@@ -22,6 +22,7 @@ export type PerfEvent = PerfMarkEvent | PerfMeasureEvent
 
 /**
  * Reporter：bus.end() 同步把当前录制窗口的事件交给它。
+ * end(reporter?) 传入的局部 reporter 会与全局 reporter 同批触发。
  * 业务侧自定义 reporter 时直接实现这个签名即可。
  */
 export type Reporter = (events: PerfEvent[]) => void

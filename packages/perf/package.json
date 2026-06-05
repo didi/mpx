@@ -1,7 +1,7 @@
 {
   "name": "@mpxjs/perf",
-  "version": "2.10.21",
-  "description": "Mpx runtime performance probes",
+  "version": "2.10.22",
+  "description": "Mpx runtime performance probes.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,

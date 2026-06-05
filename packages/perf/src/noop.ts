@@ -13,7 +13,7 @@ export const measure = (_name: string, _start: string) => {}
 export const scope = (_name: string, _meta?: object) => () => {}
 
 export const start = () => {}
-export const end = () => {}
+export const end = (_reporter?: Reporter) => {}
 
 export const setReporter = (_r: Reporter) => {}
 export const clearReporter = () => {}

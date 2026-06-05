@@ -68,6 +68,26 @@ describe('bus 状态机', () => {
     expect(() => bus.end()).not.toThrow()
   })
 
+  it('end 支持局部 reporter，与全局 reporter 同批触发', () => {
+    const local: PerfEvent[][] = []
+    bus.start()
+    bus.push({ type: 'measure', name: 'a', start: 0, dur: 1 })
+    bus.end((events) => { local.push(events) })
+    expect(captured.length).toBe(1)
+    expect(local.length).toBe(1)
+    expect(captured[0]).toBe(local[0])
+  })
+
+  it('全局 reporter 清空后 end 的局部 reporter 仍生效', () => {
+    const local: PerfEvent[][] = []
+    bus.setReporter(undefined)
+    bus.start()
+    bus.push({ type: 'measure', name: 'a', start: 0, dur: 1 })
+    bus.end((events) => { local.push(events) })
+    expect(captured.length).toBe(0)
+    expect(local.length).toBe(1)
+  })
+
   it('QUEUE_LIMIT FIFO 兜底', () => {
     bus.setReporter((events) => { captured.push(events) })
     bus.start()

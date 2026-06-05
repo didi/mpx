@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.21",
+  "version": "2.10.22",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -28,7 +28,7 @@
     "@better-scroll/slide": "^2.5.1",
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
-    "@mpxjs/perf": "^2.10.21",
+    "@mpxjs/perf": "^2.10.22",
     "@mpxjs/template-engine": "^2.8.7",
     "@mpxjs/utils": "^2.10.21",
     "acorn": "^8.11.3",
@@ -61,11 +61,12 @@
     "postcss-value-parser": "^4.0.2",
     "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
+    "source-map": "^0.7.4",
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
     "vue": "^2.7.10",
-    "webpack": "^5.75.0"
+    "webpack": "^5.83.1"
   },
   "peerDependenciesMeta": {
     "vue": {
