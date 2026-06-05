@@ -299,10 +299,10 @@ export default function styleHelperMixin () {
         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
-
-          let needAddUnoPreflight = false
           let stopClass
           if (__mpx_perf_framework__) stopClass = perf.scope('getStyle:class')
+
+          let needAddUnoPreflight = false
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           classString.split(/\s+/).forEach((className) => {
@@ -325,9 +325,7 @@ export default function styleHelperMixin () {
           if (needAddUnoPreflight) {
             mergeToLayer('preflight', global.__getAppClassStyle?.('__uno_preflight'))
           }
-        }
 
-        if (staticStyle || dynamicStyle) {
           if (__mpx_perf_framework__) stopClass()
         }
 
