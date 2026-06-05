@@ -103,7 +103,10 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
         style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 })
       }
     ),
-    [],
+    [
+      'originWhitelist',
+      'binderror'
+    ],
     {
       layoutRef
     }
