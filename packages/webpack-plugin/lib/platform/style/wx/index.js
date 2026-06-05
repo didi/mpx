@@ -500,17 +500,6 @@ module.exports = function getSpec({ warn, error }) {
             key = key === 'rotate' ? 'rotateZ' : key
             transform.push({ [key]: val })
             break
-          case 'matrix':
-            {
-              const matrixValues = parseValues(val, ',').map(val => +val)
-              if (matrixValues.length === 6) {
-                const [a, b, c, d, tx, ty] = matrixValues
-                transform.push({ [key]: [a, b, 0, c, d, 0, tx, ty, 1] })
-              } else {
-                transform.push({ [key]: matrixValues })
-              }
-              break
-            }
           case 'translate':
           case 'scale':
           case 'skew':
@@ -544,12 +533,32 @@ module.exports = function getSpec({ warn, error }) {
               else if (!x && y && !z) transform.push({ rotateY: angle })
               else if (!x && !y && z) transform.push({ rotateZ: angle })
               else unsupportedPropError({ prop, value, selector }, { mode })
+            } else {
+              error(`Value of [transform] in ${selector} does not support rotate3d with ${parts.length} values, only 4 values are supported`)
             }
             break
           }
+          case 'matrix':
+            {
+              const matrixValues = parseValues(val, ',').map(val => +val)
+              if (matrixValues.length === 6) {
+                const [a, b, c, d, tx, ty] = matrixValues
+                transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
+              } else {
+                error(`Value of [transform] in ${selector} does not support matrix with ${matrixValues.length} values, only 16 values are supported in ${mode} environment!`)
+              }
+              break
+            }
           case 'matrix3d':
-            transform.push({ matrix: parseValues(val, ',').map(val => +val) })
-            break
+            {
+              const matrixValues = parseValues(val, ',').map(val => +val)
+              if (matrixValues.length === 16) {
+                transform.push({ matrix: matrixValues })
+              } else {
+                error(`Value of [transform] in ${selector} does not support matrix3d with ${matrixValues.length} values, only 16 values are supported in ${mode} environment!`)
+              }
+              break
+            }
           // 不支持的属性处理
           case 'translateZ':
           case 'scaleZ':
