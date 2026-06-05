@@ -163,6 +163,22 @@ if (__mpx_perf__) {
 
 切换 reporter 直接再调一次 `setReporter(otherReporter)`。想完全停止上报，调 `clearReporter()`——之后 `end()` 收集到的事件被静默丢弃。
 
+如果只想在某一次录制窗口结束时追加一个局部 reporter，可以直接传给 `end(localReporter)`。局部 reporter 与全局 reporter **不互斥**：默认 `consoleReporter` 或 `setReporter` 注册过的全局 reporter 会照常收到同一批 events，局部 reporter 只在这次 `end` 调用中额外触发一次，不会改变后续窗口的全局配置。
+
+```ts
+import { start, end } from '@mpxjs/perf'
+
+const onSubmit = () => {
+  if (__mpx_perf__) start()
+  doSubmit()
+  if (__mpx_perf__) {
+    end((events) => {
+      MyAPM.report('submit_perf', events)
+    })
+  }
+}
+```
+
 ### 自定义 console 输出 {#custom-console}
 
 默认 console 不满足时，调 `createConsoleReporter` 工厂定制：
@@ -235,7 +251,7 @@ function expensiveCompute (data) {
 | `mark(name, meta?)` | 打一个时间戳。跨作用域起止配对时使用。 |
 | `measure(name, start)` | 与 `mark(start, ...)` 配对，记录从 mark 到当前的 measure 事件。 |
 | `start()` | 打开录制窗口。重复 `start` 幂等。 |
-| `end()` | 关闭录制窗口，**同步**把窗口内事件交给 reporter。 |
+| `end(reporter?)` | 关闭录制窗口，**同步**把窗口内事件交给全局 reporter；传入局部 reporter 时同批次追加触发一次。 |
 | `setReporter(r)` | 替换默认 reporter。可选，默认即 `consoleReporter`。 |
 | `clearReporter()` | 清空 reporter；之后 `end` 收集到的事件被静默丢弃。 |
 | `createConsoleReporter(opts?)` | 工厂函数，定制 console 输出。 |
@@ -245,7 +261,7 @@ function expensiveCompute (data) {
 ### 录制窗口语义 {#recording-window}
 
 - **`start()` / `end()` 之间触发的探针才会被录制**，其余时间所有 `scope` / `mark` 调用立即 return，零内存占用。
-- **`end()` 同步触发 reporter**：调用 `end()` 那一行之后立即在 console 看到结果，调试切场景手感顺。
+- **`end()` 同步触发 reporter**：调用 `end()` 那一行之后立即在 console 看到结果，调试切场景手感顺；`end(localReporter)` 不会替换全局 reporter，只对当前窗口追加一次局部上报。
 - **不强制配对**：误调 `end()`（未先 start）是 noop；重复 `start()` 沿用已有窗口（幂等）。
 - **强制重开新窗口**：先 `end()` 再 `start()`，第二次 `start` 会清空 queue。
 - **不需要 `try / finally` 保护 end**：忘记 end 不会导致内存泄漏（队列内置 4096 上限 FIFO 兜底），最坏情况只是这次录制数据被下一次 start 清空。

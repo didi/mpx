@@ -41,4 +41,15 @@ describe('impl mark / measure / scope', () => {
     end() // 未 start 直接 end，noop
     expect(captured.length).toBe(0)
   })
+
+  it('end 支持传入局部 reporter', () => {
+    const local: PerfEvent[] = []
+    start()
+    const stop = scope('foo')
+    stop()
+    end((events) => { local.push(...events) })
+    expect(captured.length).toBe(1)
+    expect(local.length).toBe(1)
+    expect(local[0].name).toBe('foo')
+  })
 })

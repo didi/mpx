@@ -141,12 +141,15 @@ function normalizePerfOptions (raw) {
 }
 ```
 
-**默认 reporter 即 `consoleReporter`**——业务方什么都不调，开启探针并 `start() / end()` 后 console 就有聚合表，零接入门槛。如果想换成自定义 reporter 把数据上报到 APM，再 `setReporter(myReporter)`；想完全静默调 `clearReporter()`：
+**默认 reporter 即 `consoleReporter`**——业务方什么都不调，开启探针并 `start() / end()` 后 console 就有聚合表，零接入门槛。如果想换成自定义 reporter 把数据上报到 APM，再 `setReporter(myReporter)`；想完全静默调 `clearReporter()`；只想在某一次窗口结束时额外上报，传 `end(localReporter)`，它与全局 reporter 不互斥：
 
 ```ts
 // 想自定义上报通道才需要这段；否则什么都不写也能看到 console 表
-import { setReporter } from '@mpxjs/perf'
+import { setReporter, end } from '@mpxjs/perf'
 if (__mpx_perf__) setReporter((events) => MyAPM.report(events))
+
+// 一次性追加上报，不替换上面的全局 reporter
+if (__mpx_perf__) end((events) => MyAPM.report('submit_perf', events))
 ```
 
 > **为什么编译期不管 reporter？**
@@ -331,7 +334,7 @@ export function scope (name: string, meta?: object) {
 
 // 录制控制：start 打开录制窗口 / end 关闭并同步交给 reporter
 export const start = () => bus.start()
-export const end   = () => bus.end()
+export const end   = (reporter?: Reporter) => bus.end(reporter)
 
 // reporter 注册 API
 export const setReporter   = (r: Reporter) => bus.setReporter(r)
@@ -340,7 +343,7 @@ export const clearReporter = ()             => bus.setReporter(undefined)
 
 #### 3.4 `bus.ts` —— 录制状态机 + 事件队列
 
-只有在 `start()` 与 `end()` 之间触发的探针才会被录制，其余时间 push 直接丢弃。`end()` 同步把窗口内事件交给 reporter。**默认 reporter 是 `consoleReporter`**，业务不调 `setReporter` 也能看到 console 输出。
+只有在 `start()` 与 `end()` 之间触发的探针才会被录制，其余时间 push 直接丢弃。`end()` 同步把窗口内事件交给全局 reporter；`end(localReporter)` 会对同一批 events 再追加一次局部上报，不会替换全局 reporter。**默认 reporter 是 `consoleReporter`**，业务不调 `setReporter` 也能看到 console 输出。
 
 ```ts
 // packages/perf/src/bus.ts
@@ -362,13 +365,14 @@ export const bus = {
     queue = []                     // 录制开始即清空，保证一段窗口对应一段干净数据
   },
 
-  end () {
+  end (reporter?: Reporter) {
     if (!_recording) return        // 未 start 直接 end 是 noop
     _recording = false
     const batch = queue
     queue = []                     // 先换队列，防 reporter 同步 push 重入污染
-    if (!_reporter || batch.length === 0) return
-    try { _reporter(batch) } catch (e) { /* 故意吞掉 reporter 错误，不影响业务 */ }
+    if (batch.length === 0) return
+    if (_reporter) runReporter(_reporter, batch)
+    if (reporter) runReporter(reporter, batch)
   },
 
   push (e: PerfEvent) {
@@ -382,6 +386,7 @@ export const bus = {
 设计要点：
 
 - **默认 reporter 是 `consoleReporter`**——业务侧最小心智模型只有 `start() / end()` 两个 API，开启探针即可在 console 看到聚合表；`setReporter` 仅在想换上报通道（自定义函数 / `createConsoleReporter({...})` 自定义参数 / 自家 APM）时才需要调。
+- **`end(localReporter)` 是一次性追加通道**：全局 reporter 照常触发，局部 reporter 只在当前窗口结束时同步收到同一批 events，不改后续窗口的全局配置。
 - **`end()` 在没有 reporter 时仍执行清理**：`_recording = false` + 清空 queue 都会走，业务调 `clearReporter()` 把 reporter 置空也不会卡死队列。
 - **`QUEUE_LIMIT = 4096`**：录制窗口可能跨越数秒到一分钟，FIFO 兜底防止业务忘 end 导致内存泄漏。
 - **重复 `start()` 幂等**：避免业务在条件分支里多次 start 误清数据；如果想强制重开新窗口，先 end 再 start。
@@ -598,7 +603,7 @@ __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
 
 ### 6. 上报形态
 
-**默认 reporter 是 `consoleReporter`**——业务方什么都不调，开启探针并 `start() / end()` 后 console 即有聚合表，零接入门槛。`setReporter` 仅在「想换上报通道」时才需要调，是可选 API。
+**默认 reporter 是 `consoleReporter`**——业务方什么都不调，开启探针并 `start() / end()` 后 console 即有聚合表，零接入门槛。`setReporter` 仅在「想换长期上报通道」时才需要调，是可选 API；临时单次上报可使用 `end(localReporter)`，不影响全局 reporter。
 
 可选的两种替代形态：
 

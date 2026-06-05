@@ -23,24 +23,29 @@ export const bus = {
     queue = []
   },
 
-  end () {
+  end (reporter?: Reporter) {
     // 未 start 直接 end 是 noop，不报错也不调 reporter。
     if (!_recording) return
     _recording = false
     const batch = queue
     // 先换队列再交给 reporter，防 reporter 同步 push 重入污染。
     queue = []
-    if (!_reporter || batch.length === 0) return
-    try {
-      _reporter(batch)
-    } catch (e) {
-      // 故意吞掉 reporter 错误，不影响业务；reporter 自己应对异常负责。
-    }
+    if (batch.length === 0) return
+    if (_reporter) runReporter(_reporter, batch)
+    if (reporter) runReporter(reporter, batch)
   },
 
   push (e: PerfEvent) {
     if (!_recording) return
     if (queue.length >= QUEUE_LIMIT) queue.shift()
     queue.push(e)
+  }
+}
+
+function runReporter (reporter: Reporter, batch: PerfEvent[]) {
+  try {
+    reporter(batch)
+  } catch (e) {
+    // 故意吞掉 reporter 错误，不影响业务；reporter 自己应对异常负责。
   }
 }

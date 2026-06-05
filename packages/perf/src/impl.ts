@@ -45,7 +45,7 @@ export function scope (name: string, meta?: object) {
 
 // 录制窗口控制
 export const start = () => bus.start()
-export const end = () => bus.end()
+export const end = (reporter?: Reporter) => bus.end(reporter)
 
 // reporter 注册 API
 export const setReporter = (r: Reporter) => bus.setReporter(r)

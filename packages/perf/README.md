@@ -26,7 +26,7 @@ import {
 | `mark(name, meta?)` | 打一个时间戳。跨作用域起止配对时使用。 |
 | `measure(name, start)` | 与 `mark(start, ...)` 配对，记录从 mark 到当前的 measure 事件。 |
 | `start()` | 打开录制窗口。重复 start 幂等。 |
-| `end()` | 关闭录制窗口，同步把窗口内事件交给 reporter。 |
+| `end(reporter?)` | 关闭录制窗口，同步把窗口内事件交给全局 reporter；传入局部 reporter 时同批次追加触发一次。 |
 | `setReporter(r)` | 替换默认 reporter。 |
 | `clearReporter()` | 清空 reporter；之后 end 收集到的事件被静默丢弃。 |
 | `createConsoleReporter(opts?)` | 工厂函数，定制 console 输出。 |
@@ -71,6 +71,18 @@ const onLeave = () => { if (__mpx_perf__) end() }
 import { setReporter } from '@mpxjs/perf'
 
 if (__mpx_perf__) setReporter((events) => MyAPM.report(events))
+```
+
+`setReporter` 注册的是全局 reporter。只想在某一次录制窗口结束时额外上报，可把局部 reporter 传给 `end`，它不会替换全局 reporter：
+
+```ts
+import { start, end } from '@mpxjs/perf'
+
+const onSubmit = () => {
+  if (__mpx_perf__) start()
+  doSubmit()
+  if (__mpx_perf__) end((events) => MyAPM.report('submit_perf', events))
+}
 ```
 
 ### 业务侧自定义探针（user 分组）
