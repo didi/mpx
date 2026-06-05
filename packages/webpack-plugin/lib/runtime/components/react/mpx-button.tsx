@@ -19,7 +19,7 @@
  * ✘ app-parameter
  * ✘ show-message-card
  * ✘ phone-number-no-quota-toast
- * ✘ bindgetuserinfo
+ * ✔ bindgetuserinfo
  * ✘ bindcontact
  * ✘ createliveactivity
  * ✘ bindgetphonenumber
@@ -47,7 +47,7 @@ import {
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThroughValue } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThrough } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -79,7 +79,7 @@ export interface ButtonProps {
   'form-type'?: 'submit' | 'reset'
   'enable-offset'?: boolean,
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -211,7 +211,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     'open-type': openType,
     'form-type': formType,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -299,7 +299,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const nodeRef = useRef(null)
 
@@ -308,7 +308,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   if (backgroundStyle) {
     warn('Button does not support background image-related styles!')
@@ -396,7 +396,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       'hover-start-time',
       'hover-stay-time',
       'open-type',
-      'form-type'
+      'form-type',
+      'bindgetuserinfo'
     ],
     {
       layoutRef,

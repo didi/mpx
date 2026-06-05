@@ -52,7 +52,6 @@ export interface ImageProps {
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -158,7 +157,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     mode = 'scaleToFill',
     style = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'enable-fast-image': enableFastImage,
     'parent-width': parentWidth,
@@ -217,7 +215,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,
@@ -490,7 +488,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     [
       'src',
       'mode',
-      'is-svg'
+      'is-svg',
+      'enable-fast-image',
+      'bindload',
+      'binderror'
     ],
     {
       layoutRef

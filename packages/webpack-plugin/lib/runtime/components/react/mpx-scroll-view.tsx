@@ -38,7 +38,7 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, hiddenStyle, useRunOnJSCallback, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, hiddenStyle, useRunOnJSCallback, useTextPassThrough } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 import Portal from './mpx-portal'
 
@@ -66,7 +66,7 @@ interface ScrollViewProps {
   'scroll-into-view'?: string;
   'enable-trigger-intersection-observer'?: boolean;
   'enable-var'?: boolean;
-  'external-var-context'?: Record<string, any>;
+  'enable-text-pass-through'?: boolean;
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
@@ -145,7 +145,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-left': scrollLeft = 0,
     'refresher-triggered': refresherTriggered,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -200,10 +200,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     hasPositionFixed,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const scrollViewRef = useRef<ScrollView>(null)
 
@@ -856,7 +856,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       'refresher-triggered',
       'refresher-enabled',
       'refresher-default-style',
+      'refresher-threshold',
       'refresher-background',
+      'scroll-into-view',
+      'enable-sticky',
+      'wait-for',
+      'simultaneous-handlers',
+      'scroll-event-throttle',
+      'scroll-into-view-offset',
+      '__selectRef',
       'children',
       'enhanced',
       'binddragstart',
@@ -865,7 +873,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       'bindscroll',
       'bindscrolltoupper',
       'bindscrolltolower',
-      'bindrefresherrefresh'
+      'bindrefresherrefresh',
+      'bindscrollend'
     ], { layoutRef })
 
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView

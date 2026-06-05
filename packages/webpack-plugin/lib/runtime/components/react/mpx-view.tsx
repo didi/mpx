@@ -12,8 +12,10 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThroughValue } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
+import { TextPassThroughContextValue } from './context'
 import { error, isFunction } from '@mpxjs/utils'
+import * as perf from '@mpxjs/perf'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal'
@@ -26,9 +28,9 @@ export interface _ViewProps extends ViewProps {
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'enable-background'?: boolean
+  'enable-text-pass-through'?: boolean
   'enable-var'?: boolean
   'enable-fast-image'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -670,7 +672,7 @@ interface WrapChildrenConfig {
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
   textProps?: Record<string, any>
-  textPassThrough?: ReturnType<typeof useTextPassThroughValue>
+  textPassThrough?: TextPassThroughContextValue | null
   innerStyle?: Record<string, any>
   enableFastImage?: boolean
 }
@@ -690,6 +692,13 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, bac
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
+  // 性能探针 - total
+  let stopTotal: (() => void) | undefined
+  if (__mpx_perf_framework__) stopTotal = perf.scope('view:render:total')
+
+  // ───── props 阶段 ─────
+  let stopProps: (() => void) | undefined
+  if (__mpx_perf_framework__) stopProps = perf.scope('view:render:props')
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
   let {
     style = {},
@@ -697,8 +706,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'enable-background': enableBackground,
+    'enable-text-pass-through': enableTextPassThrough,
     'enable-fast-image': enableFastImage,
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
@@ -723,7 +732,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
   const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
+  if (__mpx_perf_framework__) stopProps!()
 
+  // ───── style 阶段 ─────
+  let stopStyle: (() => void) | undefined
+  if (__mpx_perf_framework__) stopStyle = perf.scope('view:render:style')
   const {
     normalStyle,
     hasSelfPercent,
@@ -734,14 +747,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     setHeight
   } = useTransformStyle(styleObj, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
@@ -773,7 +785,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     style: viewStyle,
     transitionend
   })
+  if (__mpx_perf_framework__) stopStyle!()
 
+  // ───── innerProps 阶段 ─────
+  let stopInnerProps: (() => void) | undefined
+  if (__mpx_perf_framework__) stopInnerProps = perf.scope('view:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -788,13 +804,23 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       'hover-start-time',
       'hover-stay-time',
       'hover-style',
-      'hover-class'
+      'hover-class',
+      'enable-background',
+      'enable-animation',
+      'enable-fast-image',
+      'animation',
+      'catchtransitionend',
+      'bindtransitionend'
     ],
     {
       layoutRef
     }
   )
+  if (__mpx_perf_framework__) stopInnerProps!()
 
+  // ───── createElement 阶段 ─────
+  let stopCreate: (() => void) | undefined
+  if (__mpx_perf_framework__) stopCreate = perf.scope('view:render:createElement')
   const childNode = wrapWithChildren(props, {
     hasVarDec,
     enableBackground: enableBackgroundRef.current,
@@ -816,6 +842,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   if (hasPositionFixed) {
     finalComponent = createElement(Portal, null, finalComponent)
   }
+  if (__mpx_perf_framework__) stopCreate!()
+
+  if (__mpx_perf_framework__) stopTotal!()
   return finalComponent
 })
 

@@ -227,6 +227,8 @@ Mpx 的文本相关能力主要分为以下几类：
 4. **全局字体缩放**：`allowFontScaling` 不参与继承或迁移，默认值由 `mpx.config.rnConfig.allowFontScaling` 控制，组件显式设置的 `allowFontScaling` 优先。
 5. **自动包裹**：`view` 节点直接包裹裸文本时，Mpx 编译时会自动添加 `text` 节点包裹文本。
 
+> 出于性能考虑，文本样式透传采用按需启用策略。容器会在首次渲染时根据文本样式和 `numberOfLines`、`ellipsizeMode` 等文本属性决定是否订阅透传上下文；如果这些样式或属性后续可能通过动态数据才出现，需要在该容器上显式声明 <span v-pre>`enable-text-pass-through="{{ true }}"`</span>。
+
 ### 示例 {#example}
 
 ```html

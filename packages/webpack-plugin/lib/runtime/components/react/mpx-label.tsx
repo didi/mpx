@@ -6,7 +6,7 @@ import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
 import { LabelContext, LabelContextValue } from './context'
 import Portal from './mpx-portal'
 
@@ -15,7 +15,7 @@ export interface LabelProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -31,7 +31,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const {
       style = {},
       'enable-var': enableVar,
-      'external-var-context': externalVarContext,
+      'enable-text-pass-through': enableTextPassThrough,
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight
@@ -53,7 +53,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+    } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, { style: normalStyle })
@@ -61,7 +61,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+    const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
     if (backgroundStyle) {
       warn('Label does not support background image-related styles!')
@@ -88,7 +88,9 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
           bindtap: onTap
         }
       ),
-      [],
+      [
+        'for'
+      ],
       {
         layoutRef
       }

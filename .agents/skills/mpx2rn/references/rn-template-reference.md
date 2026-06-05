@@ -12,19 +12,22 @@
 - [Slot](#slot)
   - [默认插槽](#默认插槽)
   - [具名插槽与 `multipleSlots`](#具名插槽与-multipleslots)
+- [动态组件](#动态组件)
+  - [基础用法](#基础用法)
+  - [注意事项](#注意事项-2)
 - [WXML 模板](#wxml-模板)
   - [模板内联定义](#模板内联定义)
   - [import 外联引入](#import-外联引入)
-  - [注意事项](#注意事项-2)
+  - [注意事项](#注意事项-3)
 - [i18n 国际化](#i18n-国际化)
   - [工程配置示例](#工程配置示例)
   - [模板中使用翻译函数](#模板中使用翻译函数)
   - [JS 中使用翻译函数](#js-中使用翻译函数)
-  - [注意事项](#注意事项-3)
+  - [注意事项](#注意事项-4)
 - [无障碍访问](#无障碍访问)
   - [模板属性](#模板属性)
   - [示例](#示例)
-  - [注意事项](#注意事项-4)
+  - [注意事项](#注意事项-5)
 - [基础组件](#基础组件)
   - [通用属性](#通用属性)
   - [view](#view)
@@ -312,6 +315,66 @@ createComponent({
 
 ---
 
+## 动态组件
+
+跨端输出 RN 时支持通过 `<component is="...">` 在同一占位上按数据切换渲染不同的自定义组件，与微信小程序写法一致。`is` 接受 Mustache 表达式，值为目标组件在 `usingComponents` 中注册的标签名（全局注册同样生效）；切换 `is` 的值即切换被渲染的组件。
+
+`<component>` 中可以使用 **`range`** 属性用于控制候选组件范围：值为逗号分隔的组件名列表，用于显式声明 `is` 可能命中的组件子集。**未声明 `range` 时，框架会把当前文件 `usingComponents` 中所有组件都视为候选**，在小程序端会把这些组件全部纳入产物并参与运行时分发，造成不必要的体积与性能开销；声明 `range` 后只有列表内的组件会被纳入候选集合。
+
+### 基础用法
+
+在 `json` 区块中注册候选组件，在模板中通过 `is` 绑定当前要渲染的组件名，并通过 `range` 把候选范围收敛为实际会切换的组件。`<component>` 节点上书写的属性会作为 props 透传给目标组件，子节点会作为默认插槽内容。
+
+```html
+<template>
+  <view>
+    <view class="tabs">
+      <text bindtap="switchTab('com-a')">A</text>
+      <text bindtap="switchTab('com-b')">B</text>
+    </view>
+    <!-- range 显式限定候选组件，避免把 usingComponents 里其它组件也算进候选集 -->
+    <!-- is 绑定组件名，title 会作为 props 透传给目标组件 -->
+    <component is="{{ current }}" range="com-a,com-b" title="{{ title }}">
+      <text>默认插槽内容</text>
+    </component>
+  </view>
+</template>
+
+<script>
+import { createComponent, ref } from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    const current = ref('com-a')
+    const title = ref('hello')
+    function switchTab (name) {
+      current.value = name
+    }
+    return { current, title, switchTab }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "com-a": "../components/com-a",
+    "com-b": "../components/com-b",
+    "other-com": "../components/other-com"
+  }
+}
+</script>
+```
+
+### 注意事项
+
+1. `is` 的取值必须是已经在当前组件 `usingComponents` 中注册的标签名，或通过全局注册可见的组件名；未注册的名称无法渲染。
+2. `is` 仅用于切换**自定义组件**，不要传入 `view`、`text` 等基础组件名。
+3. 切换 `is` 时目标组件会被销毁并重新创建，组件内部的本地状态不会保留，对状态有连续性要求时应将状态提升到外层。
+4. **建议始终显式声明 `range`**，仅列出实际会被 `is` 切换到的组件名（逗号分隔）。未声明时默认以整个 `usingComponents` 作为候选集合，会拖累**小程序端产物体积与运行时性能**；列表中的组件名需与 `usingComponents` 中注册的一致。
+
+---
+
 ## WXML 模板
 
 小程序 WXML 的 **具名模板**（`<template name>` + `<template is>`）可在**同一组件内联**或通过 **`<import>`** 跨文件复用；跨端输出 RN 时，**内联与 `import` 均已完整支持**。语法与语义与微信保持一致。
@@ -576,6 +639,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | style | string |  | 组件内联样式 |
 | enable-offset | boolean | `false` | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息 |
 | enable-var | boolean | `true` | 默认支持使用 css variable，若想关闭该功能可设置为 false |
+| enable-text-pass-through | boolean | `false` | RN 环境特有属性，开启文本样式和文本属性透传上下文，请在动态添加文本样式或文本属性时开启 |
 | parent-font-size | number |  | 父组件字体大小，主要用于百分比计算的场景，如 font-size: 100% |
 | parent-width | number |  | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度 |
 | parent-height | number |  | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度 |
@@ -611,10 +675,11 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 #### 注意事项
 
+- **view 内可直接插入文字**：Mpx2RN 支持在 `view` 等非 `text` 组件中直接插入文字内容，无需严格遵循 RN 中文字必须由 `text` 组件包裹的限制，框架会在编译时自动为裸文字插入一个 `text` 包裹节点。但该行为存在性能开销——会额外多引入一个 `view` 层级，因此如果可以直接使用 `text` 组件包裹文字，仍应优先使用 `text`，以获得更优的渲染性能。`view` 内多个 `text` 的跨平台布局对齐方案见 [样式开发最佳实践 · text 跨平台布局对齐](./rn-style-practice.md#text-跨平台布局对齐)。
 - 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
-- 出于性能考虑，基础组件的样式增强能力（如 `enable-var`、`enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
+- 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
 
 ### text
 
@@ -631,7 +696,6 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 #### 注意事项
 
-- 未包裹 text 标签的文本，会自动包裹 text 标签。
 - text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
 
 ### scroll-view

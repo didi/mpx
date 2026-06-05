@@ -8,6 +8,7 @@
       }
     ]
   ],
+  "babelrcRoots": [".", "./packages/*"],
   "sourceType": "unambiguous",
   "env": {
     "test": {

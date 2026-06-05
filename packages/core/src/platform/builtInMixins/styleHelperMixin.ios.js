@@ -1,4 +1,5 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import * as perf from '@mpxjs/perf'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
@@ -264,6 +265,9 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
+        let stopTotal
+        if (__mpx_perf_framework__) stopTotal = perf.scope('getStyle:total')
+
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
@@ -271,6 +275,8 @@ export default function styleHelperMixin () {
         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
+          let stopClass
+          if (__mpx_perf_framework__) stopClass = perf.scope('getStyle:class')
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
 
@@ -293,9 +299,12 @@ export default function styleHelperMixin () {
               mergeResult(this.__props[className])
             }
           })
+          if (__mpx_perf_framework__) stopClass()
         }
 
         if (staticStyle || dynamicStyle) {
+          let stopStyle
+          if (__mpx_perf_framework__) stopStyle = perf.scope('getStyle:style')
           const styleObj = {}
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
@@ -308,6 +317,7 @@ export default function styleHelperMixin () {
           }
           Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
           mergeResult(transformStyleObj(styleObj))
+          if (__mpx_perf_framework__) stopStyle()
         }
 
         if (hide) {
@@ -329,6 +339,7 @@ export default function styleHelperMixin () {
           })
         }
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+        if (__mpx_perf_framework__) stopTotal()
         return isEmpty ? empty : result
       }
     }

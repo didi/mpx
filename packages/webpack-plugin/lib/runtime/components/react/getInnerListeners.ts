@@ -318,13 +318,13 @@ const useInnerProps = (
 
   const removeProps = [
     'children',
-    'enable-background',
+    'enable-text-pass-through',
     'enable-offset',
     'enable-var',
-    'external-var-context',
     'parent-font-size',
     'parent-width',
     'parent-height',
+    'enable-text-pass-through',
     ...userRemoveProps,
     ...rawEventKeys
   ]

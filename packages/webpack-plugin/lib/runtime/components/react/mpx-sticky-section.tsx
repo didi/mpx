@@ -2,7 +2,7 @@
 import { useRef, forwardRef, createElement, ReactNode, useCallback, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThrough } from './utils'
 import { StickyContext } from './context'
 import useInnerProps from './getInnerListeners'
 
@@ -11,7 +11,7 @@ interface StickySectionProps {
   style?: ViewStyle;
   'offset-top'?: number;
   'enable-var'?: boolean;
-  'external-var-context'?: Record<string, any>;
+  'enable-text-pass-through'?: boolean;
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
@@ -22,7 +22,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   const {
     style,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -36,12 +36,12 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutProps, layoutStyle } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: sectionRef, onLayout })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const stickyHeaders = useRef<Map<string, any>>(new Map())
 
@@ -71,7 +71,9 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   const innerProps = useInnerProps(extendObject({}, props, {
     style: extendObject(innerStyle, layoutStyle),
     ref: sectionRef
-  }, layoutProps), [], { layoutRef })
+  }, layoutProps), [
+    'offset-top'
+  ], { layoutRef })
 
   return (
     createElement(

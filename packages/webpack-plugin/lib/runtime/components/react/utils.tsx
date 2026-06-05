@@ -147,7 +147,6 @@ interface PositionMeta {
 
 interface TransformStyleConfig {
   enableVar?: boolean
-  externalVarContext?: Record<string, any>
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
@@ -179,8 +178,7 @@ export interface WrapChildrenConfig {
 }
 
 export interface TextPassThroughValueOptions {
-  inheritTextProps?: boolean
-  disabled?: boolean
+  enableTextPassThrough?: boolean
 }
 
 export interface GestureHandler {
@@ -298,6 +296,7 @@ function isTextStyle (key: string) {
 
 function isColorValue (token: string): boolean {
   if (token.startsWith('#') || token.startsWith('rgb(') || token.startsWith('rgba(') || token.startsWith('hsl(') || token.startsWith('hsla(')) return true
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   return hasOwn(require('./namedColorSet').default, token.toLowerCase())
 }
 
@@ -846,7 +845,7 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
 // core style hook
 // ============================================================
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -933,7 +932,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor, boxSizingVisitor, shorthandVisitor])
-  hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
   if (enableVarRef.current !== enableVar) {
@@ -944,7 +942,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   if (enableVarRef.current) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const varContext = useContext(VarContext)
-    const newVarContext = extendObject({}, varContext, externalVarContext, varStyle)
+    const newVarContext = extendObject({}, varContext, varStyle)
     // 缓存比较newVarContext是否发生变化
     if (diffAndCloneA(varContextRef.current, newVarContext).diff) {
       varContextRef.current = newVarContext
@@ -1083,26 +1081,35 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
   }
 }
 
-export function useTextPassThroughValue (
+export function useTextPassThrough (
   textStyle?: TextStyle,
   textProps?: Record<string, any>,
-  { inheritTextProps = true, disabled = false }: TextPassThroughValueOptions = {}
+  { enableTextPassThrough = false }: TextPassThroughValueOptions = {}
 ) {
+  const shouldEnableTextPassThrough = (
+    enableTextPassThrough ||
+    !!textStyle ||
+    !!textProps
+  )
+  const enableTextPassThroughRef = useRef(shouldEnableTextPassThrough)
+
+  if (enableTextPassThroughRef.current !== shouldEnableTextPassThrough) {
+    error('[Mpx runtime error]: text style/props use should be stable in the component lifecycle, or you can set [enable-text-pass-through] with true.')
+  }
+
+  if (!enableTextPassThroughRef.current) return null
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const parent = useContext(TextPassThroughContext)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const valueRef = useRef<TextPassThroughContextValue | null>(null)
-
-  if (disabled) return null
-
-  if (!textStyle && !textProps && (inheritTextProps || !parent?.pendingTextProps)) return null
 
   const nextTextStyle = textStyle
     ? extendObject({}, parent?.textStyle, textStyle)
     : parent?.textStyle
-  const nextTextProps = inheritTextProps
-    ? textProps
-      ? extendObject({}, parent?.pendingTextProps, textProps)
-      : parent?.pendingTextProps
-    : textProps
+  const nextTextProps = textProps
+    ? extendObject({}, parent?.pendingTextProps, textProps)
+    : parent?.pendingTextProps
   const nextValue = {
     textStyle: nextTextStyle,
     pendingTextProps: nextTextProps
@@ -1113,6 +1120,31 @@ export function useTextPassThroughValue (
   }
 
   return valueRef.current
+}
+
+export function useTextPassThroughText (textStyle?: TextStyle) {
+  const inheritedText = useContext(TextPassThroughContext)
+  const valueRef = useRef<TextPassThroughContextValue | null>(null)
+
+  if (!textStyle) {
+    return {
+      inheritedText,
+      textPassThrough: null
+    }
+  }
+
+  const nextValue = {
+    textStyle: extendObject({}, inheritedText?.textStyle, textStyle)
+  }
+
+  if (diffAndCloneA(valueRef.current, nextValue).diff) {
+    valueRef.current = nextValue
+  }
+
+  return {
+    inheritedText,
+    textPassThrough: valueRef.current
+  }
 }
 
 export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled }: { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
