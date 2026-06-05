@@ -287,6 +287,26 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.warn).not.toHaveBeenCalled()
       expect(config.error).not.toHaveBeenCalled()
     })
+
+    describe('background-position [x, y] ordering', () => {
+      const positionCases = [
+        { input: 'top left', expected: ['"left"', '"top"'], desc: 'top left → [left, top]' },
+        { input: 'bottom right', expected: ['"right"', '"bottom"'], desc: 'bottom right → [right, bottom]' },
+        { input: 'left top', expected: ['"left"', '"top"'], desc: 'left top → [left, top] (already correct)' },
+        { input: 'top center', expected: ['"50%"', '"top"'], desc: 'top center → [50%, top]' },
+        { input: '50% 30%', expected: ['"50%"', '"30%"'], desc: '50% 30% → [50%, 30%] (no change)' }
+      ]
+
+      positionCases.forEach(({ input, expected, desc }) => {
+        test(desc, () => {
+          const css = `.bg { background-position: ${input}; }`
+          const config = createConfig()
+          const result = getClassMap({ content: css, filename: 'test.css', ...config })
+          expect(result.bg).toEqual({ backgroundPosition: expected })
+          expect(config.error).not.toHaveBeenCalled()
+        })
+      })
+    })
   })
 
   describe('Direct normal values (without CSS variables)', () => {
