@@ -405,7 +405,7 @@ class MpxWebpackPlugin {
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, this.options.normalNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
-    const extendComponentsPlugin = new ExtendComponentsPlugin('before-file', this.options.mode, 'resolve')
+    const extendComponentsPlugin = new ExtendComponentsPlugin('before-file', this.options.mode, 'file')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(extendComponentsPlugin)
