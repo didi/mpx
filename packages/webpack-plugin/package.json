@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.21",
+  "version": "2.10.22",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -28,7 +28,7 @@
     "@better-scroll/slide": "^2.5.1",
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
-    "@mpxjs/perf": "^2.10.21",
+    "@mpxjs/perf": "^2.10.22",
     "@mpxjs/template-engine": "^2.8.7",
     "@mpxjs/utils": "^2.10.21",
     "acorn": "^8.11.3",
