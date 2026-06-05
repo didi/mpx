@@ -209,7 +209,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
   if (initialEnableItemExposureRef.current !== enableItemExposure) {
-    error('[Mpx runtime error]: item exposure use should be stable in the component lifecycle, or you can set [enable-item-exposure] with true.')
+    error('[Mpx runtime error]: [enable-item-exposure] cannot be toggled at runtime. Set its value once at component initialization.')
   }
 
   enableStickyRef.current = enableSticky
