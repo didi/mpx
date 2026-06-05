@@ -686,30 +686,28 @@ function transformFlex (styleObj: Record<string, any>) {
 function transformTextDecoration (styleObj: Record<string, any>) {
   const value = styleObj.textDecoration
   if (typeof value !== 'string') return
-  const textDecorationLineSet = new Set(['none', 'underline', 'line-through'])
+  const supportedLineValues = new Set(['none', 'underline', 'line-through'])
   const textDecorationStyleSet = new Set(['solid', 'double', 'dotted', 'dashed'])
   const values = parseValues(value)
   const lineValues: string[] = []
-  let styleValue = ''
-  let colorValue = ''
+  const otherValues: string[] = []
   for (const v of values) {
-    if (textDecorationLineSet.has(v)) {
+    if (supportedLineValues.has(v)) {
       lineValues.push(v)
-    } else if (textDecorationStyleSet.has(v)) {
-      styleValue = v
-    } else if (isColorValue(v)) {
-      colorValue = v
+    } else {
+      otherValues.push(v)
     }
   }
   delete styleObj.textDecoration
   if (lineValues.length > 0 && !hasOwn(styleObj, 'textDecorationLine')) {
     styleObj.textDecorationLine = lineValues.join(' ')
   }
-  if (styleValue && !hasOwn(styleObj, 'textDecorationStyle')) {
-    styleObj.textDecorationStyle = styleValue
-  }
-  if (colorValue && !hasOwn(styleObj, 'textDecorationColor')) {
-    styleObj.textDecorationColor = colorValue
+  for (const v of otherValues) {
+    if (textDecorationStyleSet.has(v) && !hasOwn(styleObj, 'textDecorationStyle')) {
+      styleObj.textDecorationStyle = v
+    } else if (isColorValue(v) && !hasOwn(styleObj, 'textDecorationColor')) {
+      styleObj.textDecorationColor = v
+    }
   }
 }
 
@@ -747,14 +745,19 @@ function transformFontFamily (styleObj: Record<string, any>) {
   const values = parseValues(stripped, ',')
   styleObj.fontFamily = values[0].trim()
 }
-
+function transOrderXY (values: string[]) {
+  if (values.length === 2 && ['top', 'bottom'].includes(values[0])) {
+    [values[0], values[1]] = [values[1], values[0]]
+  }
+  return values
+}
 function transformBackground (styleObj: Record<string, any>) {
   if (typeof styleObj.backgroundSize === 'string') {
     styleObj.backgroundSize = parseValues(styleObj.backgroundSize)
   }
   if (typeof styleObj.backgroundPosition === 'string') {
     const parts = parseValues(styleObj.backgroundPosition)
-    styleObj.backgroundPosition = parts.map(v => v === 'center' ? '50%' : v)
+    styleObj.backgroundPosition = transOrderXY(parts.map(v => v === 'center' ? '50%' : v))
   }
   const value = styleObj.background
   if (typeof value !== 'string') return
@@ -795,7 +798,7 @@ function transformBackground (styleObj: Record<string, any>) {
       }
     }
   }
-  if (positionValues.length) styleObj.backgroundPosition = positionValues
+  if (positionValues.length) styleObj.backgroundPosition = transOrderXY(positionValues)
   if (sizeValues.length) styleObj.backgroundSize = sizeValues
 }
 
