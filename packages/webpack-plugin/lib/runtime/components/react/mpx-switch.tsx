@@ -137,7 +137,10 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
       'checked',
       'disabled',
       'type',
-      'color'
+      'color',
+      'name',
+      'bindchange',
+      'catchchange'
     ],
     { layoutRef }
   )

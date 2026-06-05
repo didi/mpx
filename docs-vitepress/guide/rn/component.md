@@ -43,6 +43,8 @@
 
 由于 view、text、scroll-view、image 和 input 组件都是基于 React Native 原生组件实现的，因此这些组件默认继承原生组件支持的属性。
 
+与微信小程序一致，React Native 输出支持只传递属性名不传递属性值的布尔写法，例如 `<scroll-view scroll-y />` 等价于 `<scroll-view scroll-y="{{ true }}" />`。
+
 ### view
 视图容器。
 属性

@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.10.20",
+  "version": "2.10.22",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -19,13 +19,15 @@
   ],
   "main": "src/index.js",
   "dependencies": {
-    "@mpxjs/utils": "^2.10.20",
+    "@mpxjs/perf": "^2.10.22",
+    "@mpxjs/utils": "^2.10.21",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.10.0"
   },
   "peerDependencies": {
     "@d11/react-native-fast-image": "*",
-    "@mpxjs/api-proxy": "^2.9.0",
+    "@mpxjs/api-proxy": "*",
+    "@mpxjs/store": "*",
     "@react-navigation/native": "*",
     "@react-navigation/native-stack": "*",
     "react": "*",
@@ -44,9 +46,6 @@
     "vue-i18n-bridge": "^9.2.2"
   },
   "peerDependenciesMeta": {
-    "@mpxjs/api-proxy": {
-      "optional": true
-    },
     "@d11/react-native-fast-image": {
       "optional": true
     },

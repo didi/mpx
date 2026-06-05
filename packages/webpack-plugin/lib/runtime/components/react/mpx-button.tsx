@@ -19,7 +19,7 @@
  * ✘ app-parameter
  * ✘ show-message-card
  * ✘ phone-number-no-quota-toast
- * ✘ bindgetuserinfo
+ * ✔ bindgetuserinfo
  * ✘ bindcontact
  * ✘ createliveactivity
  * ✘ bindgetphonenumber
@@ -396,7 +396,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       'hover-start-time',
       'hover-stay-time',
       'open-type',
-      'form-type'
+      'form-type',
+      'bindgetuserinfo'
     ],
     {
       layoutRef,

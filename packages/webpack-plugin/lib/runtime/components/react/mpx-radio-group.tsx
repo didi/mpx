@@ -152,7 +152,10 @@ const radioGroup = forwardRef<
         style: extendObject({}, normalStyle, layoutStyle)
       }
     ),
-    ['name'],
+    [
+      'name',
+      'bindchange'
+    ],
     {
       layoutRef
     }

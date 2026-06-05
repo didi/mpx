@@ -11,6 +11,7 @@ import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren, splitStyle } from './utils'
 import { TextPassThroughContext } from './context'
+import * as perf from '@mpxjs/perf'
 
 const decodeMap = {
   '&lt;': '<',
@@ -52,6 +53,12 @@ interface _TextProps extends TextProps {
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
+  let stopTotal: (() => void) | undefined
+  if (__mpx_perf_framework__) stopTotal = perf.scope('text:render:total')
+
+  // ───── props 阶段 ─────
+  let stopProps: (() => void) | undefined
+  if (__mpx_perf_framework__) stopProps = perf.scope('text:render:props')
   const inheritedText = useContext(TextPassThroughContext)
   const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   const {
@@ -66,7 +73,11 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'parent-height': parentHeight,
     decode
   } = mergedProps
+  if (__mpx_perf_framework__) stopProps!()
 
+  // ───── style 阶段 ─────
+  let stopStyle: (() => void) | undefined
+  if (__mpx_perf_framework__) stopStyle = perf.scope('text:render:style')
   const {
     normalStyle,
     hasVarDec,
@@ -86,6 +97,26 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     style: finalStyle
   })
 
+  const children = decode ? getDecodedChildren(mergedProps.children) : mergedProps.children
+  const isStringOnly = isStringChildren(children)
+  let childTextStyle: TextStyle | undefined
+  if (!isStringOnly) {
+    const { textStyle = {} } = splitStyle(finalStyle)
+    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
+  }
+  const textPassThrough = useTextPassThroughValue(
+    childTextStyle,
+    undefined,
+    {
+      inheritTextProps: false,
+      disabled: isStringOnly
+    }
+  )
+  if (__mpx_perf_framework__) stopStyle!()
+
+  // ───── innerProps 阶段 ─────
+  let stopInnerProps: (() => void) | undefined
+  if (__mpx_perf_framework__) stopInnerProps = perf.scope('text:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -102,23 +133,11 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
       'decode'
     ]
   )
+  if (__mpx_perf_framework__) stopInnerProps!()
 
-  const children = decode ? getDecodedChildren(mergedProps.children) : mergedProps.children
-  const isStringOnly = isStringChildren(children)
-  let childTextStyle: TextStyle | undefined
-  if (!isStringOnly) {
-    const { textStyle = {} } = splitStyle(finalStyle)
-    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
-  }
-  const textPassThrough = useTextPassThroughValue(
-    childTextStyle,
-    undefined,
-    {
-      inheritTextProps: false,
-      disabled: isStringOnly
-    }
-  )
-
+  // ───── createElement 阶段 ─────
+  let stopCreate: (() => void) | undefined
+  if (__mpx_perf_framework__) stopCreate = perf.scope('text:render:createElement')
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     extendObject({}, mergedProps, {
       children
@@ -133,7 +152,9 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   if (hasPositionFixed) {
     finalComponent = createElement(Portal, null, finalComponent)
   }
+  if (__mpx_perf_framework__) stopCreate!()
 
+  if (__mpx_perf_framework__) stopTotal!()
   return finalComponent
 })
 

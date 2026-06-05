@@ -393,7 +393,8 @@ const Slider = forwardRef<
       'bindchange',
       'catchchange',
       'bindchanging',
-      'catchchanging'
+      'catchchanging',
+      'name'
     ],
     { layoutRef }
   )
