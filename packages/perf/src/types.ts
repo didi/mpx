@@ -1,33 +1,9 @@
 /**
- * 探针事件类型。每条事件对应一次 mark 或 measure。
- */
-export interface PerfMarkEvent {
-  type: 'mark'
-  name: string
-  ts: number
-  meta?: object
-}
-
-export interface PerfMeasureEvent {
-  type: 'measure'
-  name: string
-  /** 起始时刻（performance.now 时间戳） */
-  start: number
-  /** 持续时长（ms） */
-  dur: number
-  meta?: object
-}
-
-export type PerfEvent = PerfMarkEvent | PerfMeasureEvent
-
-/**
- * Reporter：bus.end() 同步把当前录制窗口的事件交给它。
- * 业务侧自定义 reporter 时直接实现这个签名即可。
- */
-export type Reporter = (events: PerfEvent[]) => void
-
-/**
  * 单个事件名的聚合统计。
+ * - count: 样本数
+ * - sum: 总时长（ms）
+ * - avg: 均值（end() 时一次性回填）
+ * - max: 最大时长（ms）
  */
 export interface AggResult {
   count: number
@@ -35,3 +11,12 @@ export interface AggResult {
   avg: number
   max: number
 }
+
+/**
+ * Reporter：bus.end() 同步把当前录制窗口的聚合结果交给它。
+ * end(reporter?) 传入的局部 reporter 会与全局 reporter 同批触发。
+ *
+ * 入参是 `Map<name, AggResult>`——窗口期间 push 阶段已实时累加，
+ * 此处无原始事件可遍历。业务侧自定义 reporter 直接实现这个签名。
+ */
+export type Reporter = (agg: Map<string, AggResult>) => void

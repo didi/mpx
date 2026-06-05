@@ -6,26 +6,29 @@
 // 整个模块的存在意义就是「空函数」——给 eslint 关掉 no-empty-function 比逐行
 // disable 更直观。
 /* eslint-disable @typescript-eslint/no-empty-function */
-import type { PerfEvent, Reporter, AggResult } from './types'
+import type { Reporter } from './types'
 
-export const mark = (_name: string, _meta?: object) => {}
+// scopeStart 关闭态恒返回 -1，与开启态未录制时的语义一致；
+// 调用方 `let id = -1; ...; perf.scopeEnd(id)` 在关闭态下被 inline 后等价于
+// `let id = -1`，配合 Terser DCE 整段消失。
+export const scopeStart = (_name: string): number => -1
+export const scopeEnd = (_id: number) => {}
+
+export const mark = (_name: string) => {}
 export const measure = (_name: string, _start: string) => {}
-export const scope = (_name: string, _meta?: object) => () => {}
 
 export const start = () => {}
-export const end = () => {}
+export const end = (_reporter?: Reporter) => {}
 
 export const setReporter = (_r: Reporter) => {}
 export const clearReporter = () => {}
 
-// 同样要为 reporter / 聚合工具提供关闭态壳子，保证 src/index.ts 顶层导出
-// 全部走 `__mpx_perf__ ? impl.x : noop.x` 三元——任何活引用在关闭态下都被
-// 静态替换为 noop，从而让 Terser 把 reporters/console.ts、aggregate.ts、
-// 以及它们的依赖整段 tree-shake 掉。
+// 同样要为 reporter 提供关闭态壳子，保证 src/index.ts 顶层导出全部走
+// `__mpx_perf__ ? impl.x : noop.x` 三元——任何活引用在关闭态下都被静态替换为
+// noop，从而让 Terser 把 reporters/console.ts 及其依赖整段 tree-shake 掉。
 //
 // 业务侧典型用法：
 //   import { consoleReporter, setReporter } from '@mpxjs/perf'
 //   setReporter(consoleReporter)   // 关闭态下 consoleReporter 是 noop reporter
-export const consoleReporter: Reporter = (_events) => {}
-export const createConsoleReporter = (_options?: object): Reporter => (_events) => {}
-export const aggregateByName = (_events: PerfEvent[]): Map<string, AggResult> => new Map()
+export const consoleReporter: Reporter = (_agg) => {}
+export const createConsoleReporter = (_options?: object): Reporter => (_agg) => {}
