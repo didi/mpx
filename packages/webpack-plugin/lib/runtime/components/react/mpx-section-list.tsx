@@ -3,6 +3,7 @@ import type { ComponentType } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import type { SectionListData, SectionListProps as RNSectionListProps } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import { hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture } from './utils'
 interface ListItem {
@@ -367,6 +368,12 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
   const scrollAdditionalProps = extendObject(
     {
+      style: [
+        hasOwn(style, 'flex') || hasOwn(style, 'flexGrow') ? null : { flexGrow: 0 },
+        { height, width },
+        style,
+        layoutStyle
+      ],
       alwaysBounceVertical: false,
       alwaysBounceHorizontal: false,
       scrollEventThrottle: scrollEventThrottle,
@@ -510,7 +517,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
   const sectionListProps: RNSectionListProps<ListItem, SectionExtra> = extendObject(
     {
-      style: [{ height, width }, style, layoutStyle],
       sections: convertedListData,
       renderItem: renderItem,
       getItemLayout: getItemLayout,
