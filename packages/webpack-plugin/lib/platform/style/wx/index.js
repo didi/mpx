@@ -217,7 +217,7 @@ module.exports = function getSpec({ warn, error }) {
     // 仅支持 offset-x | offset-y | blur-radius | color 排序
     // 'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
     // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
-    // 'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
+    'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
     // flex-grow | flex-shrink | flex-basis
     flex: ['flexGrow', 'flexShrink', 'flexBasis'],
     // flex-flow: <'flex-direction'> or flex-flow: <'flex-direction'> and <'flex-wrap'>
@@ -360,15 +360,20 @@ module.exports = function getSpec({ warn, error }) {
       return values.length === 0 ? false : { prop: bgPropMap.size, value: values }
     }
     const formatBackgroundPosition = (value) => {
+      const yAxisKeywords = ['top', 'bottom']
       const values = []
       parseValues(value).forEach(item => {
         if (verifyValues({ prop: bgPropMap.position, value: item, selector })) {
           // 支持 number 值 /  枚举, center与50%等价
           values.push(item === 'center' ? '50%' : item)
         } else {
-          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
+          error(`Value of [${bgPropMap.position}] in ${selector} does not support value [${item}]`)
         }
       })
+      // CSS 允许 y x 顺序的关键字（如 top left），但输出需要 [x, y] 顺序
+      if (values.length === 2 && yAxisKeywords.includes(values[0])) {
+        ;[values[0], values[1]] = [values[1], values[0]]
+      }
       return { prop: bgPropMap.position, value: values }
     }
     switch (prop) {
@@ -658,53 +663,22 @@ module.exports = function getSpec({ warn, error }) {
   // }
 
   const formatTextDecoration = ({ prop, value, selector }, { mode }) => {
-    // MDN text-decoration-line 所有合法值（含 RN 不支持的 overline/blink）
-    const mdnTextDecorationLineValues = ['none', 'underline', 'overline', 'line-through', 'blink']
-    // MDN text-decoration-style 所有合法值（含 RN 不支持的 wavy）
-    const mdnTextDecorationStyleValues = ['solid', 'double', 'dotted', 'dashed', 'wavy']
     const values = Array.isArray(value) ? value : parseValues(value)
     if (values.length === 1 && cssVariableExp.test(value)) {
       error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
       return []
     }
-    const cssMap = []
     const lineValues = []
-    let styleValue = null
-    let colorValue = null
+    const otherValues = []
     for (const v of values) {
-      if (mdnTextDecorationLineValues.includes(v)) {
-        if (!SUPPORTED_PROP_VAL_ARR['text-decoration-line'].includes(v)) {
-          warn(`Value [${v}] of text-decoration-line in ${selector} is not supported, supported values are [${SUPPORTED_PROP_VAL_ARR['text-decoration-line'].join(', ')}]`)
-          continue
-        }
+      if (SUPPORTED_PROP_VAL_ARR['text-decoration-line'].includes(v)) {
         lineValues.push(v)
-      } else if (mdnTextDecorationStyleValues.includes(v)) {
-        if (!SUPPORTED_PROP_VAL_ARR['text-decoration-style'].includes(v)) {
-          warn(`Value [${v}] of text-decoration-style in ${selector} is not supported, supported values are [${SUPPORTED_PROP_VAL_ARR['text-decoration-style'].join(', ')}]`)
-          continue
-        }
-        styleValue = v
-      } else if (verifyValues({ prop: 'text-decoration-color', value: v, selector }, silentVerify)) {
-        colorValue = v
+      } else {
+        otherValues.push(v)
       }
     }
-    if (lineValues.length > 0) {
-      const lineValue = lineValues.join(' ')
-      if (verifyProps({ prop: 'text-decoration-line', value: lineValue, selector }, { mode }, true)) {
-        cssMap.push({ prop: 'textDecorationLine', value: lineValue })
-      }
-    }
-    if (styleValue !== null) {
-      if (verifyProps({ prop: 'text-decoration-style', value: styleValue, selector }, { mode }, true)) {
-        cssMap.push({ prop: 'textDecorationStyle', value: styleValue })
-      }
-    }
-    if (colorValue !== null) {
-      if (verifyProps({ prop: 'text-decoration-color', value: colorValue, selector }, { mode }, true)) {
-        cssMap.push({ prop: 'textDecorationColor', value: colorValue })
-      }
-    }
-    return cssMap
+    const processedValues = lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
+    return formatAbbreviation({ prop, value: processedValues, selector }, { mode })
   }
 
   const formatBorder = ({ prop, value, selector }, { mode }) => {
