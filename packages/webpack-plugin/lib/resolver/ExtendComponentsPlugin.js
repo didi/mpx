@@ -1,6 +1,7 @@
+const path = require('path')
 const toPosix = require('../utils/to-posix')
 const EXTEND_COMPONENT_RELATIVE_PATH = './lib/runtime/components/extends/'
-const EXTEND_COMPONENT_TARGET_PATH = '@mpxjs/webpack-plugin/lib/runtime/components/react/dist'
+const EXTEND_COMPONENT_TARGET_SUB_PATH = 'lib/runtime/components/react/dist/'
 const EXTEND_COMPONENTS = {
   'section-list': ['ios', 'android', 'harmony']
 }
@@ -22,6 +23,8 @@ module.exports = class ExtendComponentsPlugin {
     const mode = this.mode
 
     resolver.getHook(this.source).tapAsync('ExtendComponentsPlugin', (request, resolveContext, callback) => {
+      if (request.__mpxResolvedExtendComponent) return callback()
+
       const componentName = getComponentName(request)
       if (!componentName) {
         return callback()
@@ -37,22 +40,24 @@ module.exports = class ExtendComponentsPlugin {
       if (!supportedModes.includes(mode)) {
         return callback(new Error(`Extended component "${componentName}" cannot be used on the ${mode} platform. Supported platforms include: ${supportedModes.join(', ')}`))
       }
-      const newRequest = `${EXTEND_COMPONENT_TARGET_PATH}/mpx-${componentName}.jsx`
+      const targetSubPath = `${EXTEND_COMPONENT_TARGET_SUB_PATH}mpx-${componentName}.jsx`
+      const targetRelativePath = `./${targetSubPath}`
+      const targetPath = path.join(request.descriptionFileRoot, targetSubPath)
 
       const redirectRequest = Object.assign({}, request, {
-        request: newRequest,
-        fullySpecified: false,
+        path: targetPath,
+        relativePath: targetRelativePath,
         __mpxResolvedExtendComponent: true
       })
 
       resolver.doResolve(
         target,
         redirectRequest,
-        `resolve extend component: ${componentName} to ${newRequest}`,
+        `resolve extend component: ${componentName} to ${targetPath}`,
         resolveContext,
         (err, result) => {
           if (err) return callback(err)
-          if (!result) return callback(new Error(`Extended component "${componentName}" resolved to "${newRequest}", but the target file was not found.`))
+          if (!result) return callback(new Error(`Extended component "${componentName}" resolved to "${targetPath}", but the target file was not found.`))
           callback(null, result)
         }
       )
