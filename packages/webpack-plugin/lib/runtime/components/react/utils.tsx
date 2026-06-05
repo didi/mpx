@@ -7,12 +7,26 @@ import { initialWindowMetrics } from 'react-native-safe-area-context'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
 
-export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
+export const TEXT_STYLE_MAP: Record<string, boolean> = {
+  color: true,
+  letterSpacing: true,
+  lineHeight: true,
+  includeFontPadding: true,
+  writingDirection: true
+}
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const SVG_REGEXP = /\.svg(?:[?#].*)?$/i
-export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
-export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
+export const BACKGROUND_STYLE_MAP: Record<string, boolean> = {
+  backgroundImage: true,
+  backgroundSize: true,
+  backgroundRepeat: true,
+  backgroundPosition: true
+}
+export const TEXT_PROPS_MAP: Record<string, boolean> = {
+  ellipsizeMode: true,
+  numberOfLines: true
+}
 export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
@@ -32,10 +46,19 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
-const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
-const filterRegExp = /(calc|env|%)/
-const boxSizingAffectingRegExp = /^(padding.*|border.*Width)$/
+const boxSizingAffectingStyleMap: Record<string, boolean> = {
+  padding: true,
+  paddingTop: true,
+  paddingRight: true,
+  paddingBottom: true,
+  paddingLeft: true,
+  borderWidth: true,
+  borderTopWidth: true,
+  borderRightWidth: true,
+  borderBottomWidth: true,
+  borderLeftWidth: true
+}
 
 const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-top': 'top',
@@ -58,7 +81,11 @@ export function transformBoxSizing (style: Record<string, any> = {}, hasBoxSizin
 }
 
 export function isBoxSizingAffectingStyle (key: string) {
-  return boxSizingAffectingRegExp.test(key)
+  return hasOwn(boxSizingAffectingStyleMap, key)
+}
+
+function isTextStyle (key: string) {
+  return hasOwn(TEXT_STYLE_MAP, key) || key.startsWith('font') || key.startsWith('text')
 }
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
@@ -153,9 +180,9 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffe
 } {
   return groupBy(styleObj, (key, val) => {
     sideEffect && sideEffect(key, val)
-    if (TEXT_STYLE_REGEX.test(key)) {
+    if (isTextStyle(key)) {
       return 'textStyle'
-    } else if (BACKGROUND_REGEX.test(key)) {
+    } else if (hasOwn(BACKGROUND_STYLE_MAP, key)) {
       return 'backgroundStyle'
     } else {
       return 'innerStyle'
@@ -481,13 +508,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  function calcVisitor ({ key, value, keyPath }: VisitorArg) {
+  function calcVisitor ({ value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
-      // calc translate & border-radius 的百分比计算
-      if (hasOwn(selfPercentRule, key) && calcPercentExp.test(value)) {
-        hasSelfPercent = true
-        percentKeyPaths.push(keyPath.slice())
-      }
       calcKeyPaths.push(keyPath.slice())
     }
   }
@@ -504,7 +526,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   }
 
   function visitOther ({ target, key, value, keyPath }: VisitorArg) {
-    if (filterRegExp.test(value)) {
+    if (typeof value === 'string' && (value.includes('%') || value.includes('calc(') || value.includes('env('))) {
       [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
     }
   }
@@ -555,6 +577,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // apply calc
   transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
     if (PERCENT_REGEX.test(value)) {
+      if (hasOwn(selfPercentRule, key)) {
+        hasSelfPercent = true
+      }
       const resolved = resolvePercent(value, key, percentConfig)
       return typeof resolved === 'number' ? resolved : 0
     } else {
@@ -639,7 +664,7 @@ export function splitProps<T extends Record<string, any>> (props: T): {
   innerProps?: Partial<T>
 } {
   return groupBy(props, (key) => {
-    if (TEXT_PROPS_REGEX.test(key)) {
+    if (hasOwn(TEXT_PROPS_MAP, key)) {
       return 'textProps'
     } else {
       return 'innerProps'

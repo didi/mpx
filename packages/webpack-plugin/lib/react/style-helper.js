@@ -34,7 +34,7 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
       }
     }
     if (hairlineRegExp.test(value)) {
-      value = `${formatValueName}(${JSON.stringify(value)}, 'hairlineWidth')`
+      value = `${formatValueName}('hairlineWidth')`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value

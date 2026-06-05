@@ -17,6 +17,7 @@ module.exports = function getSpec({ warn, error }) {
   // calc(xx)
   const calcExp = /calc\(/
   const envExp = /env\(/
+  const silentVerify = 'silent'
   // 不支持的属性提示
   const unsupportedPropError = ({ prop, value, selector }, { mode }, isError = true) => {
     const tips = isError ? error : warn
@@ -118,7 +119,7 @@ module.exports = function getSpec({ warn, error }) {
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
     const rawValue = value.trim()
-    const tips = isError ? error : warn
+    const tips = isError === silentVerify ? () => {} : isError ? error : warn
 
     // CSS 自定义属性（--xxx）是变量定义，不属于 RN 样式属性：
     // 不能按 `-height/-color` 等后缀推断类型去校验，否则会把变量定义错误过滤，导致运行时 var() 取值失败
@@ -341,6 +342,36 @@ module.exports = function getSpec({ warn, error }) {
     }
     const urlExp = /url\(["']?(.*?)["']?\)/
     const linearExp = /linear-gradient\(.*\)/
+    const formatBackgroundSize = (value) => {
+      // 不支持逗号分隔的多个值：设置多重背景!!!
+      // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
+      // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
+      if (parseValues(value, ',').length > 1) { // commas are not allowed in values
+        error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
+        return false
+      }
+      const values = []
+      parseValues(value).forEach(item => {
+        if (verifyValues({ prop: bgPropMap.size, value: item, selector })) {
+          // 支持 number 值 / container cover auto 枚举
+          values.push(item)
+        }
+      })
+      // value 无有效值时返回false
+      return values.length === 0 ? false : { prop: bgPropMap.size, value: values }
+    }
+    const formatBackgroundPosition = (value) => {
+      const values = []
+      parseValues(value).forEach(item => {
+        if (verifyValues({ prop: bgPropMap.position, value: item, selector })) {
+          // 支持 number 值 /  枚举, center与50%等价
+          values.push(item === 'center' ? '50%' : item)
+        } else {
+          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
+        }
+      })
+      return { prop: bgPropMap.position, value: values }
+    }
     switch (prop) {
       case bgPropMap.image: {
         // background-image 支持背景图/渐变/css var
@@ -353,37 +384,13 @@ module.exports = function getSpec({ warn, error }) {
       }
       case bgPropMap.size: {
         // background-size
-        // 不支持逗号分隔的多个值：设置多重背景!!!
-        // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
-        // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
-        if (parseValues(value, ',').length > 1) { // commas are not allowed in values
-          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
-          return false
-        }
-        const values = []
-        parseValues(value).forEach(item => {
-          if (verifyValues({ prop, value: item, selector })) {
-            // 支持 number 值 / container cover auto 枚举
-            values.push(item)
-          }
-        })
-        // value 无有效值时返回false
-        return values.length === 0 ? false : { prop, value: values }
+        return formatBackgroundSize(value)
       }
       case bgPropMap.position: {
-        const values = []
-        parseValues(value).forEach(item => {
-          if (verifyValues({ prop, value: item, selector })) {
-            // 支持 number 值 /  枚举, center与50%等价
-            values.push(item === 'center' ? '50%' : item)
-          } else {
-            error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
-          }
-        })
-        return { prop, value: values }
+        return formatBackgroundPosition(value)
       }
       case bgPropMap.all: {
-        // background: 仅支持 background-image & background-color & background-repeat
+        // background: 支持 image/color/repeat 与 position/size
         if (cssVariableExp.test(value)) {
           error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
           return false
@@ -396,6 +403,37 @@ module.exports = function getSpec({ warn, error }) {
           ]
         }
         const bgMap = []
+        const positionValues = []
+        const sizeValues = []
+        let isSize = false
+        const pushPositionOrSize = (item) => {
+          if (isSize) {
+            if (verifyValues({ prop: bgPropMap.size, value: item, selector }, silentVerify)) {
+              sizeValues.push(item)
+            }
+          } else if (verifyValues({ prop: bgPropMap.position, value: item, selector }, silentVerify)) {
+            positionValues.push(item)
+          }
+        }
+        const handlePositionSize = (item) => {
+          if (item === '/') {
+            isSize = true
+            return true
+          }
+          const parts = parseValues(item, '/')
+          if (parts.length > 1) {
+            parts.forEach((part, index) => {
+              if (index > 0) isSize = true
+              part && pushPositionOrSize(part)
+            })
+            return true
+          }
+          if (isSize || verifyValues({ prop: bgPropMap.position, value: item, selector }, silentVerify)) {
+            pushPositionOrSize(item)
+            return true
+          }
+          return false
+        }
         const values = parseValues(value)
         values.forEach(item => {
           const url = item.match(urlExp)?.[0]
@@ -404,12 +442,22 @@ module.exports = function getSpec({ warn, error }) {
             bgMap.push({ prop: bgPropMap.image, value: url })
           } else if (linerVal) {
             bgMap.push({ prop: bgPropMap.image, value: linerVal })
-          } else if (verifyValues({ prop: bgPropMap.color, value: item }, false)) {
+          } else if (verifyValues({ prop: bgPropMap.color, value: item, selector }, silentVerify)) {
             bgMap.push({ prop: bgPropMap.color, value: item })
-          } else if (verifyValues({ prop: bgPropMap.repeat, value: item, selector }, false)) {
+          } else if (verifyValues({ prop: bgPropMap.repeat, value: item, selector }, silentVerify)) {
             bgMap.push({ prop: bgPropMap.repeat, value: item })
+          } else {
+            handlePositionSize(item)
           }
         })
+        if (positionValues.length) {
+          const position = formatBackgroundPosition(positionValues.join(' '))
+          position && bgMap.push(position)
+        }
+        if (sizeValues.length) {
+          const size = formatBackgroundSize(sizeValues.join(' '))
+          size && bgMap.push(size)
+        }
         return bgMap.length ? bgMap : false
       }
     }

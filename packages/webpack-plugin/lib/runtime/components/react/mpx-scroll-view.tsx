@@ -856,7 +856,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       'refresher-triggered',
       'refresher-enabled',
       'refresher-default-style',
+      'refresher-threshold',
       'refresher-background',
+      'scroll-into-view',
+      'enable-sticky',
+      'wait-for',
+      'simultaneous-handlers',
+      'scroll-event-throttle',
+      'scroll-into-view-offset',
+      '__selectRef',
       'children',
       'enhanced',
       'binddragstart',
@@ -865,7 +873,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       'bindscroll',
       'bindscrolltoupper',
       'bindscrolltolower',
-      'bindrefresherrefresh'
+      'bindrefresherrefresh',
+      'bindscrollend'
     ], { layoutRef })
 
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView

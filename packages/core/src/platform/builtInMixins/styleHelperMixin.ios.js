@@ -1,4 +1,5 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import * as perf from '@mpxjs/perf'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
@@ -81,11 +82,11 @@ const empty = {}
 
 function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
-  if (unitType === 'hairlineWidth') {
-    return StyleSheet.hairlineWidth
-  }
   if (unitType && typeof unit[unitType] === 'function') {
     return unit[unitType](+value)
+  }
+  if (value === 'hairlineWidth') {
+    return StyleSheet.hairlineWidth
   }
   const matched = unitRegExp.exec(value)
   if (matched) {
@@ -95,7 +96,6 @@ function formatValue (value, unitType) {
       return unit[matched[2]](+matched[1])
     }
   }
-  if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
   return value
 }
 
@@ -142,7 +142,6 @@ function stringifyDynamicClass (value) {
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
 const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
-const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 
 const parseStyleText = cached((cssText) => {
@@ -290,6 +289,9 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
+        let stopTotal
+        if (__mpx_perf_framework__) stopTotal = perf.scope('getStyle:total')
+
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
         const { mergeToLayer, genResult } = createLayer(isNativeStaticStyle)
@@ -297,9 +299,11 @@ export default function styleHelperMixin () {
         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
-          const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           let needAddUnoPreflight = false
+          let stopClass
+          if (__mpx_perf_framework__) stopClass = perf.scope('getStyle:class')
+          const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle, unoStyle, unoVarStyle
@@ -324,6 +328,14 @@ export default function styleHelperMixin () {
         }
 
         if (staticStyle || dynamicStyle) {
+          if (__mpx_perf_framework__) stopClass()
+        }
+
+        if (staticStyle || dynamicStyle) {
+          let stopStyle
+
+          if (__mpx_perf_framework__) stopStyle = perf.scope('getStyle:style')
+
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
               mergeToLayer('normal', ...staticStyle)
@@ -333,7 +345,10 @@ export default function styleHelperMixin () {
           } else {
             mergeToLayer('normal', transformStyleObj(parseStyleText(staticStyle)))
           }
+
           mergeToLayer('normal', transformStyleObj(normalizeDynamicStyle(dynamicStyle)))
+
+          if (__mpx_perf_framework__) stopStyle()
         }
 
         if (hide) {
@@ -343,6 +358,8 @@ export default function styleHelperMixin () {
         const result = genResult()
 
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+
+        if (__mpx_perf_framework__) stopTotal()
 
         return isEmpty ? empty : result
       }
