@@ -251,12 +251,12 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
   // 枚举值
   if (typeof width === 'string' && ['cover', 'contain'].includes(width)) {
     if (layoutInfo && imageSize) {
-      const layoutRatio = layoutWidth / imageSizeWidth
-      const eleRatio = imageSizeWidth / imageSizeHeight
-      // 容器宽高比 大于 图片的宽高比，依据宽度作为基准，否则以高度为基准
-      if ((layoutRatio <= eleRatio && (width as string) === 'contain') || (layoutRatio >= eleRatio && (width as string) === 'cover')) {
+      const containerRatio = layoutWidth / layoutHeight
+      const imageRatio = imageSizeWidth / imageSizeHeight
+      // 容器宽高比 小于等于 图片宽高比：contain 按宽缩放，cover 按高缩放
+      if ((containerRatio <= imageRatio && (width as string) === 'contain') || (containerRatio >= imageRatio && (width as string) === 'cover')) {
         dimensions = calculateSize(layoutWidth as number, imageSizeHeight / imageSizeWidth, true) as Size
-      } else if ((layoutRatio > eleRatio && (width as string) === 'contain') || (layoutRatio < eleRatio && (width as string) === 'cover')) {
+      } else if ((containerRatio > imageRatio && (width as string) === 'contain') || (containerRatio < imageRatio && (width as string) === 'cover')) {
         dimensions = calculateSize(layoutHeight as number, imageSizeWidth / imageSizeHeight) as Size
       }
     }
