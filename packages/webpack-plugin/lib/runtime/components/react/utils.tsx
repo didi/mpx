@@ -537,17 +537,22 @@ function parseTransform (transformStr: string) {
         case 'matrix': {
           const matrixValues = parseValues(val, ',').map(v => +v.trim())
           if (matrixValues.length === 6) {
-            // CSS matrix(a,b,c,d,tx,ty) → RN 9-value column-major format
             const [a, b, c, d, tx, ty] = matrixValues
-            transform.push({ matrix: [a, b, 0, c, d, 0, tx, ty, 1] })
+            transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
           } else {
-            transform.push({ matrix: matrixValues })
+            error(`Transform matrix only supports 16 values in React Native, got ${matrixValues.length}`)
           }
           break
         }
-        case 'matrix3d':
-          transform.push({ matrix: parseValues(val, ',').map(v => +v.trim()) })
+        case 'matrix3d': {
+          const matrixValues = parseValues(val, ',').map(v => +v.trim())
+          if (matrixValues.length === 16) {
+            transform.push({ matrix: matrixValues })
+          } else {
+            error(`Transform matrix only supports 16 values in React Native, got ${matrixValues.length}`)
+          }
           break
+        }
         case 'translate':
         case 'scale':
         case 'skew':
@@ -577,6 +582,8 @@ function parseTransform (transformStr: string) {
             if (x && !y && !z) transform.push({ rotateX: angle })
             else if (!x && y && !z) transform.push({ rotateY: angle })
             else if (!x && !y && z) transform.push({ rotateZ: angle })
+          } else {
+            error(`Transform rotate3d only supports 4 values, got ${parts.length}`)
           }
           break
         }
