@@ -1,55 +1,105 @@
-import { mark, measure, scope, start, end, setReporter, clearReporter } from '../src/impl'
-import type { PerfEvent } from '../src/types'
+import { scopeStart, scopeEnd, mark, measure, start, end, setReporter, clearReporter } from '../src/impl'
+import type { AggResult } from '../src/types'
 
-describe('impl mark / measure / scope', () => {
-  let captured: PerfEvent[] = []
+describe('impl scopeStart/scopeEnd / mark / measure', () => {
+  let captured: Map<string, AggResult> | null = null
 
   beforeEach(() => {
-    captured = []
-    setReporter((events) => { captured.push(...events) })
+    captured = null
+    setReporter((agg) => { captured = agg })
   })
 
   afterEach(() => {
     clearReporter()
   })
 
-  it('scope 起止生成 measure 事件', () => {
+  it('scopeStart/scopeEnd 起止生成一条 measure 样本', () => {
     start()
-    const stop = scope('foo')
-    stop()
+    const id = scopeStart('foo')
+    expect(id).toBeGreaterThanOrEqual(0)
+    scopeEnd(id)
     end()
-    expect(captured.length).toBe(1)
-    expect(captured[0].type).toBe('measure')
-    expect(captured[0].name).toBe('foo')
-    expect((captured[0] as any).dur).toBeGreaterThanOrEqual(0)
+    expect(captured).not.toBeNull()
+    const foo = captured!.get('foo')!
+    expect(foo.count).toBe(1)
+    expect(foo.sum).toBeGreaterThanOrEqual(0)
+    expect(foo.max).toBe(foo.sum)
+    expect(foo.avg).toBe(foo.sum)
   })
 
-  it('mark + measure 配对生效，重复 measure 同一个 name 失效', () => {
+  it('同名 scope 多次累加，count/sum/avg/max 正确', () => {
+    start()
+    const a = scopeStart('foo'); scopeEnd(a)
+    const b = scopeStart('foo'); scopeEnd(b)
+    const c = scopeStart('foo'); scopeEnd(c)
+    end()
+    const foo = captured!.get('foo')!
+    expect(foo.count).toBe(3)
+    expect(foo.avg).toBeCloseTo(foo.sum / 3, 10)
+  })
+
+  it('嵌套 scope 不串台，freeList 正确回收', () => {
+    start()
+    const outer = scopeStart('outer')
+    const inner = scopeStart('inner')
+    scopeEnd(inner)
+    scopeEnd(outer)
+    end()
+    expect(captured!.get('outer')!.count).toBe(1)
+    expect(captured!.get('inner')!.count).toBe(1)
+  })
+
+  it('未 start 时 scopeStart 返回 -1，scopeEnd(-1) 安全 noop', () => {
+    const id = scopeStart('lost')
+    expect(id).toBe(-1)
+    expect(() => scopeEnd(id)).not.toThrow()
+    end() // 未 start 直接 end 也是 noop
+    expect(captured).toBeNull()
+  })
+
+  it('scopeEnd 重复调用同一 id 不重复累加', () => {
+    start()
+    const id = scopeStart('foo')
+    scopeEnd(id)
+    scopeEnd(id) // 重复，应被忽略
+    end()
+    expect(captured!.get('foo')!.count).toBe(1)
+  })
+
+  it('mark + measure 配对进聚合', () => {
     start()
     mark('m')
     measure('done', 'm')
-    measure('done2', 'm') // 第二次应失效（marks.delete 后查不到）
     end()
-    const measures = captured.filter(e => e.type === 'measure')
-    expect(measures.length).toBe(1)
-    expect(measures[0].name).toBe('done')
+    const done = captured!.get('done')!
+    expect(done.count).toBe(1)
+    expect(done.sum).toBeGreaterThanOrEqual(0)
   })
 
-  it('未 start 时 push 直接丢弃', () => {
-    const stop = scope('lost')
-    stop()
-    end() // 未 start 直接 end，noop
-    expect(captured.length).toBe(0)
-  })
-
-  it('end 支持传入局部 reporter', () => {
-    const local: PerfEvent[] = []
+  it('measure 同一个 mark 第二次失效（mark 用过即清）', () => {
     start()
-    const stop = scope('foo')
-    stop()
-    end((events) => { local.push(...events) })
-    expect(captured.length).toBe(1)
-    expect(local.length).toBe(1)
-    expect(local[0].name).toBe('foo')
+    mark('m')
+    measure('done', 'm')
+    measure('done2', 'm') // 已被 delete，应失效
+    end()
+    expect(captured!.has('done')).toBe(true)
+    expect(captured!.has('done2')).toBe(false)
+  })
+
+  it('mark 单独不进聚合', () => {
+    start()
+    mark('m')
+    end()
+    expect(captured).toBeNull() // aggMap 为空 → end 不触发 reporter
+  })
+
+  it('end 支持局部 reporter，与全局 reporter 同批触发', () => {
+    let local: Map<string, AggResult> | null = null
+    start()
+    const id = scopeStart('foo'); scopeEnd(id)
+    end((agg) => { local = agg })
+    expect(captured).not.toBeNull()
+    expect(local).not.toBeNull()
+    expect(captured).toBe(local) // 同一份 Map
   })
 })
