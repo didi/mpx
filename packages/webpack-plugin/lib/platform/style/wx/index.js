@@ -237,10 +237,8 @@ module.exports = function getSpec ({ warn, error }) {
     const props = AbbreviationMap[prop]
     const values = Array.isArray(value) ? value : parseValues(value)
     const cssMap = []
-    // 复合属性不支持单个css var（css var可以接收单个值可以是复合值，复合值运行时不处理，这里前置提示一下）
     if (values.length === 1 && cssVariableExp.test(value)) {
-      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
-      return cssMap
+      return { prop, value }
     }
     let idx = 0
     let propsIdx = 0
@@ -400,8 +398,7 @@ module.exports = function getSpec ({ warn, error }) {
       case bgPropMap.all: {
         // background: 支持 image/color/repeat 与 position/size
         if (cssVariableExp.test(value)) {
-          error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
-          return false
+          return { prop, value }
         }
         // background: none
         if (value === 'none') {
@@ -678,8 +675,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatTextDecoration = ({ prop, value, selector }, { mode }) => {
     const values = Array.isArray(value) ? value : parseValues(value)
     if (values.length === 1 && cssVariableExp.test(value)) {
-      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
-      return []
+      return { prop, value }
     }
     const lineValues = []
     const otherValues = []
