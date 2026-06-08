@@ -474,7 +474,14 @@ function transformTransform (style: Record<string, any>) {
 function transformBoxShadow (styleObj: Record<string, any>) {
   if (!styleObj.boxShadow) return
   styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res, i, idx) => {
-    return `${res}${idx === 0 ? '' : ' '}${global.__formatValue(i)}`
+    let formatted: string | number
+    // 需要保留 px 关键字，这里仅处理 rpx 转 px
+    if (/\d+rpx$/.test(i)) {
+      formatted = global.__formatValue(i) + 'px'
+    } else {
+      formatted = i
+    }
+    return `${res}${idx === 0 ? '' : ' '}${formatted}`
   }, '')
 }
 
