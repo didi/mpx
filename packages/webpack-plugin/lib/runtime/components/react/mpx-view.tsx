@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
+import { useRef, useState, useEffect, useContext, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
 import useAnimationHooks, { AnimationType } from './animationHooks/index'
@@ -18,6 +18,7 @@ import * as perf from '@mpxjs/perf'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal'
+import { FixedStackContext } from './context'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -137,6 +138,21 @@ const normalizeStyle = (style: ExtendedViewStyle = {}) => {
     }
   })
   return style
+}
+
+const getStyleZIndex = (style?: ExtendedViewStyle) => {
+  const zIndex = style?.zIndex as unknown
+  if (typeof zIndex === 'number') return zIndex
+  if (typeof zIndex === 'string' && zIndex.trim()) {
+    const parsed = Number(zIndex)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
+
+const getFixedStackPath = (style: ExtendedViewStyle, fixedStackContext: { stackPath: number[] } | null) => {
+  const localZIndex = getStyleZIndex(style)
+  return fixedStackContext ? [...fixedStackContext.stackPath, localZIndex] : [localZIndex]
 }
 
 const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && PERCENT_REGEX.test(val)
@@ -762,7 +778,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     parentWidth,
     parentHeight
   })
-
+  const fixedStackContext = useContext(FixedStackContext)
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
   const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
@@ -784,6 +800,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
+  const fixedStackPath = hasPositionFixed ? getFixedStackPath(viewStyle, fixedStackContext) : undefined
   const transitionend = isFunction(catchtransitionend)
     ? catchtransitionend
     : isFunction(bindtransitionend)
@@ -850,7 +867,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   }
 
   if (hasPositionFixed) {
-    finalComponent = createElement(Portal, null, finalComponent)
+    finalComponent = createElement(FixedStackContext.Provider, { value: { stackPath: fixedStackPath as number[] } }, finalComponent)
+    finalComponent = createElement(Portal, { stackPath: fixedStackPath }, finalComponent)
   }
   if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
 

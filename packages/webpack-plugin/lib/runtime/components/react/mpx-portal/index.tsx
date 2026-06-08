@@ -4,9 +4,10 @@ import PortalHost, { portal } from './portal-host'
 
 export type PortalProps = {
   children?: ReactNode
+  stackPath?: number[]
 }
 
-const Portal = ({ children }: PortalProps): null => {
+const Portal = ({ children, stackPath }: PortalProps): null => {
   const manager = useContext(PortalContext)
   const keyRef = useRef<any>(null)
   const { pageId } = useContext(RouteContext) || {}
@@ -25,15 +26,15 @@ const Portal = ({ children }: PortalProps): null => {
   }
 
   useEffect(() => {
-    manager.update(keyRef.current, children)
-  }, [children])
+    manager.update(keyRef.current, children, { stackPath })
+  }, [children, stackPath])
   useEffect(() => {
     if (!manager) {
       throw new Error(
         'Looks like you forgot to wrap your root component with `PortalHost` component from `@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index`.\n\n'
       )
     }
-    keyRef.current = manager.mount(children, null, pageId)
+    keyRef.current = manager.mount(children, null, pageId, { stackPath })
     return () => {
       manager.unmount(keyRef.current)
     }
