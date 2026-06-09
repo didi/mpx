@@ -61,7 +61,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 1. **默认布局差异**：Skyline 默认 `display: flex`，WebView 默认 `display: block` → 配置 `defaultDisplayBlock` 或改造为显式 flex 写法。
 2. **页面滚动**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发 → 使用 `scroll-view type="list"` 替代，页面需声明 `disableScroll: true`。
 3. **自定义导航**：Skyline 不支持默认导航 → 自定义导航栏，页面需声明 `navigationStyle: 'custom'`。
-4. **z-index 与层叠**：z-index 仅兄弟节点生效，无层叠上下文机制 → 需重构层级结构为兄弟节点，全局层级使用 `root-portal`。详见 [适配最佳实践 · z-index 与层叠适配](./references/skyline-migration-practice.md#z-index-与层叠适配)。
+4. **z-index 与层叠**：z-index 仅兄弟节点生效，无层叠上下文机制 → 需重构层级结构为兄弟节点。详见 [适配最佳实践 · z-index 与层叠适配](./references/skyline-migration-practice.md#z-index-与层叠适配)。
 5. **inline / inline-block**：Skyline 不支持 inline 和 inline-block 布局 → 使用 `<text>` 组件、`<span>` 组件或 flex 布局替代。
 
 ### 样式（style）约束
@@ -86,14 +86,13 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。
 2. **横向滚动需 enable-flex**：scroll-view 横向滚动需同时开启 `enable-flex` 以兼容 WebView。
 3. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，详见 [组件支持参考](./references/skyline-component-reference.md)。
-4. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。
-
-[//]: # (5. **组件根节点**：默认 `block` + `relative`，宽高 `100%` 可能失效。)
-[//]: # (6. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）)
+4. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。 
+5. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）
 
 ### 配置（config）约束
 
-1. **app.json 三项必需**：`renderer: "skyline"`、`componentFramework: "glass-easel"`、`lazyCodeLoading: "requiredComponents"` 三项必须同时配置，缺少任何一项会导致 Skyline 功能不完整或编译报错。详见 [页面配置适配 · app.json 全局配置三项必需](./references/skyline-migration-practice.md#appjson-全局配置三项必需)。
+1. **app.json 必需配置**`lazyCodeLoading: "requiredComponents"`。
+2. **配置 `"renderer": "skyline"` 的页面必须同时配置 `componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`
 
 ### 滚动 API（Scroll API）约束
 
@@ -109,6 +108,14 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 3. **worklet 中调用普通函数必须使用 runOnJS**：worklet 运行在 UI 线程，不能直接调用页面方法或 `wx.*` API，必须通过 `runOnJS` 切换回 JS 线程。详见 [Worklet 动画适配 · 在 worklet 中调用普通函数必须使用 runOnJS](./references/skyline-migration-practice.md#在-worklet-中调用普通函数必须使用-runonjs)。
 4. **runOnJS 调用页面方法必须 bind(this)**：通过 `runOnJS` 调用页面方法前必须先 `bind(this)`，否则 `this` 指向丢失。详见 [Worklet 动画适配 · 页面方法必须通过 bind(this) 绑定后传入 runOnJS](./references/skyline-migration-practice.md#页面方法必须通过-bindthis-绑定后传入-runonjs)。
 5. **禁止在 worklet 中解构 this.data**：解构赋值会触发 `Object.freeze` 冻结 `this.data`，导致页面后续所有 `setData` 失效。详见 [Worklet 动画适配 · 禁止在 worklet 中解构 this.data](./references/skyline-migration-practice.md#禁止在-worklet-中解构-thisdata)。
+
+### glass-easel 框架约束
+
+1. **模板转义改用 XML 实体**：数据绑定**外**的引号须改为 `&quot;`，数据绑定**内**无需转义（不再用反斜杠）。详见 [glass-easel 变更点适配 · 模板转义](./references/skyline-migration-practice.md#必须-模板中数据绑定外的转义改为标准-xml-转义)。
+2. **不再支持 wx-if / wx-for**：短横线写法已废弃，仅支持冒号写法 `wx:if` / `wx:for`（两种框架均支持冒号写法，可直接改）。详见 [glass-easel 变更点适配 · wx-if / wx-for](./references/skyline-migration-practice.md#必须-不再支持-wx-if--wx-for仅支持-wxif--wxfor)。
+3. **wx:for 内嵌 include 须改为 template**：`<include>` 引入的模板中 `item` / `index` 变量失效，须改用 `<template>` + `<import>` 方案。详见 [glass-easel 变更点适配 · wx:for 内嵌 include](./references/skyline-migration-practice.md#必须-wxfor-内嵌-include-时改为-template)。
+4. **SelectorQuery 选择器不支持以数字开头**：`#1` 等以数字开头的 id 选择器不合 CSS 规范，需重命名（如 `#element-1`）。详见 [glass-easel 变更点适配 · SelectorQuery](./references/skyline-migration-practice.md#必须-selectorquery-选择器不再支持以数字开头)。
+5. **[仅 Skyline] 不支持 animate / applyAnimation / clearAnimation / setInitialRenderingCache**：调用后静默不生效，须改用 CSS transition 或 Worklet 动画。详见 [glass-easel 变更点适配 · 不支持的实例方法](./references/skyline-migration-practice.md#必须仅-skyline-不支持的组件实例方法)。
 
 ## 任务一：对已有 WebView 页面进行 Skyline 适配改造
 
