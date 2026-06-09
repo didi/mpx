@@ -19,6 +19,7 @@
     "@babel/core": "^7.25.2",
     "@babel/eslint-parser": "^7.18.9",
     "@babel/preset-env": "^7.25.3",
+    "@babel/preset-typescript": "^7.29.7",
     "@testing-library/jest-dom": "^4.2.4",
     "@types/jest": "^27.0.1",
     "@typescript-eslint/eslint-plugin": "^5.2.0",

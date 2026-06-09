@@ -289,8 +289,8 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        let stopTotal
-        if (__mpx_perf_framework__) stopTotal = perf.scope('getStyle:total')
+        let idTotal = -1
+        if (__mpx_perf_framework__) idTotal = perf.scopeStart('getStyle:total')
 
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
@@ -299,10 +299,10 @@ export default function styleHelperMixin () {
         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
-          let stopClass
-          if (__mpx_perf_framework__) stopClass = perf.scope('getStyle:class')
-
+          let idClass = -1
+          if (__mpx_perf_framework__) idClass = perf.scopeStart('getStyle:class')
           let needAddUnoPreflight = false
+          // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           classString.split(/\s+/).forEach((className) => {
@@ -326,13 +326,12 @@ export default function styleHelperMixin () {
             mergeToLayer('preflight', global.__getAppClassStyle?.('__uno_preflight'))
           }
 
-          if (__mpx_perf_framework__) stopClass()
+          if (__mpx_perf_framework__) perf.scopeEnd(idClass)
         }
 
         if (staticStyle || dynamicStyle) {
-          let stopStyle
-
-          if (__mpx_perf_framework__) stopStyle = perf.scope('getStyle:style')
+          let idStyle = -1
+          if (__mpx_perf_framework__) idStyle = perf.scopeStart('getStyle:style')
 
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
@@ -346,7 +345,7 @@ export default function styleHelperMixin () {
 
           mergeToLayer('normal', transformStyleObj(normalizeDynamicStyle(dynamicStyle)))
 
-          if (__mpx_perf_framework__) stopStyle()
+          if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
         }
 
         if (hide) {
@@ -356,9 +355,7 @@ export default function styleHelperMixin () {
         const result = genResult()
 
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
-
-        if (__mpx_perf_framework__) stopTotal()
-
+        if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
         return isEmpty ? empty : result
       }
     }
