@@ -1241,3 +1241,39 @@ SVG 属性中的 `rgba()` 颜色值在 Skyline 下不生效，需拆分为颜色
 ```
 
 > 建议用 [SVGO 在线工具](https://jakearchibald.github.io/svgomg/) 优化 SVG，可自动清理冗余属性、合并路径，减小体积并降低兼容性风险。
+
+
+###  flex 布局的子节点文本超出未自动换行
+
+skyline 下 flex 布局的子节点文本超出未能自动换行，原因是这种场景下 skyline 下 width 为文本内容的宽，需要自行指定宽度来实现自动换行
+
+```html
+<view class="wrapper">
+  <text class="content">测试文案测试文案测试文案测试文案测试文案测试文案测试文案测试文案测试文案</text>
+  <view class="content">测试文案测试文案测试文案测试文案测试文案测试文案测试文案测试文案测试文案</view>
+  <span class="content">测试文案测试文案测试文案测试文案测试文案测试文案测试文案测试文案测试文案</span>
+</view>
+```
+
+```css
+/* ❌ Bad — .content 未定义 width skyline 下未能自动换行  */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+```
+
+```css
+/* ✅ Good — .content 显示定义 width 来支持自动换行  */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.content {
+  width: 100%;
+}
+```
