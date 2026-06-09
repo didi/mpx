@@ -45,7 +45,7 @@
   - [SharedValue 必须通过 .value 读写](#sharedvalue-必须通过-value-读写)
   - [在 worklet 中调用普通函数必须使用 runOnJS](#在-worklet-中调用普通函数必须使用-runonjs)
   - [页面方法必须通过 bind(this) 绑定后传入 runOnJS](#页面方法必须通过-bindthis-绑定后传入-runonjs)
-  - [禁止在 worklet 中解构 this.data](#禁止在-worklet-中解构-thisdata)
+  - [禁止在 worklet 中解构 this](#禁止在-worklet-中解构-this)
 - [适配检查清单](#适配检查清单)
 - [glass-easel 变更点适配](#glass-easel-变更点适配)
   - [[必须] 模板转义改为标准 XML 转义](#必须-模板中数据绑定外的转义改为标准-xml-转义)
@@ -94,17 +94,13 @@ onMounted(() => {
 
 ## skyline 配置
 
-### 页面配置适配
-
 Skyline 不支持默认导航也不支持页面滚动，故支持 Skyline 的页面都需要声明**禁止滚动**和**自定义导航**。
 
 **如有同时支持输出支付宝，为了对齐微信和支付宝的表现，页面也需增加支付宝 json 配置**： 为了避免 ali 和 wx 下要处理两套不一样的导航和滚动逻辑，统一使用 scroll-view 替代页面滚动，自定义导航替代默认导航。
 
-**微信页面 json 配置**：
-
 ```json5
 {
-  // 微信页面 json 配置
+  // skyline页面 json 配置
   "renderer": "skyline",
   "componentFramework": "glass-easel",
   "disableScroll": true,
@@ -115,17 +111,8 @@ Skyline 不支持默认导航也不支持页面滚动，故支持 Skyline 的页
 }
 ```
 
-### 全局配置
-
-1.`app.json` 必须同时包含 `renderer`、`componentFramework`、`lazyCodeLoading` 三项，缺少任何一项都会导致 Skyline 功能不完整或报错。
-2.rendererOptions 配置，推荐加上一下配置，对齐 webview 效果：
-- defaultDisplayBlock 对齐 webview 默认 block 布局
-- defaultContentBox 对齐 webview 默认 content-box 盒模型
-- tagNameStyleIsolation: legacy 对齐 WebView tag 选择器和 @keyframe 规则不受样式隔离约束
-- enableScrollViewAutoSize 对齐 WebView 自动根据内容撑开 scroll-view 宽高（实测自动撑开高度不生效）
-
 ```json5
-// ✅ Good
+// 全局配置
 {
   "lazyCodeLoading": "requiredComponents",
   "rendererOptions": {
@@ -604,17 +591,21 @@ Skyline 下伪元素的 `animation` 不生效，需要改用真实节点。
 
 ### 横向 scroll-view 适配
 
-横向滚动的 `scroll-view` 需同时开启 `enable-flex`，否则在 WebView 模式下横向布局可能异常。
+横向滚动需同时满足三个条件：`scroll-view` 开启 `enable-flex`（兼容 WebView）、`scroll-view` 设置 `display: flex; flex-direction: row;`、子节点设置 `flex-shrink: 0;`（防止子节点被压缩），否则 scroll-view 横向滚动在 skyline下不生效
 
 ```html
-<!-- ❌ Bad — 缺少 enable-flex，WebView 模式下横向布局可能异常 -->
-<scroll-view scroll-x="true" style="flex-direction: row;">
+<!-- ❌ Bad — 缺少 enable-flex / display:flex / flex-shrink:0，WebView 下横向布局异常 -->
+<scroll-view scroll-x="true">
   <view wx:for="{{list}}" wx:key="id">{{item.name}}</view>
 </scroll-view>
 
-<!-- ✅ Good — 同时开启 enable-flex 兼容 WebView -->
-<scroll-view scroll-x="true" enable-flex="true" style="flex-direction: row;">
-  <view wx:for="{{list}}" wx:key="id">{{item.name}}</view>
+<!-- ✅ Good — enable-flex + flex 横向布局 + 子节点禁止压缩 -->
+<scroll-view
+  scroll-x="true"
+  enable-flex="true"
+  style="display: flex; flex-direction: row;"
+>
+  <view wx:for="{{list}}" wx:key="id" style="flex-shrink: 0;">{{item.name}}</view>
 </scroll-view>
 ```
 
@@ -879,25 +870,25 @@ createPage({
 })
 ```
 
-### 禁止在 worklet 中解构 this.data
+### 禁止在 worklet 中解构 this
 
-在 worklet 函数中对 `this.data` 进行解构赋值，会触发 `Object.freeze` 冻结整个 `this.data` 对象，导致页面后续所有 `setData` 调用全部失效。
+在 worklet 函数中对 `this` 进行解构赋值，会触发 `Object.freeze` 冻结整个 `this` 对象，导致页面后续所有 `setData` 调用全部失效。
 
 ```js
 // ❌ Bad — 解构触发 Object.freeze 冻结 this.data，后续 setData 全部失效
 createPage({
   handleTap() {
     'worklet'
-    const { msg, count } = this.data
+    const { msg, count } = this
   }
 })
 
-// ✅ Good — 逐属性访问，不冻结 this.data
+// ✅ Good — 逐属性访问，不冻结 this
 createPage({
   handleTap() {
     'worklet'
-    const msg = this.data.msg
-    const count = this.data.count
+    const msg = this.msg
+    const count = this.count
   }
 })
 ```
@@ -1023,8 +1014,6 @@ Skyline 下以下组件实例方法暂不支持，调用后静默不生效，需
 
 ## 常见问题与踩坑记录
 
-以下问题来自生产环境 Skyline 适配的实际踩坑记录，按类别整理。
-
 ### properties 默认值必须使用 `value` 而非 `default`
 
 glass-easel 要求组件 properties 的默认值通过 `value` 字段声明，使用 `default` 字段会被忽略，导致属性值为 `undefined`。
@@ -1051,59 +1040,81 @@ createComponent({
 })
 ```
 
-**2. wx:for 使用 computed 属性需 initData 防护**
+### The for-list data is neither Array nor Object 报错
 
-当 `wx:for` 绑定的数据是 computed 计算属性时，组件初始化阶段 computed 尚未计算完成，`wx:for` 会收到 `undefined`，触发 `"for-list data is neither Array nor Object"` 错误。
+当 `wx:for` 绑定的数据是 computed 计算属性时，组件初始化阶段 computed 尚未计算完成，`wx:for` 会收到 `undefined`，触发 `"The for-list data is neither Array nor Object"` 错误。
 
 ```js
 // ❌ Bad — 初始化阶段 computed 未完成，wx:for 收到 undefined 导致崩溃
 createComponent({
+  properties: {
+    compData: {
+      type: Object,
+      value: () => ({
+        data: {}
+      })
+    }
+  },
   computed: {
     list() {
-      return this.data.rawList.filter(item => item.active)
+      return this.compData?.data.recommend_info
     }
   }
 })
 
 // ✅ Good — 通过 initData 提供初始值防护
 createComponent({
-  data: {
-    rawList: []
+  properties: {
+    compData: {
+      type: Object,
+      value: () => ({
+        data: {}
+      })
+    }
   },
   initData: {
     list: []
   },
   computed: {
     list() {
-      return this.data.rawList.filter(item => item.active)
+      return this.compData?.data.recommend_info
     }
   }
 })
 ```
 
-**3. properties type 校验报错**
+### properties type 校验报错
 
-在 glass-easel 下，如果 properties 的 type 声明与实际传入值不匹配，会触发 `"xxx is not illegal"` 类型校验错误。两种解决方式：
+在 glass-easel 下，如果 properties 的 type 声明与实际传入值不匹配，会触发 `"the tyle of property "xxx" is not illegal"` 类型校验错误。两种解决方式：
 
-方式一：type 设为 null 跳过校验
+
+方式一：initData 提供正确类型（更推荐）
 
 ```js
 createComponent({
   properties: {
     config: {
-      type: null,   // 跳过类型校验
-      value: {}
+      // 通过 optionalTypes 补充定义其他类型
+      type: Object,
+      optionalTypes: [Array],
+      value: () => {}
     }
   }
 })
 ```
 
-方式二：initData 提供正确类型
+方式二：type 设为 null 跳过校验
+
+> 2.17.2 及以上的基础库增加了对未填写的兼容（未填写时兼容为填写 null），更低版本的基础库无法处理未填写的情况
 
 ```js
 createComponent({
-  initData: {
-    config: {}
+  properties: {
+    config: {
+      // 跳过类型校验
+      type: null,
+      value: {}
+    }
   }
 })
 ```
@@ -1129,48 +1140,6 @@ this.setData({ animation: animation.opacity(0).step().export() })
 .fade-element.hidden {
   opacity: 0;
 }
-```
-
-**3. margin 合并行为差异**
-
-WebView 中相邻块级元素的上下 margin 会合并（BFC 机制），Skyline 没有 BFC，margin 不会合并。这会导致 WebView 下视觉间距较小的元素在 Skyline 下间距翻倍。
-
-```css
-/* ❌ Bad — WebView 下间距 20rpx（margin 合并），Skyline 下间距 40rpx（不合并） */
-.item {
-  margin-bottom: 20rpx;
-}
-
-/* ✅ Good — 使用 flex gap 替代 margin，行为一致 */
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-```
-
-**4. fixed 节点页面转场时裁切异常**
-
-Skyline 页面转场过程中，使用 `transform: translateX(-100%)` 等方式隐藏的 fixed 节点（如侧边栏）可能在转场动画期间短暂可见。这是因为页面转场时 transform 作用域与 fixed-context 的交互与 WebView 不同。
-
-处理方式：转场期间通过 `opacity: 0` 配合隐藏，或在转场完成后才设置 fixed 节点内容。
-
-**5. image 组件 max-width 行为异常**
-
-Skyline 下 image 组件设置 `max-width` 后，实际渲染宽度可能与预期不符。建议使用明确的 `width` 值而非依赖 `max-width` 约束。
-
-**6. image 组件不支持 border/padding**
-
-Skyline 下 image 组件设置 `border` 或 `padding` 会导致图片尺寸计算异常（图片被撑大）。需要边框或内边距效果时，用 view 包裹 image，在 view 上设置 border/padding：
-
-```html
-<!-- ❌ Bad — image 上设置 border/padding 导致图片尺寸计算异常 -->
-<image src="x.png" style="border: 1rpx solid #ccc; padding: 10rpx;" />
-
-<!-- ✅ Good — 外层 view 包裹，在 view 上设置 border/padding -->
-<view style="border: 1rpx solid #ccc; padding: 10rpx; display: inline-flex;">
-  <image src="x.png" style="width: 100rpx; height: 100rpx;" />
-</view>
 ```
 
 ### movable-area / movable-view 替代方案
@@ -1239,3 +1208,36 @@ this.createSelectorQuery().select(`#view1`).fields({
 触发条件：当主包的 wxs 在分包中被 "componentFramework" 为 "glass-easel" 的组件/页面的使用，且在主包没有使用 "componentFramework" 为 "glass-easel" 的组件/页面的时会出现
 
 规避方案：在主包的任意一个 "componentFramework" 为 "glass-easel" 的组件/页面的 wxml 中引用一下这个 wxs 即可，如果没有可以创建一个空组件来引用。
+
+### SVG 在 Skyline 下的限制与适配
+
+**1. 不支持 `<style>` 选择器匹配**
+
+SVG 内嵌的 `<style>` 标签中的 CSS 选择器在 Skyline 下不生效，需将样式转为内联属性。
+
+```xml
+<!-- ❌ Bad — <style> 选择器在 Skyline 下不匹配 -->
+<svg>
+  <style>.icon { fill: #FF6400; }</style>
+  <path class="icon" d="..." />
+</svg>
+
+<!-- ✅ Good — 改为内联样式属性 -->
+<svg>
+  <path fill="#FF6400" d="..." />
+</svg>
+```
+
+**2. 不支持 `rgba()` 颜色格式**
+
+SVG 属性中的 `rgba()` 颜色值在 Skyline 下不生效，需拆分为颜色值 + `fill-opacity` / `stroke-opacity`。
+
+```xml
+<!-- ❌ Bad — rgba() 在 Skyline 下不生效 -->
+<path fill="rgba(255, 100, 0, 0.5)" d="..." />
+
+<!-- ✅ Good — 用 fill-opacity 替代透明度 -->
+<path fill="#FF6400" fill-opacity="0.5" d="..." />
+```
+
+> 建议用 [SVGO 在线工具](https://jakearchibald.github.io/svgomg/) 优化 SVG，可自动清理冗余属性、合并路径，减小体积并降低兼容性风险。

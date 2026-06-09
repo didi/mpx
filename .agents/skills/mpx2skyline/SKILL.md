@@ -91,8 +91,10 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 ### 配置（config）约束
 
-1. **app.json 必需配置**`lazyCodeLoading: "requiredComponents"`。
-2. **配置 `"renderer": "skyline"` 的页面必须同时配置 `componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`
+1. **app.json 最小必需配置**：须包含 `lazyCodeLoading: "requiredComponents"`，详见 [配置参考 · 最小必需配置](./references/skyline-configuration.md#最小必需配置)。
+2. **Skyline 页面必需配置**：须同时配置 `renderer`、`componentFramework`、`navigationStyle`、`disableScroll`，详见 [配置参考 · 最小必需配置](./references/skyline-configuration.md#最小必需配置)。
+3. **推荐配置 rendererOptions 对齐 WebView**：建议在 app.json 中配置 `defaultDisplayBlock`、`defaultContentBox`、`tagNameStyleIsolation`、`enableScrollViewAutoSize`，详见 [配置参考 · rendererOptions 配置](./references/skyline-configuration.md#rendereroptions-配置)。
+4. **页面使用 worklet 函数须配置 Babel 插件**：需安装 `babel-plugin-worklet` 并在 `overrides` 中按组件路径配置，详见 [配置参考 · Worklet Babel 插件](./references/skyline-configuration.md#worklet-babel-插件)。
 
 ### 滚动 API（Scroll API）约束
 
