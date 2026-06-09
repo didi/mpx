@@ -2,66 +2,59 @@
 
 ## 目录
 
-- [接入代码配置](#接入代码配置)
-  - [全局 skyline 配置](#全局-skyline-配置)
-  - [页面 json 配置](#页面-json-配置)
-  - [Worklet Babel 插件](#worklet-babel-插件)
-- [rendererOptions 配置项](#rendereroptions-配置项)
-  - [defaultDisplayBlock](#defaultdisplayblock)
-  - [defaultContentBox](#defaultcontentbox)
-  - [tagNameStyleIsolation](#tagnamestyleisolation)
-  - [enableScrollViewAutoSize](#enablescrollviewautosize)
-  - [keyframeStyleIsolation](#keyframestylisolation)
-- [WebView/Skyline 混合渲染](#webviewskyline-混合渲染)
-- [glass-easel 变更点适配](#glass-easel-变更点适配)
-- [预加载优化](#预加载优化)
-- [上线与放量](#上线与放量)
-- [微信 Bug 反馈流程](#微信-bug-反馈流程)
-- [微信 App 版本与基础库关系](#微信-app-版本与基础库关系)
-
+- [应用配置（app.json）](#应用配置appjson)
+- [Worklet Babel 插件](#worklet-babel-插件)
+- [页面配置（页面.json）](#页面配置页面json)
+  - [混合渲染策略](#混合渲染策略)
+- [开发者工具配置（project.config.json）](#开发者工具配置projectconfigjson)
+- [配置模板](#配置模板)
+  - [新项目](#新项目)
+  - [迁移项目](#迁移项目)
+  - [混合渲染（渐进式迁移）](#混合渲染渐进式迁移)
+  - [标准页面 json 模板](#标准页面-json-模板)
 ---
 
-## 接入代码配置
+## 应用配置（app.json）
 
-### 全局 skyline 配置
-
-小程序需要新增的全局 Skyline 配置（在 `app.json` 中）：
-
-```json
-{
-  "lazyCodeLoading": "requiredComponents",
-  "rendererOptions": {
-    "skyline": {
-      "defaultDisplayBlock": true
-    }
-  }
-}
-```
-
-- `lazyCodeLoading`：按需注入组件代码
-- `rendererOptions.skyline.defaultDisplayBlock`：将 Skyline 默认布局从 flex 改为 block，对齐 WebView 行为
-
-### 页面 json 配置
-
-要适配 Skyline 的页面，json 配置新增：
+全局配置，决定小程序的默认渲染器、组件框架及 Skyline 行为选项。
 
 ```json
 {
   "renderer": "skyline",
   "componentFramework": "glass-easel",
-  "disableScroll": true,
-  "navigationStyle": "custom"
+  "lazyCodeLoading": "requiredComponents",
+  "rendererOptions": {
+    "skyline": {
+      "defaultDisplayBlock": true,
+      "defaultContentBox": true,
+      "tagNameStyleIsolation": "legacy",
+      "enableScrollViewAutoSize": true,
+      "disableABTest": true
+    }
+  },
+  "window": {
+    "navigationStyle": "custom"
+  },
+  "convertRpxToVw": true
 }
 ```
 
 | 字段 | 说明 |
 | --- | --- |
-| `renderer` | 渲染引擎，`skyline` 或 `webview` |
-| `componentFramework` | 组件框架，Skyline 下必须为 `glass-easel` |
-| `disableScroll` | 禁止页面滚动，Skyline 不支持页面滚动，必须设为 `true` |
-| `navigationStyle` | 导航样式，Skyline 不支持默认导航，必须设为 `custom` |
+| `renderer` | 全局默认渲染引擎。`"skyline"` 使用 Skyline 引擎，`"webview"` 使用 WebView（默认）。基础库 2.30.4+。 |
+| `componentFramework` | 组件框架。Skyline 项目**必须**设为 `"glass-easel"`（默认 `"exparser"`）。基础库 2.30.4+。 |
+| `lazyCodeLoading` | 设为 `"requiredComponents"` 开启按需注入，仅在用到时才加载组件代码，优化启动性能。基础库 2.11.1+。 |
+| `rendererOptions.skyline.defaultDisplayBlock` | `true`：将默认布局从 `flex`（Skyline 默认）改为 `block`，同时 `flex-direction` 默认值 `column→row`、`align-items` 默认值 `stretch→normal`，对齐 WebView 行为。迁移项目强烈建议开启。基础库 2.31.1+。 |
+| `rendererOptions.skyline.defaultContentBox` | `true`：将默认盒模型从 `border-box`（Skyline 默认）改为 `content-box`，对齐 WebView 行为。基础库 3.1.0+。 |
+| `rendererOptions.skyline.tagNameStyleIsolation` | 标签选择器作用域。`"isolated"`（默认）：仅匹配当前组件；`"legacy"`：全局匹配，对齐 WebView。基础库 3.6.0+。 |
+| `rendererOptions.skyline.enableScrollViewAutoSize` | `true`：scroll-view 自动根据内容撑开，无需显式指定高度。基础库 3.7.2+。 |
+| `rendererOptions.skyline.disableABTest` | `true`：关闭 Skyline AB 灰度实验，所有用户使用 Skyline 渲染。上线时建议开启。 |
+| `window.navigationStyle` | 全局导航栏样式。Skyline 不支持原生导航栏，应设为 `"custom"`；各页面 json 仍需单独声明。 |
+| `convertRpxToVw` | `true`：rpx 单位转换为 vw，修复部分精度问题。基础库 3.3.0+。 |
 
-### Worklet Babel 插件
+---
+
+## Worklet Babel 插件
 
 如果页面使用到 worklet 函数，需要配置 Babel 插件：
 
@@ -71,9 +64,10 @@ npm i babel-plugin-worklet@0.0.5
 
 Mpx 项目中通过 `overrides` 配置：
 
-```json
+```json5
 {
   "overrides": [{
+    // 组件路径
     "include": ["./src/components/worklet/gesture.mpx"],
     "plugins": [
       ["@babel/plugin-transform-arrow-functions"],
@@ -85,155 +79,182 @@ Mpx 项目中通过 `overrides` 配置：
 }
 ```
 
-**注意**：配置 worklet Babel 插件后，**不需要勾选**「将 JS 编译成 ES5」（会导致包体积增加）。
+**注意**：
+- 配置 worklet Babel 插件后，**不需要勾选**「将 JS 编译成 ES5」（会导致包体积增加）
+- 若未配置以上插件，则需要在开启开发者工具 "编译 worklet 函数" 选项（（"将 JS 编译成 ES5" 选项也可以，更推荐集成 babel 插件按需编译）
 
-## rendererOptions 配置项
+---
 
-在 `app.json` 或 `page.json` 中通过 `rendererOptions.skyline` 配置：
+## 页面配置（页面.json）
+
+写在各页面的 `.json` 文件中，可覆盖 `app.json` 中的全局设置。
 
 ```json
 {
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "backgroundColorContent": "#00000000"
+}
+```
+
+| 字段 | 说明 |
+| --- | --- |
+| `renderer` | 覆盖全局渲染引擎，实现混合渲染。`"skyline"` 或 `"webview"`。基础库 2.30.4+。 |
+| `componentFramework` | 混合渲染时，使用 Skyline 的页面**必须**声明 `"glass-easel"`。基础库 2.30.4+。 |
+| `navigationStyle` | **Skyline 必须设为 `"custom"`**，否则编译报错。即使 app.json 已全局配置，页面 json 仍建议显式声明。 |
+| `disableScroll` | Skyline 不支持页面级全局滚动，应设为 `true`，改用 `scroll-view` 管理滚动区域。仅页面 json 有效，无法在 app.json 中配置。 |
+| `backgroundColorContent` | 页面容器背景色，支持带透明度的颜色值（如 `"#00000000"`）。常用于自定义路由的透明背景页面。Skyline 特有。 |
+| `rendererOptions` | 覆盖 app.json 中的 `rendererOptions` 配置，字段与全局配置相同。基础库 3.1.0+。 |
+
+### 混合渲染策略
+
+| 策略 | app.json renderer | 页面 json renderer | 适用场景 |
+| --- | --- | --- | --- |
+| 全局 Skyline | `"skyline"` | 不设置 | 新项目，全部页面用 Skyline |
+| 全局 WebView + 部分 Skyline | 不设置 / `"webview"` | `"skyline"` | 渐进式迁移 |
+| 全局 Skyline + 部分 WebView | `"skyline"` | `"webview"` | 个别页面不兼容时单独回退 |
+
+- `web-view` 组件页面必须使用 `renderer: "webview"`
+- 自定义路由仅在连续的 Skyline 页面之间跳转时生效
+- 不支持 Skyline 的微信版本会自动降级为 WebView 渲染
+
+---
+
+## 开发者工具配置（project.config.json）
+
+开发者工具项目配置，影响本地调试行为，**不影响线上渲染**（线上渲染器由 `app.json` 的 `renderer` 决定）。个人配置建议写在 `project.private.config.json`（加入 `.gitignore`，优先级高于 `project.config.json`）。
+
+```json
+{
+  "setting": {
+    "skylineRenderEnable": true
+  },
+  "libVersion": "3.7.2"
+}
+```
+
+| 字段 | 说明 |
+| --- | --- |
+| `setting.skylineRenderEnable` | `true`：在开发者工具中启用 Skyline 渲染调试。 |
+| `libVersion` | 基础库版本。Skyline 功能最低要求 2.30.4；完整特性建议 3.7.2+（含 `enableScrollViewAutoSize`）。 |
+
+---
+
+## 配置模板
+
+### 新项目
+
+适用于从零创建的全 Skyline 项目：
+
+```json
+{
+  "pages": ["pages/index/index"],
+  "window": {
+    "navigationStyle": "custom",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f5f5"
+  },
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "lazyCodeLoading": "requiredComponents",
   "rendererOptions": {
     "skyline": {
       "defaultDisplayBlock": true,
       "defaultContentBox": true,
       "tagNameStyleIsolation": "legacy",
       "enableScrollViewAutoSize": true,
-      "keyframeStyleIsolation": "legacy"
+      "disableABTest": true
     }
   }
 }
 ```
 
-### defaultDisplayBlock
+### 迁移项目
 
-将 Skyline 默认布局从 `flex` 改为 `block`，对齐 WebView 行为。
-
-| 平台 | 最低版本 |
-| --- | --- |
-| Android | 8.0.34 |
-| iOS | 8.0.36 |
-| 基础库 | 2.31.1 |
+适用于从 WebView 迁移至 Skyline，开启所有兼容选项：
 
 ```json
 {
+  "pages": ["pages/index/index"],
+  "window": {
+    "navigationStyle": "custom",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black"
+  },
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "lazyCodeLoading": "requiredComponents",
   "rendererOptions": {
     "skyline": {
-      "defaultDisplayBlock": true
+      "defaultDisplayBlock": true,
+      "defaultContentBox": true,
+      "tagNameStyleIsolation": "legacy",
+      "enableScrollViewAutoSize": true,
+      "disableABTest": true
     }
   }
 }
 ```
 
-### defaultContentBox
+迁移要点：
 
-将 Skyline 默认盒模型从 `border-box` 改为 `content-box`，对齐 WebView 行为。
+- `defaultDisplayBlock: true` — 对齐 WebView 的 `display: block` 默认行为，避免 flex 布局导致的错位
+- `defaultContentBox: true` — 对齐 WebView 的 `box-sizing: content-box`，避免盒模型差异
+- `tagNameStyleIsolation: "legacy"` — 标签选择器全局匹配，避免样式作用域变化
+- `disableABTest: true` — 关闭灰度实验，确保所有用户体验一致
 
-| 平台 | 最低版本 |
-| --- | --- |
-| Android / iOS | 8.0.42 |
-| 基础库 | 3.1.0 |
+### 混合渲染（渐进式迁移）
+
+`app.json`（全局 WebView，不设 renderer）：
 
 ```json
 {
+  "pages": ["pages/index/index", "pages/skyline-page/index", "pages/webview-page/index"],
+  "lazyCodeLoading": "requiredComponents"
+}
+```
+
+Skyline 页面 json：
+
+```json
+{
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "navigationStyle": "custom",
+  "disableScroll": true,
   "rendererOptions": {
     "skyline": {
+      "defaultDisplayBlock": true,
       "defaultContentBox": true
     }
   }
 }
 ```
 
-### tagNameStyleIsolation
+WebView 页面 json 无需特殊配置。
 
-控制 tag 选择器的样式隔离行为。
+### 标准页面 json 模板
 
-| 值 | 说明 |
-| --- | --- |
-| `isolated` | 遵循样式隔离机制（Skyline 默认行为） |
-| `legacy` | 对齐 WebView 表现，tag 选择器不受样式隔离约束 |
-
-| 平台 | 最低版本 |
-| --- | --- |
-| Android / iOS | 8.0.51 |
-| 基础库 | 3.6.0 |
-
-### enableScrollViewAutoSize
-
-开启 scroll-view 自动根据内容撑开，替代默认需要指定宽高的行为。
-
-| 平台 | 最低版本 |
-| --- | --- |
-| Android / iOS | 8.0.54 |
-| 基础库 | 3.7.2 |
+**可滚动页面**：
 
 ```json
 {
-  "rendererOptions": {
-    "skyline": {
-      "enableScrollViewAutoSize": true
-    }
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
   }
 }
 ```
 
-### keyframeStyleIsolation
+**透明背景页面**（自定义路由）：
 
-控制 `@keyframe` 规则的样式隔离行为。
-
-| 值 | 说明 |
-| --- | --- |
-| `isolated` | 遵循样式隔离机制（Skyline 默认行为） |
-| `legacy` | 对齐 WebView 表现，@keyframe 不受样式隔离约束 |
-
-| 平台 | 最低版本 |
-| --- | --- |
-| Android / iOS | 8.0.57 |
-| 基础库 | 3.8.0 |
-
-## WebView/Skyline 混合渲染
-
-Skyline 渲染引擎下，页面有两种渲染模式：WebView 和 Skyline，通过页面配置中的 `renderer` 字段区分。
-
-- **页面级配置**：每个页面可独立选择 `renderer: 'skyline'` 或 `renderer: 'webview'`
-- **web-view 页面**：必须使用 `renderer: 'webview'`，建议承载 web-view 的页面单独配置
-- **自定义路由**：仅在连续的 Skyline 页面间跳转时才支持自定义路由效果
-- **降级机制**：不支持 Skyline 渲染的微信版本会自动降级为 WebView 渲染
-
-**重要**：适配过程中必须保证 WebView 渲染引擎和支付宝小程序下 iOS 和 Android 机型渲染正常。这样在 Skyline 有问题时可以关量走 WebView 渲染；在不支持 Skyline 的微信版本上，微信也会降级为 WebView。
-
-## glass-easel 变更点适配
-
-Skyline 使用 `glass-easel` 作为组件框架，与 WebView 下的组件框架存在一些变更点需要适配：
-
-- **JSON 配置差异**：`componentFramework: 'glass-easel'` 必须声明
-- **组件行为差异**：部分组件在 glass-easel 下的行为与旧组件框架不同
-- **properties 默认值**：必须使用 `value` 字段，`default` 字段无效
-- **properties 类型校验**：更严格，类型不匹配会报错，可用 `type: null` 跳过
-- **initData 机制**：glass-easel 新增 `initData` 声明初始化数据，wx:for 绑定 computed 属性时需提供默认值
-- **异步组件时序**：`attached` 可能在渲染前触发，依赖 DOM 信息的逻辑应移至 `ready`
-- **wxs 跨包引用**：主包无 glass-easel 组件时 wxs 跨包引用可能报错，需在主包添加空 glass-easel 组件
-
-详细的 glass-easel 适配指引参考微信官方文档：https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/glass-easel/migration.html
-
-详细的踩坑记录与适配示例见 [适配最佳实践 · glass-easel 适配注意](./skyline-migration-practice.md#glass-easel-适配注意)。
-
-## 预加载优化
-
-`wx.preloadSkylineView` 接口可预加载 Skyline 环境，用于加速后续 Skyline 页面的打开：
-
-```js
-// 在可能跳转到 Skyline 页面的路径上调用
-Page({
-  onShow() {
-    // 延迟一段时间后预加载（建议设为该页面的 90 分位加载时长）
-    setTimeout(() => {
-      wx.preloadSkylineView()
-    }, this.pageLoadP90)
-  }
-})
+```json
+{
+  "navigationStyle": "custom",
+  "backgroundColorContent": "#00000000",
+  "disableScroll": true
+}
 ```
-
-建议在 `onShow` 生命周期里延迟一段时间后调用，使得 Skyline 页面被返回时能够重新预载。
-
-**已知问题**：`wx.redirectTo` 跳转到已预加载的 Skyline 页面后，退出操作可能异常。如遇到此问题，暂时移除 `preloadSkylineView` 调用。

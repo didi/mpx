@@ -23,13 +23,15 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 ## 知识库索引
 
-| 知识库 | 说明 |
-| --- | --- |
+| 知识库 | 说明                                             |
+| --- |------------------------------------------------|
 | [Skyline 基础组件支持与差异参考](./references/skyline-component-reference.md) | 查询组件支持情况与差异，涉及不支持组件的替代方案、Skyline 新增组件、组件使用注意事项 |
-| [Skyline WXSS 样式能力参考](./references/skyline-style-reference.md) | 查询样式属性/选择器/单位是否支持，逐属性支持详情与 WebView 差异对比 |
-| [WebView→Skyline 适配改造最佳实践](./references/skyline-migration-practice.md) | 进行适配改造时读取，覆盖布局适配、样式适配、组件适配、层叠适配的完整实操方案 |
-| [Skyline 配置项与接入规范参考](./references/skyline-configuration.md) | 切换渲染模式、接入代码配置、分包规范、上线放量等项目级配置时读取 |
-| [Worklet 动画与手势系统参考](./references/skyline-worklet-animation.md) | 使用 worklet 动画、手势系统、自定义路由等 Skyline 增强特性时读取 |
+| [Skyline WXSS 样式能力参考](./references/skyline-style-reference.md) | 查询样式属性/选择器/单位是否支持，逐属性支持详情与 WebView 差异对比        |
+| [WebView→Skyline 适配改造最佳实践](./references/skyline-migration-practice.md) | 进行适配改造时读取，覆盖布局适配、样式适配、组件适配、层叠适配的完整实操方案         |
+| [Skyline 配置项与接入规范参考](./references/skyline-configuration.md) | 接入代码配置等项目级配置时读取                                |
+| [Worklet 动画](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/worklet.html) | 使用 worklet 动画 Skyline 增强特性时读取                  |
+| [手势系统参考](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/gesture.html) | 使用 手势系统 Skyline 增强特性时读取                        |
+
 
 ### 知识库使用建议
 
@@ -73,13 +75,40 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 7. **伪元素 animation**：Skyline 下伪元素的 `animation` 不生效 → 使用真实节点 + CSS animation。
 8. **font-weight**：部分机型不支持 `font-weight: 500` / `600` 数值加粗，需使用 `bold` / `700`。
 9. **box-shadow**：不支持多个叠加。
+10. **不支持 CSS 属性**：`float` / `contain` / `resize` / `writing-mode` / `text-indent` / `overflow-wrap` / `background-attachment` / `background-clip` / `background-origin` / `mask-origin` / `mask-clip` / `mask-mode` / `justify-items` 等属性设置后静默不生效，需替换为等效方案。详见 [样式适配 · 不支持的 CSS 属性](./references/skyline-migration-practice.md#不支持的-css-属性)。
+11. **渐变与背景多值限制**：`radial-gradient` 仅支持 `circle`（不支持 `ellipse`）；`background-image` / `mask-image` 最多支持 2 个值；`background-repeat` / `background-size` 不支持多组值。详见 [样式适配 · 渐变与背景多值限制](./references/skyline-migration-practice.md#渐变与背景多值限制)。
+12. **filter / backdrop-filter**：不支持 `url()` / `drop-shadow()` 及多函数组合；用 `box-shadow` 替代 `drop-shadow`。详见 [样式适配 · filter / backdrop-filter 限制](./references/skyline-migration-practice.md#filter--backdrop-filter-限制)。
+13. **text-decoration-line 单值**：仅支持单个值，多值组合（如 `underline line-through`）不生效。
+14. **calc() 不支持角度**：`calc()` 支持长度计算但不支持角度类型，需直接写角度值（如 `135deg`）。
 
 ### 组件（component）约束
 
 1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。
-2. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，详见 [组件支持参考](./references/skyline-component-reference.md)。
-3. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。
-4. **组件根节点**：默认 `block` + `relative`，宽高 `100%` 可能失效。
+2. **横向滚动需 enable-flex**：scroll-view 横向滚动需同时开启 `enable-flex` 以兼容 WebView。
+3. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，详见 [组件支持参考](./references/skyline-component-reference.md)。
+4. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。
+
+[//]: # (5. **组件根节点**：默认 `block` + `relative`，宽高 `100%` 可能失效。)
+[//]: # (6. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）)
+
+### 配置（config）约束
+
+1. **app.json 三项必需**：`renderer: "skyline"`、`componentFramework: "glass-easel"`、`lazyCodeLoading: "requiredComponents"` 三项必须同时配置，缺少任何一项会导致 Skyline 功能不完整或编译报错。详见 [页面配置适配 · app.json 全局配置三项必需](./references/skyline-migration-practice.md#appjson-全局配置三项必需)。
+
+### 滚动 API（Scroll API）约束
+
+1. **ScrollViewContext 需 enhanced 属性**：通过 `NodesRef.node()` 获取 `ScrollViewContext` 时，`scroll-view` 必须开启 `enhanced` 属性，否则返回的不是 ScrollViewContext 实例。详见 [Scroll API 适配 · ScrollViewContext：必须开启 enhanced 属性](./references/skyline-migration-practice.md#scrollviewcontext必须开启-enhanced-属性)。
+2. **worklet.scrollViewContext 必须通过 ref() 获取**：在 worklet 中控制滚动须用 `NodesRef.ref()` + `SharedValue`，不能用 `node()`（`node()` 返回的是逻辑线程 ScrollViewContext，无法在 UI 线程使用）。详见 [Scroll API 适配 · worklet.scrollViewContext：必须通过 ref 获取](./references/skyline-migration-practice.md#workletscrollviewcontext必须通过-ref-获取)。
+3. **worklet.scrollViewContext.scrollTo 只能在 worklet 中调用**：调用该 API 的函数必须声明 `'worklet'` 指令（仅 UI 线程可用），且不支持小程序插件。详见 [Scroll API 适配 · worklet.scrollViewContext.scrollTo：调用函数必须声明 'worklet' 指令](./references/skyline-migration-practice.md#workletscrollviewcontextscrollto调用函数必须声明-worklet-指令)。
+4. **DraggableSheetContext.scrollTo 的 size 与 pixels 互斥**：同时传入时仅 `size` 生效，`pixels` 被静默忽略。详见 [Scroll API 适配 · DraggableSheetContext：size 和 pixels 不可同时传入](./references/skyline-migration-practice.md#draggablesheetcontextsize-和-pixels-不可同时传入)。
+
+### Worklet 动画约束
+
+1. **必须声明 'worklet' 指令**：在 UI 线程执行的函数（手势/滚动回调等）必须在函数顶部声明 `'worklet'` 字符串，缺少指令将在逻辑线程执行，导致动画延迟。详见 [Worklet 动画适配 · worklet 函数必须声明 'worklet' 指令](./references/skyline-migration-practice.md#worklet-函数必须声明-worklet-指令)。
+2. **SharedValue 通过 .value 读写**：`wx.worklet.shared()` 创建的共享变量必须通过 `.value` 读写，直接赋值会替换对象本身导致动画驱动失效。详见 [Worklet 动画适配 · SharedValue 必须通过 .value 读写](./references/skyline-migration-practice.md#sharedvalue-必须通过-value-读写)。
+3. **worklet 中调用普通函数必须使用 runOnJS**：worklet 运行在 UI 线程，不能直接调用页面方法或 `wx.*` API，必须通过 `runOnJS` 切换回 JS 线程。详见 [Worklet 动画适配 · 在 worklet 中调用普通函数必须使用 runOnJS](./references/skyline-migration-practice.md#在-worklet-中调用普通函数必须使用-runonjs)。
+4. **runOnJS 调用页面方法必须 bind(this)**：通过 `runOnJS` 调用页面方法前必须先 `bind(this)`，否则 `this` 指向丢失。详见 [Worklet 动画适配 · 页面方法必须通过 bind(this) 绑定后传入 runOnJS](./references/skyline-migration-practice.md#页面方法必须通过-bindthis-绑定后传入-runonjs)。
+5. **禁止在 worklet 中解构 this.data**：解构赋值会触发 `Object.freeze` 冻结 `this.data`，导致页面后续所有 `setData` 失效。详见 [Worklet 动画适配 · 禁止在 worklet 中解构 this.data](./references/skyline-migration-practice.md#禁止在-worklet-中解构-thisdata)。
 
 ## 任务一：对已有 WebView 页面进行 Skyline 适配改造
 

@@ -77,7 +77,10 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     [
       'children',
       'enable-offset',
-      'style'
+      'style',
+      'item-id',
+      'customStyle',
+      'itemIndex'
     ],
     { layoutRef })
   const itemAnimatedStyle = useAnimatedStyle(() => {
