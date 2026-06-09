@@ -286,12 +286,31 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       try {
         const cameraPermission = global?.__mpx?.config?.rnConfig?.cameraPermission
         if (typeof cameraPermission === 'function') {
-          const permissionResult = await cameraPermission()
-          setHasPermission(permissionResult === true)
+          if (page && hasOwn(page, 'cameraPermissionResult')) {
+            setHasPermission(page.cameraPermissionResult === true)
+            return
+          }
+          let permissionResult
+          if (page) {
+            if (!hasOwn(page, 'cameraPermissionPromise')) {
+              page.cameraPermissionPromise = cameraPermission()
+            }
+            permissionResult = await page.cameraPermissionPromise
+          } else {
+            permissionResult = await cameraPermission()
+          }
+          const granted = permissionResult === true
+          if (page) {
+            page.cameraPermissionResult = granted
+          }
+          setHasPermission(granted)
         } else {
           setHasPermission(true)
         }
       } catch (error) {
+        if (page) {
+          page.cameraPermissionResult = false
+        }
         setHasPermission(false)
       }
     }
