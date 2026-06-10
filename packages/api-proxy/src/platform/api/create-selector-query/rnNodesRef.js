@@ -11,8 +11,8 @@ import {
 const flushRefFns = (nodeInstances, fns, single) => {
   // wx的数据格式：对于具体方法接受到的回调传参，如果获取的 nodeRef 只有一个，那么只需要返回一条数据而不是数组，但是 exec 里面统一都是数组
   const mountedNodeInstance = nodeInstances
-    .map((instance) => instance.getNodeInstance())
-    .filter(({ nodeRef }) => nodeRef.current) // 如果有 nodeRef，表明目前组件处于挂载中
+    .map(getNodeInstance)
+    .filter((nodeInstance) => nodeInstance && nodeInstance.nodeRef && nodeInstance.nodeRef.current) // 如果有 nodeRef，表明目前组件处于挂载中
   if (mountedNodeInstance.length) {
     return Promise.all(
       mountedNodeInstance.map((instance) => flushFns(instance, fns))
@@ -28,6 +28,11 @@ const flushFns = (nodeInstance, fns) => {
       return Object.assign(preVal, curVal)
     }, {})
   })
+}
+
+const getNodeInstance = (ref) => {
+  const getNodeInstance = ref && (ref.getNodeInstance || ref.__getNodeInstance)
+  return getNodeInstance && getNodeInstance.call(ref)
 }
 
 const wrapFn = (fn) => {
@@ -191,10 +196,10 @@ class NodeRef {
       fns.push(getPlainProps(plainProps))
     }
     if (measureProps.length) {
-      const nodeInstance =
-        this.nodeRefs[0] && this.nodeRefs[0].getNodeInstance()
+      const nodeInstance = getNodeInstance(this.nodeRefs[0])
       const hasMeasureFn =
         nodeInstance &&
+        nodeInstance.nodeRef &&
         nodeInstance.nodeRef.current &&
         nodeInstance.nodeRef.current.measure
       if (hasMeasureFn) {

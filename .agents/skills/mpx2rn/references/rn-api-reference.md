@@ -1572,6 +1572,8 @@ mpx.config.rnConfig.wifiPermission = () => {
 
 工厂方法：创建 **`SelectorQuery`**（非 `success` / `fail` 入参模型）。
 
+RN 中 `select` 支持查询声明了空 `wx:ref` 的基础节点和自定义组件；查询自定义组件时，默认测量非 virtualHost 场景下的 host 根节点。
+
 #### 入参
 
 无；若需组件作用域，与小程序一致传入 **组件实例**（以实现为准）。
