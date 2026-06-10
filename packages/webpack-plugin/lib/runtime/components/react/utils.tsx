@@ -540,7 +540,7 @@ function parseTransform (transformStr: string) {
             const [a, b, c, d, tx, ty] = matrixValues
             transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
           } else {
-            error(`Transform matrix only supports 16 values in React Native, got ${matrixValues.length}`)
+            error(`Transform matrix only supports 6 values in React Native, got ${matrixValues.length}`)
           }
           break
         }
@@ -701,7 +701,7 @@ function transformTextDecoration (styleObj: Record<string, any>) {
   const value = styleObj.textDecoration
   if (typeof value !== 'string') return
   const supportedLineValues = new Set(['none', 'underline', 'line-through'])
-  const textDecorationStyleSet = new Set(['solid', 'double', 'dotted', 'dashed'])
+  const props = ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor']
   const values = parseValues(value)
   const lineValues: string[] = []
   const otherValues: string[] = []
@@ -712,16 +712,11 @@ function transformTextDecoration (styleObj: Record<string, any>) {
       otherValues.push(v)
     }
   }
+  const processedValues = lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
   delete styleObj.textDecoration
-  if (lineValues.length > 0 && !hasOwn(styleObj, 'textDecorationLine')) {
-    styleObj.textDecorationLine = lineValues.join(' ')
-  }
-  for (const v of otherValues) {
-    if (textDecorationStyleSet.has(v) && !hasOwn(styleObj, 'textDecorationStyle')) {
-      styleObj.textDecorationStyle = v
-    } else if (isColorValue(v) && !hasOwn(styleObj, 'textDecorationColor')) {
-      styleObj.textDecorationColor = v
-    }
+  const pairs = expandAbbreviation(processedValues, props)
+  for (const [prop, val] of pairs) {
+    if (!hasOwn(styleObj, prop)) styleObj[prop] = val
   }
 }
 

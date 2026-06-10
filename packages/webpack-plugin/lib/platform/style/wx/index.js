@@ -546,7 +546,7 @@ module.exports = function getSpec ({ warn, error }) {
                 const [a, b, c, d, tx, ty] = matrixValues
                 transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
               } else {
-                error(`Value of [transform] in ${selector} does not support matrix with ${matrixValues.length} values, only 16 values are supported in ${mode} environment!`)
+                error(`Value of [transform] in ${selector} does not support matrix with ${matrixValues.length} values, only 6 values are supported in ${mode} environment!`)
               }
               break
             }
