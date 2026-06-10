@@ -711,7 +711,7 @@ function expandTextDecoration (values: string[]): string[] {
   }
   return lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
 }
-
+// Todo 目前仅支持指定属性的简单值，且不同于编译时的 class 处理，暂不支持缺省值，后续优化
 function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
   if (shorthandKeys.length === 0) return
   for (const key of shorthandKeys) {
