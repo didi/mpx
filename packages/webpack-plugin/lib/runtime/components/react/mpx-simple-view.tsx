@@ -5,12 +5,12 @@ import useInnerProps from './getInnerListeners'
 import * as perf from '@mpxjs/perf'
 
 const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
-  let stopTotal: (() => void) | undefined
-  if (__mpx_perf_framework__) stopTotal = perf.scope('simple-view:render:total')
+  let idTotal = -1
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('simple-view:render:total')
 
   // ───── style 阶段 ─────
-  let stopStyle: (() => void) | undefined
-  if (__mpx_perf_framework__) stopStyle = perf.scope('simple-view:render:style')
+  let idStyle = -1
+  if (__mpx_perf_framework__) idStyle = perf.scopeStart('simple-view:render:style')
   const { textProps, innerProps: props = {} } = splitProps(simpleViewProps)
 
   let hasBoxSizingAffectingStyle = false
@@ -20,11 +20,11 @@ const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
     }
   })
   const textPassThrough = useTextPassThroughValue(textStyle as TextStyle, textProps)
-  if (__mpx_perf_framework__) stopStyle!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────
-  let stopInnerProps: (() => void) | undefined
-  if (__mpx_perf_framework__) stopInnerProps = perf.scope('simple-view:render:innerProps')
+  let idInnerProps = -1
+  if (__mpx_perf_framework__) idInnerProps = perf.scopeStart('simple-view:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -34,11 +34,11 @@ const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
       }
     )
   )
-  if (__mpx_perf_framework__) stopInnerProps!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idInnerProps)
 
   // ───── createElement 阶段 ─────
-  let stopCreate: (() => void) | undefined
-  if (__mpx_perf_framework__) stopCreate = perf.scope('simple-view:render:createElement')
+  let idCreate = -1
+  if (__mpx_perf_framework__) idCreate = perf.scopeStart('simple-view:render:createElement')
   const result = createElement(View, innerProps, wrapChildren(
     props,
     {
@@ -46,9 +46,9 @@ const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
       textPassThrough
     }
   ))
-  if (__mpx_perf_framework__) stopCreate!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
 
-  if (__mpx_perf_framework__) stopTotal!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
   return result
 }
 

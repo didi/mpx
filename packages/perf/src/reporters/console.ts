@@ -1,13 +1,10 @@
-import type { PerfEvent, Reporter } from '../types'
-import { aggregateByName } from '../aggregate'
+import type { AggResult, Reporter } from '../types'
 
 export interface ConsoleReporterOptions {
   /** 排序字段，默认按 sum 降序 */
   sortBy?: 'sum' | 'avg' | 'max' | 'count'
   /** 仅打印事件名匹配该正则 / 字符串前缀的桶 */
   filter?: RegExp | string
-  /** true 时同时打印原始事件数组，便于业务自行加工 */
-  raw?: boolean
   /** 是否带 console.group 头，默认 true */
   header?: boolean
 }
@@ -33,16 +30,17 @@ function fmtMs (n: number): string {
 /**
  * 工厂函数：根据 options 生成一个 console reporter。
  *
+ * 入参从 bus 拿到的就是已聚合的 `Map<name, AggResult>`（实时聚合 only），
+ * 不再有原始事件可遍历——所以也没有 raw 选项了。
+ *
  * 输出形式刻意避开 console.table —— React Native 远程调试 / Hermes inspector
  * 对 console.table 的支持参差不齐（典型表现是把每行渲染成 `{…}` 不展开），
  * 这里用对齐字符串 + 单条 console.log 输出，跨 RN / 浏览器 / Node 一致可读。
  */
 export function createConsoleReporter (options: ConsoleReporterOptions = {}): Reporter {
-  const { sortBy = 'sum', filter, raw = false, header = true } = options
+  const { sortBy = 'sum', filter, header = true } = options
 
-  return (events: PerfEvent[]) => {
-    const agg = aggregateByName(events)
-
+  return (agg: Map<string, AggResult>) => {
     const rows: Row[] = []
     let totalCount = 0
     for (const [name, s] of agg) {
@@ -87,7 +85,7 @@ export function createConsoleReporter (options: ConsoleReporterOptions = {}): Re
       `${pad(c.name, nameW)}  ${pad(c.count, countW, true)}  ${pad(c.sum, sumW, true)}  ${pad(c.avg, avgW, true)}  ${pad(c.max, maxW, true)}`
     )
 
-    const title = `[mpx perf] ${events.length} events / ${rows.length} buckets / ${totalCount} samples`
+    const title = `[mpx perf] ${rows.length} buckets / ${totalCount} samples`
     const text = rows.length
       ? [title, headerLine, sepLine, ...bodyLines].join('\n')
       : `${title}\n(empty)`
@@ -98,9 +96,6 @@ export function createConsoleReporter (options: ConsoleReporterOptions = {}): Re
       console.log(rows.length ? [headerLine, sepLine, ...bodyLines].join('\n') : '(empty)')
     } else {
       console.log(text)
-    }
-    if (raw) {
-      console.log('[mpx perf] raw events:', events)
     }
     if (header && typeof console.groupEnd === 'function') {
       console.groupEnd()
