@@ -52,7 +52,8 @@ const KEY_ESCAPE_SPACE = '_sp_'
 
 const keyEscapeMap = {
   '-': KEY_ESCAPE_DASH,
-  ' ': KEY_ESCAPE_SPACE
+  ' ': KEY_ESCAPE_SPACE,
+  '*': '_st_'
 }
 const keyDecodeMap = Object.keys(keyEscapeMap).reduce((acc, key) => {
   acc[keyEscapeMap[key]] = key
@@ -61,7 +62,7 @@ const keyDecodeMap = Object.keys(keyEscapeMap).reduce((acc, key) => {
 const keyDecodeReg = new RegExp(Object.keys(keyDecodeMap).map(escapeRegExp).join('|'), 'g')
 
 function escapeKey (str) {
-  const result = str.replace(/-/g, KEY_ESCAPE_DASH).replace(/\s+/g, KEY_ESCAPE_SPACE)
+  const result = str.replace(/-/g, KEY_ESCAPE_DASH).replace(/\s+/g, KEY_ESCAPE_SPACE).replace(/\*/g, '_st_')
   if (result !== str) return result + KEY_ESCAPE_SUFFIX
   return str
 }

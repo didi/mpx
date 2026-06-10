@@ -79,9 +79,9 @@ function parseStrings (content) {
   return output
 }
 
-// 匹配对象字面量中经过 MpxEscape 编码的标识符形式的 key，如 { ml_da_17rpxMpxEscape: flag }
-// key 前面必须是 { 或 ,（加可选空格），后面是 :，且必须以 MpxEscape 结尾
-const objKeyReg = /(?:[{,]\s*)([\w-]+?MpxEscape)(?=\s*:)/gm
+// 匹配对象字面量中标识符形式的 key，如 { ml_da_17rpxMpxEscape: flag, a: true }
+// key 前面必须是 { 或 ,（加可选空格），后面是 :
+const objKeyReg = /(?:[{,]\s*)([\w-]+?)(?=\s*:)/gm
 
 function parseMpxEscapeKeys (content) {
   const output = []
