@@ -388,25 +388,41 @@ function parseTransform (transformStr: string) {
       let key = match[1]
       const val = match[2]
       switch (key) {
-        case 'translateX':
-        case 'translateY':
-        case 'scaleX':
-        case 'scaleY':
         case 'rotateX':
         case 'rotateY':
         case 'rotateZ':
         case 'rotate':
         case 'skewX':
         case 'skewY':
-        case 'perspective':
-          // rotate 处理成 rotateZ
           key = key === 'rotate' ? 'rotateZ' : key
-          // 单个值处理
+          transform.push({ [key]: val })
+          break
+        case 'translateX':
+        case 'translateY':
+        case 'scaleX':
+        case 'scaleY':
+        case 'perspective':
           transform.push({ [key]: global.__formatValue(val) })
           break
-        case 'matrix':
-          transform.push({ [key]: parseValues(val, ',').map(val => +val) })
+        case 'matrix': {
+          const matrixValues = parseValues(val, ',').map(v => +v.trim())
+          if (matrixValues.length === 6) {
+            const [a, b, c, d, tx, ty] = matrixValues
+            transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
+          } else {
+            error(`Transform matrix only supports 16 values in React Native, got ${matrixValues.length}`)
+          }
           break
+        }
+        case 'matrix3d': {
+          const matrixValues = parseValues(val, ',').map(v => +v.trim())
+          if (matrixValues.length === 16) {
+            transform.push({ matrix: matrixValues })
+          } else {
+            error(`Transform matrix only supports 16 values in React Native, got ${matrixValues.length}`)
+          }
+          break
+        }
         case 'translate':
         case 'scale':
         case 'skew':
@@ -426,6 +442,24 @@ function parseTransform (transformStr: string) {
           }))
           break
         }
+        case 'rotate3d': {
+          const parts = parseValues(val, ',')
+          if (parts.length === 4) {
+            const x = +parts[0].trim()
+            const y = +parts[1].trim()
+            const z = +parts[2].trim()
+            const angle = parts[3].trim()
+            if (x && !y && !z) transform.push({ rotateX: angle })
+            else if (!x && y && !z) transform.push({ rotateY: angle })
+            else if (!x && !y && z) transform.push({ rotateZ: angle })
+          } else {
+            error(`Transform rotate3d only supports 4 values, got ${parts.length}`)
+          }
+          break
+        }
+        case 'translateZ':
+        case 'scaleZ':
+          break
       }
     }
   })
@@ -440,7 +474,14 @@ function transformTransform (style: Record<string, any>) {
 function transformBoxShadow (styleObj: Record<string, any>) {
   if (!styleObj.boxShadow) return
   styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res, i, idx) => {
-    return `${res}${idx === 0 ? '' : ' '}${global.__formatValue(i)}`
+    let formatted: string | number
+    // 需要保留 px 关键字，这里仅处理 rpx 转 px
+    if (/\d+rpx$/.test(i)) {
+      formatted = global.__formatValue(i) + 'px'
+    } else {
+      formatted = i
+    }
+    return `${res}${idx === 0 ? '' : ' '}${formatted}`
   }, '')
 }
 

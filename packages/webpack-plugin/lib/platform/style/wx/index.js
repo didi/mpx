@@ -360,15 +360,20 @@ module.exports = function getSpec({ warn, error }) {
       return values.length === 0 ? false : { prop: bgPropMap.size, value: values }
     }
     const formatBackgroundPosition = (value) => {
+      const yAxisKeywords = ['top', 'bottom']
       const values = []
       parseValues(value).forEach(item => {
         if (verifyValues({ prop: bgPropMap.position, value: item, selector })) {
           // 支持 number 值 /  枚举, center与50%等价
           values.push(item === 'center' ? '50%' : item)
         } else {
-          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
+          error(`Value of [${bgPropMap.position}] in ${selector} does not support value [${item}]`)
         }
       })
+      // CSS 允许 y x 顺序的关键字（如 top left），但输出需要 [x, y] 顺序
+      if (values.length === 2 && yAxisKeywords.includes(values[0])) {
+        ;[values[0], values[1]] = [values[1], values[0]]
+      }
       return { prop: bgPropMap.position, value: values }
     }
     switch (prop) {
@@ -495,9 +500,6 @@ module.exports = function getSpec({ warn, error }) {
             key = key === 'rotate' ? 'rotateZ' : key
             transform.push({ [key]: val })
             break
-          case 'matrix':
-            transform.push({ [key]: parseValues(val, ',').map(val => +val) })
-            break
           case 'translate':
           case 'scale':
           case 'skew':
@@ -520,12 +522,47 @@ module.exports = function getSpec({ warn, error }) {
               }))
               break
             }
+          case 'rotate3d': {
+            const parts = parseValues(val, ',')
+            if (parts.length === 4) {
+              const x = +parts[0].trim()
+              const y = +parts[1].trim()
+              const z = +parts[2].trim()
+              const angle = parts[3].trim()
+              if (x && !y && !z) transform.push({ rotateX: angle })
+              else if (!x && y && !z) transform.push({ rotateY: angle })
+              else if (!x && !y && z) transform.push({ rotateZ: angle })
+              else unsupportedPropError({ prop, value, selector }, { mode })
+            } else {
+              error(`Value of [transform] in ${selector} does not support rotate3d with ${parts.length} values, only 4 values are supported`)
+            }
+            break
+          }
+          case 'matrix':
+            {
+              const matrixValues = parseValues(val, ',').map(val => +val)
+              if (matrixValues.length === 6) {
+                const [a, b, c, d, tx, ty] = matrixValues
+                transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
+              } else {
+                error(`Value of [transform] in ${selector} does not support matrix with ${matrixValues.length} values, only 16 values are supported in ${mode} environment!`)
+              }
+              break
+            }
+          case 'matrix3d':
+            {
+              const matrixValues = parseValues(val, ',').map(val => +val)
+              if (matrixValues.length === 16) {
+                transform.push({ matrix: matrixValues })
+              } else {
+                error(`Value of [transform] in ${selector} does not support matrix3d with ${matrixValues.length} values, only 16 values are supported in ${mode} environment!`)
+              }
+              break
+            }
+          // 不支持的属性处理
           case 'translateZ':
           case 'scaleZ':
-          case 'rotate3d': // x y z angle
-          case 'matrix3d':
           default:
-            // 不支持的属性处理
             unsupportedPropError({ prop, value, selector }, { mode })
             break
         }
@@ -633,6 +670,26 @@ module.exports = function getSpec({ warn, error }) {
   //   })
   //   return cssMap
   // }
+
+  const formatTextDecoration = ({ prop, value, selector }, { mode }) => {
+    const values = Array.isArray(value) ? value : parseValues(value)
+    if (values.length === 1 && cssVariableExp.test(value)) {
+      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
+      return []
+    }
+    const lineValues = []
+    const otherValues = []
+    for (const v of values) {
+      if (SUPPORTED_PROP_VAL_ARR['text-decoration-line'].includes(v)) {
+        lineValues.push(v)
+      } else {
+        otherValues.push(v)
+      }
+    }
+    const processedValues = lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
+    return formatAbbreviation({ prop, value: processedValues, selector }, { mode })
+  }
+
   const formatBorder = ({ prop, value, selector }, { mode }) => {
     value = value.trim()
     if (value === 'none') {
@@ -690,6 +747,12 @@ module.exports = function getSpec({ warn, error }) {
       //   android: formatBoxShadow,
       //   harmony: formatBoxShadow
       // },
+      {
+        test: 'text-decoration',
+        ios: formatTextDecoration,
+        android: formatTextDecoration,
+        harmony: formatTextDecoration
+      },
       {
         test: 'border',
         ios: formatBorder,
