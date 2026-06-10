@@ -5,12 +5,12 @@ import { extendObject, getDefaultAllowFontScaling, useTextPassThroughText, wrapC
 import * as perf from '@mpxjs/perf'
 
 const SimpleText = (props: TextProps): JSX.Element => {
-  let stopTotal: (() => void) | undefined
-  if (__mpx_perf_framework__) stopTotal = perf.scope('simple-text:render:total')
+  let idTotal = -1
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('simple-text:render:total')
 
   // ───── style 阶段 ─────
-  let stopStyle: (() => void) | undefined
-  if (__mpx_perf_framework__) stopStyle = perf.scope('simple-text:render:style')
+  let idStyle = -1
+  if (__mpx_perf_framework__) idStyle = perf.scopeStart('simple-text:render:style')
   let hasBoxSizingAffectingStyle = false
   const { textStyle } = splitStyle(props.style || {}, (key) => {
     if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
@@ -27,11 +27,11 @@ const SimpleText = (props: TextProps): JSX.Element => {
     allowFontScaling,
     children
   } = mergedProps
-  if (__mpx_perf_framework__) stopStyle!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────
-  let stopInnerProps: (() => void) | undefined
-  if (__mpx_perf_framework__) stopInnerProps = perf.scope('simple-text:render:innerProps')
+  let idInnerProps = -1
+  if (__mpx_perf_framework__) idInnerProps = perf.scopeStart('simple-text:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -42,11 +42,11 @@ const SimpleText = (props: TextProps): JSX.Element => {
       }
     )
   )
-  if (__mpx_perf_framework__) stopInnerProps!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idInnerProps)
 
   // ───── createElement 阶段 ─────
-  let stopCreate: (() => void) | undefined
-  if (__mpx_perf_framework__) stopCreate = perf.scope('simple-text:render:createElement')
+  let idCreate = -1
+  if (__mpx_perf_framework__) idCreate = perf.scopeStart('simple-text:render:createElement')
   const result = createElement(Text, innerProps, wrapChildren(
     { children },
     {
@@ -54,9 +54,9 @@ const SimpleText = (props: TextProps): JSX.Element => {
       textPassThrough
     }
   ))
-  if (__mpx_perf_framework__) stopCreate!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
 
-  if (__mpx_perf_framework__) stopTotal!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
   return result
 }
 

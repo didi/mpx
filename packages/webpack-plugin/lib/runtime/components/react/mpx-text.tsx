@@ -51,12 +51,12 @@ interface _TextProps extends TextProps {
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
-  let stopTotal: (() => void) | undefined
-  if (__mpx_perf_framework__) stopTotal = perf.scope('text:render:total')
+  let idTotal = -1
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('text:render:total')
 
   // ───── props 阶段 ─────
-  let stopProps: (() => void) | undefined
-  if (__mpx_perf_framework__) stopProps = perf.scope('text:render:props')
+  let idProps = -1
+  if (__mpx_perf_framework__) idProps = perf.scopeStart('text:render:props')
   const {
     style: currentStyle = {},
     allowFontScaling,
@@ -68,11 +68,11 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'parent-height': parentHeight,
     decode
   } = props
-  if (__mpx_perf_framework__) stopProps!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idProps)
 
   // ───── style 阶段 ─────
-  let stopStyle: (() => void) | undefined
-  if (__mpx_perf_framework__) stopStyle = perf.scope('text:render:style')
+  let idStyle = -1
+  if (__mpx_perf_framework__) idStyle = perf.scopeStart('text:render:style')
   const {
     normalStyle,
     hasVarDec,
@@ -97,11 +97,11 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
     style: finalStyle
   })
-  if (__mpx_perf_framework__) stopStyle!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────
-  let stopInnerProps: (() => void) | undefined
-  if (__mpx_perf_framework__) stopInnerProps = perf.scope('text:render:innerProps')
+  let idInnerProps = -1
+  if (__mpx_perf_framework__) idInnerProps = perf.scopeStart('text:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -118,11 +118,11 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
       'decode'
     ]
   )
-  if (__mpx_perf_framework__) stopInnerProps!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idInnerProps)
 
   // ───── createElement 阶段 ─────
-  let stopCreate: (() => void) | undefined
-  if (__mpx_perf_framework__) stopCreate = perf.scope('text:render:createElement')
+  let idCreate = -1
+  if (__mpx_perf_framework__) idCreate = perf.scopeStart('text:render:createElement')
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     extendObject({}, mergedProps, {
       children
@@ -137,9 +137,9 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   if (hasPositionFixed) {
     finalComponent = createElement(Portal, null, finalComponent)
   }
-  if (__mpx_perf_framework__) stopCreate!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
 
-  if (__mpx_perf_framework__) stopTotal!()
+  if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
   return finalComponent
 })
 
