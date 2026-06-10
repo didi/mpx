@@ -32,7 +32,7 @@ const classNameDecodeMap = Object.keys(classNameEscapeMap).reduce((acc, key) => 
   acc[classNameEscapeMap[key]] = key
   return acc
 }, {})
-const classNameDecodeReg = new RegExp(Object.keys(classNameDecodeMap).sort((a, b) => b.length - a.length).map(escapeRegExp).join('|'), 'g')
+const classNameDecodeReg = new RegExp(Object.keys(classNameDecodeMap).map(escapeRegExp).join('|'), 'g')
 
 function escapeClassName (str) {
   return str.replace(classNameEscapeReg, function (match) {
