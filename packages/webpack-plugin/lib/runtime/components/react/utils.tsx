@@ -81,7 +81,8 @@ const runtimeAbbreviationMap: Record<string, string[]> = {
   borderBottom: ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
   borderLeft: ['borderLeftWidth', 'borderLeftStyle', 'borderLeftColor'],
   flexFlow: ['flexDirection', 'flexWrap'],
-  textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor']
+  textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
+  textDecoration: ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor']
 }
 const runtimeCompositeStyleMap: Record<string, boolean> = {
   margin: true,
@@ -697,12 +698,8 @@ function transformFlex (styleObj: Record<string, any>) {
   }
 }
 
-function transformTextDecoration (styleObj: Record<string, any>) {
-  const value = styleObj.textDecoration
-  if (typeof value !== 'string') return
+function expandTextDecoration (values: string[]): string[] {
   const supportedLineValues = new Set(['none', 'underline', 'line-through'])
-  const props = ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor']
-  const values = parseValues(value)
   const lineValues: string[] = []
   const otherValues: string[] = []
   for (const v of values) {
@@ -712,12 +709,7 @@ function transformTextDecoration (styleObj: Record<string, any>) {
       otherValues.push(v)
     }
   }
-  const processedValues = lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
-  delete styleObj.textDecoration
-  const pairs = expandAbbreviation(processedValues, props)
-  for (const [prop, val] of pairs) {
-    if (!hasOwn(styleObj, prop)) styleObj[prop] = val
-  }
+  return lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
 }
 
 function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
@@ -735,7 +727,12 @@ function transformShorthand (styleObj: Record<string, any>, shorthandKeys: strin
     const props = runtimeAbbreviationMap[key]
     if (!props) continue
     if (hasOwn(runtimeCompositeStyleMap, key) && values.length === 1) continue
-    const expandedValues = hasOwn(runtimeCompositeStyleMap, key) ? expandCompositeValues(values) : values
+    let expandedValues = values
+    if (hasOwn(runtimeCompositeStyleMap, key)) {
+      expandedValues = expandCompositeValues(values)
+    } else if (key === 'textDecoration') {
+      expandedValues = expandTextDecoration(values)
+    }
     const pairs = expandAbbreviation(expandedValues, props)
     delete styleObj[key]
     for (const [prop, val] of pairs) {
@@ -1015,7 +1012,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // apply runtime style processing alignment
   transformFontFamily(normalStyle)
   transformFlex(normalStyle)
-  transformTextDecoration(normalStyle)
   transformShorthand(normalStyle, shorthandKeys)
   transformBackground(normalStyle)
 
