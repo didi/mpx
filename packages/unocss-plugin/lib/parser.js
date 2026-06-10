@@ -1,4 +1,5 @@
 const { parseMustache, stringifyAttr } = require('@mpxjs/webpack-plugin/lib/template-compiler/compiler')
+const { unescapeKey } = require('@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr')
 
 function parseClasses (content) {
   const output = []
@@ -78,9 +79,32 @@ function parseStrings (content) {
   return output
 }
 
+// 匹配对象字面量中经过 MpxEscape 编码的标识符形式的 key，如 { ml_da_17rpxMpxEscape: flag }
+// key 前面必须是 { 或 ,（加可选空格），后面是 :，且必须以 MpxEscape 结尾
+const objKeyReg = /(?:[{,]\s*)([\w-]+?MpxEscape)(?=\s*:)/gm
+
+function parseMpxEscapeKeys (content) {
+  const output = []
+  if (!content) { return output }
+  let match
+  objKeyReg.lastIndex = 0
+  while (match = objKeyReg.exec(content)) {
+    const raw = match[1]
+    const end = match.index + match[0].length - 1
+    const start = end - raw.length + 1
+    output.push({
+      result: unescapeKey(raw),
+      start,
+      end
+    })
+  }
+  return output
+}
+
 module.exports = {
   parseClasses,
   parseStrings,
+  parseMpxEscapeKeys,
   parseComments,
   parseCommentConfig,
   parseMustache,
