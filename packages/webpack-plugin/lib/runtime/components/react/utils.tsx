@@ -519,25 +519,41 @@ function parseTransform (transformStr: string) {
       let key = match[1]
       const val = match[2]
       switch (key) {
-        case 'translateX':
-        case 'translateY':
-        case 'scaleX':
-        case 'scaleY':
         case 'rotateX':
         case 'rotateY':
         case 'rotateZ':
         case 'rotate':
         case 'skewX':
         case 'skewY':
-        case 'perspective':
-          // rotate 处理成 rotateZ
           key = key === 'rotate' ? 'rotateZ' : key
-          // 单个值处理
+          transform.push({ [key]: val })
+          break
+        case 'translateX':
+        case 'translateY':
+        case 'scaleX':
+        case 'scaleY':
+        case 'perspective':
           transform.push({ [key]: global.__formatValue(val) })
           break
-        case 'matrix':
-          transform.push({ [key]: parseValues(val, ',').map(val => +val) })
+        case 'matrix': {
+          const matrixValues = parseValues(val, ',').map(v => +v.trim())
+          if (matrixValues.length === 6) {
+            const [a, b, c, d, tx, ty] = matrixValues
+            transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
+          } else {
+            error(`Transform matrix only supports 6 values in React Native, got ${matrixValues.length}`)
+          }
           break
+        }
+        case 'matrix3d': {
+          const matrixValues = parseValues(val, ',').map(v => +v.trim())
+          if (matrixValues.length === 16) {
+            transform.push({ matrix: matrixValues })
+          } else {
+            error(`Transform matrix only supports 16 values in React Native, got ${matrixValues.length}`)
+          }
+          break
+        }
         case 'translate':
         case 'scale':
         case 'skew':
@@ -557,6 +573,24 @@ function parseTransform (transformStr: string) {
           }))
           break
         }
+        case 'rotate3d': {
+          const parts = parseValues(val, ',')
+          if (parts.length === 4) {
+            const x = +parts[0].trim()
+            const y = +parts[1].trim()
+            const z = +parts[2].trim()
+            const angle = parts[3].trim()
+            if (x && !y && !z) transform.push({ rotateX: angle })
+            else if (!x && y && !z) transform.push({ rotateY: angle })
+            else if (!x && !y && z) transform.push({ rotateZ: angle })
+          } else {
+            error(`Transform rotate3d only supports 4 values, got ${parts.length}`)
+          }
+          break
+        }
+        case 'translateZ':
+        case 'scaleZ':
+          break
       }
     }
   })
@@ -572,7 +606,14 @@ function transformTransform (style: Record<string, any>) {
 function transformBoxShadow (styleObj: Record<string, any>) {
   if (!styleObj.boxShadow) return
   styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res, i, idx) => {
-    return `${res}${idx === 0 ? '' : ' '}${global.__formatValue(i)}`
+    let formatted: string | number
+    // 需要保留 px 关键字，这里仅处理 rpx 转 px
+    if (/\d+rpx$/.test(i)) {
+      formatted = global.__formatValue(i) + 'px'
+    } else {
+      formatted = i
+    }
+    return `${res}${idx === 0 ? '' : ' '}${formatted}`
   }, '')
 }
 
@@ -657,6 +698,20 @@ function transformFlex (styleObj: Record<string, any>) {
   }
 }
 
+function expandTextDecoration (values: string[]): string[] {
+  const supportedLineValues = new Set(['none', 'underline', 'line-through'])
+  const lineValues: string[] = []
+  const otherValues: string[] = []
+  for (const v of values) {
+    if (supportedLineValues.has(v)) {
+      lineValues.push(v)
+    } else {
+      otherValues.push(v)
+    }
+  }
+  return lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
+}
+// Todo 目前仅支持指定属性的简写值，且不同于编译时的 class 处理，暂不支持缺省值，后续优化
 function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
   if (shorthandKeys.length === 0) return
   for (const key of shorthandKeys) {
@@ -672,7 +727,12 @@ function transformShorthand (styleObj: Record<string, any>, shorthandKeys: strin
     const props = runtimeAbbreviationMap[key]
     if (!props) continue
     if (hasOwn(runtimeCompositeStyleMap, key) && values.length === 1) continue
-    const expandedValues = hasOwn(runtimeCompositeStyleMap, key) ? expandCompositeValues(values) : values
+    let expandedValues = values
+    if (hasOwn(runtimeCompositeStyleMap, key)) {
+      expandedValues = expandCompositeValues(values)
+    } else if (key === 'textDecoration') {
+      expandedValues = expandTextDecoration(values)
+    }
     const pairs = expandAbbreviation(expandedValues, props)
     delete styleObj[key]
     for (const [prop, val] of pairs) {
@@ -691,14 +751,19 @@ function transformFontFamily (styleObj: Record<string, any>) {
   const values = parseValues(stripped, ',')
   styleObj.fontFamily = values[0].trim()
 }
-
+function transOrderXY (values: string[]) {
+  if (values.length === 2 && ['top', 'bottom'].includes(values[0])) {
+    [values[0], values[1]] = [values[1], values[0]]
+  }
+  return values
+}
 function transformBackground (styleObj: Record<string, any>) {
   if (typeof styleObj.backgroundSize === 'string') {
     styleObj.backgroundSize = parseValues(styleObj.backgroundSize)
   }
   if (typeof styleObj.backgroundPosition === 'string') {
     const parts = parseValues(styleObj.backgroundPosition)
-    styleObj.backgroundPosition = parts.map(v => v === 'center' ? '50%' : v)
+    styleObj.backgroundPosition = transOrderXY(parts.map(v => v === 'center' ? '50%' : v))
   }
   const value = styleObj.background
   if (typeof value !== 'string') return
@@ -739,7 +804,7 @@ function transformBackground (styleObj: Record<string, any>) {
       }
     }
   }
-  if (positionValues.length) styleObj.backgroundPosition = positionValues
+  if (positionValues.length) styleObj.backgroundPosition = transOrderXY(positionValues)
   if (sizeValues.length) styleObj.backgroundSize = sizeValues
 }
 
