@@ -59,7 +59,7 @@ const eventListener = (event) => {
 
 // 环境判断逻辑
 const systemUA = navigator.userAgent
-if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
+if ((systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) || systemUA.indexOf('Touch \'n Go') > -1) {
   env = 'my'
 } else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
   env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx'
