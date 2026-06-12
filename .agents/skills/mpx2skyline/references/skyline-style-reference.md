@@ -4,30 +4,52 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 
 ## 目录
 
-- [样式能力支持情况](#样式能力支持情况)
-  - [选择器支持](#选择器支持)
-  - [单位与类型支持](#单位与类型支持)
-  - [CSS 变量与函数](#css-变量与函数)
-  - [布局模块支持](#布局模块支持)
-- [样式属性支持详情](#样式属性支持详情)
-  - [布局属性（Flexbox）](#布局属性flexbox)
-  - [定位与层级](#定位与层级)
-  - [尺寸与溢出](#尺寸与溢出)
-  - [间距（Margin/Padding）](#间距marginpadding)
-  - [边框（Border）](#边框border)
-  - [背景（Background）](#背景background)
-  - [文本与字体](#文本与字体)
-  - [变换（Transform）](#变换transform)
-  - [阴影与不透明度](#阴影与不透明度)
-  - [动画与过渡](#动画与过渡)
-  - [滤镜与遮罩](#滤镜与遮罩)
-  - [其他属性](#其他属性)
-  - [不支持的属性](#不支持的属性)
-- [与 WebView 模式的关键样式差异](#与-webview-模式的关键样式差异)
+
+- [Skyline WXSS 样式能力参考](#skyline-wxss-样式能力参考)
+  - [目录](#目录)
+  - [样式能力支持情况](#样式能力支持情况)
+    - [模块支持](#模块支持)
+    - [选择器支持](#选择器支持)
+    - [值类型支持](#值类型支持)
+    - [CSS 变量与函数](#css-变量与函数)
+  - [样式属性支持详情](#样式属性支持详情)
+    - [布局](#布局)
+    - [Flex布局](#flex布局)
+    - [定位与层级](#定位与层级)
+    - [尺寸（Width/Height）](#尺寸widthheight)
+    - [间距（Margin/Padding）](#间距marginpadding)
+    - [边框（Border）](#边框border)
+    - [背景（Background）](#背景background)
+    - [文本与字体](#文本与字体)
+    - [变换（Transform）](#变换transform)
+    - [阴影与不透明度](#阴影与不透明度)
+    - [动画与过渡](#动画与过渡)
+    - [滤镜与遮罩](#滤镜与遮罩)
+    - [其他属性](#其他属性)
+    - [不支持的属性](#不支持的属性)
+  - [与 WebView 模式的关键样式差异](#与-webview-模式的关键样式差异)
 
 ---
 
 ## 样式能力支持情况
+
+### 模块支持
+
+| 模块 | 支持情况 | 备注 |
+| --- | --- | --- |
+| Flex 布局 | ✅ | 含 `inline-flex`，是 Skyline 默认布局 |
+| Block 布局 | ✅ | 推荐开启默认Block布局，配置 `rendererOptions.skyline.defaultDisplayBlock: true` |
+| Positioned 布局 | ✅ | `sticky` 不支持，使用 `sticky-header`/`sticky-section` 替代 |
+| CSS Animation | ✅ | Android 8.0.37+，iOS 8.0.39+ |
+| CSS Transition | ✅ | |
+| CSS Variable | ✅ | Android 8.0.35+，iOS 8.0.38+ |
+| 背景与边框 | ✅ | |
+| 盒子模型 | ✅ | 支持 `border-box` 和 `content-box`，**无 BFC** |
+| 字体 / `@font-face` | ✅ | 仅支持 ttf 格式 |
+| Inline / Inline-Block 布局 | ❌ | 可在 `<text>` 内嵌套使用 |
+| Media queries | 部分支持 | 仅支持 DarkMode（`@media (prefers-color-scheme: dark)`） |
+| Grid 布局 | ❌ | 使用 Flex 布局或 `grid-view` 组件替代 |
+
 
 ### 选择器支持
 
@@ -49,11 +71,11 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 | 伪类 `:nth-child` | | ✅ | 8.0.50 | 对应 Skyline 1.3.3 |
 | 伪元素 | `::before {}` / `::after {}` | ✅ | | 只支持 ::before 和 ::after，必须双冒号声明 |
 
-### 单位与类型支持
+### 值类型支持
 
-**长度单位（`<length>`）：**
+**长度（`<length>`）：**
 
-| 单位 | 支持 | 说明 |
+| 单位/格式 | 支持 | 说明 |
 | --- | --- | --- |
 | `px` | ✅ | |
 | `rpx` | ✅ | |
@@ -64,7 +86,7 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 | `%` | ✅ | 部分属性支持 |
 | `auto` | ✅ | |
 | `calc()` | ✅ | 仅支持长度类型计算，**不支持角度类型** |
-| `env()` | ✅ | 仅支持 `safe-area-inset-top/right/bottom/left` |
+| `env()` | ✅ | 仅支持 `safe-area-inset-*系列，safe-area-inset-top/right/bottom/left` |
 
 **颜色值（`<color>`）：**
 
@@ -76,26 +98,25 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 | `#RGB` / `#RRGGBB` / `#RGBA` / `#RRGGBBAA` | ✅ | |
 | `rgb()` / `rgba()` | ✅ | |
 | `hsl()` / `hsla()` | ✅ | |
-| `hwb()` | ✅ | |
 
 **渐变（`<gradient>`）：**
 
 | 格式 | 支持 | 限制 |
 | --- | --- | --- |
-| `linear-gradient()` | ✅ | 颜色停止位置支持 `%` 和固定长度单位（px、rpx 等） |
-| `radial-gradient()` | ✅ | 仅支持 `circle` 形状；尺寸仅支持 `px`；颜色停止位置仅支持 `%` |
+| `linear-gradient()` | ✅ | 颜色停止位置仅支持 `%` 和固定长度单位（px、rpx 等） |
+| `radial-gradient()` | ✅ | 仅支持 `circle` 形状（不支持 `ellipse`）；尺寸仅支持 `px`；颜色停止位置仅支持 `%` |
 | `conic-gradient()` | ✅ | 完全支持 |
 
 **其他类型：**
 
-| 格式 | 支持 | 说明 |
-| --- | --- | --- |
-| `url()` | ✅ | |
-| `<angle>`（`deg` / `grad` / `rad` / `turn`） | ✅ | |
-| `<time>`（`s` / `ms`） | ✅ | |
-| `<border-style>`（`none` / `solid` / `dashed` / `dotted` / `hidden`） | ✅ | |
-| `<timing-function>`（`ease` / `ease-in` / `ease-out` / `ease-in-out` / `linear` / `cubic-bezier()` / `steps()`） | ✅ | |
-| `<filter-function>`（`blur()` / `brightness()` / `contrast()` / `grayscale()` / `hue-rotate()` / `invert()` / `opacity()` / `saturate()` / `sepia()`） | 部分支持 | 不支持 `drop-shadow()`；不支持多函数组合 |
+| 类型 | 格式 | 支持 | 说明 |
+| --- | --- | --- | --- |
+| `<url>` | `url()` | ✅ | |
+| `<angle>` | `deg` / `grad` / `rad` / `turn` | ✅ | |
+| `<time>` | `s` / `ms` | ✅ | |
+| `<border-style>` | `none` / `solid` / `dashed` / `dotted` / `hidden` | ✅ | |
+| `<timing-function>` | `ease` / `ease-in` / `ease-out` / `ease-in-out` / `linear` / `cubic-bezier()` / `steps()` | ✅ | |
+| `<filter-function>` | `blur()` / `brightness()` / `contrast()` / `grayscale()` / `hue-rotate()` / `invert()` / `opacity()` / `saturate()` / `sepia()` | 部分支持 | 不支持 `drop-shadow()`；不支持多函数组合 |
 
 ### CSS 变量与函数
 
@@ -115,35 +136,28 @@ page {
 - 变量名必须以 `--` 开头
 - `var()` 支持 fallback 默认值语法：`var(--name, fallback)`
 
-### 布局模块支持
-
-| 模块 | 支持情况 | 备注 |
-| --- | --- | --- |
-| Flex 布局 | ✅ | 含 `inline-flex`，是 Skyline 默认布局 |
-| Block 布局 | ✅ | 需配置 `rendererOptions.skyline.defaultDisplayBlock: true` 开启 |
-| Positioned 布局 | ✅ | `sticky` 不支持，使用 `sticky-header`/`sticky-section` 替代 |
-| CSS Animation | ✅ | Android 8.0.37+，iOS 8.0.39+ |
-| CSS Transition | ✅ | |
-| CSS Variable | ✅ | Android 8.0.35+，iOS 8.0.38+ |
-| 背景与边框 | ✅ | |
-| 盒子模型 | ✅ | 支持 `border-box` 和 `content-box`，**无 BFC** |
-| 字体 / `@font-face` | ✅ | 仅支持 ttf 格式 |
-| Inline / Inline-Block 布局 | ❌ | 可在 `<text>` 内嵌套使用 |
-| Media queries | 部分支持 | 仅支持 DarkMode（`@media (prefers-color-scheme: dark)`） |
-| Grid 布局 | ❌ | 使用 Flex 布局或 `grid-view` 组件替代 |
-
 ---
 
 ## 样式属性支持详情
 
-### 布局属性（Flexbox）
+### 布局
 
 | 属性 | 值 | 默认值                                                                                                            | 说明 |
 | --- | --- |----------------------------------------------------------------------------------------------------------------| --- |
-| `display` | `none` \| `block` \| `flex` | 默认值与 WebView（`block`）不同；`defaultDisplayBlock: true` 时改为 `block`。不支持 `grid`、`flow-root`、`inline`、`inline-flex`、`inline-block` |
+| `display` | `none` \| `block` \| `flex` \|`inline` \|`inline-flex` \| `inline-block` | `flex` | 与 WebView（`block`）不同，`defaultDisplayBlock: true` 时默认值改为 `block`。不支持 `grid`、`flow-root` |
+| `box-sizing` | `content-box` \| `border-box` | `border-box` | 默认值与 WebView（`content-box`）不同；配置 `defaultContentBox: true` 时改为 `content-box`。不支持`padding-box` |
+| `overflow` | `visible` \| `hidden` | `visible` | 不支持 `auto`/`scroll`（滚动请使用 `scroll-view`）；不支持单独设置 `overflow-x`/`overflow-y` |
+| `visibility` | `visible` \| `hidden` | `visible` | |
+| `pointer-events` | `auto` \| `none` | `auto` | |
+| `aspect-ratio` | `auto` \| `<number>` \| `<number> / <number>` | `auto` |                                                                              |
+
+### Flex布局
+
+| 属性 | 值 | 默认值                                                                                                            | 说明 |
+| --- | --- |----------------------------------------------------------------------------------------------------------------| --- |
 | `flex-direction` | `row` \| `row-reverse` \| `column` \| `column-reverse` | `column`                                                                                                       | `defaultDisplayBlock: true` 时默认值改为 `row` |
 | `flex-wrap` | `nowrap` \| `wrap` \| `wrap-reverse` | `nowrap`                                                                                                       | |
-| `flex` | 简写 |                                                                                                                | |
+| `flex` | `none`\|`auto`\| 简写属性 |                                                                                                                | 简写属性，支持解析但以展开属性为准 |
 | `flex-grow` | `<number>` | `0`                                                                                                            | |
 | `flex-shrink` | `<number>` | `1`                                                                                                            | |
 | `flex-basis` | `<length>` \| `auto` | `auto`                                                                                                         | |
@@ -162,19 +176,15 @@ page {
 | `position` | `static` \| `relative` \| `absolute` \| `fixed` | `relative` | 不支持 `sticky`（使用 `sticky-header`/`sticky-section` 替代）；`fixed` 不支持 `auto` 偏移默认值解析 |
 | `top` / `right` / `bottom` / `left` | `<length>` | `auto` | |
 | `z-index` | `auto` \| `<integer>` | `0` | **仅兄弟节点间生效，无层叠上下文机制**；不支持在 `scroll-view` 直接子节点上应用 |
-| `overflow` | `visible` \| `hidden` | `visible` | 不支持 `auto`/`scroll`（滚动请使用 `scroll-view`）；不支持单独设置 `overflow-x`/`overflow-y` |
-| `visibility` | `visible` \| `hidden` | `visible` | |
-| `pointer-events` | `auto` \| `none` | `auto` | |
 
-### 尺寸与溢出
+
+### 尺寸（Width/Height）
 
 | 属性 | 值 | 默认值 | 说明                                                                           |
 | --- | --- | --- |------------------------------------------------------------------------------|
 | `width` / `height` | `<length>` \| `auto` | `auto` |                                                                              |
 | `min-width` / `min-height` | `<length>` | `0` |                                                                              |
 | `max-width` / `max-height` | `<length>` | `none` |                                                                              |
-| `box-sizing` | `content-box` \| `border-box` | `border-box` | 默认值与 WebView（`content-box`）不同；配置 `defaultContentBox: true` 时改为 `content-box` |
-| `aspect-ratio` | `auto` \| `<number>` \| `<number> / <number>` | `auto` |                                                                              |
 
 ### 间距（Margin/Padding）
 
@@ -206,7 +216,7 @@ page {
 
 **渐变语法支持：**
 
-- `linear-gradient([ <angle> | to <side-or-corner> ,]? <color-stop-list>)` — 完整支持
+- `linear-gradient([ <angle> | to <side-or-corner> ,]? <color-stop-list>)` — 颜色停止位置仅支持 `%` 和固定长度单位（px、rpx 等）
 - `radial-gradient(circle [<size>]? [at <position>]?, <color-stop-list>)` — 仅 `circle` 形状；尺寸仅支持 `px`；颜色停止位置仅支持 `%`
 - `conic-gradient([from <angle>]? [at <position>]?, <angular-color-stop-list>)` — 完整支持
 
@@ -310,6 +320,7 @@ page {
 - `position: sticky` → 使用 `sticky-header`/`sticky-section` 组件
 - `justify-items` / `direction` → ⛔ 不可用
 - `text-indent` / `overflow-wrap` / `writing-mode` / `text-decoration-thickness` → ⛔ 不可用
+- `list-style-type` / `list-style-image` / `list-style-position` → ⛔ 列表样式属性不可用
 - `em` 单位 → 使用 `rpx` / `px` / `rem`
 - `currentColor` → 显式指定颜色值
 - 多列布局（`column-*`）→ 使用 Flex 布局或 `grid-view` 组件
@@ -328,9 +339,8 @@ page {
 | `box-sizing` 默认值 | `content-box` | **`border-box`** | 配置 `defaultContentBox: true` 或手动指定 |
 | `overflow: scroll` | 支持 | **不支持** | 使用 `scroll-view` 组件 |
 | `overflow-x` / `overflow-y` | 支持单独设置 | **不支持** | 整体 `overflow` 或 `scroll-view` |
-| `position: fixed` | 完全支持 | 降级为 `absolute`，不支持 `auto` 偏移默认值 | 使用 `root-portal` + `skyline-root` |
 | `position: sticky` | 支持 | **不支持** | 使用 `sticky-header` / `sticky-section` |
-| `z-index` | 层叠上下文机制 | **仅兄弟节点生效**，无层叠上下文 | 重构为兄弟节点结构，全局用 `root-portal` |
+| `z-index` | 层叠上下文机制 | **仅兄弟节点生效**，无层叠上下文，不支持在 scroll-view 下的直接子节点上应用 | 重构为兄弟节点结构 |
 | `*` 通配选择器 | 支持 | **不支持** | 使用具体类选择器 |
 | `[attr]` 属性选择器 | 支持 | **不支持** | 使用类选择器 |
 | `:before` / `:after` 单冒号 | 支持 | **不支持**，必须双冒号 | 替换为 `::before` / `::after` |
