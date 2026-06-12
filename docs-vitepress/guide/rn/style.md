@@ -332,8 +332,8 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 
 > [!tip] 编译时 vs 运行时
 >
-> - ✅ **class 类样式**：考虑到运行时转化的性能开销问题，简写属性只会在编译时转换
-> - ❌ **style 属性**：简写属性不会在运行时转换，RN 不支持的简写属性无法使用
+> - ✅ **class 类样式**：编译时会自动展开 RN 不支持的简写属性
+> - ✅ **style 属性**：运行时会自动展开受支持的简写属性
 >
 > **CSS 变量限制**
 > - ❌ 简写属性不支持单个 `var()` 函数，编译时会报错并原样返回
@@ -921,16 +921,18 @@ padding-left: 20px;   /* 左内边距 */
 
 边框的简写属性。
 
-**值类型**：`<border-width>` `<border-style>` `<border-color>`
+**值类型**：`<border-width>` || `<border-style>` || `<border-color>`
 
 > [!important] 💡 Mpx 增强
 >
-> 值按固定顺序分别赋值给 `border-width` `border-style` `border-color`，若值个数不够则后置位属性不设置；和所有简写属性一致，仅支持定义在 class 类上
+> 按值类型识别并展开为 `border-width`、`border-style`、`border-color`，合法值不强制书写顺序；`border-width` 仅支持数值单位和 `hairlineWidth`，不支持 `thin` / `medium` / `thick`
 
 ```css
-border: 1px solid red;    /* 宽度 样式 颜色 */
-border: 2px dotted;       /* 宽度 样式（颜色不设置） */
-border: 1px;              /* 宽度（样式和颜色不设置） */
+border: 1px solid red;
+border: red solid 1px;
+border: solid #e5e5e5;
+border: none;             /* 转换为 border-width: 0 */
+border: 1px none red;     /* 任意 token 为 none 时整体短路，转换为 border-width: 0 */
 ```
 
 ### border-width
@@ -1012,15 +1014,20 @@ border-bottom-right-radius: 8px; /* 右下角 */
 
 单边边框的简写属性。
 
-**值类型**：`<border-width>` `<border-style>` `<border-color>`
+**值类型**：`<border-width>` || `<border-style>` || `<border-color>`
 
 > [!important] 💡 Mpx 增强
 >
-> 值按固定顺序分别赋值，若值个数不够则后置位属性不设置；仅支持定义在 class 类上
+> 按值类型识别并展开，合法值不强制书写顺序：
+> - `<border-width>` → `border-*-width`（对应方向）
+> - `<border-color>` → `border-*-color`（对应方向）
+> - `<border-style>` → `border-style`（RN 不支持单边 `border-*-style`，统一作用于四边）
 
 ```css
 border-top: 1px solid red;    /* 上边框：宽度 样式 颜色 */
+border-top: red solid 1px;    /* 顺序不敏感 */
 border-left: 2px dotted blue; /* 左边框：宽度 样式 颜色 */
+border-left: none;            /* 转换为 border-left-width: 0 */
 ```
 
 ### background
@@ -1282,13 +1289,14 @@ vertical-align: top;    /* 顶部对齐 */
 
 文本装饰线的简写属性。
 
-**值类型**：`<text-decoration-line>` `<text-decoration-style>` `<text-decoration-color>`
+**值类型**：`<text-decoration-line>` || `<text-decoration-style>` || `<text-decoration-color>`
 
 > [!tip] 注意
 >
-> - 按 `<text-decoration-line>`、`<text-decoration-style>`、`<text-decoration-color>` 顺序赋值
+> - 按值类型识别并展开为 `text-decoration-line`、`text-decoration-style`、`text-decoration-color`，合法值不强制书写顺序
+> - `text-decoration-line` 唯一支持的多值组合是 `underline line-through`；`none` 只作为单值生效
 > - 赋值过程中，如遇到不支持的属性会忽略该属性；若属性值校验不合法，则忽略该值，继续校验下一个值是否合法，合法则赋值，不合法则继续校验下一个值
-> - RN 原生不支持 `text-decoration` 简写，可使用是由框架编译时处理，所以仅支持定义在 class 类上
+> - RN 原生不支持 `text-decoration` 简写，可使用是由框架编译和运行时处理
 > - android 下仅转换`<text-decoration-line>`，`<text-decoration-style>`/`<text-decoration-color>` 因不支持不会添加
 > - 遵循[文本样式继承规则](#inheritance-rule)
 
@@ -1296,6 +1304,8 @@ vertical-align: top;    /* 顶部对齐 */
 text-decoration: underline;           /* 下划线 */
 text-decoration: line-through;        /* 删除线 */
 text-decoration: underline dotted red; /* 样式 + 颜色（iOS） */
+text-decoration: red underline solid; /* 顺序不敏感（iOS） */
+text-decoration: underline line-through red; /* 下划线 + 删除线 */
 ```
 
 ### text-transform
@@ -1337,14 +1347,17 @@ letter-spacing: 2rpx; /* 字符间距 2rpx */
 
 设置文本阴影偏移量、模糊半径和颜色。
 
-**值类型**：`<offset-x> <offset-y> <blur-radius> <color>`
+**值类型**：`<color>? && <offset-x> <offset-y> <blur-radius>?`
 
 > [!important] 💡 Mpx 增强
 >
 > RN 不支持 `text-shadow` 属性，Mpx 按 RN 支持的 `textShadowOffset`、`textShadowRadius`、`textShadowColor` 属性转换
 >
 > **简写规则**：
-> - 按 `offset-x` `offset-y` `blur-radius` `color` 顺序赋值
+> - `<offset-x>` 与 `<offset-y>` 必填；`<blur-radius>` 与 `<color>` 可选
+> - 颜色可以写在长度组前后任意位置
+> - 长度组内部保持顺序：第一个长度为 `offset-x`，第二个长度为 `offset-y`，第三个长度为 `blur-radius`
+> - 编译时和运行时如缺省 `<offset-y>` 都会发出 warn 并按 `0` 兜底
 > - 不支持的属性会被忽略，值校验不合法时跳过该值继续校验下一个
 > - 遵循[文本样式继承规则](#inheritance-rule)
 
@@ -1358,6 +1371,9 @@ text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 
 /* offset-x | offset-y | color（省略模糊半径） */
 text-shadow: 2px 2px #000;
+
+/* color | offset-x | offset-y | blur-radius */
+text-shadow: #000 2px 2px 4px;
 ```
 
 ### font-variant

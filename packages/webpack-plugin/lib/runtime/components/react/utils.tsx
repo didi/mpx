@@ -39,6 +39,7 @@ const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
 const envUseRegExp = /env\(/
+const lengthValueRegExp = /^(-?(?:\d+(?:\.\d+)?|\.\d+)(?:rpx|px|%|vw|vh)?|hairlineWidth)$/
 const defaultBoxSizingStyle = {
   boxSizing: 'content-box'
 }
@@ -76,10 +77,11 @@ const runtimeAbbreviationMap: Record<string, string[]> = {
   borderWidth: ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth'],
   borderColor: ['borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'],
   border: ['borderWidth', 'borderStyle', 'borderColor'],
-  borderTop: ['borderTopWidth', 'borderTopStyle', 'borderTopColor'],
-  borderRight: ['borderRightWidth', 'borderRightStyle', 'borderRightColor'],
-  borderBottom: ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
-  borderLeft: ['borderLeftWidth', 'borderLeftStyle', 'borderLeftColor'],
+  // RN 不支持单边 border-*-style，统一展开到 borderStyle
+  borderTop: ['borderTopWidth', 'borderStyle', 'borderTopColor'],
+  borderRight: ['borderRightWidth', 'borderStyle', 'borderRightColor'],
+  borderBottom: ['borderBottomWidth', 'borderStyle', 'borderBottomColor'],
+  borderLeft: ['borderLeftWidth', 'borderStyle', 'borderLeftColor'],
   flexFlow: ['flexDirection', 'flexWrap'],
   textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
   textDecoration: ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor']
@@ -90,6 +92,50 @@ const runtimeCompositeStyleMap: Record<string, boolean> = {
   borderRadius: true,
   borderWidth: true,
   borderColor: true
+}
+const runtimeUnorderedAbbreviationMap: Record<string, boolean> = {
+  border: true,
+  borderTop: true,
+  borderRight: true,
+  borderBottom: true,
+  borderLeft: true,
+  flexFlow: true,
+  textShadow: true,
+  textDecoration: true
+}
+const borderShorthandMap: Record<string, boolean> = {
+  border: true,
+  borderTop: true,
+  borderRight: true,
+  borderBottom: true,
+  borderLeft: true
+}
+const borderStyleMap: Record<string, boolean> = {
+  solid: true,
+  dotted: true,
+  dashed: true
+}
+const textDecorationLineMap: Record<string, boolean> = {
+  none: true,
+  underline: true,
+  'line-through': true
+}
+const textDecorationStyleMap: Record<string, boolean> = {
+  solid: true,
+  double: true,
+  dotted: true,
+  dashed: true
+}
+const flexDirectionMap: Record<string, boolean> = {
+  row: true,
+  'row-reverse': true,
+  column: true,
+  'column-reverse': true
+}
+const flexWrapMap: Record<string, boolean> = {
+  wrap: true,
+  nowrap: true,
+  'wrap-reverse': true
 }
 const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-top': 'top',
@@ -299,6 +345,10 @@ function isColorValue (token: string): boolean {
   if (token.startsWith('#') || token.startsWith('rgb(') || token.startsWith('rgba(') || token.startsWith('hsl(') || token.startsWith('hsla(')) return true
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return hasOwn(require('./namedColorSet').default, token.toLowerCase())
+}
+
+function isLengthValue (token: string): boolean {
+  return lengthValueRegExp.test(token)
 }
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
@@ -635,19 +685,83 @@ function expandCompositeValues (values: string[]): string[] {
 
 function expandAbbreviation (values: string[], props: string[]): Array<[string, any]> {
   const result: Array<[string, any]> = []
-  const dotMap: Record<string, Record<string, any>> = {}
   for (let i = 0; i < props.length && i < values.length; i++) {
-    const prop = props[i]
-    const formatted = global.__formatValue(values[i])
-    if (prop.includes('.')) {
-      const [main, sub] = prop.split('.')
-      if (!dotMap[main]) {
-        dotMap[main] = {}
-        result.push([main, dotMap[main]])
+    pushExpandedPair(result, props[i], global.__formatValue(values[i]))
+  }
+  return result
+}
+
+function pushExpandedPair (result: Array<[string, any]>, prop: string, value: any) {
+  if (prop.includes('.')) {
+    const [main, sub] = prop.split('.')
+    let entry = result.find(item => item[0] === main)
+    if (!entry) {
+      entry = [main, {}]
+      result.push(entry)
+    }
+    entry[1][sub] = value
+  } else {
+    result.push([prop, value])
+  }
+}
+
+function getUnorderedShorthandProp (key: string, token: string, used: Record<string, boolean>): string | undefined {
+  const props = runtimeAbbreviationMap[key]
+  for (const prop of props) {
+    if (used[prop]) continue
+    if (matchRuntimeShorthandProp(prop, token)) return prop
+  }
+}
+
+function matchRuntimeShorthandProp (prop: string, token: string): boolean {
+  if (prop === 'textShadowOffset.width' || prop === 'textShadowOffset.height' || prop === 'textShadowRadius') return isLengthValue(token)
+  if (prop === 'textShadowColor') return isColorValue(token)
+  if (prop.endsWith('Width')) return isLengthValue(token)
+  if (prop === 'textDecorationStyle') return hasOwn(textDecorationStyleMap, token)
+  if (prop.endsWith('Style')) return hasOwn(borderStyleMap, token)
+  if (prop.endsWith('Color')) return isColorValue(token)
+  if (prop === 'flexDirection') return hasOwn(flexDirectionMap, token)
+  if (prop === 'flexWrap') return hasOwn(flexWrapMap, token)
+  return false
+}
+
+function expandUnorderedAbbreviation (key: string, values: string[]): Array<[string, any]> {
+  const result: Array<[string, any]> = []
+  const used: Record<string, boolean> = {}
+  let hasTextDecorationNone = false
+  let hasUnderline = false
+  let hasLineThrough = false
+  for (const value of values) {
+    if (key === 'textDecoration' && hasOwn(textDecorationLineMap, value)) {
+      switch (value) {
+        case 'underline':
+          hasUnderline = true
+          continue
+        case 'line-through':
+          hasLineThrough = true
+          continue
+        case 'none':
+          hasTextDecorationNone = true
+          continue
+        // textDecorationLineMap 命中但分支未处理的 line token：落到通用 getUnorderedShorthandProp 流程
       }
-      dotMap[main][sub] = formatted
-    } else {
-      result.push([prop, formatted])
+    }
+    const prop = getUnorderedShorthandProp(key, value, used)
+    if (!prop) continue
+    used[prop] = true
+    pushExpandedPair(result, prop, global.__formatValue(value))
+  }
+  if (hasUnderline || hasLineThrough) {
+    result.push(['textDecorationLine', hasUnderline && hasLineThrough ? 'underline line-through' : hasUnderline ? 'underline' : 'line-through'])
+  } else if (hasTextDecorationNone) {
+    result.push(['textDecorationLine', 'none'])
+  }
+  // text-shadow 至少需要 offset-x / offset-y；缺省 height 时按 CSS 默认补 0 并发出 warn
+  if (key === 'textShadow') {
+    const offsetEntry = result.find(item => item[0] === 'textShadowOffset')?.[1]
+    if (offsetEntry && offsetEntry.width !== undefined && offsetEntry.height === undefined) {
+      warn(`Value of [textShadow:${values.join(' ')}] is missing offset-y, fallback to 0, please check again!`)
+      offsetEntry.height = 0
     }
   }
   return result
@@ -698,42 +812,34 @@ function transformFlex (styleObj: Record<string, any>) {
   }
 }
 
-function expandTextDecoration (values: string[]): string[] {
-  const supportedLineValues = new Set(['none', 'underline', 'line-through'])
-  const lineValues: string[] = []
-  const otherValues: string[] = []
-  for (const v of values) {
-    if (supportedLineValues.has(v)) {
-      lineValues.push(v)
-    } else {
-      otherValues.push(v)
-    }
-  }
-  return lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
-}
 // Todo 目前仅支持指定属性的简写值，且不同于编译时的 class 处理，暂不支持缺省值，后续优化
-function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
+export function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
   if (shorthandKeys.length === 0) return
   for (const key of shorthandKeys) {
     const value = styleObj[key]
     if (typeof value !== 'string') continue
-    if ((key === 'border' || key === 'borderTop' || key === 'borderRight' || key === 'borderBottom' || key === 'borderLeft') && value.trim() === 'none') {
+    const values = parseValues(value)
+    // border-style: none 在 CSS 规范中等价于无边框，整体短路为 border-width: 0
+    // 既覆盖整体 `border: none`，也覆盖混合写法 `border: 1px none red`
+    if (hasOwn(borderShorthandMap, key) && values.includes('none')) {
       const prop = runtimeAbbreviationMap[key][0]
       delete styleObj[key]
       if (!hasOwn(styleObj, prop)) styleObj[prop] = 0
       continue
     }
-    const values = parseValues(value)
     const props = runtimeAbbreviationMap[key]
     if (!props) continue
     if (hasOwn(runtimeCompositeStyleMap, key) && values.length === 1) continue
     let expandedValues = values
+    let pairs: Array<[string, any]>
     if (hasOwn(runtimeCompositeStyleMap, key)) {
       expandedValues = expandCompositeValues(values)
-    } else if (key === 'textDecoration') {
-      expandedValues = expandTextDecoration(values)
     }
-    const pairs = expandAbbreviation(expandedValues, props)
+    if (hasOwn(runtimeUnorderedAbbreviationMap, key)) {
+      pairs = expandUnorderedAbbreviation(key, values)
+    } else {
+      pairs = expandAbbreviation(expandedValues, props)
+    }
     delete styleObj[key]
     for (const [prop, val] of pairs) {
       if (!hasOwn(styleObj, prop)) styleObj[prop] = val

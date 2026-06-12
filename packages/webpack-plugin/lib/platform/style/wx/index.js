@@ -3,7 +3,8 @@ const { parseValues } = require('../../../utils/string')
 
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|caret-color|float|clear)$/
+  // border-*-style 在 RN 双端都不支持，仅支持统一的 border-style；shorthand 路径会展开到 border-style，长属性写法直接拦截
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|caret-color|float|clear|border-(top|right|bottom|left)-style)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -205,22 +206,13 @@ module.exports = function getSpec ({ warn, error }) {
 
   // 简写转换规则
   const AbbreviationMap = {
-    // 仅支持 offset-x | offset-y | blur-radius | color 排序
     'text-shadow': ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
-    // 仅支持 width | style | color 这种排序
     border: ['borderWidth', 'borderStyle', 'borderColor'],
-    // 仅支持 width | style | color 这种排序
-    'border-left': ['borderLeftWidth', 'borderLeftStyle', 'borderLeftColor'],
-    // 仅支持 width | style | color 这种排序
-    'border-right': ['borderRightWidth', 'borderRightStyle', 'borderRightColor'],
-    // 仅支持 width | style | color 这种排序
-    'border-top': ['borderTopWidth', 'borderTopStyle', 'borderTopColor'],
-    // 仅支持 width | style | color 这种排序
-    'border-bottom': ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
-    // 0.76 及以上版本RN支持 box-shadow，实测0.77版本drn红米note12pro Android12 不支持内阴影，其他表现和web一致
-    // 仅支持 offset-x | offset-y | blur-radius | color 排序
-    // 'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
-    // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
+    // RN 不支持单边 border-*-style，统一展开到 borderStyle
+    'border-left': ['borderLeftWidth', 'borderStyle', 'borderLeftColor'],
+    'border-right': ['borderRightWidth', 'borderStyle', 'borderRightColor'],
+    'border-top': ['borderTopWidth', 'borderStyle', 'borderTopColor'],
+    'border-bottom': ['borderBottomWidth', 'borderStyle', 'borderBottomColor'],
     'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
     // flex-grow | flex-shrink | flex-basis
     flex: ['flexGrow', 'flexShrink', 'flexBasis'],
@@ -232,13 +224,120 @@ module.exports = function getSpec ({ warn, error }) {
     margin: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
     padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']
   }
+
+  // 这些简写按 CSS 规范允许 token 顺序自由排列，按值类型识别归位
+  const UnorderedAbbreviationMap = {
+    'text-shadow': true,
+    'text-decoration': true,
+    'flex-flow': true,
+    border: true,
+    'border-left': true,
+    'border-right': true,
+    'border-top': true,
+    'border-bottom': true
+  }
+
+  const pushAbbreviationValue = (cssMap, prop, value) => {
+    if (prop.includes('.')) {
+      // 多个属性值的prop
+      const [main, sub] = prop.split('.')
+      const cssData = cssMap.find(item => item.prop === main)
+      if (cssData) { // 设置过
+        cssData.value[sub] = value
+      } else { // 第一次设置
+        cssMap.push({
+          prop: main,
+          value: {
+            [sub]: value
+          }
+        })
+      }
+    } else {
+      // 单个值的属性
+      cssMap.push({
+        prop,
+        value
+      })
+    }
+  }
+
+  const getVerifiedProp = (props, value, selector, mode, used) => {
+    return props.find(prop => {
+      if (used[prop]) return false
+      const newProp = hump2dash(prop.replace(/\..+/, ''))
+      return verifyValues({ prop: newProp, value, selector }, silentVerify) &&
+        verifyProps({ prop: newProp, value, selector }, { mode }, false)
+    })
+  }
+
+  const formatUnorderedAbbreviation = ({ prop, value, selector }, { mode }) => {
+    const originalValue = value
+    const values = Array.isArray(value) ? value : parseValues(value)
+    const original = `${prop}:${originalValue}`
+    const props = AbbreviationMap[prop]
+    const cssMap = []
+    const used = {}
+    let hasTextDecorationNone = false
+    let hasUnderline = false
+    let hasLineThrough = false
+    // values[0] 而非 originalValue：避免 originalValue 是数组时 toString() 误命中
+    if (values.length === 1 && cssVariableExp.test(values[0])) {
+      return { prop, value: values[0] }
+    }
+    values.forEach(value => {
+      if (prop === 'text-decoration' && verifyValues({ prop: 'text-decoration-line', value, selector }, silentVerify)) {
+        switch (value) {
+          case 'underline':
+            hasUnderline = true
+            return
+          case 'line-through':
+            hasLineThrough = true
+            return
+          case 'none':
+            hasTextDecorationNone = true
+            return
+          // verifyValues 通过但分支未处理的 line token：落到通用 getVerifiedProp 流程
+        }
+      }
+      const matchedProp = getVerifiedProp(props, value, selector, mode, used)
+      if (!matchedProp) {
+        warn(`Value of [${original}] in ${selector} is invalid, received [${value}], please check again!`)
+        return
+      }
+      used[matchedProp] = true
+      pushAbbreviationValue(cssMap, matchedProp, value)
+    })
+    if (prop === 'text-decoration') {
+      if (hasUnderline || hasLineThrough) {
+        pushAbbreviationValue(cssMap, 'textDecorationLine', hasUnderline && hasLineThrough ? 'underline line-through' : hasUnderline ? 'underline' : 'line-through')
+      } else if (hasTextDecorationNone) {
+        pushAbbreviationValue(cssMap, 'textDecorationLine', 'none')
+      }
+    }
+    if (prop === 'text-shadow') {
+      // text-shadow 至少需要 offset-x 与 offset-y；缺省 height 时按 CSS 默认补 0，避免 RN 上 textShadowOffset.height 缺失
+      const shadowOffsetEntry = cssMap.find(item => item.prop === 'textShadowOffset')
+      if (shadowOffsetEntry) {
+        const offsetVal = shadowOffsetEntry.value
+        if (offsetVal && offsetVal.width !== undefined && offsetVal.height === undefined) {
+          warn(`Value of [${original}] in ${selector} is missing offset-y, fallback to 0, please check again!`)
+          offsetVal.height = 0
+        }
+      }
+    }
+    return cssMap
+  }
+
   const formatAbbreviation = ({ prop, value, selector }, { mode }) => {
+    if (UnorderedAbbreviationMap[prop]) {
+      return formatUnorderedAbbreviation({ prop, value, selector }, { mode })
+    }
     const original = `${prop}:${value}`
     const props = AbbreviationMap[prop]
     const values = Array.isArray(value) ? value : parseValues(value)
     const cssMap = []
-    if (values.length === 1 && cssVariableExp.test(value)) {
-      return { prop, value }
+    if (values.length === 1 && cssVariableExp.test(values[0])) {
+      return { prop, value: values[0] }
     }
     let idx = 0
     let propsIdx = 0
@@ -269,28 +368,8 @@ module.exports = function getSpec ({ warn, error }) {
         } else {
           idx++
         }
-      } else if (prop.includes('.')) {
-        // 多个属性值的prop
-        const [main, sub] = prop.split('.')
-        const cssData = cssMap.find(item => item.prop === main)
-        if (cssData) { // 设置过
-          cssData.value[sub] = value
-        } else { // 第一次设置
-          cssMap.push({
-            prop: main,
-            value: {
-              [sub]: value
-            }
-          })
-        }
-        idx += 1
-        propsIdx += 1
       } else {
-        // 单个值的属性
-        cssMap.push({
-          prop,
-          value
-        })
+        pushAbbreviationValue(cssMap, prop, value)
         idx += 1
         propsIdx += 1
       }
@@ -672,34 +751,17 @@ module.exports = function getSpec ({ warn, error }) {
   //   return cssMap
   // }
 
-  const formatTextDecoration = ({ prop, value, selector }, { mode }) => {
-    const values = Array.isArray(value) ? value : parseValues(value)
-    if (values.length === 1 && cssVariableExp.test(value)) {
-      return { prop, value }
-    }
-    const lineValues = []
-    const otherValues = []
-    for (const v of values) {
-      if (SUPPORTED_PROP_VAL_ARR['text-decoration-line'].includes(v)) {
-        lineValues.push(v)
-      } else {
-        otherValues.push(v)
-      }
-    }
-    const processedValues = lineValues.length > 0 ? [lineValues.join(' '), ...otherValues] : otherValues
-    return formatAbbreviation({ prop, value: processedValues, selector }, { mode })
-  }
-
   const formatBorder = ({ prop, value, selector }, { mode }) => {
     value = value.trim()
-    if (value === 'none') {
+    // border-style: none 在 CSS 规范中等价于无边框，整体短路为 border-width: 0
+    // 既覆盖整体 `border: none`，也覆盖混合写法 `border: 1px none red`
+    if (value === 'none' || parseValues(value).includes('none')) {
       return {
-        prop: 'borderWidth',
+        prop: AbbreviationMap[prop][0],
         value: 0
       }
-    } else {
-      return formatAbbreviation({ prop, value, selector }, { mode })
     }
+    return formatUnorderedAbbreviation({ prop, value, selector }, { mode })
   }
 
   return {
@@ -748,13 +810,7 @@ module.exports = function getSpec ({ warn, error }) {
       //   harmony: formatBoxShadow
       // },
       {
-        test: 'text-decoration',
-        ios: formatTextDecoration,
-        android: formatTextDecoration,
-        harmony: formatTextDecoration
-      },
-      {
-        test: 'border',
+        test: /^(border|border-left|border-right|border-top|border-bottom)$/,
         ios: formatBorder,
         android: formatBorder,
         harmony: formatBorder
