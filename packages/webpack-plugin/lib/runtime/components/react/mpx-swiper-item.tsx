@@ -3,14 +3,14 @@ import Animated, { useAnimatedStyle, interpolate, SharedValue } from 'react-nati
 import { ReactNode, forwardRef, useRef, useContext, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, extendObject, isHarmony, useTextPassThroughValue } from './utils'
+import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, extendObject, isHarmony, useTextPassThrough } from './utils'
 import { SwiperContext } from './context'
 
 interface SwiperItemProps {
   'item-id'?: string
   'enable-offset'?: boolean
   'enable-var': boolean
-  'external-var-context'?: Record<string, any>
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -30,7 +30,7 @@ interface ContextType {
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
   const {
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
+    'enable-text-pass-through': enableTextPassThrough,
     style,
     customStyle,
     itemIndex
@@ -51,9 +51,9 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar })
   const { textStyle, innerStyle } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
   useNodesRef(props, ref, nodeRef, {
     style: normalStyle
   })

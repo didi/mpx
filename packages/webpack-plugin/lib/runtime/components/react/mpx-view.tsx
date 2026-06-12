@@ -12,7 +12,8 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThroughValue } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
+import { TextPassThroughContextValue } from './context'
 import { error, isFunction } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
 import LinearGradient from 'react-native-linear-gradient'
@@ -27,9 +28,9 @@ export interface _ViewProps extends ViewProps {
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'enable-background'?: boolean
+  'enable-text-pass-through'?: boolean
   'enable-var'?: boolean
   'enable-fast-image'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -128,18 +129,7 @@ const applyHandlers = (handlers: Handler[], args: any[]) => {
   }
 }
 
-const normalizeStyle = (style: ExtendedViewStyle = {}) => {
-  ['backgroundSize', 'backgroundPosition'].forEach(name => {
-    if (style[name] && typeof style[name] === 'string') {
-      if (style[name].trim()) {
-        style[name] = style[name].split(' ')
-      }
-    }
-  })
-  return style
-}
-
-const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && PERCENT_REGEX.test(val)
+const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && percentRegExp.test(val)
 
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
@@ -261,12 +251,12 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
   // 枚举值
   if (typeof width === 'string' && ['cover', 'contain'].includes(width)) {
     if (layoutInfo && imageSize) {
-      const layoutRatio = layoutWidth / imageSizeWidth
-      const eleRatio = imageSizeWidth / imageSizeHeight
-      // 容器宽高比 大于 图片的宽高比，依据宽度作为基准，否则以高度为基准
-      if ((layoutRatio <= eleRatio && (width as string) === 'contain') || (layoutRatio >= eleRatio && (width as string) === 'cover')) {
+      const containerRatio = layoutWidth / layoutHeight
+      const imageRatio = imageSizeWidth / imageSizeHeight
+      // 容器宽高比 小于等于 图片宽高比：contain 按宽缩放，cover 按高缩放
+      if ((containerRatio <= imageRatio && (width as string) === 'contain') || (containerRatio >= imageRatio && (width as string) === 'cover')) {
         dimensions = calculateSize(layoutWidth as number, imageSizeHeight / imageSizeWidth, true) as Size
-      } else if ((layoutRatio > eleRatio && (width as string) === 'contain') || (layoutRatio < eleRatio && (width as string) === 'cover')) {
+      } else if ((containerRatio > imageRatio && (width as string) === 'contain') || (containerRatio < imageRatio && (width as string) === 'cover')) {
         dimensions = calculateSize(layoutHeight as number, imageSizeWidth / imageSizeHeight) as Size
       }
     }
@@ -547,7 +537,7 @@ function normalizeBackgroundSize (
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
-  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = normalizeStyle(imageStyle) || {}
+  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
   const { type, src, linearInfo } = parseBgImage(backgroundImage)
 
   return {
@@ -682,7 +672,7 @@ interface WrapChildrenConfig {
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
   textProps?: Record<string, any>
-  textPassThrough?: ReturnType<typeof useTextPassThroughValue>
+  textPassThrough?: TextPassThroughContextValue | null
   innerStyle?: Record<string, any>
   enableFastImage?: boolean
 }
@@ -716,8 +706,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'enable-background': enableBackground,
+    'enable-text-pass-through': enableTextPassThrough,
     'enable-fast-image': enableFastImage,
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
@@ -757,14 +747,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     setHeight
   } = useTransformStyle(styleObj, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
@@ -812,15 +801,16 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       }
     ),
     [
-      'animation',
       'hover-start-time',
       'hover-stay-time',
       'hover-style',
       'hover-class',
-      'enable-fast-image',
+      'enable-background',
       'enable-animation',
-      'bindtransitionend',
-      'catchtransitionend'
+      'enable-fast-image',
+      'animation',
+      'catchtransitionend',
+      'bindtransitionend'
     ],
     {
       layoutRef

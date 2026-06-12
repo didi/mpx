@@ -26,7 +26,7 @@ import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
 import Portal from './mpx-portal'
 
@@ -42,7 +42,7 @@ export interface CheckboxProps extends Selection {
   groupValue?: Array<string>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -89,7 +89,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       color = '#09BB07',
       style = {},
       'enable-var': enableVar,
-      'external-var-context': externalVarContext,
+      'enable-text-pass-through': enableTextPassThrough,
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
@@ -136,7 +136,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+    } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
 
     const nodeRef = useRef(null)
 
@@ -148,7 +148,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+    const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
     if (backgroundStyle) {
       warn('Checkbox does not support background image-related styles!')

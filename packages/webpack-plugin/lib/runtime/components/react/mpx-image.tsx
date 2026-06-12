@@ -27,7 +27,7 @@ import { noop } from '@mpxjs/utils'
 import { LocalSvg, SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject, isAndroid } from './utils'
+import { svgRegExp, useLayout, useTransformStyle, renderImage, extendObject, isAndroid } from './utils'
 import Portal from './mpx-portal'
 
 export type Mode =
@@ -52,7 +52,6 @@ export interface ImageProps {
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -109,7 +108,7 @@ function getImageUri (src: string | ImageSourcePropType) {
 
 function isSvgSource (src: string | ImageSourcePropType) {
   const uri = getImageUri(src)
-  return SVG_REGEXP.test(uri)
+  return svgRegExp.test(uri)
 }
 
 function getImageSize (src: string | ImageSourcePropType, success: (width: number, height: number) => void, fail: () => void = noop) {
@@ -158,7 +157,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     mode = 'scaleToFill',
     style = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'enable-fast-image': enableFastImage,
     'parent-width': parentWidth,
@@ -217,7 +215,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,

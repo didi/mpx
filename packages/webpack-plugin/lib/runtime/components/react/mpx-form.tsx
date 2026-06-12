@@ -9,13 +9,13 @@ import { JSX, useRef, forwardRef, ReactNode, useMemo, createElement } from 'reac
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
+import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren, extendObject, useTextPassThrough } from './utils'
 interface FormProps {
   style?: Record<string, any>
   children?: ReactNode
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -32,7 +32,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   const {
     style,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -45,10 +45,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const formRef = useRef(null)
   useNodesRef(props, ref, formRef, {

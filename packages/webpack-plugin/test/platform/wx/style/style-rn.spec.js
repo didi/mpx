@@ -287,6 +287,283 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.warn).not.toHaveBeenCalled()
       expect(config.error).not.toHaveBeenCalled()
     })
+
+    describe('background-position [x, y] ordering', () => {
+      const positionCases = [
+        { input: 'top left', expected: ['"left"', '"top"'], desc: 'top left → [left, top]' },
+        { input: 'bottom right', expected: ['"right"', '"bottom"'], desc: 'bottom right → [right, bottom]' },
+        { input: 'left top', expected: ['"left"', '"top"'], desc: 'left top → [left, top] (already correct)' },
+        { input: 'top center', expected: ['"50%"', '"top"'], desc: 'top center → [50%, top]' },
+        { input: '50% 30%', expected: ['"50%"', '"30%"'], desc: '50% 30% → [50%, 30%] (no change)' }
+      ]
+
+      positionCases.forEach(({ input, expected, desc }) => {
+        test(desc, () => {
+          const css = `.bg { background-position: ${input}; }`
+          const config = createConfig()
+          const result = getClassMap({ content: css, filename: 'test.css', ...config })
+          expect(result.bg).toEqual({ backgroundPosition: expected })
+          expect(config.error).not.toHaveBeenCalled()
+        })
+      })
+    })
+  })
+
+  describe('Unordered shorthand', () => {
+    test('should expand unordered border shorthand', () => {
+      const css = '.box { border: red solid 1px; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.box).toEqual({
+        borderColor: '"red"',
+        borderStyle: '"solid"',
+        borderWidth: '1'
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should expand unordered side border shorthand', () => {
+      const css = '.top { border-top: red solid 1px; } .left { border-left: dashed 2px blue; } .none { border-top: none; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      // RN 不支持单边 border-*-style，shorthand 中的 style 槽位统一展开到 borderStyle
+      expect(result.top).toEqual({
+        borderTopColor: '"red"',
+        borderStyle: '"solid"',
+        borderTopWidth: '1'
+      })
+      expect(result.left).toEqual({
+        borderStyle: '"dashed"',
+        borderLeftWidth: '2',
+        borderLeftColor: '"blue"'
+      })
+      expect(result.none).toEqual({
+        borderTopWidth: '0'
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should expand unordered text-decoration shorthand', () => {
+      const css = '.dec { text-decoration: red underline solid; } .multi { text-decoration: underline line-through red; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.dec).toEqual({
+        textDecorationColor: '"red"',
+        textDecorationStyle: '"solid"',
+        textDecorationLine: '"underline"'
+      })
+      expect(result.multi).toEqual({
+        textDecorationColor: '"red"',
+        textDecorationLine: '"underline line-through"'
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should expand unordered flex-flow and text-shadow shorthand', () => {
+      const css = '.flow { flex-flow: wrap row; } .shadow { text-shadow: red 1px 2px 3px; } .shadow2 { text-shadow: 1px 2px red; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.flow).toEqual({
+        flexWrap: '"wrap"',
+        flexDirection: '"row"'
+      })
+      expect(result.shadow).toEqual({
+        textShadowColor: '"red"',
+        textShadowOffset: {
+          width: '1',
+          height: '2'
+        },
+        textShadowRadius: '3'
+      })
+      expect(result.shadow2).toEqual({
+        textShadowOffset: {
+          width: '1',
+          height: '2'
+        },
+        textShadowColor: '"red"'
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should still expand ordered border shorthand (regression)', () => {
+      const css = '.box { border: 1px solid red; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.box).toEqual({
+        borderWidth: '1',
+        borderStyle: '"solid"',
+        borderColor: '"red"'
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should accept partial border shorthand without all three slots', () => {
+      const css = '.a { border: solid; } .b { border: 2px; } .c { border-top: red; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.a).toEqual({ borderStyle: '"solid"' })
+      expect(result.b).toEqual({ borderWidth: '2' })
+      expect(result.c).toEqual({ borderTopColor: '"red"' })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should short-circuit to borderWidth: 0 when border shorthand contains none', () => {
+      const css = '.a { border: 1px none red; } .b { border-top: red none; } .c { border: none; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      // CSS 规范中 border-style: none 等价于无边框，整体短路为 border*Width: 0
+      expect(result.a).toEqual({ borderWidth: '0' })
+      expect(result.b).toEqual({ borderTopWidth: '0' })
+      expect(result.c).toEqual({ borderWidth: '0' })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should warn on duplicate same-type tokens in border shorthand', () => {
+      const css = '.box { border: 1px 2px solid red; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      // 第二个长度无法匹配未占用的属性，触发 invalid warn；其余三个槽位仍正常填充
+      expect(result.box).toEqual({
+        borderWidth: '1',
+        borderStyle: '"solid"',
+        borderColor: '"red"'
+      })
+      expect(config.warn).toHaveBeenCalled()
+    })
+
+    test('should fallback offset-y to 0 when text-shadow is missing the second length', () => {
+      const css = '.s { text-shadow: red 2px; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.s).toEqual({
+        textShadowColor: '"red"',
+        textShadowOffset: {
+          width: '2',
+          height: '0'
+        }
+      })
+      expect(config.warn).toHaveBeenCalled()
+    })
+
+    test('should warn on unknown text-decoration line tokens instead of treating them as none', () => {
+      const css = '.t { text-decoration: overline red; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      // overline 不是 RN 支持的 line 值，应走 invalid 路径，仅保留 color
+      expect(result.t).toEqual({
+        textDecorationColor: '"red"'
+      })
+      expect(config.warn).toHaveBeenCalled()
+    })
+
+    test('should keep single var() shorthand as-is for runtime parsing', () => {
+      // 单个 var() 的简写在编译期无法判断内部 token 类型，原样保留交给运行时解析
+      const css = `
+        .border { border: var(--my-border); }
+        .borderTop { border-top: var(--my-border-top); }
+        .deco { text-decoration: var(--my-deco); }
+        .shadow { text-shadow: var(--my-shadow); }
+        .flow { flex-flow: var(--my-flow); }
+      `
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.border).toEqual({ border: '"var(--my-border)"' })
+      expect(result.borderTop).toEqual({ borderTop: '"var(--my-border-top)"' })
+      expect(result.deco).toEqual({ textDecoration: '"var(--my-deco)"' })
+      expect(result.shadow).toEqual({ textShadow: '"var(--my-shadow)"' })
+      expect(result.flow).toEqual({ flexFlow: '"var(--my-flow)"' })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should reject direct per-side border-style longhand', () => {
+      // RN 双端都不支持 border-*-style 长属性，shorthand 仅在 border-* 简写中以 borderStyle 形式展开
+      const css = '.t { border-top-style: solid; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.t).toBeUndefined()
+      expect(config.error).toHaveBeenCalled()
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('border-top-style'))
+    })
   })
 
   describe('Direct normal values (without CSS variables)', () => {

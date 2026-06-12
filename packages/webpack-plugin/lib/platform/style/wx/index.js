@@ -1,9 +1,10 @@
 const { hump2dash } = require('../../../utils/hump-dash')
 const { parseValues } = require('../../../utils/string')
 
-module.exports = function getSpec({ warn, error }) {
+module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|caret-color|float|clear)$/
+  // border-*-style 在 RN 双端都不支持，仅支持统一的 border-style；shorthand 路径会展开到 border-style，长属性写法直接拦截
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|caret-color|float|clear|border-(top|right|bottom|left)-style)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -12,12 +13,22 @@ module.exports = function getSpec({ warn, error }) {
     // TODO: rnoh 文档暂未找到 css 属性支持说明，暂时同步 android，同时需要注意此处校验是否有缺失，类似 will-change 之类属性
     harmony: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
+  const isNum = (v) => !isNaN(+v)
   // var(xx)
   const cssVariableExp = /var\(/
   // calc(xx)
   const calcExp = /calc\(/
   const envExp = /env\(/
   const silentVerify = 'silent'
+  const namedColorSet = new Set(['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen'])
+  const hexColorExp = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
+  const colorFnExp = /^(rgb|rgba|hsl|hsla|hwb)\(.+\)$/
+  const valueExp = {
+    integer: { test: isNum },
+    length: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
+    color: { test: (v) => namedColorSet.has(v) || hexColorExp.test(v) || colorFnExp.test(v) }
+  }
+
   // 不支持的属性提示
   const unsupportedPropError = ({ prop, value, selector }, { mode }, isError = true) => {
     const tips = isError ? error : warn
@@ -119,7 +130,7 @@ module.exports = function getSpec({ warn, error }) {
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
     const rawValue = value.trim()
-    const tips = isError === silentVerify ? () => {} : isError ? error : warn
+    const tips = isError === silentVerify ? () => { } : isError ? error : warn
 
     // CSS 自定义属性（--xxx）是变量定义，不属于 RN 样式属性：
     // 不能按 `-height/-color` 等后缀推断类型去校验，否则会把变量定义错误过滤，导致运行时 var() 取值失败
@@ -145,12 +156,6 @@ module.exports = function getSpec({ warn, error }) {
 
     // calc() / env() 跳过值校验，但保留 rawValue 输出
     if (calcExp.test(valueForVerify) || envExp.test(valueForVerify)) return true
-    const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
-    const valueExp = {
-      integer: /^(-?(\d+(\.\d+)?|\.\d+))$/,
-      length: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
-      color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
-    }
     const type = getValueType(prop)
     const tipsType = (type) => {
       const info = {
@@ -201,22 +206,13 @@ module.exports = function getSpec({ warn, error }) {
 
   // 简写转换规则
   const AbbreviationMap = {
-    // 仅支持 offset-x | offset-y | blur-radius | color 排序
     'text-shadow': ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
-    // 仅支持 width | style | color 这种排序
     border: ['borderWidth', 'borderStyle', 'borderColor'],
-    // 仅支持 width | style | color 这种排序
-    'border-left': ['borderLeftWidth', 'borderLeftStyle', 'borderLeftColor'],
-    // 仅支持 width | style | color 这种排序
-    'border-right': ['borderRightWidth', 'borderRightStyle', 'borderRightColor'],
-    // 仅支持 width | style | color 这种排序
-    'border-top': ['borderTopWidth', 'borderTopStyle', 'borderTopColor'],
-    // 仅支持 width | style | color 这种排序
-    'border-bottom': ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
-    // 0.76 及以上版本RN支持 box-shadow，实测0.77版本drn红米note12pro Android12 不支持内阴影，其他表现和web一致
-    // 仅支持 offset-x | offset-y | blur-radius | color 排序
-    // 'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
-    // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
+    // RN 不支持单边 border-*-style，统一展开到 borderStyle
+    'border-left': ['borderLeftWidth', 'borderStyle', 'borderLeftColor'],
+    'border-right': ['borderRightWidth', 'borderStyle', 'borderRightColor'],
+    'border-top': ['borderTopWidth', 'borderStyle', 'borderTopColor'],
+    'border-bottom': ['borderBottomWidth', 'borderStyle', 'borderBottomColor'],
     'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
     // flex-grow | flex-shrink | flex-basis
     flex: ['flexGrow', 'flexShrink', 'flexBasis'],
@@ -228,15 +224,120 @@ module.exports = function getSpec({ warn, error }) {
     margin: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
     padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']
   }
+
+  // 这些简写按 CSS 规范允许 token 顺序自由排列，按值类型识别归位
+  const UnorderedAbbreviationMap = {
+    'text-shadow': true,
+    'text-decoration': true,
+    'flex-flow': true,
+    border: true,
+    'border-left': true,
+    'border-right': true,
+    'border-top': true,
+    'border-bottom': true
+  }
+
+  const pushAbbreviationValue = (cssMap, prop, value) => {
+    if (prop.includes('.')) {
+      // 多个属性值的prop
+      const [main, sub] = prop.split('.')
+      const cssData = cssMap.find(item => item.prop === main)
+      if (cssData) { // 设置过
+        cssData.value[sub] = value
+      } else { // 第一次设置
+        cssMap.push({
+          prop: main,
+          value: {
+            [sub]: value
+          }
+        })
+      }
+    } else {
+      // 单个值的属性
+      cssMap.push({
+        prop,
+        value
+      })
+    }
+  }
+
+  const getVerifiedProp = (props, value, selector, mode, used) => {
+    return props.find(prop => {
+      if (used[prop]) return false
+      const newProp = hump2dash(prop.replace(/\..+/, ''))
+      return verifyValues({ prop: newProp, value, selector }, silentVerify) &&
+        verifyProps({ prop: newProp, value, selector }, { mode }, false)
+    })
+  }
+
+  const formatUnorderedAbbreviation = ({ prop, value, selector }, { mode }) => {
+    const originalValue = value
+    const values = Array.isArray(value) ? value : parseValues(value)
+    const original = `${prop}:${originalValue}`
+    const props = AbbreviationMap[prop]
+    const cssMap = []
+    const used = {}
+    let hasTextDecorationNone = false
+    let hasUnderline = false
+    let hasLineThrough = false
+    // values[0] 而非 originalValue：避免 originalValue 是数组时 toString() 误命中
+    if (values.length === 1 && cssVariableExp.test(values[0])) {
+      return { prop, value: values[0] }
+    }
+    values.forEach(value => {
+      if (prop === 'text-decoration' && verifyValues({ prop: 'text-decoration-line', value, selector }, silentVerify)) {
+        switch (value) {
+          case 'underline':
+            hasUnderline = true
+            return
+          case 'line-through':
+            hasLineThrough = true
+            return
+          case 'none':
+            hasTextDecorationNone = true
+            return
+          // verifyValues 通过但分支未处理的 line token：落到通用 getVerifiedProp 流程
+        }
+      }
+      const matchedProp = getVerifiedProp(props, value, selector, mode, used)
+      if (!matchedProp) {
+        warn(`Value of [${original}] in ${selector} is invalid, received [${value}], please check again!`)
+        return
+      }
+      used[matchedProp] = true
+      pushAbbreviationValue(cssMap, matchedProp, value)
+    })
+    if (prop === 'text-decoration') {
+      if (hasUnderline || hasLineThrough) {
+        pushAbbreviationValue(cssMap, 'textDecorationLine', hasUnderline && hasLineThrough ? 'underline line-through' : hasUnderline ? 'underline' : 'line-through')
+      } else if (hasTextDecorationNone) {
+        pushAbbreviationValue(cssMap, 'textDecorationLine', 'none')
+      }
+    }
+    if (prop === 'text-shadow') {
+      // text-shadow 至少需要 offset-x 与 offset-y；缺省 height 时按 CSS 默认补 0，避免 RN 上 textShadowOffset.height 缺失
+      const shadowOffsetEntry = cssMap.find(item => item.prop === 'textShadowOffset')
+      if (shadowOffsetEntry) {
+        const offsetVal = shadowOffsetEntry.value
+        if (offsetVal && offsetVal.width !== undefined && offsetVal.height === undefined) {
+          warn(`Value of [${original}] in ${selector} is missing offset-y, fallback to 0, please check again!`)
+          offsetVal.height = 0
+        }
+      }
+    }
+    return cssMap
+  }
+
   const formatAbbreviation = ({ prop, value, selector }, { mode }) => {
+    if (UnorderedAbbreviationMap[prop]) {
+      return formatUnorderedAbbreviation({ prop, value, selector }, { mode })
+    }
     const original = `${prop}:${value}`
     const props = AbbreviationMap[prop]
     const values = Array.isArray(value) ? value : parseValues(value)
     const cssMap = []
-    // 复合属性不支持单个css var（css var可以接收单个值可以是复合值，复合值运行时不处理，这里前置提示一下）
-    if (values.length === 1 && cssVariableExp.test(value)) {
-      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
-      return cssMap
+    if (values.length === 1 && cssVariableExp.test(values[0])) {
+      return { prop, value: values[0] }
     }
     let idx = 0
     let propsIdx = 0
@@ -267,28 +368,8 @@ module.exports = function getSpec({ warn, error }) {
         } else {
           idx++
         }
-      } else if (prop.includes('.')) {
-        // 多个属性值的prop
-        const [main, sub] = prop.split('.')
-        const cssData = cssMap.find(item => item.prop === main)
-        if (cssData) { // 设置过
-          cssData.value[sub] = value
-        } else { // 第一次设置
-          cssMap.push({
-            prop: main,
-            value: {
-              [sub]: value
-            }
-          })
-        }
-        idx += 1
-        propsIdx += 1
       } else {
-        // 单个值的属性
-        cssMap.push({
-          prop,
-          value
-        })
+        pushAbbreviationValue(cssMap, prop, value)
         idx += 1
         propsIdx += 1
       }
@@ -318,19 +399,19 @@ module.exports = function getSpec({ warn, error }) {
     if (+value === 0) {
       return {
         prop,
-        value
+        value: 0
       }
     }
     return verifyValues({ prop, value, selector }) && ({
       prop,
-      value: /^\s*(-?(\d+(\.\d+)?|\.\d+))\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
+      value: isNum(value) ? `${Math.round(value * 100)}%` : value
     })
   }
 
   // background 相关属性的转换 Todo
   // 仅支持以下属性，不支持其他背景相关的属性
   // /^((?!(-color)).)*background((?!(-color)).)*$/ 包含background且不包含background-color
-  const checkBackgroundImage = ({ prop, value, selector }, { mode }) => {
+  const formatBackground = ({ prop, value, selector }, { mode }) => {
     const bgPropMap = {
       image: 'background-image',
       color: 'background-color',
@@ -360,15 +441,20 @@ module.exports = function getSpec({ warn, error }) {
       return values.length === 0 ? false : { prop: bgPropMap.size, value: values }
     }
     const formatBackgroundPosition = (value) => {
+      const yAxisKeywords = ['top', 'bottom']
       const values = []
       parseValues(value).forEach(item => {
         if (verifyValues({ prop: bgPropMap.position, value: item, selector })) {
           // 支持 number 值 /  枚举, center与50%等价
           values.push(item === 'center' ? '50%' : item)
         } else {
-          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
+          error(`Value of [${bgPropMap.position}] in ${selector} does not support value [${item}]`)
         }
       })
+      // CSS 允许 y x 顺序的关键字（如 top left），但输出需要 [x, y] 顺序
+      if (values.length === 2 && yAxisKeywords.includes(values[0])) {
+        ;[values[0], values[1]] = [values[1], values[0]]
+      }
       return { prop: bgPropMap.position, value: values }
     }
     switch (prop) {
@@ -391,8 +477,7 @@ module.exports = function getSpec({ warn, error }) {
       case bgPropMap.all: {
         // background: 支持 image/color/repeat 与 position/size
         if (cssVariableExp.test(value)) {
-          error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
-          return false
+          return { prop, value }
         }
         // background: none
         if (value === 'none') {
@@ -495,9 +580,6 @@ module.exports = function getSpec({ warn, error }) {
             key = key === 'rotate' ? 'rotateZ' : key
             transform.push({ [key]: val })
             break
-          case 'matrix':
-            transform.push({ [key]: parseValues(val, ',').map(val => +val) })
-            break
           case 'translate':
           case 'scale':
           case 'skew':
@@ -520,12 +602,47 @@ module.exports = function getSpec({ warn, error }) {
               }))
               break
             }
+          case 'rotate3d': {
+            const parts = parseValues(val, ',')
+            if (parts.length === 4) {
+              const x = +parts[0].trim()
+              const y = +parts[1].trim()
+              const z = +parts[2].trim()
+              const angle = parts[3].trim()
+              if (x && !y && !z) transform.push({ rotateX: angle })
+              else if (!x && y && !z) transform.push({ rotateY: angle })
+              else if (!x && !y && z) transform.push({ rotateZ: angle })
+              else unsupportedPropError({ prop, value, selector }, { mode })
+            } else {
+              error(`Value of [transform] in ${selector} does not support rotate3d with ${parts.length} values, only 4 values are supported`)
+            }
+            break
+          }
+          case 'matrix':
+            {
+              const matrixValues = parseValues(val, ',').map(val => +val)
+              if (matrixValues.length === 6) {
+                const [a, b, c, d, tx, ty] = matrixValues
+                transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
+              } else {
+                error(`Value of [transform] in ${selector} does not support matrix with ${matrixValues.length} values, only 6 values are supported in ${mode} environment!`)
+              }
+              break
+            }
+          case 'matrix3d':
+            {
+              const matrixValues = parseValues(val, ',').map(val => +val)
+              if (matrixValues.length === 16) {
+                transform.push({ matrix: matrixValues })
+              } else {
+                error(`Value of [transform] in ${selector} does not support matrix3d with ${matrixValues.length} values, only 16 values are supported in ${mode} environment!`)
+              }
+              break
+            }
+          // 不支持的属性处理
           case 'translateZ':
           case 'scaleZ':
-          case 'rotate3d': // x y z angle
-          case 'matrix3d':
           default:
-            // 不支持的属性处理
             unsupportedPropError({ prop, value, selector }, { mode })
             break
         }
@@ -633,16 +750,18 @@ module.exports = function getSpec({ warn, error }) {
   //   })
   //   return cssMap
   // }
+
   const formatBorder = ({ prop, value, selector }, { mode }) => {
     value = value.trim()
-    if (value === 'none') {
+    // border-style: none 在 CSS 规范中等价于无边框，整体短路为 border-width: 0
+    // 既覆盖整体 `border: none`，也覆盖混合写法 `border: 1px none red`
+    if (value === 'none' || parseValues(value).includes('none')) {
       return {
-        prop: 'borderWidth',
+        prop: AbbreviationMap[prop][0],
         value: 0
       }
-    } else {
-      return formatAbbreviation({ prop, value, selector }, { mode })
     }
+    return formatUnorderedAbbreviation({ prop, value, selector }, { mode })
   }
 
   return {
@@ -650,9 +769,9 @@ module.exports = function getSpec({ warn, error }) {
     rules: [
       { // 背景相关属性的处理
         test: /^(background|background-image|background-size|background-position)$/,
-        ios: checkBackgroundImage,
-        android: checkBackgroundImage,
-        harmony: checkBackgroundImage
+        ios: formatBackground,
+        android: formatBackground,
+        harmony: formatBackground
       },
       { // margin padding 内外边距的处理
         test: /^(margin|padding|border-radius|border-width|border-color)$/,
@@ -691,7 +810,7 @@ module.exports = function getSpec({ warn, error }) {
       //   harmony: formatBoxShadow
       // },
       {
-        test: 'border',
+        test: /^(border|border-left|border-right|border-top|border-bottom)$/,
         ios: formatBorder,
         android: formatBorder,
         harmony: formatBorder

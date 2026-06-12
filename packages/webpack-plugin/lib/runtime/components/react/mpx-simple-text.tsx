@@ -1,8 +1,7 @@
 import { Text, TextStyle, TextProps } from 'react-native'
-import { JSX, createElement, useContext } from 'react'
+import { JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
-import { TextPassThroughContext } from './context'
+import { extendObject, getDefaultAllowFontScaling, useTextPassThroughText, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
 import * as perf from '@mpxjs/perf'
 
 const SimpleText = (props: TextProps): JSX.Element => {
@@ -12,30 +11,22 @@ const SimpleText = (props: TextProps): JSX.Element => {
   // ───── style 阶段 ─────
   let idStyle = -1
   if (__mpx_perf_framework__) idStyle = perf.scopeStart('simple-text:render:style')
-  const inheritedText = useContext(TextPassThroughContext)
-  const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
   let hasBoxSizingAffectingStyle = false
-  const { textStyle = {} } = splitStyle(mergedStyle, (key) => {
+  const { textStyle } = splitStyle(props.style || {}, (key) => {
     if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
       hasBoxSizingAffectingStyle = true
     }
   })
-  const finalStyle = transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
+  const isStringOnly = isStringChildren(props.children)
+  const childTextStyle: TextStyle | undefined = !isStringOnly ? textStyle as TextStyle : undefined
+  const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
+  const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
   const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
+  transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
   const {
     allowFontScaling,
     children
   } = mergedProps
-  const isStringOnly = isStringChildren(children)
-  const childTextStyle: TextStyle | undefined = !isStringOnly && Object.keys(textStyle).length ? textStyle : undefined
-  const childTextPassThrough = useTextPassThroughValue(
-    childTextStyle,
-    undefined,
-    {
-      inheritTextProps: false,
-      disabled: isStringOnly
-    }
-  )
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────
@@ -47,7 +38,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
       mergedProps,
       {
         allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling(),
-        style: finalStyle
+        style: mergedStyle
       }
     )
   )
@@ -60,7 +51,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
     { children },
     {
       hasVarDec: false,
-      textPassThrough: childTextPassThrough
+      textPassThrough
     }
   ))
   if (__mpx_perf_framework__) perf.scopeEnd(idCreate)

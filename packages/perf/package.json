@@ -32,7 +32,6 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "devDependencies": {
-    "@babel/preset-typescript": "^7.29.7",
     "rimraf": "^6.0.1"
   }
 }
