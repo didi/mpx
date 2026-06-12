@@ -221,6 +221,7 @@ function getMediaStyle (media) {
   }, {})
 }
 
+
 const createLayer = (isNativeStyle) => {
   const layerMap = {
     preflight: isNativeStyle ? [] : {},
@@ -228,6 +229,30 @@ const createLayer = (isNativeStyle) => {
     uno: isNativeStyle ? [] : {},
     normal: isNativeStyle ? [] : {},
     important: isNativeStyle ? [] : {}
+  }
+
+  const checkInlineLayer = (style) => {
+    Object.keys(style._inlineLayer).forEach(l => {
+      mergeToLayer(l, style._inlineLayer[l])
+    })
+  }
+
+  const mergeToLayer = isNativeStyle
+    ? (name, style, mediaStyle) => {
+        const layer = layerMap[name] || layerMap.normal
+        layer.push(style)
+        if (mediaStyle) layer.push(mediaStyle)
+        if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
+      }
+    : (name, style, mediaStyle) => {
+        const layer = layerMap[name] || layerMap.normal
+        Object.assign(layer, style)
+        if (mediaStyle) Object.assign(layer, mediaStyle)
+        if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
+      }
+
+  const mergeToLayerWithStyles = (name, styles) => {
+    styles.forEach(v=> mergeToLayer(name, v))
   }
 
   const genResult = () => {
@@ -244,20 +269,9 @@ const createLayer = (isNativeStyle) => {
     }
   }
 
-  const mergeToLayer = (name, ...classObjs) => {
-    const layer = layerMap[name] || layerMap.normal
-    classObjs.forEach(v => {
-      if (v._inlineLayer) {
-        Object.keys(v._inlineLayer).forEach(l => {
-          mergeToLayer(l, v._inlineLayer[l])
-        })
-      }
-      isNativeStyle ? layer.push(v) : Object.assign(layer, v)
-    })
-  }
-
   return {
     mergeToLayer,
+    mergeToLayerWithStyles,
     genResult
   }
 }
@@ -294,7 +308,7 @@ export default function styleHelperMixin () {
 
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
-        const { mergeToLayer, genResult } = createLayer(isNativeStaticStyle)
+        const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
 
         this.__getSizeCount()
 
@@ -335,7 +349,7 @@ export default function styleHelperMixin () {
 
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
-              mergeToLayer('normal', ...staticStyle)
+              mergeToLayerWithStyles('normal', staticStyle)
             } else {
               mergeToLayer('normal', staticStyle)
             }
