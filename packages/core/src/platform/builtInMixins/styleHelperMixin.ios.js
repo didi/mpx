@@ -101,35 +101,6 @@ function formatValue (value, unitType) {
 
 global.__formatValue = formatValue
 
-const escapeReg = /[()[\]{}#!.:,%'"+$]/g
-const escapeMap = {
-  '(': '_pl_',
-  ')': '_pr_',
-  '[': '_bl_',
-  ']': '_br_',
-  '{': '_cl_',
-  '}': '_cr_',
-  '#': '_h_',
-  '!': '_i_',
-  '/': '_s_',
-  '.': '_d_',
-  ':': '_c_',
-  ',': '_2c_',
-  '%': '_p_',
-  '\'': '_q_',
-  '"': '_dq_',
-  '+': '_a_',
-  $: '_si_'
-}
-
-const mpEscape = cached((str) => {
-  return str.replace(escapeReg, function (match) {
-    if (escapeMap[match]) return escapeMap[match]
-    // unknown escaped
-    return '_u_'
-  })
-})
-
 function concat (a = '', b = '') {
   return a ? b ? (a + ' ' + b) : a : b
 }
@@ -213,7 +184,14 @@ function mergeObjectArray (arr) {
 function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop])
+    const v = formatValue(styleObj[prop])
+    if (typeof v === 'string' && v.endsWith('!important')) {
+      transformed._inlineLayer = transformed._inlineLayer || {}
+      transformed._inlineLayer.important = transformed._inlineLayer.important || {}
+      transformed._inlineLayer.important[prop] = v.split('!')[0]
+    } else {
+      transformed[prop] = v
+    }
   })
   return transformed
 }
@@ -243,6 +221,78 @@ function getMediaStyle (media) {
   }, {})
 }
 
+
+const createLayer = (isNativeStyle) => {
+  const layerMap = {
+    preflight: isNativeStyle ? [] : {},
+    app: isNativeStyle ? [] : {},
+    uno: isNativeStyle ? [] : {},
+    normal: isNativeStyle ? [] : {},
+    important: isNativeStyle ? [] : {}
+  }
+
+  const checkInlineLayer = (style) => {
+    Object.keys(style._inlineLayer).forEach(l => {
+      mergeToLayer(l, style._inlineLayer[l])
+    })
+  }
+
+  const mergeToLayer = isNativeStyle
+    ? (name, style, mediaStyle) => {
+        const layer = layerMap[name] || layerMap.normal
+        layer.push(style)
+        if (mediaStyle) layer.push(mediaStyle)
+        if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
+      }
+    : (name, style, mediaStyle) => {
+        const layer = layerMap[name] || layerMap.normal
+        Object.assign(layer, style)
+        if (mediaStyle) Object.assign(layer, mediaStyle)
+        if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
+      }
+
+  const mergeToLayerWithStyles = (name, styles) => {
+    styles.forEach(v=> mergeToLayer(name, v))
+  }
+
+  const genResult = () => {
+    if (isNativeStyle) {
+      return [
+        ...layerMap.preflight,
+        ...layerMap.app,
+        ...layerMap.uno,
+        ...layerMap.normal,
+        ...layerMap.important
+      ]
+    } else {
+      return Object.assign({}, layerMap.preflight, layerMap.app, layerMap.uno, layerMap.normal, layerMap.important)
+    }
+  }
+
+  return {
+    mergeToLayer,
+    mergeToLayerWithStyles,
+    genResult
+  }
+}
+
+const HIDE_STYLE = {
+  // display: 'none'
+  // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
+  flex: 0,
+  height: 0,
+  width: 0,
+  paddingTop: 0,
+  paddingRight: 0,
+  paddingBottom: 0,
+  paddingLeft: 0,
+  marginTop: 0,
+  marginRight: 0,
+  marginBottom: 0,
+  marginLeft: 0,
+  overflow: 'hidden'
+}
+
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -257,75 +307,67 @@ export default function styleHelperMixin () {
         if (__mpx_perf_framework__) idTotal = perf.scopeStart('getStyle:total')
 
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
-        let result = isNativeStaticStyle ? [] : {}
-        const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
-        // 使用一下 __getSizeCount 触发其 get
+
+        const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
+
         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
           let idClass = -1
           if (__mpx_perf_framework__) idClass = perf.scopeStart('getStyle:class')
+          let needAddUnoPreflight = false
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
-          const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
+          const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           classString.split(/\s+/).forEach((className) => {
-            let localStyle, appStyle
+            let localStyle, appStyle, unoStyle, unoVarStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              if (localStyle._media?.length) {
-                mergeResult(localStyle, getMediaStyle(localStyle._media))
-              } else {
-                mergeResult(localStyle)
-              }
+              mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
+            } else if (unoStyle = global.__getUnoStyle?.(className)) {
+              mergeToLayer(unoStyle._layer || 'uno', unoStyle, getMediaStyle(unoStyle._media))
+              if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
+            } else if (unoVarStyle = global.__getUnoVarStyle?.(className)) {
+              mergeToLayer('important', unoVarStyle)
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              if (appStyle._media?.length) {
-                mergeResult(appStyle, getMediaStyle(appStyle._media))
-              } else {
-                mergeResult(appStyle)
-              }
+              mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              mergeResult(this.__props[className])
+              mergeToLayer('normal', this.__props[className])
             }
           })
+
+          if (needAddUnoPreflight) {
+            mergeToLayer('preflight', global.__getAppClassStyle?.('__uno_preflight'))
+          }
+
           if (__mpx_perf_framework__) perf.scopeEnd(idClass)
         }
 
         if (staticStyle || dynamicStyle) {
           let idStyle = -1
           if (__mpx_perf_framework__) idStyle = perf.scopeStart('getStyle:style')
-          const styleObj = {}
+
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
-              result = result.concat(staticStyle)
+              mergeToLayerWithStyles('normal', staticStyle)
             } else {
-              mergeResult(staticStyle)
+              mergeToLayer('normal', staticStyle)
             }
           } else {
-            Object.assign(styleObj, parseStyleText(staticStyle))
+            mergeToLayer('normal', transformStyleObj(parseStyleText(staticStyle)))
           }
-          Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
-          mergeResult(transformStyleObj(styleObj))
+
+          mergeToLayer('normal', transformStyleObj(normalizeDynamicStyle(dynamicStyle)))
+
           if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
         }
 
         if (hide) {
-          mergeResult({
-            // display: 'none'
-            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
-            flex: 0,
-            height: 0,
-            width: 0,
-            paddingTop: 0,
-            paddingRight: 0,
-            paddingBottom: 0,
-            paddingLeft: 0,
-            marginTop: 0,
-            marginRight: 0,
-            marginBottom: 0,
-            marginLeft: 0,
-            overflow: 'hidden'
-          })
+          mergeToLayer('important', { ...HIDE_STYLE })
         }
+
+        const result = genResult()
+
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
         if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
         return isEmpty ? empty : result
