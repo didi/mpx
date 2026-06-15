@@ -12,19 +12,22 @@
 - [Slot](#slot)
   - [默认插槽](#默认插槽)
   - [具名插槽与 `multipleSlots`](#具名插槽与-multipleslots)
+- [动态组件](#动态组件)
+  - [基础用法](#基础用法)
+  - [注意事项](#注意事项-2)
 - [WXML 模板](#wxml-模板)
   - [模板内联定义](#模板内联定义)
   - [import 外联引入](#import-外联引入)
-  - [注意事项](#注意事项-2)
+  - [注意事项](#注意事项-3)
 - [i18n 国际化](#i18n-国际化)
   - [工程配置示例](#工程配置示例)
   - [模板中使用翻译函数](#模板中使用翻译函数)
   - [JS 中使用翻译函数](#js-中使用翻译函数)
-  - [注意事项](#注意事项-3)
+  - [注意事项](#注意事项-4)
 - [无障碍访问](#无障碍访问)
   - [模板属性](#模板属性)
   - [示例](#示例)
-  - [注意事项](#注意事项-4)
+  - [注意事项](#注意事项-5)
 - [基础组件](#基础组件)
   - [通用属性](#通用属性)
   - [view](#view)
@@ -309,6 +312,66 @@ createComponent({
   <view slot="after">后置区域</view>
 </my-panel>
 ```
+
+---
+
+## 动态组件
+
+跨端输出 RN 时支持通过 `<component is="...">` 在同一占位上按数据切换渲染不同的自定义组件，与微信小程序写法一致。`is` 接受 Mustache 表达式，值为目标组件在 `usingComponents` 中注册的标签名（全局注册同样生效）；切换 `is` 的值即切换被渲染的组件。
+
+`<component>` 中可以使用 **`range`** 属性用于控制候选组件范围：值为逗号分隔的组件名列表，用于显式声明 `is` 可能命中的组件子集。**未声明 `range` 时，框架会把当前文件 `usingComponents` 中所有组件都视为候选**，在小程序端会把这些组件全部纳入产物并参与运行时分发，造成不必要的体积与性能开销；声明 `range` 后只有列表内的组件会被纳入候选集合。
+
+### 基础用法
+
+在 `json` 区块中注册候选组件，在模板中通过 `is` 绑定当前要渲染的组件名，并通过 `range` 把候选范围收敛为实际会切换的组件。`<component>` 节点上书写的属性会作为 props 透传给目标组件，子节点会作为默认插槽内容。
+
+```html
+<template>
+  <view>
+    <view class="tabs">
+      <text bindtap="switchTab('com-a')">A</text>
+      <text bindtap="switchTab('com-b')">B</text>
+    </view>
+    <!-- range 显式限定候选组件，避免把 usingComponents 里其它组件也算进候选集 -->
+    <!-- is 绑定组件名，title 会作为 props 透传给目标组件 -->
+    <component is="{{ current }}" range="com-a,com-b" title="{{ title }}">
+      <text>默认插槽内容</text>
+    </component>
+  </view>
+</template>
+
+<script>
+import { createComponent, ref } from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    const current = ref('com-a')
+    const title = ref('hello')
+    function switchTab (name) {
+      current.value = name
+    }
+    return { current, title, switchTab }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "com-a": "../components/com-a",
+    "com-b": "../components/com-b",
+    "other-com": "../components/other-com"
+  }
+}
+</script>
+```
+
+### 注意事项
+
+1. `is` 的取值必须是已经在当前组件 `usingComponents` 中注册的标签名，或通过全局注册可见的组件名；未注册的名称无法渲染。
+2. `is` 仅用于切换**自定义组件**，不要传入 `view`、`text` 等基础组件名。
+3. 切换 `is` 时目标组件会被销毁并重新创建，组件内部的本地状态不会保留，对状态有连续性要求时应将状态提升到外层。
+4. **建议始终显式声明 `range`**，仅列出实际会被 `is` 切换到的组件名（逗号分隔）。未声明时默认以整个 `usingComponents` 作为候选集合，会拖累**小程序端产物体积与运行时性能**；列表中的组件名需与 `usingComponents` 中注册的一致。
 
 ---
 
