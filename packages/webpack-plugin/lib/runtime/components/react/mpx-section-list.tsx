@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, memo } from 'react'
+import { forwardRef, useRef, useMemo, createElement, useImperativeHandle } from 'react'
 import type { ComponentType } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import type { SectionListData, SectionListProps as RNSectionListProps } from 'react-native'
@@ -82,14 +82,7 @@ interface ScrollPositionParams {
 
 const getGeneric = (generichash: string, generickey: string) => {
   if (!generichash || !generickey) return null
-  const GenericComponent = global.__mpxGenericsMap?.[generichash]?.[generickey]?.()
-  if (!GenericComponent) return null
-
-  return memo(forwardRef((props: any, ref: any) => {
-    return createElement(GenericComponent, extendObject({}, {
-      ref: ref
-    }, props))
-  }))
+  return global.__mpxGenericsMap?.[generichash]?.[generickey]?.() || null
 }
 
 const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
@@ -130,7 +123,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'wait-for': waitFor
   } = props
 
-  const [refreshing, setRefreshing] = useState(!!refresherTriggered)
+  const refreshing = !!refresherTriggered
 
   const scrollViewRef = useRef<any>(null)
   const sectionListGestureRef = useRef<any>()
@@ -146,12 +139,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
-
-  useEffect(() => {
-    if (refreshing !== refresherTriggered) {
-      setRefreshing(!!refresherTriggered)
-    }
-  }, [refresherTriggered])
 
   const onRefresh = () => {
     const { bindrefresherrefresh } = props
@@ -386,6 +373,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       onScroll: onScroll,
       onEndReached: onEndReached
     },
+    refresherEnabled ? { refreshing } : null,
     layoutProps
   )
 
@@ -401,12 +389,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     }
     return gesture
   }, [originSimultaneousHandlers, waitFor])
-
-  if (refresherEnabled) {
-    extendObject(scrollAdditionalProps, {
-      refreshing: refreshing
-    })
-  }
 
   useImperativeHandle(ref, () => {
     return {
