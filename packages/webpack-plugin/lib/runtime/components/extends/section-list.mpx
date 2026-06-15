@@ -1,1 +1,14 @@
-<!-- section-list placeholder -->
+<!--
+  Placeholder for @mpxjs/webpack-plugin/lib/runtime/components/extends/section-list.
+  ExtendComponentsPlugin should always redirect requests away from this file at
+  build time. Reaching this module means the plugin failed to redirect — most
+  likely because section-list is not supported on the current platform, or
+  ExtendComponentsPlugin is not registered on the resolver.
+-->
+<template></template>
+
+<script>
+  import { error } from '@mpxjs/utils'
+  error('section-list extend placeholder reached at runtime, ExtendComponentsPlugin redirect failed. See build log for the original error.')
+  export default {}
+</script>
