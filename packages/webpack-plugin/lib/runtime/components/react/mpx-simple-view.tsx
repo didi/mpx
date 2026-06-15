@@ -27,7 +27,7 @@ const SimpleView = (simpleViewProps: SimpleViewProps): JSX.Element => {
   const textPassThrough = useTextPassThrough(textStyle as TextStyle, textProps, { enableTextPassThrough })
 
   const styleObj = extendObject({}, innerStyle)
-  transformBoxSizing(styleObj, hasBoxSizingAffectingStyle)
+  if (hasBoxSizingAffectingStyle) transformBoxSizing(styleObj)
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────

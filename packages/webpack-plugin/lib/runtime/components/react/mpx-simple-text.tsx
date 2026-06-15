@@ -22,7 +22,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
   const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
   const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
   const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
-  transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
+  if (hasBoxSizingAffectingStyle) transformBoxSizing(mergedStyle)
   const {
     allowFontScaling,
     children

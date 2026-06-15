@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, shallowEqual, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext, TextPassThroughContext, TextPassThroughContextValue } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
@@ -37,8 +37,6 @@ const varDecRegExp = /^--/
 const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
-const calcUseRegExp = /calc\(/
-const envUseRegExp = /env\(/
 const lengthValueRegExp = /^(-?(?:\d+(?:\.\d+)?|\.\d+)(?:rpx|px|%|vw|vh)?|hairlineWidth)$/
 const defaultBoxSizingStyle = {
   boxSizing: 'content-box'
@@ -186,10 +184,6 @@ interface PercentConfig {
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
-}
-
-interface PositionMeta {
-  hasPositionFixed: boolean
 }
 
 interface TransformStyleConfig {
@@ -351,17 +345,15 @@ function isLengthValue (token: string): boolean {
   return lengthValueRegExp.test(token)
 }
 
-function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
-  const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
-  return insets[safeAreaInsetMap[name]]
-}
-
 export function isBoxSizingAffectingStyle (key: string) {
   return hasOwn(boxSizingAffectingStyleMap, key)
 }
 
-export function transformBoxSizing (style: Record<string, any> = {}, hasBoxSizingAffectingStyle = false) {
-  if (hasBoxSizingAffectingStyle && style.boxSizing === undefined) {
+// 仅在调用侧已确认存在 padding / border 等 box-sizing 影响项时调用：
+// 给样式补默认 boxSizing（用户未显式设置时）。是否需要进入由调用侧决定，
+// useTransformStyle / mpx-simple-view / mpx-simple-text 都按 hasBoxSizingAffectingStyle 短路。
+export function transformBoxSizing (style: Record<string, any> = {}) {
+  if (style.boxSizing === undefined) {
     style.boxSizing = global.__mpx?.config?.rnConfig?.defaultBoxSizing ?? defaultBoxSizingStyle.boxSizing
   }
 }
@@ -459,6 +451,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
 // --- env ---
 
 function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any> | undefined) {
+  const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'env')
@@ -466,8 +459,9 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
       parsed.forEach(({ start, end, args }) => {
         const name = args[0]
         const fallback = args[1] || ''
-        const value = '' + (getSafeAreaInset(name, navigation) ?? global.__formatValue(fallback))
-        replaced.replace(start, end - 1, value)
+        const inset = insets[safeAreaInsetMap[name]]
+        const next = '' + (inset ?? global.__formatValue(fallback))
+        replaced.replace(start, end - 1, next)
       })
       target[key] = global.__formatValue(replaced.source())
     })
@@ -536,13 +530,6 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
 }
 
 // --- misc ---
-
-function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
-  if (styleObj.position === 'fixed') {
-    styleObj.position = 'absolute'
-    meta.hasPositionFixed = true
-  }
-}
 
 function transformStringify (styleObj: Record<string, any>) {
   if (isNumber(styleObj.fontWeight)) {
@@ -814,7 +801,6 @@ function transformFlex (styleObj: Record<string, any>) {
 
 // Todo 目前仅支持指定属性的简写值，且不同于编译时的 class 处理，暂不支持缺省值，后续优化
 export function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
-  if (shorthandKeys.length === 0) return
   for (const key of shorthandKeys) {
     const value = styleObj[key]
     if (typeof value !== 'string') continue
@@ -918,24 +904,28 @@ function transformBackground (styleObj: Record<string, any>) {
 // style traversal
 // ============================================================
 
-export function traverseStyle (styleObj: Record<string, any>, visitors: Array<(arg: VisitorArg) => void>) {
+export function traverseStyle (styleObj: Record<string, any>, visitor: (arg: VisitorArg) => void) {
   const keyPath: Array<string> = []
   function traverse<T extends Record<string, any>> (target: T) {
     if (Array.isArray(target)) {
-      target.forEach((value, index) => {
-        const key = String(index)
+      for (let i = 0; i < target.length; i++) {
+        const key = String(i)
+        const value = target[i]
         keyPath.push(key)
-        visitors.forEach(visitor => visitor({ target, key, value, keyPath }))
+        visitor({ target, key, value, keyPath })
         traverse(value)
         keyPath.pop()
-      })
+      }
     } else if (isObject(target)) {
-      Object.entries(target).forEach(([key, value]) => {
+      const keys = Object.keys(target)
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i]
+        const value = (target as Record<string, any>)[key]
         keyPath.push(key)
-        visitors.forEach(visitor => visitor({ target, key, value, keyPath }))
+        visitor({ target, key, value, keyPath })
         traverse(value)
         keyPath.pop()
-      })
+      }
     }
   }
   traverse(styleObj)
@@ -968,6 +958,14 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   let hasVarUse = false
   let hasSelfPercent = false
   let hasBoxSizingAffectingStyle = false
+  // 顶层 transform* 标志位：在 styleVisitor 阶段从原始 styleObj 收集，
+  // 调用侧据此决定是否进入对应 transform 函数。
+  let hasTransform = false
+  let hasBoxShadow = false
+  let hasFontFamily = false
+  let hasFlex = false
+  let needTransformBackground = false
+  let needStringify = false
   const varKeyPaths: Array<Array<string>> = []
   const unoVarKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
@@ -978,7 +976,61 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const [height, setHeight] = useState(0)
   const navigation = useNavigation()
 
-  function varVisitor ({ target, key, value, keyPath }: VisitorArg) {
+  function collectTopLevelFlags (key: string, value: any) {
+    switch (key) {
+      case 'transform':
+        hasTransform = true
+        break
+      case 'boxShadow':
+        hasBoxShadow = true
+        break
+      case 'fontFamily':
+        hasFontFamily = true
+        break
+      case 'flex':
+        hasFlex = true
+        break
+      case 'background':
+      case 'backgroundSize':
+      case 'backgroundPosition':
+        needTransformBackground = true
+        break
+      case 'fontWeight':
+      case 'transformOrigin':
+        needStringify = true
+        break
+    }
+  }
+
+  function visitOther ({ key, value, keyPath }: VisitorArg) {
+    if (typeof value !== 'string') return
+    const hasPercent = value.includes('%')
+    const hasCalc = value.includes('calc(')
+    const hasEnv = value.includes('env(')
+    if (!(hasPercent || hasCalc || hasEnv)) return
+    let resolvedKeyPath: Array<string> | undefined
+    if (hasEnv) {
+      resolvedKeyPath = keyPath.slice()
+      envKeyPaths.push(resolvedKeyPath)
+    }
+    if (hasPercent) {
+      // fixme 去掉 translate & border-radius 的百分比计算
+      // fixme Image 组件 borderRadius 仅支持 number
+      const needRadiusPercent = transformRadiusPercent && hasOwn(radiusPercentRule, key)
+      const needFontPercent = key === 'fontSize' || key === 'lineHeight'
+      if ((needRadiusPercent || needFontPercent) && percentRegExp.test(value)) {
+        if (needRadiusPercent) hasSelfPercent = true
+        resolvedKeyPath = resolvedKeyPath ?? keyPath.slice()
+        percentKeyPaths.push(resolvedKeyPath)
+      }
+    }
+    if (hasCalc) {
+      resolvedKeyPath = resolvedKeyPath ?? keyPath.slice()
+      calcKeyPaths.push(resolvedKeyPath)
+    }
+  }
+
+  function styleVisitor ({ target, key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
       if (unoVarDecRegExp.test(key)) {
         unoVarStyle[key] = value
@@ -988,81 +1040,54 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       } else {
         // clone对象避免set值时改写到props
         normalStyle[key] = isObject(value) ? diffAndCloneA(value).clone : value
+        if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
+          hasBoxSizingAffectingStyle = true
+        }
+        if (hasOwn(runtimeAbbreviationMap, key)) {
+          shorthandKeys.push(key)
+        }
+        collectTopLevelFlags(key, value)
       }
     }
-    // 对于var定义中使用的var无需替换值，可以通过resolveVar递归解析出值
-    if (!varDecRegExp.test(key)) {
-      // 一般情况下一个样式属性中不会混用unocss var和普通css var，可分开进行互斥处理
-      if (unoVarUseRegExp.test(value)) {
-        unoVarKeyPaths.push(keyPath.slice())
-      } else if (varUseRegExp.test(value)) {
-        hasVarUse = true
-        varKeyPaths.push(keyPath.slice())
-      } else {
-        visitOther({ target, key, value, keyPath })
-      }
-    }
-  }
-
-  function boxSizingVisitor ({ key, keyPath }: VisitorArg) {
-    if (keyPath.length === 1 && !hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
-      hasBoxSizingAffectingStyle = true
-    }
-  }
-
-  function envVisitor ({ value, keyPath }: VisitorArg) {
-    if (envUseRegExp.test(value)) {
-      envKeyPaths.push(keyPath.slice())
-    }
-  }
-
-  function calcVisitor ({ value, keyPath }: VisitorArg) {
-    if (calcUseRegExp.test(value)) {
-      calcKeyPaths.push(keyPath.slice())
-    }
-  }
-
-  function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    // fixme 去掉 translate & border-radius 的百分比计算
-    // fixme Image 组件 borderRadius 仅支持 number
-    if (transformRadiusPercent && hasOwn(radiusPercentRule, key) && percentRegExp.test(value)) {
-      hasSelfPercent = true
-      percentKeyPaths.push(keyPath.slice())
-    } else if ((key === 'fontSize' || key === 'lineHeight') && percentRegExp.test(value)) {
-      percentKeyPaths.push(keyPath.slice())
-    }
-  }
-
-  function shorthandVisitor ({ key, keyPath }: VisitorArg) {
-    if (keyPath.length === 1 && hasOwn(runtimeAbbreviationMap, key)) {
-      shorthandKeys.push(key)
-    }
-  }
-
-  function visitOther ({ target, key, value, keyPath }: VisitorArg) {
-    if (typeof value === 'string' && (value.includes('%') || value.includes('calc(') || value.includes('env('))) {
-      [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
+    // var 定义中使用的 var 无需替换值，可以通过 resolveVar 递归解析出值
+    if (varDecRegExp.test(key) || typeof value !== 'string') return
+    // 一般情况下一个样式属性中不会混用 unocss var 和普通 css var，可分开互斥处理
+    if (unoVarUseRegExp.test(value)) {
+      unoVarKeyPaths.push(keyPath.slice())
+    } else if (varUseRegExp.test(value)) {
+      hasVarUse = true
+      varKeyPaths.push(keyPath.slice())
+    } else {
+      visitOther({ target, key, value, keyPath })
     }
   }
 
   // traverse var & generate normalStyle
-  traverseStyle(styleObj, [varVisitor, boxSizingVisitor, shorthandVisitor])
+  traverseStyle(styleObj, styleVisitor)
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
   if (enableVarRef.current !== enableVar) {
     error('css variable use/declare should be stable in the component lifecycle, or you can set [enable-var] with true.')
   }
   // apply css var
-  const varContextRef = useRef({})
+  const varContextRef = useRef<Record<string, any>>({})
   if (enableVarRef.current) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const varContext = useContext(VarContext)
-    const newVarContext = extendObject({}, varContext, varStyle)
-    // 缓存比较newVarContext是否发生变化
-    if (diffAndCloneA(varContextRef.current, newVarContext).diff) {
-      varContextRef.current = newVarContext
+    // 无声明节点：直接用父 varContext 解析，跳过 merge / 比对 / ref 维护。
+    // 有声明节点：浅合并出 newVarContext，仅在内容变化时替换 ref 维持引用稳定，
+    //            供 wrapChildren 的 <VarContext.Provider> 使用。
+    let resolvedVarContext = varContext
+    if (hasVarDec) {
+      const newVarContext = extendObject({}, varContext, varStyle)
+      if (!shallowEqual(varContextRef.current, newVarContext)) {
+        varContextRef.current = newVarContext
+      }
+      resolvedVarContext = varContextRef.current
     }
-    transformVar(normalStyle, varKeyPaths, varContextRef.current, visitOther)
+    if (varKeyPaths.length) {
+      transformVar(normalStyle, varKeyPaths, resolvedVarContext, visitOther)
+    }
   }
 
   // apply unocss var
@@ -1070,56 +1095,58 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     transformVar(normalStyle, unoVarKeyPaths, unoVarStyle, visitOther)
   }
 
-  const percentConfig = {
-    width,
-    height,
-    fontSize: normalStyle.fontSize,
-    parentWidth,
-    parentHeight,
-    parentFontSize
-  }
-
-  const positionMeta = {
-    hasPositionFixed: false
-  }
-
   // apply env
-  transformEnv(normalStyle, envKeyPaths, navigation)
-  // apply percent
-  transformPercent(normalStyle, percentKeyPaths, percentConfig)
-  // apply calc
-  transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
-    if (percentRegExp.test(value)) {
-      if (hasOwn(selfPercentRule, key)) {
-        hasSelfPercent = true
-      }
-      const resolved = resolvePercent(value, key, percentConfig)
-      return typeof resolved === 'number' ? resolved : 0
-    } else {
-      const formatted = global.__formatValue(value)
-      if (typeof formatted === 'number') {
-        return formatted
-      } else {
-        warn('calc() only support number, px, rpx, % temporarily.')
-        return 0
-      }
+  if (envKeyPaths.length) transformEnv(normalStyle, envKeyPaths, navigation)
+  // apply percent / calc：只有出现候选时才构造 percentConfig
+  if (percentKeyPaths.length || calcKeyPaths.length) {
+    const percentConfig: PercentConfig = {
+      width,
+      height,
+      fontSize: normalStyle.fontSize,
+      parentWidth,
+      parentHeight,
+      parentFontSize
     }
-  })
+    if (percentKeyPaths.length) transformPercent(normalStyle, percentKeyPaths, percentConfig)
+    if (calcKeyPaths.length) {
+      transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
+        if (percentRegExp.test(value)) {
+          if (hasOwn(selfPercentRule, key)) {
+            hasSelfPercent = true
+          }
+          const resolved = resolvePercent(value, key, percentConfig)
+          return typeof resolved === 'number' ? resolved : 0
+        } else {
+          const formatted = global.__formatValue(value)
+          if (typeof formatted === 'number') {
+            return formatted
+          } else {
+            warn('calc() only support number, px, rpx, % temporarily.')
+            return 0
+          }
+        }
+      })
+    }
+  }
 
-  // apply position
-  transformPosition(normalStyle, positionMeta)
+  // apply position：单字段判断，直接内联
+  let hasPositionFixed = false
+  if (normalStyle.position === 'fixed') {
+    normalStyle.position = 'absolute'
+    hasPositionFixed = true
+  }
   // transform number enum stringify
-  transformStringify(normalStyle)
+  if (needStringify) transformStringify(normalStyle)
   // transform unit
-  transformBoxShadow(normalStyle)
+  if (hasBoxShadow) transformBoxShadow(normalStyle)
   // transform 字符串格式转化数组格式
-  transformTransform(normalStyle)
-  transformBoxSizing(normalStyle, hasBoxSizingAffectingStyle)
+  if (hasTransform) transformTransform(normalStyle)
+  if (hasBoxSizingAffectingStyle) transformBoxSizing(normalStyle)
   // apply runtime style processing alignment
-  transformFontFamily(normalStyle)
-  transformFlex(normalStyle)
-  transformShorthand(normalStyle, shorthandKeys)
-  transformBackground(normalStyle)
+  if (hasFontFamily) transformFontFamily(normalStyle)
+  if (hasFlex) transformFlex(normalStyle)
+  if (shorthandKeys.length) transformShorthand(normalStyle, shorthandKeys)
+  if (needTransformBackground) transformBackground(normalStyle)
 
   return {
     hasVarDec,
@@ -1128,7 +1155,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     setHeight,
     normalStyle,
     hasSelfPercent,
-    hasPositionFixed: positionMeta.hasPositionFixed
+    hasPositionFixed
   }
 }
 
