@@ -64,8 +64,6 @@ const CheckboxGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = extendObject({}, defaultStyle, style)
-
   const {
     hasPositionFixed,
     hasSelfPercent,
@@ -74,7 +72,7 @@ const CheckboxGroup = forwardRef<
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
 

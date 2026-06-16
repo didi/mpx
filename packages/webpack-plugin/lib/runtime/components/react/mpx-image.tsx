@@ -186,17 +186,9 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     binderror
   } = props
 
-  const styleObj = extendObject(
-    {},
-    DEFAULT_IMAGE_STYLE,
-    style,
-    OVERFLOW_HIDDEN_STYLE
-  )
+  const styleObj = extendObject({}, style, OVERFLOW_HIDDEN_STYLE)
 
   const nodeRef = useRef(null)
-  useNodesRef(props, ref, nodeRef, {
-    defaultStyle: DEFAULT_IMAGE_STYLE
-  })
 
   const isSvg = useMemo(() => isSvgProp || isSvgSource(src), [isSvgProp, src])
   const imageSource = useMemo(() => normalizeImageSource(src), [src])
@@ -231,7 +223,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, parentFontSize, parentWidth, parentHeight, defaultStyle: DEFAULT_IMAGE_STYLE })
+
+  // normalStyle 已合入 DEFAULT_IMAGE_STYLE，对外暴露完整 style（含 default 兜底的 width/height）
+  useNodesRef(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,

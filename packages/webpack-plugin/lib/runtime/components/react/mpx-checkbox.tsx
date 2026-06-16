@@ -109,8 +109,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       disabled ? styles.wrapperDisabled : null
     )
 
-    const styleObj = extendObject({}, styles.container, style)
-
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
       const checked = !isChecked
@@ -136,12 +134,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
+    } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle: styles.container })
 
     const nodeRef = useRef(null)
 
     useNodesRef(props, ref, nodeRef, {
-      style: extendObject({}, defaultStyle, normalStyle),
+      style: normalStyle,
       change: onChange
     })
 

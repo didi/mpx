@@ -752,7 +752,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const enableHover = !!hoverStyle
   const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
-  const styleObj: ExtendedViewStyle = extendObject({}, style.display === 'flex' ? FLEX_DEFAULT_STYLE : undefined, style, isHover ? hoverStyle as ExtendedViewStyle : undefined)
+  const styleObj: ExtendedViewStyle = isHover
+    ? extendObject({}, style, hoverStyle as ExtendedViewStyle)
+    : style
   if (__mpx_perf_framework__) perf.scopeEnd(idProps)
 
   // ───── style 阶段 ─────
@@ -770,7 +772,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     enableVar,
     parentFontSize,
     parentWidth,
-    parentHeight
+    parentHeight,
+    // 基于合并后的 styleObj 判断（hover 状态切换 display 也能触发）
+    defaultStyle: styleObj.display === 'flex' ? FLEX_DEFAULT_STYLE : undefined
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)

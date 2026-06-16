@@ -170,11 +170,12 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   propsRef.current = props
 
   const { normalStyle, hasSelfPercent, setWidth, setHeight, hasPositionFixed } =
-    useTransformStyle(extendObject({}, styles.container, style), {
+    useTransformStyle(style, {
       enableVar,
       parentFontSize,
       parentWidth,
-      parentHeight
+      parentHeight,
+      defaultStyle: styles.container
     })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({

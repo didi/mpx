@@ -76,10 +76,12 @@ const runtimeAbbreviationMap: Record<string, string[]> = {
   borderColor: ['borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'],
   border: ['borderWidth', 'borderStyle', 'borderColor'],
   // RN 不支持单边 border-*-style，统一展开到 borderStyle
-  borderTop: ['borderTopWidth', 'borderStyle', 'borderTopColor'],
-  borderRight: ['borderRightWidth', 'borderStyle', 'borderRightColor'],
-  borderBottom: ['borderBottomWidth', 'borderStyle', 'borderBottomColor'],
-  borderLeft: ['borderLeftWidth', 'borderStyle', 'borderLeftColor'],
+  // 实测 RN 上当 borderStyle 不为 solid 时单边 border-*-color 不生效，
+  // 这里把单边 color 也统一展开到 borderColor 规避（width 不能这样做，否则会覆盖其它三边）
+  borderTop: ['borderTopWidth', 'borderStyle', 'borderColor'],
+  borderRight: ['borderRightWidth', 'borderStyle', 'borderColor'],
+  borderBottom: ['borderBottomWidth', 'borderStyle', 'borderColor'],
+  borderLeft: ['borderLeftWidth', 'borderStyle', 'borderColor'],
   flexFlow: ['flexDirection', 'flexWrap'],
   textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
   textDecoration: ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor']
@@ -192,6 +194,7 @@ interface TransformStyleConfig {
   parentWidth?: number
   parentHeight?: number
   transformRadiusPercent?: boolean
+  defaultStyle?: Record<string, any>
 }
 
 export interface VisitorArg {
@@ -977,7 +980,7 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
 // core style hook
 // ============================================================
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, parentFontSize, parentWidth, parentHeight, defaultStyle }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -1168,12 +1171,24 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   if (hasBoxShadow) transformBoxShadow(normalStyle)
   // transform 字符串格式转化数组格式
   if (hasTransform) transformTransform(normalStyle)
-  if (hasBoxSizingAffectingStyle) transformBoxSizing(normalStyle)
   // apply runtime style processing alignment
   if (hasFontFamily) transformFontFamily(normalStyle)
   if (hasFlex) transformFlex(normalStyle)
   if (shorthandKeys.length) transformShorthand(normalStyle, shorthandKeys)
   if (needTransformBackground) transformBackground(normalStyle)
+  // 合并组件默认样式：default 在 user transform 之后兜底写入，
+  // 命中 user 已存在 key（含简写展开后的长属性）则跳过。
+  // 复用同一次循环顺带补 hasBoxSizingAffectingStyle，避免独立扫一遍 default。
+  if (defaultStyle) {
+    for (const k in defaultStyle) {
+      if (!hasOwn(defaultStyle, k)) continue
+      if (!hasOwn(normalStyle, k)) normalStyle[k] = defaultStyle[k]
+      if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(k)) {
+        hasBoxSizingAffectingStyle = true
+      }
+    }
+  }
+  if (hasBoxSizingAffectingStyle) transformBoxSizing(normalStyle)
 
   return {
     hasVarDec,

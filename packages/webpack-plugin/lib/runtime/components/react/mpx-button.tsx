@@ -284,12 +284,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const defaultStyle = extendObject({}, defaultViewStyle, defaultTextStyle)
 
-  const styleObj = extendObject(
-    {},
-    defaultStyle,
-    style,
-    isHover ? hoverStyle : {}
-  )
+  const styleObj = isHover ? extendObject({}, style, hoverStyle) : style
 
   const {
     hasPositionFixed,
@@ -299,7 +294,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
 

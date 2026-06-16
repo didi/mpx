@@ -209,10 +209,12 @@ module.exports = function getSpec ({ warn, error }) {
     'text-shadow': ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
     border: ['borderWidth', 'borderStyle', 'borderColor'],
     // RN 不支持单边 border-*-style，统一展开到 borderStyle
-    'border-left': ['borderLeftWidth', 'borderStyle', 'borderLeftColor'],
-    'border-right': ['borderRightWidth', 'borderStyle', 'borderRightColor'],
-    'border-top': ['borderTopWidth', 'borderStyle', 'borderTopColor'],
-    'border-bottom': ['borderBottomWidth', 'borderStyle', 'borderBottomColor'],
+    // 实测 RN 上当 borderStyle 不为 solid 时单边 border-*-color 不生效，
+    // 这里把单边 color 也统一展开到 borderColor 规避（width 不能这样做，否则会覆盖其它三边）
+    'border-left': ['borderLeftWidth', 'borderStyle', 'borderColor'],
+    'border-right': ['borderRightWidth', 'borderStyle', 'borderColor'],
+    'border-top': ['borderTopWidth', 'borderStyle', 'borderColor'],
+    'border-bottom': ['borderBottomWidth', 'borderStyle', 'borderColor'],
     'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
     // flex-grow | flex-shrink | flex-basis
     flex: ['flexGrow', 'flexShrink', 'flexBasis'],

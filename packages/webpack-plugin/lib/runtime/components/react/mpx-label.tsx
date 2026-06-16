@@ -43,8 +43,6 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       flexDirection: 'row'
     }
 
-    const styleObj = extendObject({}, defaultStyle, style)
-
     const {
       hasPositionFixed,
       hasSelfPercent,
@@ -53,7 +51,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
+    } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle })
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, { style: normalStyle })

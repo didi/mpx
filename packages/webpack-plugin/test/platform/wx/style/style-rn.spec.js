@@ -339,16 +339,17 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      // RN 不支持单边 border-*-style，shorthand 中的 style 槽位统一展开到 borderStyle
+      // RN 不支持单边 border-*-style，shorthand 中的 style 槽位统一展开到 borderStyle；
+      // 又因 RN 上单边 border-*-color 在非 solid 风格下不生效，单边 color 也统一展开到 borderColor
       expect(result.top).toEqual({
-        borderTopColor: '"red"',
+        borderColor: '"red"',
         borderStyle: '"solid"',
         borderTopWidth: '1'
       })
       expect(result.left).toEqual({
         borderStyle: '"dashed"',
         borderLeftWidth: '2',
-        borderLeftColor: '"blue"'
+        borderColor: '"blue"'
       })
       expect(result.none).toEqual({
         borderTopWidth: '0'
@@ -444,7 +445,7 @@ describe('React Native style validation for CSS variables', () => {
 
       expect(result.a).toEqual({ borderStyle: '"solid"' })
       expect(result.b).toEqual({ borderWidth: '2' })
-      expect(result.c).toEqual({ borderTopColor: '"red"' })
+      expect(result.c).toEqual({ borderColor: '"red"' })
       expect(config.warn).not.toHaveBeenCalled()
       expect(config.error).not.toHaveBeenCalled()
     })

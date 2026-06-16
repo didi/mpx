@@ -53,23 +53,24 @@ describe('runtime transformShorthand', () => {
     })
 
     test('expands unordered side border', () => {
-      // RN 不支持单边 border-*-style，shorthand 中的 style 槽位统一展开到 borderStyle
+      // RN 不支持单边 border-*-style，shorthand 中的 style 槽位统一展开到 borderStyle；
+      // 又因 RN 上单边 border-*-color 在非 solid 风格下不生效，单边 color 也统一展开到 borderColor
       expect(run({ borderTop: 'red solid 1px' }, ['borderTop'])).toEqual({
-        borderTopColor: 'red',
+        borderColor: 'red',
         borderStyle: 'solid',
         borderTopWidth: 1
       })
       expect(run({ borderLeft: 'dashed 2px blue' }, ['borderLeft'])).toEqual({
         borderStyle: 'dashed',
         borderLeftWidth: 2,
-        borderLeftColor: 'blue'
+        borderColor: 'blue'
       })
     })
 
     test('partial border shorthand fills only matched slots', () => {
       expect(run({ border: 'solid' }, ['border'])).toEqual({ borderStyle: 'solid' })
       expect(run({ border: '2px' }, ['border'])).toEqual({ borderWidth: 2 })
-      expect(run({ borderTop: 'red' }, ['borderTop'])).toEqual({ borderTopColor: 'red' })
+      expect(run({ borderTop: 'red' }, ['borderTop'])).toEqual({ borderColor: 'red' })
     })
 
     test('border: none short-circuits to borderWidth: 0', () => {

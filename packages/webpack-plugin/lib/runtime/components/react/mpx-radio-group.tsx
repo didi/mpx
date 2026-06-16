@@ -67,8 +67,6 @@ const radioGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = extendObject({}, defaultStyle, style)
-
   const {
     hasPositionFixed,
     hasSelfPercent,
@@ -77,7 +75,7 @@ const radioGroup = forwardRef<
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, { style: normalStyle })

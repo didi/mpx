@@ -97,8 +97,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       disabled ? styles.wrapperDisabled : {}
     )
 
-    const styleObj = extendObject({}, styles.container, style)
-
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled || isChecked) return
       setIsChecked(!isChecked)
@@ -125,7 +123,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
+    } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle: styles.container })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
     const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
@@ -136,7 +134,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, {
-      style: extendObject({}, defaultStyle, normalStyle),
+      style: normalStyle,
       change: onChange
     })
 
