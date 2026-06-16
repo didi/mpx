@@ -184,13 +184,13 @@ function mergeObjectArray (arr) {
 function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    const v = formatValue(styleObj[prop])
-    if (typeof v === 'string' && v.endsWith('!important')) {
+    const value = styleObj[prop]
+    if (typeof value === 'string' && value.endsWith('!important')) {
       transformed._inlineLayer = transformed._inlineLayer || {}
       transformed._inlineLayer.important = transformed._inlineLayer.important || {}
-      transformed._inlineLayer.important[prop] = v.split('!')[0]
+      transformed._inlineLayer.important[prop] = formatValue(value.split('!')[0])
     } else {
-      transformed[prop] = v
+      transformed[prop] = formatValue(value)
     }
   })
   return transformed
@@ -222,51 +222,40 @@ function getMediaStyle (media) {
 }
 
 
-const createLayer = (isNativeStyle) => {
+const createLayer = () => {
   const layerMap = {
-    preflight: isNativeStyle ? [] : {},
-    app: isNativeStyle ? [] : {},
-    uno: isNativeStyle ? [] : {},
-    normal: isNativeStyle ? [] : {},
-    important: isNativeStyle ? [] : {}
+    preflight: [],
+    app: [],
+    uno: [],
+    normal: [],
+    important: []
   }
 
-  const checkInlineLayer = (style) => {
+  const checkInlineLayer = style => {
     Object.keys(style._inlineLayer).forEach(l => {
       mergeToLayer(l, style._inlineLayer[l])
     })
   }
 
-  const mergeToLayer = isNativeStyle
-    ? (name, style, mediaStyle) => {
-        const layer = layerMap[name] || layerMap.normal
-        layer.push(style)
-        if (mediaStyle) layer.push(mediaStyle)
-        if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
-      }
-    : (name, style, mediaStyle) => {
-        const layer = layerMap[name] || layerMap.normal
-        Object.assign(layer, style)
-        if (mediaStyle) Object.assign(layer, mediaStyle)
-        if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
-      }
+  const mergeToLayer = (name, style, mediaStyle) => {
+    const layer = layerMap[name] || layerMap.normal
+    layer.push(style) // 普通样式
+    if (mediaStyle) layer.push(mediaStyle) // 媒体查询样式
+    if (style._inlineLayer) checkInlineLayer(style, mergeToLayer) // important 样式
+  }
 
   const mergeToLayerWithStyles = (name, styles) => {
-    styles.forEach(v=> mergeToLayer(name, v))
+    styles.forEach(v => mergeToLayer(name, v))
   }
 
   const genResult = () => {
-    if (isNativeStyle) {
-      return [
-        ...layerMap.preflight,
-        ...layerMap.app,
-        ...layerMap.uno,
-        ...layerMap.normal,
-        ...layerMap.important
-      ]
-    } else {
-      return Object.assign({}, layerMap.preflight, layerMap.app, layerMap.uno, layerMap.normal, layerMap.important)
-    }
+    return [
+      ...layerMap.preflight,
+      ...layerMap.app,
+      ...layerMap.uno,
+      ...layerMap.normal,
+      ...layerMap.important
+    ]
   }
 
   return {
@@ -308,7 +297,7 @@ export default function styleHelperMixin () {
 
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
-        const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
+        const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer()
 
         this.__getSizeCount()
 
