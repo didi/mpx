@@ -223,7 +223,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         })
       ),
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current,

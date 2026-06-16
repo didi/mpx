@@ -114,7 +114,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     FormContext.Provider,
     { value: contextValue },
     wrapChildren(
-      props,
+      props.children,
       {
         hasVarDec,
         varContext: varContextRef.current,

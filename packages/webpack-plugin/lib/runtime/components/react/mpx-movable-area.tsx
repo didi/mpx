@@ -65,7 +65,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     View,
     innerProps,
     wrapChildren(
-      props,
+      props.children,
       {
         hasVarDec,
         varContext: varContextRef.current

@@ -17,16 +17,23 @@ const SimpleText = (props: TextProps): JSX.Element => {
       hasBoxSizingAffectingStyle = true
     }
   })
-  const isStringOnly = isStringChildren(props.children)
-  const childTextStyle: TextStyle | undefined = !isStringOnly ? textStyle as TextStyle : undefined
+  // textStyle 仅在子节点非纯字符串时才需要透传给子级；按需计算 isStringChildren
+  const childTextStyle: TextStyle | undefined = textStyle && !isStringChildren(props.children)
+    ? textStyle as TextStyle
+    : undefined
   const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
-  const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
-  if (hasBoxSizingAffectingStyle) transformBoxSizing(mergedStyle)
-  const {
-    allowFontScaling,
-    children
-  } = mergedProps
+
+  const mergedProps = inheritedText?.pendingTextProps
+    ? extendObject({}, inheritedText.pendingTextProps, props)
+    : props
+  let mergedStyle = inheritedText?.textStyle
+    ? extendObject({}, inheritedText.textStyle, props.style)
+    : props.style
+  if (hasBoxSizingAffectingStyle) {
+    // 仅在需要 mutate 时 clone，避免污染上游 props.style
+    if (mergedStyle === props.style) mergedStyle = extendObject({}, props.style)
+    transformBoxSizing(mergedStyle as Record<string, any>)
+  }
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────
@@ -37,7 +44,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
       {},
       mergedProps,
       {
-        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling(),
+        allowFontScaling: mergedProps.allowFontScaling ?? getDefaultAllowFontScaling(),
         style: mergedStyle
       }
     )
@@ -48,7 +55,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
   let idCreate = -1
   if (__mpx_perf_framework__) idCreate = perf.scopeStart('simple-text:render:createElement')
   const result = createElement(Text, innerProps, wrapChildren(
-    { children },
+    mergedProps.children,
     {
       hasVarDec: false,
       textPassThrough

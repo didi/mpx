@@ -100,7 +100,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       LabelContext.Provider,
       { value: contextRef },
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current,

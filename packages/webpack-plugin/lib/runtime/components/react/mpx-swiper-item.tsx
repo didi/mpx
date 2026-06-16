@@ -103,7 +103,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     style: [innerStyle, layoutStyle, itemAnimatedStyle, customStyle],
     'data-itemId': props['item-id']
   })
-  return createElement(Animated.View, mergeProps, wrapChildren(props, {
+  return createElement(Animated.View, mergeProps, wrapChildren(props.children, {
     hasVarDec,
     varContext: varContextRef.current,
     textPassThrough

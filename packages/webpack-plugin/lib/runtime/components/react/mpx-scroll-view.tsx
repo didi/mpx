@@ -880,7 +880,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
 
   const createScrollViewContent = () => {
-    const wrappedChildren = wrapChildren(hasRefresher ? extendObject({}, props, { children: otherContent }) : props,
+    const wrappedChildren = wrapChildren(hasRefresher ? otherContent : props.children,
       {
         hasVarDec,
         varContext: varContextRef.current,

@@ -26,8 +26,12 @@ const SimpleView = (simpleViewProps: SimpleViewProps): JSX.Element => {
   })
   const textPassThrough = useTextPassThrough(textStyle as TextStyle, textProps, { enableTextPassThrough })
 
-  const styleObj = extendObject({}, innerStyle)
-  if (hasBoxSizingAffectingStyle) transformBoxSizing(styleObj)
+  let styleObj: Record<string, any> = innerStyle
+  if (hasBoxSizingAffectingStyle) {
+    // 复制一次再 mutate，避免污染 splitStyle 复用的原 props.style
+    styleObj = extendObject({}, innerStyle)
+    transformBoxSizing(styleObj)
+  }
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────
@@ -48,7 +52,7 @@ const SimpleView = (simpleViewProps: SimpleViewProps): JSX.Element => {
   let idCreate = -1
   if (__mpx_perf_framework__) idCreate = perf.scopeStart('simple-view:render:createElement')
   const result = createElement(View, innerProps, wrapChildren(
-    props,
+    props.children,
     {
       hasVarDec: false,
       textPassThrough

@@ -1433,8 +1433,7 @@ export function usePrevious<T> (value: T): T | undefined {
 // component helpers
 // ============================================================
 
-export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textPassThrough }: WrapChildrenConfig) {
-  let { children } = props
+export function wrapChildren (children: ReactNode, { hasVarDec, varContext, textPassThrough }: WrapChildrenConfig) {
   if (textPassThrough) {
     children = <TextPassThroughContext.Provider value={textPassThrough} key='textPassThroughWrap'>{children}</TextPassThroughContext.Provider>
   }

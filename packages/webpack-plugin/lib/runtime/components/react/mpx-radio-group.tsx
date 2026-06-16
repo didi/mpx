@@ -166,7 +166,7 @@ const radioGroup = forwardRef<
         value: contextValue
       },
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current

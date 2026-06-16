@@ -189,9 +189,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     )
     const realElement = React.cloneElement(child, wrappedProps)
     return wrapChildren(
-      {
-        children: realElement
-      },
+      realElement,
       {
         hasVarDec,
         varContext: varContextRef.current,

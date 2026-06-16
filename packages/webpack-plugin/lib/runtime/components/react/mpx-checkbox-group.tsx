@@ -167,7 +167,7 @@ const CheckboxGroup = forwardRef<
       CheckboxGroupContext.Provider,
       { value: contextValue },
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current

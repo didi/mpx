@@ -124,9 +124,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   let idCreate = -1
   if (__mpx_perf_framework__) idCreate = perf.scopeStart('text:render:createElement')
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
-    extendObject({}, mergedProps, {
-      children
-    }),
+    children,
     {
       hasVarDec,
       varContext: varContextRef.current,

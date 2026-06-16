@@ -407,7 +407,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const baseButton = createElement(View, innerProps, loading && createElement(Loading, { alone: !children }),
     wrapChildren(
-      props,
+      props.children,
       {
         hasVarDec,
         varContext: varContextRef.current,

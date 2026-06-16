@@ -83,7 +83,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
         StickyContext.Provider,
         { value: contextValue },
         wrapChildren(
-          props,
+          props.children,
           {
             hasVarDec,
             varContext: varContextRef.current,

@@ -208,7 +208,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
         })
       ),
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current,

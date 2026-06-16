@@ -58,6 +58,7 @@
 | `@mpxjs/unocss-plugin` | Mpx × UnoCSS 集成插件（小程序 + Web） | [packages/unocss-plugin/AGENTS.md](packages/unocss-plugin/AGENTS.md) |
 | `@mpxjs/unocss-base` | Mpx 专用 UnoCSS preset（rem → vw/rpx 换算） | [packages/unocss-base/AGENTS.md](packages/unocss-base/AGENTS.md) |
 | `@mpxjs/size-report` | 构建产物体积分析与可视化 | [packages/size-report/AGENTS.md](packages/size-report/AGENTS.md) |
+| `@mpxjs/perf` | Mpx2RN 运行时按需测速探针：开关式 scope/mark/measure 实时聚合 + DCE 关闭态零残留 | [packages/perf/AGENTS.md](packages/perf/AGENTS.md) |
 | `@mpxjs/webview-bridge` | H5 在小程序 webview 中的宿主 SDK 桥接 | [packages/webview-bridge/AGENTS.md](packages/webview-bridge/AGENTS.md) |
 | `@mpxjs/babel-plugin-inject-page-events` | 注入小程序页面副作用事件钩子的 Babel 插件 | [packages/babel-plugin-inject-page-events/AGENTS.md](packages/babel-plugin-inject-page-events/AGENTS.md) |
 
