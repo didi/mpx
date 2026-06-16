@@ -222,7 +222,7 @@ function getMediaStyle (media) {
 }
 
 
-const createLayer = () => {
+const createLayer = (isNativeStyle) => {
   const layerMap = {
     preflight: [],
     app: [],
@@ -231,7 +231,7 @@ const createLayer = () => {
     important: []
   }
 
-  const checkInlineLayer = style => {
+  const checkInlineLayer = (style) => {
     Object.keys(style._inlineLayer).forEach(l => {
       mergeToLayer(l, style._inlineLayer[l])
     })
@@ -239,24 +239,32 @@ const createLayer = () => {
 
   const mergeToLayer = (name, style, mediaStyle) => {
     const layer = layerMap[name] || layerMap.normal
-    layer.push(style) // 普通样式
-    if (mediaStyle) layer.push(mediaStyle) // 媒体查询样式
-    if (style._inlineLayer) checkInlineLayer(style, mergeToLayer) // important 样式
+    layer.push(style)
+    if (mediaStyle) layer.push(mediaStyle)
+    if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
   }
 
   const mergeToLayerWithStyles = (name, styles) => {
-    styles.forEach(v => mergeToLayer(name, v))
+    styles.forEach(v=> mergeToLayer(name, v))
   }
 
-  const genResult = () => {
-    return [
-      ...layerMap.preflight,
-      ...layerMap.app,
-      ...layerMap.uno,
-      ...layerMap.normal,
-      ...layerMap.important
-    ]
-  }
+  const genResult = isNativeStyle
+    ? () => [
+        ...layerMap.preflight,
+        ...layerMap.app,
+        ...layerMap.uno,
+        ...layerMap.normal,
+        ...layerMap.important
+      ]
+    : () =>
+        Object.assign(
+          {},
+          ...layerMap.preflight,
+          ...layerMap.app,
+          ...layerMap.uno,
+          ...layerMap.normal,
+          ...layerMap.important
+        )
 
   return {
     mergeToLayer,
@@ -297,7 +305,7 @@ export default function styleHelperMixin () {
 
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
-        const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer()
+        const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
 
         this.__getSizeCount()
 

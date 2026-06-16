@@ -98,9 +98,6 @@ function isPreservedVar (name) {
 // `rgba(239, 68, 68, 1 !important)` 这种格式错乱的结果。
 //
 // 真正承载样式的 entry（如 `border-color: rgba(...) !important`）的 `!important`
-// 后缀我们保持原样：mpx PostCSS pipeline 会基于 `decl.important` 读取并搬到
-// `_inlineLayer.important` 里，再由 `transformStyleObj` 通过 `endsWith('!important')`
-// 切掉，最终 RN runtime 拿到的就是干净字面值。
 function stripImportantSuffix (str) {
   // 兼容 ' !important' / '!important' / 末尾多空格
   return str.replace(/\s*!important\s*$/, '')
