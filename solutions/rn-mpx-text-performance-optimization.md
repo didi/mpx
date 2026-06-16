@@ -6,11 +6,10 @@
 
 最终采纳的优化项：
 
-1. `wrapChildren` 入参由 `extendObject({}, mergedProps, { children })` 精简为 `{ children }`，去掉一次完整的 mergedProps 浅合并。
-2. `inheritedText?.pendingTextProps` / `inheritedText?.textStyle` 缺失时直接复用 `props` / `normalStyle`，免一次 `extendObject` 浅拷贝。
-3. `isStringOnly === true` 时跳过 `splitStyle(normalStyle)` 调用：纯字符串子树不会向下创建 Provider，textStyle 不会被消费。
-4. `decode === true` 且 `children` 是单字符串时直接调用 `decode(children)`，跳过 `Children.map` 的数组化与再遍历。
-5. `getDecodedChildren` 在遍历时同步返回 `isStringOnly`，避免对 decode 后的 children 再走一遍 `isStringChildren`。
+1. `inheritedText?.pendingTextProps` / `inheritedText?.textStyle` 缺失时直接复用 `props` / `normalStyle`，免一次 `extendObject` 浅拷贝。
+2. `isStringOnly === true` 时跳过 `splitStyle(normalStyle)` 调用：纯字符串子树不会向下创建 Provider，textStyle 不会被消费。
+3. `decode === true` 且 `children` 是单字符串时直接调用 `decode(children)`，跳过 `Children.map` 的数组化与再遍历。
+4. `getDecodedChildren` 在遍历时同步返回 `isStringOnly`，避免对 decode 后的 children 再走一遍 `isStringChildren`。
 
 明确不做：
 
@@ -26,26 +25,9 @@
 
 核心文件：[packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx)
 
-### 1. `wrapChildren` 入参把 `mergedProps` 整体合进新对象
+> 备注：`wrapChildren` 的签名此前为 `(props, config)`，已在 [utils.tsx:1436](packages/webpack-plugin/lib/runtime/components/react/utils.tsx#L1436) 改为 `(children, config)`，调用侧 [mpx-text.tsx:126-133](packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx#L126-L133) 已直接传 `children`，无需再单独整理"避免 `extendObject({}, mergedProps, { children })` 多余浅合并"这一项。
 
-```tsx
-let finalComponent: JSX.Element = createElement(Text, innerProps, wrapChildren(
-  extendObject({}, mergedProps, {
-    children
-  }),
-  {
-    hasVarDec,
-    varContext: varContextRef.current,
-    textPassThrough
-  }
-))
-```
-
-[wrapChildren](packages/webpack-plugin/lib/runtime/components/react/utils.tsx#L1436) 的 props 入参里只读 `children`，其余字段全部丢弃。当前实现每帧把整份 `mergedProps`（包含来自 `inheritedText?.pendingTextProps` 和原始 `props` 的所有字段，含事件、可访问性属性、style、ref 等）拷贝到一个新对象，仅为了挂上 `children` 字段。
-
-`mpx-simple-text` 已经是 `wrapChildren({ children }, …)` 的写法（见 [mpx-simple-text.tsx:50](packages/webpack-plugin/lib/runtime/components/react/mpx-simple-text.tsx#L50)），mpx-text 在这一点上单独多付了一次 `Object.keys(mergedProps)` 数量级的字段拷贝。
-
-### 2. inheritedText 缺失时仍走 extendObject 浅拷贝
+### 1. inheritedText 缺失时仍走 extendObject 浅拷贝
 
 ```tsx
 const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
@@ -59,7 +41,7 @@ view-heavy 页面里，普通文本节点祖先链上可能完全没有声明文
 1. `mergedProps` 后续被 `useNodesRef(mergedProps, ref, …)` 写入 `_props.current`。若 `inheritedText?.pendingTextProps` 为空，`mergedProps === props` 与 `mergedProps` 是一份 props 浅拷贝在外部读取语义上等价（`getNodeInstance().props.current` 的字段集合一致）。
 2. `finalStyle` 后续被 `useNodesRef` 暴露给业务的 `instance.style`、写入 `useInnerProps` 的 `style` 字段。复用 `normalStyle` 引用与新建一份浅拷贝在 RN Text 渲染语义上等价；调用方不能反向突变 `normalStyle`，但当前代码没有这种写法（`useTransformStyle` 内部对 `normalStyle` 的写入都在返回前完成），与 `splitStyle` 复用 `styleObj` 引用的口径一致。
 
-### 3. 纯字符串子树仍走 splitStyle
+### 2. 纯字符串子树仍走 splitStyle
 
 ```tsx
 const children = decode ? getDecodedChildren(props.children) : props.children
@@ -72,7 +54,7 @@ const { inheritedText, textPassThrough } = useTextPassThroughText(!isStringOnly 
 
 `splitStyle` 内部已对常见输入做了"无命中复用 styleObj 引用"短路（[utils.tsx:376](packages/webpack-plugin/lib/runtime/components/react/utils.tsx#L376)），但仍要走一遍主循环；mpx-text 自己跳过整次调用是更直接的减法。
 
-### 4. decode 路径强制走 Children.map
+### 3. decode 路径强制走 Children.map
 
 ```tsx
 function getDecodedChildren (children: ReactNode) {
@@ -93,35 +75,11 @@ function getDecodedChildren (children: ReactNode) {
 
 后续 `isStringChildren(children)` 还要再走一次 `every(typeof === 'string')`。两次遍历叠加对单值文本是无效成本。
 
-### 5. decode 后 isStringOnly 二次遍历
+### 4. decode 后 isStringOnly 二次遍历
 
 `getDecodedChildren` 已经在 `Children.map` 中检查过每个 child 是否是 string；外层 `isStringChildren(children)` 又重新遍历一遍。两条信息可以合一。
 
-## 方案一：wrapChildren 入参精简
-
-把无意义的 `mergedProps` 合并去掉，与 `mpx-simple-text` 拉齐写法：
-
-```tsx
-let finalComponent: JSX.Element = createElement(
-  Text,
-  innerProps,
-  wrapChildren(
-    { children },
-    {
-      hasVarDec,
-      varContext: varContextRef.current,
-      textPassThrough
-    }
-  )
-)
-```
-
-注意点：
-
-1. `wrapChildren` 当前只读入参的 `children`，签名行为一致。
-2. 不影响外层 `Text` 收到的 `innerProps`：`innerProps` 已经携带 `mergedProps` 的合并结果。
-
-## 方案二：inheritedText 缺失时复用 props/normalStyle
+## 方案一：inheritedText 缺失时复用 props/normalStyle
 
 ```tsx
 const pendingTextProps = inheritedText?.pendingTextProps
@@ -140,7 +98,7 @@ const finalStyle = inheritedTextStyle
 2. 复用引用后调用方不能反向突变 `mergedProps` / `finalStyle`。当前代码没有这种写法；落地前过一遍 `_Text` 主体内对这两个变量的所有写入位置（仅作为 `extendObject` 入参与 `useNodesRef` 第四参数被读），确认无突变即可。
 3. 与 [splitStyle 在无命中时复用 styleObj 引用](packages/webpack-plugin/lib/runtime/components/react/utils.tsx#L376) 的口径一致。
 
-## 方案三：isStringOnly 时跳过 splitStyle
+## 方案二：isStringOnly 时跳过 splitStyle
 
 ```tsx
 const childTextStyle: TextStyle | undefined = !isStringOnly
@@ -155,7 +113,7 @@ const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle
 2. 非纯字符串子树（如 `<text>foo<text>bar</text></text>`）走原路径，行为不变。
 3. `useTextPassThroughText` 的 hook 调用顺序不受影响（`splitStyle` 不是 hook）。
 
-## 方案四：decode 单字符串短路
+## 方案三：decode 单字符串短路
 
 ```tsx
 function getDecodedChildren (children: ReactNode): { children: ReactNode, isStringOnly: boolean } {
@@ -178,13 +136,12 @@ function getDecodedChildren (children: ReactNode): { children: ReactNode, isStri
 2. `decode(value)` 当前签名返回 `string | undefined`，对 `null`/`undefined` 透传仍返回 undefined，行为不变（[utils.tsx 中 decode](packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx#L25-L31)）。
 3. 与 mpx-simple-text 不消费 decode 的现状无冲突。
 
-## 方案五：decoded children 同步收集 isStringOnly
+## 方案四：decoded children 同步收集 isStringOnly
 
 ```tsx
-const decodeOn = !!decode
 let children: ReactNode
 let isStringOnly: boolean
-if (decodeOn) {
+if (decode) {
   ({ children, isStringOnly } = getDecodedChildren(props.children))
 } else {
   children = props.children
@@ -201,7 +158,6 @@ if (decodeOn) {
 ## 改动范围
 
 1. [packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx)
-   - `wrapChildren` 入参由 `extendObject({}, mergedProps, { children })` 改为 `{ children }`。
    - `inheritedText?.pendingTextProps` / `inheritedText?.textStyle` 缺失时直接复用 `props` / `normalStyle`。
    - `isStringOnly === true` 时跳过 `splitStyle(normalStyle)` 调用。
    - `getDecodedChildren` 改为返回 `{ children, isStringOnly }`，并对单字符串 children 走 `decode` 直返路径。
@@ -224,10 +180,9 @@ if (decodeOn) {
 
 ## 回滚策略
 
-1. wrapChildren 入参精简出问题：恢复 `extendObject({}, mergedProps, { children })`。
-2. mergedProps / finalStyle 复用引用出问题：恢复无条件 `extendObject({}, inheritedText?.pendingTextProps, props)` 与 `extendObject({}, inheritedText?.textStyle, normalStyle)`。
-3. `isStringOnly` 跳过 `splitStyle` 出问题：恢复无条件调用，`useTextPassThroughText` 入参仍按 `!isStringOnly ? textStyle : undefined` 分流。
-4. `getDecodedChildren` 返回结构调整出问题：回退为单返回值版本，外层重新调用 `isStringChildren(children)`。
-5. decode 单字符串短路出问题：删除字符串短路分支，仅保留 `Children.map` 路径；其他改动可独立保留。
+1. mergedProps / finalStyle 复用引用出问题：恢复无条件 `extendObject({}, inheritedText?.pendingTextProps, props)` 与 `extendObject({}, inheritedText?.textStyle, normalStyle)`。
+2. `isStringOnly` 跳过 `splitStyle` 出问题：恢复无条件调用，`useTextPassThroughText` 入参仍按 `!isStringOnly ? textStyle : undefined` 分流。
+3. `getDecodedChildren` 返回结构调整出问题：回退为单返回值版本，外层重新调用 `isStringChildren(children)`。
+4. decode 单字符串短路出问题：删除字符串短路分支，仅保留 `Children.map` 路径；其他改动可独立保留。
 
 各项可独立回退，互不依赖。

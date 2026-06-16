@@ -206,7 +206,7 @@ interface LayoutConfig {
   hasSelfPercent: boolean
   setWidth?: Dispatch<SetStateAction<number>>
   setHeight?: Dispatch<SetStateAction<number>>
-  onLayout?: (event?: LayoutChangeEvent) => void
+  onLayout?: (event: LayoutChangeEvent) => void
   nodeRef: React.RefObject<any>
 }
 

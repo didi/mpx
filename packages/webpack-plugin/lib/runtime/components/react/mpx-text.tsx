@@ -30,13 +30,17 @@ function decode (value: string) {
   }
 }
 
-function getDecodedChildren (children: ReactNode) {
-  return Children.map(children, (child) => {
-    if (typeof child === 'string') {
-      return decode(child)
-    }
+function getDecodedChildren (children: ReactNode): { children: ReactNode, isStringOnly: boolean } {
+  if (typeof children === 'string') {
+    return { children: decode(children), isStringOnly: true }
+  }
+  let isStringOnly = true
+  const decoded = Children.map(children, (child) => {
+    if (typeof child === 'string') return decode(child)
+    isStringOnly = false
     return child
   })
+  return { children: decoded, isStringOnly }
 }
 interface _TextProps extends TextProps {
   style?: TextStyle
@@ -85,13 +89,23 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     parentHeight
   })
 
-  const children = decode ? getDecodedChildren(props.children) : props.children
-  const isStringOnly = isStringChildren(children)
-  const { textStyle } = splitStyle(normalStyle)
-  const { inheritedText, textPassThrough } = useTextPassThroughText(!isStringOnly ? textStyle : undefined)
+  let children: ReactNode
+  let isStringOnly: boolean
+  if (decode) {
+    ({ children, isStringOnly } = getDecodedChildren(props.children))
+  } else {
+    children = props.children
+    isStringOnly = isStringChildren(children)
+  }
+  const childTextStyle = !isStringOnly ? (splitStyle(normalStyle).textStyle as TextStyle | undefined) : undefined
+  const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
 
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
-  const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
+  const mergedProps = inheritedText?.pendingTextProps
+    ? extendObject({}, inheritedText.pendingTextProps, props)
+    : props
+  const finalStyle = inheritedText?.textStyle
+    ? extendObject({}, inheritedText.textStyle, normalStyle)
+    : normalStyle
 
   const nodeRef = useRef(null)
   useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
