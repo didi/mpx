@@ -230,7 +230,7 @@ const createLayer = (isNativeStyle) => {
     important: []
   }
 
-  const checkInlineLayer = (style) => {
+  const checkInlineLayer = style => {
     Object.keys(style._inlineLayer).forEach(l => {
       mergeToLayer(l, style._inlineLayer[l])
     })
