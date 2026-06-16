@@ -4,8 +4,8 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
+import { View, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { useRef, useState, useEffect, useMemo, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
 import useAnimationHooks, { AnimationType } from './animationHooks/index'
@@ -14,7 +14,7 @@ import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
 import { TextPassThroughContextValue } from './context'
-import { error, isFunction } from '@mpxjs/utils'
+import { error } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
@@ -41,8 +41,6 @@ export interface _ViewProps extends ViewProps {
   bindtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
-
-type Handler = (...args: any[]) => void
 
 type Size = {
   width: number
@@ -85,10 +83,14 @@ type ImageProps = {
   style: ImageStyle,
   src?: string,
   source?: { uri: string },
-  colors: Array<string>,
+  colors?: Array<string>,
   locations?: Array<number>
   angle?: number
   resizeMode?: 'cover' | 'stretch'
+}
+
+type LinearImageProps = ImageProps & {
+  colors: Array<string>
 }
 
 const linearMap = new Map([
@@ -97,6 +99,13 @@ const linearMap = new Map([
   ['left', 270],
   ['right', 90]
 ])
+
+const FLEX_DEFAULT_STYLE: ExtendedViewStyle = {
+  flexDirection: 'row',
+  flexBasis: 'auto',
+  flexShrink: 1,
+  flexWrap: 'nowrap'
+}
 
 // 对角线角度
 const diagonalAngleMap: Record<string, (width: number, height: number) => any> = {
@@ -121,12 +130,6 @@ const diagonalAngleMap: Record<string, (width: number, height: number) => any> =
 // 弧度转化为角度的公式
 function radToAngle (r: number) {
   return r * 180 / Math.PI
-}
-
-const applyHandlers = (handlers: Handler[], args: any[]) => {
-  for (const handler of handlers) {
-    handler(...args)
-  }
 }
 
 const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && percentRegExp.test(val)
@@ -329,16 +332,29 @@ function linearGradient (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
 }
 
 const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) => {
-  // 初始化
+  const { type } = preImageInfo
   const imageProps: ImageProps = {
-    resizeMode: 'cover',
     style: {
       position: 'absolute'
       // ...StyleSheet.absoluteFillObject
-    },
-    colors: []
+    }
   }
-  applyHandlers([backgroundSize, backgroundImage, backgroundPosition, linearGradient], [imageProps, preImageInfo, imageSize, layoutInfo])
+
+  if (type === 'image') {
+    imageProps.resizeMode = 'cover'
+  } else {
+    imageProps.colors = []
+  }
+
+  backgroundSize(imageProps, preImageInfo, imageSize, layoutInfo)
+  if (preImageInfo.backgroundPosition.length) {
+    backgroundPosition(imageProps, preImageInfo, imageSize, layoutInfo)
+  }
+  if (type === 'image') {
+    backgroundImage(imageProps, preImageInfo)
+  } else {
+    linearGradient(imageProps, preImageInfo, imageSize, layoutInfo)
+  }
 
   return imageProps
 }
@@ -497,7 +513,7 @@ function parseLinearGradient (text: string): LinearInfo | undefined {
   })
 }
 
-function parseBgImage (text: string): {
+function parseBgImage (text?: string): {
   linearInfo?: LinearInfo
   direction?: string
   type?: 'image' | 'linear'
@@ -536,19 +552,6 @@ function normalizeBackgroundSize (
   })
 }
 
-function preParseImage (imageStyle?: ExtendedViewStyle) {
-  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
-  const { type, src, linearInfo } = parseBgImage(backgroundImage)
-
-  return {
-    src,
-    linearInfo,
-    type,
-    sizeList: normalizeBackgroundSize(backgroundSize, type),
-    backgroundPosition: normalizeBackgroundPosition(backgroundPosition)
-  }
-}
-
 function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
   return !!(linearInfo?.direction && diagonalAngleMap[linearInfo.direction])
 }
@@ -573,21 +576,48 @@ function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
 }
 
 function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
-  // 预处理数据
-  const preImageInfo: PreImageInfo = preParseImage(imageStyle)
-  // 预解析
-  const { src, sizeList, type } = preImageInfo
+  const backgroundImage = imageStyle?.backgroundImage
+  const backgroundSize = imageStyle?.backgroundSize
+  const backgroundPosition = imageStyle?.backgroundPosition
+  const parsedImageInfo = useMemo(() => parseBgImage(backgroundImage), [backgroundImage])
+  const { src, type } = parsedImageInfo
+  const backgroundSizeKey = Array.isArray(backgroundSize) ? backgroundSize.join('|') : backgroundSize
+  const sizeList = useMemo(
+    () => normalizeBackgroundSize(backgroundSize ?? ['auto'], type),
+    [backgroundSizeKey, type]
+  )
+  const backgroundPositionKey = Array.isArray(backgroundPosition) ? backgroundPosition.join('|') : backgroundPosition
+  const bgPosition = useMemo(
+    () => normalizeBackgroundPosition(backgroundPosition ?? [0, 0]),
+    [backgroundPositionKey]
+  )
+  const preImageInfo: PreImageInfo = useMemo(
+    () => extendObject({}, parsedImageInfo, { sizeList, backgroundPosition: bgPosition }),
+    [parsedImageInfo, sizeList, bgPosition]
+  )
 
   // 判断是否可挂载onLayout
   const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
 
   const [show, setShow] = useState<boolean>(((type === 'image' && !!src) || type === 'linear') && !needLayout && !needImageSize)
-  const [, setImageSizeWidth] = useState<number | null>(null)
-  const [, setImageSizeHeight] = useState<number | null>(null)
-  const [, setLayoutInfoWidth] = useState<number | null>(null)
-  const [, setLayoutInfoHeight] = useState<number | null>(null)
+  const [version, setVersion] = useState(0)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
+  const sizeCacheRef = useRef<Map<string, Size>>(new Map())
+  // sizeInfo / layoutInfo / setVersion 都是稳定引用，闭包整个生命周期只分配一次
+  const { bumpVersion, setImageSize, setLayoutInfo } = useMemo(() => ({
+    bumpVersion: () => setVersion(version => version + 1),
+    setImageSize: (width: number, height: number) => {
+      if (sizeInfo.current?.width === width && sizeInfo.current?.height === height) return false
+      sizeInfo.current = { width, height }
+      return true
+    },
+    setLayoutInfo: (width: number, height: number) => {
+      if (layoutInfo.current?.width === width && layoutInfo.current?.height === height) return false
+      layoutInfo.current = { width, height }
+      return true
+    }
+  }), [])
   useEffect(() => {
     sizeInfo.current = null
     if (type === 'linear') {
@@ -605,54 +635,55 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
 
     if (needImageSize) {
-      Image.getSize(src, (width, height) => {
-        sizeInfo.current = {
-          width,
-          height
+      const cached = sizeCacheRef.current.get(src)
+      if (cached) {
+        const imageSizeChanged = setImageSize(cached.width, cached.height)
+        if (!needLayout || layoutInfo.current) {
+          imageSizeChanged && bumpVersion()
+          setShow(true)
         }
+        return
+      }
+      let cancelled = false
+      Image.getSize(src, (width, height) => {
+        // cache 仍然填上，避免下次同 src 再发一次请求
+        sizeCacheRef.current.set(src, { width, height })
+        if (cancelled) return
+        const imageSizeChanged = setImageSize(width, height)
         // 1. 当需要绑定onLayout 2. 获取到布局信息
         if (!needLayout || layoutInfo.current) {
-          setImageSizeWidth(width)
-          setImageSizeHeight(height)
-          if (layoutInfo.current) {
-            setLayoutInfoWidth(layoutInfo.current.width)
-            setLayoutInfoHeight(layoutInfo.current.height)
-          }
+          imageSizeChanged && bumpVersion()
           setShow(true)
         }
       })
+      return () => { cancelled = true }
     }
     // type 添加type 处理无渐变 有渐变的场景
-  }, [src, type])
+  }, [src, type, needLayout, needImageSize])
+
+  const imageProps = useMemo(
+    () => imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size),
+    [preImageInfo, version]
+  )
 
   if (!type) return null
 
   const onLayout = (res: LayoutChangeEvent) => {
     const { width, height } = res?.nativeEvent?.layout || {}
-    layoutInfo.current = {
-      width,
-      height
-    }
+    // layoutInfo 总是更新，Image.getSize 回调要靠 layoutInfo.current 决定是否 setShow
+    let changed = setLayoutInfo(width, height)
     if (!needImageSize) {
-      setLayoutInfoWidth(width)
-      setLayoutInfoHeight(height)
       // 有渐变角度的时候，才触发渲染组件
       if (type === 'linear') {
-        sizeInfo.current = {
-          width: calcPercent(sizeList[0] as NumberVal, width),
-          height: calcPercent(sizeList[1] as NumberVal, height)
-        }
-        setImageSizeWidth(sizeInfo.current.width)
-        setImageSizeHeight(sizeInfo.current.height)
+        changed = setImageSize(calcPercent(sizeList[0] as NumberVal, width), calcPercent(sizeList[1] as NumberVal, height)) || changed
       }
+      changed && bumpVersion()
       setShow(true)
     } else if (sizeInfo.current) {
-      setLayoutInfoWidth(width)
-      setLayoutInfoHeight(height)
-      setImageSizeWidth(sizeInfo.current.width)
-      setImageSizeHeight(sizeInfo.current.height)
+      changed && bumpVersion()
       setShow(true)
     }
+    // needImageSize && !sizeInfo.current：等 Image.getSize 回调里 setShow(true)，此处不触发渲染
   }
 
   const backgroundProps: ViewProps = extendObject({ key: 'backgroundImage' }, needLayout ? { onLayout } : {},
@@ -660,18 +691,16 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   )
 
   return createElement(View, backgroundProps,
-    show && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))),
-    show && type === 'image' && renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage)
+    show && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageProps as LinearImageProps)),
+    show && type === 'image' && renderImage(imageProps, enableFastImage)
   )
 }
 
 interface WrapChildrenConfig {
   hasVarDec: boolean
   enableBackground?: boolean
-  textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
-  textProps?: Record<string, any>
   textPassThrough?: TextPassThroughContextValue | null
   innerStyle?: Record<string, any>
   enableFastImage?: boolean
@@ -684,9 +713,11 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, bac
     textPassThrough
   })
 
+  if (!enableBackground) return children
+
   return [
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
+    useWrapImage(backgroundStyle, innerStyle, enableFastImage),
     children
   ]
 }
@@ -718,20 +749,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     bindtransitionend
   } = props
 
-  // 默认样式
-  const defaultStyle: ExtendedViewStyle = style.display === 'flex'
-    ? {
-        flexDirection: 'row',
-        flexBasis: 'auto',
-        flexShrink: 1,
-        flexWrap: 'nowrap'
-      }
-    : {}
-
   const enableHover = !!hoverStyle
   const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
-  const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
+  const styleObj: ExtendedViewStyle = extendObject({}, style.display === 'flex' ? FLEX_DEFAULT_STYLE : undefined, style, isHover ? hoverStyle as ExtendedViewStyle : undefined)
   if (__mpx_perf_framework__) perf.scopeEnd(idProps)
 
   // ───── style 阶段 ─────
@@ -772,18 +793,16 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const viewStyle = extendObject({}, innerStyle, layoutStyle)
-  const transitionend = isFunction(catchtransitionend)
-    ? catchtransitionend
-    : isFunction(bindtransitionend)
-      ? bindtransitionend
-      : undefined
+  const viewStyle = layoutStyle
+    ? extendObject({}, innerStyle, layoutStyle)
+    : innerStyle
   const { enableStyleAnimation, animationStyle } = useAnimationHooks({
     layoutRef,
     animation,
     enableAnimation,
     style: viewStyle,
-    transitionend
+    catchtransitionend,
+    bindtransitionend
   })
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 

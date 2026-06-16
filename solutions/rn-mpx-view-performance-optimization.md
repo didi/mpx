@@ -163,12 +163,12 @@ export function splitStyle<T extends Record<string, any>> (
 `_View` 内 `defaultStyle` 当前每次 render 现场构造，并对非 flex 节点也走一次 `extendObject` 空对象合并。抽为模块级常量并按分支跳过：
 
 ```ts
-const FLEX_DEFAULT_STYLE: ExtendedViewStyle = Object.freeze({
+const FLEX_DEFAULT_STYLE: ExtendedViewStyle = {
   flexDirection: 'row',
   flexBasis: 'auto',
   flexShrink: 1,
   flexWrap: 'nowrap'
-}) as ExtendedViewStyle
+} as ExtendedViewStyle
 
 // _View 内
 const styleObj: ExtendedViewStyle = style.display === 'flex'

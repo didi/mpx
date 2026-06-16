@@ -201,8 +201,6 @@ export interface VisitorArg {
   keyPath: Array<string>
 }
 
-type GroupData<T> = Record<string, Partial<T>>
-
 interface LayoutConfig {
   props: Record<string, any>
   hasSelfPercent: boolean
@@ -271,19 +269,6 @@ export function isStringChildren (children: ReactNode) {
   if (typeof children === 'string') return true
   if (!Array.isArray(children)) return false
   return children.every((child) => typeof child === 'string')
-}
-
-export function groupBy<T extends Record<string, any>> (
-  obj: T,
-  callback: (key: string, val: T[keyof T]) => string,
-  group: GroupData<T> = {}
-): GroupData<T> {
-  Object.entries(obj).forEach(([key, val]) => {
-    const groupKey = callback(key, val)
-    group[groupKey] = group[groupKey] || {}
-    group[groupKey][key as keyof T] = val
-  })
-  return group
 }
 
 // 多value解析
@@ -363,32 +348,74 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffe
   backgroundStyle?: Partial<T>
   innerStyle?: Partial<T>
 } {
-  return groupBy(styleObj, (key, val) => {
+  const keys = Object.keys(styleObj)
+  let textStyle: Partial<T> | undefined
+  let backgroundStyle: Partial<T> | undefined
+  let innerStyle: Partial<T> | undefined
+  let firstSpecialIdx = -1
+
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    const val = styleObj[key]
     sideEffect && sideEffect(key, val)
+
     if (isTextStyle(key)) {
-      return 'textStyle'
+      if (firstSpecialIdx < 0) firstSpecialIdx = i
+      textStyle = textStyle || {}
+      textStyle[key as keyof T] = val
     } else if (hasOwn(backgroundStyleMap, key)) {
-      return 'backgroundStyle'
-    } else {
-      return 'innerStyle'
+      if (firstSpecialIdx < 0) firstSpecialIdx = i
+      backgroundStyle = backgroundStyle || {}
+      backgroundStyle[key as keyof T] = val
+    } else if (firstSpecialIdx >= 0) {
+      innerStyle = innerStyle || {}
+      innerStyle[key as keyof T] = val
     }
-  })
+  }
+
+  if (firstSpecialIdx < 0) return { innerStyle: styleObj }
+
+  if (firstSpecialIdx > 0) {
+    innerStyle = innerStyle || {}
+    for (let i = 0; i < firstSpecialIdx; i++) {
+      const key = keys[i]
+      innerStyle[key as keyof T] = styleObj[key]
+    }
+  }
+  return { textStyle, backgroundStyle, innerStyle }
 }
 
 export function splitProps<T extends Record<string, any>> (props: T): {
   textProps?: Partial<T>
   innerProps?: Partial<T>
 } {
-  return groupBy(props, (key) => {
+  const keys = Object.keys(props)
+  let textProps: Partial<T> | undefined
+  let innerProps: Partial<T> | undefined
+  let firstTextIdx = -1
+
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
     if (hasOwn(textPropsMap, key)) {
-      return 'textProps'
-    } else {
-      return 'innerProps'
+      if (firstTextIdx < 0) firstTextIdx = i
+      textProps = textProps || {}
+      textProps[key as keyof T] = props[key]
+    } else if (firstTextIdx >= 0) {
+      innerProps = innerProps || {}
+      innerProps[key as keyof T] = props[key]
     }
-  }) as {
-    textProps: Partial<T>
-    innerProps: Partial<T>
   }
+
+  if (firstTextIdx < 0) return { innerProps: props }
+
+  if (firstTextIdx > 0) {
+    innerProps = innerProps || {}
+    for (let i = 0; i < firstTextIdx; i++) {
+      const key = keys[i]
+      innerProps[key as keyof T] = props[key]
+    }
+  }
+  return { textProps, innerProps }
 }
 
 export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
@@ -1193,7 +1220,8 @@ export const useUpdateEffect = (effect: any, deps: any) => {
 export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }: LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
-  const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? hiddenStyle : {} }, [hasLayoutRef.current])
+  // 固定首次 layout 前是否需要隐藏，避免 hasSelfPercent 后续变化时重新隐藏组件
+  const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? hiddenStyle : undefined }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
   const navigation = useNavigation()
   const enableOffset = props['enable-offset']
@@ -1300,37 +1328,46 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [isHover, setIsHover] = useState(false)
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const dataRef = useRef<{
+  const hoverRef = useRef<{
     startTimer?: ReturnType<typeof setTimeout>
     stayTimer?: ReturnType<typeof setTimeout>
-  }>({})
+    hoverStartTime: number
+    hoverStayTime: number
+    disabled?: boolean
+  }>({ hoverStartTime, hoverStayTime, disabled })
+  hoverRef.current.hoverStartTime = hoverStartTime
+  hoverRef.current.hoverStayTime = hoverStayTime
+  hoverRef.current.disabled = disabled
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     return () => {
-      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+      hoverRef.current.startTimer && clearTimeout(hoverRef.current.startTimer)
+      hoverRef.current.stayTimer && clearTimeout(hoverRef.current.stayTimer)
     }
   }, [])
 
-  const setStartTimer = () => {
-    if (disabled) return
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.startTimer = setTimeout(() => {
-      setIsHover(true)
-    }, +hoverStartTime)
-  }
-
-  const setStayTimer = () => {
-    if (disabled) return
-    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.stayTimer = setTimeout(() => {
-      setIsHover(false)
-    }, +hoverStayTime)
-  }
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const gesture = useMemo(() => {
+    const setStartTimer = () => {
+      const data = hoverRef.current
+      if (data.disabled) return
+      data.startTimer && clearTimeout(data.startTimer)
+      data.startTimer = setTimeout(() => {
+        setIsHover(true)
+      }, +data.hoverStartTime)
+    }
+
+    const setStayTimer = () => {
+      const data = hoverRef.current
+      if (data.disabled) return
+      data.stayTimer && clearTimeout(data.stayTimer)
+      data.startTimer && clearTimeout(data.startTimer)
+      data.stayTimer = setTimeout(() => {
+        setIsHover(false)
+      }, +data.hoverStayTime)
+    }
+
     return Gesture.Pan()
       .onTouchesDown(() => {
         setStartTimer()
