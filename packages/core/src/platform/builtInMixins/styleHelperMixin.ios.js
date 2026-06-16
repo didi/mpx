@@ -221,7 +221,6 @@ function getMediaStyle (media) {
   }, {})
 }
 
-
 const createLayer = (isNativeStyle) => {
   const layerMap = {
     preflight: [],
@@ -245,7 +244,7 @@ const createLayer = (isNativeStyle) => {
   }
 
   const mergeToLayerWithStyles = (name, styles) => {
-    styles.forEach(v=> mergeToLayer(name, v))
+    styles.forEach(v => mergeToLayer(name, v))
   }
 
   const genResult = isNativeStyle
