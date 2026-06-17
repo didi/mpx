@@ -1,0 +1,9 @@
+{
+  "transform": {
+    "^.+\\.(js|jsx|ts|tsx)?$": "babel-jest"
+  },
+  "testEnvironment": "node",
+  "globals": {
+    "__mpx_perf__": true
+  }
+}
