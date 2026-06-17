@@ -14,6 +14,7 @@ import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThroughValue } from './utils'
 import { error, isFunction } from '@mpxjs/utils'
+import * as perf from '@mpxjs/perf'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal'
@@ -701,6 +702,13 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, bac
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
+  // 性能探针 - total
+  let idTotal = -1
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render:total')
+
+  // ───── props 阶段 ─────
+  let idProps = -1
+  if (__mpx_perf_framework__) idProps = perf.scopeStart('view:render:props')
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
   let {
     style = {},
@@ -734,7 +742,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
   const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
+  if (__mpx_perf_framework__) perf.scopeEnd(idProps)
 
+  // ───── style 阶段 ─────
+  let idStyle = -1
+  if (__mpx_perf_framework__) idStyle = perf.scopeStart('view:render:style')
   const {
     normalStyle,
     hasSelfPercent,
@@ -784,7 +796,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     style: viewStyle,
     transitionend
   })
+  if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
+  // ───── innerProps 阶段 ─────
+  let idInnerProps = -1
+  if (__mpx_perf_framework__) idInnerProps = perf.scopeStart('view:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -810,7 +826,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       layoutRef
     }
   )
+  if (__mpx_perf_framework__) perf.scopeEnd(idInnerProps)
 
+  // ───── createElement 阶段 ─────
+  let idCreate = -1
+  if (__mpx_perf_framework__) idCreate = perf.scopeStart('view:render:createElement')
   const childNode = wrapWithChildren(props, {
     hasVarDec,
     enableBackground: enableBackgroundRef.current,
@@ -832,6 +852,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   if (hasPositionFixed) {
     finalComponent = createElement(Portal, null, finalComponent)
   }
+  if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
+
+  if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
   return finalComponent
 })
 
