@@ -1,0 +1,11 @@
+import type { Reporter } from './types';
+export declare const scopeStart: (_name: string) => number;
+export declare const scopeEnd: (_id: number) => void;
+export declare const mark: (_name: string) => void;
+export declare const measure: (_name: string, _start: string) => void;
+export declare const start: () => void;
+export declare const end: (_reporter?: Reporter) => void;
+export declare const setReporter: (_r: Reporter) => void;
+export declare const clearReporter: () => void;
+export declare const consoleReporter: Reporter;
+export declare const createConsoleReporter: (_options?: object) => Reporter;

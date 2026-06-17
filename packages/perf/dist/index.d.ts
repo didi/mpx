@@ -1,0 +1,12 @@
+import * as reporters from './reporters/console';
+export declare const scopeStart: (_name: string) => number;
+export declare const scopeEnd: (_id: number) => void;
+export declare const mark: (_name: string) => void;
+export declare const measure: (_name: string, _start: string) => void;
+export declare const start: () => void;
+export declare const end: (reporter?: import("./types").Reporter | undefined) => void;
+export declare const setReporter: (r: import("./types").Reporter) => void;
+export declare const clearReporter: () => void;
+export declare const createConsoleReporter: typeof reporters.createConsoleReporter;
+export declare const consoleReporter: import("./types").Reporter;
+export type { Reporter, AggResult } from './types';
