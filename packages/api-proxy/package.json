@@ -38,7 +38,7 @@
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
     "@mpxjs/utils": "^2.10.21",
-    "axios": "^1.7.3"
+    "axios": "1.17.0"
   },
   "peerDependencies": {
     "@react-native-async-storage/async-storage": "*",
