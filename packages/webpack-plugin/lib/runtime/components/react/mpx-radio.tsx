@@ -90,7 +90,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const labelContext = useContext(LabelContext)
 
-    const defaultStyle = extendObject(
+    const wrapperStyle = extendObject(
       {},
       styles.wrapper,
       isChecked ? styles.wrapperChecked : {},
@@ -197,7 +197,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const finalComponent = createElement(View, innerProps,
       createElement(
         View,
-        { style: defaultStyle },
+        { style: wrapperStyle },
         createElement(Icon, {
           type: 'success',
           size: 24,

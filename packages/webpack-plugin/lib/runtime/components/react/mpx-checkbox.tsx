@@ -103,7 +103,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> } } | undefined
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined
 
-    const defaultStyle = extendObject(
+    const wrapperStyle = extendObject(
       {},
       styles.wrapper,
       disabled ? styles.wrapperDisabled : null
@@ -212,7 +212,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const finalComponent = createElement(View, innerProps,
       createElement(
         View,
-        { style: defaultStyle },
+        { style: wrapperStyle },
         createElement(Icon, {
           type: 'success_no_circle',
           size: 18,
