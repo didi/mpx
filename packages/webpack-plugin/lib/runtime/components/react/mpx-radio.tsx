@@ -136,7 +136,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, {
-      style: extendObject({}, defaultStyle, normalStyle),
+      style: normalStyle,
       change: onChange
     })
 
