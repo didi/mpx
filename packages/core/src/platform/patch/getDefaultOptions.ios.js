@@ -535,6 +535,24 @@ function getLayoutData (headerHeight) {
   }
 }
 
+let hasRenderedSafeAreaInsets = false
+
+function getSafeAreaInsetsWithInitialTop (safeAreaInsets) {
+  if (ReactNative.Platform.OS === 'android' && !hasRenderedSafeAreaInsets) {
+    hasRenderedSafeAreaInsets = true
+    const initialTop = initialWindowMetrics?.insets?.top || 0
+    if (safeAreaInsets?.top === 0 && initialTop) {
+      // Android 首次渲染时 top 可能暂时为 0，仅全局兜底一次，后续使用 useSafeAreaInsets 的真实更新。
+      // 返回新对象，避免修改 useSafeAreaInsets/context 产出的 insets 引用。
+      return {
+        ...safeAreaInsets,
+        top: initialTop
+      }
+    }
+  }
+  return safeAreaInsets
+}
+
 export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom ({ navigation, route, ...props }) {
     const keyboardAvoidRef = useRef(null)
@@ -583,8 +601,8 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
         )
       )
     }
-    // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
-    navigation.insets = useSafeAreaInsets()
+    // Android 全局首次渲染时对 safe area top 做兜底，避免 navigation.insets.top 短暂写入 0。
+    navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
     return withKeyboardAvoidingView(
       createElement(ReactNative.View,
         {
