@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough, resolveDefaultStyle } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
 import { TextPassThroughContextValue } from './context'
 import { error } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
@@ -104,6 +104,12 @@ const FLEX_DEFAULT_STYLE: ExtendedViewStyle = {
   flexDirection: 'row',
   flexBasis: 'auto',
   flexShrink: 1,
+  flexWrap: 'nowrap'
+}
+// 用户传入 flex shorthand 时使用的精简版（裁掉 flexBasis/flexShrink）
+// 避免 number 形式 flex:1 被 default flexBasis:'auto' 反向覆盖
+const FLEX_DEFAULT_STYLE_TRIMMED: ExtendedViewStyle = {
+  flexDirection: 'row',
   flexWrap: 'nowrap'
 }
 
@@ -774,8 +780,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     parentWidth,
     parentHeight,
     // 基于合并后的 styleObj 判断（hover 状态切换 display 也能触发）
-    // resolveDefaultStyle 在用户已传入 flex/flexFlow 等 shorthand 时裁掉冲突的 longhand default
-    defaultStyle: styleObj.display === 'flex' ? resolveDefaultStyle(FLEX_DEFAULT_STYLE, styleObj) : undefined
+    // 用户传 flex shorthand 时使用精简 default，避免 flexBasis/flexShrink 反向覆盖
+    defaultStyle: styleObj.display === 'flex'
+      ? ('flex' in styleObj ? FLEX_DEFAULT_STYLE_TRIMMED : FLEX_DEFAULT_STYLE)
+      : undefined
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)

@@ -47,7 +47,7 @@ import {
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThrough, resolveDefaultStyle } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThrough } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -112,9 +112,7 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 5,
     backgroundColor: '#F8F8F8',
-    // 拆成单边 longhand，配合 cover map 让 user 的 margin / marginHorizontal shorthand 能正确覆盖
-    marginLeft: 'auto',
-    marginRight: 'auto'
+    marginHorizontal: 'auto'
   },
   buttonMini: {
     height: 30
@@ -286,13 +284,11 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const styleObj = isHover ? extendObject({}, style, hoverStyle) : style
 
-  // 在用户 shorthand/longhand 已等价表达 default 字段时裁掉对应 default，
-  // 避免 longhand default（如 marginHorizontal:'auto'、borderWidth:1 等）
-  // 反向覆盖用户 shorthand（如 margin:0、border:'0px'）。
-  const defaultStyle = resolveDefaultStyle(
-    extendObject({}, defaultViewStyle, defaultTextStyle),
-    styleObj
-  )
+  const defaultStyle: Record<string, any> = extendObject({}, defaultViewStyle, defaultTextStyle)
+  // 用户 shorthand 优先：避免 longhand default 反向覆盖
+  if ('margin' in styleObj) {
+    delete defaultStyle.marginHorizontal
+  }
 
   const {
     hasPositionFixed,

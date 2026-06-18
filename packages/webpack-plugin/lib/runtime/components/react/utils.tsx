@@ -111,54 +111,6 @@ const borderShorthandMap: Record<string, boolean> = {
   borderLeft: true
 }
 
-// 反向覆盖映射：default longhand key → user 一侧能等价表达它的 shorthand 列表（OR）。
-// 仅覆盖 mpx-button / mpx-view / mpx-slider 当前 default 中实际出现的字段。
-// 设计前提：所有 default 都使用单边 longhand（marginLeft/Right、paddingLeft/Right …），
-// 因此只需识别 user 的 shorthand，无需 AND 组合。
-const defaultStyleCoverMap: Record<string, readonly string[]> = {
-  marginLeft: ['margin', 'marginHorizontal'],
-  marginRight: ['margin', 'marginHorizontal'],
-  paddingLeft: ['padding', 'paddingHorizontal'],
-  paddingRight: ['padding', 'paddingHorizontal'],
-  borderWidth: ['border'],
-  borderStyle: ['border'],
-  borderColor: ['border'],
-  // flex 存在 number 形式（如 flex:1），transformFlex 不展开 number,
-  // 所以 flexBasis/flexShrink 必须由 cover map 兜住。
-  // flexDirection/flexWrap ← flexFlow 无需声明：flexFlow 只有字符串形式,
-  // 会被 transformShorthand 展开后由同 key 跳过逻辑处理。
-  flexBasis: ['flex'],
-  flexShrink: ['flex']
-}
-
-// 在使用 default 之前裁掉「已被 user shorthand 等价表达」的字段，
-// 避免 longhand default 反向覆盖 user shorthand（典型如 margin:0 vs marginLeft/Right:'auto'，
-// flex:1 vs flexBasis:'auto'，padding:0 vs paddingLeft/Right:14）。
-// userStyle 传未经 transformShorthand/transformFlex 处理的原始 style 即可。
-export function resolveDefaultStyle<T extends Record<string, any>> (
-  defaultStyle: T,
-  userStyle: Record<string, any> | undefined
-): T {
-  if (!defaultStyle || !userStyle) return defaultStyle
-  let result: T = defaultStyle
-  let cloned = false
-  for (const k in defaultStyle) {
-    if (!hasOwn(defaultStyle, k)) continue
-    if (!hasOwn(userStyle, k) && !isCoveredByShorthand(userStyle, k)) continue
-    if (!cloned) { result = extendObject({}, defaultStyle) as T; cloned = true }
-    delete (result as Record<string, any>)[k]
-  }
-  return result
-}
-
-function isCoveredByShorthand (userStyle: Record<string, any>, key: string): boolean {
-  const shorthands = defaultStyleCoverMap[key]
-  if (!shorthands) return false
-  for (let i = 0; i < shorthands.length; i++) {
-    if (hasOwn(userStyle, shorthands[i])) return true
-  }
-  return false
-}
 const borderStyleMap: Record<string, boolean> = {
   solid: true,
   dotted: true,
