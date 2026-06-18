@@ -272,7 +272,9 @@ function getMessage (messages, locale, fallbackLocale, key) {
 function resolve (messages, locale, key) {
   if (messages && messages[locale] && key) {
     var format = getPathValue(messages[locale], key)
-    if (format == null) {
+    // getPathValue 在 key 形如算术表达式时（如 "1000+ reviews"）会返回 NaN，
+    // NaN 不是有效译文，应和 null/undefined 一样回退到字面量直查（format !== format 仅 NaN 成立）。
+    if (format == null || format !== format) {
       format = messages[locale][key]
     }
     return format
