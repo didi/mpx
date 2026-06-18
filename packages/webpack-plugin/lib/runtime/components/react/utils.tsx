@@ -111,47 +111,28 @@ const borderShorthandMap: Record<string, boolean> = {
   borderLeft: true
 }
 
-// 反向覆盖映射：default key → 能在语义层覆盖它的 user-side key 集合（OR-of-AND）。
-// 项为 string：单 key 命中即覆盖；项为 string[]：组内 keys 全部命中才视为覆盖。
+// 反向覆盖映射：default longhand key → user 一侧能等价表达它的 shorthand 列表（OR）。
 // 仅覆盖 mpx-button / mpx-view / mpx-slider 当前 default 中实际出现的字段。
-type CoverGroup = string | readonly string[]
-const defaultStyleCoverMap: Record<string, readonly CoverGroup[]> = {
-  marginHorizontal: ['margin', ['marginLeft', 'marginRight']],
+// 设计前提：所有 default 都使用单边 longhand（marginLeft/Right、paddingLeft/Right …），
+// 因此只需识别 user 的 shorthand，无需 AND 组合。
+const defaultStyleCoverMap: Record<string, readonly string[]> = {
+  marginLeft: ['margin', 'marginHorizontal'],
+  marginRight: ['margin', 'marginHorizontal'],
   paddingLeft: ['padding', 'paddingHorizontal'],
   paddingRight: ['padding', 'paddingHorizontal'],
-  borderRadius: [[
-    'borderTopLeftRadius', 'borderTopRightRadius',
-    'borderBottomLeftRadius', 'borderBottomRightRadius'
-  ]],
   borderWidth: ['border'],
   borderStyle: ['border'],
   borderColor: ['border'],
+  // flex 存在 number 形式（如 flex:1），transformFlex 不展开 number,
+  // 所以 flexBasis/flexShrink 必须由 cover map 兜住。
+  // flexDirection/flexWrap ← flexFlow 无需声明：flexFlow 只有字符串形式,
+  // 会被 transformShorthand 展开后由同 key 跳过逻辑处理。
   flexBasis: ['flex'],
-  flexShrink: ['flex'],
-  flexDirection: ['flexFlow'],
-  flexWrap: ['flexFlow']
+  flexShrink: ['flex']
 }
 
-function isDefaultCoveredByUser (userStyle: Record<string, any>, key: string): boolean {
-  const groups = defaultStyleCoverMap[key]
-  if (!groups) return false
-  for (let i = 0; i < groups.length; i++) {
-    const g = groups[i]
-    if (typeof g === 'string') {
-      if (hasOwn(userStyle, g)) return true
-    } else {
-      let allHit = true
-      for (let j = 0; j < g.length; j++) {
-        if (!hasOwn(userStyle, g[j])) { allHit = false; break }
-      }
-      if (allHit) return true
-    }
-  }
-  return false
-}
-
-// 在使用 default 之前裁掉「已被 user shorthand/longhand 等价表达」的字段，
-// 避免 longhand default 反向覆盖 user shorthand（典型如 margin:0 vs marginHorizontal:'auto'，
+// 在使用 default 之前裁掉「已被 user shorthand 等价表达」的字段，
+// 避免 longhand default 反向覆盖 user shorthand（典型如 margin:0 vs marginLeft/Right:'auto'，
 // flex:1 vs flexBasis:'auto'，padding:0 vs paddingLeft/Right:14）。
 // userStyle 传未经 transformShorthand/transformFlex 处理的原始 style 即可。
 export function resolveDefaultStyle<T extends Record<string, any>> (
@@ -163,11 +144,20 @@ export function resolveDefaultStyle<T extends Record<string, any>> (
   let cloned = false
   for (const k in defaultStyle) {
     if (!hasOwn(defaultStyle, k)) continue
-    if (!hasOwn(userStyle, k) && !isDefaultCoveredByUser(userStyle, k)) continue
+    if (!hasOwn(userStyle, k) && !isCoveredByShorthand(userStyle, k)) continue
     if (!cloned) { result = extendObject({}, defaultStyle) as T; cloned = true }
     delete (result as Record<string, any>)[k]
   }
   return result
+}
+
+function isCoveredByShorthand (userStyle: Record<string, any>, key: string): boolean {
+  const shorthands = defaultStyleCoverMap[key]
+  if (!shorthands) return false
+  for (let i = 0; i < shorthands.length; i++) {
+    if (hasOwn(userStyle, shorthands[i])) return true
+  }
+  return false
 }
 const borderStyleMap: Record<string, boolean> = {
   solid: true,

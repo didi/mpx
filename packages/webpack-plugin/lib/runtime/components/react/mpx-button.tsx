@@ -112,7 +112,9 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 5,
     backgroundColor: '#F8F8F8',
-    marginHorizontal: 'auto' // 按钮默认居中
+    // 拆成单边 longhand，配合 cover map 让 user 的 margin / marginHorizontal shorthand 能正确覆盖
+    marginLeft: 'auto',
+    marginRight: 'auto'
   },
   buttonMini: {
     height: 30
