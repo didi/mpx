@@ -45,7 +45,7 @@ import {
   NativeSyntheticEvent,
   useAnimatedValue
 } from 'react-native'
-import { warn } from '@mpxjs/utils'
+import { warn, hasOwn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThrough } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -286,10 +286,10 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const defaultStyle: Record<string, any> = extendObject({}, defaultViewStyle, defaultTextStyle)
   // 用户 shorthand 优先：避免 longhand default 反向覆盖
-  if ('margin' in styleObj) {
+  if (hasOwn(styleObj, 'margin')) {
     delete defaultStyle.marginHorizontal
   }
-  if ('padding' in styleObj) {
+  if (hasOwn(styleObj, 'padding')) {
     delete defaultStyle.paddingHorizontal
   }
 

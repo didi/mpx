@@ -14,7 +14,7 @@ import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
 import { TextPassThroughContextValue } from './context'
-import { error } from '@mpxjs/utils'
+import { error, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
@@ -782,7 +782,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     // 基于合并后的 styleObj 判断（hover 状态切换 display 也能触发）
     // 用户传 flex shorthand 时使用精简 default，避免 flexBasis/flexShrink 反向覆盖
     defaultStyle: styleObj.display === 'flex'
-      ? ('flex' in styleObj ? FLEX_DEFAULT_STYLE_TRIMMED : FLEX_DEFAULT_STYLE)
+      ? (hasOwn(styleObj, 'flex') ? FLEX_DEFAULT_STYLE_TRIMMED : FLEX_DEFAULT_STYLE)
       : undefined
   })
 

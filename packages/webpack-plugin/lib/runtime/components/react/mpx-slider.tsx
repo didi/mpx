@@ -31,7 +31,7 @@ import {
 } from 'react-native'
 import { GestureDetector, Gesture, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
-import { warn } from '@mpxjs/utils'
+import { warn, hasOwn } from '@mpxjs/utils'
 
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -343,8 +343,8 @@ const Slider = forwardRef<
       alignItems: 'center' as const,
       minHeight: Math.max(blockSizeNum + 8, 40)
     },
-    'padding' in style ? null : { paddingHorizontal: 14 },
-    'margin' in style ? null : { marginHorizontal: 18, marginVertical: 10 },
+    hasOwn(style, 'padding') ? null : { paddingHorizontal: 14 },
+    hasOwn(style, 'margin') ? null : { marginHorizontal: 18, marginVertical: 10 },
     normalStyle,
     layoutStyle
   )
