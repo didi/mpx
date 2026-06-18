@@ -112,7 +112,8 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 5,
     backgroundColor: '#F8F8F8',
-    marginHorizontal: 'auto'
+    marginHorizontal: 'auto',
+    paddingHorizontal: 14
   },
   buttonMini: {
     height: 30
@@ -288,6 +289,9 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   // 用户 shorthand 优先：避免 longhand default 反向覆盖
   if ('margin' in styleObj) {
     delete defaultStyle.marginHorizontal
+  }
+  if ('padding' in styleObj) {
+    delete defaultStyle.paddingHorizontal
   }
 
   const {
