@@ -105,7 +105,6 @@ const OpenTypeEventsMap = new Map<OpenType, OpenTypeEvent>([
 
 const styles = StyleSheet.create({
   button: {
-    width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

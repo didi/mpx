@@ -344,6 +344,7 @@ const Slider = forwardRef<
       minHeight: Math.max(blockSizeNum + 8, 40)
     },
     'padding' in style ? null : { paddingHorizontal: 14 },
+    'margin' in style ? null : { marginHorizontal: 18, marginVertical: 10 },
     normalStyle,
     layoutStyle
   )
