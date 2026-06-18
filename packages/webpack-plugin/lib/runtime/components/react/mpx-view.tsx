@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough, resolveDefaultStyle } from './utils'
 import { TextPassThroughContextValue } from './context'
 import { error } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
@@ -774,7 +774,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     parentWidth,
     parentHeight,
     // 基于合并后的 styleObj 判断（hover 状态切换 display 也能触发）
-    defaultStyle: styleObj.display === 'flex' ? FLEX_DEFAULT_STYLE : undefined
+    // resolveDefaultStyle 在用户已传入 flex/flexFlow 等 shorthand 时裁掉冲突的 longhand default
+    defaultStyle: styleObj.display === 'flex' ? resolveDefaultStyle(FLEX_DEFAULT_STYLE, styleObj) : undefined
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)

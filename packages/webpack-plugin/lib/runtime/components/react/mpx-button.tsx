@@ -47,7 +47,7 @@ import {
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThrough } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThrough, resolveDefaultStyle } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -282,9 +282,15 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     { color: plain ? plainTextColor : normalTextColor }
   )
 
-  const defaultStyle = extendObject({}, defaultViewStyle, defaultTextStyle)
-
   const styleObj = isHover ? extendObject({}, style, hoverStyle) : style
+
+  // 在用户 shorthand/longhand 已等价表达 default 字段时裁掉对应 default，
+  // 避免 longhand default（如 marginHorizontal:'auto'、borderWidth:1 等）
+  // 反向覆盖用户 shorthand（如 margin:0、border:'0px'）。
+  const defaultStyle = resolveDefaultStyle(
+    extendObject({}, defaultViewStyle, defaultTextStyle),
+    styleObj
+  )
 
   const {
     hasPositionFixed,

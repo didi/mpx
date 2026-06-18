@@ -35,7 +35,7 @@ import { warn } from '@mpxjs/utils'
 
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useLayout, useTransformStyle, extendObject, useRunOnJSCallback } from './utils'
+import { useLayout, useTransformStyle, extendObject, useRunOnJSCallback, resolveDefaultStyle } from './utils'
 import Portal from './mpx-portal'
 import { FormContext, FormFieldValue } from './context'
 
@@ -334,12 +334,16 @@ const Slider = forwardRef<
   const blockSizeNum = Math.max(12, Math.min(28, blockSize))
   const trackHeight = 4
 
-  const containerStyle: ViewStyle = extendObject({} as ViewStyle, {
+  // 在用户已用 padding / paddingHorizontal / paddingLeft+paddingRight 等价表达时
+  // 裁掉默认的 paddingLeft/Right，避免 number 形式 shorthand（如 padding:0）失效。
+  const sliderDefault = resolveDefaultStyle({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     minHeight: Math.max(blockSizeNum + 8, 40),
-    paddingHorizontal: 14 // 固定内边距，不受 block-size 影响
-  }, normalStyle, layoutStyle)
+    paddingLeft: 14,  // 固定内边距，不受 block-size 影响
+    paddingRight: 14
+  }, style)
+  const containerStyle: ViewStyle = extendObject({} as ViewStyle, sliderDefault, normalStyle, layoutStyle)
 
   const trackStyle: ViewStyle = {
     flex: 1,

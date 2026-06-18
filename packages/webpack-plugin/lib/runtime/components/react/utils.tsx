@@ -110,6 +110,65 @@ const borderShorthandMap: Record<string, boolean> = {
   borderBottom: true,
   borderLeft: true
 }
+
+// 反向覆盖映射：default key → 能在语义层覆盖它的 user-side key 集合（OR-of-AND）。
+// 项为 string：单 key 命中即覆盖；项为 string[]：组内 keys 全部命中才视为覆盖。
+// 仅覆盖 mpx-button / mpx-view / mpx-slider 当前 default 中实际出现的字段。
+type CoverGroup = string | readonly string[]
+const defaultStyleCoverMap: Record<string, readonly CoverGroup[]> = {
+  marginHorizontal: ['margin', ['marginLeft', 'marginRight']],
+  paddingLeft:  ['padding', 'paddingHorizontal'],
+  paddingRight: ['padding', 'paddingHorizontal'],
+  borderRadius: [[
+    'borderTopLeftRadius', 'borderTopRightRadius',
+    'borderBottomLeftRadius', 'borderBottomRightRadius'
+  ]],
+  borderWidth: ['border'],
+  borderStyle: ['border'],
+  borderColor: ['border'],
+  flexBasis:     ['flex'],
+  flexShrink:    ['flex'],
+  flexDirection: ['flexFlow'],
+  flexWrap:      ['flexFlow']
+}
+
+function isDefaultCoveredByUser (userStyle: Record<string, any>, key: string): boolean {
+  const groups = defaultStyleCoverMap[key]
+  if (!groups) return false
+  for (let i = 0; i < groups.length; i++) {
+    const g = groups[i]
+    if (typeof g === 'string') {
+      if (hasOwn(userStyle, g)) return true
+    } else {
+      let allHit = true
+      for (let j = 0; j < g.length; j++) {
+        if (!hasOwn(userStyle, g[j])) { allHit = false; break }
+      }
+      if (allHit) return true
+    }
+  }
+  return false
+}
+
+// 在使用 default 之前裁掉「已被 user shorthand/longhand 等价表达」的字段，
+// 避免 longhand default 反向覆盖 user shorthand（典型如 margin:0 vs marginHorizontal:'auto'，
+// flex:1 vs flexBasis:'auto'，padding:0 vs paddingLeft/Right:14）。
+// userStyle 传未经 transformShorthand/transformFlex 处理的原始 style 即可。
+export function resolveDefaultStyle<T extends Record<string, any>> (
+  defaultStyle: T,
+  userStyle: Record<string, any> | undefined
+): T {
+  if (!defaultStyle || !userStyle) return defaultStyle
+  let result: T = defaultStyle
+  let cloned = false
+  for (const k in defaultStyle) {
+    if (!hasOwn(defaultStyle, k)) continue
+    if (!hasOwn(userStyle, k) && !isDefaultCoveredByUser(userStyle, k)) continue
+    if (!cloned) { result = extendObject({}, defaultStyle) as T; cloned = true }
+    delete (result as Record<string, any>)[k]
+  }
+  return result
+}
 const borderStyleMap: Record<string, boolean> = {
   solid: true,
   dotted: true,
