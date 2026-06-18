@@ -55,6 +55,7 @@ module.exports = function getSpec ({ warn, error }) {
     'box-sizing': ['border-box', 'content-box'],
     'backface-visibility': ['visible', 'hidden'],
     overflow: ['visible', 'hidden', 'scroll'],
+    // RN 实测仅支持 solid/dotted/dashed；CSS 中的 none 由 formatBorder 入口短路统一处理，不进白名单
     'border-style': ['solid', 'dotted', 'dashed'],
     'object-fit': ['cover', 'contain', 'fill', 'scale-down'],
     direction: ['inherit', 'ltr', 'rtl'],
@@ -239,6 +240,39 @@ module.exports = function getSpec ({ warn, error }) {
     'border-bottom': true
   }
 
+  // CSS border-width: medium 的实测值（各主流浏览器一致取 3px）
+  // CSS 规范允许 medium 实现自定，这里取业界事实标准；调整此值需与运行时同名常量一起改
+  const BORDER_MEDIUM_WIDTH = 3
+  // 简写槽位缺省值表（数据驱动；新增简写或调整缺省值只改这里）
+  // 值即槽位缺省时追加的补齐值；不含短路语义（border 整体短路在 formatBorder 中处理）
+  // 注意：borderColor / textShadowRadius 因 RN 有内置缺省值，无需补齐，不进此表
+  const ShorthandDefaultMap = {
+    border: { borderWidth: BORDER_MEDIUM_WIDTH },
+    'border-top': { borderTopWidth: BORDER_MEDIUM_WIDTH },
+    'border-right': { borderRightWidth: BORDER_MEDIUM_WIDTH },
+    'border-bottom': { borderBottomWidth: BORDER_MEDIUM_WIDTH },
+    'border-left': { borderLeftWidth: BORDER_MEDIUM_WIDTH },
+    'text-shadow': {
+      // textShadowOffset.height 的「width 存在才补 0」由 formatUnorderedAbbreviation 内既有 fallback 处理
+      // 值不带 quote，由后续 style-helper 的 formatValue 统一 JSON.stringify
+      textShadowColor: '#000'
+    }
+    // text-decoration / flex-flow 暂不配置，与 RN 默认一致
+  }
+
+  // 通用补齐：扫描完所有 token 后，将 ShorthandDefaultMap 中未被占用（不在 used）的槽位追加到 cssMap
+  // used 即主循环的占用记录，key 是完整目标 prop 名（含 textShadowOffset.width 这类 dot 路径）
+  const applyShorthandDefaults = (cssMap, prop, used) => {
+    const defaults = ShorthandDefaultMap[prop]
+    if (!defaults) return cssMap
+    for (const target in defaults) {
+      if (!used[target]) {
+        pushAbbreviationValue(cssMap, target, defaults[target])
+      }
+    }
+    return cssMap
+  }
+
   const pushAbbreviationValue = (cssMap, prop, value) => {
     if (prop.includes('.')) {
       // 多个属性值的prop
@@ -327,7 +361,7 @@ module.exports = function getSpec ({ warn, error }) {
         }
       }
     }
-    return cssMap
+    return applyShorthandDefaults(cssMap, prop, used)
   }
 
   const formatAbbreviation = ({ prop, value, selector }, { mode }) => {
@@ -755,15 +789,24 @@ module.exports = function getSpec ({ warn, error }) {
 
   const formatBorder = ({ prop, value, selector }, { mode }) => {
     value = value.trim()
-    // border-style: none 在 CSS 规范中等价于无边框，整体短路为 border-width: 0
-    // 既覆盖整体 `border: none`，也覆盖混合写法 `border: 1px none red`
-    if (value === 'none' || parseValues(value).includes('none')) {
-      return {
-        prop: AbbreviationMap[prop][0],
-        value: 0
-      }
+    const widthProp = AbbreviationMap[prop][0]
+    // 入口短路：整体 none / 0（含 0 / 0.0 / -0），或混合写法含 none token
+    // CSS border-style: none 等价无边框 → 整体短路为 border*Width: 0
+    // none 在此前置截掉而不进 SUPPORTED_PROP_VAL_ARR['border-style'] 白名单：
+    // 白名单是 RN 支持值的标记，RN 实测 borderStyle: 'none' 长属性无效，不应混入
+    if (value === 'none' || +value === 0 || parseValues(value).includes('none')) {
+      return { prop: widthProp, value: 0 }
     }
-    return formatUnorderedAbbreviation({ prop, value, selector }, { mode })
+    const cssMap = formatUnorderedAbbreviation({ prop, value, selector }, { mode })
+    // 单 token var() 兜底：formatUnorderedAbbreviation 直接返回 { prop, value }，原样透传不补不短路
+    if (!Array.isArray(cssMap)) return cssMap
+    // 展开后短路：borderStyle 缺省 → 等价 border-style: none → 整体短路
+    // 覆盖 border: 2px / 0px / red 等无 style token 的写法
+    // 注意 cssMap 此时已被 applyShorthandDefaults 补过 borderWidth，短路时整段丢弃、补齐结果不泄漏
+    if (!cssMap.some(item => item.prop === 'borderStyle')) {
+      return { prop: widthProp, value: 0 }
+    }
+    return cssMap
   }
 
   return {

@@ -433,7 +433,10 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).not.toHaveBeenCalled()
     })
 
-    test('should accept partial border shorthand without all three slots', () => {
+    test('should fill border-width default when only style is given, short-circuit when style slot is empty', () => {
+      // CSS 规范缺省值补齐 + border 特定短路：
+      // - style 存在 → 补 borderWidth: 3（borderColor 由 RN 内置缺省承接，不补）
+      // - styleProp 槽位缺省（如 border: 2px / border-top: red）→ 等价 border-style: none → 整体短路
       const css = '.a { border: solid; } .b { border: 2px; } .c { border-top: red; }'
       const config = createConfig()
 
@@ -443,15 +446,15 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.a).toEqual({ borderStyle: '"solid"' })
-      expect(result.b).toEqual({ borderWidth: '2' })
-      expect(result.c).toEqual({ borderColor: '"red"' })
+      expect(result.a).toEqual({ borderStyle: '"solid"', borderWidth: '3' })
+      expect(result.b).toEqual({ borderWidth: '0' })
+      expect(result.c).toEqual({ borderTopWidth: '0' })
       expect(config.warn).not.toHaveBeenCalled()
       expect(config.error).not.toHaveBeenCalled()
     })
 
-    test('should short-circuit to borderWidth: 0 when border shorthand contains none', () => {
-      const css = '.a { border: 1px none red; } .b { border-top: red none; } .c { border: none; }'
+    test('should short-circuit to borderWidth: 0 when border shorthand contains none / 0', () => {
+      const css = '.a { border: 1px none red; } .b { border-top: red none; } .c { border: none; } .d { border: 0; } .e { border-top: 0; }'
       const config = createConfig()
 
       const result = getClassMap({
@@ -460,10 +463,64 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      // CSS 规范中 border-style: none 等价于无边框，整体短路为 border*Width: 0
+      // 整体 none/0 走入口短路（.c/.d/.e），混合 none 走展开后 borderStyle === none 短路（.a/.b）
+      // CSS 规范：border-style: none 等价于无边框，整体短路为 border*Width: 0
       expect(result.a).toEqual({ borderWidth: '0' })
       expect(result.b).toEqual({ borderTopWidth: '0' })
       expect(result.c).toEqual({ borderWidth: '0' })
+      expect(result.d).toEqual({ borderWidth: '0' })
+      expect(result.e).toEqual({ borderTopWidth: '0' })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should short-circuit zero with unit via styleProp-missing path', () => {
+      // 带单位 0px / 0rpx 走公共展开链路：0px 占 width 槽 → styleProp 缺省 → borderStyle 缺省短路
+      const css = '.a { border: 0px; } .b { border: 0rpx; } .c { border-top: 0px; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.a).toEqual({ borderWidth: '0' })
+      expect(result.b).toEqual({ borderWidth: '0' })
+      expect(result.c).toEqual({ borderTopWidth: '0' })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should fill text-shadow color default to #000', () => {
+      // CSS 规范 text-shadow-color 缺省 currentColor，RN 无该概念，约定为 #000 补齐
+      // radius 由 RN 内置缺省（0）承接，不补
+      const css = `
+        .a { text-shadow: 1px 2px; }
+        .b { text-shadow: 1px 2px 3px; }
+        .c { text-shadow: red 1px 2px; }
+      `
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.a).toEqual({
+        textShadowOffset: { width: '1', height: '2' },
+        textShadowColor: '"#000"'
+      })
+      expect(result.b).toEqual({
+        textShadowOffset: { width: '1', height: '2' },
+        textShadowRadius: '3',
+        textShadowColor: '"#000"'
+      })
+      expect(result.c).toEqual({
+        textShadowOffset: { width: '1', height: '2' },
+        textShadowColor: '"red"'
+      })
       expect(config.warn).not.toHaveBeenCalled()
       expect(config.error).not.toHaveBeenCalled()
     })

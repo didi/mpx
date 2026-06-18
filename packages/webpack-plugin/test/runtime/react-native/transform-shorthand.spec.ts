@@ -67,10 +67,12 @@ describe('runtime transformShorthand', () => {
       })
     })
 
-    test('partial border shorthand fills only matched slots', () => {
-      expect(run({ border: 'solid' }, ['border'])).toEqual({ borderStyle: 'solid' })
-      expect(run({ border: '2px' }, ['border'])).toEqual({ borderWidth: 2 })
-      expect(run({ borderTop: 'red' }, ['borderTop'])).toEqual({ borderColor: 'red' })
+    test('partial border shorthand: fill width default when style given, short-circuit when style missing', () => {
+      // style 存在 → 补 borderWidth: 3（borderColor 由 RN 内置缺省承接，不补）
+      expect(run({ border: 'solid' }, ['border'])).toEqual({ borderStyle: 'solid', borderWidth: 3 })
+      // styleProp 缺省（border: 2px / borderTop: red）→ 等价 border-style: none → 整体短路
+      expect(run({ border: '2px' }, ['border'])).toEqual({ borderWidth: 0 })
+      expect(run({ borderTop: 'red' }, ['borderTop'])).toEqual({ borderTopWidth: 0 })
     })
 
     test('border: none short-circuits to borderWidth: 0', () => {
@@ -93,10 +95,25 @@ describe('runtime transformShorthand', () => {
     })
 
     test('unknown tokens are silently dropped', () => {
-      expect(run({ border: 'red unknown 1px' }, ['border'])).toEqual({
-        borderColor: 'red',
-        borderWidth: 1
-      })
+      // unknown 无法匹配任何槽位 → 静默跳过；红 + 1px 占 color / width 槽位，但 borderStyle 缺省 → 短路
+      // 与 'border: 2px red' 一类行为一致：没有 style token → 整体不渲染
+      expect(run({ border: 'red unknown 1px' }, ['border'])).toEqual({ borderWidth: 0 })
+    })
+
+    test('inline number 0 short-circuits before typeof string check', () => {
+      // inline style 写 number 0 是高频「清除边框」写法；border 分支前置在 typeof string 检查之前
+      expect(run({ border: 0 as any }, ['border'])).toEqual({ borderWidth: 0 })
+      expect(run({ borderTop: 0 as any }, ['borderTop'])).toEqual({ borderTopWidth: 0 })
+      // string '0' 与 '0px' 也都短路
+      expect(run({ border: '0' }, ['border'])).toEqual({ borderWidth: 0 })
+      expect(run({ border: '0px' }, ['border'])).toEqual({ borderWidth: 0 })
+    })
+
+    test('border short-circuit force-overrides explicit borderWidth long-prop', () => {
+      // 普通展开走「长属性不覆盖」原则；但 border 短路是「清除边框」最终意图，强制写入 0
+      expect(run({ border: 0 as any, borderWidth: 5 }, ['border'])).toEqual({ borderWidth: 0 })
+      expect(run({ border: 'none', borderWidth: 5 }, ['border'])).toEqual({ borderWidth: 0 })
+      expect(run({ border: '2px red', borderWidth: 5 }, ['border'])).toEqual({ borderWidth: 0 })
     })
   })
 

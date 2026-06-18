@@ -324,7 +324,10 @@ textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRad
 const borderStyleMap: Record<string, boolean> = {
   solid: true,
   dotted: true,
-  dashed: true
+  dashed: true,
+  // none 也作为合法 borderStyle token 收集，使 border: 1px none red 展开出 borderStyle: 'none'
+  // 之后由 border 特定短路统一处理（borderStyle 缺省或 === none 都短路为 border*Width: 0）
+  none: true
 }
 
 const textDecorationLineMap: Record<string, boolean> = {
@@ -503,22 +506,473 @@ for (const [prop, val] of pairs) {
 
 ### 5. `none` 的处理
 
-当前运行时已支持：
+`border: none` 与混合 `border: 1px none red` 都需要短路为 `border*Width: 0`。具体短路流程（入口特判整体 `none` / `0` + 展开后判断 `borderStyle` 缺省或 === none）统一收敛到下文「简写缺省值补齐（通用机制）」的「border 特定短路」小节，编译期与运行时同口径，这里不再单列实现。
 
-```ts
-border: 'none' -> borderWidth: 0
+## 简写缺省值补齐（通用机制）
+
+CSS 规范中大量简写允许槽位缺省，缺省值取自各长属性的 initial value。本节将"缺省补齐"抽成**由 `ShorthandDefaultMap` 数据驱动的通用机制**，由各简写在配置表里声明自己的缺省策略，主流程统一处理；后续新增简写或调整缺省值只改配置表，不动主流程。
+
+当前实现只对 `border: none` 做了一条短路规则，其它缺省槽位均按"没写就不输出"处理，导致：
+
+```css
+.a { border: solid; }                      /* 当前: { borderStyle: 'solid' }，RN 上看不到边框（没 width） */
+.b { border: 2px; }                        /* 当前: { borderWidth: 2 }，与 CSS 规范不一致（style 缺省 = none） */
+.c { border-top: red; }                    /* 当前: { borderColor: 'red' }，同上 */
+.d { text-shadow: 1px 2px; }               /* 当前: 缺 color，渲染依赖 RN 默认，跨端不稳定 */
+.e { text-shadow: 1px 2px 3px; }           /* 当前: 同上，缺 color */
 ```
 
-建议保留现有判断，并继续覆盖 `borderTop` / `borderRight` / `borderBottom` / `borderLeft`：
+各简写在 CSS 规范与 RN 等价语义下的缺省策略：
 
-```ts
-if ((key === 'border' || key === 'borderTop' || key === 'borderRight' || key === 'borderBottom' || key === 'borderLeft') && value.trim() === 'none') {
-  const prop = runtimeAbbreviationMap[key][0]
-  delete styleObj[key]
-  if (!hasOwn(styleObj, prop)) styleObj[prop] = 0
-  continue
+策略分两类：**补齐**（进 `ShorthandDefaultMap` 通用表）、**特定短路**（border 独有，由 `formatBorder` / 运行时 border 分支处理，不进通用表）。
+
+| 简写 | 槽位 | 策略 | RN 上的取值 |
+| --- | --- | --- | --- |
+| `border` / 四个单边 | `borderStyle` | **特定短路** | 缺省等价 `none` → 整体短路为 `border*Width: 0`（不进通用表，见「border 特定短路」） |
+| 同上 | `borderWidth` / `border*Width` | **补齐** | `3`（对齐浏览器 `medium`） |
+| 同上 | `borderColor` | 不补 | RN 实测对 `borderColor` 有内置缺省值（黑色），无需补齐 |
+| `text-shadow` | `textShadowOffset.width` | 不补 | 必填，缺失沿用既有行为 |
+| `text-shadow` | `textShadowOffset.height` | 既有 fallback | `0`，但有「width 存在才补」条件依赖，不并入通用表 |
+| `text-shadow` | `textShadowRadius` | 不补 | RN 实测对 `textShadowRadius` 有内置缺省值（0），无需补齐 |
+| `text-shadow` | `textShadowColor` | **补齐** | `'#000'`（CSS 是 `currentColor`，RN 无该概念，约定黑色） |
+| `text-decoration` | 各槽位 | 当前不补 | line 缺省 `none` 即无装饰线，与 RN 默认一致 |
+| `flex-flow` | 各槽位 | 当前不补 | 与 RN 默认一致 |
+
+### 数据结构
+
+引入「简写缺省值表」，**只描述补齐型缺省**：扫描完所有 token 后，目标槽位（以主循环 `used` map 记录的完整 prop 名为准）未被占用就追加 `{ prop: target, value: defaultValue }`。
+
+`border` 的「styleProp 缺省 → 整体短路为 `border*Width: 0`」是 border 独有语义（CSS `border-style: none` 等价无边框），不进入这张通用表，由 `formatBorder` / 运行时 border 分支的**特定处理**承接（见下文「border 特定短路」）。这样通用机制保持单一职责（只补齐），无需引入 `shortCircuit` 这类分支语义，`applyShorthandDefaults` 也始终返回数组。
+
+编译期（`packages/webpack-plugin/lib/platform/style/wx/index.js`）：
+
+```js
+// 简写槽位缺省值表（数据驱动，新增简写或调整缺省值只改这里）
+// 值即槽位缺省时追加的补齐值；不含短路语义
+// 注意：borderColor / textShadowRadius 因 RN 有内置缺省值，无需补齐，不进此表
+const ShorthandDefaultMap = {
+  border: {
+    borderWidth: 3
+  },
+  'border-top': {
+    borderTopWidth: 3
+  },
+  'border-right': {
+    borderRightWidth: 3
+  },
+  'border-bottom': {
+    borderBottomWidth: 3
+  },
+  'border-left': {
+    borderLeftWidth: 3
+  },
+  'text-shadow': {
+    textShadowColor: '"#000"'
+    // textShadowOffset.height 的「width 存在才补 0」由既有 fallback 处理，不并入此表
+    // textShadowRadius 由 RN 内置缺省值（0）承接，不补
+  }
+  // text-decoration / flex-flow 暂不配置，与 RN 默认一致
 }
 ```
+
+运行时（`packages/webpack-plugin/lib/runtime/components/react/utils.tsx`）的镜像表，结构相同，值不带 CSS quote：
+
+```ts
+const runtimeShorthandDefaultMap: Record<string, Record<string, any>> = {
+  border: {
+    borderWidth: 3
+  },
+  borderTop: {
+    borderTopWidth: 3
+  },
+  // ... 其它单边
+  textShadow: {
+    textShadowColor: '#000'
+  }
+}
+```
+
+> **为什么不直接用「CSS initial value 表」**：CSS initial value 是规范概念（`border-width: medium` / `text-shadow-color: currentColor` 等），需要做 RN 等价映射（`medium` → `3` / `currentColor` → `#000`）。映射逐条不一致，所以表里存 RN 上的最终值而非原始 initial value。
+>
+> 此外只补 RN **没有**内置缺省值的槽位：`borderColor`（RN 默认黑色）、`textShadowRadius`（RN 默认 0）实测有内置缺省值，补齐冗余，不进表；`borderWidth` 缺省 RN 是 0、与 CSS `medium`（约 3px）不一致，需要补 `3` 才符合预期。`border-style: none` 这条不是「补齐」而是「整体短路」，语义不同，单独由 border 特定处理表达。
+
+### 通用补齐算法
+
+只做一件事：扫描已展开结果，把配置表中缺省的槽位补上。始终返回数组（不引入短路语义）。
+
+复用主循环已维护的 `used` map（key 是展开后的目标 prop 名，如 `borderWidth` / `textShadowColor` / `textShadowOffset.width`）判断槽位是否被占用，无需重新扫描结果数组：
+
+```js
+// 编译期：formatUnorderedAbbreviation 末尾追加调用，used 即主循环内的占用记录
+const applyShorthandDefaults = (cssMap, prop, used) => {
+  const defaults = ShorthandDefaultMap[prop]
+  if (!defaults) return cssMap
+
+  // 槽位未被 used 标记则追加补齐值
+  for (const target in defaults) {
+    if (!used[target]) {
+      pushAbbreviationValue(cssMap, target, defaults[target])
+    }
+  }
+
+  return cssMap
+}
+
+// formatUnorderedAbbreviation 末尾改为：
+//   return applyShorthandDefaults(cssMap, prop, used)
+```
+
+要点：
+
+- **`applyShorthandDefaults` 只补齐、始终返回数组**：border 的「styleProp 缺省 → 整体短路」不在这里处理，避免双返回类型与短路分支语义。
+- **直接用 `used[target]` 判断**：`used` 的 key 就是完整目标 prop 名（含 `textShadowOffset.width` 这类 dot 路径），比重新扫描 `cssMap` + dot 主键聚合更简单也更精确 —— 后者会把 `textShadowOffset.width` 与 `.height` 聚到同一主键，误判其中一个已写就跳过另一个。
+- **`textShadowOffset.height` 的 fallback** 保留在 `formatUnorderedAbbreviation` 原位置（不并入通用表），因为它有「width 存在才补 height」的条件依赖，超出无条件补齐范围。
+- **缺省值不走 `global.__formatValue`**：直接以原始 JS 值（number / string）写入，与现有 `border` 短路写 `0` 的方式一致。
+
+### border 特定短路
+
+border「整体短路为 `border*Width: 0`」语义**不进通用补齐表**，由 `formatBorder` / 运行时 border 分支处理。编译期与运行时走**同一条流程**，分两步：
+
+**第一步 · 入口短路**：只特判最高频的两种整体写法，在展开之前拦截：
+
+| 入口短路 | 判定 |
+| --- | --- |
+| `border: none` | `value === 'none'` |
+| `border: 0` | `value === '0'`（运行时再加 number `0`，覆盖 `style={{ border: 0 }}`） |
+
+**第二步 · 展开后短路**：其余写法照常展开，然后统一判断 `borderStyle` 槽位 ——「不存在」或「值为 `none`」就整体短路，丢弃补齐结果：
+
+```js
+// formatBorder 内：cssMap = formatUnorderedAbbreviation + applyShorthandDefaults 后的数组
+const styleEntry = cssMap.find(item => item.prop === 'borderStyle')
+if (!styleEntry || styleEntry.value === 'none') {
+  // borderStyle 缺省（border: 2px / 0px / red）或显式 none（border: 1px none red）
+  // → 等价 border-style: none → 整体短路，丢弃 width 补齐结果
+  return { prop: widthProp, value: 0 }
+}
+return cssMap
+```
+
+这条统一判断覆盖了原先要靠入口正则特判的所有场景：
+
+| 写法 | 走哪步 | 结果 |
+| --- | --- | --- |
+| `border: none` | 入口短路 | `border*Width: 0` |
+| `border: 0` / number `0` | 入口短路 | `border*Width: 0` |
+| `border: 0px` / `0rpx` / `2px` / `red` | 展开后 borderStyle 缺省 | `border*Width: 0` |
+| `border: 1px none red` | 展开后 borderStyle === `none` | `border*Width: 0` |
+
+**关键前提**：为了让 `border: 1px none red` 的 `none` 不在展开主循环里被判为 invalid token 触发 warn，需要把 `none` 纳入 borderStyle 槽位的合法值，使其作为 `borderStyle: 'none'` 被收集：
+
+- 运行时：`borderStyleMap` 增加 `none: true`（见前文）。
+- 编译期：`getVerifiedProp` 对 `Style` 槽位的 token 判定，除 `SUPPORTED_PROP_VAL_ARR['border-style']`（`solid/dotted/dashed`）外，额外接受 `none`（仅在 border shorthand 展开上下文，不影响 `border-style` 长属性校验）。
+
+> 注意顺序：`applyShorthandDefaults` 会先补上 `borderWidth: 3`，第二步短路判断在补齐之后；borderStyle 缺省或为 none 时整段丢弃、返回 `{ widthProp: 0 }`，补齐的 width 不会泄漏到短路结果中。
+
+### 编译期改造
+
+文件：`packages/webpack-plugin/lib/platform/style/wx/index.js`
+
+1. 新增 `ShorthandDefaultMap`（纯补齐表）与 `applyShorthandDefaults`（只补齐、始终返回数组）。
+2. `formatUnorderedAbbreviation` 末尾改为 `return applyShorthandDefaults(cssMap, prop, used)`（`used` 是主循环内已维护的占用记录）。`text-shadow` / `text-decoration` / `flex-flow` 已经走 `formatUnorderedAbbreviation`，自动获得通用补齐能力；border 也走同一条路径。
+3. `getVerifiedProp` 对 `Style` 槽位额外接受 `none`（仅 border shorthand 展开上下文），使 `border: 1px none red` 的 `none` 作为 `borderStyle: 'none'` 被收集而非触发 invalid warn。
+4. `formatBorder` 承接 border 特定短路（入口 `none` / `0` + 展开后 borderStyle 缺省或 === none）：
+
+```js
+const formatBorder = ({ prop, value, selector }, { mode }) => {
+  value = value.trim()
+  // border:        ['borderWidth',     'borderStyle', 'borderColor']
+  // border-top:    ['borderTopWidth',  'borderStyle', 'borderColor'] ...
+  const widthProp = AbbreviationMap[prop][0]
+
+  // 入口短路：只特判最高频的整体 none / 0
+  if (value === 'none' || value === '0') {
+    return { prop: widthProp, value: 0 }
+  }
+
+  const cssMap = formatUnorderedAbbreviation({ prop, value, selector }, { mode })
+  // 单 token var() 兜底：formatUnorderedAbbreviation 直接返回 { prop, value }，原样透传不补不短路
+  if (!Array.isArray(cssMap)) return cssMap
+
+  // 展开后短路：borderStyle 缺省 或 显式 none → 等价 border-style: none → 整体短路
+  // 覆盖 border: 2px / 0px / red（缺省）与 border: 1px none red（显式 none）
+  // 注意 cssMap 此时已被 applyShorthandDefaults 补过 borderWidth，短路时整段丢弃、补齐结果不泄漏
+  const styleEntry = cssMap.find(item => item.prop === 'borderStyle')
+  if (!styleEntry || styleEntry.value === 'none') {
+    return { prop: widthProp, value: 0 }
+  }
+
+  return cssMap
+}
+```
+
+注意：
+
+- `widthProp` 直接取 `AbbreviationMap[prop][0]`（原数据，不再依赖已删除的 `shortCircuit` 字段）。
+- 展开后短路放在 `formatBorder` 而非 `applyShorthandDefaults`：它是 border 专有语义，且需要对补齐后的结果再判断一次，不应污染只负责补齐的通用机制。
+- `formatUnorderedAbbreviation` 在「单 token 且为 `var()`」时仍直接返回 `{ prop, value }` 兜底，`Array.isArray` 分流后原样透传 —— `var()` 会在运行时被 `transformVar` 替换为字面值后再次进入运行时分支，到时再补 / 短路。
+- `formatCompositeVal` 链路（`border-width` / `border-color` / `border-radius` 四值简写）不经过 `formatUnorderedAbbreviation`，不受通用补齐影响。
+
+### 运行时改造
+
+文件：`packages/webpack-plugin/lib/runtime/components/react/utils.tsx`
+
+1. 新增 `runtimeShorthandDefaultMap`（纯补齐表）与 `applyRuntimeShorthandDefaults`（只补齐、始终返回数组）。
+2. `expandUnorderedAbbreviation` 末尾改为 `return applyRuntimeShorthandDefaults(key, result, used)`（`used` 是主循环内已维护的占用记录），返回类型仍是 `Array`。调用侧 `transformShorthand` 直接使用展开结果，不再二次调用。
+3. `transformShorthand` 中：
+   - **border 分支前置到顶部 `typeof value !== 'string'` 检查之前**，因为 inline `style={{ border: 0 }}` 的 `value` 是 number `0`，会被通用 typeof 检查 `continue` 掉，等同失效。这是 inline style 与 class style 的关键差异：class 走 `formatBorder` 时永远是字符串（CSS 解析产物），runtime inline style 可能是 number。
+   - border 短路与编译期 `formatBorder` 同流程：入口特判 `none` / `0`，展开后判断 `borderStyle` 缺省或 === none 再短路。
+   - 其它简写走 `expandUnorderedAbbreviation` → `applyRuntimeShorthandDefaults`，得到的数组直接写入。
+
+```ts
+// used 即 expandUnorderedAbbreviation 主循环内的占用记录，key 是完整目标 prop 名
+function applyRuntimeShorthandDefaults (
+  key: string,
+  pairs: Array<[string, any]>,
+  used: Record<string, boolean>
+): Array<[string, any]> {
+  const defaults = runtimeShorthandDefaultMap[key]
+  if (!defaults) return pairs
+
+  for (const target in defaults) {
+    if (!used[target]) {
+      pushExpandedPair(pairs, target, defaults[target])
+    }
+  }
+
+  return pairs
+}
+
+// transformShorthand —— border 只在公共链路两端各加一个最小 hook，其余完全复用
+for (const key of shorthandKeys) {
+  const value = styleObj[key]
+
+  // border 入口短路：必须前置（要在 typeof string 检查前处理 number 0）
+  // +value === 0 同时覆盖 number 0、string '0'；'0px' 等带单位写法 +value 是 NaN 不会误命中
+  // 命中即写完跳过，未命中 fall through 走公共链路
+  if (hasOwn(borderShorthandMap, key) && (+value === 0 || value === 'none')) {
+    const widthProp = runtimeAbbreviationMap[key][0]
+    delete styleObj[key]
+    // 强制写入 0：「清除边框」是用户的最终意图，覆盖任何已存在的 borderWidth 长属性
+    styleObj[widthProp] = 0
+    continue
+  }
+
+  // —— 以下为公共链路（与 textDecoration / flexFlow / textShadow / 四值简写共用）——
+
+  if (typeof value !== 'string') continue
+  const values = parseValues(value)
+  const props = runtimeAbbreviationMap[key]
+  if (!props) continue
+  if (hasOwn(runtimeCompositeStyleMap, key) && values.length === 1) continue
+
+  let expandedValues = values
+  if (hasOwn(runtimeCompositeStyleMap, key)) expandedValues = expandCompositeValues(values)
+
+  let pairs: Array<[string, any]>
+  if (hasOwn(runtimeUnorderedAbbreviationMap, key)) {
+    // expandUnorderedAbbreviation 末尾已内部调用 applyRuntimeShorthandDefaults 补齐
+    pairs = expandUnorderedAbbreviation(key, values)
+  } else {
+    pairs = expandAbbreviation(expandedValues, props)
+  }
+
+  // border 展开后短路：borderStyle 缺省 或 === none → 整体短路，丢弃补齐结果
+  // 覆盖 border: 2px / 0px / red（缺省）与 border: 1px none red（显式 none，被 borderStyleMap 收集）
+  if (hasOwn(borderShorthandMap, key)) {
+    const styleEntry = pairs.find(([p]) => p === 'borderStyle')
+    if (!styleEntry || styleEntry[1] === 'none') {
+      const widthProp = runtimeAbbreviationMap[key][0]
+      delete styleObj[key]
+      // 强制写入 0：「清除边框」是用户的最终意图，覆盖任何已存在的 borderWidth 长属性
+      styleObj[widthProp] = 0
+      continue
+    }
+  }
+
+  delete styleObj[key]
+  for (const [prop, val] of pairs) {
+    if (!hasOwn(styleObj, prop)) styleObj[prop] = val
+  }
+}
+```
+
+要点：
+
+- **border 分支必须前置到 `typeof value !== 'string'` 之前**。`style={{ border: 0 }}` 在 JS 端 `value` 是 number `0`，若走通用 `typeof` 检查会被直接 `continue` 掉，`0` 短路分支永远走不到，等同失效。class 走 `formatBorder` 时永远是字符串（CSS 解析产物），runtime inline style 可能是 number。
+- **短路流程与编译期 `formatBorder` 对齐**：入口特判 `none` / `0`，展开后判 `borderStyle` 缺省或 === none，行为口径一致。
+- **仅 border 分支放开 number 兜底，且仅识别 number `0`**。其它简写（`margin` / `padding` / `borderRadius` 等）继续用 `typeof value !== 'string' continue` —— 用户写 `{ margin: 8 }` 时 RN 直接支持，本来就不需要展开。
+- **缺省值不走 `global.__formatValue`**：直接以原始 JS 值写入（`3` 是 number，`'#000'` 是 string）。
+- **`var()`**：运行时进入 `transformShorthand` 前已被 `transformVar` 替换为字面值，补齐 / 短路发生在字面值上，行为与编译期对齐。
+
+### 目标行为对照表
+
+| 输入 | 目标输出 | 来源 |
+| --- | --- | --- |
+| `border: 1px solid red` | `{ borderWidth: 1, borderStyle: 'solid', borderColor: 'red' }` | 维持现有展开 |
+| `border: solid red` | `{ borderStyle: 'solid', borderColor: 'red', borderWidth: 3 }` | width 槽位通用补齐 |
+| `border: solid` | `{ borderStyle: 'solid', borderWidth: 3 }` | width 槽位通用补齐；color 由 RN 内置缺省承接 |
+| `border: 2px` | `{ borderWidth: 0 }` | 展开后 borderStyle 缺省 → 短路（整段丢弃补齐结果） |
+| `border: red` | `{ borderWidth: 0 }` | 同上 |
+| `border-top: red` | `{ borderTopWidth: 0 }` | 同上，短路目标 `AbbreviationMap['border-top'][0]` 走单边 |
+| `border-top: solid` | `{ borderStyle: 'solid', borderTopWidth: 3 }` | width 通用补齐到单边；color 由 RN 内置缺省承接 |
+| `border: none` | `{ borderWidth: 0 }` | 入口特判 `none` 短路 |
+| `border: 1px none red` | `{ borderWidth: 0 }` | 展开后 borderStyle === none → 短路（`none` 被收集为 borderStyle token） |
+| `border: 0` | `{ borderWidth: 0 }` | 入口特判纯 `0` 短路 |
+| `border: 0px` / `0rpx` | `{ borderWidth: 0 }` | 展开后 borderStyle 缺省 → 短路，结果同上 |
+| `style={{ border: 0 }}`（number） | `{ borderWidth: 0 }` | 运行时 number 0 入口短路 |
+| `border-top: 0` | `{ borderTopWidth: 0 }` | 入口特判纯 `0` 短路（单边） |
+| `text-shadow: 1px 2px` | `{ textShadowOffset: {width:1,height:2}, textShadowColor: '#000' }` | color 通用补齐；radius 由 RN 内置缺省承接 |
+| `text-shadow: 1px 2px 3px` | `{ textShadowOffset: {width:1,height:2}, textShadowRadius: 3, textShadowColor: '#000' }` | color 通用补齐 |
+| `text-shadow: red 1px 2px` | `{ textShadowOffset: {width:1,height:2}, textShadowColor: 'red' }` | color 已给出不补；radius 由 RN 内置缺省承接 |
+| `text-shadow: 1px` | `{ textShadowOffset: {width:1,height:0}, textShadowColor: '#000' }` + warn | offset.height 沿用既有 fallback；color 通用补齐 |
+| `border: var(--x)` | `{ border: 'var(--x)' }`（编译期单 var 兜底）；运行时由 `transformVar` 替换为字面值后再走通用流程 | — |
+
+### 扩展性
+
+新增简写或调整缺省值时，只改 `ShorthandDefaultMap` / `runtimeShorthandDefaultMap`，主流程不动。例如未来若要给 `text-decoration` 补齐 `textDecorationStyle: 'solid'`：
+
+```js
+// 编译期
+ShorthandDefaultMap['text-decoration'] = {
+  textDecorationStyle: '"solid"'
+}
+// 运行时
+runtimeShorthandDefaultMap.textDecoration = {
+  textDecorationStyle: 'solid'
+}
+```
+
+无须改动 `formatUnorderedAbbreviation` / `expandUnorderedAbbreviation` / `applyShorthandDefaults` / `applyRuntimeShorthandDefaults`。
+
+### 行为变更与兼容性
+
+通用机制下，新增缺省补齐属于 **breaking 行为**，原先依赖宽松解析的写法会变化：
+
+| 旧行为 | 新行为 | 受影响场景 |
+| --- | --- | --- |
+| `border: 2px` → `{ borderWidth: 2 }` | `{ borderWidth: 0 }` | 漏写 style 时旧行为能渲染边框，新行为按规范不渲染 |
+| `border: red` → `{ borderColor: 'red' }` | `{ borderWidth: 0 }` | 漏写 style 且只指定颜色时新行为按规范不渲染 |
+| `border-top: red` → `{ borderColor: 'red' }` | `{ borderTopWidth: 0 }` | 同上 |
+| `border: solid` → `{ borderStyle: 'solid' }` | `{ borderStyle: 'solid', borderWidth: 3 }` | 旧行为 RN 上无 width 不渲染，新行为补 `3` 后按规范渲染 |
+| `text-shadow: 1px 2px` 缺 color | 加 `textShadowColor: '#000'` | 旧行为依赖 RN 默认 color（跨端不稳定），新行为约定黑色 |
+| `text-shadow: 1px 2px 3px` 缺 color | 加 `textShadowColor: '#000'` | 同上 |
+
+> `borderColor` / `textShadowRadius` RN 有内置缺省值，不补齐，行为不变，不在 breaking 范围。
+
+需要在 changelog 中显式列出，提醒「依赖宽松写法的页面应改为完整 `border: 1px solid red` 三段写法；text-shadow 缺省 color 现在固定为 `#000`」。`.agents/skills/mpx2rn/references/rn-style-reference.md` 与 `docs-vitepress/guide/rn/style.md` 中 `border` / `text-shadow` 章节同步加「缺省值补齐」说明，并附 `ShorthandDefaultMap` 表。
+
+### 测试补充
+
+`packages/webpack-plugin/test/platform/wx/style/style-rn.spec.js` 内 `describe('Unordered shorthand')` 增加：
+
+```js
+test('should fill border-width default when only style is given', () => {
+  const css = '.a { border: solid; } .b { border: solid red; } .c { border-top: solid; }'
+  const config = createConfig()
+  const result = getClassMap({ content: css, filename: 'test.css', ...config })
+
+  // style 存在 → 补 width(3)；color 由 RN 内置缺省承接，不补
+  expect(result.a).toEqual({ borderStyle: '"solid"', borderWidth: 3 })
+  expect(result.b).toEqual({ borderStyle: '"solid"', borderColor: '"red"', borderWidth: 3 })
+  expect(result.c).toEqual({ borderStyle: '"solid"', borderTopWidth: 3 })
+  expect(config.warn).not.toHaveBeenCalled()
+  expect(config.error).not.toHaveBeenCalled()
+})
+
+test('should short-circuit to border-width: 0 when style slot is empty', () => {
+  const css = '.a { border: 2px; } .b { border: red; } .c { border-top: red; } .d { border: 2px red; }'
+  const config = createConfig()
+  const result = getClassMap({ content: css, filename: 'test.css', ...config })
+
+  expect(result.a).toEqual({ borderWidth: 0 })
+  expect(result.b).toEqual({ borderWidth: 0 })
+  expect(result.c).toEqual({ borderTopWidth: 0 })
+  expect(result.d).toEqual({ borderWidth: 0 })
+  expect(config.warn).not.toHaveBeenCalled()
+  expect(config.error).not.toHaveBeenCalled()
+})
+
+test('should short-circuit zero / none border shorthand', () => {
+  const css = `
+    .a { border: 0; }
+    .b { border: 0px; }
+    .c { border: 0rpx; }
+    .d { border-top: 0; }
+    .e { border: none; }
+    .f { border: 1px none red; }
+  `
+  const config = createConfig()
+  const result = getClassMap({ content: css, filename: 'test.css', ...config })
+
+  // 纯 0 / none（.a/.d/.e）走入口短路；带单位 0px/0rpx（.b/.c）走 borderStyle 缺省短路；
+  // 混合 none（.f）none 被收集为 borderStyle:'none'，走 borderStyle === none 短路 —— 不报 warn
+  expect(result.a).toEqual({ borderWidth: 0 })
+  expect(result.b).toEqual({ borderWidth: 0 })
+  expect(result.c).toEqual({ borderWidth: 0 })
+  expect(result.d).toEqual({ borderTopWidth: 0 })
+  expect(result.e).toEqual({ borderWidth: 0 })
+  expect(result.f).toEqual({ borderWidth: 0 })
+  expect(config.warn).not.toHaveBeenCalled()
+  expect(config.error).not.toHaveBeenCalled()
+})
+
+test('should fill text-shadow color default', () => {
+  const css = `
+    .a { text-shadow: 1px 2px; }
+    .b { text-shadow: 1px 2px 3px; }
+    .c { text-shadow: red 1px 2px; }
+  `
+  const config = createConfig()
+  const result = getClassMap({ content: css, filename: 'test.css', ...config })
+
+  // color=currentColor，RN 无该概念，约定为 #000 补齐；radius 由 RN 内置缺省承接，不补
+  expect(result.a).toEqual({
+    textShadowOffset: { width: '1', height: '2' },
+    textShadowColor: '"#000"'
+  })
+  expect(result.b).toEqual({
+    textShadowOffset: { width: '1', height: '2' },
+    textShadowRadius: '3',
+    textShadowColor: '"#000"'
+  })
+  expect(result.c).toEqual({
+    textShadowOffset: { width: '1', height: '2' },
+    textShadowColor: '"red"'
+  })
+  expect(config.error).not.toHaveBeenCalled()
+})
+```
+
+同时需要**调整现有用例**：
+
+```js
+// 原 'should accept partial border shorthand without all three slots'
+// .a: border: solid       → 期望 { borderStyle, borderWidth: 3 }（color 不补，RN 内置缺省）
+// .b: border: 2px         → 期望 { borderWidth: 0 }（style 缺省 = none → 短路）
+// .c: border-top: red     → 期望 { borderTopWidth: 0 }（同上）
+```
+
+运行时部分核心用例（仍按现有运行时测试方式覆盖）：
+
+1. `style={{ border: 'solid red' }}` → `{ borderStyle: 'solid', borderColor: 'red', borderWidth: 3 }`
+2. `style={{ borderTop: 'solid' }}` → `{ borderStyle: 'solid', borderTopWidth: 3 }`（width 补齐，color 不补）
+3. `style={{ border: '2px' }}` → `{ borderWidth: 0 }`
+4. `style={{ border: 'red' }}` → `{ borderWidth: 0 }`
+5. `style={{ border: 'solid red', borderWidth: 5 }}` → `borderWidth` 仍为 `5`（普通展开走「长属性不覆盖」原则）
+6. `style={{ border: 0 }}`（number 0）→ `{ borderWidth: 0 }` —— **必测**，覆盖 inline style 写 number 的高频写法，验证 border 分支前置到 `typeof string` 检查之前
+7. `style={{ border: '0' }}` / `style={{ border: '0px' }}` → `{ borderWidth: 0 }`
+8. `style={{ borderTop: 0 }}` → `{ borderTopWidth: 0 }`
+9. `style={{ border: 0, borderWidth: 5 }}` → `{ borderWidth: 0 }` —— **必测**，验证短路结果**强制写入**、覆盖显式 `borderWidth`（与普通展开的「长属性不覆盖」原则相反，这是 border 短路独有语义）
+10. `style={{ textShadow: '1px 2px 3px' }}` → `{ textShadowOffset, textShadowRadius: 3, textShadowColor: '#000' }`
+11. `style={{ textShadow: '1px 2px 3px', textShadowColor: 'red' }}` → `textShadowColor` 仍为 `red`（长属性不覆盖原则，验证 `applyRuntimeShorthandDefaults` 不破坏覆盖优先级）
+
+### 与现有能力的关系（补充）
+
+- **CSS 变量**：编译期 `border: var(--x)` 单 token 仍原样返回；多 token 含 `var()` 写法，`var()` 会在槽位匹配中占位，若 `var()` 命中 borderStyle 槽位则不触发短路。运行时由 `transformVar` 前置替换，缺省补齐发生在字面值上，行为可预期。
+- **`calc()` / `env()`**：仅出现在 width 槽位，会被 `verifyValues` 视为 length，正常占位，不触发短路。
+- **四值类简写（`border-width` / `border-color` / `border-radius`）**：不进入 `formatBorder`，不受缺省补齐影响。
+- **`hairlineWidth`**：作为 length 合法值占用 width 槽位，与数字一致。
 
 ## 与现有能力的关系
 
@@ -641,21 +1095,36 @@ test('should expand unordered border shorthand', () => {
    - 新增 `expandUnorderedAbbreviation`。
    - 保留现有 `none`、四值类展开、长属性不覆盖逻辑。
 
-3. 补充单测
+3. 落地通用「简写缺省值补齐」机制
+   - 新增 `ShorthandDefaultMap`（编译期）/ `runtimeShorthandDefaultMap`（运行时）**纯补齐表**：`{ [target]: defaultValue }`，不含短路语义。
+   - 新增 `applyShorthandDefaults` / `applyRuntimeShorthandDefaults`：只做补齐、始终返回数组，复用主循环的 `used` map（key 为完整目标 prop 名）判断槽位是否被占用，无需重新扫描结果。
+   - `formatUnorderedAbbreviation` / `expandUnorderedAbbreviation` 末尾调用上述函数（传入 `used`），所有走通用展开的简写（border / text-shadow / text-decoration / flex-flow）自动获得缺省补齐能力。
+   - border 特定短路由 `formatBorder` / 运行时 border 分支承接，不进通用表，编译期与运行时同流程：
+     - 入口特判 `none` / `0`（最高频整体写法捷径；运行时 `0` 含 number `0`）
+     - 展开后判断 `borderStyle` 缺省或 === none → 整体短路返回 `{ widthProp: 0 }`（丢弃补齐结果）；覆盖 `border: 2px` / `0px` / `red`（缺省）与 `border: 1px none red`（显式 none）
+   - 让 `none` 作为 borderStyle 槽位合法 token 被收集，避免混合 `none` 在主循环触发 invalid warn、并使「borderStyle === none」分支可达：
+     - 运行时 `borderStyleMap` 加 `none: true`
+     - 编译期 `getVerifiedProp` 对 `Style` 槽位额外接受 `none`（仅 shorthand 展开上下文）
+   - 运行时 `transformShorthand` 把 border 分支前置到顶部 `typeof value !== 'string'` 检查之前，处理 inline `style={{ border: 0 }}` 的 number `0`。
+   - 新增简写或调整缺省值时只改 `ShorthandDefaultMap` / `runtimeShorthandDefaultMap`，主流程不动。
+
+4. 补充单测
    - 编译期测试优先覆盖，因为 class 样式是主要路径。
    - 运行时按现有测试基础补充最小核心用例。
 
-4. 同步文档和 skill
-   - 更新 `docs-vitepress/guide/rn/style.md`。
-   - 更新 `.agents/skills/mpx2rn/references/rn-style-reference.md`。
+5. 同步文档和 skill
+   - 更新 `docs-vitepress/guide/rn/style.md`，border 章节加缺省补齐说明。
+   - 更新 `.agents/skills/mpx2rn/references/rn-style-reference.md`，同步缺省补齐行为。
+   - changelog 显式列出 `border: 2px` / `border: red` 的语义变更（旧版本可以渲染边框，新版本短路为 0）。
 
-5. 同步运行时 dist
+6. 同步运行时 dist
    - 修改 `utils.tsx` 后执行 `npm run build -w @mpxjs/webpack-plugin`。
    - 让 `packages/webpack-plugin/lib/runtime/components/react/dist/**` 由构建产物同步生成。
 
-6. 校验
+7. 校验
    - 运行相关 eslint。
    - 运行 `packages/webpack-plugin/test/platform/wx/style/style-rn.spec.js` 相关 jest。
+   - 调整原 `should accept partial border shorthand without all three slots` 用例的期望（见上文）。
 
 ## 风险与边界
 
@@ -663,3 +1132,15 @@ test('should expand unordered border shorthand', () => {
 2. `text-decoration-style` / `text-decoration-color` 在 Android / Harmony 当前受限，编译期仍应通过 `verifyProps` 过滤；运行时无法可靠知道组件平台差异时，可以继续尽力展开，由 RN 或现有运行时行为承接。
 3. `calc()` 位于简写内部时，运行时当前不会深入收集简写 token 内的 calc keyPath，本方案不单独解决。
 4. 重复同类型 token 通过 `used` 避免覆盖已匹配属性；编译期沿用 invalid warn，运行时按静默跳过处理。
+5. **简写缺省补齐是 breaking 行为**：
+   - `border: 2px` / `border: red` / `border-top: red`：旧 → 输出对应 width / color；新 → 经 border 特定短路（styleProp 缺省）整体短路为 `border*Width: 0`。
+   - `border: solid`：旧 → 只输出 `borderStyle`（RN 无 width 不渲染）；新 → 补 `borderWidth: 3`，渲染结果与浏览器一致。
+   - `text-shadow: 1px 2px` / `1px 2px 3px`：旧 → 缺 `textShadowColor`（运行时表现依赖 RN 默认）；新 → 补 `'#000'`，跨端稳定。
+   - 需要在 changelog 与文档（`docs-vitepress/guide/rn/style.md` / `.agents/skills/mpx2rn/references/rn-style-reference.md`）显式提示。
+6. **只补 RN 没有内置缺省值的槽位**：`borderColor`（RN 默认黑色）、`textShadowRadius`（RN 默认 0）实测有内置缺省值，补齐冗余，不进表；`borderWidth` 在 RN 缺省为 0，与 CSS `medium`（约 3px）不一致，必须补 `3`；`textShadowColor` 的 CSS `currentColor` 在 RN 无对应，补 `'#000'`。这些值都存放在 `ShorthandDefaultMap` / `runtimeShorthandDefaultMap`，后续若 RN 行为变化或出现更合适等价值，按表配置改即可，不动主流程。
+7. **补齐策略两端必须镜像**：编译期与运行时的 `ShorthandDefaultMap` / `runtimeShorthandDefaultMap` 必须槽位一致（仅 CSS quote 形式不同），避免 class 与 inline 输出分叉。当前不补的槽位（`borderColor` / `textShadowRadius` 走 RN 内置缺省、`text-shadow-offset.width` 必填、`flex-direction` 等与 RN 默认一致）两端都保持不补。
+8. **补齐先行、border 特定短路整段丢弃**：`applyShorthandDefaults` 会先补上 `borderWidth: 3`，随后 `formatBorder` / 运行时 border 分支检查 `borderStyle` 是否缺省。`border: 2px`（无 style token）补齐后 borderStyle 仍缺省 → 整段丢弃、返回 `{ borderWidth: 0 }`，补齐的 width **不会泄漏**。这与 CSS「border-style: none 则整体不渲染，无需 width」语义一致。
+9. **普通展开走「长属性不覆盖」原则；border 短路走「强制写入」**：
+   - 普通展开写回 `if (!hasOwn(styleObj, prop)) styleObj[prop] = val`，`{ border: 'solid red', borderColor: 'blue' }` 中 `borderColor` 仍为 `'blue'`、`{ border: 'solid red', borderWidth: 5 }` 中 `borderWidth` 仍为 `5`。
+   - border 入口短路（`border: 0` / `border: none`）和展开后短路（`borderStyle` 缺省或 === none）写回是 `styleObj[widthProp] = 0` 直接强制覆盖，因为「清除边框」是用户的最终意图，应当覆盖任何显式 `borderWidth`：`{ border: 0, borderWidth: 5 }` 最终为 `{ borderWidth: 0 }`。
+   - 这条非对称是 border 短路独有，与 CSS「shorthand 写在长属性之后会覆盖长属性」的源码顺序敏感语义一致 —— RN 里 `style` 对象无法表达顺序，约定 border 短路（语义最强）始终胜出。

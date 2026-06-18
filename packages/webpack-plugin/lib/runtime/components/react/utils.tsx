@@ -103,6 +103,20 @@ const runtimeUnorderedAbbreviationMap: Record<string, boolean> = {
   textShadow: true,
   textDecoration: true
 }
+// CSS border-width: medium 的实测值（各主流浏览器一致取 3px）
+// 与编译期 wx/index.js 同名常量保持一致；调整需两侧一起改
+const BORDER_MEDIUM_WIDTH = 3
+// 运行时简写槽位缺省值表（与编译期 ShorthandDefaultMap 镜像，仅 CSS quote 形式不同）
+// 值即槽位缺省时追加的补齐值；borderColor / textShadowRadius 因 RN 有内置缺省值不补，不进此表
+const runtimeShorthandDefaultMap: Record<string, Record<string, any>> = {
+  border: { borderWidth: BORDER_MEDIUM_WIDTH },
+  borderTop: { borderTopWidth: BORDER_MEDIUM_WIDTH },
+  borderRight: { borderRightWidth: BORDER_MEDIUM_WIDTH },
+  borderBottom: { borderBottomWidth: BORDER_MEDIUM_WIDTH },
+  borderLeft: { borderLeftWidth: BORDER_MEDIUM_WIDTH },
+  textShadow: { textShadowColor: '#000' }
+  // textDecoration / flexFlow 暂不配置，与 RN 默认一致
+}
 const borderShorthandMap: Record<string, boolean> = {
   border: true,
   borderTop: true,
@@ -111,6 +125,8 @@ const borderShorthandMap: Record<string, boolean> = {
   borderLeft: true
 }
 const borderStyleMap: Record<string, boolean> = {
+  // RN 实测仅支持 solid/dotted/dashed；CSS 的 none 由 transformShorthand border 分支入口短路统一处理
+  // 混合 none（如 border: 1px none red）入口短路前置截掉，不进展开主循环
   solid: true,
   dotted: true,
   dashed: true
@@ -742,6 +758,19 @@ function matchRuntimeShorthandProp (prop: string, token: string): boolean {
   return false
 }
 
+// 通用补齐：扫描完所有 token 后，将 runtimeShorthandDefaultMap 中未被占用（不在 used）的槽位追加到 pairs
+// used 即主循环的占用记录，key 是完整目标 prop 名（含 textShadowOffset.width 这类 dot 路径）
+function applyRuntimeShorthandDefaults (key: string, pairs: Array<[string, any]>, used: Record<string, boolean>): Array<[string, any]> {
+  const defaults = runtimeShorthandDefaultMap[key]
+  if (!defaults) return pairs
+  for (const target in defaults) {
+    if (!used[target]) {
+      pushExpandedPair(pairs, target, defaults[target])
+    }
+  }
+  return pairs
+}
+
 function expandUnorderedAbbreviation (key: string, values: string[]): Array<[string, any]> {
   const result: Array<[string, any]> = []
   const used: Record<string, boolean> = {}
@@ -781,7 +810,7 @@ function expandUnorderedAbbreviation (key: string, values: string[]): Array<[str
       offsetEntry.height = 0
     }
   }
-  return result
+  return applyRuntimeShorthandDefaults(key, result, used)
 }
 
 function expandFlex (value: string): Array<[string, any]> | null {
@@ -829,20 +858,27 @@ function transformFlex (styleObj: Record<string, any>) {
   }
 }
 
-// Todo 目前仅支持指定属性的简写值，且不同于编译时的 class 处理，暂不支持缺省值，后续优化
 export function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
   for (const key of shorthandKeys) {
     const value = styleObj[key]
-    if (typeof value !== 'string') continue
-    const values = parseValues(value)
-    // border-style: none 在 CSS 规范中等价于无边框，整体短路为 border-width: 0
-    // 既覆盖整体 `border: none`，也覆盖混合写法 `border: 1px none red`
-    if (hasOwn(borderShorthandMap, key) && values.includes('none')) {
-      const prop = runtimeAbbreviationMap[key][0]
-      delete styleObj[key]
-      if (!hasOwn(styleObj, prop)) styleObj[prop] = 0
-      continue
+
+    // border 入口短路：整体 0（含 number 0 / '0' / '-0'）或含 none token（'none' / '1px none red'）
+    // 命中即强制写入 borderWidth: 0（覆盖任何已存在的 borderWidth，「清除边框」是用户最终意图）
+    // values 在此首次解析后暂存，下方公共链路复用，避免对同一字符串 parseValues 两次
+    // +value === 0 同时覆盖 number 0、string '0'；'0px' 等带单位 +value 是 NaN，不会误命中
+    let values: string[] | undefined
+    if (hasOwn(borderShorthandMap, key)) {
+      if (value === 'none' || +value === 0 || (typeof value === 'string' && (values = parseValues(value)).includes('none'))) {
+        const widthProp = runtimeAbbreviationMap[key][0]
+        delete styleObj[key]
+        styleObj[widthProp] = 0
+        continue
+      }
     }
+
+    // —— 以下为公共链路（与 textDecoration / flexFlow / textShadow / 四值简写共用）——
+    if (typeof value !== 'string') continue
+    if (!values) values = parseValues(value)
     const props = runtimeAbbreviationMap[key]
     if (!props) continue
     if (hasOwn(runtimeCompositeStyleMap, key) && values.length === 1) continue
@@ -852,10 +888,22 @@ export function transformShorthand (styleObj: Record<string, any>, shorthandKeys
       expandedValues = expandCompositeValues(values)
     }
     if (hasOwn(runtimeUnorderedAbbreviationMap, key)) {
+      // expandUnorderedAbbreviation 末尾已内部调用 applyRuntimeShorthandDefaults 补齐
       pairs = expandUnorderedAbbreviation(key, values)
     } else {
       pairs = expandAbbreviation(expandedValues, props)
     }
+
+    // border 展开后短路：borderStyle 槽位缺省 → 等价 border-style: none → 整体短路，丢弃补齐结果
+    // 覆盖 border: 2px / 0px / red 等无 style token 的写法（none 已被入口截掉，不会进展开）
+    if (hasOwn(borderShorthandMap, key) && !pairs.some(([p]) => p === 'borderStyle')) {
+      const widthProp = runtimeAbbreviationMap[key][0]
+      delete styleObj[key]
+      // 强制写入：「清除边框」是最终意图，覆盖任何已存在的 borderWidth 长属性
+      styleObj[widthProp] = 0
+      continue
+    }
+
     delete styleObj[key]
     for (const [prop, val] of pairs) {
       if (!hasOwn(styleObj, prop)) styleObj[prop] = val
