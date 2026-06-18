@@ -19,6 +19,20 @@ const globalEventState: GlobalEventState = {
   identifier: null
 }
 
+const labelControlHandledEvents = new WeakSet<object>()
+
+export const markLabelControlHandled = (evt: any) => {
+  const { nativeEvent } = evt
+  if (nativeEvent && typeof nativeEvent === 'object') {
+    labelControlHandledEvents.add(nativeEvent)
+  }
+}
+
+export const isLabelControlHandled = (evt: any) => {
+  const { nativeEvent } = evt
+  return !!(nativeEvent && typeof nativeEvent === 'object' && labelControlHandledEvents.has(nativeEvent))
+}
+
 const getTouchEvent = (
   type: string,
   event: ExtendedNativeTouchEvent,
