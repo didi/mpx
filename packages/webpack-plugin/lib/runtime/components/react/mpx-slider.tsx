@@ -340,7 +340,7 @@ const Slider = forwardRef<
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     minHeight: Math.max(blockSizeNum + 8, 40),
-    paddingLeft: 14,  // 固定内边距，不受 block-size 影响
+    paddingLeft: 14, // 固定内边距，不受 block-size 影响
     paddingRight: 14
   }, style)
   const containerStyle: ViewStyle = extendObject({} as ViewStyle, sliderDefault, normalStyle, layoutStyle)

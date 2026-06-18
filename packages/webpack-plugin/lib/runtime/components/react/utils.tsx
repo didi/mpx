@@ -117,7 +117,7 @@ const borderShorthandMap: Record<string, boolean> = {
 type CoverGroup = string | readonly string[]
 const defaultStyleCoverMap: Record<string, readonly CoverGroup[]> = {
   marginHorizontal: ['margin', ['marginLeft', 'marginRight']],
-  paddingLeft:  ['padding', 'paddingHorizontal'],
+  paddingLeft: ['padding', 'paddingHorizontal'],
   paddingRight: ['padding', 'paddingHorizontal'],
   borderRadius: [[
     'borderTopLeftRadius', 'borderTopRightRadius',
@@ -126,10 +126,10 @@ const defaultStyleCoverMap: Record<string, readonly CoverGroup[]> = {
   borderWidth: ['border'],
   borderStyle: ['border'],
   borderColor: ['border'],
-  flexBasis:     ['flex'],
-  flexShrink:    ['flex'],
+  flexBasis: ['flex'],
+  flexShrink: ['flex'],
   flexDirection: ['flexFlow'],
-  flexWrap:      ['flexFlow']
+  flexWrap: ['flexFlow']
 }
 
 function isDefaultCoveredByUser (userStyle: Record<string, any>, key: string): boolean {
