@@ -105,14 +105,14 @@ const OpenTypeEventsMap = new Map<OpenType, OpenTypeEvent>([
 
 const styles = StyleSheet.create({
   button: {
-    width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     height: 46,
     borderRadius: 5,
     backgroundColor: '#F8F8F8',
-    marginHorizontal: 'auto' // 按钮默认居中
+    marginHorizontal: 'auto',
+    paddingHorizontal: 14
   },
   buttonMini: {
     height: 30
@@ -282,9 +282,16 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     { color: plain ? plainTextColor : normalTextColor }
   )
 
-  const defaultStyle = extendObject({}, defaultViewStyle, defaultTextStyle)
-
   const styleObj = isHover ? extendObject({}, style, hoverStyle) : style
+
+  const defaultStyle: Record<string, any> = extendObject({}, defaultViewStyle, defaultTextStyle)
+  // 用户 shorthand 优先：避免 longhand default 反向覆盖
+  if ('margin' in styleObj) {
+    delete defaultStyle.marginHorizontal
+  }
+  if ('padding' in styleObj) {
+    delete defaultStyle.paddingHorizontal
+  }
 
   const {
     hasPositionFixed,

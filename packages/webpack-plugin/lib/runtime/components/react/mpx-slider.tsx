@@ -334,12 +334,20 @@ const Slider = forwardRef<
   const blockSizeNum = Math.max(12, Math.min(28, blockSize))
   const trackHeight = 4
 
-  const containerStyle: ViewStyle = extendObject({} as ViewStyle, {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    minHeight: Math.max(blockSizeNum + 8, 40),
-    paddingHorizontal: 14 // 固定内边距，不受 block-size 影响
-  }, normalStyle, layoutStyle)
+  // 用户传 padding shorthand 时跳过 paddingLeft/Right default,
+  // 避免 number 形式 padding:0 被 longhand default 反向覆盖
+  const containerStyle: ViewStyle = extendObject(
+    {} as ViewStyle,
+    {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      minHeight: Math.max(blockSizeNum + 8, 40)
+    },
+    'padding' in style ? null : { paddingHorizontal: 14 },
+    'margin' in style ? null : { marginHorizontal: 18, marginVertical: 10 },
+    normalStyle,
+    layoutStyle
+  )
 
   const trackStyle: ViewStyle = {
     flex: 1,

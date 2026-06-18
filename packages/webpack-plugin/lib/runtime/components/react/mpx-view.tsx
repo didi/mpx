@@ -106,6 +106,12 @@ const FLEX_DEFAULT_STYLE: ExtendedViewStyle = {
   flexShrink: 1,
   flexWrap: 'nowrap'
 }
+// 用户传入 flex shorthand 时使用的精简版（裁掉 flexBasis/flexShrink）
+// 避免 number 形式 flex:1 被 default flexBasis:'auto' 反向覆盖
+const FLEX_DEFAULT_STYLE_TRIMMED: ExtendedViewStyle = {
+  flexDirection: 'row',
+  flexWrap: 'nowrap'
+}
 
 // 对角线角度
 const diagonalAngleMap: Record<string, (width: number, height: number) => any> = {
@@ -774,7 +780,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     parentWidth,
     parentHeight,
     // 基于合并后的 styleObj 判断（hover 状态切换 display 也能触发）
-    defaultStyle: styleObj.display === 'flex' ? FLEX_DEFAULT_STYLE : undefined
+    // 用户传 flex shorthand 时使用精简 default，避免 flexBasis/flexShrink 反向覆盖
+    defaultStyle: styleObj.display === 'flex'
+      ? ('flex' in styleObj ? FLEX_DEFAULT_STYLE_TRIMMED : FLEX_DEFAULT_STYLE)
+      : undefined
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)

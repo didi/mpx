@@ -124,6 +124,7 @@ const borderShorthandMap: Record<string, boolean> = {
   borderBottom: true,
   borderLeft: true
 }
+
 const borderStyleMap: Record<string, boolean> = {
   // RN 实测仅支持 solid/dotted/dashed；CSS 的 none 由 transformShorthand border 分支入口短路统一处理
   // 混合 none（如 border: 1px none red）入口短路前置截掉，不进展开主循环
