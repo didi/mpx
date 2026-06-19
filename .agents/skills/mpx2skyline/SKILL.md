@@ -59,7 +59,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 ### 布局（layout）约束
 
 1. **默认布局差异**：Skyline 默认 `display: flex`，WebView 默认 `display: block` → 配置 `defaultDisplayBlock` 或改造为显式 flex 写法。
-2. **页面滚动**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发 → 使用 `scroll-view type="list"` 替代，页面需声明 `disableScroll: true`。
+2. **页面滚动**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发 → 使用 `scroll-view type="list"` 替代，页面需声明 `disableScroll: true`。**原页面生命周期需迁移到 scroll-view 对应事件**（`bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`），WebView 对齐 Skyline 写法。事件映射与示例详见 [适配最佳实践 · 页面滚动替代方案](./references/skyline-migration-practice.md#页面滚动替代方案)。
 3. **自定义导航**：Skyline 不支持默认导航 → 自定义导航栏，页面需声明 `navigationStyle: 'custom'`。
 4. **z-index 与层叠**：z-index 仅兄弟节点生效，无层叠上下文机制 → 需重构层级结构为兄弟节点。详见 [适配最佳实践 · z-index 与层叠适配](./references/skyline-migration-practice.md#z-index-与层叠适配)。
 5. **inline / inline-block**：Skyline 不支持 inline 和 inline-block 布局 → 使用 `<text>` 组件、`<span>` 组件或 flex 布局替代。
@@ -80,14 +80,18 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 12. **filter / backdrop-filter**：不支持 `url()` / `drop-shadow()` 及多函数组合；用 `box-shadow` 替代 `drop-shadow`。详见 [样式适配 · filter / backdrop-filter 限制](./references/skyline-migration-practice.md#filter--backdrop-filter-限制)。
 13. **text-decoration-line 单值**：仅支持单个值，多值组合（如 `underline line-through`）不生效。
 14. **calc() 不支持角度**：`calc()` 支持长度计算但不支持角度类型，需直接写角度值（如 `135deg`）。
+15. **@font-face 仅支持 ttf 格式**：`woff` / `woff2` / `otf` / `eot` 在 Skyline 下静默 fallback 到系统字体，自定义字体看似不生效，详见 [适配最佳实践 · @font-face 仅支持 ttf 格式](./references/skyline-migration-practice.md#font-face-仅支持-ttf-格式)。
 
 ### 组件（component）约束
 
-1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。
-2. **横向滚动需 enable-flex**：scroll-view 横向滚动需同时开启 `enable-flex` 以兼容 WebView。
+1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。**嵌套场景下每一层 scroll-view 都必须显式声明 type**（外层 `type="nested"`、内层 `type="list"` / `"custom"`），遗漏内层 type 会让内层退化为 WebView 渲染路径。
+2. **横向滚动必要条件，缺一不可**：scroll-view 横向滚动**必须同时**满足 ① `enable-flex="true"` ② 自身 `display: flex; flex-direction: row` ③ 每个子节点 `flex-shrink: 0`。三者缺一则横向滚动不生效（这是 Skyline 适配最常漏的一条），最小示例与版本兼容写法详见 [适配最佳实践 · 横向 scroll-view 适配](./references/skyline-migration-practice.md#横向-scroll-view-适配)。
 3. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，详见 [组件支持参考](./references/skyline-component-reference.md)。
 4. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。 
 5. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）
+6. **sticky-header 必须显式声明背景色**：Skyline 下 `sticky-header` 默认透明，吸顶时会与下层列表内容透字穿透；同时 `sticky-header` 必须是 `sticky-section` 的第一个子节点（且每个 section 仅一个 header）。详见 [适配最佳实践 · sticky 吸顶替代方案](./references/skyline-migration-practice.md#sticky-吸顶替代方案)。
+7. **navigator 嵌套限制**：`<navigator>` 内**只能嵌套 `<text>` 或纯文本**，不能嵌套 `<view>` / `<image>` 等其他组件；图文混排链接需用 `<span>` 包裹。详见 [适配最佳实践 · navigator 嵌套限制](./references/skyline-migration-practice.md#navigator-嵌套限制)。
+8. **scroll-view 自适应高度需配置 enableScrollViewAutoSize**：Skyline 下 scroll-view 默认不会按内容撑开，使用自适应高度场景需在 app.json `rendererOptions` 中开启 `enableScrollViewAutoSize`（8.0.54+），或采用 flex / 动态获取高度方案。详见 [适配最佳实践 · scroll-view 高度自适应](./references/skyline-migration-practice.md#scroll-view-高度自适应)。
 
 ### 配置（config）约束
 
@@ -176,6 +180,8 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 **布局**
 - [ ] 默认布局模式已处理（flex vs block / `defaultDisplayBlock`）。
 - [ ] 页面滚动已替换为 `scroll-view type="list"`。
+- [ ] 原 `onPullDownRefresh` / `onReachBottom` / `onPageScroll` 已迁移到 scroll-view 的 `bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`。
+- [ ] 横向 scroll-view 已满足`enable-flex` + 自身 `display:flex;flex-direction:row` + 子节点 `flex-shrink:0`。
 - [ ] 自定义导航已替代默认导航。
 - [ ] `inline` / `inline-block` 已替换为 `text` / `span` 或 flex 方案。
 - [ ] `position: sticky` 已替换为 `sticky-header` / `sticky-section`。
@@ -187,6 +193,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - [ ] `text-decoration` / `text-overflow` 等 text 限定属性已确保仅在 `text` 节点使用。
 - [ ] `box-sizing` 差异已处理。
 - [ ] 字体 PostScript name 已兼容（`font-weight` 使用 `bold` / `700`）。
+- [ ] `@font-face` 仅声明 ttf 格式（`woff` / `woff2` / `otf` 等已移除或条件编译隔离）。
 - [ ] 伪元素 `animation` 不支持已处理。
 - [ ] `border-radius` 非 0 时 `border-color` / `border-style` 四边一致性已检查。
 - [ ] `box-shadow` 不使用多个叠加。
@@ -194,7 +201,11 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 **组件**
 - [ ] 不支持组件已有替代方案或单独配置 `renderer: "webview"` 页面。
-- [ ] `scroll-view` 已指定 `type` 属性。
+- [ ] `scroll-view` 已指定 `type` 属性（**嵌套场景每层都需声明**）。
+- [ ] 横向 scroll-view 已满足 `enable-flex` + 自身 `display:flex;flex-direction:row` + 子节点 `flex-shrink:0`。
+- [ ] `sticky-header` 显式声明背景色（避免吸顶透字穿透），且是 `sticky-section` 的第一个子节点。
+- [ ] `<navigator>` 内仅嵌套 `<text>` 或纯文本；图文混排链接已改用 `<span>` 包裹。
+- [ ] scroll-view 自适应高度场景已开启 `enableScrollViewAutoSize` 或采用 flex / 动态获取高度方案。
 - [ ] 自定义组件样式隔离已处理（tag/id 不跨组件、class 遵循隔离）。
 - [ ] 组件根节点行为已检查（默认 block + relative、宽高 100% 可能失效）。
 - [ ] glass-easel 下 properties 默认值使用 `value` 而非 `default`。
