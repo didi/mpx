@@ -41,10 +41,21 @@ describe('i18n.wxs translate', function () {
     expect(i18n.t(messages, 'fr', 'en', 'nav.home')).toBe('Accueil')
   })
 
-  it('keeps path priority when a flat key collides with a nested path', function () {
+  it('prefers a flat key over a nested path when they collide', function () {
+    // 字面量 key 优先：扁平 "nav.home" 命中即返回，不再进入路径解析。
     const conflicting = {
       en: { 'nav.home': 'Flat Home', nav: { home: 'Nested Home' } }
     }
-    expect(i18n.t(conflicting, 'en', 'en', 'nav.home')).toBe('Nested Home')
+    expect(i18n.t(conflicting, 'en', 'en', 'nav.home')).toBe('Flat Home')
+  })
+
+  it('falls back to the fallback locale for a "digit+" key missing in the current locale', function () {
+    // key 在当前 locale 缺失时 getPathValue 会算出 NaN；若 NaN 逃逸会被 isDef 当成
+    // 「已定义」而中断 fallback。这里验证它被归一成 undefined，从而正确回退到 en。
+    const partial = {
+      en: { '1000+ reviews': 'plus de 1000 avis' },
+      fr: { hello: 'bonjour' }
+    }
+    expect(i18n.t(partial, 'fr', 'en', '1000+ reviews')).toBe('plus de 1000 avis')
   })
 })

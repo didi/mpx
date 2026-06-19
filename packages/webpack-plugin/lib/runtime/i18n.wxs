@@ -271,13 +271,16 @@ function getMessage (messages, locale, fallbackLocale, key) {
 
 function resolve (messages, locale, key) {
   if (messages && messages[locale] && key) {
-    var format = getPathValue(messages[locale], key)
-    // getPathValue 在 key 形如算术表达式时（如 "1000+ reviews"）会返回 NaN，
-    // NaN 不是有效译文，应和 null/undefined 一样回退到字面量直查（format !== format 仅 NaN 成立）。
-    if (format == null || format !== format) {
-      format = messages[locale][key]
-    }
-    return format
+    var localeMessages = messages[locale]
+    // 优先按「字面量 key」直查：形如 "1000+ reviews" 的扁平 key 含 '+'，若先走 getPathValue
+    // 会被 parsePath 当成算术表达式求值（'1000' + undefined = NaN），导致翻译失败。
+    // 字面量命中即返回，未命中再交给 getPathValue 解析嵌套路径（如 "nav.home"）。
+    // 注意：这会让「扁平 key 与同名嵌套路径冲突」时由 nested 优先变为 flat 优先。
+    if (isDef(localeMessages[key])) return localeMessages[key]
+    var format = getPathValue(localeMessages, key)
+    // 含 '+' 的 key 在当前语言缺失时，getPathValue 仍可能返回 NaN。NaN 会被 isDef 当成
+    // 「已定义」而中断 getMessage 的 fallback，故归一成 undefined 以保留回退（format !== format 仅 NaN 成立）。
+    return format !== format ? undefined : format
   }
 }
 
