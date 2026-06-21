@@ -3,9 +3,8 @@ const Template = require('webpack/lib/Template')
 const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
 
 class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
-  constructor (timeout) {
+  constructor () {
     super('load async chunk')
-    this.timeout = timeout || 10000
   }
 
   generate () {
@@ -32,7 +31,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           ]),
           '}',
           'inProgress[url] = [done]',
-          'var callback = function (type, result) {',
+          'var callback = function (type) {',
           Template.indent([
             'var event = {',
             Template.indent([
@@ -45,7 +44,6 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           ]),
           Template.indent([
             'var doneFns = inProgress[url]',
-            'clearTimeout(timeout)',
             'delete inProgress[url]',
             `doneFns && doneFns.forEach(${runtimeTemplate.returningFunction(
               'fn(event)',
@@ -53,7 +51,6 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
             )})`
           ]),
           '}',
-          `var timeout = setTimeout(callback.bind(null, 'timeout'), ${this.timeout})`,
           `var loadChunkAsyncFn = ${RuntimeGlobals.global}.__mpx.config.rnConfig && ${RuntimeGlobals.global}.__mpx.config.rnConfig.loadChunkAsync`,
           'try {',
           Template.indent([
