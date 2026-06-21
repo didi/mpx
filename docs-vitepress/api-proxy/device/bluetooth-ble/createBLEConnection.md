@@ -1,10 +1,10 @@
-mpx.createBLEConnection(Object object)
+## mpx.createBLEConnection(Object object)
 
 连接蓝牙低功耗设备。
 
 若小程序在之前已有搜索过某个蓝牙设备，并成功建立连接，可直接传入之前搜索获取的 deviceId 直接尝试连接该设备，无需再次进行搜索操作。
 
-支持情况： 微信、支付宝
+支持情况： 微信、支付宝、RN
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/bluetooth-ble/wx.createBLEConnection.html)
 
