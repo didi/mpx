@@ -222,7 +222,7 @@ function parsePath (pathStr) {
   var property = ''
   var index = 0
 
-  if (genRegExp('^[^[]]+$').test(pathStr)) {
+  if (pathStr.indexOf('[') === -1 && pathStr.indexOf(']') === -1) {
     // 对于简单数据路径，直接分割，避免无意义的解析
     return pathStr.split('.')
   }
