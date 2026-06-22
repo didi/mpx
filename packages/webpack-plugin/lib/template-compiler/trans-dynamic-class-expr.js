@@ -47,12 +47,10 @@ function unescapeClassName (str) {
 }
 
 const KEY_ESCAPE_SUFFIX = 'MpxEscape'
-const KEY_ESCAPE_DASH = '_da_'
-const KEY_ESCAPE_SPACE = '_sp_'
 
 const keyEscapeMap = {
-  '-': KEY_ESCAPE_DASH,
-  ' ': KEY_ESCAPE_SPACE,
+  '-': '_da_',
+  ' ': '_sp_',
   '*': '_st_'
 }
 const keyDecodeMap = Object.keys(keyEscapeMap).reduce((acc, key) => {
@@ -62,7 +60,7 @@ const keyDecodeMap = Object.keys(keyEscapeMap).reduce((acc, key) => {
 const keyDecodeReg = new RegExp(Object.keys(keyDecodeMap).map(escapeRegExp).join('|'), 'g')
 
 function escapeKey (str) {
-  const result = str.replace(/-/g, KEY_ESCAPE_DASH).replace(/\s+/g, KEY_ESCAPE_SPACE).replace(/\*/g, '_st_')
+  const result = str.replace(/-/g, '_da_').replace(/\s+/g, '_sp_').replace(/\*/g, '_st_')
   if (result !== str) return result + KEY_ESCAPE_SUFFIX
   return str
 }
@@ -77,9 +75,6 @@ function unescapeKey (str) {
 }
 
 module.exports = transDynamicClassExpr
-module.exports.KEY_ESCAPE_SUFFIX = KEY_ESCAPE_SUFFIX
-module.exports.KEY_ESCAPE_DASH = KEY_ESCAPE_DASH
-module.exports.KEY_ESCAPE_SPACE = KEY_ESCAPE_SPACE
 module.exports.unescapeKey = unescapeKey
 module.exports.escapeKey = escapeKey
 module.exports.escapeClassName = escapeClassName
