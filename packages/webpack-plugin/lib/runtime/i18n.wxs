@@ -217,15 +217,16 @@ function parsePath (pathStr) {
     property = ''
   }
 
+  if (pathStr.indexOf('[') === -1 && pathStr.indexOf(']') === -1) {
+    // 对于简单数据路径，直接分割，避免无意义的解析
+    return pathStr.split('.')
+  }
+
   var curStack = genStack()
   var targetStacks = []
   var property = ''
   var index = 0
 
-  if (pathStr.indexOf('[') === -1 && pathStr.indexOf(']') === -1) {
-    // 对于简单数据路径，直接分割，避免无意义的解析
-    return pathStr.split('.')
-  }
   while (index < pathStr.length) {
     var char = pathStr[index]
     // 当前遍历引号内的字符串时
