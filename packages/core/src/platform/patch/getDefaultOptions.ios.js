@@ -535,20 +535,24 @@ function getLayoutData (headerHeight) {
   }
 }
 
-let hasRenderedSafeAreaInsets = false
+let hasResolvedSafeAreaTop = false
 
 function getSafeAreaInsetsWithInitialTop (safeAreaInsets) {
-  if (ReactNative.Platform.OS === 'android' && !hasRenderedSafeAreaInsets) {
-    hasRenderedSafeAreaInsets = true
-    const initialTop = initialWindowMetrics?.insets?.top || 0
-    if (safeAreaInsets?.top === 0 && initialTop) {
-      // Android 首次渲染时 top 可能暂时为 0，仅全局兜底一次，后续使用 useSafeAreaInsets 的真实更新。
-      // 返回新对象，避免修改 useSafeAreaInsets/context 产出的 insets 引用。
-      return {
-        ...safeAreaInsets,
-        top: initialTop
-      }
+  if (ReactNative.Platform.OS !== 'android' || hasResolvedSafeAreaTop) {
+    return safeAreaInsets
+  }
+  const initialTop = initialWindowMetrics?.insets?.top || 0
+  if (safeAreaInsets?.top === 0 && initialTop) {
+    // Android 初始化时 top 可能连续为 0（如红米 10 的 bottom 已更新但 top 仍为 0），此时持续兜底并保留其他 insets 的最新值。
+    // 返回新对象，避免修改 useSafeAreaInsets/context 返回的引用。
+    return {
+      ...safeAreaInsets,
+      top: initialTop
     }
+  }
+  if (safeAreaInsets?.top > 0 || !initialTop) {
+    // 拿到真实 top 或没有可用初始值后，后续完全使用 useSafeAreaInsets 的更新。
+    hasResolvedSafeAreaTop = true
   }
   return safeAreaInsets
 }
@@ -601,7 +605,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
         )
       )
     }
-    // Android 全局首次渲染时对 safe area top 做兜底，避免 navigation.insets.top 短暂写入 0。
+    // Android 初始化期间持续兜底 safe area top，直到 useSafeAreaInsets 返回真实值。
     navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
     return withKeyboardAvoidingView(
       createElement(ReactNative.View,
