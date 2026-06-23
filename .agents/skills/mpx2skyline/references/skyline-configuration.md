@@ -5,8 +5,7 @@
 - [适用场景](#适用场景)
 - [skyline 配置](#skyline-配置)
   - [三级配置层次](#三级配置层次)
-  - [最小必需配置](#最小必需配置)
-  - [rendererOptions 配置](#rendereroptions-配置)
+  - [推荐配置](#推荐配置)
 - [Worklet Babel 插件](#worklet-babel-插件)
 
 ---
@@ -29,25 +28,8 @@
 | 页面 | `页面.json` | 页面级配置/覆盖 | navigationStyle, disableScroll, renderer |
 | 工具 | `project.config.json` | 开发者工具调试 | setting.skylineRenderEnable |
 
-### 最小必需配置
-```json5
-// 全局 app.json
-{
-  "lazyCodeLoading": "requiredComponents"
-}
-```
 
-```json5
-// 适配 skyline 页面的 .json
-{
-  "renderer": "skyline",
-  "componentFramework": "glass-easel",
-  "navigationStyle": "custom",
-  "disableScroll": true
-}
-```
-
-### rendererOptions 配置
+### 推荐配置
 
 | 配置项 | 类型 | 默认值 | 推荐值 | 说明 |
 |--------|------|--------|--------|------|
@@ -57,8 +39,10 @@
 | `enableScrollViewAutoSize` | boolean | false | true | scroll-view 自动撑开高度 |
 | `disableABTest` | boolean | false | true | 关闭 Skyline AB 实验，确保稳定性 |
 
+**项目配置 app.json 新增以下配置**
+
  ```json5
-// ✅ 推荐，app.json 配置 defaultDisplayBlock、defaultContentBox、 tagNameStyleIsolation、 enableScrollViewAutoSize 对齐 webview
+// 对齐 webview
 {
   "lazyCodeLoading": "requiredComponents",
   "rendererOptions": {
@@ -69,6 +53,18 @@
       "enableScrollViewAutoSize": true
     }
   }
+}
+```
+
+**适配 skyline 页面的 page.json新增以下配置**
+
+```json5
+// 
+{
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "navigationStyle": "custom",
+  "disableScroll": true
 }
 ```
 

@@ -2,7 +2,7 @@
 name: mpx2skyline
 description: |
   微信小程序 WebView 适配 Skyline 渲染引擎指南，覆盖布局、样式、组件、配置四大维度。
-  当用户要求对已有微信小程序页面进行 Skyline 适配改造、创建符合 Skyline 兼容规范的页面、
+  当用户要求对已有微信小程序页面进行 Skyline 适配、创建符合 Skyline 兼容规范的页面、
   排查 Skyline 下样式不生效/组件不渲染/布局异常/层级错乱等问题、或查询某项能力在
   Skyline 下的支持情况时强制调用。当用户问题不涉及 Skyline 适配时不应调用，如
   Mpx 输出 RN 问题、支付宝小程序问题、纯 webview 小程序开发问题等。
@@ -32,26 +32,16 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 | [Worklet 动画](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/worklet.html) | 使用 worklet 动画 Skyline 增强特性时读取                  |
 | [手势系统参考](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/gesture.html) | 使用 手势系统 Skyline 增强特性时读取                        |
 
-
-### 知识库使用建议
-
-参考文档体量较大，**不要一次性预读全部参考**，按需取用即可：
-
-1. **入口只读本 SKILL.md**：完整读完本文档（含下方通用约束与任务流程）足以覆盖 80% 常见场景的判断；不要在动笔前预读 references 目录。
-2. **触发式读取**：只在任务流程或通用约束中**明确指向**某份参考时读取，且仅读取与当前问题相关的小节（参考文档均含目录与章节锚点，使用 grep / 锚点跳读，不要整文件 Read）。
-3. **典型任务的最小阅读集**（仅当本 SKILL.md 已无法判断时再补充）：
-   - 已有页面 Skyline 适配改造：识别问题维度后再读对应参考的相关小节，通常 1–2 份足够（如布局+样式改造主要查 `skyline-migration-practice.md`）。
-   - 新建 Skyline 兼容页面：先按本 SKILL.md 的通用约束起手，遇到能力存疑（某属性是否支持、某组件是否存在）时再点查对应参考。
-   - 排查 Skyline 下特定问题：直接定位到问题维度的参考文档相关小节。
-
 ## 通用约束与适配原则
+
+无论是适配改造、新建组件还是 Code Review，跨端兼容均需严格遵循以下通用约束：
 
 ### 跨渲染模式兼容约束
 
 产物代码须在 WebView 模式与 Skyline 模式下均能正常运行。引入「Skyline 支持但 WebView 不需要」的写法时，**不要替换 WebView 原有写法**，而应：
 
 - 通过运行时判断 `this.renderer === 'skyline'` 隔离 Skyline 专属逻辑；
-- WebView 原有写法保持不变，避免适配引入 WebView 行为退化。
+- 若新方案 Webview & Skyline 均兼容，则可对齐为新方案，若新方案仅支持 Skyline，那 WebView 原有写法保持不变，避免 WebView 行为退化。
 - 特定版本支持的 Skyline 特性按支持处理，不做低版本兼容（如 `position: fixed` 8.0.43+ 支持、`:nth-child` 8.0.50+ 支持）。
 
 该原则贯穿布局 / 样式 / 组件 / 配置四个维度。
@@ -73,7 +63,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 5. **边框一致性**：`border-radius` 非 0 时四边 `border-color` / `border-style` 需一致。
 6. **box-sizing 默认值**：Skyline 默认 `border-box`（WebView 默认 `content-box`），遇到 padding 未撑开布局时手动指定 `box-sizing: content-box`。
 7. **伪元素 animation**：Skyline 下伪元素的 `animation` 不生效 → 使用真实节点 + CSS animation。
-8. **font-weight**：部分机型不支持 `font-weight: 500` / `600` 数值加粗，需使用 `bold` / `700`。
+8. **font-weight**：部分机型不支持 `font-weight: 500` / `600` 数值加粗，需使用 `bold` / `700`，webview 对齐 skyline，可直接全局替换。
 9. **box-shadow**：不支持多个叠加。
 10. **不支持 CSS 属性**：`float` / `contain` / `resize` / `writing-mode` / `text-indent` / `overflow-wrap` / `background-attachment` / `background-clip` / `background-origin` / `mask-origin` / `mask-clip` / `mask-mode` / `justify-items` 等属性设置后静默不生效，需替换为等效方案。详见 [样式适配 · 不支持的 CSS 属性](./references/skyline-migration-practice.md#不支持的-css-属性)。
 11. **渐变与背景多值限制**：`radial-gradient` 仅支持 `circle`（不支持 `ellipse`）；`background-image` / `mask-image` 最多支持 2 个值；`background-repeat` / `background-size` 不支持多组值。详见 [样式适配 · 渐变与背景多值限制](./references/skyline-migration-practice.md#渐变与背景多值限制)。
@@ -87,18 +77,12 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。**嵌套场景下每一层 scroll-view 都必须显式声明 type**（外层 `type="nested"`、内层 `type="list"` / `"custom"`），遗漏内层 type 会让内层退化为 WebView 渲染路径。
 2. **横向滚动必要条件，缺一不可**：scroll-view 横向滚动**必须同时**满足 ① `enable-flex="true"` ② 自身 `display: flex; flex-direction: row` ③ 每个子节点 `flex-shrink: 0`。三者缺一则横向滚动不生效（这是 Skyline 适配最常漏的一条），最小示例与版本兼容写法详见 [适配最佳实践 · 横向 scroll-view 适配](./references/skyline-migration-practice.md#横向-scroll-view-适配)。
 3. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，详见 [组件支持参考](./references/skyline-component-reference.md)。
-4. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。 
+4. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。
 5. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）
 6. **sticky-header 必须显式声明背景色**：Skyline 下 `sticky-header` 默认透明，吸顶时会与下层列表内容透字穿透；同时 `sticky-header` 必须是 `sticky-section` 的第一个子节点（且每个 section 仅一个 header）。详见 [适配最佳实践 · sticky 吸顶替代方案](./references/skyline-migration-practice.md#sticky-吸顶替代方案)。
-7. **navigator 嵌套限制**：`<navigator>` 内**只能嵌套 `<text>` 或纯文本**，不能嵌套 `<view>` / `<image>` 等其他组件；图文混排链接需用 `<span>` 包裹。详见 [适配最佳实践 · navigator 嵌套限制](./references/skyline-migration-practice.md#navigator-嵌套限制)。
-8. **scroll-view 自适应高度需配置 enableScrollViewAutoSize**：Skyline 下 scroll-view 默认不会按内容撑开，使用自适应高度场景需在 app.json `rendererOptions` 中开启 `enableScrollViewAutoSize`（8.0.54+），或采用 flex / 动态获取高度方案。详见 [适配最佳实践 · scroll-view 高度自适应](./references/skyline-migration-practice.md#scroll-view-高度自适应)。
-
-### 配置（config）约束
-
-1. **app.json 最小必需配置**：须包含 `lazyCodeLoading: "requiredComponents"`，详见 [配置参考 · 最小必需配置](./references/skyline-configuration.md#最小必需配置)。
-2. **Skyline 页面必需配置**：须同时配置 `renderer`、`componentFramework`、`navigationStyle`、`disableScroll`，详见 [配置参考 · 最小必需配置](./references/skyline-configuration.md#最小必需配置)。
-3. **推荐配置 rendererOptions 对齐 WebView**：建议在 app.json 中配置 `defaultDisplayBlock`、`defaultContentBox`、`tagNameStyleIsolation`、`enableScrollViewAutoSize`，详见 [配置参考 · rendererOptions 配置](./references/skyline-configuration.md#rendereroptions-配置)。
-4. **页面使用 worklet 函数须配置 Babel 插件**：需安装 `babel-plugin-worklet` 并在 `overrides` 中按组件路径配置，详见 [配置参考 · Worklet Babel 插件](./references/skyline-configuration.md#worklet-babel-插件)。
+7. **navigator 嵌套限制**：`<navigator>` 内**只能嵌套 `<text>` 或纯文本**，不能嵌套 `<view>` / `<image>` 等其他组件；
+8. 图文混排链接需用 `<span>` 包裹。详见 [适配最佳实践 · navigator 嵌套限制](./references/skyline-migration-practice.md#navigator-嵌套限制)。
+9. **scroll-view 自适应高度需配置 enableScrollViewAutoSize**：Skyline 下 scroll-view 默认不会按内容撑开，使用自适应高度场景需在 app.json `rendererOptions` 中开启 `enableScrollViewAutoSize`（8.0.54+），或采用 flex / 动态获取高度方案。详见 [适配最佳实践 · scroll-view 高度自适应](./references/skyline-migration-practice.md#scroll-view-高度自适应)。
 
 ### 滚动 API（Scroll API）约束
 
@@ -113,7 +97,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 2. **SharedValue 通过 .value 读写**：`wx.worklet.shared()` 创建的共享变量必须通过 `.value` 读写，直接赋值会替换对象本身导致动画驱动失效。详见 [Worklet 动画适配 · SharedValue 必须通过 .value 读写](./references/skyline-migration-practice.md#sharedvalue-必须通过-value-读写)。
 3. **worklet 中调用普通函数必须使用 runOnJS**：worklet 运行在 UI 线程，不能直接调用页面方法或 `wx.*` API，必须通过 `runOnJS` 切换回 JS 线程。详见 [Worklet 动画适配 · 在 worklet 中调用普通函数必须使用 runOnJS](./references/skyline-migration-practice.md#在-worklet-中调用普通函数必须使用-runonjs)。
 4. **runOnJS 调用页面方法必须 bind(this)**：通过 `runOnJS` 调用页面方法前必须先 `bind(this)`，否则 `this` 指向丢失。详见 [Worklet 动画适配 · 页面方法必须通过 bind(this) 绑定后传入 runOnJS](./references/skyline-migration-practice.md#页面方法必须通过-bindthis-绑定后传入-runonjs)。
-5. **禁止在 worklet 中解构 this.data**：解构赋值会触发 `Object.freeze` 冻结 `this.data`，导致页面后续所有 `setData` 失效。详见 [Worklet 动画适配 · 禁止在 worklet 中解构 this.data](./references/skyline-migration-practice.md#禁止在-worklet-中解构-thisdata)。
+5. **禁止在 worklet 中解构 this.data**：解构赋值会触发 `Object.freeze` 冻结 `this.data`，导致页面后续所有 `setData` 失效。详见 [Worklet 动画适配 · 禁止在 worklet 中解构 this](./references/skyline-migration-practice.md#禁止在-worklet-中解构-this)。
 
 ### glass-easel 框架约束
 
@@ -137,8 +121,8 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 #### 1. 页面配置适配
 
-- 页面 json 新增 `renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`。
-- 读取 [配置参考](./references/skyline-configuration.md) 确认全局 skyline 配置（`lazyCodeLoading` / `rendererOptions` 等）是否已就绪。
+- 页面 json 需新增 `renderer` / `componentFramework` / `disableScroll` / `navigationStyle` `renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`
+- 全局配置 app.json 需新增 `lazyCodeLoading` / `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize`，参考[配置参考](./references/skyline-configuration.md)
 
 #### 2. 布局适配改造
 
@@ -153,29 +137,29 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - 读取 [样式能力参考](./references/skyline-style-reference.md) 检查 `<style>` 中所有样式属性的 Skyline 支持情况。
 - 读取 [适配最佳实践 · 样式适配](./references/skyline-migration-practice.md#样式适配) 改造为 Skyline 兼容实现。
 - 伪元素单冒号 → 双冒号（全局搜索 `([^:]):((before)|(after))` 替换为 `$1::$2`）。
-- 不支持选择器替代（`*` → 类选择器、`[attr]` → 类选择器、`:nth-child` 低版本 → 动态类）。
-- 不支持属性替代或运行时隔离（`overflow: scroll` → `scroll-view` 等）。
-- box-sizing 差异处理。
-- 文本溢出省略适配（`text-overflow: ellipsis` 仅 `text` 组件生效）。
-- 字体 PostScript name 兼容。
+- 不支持选择器替代（`*` → 类选择器、`[attr]` → 类选择器）
+- 不支持属性替代（`overflow: scroll` → `scroll-view` 等）读取 [与 webview 的关键样式差异及替代方案](./references/skyline-style-reference.md#与-webview-模式的关键样式差异及兼容方案)。
+- 增加配置 defaultContentBox defaultDisplayBlock 默认样式对齐 webview。
+- 文本溢出省略适配（`text-overflow: ellipsis`），需新增 Skyline 特有属性 overflow 与 max-lines，详见 [适配最佳实践 · 文本溢出省略适配](./references/skyline-migration-practice.md#文本溢出省略适配)。
+- flex-basis 不支持百分比，`flex 1 0 25%` / `flex-basis 25%` 需替换为等价的 rpx 单位，详见 [样式能力参考·flex布局](./references/skyline-style-reference.md#flex布局)
+- 媒体查询 `@media screen` 替换为动态类，详见[适配最佳实践 · @media screen 替换为动态类](./references/skyline-migration-practice.md#media-screen-替换为动态类)
 
 #### 4. 组件适配改造
 
 - 读取 [组件支持参考](./references/skyline-component-reference.md)，对 `<template>` 中使用的组件及其属性与事件逐一核对 Skyline 支持情况。
 - `scroll-view` 必须指定 `type`。
-- 自定义组件样式隔离处理。
-- 组件根节点表现异常处理。
+- 配置 `tagNameStyleIsolation": "legacy"` 自定义组件样式隔离处理对齐 webview。
 
 #### 5. 检查与确认
 
 按页面各部分逐项核对：
 
 **跨渲染模式兼容**
-- [ ] 引入的 Skyline 专属写法均已通过运行时判断隔离；WebView 原有写法未因 Skyline 适配而被替换或删除。
+- [ ] 引入的 Skyline 专属写法均已通过运行时判断隔离，且引入 Skyline 专属写法时 WebView 原有写法保留。
 
 **页面配置**
-- [ ] 页面 `renderer` / `componentFramework` / `disableScroll` / `navigationStyle` 配置已添加。
-- [ ] 全局 skyline 配置（`lazyCodeLoading` / `rendererOptions`）已就绪。
+- [ ] 全局配置（`lazyCodeLoading` / `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize`）、页面配置 `renderer` / `componentFramework` / `disableScroll` / `navigationStyle` 均已添加。
+- [ ] 使用 worklet 函数时已配置 Babel 插件，详见 [配置参考 · Worklet Babel 插件](./references/skyline-configuration.md#worklet-babel-插件)。
 
 **布局**
 - [ ] 默认布局模式已处理（flex vs block / `defaultDisplayBlock`）。
@@ -190,24 +174,21 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - [ ] 伪元素已改为双冒号 `::` 声明。
 - [ ] 不支持选择器（`*` / `[attr]` 等）已替代。
 - [ ] `overflow: scroll` 已替换为 `scroll-view`；不单独设置 `overflow-x` / `overflow-y`。
-- [ ] `text-decoration` / `text-overflow` 等 text 限定属性已确保仅在 `text` 节点使用。
-- [ ] `box-sizing` 差异已处理。
+- [ ] 文本溢出的省略样式 `text-overflow` `-webkit-line-clamp` 已新增属性 `overflow="ellipsis"` `max-lines`。
 - [ ] 字体 PostScript name 已兼容（`font-weight` 使用 `bold` / `700`）。
-- [ ] `@font-face` 仅声明 ttf 格式（`woff` / `woff2` / `otf` 等已移除或条件编译隔离）。
+- [ ] `@font-face` 已声明 ttf 格式。
 - [ ] 伪元素 `animation` 不支持已处理。
 - [ ] `border-radius` 非 0 时 `border-color` / `border-style` 四边一致性已检查。
 - [ ] `box-shadow` 不使用多个叠加。
-- [ ] `/*use rpx*/` / `/*use px*/` 单位注释已保留。
 
 **组件**
 - [ ] 不支持组件已有替代方案或单独配置 `renderer: "webview"` 页面。
 - [ ] `scroll-view` 已指定 `type` 属性（**嵌套场景每层都需声明**）。
 - [ ] 横向 scroll-view 已满足 `enable-flex` + 自身 `display:flex;flex-direction:row` + 子节点 `flex-shrink:0`。
 - [ ] `sticky-header` 显式声明背景色（避免吸顶透字穿透），且是 `sticky-section` 的第一个子节点。
-- [ ] `<navigator>` 内仅嵌套 `<text>` 或纯文本；图文混排链接已改用 `<span>` 包裹。
-- [ ] scroll-view 自适应高度场景已开启 `enableScrollViewAutoSize` 或采用 flex / 动态获取高度方案。
-- [ ] 自定义组件样式隔离已处理（tag/id 不跨组件、class 遵循隔离）。
-- [ ] 组件根节点行为已检查（默认 block + relative、宽高 100% 可能失效）。
+- [ ] `<navigator>` 内仅嵌套 `<text>` 或纯文本；
+- [ ] 图文混排链接已改用 `<span>` 包裹。
+- [ ] scroll-view 自适应高度场景已开启 `enableScrollViewAutoSize` 或采用动态获取高度方案。
 - [ ] glass-easel 下 properties 默认值使用 `value` 而非 `default`。
 - [ ] wx:for 绑定 computed 属性已提供 initData 默认值防护。
 - [ ] properties type 校验异常已处理（`type: null` 或 `initData`）。
@@ -227,7 +208,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 #### 1. 设计阶段
 
 - 与用户对齐需求要点：页面视图结构、数据流、是否需要 Skyline 增强特性（worklet 动画、手势、自定义路由）。
-- 若页面需要交互动画或自定义转场，读取 [Worklet 动画与手势系统参考](./references/skyline-worklet-animation.md)，确定增强方案。
+- 若页面需要交互动画或自定义转场，读取 [适配最佳实践 · Worklet 动画适配](./references/skyline-migration-practice.md#worklet-动画适配) 及 [Worklet 动画](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/worklet.html) / [手势系统](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/gesture.html) 官方文档，确定增强方案。
 
 #### 2. 实施阶段
 
@@ -236,7 +217,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - **JSON 配置**：页面必须配置 `renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`。读取 [配置参考](./references/skyline-configuration.md) 确认项目全局配置。
 - **`<template>`**：读取 [组件支持参考](./references/skyline-component-reference.md)，仅选用 Skyline 支持的组件、属性与事件；`scroll-view` 必须指定 `type`；页面滚动使用 `scroll-view` 包裹；文本内容使用 `<text>` 组件。
 - **`<style>`**：读取 [样式能力参考](./references/skyline-style-reference.md) 与 [适配最佳实践](./references/skyline-migration-practice.md)，从一开始就使用 flex 布局、`rpx` 单位、双冒号伪元素、`text` 组件限定属性等 Skyline 兼容写法。
-- **`<script>`**：通过 `this.renderer === 'skyline'` 判断渲染模式，Skyline 专属逻辑做运行时隔离；需要 worklet 能力时按 [Worklet 参考](./references/skyline-worklet-animation.md) 配置 Babel 插件。
+- **`<script>`**：通过 `this.renderer === 'skyline'` 判断渲染模式，Skyline 专属逻辑做运行时隔离；需要 worklet 能力时按 [配置参考 · Worklet Babel 插件](./references/skyline-configuration.md#worklet-babel-插件) 配置 Babel 插件。
 
 #### 3. 检查与确认
 
