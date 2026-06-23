@@ -52,7 +52,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 2. **页面滚动**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发 → 使用 `scroll-view type="list"` 替代，页面需声明 `disableScroll: true`。**原页面生命周期需迁移到 scroll-view 对应事件**（`bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`），WebView 对齐 Skyline 写法。事件映射与示例详见 [适配最佳实践 · 页面滚动替代方案](./references/skyline-migration-practice.md#页面滚动替代方案)。
 3. **自定义导航**：Skyline 不支持默认导航 → 自定义导航栏，页面需声明 `navigationStyle: 'custom'`。
 4. **z-index 与层叠**：z-index 仅兄弟节点生效，无层叠上下文机制 → 需重构层级结构为兄弟节点。详见 [适配最佳实践 · z-index 与层叠适配](./references/skyline-migration-practice.md#z-index-与层叠适配)。
-5. **inline / inline-block**：Skyline 不支持 inline 和 inline-block 布局 → 使用 `<text>` 组件、`<span>` 组件或 flex 布局替代。
+5. **inline / inline-block**：Skyline 不支持 inline 和 inline-block 布局 → 优先使用 flex 布局替代，多行文本、图片混排场景考虑使用 `<text>` / `<span>` 组件替换，参考[适配最佳实践 · inline/inline-block 替代方案](./references/skyline-migration-practice.md#inlineinline-block-替代方案)。
 
 ### 样式（style）约束
 
@@ -130,7 +130,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - 默认 flex 布局差异处理（`defaultDisplayBlock` 或显式 flex 写法）。
 - 页面滚动 → `scroll-view type="list"` 替代。
 - 自定义导航替代默认导航。
-- inline / inline-block → `<text>` / `<span>` 替代。
+- inline / inline-block → flex 布局替代。
 
 #### 3. 样式适配改造
 
@@ -141,7 +141,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - 不支持属性替代（`overflow: scroll` → `scroll-view` 等）读取 [与 webview 的关键样式差异及替代方案](./references/skyline-style-reference.md#与-webview-模式的关键样式差异及兼容方案)。
 - 增加配置 defaultContentBox defaultDisplayBlock 默认样式对齐 webview。
 - 文本溢出省略适配（`text-overflow: ellipsis`），需新增 Skyline 特有属性 overflow 与 max-lines，详见 [适配最佳实践 · 文本溢出省略适配](./references/skyline-migration-practice.md#文本溢出省略适配)。
-- flex-basis 不支持百分比，`flex 1 0 25%` / `flex-basis 25%` 需替换为等价的 rpx 单位，详见 [样式能力参考·flex布局](./references/skyline-style-reference.md#flex布局)
+  - flex-basis 不支持百分比，需替换为等价的 rpx 单位，`flex 1 0 25%` / `flex-basis 25%` → `flex-basis 187rpx`（187rpx = Math.floor(750rpx * 25%），详见 [样式能力参考·flex布局](./references/skyline-style-reference.md#flex布局)
 - 媒体查询 `@media screen` 替换为动态类，详见[适配最佳实践 · @media screen 替换为动态类](./references/skyline-migration-practice.md#media-screen-替换为动态类)
 
 #### 4. 组件适配改造
@@ -167,7 +167,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - [ ] 原 `onPullDownRefresh` / `onReachBottom` / `onPageScroll` 已迁移到 scroll-view 的 `bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`。
 - [ ] 横向 scroll-view 已满足`enable-flex` + 自身 `display:flex;flex-direction:row` + 子节点 `flex-shrink:0`。
 - [ ] 自定义导航已替代默认导航。
-- [ ] `inline` / `inline-block` 已替换为 `text` / `span` 或 flex 方案。
+- [ ] `inline` / `inline-block` 已替换为 flex 方案 或 `text` / `span`。
 - [ ] `position: sticky` 已替换为 `sticky-header` / `sticky-section`。
 
 **样式**
