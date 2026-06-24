@@ -196,6 +196,8 @@ Skyline 没有 BFC（块级格式化上下文），也没有 margin 合并机制
 
 ### inline/inline-block 替代方案
 
+> 保留多行文本省略场景下的 `display -webkit-box` 布局，webview 实现多行文本省略需要
+
 Skyline 不支持 `display: inline` 和 `display: inline-block` 布局
 
 优先使用**flex 布局替代**：使用 `flex-direction: row` + `align-items: center` 实现内联效果
@@ -612,14 +614,17 @@ Skyline 下 `box-sizing` 默认为 `border-box`，WebView 下默认为 `content-
 
 **多行省略**：
 
+> 注意：文本省略场景下不要删除原 webview 下的文本省略样式，尤其是 `display: -webkit-box;`
+
 ```html
 <view class="ellipsis"><text max-lines="2" overflow="hidden">{{text}}</text></view>
 ```
 
 ```css
 .test {
-  display: -webkit-box;
   overflow: hidden;
+  white-space: nowrap;
+  display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   text-overflow: ellipsis

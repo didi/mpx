@@ -73,22 +73,96 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 
 ### 值类型支持
 
-**长度（`<length>`）：**
+#### 长度（`<length>`）
 
 | 单位/格式 | 支持 | 说明 |
 | --- | --- | --- |
-| `px` | ✅ | |
-| `rpx` | ✅ | |
-| `vw` / `vh` | ✅ | |
-| `vmin` / `vmax` | ✅ | |
-| `rem` | ✅ | |
+| `px` | ✅ | 物理像素 |
+| `rpx` | ✅ | 响应式像素，按设备宽度 750rpx 折算 |
+| `vw` / `vh` | ✅ | 视口宽 / 高的 1% |
+| `vmin` / `vmax` | ✅ | 视口宽高中的较小 / 较大值的 1% |
+| `rem` | ✅ | 相对根节点 `font-size`（Skyline 默认根 `font-size` 为 `16px`） |
 | `em` | ❌ | 使用 `rpx` / `px` / `rem` 替代 |
-| `%` | ✅ | 部分属性支持 |
-| `auto` | ✅ | |
-| `calc()` | ✅ | 仅支持长度类型计算，**不支持角度类型** |
-| `env()` | ✅ | 仅支持 `safe-area-inset-*系列，safe-area-inset-top/right/bottom/left` |
+| `auto` | ✅ | 用于尺寸、定位、外边距等场景 |
+| `calc()` | ✅ | 仅支持长度类型计算（加减乘除、混合单位），**不支持 `<angle>` 等其他类型计算**；不要嵌套使用 |
+| `env()` | ✅ | 仅支持 `safe-area-inset-*` 系列：`safe-area-inset-top` / `safe-area-inset-right` / `safe-area-inset-bottom` / `safe-area-inset-left` |
 
-**颜色值（`<color>`）：**
+#### 百分比（`%`）支持情况
+
+⚠️ Skyline 官方文档的「值类型支持列表」中，`<length>` 一列**并未列出 `%`**。`%` 的支持需按属性逐个判断，**不要默认所有 `<length>` 类属性都接受 `%`**。
+
+**① 文档明确提到 `%` 的属性：**
+
+| 属性 | 文档原文 | `%` 参照对象 |
+| --- | --- | --- |
+| `line-height` | 类型列含 `<percent>` | 当前 `font-size` |
+| `transform-origin` | 默认值 `50% 50%` | 元素自身的 `width` / `height` |
+| `background-position` | 「完全支持 `<bg-position>#`，参考 MDN」 | 元素尺寸 - 背景图尺寸 |
+
+**② 文档明确**不**支持 `%` 的属性：**
+
+| 属性 | 文档原文 |
+| --- | --- |
+| `font-size` | 「不支持百分比；不支持 keyword (smaller..)」 |
+
+**③ 文档未声明、需实测的属性：**
+
+下列属性在官方文档中类型仅写为 `<length>`，未声明是否接受 `%`。在 Skyline 真机/模拟器上落地前请逐项验证，不要直接迁移 WebView 的 `%` 用法：
+
+- 尺寸类：`width` / `height` / `min-width` / `min-height` / `max-width` / `max-height`
+- 定位类：`top` / `right` / `bottom` / `left`
+- 盒模型：`padding` / `padding-*` / `margin` / `margin-*`
+- Flex：`flex-basis` / `gap` / `row-gap` / `column-gap`
+- 边框：`border-radius` / `border-*-radius` / `border-width` / `border-*-width`
+- 背景：`background-size`
+- 阴影：`box-shadow` / `text-shadow` 的偏移与模糊半径
+- 文本：`letter-spacing` / `word-spacing`
+- 变换：`transform: translate*()` / `translateZ()` / `perspective`
+
+> 实践建议：
+> 
+> 除上文 ① 列明确支持的属性外，优先使用 `rpx` / `px` / `vw` / `vh` 等明确长度单位；
+> `flex: 1 0 auto` + `min-width` 实现自动扩展的场景下，min-width 需要使用 rpx 单位
+> 如必须使用 `%`，请在目标平台（iOS / Android / 开发者工具）三端实测后再纳入产线代码。
+
+#### `auto` 关键字支持情况
+
+⚠️ Skyline 官方文档中，`auto` 在不同属性的「取值」列和「默认值」列出现情况不一致：有的属性把 `auto` 写进取值，有的只把 `auto` 列作默认值，还有部分属性明确不支持 `auto`。**不要默认所有 `<length>` 类属性都接受 `auto`**。
+
+**① 文档支持 `auto` 的属性（含取值列明确列出 `auto`，或默认值为 `auto`）：**
+
+| 属性 | 文档原文（取值 / 默认值） | 备注 |
+| --- | --- | --- |
+| `pointer-events` | `auto / none`，默认 `auto` | 取值列明确列出 |
+| `align-self` | `auto / stretch / center / flex-start / flex-end / baseline`，默认 `auto` | 取值列明确列出 |
+| `background-size` | `contain / cover / [<length> | auto]{1, 2}`，默认 `auto` | 取值列明确列出 |
+| `will-change` | `auto / contents`，默认 `auto` | 取值列明确列出 |
+| `width` / `height` | `<length>`，默认 `auto` | 取值列仅写 `<length>`，靠默认值兜底 |
+| `min-width` / `max-width` | `<length>`，默认 `auto` | 取值列仅写 `<length>`，靠默认值兜底 |
+| `top` / `right` / `bottom` / `left` | `<length>`,默认 `auto` | **`position: fixed` 下 top/left/bottom/right 默认值 `auto` 不解析**（文档原文，需显式设值） |
+| `flex-basis` | `<length>`，默认 `auto` | 取值列仅写 `<length>`，靠默认值兜底 |
+
+**② 文档明确不支持 `auto` 的属性：**
+
+| 属性 | 文档原文 |
+| --- | --- |
+| `overflow` | 仅支持 `hidden` / `visible`，「scroll 不支持，只能通过 scroll-view 实现」（无 `auto`） |
+| `min-height` / `max-height` | 默认值为 `none`（非 `auto`） |
+
+**③ 文档未声明、需实测的属性：**
+
+下列属性在 WebView 下常用 `auto`，但官方文档「取值」与「默认值」列均未列出 `auto`，落地前请实测：
+
+- `margin` / `margin-*`：文档类型仅 `<length>{1,4}`，未列 `auto`；`margin: 0 auto` 水平居中等用法需实测
+- `padding` / `padding-*`：CSS 规范本身不支持 `padding: auto`，此处一致
+
+> 实践建议：
+>
+> 仅在上文 ① 明确支持的场景使用 `auto`；
+> `position: fixed` 元素必须显式声明 `top` / `left` / `bottom` / `right`；
+> 居中布局优先使用 Flex（`justify-content` / `align-items`）而非 `margin: auto`
+
+#### 颜色值（`<color>`）
 
 | 格式 | 支持 | 说明 |
 | --- | --- | --- |
