@@ -141,7 +141,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - 不支持属性替代（`overflow: scroll` → `scroll-view` 等）读取 [与 webview 的关键样式差异及替代方案](./references/skyline-style-reference.md#与-webview-模式的关键样式差异及兼容方案)。
 - 增加配置 defaultContentBox defaultDisplayBlock 默认样式对齐 webview。
 - 文本溢出省略适配（`text-overflow: ellipsis`），需新增 Skyline 特有属性 overflow 与 max-lines，详见 [适配最佳实践 · 文本溢出省略适配](./references/skyline-migration-practice.md#文本溢出省略适配)。
-- `flex-basis: auto; min-width: 25%` 同时使用的场景下，`min-width` 的百分比不生效，需替换为 rpx 单位 `flex 1 0 auto; min-width: 25%;` → `flex 1 0 auto; min-width 187rpx`（flex-basis 25% 等价于 flex-basis 187rpx，计算方式为 187rpx = Math.floor(750rpx * 25%），详见 [样式能力参考·百分比支持情况](./references/skyline-style-reference.md#百分比支持情况)
+- `flex-basis: auto; min-width: 25%` 同时使用的场景下，`min-width` 的百分比不生效，需替换为 rpx 单位 `flex 1 0 auto; min-width: 25%;` → `flex 1 0 auto; min-width 187rpx`（mpx/小程序里 rpx 是按"设计稿基准 750rpx = 屏幕宽度"的方式设计的，所以 750rpx 默认就代表 100% 屏宽，750rpx * 25% = 187.5rpx），详见 [样式能力参考·百分比支持情况](./references/skyline-style-reference.md#百分比支持情况)
 - 媒体查询 `@media screen` 替换为动态类，详见[适配最佳实践 · @media screen 替换为动态类](./references/skyline-migration-practice.md#media-screen-替换为动态类)
 
 #### 4. 组件适配改造

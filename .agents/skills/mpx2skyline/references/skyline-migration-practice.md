@@ -596,12 +596,24 @@ Skyline 下 `box-sizing` 默认为 `border-box`，WebView 下默认为 `content-
 
 文本溢出省略，或者文本超长打点，在 Skyline 下需要在对应的  `text` 组件上增加 `max-lines`/`overflow` 属性
 
+> 注意事项
+> 
 > 如果文本省略样式 `text-overflow: ellipsis` 等是设置在 `view` 组件上，则 `max-lines`/`overflow` 属性加在其子 `text` 节点上，如果 `view` 没有子 `text` 节点就创建一个 `text` 节点来包裹文本
+> **新增/替换 `text` 节点时务必把插值压回单行**：`<view>` 会折叠首尾空白，`<text>` 则字面保留。开闭标签之间留下换行 + 缩进会被当作前导/尾随空格渲染出来，影响 `max-lines`/`overflow` 的截断点与视觉对齐。属性多到必须折行时，只折属性、把插值紧贴 `>`
 
 **单行省略**：
 
 ```html
-<view class="ellipsis"><text max-lines="1" overflow="hidden">{{text}}</text></view>
+<!-- ❌ Bad -->
+<view class="ellipsis">
+  {{title}}
+<view/>
+
+<!-- ✅ Good -->
+<view class="ellipsis">
+  <text max-lines="{{1}}"
+        overflow="ellipsis">{{title}}</text>
+</view>
 ```
 
 ```css
