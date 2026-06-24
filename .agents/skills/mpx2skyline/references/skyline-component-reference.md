@@ -38,48 +38,48 @@
 
 ## 组件支持详情
 
-| 组件 | 支持情况 | 差异备注 |
-| --- | --- | --- |
-| text | 基本支持 | 内联文本只能用 text 组件；可通过 span 组件与 text / image 内联 |
-| view / cover-view | 完全支持 | 涉及文本节点见 text 组件 |
-| image / cover-image | 基本支持 | SVG 支持度已完善；部分低频 mode 未支持；max-width 行为异常需用明确 width；border/padding 导致尺寸异常需外层 view 包裹 |
-| button | 完全支持 | |
-| scroll-view | 完全支持 | **需显式指定 `type="list"`**；部分属性无需对齐；额外支持大量新特性 |
-| swiper / swiper-item | 完全支持 | 增强大量特性；单项无限循环可能异常；swiper-item 自定义宽度可能不生效 |
-| input / textarea | 完全支持 | 光标选区、菜单略有不同；键盘收起/恢复行为与 WebView 有差异，可能导致布局跳动 |
-| navigator | 完全支持 | 只能嵌套 text 组件或文本节点；可通过 span 组件与 text/image 内联 |
+| 组件 | 支持情况 | 差异备注/替代方案                                                                                               |
+| --- | --- |---------------------------------------------------------------------------------------------------------|
+| text | 基本支持 | 内联文本只能用 text 组件；可通过 span 组件与 text / image 内联                                                            |
+| view / cover-view | 完全支持 | 涉及文本节点见 text 组件                                                                                         |
+| image / cover-image | 基本支持 | SVG 支持度已完善；部分低频 mode 未支持；max-width 行为异常需用明确 width；border/padding 导致尺寸异常需外层 view 包裹                      |
+| button | 完全支持 |                                                                                                         |
+| scroll-view | 完全支持 | **需显式指定 `type="list"`**；部分属性无需对齐；额外支持大量新特性                                                              |
+| swiper / swiper-item | 完全支持 | 增强大量特性；单项无限循环可能异常；swiper-item 自定义宽度可能不生效                                                                |
+| input / textarea | 完全支持 | 光标选区、菜单略有不同；键盘收起/恢复行为与 WebView 有差异，可能导致布局跳动                                                             |
+| navigator | 完全支持 | 只能嵌套 text 组件或文本节点；可通过 span 组件与 text/image 内联                                                            |
 | map | 完全支持 | 开发者工具暂未支持调试，请使用真机预览；getScale API 可能无响应需用 bindregionchange 替代；Android 高度动态变化渲染异常；iOS backdrop-filter 不生效 |
-| canvas | 完全支持 | 开发者工具暂未支持调试，请使用真机预览 |
-| radio / radio-group | 完全支持 | |
-| label | 完全支持 | |
-| video | 基本支持 | 全屏在 3.3.0 已支持，投屏暂未支持，开发者工具暂未支持调试 |
-| checkbox / checkbox-group | 完全支持 | |
-| picker | 完全支持 | |
-| camera | 完全支持 | 开发者工具暂未支持调试 |
-| root-portal | 完全支持 | |
-| form | 完全支持 | |
-| ad | 完全支持 | |
-| official-account | 完全支持 | |
-| functional-page-navigator | 支持中 | |
-| live-player / live-pusher | 完全支持 | |
-| picker-view | 基本支持 | `indicator-class` / `mask-style` 属性暂未支持；双列同时滚动时索引可能错乱 |
-| voip-room | 完全支持 | |
-| rich-text | 完全支持 | 渲染结果可能略为不同；`mode=web` 时则完全对齐 webview |
-| match-media | 待考虑 | |
-| keyboard-accessory | 待考虑 | 可通过 input 的 `worklet:onkeyboardheightchange` 回调实现 |
-| page-meta | 基本支持 | 与全局滚动相关的属性不支持 |
-| editor | 暂不考虑 | |
-| web-view | 暂不考虑 | 建议承载 web-view 的页面单独配置 `"renderer": "webview"` |
-| movable-area / movable-view | 暂不考虑 | 必须用手势组件 + worklet 动画方案替代 |
-| page-container | 基本支持 | |
-| share-element | 完全支持 | 与 WebView 使用方式有异，特性有所增强 |
-| icon | 完全支持 | |
-| progress | 暂不考虑 | |
-| slider | 完全支持 | |
-| switch | 完全支持 | |
-| xr-frame | 暂未支持 | |
-| navigation-bar | 不考虑 | Skyline 只能用自定义导航 |
-| open-data | 完全支持 | 已废弃特性不支持 |
+| canvas | 完全支持 | 开发者工具暂未支持调试，请使用真机预览                                                                                     |
+| radio / radio-group | 完全支持 |                                                                                                         |
+| label | 完全支持 |                                                                                                         |
+| video | 基本支持 | 全屏在 3.3.0 已支持，投屏暂未支持，开发者工具暂未支持调试                                                                        |
+| checkbox / checkbox-group | 完全支持 |                                                                                                         |
+| picker | 完全支持 |                                                                                                         |
+| camera | 完全支持 | 开发者工具暂未支持调试                                                                                             |
+| root-portal | 完全支持 |                                                                                                         |
+| form | 完全支持 |                                                                                                         |
+| ad | 完全支持 |                                                                                                         |
+| official-account | 完全支持 |                                                                                                         |
+| functional-page-navigator | 支持中 | 替代:暂未完全支持期间,涉及的开放能力(如发票、收货地址)改用对应 `wx.choose*` / `open-type` 能力调用                                       |
+| live-player / live-pusher | 完全支持 |                                                                                                         |
+| picker-view | 基本支持 | `indicator-style` 仅支持 `height`、`border`、`background-color`， `indicator-class` / `mask-style` 属性暂未支持；    |
+| voip-room | 完全支持 |                                                                                                         |
+| rich-text | 完全支持 | 渲染结果可能略为不同；`mode=web` 时则完全对齐 webview                                                                    |
+| match-media | 待考虑 | 替代:用 `wx.createMediaQueryObserver()` 监听媒体条件,或 `getWindowInfo()` 取屏幕尺寸配合条件渲染实现响应式布局                      |
+| keyboard-accessory | 待考虑 | 可通过 input 的 `worklet:onkeyboardheightchange` 回调实现                                                       |
+| page-meta | 基本支持 | 与全局滚动相关的属性不支持                                                                                           |
+| editor | 暂不考虑 | 替代:纯文本编辑用 `textarea`;富文本编辑场景将承载页面单独配置 `"renderer": "webview"`,或用 `rich-text` 只读展示                       |
+| web-view | 暂不考虑 | 建议承载 web-view 的页面单独配置 `"renderer": "webview"`                                                           |
+| movable-area / movable-view | 暂不考虑 | 必须用手势组件 + worklet 动画方案替代                                                                                |
+| page-container | 基本支持 |                                                                                                         |
+| share-element | 完全支持 | 与 WebView 使用方式有异，特性有所增强                                                                                 |
+| icon | 完全支持 |                                                                                                         |
+| progress | 暂不考虑 | 替代:用 `view` 嵌套(外层底色 + 内层动态 `width` 百分比)自行实现进度条,动画进度可配合 worklet 驱动                                       |
+| slider | 完全支持 |                                                                                                         |
+| switch | 完全支持 |                                                                                                         |
+| xr-frame | 暂未支持 | 替代:将承载 3D/XR 内容的页面单独配置 `"renderer": "webview"`;或用 `canvas`(WebGL)自行渲染                                   |
+| navigation-bar | 不考虑 | Skyline 只能用自定义导航                                                                                        |
+| open-data | 完全支持 | 已废弃特性不支持                                                                                                |
 
 ## 高频组件用法
 

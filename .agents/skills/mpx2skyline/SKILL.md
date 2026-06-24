@@ -76,7 +76,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。**嵌套场景下每一层 scroll-view 都必须显式声明 type**（外层 `type="nested"`、内层 `type="list"` / `"custom"`），遗漏内层 type 会让内层退化为 WebView 渲染路径。
 2. **横向滚动必要条件，缺一不可**：scroll-view 横向滚动**必须同时**满足 ① `enable-flex="true"` ② 自身 `display: flex; flex-direction: row` ③ 每个子节点 `flex-shrink: 0`。三者缺一则横向滚动不生效（这是 Skyline 适配最常漏的一条），最小示例与版本兼容写法详见 [适配最佳实践 · 横向 scroll-view 适配](./references/skyline-migration-practice.md#横向-scroll-view-适配)。
-3. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，详见 [组件支持参考](./references/skyline-component-reference.md)。
+3. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，参考 [组件支持详情](./references/skyline-component-reference.md#组件支持详情)。
 4. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。
 5. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）
 6. **sticky-header 必须显式声明背景色**：Skyline 下 `sticky-header` 默认透明，吸顶时会与下层列表内容透字穿透；同时 `sticky-header` 必须是 `sticky-section` 的第一个子节点（且每个 section 仅一个 header）。详见 [适配最佳实践 · sticky 吸顶替代方案](./references/skyline-migration-practice.md#sticky-吸顶替代方案)。
@@ -149,6 +149,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - 读取 [组件支持参考](./references/skyline-component-reference.md)，对 `<template>` 中使用的组件及其属性与事件逐一核对 Skyline 支持情况。
 - `scroll-view` 必须指定 `type`。
 - 配置 `tagNameStyleIsolation": "legacy"` 自定义组件样式隔离处理对齐 webview。
+- `picker-view` skyline 下默认会有上下边框，适配 skyline 时没有自定义边框时需设置 `indicator-style="border: none;"` 去除默认边框，`indicator-style` 仅支持 `height`、`border`、`background-color`。
 
 #### 5. 检查与确认
 
