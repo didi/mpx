@@ -335,34 +335,81 @@ page {
 
 ### 动画与过渡
 
+#### 过渡（Transition）
+
 | 属性 | 值 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `transition-property` | `none` \| `all` \| `<property-name>` | `all` | 可动画属性见下方列表 |
-| `transition-duration` | `<time>` | `0s` | |
-| `transition-timing-function` | `<timing-function>` | `ease` | |
-| `transition-delay` | `<time>` | `0s` | |
-| `transition` 简写 | | | |
-| `animation-name` | `none` \| `<custom-ident>` | `none` | 伪元素的 `animation` 不支持 |
-| `animation-duration` | `<time>` | `0s` | |
-| `animation-timing-function` | `<timing-function>` | `ease` | |
-| `animation-delay` | `<time>` | `0s` | |
-| `animation-iteration-count` | `infinite` \| `<number>` | `1` | |
-| `animation-direction` | `normal` \| `reverse` \| `alternate` \| `alternate-reverse` | `normal` | |
-| `animation-fill-mode` | `forwards` \| `both` | — | `none` 和 `backwards` 可写但实际均表现为 `forwards` |
-| `animation-play-state` | `running` \| `paused` | `running` | |
-| `animation` 简写 | | | |
+| `transition-property` | `none` \| `all` \| `<animatable-property>#` | `all` | 支持逗号分隔的多属性列表;可动画属性见下方完整列表 |
+| `transition-duration` | `<time>#` | `0s` | 支持逗号分隔的多值,与 `transition-property` 一一对应 |
+| `transition-timing-function` | `<timing-function>#` | `ease` | 支持逗号分隔的多值 |
+| `transition-delay` | `<time>#` | `0s` | 支持逗号分隔的多值 |
+| `transition` 简写 | | | 展开为上述四个子属性 |
 
-**缓动函数：** `linear` / `ease` / `ease-in` / `ease-out` / `ease-in-out` / `cubic-bezier(<n>,<n>,<n>,<n>)` / `steps(<integer>[, start|end|jump-*]?)`
+#### 动画（Animation）
+
+| 属性 | 值 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `animation-name` | `none` \| `<custom-ident>` \| `<string>` | `none` | 引用 `@keyframes` 名称,支持逗号分隔的多值;**伪元素的 `animation` 不支持** |
+| `animation-duration` | `<time>#` | `0s` | 支持逗号分隔的多值 |
+| `animation-timing-function` | `<timing-function>#` | `ease` | 支持逗号分隔的多值 |
+| `animation-delay` | `<time>#` | `0s` | 支持逗号分隔的多值 |
+| `animation-iteration-count` | `infinite` \| `<number>` | `1` | 支持逗号分隔的多值 |
+| `animation-direction` | `normal` \| `reverse` \| `alternate` \| `alternate-reverse` | `normal` | 支持逗号分隔的多值 |
+| `animation-fill-mode` | `forwards` \| `both` | — | `none` 和 `backwards` 可写但实际均表现为 `forwards` |
+| `animation-play-state` | `running` \| `paused` | `running` | 支持逗号分隔的多值 |
+| `animation` 简写 | | | 展开为上述子属性 |
+
+**`@keyframes`**
+
+```css
+@keyframes <animation-name> {
+  <keyframe-selector># { <declaration-list> }
+}
+```
+
+- `<keyframe-selector>`(关键帧选择器)取值:`from` \| `to` \| `<percentage>`(如 `0%` / `50%` / `100%`)
+- 单条规则可用逗号分隔多个选择器,如 `0%, 100% { ... }`
+
+```css
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.box {
+  animation: fade-in 0.3s ease-in-out forwards;
+}
+```
+
+#### 缓动函数（`<timing-function>`）
+
+`linear` / `ease` / `ease-in` / `ease-out` / `ease-in-out` / `cubic-bezier(<n>,<n>,<n>,<n>)` / `steps(<integer>[, start|end|jump-*]?)`
+
+#### `transition-property` / 可动画属性完整列表
+
+| 类别 | 可动画属性 |
+| --- | --- |
+| 通用 | `all` \| `none` |
+| 变换与不透明度 | `transform` / `transform-origin` / `opacity` |
+| 尺寸 | `width` / `height` / `min-width` / `max-width` / `min-height` / `max-height` |
+| 外边距 | `margin` / `margin-top` / `margin-right` / `margin-bottom` / `margin-left` |
+| 内边距 | `padding` / `padding-top` / `padding-right` / `padding-bottom` / `padding-left` |
+| 定位 | `top` / `right` / `bottom` / `left` |
+| Flex | `flex` / `flex-grow` / `flex-shrink` / `flex-basis` |
+| 边框宽度/颜色/圆角 | `border` / `border-width` / `border-color` / `border-radius` |
+| 边框单边宽度 | `border-top-width` / `border-right-width` / `border-bottom-width` / `border-left-width` |
+| 边框单边颜色 | `border-top-color` / `border-right-color` / `border-bottom-color` / `border-left-color` |
+| 边框单角圆角 | `border-top-left-radius` / `border-top-right-radius` / `border-bottom-left-radius` / `border-bottom-right-radius` |
+| 边框单边简写 | `border-top` / `border-right` / `border-bottom` / `border-left` |
+| 背景 | `background-color` / `background-position` / `background-position-x` / `background-position-y` / `background-size` / `background` |
+| 滤镜与层级 | `filter` / `backdrop-filter` / `box-shadow` / `z-index` |
+| 文本 | `text-decoration-color` |
+| 遮罩 | `mask` / `mask-size` / `mask-position` / `mask-position-x` / `mask-position-y` |
 
 **不支持 transition/animation 的属性：**
 
 - 文本：`text-align`、`text-shadow`、`direction`、`white-space`、`word-break`
 - 字体：`color`、`font-size`、`font-weight`、`font-style`、`font-family`、`font-feature-settings`、`line-height`、`letter-spacing`、`word-spacing`
 - 其他：`visibility`、`pointer-events`
-
-**`transition-property` 可用值（部分列举）：**
-
-`transform` / `transform-origin` / `opacity` / `width` / `height` / `min-*` / `max-*` / `margin-*` / `padding-*` / `top` / `right` / `bottom` / `left` / `flex` 相关 / `border` 相关 / `background-color` / `background-position` / `background-size` / `filter` / `backdrop-filter` / `box-shadow` / `z-index` / `text-decoration-color` / `mask` 相关
 
 ### 滤镜与遮罩
 
