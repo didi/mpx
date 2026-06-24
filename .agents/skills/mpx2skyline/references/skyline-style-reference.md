@@ -172,6 +172,7 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 | `#RGB` / `#RRGGBB` / `#RGBA` / `#RRGGBBAA` | ✅ | |
 | `rgb()` / `rgba()` | ✅ | |
 | `hsl()` / `hsla()` | ✅ | |
+| `hwb()` | ✅ | |
 
 **渐变（`<gradient>`）：**
 
@@ -285,7 +286,7 @@ page {
 | `background-image` | `none` \| `<url>` \| `<gradient>` | `none` | 最多支持 **2 个值** |
 | `background-size` | `auto` \| `cover` \| `contain` \| `<length>{1,2}` | `auto` | 最多支持 **2 组值** |
 | `background-position` | `<bg-position>` | `0 0` | 最多支持 **2 组值** |
-| `background-repeat` | `repeat-x` \| `repeat-y` \| `repeat` \| `no-repeat` | `repeat` | 最多支持 **2 组值** |
+| `background-repeat` | `repeat-x` \| `repeat-y` \| `repeat` \| `no-repeat` | `repeat` | 不支持 `space`/`round`；最多支持 **2 组值** |
 | `background` 简写 | | | 展开后 `background-attachment`/`background-origin`/`background-clip` 不生效，其余子属性正常 |
 
 **渐变语法支持：**
@@ -300,14 +301,14 @@ page {
 | --- | --- | --- | --- |
 | `color` | `<color>` | `#000` | 继承属性 |
 | `font-size` | `<length>` | `16px` | 继承；不支持百分比；不支持 `smaller` 等关键字 |
-| `font-weight` | `normal` \| `bold` \| `100–900` | `normal` | 继承；**部分机型不支持 500/600 数值**，建议使用 `bold`/`700` |
+| `font-weight` | `normal` \| `bold` \| `100–900` | `normal` | 继承；不支持 `bolder`/`lighter`；**部分机型不支持 500/600 数值**，建议使用 `bold`/`700` |
 | `font-style` | `normal` \| `italic` | `normal` | 不支持 `oblique` |
 | `font-family` | `<family-name>` | | 继承；支持自定义字体（仅 ttf 格式） |
 | `font-feature-settings` | `normal` \| `<feature-tag-value>` | `normal` | 继承 |
 | `line-height` | `normal` \| `<number>` \| `<length>` \| `<percentage>` | `normal` | 继承 |
-| `text-align` | `left` \| `center` \| `right` \| `justify` \| `start` \| `end` | `start` | |
-| `vertical-align` | `baseline` \| `top` \| `middle` \| `bottom` | — | |
-| `white-space` | `normal` \| `nowrap` | `normal` | |
+| `text-align` | `left` \| `center` \| `right` \| `justify` \| `start` \| `end` | `start` | 不支持 `justify-all`/`match-parent` |
+| `vertical-align` | `baseline` \| `top` \| `middle` \| `bottom` | — | 不支持 `text-top`/`text-bottom` |
+| `white-space` | `normal` \| `nowrap` | `normal` | 不支持 `pre`/`pre-wrap`/`pre-line` |
 | `word-break` | `normal` \| `break-all` | `normal` | `keep-all` 可解析但无实际效果；`break-word` 映射为 `normal` |
 | `letter-spacing` | `normal` \| `<length>` | `normal` | 继承 |
 | `word-spacing` | `normal` \| `<length>` | `normal` | 继承 |
