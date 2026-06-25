@@ -17,36 +17,41 @@ interface SectionExtra {
   footerData: ListItem | null;
   hasSectionHeader?: boolean;
   hasSectionFooter?: boolean;
-  headerIndex?: number;
-  footerIndex?: number;
-}
-
-interface SectionItem {
-  itemData: ListItem;
-  index: number;
 }
 
 interface Section extends SectionExtra {
-  data: SectionItem[];
+  data: ListItem[];
 }
 
-type RNSection = SectionListData<SectionItem, SectionExtra>
+type RNSection = SectionListData<ListItem, SectionExtra>
 
-const TypedSectionList = SectionList as unknown as ComponentType<RNSectionListProps<SectionItem, SectionExtra>>
+const TypedSectionList = SectionList as unknown as ComponentType<RNSectionListProps<ListItem, SectionExtra>>
 
 interface ItemHeightType {
   value?: number;
   getter?: (item: any, index: number) => number;
 }
 
+interface ItemLayoutInfo {
+  length: number;
+  offset: number;
+  index: number;
+}
+
+interface ItemExposureLayout {
+  offset: number;
+  length: number;
+}
+
 interface ItemExposureDetail {
   index: number;
-  itemData: ListItem;
+  itemData: ListItem | null;
+  layout: ItemExposureLayout;
   threshold: number;
 }
 
 interface ItemExposureViewToken {
-  item: Section | SectionItem;
+  item: Section | ListItem;
   key: string;
   index: number | null;
   isViewable: boolean;
@@ -67,7 +72,15 @@ interface ItemExposureViewabilityPair {
 
 interface ItemExposureInfo {
   index: number;
-  itemData: ListItem;
+  itemData: ListItem | null;
+  layout: ItemExposureLayout;
+}
+
+type ItemExposureType = 'header' | 'footer' | 'item'
+
+interface ItemExposureIndexInfo {
+  index: number;
+  type: ItemExposureType;
 }
 
 interface MpxSectionListProps {
@@ -179,8 +192,9 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const indexMap = useRef<{ [key: string]: string }>({})
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
+  const exposureIndexMap = useRef<{ [key: number]: ItemExposureIndexInfo }>({})
+  const itemLayoutsRef = useRef<ItemLayoutInfo[]>([])
   const itemExposureState = useRef<{ [key: string]: boolean }>({})
-  const enableItemExposureRef = useRef(false)
   const enableStickyRef = useRef(enableSticky)
   const bindItemExposureRef = useRef<typeof binditemexposure>()
   const propsRef = useRef(props)
@@ -201,7 +215,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
-  enableItemExposureRef.current = enableItemExposure
   if (initialEnableItemExposureRef.current !== enableItemExposure) {
     error('[Mpx runtime error]: [enable-item-exposure] cannot be toggled at runtime. Set its value once at component initialization.')
   }
@@ -241,14 +254,14 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
         viewabilityConfig: itemExposureViewabilityConfigValue,
         onViewableItemsChanged: ({ changed }) => {
           const bindItemExposure = bindItemExposureRef.current
-          if (!enableItemExposureRef.current || !bindItemExposure) return
+          if (!bindItemExposure) return
 
           const exposedItems: ItemExposureDetail[] = []
           changed.forEach((viewToken) => {
             const exposureInfo = getItemExposureInfo(viewToken)
             if (!exposureInfo) return
 
-            const { index, itemData } = exposureInfo
+            const { index, itemData, layout } = exposureInfo
             const key = `${index}`
 
             if (!viewToken.isViewable) {
@@ -261,6 +274,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
               exposedItems.push({
                 index,
                 itemData,
+                layout,
                 threshold: itemExposureViewabilityConfigValue.itemVisiblePercentThreshold
               })
             }
@@ -292,31 +306,39 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     const item = viewToken.item
     if (!item) return null
 
-    if (viewToken.key.endsWith(':header')) {
-      if (enableStickyRef.current) return null
-      const section = item as Section
-      return section.headerData && section.headerIndex != null
-        ? {
-            index: section.headerIndex,
-            itemData: section.headerData
-          }
-        : null
+    const viewIndex = viewToken.index
+    if (viewIndex == null) return null
+    const indexInfo = exposureIndexMap.current[viewIndex]
+    if (!indexInfo) return null
+    if (indexInfo.type === 'header' && enableStickyRef.current) return null
+    const layoutInfo = itemLayoutsRef.current[viewIndex]
+    const layout = {
+      offset: layoutInfo ? layoutInfo.offset : 0,
+      length: layoutInfo ? layoutInfo.length : 0
     }
 
-    if (viewToken.key.endsWith(':footer')) {
+    if (indexInfo.type === 'header') {
       const section = item as Section
-      return section.footerData && section.footerIndex != null
-        ? {
-            index: section.footerIndex,
-            itemData: section.footerData
-          }
-        : null
+      return {
+        index: indexInfo.index,
+        itemData: section.headerData || null,
+        layout
+      }
     }
 
-    const sectionItem = item as SectionItem
+    if (indexInfo.type === 'footer') {
+      const section = item as Section
+      return {
+        index: indexInfo.index,
+        itemData: section.footerData || null,
+        layout
+      }
+    }
+
     return {
-      index: sectionItem.index,
-      itemData: sectionItem.itemData
+      index: indexInfo.index,
+      itemData: item as ListItem,
+      layout
     }
   }
 
@@ -347,8 +369,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     }
     if ((itemHeight as ItemHeightType).getter) {
       const item = convertedListData[sectionIndex].data[rowIndex]
-      // 使用 item 记录的原始索引
-      return (itemHeight as ItemHeightType).getter?.(item.itemData, item.index) || 0
+      return (itemHeight as ItemHeightType).getter?.(item, getOriginalIndex(sectionIndex, rowIndex)) || 0
     } else {
       return (itemHeight as ItemHeightType).value || 0
     }
@@ -373,95 +394,110 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     indexMap.current = {}
     // 清空反向索引映射
     reverseIndexMap.current = {}
+    exposureIndexMap.current = {}
 
     // 处理 listData 为空的情况
     if (!listData || !listData.length) {
       return sections
     }
 
+    let exposureIndex = 0
+    // 需与 RN SectionList 和 getItemLayout 的扁平顺序保持一致：每个 section 都是 [header, ...items, footer]
+    const createSection = (headerInfo?: { data: ListItem, index: number }): Section => {
+      const sectionIndex = sections.length
+      const section = {
+        headerData: headerInfo?.data || null,
+        footerData: null,
+        data: [],
+        hasSectionHeader: !!headerInfo,
+        hasSectionFooter: false
+      }
+
+      if (headerInfo) {
+        const { index } = headerInfo
+        indexMap.current[index] = `${sectionIndex}_header`
+        reverseIndexMap.current[`${sectionIndex}_header`] = index
+        exposureIndexMap.current[exposureIndex] = {
+          index,
+          type: 'header'
+        }
+      }
+      exposureIndex++
+
+      return section
+    }
+
+    const closeSection = () => {
+      const section = currentSection
+      if (!section) return
+
+      if (section.hasSectionFooter) {
+        const sectionIndex = sections.length
+        const index = getOriginalIndex(sectionIndex, 'footer')
+        if (index > -1) {
+          exposureIndexMap.current[exposureIndex] = {
+            index,
+            type: 'footer'
+          }
+        }
+      }
+      // RN SectionList 即使没有真实 footer，也会为每个 section 保留 footer slot
+      exposureIndex++
+
+      sections.push(section)
+      currentSection = null
+    }
+
     listData.forEach((item: ListItem, index: number) => {
       if (item.isSectionHeader) {
         // 如果已经存在一个 section，先把它添加到 sections 中
         if (currentSection) {
-          sections.push(currentSection)
+          closeSection()
         }
-        // 创建新的 section
-        currentSection = {
-          headerData: item,
-          footerData: null,
-          data: [],
-          hasSectionHeader: true,
-          hasSectionFooter: false,
-          headerIndex: index
-        }
-        // 为 section header 添加索引映射
-        const sectionIndex = sections.length
-        indexMap.current[index] = `${sectionIndex}_header`
-        // 添加反向索引映射
-        reverseIndexMap.current[`${sectionIndex}_header`] = index
+        currentSection = createSection({ data: item, index })
       } else if (item.isSectionFooter) {
         // 如果没有当前 section，创建一个默认的
         if (!currentSection) {
           // 创建默认section (无header的section)
-          currentSection = {
-            headerData: null,
-            footerData: null,
-            data: [],
-            hasSectionHeader: false,
-            hasSectionFooter: false
-          }
+          currentSection = createSection()
         }
         const sectionIndex = sections.length
         currentSection.footerData = item
         currentSection.hasSectionFooter = true
-        currentSection.footerIndex = index
         indexMap.current[index] = `${sectionIndex}_footer`
         // 添加反向索引映射
         reverseIndexMap.current[`${sectionIndex}_footer`] = index
-        sections.push(currentSection)
-        currentSection = null
+        closeSection()
       } else {
         // 如果没有当前 section，创建一个默认的
         if (!currentSection) {
           // 创建默认section (无header的section)
-          currentSection = {
-            headerData: null,
-            footerData: null,
-            data: [],
-            hasSectionHeader: false,
-            hasSectionFooter: false
-          }
+          currentSection = createSection()
         }
         // 将 item 添加到当前 section 的 data 中
         const itemIndex = currentSection.data.length
-        currentSection.data.push({
-          itemData: item,
-          index
-        })
-        let sectionIndex
+        currentSection.data.push(item)
+        const sectionIndex = sections.length
         // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
-        if (!currentSection.hasSectionHeader && sections.length === 0) {
-          // 在默认section中(第一个且无header)
-          sectionIndex = 0
-          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-        } else {
-          // 在普通section中
-          sectionIndex = sections.length
-          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-        }
+        indexMap.current[index] = `${sectionIndex}_${itemIndex}`
         // 添加反向索引映射
         reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
+        exposureIndexMap.current[exposureIndex] = {
+          index,
+          type: 'item'
+        }
+        exposureIndex++
       }
     })
     // 添加最后一个 section
     if (currentSection) {
-      sections.push(currentSection)
+      closeSection()
     }
     return sections
   }, [listData])
 
   const { getItemLayout } = useMemo(() => {
-    const layouts: Array<{ length: number, offset: number, index: number }> = []
+    const layouts: ItemLayoutInfo[] = []
     let offset = 0
 
     if (useListHeader) {
@@ -481,7 +517,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       offset += headerHeight
 
       // 添加该 section 中所有 items 的位置信息
-      section.data.forEach((item: SectionItem, itemIndex: number) => {
+      section.data.forEach((item: ListItem, itemIndex: number) => {
         const contentHeight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
         layouts.push({
           length: contentHeight,
@@ -501,15 +537,15 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       })
       offset += footerHeight
     })
+    itemLayoutsRef.current = layouts
     return {
-      itemLayouts: layouts,
       getItemLayout: (data: any, index: number) => layouts[index]
     }
   }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight])
 
   useEffect(() => {
     itemExposureState.current = {}
-  }, [convertedListData, enableItemExposure, enableSticky])
+  }, [convertedListData, enableSticky])
 
   const scrollAdditionalProps = extendObject(
     {
@@ -603,7 +639,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     () => {
       const ItemComponent = getGeneric(generichash, genericrecycleItem)
       if (!ItemComponent) return undefined
-      return ({ item }: { item: SectionItem }) => createElement(ItemComponent, { itemData: item.itemData })
+      return ({ item }: { item: ListItem }) => createElement(ItemComponent, { itemData: item })
     },
     [generichash, genericrecycleItem]
   )
@@ -664,7 +700,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     [ListFooterGenericComponent, listFooterData]
   )
 
-  const sectionListProps: RNSectionListProps<SectionItem, SectionExtra> = extendObject(
+  const sectionListProps: RNSectionListProps<ListItem, SectionExtra> = extendObject(
     {
       sections: convertedListData,
       renderItem: renderItem,
