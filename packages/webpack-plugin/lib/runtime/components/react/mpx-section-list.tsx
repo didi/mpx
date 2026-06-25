@@ -32,9 +32,21 @@ interface ItemHeightType {
   getter?: (item: any, index: number) => number;
 }
 
+interface ItemLayoutInfo {
+  length: number;
+  offset: number;
+  index: number;
+}
+
+interface ItemExposureLayout {
+  offset: number;
+  length: number;
+}
+
 interface ItemExposureDetail {
   index: number;
-  itemData: ListItem;
+  itemData: ListItem | null;
+  layout: ItemExposureLayout;
   threshold: number;
 }
 
@@ -60,7 +72,8 @@ interface ItemExposureViewabilityPair {
 
 interface ItemExposureInfo {
   index: number;
-  itemData: ListItem;
+  itemData: ListItem | null;
+  layout: ItemExposureLayout;
 }
 
 type ItemExposureType = 'header' | 'footer' | 'item'
@@ -180,6 +193,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
   const exposureIndexMap = useRef<{ [key: number]: ItemExposureIndexInfo }>({})
+  const itemLayoutsRef = useRef<ItemLayoutInfo[]>([])
   const itemExposureState = useRef<{ [key: string]: boolean }>({})
   const enableStickyRef = useRef(enableSticky)
   const bindItemExposureRef = useRef<typeof binditemexposure>()
@@ -247,7 +261,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
             const exposureInfo = getItemExposureInfo(viewToken)
             if (!exposureInfo) return
 
-            const { index, itemData } = exposureInfo
+            const { index, itemData, layout } = exposureInfo
             const key = `${index}`
 
             if (!viewToken.isViewable) {
@@ -260,6 +274,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
               exposedItems.push({
                 index,
                 itemData,
+                layout,
                 threshold: itemExposureViewabilityConfigValue.itemVisiblePercentThreshold
               })
             }
@@ -291,35 +306,41 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     const item = viewToken.item
     if (!item) return null
 
-    const indexInfo = viewToken.index == null ? null : exposureIndexMap.current[viewToken.index]
+    const viewIndex = viewToken.index
+    if (viewIndex == null) return null
+    const indexInfo = exposureIndexMap.current[viewIndex]
     if (!indexInfo) return null
+    if (indexInfo.type === 'header' && enableStickyRef.current) return null
+    const layoutInfo = itemLayoutsRef.current[viewIndex]
+    const layout = {
+      offset: layoutInfo ? layoutInfo.offset : 0,
+      length: layoutInfo ? layoutInfo.length : 0
+    }
 
     if (indexInfo.type === 'header') {
-      if (enableStickyRef.current) return null
       // RN header/footer slot 的 item 即 section 对象
       const section = item as Section
-      return section.headerData
-        ? {
-            index: indexInfo.index,
-            itemData: section.headerData
-          }
-        : null
+      return {
+        index: indexInfo.index,
+        itemData: section.headerData || null,
+        layout
+      }
     }
 
     if (indexInfo.type === 'footer') {
       // RN header/footer slot 的 item 即 section 对象
       const section = item as Section
-      return section.footerData
-        ? {
-            index: indexInfo.index,
-            itemData: section.footerData
-          }
-        : null
+      return {
+        index: indexInfo.index,
+        itemData: section.footerData || null,
+        layout
+      }
     }
 
     return {
       index: indexInfo.index,
-      itemData: item as ListItem
+      itemData: item as ListItem,
+      layout
     }
   }
 
@@ -481,7 +502,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   }, [listData])
 
   const { getItemLayout } = useMemo(() => {
-    const layouts: Array<{ length: number, offset: number, index: number }> = []
+    const layouts: ItemLayoutInfo[] = []
     let offset = 0
 
     if (useListHeader) {
@@ -521,8 +542,8 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       })
       offset += footerHeight
     })
+    itemLayoutsRef.current = layouts
     return {
-      itemLayouts: layouts,
       getItemLayout: (data: any, index: number) => layouts[index]
     }
   }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight])

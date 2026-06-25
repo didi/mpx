@@ -1467,6 +1467,7 @@ level 有效值：
 
 - 当使用列表项、列表头、自定义分组头或者自定义分组尾，必须配置对应 `item-height`、`section-header-height`、`section-footer-height`、`list-header-height` 高度参数，否则会出现滚动异常。
 - `binditemexposure` 基于 RN 的 `onViewableItemsChanged` 触发，`item-exposure-threshold` 为 item 自身可见百分比阈值，0 表示露出任意像素即可触发，100 表示完全可见时触发。
+- `binditemexposure` 的 `detail.items` 中每一项包含 `index`、`itemData`、`layout`、`threshold`；`index` 为该项在 `list-data` 中的原始下标，`itemData` 为对应原始数据，无法获取原始数据时为 `null`；`layout.offset` 为该项顶部相对 section-list 内容起点的偏移量，`layout.length` 为该项高度；如使用了 `list-header`，`layout.offset` 会包含 `list-header-height` 的偏移；无法获取布局信息时 `layout.offset` 和 `layout.length` 兜底为 `0`。
 - 会统计 `recycle-item`、`section-header`、`section-footer`，不统计 `list-header`、`list-footer`。
 - `section-header` 曝光统计仅支持 `enable-sticky=false` 场景；开启 `enable-sticky` 时暂不支持统计 `section-header` 曝光。
 - 同一个 item 达到阈值后不会在停留期间重复触发；划出列表可视区域后会重置本轮状态，再次划入并达到阈值时可再次触发。
