@@ -18,7 +18,6 @@
   - [渐变与背景多值限制](#渐变与背景多值限制)
   - [filter / backdrop-filter 限制](#filter--backdrop-filter-限制)
   - [选择器适配](#选择器适配)
-  - [伪元素适配（单冒号→双冒号）](#伪元素适配单冒号双冒号)
   - [伪类适配](#伪类适配)
   - [单位适配](#单位适配)
   - [overflow 适配](#overflow-适配)
@@ -524,23 +523,7 @@ watch(isShow, (val) => {
 | `* {}` 通配选择器 | 使用具体类选择器替代 |
 | `[attr] {}` 属性选择器 | 使用类选择器替代 |
 
-### 伪元素适配（单冒号→双冒号）
-
-Skyline 下伪元素只支持 `::before` 和 `::after`，且必须以双冒号 `::` 形式声明。单冒号写法在 Skyline 下不生效。
-
-**全局搜索替换**：在需要适配 Skyline 的文件或文件夹下，搜索 `([^:]):((before)|(after))` 替换为 `$1::$2`。
-
-```css
-/* ❌ Bad — 单冒号，Skyline 不识别 */
-.item:before { content: ''; }
-.item:after { content: ''; }
-
-/* ✅ Good — 双冒号 */
-.item::before { content: ''; }
-.item::after { content: ''; }
-```
-
-其他伪元素在 Skyline 下不支持，需使用真实节点替代。
+Skyline 下伪元素只支持 `::before` 和 `::after`， 其他伪元素在 Skyline 下不支持，需使用真实节点替代。
 
 ### 伪类适配
 

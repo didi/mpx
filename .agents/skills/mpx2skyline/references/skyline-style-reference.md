@@ -69,7 +69,7 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 | 伪类 `:first-child` / `:last-child` | | ✅ | | |
 | 伪类 `:not` / `:only-child` / `:empty` | | ✅ | 8.0.49 | |
 | 伪类 `:nth-child` | | ✅ | 8.0.50 | 对应 Skyline 1.3.3 |
-| 伪元素 | `::before {}` / `::after {}` | ✅ | | 只支持 ::before 和 ::after，必须双冒号声明 |
+| 伪元素 | `::before {}` / `::after {}` | ✅ | | 只支持 ::before 和 ::after |
 
 ### 值类型支持
 
@@ -455,34 +455,33 @@ page {
 
 ## 与 WebView 模式的关键样式差异及兼容方案
 
-| 属性/行为 | WebView | Skyline | 兼容方案 |
-| --- | --- | --- | --- |
-| `display` 默认值 | `block` | **`flex`** | 配置 `defaultDisplayBlock: true` 或改造为显式 flex 写法 |
-| `box-sizing` 默认值 | `content-box` | **`border-box`** | 配置 `defaultContentBox: true` 或手动指定 |
-| `overflow: scroll` | 支持 | **不支持** | 使用 `scroll-view` 组件 |
-| `overflow-x` / `overflow-y` | 支持单独设置 | **不支持** | 整体 `overflow` 或 `scroll-view` |
-| `position: sticky` | 支持 | **不支持** | 使用 `sticky-header` / `sticky-section` |
-| `z-index` | 层叠上下文机制 | **仅兄弟节点生效**，无层叠上下文，不支持在 scroll-view 下的直接子节点上应用 | 重构为兄弟节点结构 |
-| `*` 通配选择器 | 支持 | **不支持** | 使用具体类选择器 |
-| `[attr]` 属性选择器 | 支持 | **不支持** | 使用类选择器 |
-| `:before` / `:after` 单冒号 | 支持 | **不支持**，必须双冒号 | 替换为 `::before` / `::after` |
-| `:nth-child` | 支持 | 需 **8.0.50+** | 低版本用动态类 + index 判断 |
-| 伪元素 `animation` | 支持 | **不支持** | 真实节点 + CSS animation 或 worklet |
-| `em` 单位 | 支持 | **不支持** | 使用 `rpx` / `px` / `rem` |
-| `currentColor` | 支持 | **不支持** | 显式指定颜色值 |
-| `text-decoration` 作用范围 | 所有元素 | **仅 `<text>` 和 `<input>`** | view 内文字用 `<text>` 包裹 |
-| `text-overflow` 作用范围 | 所有元素 | **仅 `<text>`** | view 内文字用 `<text>` 包裹 |
-| `border-color`/`border-style` 四边 | 四边可不同 | **`border-radius` 非 0 时需一致** | 保持四边一致或拆分节点 |
-| `font-weight` 数值 | 完全支持 | **部分机型 500/600 不生效** | 使用 `bold` / `700` |
-| `box-shadow` 多层 | 支持 | **不支持多个叠加** | 拆分节点或合并 |
-| `animation-fill-mode` | `none`/`forwards`/`backwards`/`both` | **`none`/`backwards` 表现均为 `forwards`** | 注意动画行为差异 |
-| inline / inline-block 布局 | 支持 | **开发中**，使用受限 | 使用 `<text>` / `<span>` 或 Flex 布局 |
-| BFC | 支持 | **不支持** | 不依赖 BFC，使用 Flex 布局 |
-| 页面滚动 | 支持 | **不支持** | 使用 `scroll-view type="list"` |
-| `margin` 合并 | 相邻块级元素上下合并 | **不合并** | 使用 `flex gap` 替代 `margin` |
-| `wx.createAnimation` | 支持 | **不支持** | 使用 CSS `transition` 或 worklet 动画 |
-| `apng` 动画 | 支持 | **仅显示首帧** | 使用 `awebp` / `gif` 替代 |
-| `max-width` 在 `<image>` 上 | 正常 | **行为异常** | 使用明确 `width` 值替代 |
-| `<image>` 的 `border`/`padding` | 正常 | **导致图片尺寸异常** | 外层 `<view>` 包裹设置 |
-| `backdrop-filter` 在 `<map>` 上 | 正常 | **iOS 不生效** | 使用其他方案实现模糊 |
+| 属性/行为                             | WebView | Skyline | 兼容方案 |
+|-----------------------------------| --- | --- | --- |
+| `display` 默认值                     | `block` | **`flex`** | 配置 `defaultDisplayBlock: true` 或改造为显式 flex 写法 |
+| `box-sizing` 默认值                  | `content-box` | **`border-box`** | 配置 `defaultContentBox: true` 或手动指定 |
+| `overflow: scroll`                | 支持 | **不支持** | 使用 `scroll-view` 组件 |
+| `overflow-x` / `overflow-y`       | 支持单独设置 | **不支持** | 整体 `overflow` 或 `scroll-view` |
+| `position: sticky`                | 支持 | **不支持** | 使用 `sticky-header` / `sticky-section` |
+| `z-index`                         | 层叠上下文机制 | **仅兄弟节点生效**，无层叠上下文，不支持在 scroll-view 下的直接子节点上应用 | 重构为兄弟节点结构 |
+| `*` 通配选择器                         | 支持 | **不支持** | 使用具体类选择器 |
+| `[attr]` 属性选择器                    | 支持 | **不支持** | 使用类选择器 |
+| `:nth-child`                      | 支持 | 需 **8.0.50+** | 低版本用动态类 + index 判断 |
+| 伪元素 `animation`                   | 支持 | **不支持** | 真实节点 + CSS animation 或 worklet |
+| `em` 单位                           | 支持 | **不支持** | 使用 `rpx` / `px` / `rem` |
+| `currentColor`                    | 支持 | **不支持** | 显式指定颜色值 |
+| `text-decoration` 作用范围            | 所有元素 | **仅 `<text>` 和 `<input>`** | view 内文字用 `<text>` 包裹 |
+| `text-overflow` 作用范围              | 所有元素 | **仅 `<text>`** | view 内文字用 `<text>` 包裹 |
+| `border-color`/`border-style` 四边  | 四边可不同 | **`border-radius` 非 0 时需一致** | 保持四边一致或拆分节点 |
+| `font-weight` 数值                  | 完全支持 | **部分机型 500/600 不生效** | 使用 `bold` / `700` |
+| `box-shadow` 多层                   | 支持 | **不支持多个叠加** | 拆分节点或合并 |
+| `animation-fill-mode`             | `none`/`forwards`/`backwards`/`both` | **`none`/`backwards` 表现均为 `forwards`** | 注意动画行为差异 |
+| inline / inline-block 布局          | 支持 | **开发中**，使用受限 | 使用 `<text>` / `<span>` 或 Flex 布局 |
+| BFC                               | 支持 | **不支持** | 不依赖 BFC，使用 Flex 布局 |
+| 页面滚动                              | 支持 | **不支持** | 使用 `scroll-view type="list"` |
+| `margin` 合并                       | 相邻块级元素上下合并 | **不合并** | 使用 `flex gap` 替代 `margin` |
+| `wx.createAnimation`              | 支持 | **不支持** | 使用 CSS `transition` 或 worklet 动画 |
+| `apng` 动画                         | 支持 | **仅显示首帧** | 使用 `awebp` / `gif` 替代 |
+| `max-width` 在 `<image>` 上         | 正常 | **行为异常** | 使用明确 `width` 值替代 |
+| `<image>` 的 `border`/`padding`    | 正常 | **导致图片尺寸异常** | 外层 `<view>` 包裹设置 |
+| `backdrop-filter` 在 `<map>` 上     | 正常 | **iOS 不生效** | 使用其他方案实现模糊 |
 | `flex + column` + `overflow: hidden` | 正常 | **可能失效** | 显式约束子节点 `flex-shrink: 0` |

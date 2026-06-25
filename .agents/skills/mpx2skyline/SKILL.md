@@ -56,7 +56,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 ### 样式（style）约束
 
-1. **选择器**：不支持通配选择器 `*` 和属性选择器 `[attr]`；伪元素仅 `::before` / `::after` 且**必须双冒号**；`:nth-child` 需 8.0.50+。详见 [样式能力参考 · 选择器支持](./references/skyline-style-reference.md#选择器支持)。
+1. **选择器**：不支持通配选择器 `*` 和属性选择器 `[attr]`；伪元素仅 `::before` / `::after`；`:nth-child` 需 8.0.50+。详见 [样式能力参考 · 选择器支持](./references/skyline-style-reference.md#选择器支持)。
 2. **单位**：避免 `em` / `currentColor`，使用 `rpx` / `px` / `rem`。
 3. **overflow**：`overflow: scroll` 不支持 → 使用 `scroll-view` 组件；不支持单独设置 `overflow-x` / `overflow-y`。
 4. **text 限定属性**：`text-decoration` / `text-overflow` 仅 `text` 节点生效 → `view` 内文字需用 `<text>` 包裹。
@@ -136,7 +136,6 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 - 读取 [样式能力参考](./references/skyline-style-reference.md) 检查 `<style>` 中所有样式属性的 Skyline 支持情况。
 - 读取 [适配最佳实践 · 样式适配](./references/skyline-migration-practice.md#样式适配) 改造为 Skyline 兼容实现。
-- 伪元素单冒号 → 双冒号（全局搜索 `([^:]):((before)|(after))` 替换为 `$1::$2`）。
 - 不支持选择器替代（`*` → 类选择器、`[attr]` → 类选择器）
 - 不支持属性替代（`overflow: scroll` → `scroll-view` 等）读取 [与 webview 的关键样式差异及替代方案](./references/skyline-style-reference.md#与-webview-模式的关键样式差异及兼容方案)。
 - 增加配置 defaultContentBox defaultDisplayBlock 默认样式对齐 webview。
@@ -153,7 +152,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 #### 5. 检查与确认
 
-按页面各部分逐项核对：
+按 SFC 各区块逐项核对：
 
 **跨渲染模式兼容**
 - [ ] 引入的 Skyline 专属写法均已通过运行时判断隔离，且引入 Skyline 专属写法时 WebView 原有写法保留。
@@ -172,19 +171,19 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - [ ] `position: sticky` 已替换为 `sticky-header` / `sticky-section`。
 
 **样式**
-- [ ] 伪元素已改为双冒号 `::` 声明。
 - [ ] 不支持选择器（`*` / `[attr]` 等）已替代。
 - [ ] `overflow: scroll` 已替换为 `scroll-view`；不单独设置 `overflow-x` / `overflow-y`。
-- [ ] 文本溢出的省略样式 `text-overflow` `-webkit-line-clamp` 已新增属性 `overflow="ellipsis"` `max-lines`。
+- [ ] 有文本溢出的省略样式`text-overflow` 的组件或节点逐个确认对应节点为 `<text>` 且带 `max-lines` + `overflow="ellipsis"` 属性。
 - [ ] 字体 PostScript name 已兼容（`font-weight` 使用 `bold` / `700`）。
 - [ ] `@font-face` 已声明 ttf 格式。
 - [ ] 伪元素 `animation` 不支持已处理。
-- [ ] `border-radius` 非 0 时 `border-color` / `border-style` 四边一致性已检查。
+- [ ] 所有非 0 的 `border-radius` 选择器（即排除 `border-radius: 0`），逐个核对所属选择器的 `border-color` / `border-style` 四边一致。
 - [ ] `box-shadow` 不使用多个叠加。
+- [ ] `display: flex; flex-direction: row` 逐个确认带 `align-items: center`。
 
 **组件**
 - [ ] 不支持组件已有替代方案或单独配置 `renderer: "webview"` 页面。
-- [ ] `scroll-view` 已指定 `type` 属性（**嵌套场景每层都需声明**）。
+- [ ] 逐个确认所有 `<scroll-view>` 标签已指定 `type` 属性（嵌套场景每层都需声明，外层 `type="nested"`、内层 `type="list"` / `"custom"`）。
 - [ ] 横向 scroll-view 已满足 `enable-flex` + 自身 `display:flex;flex-direction:row` + 子节点 `flex-shrink:0`。
 - [ ] `sticky-header` 显式声明背景色（避免吸顶透字穿透），且是 `sticky-section` 的第一个子节点。
 - [ ] `<navigator>` 内仅嵌套 `<text>` 或纯文本；
