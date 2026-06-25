@@ -38,6 +38,7 @@
 
 - **文档**：更新 [docs-vitepress/](docs-vitepress/) 下对应位置的 `.md`，并按 [docs-vitepress/AGENTS.md](docs-vitepress/AGENTS.md) 的归档原则与索引要求同步侧边栏、导航及目录索引。
 - **Skill**：当变更涉及**跨端输出 RN 的能力**（模板/脚本/样式/JSON 配置维度、基础组件、环境 API 在 RN 平台的支持情况、Mpx2RN 编译行为等）时，必须同步更新 [.agents/skills/mpx2rn/](.agents/skills/mpx2rn/) 下的相关知识库（`references/` 中的 RN 模板/脚本/样式/API 参考与最佳实践等）。
+- 对当前仓库本身进行开发时，不需要预先读取 `mpx2rn` Skill；只有当变更确认需要同步更新 `.agents/skills/mpx2rn/` 相关内容时，才读取并使用该 Skill。
 - 仅修改内部实现、重构、测试、构建脚本而不改变对外使用方式时，无需更新文档或 Skill。
 
 ## 路径指引

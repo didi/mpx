@@ -50,13 +50,18 @@ module.exports = function getSpec ({ warn, error }) {
     color: 'color',
     enum: 'enum'
   }
+  // 校验失败提示中的示例值（按类型）。enum 依赖具体 prop 的白名单，在 tipsType 内动态拼。
+  const valueTypeExample = {
+    [ValueType.length]: '2rpx,10%,30rpx',
+    [ValueType.color]: 'rgb,rgba,hsl,hsla,hwb,named color,#000000'
+  }
   // React 属性支持的枚举值
   const SUPPORTED_PROP_VAL_ARR = {
     'box-sizing': ['border-box', 'content-box'],
     'backface-visibility': ['visible', 'hidden'],
     overflow: ['visible', 'hidden', 'scroll'],
-    // RN 实测仅支持 solid/dotted/dashed；CSS 中的 none 由 formatBorder 入口短路统一处理，不进白名单
-    'border-style': ['solid', 'dotted', 'dashed'],
+    // RN 实测仅支持 solid/dotted/dashed；none 作为 CSS 合法值保留到运行时统一转换为 borderWidth: 0
+    'border-style': ['solid', 'dotted', 'dashed', 'none'],
     'object-fit': ['cover', 'contain', 'fill', 'scale-down'],
     direction: ['inherit', 'ltr', 'rtl'],
     display: ['flex', 'none'],
@@ -89,7 +94,9 @@ module.exports = function getSpec ({ warn, error }) {
     'margin-bottom': ['auto', ValueType.length],
     'margin-right': ['auto', ValueType.length],
     'margin-horizontal': ['auto', ValueType.length],
-    'margin-vertical': ['auto', ValueType.length]
+    'margin-vertical': ['auto', ValueType.length],
+    // outline-style 走 enum 校验；与 border-style 对齐，不支持 double / groove / ridge
+    'outline-style': ['solid', 'dotted', 'dashed', 'none']
   }
   // 获取值类型
   const getValueType = (prop) => {
@@ -159,12 +166,10 @@ module.exports = function getSpec ({ warn, error }) {
     if (calcExp.test(valueForVerify) || envExp.test(valueForVerify)) return true
     const type = getValueType(prop)
     const tipsType = (type) => {
-      const info = {
-        [ValueType.length]: '2rpx,10%,30rpx',
-        [ValueType.color]: 'rgb,rgba,hsl,hsla,hwb,named color,#000000',
-        [ValueType.enum]: `${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}`
-      }
-      tips(`Value of ${prop} in ${selector} should be ${type}${info[type] ? `, eg ${info[type]}` : ''}, received [${rawValue}], please check again!`)
+      const example = type === ValueType.enum
+        ? SUPPORTED_PROP_VAL_ARR[prop]?.join(',')
+        : valueTypeExample[type]
+      tips(`Value of ${prop} in ${selector} should be ${type}${example ? `, eg ${example}` : ''}, received [${rawValue}], please check again!`)
     }
     switch (type) {
       case ValueType.length: {
@@ -189,6 +194,17 @@ module.exports = function getSpec ({ warn, error }) {
         return true
       }
       case ValueType.enum: {
+        // font-variant 长属性允许空格分隔的多值（如 `small-caps tabular-nums`），
+        // 走整串比对会误杀多值场景；拆 token 后逐个命中枚举白名单即放行。
+        // 输出仍保留 raw value，运行时由 RN `processFontVariant` 自行 `split(' ')` 归一为数组。
+        if (prop === 'font-variant') {
+          const tokens = parseValues(valueForVerify)
+          if (!tokens.length || !tokens.every(t => SUPPORTED_PROP_VAL_ARR[prop].includes(t))) {
+            tipsType(type)
+            return false
+          }
+          return true
+        }
         const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(valueForVerify)
         const isType = Object.keys(valueExp).some(item => valueExp[item].test(valueForVerify) && SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]))
         if (!isIn && !isType) {
@@ -225,7 +241,13 @@ module.exports = function getSpec ({ warn, error }) {
     'border-width': ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth'],
     'border-color': ['borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'],
     margin: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
-    padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']
+    padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'],
+    // gap：CSS 2 槽位（row-gap / column-gap），单值复制行列
+    gap: ['rowGap', 'columnGap'],
+    // inset：4 槽位等价 margin 四值语法；RN inset 长属性不稳定，单值也强制展开
+    inset: ['top', 'right', 'bottom', 'left'],
+    // outline：RN 0.74 不支持、0.76+ 生效；走无序展开，与 border 共享缺省补齐
+    outline: ['outlineWidth', 'outlineStyle', 'outlineColor']
   }
 
   // 这些简写按 CSS 规范允许 token 顺序自由排列，按值类型识别归位
@@ -237,21 +259,26 @@ module.exports = function getSpec ({ warn, error }) {
     'border-left': true,
     'border-right': true,
     'border-top': true,
-    'border-bottom': true
+    'border-bottom': true,
+    // outline: <outline-width> || <outline-style> || <outline-color>，顺序不敏感
+    outline: true
   }
 
   // CSS border-width: medium 的实测值（各主流浏览器一致取 3px）
   // CSS 规范允许 medium 实现自定，这里取业界事实标准；调整此值需与运行时同名常量一起改
   const BORDER_MEDIUM_WIDTH = 3
   // 简写槽位缺省值表（数据驱动；新增简写或调整缺省值只改这里）
-  // 值即槽位缺省时追加的补齐值；不含短路语义（border 整体短路在 formatBorder 中处理）
+  // 值即槽位缺省时追加的补齐值；none 清除语义统一保留到运行时处理
   // 注意：borderColor / textShadowRadius 因 RN 有内置缺省值，无需补齐，不进此表
   const ShorthandDefaultMap = {
-    border: { borderWidth: BORDER_MEDIUM_WIDTH },
-    'border-top': { borderTopWidth: BORDER_MEDIUM_WIDTH },
-    'border-right': { borderRightWidth: BORDER_MEDIUM_WIDTH },
-    'border-bottom': { borderBottomWidth: BORDER_MEDIUM_WIDTH },
-    'border-left': { borderLeftWidth: BORDER_MEDIUM_WIDTH },
+    border: { borderWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+    'border-top': { borderTopWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+    'border-right': { borderRightWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+    'border-bottom': { borderBottomWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+    'border-left': { borderLeftWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+    // outline 与 border 缺省值完全对齐：缺 width → BORDER_MEDIUM_WIDTH；
+    // 缺 style → outlineStyle: none，运行时统一转换为 outlineWidth: 0
+    outline: { outlineWidth: BORDER_MEDIUM_WIDTH, outlineStyle: 'none' },
     'text-shadow': {
       // textShadowOffset.height 的「width 存在才补 0」由 formatUnorderedAbbreviation 内既有 fallback 处理
       // 值不带 quote，由后续 style-helper 的 formatValue 统一 JSON.stringify
@@ -413,18 +440,31 @@ module.exports = function getSpec ({ warn, error }) {
     return cssMap
   }
 
+  // 单值直接返回（RN 原生支持单值 DimensionValue）的属性：margin / padding / border-* 四值简写
+  // 不含 gap / inset：
+  // - inset：RN inset 长属性非稳定，单值透传会留下不可靠的 inset key，必须展开到 top/right/bottom/left
+  // - gap：RN gap / rowGap / columnGap 只接受 number；单值串虽然后续 style-helper formatValue 也会处理，
+  //   但展开到 rowGap / columnGap 与运行时 runtimeForceExpandCompositeMap 行为保持对齐，更可读
+  const compositeSingleValuePassthrough = (prop) => prop !== 'gap' && prop !== 'inset'
+
   const formatCompositeVal = ({ prop, value, selector }, { mode }) => {
-    const values = parseValues(value).splice(0, 4)
-    switch (values.length) {
-      case 1:
-        verifyValues({ prop, value, selector }, false)
-        return { prop, value }
-      case 2:
-        values.push(...values)
-        break
-      case 3:
-        values.push(values[1])
-        break
+    // 槽位数由 AbbreviationMap[prop].length 决定（gap=2，inset/margin/padding/border-*=4）
+    const count = AbbreviationMap[prop].length
+    const values = parseValues(value).splice(0, count)
+    // 单值短路：margin / padding 等 RN 原生支持单值，原样透传；gap / inset 单值也需展开，不走此捷径
+    if (values.length === 1 && compositeSingleValuePassthrough(prop)) {
+      verifyValues({ prop, value, selector }, false)
+      return { prop, value }
+    }
+    if (count === 2) {
+      // gap：单值复制到行列两槽；双值原样
+      if (values.length === 1) values.push(values[0])
+    } else {
+      switch (values.length) {
+        case 1: values.push(values[0], values[0], values[0]); break // 仅 inset 命中（margin/padding 已被上面短路）
+        case 2: values.push(...values); break
+        case 3: values.push(values[1]); break
+      }
     }
     return formatAbbreviation({ prop, value: values, selector }, { mode })
   }
@@ -484,7 +524,8 @@ module.exports = function getSpec ({ warn, error }) {
           // 支持 number 值 /  枚举, center与50%等价
           values.push(item === 'center' ? '50%' : item)
         } else {
-          error(`Value of [${bgPropMap.position}] in ${selector} does not support value [${item}]`)
+          // 仅丢这一 token，其它 push 的位置仍输出，按规范使用 warn
+          warn(`Value of [${bgPropMap.position}] in ${selector} does not support value [${item}], please check again!`)
         }
       })
       // CSS 允许 y x 顺序的关键字（如 top left），但输出需要 [x, y] 顺序
@@ -530,9 +571,13 @@ module.exports = function getSpec ({ warn, error }) {
           if (isSize) {
             if (verifyValues({ prop: bgPropMap.size, value: item, selector }, silentVerify)) {
               sizeValues.push(item)
+            } else {
+              warn(`Value of [${bgPropMap.all}:${value}] in ${selector} does not support background-size token [${item}], please check again!`)
             }
           } else if (verifyValues({ prop: bgPropMap.position, value: item, selector }, silentVerify)) {
             positionValues.push(item)
+          } else {
+            warn(`Value of [${bgPropMap.all}:${value}] in ${selector} does not support background-position token [${item}], please check again!`)
           }
         }
         const handlePositionSize = (item) => {
@@ -566,8 +611,10 @@ module.exports = function getSpec ({ warn, error }) {
             bgMap.push({ prop: bgPropMap.color, value: item })
           } else if (verifyValues({ prop: bgPropMap.repeat, value: item, selector }, silentVerify)) {
             bgMap.push({ prop: bgPropMap.repeat, value: item })
-          } else {
-            handlePositionSize(item)
+          } else if (!handlePositionSize(item)) {
+            // 既不是 url / linear-gradient / color / repeat / position-size，也不是合法 position 起头的 token
+            // 典型场景：background-attachment / background-origin / background-clip 及拼写错误，RN 均不支持
+            warn(`Value of [${bgPropMap.all}:${value}] in ${selector} does not support token [${item}], please check again!`)
           }
         })
         if (positionValues.length) {
@@ -630,27 +677,32 @@ module.exports = function getSpec ({ warn, error }) {
                 vals.push(vals[0])
               }
               const xyz = ['X', 'Y', 'Z']
-              transform.push(...vals.map((v, index) => {
+              vals.forEach((v, index) => {
                 if (key !== 'rotate' && index > 1) {
-                  unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
+                  // 局部丢弃：仅这一维 (Z) 对应的子项被推出去也是错的，但 X/Y 仍正常输出，按规范使用 warn
+                  unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode }, false)
+                  return
                 }
-                return { [`${key}${xyz[index] || ''}`]: v.trim() }
-              }))
+                // parseValues 内部已 trim，这里不再重复
+                transform.push({ [`${key}${xyz[index] || ''}`]: v })
+              })
               break
             }
           case 'rotate3d': {
             const parts = parseValues(val, ',')
             if (parts.length === 4) {
-              const x = +parts[0].trim()
-              const y = +parts[1].trim()
-              const z = +parts[2].trim()
-              const angle = parts[3].trim()
+              // parseValues 内部已 trim
+              const x = +parts[0]
+              const y = +parts[1]
+              const z = +parts[2]
+              const angle = parts[3]
               if (x && !y && !z) transform.push({ rotateX: angle })
               else if (!x && y && !z) transform.push({ rotateY: angle })
               else if (!x && !y && z) transform.push({ rotateZ: angle })
-              else unsupportedPropError({ prop, value, selector }, { mode })
+              // 仅丢这一 transform 项，其它项仍输出，按规范使用 warn
+              else unsupportedPropError({ prop, value, selector }, { mode }, false)
             } else {
-              error(`Value of [transform] in ${selector} does not support rotate3d with ${parts.length} values, only 4 values are supported`)
+              warn(`Value of [transform] in ${selector} does not support rotate3d with ${parts.length} values, only 4 values are supported, please check again!`)
             }
             break
           }
@@ -661,7 +713,8 @@ module.exports = function getSpec ({ warn, error }) {
                 const [a, b, c, d, tx, ty] = matrixValues
                 transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
               } else {
-                error(`Value of [transform] in ${selector} does not support matrix with ${matrixValues.length} values, only 6 values are supported in ${mode} environment!`)
+                // 仅丢这一 transform 项，其它项仍输出，按规范使用 warn
+                warn(`Value of [transform] in ${selector} does not support matrix with ${matrixValues.length} values, only 6 values are supported in ${mode} environment, please check again!`)
               }
               break
             }
@@ -671,7 +724,8 @@ module.exports = function getSpec ({ warn, error }) {
               if (matrixValues.length === 16) {
                 transform.push({ matrix: matrixValues })
               } else {
-                error(`Value of [transform] in ${selector} does not support matrix3d with ${matrixValues.length} values, only 16 values are supported in ${mode} environment!`)
+                // 仅丢这一 transform 项，其它项仍输出，按规范使用 warn
+                warn(`Value of [transform] in ${selector} does not support matrix3d with ${matrixValues.length} values, only 16 values are supported in ${mode} environment, please check again!`)
               }
               break
             }
@@ -679,11 +733,13 @@ module.exports = function getSpec ({ warn, error }) {
           case 'translateZ':
           case 'scaleZ':
           default:
-            unsupportedPropError({ prop, value, selector }, { mode })
+            // 仅丢这一 transform 项，其它项仍输出，按规范使用 warn
+            unsupportedPropError({ prop, value, selector }, { mode }, false)
             break
         }
       } else {
-        error(`Property [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
+        // 仅丢这一 transform 项，其它项仍输出，按规范使用 warn
+        warn(`Property [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
       }
     })
     return {
@@ -700,7 +756,8 @@ module.exports = function getSpec ({ warn, error }) {
     if ((isNumber(value) && value >= 0) || cssVariableExp.test(value)) {
       return { prop, value }
     } else {
-      error(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check again!`)
+      // 仅这一槽位被丢，调用侧 cssMap 仍会输出其它槽位，按规范使用 warn
+      warn(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check again!`)
       return false
     }
   }
@@ -769,7 +826,8 @@ module.exports = function getSpec ({ warn, error }) {
     } else if (values.length > 1) {
       warn(`Value of [${prop}] only supports one in ${selector}, received [${value}], and the first one is used by default.`)
     }
-    return { prop, value: values[0].trim() }
+    // parseValues 内部已 trim，这里无需再 trim
+    return { prop, value: values[0] }
   }
 
   // const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
@@ -787,26 +845,89 @@ module.exports = function getSpec ({ warn, error }) {
   //   return cssMap
   // }
 
+  // font 简写专用 formatter。RN 等效子集语法：
+  //   font: [ <font-style> ] [ <font-variant-css2> ] [ <font-weight> ] <font-size> [ / <line-height> ] <font-family>
+  // - 必填项：font-size 与 font-family；缺其一整条声明丢弃（error）
+  // - 非必填 token（font-stretch / 数字型 font-variant-numeric / system 关键字等）：warn 提示并忽略，保留其余槽位
+  // - font-variant 仅支持 small-caps（CSS font 简写规范 <font-variant-css2>），与 RN processFontVariant 同口径（字符串透传，内部 split 为数组）
+  const formatFont = ({ prop, value, selector }, { mode }) => {
+    value = value.trim()
+    // 单 var() 兜底：编译期无法判断内部 token，原样返回交给运行时解析
+    if (cssVariableExp.test(value) && parseValues(value).length === 1) {
+      return { prop, value }
+    }
+    const tokens = parseValues(value)
+    const cssMap = []
+    let sizeIdx = -1
+    let lineHeight
+    // 1. 定位 font-size（第一个 length 类型 token，可能带 /<line-height>）
+    //   注意：unit-less 数字也命中 length 正则，需要先排除 font-weight 数字（100..900 / bold / normal），
+    //   否则 `font: small-caps 500 28rpx Arial` 会把 500 误判为 fontSize。
+    for (let i = 0; i < tokens.length; i++) {
+      let t = tokens[i]
+      if (t.endsWith('/') && tokens[i + 1]) {
+        t += tokens[i + 1]
+        tokens.splice(i + 1, 1)
+      } else if (tokens[i + 1] === '/' && tokens[i + 2]) {
+        t += `/${tokens[i + 2]}`
+        tokens.splice(i + 1, 2)
+      } else if (tokens[i + 1]?.startsWith('/') && tokens[i + 1].length > 1) {
+        t += tokens[i + 1]
+        tokens.splice(i + 1, 1)
+      }
+      const [sizePart, lhPart] = parseValues(t, '/')
+      if (verifyValues({ prop: 'font-weight', value: sizePart, selector }, silentVerify)) continue
+      if (verifyValues({ prop: 'font-size', value: sizePart, selector }, silentVerify)) {
+        sizeIdx = i
+        cssMap.push({ prop: 'fontSize', value: sizePart })
+        if (lhPart) lineHeight = lhPart
+        break
+      }
+    }
+    if (sizeIdx === -1) {
+      // 缺必填 font-size → 整条声明丢弃
+      error(`Value of [${prop}:${value}] in ${selector} is missing required <font-size>, please check again!`)
+      return false
+    }
+    // 2. 前导段（font-size 之前）：识别 font-style / font-variant(small-caps) / font-weight，顺序不敏感
+    for (let i = 0; i < sizeIdx; i++) {
+      const t = tokens[i]
+      if (t === 'normal') continue // 默认值跳过
+      if (verifyValues({ prop: 'font-style', value: t, selector }, silentVerify)) {
+        cssMap.push({ prop: 'fontStyle', value: t })
+      } else if (t === 'small-caps') {
+        // CSS font 简写的 variant 槽位仅 <font-variant-css2>（normal | small-caps）；
+        // 字符串透传，RN processFontVariant 会 split 归一为数组，与 font-variant 长属性同口径
+        cssMap.push({ prop: 'fontVariant', value: t })
+      } else if (verifyValues({ prop: 'font-weight', value: t, selector }, silentVerify)) {
+        cssMap.push({ prop: 'fontWeight', value: t })
+      } else {
+        // font-stretch / 数字型 font-variant-numeric / system 关键字等 → 非必填槽位，warn 并忽略该 token、保留其余
+        warn(`Value of [${prop}:${value}] in ${selector}: token [${t}] is not supported (only font-style / small-caps / font-weight are valid before <font-size>), ignored.`)
+      }
+    }
+    // 3. line-height（数值复用 formatLineHeight 口径换算为百分比）
+    if (lineHeight !== undefined) {
+      const lh = formatLineHeight({ prop: 'line-height', value: lineHeight, selector })
+      if (lh) cssMap.push(lh)
+    }
+    // 4. font-family（font-size 之后剩余部分）
+    const familyStr = tokens.slice(sizeIdx + 1).join(' ').trim()
+    if (!familyStr) {
+      // 缺必填 font-family → 整条声明丢弃
+      error(`Value of [${prop}:${value}] in ${selector} is missing required <font-family>, please check again!`)
+      return false
+    }
+    const family = formatFontFamily({ prop: 'font-family', value: familyStr, selector })
+    if (family) cssMap.push({ prop: 'fontFamily', value: family.value })
+    return cssMap
+  }
+
+  // border / outline 简写只负责按值类型展开和补齐缺省值；
+  // none 清除语义不在编译期折叠，统一保留到运行时最终处理。
   const formatBorder = ({ prop, value, selector }, { mode }) => {
     value = value.trim()
-    const widthProp = AbbreviationMap[prop][0]
-    // 入口短路：整体 none / 0（含 0 / 0.0 / -0），或混合写法含 none token
-    // CSS border-style: none 等价无边框 → 整体短路为 border*Width: 0
-    // none 在此前置截掉而不进 SUPPORTED_PROP_VAL_ARR['border-style'] 白名单：
-    // 白名单是 RN 支持值的标记，RN 实测 borderStyle: 'none' 长属性无效，不应混入
-    if (value === 'none' || +value === 0 || parseValues(value).includes('none')) {
-      return { prop: widthProp, value: 0 }
-    }
-    const cssMap = formatUnorderedAbbreviation({ prop, value, selector }, { mode })
-    // 单 token var() 兜底：formatUnorderedAbbreviation 直接返回 { prop, value }，原样透传不补不短路
-    if (!Array.isArray(cssMap)) return cssMap
-    // 展开后短路：borderStyle 缺省 → 等价 border-style: none → 整体短路
-    // 覆盖 border: 2px / 0px / red 等无 style token 的写法
-    // 注意 cssMap 此时已被 applyShorthandDefaults 补过 borderWidth，短路时整段丢弃、补齐结果不泄漏
-    if (!cssMap.some(item => item.prop === 'borderStyle')) {
-      return { prop: widthProp, value: 0 }
-    }
-    return cssMap
+    return formatUnorderedAbbreviation({ prop, value, selector }, { mode })
   }
 
   return {
@@ -818,8 +939,8 @@ module.exports = function getSpec ({ warn, error }) {
         android: formatBackground,
         harmony: formatBackground
       },
-      { // margin padding 内外边距的处理
-        test: /^(margin|padding|border-radius|border-width|border-color)$/,
+      { // margin padding 内外边距 / gap / inset 的处理（统一走复合值展开）
+        test: /^(margin|padding|border-radius|border-width|border-color|gap|inset)$/,
         ios: formatCompositeVal,
         android: formatCompositeVal,
         harmony: formatCompositeVal
@@ -848,14 +969,20 @@ module.exports = function getSpec ({ warn, error }) {
         android: formatFontFamily,
         harmony: formatFontFamily
       },
+      { // font 简写专用处理：必须置于通用 AbbreviationMap 匹配规则之前
+        test: 'font',
+        ios: formatFont,
+        android: formatFont,
+        harmony: formatFont
+      },
       // {
       //   test: 'box-shadow',
       //   ios: formatBoxShadow,
       //   android: formatBoxShadow,
       //   harmony: formatBoxShadow
       // },
-      {
-        test: /^(border|border-left|border-right|border-top|border-bottom)$/,
+      { // border / outline 简写共享 formatBorder（按值类型展开 + 缺省补齐；none 清除语义留到运行时处理）
+        test: /^(border|border-left|border-right|border-top|border-bottom|outline)$/,
         ios: formatBorder,
         android: formatBorder,
         harmony: formatBorder

@@ -28,9 +28,15 @@ jest.mock('react-native-safe-area-context', () => ({
 // eslint-disable-next-line import/first
 import { transformShorthand } from '../../../lib/runtime/components/react/utils'
 
-const run = (style: Record<string, any>, keys: string[]) => {
+// percentConfig 是必传参数（生产链路由 useTransformStyle 统一注入），
+// 不涉及百分比的用例用空对象兜底即可
+const run = (
+  style: Record<string, any>,
+  keys: string[],
+  percentConfig: Parameters<typeof transformShorthand>[2] = {}
+) => {
   const obj = { ...style }
-  transformShorthand(obj, keys)
+  transformShorthand(obj, keys, percentConfig)
   return obj
 }
 
@@ -67,23 +73,34 @@ describe('runtime transformShorthand', () => {
       })
     })
 
-    test('partial border shorthand: fill width default when style given, short-circuit when style missing', () => {
+    test('partial border shorthand: fill defaults when style is missing', () => {
       // style 存在 → 补 borderWidth: 3（borderColor 由 RN 内置缺省承接，不补）
       expect(run({ border: 'solid' }, ['border'])).toEqual({ borderStyle: 'solid', borderWidth: 3 })
-      // styleProp 缺省（border: 2px / borderTop: red）→ 等价 border-style: none → 整体短路
-      expect(run({ border: '2px' }, ['border'])).toEqual({ borderWidth: 0 })
-      expect(run({ borderTop: 'red' }, ['borderTop'])).toEqual({ borderTopWidth: 0 })
+      // styleProp 缺省（border: 2px / borderTop: red）→ 补 borderStyle: none，末尾统一清除
+      expect(run({ border: '2px' }, ['border'])).toEqual({ borderWidth: 2, borderStyle: 'none' })
+      expect(run({ borderTop: 'red' }, ['borderTop'])).toEqual({
+        borderColor: 'red',
+        borderTopWidth: 3,
+        borderStyle: 'none'
+      })
     })
 
-    test('border: none short-circuits to borderWidth: 0', () => {
-      expect(run({ border: 'none' }, ['border'])).toEqual({ borderWidth: 0 })
-      expect(run({ borderTop: 'none' }, ['borderTop'])).toEqual({ borderTopWidth: 0 })
+    test('border: none expands for final runtime clearing', () => {
+      expect(run({ border: 'none' }, ['border'])).toEqual({ borderStyle: 'none', borderWidth: 3 })
+      expect(run({ borderTop: 'none' }, ['borderTop'])).toEqual({ borderStyle: 'none', borderTopWidth: 3 })
     })
 
-    test('border with style=none token also short-circuits', () => {
-      // CSS spec: border-style: none ⇒ no border, drop width/color tokens
-      expect(run({ border: '1px none red' }, ['border'])).toEqual({ borderWidth: 0 })
-      expect(run({ borderTop: 'red none' }, ['borderTop'])).toEqual({ borderTopWidth: 0 })
+    test('border with style=none token keeps tokens for final runtime clearing', () => {
+      expect(run({ border: '1px none red' }, ['border'])).toEqual({
+        borderWidth: 1,
+        borderStyle: 'none',
+        borderColor: 'red'
+      })
+      expect(run({ borderTop: 'red none' }, ['borderTop'])).toEqual({
+        borderColor: 'red',
+        borderStyle: 'none',
+        borderTopWidth: 3
+      })
     })
 
     test('explicit long-form prop wins over expanded shorthand', () => {
@@ -94,26 +111,29 @@ describe('runtime transformShorthand', () => {
       })
     })
 
-    test('unknown tokens are silently dropped', () => {
-      // unknown 无法匹配任何槽位 → 静默跳过；红 + 1px 占 color / width 槽位，但 borderStyle 缺省 → 短路
-      // 与 'border: 2px red' 一类行为一致：没有 style token → 整体不渲染
-      expect(run({ border: 'red unknown 1px' }, ['border'])).toEqual({ borderWidth: 0 })
+    test('unknown tokens are dropped while valid tokens and defaults are kept', () => {
+      expect(run({ border: 'red unknown 1px' }, ['border'])).toEqual({
+        borderColor: 'red',
+        borderWidth: 1,
+        borderStyle: 'none'
+      })
     })
 
-    test('inline number 0 short-circuits before typeof string check', () => {
-      // inline style 写 number 0 是高频「清除边框」写法；border 分支前置在 typeof string 检查之前
-      expect(run({ border: 0 as any }, ['border'])).toEqual({ borderWidth: 0 })
-      expect(run({ borderTop: 0 as any }, ['borderTop'])).toEqual({ borderTopWidth: 0 })
-      // string '0' 与 '0px' 也都短路
-      expect(run({ border: '0' }, ['border'])).toEqual({ borderWidth: 0 })
-      expect(run({ border: '0px' }, ['border'])).toEqual({ borderWidth: 0 })
+    test('inline number 0 expands for final runtime clearing', () => {
+      expect(run({ border: 0 as any }, ['border'])).toEqual({ borderWidth: 0, borderStyle: 'none' })
+      expect(run({ borderTop: 0 as any }, ['borderTop'])).toEqual({ borderTopWidth: 0, borderStyle: 'none' })
+      expect(run({ border: '0' }, ['border'])).toEqual({ borderWidth: 0, borderStyle: 'none' })
+      expect(run({ border: '0px' }, ['border'])).toEqual({ borderWidth: 0, borderStyle: 'none' })
     })
 
-    test('border short-circuit force-overrides explicit borderWidth long-prop', () => {
-      // 普通展开走「长属性不覆盖」原则；但 border 短路是「清除边框」最终意图，强制写入 0
-      expect(run({ border: 0 as any, borderWidth: 5 }, ['border'])).toEqual({ borderWidth: 0 })
-      expect(run({ border: 'none', borderWidth: 5 }, ['border'])).toEqual({ borderWidth: 0 })
-      expect(run({ border: '2px red', borderWidth: 5 }, ['border'])).toEqual({ borderWidth: 0 })
+    test('explicit borderWidth long-prop is kept until final runtime clearing', () => {
+      expect(run({ border: 0 as any, borderWidth: 5 }, ['border'])).toEqual({ borderWidth: 5, borderStyle: 'none' })
+      expect(run({ border: 'none', borderWidth: 5 }, ['border'])).toEqual({ borderWidth: 5, borderStyle: 'none' })
+      expect(run({ border: '2px red', borderWidth: 5 }, ['border'])).toEqual({
+        borderColor: 'red',
+        borderWidth: 5,
+        borderStyle: 'none'
+      })
     })
   })
 
@@ -254,6 +274,116 @@ describe('runtime transformShorthand', () => {
         borderRightColor: 'blue',
         borderBottomColor: 'red',
         borderLeftColor: 'blue'
+      })
+    })
+  })
+
+  describe('gap shorthand', () => {
+    test('single string value is expanded to rowGap / columnGap (number via __formatValue)', () => {
+      // 实际生产链路里单值串已在 __getStyle 阶段被 __formatValue 换算为 number；这里直接喂字符串
+      // 是为了校验 transformShorthand 自身的兜底行为（多值串 / 其他链路残留场景同此分支）
+      expect(run({ gap: '20px' }, ['gap'])).toEqual({ rowGap: 20, columnGap: 20 })
+    })
+
+    test('two string values expand to rowGap / columnGap respectively', () => {
+      // RN gap / rowGap / columnGap 严格要求 number，多值串原样透传到这里 → 展开后逐 token 经 __formatValue
+      expect(run({ gap: '10px 20px' }, ['gap'])).toEqual({ rowGap: 10, columnGap: 20 })
+    })
+
+    test('non-string single value is left alone (RN native gap accepts number)', () => {
+      // typeof value !== 'string' → continue（与 border 一致）；RN 原生 gap 承接 number
+      expect(run({ gap: 8 as any }, ['gap'])).toEqual({ gap: 8 })
+    })
+
+    test('single percent expands to rowGap (parentHeight) / columnGap (parentWidth)', () => {
+      // CSS 规范：rowGap 基容器内容高度，columnGap 基内容宽度；gap 单值复制行列后各自取对应基
+      expect(run({ gap: '50%' }, ['gap'], { parentWidth: 200, parentHeight: 400 }))
+        .toEqual({ rowGap: 200, columnGap: 100 })
+    })
+
+    test('mixed percent / length expands per slot with the matching base', () => {
+      // 多值串展开成 rowGap / columnGap 后逐 prop 解析：rowGap 基 parentHeight、columnGap 基 parentWidth
+      expect(run({ gap: '10px 50%' }, ['gap'], { parentWidth: 200, parentHeight: 400 }))
+        .toEqual({ rowGap: 10, columnGap: 100 })
+      expect(run({ gap: '50% 10px' }, ['gap'], { parentWidth: 200, parentHeight: 400 }))
+        .toEqual({ rowGap: 200, columnGap: 10 })
+    })
+
+    test('percent without parent dims is left as-is (resolvePercent base 缺失 → 原样返回)', () => {
+      // 生产链路 useTransformStyle 总会注入 percentConfig（含 parentWidth / parentHeight），
+      // 这里覆盖 base 缺失（parentWidth / parentHeight 为 undefined）时 resolvePercent 的兜底分支：
+      // error 提示后原样返回字符串，避免错误数值。生产链路不会进这条分支。
+      expect(run({ gap: '50%' }, ['gap'])).toEqual({ rowGap: '50%', columnGap: '50%' })
+    })
+  })
+
+  describe('inset shorthand', () => {
+    test('single value is force-expanded to four sides (RN inset 长属性不稳定)', () => {
+      expect(run({ inset: '0' }, ['inset'])).toEqual({ top: 0, right: 0, bottom: 0, left: 0 })
+    })
+
+    test('two values expand to four sides', () => {
+      expect(run({ inset: '10px 20px' }, ['inset'])).toEqual({
+        top: 10, right: 20, bottom: 10, left: 20
+      })
+    })
+
+    test('four values expand directly', () => {
+      expect(run({ inset: '1px 2px 3px 4px' }, ['inset'])).toEqual({
+        top: 1, right: 2, bottom: 3, left: 4
+      })
+    })
+
+    test('explicit single-side longhand wins over expanded shorthand', () => {
+      // 普通展开「长属性不覆盖」原则；与 CSS 源码顺序语义在 RN 无法表达，约定显式单边优先
+      expect(run({ inset: '0', top: 8 }, ['inset'])).toEqual({
+        top: 8, right: 0, bottom: 0, left: 0
+      })
+    })
+  })
+
+  describe('outline shorthand', () => {
+    test('expands unordered outline', () => {
+      expect(run({ outline: '1px solid red' }, ['outline'])).toEqual({
+        outlineWidth: 1,
+        outlineStyle: 'solid',
+        outlineColor: 'red'
+      })
+    })
+
+    test('expands outline with color first (顺序无关)', () => {
+      expect(run({ outline: 'red solid 2px' }, ['outline'])).toEqual({
+        outlineColor: 'red',
+        outlineStyle: 'solid',
+        outlineWidth: 2
+      })
+    })
+
+    test('expands outline with same defaults as border', () => {
+      // outline 与 border 共享 runtimeShorthandDefaultMap：
+      // - 缺 outlineWidth → 补 BORDER_MEDIUM_WIDTH(3)
+      // - 缺 outlineStyle → 补 outlineStyle: none
+      expect(run({ outline: 'solid' }, ['outline'])).toEqual({ outlineStyle: 'solid', outlineWidth: 3 })
+      expect(run({ outline: 'solid red' }, ['outline'])).toEqual({
+        outlineStyle: 'solid', outlineColor: 'red', outlineWidth: 3
+      })
+      expect(run({ outline: '2px' }, ['outline'])).toEqual({ outlineWidth: 2, outlineStyle: 'none' })
+    })
+
+    test('expands outline none / 0 / mixed none for final runtime clearing', () => {
+      expect(run({ outline: 'none' }, ['outline'])).toEqual({ outlineStyle: 'none', outlineWidth: 3 })
+      expect(run({ outline: '0' }, ['outline'])).toEqual({ outlineWidth: 0, outlineStyle: 'none' })
+      expect(run({ outline: '1px none red' }, ['outline'])).toEqual({
+        outlineWidth: 1,
+        outlineStyle: 'none',
+        outlineColor: 'red'
+      })
+    })
+
+    test('existing outlineWidth long-form is kept until final runtime clearing', () => {
+      expect(run({ outline: 'none', outlineWidth: 4 }, ['outline'])).toEqual({
+        outlineWidth: 4,
+        outlineStyle: 'none'
       })
     })
   })

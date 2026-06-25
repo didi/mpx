@@ -38,6 +38,12 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const lengthValueRegExp = /^(-?(?:\d+(?:\.\d+)?|\.\d+)(?:rpx|px|%|vw|vh)?|hairlineWidth)$/
+// transform: 'rotateX(45deg) ...' 单段拆出 fn 名与括号内值
+const transformFnRegExp = /([/\w]+)\((.+)\)/
+// boxShadow 子值识别 rpx 单位（仅 rpx 需要换算为 px，其它单位保留原样）
+const rpxSuffixRegExp = /\d+rpx$/
+// font-family / font 简写解析时统一去掉单/双引号
+const quoteCharRegExp = /["']/g
 const defaultBoxSizingStyle = {
   boxSizing: 'content-box'
 }
@@ -84,14 +90,35 @@ const runtimeAbbreviationMap: Record<string, string[]> = {
   borderLeft: ['borderLeftWidth', 'borderStyle', 'borderColor'],
   flexFlow: ['flexDirection', 'flexWrap'],
   textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
-  textDecoration: ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor']
+  textDecoration: ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
+  // gap：CSS 2 槽位（row-gap / column-gap），单值复制行列。RN 原生支持但要求 number。
+  // 单值串在 __getStyle 的 transformStyleObj / 编译期 formatValue 已被 __formatValue 换算为 number；
+  // 真正以字符串形态进 transformShorthand 的是多值串（如 '10px 20px'）—— unitRegExp 不命中、原样透传。
+  // 因此进入 runtimeForceExpandCompositeMap，避免「单值透传」捷径放过这类多值串残留。
+  // 百分比（`gap: 50%` / `gap: 10px 50%`）由 transformShorthand 写回阶段就地 resolvePercent 落成 number
+  gap: ['rowGap', 'columnGap'],
+  // inset：4 槽位等价 margin 四值语法；RN inset 长属性非稳定，单值也必须展开到 top/right/bottom/left
+  inset: ['top', 'right', 'bottom', 'left'],
+  // outline: <outline-width> || <outline-style> || <outline-color>，顺序不敏感
+  outline: ['outlineWidth', 'outlineStyle', 'outlineColor']
 }
 const runtimeCompositeStyleMap: Record<string, boolean> = {
   margin: true,
   padding: true,
   borderRadius: true,
   borderWidth: true,
-  borderColor: true
+  borderColor: true,
+  gap: true,
+  inset: true
+}
+// 即使单值也必须展开（不走「单值透传」捷径）：
+// - inset：RN inset 长属性不稳定，单值透传会留下不可靠的 inset key
+// - gap：RN gap / rowGap / columnGap 严格要求 number；单值串虽已在 __getStyle 阶段被 __formatValue 换算，
+//   但多值串（如 '10px 20px'）会原样透传到这里，需展开后逐 token 再过 __formatValue 才能落成 number；
+//   `%` 在写回阶段由 transformShorthand 调 resolvePercent 落成 number（rowGap 基 parentHeight、columnGap 基 parentWidth）
+const runtimeForceExpandCompositeMap: Record<string, boolean> = {
+  inset: true,
+  gap: true
 }
 const runtimeUnorderedAbbreviationMap: Record<string, boolean> = {
   border: true,
@@ -101,36 +128,43 @@ const runtimeUnorderedAbbreviationMap: Record<string, boolean> = {
   borderLeft: true,
   flexFlow: true,
   textShadow: true,
-  textDecoration: true
+  textDecoration: true,
+  // outline 与 border 简写共享同一套缺省值处理
+  outline: true
+}
+const runtimeBorderLikeShorthandMap: Record<string, boolean> = {
+  border: true,
+  borderTop: true,
+  borderRight: true,
+  borderBottom: true,
+  borderLeft: true,
+  outline: true
 }
 // CSS border-width: medium 的实测值（各主流浏览器一致取 3px）
 // 与编译期 wx/index.js 同名常量保持一致；调整需两侧一起改
 const BORDER_MEDIUM_WIDTH = 3
 // 运行时简写槽位缺省值表（与编译期 ShorthandDefaultMap 镜像，仅 CSS quote 形式不同）
 // 值即槽位缺省时追加的补齐值；borderColor / textShadowRadius 因 RN 有内置缺省值不补，不进此表
+// none 清除语义统一保留到 useTransformStyle 末尾处理
 const runtimeShorthandDefaultMap: Record<string, Record<string, any>> = {
-  border: { borderWidth: BORDER_MEDIUM_WIDTH },
-  borderTop: { borderTopWidth: BORDER_MEDIUM_WIDTH },
-  borderRight: { borderRightWidth: BORDER_MEDIUM_WIDTH },
-  borderBottom: { borderBottomWidth: BORDER_MEDIUM_WIDTH },
-  borderLeft: { borderLeftWidth: BORDER_MEDIUM_WIDTH },
+  border: { borderWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+  borderTop: { borderTopWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+  borderRight: { borderRightWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+  borderBottom: { borderBottomWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+  borderLeft: { borderLeftWidth: BORDER_MEDIUM_WIDTH, borderStyle: 'none' },
+  // outline 与 border 缺省值完全对齐：缺 width → BORDER_MEDIUM_WIDTH；
+  // 缺 style → outlineStyle: none，末尾统一转换为 outlineWidth: 0
+  outline: { outlineWidth: BORDER_MEDIUM_WIDTH, outlineStyle: 'none' },
   textShadow: { textShadowColor: '#000' }
   // textDecoration / flexFlow 暂不配置，与 RN 默认一致
 }
-const borderShorthandMap: Record<string, boolean> = {
-  border: true,
-  borderTop: true,
-  borderRight: true,
-  borderBottom: true,
-  borderLeft: true
-}
 
 const borderStyleMap: Record<string, boolean> = {
-  // RN 实测仅支持 solid/dotted/dashed；CSS 的 none 由 transformShorthand border 分支入口短路统一处理
-  // 混合 none（如 border: 1px none red）入口短路前置截掉，不进展开主循环
+  // RN 实测仅支持 solid/dotted/dashed；none 作为 CSS 合法值保留到末尾统一转换为 borderWidth: 0
   solid: true,
   dotted: true,
-  dashed: true
+  dashed: true,
+  none: true
 }
 const textDecorationLineMap: Record<string, boolean> = {
   none: true,
@@ -142,6 +176,20 @@ const textDecorationStyleMap: Record<string, boolean> = {
   double: true,
   dotted: true,
   dashed: true
+}
+// font 简写 <font-weight> 槽位允许的关键字 / 数值（CSS 子集，与 RN 支持一致）
+const fontWeightMap: Record<string, boolean> = {
+  bold: true,
+  normal: true,
+  100: true,
+  200: true,
+  300: true,
+  400: true,
+  500: true,
+  600: true,
+  700: true,
+  800: true,
+  900: true
 }
 const flexDirectionMap: Record<string, boolean> = {
   row: true,
@@ -176,7 +224,9 @@ const parentHeightPercentRule: Record<string, boolean> = {
   minHeight: true,
   maxHeight: true,
   top: true,
-  bottom: true
+  bottom: true,
+  // row-gap 百分比按 CSS 规范基于容器内容区高度；columnGap 不入此表，落默认 parentWidth 分支
+  rowGap: true
 }
 const bgRepeatMap: Record<string, boolean> = {
   repeat: true,
@@ -597,85 +647,103 @@ function parseTransform (transformStr: string) {
   // Todo 1 transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
   // values.sort()
   const transform: { [propName: string]: string | number | number[] }[] = []
+  // 与编译期 wx/index.js 同 transform formatter 口径对齐：
+  // 「整条 transform 声明」绝不会因单个子项失败而丢弃，被丢的只有那一个子项，其余 transform 项仍输出。
+  // 因此本 forEach 内所有「丢这一项」的提示一律用 warn（编译期同名分支注释：「仅丢这一 transform 项，其它项仍输出，按规范使用 warn」）。
   values.forEach(item => {
-    const match = item.match(/([/\w]+)\((.+)\)/)
-    if (match && match.length >= 3) {
-      let key = match[1]
-      const val = match[2]
-      switch (key) {
-        case 'rotateX':
-        case 'rotateY':
-        case 'rotateZ':
-        case 'rotate':
-        case 'skewX':
-        case 'skewY':
-          key = key === 'rotate' ? 'rotateZ' : key
-          transform.push({ [key]: val })
-          break
-        case 'translateX':
-        case 'translateY':
-        case 'scaleX':
-        case 'scaleY':
-        case 'perspective':
-          transform.push({ [key]: global.__formatValue(val) })
-          break
-        case 'matrix': {
-          const matrixValues = parseValues(val, ',').map(v => +v.trim())
-          if (matrixValues.length === 6) {
-            const [a, b, c, d, tx, ty] = matrixValues
-            transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
-          } else {
-            error(`Transform matrix only supports 6 values in React Native, got ${matrixValues.length}`)
-          }
-          break
+    const match = item.match(transformFnRegExp)
+    if (!match || match.length < 3) {
+      warn(`Transform value [${item}] is not a valid fn(value) form, dropped.`)
+      return
+    }
+    let key = match[1]
+    const val = match[2]
+    switch (key) {
+      case 'rotateX':
+      case 'rotateY':
+      case 'rotateZ':
+      case 'rotate':
+      case 'skewX':
+      case 'skewY':
+        key = key === 'rotate' ? 'rotateZ' : key
+        transform.push({ [key]: val })
+        break
+      case 'translateX':
+      case 'translateY':
+      case 'scaleX':
+      case 'scaleY':
+      case 'perspective':
+        transform.push({ [key]: global.__formatValue(val) })
+        break
+      case 'matrix': {
+        // parseValues 内部已 trim
+        const matrixValues = parseValues(val, ',').map(v => +v)
+        if (matrixValues.length === 6) {
+          const [a, b, c, d, tx, ty] = matrixValues
+          transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
+        } else {
+          warn(`Transform matrix only supports 6 values in React Native, got ${matrixValues.length}`)
         }
-        case 'matrix3d': {
-          const matrixValues = parseValues(val, ',').map(v => +v.trim())
-          if (matrixValues.length === 16) {
-            transform.push({ matrix: matrixValues })
-          } else {
-            error(`Transform matrix only supports 16 values in React Native, got ${matrixValues.length}`)
-          }
-          break
-        }
-        case 'translate':
-        case 'scale':
-        case 'skew':
-        case 'translate3d': // x y 支持 z不支持
-        case 'scale3d': // x y 支持 z不支持
-        {
-          // 2 个以上的值处理
-          key = key.replace('3d', '')
-          const vals = parseValues(val, ',').splice(0, 3)
-          // scale(.5) === scaleX(.5) scaleY(.5)
-          if (vals.length === 1 && key === 'scale') {
-            vals.push(vals[0])
-          }
-          const xyz = ['X', 'Y', 'Z']
-          transform.push(...vals.map((v, index) => {
-            return { [`${key}${xyz[index] || ''}`]: global.__formatValue(v.trim()) }
-          }))
-          break
-        }
-        case 'rotate3d': {
-          const parts = parseValues(val, ',')
-          if (parts.length === 4) {
-            const x = +parts[0].trim()
-            const y = +parts[1].trim()
-            const z = +parts[2].trim()
-            const angle = parts[3].trim()
-            if (x && !y && !z) transform.push({ rotateX: angle })
-            else if (!x && y && !z) transform.push({ rotateY: angle })
-            else if (!x && !y && z) transform.push({ rotateZ: angle })
-          } else {
-            error(`Transform rotate3d only supports 4 values, got ${parts.length}`)
-          }
-          break
-        }
-        case 'translateZ':
-        case 'scaleZ':
-          break
+        break
       }
+      case 'matrix3d': {
+        // parseValues 内部已 trim
+        const matrixValues = parseValues(val, ',').map(v => +v)
+        if (matrixValues.length === 16) {
+          transform.push({ matrix: matrixValues })
+        } else {
+          warn(`Transform matrix only supports 16 values in React Native, got ${matrixValues.length}`)
+        }
+        break
+      }
+      case 'translate':
+      case 'scale':
+      case 'skew':
+      case 'translate3d': // x y 支持 z不支持
+      case 'scale3d': // x y 支持 z不支持
+      {
+        // 2 个以上的值处理
+        key = key.replace('3d', '')
+        const vals = parseValues(val, ',').splice(0, 3)
+        // scale(.5) === scaleX(.5) scaleY(.5)
+        if (vals.length === 1 && key === 'scale') {
+          vals.push(vals[0])
+        }
+        const xyz = ['X', 'Y', 'Z']
+        vals.forEach((v, index) => {
+          if (key !== 'rotate' && index > 1) {
+            warn(`Transform [${key}Z] is not supported in React Native, dropped.`)
+            return
+          }
+          // parseValues 内部已 trim
+          transform.push({ [`${key}${xyz[index] || ''}`]: global.__formatValue(v) })
+        })
+        break
+      }
+      case 'rotate3d': {
+        const parts = parseValues(val, ',')
+        if (parts.length !== 4) {
+          warn(`Transform rotate3d only supports 4 values, got ${parts.length}`)
+          break
+        }
+        // parseValues 内部已 trim
+        const x = +parts[0]
+        const y = +parts[1]
+        const z = +parts[2]
+        const angle = parts[3]
+        if (x && !y && !z) transform.push({ rotateX: angle })
+        else if (!x && y && !z) transform.push({ rotateY: angle })
+        else if (!x && !y && z) transform.push({ rotateZ: angle })
+        else warn(`Transform rotate3d(${val}) only supports single-axis vector (1,0,0) / (0,1,0) / (0,0,1) in React Native, dropped.`)
+        break
+      }
+      case 'translateZ':
+      case 'scaleZ':
+        // RN 不支持 Z 轴 translate/scale，丢该子项；编译期同分支用 warn（unsupportedPropError isError=false）
+        warn(`Transform [${key}] is not supported in React Native, dropped.`)
+        break
+      default:
+        warn(`Transform fn [${key}] is not supported in React Native, dropped.`)
     }
   })
   return transform
@@ -692,7 +760,7 @@ function transformBoxShadow (styleObj: Record<string, any>) {
   styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res, i, idx) => {
     let formatted: string | number
     // 需要保留 px 关键字，这里仅处理 rpx 转 px
-    if (/\d+rpx$/.test(i)) {
+    if (rpxSuffixRegExp.test(i)) {
       formatted = global.__formatValue(i) + 'px'
     } else {
       formatted = i
@@ -794,7 +862,11 @@ function expandUnorderedAbbreviation (key: string, values: string[]): Array<[str
       }
     }
     const prop = getUnorderedShorthandProp(key, value, used)
-    if (!prop) continue
+    if (!prop) {
+      // 该 token 与 key 下任何空闲槽位都不匹配（未知类型 / 槽位已占满），静默丢弃可能让用户难以察觉
+      warn(`Token [${value}] in [${key}: ${values.join(' ')}] is not a valid value or has no available slot, dropped.`)
+      continue
+    }
     used[prop] = true
     pushExpandedPair(result, prop, global.__formatValue(value))
   }
@@ -848,41 +920,151 @@ function expandFlex (value: string): Array<[string, any]> | null {
   return result
 }
 
+// font 简写专用 transform，仿 transformFlex 的标志位模式。
+// RN 等效子集语法：font: [ <font-style> ] [ <font-variant-css2> ] [ <font-weight> ] <font-size> [ / <line-height> ] <font-family>
+// - 必填项：font-size 与 font-family；缺其一整条 font 声明丢弃（error）
+// - 非必填 token（font-stretch / 数字型 font-variant-numeric / system 关键字等）：warn 提示并忽略，保留其余槽位
+function transformFont (styleObj: Record<string, any>, percentConfig: PercentConfig) {
+  const value = styleObj.font
+  if (typeof value !== 'string') return
+  const tokens = parseValues(value)
+  let sizeIdx = -1
+  let lineHeight: string | undefined
+  const result: Array<[string, any]> = []
+  // 1. 定位 font-size（第一个 length，可能带 /<line-height>）
+  //    注意：unit-less 数字也命中 length 正则，需要先排除 font-weight 数字（100..900 / bold / normal），
+  //    否则 `font: 500 16px Arial` 会把 500 误判为 fontSize。
+  //    fontSize 自身可能是 %（如 `font: 50% Arial`），就地用 resolvePercent 按 parentFontSize 解析；
+  //    fontSize % 校验通过的是 `isLengthValue`（length 正则含 %），主流程已用 length 分支接住，无需特判
+  for (let i = 0; i < tokens.length; i++) {
+    let t = tokens[i]
+    if (t.endsWith('/') && tokens[i + 1]) {
+      t += tokens[i + 1]
+      tokens.splice(i + 1, 1)
+    } else if (tokens[i + 1] === '/' && tokens[i + 2]) {
+      t += `/${tokens[i + 2]}`
+      tokens.splice(i + 1, 2)
+    } else if (tokens[i + 1]?.startsWith('/') && tokens[i + 1].length > 1) {
+      t += tokens[i + 1]
+      tokens.splice(i + 1, 1)
+    }
+    const [sizePart, lhPart] = parseValues(t, '/')
+    if (hasOwn(fontWeightMap, sizePart)) continue
+    if (isLengthValue(sizePart)) {
+      sizeIdx = i
+      const sizeVal = percentRegExp.test(sizePart)
+        ? resolvePercent(sizePart, 'fontSize', percentConfig)
+        : global.__formatValue(sizePart)
+      result.push(['fontSize', sizeVal])
+      if (lhPart) lineHeight = lhPart
+      break
+    }
+  }
+  if (sizeIdx === -1) {
+    // 缺必填 font-size 整体丢弃；与 transformFlex「Flex shorthand value [...] ..., dropped.」同口径
+    error(`Font shorthand value [${value}] is missing required <font-size>, dropped.`)
+    delete styleObj.font
+    return
+  }
+  // 2. 前导段 font-style / font-variant(small-caps) / font-weight，顺序不敏感
+  for (let i = 0; i < sizeIdx; i++) {
+    const t = tokens[i]
+    if (t === 'normal') continue
+    if (t === 'italic') {
+      result.push(['fontStyle', t])
+    } else if (t === 'small-caps') {
+      // RN processFontVariant 接受字符串，内部 split 归一为数组，与 font-variant 长属性同口径
+      result.push(['fontVariant', t])
+    } else if (hasOwn(fontWeightMap, t)) {
+      result.push(['fontWeight', t])
+    } else {
+      // 其余（font-stretch / 数字型 font-variant-numeric / system 关键字等）→ 非必填：
+      // 与 transformBackground「Token [...] in [background: ...] ..., dropped.」同口径，warn + 忽略该 token、保留其余
+      warn(`Token [${t}] in [font: ${value}] is not supported (only font-style / small-caps / font-weight are valid before <font-size>), dropped.`)
+    }
+  }
+  // 3. line-height：RN lineHeight 不接受百分比字符串，必须当场数值化。
+  //    - unit-less 数字（1.5）→ '150%' 后走 resolvePercent
+  //    - 显式百分比（120%）→ 直接走 resolvePercent
+  //    - 带单位（40px / 40rpx）→ __formatValue
+  //    基数 fontSize 取值（「长属性不覆盖简写」一致）：
+  //    - user 已显式写 fontSize 长属性 → 优先（先经 __formatValue 归一 '24px' → 24）
+  //    - 否则用 font 简写解析出的 fontSize（result[0][1]，已可能是 number / 解析后的 % 值）
+  if (lineHeight !== undefined) {
+    // percentConfig.fontSize 用于 resolvePercent 的 base：
+    // - user 已显式写 fontSize 长属性 → 外层用 normalStyle.fontSize 初始化，已被前置 styleHelperMixin
+    //   的 transformStyleObj 经 __formatValue 归一为 number，可直接用，不覆盖（「长属性优先」一致）
+    // - 否则用 font 简写解析出的 fontSize（result[0][1]，本身已 number 或解析后的 % 值）回填
+    if (percentConfig.fontSize === undefined) percentConfig.fontSize = result[0][1]
+    let lh: string | number | undefined
+    if (percentRegExp.test(lineHeight)) {
+      lh = resolvePercent(lineHeight, 'lineHeight', percentConfig)
+    } else if (!isNaN(+lineHeight)) {
+      lh = resolvePercent(`${+lineHeight * 100}%`, 'lineHeight', percentConfig)
+    } else {
+      lh = global.__formatValue(lineHeight)
+    }
+    // lh 仍是字符串说明 resolvePercent 因 base 非 number 原样返回（已 error 过）或带单位 __formatValue
+    // 未能换算成 number（如 fontSize 是未解析的 var()）。RN lineHeight 不接受字符串，丢弃避免运行时报错
+    if (typeof lh === 'number') {
+      result.push(['lineHeight', lh])
+    } else {
+      warn(`Line-height [${lineHeight}] in [font: ${value}] could not be resolved to a number (font-size unresolved?), dropped.`)
+    }
+  }
+  // 4. font-family（font-size 之后剩余部分；多字体取首值、去引号）
+  const familyStr = tokens.slice(sizeIdx + 1).join(' ').trim()
+  if (!familyStr) {
+    error(`Font shorthand value [${value}] is missing required <font-family>, dropped.`)
+    delete styleObj.font
+    return
+  }
+  // parseValues 内部已 trim
+  const family = parseValues(familyStr.replace(quoteCharRegExp, ''), ',')[0]
+  if (family) result.push(['fontFamily', family])
+  delete styleObj.font
+  for (const [prop, val] of result) {
+    if (!hasOwn(styleObj, prop)) styleObj[prop] = val
+  }
+}
+
 function transformFlex (styleObj: Record<string, any>) {
   const value = styleObj.flex
   if (typeof value !== 'string') return
-  const flexResult = expandFlex(value)
-  if (!flexResult) return
   delete styleObj.flex
+  const flexResult = expandFlex(value)
+  if (!flexResult) {
+    // expandFlex 仅在 parseValues 出空数组时返回 null（空字符串 / 纯空白），属于明确非法，整段丢弃
+    error(`Flex shorthand value [${value}] is not a valid CSS flex value, dropped.`)
+    return
+  }
   for (const [prop, val] of flexResult) {
     if (!hasOwn(styleObj, prop)) styleObj[prop] = val
   }
 }
 
-export function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
+export function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[], percentConfig: PercentConfig) {
   for (const key of shorthandKeys) {
     const value = styleObj[key]
 
-    // border 入口短路：整体 0（含 number 0 / '0' / '-0'）或含 none token（'none' / '1px none red'）
-    // 命中即强制写入 borderWidth: 0（覆盖任何已存在的 borderWidth，「清除边框」是用户最终意图）
-    // values 在此首次解析后暂存，下方公共链路复用，避免对同一字符串 parseValues 两次
-    // +value === 0 同时覆盖 number 0、string '0'；'0px' 等带单位 +value 是 NaN，不会误命中
-    let values: string[] | undefined
-    if (hasOwn(borderShorthandMap, key)) {
-      if (value === 'none' || +value === 0 || (typeof value === 'string' && (values = parseValues(value)).includes('none'))) {
-        const widthProp = runtimeAbbreviationMap[key][0]
-        delete styleObj[key]
-        styleObj[widthProp] = 0
-        continue
-      }
-    }
-
     // —— 以下为公共链路（与 textDecoration / flexFlow / textShadow / 四值简写共用）——
-    if (typeof value !== 'string') continue
-    if (!values) values = parseValues(value)
+    let values: string[]
+    if (typeof value === 'string') {
+      values = parseValues(value)
+    } else if (value === 0 && hasOwn(runtimeBorderLikeShorthandMap, key)) {
+      values = ['0']
+    } else {
+      continue
+    }
     const props = runtimeAbbreviationMap[key]
     if (!props) continue
-    if (hasOwn(runtimeCompositeStyleMap, key) && values.length === 1) continue
+    // 单值短路：composite 且单值通常透传（RN 原生支持 margin / padding 单值 DimensionValue）；
+    // 但 inset / gap 必须展开（理由见 runtimeForceExpandCompositeMap 注释）
+    if (
+      hasOwn(runtimeCompositeStyleMap, key) &&
+      values.length === 1 &&
+      !hasOwn(runtimeForceExpandCompositeMap, key)
+    ) continue
     let expandedValues = values
     let pairs: Array<[string, any]>
     if (hasOwn(runtimeCompositeStyleMap, key)) {
@@ -895,19 +1077,16 @@ export function transformShorthand (styleObj: Record<string, any>, shorthandKeys
       pairs = expandAbbreviation(expandedValues, props)
     }
 
-    // border 展开后短路：borderStyle 槽位缺省 → 等价 border-style: none → 整体短路，丢弃补齐结果
-    // 覆盖 border: 2px / 0px / red 等无 style token 的写法（none 已被入口截掉，不会进展开）
-    if (hasOwn(borderShorthandMap, key) && !pairs.some(([p]) => p === 'borderStyle')) {
-      const widthProp = runtimeAbbreviationMap[key][0]
-      delete styleObj[key]
-      // 强制写入：「清除边框」是最终意图，覆盖任何已存在的 borderWidth 长属性
-      styleObj[widthProp] = 0
-      continue
-    }
-
     delete styleObj[key]
     for (const [prop, val] of pairs) {
-      if (!hasOwn(styleObj, prop)) styleObj[prop] = val
+      if (hasOwn(styleObj, prop)) continue
+      // gap 简写展开后的 rowGap / columnGap 仍可能是 `%` 字符串（如 `gap: 50%` / `gap: 10px 50%`），
+      // RN 类型严格要求 number，这里就地用 resolvePercent 落成数字（rowGap 基 parentHeight、columnGap 基 parentWidth）
+      if ((prop === 'rowGap' || prop === 'columnGap') && typeof val === 'string' && percentRegExp.test(val)) {
+        styleObj[prop] = resolvePercent(val, prop, percentConfig)
+      } else {
+        styleObj[prop] = val
+      }
     }
   }
 }
@@ -917,11 +1096,36 @@ export function transformShorthand (styleObj: Record<string, any>, shorthandKeys
 function transformFontFamily (styleObj: Record<string, any>) {
   const value = styleObj.fontFamily
   if (typeof value !== 'string') return
-  const stripped = value.replace(/["']/g, '').trim()
+  const stripped = value.replace(quoteCharRegExp, '').trim()
   if (!stripped) return
   const values = parseValues(stripped, ',')
-  styleObj.fontFamily = values[0].trim()
+  // parseValues 内部已 trim
+  styleObj.fontFamily = values[0]
 }
+
+function transformBorderStyleNone (styleObj: Record<string, any>) {
+  if (styleObj.borderStyle === 'none') {
+    delete styleObj.borderStyle
+    delete styleObj.borderTopWidth
+    delete styleObj.borderRightWidth
+    delete styleObj.borderBottomWidth
+    delete styleObj.borderLeftWidth
+    styleObj.borderWidth = 0
+  }
+  if (styleObj.outlineStyle === 'none') {
+    delete styleObj.outlineStyle
+    styleObj.outlineWidth = 0
+  }
+}
+
+function transformPosition (styleObj: Record<string, any>) {
+  if (styleObj.position === 'fixed') {
+    styleObj.position = 'absolute'
+    return true
+  }
+  return false
+}
+
 function transOrderXY (values: string[]) {
   if (values.length === 2 && ['top', 'bottom'].includes(values[0])) {
     [values[0], values[1]] = [values[1], values[0]]
@@ -972,6 +1176,9 @@ function transformBackground (styleObj: Record<string, any>) {
         sizeValues.push(token)
       } else if (hasOwn(bgPositionMap, token) || percentRegExp.test(token) || digitStartRegExp.test(token)) {
         positionValues.push(token === 'center' ? '50%' : token)
+      } else {
+        // background-attachment / background-origin / background-clip 及拼写错误等：RN 均不支持，提示用户避免静默丢值
+        warn(`Token [${token}] in [background: ${value}] is not a recognized background sub-value, dropped.`)
       }
     }
   }
@@ -1043,6 +1250,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   let hasBoxShadow = false
   let hasFontFamily = false
   let hasFlex = false
+  let hasFont = false
   let needTransformBackground = false
   let needStringify = false
   const varKeyPaths: Array<Array<string>> = []
@@ -1068,6 +1276,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
         break
       case 'flex':
         hasFlex = true
+        break
+      case 'font':
+        hasFont = true
         break
       case 'background':
       case 'backgroundSize':
@@ -1097,7 +1308,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       // fixme Image 组件 borderRadius 仅支持 number
       const needRadiusPercent = transformRadiusPercent && hasOwn(radiusPercentRule, key)
       const needFontPercent = key === 'fontSize' || key === 'lineHeight'
-      if ((needRadiusPercent || needFontPercent) && percentRegExp.test(value)) {
+      // RN gap / rowGap / columnGap 不支持 %，需要运行时换算为 number 喂给 RN
+      const needGapPercent = key === 'rowGap' || key === 'columnGap'
+      if ((needRadiusPercent || needFontPercent || needGapPercent) && percentRegExp.test(value)) {
         if (needRadiusPercent) hasSelfPercent = true
         resolvedKeyPath = resolvedKeyPath ?? keyPath.slice()
         percentKeyPaths.push(resolvedKeyPath)
@@ -1164,56 +1377,45 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       }
       resolvedVarContext = varContextRef.current
     }
-    if (varKeyPaths.length) {
-      transformVar(normalStyle, varKeyPaths, resolvedVarContext, visitOther)
-    }
+    if (varKeyPaths.length) transformVar(normalStyle, varKeyPaths, resolvedVarContext, visitOther)
   }
 
   // apply unocss var
-  if (unoVarKeyPaths.length) {
-    transformVar(normalStyle, unoVarKeyPaths, unoVarStyle, visitOther)
-  }
-
+  if (unoVarKeyPaths.length) transformVar(normalStyle, unoVarKeyPaths, unoVarStyle, visitOther)
   // apply env
   if (envKeyPaths.length) transformEnv(normalStyle, envKeyPaths, navigation)
-  // apply percent / calc：只有出现候选时才构造 percentConfig
-  if (percentKeyPaths.length || calcKeyPaths.length) {
-    const percentConfig: PercentConfig = {
-      width,
-      height,
-      fontSize: normalStyle.fontSize,
-      parentWidth,
-      parentHeight,
-      parentFontSize
-    }
-    if (percentKeyPaths.length) transformPercent(normalStyle, percentKeyPaths, percentConfig)
-    if (calcKeyPaths.length) {
-      transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
-        if (percentRegExp.test(value)) {
-          if (hasOwn(selfPercentRule, key)) {
-            hasSelfPercent = true
-          }
-          const resolved = resolvePercent(value, key, percentConfig)
-          return typeof resolved === 'number' ? resolved : 0
-        } else {
-          const formatted = global.__formatValue(value)
-          if (typeof formatted === 'number') {
-            return formatted
-          } else {
-            warn('calc() only support number, px, rpx, % temporarily.')
-            return 0
-          }
+  // apply percent / calc
+  const percentConfig: PercentConfig = {
+    width,
+    height,
+    fontSize: normalStyle.fontSize,
+    parentWidth,
+    parentHeight,
+    parentFontSize
+  }
+  // transformFont 可能会更新 percentConfig 配置，必须在 transformPercent 之前执行，保证 fontSize / lineHeight 的百分比能被正确解析
+  if (hasFont) transformFont(normalStyle, percentConfig)
+  if (percentKeyPaths.length) transformPercent(normalStyle, percentKeyPaths, percentConfig)
+  if (calcKeyPaths.length) {
+    transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
+      if (percentRegExp.test(value)) {
+        if (hasOwn(selfPercentRule, key)) {
+          hasSelfPercent = true
         }
-      })
-    }
+        const resolved = resolvePercent(value, key, percentConfig)
+        return typeof resolved === 'number' ? resolved : 0
+      } else {
+        const formatted = global.__formatValue(value)
+        if (typeof formatted === 'number') {
+          return formatted
+        } else {
+          warn('calc() only support number, px, rpx, % temporarily.')
+          return 0
+        }
+      }
+    })
   }
 
-  // apply position：单字段判断，直接内联
-  let hasPositionFixed = false
-  if (normalStyle.position === 'fixed') {
-    normalStyle.position = 'absolute'
-    hasPositionFixed = true
-  }
   // transform number enum stringify
   if (needStringify) transformStringify(normalStyle)
   // transform unit
@@ -1223,9 +1425,13 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // apply runtime style processing alignment
   if (hasFontFamily) transformFontFamily(normalStyle)
   if (hasFlex) transformFlex(normalStyle)
-  if (shorthandKeys.length) transformShorthand(normalStyle, shorthandKeys)
+  if (shorthandKeys.length) transformShorthand(normalStyle, shorthandKeys, percentConfig)
   if (needTransformBackground) transformBackground(normalStyle)
-  // 合并组件默认样式：default 在 user transform 之后兜底写入，
+  // borderStyle / outlineStyle: 'none' 的清除语义放到变量解析、简写展开之后统一处理。
+  transformBorderStyleNone(normalStyle)
+  // transform position: fixed
+  const hasPositionFixed = transformPosition(normalStyle)
+  // 合并组件默认样式：默认样式在 user transform 之后兜底写入，需完全符合 RN style 规范
   // 命中 user 已存在 key（含简写展开后的长属性）则跳过。
   // 复用同一次循环顺带补 hasBoxSizingAffectingStyle，避免独立扫一遍 default。
   if (defaultStyle) {

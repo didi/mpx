@@ -14,7 +14,7 @@ import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
 import { TextPassThroughContextValue } from './context'
-import { error, hasOwn } from '@mpxjs/utils'
+import { error, warn, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
@@ -136,6 +136,35 @@ const diagonalAngleMap: Record<string, (width: number, height: number) => any> =
 // 弧度转化为角度的公式
 function radToAngle (r: number) {
   return r * 180 / Math.PI
+}
+
+// === linear-gradient 解析相关正则（模块级，一次创建） ===
+// CSS <angle> 支持 deg/turn/rad/grad 四种单位，统一归一为 deg
+// https://www.w3.org/TR/css-values-3/#angles
+const angleRegExp = /^\s*(-?\d+(?:\.\d+)?)(deg|turn|rad|grad)\b/
+const gradientToRegExp = /^to\b\s*/
+// 入口形态：仅在含 linear-gradient 时走解析；提取括号内内容
+const linearGradientRegExp = /linear-gradient\((.*)\)/
+// 顶层逗号切分（忽略 () / # 内部的逗号）
+const topLevelCommaRegExp = /,(?![^(#]*\))/
+// 色标内空白切分（忽略色函数里的逗号边界）
+const stopWhitespaceRegExp = /(?<!,)\s+/
+// 色标位置仅支持 `<n>%` 或裸 `0`（CSS 允许 0 作为唯一无单位 length）
+// 其它单位（px/rpx/em/vw/...）当前无法在不依赖 layout 的情况下归一为百分比，统一拒绝
+const validStopPosRegExp = /^-?\d+(?:\.\d+)?%$|^0$/
+// color hint 检测：色标 token 仅含一个分量且以数字/正负号/小数点开头
+const colorHintLeadingRegExp = /^[-+.\d]/
+
+function normalizeAngle (raw: string): number | undefined {
+  const m = raw.match(angleRegExp)
+  if (!m) return undefined
+  const n = +m[1]
+  switch (m[2]) {
+    case 'turn': return n * 360
+    case 'rad': return radToAngle(n)
+    case 'grad': return n * 0.9
+    default: return n // deg
+  }
 }
 
 const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && percentRegExp.test(val)
@@ -324,7 +353,16 @@ function linearGradient (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
   if (type !== 'linear') return
 
   // 角度计算
-  let angle = +(linearMap.get(direction) || direction.match(/(-?\d+(\.\d+)?)deg/)?.[1] || 180) % 360
+  // 注意：不要用 `linearMap.get(direction) || ...`，因为 'top' 映射为 0 是 falsy 值，
+  // 会被误判为未命中并落到默认 180deg
+  let angle: number
+  if (linearMap.has(direction)) {
+    angle = linearMap.get(direction) as number
+  } else {
+    const normalized = normalizeAngle(direction)
+    angle = normalized !== undefined ? normalized : 180
+  }
+  angle = angle % 360
 
   // 对角线角度计算
   if (layoutInfo && diagonalAngleMap[direction] && imageSize && linearInfo) {
@@ -468,23 +506,58 @@ function calcSteps (startVal: number, endVal: number, len: number) {
   return newArr
 }
 
-function parseLinearGradient (text: string): LinearInfo | undefined {
-  let linearText = text.trim().match(/linear-gradient\((.*)\)/)?.[1]
+// 返回值约定：
+//   - LinearInfo  解析成功
+//   - null        已识别为 linear-gradient 但内部已通过 error/warn 报错，外部不要再报
+//   - undefined   不是 linear-gradient 形态，外部按"不支持的 background-image"处理
+function parseLinearGradient (text: string): LinearInfo | null | undefined {
+  let linearText = text.trim().match(linearGradientRegExp)?.[1]
   if (!linearText) return
 
-  // 添加默认的角度
-  if (!/^to|^-?\d+deg/.test(linearText)) {
-    linearText = '180deg ,' + linearText
-  } else {
-    linearText = linearText.replace('to', '')
+  // 多重渐变 / 多重背景：linearGradientRegExp 用了贪婪 `.*`，多渐变时括号内
+  // 会贪到下一段 `linear-gradient(`，单段则一定不含；用 includes 一次判断即可
+  if (linearText.includes('linear-gradient(')) {
+    error(`[mpx-view] background-image 暂不支持多重渐变 (multi gradients)，已丢弃，原值: ${text}`)
+    return null
   }
 
   // 把 0deg, red 10%, blue 20% 解析为 ['0deg', 'red, 10%', 'blue, 20%']
-  const [direction, ...colorList] = linearText.split(/,(?![^(#]*\))/)
+  if (gradientToRegExp.test(linearText)) {
+    linearText = linearText.replace(gradientToRegExp, '')
+  } else if (!angleRegExp.test(linearText)) {
+    linearText = '180deg ,' + linearText
+  }
+  const [direction, ...colorList] = linearText.split(topLevelCommaRegExp)
   // 记录需要填充起点的起始位置
   let startIdx = 0; let startVal = 0
   // 把 ['red, 10%', 'blue, 20%']解析为 [[red, 10%], [blue, 20%]]
-  const linearInfo = colorList.map(item => item.trim().split(/(?<!,)\s+/))
+  // 双位置语法展开：['red', '0%', '50%'] → [['red', '0%'], ['red', '50%']]
+  // 等价于 CSS Images Level 4 中 `red 0% 50%` ≡ `red 0%, red 50%`
+  // 同步对不支持的写法做拦截：color hint（仅一个位置 token）、非百分比位置（px/rpx 等）
+  const linearInfo = colorList
+    .map(item => item.trim().split(stopWhitespaceRegExp))
+    .reduce<string[][]>((acc, parts) => {
+      // color hint: 例如 `linear-gradient(red, 30%, blue)` 中的 `30%`
+      // 该 token 仅含一个位置值、无颜色；当前实现无法做颜色采样，直接丢弃
+      if (parts.length === 1 && colorHintLeadingRegExp.test(parts[0])) {
+        warn(`[mpx-view] linear-gradient 暂不支持 color hint 写法 [${parts[0]}]，已丢弃该色标`)
+        return acc
+      }
+      const [color, ...positions] = parts
+      if (positions.length === 0) {
+        acc.push([color])
+      } else {
+        for (const pos of positions) {
+          if (!validStopPosRegExp.test(pos)) {
+            warn(`[mpx-view] linear-gradient 色标位置仅支持百分比 [${color} ${pos}] 已丢弃位置，仅保留颜色`)
+            acc.push([color])
+          } else {
+            acc.push([color, pos])
+          }
+        }
+      }
+      return acc
+    }, [])
     .reduce<LinearInfo>((prev, cur, idx, self) => {
       const { colors, locations } = prev
       const [color, val] = cur
@@ -514,6 +587,12 @@ function parseLinearGradient (text: string): LinearInfo | undefined {
       return prev
     }, { colors: [], locations: [] })
 
+  // 色标全部被丢弃或不足以构成渐变（至少 2 个颜色），降级返回
+  if (linearInfo.colors.length < 2) {
+    error(`[mpx-view] linear-gradient 至少需要 2 个有效色标，已丢弃，原值: ${text}`)
+    return null
+  }
+
   return extendObject({}, linearInfo, {
     direction: direction.trim()
   })
@@ -531,12 +610,20 @@ function parseBgImage (text?: string): {
   if (src) return { src, type: 'image' }
 
   const linearInfo = parseLinearGradient(text)
-  if (!linearInfo) return {}
+  if (!linearInfo) {
+    // null 表示 parseLinearGradient 内部已报错，外部不要重复；undefined 才属于未识别形态
+    if (linearInfo === undefined) {
+      error(`[mpx-view] background-image 暂不支持 ${text}，已丢弃，仅支持 url(...) / linear-gradient(...)。`)
+    }
+    return {}
+  }
   return {
     linearInfo,
     type: 'linear'
   }
 }
+
+export const __parseBgImageForTest = (text?: string): any => parseBgImage(text)
 
 function normalizeBackgroundSize (
   backgroundSize: NonNullable<ExtendedViewStyle['backgroundSize']>,

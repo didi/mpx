@@ -62,7 +62,7 @@ describe('useTransformStyle defaultStyle merge', () => {
       expect(result.borderWidth).toBe(0)
     })
 
-    test('user `border: none` short-circuits and overrides default borderWidth', () => {
+    test('user `border: none` clears borderWidth before default style merge', () => {
       const result = run(
         { border: 'none' },
         { borderWidth: 1, borderStyle: 'solid', borderColor: 'red' }
