@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { WebView } from 'react-native-webview'
 import Bus from './Bus'
 
+type WebViewInstance = WebView<{}>
+
 export const WEBVIEW_TARGET = '@@WEBVIEW_TARGET'
 
 export const constructors: Record<string, any> = {}
@@ -42,7 +44,7 @@ export interface WebviewMessage {
 }
 
 export interface CanvasInstance {
-  webview: WebView | null;
+  webview: WebViewInstance | null;
   bus: Bus | null;
   context2D: CanvasRenderingContext2D;
   getContext: (contextType: string) => CanvasRenderingContext2D | null;
