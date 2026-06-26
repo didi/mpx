@@ -107,7 +107,7 @@
     "react-native-svg": "^15.8.0",
     "react-native-video": "^6.9.0",
     "react-native-vision-camera": "^4.7.2",
-    "react-native-webview": "^13.12.2",
+    "react-native-webview": "^13.17.0",
     "rimraf": "^6.0.1",
     "vue": "^2.7.16",
     "webpack": "^5.75.0"
