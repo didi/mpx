@@ -295,6 +295,13 @@ export interface RnConfig {
   onStateChange?: (state: Record<string, any>) => void
 
   /**
+   * 自定义 React Navigation Stack.Navigator 的 screenOptions。
+   *
+   * 会与 Mpx 默认 screenOptions 合并，用户配置优先。
+   */
+  screenOptions?: Record<string, any>
+
+  /**
    * 用于获取初始路由配置的函数。
    *
    * @param props ReactNative根组件接收到的参数
@@ -319,6 +326,13 @@ export interface RnConfig {
    * 是否禁用框架内部的 AppStateChange 监听。
    */
   disableAppStateListener?: boolean
+
+  /**
+   * Stack screenOptions 中 statusBarTranslucent 的默认值。
+   *
+   * @default true
+   */
+  statusBarTranslucent?: boolean
 
   /**
    * RN 文本类组件是否允许跟随系统字体缩放。

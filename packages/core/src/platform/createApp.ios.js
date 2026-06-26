@@ -133,7 +133,7 @@ export default function createApp (options) {
         cb(options)
       })
     } else if (value === 'hide' || value === 'exit') {
-       global.__mpxAppCbs.hide.forEach((cb) => {
+      global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
           reason: value === 'exit' ? 0 : 3
         })
@@ -211,11 +211,11 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
-    const navScreenOpts = {
+    const navScreenOpts = Object.assign({
       headerShown: false,
       statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
       statusBarBackgroundColor: 'transparent'
-    }
+    }, Mpx.config.rnConfig.screenOptions)
 
     return createElement(SafeAreaProvider,
       null,
