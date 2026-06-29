@@ -498,6 +498,27 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).not.toHaveBeenCalled()
     })
 
+    test('should let explicit border-style fill the slot left default by width-only border shorthand', () => {
+      // border: 1px 仅占 width 槽，style 槽缺省补 borderStyle: none；
+      // 后置的 border-style: solid 按声明顺序覆盖默认 none，最终保留 solid
+      // 注：编译期不注入 boxSizing（boxSizing 兜底是运行时 transformBoxSizing 行为）
+      const css = '.a { border: 1px; border-style: solid; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.a).toEqual({
+        borderWidth: '1',
+        borderStyle: '"solid"'
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
     test('should preserve zero with unit for runtime clearing', () => {
       // 带单位 0px / 0rpx 走公共展开链路：0px 占 width 槽，styleProp 缺省补 borderStyle: none
       const css = '.a { border: 0px; } .b { border: 0rpx; } .c { border-top: 0px; }'
@@ -758,13 +779,13 @@ describe('React Native style validation for CSS variables', () => {
     })
 
     test('should expand inset shorthand to four sides', () => {
-      // RN inset 长属性非稳定，单值也必须展开到 top/right/bottom/left
+      // RN 0.74+ 原生支持 inset 单值 DimensionValue，单值原样透传；多值仍展开到 top/right/bottom/left
       const css = '.a { inset: 0; } .b { inset: 10px 20px; } .c { inset: 1px 2px 3px 4px; }'
       const config = createConfig()
 
       const result = getClassMap({ content: css, filename: 'test.css', ...config })
 
-      expect(result.a).toEqual({ top: '0', right: '0', bottom: '0', left: '0' })
+      expect(result.a).toEqual({ inset: '0' })
       expect(result.b).toEqual({ top: '10', right: '20', bottom: '10', left: '20' })
       expect(result.c).toEqual({ top: '1', right: '2', bottom: '3', left: '4' })
       expect(config.warn).not.toHaveBeenCalled()
