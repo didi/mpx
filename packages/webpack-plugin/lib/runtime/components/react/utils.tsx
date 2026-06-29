@@ -97,7 +97,7 @@ const runtimeAbbreviationMap: Record<string, string[]> = {
   // 因此进入 runtimeForceExpandCompositeMap，避免「单值透传」捷径放过这类多值串残留。
   // 百分比（`gap: 50%` / `gap: 10px 50%`）由 transformShorthand 写回阶段就地 resolvePercent 落成 number
   gap: ['rowGap', 'columnGap'],
-  // inset：4 槽位等价 margin 四值语法；RN inset 长属性非稳定，单值也必须展开到 top/right/bottom/left
+  // inset：4 槽位等价 margin 四值语法；RN 0.74+ 原生支持单值 DimensionValue，单值走 runtimeCompositeStyleMap 短路透传
   inset: ['top', 'right', 'bottom', 'left'],
   // outline: <outline-width> || <outline-style> || <outline-color>，顺序不敏感
   outline: ['outlineWidth', 'outlineStyle', 'outlineColor']
@@ -111,15 +111,6 @@ const runtimeCompositeStyleMap: Record<string, boolean> = {
   gap: true,
   inset: true
 }
-// 即使单值也必须展开（不走「单值透传」捷径）：
-// - inset：RN inset 长属性不稳定，单值透传会留下不可靠的 inset key
-// - gap：RN gap / rowGap / columnGap 严格要求 number；单值串虽已在 __getStyle 阶段被 __formatValue 换算，
-//   但多值串（如 '10px 20px'）会原样透传到这里，需展开后逐 token 再过 __formatValue 才能落成 number；
-//   `%` 在写回阶段由 transformShorthand 调 resolvePercent 落成 number（rowGap 基 parentHeight、columnGap 基 parentWidth）
-const runtimeForceExpandCompositeMap: Record<string, boolean> = {
-  inset: true,
-  gap: true
-}
 const runtimeUnorderedAbbreviationMap: Record<string, boolean> = {
   border: true,
   borderTop: true,
@@ -132,13 +123,18 @@ const runtimeUnorderedAbbreviationMap: Record<string, boolean> = {
   // outline 与 border 简写共享同一套缺省值处理
   outline: true
 }
-const runtimeBorderLikeShorthandMap: Record<string, boolean> = {
+// 单值简写在 __getStyle 阶段经 __formatValue 把带单位长度换算为 number 后，
+// 需要在 transformShorthand 入口转回字符串 token 交给展开逻辑的 key 集合。
+// margin / padding / borderRadius / borderWidth / borderColor / inset 不在此列：
+// RN 原生支持这些 key 直接吃单值 number，无需展开。
+const runtimeNumericExpandShorthandMap: Record<string, boolean> = {
   border: true,
   borderTop: true,
   borderRight: true,
   borderBottom: true,
   borderLeft: true,
-  outline: true
+  outline: true,
+  gap: true
 }
 // CSS border-width: medium 的实测值（各主流浏览器一致取 3px）
 // 与编译期 wx/index.js 同名常量保持一致；调整需两侧一起改
@@ -1051,19 +1047,24 @@ export function transformShorthand (styleObj: Record<string, any>, shorthandKeys
     let values: string[]
     if (typeof value === 'string') {
       values = parseValues(value)
-    } else if (value === 0 && hasOwn(runtimeBorderLikeShorthandMap, key)) {
-      values = ['0']
+    } else if (typeof value === 'number' && hasOwn(runtimeNumericExpandShorthandMap, key)) {
+      // runtimeNumericExpandShorthandMap 中的简写（border / outline / gap）在 __getStyle 的 transformStyleObj
+      // 阶段已被 __formatValue 把带单位长度换算为 number；这里转回字符串 token 交给后续展开，
+      // 否则会原样残留为 RN 不认识或行为不一致的简写 key。
+      values = ['' + value]
     } else {
       continue
     }
     const props = runtimeAbbreviationMap[key]
     if (!props) continue
-    // 单值短路：composite 且单值通常透传（RN 原生支持 margin / padding 单值 DimensionValue）；
-    // 但 inset / gap 必须展开（理由见 runtimeForceExpandCompositeMap 注释）
+    // 单值短路：composite 且单值通常透传（RN 原生支持 margin / padding / inset / border-* 单值 DimensionValue）；
+    // 但 gap 必须展开 —— RN gap / rowGap / columnGap 严格要求 number，单值串虽已在 __getStyle 阶段被 __formatValue 换算，
+    // 多值串（如 '10px 20px'）仍会原样透传到这里，需展开后逐 token 再过 __formatValue 才能落成 number；
+    // `%` 在写回阶段由 transformShorthand 调 resolvePercent 落成 number（rowGap 基 parentHeight、columnGap 基 parentWidth）
     if (
       hasOwn(runtimeCompositeStyleMap, key) &&
       values.length === 1 &&
-      !hasOwn(runtimeForceExpandCompositeMap, key)
+      key !== 'gap'
     ) continue
     let expandedValues = values
     let pairs: Array<[string, any]>

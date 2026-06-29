@@ -318,7 +318,7 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 
 | 属性类型 | 简写属性 |
 |----------|----------|
-| **文本相关** | `text-shadow`、`text-decoration` |
+| **文本相关** | `text-shadow`、`text-decoration`、`font` |
 | **布局相关** | `flex`、`flex-flow` |
 | **间距相关** | `margin`、`padding`、`gap` |
 | **定位相关** | `inset` |
@@ -336,7 +336,8 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
   margin: 10px 20px;        /* 转换为 marginTop, marginRight, marginBottom, marginLeft */
   padding: 15px;            /* 转换为 paddingTop, paddingRight, paddingBottom, paddingLeft */
   gap: 20px 10px;           /* 转换为 rowGap, columnGap */
-  inset: 0 10px;            /* 转换为 top, right, bottom, left */
+  inset: 0;                 /* 单值透传给 RN */
+  inset: 0 10px;            /* 多值转换为 top, right, bottom, left */
   
   /* 边框简写 */
   border: 1px solid red;    /* 转换为 borderWidth, borderStyle, borderColor */
@@ -344,7 +345,10 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
   outline: 1px solid red;   /* 转换为 outlineWidth, outlineStyle, outlineColor */
   
   /* 弹性布局简写 */
-  flex: 1 0 auto;          /* 转换为 flexGrow, flexShrink, flexBasis */
+  flex: 1 0 auto;           /* 转换为 flexGrow, flexShrink, flexBasis */
+
+  /* 字体简写 */
+  font: italic bold 16px / 1.5 Arial; /* 转换为 fontStyle, fontWeight, fontSize, lineHeight, fontFamily */
 }
 ```
 
@@ -860,12 +864,12 @@ gap: 10% 20%;       /* 行间距基于父高度，列间距基于父宽度 */
 
 > [!important] Mpx 增强
 >
-> RN 的 `inset` 长属性支持不稳定，Mpx 会将 `inset` 强制展开为 `top`、`right`、`bottom`、`left`。
+> RN 0.74+ 支持 `inset` 单值，Mpx 会保留单值写法；2-4 值写法会展开为 `top`、`right`、`bottom`、`left`。
 
 ```css
-inset: 0;                 /* top/right/bottom/left 都是 0 */
-inset: 10px 20px;         /* 上下 10px，左右 20px */
-inset: 1px 2px 3px 4px;   /* 上 | 右 | 下 | 左 */
+inset: 0;                 /* 单值透传给 RN */
+inset: 10px 20px;         /* 展开为 top/right/bottom/left：上下 10px，左右 20px */
+inset: 1px 2px 3px 4px;   /* 展开为 top/right/bottom/left：上 | 右 | 下 | 左 */
 ```
 
 ### width / height
