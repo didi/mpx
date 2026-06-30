@@ -36,9 +36,13 @@ jest.mock('react', () => {
 
 // eslint-disable-next-line import/first
 import { useTransformStyle } from '../../../lib/runtime/components/react/utils'
+// eslint-disable-next-line import/first
+import { transformStyleObj } from './helpers'
 
 const run = (style: Record<string, any>, defaultStyle?: Record<string, any>) => {
-  const { normalStyle } = useTransformStyle(style, {
+  // 与生产 __getStyle 数据流一致：用户样式先经 styleHelperMixin.ios.js 的 transformStyleObj 归一
+  // 再进 useTransformStyle；defaultStyle 是组件侧用 RN-style 直传，不走 transformStyleObj
+  const { normalStyle } = useTransformStyle(transformStyleObj(style), {
     enableVar: false,
     parentFontSize: 16,
     parentWidth: 375,
