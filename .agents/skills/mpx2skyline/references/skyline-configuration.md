@@ -5,7 +5,7 @@
 - [适用场景](#适用场景)
 - [skyline 配置](#skyline-配置)
   - [三级配置层次](#三级配置层次)
-  - [推荐配置](#推荐配置)
+  - [必要配置](#必要配置)
 - [Worklet Babel 插件](#worklet-babel-插件)
 
 ---
@@ -29,15 +29,17 @@
 | 工具 | `project.config.json` | 开发者工具调试 | setting.skylineRenderEnable |
 
 
-### 推荐配置
+### 必要配置
 
-| 配置项 | 类型 | 默认值 | 推荐值 | 说明 |
-|--------|------|--------|--------|------|
-| `defaultDisplayBlock` | boolean | false | true | 默认 display:block（对齐 WebView） |
+| 配置项 | 类型 | 默认值 | 推荐值 | 说明                                    |
+|--------|------|--------|--------|---------------------------------------|
+| `defaultDisplayBlock` | boolean | false | true | 默认 display:block（对齐 WebView）          |
 | `defaultContentBox` | boolean | false | true | 默认 box-sizing:content-box（对齐 WebView） |
-| `tagNameStyleIsolation` | string | "isolated" | "legacy" | 标签选择器全局匹配（对齐 WebView） |
-| `enableScrollViewAutoSize` | boolean | false | true | scroll-view 自动撑开高度 |
-| `disableABTest` | boolean | false | true | 关闭 Skyline AB 实验，确保稳定性 |
+| `tagNameStyleIsolation` | string | "isolated" | "legacy" | 标签选择器全局匹配（对齐 WebView）                 |
+| `enableScrollViewAutoSize` | boolean | false | true | scroll-view 自动撑开高度                    |
+| `disableABTest` | boolean | false | true | 关闭 Skyline AB 实验，确保稳定性（非必要配置）         |
+
+> 说明：前 4 项（`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize`）是对齐 WebView 行为的**必配项**，适配时务必逐项补齐。`disableABTest` 为**非必填**：仅在需要关闭 Skyline 灰度 AB 实验、强制全量走 Skyline 以排除实验态干扰时按需开启，常规适配可不配，不作为校验项。
 
 **项目配置 app.json 新增以下配置**
 
@@ -55,6 +57,8 @@
   }
 }
 ```
+
+> 注意：上述配置项均为 `rendererOptions.skyline` 的子项，须写在该对象内，**不要**放到 app.json 顶层；只有 `lazyCodeLoading` 是顶层配置。补齐 app.json 时务必逐项核对前 4 项必配项都不遗漏；`disableABTest` 按需选配。
 
 **适配 skyline 页面的 page.json新增以下配置**
 
