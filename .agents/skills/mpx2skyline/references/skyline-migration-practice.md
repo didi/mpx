@@ -793,6 +793,7 @@ const isSmall = ref(mpx.getWindowInfo().screenWidth <= 320)
 - Skyline：`@media` 忽略 → 动态类生效。
 
 > 取舍：`@media` 与 `.small` 两份规则需同步（阈值 / 样式改动要两处一起改）。`getWindowInfo` 是一次性快照，若 Skyline 下需响应运行时屏宽变化（横竖屏），要再用 `wx.onWindowResize` / 页面 `onResize` 更新 `isSmall`。
+> ⚠️ 声明顺序陷阱：Skyline 下 `@media screen` 包裹器被静默忽略，但其内部样式会**无条件生效**（等同于裸写）。若把 `@media` 块放在 Skyline 默认样式之后，会反向覆盖默认样式。务必将 `@media screen` 规则写在 Skyline 默认样式**之前**，让后续的默认样式按级联顺序覆盖它。
 
 ## 组件适配
 

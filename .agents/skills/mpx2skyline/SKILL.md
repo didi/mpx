@@ -134,6 +134,18 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 3. **worklet.scrollViewContext.scrollTo 只能在 worklet 中调用**：调用该 API 的函数必须声明 `'worklet'` 指令（仅 UI 线程可用），且不支持小程序插件。详见 [Scroll API 适配 · worklet.scrollViewContext.scrollTo：调用函数必须声明 'worklet' 指令](./references/skyline-migration-practice.md#workletscrollviewcontextscrollto调用函数必须声明-worklet-指令)。
 4. **DraggableSheetContext.scrollTo 的 size 与 pixels 互斥**：同时传入时仅 `size` 生效，`pixels` 被静默忽略。详见 [Scroll API 适配 · DraggableSheetContext：size 和 pixels 不可同时传入](./references/skyline-migration-practice.md#draggablesheetcontextsize-和-pixels-不可同时传入)。
 
+### 动画策略约束
+
+跨端（WebView + Skyline + RN）场景下，动画方案的选择优先级：
+
+1. **CSS `transition`（首选）**：三端均支持，适用于简单状态切换动画（缩放、透明度、位移等交互反馈）。通过 class 切换或动态 style 触发，无需平台判断。
+2. **CSS `animation` + `@keyframes`（次选）**：三端均支持（RN 侧预计后续版本支持），适用于循环/多步骤动画。
+3. **Worklet 动画（仅 Skyline 手势/滚动场景）**：仅用于需要 UI 线程 60fps 驱动的场景（手势跟手、滚动联动），必须通过 `this.renderer === 'skyline'` 隔离，WebView/RN 走 touch 事件 + transition 降级。
+4. **禁止使用** `this.animate` / `this.applyAnimation` — 这些是 WebView-only API，Skyline 下静默不生效，RN 下不存在。
+5. `wx.createAnimation` mpx2RN & WebView 支持，Skyline 不支持，Skyline 适配时需改造为 CSS `transition` 或者 CSS `animation` + `@keyframes`
+
+> 简单交互动画（如按钮缩放、卡片翻转）直接用 transition，不要为了"性能最优"引入 worklet — worklet 的价值在于手势跟手的实时性，不在于简单状态动画。
+
 ### Worklet 动画约束
 
 1. **必须声明 'worklet' 指令**：在 UI 线程执行的函数（手势/滚动回调等）必须在函数顶部声明 `'worklet'` 字符串，缺少指令将在逻辑线程执行，导致动画延迟。详见 [Worklet 动画适配 · worklet 函数必须声明 'worklet' 指令](./references/skyline-migration-practice.md#worklet-函数必须声明-worklet-指令)。
