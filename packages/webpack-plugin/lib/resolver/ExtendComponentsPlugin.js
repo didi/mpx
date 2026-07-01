@@ -1,9 +1,13 @@
 const path = require('path')
 const toPosix = require('../utils/to-posix')
-const EXTEND_COMPONENT_PATH_REGEXP = /\/lib\/runtime\/components\/extends\//
-const EXTEND_COMPONENT_TARGET_SUB_PATH = 'lib/runtime/components/react/dist/'
+const EXTEND_COMPONENT_PATH_REGEXP = /@mpxjs\/webpack-plugin\/lib\/runtime\/components\/extends\/[^/]+$/
+const RN_SECTION_LIST_TARGET = path.resolve(__dirname, '../runtime/components/react/dist/mpx-section-list.jsx')
 const EXTEND_COMPONENTS = {
-  'section-list': ['ios', 'android', 'harmony']
+  'section-list': {
+    ios: RN_SECTION_LIST_TARGET,
+    android: RN_SECTION_LIST_TARGET,
+    harmony: RN_SECTION_LIST_TARGET
+  }
 }
 
 /**
@@ -41,24 +45,22 @@ module.exports = class ExtendComponentsPlugin {
       }
 
       // 检查组件是否在配置中
-      const supportedModes = EXTEND_COMPONENTS[componentName]
-      if (!supportedModes) {
+      const componentTargetMap = EXTEND_COMPONENTS[componentName]
+      if (!componentTargetMap) {
         pushError(new Error(`Extended component "${componentName}" was not found. Available extended components: ${Object.keys(EXTEND_COMPONENTS).join(', ')}`))
         return callback()
       }
 
       // 获取当前模式下的组件路径
-      if (!supportedModes.includes(mode)) {
-        pushError(new Error(`Extended component "${componentName}" cannot be used on the ${mode} platform. Supported platforms include: ${supportedModes.join(', ')}`))
+      const targetPath = componentTargetMap[mode]
+      if (!targetPath) {
+        pushError(new Error(`Extended component "${componentName}" cannot be used on the ${mode} platform. Supported platforms include: ${Object.keys(componentTargetMap).join(', ')}`))
         return callback()
       }
-      const targetSubPath = `${EXTEND_COMPONENT_TARGET_SUB_PATH}mpx-${componentName}.jsx`
-      const targetRelativePath = `./${targetSubPath}`
-      const targetPath = path.join(request.descriptionFileRoot, targetSubPath)
 
       const redirectRequest = Object.assign({}, request, {
         path: targetPath,
-        relativePath: targetRelativePath,
+        relativePath: undefined,
         __mpxResolvedExtendComponent: true
       })
 
@@ -67,17 +69,7 @@ module.exports = class ExtendComponentsPlugin {
         redirectRequest,
         `resolve extend component: ${componentName} to ${targetPath}`,
         resolveContext,
-        (err, result) => {
-          if (err) {
-            pushError(err)
-            return callback()
-          }
-          if (!result) {
-            pushError(new Error(`Extended component "${componentName}" resolved to "${targetPath}", but the target file was not found.`))
-            return callback()
-          }
-          callback(null, result)
-        }
+        callback
       )
     })
   }

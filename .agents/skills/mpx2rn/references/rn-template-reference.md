@@ -1451,7 +1451,7 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindscroll | 滚动时触发，返回滚动信息 |
+| bindscroll | 滚动时触发，`event.detail.scrollTop` 返回纵向滚动位置 |
 | bindscrolltolower | 滚动到底部 / 触底通知 |
 | bindrefresherrefresh | 自定义下拉刷新被触发 |
 

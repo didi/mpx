@@ -158,10 +158,17 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { bindscroll } = props
-    bindscroll &&
+    if (bindscroll) {
+      const { nativeEvent } = event
       bindscroll(
-        getCustomEvent('scroll', event.nativeEvent, { layoutRef }, props)
+        getCustomEvent('scroll', event, {
+          detail: {
+            scrollTop: nativeEvent.contentOffset.y
+          },
+          layoutRef
+        }, props)
       )
+    }
   }
 
   // 通过sectionIndex和rowIndex获取原始索引
@@ -365,7 +372,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       alwaysBounceHorizontal: false,
       scrollEventThrottle: scrollEventThrottle,
       scrollsToTop: enableBackToTop,
-      showsHorizontalScrollIndicator: showScrollbar,
+      showsVerticalScrollIndicator: showScrollbar,
       onEndReachedThreshold,
       ref: scrollViewRef,
       bounces: enhanced ? bounces : false,
