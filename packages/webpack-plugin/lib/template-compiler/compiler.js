@@ -2824,14 +2824,7 @@ function getVirtualHostRoot (options, meta) {
     }
     if (ctorType === 'page') {
       if (isWeb(mode)) {
-          const rootView = createASTElement('titlebar', [
-              {
-                  name: 'pageConfig',
-                  value: '{{ this.$options.__mpxPageConfig }}'
-              }
-          ])
-          processElement(rootView, rootView, options, meta)
-          return rootView
+        return createASTElement('page')
       }
       if (isReact(mode)) {
         const rootView = createASTElement('view', [

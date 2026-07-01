@@ -78,7 +78,7 @@ const isBuildInWebTag = makeMap(
   'mpx-swiper,mpx-view,mpx-checkbox-group,mpx-movable-area,mpx-radio-group,' +
   'mpx-switch,mpx-web-view,mpx-checkbox,mpx-movable-view,mpx-radio,' +
   'mpx-form,mpx-navigator,mpx-rich-text,' +
-  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text,mpx-titlebar'
+  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text'
 )
 
 /**

@@ -1,46 +1,34 @@
 <script>
 import mpx from '@mpxjs/core'
 
-const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent)
-const innerHeight = (isIOS ? 44 : 48) + 'px'
-
 const safeStyle = { paddingTop: 'var(--safe-area-inset-top)' }
 
 export default {
   name: 'mpx-titlebar',
   props: {
-    // 来自 app.json 中 window 的 titlebar 相关配置
-    windowConfig: {
-      type: Object,
-      default: () => global.__mpxPageConfig
-    },
-    // 来自 页面 json 中的 titlebar 相关配置，会覆盖 windowConfig
+    // 已合并 app.json window 配置与页面 json 配置的最终配置
     pageConfig: {
       type: Object,
       default: () => ({})
     }
   },
   computed: {
-    // 合并全局 window 配置与页面配置（页面配置覆盖全局配置）
-    cfg() {
-      return Object.assign({}, this.windowConfig || {}, this.pageConfig || {})
-    },
     // 标题文本（兼容常见字段名）
     titleText() {
-      return this.cfg.navigationBarTitleText || this.cfg.title || ''
+      return this.pageConfig.navigationBarTitleText || this.pageConfig.title || ''
     },
     // 背景色（兼容常见字段）
     backgroundColor() {
-      return this.cfg.navigationBarBackgroundColor || '#ffffff'
+      return this.pageConfig.navigationBarBackgroundColor || '#ffffff'
     },
     // 文本颜色，微信小程序中 navigationBarTextStyle 为 white 或 black
     textColor() {
-      const style = this.cfg.navigationBarTextStyle || 'black'
+      const style = this.pageConfig.navigationBarTextStyle || 'black'
       return style === 'white' ? '#ffffff' : '#000000'
     },
     // navigationStyle: 'default' | 'custom'，custom 表示需要自定义绘制
     navigationStyle() {
-      return this.cfg.navigationStyle || 'default'
+      return this.pageConfig.navigationStyle || 'default'
     },
     // 是否隐藏（navigationStyle 为 'custom' 时也应隐藏）
     hidden() {
@@ -48,7 +36,6 @@ export default {
     },
     // 是否展示返回按钮：根据浏览器历史判断（不依赖额外 page 配置）
     showBack() {
-      console.log('showBack', this.$router.stack.length)
       try {
         return this.$router.stack.length > 1
       } catch (e) {
@@ -62,10 +49,16 @@ export default {
       }
       return 24
     },
+    isIOS() {
+      return /iP(hone|od|ad)/.test(navigator.userAgent)
+    },
+    innerHeight() {
+      return (this.isIOS ? 44 : 48) + 'px'
+    },
     warpStyle() {
       return {
-        '--titlebar-height': innerHeight,
-        '--safe-area-inset-top': `${isIOS ? 'env(safe-area-inset-top, constant(safe-area-inset-top), 0px)' : this.safeAreaInsetTop + 'px'}`,
+        '--titlebar-height': this.innerHeight,
+        '--safe-area-inset-top': `${this.isIOS ? 'env(safe-area-inset-top, constant(safe-area-inset-top), 0px)' : this.safeAreaInsetTop + 'px'}`,
         paddingTop: 'calc(var(--safe-area-inset-top) + var(--titlebar-height))',
       }
     },
@@ -77,7 +70,7 @@ export default {
     },
     innerStyle() {
       return {
-        height: innerHeight
+        height: this.innerHeight
       }
     }
   },
