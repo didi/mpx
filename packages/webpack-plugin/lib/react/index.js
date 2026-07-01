@@ -23,6 +23,7 @@ module.exports = function ({
   usingComponentsInfo,
   originalUsingComponents,
   componentGenerics,
+  componentPlaceholder,
   autoScope,
   callback
 }) {
@@ -55,7 +56,8 @@ module.exports = function ({
             ctorType,
             usingComponentsInfo,
             originalUsingComponents,
-            componentGenerics
+            componentGenerics,
+            componentPlaceholder
           }, callback)
         },
         (callback) => {
