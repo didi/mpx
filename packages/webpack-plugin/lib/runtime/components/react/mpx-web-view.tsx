@@ -35,7 +35,7 @@ interface WebViewProps {
   binderror?: (event: CommonCallbackEvent) => void
   [x: string]: any
 }
-type WebViewInstance = WebView<{}>
+type WebViewInstance = WebView<any>
 type Listener = (type: string, callback: (e: Event) => void) => () => void
 
 interface PayloadData {

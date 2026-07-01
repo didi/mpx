@@ -33,7 +33,7 @@ import { createImageData as canvasCreateImageData } from './ImageData'
 import { useConstructorsRegistry } from './constructorsRegistry'
 import Portal from '../mpx-portal'
 
-type WebViewInstance = WebView<{}>
+type WebViewInstance = WebView<any>
 
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
