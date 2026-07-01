@@ -23,7 +23,6 @@ interface _RichTextProps extends ViewProps {
   style?: ViewStyle
   nodes: string | Array<Node>
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -57,7 +56,6 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     style = {},
     nodes,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -77,7 +75,6 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     height: webViewHeight
   }, style), {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
@@ -103,7 +100,9 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
         style: extendObject(normalStyle, layoutStyle)
       }
     ),
-    [],
+    [
+      'nodes'
+    ],
     {
       layoutRef
     }

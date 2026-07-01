@@ -29,7 +29,6 @@ export interface RadioGroupProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -44,7 +43,6 @@ const radioGroup = forwardRef<
   const {
     style = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -69,8 +67,6 @@ const radioGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = extendObject({}, defaultStyle, style)
-
   const {
     hasPositionFixed,
     hasSelfPercent,
@@ -79,7 +75,7 @@ const radioGroup = forwardRef<
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, { style: normalStyle })
@@ -152,7 +148,10 @@ const radioGroup = forwardRef<
         style: extendObject({}, normalStyle, layoutStyle)
       }
     ),
-    ['name'],
+    [
+      'name',
+      'bindchange'
+    ],
     {
       layoutRef
     }
@@ -165,7 +164,7 @@ const radioGroup = forwardRef<
         value: contextValue
       },
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current

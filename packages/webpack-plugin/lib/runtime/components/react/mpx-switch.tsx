@@ -26,7 +26,6 @@ interface _SwitchProps extends SwitchProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'external-var-context'?: Record<string, any>
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   catchchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -39,7 +38,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     disabled = false,
     color = '#04BE02',
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -67,7 +65,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     hasPositionFixed
   } = useTransformStyle(style, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
@@ -137,7 +134,10 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
       'checked',
       'disabled',
       'type',
-      'color'
+      'color',
+      'name',
+      'bindchange',
+      'catchchange'
     ],
     { layoutRef }
   )
