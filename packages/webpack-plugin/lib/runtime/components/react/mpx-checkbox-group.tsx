@@ -28,7 +28,6 @@ export interface CheckboxGroupProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -45,7 +44,6 @@ const CheckboxGroup = forwardRef<
   const {
     style = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -66,8 +64,6 @@ const CheckboxGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = extendObject({}, defaultStyle, style)
-
   const {
     hasPositionFixed,
     hasSelfPercent,
@@ -76,7 +72,7 @@ const CheckboxGroup = forwardRef<
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
 
@@ -169,7 +165,7 @@ const CheckboxGroup = forwardRef<
       CheckboxGroupContext.Provider,
       { value: contextValue },
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current
