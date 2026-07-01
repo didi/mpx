@@ -1,8 +1,7 @@
 import { Text, TextStyle, TextProps } from 'react-native'
-import { JSX, createElement, useContext } from 'react'
+import { JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
-import { TextPassThroughContext } from './context'
+import { extendObject, getDefaultAllowFontScaling, useTextPassThroughText, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
 import * as perf from '@mpxjs/perf'
 
 const SimpleText = (props: TextProps): JSX.Element => {
@@ -12,30 +11,29 @@ const SimpleText = (props: TextProps): JSX.Element => {
   // ───── style 阶段 ─────
   let idStyle = -1
   if (__mpx_perf_framework__) idStyle = perf.scopeStart('simple-text:render:style')
-  const inheritedText = useContext(TextPassThroughContext)
-  const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
   let hasBoxSizingAffectingStyle = false
-  const { textStyle = {} } = splitStyle(mergedStyle, (key) => {
+  const { textStyle } = splitStyle(props.style || {}, (key) => {
     if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
       hasBoxSizingAffectingStyle = true
     }
   })
-  const finalStyle = transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
-  const {
-    allowFontScaling,
-    children
-  } = mergedProps
-  const isStringOnly = isStringChildren(children)
-  const childTextStyle: TextStyle | undefined = !isStringOnly && Object.keys(textStyle).length ? textStyle : undefined
-  const childTextPassThrough = useTextPassThroughValue(
-    childTextStyle,
-    undefined,
-    {
-      inheritTextProps: false,
-      disabled: isStringOnly
-    }
-  )
+  // textStyle 仅在子节点非纯字符串时才需要透传给子级；按需计算 isStringChildren
+  const childTextStyle: TextStyle | undefined = textStyle && !isStringChildren(props.children)
+    ? textStyle as TextStyle
+    : undefined
+  const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
+
+  const mergedProps = inheritedText?.pendingTextProps
+    ? extendObject({}, inheritedText.pendingTextProps, props)
+    : props
+  let mergedStyle = inheritedText?.textStyle
+    ? extendObject({}, inheritedText.textStyle, props.style)
+    : props.style
+  if (hasBoxSizingAffectingStyle) {
+    // 仅在需要 mutate 时 clone，避免污染上游 props.style
+    if (mergedStyle === props.style) mergedStyle = extendObject({}, props.style)
+    transformBoxSizing(mergedStyle as Record<string, any>)
+  }
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────
@@ -46,8 +44,8 @@ const SimpleText = (props: TextProps): JSX.Element => {
       {},
       mergedProps,
       {
-        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling(),
-        style: finalStyle
+        allowFontScaling: mergedProps.allowFontScaling ?? getDefaultAllowFontScaling(),
+        style: mergedStyle
       }
     )
   )
@@ -57,10 +55,10 @@ const SimpleText = (props: TextProps): JSX.Element => {
   let idCreate = -1
   if (__mpx_perf_framework__) idCreate = perf.scopeStart('simple-text:render:createElement')
   const result = createElement(Text, innerProps, wrapChildren(
-    { children },
+    mergedProps.children,
     {
       hasVarDec: false,
-      textPassThrough: childTextPassThrough
+      textPassThrough
     }
   ))
   if (__mpx_perf_framework__) perf.scopeEnd(idCreate)

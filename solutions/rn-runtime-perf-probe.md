@@ -890,10 +890,9 @@ monorepo 工作区配置：根 `pnpm-workspace.yaml` / `lerna.json` 把 `package
 首版 `probes` 列表只允许 `'framework'` / `'user'` 两值 + `__mpx_perf__` 总开关，API 表面为 `scopeStart / scopeEnd / mark / measure / start / end / setReporter / clearReporter`。后续如出现以下需求再演进：
 
 1. **新增分组维度**：如 navigation / network 单独成组，扩 `PERF_GROUPS` 数组 + 同步加 `declare const __mpx_perf_navigation__: boolean` 即可，业务方写 `probes: ['framework', 'navigation']`；`@mpxjs/perf` 包零改动。
-2. **分组内细分子桶**：当某分组探针密度过高（如 framework 下的 `useTransformStyle` 在每个 view 上调用）导致测量噪声大、又确实想保留可选粒度时，把 `'framework.view'` / `'framework.style'` 这种带点的字符串纳入 `PERF_GROUPS`，配套生成 `__mpx_perf_framework_view__` 等常量；事件名 namespace 不变，点缀点改用细粒度常量做编译期 DCE。
-3. **更多内置 reporter**：如 Chrome trace / Perfetto JSON 输出（需要时间戳，可从 scopeStart 的 stackStart 数组拿）。
-4. **分位指标补充**：若 p50 / p95 真成为高频需求，可考虑增量加入 `t-digest` 等概率结构（每桶额外 ~1KB），仍不保留逐条事件；先在调用点采样 + 业务侧合并是首选方案。
-5. **业务侧手动开关 sub-feature**（运行时变量）：明确不与"零残留"目标兼容，需新设计。
+2. **更多内置 reporter**：如 Chrome trace / Perfetto JSON 输出（需要时间戳，可从 scopeStart 的 stackStart 数组拿）。
+3. **分位指标补充**：若 p50 / p95 真成为高频需求，可考虑增量加入 `t-digest` 等概率结构（每桶额外 ~1KB），仍不保留逐条事件；先在调用点采样 + 业务侧合并是首选方案。
+4. **业务侧手动开关 sub-feature**（运行时变量）：明确不与"零残留"目标兼容，需新设计。
 
 ## 验收清单
 

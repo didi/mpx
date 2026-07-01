@@ -33,6 +33,7 @@ jobs:
             packages/webpack-plugin/node_modules
             packages/core/node_modules
             packages/api-proxy/node_modules
+            packages/perf/node_modules
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
@@ -51,6 +52,9 @@ jobs:
 
       - name: build-plugin
         run: npm run build --prefix test/e2e/plugin-project
+
+      - name: build-perf
+        run: npm run build -w @mpxjs/perf
 
       - name: exec unit test
         run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
