@@ -66,29 +66,24 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 ## 通用约束与适配原则
 
-无论是适配改造、新建组件还是 Code Review，Skyline 兼容均需严格遵循以下通用约束：
+适配改造、新建组件、Code Review 均须遵循以下约束：
 
-适配/重构类任务下读到 skill 给出的具体改造规则时:
-- 每一项约束或者改造细则，如果有知识库路由或者外链时，必须先读连接文档；
-- skill 明确给方案/可复制代码片段(具体属性值、CSS snippet、组件属性写法)默认按 skill 走，skill 实现复杂且明确有更简单的写法时先抛出来确认；
-- skill 方案和其他方案（如"和邻近文件保持一致" / "拆开写更精确"/ "有更简单的写法"）冲突时，要验证两个问题：语义是否等价、skill 的方案是否在看不到的上下文里更稳，验证符合预期才可使用；
-- 遇到不清楚的地方或者文档中有存在歧义，先要求澄清。
-- 遇到没有 Skyline 下没有替代方案的场景（比如自定义字体需要 ttf 格式、`movable-view` 组件）或者较复杂的场景（层叠上下文改造）等，在最后以 Todo 项的形式列出来，并给出可选方案或降级方案以供决策。
+适配/重构类任务，读到 skill 给出的具体改造规则时：
+- 规则带有知识库路由或外链的，**先读链接文档**再动手；
+- skill 给出明确可复制代码片段（属性值、CSS snippet、组件属性写法）→ 默认按 skill 执行；
+- skill 方案明显偏复杂且有公认更简写法需要澄清确认；
+- skill 没有明确替代方案的组件或者样式属性、规则不清楚、文档有歧义等场景先要求澄清；
+- skill 方案与其他方案（如"和邻近文件保持一致""拆开写更精确""有更简单的写法"）冲突时，先验证两点：语义是否等价；skill 方案是否在未显式声明的上下文里更稳，再确认是否改方案
 
 ### 跨渲染模式兼容约束
 
-产物代码须在 WebView 模式与 Skyline 模式下均能正常运行：
+产物代码须在 WebView 与 Skyline 下均正常运行：
 
-- 若新方案属于 Webview & Skyline & RN 均兼容，则可对齐为新方案；
-- 若新方案属于 Skyline-only 改造，**必须**通过 `this.renderer === 'skyline'` 运行时判断隔离，WebView 下走原有逻辑不受影响，阅读 [运行时 renderer 判断](./references/skyline-migration-practice.md#判断当前渲染模式) ；
-- 特定版本支持的 Skyline 特性按支持处理，不做低版本兼容（如 `position: fixed` 8.0.43+ 支持、`:nth-child` 8.0.50+ 支持）。
+- 新方案若 WebView & Skyline & RN 三端兼容，直接对齐为新方案；
+- 新方案若属 Skyline-only 改造，**必须**通过 `this.renderer === 'skyline'` 运行时隔离，若有细则明确要求 WebView 保留原有逻辑且 Skyline 无副作用则保留，阅读 [运行时 renderer 判断](./references/skyline-migration-practice.md#判断当前渲染模式)；
+- 特定版本起支持的 Skyline 特性（如 `position: fixed` 8.0.43+、`:nth-child` 8.0.50+）按已支持处理，不做低版本兼容。
 
 该原则贯穿模板 / 脚本 / 样式 / JSON 四个维度。
-
-> **页面 vs 组件的配置区别**：
->
-> - **页面**：可在页面 JSON 中配置 `renderer: 'skyline'`，声明该页面使用 Skyline 渲染。但页面内的 Skyline-only 改造（如 span、sticky-header）仍需通过 `this.renderer` 运行时隔离，确保未来切回 WebView 或在不支持 Skyline 的基础库版本上可降级。
-> - **组件**：组件 JSON 中**不要**设置 `renderer: 'skyline'`（组件可能被 WebView 页面和 Skyline 页面同时引用）。组件内所有 Skyline-only 的适配改造**必须**通过 `this.renderer === 'skyline'` 运行时判断隔离，WebView 下走原有逻辑不受影响。组件 JSON 中只需配置 `componentFramework: 'glass-easel'`（双框架兼容）。
 
 ### 布局（layout）约束
 
@@ -96,8 +91,8 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 2. **box-sizing 默认值**：Skyline 默认 `border-box`（WebView 默认 `content-box`）→ app.json  配置 `defaultContentBox` 对齐 WebView 默认 `content-box`。
 3. **页面滚动**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发 → 使用 `scroll-view type="list"` 替代，页面需声明 `disableScroll: true`。**原页面生命周期需迁移到 scroll-view 对应事件**（`bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`），WebView 对齐 Skyline 写法。事件映射与示例详见 [适配最佳实践 · 页面滚动替代方案](./references/skyline-migration-practice.md#页面滚动替代方案)。
 4. **自定义导航**：Skyline 不支持默认导航 → 自定义导航栏，页面需声明 `navigationStyle: 'custom'`。
-5. **inline / inline-block**：Skyline 不支持 inline 和 inline-block 布局 → 使用 flex 布局或 `mpxTagName@wx="span"` 替代，阅读 [适配最佳实践 · inline/inline-block 替代方案](./references/skyline-migration-practice.md#inlineinline-block-替代方案)。**替换后必须同步清理**：① 删除 CSS 中的 `display: inline` / `display: inline-block` 声明；② 删除 `vertical-align`，改由父容器 `align-items: center` 实现垂直居中。
-6. **z-index 与层叠**：z-index 仅兄弟节点生效，无层叠上下文机制 → 阅读 [适配最佳实践 · z-index 与层叠适配](./references/skyline-migration-practice.md#z-index-与层叠适配)，理解 WebView & Skyline 层级差异，重新排布页面内所有子孙节点的层级结构。**优先用非负兄弟序（必要时调整 DOM 顺序）控制层级，尽量避免负 z-index**。
+5. **inline / inline-block**：Skyline 不支持 inline 和 inline-block 布局 → 使用 flex 布局或 `mpxTagName@wx="span"` 替代，阅读 [适配最佳实践 · inline/inline-block 替代方案](./references/skyline-migration-practice.md#inlineinline-block-替代方案)。
+6. **z-index 与层叠**：z-index 仅兄弟节点生效，无层叠上下文机制 → 阅读 [适配最佳实践 · z-index 与层叠适配](./references/skyline-migration-practice.md#z-index-与层叠适配)，理解 WebView & Skyline 层级差异，重新排布页面内所有子孙节点的层级结构。**优先用非负兄弟序（不要调整 DOM 顺序，需要调整 DOM 顺序时需先确认）控制层级，尽量避免负 z-index**。
 
 ### 样式（style）约束
 
@@ -108,7 +103,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 5. **伪元素 animation**：Skyline 下伪元素的 `animation` 不生效 → 使用真实节点 + CSS animation。
 6. **font-weight**：部分机型不支持 `font-weight: 500` / `600` 数值加粗，需使用 `bold` / `700`，webview 对齐 skyline，可直接全局替换。
 7. **box-shadow**：不支持多个叠加。
-8. **不支持 CSS 属性**：`float` / `contain` / `resize` / `writing-mode` / `text-indent` / `overflow-wrap` / `background-attachment` / `background-clip` / `background-origin` / `mask-origin` / `mask-clip` / `mask-mode` / `justify-items` 等属性设置后静默不生效，需替换为等效方案，阅读 [样式适配 · 不支持的 CSS 属性](./references/skyline-migration-practice.md#不支持的-css-属性)。
+8. **不支持 CSS 属性**：`float` / `contain` / `resize` / `writing-mode` / `text-indent` / `overflow-wrap` / `background-attachment` / `background-clip` / `background-origin` / `mask-origin` / `mask-clip` / `mask-mode` / `justify-items` 等属性设置后静默不生效，阅读 [样式适配 · 不支持的 CSS 属性](./references/skyline-migration-practice.md#不支持的-css-属性)，无等效方案时抛出提示
 9. **渐变与背景多值限制**：`radial-gradient` 仅支持 `circle`（不支持 `ellipse`）；`background-image` / `mask-image` 最多支持 2 个值；`background-repeat` / `background-size` 不支持多组值，阅读 [样式适配 · 渐变与背景多值限制](./references/skyline-migration-practice.md#渐变与背景多值限制)。
 10. **filter / backdrop-filter**：不支持 `url()` / `drop-shadow()` 及多函数组合；用 `box-shadow` 替代 `drop-shadow`。详见 [样式适配 · filter / backdrop-filter 限制](./references/skyline-migration-practice.md#filter--backdrop-filter-限制)。
 11. **text-decoration-line 单值**：仅支持单个值，多值组合（如 `underline line-through`）不生效 → 需双值时用运行时判断嵌套 `text` 节点拆分，详见 [适配最佳实践 · text-decoration-line 多值适配](./references/skyline-migration-practice.md#text-decoration-line-多值适配)。
@@ -124,7 +119,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 5. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）。
 6. **sticky-header 必须显式声明背景色**：Skyline 下 `sticky-header` 默认透明，吸顶时会与下层列表内容透字穿透；同时 `sticky-header` 必须是 `sticky-section` 的第一个子节点（且每个 section 仅一个 header）。详见 [适配最佳实践 · sticky 吸顶替代方案](./references/skyline-migration-practice.md#sticky-吸顶替代方案)。
 7. **navigator 嵌套限制**：`<navigator>` 内**只能嵌套 `<text>` 或纯文本**，不能嵌套 `<view>` / `<image>` 等其他组件；
-8. **图文混排须用 `<span>` 内联包裹**：不限于 `<navigator>` 链接——任何「文字与图标/图片在同一行内联混排」的场景（如 `文案 + 小图标 + 文案` 这类促销条/提示行），Skyline 下 `<view>`/`<text>` 无法直接内联混排，需用 `<span>` 包裹各内联片段。详见 [适配最佳实践 · navigator 嵌套限制](./references/skyline-migration-practice.md#navigator-嵌套限制)。
+8. **图文混排须用 `<span>` 内联包裹**：Skyline 下 `<view>`/`<text>` 无法直接图文内联混排，需用 `<span>` 包裹各内联片段，实现参考 [图文混排](./references/skyline-migration-practice.md#inlineinline-block-替代方案)。
 9. **scroll-view 按内容撑开**：需在 app.json 配置 `enableScrollViewAutoSize` 对齐 Webview scroll-view 自动撑开高度。
 
 ### 滚动 API（Scroll API）约束
@@ -138,9 +133,9 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 跨端（WebView + Skyline + RN）场景下，动画方案的选择优先级：
 
-1. **CSS `transition`（首选）**：三端均支持，适用于简单状态切换动画（缩放、透明度、位移等交互反馈）。通过 class 切换或动态 style 触发，无需平台判断。
-2. **CSS `animation` + `@keyframes`（次选）**：三端均支持（RN 侧预计后续版本支持），适用于循环/多步骤动画。
-3. **Worklet 动画（仅 Skyline 手势/滚动场景）**：仅用于需要 UI 线程 60fps 驱动的场景（手势跟手、滚动联动），必须通过 `this.renderer === 'skyline'` 隔离，WebView/RN 走 touch 事件 + transition 降级。
+1. 简单状态切换动画（缩放、透明度、位移等交互反馈）：**CSS `transition`**：三端均支持，通过 class 切换或动态 style 触发，无需平台判断。
+2. 循环/多步骤动画：**CSS `animation` + `@keyframes`**：Webview & Skyline支持，RN 暂不支持可暂时区分平台使用 API `mpx.createAnimation`。
+3. 手势/滚动场景：**Skyline Worklet 动画**，仅用于需要 UI 线程 60fps 驱动的场景（手势跟手、滚动联动），必须通过 `this.renderer === 'skyline'` 隔离。
 4. **禁止使用** `this.animate` / `this.applyAnimation` — 这些是 WebView-only API，Skyline 下静默不生效，RN 下不存在。
 5. `wx.createAnimation` mpx2RN & WebView 支持，Skyline 不支持，Skyline 适配时需改造为 CSS `transition` 或者 CSS `animation` + `@keyframes`
 
@@ -222,7 +217,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - [ ] 原 `onPullDownRefresh` / `onReachBottom` / `onPageScroll` 已迁移到 scroll-view 的 `bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`。
 - [ ] 横向 scroll-view 已满足`enable-flex` + 自身 `display:flex;flex-direction:row` + 子节点 `flex-shrink:0`。
 - [ ] 自定义导航已替代默认导航。
-- [ ] 逐个原 `inline` / `inline-block` 节点确认已**补齐 flex 容器属性**（`display:flex` + `flex-direction`）或改 `text` / `span`——仅删 `inline-block` 不补 flex 会导致布局塌缩。
+- [ ] `inline` / `inline-block` 节点确认已**补齐 flex 容器属性**（`display:flex` + `flex-direction`）或改 `text` / `span`。
 - [ ] `position: sticky` 已替换为 `sticky-header` / `sticky-section`。
 
 **样式**
@@ -242,7 +237,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - [ ] 横向 scroll-view 已满足 `enable-flex` + 自身 `display:flex;flex-direction:row` + 子节点 `flex-shrink:0`。
 - [ ] `sticky-header` 显式声明背景色（避免吸顶透字穿透），且是 `sticky-section` 的第一个子节点。
 - [ ] `<navigator>` 内仅嵌套 `<text>` 或纯文本；
-- [ ] 图文混排已用 `<span>` 包裹——逐个排查「文字与图标/图片同行内联」的节点（不止 `<navigator>` 链接，还含促销条/提示行等），确认已用 `<span>` 内联包裹。
+- [ ] 图文混排已用 `<span>` 包裹——排查「文字与图标/图片同行内联」的节点确认已用 `<span>` 内联包裹。
 - [ ] scroll-view 自适应高度场景已开启 `enableScrollViewAutoSize` 或采用动态获取高度方案。
 - [ ] glass-easel 下 properties 默认值使用 `value` 而非 `default`。
 - [ ] wx:for 绑定 computed 属性已提供 initData 默认值防护。
