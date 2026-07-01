@@ -1,12 +1,12 @@
 const path = require('path')
 const toPosix = require('../utils/to-posix')
 const EXTEND_COMPONENT_PATH_REGEXP = /@mpxjs\/webpack-plugin\/lib\/runtime\/components\/extends\/[^/]+$/
-const RN_SECTION_LIST_TARGET = path.resolve(__dirname, '../runtime/components/react/dist/mpx-section-list.jsx')
+const RN_COMPONENTS_DIST_PATH = 'lib/runtime/components/react/dist'
 const EXTEND_COMPONENTS = {
   'section-list': {
-    ios: RN_SECTION_LIST_TARGET,
-    android: RN_SECTION_LIST_TARGET,
-    harmony: RN_SECTION_LIST_TARGET
+    ios: `${RN_COMPONENTS_DIST_PATH}/mpx-section-list.jsx`,
+    android: `${RN_COMPONENTS_DIST_PATH}/mpx-section-list.jsx`,
+    harmony: `${RN_COMPONENTS_DIST_PATH}/mpx-section-list.jsx`
   }
 }
 
@@ -52,15 +52,17 @@ module.exports = class ExtendComponentsPlugin {
       }
 
       // 获取当前模式下的组件路径
-      const targetPath = componentTargetMap[mode]
-      if (!targetPath) {
+      const targetSubPath = componentTargetMap[mode]
+      if (!targetSubPath) {
         pushError(new Error(`Extended component "${componentName}" cannot be used on the ${mode} platform. Supported platforms include: ${Object.keys(componentTargetMap).join(', ')}`))
         return callback()
       }
+      const targetPath = path.join(request.descriptionFileRoot, targetSubPath)
+      const targetRelativePath = `./${targetSubPath}`
 
       const redirectRequest = Object.assign({}, request, {
         path: targetPath,
-        relativePath: undefined,
+        relativePath: targetRelativePath,
         __mpxResolvedExtendComponent: true
       })
 
