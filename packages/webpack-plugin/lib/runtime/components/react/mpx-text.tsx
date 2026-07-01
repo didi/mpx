@@ -5,12 +5,11 @@
  * ✔ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useContext } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement, Children } from 'react'
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren, splitStyle } from './utils'
-import { TextPassThroughContext } from './context'
+import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughText, isStringChildren, splitStyle } from './utils'
 import * as perf from '@mpxjs/perf'
 
 const decodeMap = {
@@ -31,13 +30,17 @@ function decode (value: string) {
   }
 }
 
-function getDecodedChildren (children: ReactNode) {
-  return Children.map(children, (child) => {
-    if (typeof child === 'string') {
-      return decode(child)
-    }
+function getDecodedChildren (children: ReactNode): { children: ReactNode, isStringOnly: boolean } {
+  if (typeof children === 'string') {
+    return { children: decode(children), isStringOnly: true }
+  }
+  let isStringOnly = true
+  const decoded = Children.map(children, (child) => {
+    if (typeof child === 'string') return decode(child)
+    isStringOnly = false
     return child
   })
+  return { children: decoded, isStringOnly }
 }
 interface _TextProps extends TextProps {
   style?: TextStyle
@@ -45,7 +48,6 @@ interface _TextProps extends TextProps {
   selectable?: boolean
   'user-select'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -59,20 +61,17 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   // ───── props 阶段 ─────
   let idProps = -1
   if (__mpx_perf_framework__) idProps = perf.scopeStart('text:render:props')
-  const inheritedText = useContext(TextPassThroughContext)
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   const {
     style: currentStyle = {},
     allowFontScaling,
     selectable,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'user-select': userSelect,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     decode
-  } = mergedProps
+  } = props
   if (__mpx_perf_framework__) perf.scopeEnd(idProps)
 
   // ───── style 阶段 ─────
@@ -85,33 +84,33 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     hasPositionFixed
   } = useTransformStyle(currentStyle, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
   })
-  const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
+
+  let children: ReactNode
+  let isStringOnly: boolean
+  if (decode) {
+    ({ children, isStringOnly } = getDecodedChildren(props.children))
+  } else {
+    children = props.children
+    isStringOnly = isStringChildren(children)
+  }
+  const childTextStyle = !isStringOnly ? (splitStyle(normalStyle).textStyle as TextStyle | undefined) : undefined
+  const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
+
+  const mergedProps = inheritedText?.pendingTextProps
+    ? extendObject({}, inheritedText.pendingTextProps, props)
+    : props
+  const finalStyle = inheritedText?.textStyle
+    ? extendObject({}, inheritedText.textStyle, normalStyle)
+    : normalStyle
 
   const nodeRef = useRef(null)
   useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
     style: finalStyle
   })
-
-  const children = decode ? getDecodedChildren(mergedProps.children) : mergedProps.children
-  const isStringOnly = isStringChildren(children)
-  let childTextStyle: TextStyle | undefined
-  if (!isStringOnly) {
-    const { textStyle = {} } = splitStyle(finalStyle)
-    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
-  }
-  const textPassThrough = useTextPassThroughValue(
-    childTextStyle,
-    undefined,
-    {
-      inheritTextProps: false,
-      disabled: isStringOnly
-    }
-  )
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
   // ───── innerProps 阶段 ─────
@@ -139,9 +138,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   let idCreate = -1
   if (__mpx_perf_framework__) idCreate = perf.scopeStart('text:render:createElement')
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
-    extendObject({}, mergedProps, {
-      children
-    }),
+    children,
     {
       hasVarDec,
       varContext: varContextRef.current,

@@ -80,6 +80,8 @@ const unit = {
 
 const empty = {}
 
+const isNum = (v) => !isNaN(+v)
+
 function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
   if (unitType && typeof unit[unitType] === 'function') {
@@ -170,7 +172,7 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const varRegExp = /^--/
 
 const parseStyleText = cached((cssText) => {
@@ -213,7 +215,17 @@ function mergeObjectArray (arr) {
 function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop])
+    if (prop === 'lineHeight' && isNum(styleObj[prop])) {
+      if (+styleObj[prop] === 0) {
+        transformed[prop] = 0
+      } else {
+        transformed[prop] = `${Math.round(styleObj[prop] * 100)}%`
+      }
+    } else if (prop === 'flex') {
+      transformed[prop] = styleObj[prop]
+    } else {
+      transformed[prop] = formatValue(styleObj[prop])
+    }
   })
   return transformed
 }
