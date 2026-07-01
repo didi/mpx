@@ -6,9 +6,6 @@
     "OUTPUT_PATH": "输出文件的绝对路径",
     "ORIGINAL_SKILL_PATH": ".agents/skills/mpx2rn/SKILL.md 的绝对路径",
     "ORIGINAL_REFS_PATH": ".agents/skills/mpx2rn/references/ 的绝对路径",
-    "GENE_SKILL_PATH": ".agents/skills/mpx2rn-gene/SKILL.md 的绝对路径",
-    "GENE_GENES_PATH": ".agents/skills/mpx2rn-gene/genes/ 的绝对路径",
-    "GENE_REFS_PATH": ".agents/skills/mpx2rn-gene/references/ 的绝对路径",
     "MODEL": "子 agent 使用的模型 (opus/sonnet/haiku)",
     "METRICS_PATH": "本次 run 的指标文件路径。由主 agent 从 task-notification 的 <usage> 中提取真实数据后写入"
   },
@@ -24,10 +21,6 @@
     "mpx2rn_original": {
       "label": "使用 mpx2rn 原版 skill",
       "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**输入文件**：读取 {{INPUT_PATH}}\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先读取 {{ORIGINAL_SKILL_PATH}}，这是 Mpx 跨端输出 RN 的完整开发适配指南。按照 SKILL.md 中的任务流程和知识库索引，在需要时读取 references/ 目录下的相关参考文档（位于 {{ORIGINAL_REFS_PATH}} 目录）。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**输出**：将完整的修改后 .mpx 文件写入 {{OUTPUT_PATH}}"
-    },
-    "mpx2rn_gene": {
-      "label": "使用 mpx2rn gene 版 skill",
-      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**输入文件**：读取 {{INPUT_PATH}}\n\n**Skill 参考**：你必须严格按照 gene skill 文档进行改造。首先读取 {{GENE_SKILL_PATH}}，这是 Mpx2RN Strategy Gene Skill。按照 SKILL.md 中的调度规则和 Gene 注册表，读取 {{GENE_GENES_PATH}} 目录下的相关 gene 文件。当 gene 指令不足时，查阅 {{GENE_REFS_PATH}} 目录下的详细参考文档。\n\n**输出**：将完整的修改后 .mpx 文件写入 {{OUTPUT_PATH}}"
     }
   }
 }
