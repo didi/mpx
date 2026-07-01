@@ -702,6 +702,7 @@ Mpx.config.rnConfig = {
   onStateChange(state) {
     console.log("navigation state", state)
   },
+  disablePageTransition: true,
   openTypeHandler: {
     onShareAppMessage(shareInfo) {
       console.log("share", shareInfo)
@@ -718,6 +719,7 @@ Mpx.config.rnConfig = {
 | `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
 | `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由。 |
 | `onStateChange` | 导航 state 变化时回调。 |
+| `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
 | `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |
 | `openTypeHandler` | 对象，注册 `button` 组件在 RN 上 `open-type` 的容器侧实现，未注册对应键时点击会告警。 |
 | `openTypeHandler.onShareAppMessage` | 对应模板中 `open-type="share"`：框架会先取当前页 `onShareAppMessage` 的返回（含与默认 `title` / `path` 的合并及可选 `promise` 异步结果），再调用本回调，入参为 `{ title, path, imageUrl? }`，由宿主调起系统分享等能力。 |

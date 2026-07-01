@@ -428,6 +428,20 @@ createComponent({
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，可能需要将 RN 的路由栈同步到 NA 中以便于进行路径关系，此时可在此回调中将 RN 路径栈同步到容器中。
 
+#### mpx.config.rnConfig.disablePageTransition
+
+```ts
+boolean
+```
+
+用于禁用页面转场动画，默认为 `false`。设置为 `true` 后，框架会在内部导航配置中使用 `animation: 'none'`。
+
+如果需要关闭转场动画，可配置：
+
+```js
+mpx.config.rnConfig.disablePageTransition = true
+```
+
 #### mpx.config.rnConfig.onAppBack
 
 ```ts

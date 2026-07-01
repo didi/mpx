@@ -33,6 +33,8 @@ import { createImageData as canvasCreateImageData } from './ImageData'
 import { useConstructorsRegistry } from './constructorsRegistry'
 import Portal from '../mpx-portal'
 
+type WebViewInstance = WebView<any>
+
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
   webview: {
@@ -266,7 +268,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     canvasComponent = createElement(View, innerProps, createElement(
       WebView,
       {
-        ref: (element) => {
+        ref: (element: WebViewInstance | null) => {
           if (canvasRef.current) {
             canvasRef.current.webview = element
           }
@@ -291,7 +293,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }
 
   canvasComponent = createElement(View, innerProps, createElement(WebView, {
-    ref: (element) => {
+    ref: (element: WebViewInstance | null) => {
       if (canvasRef.current) {
         canvasRef.current.webview = element
       }
