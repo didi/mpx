@@ -90,7 +90,7 @@ function genNode (node, isRoot = false) {
             if (node.attrsList.length) {
               const attrs = []
               node.attrsList && node.attrsList.forEach(({ name, value }) => {
-                const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)
+                const attrExp = attrExpMap[name] ? attrExpMap[name] : (value === undefined ? 'true' : s(value))
                 attrs.push(`${mapAttrName(name)}: ${attrExp}`)
               })
               exp += `, { ${attrs.join(', ')} }`
