@@ -28,7 +28,6 @@ interface CameraProps {
   'parent-width'?: number
   'parent-height'?: number
   'enable-var'?: boolean
-  'external-var-context'?: any
 }
 
 interface TakePhotoOptions {
@@ -81,7 +80,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     style = {}
   } = props
   const styleObj = extendObject(
@@ -95,7 +93,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     setHeight
   } = useTransformStyle(styleObj, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
@@ -328,6 +325,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       'mode',
       'resolution',
       'frame-size',
+      'device-position',
       'bindinitdone',
       'bindstop',
       'flash',

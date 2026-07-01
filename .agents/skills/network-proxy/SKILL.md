@@ -14,11 +14,11 @@ This skill helps you troubleshoot and fix network connectivity issues by applyin
 
 ## Default Proxy Configuration
 Unless the user specifies otherwise, assume the local proxy is running at:
-- HTTP Proxy: `http://127.0.0.1:7897`
-- HTTPS Proxy: `http://127.0.0.1:7897`
-- SOCKS Proxy: `socks5://127.0.0.1:7897`
+- HTTP Proxy: `http://127.0.0.1:6268`
+- HTTPS Proxy: `http://127.0.0.1:6268`
+- SOCKS Proxy: `socks5://127.0.0.1:6268`
 
-(Note: Port 7897 is common for tools like Clash/V2Ray. Adjust if the user provides a different port.)
+(Note: Port 6268 is common for tools like Clash/V2Ray. Adjust if the user provides a different port.)
 
 ## How to Apply
 
@@ -26,13 +26,13 @@ Unless the user specifies otherwise, assume the local proxy is running at:
 For a single command execution, prepend the environment variables:
 
 ```bash
-export https_proxy=http://127.0.0.1:7897 http_proxy=http://127.0.0.1:7897 all_proxy=socks5://127.0.0.1:7897
+export https_proxy=http://127.0.0.1:6268 http_proxy=http://127.0.0.1:6268 all_proxy=socks5://127.0.0.1:6268
 [original command]
 ```
 
 Example:
 ```bash
-export https_proxy=http://127.0.0.1:7897 http_proxy=http://127.0.0.1:7897 all_proxy=socks5://127.0.0.1:7897
+export https_proxy=http://127.0.0.1:6268 http_proxy=http://127.0.0.1:6268 all_proxy=socks5://127.0.0.1:6268
 git clone https://github.com/some/repo.git
 ```
 
@@ -40,9 +40,9 @@ git clone https://github.com/some/repo.git
 To set it for the current session:
 
 ```bash
-export https_proxy=http://127.0.0.1:7897
-export http_proxy=http://127.0.0.1:7897
-export all_proxy=socks5://127.0.0.1:7897
+export https_proxy=http://127.0.0.1:6268
+export http_proxy=http://127.0.0.1:6268
+export all_proxy=socks5://127.0.0.1:6268
 ```
 
 ### 3. Unset (Turn off)
@@ -53,6 +53,6 @@ unset https_proxy http_proxy all_proxy
 ```
 
 ## Troubleshooting
-If the default port (7897) doesn't work:
+If the default port (6268) doesn't work:
 1. Ask the user for their proxy port (common alternatives: 1080, 1087, 8080).
 2. Check if a proxy tool is running.
