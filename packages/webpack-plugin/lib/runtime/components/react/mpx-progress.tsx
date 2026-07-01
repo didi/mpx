@@ -51,7 +51,6 @@ export interface ProgressProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -72,7 +71,6 @@ const Progress = forwardRef<
     duration = 30,
     style = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -94,7 +92,6 @@ const Progress = forwardRef<
     hasPositionFixed
   } = useTransformStyle(style, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight

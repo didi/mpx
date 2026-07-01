@@ -168,6 +168,10 @@
 | `onAddToFavorites` | 页面 | 输出 RN 时无效。 |
 | `onSaveExitState` | 页面 | 输出 RN 时无效。 |
 
+#### 注意事项
+
+- **保留关键字 `id` / `dataset` / `data`**：这三个 key 是页面/组件实例的保留关键字。任何会被合并挂载到实例上的数据 key——包括 `properties` / `props`、`data`、`computed`、`methods`、`setup` 的 `return`、`inject`、`mixins` 合并进来的同类字段等——都不得使用这三个名称作为 key（其中 `data` 作为构造选项本身合法，指不能在 `data` / `props` / `computed` 等内部再声明名为 `id` / `dataset` / `data` 的字段）。命中时会触发 `The xxx key [id] is a reserved keyword of miniprogram, please check and rename it.` 报错。命名时使用语义化别名（如 `itemId` / `rowData` / `pageData`）替代。
+
 ---
 
 ### 页面 / 组件实例方法与属性
