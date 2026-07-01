@@ -883,6 +883,10 @@ const sidebar: ExtendedSidebar = {
           link: '/articles/2.9-release',
         },
         {
+          text: 'Mpx 2.11.0 版本正式发布，Mpx2RN 样式一致性与运行时性能系统升级',
+          link: '/articles/2.11-release',
+        },
+        {
           text: '小程序跨端组件库 Mpx-cube-ui 开源啦',
           link: '/articles/mpx-cube-ui',
         },
