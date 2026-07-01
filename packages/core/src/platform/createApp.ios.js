@@ -211,11 +211,14 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
-    const navScreenOpts = Object.assign({
+    const navScreenOpts = {
       headerShown: false,
       statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
       statusBarBackgroundColor: 'transparent'
-    }, Mpx.config.rnConfig.screenOptions)
+    }
+    if (Mpx.config.rnConfig.disablePageTransition) {
+      navScreenOpts.animation = 'none'
+    }
 
     return createElement(SafeAreaProvider,
       null,

@@ -295,11 +295,11 @@ export interface RnConfig {
   onStateChange?: (state: Record<string, any>) => void
 
   /**
-   * 自定义 React Navigation Stack.Navigator 的 screenOptions。
+   * 是否禁用页面转场动画。
    *
-   * 会与 Mpx 默认 screenOptions 合并，用户配置优先。
+   * @default false
    */
-  screenOptions?: Record<string, any>
+  disablePageTransition?: boolean
 
   /**
    * 用于获取初始路由配置的函数。
@@ -328,7 +328,7 @@ export interface RnConfig {
   disableAppStateListener?: boolean
 
   /**
-   * Stack screenOptions 中 statusBarTranslucent 的默认值。
+   * RN 导航状态栏是否默认透明。
    *
    * @default true
    */
