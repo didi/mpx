@@ -1,0 +1,241 @@
+<script>
+import mpx from '@mpxjs/core'
+
+const safeStyle = { paddingTop: 'var(--safe-area-inset-top)' }
+
+export default {
+  name: 'mpx-titlebar',
+  props: {
+    // 已合并 app.json window 配置与页面 json 配置的最终配置
+    pageConfig: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  computed: {
+    // 标题文本（兼容常见字段名）
+    titleText() {
+      return this.pageConfig.navigationBarTitleText || this.pageConfig.title || ''
+    },
+    // 背景色（兼容常见字段）
+    backgroundColor() {
+      return this.pageConfig.navigationBarBackgroundColor || '#ffffff'
+    },
+    // 文本颜色，微信小程序中 navigationBarTextStyle 为 white 或 black
+    textColor() {
+      const style = this.pageConfig.navigationBarTextStyle || 'black'
+      return style === 'white' ? '#ffffff' : '#000000'
+    },
+    // navigationStyle: 'default' | 'custom'，custom 表示需要自定义绘制
+    navigationStyle() {
+      return this.pageConfig.navigationStyle || 'default'
+    },
+    // 是否隐藏（navigationStyle 为 'custom' 时也应隐藏）
+    hidden() {
+      return mpx.config?.webConfig?.enableTitleBar !== true || this.navigationStyle === 'custom'
+    },
+    // 是否展示返回按钮：根据浏览器历史判断（不依赖额外 page 配置）
+    showBack() {
+      try {
+        return this.$router.stack.length > 1
+      } catch (e) {
+        return false
+      }
+    },
+    // 安卓安全高度
+    safeAreaInsetTop() {
+      if (typeof mpx.config.webConfig.safeAreaInsetTop === 'number' && mpx.config.webConfig.safeAreaInsetTop >= 0) {
+        return mpx.config.webConfig.safeAreaInsetTop
+      }
+      return 24
+    },
+    isIOS() {
+      return /iP(hone|od|ad)/.test(navigator.userAgent)
+    },
+    innerHeight() {
+      return (this.isIOS ? 44 : 48) + 'px'
+    },
+    warpStyle() {
+      return {
+        '--titlebar-height': this.innerHeight,
+        '--safe-area-inset-top': `${this.isIOS ? 'env(safe-area-inset-top, constant(safe-area-inset-top), 0px)' : this.safeAreaInsetTop + 'px'}`,
+        paddingTop: 'calc(var(--safe-area-inset-top) + var(--titlebar-height))',
+      }
+    },
+    rootStyle() {
+      return {
+        background: this.backgroundColor,
+        color: this.textColor
+      }
+    },
+    innerStyle() {
+      return {
+        height: this.innerHeight
+      }
+    }
+  },
+  methods: {
+    // 左侧点击：派发事件并在可回退时回退
+    onLeftClick(e) {
+      this.$emit('click-left', e)
+      if (this.showBack) {
+        try { window.history.back() } catch (err) { }
+      }
+    }
+  },
+  render(h) {
+    const leftChildren = []
+
+    // default back button (SVG) — no left slot support
+    if (this.showBack) {
+      leftChildren.push(
+        h('button', {
+          class: 'mpx-titlebar__back',
+          attrs: { 'aria-label': 'back', type: 'button' }
+        }, [
+          h('svg', {
+            attrs: {
+              viewBox: '0 0 24 24',
+              width: '20',
+              height: '20',
+              fill: 'none',
+              xmlns: 'http://www.w3.org/2000/svg',
+              focusable: 'false',
+              'aria-hidden': 'true'
+            }
+          }, [
+            h('path', {
+              attrs: {
+                d: 'M15 18l-6-6 6-6',
+                stroke: 'currentColor',
+                'stroke-width': '2',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round'
+              }
+            })
+          ])
+        ])
+      )
+    }
+
+    // center shows title; only default slot (page content) is supported
+    const centerChildren = [
+      h('div', { class: 'mpx-titlebar__title', style: { color: this.textColor } }, [this.titleText])
+    ]
+
+    // top-level wrapper: contains fixed titlebar and page content wrapper
+    return h('div', { class: 'mpx-page-warp', style: this.hidden ? {} : this.warpStyle }, [
+      this.hidden ? null : h('div', {
+        class: ['mpx-titlebar'],
+        style: this.rootStyle
+      }, [
+        h('div', { class: 'mpx-titlebar__safe', style: safeStyle }, [
+          h('div', { class: 'mpx-titlebar__inner', style: this.innerStyle }, [
+            h('div', { class: 'mpx-titlebar__left', on: { click: this.onLeftClick } }, leftChildren),
+            h('div', { class: 'mpx-titlebar__center' }, centerChildren),
+            h('div', { class: 'mpx-titlebar__right' }, [])
+          ])
+        ])
+      ]),
+      h('page', { style: { position: 'relative'} }, [this.$slots.default])
+    ])
+  }
+}
+</script>
+
+<style scoped>
+.mpx-page-warp {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+
+.mpx-titlebar--hidden {
+  display: none;
+}
+
+.mpx-titlebar__safe {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.mpx-titlebar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.mpx-titlebar__left,
+.mpx-titlebar__right {
+  flex: 0 0 auto;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.mpx-titlebar__center {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 8px;
+}
+
+.mpx-titlebar__title {
+  font-size: 17px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-weight: 500;
+}
+
+.mpx-titlebar__back {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: inherit;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.mpx-titlebar {
+  /* flex-shrink: 0; */
+  height: calc(var(--safe-area-inset-top) + var(--titlebar-height));
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  /* 脱离上下文，单独渲染加速，修复安卓低端机型在页面滚动时titlebar闪烁问题 */
+  transform: translateZ(0);
+}
+
+.mpx-titlebar__content {
+  flex: 1;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.mpx-titlebar__scroll {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+/* SVG icon sizing and inherit color */
+.mpx-titlebar__back svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.mpx-titlebar__back path {
+  stroke: currentColor;
+}
+</style>
