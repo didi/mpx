@@ -65,7 +65,7 @@ const isNativeMiniTag = makeMap(
   'sticky-section,functional-page-navigator,navigator,audio,camera,' +
   'channel-live,channel-video,image,live-player,live-pusher,video,' +
   'voip-room,map,canvas,web-view,ad,ad-custom,official-account,' +
-  'open-data,native-component,aria-component,page-meta,titlebar'
+  'open-data,native-component,aria-component,page-meta'
 )
 
 /**
