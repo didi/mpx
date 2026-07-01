@@ -8,7 +8,7 @@
           wx:key="id"
           class="tab-item"
           bindtap="switchTab(item.id)"
-          wx:class="{{  {tabActive: activeTab === item.id}  }}"
+          wx:class="{{  {'tab-active': activeTab === item.id}  }}"
         >
           <text>{{item.label}}</text>
         </view>
@@ -193,7 +193,7 @@ createComponent({
   color: #666;
 }
 
-.tabActive {
+.tab-active {
   background-color: #667eea;
   color: #fff;
 }

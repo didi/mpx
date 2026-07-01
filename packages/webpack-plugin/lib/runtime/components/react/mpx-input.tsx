@@ -97,7 +97,6 @@ export interface InputProps {
   'placeholder-style'?: { color?: string }
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -148,7 +147,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'selection-start': selectionStart = -1,
     'selection-end': selectionEnd = -1,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -212,7 +210,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, {
@@ -512,7 +510,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
     [
+      'name',
       'type',
+      'maxlength',
+      'cursor-spacing',
+      'adjust-position',
+      'hold-keyboard',
+      'keyboard-type',
+      'auto-height',
       'password',
       'placeholder-style',
       'disabled',
@@ -523,7 +528,13 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       'cursor',
       'cursor-color',
       'selection-start',
-      'selection-end'
+      'selection-end',
+      'bindinput',
+      'bindfocus',
+      'bindblur',
+      'bindconfirm',
+      'bindselectionchange',
+      'bindlinechange'
     ],
     {
       layoutRef
