@@ -11,8 +11,7 @@
   "comparison": {
     "groups": [
       {"id": "no_skill", "label": "不使用 skill (baseline)"},
-      {"id": "mpx2rn_original", "label": "使用 mpx2rn 原版 skill", "skill": ".agents/skills/mpx2rn/SKILL.md"},
-      {"id": "mpx2rn_gene", "label": "使用 mpx2rn gene 版 skill", "skill": ".agents/skills/mpx2rn-gene/SKILL.md"}
+      {"id": "mpx2rn_original", "label": "使用 mpx2rn 原版 skill", "skill": ".agents/skills/mpx2rn/SKILL.md"}
     ]
   },
   "evals": [

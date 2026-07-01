@@ -5,21 +5,21 @@ const getRulesRunner = require('../platform/index')
 const createDiagnostic = require('../platform/create-diagnostic')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const parseValues = require('../utils/string').parseValues
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
-      ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
-      : {}
+    ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
+    : {}
 
   styles = styles && styles.length
     ? styles
     : [{
-        content,
-        filename
-      }]
+      content,
+      filename
+    }]
 
   function formatValue (value) {
     let needStringify = true
