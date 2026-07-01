@@ -16,25 +16,15 @@ const EXTEND_COMPONENTS = {
  * 解析为对应平台的实际组件路径
  */
 module.exports = class ExtendComponentsPlugin {
-  constructor (source, mode, target, compiler) {
+  constructor (source, mode, target) {
     this.source = source
     this.target = target
     this.mode = mode
-    this.currentCompilation = null
-    compiler.hooks.thisCompilation.tap('ExtendComponentsPlugin', (compilation) => {
-      this.currentCompilation = compilation
-    })
   }
 
   apply (resolver) {
     const target = resolver.ensureHook(this.target)
     const mode = this.mode
-
-    const pushError = (err) => {
-      if (this.currentCompilation) {
-        this.currentCompilation.errors.push(err)
-      }
-    }
 
     resolver.getHook(this.source).tapAsync('ExtendComponentsPlugin', (request, resolveContext, callback) => {
       if (request.__mpxResolvedExtendComponent) return callback()
@@ -46,16 +36,9 @@ module.exports = class ExtendComponentsPlugin {
 
       // 检查组件是否在配置中
       const componentTargetMap = EXTEND_COMPONENTS[componentName]
-      if (!componentTargetMap) {
-        pushError(new Error(`Extended component "${componentName}" was not found. Available extended components: ${Object.keys(EXTEND_COMPONENTS).join(', ')}`))
-        return callback()
-      }
-
-      // 获取当前模式下的组件路径
-      const targetSubPath = componentTargetMap[mode]
+      const targetSubPath = componentTargetMap && componentTargetMap[mode]
       if (!targetSubPath) {
-        pushError(new Error(`Extended component "${componentName}" cannot be used on the ${mode} platform. Supported platforms include: ${Object.keys(componentTargetMap).join(', ')}`))
-        return callback()
+        return callback(new Error(`Extended component "${componentName}" cannot be used on the ${mode} platform.`))
       }
       const targetPath = path.join(request.descriptionFileRoot, targetSubPath)
       const targetRelativePath = `./${targetSubPath}`
