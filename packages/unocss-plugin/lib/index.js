@@ -14,11 +14,13 @@ const transformerVariantGroup = require('@unocss/transformer-variant-group')
 const {
   parseClasses,
   parseStrings,
+  parseMpxEscapeKeys,
   parseMustache,
   stringifyAttr,
   parseComments,
   parseCommentConfig
 } = require('./parser')
+const { escapeKey, escapeClassName } = require('@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
 const {
   transformStyle,
@@ -357,6 +359,10 @@ class MpxUnocssPlugin {
               parseStrings(exp).forEach(({ result, start, end }) => {
                 result = transformClasses(result, classNameHandler)
                 expSource.replace(start, end, result)
+              })
+              parseMpxEscapeKeys(exp).forEach(({ result, start, end }) => {
+                const expanded = transformClasses(result, classNameHandler)
+                expSource.replace(start, end, escapeKey(escapeClassName(expanded)))
               })
               return expSource.source()
             }, str => transformClasses(str, classNameHandler))
