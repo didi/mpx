@@ -736,7 +736,7 @@ API
 > [!tip] 注意
 >
 > - style 样式不支持中使用百分比计算、css variable
-   
+
 ### sticky-section
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
 
