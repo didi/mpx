@@ -45,9 +45,13 @@ export interface IntersectionObserver {
 }
 
 export interface PortalContextValue {
-  mount: (children: React.ReactNode, key?: number | null, id?: number | null) => number | undefined
-  update: (key: number, children: React.ReactNode) => void
+  mount: (children: React.ReactNode, key?: number | null, id?: number | null, meta?: PortalMeta) => number | undefined
+  update: (key: number, children: React.ReactNode, meta?: PortalMeta) => void
   unmount: (key: number) => void
+}
+
+export interface PortalMeta {
+  stackPath?: number[]
 }
 
 export interface ScrollViewContextValue {
@@ -73,6 +77,10 @@ export interface StickyContextValue {
 export interface TextPassThroughContextValue {
   textStyle?: TextStyle
   pendingTextProps?: Record<string, any>
+}
+
+export interface FixedStackContextValue {
+  stackPath: number[]
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
@@ -104,5 +112,7 @@ export const ScrollViewContext = createContext<ScrollViewContextValue>({ gesture
 export const PortalContext = createContext<PortalContextValue>(null as any)
 
 export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
+
+export const FixedStackContext = createContext<FixedStackContextValue | null>(null)
 
 export const ProviderContext = createContext(null)
