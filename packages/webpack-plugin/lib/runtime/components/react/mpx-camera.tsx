@@ -58,11 +58,28 @@ interface CameraRef {
   stopRecord: (options?: StopRecordOptions) => void
 }
 
+interface CameraPermissionCache {
+  promise?: Promise<any>
+  result?: boolean
+}
+
 type HandlerRef<T, P> = {
   current: T | null
 }
 
 let RecordRes: any = null
+
+const cameraPermissionCacheMap = new Map<number, CameraPermissionCache>()
+
+function getCameraPermissionCache (pageId: number | undefined) {
+  if (pageId == null) return
+  let cache = cameraPermissionCacheMap.get(pageId)
+  if (!cache) {
+    cache = {}
+    cameraPermissionCacheMap.set(pageId, cache)
+  }
+  return cache
+}
 
 const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -283,30 +300,32 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       try {
         const cameraPermission = global?.__mpx?.config?.rnConfig?.cameraPermission
         if (typeof cameraPermission === 'function') {
-          if (page && hasOwn(page, 'cameraPermissionResult')) {
-            setHasPermission(page.cameraPermissionResult === true)
+          const permissionCache = getCameraPermissionCache(pageId)
+          if (permissionCache && hasOwn(permissionCache, 'result')) {
+            setHasPermission(permissionCache.result === true)
             return
           }
           let permissionResult
-          if (page) {
-            if (!hasOwn(page, 'cameraPermissionPromise')) {
-              page.cameraPermissionPromise = cameraPermission()
+          if (permissionCache) {
+            if (!permissionCache.promise) {
+              permissionCache.promise = cameraPermission()
             }
-            permissionResult = await page.cameraPermissionPromise
+            permissionResult = await permissionCache.promise
           } else {
             permissionResult = await cameraPermission()
           }
           const granted = permissionResult === true
-          if (page) {
-            page.cameraPermissionResult = granted
+          if (permissionCache) {
+            permissionCache.result = granted
           }
           setHasPermission(granted)
         } else {
           setHasPermission(true)
         }
       } catch (error) {
-        if (page) {
-          page.cameraPermissionResult = false
+        const permissionCache = getCameraPermissionCache(pageId)
+        if (permissionCache) {
+          permissionCache.result = false
         }
         setHasPermission(false)
       }
