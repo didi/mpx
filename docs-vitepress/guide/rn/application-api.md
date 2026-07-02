@@ -222,7 +222,7 @@ module.exports = {
 
 ### 跨平台 API 使用限制 {#cross-platform-api-limit}
 ### selectComponent/selectAllComponents
-在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式
+在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标组件上标记 wx:ref。选择器支持范围有限，仅支持以下方式
   * id 选择器：`#id`
   * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
 
@@ -247,11 +247,12 @@ module.exports = {
 
 #### createSelectorQuery
 
-使用 `createSelectorQuery` 来获取基础组件需要在基础节点上标记 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致。
+使用 `createSelectorQuery` 获取基础组件或自定义组件布局信息时，需要在目标节点或组件上标记空 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致。自定义组件默认会测量其非 virtualHost 场景下的 host 根节点。
 
 ```javascript
 <template>
   <view wx:ref class="title">this is view</view>
+  <custom-card wx:ref class="card" />
 </template>
 
 <script>
@@ -263,6 +264,10 @@ module.exports = {
         .select('.title')
         .boundingClientRect(res => {
           console.log('the rect res is:', res)
+        })
+        .select('.card')
+        .boundingClientRect(res => {
+          console.log('the card rect res is:', res)
         })
         .exec()
     }
