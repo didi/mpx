@@ -55,7 +55,6 @@ interface MpxSectionListProps {
   'genericlist-header'?: string;
   'genericlist-footer'?: string;
   'enable-var'?: boolean;
-  'external-var-context'?: any;
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
@@ -109,7 +108,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'genericlist-header': genericListHeader,
     'genericlist-footer': genericListFooter,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -136,7 +134,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
