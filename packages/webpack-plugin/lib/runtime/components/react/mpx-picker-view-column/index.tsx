@@ -19,7 +19,6 @@ interface ColumnProps {
     [key: string]: any
   }
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   wrapperStyle: {
     height: number
     itemHeight: number
@@ -42,8 +41,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     pickerMaskStyle,
     pickerIndicatorStyle,
     enableWheelAnimation = true,
-    'enable-var': enableVar,
-    'external-var-context': externalVarContext
+    'enable-var': enableVar
   } = props
 
   const {
@@ -51,7 +49,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar })
   const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps = {} } = splitProps(props)
   const scrollViewRef = useAnimatedRef<Reanimated.ScrollView>()
