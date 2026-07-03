@@ -11,7 +11,6 @@ import {
   extendObject,
   useTextPassThrough
 } from '../utils'
-import { PickerViewStyleContext } from './pickerVIewContext'
 import Portal from '../mpx-portal'
 import type { AnyFunc } from '../types/common'
 /**
@@ -76,6 +75,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough
+
   } = props
   const { height: indicatorH, ...pickerIndicatorStyle } = indicatorStyle
   const nodeRef = useRef(null)
@@ -187,15 +187,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         enableWheelAnimation
       }
     )
-    const realElement = React.cloneElement(child, wrappedProps)
-    return wrapChildren(
-      realElement,
-      {
-        hasVarDec,
-        varContext: varContextRef.current,
-        textPassThrough
-      }
-    )
+    return React.cloneElement(child, wrappedProps)
   }
 
   const validateChildInitialIndex = (index: number, data: React.ReactNode[]) => {
@@ -230,15 +222,18 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const finalComponent = createElement(
-    PickerViewStyleContext.Provider,
-    { value: textStyle },
+    View,
+    innerProps,
     createElement(
       View,
-      innerProps,
-      createElement(
-        View,
-        { style: [styles.wrapper] },
-        renderPickerColumns()
+      { style: [styles.wrapper] },
+      wrapChildren(
+        renderPickerColumns(),
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textPassThrough
+        }
       )
     )
   )

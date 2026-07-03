@@ -23,7 +23,6 @@ interface _SwitchProps extends SwitchProps {
   disabled: boolean
   color: string
   'enable-var'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -38,7 +37,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     disabled = false,
     color = '#04BE02',
     'enable-var': enableVar,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     bindchange,
@@ -65,7 +63,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     hasPositionFixed
   } = useTransformStyle(style, {
     enableVar,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
