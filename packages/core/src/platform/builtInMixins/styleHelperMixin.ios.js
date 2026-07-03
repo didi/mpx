@@ -215,7 +215,6 @@ function transformStyleObj (styleObj) {
     }
   })
 
-  console.log(transformed)
   return transformed
 }
 
