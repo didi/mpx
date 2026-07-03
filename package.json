@@ -2,9 +2,6 @@
   "name": "mpx-monorepo",
   "description": "mpx monorepo",
   "private": true,
-  "overrides": {
-    "@types/node": "18.19.70"
-  },
   "scripts": {
     "build:tsc": "npm run build -w @mpxjs/perf && npm run build -w @mpxjs/webpack-plugin",
     "lint": "eslint --ext .js,.ts,.tsx,.jsx packages/",
@@ -25,6 +22,7 @@
     "@babel/preset-env": "^7.25.3",
     "@babel/preset-typescript": "^7.24.7",
     "@testing-library/jest-dom": "^4.2.4",
+    "@types/node": "18.19.70",
     "@types/jest": "^27.0.1",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
