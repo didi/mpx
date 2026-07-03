@@ -230,6 +230,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
 
     const specificProps = extendObject({}, innerProps, {
       mode,
+      range,
       children,
       bindchange: onChange,
       bindcolumnchange: onColumnChange,
