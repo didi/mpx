@@ -290,9 +290,7 @@ const createLayer = (isNativeStyle) => {
         ...layerMap.normal,
         ...layerMap.important
       )
-      console.log('pre', res);
       delete res['_inlineLayer']
-      console.log(res);
       return res
     }
 
