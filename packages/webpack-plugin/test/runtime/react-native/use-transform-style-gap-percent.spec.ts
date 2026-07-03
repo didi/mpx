@@ -38,7 +38,6 @@ import { useTransformStyle } from '../../../lib/runtime/components/react/utils'
 const run = (style: Record<string, any>, parent: { parentWidth?: number, parentHeight?: number } = {}) => {
   const { normalStyle } = useTransformStyle(style, {
     enableVar: false,
-    parentFontSize: 16,
     parentWidth: parent.parentWidth ?? 200,
     parentHeight: parent.parentHeight ?? 400
   })

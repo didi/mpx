@@ -35,7 +35,6 @@ import { useTransformStyle } from '../../../lib/runtime/components/react/utils'
 const run = (style: Record<string, any>) => {
   const { normalStyle } = useTransformStyle(style, {
     enableVar: false,
-    parentFontSize: 16,
     parentWidth: 375,
     parentHeight: 667
   })
@@ -43,13 +42,13 @@ const run = (style: Record<string, any>) => {
 }
 
 describe('useTransformStyle font shorthand', () => {
-  test('expands full ordered font with unit-less line-height multiplied by fontSize', () => {
-    // RN lineHeight 不接受百分比；unit-less 数字按规范 = fontSize * 倍数（复用 resolvePercent）
+  test('expands full ordered font with unit-less line-height as percent intermediate', () => {
+    // RN lineHeight 不接受百分比；这里先保留为文本透传阶段可解析的中间态
     expect(run({ font: 'italic bold 16px/1.5 Arial' })).toEqual({
       fontSize: 16,
       fontStyle: 'italic',
       fontWeight: 'bold', // transformStringify 保留 string 'bold'
-      lineHeight: 24, // 16 * 1.5
+      lineHeight: '150%',
       fontFamily: 'Arial'
     })
   })
@@ -57,28 +56,23 @@ describe('useTransformStyle font shorthand', () => {
   test('expands font with spaced slash line-height', () => {
     expect(run({ font: '16px / 1.5 Arial' })).toEqual({
       fontSize: 16,
-      lineHeight: 24,
+      lineHeight: '150%',
       fontFamily: 'Arial'
     })
   })
 
-  test('resolves explicit percent line-height against fontSize', () => {
-    // CSS 规范允许 `font: 16px/120% Arial`；resolvePercent 直接消化 % 字符串
+  test('keeps explicit percent line-height for later text resolution', () => {
     expect(run({ font: '16px/120% Arial' })).toEqual({
       fontSize: 16,
-      lineHeight: 19.2, // 16 * 1.2
+      lineHeight: '120%',
       fontFamily: 'Arial'
     })
   })
 
-  test('percent fontSize resolves via parent-font-size and propagates to line-height', () => {
-    // font 的 fontSize 槽位本身可能是 %（如 50% 表示 parentFontSize 的一半）。
-    // transformFont 内部就地用 resolvePercent 解析 fontSize %（透传外层 percentConfig 拿到 parentFontSize）：
-    //   fontSize: '50%' → 50/100 * parentFontSize(16) = 8
-    // 再用解析后的 fontSize 作为 lineHeight 倍数基数：1.5 → '150%' → 8 * 1.5 = 12
+  test('keeps percent fontSize and unit-less line-height for later text resolution', () => {
     expect(run({ font: '50%/1.5 Arial' })).toEqual({
-      fontSize: 8,
-      lineHeight: 12,
+      fontSize: '50%',
+      lineHeight: '150%',
       fontFamily: 'Arial'
     })
   })
@@ -145,7 +139,7 @@ describe('useTransformStyle font shorthand', () => {
     // 故 useTransformStyle 收到的 fontSize 必为 number；测试同口径传 number 24 而非 '24px' 字符串
     expect(run({ font: '16px/1.5 Arial', fontSize: 24 })).toEqual({
       fontSize: 24, // 长属性原样保留
-      lineHeight: 36, // 24 * 1.5
+      lineHeight: '150%',
       fontFamily: 'Arial'
     })
   })
