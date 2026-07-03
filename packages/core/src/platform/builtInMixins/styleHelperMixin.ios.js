@@ -273,26 +273,26 @@ const createLayer = (isNativeStyle) => {
 
   const genResult = isNativeStyle
     ? () => {
-      return [
-        ...layerMap.preflight,
-        ...layerMap.app,
-        ...layerMap.uno,
-        ...layerMap.normal,
-        ...layerMap.important
-      ]
-    }
+        return [
+          ...layerMap.preflight,
+          ...layerMap.app,
+          ...layerMap.uno,
+          ...layerMap.normal,
+          ...layerMap.important
+        ]
+      }
     : () => {
-      const res = Object.assign(
-        {},
-        ...layerMap.preflight,
-        ...layerMap.app,
-        ...layerMap.uno,
-        ...layerMap.normal,
-        ...layerMap.important
-      )
-      delete res['_inlineLayer']
-      return res
-    }
+        const res = Object.assign(
+          {},
+          ...layerMap.preflight,
+          ...layerMap.app,
+          ...layerMap.uno,
+          ...layerMap.normal,
+          ...layerMap.important
+        )
+        delete res['_inlineLayer']
+        return res
+      }
 
   return {
     mergeToLayer,
