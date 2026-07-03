@@ -213,7 +213,6 @@ function transformStyleObj (styleObj) {
     } else {
       transformed[prop] = value
     }
-
   })
 
   console.log(transformed)
@@ -290,7 +289,7 @@ const createLayer = (isNativeStyle) => {
           ...layerMap.normal,
           ...layerMap.important
         )
-        delete res['_inlineLayer']
+        delete res._inlineLayer
         return res
       }
 
