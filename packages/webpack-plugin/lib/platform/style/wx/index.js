@@ -87,6 +87,11 @@ module.exports = function getSpec ({ warn, error }) {
     'background-repeat': ['no-repeat'],
     width: ['auto', ValueType.length],
     height: ['auto', ValueType.length],
+    left: ['auto', ValueType.length],
+    right: ['auto', ValueType.length],
+    top: ['auto', ValueType.length],
+    bottom: ['auto', ValueType.length],
+    inset: ['auto', ValueType.length],
     'flex-basis': ['auto', ValueType.length],
     margin: ['auto', ValueType.length],
     'margin-top': ['auto', ValueType.length],
@@ -103,7 +108,7 @@ module.exports = function getSpec ({ warn, error }) {
     const propValueTypeRules = [
       // 重要！！优先判断是不是枚举类型
       [ValueType.enum, new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')],
-      [ValueType.length, /^((gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|offset)))$/],
+      [ValueType.length, /^(gap|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|offset)))$/],
       [ValueType.integer, /^((opacity|flex-grow|flex-shrink|z-index)|(.+-(index|opacity)))$/],
       [ValueType.color, /^(color|(.+-color))$/]
     ]
@@ -206,7 +211,7 @@ module.exports = function getSpec ({ warn, error }) {
           return true
         }
         const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(valueForVerify)
-        const isType = Object.keys(valueExp).some(item => valueExp[item].test(valueForVerify) && SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]))
+        const isType = Object.keys(valueExp).some(item => SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]) && valueExp[item].test(valueForVerify))
         if (!isIn && !isType) {
           tipsType(type)
           return false
@@ -440,19 +445,13 @@ module.exports = function getSpec ({ warn, error }) {
     return cssMap
   }
 
-  // 单值直接返回（RN 原生支持单值 DimensionValue）的属性：margin / padding / border-* 四值简写
-  // 不含 gap / inset：
-  // - inset：RN inset 长属性非稳定，单值透传会留下不可靠的 inset key，必须展开到 top/right/bottom/left
-  // - gap：RN gap / rowGap / columnGap 只接受 number；单值串虽然后续 style-helper formatValue 也会处理，
-  //   但展开到 rowGap / columnGap 与运行时 runtimeForceExpandCompositeMap 行为保持对齐，更可读
-  const compositeSingleValuePassthrough = (prop) => prop !== 'gap' && prop !== 'inset'
-
   const formatCompositeVal = ({ prop, value, selector }, { mode }) => {
     // 槽位数由 AbbreviationMap[prop].length 决定（gap=2，inset/margin/padding/border-*=4）
     const count = AbbreviationMap[prop].length
     const values = parseValues(value).splice(0, count)
-    // 单值短路：margin / padding 等 RN 原生支持单值，原样透传；gap / inset 单值也需展开，不走此捷径
-    if (values.length === 1 && compositeSingleValuePassthrough(prop)) {
+    // 单值短路：margin / padding / inset / border-* 等 RN 原生支持单值 DimensionValue，原样透传；
+    // gap 单值仍需展开（RN gap / rowGap / columnGap 只接受 number，展开后与运行时 runtimeForceExpandCompositeMap 对齐）
+    if (values.length === 1 && prop !== 'gap') {
       verifyValues({ prop, value, selector }, false)
       return { prop, value }
     }
@@ -461,7 +460,7 @@ module.exports = function getSpec ({ warn, error }) {
       if (values.length === 1) values.push(values[0])
     } else {
       switch (values.length) {
-        case 1: values.push(values[0], values[0], values[0]); break // 仅 inset 命中（margin/padding 已被上面短路）
+        // case 1 已被上面单值短路兜走（margin / padding / inset / border-* 四值简写均原样透传单值）
         case 2: values.push(...values); break
         case 3: values.push(values[1]); break
       }

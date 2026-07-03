@@ -31,9 +31,13 @@ jest.mock('react', () => {
 
 // eslint-disable-next-line import/first
 import { useTransformStyle } from '../../../lib/runtime/components/react/utils'
+// eslint-disable-next-line import/first
+import { transformStyleObj } from './helpers'
 
 const run = (style: Record<string, any>) => {
-  const { normalStyle } = useTransformStyle(style, {
+  // 与生产 __getStyle 数据流一致：用户样式先经 styleHelperMixin.ios.js 的 transformStyleObj 归一再进 useTransformStyle
+  // 对 font 用例特别相关：lineHeight number 在 transformStyleObj 阶段已被改写为 '%' 字符串
+  const { normalStyle } = useTransformStyle(transformStyleObj(style), {
     enableVar: false,
     parentWidth: 375,
     parentHeight: 667
@@ -107,7 +111,11 @@ describe('useTransformStyle font shorthand', () => {
 
   test('drops the whole font when font-family is missing', () => {
     // 缺必填 font-family → 整体丢弃；font key 被删除、不展开任何 font*
-    expect(run({ font: '16px' })).toEqual({})
+    // 注：单 token 字符串（如 '16px'）在 transformStyleObj 阶段已被 __formatValue 归一为 number，
+    // 进 transformFont 时已不是 string，直接被 typeof 守卫挡掉、不会走到丢弃分支；
+    // 这里用 'bold 16px' 这种多 token 串（含空格不命中 __formatValue 单值正则）保留 string 形态，
+    // 才能真正覆盖 sizeIdx 找到但 family 为空的丢弃分支
+    expect(run({ font: 'bold 16px' })).toEqual({})
   })
 
   test('drops the whole font when font-size is missing', () => {

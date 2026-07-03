@@ -32,9 +32,13 @@ jest.mock('react', () => {
 
 // eslint-disable-next-line import/first
 import { useTransformStyle } from '../../../lib/runtime/components/react/utils'
+// eslint-disable-next-line import/first
+import { transformStyleObj } from './helpers'
 
 const run = (style: Record<string, any>) => {
-  const { normalStyle } = useTransformStyle(style, {
+  // 与生产 __getStyle 数据流一致：用户样式先过 styleHelperMixin.ios.js 的 transformStyleObj 归一
+  // （'1px' → 1、lineHeight → %、flex 原样），再进 useTransformStyle
+  const { normalStyle } = useTransformStyle(transformStyleObj(style), {
     enableVar: false,
     parentWidth: 375,
     parentHeight: 667
@@ -55,6 +59,33 @@ describe('useTransformStyle border-style / outline-style none final clearing', (
     expect(run({ border: '1px solid red', borderStyle: 'none' })).toEqual({
       borderWidth: 0,
       borderColor: 'red',
+      boxSizing: 'content-box'
+    })
+  })
+
+  test('explicit borderStyle long-form fills the style slot left default by width-only border shorthand', () => {
+    // 真实数据流：`border: 1px` 经 __getStyle 的 transformStyleObj → __formatValue 换算为 number 1 后才进 useTransformStyle，
+    // 故这里用 number 1 而非 '1px' 模拟入参（用字符串会绕过真实链路、掩盖单值 number 简写未展开的问题）。
+    // border: 1 仅占 width 槽，style 槽由简写补齐为 none；borderStyle: solid 长属性先于默认占位，
+    // 经 hasOwn 守卫保留 solid，最终不触发 none 折叠。
+    // 注：border 命中 boxSizingAffectingStyleMap → transformBoxSizing 兜底注入 boxSizing 默认值
+    expect(run({ border: 1, borderStyle: 'solid' })).toEqual({
+      borderWidth: 1,
+      borderStyle: 'solid',
+      boxSizing: 'content-box'
+    })
+  })
+
+  test('numeric single-value border shorthand expands to borderWidth (regression: border: 1px)', () => {
+    // 单值 number border 必须展开为 borderWidth，缺省补 borderStyle: none → 末尾折叠为 borderWidth: 0；
+    // 修复前 number 非 0 单值会原样残留为 RN 不认识的 border key
+    expect(run({ border: 1 })).toEqual({
+      borderWidth: 0,
+      boxSizing: 'content-box'
+    })
+    // border: 0 单值同样展开（原本就支持的分支，确保未被破坏）
+    expect(run({ border: 0 })).toEqual({
+      borderWidth: 0,
       boxSizing: 'content-box'
     })
   })
