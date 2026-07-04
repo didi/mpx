@@ -16,7 +16,6 @@ interface FormProps {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'enable-text-pass-through'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   bindsubmit?: (evt: {
@@ -33,7 +32,6 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     style,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -45,7 +43,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
   const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
