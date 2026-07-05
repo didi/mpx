@@ -78,13 +78,13 @@ const styles = StyleSheet.create({
   }
 })
 
-const pickerModalMap: Record<PickerMode, React.ComponentType<PickerProps>> = {
+const pickerModalMap = {
   [PickerMode.SELECTOR]: PickerSelector,
   [PickerMode.MULTI_SELECTOR]: PickerMultiSelector,
   [PickerMode.TIME]: PickerTime,
   [PickerMode.DATE]: PickerDate,
   [PickerMode.REGION]: PickerRegion
-}
+} satisfies Record<PickerMode, React.ComponentType<any>>
 
 const getDefaultValue = (mode: PickerMode) => {
   switch (mode) {
@@ -228,15 +228,6 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       hide()
     }
 
-    const specificProps = extendObject({}, innerProps, {
-      mode,
-      range,
-      children,
-      bindchange: onChange,
-      bindcolumnchange: onColumnChange,
-      getRange: () => range
-    })
-
     const renderPickerContent = () => {
       if (disabled) {
         return null
@@ -245,8 +236,16 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!(_mode in pickerModalMap)) {
         return warn(`[Mpx runtime warn]: Unsupported <picker> mode: ${mode}`)
       }
+      const specificProps = extendObject({}, innerProps, {
+        mode: _mode,
+        range,
+        children,
+        bindchange: onChange,
+        bindcolumnchange: onColumnChange,
+        getRange: () => range
+      }) as PickerProps
       const _value: any = value
-      const PickerModal = pickerModalMap[_mode]
+      const PickerModal = pickerModalMap[_mode] as React.ComponentType<PickerProps>
       const renderPickerModal = (
         <>
           {headerText && (
