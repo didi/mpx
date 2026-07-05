@@ -115,4 +115,19 @@ describe('MpxPicker RN runtime', () => {
     expect(selector.props.range).toBe(range)
     expect(triggerView.props.range).toBeUndefined()
   })
+
+  test('defaults omitted selector range to empty array', () => {
+    const result = (Picker as any)({
+      mode: PickerMode.SELECTOR,
+      value: 0,
+      children: 'Select'
+    }, null)
+
+    const popupContent = mockOpen.mock.calls[0][0]
+    const selector = findElementByType(popupContent, 'PickerSelector')
+    const triggerView = findElementByType(result, 'View')
+
+    expect(selector.props.range).toEqual([])
+    expect(triggerView.props.range).toBeUndefined()
+  })
 })

@@ -115,7 +115,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const {
       mode,
       value,
-      range = null,
+      range = [],
       children,
       disabled,
       bindcancel,
