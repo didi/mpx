@@ -38,6 +38,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const lengthValueRegExp = /^(-?(?:\d+(?:\.\d+)?|\.\d+)(?:rpx|px|%|vw|vh)?|hairlineWidth)$/
+const DEFAULT_FONT_SIZE = 16
 // transform: 'rotateX(45deg) ...' 单段拆出 fn 名与括号内值
 const transformFnRegExp = /([/\w]+)\((.+)\)/
 // boxShadow 子值识别 rpx 单位（仅 rpx 需要换算为 px，其它单位保留原样）
@@ -566,7 +567,7 @@ function resolvePercent (value: string | number | undefined, key: string, percen
   let base
   let reason
   if (key === 'fontSize') {
-    base = 16
+    base = DEFAULT_FONT_SIZE
     reason = 'default-font-size'
   } else if (key === 'lineHeight') {
     base = resolvePercent(percentConfig.fontSize, 'fontSize', percentConfig)
@@ -1447,7 +1448,7 @@ function getTextPercentBase (currentFontSize?: string | number, parentTextStyle?
     ? currentFontSize
     : typeof parentTextStyle?.fontSize === 'number'
       ? parentTextStyle.fontSize
-      : 16
+      : DEFAULT_FONT_SIZE
 }
 
 export function resolveTextPercentStyle<T extends TextStyle | undefined> (
