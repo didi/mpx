@@ -300,7 +300,7 @@ page {
 | `text-decoration-style` | `solid` \| `double` \| `dotted` \| `dashed` \| `wavy` | `solid` | **仅在 `<text>` 和 `<input>` 上生效** |
 | `text-decoration-color` | `<color>` | `black` | **仅在 `<text>` 和 `<input>` 上生效** |
 | `text-shadow` | `none` \| `<length>{2,3} <color>?` | `none` | |
-| `text-overflow` | `clip` \| `ellipsis` | `clip` | **仅在 `<text>` 上生效**，`<view>` 等无效；推荐使用 `<text>` 的 `overflow`/`max-lines` 属性 |
+| `text-overflow` | `clip` \| `ellipsis` | `clip` | CSS 属性生效范围有限；文本超长打点推荐在承载文本的 `view` / `text` / `rich-text` / `special-text` 上使用 `overflow` / `max-lines` 属性 |
 | `direction` | — | — | ⛔ 不可用 |
 
 ### 变换（Transform）
@@ -451,7 +451,7 @@ page {
 | 伪元素 `animation`                   | 支持 | **不支持** | 真实节点 + CSS animation                                        |
 | `em` 单位                           | 支持 | **不支持** | 使用 `rpx` / `px` / `rem`                                     |
 | `text-decoration` 作用范围            | 所有元素 | **仅 `<text>` 和 `<input>`** | view 内文字用 `<text>` 包裹                                       |
-| `text-overflow` 作用范围              | 所有元素 | **仅 `<text>`** | view 内文字用 `<text>` 包裹                                       |
+| `text-overflow` 作用范围              | 所有元素 | CSS 属性生效范围有限；组件属性可覆盖 `view` / `text` / `rich-text` / `special-text` | 文本超长打点优先补 `max-lines` / `overflow` 属性，`view` 可直接承载 |
 | `border-color`/`border-style` 四边  | 四边可不同 | **`border-radius` 非 0 时需一致** | 保持四边一致或拆分节点                                                 |
 | `font-weight` 数值                  | 完全支持 | **部分机型 500/600 不生效** | 使用 `bold` / `700`                                           |
 | `box-shadow` 多层                   | 支持 | **不支持多个叠加** | 拆分节点或合并                                                     |
