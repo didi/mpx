@@ -76,6 +76,8 @@ jest.mock('../../../lib/runtime/components/react/mpx-picker/region', () => ({
 import Picker from '../../../lib/runtime/components/react/mpx-picker'
 // eslint-disable-next-line import/first
 import { PickerMode } from '../../../lib/runtime/components/react/mpx-picker/type'
+// eslint-disable-next-line import/first
+import { TextPassThroughContext } from '../../../lib/runtime/components/react/context'
 
 const findElementByType = (element: any, type: any): any => {
   if (!element) return null
@@ -129,5 +131,28 @@ describe('MpxPicker RN runtime', () => {
 
     expect(selector.props.range).toEqual([])
     expect(triggerView.props.range).toBeUndefined()
+  })
+
+  test('passes text style through to trigger children', () => {
+    const result = (Picker as any)({
+      mode: PickerMode.SELECTOR,
+      value: 0,
+      range: ['Beijing'],
+      style: {
+        width: 100,
+        color: 'red',
+        fontSize: 20
+      },
+      children: 'Select'
+    }, null)
+
+    const triggerView = findElementByType(result, 'View')
+    const textProvider = findElementByType(triggerView, TextPassThroughContext.Provider)
+
+    expect(triggerView.props.style).toEqual({ width: 100 })
+    expect(textProvider.props.value.textStyle).toEqual({
+      color: 'red',
+      fontSize: 20
+    })
   })
 })

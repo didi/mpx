@@ -9,7 +9,7 @@ import PickerRegion from './region'
 import { FormContext, FormFieldValue, RouteContext } from '../context'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
-import { extendObject, useLayout } from '../utils'
+import { extendObject, splitProps, splitStyle, useLayout, useTextPassThrough, useTransformStyle, wrapChildren } from '../utils'
 import { createPopupManager } from '../mpx-popup'
 import { EventType, LanguageCode, PickerMode, PickerProps } from './type'
 
@@ -111,7 +111,9 @@ const buttonTextMap: Record<LanguageCode, { cancel: string; confirm: string }> =
 }
 
 const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
-  (props: PickerProps, ref): React.JSX.Element => {
+  (pickerProps: PickerProps, ref): React.JSX.Element => {
+    const { textProps, innerProps: splitInnerProps } = splitProps(pickerProps)
+    const props = (splitInnerProps || {}) as PickerProps
     const {
       mode,
       value,
@@ -120,7 +122,12 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       disabled,
       bindcancel,
       bindchange,
-      'header-text': headerText = ''
+      'header-text': headerText = '',
+      style,
+      'enable-var': enableVar,
+      'enable-text-pass-through': enableTextPassThrough,
+      'parent-width': parentWidth,
+      'parent-height': parentHeight
     } = props
 
     const { pageId } = useContext(RouteContext) || {}
@@ -130,11 +137,25 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const nodeRef = useRef<View>(null)
     const pickerRef = useRef<any>(null)
     const { open, show, hide, remove } = useRef(createPopupManager()).current
+    const {
+      normalStyle,
+      hasVarDec,
+      varContextRef,
+      hasSelfPercent,
+      setWidth,
+      setHeight
+    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
+    const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+    const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
-    useNodesRef<View, PickerProps>(props, ref, nodeRef)
-    const { layoutRef, layoutProps } = useLayout({
+    useNodesRef<View, PickerProps>(props, ref, nodeRef, {
+      style: normalStyle
+    })
+    const { layoutRef, layoutProps, layoutStyle } = useLayout({
       props,
-      hasSelfPercent: false,
+      hasSelfPercent,
+      setWidth,
+      setHeight,
       nodeRef
     })
 
@@ -143,7 +164,8 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         {},
         props,
         {
-          ref: nodeRef
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle)
         },
         layoutProps
       ),
@@ -284,7 +306,15 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     return createElement(
       TouchableWithoutFeedback,
       { onPress: show },
-      createElement(View, innerProps, children)
+      createElement(
+        View,
+        innerProps,
+        wrapChildren(children, {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textPassThrough
+        })
+      )
     )
   }
 )
