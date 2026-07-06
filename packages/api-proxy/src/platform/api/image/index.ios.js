@@ -22,13 +22,15 @@ const getImageInfo = function (options = {}) {
     failHandle(result, fail, complete)
     return
   }
+
   Image.getSize(src, (width, height) => {
     const result = {
       errMsg: 'getImageInfo:ok',
       width,
-      height
+      height,
+      path: src
     }
-    defineUnsupportedProps(result, ['path', 'orientation', 'type'])
+    defineUnsupportedProps(result, ['orientation', 'type'])
     successHandle(result, success, complete)
   }, (err) => {
     const result = {

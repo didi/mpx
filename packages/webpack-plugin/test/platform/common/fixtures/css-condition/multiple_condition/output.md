@@ -7,23 +7,24 @@
     "defs": {
         "isMobile": true,
         "showHeader": true
-    }
+    },
+    "dependencies": []
 }
 ```
 
 ## Result
 
 ```css
-
+/*@mpx-if(isMobile)*/
 .mobile {
   display: block;
 }
+/*@mpx-endif*/
 
-
-
+/*@mpx-if(showHeader)*/
 .header {
   height: 100px;
 }
-
+/*@mpx-endif*/
 
 ```

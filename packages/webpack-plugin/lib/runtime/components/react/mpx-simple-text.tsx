@@ -1,25 +1,70 @@
-import { Text, TextProps } from 'react-native'
+import { Text, TextStyle, TextProps } from 'react-native'
 import { JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject } from './utils'
+import { extendObject, getDefaultAllowFontScaling, useTextPassThroughText, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
+import * as perf from '@mpxjs/perf'
 
 const SimpleText = (props: TextProps): JSX.Element => {
-  const {
-    allowFontScaling = false,
-    children
-  } = props
+  let idTotal = -1
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('simple-text:render:total')
 
+  // ───── style 阶段 ─────
+  let idStyle = -1
+  if (__mpx_perf_framework__) idStyle = perf.scopeStart('simple-text:render:style')
+  let hasBoxSizingAffectingStyle = false
+  const { textStyle } = splitStyle(props.style || {}, (key) => {
+    if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
+      hasBoxSizingAffectingStyle = true
+    }
+  })
+  // textStyle 仅在子节点非纯字符串时才需要透传给子级；按需计算 isStringChildren
+  const childTextStyle: TextStyle | undefined = textStyle && !isStringChildren(props.children)
+    ? textStyle as TextStyle
+    : undefined
+  const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
+
+  const mergedProps = inheritedText?.pendingTextProps
+    ? extendObject({}, inheritedText.pendingTextProps, props)
+    : props
+  let mergedStyle = inheritedText?.textStyle
+    ? extendObject({}, inheritedText.textStyle, props.style)
+    : props.style
+  if (hasBoxSizingAffectingStyle) {
+    // 仅在需要 mutate 时 clone，避免污染上游 props.style
+    if (mergedStyle === props.style) mergedStyle = extendObject({}, props.style)
+    transformBoxSizing(mergedStyle as Record<string, any>)
+  }
+  if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
+
+  // ───── innerProps 阶段 ─────
+  let idInnerProps = -1
+  if (__mpx_perf_framework__) idInnerProps = perf.scopeStart('simple-text:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
-      props,
+      mergedProps,
       {
-        allowFontScaling
+        allowFontScaling: mergedProps.allowFontScaling ?? getDefaultAllowFontScaling(),
+        style: mergedStyle
       }
     )
   )
+  if (__mpx_perf_framework__) perf.scopeEnd(idInnerProps)
 
-  return createElement(Text, innerProps, children)
+  // ───── createElement 阶段 ─────
+  let idCreate = -1
+  if (__mpx_perf_framework__) idCreate = perf.scopeStart('simple-text:render:createElement')
+  const result = createElement(Text, innerProps, wrapChildren(
+    mergedProps.children,
+    {
+      hasVarDec: false,
+      textPassThrough
+    }
+  ))
+  if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
+
+  if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
+  return result
 }
 
 SimpleText.displayName = 'MpxSimpleText'

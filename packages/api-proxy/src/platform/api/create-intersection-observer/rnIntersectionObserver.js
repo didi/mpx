@@ -74,10 +74,19 @@ class RNIntersectionObserver {
       return
     }
     let targetRef = null
-    if (this.observeAll) {
-      targetRef = this.component.__selectRef(selector, 'node', true)
-    } else {
-      targetRef = this.component.__selectRef(selector, 'node')
+    // 支持传递 ref 对象或数组
+    if (isArray(selector)) {
+      const refs = [].concat(...selector.map(item => (item && item.nodeRefs) || []))
+      targetRef = this.observeAll ? refs : refs[0]
+    } else if (isObject(selector)) {
+      const refs = selector.nodeRefs || []
+      targetRef = this.observeAll ? refs : refs[0]
+    } else if (isString(selector)) {
+      if (this.observeAll) {
+        targetRef = this.component.__selectRef(selector, 'node', true)
+      } else {
+        targetRef = this.component.__selectRef(selector, 'node')
+      }
     }
     if (!targetRef || targetRef.length === 0) {
       warn('intersection observer target not found', this.mpxFileResource)
@@ -201,6 +210,9 @@ class RNIntersectionObserver {
 
   // 计算节点的rect信息
   _measureTarget (isInit = false) {
+    if (!this.observerRefs || !this.relativeRef) {
+      return
+    }
     Promise.all([
       this._getReferenceRect(this.observerRefs),
       this._getReferenceRect(this.relativeRef)

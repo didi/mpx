@@ -22,7 +22,7 @@ import { StyleSheet, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback } from './utils'
+import { useTransformStyle, splitProps, splitStyle, hiddenStyle, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback, useTextPassThrough } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -179,7 +179,7 @@ interface MovableViewProps {
   'simultaneous-handlers'?: Array<GestureHandler>
   inertia?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -213,7 +213,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     friction = 2,
     'out-of-bounds': outOfBounds = false,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -243,7 +243,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const navigation = useNavigation()
 
@@ -251,6 +251,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
   const gestureSwitch = useRef(false)
   const { textStyle, innerStyle } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
@@ -718,7 +719,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return handlers
   }
 
-  const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
+  const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? hiddenStyle : {}
 
   // bind 相关 touch 事件直接由 gesture 触发，无须重复挂载
   // catch 相关 touch 事件需要重写并通过 useInnerProps 注入阻止冒泡逻辑
@@ -745,19 +746,34 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         style: [innerStyle, animatedStyles, layoutStyle]
       },
       rewriteCatchEvent()
-    )
+    ),
+    [
+      'direction',
+      'x',
+      'y',
+      'disabled',
+      'animation',
+      'damping',
+      'friction',
+      'out-of-bounds',
+      'inertia',
+      'wait-for',
+      'simultaneous-handlers',
+      'disable-event-passthrough',
+      'changeThrottleTime',
+      'bindchange'
+    ]
   )
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
     Animated.View,
     innerProps,
     wrapChildren(
-      props,
+      props.children,
       {
         hasVarDec,
         varContext: varContextRef.current,
-        textStyle,
-        textProps
+        textPassThrough
       }
     )
   ))

@@ -46,15 +46,15 @@ module.exports = function (content) {
   const fs = this._compiler.inputFileSystem
   const runtimeCompile = queryObj.isDynamic
 
-  const emitWarning = (msg) => {
+  const emitWarning = (msg, loc) => {
     this.emitWarning(
-      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const emitError = (msg, loc) => {
     this.emitError(
-      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
@@ -180,6 +180,9 @@ module.exports = function (content) {
     waterfall: true,
     warn: emitWarning,
     error: emitError,
+    diagnostic: {
+      file: resourcePath
+    },
     data: {
       // polyfill global usingComponents
       globalComponents: mpx.globalComponents
@@ -472,6 +475,11 @@ module.exports = function (content) {
       }
     }
 
+    const wrapTabBarAsset = (expr) => {
+      if (mode !== 'ks') return expr
+      return `(function(p){return typeof p === "string" && p.charAt(0) === "/" ? p.slice(1) : p})(${expr})`
+    }
+
     const processTabBar = (output) => {
       const tabBarCfg = config[mode].tabBar
       const itemKey = tabBarCfg.itemKey
@@ -480,11 +488,15 @@ module.exports = function (content) {
 
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
-          if (item[iconKey] && isUrlRequest(item[iconKey])) {
-            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(urlToRequest(item[iconKey]), { useLocal: true })}");\n`
+          const iconPath = item[iconKey]
+          if (iconPath && isUrlRequest(iconPath)) {
+            const iconRequire = wrapTabBarAsset(`require("${addQuery(urlToRequest(iconPath), { useLocal: true })}")`)
+            output += `json.tabBar.${itemKey}[${index}].${iconKey} = ${iconRequire};\n`
           }
-          if (item[activeIconKey] && isUrlRequest(item[activeIconKey])) {
-            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(urlToRequest(item[activeIconKey]), { useLocal: true })}");\n`
+          const activeIconPath = item[activeIconKey]
+          if (activeIconPath && isUrlRequest(activeIconPath)) {
+            const activeIconRequire = wrapTabBarAsset(`require("${addQuery(urlToRequest(activeIconPath), { useLocal: true })}")`)
+            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = ${activeIconRequire};\n`
           }
         })
       }

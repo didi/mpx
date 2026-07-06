@@ -2,6 +2,7 @@ const createHelpers = require('../helpers')
 const async = require('async')
 const getClassMap = require('./style-helper').getClassMap
 const shallowStringify = require('../utils/shallow-stringify')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 module.exports = function (styles, {
   loaderContext,
@@ -11,16 +12,17 @@ module.exports = function (styles, {
 }, callback) {
   const { getRequestString } = createHelpers(loaderContext)
   let content = ''
+  const styleResults = []
   let output = '/* styles */\n'
   if (styles.length) {
-    const warn = (msg) => {
+    const warn = (msg, loc) => {
       loaderContext.emitWarning(
-        new Error('[Mpx style warning][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style warning][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
       )
     }
-    const error = (msg) => {
+    const error = (msg, loc) => {
       loaderContext.emitError(
-        new Error('[Mpx style error][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
       )
     }
     const { mode, srcMode } = loaderContext.getMpx()
@@ -34,11 +36,22 @@ module.exports = function (styles, {
       // todo 建立新的request在内部导出classMap，便于样式模块复用
       loaderContext.importModule(JSON.parse(getRequestString('styles', style, extraOptions, i))).then((result) => {
         if (Array.isArray(result)) {
-          result = result.map((item) => {
-            return item[1]
-          }).join('\n')
+          result.forEach((item) => {
+            const css = item[1]
+            styleResults.push({
+              content: css,
+              map: item[3],
+              filename: loaderContext.resourcePath
+            })
+            content += css.trim() + '\n'
+          })
+        } else {
+          styleResults.push({
+            content: result,
+            filename: loaderContext.resourcePath
+          })
+          content += result.trim() + '\n'
         }
-        content += result.trim() + '\n'
         callback()
       }).catch((e) => {
         callback(e)
@@ -47,33 +60,46 @@ module.exports = function (styles, {
     }, (err) => {
       if (err) return callback(err)
       try {
+        output += `
+          global.__classCaches = global.__classCaches || []
+          var __classCache = new Map()
+          global.__classCaches.push(__classCache)`
+        const formatValueName = '_f'
         const classMap = getClassMap({
           content,
+          styles: styleResults,
           filename: loaderContext.resourcePath,
+          inputFileSystem: loaderContext._compiler && loaderContext._compiler.inputFileSystem,
           mode,
           srcMode,
           ctorType,
           warn,
-          error
+          error,
+          formatValueName
         })
+        const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
+          result !== '' && (result += ',')
+          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(${formatValueName}){return ${shallowStringify(value)};}`
+          return result
+        }, '')
         if (ctorType === 'app') {
           output += `
-          let __appClassMap
-          global.__getAppClassMap = function() {
+          var __appClassMap
+          global.__getAppClassStyle = function(className) {
             if(!__appClassMap) {
-              __appClassMap = ${shallowStringify(classMap)};
+              __appClassMap = {${classMapCode}};
             }
-            return __appClassMap;
+            return global.__GCC(className, __appClassMap, __classCache);
           };\n`
         } else {
           output += `
-          let __classMap
+          var __classMap
           global.currentInject.injectMethods = {
-            __getClassMap: function() {
+            __getClassStyle: function(className) {
               if(!__classMap) {
-                __classMap = ${shallowStringify(classMap)};
+                __classMap = {${classMapCode}};
               }
-              return __classMap;
+              return global.__GCC(className, __classMap, __classCache);
             }
           };\n`
         }

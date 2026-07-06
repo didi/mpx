@@ -55,7 +55,6 @@ interface CanvasProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'external-var-context'?: Record<string, any>
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void
@@ -65,7 +64,7 @@ interface CanvasProps {
 }
 
 const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasProps>((props: CanvasProps = {}, ref): JSX.Element => {
-  const { style = {}, originWhitelist = ['*'], 'enable-var': enableVar, 'external-var-context': externalVarContext, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
+  const { style = {}, originWhitelist = ['*'], 'enable-var': enableVar, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
   const [isLoaded, setIsLoaded] = useState(false)
   const nodeRef = useRef(null)
 
@@ -77,7 +76,6 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     setHeight
   } = useTransformStyle(extendObject({}, style, stylesheet.container), {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
@@ -103,7 +101,10 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
         style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 })
       }
     ),
-    [],
+    [
+      'originWhitelist',
+      'binderror'
+    ],
     {
       layoutRef
     }
@@ -310,6 +311,6 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   return canvasComponent
 })
 
-_Canvas.displayName = 'mpxCanvas'
+_Canvas.displayName = 'MpxCanvas'
 
 export default _Canvas

@@ -4,12 +4,17 @@ import Portal from './mpx-portal/index'
 import { usePreventRemove, PreventRemoveEvent } from '@react-navigation/native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
-import { WebView } from 'react-native-webview'
+import { WebView, WebViewProps as RNWebViewProps } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { getCurrentPage, useNavigation } from './utils'
 import { WebViewHttpErrorEvent, WebViewEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
 import { StyleSheet, View, Text } from 'react-native'
+
+// react-native-webview@13.17+ 将 WebView 泛型默认值由 {} 改为 undefined，
+// 导致 WebViewProps & undefined 塌成 never、JSX 直接使用时 props 全部不可赋值。
+// 显式实参化为 WebView<object>（其 props 即 WebViewProps），保留类实例签名使 ref 仍解析为 WebView，兼容各版本声明。
+const RNWebView = WebView as unknown as new (props: RNWebViewProps) => WebView<object>
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -127,8 +132,16 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     style: defaultWebViewStyle
   })
 
+  const getHostFromUrl = function (url: string): string {
+    if (!url) return ''
+    // 匹配协议://主机名(:端口) 的模式
+    const regex = /^(?:https?|ftp):\/\/([^/?:#]+)(?::(\d+))?/i
+    const match = url.match(regex)
+    return match ? match[1] : ''
+  }
+
   const hostValidate = (url: string) => {
-    const host = url && new URL(url).host
+    const host = url && getHostFromUrl(url)
     const hostWhitelists = mpx.config.rnConfig?.webviewConfig?.hostWhitelists || []
     if (hostWhitelists.length) {
       return hostWhitelists.some((item: string) => {
@@ -226,7 +239,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         }
         break
       case 'postMessage':
-        bindmessage && bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
+        bindmessage && bindmessage(getCustomEvent('message', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
           detail: {
             data: params[0]?.data
           }
@@ -343,8 +356,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
               <View style={styles.loadErrorButton} onTouchEnd={_reload}><Text style={{ fontSize: 12, color: '#666666' }}>{currentErrorText.button}</Text></View>
             </View>
             )
-          : (<WebView
-            style={ defaultWebViewStyle }
+          : (
+          <RNWebView
+            containerStyle={ defaultWebViewStyle }
             source={{ uri: src }}
             ref={webViewRef}
             javaScriptEnabled={true}
@@ -356,7 +370,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onHttpError={onHttpError}
             onError={onError}
             allowsBackForwardNavigationGestures={true}
-      ></WebView>)}
+          ></RNWebView>)}
       </Portal>
   )
 })

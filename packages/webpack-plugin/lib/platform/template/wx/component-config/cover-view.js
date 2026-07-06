@@ -4,6 +4,7 @@ module.exports = function ({ print }) {
   const aliPropLog = print({ platform: 'ali', tag: TAG_NAME, isError: false })
   const baiduValueLogError = print({ platform: 'baidu', tag: TAG_NAME, isError: true, type: 'value' })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -41,7 +42,8 @@ module.exports = function ({ print }) {
             baiduValueLogError({ name, value })
           }
         },
-        web: webPropLog
+        web: webPropLog,
+        ks: ksPropLog
       },
       {
         test: 'use-built-in',

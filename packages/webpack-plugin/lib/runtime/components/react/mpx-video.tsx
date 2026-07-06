@@ -77,7 +77,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import Portal from './mpx-portal'
 
 interface VideoProps {
-  src: string
+  src: string | ReactVideoSourceProperties | number
   autoplay?: boolean
   loop?: boolean
   muted?: boolean
@@ -93,7 +93,6 @@ interface VideoProps {
   'preferred-peak-bit-rate'?: number
   'enable-auto-rotation'?: number
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -155,7 +154,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     'preferred-peak-bit-rate': preferredPeakBitRate = 0,
     'enable-auto-rotation': enableAutoRotation = false,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -172,12 +170,12 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   propsRef.current = props
 
   const { normalStyle, hasSelfPercent, setWidth, setHeight, hasPositionFixed } =
-    useTransformStyle(extendObject({}, styles.container, style), {
+    useTransformStyle(style, {
       enableVar,
-      externalVarContext,
       parentFontSize,
       parentWidth,
-      parentHeight
+      parentHeight,
+      defaultStyle: styles.container
     })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
@@ -321,10 +319,8 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     videoRef.current && videoRef.current.setFullScreen(true)
   }
 
-  const source: ReactVideoSourceProperties = {
-    uri: src
-  }
-  if (isDrm) {
+  const source = typeof src === 'string' ? { uri: src } : (typeof src === 'number' ? src : extendObject({}, src))
+  if (isDrm && source && typeof source !== 'number') {
     source.drm = {
       type: DRMType.FAIRPLAY,
       certificateUrl: __mpx_mode__ !== 'ios' ? provisionUrl : certificateUrl,
@@ -369,6 +365,14 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
       'src',
       'autoplay',
       'loop',
+      'initial-time',
+      'object-fit',
+      'is-drm',
+      'provision-url',
+      'certificate-url',
+      'license-url',
+      'preferred-peak-bit-rate',
+      'enable-auto-rotation',
       'bindplay',
       'bindpause',
       'bindended',

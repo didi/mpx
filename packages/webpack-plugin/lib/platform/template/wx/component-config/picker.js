@@ -11,6 +11,7 @@ module.exports = function ({ print }) {
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -49,7 +50,8 @@ module.exports = function ({ print }) {
         qa: qaPropLog,
         ios: iosPropLog,
         android: androidPropLog,
-        harmony: harmonyPropLog
+        harmony: harmonyPropLog,
+        ks: ksPropLog
       }
     ],
     event: [

@@ -19,7 +19,6 @@ interface ColumnProps {
     [key: string]: any
   }
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   wrapperStyle: {
     height: number
     itemHeight: number
@@ -42,8 +41,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     pickerMaskStyle,
     pickerIndicatorStyle,
     enableWheelAnimation = true,
-    'enable-var': enableVar,
-    'external-var-context': externalVarContext
+    'enable-var': enableVar
   } = props
 
   const {
@@ -51,7 +49,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar })
   const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps = {} } = splitProps(props)
   const scrollViewRef = useAnimatedRef<Reanimated.ScrollView>()
@@ -97,6 +95,11 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const contentContainerStyle = useMemo(() => {
     return [{ paddingVertical: paddingHeight }]
   }, [paddingHeight])
+
+  const initialContentOffsetY = useMemo(
+    () => initialIndex * itemRawH,
+    [initialIndex, itemRawH]
+  )
 
   const getIndex = useCallback((y: number) => {
     const calc = Math.round(y / itemRawH)
@@ -154,17 +157,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       activeIndex.current = initialIndex
     }, isIOS ? 0 : 200)
   }, [itemRawH, maxIndex, initialIndex])
-
-  const onContentSizeChange = useCallback((_w: number, h: number) => {
-    const y = initialIndex * itemRawH
-    if (y <= h) {
-      clearTimerScrollTo()
-      timerScrollTo.current = setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
-        activeIndex.current = initialIndex
-      }, 0)
-    }
-  }, [itemRawH, initialIndex])
 
   const onItemLayout = useCallback((e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
@@ -331,8 +323,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       onScrollEndDrag,
       onMomentumScrollBegin,
       onMomentumScrollEnd,
-      onContentSizeChange,
-      contentContainerStyle
+      contentContainerStyle,
+      contentOffset: { x: 0, y: initialContentOffsetY }
     }) as React.ComponentProps<typeof Reanimated.ScrollView>
 
     return createElement(

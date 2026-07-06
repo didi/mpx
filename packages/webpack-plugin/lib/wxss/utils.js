@@ -972,11 +972,13 @@ function normalizeSourceMapForRuntime (map, loaderContext) {
 
       const resourceDirname = path.dirname(loaderContext.resourcePath)
       const absoluteSource = path.resolve(resourceDirname, source)
-      const contextifyPath = normalizePath(
-        path.relative(loaderContext.rootContext, absoluteSource)
-      )
+      // 为方便编译报错信息显示，直接返回绝对路径，后续如果有需要再改成 webpack://./xxx 的形式
+      return normalizePath(absoluteSource)
+      // const contextifyPath = normalizePath(
+      //   path.relative(loaderContext.rootContext, absoluteSource)
+      // )
 
-      return `webpack://./${contextifyPath}`
+      // return `webpack://./${contextifyPath}`
     })
   }
 
@@ -1016,6 +1018,7 @@ function getModuleCode (
   api,
   replacements,
   options,
+  isRN,
   loaderContext
 ) {
   if (options.modules.exportOnlyLocals === true) {
@@ -1054,8 +1057,12 @@ function getModuleCode (
     } else {
       // 符合css后缀名的文件经过mpx处理后会带上相应的后缀防止使用 webpack 的默认解析规则，此时 require/import 相应路径时，导出的不是一段 css 代码了，事实上是一个文件路径。
       const printedParam = printParams(media, dedupe, supports, layer)
-      const otherParams = printedParam.length > 0 ? printedParam : ''
-      beforeCode += `___CSS_LOADER_EXPORT___.push([module.id, '@import "' + ${item.importName} + '";', ${JSON.stringify(otherParams)} ]);\n`
+      const hasParams = printedParam.length > 0
+      if (isRN) {
+        beforeCode += `___CSS_LOADER_EXPORT___.i(${item.importName}${hasParams ? `, ${printedParam}` : ''});\n`
+      } else {
+        beforeCode += `___CSS_LOADER_EXPORT___.push([module.id, '@import "' + ${item.importName} + '";'${hasParams ? `, ${printedParam}` : ''}]);\n`
+      }
     }
   }
 

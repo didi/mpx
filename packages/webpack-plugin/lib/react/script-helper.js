@@ -58,10 +58,10 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
       const moduleId = mpx.getModuleId(pageCfg.resource)
       const getFallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback'))
       const getLoading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading'))
-      pagesMap[pagePath] = getAsyncSuspense('page', moduleId, pageRequest, 'Page', pageCfg.async, getFallback, getLoading)
+      pagesMap[pagePath] = getAsyncSuspense('page', moduleId, pageRequest, 'MpxPage', pageCfg.async, getFallback, getLoading)
     } else {
       // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-      pagesMap[pagePath] = getComponentGetter(getComponent(pageRequest, 'Page'))
+      pagesMap[pagePath] = getComponentGetter(getComponent(pageRequest, 'MpxPage'))
     }
     if (pagePath === jsonConfig.entryPagePath) {
       firstPage = pagePath

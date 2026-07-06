@@ -31,8 +31,10 @@ import {
   wrapMethodsWithErrorHandling,
   warn,
   error,
-  getEnvObj
+  getEnvObj,
+  def
 } from '@mpxjs/utils'
+import { renderHelperDefs } from '../platform/builtInMixins/renderHelperMixin'
 import {
   BEFORECREATE,
   CREATED,
@@ -52,6 +54,7 @@ import {
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
 import { inject, provide } from '../platform/export/inject'
+import * as perf from '@mpxjs/perf'
 
 let uid = 0
 
@@ -164,6 +167,8 @@ export default class MpxProxy {
   }
 
   created () {
+    let perfId = -1
+    if (__mpx_perf_framework__) perfId = perf.scopeStart('proxy:created')
     if (__mpx_dynamic_runtime__) {
       // 缓存上下文，在 destoryed 阶段删除
       contextMap.set(this.uid, this.target)
@@ -190,12 +195,14 @@ export default class MpxProxy {
     this.callHook(CREATED)
 
     if (!isWeb && !isReact) {
+      this.initRenderHelpers()
       this.initRender()
     }
 
     if (this.reCreated) {
       nextTick(this.mounted.bind(this))
     }
+    if (__mpx_perf_framework__) perf.scopeEnd(perfId)
   }
 
   resolveParent () {
@@ -245,6 +252,8 @@ export default class MpxProxy {
   }
 
   unmounted () {
+    let perfId = -1
+    if (__mpx_perf_framework__) perfId = perf.scopeStart('proxy:unmounted')
     if (__mpx_dynamic_runtime__) {
       // 页面/组件销毁清除上下文的缓存
       contextMap.remove(this.uid)
@@ -274,6 +283,7 @@ export default class MpxProxy {
       this.miniRenderData = null
       this.forceUpdateData = null
     }
+    if (__mpx_perf_framework__) perf.scopeEnd(perfId)
   }
 
   isUnmounted () {
@@ -335,7 +345,7 @@ export default class MpxProxy {
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
           createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
           getPageId: this.target.getPageId.bind(this.target),
-          getOpenerEventChannel: this.target.getOpenerEventChannel.bind(this.target)
+          getOpenerEventChannel: this.target.getOpenerEventChannel ? this.target.getOpenerEventChannel.bind(this.target) : noop
         }
       ])
       if (!isObject(setupResult)) {
@@ -726,6 +736,15 @@ export default class MpxProxy {
     flushPreFlushCbs(this)
     resetTracking()
     this.toggleRecurse(true)
+  }
+
+  initRenderHelpers () {
+    if (this.options.__nativeRender__ || __mpx_mode__ !== 'ks') return
+    Object.keys(renderHelperDefs).forEach((key) => {
+      if (!hasOwn(this.target, key)) {
+        def(this.target, key, renderHelperDefs[key])
+      }
+    })
   }
 
   initRender () {

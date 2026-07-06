@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.10.3
+ * mpxjs webview bridge v2.10.6
  * (c) 2025 @mpxjs team
  * @license Apache
  */
@@ -44,6 +44,7 @@ function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
 }
 
 let sdkReady;
+const loadErrorCallbacks = [];
 const SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
@@ -120,6 +121,13 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
 
 const initWebviewBridge = () => {
   sdkReady = (env !== 'web' && env !== 'rn') ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  sdkReady.catch((err = {}) => {
+    loadErrorCallbacks.forEach((callback) => {
+      if (typeof callback === 'function') {
+        callback(err.message || err);
+      }
+    });
+  });
   getWebviewApi();
 };
 
@@ -146,6 +154,17 @@ const webviewBridge = {
         window.wx.config(config);
       }
     });
+  },
+  onLoadScriptError (callback) {
+    if (loadErrorCallbacks.indexOf(callback) === -1) {
+      loadErrorCallbacks.push(callback);
+    }
+  },
+  offLoadScriptError (callback) {
+    const index = loadErrorCallbacks.indexOf(callback);
+    if (index > -1) {
+      loadErrorCallbacks.splice(index, 1);
+    }
   }
 };
 

@@ -2,7 +2,7 @@
 sidebarDepth: 2
 ---
 
-# 编译构建
+# 编译构建 {#compile-build}
 
 对于使用 `@mpxjs/cli@3.x` 脚手架初始化的项目而言，编译构建相关的配置统一收敛至项目根目录下的 `vue.config.js` 进行配置。一个新项目初始化的 `vue.config.js` 如下图，相较于 `@mpxjs/cli@2.x` 版本，在新的初始化项目当中原有的编译构建配置都收敛至 cli 插件当中进行管理和维护，同时还对外暴露相关的接口或者 api 使得开发者能自定义修改 cli 插件当中默认的配置。
 
@@ -34,7 +34,7 @@ module.exports = () => {
 }
 ```
 
-## 类型定义
+## 类型定义 {#type-definition}
 
 为了便于对编译配置的数据类型进行准确地描述，我们在这里对一些常用的配置类型进行定义
 
@@ -570,13 +570,13 @@ module.exports = defineConfig({
 })
 ```
 
-#### 应用场景及相应配置
+#### 应用场景及相应配置 {#scenarios-and-config}
 
 接下来我们来看下一些应用场景及如何配置。如果是用脚手架生成的项目，在`mpx.plugin.conf.js`里找到`transRpxRules`，应该已经有预设的`transRpxRules`选项，按例修改即可。
 
-三种场景分别是 [普通使用](#场景一) ， [只对某些特殊样式转换](#场景二) ， [不同路径分别配置规则](#场景三)
+三种场景分别是 [普通使用](#scenario-1) ， [只对某些特殊样式转换](#scenario-2) ， [不同路径分别配置规则](#scenario-3)
 
-#### 场景一
+#### 场景一 {#scenario-1}
 设计师给的稿是2倍图，分辨率750px。或者更高倍图。
 
 ```js
@@ -595,7 +595,7 @@ module.exports = defineConfig({
 })
 ```
 
-#### 场景二
+#### 场景二 {#scenario-2}
 
 大部分样式都用px下，某些元素期望用rpx。或者反过来。
 
@@ -618,7 +618,7 @@ module.exports = defineConfig({
 
 mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，细节请看下方附录。
 
-#### 场景三
+#### 场景三 {#scenario-3}
 使用了第三方组件，它的设计宽度和主项目不一致，期望能设置不同的转换规则
 
 ```js
@@ -650,7 +650,7 @@ module.exports = defineConfig({
 
 > 注意事项：转换规则是不可以对一个文件做多次转换的，会出错，所以一旦被一个规则命中后就不会再次命中另一个规则，include 和 exclude 的编写需要注意先后顺序，就比如上面这个配置，如果第一个规则 include 的是 '/' 即整个项目，iview-weapp 里的样式就无法命中第二条规则了。
 
-#### transRpxRules附录
+#### transRpxRules附录 {#transrpxrules-appendix}
 
 - **designWidth**
 
@@ -818,20 +818,49 @@ module.exports = defineConfig({
 })
 ```
 
-### webConfig
+### webConfig {#web-config}
 
-`{transRpxFn(match:string, $1:number): string}`
+**`mode === 'web'`** 输出时使用的编译期配置对象，在 `plugin.webConfig`（如 `vue.config.js` / `mpx.config.js` 的 `pluginOptions.mpx.plugin` 下）中传入，由 `MpxWebpackPlugin` 读取并参与 Web 侧 rpx 转换、SSR、页面切换动画与内建组件等编译逻辑。
 
-transRpxFn 配置用于自定义输出 web 时对于 rpx 样式单位的转换逻辑，常见的方式有转换为 vw 或转换为 rem
+#### webConfig.transRpxFn {#webconfig-transrpxfn}
 
-`{useSSR: boolean}`
+`(match: string, $1: number) => string`
 
-useSSR 默认值为 `false`，当 SSR 模式下使用异步分包时，需要将 useSSR 设置为 `true`, 其他场景不需要。
+自定义 Web 输出时对 **rpx** 单位的转换规则，常见写法为转为 **vw** 或 **rem**。
 
-`{disablePageTransition: boolean}`
+#### webConfig.useSSR {#webconfig-usessr}
 
-用于配置禁用/开启页面切换动画，默认禁用
+`boolean = false`
 
+在 **SSR** 模式下若使用 **异步分包**，需将 `useSSR` 设为 **`true`**；其它场景保持默认即可。
+
+#### webConfig.disablePageTransition {#webconfig-disablepagetransition}
+
+`boolean = true`
+
+为 `true` 时 **禁用** 页面切换动画；设为 **`false`** 可 **开启** 切换过渡效果。
+
+#### webConfig.customBuiltInComponents {#webconfig-custombuiltincomponents}
+
+`Record<string, string> | undefined`
+
+在 **Web 输出**（**`mode === 'web'`**）、且 **非 app 入口**（存在参与编译的用户模版）时生效，用于 **替换或扩展** 框架对某一微信基础标签在 Web 侧的内建实现。
+
+**key**
+
+- 须为 **微信小程序侧基础标签名**（如 `view`、`text`、`scroll-view`），与模版中写的标签一致。
+- **不要** 使用 **`mpx-*`** 作为 key。
+
+**value**（文档约定，插件 **不在编译期校验** 格式）
+
+- 建议使用 **绝对路径**（POSIX 以 **`/`** 开头，或 Windows 下 **`path.isAbsolute` 为真**），或 **以 npm 包名开头的模块路径**（如 **`@scope/pkg/...`**、**`my-pkg/...`**，首段须为合法包名，避免写成易被误认为工程相对路径的 **`src/...`**）。
+- **不要** 使用 **`./`、`../`** 及 **`~`** 前缀；不符合约定时一般由 **webpack 解析** 等环节报错。
+
+**注意事项**
+
+- 某标签一旦在配置中声明，Web 侧将 **优先使用你提供的模块** 作为该基础标签的实现；**属性、事件、子节点等与微信文档的差异** 需在你的组件内 **自行对齐**。
+- **app 入口** 仅内置 **`mpx-keep-alive`**，**不使用** 本配置项。
+- **小程序等其它输出形态** 不读取 `webConfig.customBuiltInComponents`；仅在 **Web / RN** 输出下配置有效。RN 侧请使用 **`rnConfig.customBuiltInComponents`**，约定与本节相同，见 [rnConfig.customBuiltInComponents](#rnconfig-custombuiltincomponents)。
 
 ```js
 // mpx.config.js
@@ -847,7 +876,78 @@ module.exports = defineConfig({
           // 当 SSR 模式下使用异步分包时
           useSSR: true,
           // 开启页面切换动画
-          disablePageTransition: false
+          disablePageTransition: false,
+          customBuiltInComponents: {
+            view: require('path').resolve(__dirname, 'src/builtin/MpxView.vue')
+          }
+        }
+      }
+    }
+  }
+})
+```
+
+### rnConfig {#rn-config}
+
+**`mode` 为输出 React Native（如 `react`）时**使用的编译期配置对象，由 `MpxWebpackPlugin` 传入 loader 上下文，并会挂到运行时的 `mpx.config.rnConfig` 上供 RN 逻辑读取（与小程序 / Web 无关）。
+
+#### rnConfig.projectName
+
+`string | undefined`
+
+若配置，则在入口脚本中调用 `AppRegistry.registerComponent(projectName, () => app)`，用于注册 RN 根组件名称。
+
+#### rnConfig.supportSubpackage
+
+`boolean = true`
+
+为 `true` 时，RN 输出下页面与组件可走异步分包与 `import()` 等逻辑；为 `false` 时关闭相关能力。插件初始化时若未传入则默认为 `true`。
+
+#### rnConfig.asyncChunk
+
+`{ timeout?: number, fallback?: string, loading?: string } | undefined`
+
+异步分包相关：
+
+- **timeout**：传给内部 `LoadAsyncChunkModule` 的超时时间（毫秒级用途，见 `@mpxjs/webpack-plugin` 实现）。
+- **fallback** / **loading**：异步页面/组件的占位与 loading 组件资源路径（经 `addQuery(..., { isComponent: true })` 参与打包），在 `react/script-helper.js` 中生成异步包装代码时使用。
+
+#### rnConfig.customBuiltInComponents {#rnconfig-custombuiltincomponents}
+
+`Record<string, string> | undefined`
+
+在 **RN 输出**（**`mode`** 为 **`ios` / `android` / `harmony`** 等）时生效。与 [webConfig.customBuiltInComponents](#webconfig-custombuiltincomponents) 的 **key、value 约定及注意事项** 相同，仅在 **`rnConfig`** 中配置，便于与 Web 使用不同的模块路径。
+
+**注意事项**
+
+- 页面/组件 **主模版** 以及 **子模版**（如通过 import 引入的模版）均会应用本配置。
+- **key / value** 及路径书写要求与 Web 一节一致，此处不再重复；详见 [webConfig.customBuiltInComponents](#webconfig-custombuiltincomponents)。
+
+#### rnConfig.loadChunkAsync（运行时）
+
+编译插件不会在选项里“实现”该函数；异步分包下载 chunk 时，运行时代码会调用 **`mpx.config.rnConfig.loadChunkAsync`**（若存在）。需在 RN 应用启动后自行挂载，例如与原生下载、热更新方案对接。与 **asyncChunk** 编译配置配合使用。
+
+```js
+// vue.config.js / mpx.config.js 片段
+const path = require('path')
+
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        mode: 'react',
+        rnConfig: {
+          projectName: 'MyMpxApp',
+          supportSubpackage: true,
+          asyncChunk: {
+            timeout: 10000,
+            fallback: path.resolve(__dirname, 'src/rn/PageFallback.mpx'),
+            loading: path.resolve(__dirname, 'src/rn/PageLoading.mpx')
+          },
+          customBuiltInComponents: {
+            view: '@your-org/mpx-rn-builtin/MpxView.mpx',
+            text: path.resolve(__dirname, 'src/builtin/MpxText.mpx')
+          }
         }
       }
     }
@@ -1014,11 +1114,13 @@ module.exports = defineConfig({
 
 ### partialCompileRules
 
-`{ include: string | RegExp | Function | Array<string | RegExp | Function> }`
+`Rules | { pages?: Rules, page?: Rules, components?: Rules, component?: Rules }`
 
-在大型的小程序开发当中，全量打包页面耗时非常长，往往在`开发过程`中仅仅只需用到几个 pages 而已，该配置项支持打包指定的小程序页面。
+在大型的小程序开发当中，全量打包页面和组件耗时非常长，往往在`开发过程`中仅仅只需用到几个页面或组件而已，该配置项支持打包指定的小程序页面和组件。
 
 **注意：** @mpxjs/webpack-plugin@2.9.41版本之前该配置为 partialCompile。
+
+历史写法 `partialCompileRules: { include, exclude }` 保持兼容，仅作用于页面；被保留页面引用的组件会继续全部编译。如需同时过滤组件，可使用 `pages` / `components` 分类型配置。`page` / `component` 为对应单数别名。
 
 ```js
 // vue.config.js
@@ -1028,17 +1130,39 @@ module.exports = defineConfig({
       plugin: {
         // include 可以是正则、字符串、函数、数组
         partialCompileRules: {
-          include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
-          include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
-          include (pageResourcePath) {
-            // pageResourcePath 是小程序页面所在系统的文件路径
-            return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
-          },
           include: [
             '/project/pages',
             /pages\/internal/,
             (pageResourcePath) => pageResourcePath.includes('pages')
-          ] // 满足任意条件的页面都会被打包
+          ] // 满足任意条件的页面都会被打包，旧写法只过滤页面
+        }
+      }
+    }
+  }
+})
+```
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        partialCompileRules: {
+          pages: {
+            include: [
+              '/project/pages',
+              /pages\/internal/,
+              (pageResourcePath) => pageResourcePath.includes('pages')
+            ] // 满足任意条件的页面都会被打包
+          },
+          components: {
+            include: [
+              '/project/components/base',
+              /components\/debug/,
+              (componentResourcePath) => componentResourcePath.includes('components')
+            ] // 满足任意条件的组件都会被打包
+          }
         }
       }
     }
@@ -1047,7 +1171,7 @@ module.exports = defineConfig({
 ```
 
 :::warning
-该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
+该特性只能用于**开发环境**。配置页面过滤规则后，未命中的页面会被替换为默认页面；配置组件过滤规则后，未命中的组件会被替换为默认组件，其 `usingComponents` 声明仍会保留。
 :::
 
 ### optimizeRenderRules
@@ -1122,6 +1246,39 @@ module.exports = defineConfig({
 * 若placeholder配置使用自定义组件，注意一定要配置 placeholder 中的 resource 字段
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
+
+### transSubpackageRules
+
+`Array`
+
+仅在输出 RN (ios/android/harmony) 时生效。
+
+用于配置分包资源转移规则，可将指定分包中的页面或组件资源转移到其他分包或主包中。
+
+- **from**: `Array<string>` 源分包名称列表
+- **to**: `string` 目标分包名称。当为 `''` (空字符串) 时，表示输出到主包
+
+#### 示例 {#example}
+
+```js
+// mpx.config.js
+module.exports = {
+  pluginOptions: {
+    mpx: {
+      transSubpackageRules: [
+        {
+          from: ['comp-pages'],
+          to: 'common'
+        },
+        {
+          from: ['sub1'],
+          to: ''
+        }
+      ]
+    }
+  }
+}
+```
 
 ### retryRequireAsync
 
@@ -1930,7 +2087,7 @@ wx.navigateTo({url : '/test/homepage/index'})
 
 `boolean`
 
-对于使用`MpxWebpackPlugin.urlLoader`的文件，如果在引用资源的末尾加上`?fallback=true`，则使用配置的自定义loader。图片的引入和处理详见[图像资源处理](../guide/advance/image-process.html)。
+对于使用`MpxWebpackPlugin.urlLoader`的文件，如果在引用资源的末尾加上`?fallback=true`，则使用配置的自定义loader。图片的引入和处理详见[图像资源处理](../guide/advance/image-process.md)。
 
 ```js
 // vue.config.js

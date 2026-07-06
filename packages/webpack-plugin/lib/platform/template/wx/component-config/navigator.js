@@ -22,6 +22,16 @@ module.exports = function ({ print }) {
   const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const qaValueLogError = print({ platform: 'qa', tag: TAG_NAME, isError: true, type: 'value' })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -103,6 +113,18 @@ module.exports = function ({ print }) {
       {
         test: /^(target|app-id|path|extra-data|version)$/,
         web: webPropLog
+      },
+      {
+        test: /^(short-link)$/,
+        ks: ksPropLog,
+        web: webPropLog,
+        ios: iosPropLog,
+        android: androidPropLog,
+        harmony: harmonyPropLog,
+        jd: jdPropLog,
+        ali: aliPropLog,
+        tt: ttPropLog,
+        qa: qaPropLog
       }
     ],
     event: [
@@ -112,6 +134,10 @@ module.exports = function ({ print }) {
         tt: ttEventLog,
         web: webEventLog,
         qa: qaEventLog,
+        ks: ksEventLog,
+        ios: iosEventLog,
+        android: androidEventLog,
+        harmony: harmonyEventLog,
         jd (eventName) {
           const eventMap = {
             success: 'success',

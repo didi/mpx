@@ -40,7 +40,7 @@ module.exports = async function loader (content, map, meta) {
   const mpx = this.getMpx()
   const externals = mpx.externals
   const root = mpx.projectRoot
-  const sourceMap = mpx.cssSourceMap || false
+  const sourceMap = this.sourceMap
   const isRN = ['ios', 'android', 'harmony'].includes(mpx.mode)
 
   let options
@@ -92,6 +92,9 @@ module.exports = async function loader (content, map, meta) {
         filter: options.import.filter,
         urlHandler: (url) => {
           url = combineRequests(getPreRequester(this)(options.importLoaders), url)
+          if (isRN) {
+            return stringifyRequest(this, url)
+          }
           return getRequestString('styles', { src: url }, {
             isStatic: true,
             issuerResource: this.resource,
@@ -249,7 +252,7 @@ module.exports = async function loader (content, map, meta) {
   let moduleCode
 
   try {
-    moduleCode = getModuleCode(result, api, replacements, options, this)
+    moduleCode = getModuleCode(result, api, replacements, options, isRN, this)
   } catch (error) {
     callback(error)
 

@@ -19,6 +19,10 @@ const processWeb = require('./web')
 const processReact = require('./react')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 
+/**
+ * @this {MpxLoaderContext<any>}
+ * @param {string} content
+ */
 module.exports = function (content) {
   this.cacheable()
 
@@ -49,15 +53,15 @@ module.exports = function (content) {
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isRuntimeMode = queryObj.isDynamic
 
-  const emitWarning = (msg) => {
+  const emitWarning = (msg, loc) => {
     this.emitWarning(
-      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const emitError = (msg, loc) => {
     this.emitError(
-      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
@@ -147,8 +151,10 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
+          componentPlaceholder,
           autoScope,
           callback
         })
@@ -169,8 +175,10 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
+          componentPlaceholder,
           autoScope,
           callback
         })

@@ -1,33 +1,75 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mpxjs/utils'
-import { Dimensions, StyleSheet } from 'react-native'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import * as perf from '@mpxjs/perf'
+import { StyleSheet, Dimensions } from 'react-native'
+import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
 
-const rawDimensions = {
-  screen: Dimensions.get('screen'),
-  window: Dimensions.get('window')
+global.__mpxAppDimensionsInfo = {
+  window: Dimensions.get('window'),
+  screen: Dimensions.get('screen')
 }
-let width, height
+global.__mpxSizeCount = 0
+global.__mpxPageSizeCountMap = reactive({})
 
-function customDimensions (dimensions) {
+global.__GCC = function (className, classMap, classMapValueCache) {
+  if (!classMapValueCache.has(className)) {
+    const styleObj = classMap[className]?.(global.__formatValue)
+    styleObj && classMapValueCache.set(className, styleObj)
+  }
+  return classMapValueCache.get(className)
+}
+
+let dimensionsInfoInitialized = false
+function useDimensionsInfo (dimensions) {
+  dimensionsInfoInitialized = true
   if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
     dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
   }
-  width = dimensions.screen.width
-  height = dimensions.screen.height
+  global.__mpxAppDimensionsInfo.window = dimensions.window
+  global.__mpxAppDimensionsInfo.screen = dimensions.screen
 }
 
-Dimensions.addEventListener('change', customDimensions)
+function getPageSize (window = global.__mpxAppDimensionsInfo.screen) {
+  return window.width + 'x' + window.height
+}
 
+Dimensions.addEventListener('change', ({ window, screen }) => {
+  const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
+  useDimensionsInfo({ window, screen })
+
+  // 对比 screen 高宽是否存在变化
+  if (getPageSize(screen) === oldScreen) return
+
+  global.__classCaches?.forEach(cache => cache?.clear())
+
+  // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
+  global.__mpxSizeCount++
+
+  const navigation = getFocusedNavigation()
+
+  if (navigation) {
+    global.__mpxPageSizeCountMap[navigation.pageId] = global.__mpxSizeCount
+    if (hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+      global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
+    }
+  }
+})
+
+// TODO: 1 目前测试鸿蒙下折叠屏screen固定为展开状态下屏幕尺寸，仅window会变化，且window包含状态栏高度
+// TODO: 2 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions监听到的width/height尺寸错误，并触发多次问题
 function rpx (value) {
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (750 / 屏幕宽度)
-  return value * width / 750
+  return value * screenInfo.width / 750
 }
 function vw (value) {
-  return value * width / 100
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
+  return value * screenInfo.width / 100
 }
 function vh (value) {
-  return value * height / 100
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
+  return value * screenInfo.height / 100
 }
 
 const unit = {
@@ -38,8 +80,16 @@ const unit = {
 
 const empty = {}
 
-function formatValue (value) {
-  if (width === undefined) customDimensions(rawDimensions)
+const isNum = (v) => !isNaN(+v)
+
+function formatValue (value, unitType) {
+  if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
+  if (unitType && typeof unit[unitType] === 'function') {
+    return unit[unitType](+value)
+  }
+  if (value === 'hairlineWidth') {
+    return StyleSheet.hairlineWidth
+  }
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
@@ -48,7 +98,6 @@ function formatValue (value) {
       return unit[matched[2]](+matched[1])
     }
   }
-  if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
   return value
 }
 
@@ -123,8 +172,7 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
-const hairlineRegExp = /^\s*hairlineWidth\s*$/
+const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const varRegExp = /^--/
 
 const parseStyleText = cached((cssText) => {
@@ -167,7 +215,17 @@ function mergeObjectArray (arr) {
 function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop])
+    if (prop === 'lineHeight' && isNum(styleObj[prop])) {
+      if (+styleObj[prop] === 0) {
+        transformed[prop] = 0
+      } else {
+        transformed[prop] = `${Math.round(styleObj[prop] * 100)}%`
+      }
+    } else if (prop === 'flex') {
+      transformed[prop] = styleObj[prop]
+    } else {
+      transformed[prop] = formatValue(styleObj[prop])
+    }
   })
   return transformed
 }
@@ -180,37 +238,73 @@ function isNativeStyle (style) {
   )
 }
 
+function getMediaStyle (media) {
+  if (!media || !media.length) return {}
+  const { width } = global.__mpxAppDimensionsInfo.screen
+  return media.reduce((styleObj, item) => {
+    const { options = {}, value = {} } = item
+    const { minWidth, maxWidth } = options
+    if (!isNaN(minWidth) && !isNaN(maxWidth) && width >= minWidth && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(minWidth) && width >= minWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(maxWidth) && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    }
+    return styleObj
+  }, {})
+}
+
 export default function styleHelperMixin () {
   return {
     methods: {
+      __getSizeCount () {
+        return global.__mpxPageSizeCountMap[this.__pageId]
+      },
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
+        let idTotal = -1
+        if (__mpx_perf_framework__) idTotal = perf.scopeStart('getStyle:total')
+
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
-        const mergeResult = isNativeStaticStyle ? (o) => result.push(o) : (o) => Object.assign(result, o)
-
-        const classMap = this.__getClassMap?.() || {}
-        const appClassMap = global.__getAppClassMap?.() || {}
+        const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
+        // 使用一下 __getSizeCount 触发其 get
+        this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
+          let idClass = -1
+          if (__mpx_perf_framework__) idClass = perf.scopeStart('getStyle:class')
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
+
           classString.split(/\s+/).forEach((className) => {
-            if (classMap[className]) {
-              mergeResult(classMap[className])
-            } else if (appClassMap[className]) {
-              // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              mergeResult(appClassMap[className])
+            let localStyle, appStyle
+            if (localStyle = this.__getClassStyle?.(className)) {
+              if (localStyle._media?.length) {
+                mergeResult(localStyle, getMediaStyle(localStyle._media))
+              } else {
+                mergeResult(localStyle)
+              }
+            } else if (appStyle = global.__getAppClassStyle?.(className)) {
+              if (appStyle._media?.length) {
+                mergeResult(appStyle, getMediaStyle(appStyle._media))
+              } else {
+                mergeResult(appStyle)
+              }
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               mergeResult(this.__props[className])
             }
           })
+          if (__mpx_perf_framework__) perf.scopeEnd(idClass)
         }
 
         if (staticStyle || dynamicStyle) {
+          let idStyle = -1
+          if (__mpx_perf_framework__) idStyle = perf.scopeStart('getStyle:style')
           const styleObj = {}
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
@@ -223,6 +317,7 @@ export default function styleHelperMixin () {
           }
           Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
           mergeResult(transformStyleObj(styleObj))
+          if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
         }
 
         if (hide) {
@@ -244,6 +339,7 @@ export default function styleHelperMixin () {
           })
         }
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+        if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
         return isEmpty ? empty : result
       }
     }

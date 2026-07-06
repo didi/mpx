@@ -1,4 +1,4 @@
-# 原生能力兼容
+# 原生能力兼容 {#native-ability-compatible}
 
 ## custom-tab-bar
 
@@ -45,7 +45,7 @@ Mpx 完全支持小程序原生的 worker ，需要在 app.mpx 文件中的 json
 
 更多详情可查看[这里](https://developers.weixin.qq.com/miniprogram/dev/framework/workers.html)
 
-## 云开发
+## 云开发 {#cloud-development}
 
 Mpx 支持微信小程序提供的原生云开发能力。如果需要在项目中使用云开发的能力，可以通过 Mpx 脚手架工具在初始化项目时选择支持云开发。如果需要支持云开发能力，在项目初始化时需要选择是微信平台下，且不能支持跨平台开发。如下图所示：
 
