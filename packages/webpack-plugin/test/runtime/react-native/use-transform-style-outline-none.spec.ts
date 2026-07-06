@@ -40,7 +40,6 @@ const run = (style: Record<string, any>) => {
   // （'1px' → 1、lineHeight → %、flex 原样），再进 useTransformStyle
   const { normalStyle } = useTransformStyle(transformStyleObj(style), {
     enableVar: false,
-    parentFontSize: 16,
     parentWidth: 375,
     parentHeight: 667
   })

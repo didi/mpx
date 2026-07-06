@@ -44,7 +44,6 @@ const run = (style: Record<string, any>, defaultStyle?: Record<string, any>) => 
   // 再进 useTransformStyle；defaultStyle 是组件侧用 RN-style 直传，不走 transformStyleObj
   const { normalStyle } = useTransformStyle(transformStyleObj(style), {
     enableVar: false,
-    parentFontSize: 16,
     parentWidth: 375,
     parentHeight: 667,
     defaultStyle
