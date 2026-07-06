@@ -5,12 +5,14 @@
  * ✔ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX, createElement, Children } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useContext } from 'react'
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughText, isStringChildren, splitStyle } from './utils'
+import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, isStringChildren, splitStyle, resolveTextPercentStyle } from './utils'
 import * as perf from '@mpxjs/perf'
+import { diffAndCloneA } from '@mpxjs/utils'
+import { TextPassThroughContext, TextPassThroughContextValue } from './context'
 
 const decodeMap = {
   '&lt;': '<',
@@ -48,7 +50,6 @@ interface _TextProps extends TextProps {
   selectable?: boolean
   'user-select'?: boolean
   'enable-var'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   decode?: boolean
@@ -67,7 +68,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     selectable,
     'enable-var': enableVar,
     'user-select': userSelect,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     decode
@@ -84,7 +84,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     hasPositionFixed
   } = useTransformStyle(currentStyle, {
     enableVar,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
@@ -97,15 +96,27 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     children = props.children
     isStringOnly = isStringChildren(children)
   }
-  const childTextStyle = !isStringOnly ? (splitStyle(normalStyle).textStyle as TextStyle | undefined) : undefined
-  const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
+  const inheritedText = useContext(TextPassThroughContext)
+  const resolvedNormalStyle = resolveTextPercentStyle(normalStyle, inheritedText?.textStyle)
+  const childTextStyle = !isStringOnly ? (splitStyle(resolvedNormalStyle).textStyle as TextStyle | undefined) : undefined
+  const textPassThroughRef = useRef<TextPassThroughContextValue | null>(null)
+  let textPassThrough: TextPassThroughContextValue | null = null
+  if (childTextStyle) {
+    const nextTextPassThrough = {
+      textStyle: extendObject({}, inheritedText?.textStyle, childTextStyle)
+    }
+    if (diffAndCloneA(textPassThroughRef.current, nextTextPassThrough).diff) {
+      textPassThroughRef.current = nextTextPassThrough
+    }
+    textPassThrough = textPassThroughRef.current
+  }
 
   const mergedProps = inheritedText?.pendingTextProps
     ? extendObject({}, inheritedText.pendingTextProps, props)
     : props
   const finalStyle = inheritedText?.textStyle
-    ? extendObject({}, inheritedText.textStyle, normalStyle)
-    : normalStyle
+    ? extendObject({}, inheritedText.textStyle, resolvedNormalStyle)
+    : resolvedNormalStyle
 
   const nodeRef = useRef(null)
   useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {

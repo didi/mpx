@@ -38,6 +38,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const lengthValueRegExp = /^(-?(?:\d+(?:\.\d+)?|\.\d+)(?:rpx|px|%|vw|vh)?|hairlineWidth)$/
+const DEFAULT_FONT_SIZE = 16
 // transform: 'rotateX(45deg) ...' 单段拆出 fn 名与括号内值
 const transformFnRegExp = /([/\w]+)\((.+)\)/
 // boxShadow 子值识别 rpx 单位（仅 rpx 需要换算为 px，其它单位保留原样）
@@ -246,14 +247,12 @@ interface PercentConfig {
   fontSize?: number | string
   width?: number
   height?: number
-  parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
 }
 
 interface TransformStyleConfig {
   enableVar?: boolean
-  parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
   transformRadiusPercent?: boolean
@@ -568,8 +567,8 @@ function resolvePercent (value: string | number | undefined, key: string, percen
   let base
   let reason
   if (key === 'fontSize') {
-    base = percentConfig.parentFontSize
-    reason = 'parent-font-size'
+    base = DEFAULT_FONT_SIZE
+    reason = 'default-font-size'
   } else if (key === 'lineHeight') {
     base = resolvePercent(percentConfig.fontSize, 'fontSize', percentConfig)
     reason = 'font-size'
@@ -920,7 +919,7 @@ function expandFlex (value: string): Array<[string, any]> | null {
 // RN 等效子集语法：font: [ <font-style> ] [ <font-variant-css2> ] [ <font-weight> ] <font-size> [ / <line-height> ] <font-family>
 // - 必填项：font-size 与 font-family；缺其一整条 font 声明丢弃（error）
 // - 非必填 token（font-stretch / 数字型 font-variant-numeric / system 关键字等）：warn 提示并忽略，保留其余槽位
-function transformFont (styleObj: Record<string, any>, percentConfig: PercentConfig) {
+function transformFont (styleObj: Record<string, any>) {
   const value = styleObj.font
   if (typeof value !== 'string') return
   const tokens = parseValues(value)
@@ -930,7 +929,7 @@ function transformFont (styleObj: Record<string, any>, percentConfig: PercentCon
   // 1. 定位 font-size（第一个 length，可能带 /<line-height>）
   //    注意：unit-less 数字也命中 length 正则，需要先排除 font-weight 数字（100..900 / bold / normal），
   //    否则 `font: 500 16px Arial` 会把 500 误判为 fontSize。
-  //    fontSize 自身可能是 %（如 `font: 50% Arial`），就地用 resolvePercent 按 parentFontSize 解析；
+  //    fontSize 自身可能是 %（如 `font: 50% Arial`），保留给文本透传阶段按继承 fontSize 解析；
   //    fontSize % 校验通过的是 `isLengthValue`（length 正则含 %），主流程已用 length 分支接住，无需特判
   for (let i = 0; i < tokens.length; i++) {
     let t = tokens[i]
@@ -948,10 +947,7 @@ function transformFont (styleObj: Record<string, any>, percentConfig: PercentCon
     if (hasOwn(fontWeightMap, sizePart)) continue
     if (isLengthValue(sizePart)) {
       sizeIdx = i
-      const sizeVal = percentRegExp.test(sizePart)
-        ? resolvePercent(sizePart, 'fontSize', percentConfig)
-        : global.__formatValue(sizePart)
-      result.push(['fontSize', sizeVal])
+      result.push(['fontSize', global.__formatValue(sizePart)])
       if (lhPart) lineHeight = lhPart
       break
     }
@@ -979,33 +975,17 @@ function transformFont (styleObj: Record<string, any>, percentConfig: PercentCon
       warn(`Token [${t}] in [font: ${value}] is not supported (only font-style / small-caps / font-weight are valid before <font-size>), dropped.`)
     }
   }
-  // 3. line-height：RN lineHeight 不接受百分比字符串，必须当场数值化。
-  //    - unit-less 数字（1.5）→ '150%' 后走 resolvePercent
-  //    - 显式百分比（120%）→ 直接走 resolvePercent
-  //    - 带单位（40px / 40rpx）→ __formatValue
-  //    基数 fontSize 取值（「长属性不覆盖简写」一致）：
-  //    - user 已显式写 fontSize 长属性 → 优先（先经 __formatValue 归一 '24px' → 24）
-  //    - 否则用 font 简写解析出的 fontSize（result[0][1]，已可能是 number / 解析后的 % 值）
+  // 3. line-height：文本透传阶段会基于当前 / 继承 fontSize 解析百分比。
+  //    - unit-less 数字（1.5）→ '150%' 中间态，避免和已格式化 RN 绝对 number 混淆
+  //    - 其它值（120% / 40px / 40rpx）→ __formatValue
   if (lineHeight !== undefined) {
-    // percentConfig.fontSize 用于 resolvePercent 的 base：
-    // - user 已显式写 fontSize 长属性 → 外层用 normalStyle.fontSize 初始化，已被前置 styleHelperMixin
-    //   的 transformStyleObj 经 __formatValue 归一为 number，可直接用，不覆盖（「长属性优先」一致）
-    // - 否则用 font 简写解析出的 fontSize（result[0][1]，本身已 number 或解析后的 % 值）回填
-    if (percentConfig.fontSize === undefined) percentConfig.fontSize = result[0][1]
-    let lh: string | number | undefined
-    if (percentRegExp.test(lineHeight)) {
-      lh = resolvePercent(lineHeight, 'lineHeight', percentConfig)
-    } else if (!isNaN(+lineHeight)) {
-      lh = resolvePercent(`${+lineHeight * 100}%`, 'lineHeight', percentConfig)
-    } else {
-      lh = global.__formatValue(lineHeight)
-    }
-    // lh 仍是字符串说明 resolvePercent 因 base 非 number 原样返回（已 error 过）或带单位 __formatValue
-    // 未能换算成 number（如 fontSize 是未解析的 var()）。RN lineHeight 不接受字符串，丢弃避免运行时报错
-    if (typeof lh === 'number') {
+    const lh = !isNaN(+lineHeight)
+      ? `${+lineHeight * 100}%`
+      : global.__formatValue(lineHeight)
+    if (lh !== undefined) {
       result.push(['lineHeight', lh])
     } else {
-      warn(`Line-height [${lineHeight}] in [font: ${value}] could not be resolved to a number (font-size unresolved?), dropped.`)
+      warn(`Line-height [${lineHeight}] in [font: ${value}] could not be resolved, dropped.`)
     }
   }
   // 4. font-family（font-size 之后剩余部分；多字体取首值、去引号）
@@ -1237,7 +1217,7 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
 // core style hook
 // ============================================================
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, parentFontSize, parentWidth, parentHeight, defaultStyle }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, parentWidth, parentHeight, defaultStyle }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -1308,10 +1288,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       // fixme 去掉 translate & border-radius 的百分比计算
       // fixme Image 组件 borderRadius 仅支持 number
       const needRadiusPercent = transformRadiusPercent && hasOwn(radiusPercentRule, key)
-      const needFontPercent = key === 'fontSize' || key === 'lineHeight'
       // RN gap / rowGap / columnGap 不支持 %，需要运行时换算为 number 喂给 RN
       const needGapPercent = key === 'rowGap' || key === 'columnGap'
-      if ((needRadiusPercent || needFontPercent || needGapPercent) && percentRegExp.test(value)) {
+      if ((needRadiusPercent || needGapPercent) && percentRegExp.test(value)) {
         if (needRadiusPercent) hasSelfPercent = true
         resolvedKeyPath = resolvedKeyPath ?? keyPath.slice()
         percentKeyPaths.push(resolvedKeyPath)
@@ -1391,11 +1370,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     height,
     fontSize: normalStyle.fontSize,
     parentWidth,
-    parentHeight,
-    parentFontSize
+    parentHeight
   }
-  // transformFont 可能会更新 percentConfig 配置，必须在 transformPercent 之前执行，保证 fontSize / lineHeight 的百分比能被正确解析
-  if (hasFont) transformFont(normalStyle, percentConfig)
+  if (hasFont) transformFont(normalStyle)
   if (percentKeyPaths.length) transformPercent(normalStyle, percentKeyPaths, percentConfig)
   if (calcKeyPaths.length) {
     transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
@@ -1464,6 +1441,33 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 export function useNavigation (): Record<string, any> | undefined {
   const { navigation } = useContext(RouteContext) || {}
   return navigation
+}
+
+function getTextPercentBase (currentFontSize?: string | number, parentTextStyle?: TextStyle) {
+  return typeof currentFontSize === 'number'
+    ? currentFontSize
+    : typeof parentTextStyle?.fontSize === 'number'
+      ? parentTextStyle.fontSize
+      : DEFAULT_FONT_SIZE
+}
+
+export function resolveTextPercentStyle<T extends TextStyle | undefined> (
+  textStyle: T,
+  parentTextStyle?: TextStyle
+): T {
+  if (!textStyle) return textStyle
+
+  if (typeof textStyle.fontSize === 'string' && percentRegExp.test(textStyle.fontSize)) {
+    const base = getTextPercentBase(undefined, parentTextStyle)
+    textStyle.fontSize = parseFloat(textStyle.fontSize) / 100 * base
+  }
+
+  if (typeof textStyle.lineHeight === 'string' && percentRegExp.test(textStyle.lineHeight)) {
+    const base = getTextPercentBase(textStyle.fontSize, parentTextStyle)
+    textStyle.lineHeight = parseFloat(textStyle.lineHeight) / 100 * base
+  }
+
+  return textStyle
 }
 
 /**
@@ -1544,8 +1548,9 @@ export function useTextPassThrough (
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const valueRef = useRef<TextPassThroughContextValue | null>(null)
 
-  const nextTextStyle = textStyle
-    ? extendObject({}, parent?.textStyle, textStyle)
+  const resolvedTextStyle = resolveTextPercentStyle(textStyle, parent?.textStyle)
+  const nextTextStyle = resolvedTextStyle
+    ? extendObject({}, parent?.textStyle, resolvedTextStyle)
     : parent?.textStyle
   const nextTextProps = textProps
     ? extendObject({}, parent?.pendingTextProps, textProps)
@@ -1560,31 +1565,6 @@ export function useTextPassThrough (
   }
 
   return valueRef.current
-}
-
-export function useTextPassThroughText (textStyle?: TextStyle) {
-  const inheritedText = useContext(TextPassThroughContext)
-  const valueRef = useRef<TextPassThroughContextValue | null>(null)
-
-  if (!textStyle) {
-    return {
-      inheritedText,
-      textPassThrough: null
-    }
-  }
-
-  const nextValue = {
-    textStyle: extendObject({}, inheritedText?.textStyle, textStyle)
-  }
-
-  if (diffAndCloneA(valueRef.current, nextValue).diff) {
-    valueRef.current = nextValue
-  }
-
-  return {
-    inheritedText,
-    textPassThrough: valueRef.current
-  }
 }
 
 export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled }: { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
