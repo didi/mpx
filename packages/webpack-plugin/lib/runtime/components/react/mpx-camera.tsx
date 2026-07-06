@@ -24,7 +24,6 @@ interface CameraProps {
   binderror?: (error: { message: string }) => void
   bindinitdone?: (result: { type: string, data: string }) => void
   bindscancode?: (result: { type: string, data: string }) => void
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   'enable-var'?: boolean
@@ -93,7 +92,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     bindinitdone,
     bindstop,
     bindscancode,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'enable-var': enableVar,
@@ -110,7 +108,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     setHeight
   } = useTransformStyle(styleObj, {
     enableVar,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
