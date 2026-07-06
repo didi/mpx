@@ -97,7 +97,6 @@ export interface InputProps {
   'placeholder-style'?: { color?: string }
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   // 只有 RN 环境读取
@@ -147,7 +146,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'selection-start': selectionStart = -1,
     'selection-end': selectionEnd = -1,
     'enable-var': enableVar,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'adjust-position': adjustPosition = true,
@@ -210,7 +208,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, parentWidth, parentHeight })
 
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, {

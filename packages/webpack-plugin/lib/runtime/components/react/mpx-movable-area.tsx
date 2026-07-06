@@ -17,13 +17,12 @@ interface MovableAreaProps {
   height?: number
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
-  const { style = {}, 'enable-var': enableVar, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
+  const { style = {}, 'enable-var': enableVar, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
 
   const {
     hasSelfPercent,
@@ -33,7 +32,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     hasPositionFixed,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const movableViewRef = useRef(null)
   useNodesRef(props, ref, movableViewRef, {
