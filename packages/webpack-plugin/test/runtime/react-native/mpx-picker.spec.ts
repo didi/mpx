@@ -4,6 +4,7 @@ const mockOpen = jest.fn()
 const mockShow = jest.fn()
 const mockHide = jest.fn()
 const mockRemove = jest.fn()
+const mockUpdate = jest.fn()
 
 jest.mock('react-native', () => ({
   StyleSheet: {
@@ -43,6 +44,7 @@ jest.mock('../../../lib/runtime/components/react/mpx-popup', () => ({
     open: mockOpen,
     show: mockShow,
     hide: mockHide,
+    update: mockUpdate,
     remove: mockRemove
   })
 }))
@@ -99,6 +101,7 @@ describe('MpxPicker RN runtime', () => {
     mockShow.mockClear()
     mockHide.mockClear()
     mockRemove.mockClear()
+    mockUpdate.mockClear()
   })
 
   test('passes range to selector popup content after filtering root props', () => {
@@ -131,6 +134,30 @@ describe('MpxPicker RN runtime', () => {
 
     expect(selector.props.range).toEqual([])
     expect(triggerView.props.range).toBeUndefined()
+  })
+
+  test('updates selector popup content before next open when range changes', () => {
+    const range = ['Beijing', 'Shanghai']
+    ;(Picker as any)({
+      mode: PickerMode.SELECTOR,
+      value: 0,
+      range: [],
+      children: 'Select'
+    }, null)
+    const result = (Picker as any)({
+      mode: PickerMode.SELECTOR,
+      value: 0,
+      range,
+      children: 'Select'
+    }, null)
+
+    expect(mockUpdate).not.toHaveBeenCalled()
+    result.props.onPress()
+
+    const popupContent = mockUpdate.mock.calls[mockUpdate.mock.calls.length - 1][0]
+    const selector = findElementByType(popupContent, 'PickerSelector')
+
+    expect(selector.props.range).toBe(range)
   })
 
   test('passes text style through to trigger children', () => {

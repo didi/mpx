@@ -136,7 +136,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     pickerValue.current = Array.isArray(value) ? value.slice() : value
     const nodeRef = useRef<View>(null)
     const pickerRef = useRef<any>(null)
-    const { open, show, hide, remove } = useRef(createPopupManager()).current
+    const { open, show, hide, remove, update } = useRef(createPopupManager()).current
     const {
       normalStyle,
       hasVarDec,
@@ -250,7 +250,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       hide()
     }
 
-    const renderPickerContent = () => {
+    const getPickerContent = () => {
       if (disabled) {
         return null
       }
@@ -268,7 +268,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       }) as PickerProps
       const _value: any = value
       const PickerModal = pickerModalMap[_mode] as React.ComponentType<PickerProps>
-      const renderPickerModal = (
+      return (
         <>
           {headerText && (
             <View style={[styles.header]}>
@@ -292,8 +292,16 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
           </View>
         </>
       )
+    }
+
+    const renderPickerContent = () => {
+      const renderPickerModal = getPickerContent()
+      if (!renderPickerModal) {
+        return false
+      }
       const contentHeight = headerText ? 350 : 310
       open(renderPickerModal, pageId, { contentHeight })
+      return true
     }
 
     useEffect(() => {
@@ -303,9 +311,25 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       }
     }, [])
 
+    const updatePickerContent = () => {
+      const renderPickerModal = getPickerContent()
+      if (!renderPickerModal) {
+        return false
+      }
+      update(renderPickerModal)
+      return true
+    }
+
+    const showPicker = () => {
+      if (renderPickerContent()) {
+        updatePickerContent()
+        show()
+      }
+    }
+
     return createElement(
       TouchableWithoutFeedback,
-      { onPress: show },
+      { onPress: showPicker },
       createElement(
         View,
         innerProps,
