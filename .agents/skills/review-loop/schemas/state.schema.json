@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewLoopState",
+  "type": "object",
+  "required": [
+    "protocolVersion",
+    "taskId",
+    "phase",
+    "planRound",
+    "codeRound",
+    "maxRounds",
+    "planStatus",
+    "codeStatus",
+    "awaitingUserConfirmation",
+    "lastReviewFile",
+    "terminationReason"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "protocolVersion": {
+      "type": "string"
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "plan_drafting",
+        "plan_reviewing",
+        "awaiting_plan_confirm",
+        "code_drafting",
+        "code_reviewing",
+        "awaiting_final_confirm",
+        "done"
+      ]
+    },
+    "planRound": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "codeRound": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxRounds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "planStatus": {
+      "type": "string"
+    },
+    "codeStatus": {
+      "type": "string"
+    },
+    "awaitingUserConfirmation": {
+      "type": "boolean"
+    },
+    "lastReviewFile": {
+      "type": "string"
+    },
+    "terminationReason": {
+      "type": "string"
+    }
+  }
+}
