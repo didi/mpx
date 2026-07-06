@@ -23,7 +23,6 @@ export interface RadioProps {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'enable-text-pass-through'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   children: ReactNode
@@ -76,7 +75,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       style = [],
       'enable-var': enableVar,
       'enable-text-pass-through': enableTextPassThrough,
-      'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
       bindtap
@@ -123,7 +121,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle: styles.container })
+    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
     const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })

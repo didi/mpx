@@ -12,7 +12,6 @@ interface StickySectionProps {
   'offset-top'?: number;
   'enable-var'?: boolean;
   'enable-text-pass-through'?: boolean;
-  'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
 }
@@ -23,7 +22,6 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
     style,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -36,7 +34,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const { layoutRef, layoutProps, layoutStyle } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: sectionRef, onLayout })
 
