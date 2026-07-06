@@ -41,7 +41,6 @@ const run = (style: Record<string, any>, parent: { parentWidth?: number, parentH
   // 与生产 __getStyle 数据流一致：用户样式先经 styleHelperMixin.ios.js 的 transformStyleObj 归一再进 useTransformStyle
   const { normalStyle } = useTransformStyle(transformStyleObj(style), {
     enableVar: false,
-    parentFontSize: 16,
     parentWidth: parent.parentWidth ?? 200,
     parentHeight: parent.parentHeight ?? 400
   })

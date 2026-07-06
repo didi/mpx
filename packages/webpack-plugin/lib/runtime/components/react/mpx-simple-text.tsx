@@ -1,8 +1,10 @@
 import { Text, TextStyle, TextProps } from 'react-native'
-import { JSX, createElement } from 'react'
+import { JSX, createElement, useContext, useRef } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject, getDefaultAllowFontScaling, useTextPassThroughText, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
+import { extendObject, getDefaultAllowFontScaling, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
 import * as perf from '@mpxjs/perf'
+import { diffAndCloneA } from '@mpxjs/utils'
+import { TextPassThroughContext, TextPassThroughContextValue } from './context'
 
 const SimpleText = (props: TextProps): JSX.Element => {
   let idTotal = -1
@@ -17,11 +19,22 @@ const SimpleText = (props: TextProps): JSX.Element => {
       hasBoxSizingAffectingStyle = true
     }
   })
+  const inheritedText = useContext(TextPassThroughContext)
   // textStyle 仅在子节点非纯字符串时才需要透传给子级；按需计算 isStringChildren
   const childTextStyle: TextStyle | undefined = textStyle && !isStringChildren(props.children)
     ? textStyle as TextStyle
     : undefined
-  const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
+  const textPassThroughRef = useRef<TextPassThroughContextValue | null>(null)
+  let textPassThrough: TextPassThroughContextValue | null = null
+  if (childTextStyle) {
+    const nextTextPassThrough = {
+      textStyle: extendObject({}, inheritedText?.textStyle, childTextStyle)
+    }
+    if (diffAndCloneA(textPassThroughRef.current, nextTextPassThrough).diff) {
+      textPassThroughRef.current = nextTextPassThrough
+    }
+    textPassThrough = textPassThroughRef.current
+  }
 
   const mergedProps = inheritedText?.pendingTextProps
     ? extendObject({}, inheritedText.pendingTextProps, props)
