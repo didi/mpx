@@ -197,6 +197,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - `scroll-view` 必须指定 `type`。
 - 配置 `tagNameStyleIsolation": "legacy"` 自定义组件样式隔离处理对齐 webview。
 - `picker-view` skyline 下默认会有上下边框，适配 skyline 时没有自定义边框时需设置 `indicator-style="border: none;"` 去除默认边框，`indicator-style` 仅支持 `height`、`border`、`background-color`。
+- 若同一视觉行内存在 `image` / icon 与 `text` / `rich-text` / `special-text` / 自定义文本组件混排，必须读取并执行 [适配最佳实践 · 图文混排](./references/skyline-migration-practice.md#图文混排)。
 
 #### 5. 检查与确认
 

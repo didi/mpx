@@ -20,7 +20,7 @@
 第一阶段可用以下命令兜底扫描；结构化场景（多行 `scroll-view` 等）仍需人工或脚本复核。
 
 ```bash
-rg -n "@media screen|font-weight\\s*:?\\s*(500|600)|text-overflow|truncate|overflow-x|overflow-y|overflow\\s+scroll|float\\s|text-indent|overflow-wrap|justify-items|box-shadow:.*?,|background-image|mask-image|background-size|background-repeat|<scroll-view|movable-area|movable-view|web-view|editor|progress|navigation-bar|\\.animate\\(|\\.applyAnimation\\(|wx\\.createAnimation|wx-if|wx-for" <scope> -g '*.mpx'
+rg -n "@media screen|font-weight\\s*:?\\s*(500|600)|text-overflow|truncate|<image|<rich-text|<special-text|<mpx-icon|overflow-x|overflow-y|overflow\\s+scroll|float\\s|text-indent|overflow-wrap|justify-items|box-shadow:.*?,|background-image|mask-image|background-size|background-repeat|<scroll-view|movable-area|movable-view|web-view|editor|progress|navigation-bar|\\.animate\\(|\\.applyAnimation\\(|wx\\.createAnimation|wx-if|wx-for" <scope> -g '*.mpx'
 ```
 
 ## 规则矩阵
@@ -30,6 +30,7 @@ rg -n "@media screen|font-weight\\s*:?\\s*(500|600)|text-overflow|truncate|overf
 | `STYLE_MEDIA_SCREEN` | error | style | `@media screen` | Skyline 下静默失效，且可能把内部规则当裸样式应用 | WebView 保留 `@media`；Skyline 用 `isSkyline && isSmall` 动态类兜底，必要时加 normal 类反向兜底 | 非 wx / RN-only / `.ios.mpx` |
 | `STYLE_FONT_WEIGHT` | warn | style/template/script | `font-weight\\s*:?\\s*(500\|600)` | 部分机型数字字重不稳定 | 改 `bold` / `700`；WebView 对齐 | iOS 专用分支可保留 |
 | `STYLE_TEXT_OVERFLOW` | warn | template/style | `text-overflow\\s+ellipsis\|truncate` | Skyline 省略需由组件属性承载，`view` / `text` / `rich-text` / `special-text` 均可直接补属性 | 承载文本的节点补 `max-lines` + `overflow="ellipsis"` | 容器只做裁剪时说明 |
+| `COMP_INLINE_MIXED_CONTENT` | warn | template | `mpxTagName@wx="span"\|<image\|<rich-text\|<special-text\|<mpx-icon\|line-clamp\|truncate` | 同一视觉行内图标/图片与文本组件混排时，Skyline 下 `view` / `text` 不能直接完成 WebView 式内联混排；| 人工确认是否为同段图文混排；若是，按「图文混排」改造：`useSkyline()`、容器 `mpxTagName@wx="span"`、Skyline 下 `whitespace-nowrap`、图片 `inline-block`、组件 virtual-host `inline-flex`、文本承载节点 `max-lines` / `overflow` | 普通独立图片、独立图标按钮、非同一视觉行混排可说明 |
 | `COMP_SCROLL_TYPE` | error | template | `<scroll-view` | Skyline 下 `scroll-view` 必须显式声明 `type` | 补 `type="list"` / `nested` / `custom` | 无 |
 | `STYLE_OVERFLOW_AXIS` | error | style | `overflow-x\|overflow-y\|overflow\\s+scroll` | Skyline 不支持单轴 overflow 与 scroll overflow | 改 `scroll-view` 或统一 `overflow hidden` | 非 wx 分支 |
 | `STYLE_UNSUPPORTED_PROP` | warn | style | `float\\s\|contain\|resize\|writing-mode\|text-indent\|overflow-wrap\|justify-items` | Skyline 不支持或静默失效 | 替换实现、删除或给出降级说明 | 确认无视觉依赖 |
@@ -45,3 +46,4 @@ rg -n "@media screen|font-weight\\s*:?\\s*(500|600)|text-overflow|truncate|overf
 2. 多行 `<scroll-view>` 不能只靠单行 pattern 判定，需读取完整标签。
 3. 保留 `@media screen` 时必须说明 WebView 路径仍需要它；Skyline 路径必须有动态类兜底。
 4. 最终结果中 `error` 不允许无说明残留。
+5. `COMP_INLINE_MIXED_CONTENT` 不能只按 `STYLE_TEXT_OVERFLOW` 处理；命中 `truncate` 且同一行附近存在 `image` / icon / `rich-text` / `special-text` 时，必须进一步套用图文混排规则或说明为什么不是同段混排。

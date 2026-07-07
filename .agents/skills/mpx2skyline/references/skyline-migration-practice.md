@@ -164,6 +164,8 @@ Skyline 没有 BFC（块级格式化上下文），也没有 margin 合并机制
 
 ### 图文混排
 
+触发条件：同一视觉行内同时出现 `image` / icon 与 `text` / `rich-text` / `special-text` / 自定义文本组件，尤其容器带 `truncate` / `line-clamp` / `whitespace-nowrap` 或 `mpxTagName@wx="span"` 时，必须按本节处理。不要只补 `max-lines` / `overflow`，否则 Skyline 下图片、组件 virtual-host 与文本可能仍无法按 WebView 方式内联对齐或截断。
+
 ```html
 <view class="flex-1 w-0 truncate">
   <image 
