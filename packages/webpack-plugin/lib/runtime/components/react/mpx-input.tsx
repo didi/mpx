@@ -469,8 +469,13 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   // React Native 的 TextInput 在 textAlign center + placeholder 时光标会跑到右边
   // 这个问题只在 Android 上出现
   // 参考：https://github.com/facebook/react-native/issues/28794 (Android only)
-  const needMultilineFix = isAndroid && !multiline && !!props.placeholder && normalStyle.textAlign === 'center'
-  const multilineFixProps = needMultilineFix ? { multiline: true, numberOfLines: 1 } : {}
+  const conditionalTextInputProps = extendObject(
+    {},
+    isAndroid && !multiline && !!props.placeholder && normalStyle.textAlign === 'center'
+      ? { multiline: true, numberOfLines: 1 }
+      : {},
+    (multiline && confirmType === 'return') ? {} : { enterKeyHint: confirmType }
+  )
 
   const innerProps = useInnerProps(
     extendObject(
@@ -505,8 +510,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onContentSizeChange,
         onSubmitEditing: bindconfirm && onSubmitEditing
       },
-      multilineFixProps,
-      (multiline && confirmType === 'return') ? {} : { enterKeyHint: confirmType }
+      conditionalTextInputProps
     ),
     [
       'name',
