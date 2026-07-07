@@ -18,14 +18,17 @@ the loop alive.
 
 1. Review the plan for correctness, scope control, stability, verifiability,
    project constraints, and required documentation or knowledge-base updates.
-2. Prioritize actionable findings over commentary. A finding should point to a
+2. Pay particular attention to boundary and exceptional cases, avoidable
+   performance cost, elegance and simplicity, and reuse of existing project
+   flows with consistent local style.
+3. Prioritize actionable findings over commentary. A finding should point to a
    specific plan section or missing validation step.
-3. Do not request extra detail when the coder can safely infer it from existing
+4. Do not request extra detail when the coder can safely infer it from existing
    project patterns.
-4. Do not repeat findings already resolved or explicitly rejected with sufficient
+5. Do not repeat findings already resolved or explicitly rejected with sufficient
    reason.
-5. Do not edit `plan.md`.
-6. Output JSON only.
+6. Do not edit `plan.md`.
+7. Output JSON only.
 
 ## Review Policy
 

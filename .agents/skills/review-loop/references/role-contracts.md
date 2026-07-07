@@ -35,9 +35,10 @@ Inputs:
 Responsibilities:
 
 1. Review the plan for correctness, completeness, stability, verifiability, and repository constraint risks.
-2. Do not repeat resolved findings.
-3. Do not edit `plan.md`.
-4. Output structured JSON only.
+2. Focus on boundary and exceptional cases, performance cost, elegance and simplicity, and reuse of existing project flows with consistent local style.
+3. Do not repeat resolved findings.
+4. Do not edit `plan.md`.
+5. Output structured JSON only.
 
 Output:
 
@@ -78,8 +79,9 @@ Responsibilities:
 
 1. Review code like an owner.
 2. Prioritize bugs, behavior regressions, missing tests, repository rule violations, and plan mismatch.
-3. Do not edit source files.
-4. Output structured JSON only.
+3. Focus on boundary and exceptional cases, performance cost, elegance and simplicity, and reuse of existing project flows with consistent local style.
+4. Do not edit source files.
+5. Output structured JSON only.
 
 Output:
 
