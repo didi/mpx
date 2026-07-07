@@ -56,7 +56,8 @@ jest.mock('react', () => {
 import { createElement, useContext } from 'react'
 // eslint-disable-next-line import/first
 import {
-  resolveTextPercentStyle,
+  resolveTextFontSizePercentStyle,
+  resolveTextLineHeightPercentStyle,
   useTextPassThrough,
   useTransformStyle
 } from '../../../lib/runtime/components/react/utils'
@@ -64,6 +65,8 @@ import {
 import MpxText from '../../../lib/runtime/components/react/mpx-text'
 // eslint-disable-next-line import/first
 import MpxSimpleText from '../../../lib/runtime/components/react/mpx-simple-text'
+// eslint-disable-next-line import/first
+import MpxInlineText from '../../../lib/runtime/components/react/mpx-inline-text'
 
 const mockedUseContext = useContext as jest.Mock
 const mockedCreateElement = createElement as jest.Mock
@@ -99,32 +102,30 @@ describe('text percent pass-through', () => {
     })
   })
 
-  test('resolveTextPercentStyle uses inherited fontSize, current fontSize, then 16 fallback', () => {
-    expect(resolveTextPercentStyle({
+  test('text percent helpers split fontSize and lineHeight resolution', () => {
+    const textStyle = resolveTextFontSizePercentStyle({
       fontSize: '50%' as any,
       lineHeight: '150%' as any
-    }, { fontSize: 20 })).toEqual({
+    }, { fontSize: 20 })
+    expect(textStyle).toEqual({
+      fontSize: 10,
+      lineHeight: '150%'
+    })
+
+    expect(resolveTextLineHeightPercentStyle(textStyle, { fontSize: 20 })).toEqual({
       fontSize: 10,
       lineHeight: 15
     })
 
-    expect(resolveTextPercentStyle({
+    expect(resolveTextLineHeightPercentStyle({
       lineHeight: '150%' as any
     })).toEqual({
       lineHeight: 24
     })
-
-    expect(resolveTextPercentStyle({
-      fontSize: '50%' as any,
-      lineHeight: '150%' as any
-    })).toEqual({
-      fontSize: 8,
-      lineHeight: 12
-    })
   })
 
   test('number lineHeight stays an absolute RN value', () => {
-    expect(resolveTextPercentStyle({
+    expect(resolveTextLineHeightPercentStyle({
       fontSize: 16,
       lineHeight: 24
     })).toEqual({
@@ -151,7 +152,7 @@ describe('text percent pass-through', () => {
       textStyle: {
         fontSize: 10,
         color: 'red',
-        lineHeight: 15
+        lineHeight: '150%'
       },
       pendingTextProps: {
         numberOfLines: 1,
@@ -206,19 +207,95 @@ describe('text percent pass-through', () => {
     expect(provider.props.value.textStyle).toEqual({
       fontSize: 20,
       color: 'blue',
-      lineHeight: 30
+      lineHeight: '150%'
     })
   })
 
-  test('mpx-simple-text keeps lightweight inherited text pass-through behavior', () => {
+  test('two text nodes resolve inherited relative lineHeight with their own fontSize', () => {
     mockTextContext = {
-      textStyle: { fontSize: 20, color: 'red' },
+      textStyle: { fontSize: 16, lineHeight: '150%' }
+    }
+
+    const first = (MpxText as any)({
+      style: { fontSize: 20 },
+      children: 'first'
+    }, null)
+    const second = (MpxText as any)({
+      style: { fontSize: 30 },
+      children: 'second'
+    }, null)
+
+    expect(first.props.style.lineHeight).toBe(30)
+    expect(second.props.style.lineHeight).toBe(45)
+  })
+
+  test('nested mpx-text keeps relative lineHeight in child pass-through', () => {
+    mockTextContext = null
+    const child = createElement('View', null)
+    const parent = (MpxText as any)({
+      style: {
+        fontSize: 20,
+        lineHeight: '150%'
+      },
+      children: child
+    }, null)
+    const provider = parent.children[0]
+
+    expect(parent.props.style.lineHeight).toBe(30)
+    expect(provider.props.value.textStyle).toEqual({
+      fontSize: 20,
+      lineHeight: '150%'
+    })
+
+    mockTextContext = provider.props.value
+    const nested = (MpxText as any)({
+      style: { fontSize: 30 },
+      children: 'nested'
+    }, null)
+
+    expect(nested.props.style.lineHeight).toBe(45)
+  })
+
+  test('font shorthand unit-less lineHeight resolves at final text node', () => {
+    mockTextContext = {
+      textStyle: runTransform({ font: '20px / 1.5 Arial' })
+    }
+
+    const result = (MpxText as any)({
+      style: { fontSize: 30 },
+      children: 'hello'
+    }, null)
+
+    expect(result.props.style).toEqual({
+      fontSize: 30,
+      lineHeight: 45,
+      fontFamily: 'Arial'
+    })
+  })
+
+  test('absolute inherited lineHeight stays absolute with mixed fontSize', () => {
+    mockTextContext = {
+      textStyle: { fontSize: 20, lineHeight: 24 }
+    }
+
+    const result = (MpxText as any)({
+      style: { fontSize: 30 },
+      children: 'hello'
+    }, null)
+
+    expect(result.props.style.lineHeight).toBe(24)
+  })
+
+  test('mpx-simple-text resolves inherited relative lineHeight with local fontSize', () => {
+    mockTextContext = {
+      textStyle: { fontSize: 20, color: 'red', lineHeight: '150%' },
       pendingTextProps: { numberOfLines: 1 }
     }
     const child = createElement('View', null)
 
     const result = (MpxSimpleText as any)({
       style: {
+        fontSize: 30,
         color: 'blue'
       },
       children: child
@@ -226,12 +303,32 @@ describe('text percent pass-through', () => {
     const provider = result.children[0]
 
     expect(result.props.style).toEqual({
-      fontSize: 20,
-      color: 'blue'
+      fontSize: 30,
+      color: 'blue',
+      lineHeight: 45
     })
     expect(provider.props.value.textStyle).toEqual({
-      fontSize: 20,
-      color: 'blue'
+      fontSize: 30,
+      color: 'blue',
+      lineHeight: '150%'
     })
+  })
+
+  test('mpx-inline-text resolves inherited relative lineHeight', () => {
+    mockTextContext = {
+      textStyle: { fontSize: 20, color: 'red', lineHeight: '150%' },
+      pendingTextProps: { numberOfLines: 1 }
+    }
+
+    const result = (MpxInlineText as any)({
+      children: 'inline'
+    })
+
+    expect(result.props.style).toEqual({
+      fontSize: 20,
+      color: 'red',
+      lineHeight: 30
+    })
+    expect(result.props.numberOfLines).toBe(1)
   })
 })
