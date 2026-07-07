@@ -5,6 +5,7 @@ const mockShow = jest.fn()
 const mockHide = jest.fn()
 const mockRemove = jest.fn()
 const mockUpdate = jest.fn()
+const mockWarn = jest.fn()
 
 jest.mock('react-native', () => ({
   StyleSheet: {
@@ -102,14 +103,20 @@ describe('MpxPicker RN runtime', () => {
     mockHide.mockClear()
     mockRemove.mockClear()
     mockUpdate.mockClear()
+    mockWarn.mockClear()
+    const mpxConfig = (global as any).__mpx.config
+    mpxConfig.ignoreWarning = true
+    delete mpxConfig.warnHandler
   })
 
-  test('passes range to selector popup content after filtering root props', () => {
-    const range = ['Beijing', 'Shanghai', 'Guangzhou']
+  test('passes selector props to popup content after filtering root props', () => {
+    const range = [{ name: 'Beijing' }, { name: 'Shanghai' }, { name: 'Guangzhou' }]
     const result = (Picker as any)({
       mode: PickerMode.SELECTOR,
       value: 1,
       range,
+      'range-key': 'name',
+      style: { width: 100 },
       children: 'Select'
     }, null)
 
@@ -118,6 +125,9 @@ describe('MpxPicker RN runtime', () => {
     const triggerView = findElementByType(result, 'View')
 
     expect(selector.props.range).toBe(range)
+    expect(selector.props['range-key']).toBe('name')
+    expect(selector.props.style).toBeUndefined()
+    expect(selector.props.children).toBeUndefined()
     expect(triggerView.props.range).toBeUndefined()
   })
 
@@ -136,7 +146,7 @@ describe('MpxPicker RN runtime', () => {
     expect(triggerView.props.range).toBeUndefined()
   })
 
-  test('updates selector popup content before next open when range changes', () => {
+  test('updates selector popup content before showing when range changes', () => {
     const range = ['Beijing', 'Shanghai']
     ;(Picker as any)({
       mode: PickerMode.SELECTOR,
@@ -152,11 +162,14 @@ describe('MpxPicker RN runtime', () => {
     }, null)
 
     expect(mockUpdate).not.toHaveBeenCalled()
+    const openCallCount = mockOpen.mock.calls.length
     result.props.onPress()
 
     const popupContent = mockUpdate.mock.calls[mockUpdate.mock.calls.length - 1][0]
     const selector = findElementByType(popupContent, 'PickerSelector')
 
+    expect(mockOpen.mock.calls.length).toBe(openCallCount)
+    expect(mockShow).toHaveBeenCalledTimes(1)
     expect(selector.props.range).toBe(range)
   })
 
@@ -181,5 +194,24 @@ describe('MpxPicker RN runtime', () => {
       color: 'red',
       fontSize: 20
     })
+  })
+
+  test('warns when background image-related styles are used', () => {
+    const mpxConfig = (global as any).__mpx.config
+    mpxConfig.ignoreWarning = false
+    mpxConfig.warnHandler = mockWarn
+
+    const result = (Picker as any)({
+      mode: PickerMode.SELECTOR,
+      value: 0,
+      range: ['Beijing'],
+      style: {
+        backgroundImage: 'url(test.png)'
+      },
+      children: 'Select'
+    }, null)
+
+    expect(result).toBeTruthy()
+    expect(mockWarn).toHaveBeenCalledWith('Picker does not support background image-related styles!')
   })
 })

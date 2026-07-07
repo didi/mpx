@@ -6,6 +6,7 @@ import PickerMultiSelector from './multiSelector'
 import PickerTime from './time'
 import PickerDate from './date'
 import PickerRegion from './region'
+import Portal from '../mpx-portal'
 import { FormContext, FormFieldValue, RouteContext } from '../context'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
@@ -142,11 +143,16 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       hasVarDec,
       varContextRef,
       hasSelfPercent,
+      hasPositionFixed,
       setWidth,
       setHeight
     } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
-    const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+    const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
     const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
+
+    if (backgroundStyle) {
+      warn('Picker does not support background image-related styles!')
+    }
 
     useNodesRef<View, PickerProps>(props, ref, nodeRef, {
       style: normalStyle
@@ -258,14 +264,19 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!(_mode in pickerModalMap)) {
         return warn(`[Mpx runtime warn]: Unsupported <picker> mode: ${mode}`)
       }
-      const specificProps = extendObject({}, innerProps, {
+      const modalProps = props as any
+      const specificProps = {
         mode: _mode,
         range,
-        children,
+        'range-key': modalProps['range-key'],
+        start: modalProps.start,
+        end: modalProps.end,
+        fields: modalProps.fields,
+        level: modalProps.level,
+        'custom-item': modalProps['custom-item'],
         bindchange: onChange,
-        bindcolumnchange: onColumnChange,
-        getRange: () => range
-      }) as PickerProps
+        bindcolumnchange: onColumnChange
+      } as PickerProps
       const _value: any = value
       const PickerModal = pickerModalMap[_mode] as React.ComponentType<PickerProps>
       return (
@@ -294,7 +305,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       )
     }
 
-    const renderPickerContent = () => {
+    const openPickerContent = () => {
       const renderPickerModal = getPickerContent()
       if (!renderPickerModal) {
         return false
@@ -305,29 +316,22 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     }
 
     useEffect(() => {
-      renderPickerContent()
+      openPickerContent()
       return () => {
         remove()
       }
     }, [])
 
-    const updatePickerContent = () => {
+    const showPicker = () => {
       const renderPickerModal = getPickerContent()
       if (!renderPickerModal) {
-        return false
+        return
       }
       update(renderPickerModal)
-      return true
+      show()
     }
 
-    const showPicker = () => {
-      if (renderPickerContent()) {
-        updatePickerContent()
-        show()
-      }
-    }
-
-    return createElement(
+    const finalComponent = createElement(
       TouchableWithoutFeedback,
       { onPress: showPicker },
       createElement(
@@ -340,6 +344,12 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         })
       )
     )
+
+    if (hasPositionFixed) {
+      return createElement(Portal, null, finalComponent)
+    }
+
+    return finalComponent
   }
 )
 
