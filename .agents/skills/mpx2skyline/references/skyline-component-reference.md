@@ -251,7 +251,6 @@
 > 注意事项
 >
 > - z-index 不支持 Web 标准的层叠上下文，只在同层级节点间有效
-> - 不支持 inline 布局（display: inline / inline-block）
 > - 块级文本省略可在 `view` 上直接使用 `max-lines` / `overflow`；内联文本、文本嵌套、可选中文本仍优先使用 `text`
 
 ---
@@ -282,7 +281,6 @@
 
 > 注意事项
 >
-> - Skyline 中内联文本只能用 `text` 组件，`view` 不支持 inline 布局
 > - `text` 内只能嵌套 `text`，不能嵌套其他类型组件
 > - 块级文本超长打点也可直接在 `view` 上使用 `max-lines` / `overflow`
 > - 图文混排使用 Skyline 专属的 `span` 组件；WebView 下用 `display: flex` 的 view 替代
@@ -457,7 +455,7 @@ Skyline 专属内联容器，用于实现 text、image 的图文混排。
 
 > 注意事项
 >
-> - Skyline 专属，WebView 不识别此组件
+> - Skyline 专属，WebView 实测运行无异常
 > - Mpx 中通过 `mpxTagName@wx="span"` 条件渲染；WebView 下用 `display: flex` 的 view 替代
 > - 内部可嵌套 text、image
 

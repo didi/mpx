@@ -46,7 +46,6 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 | 背景与边框 | ✅ | |
 | 盒子模型 | ✅ | 支持 `border-box` 和 `content-box`，**无 BFC** |
 | 字体 / `@font-face` | ✅ | 仅支持 ttf 格式 |
-| Inline / Inline-Block 布局 | ❌ | 可在 `<text>` 内嵌套使用 |
 | Media queries | 部分支持 | 仅支持 DarkMode（`@media (prefers-color-scheme: dark)`） |
 | Grid 布局 | ❌ | 使用 Flex 布局或 `grid-view` 组件替代 |
 
@@ -420,7 +419,6 @@ page {
 
 - `float` 及相关清除浮动属性 → 使用 Flex 布局替代
 - `display: grid` → 使用 Flex 布局或 `grid-view` 组件
-- `display: inline` / `display: inline-block` → 使用 `<text>` / `<span>` 或 Flex 布局（完整支持开发中）
 - `overflow: scroll` / 单独设置 `overflow-x`/`overflow-y` → 使用 `scroll-view` 组件
 - `position: sticky` → 使用 `sticky-header`/`sticky-section` 组件
 - `justify-items` / `direction` → ⛔ 不可用
@@ -456,7 +454,6 @@ page {
 | `font-weight` 数值                  | 完全支持 | **部分机型 500/600 不生效** | 使用 `bold` / `700`                                           |
 | `box-shadow` 多层                   | 支持 | **不支持多个叠加** | 拆分节点或合并                                                     |
 | `animation-fill-mode`             | `none`/`forwards`/`backwards`/`both` | **`none`/`backwards` 表现均为 `forwards`** | 注意动画行为差异    |
-| inline / inline-block 布局          | 支持 | **不支持** | 使用 `<text>` / `<span>` 或 Flex 布局                            |
 | BFC                               | 支持 | **不支持** | 不依赖 BFC，使用 Flex 布局                                          |
 | 页面滚动                              | 支持 | **不支持** | 使用 `scroll-view type="list"`                                |
 | `margin` 合并                       | 相邻块级元素上下合并 | **不合并** | 不依赖上下合并                                                       |

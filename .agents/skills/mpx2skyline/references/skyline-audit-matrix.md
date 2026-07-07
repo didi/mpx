@@ -20,7 +20,7 @@
 第一阶段可用以下命令兜底扫描；结构化场景（多行 `scroll-view` 等）仍需人工或脚本复核。
 
 ```bash
-rg -n "@media screen|display\\s+inline|inline-block|inline-flex|font-weight\\s*:?\\s*(500|600)|text-overflow|truncate|overflow-x|overflow-y|overflow\\s+scroll|float\\s|text-indent|overflow-wrap|justify-items|box-shadow:.*?,|background-image|mask-image|background-size|background-repeat|<scroll-view|movable-area|movable-view|web-view|editor|progress|navigation-bar|\\.animate\\(|\\.applyAnimation\\(|wx\\.createAnimation|wx-if|wx-for" <scope> -g '*.mpx'
+rg -n "@media screen|font-weight\\s*:?\\s*(500|600)|text-overflow|truncate|overflow-x|overflow-y|overflow\\s+scroll|float\\s|text-indent|overflow-wrap|justify-items|box-shadow:.*?,|background-image|mask-image|background-size|background-repeat|<scroll-view|movable-area|movable-view|web-view|editor|progress|navigation-bar|\\.animate\\(|\\.applyAnimation\\(|wx\\.createAnimation|wx-if|wx-for" <scope> -g '*.mpx'
 ```
 
 ## 规则矩阵
@@ -28,7 +28,6 @@ rg -n "@media screen|display\\s+inline|inline-block|inline-flex|font-weight\\s*:
 | id | level | scope | pattern | 判定 | 标准修复 | 允许例外 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `STYLE_MEDIA_SCREEN` | error | style | `@media screen` | Skyline 下静默失效，且可能把内部规则当裸样式应用 | WebView 保留 `@media`；Skyline 用 `isSkyline && isSmall` 动态类兜底，必要时加 normal 类反向兜底 | 非 wx / RN-only / `.ios.mpx` |
-| `LAYOUT_INLINE` | error | style/template | `display\\s+inline\|inline-block\|inline-flex` | Skyline 不支持 inline 布局，且 `inline-block -> block` 可能改变行内占位和对齐语义 | 默认改 flex row + `align-items:center`；纯文本改 `<text>`；图文混排用 `mpxTagName@wx="span"` 或 `<span>`；`block` 仅作例外并说明原因 |  |
 | `STYLE_FONT_WEIGHT` | warn | style/template/script | `font-weight\\s*:?\\s*(500\|600)` | 部分机型数字字重不稳定 | 改 `bold` / `700`；WebView 对齐 | iOS 专用分支可保留 |
 | `STYLE_TEXT_OVERFLOW` | warn | template/style | `text-overflow\\s+ellipsis\|truncate` | Skyline 省略需由组件属性承载，`view` / `text` / `rich-text` / `special-text` 均可直接补属性 | 承载文本的节点补 `max-lines` + `overflow="ellipsis"` | 容器只做裁剪时说明 |
 | `COMP_SCROLL_TYPE` | error | template | `<scroll-view` | Skyline 下 `scroll-view` 必须显式声明 `type` | 补 `type="list"` / `nested` / `custom` | 无 |
@@ -45,5 +44,4 @@ rg -n "@media screen|display\\s+inline|inline-block|inline-flex|font-weight\\s*:
 1. `rg` 命中只是候选项，必须结合 SFC 区块和平台条件判断。
 2. 多行 `<scroll-view>` 不能只靠单行 pattern 判定，需读取完整标签。
 3. 保留 `@media screen` 时必须说明 WebView 路径仍需要它；Skyline 路径必须有动态类兜底。
-4. `LAYOUT_INLINE` 命中需在最终结果中按替换类型汇总：flex 替换 / text-span 替换 / block 例外；每个 block 例外必须说明原因。
-6. 最终结果中 `error` 不允许无说明残留。
+4. 最终结果中 `error` 不允许无说明残留。
