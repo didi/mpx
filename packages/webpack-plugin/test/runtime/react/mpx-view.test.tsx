@@ -3,6 +3,7 @@ import React from 'react'
 import { render, screen } from '@testing-library/react-native'
 import MpxView from '../../../lib/runtime/components/react/mpx-view'
 import MpxInlineText from '../../../lib/runtime/components/react/mpx-inline-text'
+import { fireTap } from './helpers'
 
 // Mock mpx-portal
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
@@ -68,10 +69,20 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('touchable-view')
-    expect(viewElement).toBeTruthy()
-    expect(bindtap).toBeDefined()
-    expect(bindtouchstart).toBeDefined()
-    expect(bindtouchend).toBeDefined()
+    fireTap(viewElement)
+
+    expect(bindtouchstart).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'touchstart',
+      detail: { x: 10, y: 20 }
+    }))
+    expect(bindtouchend).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'touchend',
+      detail: { x: 10, y: 20 }
+    }))
+    expect(bindtap).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'tap',
+      detail: { x: 10, y: 20 }
+    }))
   })
 
   it('should handle background properties', () => {
@@ -473,7 +484,8 @@ describe('MpxView', () => {
     let viewElement = screen.getByTestId('boundary-view')
     expect(viewElement).toBeTruthy()
 
-    // 测试非法的背景图片 URL
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+
     rerender(
       <MpxView
         testID="boundary-view"
@@ -489,6 +501,8 @@ describe('MpxView', () => {
 
     viewElement = screen.getByTestId('boundary-view')
     expect(viewElement).toBeTruthy()
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('background use should be stable'))
+    errorSpy.mockRestore()
   })
 
   // 性能优化相关测试

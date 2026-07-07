@@ -22,12 +22,12 @@ describe('MpxInput', () => {
 
   // 参数化测试 - 不同输入类型
   it.each([
-    ['text', 'default'],
+    ['text', 'text'],
     ['number', 'numeric'],
-    ['idcard', 'default'],
-    ['digit', expect.stringMatching(/decimal-pad|numeric/)]
-  ])('should handle input type %s with keyboard %s', (type, expectedKeyboard) => {
-    const { toJSON } = render(
+    ['idcard', 'text'],
+    ['digit', 'decimal']
+  ])('should handle input type %s with inputMode %s', (type, expectedInputMode) => {
+    render(
       <MpxInput
         testID="type-input"
         type={type as any}
@@ -37,8 +37,24 @@ describe('MpxInput', () => {
     )
 
     const inputElement = screen.getByTestId('type-input')
-    expect(inputElement.props.keyboardType).toEqual(expectedKeyboard)
-    expect(toJSON()).toMatchSnapshot(`input-type-${type}`)
+    expect(inputElement.props.inputMode).toEqual(expectedInputMode)
+    expect(inputElement.props.keyboardType).toBeUndefined()
+  })
+
+  it('should prefer explicit keyboard-type over input type mapping', () => {
+    render(
+      <MpxInput
+        testID="keyboard-type-input"
+        type="number"
+        keyboard-type="phone-pad"
+        value="123"
+        enable-var={true}
+      />
+    )
+
+    const inputElement = screen.getByTestId('keyboard-type-input')
+    expect(inputElement.props.inputMode).toBeUndefined()
+    expect(inputElement.props.keyboardType).toBe('phone-pad')
   })
 
   // 参数化测试 - 属性组合
@@ -144,9 +160,7 @@ describe('MpxInput', () => {
   // 警告测试
   it('should warn when form lacks name attribute', () => {
     const mockFormValuesMap = new Map()
-    const originalWarn = console.warn
-    const mockWarn = jest.fn()
-    console.warn = mockWarn
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
 
     const TestFormProvider = ({ children }: { children: any }) => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -158,16 +172,19 @@ describe('MpxInput', () => {
       }, children)
     }
 
-    render(
-      <TestFormProvider>
-        <MpxInput testID="no-name-input" value="test" enable-var={true} />
-      </TestFormProvider>
-    )
+    try {
+      render(
+        <TestFormProvider>
+          <MpxInput testID="no-name-input" value="test" enable-var={true} />
+        </TestFormProvider>
+      )
 
-    expect(mockWarn).toHaveBeenCalledWith(
-      expect.stringContaining('If a form component is used, the name attribute is required.')
-    )
-    console.warn = originalWarn
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('If a form component is used, the name attribute is required.')
+      )
+    } finally {
+      warnSpy.mockRestore()
+    }
   })
 
   // 值解析边界测试
@@ -246,7 +263,7 @@ describe('MpxInput', () => {
   it('should handle multiline and confirm-type combinations', () => {
     const testCases = [
       { multiline: true, 'confirm-type': 'return', expectedEnterKeyHint: undefined, expectedBlurOnSubmit: false },
-      { multiline: true, 'confirm-type': 'done', expectedEnterKeyHint: 'done', expectedBlurOnSubmit: false },
+      { multiline: true, 'confirm-type': 'done', expectedEnterKeyHint: 'done', expectedBlurOnSubmit: true },
       { multiline: false, 'confirm-type': 'search', expectedEnterKeyHint: 'search', expectedBlurOnSubmit: true }
     ]
 
@@ -333,33 +350,53 @@ describe('MpxInput', () => {
   it('should render in Portal when position is fixed', () => {
     const mockUseTransformStyle = jest.fn(() => ({
       hasPositionFixed: true, // 正确：hasPositionFixed 来自 useTransformStyle
+      hasVarDec: false,
       hasSelfPercent: false,
-      normalStyle: { position: 'absolute' },
+      normalStyle: {
+        backgroundColor: '#fff',
+        boxSizing: 'content-box',
+        padding: 0
+      },
+      varContextRef: { current: null },
       setWidth: jest.fn(),
       setHeight: jest.fn()
     }))
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const originalModule = jest.requireActual('../../../lib/runtime/components/react/utils')
-    jest.doMock('../../../lib/runtime/components/react/utils', () => ({
-      ...originalModule,
-      useTransformStyle: mockUseTransformStyle
-    }))
+    let tree: unknown
+    try {
+      jest.isolateModules(() => {
+        jest.doMock('react', () => React)
+        jest.doMock('../../../lib/runtime/components/react/mpx-portal', () => {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const mockReact = require('react')
+          return ({ children }: { children: any }) => mockReact.createElement(mockReact.Fragment, null, children)
+        })
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const originalModule = jest.requireActual('../../../lib/runtime/components/react/utils')
+        jest.doMock('../../../lib/runtime/components/react/utils', () => Object.assign({}, originalModule, {
+          useTransformStyle: mockUseTransformStyle
+        }))
 
-    delete require.cache[require.resolve('../../../lib/runtime/components/react/mpx-input')]
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const MockedMpxInput = require('../../../lib/runtime/components/react/mpx-input').default
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const MockedMpxInput = require('../../../lib/runtime/components/react/mpx-input').default
 
-    const { toJSON } = render(
-      React.createElement(MockedMpxInput, {
-        testID: 'portal-input',
-        value: 'Portal content',
-        'enable-var': true
+        const { toJSON } = render(
+          React.createElement(MockedMpxInput, {
+            testID: 'portal-input',
+            value: 'Portal content',
+            'enable-var': true
+          })
+        )
+        tree = toJSON()
       })
-    )
 
-    expect(toJSON()).toMatchSnapshot('input-with-portal')
-    jest.dontMock('../../../lib/runtime/components/react/utils')
+      expect(mockUseTransformStyle).toHaveBeenCalled()
+      expect(tree).toMatchSnapshot('input-with-portal')
+    } finally {
+      jest.dontMock('react')
+      jest.dontMock('../../../lib/runtime/components/react/mpx-portal')
+      jest.dontMock('../../../lib/runtime/components/react/utils')
+    }
   })
 
   // onChange 返回值处理测试

@@ -1,9 +1,14 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent, act } from '@testing-library/react-native'
 
 import MpxScrollView from '../../../lib/runtime/components/react/mpx-scroll-view'
 import MpxView from '../../../lib/runtime/components/react/mpx-view'
 import MpxText from '../../../lib/runtime/components/react/mpx-text'
+import { IntersectionObserverContext } from '../../../lib/runtime/components/react/context'
+import { createTouchEvent } from './helpers'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { __getLastPanGesture } = require('react-native-gesture-handler')
 
 // Mock mpx-portal
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
@@ -120,14 +125,15 @@ describe('MpxScrollView', () => {
       nativeEvent: { layout: { height: 60 } }
     })
 
-    // 测试下拉刷新手势
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 5, // END
-        translationY: 70,
-        velocityY: 0
-      }
+    const panGesture = __getLastPanGesture()
+    act(() => {
+      panGesture.onUpdateCallback({ translationY: 70, velocityY: 0 })
+      panGesture.onEndCallback({ translationY: 70, velocityY: 0 })
     })
+
+    expect(mockRefresherRefresh).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'refresherrefresh'
+    }))
 
     // 测试刷新状态变化
     rerender(
@@ -148,7 +154,7 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    expect(scrollElement).toBeTruthy()
+    expect(screen.getByText('Refreshing...')).toBeTruthy()
   })
 
   // 增强模式和手势处理测试
@@ -180,21 +186,16 @@ describe('MpxScrollView', () => {
       nativeEvent: { layout: { height: 50 } }
     })
 
-    // 测试各种手势状态
-    const gestureStates = [
-      { state: 4, translationY: 30, velocityY: 0 }, // ACTIVE - 向下
-      { state: 4, translationY: -20, velocityY: 0 }, // ACTIVE - 向上
-      { state: 5, translationY: 60, velocityY: 0 }, // END - 触发刷新
-      { state: 5, translationY: 30, velocityY: 0 } // END - 回弹
-    ]
-
-    gestureStates.forEach(gesture => {
-      fireEvent(scrollElement, 'onGestureEvent', {
-        nativeEvent: gesture
-      })
+    const panGesture = __getLastPanGesture()
+    act(() => {
+      panGesture.onUpdateCallback({ translationY: 30, velocityY: 0 })
+      panGesture.onUpdateCallback({ translationY: -20, velocityY: 0 })
+      panGesture.onEndCallback({ translationY: 60, velocityY: 0 })
     })
 
-    expect(scrollElement).toBeTruthy()
+    expect(mockRefresherRefresh).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'refresherrefresh'
+    }))
   })
 
   // 滚动位置控制和scroll-into-view测试
@@ -256,34 +257,43 @@ describe('MpxScrollView', () => {
     // Mock useTransformStyle hook
     const mockUseTransformStyle = jest.fn(() => ({
       hasPositionFixed: true,
+      hasVarDec: false,
       hasSelfPercent: false,
       normalStyle: { position: 'absolute' },
+      varContextRef: { current: null },
       setWidth: jest.fn(),
       setHeight: jest.fn()
     }))
 
-    const originalModule = jest.requireActual('../../../lib/runtime/components/react/utils')
-    jest.doMock('../../../lib/runtime/components/react/utils', () => ({
-      ...originalModule,
-      useTransformStyle: mockUseTransformStyle
-    }))
+    try {
+      jest.isolateModules(() => {
+        jest.doMock('react', () => React)
+        const originalModule = jest.requireActual('../../../lib/runtime/components/react/utils')
+        jest.doMock('../../../lib/runtime/components/react/utils', () => Object.assign({}, originalModule, {
+          useTransformStyle: mockUseTransformStyle
+        }))
 
-    delete require.cache[require.resolve('../../../lib/runtime/components/react/mpx-scroll-view')]
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const MpxScrollViewWithMock = require('../../../lib/runtime/components/react/mpx-scroll-view').default
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const MpxScrollViewWithMock = require('../../../lib/runtime/components/react/mpx-scroll-view').default
 
-    render(
-      <MpxScrollViewWithMock
-        testID="portal-scroll"
-        style={{ position: 'fixed' }}
-      >
-        <MpxView>
-          <MpxText>Fixed positioned content</MpxText>
-        </MpxView>
-      </MpxScrollViewWithMock>
-    )
+        render(
+          <MpxScrollViewWithMock
+            testID="portal-scroll"
+            style={{ position: 'fixed' }}
+          >
+            <MpxView>
+              <MpxText>Fixed positioned content</MpxText>
+            </MpxView>
+          </MpxScrollViewWithMock>
+        )
+      })
 
-    expect(screen.getByTestId('portal-scroll')).toBeTruthy()
+      expect(screen.getByTestId('portal-scroll')).toBeTruthy()
+      expect(mockUseTransformStyle).toHaveBeenCalled()
+    } finally {
+      jest.dontMock('react')
+      jest.dontMock('../../../lib/runtime/components/react/utils')
+    }
   })
 
   // 阈值事件测试
@@ -311,7 +321,15 @@ describe('MpxScrollView', () => {
 
     const scrollElement = screen.getByTestId('threshold-scroll')
 
-    // 测试upper threshold (距顶部小于threshold)
+    // 先远离顶部，再回到 upper threshold 内，才能覆盖向上滚动触发逻辑
+    fireEvent.scroll(scrollElement, {
+      nativeEvent: {
+        contentOffset: { x: 0, y: 100 },
+        contentSize: { width: 300, height: 800 },
+        layoutMeasurement: { width: 300, height: 400 }
+      }
+    })
+
     fireEvent.scroll(scrollElement, {
       nativeEvent: {
         contentOffset: { x: 0, y: 15 }, // 小于upper-threshold 20
@@ -329,9 +347,15 @@ describe('MpxScrollView', () => {
       }
     })
 
-    // 验证基本滚动事件被触发
-    expect(mockScroll).toHaveBeenCalled()
-    expect(scrollElement).toBeTruthy()
+    expect(mockScrollToUpper).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'scrolltoupper',
+      detail: expect.objectContaining({ direction: 'top' })
+    }))
+    expect(mockScrollToLower).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'scrolltolower',
+      detail: expect.objectContaining({ direction: 'bottom' })
+    }))
+    expect(mockScroll).toHaveBeenCalledTimes(3)
   })
 
   // 交叉观察器测试
@@ -363,6 +387,7 @@ describe('MpxScrollView', () => {
 
   // 边界情况和错误处理测试
   it('should handle edge cases and error scenarios', () => {
+    const mockRefresherRefresh = jest.fn()
     const { rerender } = render(
       <MpxScrollView testID="edge-scroll">
         {/* 空内容 */}
@@ -378,7 +403,7 @@ describe('MpxScrollView', () => {
         enhanced={true}
         refresher-enabled={true}
         refresher-triggered={undefined}
-        bindrefresherrefresh={jest.fn()}
+        bindrefresherrefresh={mockRefresherRefresh}
       >
         <MpxView slot="refresher" style={{ height: 60 }}>
           <MpxText>Custom refresher</MpxText>
@@ -396,15 +421,15 @@ describe('MpxScrollView', () => {
       nativeEvent: { layout: { height: 60 } }
     })
 
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 5,
-        translationY: 70,
-        velocityY: 0
-      }
+    const panGesture = __getLastPanGesture()
+    act(() => {
+      panGesture.onUpdateCallback({ translationY: 70, velocityY: 0 })
+      panGesture.onEndCallback({ translationY: 70, velocityY: 0 })
     })
 
-    expect(scrollElement).toBeTruthy()
+    expect(mockRefresherRefresh).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'refresherrefresh'
+    }))
   })
 
   // Refs转发测试
@@ -514,38 +539,29 @@ describe('MpxScrollView', () => {
     })
     expect(mockScroll).toHaveBeenCalled()
 
-    // 测试updateScrollState和updateBouncesState条件分支
-    fireEvent(scrollElement, 'onGestureEvent', {
+    fireEvent(scrollElement, 'onScroll', {
       nativeEvent: {
-        state: 4, // ACTIVE
-        translationY: 50,
-        velocityY: 100
+        contentOffset: { x: 0, y: 0 },
+        contentSize: { width: 300, height: 1000 },
+        layoutMeasurement: { width: 300, height: 400 }
       }
     })
 
-    // 测试不同状态以覆盖条件分支 (594-596, 607-609)
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 4, // ACTIVE
-        translationY: -30,
-        velocityY: -50
-      }
+    const panGesture = __getLastPanGesture()
+    act(() => {
+      panGesture.onUpdateCallback({ translationY: 50, velocityY: 100 })
+      panGesture.onUpdateCallback({ translationY: -30, velocityY: -50 })
+      panGesture.onUpdateCallback({ translationY: 80, velocityY: 0 })
+      panGesture.onEndCallback({ translationY: 80, velocityY: 0 })
     })
 
-    // 测试refresherTriggered === undefined的onRefresh分支 (527-539)
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 5, // END
-        translationY: 80, // 大于refresher高度
-        velocityY: 0
-      }
-    })
-
-    expect(scrollElement).toBeTruthy()
+    expect(mockRefresherRefresh).toHaveBeenCalled()
   })
 
   // 复杂手势和状态管理测试
   it('should handle complex gesture states and transitions', () => {
+    const mockRefresherRefresh = jest.fn()
+
     render(
       <MpxScrollView
         testID="complex-gesture"
@@ -554,6 +570,7 @@ describe('MpxScrollView', () => {
         bounces={true}
         refresher-enabled={true}
         refresher-threshold={80}
+        bindrefresherrefresh={mockRefresherRefresh}
       >
         <MpxView slot="refresher" style={{ height: 100 }}>
           <MpxText>Pull to refresh</MpxText>
@@ -581,13 +598,18 @@ describe('MpxScrollView', () => {
       { state: 5, translationY: -15, velocityY: -30 } // 向上滑动隐藏
     ]
 
-    complexGestures.forEach(gesture => {
-      fireEvent(scrollElement, 'onGestureEvent', {
-        nativeEvent: gesture
+    const panGesture = __getLastPanGesture()
+    act(() => {
+      complexGestures.forEach((gesture) => {
+        if (gesture.state === 4) {
+          panGesture.onUpdateCallback(gesture)
+        } else {
+          panGesture.onEndCallback(gesture)
+        }
       })
     })
 
-    expect(scrollElement).toBeTruthy()
+    expect(mockRefresherRefresh).toHaveBeenCalled()
   })
 
   // 测试 firstScrollIntoViewChange 分支 (272-277)
@@ -699,32 +721,23 @@ describe('MpxScrollView', () => {
     const mockThrottleMeasure1 = jest.fn()
     const mockThrottleMeasure2 = jest.fn()
 
-    // 模拟 IntersectionObserverContext
     const mockIntersectionObservers = {
       observer1: { throttleMeasure: mockThrottleMeasure1 },
       observer2: { throttleMeasure: mockThrottleMeasure2 }
     }
 
-    // Mock useContext for IntersectionObserverContext
-    const originalUseContext = React.useContext
-    jest.spyOn(React, 'useContext').mockImplementation((context) => {
-      // 如果是 IntersectionObserverContext，返回 mock 数据
-      if (context.displayName === 'IntersectionObserverContext') {
-        return mockIntersectionObservers
-      }
-      return originalUseContext(context)
-    })
-
     render(
-      <MpxScrollView
-        testID="intersection-observer"
-        scroll-y={true}
-        enable-trigger-intersection-observer={true}
-      >
-        <MpxView style={{ height: 1000 }}>
-          <MpxText>Intersection observer content</MpxText>
-        </MpxView>
-      </MpxScrollView>
+      <IntersectionObserverContext.Provider value={mockIntersectionObservers}>
+        <MpxScrollView
+          testID="intersection-observer"
+          scroll-y={true}
+          enable-trigger-intersection-observer={true}
+        >
+          <MpxView style={{ height: 1000 }}>
+            <MpxText>Intersection observer content</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      </IntersectionObserverContext.Provider>
     )
 
     const scrollElement = screen.getByTestId('intersection-observer')
@@ -738,10 +751,8 @@ describe('MpxScrollView', () => {
       }
     })
 
-    // 恢复原始的 useContext
-    React.useContext.mockRestore()
-
-    expect(scrollElement).toBeTruthy()
+    expect(mockThrottleMeasure1).toHaveBeenCalled()
+    expect(mockThrottleMeasure2).toHaveBeenCalled()
   })
 
   // 测试 scrollHandler listener (485)
@@ -833,42 +844,12 @@ describe('MpxScrollView', () => {
 
     const scrollElement = screen.getByTestId('state-update-conditions')
 
-    // 测试不同的手势状态来触发 updateScrollState 和 updateBouncesState
-
-    // 1. 触发 enableScrollValue.value !== newValue 分支
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 4, // ACTIVE
-        translationY: 50,
-        velocityY: 50
-      }
-    })
-
-    // 2. 触发 bouncesValue.value !== newValue 分支
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 4, // ACTIVE
-        translationY: 30,
-        velocityY: 0
-      }
-    })
-
-    // 3. 触发不同的状态变化
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 4, // ACTIVE
-        translationY: -25,
-        velocityY: -30
-      }
-    })
-
-    // 4. 测试状态值相同时不更新的分支
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 4, // ACTIVE (same state)
-        translationY: -25,
-        velocityY: -30
-      }
+    const panGesture = __getLastPanGesture()
+    act(() => {
+      panGesture.onUpdateCallback({ translationY: 50, velocityY: 50 })
+      panGesture.onUpdateCallback({ translationY: 30, velocityY: 0 })
+      panGesture.onUpdateCallback({ translationY: -25, velocityY: -30 })
+      panGesture.onUpdateCallback({ translationY: -25, velocityY: -30 })
     })
 
     expect(scrollElement).toBeTruthy()
@@ -876,94 +857,97 @@ describe('MpxScrollView', () => {
 
   // 测试 enable-sticky 和内容高度变化场景 (382-392)
   it('should handle sticky scroll and content size changes', () => {
-    // 模拟 __mpx_mode__
     const originalMode = global.__mpx_mode__
-    global.__mpx_mode__ = 'android'
+    try {
+      global.__mpx_mode__ = 'android'
 
-    const { rerender } = render(
-      <MpxScrollView
-        testID="sticky-scroll"
-        scroll-y={true}
-        enable-sticky={true}
-        style={{ height: 300 }}
-      >
-        <MpxView style={{ height: 800 }}>
-          <MpxText>Sticky content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
+      const { rerender } = render(
+        <MpxScrollView
+          testID="sticky-scroll"
+          scroll-y={true}
+          enable-sticky={true}
+          style={{ height: 300 }}
+        >
+          <MpxView style={{ height: 800 }}>
+            <MpxText>Sticky content</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
 
-    const scrollElement = screen.getByTestId('sticky-scroll')
+      const scrollElement = screen.getByTestId('sticky-scroll')
 
-    // 先滚动到底部
-    fireEvent.scroll(scrollElement, {
-      nativeEvent: {
-        contentOffset: { x: 0, y: 500 },
-        contentSize: { width: 300, height: 800 },
-        layoutMeasurement: { width: 300, height: 300 }
-      }
-    })
+      // 先滚动到底部
+      fireEvent.scroll(scrollElement, {
+        nativeEvent: {
+          contentOffset: { x: 0, y: 500 },
+          contentSize: { width: 300, height: 800 },
+          layoutMeasurement: { width: 300, height: 300 }
+        }
+      })
 
-    // 减少内容高度，触发 maxOffset 调整逻辑
-    rerender(
-      <MpxScrollView
-        testID="sticky-scroll"
-        scroll-y={true}
-        enable-sticky={true}
-        style={{ height: 300 }}
-      >
-        <MpxView style={{ height: 400 }}>
-          <MpxText>Reduced content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
+      // 减少内容高度，触发 maxOffset 调整逻辑
+      rerender(
+        <MpxScrollView
+          testID="sticky-scroll"
+          scroll-y={true}
+          enable-sticky={true}
+          style={{ height: 300 }}
+        >
+          <MpxView style={{ height: 400 }}>
+            <MpxText>Reduced content</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
 
-    fireEvent(scrollElement, 'onContentSizeChange', {
-      nativeEvent: { contentSize: { width: 300, height: 400 } }
-    })
+      fireEvent(scrollElement, 'onContentSizeChange', {
+        nativeEvent: { contentSize: { width: 300, height: 400 } }
+      })
 
-    // 恢复原始 mode
-    global.__mpx_mode__ = originalMode
-
-    expect(scrollElement).toBeTruthy()
+      expect(scrollElement).toBeTruthy()
+    } finally {
+      global.__mpx_mode__ = originalMode
+    }
   })
 
   // 测试 harmony 模式下的 sticky 逻辑 (509-516)
   it('should handle harmony mode sticky scroll', () => {
     const originalMode = global.__mpx_mode__
-    global.__mpx_mode__ = 'harmony'
+    try {
+      global.__mpx_mode__ = 'harmony'
 
-    render(
-      <MpxScrollView
-        testID="harmony-sticky"
-        scroll-y={true}
-        enable-sticky={true}
-        style={{ height: 300 }}
-      >
-        <MpxView style={{ height: 600 }}>
-          <MpxText>Harmony content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
+      render(
+        <MpxScrollView
+          testID="harmony-sticky"
+          scroll-y={true}
+          enable-sticky={true}
+          style={{ height: 300 }}
+        >
+          <MpxView style={{ height: 600 }}>
+            <MpxText>Harmony content</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
 
-    const scrollElement = screen.getByTestId('harmony-sticky')
+      const scrollElement = screen.getByTestId('harmony-sticky')
 
-    // 先触发内容尺寸变化
-    fireEvent(scrollElement, 'onContentSizeChange', {
-      nativeEvent: { contentSize: { width: 300, height: 600 } }
-    })
+      // 先触发内容尺寸变化
+      fireEvent(scrollElement, 'onContentSizeChange', {
+        nativeEvent: { contentSize: { width: 300, height: 600 } }
+      })
 
-    // 触发滚动来测试 harmony 模式的特殊逻辑
-    fireEvent.scroll(scrollElement, {
-      nativeEvent: {
-        contentOffset: { x: 0, y: 200 },
-        contentSize: { width: 300, height: 600 },
-        layoutMeasurement: { width: 300, height: 300 }
-      }
-    })
+      // 触发滚动来测试 harmony 模式的特殊逻辑
+      fireEvent.scroll(scrollElement, {
+        nativeEvent: {
+          contentOffset: { x: 0, y: 200 },
+          contentSize: { width: 300, height: 600 },
+          layoutMeasurement: { width: 300, height: 300 }
+        }
+      })
 
-    global.__mpx_mode__ = originalMode
-    expect(scrollElement).toBeTruthy()
+      expect(scrollElement).toBeTruthy()
+    } finally {
+      global.__mpx_mode__ = originalMode
+    }
   })
 
   // 测试 enhanced 模式下的 drag 事件 (482-494, 527-537, 542-554)
@@ -1032,8 +1016,13 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    // 测试非 enhanced 模式
-    expect(screen.getByTestId('touch-move-test')).toBeTruthy()
+    fireEvent(screen.getByTestId('touch-move-test'), 'touchMove', createTouchEvent())
+    expect(mockTouchMove).toHaveBeenCalledWith(expect.objectContaining({
+      nativeEvent: expect.objectContaining({
+        pageX: 10,
+        pageY: 20
+      })
+    }))
 
     // 测试 enhanced 模式下的 binddragging
     rerender(
@@ -1050,7 +1039,14 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    expect(screen.getByTestId('touch-move-test')).toBeTruthy()
+    fireEvent(screen.getByTestId('touch-move-test'), 'touchMove', createTouchEvent())
+    expect(mockDragging).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'dragging',
+      detail: {
+        scrollLeft: 0,
+        scrollTop: 0
+      }
+    }))
   })
 
   // 测试 refresher 在 refreshing 状态下的手势处理 (667-694)
@@ -1105,34 +1101,18 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    // 在 refreshing 状态下向下滑动但不超过 threshold
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 5, // END
-        translationY: 40, // 小于 refresherThreshold (60)
-        velocityY: 0
-      }
+    const panGesture = __getLastPanGesture()
+    act(() => {
+      panGesture.onUpdateCallback({ translationY: 40, velocityY: 0 })
+      panGesture.onEndCallback({ translationY: 40, velocityY: 0 })
+      panGesture.onUpdateCallback({ translationY: -30, velocityY: -50 })
+      panGesture.onEndCallback({ translationY: -30, velocityY: -50 })
+      panGesture.onUpdateCallback({ translationY: 70, velocityY: 0 })
+      panGesture.onEndCallback({ translationY: 70, velocityY: 0 })
     })
 
-    // 在 refreshing 状态下向上滑动
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 5, // END
-        translationY: -30,
-        velocityY: -50
-      }
-    })
-
-    // 在 refreshing 状态下向下滑动超过 threshold
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 5, // END
-        translationY: 70, // 大于 refresherThreshold (60)
-        velocityY: 0
-      }
-    })
-
-    expect(scrollElement).toBeTruthy()
+    expect(mockRefresherRefresh).not.toHaveBeenCalled()
+    expect(screen.getByText('Refreshing...')).toBeTruthy()
   })
 
   // 测试 scrollX 场景下的 handleScrollIntoView (317)
@@ -1223,7 +1203,9 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    expect(screen.getByTestId('no-custom-refresher')).toBeTruthy()
+    const scrollElement = screen.getByTestId('no-custom-refresher')
+    expect(scrollElement.props.refreshControl).toBeTruthy()
+    expect(scrollElement.props.refreshControl.props.refreshing).toBe(true)
   })
 
   // 测试 simultaneousHandlers 和 waitFor (734-735)
@@ -1286,6 +1268,8 @@ describe('MpxScrollView', () => {
 
   // 测试 enableScrollValue.value 为 true 时的 onEnd 分支 (684)
   it('should handle onEnd gesture when scroll is enabled', () => {
+    const mockRefresherRefresh = jest.fn()
+
     render(
       <MpxScrollView
         testID="enabled-scroll-gesture"
@@ -1293,6 +1277,7 @@ describe('MpxScrollView', () => {
         scroll-y={true}
         bounces={true}
         refresher-enabled={true}
+        bindrefresherrefresh={mockRefresherRefresh}
       >
         <MpxView slot="refresher" style={{ height: 60 }}>
           <MpxText>Refresher</MpxText>
@@ -1309,15 +1294,11 @@ describe('MpxScrollView', () => {
       nativeEvent: { layout: { height: 60 } }
     })
 
-    // 在滚动启用状态下结束手势
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 5, // END
-        translationY: 50,
-        velocityY: 0
-      }
+    const panGesture = __getLastPanGesture()
+    act(() => {
+      panGesture.onEndCallback({ translationY: 50, velocityY: 0 })
     })
 
-    expect(scrollElement).toBeTruthy()
+    expect(mockRefresherRefresh).not.toHaveBeenCalled()
   })
 })

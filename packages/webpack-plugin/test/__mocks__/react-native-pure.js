@@ -12,6 +12,45 @@ const createRNComponent = (displayName) => {
     return Component
 }
 
+const createMeasuredRNComponent = (displayName) => {
+    const Component = React.forwardRef((props, ref) => {
+        const { children, ...otherProps } = props
+        React.useImperativeHandle(ref, () => ({
+            measure: jest.fn((callback) => callback(0, 0, 50, 50, 0, 0)),
+            measureLayout: jest.fn((parent, callback) => callback(0, 0))
+        }))
+        return React.createElement(displayName, otherProps, children)
+    })
+    Component.displayName = displayName
+    return Component
+}
+
+const eventListeners = {}
+const createEmitter = () => ({
+    addListener: jest.fn((type, listener) => {
+        eventListeners[type] = eventListeners[type] || []
+        eventListeners[type].push(listener)
+        return {
+            remove: jest.fn(() => {
+                eventListeners[type] = (eventListeners[type] || []).filter((item) => item !== listener)
+            })
+        }
+    }),
+    removeListener: jest.fn((type, listener) => {
+        eventListeners[type] = (eventListeners[type] || []).filter((item) => item !== listener)
+    }),
+    removeAllListeners: jest.fn((type) => {
+        if (type) {
+            delete eventListeners[type]
+        } else {
+            Object.keys(eventListeners).forEach((key) => delete eventListeners[key])
+        }
+    }),
+    emit: jest.fn((type, ...args) => {
+        ;(eventListeners[type] || []).forEach((listener) => listener(...args))
+    })
+})
+
 // 基础组件 Mock - 保持 RN 组件名称
 export const View = createRNComponent('View')
 export const Text = createRNComponent('Text')
@@ -73,6 +112,23 @@ export const StyleSheet = {
     }
 }
 
+export const processColor = jest.fn((color) => {
+    const colors = {
+        black: 0xff000000,
+        white: 0xffffffff,
+        transparent: 0x00000000
+    }
+    if (typeof color !== 'string') return color
+    if (colors[color]) return colors[color]
+    if (/^#([0-9a-f]{6})$/i.test(color)) {
+        return parseInt(color.slice(1), 16)
+    }
+    if (/^#([0-9a-f]{8})$/i.test(color)) {
+        return parseInt(color.slice(1), 16)
+    }
+    return null
+})
+
 // 布局系统
 export const Dimensions = {
     get: jest.fn(() => ({
@@ -112,9 +168,10 @@ export const Appearance = {
 
 // Keyboard
 export const Keyboard = {
-    addListener: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
     removeListener: jest.fn(),
     removeAllListeners: jest.fn(),
+    isVisible: jest.fn(() => false),
     dismiss: jest.fn()
 }
 
@@ -124,11 +181,10 @@ export const DeviceInfo = {
 }
 
 // StatusBar
-export const StatusBar = {
-    setBarStyle: jest.fn(),
-    setBackgroundColor: jest.fn(),
-    setHidden: jest.fn()
-}
+export const StatusBar = createRNComponent('StatusBar')
+StatusBar.setBarStyle = jest.fn()
+StatusBar.setBackgroundColor = jest.fn()
+StatusBar.setHidden = jest.fn()
 
 // Alert
 export const Alert = {
@@ -164,20 +220,10 @@ export const NetInfo = {
 }
 
 // DeviceEventEmitter
-export const DeviceEventEmitter = {
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    removeAllListeners: jest.fn(),
-    emit: jest.fn()
-}
+export const DeviceEventEmitter = createEmitter()
 
 // NativeEventEmitter
-export const NativeEventEmitter = jest.fn().mockImplementation(() => ({
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    removeAllListeners: jest.fn(),
-    emit: jest.fn()
-}))
+export const NativeEventEmitter = jest.fn().mockImplementation(() => createEmitter())
 
 // PanResponder
 export const PanResponder = {
@@ -188,7 +234,7 @@ export const PanResponder = {
 
 // Animated
 export const Animated = {
-    View: createRNComponent('Animated.View'),
+    View: createMeasuredRNComponent('Animated.View'),
     Text: createRNComponent('Animated.Text'),
     ScrollView: createRNComponent('Animated.ScrollView'),
     Image: createRNComponent('Animated.Image'),
@@ -242,6 +288,12 @@ export const Animated = {
 
     event: jest.fn(),
     createAnimatedComponent: jest.fn((component) => component),
+    add: jest.fn(() => ({
+        interpolate: jest.fn(() => 0)
+    })),
+    subtract: jest.fn(() => ({
+        interpolate: jest.fn(() => 0)
+    })),
 
     Easing: {
         linear: jest.fn(),

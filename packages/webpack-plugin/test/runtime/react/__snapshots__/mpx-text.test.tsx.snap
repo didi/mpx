@@ -25,6 +25,7 @@ exports[`MpxText should handle Portal with complex styling and content: complex-
       {
         "backgroundColor": "rgba(0,0,0,0.8)",
         "borderRadius": 5,
+        "boxSizing": "content-box",
         "color": "white",
         "height": 50,
         "left": "20%",
@@ -45,6 +46,7 @@ exports[`MpxText should handle Portal with complex styling and content: complex-
         {
           "color": "yellow",
           "fontWeight": "bold",
+          "textAlign": "center",
         }
       }
     >
@@ -107,7 +109,10 @@ exports[`MpxText should handle complex nested text with style inheritance: neste
     style={
       {
         "color": "red",
+        "fontSize": 16,
         "fontStyle": "italic",
+        "fontWeight": "bold",
+        "lineHeight": 1.5,
       }
     }
   >
@@ -119,7 +124,10 @@ exports[`MpxText should handle complex nested text with style inheritance: neste
     selectable={false}
     style={
       {
+        "color": "#333",
         "fontSize": 18,
+        "fontWeight": "bold",
+        "lineHeight": 1.5,
         "textDecorationLine": "underline",
       }
     }
@@ -191,6 +199,7 @@ exports[`MpxText should handle useTransformStyle with various configurations: tr
     style={
       {
         "backgroundColor": "#f0f0f0",
+        "boxSizing": "content-box",
         "color": "#ff0000",
         "fontSize": 18,
         "padding": 8,

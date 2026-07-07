@@ -13,6 +13,7 @@ exports[`MpxView should handle Portal functionality: view-with-portal 1`] = `
 >
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Portal view content
   </Text>
@@ -43,6 +44,7 @@ exports[`MpxView should handle background image properties: bg-image-view 1`] = 
   />
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Background image content
   </Text>
@@ -51,7 +53,6 @@ exports[`MpxView should handle background image properties: bg-image-view 1`] = 
 
 exports[`MpxView should handle background properties 1`] = `
 <View
-  enable-fast-image={true}
   style={
     {
       "backgroundColor": "#ff0000",
@@ -76,6 +77,7 @@ exports[`MpxView should handle background properties 1`] = `
   />
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Background content
   </Text>
@@ -84,7 +86,6 @@ exports[`MpxView should handle background properties 1`] = `
 
 exports[`MpxView should handle basic animation properties: animated-view 1`] = `
 <View
-  enable-animation={false}
   style={
     {
       "backgroundColor": "#ff0000",
@@ -96,6 +97,7 @@ exports[`MpxView should handle basic animation properties: animated-view 1`] = `
 >
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Animated content
   </Text>
@@ -104,7 +106,6 @@ exports[`MpxView should handle basic animation properties: animated-view 1`] = `
 
 exports[`MpxView should handle complex background property combinations: complex-bg-view 1`] = `
 <View
-  enable-fast-image={true}
   style={
     {
       "borderRadius": 10,
@@ -130,6 +131,7 @@ exports[`MpxView should handle complex background property combinations: complex
   />
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Complex background
   </Text>
@@ -150,6 +152,7 @@ exports[`MpxView should handle comprehensive touch and gesture events: gesture-v
 >
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Gesture area
   </Text>
@@ -160,6 +163,7 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
 <View
   style={
     {
+      "boxSizing": "content-box",
       "padding": 10,
     }
   }
@@ -175,6 +179,7 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
   >
     <Text
       allowFontScaling={false}
+      style={{}}
     >
       Level 1
     </Text>
@@ -188,6 +193,7 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
     >
       <Text
         allowFontScaling={false}
+        style={{}}
       >
         Level 2
       </Text>
@@ -201,6 +207,7 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
       >
         <Text
           allowFontScaling={false}
+          style={{}}
         >
           Level 3
         </Text>
@@ -214,6 +221,7 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
         >
           <Text
             allowFontScaling={false}
+            style={{}}
           >
             Level 4
           </Text>
@@ -230,6 +238,7 @@ exports[`MpxView should handle external context properties: context-view 1`] = `
     {
       "backgroundColor": "#007AFF",
       "borderRadius": 8,
+      "boxSizing": "content-box",
       "height": 100,
       "margin": 12,
       "padding": 16,
@@ -240,6 +249,7 @@ exports[`MpxView should handle external context properties: context-view 1`] = `
 >
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Context styled view
   </Text>
@@ -253,9 +263,7 @@ exports[`MpxView should handle flex layout properties 1`] = `
       "alignItems": "center",
       "display": "flex",
       "flex": 1,
-      "flexBasis": "auto",
       "flexDirection": "row",
-      "flexShrink": 1,
       "flexWrap": "nowrap",
       "justifyContent": "space-between",
     }
@@ -264,11 +272,13 @@ exports[`MpxView should handle flex layout properties 1`] = `
 >
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Item 1
   </Text>
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Item 2
   </Text>
@@ -291,6 +301,7 @@ exports[`MpxView should handle hover states and timing: hover-view 1`] = `
   >
     <Text
       allowFontScaling={false}
+      style={{}}
     >
       Hover me
     </Text>
@@ -323,6 +334,7 @@ exports[`MpxView should handle linear gradient backgrounds: gradient-view 1`] = 
   />
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Gradient background
   </Text>
@@ -333,6 +345,7 @@ exports[`MpxView should handle nested views and complex structure 1`] = `
 <View
   style={
     {
+      "boxSizing": "content-box",
       "padding": 5,
     }
   }
@@ -347,12 +360,14 @@ exports[`MpxView should handle nested views and complex structure 1`] = `
   >
     <Text
       allowFontScaling={false}
+      style={{}}
     >
       Nested content
     </Text>
   </View>
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Sibling content
   </Text>
@@ -363,6 +378,7 @@ exports[`MpxView should handle parent size context: parent-size-view 1`] = `
 <View
   style={
     {
+      "boxSizing": "content-box",
       "height": 150,
       "padding": 10,
       "width": 300,
@@ -385,7 +401,6 @@ exports[`MpxView should handle parent size context: parent-size-view 1`] = `
 
 exports[`MpxView should handle performance optimization features: performance-view 1`] = `
 <View
-  enable-fast-image={true}
   style={
     {
       "height": 500,
@@ -408,6 +423,7 @@ exports[`MpxView should handle performance optimization features: performance-vi
   />
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Performance optimized view
   </Text>
@@ -420,6 +436,7 @@ exports[`MpxView should render with basic props and styles 1`] = `
     {
       "backgroundColor": "#f0f0f0",
       "borderRadius": 5,
+      "boxSizing": "content-box",
       "padding": 10,
     }
   }
@@ -427,6 +444,7 @@ exports[`MpxView should render with basic props and styles 1`] = `
 >
   <Text
     allowFontScaling={false}
+    style={{}}
   >
     Basic content
   </Text>

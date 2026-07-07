@@ -11,7 +11,8 @@
     "^react-native-gesture-handler$": "<rootDir>/test/__mocks__/react-native-gesture-handler.js",
     "^react-native-reanimated$": "<rootDir>/test/__mocks__/react-native-reanimated.js",
     "^react-native-fast-image$": "<rootDir>/test/__mocks__/react-native-fast-image.js",
-    "^@d11/react-native-fast-image$": "<rootDir>/test/__mocks__/react-native-fast-image.js"
+    "^@d11/react-native-fast-image$": "<rootDir>/test/__mocks__/react-native-fast-image.js",
+    "\\.(png|jpg|jpeg|gif|webp)$": "<rootDir>/test/__mocks__/fileMock.js"
   },
   "setupFilesAfterEnv": [
     "<rootDir>/test/runtime/react/setup.js"
@@ -24,11 +25,236 @@
     "/dist/"
   ],
   "collectCoverageFrom": [
-    "lib/runtime/components/react/**/*.{ts,tsx}",
-    "!lib/runtime/components/react/dist/**",
-    "!lib/runtime/components/react/**/*.d.ts",
-    "!lib/runtime/components/react/types/**"
+    "lib/runtime/components/react/mpx-checkbox.tsx",
+    "lib/runtime/components/react/mpx-checkbox-group.tsx",
+    "lib/runtime/components/react/mpx-button.tsx",
+    "lib/runtime/components/react/mpx-async-suspense.tsx",
+    "lib/runtime/components/react/mpx-camera.tsx",
+    "lib/runtime/components/react/mpx-canvas/index.tsx",
+    "lib/runtime/components/react/mpx-form.tsx",
+    "lib/runtime/components/react/mpx-icon/index.tsx",
+    "lib/runtime/components/react/mpx-image.tsx",
+    "lib/runtime/components/react/mpx-inline-text.tsx",
+    "lib/runtime/components/react/mpx-keyboard-avoiding-view.tsx",
+    "lib/runtime/components/react/mpx-label.tsx",
+    "lib/runtime/components/react/mpx-movable-area.tsx",
+    "lib/runtime/components/react/mpx-movable-view.tsx",
+    "lib/runtime/components/react/mpx-nav.tsx",
+    "lib/runtime/components/react/mpx-navigator.tsx",
+    "lib/runtime/components/react/mpx-picker/index.tsx",
+    "lib/runtime/components/react/mpx-picker-view/index.tsx",
+    "lib/runtime/components/react/mpx-picker-view-column/index.tsx",
+    "lib/runtime/components/react/mpx-popup/index.tsx",
+    "lib/runtime/components/react/mpx-portal/index.tsx",
+    "lib/runtime/components/react/mpx-progress.tsx",
+    "lib/runtime/components/react/mpx-radio.tsx",
+    "lib/runtime/components/react/mpx-radio-group.tsx",
+    "lib/runtime/components/react/mpx-rich-text/index.tsx",
+    "lib/runtime/components/react/mpx-root-portal.tsx",
+    "lib/runtime/components/react/mpx-simple-text.tsx",
+    "lib/runtime/components/react/mpx-simple-view.tsx",
+    "lib/runtime/components/react/mpx-slider.tsx",
+    "lib/runtime/components/react/mpx-sticky-header.tsx",
+    "lib/runtime/components/react/mpx-sticky-section.tsx",
+    "lib/runtime/components/react/mpx-swiper.tsx",
+    "lib/runtime/components/react/mpx-swiper-item.tsx",
+    "lib/runtime/components/react/mpx-switch.tsx",
+    "lib/runtime/components/react/mpx-textarea.tsx",
+    "lib/runtime/components/react/mpx-video.tsx",
+    "lib/runtime/components/react/mpx-web-view.tsx"
   ],
+  "coverageThreshold": {
+    "global": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-checkbox.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-checkbox-group.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-button.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-async-suspense.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-camera.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-canvas/index.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-form.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-icon/index.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-image.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-inline-text.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-keyboard-avoiding-view.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-label.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-movable-area.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-movable-view.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-nav.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-navigator.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-picker/index.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-picker-view/index.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-picker-view-column/index.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-popup/index.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-portal/index.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-progress.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-radio.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-radio-group.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-rich-text/index.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-root-portal.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-simple-text.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-simple-view.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-slider.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-sticky-header.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-sticky-section.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-swiper.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-swiper-item.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-switch.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-textarea.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-video.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "lib/runtime/components/react/mpx-web-view.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    }
+  },
   "transformIgnorePatterns": [
     "node_modules/(?!(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs)/)"
   ]

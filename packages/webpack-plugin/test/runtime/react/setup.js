@@ -1,4 +1,9 @@
 // Mock Easing first to avoid import issues
+jest.mock('@mpxjs/perf', () => ({
+  scopeStart: jest.fn(() => -1),
+  scopeEnd: jest.fn()
+}))
+
 jest.doMock('react-native', () => {
   const RN = jest.requireActual('react-native')
   const React = jest.requireActual('react')
@@ -11,6 +16,17 @@ jest.doMock('react-native', () => {
   return {
     ...RN,
     RefreshControl: MockRefreshControl,
+    useAnimatedValue: jest.fn(() => ({
+      interpolate: jest.fn(() => '0deg')
+    })),
+    Animated: Object.assign({}, RN.Animated, {
+      Image: RN.Animated?.Image || RN.Image,
+      timing: jest.fn(() => ({})),
+      loop: jest.fn(() => ({
+        start: jest.fn(),
+        stop: jest.fn()
+      }))
+    }),
     Easing: {
       linear: jest.fn(),
       ease: jest.fn(),
@@ -34,6 +50,8 @@ jest.doMock('react-native', () => {
 // 定义全局变量
 global.__mpx_mode__ = 'ios' // 设置为React Native模式
 global.__DEV__ = false // 设置开发模式标志
+global.__mpx_perf_framework__ = false
+global.React = require('react')
 
 // Mock MPX 运行时全局函数
 global.__formatValue = jest.fn((value) => {
@@ -61,9 +79,14 @@ jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper')
 // Mock Image.getSize for background image functionality
 const { Image } = require('react-native')
 Image.getSize = jest.fn((uri, success, error) => {
+  if (uri.includes('fail')) {
+    error && error()
+    return
+  }
   // Mock successful image loading with default dimensions
   setTimeout(() => success(100, 100), 0)
 })
+Image.resolveAssetSource = jest.fn((source) => source)
 
 // Mock mpxGlobal for warnings
 global.mpxGlobal = {
