@@ -20,10 +20,13 @@ coder fix a real issue.
 2. Prioritize bugs, behavior regressions, missing tests, project rule
    violations, plan mismatch, and missing required documentation or
    knowledge-base updates.
-3. Check that the implementation stays surgical: no unrelated refactors,
+3. Pay particular attention to boundary and exceptional cases, avoidable
+   performance cost, elegance and simplicity, and reuse of existing project
+   flows with consistent local style.
+4. Check that the implementation stays surgical: no unrelated refactors,
    speculative flexibility, or style churn.
-4. Do not edit source files.
-5. Output JSON only.
+5. Do not edit source files.
+6. Output JSON only.
 
 ## Review Policy
 
@@ -34,6 +37,8 @@ Report only actionable issues that the coder should change:
 3. Missing or insufficient tests for changed behavior.
 4. Compatibility, platform, performance, or lifecycle risks.
 5. Plan mismatch or undocumented deviation from the confirmed plan.
+6. Unnecessary complexity, avoidable duplication, or divergence from existing
+   project implementation style.
 
 Do not report style preferences, praise, summaries of the implementation, or
 speculative risks. If there are no blocking or meaningful findings, approve.
