@@ -470,8 +470,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   // 这个问题只在 Android 上出现
   // 参考：https://github.com/facebook/react-native/issues/28794 (Android only)
   const needMultilineFix = isAndroid && !multiline && !!props.placeholder && normalStyle.textAlign === 'center'
-  // 语义上的多行（textarea），排除 needMultilineFix 强制开启的假多行
-  const effectiveMultiline = multiline && !needMultilineFix
   const multilineFixProps = needMultilineFix ? { multiline: true, numberOfLines: 1 } : {}
 
   const innerProps = useInnerProps(
@@ -493,11 +491,11 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         autoFocus: isAutoFocus,
         selection: selectionStart > -1 || typeof cursor === 'number' ? selection : undefined,
         selectionColor: cursorColor,
-        submitBehavior: effectiveMultiline ? (confirmType === 'return' ? 'newline' : 'blurAndSubmit') : (confirmHold ? 'submit' : 'blurAndSubmit'),
+        submitBehavior: multiline ? (confirmType === 'return' ? 'newline' : 'blurAndSubmit') : (confirmHold ? 'submit' : 'blurAndSubmit'),
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
-        multiline: effectiveMultiline,
+        multiline,
         onTouchStart,
         onTouchEnd,
         onFocus,
@@ -508,7 +506,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onSubmitEditing: bindconfirm && onSubmitEditing
       },
       multilineFixProps,
-      (effectiveMultiline && confirmType === 'return') ? {} : { enterKeyHint: confirmType }
+      (multiline && confirmType === 'return') ? {} : { enterKeyHint: confirmType }
     ),
     [
       'name',
