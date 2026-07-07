@@ -6,6 +6,11 @@ const mockHide = jest.fn()
 const mockRemove = jest.fn()
 const mockUpdate = jest.fn()
 const mockWarn = jest.fn()
+const mockEmitter = {
+  addListener: jest.fn(),
+  emit: jest.fn(),
+  removeListener: jest.fn()
+}
 
 jest.mock('react-native', () => ({
   StyleSheet: {
@@ -14,7 +19,9 @@ jest.mock('react-native', () => ({
   },
   Text: 'Text',
   TouchableWithoutFeedback: 'TouchableWithoutFeedback',
-  View: 'View'
+  View: 'View',
+  DeviceEventEmitter: mockEmitter,
+  NativeEventEmitter: jest.fn(() => mockEmitter)
 }), { virtual: false })
 
 jest.mock('react-native-gesture-handler', () => ({
@@ -212,6 +219,6 @@ describe('MpxPicker RN runtime', () => {
     }, null)
 
     expect(result).toBeTruthy()
-    expect(mockWarn).toHaveBeenCalledWith('Picker does not support background image-related styles!')
+    expect(mockWarn.mock.calls[0][0]).toBe('Picker does not support background image-related styles!')
   })
 })
