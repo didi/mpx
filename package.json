@@ -24,6 +24,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@types/node": "18.19.70",
     "@types/jest": "^27.0.1",
+    "@types/node": "18.19.70",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "eslint": "^7.32.0",

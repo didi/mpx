@@ -11,7 +11,6 @@ interface SwiperItemProps {
   'enable-offset'?: boolean
   'enable-var': boolean
   'enable-text-pass-through'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   children?: ReactNode

@@ -80,7 +80,6 @@ export interface ButtonProps {
   'enable-offset'?: boolean,
   'enable-var'?: boolean
   'enable-text-pass-through'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   style?: ViewStyle & TextStyle & Record<string, any>
@@ -212,7 +211,6 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     'form-type': formType,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     style = {},
@@ -301,7 +299,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle })
+  } = useTransformStyle(styleObj, { enableVar, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
 
