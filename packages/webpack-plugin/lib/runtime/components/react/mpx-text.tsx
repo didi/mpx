@@ -9,7 +9,7 @@ import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useContext
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, isStringChildren, splitStyle, resolveTextPercentStyle } from './utils'
+import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, isStringChildren, splitStyle, resolveTextFontSizePercentStyle, resolveTextLineHeightPercentStyle } from './utils'
 import * as perf from '@mpxjs/perf'
 import { diffAndCloneA } from '@mpxjs/utils'
 import { TextPassThroughContext, TextPassThroughContextValue } from './context'
@@ -97,7 +97,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     isStringOnly = isStringChildren(children)
   }
   const inheritedText = useContext(TextPassThroughContext)
-  const resolvedNormalStyle = resolveTextPercentStyle(normalStyle, inheritedText?.textStyle)
+  const resolvedNormalStyle = resolveTextFontSizePercentStyle(normalStyle, inheritedText?.textStyle)
   const childTextStyle = !isStringOnly ? (splitStyle(resolvedNormalStyle).textStyle as TextStyle | undefined) : undefined
   const textPassThroughRef = useRef<TextPassThroughContextValue | null>(null)
   let textPassThrough: TextPassThroughContextValue | null = null
@@ -117,6 +117,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   const finalStyle = inheritedText?.textStyle
     ? extendObject({}, inheritedText.textStyle, resolvedNormalStyle)
     : resolvedNormalStyle
+  resolveTextLineHeightPercentStyle(finalStyle, inheritedText?.textStyle)
 
   const nodeRef = useRef(null)
   useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
