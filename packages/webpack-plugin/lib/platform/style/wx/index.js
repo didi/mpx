@@ -998,7 +998,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'text-decoration-style',
-        ios: formatTextDecorationStyle,
         android: formatTextDecorationStyle,
         harmony: formatTextDecorationStyle
       },
