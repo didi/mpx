@@ -1387,13 +1387,13 @@ vertical-align: top;    /* 顶部对齐 */
 > - `text-decoration-line` 唯一支持的多值组合是 `underline line-through`；`none` 只作为单值生效
 > - 赋值过程中，如遇到不支持的属性会忽略该属性；若属性值校验不合法，则忽略该值，继续校验下一个值是否合法，合法则赋值，不合法则继续校验下一个值
 > - RN 原生不支持 `text-decoration` 简写，可使用是由框架编译和运行时处理
-> - android 下仅转换`<text-decoration-line>`，`<text-decoration-style>`/`<text-decoration-color>` 因不支持不会添加
+> - Android / Harmony 下 `text-decoration-style` 仅等效为 `solid`，非 `solid` 值会提示并降级为 `solid`；`text-decoration-color` 不生效，装饰线颜色跟随文本色，编译时会提示并忽略该值
 > - 遵循[文本样式继承规则](#inheritance-rule)
 
 ```css
 text-decoration: underline;           /* 下划线 */
 text-decoration: line-through;        /* 删除线 */
-text-decoration: underline dotted red; /* 样式 + 颜色（iOS） */
+text-decoration: underline dotted red; /* 样式 + 颜色（iOS，Android/Harmony 下 style 降级为 solid 且 color 跟随文本色） */
 text-decoration: red underline solid; /* 顺序不敏感（iOS） */
 text-decoration: underline line-through red; /* 下划线 + 删除线 */
 ```

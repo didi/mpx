@@ -9,9 +9,9 @@ module.exports = function getSpec ({ warn, error }) {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
     // React Native android 不支持的 CSS property
-    android: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/,
+    android: /^(shadow-offset|shadow-opacity|shadow-radius)$/,
     // TODO: rnoh 文档暂未找到 css 属性支持说明，暂时同步 android，同时需要注意此处校验是否有缺失，类似 will-change 之类属性
-    harmony: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
+    harmony: /^(shadow-offset|shadow-opacity|shadow-radius)$/
   }
   const isNum = (v) => !isNaN(+v)
   // var(xx)
@@ -338,6 +338,19 @@ module.exports = function getSpec ({ warn, error }) {
     })
   }
 
+  const normalizeTextDecorationValue = (prop, value, selector, mode) => {
+    if (mode !== 'android' && mode !== 'harmony') return value
+    if (prop === 'textDecorationStyle' && value !== 'solid') {
+      warn(`Property [text-decoration-style] on ${selector} only supports value "solid" in ${mode} environment, received [${value}], will use "solid" instead!`)
+      return 'solid'
+    }
+    if (prop === 'textDecorationColor') {
+      warn(`Property [text-decoration-color] on ${selector} is ignored in ${mode} environment, decoration color follows text color instead!`)
+      return false
+    }
+    return value
+  }
+
   const formatUnorderedAbbreviation = ({ prop, value, selector }, { mode }) => {
     const originalValue = value
     const values = Array.isArray(value) ? value : parseValues(value)
@@ -373,7 +386,11 @@ module.exports = function getSpec ({ warn, error }) {
         return
       }
       used[matchedProp] = true
-      pushAbbreviationValue(cssMap, matchedProp, value)
+      const normalizedValue = prop === 'text-decoration'
+        ? normalizeTextDecorationValue(matchedProp, value, selector, mode)
+        : value
+      if (normalizedValue === false) return
+      pushAbbreviationValue(cssMap, matchedProp, normalizedValue)
     })
     if (prop === 'text-decoration') {
       if (hasUnderline || hasLineThrough) {
@@ -929,14 +946,16 @@ module.exports = function getSpec ({ warn, error }) {
     return formatUnorderedAbbreviation({ prop, value, selector }, { mode })
   }
 
-  // Android/Harmony 平台的 text-decoration-style 只支持 solid
+  // Android/Harmony 平台的 text-decoration-style 只按 solid 生效
   const formatTextDecorationStyle = ({ prop, value, selector }, { mode }) => {
     value = value.trim()
-    if ((mode === 'android' || mode === 'harmony') && value !== 'solid' && !cssVariableExp.test(value)) {
-      warn(`Property [text-decoration-style] on ${selector} only supports value "solid" in ${mode} environment, received [${value}], will use "solid" instead!`)
-      return { prop, value: 'solid' }
-    }
-    return verifyValues({ prop, value, selector }) && { prop, value }
+    if (!verifyValues({ prop, value, selector })) return false
+    return { prop, value: normalizeTextDecorationValue('textDecorationStyle', value, selector, mode) }
+  }
+
+  const formatTextDecorationColor = ({ prop, value, selector }, { mode }) => {
+    value = value.trim()
+    return verifyValues({ prop, value, selector }) && normalizeTextDecorationValue('textDecorationColor', value, selector, mode) && { prop, value }
   }
 
   return {
@@ -1000,6 +1019,11 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'text-decoration-style',
         android: formatTextDecorationStyle,
         harmony: formatTextDecorationStyle
+      },
+      {
+        test: 'text-decoration-color',
+        android: formatTextDecorationColor,
+        harmony: formatTextDecorationColor
       },
       // 通用的简写格式匹配
       {

@@ -382,6 +382,50 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).not.toHaveBeenCalled()
     })
 
+    test('should normalize text-decoration style and drop color on android', () => {
+      const css = '.dec { text-decoration: underline dotted red; } .style { text-decoration-style: dashed; } .color { text-decoration-color: blue; }'
+      const config = createConfig('android')
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.dec).toEqual({
+        textDecorationLine: '"underline"',
+        textDecorationStyle: '"solid"'
+      })
+      expect(result.style).toEqual({
+        textDecorationStyle: '"solid"'
+      })
+      expect(result.color).toBeUndefined()
+      expect(config.warn).toHaveBeenCalledTimes(4)
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should normalize text-decoration style and drop color on harmony', () => {
+      const css = '.dec { text-decoration: underline dotted red; } .style { text-decoration-style: dashed; } .color { text-decoration-color: blue; }'
+      const config = createConfig('harmony')
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.dec).toEqual({
+        textDecorationLine: '"underline"',
+        textDecorationStyle: '"solid"'
+      })
+      expect(result.style).toEqual({
+        textDecorationStyle: '"solid"'
+      })
+      expect(result.color).toBeUndefined()
+      expect(config.warn).toHaveBeenCalledTimes(4)
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
     test('should expand unordered flex-flow and text-shadow shorthand', () => {
       const css = '.flow { flex-flow: wrap row; } .shadow { text-shadow: red 1px 2px 3px; } .shadow2 { text-shadow: 1px 2px red; }'
       const config = createConfig()
