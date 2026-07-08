@@ -74,16 +74,16 @@ Skyline 渲染引擎 CSS 支持范围与 WebView 有所不同。本文档说明 
 
 #### 长度（`<length>`）
 
-| 单位/格式 | 支持 | 说明 |
-| --- | --- | --- |
-| `px` | ✅ | 物理像素 |
-| `rpx` | ✅ | 响应式像素，按设备宽度 750rpx 折算 |
-| `vw` / `vh` | ✅ | 视口宽 / 高的 1% |
-| `vmin` / `vmax` | ✅ | 视口宽高中的较小 / 较大值的 1% |
-| `rem` | ✅ | 相对根节点 `font-size`（Skyline 默认根 `font-size` 为 `16px`） |
-| `em` | ❌ | 使用 `rpx` / `px` / `rem` 替代 |
-| `auto` | ✅ | 用于尺寸、定位、外边距等场景 |
-| `calc()` | ✅ | 仅支持长度类型计算（加减乘除、混合单位），**不支持 `<angle>` 等其他类型计算**；不要嵌套使用 |
+| 单位/格式 | 支持 | 说明                                                                                                                          |
+| --- | --- |-----------------------------------------------------------------------------------------------------------------------------|
+| `px` | ✅ | 物理像素                                                                                                                        |
+| `rpx` | ✅ | 响应式像素，按设备宽度 750rpx 折算                                                                                                       |
+| `vw` / `vh` | ✅ | 视口宽 / 高的 1%                                                                                                                 |
+| `vmin` / `vmax` | ✅ | 视口宽高中的较小 / 较大值的 1%                                                                                                          |
+| `rem` | ✅ | 相对根节点 `font-size`（Skyline 默认根 `font-size` 为 `16px`）                                                                         |
+| `em` | ✅ | 建议优先使用 `rpx` / `px`                                                                                                 |
+| `auto` | ✅ | 用于尺寸、定位、外边距等场景                                                                                                              |
+| `calc()` | ✅ | 仅支持长度类型计算（加减乘除、混合单位），**不支持 `<angle>` 等其他类型计算**；不要嵌套使用                                                                       |
 | `env()` | ✅ | 仅支持 `safe-area-inset-*` 系列：`safe-area-inset-top` / `safe-area-inset-right` / `safe-area-inset-bottom` / `safe-area-inset-left` |
 
 #### 百分比（`%`）支持情况
@@ -424,7 +424,6 @@ page {
 - `justify-items` / `direction` → ⛔ 不可用
 - `text-indent` / `overflow-wrap` / `writing-mode` / `text-decoration-thickness` → ⛔ 不可用
 - `list-style-type` / `list-style-image` / `list-style-position` → ⛔ 列表样式属性不可用
-- `em` 单位 → 使用 `rpx` / `px` / `rem`
 - 多列布局（`column-*`）→ 使用 Flex 布局或 `grid-view` 组件
 - `outline` / `resize` / `cursor` → 不支持
 - `calc()` 角度类型计算 → 不支持
@@ -447,7 +446,6 @@ page {
 | `[attr]` 属性选择器                    | 支持 | **不支持** | 使用类选择器替代                                                    |
 | `:nth-child`                      | 支持 | 需 **8.0.50+** |                                                             |
 | 伪元素 `animation`                   | 支持 | **不支持** | 真实节点 + CSS animation                                        |
-| `em` 单位                           | 支持 | **不支持** | 使用 `rpx` / `px` / `rem`                                     |
 | `text-decoration` 作用范围            | 所有元素 | **仅 `<text>` 和 `<input>`** | view 内文字用 `<text>` 包裹                                       |
 | `text-overflow` 作用范围              | 所有元素 | CSS 属性生效范围有限；组件属性可覆盖 `view` / `text` / `rich-text` / `special-text` | 文本超长打点优先补 `max-lines` / `overflow` 属性，`view` 可直接承载 |
 | `border-color`/`border-style` 四边  | 四边可不同 | **`border-radius` 非 0 时需一致** | 保持四边一致或拆分节点                                                 |

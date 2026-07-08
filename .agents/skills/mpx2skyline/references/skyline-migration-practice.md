@@ -1620,7 +1620,7 @@ createPage({
     // 延迟调用,避免阻塞当前页面渲染
     setTimeout(() => {
       wx.preloadSkylineView()
-    }, 2500)
+    }, 500)
   }
 })
 ```
