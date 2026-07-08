@@ -737,7 +737,8 @@ createPage({
 
 ### flex 布局的子节点 min-width 百分比撑开失效
 
-Skyline 下横向 `scroll-view` 内部使用 flex 布局时，百分比 `min-width` 可能无法按预期撑开节点。这个 case 中，外层 `.estimate-form` 的 `min-width: 100%` 未能撑满一屏，子项 `.form-item` 的 `min-width: 25%` 也未能按四等分撑开。典型表现是业务工具栏在 WebView 下 4 个按钮均分一屏，但 Skyline 下子项宽度按内容收缩，导致间距和滚动范围异常。
+Skyline 下 flex 布局子节点依赖百分比 `min-width` 撑开或等分时，百分比可能无法按预期生效，节点会按内容收缩。
+这个 case 中，外层 `.estimate-form` 的 `min-width: 100%` 未能撑满一屏，子项 `.form-item` 的 `min-width: 25%` 也未能按四等分撑开。典型表现是业务工具栏在 WebView 下 4 个按钮均分一屏，但 Skyline 下子项宽度按内容收缩，导致间距和滚动范围异常。
 
 ```html
 <!-- ❌ Bad — 子项依赖百分比 min-width 撑开 -->
@@ -759,7 +760,7 @@ Skyline 下横向 `scroll-view` 内部使用 flex 布局时，百分比 `min-wid
 ```
 
 ```stylus
-/* ❌ Bad — 横向 flex 布局内的 min-width 百分比在 Skyline 下可能不生效 */
+/* ❌ Bad — flex 布局内的 min-width 百分比在 Skyline 下可能不生效 */
 .estimate-form
   d-flex()
   min-width 100% // Skyline 下这里也未能按一屏宽度撑开
@@ -810,6 +811,7 @@ Skyline 下横向 `scroll-view` 内部使用 flex 布局时，百分比 `min-wid
   box-sizing border-box
   min-height 38px
   color #444
+  //  ✅ Good — min-width 100% 换算为 min-width 750rpx
   min-width 750rpx
   justify-content space-around
   .form-item
@@ -817,6 +819,7 @@ Skyline 下横向 `scroll-view` 内部使用 flex 布局时，百分比 `min-wid
     d-flex(,center,center)
     padding 0 10px
     flex 1 0 auto
+    //  ✅ Good — min-width 25% 换算为 min-width 187rpx
     min-width 187rpx
     max-width 100%
     box-sizing border-box
@@ -824,8 +827,9 @@ Skyline 下横向 `scroll-view` 内部使用 flex 布局时，百分比 `min-wid
 
 适配要点：
 
-1. 不再依赖 `min-width: 25%` 百分比撑开，按设计稿宽度换算为 `rpx`。750rpx 代表屏宽，25% 可写为约 187rpx。
-2. 外层横向内容容器使用 `min-width: 750rpx` 确保少于一屏时仍能撑满一屏。
+0. 必须以 flex 容器链为单位处理，扫描并替换同一撑开/等分关系里的所有百分比 `min-width`；不要只处理命中的子项规则。
+1. 不再依赖 `min-width` 百分比撑开，按实际基准宽度换算为 `rpx` / `px` 等明确长度单位。若基准宽度是一屏，750rpx 代表屏宽，25% 可写为约 187rpx。
+2. 若外层内容容器预期至少撑满一屏，使用 `min-width: 750rpx`；若基准不是一屏，应按实际容器设计宽度换算，不要机械套用 750rpx。
 
 ### flex 布局的子节点文本超出未自动换行
 

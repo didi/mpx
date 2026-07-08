@@ -188,7 +188,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - 不支持属性替代（`overflow: scroll` → `scroll-view` 等）读取 [与 webview 的关键样式差异及替代方案](./references/skyline-style-reference.md#与-webview-模式的关键样式差异及兼容方案)。
 - 增加配置 `defaultContentBox` `defaultDisplayBlock` 默认样式对齐 webview。
 - 文本溢出省略适配（`text-overflow: ellipsis` / 超长打点），可在承载文本的 `view` / `text` / `rich-text` / `special-text` 上新增 Skyline 特有属性 `max-lines` 与 `overflow`，阅读 [适配最佳实践 · 文本溢出省略适配](./references/skyline-migration-practice.md#文本溢出省略适配)。
-- `flex-basis: auto; min-width: 25%` 同时使用的场景下，`min-width` 的百分比不生效，需替换为 rpx 单位 `flex 1 0 auto; min-width: 25%;` → `flex 1 0 auto; min-width 187rpx`（mpx/小程序里 rpx 是按"设计稿基准 750rpx = 屏幕宽度"的方式设计的，所以 750rpx 默认就代表 100% 屏宽，750rpx * 25% = 187.5rpx），详见 [样式能力参考·百分比支持情况](./references/skyline-style-reference.md#百分比支持情况)
+- flex 布局子节点依赖百分比 `min-width` 撑开或等分时，百分比 `min-width` 可能不生效，必须以同一 flex 容器链为单位成组处理并替换为明确长度单位；若基准宽度是一屏，可按 `750rpx` 换算（如 `min-width: 100%` → `750rpx`，`min-width: 25%` → `187rpx/187.5rpx`），须读取 [适配最佳实践 · flex 布局的子节点 min-width 百分比撑开失效](./references/skyline-migration-practice.md#flex-布局的子节点-min-width-百分比撑开失效) 与 [样式能力参考·百分比支持情况](./references/skyline-style-reference.md#百分比支持情况)
 - 媒体查询 `@media screen` 替换为动态类，详见[适配最佳实践 · @media screen 替换方案](./references/skyline-migration-practice.md#media-screen-替换方案)
 
 #### 4. 组件适配改造
