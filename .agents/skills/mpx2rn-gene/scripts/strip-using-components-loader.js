@@ -1,1 +1,0 @@
-../../mpx2rn/scripts/strip-using-components-loader.js
