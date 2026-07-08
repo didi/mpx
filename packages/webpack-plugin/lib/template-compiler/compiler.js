@@ -2816,6 +2816,10 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'ishost',
             value: '{{true}}'
+          },
+          {
+            name: config[mode].directive.ref,
+            value: '__mpxHost'
           }
         ])
         processElement(rootView, rootView, options, meta)

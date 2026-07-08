@@ -125,8 +125,10 @@ const instanceProto = {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
   },
   __getNodeInstance () {
-    const hostRef = this.__hostRef && this.__hostRef.current
-    return hostRef && hostRef.getNodeInstance && hostRef.getNodeInstance()
+    const hostRef = this.$refs && this.$refs.__mpxHost
+    const nodeRef = hostRef && hostRef.nodeRefs && hostRef.nodeRefs[0]
+    const getNodeInstance = nodeRef && (nodeRef.getNodeInstance || nodeRef.__getNodeInstance)
+    return getNodeInstance && getNodeInstance.call(nodeRef)
   },
   // 触发页面范围内的所有observer的计算
   __triggerIntersectionObserver () {
@@ -649,7 +651,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
-    const hostRef = useRef(null)
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
     const { pageId } = useContext(RouteContext) || {}
@@ -665,9 +666,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides })
     }
     const instance = instanceRef.current
-    if (type === 'component') {
-      instance.__hostRef = hostRef
-    }
     useImperativeHandle(ref, () => {
       return instance
     })
@@ -744,9 +742,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       // 对于组件未注册的属性继承到host节点上，如事件、样式和其他属性等
       const rootProps = getRootProps(props, validProps)
       rootProps.style = Object.assign({}, root.props.style, rootProps.style)
-      if (type === 'component') {
-        rootProps.ref = hostRef
-      }
       // update root props
       root = cloneElement(root, rootProps)
     }

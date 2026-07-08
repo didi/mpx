@@ -31,8 +31,12 @@ const flushFns = (nodeInstance, fns) => {
 }
 
 const getNodeInstance = (ref) => {
-  const getNodeInstance = ref && (ref.getNodeInstance || ref.__getNodeInstance)
-  return getNodeInstance && getNodeInstance.call(ref)
+  const hostRef = ref && ref.$refs && ref.$refs.__mpxHost
+  if (hostRef && hostRef.nodeRefs && hostRef.nodeRefs[0]) {
+    return getNodeInstance(hostRef.nodeRefs[0])
+  }
+  const nodeInstanceGetter = ref && (ref.getNodeInstance || ref.__getNodeInstance)
+  return nodeInstanceGetter && nodeInstanceGetter.call(ref)
 }
 
 const wrapFn = (fn) => {

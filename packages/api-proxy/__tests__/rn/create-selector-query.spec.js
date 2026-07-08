@@ -87,4 +87,41 @@ describe('createSelectorQuery for RN', () => {
       done()
     })
   })
+
+  test('select should use custom component host ref', (done) => {
+    const componentRef = {
+      $refs: {
+        __mpxHost: {
+          nodeRefs: [
+            {
+              __getNodeInstance () {
+                return {
+                  nodeRef: {
+                    current: true
+                  },
+                  props: {
+                    current: {}
+                  },
+                  instance: {
+                    ref: 'custom-component-host-ref'
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+    const component = {
+      __selectRef: jest.fn(() => componentRef)
+    }
+    const query = new SelectorQuery()
+
+    query.in(component).select('.custom').ref()
+    query.exec((res) => {
+      expect(component.__selectRef).toHaveBeenCalledWith('.custom', 'all', undefined)
+      expect(res).toEqual([{ ref: 'custom-component-host-ref' }])
+      done()
+    })
+  })
 })

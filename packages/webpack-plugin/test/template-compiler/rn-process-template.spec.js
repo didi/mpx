@@ -122,6 +122,31 @@ describe('RN process template', () => {
     })
   })
 
+  it('should inject internal host ref for component host root', (done) => {
+    const template = {
+      content: '<view>Main</view>'
+    }
+    const options = {
+      loaderContext: mockContext,
+      hasComment: false,
+      isNative: false,
+      srcMode: 'wx',
+      moduleId: 'm123',
+      ctorType: 'component',
+      usingComponentsInfo: {},
+      originalUsingComponents: {},
+      componentGenerics: {}
+    }
+
+    processTemplate(template, options, (err, result) => {
+      expect(err).toBeNull()
+      expect(result.output).toContain('global.currentInject.getRefsData')
+      expect(result.output).toContain('"key":"__mpxHost"')
+      expect(result.output).toContain('"type":"node"')
+      done()
+    })
+  })
+
   it('should transform static image src to webpack require', (done) => {
     const template = {
       content: `
