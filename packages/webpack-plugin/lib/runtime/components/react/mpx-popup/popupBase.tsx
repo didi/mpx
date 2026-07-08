@@ -113,6 +113,7 @@ const PopupBase = (props: PopupBaseProps = {}) => {
       onTouchEnd={hide}
       style={[
         styles.mask,
+        animatedStylesMask,
         { pointerEvents: visible ? 'auto' : 'none' }
       ]}
     >
