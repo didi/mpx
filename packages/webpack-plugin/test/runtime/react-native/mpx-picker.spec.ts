@@ -180,6 +180,29 @@ describe('MpxPicker RN runtime', () => {
     expect(selector.props.range).toBe(range)
   })
 
+  test('updates popup content height before showing when header text changes', () => {
+    (Picker as any)({
+      mode: PickerMode.SELECTOR,
+      value: 0,
+      range: ['Beijing'],
+      children: 'Select'
+    }, null)
+    const result = (Picker as any)({
+      mode: PickerMode.SELECTOR,
+      value: 0,
+      range: ['Beijing'],
+      'header-text': 'City',
+      children: 'Select'
+    }, null)
+
+    expect(mockOpen.mock.calls[0][2]).toEqual({ contentHeight: 310 })
+    result.props.onPress()
+
+    const updateOptions = mockUpdate.mock.calls[mockUpdate.mock.calls.length - 1][1]
+
+    expect(updateOptions).toEqual({ contentHeight: 350 })
+  })
+
   test('passes text style through to trigger children', () => {
     const result = (Picker as any)({
       mode: PickerMode.SELECTOR,

@@ -256,6 +256,8 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       hide()
     }
 
+    const getContentHeight = () => headerText ? 350 : 310
+
     const getPickerContent = () => {
       if (disabled) {
         return null
@@ -310,8 +312,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!renderPickerModal) {
         return
       }
-      const contentHeight = headerText ? 350 : 310
-      open(renderPickerModal, pageId, { contentHeight })
+      open(renderPickerModal, pageId, { contentHeight: getContentHeight() })
     }
 
     useEffect(() => {
@@ -326,7 +327,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!renderPickerModal) {
         return
       }
-      update(renderPickerModal)
+      update(renderPickerModal, { contentHeight: getContentHeight() })
       show()
     }
 
