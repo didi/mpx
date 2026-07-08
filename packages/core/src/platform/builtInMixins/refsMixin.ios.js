@@ -54,12 +54,13 @@ export default function getRefsMixin () {
       },
       __selectRef (selector, refType, all = false) {
         const refTypes = Array.isArray(refType) ? refType : [refType]
+        const includeAll = refTypes.indexOf('all') > -1
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
         const refsArr = splitedSelector.map(selector => {
           const refs = this.__refs[selector] || []
           const res = []
           refs.forEach(({ type, instance }) => {
-            if (refTypes.indexOf(type) > -1) {
+            if (includeAll || refTypes.indexOf(type) > -1) {
               res.push(instance)
             }
           })

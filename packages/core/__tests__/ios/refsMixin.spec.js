@@ -9,6 +9,7 @@ describe('refsMixin for RN', () => {
     const { methods } = getRefsMixin()
     const componentRef = {}
     const nodeRef = {}
+    const otherRef = {}
     const target = {
       __refs: {
         '.custom': [
@@ -19,6 +20,10 @@ describe('refsMixin for RN', () => {
           {
             type: 'node',
             instance: nodeRef
+          },
+          {
+            type: 'other',
+            instance: otherRef
           }
         ]
       }
@@ -26,5 +31,6 @@ describe('refsMixin for RN', () => {
 
     expect(methods.__selectRef.call(target, '.custom', ['node', 'component'])).toBe(componentRef)
     expect(methods.__selectRef.call(target, '.custom', ['node', 'component'], true)).toEqual([componentRef, nodeRef])
+    expect(methods.__selectRef.call(target, '.custom', 'all', true)).toEqual([componentRef, nodeRef, otherRef])
   })
 })

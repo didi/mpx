@@ -24,7 +24,7 @@ describe('createSelectorQuery for RN', () => {
 
     query.in(component).select('.custom').ref()
     query.exec((res) => {
-      expect(component.__selectRef).toHaveBeenCalledWith('.custom', ['node', 'component'], undefined)
+      expect(component.__selectRef).toHaveBeenCalledWith('.custom', 'all', undefined)
       expect(res).toEqual([{ ref: 'custom-component-ref' }])
       done()
     })
@@ -53,7 +53,7 @@ describe('createSelectorQuery for RN', () => {
 
     query.in(component).select('#custom').ref()
     query.exec((res) => {
-      expect(component.__selectRef).toHaveBeenCalledWith('#custom', ['node', 'component'], undefined)
+      expect(component.__selectRef).toHaveBeenCalledWith('#custom', 'all', undefined)
       expect(res).toEqual([{ ref: 'custom-component-ref' }])
       done()
     })
@@ -82,7 +82,7 @@ describe('createSelectorQuery for RN', () => {
 
     query.in(component).selectAll('.custom').ref()
     query.exec((res) => {
-      expect(component.__selectRef).toHaveBeenCalledWith('.custom', ['node', 'component'], true)
+      expect(component.__selectRef).toHaveBeenCalledWith('.custom', 'all', true)
       expect(res).toEqual([[{ ref: 'custom-component-ref-1' }, { ref: 'custom-component-ref-2' }]])
       done()
     })
