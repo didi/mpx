@@ -196,7 +196,11 @@ class SelectQuery {
   }
 
   _getComponentHostEls (component, selector) {
-    if (!component || typeof selector !== 'string' || typeof component.selectAllComponents !== 'function' || /[>\s]/.test(selector)) {
+    // host 兜底依赖 selectAllComponents，仅处理其支持的基础 selector；关系选择器仍由 DOM 查询处理。
+    if (typeof selector !== 'string' || /[>\s]/.test(selector)) {
+      return []
+    }
+    if (!component || typeof component.selectAllComponents !== 'function') {
       return []
     }
     const components = component.selectAllComponents(selector) || []
