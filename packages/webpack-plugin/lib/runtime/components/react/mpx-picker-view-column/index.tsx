@@ -67,7 +67,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const { height: pickerH, itemHeight } = wrapperStyle
   const [itemRawH, setItemRawH] = useState(Math.round(itemHeight))
-  const itemRawHRef = useRef(itemRawH)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const prevScrollingInfo = useRef({ index: initialIndex, y: 0 })
   const dragging = useRef(false)
@@ -88,13 +87,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     setHeight,
     nodeRef: scrollViewRef
   })
-
-  const updateItemRawH = useCallback((height: number) => {
-    if (height && height !== itemRawHRef.current) {
-      itemRawHRef.current = height
-      setItemRawH(height)
-    }
-  }, [])
 
   const paddingHeight = useMemo(
     () => (pickerH - itemRawH) / 2,
@@ -173,13 +165,19 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH, maxIndex, initialIndex])
 
   useEffect(() => {
-    updateItemRawH(Math.round(itemHeight))
-  }, [itemHeight, updateItemRawH])
+    const roundedH = Math.round(itemHeight)
+    if (roundedH) {
+      setItemRawH(roundedH)
+    }
+  }, [itemHeight])
 
   const onItemLayout = useCallback((e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
-    updateItemRawH(Math.round(rawH))
-  }, [updateItemRawH])
+    const roundedH = Math.round(rawH)
+    if (roundedH) {
+      setItemRawH(roundedH)
+    }
+  }, [])
 
   const resetScrollPosition = useCallback((y: number) => {
     if (dragging.current || scrolling.current) {
