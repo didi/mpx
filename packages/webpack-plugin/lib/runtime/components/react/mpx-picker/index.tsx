@@ -308,11 +308,10 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const openPickerContent = () => {
       const renderPickerModal = getPickerContent()
       if (!renderPickerModal) {
-        return false
+        return
       }
       const contentHeight = headerText ? 350 : 310
       open(renderPickerModal, pageId, { contentHeight })
-      return true
     }
 
     useEffect(() => {
