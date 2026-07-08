@@ -23,15 +23,19 @@ const styles = StyleSheet.create({
 })
 
 const compareStackPath = (left: number[], right: number[]) => {
-  const maxLength = Math.max(left.length, right.length)
-  for (let i = 0; i < maxLength; i++) {
-    const leftValue = i < left.length ? left[i] : 0
-    const rightValue = i < right.length ? right[i] : 0
-    if (leftValue !== rightValue) {
-      return leftValue - rightValue
-    }
+  const minLength = Math.min(left.length, right.length)
+  for (let i = 0; i < minLength; i++) {
+    if (left[i] !== right[i]) return left[i] - right[i]
   }
-  return 0
+  if (left.length === right.length) return 0
+
+  const lengthDiff = left.length - right.length
+  const longer = lengthDiff > 0 ? left : right
+  for (let i = minLength; i < longer.length; i++) {
+    if (longer[i]) return lengthDiff > 0 ? longer[i] : -longer[i]
+  }
+
+  return lengthDiff
 }
 
 const comparePortalItems = (left: PortalItem, right: PortalItem) => {
