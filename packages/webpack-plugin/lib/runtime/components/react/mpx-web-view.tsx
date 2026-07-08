@@ -4,12 +4,17 @@ import Portal from './mpx-portal/index'
 import { usePreventRemove, PreventRemoveEvent } from '@react-navigation/native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
-import { WebView } from 'react-native-webview'
+import { WebView, WebViewProps as RNWebViewProps } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { getCurrentPage, useNavigation } from './utils'
 import { WebViewHttpErrorEvent, WebViewEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
 import { StyleSheet, View, Text } from 'react-native'
+
+// react-native-webview@13.17+ 将 WebView 泛型默认值由 {} 改为 undefined，
+// 导致 WebViewProps & undefined 塌成 never、JSX 直接使用时 props 全部不可赋值。
+// 显式实参化为 WebView<object>（其 props 即 WebViewProps），保留类实例签名使 ref 仍解析为 WebView，兼容各版本声明。
+const RNWebView = WebView as unknown as new (props: RNWebViewProps) => WebView<object>
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -352,7 +357,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             </View>
             )
           : (
-          <WebView
+          <RNWebView
             containerStyle={ defaultWebViewStyle }
             source={{ uri: src }}
             ref={webViewRef}
@@ -365,7 +370,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onHttpError={onHttpError}
             onError={onError}
             allowsBackForwardNavigationGestures={true}
-          ></WebView>)}
+          ></RNWebView>)}
       </Portal>
   )
 })
