@@ -56,4 +56,30 @@ describe('test create-selector-query', () => {
     })
     expect(cb.mock.calls.length).toBe(1)
   })
+
+  test('should support custom component host ref', () => {
+    const host = document.createElement('div')
+    const parent = document.createElement('div')
+    parent.appendChild(host)
+
+    const component = {
+      $el: parent,
+      selectAllComponents: jest.fn(() => [
+        {
+          $refs: {
+            __mpxHost: createSelectorQuery().select(host)
+          }
+        }
+      ])
+    }
+    const cb = jest.fn()
+    const query = createSelectorQuery()
+
+    query.in(component).select('.custom').node(cb)
+    query.exec(res => {
+      expect(component.selectAllComponents).toHaveBeenCalledWith('.custom')
+      expect(res[0].node).toBe(host)
+    })
+    expect(cb.mock.calls[0][0].node).toBe(host)
+  })
 })

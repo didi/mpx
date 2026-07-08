@@ -2801,6 +2801,10 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'v-on',
             value: '$listeners'
+          },
+          {
+            name: config[srcMode].directive.ref,
+            value: '__mpxHost'
           }
         ])
         processElement(rootView, rootView, options, meta)

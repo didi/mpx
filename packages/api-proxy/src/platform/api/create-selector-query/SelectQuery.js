@@ -50,20 +50,33 @@ class SelectQuery {
         } else {
           res.push(selector.map(el => handleFields(fields, el, null)))
         }
-      } else {
-        const selectSelf =
-          curComponent === document
-            ? false
-            : Array
-              .from(curComponent.parentNode.querySelectorAll(selector))
-              .every(item => item === curComponent)
+      } else if (selector === 'html') {
+        const el = document.documentElement
         if (single) {
-          const el = selectSelf ? curComponent : curComponent.querySelector(selector)
+          res.push(handleFields(fields, el, selector))
+        } else {
+          res.push([handleFields(fields, el, selector)])
+        }
+      } else {
+        const matchedEls = curComponent === document || !curComponent.parentNode
+          ? []
+          : Array.from(curComponent.parentNode.querySelectorAll(selector))
+        const selectSelf = matchedEls.length > 0 && matchedEls.every(item => item === curComponent)
+        if (single) {
+          const el = selectSelf ? curComponent : curComponent.querySelector(selector) || this._getComponentHostEl(component, selector)
           res.push(handleFields(fields, el, selector))
         } else {
           const els = selectSelf
             ? [curComponent]
-            : curComponent.querySelectorAll(selector)
+            : Array.from(curComponent.querySelectorAll(selector))
+          const componentHostEls = this._getComponentHostEls(component, selector)
+          if (componentHostEls.length) {
+            componentHostEls.forEach(el => {
+              if (els.indexOf(el) < 0) {
+                els.push(el)
+              }
+            })
+          }
           const elsArr = Array.from(els).map(el => handleFields(fields, el, null))
           res.push(elsArr)
         }
@@ -180,6 +193,23 @@ class SelectQuery {
   _isEl (selector) {
     if (Array.isArray(selector)) return this._isEl(selector[0])
     return selector && selector.nodeType === 1
+  }
+
+  _getComponentHostEls (component, selector) {
+    if (!component || typeof selector !== 'string' || typeof component.selectAllComponents !== 'function' || /[>\s]/.test(selector)) {
+      return []
+    }
+    const components = component.selectAllComponents(selector) || []
+    return components.map(component => this._getComponentHostEl(component)).filter(Boolean)
+  }
+
+  _getComponentHostEl (component, selector) {
+    if (selector) {
+      return this._getComponentHostEls(component, selector)[0]
+    }
+    const hostRef = component && component.$refs && component.$refs.__mpxHost
+    const hostSelector = hostRef && hostRef._selector
+    return this._isEl(hostSelector) ? hostSelector : null
   }
 }
 

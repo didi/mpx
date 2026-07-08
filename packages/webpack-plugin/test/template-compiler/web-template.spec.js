@@ -97,6 +97,20 @@ describe('Web template support (compiler + template-shared)', () => {
       expect(opts.error).not.toHaveBeenCalled()
     })
 
+    it('injects internal host ref for component host root', () => {
+      const opts = createWebParseOptions({
+        ctorType: 'component',
+        hasVirtualHost: false,
+        moduleId: 'm123'
+      })
+      const { root } = compiler.parse('<view>Main</view>', opts)
+      const html = compiler.serialize(root)
+
+      expect(html).toContain('ref="__mpx_ref___mpxHost__"')
+      expect(html).toContain('mpx-root-view')
+      expect(opts.error).not.toHaveBeenCalled()
+    })
+
     it('reports duplicated template name', () => {
       const opts = createWebParseOptions()
       compiler.parse(

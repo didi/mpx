@@ -6,10 +6,10 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/wxml/wx.createSelectorQuery.html)
 
-### 特别说明RN中 {#rn-note}
+### 特别说明 Web/RN 中 {#rn-note}
 1. RN 中调用 createSelectorQuery 查询基础节点或自定义组件时，目标节点或组件需要通过空 `wx:ref` 进行绑定。
 2. 调用 createSelectorQuery 方法创建的 SelectorQuery 实例，在使用过程中需要手动调用实例上的 in 方法来指定组件上下文。
-3. 查询自定义组件时，默认测量非 virtualHost 场景下的 host 根节点。
+3. Web 与 RN 查询自定义组件时，默认测量非 virtualHost 场景下的 host 根节点。
 
 
 ### 返回值 {#return-value}
