@@ -1,11 +1,11 @@
 'use strict'
 
-// 兼容回退实现：当宿主项目 @mpxjs/webpack-plugin < 2.10.20，缺少
-// `partialCompileRules.components` 能力时，通过前置 loader 在源码层面
-// 移除目标 .mpx 文件 JSON 块/脚本块中的 usingComponents 字段，绕开
-// 子组件的递归编译。该实现属于"不完美兼容"——会同时丢失 usingComponents
-// 字段对应的依赖解析与 json-compiler 校验，请尽量升级到 2.10.20+ 使用
-// resolver 级 partialCompile 替代。
+// Web 编译校验的旧版本兜底：当前 @mpxjs/webpack-plugin 已支持
+// `partialCompileRules.components`，可在 resolver 层把非目标组件替换为
+// 默认占位组件。若业务项目安装的旧版插件缺少该能力，校验脚本才会启用
+// 这个前置 loader，在源码层移除目标 .mpx 的 usingComponents，避免递归编译
+// 子组件。该兜底会跳过 usingComponents 对应的依赖解析与 json-compiler 校验，
+// 只用于尽量跑出目标文件自身的 Web 编译错误。
 
 function removeUsingComponents (source) {
   const re = /(["']?)usingComponents\1\s*:\s*\{/g

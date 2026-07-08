@@ -1,6 +1,6 @@
 # 跨端输出 Web 脚本能力参考
 
-本文档说明 Mpx 输出 Web（`mode: 'web'`）时，`<script>` 中可用的构造选项、生命周期、实例 API、组合式 API 与状态管理能力。Web 侧基于 Vue 2.7 运行，整体能力与小程序写法高度一致；下文重点记录 Web 运行时确认支持的能力与需要隔离的小程序专属能力。
+本文档说明 Mpx 输出 Web（`mode: 'web'`）时，`<script>` 中可用的构造选项、生命周期、实例 API、组合式 API 与状态管理能力。Web 侧整体能力与小程序写法高度一致；下文重点记录 Web 运行时确认支持的能力与需要隔离的小程序专属能力。
 
 ## 目录
 
@@ -34,25 +34,25 @@
 | `onPageNotFound` | 首次进入不存在页面时可触发；非首次路由跳转找不到页面会按导航 API 失败处理。 |
 | `onSSRAppCreated` | SSR 服务端应用创建钩子，见[生命周期](#生命周期)。 |
 | `onAppInit` | SSR / 应用创建前扩展钩子，常用于创建并返回新的 Pinia 实例。 |
-| `provide` | 可作为 Vue App 级 provide 使用。 |
+| `provide` | 可作为应用级 provide 使用。 |
 | 其他顶层字段 | 挂到 `getApp()` 返回对象上。 |
 | `data` / `computed` / `watch` | App 级不作为业务响应式状态使用。 |
 
 ### 页面 / 组件构造选项
 
-页面使用 `createPage`，组件使用 `createComponent`。常规选项会转换为 Vue 组件选项运行。
+页面使用 `createPage`，组件使用 `createComponent`。常规选项会转换为 Web 运行时组件选项。
 
 | 选项 | 适用 | Web 侧说明 |
 | --- | --- | --- |
-| `properties` / `props` | 组件 | 转换为 Vue `props`；`value` 会转为默认值。 |
+| `properties` / `props` | 组件 | 转换为 Web 组件 props；`value` 会转为默认值。 |
 | `data` | 页面 / 组件 | 响应式状态，支持对象或函数形态。 |
 | `computed` | 页面 / 组件 | 计算属性。 |
 | `watch` | 页面 / 组件 | 侦听器；字符串路径支持逗号分隔多字段。 |
 | `methods` | 页面 / 组件 | 事件处理与业务方法，Web 下会包裹错误处理。 |
-| `mixins` | 页面 / 组件 | 支持 Mpx / Vue 选项合并。 |
+| `mixins` | 页面 / 组件 | 按 Mpx 选项合并规则处理。 |
 | `provide` / `inject` | 页面 / 组件 | 支持。 |
 | `setup` | 页面 / 组件 | 支持组合式 API，详见[组合式 API](#组合式-api)。 |
-| `components` | 页面 / 组件 | 可注册 Web / Vue 组件；跨端组件依赖优先使用 JSON `usingComponents`。 |
+| `components` | 页面 / 组件 | 可注册 Web 组件；跨端组件依赖优先使用 JSON `usingComponents`。 |
 | `pageLifetimes.show` | 组件 | 所在页面展示时触发。 |
 | `pageLifetimes.hide` | 组件 | 所在页面隐藏时触发。 |
 | `pageLifetimes.resize` | 组件 | 所在页面尺寸变化时触发。 |
@@ -75,7 +75,7 @@
 | `createSelectorQuery()` | 方法 | 页面 / 组件 | 创建 selector 查询，基于 Web DOM 实现。 |
 | `createIntersectionObserver(options?)` | 方法 | 页面 / 组件 | 创建交叉观察器，基于 Web DOM / IntersectionObserver 能力。 |
 | `$refs` | 属性 | 页面 / 组件 | 支持 `wx:ref`；DOM / 内建组件 ref 会转换为 selector 查询结果。 |
-| `$watch` | 方法 | 页面 / 组件 | Vue 实例 watch，支持 Mpx 对逗号路径的扩展。 |
+| `$watch` | 方法 | 页面 / 组件 | 实例 watch，支持 Mpx 对逗号路径的扩展。 |
 | `$forceUpdate` | 方法 | 页面 / 组件 | 强制刷新视图。 |
 | `$nextTick` | 方法 | 页面 / 组件 | 视图更新后执行回调。 |
 | `$set` / `$delete` | 方法 | 页面 / 组件 | 响应式新增 / 删除字段。 |
@@ -86,7 +86,7 @@
 
 ## 数据响应
 
-Web 侧运行在 Vue 2.7 响应式系统上，页面和组件数据可直接赋值更新视图。
+Web 侧支持响应式数据更新，页面和组件数据可直接赋值更新视图。
 
 | 能力 | Web 侧说明 |
 | --- | --- |

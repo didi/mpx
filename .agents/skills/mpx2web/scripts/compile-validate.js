@@ -36,9 +36,54 @@ function resolveProjectRoot (startPath) {
   }
 }
 
+function resolveFromProject (name, projectRoot) {
+  try {
+    return require.resolve(name, { paths: [projectRoot] })
+  } catch (err) {
+    const anchors = [
+      '@mpxjs/mpx-cli-service',
+      '@mpxjs/vue-cli-plugin-mpx/config',
+      '@mpxjs/webpack-plugin'
+    ]
+    for (const anchor of anchors) {
+      try {
+        const anchorPath = require.resolve(anchor, { paths: [projectRoot] })
+        return require.resolve(name, { paths: [path.dirname(anchorPath)] })
+      } catch (_) {}
+    }
+    throw err
+  }
+}
+
 function requireFromProject (name, projectRoot) {
-  const resolved = require.resolve(name, { paths: [projectRoot] })
+  const resolved = resolveFromProject(name, projectRoot)
   return require(resolved)
+}
+
+function assertProjectDeps (projectRoot) {
+  const deps = [
+    '@mpxjs/mpx-cli-service',
+    '@mpxjs/cli-shared-utils',
+    '@mpxjs/vue-cli-plugin-mpx/config',
+    '@mpxjs/vue-cli-plugin-mpx/config/base',
+    '@mpxjs/mpx-cli-service/utils/filterPlugins',
+    '@vue/cli-service/lib/PluginAPI',
+    'webpack',
+    '@mpxjs/webpack-plugin'
+  ]
+  const missing = []
+  deps.forEach(name => {
+    try {
+      resolveFromProject(name, projectRoot)
+    } catch (_) {
+      missing.push(name)
+    }
+  })
+  if (missing.length) {
+    throw new MpxCliNotFoundError(
+      `业务项目 ${projectRoot} 缺少编译校验依赖: ${missing.join(', ')}`
+    )
+  }
 }
 
 // 简单 semver 比较：a >= b 返回 true。仅支持 'x.y.z' 三段数字。
@@ -57,6 +102,22 @@ function gteVersion (a, b) {
 // `partialCompileRules.components` 自 @mpxjs/webpack-plugin@2.10.20 起支持。
 // 低版本回退到前置 loader 剥离 usingComponents 的"不完美"兼容方案。
 const PARTIAL_COMPILE_COMPONENTS_MIN_VERSION = '2.10.20'
+
+function hasComponentPartialCompile (projectRoot) {
+  try {
+    const { getPartialCompileRules } = requireFromProject(
+      '@mpxjs/webpack-plugin/lib/utils/partial-compile-rules', projectRoot
+    )
+    return !!getPartialCompileRules({ components: { include: () => true } }, 'component')
+  } catch (_) {
+    try {
+      const pkg = requireFromProject('@mpxjs/webpack-plugin/package.json', projectRoot)
+      return gteVersion(pkg.version, PARTIAL_COMPILE_COMPONENTS_MIN_VERSION)
+    } catch (_) {
+      return false
+    }
+  }
+}
 
 async function compileValidate (input, options = {}) {
   const mpxPaths = (Array.isArray(input) ? input : [input]).map(p => path.resolve(p))
@@ -83,14 +144,10 @@ async function compileValidate (input, options = {}) {
     : resolveProjectRoot(mpxPaths[0])
   if (!projectRoot) {
     throw new MpxCliNotFoundError(
-      `当前环境未安装 mpx-cli (@mpxjs/mpx-cli-service)，无法执行真实编译校验。起点: ${mpxPaths[0]}`
+      `未找到安装了 @mpxjs/mpx-cli-service 的业务项目，无法执行真实编译校验。起点: ${mpxPaths[0]}`
     )
   }
-  try {
-    require.resolve('@mpxjs/mpx-cli-service', { paths: [projectRoot] })
-  } catch (_) {
-    throw new MpxCliNotFoundError(`项目 ${projectRoot} 中未安装 @mpxjs/mpx-cli-service`)
-  }
+  assertProjectDeps(projectRoot)
 
   const targets = Array.isArray(target) ? target : [target]
   if (targets.length === 1) {
@@ -122,10 +179,7 @@ async function compileOne (projectRoot, mpxPaths, targetMode, type, ignoreSubCom
   const PluginAPI = requireFromProject('@vue/cli-service/lib/PluginAPI', projectRoot)
   const webpack = requireFromProject('webpack', projectRoot)
   const MpxWebpackPlugin = requireFromProject('@mpxjs/webpack-plugin', projectRoot)
-  const mpxPluginPkg = requireFromProject('@mpxjs/webpack-plugin/package.json', projectRoot)
-  const supportsComponentPartialCompile = gteVersion(
-    mpxPluginPkg.version, PARTIAL_COMPILE_COMPONENTS_MIN_VERSION
-  )
+  const supportsComponentPartialCompile = hasComponentPartialCompile(projectRoot)
 
   if (!SUPPORT_MODE.includes(targetMode)) {
     throw new InvalidInputError(
@@ -220,7 +274,11 @@ async function compileOne (projectRoot, mpxPaths, targetMode, type, ignoreSubCom
 
     await new Promise((resolve, reject) => {
       webpack(webpackConfigs, (err, stats) => {
-        if (err) { reject(err); return }
+        if (err) {
+          errors.push(normalizeIssue(err))
+          resolve()
+          return
+        }
         const statsArr = stats && stats.stats
           ? stats.stats
           : stats
@@ -416,8 +474,8 @@ function categorize ({ message, moduleIdent, blockType, name }) {
   if (/\[mpx script (error|warn)/i.test(msg)) return 'script'
   if (blockType === 'style' || /style-compiler|postcss-loader|wxss-loader/.test(hay)) return 'style'
   if (blockType === 'template' || /template-compiler/.test(hay)) return 'template'
-  if (blockType === 'json' || /json-compiler/.test(hay)) return 'json'
-  if (blockType === 'script' || /script-compiler|babel-loader|ts-loader/.test(hay)) return 'script'
+  if (blockType === 'json' || /json-compiler|pre-process-json|json5|name=json/.test(hay)) return 'json'
+  if (blockType === 'script' || /script-compiler|babel-loader|ts-loader|\[tsl\]/.test(hay)) return 'script'
   return 'other'
 }
 
@@ -430,7 +488,11 @@ module.exports.InvalidInputError = InvalidInputError
 
 if (require.main === module) {
   runCli().catch(err => {
-    console.error(err && err.stack ? err.stack : err)
+    if (err instanceof MpxCliNotFoundError || err instanceof InvalidInputError) {
+      console.error(`${err.name}: ${err.message}`)
+    } else {
+      console.error(err && err.stack ? err.stack : err)
+    }
     process.exit(2)
   })
 }
@@ -445,13 +507,20 @@ async function runCli () {
   let projectRoot
 
   for (const a of argv) {
-    if (a === '-h' || a === '--help') { printHelp(); process.exit(0) }
-    else if (a.startsWith('--target=')) targetArg = a.slice('--target='.length)
-    else if (a.startsWith('--type=')) typeArg = a.slice('--type='.length)
-    else if (a.startsWith('--project-root=')) projectRoot = a.slice('--project-root='.length)
-    else if (a === '--json') jsonOut = true
-    else if (a === '--no-ignore-sub-components') ignoreSubComponents = false
-    else if (a.startsWith('-')) {
+    if (a === '-h' || a === '--help') {
+      printHelp()
+      process.exit(0)
+    } else if (a.startsWith('--target=')) {
+      targetArg = a.slice('--target='.length)
+    } else if (a.startsWith('--type=')) {
+      typeArg = a.slice('--type='.length)
+    } else if (a.startsWith('--project-root=')) {
+      projectRoot = a.slice('--project-root='.length)
+    } else if (a === '--json') {
+      jsonOut = true
+    } else if (a === '--no-ignore-sub-components') {
+      ignoreSubComponents = false
+    } else if (a.startsWith('-')) {
       console.error(`未知参数: ${a}`); process.exit(2)
     } else {
       files.push(a)
@@ -460,9 +529,19 @@ async function runCli () {
   if (!files.length) { printHelp(); process.exit(2) }
 
   const target = targetArg.includes(',') ? targetArg.split(',') : targetArg
-  const result = await compileValidate(files, {
-    target, type: typeArg, ignoreSubComponents, projectRoot
-  })
+  let restoreOutput
+  if (jsonOut) {
+    restoreOutput = silenceOutput()
+  }
+
+  let result
+  try {
+    result = await compileValidate(files, {
+      target, type: typeArg, ignoreSubComponents, projectRoot
+    })
+  } finally {
+    if (restoreOutput) restoreOutput()
+  }
 
   if (jsonOut) {
     console.log(JSON.stringify(result, null, 2))
@@ -472,11 +551,30 @@ async function runCli () {
   process.exit(isSuccess(result) ? 0 : 1)
 }
 
+function silenceOutput () {
+  const stdoutWrite = process.stdout.write
+  const stderrWrite = process.stderr.write
+  process.stdout.write = function (chunk, encoding, callback) {
+    if (typeof encoding === 'function') encoding()
+    if (typeof callback === 'function') callback()
+    return true
+  }
+  process.stderr.write = function (chunk, encoding, callback) {
+    if (typeof encoding === 'function') encoding()
+    if (typeof callback === 'function') callback()
+    return true
+  }
+  return function restoreOutput () {
+    process.stdout.write = stdoutWrite
+    process.stderr.write = stderrWrite
+  }
+}
+
 function printHelp () {
   console.log(`usage: compile-validate <file.mpx>... [options]
 
 options:
-  --target=<mode>              编译目标 (默认 ios)，多个用逗号分隔
+  --target=<mode>              编译目标 (默认 web)，多个用逗号分隔
   --type=<page|component>      入口类型，默认 component
   --project-root=<path>        显式指定宿主项目根目录（覆盖自动探测）
   --no-ignore-sub-components   不忽略子组件，一并纳入编译

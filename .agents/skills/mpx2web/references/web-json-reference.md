@@ -1,6 +1,6 @@
 # 跨端输出 Web JSON 配置参考
 
-本文档说明 Mpx 输出 Web（`mode: 'web'`）时，`app.mpx` / 页面与组件 `.mpx` 中 JSON 配置的支持范围与使用注意。写法仍与微信小程序 `app.json`、页面/组件配置对齐；Web 侧会转成 Vue Router、Vue 组件注册与 Web 运行时页面配置。
+本文档说明 Mpx 输出 Web（`mode: 'web'`）时，`app.mpx` / 页面与组件 `.mpx` 中 JSON 配置的支持范围与使用注意。写法仍与微信小程序 `app.json`、页面/组件配置对齐；Web 侧会转成 Web 路由、组件注册与 Web 运行时页面配置。
 
 为避免文档滞后，未提到的字段默认不作为 Web 支持能力使用；有疑问时优先扫描 `packages/webpack-plugin/lib/web/processJSON.js`、`packages/webpack-plugin/lib/json-compiler/helper.js`、`packages/webpack-plugin/lib/platform/json/` 与 Web 运行时消费点。
 
@@ -170,7 +170,7 @@ Web 支持分包与异步组件的构建能力，运行时由 webpack 动态 `im
 
 | 配置 | Web 侧说明 |
 | --- | --- |
-| `mpx.config.webConfig.routeConfig` | 推荐的 Web 路由配置入口，内容透传给 VueRouter。 |
+| `mpx.config.webConfig.routeConfig` | 推荐的 Web 路由配置入口，内容透传给 Web 路由实例。 |
 | `mpx.config.webRouteConfig` | 旧路由配置入口，仍兼容但不推荐继续使用。 |
 | `routeConfig.mode` | 路由模式；SSR 场景需使用 `history`。 |
 | `routeConfig.base` | 路由基础路径；非根路径部署时需与实际访问路径匹配。 |
