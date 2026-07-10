@@ -18,6 +18,7 @@ module.exports = function (raw) {
   const defs = mpx.defs
   const i18n = mpx.i18n
   const externalClasses = mpx.externalClasses
+  const unocssEscapeMap = mpx.unocssEscapeMap
   const decodeHTMLText = mpx.decodeHTMLText
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
@@ -69,6 +70,7 @@ module.exports = function (raw) {
     defs,
     decodeHTMLText,
     externalClasses,
+    unocssEscapeMap,
     hasScoped,
     moduleId,
     usingComponentsInfo,

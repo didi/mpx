@@ -20,7 +20,7 @@ const {
   parseComments,
   parseCommentConfig
 } = require('./parser')
-const { escapeKey, escapeClassName } = require('@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr')
+const { escapeKey, mpEscapeMap } = require('@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr')
 const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
 const {
   transformStyle,
@@ -105,27 +105,7 @@ function normalizeOptions (options) {
     ...webOptions
   }
 
-  escapeMap = {
-    '(': '_pl_',
-    ')': '_pr_',
-    '[': '_bl_',
-    ']': '_br_',
-    '{': '_cl_',
-    '}': '_cr_',
-    '#': '_h_',
-    '!': '_i_',
-    '/': '_s_',
-    '.': '_d_',
-    ':': '_c_',
-    ',': '_2c_',
-    '%': '_p_',
-    '\'': '_q_',
-    '"': '_dq_',
-    '+': '_a_',
-    $: '_si_',
-    unknown: '_u_',
-    ...escapeMap
-  }
+  escapeMap = Object.assign({}, mpEscapeMap, { unknown: '_u_' }, escapeMap)
 
   scan.include = normalizeRules(scan.include, root)
   scan.exclude = normalizeRules(scan.exclude, root)
@@ -258,6 +238,7 @@ class MpxUnocssPlugin {
     }, (compilation) => {
       const { __mpx__: mpx } = compilation
       mpx.hasUnoCSS = true
+      mpx.unocssEscapeMap = this.options.escapeMap
       if (mode === 'web') return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
@@ -360,9 +341,9 @@ class MpxUnocssPlugin {
                 result = transformClasses(result, classNameHandler)
                 expSource.replace(start, end, result)
               })
-              parseMpxEscapeKeys(exp).forEach(({ result, start, end }) => {
+              parseMpxEscapeKeys(exp, this.options.escapeMap).forEach(({ result, start, end }) => {
                 const expanded = transformClasses(result, classNameHandler)
-                expSource.replace(start, end, escapeKey(escapeClassName(expanded)))
+                expSource.replace(start, end, escapeKey(expanded))
               })
               return expSource.source()
             }, str => transformClasses(str, classNameHandler))

@@ -1,5 +1,5 @@
 const { parseMustache, stringifyAttr } = require('@mpxjs/webpack-plugin/lib/template-compiler/compiler')
-const { unescapeKey } = require('@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr')
+const { unescapeKey, mpUnescape } = require('@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr')
 
 function parseClasses (content) {
   const output = []
@@ -83,7 +83,7 @@ function parseStrings (content) {
 // key 前面必须是 { 或 ,（加可选空格），后面是 :
 const objKeyReg = /(?:[{,]\s*)([\w-]+?)(?=\s*:)/gm
 
-function parseMpxEscapeKeys (content) {
+function parseMpxEscapeKeys (content, escapeMap) {
   const output = []
   if (!content) { return output }
   let match
@@ -93,7 +93,7 @@ function parseMpxEscapeKeys (content) {
     const end = match.index + match[0].length - 1
     const start = end - raw.length + 1
     output.push({
-      result: unescapeKey(raw),
+      result: mpUnescape(unescapeKey(raw), escapeMap),
       start,
       end
     })
