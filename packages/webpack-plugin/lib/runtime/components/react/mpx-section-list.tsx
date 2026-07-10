@@ -369,7 +369,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
   const scrollAdditionalProps = extendObject(
     {
       style: [
-        hasOwn(normalStyle, 'flex') || hasOwn(normalStyle, 'flexGrow') ? null : { flexGrow: 0 },
+        hasOwn(innerStyle, 'flex') || hasOwn(innerStyle, 'flexGrow') ? null : { flexGrow: 0 },
         { height, width },
         innerStyle,
         layoutStyle
