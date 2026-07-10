@@ -28,6 +28,7 @@
   - [模板属性](#模板属性)
   - [示例](#示例)
   - [注意事项](#注意事项-5)
+- [模板相关编译配置](#模板相关编译配置)
 - [基础组件](#基础组件)
   - [通用属性](#通用属性)
   - [view](#view)
@@ -623,6 +624,41 @@ createComponent({
 
 ---
 
+## 模板相关编译配置
+
+下列配置是 `@mpxjs/webpack-plugin` 中会影响 RN 模板编译结果的配置。按 `Rules` 匹配的配置均以组件文件路径为匹配对象；业务模板中不需要也不应额外书写这些配置名对应的属性。
+
+| 配置 | 作用 | 适用场景 |
+| --- | --- | --- |
+| `autoVirtualHostRules` | 命中的组件会按 virtual host 语义编译，跨平台输出时不再为该组件额外生成实体 host 包裹节点，引用方传入的外层 `class` / `style` / `wx:show` 等会作用到组件根结构。 | 组件希望自身根节点直接承接布局、样式或显隐语义，避免跨端产物多一层默认 host 节点影响布局。 |
+| `customTextRules` | 命中的组件会按文本类组件处理，跨平台输出时可将该自定义组件识别为文本节点；当组件仍需要实体 host 节点时，会使用文本容器而不是视图容器。 | 自定义组件本质是 `text` 的封装，或需要作为文本节点参与嵌套、文本样式透传、文本上下文判断。 |
+| `externalClasses` | 声明模板中需要识别的外部样式类名。跨平台输出时会把这些外部类转换为目标平台可承接的样式传递形式，默认值为 `['custom-class', 'i-class']`。 | 跨端开发时使用微信 `externalClasses` 语法传递外部样式类，让组件内部能够访问到外部定义的样式。 |
+| `rnConfig.customBuiltInComponents` | RN 输出时覆盖或扩展模板编译期识别的基础组件：同名 key 覆盖内置基础组件，新 key 作为扩展基础组件使用；详见下方[基础组件](#基础组件)中的自定义覆盖与扩展说明。 | 内置基础组件不满足业务需求，或需要在 RN 模板中直接使用一组宿主特有基础组件。 |
+
+`defs` / `env` / `mode` 也会参与模板表达式和条件编译判断，其中 `__mpx_mode__`、`__mpx_env__` 与自定义 `defs` 的模板访问方式见[数据绑定](#数据绑定)。
+
+需要跨平台获得稳定一致的 virtual host 或自定义文本组件行为时，应通过 `autoVirtualHostRules` 与 `customTextRules` 配置控制，不要依赖仅部分平台支持的组件 `options` 选项。这样可以由编译链路统一抹平跨端差异，并按平台或目录精确控制生效范围。
+
+```js
+// vue.config.js
+module.exports = {
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        autoVirtualHostRules: {
+          include: [/src\/components\/layout/]
+        },
+        customTextRules: {
+          include: [/src\/components\/text/]
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
 ## 基础组件
 
 Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文档。
@@ -640,7 +676,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | style | string |  | 组件内联样式 |
 | enable-offset | boolean | `false` | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息 |
 | enable-var | boolean | `true` | 默认支持使用 css variable，若想关闭该功能可设置为 false |
-| parent-font-size | number |  | 父组件字体大小，主要用于百分比计算的场景，如 font-size: 100% |
+| enable-text-pass-through | boolean | `false` | RN 环境特有属性，开启文本样式和文本属性透传上下文，请在动态添加文本样式或文本属性时开启 |
 | parent-width | number |  | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度 |
 | parent-height | number |  | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度 |
 
@@ -679,7 +715,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 - 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
-- 出于性能考虑，基础组件的样式增强能力（如 `enable-var`、`enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
+- 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
 
 ### text
 
@@ -1452,7 +1488,7 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindscroll | 滚动时触发，返回滚动信息 |
+| bindscroll | 滚动时触发，`event.detail.scrollTop` 返回纵向滚动位置 |
 | bindscrolltolower | 滚动到底部 / 触底通知 |
 | bindrefresherrefresh | 自定义下拉刷新被触发 |
 | binditemexposure | 列表项露出比例达到阈值时触发 |

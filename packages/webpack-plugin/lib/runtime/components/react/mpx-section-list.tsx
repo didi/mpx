@@ -1,11 +1,12 @@
 import { forwardRef, useRef, useMemo, createElement, useImperativeHandle, useEffect } from 'react'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactElement } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import type { SectionListData, SectionListProps as RNSectionListProps } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { error, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture } from './utils'
+import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture, wrapChildren, splitStyle, useTextPassThrough, splitProps } from './utils'
+import Portal from './mpx-portal'
 interface ListItem {
   isSectionHeader?: boolean;
   isSectionFooter?: boolean;
@@ -106,8 +107,6 @@ interface MpxSectionListProps {
   'genericlist-header'?: string;
   'genericlist-footer'?: string;
   'enable-var'?: boolean;
-  'external-var-context'?: any;
-  'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
   'enable-sticky'?: boolean;
@@ -143,7 +142,8 @@ const getExposurePercentThreshold = (threshold = 0) => {
   return Math.max(0, Math.min(100, threshold))
 }
 
-const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
+const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}, ref) => {
+  const { textProps, innerProps: props = {} } = splitProps(sectionListProps)
   const {
     enhanced = false,
     bounces = true,
@@ -167,8 +167,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'genericlist-header': genericListHeader,
     'genericlist-footer': genericListFooter,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'enable-sticky': enableSticky = false,
@@ -208,10 +207,17 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const itemExposureViewabilityConfigValue = itemExposureViewabilityConfig.current as ItemExposureViewabilityConfig
 
   const {
+    normalStyle,
+    hasVarDec,
+    varContextRef,
     hasSelfPercent,
+    hasPositionFixed,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
+
+  const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
@@ -241,10 +247,17 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { bindscroll } = props
-    bindscroll &&
+    if (bindscroll) {
+      const { nativeEvent } = event
       bindscroll(
-        getCustomEvent('scroll', event.nativeEvent, { layoutRef }, props)
+        getCustomEvent('scroll', event, {
+          detail: {
+            scrollTop: nativeEvent.contentOffset.y
+          },
+          layoutRef
+        }, props)
       )
+    }
   }
 
   const itemExposureViewabilityPairs = useRef<ItemExposureViewabilityPair[]>()
@@ -499,7 +512,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       closeSection()
     }
     return sections
-  }, [listData])
+  }, [listData, listData?.length])
 
   const { getItemLayout } = useMemo(() => {
     const layouts: ItemLayoutInfo[] = []
@@ -555,16 +568,16 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const scrollAdditionalProps = extendObject(
     {
       style: [
-        hasOwn(style, 'flex') || hasOwn(style, 'flexGrow') ? null : { flexGrow: 0 },
+        hasOwn(innerStyle, 'flex') || hasOwn(innerStyle, 'flexGrow') ? null : { flexGrow: 0 },
         { height, width },
-        style,
+        innerStyle,
         layoutStyle
       ],
       alwaysBounceVertical: false,
       alwaysBounceHorizontal: false,
       scrollEventThrottle: scrollEventThrottle,
       scrollsToTop: enableBackToTop,
-      showsHorizontalScrollIndicator: showScrollbar,
+      showsVerticalScrollIndicator: showScrollbar,
       onEndReachedThreshold,
       ref: scrollViewRef,
       bounces: enhanced ? bounces : false,
@@ -621,6 +634,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'genericsection-footer',
     'genericlist-header',
     'genericlist-footer',
+    'enable-text-pass-through',
     'show-scrollbar',
     'lower-threshold',
     'scroll-event-throttle',
@@ -705,7 +719,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     [ListFooterGenericComponent, listFooterData]
   )
 
-  const sectionListProps: RNSectionListProps<ListItem, SectionExtra> = extendObject(
+  const rnSectionListProps: RNSectionListProps<ListItem, SectionExtra> = extendObject(
     {
       sections: convertedListData,
       renderItem: renderItem,
@@ -724,14 +738,26 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     innerProps
   )
 
-  return createElement(
+  let sectionListComponent: ReactElement = createElement(
     GestureDetector,
     { gesture: nativeGesture },
     createElement(
       TypedSectionList,
-      sectionListProps
+      rnSectionListProps
     )
   )
+
+  if (hasPositionFixed) {
+    sectionListComponent = createElement(Portal, null, sectionListComponent)
+  }
+  return wrapChildren(
+    sectionListComponent,
+    {
+      hasVarDec,
+      varContext: varContextRef.current,
+      textPassThrough
+    }
+  ) as ReactElement
 })
 
 _SectionList.displayName = 'MpxSectionList'
