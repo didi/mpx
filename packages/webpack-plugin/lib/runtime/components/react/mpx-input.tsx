@@ -469,7 +469,18 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   // React Native 的 TextInput 在 textAlign center + placeholder 时光标会跑到右边
   // 这个问题只在 Android 上出现
   // 参考：https://github.com/facebook/react-native/issues/28794 (Android only)
-  const needMultilineFix = isAndroid && !multiline
+  const conditionalTextInputProps: {
+    multiline?: boolean
+    numberOfLines?: number
+    enterKeyHint?: ConfirmType
+  } = {}
+  if (isAndroid && !multiline && props.placeholder && normalStyle.textAlign === 'center') {
+    conditionalTextInputProps.multiline = true
+    conditionalTextInputProps.numberOfLines = 1
+  }
+  if (!multiline || confirmType !== 'return') {
+    conditionalTextInputProps.enterKeyHint = confirmType
+  }
 
   const innerProps = useInnerProps(
     extendObject(
@@ -490,11 +501,11 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         autoFocus: isAutoFocus,
         selection: selectionStart > -1 || typeof cursor === 'number' ? selection : undefined,
         selectionColor: cursorColor,
-        blurOnSubmit: multiline ? confirmType !== 'return' : !confirmHold,
+        submitBehavior: multiline ? (confirmType === 'return' ? 'newline' : 'blurAndSubmit') : (confirmHold ? 'submit' : 'blurAndSubmit'),
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
-        multiline: multiline || needMultilineFix,
+        multiline,
         onTouchStart,
         onTouchEnd,
         onFocus,
@@ -504,8 +515,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onContentSizeChange,
         onSubmitEditing: bindconfirm && onSubmitEditing
       },
-      needMultilineFix ? { numberOfLines: 1 } : {},
-      !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
+      conditionalTextInputProps
     ),
     [
       'name',

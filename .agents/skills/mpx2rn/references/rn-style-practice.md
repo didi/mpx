@@ -15,6 +15,7 @@
   - [谨慎使用 font-weight 数值](#谨慎使用-font-weight-数值)
 - [布局最佳实践](#布局最佳实践)
   - [使用 Flexbox 布局](#使用-flexbox-布局)
+  - [嵌套 fixed 定位](#嵌套-fixed-定位)
   - [不要依赖 BFC 和 margin 合并](#不要依赖-bfc-和-margin-合并)
   - [避免使用 Grid 布局](#避免使用-grid-布局)
   - [避免使用 Float 布局](#避免使用-float-布局)
@@ -753,6 +754,62 @@ Flexbox 是跨平台最可靠的布局方式。
     </text>
   </view>
 </template>
+```
+
+### 嵌套 fixed 定位
+
+Mpx2RN 中 `position: fixed` 不是由 RN 原生定位直接承载，而是通过 portal 将 fixed 节点提升到 page root 下，再使用 `position: absolute` 模拟固定定位。因此模板中嵌套的 fixed 节点，在 RN 视图实现层会变成 page root 下的兄弟节点，无法继续保持原模板里的父子关系。
+
+这会影响依赖父子关系的能力，常见问题包括：
+
+1. **层级不再由父子关系兜底**：外层 fixed 声明了较高的 `z-index`，内层 fixed 未声明 `z-index` 时，RN 侧提升后的外层节点可能遮挡内层节点。
+2. **不要依赖事件冒泡穿透父级**：内层 fixed 已不再是外层 fixed 的真实子节点，依赖父子关系的事件冒泡、统一拦截或关闭逻辑可能与原平台表现不一致。
+
+**❌ 避免：**内层 fixed 依赖外层 fixed 的层级上下文与事件冒泡。
+
+```html
+<template>
+  <view class="mask" bindtap="close">
+    <view class="panel">
+      <view class="toast" bindtap="handleToastTap">提示内容</view>
+    </view>
+  </view>
+</template>
+
+<style>
+  .mask {
+    position: fixed;
+    z-index: 1000;
+  }
+
+  .toast {
+    position: fixed;
+  }
+</style>
+```
+
+**✅ 推荐：**嵌套 fixed 需要覆盖外层 fixed 时，在内层显式声明更高的 `z-index`；事件逻辑上避免依赖从内层 fixed 冒泡到外层 fixed，可分别绑定明确的处理函数，或通过共享状态 / 自定义事件完成联动。
+
+```html
+<template>
+  <view class="mask" bindtap="closeMask">
+    <view class="panel">
+      <view class="toast" catchtap="handleToastTap">提示内容</view>
+    </view>
+  </view>
+</template>
+
+<style>
+  .mask {
+    position: fixed;
+    z-index: 1000;
+  }
+
+  .toast {
+    position: fixed;
+    z-index: 1001;
+  }
+</style>
 ```
 
 ### 不要依赖 BFC 和 margin 合并
