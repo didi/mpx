@@ -5,13 +5,22 @@ import MpxForm from '../../../lib/runtime/components/react/mpx-form'
 import { RouteContext } from '../../../lib/runtime/components/react/context'
 import { fireTap } from './helpers'
 
+const mockPortal = jest.fn()
+
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mockReact = require('react')
-  return ({ children }: { children: any }) => mockReact.createElement(mockReact.Fragment, null, children)
+  return ({ children }: { children: any }) => {
+    mockPortal(children)
+    return mockReact.createElement(mockReact.Fragment, null, children)
+  }
 })
 
 describe('MpxButton', () => {
+  beforeEach(() => {
+    mockPortal.mockClear()
+  })
+
   it('handles tap and form actions', () => {
     const bindtap = jest.fn()
     const bindsubmit = jest.fn()
@@ -77,6 +86,7 @@ describe('MpxButton', () => {
       )
 
       expect(screen.getByTestId('fixed-button')).toBeTruthy()
+      expect(mockPortal).toHaveBeenCalled()
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Button does not support background image-related styles!'))
     } finally {
       warnSpy.mockRestore()

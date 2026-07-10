@@ -2,7 +2,7 @@
 import React from 'react'
 import { act, fireEvent, render } from '@testing-library/react-native'
 import { Platform } from 'react-native'
-import { getWebViews, renderWithPortalHost, resetMpxRuntimeGlobals } from './rn-component-test-utils'
+import { expectPortalHostRendered, getWebViews, renderWithPortalHost, resetMpxRuntimeGlobals } from './rn-component-test-utils'
 
 jest.mock('react-native-webview', () => {
   const mockReact = require('react')
@@ -223,9 +223,10 @@ describe('MpxCanvas', () => {
 
     ;(global as any).__mpx_mode__ = originalMode
     ;(Platform as any).Version = originalVersion
-    renderWithPortalHost(
-      <MpxCanvas style={{ width: 120, height: 80, position: 'fixed' }} />
+    const fixedRender = renderWithPortalHost(
+      <MpxCanvas testID="fixed-canvas" style={{ width: 120, height: 80, position: 'fixed' }} />
     )
     expect(getWebViews().length).toBeGreaterThan(0)
+    expectPortalHostRendered(fixedRender.toJSON(), 'fixed-canvas')
   })
 })

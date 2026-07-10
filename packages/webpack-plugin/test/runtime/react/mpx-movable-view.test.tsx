@@ -80,6 +80,7 @@ describe('MpxMovableView', () => {
 
   it('handles vertical and disabled movable branches', () => {
     const bindvtouchmove = jest.fn()
+    const bindchange = jest.fn()
     const { __getLastPanGesture } = require('react-native-gesture-handler')
     const { rerender } = renderWithRoute(
       <MpxMovableArea style={{ width: 100, height: 100 }}>
@@ -106,7 +107,7 @@ describe('MpxMovableView', () => {
     rerender(
       <RouteContext.Provider value={{ pageId: 1, navigation: {} }}>
         <MpxMovableArea style={{ width: 100, height: 100 }}>
-          <MpxMovableView direction="all" disabled={true}>
+          <MpxMovableView direction="all" disabled={true} bindchange={bindchange}>
             <Text>disabled movable</Text>
           </MpxMovableView>
         </MpxMovableArea>
@@ -119,6 +120,12 @@ describe('MpxMovableView', () => {
       gesture.onEndCallback({ velocityX: 50, velocityY: 50 })
     })
     expect(screen.getByText('disabled movable')).toBeTruthy()
+    bindchange.mockClear()
+    act(() => {
+      gesture.onUpdateCallback({ translationX: 80, translationY: 80 })
+      gesture.onEndCallback({ velocityX: 80, velocityY: 80 })
+    })
+    expect(bindchange).not.toHaveBeenCalled()
   })
 
   it('handles prop updates, percent layout and area boundary changes', () => {

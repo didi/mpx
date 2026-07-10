@@ -25,49 +25,36 @@
     "/dist/"
   ],
   "collectCoverageFrom": [
-    "lib/runtime/components/react/mpx-checkbox.tsx",
-    "lib/runtime/components/react/mpx-checkbox-group.tsx",
-    "lib/runtime/components/react/mpx-button.tsx",
-    "lib/runtime/components/react/mpx-async-suspense.tsx",
-    "lib/runtime/components/react/mpx-camera.tsx",
-    "lib/runtime/components/react/mpx-canvas/index.tsx",
-    "lib/runtime/components/react/mpx-form.tsx",
-    "lib/runtime/components/react/mpx-icon/index.tsx",
-    "lib/runtime/components/react/mpx-image.tsx",
-    "lib/runtime/components/react/mpx-inline-text.tsx",
-    "lib/runtime/components/react/mpx-keyboard-avoiding-view.tsx",
-    "lib/runtime/components/react/mpx-label.tsx",
-    "lib/runtime/components/react/mpx-movable-area.tsx",
-    "lib/runtime/components/react/mpx-movable-view.tsx",
-    "lib/runtime/components/react/mpx-nav.tsx",
-    "lib/runtime/components/react/mpx-navigator.tsx",
-    "lib/runtime/components/react/mpx-picker/index.tsx",
-    "lib/runtime/components/react/mpx-picker-view/index.tsx",
-    "lib/runtime/components/react/mpx-picker-view-column/index.tsx",
-    "lib/runtime/components/react/mpx-popup/index.tsx",
-    "lib/runtime/components/react/mpx-portal/index.tsx",
-    "lib/runtime/components/react/mpx-progress.tsx",
-    "lib/runtime/components/react/mpx-radio.tsx",
-    "lib/runtime/components/react/mpx-radio-group.tsx",
-    "lib/runtime/components/react/mpx-rich-text/index.tsx",
-    "lib/runtime/components/react/mpx-root-portal.tsx",
-    "lib/runtime/components/react/mpx-simple-text.tsx",
-    "lib/runtime/components/react/mpx-simple-view.tsx",
-    "lib/runtime/components/react/mpx-slider.tsx",
-    "lib/runtime/components/react/mpx-sticky-header.tsx",
-    "lib/runtime/components/react/mpx-sticky-section.tsx",
-    "lib/runtime/components/react/mpx-swiper.tsx",
-    "lib/runtime/components/react/mpx-swiper-item.tsx",
-    "lib/runtime/components/react/mpx-switch.tsx",
-    "lib/runtime/components/react/mpx-textarea.tsx",
-    "lib/runtime/components/react/mpx-video.tsx",
-    "lib/runtime/components/react/mpx-web-view.tsx"
+    "lib/runtime/components/react/**/*.{ts,tsx}",
+    "!lib/runtime/components/react/**/*.d.ts",
+    "!lib/runtime/components/react/dist/**",
+    "!lib/runtime/components/react/mpx-canvas/html.ts",
+    "!lib/runtime/components/react/mpx-picker/type.ts"
   ],
   "coverageThreshold": {
     "global": {
       "statements": 90,
       "functions": 90,
-      "lines": 90
+      "lines": 90,
+      "branches": 75
+    },
+    "lib/runtime/components/react/context.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/event.config.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/getInnerListeners.ts": {
+      "statements": 80,
+      "functions": 90,
+      "lines": 80,
+      "branches": 65
     },
     "lib/runtime/components/react/mpx-checkbox.tsx": {
       "statements": 90,
@@ -98,6 +85,48 @@
       "statements": 90,
       "functions": 90,
       "lines": 90
+    },
+    "lib/runtime/components/react/mpx-canvas/Bus.ts": {
+      "statements": 80,
+      "functions": 85,
+      "lines": 80,
+      "branches": 80
+    },
+    "lib/runtime/components/react/mpx-canvas/CanvasGradient.ts": {
+      "statements": 60,
+      "functions": 50,
+      "lines": 60,
+      "branches": 60
+    },
+    "lib/runtime/components/react/mpx-canvas/CanvasRenderingContext2D.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/mpx-canvas/Image.ts": {
+      "statements": 75,
+      "functions": 65,
+      "lines": 75,
+      "branches": 60
+    },
+    "lib/runtime/components/react/mpx-canvas/ImageData.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 75
+    },
+    "lib/runtime/components/react/mpx-canvas/constructorsRegistry.ts": {
+      "statements": 75,
+      "functions": 60,
+      "lines": 80,
+      "branches": 90
+    },
+    "lib/runtime/components/react/mpx-canvas/utils.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 50
     },
     "lib/runtime/components/react/mpx-form.tsx": {
       "statements": 90,
@@ -152,27 +181,126 @@
     "lib/runtime/components/react/mpx-picker/index.tsx": {
       "statements": 90,
       "functions": 90,
-      "lines": 90
+      "lines": 90,
+      "branches": 75
+    },
+    "lib/runtime/components/react/mpx-picker/date.tsx": {
+      "statements": 90,
+      "functions": 85,
+      "lines": 90,
+      "branches": 65
+    },
+    "lib/runtime/components/react/mpx-picker/dateData.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 70
+    },
+    "lib/runtime/components/react/mpx-picker/multiSelector.tsx": {
+      "statements": 90,
+      "functions": 85,
+      "lines": 90,
+      "branches": 60
+    },
+    "lib/runtime/components/react/mpx-picker/region.tsx": {
+      "statements": 85,
+      "functions": 90,
+      "lines": 85,
+      "branches": 55
+    },
+    "lib/runtime/components/react/mpx-picker/regionData.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/mpx-picker/selector.tsx": {
+      "statements": 85,
+      "functions": 70,
+      "lines": 85,
+      "branches": 70
+    },
+    "lib/runtime/components/react/mpx-picker/time.tsx": {
+      "statements": 85,
+      "functions": 80,
+      "lines": 85,
+      "branches": 60
     },
     "lib/runtime/components/react/mpx-picker-view/index.tsx": {
       "statements": 90,
       "functions": 90,
-      "lines": 90
+      "lines": 90,
+      "branches": 80
+    },
+    "lib/runtime/components/react/mpx-picker-view/pickerVIewContext.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 50
     },
     "lib/runtime/components/react/mpx-picker-view-column/index.tsx": {
       "statements": 90,
       "functions": 90,
-      "lines": 90
+      "lines": 90,
+      "branches": 80
+    },
+    "lib/runtime/components/react/mpx-picker-view-column/pickerViewColumnItem.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/mpx-picker-view-column/pickerViewColumnItemLite.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/mpx-picker-view-column/pickerViewFaces.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 75
+    },
+    "lib/runtime/components/react/mpx-picker-view-column/pickerViewIndicator.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/mpx-picker-view-column/pickerViewMask.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
     },
     "lib/runtime/components/react/mpx-popup/index.tsx": {
       "statements": 90,
       "functions": 90,
       "lines": 90
     },
+    "lib/runtime/components/react/mpx-popup/popupBase.tsx": {
+      "statements": 72,
+      "functions": 50,
+      "lines": 70,
+      "branches": 25
+    },
     "lib/runtime/components/react/mpx-portal/index.tsx": {
       "statements": 90,
       "functions": 90,
       "lines": 90
+    },
+    "lib/runtime/components/react/mpx-portal/portal-host.tsx": {
+      "statements": 70,
+      "functions": 90,
+      "lines": 75,
+      "branches": 40
+    },
+    "lib/runtime/components/react/mpx-portal/portal-manager.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
     },
     "lib/runtime/components/react/mpx-progress.tsx": {
       "statements": 90,
@@ -192,7 +320,14 @@
     "lib/runtime/components/react/mpx-rich-text/index.tsx": {
       "statements": 90,
       "functions": 90,
-      "lines": 90
+      "lines": 90,
+      "branches": 40
+    },
+    "lib/runtime/components/react/mpx-rich-text/html.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
     },
     "lib/runtime/components/react/mpx-root-portal.tsx": {
       "statements": 90,
@@ -208,6 +343,12 @@
       "statements": 90,
       "functions": 90,
       "lines": 90
+    },
+    "lib/runtime/components/react/mpx-scroll-view.tsx": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 80
     },
     "lib/runtime/components/react/mpx-slider.tsx": {
       "statements": 90,
@@ -227,17 +368,25 @@
     "lib/runtime/components/react/mpx-swiper.tsx": {
       "statements": 90,
       "functions": 90,
-      "lines": 90
+      "lines": 90,
+      "branches": 80
     },
     "lib/runtime/components/react/mpx-swiper-item.tsx": {
       "statements": 90,
       "functions": 90,
-      "lines": 90
+      "lines": 90,
+      "branches": 65
     },
     "lib/runtime/components/react/mpx-switch.tsx": {
       "statements": 90,
       "functions": 90,
       "lines": 90
+    },
+    "lib/runtime/components/react/mpx-text.tsx": {
+      "statements": 82,
+      "functions": 100,
+      "lines": 100,
+      "branches": 70
     },
     "lib/runtime/components/react/mpx-textarea.tsx": {
       "statements": 90,
@@ -249,13 +398,73 @@
       "functions": 90,
       "lines": 90
     },
+    "lib/runtime/components/react/mpx-view.tsx": {
+      "statements": 88,
+      "functions": 89,
+      "lines": 90,
+      "branches": 79
+    },
+    "lib/runtime/components/react/mpx-view-parser.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 80
+    },
     "lib/runtime/components/react/mpx-web-view.tsx": {
       "statements": 90,
       "functions": 90,
       "lines": 90
+    },
+    "lib/runtime/components/react/namedColorSet.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/parser.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 85
+    },
+    "lib/runtime/components/react/useNodesRef.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    },
+    "lib/runtime/components/react/utils.tsx": {
+      "statements": 90,
+      "functions": 95,
+      "lines": 90,
+      "branches": 80
+    },
+    "lib/runtime/components/react/animationHooks/index.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 75
+    },
+    "lib/runtime/components/react/animationHooks/useAnimationAPIHooks.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 70
+    },
+    "lib/runtime/components/react/animationHooks/useTransitionHooks.ts": {
+      "statements": 88,
+      "functions": 90,
+      "lines": 88,
+      "branches": 64
+    },
+    "lib/runtime/components/react/animationHooks/utils.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
     }
   },
   "transformIgnorePatterns": [
-    "node_modules/(?!(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs)/)"
+    "node_modules/(?!(\\.pnpm/)?(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs))"
   ]
 }

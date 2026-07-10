@@ -2,31 +2,32 @@
 import React from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
-import { renderWithPortalHost, resetMpxRuntimeGlobals } from './rn-component-test-utils'
+import { expectPortalHostRendered, renderWithPortalHost, resetMpxRuntimeGlobals } from './rn-component-test-utils'
 
 const MpxSwiper = require('../../../lib/runtime/components/react/mpx-swiper').default
 const MpxSwiperItem = require('../../../lib/runtime/components/react/mpx-swiper-item').default
 
 beforeEach(() => {
   jest.clearAllMocks()
+  const { __resetAnimatedReactions } = require('react-native-reanimated')
+  __resetAnimatedReactions()
   resetMpxRuntimeGlobals()
 })
 
+afterEach(() => {
+  jest.useRealTimers()
+})
+
 describe('MpxSwiper', () => {
-  it('renders swiper items, pagination and gesture configuration', () => {
-    jest.useFakeTimers()
+  it('renders swiper items, pagination and emits touch change from gesture', () => {
     const bindchange = jest.fn()
     const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { __flushAnimatedReactions } = require('react-native-reanimated')
     render(
       <MpxSwiper
         testID="swiper"
         style={{ width: 300, height: 120 }}
         indicator-dots={true}
-        autoplay={true}
-        interval={10}
-        circular={true}
-        previous-margin="10"
-        next-margin="10"
         bindchange={bindchange}
       >
         <MpxSwiperItem item-id="a" enable-var={false}>
@@ -40,20 +41,24 @@ describe('MpxSwiper', () => {
 
     expect(screen.getAllByText('A').length).toBeGreaterThan(0)
     expect(screen.getByTestId('gesture-detector')).toBeTruthy()
+    fireEvent(screen.getByTestId('swiper'), 'layout', {
+      nativeEvent: { layout: { width: 300, height: 120 } }
+    })
     const gesture = __getLastPanGesture()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
       gesture.onUpdateCallback({ absoluteX: -180, velocityX: 0 })
-      gesture.onFinalizeCallback({ absoluteX: -180, velocityX: 20 })
-      jest.advanceTimersByTime(20)
+      gesture.onFinalizeCallback({ absoluteX: -180, velocityX: 150 })
+      __flushAnimatedReactions()
     })
     expect(gesture.activeOffsetX).toHaveBeenCalled()
-    jest.useRealTimers()
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 1, source: 'touch' }
+    }))
   })
 
   it('updates from props, autoplay and boundary gestures', () => {
     jest.useFakeTimers()
-    const bindchange = jest.fn()
     const { __getLastPanGesture } = require('react-native-gesture-handler')
     const { rerender } = render(
       <MpxSwiper
@@ -65,7 +70,6 @@ describe('MpxSwiper', () => {
         circular={false}
         previous-margin="0"
         next-margin="0"
-        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -94,7 +98,6 @@ describe('MpxSwiper', () => {
         circular={false}
         previous-margin="10"
         next-margin="20"
-        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -119,7 +122,6 @@ describe('MpxSwiper', () => {
         circular={true}
         previous-margin="10"
         next-margin="10"
-        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -138,8 +140,54 @@ describe('MpxSwiper', () => {
       gesture.onUpdateCallback({ absoluteX: -520, velocityX: 0 })
       gesture.onFinalizeCallback({ absoluteX: -520, velocityX: 150 })
     })
-    expect(bindchange).toHaveBeenCalled()
+    expect(screen.getAllByText('One').length).toBeGreaterThan(0)
     jest.useRealTimers()
+  })
+
+  it('emits bindchange when current updates after layout', () => {
+    const bindchange = jest.fn()
+    const { __flushAnimatedReactions } = require('react-native-reanimated')
+    const { rerender } = render(
+      <MpxSwiper
+        testID="change-swiper"
+        style={{ width: 240, height: 100 }}
+        current={0}
+        bindchange={bindchange}
+      >
+        <MpxSwiperItem item-id="one" enable-var={false}>
+          <Text>One</Text>
+        </MpxSwiperItem>
+        <MpxSwiperItem item-id="two" enable-var={false}>
+          <Text>Two</Text>
+        </MpxSwiperItem>
+      </MpxSwiper>
+    )
+
+    fireEvent(screen.getByTestId('change-swiper'), 'layout', {
+      nativeEvent: { layout: { width: 240, height: 100 } }
+    })
+    rerender(
+      <MpxSwiper
+        testID="change-swiper"
+        style={{ width: 240, height: 100 }}
+        current={1}
+        bindchange={bindchange}
+      >
+        <MpxSwiperItem item-id="one" enable-var={false}>
+          <Text>One</Text>
+        </MpxSwiperItem>
+        <MpxSwiperItem item-id="two" enable-var={false}>
+          <Text>Two</Text>
+        </MpxSwiperItem>
+      </MpxSwiper>
+    )
+    act(() => {
+      __flushAnimatedReactions()
+    })
+
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 1, source: 'touch' }
+    }))
   })
 
   it('covers vertical, single-item, no-gesture and fixed-position branches', () => {
@@ -189,8 +237,9 @@ describe('MpxSwiper', () => {
     })
     expect(screen.queryByTestId('gesture-detector')).toBeNull()
 
-    renderWithPortalHost(
+    const fixedRender = renderWithPortalHost(
       <MpxSwiper
+        testID="fixed-swiper"
         style={{ width: 200, height: 100, position: 'fixed' }}
         circular={true}
         current={1}
@@ -203,17 +252,21 @@ describe('MpxSwiper', () => {
         </MpxSwiperItem>
       </MpxSwiper>
     )
+    expectPortalHostRendered(fixedRender.toJSON(), 'fixed-swiper')
     gesture = __getLastPanGesture()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
       gesture.onUpdateCallback({ absoluteX: -260, velocityX: 0 })
       gesture.onFinalizeCallback({ absoluteX: -260, velocityX: 200 })
     })
-    expect(screen.getAllByText('X').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('X')).toHaveLength(2)
   })
 
   it('handles autoplay terminal page and circular rollover', () => {
     jest.useFakeTimers()
+    const terminalChange = jest.fn()
+    const circularChange = jest.fn()
+    const { __flushAnimatedReactions, withTiming } = require('react-native-reanimated')
     const firstRender = render(
       <MpxSwiper
         testID="autoplay-last"
@@ -221,6 +274,7 @@ describe('MpxSwiper', () => {
         current={1}
         autoplay={true}
         interval={10}
+        bindchange={terminalChange}
       >
         <MpxSwiperItem item-id="a" enable-var={false}>
           <Text>A</Text>
@@ -237,6 +291,7 @@ describe('MpxSwiper', () => {
     act(() => {
       jest.advanceTimersByTime(20)
     })
+    expect(terminalChange).not.toHaveBeenCalled()
     firstRender.unmount()
 
     render(
@@ -247,6 +302,7 @@ describe('MpxSwiper', () => {
         autoplay={true}
         circular={true}
         interval={10}
+        bindchange={circularChange}
       >
         <MpxSwiperItem item-id="a" enable-var={false}>
           <Text>A</Text>
@@ -259,11 +315,20 @@ describe('MpxSwiper', () => {
     fireEvent(screen.getByTestId('autoplay-circular'), 'layout', {
       nativeEvent: { layout: { width: 200, height: 100 } }
     })
+    withTiming.mockClear()
     act(() => {
-      jest.advanceTimersByTime(20)
+      jest.advanceTimersByTime(10)
+    })
+    expect(withTiming).toHaveBeenCalledWith(-600, expect.objectContaining({
+      duration: 500
+    }), expect.any(Function))
+    act(() => {
+      __flushAnimatedReactions()
     })
 
-    expect(screen.getAllByText('A').length).toBeGreaterThan(0)
+    expect(circularChange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 0, source: 'autoplay' }
+    }))
     jest.useRealTimers()
   })
 
@@ -337,8 +402,8 @@ describe('MpxSwiper', () => {
       jest.advanceTimersByTime(20)
     })
 
-    expect(screen.getAllByText('One').length).toBeGreaterThan(0)
-    jest.useRealTimers()
+    expect(screen.queryByText('Three')).toBeNull()
+    expect(screen.getAllByText('One')).toHaveLength(3)
   })
 
   it('handles gesture dependencies and edge gesture paths', () => {

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import React from 'react'
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import { renderWithPortalHost, getWebViews, resetMpxRuntimeGlobals } from './rn-component-test-utils'
+import { expectPortalHostRendered, renderWithPortalHost, getWebViews, resetMpxRuntimeGlobals } from './rn-component-test-utils'
 
 jest.mock('react-native-webview', () => {
   const mockReact = require('react')
@@ -31,7 +31,7 @@ beforeEach(() => {
 
 describe('MpxRichText', () => {
   it('renders html and updates measured height', () => {
-    renderWithPortalHost(
+    const richTextRender = renderWithPortalHost(
       <MpxRichText
         testID="rich-text"
         style={{ position: 'fixed', width: 200 }}
@@ -49,6 +49,7 @@ describe('MpxRichText', () => {
 
     const webView = getWebViews()[0]
     expect(webView.props.source.html).toContain('<p class="intro">Hello rich text</p>')
+    expectPortalHostRendered(richTextRender.toJSON(), 'rich-text')
     act(() => {
       fireEvent(webView, 'message', { nativeEvent: { data: '88' } })
     })

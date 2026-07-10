@@ -1,38 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MpxInput should render in Portal when position is fixed: input-with-portal 1`] = `
-<TextInput
-  allowFontScaling={false}
-  autoFocus={false}
-  blurOnSubmit={true}
-  defaultValue="Portal content"
-  editable={true}
-  enterKeyHint="done"
-  inputMode="text"
-  maxLength={140}
-  multiline={false}
-  onBlur={[Function]}
-  onChange={[Function]}
-  onContentSizeChange={[Function]}
-  onFocus={[Function]}
-  onSelectionChange={[Function]}
-  onTouchEnd={[Function]}
-  onTouchStart={[Function]}
-  secureTextEntry={false}
-  style={
-    {
-      "backgroundColor": "#fff",
-      "boxSizing": "content-box",
-      "padding": 0,
-    }
-  }
-  testID="portal-input"
-  textAlignVertical="auto"
-  underlineColorAndroid="rgba(0,0,0,0)"
-  value="Portal content"
-/>
-`;
-
 exports[`MpxInput should render with basic props 1`] = `
 <TextInput
   allowFontScaling={false}

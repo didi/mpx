@@ -8,7 +8,7 @@ jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   const mockReact = require('react')
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return mockReact.forwardRef((props: any, ref: any) => {
-    return mockReact.createElement('View', { ...props, ref })
+    return mockReact.createElement('View', { ...props, ref, testID: 'mock-portal' })
   })
 })
 
@@ -135,9 +135,9 @@ describe('MpxText', () => {
     expect(textElement.props.selectable).toBe(true)
   })
 
-  // 基础 Portal 功能测试
-  it('should handle Portal functionality', () => {
-    const { toJSON } = render(
+  // 普通渲染不应走 Portal
+  it('should render regular text without Portal', () => {
+    const { queryByTestId } = render(
       <MpxText
         testID="portal-text"
         style={{ fontSize: 16, color: '#333' }}
@@ -148,7 +148,11 @@ describe('MpxText', () => {
 
     const textElement = screen.getByTestId('portal-text')
     expect(textElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('text-with-portal')
+    expect(textElement.props.style).toEqual(expect.objectContaining({
+      color: '#333',
+      fontSize: 16
+    }))
+    expect(queryByTestId('mock-portal')).toBeNull()
   })
 
   // 简化的上下文测试
@@ -168,6 +172,12 @@ describe('MpxText', () => {
 
     const textElement = screen.getByTestId('context-text')
     expect(textElement).toBeTruthy()
+    expect(screen.getByText('Context styled text')).toBeTruthy()
+    expect(textElement.props.style).toEqual(expect.objectContaining({
+      color: '#ff0000',
+      fontSize: 16,
+      textAlign: 'center'
+    }))
     expect(toJSON()).toMatchSnapshot('context-text')
   })
 
@@ -180,8 +190,9 @@ describe('MpxText', () => {
         parent-width={300}
         parent-height={200}
         style={{
-          fontSize: 18, // 使用具体数值而不是相对值
-          width: 150 // 使用具体数值而不是百分比
+          fontSize: '150%',
+          width: 'calc(50%)',
+          lineHeight: '200%'
         }}
       >
         Parent size context text
@@ -190,6 +201,11 @@ describe('MpxText', () => {
 
     const textElement = screen.getByTestId('parent-size-text')
     expect(textElement).toBeTruthy()
+    expect(textElement.props.style).toEqual(expect.objectContaining({
+      fontSize: 27,
+      width: '150',
+      lineHeight: 54
+    }))
     expect(toJSON()).toMatchSnapshot('parent-size-text')
   })
 
@@ -224,38 +240,49 @@ describe('MpxText', () => {
 
   // 边界值和特殊情况测试
   it('should handle edge cases and special values', () => {
-    const { rerender } = render(
-      <MpxText testID="edge-text" style={undefined}>
-        {null}
-        Edge case text
-        {false}
-        {0}
-        {''}
-      </MpxText>
-    )
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      const { rerender } = render(
+        <MpxText testID="edge-text" style={undefined}>
+          {null}
+          Edge case text
+          {false}
+          {0}
+          {''}
+        </MpxText>
+      )
 
-    let textElement = screen.getByTestId('edge-text')
-    expect(textElement).toBeTruthy()
+      let textElement = screen.getByTestId('edge-text')
+      expect(textElement).toBeTruthy()
+      expect(textElement.props.children).toEqual(expect.arrayContaining(['Edge case text', 0]))
 
-    // 测试空文本内容
-    rerender(
-      <MpxText testID="edge-text">
-        {''}
-      </MpxText>
-    )
+      // 测试空文本内容
+      rerender(
+        <MpxText testID="edge-text">
+          {''}
+        </MpxText>
+      )
 
-    textElement = screen.getByTestId('edge-text')
-    expect(textElement).toBeTruthy()
+      textElement = screen.getByTestId('edge-text')
+      expect(textElement.props.children).toBe('')
+      expect(screen.queryByText('Edge case text')).toBeNull()
 
-    // 测试只有空白字符的文本
-    rerender(
-      <MpxText testID="edge-text">
-        {'\n  \t  \n'}
-      </MpxText>
-    )
+      // 测试只有空白字符的文本
+      rerender(
+        <MpxText testID="edge-text">
+          {'\n  \t  \n'}
+        </MpxText>
+      )
 
-    textElement = screen.getByTestId('edge-text')
-    expect(textElement).toBeTruthy()
+      textElement = screen.getByTestId('edge-text')
+      expect(textElement.props.children).toBe('\n  \t  \n')
+      expect(warnSpy).not.toHaveBeenCalled()
+      expect(errorSpy).not.toHaveBeenCalled()
+    } finally {
+      warnSpy.mockRestore()
+      errorSpy.mockRestore()
+    }
   })
 
   // 动态内容更新测试
@@ -317,7 +344,7 @@ describe('MpxText', () => {
 
   // Portal 渲染测试 - 测试 hasPositionFixed 逻辑
   it('should render in Portal when position is fixed', () => {
-    const { toJSON } = render(
+    render(
       <MpxText
         testID="fixed-position-text"
         style={{
@@ -336,14 +363,13 @@ describe('MpxText', () => {
     const textElement = screen.getByTestId('fixed-position-text')
     expect(textElement).toBeTruthy()
 
-    // 验证快照，Portal 会影响渲染结构
-    expect(toJSON()).toMatchSnapshot('fixed-position-text')
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
   })
 
   // 多种样式条件测试
   it('should handle different style conditions that affect Portal usage', () => {
     // 测试 position: absolute（不会触发 Portal）
-    const { rerender, toJSON } = render(
+    const { queryByTestId, rerender } = render(
       <MpxText
         testID="position-test"
         style={{
@@ -358,6 +384,7 @@ describe('MpxText', () => {
 
     let textElement = screen.getByTestId('position-test')
     expect(textElement).toBeTruthy()
+    expect(queryByTestId('mock-portal')).toBeNull()
 
     // 测试 position: relative（不会触发 Portal）
     rerender(
@@ -374,6 +401,7 @@ describe('MpxText', () => {
 
     textElement = screen.getByTestId('position-test')
     expect(textElement).toBeTruthy()
+    expect(queryByTestId('mock-portal')).toBeNull()
 
     // 测试 position: fixed（会触发 Portal）
     rerender(
@@ -392,12 +420,12 @@ describe('MpxText', () => {
 
     textElement = screen.getByTestId('position-test')
     expect(textElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('position-conditions-test')
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
   })
 
   // 复杂场景下的 Portal 测试
   it('should handle Portal with complex styling and content', () => {
-    const { toJSON } = render(
+    render(
       <MpxText
         testID="complex-portal-text"
         style={{
@@ -424,14 +452,14 @@ describe('MpxText', () => {
 
     const textElement = screen.getByTestId('complex-portal-text')
     expect(textElement).toBeTruthy()
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
     expect(textElement.props.selectable).toBe(true)
     expect(textElement.props.allowFontScaling).toBe(false)
-    expect(toJSON()).toMatchSnapshot('complex-portal-text')
   })
 
   // 边界情况：样式动态变化影响 Portal
   it('should handle dynamic style changes affecting Portal usage', () => {
-    const { rerender } = render(
+    const { queryByTestId, rerender } = render(
       <MpxText
         testID="dynamic-portal-text"
         style={{
@@ -445,6 +473,7 @@ describe('MpxText', () => {
 
     let textElement = screen.getByTestId('dynamic-portal-text')
     expect(textElement).toBeTruthy()
+    expect(queryByTestId('mock-portal')).toBeNull()
 
     // 动态改变为 fixed 定位（会触发 Portal）
     rerender(
@@ -465,6 +494,7 @@ describe('MpxText', () => {
 
     textElement = screen.getByTestId('dynamic-portal-text')
     expect(textElement).toBeTruthy()
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
 
     // 再次改变为普通样式
     rerender(
@@ -481,11 +511,12 @@ describe('MpxText', () => {
 
     textElement = screen.getByTestId('dynamic-portal-text')
     expect(textElement).toBeTruthy()
+    expect(queryByTestId('mock-portal')).toBeNull()
   })
 
   // useTransformStyle 相关测试
   it('should handle useTransformStyle with various configurations', () => {
-    const { toJSON } = render(
+    render(
       <MpxText
         testID="transform-style-text"
         enable-var={false} // 简化测试，避免变量上下文问题
@@ -507,6 +538,50 @@ describe('MpxText', () => {
 
     const textElement = screen.getByTestId('transform-style-text')
     expect(textElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('transform-style-text')
+    expect(textElement.props.style).toEqual(expect.objectContaining({
+      backgroundColor: '#f0f0f0',
+      color: '#ff0000',
+      fontSize: 18,
+      padding: 8,
+      width: 256
+    }))
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
+  })
+
+  it('should decode string and mixed children when decode is enabled', () => {
+    const previousMpx = global.__mpx
+    global.__mpx = {
+      config: {
+        rnConfig: {
+          allowFontScaling: true
+        }
+      }
+    }
+
+    try {
+      const { rerender } = render(
+        <MpxText testID="decoded-text" decode={true}>
+          {'Tom &amp; Jerry &lt;b&gt;&#39;&nbsp;'}
+        </MpxText>
+      )
+
+      let textElement = screen.getByTestId('decoded-text')
+      expect(textElement.props.children).toBe('Tom & Jerry <b>\' ')
+      expect(textElement.props.allowFontScaling).toBe(true)
+
+      rerender(
+        <MpxText testID="decoded-text" decode={true}>
+          {'A&nbsp;'}
+          <MpxText>child</MpxText>
+          {'&lt;tail&gt;'}
+        </MpxText>
+      )
+
+      textElement = screen.getByTestId('decoded-text')
+      expect(textElement.props.children[0]).toBe('A ')
+      expect(textElement.props.children[2]).toBe('<tail>')
+    } finally {
+      global.__mpx = previousMpx
+    }
   })
 })

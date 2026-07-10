@@ -2,10 +2,15 @@ import React from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import MpxVideo from '../../../lib/runtime/components/react/mpx-video'
 
+const mockPortal = jest.fn()
+
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mockReact = require('react')
-  return ({ children }: { children: any }) => mockReact.createElement(mockReact.Fragment, null, children)
+  return ({ children }: { children: any }) => {
+    mockPortal(children)
+    return mockReact.createElement(mockReact.Fragment, null, children)
+  }
 })
 
 jest.mock('react-native-video', () => {
@@ -30,6 +35,10 @@ jest.mock('react-native-video', () => {
 })
 
 describe('MpxVideo', () => {
+  beforeEach(() => {
+    mockPortal.mockClear()
+  })
+
   it('renders props and emits media events', () => {
     const handlers = {
       bindplay: jest.fn(),
@@ -146,6 +155,7 @@ describe('MpxVideo', () => {
     const numberVideo = screen.getByTestId('number-video')
     expect(numberVideo.props.source).toBe(123)
     expect(numberVideo.props.poster).toBe('poster.png')
+    expect(mockPortal).toHaveBeenCalled()
 
     act(() => {
       const instance = ref.current.getNodeInstance().instance.node

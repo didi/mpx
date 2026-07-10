@@ -23,12 +23,42 @@ const AnimatedDefault = {
 
 export default AnimatedDefault
 
+const animatedReactions = []
+
 export const useSharedValue = jest.fn((initial) => React.useRef({ value: initial }).current)
 export const useAnimatedRef = jest.fn(() => React.createRef())
 export const useScrollViewOffset = jest.fn(() => ({ value: 0 }))
 export const useAnimatedStyle = jest.fn((styleFactory) => styleFactory())
 export const useAnimatedReaction = jest.fn((prepare, react) => {
-  react(prepare(), undefined)
+  const reactionRef = React.useRef()
+  if (!reactionRef.current) {
+    const value = prepare()
+    reactionRef.current = { prepare, react, value }
+    animatedReactions.push(reactionRef.current)
+    react(value, undefined)
+  } else {
+    reactionRef.current.prepare = prepare
+    reactionRef.current.react = react
+  }
+  React.useEffect(() => {
+    return () => {
+      const index = animatedReactions.indexOf(reactionRef.current)
+      if (index > -1) animatedReactions.splice(index, 1)
+    }
+  }, [])
+})
+export const __flushAnimatedReactions = jest.fn(() => {
+  animatedReactions.forEach((reaction) => {
+    const value = reaction.prepare()
+    if (value !== reaction.value) {
+      const previous = reaction.value
+      reaction.value = value
+      reaction.react(value, previous)
+    }
+  })
+})
+export const __resetAnimatedReactions = jest.fn(() => {
+  animatedReactions.splice(0, animatedReactions.length)
 })
 export const withTiming = jest.fn((toValue, config, callback) => {
   if (callback) callback(true)

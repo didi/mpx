@@ -4,10 +4,15 @@ import { Image as RNImage } from 'react-native'
 import MpxImage from '../../../lib/runtime/components/react/mpx-image'
 import { flushImageSize } from './helpers'
 
+const mockPortal = jest.fn()
+
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mockReact = require('react')
-  return ({ children }: { children: any }) => mockReact.createElement(mockReact.Fragment, null, children)
+  return ({ children }: { children: any }) => {
+    mockPortal(children)
+    return mockReact.createElement(mockReact.Fragment, null, children)
+  }
 })
 
 jest.mock('react-native-svg/css', () => {
@@ -22,6 +27,10 @@ jest.mock('react-native-svg/css', () => {
 })
 
 describe('MpxImage', () => {
+  beforeEach(() => {
+    mockPortal.mockClear()
+  })
+
   it('handles load, error and layout modes', async () => {
     const bindload = jest.fn()
     const binderror = jest.fn()
@@ -81,6 +90,7 @@ describe('MpxImage', () => {
       width: 200,
       overflow: 'hidden'
     }))
+    expect(mockPortal).toHaveBeenCalled()
   })
 
   it('handles svg image sources and errors', () => {
@@ -138,18 +148,17 @@ describe('MpxImage', () => {
   })
 
   it.each([
-    'top',
-    'bottom',
-    'center',
-    'left',
-    'right',
-    'top left',
-    'top right',
-    'bottom left',
-    'bottom right',
-    'heightFix'
-  ])('renders layout mode %s', (mode) => {
-    render(
+    ['top', [{ translateX: 60 }]],
+    ['bottom', [{ translateY: 60 }, { translateX: 60 }]],
+    ['center', [{ translateY: 30 }, { translateX: 60 }]],
+    ['left', [{ translateY: 30 }]],
+    ['right', [{ translateY: 30 }, { translateX: 120 }]],
+    ['top left', undefined],
+    ['top right', [{ translateX: 120 }]],
+    ['bottom left', [{ translateY: 60 }]],
+    ['bottom right', [{ translateY: 60 }, { translateX: 120 }]]
+  ])('renders layout mode %s', async (mode, transform) => {
+    const { UNSAFE_getByType } = render(
       <MpxImage
         testID={`mode-image-${mode}`}
         src={{ uri: `${mode}.png`, width: 120, height: 60 } as any}
@@ -158,12 +167,47 @@ describe('MpxImage', () => {
         enable-fast-image={false}
       />
     )
+    await flushImageSize()
 
-    const image = screen.getByTestId(`mode-image-${mode}`)
-    expect(image).toBeTruthy()
+    const image = UNSAFE_getByType(RNImage)
+    expect(screen.getByTestId(`mode-image-${mode}`)).toBeTruthy()
+    expect(image.props.resizeMode).toBe('stretch')
+    expect(image.props.style).toEqual(expect.objectContaining({
+      width: 120,
+      height: 60
+    }))
+    if (transform) {
+      expect(image.props.style.transform).toEqual(transform)
+    } else {
+      expect(image.props.style.transform).toBeUndefined()
+    }
   })
 
-  it('falls back when image size cannot be resolved', () => {
+  it('calculates heightFix layout from image ratio', async () => {
+    const { UNSAFE_getByType } = render(
+      <MpxImage
+        testID="mode-image-heightFix"
+        src={{ uri: 'heightFix.png', width: 120, height: 60 } as any}
+        mode="heightFix"
+        style={{ height: 120 }}
+        enable-fast-image={false}
+      />
+    )
+    await flushImageSize()
+
+    const image = UNSAFE_getByType(RNImage)
+    expect(screen.getByTestId('mode-image-heightFix').props.style).toEqual(expect.objectContaining({
+      width: 240,
+      height: 120
+    }))
+    expect(image.props.resizeMode).toBe('stretch')
+    expect(image.props.style).toEqual(expect.objectContaining({
+      width: '100%',
+      height: '100%'
+    }))
+  })
+
+  it('falls back to default widthFix height when image size cannot be resolved', async () => {
     render(
       <MpxImage
         testID="failed-size-image"
@@ -173,8 +217,14 @@ describe('MpxImage', () => {
         enable-fast-image={false}
       />
     )
+    await flushImageSize()
 
-    expect(screen.getByTestId('failed-size-image')).toBeTruthy()
+    const image = screen.getByTestId('failed-size-image')
+    expect(image.props.style).toEqual(expect.objectContaining({
+      width: 200,
+      height: 240,
+      overflow: 'hidden'
+    }))
   })
 
   it('handles default source load and unresolved asset metadata', async () => {
@@ -201,7 +251,7 @@ describe('MpxImage', () => {
       .mockReturnValueOnce({ uri: 'asset-no-size.png' })
       .mockReturnValueOnce({ uri: 'asset-no-size.png' })
 
-    render(
+    const { UNSAFE_getAllByType } = render(
       <>
         <MpxImage
           testID="unresolved-asset-image"
@@ -218,8 +268,11 @@ describe('MpxImage', () => {
       </>
     )
     await flushImageSize()
-    expect(screen.getByTestId('unresolved-asset-image')).toBeTruthy()
-    expect(screen.getByTestId('asset-no-size-image')).toBeTruthy()
+    expect(UNSAFE_getAllByType(RNImage)).toHaveLength(2)
+    expect(screen.getByTestId('asset-no-size-image').props.style).toEqual(expect.objectContaining({
+      width: 320,
+      height: 120
+    }))
   })
 
   it('handles svg fit, zero-size layout and unknown modes', () => {
@@ -262,8 +315,13 @@ describe('MpxImage', () => {
         layout: { width: 50, height: 25 }
       }
     })
-    expect(screen.getByTestId('svg-fit-image')).toBeTruthy()
-    expect(screen.getByTestId('svg-zero-width-image')).toBeTruthy()
-    expect(screen.getByTestId('svg-unknown-mode-image')).toBeTruthy()
+    const updatedSvgs = UNSAFE_getAllByType('SvgCssUri' as any)
+    expect(updatedSvgs[0].props.style.transform).toEqual([
+      { translateY: 15 },
+      { translateX: 0 },
+      { scale: 2 }
+    ])
+    expect(updatedSvgs[1].props.style.transform).toBeUndefined()
+    expect(updatedSvgs[2].props.style.transform).toBeUndefined()
   })
 })

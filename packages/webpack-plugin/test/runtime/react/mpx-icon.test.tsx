@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
 import MpxIcon from '../../../lib/runtime/components/react/mpx-icon'
-import { renderWithPortalHost } from './rn-component-test-utils'
+import { expectPortalHostRendered, renderWithPortalHost } from './rn-component-test-utils'
 
 describe('MpxIcon', () => {
   it('renders core props', () => {
@@ -19,7 +19,7 @@ describe('MpxIcon', () => {
   })
 
   it('renders fixed icon through portal', () => {
-    renderWithPortalHost(
+    const { toJSON } = renderWithPortalHost(
       <MpxIcon
         testID="fixed-icon"
         type="info"
@@ -28,5 +28,6 @@ describe('MpxIcon', () => {
     )
 
     expect(screen.getByTestId('fixed-icon')).toBeTruthy()
+    expectPortalHostRendered(toJSON(), 'fixed-icon')
   })
 })

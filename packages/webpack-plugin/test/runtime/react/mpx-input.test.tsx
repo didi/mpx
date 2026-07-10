@@ -311,10 +311,18 @@ describe('MpxInput', () => {
     const inputElement = screen.getByTestId('keyboard-input')
 
     // 测试触摸事件
+    const touchEndEvent = { nativeEvent: {} as any }
     fireEvent(inputElement, 'touchStart')
-    fireEvent(inputElement, 'touchEnd', { nativeEvent: {} })
+    fireEvent(inputElement, 'touchEnd', touchEndEvent)
 
-    expect(inputElement).toBeTruthy()
+    expect(mockKeyboardAvoidRef.current).toEqual(expect.objectContaining({
+      cursorSpacing: 10,
+      adjustPosition: true,
+      holdKeyboard: false,
+      readyToShow: true
+    }))
+    expect((mockKeyboardAvoidRef.current as any).ref).toBeTruthy()
+    expect(touchEndEvent.nativeEvent.origin).toBe('input')
   })
 
   // 多行内容尺寸变化测试
@@ -348,54 +356,41 @@ describe('MpxInput', () => {
 
   // Portal 渲染测试
   it('should render in Portal when position is fixed', () => {
-    const mockUseTransformStyle = jest.fn(() => ({
-      hasPositionFixed: true, // 正确：hasPositionFixed 来自 useTransformStyle
-      hasVarDec: false,
-      hasSelfPercent: false,
-      normalStyle: {
-        backgroundColor: '#fff',
-        boxSizing: 'content-box',
-        padding: 0
-      },
-      varContextRef: { current: null },
-      setWidth: jest.fn(),
-      setHeight: jest.fn()
-    }))
+    const mockPortal = jest.fn()
 
-    let tree: unknown
     try {
       jest.isolateModules(() => {
         jest.doMock('react', () => React)
         jest.doMock('../../../lib/runtime/components/react/mpx-portal', () => {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
           const mockReact = require('react')
-          return ({ children }: { children: any }) => mockReact.createElement(mockReact.Fragment, null, children)
+          return ({ children }: { children: any }) => {
+            mockPortal(children)
+            return mockReact.createElement('View', { testID: 'input-portal' }, children)
+          }
         })
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const originalModule = jest.requireActual('../../../lib/runtime/components/react/utils')
-        jest.doMock('../../../lib/runtime/components/react/utils', () => Object.assign({}, originalModule, {
-          useTransformStyle: mockUseTransformStyle
-        }))
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const MockedMpxInput = require('../../../lib/runtime/components/react/mpx-input').default
 
-        const { toJSON } = render(
+        render(
           React.createElement(MockedMpxInput, {
             testID: 'portal-input',
             value: 'Portal content',
-            'enable-var': true
+            'enable-var': true,
+            style: { position: 'fixed' }
           })
         )
-        tree = toJSON()
       })
 
-      expect(mockUseTransformStyle).toHaveBeenCalled()
-      expect(tree).toMatchSnapshot('input-with-portal')
+      expect(mockPortal).toHaveBeenCalled()
+      expect(screen.getByTestId('input-portal')).toBeTruthy()
+      expect(screen.getByTestId('portal-input').props.style).toEqual(expect.objectContaining({
+        position: 'absolute'
+      }))
     } finally {
       jest.dontMock('react')
       jest.dontMock('../../../lib/runtime/components/react/mpx-portal')
-      jest.dontMock('../../../lib/runtime/components/react/utils')
     }
   })
 
@@ -420,6 +415,7 @@ describe('MpxInput', () => {
     fireEvent(inputElement, 'change', {
       nativeEvent: { text: 'new text', selection: { start: 8, end: 8 } }
     })
+    expect(screen.getByTestId('onchange-input').props.value).toBe('modified value')
 
     // 测试返回 undefined 的情况
     fireEvent(inputElement, 'change', {
@@ -427,6 +423,7 @@ describe('MpxInput', () => {
     })
 
     expect(mockBindinput).toHaveBeenCalledTimes(2)
+    expect(screen.getByTestId('onchange-input').props.value).toBe('another text')
   })
 
   // 补充关键的覆盖率测试

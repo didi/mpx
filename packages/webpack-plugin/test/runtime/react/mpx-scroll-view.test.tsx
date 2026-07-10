@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent, act } from '@testing-library/react-native'
+import { Animated } from 'react-native'
 
 import MpxScrollView from '../../../lib/runtime/components/react/mpx-scroll-view'
 import MpxView from '../../../lib/runtime/components/react/mpx-view'
@@ -8,18 +9,34 @@ import { IntersectionObserverContext } from '../../../lib/runtime/components/rea
 import { createTouchEvent } from './helpers'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { __getLastPanGesture } = require('react-native-gesture-handler')
+const { __getLastPanGesture, __getLastScrollViewRef, __resetScrollViewRefs } = require('react-native-gesture-handler')
+
+const createScrollEvent = (x = 0, y = 0, contentWidth = 300, contentHeight = 1000, layoutWidth = 300, layoutHeight = 400) => ({
+  nativeEvent: {
+    contentOffset: { x, y },
+    contentSize: { width: contentWidth, height: contentHeight },
+    layoutMeasurement: { width: layoutWidth, height: layoutHeight }
+  }
+})
+
+const mockPortal = jest.fn()
 
 // Mock mpx-portal
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mockReact = require('react')
   return mockReact.forwardRef((props: any, ref: any) => {
-    return mockReact.createElement('View', { ...props, ref })
+    mockPortal(props)
+    return mockReact.createElement('View', { ...props, ref, testID: 'mock-portal' })
   })
 })
 
 describe('MpxScrollView', () => {
+  beforeEach(() => {
+    mockPortal.mockClear()
+    __resetScrollViewRefs()
+  })
+
   // 基础滚动功能和属性测试
   it('should handle basic scroll properties and events', () => {
     const mockScroll = jest.fn()
@@ -74,25 +91,30 @@ describe('MpxScrollView', () => {
 
   // MPX特定属性和警告测试
   it('should handle MPX specific properties and warnings', () => {
-    const mockRefresh = jest.fn()
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    try {
+      render(
+        <MpxScrollView
+          testID="mpx-props"
+          scroll-x={true}
+          scroll-y={true}
+          scroll-top={100}
+          scroll-left={50}
+          refresher-enabled={true}
+        >
+          <MpxView>
+            <MpxText>Content with conflicting scroll directions</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
 
-    render(
-      <MpxScrollView
-        testID="mpx-props"
-        scroll-x={true}
-        scroll-y={true} // 触发警告
-        scroll-top={100}
-        scroll-left={50}
-        refresher-enabled={true}
-        bindrefresherrefresh={mockRefresh}
-      >
-        <MpxView>
-          <MpxText>Content with conflicting scroll directions</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
-
-    expect(screen.getByTestId('mpx-props')).toBeTruthy()
+      const scrollElement = screen.getByTestId('mpx-props')
+      expect(scrollElement.props.horizontal).toBe(false)
+      expect(scrollElement.props.refreshControl).toBeTruthy()
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('scroll-x and scroll-y cannot be set to true at the same time'))
+    } finally {
+      warnSpy.mockRestore()
+    }
   })
 
   // 下拉刷新功能测试
@@ -254,46 +276,26 @@ describe('MpxScrollView', () => {
 
   // Portal渲染测试
   it('should render in Portal when position is fixed', () => {
-    // Mock useTransformStyle hook
-    const mockUseTransformStyle = jest.fn(() => ({
-      hasPositionFixed: true,
-      hasVarDec: false,
-      hasSelfPercent: false,
-      normalStyle: { position: 'absolute' },
-      varContextRef: { current: null },
-      setWidth: jest.fn(),
-      setHeight: jest.fn()
-    }))
+    render(
+      <MpxScrollView
+        testID="portal-scroll"
+        style={{ position: 'fixed' }}
+      >
+        <MpxView>
+          <MpxText>Fixed positioned content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
 
-    try {
-      jest.isolateModules(() => {
-        jest.doMock('react', () => React)
-        const originalModule = jest.requireActual('../../../lib/runtime/components/react/utils')
-        jest.doMock('../../../lib/runtime/components/react/utils', () => Object.assign({}, originalModule, {
-          useTransformStyle: mockUseTransformStyle
-        }))
-
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const MpxScrollViewWithMock = require('../../../lib/runtime/components/react/mpx-scroll-view').default
-
-        render(
-          <MpxScrollViewWithMock
-            testID="portal-scroll"
-            style={{ position: 'fixed' }}
-          >
-            <MpxView>
-              <MpxText>Fixed positioned content</MpxText>
-            </MpxView>
-          </MpxScrollViewWithMock>
-        )
+    expect(screen.getByTestId('portal-scroll')).toBeTruthy()
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
+    expect(mockPortal).toHaveBeenCalledWith(expect.objectContaining({
+      children: expect.objectContaining({
+        props: expect.objectContaining({
+          testID: 'portal-scroll'
+        })
       })
-
-      expect(screen.getByTestId('portal-scroll')).toBeTruthy()
-      expect(mockUseTransformStyle).toHaveBeenCalled()
-    } finally {
-      jest.dontMock('react')
-      jest.dontMock('../../../lib/runtime/components/react/utils')
-    }
+    }))
   })
 
   // 阈值事件测试
@@ -360,29 +362,24 @@ describe('MpxScrollView', () => {
 
   // 交叉观察器测试
   it('should handle intersection observer functionality', () => {
+    const throttleMeasure = jest.fn()
     render(
-      <MpxScrollView
-        testID="intersection-scroll"
-        scroll-y={true}
-        enable-trigger-intersection-observer={true}
-      >
-        <MpxView style={{ height: 1000 }}>
-          <MpxText>Intersection content</MpxText>
-        </MpxView>
-      </MpxScrollView>
+      <IntersectionObserverContext.Provider value={{ observer: { throttleMeasure } }}>
+        <MpxScrollView
+          testID="intersection-scroll"
+          scroll-y={true}
+          enable-trigger-intersection-observer={true}
+        >
+          <MpxView style={{ height: 1000 }}>
+            <MpxText>Intersection content</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      </IntersectionObserverContext.Provider>
     )
 
     const scrollElement = screen.getByTestId('intersection-scroll')
-
-    fireEvent.scroll(scrollElement, {
-      nativeEvent: {
-        contentOffset: { x: 0, y: 200 },
-        contentSize: { width: 300, height: 1000 },
-        layoutMeasurement: { width: 300, height: 400 }
-      }
-    })
-
-    expect(scrollElement).toBeTruthy()
+    fireEvent.scroll(scrollElement, createScrollEvent(0, 200))
+    expect(throttleMeasure).toHaveBeenCalled()
   })
 
   // 边界情况和错误处理测试
@@ -451,9 +448,11 @@ describe('MpxScrollView', () => {
   // 性能和布局相关测试
   it('should handle layout changes and performance scenarios', () => {
     const mockScroll = jest.fn()
+    const ref = React.createRef<any>()
 
     const { rerender } = render(
       <MpxScrollView
+        ref={ref}
         testID="performance-scroll"
         scroll-y={true}
         bindscroll={mockScroll}
@@ -468,20 +467,23 @@ describe('MpxScrollView', () => {
     const scrollElement = screen.getByTestId('performance-scroll')
 
     // 测试布局变化
-    fireEvent(scrollElement, 'onLayout', {
+    scrollElement.props.onLayout({
       nativeEvent: {
         layout: { width: 300, height: 300 }
       }
     })
 
     // 测试内容尺寸变化
-    fireEvent(scrollElement, 'onContentSizeChange', {
-      nativeEvent: { contentSize: { width: 300, height: 800 } }
-    })
+    scrollElement.props.onContentSizeChange(300, 800)
+    expect(ref.current.getNodeInstance().instance.scrollOffset.current).toEqual(expect.objectContaining({
+      contentLength: 800,
+      visibleLength: 300
+    }))
 
     // 测试动态内容变化
     rerender(
       <MpxScrollView
+        ref={ref}
         testID="performance-scroll"
         scroll-y={true}
         bindscroll={mockScroll}
@@ -494,7 +496,9 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    expect(scrollElement).toBeTruthy()
+    screen.getByTestId('performance-scroll').props.onContentSizeChange(300, 1200)
+    expect(ref.current.getNodeInstance().instance.scrollOffset.current.contentLength).toBe(1200)
+    expect(mockScroll).not.toHaveBeenCalled()
   })
 
   // 关键分支覆盖测试
@@ -614,6 +618,7 @@ describe('MpxScrollView', () => {
 
   // 测试 firstScrollIntoViewChange 分支 (272-277)
   it('should handle first scrollIntoView change with setTimeout', () => {
+    jest.useFakeTimers()
     const mockSelectRef = jest.fn(() => ({
       getNodeInstance: () => ({
         nodeRef: {
@@ -627,46 +632,40 @@ describe('MpxScrollView', () => {
       })
     }))
 
-    const { rerender } = render(
-      <MpxScrollView
-        testID="first-scroll-into-view"
-        scroll-y={true}
-        scroll-into-view=""
-        __selectRef={mockSelectRef}
-      >
-        <MpxView id="item1" style={{ height: 200 }}>
-          <MpxText>Item 1</MpxText>
-        </MpxView>
-        <MpxView id="item2" style={{ height: 300 }}>
-          <MpxText>Item 2</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
+    try {
+      render(
+        <MpxScrollView
+          testID="first-scroll-into-view"
+          scroll-y={true}
+          scroll-into-view="item2"
+          scroll-into-view-offset={20}
+          scroll-with-animation={true}
+          __selectRef={mockSelectRef}
+        >
+          <MpxView id="item1" style={{ height: 200 }}>
+            <MpxText>Item 1</MpxText>
+          </MpxView>
+          <MpxView id="item2" style={{ height: 300 }}>
+            <MpxText>Item 2</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
 
-    // 首次设置 scroll-into-view，触发 firstScrollIntoViewChange.current === true 分支
-    rerender(
-      <MpxScrollView
-        testID="first-scroll-into-view"
-        scroll-y={true}
-        scroll-into-view="item2"
-        scroll-into-view-offset={20}
-        scroll-with-animation={true}
-        __selectRef={mockSelectRef}
-      >
-        <MpxView id="item1" style={{ height: 200 }}>
-          <MpxText>Item 1</MpxText>
-        </MpxView>
-        <MpxView id="item2" style={{ height: 300 }}>
-          <MpxText>Item 2</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
+      expect(mockSelectRef).not.toHaveBeenCalled()
 
-    expect(mockSelectRef).toHaveBeenCalledWith('#item2', 'node')
+      act(() => {
+        jest.runOnlyPendingTimers()
+      })
+
+      expect(mockSelectRef).toHaveBeenCalledWith('#item2', 'node')
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   // 测试 scrollTo 和 handleScrollIntoView 函数 (300-312)
   it('should handle scrollTo function and handleScrollIntoView details', () => {
+    const ref = React.createRef<any>()
     const mockSelectRef = jest.fn(() => ({
       getNodeInstance: () => ({
         nodeRef: {
@@ -682,9 +681,10 @@ describe('MpxScrollView', () => {
 
     const { rerender } = render(
       <MpxScrollView
+        ref={ref}
         testID="scroll-to-test"
         scroll-x={true}
-        scroll-y={true}
+        scroll-y={false}
         scroll-into-view=""
         scroll-into-view-offset={15}
         scroll-with-animation={false}
@@ -699,9 +699,10 @@ describe('MpxScrollView', () => {
     // 通过 rerender 设置 scroll-into-view 来触发 handleScrollIntoView
     rerender(
       <MpxScrollView
+        ref={ref}
         testID="scroll-to-test"
         scroll-x={true}
-        scroll-y={true}
+        scroll-y={false}
         scroll-into-view="target"
         scroll-into-view-offset={15}
         scroll-with-animation={false}
@@ -714,6 +715,11 @@ describe('MpxScrollView', () => {
     )
 
     expect(mockSelectRef).toHaveBeenCalledWith('#target', 'node')
+    expect(ref.current.getNodeInstance().nodeRef.current.scrollTo).toHaveBeenCalledWith({
+      x: 165,
+      y: 250,
+      animated: false
+    })
   })
 
   // 测试 updateIntersection 函数 (443-454)
@@ -786,44 +792,54 @@ describe('MpxScrollView', () => {
   })
 
   // 测试 onRefresh 函数特殊逻辑 (527-539)
-  it('should handle onRefresh with undefined refresherTriggered', async () => {
+  it('should handle onRefresh with undefined refresherTriggered', () => {
+    jest.useFakeTimers()
     const mockRefresherRefresh = jest.fn()
 
-    const { getByTestId } = render(
-      <MpxScrollView
-        testID="refresh-undefined"
-        enhanced={false} // 使用普通模式，使用 RefreshControl
-        scroll-y={true}
-        refresher-enabled={true}
-        refresher-triggered={undefined} // 关键：undefined 触发特殊逻辑
-        refresher-default-style="black"
-        bindrefresherrefresh={mockRefresherRefresh}
-        style={{ height: 400 }}
-      >
-        <MpxView style={{ height: 800 }}>
-          <MpxText>Main content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
+    try {
+      render(
+        <MpxScrollView
+          testID="refresh-undefined"
+          enhanced={true}
+          scroll-y={true}
+          refresher-enabled={true}
+          refresher-triggered={undefined}
+          bindrefresherrefresh={mockRefresherRefresh}
+          style={{ height: 400 }}
+        >
+          <MpxView slot="refresher" style={{ height: 100 }}>
+            <MpxText>Pull to refresh</MpxText>
+          </MpxView>
+          <MpxView style={{ height: 800 }}>
+            <MpxText>Main content</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
 
-    const scrollElement = getByTestId('refresh-undefined')
+      let scrollElement = screen.getByTestId('refresh-undefined')
 
-    // 由于使用了 RefreshControl，我们可以通过 refresh 相关事件来触发
-    // 模拟 RefreshControl 的 onRefresh 调用
-    const refreshControl = scrollElement.props.refreshControl
+      fireEvent(scrollElement.children[0], 'onLayout', {
+        nativeEvent: { layout: { height: 100 } }
+      })
 
-    // 验证 RefreshControl 存在且有 onRefresh 回调
-    expect(refreshControl).toBeDefined()
-    expect(refreshControl.props.onRefresh).toBeDefined()
+      const panGesture = __getLastPanGesture()
+      act(() => {
+        panGesture.onUpdateCallback({ translationY: 100, velocityY: 0 })
+        panGesture.onEndCallback({ translationY: 100, velocityY: 0 })
+      })
 
-    // 直接调用 onRefresh 函数来触发刷新逻辑
-    refreshControl.props.onRefresh()
+      scrollElement = screen.getByTestId('refresh-undefined')
+      expect(mockRefresherRefresh).toHaveBeenCalled()
+      expect(scrollElement.props.scrollEnabled).toBe(false)
 
-    // 等待异步操作完成
-    await new Promise(resolve => setTimeout(resolve, 100))
+      act(() => {
+        jest.advanceTimersByTime(500)
+      })
 
-    // 验证 bindrefresherrefresh 被调用
-    expect(mockRefresherRefresh).toHaveBeenCalled()
+      expect(screen.getByTestId('refresh-undefined').props.scrollEnabled).toBe(true)
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   // 测试状态更新条件分支 (594-596, 607-609)
@@ -842,24 +858,33 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    const scrollElement = screen.getByTestId('state-update-conditions')
-
     const panGesture = __getLastPanGesture()
     act(() => {
       panGesture.onUpdateCallback({ translationY: 50, velocityY: 50 })
+    })
+    expect(screen.getByTestId('state-update-conditions').props.scrollEnabled).toBe(false)
+
+    act(() => {
       panGesture.onUpdateCallback({ translationY: 30, velocityY: 0 })
       panGesture.onUpdateCallback({ translationY: -25, velocityY: -30 })
       panGesture.onUpdateCallback({ translationY: -25, velocityY: -30 })
     })
 
-    expect(scrollElement).toBeTruthy()
+    expect(screen.getByTestId('state-update-conditions').props.scrollEnabled).toBe(true)
   })
 
   // 测试 enable-sticky 和内容高度变化场景 (382-392)
   it('should handle sticky scroll and content size changes', () => {
     const originalMode = global.__mpx_mode__
+    const scrollOffset = {
+      setValue: jest.fn()
+    }
     try {
       global.__mpx_mode__ = 'android'
+      ;(Animated.Value as jest.Mock).mockReturnValueOnce(scrollOffset)
+      ;(Animated.event as jest.Mock).mockImplementationOnce((_mapping, config) => {
+        return (event: any) => config.listener(event)
+      })
 
       const { rerender } = render(
         <MpxScrollView
@@ -875,15 +900,10 @@ describe('MpxScrollView', () => {
       )
 
       const scrollElement = screen.getByTestId('sticky-scroll')
+      scrollElement.props.onContentSizeChange(300, 800)
 
       // 先滚动到底部
-      fireEvent.scroll(scrollElement, {
-        nativeEvent: {
-          contentOffset: { x: 0, y: 500 },
-          contentSize: { width: 300, height: 800 },
-          layoutMeasurement: { width: 300, height: 300 }
-        }
-      })
+      scrollElement.props.onScroll(createScrollEvent(0, 500, 300, 800, 300, 300))
 
       // 减少内容高度，触发 maxOffset 调整逻辑
       rerender(
@@ -899,11 +919,9 @@ describe('MpxScrollView', () => {
         </MpxScrollView>
       )
 
-      fireEvent(scrollElement, 'onContentSizeChange', {
-        nativeEvent: { contentSize: { width: 300, height: 400 } }
-      })
+      screen.getByTestId('sticky-scroll').props.onContentSizeChange(300, 400)
 
-      expect(scrollElement).toBeTruthy()
+      expect(scrollOffset.setValue).toHaveBeenCalledWith(100)
     } finally {
       global.__mpx_mode__ = originalMode
     }
@@ -912,8 +930,15 @@ describe('MpxScrollView', () => {
   // 测试 harmony 模式下的 sticky 逻辑 (509-516)
   it('should handle harmony mode sticky scroll', () => {
     const originalMode = global.__mpx_mode__
+    const scrollOffset = {
+      setValue: jest.fn()
+    }
     try {
       global.__mpx_mode__ = 'harmony'
+      ;(Animated.Value as jest.Mock).mockReturnValueOnce(scrollOffset)
+      ;(Animated.event as jest.Mock).mockImplementationOnce((_mapping, config) => {
+        return (event: any) => config.listener(event)
+      })
 
       render(
         <MpxScrollView
@@ -931,20 +956,12 @@ describe('MpxScrollView', () => {
       const scrollElement = screen.getByTestId('harmony-sticky')
 
       // 先触发内容尺寸变化
-      fireEvent(scrollElement, 'onContentSizeChange', {
-        nativeEvent: { contentSize: { width: 300, height: 600 } }
-      })
+      scrollElement.props.onContentSizeChange(300, 600)
 
       // 触发滚动来测试 harmony 模式的特殊逻辑
-      fireEvent.scroll(scrollElement, {
-        nativeEvent: {
-          contentOffset: { x: 0, y: 200 },
-          contentSize: { width: 300, height: 600 },
-          layoutMeasurement: { width: 300, height: 300 }
-        }
-      })
+      scrollElement.props.onScroll(createScrollEvent(0, 200, 300, 600, 300, 300))
 
-      expect(scrollElement).toBeTruthy()
+      expect(scrollOffset.setValue).toHaveBeenCalledWith(200)
     } finally {
       global.__mpx_mode__ = originalMode
     }
@@ -1145,6 +1162,8 @@ describe('MpxScrollView', () => {
 
     // 等待初始渲染完成
     await new Promise(resolve => setTimeout(resolve, 10))
+    const scrollViewRef = __getLastScrollViewRef()
+    scrollViewRef.scrollTo.mockClear()
 
     // 设置 scroll-into-view 触发滚动
     rerender(
@@ -1166,6 +1185,11 @@ describe('MpxScrollView', () => {
     await new Promise(resolve => setTimeout(resolve, 10))
 
     expect(mockSelectRef).toHaveBeenCalledWith('#item1', 'node')
+    expect(scrollViewRef.scrollTo).toHaveBeenCalledWith({
+      x: 210,
+      y: 50,
+      animated: true
+    })
   })
 
   // 测试没有 refresher content 时的逻辑 (294)
@@ -1210,8 +1234,8 @@ describe('MpxScrollView', () => {
 
   // 测试 simultaneousHandlers 和 waitFor (734-735)
   it('should handle simultaneousHandlers and waitFor props', () => {
-    const mockGesture1 = { current: null }
-    const mockGesture2 = { current: null }
+    const mockGesture1 = { current: { name: 'gesture-1' } }
+    const mockGesture2 = { current: { name: 'gesture-2' } }
 
     render(
       <MpxScrollView
@@ -1226,7 +1250,9 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    expect(screen.getByTestId('gesture-handlers')).toBeTruthy()
+    const scrollElement = screen.getByTestId('gesture-handlers')
+    expect(scrollElement.props.simultaneousHandlers).toEqual([mockGesture1, mockGesture2])
+    expect(scrollElement.props.waitFor).toEqual([mockGesture1])
   })
 
   // 测试 pagingEnabled 在 enhanced 模式下 (742)
@@ -1249,21 +1275,27 @@ describe('MpxScrollView', () => {
     expect(scrollElement.props.pagingEnabled).toBe(true)
   })
 
-  // 测试没有 __selectRef 时的 scrollIntoView (311)
-  it('should handle scrollIntoView without __selectRef', () => {
-    render(
-      <MpxScrollView
-        testID="no-select-ref"
-        scroll-y={true}
-        scroll-into-view="item1"
-      >
-        <MpxView id="item1" style={{ height: 200 }}>
-          <MpxText>Item 1</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
+  // prop 形式缺少 selector resolver 时不触发 scrollIntoView 处理
+  it('keeps prop scrollIntoView inert without __selectRef', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    try {
+      render(
+        <MpxScrollView
+          testID="no-select-ref"
+          scroll-y={true}
+          scroll-into-view="item1"
+        >
+          <MpxView id="item1" style={{ height: 200 }}>
+            <MpxText>Item 1</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
 
-    expect(screen.getByTestId('no-select-ref')).toBeTruthy()
+      expect(screen.getByTestId('no-select-ref').props.scrollEnabled).toBe(true)
+      expect(warnSpy).not.toHaveBeenCalled()
+    } finally {
+      warnSpy.mockRestore()
+    }
   })
 
   // 测试 enableScrollValue.value 为 true 时的 onEnd 分支 (684)
@@ -1300,5 +1332,179 @@ describe('MpxScrollView', () => {
     })
 
     expect(mockRefresherRefresh).not.toHaveBeenCalled()
+  })
+
+  it('should animate imperative scrollTo when duration is provided', () => {
+    const ref = React.createRef<any>()
+    const originalRequestAnimationFrame = global.requestAnimationFrame
+    let now = 0
+    const dateNow = jest.spyOn(Date, 'now').mockImplementation(() => now)
+    const rafCallbacks: Array<(time: number) => void> = []
+    global.requestAnimationFrame = jest.fn((callback) => {
+      rafCallbacks.push(callback as (time: number) => void)
+      return rafCallbacks.length
+    }) as any
+
+    try {
+      render(
+        <MpxScrollView
+          ref={ref}
+          testID="imperative-scroll"
+          scroll-x={true}
+          scroll-y={false}
+        >
+          <MpxView style={{ width: 1000 }}>
+            <MpxText>Wide content</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
+
+      const nodeInstance = ref.current.getNodeInstance()
+      const nativeScrollTo = nodeInstance.nodeRef.current.scrollTo
+      nodeInstance.instance.node.scrollTo({
+        left: 40,
+        top: 100,
+        animated: true,
+        duration: 100
+      })
+
+      expect(global.requestAnimationFrame).toHaveBeenCalledTimes(1)
+      expect(nativeScrollTo).not.toHaveBeenCalled()
+
+      now = 50
+      act(() => {
+        rafCallbacks.shift()!(50)
+      })
+      expect(nativeScrollTo).toHaveBeenNthCalledWith(1, {
+        x: 20,
+        y: 50,
+        animated: false
+      })
+      expect(global.requestAnimationFrame).toHaveBeenCalledTimes(2)
+
+      now = 100
+      act(() => {
+        rafCallbacks.shift()!(100)
+      })
+      expect(nativeScrollTo).toHaveBeenNthCalledWith(2, {
+        x: 40,
+        y: 100,
+        animated: false
+      })
+      expect(nativeScrollTo).toHaveBeenNthCalledWith(3, {
+        x: 40,
+        y: 100,
+        animated: false
+      })
+    } finally {
+      global.requestAnimationFrame = originalRequestAnimationFrame
+      dateNow.mockRestore()
+    }
+  })
+
+  it('should warn for scrollIntoView unavailable target branches', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const ref = React.createRef<any>()
+    const missingSelectRef = jest.fn(() => null)
+    const missingNodeRef = jest.fn(() => ({
+      getNodeInstance: () => ({
+        nodeRef: {
+          current: null
+        }
+      })
+    }))
+    const failedMeasureRef = jest.fn(() => ({
+      getNodeInstance: () => ({
+        nodeRef: {
+          current: {
+            measureLayout: jest.fn((parent, success, fail) => {
+              fail('measure failed')
+            })
+          }
+        }
+      })
+    }))
+    const throwingSelectRef = jest.fn(() => {
+      throw new Error('select failed')
+    })
+
+    try {
+      const { rerender } = render(
+        <MpxScrollView
+          ref={ref}
+          testID="scroll-into-view-warnings"
+          scroll-y={true}
+        >
+          <MpxView id="target">
+            <MpxText>Target</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
+
+      ref.current.getNodeInstance().instance.node.scrollIntoView('target')
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('__selectRef is not available'))
+
+      rerender(
+        <MpxScrollView
+          ref={ref}
+          testID="scroll-into-view-warnings"
+          scroll-y={true}
+          __selectRef={missingSelectRef}
+        >
+          <MpxView id="target">
+            <MpxText>Target</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
+      ref.current.getNodeInstance().instance.node.scrollIntoView('target')
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Element not found for selector: #target'))
+
+      rerender(
+        <MpxScrollView
+          ref={ref}
+          testID="scroll-into-view-warnings"
+          scroll-y={true}
+          __selectRef={missingNodeRef}
+        >
+          <MpxView id="target">
+            <MpxText>Target</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
+      ref.current.getNodeInstance().instance.node.scrollIntoView('.target')
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Node ref not available for selector: .target'))
+
+      rerender(
+        <MpxScrollView
+          ref={ref}
+          testID="scroll-into-view-warnings"
+          scroll-y={true}
+          __selectRef={failedMeasureRef}
+        >
+          <MpxView id="target">
+            <MpxText>Target</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
+      ref.current.getNodeInstance().instance.node.scrollIntoView('#target')
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to measure layout for selector #target'))
+
+      rerender(
+        <MpxScrollView
+          ref={ref}
+          testID="scroll-into-view-warnings"
+          scroll-y={true}
+          __selectRef={throwingSelectRef}
+        >
+          <MpxView id="target">
+            <MpxText>Target</MpxText>
+          </MpxView>
+        </MpxScrollView>
+      )
+      ref.current.getNodeInstance().instance.node.scrollIntoView('target')
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('handleScrollIntoView error for selector target'))
+    } finally {
+      warnSpy.mockRestore()
+    }
   })
 })

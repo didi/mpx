@@ -70,3 +70,19 @@ export function getWebViews () {
 export function getViews () {
   return screen.UNSAFE_getAllByType('View')
 }
+
+function hasTestID (tree: any, testID: string): boolean {
+  if (!tree) return false
+  if (Array.isArray(tree)) {
+    return tree.some((node) => hasTestID(node, testID))
+  }
+  if (tree.props?.testID === testID) return true
+  return hasTestID(tree.children, testID)
+}
+
+export function expectPortalHostRendered (tree: any, testID: string) {
+  expect(Array.isArray(tree)).toBe(true)
+  const [host, ...portalChildren] = tree
+  expect(hasTestID(host, testID)).toBe(false)
+  expect(hasTestID(portalChildren, testID)).toBe(true)
+}

@@ -9,11 +9,15 @@ const GestureDetector = ({ children, gesture, ...props }) => {
 }
 
 // Mock ScrollView from gesture-handler (enhanced ScrollView)
+let lastScrollViewRef
+
 const ScrollView = React.forwardRef((props, ref) => {
-  React.useImperativeHandle(ref, () => ({
+  const instanceRef = React.useRef({
     scrollTo: jest.fn(),
     measureLayout: jest.fn()
-  }))
+  })
+  lastScrollViewRef = instanceRef.current
+  React.useImperativeHandle(ref, () => instanceRef.current)
   return React.createElement('ScrollView', props)
 })
 
@@ -88,13 +92,19 @@ const Gesture = {
 }
 
 const __getLastPanGesture = () => lastPanGesture
+const __getLastScrollViewRef = () => lastScrollViewRef
+const __resetScrollViewRefs = () => {
+  lastScrollViewRef = undefined
+}
 
 export {
   GestureDetector,
   Gesture,
   ScrollView,
   RefreshControl,
-  __getLastPanGesture
+  __getLastPanGesture,
+  __getLastScrollViewRef,
+  __resetScrollViewRefs
 }
 
 // For compatibility, also export as default

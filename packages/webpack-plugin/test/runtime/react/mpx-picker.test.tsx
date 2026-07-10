@@ -17,8 +17,10 @@ const PickerMultiSelector = require('../../../lib/runtime/components/react/mpx-p
 const PickerRegion = require('../../../lib/runtime/components/react/mpx-picker/region').default
 const PickerSelector = require('../../../lib/runtime/components/react/mpx-picker/selector').default
 const PickerTime = require('../../../lib/runtime/components/react/mpx-picker/time').default
+const MpxPickerView = require('../../../lib/runtime/components/react/mpx-picker-view').default
 const Portal = require('../../../lib/runtime/components/react/mpx-portal').default
 const { FormContext, RouteContext } = require('../../../lib/runtime/components/react/context')
+const { regionData } = require('../../../lib/runtime/components/react/mpx-picker/regionData')
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -188,5 +190,86 @@ describe('MpxPicker', () => {
       formValuesMap.get('time')!.resetValue({})
     })
     expect(formValuesMap.get('time')!.getValue()).toBe('00:00')
+  })
+
+  it('clamps date days and supports date imperative updates', () => {
+    const bindchange = jest.fn()
+    const ref = React.createRef<any>()
+    const dateRender = render(
+      <PickerDate
+        ref={ref}
+        mode="date"
+        value="2024-01-31"
+        start="2024-12-31"
+        end="2024-01-01"
+        bindchange={bindchange}
+      />
+    )
+
+    bindchange.mockClear()
+    fireEvent(dateRender.UNSAFE_getAllByType('ScrollView')[1], 'momentumScrollEnd', {
+      nativeEvent: { contentOffset: { y: 45 } }
+    })
+    expect(bindchange).toHaveBeenCalledWith({ detail: { value: '2024-02-29' } })
+
+    act(() => {
+      ref.current.updateValue('2025-05-20')
+    })
+    expect(dateRender.UNSAFE_getByType(MpxPickerView).props.value).toEqual([125, 4, 19])
+    bindchange.mockClear()
+    fireEvent(dateRender.UNSAFE_getAllByType('ScrollView')[2], 'momentumScrollEnd', {
+      nativeEvent: { contentOffset: { y: 20 * 45 } }
+    })
+    expect(bindchange).toHaveBeenCalledWith({ detail: { value: '2025-05-21' } })
+    dateRender.unmount()
+
+    const yearRender = render(<PickerDate mode="date" fields="year" value="" />)
+    expect(yearRender.UNSAFE_getAllByType('ScrollView')).toHaveLength(1)
+  })
+
+  it('handles region custom item levels and imperative updates', () => {
+    const bindchange = jest.fn()
+    const ref = React.createRef<any>()
+    const province = regionData[0].value
+    const nextProvince = regionData[1].value
+    const regionRender = render(
+      <PickerRegion
+        ref={ref}
+        mode="region"
+        level="province"
+        custom-item="全部"
+        value={['全部']}
+        bindchange={bindchange}
+      />
+    )
+
+    bindchange.mockClear()
+    fireEvent(regionRender.UNSAFE_getAllByType('ScrollView')[0], 'momentumScrollEnd', {
+      nativeEvent: { contentOffset: { y: 45 } }
+    })
+    expect(bindchange).toHaveBeenCalledWith({ detail: { value: [province] } })
+
+    act(() => {
+      ref.current.updateValue([nextProvince])
+    })
+    expect(regionRender.UNSAFE_getByType(MpxPickerView).props.value).toEqual([2])
+    regionRender.unmount()
+
+    bindchange.mockClear()
+    const cityRender = render(
+      <PickerRegion
+        ref={ref}
+        mode="region"
+        level="city"
+        custom-item="全部"
+        value={[province, '全部']}
+        bindchange={bindchange}
+      />
+    )
+    expect(cityRender.UNSAFE_getAllByType('ScrollView')).toHaveLength(2)
+    fireEvent(cityRender.UNSAFE_getAllByType('ScrollView')[1], 'momentumScrollEnd', {
+      nativeEvent: { contentOffset: { y: 0 } }
+    })
+    expect(bindchange).toHaveBeenCalledWith({ detail: { value: [province, '全部'] } })
   })
 })

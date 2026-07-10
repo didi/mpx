@@ -1,56 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MpxView should handle Portal functionality: view-with-portal 1`] = `
-<View
-  style={
-    {
-      "backgroundColor": "#f0f0f0",
-      "height": 100,
-      "width": 100,
-    }
-  }
-  testID="portal-view"
->
-  <Text
-    allowFontScaling={false}
-    style={{}}
-  >
-    Portal view content
-  </Text>
-</View>
-`;
-
-exports[`MpxView should handle background image properties: bg-image-view 1`] = `
-<View
-  style={
-    {
-      "height": 200,
-      "width": 200,
-    }
-  }
-  testID="bg-image-view"
->
-  <View
-    style={
-      {
-        "bottom": 0,
-        "left": 0,
-        "overflow": "hidden",
-        "position": "absolute",
-        "right": 0,
-        "top": 0,
-      }
-    }
-  />
-  <Text
-    allowFontScaling={false}
-    style={{}}
-  >
-    Background image content
-  </Text>
-</View>
-`;
-
 exports[`MpxView should handle background properties 1`] = `
 <View
   style={
@@ -80,26 +29,6 @@ exports[`MpxView should handle background properties 1`] = `
     style={{}}
   >
     Background content
-  </Text>
-</View>
-`;
-
-exports[`MpxView should handle basic animation properties: animated-view 1`] = `
-<View
-  style={
-    {
-      "backgroundColor": "#ff0000",
-      "height": 100,
-      "width": 100,
-    }
-  }
-  testID="animated-view"
->
-  <Text
-    allowFontScaling={false}
-    style={{}}
-  >
-    Animated content
   </Text>
 </View>
 `;
@@ -134,27 +63,6 @@ exports[`MpxView should handle complex background property combinations: complex
     style={{}}
   >
     Complex background
-  </Text>
-</View>
-`;
-
-exports[`MpxView should handle comprehensive touch and gesture events: gesture-view 1`] = `
-<View
-  onTouchEnd={[Function]}
-  onTouchStart={[Function]}
-  style={
-    {
-      "height": 100,
-      "width": 100,
-    }
-  }
-  testID="gesture-view"
->
-  <Text
-    allowFontScaling={false}
-    style={{}}
-  >
-    Gesture area
   </Text>
 </View>
 `;
@@ -285,30 +193,6 @@ exports[`MpxView should handle flex layout properties 1`] = `
 </View>
 `;
 
-exports[`MpxView should handle hover states and timing: hover-view 1`] = `
-<View
-  testID="gesture-detector"
->
-  <View
-    style={
-      {
-        "backgroundColor": "#ff0000",
-        "height": 100,
-        "width": 100,
-      }
-    }
-    testID="hover-view"
-  >
-    <Text
-      allowFontScaling={false}
-      style={{}}
-    >
-      Hover me
-    </Text>
-  </View>
-</View>
-`;
-
 exports[`MpxView should handle linear gradient backgrounds: gradient-view 1`] = `
 <View
   style={
@@ -379,9 +263,9 @@ exports[`MpxView should handle parent size context: parent-size-view 1`] = `
   style={
     {
       "boxSizing": "content-box",
-      "height": 150,
+      "height": "150",
       "padding": 10,
-      "width": 300,
+      "width": "300",
     }
   }
   testID="parent-size-view"
@@ -399,33 +283,22 @@ exports[`MpxView should handle parent size context: parent-size-view 1`] = `
 </View>
 `;
 
-exports[`MpxView should handle performance optimization features: performance-view 1`] = `
+exports[`MpxView should render static branch when animation is disabled: animated-view 1`] = `
 <View
   style={
     {
-      "height": 500,
-      "width": 500,
+      "backgroundColor": "#ff0000",
+      "height": 100,
+      "width": 100,
     }
   }
-  testID="performance-view"
+  testID="animated-view"
 >
-  <View
-    style={
-      {
-        "bottom": 0,
-        "left": 0,
-        "overflow": "hidden",
-        "position": "absolute",
-        "right": 0,
-        "top": 0,
-      }
-    }
-  />
   <Text
     allowFontScaling={false}
     style={{}}
   >
-    Performance optimized view
+    Animated content
   </Text>
 </View>
 `;

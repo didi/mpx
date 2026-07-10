@@ -1,9 +1,13 @@
 
 import React from 'react'
-import { render, screen } from '@testing-library/react-native'
+import { act, render, screen } from '@testing-library/react-native'
 import MpxView from '../../../lib/runtime/components/react/mpx-view'
 import MpxInlineText from '../../../lib/runtime/components/react/mpx-inline-text'
-import { fireTap } from './helpers'
+import { parseBgImage } from '../../../lib/runtime/components/react/mpx-view-parser'
+import { fireTap, flushImageSize } from './helpers'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { __getLastPanGesture } = require('react-native-gesture-handler')
 
 // Mock mpx-portal
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
@@ -11,9 +15,42 @@ jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   const mockReact = require('react')
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return mockReact.forwardRef((props: any, ref: any) => {
-    return mockReact.createElement('View', { ...props, ref })
+    return mockReact.createElement('View', { ...props, ref, testID: 'mock-portal' })
   })
 })
+
+function getBackgroundView () {
+  return screen.UNSAFE_getAllByType('View').find((node) => {
+    return node.props.onLayout && node.props.style?.position === 'absolute' && node.props.style?.overflow === 'hidden'
+  })
+}
+
+function layoutBackground (width: number, height: number) {
+  const backgroundView = getBackgroundView()
+  expect(backgroundView).toBeTruthy()
+  act(() => {
+    backgroundView.props.onLayout({
+      nativeEvent: {
+        layout: { width, height }
+      }
+    })
+  })
+  return backgroundView
+}
+
+function layoutBackgroundIfNeeded (width: number, height: number) {
+  const backgroundView = getBackgroundView()
+  if (backgroundView) {
+    act(() => {
+      backgroundView.props.onLayout({
+        nativeEvent: {
+          layout: { width, height }
+        }
+      })
+    })
+  }
+  return backgroundView
+}
 
 describe('MpxView', () => {
   // 基础渲染和样式测试
@@ -163,49 +200,68 @@ describe('MpxView', () => {
 
   // 边界情况和异常处理测试
   it('should handle edge cases and null values', () => {
-    const { rerender } = render(
-      <MpxView testID="edge-view" style={undefined}>
-        <MpxInlineText>Edge case content</MpxInlineText>
-      </MpxView>
-    )
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      const { rerender } = render(
+        <MpxView testID="edge-view" style={undefined}>
+          <MpxInlineText>Edge case content</MpxInlineText>
+        </MpxView>
+      )
 
-    let viewElement = screen.getByTestId('edge-view')
-    expect(viewElement).toBeTruthy()
+      let viewElement = screen.getByTestId('edge-view')
+      expect(viewElement).toBeTruthy()
+      expect(screen.getByText('Edge case content')).toBeTruthy()
 
-    // 测试 null children
-    rerender(
-      <MpxView testID="edge-view">
-        {null}
-        <MpxInlineText>Valid content</MpxInlineText>
-        {false}
-      </MpxView>
-    )
+      // 测试 null children
+      rerender(
+        <MpxView testID="edge-view">
+          {null}
+          <MpxInlineText>Valid content</MpxInlineText>
+          {false}
+        </MpxView>
+      )
 
-    viewElement = screen.getByTestId('edge-view')
-    expect(viewElement).toBeTruthy()
+      viewElement = screen.getByTestId('edge-view')
+      expect(viewElement).toBeTruthy()
+      expect(screen.queryByText('Edge case content')).toBeNull()
+      expect(screen.getByText('Valid content')).toBeTruthy()
 
-    // 测试零值和负值样式
-    rerender(
-      <MpxView
-        testID="edge-view"
-        style={{
-          width: 0,
-          height: -1,
-          margin: 0,
-          padding: -5
-        }}
-      >
-        <MpxInlineText>Zero/negative values</MpxInlineText>
-      </MpxView>
-    )
+      // 测试零值和负值样式
+      rerender(
+        <MpxView
+          testID="edge-view"
+          style={{
+            width: 0,
+            height: -1,
+            margin: 0,
+            padding: -5
+          }}
+        >
+          <MpxInlineText>Zero/negative values</MpxInlineText>
+        </MpxView>
+      )
 
-    viewElement = screen.getByTestId('edge-view')
-    expect(viewElement).toBeTruthy()
+      viewElement = screen.getByTestId('edge-view')
+      expect(viewElement.props.style).toEqual(expect.objectContaining({
+        width: 0,
+        height: -1,
+        margin: 0,
+        padding: -5
+      }))
+      expect(screen.queryByText('Valid content')).toBeNull()
+      expect(screen.getByText('Zero/negative values')).toBeTruthy()
+      expect(warnSpy).not.toHaveBeenCalled()
+      expect(errorSpy).not.toHaveBeenCalled()
+    } finally {
+      warnSpy.mockRestore()
+      errorSpy.mockRestore()
+    }
   })
 
   // 背景图片功能测试
-  it('should handle background image properties', () => {
-    const { toJSON } = render(
+  it('should handle background image properties', async () => {
+    render(
       <MpxView
         testID="bg-image-view"
         enable-background={true}
@@ -218,10 +274,13 @@ describe('MpxView', () => {
         <MpxInlineText>Background image content</MpxInlineText>
       </MpxView>
     )
+    await flushImageSize()
 
     const viewElement = screen.getByTestId('bg-image-view')
     expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('bg-image-view')
+    expect(screen.getByTestId('fast-image').props.source).toEqual({
+      uri: 'https://example.com/image.jpg'
+    })
   })
 
   // 线性渐变背景测试
@@ -246,7 +305,7 @@ describe('MpxView', () => {
   })
 
   // 基础动画属性测试
-  it('should handle basic animation properties', () => {
+  it('should render static branch when animation is disabled', () => {
     const { toJSON } = render(
       <MpxView
         testID="animated-view"
@@ -268,38 +327,57 @@ describe('MpxView', () => {
 
   // 悬停状态测试
   it('should handle hover states and timing', () => {
+    jest.useFakeTimers()
     const hoverStyle = {
       backgroundColor: '#00ff00',
       transform: [{ scale: 1.1 }]
     }
 
-    const { toJSON } = render(
-      <MpxView
-        testID="hover-view"
-        hover-style={hoverStyle}
-        hover-start-time={100}
-        hover-stay-time={200}
-        style={{
-          width: 100,
-          height: 100,
-          backgroundColor: '#ff0000'
-        }}
-      >
-        <MpxInlineText>Hover me</MpxInlineText>
-      </MpxView>
-    )
+    try {
+      render(
+        <MpxView
+          testID="hover-view"
+          hover-style={hoverStyle}
+          hover-start-time={100}
+          hover-stay-time={200}
+          style={{
+            width: 100,
+            height: 100,
+            backgroundColor: '#ff0000'
+          }}
+        >
+          <MpxInlineText>Hover me</MpxInlineText>
+        </MpxView>
+      )
 
-    const viewElement = screen.getByTestId('hover-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('hover-view')
+      const gesture = __getLastPanGesture()
+      act(() => {
+        gesture.onTouchesDownCallback()
+        jest.advanceTimersByTime(100)
+      })
+      expect(screen.getByTestId('hover-view').props.style).toEqual(expect.objectContaining({
+        backgroundColor: '#00ff00',
+        transform: [{ scale: 1.1 }]
+      }))
+
+      act(() => {
+        gesture.onTouchesUpCallback()
+        jest.advanceTimersByTime(200)
+      })
+      expect(screen.getByTestId('hover-view').props.style).toEqual(expect.objectContaining({
+        backgroundColor: '#ff0000'
+      }))
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   // 基础 Portal 功能测试
   it('should handle Portal functionality', () => {
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="portal-view"
-        style={{ width: 100, height: 100, backgroundColor: '#f0f0f0' }}
+        style={{ width: 100, height: 100, backgroundColor: '#f0f0f0', position: 'fixed' }}
       >
         <MpxInlineText>Portal view content</MpxInlineText>
       </MpxView>
@@ -307,7 +385,7 @@ describe('MpxView', () => {
 
     const viewElement = screen.getByTestId('portal-view')
     expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('view-with-portal')
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
   })
 
   // 手势事件测试
@@ -315,7 +393,7 @@ describe('MpxView', () => {
     const mockBindtouchstart = jest.fn()
     const mockBindtouchend = jest.fn()
 
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="gesture-view"
         bindtouchstart={mockBindtouchstart}
@@ -327,8 +405,13 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('gesture-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('gesture-view')
+    fireTap(viewElement)
+    expect(mockBindtouchstart).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'touchstart'
+    }))
+    expect(mockBindtouchend).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'touchend'
+    }))
   })
 
   // 简化的上下文测试
@@ -363,9 +446,9 @@ describe('MpxView', () => {
         parent-width={400}
         parent-height={300}
         style={{
-          width: 300, // 使用具体数值而不是百分比
-          height: 150, // 使用具体数值而不是百分比
-          fontSize: 24, // 使用具体数值而不是相对值
+          width: 'calc(75%)',
+          height: 'calc(50%)',
+          fontSize: '150%',
           padding: 10
         }}
       >
@@ -375,6 +458,13 @@ describe('MpxView', () => {
 
     const viewElement = screen.getByTestId('parent-size-view')
     expect(viewElement).toBeTruthy()
+    expect(viewElement.props.style).toEqual(expect.objectContaining({
+      width: '300',
+      height: '150'
+    }))
+    expect(screen.getByText('Parent size context view').props.style).toEqual(expect.objectContaining({
+      fontSize: 24
+    }))
     expect(toJSON()).toMatchSnapshot('parent-size-view')
   })
 
@@ -408,6 +498,7 @@ describe('MpxView', () => {
     const { rerender } = render(
       <MpxView
         testID="layout-view"
+        enable-offset={true}
         onLayout={mockOnLayout}
         style={{
           width: 100,
@@ -420,12 +511,22 @@ describe('MpxView', () => {
     )
 
     let viewElement = screen.getByTestId('layout-view')
-    expect(viewElement).toBeTruthy()
+    viewElement.props.onLayout({
+      nativeEvent: {
+        layout: { width: 100, height: 100 }
+      }
+    })
+    expect(mockOnLayout).toHaveBeenCalledWith(expect.objectContaining({
+      nativeEvent: {
+        layout: { width: 100, height: 100 }
+      }
+    }))
 
     // 改变尺寸
     rerender(
       <MpxView
         testID="layout-view"
+        enable-offset={true}
         onLayout={mockOnLayout}
         style={{
           width: 200,
@@ -438,7 +539,16 @@ describe('MpxView', () => {
     )
 
     viewElement = screen.getByTestId('layout-view')
-    expect(viewElement).toBeTruthy()
+    viewElement.props.onLayout({
+      nativeEvent: {
+        layout: { width: 200, height: 150 }
+      }
+    })
+    expect(mockOnLayout).toHaveBeenCalledTimes(2)
+    expect(viewElement.props.style).toEqual(expect.objectContaining({
+      width: 200,
+      height: 150
+    }))
   })
 
   // 深度嵌套和复杂结构测试
@@ -506,8 +616,8 @@ describe('MpxView', () => {
   })
 
   // 性能优化相关测试
-  it('should handle performance optimization features', () => {
-    const { toJSON } = render(
+  it('should handle performance optimization features', async () => {
+    render(
       <MpxView
         testID="performance-view"
         enable-fast-image={true}
@@ -521,9 +631,286 @@ describe('MpxView', () => {
         <MpxInlineText>Performance optimized view</MpxInlineText>
       </MpxView>
     )
+    await flushImageSize()
 
     const viewElement = screen.getByTestId('performance-view')
     expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('performance-view')
+    expect(screen.getByTestId('fast-image').props.source).toEqual({
+      uri: 'https://example.com/large-image.jpg'
+    })
+  })
+
+  it('should parse supported background-image values and report dropped gradients', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
+    const error = jest.spyOn(console, 'error').mockImplementation(jest.fn())
+
+    try {
+      expect(parseBgImage('url("https://example.com/a.png")')).toEqual({
+        src: 'https://example.com/a.png',
+        type: 'image'
+      })
+      expect(parseBgImage('linear-gradient(red 0% 50%, 25%, blue)')).toEqual({
+        type: 'linear',
+        linearInfo: {
+          direction: '180deg',
+          colors: ['red', 'red', 'blue'],
+          locations: [0, 0.5, 1]
+        }
+      })
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('color hint'))
+
+      expect(parseBgImage('linear-gradient(red, linear-gradient(blue, green))')).toEqual({})
+      expect(error).toHaveBeenCalledWith(expect.stringContaining('多重渐变'))
+
+      expect(parseBgImage('radial-gradient(red, blue)')).toEqual({})
+      expect(error).toHaveBeenCalledWith(expect.stringContaining('仅支持 url(...) / linear-gradient(...)'))
+    } finally {
+      warn.mockRestore()
+      error.mockRestore()
+    }
+  })
+
+  it('should render layout-dependent linear gradient backgrounds', () => {
+    render(
+      <MpxView
+        testID="layout-gradient-view"
+        enable-background={true}
+        style={{
+          width: 200,
+          height: 100,
+          borderWidth: 4,
+          borderRadius: 10,
+          backgroundImage: 'linear-gradient(to bottom right, red 0%, blue 100%)',
+          backgroundSize: ['50%', '100%'],
+          backgroundPosition: ['center', 'center']
+        }}
+      >
+        <MpxInlineText>Gradient with layout</MpxInlineText>
+      </MpxView>
+    )
+
+    const backgroundView = layoutBackground(200, 100)
+
+    const gradient = screen.getByTestId('linear-gradient')
+    expect(gradient.props.colors).toEqual(['red', 'blue'])
+    expect(gradient.props.locations).toEqual([0, 1])
+    expect(gradient.props.angle).toBeCloseTo(135)
+    expect(gradient.props.style).toEqual(expect.objectContaining({
+      width: '50%',
+      height: '100%'
+    }))
+    expect(backgroundView.props.style).toEqual(expect.objectContaining({
+      borderRadius: 6,
+      overflow: 'hidden'
+    }))
+  })
+
+  it('should resolve cover image background size and percent position after layout', async () => {
+    render(
+      <MpxView
+        testID="layout-image-view"
+        enable-background={true}
+        enable-fast-image={true}
+        style={{
+          width: 300,
+          height: 100,
+          backgroundImage: 'url(https://example.com/cover.jpg)',
+          backgroundSize: ['cover'],
+          backgroundPosition: ['right', '25%']
+        }}
+      >
+        <MpxInlineText>Image with layout</MpxInlineText>
+      </MpxView>
+    )
+
+    layoutBackground(300, 100)
+    await flushImageSize()
+
+    const image = screen.getByTestId('fast-image')
+    expect(image.props.source).toEqual({
+      uri: 'https://example.com/cover.jpg'
+    })
+    expect(image.props.style).toEqual(expect.objectContaining({
+      width: 300,
+      height: 300,
+      right: 0,
+      top: -50
+    }))
+  })
+
+  it('should parse gradient interpolation and invalid color stop fallbacks', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
+    const error = jest.spyOn(console, 'error').mockImplementation(jest.fn())
+
+    try {
+      expect(parseBgImage('linear-gradient(100grad, red 0%, green, blue 100%)')).toEqual({
+        type: 'linear',
+        linearInfo: {
+          direction: '100grad',
+          colors: ['red', 'green', 'blue'],
+          locations: [0, 0.5, 1]
+        }
+      })
+      expect(parseBgImage('linear-gradient(red 10px, blue)')).toEqual({
+        type: 'linear',
+        linearInfo: {
+          direction: '180deg',
+          colors: ['red', 'blue'],
+          locations: [0, 1]
+        }
+      })
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('色标位置仅支持百分比'))
+
+      expect(parseBgImage('linear-gradient(red 0%, blue 0%)')).toEqual({
+        type: 'linear',
+        linearInfo: {
+          direction: '180deg',
+          colors: ['red', 'blue'],
+          locations: [0, 0]
+        }
+      })
+
+      expect(parseBgImage('linear-gradient(30%, 40%)')).toEqual({})
+      expect(error).toHaveBeenCalledWith(expect.stringContaining('至少需要 2 个有效色标'))
+    } finally {
+      warn.mockRestore()
+      error.mockRestore()
+    }
+  })
+
+  it('should normalize linear gradient angle units', () => {
+    const cases = [
+      { id: 'turn-gradient', image: 'linear-gradient(0.25turn, red, blue)', angle: 90 },
+      { id: 'rad-gradient', image: 'linear-gradient(3.141592653589793rad, red, blue)', angle: 180 },
+      { id: 'grad-gradient', image: 'linear-gradient(100grad, red, blue)', angle: 90 },
+      { id: 'alias-gradient', image: 'linear-gradient(to right bottom, red, blue)', angle: 135 }
+    ]
+
+    cases.forEach(({ id, image, angle }) => {
+      const { unmount } = render(
+        <MpxView
+          testID={id}
+          enable-background={true}
+          style={{
+            width: 100,
+            height: 100,
+            backgroundImage: image,
+            backgroundSize: [100, 100]
+          }}
+        >
+          <MpxInlineText>{id}</MpxInlineText>
+        </MpxView>
+      )
+
+      layoutBackgroundIfNeeded(100, 100)
+      expect(screen.getByTestId('linear-gradient').props.angle).toBeCloseTo(angle)
+      unmount()
+    })
+  })
+
+  it('should resolve contain and auto image background sizing', async () => {
+    const cases = [
+      {
+        id: 'contain-image',
+        backgroundSize: ['contain'],
+        layout: { width: 300, height: 100 },
+        expectedStyle: { width: 100, height: 100 }
+      },
+      {
+        id: 'auto-height-image',
+        backgroundSize: ['auto', '50%'],
+        layout: { width: 300, height: 200 },
+        expectedStyle: { width: 100, height: 100 }
+      },
+      {
+        id: 'auto-width-image',
+        backgroundSize: ['50%', 'auto'],
+        layout: { width: 300, height: 200 },
+        expectedStyle: { width: 150, height: 150 }
+      },
+      {
+        id: 'auto-auto-image',
+        backgroundSize: ['auto', 'auto'],
+        layout: { width: 300, height: 200 },
+        expectedStyle: { width: 100, height: 100 }
+      }
+    ]
+
+    for (const item of cases) {
+      const { unmount } = render(
+        <MpxView
+          testID={item.id}
+          enable-background={true}
+          enable-fast-image={true}
+          style={{
+            width: item.layout.width,
+            height: item.layout.height,
+            backgroundImage: `url(https://example.com/${item.id}.jpg)`,
+            backgroundSize: item.backgroundSize
+          }}
+        >
+          <MpxInlineText>{item.id}</MpxInlineText>
+        </MpxView>
+      )
+
+      layoutBackgroundIfNeeded(item.layout.width, item.layout.height)
+      await flushImageSize()
+      expect(screen.getByTestId('fast-image').props.style).toEqual(expect.objectContaining(item.expectedStyle))
+      unmount()
+    }
+  })
+
+  it('should normalize numeric and three-part background positions', async () => {
+    const cases = [
+      {
+        id: 'numeric-position',
+        backgroundPosition: 5,
+        expectedStyle: { left: 5, top: 45 }
+      },
+      {
+        id: 'single-left-position',
+        backgroundPosition: ['left'],
+        expectedStyle: { left: 0, top: 45 }
+      },
+      {
+        id: 'single-top-position',
+        backgroundPosition: ['top'],
+        expectedStyle: { left: 45, top: 0 }
+      },
+      {
+        id: 'three-keyword-position',
+        backgroundPosition: ['bottom', 10, 'right'],
+        expectedStyle: { bottom: 10, right: 0 }
+      },
+      {
+        id: 'three-offset-position',
+        backgroundPosition: ['right', 10, 'bottom'],
+        expectedStyle: { right: 10, bottom: 0 }
+      }
+    ]
+
+    for (const item of cases) {
+      const { unmount } = render(
+        <MpxView
+          testID={item.id}
+          enable-background={true}
+          enable-fast-image={true}
+          style={{
+            width: 100,
+            height: 100,
+            backgroundImage: `url(https://example.com/${item.id}.jpg)`,
+            backgroundSize: [10, 10],
+            backgroundPosition: item.backgroundPosition as any
+          }}
+        >
+          <MpxInlineText>{item.id}</MpxInlineText>
+        </MpxView>
+      )
+
+      layoutBackgroundIfNeeded(100, 100)
+      await flushImageSize()
+      expect(screen.getByTestId('fast-image').props.style).toEqual(expect.objectContaining(item.expectedStyle))
+      unmount()
+    }
   })
 })
