@@ -130,6 +130,8 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       'parent-width': parentWidth,
       'parent-height': parentHeight
     } = props
+    const modalProps = props as any
+    const rangeKey = modalProps['range-key']
 
     const { pageId } = useContext(RouteContext) || {}
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
@@ -179,6 +181,12 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         'mode',
         'value',
         'range',
+        'range-key',
+        'start',
+        'end',
+        'fields',
+        'level',
+        'custom-item',
         'disabled',
         'bindcancel',
         'bindchange',
@@ -191,9 +199,9 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
 
     useEffect(() => {
       if (range && pickerRef.current && mode === PickerMode.MULTI_SELECTOR) {
-        pickerRef.current.updateRange?.(range)
+        pickerRef.current.updateRange?.(range, rangeKey)
       }
-    }, [JSON.stringify(range)])
+    }, [JSON.stringify(range), rangeKey, mode])
 
     /** --- form 表单组件内部方法 --- */
     const getValue = () => {
@@ -266,11 +274,10 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!(_mode in pickerModalMap)) {
         return warn(`[Mpx runtime warn]: Unsupported <picker> mode: ${mode}`)
       }
-      const modalProps = props as any
       const specificProps = {
         mode: _mode,
         range,
-        'range-key': modalProps['range-key'],
+        'range-key': rangeKey,
         start: modalProps.start,
         end: modalProps.end,
         fields: modalProps.fields,

@@ -54,8 +54,8 @@ const PickerMultiSelector = forwardRef<
     }
   }, [formatValue])
 
-  const updateRange = (newRange: RangeItem[]) => {
-    const range = formatRangeFun(newRange.slice(), props['range-key'])
+  const updateRange = (newRange: RangeItem[], rangeKey?: string) => {
+    const range = formatRangeFun(newRange.slice(), rangeKey)
     setFormatRange(range)
   }
 

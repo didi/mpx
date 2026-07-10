@@ -5,7 +5,12 @@ const mockShow = jest.fn()
 const mockHide = jest.fn()
 const mockRemove = jest.fn()
 const mockUpdate = jest.fn()
+const mockUpdateRange = jest.fn()
 const mockWarn = jest.fn()
+const mockSetState = jest.fn()
+const mockUseEffect = jest.fn((effect: any) => effect())
+const mockUseImperativeHandle = jest.fn()
+const mockUseRef = jest.fn((init: any) => ({ current: init }))
 const mockEmitter = {
   addListener: jest.fn(),
   emit: jest.fn(),
@@ -39,11 +44,11 @@ jest.mock('react', () => {
     createElement: jest.fn((type: any, props: any, ...children: any[]) => ({ type, props: props || {}, children })),
     useCallback: (fn: any) => fn,
     useContext: jest.fn(() => null),
-    useEffect: (effect: any) => effect(),
-    useImperativeHandle: () => undefined,
+    useEffect: (effect: any, deps: any) => mockUseEffect(effect, deps),
+    useImperativeHandle: (ref: any, createHandle: any) => mockUseImperativeHandle(ref, createHandle),
     useMemo: (factory: any) => factory(),
-    useRef: (init: any) => ({ current: init }),
-    useState: (init: any) => [typeof init === 'function' ? init() : init, () => undefined]
+    useRef: (init: any) => mockUseRef(init),
+    useState: (init: any) => [typeof init === 'function' ? init() : init, mockSetState]
   })
 })
 
@@ -82,6 +87,16 @@ jest.mock('../../../lib/runtime/components/react/mpx-picker/region', () => ({
   default: 'PickerRegion'
 }))
 
+jest.mock('../../../lib/runtime/components/react/mpx-picker-view', () => ({
+  __esModule: true,
+  default: 'MpxPickerView'
+}))
+
+jest.mock('../../../lib/runtime/components/react/mpx-picker-view-column', () => ({
+  __esModule: true,
+  default: 'MpxPickerViewColumn'
+}))
+
 // eslint-disable-next-line import/first
 import Picker from '../../../lib/runtime/components/react/mpx-picker'
 // eslint-disable-next-line import/first
@@ -110,7 +125,13 @@ describe('MpxPicker RN runtime', () => {
     mockHide.mockClear()
     mockRemove.mockClear()
     mockUpdate.mockClear()
+    mockUpdateRange.mockClear()
     mockWarn.mockClear()
+    mockSetState.mockClear()
+    mockUseEffect.mockClear()
+    mockUseImperativeHandle.mockClear()
+    mockUseRef.mockReset()
+    mockUseRef.mockImplementation((init: any) => ({ current: init }))
     const mpxConfig = (global as any).__mpx.config
     mpxConfig.ignoreWarning = true
     delete mpxConfig.warnHandler
@@ -136,6 +157,81 @@ describe('MpxPicker RN runtime', () => {
     expect(selector.props.style).toBeUndefined()
     expect(selector.props.children).toBeUndefined()
     expect(triggerView.props.range).toBeUndefined()
+    expect(triggerView.props['range-key']).toBeUndefined()
+  })
+
+  test.each([
+    [PickerMode.TIME, 'PickerTime', { start: '00:00', end: '23:59' }],
+    [PickerMode.DATE, 'PickerDate', { fields: 'day' }],
+    [PickerMode.REGION, 'PickerRegion', { level: 'city', 'custom-item': 'All' }]
+  ])('filters %s-specific props from the trigger view', (mode, modalType, specificProps) => {
+    const result = (Picker as any)(Object.assign({ mode, children: 'Select' }, specificProps), null)
+    const popupContent = mockOpen.mock.calls[0][0]
+    const modal = findElementByType(popupContent, modalType)
+    const triggerView = findElementByType(result, 'View')
+
+    Object.keys(specificProps).forEach((key) => {
+      expect(modal.props[key]).toBe((specificProps as any)[key])
+      expect(triggerView.props[key]).toBeUndefined()
+    })
+  })
+
+  test('updates multi-selector range with the latest range key', () => {
+    const initialRange = [{ name: ['Old'] }]
+    const nextRange = [{ label: ['New'] }]
+    ;(Picker as any)({
+      mode: PickerMode.MULTI_SELECTOR,
+      value: [0],
+      range: initialRange,
+      'range-key': 'name',
+      children: 'Select'
+    }, null)
+    const popupContent = mockOpen.mock.calls[0][0]
+    const multiSelector = findElementByType(popupContent, 'PickerMultiSelector')
+    const pickerRef = multiSelector.ref
+    pickerRef.current = { updateRange: mockUpdateRange }
+    mockUpdateRange.mockClear()
+    mockUseEffect.mockClear()
+    mockUseRef.mockClear()
+    mockUseRef
+      .mockImplementationOnce((init: any) => ({ current: init }))
+      .mockImplementationOnce((init: any) => ({ current: init }))
+      .mockImplementationOnce(() => pickerRef)
+
+    ;(Picker as any)({
+      mode: PickerMode.MULTI_SELECTOR,
+      value: [0],
+      range: nextRange,
+      'range-key': 'label',
+      children: 'Select'
+    }, null)
+
+    expect(mockUpdateRange).toHaveBeenCalledWith(nextRange, 'label')
+    expect(mockUseEffect).toHaveBeenCalledWith(
+      expect.any(Function),
+      [JSON.stringify(nextRange), 'label', PickerMode.MULTI_SELECTOR]
+    )
+  })
+
+  test('formats an updated multi-selector range with the provided range key', () => {
+    const PickerMultiSelector = jest.requireActual(
+      '../../../lib/runtime/components/react/mpx-picker/multiSelector'
+    ).default
+    let handler: any
+    mockUseImperativeHandle.mockImplementationOnce((_ref, createHandle) => {
+      handler = createHandle()
+    })
+    ;(PickerMultiSelector as any)({
+      mode: PickerMode.MULTI_SELECTOR,
+      value: [0],
+      range: [{ name: ['Old'] }],
+      'range-key': 'name'
+    }, null)
+    mockSetState.mockClear()
+
+    handler.updateRange([{ label: ['New'] }], 'label')
+
+    expect(mockSetState).toHaveBeenCalledWith([['New']])
   })
 
   test('defaults omitted selector range to empty array', () => {
