@@ -31,7 +31,7 @@ import {
 } from 'react-native'
 import { GestureDetector, Gesture, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
-import { warn } from '@mpxjs/utils'
+import { warn, hasOwn } from '@mpxjs/utils'
 
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -59,8 +59,6 @@ export interface SliderProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
 }
@@ -84,8 +82,6 @@ const Slider = forwardRef<
     name,
     style = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -128,8 +124,6 @@ const Slider = forwardRef<
     hasPositionFixed
   } = useTransformStyle(style, {
     enableVar,
-    externalVarContext,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
@@ -337,12 +331,20 @@ const Slider = forwardRef<
   const blockSizeNum = Math.max(12, Math.min(28, blockSize))
   const trackHeight = 4
 
-  const containerStyle: ViewStyle = extendObject({} as ViewStyle, {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    minHeight: Math.max(blockSizeNum + 8, 40),
-    paddingHorizontal: 14 // 固定内边距，不受 block-size 影响
-  }, normalStyle, layoutStyle)
+  // 用户传 padding shorthand 时跳过 paddingLeft/Right default,
+  // 避免 number 形式 padding:0 被 longhand default 反向覆盖
+  const containerStyle: ViewStyle = extendObject(
+    {} as ViewStyle,
+    {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      minHeight: Math.max(blockSizeNum + 8, 40)
+    },
+    hasOwn(style, 'padding') ? null : { paddingHorizontal: 14 },
+    hasOwn(style, 'margin') ? null : { marginHorizontal: 18, marginVertical: 10 },
+    normalStyle,
+    layoutStyle
+  )
 
   const trackStyle: ViewStyle = {
     flex: 1,
