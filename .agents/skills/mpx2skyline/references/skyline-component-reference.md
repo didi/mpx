@@ -7,7 +7,7 @@
 - [Skyline 不支持或不建议使用的组件](#Skyline-不支持或不建议使用的组件)
 - [WebView-only 属性、取值与行为](#webview-only-属性取值与行为)
 - [Skyline 必填属性与结构约束](#skyline-必填属性与结构约束)
-- [相对 WebView 的高频差异补充](#相对-webview-的高频差异补充)
+- [Skyline 相对 WebView 的高频差异补充](#Skyline-相对-webview-的高频差异补充)
 
 ## Skyline 不支持或不建议使用的组件
 
@@ -47,7 +47,7 @@
 | `navigator` | 只能嵌套 `text` 或纯文本 | 不能嵌套 `view` / `image` / 自定义组件 |
 | `text` | 只能嵌套 `text` | 图文混排使用 `span` |
 
-## 相对 WebView 的高频差异补充
+## Skyline 相对 WebView 的高频差异补充
 
 | 组件 | 差异 |
 | --- | --- |

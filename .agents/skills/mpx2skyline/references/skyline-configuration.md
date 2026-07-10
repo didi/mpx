@@ -6,7 +6,9 @@
 - [skyline 配置](#skyline-配置)
   - [三级配置层次](#三级配置层次)
   - [rendererOptions.skyline 配置项](#rendereroptionsskyline-配置项)
+  - [app.json 顶层配置](#appjson-顶层配置)
   - [其他配置项](#其他配置项)
+  - [适配参考](#适配参考)
 - [Worklet Babel 插件](#worklet-babel-插件)
 
 ---
@@ -29,7 +31,6 @@
 | 页面 | `页面.json` | 页面级配置/覆盖 | navigationStyle, disableScroll, renderer |
 | 工具 | `project.config.json` | 开发者工具调试 | setting.skylineRenderEnable |
 
-
 ### rendererOptions.skyline 配置项
 
 | 配置项 | 类型 | 默认值 | 推荐值 | 说明                                    |
@@ -43,12 +44,20 @@
 
 > 说明：前 5 项（`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`）是对齐 WebView 行为的**推荐补齐项**，适配时务必逐项核对。`disableABTest` 为**非必填**：仅在需要关闭 Skyline 灰度 AB 实验、强制全量走 Skyline 以排除实验态干扰时按需开启，常规适配可不配，不作为校验项。
 
+### app.json 顶层配置
+
+| 配置项 | 位置 | 类型 | 推荐值 / 示例 | 说明 |
+|--------|------|------|---------------|------|
+| `lazyCodeLoading` | `app.json` 顶层 | string | `"requiredComponents"` | 开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量 |
+| `convertRpxToVw` | `app.json` 顶层 | boolean | true | 基础库 3.3.0+；开启后将 `rpx` 单位转换为 `vw` 单位，用于修复部分 `rpx` 精度问题 |
+
 ### 其他配置项
 
 | 配置项 | 位置 | 类型 | 推荐值 / 示例 | 说明 |
 |--------|------|------|---------------|------|
-| `convertRpxToVw` | `app.json` 顶层 | boolean | true | 基础库 3.3.0+；开启后将 `rpx` 单位转换为 `vw` 单位，用于修复部分 `rpx` 精度问题 |
 | `backgroundColorContent` | 页面 json | HexColor | `"#00000000"` | Skyline 特有页面配置；设置页面容器背景色，支持 `#RRGGBBAA` 透明度格式，常用于自定义路由透明背景 |
+
+### 适配参考
 
 **项目配置 app.json 新增以下配置**
 
