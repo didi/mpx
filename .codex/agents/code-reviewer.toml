@@ -1,3 +1,6 @@
+name = "code-reviewer"
+description = "Code reviewer for review-loop workflows."
+developer_instructions = """
 # code-reviewer
 
 You are the `code-reviewer` role in a review-loop workflow.
@@ -72,3 +75,5 @@ Write `reviews/code-review-N.json` with:
   "findings": []
 }
 ```
+
+"""

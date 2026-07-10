@@ -38,6 +38,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const lengthValueRegExp = /^(-?(?:\d+(?:\.\d+)?|\.\d+)(?:rpx|px|%|vw|vh)?|hairlineWidth)$/
+const DEFAULT_FONT_SIZE = 16
 // transform: 'rotateX(45deg) ...' 单段拆出 fn 名与括号内值
 const transformFnRegExp = /([/\w]+)\((.+)\)/
 // boxShadow 子值识别 rpx 单位（仅 rpx 需要换算为 px，其它单位保留原样）
@@ -407,7 +408,7 @@ export function transformBoxSizing (style: Record<string, any> = {}) {
   }
 }
 
-export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffect?: (key: string, val: T[keyof T]) => void): {
+export function splitStyle<T extends Record<string, any>> (styleObj: T = {} as T, sideEffect?: (key: string, val: T[keyof T]) => void): {
   textStyle?: Partial<T>
   backgroundStyle?: Partial<T>
   innerStyle?: Partial<T>
@@ -449,7 +450,7 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffe
   return { textStyle, backgroundStyle, innerStyle }
 }
 
-export function splitProps<T extends Record<string, any>> (props: T): {
+export function splitProps<T extends Record<string, any>> (props: T = {} as T): {
   textProps?: Partial<T>
   innerProps?: Partial<T>
 } {
@@ -566,7 +567,7 @@ function resolvePercent (value: string | number | undefined, key: string, percen
   let base
   let reason
   if (key === 'fontSize') {
-    base = 16
+    base = DEFAULT_FONT_SIZE
     reason = 'default-font-size'
   } else if (key === 'lineHeight') {
     base = resolvePercent(percentConfig.fontSize, 'fontSize', percentConfig)
@@ -1447,10 +1448,10 @@ function getTextPercentBase (currentFontSize?: string | number, parentTextStyle?
     ? currentFontSize
     : typeof parentTextStyle?.fontSize === 'number'
       ? parentTextStyle.fontSize
-      : 16
+      : DEFAULT_FONT_SIZE
 }
 
-export function resolveTextPercentStyle<T extends TextStyle | undefined> (
+export function resolveTextFontSizePercentStyle<T extends TextStyle | undefined> (
   textStyle: T,
   parentTextStyle?: TextStyle
 ): T {
@@ -1460,6 +1461,15 @@ export function resolveTextPercentStyle<T extends TextStyle | undefined> (
     const base = getTextPercentBase(undefined, parentTextStyle)
     textStyle.fontSize = parseFloat(textStyle.fontSize) / 100 * base
   }
+
+  return textStyle
+}
+
+export function resolveTextLineHeightPercentStyle<T extends TextStyle | undefined> (
+  textStyle: T,
+  parentTextStyle?: TextStyle
+): T {
+  if (!textStyle) return textStyle
 
   if (typeof textStyle.lineHeight === 'string' && percentRegExp.test(textStyle.lineHeight)) {
     const base = getTextPercentBase(textStyle.fontSize, parentTextStyle)
@@ -1547,7 +1557,7 @@ export function useTextPassThrough (
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const valueRef = useRef<TextPassThroughContextValue | null>(null)
 
-  const resolvedTextStyle = resolveTextPercentStyle(textStyle, parent?.textStyle)
+  const resolvedTextStyle = resolveTextFontSizePercentStyle(textStyle, parent?.textStyle)
   const nextTextStyle = resolvedTextStyle
     ? extendObject({}, parent?.textStyle, resolvedTextStyle)
     : parent?.textStyle
