@@ -20,6 +20,8 @@ const { capitalToHyphen } = require('../utils/string')
 const { isNativeMiniTag } = require('../utils/dom-tag-config')
 const { offsetToLoc } = require('../utils/source-location')
 
+const MPX_HOST_REF = '__mpxHost'
+
 const no = function () {
   return false
 }
@@ -2816,6 +2818,10 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'ishost',
             value: '{{true}}'
+          },
+          {
+            name: config[mode].directive.ref,
+            value: MPX_HOST_REF
           }
         ])
         processElement(rootView, rootView, options, meta)
