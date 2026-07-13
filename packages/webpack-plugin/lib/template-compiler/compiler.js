@@ -20,6 +20,8 @@ const { capitalToHyphen } = require('../utils/string')
 const { isNativeMiniTag } = require('../utils/dom-tag-config')
 const { offsetToLoc } = require('../utils/source-location')
 
+const MPX_HOST_REF = '__mpxHost'
+
 const no = function () {
   return false
 }
@@ -851,9 +853,13 @@ function parse (template, options) {
   })
 
   if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
+    // usingComponents 与 tagNames 均为 rulesRunner 处理后的名字（capitalToHyphen / mpx-com- 前缀已对齐），
+    // 反向排除 globalComponents 以避免对仅在 app 注册的组件误报「未使用」
+    const globalComponents = options.globalComponents || []
+    const componentPlaceholder = options.componentPlaceholder || []
     const arr = []
     usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
+      if (!tagNames.has(item) && !globalComponents.includes(item) && !componentPlaceholder.includes(item)) {
         arr.push(item)
       }
     })
@@ -2027,17 +2033,23 @@ const spreadREG = /\{\s*\.\.\.\s*([^,{]+?)\s*\}/g
 
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    const isTemplateData = el.tag === 'template' && attr.name === 'data'
+    const isTemplateData = el.tag === 'template' && attr.name === 'data' && attr.value
     const needWrap = isTemplateData && mode !== 'swan'
     let value = needWrap ? `{${attr.value}}` : attr.value
 
-    // 修复React Native环境下属性值中插值表达式带空格的问题
-    if (isReact(mode) && typeof value === 'string') {
-      // 检查是否为带空格的插值表达式
-      const trimmedValue = value.trim()
-      if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
-        // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
-        value = trimmedValue
+    if (isReact(mode)) {
+      // 修复React Native环境下属性值中插值表达式带空格的问题
+      if (typeof value === 'string') {
+        // 检查是否为带空格的插值表达式
+        const trimmedValue = value.trim()
+        if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
+          // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
+          value = trimmedValue
+        }
+      }
+      if (value === undefined) {
+        value = '{{true}}'
+        modifyAttr(el, attr.name, value)
       }
     }
 
@@ -2647,7 +2659,7 @@ function processTemplateImport (el, meta) {
 function processTemplateTranspile (el, meta) {
   if (processTemplateImport(el, meta)) return
 
-  if (el.tag !== 'template') return
+  if (el.tag !== 'template' || el.isBlock) return
 
   const is = getAndRemoveAttr(el, 'is').val
   if (is) {
@@ -2809,6 +2821,10 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'ishost',
             value: '{{true}}'
+          },
+          {
+            name: config[mode].directive.ref,
+            value: MPX_HOST_REF
           }
         ])
         processElement(rootView, rootView, options, meta)
