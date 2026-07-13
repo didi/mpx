@@ -1,0 +1,23 @@
+{
+  "skill_name": "review-loop",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "使用 review-loop 工作流实现一个小的 bugfix，先产出方案并 review，等我确认后再写代码。",
+      "expected_output": "Creates a review-loop workspace, initializes state.json with maxRounds=3, enters plan loop, and waits for user confirmation before code loop.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "使用 review-loop 工作流实现需求，最多 review 5 轮。",
+      "expected_output": "Initializes state.json with maxRounds=5 and uses that value to stop plan/code loops.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "继续上次中断的 review-loop 任务。",
+      "expected_output": "Runs recoverability/state checks, reads state.json, and resumes from the recorded phase instead of starting over.",
+      "files": []
+    }
+  ]
+}

@@ -3,16 +3,14 @@ import { LayoutChangeEvent } from 'react-native'
 import Reanimated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
 import { extendObject } from '../utils'
 import { createFaces } from './pickerViewFaces'
-import { usePickerViewColumnAnimationContext, usePickerViewStyleContext } from '../mpx-picker-view/pickerVIewContext'
+import { usePickerViewColumnAnimationContext } from '../mpx-picker-view/pickerVIewContext'
 
 interface PickerColumnItemProps {
   item: React.ReactElement
   index: number
   itemHeight: number
   itemWidth?: number | '100%'
-  textStyle: Record<string, any>
   visibleCount: number
-  textProps?: any
   onItemLayout?: (e: LayoutChangeEvent) => void
 }
 
@@ -21,12 +19,9 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   index,
   itemHeight,
   itemWidth = '100%',
-  textStyle,
-  textProps,
   visibleCount,
   onItemLayout
 }) => {
-  const textStyleFromAncestor = usePickerViewStyleContext()
   const offsetYShared = usePickerViewColumnAnimationContext()
   const facesShared = useMemo(() => createFaces(itemHeight, visibleCount), [itemHeight, visibleCount])
 
@@ -48,12 +43,9 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
     {
       style: extendObject(
         { height: itemHeight, width: '100%' },
-        textStyleFromAncestor,
-        textStyle,
         item.props.style
       )
     },
-    textProps,
     restProps
   )
   const realItem = React.cloneElement(item, itemProps)
