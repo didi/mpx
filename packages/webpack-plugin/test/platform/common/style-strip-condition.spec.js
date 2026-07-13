@@ -261,7 +261,7 @@ describe('strip-conditional unit tests', () => {
         expect(getAfterLine(result)).toBe(getAfterLine(input))
       })
 
-      it('should use removable comment placeholders without blank lines', () => {
+      it('should use indented removable comment placeholders for stripped content', () => {
         const input = [
           '.before',
           '  color gray',
@@ -274,7 +274,8 @@ describe('strip-conditional unit tests', () => {
         expect(result.split('\n').length).toBe(input.split('\n').length)
         expect(result).not.toContain('color blue')
         expect(result).toContain(`  /* ${STYLE_PAD_PLACEHOLDER} */`)
-        expect(result.split('\n').some(line => line === '')).toBe(false)
+        // 占位注释保留原始缩进，绝不出现在 col 0，否则会破坏 stylus / sass 的缩进结构
+        expect(result.split('\n').some(line => line.startsWith(`/* ${STYLE_PAD_PLACEHOLDER}`))).toBe(false)
       })
 
       it('should remove placeholder comments in postcss output', async () => {

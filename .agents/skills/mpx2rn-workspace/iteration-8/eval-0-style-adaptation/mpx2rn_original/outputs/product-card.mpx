@@ -14,12 +14,12 @@
       <!-- 文本溢出：RN 平台使用 numberOfLines 属性条件编译等效实现 -->
       <text class="card-desc" numberOfLines@ios|android|harmony="{{1}}">{{info.description}}</text>
       <view class="card-tags">
-        <!-- wx:class key 改为 camelCase 无引号形式；tag-highlight 交集选择器改为单类 tagHighlight -->
+        <!-- tag-highlight 交集选择器改为单类 tag-highlight，模板中通过 wx:class 绑定；wx:class 的 key 是类名，保持 kebab-case 原样（无需 camelCase 转换） -->
         <text
           class="tag"
           wx:for="{{info.tags}}"
           wx:key="*this"
-          wx:class="{{ {tagHighlight: item === info.tags[0]} }}"
+          wx:class="{{ {'tag-highlight': item === info.tags[0]} }}"
         >{{item}}</text>
       </view>
     </view>
@@ -137,8 +137,8 @@ createComponent({
   margin-bottom: 8rpx;
 }
 
-/* 交集选择器 .tag.tag-highlight → 单类 .tagHighlight，模板中通过 wx:class 绑定 */
-.tagHighlight {
+/* 交集选择器 .tag.tag-highlight → 单类 .tag-highlight，模板中通过 wx:class 绑定 */
+.tag-highlight {
   background: rgba(255, 77, 79, 0.08);
   color: #ff4d4f;
 }

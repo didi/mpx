@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/size-report",
-  "version": "2.10.22",
+  "version": "2.11.0",
   "description": "mpx size report plugin",
   "main": "src/index.js",
   "scripts": {
@@ -39,17 +39,6 @@
   },
   "peerDependencies": {
     "@mpxjs/webpack-plugin": "*"
-  },
-  "devDependencies": {
-    "babel-eslint": "^10.1.0",
-    "eslint": "^5.10.0",
-    "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-html": "^5.0.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jest": "^22.5.1",
-    "eslint-plugin-node": "^8.0.0",
-    "eslint-plugin-promise": "^4.0.1",
-    "eslint-plugin-standard": "^5.0.0"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }
