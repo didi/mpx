@@ -1,4 +1,4 @@
-# 跨端输出 Web 环境 API 参考
+# Mpx2Web 环境 API 参考
 
 ## 目录
 
@@ -40,15 +40,12 @@
   - [createVideoContext](#createvideocontext)
 - [位置](#位置)
 - [设备](#设备)
-- [WXML](#wxml)
-  - [createSelectorQuery](#createselectorquery)
-  - [createIntersectionObserver](#createintersectionobserver)
 
 ---
 
 ## 使用说明
 
-`@mpxjs/api-proxy` 提供跨端环境 API 抹平。输出 Web 时，在应用入口执行 `mpx.use(apiProxy, options)`，即可通过 `mpx.xxx` 使用本参考中列出的 API。
+输出 Web 时，在应用入口执行 `mpx.use(apiProxy, options)`，即可通过 `mpx.xxx` 使用本参考中列出的 Web 环境 API。
 
 ```js
 import mpx from '@mpxjs/core'
@@ -87,7 +84,7 @@ mpx.use(apiProxy, {
 
 ### 支持范围
 
-本文展开说明的 API 可在 Web 使用。未在本文列出的 `mpx.xxx` API，默认按 Web 不支持处理；如能力存疑，应扫描 `@mpxjs/api-proxy` Web 侧源码确认。需要时通过条件编译提供 Web 替代方案，或使用 `custom.web` 扩展。
+本文展开说明的 API 可在 Web 使用。未在本文列出的 `mpx.xxx` API，默认按 Web 不支持处理；如能力存疑，应扫描 `@mpxjs/api-proxy` Web 侧源码确认。需要时提供 Web-only 替代方案，或使用 `custom.web` 扩展。
 
 ### 浏览器与 SSR
 
@@ -131,7 +128,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-异步获取设备概要与当前窗口尺寸。Web 可获得的信息少于小程序宿主，品牌、型号和系统版本为浏览器环境推断值，不应作为可靠的设备识别依据。
+异步获取设备概要与当前窗口尺寸。Web 可获得的信息受浏览器限制，品牌、型号和系统版本为浏览器环境推断值，不应作为可靠的设备识别依据。
 
 #### 入参
 
@@ -258,7 +255,7 @@ mpx.use(apiProxy, {
 
 监听应用进入**前台**（展示态；监听 API，非 `success` / `fail` 模型）。应用首次创建以及页面由隐藏状态恢复可见时触发。
 
-Web 不区分小程序意义上的冷启动与热启动。首次触发时回调包含当前页面的启动参数；页面从隐藏状态恢复时，回调参数为空对象。
+Web 不区分宿主应用意义上的冷启动与热启动。首次触发时回调包含当前页面的启动参数；页面从隐藏状态恢复时，回调参数为空对象。
 
 #### 入参
 
@@ -435,7 +432,7 @@ Web 端回调不传参数，业务侧只应将其作为“页面进入隐藏态�
 
 ## 路由
 
-业务代码统一使用下列 Mpx 导航 API，不要直接引入 `vue-router` 或手写 Web 路由跳转。
+Web 业务代码优先使用下列 Mpx 导航 API，由 Mpx Web 运行时映射到 Web 路由。
 
 以下 API 只能在浏览器且 Mpx 路由实例已初始化后工作。路由与 SSR 相关配置见 [JSON 配置参考](./web-json-reference.md)。
 
@@ -452,7 +449,7 @@ Web 端回调不传参数，业务侧只应将其作为“页面进入隐藏态�
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `url` | `string` | 是 | 打开的页面路径。 |
-| `events` | `Object` | 否 | 页面间通信通道，与小程序一致。 |
+| `events` | `Object` | 否 | 页面间通信通道。 |
 
 #### 返回值
 
@@ -846,7 +843,7 @@ Web 不支持。
 
 #### 返回值
 
-返回 **`Animation`** 实例；链式方法与 `export()` 与小程序对齐，全集以实现为准。带 `rpx` 的动画配置应在客户端使用。
+返回 **`Animation`** 实例；链式方法与 `export()` 以 Web 实现为准。带 `rpx` 的动画配置应在客户端使用。
 
 ---
 
@@ -1201,30 +1198,8 @@ Web 下不提供 `horizontalAccuracy`、`verticalAccuracy`；`speed` 不建议�
 
 ### getNetworkType
 
-获取当前网络类型。浏览器无法识别时返回 `unknown`，枚举值不保证与小程序完全一致。
+获取当前网络类型。浏览器无法识别时返回 `unknown`。
 
 ### onNetworkStatusChange / offNetworkStatusChange
 
 监听或取消监听网络连接状态变化。不同浏览器能够提供的网络类型精度不同，无法识别时按未知网络处理。
-
----
-
-## WXML
-
-### createSelectorQuery
-
-创建 `SelectorQuery`，支持 ID、class、子元素、后代、跨组件后代和并集选择器。必须在节点挂载后调用，SSR 渲染阶段不可用。
-
----
-
-### createIntersectionObserver
-
-创建节点相交状态观察器。
-
-| 字段名 | 类型 | 说明 |
-| --- | --- | --- |
-| `thresholds` | `number[]` | 相交比例阈值，默认 `[0]`。 |
-| `initialRatio` | `number` | 初始比例过滤依据，默认 `0`。 |
-| `observeAll` | `boolean` | 为 `true` 时观察匹配选择器的全部节点。 |
-
-旧浏览器可能不支持该能力，需要按目标浏览器范围提供降级方案。
