@@ -86,3 +86,10 @@ export function expectPortalHostRendered (tree: any, testID: string) {
   expect(hasTestID(host, testID)).toBe(false)
   expect(hasTestID(portalChildren, testID)).toBe(true)
 }
+
+export function expectPortalHostInline (tree: any, testID: string) {
+  expect(Array.isArray(tree)).toBe(true)
+  const [host, ...portalChildren] = tree
+  expect(hasTestID(host, testID)).toBe(true)
+  expect(hasTestID(portalChildren, testID)).toBe(false)
+}

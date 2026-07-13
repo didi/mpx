@@ -2,6 +2,7 @@
 import React from 'react'
 import { act, fireEvent, render } from '@testing-library/react-native'
 import { Keyboard, Text } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { getViews, resetMpxRuntimeGlobals } from './rn-component-test-utils'
 
 const MpxKeyboardAvoidingView = require('../../../lib/runtime/components/react/mpx-keyboard-avoiding-view').default
@@ -51,9 +52,13 @@ describe('MpxKeyboardAvoidingView', () => {
       jest.advanceTimersByTime(40)
     })
     expect(keyboardAvoid.current.onKeyboardShow).toHaveBeenCalled()
+    expect(measure).toHaveBeenCalled()
+    expect(withTiming).toHaveBeenNthCalledWith(1, 180, expect.objectContaining({ duration: 250 }), expect.any(Function))
     act(() => {
       hide()
     })
+    expect(withTiming).toHaveBeenNthCalledWith(2, 0, expect.objectContaining({ duration: 250 }))
+    expect(blur).toHaveBeenCalled()
 
     ;(Keyboard.isVisible as jest.Mock).mockReturnValueOnce(true)
     fireEvent(getViews()[0], 'touchEnd', { nativeEvent: {} })

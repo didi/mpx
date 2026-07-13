@@ -89,10 +89,12 @@ describe('MpxCamera', () => {
     ])
 
     expect(bindinitdone).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'initdone',
       detail: { maxZoom: 8 }
     }))
-    expect(bindstop).toHaveBeenCalled()
+    expect(bindstop).toHaveBeenCalledWith(expect.objectContaining({ type: 'stop' }))
     expect(bindscancode).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'scancode',
       detail: expect.objectContaining({
         result: 'https://example.com',
         type: 'QR_CODE',
@@ -292,11 +294,11 @@ describe('MpxCamera', () => {
     expect(noDevice.queryByTestId('mock-camera')).toBeNull()
     noDevice.unmount()
 
-    render(<MpxCamera />)
+    const noRoute = render(<MpxCamera />)
     await act(async () => {
       await Promise.resolve()
     })
-    expect(screen.getAllByTestId('mock-camera').length).toBeGreaterThan(0)
+    expect(noRoute.getByTestId('mock-camera')).toBeTruthy()
     jest.useRealTimers()
   })
 })

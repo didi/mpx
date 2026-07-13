@@ -1,3 +1,5 @@
+/** @jest-environment node */
+
 const postcss = require('postcss')
 const stylus = require('stylus')
 const { SourceMapConsumer } = require('source-map')

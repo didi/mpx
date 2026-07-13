@@ -20,7 +20,7 @@ interface CameraProps {
   flash?: 'auto' | 'on' | 'off'
   'frame-size'?: 'small' | 'medium' | 'large'
   style?: Record<string, any>
-  bindstop?: () => void
+  bindstop?: (event: Record<string, any>) => void
   binderror?: (error: { message: string }) => void
   bindinitdone?: (result: { type: string, data: string }) => void
   bindscancode?: (result: { type: string, data: string }) => void
@@ -163,7 +163,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   }, [bindinitdone, maxZoom])
 
   const onStopped = useCallback(() => {
-    bindstop && bindstop()
+    bindstop && bindstop(getCustomEvent('stop', {}, { layoutRef }))
   }, [bindstop])
 
   const camera: CameraRef = useMemo(() => ({

@@ -69,10 +69,18 @@ describe('MpxMovableView', () => {
       gesture.onEndCallback({ velocityX: 300, velocityY: 0 })
     })
 
-    expect(catchtouchstart).toHaveBeenCalled()
-    expect(catchtouchmove).toHaveBeenCalled()
-    expect(catchtouchend).toHaveBeenCalled()
-    expect(bindchange).toHaveBeenCalled()
+    expect(catchtouchstart).toHaveBeenCalledWith(expect.objectContaining({
+      currentTarget: expect.objectContaining({ id: 'bounded' })
+    }))
+    expect(catchtouchmove).toHaveBeenCalledWith(expect.objectContaining({
+      changedTouches: [expect.objectContaining({ pageX: 80, pageY: 5 })]
+    }))
+    expect(catchtouchend).toHaveBeenCalledWith(expect.objectContaining({ touches: [] }))
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'change',
+      detail: expect.objectContaining({ source: 'touch-out-of-bounds' }),
+      target: expect.objectContaining({ id: 'bounded' })
+    }))
     expect(gesture.activeOffsetX).toHaveBeenCalledWith([-5, 5])
     expect(gesture.simultaneousWithExternalGesture).toHaveBeenCalled()
     expect(gesture.requireExternalGestureToFail).toHaveBeenCalled()
@@ -101,7 +109,9 @@ describe('MpxMovableView', () => {
       gesture.onTouchesMoveCallback({ changedTouches: [{ x: 0, y: 30, absoluteX: 0, absoluteY: 30 }], allTouches: [{ absoluteX: 0, absoluteY: 30 }] })
       gesture.onUpdateCallback({ translationX: 0, translationY: 30 })
     })
-    expect(bindvtouchmove).toHaveBeenCalled()
+    expect(bindvtouchmove).toHaveBeenCalledWith(expect.objectContaining({
+      changedTouches: [expect.objectContaining({ pageX: 0, pageY: 30 })]
+    }))
     expect(gesture.activeOffsetY).toHaveBeenCalledWith([-5, 5])
 
     rerender(
@@ -188,7 +198,11 @@ describe('MpxMovableView', () => {
       </RouteContext.Provider>
     )
 
-    rerender(
+    expect(bindchange).toHaveBeenLastCalledWith(expect.objectContaining({
+      detail: { x: 40, y: 30, source: '' }
+    }))
+
+    const renderSmallArea = () => (
       <RouteContext.Provider value={{ pageId: 1, navigation: { layout: { top: 0 } } }}>
         <MpxMovableArea style={{ width: 20, height: 20 }}>
           <MpxMovableView
@@ -205,9 +219,13 @@ describe('MpxMovableView', () => {
       </RouteContext.Provider>
     )
 
-    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
-      detail: expect.objectContaining({ source: '' })
-    }))
+    rerender(renderSmallArea())
+    // Re-render so the mock animated style reads the offsets updated by the area-size effect.
+    rerender(renderSmallArea())
+
+    expect(screen.getByTestId('percent-movable').props.style[1]).toEqual({
+      transform: [{ translateX: 0 }, { translateY: 0 }]
+    })
   })
 
   it('handles negative drag, vertical catch movement and out-of-bounds bounce', () => {
@@ -253,6 +271,7 @@ describe('MpxMovableView', () => {
     expect(catchtouchmove).toHaveBeenCalled()
 
     firstRender.unmount()
+    bindchange.mockClear()
     renderWithRoute(
       <MpxMovableArea style={{ width: 100, height: 100 }}>
         <MpxMovableView
@@ -292,21 +311,33 @@ describe('MpxMovableView', () => {
       gesture.onEndCallback({ velocityX: 0, velocityY: 0 })
     })
 
-    expect(bindchange).toHaveBeenCalled()
+    expect(bindchange).toHaveBeenLastCalledWith(expect.objectContaining({
+      type: 'change',
+      detail: {
+        x: 0,
+        y: 0,
+        source: 'touch-out-of-bounds'
+      }
+    }))
   })
 
   it('handles vertical inertia, lower friction clamp and gesture dependency changes', () => {
     const bindchange = jest.fn()
     const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { withTiming } = require('react-native-reanimated')
     const waitFor = { current: { name: 'wait-a' } }
     const nextWaitFor = { current: { name: 'wait-b' } }
     const { rerender } = renderWithRoute(
       <MpxMovableArea style={{ width: 100, height: 100 }}>
         <MpxMovableView
+          testID="inertia-movable"
           direction="all"
+          style={{ width: 50, height: 50 }}
           inertia={true}
+          friction={0}
           x={10}
-          y={10}
+          y={40}
+          changeThrottleTime={0}
           wait-for={[waitFor] as any}
           bindchange={bindchange}
         >
@@ -315,12 +346,38 @@ describe('MpxMovableView', () => {
       </MpxMovableArea>
     )
 
-    let gesture = __getLastPanGesture()
-    act(() => {
-      gesture.onStartCallback()
-      gesture.onEndCallback({ velocityX: 0, velocityY: -10000 })
+    fireEvent(screen.getByTestId('inertia-movable'), 'layout', {
+      nativeEvent: { layout: { width: 50, height: 50 } }
     })
-    expect(bindchange).toHaveBeenCalled()
+    let gesture = __getLastPanGesture()
+    expect(gesture.requireExternalGestureToFail).toHaveBeenCalledWith(waitFor)
+    const animationCallbacks: Array<() => void> = []
+    withTiming
+      .mockImplementationOnce((toValue: number, config: unknown, callback: (finished: boolean) => void) => {
+        // eslint-disable-next-line node/no-callback-literal
+        animationCallbacks.push(() => callback(true))
+        return toValue
+      })
+      .mockImplementationOnce((toValue: number, config: unknown, callback: (finished: boolean) => void) => {
+        // eslint-disable-next-line node/no-callback-literal
+        animationCallbacks.push(() => callback(true))
+        return toValue
+      })
+    act(() => {
+      gesture.onTouchesDownCallback({ changedTouches: [{ x: 0, y: 0 }] })
+      gesture.onStartCallback()
+      gesture.onTouchesMoveCallback({ changedTouches: [{ x: 0, y: 1 }] })
+      gesture.onUpdateCallback({ translationX: 0, translationY: 0 })
+      bindchange.mockClear()
+      withTiming.mockClear()
+      gesture.onEndCallback({ velocityX: 0, velocityY: 10000 })
+      animationCallbacks.forEach(callback => callback())
+    })
+    expect(withTiming).toHaveBeenNthCalledWith(1, 10, expect.objectContaining({ duration: 200 }), expect.any(Function))
+    expect(withTiming).toHaveBeenNthCalledWith(2, 50, expect.objectContaining({ duration: 200 }), expect.any(Function))
+    expect(bindchange).toHaveBeenLastCalledWith(expect.objectContaining({
+      detail: { x: 10, y: 50, source: 'friction' }
+    }))
 
     rerender(
       <RouteContext.Provider value={{ pageId: 1, navigation: {} }}>
@@ -329,7 +386,7 @@ describe('MpxMovableView', () => {
             direction="all"
             inertia={true}
             x={10}
-            y={10}
+            y={40}
             wait-for={[nextWaitFor] as any}
             bindchange={bindchange}
           >
@@ -339,6 +396,6 @@ describe('MpxMovableView', () => {
       </RouteContext.Provider>
     )
     gesture = __getLastPanGesture()
-    expect(gesture.requireExternalGestureToFail).toHaveBeenCalled()
+    expect(gesture.requireExternalGestureToFail).toHaveBeenCalledWith(nextWaitFor)
   })
 })

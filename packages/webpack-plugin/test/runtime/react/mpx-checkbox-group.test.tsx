@@ -71,6 +71,7 @@ describe('MpxCheckboxGroup', () => {
       fireTap(screen.getByTestId('checkbox-apple'))
     })
     expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'change',
       detail: {
         value: expect.arrayContaining(['apple', 'banana'])
       }

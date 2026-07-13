@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import React from 'react'
-import { act } from '@testing-library/react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
 import { renderWithRoute, resetMpxRuntimeGlobals } from './rn-component-test-utils'
 
@@ -23,10 +23,13 @@ describe('MpxMovableArea', () => {
     renderWithRoute(
       <MpxMovableArea style={{ width: 300, height: 200 }}>
         <MpxMovableView
+          testID="area-movable"
           id="mv"
           direction="all"
+          style={{ width: 50, height: 50 }}
           x={10}
           y={20}
+          changeThrottleTime={0}
           bindchange={bindchange}
           bindtouchstart={bindtouchstart}
           bindtouchmove={bindtouchmove}
@@ -38,6 +41,10 @@ describe('MpxMovableArea', () => {
       { layout: { top: 5 } }
     )
 
+    fireEvent(screen.getByTestId('area-movable'), 'layout', {
+      nativeEvent: { layout: { width: 50, height: 50 } }
+    })
+
     const gesture = __getLastPanGesture()
     const touchEvent: any = {
       changedTouches: [{ x: 0, y: 0, absoluteX: 0, absoluteY: 10 }],
@@ -47,17 +54,28 @@ describe('MpxMovableArea', () => {
       gesture.onTouchesDownCallback(touchEvent)
       gesture.onStartCallback()
       gesture.onTouchesMoveCallback({
-        changedTouches: [{ x: 40, y: 10, absoluteX: 40, absoluteY: 20 }],
-        allTouches: [{ x: 40, y: 10, absoluteX: 40, absoluteY: 20 }]
+        changedTouches: [{ x: 400, y: 300, absoluteX: 400, absoluteY: 310 }],
+        allTouches: [{ x: 400, y: 300, absoluteX: 400, absoluteY: 310 }]
       })
-      gesture.onUpdateCallback({ translationX: 40, translationY: 10 })
+      gesture.onUpdateCallback({ translationX: 400, translationY: 300 })
       gesture.onTouchesUpCallback(touchEvent)
       gesture.onEndCallback({ velocityX: 100, velocityY: 60 })
     })
 
-    expect(bindtouchstart).toHaveBeenCalled()
-    expect(bindtouchmove).toHaveBeenCalled()
-    expect(bindtouchend).toHaveBeenCalled()
-    expect(bindchange).toHaveBeenCalled()
+    expect(bindtouchstart).toHaveBeenCalledWith(expect.objectContaining({
+      currentTarget: expect.objectContaining({ id: 'mv' })
+    }))
+    expect(bindtouchmove).toHaveBeenCalledWith(expect.objectContaining({
+      changedTouches: [expect.objectContaining({ pageX: 400, pageY: 305 })]
+    }))
+    expect(bindtouchend).toHaveBeenCalledWith(expect.objectContaining({
+      touches: [],
+      changedTouches: [expect.objectContaining({ pageX: 0, pageY: 5 })]
+    }))
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'change',
+      detail: { x: 250, y: 150, source: 'touch' },
+      target: expect.objectContaining({ id: 'mv' })
+    }))
   })
 })

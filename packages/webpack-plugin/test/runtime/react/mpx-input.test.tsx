@@ -66,7 +66,7 @@ describe('MpxInput', () => {
     { focus: false, 'auto-focus': true },
     { focus: true, 'auto-focus': true }
   ])('should handle property combinations: %p', (props) => {
-    const { rerender } = render(
+    render(
       <MpxInput
         testID="combo-input"
         value="test"
@@ -76,13 +76,10 @@ describe('MpxInput', () => {
     )
 
     const inputElement = screen.getByTestId('combo-input')
-    expect(inputElement).toBeTruthy()
-
-    // 验证关键属性映射
-    if (props.password) expect(inputElement.props.secureTextEntry).toBe(true)
-    if (props.disabled) expect(inputElement.props.editable).toBe(false)
-    if (props.multiline) expect(inputElement.props.multiline).toBe(true)
-    if (props.focus || props['auto-focus']) expect(inputElement.props.autoFocus).toBe(true)
+    expect(inputElement.props.secureTextEntry).toBe(!!props.password)
+    expect(inputElement.props.editable).toBe(!props.disabled)
+    expect(inputElement.props.multiline).toBe(!!props.multiline)
+    expect(inputElement.props.autoFocus).toBe(!!(props.focus || props['auto-focus']))
   })
 
   // 事件处理综合测试
@@ -115,12 +112,21 @@ describe('MpxInput', () => {
     fireEvent(inputElement, 'submitEditing')
     fireEvent(inputElement, 'selectionChange', { nativeEvent: { selection: { start: 4, end: 4 } } })
 
-    // 验证所有事件被调用
-    expect(mockBindinput).toHaveBeenCalled()
-    expect(mockBindfocus).toHaveBeenCalled()
-    expect(mockBindblur).toHaveBeenCalled()
-    expect(mockBindconfirm).toHaveBeenCalled()
-    expect(mockBindselectionchange).toHaveBeenCalled()
+    expect(mockBindinput).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { value: 'new text', cursor: 8 }
+    }))
+    expect(mockBindfocus).toHaveBeenCalledWith(expect.objectContaining({
+      detail: expect.objectContaining({ value: 'new text' })
+    }))
+    expect(mockBindblur).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { value: 'new text', cursor: 8 }
+    }))
+    expect(mockBindconfirm).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { value: 'new text' }
+    }))
+    expect(mockBindselectionchange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { selectionStart: 4, selectionEnd: 4 }
+    }))
   })
 
   // 表单集成测试
@@ -151,7 +157,8 @@ describe('MpxInput', () => {
     act(() => {
       formField.resetValue()
     })
-    expect(typeof formField.resetValue).toBe('function')
+    expect(mockFormValuesMap.get('username').getValue()).toBe('')
+    expect(screen.getByTestId('form-input').props.value).toBe('')
 
     unmount()
     expect(mockFormValuesMap.has('username')).toBe(false) // 验证清理
@@ -190,11 +197,11 @@ describe('MpxInput', () => {
   // 值解析边界测试
   it('should handle value parsing edge cases', () => {
     const testCases = [
-      { value: undefined, maxlength: 140, expected: '' },
-      { value: 'very long text', maxlength: 5, expected: 'very ' },
+      { value: undefined, maxlength: 140, expected: '', expectedMaxLength: 140 },
+      { value: 'very long text', maxlength: 5, expected: 'very ', expectedMaxLength: 5 },
       { value: 'short', maxlength: -1, expected: 'short', expectedMaxLength: undefined },
-      { value: 12345, maxlength: 140, expected: '12345' },
-      { value: 'any text', maxlength: 0, expected: '' }
+      { value: 12345, maxlength: 140, expected: '12345', expectedMaxLength: 140 },
+      { value: 'any text', maxlength: 0, expected: '', expectedMaxLength: 0 }
     ]
 
     testCases.forEach(({ value, maxlength, expected, expectedMaxLength }, index) => {
@@ -209,9 +216,7 @@ describe('MpxInput', () => {
 
       const inputElement = screen.getByTestId('parse-input')
       expect(inputElement.props.value).toBe(expected)
-      if (expectedMaxLength !== undefined) {
-        expect(inputElement.props.maxLength).toBe(expectedMaxLength)
-      }
+      expect(inputElement.props.maxLength).toBe(expectedMaxLength)
     })
   })
 
@@ -351,7 +356,14 @@ describe('MpxInput', () => {
       nativeEvent: { contentSize: { width: 200, height: 120 } }
     })
 
-    expect(mockBindlinechange).toHaveBeenCalled()
+    expect(mockBindlinechange).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      type: 'linechange',
+      detail: { height: 60, lineHeight: 60, lineCount: 1 }
+    }))
+    expect(mockBindlinechange).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      type: 'linechange',
+      detail: { height: 120, lineHeight: 60, lineCount: 2 }
+    }))
   })
 
   // Portal 渲染测试
@@ -468,7 +480,7 @@ describe('MpxInput', () => {
       nativeEvent: { text: 'changed', selection: { start: 7, end: 7 } }
     })
 
-    expect(noBindinputElement).toBeTruthy()
+    expect(screen.getByTestId('no-bindinput').props.value).toBe('changed')
   })
 
   // 精简的分支覆盖率补充测试

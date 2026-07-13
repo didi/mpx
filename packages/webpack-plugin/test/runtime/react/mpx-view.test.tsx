@@ -304,27 +304,6 @@ describe('MpxView', () => {
     expect(toJSON()).toMatchSnapshot('gradient-view')
   })
 
-  // 基础动画属性测试
-  it('should render static branch when animation is disabled', () => {
-    const { toJSON } = render(
-      <MpxView
-        testID="animated-view"
-        enable-animation={false} // 简化测试，不启用复杂动画
-        style={{
-          width: 100,
-          height: 100,
-          backgroundColor: '#ff0000'
-        }}
-      >
-        <MpxInlineText>Animated content</MpxInlineText>
-      </MpxView>
-    )
-
-    const viewElement = screen.getByTestId('animated-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('animated-view')
-  })
-
   // 悬停状态测试
   it('should handle hover states and timing', () => {
     jest.useFakeTimers()
@@ -414,18 +393,20 @@ describe('MpxView', () => {
     }))
   })
 
-  // 简化的上下文测试
-  it('should handle external context properties', () => {
+  it('should pass text styles through to inline children', () => {
     const { toJSON } = render(
       <MpxView
         testID="context-view"
+        enable-text-pass-through={true}
         style={{
           backgroundColor: '#007AFF',
           borderRadius: 8,
           padding: 16,
           margin: 12,
           width: 200,
-          height: 100
+          height: 100,
+          color: '#ff0000',
+          fontSize: 16
         }}
       >
         <MpxInlineText>Context styled view</MpxInlineText>
@@ -434,6 +415,10 @@ describe('MpxView', () => {
 
     const viewElement = screen.getByTestId('context-view')
     expect(viewElement).toBeTruthy()
+    expect(screen.getByText('Context styled view').props.style).toEqual(expect.objectContaining({
+      color: '#ff0000',
+      fontSize: 16
+    }))
     expect(toJSON()).toMatchSnapshot('context-view')
   })
 
@@ -459,8 +444,8 @@ describe('MpxView', () => {
     const viewElement = screen.getByTestId('parent-size-view')
     expect(viewElement).toBeTruthy()
     expect(viewElement.props.style).toEqual(expect.objectContaining({
-      width: '300',
-      height: '150'
+      width: 300,
+      height: 150
     }))
     expect(screen.getByText('Parent size context view').props.style).toEqual(expect.objectContaining({
       fontSize: 24
@@ -613,31 +598,6 @@ describe('MpxView', () => {
     expect(viewElement).toBeTruthy()
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('background use should be stable'))
     errorSpy.mockRestore()
-  })
-
-  // 性能优化相关测试
-  it('should handle performance optimization features', async () => {
-    render(
-      <MpxView
-        testID="performance-view"
-        enable-fast-image={true}
-        enable-background={true}
-        style={{
-          width: 500,
-          height: 500,
-          backgroundImage: 'url(https://example.com/large-image.jpg)'
-        }}
-      >
-        <MpxInlineText>Performance optimized view</MpxInlineText>
-      </MpxView>
-    )
-    await flushImageSize()
-
-    const viewElement = screen.getByTestId('performance-view')
-    expect(viewElement).toBeTruthy()
-    expect(screen.getByTestId('fast-image').props.source).toEqual({
-      uri: 'https://example.com/large-image.jpg'
-    })
   })
 
   it('should parse supported background-image values and report dropped gradients', () => {

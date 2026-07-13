@@ -2,6 +2,7 @@
 import React from 'react'
 import { act, render } from '@testing-library/react-native'
 import { Keyboard, Text } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 
 ;(global as any).__mpx_mode__ = 'android'
 
@@ -61,6 +62,10 @@ describe('MpxKeyboardAvoidingView android', () => {
       hide()
     })
     expect(keyboardAvoid.current.onKeyboardShow).toHaveBeenCalled()
+    expect(keyboardAvoid.current.ref.current.measure).toHaveBeenCalled()
+    expect(withTiming).toHaveBeenNthCalledWith(1, 20, expect.objectContaining({ duration: 300 }), expect.any(Function))
+    expect(withTiming).toHaveBeenNthCalledWith(2, 0, expect.objectContaining({ duration: 300 }))
+    expect(keyboardAvoid.current.ref.current.blur).toHaveBeenCalled()
   })
 
   it('falls back to manual offsets when native android avoiding is disabled', () => {
@@ -72,7 +77,7 @@ describe('MpxKeyboardAvoidingView android', () => {
           current: {
             measure: jest.fn((callback) => {
               // eslint-disable-next-line node/no-callback-literal
-              callback(0, 0, 100, 40, 0, 420)
+              callback(0, 0, 100, 40, 0, 620)
             }),
             isFocused: () => false,
             blur: jest.fn()
@@ -96,5 +101,7 @@ describe('MpxKeyboardAvoidingView android', () => {
       show({ endCoordinates: { height: 260, screenY: 500 } })
     })
     expect(keyboardAvoid.current.onKeyboardShow).toHaveBeenCalled()
+    expect(keyboardAvoid.current.ref.current.measure).toHaveBeenCalled()
+    expect(withTiming).toHaveBeenCalledWith(180, expect.objectContaining({ duration: 300 }), expect.any(Function))
   })
 })

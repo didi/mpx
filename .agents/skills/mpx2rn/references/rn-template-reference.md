@@ -927,7 +927,7 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | checkbox-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 checkbox 的 value 的数组 ] } ` |
+| bindchange | checkbox-group 中选中项发生改变时触发 change 事件，`event.type = 'change'`，`event.detail = { value: [选中的 checkbox 的 value 的数组] }` |
 
 ### radio
 
@@ -950,7 +950,7 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | radio-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 radio 的 value 的数组 ] }` |
+| bindchange | radio-group 中选中项发生改变时触发 change 事件，`event.type = 'change'`，`event.detail = { value: 选中的 radio 的 value }` |
 
 ### form
 
@@ -963,7 +963,7 @@ movable-view 的可移动区域。
 | 事件名 | 说明 |
 | --- | --- |
 | bindsubmit | 携带 form 中的数据触发 submit 事件，`event.detail = {value : {'name': 'value'} }` |
-| bindreset | 表单重置时会触发 reset 事件 |
+| bindreset | 表单重置时会触发 reset 事件，`event.type = 'reset'` |
 
 ### input
 
@@ -1124,7 +1124,7 @@ movable-view 的可移动区域。
 
 | 事件名     | 说明                                                   |
 | ---------- | ------------------------------------------------------ |
-| bindcancel | 取消选择时触发                                         |
+| bindcancel | 取消选择时触发 cancel 事件，`event.type = 'cancel'`    |
 | bindchange | value 改变时触发 change 事件，`event.detail = {value}` |
 
 #### 普通选择器：mode = selector
@@ -1314,7 +1314,7 @@ level 有效值：
 | 事件名 | 说明 |
 | --- | --- |
 | bindinitdone | 相机初始化完成时触发，`event.detail = { maxZoom }` |
-| bindstop | 摄像头在非正常终止时触发 |
+| bindstop | 摄像头在非正常终止时触发 stop 事件，`event.type = 'stop'` |
 | binderror | 相机发生错误时触发 |
 | bindscancode | 在 `scanCode` 模式下识别到二维码时触发，`event.detail = { result, type, scanArea }` |
 
@@ -1360,13 +1360,13 @@ level 有效值：
 | --- | --- |
 | bindplay | 当开始/继续播放时触发 play 事件 |
 | bindpause | 当暂停播放时触发 pause 事件 |
-| bindended | 当播放到末尾时触发 ended 事件 |
+| bindended | 当播放到末尾时触发 ended 事件，`event.type = 'ended'` |
 | bindtimeupdate | 播放进度变化时触发，`event.detail = {currentTime, duration}` |
 | bindfullscreenchange | 视频进入和退出全屏时触发，`event.detail = {fullScreen` } |
 | bindwaiting | 视频出现缓冲时触发 |
-| binderror | 视频播放出错时触发 |
+| binderror | 视频播放出错时触发 error 事件，`event.type = 'error'` |
 | bindloadedmetadata | 视频元数据加载完成时触发。`event.detail = {width, height, duration}` |
-| bindcontrolstoggle | 切换 controls 显示隐藏时触发。`event.detail = {show}` |
+| bindcontrolstoggle | 切换 controls 显示隐藏时触发 controlstoggle 事件，`event.type = 'controlstoggle'`，`event.detail = {show}` |
 | bindseekcomplete | seek 完成时触发 |
 
 #### 注意事项

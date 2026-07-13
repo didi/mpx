@@ -53,13 +53,16 @@ describe('MpxSwiper', () => {
     })
     expect(gesture.activeOffsetX).toHaveBeenCalled()
     expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'change',
       detail: { current: 1, source: 'touch' }
     }))
   })
 
   it('updates from props, autoplay and boundary gestures', () => {
     jest.useFakeTimers()
+    const bindchange = jest.fn()
     const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { __flushAnimatedReactions, withTiming } = require('react-native-reanimated')
     const { rerender } = render(
       <MpxSwiper
         testID="prop-swiper"
@@ -70,6 +73,7 @@ describe('MpxSwiper', () => {
         circular={false}
         previous-margin="0"
         next-margin="0"
+        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -86,9 +90,18 @@ describe('MpxSwiper', () => {
     fireEvent(screen.getByTestId('prop-swiper'), 'layout', {
       nativeEvent: { layout: { width: 240, height: 100 } }
     })
+    withTiming.mockClear()
     act(() => {
-      jest.advanceTimersByTime(20)
+      jest.advanceTimersByTime(10)
+      __flushAnimatedReactions()
     })
+    expect(withTiming).toHaveBeenCalledWith(-240, expect.objectContaining({ duration: 500 }), expect.any(Function))
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 1, source: 'autoplay' }
+    }))
+
+    bindchange.mockClear()
+    withTiming.mockClear()
     rerender(
       <MpxSwiper
         testID="prop-swiper"
@@ -98,6 +111,7 @@ describe('MpxSwiper', () => {
         circular={false}
         previous-margin="10"
         next-margin="20"
+        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -112,8 +126,15 @@ describe('MpxSwiper', () => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
       gesture.onUpdateCallback({ absoluteX: 260, velocityX: 0 })
       gesture.onFinalizeCallback({ absoluteX: 260, velocityX: 120 })
+      __flushAnimatedReactions()
     })
+    expect(withTiming).toHaveBeenLastCalledWith(-0, expect.objectContaining({ duration: 500 }), expect.any(Function))
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 0, source: 'touch' }
+    }))
 
+    bindchange.mockClear()
+    withTiming.mockClear()
     rerender(
       <MpxSwiper
         testID="circular-swiper"
@@ -122,6 +143,7 @@ describe('MpxSwiper', () => {
         circular={true}
         previous-margin="10"
         next-margin="10"
+        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -134,13 +156,25 @@ describe('MpxSwiper', () => {
     fireEvent(screen.getByTestId('circular-swiper'), 'layout', {
       nativeEvent: { layout: { width: 240, height: 100 } }
     })
+    act(() => {
+      __flushAnimatedReactions()
+    })
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 1, source: 'touch' }
+    }))
+    bindchange.mockClear()
+    withTiming.mockClear()
     gesture = __getLastPanGesture()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
       gesture.onUpdateCallback({ absoluteX: -520, velocityX: 0 })
       gesture.onFinalizeCallback({ absoluteX: -520, velocityX: 150 })
+      __flushAnimatedReactions()
     })
-    expect(screen.getAllByText('One').length).toBeGreaterThan(0)
+    expect(withTiming).toHaveBeenLastCalledWith(-870, expect.objectContaining({ duration: 500 }), expect.any(Function))
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 0, source: 'touch' }
+    }))
     jest.useRealTimers()
   })
 
@@ -288,9 +322,11 @@ describe('MpxSwiper', () => {
     fireEvent(screen.getByTestId('autoplay-last'), 'layout', {
       nativeEvent: { layout: { width: 200, height: 100 } }
     })
+    withTiming.mockClear()
     act(() => {
       jest.advanceTimersByTime(20)
     })
+    expect(withTiming).not.toHaveBeenCalled()
     expect(terminalChange).not.toHaveBeenCalled()
     firstRender.unmount()
 
@@ -408,6 +444,8 @@ describe('MpxSwiper', () => {
 
   it('handles gesture dependencies and edge gesture paths', () => {
     const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { __flushAnimatedReactions, withTiming } = require('react-native-reanimated')
+    const circularChange = jest.fn()
     const waitFor = { current: { name: 'wait-a' } }
     const nextWaitFor = { current: { name: 'wait-b' } }
     const simultaneous = { current: { name: 'simultaneous-a' } }
@@ -428,8 +466,8 @@ describe('MpxSwiper', () => {
       </MpxSwiper>
     )
     let gesture = __getLastPanGesture()
-    expect(gesture.simultaneousWithExternalGesture).toHaveBeenCalled()
-    expect(gesture.requireExternalGestureToFail).toHaveBeenCalled()
+    expect(gesture.simultaneousWithExternalGesture).toHaveBeenCalledWith(simultaneous)
+    expect(gesture.requireExternalGestureToFail).toHaveBeenCalledWith(waitFor)
 
     rerender(
       <MpxSwiper
@@ -447,7 +485,8 @@ describe('MpxSwiper', () => {
       </MpxSwiper>
     )
     gesture = __getLastPanGesture()
-    expect(gesture.simultaneousWithExternalGesture).toHaveBeenCalled()
+    expect(gesture.simultaneousWithExternalGesture).toHaveBeenCalledWith(nextSimultaneous)
+    expect(gesture.requireExternalGestureToFail).toHaveBeenCalledWith(nextWaitFor)
     unmount()
 
     render(
@@ -455,6 +494,7 @@ describe('MpxSwiper', () => {
         testID="circular-edge"
         style={{ width: 200, height: 100 }}
         circular={true}
+        bindchange={circularChange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -468,16 +508,29 @@ describe('MpxSwiper', () => {
       nativeEvent: { layout: { width: 200, height: 100 } }
     })
     gesture = __getLastPanGesture()
+    withTiming.mockClear()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
       gesture.onUpdateCallback({ absoluteX: 120, velocityX: 0 })
       gesture.onFinalizeCallback({ absoluteX: 120, velocityX: 0 })
+      __flushAnimatedReactions()
     })
+    expect(withTiming).toHaveBeenCalledWith(-0, expect.objectContaining({ duration: 500 }), expect.any(Function))
+    expect(circularChange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 1, source: 'touch' }
+    }))
+    circularChange.mockClear()
+    withTiming.mockClear()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
-      gesture.onUpdateCallback({ absoluteX: -1000, velocityX: 0 })
-      gesture.onFinalizeCallback({ absoluteX: -1000, velocityX: 200 })
+      gesture.onUpdateCallback({ absoluteX: -450, velocityX: 0 })
+      gesture.onFinalizeCallback({ absoluteX: -450, velocityX: 200 })
+      __flushAnimatedReactions()
     })
+    expect(withTiming).toHaveBeenCalledWith(-600, expect.objectContaining({ duration: 500 }), expect.any(Function))
+    expect(circularChange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 0, source: 'touch' }
+    }))
 
     render(
       <MpxSwiper
@@ -494,11 +547,13 @@ describe('MpxSwiper', () => {
       nativeEvent: { layout: { width: 200, height: 100 } }
     })
     gesture = __getLastPanGesture()
+    withTiming.mockClear()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
       gesture.onUpdateCallback({ absoluteX: 80, velocityX: 0 })
       gesture.onFinalizeCallback({ absoluteX: 80, velocityX: 0 })
     })
+    expect(withTiming).toHaveBeenCalledWith(0, expect.objectContaining({ duration: 500 }))
 
     render(
       <MpxSwiper
@@ -518,11 +573,12 @@ describe('MpxSwiper', () => {
       nativeEvent: { layout: { width: 200, height: 100 } }
     })
     gesture = __getLastPanGesture()
+    withTiming.mockClear()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
       gesture.onFinalizeCallback({ absoluteX: -80, velocityX: 0 })
     })
 
-    expect(screen.getAllByText('Two').length).toBeGreaterThan(0)
+    expect(withTiming).toHaveBeenCalledWith(-200, expect.objectContaining({ duration: 500 }), expect.any(Function))
   })
 })

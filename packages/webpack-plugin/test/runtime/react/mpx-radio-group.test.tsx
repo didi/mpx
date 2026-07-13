@@ -88,6 +88,7 @@ describe('MpxRadioGroup', () => {
       fireTap(screen.getByTestId('radio-b'))
     })
     expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'change',
       detail: { value: 'b' }
     }))
 

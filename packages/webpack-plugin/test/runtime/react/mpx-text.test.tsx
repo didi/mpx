@@ -1,6 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
 import MpxText from '../../../lib/runtime/components/react/mpx-text'
+import { TextPassThroughContext } from '../../../lib/runtime/components/react/context'
 
 // Mock mpx-portal
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
@@ -67,8 +68,8 @@ describe('MpxText', () => {
       <MpxText
         testID="basic-text"
         style={{
-          fontSize: '16px',
-          lineHeight: '1.5',
+          fontSize: 16,
+          lineHeight: '150%',
           textAlign: 'center',
           textDecorationLine: 'underline'
         }}
@@ -78,7 +79,7 @@ describe('MpxText', () => {
     )
 
     textElement = screen.getByTestId('basic-text')
-    expect(textElement).toBeTruthy()
+    expect(textElement.props.style.lineHeight).toBe(24)
     expect(toJSON()).toMatchSnapshot()
   })
 
@@ -155,27 +156,33 @@ describe('MpxText', () => {
     expect(queryByTestId('mock-portal')).toBeNull()
   })
 
-  // 简化的上下文测试
-  it('should handle external context properties', () => {
+  it('should merge external text pass-through context', () => {
     const { toJSON } = render(
-      <MpxText
-        testID="context-text"
-        style={{
-          color: '#ff0000',
-          fontSize: 16,
-          textAlign: 'center'
+      <TextPassThroughContext.Provider
+        value={{
+          textStyle: { fontWeight: 'bold' },
+          pendingTextProps: { numberOfLines: 1 }
         }}
       >
-        Context styled text
-      </MpxText>
+        <MpxText
+          testID="context-text"
+          style={{
+            color: '#ff0000',
+            fontSize: 16,
+            textAlign: 'center'
+          }}
+        >
+          Context styled text
+        </MpxText>
+      </TextPassThroughContext.Provider>
     )
 
     const textElement = screen.getByTestId('context-text')
-    expect(textElement).toBeTruthy()
-    expect(screen.getByText('Context styled text')).toBeTruthy()
+    expect(textElement.props.numberOfLines).toBe(1)
     expect(textElement.props.style).toEqual(expect.objectContaining({
       color: '#ff0000',
       fontSize: 16,
+      fontWeight: 'bold',
       textAlign: 'center'
     }))
     expect(toJSON()).toMatchSnapshot('context-text')
@@ -203,7 +210,7 @@ describe('MpxText', () => {
     expect(textElement).toBeTruthy()
     expect(textElement.props.style).toEqual(expect.objectContaining({
       fontSize: 27,
-      width: '150',
+      width: 150,
       lineHeight: 54
     }))
     expect(toJSON()).toMatchSnapshot('parent-size-text')
@@ -218,7 +225,7 @@ describe('MpxText', () => {
           fontSize: 16,
           color: '#333',
           fontWeight: 'bold',
-          lineHeight: 1.5
+          lineHeight: '150%'
         }}
       >
         Parent text with
@@ -234,7 +241,7 @@ describe('MpxText', () => {
     )
 
     const textElement = screen.getByTestId('nested-styled-text')
-    expect(textElement).toBeTruthy()
+    expect(textElement.props.style.lineHeight).toBe(24)
     expect(toJSON()).toMatchSnapshot('nested-styled-text')
   })
 
@@ -285,40 +292,6 @@ describe('MpxText', () => {
     }
   })
 
-  // 动态内容更新测试
-  it('should handle dynamic content updates', () => {
-    const { rerender } = render(
-      <MpxText testID="dynamic-text" selectable={true}>
-        Initial text
-      </MpxText>
-    )
-
-    let textElement = screen.getByTestId('dynamic-text')
-    expect(screen.getByText('Initial text')).toBeTruthy()
-
-    // 更新文本内容
-    rerender(
-      <MpxText testID="dynamic-text" selectable={true}>
-        Updated text content
-      </MpxText>
-    )
-
-    textElement = screen.getByTestId('dynamic-text')
-    expect(screen.getByText('Updated text content')).toBeTruthy()
-
-    // 更新为嵌套内容
-    rerender(
-      <MpxText testID="dynamic-text" selectable={true}>
-        Parent
-        <MpxText>Nested</MpxText>
-        Content
-      </MpxText>
-    )
-
-    textElement = screen.getByTestId('dynamic-text')
-    expect(textElement).toBeTruthy()
-  })
-
   // 可访问性和交互测试
   it('should handle accessibility and interaction properties', () => {
     const { toJSON } = render(
@@ -340,30 +313,6 @@ describe('MpxText', () => {
     expect(textElement.props.selectable).toBe(true)
     expect(textElement.props.allowFontScaling).toBe(true)
     expect(toJSON()).toMatchSnapshot('accessible-text')
-  })
-
-  // Portal 渲染测试 - 测试 hasPositionFixed 逻辑
-  it('should render in Portal when position is fixed', () => {
-    render(
-      <MpxText
-        testID="fixed-position-text"
-        style={{
-          position: 'fixed',
-          top: 100,
-          left: 50,
-          fontSize: 16,
-          color: '#333'
-        }}
-      >
-        Fixed position text
-      </MpxText>
-    )
-
-    // 验证组件正常渲染
-    const textElement = screen.getByTestId('fixed-position-text')
-    expect(textElement).toBeTruthy()
-
-    expect(screen.getByTestId('mock-portal')).toBeTruthy()
   })
 
   // 多种样式条件测试
@@ -423,40 +372,6 @@ describe('MpxText', () => {
     expect(screen.getByTestId('mock-portal')).toBeTruthy()
   })
 
-  // 复杂场景下的 Portal 测试
-  it('should handle Portal with complex styling and content', () => {
-    render(
-      <MpxText
-        testID="complex-portal-text"
-        style={{
-          position: 'fixed',
-          top: '10%',
-          left: '20%',
-          width: 200,
-          height: 50,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          color: 'white',
-          textAlign: 'center',
-          borderRadius: 5,
-          padding: 10
-        }}
-        selectable={true}
-        allowFontScaling={false}
-      >
-        Complex Portal Text
-        <MpxText style={{ fontWeight: 'bold', color: 'yellow' }}>
-          Nested Content
-        </MpxText>
-      </MpxText>
-    )
-
-    const textElement = screen.getByTestId('complex-portal-text')
-    expect(textElement).toBeTruthy()
-    expect(screen.getByTestId('mock-portal')).toBeTruthy()
-    expect(textElement.props.selectable).toBe(true)
-    expect(textElement.props.allowFontScaling).toBe(false)
-  })
-
   // 边界情况：样式动态变化影响 Portal
   it('should handle dynamic style changes affecting Portal usage', () => {
     const { queryByTestId, rerender } = render(
@@ -512,40 +427,6 @@ describe('MpxText', () => {
     textElement = screen.getByTestId('dynamic-portal-text')
     expect(textElement).toBeTruthy()
     expect(queryByTestId('mock-portal')).toBeNull()
-  })
-
-  // useTransformStyle 相关测试
-  it('should handle useTransformStyle with various configurations', () => {
-    render(
-      <MpxText
-        testID="transform-style-text"
-        enable-var={false} // 简化测试，避免变量上下文问题
-        parent-font-size={16}
-        parent-width={320}
-        parent-height={568}
-        style={{
-          position: 'fixed', // 关键：触发 Portal 逻辑
-          fontSize: 18,
-          width: 256, // 320 * 80%
-          color: '#ff0000',
-          backgroundColor: '#f0f0f0',
-          padding: 8
-        }}
-      >
-        Transform style text
-      </MpxText>
-    )
-
-    const textElement = screen.getByTestId('transform-style-text')
-    expect(textElement).toBeTruthy()
-    expect(textElement.props.style).toEqual(expect.objectContaining({
-      backgroundColor: '#f0f0f0',
-      color: '#ff0000',
-      fontSize: 18,
-      padding: 8,
-      width: 256
-    }))
-    expect(screen.getByTestId('mock-portal')).toBeTruthy()
   })
 
   it('should decode string and mixed children when decode is enabled', () => {

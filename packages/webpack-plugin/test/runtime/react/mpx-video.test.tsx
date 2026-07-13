@@ -3,6 +3,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import MpxVideo from '../../../lib/runtime/components/react/mpx-video'
 
 const mockPortal = jest.fn()
+const mockVideoSeek = jest.fn()
+const mockVideoResume = jest.fn()
+const mockVideoPause = jest.fn()
+const mockVideoSetFullScreen = jest.fn()
 
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -18,10 +22,10 @@ jest.mock('react-native-video', () => {
   const mockReact = require('react')
   const MockVideo = mockReact.forwardRef((props: any, ref: any) => {
     mockReact.useImperativeHandle(ref, () => ({
-      seek: jest.fn(),
-      resume: jest.fn(),
-      pause: jest.fn(),
-      setFullScreen: jest.fn()
+      seek: mockVideoSeek,
+      resume: mockVideoResume,
+      pause: mockVideoPause,
+      setFullScreen: mockVideoSetFullScreen
     }))
     return mockReact.createElement('Video', props)
   })
@@ -36,7 +40,7 @@ jest.mock('react-native-video', () => {
 
 describe('MpxVideo', () => {
   beforeEach(() => {
-    mockPortal.mockClear()
+    jest.clearAllMocks()
   })
 
   it('renders props and emits media events', () => {
@@ -117,24 +121,28 @@ describe('MpxVideo', () => {
       type: 'timeupdate',
       detail: { currentTime: 5, duration: 12 }
     }))
-    expect(handlers.bindplay).toHaveBeenCalled()
-    expect(handlers.bindpause).toHaveBeenCalled()
-    expect(handlers.bindended).toHaveBeenCalled()
-    expect(handlers.bindwaiting).toHaveBeenCalled()
+    expect(handlers.bindplay).toHaveBeenCalledWith(expect.objectContaining({ type: 'play' }))
+    expect(handlers.bindpause).toHaveBeenCalledWith(expect.objectContaining({ type: 'pause' }))
+    expect(handlers.bindended).toHaveBeenCalledWith(expect.objectContaining({ type: 'ended' }))
+    expect(handlers.bindwaiting).toHaveBeenCalledWith(expect.objectContaining({ type: 'waiting' }))
     expect(handlers.bindseekcomplete).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'seekcomplete',
       detail: { position: 4 }
     }))
     expect(handlers.bindfullscreenchange).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'fullscreenchange',
       detail: { fullScreen: 1 }
     }))
     expect(handlers.bindfullscreenchange).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'fullscreenchange',
       detail: { fullScreen: 0 }
     }))
     expect(handlers.bindcontrolstoggle).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'progress',
+      type: 'controlstoggle',
       detail: { show: true }
     }))
     expect(handlers.binderror).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'error',
       detail: { errMsg: 'bad video' }
     }))
   })
@@ -166,6 +174,12 @@ describe('MpxVideo', () => {
       instance.requestFullScreen()
       instance.exitFullScreen()
     })
+    expect(mockVideoResume).toHaveBeenCalledTimes(1)
+    expect(mockVideoPause).toHaveBeenCalledTimes(2)
+    expect(mockVideoSeek).toHaveBeenNthCalledWith(1, 2)
+    expect(mockVideoSeek).toHaveBeenNthCalledWith(2, 0)
+    expect(mockVideoSetFullScreen).toHaveBeenNthCalledWith(1, true)
+    expect(mockVideoSetFullScreen).toHaveBeenNthCalledWith(2, false)
 
     rerender(
       <MpxVideo

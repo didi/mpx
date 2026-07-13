@@ -33,8 +33,23 @@ describe('MpxPopup', () => {
     manager.hide()
     manager.remove()
 
+    expect(addSpy).toHaveBeenCalledTimes(1)
     expect(addSpy).toHaveBeenCalledWith(expect.anything(), 1)
-    expect(updateSpy).toHaveBeenCalled()
+    const addedPopup = addSpy.mock.calls[0][0] as React.ReactElement<any>
+    expect(addedPopup.props).toEqual(expect.objectContaining({
+      contentHeight: 200,
+      visible: false
+    }))
+    expect(addedPopup.props.children.props.children).toBe('popup child')
+
+    expect(updateSpy).toHaveBeenCalledTimes(3)
+    expect(updateSpy.mock.calls.map(([key]) => key)).toEqual([100, 100, 100])
+    const updates = updateSpy.mock.calls.map(([, popup]) => popup as React.ReactElement<any>)
+    expect(updates[0].props.visible).toBe(true)
+    expect(updates[1].props.visible).toBe(true)
+    expect(updates[1].props.children.props.children).toBe('popup updated')
+    expect(updates[2].props.visible).toBe(false)
+    expect(updates[2].props.children.props.children).toBe('popup updated')
     expect(removeSpy).toHaveBeenCalledWith(100)
     addSpy.mockRestore()
     updateSpy.mockRestore()

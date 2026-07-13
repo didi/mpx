@@ -880,6 +880,20 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).toHaveBeenCalled()
     })
 
+    test('should convert unitless line-height longhand to percentage', () => {
+      const css = '.text { font-size: 16px; line-height: 1.5; }'
+      const config = createConfig()
+
+      const result = getClassMap({ content: css, filename: 'test.css', ...config })
+
+      expect(result.text).toEqual({
+        fontSize: '16',
+        lineHeight: '"150%"'
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
     test('should expand font shorthand subset', () => {
       // 必填项 font-size / font-family；前导段顺序不敏感，识别 font-style / small-caps / font-weight；
       // line-height 数值按 formatLineHeight 转百分比；font-family 取首值、去引号

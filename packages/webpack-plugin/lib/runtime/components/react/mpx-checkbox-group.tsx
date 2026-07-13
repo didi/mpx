@@ -140,7 +140,7 @@ const CheckboxGroup = forwardRef<
       bindchange &&
         bindchange(
           getCustomEvent(
-            'tap',
+            'change',
             evt,
             {
               layoutRef,

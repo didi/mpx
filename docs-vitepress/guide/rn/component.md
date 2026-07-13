@@ -7,7 +7,7 @@
 - #### 基础组件
 **容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
 
-**媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas)
+**媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas) · [camera](#camera)
 
 **表单组件**：[input](#input) · [textarea](#textarea) · [button](#button) · [checkbox](#checkbox) · [checkbox-group](#checkbox-group) · [radio](#radio) · [radio-group](#radio-group) · [switch](#switch) · [picker](#picker) · [picker-view](#picker-view) · [picker-view-column](#picker-view-column) · [form](#form) · [label](#label)
 
@@ -321,7 +321,7 @@ movable-view的可移动区域。
 
 | 事件名           | 说明                |
 | ----------------| ------------------ |
-| bindchange      | checkbox-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 checkbox 的 value 的数组 ] } `|
+| bindchange      | checkbox-group 中选中项发生改变时触发 change 事件，`event.type = 'change'`，`event.detail = { value: [选中的 checkbox 的 value 的数组] }` |
 
 
 ### radio
@@ -346,7 +346,7 @@ movable-view的可移动区域。
 
 | 事件名           | 说明                |
 | ----------------| ------------------ |
-| bindchange      | radio-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 radio 的 value 的数组 ] }` |
+| bindchange      | radio-group 中选中项发生改变时触发 change 事件，`event.type = 'change'`，`event.detail = { value: 选中的 radio 的 value }` |
 
 
 ### form
@@ -359,7 +359,7 @@ movable-view的可移动区域。
 | 事件名     | 说明                                                |
 | ---------- | --------------------------------------------------- |
 | bindsubmit | 携带 form 中的数据触发 submit 事件，`event.detail = {value : {'name': 'value'} }` |
-| bindreset  | 表单重置时会触发 reset 事件 |
+| bindreset  | 表单重置时会触发 reset 事件，`event.type = 'reset'` |
 
 
 ### input
@@ -516,7 +516,7 @@ movable-view的可移动区域。
 
 | 事件名           | 说明                                                 |
 | ----------------| ----------------------------------------------------|
-| bindcancel      | 取消选择时触发                                         |
+| bindcancel      | 取消选择时触发 cancel 事件，`event.type = 'cancel'`    |
 | bindchange      | value 改变时触发 change 事件，`event.detail = {value}` |
 
 #### 普通选择器：mode = selector {#mode-selector}
@@ -657,6 +657,42 @@ API
 > - canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 > - 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
 
+### camera
+
+系统相机。
+
+#### 属性 {#camera-props}
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| mode | string | `normal` | 应用模式，可选值为 `normal`、`scanCode` |
+| resolution | string | `medium` | 分辨率，可选值为 `low`、`medium`、`high` |
+| device-position | string | `back` | 摄像头朝向，可选值为 `front`、`back` |
+| flash | string | `auto` | 闪光灯，可选值为 `auto`、`on`、`off` |
+| frame-size | string | `medium` | 指定期望的相机帧数据尺寸，可选值为 `small`、`medium`、`large` |
+
+#### 事件 {#camera-events}
+
+| 事件名 | 说明 |
+| --- | --- |
+| bindinitdone | 相机初始化完成时触发，`event.detail = { maxZoom }` |
+| bindstop | 摄像头在非正常终止时触发 stop 事件，`event.type = 'stop'` |
+| binderror | 相机发生错误时触发 |
+| bindscancode | 在 `scanCode` 模式下识别到二维码时触发，`event.detail = { result, type, scanArea }` |
+
+#### API
+
+| 方法名 | 说明 |
+| --- | --- |
+| setZoom | 设置缩放级别 |
+| takePhoto | 拍照，仅支持在 `normal` 模式中使用 |
+| startRecord | 开始录像 |
+| stopRecord | 结束录像 |
+
+> [!tip] 注意
+>
+> camera 组件基于第三方库 `react-native-vision-camera` 实现，需要容器安装该依赖并完成相机权限配置。
+
 ### video
 视频
 
@@ -687,13 +723,13 @@ API
 | ----------------| --------------------------------------------------- |
 | bindplay       |  当开始/继续播放时触发play事件   |
 | bindpause       |  当暂停播放时触发 pause 事件	   |
-| bindended       |  当播放到末尾时触发 ended 事件   |
+| bindended       |  当播放到末尾时触发 ended 事件，`event.type = 'ended'`   |
 | bindtimeupdate       |  播放进度变化时触发，`event.detail = {currentTime, duration}`   |
 | bindfullscreenchange       |  视频进入和退出全屏时触发，`event.detail = {fullScreen` }   |
 | bindwaiting       |  视频出现缓冲时触发   |
-| binderror       |  视频播放出错时触发	   |
+| binderror       |  视频播放出错时触发 error 事件，`event.type = 'error'`	   |
 | bindloadedmetadata       |  视频元数据加载完成时触发。`event.detail = {width, height, duration}`   |
-| bindcontrolstoggle       |  切换 controls 显示隐藏时触发。`event.detail = {show}`	   |
+| bindcontrolstoggle       |  切换 controls 显示隐藏时触发 controlstoggle 事件，`event.type = 'controlstoggle'`，`event.detail = {show}`	   |
 | bindseekcomplete       |  seek 完成时触发    |
 
 > [!tip] 注意

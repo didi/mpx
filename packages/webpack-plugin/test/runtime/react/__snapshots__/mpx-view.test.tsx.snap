@@ -140,30 +140,6 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
 </View>
 `;
 
-exports[`MpxView should handle external context properties: context-view 1`] = `
-<View
-  style={
-    {
-      "backgroundColor": "#007AFF",
-      "borderRadius": 8,
-      "boxSizing": "content-box",
-      "height": 100,
-      "margin": 12,
-      "padding": 16,
-      "width": 200,
-    }
-  }
-  testID="context-view"
->
-  <Text
-    allowFontScaling={false}
-    style={{}}
-  >
-    Context styled view
-  </Text>
-</View>
-`;
-
 exports[`MpxView should handle flex layout properties 1`] = `
 <View
   style={
@@ -263,9 +239,9 @@ exports[`MpxView should handle parent size context: parent-size-view 1`] = `
   style={
     {
       "boxSizing": "content-box",
-      "height": "150",
+      "height": 150,
       "padding": 10,
-      "width": "300",
+      "width": 300,
     }
   }
   testID="parent-size-view"
@@ -283,22 +259,31 @@ exports[`MpxView should handle parent size context: parent-size-view 1`] = `
 </View>
 `;
 
-exports[`MpxView should render static branch when animation is disabled: animated-view 1`] = `
+exports[`MpxView should pass text styles through to inline children: context-view 1`] = `
 <View
   style={
     {
-      "backgroundColor": "#ff0000",
+      "backgroundColor": "#007AFF",
+      "borderRadius": 8,
+      "boxSizing": "content-box",
       "height": 100,
-      "width": 100,
+      "margin": 12,
+      "padding": 16,
+      "width": 200,
     }
   }
-  testID="animated-view"
+  testID="context-view"
 >
   <Text
     allowFontScaling={false}
-    style={{}}
+    style={
+      {
+        "color": "#ff0000",
+        "fontSize": 16,
+      }
+    }
   >
-    Animated content
+    Context styled view
   </Text>
 </View>
 `;

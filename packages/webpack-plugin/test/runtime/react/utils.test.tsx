@@ -35,20 +35,8 @@ import {
 } from '../../../lib/runtime/components/react/utils'
 import { RouteContext, ScrollViewContext, TextPassThroughContext, VarContext } from '../../../lib/runtime/components/react/context'
 
-const originalFormatValue = global.__formatValue
-
-function formatStyleValue (value: any) {
-  if (typeof value !== 'string') return value
-  if (value === 'hairlineWidth') return 1
-  if (/^-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|rpx|vw|vh)?$/.test(value)) {
-    return parseFloat(value)
-  }
-  return value
-}
-
 describe('react runtime utils', () => {
   beforeEach(() => {
-    global.__formatValue = jest.fn(formatStyleValue)
     global.__mpx = global.__mpx || { config: { rnConfig: {} } }
     global.__mpx.config = global.__mpx.config || { rnConfig: {} }
     global.__mpx.config.rnConfig = global.__mpx.config.rnConfig || {}
@@ -56,7 +44,6 @@ describe('react runtime utils', () => {
   })
 
   afterEach(() => {
-    global.__formatValue = originalFormatValue
     jest.useRealTimers()
     jest.restoreAllMocks()
   })
@@ -190,7 +177,7 @@ describe('react runtime utils', () => {
       color: 'var(--brand)',
       width: 'calc(50% + var(--space))',
       paddingTop: 'env(safe-area-inset-top, 8px)',
-      padding: '4px',
+      padding: 4,
       border: 'none',
       font: 'italic small-caps 700 16px/1.5 "Ping Fang", sans-serif',
       fontFamily: '"Override", fallback',
@@ -230,7 +217,7 @@ describe('react runtime utils', () => {
       color: 'red',
       width: 112,
       paddingTop: 44,
-      padding: '4px',
+      padding: 4,
       paddingLeft: 9,
       borderWidth: 0,
       fontStyle: 'italic',
@@ -240,7 +227,7 @@ describe('react runtime utils', () => {
       lineHeight: 24,
       fontFamily: 'Override',
       transformOrigin: '10',
-      boxShadow: '1px 2px black',
+      boxShadow: '0.5px 2px black',
       backgroundImage: 'none',
       backgroundColor: 'transparent',
       position: 'absolute',

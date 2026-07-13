@@ -41,7 +41,7 @@ describe('MpxForm', () => {
     act(() => {
       formContext.reset()
     })
-    expect(bindreset).toHaveBeenCalled()
+    expect(bindreset).toHaveBeenCalledWith(expect.objectContaining({ type: 'reset' }))
     expect(formContext.formValuesMap.get('enabled').getValue()).toBe(false)
   })
 })

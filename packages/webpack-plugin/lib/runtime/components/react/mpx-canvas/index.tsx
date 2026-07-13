@@ -200,7 +200,10 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }
 
   const removeMessageListener = (listener: any) => {
-    canvasRef.current.listeners.splice(canvasRef.current.listeners.indexOf(listener), 1)
+    const index = canvasRef.current.listeners.indexOf(listener)
+    if (index > -1) {
+      canvasRef.current.listeners.splice(index, 1)
+    }
   }
 
   const onMessage = useCallback((e: { nativeEvent: { data: string } }) => {
@@ -288,21 +291,21 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
         allowUniversalAccessFromFileURLs: true
       })
     )
+  } else {
+    canvasComponent = createElement(View, innerProps, createElement(WebView, {
+      ref: (element) => {
+        if (canvasRef.current) {
+          canvasRef.current.webview = element
+        }
+      },
+      style: [stylesheet.webview, { height, width }],
+      source: { html },
+      originWhitelist: originWhitelist,
+      onMessage: onMessage,
+      onLoad: onLoad,
+      scrollEnabled: false
+    }))
   }
-
-  canvasComponent = createElement(View, innerProps, createElement(WebView, {
-    ref: (element) => {
-      if (canvasRef.current) {
-        canvasRef.current.webview = element
-      }
-    },
-    style: [stylesheet.webview, { height, width }],
-    source: { html },
-    originWhitelist: originWhitelist,
-    onMessage: onMessage,
-    onLoad: onLoad,
-    scrollEnabled: false
-  }))
 
   if (hasPositionFixed) {
     canvasComponent = createElement(Portal, null, canvasComponent)

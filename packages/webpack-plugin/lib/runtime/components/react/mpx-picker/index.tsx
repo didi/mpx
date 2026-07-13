@@ -214,7 +214,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     }
 
     const onCancel = () => {
-      bindcancel?.()
+      bindcancel?.(getCustomEvent('cancel', {}, { layoutRef }, props))
       hide()
     }
 

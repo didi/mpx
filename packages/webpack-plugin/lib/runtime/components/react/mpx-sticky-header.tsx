@@ -59,7 +59,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const headerTopRef = useRef(0)
 
   useEffect(() => {
-    registerStickyHeader({ key: id, updatePosition })
+    registerStickyHeader({ id, updatePosition })
     return () => {
       unregisterStickyHeader(id)
     }

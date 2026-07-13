@@ -4,12 +4,16 @@
   },
   "testEnvironment": "jsdom",
   "moduleNameMapper": {
-    "\\.(css|styl)$": "identity-obj-proxy"
+    "\\.(css|styl)$": "identity-obj-proxy",
+    "^@mpxjs/utils$": "<rootDir>/../utils/src/index.js"
   },
   "testPathIgnorePatterns": [
     "/node_modules/",
     "/dist/",
     "test/runtime/react/"
+  ],
+  "transformIgnorePatterns": [
+    "node_modules/(?!(\\.pnpm/)?(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs))"
   ],
   "setupFiles": ["<rootDir>/test/runtime/react-native/setup.js"],
   "testTimeout": 10000

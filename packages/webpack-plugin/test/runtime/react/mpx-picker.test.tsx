@@ -19,6 +19,7 @@ const PickerSelector = require('../../../lib/runtime/components/react/mpx-picker
 const PickerTime = require('../../../lib/runtime/components/react/mpx-picker/time').default
 const MpxPickerView = require('../../../lib/runtime/components/react/mpx-picker-view').default
 const Portal = require('../../../lib/runtime/components/react/mpx-portal').default
+const PopupBase = require('../../../lib/runtime/components/react/mpx-popup/popupBase').default
 const { FormContext, RouteContext } = require('../../../lib/runtime/components/react/context')
 const { regionData } = require('../../../lib/runtime/components/react/mpx-picker/regionData')
 
@@ -28,8 +29,7 @@ beforeEach(() => {
 })
 
 describe('MpxPicker', () => {
-  it('opens picker in a portal, confirms/cancels values and registers form value', () => {
-    const bindchange = jest.fn()
+  it('opens picker in a portal, cancels and registers form value', () => {
     const bindcancel = jest.fn()
     const formValuesMap = new Map()
 
@@ -43,7 +43,6 @@ describe('MpxPicker', () => {
             range={['Beijing', 'Shanghai']}
             value={0}
             header-text="Choose city"
-            bindchange={bindchange}
             bindcancel={bindcancel}
           >
             <Text>open picker</Text>
@@ -54,12 +53,38 @@ describe('MpxPicker', () => {
 
     expect(screen.getByText('Choose city')).toBeTruthy()
     expect(formValuesMap.has('city')).toBe(true)
+    expect(screen.UNSAFE_getByType(PopupBase).props.visible).toBe(false)
+    fireEvent.press(screen.getByTestId('picker').parent)
+    expect(screen.UNSAFE_getByType(PopupBase).props.visible).toBe(true)
     fireEvent(screen.getByText('取消').parent, 'touchEnd')
-    expect(bindcancel).toHaveBeenCalled()
+    expect(bindcancel).toHaveBeenCalledWith(expect.objectContaining({ type: 'cancel' }))
+    expect(screen.UNSAFE_getByType(PopupBase).props.visible).toBe(false)
+  })
+
+  it('opens picker in a portal and confirms value', () => {
+    const bindchange = jest.fn()
+
+    renderWithRoute(
+      <Portal.Host pageId={1}>
+        <Picker
+          testID="picker"
+          mode="selector"
+          range={['Beijing', 'Shanghai']}
+          value={0}
+          bindchange={bindchange}
+        >
+          <Text>open picker</Text>
+        </Picker>
+      </Portal.Host>
+    )
+
+    fireEvent.press(screen.getByTestId('picker').parent)
     fireEvent(screen.getByText('确定').parent, 'touchEnd')
     expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'change',
       detail: { value: '0' }
     }))
+    expect(screen.UNSAFE_getByType(PopupBase).props.visible).toBe(false)
   })
 
   it('maps selector and multi selector values', () => {

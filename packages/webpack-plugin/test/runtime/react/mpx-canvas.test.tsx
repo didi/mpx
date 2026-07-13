@@ -50,7 +50,11 @@ describe('MpxCanvas', () => {
     context.fillRect(0, 0, 10, 10)
 
     const image = canvas.createImage(20, 30)
+    const staleOnload = jest.fn()
     const onload = jest.fn()
+    const onerror = jest.fn()
+    image.onload = staleOnload
+    image.onerror = onerror
     image.onload = onload
     fireEvent(webView, 'message', {
       nativeEvent: {
@@ -73,6 +77,29 @@ describe('MpxCanvas', () => {
     expect(onload).toHaveBeenCalledWith(expect.objectContaining({
       type: 'load',
       target: expect.objectContaining({ width: 22 })
+    }))
+    expect(staleOnload).not.toHaveBeenCalled()
+
+    fireEvent(webView, 'message', {
+      nativeEvent: {
+        data: JSON.stringify({
+          type: 'event',
+          meta: {},
+          payload: {
+            type: 'event',
+            payload: {
+              type: 'error',
+              target: {
+                [WEBVIEW_TARGET]: image[WEBVIEW_TARGET]
+              }
+            }
+          }
+        })
+      }
+    })
+    expect(onerror).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'error',
+      target: image
     }))
 
     const imageData = canvas.createImageData([1, 2, 3, 4], 1, 1)
@@ -178,7 +205,10 @@ describe('MpxCanvas', () => {
     const canvas = ref.current.getNodeInstance().instance.node
     const listener = jest.fn()
     const removeListener = canvas.addMessageListener(listener)
+    const retainedListener = jest.fn()
+    canvas.addMessageListener(retainedListener)
     removeListener()
+    canvas.removeMessageListener(jest.fn())
     fireEvent(webView, 'message', {
       nativeEvent: {
         data: JSON.stringify({
@@ -189,6 +219,7 @@ describe('MpxCanvas', () => {
       }
     })
     expect(listener).not.toHaveBeenCalled()
+    expect(retainedListener).toHaveBeenCalledWith({ ignored: true })
 
     const errorPromise = canvas.postMessage({
       type: 'exec',
@@ -212,21 +243,41 @@ describe('MpxCanvas', () => {
     }))
   })
 
-  it('renders default, android and fixed-position canvas branches', () => {
-    const originalMode = (global as any).__mpx_mode__
-    const originalVersion = Platform.Version
-
-    ;(global as any).__mpx_mode__ = 'android'
-    ;(Platform as any).Version = 29
-    render(<MpxCanvas />)
-    expect(getWebViews()[0]).toBeTruthy()
-
-    ;(global as any).__mpx_mode__ = originalMode
-    ;(Platform as any).Version = originalVersion
+  it('renders fixed-position canvas through portal', () => {
     const fixedRender = renderWithPortalHost(
       <MpxCanvas testID="fixed-canvas" style={{ width: 120, height: 80, position: 'fixed' }} />
     )
     expect(getWebViews().length).toBeGreaterThan(0)
     expectPortalHostRendered(fixedRender.toJSON(), 'fixed-canvas')
+  })
+
+  it('renders Android canvas with platform-specific WebView props', () => {
+    const runtimeGlobal = global as any
+    const platform = Platform as any
+    const originalMode = runtimeGlobal.__mpx_mode__
+    const originalVersion = platform.Version
+
+    try {
+      runtimeGlobal.__mpx_mode__ = 'android'
+      platform.Version = 29
+      render(<MpxCanvas style={{ width: 120, height: 80 }} />)
+
+      const webView = getWebViews()[0]
+      expect(webView.props).toEqual(expect.objectContaining({
+        overScrollMode: 'never',
+        mixedContentMode: 'always',
+        scalesPageToFit: false,
+        javaScriptEnabled: true,
+        domStorageEnabled: true,
+        thirdPartyCookiesEnabled: true,
+        allowUniversalAccessFromFileURLs: true
+      }))
+      expect(webView.props.style).toEqual(expect.arrayContaining([
+        expect.objectContaining({ opacity: 0.99 })
+      ]))
+    } finally {
+      runtimeGlobal.__mpx_mode__ = originalMode
+      platform.Version = originalVersion
+    }
   })
 })

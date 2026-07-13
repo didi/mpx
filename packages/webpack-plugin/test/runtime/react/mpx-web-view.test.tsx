@@ -59,6 +59,7 @@ beforeEach(() => {
 
 describe('MpxWebView', () => {
   it('validates hosts, handles navigation, messages and load events', async () => {
+    const customApi = (global as any).__mpx.config.rnConfig.webviewConfig.apiImplementations.customApi
     const navigation = {
       setPageConfig: jest.fn(),
       dispatch: jest.fn(),
@@ -109,6 +110,7 @@ describe('MpxWebView', () => {
       }
     })
     expect(bindmessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'message',
       detail: { data: ['hello'] }
     }))
 
@@ -125,7 +127,10 @@ describe('MpxWebView', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    expect(mockWebViewInstances[0].injectJavaScript).toHaveBeenCalledWith(expect.stringContaining('customApi'))
+    expect(customApi).toHaveBeenCalledWith({ count: 1 })
+    expect(mockWebViewInstances[0].injectJavaScript).toHaveBeenCalledWith(
+      expect.stringContaining('"type":"customApi","callbackId":2,"result":{"ok":true}')
+    )
 
     fireEvent(webView, 'httpError', { nativeEvent: { statusCode: 500 } })
     fireEvent(webView, 'loadEnd', { timeStamp: 1, nativeEvent: { url: 'https://m.example.com/page' } })
@@ -146,6 +151,7 @@ describe('MpxWebView', () => {
 
   it('bridges navigation APIs, rejects missing implementations and ignores blocked messages', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const customApi = (global as any).__mpx.config.rnConfig.webviewConfig.apiImplementations.customApi
     const navigation = {
       setPageConfig: jest.fn(),
       dispatch: jest.fn(),
@@ -185,6 +191,7 @@ describe('MpxWebView', () => {
     expect(mockSwitchTab).toHaveBeenCalledWith({ url: '/pages/tab' })
     expect(mockReLaunch).toHaveBeenCalledWith({ url: '/pages/home' })
     expect(mockWebViewInstances[0].injectJavaScript).toHaveBeenCalledWith(expect.stringContaining('missingApi'))
+    expect(customApi).not.toHaveBeenCalled()
 
     act(() => {
       mockPreventRemoveState.callback?.({ data: { action: { type: 'GO_BACK' } } })
@@ -246,6 +253,7 @@ describe('MpxWebView', () => {
 
   it('handles malformed messages, args payloads and loaded-page errors', async () => {
     (global as any).__mpx.config.rnConfig.webviewConfig.hostWhitelists = []
+    const customApi = (global as any).__mpx.config.rnConfig.webviewConfig.apiImplementations.customApi
     const navigation = {
       setPageConfig: jest.fn(),
       dispatch: jest.fn(),
@@ -293,21 +301,10 @@ describe('MpxWebView', () => {
       await Promise.resolve()
     })
     expect(navigation.setPageConfig).not.toHaveBeenCalled()
-    expect(mockWebViewInstances[0].injectJavaScript).toHaveBeenCalledWith(expect.stringContaining('customApi'))
-
-    mockWebViewInstances[0].postMessage = undefined
-    fireEvent(webView, 'message', {
-      nativeEvent: {
-        url: 'notaurl',
-        data: JSON.stringify({
-          type: 'missingApi',
-          callbackId: 9
-        })
-      }
-    })
-    await act(async () => {
-      await Promise.resolve()
-    })
+    expect(customApi).toHaveBeenCalledWith({ count: 2 })
+    expect(mockWebViewInstances[0].injectJavaScript).toHaveBeenCalledWith(
+      expect.stringContaining('"type":"customApi","callbackId":8,"result":{"ok":true}')
+    )
 
     fireEvent(webView, 'loadEnd', { timeStamp: 4, nativeEvent: { url: 'notaurl' } })
     fireEvent(webView, 'error')

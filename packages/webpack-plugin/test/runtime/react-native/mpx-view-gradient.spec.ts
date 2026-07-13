@@ -38,17 +38,17 @@ jest.mock('../../../lib/runtime/components/react/mpx-portal', () => ({
 }))
 
 // eslint-disable-next-line import/first
-import { __parseBgImageForTest } from '../../../lib/runtime/components/react/mpx-view'
+import { parseBgImage } from '../../../lib/runtime/components/react/mpx-view-parser'
 
 describe('mpx-view linear-gradient parser', () => {
   test('keeps non-deg angle units as explicit gradient direction', () => {
-    expect(__parseBgImageForTest('linear-gradient(0.25turn, red, blue)').linearInfo.direction).toBe('0.25turn')
-    expect(__parseBgImageForTest('linear-gradient(1.5707963267948966rad, red, blue)').linearInfo.direction).toBe('1.5707963267948966rad')
-    expect(__parseBgImageForTest('linear-gradient(100grad, red, blue)').linearInfo.direction).toBe('100grad')
+    expect(parseBgImage('linear-gradient(0.25turn, red, blue)').linearInfo.direction).toBe('0.25turn')
+    expect(parseBgImage('linear-gradient(1.5707963267948966rad, red, blue)').linearInfo.direction).toBe('1.5707963267948966rad')
+    expect(parseBgImage('linear-gradient(100grad, red, blue)').linearInfo.direction).toBe('100grad')
   })
 
   test('does not strip "to" from colors when angle is explicit', () => {
-    const { linearInfo } = __parseBgImageForTest('linear-gradient(90deg, tomato, blue)')
+    const { linearInfo } = parseBgImage('linear-gradient(90deg, tomato, blue)')
 
     expect(linearInfo.direction).toBe('90deg')
     expect(linearInfo.colors).toEqual(['tomato', 'blue'])
