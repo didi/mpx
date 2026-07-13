@@ -559,12 +559,6 @@ module.exports = function getSpec ({ warn, error }) {
         }
       ],
       rules: [
-        {
-          test: /^beforeleave$/,
-          ali () {
-            return 'beforeLeave'
-          }
-        },
         // 通用冒泡事件
         {
           test: /^(touchstart|touchmove|touchcancel|touchend|tap|longpress|longtap|transitionend|animationstart|animationiteration|animationend|touchforcechange)$/,

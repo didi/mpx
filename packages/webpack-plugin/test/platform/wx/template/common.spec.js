@@ -54,11 +54,4 @@ describe('common spec case', function () {
     expect(output).toBe('<view s-if="{{show}}"><view s-for="{{list}}"><view>{{item}}</view></view></view>')
     expect(output2).toBe('<view s-for="item,index in list"><view s-if="{{item.show}}">{{item.value}}</view></view>')
   })
-
-  it('should transform beforeleave event for ali', function () {
-    const input = '<page-container bind:beforeleave="handleBeforeLeave"></page-container>'
-    const output = compileTemplate(input, { srcMode: 'wx', mode: 'ali' })
-
-    expect(output).toBe('<page-container onBeforeLeave="handleBeforeLeave"></page-container>')
-  })
 })
