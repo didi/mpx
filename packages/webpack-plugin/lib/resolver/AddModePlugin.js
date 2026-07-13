@@ -21,7 +21,7 @@ module.exports = class AddModePlugin {
     const defaultModePattern = new RegExp(`\\.${defaultMode}(\\.|$)`)
 
     resolver.getHook(this.source).tapAsync('AddModePlugin', (request, resolveContext, callback) => {
-      if (request.mode || request.env) {
+      if (request.__mpxResolvedExtendComponent || request.mode || request.env) {
         return callback()
       }
       const obj = {
