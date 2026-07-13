@@ -385,7 +385,7 @@ class MpxUnocssPlugin {
         await Promise.all(Object.entries(assets).map(([file, source]) => {
           if (file.endsWith(styleExt) || file.endsWith(templateExt)) {
             const assetModules = assetsModulesMap.get(file)
-            if (has(assetModules, (module) => {
+            if (assetModules && has(assetModules, (module) => {
               if (module.resource) {
                 const resourcePath = toPosix(parseRequest(module.resource).resourcePath)
                 return filterFile(resourcePath, this.options.scan)
