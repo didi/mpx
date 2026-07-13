@@ -6,7 +6,7 @@ import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
 import { LabelContext, LabelContextValue } from './context'
 import Portal from './mpx-portal'
 
@@ -15,8 +15,7 @@ export interface LabelProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
+  'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
   children: ReactNode
@@ -31,8 +30,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const {
       style = {},
       'enable-var': enableVar,
-      'external-var-context': externalVarContext,
-      'parent-font-size': parentFontSize,
+      'enable-text-pass-through': enableTextPassThrough,
       'parent-width': parentWidth,
       'parent-height': parentHeight
     } = props
@@ -43,8 +41,6 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       flexDirection: 'row'
     }
 
-    const styleObj = extendObject({}, defaultStyle, style)
-
     const {
       hasPositionFixed,
       hasSelfPercent,
@@ -53,7 +49,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle })
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, { style: normalStyle })
@@ -61,7 +57,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+    const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
     if (backgroundStyle) {
       warn('Label does not support background image-related styles!')
@@ -100,7 +96,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       LabelContext.Provider,
       { value: contextRef },
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current,
