@@ -184,7 +184,7 @@
 | `triggerEvent(name, detail?)` | 方法 | 组件 | 向父节点派发自定义事件。 |
 | `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例。RN 不能像小程序一样按 selector 遍历视图树，须在模板目标节点声明 **空 wx:ref**，由编译期建立 **`#id` / `.class` 与节点**的映射后，本 API 才能按小程序写法解析。 |
 | `selectAllComponents(selector)` | 方法 | 共用 | 取全部匹配实例数组，**RN 侧与 `selectComponent` 相同**：依赖模板 **空 wx:ref** 与编译期 selector 映射，仅支持 **`#id` / `.class`**。 |
-| `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。后续 **`select(selector)`** 等链式调用在 RN 上同样依赖目标节点 **空 wx:ref**，通过编译映射将 `#id` / `.class` 落到真实视图，以兼容小程序用法。 |
+| `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。后续 **`select(selector)`** 等链式调用在 RN 上同样依赖目标节点 **空 wx:ref**，通过编译映射将 `#id` / `.class` 落到真实视图；命中非 virtualHost 自定义组件时，返回该组件实体 host 节点信息。 |
 | `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
 | `$refs` | 属性 | 共用 | 模板 **`wx:ref="refName"`** 对应的懒解析访问器（如 `this.$refs.refName`）；**空 wx:ref 不会注册具名 ref**，但与 selector 映射可并存——需按名取子实例时再写 **`wx:ref="refName"`**。 |
 | `$watch` | 方法 | 共用 | 动态创建对数据路径或表达式的侦听，返回用于停止侦听的函数，行为与选项式 `watch` 对齐。 |
@@ -200,7 +200,7 @@
 
 #### 注意事项
 
-- **`selectComponent`、`selectAllComponents`、`createSelectorQuery`（含 `select` 等链式入参）、`createIntersectionObserver`（`relativeTo` / `observe` 等涉及 selector 时）**在小程序中依赖视图层按 selector 查找节点，**RN 无同等原生能力**；须在**与 script 中 selector 对应**的节点上声明 **空 wx:ref**，可与 `id`、`class` 并存，由 **Mpx 编译期**根据 **`#id` / `.class` 建立映射**。若需 **`$refs` / `context.refs`** 按名访问，再使用 **`wx:ref="refName"`**。映射**仅支持 `#id` 与 `.class`**，不支持复合、后代等选择器；**未写 `wx:ref` 则无法解析**。`createSelectorQuery` / `createIntersectionObserver` 的测量与交叉等行为仍以 `@mpxjs/api-proxy` 的 RN 实现为准。
+- **`selectComponent`、`selectAllComponents`、`createSelectorQuery`（含 `select` 等链式入参）、`createIntersectionObserver`（`relativeTo` / `observe` 等涉及 selector 时）**在小程序中依赖视图层按 selector 查找节点，**RN 无同等原生能力**；须在**与 script 中 selector 对应**的节点上声明 **空 wx:ref**，可与 `id`、`class` 并存，由 **Mpx 编译期**根据 **`#id` / `.class` 建立映射**。若需 **`$refs` / `context.refs`** 按名访问，再使用 **`wx:ref="refName"`**。映射**仅支持 `#id` 与 `.class`**，不支持复合、后代等选择器；**未写 `wx:ref` 则无法解析**。`createSelectorQuery().select()` / `selectAll()` 命中基础节点时返回基础节点信息，命中非 virtualHost 自定义组件时返回该组件实体 host 节点信息；virtualHost 组件没有实体 host 节点，不支持按组件节点测量。`createIntersectionObserver` 的交叉行为仍以 `@mpxjs/api-proxy` 的 RN 实现为准。
 
 **使用示例：**
 
@@ -220,7 +220,7 @@
       this.selectComponent("#chip")
       this.selectAllComponents(".cell")
       this.createSelectorQuery()
-        .select("#box")
+        .select("#chip")
         .boundingClientRect()
         .exec((res) => {
           console.log(res)

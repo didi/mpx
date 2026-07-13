@@ -52,7 +52,6 @@ export interface ImageProps {
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   'enable-fast-image'?: boolean
@@ -176,9 +175,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     src = '',
     mode = 'scaleToFill',
     style = {},
-    'enable-var': enableVar,
-    'parent-font-size': parentFontSize,
-    'enable-fast-image': enableFastImage,
+    'enable-var': enableVar, 'enable-fast-image': enableFastImage,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'is-svg': isSvgProp,
@@ -223,7 +220,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, parentFontSize, parentWidth, parentHeight, defaultStyle: DEFAULT_IMAGE_STYLE })
+  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, parentWidth, parentHeight, defaultStyle: DEFAULT_IMAGE_STYLE })
 
   // normalStyle 已合入 DEFAULT_IMAGE_STYLE，对外暴露完整 style（含 default 兜底的 width/height）
   useNodesRef(props, ref, nodeRef, {
