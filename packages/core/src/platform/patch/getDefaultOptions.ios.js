@@ -544,12 +544,8 @@ function getSafeAreaInsetsWithInitialTop (safeAreaInsets) {
   if (safeAreaInsets?.top === 0 && initialTop) {
     // Android 初始化时 top 可能连续为 0（如红米 10 的 bottom 已更新但 top 仍为 0），此时持续兜底并保留其他 insets 的最新值。
     // 返回新对象，避免修改 useSafeAreaInsets/context 返回的引用。
-    return {
-      ...safeAreaInsets,
-      top: initialTop
-    }
-  }
-  if (safeAreaInsets?.top > 0 || !initialTop) {
+    return Object.assign({}, safeAreaInsets, { top: initialTop })
+  } else {
     // 拿到真实 top 或没有可用初始值后，后续完全使用 useSafeAreaInsets 的更新。
     hasResolvedSafeAreaTop = true
   }

@@ -291,7 +291,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     setKeyboardAvoidContext()
   }
 
-  const onTouchEnd = (evt: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
+  const markEventOrigin = (evt: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
     evt.nativeEvent.origin = 'input'
   }
 
@@ -507,8 +507,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         placeholderTextColor: placeholderStyle?.color,
         multiline,
         onTouchStart,
-        onTouchEnd,
-        onTouchMove: onTouchEnd,
+        onTouchEnd: markEventOrigin,
+        onTouchMove: markEventOrigin,
         onFocus,
         onBlur,
         onChange,
