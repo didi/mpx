@@ -121,7 +121,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 6. **navigator 嵌套限制**：`<navigator>` 内**只能嵌套 `<text>` 或纯文本**，不能嵌套 `<view>` / `<image>` 等其他组件；
 7. **图文混排须用 `<span>` 内联包裹**：Skyline 下 `<view>`/`<text>` 无法直接图文内联混排，需用 `<span>` 包裹各内联片段，实现参考 [图文混排](./references/skyline-layout-practice.md#图文混排)。
 8. **scroll-view 按内容撑开**：需在 app.json 配置 `enableScrollViewAutoSize` 对齐 Webview scroll-view 自动撑开高度。
-9. **ScrollViewContext 需 enhanced 属性**：通过 `NodesRef.node()` 获取 `ScrollViewContext` 时，`scroll-view` 必须开启 `enhanced` 属性，否则返回的不是 ScrollViewContext 实例。详见 [运行时适配实践 · ScrollViewContext：必须开启 enhanced 属性](./references/skyline-runtime-practice.md#scrollviewcontext必须开启-enhanced-属性)。
+9. **ScrollViewContext 需 enhanced 属性**：通过 `NodesRef.node()` 获取 `ScrollViewContext` 时，`scroll-view` 必须开启 `enhanced` 属性，否则返回的不是 ScrollViewContext 实例。详见 [运行时适配实践 · ScrollViewContext：开启 enhanced 属性](./references/skyline-runtime-practice.md#必须-scrollviewcontext开启-enhanced-属性)。
 
 ### 动画策略约束
 

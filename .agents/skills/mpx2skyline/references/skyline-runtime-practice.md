@@ -16,10 +16,10 @@
   - [[必须] Skyline 不支持的组件实例方法](#必须-skyline-不支持的组件实例方法)
   - [[推荐] 用 this.createSelectorQuery 替代 wx.createSelectorQuery](#推荐-用-thiscreateselectorquery-替代-wxcreateselectorquery)
 - [常见问题与踩坑记录](#常见问题与踩坑记录)
-  - [ScrollViewContext：必须开启 enhanced 属性](#scrollviewcontext必须开启-enhanced-属性)
-  - [properties 默认值必须使用 value 而非 default](#properties-默认值必须使用-value-而非-default)
-  - [The for-list data is neither Array nor Object 报错](#the-for-list-data-is-neither-array-nor-object-报错)
-  - [properties type 校验报错](#properties-type-校验报错)
+  - [[必须] ScrollViewContext：开启 enhanced 属性](#必须-scrollviewcontext开启-enhanced-属性)
+  - [[必须] properties 默认值使用 value 而非 default](#必须-properties-默认值使用-value-而非-default)
+  - [[必须] 确保 wx:for 数据始终为 Array 或 Object](#必须-确保-wxfor-数据始终为-array-或-object)
+  - [[必须] properties 声明类型与实际值保持一致](#必须-properties-声明类型与实际值保持一致)
   - [animation API 不支持 → 使用 CSS transition](#animation-api-不支持--使用-css-transition)
   - [wxs 跨包引用错误](#wxs-跨包引用错误typeerror-rwxsstringify4ccc0480-is-not-a-function)
 - [性能优化](#性能优化)
@@ -220,7 +220,7 @@ this.createSelectorQuery().select('#el').exec(res => {})
 
 ## 常见问题与踩坑记录
 
-### ScrollViewContext：必须开启 enhanced 属性
+### [必须] ScrollViewContext：开启 enhanced 属性
 
 通过 `NodesRef.node()` 获取 `ScrollViewContext` 时，`scroll-view` 必须开启 `enhanced` 属性，否则返回的不是 ScrollViewContext 实例，调用 `scrollTo` 等方法会报错。
 
@@ -248,7 +248,7 @@ createPage({
 })
 ```
 
-### properties 默认值必须使用 `value` 而非 `default`
+### [必须] properties 默认值使用 `value` 而非 `default`
 
 glass-easel 要求组件 properties 的默认值通过 `value` 字段声明，使用 `default` 字段会被忽略，导致属性值为 `undefined`。
 
@@ -274,9 +274,9 @@ createComponent({
 })
 ```
 
-### The for-list data is neither Array nor Object 报错
+### [必须] 确保 wx:for 数据始终为 Array 或 Object
 
-当 `wx:for` 绑定的数据是 computed 计算属性时，组件初始化阶段 computed 尚未计算完成，`wx:for` 会收到 `undefined`，触发 `"The for-list data is neither Array nor Object"` 错误。
+`wx:for` 在任意渲染阶段收到非 Array/Object 值时，都会触发 `"The for-list data is neither Array nor Object"` 错误。常见来源包括 properties 默认值缺失、异步数据未返回、computed 分支未返回值或上游传入 `null` 等；computed 初始化未完成只是其中一种情况。
 
 ```js
 // ❌ Bad — 初始化阶段 computed 未完成，wx:for 收到 undefined 导致崩溃
@@ -296,7 +296,7 @@ createComponent({
   }
 })
 
-// ✅ Good — 通过 initData 提供初始值防护
+// ✅ Good — initData 保护初始化阶段，computed 保护后续更新
 createComponent({
   properties: {
     compData: {
@@ -311,47 +311,57 @@ createComponent({
   },
   computed: {
     list() {
-      return this.compData?.data.recommend_info
+      return this.compData?.data.recommend_info || []
     }
   }
 })
 ```
 
-### properties type 校验报错
+`initData` 只能提供初始化阶段的值，不能替代 computed 返回值保护。适配时需检查 `wx:for` 数据源的所有赋值和返回路径，确保始终为 Array 或 Object。
 
-在 glass-easel 下，如果 properties 的 type 声明与实际传入值不匹配，会触发 `"the tyle of property "xxx" is not illegal"` 类型校验错误。两种解决方式：
+### [必须] properties 声明类型与实际值保持一致
 
+glass-easel 会校验 properties 的声明类型；实际传入值或默认值与 `type` 不匹配时会报 `"the tyle of property "xxx" is not illegal"` 类型校验错误，按以下优先级处理：
 
-方式一：initData 提供正确类型（更推荐）
+1. 优先修正调用侧传值和默认值，使其匹配真实类型；
+2. 业务确实允许联合类型时使用 `optionalTypes`；
+3. 只有类型确实不可知时才使用 `type: null` 跳过校验。
 
 ```js
+// ❌ Bad — type 不支持使用数组声明多个类型
+createComponent({
+  properties: {
+    moreIconStyle: {
+      type: [Object, String],
+      value: ''
+    }
+  }
+})
+
+// ✅ Good — 通过 optionalTypes 补充定义其他类型（更推荐）
 createComponent({
   properties: {
     config: {
-      // 通过 optionalTypes 补充定义其他类型
       type: Object,
       optionalTypes: [Array],
-      value: () => {}
+      value: () => ({})
     }
   }
 })
-```
 
-方式二：type 设为 null 跳过校验
-
-> 2.17.2 及以上的基础库增加了对未填写的兼容（未填写时兼容为填写 null），更低版本的基础库无法处理未填写的情况
-
-```js
+// ✅ Good — 将 type 设为 null 跳过校验
+// 在无法获知 properties 全部类型场景的兜底方案
 createComponent({
   properties: {
     config: {
-      // 跳过类型校验
       type: null,
       value: {}
     }
   }
 })
 ```
+
+> 2.17.2 及以上的基础库增加了对未填写 `type` 的兼容（未填写时按 `null` 处理），更低版本的基础库无法处理未填写的情况。
 
 ### animation API 不支持 → 使用 CSS transition
 

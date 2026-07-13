@@ -81,17 +81,17 @@ rg -n "rendererOptions|defaultDisplayBlock|defaultContentBox|tagNameStyleIsolati
 
 | id | level | scope | pattern | 判定 | 标准修复 | 允许例外 | 参考 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GLASS_WX_DASH` | warn | template | `wx-if\|wx-for` | glass-easel 不再支持短横线写法，仅支持 `wx:if` / `wx:for` | 改 `wx:if` / `wx:for` | 旧编译链确认兼容时可延后 | [wx-if / wx-for](./skyline-runtime-practice.md#必须-不再支持-wx-if--wx-for仅支持-wxif--wxfor) |
-| `GLASS_INCLUDE_IN_FOR` | warn | template | `<include\|wx:for` | `wx:for` 内嵌 `<include>` 时被引入模板中的 `item` / `index` 失效 | 改 `<import>` + `<template>`，显式传 `data` | include 不在循环内 | [include 适配](./skyline-runtime-practice.md#必须-wxfor-内嵌-include-时改为-template) |
-| `GLASS_TEMPLATE_ESCAPE` | warn | template | `\\\\\\"\|\\\\'` | 数据绑定外的引号需改 XML 实体；数据绑定内无需反斜杠转义 | 外层属性值用 `&quot;`；绑定表达式内去掉多余转义 | 不是模板属性转义 | [模板转义](./skyline-runtime-practice.md#必须-模板中数据绑定外的转义改为标准-xml-转义) |
+| `GLASS_WX_DASH` | error | template | `wx-if\|wx-for` | glass-easel 不再支持短横线写法，仅支持 `wx:if` / `wx:for` | 改 `wx:if` / `wx:for` | 非微信平台条件分支 | [wx-if / wx-for](./skyline-runtime-practice.md#必须-不再支持-wx-if--wx-for仅支持-wxif--wxfor) |
+| `GLASS_INCLUDE_IN_FOR` | error | template | `<include\|wx:for` | 候选召回；必须读取模板结构，判断 `<include>` 是否位于 `wx:for` 子树中 | 改 `<import>` + `<template>`，显式传 `data` | include 不在循环子树中 | [include 适配](./skyline-runtime-practice.md#必须-wxfor-内嵌-include-时改为-template) |
+| `GLASS_TEMPLATE_ESCAPE` | error | template | `\\\\\\"\|\\\\'` | 候选召回；必须结合完整模板属性判断转义位于数据绑定内还是绑定外 | 外层属性值用 `&quot;`；绑定表达式内去掉多余转义 | 不是模板属性转义 | [模板转义](./skyline-runtime-practice.md#必须-模板中数据绑定外的转义改为标准-xml-转义) |
 | `GLASS_SELECTOR_NUMERIC_ID` | error | template/script | `id=["']?[0-9]\|select\\(['"]#[0-9]` | glass-easel 下数字开头 id 选择器不合法 | id 改为字母前缀，如 `element-1`；SelectorQuery 同步改 | 非选择器用途需说明 | [SelectorQuery](./skyline-runtime-practice.md#必须-selectorquery-选择器不再支持以数字开头) |
 | `WORKLET_OLD_EVENT` | warn | template | `on-gesture-event\|should-response-on-move\|should-accept-gesture\|bind:scroll-start\|bind:scroll\|bind:scroll-end\|adjust-deceleration-velocity\|bind:transition\|bind:animationfinish\|on-frame` | Skyline Worklet 事件名已更新 | 改 `worklet:*` 新事件名 | 非 worklet 普通事件需说明 | [Worklet 事件名](./skyline-runtime-practice.md#必须-skyline-worklet-回调函数名称变更) |
 | `ANIMATION_WEBVIEW_API` | error | script/template | `\\.animate\\(\|\\.applyAnimation\\(\|\\.clearAnimation\\(\|\\.setInitialRenderingCache\\(\|wx\\.createAnimation` | Skyline 不支持这些动画 API 或静默不生效 | CSS transition / animation 或 Worklet；Skyline-only 逻辑需 renderer 隔离 | WebView-only 分支 | [实例方法](./skyline-runtime-practice.md#必须-skyline-不支持的组件实例方法) |
-| `SCROLL_CONTEXT_ENHANCED` | warn | template/script | `\\.node\\(\\)[\\s\\S]*scrollTo\|ScrollViewContext\|<scroll-view` | 通过 `NodesRef.node()` 获取 `ScrollViewContext` 时，`scroll-view` 必须开启 `enhanced` | 对目标 `scroll-view` 补 `enhanced="true"` | 不获取 ScrollViewContext | [ScrollViewContext](./skyline-runtime-practice.md#scrollviewcontext必须开启-enhanced-属性) |
+| `SCROLL_CONTEXT_ENHANCED` | error | template/script | `\\.node\\(\\)\|ScrollViewContext\|<scroll-view` | 候选召回；必须建立 `select('#id').node()` 与对应 `scroll-view` 的关联，并检查目标标签是否开启 `enhanced` | 对目标 `scroll-view` 补 `enhanced="true"` | `.node()` 不用于获取 ScrollViewContext | [ScrollViewContext](./skyline-runtime-practice.md#必须-scrollviewcontext开启-enhanced-属性) |
 | `SELECTOR_QUERY_SCOPE` | warn | script | `wx\\.createSelectorQuery` | glass-easel 下推荐使用 `this.createSelectorQuery` | 改 `this.createSelectorQuery()` | 跨页面或非组件实例上下文需说明 | [SelectorQuery 推荐](./skyline-runtime-practice.md#推荐-用-thiscreateselectorquery-替代-wxcreateselectorquery) |
-| `PROPS_DEFAULT_FIELD` | warn | script | `properties[\\s\\S]*default\\s*:` | glass-easel properties 默认值需使用 `value` 字段 | `default` 改 `value` | 非组件 properties 配置 | [properties 默认值](./skyline-runtime-practice.md#properties-默认值必须使用-value-而非-default) |
-| `WX_FOR_COMPUTED_INIT` | warn | template/script | `wx:for=.*\\{\\{[^}]+\\}\\}\|computed\\s*:` | `wx:for` 绑定 computed 时初始化阶段可能收到 `undefined` | 通过 `initData` 提供数组 / 对象初始值 | 已有稳定初始值 | [for-list 报错](./skyline-runtime-practice.md#the-for-list-data-is-neither-array-nor-object-报错) |
-| `PROPS_TYPE_CHECK` | warn | script | `properties[\\s\\S]*type\\s*:\\s*(Object\|Array\|String\|Number\|Boolean)` | glass-easel 会校验 properties type，传入值不匹配会报错 | 用 `optionalTypes` 补充类型、提供正确 `value`，或必要时 `type: null` | 已确认传参类型稳定 | [properties type](./skyline-runtime-practice.md#properties-type-校验报错) |
+| `PROPS_DEFAULT_FIELD` | error | script | `properties[\\s\\S]*default\\s*:` | 候选召回；必须逐个读取 properties descriptor，确认 `default` 是否属于属性默认值 | `default` 改 `value` | 命中位于 properties 对象外 | [properties 默认值](./skyline-runtime-practice.md#必须-properties-默认值使用-value-而非-default) |
+| `WX_FOR_DATA_TYPE` | warn | template/script | `wx:for=.*\\{\\{[^}]+\\}\\}` | 追踪每个 `wx:for` 数据源的默认值、赋值和 computed 返回路径；任意阶段都必须稳定返回 Array/Object | 补正确默认值；computed/异步路径返回 `[]` 或 `{}`；初始化时可同时使用 `initData` | 所有数据路径已确认类型稳定 | [for-list 报错](./skyline-runtime-practice.md#必须-确保-wxfor-数据始终为-array-或-object) |
+| `PROPS_TYPE_CHECK` | warn | script | `properties[\\s\\S]*type\\s*:\\s*(Object\|Array\|String\|Number\|Boolean)` | 逐项核对声明类型、默认值和调用侧实际传值 | 优先修正传值/默认值；确需联合类型时用 `optionalTypes`；类型不可知时才用 `type: null` | 声明、默认值与所有传值类型稳定一致 | [properties type](./skyline-runtime-practice.md#必须-properties-声明类型与实际值保持一致) |
 | `WXS_CROSS_PACKAGE` | warn | template/script | `\\.wxs\|wxs` | glass-easel 分包使用主包 wxs 时可能触发跨包引用错误 | 主包任一 glass-easel 页面/组件引用该 wxs，或按项目结构调整 | 无分包 / 无主包 wxs 复用 | [wxs 跨包](./skyline-runtime-practice.md#wxs-跨包引用错误typeerror-rwxsstringify4ccc0480-is-not-a-function) |
 | `PERF_CACHE_EXTENT` | info | template | `cache-extent` | `cache-extent` 是内存换流畅，过大可能拖慢首屏 | 仅在真机出现白屏 / 掉帧时按需加，首屏敏感页谨慎调大 | 已有真机性能数据 | [cache-extent](./skyline-runtime-practice.md#cache-extent-预渲染按需启用) |
 | `PERF_PRELOAD_SKYLINE` | info | script | `preloadSkylineView` | 前置页预加载可降低首次进入 Skyline 页冷启动 | 放在前置页 `onShow` 延迟调用 | 无前置跳转链路 | [预加载 Skyline](./skyline-runtime-practice.md#预加载-skyline-环境) |
@@ -100,8 +100,10 @@ rg -n "rendererOptions|defaultDisplayBlock|defaultContentBox|tagNameStyleIsolati
 
 1. `rg` 命中只是候选项，必须结合 SFC 区块、平台条件、运行时 renderer 分支判断。
 2. 多行 `<scroll-view>`、`<navigator>`、`<text>`、`sticky-section` 不能只靠单行 pattern 判定，需读取完整标签和直接子节点。
-3. 保留 `@media screen` 时必须说明 WebView 路径仍需要它；Skyline 路径必须有动态类兜底。
-4. 最终结果中 `error` 不允许无说明残留；`warn` 必须处理或说明为什么不影响当前 scope。
-5. `COMP_INLINE_MIXED_CONTENT` 不能只按 `STYLE_TEXT_OVERFLOW` 处理；命中 `truncate` 且同一行附近存在 `image` / icon / `rich-text` / `special-text` 时，必须进一步套用图文混排规则或说明为什么不是同段混排。
-6. `CONFIG_*` 规则需要同时检查 app.json、page.json 和构建配置；只审 `.mpx` 文件时要明确配置未覆盖。
-7. 矩阵未收录的组件、属性、事件不能反推为支持；需回到对应 reference 或官方来源确认。
+3. `SCROLL_CONTEXT_ENHANCED` 必须把 `select('#id').node()` 关联到对应 `scroll-view`；不能因文件内存在其他已开启 `enhanced` 的滚动容器而放行。
+4. `GLASS_INCLUDE_IN_FOR` 必须检查祖先关系；`GLASS_TEMPLATE_ESCAPE` 必须按完整属性区分数据绑定内外，聚合扫描结果不能直接作为最终结论。
+5. 保留 `@media screen` 时必须说明 WebView 路径仍需要它；Skyline 路径必须有动态类兜底。
+6. 最终结果中 `error` 不允许无说明残留；`warn` 必须处理或说明为什么不影响当前 scope。
+7. `COMP_INLINE_MIXED_CONTENT` 不能只按 `STYLE_TEXT_OVERFLOW` 处理；命中 `truncate` 且同一行附近存在 `image` / icon / `rich-text` / `special-text` 时，必须进一步套用图文混排规则或说明为什么不是同段混排。
+8. `CONFIG_*` 规则需要同时检查 app.json、page.json 和构建配置；只审 `.mpx` 文件时要明确配置未覆盖。
+9. 矩阵未收录的组件、属性、事件不能反推为支持；需回到对应 reference 或官方来源确认。
