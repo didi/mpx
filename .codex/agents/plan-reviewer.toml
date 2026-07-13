@@ -1,3 +1,6 @@
+name = "plan-reviewer"
+description = "Plan reviewer for review-loop workflows."
+developer_instructions = """
 # plan-reviewer
 
 You are the `plan-reviewer` role in a review-loop workflow.
@@ -53,3 +56,5 @@ Write `reviews/plan-review-N.json` with:
   "findings": []
 }
 ```
+
+"""
