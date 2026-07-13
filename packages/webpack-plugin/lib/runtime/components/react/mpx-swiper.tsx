@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS
 import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture, useRunOnJSCallback, useTextPassThroughValue } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture, useRunOnJSCallback, useTextPassThrough } from './utils'
 import { SwiperContext } from './context'
 import Portal from './mpx-portal'
 /**
@@ -70,10 +70,9 @@ interface SwiperProps {
   'next-margin'?: string
   'enable-offset'?: boolean
   'enable-var': boolean
-  'parent-font-size'?: number
+  'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
-  'external-var-context'?: Record<string, any>
   'wait-for'?: Array<GestureHandler>
   'simultaneous-handlers'?: Array<GestureHandler>
   disableGesture?: boolean
@@ -147,10 +146,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'indicator-margin': paginationMargin = 10,
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
-    'parent-font-size': parentFontSize,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    'external-var-context': externalVarContext,
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
@@ -192,14 +190,12 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     setHeight
   } = useTransformStyle(style, {
     enableVar,
-    externalVarContext,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
   const preMargin = props['previous-margin'] ? global.__formatValue(props['previous-margin']) as number : 0
   const nextMargin = props['next-margin'] ? global.__formatValue(props['next-margin']) as number : 0
   const preMarginShared = useSharedValue(preMargin)
@@ -279,6 +275,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'indicator-dots',
       'indicator-color',
       'indicator-width',
+      'indicator-height',
+      'indicator-radius',
+      'indicator-spacing',
+      'indicator-margin',
       'indicator-active-color',
       'previous-margin',
       'vertical',
@@ -288,7 +288,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'autoplay',
       'circular',
       'interval',
-      'easing-function'
+      'easing-function',
+      'current',
+      'duration',
+      'scale',
+      'disableGesture',
+      'wait-for',
+      'simultaneous-handlers',
+      'bindchange'
+
     ], { layoutRef: layoutRef })
 
   function onWrapperLayout (e: LayoutChangeEvent) {
@@ -918,9 +926,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const animateComponent = createElement(Animated.View, {
     key: 'swiperContainer',
     style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
-  }, wrapChildren({
-    children: arrPages
-  }, {
+  }, wrapChildren(arrPages, {
     hasVarDec,
     varContext: varContextRef.current,
     textPassThrough
