@@ -508,6 +508,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         multiline,
         onTouchStart,
         onTouchEnd,
+        onTouchMove: onTouchEnd,
         onFocus,
         onBlur,
         onChange,
