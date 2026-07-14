@@ -342,9 +342,9 @@ createComponent({
 createComponent({
   properties: {
     config: {
-      type: Object,
-      optionalTypes: [Array],
-      value: () => ({})
+      type: String,
+      optionalTypes: [Object],
+      value: ''
     }
   }
 })
@@ -355,7 +355,7 @@ createComponent({
   properties: {
     config: {
       type: null,
-      value: {}
+      value: () => ({})
     }
   }
 })
