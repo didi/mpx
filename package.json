@@ -8,6 +8,7 @@
     "fix": "eslint --fix --ext .js,.ts,.tsx,.jsx packages/",
     "lint:js": "eslint --ext .js packages/",
     "test": "jest --passWithNoTests",
+    "test:review-loop": "jest --config .agents/skills/review-loop/jest.config.json --runInBand",
     "release": "npm run lint && npm run test && npx lerna version",
     "lerna:publish": "lerna publish from-package --yes",
     "docs:dev": "npm run dev -w docs-vitepress",
