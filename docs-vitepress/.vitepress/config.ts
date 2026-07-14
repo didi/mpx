@@ -147,6 +147,7 @@ const sidebar: ExtendedSidebar = {
         { text: '网络请求', link: '/guide/extend/fetch' },
         { text: '数据 Mock', link: '/guide/extend/mock' },
         { text: 'WebView Bridge', link: '/guide/extend/webview-bridge' },
+        { text: '扩展组件', link: '/guide/extend/extend-component' },
       ],
     },
     {

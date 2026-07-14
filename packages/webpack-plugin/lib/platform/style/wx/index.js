@@ -9,9 +9,9 @@ module.exports = function getSpec ({ warn, error }) {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
     // React Native android 不支持的 CSS property
-    android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/,
+    android: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/,
     // TODO: rnoh 文档暂未找到 css 属性支持说明，暂时同步 android，同时需要注意此处校验是否有缺失，类似 will-change 之类属性
-    harmony: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
+    harmony: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
   const isNum = (v) => !isNaN(+v)
   // var(xx)
@@ -31,11 +31,12 @@ module.exports = function getSpec ({ warn, error }) {
 
   // 不支持的属性提示
   const unsupportedPropError = ({ prop, value, selector }, { mode }, isError = true) => {
+    if (isError === silentVerify) return
     const tips = isError ? error : warn
     tips(`Property [${prop}] on ${selector} is not supported in ${mode} environment!`)
   }
   // prop 校验
-  const verifyProps = ({ prop, value, selector }, { mode }, isError = true) => {
+  const verifyProps = ({ prop, value, selector }, { mode, isError = true }) => {
     prop = prop.trim()
     if (unsupportedPropExp.test(prop) || unsupportedPropMode[mode].test(prop)) {
       unsupportedPropError({ prop, value, selector }, { mode }, isError)
@@ -103,6 +104,10 @@ module.exports = function getSpec ({ warn, error }) {
     // outline-style 走 enum 校验；与 border-style 对齐，不支持 double / groove / ridge
     'outline-style': ['solid', 'dotted', 'dashed', 'none']
   }
+  const getSupportedPropValArr = (prop, mode) => {
+    if ((mode === 'android' || mode === 'harmony') && prop === 'text-decoration-style') return ['solid']
+    return SUPPORTED_PROP_VAL_ARR[prop]
+  }
   // 获取值类型
   const getValueType = (prop) => {
     const propValueTypeRules = [
@@ -116,6 +121,7 @@ module.exports = function getSpec ({ warn, error }) {
       if (rule[1].test(prop)) return rule[0]
     }
   }
+  const getDashProp = (prop) => hump2dash(prop.replace(/\..+/, ''))
 
   // 从 CSS 变量中提取 fallback 值进行验证
   // 返回值：fallback 值 | null（没有 fallback）| undefined（循环引用）
@@ -140,7 +146,7 @@ module.exports = function getSpec ({ warn, error }) {
   // 返回值：
   // - 通过：返回 true
   // - 失败：返回 false
-  const verifyValues = ({ prop, value, selector }, isError = true) => {
+  const verifyValues = ({ prop, value, selector }, { isError = true, mode } = {}) => {
     prop = prop.trim()
     const rawValue = value.trim()
     const tips = isError === silentVerify ? () => { } : isError ? error : warn
@@ -170,9 +176,10 @@ module.exports = function getSpec ({ warn, error }) {
     // calc() / env() 跳过值校验，但保留 rawValue 输出
     if (calcExp.test(valueForVerify) || envExp.test(valueForVerify)) return true
     const type = getValueType(prop)
+    const supportedPropValArr = getSupportedPropValArr(prop, mode)
     const tipsType = (type) => {
       const example = type === ValueType.enum
-        ? SUPPORTED_PROP_VAL_ARR[prop]?.join(',')
+        ? supportedPropValArr?.join(',')
         : valueTypeExample[type]
       tips(`Value of ${prop} in ${selector} should be ${type}${example ? `, eg ${example}` : ''}, received [${rawValue}], please check again!`)
     }
@@ -204,14 +211,14 @@ module.exports = function getSpec ({ warn, error }) {
         // 输出仍保留 raw value，运行时由 RN `processFontVariant` 自行 `split(' ')` 归一为数组。
         if (prop === 'font-variant') {
           const tokens = parseValues(valueForVerify)
-          if (!tokens.length || !tokens.every(t => SUPPORTED_PROP_VAL_ARR[prop].includes(t))) {
+          if (!tokens.length || !tokens.every(t => supportedPropValArr.includes(t))) {
             tipsType(type)
             return false
           }
           return true
         }
-        const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(valueForVerify)
-        const isType = Object.keys(valueExp).some(item => SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]) && valueExp[item].test(valueForVerify))
+        const isIn = supportedPropValArr.includes(valueForVerify)
+        const isType = Object.keys(valueExp).some(item => supportedPropValArr.includes(ValueType[item]) && valueExp[item].test(valueForVerify))
         if (!isIn && !isType) {
           tipsType(type)
           return false
@@ -224,7 +231,7 @@ module.exports = function getSpec ({ warn, error }) {
 
   // prop & value 校验：过滤的不合法的属性和属性值
   const verification = ({ prop, value, selector }, { mode }) => {
-    return verifyProps({ prop, value, selector }, { mode }) && verifyValues({ prop, value, selector }) && ({ prop, value })
+    return verifyProps({ prop, value, selector }, { mode }) && verifyValues({ prop, value, selector }, { mode }) && ({ prop, value })
   }
 
   // 简写转换规则
@@ -333,9 +340,9 @@ module.exports = function getSpec ({ warn, error }) {
   const getVerifiedProp = (props, value, selector, mode, used) => {
     return props.find(prop => {
       if (used[prop]) return false
-      const newProp = hump2dash(prop.replace(/\..+/, ''))
-      return verifyValues({ prop: newProp, value, selector }, silentVerify) &&
-        verifyProps({ prop: newProp, value, selector }, { mode }, false)
+      const newProp = getDashProp(prop)
+      return verifyValues({ prop: newProp, value, selector }, { mode, isError: silentVerify }) &&
+        verifyProps({ prop: newProp, value, selector }, { mode, isError: silentVerify })
     })
   }
 
@@ -354,7 +361,7 @@ module.exports = function getSpec ({ warn, error }) {
       return { prop, value: values[0] }
     }
     values.forEach(value => {
-      if (prop === 'text-decoration' && verifyValues({ prop: 'text-decoration-line', value, selector }, silentVerify)) {
+      if (prop === 'text-decoration' && verifyValues({ prop: 'text-decoration-line', value, selector }, { isError: silentVerify, mode })) {
         switch (value) {
           case 'underline':
             hasUnderline = true
@@ -370,7 +377,7 @@ module.exports = function getSpec ({ warn, error }) {
       }
       const matchedProp = getVerifiedProp(props, value, selector, mode, used)
       if (!matchedProp) {
-        warn(`Value of [${original}] in ${selector} is invalid, received [${value}], please check again!`)
+        warn(`Value of [${original}] in ${selector} contains unsupported value [${value}], please check again!`)
         return
       }
       used[matchedProp] = true
@@ -418,8 +425,8 @@ module.exports = function getSpec ({ warn, error }) {
         break
       }
       const value = values[idx]
-      const newProp = hump2dash(prop.replace(/\..+/, ''))
-      if (!verifyProps({ prop: newProp, value, selector }, { mode }, diff === 0)) {
+      const newProp = getDashProp(prop)
+      if (!verifyProps({ prop: newProp, value, selector }, { mode, isError: diff === 0 })) {
         // 有 ios or android 不支持的 prop，跳过 prop
         if (diff === 0) {
           propsIdx++
@@ -427,7 +434,7 @@ module.exports = function getSpec ({ warn, error }) {
         } else {
           propsIdx++
         }
-      } else if (!verifyValues({ prop: newProp, value, selector }, diff === 0)) {
+      } else if (!verifyValues({ prop: newProp, value, selector }, { isError: diff === 0, mode })) {
         // 值不合法 跳过 value
         if (diff === 0) {
           propsIdx++
@@ -453,7 +460,7 @@ module.exports = function getSpec ({ warn, error }) {
     // 单值短路：margin / padding / inset / border-* 等 RN 原生支持单值 DimensionValue，原样透传；
     // gap 单值仍需展开（RN gap / rowGap / columnGap 只接受 number，展开后与运行时 runtimeForceExpandCompositeMap 对齐）
     if (values.length === 1 && prop !== 'gap') {
-      verifyValues({ prop, value, selector }, false)
+      verifyValues({ prop, value, selector }, { isError: false })
       return { prop, value }
     }
     if (count === 2) {
@@ -569,12 +576,12 @@ module.exports = function getSpec ({ warn, error }) {
         let isSize = false
         const pushPositionOrSize = (item) => {
           if (isSize) {
-            if (verifyValues({ prop: bgPropMap.size, value: item, selector }, silentVerify)) {
+            if (verifyValues({ prop: bgPropMap.size, value: item, selector }, { isError: silentVerify, mode })) {
               sizeValues.push(item)
             } else {
               warn(`Value of [${bgPropMap.all}:${value}] in ${selector} does not support background-size token [${item}], please check again!`)
             }
-          } else if (verifyValues({ prop: bgPropMap.position, value: item, selector }, silentVerify)) {
+          } else if (verifyValues({ prop: bgPropMap.position, value: item, selector }, { isError: silentVerify, mode })) {
             positionValues.push(item)
           } else {
             warn(`Value of [${bgPropMap.all}:${value}] in ${selector} does not support background-position token [${item}], please check again!`)
@@ -593,7 +600,7 @@ module.exports = function getSpec ({ warn, error }) {
             })
             return true
           }
-          if (isSize || verifyValues({ prop: bgPropMap.position, value: item, selector }, silentVerify)) {
+          if (isSize || verifyValues({ prop: bgPropMap.position, value: item, selector }, { isError: silentVerify, mode })) {
             pushPositionOrSize(item)
             return true
           }
@@ -607,9 +614,9 @@ module.exports = function getSpec ({ warn, error }) {
             bgMap.push({ prop: bgPropMap.image, value: url })
           } else if (linerVal) {
             bgMap.push({ prop: bgPropMap.image, value: linerVal })
-          } else if (verifyValues({ prop: bgPropMap.color, value: item, selector }, silentVerify)) {
+          } else if (verifyValues({ prop: bgPropMap.color, value: item, selector }, { isError: silentVerify, mode })) {
             bgMap.push({ prop: bgPropMap.color, value: item })
-          } else if (verifyValues({ prop: bgPropMap.repeat, value: item, selector }, silentVerify)) {
+          } else if (verifyValues({ prop: bgPropMap.repeat, value: item, selector }, { isError: silentVerify, mode })) {
             bgMap.push({ prop: bgPropMap.repeat, value: item })
           } else if (!handlePositionSize(item)) {
             // 既不是 url / linear-gradient / color / repeat / position-size，也不是合法 position 起头的 token
@@ -877,8 +884,8 @@ module.exports = function getSpec ({ warn, error }) {
         tokens.splice(i + 1, 1)
       }
       const [sizePart, lhPart] = parseValues(t, '/')
-      if (verifyValues({ prop: 'font-weight', value: sizePart, selector }, silentVerify)) continue
-      if (verifyValues({ prop: 'font-size', value: sizePart, selector }, silentVerify)) {
+      if (verifyValues({ prop: 'font-weight', value: sizePart, selector }, { isError: silentVerify, mode })) continue
+      if (verifyValues({ prop: 'font-size', value: sizePart, selector }, { isError: silentVerify, mode })) {
         sizeIdx = i
         cssMap.push({ prop: 'fontSize', value: sizePart })
         if (lhPart) lineHeight = lhPart
@@ -894,13 +901,13 @@ module.exports = function getSpec ({ warn, error }) {
     for (let i = 0; i < sizeIdx; i++) {
       const t = tokens[i]
       if (t === 'normal') continue // 默认值跳过
-      if (verifyValues({ prop: 'font-style', value: t, selector }, silentVerify)) {
+      if (verifyValues({ prop: 'font-style', value: t, selector }, { isError: silentVerify, mode })) {
         cssMap.push({ prop: 'fontStyle', value: t })
       } else if (t === 'small-caps') {
         // CSS font 简写的 variant 槽位仅 <font-variant-css2>（normal | small-caps）；
         // 字符串透传，RN processFontVariant 会 split 归一为数组，与 font-variant 长属性同口径
         cssMap.push({ prop: 'fontVariant', value: t })
-      } else if (verifyValues({ prop: 'font-weight', value: t, selector }, silentVerify)) {
+      } else if (verifyValues({ prop: 'font-weight', value: t, selector }, { isError: silentVerify, mode })) {
         cssMap.push({ prop: 'fontWeight', value: t })
       } else {
         // font-stretch / 数字型 font-variant-numeric / system 关键字等 → 非必填槽位，warn 并忽略该 token、保留其余

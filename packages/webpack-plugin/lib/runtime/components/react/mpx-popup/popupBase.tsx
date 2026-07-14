@@ -59,8 +59,9 @@ const PopupBase = (props: PopupBaseProps = {}) => {
     contentHeight = MOVEOUT_HEIGHT,
     visible = false
   } = props
+  const moveoutHeight = contentHeight + bottom
   const fade = useSharedValue<number>(MASK_OFF)
-  const slide = useSharedValue<number>(contentHeight)
+  const slide = useSharedValue<number>(moveoutHeight)
 
   const animatedStylesMask = useAnimatedStyle(() => ({
     opacity: fade.value
@@ -87,7 +88,7 @@ const PopupBase = (props: PopupBaseProps = {}) => {
       duration: 300
     })
     slide.value = withTiming(
-      contentHeight,
+      moveoutHeight,
       {
         easing: Easing.inOut(Easing.poly(3)),
         duration: 300
