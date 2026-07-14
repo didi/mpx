@@ -33,7 +33,6 @@ export interface _ViewProps extends ViewProps {
   'enable-text-pass-through'?: boolean
   'enable-var'?: boolean
   'enable-fast-image'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   'enable-animation'?: boolean | AnimationType
@@ -675,7 +674,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-text-pass-through': enableTextPassThrough,
     'enable-fast-image': enableFastImage,
     'enable-animation': enableAnimation,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     animation,
@@ -704,7 +702,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     setHeight
   } = useTransformStyle(styleObj, {
     enableVar,
-    parentFontSize,
     parentWidth,
     parentHeight,
     // 基于合并后的 styleObj 判断（hover 状态切换 display 也能触发）

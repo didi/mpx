@@ -93,7 +93,6 @@ interface VideoProps {
   'preferred-peak-bit-rate'?: number
   'enable-auto-rotation'?: number
   'enable-var'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   bindplay?: (event: Record<string, any>) => void
@@ -154,7 +153,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     'preferred-peak-bit-rate': preferredPeakBitRate = 0,
     'enable-auto-rotation': enableAutoRotation = false,
     'enable-var': enableVar,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -172,7 +170,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   const { normalStyle, hasSelfPercent, setWidth, setHeight, hasPositionFixed } =
     useTransformStyle(style, {
       enableVar,
-      parentFontSize,
       parentWidth,
       parentHeight,
       defaultStyle: styles.container

@@ -71,7 +71,6 @@ interface SwiperProps {
   'enable-offset'?: boolean
   'enable-var': boolean
   'enable-text-pass-through'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   'wait-for'?: Array<GestureHandler>
@@ -148,7 +147,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
     'enable-text-pass-through': enableTextPassThrough,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'simultaneous-handlers': originSimultaneousHandlers = [],
@@ -192,7 +190,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     setHeight
   } = useTransformStyle(style, {
     enableVar,
-    parentFontSize,
     parentWidth,
     parentHeight
   })

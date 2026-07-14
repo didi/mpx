@@ -13,7 +13,6 @@ interface StickyHeaderProps {
   'offset-top'?: number;
   'enable-var'?: boolean;
   'enable-text-pass-through'?: boolean;
-  'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
   bindstickontopchange?: (e: NativeSyntheticEvent<unknown>) => void;
@@ -28,7 +27,6 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     'offset-top': offsetTop = 0,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -47,7 +45,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const { layoutRef, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef, onLayout })
 
