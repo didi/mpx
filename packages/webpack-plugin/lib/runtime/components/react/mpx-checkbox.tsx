@@ -43,7 +43,6 @@ export interface CheckboxProps extends Selection {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'enable-text-pass-through'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   children?: ReactNode
@@ -90,7 +89,6 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       style = {},
       'enable-var': enableVar,
       'enable-text-pass-through': enableTextPassThrough,
-      'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
       bindtap,
@@ -135,7 +133,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight, defaultStyle: styles.container })
+    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
 
     const nodeRef = useRef(null)
 

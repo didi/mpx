@@ -27,7 +27,12 @@ describe('RN template support', () => {
   })
 
   function compileReactTemplate (input, extraOptions) {
-    const parsed = compiler.parse(input, Object.assign({
+    const parsed = parseReactTemplate(input, extraOptions)
+    return genNodeReact(parsed.root)
+  }
+
+  function parseReactTemplate (input, extraOptions) {
+    return compiler.parse(input, Object.assign({
       mode: 'ios',
       srcMode: 'wx',
       defs: {},
@@ -37,7 +42,6 @@ describe('RN template support', () => {
       error: console.error,
       isUrlRequest: () => false
     }, extraOptions))
-    return genNodeReact(parsed.root)
   }
 
   it('should generate correct code for template import and definition', () => {
@@ -157,6 +161,36 @@ describe('RN template support', () => {
     expect(output).toContain('getComponent("mpx-audio")')
     expect(output).toContain('controls: (true)')
     expect(output).not.toContain('controls: "true"')
+  })
+
+  it('should inject internal host ref into RN component root', () => {
+    const parsed = parseReactTemplate('<view>content</view>', {
+      ctorType: 'component',
+      moduleId: 'm123'
+    })
+    const output = genNodeReact(parsed.root)
+
+    expect(output).toContain('__getRefVal(\'node\', [["", "__mpxHost"]')
+    expect(output).toContain('ishost: (true)')
+    expect(parsed.meta.refs).toEqual([
+      {
+        key: '__mpxHost',
+        all: false,
+        type: 'node'
+      }
+    ])
+  })
+
+  it('should not inject internal host ref into RN virtualHost component', () => {
+    const parsed = parseReactTemplate('<view>content</view>', {
+      ctorType: 'component',
+      moduleId: 'm123',
+      hasVirtualHost: true
+    })
+    const output = genNodeReact(parsed.root)
+
+    expect(output).not.toContain('__mpxHost')
+    expect(parsed.meta.refs).toBeUndefined()
   })
 
   it('should report error for template usage without valid is value', () => {
