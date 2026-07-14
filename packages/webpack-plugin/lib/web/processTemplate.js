@@ -1,4 +1,3 @@
-const JSON5 = require('json5')
 const templateCompiler = require('../template-compiler/compiler')
 const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
@@ -8,7 +7,6 @@ const { matchCondition } = require('../utils/match-condition')
 const { getWxTemplateComponentName, serializeWxTemplateDefinition, buildWebTemplateImportMergeExpr } = require('./template-shared')
 
 const titleBarPath = normalize.lib('runtime/components/web/mpx-titlebar.vue')
-const validNavigationStyles = ['default', 'custom']
 
 module.exports = function (template, {
   loaderContext,
@@ -21,8 +19,7 @@ module.exports = function (template, {
   usingComponentsInfo,
   originalUsingComponents,
   componentGenerics,
-  componentPlaceholder,
-  jsonContent
+  componentPlaceholder
 }, callback) {
   const mpx = loaderContext.getMpx()
   const {
@@ -169,32 +166,11 @@ module.exports = function (template, {
 
         // Page 在 web 模式下插入 titlebar 组件
         if (ctorType === 'page') {
-          let needTitleBar = true
-          // 页面级 navigationStyle 优先，未配置时回退到 app 全局配置
-          let navigationStyle = mpx.appJson && mpx.appJson.window && mpx.appJson.window.navigationStyle
-          if (!validNavigationStyles.includes(navigationStyle)) {
-            navigationStyle = undefined
+          builtInComponentsMap['mpx-titlebar'] = {
+            resource: addQuery(titleBarPath, { isComponent: true })
           }
-          if (jsonContent) {
-            try {
-              const jsonObj = JSON5.parse(jsonContent)
-              if (validNavigationStyles.includes(jsonObj.navigationStyle)) {
-                navigationStyle = jsonObj.navigationStyle
-              }
-            } catch (e) {
-              // json 解析失败，保持默认行为
-            }
-          }
-          if (navigationStyle === 'custom') {
-            needTitleBar = false
-          }
-          if (needTitleBar) {
-            builtInComponentsMap['mpx-titlebar'] = {
-              resource: addQuery(titleBarPath, { isComponent: true })
-            }
-            const serialized = templateCompiler.serialize(root)
-            return `<mpx-titlebar :page-config="$options.__mpxPageConfig">${serialized}</mpx-titlebar>`
-          }
+          const serialized = templateCompiler.serialize(root)
+          return `<mpx-titlebar :page-config="$options.__mpxPageConfig">${serialized}</mpx-titlebar>`
         }
 
         return templateCompiler.serialize(root)

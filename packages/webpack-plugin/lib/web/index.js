@@ -74,8 +74,7 @@ module.exports = function ({
             usingComponentsInfo,
             originalUsingComponents,
             componentGenerics,
-            componentPlaceholder,
-            jsonContent
+            componentPlaceholder
           }, callback)
         },
         (callback) => {

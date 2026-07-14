@@ -116,10 +116,7 @@ module.exports = function (jsonContent, {
       }
     }
 
-    if (ctorType === 'app') {
-      // 存储原始 app json（rulesRunner 执行前），供编译期其他模块读取基础配置
-      mpx.appJson = jsonObj
-    } else {
+    if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
     }
 

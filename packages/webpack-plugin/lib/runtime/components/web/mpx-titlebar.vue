@@ -13,9 +13,9 @@ export default {
     }
   },
   computed: {
-    // 标题文本（兼容常见字段名）
+    // 标题文本
     titleText() {
-      return this.pageConfig.navigationBarTitleText || this.pageConfig.title || ''
+      return this.pageConfig.navigationBarTitleText || ''
     },
     // 背景色（兼容常见字段）
     backgroundColor() {
