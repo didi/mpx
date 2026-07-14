@@ -160,7 +160,7 @@ describe('MpxSwiper', () => {
       __flushAnimatedReactions()
     })
     expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
-      detail: { current: 1, source: 'touch' }
+      detail: { current: 1, source: '' }
     }))
     bindchange.mockClear()
     withTiming.mockClear()
@@ -220,7 +220,7 @@ describe('MpxSwiper', () => {
     })
 
     expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
-      detail: { current: 1, source: 'touch' }
+      detail: { current: 1, source: '' }
     }))
   })
 
@@ -370,6 +370,8 @@ describe('MpxSwiper', () => {
 
   it('handles margin, circular and children length updates', () => {
     jest.useFakeTimers()
+    const bindchange = jest.fn()
+    const { __flushAnimatedReactions } = require('react-native-reanimated')
     const { rerender } = render(
       <MpxSwiper
         testID="updating-swiper"
@@ -377,6 +379,7 @@ describe('MpxSwiper', () => {
         current={2}
         autoplay={true}
         interval={10}
+        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -402,6 +405,7 @@ describe('MpxSwiper', () => {
         interval={10}
         previous-margin="10"
         next-margin="20"
+        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -425,6 +429,7 @@ describe('MpxSwiper', () => {
         previous-margin="10"
         next-margin="20"
         circular={true}
+        bindchange={bindchange}
       >
         <MpxSwiperItem item-id="one" enable-var={false}>
           <Text>One</Text>
@@ -434,6 +439,12 @@ describe('MpxSwiper', () => {
         </MpxSwiperItem>
       </MpxSwiper>
     )
+    act(() => {
+      __flushAnimatedReactions()
+    })
+    expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { current: 0, source: '' }
+    }))
     act(() => {
       jest.advanceTimersByTime(20)
     })

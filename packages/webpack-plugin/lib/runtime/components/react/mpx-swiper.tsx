@@ -30,6 +30,7 @@ import Portal from './mpx-portal'
  * ✘ snap-to-edge
  */
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
+type ChangeSource = '' | 'touch' | 'autoplay'
 type StrAbsoType = 'absoluteX' | 'absoluteY'
 type StrVelocityType = 'velocityX' | 'velocityY'
 type EventDataType = {
@@ -201,7 +202,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const preMarginShared = useSharedValue(preMargin)
   const nextMarginShared = useSharedValue(nextMargin)
   const autoplayShared = useSharedValue(autoplay)
-  const changeSource = useSharedValue('touch')
+  const changeSource = useSharedValue<ChangeSource>('')
   // 默认前后补位的元素个数
   const patchElmNum = circular ? (preMargin ? 2 : 1) : 0
   const patchElmNumShared = useSharedValue(patchElmNum)
@@ -478,10 +479,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [])
 
-  function handleSwiperChange (current: number, source = 'touch') {
+  function handleSwiperChange (current: number, source: ChangeSource = 'touch') {
     const eventData = getCustomEvent('change', {}, { detail: { current, source }, layoutRef: layoutRef })
     bindchange && bindchange(eventData)
-    changeSource.value = 'touch'
   }
 
   const runOnJSCallbackRef = useRef({
@@ -513,7 +513,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           duration: easeDuration,
           easing: easeMap[easeingFunc]
         }, () => {
-          changeSource.value = 'touch'
+          changeSource.value = ''
           currentIndex.value = propCurrent
         })
       } else {
@@ -558,7 +558,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     childrenLength.value = children.length
     if (children.length - 1 < currentIndex.value) {
       pauseLoop()
-      changeSource.value = 'touch'
+      changeSource.value = ''
       currentIndex.value = 0
       offset.value = getOffset(0, step.value)
       if (autoplay && children.length > 1) {
@@ -662,6 +662,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           easing: easeMap[easeingFunc]
         }, () => {
           if (touchfinish.value !== false) {
+            changeSource.value = 'touch'
             currentIndex.value = selectedIndex
             offset.value = resetOffset
             runOnJS(runOnJSCallback)('resumeLoop')
@@ -673,6 +674,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           easing: easeMap[easeingFunc]
         }, () => {
           if (touchfinish.value !== false) {
+            changeSource.value = 'touch'
             currentIndex.value = selectedIndex
             runOnJS(runOnJSCallback)('resumeLoop')
           }
@@ -695,6 +697,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         easing: easeMap[easeingFunc]
       }, () => {
         if (touchfinish.value !== false) {
+          changeSource.value = 'touch'
           currentIndex.value = moveToIndex
           runOnJS(runOnJSCallback)('resumeLoop')
         }
@@ -784,7 +787,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         'worklet'
         if (!step.value) return
         touchfinish.value = false
-        changeSource.value = 'touch'
         cancelAnimation(offset)
         runOnJS(runOnJSCallback)('pauseLoop')
         preAbsolutePos.value = e[strAbso]
