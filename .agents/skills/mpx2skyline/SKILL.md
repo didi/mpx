@@ -1,11 +1,11 @@
 ---
 name: mpx2skyline
 description: |
-  微信小程序 WebView 适配 Skyline 渲染引擎指南，覆盖布局、样式、组件、配置四大维度。
+   基于 Mpx 开发实现的微信小程序 WebView 适配 Skyline 渲染引擎指南，覆盖布局、样式、组件、配置四大维度。
   当用户要求对已有微信小程序页面进行 Skyline 适配、创建符合 Skyline 兼容规范的页面、
   排查 Skyline 下样式不生效/组件不渲染/布局异常/层级错乱等问题、或查询某项能力在
   Skyline 下的支持情况时强制调用。当用户问题不涉及 Skyline 适配时不应调用，如
-  Mpx 输出 RN 问题、支付宝小程序问题、纯 webview 小程序开发问题等。
+  Mpx 输出 RN 问题、支付宝小程序问题、纯微信原生小程序、纯 webview 小程序开发问题等。
 metadata:
   version: "1.0.1"
 ---
@@ -25,7 +25,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - **技术方案设计**：评估需求在 Skyline 下的可行性、跨渲染模式（WebView & Skyline）兼容方案选型、是否需要通过 `this.renderer === 'skyline'` 进行运行时模式隔离等;
 - **WebView 页面 Skyline 适配改造**：对已基于 WebView 模式编写、未适配 Skyline 的存量页面进行兼容性补齐（参见下文[任务一](#任务一对已有-webview-页面进行-skyline-适配改造)）;
 - **页面 / 组件开发迭代**：从零编写或迭代符合 WebView & Skyline 双模式兼容规范的 `.mpx` 页面与组件（参见下文[任务二](#任务二创建符合-skyline-兼容规范的页面)）;
-- **运行时报错与异常排查**：定位 Skyline 下样式不生效（如不支持选择器/属性静默失效）、组件不渲染（如 `scroll-view` 缺失 `type`）、布局异常（如默认 `display: flex` / `border-box` 引发的差异）、层级错乱（z-index 无层叠上下文）、glass-easel 框架变更点（如 `wx-if` 废弃、模板转义、SelectorQuery 数字开头）、worklet 动画失效等问题;
+- **运行时报错与异常排查**：定位 Skyline 下样式不生效（如不支持选择器/属性静默失效）、组件不渲染（如 `scroll-view` 缺失 `type`）、布局异常（如默认 `display: flex` / `border-box` 引发的差异）、层级错乱（z-index 无层叠上下文）、模板转义、SelectorQuery 数字开头等问题;
 - **能力查询**：查询某项基础组件、属性、样式、API、滚动 API、worklet 能力在 Skyline 下的支持情况、版本要求与 WebView 差异;
 - **Code Review**：以本 SKILL 的[通用约束与适配原则](#通用约束与适配原则)为标准对照检查 Skyline 兼容性与跨渲染模式兼容性。
 
@@ -84,7 +84,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 - 新方案若 WebView & Skyline & RN 三端兼容，直接对齐为新方案；
 - 新方案若属 Skyline-only 改造，**必须**通过 `this.renderer === 'skyline'` 运行时隔离，若有细则明确要求 WebView 保留原有逻辑且 Skyline 无副作用则保留，阅读 [运行时 renderer 判断](./references/skyline-runtime-practice.md#判断当前渲染模式)；
-- 特定版本起支持的 Skyline 特性（如 `position: fixed` 8.0.43+、`:nth-child` 8.0.50+）按已支持处理，不做低版本兼容。
+- Skyline 适配不做低版本兼容，由 Skyline 开量开关控制最低版本基础库，低版本降级到 Webview 渲染。
 
 该原则贯穿模板 / 脚本 / 样式 / JSON 四个维度。
 
@@ -99,7 +99,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 ### 样式（style）约束
 
 1. **选择器**：不支持通配选择器 `*` 和属性选择器 `[attr]`；伪元素仅 `::before` / `::after`；`:nth-child` 需 8.0.50+，选择器差异详情阅读 [样式差异参考 · 选择器支持](./references/skyline-style-reference.md#选择器支持)。
-2. **单位**：避免 `em` / `currentColor`，使用 `rpx` / `px` / `rem`，值类型差异阅读 [样式差异参考 · 值类型支持](./references/skyline-style-reference.md#值类型支持)。
+2. **单位**：优先使用 `rpx` / `px` / 百分比，值类型差异阅读 [样式差异参考 · 值类型支持](./references/skyline-style-reference.md#值类型支持)。
 3. **overflow**：`overflow: scroll` 不支持 → 使用 `scroll-view` 组件；不支持单独设置 `overflow-x` / `overflow-y`。
 4. **边框一致性**：`border-radius` 非 0 时四边 `border-color` / `border-style` 需一致。
 5. **伪元素 animation**：Skyline 下伪元素的 `animation` 不生效 → 使用真实节点 + CSS animation。
@@ -196,7 +196,6 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - 页面配置：页面 JSON 与 app.json Skyline 配置齐全；涉及 Worklet 时 Babel 插件已配置。
 - 页面滚动：页面滚动、下拉刷新、触底、滚动监听已迁移到 `scroll-view` 对应事件。
 - 层级结构：z-index 仅依赖兄弟层级，未引入负 z-index 或跨层叠上下文假设。
-- Worklet：worklet 函数、SharedValue、runOnJS、滚动上下文获取方式符合约束。
 - 覆盖范围：页面适配时已说明覆盖到的组件树和未覆盖子树。
 
 ## 任务二：创建符合 Skyline 兼容规范的页面

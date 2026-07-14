@@ -340,20 +340,28 @@ export function getScrollViewHeight(context: Obj, query: string, defaultHeight =
 
 ```ts
 // 组件 setup 中使用（仅 Skyline 模式下启用）
-import isSkyline, { getScrollViewHeight } from 'useSkyline'
+import { getCurrentInstance, nextTick } from '@mpxjs/core'
+import { getScrollViewHeight } from 'useSkyline'
 
 const context = useContext()
 
+const isSkyline = getCurrentInstance().proxy.renderer === 'skyline'
+
 // isSkyline() 为 false（WebView）时退化为空实现，不影响 WebView 逻辑
 const { height, updateHeight } = isSkyline()
-  ? getScrollViewHeight(context, '#scrollContent')
-  : { height: ref(''), updateHeight: () => {} }
+        ? getScrollViewHeight(context, '#scrollContent')
+        : {
+          height: ref(''),
+          updateHeight: () => {}
+        }
 
 // 在内容加载完成后调用 updateHeight，例如接口返回后
 watch(isShow, (val) => {
   if (val) {
     fetchData().finally(() => {
-      nextTick(() => { updateHeight() })
+      nextTick(() => {
+        updateHeight()
+      })
     })
   }
 })
@@ -412,14 +420,17 @@ watch(isShow, (val) => {
 > 注意：文本省略场景下不要删除原 webview 下的文本省略样式，尤其是 `display: -webkit-box;`
 
 ```html
-<view class="ellipsis" max-lines="{{2}}" overflow="ellipsis">{{title}}</view>
+<view class="normal"
+      wx:class="{{{ ellipsis: !isSkyline }}}" max-lines="{{2}}" overflow="ellipsis">{{title}}</view>
 ```
 
 ```css
-.ellipsis {
-  overflow: hidden;
+.normal {
   white-space: nowrap;
+}
+.ellipsis {
   display: -webkit-box;
+  overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   text-overflow: ellipsis
@@ -530,7 +541,7 @@ createPage({
     isSkyline: false
   },
   onLoad() {
-    this.isSkyline === this.renderer === 'skyline'
+    this.isSkyline = this.renderer === 'skyline'
   }
 })
 ```
@@ -739,7 +750,7 @@ const isSmall = ref(mpx.getWindowInfo().screenWidth <= 320)
 <view prop-a="\"test\"" prop-b="{{ test === \"test\" }}" />
 
 <!-- ✅ Good — 新写法：XML 实体转义（外）、不转义（内） -->
-<view prop-a="&quot;test&quot;" prop-b="{{ test === "test" }}" />
+<view prop-a="&quot;test&quot;" prop-b="{{ test === 'test' }}" />
 ```
 
 ### [必须] wx:for 内嵌 &lt;include&gt; 时改为 &lt;template&gt;
