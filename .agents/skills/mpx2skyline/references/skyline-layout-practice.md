@@ -432,7 +432,6 @@ watch(isShow, (val) => {
 
 | PostScript name | CSS 写法 | 备注 |
 | --- | --- | --- |
-| `xx-Regular` | `font-family: xx;` | 默认值可不加后缀 |
 | `xx-Medium` | `font-family: xx; font-weight: bold;` | |
 | `xx-Semibold` | `font-family: xx; font-weight: bold;` | |
 | `xx-Bold` | `font-family: xx; font-weight: bold;` | |
