@@ -101,7 +101,7 @@ function normalizeOptions (options) {
   } = options
   // 是否兼容为true的写法
   if (transformGroups) transformGroups = transformGroups instanceof Object ? transformGroups : {}
-  if (transformCSS) transformCSS = transformCSS instanceof Object ? transformGroups : {}
+  if (transformCSS) transformCSS = transformCSS instanceof Object ? transformCSS : {}
   // web配置
   // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {

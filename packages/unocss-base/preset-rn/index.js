@@ -1,4 +1,4 @@
-import rules, { blocklistRules } from './rules/index'
+import rules, { blocklistRules } from './rules/index.js'
 import { normalizeTransformVar } from './rules/transforms'
 import theme from './theme'
 import blocklistVariants from './variants/index'

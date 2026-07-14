@@ -386,7 +386,7 @@ export default function styleHelperMixin () {
         }
 
         if (hide) {
-          mergeToLayer('important', { ...HIDE_STYLE })
+          mergeToLayer('important', Object.assign({}, HIDE_STYLE))
         }
 
         const result = genResult()
