@@ -2,7 +2,7 @@
 import React from 'react'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
-import { renderWithRoute, resetMpxRuntimeGlobals } from './rn-component-test-utils'
+import { expectPortalHostRendered, renderWithPortalHost, renderWithRoute, resetMpxRuntimeGlobals } from './rn-component-test-utils'
 
 const MpxMovableArea = require('../../../lib/runtime/components/react/mpx-movable-area').default
 const MpxMovableView = require('../../../lib/runtime/components/react/mpx-movable-view').default
@@ -77,5 +77,21 @@ describe('MpxMovableArea', () => {
       detail: { x: 250, y: 150, source: 'touch' },
       target: expect.objectContaining({ id: 'mv' })
     }))
+  })
+
+  it('uses default dimensions and renders fixed areas in portal', () => {
+    const fixedRender = renderWithPortalHost(
+      <MpxMovableArea testID="default-area" style={{ position: 'fixed' }}>
+        <Text>fixed area</Text>
+      </MpxMovableArea>
+    )
+
+    expectPortalHostRendered(fixedRender.toJSON(), 'default-area')
+    expect(screen.getByTestId('default-area').props.style).toEqual(expect.objectContaining({
+      width: 10,
+      height: 10,
+      position: 'absolute'
+    }))
+    expect(screen.getByText('fixed area')).toBeTruthy()
   })
 })

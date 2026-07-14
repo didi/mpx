@@ -86,6 +86,19 @@ describe('MpxImage', () => {
       }
     })
     await flushImageSize()
+    expect(screen.getByTestId('layout-image').props.style.height).toBe(200)
+    fireEvent(screen.getByTestId('layout-image'), 'layout', {
+      nativeEvent: {
+        layout: { width: 200, height: 200 }
+      }
+    })
+    expect(screen.getByTestId('layout-image').props.style.height).toBe(200)
+    fireEvent(screen.getByTestId('layout-image'), 'layout', {
+      nativeEvent: {
+        layout: { width: 250, height: 100 }
+      }
+    })
+    expect(screen.getByTestId('layout-image').props.style.height).toBe(250)
     expect(layoutImage.props.style).toEqual(expect.objectContaining({
       width: 200,
       overflow: 'hidden'

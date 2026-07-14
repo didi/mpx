@@ -25,6 +25,7 @@ jest.mock('react-native-webview', () => {
 
 const MpxCanvas = require('../../../lib/runtime/components/react/mpx-canvas').default
 const { WEBVIEW_TARGET } = require('../../../lib/runtime/components/react/mpx-canvas/utils')
+const CanvasGradient = require('../../../lib/runtime/components/react/mpx-canvas/CanvasGradient').default
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -101,6 +102,33 @@ describe('MpxCanvas', () => {
       type: 'error',
       target: image
     }))
+    expect(image.onload).toBe(onload)
+    expect(image.onerror).toBe(onerror)
+    image.onload = null
+    image.onerror = null
+    expect(image.onload).toBeNull()
+    expect(image.onerror).toBeNull()
+    ;['load', 'error'].forEach((type) => {
+      fireEvent(webView, 'message', {
+        nativeEvent: {
+          data: JSON.stringify({
+            type: 'event',
+            meta: {},
+            payload: {
+              type: 'event',
+              payload: {
+                type,
+                target: {
+                  [WEBVIEW_TARGET]: image[WEBVIEW_TARGET]
+                }
+              }
+            }
+          })
+        }
+      })
+    })
+    expect(onload).toHaveBeenCalledTimes(1)
+    expect(onerror).toHaveBeenCalledTimes(1)
 
     const imageData = canvas.createImageData([1, 2, 3, 4], 1, 1)
     expect(imageData.canvas).toBe(canvas)
@@ -279,5 +307,26 @@ describe('MpxCanvas', () => {
       runtimeGlobal.__mpx_mode__ = originalMode
       platform.Version = originalVersion
     }
+  })
+
+  it('constructs gradients locally and forwards gradient methods', () => {
+    const postMessage = jest.fn()
+    const gradient = new CanvasGradient({ postMessage })
+
+    gradient.addColorStop(0, 'red')
+    gradient.postMessage({ type: 'custom' })
+
+    expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'construct',
+      payload: expect.objectContaining({ constructor: 'CanvasGradient' })
+    }))
+    expect(postMessage).toHaveBeenCalledWith({
+      type: 'exec',
+      payload: expect.objectContaining({
+        method: 'addColorStop',
+        args: [0, 'red']
+      })
+    })
+    expect(postMessage).toHaveBeenCalledWith({ type: 'custom' })
   })
 })

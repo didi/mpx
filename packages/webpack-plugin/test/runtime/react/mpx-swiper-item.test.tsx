@@ -35,4 +35,28 @@ describe('MpxSwiperItem', () => {
     }))
     expect(item.props.style).toContainEqual(expect.objectContaining({ marginTop: 4 }))
   })
+
+  it('returns empty animated style before swiper step is ready', () => {
+    render(
+      <SwiperContext.Provider value={{ offset: { value: 0 } }}>
+        <MpxSwiperItem testID="default-item" itemIndex={0} customStyle={{}} enable-var={false} />
+      </SwiperContext.Provider>
+    )
+
+    expect(screen.getByTestId('default-item').props.style).toContainEqual({})
+  })
+
+  it('defaults to horizontal layout without scaling', () => {
+    render(
+      <SwiperContext.Provider value={{ offset: { value: 0 }, step: { value: 100 } }}>
+        <MpxSwiperItem testID="default-layout-item" itemIndex={0} customStyle={{}} enable-var={false} />
+      </SwiperContext.Provider>
+    )
+
+    expect(screen.getByTestId('default-layout-item').props.style).toContainEqual({
+      width: 100,
+      height: '100%',
+      transform: []
+    })
+  })
 })

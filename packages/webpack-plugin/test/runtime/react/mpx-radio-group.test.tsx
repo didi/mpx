@@ -5,6 +5,7 @@ import MpxRadio from '../../../lib/runtime/components/react/mpx-radio'
 import MpxRadioGroup from '../../../lib/runtime/components/react/mpx-radio-group'
 import { FormContext } from '../../../lib/runtime/components/react/context'
 import { fireTap } from './helpers'
+import { expectPortalHostRendered, renderWithPortalHost } from './rn-component-test-utils'
 
 describe('MpxRadioGroup', () => {
   it('registers with form submit, reset and cleanup', () => {
@@ -106,5 +107,25 @@ describe('MpxRadioGroup', () => {
       </MpxForm>
     )
     expect(formContext.formValuesMap.get('radio').getValue()).toBe('b')
+  })
+
+  it('renders fixed groups in portal', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
+    const fixedRender = renderWithPortalHost(
+      <MpxRadioGroup testID="fixed-radio-group" style={{ position: 'fixed' }}>
+        <MpxRadio value="fixed">Fixed</MpxRadio>
+      </MpxRadioGroup>
+    )
+
+    expectPortalHostRendered(fixedRender.toJSON(), 'fixed-radio-group')
+
+    render(
+      <MpxForm>
+        <MpxRadioGroup testID="unnamed-radio-group">
+          <MpxRadio value="unnamed">Unnamed</MpxRadio>
+        </MpxRadioGroup>
+      </MpxForm>
+    )
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('name attribute is required'))
   })
 })

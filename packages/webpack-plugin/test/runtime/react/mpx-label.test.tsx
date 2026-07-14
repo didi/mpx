@@ -6,6 +6,7 @@ import MpxLabel from '../../../lib/runtime/components/react/mpx-label'
 import MpxRadio from '../../../lib/runtime/components/react/mpx-radio'
 import MpxRadioGroup from '../../../lib/runtime/components/react/mpx-radio-group'
 import { fireTap } from './helpers'
+import { expectPortalHostRendered, renderWithPortalHost } from './rn-component-test-utils'
 
 describe('MpxLabel', () => {
   it('triggers child checkbox change and its own tap handler', () => {
@@ -52,5 +53,22 @@ describe('MpxLabel', () => {
     expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
       detail: { value: 'agree' }
     }))
+  })
+
+  it('warns for background images and renders fixed labels in portal', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
+
+    const fixedRender = renderWithPortalHost(
+      <MpxLabel
+        testID="fixed-label"
+        style={{ position: 'fixed', backgroundImage: 'url(label.png)' }}
+      >
+        Fixed label
+      </MpxLabel>
+    )
+
+    expectPortalHostRendered(fixedRender.toJSON(), 'fixed-label')
+    expect(screen.getByTestId('fixed-label').props.children.props.children).toBe('Fixed label')
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('does not support background image'))
   })
 })

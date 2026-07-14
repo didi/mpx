@@ -465,4 +465,28 @@ describe('MpxText', () => {
       global.__mpx = previousMpx
     }
   })
+
+  it('should record render performance scopes when enabled', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const perf = require('@mpxjs/perf')
+    const runtimeGlobal = global as any
+    perf.scopeStart.mockClear()
+    perf.scopeEnd.mockClear()
+    runtimeGlobal.__mpx_perf_framework__ = true
+
+    try {
+      render(<MpxText testID="perf-text">performance text</MpxText>)
+
+      expect(perf.scopeStart.mock.calls.map(([name]: [string]) => name)).toEqual([
+        'text:render:total',
+        'text:render:props',
+        'text:render:style',
+        'text:render:innerProps',
+        'text:render:createElement'
+      ])
+      expect(perf.scopeEnd).toHaveBeenCalledTimes(5)
+    } finally {
+      runtimeGlobal.__mpx_perf_framework__ = false
+    }
+  })
 })

@@ -84,13 +84,17 @@ describe('MpxScrollView', () => {
         testID="basic-scroll"
         scroll-x={true}
         scroll-y={false}
+        style={{ flex: 1 }}
       >
         <MpxView style={{ width: 800 }}>
           <MpxText>Horizontal content</MpxText>
         </MpxView>
       </MpxScrollView>
     )
-    expect(screen.getByTestId('basic-scroll').props.horizontal).toBe(true)
+    const horizontalScroll = screen.getByTestId('basic-scroll')
+    expect(horizontalScroll.props.horizontal).toBe(true)
+    expect(horizontalScroll.props.style).toEqual(expect.objectContaining({ flex: 1 }))
+    expect(horizontalScroll.props.style).not.toHaveProperty('flexGrow')
   })
 
   it('should emit scrollend with the final scroll metrics', () => {

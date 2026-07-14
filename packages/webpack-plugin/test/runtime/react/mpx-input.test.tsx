@@ -290,6 +290,7 @@ describe('MpxInput', () => {
 
   // 键盘避让和触摸事件测试
   it('should handle keyboard avoidance and touch events', () => {
+    const mockBindfocus = jest.fn()
     const mockKeyboardAvoidRef = { current: null }
     const TestKeyboardAvoidProvider = ({ children }: { children: any }) => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -307,6 +308,7 @@ describe('MpxInput', () => {
           testID="keyboard-input"
           adjust-position={true}
           cursor-spacing={10}
+          bindfocus={mockBindfocus}
           value="test"
           enable-var={true}
         />
@@ -328,6 +330,26 @@ describe('MpxInput', () => {
     }))
     expect((mockKeyboardAvoidRef.current as any).ref).toBeTruthy()
     expect(touchEndEvent.nativeEvent.origin).toBe('input')
+
+    const focusEvent = { persist: jest.fn(), nativeEvent: {}, target: {} }
+    fireEvent(inputElement, 'focus', focusEvent)
+    expect(focusEvent.persist).toHaveBeenCalled()
+    expect(typeof (mockKeyboardAvoidRef.current as any).onKeyboardShow).toBe('function')
+
+    const onKeyboardShow = (mockKeyboardAvoidRef.current as any).onKeyboardShow
+    act(() => {
+      onKeyboardShow()
+    })
+    expect(mockBindfocus).toHaveBeenCalledWith(expect.objectContaining({
+      detail: expect.objectContaining({ value: 'test' })
+    }))
+
+    const keyboardAvoid = mockKeyboardAvoidRef.current as any
+    keyboardAvoid.keyboardHeight = 300
+    fireEvent(inputElement, 'focus', focusEvent)
+    expect(mockBindfocus).toHaveBeenLastCalledWith(expect.objectContaining({
+      detail: expect.objectContaining({ height: 300 })
+    }))
   })
 
   // 多行内容尺寸变化测试
@@ -356,6 +378,13 @@ describe('MpxInput', () => {
       nativeEvent: { contentSize: { width: 200, height: 120 } }
     })
 
+    fireEvent(inputElement, 'contentSizeChange', {
+      nativeEvent: { contentSize: { width: 200, height: 120 } }
+    })
+    fireEvent(inputElement, 'contentSizeChange', {
+      nativeEvent: { contentSize: { width: 0, height: 120 } }
+    })
+
     expect(mockBindlinechange).toHaveBeenNthCalledWith(1, expect.objectContaining({
       type: 'linechange',
       detail: { height: 60, lineHeight: 60, lineCount: 1 }
@@ -364,6 +393,7 @@ describe('MpxInput', () => {
       type: 'linechange',
       detail: { height: 120, lineHeight: 60, lineCount: 2 }
     }))
+    expect(mockBindlinechange).toHaveBeenCalledTimes(2)
   })
 
   // Portal 渲染测试

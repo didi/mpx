@@ -72,6 +72,172 @@ describe('react runtime utils', () => {
     ])
   })
 
+  it('handles helper defaults and empty inputs', () => {
+    const previousMpx = global.__mpx
+    const previousGetCurrentPages = global.getCurrentPages
+    const setter = jest.fn()
+    const presetBoxStyle = { boxSizing: 'border-box' }
+
+    global.__mpx = undefined as any
+    global.getCurrentPages = undefined as any
+    transformBoxSizing(presetBoxStyle)
+    setStyle({ nested: null }, ['nested', 'value'], setter)
+
+    expect(parseUrl()).toBeUndefined()
+    expect(getDefaultAllowFontScaling()).toBe(false)
+    expect(isText(null)).toBe(false)
+    expect(isStringChildren('text')).toBe(true)
+    expect(isStringChildren(<Text>text</Text>)).toBe(false)
+    expect(splitStyle({ width: 10, height: 20 })).toEqual({
+      innerStyle: { width: 10, height: 20 }
+    })
+    expect(splitProps({ numberOfLines: 1, id: 'text' })).toEqual({
+      textProps: { numberOfLines: 1 },
+      innerProps: { id: 'text' }
+    })
+    expect(splitProps({ id: 'text', numberOfLines: 1 })).toEqual({
+      textProps: { numberOfLines: 1 },
+      innerProps: { id: 'text' }
+    })
+    expect(pickStyle({ width: 10 }, ['width', 'height'])).toEqual({ width: 10 })
+    expect(presetBoxStyle.boxSizing).toBe('border-box')
+    expect(setter).not.toHaveBeenCalled()
+    expect(flatGesture()).toEqual([])
+    expect(flatGesture([{ current: false }])).toEqual([])
+    expect(getCurrentPage(1)).toBeUndefined()
+
+    global.__mpx = previousMpx
+    global.getCurrentPages = previousGetCurrentPages
+  })
+
+  it('expands one, two and four-value shorthand styles', () => {
+    const style = {
+      margin: '1px 2px 3px 4px',
+      padding: '5px 6px',
+      borderRadius: '7px',
+      gap: '8px',
+      border: 'invalid-token',
+      textDecoration: 'underline'
+    }
+    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
+
+    transformShorthand(style, Object.keys(style), {})
+
+    expect(style).toEqual(expect.objectContaining({
+      marginTop: 1,
+      marginRight: 2,
+      marginBottom: 3,
+      marginLeft: 4,
+      paddingTop: 5,
+      paddingRight: 6,
+      paddingBottom: 5,
+      paddingLeft: 6,
+      borderRadius: '7px',
+      rowGap: 8,
+      columnGap: 8,
+      borderWidth: 3,
+      borderStyle: 'none',
+      textDecorationLine: 'underline'
+    }))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('invalid-token'))
+  })
+
+  it('resolves nested variable fallbacks and background branches', () => {
+    let result: ReturnType<typeof useTransformStyle> | undefined
+    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
+    const Probe = () => {
+      result = useTransformStyle({
+        '--local': 'var(--theme)',
+        '--un-tone': 'green',
+        color: 'var(--missing, var(--local))',
+        backgroundColor: 'var(--un-tone)',
+        borderRadius: '50%',
+        width: 'calc(25% + 10px)',
+        transform: [{ translateX: 'calc(50%)' }],
+        boxShadow: '',
+        fontFamily: 42,
+        backgroundPosition: 'center top',
+        background: 'linear-gradient(red,blue) red invalid-token center/cover'
+      }, {
+        enableVar: true,
+        transformRadiusPercent: true,
+        parentWidth: 200,
+        defaultStyle: {
+          color: 'black',
+          paddingTop: 1
+        }
+      })
+      return <View testID="variable-style-probe" style={result.normalStyle} />
+    }
+
+    render(
+      <VarContext.Provider value={{ '--theme': 'purple' }}>
+        <Probe />
+      </VarContext.Provider>
+    )
+
+    expect(result?.hasVarDec).toBe(true)
+    expect(result?.hasSelfPercent).toBe(true)
+    expect(result?.normalStyle).toEqual(expect.objectContaining({
+      color: 'purple',
+      backgroundColor: 'red',
+      borderRadius: 0,
+      width: 60,
+      paddingTop: 1,
+      boxSizing: 'content-box',
+      backgroundImage: 'linear-gradient(red,blue)',
+      backgroundPosition: ['50%'],
+      backgroundSize: ['cover'],
+      transform: [{ translateX: 0 }]
+    }))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('invalid-token'))
+  })
+
+  it('handles font and flex shorthand boundary forms', () => {
+    const results: Array<ReturnType<typeof useTransformStyle>> = []
+    const error = jest.spyOn(console, 'error').mockImplementation(jest.fn())
+    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
+    const Probe = () => {
+      results.push(
+        useTransformStyle({ font: 16 as any }, {}),
+        useTransformStyle({ font: 'bold' }, {}),
+        useTransformStyle({ font: '16px' }, {}),
+        useTransformStyle({ font: 'normal 16px / 20px Arial' }, {}),
+        useTransformStyle({ font: '16px/bad Arial' }, {}),
+        useTransformStyle({ font: '16px/ 20px Arial' }, {}),
+        useTransformStyle({ font: '16px /20px Arial' }, {}),
+        useTransformStyle({ flex: 'none' }, {}),
+        useTransformStyle({ flex: 'initial' }, {}),
+        useTransformStyle({ flex: 'auto' }, {}),
+        useTransformStyle({ flex: '2 auto' }, {}),
+        useTransformStyle({ flex: '2' }, {})
+      )
+      return null
+    }
+
+    render(<Probe />)
+
+    expect(results[0].normalStyle.font).toBe(16)
+    expect(results[1].normalStyle.font).toBeUndefined()
+    expect(results[2].normalStyle.font).toBeUndefined()
+    expect(results[3].normalStyle).toEqual(expect.objectContaining({
+      fontSize: 16,
+      lineHeight: 20,
+      fontFamily: 'Arial'
+    }))
+    expect(results[4].normalStyle.lineHeight).toBeUndefined()
+    expect(results[5].normalStyle.lineHeight).toBe(20)
+    expect(results[6].normalStyle.lineHeight).toBe(20)
+    expect(results[7].normalStyle).toEqual(expect.objectContaining({ flexGrow: 0, flexShrink: 0 }))
+    expect(results[8].normalStyle).toEqual(expect.objectContaining({ flexGrow: 0, flexShrink: 1 }))
+    expect(results[9].normalStyle).toEqual(expect.objectContaining({ flexGrow: 1, flexShrink: 1 }))
+    expect(results[10].normalStyle).toEqual(expect.objectContaining({ flexGrow: 2, flexShrink: 1 }))
+    expect(results[11].normalStyle).toEqual(expect.objectContaining({ flexGrow: 2, flexShrink: 1, flexBasis: 0 }))
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('missing required <font-size>'))
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('missing required <font-family>'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not be resolved'))
+  })
+
   it('splits and picks style and prop buckets without losing leading fields', () => {
     const visited: string[] = []
     const style = {
@@ -249,7 +415,7 @@ describe('react runtime utils', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
     let result: ReturnType<typeof useTransformStyle> | undefined
     const style = {
-      transform: 'bad rotateX(10deg) matrix(1,2,3) matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,4,5,6,1) matrix3d(1,2) translate3d(1px,2px,3px) scale3d(2,3,4) rotate3d(1,0,0,20deg) rotate3d(0,0,1,40deg) rotate3d(1,1,0,50deg) translateZ(1px) skew(10deg,20deg) perspective(100px) unknown(1)'
+      transform: 'bad rotateX(10deg) matrix(1,2,3) matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,4,5,6,1) matrix3d(1,2) translate3d(1px,2px,3px) scale3d(2,3,4) rotate3d(1,0) rotate3d(1,0,0,20deg) rotate3d(0,0,1,40deg) rotate3d(1,1,0,50deg) translateZ(1px) skew(10deg,20deg) perspective(100px) unknown(1)'
     }
 
     const Probe = () => {
@@ -276,6 +442,7 @@ describe('react runtime utils', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('matrix only supports 6 values'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('matrix only supports 16 values'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('translateZ'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('rotate3d only supports 4 values'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('rotate3d'))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown'))
   })
@@ -420,6 +587,37 @@ describe('react runtime utils', () => {
     })
   })
 
+  it('returns stable defaults for inactive layout and text pass-through hooks', () => {
+    let layoutResult: ReturnType<typeof useLayout> | undefined
+    let disabledPassThrough: ReturnType<typeof useTextPassThrough> | undefined
+    let enabledPassThrough: ReturnType<typeof useTextPassThrough> | undefined
+    let textResult: ReturnType<typeof useTextPassThroughText> | undefined
+    const Probe = () => {
+      layoutResult = useLayout({
+        props: {},
+        hasSelfPercent: false,
+        nodeRef: { current: null }
+      })
+      disabledPassThrough = useTextPassThrough()
+      enabledPassThrough = useTextPassThrough(undefined, undefined, { enableTextPassThrough: true })
+      textResult = useTextPassThroughText()
+      return null
+    }
+
+    render(<Probe />)
+
+    expect(layoutResult).toEqual(expect.objectContaining({
+      layoutStyle: undefined,
+      layoutProps: {}
+    }))
+    expect(disabledPassThrough).toBeNull()
+    expect(enabledPassThrough).toEqual({
+      textStyle: undefined,
+      pendingTextProps: undefined
+    })
+    expect(textResult?.textPassThrough).toBeNull()
+  })
+
   it('keeps disabled hover gestures from changing hover state', () => {
     jest.useFakeTimers()
     let hoverResult: ReturnType<typeof useHover> | undefined
@@ -464,6 +662,15 @@ describe('react runtime utils', () => {
       jest.advanceTimersByTime(20)
     })
     expect(callback).toHaveBeenCalledWith('second')
+
+    const clearedCallback = jest.fn()
+    const clearedDebounced = debounce(clearedCallback, 20)
+    clearedDebounced()
+    clearedDebounced.clear()
+    act(() => {
+      jest.advanceTimersByTime(20)
+    })
+    expect(clearedCallback).not.toHaveBeenCalled()
 
     let hookResult: any
     const update = jest.fn()

@@ -5,6 +5,7 @@ import MpxCheckboxGroup from '../../../lib/runtime/components/react/mpx-checkbox
 import MpxForm from '../../../lib/runtime/components/react/mpx-form'
 import { FormContext } from '../../../lib/runtime/components/react/context'
 import { fireTap } from './helpers'
+import { expectPortalHostRendered, renderWithPortalHost } from './rn-component-test-utils'
 
 describe('MpxCheckboxGroup', () => {
   it('registers with form submit, reset and cleanup', () => {
@@ -114,5 +115,25 @@ describe('MpxCheckboxGroup', () => {
     )
 
     expect(formContext.formValuesMap.get('checks').getValue()).toEqual(['sync'])
+  })
+
+  it('renders fixed groups in portal', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
+    const fixedRender = renderWithPortalHost(
+      <MpxCheckboxGroup testID="fixed-checkbox-group" style={{ position: 'fixed' }}>
+        <MpxCheckbox value="fixed">Fixed</MpxCheckbox>
+      </MpxCheckboxGroup>
+    )
+
+    expectPortalHostRendered(fixedRender.toJSON(), 'fixed-checkbox-group')
+
+    render(
+      <MpxForm>
+        <MpxCheckboxGroup testID="unnamed-checkbox-group">
+          <MpxCheckbox value="unnamed">Unnamed</MpxCheckbox>
+        </MpxCheckboxGroup>
+      </MpxForm>
+    )
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('name attribute is required'))
   })
 })
