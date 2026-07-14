@@ -40,7 +40,7 @@
 | `tagNameStyleIsolation` | string | "isolated" | "legacy" | 标签选择器全局匹配（对齐 WebView）                 |
 | `enableScrollViewAutoSize` | boolean | false | true | scroll-view 自动撑开高度                    |
 | `keyframeStyleIsolation` | string | - | "legacy" | `@keyframes` 全局共享，避免迁移项目中动画关键帧作用域变化 |
-| `disableABTest` | boolean | false | true | 关闭 Skyline AB 实验，确保稳定性（非必要配置）         |
+| `disableABTest` | boolean | false | 按需 | 关闭 Skyline AB 实验，确保稳定性（非必要配置）         |
 
 > 说明：前 5 项（`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`）是对齐 WebView 行为的**推荐补齐项**，适配时务必逐项核对。`disableABTest` 为**非必填**：仅在需要关闭 Skyline 灰度 AB 实验、强制全量走 Skyline 以排除实验态干扰时按需开启，常规适配可不配，不作为校验项。
 
@@ -129,6 +129,6 @@ Mpx 项目中通过 `overrides` 配置：
 
 **注意**：
 - 配置 worklet Babel 插件后，**不需要勾选**「将 JS 编译成 ES5」（会导致包体积增加）
-- 若未配置以上插件，则需要在开启开发者工具 "编译 worklet 函数" 选项（（"将 JS 编译成 ES5" 选项也可以，更推荐集成 babel 插件按需编译）
+- 若未配置以上插件，则需要开启开发者工具的「编译 worklet 函数」选项；「将 JS 编译成 ES5」也可以，但更推荐集成 Babel 插件按需编译
 
 ---

@@ -4,10 +4,10 @@
 
 ## 目录
 
-- [Skyline 不支持或不建议使用的组件](#Skyline-不支持或不建议使用的组件)
+- [Skyline 不支持或不建议使用的组件](#skyline-不支持或不建议使用的组件)
 - [WebView-only 属性、取值与行为](#webview-only-属性取值与行为)
 - [Skyline 必填属性与结构约束](#skyline-必填属性与结构约束)
-- [Skyline 相对 WebView 的高频差异补充](#Skyline-相对-webview-的高频差异补充)
+- [Skyline 相对 WebView 的高频差异补充](#skyline-相对-webview-的高频差异补充)
 
 ## Skyline 不支持或不建议使用的组件
 
