@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.10.21
+ * mpxjs webview bridge v2.11.1
  * (c) 2026 @mpxjs team
  * @license Apache
  */
