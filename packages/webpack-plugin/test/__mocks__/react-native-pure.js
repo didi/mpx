@@ -68,7 +68,17 @@ export const Modal = createRNComponent('Modal')
 export const Switch = createRNComponent('Switch')
 export const Slider = createRNComponent('Slider')
 export const FlatList = createRNComponent('FlatList')
-export const SectionList = createRNComponent('SectionList')
+let lastSectionListRef
+export const SectionList = React.forwardRef((props, ref) => {
+    const instanceRef = React.useRef({
+        scrollToLocation: jest.fn()
+    })
+    lastSectionListRef = instanceRef.current
+    React.useImperativeHandle(ref, () => instanceRef.current)
+    return React.createElement('SectionList', props)
+})
+SectionList.displayName = 'SectionList'
+export const __getLastSectionListRef = () => lastSectionListRef
 export const VirtualizedList = createRNComponent('VirtualizedList')
 
 // TextInput 需要特殊处理，支持 value 和 onChangeText

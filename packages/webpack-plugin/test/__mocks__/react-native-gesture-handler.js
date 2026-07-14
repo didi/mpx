@@ -27,6 +27,7 @@ const RefreshControl = React.forwardRef((props, ref) =>
 )
 
 let lastPanGesture
+let lastNativeGesture
 
 const createMockGesture = () => {
   const gesture = {
@@ -82,8 +83,14 @@ const createMockPanGesture = () => {
   return lastPanGesture
 }
 
+const createMockNativeGesture = () => {
+  lastNativeGesture = createMockGesture()
+  return lastNativeGesture
+}
+
 const Gesture = {
   Pan: jest.fn(() => createMockPanGesture()),
+  Native: jest.fn(() => createMockNativeGesture()),
   Tap: jest.fn(() => createMockGesture()),
   LongPress: jest.fn(() => createMockGesture()),
   Pinch: jest.fn(() => createMockGesture()),
@@ -92,6 +99,7 @@ const Gesture = {
 }
 
 const __getLastPanGesture = () => lastPanGesture
+const __getLastNativeGesture = () => lastNativeGesture
 const __getLastScrollViewRef = () => lastScrollViewRef
 const __resetScrollViewRefs = () => {
   lastScrollViewRef = undefined
@@ -103,6 +111,7 @@ export {
   ScrollView,
   RefreshControl,
   __getLastPanGesture,
+  __getLastNativeGesture,
   __getLastScrollViewRef,
   __resetScrollViewRefs
 }
