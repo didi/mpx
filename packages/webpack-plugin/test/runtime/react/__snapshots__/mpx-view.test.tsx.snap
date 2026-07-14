@@ -26,7 +26,6 @@ exports[`MpxView should handle background properties 1`] = `
   />
   <Text
     allowFontScaling={false}
-    style={{}}
   >
     Background content
   </Text>
@@ -60,7 +59,6 @@ exports[`MpxView should handle complex background property combinations: complex
   />
   <Text
     allowFontScaling={false}
-    style={{}}
   >
     Complex background
   </Text>
@@ -87,7 +85,6 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
   >
     <Text
       allowFontScaling={false}
-      style={{}}
     >
       Level 1
     </Text>
@@ -101,7 +98,6 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
     >
       <Text
         allowFontScaling={false}
-        style={{}}
       >
         Level 2
       </Text>
@@ -115,7 +111,6 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
       >
         <Text
           allowFontScaling={false}
-          style={{}}
         >
           Level 3
         </Text>
@@ -129,7 +124,6 @@ exports[`MpxView should handle deeply nested complex structures: deep-nested-vie
         >
           <Text
             allowFontScaling={false}
-            style={{}}
           >
             Level 4
           </Text>
@@ -156,13 +150,11 @@ exports[`MpxView should handle flex layout properties 1`] = `
 >
   <Text
     allowFontScaling={false}
-    style={{}}
   >
     Item 1
   </Text>
   <Text
     allowFontScaling={false}
-    style={{}}
   >
     Item 2
   </Text>
@@ -194,7 +186,6 @@ exports[`MpxView should handle linear gradient backgrounds: gradient-view 1`] = 
   />
   <Text
     allowFontScaling={false}
-    style={{}}
   >
     Gradient background
   </Text>
@@ -220,14 +211,12 @@ exports[`MpxView should handle nested views and complex structure 1`] = `
   >
     <Text
       allowFontScaling={false}
-      style={{}}
     >
       Nested content
     </Text>
   </View>
   <Text
     allowFontScaling={false}
-    style={{}}
   >
     Sibling content
   </Text>
@@ -302,7 +291,6 @@ exports[`MpxView should render with basic props and styles 1`] = `
 >
   <Text
     allowFontScaling={false}
-    style={{}}
   >
     Basic content
   </Text>

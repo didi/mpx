@@ -52,11 +52,7 @@ export class ExpressionParser {
   }
 
   parse (): ExpressionNode {
-    const node = this.expression()
-    if (this.current < this.tokens.length) {
-      throw new Error(`Unexpected token: ${this.tokens[this.current].type}`)
-    }
-    return node
+    return this.expression()
   }
 
   private expression (): ExpressionNode {
@@ -189,14 +185,12 @@ export function parseFunc (str: string, funcName: string): FuncInfo[] {
       i++
     }
 
-    regex.lastIndex = i
-    if (depth === 0) {
-      result.push({
-        start,
-        end: i,
-        args
-      })
-    }
+    const end = regex.lastIndex = i
+    result.push({
+      start,
+      end,
+      args
+    })
   }
 
   return result

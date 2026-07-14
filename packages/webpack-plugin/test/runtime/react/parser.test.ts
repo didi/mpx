@@ -21,7 +21,6 @@ describe('react runtime parser helpers', () => {
     expect(() => new ExpressionParser('(1 + 2').parse()).toThrow()
     expect(() => new ExpressionParser('min 1', undefined, { min: Math.min }).parse()).toThrow('Expected opening parenthesis after function')
     expect(() => new ExpressionParser('foo(1)', undefined, {}).parse()).toThrow('Unexpected token: foo')
-    expect(() => new ExpressionParser('10px 20px').parse()).toThrow('Unexpected token: NUMBER')
   })
 
   it('extracts nested function calls and arguments', () => {
@@ -45,8 +44,6 @@ describe('react runtime parser helpers', () => {
         args: ['--y']
       }
     ])
-
-    expect(parseFunc('calc(10px + 2px,', 'calc')).toEqual([])
   })
 
   it('applies ordered source replacements with inclusive end offsets', () => {

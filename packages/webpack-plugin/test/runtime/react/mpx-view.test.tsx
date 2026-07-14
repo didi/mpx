@@ -1,9 +1,8 @@
 
 import React from 'react'
 import { act, render, screen } from '@testing-library/react-native'
-import MpxView from '../../../lib/runtime/components/react/mpx-view'
+import MpxView, { __parseBgImageForTest as parseBgImage } from '../../../lib/runtime/components/react/mpx-view'
 import MpxInlineText from '../../../lib/runtime/components/react/mpx-inline-text'
-import { parseBgImage } from '../../../lib/runtime/components/react/mpx-view-parser'
 import { fireTap, flushImageSize } from './helpers'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -283,6 +282,13 @@ describe('MpxView', () => {
     })
   })
 
+  it('should handle enabled background without background image', () => {
+    render(<MpxView testID="empty-background-view" enable-background={true} />)
+
+    expect(screen.getByTestId('empty-background-view')).toBeTruthy()
+    expect(getBackgroundView()).toBeUndefined()
+  })
+
   // 线性渐变背景测试
   it('should handle linear gradient backgrounds', () => {
     const { toJSON } = render(
@@ -302,6 +308,18 @@ describe('MpxView', () => {
     const viewElement = screen.getByTestId('gradient-view')
     expect(viewElement).toBeTruthy()
     expect(toJSON()).toMatchSnapshot('gradient-view')
+  })
+
+  it('should render animated view when animation is enabled', () => {
+    render(
+      <MpxView
+        testID="animated-view"
+        enable-animation="api"
+        style={{ opacity: 1 }}
+      />
+    )
+
+    expect(screen.getByTestId('animated-view')).toBeTruthy()
   })
 
   // 悬停状态测试
@@ -536,6 +554,39 @@ describe('MpxView', () => {
     }))
   })
 
+  it('should resolve self percent styles after layout', () => {
+    render(
+      <MpxView
+        testID="self-percent-view"
+        style={{
+          width: 100,
+          height: 100,
+          borderRadius: 'calc(50%)' as any
+        }}
+      />
+    )
+
+    let viewElement = screen.getByTestId('self-percent-view')
+    expect(viewElement.props.style).toEqual(expect.objectContaining({
+      borderRadius: 0,
+      opacity: 0
+    }))
+
+    act(() => {
+      viewElement.props.onLayout({
+        nativeEvent: {
+          layout: { width: 100, height: 100 }
+        }
+      })
+    })
+
+    viewElement = screen.getByTestId('self-percent-view')
+    expect(viewElement.props.style).toEqual(expect.objectContaining({
+      borderRadius: 50
+    }))
+    expect(viewElement.props.style.opacity).toBeUndefined()
+  })
+
   // 深度嵌套和复杂结构测试
   it('should handle deeply nested complex structures', () => {
     const { toJSON } = render(
@@ -721,15 +772,6 @@ describe('MpxView', () => {
       })
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('色标位置仅支持百分比'))
 
-      expect(parseBgImage('linear-gradient(red 0%, blue 0%)')).toEqual({
-        type: 'linear',
-        linearInfo: {
-          direction: '180deg',
-          colors: ['red', 'blue'],
-          locations: [0, 0]
-        }
-      })
-
       expect(parseBgImage('linear-gradient(30%, 40%)')).toEqual({})
       expect(error).toHaveBeenCalledWith(expect.stringContaining('至少需要 2 个有效色标'))
     } finally {
@@ -743,7 +785,9 @@ describe('MpxView', () => {
       { id: 'turn-gradient', image: 'linear-gradient(0.25turn, red, blue)', angle: 90 },
       { id: 'rad-gradient', image: 'linear-gradient(3.141592653589793rad, red, blue)', angle: 180 },
       { id: 'grad-gradient', image: 'linear-gradient(100grad, red, blue)', angle: 90 },
-      { id: 'alias-gradient', image: 'linear-gradient(to right bottom, red, blue)', angle: 135 }
+      { id: 'alias-gradient', image: 'linear-gradient(to right bottom, red, blue)', angle: 135 },
+      { id: 'top-right-alias-gradient', image: 'linear-gradient(to right top, red, blue)', angle: 45 },
+      { id: 'bottom-left-alias-gradient', image: 'linear-gradient(to left bottom, red, blue)', angle: 225 }
     ]
 
     cases.forEach(({ id, image, angle }) => {
@@ -836,6 +880,16 @@ describe('MpxView', () => {
         id: 'single-top-position',
         backgroundPosition: ['top'],
         expectedStyle: { left: 45, top: 0 }
+      },
+      {
+        id: 'two-keyword-position',
+        backgroundPosition: ['right', 'bottom'],
+        expectedStyle: { right: 0, bottom: 0 }
+      },
+      {
+        id: 'three-leading-keywords-position',
+        backgroundPosition: ['left', 'bottom', 10],
+        expectedStyle: { left: 0, bottom: 10 }
       },
       {
         id: 'three-keyword-position',

@@ -592,4 +592,160 @@ describe('MpxSwiper', () => {
 
     expect(withTiming).toHaveBeenCalledWith(-200, expect.objectContaining({ duration: 500 }), expect.any(Function))
   })
+
+  it('handles a vertical swiper without an initial size', () => {
+    jest.useFakeTimers()
+    const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { cancelAnimation, withTiming } = require('react-native-reanimated')
+    render(
+      <MpxSwiper
+        testID="zero-sized-swiper"
+        style={{}}
+        vertical={true}
+        autoplay={true}
+        interval={10}
+        indicator-dots={true}
+        indicator-color=""
+        indicator-active-color=""
+        indicator-margin={0}
+        previous-margin="10"
+        next-margin="20"
+      >
+        <MpxSwiperItem item-id="top" enable-var={false}>
+          <Text>Top</Text>
+        </MpxSwiperItem>
+        <MpxSwiperItem item-id="bottom" enable-var={false}>
+          <Text>Bottom</Text>
+        </MpxSwiperItem>
+      </MpxSwiper>
+    )
+
+    const gesture = __getLastPanGesture()
+    act(() => {
+      gesture.onBeginCallback({ absoluteY: 0, velocityY: 0 })
+      jest.advanceTimersByTime(10)
+    })
+    expect(cancelAnimation).not.toHaveBeenCalled()
+    expect(withTiming).not.toHaveBeenCalled()
+
+    fireEvent(screen.getByTestId('zero-sized-swiper'), 'layout', {
+      nativeEvent: { layout: { width: 200, height: 100 } }
+    })
+    expect(gesture.activeOffsetY).toHaveBeenCalled()
+  })
+
+  it('resumes autoplay after a slow gesture and handles non-circular boundaries', () => {
+    jest.useFakeTimers()
+    const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { withTiming } = require('react-native-reanimated')
+    const autoplayRender = render(
+      <MpxSwiper
+        testID="autoplay-gesture-swiper"
+        style={{ width: 200, height: 100 }}
+        autoplay={true}
+        interval={1000}
+      >
+        <MpxSwiperItem item-id="one" enable-var={false}>
+          <Text>One</Text>
+        </MpxSwiperItem>
+        <MpxSwiperItem item-id="two" enable-var={false}>
+          <Text>Two</Text>
+        </MpxSwiperItem>
+      </MpxSwiper>
+    )
+    fireEvent(screen.getByTestId('autoplay-gesture-swiper'), 'layout', {
+      nativeEvent: { layout: { width: 200, height: 100 } }
+    })
+    let gesture = __getLastPanGesture()
+    withTiming.mockClear()
+    act(() => {
+      gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
+      gesture.onUpdateCallback({ absoluteX: -40, velocityX: 0 })
+      gesture.onFinalizeCallback({ absoluteX: -40, velocityX: 0 })
+    })
+    expect(withTiming).toHaveBeenCalledWith(0, expect.objectContaining({ duration: 500 }), expect.any(Function))
+    expect(jest.getTimerCount()).toBe(1)
+    autoplayRender.unmount()
+
+    const startBoundaryRender = render(
+      <MpxSwiper testID="start-boundary-swiper" style={{ width: 200, height: 100 }}>
+        <MpxSwiperItem item-id="one" enable-var={false}>
+          <Text>One</Text>
+        </MpxSwiperItem>
+        <MpxSwiperItem item-id="two" enable-var={false}>
+          <Text>Two</Text>
+        </MpxSwiperItem>
+      </MpxSwiper>
+    )
+    gesture = __getLastPanGesture()
+    withTiming.mockClear()
+    act(() => {
+      gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
+      gesture.onFinalizeCallback({ absoluteX: 80, velocityX: 0 })
+    })
+    expect(withTiming).toHaveBeenCalledWith(-0, expect.objectContaining({ duration: 500 }), expect.any(Function))
+    startBoundaryRender.unmount()
+
+    render(
+      <MpxSwiper testID="end-boundary-swiper" style={{ width: 200, height: 100 }} current={1}>
+        <MpxSwiperItem item-id="one" enable-var={false}>
+          <Text>One</Text>
+        </MpxSwiperItem>
+        <MpxSwiperItem item-id="two" enable-var={false}>
+          <Text>Two</Text>
+        </MpxSwiperItem>
+      </MpxSwiper>
+    )
+    gesture = __getLastPanGesture()
+    withTiming.mockClear()
+    act(() => {
+      gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
+      gesture.onUpdateCallback({ absoluteX: -80, velocityX: 0 })
+      gesture.onFinalizeCallback({ absoluteX: -80, velocityX: 0 })
+    })
+    expect(withTiming).toHaveBeenCalledWith(-200, expect.objectContaining({ duration: 500 }), expect.any(Function))
+  })
+
+  it('handles circular upper-boundary reset and slow rollback', () => {
+    const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { withTiming } = require('react-native-reanimated')
+    const boundaryRender = render(
+      <MpxSwiper testID="circular-upper-boundary" style={{ width: 200, height: 100 }} circular={true}>
+        <MpxSwiperItem item-id="one" enable-var={false}>
+          <Text>One</Text>
+        </MpxSwiperItem>
+        <MpxSwiperItem item-id="two" enable-var={false}>
+          <Text>Two</Text>
+        </MpxSwiperItem>
+      </MpxSwiper>
+    )
+    let gesture = __getLastPanGesture()
+    withTiming.mockClear()
+    act(() => {
+      gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
+      gesture.onUpdateCallback({ absoluteX: 250, velocityX: 0 })
+      gesture.onFinalizeCallback({ absoluteX: 250, velocityX: 0 })
+    })
+    expect(withTiming).toHaveBeenCalled()
+    boundaryRender.unmount()
+
+    render(
+      <MpxSwiper testID="circular-slow-rollback" style={{ width: 200, height: 100 }} circular={true}>
+        <MpxSwiperItem item-id="one" enable-var={false}>
+          <Text>One</Text>
+        </MpxSwiperItem>
+        <MpxSwiperItem item-id="two" enable-var={false}>
+          <Text>Two</Text>
+        </MpxSwiperItem>
+      </MpxSwiper>
+    )
+    gesture = __getLastPanGesture()
+    withTiming.mockClear()
+    act(() => {
+      gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
+      gesture.onUpdateCallback({ absoluteX: -40, velocityX: 0 })
+      gesture.onFinalizeCallback({ absoluteX: -40, velocityX: 0 })
+    })
+    expect(withTiming).toHaveBeenCalledWith(-200, expect.objectContaining({ duration: 500 }), expect.any(Function))
+  })
 })

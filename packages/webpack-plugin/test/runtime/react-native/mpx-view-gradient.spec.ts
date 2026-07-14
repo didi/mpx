@@ -38,7 +38,7 @@ jest.mock('../../../lib/runtime/components/react/mpx-portal', () => ({
 }))
 
 // eslint-disable-next-line import/first
-import { parseBgImage } from '../../../lib/runtime/components/react/mpx-view-parser'
+import { __parseBgImageForTest as parseBgImage } from '../../../lib/runtime/components/react/mpx-view'
 
 describe('mpx-view linear-gradient parser', () => {
   test('keeps non-deg angle units as explicit gradient direction', () => {
