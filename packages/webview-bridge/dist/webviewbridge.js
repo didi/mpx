@@ -133,7 +133,7 @@
     env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';
   } else if (systemUA.indexOf('swan/') > -1) {
     env = 'swan';
-  } else if (systemUA.indexOf('toutiao') > -1) {
+  } else if (systemUA.toLocaleLowerCase().indexOf('toutiao') > -1) {
     env = 'tt';
   } else {
     env = 'web';
