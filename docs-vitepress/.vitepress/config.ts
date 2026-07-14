@@ -118,6 +118,7 @@ const sidebar: ExtendedSidebar = {
         { text: '跨端样式', link: '/guide/rn/style' },
         { text: '应用能力', link: '/guide/rn/application-api' },
         { text: '混合编写 RN', link: '/guide/rn/hybrid-with-react-native' },
+        { text: '使用原子类', link: '/guide/rn/rn-unocss' }
       ],
     },
     {
@@ -146,6 +147,7 @@ const sidebar: ExtendedSidebar = {
         { text: '网络请求', link: '/guide/extend/fetch' },
         { text: '数据 Mock', link: '/guide/extend/mock' },
         { text: 'WebView Bridge', link: '/guide/extend/webview-bridge' },
+        { text: '扩展组件', link: '/guide/extend/extend-component' },
       ],
     },
     {
