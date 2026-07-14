@@ -738,26 +738,26 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     innerProps
   )
 
-  let sectionListComponent: ReactElement = createElement(
-    GestureDetector,
-    { gesture: nativeGesture },
+  let sectionListComponent = wrapChildren(
     createElement(
-      TypedSectionList,
-      rnSectionListProps
-    )
-  )
-
-  if (hasPositionFixed) {
-    sectionListComponent = createElement(Portal, null, sectionListComponent)
-  }
-  return wrapChildren(
-    sectionListComponent,
+      GestureDetector,
+      { gesture: nativeGesture },
+      createElement(
+        TypedSectionList,
+        rnSectionListProps
+      )
+    ),
     {
       hasVarDec,
       varContext: varContextRef.current,
       textPassThrough
     }
   ) as ReactElement
+
+  if (hasPositionFixed) {
+    sectionListComponent = createElement(Portal, null, sectionListComponent)
+  }
+  return sectionListComponent
 })
 
 _SectionList.displayName = 'MpxSectionList'
