@@ -35,8 +35,8 @@
 
 | 配置项 | 类型 | 默认值 | 推荐值 | 说明                                    |
 |--------|------|--------|--------|---------------------------------------|
-| `defaultDisplayBlock` | boolean | false | true | 默认 display:block（对齐 WebView）          |
-| `defaultContentBox` | boolean | false | true | 默认 box-sizing:content-box（对齐 WebView） |
+| `defaultDisplayBlock` | boolean | false | true | 默认 `display: block`（对齐 WebView）          |
+| `defaultContentBox` | boolean | false | true | 默认 `box-sizing: content-box`（对齐 WebView） |
 | `tagNameStyleIsolation` | string | "isolated" | "legacy" | 标签选择器全局匹配（对齐 WebView）                 |
 | `enableScrollViewAutoSize` | boolean | false | true | scroll-view 自动撑开高度                    |
 | `keyframeStyleIsolation` | string | - | "legacy" | `@keyframes` 全局共享，避免迁移项目中动画关键帧作用域变化 |
@@ -49,7 +49,7 @@
 | 配置项 | 位置 | 类型 | 推荐值 / 示例               | 说明                                                                                  |
 |--------|------|------|------------------------|-------------------------------------------------------------------------------------|
 | `lazyCodeLoading` | `app.json` 顶层 | string | `"requiredComponents"` | 开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量                                                     |
-| `convertRpxToVw` | `app.json` 顶层 | boolean | 按需  | 基础库 3.3.0+；开启后将会将 Webview rpx 计算逻辑对齐 Skyline（`rpx` 单位转换为 `vw` 单位），用于修复部分 `rpx` 精度问题 |
+| `convertRpxToVw` | `app.json` 顶层 | boolean | 按需  | 基础库 3.3.0+；开启后会将 WebView rpx 计算逻辑对齐 Skyline（`rpx` 单位转换为 `vw` 单位），用于修复部分 `rpx` 精度问题 |
 
 ### 其他配置项
 
@@ -62,7 +62,7 @@
 **项目配置 app.json 新增以下配置**
 
  ```json5
-// 对齐 webview
+// 对齐 WebView
 {
   "lazyCodeLoading": "requiredComponents",
   "rendererOptions": {
@@ -103,7 +103,7 @@
 
 ## Worklet Babel 插件
 
-如果页面使用到 worklet 函数，需要配置 Babel 插件：
+如果页面使用到 Worklet 函数，需要配置 Babel 插件：
 
 ```bash
 npm i babel-plugin-worklet
@@ -127,7 +127,7 @@ Mpx 项目中通过 `overrides` 配置：
 ```
 
 **注意**：
-- 配置 worklet Babel 插件后，**不需要勾选**「将 JS 编译成 ES5」（会导致包体积增加）
-- 若未配置以上插件，则需要开启开发者工具的「编译 worklet 函数」选项；「将 JS 编译成 ES5」也可以，但更推荐集成 Babel 插件按需编译
+- 配置 Worklet Babel 插件后，**不需要勾选**「将 JS 编译成 ES5」（会导致包体积增加）
+- 若未配置以上插件，则需要开启开发者工具的「编译 Worklet 函数」选项；「将 JS 编译成 ES5」也可以，但更推荐集成 Babel 插件按需编译
 
 ---

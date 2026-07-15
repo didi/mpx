@@ -43,7 +43,7 @@ rg -n "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|tag
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `CONFIG_APP_SKYLINE_OPTIONS` | error | app.json | `lazyCodeLoading` / `rendererOptions` / `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation` | 迁移项目需补齐对齐 WebView 的推荐配置；缺失会放大默认布局、盒模型、样式隔离、scroll-view 自适应、keyframes 作用域差异 | app.json 顶层补 `lazyCodeLoading`，`rendererOptions.skyline` 下补 5 个推荐项 | 非 Skyline 项目、明确只审单组件且无 app.json scope 时说明未覆盖 | [rendererOptions.skyline](./skyline-configuration.md#rendereroptionsskyline-配置项)、[app.json 顶层配置](./skyline-configuration.md#appjson-顶层配置) |
 | `CONFIG_PAGE_SKYLINE` | error | page.json | `renderer` / `componentFramework` / `disableScroll` / `navigationStyle` | Skyline 页面需显式声明渲染后端、glass-easel、禁用页面滚动和自定义导航 | 页面 json 补 `renderer: "skyline"`、`componentFramework: "glass-easel"`、`disableScroll: true`、`navigationStyle: "custom"` | 明确 WebView-only 页面 | [配置参考](./skyline-configuration.md#适配参考) |
-| `CONFIG_WORKLET_BABEL` | warn | script/config | `worklet:` / `'worklet'` / `wx.worklet` | 使用 worklet 时需确认 Babel 插件或开发者工具 worklet 编译配置 | 按需配置 `babel-plugin-worklet` overrides | 未使用 worklet；项目统一构建链已配置时说明 | [Worklet Babel 插件](./skyline-configuration.md#worklet-babel-插件) |
+| `CONFIG_WORKLET_BABEL` | warn | script/config | `worklet:` / `'worklet'` / `wx.worklet` | 使用 Worklet 时需确认 Babel 插件或开发者工具 Worklet 编译配置 | 按需配置 `babel-plugin-worklet` overrides | 未使用 Worklet；项目统一构建链已配置时说明 | [Worklet Babel 插件](./skyline-configuration.md#worklet-babel-插件) |
 
 ## 模板与组件规则
 
@@ -89,7 +89,7 @@ rg -n "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|tag
 | `STYLE_CALC_ANGLE` | warn | style | `calc\\([^)]*(deg\|rad\|turn)` | Skyline `calc()` 不支持角度类型 | 直接写静态角度值 | 无 | [值类型支持](./skyline-style-reference.md#长度函数与单位) |
 | `STYLE_PSEUDO_ANIMATION` | warn | style | `::(before\|after)[\\s\\S]*animation` | Skyline 下伪元素 animation 不生效 | 改真实节点 + CSS animation | 无动画依赖 | [伪元素 animation](./skyline-layout-practice.md#伪元素不支持的-animation-需替换为真实节点) |
 | `STYLE_ANIMATION_FILL_MODE` | warn | style | `animation-fill-mode\\s*:?\\s*(none\|backwards)` | Skyline 下 `none` / `backwards` 实际表现为 `forwards` | 改 `forwards` / `both` 或调整动画逻辑 | 已确认视觉无影响 | [动画差异](./skyline-style-reference.md#动画与过渡差异) |
-| `STYLE_ANIMATION_PROPERTY` | warn | style | `transition-property\|animation` | Skyline transition / animation 可动画属性是白名单 | 人工确认只驱动白名单属性；其他改 JS / class 切换 / worklet | 已确认不涉及不支持属性 | [动画差异](./skyline-style-reference.md#动画与过渡差异) |
+| `STYLE_ANIMATION_PROPERTY` | warn | style | `transition-property\|animation` | Skyline transition / animation 可动画属性是白名单 | 人工确认只驱动白名单属性；其他改 JS / class 切换 / Worklet | 已确认不涉及不支持属性 | [动画差异](./skyline-style-reference.md#动画与过渡差异) |
 | `STYLE_Z_INDEX_CONTEXT` | warn | style/template | `z-index\|transform\\s*:\|opacity\\s*:` | Skyline 无层叠上下文，`transform` / `opacity` 不会提升比较层级；`scroll-view` 直接子节点 `z-index` 不生效 | 将需比较层级的节点调整为兄弟节点；fixed 元素按 fixed-context 排序 | 简单同级 z-index 且已验证 | [z-index 适配](./skyline-layout-practice.md#z-index-与层叠适配) |
 
 ## 运行时规则

@@ -49,7 +49,7 @@ const instance = getCurrentInstance()
 const isSkyline = instance.proxy.renderer === 'skyline'
 ```
 
-> 注意事项：Skyline & Webview 只能通过运行时的变量区分，在编译时仅能区分微信平台，无法区分是否是 Skyline 渲染
+> 注意事项：Skyline 与 WebView 只能通过运行时变量区分；编译时仅能区分微信平台，无法区分是否为 Skyline 渲染。
 
 ### [必须] SelectorQuery 选择器不再支持以数字开头
 
@@ -256,7 +256,7 @@ createComponent({
 
 > 注意：`list` 模式下列表项必须是 `scroll-view` 的**直接子节点**；若只有一个直接子节点（例如外面又包了一层 `view`），按需渲染会退化为全量渲染。
 
-适用前提:列表项结构、样式一致(差异仅由数据驱动)。结构差异较大的卡片混排不要无脑标注 `list-item`,否则共享失败反而增加判定成本。
+适用前提：列表项结构、样式一致（差异仅由数据驱动）。结构差异较大的卡片混排不要无脑标注 `list-item`，否则共享失败反而增加判定成本。
 
 ### cache-extent 预渲染（按需启用）
 
@@ -285,12 +285,12 @@ createComponent({
 
 ### 预加载 Skyline 环境
 
-微信客户端默认不预加载 Skyline 环境(WebView 为主),首次进入 Skyline 页面会有冷启动开销。在可能跳转到 Skyline 页面的前置页面手动预加载,可显著缩短首屏:
+微信客户端默认不预加载 Skyline 环境（以 WebView 为主），首次进入 Skyline 页面会有冷启动开销。在可能跳转到 Skyline 页面的前置页面手动预加载，可显著缩短首屏：
 
 ```js
 createPage({
   onShow() {
-    // 延迟调用,避免阻塞当前页面渲染
+    // 延迟调用，避免阻塞当前页面渲染
     setTimeout(() => {
       wx.preloadSkylineView()
     }, 500)
@@ -298,5 +298,5 @@ createPage({
 })
 ```
 
-- 放在 `onShow` 而非 `onLoad`:用户从 Skyline 页面返回时,前置页 `onShow` 会再次触发,保证下次跳转仍是热环境。
-- 延迟约 500ms 触发,避开当前页首帧高峰。
+- 放在 `onShow` 而非 `onLoad`：用户从 Skyline 页面返回时，前置页 `onShow` 会再次触发，保证下次跳转仍是热环境。
+- 延迟约 500ms 触发，避开当前页首帧高峰。

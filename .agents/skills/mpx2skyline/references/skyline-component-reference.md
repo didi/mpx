@@ -15,8 +15,8 @@
 | --- | --- | --- |
 | `web-view` | 暂不考虑 | 承载 `web-view` 的页面单独配置 `"renderer": "webview"` |
 | `editor` | 暂不考虑 | 纯文本编辑用 `textarea`；富文本编辑页降级 WebView；只读展示用 `rich-text` |
-| `movable-area` / `movable-view` | 暂不考虑 | 使用手势组件 + worklet 动画替代 |
-| `progress` | 暂不考虑 | 用 `view` 嵌套实现进度条，动画进度可配合 worklet 驱动 |
+| `movable-area` / `movable-view` | 暂不考虑 | 使用手势组件 + Worklet 动画替代 |
+| `progress` | 暂不考虑 | 用 `view` 嵌套实现进度条，动画进度可配合 Worklet 驱动 |
 | `navigation-bar` | 不考虑 | Skyline 只能使用自定义导航 |
 | `xr-frame` | 暂未支持 | 3D/XR 页面降级 WebView，或用 `canvas` / WebGL 自行渲染 |
 | `match-media` | 待考虑 | 用 `wx.createMediaQueryObserver()` 监听媒体条件，或用 `getWindowInfo()` 获取屏幕尺寸后条件渲染 |
