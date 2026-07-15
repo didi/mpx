@@ -382,6 +382,69 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).not.toHaveBeenCalled()
     })
 
+    test('should only allow solid text-decoration-style in android and harmony text-decoration shorthand', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.solid { text-decoration: underline solid; } .dotted { text-decoration: underline dotted; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result.solid).toEqual({
+          textDecorationStyle: '"solid"',
+          textDecorationLine: '"underline"'
+        })
+        expect(result.dotted).toEqual({
+          textDecorationLine: '"underline"'
+        })
+        expect(config.warn.mock.calls[0][0]).toEqual(expect.stringContaining('text-decoration:underline dotted'))
+        expect(config.error).not.toHaveBeenCalled()
+      })
+    })
+
+    test('should keep text-decoration shorthand without color on android and harmony without warning', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration: underline solid; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result.text).toEqual({
+          textDecorationStyle: '"solid"',
+          textDecorationLine: '"underline"'
+        })
+        expect(config.warn).not.toHaveBeenCalled()
+        expect(config.error).not.toHaveBeenCalled()
+      })
+    })
+
+    test('should reject text-decoration-color in android and harmony text-decoration shorthand', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration: underline solid red; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result.text).toEqual({
+          textDecorationStyle: '"solid"',
+          textDecorationLine: '"underline"'
+        })
+        expect(config.warn.mock.calls[0][0]).toEqual(expect.stringContaining('contains unsupported value [red]'))
+        expect(config.error).not.toHaveBeenCalled()
+      })
+    })
+
     test('should expand unordered flex-flow and text-shadow shorthand', () => {
       const css = '.flow { flex-flow: wrap row; } .shadow { text-shadow: red 1px 2px 3px; } .shadow2 { text-shadow: 1px 2px red; }'
       const config = createConfig()
@@ -493,6 +556,27 @@ describe('React Native style validation for CSS variables', () => {
         borderStyle: '"none"',
         borderWidth: '1',
         borderColor: '"red"'
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should let explicit border-style fill the slot left default by width-only border shorthand', () => {
+      // border: 1px 仅占 width 槽，style 槽缺省补 borderStyle: none；
+      // 后置的 border-style: solid 按声明顺序覆盖默认 none，最终保留 solid
+      // 注：编译期不注入 boxSizing（boxSizing 兜底是运行时 transformBoxSizing 行为）
+      const css = '.a { border: 1px; border-style: solid; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.a).toEqual({
+        borderWidth: '1',
+        borderStyle: '"solid"'
       })
       expect(config.warn).not.toHaveBeenCalled()
       expect(config.error).not.toHaveBeenCalled()
@@ -709,6 +793,88 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).not.toHaveBeenCalled()
     })
 
+    test('should keep text-decoration-style: solid on android and harmony', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration-style: solid; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result.text).toEqual({
+          textDecorationStyle: '"solid"'
+        })
+        expect(config.error).not.toHaveBeenCalled()
+      })
+    })
+
+    test('should reject non-solid text-decoration-style on android and harmony', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration-style: dotted; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result).toEqual({})
+        expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('eg solid'))
+      })
+    })
+
+    test('should keep other text-decoration-style values on ios', () => {
+      const css = '.text { text-decoration-style: dotted; }'
+      const config = createConfig('ios')
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.text).toEqual({
+        textDecorationStyle: '"dotted"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should reject text-decoration-color on android and harmony', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration-color: red; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result).toEqual({})
+        expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('text-decoration-color'))
+      })
+    })
+
+    test('should keep text-decoration-color on ios', () => {
+      const css = '.text { text-decoration-color: red; }'
+      const config = createConfig('ios')
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.text).toEqual({
+        textDecorationColor: '"red"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
     test('should filter out unsupported float and clear', () => {
       const css = '.box { float: left; clear: both; }'
       const config = createConfig()
@@ -758,13 +924,13 @@ describe('React Native style validation for CSS variables', () => {
     })
 
     test('should expand inset shorthand to four sides', () => {
-      // RN inset 长属性非稳定，单值也必须展开到 top/right/bottom/left
+      // RN 0.74+ 原生支持 inset 单值 DimensionValue，单值原样透传；多值仍展开到 top/right/bottom/left
       const css = '.a { inset: 0; } .b { inset: 10px 20px; } .c { inset: 1px 2px 3px 4px; }'
       const config = createConfig()
 
       const result = getClassMap({ content: css, filename: 'test.css', ...config })
 
-      expect(result.a).toEqual({ top: '0', right: '0', bottom: '0', left: '0' })
+      expect(result.a).toEqual({ inset: '0' })
       expect(result.b).toEqual({ top: '10', right: '20', bottom: '10', left: '20' })
       expect(result.c).toEqual({ top: '1', right: '2', bottom: '3', left: '4' })
       expect(config.warn).not.toHaveBeenCalled()

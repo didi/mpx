@@ -38,6 +38,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const lengthValueRegExp = /^(-?(?:\d+(?:\.\d+)?|\.\d+)(?:rpx|px|%|vw|vh)?|hairlineWidth)$/
+const DEFAULT_FONT_SIZE = 16
 // transform: 'rotateX(45deg) ...' 单段拆出 fn 名与括号内值
 const transformFnRegExp = /([/\w]+)\((.+)\)/
 // boxShadow 子值识别 rpx 单位（仅 rpx 需要换算为 px，其它单位保留原样）
@@ -97,7 +98,7 @@ const runtimeAbbreviationMap: Record<string, string[]> = {
   // 因此进入 runtimeForceExpandCompositeMap，避免「单值透传」捷径放过这类多值串残留。
   // 百分比（`gap: 50%` / `gap: 10px 50%`）由 transformShorthand 写回阶段就地 resolvePercent 落成 number
   gap: ['rowGap', 'columnGap'],
-  // inset：4 槽位等价 margin 四值语法；RN inset 长属性非稳定，单值也必须展开到 top/right/bottom/left
+  // inset：4 槽位等价 margin 四值语法；RN 0.74+ 原生支持单值 DimensionValue，单值走 runtimeCompositeStyleMap 短路透传
   inset: ['top', 'right', 'bottom', 'left'],
   // outline: <outline-width> || <outline-style> || <outline-color>，顺序不敏感
   outline: ['outlineWidth', 'outlineStyle', 'outlineColor']
@@ -111,15 +112,6 @@ const runtimeCompositeStyleMap: Record<string, boolean> = {
   gap: true,
   inset: true
 }
-// 即使单值也必须展开（不走「单值透传」捷径）：
-// - inset：RN inset 长属性不稳定，单值透传会留下不可靠的 inset key
-// - gap：RN gap / rowGap / columnGap 严格要求 number；单值串虽已在 __getStyle 阶段被 __formatValue 换算，
-//   但多值串（如 '10px 20px'）会原样透传到这里，需展开后逐 token 再过 __formatValue 才能落成 number；
-//   `%` 在写回阶段由 transformShorthand 调 resolvePercent 落成 number（rowGap 基 parentHeight、columnGap 基 parentWidth）
-const runtimeForceExpandCompositeMap: Record<string, boolean> = {
-  inset: true,
-  gap: true
-}
 const runtimeUnorderedAbbreviationMap: Record<string, boolean> = {
   border: true,
   borderTop: true,
@@ -132,13 +124,18 @@ const runtimeUnorderedAbbreviationMap: Record<string, boolean> = {
   // outline 与 border 简写共享同一套缺省值处理
   outline: true
 }
-const runtimeBorderLikeShorthandMap: Record<string, boolean> = {
+// 单值简写在 __getStyle 阶段经 __formatValue 把带单位长度换算为 number 后，
+// 需要在 transformShorthand 入口转回字符串 token 交给展开逻辑的 key 集合。
+// margin / padding / borderRadius / borderWidth / borderColor / inset 不在此列：
+// RN 原生支持这些 key 直接吃单值 number，无需展开。
+const runtimeNumericExpandShorthandMap: Record<string, boolean> = {
   border: true,
   borderTop: true,
   borderRight: true,
   borderBottom: true,
   borderLeft: true,
-  outline: true
+  outline: true,
+  gap: true
 }
 // CSS border-width: medium 的实测值（各主流浏览器一致取 3px）
 // 与编译期 wx/index.js 同名常量保持一致；调整需两侧一起改
@@ -250,14 +247,12 @@ interface PercentConfig {
   fontSize?: number | string
   width?: number
   height?: number
-  parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
 }
 
 interface TransformStyleConfig {
   enableVar?: boolean
-  parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
   transformRadiusPercent?: boolean
@@ -293,6 +288,7 @@ export interface TextPassThroughValueOptions {
 export interface GestureHandler {
   nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>
   current?: unknown
+  handlerTag?: number
 }
 
 // ============================================================
@@ -413,7 +409,7 @@ export function transformBoxSizing (style: Record<string, any> = {}) {
   }
 }
 
-export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffect?: (key: string, val: T[keyof T]) => void): {
+export function splitStyle<T extends Record<string, any>> (styleObj: T = {} as T, sideEffect?: (key: string, val: T[keyof T]) => void): {
   textStyle?: Partial<T>
   backgroundStyle?: Partial<T>
   innerStyle?: Partial<T>
@@ -455,7 +451,7 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffe
   return { textStyle, backgroundStyle, innerStyle }
 }
 
-export function splitProps<T extends Record<string, any>> (props: T): {
+export function splitProps<T extends Record<string, any>> (props: T = {} as T): {
   textProps?: Partial<T>
   innerProps?: Partial<T>
 } {
@@ -572,8 +568,8 @@ function resolvePercent (value: string | number | undefined, key: string, percen
   let base
   let reason
   if (key === 'fontSize') {
-    base = percentConfig.parentFontSize
-    reason = 'parent-font-size'
+    base = DEFAULT_FONT_SIZE
+    reason = 'default-font-size'
   } else if (key === 'lineHeight') {
     base = resolvePercent(percentConfig.fontSize, 'fontSize', percentConfig)
     reason = 'font-size'
@@ -924,7 +920,7 @@ function expandFlex (value: string): Array<[string, any]> | null {
 // RN 等效子集语法：font: [ <font-style> ] [ <font-variant-css2> ] [ <font-weight> ] <font-size> [ / <line-height> ] <font-family>
 // - 必填项：font-size 与 font-family；缺其一整条 font 声明丢弃（error）
 // - 非必填 token（font-stretch / 数字型 font-variant-numeric / system 关键字等）：warn 提示并忽略，保留其余槽位
-function transformFont (styleObj: Record<string, any>, percentConfig: PercentConfig) {
+function transformFont (styleObj: Record<string, any>) {
   const value = styleObj.font
   if (typeof value !== 'string') return
   const tokens = parseValues(value)
@@ -934,7 +930,7 @@ function transformFont (styleObj: Record<string, any>, percentConfig: PercentCon
   // 1. 定位 font-size（第一个 length，可能带 /<line-height>）
   //    注意：unit-less 数字也命中 length 正则，需要先排除 font-weight 数字（100..900 / bold / normal），
   //    否则 `font: 500 16px Arial` 会把 500 误判为 fontSize。
-  //    fontSize 自身可能是 %（如 `font: 50% Arial`），就地用 resolvePercent 按 parentFontSize 解析；
+  //    fontSize 自身可能是 %（如 `font: 50% Arial`），保留给文本透传阶段按继承 fontSize 解析；
   //    fontSize % 校验通过的是 `isLengthValue`（length 正则含 %），主流程已用 length 分支接住，无需特判
   for (let i = 0; i < tokens.length; i++) {
     let t = tokens[i]
@@ -952,10 +948,7 @@ function transformFont (styleObj: Record<string, any>, percentConfig: PercentCon
     if (hasOwn(fontWeightMap, sizePart)) continue
     if (isLengthValue(sizePart)) {
       sizeIdx = i
-      const sizeVal = percentRegExp.test(sizePart)
-        ? resolvePercent(sizePart, 'fontSize', percentConfig)
-        : global.__formatValue(sizePart)
-      result.push(['fontSize', sizeVal])
+      result.push(['fontSize', global.__formatValue(sizePart)])
       if (lhPart) lineHeight = lhPart
       break
     }
@@ -983,33 +976,17 @@ function transformFont (styleObj: Record<string, any>, percentConfig: PercentCon
       warn(`Token [${t}] in [font: ${value}] is not supported (only font-style / small-caps / font-weight are valid before <font-size>), dropped.`)
     }
   }
-  // 3. line-height：RN lineHeight 不接受百分比字符串，必须当场数值化。
-  //    - unit-less 数字（1.5）→ '150%' 后走 resolvePercent
-  //    - 显式百分比（120%）→ 直接走 resolvePercent
-  //    - 带单位（40px / 40rpx）→ __formatValue
-  //    基数 fontSize 取值（「长属性不覆盖简写」一致）：
-  //    - user 已显式写 fontSize 长属性 → 优先（先经 __formatValue 归一 '24px' → 24）
-  //    - 否则用 font 简写解析出的 fontSize（result[0][1]，已可能是 number / 解析后的 % 值）
+  // 3. line-height：文本透传阶段会基于当前 / 继承 fontSize 解析百分比。
+  //    - unit-less 数字（1.5）→ '150%' 中间态，避免和已格式化 RN 绝对 number 混淆
+  //    - 其它值（120% / 40px / 40rpx）→ __formatValue
   if (lineHeight !== undefined) {
-    // percentConfig.fontSize 用于 resolvePercent 的 base：
-    // - user 已显式写 fontSize 长属性 → 外层用 normalStyle.fontSize 初始化，已被前置 styleHelperMixin
-    //   的 transformStyleObj 经 __formatValue 归一为 number，可直接用，不覆盖（「长属性优先」一致）
-    // - 否则用 font 简写解析出的 fontSize（result[0][1]，本身已 number 或解析后的 % 值）回填
-    if (percentConfig.fontSize === undefined) percentConfig.fontSize = result[0][1]
-    let lh: string | number | undefined
-    if (percentRegExp.test(lineHeight)) {
-      lh = resolvePercent(lineHeight, 'lineHeight', percentConfig)
-    } else if (!isNaN(+lineHeight)) {
-      lh = resolvePercent(`${+lineHeight * 100}%`, 'lineHeight', percentConfig)
-    } else {
-      lh = global.__formatValue(lineHeight)
-    }
-    // lh 仍是字符串说明 resolvePercent 因 base 非 number 原样返回（已 error 过）或带单位 __formatValue
-    // 未能换算成 number（如 fontSize 是未解析的 var()）。RN lineHeight 不接受字符串，丢弃避免运行时报错
-    if (typeof lh === 'number') {
+    const lh = !isNaN(+lineHeight)
+      ? `${+lineHeight * 100}%`
+      : global.__formatValue(lineHeight)
+    if (lh !== undefined) {
       result.push(['lineHeight', lh])
     } else {
-      warn(`Line-height [${lineHeight}] in [font: ${value}] could not be resolved to a number (font-size unresolved?), dropped.`)
+      warn(`Line-height [${lineHeight}] in [font: ${value}] could not be resolved, dropped.`)
     }
   }
   // 4. font-family（font-size 之后剩余部分；多字体取首值、去引号）
@@ -1051,19 +1028,24 @@ export function transformShorthand (styleObj: Record<string, any>, shorthandKeys
     let values: string[]
     if (typeof value === 'string') {
       values = parseValues(value)
-    } else if (value === 0 && hasOwn(runtimeBorderLikeShorthandMap, key)) {
-      values = ['0']
+    } else if (typeof value === 'number' && hasOwn(runtimeNumericExpandShorthandMap, key)) {
+      // runtimeNumericExpandShorthandMap 中的简写（border / outline / gap）在 __getStyle 的 transformStyleObj
+      // 阶段已被 __formatValue 把带单位长度换算为 number；这里转回字符串 token 交给后续展开，
+      // 否则会原样残留为 RN 不认识或行为不一致的简写 key。
+      values = ['' + value]
     } else {
       continue
     }
     const props = runtimeAbbreviationMap[key]
     if (!props) continue
-    // 单值短路：composite 且单值通常透传（RN 原生支持 margin / padding 单值 DimensionValue）；
-    // 但 inset / gap 必须展开（理由见 runtimeForceExpandCompositeMap 注释）
+    // 单值短路：composite 且单值通常透传（RN 原生支持 margin / padding / inset / border-* 单值 DimensionValue）；
+    // 但 gap 必须展开 —— RN gap / rowGap / columnGap 严格要求 number，单值串虽已在 __getStyle 阶段被 __formatValue 换算，
+    // 多值串（如 '10px 20px'）仍会原样透传到这里，需展开后逐 token 再过 __formatValue 才能落成 number；
+    // `%` 在写回阶段由 transformShorthand 调 resolvePercent 落成 number（rowGap 基 parentHeight、columnGap 基 parentWidth）
     if (
       hasOwn(runtimeCompositeStyleMap, key) &&
       values.length === 1 &&
-      !hasOwn(runtimeForceExpandCompositeMap, key)
+      key !== 'gap'
     ) continue
     let expandedValues = values
     let pairs: Array<[string, any]>
@@ -1236,7 +1218,7 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
 // core style hook
 // ============================================================
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, parentFontSize, parentWidth, parentHeight, defaultStyle }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, parentWidth, parentHeight, defaultStyle }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -1307,10 +1289,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       // fixme 去掉 translate & border-radius 的百分比计算
       // fixme Image 组件 borderRadius 仅支持 number
       const needRadiusPercent = transformRadiusPercent && hasOwn(radiusPercentRule, key)
-      const needFontPercent = key === 'fontSize' || key === 'lineHeight'
       // RN gap / rowGap / columnGap 不支持 %，需要运行时换算为 number 喂给 RN
       const needGapPercent = key === 'rowGap' || key === 'columnGap'
-      if ((needRadiusPercent || needFontPercent || needGapPercent) && percentRegExp.test(value)) {
+      if ((needRadiusPercent || needGapPercent) && percentRegExp.test(value)) {
         if (needRadiusPercent) hasSelfPercent = true
         resolvedKeyPath = resolvedKeyPath ?? keyPath.slice()
         percentKeyPaths.push(resolvedKeyPath)
@@ -1390,11 +1371,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     height,
     fontSize: normalStyle.fontSize,
     parentWidth,
-    parentHeight,
-    parentFontSize
+    parentHeight
   }
-  // transformFont 可能会更新 percentConfig 配置，必须在 transformPercent 之前执行，保证 fontSize / lineHeight 的百分比能被正确解析
-  if (hasFont) transformFont(normalStyle, percentConfig)
+  if (hasFont) transformFont(normalStyle)
   if (percentKeyPaths.length) transformPercent(normalStyle, percentKeyPaths, percentConfig)
   if (calcKeyPaths.length) {
     transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
@@ -1463,6 +1442,42 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 export function useNavigation (): Record<string, any> | undefined {
   const { navigation } = useContext(RouteContext) || {}
   return navigation
+}
+
+function getTextPercentBase (currentFontSize?: string | number, parentTextStyle?: TextStyle) {
+  return typeof currentFontSize === 'number'
+    ? currentFontSize
+    : typeof parentTextStyle?.fontSize === 'number'
+      ? parentTextStyle.fontSize
+      : DEFAULT_FONT_SIZE
+}
+
+export function resolveTextFontSizePercentStyle<T extends TextStyle | undefined> (
+  textStyle: T,
+  parentTextStyle?: TextStyle
+): T {
+  if (!textStyle) return textStyle
+
+  if (typeof textStyle.fontSize === 'string' && percentRegExp.test(textStyle.fontSize)) {
+    const base = getTextPercentBase(undefined, parentTextStyle)
+    textStyle.fontSize = parseFloat(textStyle.fontSize) / 100 * base
+  }
+
+  return textStyle
+}
+
+export function resolveTextLineHeightPercentStyle<T extends TextStyle | undefined> (
+  textStyle: T,
+  parentTextStyle?: TextStyle
+): T {
+  if (!textStyle) return textStyle
+
+  if (typeof textStyle.lineHeight === 'string' && percentRegExp.test(textStyle.lineHeight)) {
+    const base = getTextPercentBase(textStyle.fontSize, parentTextStyle)
+    textStyle.lineHeight = parseFloat(textStyle.lineHeight) / 100 * base
+  }
+
+  return textStyle
 }
 
 /**
@@ -1543,8 +1558,9 @@ export function useTextPassThrough (
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const valueRef = useRef<TextPassThroughContextValue | null>(null)
 
-  const nextTextStyle = textStyle
-    ? extendObject({}, parent?.textStyle, textStyle)
+  const resolvedTextStyle = resolveTextFontSizePercentStyle(textStyle, parent?.textStyle)
+  const nextTextStyle = resolvedTextStyle
+    ? extendObject({}, parent?.textStyle, resolvedTextStyle)
     : parent?.textStyle
   const nextTextProps = textProps
     ? extendObject({}, parent?.pendingTextProps, textProps)
@@ -1559,31 +1575,6 @@ export function useTextPassThrough (
   }
 
   return valueRef.current
-}
-
-export function useTextPassThroughText (textStyle?: TextStyle) {
-  const inheritedText = useContext(TextPassThroughContext)
-  const valueRef = useRef<TextPassThroughContextValue | null>(null)
-
-  if (!textStyle) {
-    return {
-      inheritedText,
-      textPassThrough: null
-    }
-  }
-
-  const nextValue = {
-    textStyle: extendObject({}, inheritedText?.textStyle, textStyle)
-  }
-
-  if (diffAndCloneA(valueRef.current, nextValue).diff) {
-    valueRef.current = nextValue
-  }
-
-  return {
-    inheritedText,
-    textPassThrough: valueRef.current
-  }
 }
 
 export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled }: { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
@@ -1732,7 +1723,10 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
       return gesture.nodeRefs
         .map((item: { getNodeInstance: () => any }) => item.getNodeInstance()?.instance?.gestureRef || {})
     }
-    return gesture?.current ? [gesture] : []
+    if (gesture && (gesture.current || gesture.handlerTag !== undefined)) {
+      return [gesture]
+    }
+    return []
   })) || []
 }
 

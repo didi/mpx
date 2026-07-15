@@ -27,15 +27,23 @@ jest.mock('react-native-safe-area-context', () => ({
 
 // eslint-disable-next-line import/first
 import { transformShorthand } from '../../../lib/runtime/components/react/utils'
+// eslint-disable-next-line import/first
+import { transformStyleObj } from './helpers'
 
 // percentConfig 是必传参数（生产链路由 useTransformStyle 统一注入），
 // 不涉及百分比的用例用空对象兜底即可
+//
+// 生产链路：用户样式先经 styleHelperMixin.ios.js 的 transformStyleObj 归一（lineHeight → %、其他 prop → __formatValue），
+// 再喂给 transformShorthand。这里 run helper 同样先过 transformStyleObj，让单测口径与生产一致：
+//   - '1px' / '0' / '0px' → number；'50%' / 'none' / 'red' / 多 token 串 → 原样；
+//   - 这意味着 single-value composite（如 `margin: '10px'`）在进入 transformShorthand 时已是 number，
+//     原本「字符串单值透传」的 case 现在落到「number 单值透传」分支
 const run = (
   style: Record<string, any>,
   keys: string[],
   percentConfig: Parameters<typeof transformShorthand>[2] = {}
 ) => {
-  const obj = { ...style }
+  const obj = transformStyleObj(style)
   transformShorthand(obj, keys, percentConfig)
   return obj
 }
@@ -237,8 +245,10 @@ describe('runtime transformShorthand', () => {
 
   describe('composite four-value shorthands', () => {
     test('margin: single value not expanded', () => {
-      // Composite single-value shorthands stay native at runtime
-      expect(run({ margin: '10px' }, ['margin'])).toEqual({ margin: '10px' })
+      // Composite single-value shorthands stay native at runtime.
+      // 生产链路 transformStyleObj 已把 '10px' 归一为 number 10，transformShorthand 的 composite + 单值短路放过，
+      // RN 原生 margin 接受 number DimensionValue
+      expect(run({ margin: '10px' }, ['margin'])).toEqual({ margin: 10 })
     })
 
     test('margin: 1px 2px expands to 4 sides', () => {
@@ -290,11 +300,6 @@ describe('runtime transformShorthand', () => {
       expect(run({ gap: '10px 20px' }, ['gap'])).toEqual({ rowGap: 10, columnGap: 20 })
     })
 
-    test('non-string single value is left alone (RN native gap accepts number)', () => {
-      // typeof value !== 'string' → continue（与 border 一致）；RN 原生 gap 承接 number
-      expect(run({ gap: 8 as any }, ['gap'])).toEqual({ gap: 8 })
-    })
-
     test('single percent expands to rowGap (parentHeight) / columnGap (parentWidth)', () => {
       // CSS 规范：rowGap 基容器内容高度，columnGap 基内容宽度；gap 单值复制行列后各自取对应基
       expect(run({ gap: '50%' }, ['gap'], { parentWidth: 200, parentHeight: 400 }))
@@ -318,8 +323,9 @@ describe('runtime transformShorthand', () => {
   })
 
   describe('inset shorthand', () => {
-    test('single value is force-expanded to four sides (RN inset 长属性不稳定)', () => {
-      expect(run({ inset: '0' }, ['inset'])).toEqual({ top: 0, right: 0, bottom: 0, left: 0 })
+    test('single value is passthrough (RN 0.74+ 原生支持单值 DimensionValue)', () => {
+      // 编译期 __getStyle 已将单值串经 __formatValue 换算成 number；这里以 number 入参对齐生产链路
+      expect(run({ inset: 0 } as any, ['inset'])).toEqual({ inset: 0 })
     })
 
     test('two values expand to four sides', () => {
@@ -336,8 +342,8 @@ describe('runtime transformShorthand', () => {
 
     test('explicit single-side longhand wins over expanded shorthand', () => {
       // 普通展开「长属性不覆盖」原则；与 CSS 源码顺序语义在 RN 无法表达，约定显式单边优先
-      expect(run({ inset: '0', top: 8 }, ['inset'])).toEqual({
-        top: 8, right: 0, bottom: 0, left: 0
+      expect(run({ inset: '10px 20px', top: 8 }, ['inset'])).toEqual({
+        top: 8, right: 20, bottom: 10, left: 20
       })
     })
   })
@@ -389,8 +395,10 @@ describe('runtime transformShorthand', () => {
   })
 
   describe('miscellaneous', () => {
-    test('non-string value is left alone', () => {
-      expect(run({ border: 123 as any }, ['border'])).toEqual({ border: 123 })
+    test('non-border numeric shorthand value is left alone', () => {
+      // 仅 border / outline 单值 number 走换算展开（runtimeBorderLikeShorthandMap）；
+      // 其它简写 key 的 number 值不属于该捷径，原样透传
+      expect(run({ flexFlow: 123 as any }, ['flexFlow'])).toEqual({ flexFlow: 123 })
     })
 
     test('empty shorthandKeys is a no-op', () => {
