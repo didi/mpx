@@ -27,9 +27,9 @@ confirmation phase.
 
 1. `plan_drafting`: run `planner`.
 2. Advance with `--event planner-complete`.
-3. `plan_reviewing`: on Codex or Claude Code run
-   `run-reviewer.js --kind plan --round N`. It starts a fresh read-only CLI
-   process and persists the validated result.
+3. `plan_reviewing`: run `review-manager.js --kind plan --round N --prepare`,
+   start a fresh native `plan-reviewer` subagent with the returned prompt, then
+   run `--finalize --input <file> --agent-id <id>` to persist its result.
 4. Advance with `--event plan-review-complete --review <path>`.
 
 If review status is `approved`, advance to `awaiting_plan_confirm`.
@@ -83,9 +83,9 @@ bypass the configured limit.
    mismatched current-round snapshot artifacts. It reconstructs the current
    Git tree, path partitions, cumulative patch, and round patch, so any code
    change after snapshotting requires rerunning `snapshot-diff.js`.
-5. `code_reviewing`: on Codex or Claude Code run
-   `run-reviewer.js --kind code --round N`. It starts a fresh read-only native
-   review process and persists the validated result.
+5. `code_reviewing`: run `review-manager.js --kind code --round N --prepare`,
+   start a fresh native `code-reviewer` subagent with the returned prompt, then
+   run `--finalize --input <file> --agent-id <id>` to persist its result.
 6. Advance with `--event code-review-complete --review <path>`.
 
 If review status is `approved`, advance to `awaiting_final_confirm`.

@@ -4,7 +4,7 @@
 const fs = require('fs')
 const path = require('path')
 const u = require('./review-loop-utils')
-const reviewerRun = require('./run-reviewer')
+const reviewManager = require('./review-manager')
 const snapshot = require('./git-snapshot')
 
 function main () {
@@ -21,8 +21,10 @@ function main () {
   if (!u.isPositiveInteger(round)) u.fail('--round must be a positive integer')
   if (round !== expectedRound) u.fail('--round must equal state-derived next round ' + expectedRound)
   const reviewFile = path.join(u.taskDir(taskId), 'reviews', 'code-review-' + round + '.json')
-  const runFile = reviewerRun.artifactPath(taskId, 'code', round)
-  if (state.phase === 'code_reviewing' && (fs.existsSync(reviewFile) || fs.existsSync(runFile))) {
+  const runFile = reviewManager.artifactPath(taskId, 'code', round)
+  const requestFile = reviewManager.requestPath(taskId, 'code', round)
+  if (state.phase === 'code_reviewing' &&
+    (fs.existsSync(reviewFile) || fs.existsSync(runFile) || fs.existsSync(requestFile))) {
     u.fail('snapshot-diff cannot replace artifacts after the current reviewer run starts')
   }
   const baseline = snapshot.readBaseline(taskId)
