@@ -1,6 +1,6 @@
 # Skyline 运行时与性能适配实践
 
-本文记录 WebView 迁移 Skyline 时偏运行时、框架行为、滚动上下文、glass-easel、常见报错与性能优化的可复制改造方案。
+本文记录 WebView 迁移 Skyline 时偏运行时、框架行为、滚动上下文、glass-easel、常见报错与性能优化的改造方案。
 
 ## 目录
 
@@ -185,7 +185,7 @@ createComponent({
 
 ### [必须] properties 声明类型与实际值保持一致
 
-glass-easel 会校验 properties 的声明类型；实际传入值或默认值与 `type` 不匹配时会报 `"the tyle of property "xxx" is not illegal"` 类型校验错误，按以下优先级处理：
+glass-easel 会校验 properties 的声明类型；实际传入值或默认值与 `type` 不匹配时会报 `"the type of property "xxx" is not illegal"` 类型校验错误，按以下优先级处理：
 
 1. 优先修正调用侧传值和默认值，使其匹配真实类型；
 2. 业务确实允许联合类型时使用 `optionalTypes`；

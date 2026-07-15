@@ -46,10 +46,10 @@
 
 ### app.json 顶层配置
 
-| 配置项 | 位置 | 类型 | 推荐值 / 示例 | 说明 |
-|--------|------|------|---------------|------|
-| `lazyCodeLoading` | `app.json` 顶层 | string | `"requiredComponents"` | 开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量 |
-| `convertRpxToVw` | `app.json` 顶层 | boolean | true | 基础库 3.3.0+；开启后将 `rpx` 单位转换为 `vw` 单位，用于修复部分 `rpx` 精度问题 |
+| 配置项 | 位置 | 类型 | 推荐值 / 示例               | 说明                                                                                  |
+|--------|------|------|------------------------|-------------------------------------------------------------------------------------|
+| `lazyCodeLoading` | `app.json` 顶层 | string | `"requiredComponents"` | 开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量                                                     |
+| `convertRpxToVw` | `app.json` 顶层 | boolean | 按需  | 基础库 3.3.0+；开启后将会将 Webview rpx 计算逻辑对齐 Skyline（`rpx` 单位转换为 `vw` 单位），用于修复部分 `rpx` 精度问题 |
 
 ### 其他配置项
 
@@ -65,7 +65,6 @@
 // 对齐 webview
 {
   "lazyCodeLoading": "requiredComponents",
-  "convertRpxToVw": true,
   "rendererOptions": {
     "skyline": {
       "defaultDisplayBlock": true,
@@ -78,7 +77,7 @@
 }
 ```
 
-> 注意：`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation` 均为 `rendererOptions.skyline` 的子项，须写在该对象内，**不要**放到 app.json 顶层；`lazyCodeLoading` 与 `convertRpxToVw` 是 app.json 顶层配置。补齐 app.json 时务必逐项核对上述推荐项都不遗漏；`disableABTest` 按需选配。
+> 注意：`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation` 均为 `rendererOptions.skyline` 的子项，须写在该对象内，**不要**放到 app.json 顶层；`lazyCodeLoading` 与 `convertRpxToVw` 是 app.json 顶层配置。补齐 app.json 时务必逐项核对上述推荐项都不遗漏， `convertRpxToVw` 和 `disableABTest`除外，可按需选配。
 
 **适配 skyline 页面的 page.json新增以下配置**
 

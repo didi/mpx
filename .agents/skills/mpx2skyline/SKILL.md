@@ -1,7 +1,7 @@
 ---
 name: mpx2skyline
 description: |
-   基于 Mpx 开发实现的微信小程序 WebView 适配 Skyline 渲染引擎指南，覆盖布局、样式、组件、配置四大维度。
+  基于 Mpx 开发实现的微信小程序 WebView 适配 Skyline 渲染引擎指南，覆盖布局、样式、组件、配置四大维度。
   当用户要求对已有微信小程序页面进行 Skyline 适配、创建符合 Skyline 兼容规范的页面、
   排查 Skyline 下样式不生效/组件不渲染/布局异常/层级错乱等问题、或查询某项能力在
   Skyline 下的支持情况时强制调用。当用户问题不涉及 Skyline 适配时不应调用，如
@@ -26,7 +26,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 - **WebView 页面 Skyline 适配改造**：对已基于 WebView 模式编写、未适配 Skyline 的存量页面进行兼容性补齐（参见下文[任务一](#任务一对已有-webview-页面进行-skyline-适配改造)）;
 - **页面 / 组件开发迭代**：从零编写或迭代符合 WebView & Skyline 双模式兼容规范的 `.mpx` 页面与组件（参见下文[任务二](#任务二创建符合-skyline-兼容规范的页面)）;
 - **运行时报错与异常排查**：定位 Skyline 下样式不生效（如不支持选择器/属性静默失效）、组件不渲染（如 `scroll-view` 缺失 `type`）、布局异常（如默认 `display: flex` / `border-box` 引发的差异）、层级错乱（z-index 无层叠上下文）、模板转义、SelectorQuery 数字开头等问题;
-- **能力查询**：查询某项基础组件、属性、样式、API、滚动 API、worklet 能力在 Skyline 下的支持情况、版本要求与 WebView 差异;
+- **能力查询**：查询基础组件、属性、样式、API、滚动 API 在 Skyline 下的支持情况、版本要求与 WebView 差异；涉及 Worklet 动画、手势系统、自定义路由、共享元素时，本 SKILL 仅判断 Mpx 双模式接入边界，具体能力回源[微信官方 Skyline Skills](https://github.com/wechat-miniprogram/skyline-skills/tree/master/skills);
 - **Code Review**：以本 SKILL 的[通用约束与适配原则](#通用约束与适配原则)为标准对照检查 Skyline 兼容性与跨渲染模式兼容性。
 
 ### 不适用场景
@@ -46,12 +46,23 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 | --- |------------------------------------------------|
 | [Skyline 组件不支持与差异参考](./references/skyline-component-reference.md) | 查询 WebView 迁移 Skyline 时的组件差异，覆盖不支持组件、WebView-only 属性/取值、必填属性、结构约束与高频行为差异；不是完整组件手册，未收录能力需回源确认 |
 | [Skyline 与 Web/W3C CSS 标准差异参考](./references/skyline-style-reference.md) | 查询 Skyline 样式与 Web/W3C CSS 标准不一致的部分，覆盖默认值、选择器、值类型、布局层叠、文本、背景遮罩、滤镜、动画等差异 |
-| [Skyline 布局与样式适配实践](./references/skyline-layout-practice.md) | 进行视图层适配改造时读取，覆盖布局/层叠、页面滚动、图文混排、sticky、文本省略、flex、媒体查询与 SVG 展示限制等可复制改造方案 |
-| [Skyline 运行时适配实践](./references/skyline-runtime-practice.md) | 进行运行时、框架行为或性能问题适配时读取，覆盖渲染模式判断、SelectorQuery、组件实例方法、Scroll API、常见报错与性能优化等可复制改造方案 |
+| [Skyline 布局与样式适配实践](./references/skyline-layout-practice.md) | 进行视图层适配改造时读取，覆盖布局/层叠、页面滚动、图文混排、sticky、文本省略、flex、媒体查询与 SVG 展示限制等改造方案 |
+| [Skyline 运行时适配实践](./references/skyline-runtime-practice.md) | 进行运行时、框架行为或性能问题适配时读取，覆盖渲染模式判断、SelectorQuery、组件实例方法、Scroll API、常见报错与性能优化等改造方案 |
 | [Skyline 配置项与接入规范参考](./references/skyline-configuration.md) | 接入项目级与页面级配置时读取；按需点查 app.json 顶层配置、rendererOptions.skyline、页面配置示例与 Worklet Babel 插件配置 |
 | [Skyline 适配检查矩阵](./references/skyline-audit-matrix.md) | 适配完成前强制执行的审计矩阵，覆盖扫描 pattern、判定、修复、例外与验证要求 |
 
-> 若有涉及到纯 Skyline 相关的问题（比如共享元素、手势系统、worklet 动画）可查询 [微信官方Skyline skills](https://github.com/wechat-miniprogram/skyline-skills/tree/master/skills)
+### Skyline 高级能力
+
+Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 高级能力。本 SKILL **只负责方案路由与 Mpx 接入边界**，具体 API、事件参数、版本要求、线程模型或完整实现规则参考以下官方 SKILL：
+
+| 能力 | 官方来源 | 本 SKILL 负责 |
+| --- | --- | --- |
+| Worklet 动画 | [skyline-worklet](https://github.com/wechat-miniprogram/skyline-skills/tree/master/skills/skyline-worklet) | 判断是否确需 UI 线程驱动；补充 Mpx Babel 构建配置、`renderer === 'skyline'` 隔离与 WebView 降级方案 |
+| 手势系统 | [gesture-system](https://github.com/wechat-miniprogram/skyline-skills/blob/master/skills/skyline-components/references/gesture/gesture-system.md) / [gesture-negotiation](https://github.com/wechat-miniprogram/skyline-skills/blob/master/skills/skyline-components/references/gesture/gesture-negotiation.md) | 判断是否需要 Skyline 手势能力；处理 Mpx 模板与脚本接入、跨渲染模式隔离 |
+| 自定义路由 | [skyline-route](https://github.com/wechat-miniprogram/skyline-skills/tree/master/skills/skyline-route) | 判断转场需求与 Mpx 页面配置、生命周期及 WebView 降级边界 |
+| 共享元素 | [share-element](https://github.com/wechat-miniprogram/skyline-skills/blob/master/skills/skyline-components/references/special/share-element.md) | 判断是否采用共享元素方案；处理 Mpx 页面结构、双模式隔离与降级边界 |
+
+处理上述能力时，先读取对应官方 Skill 确认能力约束与实现方案，再应用本 SKILL 的 Mpx 编译接入和 WebView & Skyline 兼容约束。官方 Skill 未明确支持的能力不得依据本地经验推断；两者冲突时，Skyline 能力事实以官方 Skill 为准，Mpx 接入方式以本 SKILL 为准。
 
 ### 知识库使用建议
 
@@ -63,6 +74,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
    - **存量 WebView 页面 Skyline 适配改造**：先按本 SKILL.md 的[通用约束](#通用约束与适配原则)逐维度核对，识别出问题维度后再点读对应参考的相关小节。样式与 Web 标准 / WebView 模式的差异查 [`skyline-style-reference.md`](./references/skyline-style-reference.md)；布局、样式和模板结构改造查 [`skyline-layout-practice.md`](./references/skyline-layout-practice.md)；运行时、Scroll API、常见报错与性能问题查 [`skyline-runtime-practice.md`](./references/skyline-runtime-practice.md)。
    - **WebView→Skyline 组件差异存疑**（不支持组件、WebView-only 属性/取值、必填属性、结构约束、高频行为差异）：点查 [`skyline-component-reference.md`](./references/skyline-component-reference.md) 相关行；未收录条目不要反推为支持或不支持，需回源确认。
    - **新建双模式兼容页面/组件**：先按通用约束起手，遇到能力存疑（某属性是否支持、某 API 是否存在）时再点查对应参考。
+   - **Worklet 动画 / 手势系统 / 自定义路由 / 共享元素**：按[高级能力边界与官方路由](#skyline-高级能力)读取对应官方 Skill。
    - **项目级配置接入**（app.json / page.json / worklet Babel）：app.json 顶层项查 [`app.json 顶层配置`](./references/skyline-configuration.md#appjson-顶层配置)，`rendererOptions.skyline` 查 [`rendererOptions.skyline 配置项`](./references/skyline-configuration.md#rendereroptionsskyline-配置项)，页面配置示例查 [`适配参考`](./references/skyline-configuration.md#适配参考)，worklet 构建配置查 [`Worklet Babel 插件`](./references/skyline-configuration.md#worklet-babel-插件)。
    - **排查 Skyline 运行时问题**（样式静默失效 / 组件不渲染 / 布局异常 / 层级错乱 / worklet 失效）：先定位到报错所属维度，再读该维度能力参考的相关小节。
    - **适配完成前检查 / Code Review**：必须读取并执行 [`skyline-audit-matrix.md`](./references/skyline-audit-matrix.md)。
@@ -73,7 +85,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 适配/重构类任务，读到 skill 给出的具体改造规则时：
 - 规则带有知识库路由或外链的，**先读链接文档**再动手；
-- skill 给出明确可复制代码片段（属性值、CSS snippet、组件属性写法）→ 默认按 skill 执行；
+- skill 给出明确代码片段（属性值、CSS snippet、组件属性写法）→ 默认按 skill 执行，不过度发散；
 - skill 方案明显偏复杂且有公认更简写法需要澄清确认；
 - skill 没有明确替代方案的组件或者样式属性、规则不清楚、文档有歧义等场景先要求澄清；
 - skill 方案与其他方案（如"和邻近文件保持一致""拆开写更精确""有更简单的写法"）冲突时，先验证两点：语义是否等价；skill 方案是否在未显式声明的上下文里更稳，再确认是否改方案
@@ -103,7 +115,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 3. **overflow**：`overflow: scroll` 不支持 → 使用 `scroll-view` 组件；不支持单独设置 `overflow-x` / `overflow-y`。
 4. **边框一致性**：`border-radius` 非 0 时四边 `border-color` / `border-style` 需一致。
 5. **伪元素 animation**：Skyline 下伪元素的 `animation` 不生效 → 使用真实节点 + CSS animation。
-6. **font-weight**：部分机型不支持 `font-weight: 500` / `600` 数值加粗，需使用 `bold` / `700`，webview 对齐 skyline，可直接全局替换。
+6. **font-weight**：部分机型不支持 `font-weight: 500` / `600` 数值加粗；命中时需先澄清确认是否直接改为 `bold` / `700`，避免改变 WebView 视觉表现。确认后再统一调整；未确认时保留原字重，并结合字体资源映射评估兼容方案。
 7. **box-shadow**：不支持多个叠加。
 8. **不支持 CSS 属性**：`float` / `contain` / `resize` / `writing-mode` / `text-indent` / `overflow-wrap` / `background-attachment` / `background-clip` / `background-origin` / `mask-origin` / `mask-clip` / `mask-mode` / `justify-items` 等属性设置后静默不生效，按类别阅读 [布局、盒模型与层叠差异](./references/skyline-style-reference.md#布局盒模型与层叠差异)、[文本与字体差异](./references/skyline-style-reference.md#文本与字体差异)、[背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异) 与 [其他 Skyline 不支持能力及兼容方案](./references/skyline-style-reference.md#其他-skyline-不支持能力及兼容方案)，无等效方案时抛出提示待确认
 9. **渐变与背景多值限制**：`radial-gradient` 仅支持 `circle`（不支持 `ellipse`）；`background-image` / `mask-image` 最多支持 2 个值；`background-repeat` / `background-size` 不支持多组值，阅读 [样式差异参考 · 颜色与渐变](./references/skyline-style-reference.md#颜色与渐变) 与 [背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异)。
@@ -132,8 +144,8 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 1. 简单状态切换动画（缩放、透明度、位移等交互反馈）：**CSS `transition`**：三端均支持，通过 class 切换或动态 style 触发，无需平台判断。
 2. 循环/多步骤动画：**CSS `animation` + `@keyframes`**：Webview & Skyline支持，RN 暂不支持可暂时区分平台使用 API `mpx.createAnimation`。
-3. 手势/滚动场景：**Skyline Worklet 动画**，仅用于需要 UI 线程 60fps 驱动的场景（手势跟手、滚动联动），必须通过 `this.renderer === 'skyline'` 隔离。
-4. **禁止使用不支持的组件实例方法**：`this.animate` / `this.applyAnimation` / `this.clearAnimation` / `this.setInitialRenderingCache` 在 Skyline 下静默不生效，RN 下不存在；须改用 CSS transition 或 Worklet 动画。详见 [运行时适配实践 · 不支持的实例方法](./references/skyline-runtime-practice.md#必须-skyline-不支持的组件实例方法)。
+3. 手势/滚动场景：**Skyline Worklet 动画**，仅用于需要 UI 线程 60fps 驱动的场景（手势跟手、滚动联动）；先按[高级能力边界与官方路由](#skyline-高级能力边界与官方路由)读取官方 Skill，再通过 `this.renderer === 'skyline'` 隔离。
+4. **禁止使用不支持的组件实例方法**：`this.animate` / `this.applyAnimation` / `this.clearAnimation` / `this.setInitialRenderingCache` 在 Skyline 下静默不生效，RN 下不存在；须改用 CSS transition，确需 Worklet 时按[高级能力边界与官方路由](#skyline-高级能力边界与官方路由)回源官方 Skill。详见 [运行时适配实践 · 不支持的实例方法](./references/skyline-runtime-practice.md#必须-skyline-不支持的组件实例方法)。
 5. `wx.createAnimation` mpx2RN & WebView 支持，Skyline 不支持，Skyline 适配时需改造为 CSS `transition` 或者 CSS `animation` + `@keyframes`
 
 > 简单交互动画（如按钮缩放、卡片翻转）直接用 transition，不要为了"性能最优"引入 worklet — worklet 的价值在于手势跟手的实时性，不在于简单状态动画。
@@ -202,7 +214,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 ### 输入
 
-用户描述的页面需求，包括视图结构、交互、数据来源、是否需要使用 worklet 增强特性等。
+用户描述的页面需求，包括视图结构、交互、数据来源、是否需要 Worklet 动画、手势系统、自定义路由、共享元素等 Skyline 高级能力。
 
 ### 输出
 
@@ -212,8 +224,8 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 #### 1. 设计阶段
 
-- 与用户对齐需求要点：页面视图结构、数据流、是否需要 Skyline 增强特性（worklet 动画、手势、自定义路由）。
-- 若页面需要交互动画或自定义转场，读取 [Worklet 动画](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/worklet.html) / [手势系统](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/gesture.html) 官方文档，确定方案。
+- 与用户对齐需求要点：页面视图结构、数据流、是否需要 Skyline 高级能力（Worklet 动画、手势系统、自定义路由、共享元素）。
+- 命中任一高级能力时，按[高级能力](#skyline-高级能力)读取对应官方 Skill，先确定 Skyline 方案，再补充 Mpx 接入、运行时隔离与 WebView 降级方案；不得仅依据本 SKILL 补全高级能力实现细节。
 
 #### 2. 实施阶段
 

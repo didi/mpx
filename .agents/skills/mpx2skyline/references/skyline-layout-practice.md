@@ -1,6 +1,6 @@
 # Skyline 布局与样式适配实践
 
-本文记录 WebView 迁移 Skyline 时偏视图层的可复制改造方案，覆盖布局、样式、模板结构、页面滚动、层级、文本与 SVG 展示限制。
+本文记录 WebView 迁移 Skyline 时偏视图层的改造方案，覆盖布局、样式、模板结构、页面滚动、层级、文本与 SVG 展示限制。
 
 ## 目录
 
@@ -316,9 +316,9 @@ Skyline 下 `scroll-view` 默认不会按内容高度自动撑开。迁移时优
 
 ```ts
 // 工具函数
-import { nextTick, ref } from '@mpxjs/core'
+import { nextTick, ref, watch } from '@mpxjs/core'
 
-export function getScrollViewHeight(context: Obj, query: string, defaultHeight = 0) {
+export function getScrollViewHeight(context, query, defaultHeight = 0) {
   // height 初始为空（或传入兜底高度），格式为内联 style 字符串
   const height = ref(defaultHeight ? `height:${defaultHeight}px;` : '')
 
@@ -345,7 +345,7 @@ import { getScrollViewHeight } from 'useSkyline'
 
 const context = useContext()
 
-const isSkyline = getCurrentInstance().proxy.renderer === 'skyline'
+const isSkyline = () => getCurrentInstance().proxy.renderer === 'skyline'
 
 // isSkyline() 为 false（WebView）时退化为空实现，不影响 WebView 逻辑
 const { height, updateHeight } = isSkyline()
