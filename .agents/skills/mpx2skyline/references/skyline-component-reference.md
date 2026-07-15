@@ -12,16 +12,16 @@
 ## Skyline 不支持或不建议使用的组件
 
 | 组件 | Skyline 支持情况 | 替代/处理 |
-| --- | --- | --- |
-| `web-view` | 暂不考虑 | 承载 `web-view` 的页面单独配置 `"renderer": "webview"` |
-| `editor` | 暂不考虑 | 纯文本编辑用 `textarea`；富文本编辑页降级 WebView；只读展示用 `rich-text` |
-| `movable-area` / `movable-view` | 暂不考虑 | 使用手势组件 + Worklet 动画替代 |
-| `progress` | 暂不考虑 | 用 `view` 嵌套实现进度条，动画进度可配合 Worklet 驱动 |
-| `navigation-bar` | 不考虑 | Skyline 只能使用自定义导航 |
-| `xr-frame` | 暂未支持 | 3D/XR 页面降级 WebView，或用 `canvas` / WebGL 自行渲染 |
-| `match-media` | 待考虑 | 用 `wx.createMediaQueryObserver()` 监听媒体条件，或用 `getWindowInfo()` 获取屏幕尺寸后条件渲染 |
-| `keyboard-accessory` | 待考虑 | 用 `input` 的 `worklet:onkeyboardheightchange` 回调实现键盘跟随 |
-| `page-meta` | 基本支持 | 全局页面滚动属性 `scroll-top` / `scroll-duration` 不支持；页面滚动需改用 `scroll-view` |
+| --- |--------------| --- |
+| `web-view` | 不支持          | 承载 `web-view` 的页面单独配置 `"renderer": "webview"` |
+| `editor` | 不支持         | 纯文本编辑用 `textarea`；富文本编辑页降级 WebView；只读展示用 `rich-text` |
+| `movable-area` / `movable-view` | 不支持         | 使用手势组件 + Worklet 动画替代 |
+| `progress` | 不支持         | 用 `view` 嵌套实现进度条，动画进度可配合 Worklet 驱动 |
+| `navigation-bar` | 不支持          | Skyline 只能使用自定义导航 |
+| `xr-frame` | 不支持         | 3D/XR 页面降级 WebView，或用 `canvas` / WebGL 自行渲染 |
+| `match-media` | 不支持          | 用 `wx.createMediaQueryObserver()` 监听媒体条件，或用 `getWindowInfo()` 获取屏幕尺寸后条件渲染 |
+| `keyboard-accessory` | 不支持          | 用 `input` 的 `worklet:onkeyboardheightchange` 回调实现键盘跟随 |
+| `page-meta` | 基本支持         | 全局页面滚动属性 `scroll-top` / `scroll-duration` 不支持；页面滚动需改用 `scroll-view` |
 
 ## WebView-only 属性、取值与行为
 

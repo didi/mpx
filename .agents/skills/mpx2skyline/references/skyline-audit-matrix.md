@@ -16,7 +16,7 @@
 ## 使用方式
 
 - **指定单个 `.mpx` 组件**：以该文件为 scope 跑完整矩阵。
-- **指定页面**：先确认本次页面适配范围；按确认范围纳入页面文件、页面 json、app.json、模板实际引用的组件树执行矩阵；若只覆盖部分子树，必须说明未覆盖范围。
+- **指定页面**：先确认本次页面适配范围；按确认范围纳入页面文件、页面 JSON、app.json、模板实际引用的组件树执行矩阵；若只覆盖部分子树，必须说明未覆盖范围。
 - **最终输出**：对所有 `error` 命中给出处理结果：已修 / 保留原因 / 非目标平台分支 / 待确认。
 - **例外规则**：`.ios.mpx`、RN-only、非 wx 分支、明确 WebView-only 页面可跳过，但要在结果中说明。
 
@@ -42,7 +42,7 @@ rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|
 | id | level | scope | pattern | 判定 | 标准修复 | 允许例外 | 参考 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `CONFIG_APP_SKYLINE_OPTIONS` | error | app.json | `lazyCodeLoading` / `rendererOptions` / `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation` | 迁移项目需补齐对齐 WebView 的推荐配置；缺失会放大默认布局、盒模型、样式隔离、scroll-view 自适应、keyframes 作用域差异 | app.json 顶层补 `lazyCodeLoading`，`rendererOptions.skyline` 下补 5 个推荐项 | 非 Skyline 项目、明确只审单组件且无 app.json scope 时说明未覆盖 | [rendererOptions.skyline](./skyline-configuration.md#rendereroptionsskyline-配置项)、[app.json 顶层配置](./skyline-configuration.md#appjson-顶层配置) |
-| `CONFIG_PAGE_SKYLINE` | error | page.json | `renderer` / `componentFramework` / `disableScroll` / `navigationStyle` | Skyline 页面需显式声明渲染后端、glass-easel、禁用页面滚动和自定义导航 | 页面 json 补 `renderer: "skyline"`、`componentFramework: "glass-easel"`、`disableScroll: true`、`navigationStyle: "custom"` | 明确 WebView-only 页面 | [配置参考](./skyline-configuration.md#适配参考) |
+| `CONFIG_PAGE_SKYLINE` | error | page.json | `renderer` / `componentFramework` / `disableScroll` / `navigationStyle` | Skyline 页面需显式声明渲染后端、glass-easel、禁用页面滚动和自定义导航 | 页面 JSON 补 `renderer: "skyline"`、`componentFramework: "glass-easel"`、`disableScroll: true`、`navigationStyle: "custom"` | 明确 WebView-only 页面 | [配置参考](./skyline-configuration.md#适配参考) |
 | `CONFIG_WORKLET_BABEL` | warn | script/config | `worklet:` / `'worklet'` / `wx.worklet` | 使用 Worklet 时需确认 Babel 插件或开发者工具 Worklet 编译配置 | 按需配置 `babel-plugin-worklet` overrides | 未使用 Worklet；项目统一构建链已配置时说明 | [Worklet Babel 插件](./skyline-configuration.md#worklet-babel-插件) |
 
 ## 模板与组件规则

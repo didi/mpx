@@ -48,14 +48,14 @@
 
 | 配置项 | 位置 | 类型 | 推荐值 / 示例               | 说明                                                                                |
 |--------|------|------|------------------------|-----------------------------------------------------------------------------------|
-| `lazyCodeLoading` | `app.json` 顶层 | string | `"requiredComponents"` | 开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量，Skyline 必需，Webview 可按需         |
+| `lazyCodeLoading` | `app.json` 顶层 | string | `"requiredComponents"` | 开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量，Skyline 必需，WebView 可按需         |
 | `convertRpxToVw` | `app.json` 顶层 | boolean | 按需  | 基础库 3.3.0+；开启后会将 WebView rpx 计算逻辑对齐 Skyline（`rpx` 单位转换为 `vw` 单位），用于修复部分 `rpx` 精度问题 |
 
 ### 其他配置项
 
 | 配置项 | 位置 | 类型 | 推荐值 / 示例 | 说明 |
 |--------|------|------|---------------|------|
-| `backgroundColorContent` | 页面 json | HexColor | `"#00000000"` | Skyline 特有页面配置；设置页面容器背景色，支持 `#RRGGBBAA` 透明度格式，常用于自定义路由透明背景 |
+| `backgroundColorContent` | 页面 JSON | HexColor | `"#00000000"` | Skyline 特有页面配置；设置页面容器背景色，支持 `#RRGGBBAA` 透明度格式，常用于自定义路由透明背景 |
 
 ### 适配参考
 

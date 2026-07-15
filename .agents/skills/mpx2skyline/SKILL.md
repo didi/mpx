@@ -125,7 +125,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 ### 组件（component）约束
 
-1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。**嵌套场景下每一层 scroll-view 都必须显式声明 type**（外层 `type="nested"`、内层 `type="list"` / `"custom"`），遗漏内层 type 会让内层退化为 WebView 渲染路径。
+1. **scroll-view 必须指定 type**：Skyline 下缺少 `type` 属性将无法正常工作；根据直接子节点结构选择 `list` / `custom` / `nested`，列表项为直接子节点时才使用 `list`。**嵌套场景下每一层 scroll-view 都必须显式声明 type**（外层 `type="nested"`、内层 `type="list"` / `"custom"`），遗漏内层 type 会让内层退化为 WebView 渲染路径。
 2. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 简单场景使用替代方案，复杂场景给出替代方案或者降级方案待确认，参考 [Skyline 不支持或不建议使用的组件](./references/skyline-component-reference.md#skyline-不支持或不建议使用的组件)。
 3. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制 → 全局配置 `"tagNameStyleIsolation": "legacy"` 对齐 WebView 标签选择器全局匹配。
 4. **不使用 image 的 WebView-only 裁剪模式**（`top` / `bottom` / `center` / `left` / `right`）。
@@ -165,7 +165,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 #### 1. 页面配置适配
 
 - 页面 JSON 需新增 `renderer` / `componentFramework` / `disableScroll` / `navigationStyle`：`renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`。
-- 全局配置 app.json 需新增顶层 `lazyCodeLoading`，以及 `rendererOptions.skyline` 下的 `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`，阅读 [app.json 顶层配置](./references/skyline-configuration.md#appjson-顶层配置)、[rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项) 与 [适配参考](./references/skyline-configuration.md#适配参考)
+- 全局配置 app.json 需新增顶层 `lazyCodeLoading`，以及 `rendererOptions.skyline` 下的 `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`，阅读 [app.json 顶层配置](./references/skyline-configuration.md#appjson-顶层配置)、[rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项) 与 [适配参考](./references/skyline-configuration.md#适配参考)。
 
 #### 2. 布局适配改造
 
@@ -182,15 +182,15 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 - 不支持属性替代（`overflow: scroll` → `scroll-view` 等）读取 [布局、盒模型与层叠差异](./references/skyline-style-reference.md#布局盒模型与层叠差异)。
 - 增加配置 `defaultContentBox` `defaultDisplayBlock`，使默认样式对齐 WebView。
 - 文本溢出省略适配（`text-overflow: ellipsis` / 超长打点），可在承载文本的 `view` / `text` / `rich-text` / `special-text` 上新增 Skyline 特有属性 `max-lines` 与 `overflow`，阅读 [布局适配实践 · 文本溢出省略适配](./references/skyline-layout-practice.md#文本溢出省略适配)。
-- flex 布局子节点依赖百分比 `min-width` 撑开或等分时，百分比 `min-width` 不生效，必须替换为明确长度单位，须读取 [布局适配实践 · flex 布局的子节点 min-width 百分比撑开失效](./references/skyline-layout-practice.md#flex-布局的子节点-min-width-百分比撑开失效) 与 [样式差异参考 · 百分比支持情况](./references/skyline-style-reference.md#百分比支持情况)
-- 媒体查询 `@media screen` 替换为动态类，详见[布局适配实践 · @media screen 替换方案](./references/skyline-layout-practice.md#media-screen-替换方案)
+- flex 布局子节点依赖百分比 `min-width` 撑开或等分时，百分比 `min-width` 不生效，必须替换为明确长度单位，须读取 [布局适配实践 · flex 布局的子节点 min-width 百分比撑开失效](./references/skyline-layout-practice.md#flex-布局的子节点-min-width-百分比撑开失效) 与 [样式差异参考 · 百分比支持情况](./references/skyline-style-reference.md#百分比支持情况)。
+- 媒体查询 `@media screen` 替换为动态类，详见 [布局适配实践 · @media screen 替换方案](./references/skyline-layout-practice.md#media-screen-替换方案)。
 
 #### 4. 组件适配改造
 
 - 读取 [组件不支持与差异参考](./references/skyline-component-reference.md)，对 `<template>` 中的不支持组件、WebView-only 属性/取值、必填属性、结构约束与高频行为差异逐一核对；未收录能力需回源确认，不要反推结论。
 - `scroll-view` 必须指定 `type`。
 - 配置 `tagNameStyleIsolation": "legacy"`，使自定义组件样式隔离行为对齐 WebView。
-- `picker-view` skyline 下默认会有上下边框，适配 skyline 时没有自定义边框时需设置 `indicator-style="border: none;"` 去除默认边框，`indicator-style` 仅支持 `height`、`border`、`background-color`。
+- `picker-view` Skyline 下默认会有上下边框，适配 Skyline 时没有自定义边框时需设置 `indicator-style="border: none;"` 去除默认边框，`indicator-style` 仅支持 `height`、`border`、`background-color`。
 - 若同一视觉行内存在 `image` / icon 与 `text` / `rich-text` / `special-text` / 自定义文本组件混排，必须读取并执行 [布局适配实践 · 图文混排](./references/skyline-layout-practice.md#图文混排)。
 
 #### 5. 检查与确认
