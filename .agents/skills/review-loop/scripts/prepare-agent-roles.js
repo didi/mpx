@@ -5,10 +5,12 @@ const fs = require('fs')
 const path = require('path')
 const u = require('./review-loop-utils')
 
-const roles = ['planner', 'coder']
+const roles = ['planner', 'plan-reviewer', 'coder', 'code-reviewer']
 const roleDescriptions = {
   planner: 'Planner for review-loop workflows.',
-  coder: 'Coder for review-loop workflows.'
+  'plan-reviewer': 'Plan reviewer for review-loop workflows.',
+  coder: 'Coder for review-loop workflows.',
+  'code-reviewer': 'Code reviewer for review-loop workflows.'
 }
 
 function roleTemplatePath (role) {

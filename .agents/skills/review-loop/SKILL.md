@@ -11,10 +11,10 @@ Use this skill to run a two-phase workflow:
 1. Plan loop: `planner` writes or revises `plan.md`; `plan-reviewer` reviews it.
 2. Code loop: after user confirmation, `coder` implements the confirmed plan; `code-reviewer` reviews the resulting diff.
 
-The workflow requires real planner and coder subagents. If the current
-environment cannot create them, stop and tell the user that `review-loop`
-cannot run in this session. Codex and Claude Code reviewers run as standalone
-CLI processes instead of custom subagents.
+The workflow requires real planner, reviewer, and coder subagents. If the
+current environment cannot create fresh native subagents, stop and tell the
+user that `review-loop` cannot run in this session. Codex and Claude Code use
+host-native subagents for all four roles.
 
 ## Required Setup
 
@@ -33,19 +33,16 @@ Default `maxRounds` is `3`. If the user specifies a maximum loop count, pass it 
 
 - Do not implement code until the plan loop has ended and the user explicitly confirms the plan.
 - Do not let reviewer roles modify repository files. Reviewers return one strict
-  JSON object; the orchestrator persists and validates it with
-  `scripts/persist-review-json.js`.
+  JSON object; the orchestrator persists and validates it through
+  `scripts/review-manager.js --finalize`.
 - Start every reviewer in a fresh context that does not inherit planner/coder conversation history.
-- On Codex or Claude Code, enter the reviewing phase, then run
-  `scripts/run-reviewer.js`. It starts a new read-only CLI process with
-  state-derived paths, binds every initial input to a SHA-256 digest, writes an
-  immutable `runtime/reviewer-runs/*` artifact, validates the strict JSON
-  result, and persists the canonical review. Code reviews also bind the
-  validated Git snapshot tree. Reviewing-phase advancement fails when any
-  bound input, snapshot, or run artifact changes. Confirmation gates check only
-  `plan.md` or the Git tree, so later task-workspace patch, scope, review, and
-  log edits do not block normal work by themselves. Do not invoke
-  `scripts/persist-review-json.js` directly on either platform.
+- On Codex or Claude Code, run `scripts/review-manager.js --prepare`, pass the
+  returned paths-only prompt to a fresh native reviewer subagent, save its one
+  JSON response to a temporary file outside the repository, then run
+  `scripts/review-manager.js --finalize --input <file> --agent-id <id>`. Prepare
+  binds every input and the Git tree; finalize rejects drift, writes the
+  immutable reviewer-run, and persists the canonical review. Do not invoke
+  `scripts/persist-review-json.js` directly.
 - Use `scripts/validate-review-json.js` for later read-only revalidation.
 - Use `scripts/snapshot-diff.js` after every code loop implementation round.
 - `coder-complete` reconstructs the current Git tree, path partitions, and
@@ -77,9 +74,8 @@ The four required roles are:
 - `code-reviewer`
 
 Use the templates under `templates/roles/` as role definitions. On Codex and
-Claude Code, only `planner` and `coder` are custom subagents;
-`plan-reviewer` and `code-reviewer` templates are consumed by
-`run-reviewer.js`. Do not create reviewer agent definitions.
+Claude Code all four roles are native subagents, and reviewer roles must start
+with no inherited planner/coder conversation.
 
 ## User Confirmation Gates
 

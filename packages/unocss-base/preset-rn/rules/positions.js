@@ -39,16 +39,11 @@ const blockFlexGridJustifiesAlignments = [
   ...[...justifies, ...alignments, ...placements].map((k) => `grid-${k}`)
 ]
 
-const blockBoxSizing = [
-  'box-content'
-]
-
 export {
   blockPositions,
   blockJustifies,
   orders as blockOrders,
   placements as blockPlacements,
   blockFlexGridJustifiesAlignments,
-  floats as blockFloats,
-  blockBoxSizing
+  floats as blockFloats
 }

@@ -3,7 +3,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const reviewerRun = require('./run-reviewer')
+const reviewManager = require('./review-manager')
 const snapshot = require('./git-snapshot')
 const u = require('./review-loop-utils')
 
@@ -35,7 +35,7 @@ function requireCodeSnapshot (taskId, round) {
 }
 
 function confirmReview (state, taskId, kind, round, args) {
-  const drift = reviewerRun.confirmationDrift(state, taskId, kind, round)
+  const drift = reviewManager.confirmationDrift(state, taskId, kind, round)
   if (!drift.changed) return
   if (args['accept-changed-inputs'] !== 'true') {
     u.fail('Reviewed ' + kind + ' content changed before confirmation: ' + drift.changedPaths.join(', ') +
@@ -56,7 +56,7 @@ function confirmReview (state, taskId, kind, round, args) {
 function loadReview (taskId, args, kind, expectedRound, scopeFile) {
   if (!args.review) u.fail('Missing --review')
   const state = u.readState(taskId)
-  reviewerRun.requireForState(state, taskId, kind, expectedRound)
+  reviewManager.requireForState(state, taskId, kind, expectedRound)
   const reviewFile = u.reviewArtifactPath(taskId, kind, expectedRound)
   const supplied = u.resolveReviewArtifact(args.review)
   if (supplied.canonicalFile !== u.resolveReviewArtifact(reviewFile).canonicalFile) {
@@ -77,7 +77,7 @@ function loadReview (taskId, args, kind, expectedRound, scopeFile) {
     review: review,
     file: reviewFile,
     runDigest: state.platform === 'codex' || state.platform === 'claude-code'
-      ? reviewerRun.artifactDigest(taskId, kind, expectedRound)
+      ? reviewManager.artifactDigest(taskId, kind, expectedRound)
       : ''
   }
 }

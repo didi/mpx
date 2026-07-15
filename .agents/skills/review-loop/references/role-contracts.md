@@ -1,8 +1,8 @@
 # Role Contracts
 
-Planner and coder are real subagents. Plan-reviewer and code-reviewer are role
-contracts executed by fresh standalone reviewer CLI processes. The main agent
-orchestrates, prepares inputs, runs scripts, and asks the user for confirmation.
+Planner, plan-reviewer, coder, and code-reviewer are real native subagents. The
+main agent orchestrates them, prepares inputs, persists reviewer results, and
+asks the user for confirmation.
 
 ## planner
 
@@ -46,8 +46,8 @@ Responsibilities:
    then the plan; independently inspect every claimed impact path, full related
    functions, direct callers/consumers, adjacent implementations, and tests.
    Read earlier reviews and revision records last, only for deduplication.
-7. On Codex and Claude Code, this role is launched by `run-reviewer.js` through
-   a fresh, read-only CLI process with paths-only initial task input.
+7. On Codex and Claude Code, launch this role as a fresh native subagent with
+   paths-only initial task input and no inherited conversation.
 8. Construct at least one counterexample that could falsify a behavior
    assumption, and record review paths, symbol traces, checks, counterexamples,
    residual risks, and reviewer configuration in `evidence`.
@@ -99,8 +99,8 @@ Responsibilities:
    diff, round delta, and scope metadata before the confirmed plan, coder log,
    or validation claims. Inspect full changed functions, direct
    callers/consumers, adjacent implementations, and relevant tests.
-7. On Codex and Claude Code, this role is launched by `run-reviewer.js` through
-   a fresh, read-only native review process with paths-only initial task input.
+7. On Codex and Claude Code, launch this role as a fresh native subagent with
+   paths-only initial task input and no inherited conversation.
 8. Check target behavior, plan mismatch, unexpected paths, whether tests cover
    the failure mode, and whether reported validation is credible. Construct at
    least one falsifying counterexample; for UI/platform work distinguish an
@@ -114,9 +114,9 @@ Output returned to the orchestrator:
 
 ## Shared Reviewer JSON Requirements
 
-Reviewer JSON must follow `schemas/review.schema.json`. `run-reviewer.js`
-persists it only for the state-derived next round during the matching reviewing
-phase. Persisted review artifacts are immutable;
+Reviewer JSON must follow `schemas/review.schema.json`. `review-manager.js
+--finalize` persists it only for the state-derived next round during the
+matching reviewing phase. Persisted review artifacts are immutable;
 new files use exclusive creation and only byte-identical retries against an
 existing regular non-symlink file are accepted. The task workspace and
 `reviews/` path components must also be canonical non-symlink directories. The
@@ -127,9 +127,15 @@ SHA-256 digest; code reviews additionally bind the validated snapshot tree.
 Persisted reviews must also pass
 `scripts/validate-review-json.js`.
 
+Before repository inspection, each reviewer must verify that its paths-only
+task is the first visible user task message and that no parent planner, coder,
+or orchestrator conversation is visible. It records the exact passed
+`context-isolation-preflight` check required by `review-manager.js --finalize`.
+This assertion is defense in depth; the host-native fresh-context launch is the
+actual isolation boundary.
+
 Use concise findings. Each finding must be actionable and must include a stable `id`.
 Approval is allowed without findings, but never without complete evidence.
-The reviewer command must enforce a read-only sandbox before delegation. On
-Codex and Claude Code the runner derives and overwrites `reviewerConfig` from
-that command; reviewer self-reporting is not trusted. A role default or an
-unverified claim is insufficient because host runtime settings may override it.
+The reviewer must follow a no-write role contract. Prepare/finalize bind the
+Git tree and reject drift, and the orchestrator overwrites `reviewerConfig`
+with the host-native contract; reviewer self-reporting is not trusted.

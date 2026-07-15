@@ -3,7 +3,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const reviewerRun = require('./run-reviewer')
+const reviewManager = require('./review-manager')
 const u = require('./review-loop-utils')
 
 function main () {
@@ -41,7 +41,7 @@ function main () {
     (state.phase === 'plan_reviewing' || state.phase === 'code_reviewing')) {
     const kind = state.phase === 'plan_reviewing' ? 'plan' : 'code'
     const round = state[kind + 'Round'] + 1
-    const runFile = reviewerRun.artifactPath(taskId, kind, round)
+    const runFile = reviewManager.artifactPath(taskId, kind, round)
     const reviewFile = u.reviewArtifactPath(taskId, kind, round)
     if (!fs.existsSync(runFile)) {
       process.stdout.write(JSON.stringify({
@@ -57,7 +57,7 @@ function main () {
     }
     if (!fs.existsSync(reviewFile)) {
       try {
-        reviewerRun.requireValid(taskId, kind, round, state.platform)
+        reviewManager.requireValid(taskId, kind, round, state.platform)
       } catch (err) {
         process.stdout.write(JSON.stringify({
           ok: false,
@@ -73,12 +73,12 @@ function main () {
         action: 'rerun_current_round',
         missing: [reviewFile],
         phase: state.phase,
-        reason: 'Re-run run-reviewer.js to persist the completed reviewer artifact.'
+        reason: 'Re-run review-manager.js --finalize to persist the completed reviewer artifact.'
       }, null, 2) + '\n')
       return
     }
     try {
-      reviewerRun.requireForState(state, taskId, kind, round)
+      reviewManager.requireForState(state, taskId, kind, round)
     } catch (err) {
       process.stdout.write(JSON.stringify({
         ok: false,
@@ -94,7 +94,7 @@ function main () {
     (state.phase === 'awaiting_plan_confirm' || state.phase === 'awaiting_final_confirm')) {
     const kind = state.phase === 'awaiting_plan_confirm' ? 'plan' : 'code'
     try {
-      reviewerRun.confirmationDrift(state, taskId, kind, state[kind + 'Round'])
+      reviewManager.confirmationDrift(state, taskId, kind, state[kind + 'Round'])
     } catch (err) {
       process.stdout.write(JSON.stringify({
         ok: false,
