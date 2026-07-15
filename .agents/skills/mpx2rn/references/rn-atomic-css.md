@@ -111,7 +111,7 @@ export default defineConfig({
 | Border / outline | 部分支持 | 支持常用圆角、宽度、颜色、透明度、style 与 outline；不支持 logical border、`double`、`hidden` 等值 |
 | Shadow / opacity | 支持 | 支持 box shadow、shadow color 与 opacity；颜色 alpha 写法遵循下文约束 |
 | Transform | 支持 | 支持 origin、rotate、scale、skew、translate、perspective |
-| Transition | 部分支持 | 支持单属性及逗号分隔的多属性 transition，以及对应的 duration、timing function、delay；每个属性都必须处于 Mpx2RN transition 支持范围内，不支持生成 `transition-property: all` 的 `transition-all` |
+| Transition | 部分支持 | 支持单属性及逗号分隔的多属性 transition，以及对应的 duration、timing function、delay；每个属性都必须处于 Mpx2RN transition 支持范围内；RN preset 会屏蔽 `transition`、`transition-\d+`、`transition-all`、`transition-all-\d+` |
 | Filter | 有条件支持 | 依赖 RN 0.76+，并存在机型兼容性差异；上线前必须覆盖目标 RN 版本和设备验证 |
 | Overflow | 部分支持 | 仅使用 `hidden`、`scroll`、`visible` |
 | Display | 部分支持 | 支持 `hidden`；不要使用 `block`、`inline`、`inline-block`、`contents` 等 Web display 工具类 |

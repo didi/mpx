@@ -118,7 +118,7 @@ Only Screen
 
 #### [Transitions](https://windicss.org/utilities/animations/transitions.html)
 
-支持单属性及逗号分隔的多属性 transition，例如 `transition-opacity`、`transition-transform`、`transition-colors` 和多属性任意值；其中每个属性都必须处于 Mpx2RN transition 支持范围内。不支持生成 `transition-property: all` 的 `transition-all`。
+支持单属性及逗号分隔的多属性 transition，例如 `transition-opacity`、`transition-transform`、`transition-colors` 和多属性任意值；其中每个属性都必须处于 Mpx2RN transition 支持范围内。RN preset 会屏蔽生成 `transition-property: all` 的 `transition`、`transition-\d+`、`transition-all`、`transition-all-\d+`。
 
 #### [Background](https://windicss.org/utilities/backgrounds/background.html)
 
