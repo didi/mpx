@@ -225,7 +225,7 @@ createComponent({
 })
 ```
 
-> properties 中 value 可选；type 必写，基础库 2.17.2 及以上允许省略 type，省略时按 null 处理；低于 2.17.2 的 基础库不支持省略。
+> properties 中 value 可选；type 必写，基础库 2.17.2 及以上允许设置为 null 跳过校验（低于 2.17.2 的基础库不支持，这里暂不考虑低版本）。
 
 ### wxs 跨包引用错误：TypeError: R.wxs/stringify4ccc0480 is not a function
 

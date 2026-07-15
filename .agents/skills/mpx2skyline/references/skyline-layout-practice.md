@@ -316,7 +316,7 @@ Skyline 下 `scroll-view` 默认不会按内容高度自动撑开。迁移时优
 
 ```ts
 // 工具函数
-import { nextTick, ref, watch } from '@mpxjs/core'
+import { nextTick, ref } from '@mpxjs/core'
 
 export function getScrollViewHeight(context, query, defaultHeight = 0) {
   // height 初始为空（或传入兜底高度），格式为内联 style 字符串
@@ -327,7 +327,7 @@ export function getScrollViewHeight(context, query, defaultHeight = 0) {
     nextTick(() => {
       context.createSelectorQuery()
         .select(query)
-        .boundingClientRect((rect: Obj) => {
+        .boundingClientRect(rect => {
           height.value = `height:${Math.ceil(rect?.height || 0)}px;`
         })
         .exec()
@@ -340,7 +340,7 @@ export function getScrollViewHeight(context, query, defaultHeight = 0) {
 
 ```ts
 // 组件 setup 中使用（仅 Skyline 模式下启用）
-import { getCurrentInstance, nextTick } from '@mpxjs/core'
+import { getCurrentInstance, nextTick, watch, ref } from '@mpxjs/core'
 import { getScrollViewHeight } from 'useSkyline'
 
 const context = useContext()
@@ -425,9 +425,6 @@ watch(isShow, (val) => {
 ```
 
 ```css
-.normal {
-  white-space: nowrap;
-}
 .ellipsis {
   display: -webkit-box;
   overflow: hidden;
@@ -439,9 +436,9 @@ watch(isShow, (val) => {
 
 ### 字体 PostScript name 兼容
 
-部分机型不支持 `font-weight: 500` / `600` 等数值加粗，只能使用 `font-weight: bold` / `700`。
+部分机型可能不支持 `font-weight: 500` / `600` 等数值加粗，但直接改为 `bold` / `700` 可能改变 WebView 视觉表现。命中时先澄清确认是否调整字重；确认后再统一修改，未确认时保留原值并说明 Skyline 兼容风险。涉及自定义字体时，先检查字体资源与 PostScript name 映射，再确定替代写法。
 
-自定义字体的 PostScript name 映射：
+确认需要调整后，可参考以下自定义字体 PostScript name 映射：
 
 | PostScript name | CSS 写法 | 备注 |
 | --- | --- | --- |

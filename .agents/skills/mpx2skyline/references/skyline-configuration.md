@@ -106,7 +106,7 @@
 如果页面使用到 worklet 函数，需要配置 Babel 插件：
 
 ```bash
-npm i babel-plugin-worklet@0.0.5
+npm i babel-plugin-worklet
 ```
 
 Mpx 项目中通过 `overrides` 配置：

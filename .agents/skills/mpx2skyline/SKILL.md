@@ -74,7 +74,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
    - **存量 WebView 页面 Skyline 适配改造**：先按本 SKILL.md 的[通用约束](#通用约束与适配原则)逐维度核对，识别出问题维度后再点读对应参考的相关小节。样式与 Web 标准 / WebView 模式的差异查 [`skyline-style-reference.md`](./references/skyline-style-reference.md)；布局、样式和模板结构改造查 [`skyline-layout-practice.md`](./references/skyline-layout-practice.md)；运行时、Scroll API、常见报错与性能问题查 [`skyline-runtime-practice.md`](./references/skyline-runtime-practice.md)。
    - **WebView→Skyline 组件差异存疑**（不支持组件、WebView-only 属性/取值、必填属性、结构约束、高频行为差异）：点查 [`skyline-component-reference.md`](./references/skyline-component-reference.md) 相关行；未收录条目不要反推为支持或不支持，需回源确认。
    - **新建双模式兼容页面/组件**：先按通用约束起手，遇到能力存疑（某属性是否支持、某 API 是否存在）时再点查对应参考。
-   - **Worklet 动画 / 手势系统 / 自定义路由 / 共享元素**：按[高级能力边界与官方路由](#skyline-高级能力)读取对应官方 Skill。
+   - **Worklet 动画 / 手势系统 / 自定义路由 / 共享元素**：按[高级能力](#skyline-高级能力)读取对应官方 Skill。
    - **项目级配置接入**（app.json / page.json / worklet Babel）：app.json 顶层项查 [`app.json 顶层配置`](./references/skyline-configuration.md#appjson-顶层配置)，`rendererOptions.skyline` 查 [`rendererOptions.skyline 配置项`](./references/skyline-configuration.md#rendereroptionsskyline-配置项)，页面配置示例查 [`适配参考`](./references/skyline-configuration.md#适配参考)，worklet 构建配置查 [`Worklet Babel 插件`](./references/skyline-configuration.md#worklet-babel-插件)。
    - **排查 Skyline 运行时问题**（样式静默失效 / 组件不渲染 / 布局异常 / 层级错乱 / worklet 失效）：先定位到报错所属维度，再读该维度能力参考的相关小节。
    - **适配完成前检查 / Code Review**：必须读取并执行 [`skyline-audit-matrix.md`](./references/skyline-audit-matrix.md)。
@@ -140,12 +140,12 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 ### 动画策略约束
 
-跨端（WebView + Skyline + RN）场景下，动画方案的选择优先级：
+若需同时兼容 WebView + Skyline + RN 场景，动画方案的选择优先级：
 
 1. 简单状态切换动画（缩放、透明度、位移等交互反馈）：**CSS `transition`**：三端均支持，通过 class 切换或动态 style 触发，无需平台判断。
 2. 循环/多步骤动画：**CSS `animation` + `@keyframes`**：Webview & Skyline支持，RN 暂不支持可暂时区分平台使用 API `mpx.createAnimation`。
-3. 手势/滚动场景：**Skyline Worklet 动画**，仅用于需要 UI 线程 60fps 驱动的场景（手势跟手、滚动联动）；先按[高级能力边界与官方路由](#skyline-高级能力边界与官方路由)读取官方 Skill，再通过 `this.renderer === 'skyline'` 隔离。
-4. **禁止使用不支持的组件实例方法**：`this.animate` / `this.applyAnimation` / `this.clearAnimation` / `this.setInitialRenderingCache` 在 Skyline 下静默不生效，RN 下不存在；须改用 CSS transition，确需 Worklet 时按[高级能力边界与官方路由](#skyline-高级能力边界与官方路由)回源官方 Skill。详见 [运行时适配实践 · 不支持的实例方法](./references/skyline-runtime-practice.md#必须-skyline-不支持的组件实例方法)。
+3. 手势/滚动场景：**Skyline Worklet 动画**，仅用于需要 UI 线程 60fps 驱动的场景（手势跟手、滚动联动）；先按[高级能力](#skyline-高级能力)读取官方 Skill，再通过 `this.renderer === 'skyline'` 隔离。
+4. **禁止使用不支持的组件实例方法**：`this.animate` / `this.applyAnimation` / `this.clearAnimation` / `this.setInitialRenderingCache` 在 Skyline 下静默不生效，RN 下不存在；须改用 CSS transition，确需 Worklet 时按[高级能力](#skyline-高级能力)回源官方 Skill。详见 [运行时适配实践 · 不支持的实例方法](./references/skyline-runtime-practice.md#必须-skyline-不支持的组件实例方法)。
 5. `wx.createAnimation` mpx2RN & WebView 支持，Skyline 不支持，Skyline 适配时需改造为 CSS `transition` 或者 CSS `animation` + `@keyframes`
 
 > 简单交互动画（如按钮缩放、卡片翻转）直接用 transition，不要为了"性能最优"引入 worklet — worklet 的价值在于手势跟手的实时性，不在于简单状态动画。
@@ -165,7 +165,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 #### 1. 页面配置适配
 
 - 页面 json 需新增 `renderer` / `componentFramework` / `disableScroll` / `navigationStyle` `renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`
-- 全局配置 app.json 需新增顶层 `lazyCodeLoading` / `convertRpxToVw`，以及 `rendererOptions.skyline` 下的 `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`，阅读 [app.json 顶层配置](./references/skyline-configuration.md#appjson-顶层配置)、[rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项) 与 [适配参考](./references/skyline-configuration.md#适配参考)
+- 全局配置 app.json 需新增顶层 `lazyCodeLoading`，以及 `rendererOptions.skyline` 下的 `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`，阅读 [app.json 顶层配置](./references/skyline-configuration.md#appjson-顶层配置)、[rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项) 与 [适配参考](./references/skyline-configuration.md#适配参考)
 
 #### 2. 布局适配改造
 
