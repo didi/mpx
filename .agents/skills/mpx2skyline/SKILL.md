@@ -42,14 +42,14 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 ## 知识库索引
 
-| 知识库 | 说明                                             |
-| --- |------------------------------------------------|
+| 知识库 | 说明                                                                                     |
+| --- |----------------------------------------------------------------------------------------|
 | [Skyline 组件不支持与差异参考](./references/skyline-component-reference.md) | 查询 WebView 迁移 Skyline 时的组件差异，覆盖不支持组件、WebView-only 属性/取值、必填属性、结构约束与高频行为差异；不是完整组件手册，未收录能力需回源确认 |
-| [Skyline 与 Web/W3C CSS 标准差异参考](./references/skyline-style-reference.md) | 查询 Skyline 样式与 Web/W3C CSS 标准不一致的部分，覆盖默认值、选择器、值类型、布局层叠、文本、背景遮罩、滤镜、动画等差异 |
-| [Skyline 布局与样式适配实践](./references/skyline-layout-practice.md) | 进行视图层适配改造时读取，覆盖布局/层叠、页面滚动、图文混排、sticky、文本省略、flex、媒体查询与 SVG 展示限制等改造方案 |
-| [Skyline 运行时适配实践](./references/skyline-runtime-practice.md) | 进行运行时、框架行为或性能问题适配时读取，覆盖渲染模式判断、SelectorQuery、组件实例方法、Scroll API、常见报错与性能优化等改造方案 |
-| [Skyline 配置项与接入规范参考](./references/skyline-configuration.md) | 接入项目级与页面级配置时读取；按需点查 app.json 顶层配置、rendererOptions.skyline、页面配置示例与 Worklet Babel 插件配置 |
-| [Skyline 适配检查矩阵](./references/skyline-audit-matrix.md) | 适配完成前强制执行的审计矩阵，覆盖扫描 pattern、判定、修复、例外与验证要求 |
+| [Skyline 与 Web/W3C CSS 标准差异参考](./references/skyline-style-reference.md) | 查询 Skyline 样式与 Web/W3C CSS 标准不一致的部分，覆盖默认值、选择器、值类型、布局层叠、文本、背景遮罩、滤镜、动画等差异                |
+| [Skyline 布局与样式适配实践](./references/skyline-layout-practice.md) | 进行视图层适配改造时读取，覆盖布局/层叠、页面滚动、图文混排、sticky、文本省略、flex、媒体查询与 SVG 展示限制等改造方案                    |
+| [Skyline 运行时适配实践](./references/skyline-runtime-practice.md) | 进行运行时常见问题或者性能相关问题时读取，覆盖渲染模式判断、SelectorQuery、组件实例方法、Scroll API、常见报错与性能优化等               |
+| [Skyline 配置项与接入规范参考](./references/skyline-configuration.md) | 接入项目级与页面级配置时读取；按需点查 app.json 顶层配置、rendererOptions.skyline、页面配置示例与 Worklet Babel 插件配置   |
+| [Skyline 适配检查矩阵](./references/skyline-audit-matrix.md) | 适配完成前强制执行的审计矩阵，覆盖扫描 pattern、判定、修复、例外与验证要求                                              |
 
 ### Skyline 高级能力
 
@@ -68,87 +68,75 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 参考文档体量较大，**不要一次性预读全部参考**，按需取用即可：
 
-1. **入口只读本 SKILL.md**：完整读完本文档（含下方[通用约束与适配原则](#通用约束与适配原则)与任务流程）足以覆盖 80% 常见场景的判断；不要在动笔前预读 references 目录。
-2. **触发式读取**：只在通用约束或任务流程中**明确指向**某份参考（及其锚点）时读取，且仅读取与当前问题相关的小节——参考文档均含目录与章节锚点，用 `rg` / 锚点跳读，不要整文件 Read。
-3. **典型任务的最小阅读集**（仅当本 SKILL.md 已无法判断时再补充）：
-   - **存量 WebView 页面 Skyline 适配改造**：先按本 SKILL.md 的[通用约束](#通用约束与适配原则)逐维度核对，识别出问题维度后再点读对应参考的相关小节。样式与 Web 标准 / WebView 模式的差异查 [`skyline-style-reference.md`](./references/skyline-style-reference.md)；布局、样式和模板结构改造查 [`skyline-layout-practice.md`](./references/skyline-layout-practice.md)；运行时、Scroll API、常见报错与性能问题查 [`skyline-runtime-practice.md`](./references/skyline-runtime-practice.md)。
-   - **WebView→Skyline 组件差异存疑**（不支持组件、WebView-only 属性/取值、必填属性、结构约束、高频行为差异）：点查 [`skyline-component-reference.md`](./references/skyline-component-reference.md) 相关行；未收录条目不要反推为支持或不支持，需回源确认。
-   - **新建双模式兼容页面/组件**：先按通用约束起手，遇到能力存疑（某属性是否支持、某 API 是否存在）时再点查对应参考。
-   - **Worklet 动画 / 手势系统 / 自定义路由 / 共享元素**：按[高级能力](#skyline-高级能力)读取对应官方 Skill。
-   - **项目级配置接入**（app.json / page.json / Worklet Babel）：app.json 顶层项查 [`app.json 顶层配置`](./references/skyline-configuration.md#appjson-顶层配置)，`rendererOptions.skyline` 查 [`rendererOptions.skyline 配置项`](./references/skyline-configuration.md#rendereroptionsskyline-配置项)，页面配置示例查 [`适配参考`](./references/skyline-configuration.md#适配参考)，Worklet 构建配置查 [`Worklet Babel 插件`](./references/skyline-configuration.md#worklet-babel-插件)。
-   - **排查 Skyline 运行时问题**（样式静默失效 / 组件不渲染 / 布局异常 / 层级错乱 / Worklet 失效）：先定位到报错所属维度，再读该维度能力参考的相关小节。
-   - **适配完成前检查 / Code Review**：必须读取并执行 [`skyline-audit-matrix.md`](./references/skyline-audit-matrix.md)。
+1. **入口只读本 SKILL.md**：完整读完本文档（含下方通用约束与任务流程）足以覆盖 80% 常见场景的判断；不要在动笔前预读 references 目录。
+2. **触发式读取**：只在任务流程或通用约束中**明确指向**某份参考时读取，且仅读取与当前问题相关的小节（参考文档均含目录与章节锚点，使用 `rg` / 锚点跳读，不要整文件 Read）。
+3. **典型任务的最小阅读集**：
+   - 已有 WebView 页面 Skyline 适配改造：识别问题维度后再读对应能力参考的相关小节，通常 1–2 份足够（如样式能力差异查 `skyline-style-reference.md`，布局或模板结构改造查 `skyline-layout-practice.md`，组件差异查 `skyline-component-reference.md`，运行时问题查 `skyline-runtime-practice.md`）。未收录的组件或能力不要反推结论，需回源确认。
+   - 新建 WebView / Skyline 双模式兼容页面或组件：先按本 SKILL.md 的通用约束起手，遇到能力存疑（某属性是否支持、某 API 是否存在）时再点查对应参考。
+   - 项目级配置接入：app.json 顶层项查 [`app.json 顶层配置`](./references/skyline-configuration.md#appjson-顶层配置)，`rendererOptions.skyline` 查 [`rendererOptions.skyline 配置项`](./references/skyline-configuration.md#rendereroptionsskyline-配置项)，页面配置示例查 [`适配参考`](./references/skyline-configuration.md#适配参考)，Worklet 构建配置查 [`Worklet Babel 插件`](./references/skyline-configuration.md#worklet-babel-插件)。
+   - Worklet 动画、手势系统、自定义路由或共享元素：按[高级能力](#skyline-高级能力)读取对应官方 Skill，不预读无关高级能力参考。
+4. **何时读取 `skyline-audit-matrix.md`**：仅在适配完成前检查或 Code Review 时读取，并按要求执行完整矩阵；不要在方案设计或编码前预读。
 
 ## 通用约束与适配原则
 
-适配改造、新建组件、Code Review 均须遵循以下约束：
+适配改造、新建页面或组件、重构与 Code Review 均须遵循本节约束。应用本 Skill 的具体规则时，按以下优先级处理：
 
-适配/重构类任务，读到 skill 给出的具体改造规则时：
-- 规则带有知识库路由或外链的，**先读链接文档**再动手；
-- skill 给出明确代码片段（属性值、CSS snippet、组件属性写法）→ 默认按 skill 执行，不过度发散；
-- skill 方案明显偏复杂且有公认更简写法需要澄清确认；
-- skill 没有明确替代方案的组件或者样式属性、规则不清楚、文档有歧义等场景先要求澄清；
-- skill 方案与其他方案（如"和邻近文件保持一致""拆开写更精确""有更简单的写法"）冲突时，先验证两点：语义是否等价；skill 方案是否在未显式声明的上下文里更稳，再确认是否改方案
+- 规则明确指向知识库或外部文档时，先读取与当前问题相关的小节，再实施改动；
+- 规则已给出明确实现（属性值、CSS 片段、组件属性写法等）时，默认直接采用，不自行扩展替代方案；
+- Skill 未给出替代方案、规则含义不明确或文档存在歧义时，不推断实现，先说明不确定点并请求确认；
+- Skill 方案与更简写法、邻近代码风格或其他实现冲突时，先验证语义是否等价，以及 Skill 方案是否覆盖了未显式声明的上下文；验证后仍需偏离 Skill 方案的，说明差异并确认后再改。
 
 ### 跨渲染模式兼容约束
 
-产物代码须在 WebView 与 Skyline 下均正常运行：
+产物代码须在 WebView 与 Skyline 下均正常运行，按以下顺序选择方案：
 
-- 新方案若 WebView、Skyline、RN 三端兼容，直接对齐为新方案；
-- 新方案若属 Skyline-only 改造，**必须**通过 `this.renderer === 'skyline'` 运行时隔离，若有细则明确要求 WebView 保留原有逻辑且 Skyline 无副作用则保留，阅读 [运行时 renderer 判断](./references/skyline-runtime-practice.md#判断当前渲染模式)；
-- Skyline 适配不做低版本兼容，由 Skyline 开量开关控制最低版本基础库，低版本降级到 WebView 渲染。
+- **优先采用通用方案**：新方案若同时兼容 WebView、Skyline 与 RN，直接统一为新方案，无需按渲染模式分支；
+- **隔离 Skyline-only 方案**：仅 Skyline 可用的新逻辑默认通过 `this.renderer === 'skyline'` 运行时隔离。仅当细则明确要求该逻辑在 WebView 下保留，或已确认其在 WebView 下无副作用时，才可不作隔离；
+- **保留在 Skyline 下静默失效的 WebView 方案**：既有 WebView 方案若在 Skyline 下静默失效，确认其在 Skyline 下无副作用后可保留原逻辑，仅新增 Skyline 兼容实现。静默失效不等于无副作用；无法确认时，仍须按渲染模式隔离；
+- **不处理 Skyline 低版本兼容**：通过 Skyline 开量开关控制最低基础库版本，未达到要求的版本降级为 WebView 渲染。
 
-该原则贯穿模板 / 脚本 / 样式 / JSON 四个维度。
+运行时隔离方式见 [判断当前渲染模式](./references/skyline-runtime-practice.md#判断当前渲染模式)。上述原则贯穿模板 / 脚本 / 样式 / JSON 四个维度。
 
 ### 布局（layout）约束
 
-1. **默认布局差异**：Skyline 默认 `display: flex`，WebView 默认 `display: block` → app.json 配置 `defaultDisplayBlock` 对齐 WebView 默认 `display: block`。
-2. **box-sizing 默认值**：Skyline 默认 `border-box`（WebView 默认 `content-box`）→ app.json 配置 `defaultContentBox` 对齐 WebView 默认 `content-box`。
-3. **页面滚动**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发 → 使用 `scroll-view type="list"` 替代，页面需声明 `disableScroll: true`。**原页面生命周期需迁移到 scroll-view 对应事件**（`bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`），WebView 对齐 Skyline 写法。事件映射与示例详见 [布局适配实践 · 页面滚动替代方案](./references/skyline-layout-practice.md#页面滚动替代方案)。
-4. **自定义导航**：Skyline 不支持默认导航 → 自定义导航栏，页面需声明 `navigationStyle: 'custom'`。
-5. **z-index 与层叠**：z-index 仅兄弟节点生效，无层叠上下文机制 → 阅读 [布局适配实践 · z-index 与层叠适配](./references/skyline-layout-practice.md#z-index-与层叠适配)，理解 WebView 与 Skyline 层级差异，重新排布页面内所有子孙节点的层级结构。**优先用非负兄弟序（不要调整 DOM 顺序，需要调整 DOM 顺序时需先确认）控制层级，尽量避免负 z-index**。
+1. **先对齐默认布局基线**：在 `rendererOptions.skyline` 中开启 `defaultDisplayBlock` 与 `defaultContentBox`，分别对齐 WebView 的 `display: block` 和 `box-sizing: content-box`；需要静态定位时仍须显式声明 `position: static`。配置位置见 [rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项)，其余默认值差异见 [非标准默认值](./references/skyline-style-reference.md#非标准默认值)。
+2. **不依赖 BFC 与 margin 合并**：Skyline 没有 BFC 和 margin 合并机制，`overflow: hidden` 仅用于裁剪。容器外沿空间用父容器 `padding` 表达，兄弟间距只由一侧承担；复杂存量布局按 [不要依赖 BFC 和 margin 合并](./references/skyline-layout-practice.md#不要依赖-bfc-和-margin-合并) 改造。
+3. **页面滚动统一迁移到 scroll-view**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发。页面声明 `disableScroll: true`，使用 `scroll-view` 承载滚动，并根据直接子节点结构选择 `list` / `custom` / `nested`，不要固定写死 `type="list"`。原生命周期同步迁移到 `bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`，WebView 对齐同一事件链路；详见 [页面滚动替代方案](./references/skyline-layout-practice.md#页面滚动替代方案)。
+4. **按 normal-context / fixed-context 设计层级**：Skyline 没有 WebView 层叠上下文，非 fixed 节点最终比较共同父级下的兄弟分支；fixed 节点会全局提升并按自身 `z-index` 排序，整体高于非 fixed 内容。`transform` / `opacity` 不会抬升层级，`scroll-view` 直接子节点的 `z-index` 不生效。需要比较层级的节点应调整为可比较的兄弟结构，避免依赖负 `z-index`；详见 [z-index 与层叠适配](./references/skyline-layout-practice.md#z-index-与层叠适配)。
+5. **吸顶逻辑双分支保留**：Skyline 不支持 `position: sticky`，Skyline 分支使用 `sticky-section` / `sticky-header`，WebView 分支保留 CSS sticky。`sticky-header` 必须是 section 的第一个子节点且显式设置背景色，完整结构见 [sticky 吸顶替代方案](./references/skyline-layout-practice.md#sticky-吸顶替代方案)。
+6. **使用自定义导航**：Skyline 页面声明 `navigationStyle: 'custom'` 并实现自定义导航栏，不依赖默认导航；页面配置见 [适配参考](./references/skyline-configuration.md#适配参考)。
 
 ### 样式（style）约束
 
-1. **选择器**：不支持通配选择器 `*` 和属性选择器 `[attr]`；伪元素仅 `::before` / `::after`；`:nth-child` 需 8.0.50+，选择器差异详情阅读 [样式差异参考 · 选择器支持](./references/skyline-style-reference.md#选择器支持)。
-2. **单位**：优先使用 `rpx` / `px` / 百分比，值类型差异阅读 [样式差异参考 · 值类型支持](./references/skyline-style-reference.md#值类型支持)。
-3. **overflow**：`overflow: scroll` 不支持 → 使用 `scroll-view` 组件；不支持单独设置 `overflow-x` / `overflow-y`。
-4. **边框一致性**：`border-radius` 非 0 时四边 `border-color` / `border-style` 需一致。
-5. **伪元素 animation**：Skyline 下伪元素的 `animation` 不生效 → 使用真实节点 + CSS animation。
-6. **font-weight**：部分机型不支持 `font-weight: 500` / `600` 数值加粗；命中时需先澄清确认是否直接改为 `bold` / `700`，避免改变 WebView 视觉表现。确认后再统一调整；未确认时保留原字重，并结合字体资源映射评估兼容方案。
-7. **box-shadow**：不支持多个叠加。
-8. **不支持 CSS 属性**：`float` / `contain` / `resize` / `writing-mode` / `text-indent` / `overflow-wrap` / `background-attachment` / `background-clip` / `background-origin` / `mask-origin` / `mask-clip` / `mask-mode` / `justify-items` 等属性设置后静默不生效，按类别阅读 [布局、盒模型与层叠差异](./references/skyline-style-reference.md#布局盒模型与层叠差异)、[文本与字体差异](./references/skyline-style-reference.md#文本与字体差异)、[背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异) 与 [其他 Skyline 不支持能力及兼容方案](./references/skyline-style-reference.md#其他-skyline-不支持能力及兼容方案)，无等效方案时抛出提示待确认。
-9. **渐变与背景多值限制**：`radial-gradient` 仅支持 `circle`（不支持 `ellipse`）；`background-image` / `mask-image` 最多支持 2 个值；`background-repeat` / `background-size` 不支持多组值，阅读 [样式差异参考 · 颜色与渐变](./references/skyline-style-reference.md#颜色与渐变) 与 [背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异)。
-10. **filter / backdrop-filter**：不支持 `url()` / `drop-shadow()` 及多函数组合；用 `box-shadow` 替代 `drop-shadow`。详见 [样式差异参考 · 滤镜差异](./references/skyline-style-reference.md#滤镜差异)。
-11. **text-decoration-line 单值**：仅支持单个值，多值组合（如 `underline line-through`）不生效 → 需双值时用运行时判断嵌套 `text` 节点拆分，详见 [布局适配实践 · text-decoration-line 多值适配](./references/skyline-layout-practice.md#text-decoration-line-多值适配)。
-12. **calc() 不支持角度**：`calc()` 支持长度计算但不支持角度类型，需直接写角度值（如 `135deg`）。
+1. **只使用受支持的选择器**：不使用通配选择器和属性选择器；伪元素只使用 `::before` / `::after`，其他伪类按 [选择器支持](./references/skyline-style-reference.md#选择器支持) 核对版本与替代方案，不能用时改为模板动态类或真实节点。
+2. **值类型按稳定范围使用**：长度优先使用 `rpx` / `px` / `rem`；百分比仅用于 [百分比支持情况](./references/skyline-style-reference.md#百分比支持情况) 明确记录的属性，Flex 子节点不能依赖百分比 `min-width` 撑开或等分。`calc()` 只用于非嵌套的长度计算，不用于角度等类型；详见 [长度、函数与单位](./references/skyline-style-reference.md#长度函数与单位)。
+3. **滚动与特殊布局改用组件或显式布局**：不使用 `overflow: auto` / `scroll`、`overflow-x` / `overflow-y`、`display: grid` / `flow-root` 或 `position: sticky`；分别改用 `scroll-view`、Flex / `grid-view`、sticky 组件。其他布局差异按 [布局、盒模型与层叠差异](./references/skyline-style-reference.md#布局盒模型与层叠差异) 处理。
+4. **文本省略同时保留两端实现**：保留 WebView 的 `text-overflow` / `-webkit-line-clamp` 等样式，并在承载文本的组件上新增 `max-lines` 与 `overflow` 供 Skyline 使用；新增或替换为 `text` 时将插值紧贴标签，避免字面空白影响截断。完整规则见 [文本溢出省略适配](./references/skyline-layout-practice.md#文本溢出省略适配)。
+5. **字体与文本能力先核对再替换**：`font-weight: 500/600` 在部分机型不生效，命中时先检查字体资源与 PostScript name，再确认是否改为 `bold` / `700`，未确认时保留并说明风险。`white-space`、`word-break`、`text-decoration` 等能力按 [文本与字体差异](./references/skyline-style-reference.md#文本与字体差异) 处理；`text-decoration-line` 多值按 [多值适配](./references/skyline-layout-practice.md#text-decoration-line-多值适配) 拆分节点。
+6. **背景、边框、遮罩与滤镜遵循层数和值域限制**：圆角非 0 时四边边框颜色和样式保持一致；多层背景、遮罩或阴影超出支持范围时拆节点；`mask-image` 不使用渐变；`filter` / `backdrop-filter` 不使用 `url()`、`drop-shadow()` 或多函数组合。具体值域见 [背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异) 与 [滤镜差异](./references/skyline-style-reference.md#滤镜差异)。
+7. **媒体查询保留 WebView、补 Skyline 动态类**：Skyline 会忽略 `@media screen` 条件但可能保留内部规则，不能直接删除或全局覆盖。WebView 继续使用原媒体查询，Skyline 通过运行时状态类表达条件，并在媒体查询后补 Skyline 默认类兜底；详见 [@media screen 替换方案](./references/skyline-layout-practice.md#media-screen-替换方案)。
+8. **未支持属性按跨渲染原则处理**：命中未支持或静默失效的 CSS 时，先在 [其他 Skyline 不支持能力及兼容方案](./references/skyline-style-reference.md#其他-skyline-不支持能力及兼容方案) 查询替代方案；确认原 WebView 样式在 Skyline 下无副作用后可保留，仅新增 Skyline 实现。没有等效方案或副作用不明确时，说明风险并请求确认。
 
 ### 组件（component）约束
 
-1. **scroll-view 必须指定 type**：Skyline 下缺少 `type` 属性将无法正常工作；根据直接子节点结构选择 `list` / `custom` / `nested`，列表项为直接子节点时才使用 `list`。**嵌套场景下每一层 scroll-view 都必须显式声明 type**（外层 `type="nested"`、内层 `type="list"` / `"custom"`），遗漏内层 type 会让内层退化为 WebView 渲染路径。
-2. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 简单场景使用替代方案，复杂场景给出替代方案或者降级方案待确认，参考 [Skyline 不支持或不建议使用的组件](./references/skyline-component-reference.md#skyline-不支持或不建议使用的组件)。
-3. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制 → 全局配置 `"tagNameStyleIsolation": "legacy"` 对齐 WebView 标签选择器全局匹配。
-4. **不使用 image 的 WebView-only 裁剪模式**（`top` / `bottom` / `center` / `left` / `right`）。
-5. **sticky-header 必须显式声明背景色**：Skyline 下 `sticky-header` 默认透明，吸顶时会与下层列表内容透字穿透；同时 `sticky-header` 必须是 `sticky-section` 的第一个子节点（且每个 section 仅一个 header）。详见 [布局适配实践 · sticky 吸顶替代方案](./references/skyline-layout-practice.md#sticky-吸顶替代方案)。
-6. **navigator 嵌套限制**：`<navigator>` 内**只能嵌套 `<text>` 或纯文本**，不能嵌套 `<view>` / `<image>` 等其他组件；
-7. **图文混排须用 `<span>` 内联包裹**：Skyline 下 `<view>`/`<text>` 无法直接图文内联混排，需用 `<span>` 包裹各内联片段，实现参考 [图文混排](./references/skyline-layout-practice.md#图文混排)。
-8. **scroll-view 按内容撑开**：需在 app.json 配置 `enableScrollViewAutoSize` 对齐 WebView scroll-view 自动撑开高度。
-9. **ScrollViewContext 需 enhanced 属性**：通过 `NodesRef.node()` 获取 `ScrollViewContext` 时，`scroll-view` 必须开启 `enhanced` 属性，否则返回的不是 ScrollViewContext 实例。详见 [运行时适配实践 · ScrollViewContext：开启 enhanced 属性](./references/skyline-runtime-practice.md#必须-scrollviewcontext开启-enhanced-属性)。
-10. **模板转义改用 XML 实体**：数据绑定**外**的引号须改为 `&quot;`，数据绑定**内**无需转义（不再用反斜杠）。详见 [布局适配实践 · 模板转义](./references/skyline-layout-practice.md#必须-模板中数据绑定外的转义改为标准-xml-转义)。
-11. **wx:for 内嵌 include 须改为 template**：`<include>` 引入的模板中 `item` / `index` 变量失效，须改用 `<template>` + `<import>` 方案。详见 [布局适配实践 · wx:for 内嵌 include](./references/skyline-layout-practice.md#必须-wxfor-内嵌-include-时改为-template)。
-12. **SelectorQuery 选择器不支持以数字开头**：`#1` 等以数字开头的 id 选择器不合 CSS 规范，需重命名（如 `#element-1`）。详见 [运行时适配实践 · SelectorQuery](./references/skyline-runtime-practice.md#必须-selectorquery-选择器不再支持以数字开头)。
+组件参考只记录 WebView 迁移 Skyline 的差异，不是完整组件手册；未收录的组件、属性或事件不得反推为支持，需回源确认。
+
+1. **scroll-view 必须显式选型**：每个 `scroll-view` 都声明 `type`。`type="list"` 仅用于列表项是直接子节点的场景，单一外层 wrapper 会使按需渲染退化；嵌套滚动时外层使用 `type="nested"`，内层显式使用 `list` / `custom` 并设置 `associative-container="nested-scroll-view"`。选型与结构约束见 [Skyline 必填属性与结构约束](./references/skyline-component-reference.md#skyline-必填属性与结构约束)。
+2. **scroll-view 行为按需补齐**：横向滚动同时开启 `enable-flex` 并设置横向布局；自定义下拉刷新节点声明 `slot="refresher"`；需要内容撑高时开启 `enableScrollViewAutoSize`。通过 `NodesRef.node()` 获取 `ScrollViewContext` 时，目标滚动容器必须开启 `enhanced`；详见 [组件高频差异](./references/skyline-component-reference.md#skyline-相对-webview-的高频差异补充) 与 [ScrollViewContext](./references/skyline-runtime-practice.md#必须-scrollviewcontext开启-enhanced-属性)。
+3. **不支持组件采用替代或降级**：命中 `web-view`、富文本编辑、可移动视图等不支持能力时，按 [不支持或不建议使用的组件](./references/skyline-component-reference.md#skyline-不支持或不建议使用的组件) 选择替代组件、独立 WebView 页面或 renderer 降级；复杂交互无明确等效方案时说明风险并请求确认。
+4. **WebView-only 属性与取值不得作为 Skyline 方案**：例如 `image` 的 WebView-only 裁剪模式、`text` 的 `space` / `decode`、输入组件的 `placeholder-class` 等，确认在 Skyline 下无副作用后可保留给 WebView，并补充 Skyline 实现；存在副作用时替换为双端支持写法或按 renderer 隔离，不明确时说明风险并请求确认。完整范围见 [WebView-only 属性、取值与行为](./references/skyline-component-reference.md#webview-only-属性取值与行为)。
+5. **遵守组件子节点结构**：`navigator` 只能嵌套 `text` 或纯文本，`text` 只能嵌套 `text`；复杂卡片改为外层点击事件。图标、图片与文本处于同一行时使用 `span` 方案，并补齐 Skyline 的内联布局与截断属性；详见 [图文混排](./references/skyline-layout-practice.md#图文混排)。
+6. **模板结构按 glass-easel 规则改造**：数据绑定外的引号使用 XML 实体，数据绑定内不使用反斜杠转义；`wx:for` 子树中的 `<include>` 改为 `<import>` + `<template>` 并显式传入 `item` / `index`。详见 [模板结构适配](./references/skyline-layout-practice.md#模板结构适配)。
+7. **节点查询使用合法选择器**：id 不以数字开头；glass-easel 组件实例内优先使用 `this.createSelectorQuery()`。详见 [SelectorQuery 约束](./references/skyline-runtime-practice.md#必须-selectorquery-选择器不再支持以数字开头) 与 [SelectorQuery 推荐](./references/skyline-runtime-practice.md#推荐-用-thiscreateselectorquery-替代-wxcreateselectorquery)。
 
 ### 动画策略约束
 
 若需同时兼容 WebView、Skyline、RN，动画方案的选择优先级：
 
-1. 简单状态切换动画（缩放、透明度、位移等交互反馈）：**CSS `transition`**：三端均支持，通过 class 切换或动态 style 触发，无需平台判断。
-2. 循环/多步骤动画：**CSS `animation` + `@keyframes`**：WebView 与 Skyline 支持，RN 暂不支持，可暂时区分平台使用 API `mpx.createAnimation`。
-3. 手势/滚动场景：**Skyline Worklet 动画**，仅用于需要 UI 线程 60fps 驱动的场景（手势跟手、滚动联动）；先按[高级能力](#skyline-高级能力)读取官方 Skill，再通过 `this.renderer === 'skyline'` 隔离。
-4. **禁止使用不支持的组件实例方法**：`this.animate` / `this.applyAnimation` / `this.clearAnimation` / `this.setInitialRenderingCache` 在 Skyline 下静默不生效，RN 下不存在；须改用 CSS transition，确需 Worklet 时按[高级能力](#skyline-高级能力)回源官方 Skill。详见 [运行时适配实践 · 不支持的实例方法](./references/skyline-runtime-practice.md#必须-skyline-不支持的组件实例方法)。
-5. `wx.createAnimation` 在 Mpx2RN 与 WebView 下受支持，Skyline 不支持；适配 Skyline 时需改造为 CSS `transition` 或 CSS `animation` + `@keyframes`。
-
-> 简单交互动画（如按钮缩放、卡片翻转）直接用 transition，不要为了“性能最优”引入 Worklet——Worklet 的价值在于手势跟手的实时性，不在于简单状态动画。
+1. **简单状态切换优先 CSS transition**：缩放、透明度、位移等交互反馈通过 class 或动态 style 驱动，优先选择三端均支持的通用方案。Skyline 动画属性为白名单，只对 `transform`、`opacity`、尺寸、间距、定位等受支持属性使用 transition；字体、颜色、文本排版等未支持属性改为直接状态切换或其他方案，完整范围见 [动画与过渡差异](./references/skyline-style-reference.md#动画与过渡差异)。
+2. **循环或多步骤动画使用真实节点**：WebView 与 Skyline 可使用 CSS `animation` + `@keyframes`，RN 按需保留独立动画路径。伪元素 animation 在 Skyline 下不生效，改为真实节点；`animation-fill-mode` 只使用 `forwards` / `both`，迁移项目同时核对 `keyframeStyleIsolation`。
+3. **WebView 动画 API 在 Skyline 下补替代实现**：`wx.createAnimation` 以及 `animate` / `applyAnimation` / `clearAnimation` / `setInitialRenderingCache` 在 Skyline 下不支持，需改造为 CSS transition / animation；详见 [不支持的组件实例方法](./references/skyline-runtime-practice.md#必须-skyline-不支持的组件实例方法) 与 [animation API 替代方案](./references/skyline-layout-practice.md#animation-api-不支持--使用-css-transition)。
+4. **Worklet 只用于 UI 线程实时驱动**：手势跟随、滚动联动等需要 UI 线程及时反馈的场景才使用 Worklet。先按[高级能力](#skyline-高级能力)读取官方 Skill，再补 Mpx Babel 配置、renderer 隔离与 WebView 降级；简单交互不要仅为“性能最优”引入 Worklet。
 
 ## 任务一：对已有 WebView 页面进行 Skyline 适配改造
 
@@ -165,7 +153,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 #### 1. 页面配置适配
 
 - 页面 JSON 需新增 `renderer` / `componentFramework` / `disableScroll` / `navigationStyle`：`renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`。
-- 全局配置 app.json 需新增顶层 `lazyCodeLoading`，以及 `rendererOptions.skyline` 下的 `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`，阅读 [app.json 顶层配置](./references/skyline-configuration.md#appjson-顶层配置)、[rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项) 与 [适配参考](./references/skyline-configuration.md#适配参考)。
+- 全局配置 app.json 需新增顶层 `lazyCodeLoading`，以及 `rendererOptions.skyline` 下的 `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`，阅读 [适配参考](./references/skyline-configuration.md#适配参考)。
 
 #### 2. 布局适配改造
 
@@ -178,8 +166,6 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 - 读取 [样式差异参考](./references/skyline-style-reference.md) 按差异项核对 `<style>` 中与 Web/W3C CSS 标准不一致的样式写法。
 - 读取 [布局适配实践 · 样式适配](./references/skyline-layout-practice.md#样式适配) 改造为 Skyline 兼容实现。
-- 不支持选择器替代（`*` → 类选择器、`[attr]` → 类选择器）。
-- 不支持属性替代（`overflow: scroll` → `scroll-view` 等）读取 [布局、盒模型与层叠差异](./references/skyline-style-reference.md#布局盒模型与层叠差异)。
 - 增加配置 `defaultContentBox` `defaultDisplayBlock`，使默认样式对齐 WebView。
 - 文本溢出省略适配（`text-overflow: ellipsis` / 超长打点），可在承载文本的 `view` / `text` / `rich-text` / `special-text` 上新增 Skyline 特有属性 `max-lines` 与 `overflow`，阅读 [布局适配实践 · 文本溢出省略适配](./references/skyline-layout-practice.md#文本溢出省略适配)。
 - flex 布局子节点依赖百分比 `min-width` 撑开或等分时，百分比 `min-width` 不生效，必须替换为明确长度单位，须读取 [布局适配实践 · flex 布局的子节点 min-width 百分比撑开失效](./references/skyline-layout-practice.md#flex-布局的子节点-min-width-百分比撑开失效) 与 [样式差异参考 · 百分比支持情况](./references/skyline-style-reference.md#百分比支持情况)。
@@ -199,7 +185,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 执行要求：
 - 指定单个 `.mpx` 组件：以该文件为 scope 跑完整矩阵。
-- 指定页面：以页面文件 + 模板实际引用组件树为 scope 跑完整矩阵；若只覆盖部分子树，最终输出必须说明未覆盖范围。
+- 指定页面：先确认涉及的组件范围，以反馈后的 scope 跑完整矩阵，最终输出必须说明覆盖以及未覆盖的范围。
 - 不允许只扫描本次怀疑的问题类型。
 - 每个 `error` 命中必须处理或说明例外；最终输出需概述 `error` / `warn` 残留原因。
 
@@ -214,24 +200,24 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 ### 输入
 
-用户描述的页面需求，包括视图结构、交互、数据来源、是否需要 Worklet 动画、手势系统、自定义路由、共享元素等 Skyline 高级能力。
+用户描述的页面需求，包括视图结构、交互、数据来源、目标平台范围、是否有复杂动画或者手势需要 Worklet 动画、手势系统、自定义路由、共享元素等 Skyline 高级能力。
 
 ### 输出
 
-完整的 `.mpx` 页面文件，结构包含 `<template>`、`<script>`、`<style>` 与 JSON 配置区块。代码须直接满足 [通用约束与适配原则](#通用约束与适配原则)，避免新建后再走一轮适配改造。
+完整的 `{name}.mpx` 组件文件，结构包含 `<template>`、`<script>`、`<style>` 与 JSON 配置区块。代码须直接满足 [通用约束与适配原则](#通用约束与适配原则)，避免新建后再走一轮适配改造。
 
 ### 任务流程
 
 #### 1. 设计阶段
 
-- 与用户对齐需求要点：页面视图结构、数据流、是否需要 Skyline 高级能力（Worklet 动画、手势系统、自定义路由、共享元素）。
+- 与用户对齐需求要点：组件视图结构、props / 事件、数据流、目标平台、是否需要 Skyline 高级能力（Worklet 动画、手势系统、自定义路由、共享元素）。
 - 命中任一高级能力时，按[高级能力](#skyline-高级能力)读取对应官方 Skill，先确定 Skyline 方案，再补充 Mpx 接入、运行时隔离与 WebView 降级方案；不得仅依据本 SKILL 补全高级能力实现细节。
 
 #### 2. 实施阶段
 
 按 SFC 各区块依次实现，全程遵循 [通用约束与适配原则](#通用约束与适配原则)：
 
-- **JSON 配置**：页面必须配置 `renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`。读取 [配置参考 · 适配参考](./references/skyline-configuration.md#适配参考) 确认页面配置示例，并按 [app.json 顶层配置](./references/skyline-configuration.md#appjson-顶层配置) 与 [rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项) 确认项目全局配置。
+- **JSON 配置**：页面必须配置 `renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`。读取 [配置参考 · 适配参考](./references/skyline-configuration.md#适配参考) 确认页面和项目全局配置。
 - **`<template>`**：读取 [组件不支持与差异参考](./references/skyline-component-reference.md)，避开不支持组件与 WebView-only 属性/取值，满足必填属性和结构约束；该参考不是完整组件手册，未收录组件、属性与事件需回源确认；`scroll-view` 必须指定 `type`；页面滚动使用 `scroll-view` 包裹；文本内容按语义选用 `view` / `text`，需要超长打点时在承载文本的组件上补 `max-lines` / `overflow`。
 - **`<style>`**：读取 [样式差异参考](./references/skyline-style-reference.md) 与 [布局适配实践 · 样式适配](./references/skyline-layout-practice.md#样式适配)，从一开始就使用 flex 布局、`rpx` 单位、双冒号伪元素、组件属性式文本截断等 Skyline 兼容写法。
 - **`<script>`**：通过 `this.renderer === 'skyline'` 判断渲染模式，Skyline 专属逻辑做运行时隔离；需要 Worklet 能力时按 [配置参考 · Worklet Babel 插件](./references/skyline-configuration.md#worklet-babel-插件) 配置 Babel 插件。

@@ -1,6 +1,6 @@
 # Skyline 运行时与性能适配实践
 
-本文记录 WebView 迁移 Skyline 时偏运行时、框架行为、滚动上下文、glass-easel、常见报错与性能优化的改造方案。
+本文记录 WebView 迁移 Skyline 时偏运行时的改造方案，包括常见问题与性能优化等改造方案。
 
 ## 目录
 
