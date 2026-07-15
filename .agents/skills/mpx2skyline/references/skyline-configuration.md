@@ -3,7 +3,7 @@
 ## 目录
 
 - [适用场景](#适用场景)
-- [skyline 配置](#skyline-配置)
+- [Skyline 配置](#skyline-配置)
   - [三级配置层次](#三级配置层次)
   - [rendererOptions.skyline 配置项](#rendereroptionsskyline-配置项)
   - [app.json 顶层配置](#appjson-顶层配置)
@@ -21,7 +21,7 @@
 - 配置 rendererOptions 优化样式兼容性
 - 排查 Skyline 配置相关的编译错误
 
-## skyline 配置
+## Skyline 配置
 
 ### 三级配置层次
 
@@ -61,7 +61,7 @@
 
 **项目配置 app.json 新增以下配置**
 
- ```json5
+```json5
 // 对齐 WebView
 {
   "lazyCodeLoading": "requiredComponents",
@@ -77,12 +77,11 @@
 }
 ```
 
-> 注意：`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation` 均为 `rendererOptions.skyline` 的子项，须写在该对象内，**不要**放到 app.json 顶层；`lazyCodeLoading` 与 `convertRpxToVw` 是 app.json 顶层配置。补齐 app.json 时务必逐项核对上述推荐项都不遗漏， `convertRpxToVw` 和 `disableABTest`除外，可按需选配。
+> 注意：`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation` 均为 `rendererOptions.skyline` 的子项，须写在该对象内，**不要**放到 app.json 顶层；`lazyCodeLoading` 与 `convertRpxToVw` 是 app.json 顶层配置。补齐 app.json 时务必逐项核对上述推荐项都不遗漏；`convertRpxToVw` 和 `disableABTest` 除外，可按需选配。
 
-**适配 skyline 页面的 page.json新增以下配置**
+**适配 Skyline 页面的 page.json 新增以下配置**
 
 ```json5
-// 
 {
   "renderer": "skyline",
   "componentFramework": "glass-easel",

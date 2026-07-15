@@ -117,7 +117,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 5. **伪元素 animation**：Skyline 下伪元素的 `animation` 不生效 → 使用真实节点 + CSS animation。
 6. **font-weight**：部分机型不支持 `font-weight: 500` / `600` 数值加粗；命中时需先澄清确认是否直接改为 `bold` / `700`，避免改变 WebView 视觉表现。确认后再统一调整；未确认时保留原字重，并结合字体资源映射评估兼容方案。
 7. **box-shadow**：不支持多个叠加。
-8. **不支持 CSS 属性**：`float` / `contain` / `resize` / `writing-mode` / `text-indent` / `overflow-wrap` / `background-attachment` / `background-clip` / `background-origin` / `mask-origin` / `mask-clip` / `mask-mode` / `justify-items` 等属性设置后静默不生效，按类别阅读 [布局、盒模型与层叠差异](./references/skyline-style-reference.md#布局盒模型与层叠差异)、[文本与字体差异](./references/skyline-style-reference.md#文本与字体差异)、[背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异) 与 [其他 Skyline 不支持能力及兼容方案](./references/skyline-style-reference.md#其他-skyline-不支持能力及兼容方案)，无等效方案时抛出提示待确认
+8. **不支持 CSS 属性**：`float` / `contain` / `resize` / `writing-mode` / `text-indent` / `overflow-wrap` / `background-attachment` / `background-clip` / `background-origin` / `mask-origin` / `mask-clip` / `mask-mode` / `justify-items` 等属性设置后静默不生效，按类别阅读 [布局、盒模型与层叠差异](./references/skyline-style-reference.md#布局盒模型与层叠差异)、[文本与字体差异](./references/skyline-style-reference.md#文本与字体差异)、[背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异) 与 [其他 Skyline 不支持能力及兼容方案](./references/skyline-style-reference.md#其他-skyline-不支持能力及兼容方案)，无等效方案时抛出提示待确认。
 9. **渐变与背景多值限制**：`radial-gradient` 仅支持 `circle`（不支持 `ellipse`）；`background-image` / `mask-image` 最多支持 2 个值；`background-repeat` / `background-size` 不支持多组值，阅读 [样式差异参考 · 颜色与渐变](./references/skyline-style-reference.md#颜色与渐变) 与 [背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异)。
 10. **filter / backdrop-filter**：不支持 `url()` / `drop-shadow()` 及多函数组合；用 `box-shadow` 替代 `drop-shadow`。详见 [样式差异参考 · 滤镜差异](./references/skyline-style-reference.md#滤镜差异)。
 11. **text-decoration-line 单值**：仅支持单个值，多值组合（如 `underline line-through`）不生效 → 需双值时用运行时判断嵌套 `text` 节点拆分，详见 [布局适配实践 · text-decoration-line 多值适配](./references/skyline-layout-practice.md#text-decoration-line-多值适配)。
@@ -128,7 +128,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。**嵌套场景下每一层 scroll-view 都必须显式声明 type**（外层 `type="nested"`、内层 `type="list"` / `"custom"`），遗漏内层 type 会让内层退化为 WebView 渲染路径。
 2. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 简单场景使用替代方案，复杂场景给出替代方案或者降级方案待确认，参考 [Skyline 不支持或不建议使用的组件](./references/skyline-component-reference.md#skyline-不支持或不建议使用的组件)。
 3. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制 → 全局配置 `"tagNameStyleIsolation": "legacy"` 对齐 WebView 标签选择器全局匹配。
-4. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）。
+4. **不使用 image 的 WebView-only 裁剪模式**（`top` / `bottom` / `center` / `left` / `right`）。
 5. **sticky-header 必须显式声明背景色**：Skyline 下 `sticky-header` 默认透明，吸顶时会与下层列表内容透字穿透；同时 `sticky-header` 必须是 `sticky-section` 的第一个子节点（且每个 section 仅一个 header）。详见 [布局适配实践 · sticky 吸顶替代方案](./references/skyline-layout-practice.md#sticky-吸顶替代方案)。
 6. **navigator 嵌套限制**：`<navigator>` 内**只能嵌套 `<text>` 或纯文本**，不能嵌套 `<view>` / `<image>` 等其他组件；
 7. **图文混排须用 `<span>` 内联包裹**：Skyline 下 `<view>`/`<text>` 无法直接图文内联混排，需用 `<span>` 包裹各内联片段，实现参考 [图文混排](./references/skyline-layout-practice.md#图文混排)。
@@ -164,7 +164,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 #### 1. 页面配置适配
 
-- 页面 json 需新增 `renderer` / `componentFramework` / `disableScroll` / `navigationStyle` `renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`
+- 页面 JSON 需新增 `renderer` / `componentFramework` / `disableScroll` / `navigationStyle`：`renderer: 'skyline'`、`componentFramework: 'glass-easel'`、`disableScroll: true`、`navigationStyle: 'custom'`。
 - 全局配置 app.json 需新增顶层 `lazyCodeLoading`，以及 `rendererOptions.skyline` 下的 `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`，阅读 [app.json 顶层配置](./references/skyline-configuration.md#appjson-顶层配置)、[rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项) 与 [适配参考](./references/skyline-configuration.md#适配参考)
 
 #### 2. 布局适配改造
