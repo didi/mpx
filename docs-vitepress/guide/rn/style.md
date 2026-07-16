@@ -1581,15 +1581,19 @@ object-fit: scale-down; /* 缩小显示 */
 
 
 ## 跨端动画 {#cross-platform-animation}
+
 基础组件 view 支持两种动画形式 createAnimation API 和 transition，
 可以通过设置 animation 属于来使用 createAnimation API 动画，通过 class 或者 style 设置 css transition 来使用 transition 动画，
 可以用过 prop enable-animation = api/transition 来指定使用 createAnimation API/transition 的动画形式，，enable-animation 设置 true 默认为 createAnimation API 形式，需要注意的是指定动画类型后，对应的动画参数也需要匹配设置，详细使用文档如下：
 
 ### createAnimation 动画API {#create-animation-api}
+
 创建一个动画实例 animation，调用实例的方法来描述动画，最后通过动画实例的 export 方法导出动画数据传递给组件的 animation 属性。
 详情参考以下动画部分微信小程序文档，以下仅描述支持能力有差异部分：
+
 #### [wx.createAnimation](https://developers.weixin.qq.com/miniprogram/dev/api/ui/animation/wx.createAnimation.html)
 - 参数 timingFunction 不支持 step-start 和 step-end
+
 #### [动画实例 animation](https://developers.weixin.qq.com/miniprogram/dev/api/ui/animation/Animation.html) {#animation-instance}
 - translateZ() 不支持
 - translate3d() 不支持
@@ -1601,8 +1605,22 @@ object-fit: scale-down; /* 缩小显示 */
 - animation.matrix3d() 不支持
 
 ### CSS transition
-CSS transition 动画至少需要设置动画时长和动画属性，可通过单独属性 transition-property 和 transition-property 设置，也可以通过 transition 缩写设置
->重要提示：transition 支持设置百分比，如 ```marginTop: 1%;marginTop: 100%;```；要注意的是起始值和结束值需设置为同一类型，同为px或者同为百分比， 支持 ```marginTop: 10px;marginTop: 100px; ```，**不支持 ```marginTop: 10px; marginTop: 100%;```**
+
+CSS transition 动画至少需要设置动画时长和动画属性，可通过单独属性 `transition-property` 和 `transition-duration` 设置，也可以通过 transition 缩写设置
+
+> 重要提示：
+> `transition-property` 需要保持稳定，不支持通过条件控制添加和移除 `transition-property`
+> `transition` 支持设置百分比，如 ```marginTop: 1%;marginTop: 100%;```；要注意的是起始值和结束值需设置为同一类型，同为px或者同为百分比， 支持 ```marginTop: 10px;marginTop: 100px; ```，**不支持 ```marginTop: 10px; marginTop: 100%;```**
+
+```js
+// ❌ Bad 不支持 transition-property transform 动态设置
+const dotTransition = computed(() => enableTransition.value ? '' : 'transition: transform 0.5s')
+
+// ✅ Good 保持 transition-property transform 稳定，通过动态控制 transform-duration 来控制动画
+const dotTransition = computed(() => enableTransition.value ? 'transition: transform 0s' : 'transition: transform 0.5s')
+const dotTransition = computed(() => enableTransition.value ? 'transition-property:transform; transform-duration: 0;' : 'transition-property:transform; transform-duration: 0.5s;')
+```
+
 
 #### [transition](https://developer.mozilla.org/en-US/docs/Web/CSS/transition)
 ```css
@@ -1629,7 +1647,9 @@ transition: 2s, 1s;
 /**** 不支持：property 不支持设置为 all  */
 transition: all 0.5s ease-out
 ```
+
 #### [transition-property](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-property)
+
 不支持设置为 all，不支持自定义
 > 支持的 property 合集有：
 > rotateX rotateY rotateZ scaleX scaleY skewX skewY translateX translateY opacity backgroundColor width height top right bottom left color borderColor borderBottomColor borderLeftColor borderRightColor borderTopColor borderTopLeftRadius borderTopRightRadius borderBottomLeftRadius borderBottomRightRadius borderRadius borderBottomWidth borderLeftWidth borderRightWidth borderTopWidth borderWidth margin marginBottom marginLeft marginRight marginTop maxHeight maxWidth minHeight minWidth padding paddingBottom paddingLeft paddingRight paddingTop
@@ -1653,7 +1673,9 @@ transition-property: revert;
 transition-property: revert-layer;
 transition-property: unset;
 ```
+
 #### [transition-duration](https://developer.mozilla.org/zh-CN/docs/Web/CSS/transition-duration)
+
 ```css
 /**** 支持 */
 transition-duration: 6s;
@@ -1661,27 +1683,42 @@ transition-duration: 120ms;
 transition-duration: 1s, 15s;
 transition-duration: 10s, 30s, 230ms;
 ```
+
 #### [transition-delay](https://developer.mozilla.org/zh-CN/docs/Web/CSS/transition-delay)
+
 ```css
 /**** 支持 */
 transition-delay: 3s;
 transition-delay: 2s, 4ms;
 ```
+
 #### [transition-behavior](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-behavior)
+
 不支持
+
 #### [transition-timing-function](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function)
+
 仅支持 ease、ease-in、ease-out、ease-in-out、linear、cubic-bezier()，不支持 step-start、step-end、steps()
 
 ### CSS animation
+
 暂不支持
 
 ### 动画监听事件 {#animation-event-listener}
+
 #### transitionend
+
 - CSS transition 结束或 wx.createAnimation 结束一个阶段时触发
 - 不属于冒泡事件，需要绑定在真正发生了动画的节点上才会生效
+
 #### animationstart
+
 暂不支持
+
 #### animationiteration
+
 暂不支持
+
 #### animationend
+
 暂不支持
