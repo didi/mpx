@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React, { useContext } from 'react'
+import React from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
 import { resetMpxRuntimeGlobals } from './rn-component-test-utils'
@@ -8,7 +8,7 @@ const MpxPickerViewColumn = require('../../../lib/runtime/components/react/mpx-p
 const { calcHeightOffsets, calcPickerHeight, createFaces, degToRad } = require('../../../lib/runtime/components/react/mpx-picker-view-column/pickerViewFaces')
 const {
   PickerViewColumnAnimationContext,
-  PickerViewStyleContext
+  usePickerViewColumnAnimationContext
 } = require('../../../lib/runtime/components/react/mpx-picker-view/pickerVIewContext')
 
 beforeEach(() => {
@@ -105,17 +105,14 @@ describe('MpxPickerViewColumn', () => {
     expect(calcHeightOffsets(40)).toEqual(expect.arrayContaining([20]))
 
     const Probe = () => {
-      const style = useContext(PickerViewStyleContext)
-      const offset = useContext(PickerViewColumnAnimationContext)
-      return <Text>{`${style!.color}-${offset!.value}`}</Text>
+      const offset = usePickerViewColumnAnimationContext()
+      return <Text>{offset.value}</Text>
     }
     render(
-      <PickerViewStyleContext.Provider value={{ color: 'red' }}>
-        <PickerViewColumnAnimationContext.Provider value={{ value: 3 }}>
-          <Probe />
-        </PickerViewColumnAnimationContext.Provider>
-      </PickerViewStyleContext.Provider>
+      <PickerViewColumnAnimationContext.Provider value={{ value: 3 }}>
+        <Probe />
+      </PickerViewColumnAnimationContext.Provider>
     )
-    expect(screen.getByText('red-3')).toBeTruthy()
+    expect(screen.getByText('3')).toBeTruthy()
   })
 })

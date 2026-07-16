@@ -56,4 +56,21 @@ describe('MpxRichText', () => {
     expect(screen.getByTestId('rich-text').props.style.height).toBe(88)
     expect(generateHTML('<span>x</span>')).toContain('<div id="rich-text"><span>x</span></div>')
   })
+
+  it('renders string nodes inline and defaults missing node attributes and children', () => {
+    const stringRender = renderWithPortalHost(
+      <MpxRichText testID="string-rich-text" nodes="<strong>raw html</strong>" />
+    )
+    expect(getWebViews()[0].props.source.html).toContain('<strong>raw html</strong>')
+    expect(screen.getByTestId('string-rich-text')).toBeTruthy()
+    stringRender.unmount()
+
+    renderWithPortalHost(
+      <MpxRichText
+        testID="empty-node-rich-text"
+        nodes={[{ type: 'node', name: 'br', text: '' }] as any}
+      />
+    )
+    expect(getWebViews()[0].props.source.html).toContain('<br></br>')
+  })
 })

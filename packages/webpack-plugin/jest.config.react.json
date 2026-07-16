@@ -1,6 +1,6 @@
 {
   "transform": {
-    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
+    "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { "rootMode": "upward" }]
   },
   "testEnvironment": "node",
   "coverageProvider": "v8",

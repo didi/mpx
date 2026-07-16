@@ -22,4 +22,13 @@ describe('MpxTextarea', () => {
       height: 200
     }))
   })
+
+  it('uses textarea dimensions when style is omitted', () => {
+    render(<MpxTextarea testID="default-textarea" />)
+
+    expect(screen.getByTestId('default-textarea').props.style).toEqual(expect.objectContaining({
+      width: 300,
+      height: 150
+    }))
+  })
 })

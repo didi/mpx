@@ -1,6 +1,7 @@
 
 import React from 'react'
 import { act, render, screen } from '@testing-library/react-native'
+import { Image } from 'react-native'
 import MpxView, { __parseBgImageForTest as parseBgImage } from '../../../lib/runtime/components/react/mpx-view'
 import MpxInlineText from '../../../lib/runtime/components/react/mpx-inline-text'
 import { fireTap, flushImageSize } from './helpers'
@@ -54,7 +55,7 @@ function layoutBackgroundIfNeeded (width: number, height: number) {
 describe('MpxView', () => {
   // 基础渲染和样式测试
   it('should render with basic props and styles', () => {
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="basic-view"
         style={{
@@ -68,14 +69,20 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('basic-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot()
+    expect(viewElement.props.style).toEqual({
+      backgroundColor: '#f0f0f0',
+      borderRadius: 5,
+      boxSizing: 'content-box',
+      padding: 10
+    })
+    expect(viewElement.children).toHaveLength(1)
+    expect((viewElement.children[0] as any).props.children).toBe('Basic content')
   })
 
   it('should handle nested views and complex structure', () => {
-    const { toJSON } = render(
+    render(
       <MpxView testID="nested-view" style={{ padding: 5 }}>
-        <MpxView style={{ margin: 2 }}>
+        <MpxView testID="nested-child-view" style={{ margin: 2 }}>
           <MpxInlineText>Nested content</MpxInlineText>
         </MpxView>
         <MpxInlineText>Sibling content</MpxInlineText>
@@ -83,8 +90,16 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('nested-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot()
+    const childView = screen.getByTestId('nested-child-view')
+    expect(viewElement.props.style).toEqual({
+      boxSizing: 'content-box',
+      padding: 5
+    })
+    expect(childView.props.style).toEqual({ margin: 2 })
+    expect(viewElement.children).toHaveLength(2)
+    expect((viewElement.children[0] as any).props.testID).toBe('nested-child-view')
+    expect((childView.children[0] as any).props.children).toBe('Nested content')
+    expect((viewElement.children[1] as any).props.children).toBe('Sibling content')
   })
 
   // MPX 特有功能测试
@@ -122,7 +137,7 @@ describe('MpxView', () => {
   })
 
   it('should handle background properties', () => {
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="background-view"
         enable-background={true}
@@ -138,13 +153,22 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('background-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot()
+    expect(viewElement.props.style).toEqual({
+      backgroundColor: '#ff0000',
+      borderRadius: 10
+    })
+    layoutBackground(100, 100)
+    expect(screen.getByTestId('linear-gradient').props).toEqual(expect.objectContaining({
+      angle: 45,
+      colors: ['#ff0000', '#00ff00'],
+      locations: [0, 1],
+      useAngle: true
+    }))
   })
 
   // 布局和样式测试
   it('should handle flex layout properties', () => {
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="flex-view"
         style={{
@@ -161,8 +185,28 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('flex-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot()
+    expect(viewElement.props.style).toEqual({
+      alignItems: 'center',
+      display: 'flex',
+      flex: 1,
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      justifyContent: 'space-between'
+    })
+    expect(viewElement.children).toHaveLength(2)
+    expect((viewElement.children[0] as any).props.children).toBe('Item 1')
+    expect((viewElement.children[1] as any).props.children).toBe('Item 2')
+  })
+
+  it('should apply complete flex defaults without a flex shorthand', () => {
+    render(<MpxView testID="default-flex-view" style={{ display: 'flex' }} />)
+    expect(screen.getByTestId('default-flex-view').props.style).toEqual({
+      display: 'flex',
+      flexBasis: 'auto',
+      flexDirection: 'row',
+      flexShrink: 1,
+      flexWrap: 'nowrap'
+    })
   })
 
   // Ref 转发测试
@@ -291,7 +335,7 @@ describe('MpxView', () => {
 
   // 线性渐变背景测试
   it('should handle linear gradient backgrounds', () => {
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="gradient-view"
         enable-background={true}
@@ -306,8 +350,14 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('gradient-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('gradient-view')
+    expect(viewElement.props.style).toEqual({ height: 150, width: 300 })
+    layoutBackground(300, 150)
+    expect(screen.getByTestId('linear-gradient').props).toEqual(expect.objectContaining({
+      angle: 45,
+      colors: ['#ff0000', '#00ff00', '#0000ff'],
+      locations: [0, 0.5, 1],
+      useAngle: true
+    }))
   })
 
   it('should render animated view when animation is enabled', () => {
@@ -412,7 +462,7 @@ describe('MpxView', () => {
   })
 
   it('should pass text styles through to inline children', () => {
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="context-view"
         enable-text-pass-through={true}
@@ -437,12 +487,11 @@ describe('MpxView', () => {
       color: '#ff0000',
       fontSize: 16
     }))
-    expect(toJSON()).toMatchSnapshot('context-view')
   })
 
   // 父级尺寸上下文测试
   it('should handle parent size context', () => {
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="parent-size-view"
         parent-font-size={16}
@@ -468,12 +517,11 @@ describe('MpxView', () => {
     expect(screen.getByText('Parent size context view').props.style).toEqual(expect.objectContaining({
       fontSize: 24
     }))
-    expect(toJSON()).toMatchSnapshot('parent-size-view')
   })
 
   // 复杂背景属性组合测试
   it('should handle complex background property combinations', () => {
-    const { toJSON } = render(
+    render(
       <MpxView
         testID="complex-bg-view"
         enable-background={true}
@@ -490,8 +538,18 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('complex-bg-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('complex-bg-view')
+    expect(viewElement.props.style).toEqual({
+      borderRadius: 10,
+      height: 200,
+      width: 300
+    })
+    layoutBackground(300, 200)
+    expect(screen.getByTestId('linear-gradient').props).toEqual(expect.objectContaining({
+      angle: 90,
+      colors: ['rgba(255,0,0,0.5)', 'rgba(0,255,0,0.5)'],
+      locations: [0, 1],
+      useAngle: true
+    }))
   })
 
   // 布局变化和尺寸计算测试
@@ -589,15 +647,15 @@ describe('MpxView', () => {
 
   // 深度嵌套和复杂结构测试
   it('should handle deeply nested complex structures', () => {
-    const { toJSON } = render(
+    render(
       <MpxView testID="deep-nested-view" style={{ padding: 10 }}>
-        <MpxView style={{ backgroundColor: '#ff0000', margin: 5 }}>
+        <MpxView testID="deep-level-1" style={{ backgroundColor: '#ff0000', margin: 5 }}>
           <MpxInlineText>Level 1</MpxInlineText>
-          <MpxView style={{ backgroundColor: '#00ff00', margin: 5 }}>
+          <MpxView testID="deep-level-2" style={{ backgroundColor: '#00ff00', margin: 5 }}>
             <MpxInlineText>Level 2</MpxInlineText>
-            <MpxView style={{ backgroundColor: '#0000ff', margin: 5 }}>
+            <MpxView testID="deep-level-3" style={{ backgroundColor: '#0000ff', margin: 5 }}>
               <MpxInlineText>Level 3</MpxInlineText>
-              <MpxView style={{ backgroundColor: '#ffff00', margin: 5 }}>
+              <MpxView testID="deep-level-4" style={{ backgroundColor: '#ffff00', margin: 5 }}>
                 <MpxInlineText>Level 4</MpxInlineText>
               </MpxView>
             </MpxView>
@@ -607,8 +665,17 @@ describe('MpxView', () => {
     )
 
     const viewElement = screen.getByTestId('deep-nested-view')
-    expect(viewElement).toBeTruthy()
-    expect(toJSON()).toMatchSnapshot('deep-nested-view')
+    const levels = ['#ff0000', '#00ff00', '#0000ff', '#ffff00'].map((backgroundColor, index) => {
+      const level = screen.getByTestId(`deep-level-${index + 1}`)
+      expect(level.props.style).toEqual({ backgroundColor, margin: 5 })
+      expect((level.children[0] as any).props.children).toBe(`Level ${index + 1}`)
+      return level
+    })
+    expect(viewElement.props.style).toEqual({ boxSizing: 'content-box', padding: 10 })
+    expect((viewElement.children[0] as any).props.testID).toBe('deep-level-1')
+    levels.slice(1).forEach((level, index) => {
+      expect((levels[index].children[1] as any).props.testID).toBe(level.props.testID)
+    })
   })
 
   // 边界条件和错误处理测试
@@ -701,8 +768,10 @@ describe('MpxView', () => {
     )
 
     const backgroundView = layoutBackground(200, 100)
-
     const gradient = screen.getByTestId('linear-gradient')
+    const gradientProps = gradient.props
+    layoutBackground(200, 100)
+    expect(screen.getByTestId('linear-gradient').props).toBe(gradientProps)
     expect(gradient.props.colors).toEqual(['red', 'blue'])
     expect(gradient.props.locations).toEqual([0, 1])
     expect(gradient.props.angle).toBeCloseTo(135)
@@ -736,8 +805,11 @@ describe('MpxView', () => {
 
     layoutBackground(300, 100)
     await flushImageSize()
-
     const image = screen.getByTestId('fast-image')
+    const imageProps = image.props
+    layoutBackground(300, 100)
+    expect(screen.getByTestId('fast-image').props).toBe(imageProps)
+
     expect(image.props.source).toEqual({
       uri: 'https://example.com/cover.jpg'
     })
@@ -862,6 +934,78 @@ describe('MpxView', () => {
       expect(screen.getByTestId('fast-image').props.style).toEqual(expect.objectContaining(item.expectedStyle))
       unmount()
     }
+  })
+
+  it('should reuse cached image dimensions and ignore stale image callbacks', () => {
+    type ImageSizeCallback = (width: number, height: number) => void
+    const getSize = Image.getSize as jest.Mock
+    const defaultGetSize = getSize.getMockImplementation()
+    const imageSizeCallbacks = new Map<string, ImageSizeCallback>()
+    getSize.mockClear()
+    getSize.mockImplementation((uri, success) => {
+      imageSizeCallbacks.set(uri, success)
+    })
+    const renderImageView = (src?: string) => (
+      <MpxView
+        testID="cached-image-view"
+        enable-background={true}
+        enable-fast-image={true}
+        style={src
+          ? {
+              backgroundImage: `url(https://example.com/${src}.jpg)`,
+              backgroundSize: ['auto', 'auto']
+            }
+          : {}}
+      />
+    )
+
+    try {
+      const imageRender = render(renderImageView('cached'))
+      act(() => {
+        imageSizeCallbacks.get('https://example.com/cached.jpg')!(80, 40)
+      })
+      expect(screen.getByTestId('fast-image').props.style).toEqual(expect.objectContaining({ width: 80, height: 40 }))
+
+      imageRender.rerender(renderImageView())
+      imageRender.rerender(renderImageView('cached'))
+      expect(screen.getByTestId('fast-image').props.style).toEqual(expect.objectContaining({ width: 80, height: 40 }))
+      expect(getSize).toHaveBeenCalledTimes(1)
+
+      imageRender.rerender(renderImageView('stale'))
+      imageRender.rerender(renderImageView('latest'))
+      act(() => {
+        imageSizeCallbacks.get('https://example.com/latest.jpg')!(240, 120)
+      })
+      expect(screen.getByTestId('fast-image').props.source.uri).toContain('latest.jpg')
+      expect(screen.getByTestId('fast-image').props.style).toEqual(expect.objectContaining({ width: 240, height: 120 }))
+
+      act(() => {
+        imageSizeCallbacks.get('https://example.com/stale.jpg')!(60, 30)
+      })
+      expect(screen.getByTestId('fast-image').props.style).toEqual(expect.objectContaining({ width: 240, height: 120 }))
+      expect(getSize).toHaveBeenCalledTimes(3)
+    } finally {
+      getSize.mockImplementation(defaultGetSize)
+    }
+  })
+
+  it('should clamp inherited inner background radii at zero', () => {
+    render(
+      <MpxView
+        testID="inner-radius-view"
+        enable-background={true}
+        style={{
+          borderWidth: 4,
+          borderRadius: 2,
+          backgroundImage: 'linear-gradient(red, blue)',
+          backgroundSize: [100, 100]
+        }}
+      />
+    )
+    expect((screen.getByTestId('inner-radius-view').children[0] as any).props.style).toEqual(expect.objectContaining({
+      borderRadius: 0,
+      overflow: 'hidden'
+    }))
   })
 
   it('should normalize numeric and three-part background positions', async () => {

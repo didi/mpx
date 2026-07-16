@@ -203,7 +203,8 @@ describe('MpxCamera', () => {
     const navigation: any = {}
     const { queryByTestId, rerender, unmount } = renderWithRoute(
       <MpxCamera mode="normal" style={{ width: 100, height: 80 }} />,
-      navigation
+      navigation,
+      2
     )
     await act(async () => {
       await Promise.resolve()
@@ -213,7 +214,7 @@ describe('MpxCamera', () => {
     ;(global as any).__mpx.config.rnConfig.cameraPermission = jest.fn(() => Promise.resolve(true))
     navigation.camera = { stale: true }
     rerender(
-      <RouteContext.Provider value={{ pageId: 1, navigation }}>
+      <RouteContext.Provider value={{ pageId: 2, navigation }}>
         <MpxCamera mode="normal" style={{ width: 100, height: 80 }} />
       </RouteContext.Provider>
     )

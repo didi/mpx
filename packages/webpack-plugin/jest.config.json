@@ -15,6 +15,5 @@
   "transformIgnorePatterns": [
     "node_modules/(?!(\\.pnpm/)?(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs))"
   ],
-  "setupFiles": ["<rootDir>/test/runtime/react-native/setup.js"],
-  "testTimeout": 10000
+  "setupFiles": ["<rootDir>/test/runtime/react-native/setup.js"]
 }

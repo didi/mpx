@@ -75,4 +75,38 @@ describe('MpxPortal', () => {
 
     expect(screen.getByText('dark-red')).toBeTruthy()
   })
+
+  it('flushes portal operations queued before the manager ref is mounted', () => {
+    const QueueProbe = () => {
+      const initialized = React.useRef(false)
+      if (!initialized.current) {
+        initialized.current = true
+        const key = Portal.add(<Text>queued portal</Text>, 1)
+        Portal.update(key, <Text>queued updated</Text>)
+      }
+      return null
+    }
+
+    renderWithPortalHost(<QueueProbe />)
+    expect(screen.getByText('queued updated')).toBeTruthy()
+    expect(screen.queryByText('queued portal')).toBeNull()
+  })
+
+  it('flushes removes queued before the manager ref is mounted', () => {
+    const QueueProbe = () => {
+      const initialized = React.useRef(false)
+      if (!initialized.current) {
+        initialized.current = true
+        const key = Portal.add(<Text>queued removed portal</Text>, 1)
+        Portal.remove(key)
+        Portal.remove(998)
+        Portal.add(<Text>wrong page</Text>, 2)
+      }
+      return null
+    }
+
+    renderWithPortalHost(<QueueProbe />)
+    expect(screen.queryByText('queued removed portal')).toBeNull()
+    expect(screen.queryByText('wrong page')).toBeNull()
+  })
 })

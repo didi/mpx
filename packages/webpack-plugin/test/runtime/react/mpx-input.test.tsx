@@ -5,7 +5,7 @@ import MpxInput from '../../../lib/runtime/components/react/mpx-input'
 describe('MpxInput', () => {
   // 基础功能测试
   it('should render with basic props', () => {
-    const { toJSON } = render(
+    render(
       <MpxInput
         testID="basic-input"
         value="test value"
@@ -17,7 +17,6 @@ describe('MpxInput', () => {
     const inputElement = screen.getByTestId('basic-input')
     expect(inputElement.props.value).toBe('test value')
     expect(inputElement.props.placeholder).toBe('Enter text')
-    expect(toJSON()).toMatchSnapshot()
   })
 
   // 参数化测试 - 不同输入类型
@@ -78,7 +77,7 @@ describe('MpxInput', () => {
     const inputElement = screen.getByTestId('combo-input')
     expect(inputElement.props.secureTextEntry).toBe(!!props.password)
     expect(inputElement.props.editable).toBe(!props.disabled)
-    expect(inputElement.props.multiline).toBe(!!props.multiline)
+    expect(inputElement.props.multiline).toBe(props.multiline)
     expect(inputElement.props.autoFocus).toBe(!!(props.focus || props['auto-focus']))
   })
 
@@ -267,13 +266,13 @@ describe('MpxInput', () => {
   // 多行和确认类型组合测试
   it('should handle multiline and confirm-type combinations', () => {
     const testCases = [
-      { multiline: true, 'confirm-type': 'return', expectedEnterKeyHint: undefined, expectedBlurOnSubmit: false },
-      { multiline: true, 'confirm-type': 'done', expectedEnterKeyHint: 'done', expectedBlurOnSubmit: true },
-      { multiline: false, 'confirm-type': 'search', expectedEnterKeyHint: 'search', expectedBlurOnSubmit: true }
+      { multiline: true, 'confirm-type': 'return', expectedEnterKeyHint: undefined, expectedSubmitBehavior: 'newline' },
+      { multiline: true, 'confirm-type': 'done', expectedEnterKeyHint: 'done', expectedSubmitBehavior: 'blurAndSubmit' },
+      { multiline: false, 'confirm-type': 'search', expectedEnterKeyHint: 'search', expectedSubmitBehavior: 'blurAndSubmit' }
     ]
 
     testCases.forEach((testCase) => {
-      const { rerender } = render(
+      render(
         <MpxInput
           testID="multiline-confirm-input"
           value="test"
@@ -284,7 +283,7 @@ describe('MpxInput', () => {
 
       const inputElement = screen.getByTestId('multiline-confirm-input')
       expect(inputElement.props.enterKeyHint).toBe(testCase.expectedEnterKeyHint)
-      expect(inputElement.props.blurOnSubmit).toBe(testCase.expectedBlurOnSubmit)
+      expect(inputElement.props.submitBehavior).toBe(testCase.expectedSubmitBehavior)
     })
   })
 

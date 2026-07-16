@@ -15,6 +15,8 @@ import {
   parseValues,
   pickStyle,
   renderImage,
+  resolveTextFontSizePercentStyle,
+  resolveTextLineHeightPercentStyle,
   setStyle,
   splitProps,
   splitStyle,
@@ -28,7 +30,6 @@ import {
   useRunOnJSCallback,
   useStableCallback,
   useTextPassThrough,
-  useTextPassThroughText,
   useTransformStyle,
   useUpdateEffect,
   wrapChildren
@@ -196,7 +197,6 @@ describe('react runtime utils', () => {
   it('handles font and flex shorthand boundary forms', () => {
     const results: Array<ReturnType<typeof useTransformStyle>> = []
     const error = jest.spyOn(console, 'error').mockImplementation(jest.fn())
-    const warn = jest.spyOn(console, 'warn').mockImplementation(jest.fn())
     const Probe = () => {
       results.push(
         useTransformStyle({ font: 16 as any }, {}),
@@ -225,7 +225,7 @@ describe('react runtime utils', () => {
       lineHeight: 20,
       fontFamily: 'Arial'
     }))
-    expect(results[4].normalStyle.lineHeight).toBeUndefined()
+    expect(results[4].normalStyle.lineHeight).toBe('bad')
     expect(results[5].normalStyle.lineHeight).toBe(20)
     expect(results[6].normalStyle.lineHeight).toBe(20)
     expect(results[7].normalStyle).toEqual(expect.objectContaining({ flexGrow: 0, flexShrink: 0 }))
@@ -235,7 +235,6 @@ describe('react runtime utils', () => {
     expect(results[11].normalStyle).toEqual(expect.objectContaining({ flexGrow: 2, flexShrink: 1, flexBasis: 0 }))
     expect(error).toHaveBeenCalledWith(expect.stringContaining('missing required <font-size>'))
     expect(error).toHaveBeenCalledWith(expect.stringContaining('missing required <font-family>'))
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not be resolved'))
   })
 
   it('splits and picks style and prop buckets without losing leading fields', () => {
@@ -360,7 +359,6 @@ describe('react runtime utils', () => {
         enableVar: true,
         parentWidth: 200,
         parentHeight: 100,
-        parentFontSize: 20,
         defaultStyle: {
           minWidth: 1,
           paddingLeft: 9
@@ -390,7 +388,7 @@ describe('react runtime utils', () => {
       fontVariant: 'small-caps',
       fontWeight: '500',
       fontSize: 16,
-      lineHeight: 24,
+      lineHeight: '150%',
       fontFamily: 'Override',
       transformOrigin: '10',
       boxShadow: '0.5px 2px black',
@@ -461,9 +459,7 @@ describe('react runtime utils', () => {
     }
 
     const Probe = () => {
-      result = useTransformStyle(style, {
-        parentFontSize: 20
-      })
+      result = useTransformStyle(style, {})
       return <View testID="shorthand-probe" style={result.normalStyle} />
     }
 
@@ -471,8 +467,8 @@ describe('react runtime utils', () => {
 
     expect(result?.normalStyle).toEqual(expect.objectContaining({
       fontStyle: 'italic',
-      fontSize: 10,
-      lineHeight: 12,
+      fontSize: '50%',
+      lineHeight: '120%',
       fontFamily: 'Arial',
       flexGrow: 2,
       flexShrink: 3,
@@ -487,7 +483,7 @@ describe('react runtime utils', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('condensed'))
   })
 
-  it('reports unresolved variables, percent bases and malformed calc expressions', () => {
+  it('reports unresolved variables, self percent bases and malformed calc expressions', () => {
     const error = jest.spyOn(console, 'error').mockImplementation(jest.fn())
     let result: ReturnType<typeof useTransformStyle> | undefined
     const style = {
@@ -512,7 +508,7 @@ describe('react runtime utils', () => {
     expect(result?.hasSelfPercent).toBe(true)
     const errorMessages = error.mock.calls.map((args) => args.map(String).join(' '))
     expect(errorMessages.some((msg) => msg.includes('Can not resolve css var'))).toBe(true)
-    expect(errorMessages.some((msg) => msg.includes('[fontSize] can not contain % unit'))).toBe(true)
+    expect(errorMessages.some((msg) => msg.includes('[fontSize] can not contain % unit'))).toBe(false)
     expect(errorMessages.some((msg) => msg.includes('calc(foo) parse error.'))).toBe(true)
   })
 
@@ -525,7 +521,7 @@ describe('react runtime utils', () => {
     const measure = jest.fn((callback) => callback(1, 4, 100, 80, 9, 12))
     let layoutResult: ReturnType<typeof useLayout> | undefined
     let passThroughResult: ReturnType<typeof useTextPassThrough> | undefined
-    let textResult: ReturnType<typeof useTextPassThroughText> | undefined
+    let resolvedTextStyle
 
     const Probe = () => {
       layoutResult = useLayout({
@@ -544,7 +540,9 @@ describe('react runtime utils', () => {
         { numberOfLines: 1 },
         { enableTextPassThrough: true }
       )
-      textResult = useTextPassThroughText({ fontSize: 12 })
+      resolvedTextStyle = resolveTextLineHeightPercentStyle(
+        resolveTextFontSizePercentStyle({ fontSize: '150%', lineHeight: '200%' } as any, { fontSize: 12 })
+      )
       return <View testID="layout-hook-probe" style={layoutResult.layoutStyle} onLayout={layoutResult.layoutProps.onLayout} />
     }
 
@@ -581,9 +579,9 @@ describe('react runtime utils', () => {
       textStyle: { lineHeight: 20, color: 'red' },
       pendingTextProps: { selectable: true, numberOfLines: 1 }
     })
-    expect(textResult).toEqual({
-      inheritedText: { textStyle: { lineHeight: 20 }, pendingTextProps: { selectable: true } },
-      textPassThrough: { textStyle: { lineHeight: 20, fontSize: 12 } }
+    expect(resolvedTextStyle).toEqual({
+      fontSize: 18,
+      lineHeight: 36
     })
   })
 
@@ -591,7 +589,6 @@ describe('react runtime utils', () => {
     let layoutResult: ReturnType<typeof useLayout> | undefined
     let disabledPassThrough: ReturnType<typeof useTextPassThrough> | undefined
     let enabledPassThrough: ReturnType<typeof useTextPassThrough> | undefined
-    let textResult: ReturnType<typeof useTextPassThroughText> | undefined
     const Probe = () => {
       layoutResult = useLayout({
         props: {},
@@ -600,7 +597,6 @@ describe('react runtime utils', () => {
       })
       disabledPassThrough = useTextPassThrough()
       enabledPassThrough = useTextPassThrough(undefined, undefined, { enableTextPassThrough: true })
-      textResult = useTextPassThroughText()
       return null
     }
 
@@ -615,7 +611,6 @@ describe('react runtime utils', () => {
       textStyle: undefined,
       pendingTextProps: undefined
     })
-    expect(textResult?.textPassThrough).toBeNull()
   })
 
   it('keeps disabled hover gestures from changing hover state', () => {
@@ -740,5 +735,143 @@ describe('react runtime utils', () => {
       }
     ])).toEqual([gesture, refGesture, {}])
     expect(getCurrentPage(2)).toEqual({ getPageId: expect.any(Function), name: 'detail' })
+  })
+
+  it('covers helper defaults, fallback values and direct transform variants', () => {
+    const previousMpx = global.__mpx
+    const previousGetCurrentPages = global.getCurrentPages
+    const defaultStyle = Object.create({ inherited: 1 })
+    defaultStyle.minWidth = 10
+    let result: ReturnType<typeof useTransformStyle> | undefined
+
+    try {
+      global.__mpx = {} as any
+      expect(getRestProps()).toEqual({})
+      expect(getDefaultAllowFontScaling()).toBe(false)
+      expect(pickStyle(undefined as any, [])).toEqual({})
+      expect(isText(React.createElement('Text'))).toBe(false)
+      expect(flatGesture(undefined as any)).toEqual([])
+      expect(flatGesture([{ handlerTag: 0 }, {}])).toEqual([{ handlerTag: 0 }])
+
+      const Probe = () => {
+        result = useTransformStyle({
+          color: 'var(--missing, red)',
+          paddingTop: 'env(unknown-inset)',
+          rowGap: '50%',
+          columnGap: '25%',
+          transform: 'translateX(1px) translateY(2px) scaleX(3) scaleY(4) perspective(5px)',
+          fontWeight: 0,
+          transformOrigin: null
+        }, {
+          enableVar: true,
+          parentWidth: 100,
+          parentHeight: 200,
+          defaultStyle
+        })
+        return <View testID="fallback-style-probe" style={result.normalStyle} />
+      }
+      render(<Probe />)
+
+      expect(result?.normalStyle).toEqual(expect.objectContaining({
+        color: 'red',
+        paddingTop: '',
+        rowGap: 100,
+        columnGap: 25,
+        minWidth: 10,
+        fontWeight: '0',
+        transformOrigin: null,
+        transform: [
+          { translateX: 1 },
+          { translateY: 2 },
+          { scaleX: 3 },
+          { scaleY: 4 },
+          { perspective: 5 }
+        ]
+      }))
+      expect(result?.normalStyle).not.toHaveProperty('inherited')
+
+      global.getCurrentPages = jest.fn(() => [
+        { name: 'invalid' },
+        { getPageId: () => 3, name: 'valid' }
+      ])
+      expect(getCurrentPage(3)).toEqual({ getPageId: expect.any(Function), name: 'valid' })
+    } finally {
+      global.__mpx = previousMpx
+      global.getCurrentPages = previousGetCurrentPages
+    }
+  })
+
+  it('reports stable hook feature changes and handles empty layout events', () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(jest.fn())
+    const setWidth = jest.fn()
+    const setHeight = jest.fn()
+    let layoutResult: ReturnType<typeof useLayout> | undefined
+    let styleResult: ReturnType<typeof useTransformStyle> | undefined
+    let passThroughResult: ReturnType<typeof useTextPassThrough> | undefined
+
+    const Probe = ({ active }: { active: boolean }) => {
+      styleResult = useTransformStyle(active ? { '--color': 'red' } : {}, {})
+      passThroughResult = useTextPassThrough(active ? { color: 'red' } : undefined)
+      layoutResult = useLayout({
+        props: {},
+        hasSelfPercent: true,
+        setWidth,
+        setHeight,
+        nodeRef: { current: null }
+      })
+      return <View testID="stable-feature-probe" onLayout={layoutResult.layoutProps.onLayout} />
+    }
+
+    const { rerender } = render(<Probe active={false} />)
+    act(() => {
+      layoutResult?.layoutProps.onLayout(undefined as any)
+    })
+    expect(setWidth).toHaveBeenCalledWith(0)
+    expect(setHeight).toHaveBeenCalledWith(0)
+
+    rerender(<Probe active={true} />)
+    expect(styleResult?.hasVarDec).toBe(true)
+    expect(passThroughResult).toBeNull()
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('css variable use/declare should be stable'))
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('text style/props use should be stable'))
+  })
+
+  it('handles enabled hover timer replacement and optional stable callbacks', () => {
+    jest.useFakeTimers()
+    let hoverResult: ReturnType<typeof useHover> | undefined
+    let stableCallback: ReturnType<typeof useStableCallback>
+
+    const Probe = () => {
+      hoverResult = useHover({
+        enableHover: true,
+        hoverStartTime: 10,
+        hoverStayTime: 20
+      })
+      stableCallback = useStableCallback(undefined)
+      return null
+    }
+
+    const { unmount } = render(<Probe />)
+    const gesture = hoverResult?.gesture as any
+    act(() => {
+      gesture.onTouchesDownCallback()
+      gesture.onTouchesDownCallback()
+    })
+    expect(jest.getTimerCount()).toBe(1)
+    act(() => {
+      jest.advanceTimersByTime(10)
+    })
+    expect(hoverResult?.isHover).toBe(true)
+    act(() => {
+      gesture.onTouchesUpCallback()
+      gesture.onTouchesUpCallback()
+    })
+    expect(jest.getTimerCount()).toBe(1)
+    act(() => {
+      jest.advanceTimersByTime(20)
+    })
+    expect(hoverResult?.isHover).toBe(false)
+    expect(stableCallback()).toBeUndefined()
+    unmount()
   })
 })

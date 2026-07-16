@@ -16,7 +16,7 @@ jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
 describe('MpxText', () => {
   // 综合基础功能测试
   it('should handle basic rendering, nested text and selection properties', () => {
-    const { rerender, toJSON } = render(
+    const { rerender } = render(
       <MpxText
         testID="basic-text"
         style={{
@@ -80,7 +80,6 @@ describe('MpxText', () => {
 
     textElement = screen.getByTestId('basic-text')
     expect(textElement.props.style.lineHeight).toBe(24)
-    expect(toJSON()).toMatchSnapshot()
   })
 
   // MPX user-select 属性测试
@@ -157,7 +156,7 @@ describe('MpxText', () => {
   })
 
   it('should merge external text pass-through context', () => {
-    const { toJSON } = render(
+    render(
       <TextPassThroughContext.Provider
         value={{
           textStyle: { fontWeight: 'bold' },
@@ -185,25 +184,25 @@ describe('MpxText', () => {
       fontWeight: 'bold',
       textAlign: 'center'
     }))
-    expect(toJSON()).toMatchSnapshot('context-text')
   })
 
   // 父级尺寸上下文测试
   it('should handle parent size context', () => {
-    const { toJSON } = render(
-      <MpxText
-        testID="parent-size-text"
-        parent-font-size={18}
-        parent-width={300}
-        parent-height={200}
-        style={{
-          fontSize: '150%',
-          width: 'calc(50%)',
-          lineHeight: '200%'
-        }}
-      >
-        Parent size context text
-      </MpxText>
+    render(
+      <TextPassThroughContext.Provider value={{ textStyle: { fontSize: 18 } }}>
+        <MpxText
+          testID="parent-size-text"
+          parent-width={300}
+          parent-height={200}
+          style={{
+            fontSize: '150%',
+            width: 'calc(50%)',
+            lineHeight: '200%'
+          }}
+        >
+          Parent size context text
+        </MpxText>
+      </TextPassThroughContext.Provider>
     )
 
     const textElement = screen.getByTestId('parent-size-text')
@@ -213,12 +212,11 @@ describe('MpxText', () => {
       width: 150,
       lineHeight: 54
     }))
-    expect(toJSON()).toMatchSnapshot('parent-size-text')
   })
 
   // 复杂嵌套和样式继承测试
   it('should handle complex nested text with style inheritance', () => {
-    const { toJSON } = render(
+    render(
       <MpxText
         testID="nested-styled-text"
         style={{
@@ -229,11 +227,11 @@ describe('MpxText', () => {
         }}
       >
         Parent text with
-        <MpxText style={{ color: 'red', fontStyle: 'italic' }}>
+        <MpxText testID="nested-red-text" style={{ color: 'red', fontStyle: 'italic' }}>
           nested red italic text
         </MpxText>
         and
-        <MpxText style={{ textDecorationLine: 'underline', fontSize: 18 }}>
+        <MpxText testID="nested-underlined-text" style={{ textDecorationLine: 'underline', fontSize: 18 }}>
           underlined larger text
         </MpxText>
         back to parent style
@@ -241,8 +239,26 @@ describe('MpxText', () => {
     )
 
     const textElement = screen.getByTestId('nested-styled-text')
-    expect(textElement.props.style.lineHeight).toBe(24)
-    expect(toJSON()).toMatchSnapshot('nested-styled-text')
+    expect(textElement.props.style).toEqual({
+      color: '#333',
+      fontSize: 16,
+      fontWeight: 'bold',
+      lineHeight: 24
+    })
+    expect(screen.getByTestId('nested-red-text').props.style).toEqual({
+      color: 'red',
+      fontSize: 16,
+      fontStyle: 'italic',
+      fontWeight: 'bold',
+      lineHeight: 24
+    })
+    expect(screen.getByTestId('nested-underlined-text').props.style).toEqual({
+      color: '#333',
+      fontSize: 18,
+      fontWeight: 'bold',
+      lineHeight: 27,
+      textDecorationLine: 'underline'
+    })
   })
 
   // 边界值和特殊情况测试
@@ -294,7 +310,7 @@ describe('MpxText', () => {
 
   // 可访问性和交互测试
   it('should handle accessibility and interaction properties', () => {
-    const { toJSON } = render(
+    render(
       <MpxText
         testID="accessible-text"
         accessible={true}
@@ -312,7 +328,6 @@ describe('MpxText', () => {
     expect(textElement.props.accessibilityLabel).toBe('Accessible text content')
     expect(textElement.props.selectable).toBe(true)
     expect(textElement.props.allowFontScaling).toBe(true)
-    expect(toJSON()).toMatchSnapshot('accessible-text')
   })
 
   // 多种样式条件测试

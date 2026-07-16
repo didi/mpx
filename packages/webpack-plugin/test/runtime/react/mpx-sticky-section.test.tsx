@@ -14,6 +14,11 @@ beforeEach(() => {
 })
 
 describe('MpxStickySection', () => {
+  it('renders with default props and no registered headers', () => {
+    const { toJSON } = render(<MpxStickySection />)
+    expect(toJSON()).toEqual(expect.objectContaining({ type: 'View' }))
+  })
+
   it('updates registered sticky headers from section layout', () => {
     const updatePosition = jest.fn()
     const unregisterPosition = jest.fn()

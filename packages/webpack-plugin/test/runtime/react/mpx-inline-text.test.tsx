@@ -4,7 +4,7 @@ import MpxInlineText from '../../../lib/runtime/components/react/mpx-inline-text
 import { TextPassThroughContext } from '../../../lib/runtime/components/react/context'
 
 describe('MpxInlineText', () => {
-  it('merges text pass-through context with own props', () => {
+  it('uses inherited text style and ignores local style', () => {
     render(
       <TextPassThroughContext.Provider
         value={{
@@ -20,6 +20,18 @@ describe('MpxInlineText', () => {
 
     const inlineText = screen.getByTestId('context-inline')
     expect(inlineText.props.numberOfLines).toBe(1)
-    expect(inlineText.props.style).toEqual(expect.objectContaining({ color: 'red', fontSize: 20 }))
+    expect(inlineText.props.style).toEqual(expect.objectContaining({ color: 'red', fontSize: 16 }))
+  })
+
+  it('renders without inherited text props', () => {
+    render(
+      <MpxInlineText testID="plain-inline" allowFontScaling={false}>
+        Plain child
+      </MpxInlineText>
+    )
+
+    const inlineText = screen.getByTestId('plain-inline')
+    expect(inlineText.props.allowFontScaling).toBe(false)
+    expect(inlineText.props.style).toBeUndefined()
   })
 })

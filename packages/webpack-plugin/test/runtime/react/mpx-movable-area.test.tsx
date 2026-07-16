@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import React from 'react'
-import { act, fireEvent, screen } from '@testing-library/react-native'
+import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
 import { expectPortalHostRendered, renderWithPortalHost, renderWithRoute, resetMpxRuntimeGlobals } from './rn-component-test-utils'
 
@@ -13,6 +13,19 @@ beforeEach(() => {
 })
 
 describe('MpxMovableArea', () => {
+  it('uses default dimensions when style is omitted', () => {
+    render(
+      <MpxMovableArea testID="unstyled-area">
+        <Text>unstyled area</Text>
+      </MpxMovableArea>
+    )
+
+    expect(screen.getByTestId('unstyled-area').props.style).toEqual(expect.objectContaining({
+      width: 10,
+      height: 10
+    }))
+  })
+
   it('provides movable area context and dispatches movable view gesture events', () => {
     const bindchange = jest.fn()
     const bindtouchstart = jest.fn()

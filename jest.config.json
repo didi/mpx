@@ -1,7 +1,6 @@
 {
   "projects": [
-    "<rootDir>/packages/*/jest.config.json",
-    "<rootDir>/packages/webpack-plugin/jest.config.react.json"
+    "<rootDir>/packages/*/jest.config.json"
   ],
   "testTimeout": 10000
 }

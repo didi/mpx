@@ -44,4 +44,26 @@ describe('MpxForm', () => {
     expect(bindreset).toHaveBeenCalledWith(expect.objectContaining({ type: 'reset' }))
     expect(formContext.formValuesMap.get('enabled').getValue()).toBe(false)
   })
+
+  it('skips fields without getters and supports forms without event callbacks', () => {
+    let formContext: any
+    const resetValue = jest.fn()
+    const FormProbe = () => {
+      formContext = useContext(FormContext)
+      return null
+    }
+
+    render(
+      <MpxForm>
+        <FormProbe />
+      </MpxForm>
+    )
+    formContext.formValuesMap.set('empty', { resetValue })
+
+    act(() => {
+      formContext.submit()
+      formContext.reset()
+    })
+    expect(resetValue).toHaveBeenCalled()
+  })
 })

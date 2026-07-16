@@ -94,6 +94,118 @@ describe('MpxAsyncSuspense', () => {
     })
   })
 
+  it('renders no component placeholder when fallback is omitted', async () => {
+    const componentRender = render(
+      <AsyncSuspense
+        type="component"
+        chunkName="empty-component-pkg"
+        moduleId="async-component-without-fallback"
+        innerProps={{}}
+        getChildren={() => Promise.reject(Object.assign(new Error('network'), { type: 'network' }))}
+      />
+    )
+
+    expect(componentRender.toJSON()).toBeNull()
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(componentRender.toJSON()).toBeNull()
+    expect((global as any).__mpxAppCbs.lazyLoad[0]).toHaveBeenCalledWith({
+      type: 'subpackage',
+      subpackage: ['empty-component-pkg'],
+      errMsg: 'loadSubpackage: network'
+    })
+  })
+
+  it('ignores resolved and rejected chunk callbacks after unmount', async () => {
+    const StaleLoaded = () => <Text>stale loaded</Text>
+    const LatestLoaded = () => <Text>latest loaded</Text>
+    let resolveStale: (value: React.ReactNode) => void = () => undefined
+    let rejectStale: (reason: Error) => void = () => undefined
+    const staleResolvePromise = new Promise<React.ReactNode>((resolve) => {
+      resolveStale = resolve
+    })
+    const staleRejectPromise = new Promise<React.ReactNode>((_resolve, reject) => {
+      rejectStale = reject
+    })
+
+    const staleResolveRender = render(
+      <AsyncSuspense
+        type="page"
+        chunkName="stale-resolve-pkg"
+        moduleId="async-stale-resolve"
+        innerProps={{}}
+        getLoading={() => () => <Text>stale loading</Text>}
+        getChildren={() => staleResolvePromise}
+      />
+    )
+    expect(screen.getByText('stale loading')).toBeTruthy()
+    staleResolveRender.unmount()
+    await act(async () => {
+      resolveStale(StaleLoaded)
+      await staleResolvePromise
+    })
+
+    const getLatestChildren = jest.fn(() => Promise.resolve(LatestLoaded))
+    render(
+      <AsyncSuspense
+        type="page"
+        chunkName="stale-resolve-pkg"
+        moduleId="async-stale-resolve"
+        innerProps={{}}
+        getLoading={() => () => <Text>latest loading</Text>}
+        getChildren={getLatestChildren}
+      />
+    )
+    expect(screen.getByText('latest loading')).toBeTruthy()
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(screen.getByText('latest loaded')).toBeTruthy()
+    expect(getLatestChildren).toHaveBeenCalledTimes(1)
+
+    const pageErrorHandler = (global as any).mpxGlobal.__mpx.config.rnConfig.onLazyLoadPageError
+    pageErrorHandler.mockClear()
+    const staleRejectRender = render(
+      <AsyncSuspense
+        type="page"
+        chunkName="stale-reject-pkg"
+        moduleId="async-stale-reject"
+        innerProps={{}}
+        getLoading={() => () => <Text>reject loading</Text>}
+        getChildren={() => staleRejectPromise}
+      />
+    )
+    expect(screen.getByText('reject loading')).toBeTruthy()
+    staleRejectRender.unmount()
+    await act(async () => {
+      rejectStale(Object.assign(new Error('late error'), { type: 'late' }))
+      await staleRejectPromise.catch(() => undefined)
+    })
+    expect(pageErrorHandler).not.toHaveBeenCalled()
+  })
+
+  it('shows page fallback when no lazy-load error handler is configured', async () => {
+    const Fallback = () => <Text>fallback without handler</Text>
+    ;(global as any).mpxGlobal.__mpx.config.rnConfig.onLazyLoadPageError = undefined
+
+    render(
+      <AsyncSuspense
+        type="page"
+        chunkName="no-handler-pkg"
+        moduleId="async-page-no-handler"
+        innerProps={{}}
+        getFallback={() => Fallback}
+        getChildren={() => Promise.reject(Object.assign(new Error('offline'), { type: 'offline' }))}
+      />
+    )
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(screen.getByText('fallback without handler')).toBeTruthy()
+  })
+
   it('renders default loading and retries from default fallback', async () => {
     const Loaded = () => <Text>default loaded</Text>
     const getChildren = jest

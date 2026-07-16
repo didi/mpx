@@ -2,6 +2,7 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react-native'
 import { Text } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { getViews, resetMpxRuntimeGlobals } from './rn-component-test-utils'
 
 jest.mock('@mpxjs/api-proxy', () => ({
@@ -67,5 +68,61 @@ describe('MpxPopup', () => {
     const stopPropagation = jest.fn()
     fireEvent(views[1], 'touchEnd', { stopPropagation })
     expect(stopPropagation).toHaveBeenCalled()
+  })
+
+  it('ignores invalid manager transitions and supports a custom modal', () => {
+    const addSpy = jest.spyOn(Portal, 'add').mockReturnValue(101)
+    const updateSpy = jest.spyOn(Portal, 'update').mockImplementation(() => undefined)
+    const removeSpy = jest.spyOn(Portal, 'remove').mockImplementation(() => undefined)
+    const CustomModal = (props: any) => <Text>{props.children}</Text>
+    const manager = createPopupManager({ modal: CustomModal })
+
+    manager.show()
+    manager.hide()
+    manager.update(<Text>ignored update</Text>)
+    manager.remove()
+    manager.open(<Text>missing page</Text>, undefined)
+    expect(addSpy).not.toHaveBeenCalled()
+    expect(updateSpy).not.toHaveBeenCalled()
+    expect(removeSpy).not.toHaveBeenCalled()
+
+    manager.open(<Text>custom popup</Text>, 1)
+    manager.open(<Text>duplicate popup</Text>, 1)
+    manager.update(null)
+    expect(updateSpy).not.toHaveBeenCalled()
+    expect(addSpy).toHaveBeenCalledTimes(1)
+    const addedPopup = addSpy.mock.calls[0][0] as React.ReactElement<any>
+    expect(addedPopup.type).toBe(CustomModal)
+    expect(addedPopup.props).toEqual(expect.objectContaining({ visible: false }))
+    manager.remove()
+    manager.remove()
+    expect(removeSpy).toHaveBeenCalledTimes(1)
+    addSpy.mockRestore()
+    updateSpy.mockRestore()
+    removeSpy.mockRestore()
+  })
+
+  it('runs default PopupBase hide/show animation branches', () => {
+    const popupRender = render(<PopupBase />)
+    let views = getViews()
+    expect(views[0].props.style[2]).toEqual({ pointerEvents: 'none' })
+    fireEvent(views[0], 'touchEnd')
+
+    popupRender.rerender(<PopupBase visible={true}><Text>visible</Text></PopupBase>)
+    views = getViews()
+    expect(views[0].props.style[2]).toEqual({ pointerEvents: 'auto' })
+    popupRender.rerender(<PopupBase visible={false}><Text>hidden</Text></PopupBase>)
+    expect(getViews()[0].props.style[2]).toEqual({ pointerEvents: 'none' })
+    expect((withTiming as jest.Mock).mock.calls.map(([value]) => value)).toEqual([1, 0, 0, 370])
+  })
+
+  it('uses PopupBase for picker popup type', () => {
+    const addSpy = jest.spyOn(Portal, 'add').mockReturnValue(102)
+    const manager = createPopupManager({ type: 'picker' as any })
+
+    manager.open(<Text>picker popup</Text>, 1)
+
+    expect((addSpy.mock.calls[0][0] as React.ReactElement).type).toBe(PopupBase)
+    addSpy.mockRestore()
   })
 })
