@@ -79,6 +79,7 @@ const sidebar: ExtendedSidebar = {
 
         { text: '国际化 i18n', link: '/guide/advance/i18n' },
         { text: '包体积分析', link: '/guide/advance/size-report' },
+        { text: 'RN 运行时测速', link: '/guide/advance/perf' },
         { text: '图像资源处理', link: '/guide/advance/image-process' },
         { text: '原生渐进迁移', link: '/guide/advance/progressive' },
         {
@@ -117,6 +118,7 @@ const sidebar: ExtendedSidebar = {
         { text: '跨端样式', link: '/guide/rn/style' },
         { text: '应用能力', link: '/guide/rn/application-api' },
         { text: '混合编写 RN', link: '/guide/rn/hybrid-with-react-native' },
+        { text: '使用原子类', link: '/guide/rn/rn-unocss' }
       ],
     },
     {
@@ -145,6 +147,7 @@ const sidebar: ExtendedSidebar = {
         { text: '网络请求', link: '/guide/extend/fetch' },
         { text: '数据 Mock', link: '/guide/extend/mock' },
         { text: 'WebView Bridge', link: '/guide/extend/webview-bridge' },
+        { text: '扩展组件', link: '/guide/extend/extend-component' },
       ],
     },
     {
@@ -879,6 +882,10 @@ const sidebar: ExtendedSidebar = {
         {
           text: 'Mpx2.9 版本正式发布，支持原子类、SSR 和包体积优化',
           link: '/articles/2.9-release',
+        },
+        {
+          text: 'Mpx 2.11.0 版本正式发布，Mpx2RN 样式一致性与运行时性能系统升级',
+          link: '/articles/2.11-release',
         },
         {
           text: '小程序跨端组件库 Mpx-cube-ui 开源啦',

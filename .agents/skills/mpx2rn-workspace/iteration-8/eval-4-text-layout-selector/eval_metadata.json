@@ -1,0 +1,20 @@
+{
+  "eval_id": 4,
+  "eval_name": "text-layout-selector",
+  "complexity": "tricky",
+  "focus": "style/template/script/json",
+  "prompt": "请对附件中的 data-panel.mpx 页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style/json），不要省略任何内容。",
+  "files": ["input/data-panel.mpx"],
+  "assertions": [
+    {"id": "l0", "text": "style: 纵向布局显式声明 flex-direction:column（Mpx 在声明 display:flex 时会自动补充 flex-direction:row，不声明则默认横向）", "category": "style"},
+    {"id": "l1", "text": "style: position:sticky 替换为 sticky-header 组件方案（RN 不支持 position:sticky）", "category": "style"},
+    {"id": "l2", "text": "style: 保留 /*use rpx*/ 和 /*use px*/ 单位转换注释（构建系统依赖这些注释进行批量单位转换）", "category": "style"},
+    {"id": "l3", "text": "style: background-image 不应用于 text 元素对应的类（RN 中仅 view 组件支持 background-image）", "category": "style"},
+    {"id": "l4", "text": "template: 内联 style 属性中不使用多值 margin/padding 简写（RN 内联样式不支持编译增强的多值简写）", "category": "template"},
+    {"id": "l5", "text": "template: scroll-into-view 目标元素添加 wx:ref 属性（RN 中 scroll-into-view 需要 wx:ref 进行节点映射）", "category": "template"},
+    {"id": "l6", "text": "template: createSelectorQuery 目标元素添加空 wx:ref 属性（RN 中选择器 API 依赖编译期 wx:ref 映射）", "category": "template"},
+    {"id": "l7", "text": "script: createSelectorQuery/selectComponent 仅使用 #id 或 .class 单一选择器（不使用后代/复合选择器）", "category": "script"},
+    {"id": "l8", "text": "script: 非触摸事件（scroll/change 等）不使用 catch 前缀（仅 6 个基础触摸事件支持冒泡和捕获）", "category": "script"},
+    {"id": "l9", "text": "style: radial-gradient() 通过条件编译限制或替换为 linear-gradient（RN 仅支持 linear-gradient）", "category": "style"}
+  ]
+}

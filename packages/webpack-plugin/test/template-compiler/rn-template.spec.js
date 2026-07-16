@@ -26,6 +26,24 @@ describe('RN template support', () => {
     mockMpx.rnConfig = undefined
   })
 
+  function compileReactTemplate (input, extraOptions) {
+    const parsed = parseReactTemplate(input, extraOptions)
+    return genNodeReact(parsed.root)
+  }
+
+  function parseReactTemplate (input, extraOptions) {
+    return compiler.parse(input, Object.assign({
+      mode: 'ios',
+      srcMode: 'wx',
+      defs: {},
+      usingComponentsInfo: {},
+      filePath: 'test.mpx',
+      warn: console.warn,
+      error: console.error,
+      isUrlRequest: () => false
+    }, extraOptions))
+  }
+
   it('should generate correct code for template import and definition', () => {
     const input = `
       <import src="./other.wxml" />
@@ -109,6 +127,70 @@ describe('RN template support', () => {
     expect(output).toContain('getBuiltInBaseComponent')
     expect(output).toContain('__mpxBuiltIn: true')
     expect(output).toContain('"mpx-movable-view": function')
+  })
+
+  it('should treat no-value attrs as true in RN render code', () => {
+    expect(compileReactTemplate('<scroll-view scroll-y></scroll-view>')).toContain('"scroll-y": (true)')
+    expect(compileReactTemplate('<scroll-view scroll-y="{{false}}"></scroll-view>')).toContain('"scroll-y": (false)')
+    expect(compileReactTemplate('<view id=""></view>')).toContain('id: ""')
+  })
+
+  it('should pass no-value attrs as boolean true to custom components', () => {
+    const output = compileReactTemplate('<custom-comp enabled></custom-comp>', {
+      usingComponentsInfo: {
+        'custom-comp': {}
+      }
+    })
+    expect(output).toContain('getComponent("custom-comp")')
+    expect(output).toContain('enabled: (true)')
+    expect(output).not.toContain('enabled: "true"')
+  })
+
+  it('should keep RN compile marker attrs consumed before no-value attr normalization', () => {
+    const output = compileReactTemplate('<view is-simple></view>')
+    expect(output).toContain('getComponent("mpx-simple-view")')
+    expect(output).not.toContain('"is-simple"')
+  })
+
+  it('should treat no-value attrs as true on custom built-in components', () => {
+    const output = compileReactTemplate('<audio controls></audio>', {
+      customBuiltInComponents: {
+        audio: '/components/mpx-audio'
+      }
+    })
+    expect(output).toContain('getComponent("mpx-audio")')
+    expect(output).toContain('controls: (true)')
+    expect(output).not.toContain('controls: "true"')
+  })
+
+  it('should inject internal host ref into RN component root', () => {
+    const parsed = parseReactTemplate('<view>content</view>', {
+      ctorType: 'component',
+      moduleId: 'm123'
+    })
+    const output = genNodeReact(parsed.root)
+
+    expect(output).toContain('__getRefVal(\'node\', [["", "__mpxHost"]')
+    expect(output).toContain('ishost: (true)')
+    expect(parsed.meta.refs).toEqual([
+      {
+        key: '__mpxHost',
+        all: false,
+        type: 'node'
+      }
+    ])
+  })
+
+  it('should not inject internal host ref into RN virtualHost component', () => {
+    const parsed = parseReactTemplate('<view>content</view>', {
+      ctorType: 'component',
+      moduleId: 'm123',
+      hasVirtualHost: true
+    })
+    const output = genNodeReact(parsed.root)
+
+    expect(output).not.toContain('__mpxHost')
+    expect(parsed.meta.refs).toBeUndefined()
   })
 
   it('should report error for template usage without valid is value', () => {

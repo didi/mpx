@@ -13,6 +13,11 @@
   - [`setup` 的第一个参数 `props`](#setup-的第一个参数-props)
   - [`setup` 的第二个参数 `context`](#setup-的第二个参数-context)
   - [`<script setup>`](#script-setup)
+- [生命周期](#生命周期)
+  - [生命周期对应关系](#生命周期对应关系)
+  - [三类写法说明](#三类写法说明)
+  - [用法示例](#用法示例)
+  - [注意事项](#注意事项-3)
 - [Mpx 运行时导出](#mpx-运行时导出)
   - [默认导出](#默认导出)
   - [命名导出](#命名导出)
@@ -165,7 +170,7 @@
 
 #### 注意事项
 
-- 由于不同平台对 `onLoad` 中 `query` 参数的处理逻辑不同，有的进行了 `decodeURIComponent` 而有的没有，为了方便跨平台统一处理，Mpx 在 `onLoad` 生命周期中添加了第二个参数 `decodedQuery`，该参数能保证所有平台下获取到的结果都是经过 `decodeURIComponent` 处理的。
+- **保留关键字 `id` / `dataset` / `data`**：这三个 key 是页面/组件实例的保留关键字。任何会被合并挂载到实例上的数据 key——包括 `properties` / `props`、`data`、`computed`、`methods`、`setup` 的 `return`、`inject`、`mixins` 合并进来的同类字段等——都不得使用这三个名称作为 key（其中 `data` 作为构造选项本身合法，指不能在 `data` / `props` / `computed` 等内部再声明名为 `id` / `dataset` / `data` 的字段）。命中时会触发 `The xxx key [id] is a reserved keyword of miniprogram, please check and rename it.` 报错。命名时使用语义化别名（如 `itemId` / `rowData` / `pageData`）替代。
 
 ---
 
@@ -179,7 +184,7 @@
 | `triggerEvent(name, detail?)` | 方法 | 组件 | 向父节点派发自定义事件。 |
 | `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例。RN 不能像小程序一样按 selector 遍历视图树，须在模板目标节点声明 **空 wx:ref**，由编译期建立 **`#id` / `.class` 与节点**的映射后，本 API 才能按小程序写法解析。 |
 | `selectAllComponents(selector)` | 方法 | 共用 | 取全部匹配实例数组，**RN 侧与 `selectComponent` 相同**：依赖模板 **空 wx:ref** 与编译期 selector 映射，仅支持 **`#id` / `.class`**。 |
-| `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。后续 **`select(selector)`** 等链式调用在 RN 上同样依赖目标节点 **空 wx:ref**，通过编译映射将 `#id` / `.class` 落到真实视图，以兼容小程序用法。 |
+| `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。后续 **`select(selector)`** 等链式调用在 RN 上同样依赖目标节点 **空 wx:ref**，通过编译映射将 `#id` / `.class` 落到真实视图；命中非 virtualHost 自定义组件时，返回该组件实体 host 节点信息。 |
 | `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
 | `$refs` | 属性 | 共用 | 模板 **`wx:ref="refName"`** 对应的懒解析访问器（如 `this.$refs.refName`）；**空 wx:ref 不会注册具名 ref**，但与 selector 映射可并存——需按名取子实例时再写 **`wx:ref="refName"`**。 |
 | `$watch` | 方法 | 共用 | 动态创建对数据路径或表达式的侦听，返回用于停止侦听的函数，行为与选项式 `watch` 对齐。 |
@@ -195,7 +200,7 @@
 
 #### 注意事项
 
-- **`selectComponent`、`selectAllComponents`、`createSelectorQuery`（含 `select` 等链式入参）、`createIntersectionObserver`（`relativeTo` / `observe` 等涉及 selector 时）**在小程序中依赖视图层按 selector 查找节点，**RN 无同等原生能力**；须在**与 script 中 selector 对应**的节点上声明 **空 wx:ref**，可与 `id`、`class` 并存，由 **Mpx 编译期**根据 **`#id` / `.class` 建立映射**。若需 **`$refs` / `context.refs`** 按名访问，再使用 **`wx:ref="refName"`**。映射**仅支持 `#id` 与 `.class`**，不支持复合、后代等选择器；**未写 `wx:ref` 则无法解析**。`createSelectorQuery` / `createIntersectionObserver` 的测量与交叉等行为仍以 `@mpxjs/api-proxy` 的 RN 实现为准。
+- **`selectComponent`、`selectAllComponents`、`createSelectorQuery`（含 `select` 等链式入参）、`createIntersectionObserver`（`relativeTo` / `observe` 等涉及 selector 时）**在小程序中依赖视图层按 selector 查找节点，**RN 无同等原生能力**；须在**与 script 中 selector 对应**的节点上声明 **空 wx:ref**，可与 `id`、`class` 并存，由 **Mpx 编译期**根据 **`#id` / `.class` 建立映射**。若需 **`$refs` / `context.refs`** 按名访问，再使用 **`wx:ref="refName"`**。映射**仅支持 `#id` 与 `.class`**，不支持复合、后代等选择器；**未写 `wx:ref` 则无法解析**。`createSelectorQuery().select()` / `selectAll()` 命中基础节点时返回基础节点信息，命中非 virtualHost 自定义组件时返回该组件实体 host 节点信息；virtualHost 组件没有实体 host 节点，不支持按组件节点测量。`createIntersectionObserver` 的交叉行为仍以 `@mpxjs/api-proxy` 的 RN 实现为准。
 
 **使用示例：**
 
@@ -215,7 +220,7 @@
       this.selectComponent("#chip")
       this.selectAllComponents(".cell")
       this.createSelectorQuery()
-        .select("#box")
+        .select("#chip")
         .boundingClientRect()
         .exec((res) => {
           console.log(res)
@@ -386,6 +391,172 @@ createComponent({
 
 ---
 
+## 生命周期
+
+Mpx 生命周期体系包含三类写法，在组合式 API 中统一使用 Vue 风格钩子；选项式 API 中可使用小程序原生生命周期或框架内置生命周期常量。三者对应关系如下：
+
+### 生命周期对应关系
+
+| 框架内置生命周期常量 | 选项式 API（原生生命周期） | 组合式 API 钩子 | 说明 |
+|:---|:---|:---|:---|
+| `BEFORECREATE` | 页面：`onLoad` / 组件：`attached` | —（直接在 `setup` 中编写） | 实例初始化之后，数据观测之前 |
+| `CREATED` | 页面：`onLoad` / 组件：`attached` | —（直接在 `setup` 中编写） | 实例创建完成，数据观测已就绪 |
+| `BEFOREMOUNT` | 页面：`onReady` / 组件：`ready` | `onBeforeMount` | 挂载开始之前，视图尚未渲染 |
+| `MOUNTED` | 页面：`onReady` / 组件：`ready` | `onMounted` | 视图渲染完成，可访问节点与 refs |
+| `BEFOREUPDATE` | — | `onBeforeUpdate` | 数据变更后，视图重新渲染之前 |
+| `UPDATED` | — | `onUpdated` | 视图重新渲染完毕之后 |
+| `BEFOREUNMOUNT` | 页面：`onUnload` / 组件：`detached` | `onBeforeUnmount` | 实例卸载之前，仍可访问实例 |
+| `UNMOUNTED` | 页面：`onUnload` / 组件：`detached` | `onUnmounted` | 实例卸载完成，子组件已全部卸载 |
+| `ONLOAD` | `onLoad` | `onLoad` | 页面创建时触发，仅调用一次；入参 `(rawQuery, decodedQuery)` |
+| `ONSHOW` | `onShow` | `onShow` | 页面显示 / 从后台切入前台时触发 |
+| `ONHIDE` | `onHide` | `onHide` | 页面隐藏 / 切入后台时触发 |
+| `ONRESIZE` | `onResize` | `onResize` | 页面可视区域尺寸变化时触发；入参 `(res)`，含 `windowWidth`、`windowHeight` 等 |
+| `REACTHOOKSEXEC` | — | `onReactHooksExec` | RN 组件渲染期，用于执行 React Hooks；入参 `(props)`，返回值（对象）会合并到组件实例上 |
+
+### 三类写法说明
+
+1. **小程序原生生命周期**（选项式 API）：直接使用各平台原生名称，如 `onLoad`、`attached`、`ready`、`detached`、`onShow` 等。
+2. **框架内置生命周期常量**（选项式 API）：从 `@mpxjs/core` 导入 `BEFORECREATE`、`CREATED`、`MOUNTED` 等常量，以计算属性名 `[MOUNTED]() {}` 形式声明，保持跨平台一致性。
+3. **组合式生命周期钩子**（组合式 API）：从 `@mpxjs/core` 导入 `onMounted`、`onBeforeUnmount`、`onShow` 等函数，在 `setup` 内同步调用注册。`setup` 本身等价于 `beforeCreate` + `created`，可直接在其中编写初始化逻辑。
+
+### 用法示例
+
+#### 小程序原生生命周期（选项式 API）
+
+```js
+import { createComponent } from "@mpxjs/core"
+
+createComponent({
+  data: {
+    count: 0
+  },
+  attached() {
+    console.log("组件进入页面节点树，可访问 data")
+    this.count = 1
+  },
+  ready() {
+    console.log("组件视图层布局完成，可操作节点")
+  },
+  detached() {
+    console.log("组件从节点树移除，清理资源")
+  },
+  pageLifetimes: {
+    show() {
+      console.log("组件所在页面显示")
+    },
+    hide() {
+      console.log("组件所在页面隐藏")
+    }
+  }
+})
+```
+
+#### 框架内置生命周期常量（选项式 API）
+
+```js
+import { createComponent, CREATED, MOUNTED, BEFOREUNMOUNT, ONSHOW } from "@mpxjs/core"
+
+createComponent({
+  data: {
+    timer: null
+  },
+  [CREATED]() {
+    console.log("组件创建完成")
+  },
+  [MOUNTED]() {
+    console.log("组件挂载完成")
+    this.timer = setInterval(() => {
+      console.log("定时任务")
+    }, 1000)
+  },
+  [BEFOREUNMOUNT]() {
+    console.log("组件即将销毁")
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
+  },
+  [ONSHOW]() {
+    console.log("页面显示")
+  }
+})
+```
+
+#### 组合式生命周期钩子（组合式 API）
+
+```js
+import {
+  createComponent,
+  ref,
+  onBeforeMount,
+  onMounted,
+  onBeforeUpdate,
+  onUpdated,
+  onBeforeUnmount,
+  onUnmounted,
+  onShow,
+  onHide,
+  onResize
+} from "@mpxjs/core"
+
+createComponent({
+  setup() {
+    // setup 执行期相当于 beforeCreate + created
+    const count = ref(0)
+
+    onBeforeMount(() => {
+      console.log("组件即将挂载")
+    })
+
+    onMounted(() => {
+      console.log("组件已挂载，可访问 refs")
+    })
+
+    onBeforeUpdate(() => {
+      console.log("数据即将更新")
+    })
+
+    onUpdated(() => {
+      console.log("数据更新完成")
+    })
+
+    onBeforeUnmount(() => {
+      console.log("组件即将卸载，清理资源")
+    })
+
+    onUnmounted(() => {
+      console.log("组件已卸载")
+    })
+
+    onShow(() => {
+      console.log("页面显示")
+    })
+
+    onHide(() => {
+      console.log("页面隐藏")
+    })
+
+    onResize((res) => {
+      console.log("页面尺寸变化", res)
+    })
+
+    return { count }
+  }
+})
+```
+
+### 注意事项
+
+- 由于不同平台对 `onLoad` 中 `query` 参数的处理逻辑不同，有的进行了 `decodeURIComponent` 而有的没有，为了方便跨平台统一处理，Mpx 在 `onLoad` 生命周期中添加了第二个参数 `decodedQuery`，该参数能保证所有平台下获取到的结果都是经过 `decodeURIComponent` 处理的。
+- 组合式生命周期钩子**必须在 `setup` 执行期间同步注册**，禁止在异步回调（`setTimeout`、`Promise.then` 等）中调用，否则会丢失当前实例上下文。
+- `setup` 本身即 `BEFORECREATE` + `CREATED` 阶段，无需额外的 `onBeforeCreate` / `onCreated` 钩子。
+- `onMounted` 对应页面 `onReady` / 组件 `ready`，此时可安全访问 `context.refs` 和 selector 查询。
+- `onShow` / `onHide` 在组件中监听的是所在页面的显示/隐藏事件。
+- `onReactHooksExec` 为 RN 混编场景专用，用于在组件渲染期执行 React Hooks。
+- App 级别**不支持** `setup` 语法，应用生命周期（`onLaunch`、`onShow`、`onHide`、`onError`）只能在选项式 API 中使用。
+
+---
+
 ## Mpx 运行时导出
 
 依据 **`packages/core/src/index.js`** 及其 **`export *`**（**`platform/export/index.js`**，以及可能对 **`@mpxjs/store`** 的再导出）整理；与版本不一致时以包内源码与类型声明为准。全局状态方案选型见 **[状态管理](#状态管理)**。
@@ -531,6 +702,7 @@ Mpx.config.rnConfig = {
   onStateChange(state) {
     console.log("navigation state", state)
   },
+  disablePageTransition: true,
   openTypeHandler: {
     onShareAppMessage(shareInfo) {
       console.log("share", shareInfo)
@@ -547,11 +719,11 @@ Mpx.config.rnConfig = {
 | `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
 | `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由。 |
 | `onStateChange` | 导航 state 变化时回调。 |
+| `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
 | `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |
 | `openTypeHandler` | 对象，注册 `button` 组件在 RN 上 `open-type` 的容器侧实现，未注册对应键时点击会告警。 |
 | `openTypeHandler.onShareAppMessage` | 对应模板中 `open-type="share"`：框架会先取当前页 `onShareAppMessage` 的返回（含与默认 `title` / `path` 的合并及可选 `promise` 异步结果），再调用本回调，入参为 `{ title, path, imageUrl? }`，由宿主调起系统分享等能力。 |
 | `openTypeHandler.onUserInfo` | 对应模板中 `open-type="getUserInfo"`：由宿主实现获取用户信息的逻辑，结果需满足按钮侧对 `bindgetuserinfo` 的约定（以 `@mpxjs/webpack-plugin` 中 `mpx-button` 运行时为准）。 |
-| `statusBarTranslucent` | 影响 Stack `screenOptions` 中状态栏相关配置。 |
 | `getBottomVirtualHeight` | Android 底部虚拟区域高度修正。 |
 | `loadChunkAsync` | 异步分包加载实现。 |
 | `downloadChunkAsync` | 分包下载实现，用于实现 preloadRule。 |

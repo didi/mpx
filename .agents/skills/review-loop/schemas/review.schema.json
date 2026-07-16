@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewLoopReview",
+  "type": "object",
+  "required": ["round", "status", "summary", "findings", "evidence"],
+  "additionalProperties": false,
+  "properties": {
+    "round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["approved", "changes_requested"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "category", "target", "comment", "suggestion"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "major", "minor", "nit"]
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "comment": {
+            "type": "string",
+            "minLength": 1
+          },
+          "suggestion": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "reviewedPaths",
+        "tracedSymbols",
+        "checks",
+        "counterexamples",
+        "diffScope",
+        "residualRisks",
+        "reviewerConfig"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "reviewedPaths": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "tracedSymbols": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["symbol", "path", "related"],
+            "additionalProperties": false,
+            "properties": {
+              "symbol": { "type": "string", "minLength": 1 },
+              "path": { "type": "string", "minLength": 1 },
+              "related": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["command", "result"],
+            "additionalProperties": false,
+            "properties": {
+              "command": { "type": "string", "minLength": 1 },
+              "result": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "counterexamples": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["scenario", "result"],
+            "additionalProperties": false,
+            "properties": {
+              "scenario": { "type": "string", "minLength": 1 },
+              "result": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "diffScope": {
+          "type": "object",
+          "required": ["cumulativeDiff", "roundDiff", "unexpectedPaths", "unexpectedDispositions"],
+          "additionalProperties": false,
+          "properties": {
+            "cumulativeDiff": { "type": "string", "minLength": 1 },
+            "roundDiff": { "type": "string", "minLength": 1 },
+            "unexpectedPaths": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "unexpectedDispositions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["path", "disposition", "reason"],
+                "additionalProperties": false,
+                "properties": {
+                  "path": { "type": "string", "minLength": 1 },
+                  "disposition": {
+                    "type": "string",
+                    "enum": ["included", "excluded", "blocking"]
+                  },
+                  "reason": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        },
+        "residualRisks": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "reviewerConfig": {
+          "type": "object",
+          "required": ["model", "reasoningEffort", "sandboxMode", "source"],
+          "additionalProperties": false,
+          "properties": {
+            "model": { "type": "string", "minLength": 1 },
+            "reasoningEffort": { "type": "string", "minLength": 1 },
+            "sandboxMode": { "const": "read-only" },
+            "source": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}
