@@ -22,12 +22,16 @@
 
 ## 与其他参考的边界
 
-- 本文件维护可扫描、可枚举的 Skyline 兼容规则。
-- 组件事实查 [组件不支持与差异参考](./skyline-component-reference.md)。
-- 样式事实查 [样式差异参考](./skyline-style-reference.md)。
-- 运行时与性能事实查 [运行时适配实践](./skyline-runtime-practice.md)。
-- 布局、样式与模板结构改造写法查 [布局与样式适配实践](./skyline-layout-practice.md)。
-- `SKILL.md` 只维护流程门禁和人工验收项；新增可扫描规则时只改本文件，不要同步复制到 `SKILL.md` checklist。
+- `SKILL.md` 维护任务流程、决策优先级、高频跨维度约束、知识路由与人工验收，使 Agent 只读入口即可完成常见判断；可概括高频原则，但不复制本矩阵的扫描 pattern、规则 ID 或完整枚举。
+- reference 维护能力事实、适用条件、实现细节与示例：组件事实查 [组件不支持与差异参考](./skyline-component-reference.md)，样式事实查 [样式差异参考](./skyline-style-reference.md)，运行时与性能事实查 [运行时适配实践](./skyline-runtime-practice.md)，布局、样式与模板结构改造写法查 [布局与样式适配实践](./skyline-layout-practice.md)。
+- 本文件只维护可扫描、可枚举规则的 ID、level、候选 pattern、判定、标准修复与允许例外，不承担能力事实和完整实现方案。
+
+同步规则：
+
+1. 能力支持情况、适用条件或实现方案变化时，先更新对应 reference。
+2. 该变化可通过源码候选扫描或结构复核发现时，再更新本矩阵。
+3. 仅当变化影响通用决策、知识路由或人工验收时才同步 `SKILL.md`；任务流程引用通用约束或 reference，不重复具体规则枚举。
+4. 内容冲突时，能力事实以 reference 为准，扫描与分级以本矩阵为准，执行顺序与确认门禁以 `SKILL.md` 为准。
 
 ## 聚合扫描
 

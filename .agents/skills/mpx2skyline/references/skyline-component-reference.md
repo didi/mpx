@@ -49,24 +49,24 @@
 
 ## Skyline 相对 WebView 的高频差异补充
 
-| 组件 | 差异 |
-| --- | --- |
-| `picker-view` | `indicator-style` 仅支持 `height` / `border` / `background-color`；`indicator-class` / `mask-style` 暂未支持 |
-| `swiper` | `layout-type="stackLeft"` / `stackRight` / `tinder` 时仅支持 `indicator-type="normal"` |
-| `swiper` | `indicator-type="scrollFixedCenter"` / `swap` / `swapYRotation` 时不支持 `circular` |
-| `swiper` | `previous-margin` / `display-multiple-items` / `vertical` 的布局计算与 WebView 不一致；设置 `next-margin > 0` 时对齐 WebView 实现 |
-| `input` / `textarea` | 原生组件字体固定为系统字体，`font-family` 不生效；聚焦期间避免 CSS 动画 |
-| `video` | 全屏已支持，投屏暂未支持；开发者工具暂未支持调试，需真机预览 |
-| `map` / `canvas` / `camera` | 开发者工具暂未支持调试，需真机预览 |
-| `rich-text` | 默认渲染模式不保证与 WebView 完全一致；`mode="web"` 时对齐 WebView |
-| `scroll-view` | 滚动 `scroll-view` 会阻止页面回弹，无法触发页面级 `onPullDownRefresh` |
-| `scroll-view` | `scroll-into-view` 优先级高于 `scroll-top`；目标 id 不能以数字开头 |
-| `scroll-view` | 自定义下拉刷新节点必须声明 `slot="refresher"` |
-| `scroll-view` | 滚动条长度为预估值；直接子节点高度差异较大时，滚动条长度不保证精确 |
-| `scroll-view` | 横向滚动需同时开启 `enable-flex`，并设置横向布局样式（如 `flex-direction: row`）以兼容 WebView |
-| `scroll-view` | `type="list"` 下列表项可加 `list-item` 启用样式共享优化；列表项仍必须是直接子节点 |
-| `scroll-view` | 基础库 2.4.0 以下不支持嵌套 `textarea` / `map` / `canvas` / `video` |
-| `text` | `user-select` 会使节点变为 `inline-block`；除文本节点外，其他节点无法长按选中 |
-| `span` | 用于图文内联混排 |
-| `input` / `textarea` | `bindkeyboardheightchange` 存在多次触发场景，应忽略相同高度值避免重复布局 |
+| 组件 | 差异                                                                                                                  |
+| --- |---------------------------------------------------------------------------------------------------------------------|
+| `picker-view` | `indicator-style` 仅支持 `height` / `border` / `background-color`；`indicator-class` / `mask-style` 暂未支持；Skyline 默认存在上下边框，无自定义边框需设置 `indicator-style="border: none;"` 去除默认边框 |
+| `swiper` | `layout-type="stackLeft"` / `stackRight` / `tinder` 时仅支持 `indicator-type="normal"`                                  |
+| `swiper` | `indicator-type="scrollFixedCenter"` / `swap` / `swapYRotation` 时不支持 `circular`                                     |
+| `swiper` | `previous-margin` / `display-multiple-items` / `vertical` 的布局计算与 WebView 不一致；设置 `next-margin > 0` 时对齐 WebView 实现    |
+| `input` / `textarea` | 原生组件字体固定为系统字体，`font-family` 不生效；聚焦期间避免 CSS 动画                                                                       |
+| `video` | 全屏已支持，投屏暂未支持；开发者工具暂未支持调试，需真机预览                                                                                      |
+| `map` / `canvas` / `camera` | 开发者工具暂未支持调试，需真机预览                                                                                                   |
+| `rich-text` | 默认渲染模式不保证与 WebView 完全一致；`mode="web"` 时对齐 WebView                                                                    |
+| `scroll-view` | 滚动 `scroll-view` 会阻止页面回弹，无法触发页面级 `onPullDownRefresh`                                                                |
+| `scroll-view` | `scroll-into-view` 优先级高于 `scroll-top`；目标 id 不能以数字开头                                                                 |
+| `scroll-view` | 自定义下拉刷新节点必须声明 `slot="refresher"`                                                                                    |
+| `scroll-view` | 滚动条长度为预估值；直接子节点高度差异较大时，滚动条长度不保证精确                                                                                   |
+| `scroll-view` | 横向滚动需同时开启 `enable-flex`，并设置横向布局样式（如 `flex-direction: row`）以兼容 WebView                                               |
+| `scroll-view` | `type="list"` 下列表项可加 `list-item` 启用样式共享优化；列表项仍必须是直接子节点                                                              |
+| `scroll-view` | 基础库 2.4.0 以下不支持嵌套 `textarea` / `map` / `canvas` / `video`                                                           |
+| `text` | `user-select` 会使节点变为 `inline-block`；除文本节点外，其他节点无法长按选中                                                               |
+| `span` | 用于图文内联混排                                                                                                            |
+| `input` / `textarea` | `bindkeyboardheightchange` 存在多次触发场景，应忽略相同高度值避免重复布局                                                                  |
 | `sticky-section` / `sticky-header` | WebView 常用的 CSS `position: sticky` 在 Skyline 下应替换为 `scroll-view type="custom"` + `sticky-section` / `sticky-header` |
