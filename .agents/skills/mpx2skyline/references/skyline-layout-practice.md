@@ -145,6 +145,7 @@ defineExpose({
 Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发。需要滚动的页面必须使用 `scroll-view` 替代页面滚动，页面 json 同时声明 `disableScroll: true`。
 
 ```html
+<!-- 普通长列表 type="list" -->
 <scroll-view type="list" style="height:100%" show-scrollbar="{{false}}" scroll-y="true">
   <!-- 页面内容 -->
 </scroll-view>
@@ -161,6 +162,7 @@ Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageS
 WebView 直接对齐 Skyline 写法（统一走 scroll-view 事件），避免双份实现带来的维护成本与行为漂移。
 
 ```html
+<!-- 普通长列表 type="list" -->
 <scroll-view
   type="list"
   scroll-y="true"
@@ -245,7 +247,7 @@ fixed-e (z-index: 4)
 
 ```html
 <!-- isSkyline 来自 renderer 判断，见 skyline-runtime-practice.md 的「判断当前渲染模式」 -->
-<scroll-view type="list" scroll-y="true">
+<scroll-view type="custom" scroll-y>
   <!-- Skyline：sticky-section + sticky-header 组件 -->
   <sticky-section wx:if="{{isSkyline}}">
     <sticky-header class="sticky-title">吸顶标题</sticky-header>
@@ -278,7 +280,7 @@ createPage({
 **Skyline 分支结构约束**：
 
 - `sticky-header` 必须是 `sticky-section` 的**第一个子节点**；每个 `sticky-section` 仅允许一个 `sticky-header`。
-- `sticky-section` 必须放在 `scroll-view type="custom"` 或 `type="list"` 内（不可裸用）。
+- `sticky-section` 必须放在 `scroll-view type="custom"` 内（不可裸用）。
 - `sticky-header` **必须显式声明背景色**（`background` / `background-color`）。Skyline 下 `sticky-header` 默认透明，吸顶时下层列表内容会透字穿透，常见症状是"吸顶后文字与列表叠在一起"。
 
 ### scroll-view 高度自适应

@@ -2,7 +2,7 @@
 name: mpx2skyline
 description: |
   基于 Mpx 开发实现的微信小程序 WebView 适配 Skyline 渲染引擎指南，覆盖布局、样式、组件、配置四大维度。
-  当用户要求对已有微信小程序页面进行 Skyline 适配、创建符合 Skyline 兼容规范的页面、
+  当用户要求对已有微信小程序页面或组件进行 Skyline 适配、创建符合 Skyline 兼容规范的页面或组件、
   排查 Skyline 下样式不生效/组件不渲染/布局异常/层级错乱等问题、或查询某项能力在
   Skyline 下的支持情况时强制调用。当用户问题不涉及 Skyline 适配时不应调用，如
   Mpx 输出 RN 问题、支付宝小程序问题、纯微信原生小程序、纯 WebView 小程序开发问题等。
@@ -23,8 +23,8 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 本 SKILL 是 Mpx WebView 适配 Skyline 渲染引擎的统一指南，覆盖布局、样式、组件、配置四大维度。涉及 Mpx Skyline 适配的任务均应在动笔前阅读本 SKILL 的[通用约束与适配原则](#通用约束与适配原则)，包括但不限于：
 
 - **技术方案设计**：评估需求在 Skyline 下的可行性、跨渲染模式（WebView 与 Skyline）兼容方案选型、是否需要通过 `this.renderer === 'skyline'` 进行运行时模式隔离等；
-- **WebView 页面 Skyline 适配改造**：对已基于 WebView 模式编写、未适配 Skyline 的存量页面进行兼容性补齐（参见下文[任务一](#任务一对已有-webview-页面进行-skyline-适配改造)）；
-- **页面 / 组件开发迭代**：从零编写或迭代符合 WebView 与 Skyline 双模式兼容规范的 `.mpx` 页面与组件（参见下文[任务二](#任务二创建符合-skyline-兼容规范的页面)）；
+- **WebView 页面 Skyline 适配改造**：对已基于 WebView 模式编写、未适配 Skyline 的存量页面进行兼容性补齐（参见下文[任务一](#任务一对已有-webview-页面或组件进行-skyline-适配改造)）；
+- **页面 / 组件开发迭代**：从零编写或迭代符合 WebView 与 Skyline 双模式兼容规范的 `.mpx` 页面与组件（参见下文[任务二](#任务二创建符合-skyline-兼容规范的页面或组件)）；
 - **运行时报错与异常排查**：定位 Skyline 下样式不生效（如不支持选择器/属性静默失效）、组件不渲染（如 `scroll-view` 缺失 `type`）、布局异常（如默认 `display: flex` / `border-box` 引发的差异）、层级错乱（z-index 无层叠上下文）、模板转义、SelectorQuery 数字开头等问题；
 - **能力查询**：查询基础组件、属性、样式、API、滚动 API 在 Skyline 下的支持情况、版本要求与 WebView 差异；涉及 Worklet 动画、手势系统、自定义路由、共享元素时，本 SKILL 仅判断 Mpx 双模式接入边界，具体能力回源[微信官方 Skyline Skills](https://github.com/wechat-miniprogram/skyline-skills/tree/master/skills)；
 - **Code Review**：以本 SKILL 的[通用约束与适配原则](#通用约束与适配原则)为标准对照检查 Skyline 兼容性与跨渲染模式兼容性。
@@ -108,7 +108,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 1. **先对齐默认布局基线**：在 `rendererOptions.skyline` 中开启 `defaultDisplayBlock` 与 `defaultContentBox`，分别对齐 WebView 的 `display: block` 和 `box-sizing: content-box`；需要静态定位时仍须显式声明 `position: static`。配置位置见 [rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项)，其余默认值差异见 [非标准默认值](./references/skyline-style-reference.md#非标准默认值)。
 2. **不依赖 BFC 与 margin 合并**：Skyline 没有 BFC 和 margin 合并机制，`overflow: hidden` 仅用于裁剪。容器外沿空间用父容器 `padding` 表达，兄弟间距只由一侧承担；复杂存量布局按 [不要依赖 BFC 和 margin 合并](./references/skyline-layout-practice.md#不要依赖-bfc-和-margin-合并) 改造。
-3. **页面滚动统一迁移到 scroll-view**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发。页面声明 `disableScroll: true`，使用 `scroll-view` 承载滚动，并根据直接子节点结构选择 `list` / `custom` / `nested`，不要固定写死 `type="list"`。原生命周期同步迁移到 `bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`，WebView 对齐同一事件链路；详见 [页面滚动替代方案](./references/skyline-layout-practice.md#页面滚动替代方案)。
+3. **页面滚动统一迁移到 scroll-view**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发。页面声明 `disableScroll: true`，使用 `scroll-view` 承载滚动，并根据直接子节点结构选择 `list` / `custom` / `nested`，常见为列表模式 `type="list"`。原生命周期同步迁移到 `bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`，WebView 对齐同一事件链路；详见 [页面滚动替代方案](./references/skyline-layout-practice.md#页面滚动替代方案)。
 4. **按 normal-context / fixed-context 设计层级**：Skyline 没有 WebView 层叠上下文，非 fixed 节点最终比较共同父级下的兄弟分支；fixed 节点会全局提升并按自身 `z-index` 排序，整体高于非 fixed 内容。`transform` / `opacity` 不会抬升层级，`scroll-view` 直接子节点的 `z-index` 不生效。需要比较层级的节点应调整为可比较的兄弟结构，避免依赖负 `z-index`；详见 [z-index 与层叠适配](./references/skyline-layout-practice.md#z-index-与层叠适配)。
 5. **吸顶逻辑双分支保留**：Skyline 不支持 `position: sticky`，Skyline 分支使用 `sticky-section` / `sticky-header`，WebView 分支保留 CSS sticky。`sticky-header` 必须是 section 的第一个子节点且显式设置背景色，完整结构见 [sticky 吸顶替代方案](./references/skyline-layout-practice.md#sticky-吸顶替代方案)。
 6. **使用自定义导航**：Skyline 页面声明 `navigationStyle: 'custom'` 并实现自定义导航栏，不依赖默认导航；页面配置见 [适配参考](./references/skyline-configuration.md#适配参考)。
@@ -164,7 +164,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 #### 2. 布局适配改造
 
 - 识别默认布局、页面滚动、层叠与导航等命中维度，先应用[布局约束](#布局layout约束)，再按实际问题点读取 [布局适配实践](./references/skyline-layout-practice.md#布局适配) 的对应小节。
-- 页面滚动改造需同时迁移业务事件并按结构选择 `scroll-view` 类型，列表模式则为 `type="list"`。
+- 页面滚动改造需同时迁移业务事件并按结构选择 `scroll-view` 类型，常见为列表模式 `type="list"`。
 
 #### 3. 样式适配改造
 

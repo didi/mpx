@@ -227,15 +227,15 @@ Skyline 支持 transition / animation 的主要属性：
 
 以下属性、行为与 API 在 WebView / Web CSS 中可用或常见，但 Skyline 下不可用或设置后不生效：
 
-| 分类 | 属性 / 行为 / API | 兼容方案 |
-| --- | --- | --- |
-| 布局 | `float` / 清除浮动相关写法 | 使用 Flex |
-| 布局 | `contain` | 使用 Skyline 私有 `-wx-contain` |
-| 布局 | `resize` | 无等效替代 |
-| 布局 | 多列布局 `column-*` | Flex 或 `grid-view` |
-| 布局 | `outline` | 用 border / box-shadow 模拟 |
-| 交互 | `cursor` | 无等效替代 |
-| Flex | `justify-items` | 无等效替代 |
-| 滚动 | 页面滚动 | `scroll-view type="list"` + 页面 `disableScroll: true` |
-| 响应式 | `@media screen` | 使用动态类 |
-| 动画 API | `wx.createAnimation` | CSS `transition` / `animation` 或 Skyline Worklet |
+| 分类 | 属性 / 行为 / API | 兼容方案                                                       |
+| --- | --- |------------------------------------------------------------|
+| 布局 | `float` / 清除浮动相关写法 | 使用 Flex                                                    |
+| 布局 | `contain` | 使用 Skyline 私有 `-wx-contain`                                |
+| 布局 | `resize` | 无等效替代                                                      |
+| 布局 | 多列布局 `column-*` | Flex 或 `grid-view`                                         |
+| 布局 | `outline` | 用 border / box-shadow 模拟                                   |
+| 交互 | `cursor` | 无等效替代                                                      |
+| Flex | `justify-items` | 无等效替代                                                      |
+| 滚动 | 页面滚动 | 普通长列表 `scroll-view type="list"` + 页面 `disableScroll: true` |
+| 响应式 | `@media screen` | 使用动态类                                                      |
+| 动画 API | `wx.createAnimation` | CSS `transition` / `animation` 或 Skyline Worklet           |
