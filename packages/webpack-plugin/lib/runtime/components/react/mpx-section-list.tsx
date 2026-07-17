@@ -198,13 +198,13 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
   const bindItemExposureRef = useRef<typeof binditemexposure>()
   const propsRef = useRef(props)
   const initialEnableItemExposureRef = useRef(enableItemExposure)
+  const enableItemExposureOnInit = initialEnableItemExposureRef.current
   const itemExposureViewabilityConfig = useRef<ItemExposureViewabilityConfig>()
-  if (!itemExposureViewabilityConfig.current) {
+  if (enableItemExposureOnInit && !itemExposureViewabilityConfig.current) {
     itemExposureViewabilityConfig.current = {
       itemVisiblePercentThreshold: getExposurePercentThreshold(itemExposureThreshold)
     }
   }
-  const itemExposureViewabilityConfigValue = itemExposureViewabilityConfig.current as ItemExposureViewabilityConfig
 
   const {
     normalStyle,
@@ -221,7 +221,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
-  if (initialEnableItemExposureRef.current !== enableItemExposure) {
+  if (enableItemExposureOnInit !== enableItemExposure) {
     error('[Mpx runtime error]: [enable-item-exposure] cannot be toggled at runtime. Set its value once at component initialization.')
   }
 
@@ -261,7 +261,8 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
   }
 
   const itemExposureViewabilityPairs = useRef<ItemExposureViewabilityPair[]>()
-  if (!itemExposureViewabilityPairs.current) {
+  if (enableItemExposureOnInit && !itemExposureViewabilityPairs.current) {
+    const itemExposureViewabilityConfigValue = itemExposureViewabilityConfig.current as ItemExposureViewabilityConfig
     itemExposureViewabilityPairs.current = [
       {
         viewabilityConfig: itemExposureViewabilityConfigValue,
@@ -411,7 +412,9 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     indexMap.current = {}
     // 清空反向索引映射
     reverseIndexMap.current = {}
-    exposureIndexMap.current = {}
+    if (enableItemExposureOnInit) {
+      exposureIndexMap.current = {}
+    }
 
     // 处理 listData 为空的情况
     if (!listData || !listData.length) {
@@ -434,12 +437,16 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
         const { index } = headerInfo
         indexMap.current[index] = `${sectionIndex}_header`
         reverseIndexMap.current[`${sectionIndex}_header`] = index
-        exposureIndexMap.current[exposureIndex] = {
-          index,
-          type: 'header'
+        if (enableItemExposureOnInit) {
+          exposureIndexMap.current[exposureIndex] = {
+            index,
+            type: 'header'
+          }
         }
       }
-      exposureIndex++
+      if (enableItemExposureOnInit) {
+        exposureIndex++
+      }
 
       return section
     }
@@ -448,18 +455,20 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
       const section = currentSection
       if (!section) return
 
-      if (section.hasSectionFooter) {
-        const sectionIndex = sections.length
-        const index = getOriginalIndex(sectionIndex, 'footer')
-        if (index > -1) {
-          exposureIndexMap.current[exposureIndex] = {
-            index,
-            type: 'footer'
+      if (enableItemExposureOnInit) {
+        if (section.hasSectionFooter) {
+          const sectionIndex = sections.length
+          const index = getOriginalIndex(sectionIndex, 'footer')
+          if (index > -1) {
+            exposureIndexMap.current[exposureIndex] = {
+              index,
+              type: 'footer'
+            }
           }
         }
+        // RN SectionList 即使没有真实 footer，也会为每个 section 保留 footer slot
+        exposureIndex++
       }
-      // RN SectionList 即使没有真实 footer，也会为每个 section 保留 footer slot
-      exposureIndex++
 
       sections.push(section)
       currentSection = null
@@ -500,11 +509,13 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
         indexMap.current[index] = `${sectionIndex}_${itemIndex}`
         // 添加反向索引映射
         reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
-        exposureIndexMap.current[exposureIndex] = {
-          index,
-          type: 'item'
+        if (enableItemExposureOnInit) {
+          exposureIndexMap.current[exposureIndex] = {
+            index,
+            type: 'item'
+          }
+          exposureIndex++
         }
-        exposureIndex++
       }
     })
     // 添加最后一个 section
@@ -512,7 +523,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
       closeSection()
     }
     return sections
-  }, [listData, listData?.length])
+  }, [listData, listData?.length, enableItemExposureOnInit])
 
   const { getItemLayout } = useMemo(() => {
     const layouts: ItemLayoutInfo[] = []
@@ -589,7 +600,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     layoutProps
   )
 
-  if (initialEnableItemExposureRef.current) {
+  if (enableItemExposureOnInit) {
     extendObject(scrollAdditionalProps, {
       viewabilityConfigCallbackPairs: itemExposureViewabilityPairs.current
     })
