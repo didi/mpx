@@ -695,6 +695,10 @@ const sidebar: ExtendedSidebar = {
               collapsed: true,
               items: [
                 {
+                  text: 'startBluetoothDevicesDiscovery',
+                  link: '/api-proxy/device/bluetooth-ble/startBluetoothDevicesDiscovery',
+                },
+                {
                   text: 'closeBLEConnection',
                   link: '/api-proxy/device/bluetooth-ble/closeBLEConnection',
                 },
