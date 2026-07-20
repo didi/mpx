@@ -755,7 +755,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       gesturePan.requireExternalGestureToFail(...waitForHandlers)
     }
     return gesturePan
-  }, [disabled, direction, inertia, outOfBounds, gestureSwitch.current])
+  }, [disabled, direction, inertia, outOfBounds, gestureSwitch.current, workletChange, handleTriggerWorkletChange])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
