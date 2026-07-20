@@ -252,8 +252,8 @@ createComponent({
 
 ### 注意事项
 
-1. 除基础通用事件外，其余所有事件均不支持事件冒泡和捕获。
-2. 由于 `tap` 和 `longpress` 事件是由 `touchstart` / `touchend` 等底层触摸事件模拟实现，所以在 RN 环境，如果子组件绑定了 `catchtouchend`，那么父组件的 `tap` 事件将不会响应。
+1. 仅 `tap`、`longpress`、`touchstart`、`touchmove`、`touchend`、`touchcancel` 事件支持阻止冒泡和捕获，其他事件使用 `catch`、`capture-bind` 或 `capture-catch` 时，编译器会给出警告并降级为普通 `bind` 绑定。
+2. `tap` 和 `longpress` 由 `touchstart` / `touchend` 等底层触摸事件模拟实现，因此子组件绑定 `catchtouchend` 后，父组件的 `tap` 事件不会响应。
 3. 如果元素上设置了 `opacity: 0` 的样式，会导致 ios 事件无法响应。
 4. 传递自定义参数给事件处理器时，优先使用**事件内联传参**语法（如 `bindtap="handleTap('param')"`），而不是通过 `data-` dataset 属性传参。
 
@@ -707,7 +707,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindtransitionend | 动画结束时触发,`event.detail = { elapsedTime, finished, current }` |
+| transitionend | 动画结束时触发,`event.detail = { elapsedTime, finished, current }` |
 
 #### 注意事项
 
@@ -771,14 +771,14 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 事件名               | 说明                                       |
 | -------------------- | ------------------------------------------ |
-| binddragstart        | 滑动开始事件，同时开启 enhanced 属性后生效 |
-| binddragging         | 滑动事件，同时开启 enhanced 属性后生效     |
-| binddragend          | 滑动结束事件，同时开启 enhanced 属性后生效 |
-| bindscrolltoupper    | 滚动到顶部/左边触发                        |
-| bindscrolltolower    | 滚动到底部/右边触发                        |
-| bindscroll           | 滚动时触发                                 |
-| bindscrollend        | 滚动结束时触发                             |
-| bindrefresherrefresh | 自定义下拉刷新被触发                       |
+| dragstart        | 滑动开始事件，同时开启 enhanced 属性后生效 |
+| dragging         | 滑动事件，同时开启 enhanced 属性后生效     |
+| dragend          | 滑动结束事件，同时开启 enhanced 属性后生效 |
+| scrolltoupper    | 滚动到顶部/左边触发                        |
+| scrolltolower    | 滚动到底部/右边触发                        |
+| scroll           | 滚动时触发                                 |
+| scrollend        | 滚动结束时触发                             |
+| refresherrefresh | 自定义下拉刷新被触发                       |
 
 #### 注意事项
 
@@ -822,7 +822,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | current 改变时会触发 change 事件，`event.detail = {current, source}` |
+| change | current 改变时会触发 change 事件，`event.detail = {current, source}` |
 
 ### swiper-item
 
@@ -861,11 +861,11 @@ movable-view 的可移动区域。
 
 #### 事件
 
-| 事件名     | 说明                                                  |
-| ---------- | ----------------------------------------------------- |
-| bindchange | 拖动过程中触发的事件，`event.detail = {x, y, source}` |
-| htouchmove | 初次手指触摸后移动为横向的移动时触发                  |
-| vtouchmove | 初次手指触摸后移动为纵向的移动时触发                  |
+| 事件名     | 说明                                                         |
+| ---------- | ------------------------------------------------------------ |
+| change     | 拖动过程中触发，`event.detail = {x, y, source}`              |
+| htouchmove | 初次手指触摸后横向移动时触发，支持使用 `catch` 阻止事件冒泡 |
+| vtouchmove | 初次手指触摸后纵向移动时触发，支持使用 `catch` 阻止事件冒泡 |
 
 #### 注意事项
 
@@ -890,8 +890,8 @@ movable-view 的可移动区域。
 
 | 事件名    | 说明                                                     |
 | --------- | -------------------------------------------------------- |
-| binderror | 当错误发生时触发，`event.detail = { errMsg }`            |
-| bindload  | 当图片载入完毕时触发，`event.detail = { height, width }` |
+| error | 当错误发生时触发，`event.detail = { errMsg }`            |
+| load  | 当图片载入完毕时触发，`event.detail = { height, width }` |
 
 #### 注意事项
 
@@ -963,7 +963,7 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | checkbox-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 checkbox 的 value 的数组 ] } ` |
+| change | checkbox-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 checkbox 的 value 的数组 ] } ` |
 
 ### radio
 
@@ -986,7 +986,7 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | radio-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 radio 的 value 的数组 ] }` |
+| change | radio-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 radio 的 value 的数组 ] }` |
 
 ### form
 
@@ -998,8 +998,8 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindsubmit | 携带 form 中的数据触发 submit 事件，`event.detail = {value : {'name': 'value'} }` |
-| bindreset | 表单重置时会触发 reset 事件 |
+| submit | 携带 form 中的数据触发 submit 事件，`event.detail = {value : {'name': 'value'} }` |
+| reset | 表单重置时会触发 reset 事件 |
 
 ### input
 
@@ -1033,11 +1033,11 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindinput | 键盘输入时触发，`event.detail = { value, cursor }`，不支持 `keyCode` |
-| bindfocus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
-| bindblur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
-| bindconfirm | 点击完成按钮时触发，`event.detail = { value }` |
-| bind:selectionchange | 选区改变事件, `event.detail = { selectionStart, selectionEnd }` |
+| input | 键盘输入时触发，`event.detail = { value, cursor }`，不支持 `keyCode` |
+| focus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
+| blur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
+| confirm | 点击完成按钮时触发，`event.detail = { value }` |
+| selectionchange | 选区改变事件, `event.detail = { selectionStart, selectionEnd }` |
 
 ### textarea
 
@@ -1071,12 +1071,12 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindinput | 键盘输入时触发，`event.detail = { value, cursor }`，不支持 `keyCode` |
-| bindfocus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
-| bindblur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
-| bindconfirm | 点击完成按钮时触发，`event.detail = { value }` |
-| bindlinechange | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx` |
-| bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}` |
+| input | 键盘输入时触发，`event.detail = { value, cursor }`，不支持 `keyCode` |
+| focus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
+| blur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
+| confirm | 点击完成按钮时触发，`event.detail = { value }` |
+| linechange | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx` |
+| selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}` |
 
 #### 注意事项
 
@@ -1103,7 +1103,7 @@ movable-view 的可移动区域。
 
 | 事件名        | 说明                                         |
 | ------------- | -------------------------------------------- |
-| bindactiveend | 动画完成时触发，`event.detail = { percent }` |
+| activeend | 动画完成时触发，`event.detail = { percent }` |
 
 #### 注意事项
 
@@ -1130,7 +1130,7 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | 滚动选择时触发 change 事件，`event.detail = {value}`，其中 `value` 为数组，表示 picker-view 内的 [picker-view-column](#picker-view-column) 当前选择的是第几项（下标从 0 开始） |
+| change | 滚动选择时触发 change 事件，`event.detail = {value}`，其中 `value` 为数组，表示 picker-view 内的 [picker-view-column](#picker-view-column) 当前选择的是第几项（下标从 0 开始） |
 
 触感反馈回调方法
 
@@ -1162,8 +1162,8 @@ movable-view 的可移动区域。
 
 | 事件名     | 说明                                                   |
 | ---------- | ------------------------------------------------------ |
-| bindcancel | 取消选择时触发                                         |
-| bindchange | value 改变时触发 change 事件，`event.detail = {value}` |
+| cancel | 取消选择时触发                                         |
+| change | value 改变时触发 change 事件，`event.detail = {value}` |
 
 #### 普通选择器：mode = selector
 
@@ -1184,7 +1184,7 @@ movable-view 的可移动区域。
 | range | array[object]/array | `[]` | mode 为 selector 或 multiSelector 时，range 有效 |
 | range-key | string | `false` | 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器显示内容 |
 | value | array | `[]` | 表示选择了 range 中的第几个（下标从 0 开始） |
-| bindcolumnchange | function |  | 列改变时触发 |
+| columnchange | function |  | 列改变时触发 |
 
 #### 多列选择器：时间选择器：mode = time
 
@@ -1251,8 +1251,8 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | 完成一次拖动后触发，`event.detail = { value }` |
-| bindchanging | 拖动过程中触发，`event.detail = { value }` |
+| change | 完成一次拖动后触发，`event.detail = { value }` |
+| changing | 拖动过程中触发，`event.detail = { value }` |
 
 #### 注意事项
 
@@ -1275,7 +1275,7 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | 点击导致 checked 改变时会触发 change 事件，`event.detail = { value }` |
+| change | 点击导致 checked 改变时会触发 change 事件，`event.detail = { value }` |
 
 ### navigator
 
@@ -1310,12 +1310,12 @@ level 有效值：
 
 | 事件名          | 说明                                              |
 | --------------- | ------------------------------------------------- |
-| bindtouchstart  | 手指触摸动作开始                                  |
-| bindtouchmove   | 手指触摸后移动                                    |
-| bindtouchend    | 手指触摸动作结束                                  |
-| bindtouchcancel | 手指触摸动作被打断                                |
-| bindlongtap     | 手指长按 350ms 之后触发                           |
-| binderror       | 当发生错误时触发 error 事件， `detail = {errMsg}` |
+| touchstart  | 手指触摸动作开始                                  |
+| touchmove   | 手指触摸后移动                                    |
+| touchend    | 手指触摸动作结束                                  |
+| touchcancel | 手指触摸动作被打断                                |
+| longtap     | 手指长按 350ms 之后触发                           |
+| error       | 当发生错误时触发 error 事件， `detail = {errMsg}` |
 
 #### API
 
@@ -1351,10 +1351,10 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindinitdone | 相机初始化完成时触发，`event.detail = { maxZoom }` |
-| bindstop | 摄像头在非正常终止时触发 |
-| binderror | 相机发生错误时触发 |
-| bindscancode | 在 `scanCode` 模式下识别到二维码时触发，`event.detail = { result, type, scanArea }` |
+| initdone | 相机初始化完成时触发，`event.detail = { maxZoom }` |
+| stop | 摄像头在非正常终止时触发 |
+| error | 相机发生错误时触发 |
+| scancode | 在 `scanCode` 模式下识别到二维码时触发，`event.detail = { result, type, scanArea }` |
 
 #### API
 
@@ -1396,16 +1396,16 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindplay | 当开始/继续播放时触发 play 事件 |
-| bindpause | 当暂停播放时触发 pause 事件 |
-| bindended | 当播放到末尾时触发 ended 事件 |
-| bindtimeupdate | 播放进度变化时触发，`event.detail = {currentTime, duration}` |
-| bindfullscreenchange | 视频进入和退出全屏时触发，`event.detail = {fullScreen` } |
-| bindwaiting | 视频出现缓冲时触发 |
-| binderror | 视频播放出错时触发 |
-| bindloadedmetadata | 视频元数据加载完成时触发。`event.detail = {width, height, duration}` |
-| bindcontrolstoggle | 切换 controls 显示隐藏时触发。`event.detail = {show}` |
-| bindseekcomplete | seek 完成时触发 |
+| play | 当开始/继续播放时触发 play 事件 |
+| pause | 当暂停播放时触发 pause 事件 |
+| ended | 当播放到末尾时触发 ended 事件 |
+| timeupdate | 播放进度变化时触发，`event.detail = {currentTime, duration}` |
+| fullscreenchange | 视频进入和退出全屏时触发，`event.detail = {fullScreen` } |
+| waiting | 视频出现缓冲时触发 |
+| error | 视频播放出错时触发 |
+| loadedmetadata | 视频元数据加载完成时触发。`event.detail = {width, height, duration}` |
+| controlstoggle | 切换 controls 显示隐藏时触发。`event.detail = {show}` |
+| seekcomplete | seek 完成时触发 |
 
 #### 注意事项
 
@@ -1426,9 +1426,9 @@ level 有效值：
 
 | 事件名      | 说明                                |
 | ----------- | ----------------------------------- |
-| bindmessage | 网页向 RN 通过 postMessage 传递数据 |
-| bindload    | 网页加载成功时候触发此事件          |
-| binderror   | 网页加载失败的时候触发此事件        |
+| message | 网页向 RN 通过 postMessage 传递数据 |
+| load    | 网页加载成功时候触发此事件          |
+| error   | 网页加载失败的时候触发此事件        |
 
 #### 注意事项
 
@@ -1488,9 +1488,9 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindscroll | 滚动时触发，`event.detail.scrollTop` 返回纵向滚动位置 |
-| bindscrolltolower | 滚动到底部 / 触底通知 |
-| bindrefresherrefresh | 自定义下拉刷新被触发 |
+| scroll | 滚动时触发，`event.detail.scrollTop` 返回纵向滚动位置 |
+| scrolltolower | 滚动到底部 / 触底通知 |
+| refresherrefresh | 自定义下拉刷新被触发 |
 
 #### 方法
 
@@ -1526,7 +1526,7 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindstickontopchange | 吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false |
+| stickontopchange | 吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false |
 
 #### 注意事项
 
