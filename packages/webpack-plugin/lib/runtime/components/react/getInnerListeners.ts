@@ -22,18 +22,16 @@ const globalEventState: GlobalEventState = {
   identifier: null
 }
 
-const labelControlHandledEvents = new WeakSet<object>()
-
-export const markLabelControlHandled = (evt: NativeSyntheticEvent<TouchEvent>) => {
-  const { nativeEvent } = evt
-  if (nativeEvent) {
-    labelControlHandledEvents.add(nativeEvent)
-  }
+type LabelControlEvent = NativeSyntheticEvent<TouchEvent> & {
+  _labelControlHandled?: boolean
 }
 
-export const isLabelControlHandled = (evt: NativeSyntheticEvent<TouchEvent>) => {
-  const { nativeEvent } = evt
-  return !!(nativeEvent && labelControlHandledEvents.has(nativeEvent))
+export const markLabelControlHandled = (evt: LabelControlEvent) => {
+  evt._labelControlHandled = true
+}
+
+export const isLabelControlHandled = (evt: LabelControlEvent) => {
+  return !!evt._labelControlHandled
 }
 
 const baseRemovePropsMap: Record<string, boolean> = {
