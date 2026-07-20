@@ -9,8 +9,10 @@ import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useContext
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren, splitStyle } from './utils'
-import { TextPassThroughContext } from './context'
+import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, isStringChildren, splitStyle, resolveTextFontSizePercentStyle, resolveTextLineHeightPercentStyle } from './utils'
+import * as perf from '@mpxjs/perf'
+import { diffAndCloneA } from '@mpxjs/utils'
+import { TextPassThroughContext, TextPassThroughContextValue } from './context'
 
 const decodeMap = {
   '&lt;': '<',
@@ -30,13 +32,17 @@ function decode (value: string) {
   }
 }
 
-function getDecodedChildren (children: ReactNode) {
-  return Children.map(children, (child) => {
-    if (typeof child === 'string') {
-      return decode(child)
-    }
+function getDecodedChildren (children: ReactNode): { children: ReactNode, isStringOnly: boolean } {
+  if (typeof children === 'string') {
+    return { children: decode(children), isStringOnly: true }
+  }
+  let isStringOnly = true
+  const decoded = Children.map(children, (child) => {
+    if (typeof child === 'string') return decode(child)
+    isStringOnly = false
     return child
   })
+  return { children: decoded, isStringOnly }
 }
 interface _TextProps extends TextProps {
   style?: TextStyle
@@ -44,29 +50,33 @@ interface _TextProps extends TextProps {
   selectable?: boolean
   'user-select'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   decode?: boolean
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
-  const inheritedText = useContext(TextPassThroughContext)
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
+  let idTotal = -1
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('text:render:total')
+
+  // ───── props 阶段 ─────
+  let idProps = -1
+  if (__mpx_perf_framework__) idProps = perf.scopeStart('text:render:props')
   const {
     style: currentStyle = {},
     allowFontScaling,
     selectable,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'user-select': userSelect,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     decode
-  } = mergedProps
+  } = props
+  if (__mpx_perf_framework__) perf.scopeEnd(idProps)
 
+  // ───── style 阶段 ─────
+  let idStyle = -1
+  if (__mpx_perf_framework__) idStyle = perf.scopeStart('text:render:style')
   const {
     normalStyle,
     hasVarDec,
@@ -74,18 +84,50 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     hasPositionFixed
   } = useTransformStyle(currentStyle, {
     enableVar,
-    externalVarContext,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
-  const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
+
+  let children: ReactNode
+  let isStringOnly: boolean
+  if (decode) {
+    ({ children, isStringOnly } = getDecodedChildren(props.children))
+  } else {
+    children = props.children
+    isStringOnly = isStringChildren(children)
+  }
+  const inheritedText = useContext(TextPassThroughContext)
+  const resolvedNormalStyle = resolveTextFontSizePercentStyle(normalStyle, inheritedText?.textStyle)
+  const childTextStyle = !isStringOnly ? (splitStyle(resolvedNormalStyle).textStyle as TextStyle | undefined) : undefined
+  const textPassThroughRef = useRef<TextPassThroughContextValue | null>(null)
+  let textPassThrough: TextPassThroughContextValue | null = null
+  if (childTextStyle) {
+    const nextTextPassThrough = {
+      textStyle: extendObject({}, inheritedText?.textStyle, childTextStyle)
+    }
+    if (diffAndCloneA(textPassThroughRef.current, nextTextPassThrough).diff) {
+      textPassThroughRef.current = nextTextPassThrough
+    }
+    textPassThrough = textPassThroughRef.current
+  }
+
+  const mergedProps = inheritedText?.pendingTextProps
+    ? extendObject({}, inheritedText.pendingTextProps, props)
+    : props
+  const finalStyle = inheritedText?.textStyle
+    ? extendObject({}, inheritedText.textStyle, resolvedNormalStyle)
+    : resolvedNormalStyle
+  resolveTextLineHeightPercentStyle(finalStyle, inheritedText?.textStyle)
 
   const nodeRef = useRef(null)
   useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
     style: finalStyle
   })
+  if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
+  // ───── innerProps 阶段 ─────
+  let idInnerProps = -1
+  if (__mpx_perf_framework__) idInnerProps = perf.scopeStart('text:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -102,27 +144,13 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
       'decode'
     ]
   )
+  if (__mpx_perf_framework__) perf.scopeEnd(idInnerProps)
 
-  const children = decode ? getDecodedChildren(mergedProps.children) : mergedProps.children
-  const isStringOnly = isStringChildren(children)
-  let childTextStyle: TextStyle | undefined
-  if (!isStringOnly) {
-    const { textStyle = {} } = splitStyle(finalStyle)
-    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
-  }
-  const textPassThrough = useTextPassThroughValue(
-    childTextStyle,
-    undefined,
-    {
-      inheritTextProps: false,
-      disabled: isStringOnly
-    }
-  )
-
+  // ───── createElement 阶段 ─────
+  let idCreate = -1
+  if (__mpx_perf_framework__) idCreate = perf.scopeStart('text:render:createElement')
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
-    extendObject({}, mergedProps, {
-      children
-    }),
+    children,
     {
       hasVarDec,
       varContext: varContextRef.current,
@@ -133,7 +161,9 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   if (hasPositionFixed) {
     finalComponent = createElement(Portal, null, finalComponent)
   }
+  if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
 
+  if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
   return finalComponent
 })
 

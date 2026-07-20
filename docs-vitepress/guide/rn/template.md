@@ -55,6 +55,7 @@
 在 RN 环境下使用 `wx:ref` 时需要注意选择器功能的限制：
 
 * 选择器仅支持 id 选择器（`#id`）和 class 选择器（`.class`）
+* `createSelectorQuery().select()` / `selectAll()` 命中自定义组件时，返回该组件实体 host 节点的信息；`virtualHost` 组件没有实体 host 节点，不支持按组件节点测量
 
 ```html
 <template>
@@ -62,6 +63,7 @@
   <view wx:ref="tref">123</view>
   <!-- 自定义组件 -->
   <test-component wx:ref="cref"></test-component>
+  <test-component id="card" wx:ref></test-component>
 </template>
 
 <script>
@@ -76,6 +78,14 @@ createPage({
     
     // 获取自定义组件实例，调用组件方法
     this.$refs.cref.show()
+
+    // 测量自定义组件的实体 host 节点
+    this.createSelectorQuery()
+      .select("#card")
+      .boundingClientRect()
+      .exec(([rect]) => {
+        console.log(rect)
+      })
   }
 })
 </script>

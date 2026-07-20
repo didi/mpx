@@ -12,19 +12,23 @@
 - [Slot](#slot)
   - [默认插槽](#默认插槽)
   - [具名插槽与 `multipleSlots`](#具名插槽与-multipleslots)
+- [动态组件](#动态组件)
+  - [基础用法](#基础用法)
+  - [注意事项](#注意事项-2)
 - [WXML 模板](#wxml-模板)
   - [模板内联定义](#模板内联定义)
   - [import 外联引入](#import-外联引入)
-  - [注意事项](#注意事项-2)
+  - [注意事项](#注意事项-3)
 - [i18n 国际化](#i18n-国际化)
   - [工程配置示例](#工程配置示例)
   - [模板中使用翻译函数](#模板中使用翻译函数)
   - [JS 中使用翻译函数](#js-中使用翻译函数)
-  - [注意事项](#注意事项-3)
+  - [注意事项](#注意事项-4)
 - [无障碍访问](#无障碍访问)
   - [模板属性](#模板属性)
   - [示例](#示例)
-  - [注意事项](#注意事项-4)
+  - [注意事项](#注意事项-5)
+- [模板相关编译配置](#模板相关编译配置)
 - [基础组件](#基础组件)
   - [通用属性](#通用属性)
   - [view](#view)
@@ -58,6 +62,7 @@
   - [video](#video)
   - [web-view](#web-view)
   - [root-portal](#root-portal)
+  - [section-list](#section-list)
   - [sticky-section](#sticky-section)
   - [sticky-header](#sticky-header)
   - [cover-view](#cover-view)
@@ -312,6 +317,66 @@ createComponent({
 
 ---
 
+## 动态组件
+
+跨端输出 RN 时支持通过 `<component is="...">` 在同一占位上按数据切换渲染不同的自定义组件，与微信小程序写法一致。`is` 接受 Mustache 表达式，值为目标组件在 `usingComponents` 中注册的标签名（全局注册同样生效）；切换 `is` 的值即切换被渲染的组件。
+
+`<component>` 中可以使用 **`range`** 属性用于控制候选组件范围：值为逗号分隔的组件名列表，用于显式声明 `is` 可能命中的组件子集。**未声明 `range` 时，框架会把当前文件 `usingComponents` 中所有组件都视为候选**，在小程序端会把这些组件全部纳入产物并参与运行时分发，造成不必要的体积与性能开销；声明 `range` 后只有列表内的组件会被纳入候选集合。
+
+### 基础用法
+
+在 `json` 区块中注册候选组件，在模板中通过 `is` 绑定当前要渲染的组件名，并通过 `range` 把候选范围收敛为实际会切换的组件。`<component>` 节点上书写的属性会作为 props 透传给目标组件，子节点会作为默认插槽内容。
+
+```html
+<template>
+  <view>
+    <view class="tabs">
+      <text bindtap="switchTab('com-a')">A</text>
+      <text bindtap="switchTab('com-b')">B</text>
+    </view>
+    <!-- range 显式限定候选组件，避免把 usingComponents 里其它组件也算进候选集 -->
+    <!-- is 绑定组件名，title 会作为 props 透传给目标组件 -->
+    <component is="{{ current }}" range="com-a,com-b" title="{{ title }}">
+      <text>默认插槽内容</text>
+    </component>
+  </view>
+</template>
+
+<script>
+import { createComponent, ref } from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    const current = ref('com-a')
+    const title = ref('hello')
+    function switchTab (name) {
+      current.value = name
+    }
+    return { current, title, switchTab }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "com-a": "../components/com-a",
+    "com-b": "../components/com-b",
+    "other-com": "../components/other-com"
+  }
+}
+</script>
+```
+
+### 注意事项
+
+1. `is` 的取值必须是已经在当前组件 `usingComponents` 中注册的标签名，或通过全局注册可见的组件名；未注册的名称无法渲染。
+2. `is` 仅用于切换**自定义组件**，不要传入 `view`、`text` 等基础组件名。
+3. 切换 `is` 时目标组件会被销毁并重新创建，组件内部的本地状态不会保留，对状态有连续性要求时应将状态提升到外层。
+4. **建议始终显式声明 `range`**，仅列出实际会被 `is` 切换到的组件名（逗号分隔）。未声明时默认以整个 `usingComponents` 作为候选集合，会拖累**小程序端产物体积与运行时性能**；列表中的组件名需与 `usingComponents` 中注册的一致。
+
+---
+
 ## WXML 模板
 
 小程序 WXML 的 **具名模板**（`<template name>` + `<template is>`）可在**同一组件内联**或通过 **`<import>`** 跨文件复用；跨端输出 RN 时，**内联与 `import` 均已完整支持**。语法与语义与微信保持一致。
@@ -559,6 +624,41 @@ createComponent({
 
 ---
 
+## 模板相关编译配置
+
+下列配置是 `@mpxjs/webpack-plugin` 中会影响 RN 模板编译结果的配置。按 `Rules` 匹配的配置均以组件文件路径为匹配对象；业务模板中不需要也不应额外书写这些配置名对应的属性。
+
+| 配置 | 作用 | 适用场景 |
+| --- | --- | --- |
+| `autoVirtualHostRules` | 命中的组件会按 virtual host 语义编译，跨平台输出时不再为该组件额外生成实体 host 包裹节点，引用方传入的外层 `class` / `style` / `wx:show` 等会作用到组件根结构。 | 组件希望自身根节点直接承接布局、样式或显隐语义，避免跨端产物多一层默认 host 节点影响布局。 |
+| `customTextRules` | 命中的组件会按文本类组件处理，跨平台输出时可将该自定义组件识别为文本节点；当组件仍需要实体 host 节点时，会使用文本容器而不是视图容器。 | 自定义组件本质是 `text` 的封装，或需要作为文本节点参与嵌套、文本样式透传、文本上下文判断。 |
+| `externalClasses` | 声明模板中需要识别的外部样式类名。跨平台输出时会把这些外部类转换为目标平台可承接的样式传递形式，默认值为 `['custom-class', 'i-class']`。 | 跨端开发时使用微信 `externalClasses` 语法传递外部样式类，让组件内部能够访问到外部定义的样式。 |
+| `rnConfig.customBuiltInComponents` | RN 输出时覆盖或扩展模板编译期识别的基础组件：同名 key 覆盖内置基础组件，新 key 作为扩展基础组件使用；详见下方[基础组件](#基础组件)中的自定义覆盖与扩展说明。 | 内置基础组件不满足业务需求，或需要在 RN 模板中直接使用一组宿主特有基础组件。 |
+
+`defs` / `env` / `mode` 也会参与模板表达式和条件编译判断，其中 `__mpx_mode__`、`__mpx_env__` 与自定义 `defs` 的模板访问方式见[数据绑定](#数据绑定)。
+
+需要跨平台获得稳定一致的 virtual host 或自定义文本组件行为时，应通过 `autoVirtualHostRules` 与 `customTextRules` 配置控制，不要依赖仅部分平台支持的组件 `options` 选项。这样可以由编译链路统一抹平跨端差异，并按平台或目录精确控制生效范围。
+
+```js
+// vue.config.js
+module.exports = {
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        autoVirtualHostRules: {
+          include: [/src\/components\/layout/]
+        },
+        customTextRules: {
+          include: [/src\/components\/text/]
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
 ## 基础组件
 
 Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文档。
@@ -576,13 +676,15 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | style | string |  | 组件内联样式 |
 | enable-offset | boolean | `false` | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息 |
 | enable-var | boolean | `true` | 默认支持使用 css variable，若想关闭该功能可设置为 false |
-| parent-font-size | number |  | 父组件字体大小，主要用于百分比计算的场景，如 font-size: 100% |
+| enable-text-pass-through | boolean | `false` | RN 环境特有属性，开启文本样式和文本属性透传上下文，请在动态添加文本样式或文本属性时开启 |
 | parent-width | number |  | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度 |
 | parent-height | number |  | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度 |
 
 以上基础组件的通用属性仅在 RN 环境中支持。在跨平台输出到小程序或 Web 时，这些属性将无法使用。
 
 由于 view、text、scroll-view、image 和 input 组件都是基于 RN 原生组件实现的，因此这些组件默认继承原生组件支持的属性。
+
+与微信小程序一致，RN 输出支持只传递属性名不传递属性值的布尔写法，例如 `<scroll-view scroll-y />` 等价于 `<scroll-view scroll-y="{{ true }}" />`。
 
 ### view
 
@@ -609,10 +711,11 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 #### 注意事项
 
+- **view 内可直接插入文字**：Mpx2RN 支持在 `view` 等非 `text` 组件中直接插入文字内容，无需严格遵循 RN 中文字必须由 `text` 组件包裹的限制，框架会在编译时自动为裸文字插入一个 `text` 包裹节点。但该行为存在性能开销——会额外多引入一个 `view` 层级，因此如果可以直接使用 `text` 组件包裹文字，仍应优先使用 `text`，以获得更优的渲染性能。`view` 内多个 `text` 的跨平台布局对齐方案见 [样式开发最佳实践 · text 跨平台布局对齐](./rn-style-practice.md#text-跨平台布局对齐)。
 - 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
-- 出于性能考虑，基础组件的样式增强能力（如 `enable-var`、`enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
+- 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
 
 ### text
 
@@ -629,7 +732,6 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 #### 注意事项
 
-- 未包裹 text 标签的文本，会自动包裹 text 标签。
 - text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
 
 ### scroll-view
@@ -1048,6 +1150,8 @@ movable-view 的可移动区域。
 
 从底部弹起的滚动选择器。
 
+`picker` 节点上的文本样式（如 `color`、`font-size` 等）会透传给触发区域的子节点，用于对齐小程序中父节点文本样式影响子内容的表现。
+
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
@@ -1345,6 +1449,61 @@ level 有效值：
 #### 注意事项
 
 - style 样式中不支持使用百分比计算、css variable
+
+### section-list
+
+跨端虚拟列表组件，可自定义分组头、列表头、列表项，自动分段渲染兼容各端。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| height | string \| number | `100%` | 组件高度 |
+| width | string \| number | `100%` | 组件宽度 |
+| list-data | array | `[]` | 列表数据；分组头数据需包含 `isSectionHeader: true`，分组尾数据需包含 `isSectionFooter: true` |
+| enable-sticky | boolean | `false` | 启用分组吸顶 |
+| scroll-event-throttle | number | `0` | 控制 scroll 事件触发频率 |
+| enhanced | boolean | `false` | 开启滚动增强能力 |
+| bounces | boolean | `true` | iOS 下边界弹性控制，需同时开启 `enhanced` |
+| use-list-header | boolean | `false` | 使用自定义列表头 |
+| list-header-data | object | `{}` | 列表头数据 |
+| use-list-footer | boolean | `false` | 使用自定义列表页脚 |
+| list-footer-data | object | `{}` | 列表页脚数据 |
+| generic:recycle-item | string |  | 列表项抽象节点组件名 |
+| generic:section-header | string |  | 列表分组头抽象节点组件名 |
+| generic:section-footer | string |  | 列表分组尾抽象节点组件名 |
+| generic:list-header | string |  | 列表头抽象节点组件名 |
+| generic:list-footer | string |  | 列表页脚抽象节点组件名 |
+| item-height | object | `{}` | 列表项高度配置，支持 `getter` / `value` |
+| section-header-height | object | `{}` | 分组头部高度配置，支持 `getter` / `value` |
+| section-footer-height | object | `{}` | 分组尾部高度配置，支持 `getter` / `value` |
+| list-header-height | number | `0` | 列表头部固定高度，不支持 `getter` / `value` |
+| enable-back-to-top | boolean | `false` | 点击状态栏时滚动到顶部，仅 iOS 环境支持 |
+| end-reached-threshold | number | `0.1` | 触底事件触发阈值 |
+| refresher-enabled | boolean | `false` | 开启自定义下拉刷新 |
+| refresher-triggered | boolean | `false` | 设置当前下拉刷新状态，true 表示已触发 |
+| show-scrollbar | boolean | `true` | 滚动条显隐控制 |
+| simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，允许多个手势同时识别和处理 |
+| wait-for | array\<object> | `[]` | RN 环境特有属性，允许延迟激活处理某些手势 |
+
+#### 事件
+
+| 事件名 | 说明 |
+| --- | --- |
+| bindscroll | 滚动时触发，`event.detail.scrollTop` 返回纵向滚动位置 |
+| bindscrolltolower | 滚动到底部 / 触底通知 |
+| bindrefresherrefresh | 自定义下拉刷新被触发 |
+
+#### 方法
+
+| 方法名 | 说明 |
+| --- | --- |
+| scrollToIndex | 通过 ref 获取实例后可调用，`scrollToIndex({ index, animated, viewOffset, viewPosition })`，用于滚动到指定索引 |
+
+#### 注意事项
+
+- 当使用列表项、列表头、自定义分组头或者自定义分组尾，必须配置对应 `item-height`、`section-header-height`、`section-footer-height`、`list-header-height` 高度参数，否则会出现滚动异常。
+- RN 环境中，section-list 通过 RN 的 `SectionList` 实现分组吸顶。开启 `enable-sticky` 且快速滑动时，自定义分组头有时会出现闪烁，属于 RN 底层实现限制。
 
 ### sticky-section
 
