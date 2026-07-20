@@ -4,6 +4,11 @@
 const fs = require('fs')
 const path = require('path')
 const u = require('./review-loop-utils')
+const snapshot = require('./git-snapshot')
+
+function hasEntries (dir) {
+  return fs.existsSync(dir) && fs.readdirSync(dir).length > 0
+}
 
 function main () {
   const args = u.parseArgs(process.argv)
@@ -18,8 +23,16 @@ function main () {
   if (fs.existsSync(u.statePath(taskId)) && !args.force) {
     u.fail('Workspace already exists for task ' + taskId + '. Use --force to overwrite initial files.', 2)
   }
+  if (args.force && [
+    path.join(dir, 'reviews'),
+    path.join(dir, 'runtime', 'reviewer-runs')
+  ].some(hasEntries)) {
+    u.fail('Workspace contains immutable review history; use a new task id instead of --force.', 2)
+  }
 
-  ;['reviews', 'diffs', 'logs', path.join('runtime', 'roles')].forEach(function (subdir) {
+  snapshot.captureBaseline(taskId)
+
+  ;['reviews', 'diffs', 'logs', path.join('runtime', 'roles'), path.join('runtime', 'reviewer-runs')].forEach(function (subdir) {
     u.ensureDir(path.join(dir, subdir))
   })
 
@@ -47,6 +60,8 @@ function main () {
     codeStatus: 'pending',
     awaitingUserConfirmation: false,
     lastReviewFile: '',
+    lastReviewerRunDigest: '',
+    confirmationOverrides: [],
     terminationReason: '',
     roleMode: '',
     platform: args.platform || '',

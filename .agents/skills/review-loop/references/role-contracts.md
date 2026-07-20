@@ -1,6 +1,8 @@
 # Role Contracts
 
-All roles are real subagents. The main agent orchestrates, prepares inputs, runs scripts, and asks the user for confirmation.
+Planner, plan-reviewer, coder, and code-reviewer are real native subagents. The
+main agent orchestrates them, prepares inputs, persists reviewer results, and
+asks the user for confirmation.
 
 ## planner
 
@@ -38,9 +40,19 @@ Responsibilities:
 2. Focus on boundary and exceptional cases, performance cost, elegance and simplicity, and reuse of existing project flows with consistent local style.
 3. Do not repeat resolved findings.
 4. Do not edit `plan.md`.
-5. Output structured JSON only.
+5. Return one strict JSON object to the orchestrator; do not write repository
+   files. The orchestrator owns persistence and validation.
+6. Start in a fresh context. Read `goal.md` and repository constraints first,
+   then the plan; independently inspect every claimed impact path, full related
+   functions, direct callers/consumers, adjacent implementations, and tests.
+   Read earlier reviews and revision records last, only for deduplication.
+7. On Codex and Claude Code, launch this role as a fresh native subagent with
+   paths-only initial task input and no inherited conversation.
+8. Construct at least one counterexample that could falsify a behavior
+   assumption, and record review paths, symbol traces, checks, counterexamples,
+   residual risks, and reviewer configuration in `evidence`.
 
-Output:
+Output returned to the orchestrator:
 
 - `reviews/plan-review-N.json`
 
@@ -81,14 +93,49 @@ Responsibilities:
 2. Prioritize bugs, behavior regressions, missing tests, repository rule violations, and plan mismatch.
 3. Focus on boundary and exceptional cases, performance cost, elegance and simplicity, and reuse of existing project flows with consistent local style.
 4. Do not edit source files.
-5. Output structured JSON only.
+5. Return one strict JSON object to the orchestrator; do not write repository
+   files. The orchestrator owns persistence and validation.
+6. Start in a fresh context. Read `goal.md`, repository constraints, cumulative
+   diff, round delta, and scope metadata before the confirmed plan, coder log,
+   or validation claims. Inspect full changed functions, direct
+   callers/consumers, adjacent implementations, and relevant tests.
+7. On Codex and Claude Code, launch this role as a fresh native subagent with
+   paths-only initial task input and no inherited conversation.
+8. Check target behavior, plan mismatch, unexpected paths, whether tests cover
+   the failure mode, and whether reported validation is credible. Construct at
+   least one falsifying counterexample; for UI/platform work distinguish an
+   intermediate value assertion from user-visible behavior.
+9. Record all required `evidence`. Give every unexpected path an explicit
+   disposition; do not approve while any disposition is `blocking`.
 
-Output:
+Output returned to the orchestrator:
 
 - `reviews/code-review-N.json`
 
 ## Shared Reviewer JSON Requirements
 
-Reviewer JSON must follow `schemas/review.schema.json` and pass `scripts/validate-review-json.js`.
+Reviewer JSON must follow `schemas/review.schema.json`. `review-manager.js
+--finalize` persists it only for the state-derived next round during the
+matching reviewing phase. Persisted review artifacts are immutable;
+new files use exclusive creation and only byte-identical retries against an
+existing regular non-symlink file are accepted. The task workspace and
+`reviews/` path components must also be canonical non-symlink directories. The
+orchestrator advances state only with the current task's canonical regular
+persisted review. Persistence, advancement, validation, and migration share
+this path safety contract. Reviewer-run records bind every initial input to a
+SHA-256 digest; code reviews additionally bind the validated snapshot tree.
+Persisted reviews must also pass
+`scripts/validate-review-json.js`.
+
+Before repository inspection, each reviewer must verify that its paths-only
+task is the first visible user task message and that no parent planner, coder,
+or orchestrator conversation is visible. It records the exact passed
+`context-isolation-preflight` check required by `review-manager.js --finalize`.
+This assertion is defense in depth; the host-native fresh-context launch is the
+actual isolation boundary.
 
 Use concise findings. Each finding must be actionable and must include a stable `id`.
+Approval is allowed without findings, but never without complete evidence.
+The reviewer must follow a no-write role contract. Prepare/finalize bind the
+Git tree and reject drift, and the orchestrator overwrites `reviewerConfig`
+with the host-native contract; reviewer self-reporting is not trusted.
