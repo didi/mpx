@@ -1,0 +1,19 @@
+{
+  "eval_id": 2,
+  "eval_name": "script-json-adaptation",
+  "complexity": "normal",
+  "focus": "script/json",
+  "prompt": "请对附件中的 user-profile.mpx 页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style/json），不要省略任何内容。",
+  "files": ["input/user-profile.mpx"],
+  "assertions": [
+    {"id": "j0", "text": "script: all wx.xxx API replaced with mpx.xxx (request/navigateTo/showModal/getStorageSync/setStorageSync/removeStorageSync/showToast/reLaunch)", "category": "script"},
+    {"id": "j1", "text": "script: onShareTimeline removed or isolated with conditional compile (RN unsupported)", "category": "script"},
+    {"id": "j2", "text": "script: onTabItemTap removed or isolated with conditional compile (RN unsupported)", "category": "script"},
+    {"id": "j3", "text": "script: setTabBarBadge/removeTabBarBadge isolated with conditional compile (RN unsupported)", "category": "script"},
+    {"id": "j4", "text": "script: wx.getUserProfile isolated or replaced (RN unsupported)", "category": "script"},
+    {"id": "j5", "text": "script: no e.target.dataset usage (event params via inline syntax or e.currentTarget.dataset)", "category": "script"},
+    {"id": "j7", "text": "json: enablePullDownRefresh handled for RN (page not scrollable by default)", "category": "json"},
+    {"id": "j8", "text": "template: data- attributes removed (inline event params used instead)", "category": "template"},
+    {"id": "j9", "text": "script: onShareAppMessage preserved (RN supported, should not be removed)", "category": "script"}
+  ]
+}

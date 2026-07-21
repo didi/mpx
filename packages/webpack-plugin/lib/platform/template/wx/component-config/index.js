@@ -40,9 +40,24 @@ const webView = require('./web-view')
 const label = require('./label')
 const wxs = require('./wxs')
 const fixComponentName = require('./fix-component-name')
+const customBuiltInComponent = require('./custom-built-in-component')
 const rootPortal = require('./root-portal')
 const stickyHeader = require('./sticky-header')
 const stickySection = require('./sticky-section')
+
+/**
+ * 未命中上方任一组件 test 的标签，仍须走 normalizeComponentRules 中的通用
+ * 指令 / 属性 / 事件链路（如 wx 源码输出 ali 时 bindtap → onTap）。
+ * 历史上在 template/wx/index.js 里通过 normalizeComponentRules(cfgs.concat({}), spec)
+ * 末尾塞入空对象，由 run-rules 对缺省 test 退化为恒 true；此处改为显式配置且必须排在最后。
+ */
+function defaultCatchAllComponentConfig () {
+  return {
+    test () {
+      return true
+    }
+  }
+}
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -84,6 +99,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
   // 转换规则只需以微信为基准配置微信和支付宝的差异部分，比如微信和支付宝都支持但是写法不一致，或者微信支持而支付宝不支持的部分(抛出错误或警告)
   return [
     fixComponentName({ print }),
+    customBuiltInComponent(),
     ...unsupported({ print }),
     ad({ print }),
     view({ print }),
@@ -127,6 +143,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     label({ print }),
     rootPortal({ print }),
     stickyHeader({ print }),
-    stickySection({ print })
+    stickySection({ print }),
+    defaultCatchAllComponentConfig()
   ]
 }
