@@ -345,7 +345,7 @@ movable-view的可移动区域。
 
 | 事件名           | 说明                |
 | ----------------| ------------------ |
-| change      | radio-group 中选中项发生改变时触发 change 事件，`event.type = 'change'`，`event.detail = { value: 选中的 radio 的 value }` |
+| change | radio-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 radio 的 value 的数组 ] }` |
 
 ### form
 表单。
