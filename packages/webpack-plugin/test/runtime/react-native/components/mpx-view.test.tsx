@@ -826,6 +826,10 @@ describe('MpxView', () => {
     const error = jest.spyOn(console, 'error').mockImplementation(jest.fn())
 
     try {
+      expect(parseBgImage('linear-gradient(0.25turn, red, blue)').linearInfo.direction).toBe('0.25turn')
+      expect(parseBgImage('linear-gradient(1.5707963267948966rad, red, blue)').linearInfo.direction).toBe('1.5707963267948966rad')
+      expect(parseBgImage('linear-gradient(100grad, red, blue)').linearInfo.direction).toBe('100grad')
+      expect(parseBgImage('linear-gradient(90deg, tomato, blue)').linearInfo.colors).toEqual(['tomato', 'blue'])
       expect(parseBgImage('linear-gradient(100grad, red 0%, green, blue 100%)')).toEqual({
         type: 'linear',
         linearInfo: {

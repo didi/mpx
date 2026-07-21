@@ -18,6 +18,7 @@ const PickerRegion = require('../../../../lib/runtime/components/react/mpx-picke
 const PickerSelector = require('../../../../lib/runtime/components/react/mpx-picker/selector').default
 const PickerTime = require('../../../../lib/runtime/components/react/mpx-picker/time').default
 const MpxPickerView = require('../../../../lib/runtime/components/react/mpx-picker-view').default
+const MpxInlineText = require('../../../../lib/runtime/components/react/mpx-inline-text').default
 const Portal = require('../../../../lib/runtime/components/react/mpx-portal').default
 const PopupBase = require('../../../../lib/runtime/components/react/mpx-popup/popupBase').default
 const { FormContext, RouteContext } = require('../../../../lib/runtime/components/react/context')
@@ -110,6 +111,128 @@ describe('MpxPicker', () => {
       detail: { value: '0' }
     }))
     expect(screen.UNSAFE_getByType(PopupBase).props.visible).toBe(false)
+  })
+
+  it('passes mode props only to picker content', () => {
+    const range = [{ name: 'Beijing' }, { name: 'Shanghai' }]
+    const selectorRender = renderWithRoute(
+      <Portal.Host pageId={1}>
+        <Picker
+          testID="selector-picker"
+          mode="selector"
+          value={1}
+          range={range}
+          range-key="name"
+          style={{ width: 100 }}
+        />
+      </Portal.Host>
+    )
+    const selector = selectorRender.UNSAFE_getByType(PickerSelector)
+    const selectorTrigger = selectorRender.getByTestId('selector-picker')
+    expect(selector.props.range).toBe(range)
+    expect(selector.props['range-key']).toBe('name')
+    expect(selector.props.style).toBeUndefined()
+    expect(selector.props.children).toBeUndefined()
+    expect(selectorTrigger.props.range).toBeUndefined()
+    expect(selectorTrigger.props['range-key']).toBeUndefined()
+    selectorRender.unmount()
+
+    const cases = [
+      { mode: 'time', component: PickerTime, specificProps: { start: '00:00', end: '23:59' } },
+      { mode: 'date', component: PickerDate, specificProps: { fields: 'day' } },
+      { mode: 'region', component: PickerRegion, specificProps: { level: 'city', 'custom-item': 'All' } }
+    ]
+    cases.forEach(({ mode, component, specificProps }) => {
+      const pickerRender = renderWithRoute(
+        <Portal.Host pageId={1}>
+          <Picker testID={`${mode}-picker`} mode={mode as any} {...specificProps} />
+        </Portal.Host>
+      )
+      const modal = pickerRender.UNSAFE_getByType(component)
+      const trigger = pickerRender.getByTestId(`${mode}-picker`)
+      Object.keys(specificProps).forEach((key) => {
+        expect(modal.props[key]).toBe((specificProps as any)[key])
+        expect(trigger.props[key]).toBeUndefined()
+      })
+      pickerRender.unmount()
+    })
+  })
+
+  it('refreshes popup content and height with the latest props before showing', () => {
+    const pickerRender = renderWithRoute(
+      <Portal.Host pageId={1}>
+        <Picker testID="latest-picker" mode="selector" value={0} range={[]} />
+      </Portal.Host>
+    )
+    expect(pickerRender.UNSAFE_getByType(PopupBase).props.contentHeight).toBe(310)
+
+    pickerRender.rerender(
+      <RouteContext.Provider value={{ pageId: 1, navigation: {} }}>
+        <Portal.Host pageId={1}>
+          <Picker
+            testID="latest-picker"
+            mode="selector"
+            value={0}
+            range={['Beijing', 'Shanghai']}
+            header-text="City"
+          />
+        </Portal.Host>
+      </RouteContext.Provider>
+    )
+    expect(pickerRender.queryByText('Beijing')).toBeNull()
+    fireEvent.press(pickerRender.getByTestId('latest-picker').parent)
+    expect(pickerRender.getByText('Beijing')).toBeTruthy()
+    expect(pickerRender.UNSAFE_getByType(PopupBase).props.contentHeight).toBe(350)
+  })
+
+  it('updates multi-selector content with the latest keyed range', () => {
+    const pickerRender = renderWithRoute(
+      <Portal.Host pageId={1}>
+        <Picker
+          mode="multiSelector"
+          value={[0]}
+          range={[{ name: ['Old'] }]}
+          range-key="name"
+        />
+      </Portal.Host>
+    )
+    expect(pickerRender.getByText('Old')).toBeTruthy()
+
+    pickerRender.rerender(
+      <RouteContext.Provider value={{ pageId: 1, navigation: {} }}>
+        <Portal.Host pageId={1}>
+          <Picker
+            mode="multiSelector"
+            value={[0]}
+            range={[{ label: ['New'] }]}
+            range-key="label"
+          />
+        </Portal.Host>
+      </RouteContext.Provider>
+    )
+    expect(pickerRender.getByText('New')).toBeTruthy()
+  })
+
+  it('defaults selector range and passes text styles to trigger children', () => {
+    const pickerRender = renderWithRoute(
+      <Portal.Host pageId={1}>
+        <Picker
+          testID="styled-picker"
+          mode="selector"
+          value={0}
+          style={{ width: 100, color: 'red', fontSize: 20 }}
+        >
+          <MpxInlineText testID="picker-text">Select</MpxInlineText>
+        </Picker>
+      </Portal.Host>
+    )
+
+    expect(pickerRender.UNSAFE_getByType(PickerSelector).props.range).toEqual([])
+    expect(pickerRender.getByTestId('styled-picker').props.style).toEqual({ width: 100 })
+    expect(pickerRender.getByTestId('picker-text').props.style).toEqual({
+      color: 'red',
+      fontSize: 20
+    })
   })
 
   it('maps selector and multi selector values', () => {
