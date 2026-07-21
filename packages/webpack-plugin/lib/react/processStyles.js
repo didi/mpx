@@ -12,19 +12,20 @@ module.exports = function (styles, {
 }, callback) {
   const { getRequestString } = createHelpers(loaderContext)
   let content = ''
+  const styleResults = []
   let output = '/* styles */\n'
   if (styles.length) {
-    const warn = (msg) => {
+    const warn = (msg, loc) => {
       loaderContext.emitWarning(
-        new Error('[Mpx style warning][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style warning][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
       )
     }
-    const error = (msg) => {
+    const error = (msg, loc) => {
       loaderContext.emitError(
-        new Error('[Mpx style error][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
       )
     }
-    const { mode, srcMode } = loaderContext.getMpx()
+    const { mode, srcMode, hasUnoCSS } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -35,11 +36,22 @@ module.exports = function (styles, {
       // todo 建立新的request在内部导出classMap，便于样式模块复用
       loaderContext.importModule(JSON.parse(getRequestString('styles', style, extraOptions, i))).then((result) => {
         if (Array.isArray(result)) {
-          result = result.map((item) => {
-            return item[1]
-          }).join('\n')
+          result.forEach((item) => {
+            const css = item[1]
+            styleResults.push({
+              content: css,
+              map: item[3],
+              filename: loaderContext.resourcePath
+            })
+            content += css.trim() + '\n'
+          })
+        } else {
+          styleResults.push({
+            content: result,
+            filename: loaderContext.resourcePath
+          })
+          content += result.trim() + '\n'
         }
-        content += result.trim() + '\n'
         callback()
       }).catch((e) => {
         callback(e)
@@ -55,7 +67,9 @@ module.exports = function (styles, {
         const formatValueName = '_f'
         const classMap = getClassMap({
           content,
+          styles: styleResults,
           filename: loaderContext.resourcePath,
+          inputFileSystem: loaderContext._compiler && loaderContext._compiler.inputFileSystem,
           mode,
           srcMode,
           ctorType,
@@ -70,13 +84,44 @@ module.exports = function (styles, {
         }, '')
         if (ctorType === 'app') {
           output += `
-          var __appClassMap
-          global.__getAppClassStyle = function(className) {
-            if(!__appClassMap) {
-              __appClassMap = {${classMapCode}};
-            }
-            return global.__GCC(className, __appClassMap, __classCache);
-          };\n`
+          global.__classCaches = global.__classCaches || [];
+          var __classCache = new Map();
+          global.__classCaches.push(__classCache);\n`
+
+          if (hasUnoCSS) {
+            output += `
+            var __unoClassMap;
+            global.__getUnoStyle = function(className) {
+              if (!__unoClassMap) {
+                __unoClassMap = {__unoCssMapPlaceholder__}
+              }
+              return global.__GCC(className, __unoClassMap, __classCache);
+            };
+            var __unoVarClassMap;
+            global.__getUnoVarStyle = function(className) {
+              if (!__unoVarClassMap) {
+                __unoVarClassMap = {__unoVarUtilitiesCssMap__}
+              }
+              return global.__GCC(className, __unoVarClassMap, __classCache);
+            };\n`
+            output += `
+            var __appClassMap
+            global.__getAppClassStyle = function(className) {
+              if(!__appClassMap) {
+                __appClassMap = {__unoCssMapPreflights__, ${classMapCode}};
+              }
+              return global.__GCC(className, __appClassMap, __classCache);
+            };\n`
+          } else {
+            output += `
+            var __appClassMap
+            global.__getAppClassStyle = function(className) {
+              if(!__appClassMap) {
+                __appClassMap = {${classMapCode}};
+              }
+              return global.__GCC(className, __appClassMap, __classCache);
+            };\n`
+          }
         } else {
           output += `
           var __classMap
