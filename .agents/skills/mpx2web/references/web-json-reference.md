@@ -1,33 +1,13 @@
 # Mpx2Web JSON 配置参考
 
-本文档只记录 Web 输出相关 JSON / `webConfig` 差异。通用 `app.json`、页面 JSON、组件 JSON 字段语义当前先参考 `../mpx2rn` 公共部分，未来替换为 mpx base skill。
+本文档只记录 Web 输出相关 JSON / `webConfig` 差异。通用 `app.json`、页面 JSON、组件 JSON 字段语义与配置写法统一参考 [Mpx2RN JSON 配置参考](../../mpx2rn/references/rn-json-reference.md) 中的公共部分，未来替换为 mpx base skill。
 
 ## 目录
 
-- [Web 路由页面](#web-路由页面)
 - [Web 页面配置](#web-页面配置)
 - [Web tabBar](#web-tabbar)
 - [Web 分包与异步组件](#web-分包与异步组件)
 - [Web 运行配置](#web-运行配置)
-- [Web 抽象节点](#web-抽象节点)
-
----
-
-## Web 路由页面
-
-应用级 `pages` 会注册 Web 路由页面。Web 支持字符串页面路径，也支持 `{ src, path? }` 对象；`path` 可作为 Web 路由别名。
-
-```JSON5
-{
-  pages: [
-    "pages/index",
-    { src: "pages/detail", path: "detail" }
-  ],
-  entryPagePath: "pages/index"
-}
-```
-
-`entryPagePath` 指定 Web 初始页面；未定义时使用 `pages` 数组首个页面。
 
 ---
 
@@ -67,36 +47,9 @@ Web 支持运行时渲染内建 tabBar；`custom: true` 时加载 `./custom-tab-
 
 ## Web 分包与异步组件
 
-Web 分包与异步组件由 webpack 动态 `import()` 与浏览器 chunk 加载机制处理。
+`packages`、`?root`、`usingComponents` 与 `componentPlaceholder` 的通用配置写法分别参考 [使用 `packages` 定义分包](../../mpx2rn/references/rn-json-reference.md#使用-packages-定义分包) 和 [异步分包组件](../../mpx2rn/references/rn-json-reference.md#异步分包组件)。
 
-### 页面分包
-
-在 `packages` 中声明分包入口，并通过 `?root=分包名` 指定分包名。
-
-```JSON5
-{
-  pages: ["pages/index"],
-  packages: ["./packageA/app.mpx?root=packageA"]
-}
-```
-
-### 异步组件
-
-在 `usingComponents` 路径上声明 `?root=分包名` 可标记 Web 异步组件，并在 `componentPlaceholder` 中配置同步占位组件。
-
-```JSON5
-{
-  usingComponents: {
-    hello: "../../packageB/components/hello?root=packageB",
-    "simple-hello": "../components/hello"
-  },
-  componentPlaceholder: {
-    hello: "simple-hello"
-  }
-}
-```
-
-占位组件需可同步解析，且占位组件本身不要再标记为异步。
+Web 输出通过 webpack 动态 `import()` 与浏览器 chunk 加载机制处理分包和异步组件，无需注册 RN 侧的 `loadChunkAsync` / `downloadChunkAsync`。SSR 场景还需启用 `webConfig.useSSR`，详见 [SSR 专项参考](./ssr-reference.md)。
 
 ---
 
@@ -114,9 +67,3 @@ Web 分包与异步组件由 webpack 动态 `import()` 与浏览器 chunk 加载
 | `webConfig.useSSR` | SSR 模式下使用异步分包 / 异步组件时设为 `true`，详见 [SSR 专项参考](./ssr-reference.md)。 |
 | `webConfig.disablePageTransition` | 是否禁用 Web 页面切换动画，默认 `true`。 |
 | `output.publicPath` | webpack 静态资源加载路径；非根路径部署时需与资源发布路径匹配。 |
-
----
-
-## Web 抽象节点
-
-Web 支持 `componentGenerics` 与模板中的 `generic:*` 组合。带 `default` 的项会参与组件依赖收集，传入的具体组件需要在当前页面或组件的 `usingComponents` 中注册。

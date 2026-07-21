@@ -2,7 +2,7 @@
 name: mpx2web
 description: Mpx 输出 Web（Mpx2Web）的 Web-only 差异指南，聚焦 Web 端特有配置、浏览器能力、H5 SDK、Vue 组件、Web CSS、路由部署、SSR/SEO 与 Web 运行时差异。当前尚无 mpx base skill，遇到通用 Mpx 基础语法、通用条件编译或通用组件开发问题时，先读取 mpx2rn skill 中可复用的公共部分，再回到本 skill 处理 Web-only 差异；未来有 mpx base skill 后替换该过渡指引。
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   author: wangcuijuan
 ---
 
@@ -19,7 +19,7 @@ Web-only 内容包括：
 - Web 运行时配置：路由、部署路径、挂载节点、分包、异步组件、SSR。
 - 浏览器能力：DOM、`window` / `document`、HTML/SVG 原生标签、Web 标准无障碍属性。
 - H5 生态：第三方 H5 SDK、Vue 组件、自定义 Web 内建组件。
-- Web 样式：`rpx` 到 Web 单位转换、viewport、安全区域、Web-only CSS、浏览器滚动、细线增强。
+- Web 样式：`rpx` 到 Web 单位转换、viewport、浏览器私有 CSS 与浏览器页面滚动差异。
 - Web 降级：浏览器无法提供的宿主能力在 Web 下的替代方向。
 
 ## 知识库索引
@@ -28,12 +28,13 @@ Web-only 内容包括：
 | --- | --- |
 | [临时公共基础：Mpx2RN 公共部分](../mpx2rn/SKILL.md) | 当前无 mpx base skill 时，读取其中 SFC、通用条件编译、通用模板/脚本/样式/JSON 开发约束；忽略 RN-only 适配结论 |
 | [条件编译](./references/conditional-compile.md) | 判断某段逻辑是否属于 Web-only，是否应隔离到 Web 输出 |
-| [Web 模板能力参考](./references/web-template-reference.md) | 使用 HTML/SVG 原生标签、Web 标准属性、Web 缺失/降级组件时读取 |
+| [Web 模板能力参考](./references/web-template-reference.md) | 使用 HTML/SVG 原生标签、Web 标准属性、核对 Web 内建基础组件能力或处理 Web 缺失/降级组件时读取 |
 | [Web 脚本能力参考](./references/web-script-reference.md) | 处理 Web 路由、浏览器生命周期、Web 运行时实例差异、状态与 SSR 入口时读取 |
-| [Web 样式实践](./references/web-style-practice.md) | 处理 Web 单位、viewport、安全区域、Web-only CSS、滚动与细线时读取 |
+| [Web 样式实践](./references/web-style-practice.md) | 处理 Web 下的 `rpx` 转换、viewport、浏览器私有 CSS 与页面滚动差异时读取 |
 | [Web 环境 API 参考](./references/web-api-reference.md) | 核对 `@mpxjs/api-proxy` 在 Web 的浏览器实现与不可用能力时读取 |
-| [Web JSON 配置参考](./references/web-json-reference.md) | 处理 Web 路由、tabBar、分包、异步组件、抽象节点、Web 配置时读取 |
+| [Web JSON 配置参考](./references/web-json-reference.md) | 处理 Web 路由、tabBar、分包、异步组件、Web 配置时读取 |
 | [H5 生态混合开发](./references/web-hybrid-dev.md) | 接入 DOM、H5 SDK、Vue 组件、自定义 Web 内建组件时读取 |
+| [WebView Bridge 参考](./references/webview-bridge-reference.md) | 在 `web-view` 嵌入页中使用 `@mpxjs/webview-bridge`，处理消息、导航、自定义 API、宿主 SDK 与来源安全时读取 |
 | [SSR 专项参考](./references/ssr-reference.md) | 处理 SSR、SEO、服务端数据预取、状态注水、异步分包 hydrate 时读取 |
 
 ## Web-only 判断
@@ -44,6 +45,7 @@ Web-only 内容包括：
 - 需要浏览器对象、DOM、H5 SDK、Vue 组件、Web-only CSS：使用本 skill。
 - 需要 Web 路由、部署、分包、异步组件、SSR/SEO：使用本 skill。
 - Web 下缺失某类宿主能力，需要 Web 替代方案：使用本 skill。
+- 需要判断某个基础组件在 Web 下是否有内建实现、实现到什么程度：读取 Web 模板能力参考中的组件说明，并以运行时源码而非标签能否编译作为依据。
 
 ## 任务流程
 
@@ -58,6 +60,7 @@ Web-only 内容包括：
 
 - [ ] 文档或实现没有重复讲 `mpx2rn` 公共部分当前承接的基础语法、节点访问、条件编译语法或通用组件规范。
 - [ ] Web-only 能力、Web-only CSS、H5 SDK、Vue 组件、SSR 客户端逻辑已被最小范围隔离。
+- [ ] 涉及基础组件兼容性时，已区分“有 Web 内建实现”“属性/事件已实现”“完整对齐宿主能力”，没有仅凭标签可编译就宣称支持。
 - [ ] Web 路由、部署路径、资源路径、挂载节点、分包和异步组件配置符合 Web 输出要求。
 - [ ] SSR 页面没有在服务端阶段访问浏览器对象。
 - [ ] 已完成 Web 目标构建校验。
