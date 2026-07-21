@@ -17,10 +17,10 @@
     "\\.(png|jpg|jpeg|gif|webp)$": "<rootDir>/test/__mocks__/fileMock.js"
   },
   "setupFilesAfterEnv": [
-    "<rootDir>/test/runtime/react/setup.js"
+    "<rootDir>/test/runtime/react-native/components/setup.js"
   ],
   "testMatch": [
-    "<rootDir>/test/runtime/react/**/*.test.(js|jsx|ts|tsx)"
+    "<rootDir>/test/runtime/react-native/components/**/*.test.(js|jsx|ts|tsx)"
   ],
   "testPathIgnorePatterns": [
     "/node_modules/",

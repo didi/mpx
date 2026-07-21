@@ -1,0 +1,507 @@
+import React from 'react'
+import { render, screen } from '@testing-library/react-native'
+import MpxText from '../../../../lib/runtime/components/react/mpx-text'
+import { TextPassThroughContext } from '../../../../lib/runtime/components/react/context'
+
+// Mock mpx-portal
+jest.mock('../../../../lib/runtime/components/react/mpx-portal', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mockReact = require('react')
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return mockReact.forwardRef((props: any, ref: any) => {
+    return mockReact.createElement('View', { ...props, ref, testID: 'mock-portal' })
+  })
+})
+
+describe('MpxText', () => {
+  // 综合基础功能测试
+  it('should handle basic rendering, nested text and selection properties', () => {
+    const { rerender } = render(
+      <MpxText
+        testID="basic-text"
+        style={{
+          fontSize: 16,
+          color: '#333',
+          fontWeight: 'bold'
+        }}
+      >
+        Hello World
+      </MpxText>
+    )
+
+    // 基础文本渲染测试
+    let textElement = screen.getByTestId('basic-text')
+    expect(textElement).toBeTruthy()
+    expect(screen.getByText('Hello World')).toBeTruthy()
+
+    // 测试嵌套文本组件
+    rerender(
+      <MpxText testID="basic-text">
+        Parent text
+        <MpxText style={{ color: 'red' }}>
+          Nested text
+        </MpxText>
+        More parent text
+      </MpxText>
+    )
+
+    textElement = screen.getByTestId('basic-text')
+    expect(textElement).toBeTruthy()
+
+    // 测试文本选择属性
+    rerender(
+      <MpxText
+        testID="basic-text"
+        selectable={true}
+        allowFontScaling={false}
+      >
+        Selectable text
+      </MpxText>
+    )
+
+    textElement = screen.getByTestId('basic-text')
+    expect(textElement.props.selectable).toBe(true)
+    expect(textElement.props.allowFontScaling).toBe(false)
+
+    // 测试复杂样式转换
+    rerender(
+      <MpxText
+        testID="basic-text"
+        style={{
+          fontSize: 16,
+          lineHeight: '150%',
+          textAlign: 'center',
+          textDecorationLine: 'underline'
+        }}
+      >
+        Complex styled text
+      </MpxText>
+    )
+
+    textElement = screen.getByTestId('basic-text')
+    expect(textElement.props.style.lineHeight).toBe(24)
+  })
+
+  // MPX user-select 属性测试
+  it('should handle MPX user-select property', () => {
+    const { rerender } = render(
+      <MpxText
+        testID="user-select-text"
+        user-select="text"
+      >
+        User selectable text
+      </MpxText>
+    )
+
+    let textElement = screen.getByTestId('user-select-text')
+    expect(textElement.props.selectable).toBe(true)
+
+    // 测试显式设置 selectable 为 false
+    rerender(
+      <MpxText
+        testID="user-select-text"
+        selectable={false}
+      >
+        Non-selectable text
+      </MpxText>
+    )
+
+    textElement = screen.getByTestId('user-select-text')
+    expect(textElement.props.selectable).toBe(false)
+  })
+
+  // Ref 转发测试
+  it('should properly forward refs', () => {
+    const ref = React.createRef()
+
+    render(
+      <MpxText
+        ref={ref}
+        testID="ref-text"
+        selectable={true}
+      >
+        Ref forwarded text
+      </MpxText>
+    )
+
+    // 验证 ref 被正确转发
+    expect(ref.current).toBeTruthy()
+    expect(ref.current).toHaveProperty('getNodeInstance')
+    expect(typeof ref.current.getNodeInstance).toBe('function')
+
+    // 验证组件正确渲染
+    const textElement = screen.getByTestId('ref-text')
+    expect(textElement).toBeTruthy()
+    expect(textElement.props.selectable).toBe(true)
+  })
+
+  // 普通渲染不应走 Portal
+  it('should render regular text without Portal', () => {
+    const { queryByTestId } = render(
+      <MpxText
+        testID="portal-text"
+        style={{ fontSize: 16, color: '#333' }}
+      >
+        Portal text content
+      </MpxText>
+    )
+
+    const textElement = screen.getByTestId('portal-text')
+    expect(textElement).toBeTruthy()
+    expect(textElement.props.style).toEqual(expect.objectContaining({
+      color: '#333',
+      fontSize: 16
+    }))
+    expect(queryByTestId('mock-portal')).toBeNull()
+  })
+
+  it('should merge external text pass-through context', () => {
+    render(
+      <TextPassThroughContext.Provider
+        value={{
+          textStyle: { fontWeight: 'bold' },
+          pendingTextProps: { numberOfLines: 1 }
+        }}
+      >
+        <MpxText
+          testID="context-text"
+          style={{
+            color: '#ff0000',
+            fontSize: 16,
+            textAlign: 'center'
+          }}
+        >
+          Context styled text
+        </MpxText>
+      </TextPassThroughContext.Provider>
+    )
+
+    const textElement = screen.getByTestId('context-text')
+    expect(textElement.props.numberOfLines).toBe(1)
+    expect(textElement.props.style).toEqual(expect.objectContaining({
+      color: '#ff0000',
+      fontSize: 16,
+      fontWeight: 'bold',
+      textAlign: 'center'
+    }))
+  })
+
+  // 父级尺寸上下文测试
+  it('should handle parent size context', () => {
+    render(
+      <TextPassThroughContext.Provider value={{ textStyle: { fontSize: 18 } }}>
+        <MpxText
+          testID="parent-size-text"
+          parent-width={300}
+          parent-height={200}
+          style={{
+            fontSize: '150%',
+            width: 'calc(50%)',
+            lineHeight: '200%'
+          }}
+        >
+          Parent size context text
+        </MpxText>
+      </TextPassThroughContext.Provider>
+    )
+
+    const textElement = screen.getByTestId('parent-size-text')
+    expect(textElement).toBeTruthy()
+    expect(textElement.props.style).toEqual(expect.objectContaining({
+      fontSize: 27,
+      width: 150,
+      lineHeight: 54
+    }))
+  })
+
+  // 复杂嵌套和样式继承测试
+  it('should handle complex nested text with style inheritance', () => {
+    render(
+      <MpxText
+        testID="nested-styled-text"
+        style={{
+          fontSize: 16,
+          color: '#333',
+          fontWeight: 'bold',
+          lineHeight: '150%'
+        }}
+      >
+        Parent text with
+        <MpxText testID="nested-red-text" style={{ color: 'red', fontStyle: 'italic' }}>
+          nested red italic text
+        </MpxText>
+        and
+        <MpxText testID="nested-underlined-text" style={{ textDecorationLine: 'underline', fontSize: 18 }}>
+          underlined larger text
+        </MpxText>
+        back to parent style
+      </MpxText>
+    )
+
+    const textElement = screen.getByTestId('nested-styled-text')
+    expect(textElement.props.style).toEqual({
+      color: '#333',
+      fontSize: 16,
+      fontWeight: 'bold',
+      lineHeight: 24
+    })
+    expect(screen.getByTestId('nested-red-text').props.style).toEqual({
+      color: 'red',
+      fontSize: 16,
+      fontStyle: 'italic',
+      fontWeight: 'bold',
+      lineHeight: 24
+    })
+    expect(screen.getByTestId('nested-underlined-text').props.style).toEqual({
+      color: '#333',
+      fontSize: 18,
+      fontWeight: 'bold',
+      lineHeight: 27,
+      textDecorationLine: 'underline'
+    })
+  })
+
+  // 边界值和特殊情况测试
+  it('should handle edge cases and special values', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      const { rerender } = render(
+        <MpxText testID="edge-text" style={undefined}>
+          {null}
+          Edge case text
+          {false}
+          {0}
+          {''}
+        </MpxText>
+      )
+
+      let textElement = screen.getByTestId('edge-text')
+      expect(textElement).toBeTruthy()
+      expect(textElement.props.children).toEqual(expect.arrayContaining(['Edge case text', 0]))
+
+      // 测试空文本内容
+      rerender(
+        <MpxText testID="edge-text">
+          {''}
+        </MpxText>
+      )
+
+      textElement = screen.getByTestId('edge-text')
+      expect(textElement.props.children).toBe('')
+      expect(screen.queryByText('Edge case text')).toBeNull()
+
+      // 测试只有空白字符的文本
+      rerender(
+        <MpxText testID="edge-text">
+          {'\n  \t  \n'}
+        </MpxText>
+      )
+
+      textElement = screen.getByTestId('edge-text')
+      expect(textElement.props.children).toBe('\n  \t  \n')
+      expect(warnSpy).not.toHaveBeenCalled()
+      expect(errorSpy).not.toHaveBeenCalled()
+    } finally {
+      warnSpy.mockRestore()
+      errorSpy.mockRestore()
+    }
+  })
+
+  // 可访问性和交互测试
+  it('should handle accessibility and interaction properties', () => {
+    render(
+      <MpxText
+        testID="accessible-text"
+        accessible={true}
+        accessibilityLabel="Accessible text content"
+        accessibilityRole="text"
+        selectable={true}
+        allowFontScaling={true}
+      >
+        Accessible and interactive text
+      </MpxText>
+    )
+
+    const textElement = screen.getByTestId('accessible-text')
+    expect(textElement.props.accessible).toBe(true)
+    expect(textElement.props.accessibilityLabel).toBe('Accessible text content')
+    expect(textElement.props.selectable).toBe(true)
+    expect(textElement.props.allowFontScaling).toBe(true)
+  })
+
+  // 多种样式条件测试
+  it('should handle different style conditions that affect Portal usage', () => {
+    // 测试 position: absolute（不会触发 Portal）
+    const { queryByTestId, rerender } = render(
+      <MpxText
+        testID="position-test"
+        style={{
+          position: 'absolute',
+          top: 50,
+          left: 50
+        }}
+      >
+        Absolute position text
+      </MpxText>
+    )
+
+    let textElement = screen.getByTestId('position-test')
+    expect(textElement).toBeTruthy()
+    expect(queryByTestId('mock-portal')).toBeNull()
+
+    // 测试 position: relative（不会触发 Portal）
+    rerender(
+      <MpxText
+        testID="position-test"
+        style={{
+          position: 'relative',
+          top: 10
+        }}
+      >
+        Relative position text
+      </MpxText>
+    )
+
+    textElement = screen.getByTestId('position-test')
+    expect(textElement).toBeTruthy()
+    expect(queryByTestId('mock-portal')).toBeNull()
+
+    // 测试 position: fixed（会触发 Portal）
+    rerender(
+      <MpxText
+        testID="position-test"
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          right: 0,
+          zIndex: 999
+        }}
+      >
+        Fixed position text
+      </MpxText>
+    )
+
+    textElement = screen.getByTestId('position-test')
+    expect(textElement).toBeTruthy()
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
+  })
+
+  // 边界情况：样式动态变化影响 Portal
+  it('should handle dynamic style changes affecting Portal usage', () => {
+    const { queryByTestId, rerender } = render(
+      <MpxText
+        testID="dynamic-portal-text"
+        style={{
+          fontSize: 16,
+          color: '#333'
+        }}
+      >
+        Normal text
+      </MpxText>
+    )
+
+    let textElement = screen.getByTestId('dynamic-portal-text')
+    expect(textElement).toBeTruthy()
+    expect(queryByTestId('mock-portal')).toBeNull()
+
+    // 动态改变为 fixed 定位（会触发 Portal）
+    rerender(
+      <MpxText
+        testID="dynamic-portal-text"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          fontSize: 16,
+          color: '#333',
+          backgroundColor: 'yellow'
+        }}
+      >
+        Now fixed text
+      </MpxText>
+    )
+
+    textElement = screen.getByTestId('dynamic-portal-text')
+    expect(textElement).toBeTruthy()
+    expect(screen.getByTestId('mock-portal')).toBeTruthy()
+
+    // 再次改变为普通样式
+    rerender(
+      <MpxText
+        testID="dynamic-portal-text"
+        style={{
+          fontSize: 18,
+          color: 'blue'
+        }}
+      >
+        Back to normal
+      </MpxText>
+    )
+
+    textElement = screen.getByTestId('dynamic-portal-text')
+    expect(textElement).toBeTruthy()
+    expect(queryByTestId('mock-portal')).toBeNull()
+  })
+
+  it('should decode string and mixed children when decode is enabled', () => {
+    const previousMpx = global.__mpx
+    global.__mpx = {
+      config: {
+        rnConfig: {
+          allowFontScaling: true
+        }
+      }
+    }
+
+    try {
+      const { rerender } = render(
+        <MpxText testID="decoded-text" decode={true}>
+          {'Tom &amp; Jerry &lt;b&gt;&#39;&nbsp;'}
+        </MpxText>
+      )
+
+      let textElement = screen.getByTestId('decoded-text')
+      expect(textElement.props.children).toBe('Tom & Jerry <b>\' ')
+      expect(textElement.props.allowFontScaling).toBe(true)
+
+      rerender(
+        <MpxText testID="decoded-text" decode={true}>
+          {'A&nbsp;'}
+          <MpxText>child</MpxText>
+          {'&lt;tail&gt;'}
+        </MpxText>
+      )
+
+      textElement = screen.getByTestId('decoded-text')
+      expect(textElement.props.children[0]).toBe('A ')
+      expect(textElement.props.children[2]).toBe('<tail>')
+    } finally {
+      global.__mpx = previousMpx
+    }
+  })
+
+  it('should record render performance scopes when enabled', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const perf = require('@mpxjs/perf')
+    const runtimeGlobal = global as any
+    perf.scopeStart.mockClear()
+    perf.scopeEnd.mockClear()
+    runtimeGlobal.__mpx_perf_framework__ = true
+
+    try {
+      render(<MpxText testID="perf-text">performance text</MpxText>)
+
+      expect(perf.scopeStart.mock.calls.map(([name]: [string]) => name)).toEqual([
+        'text:render:total',
+        'text:render:props',
+        'text:render:style',
+        'text:render:innerProps',
+        'text:render:createElement'
+      ])
+      expect(perf.scopeEnd).toHaveBeenCalledTimes(5)
+    } finally {
+      runtimeGlobal.__mpx_perf_framework__ = false
+    }
+  })
+})

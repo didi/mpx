@@ -1,10 +1,12 @@
 # Codex Integration
 
-Codex support requires real subagents. Do not run this workflow as single-agent roleplay.
+Codex support uses real native subagents for `planner`, `plan-reviewer`,
+`coder`, and `code-reviewer`. Do not run any role as single-agent roleplay and
+do not start a nested `codex exec` process.
 
 ## Role Discovery
 
-Check project custom agents first:
+Prepare these project agents with `scripts/prepare-agent-roles.js --mode project`:
 
 ```text
 .codex/agents/planner.toml
@@ -13,45 +15,39 @@ Check project custom agents first:
 .codex/agents/code-reviewer.toml
 ```
 
-If all four exist, reuse them.
-
-If any are missing, ask the user to choose:
-
-- temporary roles under `.agent-workflows/review-loop/<task-id>/runtime/roles/`
-- persistent project custom agents under `.codex/agents/`
-
-Use `scripts/prepare-agent-roles.js` for either path.
-
-## Persistent Agent Format
-
-Codex custom agents are TOML files. Each file must define:
-
-```toml
-name = "planner"
-description = "Planner for review-loop workflows."
-developer_instructions = """
-Read the review-loop workspace inputs and produce or revise plan.md.
-Do not implement code.
-"""
-```
+In `auto` mode the preparation script verifies all four definitions. Ask before
+creating or refreshing project agent files.
 
 ## Starting Roles
 
-Codex does not spawn subagents without an explicit request. After roles are prepared, the orchestrator must explicitly start the four role subagents as the state machine requires.
+Start planner and coder as named native subagents when required by the state
+machine. Start every reviewer with `spawn_agent` and `fork_turns: "none"` so it
+does not inherit planner, coder, or orchestrator conclusions.
 
-For each role, include:
+For a reviewer round:
 
-- role name
-- task id
-- workspace path
-- input files
-- required output path
-- instruction to return a concise summary to the orchestrator
+1. Run `review-manager.js --task-id <id> --kind plan|code --round N --prepare`.
+2. Pass the returned prompt unchanged to the matching reviewer role.
+3. Require the reviewer to run its context-isolation preflight before reading
+   repository files and return exactly one JSON object with no repository writes.
+4. Save the response to a temporary file outside the repository.
+5. Run `review-manager.js ... --finalize --input <file> --agent-id <id>`.
+
+Prepare binds the input digests and current Git tree. Finalize reconstructs the
+request and rejects any input, snapshot, or worktree drift before writing the
+immutable reviewer-run and canonical review.
+Finalize also rejects output that lacks the exact passed
+`context-isolation-preflight` evidence. This self-check supplements, but does
+not replace, `fork_turns: "none"`.
+
+Codex native subagents do not currently expose a per-agent sandbox override.
+The reviewer role is therefore a no-write contract backed by Git-tree drift
+validation, not a separately enforced OS sandbox. `reviewerConfig` records
+`model = host-selected`, `reasoningEffort = host-selected`,
+`sandboxMode = read-only`, and `source = codex-native-subagent`; these describe
+the host-native review contract and do not claim a pinned CLI model.
 
 ## Failure
 
-If Codex cannot create real subagents in the current session, stop the workflow and tell the user:
-
-```text
-review-loop requires real subagent support. Current Codex session cannot create subagents, so the workflow cannot continue.
-```
+If Codex cannot create fresh native subagents, stop the workflow and report
+that review-loop requires native planner, reviewer, and coder subagent support.
