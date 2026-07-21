@@ -101,12 +101,26 @@ describe('MpxCamera', () => {
         scanArea: [1, 2, 3, 4]
       })
     }))
+    mockCodeScannerOptions.onCodeScanned([
+      { type: 'ean_13', value: '978' }
+    ])
+    expect(bindscancode).toHaveBeenLastCalledWith(expect.objectContaining({
+      detail: {
+        result: '978',
+        type: 'EAN_13',
+        scanArea: [0, 0, 0, 0]
+      }
+    }))
 
     const fail = jest.fn()
     const complete = jest.fn()
     navigation.camera.takePhoto({ fail, complete })
     expect(fail).toHaveBeenCalledWith({ errMsg: 'Not allow to invoke takePhoto in \'scanCode\' mode.' })
     expect(complete).toHaveBeenCalled()
+    navigation.camera.startRecord()
+    navigation.camera.stopRecord()
+    expect(mockCameraMethods.startRecording).not.toHaveBeenCalled()
+    expect(mockCameraMethods.stopRecording).not.toHaveBeenCalled()
   })
 
   it('supports photo and recording APIs in normal mode', async () => {
@@ -255,37 +269,7 @@ describe('MpxCamera', () => {
     warnSpy.mockRestore()
   })
 
-  it('handles default props, scanner fallbacks, absent route context and no device', async () => {
-    jest.useFakeTimers()
-    const bindscancode = jest.fn()
-    const navigation: any = {}
-    renderWithRoute(
-      <MpxCamera
-        mode="scanCode"
-        bindscancode={bindscancode}
-      />,
-      navigation
-    )
-    await act(async () => {
-      await Promise.resolve()
-    })
-
-    mockCodeScannerOptions.onCodeScanned([
-      { type: 'ean_13', value: '978' }
-    ])
-    expect(bindscancode).toHaveBeenCalledWith(expect.objectContaining({
-      detail: {
-        result: '978',
-        type: 'EAN_13',
-        scanArea: [0, 0, 0, 0]
-      }
-    }))
-    navigation.camera.startRecord()
-    navigation.camera.stopRecord()
-    act(() => {
-      jest.runOnlyPendingTimers()
-    })
-
+  it('does not render without a matching camera device', async () => {
     const { useCameraDevice } = require('react-native-vision-camera')
     ;(useCameraDevice as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce(null)
     const noDevice = renderWithRoute(<MpxCamera />)
@@ -293,13 +277,19 @@ describe('MpxCamera', () => {
       await Promise.resolve()
     })
     expect(noDevice.queryByTestId('mock-camera')).toBeNull()
-    noDevice.unmount()
+  })
 
+  it('renders with default props outside route context', async () => {
     const noRoute = render(<MpxCamera />)
     await act(async () => {
       await Promise.resolve()
     })
-    expect(noRoute.getByTestId('mock-camera')).toBeTruthy()
-    jest.useRealTimers()
+    const camera = noRoute.getByTestId('mock-camera')
+    expect(camera.props.device.position).toBe('back')
+    expect(camera.props.torch).toBe('auto')
+    expect(mockCameraFormatArgs.args[0]).toEqual({
+      photoResolution: { width: 1920, height: 1080 },
+      videoResolution: { width: 1920, height: 1080 }
+    })
   })
 })

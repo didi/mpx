@@ -97,13 +97,15 @@ describe('MpxPickerViewColumn', () => {
     jest.useRealTimers()
   })
 
-  it('covers picker faces and context helpers', () => {
+  it('calculates picker face geometry', () => {
     const faces = createFaces(40, 5)
     expect(degToRad(180)).toBe(Math.PI)
     expect(calcPickerHeight(faces, 40)).toBe(200)
     expect(calcPickerHeight(faces.slice(0, 3), 40)).toBeCloseTo(54.64101615137755)
     expect(calcHeightOffsets(40)).toEqual(expect.arrayContaining([20]))
+  })
 
+  it('reads the animation offset from picker view context', () => {
     const Probe = () => {
       const offset = usePickerViewColumnAnimationContext()
       return <Text>{offset.value}</Text>

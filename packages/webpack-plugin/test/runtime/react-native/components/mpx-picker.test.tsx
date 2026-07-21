@@ -300,47 +300,66 @@ describe('MpxPicker', () => {
     expect(regionChange).toHaveBeenCalledWith({ detail: { value: expect.any(Array) } })
   })
 
-  it('handles picker disabled, unsupported mode, no-name form warning and range updates', () => {
+  it('does not open a disabled picker', () => {
+    const { queryByText, getByTestId } = renderWithRoute(
+      <Portal.Host pageId={1}>
+        <Picker testID="disabled-picker" mode="selector" disabled={true} range={['A']} value={0}>
+          <Text>disabled picker</Text>
+        </Picker>
+      </Portal.Host>
+    )
+
+    expect(queryByText('确定')).toBeNull()
+    fireEvent.press(getByTestId('disabled-picker').parent)
+    expect(queryByText('确定')).toBeNull()
+  })
+
+  it('warns when a picker in a form has no name', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
     const formValuesMap = new Map()
-    const { queryByText, rerender } = renderWithRoute(
+    renderWithRoute(
       <FormContext.Provider value={{ formValuesMap, submit: jest.fn(), reset: jest.fn() }}>
         <Portal.Host pageId={1}>
-          <Picker mode="selector" disabled={true} range={['A']} value={0}>
-            <Text>disabled picker</Text>
-          </Picker>
+          <Picker mode="selector" range={['A']} value={0} />
         </Portal.Host>
       </FormContext.Provider>
     )
-    expect(queryByText('确定')).toBeNull()
+
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('name attribute is required'))
+    warnSpy.mockRestore()
+  })
 
-    rerender(
-      <RouteContext.Provider value={{ pageId: 1, navigation: {} }}>
-        <Portal.Host pageId={1}>
-          <Picker mode={'unsupported' as any} range={['A']} value={0}>
-            <Text>bad picker</Text>
-          </Picker>
-        </Portal.Host>
-      </RouteContext.Provider>
+  it('warns when picker mode is unsupported', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    renderWithRoute(
+      <Portal.Host pageId={1}>
+        <Picker mode={'unsupported' as any} range={['A']} value={0}>
+          <Text>bad picker</Text>
+        </Picker>
+      </Portal.Host>
     )
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Unsupported <picker> mode'))
 
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Unsupported <picker> mode'))
+    warnSpy.mockRestore()
+  })
+
+  it('updates multi-selector range and resets empty values imperatively', () => {
     const ref = React.createRef<any>()
     const multi = render(
       <PickerMultiSelector
         ref={ref}
         mode="multiSelector"
-        range={[['A'], ['1']]}
-        value={[0, 0]}
+        range={[['A', 'B'], ['1', '2']]}
+        value={[1, 1]}
       />
     )
     act(() => {
       ref.current.updateRange([['B', 'C'], ['2', '3']])
       ref.current.updateValue([])
     })
-    expect(multi.getByText('B')).toBeTruthy()
-    warnSpy.mockRestore()
+    expect(multi.getByText('C')).toBeTruthy()
+    expect(multi.queryByText('A')).toBeNull()
+    expect(multi.UNSAFE_getByType(MpxPickerView).props.value).toEqual([0, 0])
   })
 
   it('resets picker form fields to mode defaults', () => {
