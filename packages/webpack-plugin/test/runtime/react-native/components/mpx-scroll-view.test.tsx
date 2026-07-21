@@ -76,7 +76,17 @@ describe('MpxScrollView', () => {
         layoutMeasurement: { width: 300, height: 200 }
       }
     })
-    expect(mockScroll).toHaveBeenCalled()
+    expect(mockScroll).toHaveBeenCalledWith(expect.objectContaining({
+      detail: {
+        scrollLeft: 0,
+        scrollTop: 100,
+        scrollHeight: 600,
+        scrollWidth: 300,
+        deltaX: 0,
+        deltaY: 100,
+        layoutMeasurement: { width: 300, height: 200 }
+      }
+    }))
 
     // 测试水平滚动
     rerender(
@@ -400,53 +410,6 @@ describe('MpxScrollView', () => {
     expect(throttleMeasure).toHaveBeenCalled()
   })
 
-  // 边界情况和错误处理测试
-  it('should handle edge cases and error scenarios', () => {
-    const mockRefresherRefresh = jest.fn()
-    const { rerender } = render(
-      <MpxScrollView testID="edge-scroll">
-        {/* 空内容 */}
-      </MpxScrollView>
-    )
-
-    expect(screen.getByTestId('edge-scroll')).toBeTruthy()
-
-    // 测试undefined refresherTriggered的特殊逻辑
-    rerender(
-      <MpxScrollView
-        testID="edge-scroll"
-        enhanced={true}
-        refresher-enabled={true}
-        refresher-triggered={undefined}
-        bindrefresherrefresh={mockRefresherRefresh}
-      >
-        <MpxView slot="refresher" style={{ height: 60 }}>
-          <MpxText>Custom refresher</MpxText>
-        </MpxView>
-        <MpxView style={{ height: 800 }}>
-          <MpxText>Main content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
-
-    const scrollElement = screen.getByTestId('edge-scroll')
-
-    // 设置refresher高度并触发手势
-    fireEvent(scrollElement.children[0], 'onLayout', {
-      nativeEvent: { layout: { height: 60 } }
-    })
-
-    const panGesture = __getLastPanGesture()
-    act(() => {
-      panGesture.onUpdateCallback({ translationY: 70, velocityY: 0 })
-      panGesture.onEndCallback({ translationY: 70, velocityY: 0 })
-    })
-
-    expect(mockRefresherRefresh).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'refresherrefresh'
-    }))
-  })
-
   // Refs转发测试
   it('should properly forward refs', () => {
     const ref = React.createRef()
@@ -519,81 +482,6 @@ describe('MpxScrollView', () => {
     expect(mockScroll).not.toHaveBeenCalled()
   })
 
-  // 关键分支覆盖测试
-  it('should handle specific uncovered branches', () => {
-    const mockRefresherRefresh = jest.fn()
-    const mockScroll = jest.fn()
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { withTiming } = require('react-native-reanimated')
-
-    render(
-      <MpxScrollView
-        testID="branch-scroll"
-        enhanced={true}
-        scroll-y={true}
-        bounces={true}
-        refresher-enabled={true}
-        refresher-triggered={undefined}
-        bindscroll={mockScroll}
-        bindrefresherrefresh={mockRefresherRefresh}
-      >
-        <MpxView slot="refresher" style={{ height: 60 }}>
-          <MpxText>Custom refresher</MpxText>
-        </MpxView>
-        <MpxView style={{ height: 1000 }}>
-          <MpxText>Branch test content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
-
-    const scrollElement = screen.getByTestId('branch-scroll')
-
-    // 设置refresher高度并测试firstScrollIntoViewChange分支
-    fireEvent(scrollElement.children[0], 'onLayout', {
-      nativeEvent: { layout: { height: 60 } }
-    })
-
-    // 测试scrollHandler listener (485行)
-    fireEvent(scrollElement, 'onScroll', {
-      nativeEvent: {
-        contentOffset: { x: 0, y: 150 },
-        contentSize: { width: 300, height: 1000 },
-        layoutMeasurement: { width: 300, height: 400 }
-      }
-    })
-    expect(mockScroll).toHaveBeenCalledWith(expect.objectContaining({
-      detail: {
-        scrollLeft: 0,
-        scrollTop: 150,
-        scrollHeight: 1000,
-        scrollWidth: 300,
-        deltaX: 0,
-        deltaY: 150,
-        layoutMeasurement: { width: 300, height: 400 }
-      }
-    }))
-
-    fireEvent(scrollElement, 'onScroll', {
-      nativeEvent: {
-        contentOffset: { x: 0, y: 0 },
-        contentSize: { width: 300, height: 1000 },
-        layoutMeasurement: { width: 300, height: 400 }
-      }
-    })
-
-    const panGesture = __getLastPanGesture()
-    withTiming.mockClear()
-    act(() => {
-      panGesture.onUpdateCallback({ translationY: 50, velocityY: 100 })
-      panGesture.onUpdateCallback({ translationY: -30, velocityY: -50 })
-      panGesture.onUpdateCallback({ translationY: 80, velocityY: 0 })
-      panGesture.onEndCallback({ translationY: 80, velocityY: 0 })
-    })
-
-    expect(mockRefresherRefresh).toHaveBeenCalled()
-    expect(withTiming).toHaveBeenCalledWith(60)
-  })
-
   it('should update bounce and scroll states before triggering refresh', () => {
     const mockRefresherRefresh = jest.fn()
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -641,6 +529,11 @@ describe('MpxScrollView', () => {
     expect(screen.getByTestId('complex-gesture').props.scrollEnabled).toBe(true)
     expect(withTiming).toHaveBeenCalledWith(0)
 
+    act(() => {
+      panGesture.onUpdateCallback({ translationY: -10, velocityY: 0 })
+    })
+    expect(screen.getByTestId('complex-gesture').props.scrollEnabled).toBe(true)
+
     withTiming.mockClear()
     act(() => {
       panGesture.onUpdateCallback({ translationY: 105, velocityY: 0 })
@@ -652,7 +545,6 @@ describe('MpxScrollView', () => {
     }))
   })
 
-  // 测试 firstScrollIntoViewChange 分支 (272-277)
   it('should handle first scrollIntoView change with setTimeout', () => {
     jest.useFakeTimers()
     const mockSelectRef = jest.fn(() => ({
@@ -699,7 +591,6 @@ describe('MpxScrollView', () => {
     }
   })
 
-  // 测试 scrollTo 和 handleScrollIntoView 函数 (300-312)
   it('should handle scrollTo function and handleScrollIntoView details', () => {
     const ref = React.createRef<any>()
     const mockSelectRef = jest.fn(() => ({
@@ -758,7 +649,6 @@ describe('MpxScrollView', () => {
     })
   })
 
-  // 测试 updateIntersection 函数 (443-454)
   it('should handle intersection observer updates correctly', () => {
     const mockThrottleMeasure1 = jest.fn()
     const mockThrottleMeasure2 = jest.fn()
@@ -797,37 +687,6 @@ describe('MpxScrollView', () => {
     expect(mockThrottleMeasure2).toHaveBeenCalled()
   })
 
-  // 测试 scrollHandler listener (485)
-  it('should trigger scrollHandler listener correctly', () => {
-    const mockScroll = jest.fn()
-
-    render(
-      <MpxScrollView
-        testID="scroll-handler-listener"
-        scroll-y={true}
-        bindscroll={mockScroll}
-      >
-        <MpxView style={{ height: 1000 }}>
-          <MpxText>Scroll handler content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
-
-    const scrollElement = screen.getByTestId('scroll-handler-listener')
-
-    // 使用 onScroll 事件来触发 scrollHandler 的 listener
-    fireEvent(scrollElement, 'onScroll', {
-      nativeEvent: {
-        contentOffset: { x: 0, y: 200 },
-        contentSize: { width: 300, height: 1000 },
-        layoutMeasurement: { width: 300, height: 400 }
-      }
-    })
-
-    expect(mockScroll).toHaveBeenCalled()
-  })
-
-  // 测试 onRefresh 函数特殊逻辑 (527-539)
   it('should handle onRefresh with undefined refresherTriggered', () => {
     jest.useFakeTimers()
     const mockRefresherRefresh = jest.fn()
@@ -878,38 +737,6 @@ describe('MpxScrollView', () => {
     }
   })
 
-  // 测试状态更新条件分支 (594-596, 607-609)
-  it('should handle state update conditions correctly', () => {
-    render(
-      <MpxScrollView
-        testID="state-update-conditions"
-        enhanced={true}
-        scroll-y={true}
-        bounces={true}
-        refresher-enabled={true}
-      >
-        <MpxView style={{ height: 1000 }}>
-          <MpxText>State update content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
-
-    const panGesture = __getLastPanGesture()
-    act(() => {
-      panGesture.onUpdateCallback({ translationY: 50, velocityY: 50 })
-    })
-    expect(screen.getByTestId('state-update-conditions').props.scrollEnabled).toBe(false)
-
-    act(() => {
-      panGesture.onUpdateCallback({ translationY: 30, velocityY: 0 })
-      panGesture.onUpdateCallback({ translationY: -25, velocityY: -30 })
-      panGesture.onUpdateCallback({ translationY: -25, velocityY: -30 })
-    })
-
-    expect(screen.getByTestId('state-update-conditions').props.scrollEnabled).toBe(true)
-  })
-
-  // 测试 enable-sticky 和内容高度变化场景 (382-392)
   it('should handle sticky scroll and content size changes', () => {
     const originalMode = global.__mpx_mode__
     const scrollOffset = {
@@ -963,8 +790,8 @@ describe('MpxScrollView', () => {
     }
   })
 
-  // 测试 harmony 模式下的 sticky 逻辑 (509-516)
-  it('should handle harmony mode sticky scroll', () => {
+  it('should reset harmony sticky reconciliation after content size changes', () => {
+    jest.useFakeTimers()
     const originalMode = global.__mpx_mode__
     const scrollOffset = {
       setValue: jest.fn()
@@ -998,12 +825,18 @@ describe('MpxScrollView', () => {
       scrollElement.props.onScroll(createScrollEvent(0, 200, 300, 600, 300, 300))
 
       expect(scrollOffset.setValue).toHaveBeenCalledWith(200)
+
+      act(() => {
+        jest.advanceTimersByTime(100)
+      })
+      scrollOffset.setValue.mockClear()
+      scrollElement.props.onScroll(createScrollEvent(0, 250, 300, 600, 300, 300))
+      expect(scrollOffset.setValue).not.toHaveBeenCalled()
     } finally {
       global.__mpx_mode__ = originalMode
     }
   })
 
-  // 测试 enhanced 模式下的 drag 事件 (482-494, 527-537, 542-554)
   it('should handle enhanced drag events', () => {
     const mockDragStart = jest.fn()
     const mockDragEnd = jest.fn()
@@ -1052,7 +885,6 @@ describe('MpxScrollView', () => {
     }))
   })
 
-  // 测试 bindtouchmove 和 binddragging 触发 (481-493)
   it('should handle bindtouchmove and binddragging', () => {
     const mockTouchMove = jest.fn()
     const mockDragging = jest.fn()
@@ -1104,7 +936,6 @@ describe('MpxScrollView', () => {
     }))
   })
 
-  // 测试 refresher 在 refreshing 状态下的手势处理 (667-694)
   it('should handle gestures during refreshing state', () => {
     const mockRefresherRefresh = jest.fn()
 
@@ -1170,7 +1001,6 @@ describe('MpxScrollView', () => {
     expect(screen.getByText('Refreshing...')).toBeTruthy()
   })
 
-  // 测试 scrollX 场景下的 handleScrollIntoView (317)
   it('should handle scrollIntoView with scroll-x enabled', () => {
     jest.useFakeTimers()
     const mockSelectRef = jest.fn(() => ({
@@ -1234,7 +1064,6 @@ describe('MpxScrollView', () => {
     jest.useRealTimers()
   })
 
-  // 测试没有 refresher content 时的逻辑 (294)
   it('should handle refresher without custom refresher content', () => {
     const mockRefresh = jest.fn()
 
@@ -1274,7 +1103,6 @@ describe('MpxScrollView', () => {
     expect(scrollElement.props.refreshControl.props.refreshing).toBe(true)
   })
 
-  // 测试 simultaneousHandlers 和 waitFor (734-735)
   it('should handle simultaneousHandlers and waitFor props', () => {
     const mockGesture1 = { current: { name: 'gesture-1' } }
     const mockGesture2 = { current: { name: 'gesture-2' } }
@@ -1297,7 +1125,6 @@ describe('MpxScrollView', () => {
     expect(scrollElement.props.waitFor).toEqual([mockGesture1])
   })
 
-  // 测试 pagingEnabled 在 enhanced 模式下 (742)
   it('should handle pagingEnabled in enhanced mode', () => {
     render(
       <MpxScrollView
@@ -1340,7 +1167,6 @@ describe('MpxScrollView', () => {
     }
   })
 
-  // 测试 enableScrollValue.value 为 true 时的 onEnd 分支 (684)
   it('should handle onEnd gesture when scroll is enabled', () => {
     const mockRefresherRefresh = jest.fn()
     // eslint-disable-next-line @typescript-eslint/no-var-requires

@@ -222,11 +222,18 @@ describe('MpxSwiper', () => {
     expect(bindchange).toHaveBeenCalledWith(expect.objectContaining({
       detail: { current: 1, source: '' }
     }))
+
+    bindchange.mockClear()
+    fireEvent(screen.getByTestId('change-swiper'), 'layout', {
+      nativeEvent: { layout: { width: 260, height: 100 } }
+    })
+    expect(bindchange).not.toHaveBeenCalled()
   })
 
-  it('covers vertical, single-item, no-gesture and fixed-position branches', () => {
+  it('rolls back a vertical swiper with one item', () => {
     const { __getLastPanGesture } = require('react-native-gesture-handler')
-    const { rerender } = render(
+    const { withTiming } = require('react-native-reanimated')
+    render(
       <MpxSwiper
         testID="single-swiper"
         style={{ width: 200, height: 100 }}
@@ -240,22 +247,22 @@ describe('MpxSwiper', () => {
         </MpxSwiperItem>
       </MpxSwiper>
     )
-    let gesture = __getLastPanGesture()
+    const gesture = __getLastPanGesture()
+    withTiming.mockClear()
     act(() => {
       gesture.onBeginCallback({ absoluteY: 0, velocityY: 0 })
       gesture.onUpdateCallback({ absoluteY: 60, velocityY: 0 })
       gesture.onFinalizeCallback({ absoluteY: 60, velocityY: 0 })
     })
     expect(gesture.activeOffsetY).toHaveBeenCalled()
+    expect(withTiming).toHaveBeenCalledWith(0, expect.objectContaining({ duration: 500 }))
+  })
 
-    rerender(
+  it('does not attach a gesture detector when gestures are disabled', () => {
+    render(
       <MpxSwiper
         testID="plain-swiper"
         style={{ width: 200, height: 100 }}
-        current={1}
-        previous-margin="10"
-        next-margin="20"
-        enable-offset={true}
         disableGesture={true}
       >
         <MpxSwiperItem item-id="first" enable-var={false}>
@@ -266,34 +273,21 @@ describe('MpxSwiper', () => {
         </MpxSwiperItem>
       </MpxSwiper>
     )
-    fireEvent(screen.getByTestId('plain-swiper'), 'layout', {
-      nativeEvent: { layout: { width: 240, height: 100 } }
-    })
     expect(screen.queryByTestId('gesture-detector')).toBeNull()
+  })
 
+  it('renders fixed swipers through the portal', () => {
     const fixedRender = renderWithPortalHost(
       <MpxSwiper
         testID="fixed-swiper"
         style={{ width: 200, height: 100, position: 'fixed' }}
-        circular={true}
-        current={1}
       >
         <MpxSwiperItem item-id="x" enable-var={false}>
           <Text>X</Text>
         </MpxSwiperItem>
-        <MpxSwiperItem item-id="y" enable-var={false}>
-          <Text>Y</Text>
-        </MpxSwiperItem>
       </MpxSwiper>
     )
     expectPortalHostRendered(fixedRender.toJSON(), 'fixed-swiper')
-    gesture = __getLastPanGesture()
-    act(() => {
-      gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
-      gesture.onUpdateCallback({ absoluteX: -260, velocityX: 0 })
-      gesture.onFinalizeCallback({ absoluteX: -260, velocityX: 200 })
-    })
-    expect(screen.getAllByText('X')).toHaveLength(2)
   })
 
   it('handles autoplay terminal page and circular rollover', () => {
@@ -453,15 +447,13 @@ describe('MpxSwiper', () => {
     expect(screen.getAllByText('One')).toHaveLength(3)
   })
 
-  it('handles gesture dependencies and edge gesture paths', () => {
+  it('updates external gesture dependencies after rerender', () => {
     const { __getLastPanGesture } = require('react-native-gesture-handler')
-    const { __flushAnimatedReactions, withTiming } = require('react-native-reanimated')
-    const circularChange = jest.fn()
     const waitFor = { current: { name: 'wait-a' } }
     const nextWaitFor = { current: { name: 'wait-b' } }
     const simultaneous = { current: { name: 'simultaneous-a' } }
     const nextSimultaneous = { current: { name: 'simultaneous-b' } }
-    const { rerender, unmount } = render(
+    const { rerender } = render(
       <MpxSwiper
         testID="dep-swiper"
         style={{ width: 200, height: 100 }}
@@ -498,8 +490,12 @@ describe('MpxSwiper', () => {
     gesture = __getLastPanGesture()
     expect(gesture.simultaneousWithExternalGesture).toHaveBeenCalledWith(nextSimultaneous)
     expect(gesture.requireExternalGestureToFail).toHaveBeenCalledWith(nextWaitFor)
-    unmount()
+  })
 
+  it('wraps across both circular boundaries', () => {
+    const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { __flushAnimatedReactions, withTiming } = require('react-native-reanimated')
+    const circularChange = jest.fn()
     render(
       <MpxSwiper
         testID="circular-edge"
@@ -518,7 +514,7 @@ describe('MpxSwiper', () => {
     fireEvent(screen.getByTestId('circular-edge'), 'layout', {
       nativeEvent: { layout: { width: 200, height: 100 } }
     })
-    gesture = __getLastPanGesture()
+    const gesture = __getLastPanGesture()
     withTiming.mockClear()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
@@ -542,7 +538,11 @@ describe('MpxSwiper', () => {
     expect(circularChange).toHaveBeenCalledWith(expect.objectContaining({
       detail: { current: 0, source: 'touch' }
     }))
+  })
 
+  it('rolls back a circular swiper with one item', () => {
+    const { __getLastPanGesture } = require('react-native-gesture-handler')
+    const { withTiming } = require('react-native-reanimated')
     render(
       <MpxSwiper
         testID="circular-one"
@@ -557,7 +557,7 @@ describe('MpxSwiper', () => {
     fireEvent(screen.getByTestId('circular-one'), 'layout', {
       nativeEvent: { layout: { width: 200, height: 100 } }
     })
-    gesture = __getLastPanGesture()
+    const gesture = __getLastPanGesture()
     withTiming.mockClear()
     act(() => {
       gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
@@ -565,32 +565,6 @@ describe('MpxSwiper', () => {
       gesture.onFinalizeCallback({ absoluteX: 80, velocityX: 0 })
     })
     expect(withTiming).toHaveBeenCalledWith(0, expect.objectContaining({ duration: 500 }))
-
-    render(
-      <MpxSwiper
-        testID="boundary-swiper"
-        style={{ width: 200, height: 100 }}
-        current={1}
-      >
-        <MpxSwiperItem item-id="one" enable-var={false}>
-          <Text>One</Text>
-        </MpxSwiperItem>
-        <MpxSwiperItem item-id="two" enable-var={false}>
-          <Text>Two</Text>
-        </MpxSwiperItem>
-      </MpxSwiper>
-    )
-    fireEvent(screen.getByTestId('boundary-swiper'), 'layout', {
-      nativeEvent: { layout: { width: 200, height: 100 } }
-    })
-    gesture = __getLastPanGesture()
-    withTiming.mockClear()
-    act(() => {
-      gesture.onBeginCallback({ absoluteX: 0, velocityX: 0 })
-      gesture.onFinalizeCallback({ absoluteX: -80, velocityX: 0 })
-    })
-
-    expect(withTiming).toHaveBeenCalledWith(-200, expect.objectContaining({ duration: 500 }), expect.any(Function))
   })
 
   it('handles a vertical swiper without an initial size', () => {

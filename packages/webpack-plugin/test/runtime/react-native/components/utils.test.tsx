@@ -85,8 +85,10 @@ describe('react runtime utils', () => {
     setStyle({ nested: null }, ['nested', 'value'], setter)
 
     expect(parseUrl()).toBeUndefined()
+    expect(getRestProps()).toEqual({})
     expect(getDefaultAllowFontScaling()).toBe(false)
     expect(isText(null)).toBe(false)
+    expect(isText(React.createElement('Text'))).toBe(false)
     expect(isStringChildren('text')).toBe(true)
     expect(isStringChildren(<Text>text</Text>)).toBe(false)
     expect(splitStyle({ width: 10, height: 20 })).toEqual({
@@ -101,10 +103,12 @@ describe('react runtime utils', () => {
       innerProps: { id: 'text' }
     })
     expect(pickStyle({ width: 10 }, ['width', 'height'])).toEqual({ width: 10 })
+    expect(pickStyle(undefined as any, [])).toEqual({})
     expect(presetBoxStyle.boxSizing).toBe('border-box')
     expect(setter).not.toHaveBeenCalled()
     expect(flatGesture()).toEqual([])
     expect(flatGesture([{ current: false }])).toEqual([])
+    expect(flatGesture([{ handlerTag: 0 }, {}])).toEqual([{ handlerTag: 0 }])
     expect(getCurrentPage(1)).toBeUndefined()
 
     global.__mpx = previousMpx
@@ -718,6 +722,7 @@ describe('react runtime utils', () => {
     const refGesture = { current: true }
 
     global.getCurrentPages = jest.fn(() => [
+      { name: 'invalid' },
       { getPageId: () => 1, name: 'home' },
       { getPageId: () => 2, name: 'detail' }
     ])
@@ -737,22 +742,14 @@ describe('react runtime utils', () => {
     expect(getCurrentPage(2)).toEqual({ getPageId: expect.any(Function), name: 'detail' })
   })
 
-  it('covers helper defaults, fallback values and direct transform variants', () => {
+  it('applies fallback variables, percent gaps and direct transforms', () => {
     const previousMpx = global.__mpx
-    const previousGetCurrentPages = global.getCurrentPages
     const defaultStyle = Object.create({ inherited: 1 })
     defaultStyle.minWidth = 10
     let result: ReturnType<typeof useTransformStyle> | undefined
 
     try {
       global.__mpx = {} as any
-      expect(getRestProps()).toEqual({})
-      expect(getDefaultAllowFontScaling()).toBe(false)
-      expect(pickStyle(undefined as any, [])).toEqual({})
-      expect(isText(React.createElement('Text'))).toBe(false)
-      expect(flatGesture(undefined as any)).toEqual([])
-      expect(flatGesture([{ handlerTag: 0 }, {}])).toEqual([{ handlerTag: 0 }])
-
       const Probe = () => {
         result = useTransformStyle({
           color: 'var(--missing, red)',
@@ -789,15 +786,8 @@ describe('react runtime utils', () => {
         ]
       }))
       expect(result?.normalStyle).not.toHaveProperty('inherited')
-
-      global.getCurrentPages = jest.fn(() => [
-        { name: 'invalid' },
-        { getPageId: () => 3, name: 'valid' }
-      ])
-      expect(getCurrentPage(3)).toEqual({ getPageId: expect.any(Function), name: 'valid' })
     } finally {
       global.__mpx = previousMpx
-      global.getCurrentPages = previousGetCurrentPages
     }
   })
 

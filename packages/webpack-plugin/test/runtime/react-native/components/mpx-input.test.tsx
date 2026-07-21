@@ -203,8 +203,9 @@ describe('MpxInput', () => {
       { value: 'any text', maxlength: 0, expected: '', expectedMaxLength: 0 }
     ]
 
-    testCases.forEach(({ value, maxlength, expected, expectedMaxLength }, index) => {
-      const { rerender } = render(
+    const { rerender } = render(<MpxInput testID="parse-input" enable-var={true} />)
+    testCases.forEach(({ value, maxlength, expected, expectedMaxLength }) => {
+      rerender(
         <MpxInput
           testID="parse-input"
           value={value as any}
@@ -212,7 +213,6 @@ describe('MpxInput', () => {
           enable-var={true}
         />
       )
-
       const inputElement = screen.getByTestId('parse-input')
       expect(inputElement.props.value).toBe(expected)
       expect(inputElement.props.maxLength).toBe(expectedMaxLength)
@@ -266,9 +266,9 @@ describe('MpxInput', () => {
   // 多行和确认类型组合测试
   it('should handle multiline and confirm-type combinations', () => {
     const testCases = [
-      { multiline: true, 'confirm-type': 'return', expectedEnterKeyHint: undefined, expectedSubmitBehavior: 'newline' },
-      { multiline: true, 'confirm-type': 'done', expectedEnterKeyHint: 'done', expectedSubmitBehavior: 'blurAndSubmit' },
-      { multiline: false, 'confirm-type': 'search', expectedEnterKeyHint: 'search', expectedSubmitBehavior: 'blurAndSubmit' }
+      { multiline: true, confirmType: 'return', autoHeight: false, expectedEnterKeyHint: undefined, expectedSubmitBehavior: 'newline', expectedTextAlignVertical: 'top', expectedHeight: undefined },
+      { multiline: true, confirmType: 'done', autoHeight: true, expectedEnterKeyHint: 'done', expectedSubmitBehavior: 'blurAndSubmit', expectedTextAlignVertical: 'top', expectedHeight: 'auto' },
+      { multiline: false, confirmType: 'search', autoHeight: undefined, expectedEnterKeyHint: 'search', expectedSubmitBehavior: 'blurAndSubmit', expectedTextAlignVertical: 'auto', expectedHeight: undefined }
     ]
 
     testCases.forEach((testCase) => {
@@ -277,13 +277,17 @@ describe('MpxInput', () => {
           testID="multiline-confirm-input"
           value="test"
           enable-var={true}
-          {...testCase}
+          multiline={testCase.multiline}
+          confirm-type={testCase.confirmType as any}
+          auto-height={testCase.autoHeight}
         />
       )
 
       const inputElement = screen.getByTestId('multiline-confirm-input')
       expect(inputElement.props.enterKeyHint).toBe(testCase.expectedEnterKeyHint)
       expect(inputElement.props.submitBehavior).toBe(testCase.expectedSubmitBehavior)
+      expect(inputElement.props.textAlignVertical).toBe(testCase.expectedTextAlignVertical)
+      expect(inputElement.props.style.height).toBe(testCase.expectedHeight)
     })
   })
 
@@ -436,7 +440,7 @@ describe('MpxInput', () => {
   })
 
   // onChange 返回值处理测试
-  it('should handle onChange return values', () => {
+  it('should apply bindinput return values and update without bindinput', () => {
     const mockBindinput = jest.fn()
       .mockReturnValueOnce('modified value')
       .mockReturnValueOnce(undefined)
@@ -465,86 +469,43 @@ describe('MpxInput', () => {
 
     expect(mockBindinput).toHaveBeenCalledTimes(2)
     expect(screen.getByTestId('onchange-input').props.value).toBe('another text')
-  })
 
-  // 补充关键的覆盖率测试
-  it('should handle edge cases for better coverage', () => {
-    const mockBindinput = jest.fn()
-
-    // 测试 tmpValue.current === text 的情况（应该 return early）
     render(
       <MpxInput
-        testID="edge-input"
+        testID="no-bindinput"
+        value="test"
+        enable-var={true}
+      />
+    )
+    fireEvent(screen.getByTestId('no-bindinput'), 'change', {
+      nativeEvent: { text: 'changed', selection: { start: 7, end: 7 } }
+    })
+    expect(screen.getByTestId('no-bindinput').props.value).toBe('changed')
+  })
+
+  it('should ignore duplicate changes and derive missing cursor positions', () => {
+    const mockBindinput = jest.fn()
+
+    render(
+      <MpxInput
+        testID="deduplicated-input"
         bindinput={mockBindinput}
         value="test"
         enable-var={true}
       />
     )
 
-    const inputElement = screen.getByTestId('edge-input')
-
-    // 触发相同文本的 change 事件
+    const inputElement = screen.getByTestId('deduplicated-input')
     fireEvent(inputElement, 'change', {
       nativeEvent: { text: 'test', selection: { start: 4, end: 4 } }
     })
+    expect(mockBindinput).not.toHaveBeenCalled()
 
-    // 触发不同文本的 change 事件
     fireEvent(inputElement, 'change', {
       nativeEvent: { text: 'different', selection: undefined }
     })
-
-    expect(mockBindinput).toHaveBeenCalledTimes(1) // 只有第二次调用有效
-
-    // 测试没有 bindinput 的情况
-    const { rerender } = render(
-      <MpxInput
-        testID="no-bindinput"
-        value="test2"
-        enable-var={true}
-      />
-    )
-
-    const noBindinputElement = screen.getByTestId('no-bindinput')
-    fireEvent(noBindinputElement, 'change', {
-      nativeEvent: { text: 'changed', selection: { start: 7, end: 7 } }
-    })
-
-    expect(screen.getByTestId('no-bindinput').props.value).toBe('changed')
-  })
-
-  // 精简的分支覆盖率补充测试
-  it('should handle key remaining branches efficiently', () => {
-    // 测试 number 类型 value 和特殊 maxlength
-    const { rerender } = render(
-      <MpxInput
-        testID="efficient-branch-input"
-        value={12345}
-        type="number"
-        maxlength={-1}
-        enable-var={true}
-      />
-    )
-
-    let inputElement = screen.getByTestId('efficient-branch-input')
-    expect(inputElement.props.value).toBe('12345')
-    expect(inputElement.props.maxLength).toBeUndefined()
-
-    // 测试 multiline 相关分支组合
-    rerender(
-      <MpxInput
-        testID="efficient-branch-input"
-        multiline={true}
-        confirm-type="return"
-        auto-height={false}
-        enable-var={true}
-      />
-    )
-
-    inputElement = screen.getByTestId('efficient-branch-input')
-    expect(inputElement.props.enterKeyHint).toBeUndefined()
-    expect(inputElement.props.textAlignVertical).toBe('top')
-
-    // 测试 selection 未设置的情况
-    expect(inputElement.props.selection).toBeUndefined()
+    expect(mockBindinput).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { value: 'different', cursor: 5 }
+    }))
   })
 })
