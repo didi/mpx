@@ -37,45 +37,56 @@ for (const [, relPath] of exportMatches) {
   // relPath is like './api/system' or './api/device/network'
   const apiDir = path.join(srcDir, 'platform', relPath)
 
-  let indexFilePath = path.join(apiDir, 'index.js')
-  if (!fs.existsSync(indexFilePath)) {
+  let indexFilePaths
+  if (fs.existsSync(apiDir) && fs.statSync(apiDir).isDirectory()) {
+    // Merge exports from index.js and all platform variants such as index.web.js.
+    indexFilePaths = fs.readdirSync(apiDir)
+      .filter(fileName => /^index(?:\.[^.]+)?\.js$/.test(fileName))
+      .map(fileName => path.join(apiDir, fileName))
+  } else {
     // fallback: relPath might point directly to a .js file
-    indexFilePath = apiDir + '.js'
-    if (!fs.existsSync(indexFilePath)) {
-      console.warn('  [skip] index.js not found for:', relPath)
-      continue
-    }
+    const fileName = path.basename(apiDir)
+    const fileNameRegex = new RegExp(`^${fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\.[^.]+)?\\.js$`)
+    indexFilePaths = fs.readdirSync(path.dirname(apiDir))
+      .filter(item => fileNameRegex.test(item))
+      .map(item => path.join(path.dirname(apiDir), item))
   }
 
-  const content = fs.readFileSync(indexFilePath, 'utf-8')
+  if (indexFilePaths.length === 0) {
+    console.warn('  [skip] entry file not found for:', relPath)
+    continue
+  }
 
-  // Match all export { name1, name2, ... } blocks (may span multiple lines)
-  const exportBlockRegex = /export\s*\{([^}]+)\}/g
-  let blockMatch
-  while ((blockMatch = exportBlockRegex.exec(content)) !== null) {
-    const names = blockMatch[1]
-      .split(',')
-      .map(n => {
-        // Handle "localName as exportedName" — take the exported name
-        const parts = n.trim().split(/\s+as\s+/)
-        return (parts[1] || parts[0]).trim()
-      })
-      .filter(n => n && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(n))
+  indexFilePaths.forEach(indexFilePath => {
+    const content = fs.readFileSync(indexFilePath, 'utf-8')
 
-    // require path: relative from common/js/ to the api dir's index (no .js extension)
-    const requireTarget = path.join(apiDir, 'index')
-    let requirePath = path.relative(commonJsDir, requireTarget).replace(/\\/g, '/')
-    if (!requirePath.startsWith('.')) requirePath = './' + requirePath
+    // Match all export { name1, name2, ... } blocks (may span multiple lines)
+    const exportBlockRegex = /export\s*\{([^}]+)\}/g
+    let blockMatch
+    while ((blockMatch = exportBlockRegex.exec(content)) !== null) {
+      const names = blockMatch[1]
+        .split(',')
+        .map(n => {
+          // Handle "localName as exportedName" — take the exported name
+          const parts = n.trim().split(/\s+as\s+/)
+          return (parts[1] || parts[0]).trim()
+        })
+        .filter(n => n && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(n))
 
-    for (const name of names) {
-      if (seenNames.has(name)) {
-        console.warn('  [dup] skipping duplicate export:', name)
-        continue
+      // require path: relative from common/js/ to the api dir's index (no .js extension)
+      const requireTarget = path.join(apiDir, 'index')
+      let requirePath = path.relative(commonJsDir, requireTarget).replace(/\\/g, '/')
+      if (!requirePath.startsWith('.')) requirePath = './' + requirePath
+
+      for (const name of names) {
+        if (seenNames.has(name)) {
+          continue
+        }
+        seenNames.add(name)
+        apiEntries.push({ name, requirePath })
       }
-      seenNames.add(name)
-      apiEntries.push({ name, requirePath })
     }
-  }
+  })
 }
 
 if (apiEntries.length === 0) {
