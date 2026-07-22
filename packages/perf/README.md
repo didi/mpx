@@ -81,6 +81,26 @@ onPageInteractive(() => {
 
 即使没有 measure 和显式 mark，正常结束的窗口也会用 start/end 两条边界事件触发 reporter。
 
+当窗口内同时包含一个 measure 桶和两条显式 mark 时，默认 `consoleReporter` 会先输出聚合结果，再按调用顺序输出时间线：
+
+```text
+[mpx perf] 1 measure bucket / 4 marks
+measures
+name           count      sum      avg      max
+-------------  -----  -------  -------  -------
+goods:request      1  86.20ms  86.20ms  86.20ms
+
+timeline
+index        at  name
+-----  --------  -----------------
+    0    0.00ms  start
+    1   86.20ms  goods:data-ready
+    2  145.06ms  goods:interactive
+    3  145.11ms  end
+```
+
+默认 `header: true` 时会通过 `console.group` 包裹输出，不同控制台可能展示为可折叠分组，文本内容与上述结构一致。
+
 ### 同步与跨作用域耗时
 
 ```ts

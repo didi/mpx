@@ -48,9 +48,10 @@ describe('console reporter', () => {
     expect(output).toContain('measures\n')
     expect(output).toContain('timeline\n')
     expect(output).not.toContain('  hidden')
-    expect(output.indexOf('start')).toBeLessThan(output.indexOf('keep:ready'))
-    expect(output.match(/keep:ready/g)).toHaveLength(2)
-    expect(output.indexOf('keep:ready')).toBeLessThan(output.indexOf('end'))
+    const timelineOutput = output.slice(output.indexOf('timeline\n'))
+    expect(timelineOutput.indexOf('start')).toBeLessThan(timelineOutput.indexOf('keep:ready'))
+    expect(timelineOutput.match(/keep:ready/g)).toHaveLength(2)
+    expect(timelineOutput.indexOf('keep:ready')).toBeLessThan(timelineOutput.indexOf('end'))
     expect(output).toContain('mark timeline truncated: 2 events dropped after limit 256')
   })
 
