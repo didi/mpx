@@ -25,7 +25,9 @@ export function onNetworkStatusChange (callbackFn) {
         networkType: isConnected ? evt.currentTarget.effectiveType : 'none'
       })
     }
-    fnMap.set(callbackFn, proxyCallback)
+    const proxyCallbacks = fnMap.get(callbackFn) || new Set()
+    proxyCallbacks.add(proxyCallback)
+    fnMap.set(callbackFn, proxyCallbacks)
     navigator.connection.addEventListener('change', proxyCallback)
   } else {
     typeof callbackFn === 'function' && oldObserveList.add(callbackFn)
@@ -39,9 +41,11 @@ export function offNetworkStatusChange (callbackFn) {
   }
   if (callbackFn == null) {
     // 不传 callback 时清除所有监听
-    fnMap.forEach((proxyCallback, originalCallback) => {
+    fnMap.forEach((proxyCallbacks) => {
       if (navigator.connection) {
-        navigator.connection.removeEventListener('change', proxyCallback)
+        proxyCallbacks.forEach(proxyCallback => {
+          navigator.connection.removeEventListener('change', proxyCallback)
+        })
       }
     })
     fnMap.clear()
@@ -49,7 +53,10 @@ export function offNetworkStatusChange (callbackFn) {
     return
   }
   if (navigator.connection) {
-    navigator.connection.removeEventListener('change', fnMap.get(callbackFn))
+    const proxyCallbacks = fnMap.get(callbackFn)
+    proxyCallbacks && proxyCallbacks.forEach(proxyCallback => {
+      navigator.connection.removeEventListener('change', proxyCallback)
+    })
     fnMap.delete(callbackFn)
   } else {
     oldObserveList.has(callbackFn) && oldObserveList.delete(callbackFn)

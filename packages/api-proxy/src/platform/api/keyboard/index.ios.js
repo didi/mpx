@@ -1,6 +1,8 @@
 import { Keyboard } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 let hasListener = false
+let keyboardShowSubscription
+let keyboardHideSubscription
 const callbacks = []
 
 function keyboardShowListener (e) {
@@ -18,8 +20,8 @@ function keyboardHideListener (e) {
 }
 const onKeyboardHeightChange = function (callback) {
   if (!hasListener) {
-    Keyboard.addListener('keyboardDidShow', keyboardShowListener)
-    Keyboard.addListener('keyboardDidHide', keyboardHideListener)
+    keyboardShowSubscription = Keyboard.addListener('keyboardDidShow', keyboardShowListener)
+    keyboardHideSubscription = Keyboard.addListener('keyboardDidHide', keyboardHideListener)
     hasListener = true
   }
   callbacks.push(callback)
@@ -31,9 +33,11 @@ const offKeyboardHeightChange = function (callback) {
   }
   if (callbacks.length === 0 || callback == null) {
     callbacks.length = 0
-    Keyboard.removeAllListeners('keyboardDidShow')
-    Keyboard.removeAllListeners('keyboardDidHide')
-    hasListener = false
+    if (hasListener) {
+      keyboardShowSubscription.remove()
+      keyboardHideSubscription.remove()
+      hasListener = false
+    }
   }
 }
 

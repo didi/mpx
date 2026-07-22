@@ -1055,7 +1055,7 @@ mpx.use(apiProxy, {
 
 ## 数据缓存
 
-以下与小程序键值语义一致；RN 侧常用本地持久化能力承载。**`setStorageSync`**、**`getStorageSync`**、**`getStorageInfoSync`** 在 RN 上不可用，本文不列出；**`removeStorageSync`**、**`clearStorageSync`** 为同步接口，可直接使用。
+以下与小程序键值语义一致；RN 侧使用异步的 AsyncStorage 承载，因此 **`setStorageSync`**、**`getStorageSync`**、**`getStorageInfoSync`**、**`removeStorageSync`**、**`clearStorageSync`** 均不可用，请使用对应异步 API。
 
 ### setStorage
 
@@ -1136,7 +1136,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-同步删除一项。
+RN 不支持此同步 API，请使用 `removeStorage`。
 
 #### 入参
 
@@ -1170,7 +1170,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-同步清空缓存。
+RN 不支持此同步 API，请使用 `clearStorage`。
 
 #### 入参
 
@@ -1385,13 +1385,13 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-取消键盘高度监听：仅移除与注册时**同一引用**的 **`callback`**；**不传引用不会移除其它监听**。当监听列表为空时会移除键盘显示/隐藏相关订阅。
+取消键盘高度监听：传入与注册时**同一引用**的 **`callback`** 时移除对应监听；不传回调时移除全部监听。当监听列表为空时会移除键盘显示/隐藏相关订阅。
 
 #### 入参
 
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `callback` | `function` | 是 | 与 **`onKeyboardHeightChange`** 注册时为同一函数引用。 |
+| `callback` | `function` | 否 | 与 **`onKeyboardHeightChange`** 注册时为同一函数引用；不传时移除全部监听。 |
 
 #### 返回值
 

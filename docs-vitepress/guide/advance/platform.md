@@ -699,9 +699,9 @@ getStorageSync|支持
 getStorageInfo|支持
 getStorageInfoSync|支持
 removeStorage|支持
-removeStorageSync|支持
+removeStorageSync|不支持（请使用 removeStorage）
 clearStorage|支持
-clearStorageSync|支持
+clearStorageSync|不支持（请使用 clearStorage）
 getSystemInfo|支持
 getSystemInfoSync|支持
 showModal|支持
@@ -742,4 +742,3 @@ i18n|是
 :---|---
 wxs|支持
 animation|支持组件的animation属性，支持所有animation对象方法(export、step、width、height、rotate、scale、skew、translate等等)
-
