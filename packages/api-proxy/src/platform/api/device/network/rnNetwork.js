@@ -45,7 +45,7 @@ const onNetworkStatusChange = function (callback) {
 const offNetworkStatusChange = function (callback) {
   if (callback && typeof callback === 'function') {
     _callbacks.delete(callback)
-  } else if (callback === undefined) {
+  } else if (callback == null) {
     _callbacks.clear()
     _unsubscribe && _unsubscribe()
     _unsubscribe = null

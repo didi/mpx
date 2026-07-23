@@ -2,7 +2,7 @@
 
 创建一个 WebSocket 连接。
 
-支持情况： 微信、支付宝
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/upload/wx.uploadFile.html)
 

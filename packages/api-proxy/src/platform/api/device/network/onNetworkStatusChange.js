@@ -25,7 +25,9 @@ export function onNetworkStatusChange (callbackFn) {
         networkType: isConnected ? evt.currentTarget.effectiveType : 'none'
       })
     }
-    fnMap.set(callbackFn, proxyCallback)
+    const proxyCallbacks = fnMap.get(callbackFn) || new Set()
+    proxyCallbacks.add(proxyCallback)
+    fnMap.set(callbackFn, proxyCallbacks)
     navigator.connection.addEventListener('change', proxyCallback)
   } else {
     typeof callbackFn === 'function' && oldObserveList.add(callbackFn)
@@ -37,8 +39,25 @@ export function offNetworkStatusChange (callbackFn) {
     throwSSRWarning('offNetworkStatusChange API is running in non browser environments')
     return
   }
+  if (callbackFn == null) {
+    // 不传 callback 时清除所有监听
+    fnMap.forEach((proxyCallbacks) => {
+      if (navigator.connection) {
+        proxyCallbacks.forEach(proxyCallback => {
+          navigator.connection.removeEventListener('change', proxyCallback)
+        })
+      }
+    })
+    fnMap.clear()
+    oldObserveList.clear()
+    return
+  }
   if (navigator.connection) {
-    navigator.connection.removeEventListener('change', fnMap.get(callbackFn))
+    const proxyCallbacks = fnMap.get(callbackFn)
+    proxyCallbacks && proxyCallbacks.forEach(proxyCallback => {
+      navigator.connection.removeEventListener('change', proxyCallback)
+    })
+    fnMap.delete(callbackFn)
   } else {
     oldObserveList.has(callbackFn) && oldObserveList.delete(callbackFn)
   }
