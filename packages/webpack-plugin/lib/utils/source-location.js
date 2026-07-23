@@ -1,6 +1,10 @@
 const path = require('path')
 const { codeFrameColumns } = require('@babel/code-frame')
-const { SourceMapConsumer } = require('source-map')
+const {
+  TraceMap,
+  originalPositionFor: traceOriginalPositionFor,
+  sourceContentFor
+} = require('@jridgewell/trace-mapping')
 
 function offsetToPosition (source, offset) {
   const before = source.slice(0, offset)
@@ -45,25 +49,17 @@ function createCodeFrame (source, loc) {
 function originalPositionFor (map, loc) {
   loc = normalizeLoc(loc)
   if (!map || !loc || !loc.start) return
-  if (typeof map === 'string') {
-    try {
-      map = JSON.parse(map)
-    } catch (e) {
-      return
-    }
-  }
-  let consumer
+  let tracer
   try {
-    consumer = new SourceMapConsumer(map)
+    tracer = new TraceMap(map)
   } catch (e) {
     return
   }
-  const original = consumer.originalPositionFor({
+  const original = traceOriginalPositionFor(tracer, {
     line: loc.start.line,
     column: Math.max((loc.start.column || 1) - 1, 0)
   })
   if (!original || !original.source || !original.line) return
-  const sourceIndex = map.sources && map.sources.indexOf(original.source)
   return {
     file: original.source,
     loc: {
@@ -72,7 +68,7 @@ function originalPositionFor (map, loc) {
         column: (original.column || 0) + 1
       }
     },
-    source: sourceIndex > -1 && map.sourcesContent && map.sourcesContent[sourceIndex],
+    source: sourceContentFor(tracer, original.source) || undefined,
     generatedLoc: loc
   }
 }

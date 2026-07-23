@@ -32,7 +32,8 @@ module.exports = function (template, {
   ctorType,
   usingComponentsInfo,
   originalUsingComponents,
-  componentGenerics
+  componentGenerics,
+  componentPlaceholder
 }, callback) {
   const mpx = loaderContext.getMpx()
   const {
@@ -103,6 +104,7 @@ module.exports = function (template, {
         i18n: null,
         // 与 template-compiler/index 一致：usingComponentsInfo 已合并 globalComponentsInfo，此处白名单避免对仅 app 注册的组件误报「未使用」
         globalComponents: Object.keys(globalComponents || {}),
+        componentPlaceholder,
         // rn模式下实现抽象组件
         componentGenerics,
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),

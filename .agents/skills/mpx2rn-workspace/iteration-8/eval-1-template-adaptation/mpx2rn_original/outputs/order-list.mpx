@@ -18,7 +18,7 @@
       >
         <text
           class="tab-text"
-          wx:class="{{ {tabTextActive: activeTab === item.key} }}"
+          wx:class="{{ {'tab-text-active': activeTab === item.key} }}"
         >{{item.label}}</text>
         <view wx:if="{{item.badge > 0}}" class="badge">
           <text class="badge-text">{{item.badge > 99 ? '99+' : item.badge}}</text>
@@ -200,7 +200,7 @@ createPage({
   font-size: 28rpx;
 }
 
-.tabTextActive {
+.tab-text-active {
   color: #1677ff;
   font-weight: bold;
 }

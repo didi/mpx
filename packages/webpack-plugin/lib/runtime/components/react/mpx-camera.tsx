@@ -24,11 +24,9 @@ interface CameraProps {
   binderror?: (error: { message: string }) => void
   bindinitdone?: (result: { type: string, data: string }) => void
   bindscancode?: (result: { type: string, data: string }) => void
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   'enable-var'?: boolean
-  'external-var-context'?: any
 }
 
 interface TakePhotoOptions {
@@ -59,11 +57,28 @@ interface CameraRef {
   stopRecord: (options?: StopRecordOptions) => void
 }
 
+interface CameraPermissionCache {
+  promise?: Promise<any>
+  result?: boolean
+}
+
 type HandlerRef<T, P> = {
   current: T | null
 }
 
 let RecordRes: any = null
+
+const cameraPermissionCacheMap = new Map<number, CameraPermissionCache>()
+
+function getCameraPermissionCache (pageId: number | undefined) {
+  if (pageId == null) return
+  let cache = cameraPermissionCacheMap.get(pageId)
+  if (!cache) {
+    cache = {}
+    cameraPermissionCacheMap.set(pageId, cache)
+  }
+  return cache
+}
 
 const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -77,11 +92,9 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     bindinitdone,
     bindstop,
     bindscancode,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     style = {}
   } = props
   const styleObj = extendObject(
@@ -95,8 +108,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     setHeight
   } = useTransformStyle(styleObj, {
     enableVar,
-    externalVarContext,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
@@ -286,12 +297,33 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       try {
         const cameraPermission = global?.__mpx?.config?.rnConfig?.cameraPermission
         if (typeof cameraPermission === 'function') {
-          const permissionResult = await cameraPermission()
-          setHasPermission(permissionResult === true)
+          const permissionCache = getCameraPermissionCache(pageId)
+          if (permissionCache && hasOwn(permissionCache, 'result')) {
+            setHasPermission(permissionCache.result === true)
+            return
+          }
+          let permissionResult
+          if (permissionCache) {
+            if (!permissionCache.promise) {
+              permissionCache.promise = cameraPermission()
+            }
+            permissionResult = await permissionCache.promise
+          } else {
+            permissionResult = await cameraPermission()
+          }
+          const granted = permissionResult === true
+          if (permissionCache) {
+            permissionCache.result = granted
+          }
+          setHasPermission(granted)
         } else {
           setHasPermission(true)
         }
       } catch (error) {
+        const permissionCache = getCameraPermissionCache(pageId)
+        if (permissionCache) {
+          permissionCache.result = false
+        }
         setHasPermission(false)
       }
     }

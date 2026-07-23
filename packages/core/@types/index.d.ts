@@ -295,6 +295,13 @@ export interface RnConfig {
   onStateChange?: (state: Record<string, any>) => void
 
   /**
+   * 是否禁用页面转场动画。
+   *
+   * @default false
+   */
+  disablePageTransition?: boolean
+
+  /**
    * 用于获取初始路由配置的函数。
    *
    * @param props ReactNative根组件接收到的参数
@@ -319,6 +326,13 @@ export interface RnConfig {
    * 是否禁用框架内部的 AppStateChange 监听。
    */
   disableAppStateListener?: boolean
+
+  /**
+   * RN 导航状态栏是否默认透明。
+   *
+   * @default true
+   */
+  statusBarTranslucent?: boolean
 
   /**
    * RN 文本类组件是否允许跟随系统字体缩放。

@@ -35,3 +35,7 @@ export default function install(proxyMPX) {
 - 小程序API转换及promisify：@mpxjs/api-proxy [详细介绍](#api-proxy) [源码地址](https://github.com/didi/mpx/tree/master/packages/api-proxy)
 
 - mock数据：@mpxjs/mock [详细介绍](#mock) [源码地址](https://github.com/didi/mpx/tree/master/packages/mock)
+
+## 扩展组件 {#extend-components}
+
+Mpx 提供跨端扩展组件能力，详见 [Mpx 扩展组件](./extend-component)。

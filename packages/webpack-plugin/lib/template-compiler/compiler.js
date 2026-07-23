@@ -20,6 +20,8 @@ const { capitalToHyphen } = require('../utils/string')
 const { isNativeMiniTag } = require('../utils/dom-tag-config')
 const { offsetToLoc } = require('../utils/source-location')
 
+const MPX_HOST_REF = '__mpxHost'
+
 const no = function () {
   return false
 }
@@ -849,9 +851,13 @@ function parse (template, options) {
   })
 
   if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
+    // usingComponents 与 tagNames 均为 rulesRunner 处理后的名字（capitalToHyphen / mpx-com- 前缀已对齐），
+    // 反向排除 globalComponents 以避免对仅在 app 注册的组件误报「未使用」
+    const globalComponents = options.globalComponents || []
+    const componentPlaceholder = options.componentPlaceholder || []
     const arr = []
     usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
+      if (!tagNames.has(item) && !globalComponents.includes(item) && !componentPlaceholder.includes(item)) {
         arr.push(item)
       }
     })
@@ -2812,6 +2818,10 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'ishost',
             value: '{{true}}'
+          },
+          {
+            name: config[mode].directive.ref,
+            value: MPX_HOST_REF
           }
         ])
         processElement(rootView, rootView, options, meta)

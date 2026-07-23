@@ -154,6 +154,7 @@ module.exports = function (content) {
           usingComponentsInfo,
           originalUsingComponents,
           componentGenerics,
+          componentPlaceholder,
           autoScope,
           callback
         })
@@ -177,6 +178,7 @@ module.exports = function (content) {
           usingComponentsInfo,
           originalUsingComponents,
           componentGenerics,
+          componentPlaceholder,
           autoScope,
           callback
         })

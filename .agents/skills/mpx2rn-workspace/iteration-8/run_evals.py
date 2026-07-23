@@ -69,9 +69,6 @@ def build_prompts(eval_ids=None, groups=None, model="opus"):
     skill_paths = {
         "ORIGINAL_SKILL_PATH": str(PROJECT_ROOT / ".agents/skills/mpx2rn/SKILL.md"),
         "ORIGINAL_REFS_PATH": str(PROJECT_ROOT / ".agents/skills/mpx2rn/references/"),
-        "GENE_SKILL_PATH": str(PROJECT_ROOT / ".agents/skills/mpx2rn-gene/SKILL.md"),
-        "GENE_GENES_PATH": str(PROJECT_ROOT / ".agents/skills/mpx2rn-gene/genes/"),
-        "GENE_REFS_PATH": str(PROJECT_ROOT / ".agents/skills/mpx2rn-gene/references/"),
     }
 
     dispatches = []
