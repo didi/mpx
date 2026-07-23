@@ -137,7 +137,7 @@ function getWifiList (options = {}) {
 }
 
 function onGetWifiList (callback) {
-  if (!startWifiReady && wifiListListeners.indexOf(callback) > -1) {
+  if (wifiListListeners.indexOf(callback) > -1) {
     return
   }
   wifiListListeners.push(callback)
