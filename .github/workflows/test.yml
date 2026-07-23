@@ -34,11 +34,12 @@ jobs:
             packages/core/node_modules
             packages/api-proxy/node_modules
             packages/perf/node_modules
+            packages/unocss-base/node_modules
             packages/unocss-plugin/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+          key: ${{ runner.os }}-build-v2-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-build-v2-${{ env.cache-name }}-
+            ${{ runner.os }}-build-v2-
             ${{ runner.os }}-
 
       - name: install deps
