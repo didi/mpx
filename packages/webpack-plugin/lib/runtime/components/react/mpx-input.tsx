@@ -31,11 +31,11 @@
  * ✔ bindconfirm
  * ✘ bindkeyboardheightchange
  * ✘ bindnicknamereview
- * ✔ bind:selectionchange
- * ✘ bind:keyboardcompositionstart
- * ✘ bind:keyboardcompositionupdate
- * ✘ bind:keyboardcompositionend
- * ✘ bind:onkeyboardheightchange
+ * ✔ bindselectionchange
+ * ✘ bindkeyboardcompositionstart
+ * ✘ bindkeyboardcompositionupdate
+ * ✘ bindkeyboardcompositionend
+ * ✘ bindonkeyboardheightchange
  */
 import { JSX, forwardRef, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {
@@ -97,8 +97,6 @@ export interface InputProps {
   'placeholder-style'?: { color?: string }
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   // 只有 RN 环境读取
@@ -148,8 +146,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'selection-start': selectionStart = -1,
     'selection-end': selectionEnd = -1,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'adjust-position': adjustPosition = true,
@@ -212,7 +208,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, parentWidth, parentHeight })
 
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, {
@@ -295,7 +291,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     setKeyboardAvoidContext()
   }
 
-  const onTouchEnd = (evt: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
+  const markEventOrigin = (evt: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
     evt.nativeEvent.origin = 'input'
   }
 
@@ -473,7 +469,18 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   // React Native 的 TextInput 在 textAlign center + placeholder 时光标会跑到右边
   // 这个问题只在 Android 上出现
   // 参考：https://github.com/facebook/react-native/issues/28794 (Android only)
-  const needMultilineFix = isAndroid && !multiline
+  const conditionalTextInputProps: {
+    multiline?: boolean
+    numberOfLines?: number
+    enterKeyHint?: ConfirmType
+  } = {}
+  if (isAndroid && !multiline && props.placeholder && normalStyle.textAlign === 'center') {
+    conditionalTextInputProps.multiline = true
+    conditionalTextInputProps.numberOfLines = 1
+  }
+  if (!multiline || confirmType !== 'return') {
+    conditionalTextInputProps.enterKeyHint = confirmType
+  }
 
   const innerProps = useInnerProps(
     extendObject(
@@ -494,13 +501,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         autoFocus: isAutoFocus,
         selection: selectionStart > -1 || typeof cursor === 'number' ? selection : undefined,
         selectionColor: cursorColor,
-        blurOnSubmit: multiline ? confirmType !== 'return' : !confirmHold,
+        submitBehavior: multiline ? (confirmType === 'return' ? 'newline' : 'blurAndSubmit') : (confirmHold ? 'submit' : 'blurAndSubmit'),
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
-        multiline: multiline || needMultilineFix,
+        multiline,
         onTouchStart,
-        onTouchEnd,
+        onTouchEnd: markEventOrigin,
+        onTouchMove: markEventOrigin,
         onFocus,
         onBlur,
         onChange,
@@ -508,8 +516,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onContentSizeChange,
         onSubmitEditing: bindconfirm && onSubmitEditing
       },
-      needMultilineFix ? { numberOfLines: 1 } : {},
-      !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
+      conditionalTextInputProps
     ),
     [
       'name',

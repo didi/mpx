@@ -38,7 +38,7 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE, useRunOnJSCallback, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, hiddenStyle, useRunOnJSCallback, useTextPassThrough } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 import Portal from './mpx-portal'
 
@@ -66,8 +66,7 @@ interface ScrollViewProps {
   'scroll-into-view'?: string;
   'enable-trigger-intersection-observer'?: boolean;
   'enable-var'?: boolean;
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
+  'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
   'parent-height'?: number;
   'enable-sticky'?: boolean;
@@ -145,8 +144,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-left': scrollLeft = 0,
     'refresher-triggered': refresherTriggered,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'simultaneous-handlers': originSimultaneousHandlers,
@@ -200,10 +198,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     hasPositionFixed,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const scrollViewRef = useRef<ScrollView>(null)
 
@@ -255,7 +253,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const hasRefresherLayoutRef = useRef(false)
 
   // layout 完成前先隐藏，避免安卓闪烁问题
-  const refresherLayoutStyle = useMemo(() => { return !hasRefresherLayoutRef.current ? HIDDEN_STYLE : {} }, [hasRefresherLayoutRef.current])
+  const refresherLayoutStyle = useMemo(() => { return !hasRefresherLayoutRef.current ? hiddenStyle : {} }, [hasRefresherLayoutRef.current])
   const lastOffset = useRef(0)
 
   if (scrollX && scrollY) {
@@ -880,7 +878,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
 
   const createScrollViewContent = () => {
-    const wrappedChildren = wrapChildren(hasRefresher ? extendObject({}, props, { children: otherContent }) : props,
+    const wrappedChildren = wrapChildren(hasRefresher ? otherContent : props.children,
       {
         hasVarDec,
         varContext: varContextRef.current,

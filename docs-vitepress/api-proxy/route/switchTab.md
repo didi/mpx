@@ -4,6 +4,8 @@
 
 支持情况： 微信、支付宝、web
 
+> RN 平台当前不支持该 API；调用时会通过 `envError` 报告环境不支持，`mpx.canIUse('switchTab')` 返回 `false`。
+
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/route/wx.switchTab.html)
 
 ### 参数 {#parameters}

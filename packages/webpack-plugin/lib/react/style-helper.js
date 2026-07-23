@@ -5,23 +5,23 @@ const getRulesRunner = require('../platform/index')
 const createDiagnostic = require('../platform/create-diagnostic')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const parseValues = require('../utils/string').parseValues
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
-      ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
-      : {}
+    ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
+    : {}
 
   styles = styles && styles.length
     ? styles
     : [{
-        content,
-        filename
-      }]
+      content,
+      filename
+    }]
 
-  function formatValue (value) {
+  function formatValue(value) {
     let needStringify = true
     const matched = unitRegExp.exec(value)
     if (matched) {
@@ -40,7 +40,7 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
     return needStringify ? JSON.stringify(value) : value
   }
 
-  function getMediaOptions (params) {
+  function getMediaOptions(params) {
     return parseValues(params).reduce((option, item) => {
       if (['all', 'print'].includes(item)) {
         if (item === 'media') {
@@ -60,7 +60,7 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
       }
       const bracketsExp = /\((.+?)\)/
       if (bracketsExp.test(item)) {
-        const range = parseValues((item.match(bracketsExp)?.[1] || ''), ':')
+        const range = parseValues(item.match(bracketsExp)?.[1] || '', ':')
         if (range.length < 2) {
           return option
         } else {
@@ -122,8 +122,13 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
 
     root.walkRules(rule => {
       const classMapValue = {}
+      const prev = rule.prev()
+      let layer
+      if (prev && prev.type === 'comment' && prev.text.includes('rn-layer:')) {
+        layer = JSON.stringify(prev.text.split(':')[1].trim())
+      }
       rule.walkDecls((decl) => {
-        let { prop, value } = decl
+        let { prop, value, important } = decl
         if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
         let newData = rulesRunner && rulesRunner({ prop, value, selector: rule.selector, decl, rule, sourceMap })
         if (!newData) return
@@ -151,7 +156,13 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
           } else {
             value = formatValue(value)
           }
-          classMapValue[prop] = value
+          if (important) {
+            classMapValue._inlineLayer = classMapValue._inlineLayer || {}
+            classMapValue._inlineLayer.important = classMapValue._inlineLayer.important || {}
+            classMapValue._inlineLayer.important[prop] = value
+          } else {
+            classMapValue[prop] = value
+          }
         })
       })
 
@@ -162,6 +173,12 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
         selectors.each(selector => {
           if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
             classMapKeys.push(selector.nodes[0].value)
+          } else if (
+            selector.nodes.length === 2 &&
+            selector.nodes[0].type === 'class' &&
+            selector.nodes[1].type === 'pseudo'
+          ) {
+            classMapKeys.push(selector.nodes[0].value + selector.nodes[1].value)
           } else {
             reporter.error('Only single class selector is supported in react native mode temporarily.', {
               node: rule,
@@ -181,6 +198,10 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
             // set css defalut value
             const val = classMap[key] || {}
             classMap[key] = Object.assign(val, classMapValue)
+
+            if (layer) {
+              classMap[key]._layer = layer
+            }
 
             // set css media
             if (isMedia) {
