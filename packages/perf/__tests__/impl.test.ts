@@ -1,12 +1,27 @@
-import { scopeStart, scopeEnd, mark, measure, start, end, setReporter, clearReporter } from '../src/impl'
-import type { AggResult } from '../src/types'
+import {
+  scopeStart,
+  scopeEnd,
+  mark,
+  measureStart,
+  measureEnd,
+  start,
+  end,
+  setReporter,
+  clearReporter
+} from '../src/impl'
+import type { AggResult, MarkTimeline } from '../src/types'
 
-describe('impl scopeStart/scopeEnd / mark / measure', () => {
+describe('impl scope / measure / mark', () => {
   let captured: Map<string, AggResult> | null = null
+  let timeline: MarkTimeline | null = null
 
   beforeEach(() => {
     captured = null
-    setReporter((agg) => { captured = agg })
+    timeline = null
+    setReporter((measures, marks) => {
+      captured = measures
+      timeline = marks!
+    })
   })
 
   afterEach(() => {
@@ -53,7 +68,7 @@ describe('impl scopeStart/scopeEnd / mark / measure', () => {
     const id = scopeStart('lost')
     expect(id).toBe(-1)
     expect(() => scopeEnd(id)).not.toThrow()
-    end() // 未 start 直接 end 也是 noop
+    end()
     expect(captured).toBeNull()
   })
 
@@ -61,45 +76,65 @@ describe('impl scopeStart/scopeEnd / mark / measure', () => {
     start()
     const id = scopeStart('foo')
     scopeEnd(id)
-    scopeEnd(id) // 重复，应被忽略
+    scopeEnd(id)
     end()
     expect(captured!.get('foo')!.count).toBe(1)
   })
 
-  it('mark + measure 配对进聚合', () => {
+  it('measureStart/measureEnd 使用同名 key 配对并聚合', () => {
     start()
-    mark('m')
-    measure('done', 'm')
+    measureStart('request')
+    measureEnd('request')
     end()
-    const done = captured!.get('done')!
-    expect(done.count).toBe(1)
-    expect(done.sum).toBeGreaterThanOrEqual(0)
+    const request = captured!.get('request')!
+    expect(request.count).toBe(1)
+    expect(request.sum).toBeGreaterThanOrEqual(0)
   })
 
-  it('measure 同一个 mark 第二次失效（mark 用过即清）', () => {
+  it('measureEnd 消费起点后重复调用不再聚合', () => {
     start()
-    mark('m')
-    measure('done', 'm')
-    measure('done2', 'm') // 已被 delete，应失效
+    measureStart('request')
+    measureEnd('request')
+    measureEnd('request')
     end()
-    expect(captured!.has('done')).toBe(true)
-    expect(captured!.has('done2')).toBe(false)
+    expect(captured!.get('request')!.count).toBe(1)
   })
 
-  it('mark 单独不进聚合', () => {
+  it('mark 只写入有序时间线，同名事件不合并', () => {
     start()
-    mark('m')
+    mark('ready')
+    mark('ready')
     end()
-    expect(captured).toBeNull() // aggMap 为空 → end 不触发 reporter
+    expect(captured!.size).toBe(0)
+    expect(timeline!.events.map(event => event.name)).toEqual(['start', 'ready', 'ready', 'end'])
   })
 
-  it('end 支持局部 reporter，与全局 reporter 同批触发', () => {
-    let local: Map<string, AggResult> | null = null
+  it('mark 不会注册 measure 起点', () => {
+    start()
+    mark('request')
+    measureEnd('request')
+    end()
+    expect(captured!.has('request')).toBe(false)
+    expect(timeline!.events.map(event => event.name)).toEqual(['start', 'request', 'end'])
+  })
+
+  it('未录制时 mark 被丢弃，start/end 仍自动生成边界', () => {
+    mark('lost')
+    start()
+    end()
+    expect(timeline!.events.map(event => event.name)).toEqual(['start', 'end'])
+  })
+
+  it('end 支持局部 reporter，与全局 reporter 共享结果', () => {
+    let localMeasures: Map<string, AggResult> | undefined
+    let localTimeline: MarkTimeline | undefined
     start()
     const id = scopeStart('foo'); scopeEnd(id)
-    end((agg) => { local = agg })
-    expect(captured).not.toBeNull()
-    expect(local).not.toBeNull()
-    expect(captured).toBe(local) // 同一份 Map
+    end((measures, marks) => {
+      localMeasures = measures
+      localTimeline = marks
+    })
+    expect(captured).toBe(localMeasures)
+    expect(timeline).toBe(localTimeline)
   })
 })
