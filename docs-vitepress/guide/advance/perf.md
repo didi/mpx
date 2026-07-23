@@ -2,7 +2,7 @@
 
 Mpx 跨端输出 React Native 时，运行时核心组件（`mpx-view` / `mpx-text` / `mpx-simple-view` / `mpx-simple-text` 等）以及 `useTransformStyle` / `__getStyle` 等公共函数是高频热路径，在大列表、复杂样式、嵌套文本场景下经常成为性能瓶颈。Hermes Profiler / Flipper 只能看到 RN 原生层调用栈，难以定位到 `splitStyle`、`useTransformStyle`、`wrapChildren` 这些 mpx 自身逻辑。
 
-`@mpxjs/perf` 是 Mpx 内置的运行时测速探针，提供「需要时打开、不需要时关闭、关闭态产物零字节残留」的能力，作为 mpx 抽象层的 mark / measure 数据源，与 Hermes Profiler / Flipper / Perfetto 等系统级工具互补。
+`@mpxjs/perf` 是 Mpx 内置的运行时性能探针，提供「需要时打开、不需要时关闭、关闭态产物零字节残留」的能力。它同时提供实时聚合的 measure 数据和有序 mark 时间线，与 Hermes Profiler / Flipper / Perfetto 等系统级工具互补。
 
 ## 设计原则 {#design-principles}
 
@@ -14,7 +14,7 @@ Mpx 跨端输出 React Native 时，运行时核心组件（`mpx-view` / `mpx-te
 
 最终：**关闭态下产物里既不存在探针代码，也不存在事件名字符串字面量，对 bundle size 与运行时性能均无任何影响**。
 
-**实时聚合 only**：录制窗口内只维护 `Map<name, AggResult>`，不保留逐条事件。push 阶段直接累加，end 时回填 `avg`。GC / 内存压力近乎为零，专门为高频渲染场景（大列表 / 嵌套文本）下的"测速本身不影响被测对象"设计。
+measure 在录制窗口内实时聚合为 `Map<name, AggResult>`，不保留逐次耗时样本；push 阶段直接累加，end 时回填 `avg`。mark 则用于表达数据就绪、首次渲染、可交互等低频时间线里程碑，每次调用保留一条独立事件，同名 mark 不合并。时间线包含自动生成的 start/end 边界，总量固定最多 256 条。
 
 ::: warning 该方案不支持线上动态开关
 线上开关意味着探针字节必须进入产物，与「关闭态零残留」目标冲突。线上诊断需重新打一个**开启探针的内测包**。
@@ -56,7 +56,7 @@ module.exports = defineConfig({
 | `framework` | 框架内部探针（`view:render:*` / `text:render:*` / `getStyle:*`） | 调试 mpx 框架自身渲染性能 |
 | `user` | 业务侧自定义探针（业务前缀如 `myBiz:list:filter`） | 定位业务函数耗时 |
 
-两个分组的开关粒度独立、产物 DCE 独立，但**共用同一根聚合 Map 与 reporter**——业务侧 reporter 可同时收到所有桶，按 name 前缀区分。
+两个分组的开关粒度独立、产物 DCE 独立，但**共用同一根聚合 Map、mark 时间线与 reporter**——业务侧 reporter 可同时读取所有耗时桶和里程碑。
 
 | 配置 | 行为 |
 | --- | --- |
@@ -68,7 +68,7 @@ module.exports = defineConfig({
 
 ### 最小用法（默认 reporter） {#minimal}
 
-`@mpxjs/perf` 的默认 reporter 即 `consoleReporter`——业务方什么都不调，开启探针并 `start()` / `end()` 后 console 就有聚合输出，**零接入门槛**。
+`@mpxjs/perf` 的默认 reporter 即 `consoleReporter`——业务方什么都不调，开启探针并 `start()` / `end()` 后 console 就有 measure 聚合和 mark 时间线输出，**零接入门槛**。`start()` / `end()` 本身会生成同名边界事件，因此空窗口也会触发 reporter。
 
 ```ts
 import { start, end } from '@mpxjs/perf'
@@ -86,13 +86,20 @@ router.beforeLeave('/goods/:id', () => {
 输出样例（对齐字符串，跨 RN / 浏览器 / Node 显示一致）：
 
 ```
-[mpx perf] 4 buckets / 432 samples
+[mpx perf] 4 measure buckets / 2 marks
+measures
 name                count       sum      avg       max
 ------------------  -----  --------  -------  --------
 view:render:total     120  480.32ms   4.00ms   18.21ms
 view:render:style     120   92.15ms   0.77ms    3.42ms
 getStyle:total        120   21.08ms   0.18ms    1.10ms
 text:render:total      84    8.42ms   0.10ms    0.55ms
+
+timeline
+index      at  name
+-----  ------  -----
+    0  0.00ms  start
+    1  1420.00ms  end
 ```
 
 > 默认 reporter 不使用 `console.table`——React Native 远程调试 / Hermes inspector 对它支持参差不齐（典型表现是把每行渲染成 `{…}` 不展开），改成对齐字符串 + 单条 `console.log`，在 RN console、Chrome DevTools、终端 Node 中都能直接读。
@@ -142,15 +149,15 @@ useEffect(() => {
 
 ### 自定义 reporter（可选） {#custom-reporter}
 
-如果想把数据接到自家 APM、写文件、发本地 socket，调 `setReporter` 替换默认 console。reporter 收到的就是已聚合的 `Map<name, AggResult>`：
+如果想把数据接到自家 APM、写文件、发本地 socket，调 `setReporter` 替换默认 console。reporter 的第一个参数是已聚合的 `Map<name, AggResult>`，第二个参数是有界、有序的 mark 时间线：
 
 ```ts
 // App.tsx
 import { setReporter } from '@mpxjs/perf'
-import type { AggResult } from '@mpxjs/perf'
+import type { AggResult, MarkTimeline } from '@mpxjs/perf'
 
 if (__mpx_perf__) {
-  setReporter((agg: Map<string, AggResult>) => {
+  setReporter((agg: Map<string, AggResult>, timeline?: MarkTimeline) => {
     // agg 是 bus 内部 Map 的引用，不要直接修改；如需保留请自行复制成普通对象。
     const fw: Record<string, AggResult> = {}
     const user: Record<string, AggResult> = {}
@@ -161,6 +168,7 @@ if (__mpx_perf__) {
     }
     MyAPM.report('mpx_perf_fw', fw)
     MyAPM.report('mpx_perf_user', user)
+    if (timeline) MyAPM.report('mpx_perf_timeline', timeline)
   })
 }
 ```
@@ -171,13 +179,13 @@ if (__mpx_perf__) {
 **不要**写成 `setReporter(__mpx_perf__ ? myFn : undefined)`——`myFn` 引用没被字面量条件包裹，仍可能被 webpack 视作活引用。
 :::
 
-::: warning Map 引用语义
-`reporter` 收到的 Map 是 bus 内部窗口数据的引用，**不要在 reporter 内修改它**。下一次 `start()` 会重建新 Map（旧引用归调用方私有，业务侧异步消费安全），但若 reporter 在当次调用里改桶值，会污染同批次的局部 reporter。
+::: warning 引用语义
+`reporter` 收到的 Map、timeline 及 events 都是 bus 内部窗口数据的引用，**不要在 reporter 内修改它们**。下一次 `start()` 会重建窗口数据，旧引用可安全异步消费；但当次修改会污染同批次的局部 reporter。
 :::
 
 切换 reporter 直接再调一次 `setReporter(otherReporter)`。想完全停止上报，调 `clearReporter()`——之后 `end()` 收集到的桶被静默丢弃。
 
-如果只想在某一次录制窗口结束时追加一个局部 reporter，可以直接传给 `end(localReporter)`。局部 reporter 与全局 reporter **不互斥**：默认 `consoleReporter` 或 `setReporter` 注册过的全局 reporter 会照常收到同一份 Map，局部 reporter 只在这次 `end` 调用中额外触发一次，不会改变后续窗口的全局配置。
+如果只想在某一次录制窗口结束时追加一个局部 reporter，可以直接传给 `end(localReporter)`。局部 reporter 与全局 reporter **不互斥**：二者会收到同一份 Map 和 timeline，局部 reporter 只在这次 `end` 调用中额外触发一次，不会改变后续窗口的全局配置。
 
 ```ts
 import { start, end } from '@mpxjs/perf'
@@ -186,8 +194,9 @@ const onSubmit = () => {
   if (__mpx_perf__) start()
   doSubmit()
   if (__mpx_perf__) {
-    end((agg) => {
+    end((agg, timeline) => {
       MyAPM.report('submit_perf', agg)
+      if (timeline) MyAPM.report('submit_timeline', timeline)
     })
   }
 }
@@ -202,22 +211,61 @@ import { setReporter, createConsoleReporter } from '@mpxjs/perf'
 
 if (__mpx_perf__) {
   setReporter(createConsoleReporter({
-    sortBy: 'max',          // 'sum'(默认) | 'avg' | 'max' | 'count'
-    filter: /^view:/,       // 仅打印匹配的事件名
+    sortBy: 'max',          // 只排序 measure：'sum'(默认) | 'avg' | 'max' | 'count'
+    filter: /^view:/,       // 过滤 measure 与显式 mark；不会隐藏 start/end
     header: true            // 是否带 console.group 头
   }))
 }
 ```
 
 ::: tip 高阶统计的取舍
-本方案实时聚合 only，**不保留**逐条事件数组——因此**无法**在录制窗口结束后再计算 p50 / p95 / 直方图等分位指标。如需分位数，请用业务自定义探针在调用点自行采样，或在 reporter 中按桶名做二次累加。
+measure 只做实时聚合，**不保留**逐次耗时样本，因此无法在窗口结束后再计算 p50 / p95 / 直方图等分位指标。mark 时间线保存的是不同里程碑的发生时刻，不是 measure 样本，也不用于聚类或分位数分析。
 
-设计上的取舍：高频渲染场景下保留逐条事件会显著放大 GC 压力（每次 scope ≈ 1 事件对象 + 1 闭包），与「测速本身不影响被测对象」的目标冲突，因此选择仅保留聚合。
+高频渲染耗时继续使用 scope/measure 聚合；低频流程里程碑才使用 mark，并由 256 条硬上限控制最坏内存。
 :::
+
+### Mark 时间线 {#mark-timeline}
+
+`mark(name)` 记录“某件事在何时发生”，不产生耗时聚合桶。每次调用都在 start/end 之间追加一条独立事件，数组顺序就是权威顺序：
+
+```ts
+import { start, mark, end } from '@mpxjs/perf'
+
+if (__mpx_perf__) start()
+
+loadPageData().then(() => {
+  if (__mpx_perf_user__) mark('goods:data-ready')
+})
+
+onFirstContentRendered(() => {
+  if (__mpx_perf_user__) mark('goods:first-render')
+})
+
+onPageInteractive(() => {
+  if (__mpx_perf_user__) mark('goods:interactive')
+  if (__mpx_perf__) end()
+})
+```
+
+Reporter 得到的 `MarkTimeline` 结构为：
+
+```ts
+interface MarkEvent {
+  name: string
+  at: number // 相对当前 start() 的毫秒偏移
+}
+
+interface MarkTimeline {
+  events: MarkEvent[]
+  dropped: number
+}
+```
+
+内建 start 永远是首项，内建 end 永远是完整窗口的末项。总事件数固定最多 256：1 个 start、最多 254 个显式 mark、1 个 end。超过上限后保留前缀并增加 `dropped`，end 始终保留。业务 mark 应避免使用 `start` / `end` 名称。
 
 ## 业务侧自定义探针 {#user-probes}
 
-业务侧自有 RN 代码（非 `.mpx` 的纯 RN 封装、列表项、外置 hook 等）想接入同一根 reporter 通道时，使用 `__mpx_perf_user__` 分组开关 + `scopeStart` / `scopeEnd` 句柄式 API：
+业务侧自有 RN 代码（非 `.mpx` 的纯 RN 封装、列表项、外置 hook 等）想接入同一根 reporter 通道时，使用 `__mpx_perf_user__` 分组开关。同步高频路径优先使用 `scopeStart` / `scopeEnd` 句柄式 API：
 
 ```ts
 import { scopeStart, scopeEnd } from '@mpxjs/perf'
@@ -242,10 +290,25 @@ function expensiveCompute (data) {
 
 这是为高频渲染场景特别设计的——一帧 1000+ 次 scope 调用下，旧的闭包模式会产生 1000+ 个闭包 Context 对象，显著放大 GC 压力，让测速本身变成被测项的瓶颈。
 
+### 跨作用域 measure {#named-measure}
+
+当开始与结束不在同一同步作用域时，使用同名的 `measureStart` / `measureEnd`：
+
+```ts
+import { measureStart, measureEnd } from '@mpxjs/perf'
+
+if (__mpx_perf_user__) measureStart('goods:request')
+loadPageData().finally(() => {
+  if (__mpx_perf_user__) measureEnd('goods:request')
+})
+```
+
+该名称同时作为配对 key 和最终聚合桶名。`measureEnd` 命中后消费起点，重复结束 noop；同名并发测量时后一次起点覆盖前一次。`measureStart/measureEnd` 不写入时间线，`mark` 也不会注册 measure 起点。
+
 ### 强约束 {#user-probe-constraints}
 
 1. **字面量条件**：所有探针调用必须直接包在 `if (__mpx_perf_framework__)`（框架探针）/ `if (__mpx_perf_user__)`（业务探针）字面量条件里——不能先把常量赋给变量再用。只有字面量条件才能被 DefinePlugin + Terser DCE 静态消除。
-2. **scopeStart / scopeEnd 必须配对**：用 `let id = -1` 提前声明，再 `if (...) id = scopeStart(...)` / `if (...) scopeEnd(id)`——这样关闭态下整组语句被 DCE 删除。**不要**写成 `const id = <常量> ? scopeStart(...) : -1`，那会把字面量字符串和分支保留在产物里。
+2. **起止 API 必须配对**：scope 用同一个数字 id；跨作用域 measure 的 start/end 使用同一个 name。所有调用都分别放入对应的字面量门禁。
 3. **不要跨类混用**：业务代码里只用 `__mpx_perf_user__`，不要错用 `__mpx_perf_framework__`（反之亦然）。
 
 ## API 参考 {#api}
@@ -254,26 +317,32 @@ function expensiveCompute (data) {
 | --- | --- |
 | `scopeStart(name): number` | 起一段 scope，返回 id 句柄。未录制时返回 `-1`。**首选**。无闭包 / 对象分配。 |
 | `scopeEnd(id): void` | 关闭 id 对应的 scope，累加进聚合。`id < 0` 或重复 end 安全 noop。 |
-| `mark(name)` | 仅打一个时间戳，**不进聚合**。跨作用域起止配对时使用。 |
-| `measure(name, start)` | 与 `mark(start)` 配对，记录从 mark 到当前的样本进聚合。mark 用过即清。 |
-| `start()` | 打开录制窗口；新建一个干净的聚合 Map。重复 `start` 幂等。 |
-| `end(reporter?)` | 关闭录制窗口，回填 `avg = sum/count` 后**同步**把 `Map<name, AggResult>` 交给全局 reporter；传入局部 reporter 时同批次追加触发一次。 |
+| `measureStart(name): void` | 注册跨作用域耗时的具名起点。 |
+| `measureEnd(name): void` | 消费同名起点，将耗时聚合到同名桶；找不到起点时 noop。 |
+| `mark(name): void` | 向当前窗口追加独立、有序的时间线事件，同名 mark 不合并。 |
+| `start(): void` | 打开录制窗口，新建聚合 Map 和时间线，并生成 start 边界。重复 `start` 幂等。 |
+| `end(reporter?): void` | 生成 end 边界，回填 measure 的 avg 后同步触发全局及可选局部 reporter。 |
 | `setReporter(r)` | 替换默认 reporter。可选，默认即 `consoleReporter`。 |
-| `clearReporter()` | 清空 reporter；之后 `end` 收集到的聚合结果被静默丢弃。 |
+| `clearReporter()` | 清空全局 reporter。 |
 | `createConsoleReporter(opts?)` | 工厂函数，定制 console 输出。 |
 | `consoleReporter` | 默认 reporter，等价于 `createConsoleReporter()` 默认参数。 |
 
-`Reporter` 签名：`(agg: Map<string, AggResult>) => void`。
+`Reporter` 签名：`(measures: Map<string, AggResult>, timeline?: MarkTimeline) => void`。通过正常 `start/end` 完成的窗口始终传入 timeline；第二参数保持可选，以兼容单参数 reporter 和手动调用。
 `AggResult`：`{ count, sum, avg, max }`，所有时长字段单位为 ms。
+
+::: warning API 直接变更
+旧 `mark(name)` 的 measure 起点语义已直接替换为时间线语义；请迁移为 `measureStart(name)`。旧 `measure(resultName, startName)` 请迁移为使用同一名称的 `measureEnd(name)`，旧 `measure` 不再导出。本次不提供 alias 或过渡阶段。
+:::
 
 ### 录制窗口语义 {#recording-window}
 
-- **`start()` / `end()` 之间触发的探针才会被录制**，其余时间所有 `scopeStart` / `mark` 调用立即 return（`scopeStart` 返回 `-1`），零内存占用。
-- **`end()` 同步触发 reporter**：调用 `end()` 那一行之后立即在 console 看到结果，调试切场景手感顺；`end(localReporter)` 不会替换全局 reporter，只对当前窗口追加一次局部上报。
+- **`start()` / `end()` 之间触发的 scope、mark 与完成的 measure 才会进入当前窗口**。未录制时 `scopeStart` 返回 `-1`，`mark` 不读取时钟也不分配事件。
+- **start/end 自动构成闭合时间线**：最小窗口也包含 `{ name: 'start', at: 0 }` 和名为 end 的末事件，因此没有显式 mark 和 measure 时仍会触发 reporter。
+- **`end()` 同步触发 reporter**：调用 `end()` 后立即在 console 看到结果；`end(localReporter)` 不会替换全局 reporter，只对当前窗口追加一次局部上报。
 - **不强制配对**：误调 `end()`（未先 start）是 noop；重复 `start()` 沿用已有窗口（幂等）。
-- **强制重开新窗口**：先 `end()` 再 `start()`，第二次 `start` 会丢弃旧聚合并新建一个空 Map。
-- **跨窗口的 Map 引用是安全的**：每次 `start()` 都新建 Map，所以 reporter 异步消费旧窗口的 Map 不会被下一次窗口覆盖。
-- **不需要 `try / finally` 保护 end**：忘记 end 不会导致内存泄漏（聚合 Map 桶数 = 唯一事件名数量，业务侧名集合通常有限）。
+- **强制重开新窗口**：先 `end()` 再 `start()`，第二次 start 会新建 Map、timeline 和 events。
+- **跨窗口引用安全**：每次 start 都重建窗口数据，reporter 异步消费旧窗口不会被下一次窗口覆盖。
+- **时间线容量固定**：包含边界在内最多 256 条；显式 mark 超过 254 条后只累计 `dropped`。measure Map 仍应使用有限、稳定的桶名，避免动态名称集合增长。
 
 ## 内置框架探针事件 schema {#schema}
 
@@ -333,12 +402,13 @@ function expensiveCompute (data) {
 | --- | --- | --- | --- |
 | 单次 scope 额外耗时 | 0 | 一次 `isRecording()` 比较 → return | 状态判断 + freeList 取 id + 一次 `now()` + 两次数组下标写 + push 阶段 `Map.get` + 数值累加 |
 | 单次 scope 堆分配 | 0 | 0 | 0（首次出现新桶时一次 `AggResult` 对象） |
-| 内存 | 0 | 0（scopeStart 返回 -1 即终止） | 桶数 × `AggResult`（~40 字节）。桶名通常有限，远低于事件流模型 |
+| 单次 mark | 0 | 一次 `isRecording()` 比较，不读取时钟 | 一次 `now()`、相对时间计算和一次事件 push；达到容量后只增加 dropped |
+| 内存 | 0 | 0 | 桶数 × `AggResult` + 最多 256 个 MarkEvent。measure 不保存逐次样本 |
 | Hook 调用顺序 | 不变 | 不变（同一构建内常量恒定） | 不变 |
 | reporter 触发开销 | 无 | 无 | 仅 `end()` 触发一次同步调用，不在热路径上重复跑 |
 
 ::: tip 实时聚合 vs 事件流模型
-旧版（事件流）每次 scope 产生 1 个事件对象 + 1 个 stop 闭包，一帧 1000+ 次 scope 直接累积 2000+ 个短命对象，触发 Hermes minor GC。本版（实时聚合）单次 scope 在录制态下零对象分配，桶数稳态后甚至零分配总量——测速本身对热路径的影响接近忽略不计。
+高频 scope/measure 只做实时聚合，不保存逐次样本；单次 scope 在录制态下零对象分配。mark 明确保留事件对象，因此只用于低频里程碑，并用 256 条硬上限约束最坏内存。
 :::
 
 ::: warning 观测者效应
@@ -353,6 +423,6 @@ function expensiveCompute (data) {
 
 ## Terser / babel 兼容性约束 {#terser-babel}
 
-- `@mpxjs/perf` 以**未压缩、未编译**源码形式被引用，使用方 webpack 的 ts-loader / babel-loader + Terser 在最终构建里完成 DCE。
+- 最终构建依赖 `@mpxjs/perf` 的 `dist/index.js` 保留顶层三元、`sideEffects: false` 与使用方 Terser 完成 DCE。
 - 接入方需保留默认 Terser 配置（不要关闭 minimizer / 不要禁用 `dead_code` / `conditionals`）。
 - `babel-preset-env` 不要把三元条件 `__mpx_perf__ ? impl.x : noop.x` 变换平铺，否则 DCE 失效。

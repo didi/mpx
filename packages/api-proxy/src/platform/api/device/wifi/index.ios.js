@@ -53,7 +53,7 @@ function startWifi (options = {}) {
     }
     startWifiReady = true
     const result = {
-      errMsg: 'startWifi:success'
+      errMsg: 'startWifi:ok'
     }
     success(result)
     complete(result)
@@ -80,7 +80,7 @@ function stopWifi (options = {}) {
   startWifiReady = false
   wifiListListeners.length = 0
   const result = {
-    errMsg: 'stopWifi:success'
+    errMsg: 'stopWifi:ok'
   }
   success(result)
   complete(result)
@@ -121,7 +121,7 @@ function getWifiList (options = {}) {
       }
     })
     const result = {
-      errMsg: 'getWifiList:success',
+      errMsg: 'getWifiList:ok',
       errno: 0,
       errCode: 0
     }
