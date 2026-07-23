@@ -104,6 +104,16 @@
       this.setCurrentChildLength()
     },
     watch: {
+      autoplay (val) {
+        if (!this.bs) return
+        // BetterScroll 不支持动态更新 autoplay，startPlay/pausePlay 只管理定时器且依赖
+        // Slide 内部的 autoplay 配置，因此同步配置以避免重建实例影响当前页状态。
+        this.bs.pausePlay()
+        this.bs.plugins.slide.options.autoplay = val
+        if (val) {
+          this.bs.startPlay()
+        }
+      },
       current (val) {
         this.currentIndex = val
         if (this.bs) {
