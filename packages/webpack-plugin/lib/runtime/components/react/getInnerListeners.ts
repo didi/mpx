@@ -22,16 +22,16 @@ const globalEventState: GlobalEventState = {
   identifier: null
 }
 
-type LabelControlEvent = NativeSyntheticEvent<TouchEvent> & {
+type LabelControlEvent = NativeSyntheticEvent<TouchEvent & {
   _labelControlHandled?: boolean
-}
+}>
 
 export const markLabelControlHandled = (evt: LabelControlEvent) => {
-  evt._labelControlHandled = true
+  evt.nativeEvent._labelControlHandled = true
 }
 
 export const isLabelControlHandled = (evt: LabelControlEvent) => {
-  return !!evt._labelControlHandled
+  return !!evt.nativeEvent._labelControlHandled
 }
 
 const baseRemovePropsMap: Record<string, boolean> = {
