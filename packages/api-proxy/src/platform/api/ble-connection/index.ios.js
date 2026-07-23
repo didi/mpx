@@ -419,8 +419,8 @@ function writeBLECharacteristicValue (options = {}) {
       errMsg: 'writeBLECharacteristicValue:fail parameter error',
       errno: 1001
     }
-    success(result)
     fail(result)
+    complete(result)
     return
   }
   let writeTypeValue = writeType
@@ -454,10 +454,10 @@ function readBLECharacteristicValue (options = {}) {
 
   if (!deviceId || !serviceId || !characteristicId) {
     const result = {
-      errMsg: 'readBLECharacteristicValue:ok',
+      errMsg: 'readBLECharacteristicValue:fail parameter error',
       errno: 1509000
     }
-    success(result)
+    fail(result)
     complete(result)
     return
   }
@@ -491,10 +491,10 @@ function notifyBLECharacteristicValueChange (options = {}) {
 
   if (!deviceId || !serviceId || !characteristicId) {
     const result = {
-      errMsg: 'notifyBLECharacteristicValueChange:ok',
+      errMsg: 'notifyBLECharacteristicValueChange:fail parameter error',
       errno: 1509000
     }
-    success(result)
+    fail(result)
     complete(result)
     return
   }
@@ -611,10 +611,10 @@ function getBLEDeviceRSSI (options = {}) {
 
   if (!deviceId) {
     const result = {
-      errMsg: 'getBLEDeviceRSSI:ok',
+      errMsg: 'getBLEDeviceRSSI:fail parameter error',
       errno: 1509000
     }
-    success(result)
+    fail(result)
     complete(result)
     return
   }
@@ -642,7 +642,7 @@ function getBLEDeviceServices (options = {}) {
 
   if (!deviceId) {
     const result = {
-      errMsg: 'getBLEDeviceServices:ok',
+      errMsg: 'getBLEDeviceServices:fail parameter error',
       errno: 1509000,
       services: []
     }
@@ -679,11 +679,11 @@ function getBLEDeviceCharacteristics (options = {}) {
 
   if (!deviceId || !serviceId) {
     const result = {
-      errMsg: 'getBLEDeviceCharacteristics:ok',
+      errMsg: 'getBLEDeviceCharacteristics:fail parameter error',
       errno: 1509000,
       characteristics: []
     }
-    success(result)
+    fail(result)
     complete(result)
     return
   }
@@ -732,7 +732,7 @@ function createBLEConnection (options = {}) {
 
   if (!deviceId) {
     const result = {
-      errMsg: 'createBLEConnection:ok',
+      errMsg: 'createBLEConnection:fail parameter error',
       errno: 1509000
     }
     fail(result)
@@ -782,10 +782,10 @@ function closeBLEConnection (options = {}) {
 
   if (!deviceId) {
     const result = {
-      errMsg: 'closeBLEConnection:ok',
+      errMsg: 'closeBLEConnection:fail parameter error',
       errno: 1509000
     }
-    success(result)
+    fail(result)
     complete(result)
     return
   }

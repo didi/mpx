@@ -192,12 +192,7 @@ class RNIntersectionObserver {
     this.previousIntersectionRatio[observeIndex] = intersectionRatio
     return {
       intersectionRatio,
-      intersectionRect: {
-        top: visibleRect.top,
-        bottom: relativeRect.bottom,
-        left: visibleRect.left,
-        right: relativeRect.right
-      },
+      intersectionRect: visibleRect,
       isInsected
     }
   }
