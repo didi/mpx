@@ -33,10 +33,13 @@ jobs:
             packages/webpack-plugin/node_modules
             packages/core/node_modules
             packages/api-proxy/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+            packages/perf/node_modules
+            packages/unocss-base/node_modules
+            packages/unocss-plugin/node_modules
+          key: ${{ runner.os }}-build-v2-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-build-v2-${{ env.cache-name }}-
+            ${{ runner.os }}-build-v2-
             ${{ runner.os }}-
 
       - name: install deps
@@ -51,6 +54,9 @@ jobs:
 
       - name: build-plugin
         run: npm run build --prefix test/e2e/plugin-project
+
+      - name: build-perf
+        run: npm run build -w @mpxjs/perf
 
       - name: exec unit test
         run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project

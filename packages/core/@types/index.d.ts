@@ -280,11 +280,26 @@ export interface WebviewConfig {
  */
 export interface RnConfig {
   /**
+   * RN 节点未显式声明 box-sizing 时使用的默认盒模型。
+   *
+   * 默认值为 content-box，用于对齐小程序 / Web 的默认行为。
+   * 如需保留 RN 原始默认盒模型，可配置为 border-box。
+   */
+  defaultBoxSizing?: 'border-box' | 'content-box'
+
+  /**
    * 当导航状态发生变化时触发，例如页面跳转、返回等。
    *
    * @param state 当前的导航状态对象
    */
   onStateChange?: (state: Record<string, any>) => void
+
+  /**
+   * 是否禁用页面转场动画。
+   *
+   * @default false
+   */
+  disablePageTransition?: boolean
 
   /**
    * 用于获取初始路由配置的函数。
@@ -311,6 +326,20 @@ export interface RnConfig {
    * 是否禁用框架内部的 AppStateChange 监听。
    */
   disableAppStateListener?: boolean
+
+  /**
+   * RN 导航状态栏是否默认透明。
+   *
+   * @default true
+   */
+  statusBarTranslucent?: boolean
+
+  /**
+   * RN 文本类组件是否允许跟随系统字体缩放。
+   *
+   * @default false
+   */
+  allowFontScaling?: boolean
 
   /**
    * 控制首页回退按钮是否展示，并监听点击事件。
@@ -373,7 +402,7 @@ export interface RnConfig {
    * @param params.package 分包名
    * @returns Promise，表示加载完成
    */
-  loadChunkAsync?: (params: { url: string; package: string }) => Promise<any>
+  loadChunkAsync?: (params: { url: string; package: string }) => Promise<null>
 
   /**
    * 下载多个异步分包的方法（不执行）。
