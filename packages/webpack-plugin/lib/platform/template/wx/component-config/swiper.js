@@ -67,7 +67,7 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: /^(display-multiple-items|snap-to-edge|easing-function)$/,
+        test: /^(snap-to-edge|easing-function)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog

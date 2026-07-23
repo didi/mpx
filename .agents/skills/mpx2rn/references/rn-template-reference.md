@@ -812,6 +812,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | vertical | boolean | `false` | 滑动方向是否为纵向 |
 | previous-margin | string | `0` | 前边距，可用于露出前一项的一小部分，接受 px |
 | next-margin | string | `0` | 后边距，可用于露出后一项的一小部分，接受 px |
+| display-multiple-items | number | `1` | 同时显示的滑块数量 |
 | scale | boolean | `false` | 滑动时是否开启前后元素缩小,默认是缩放 0.7 倍, 暂不支持自定义 |
 | easing-function | string | `linear` | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic |
 | simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件 |

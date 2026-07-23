@@ -65,16 +65,13 @@ bindchangestart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 组件内部新增：
 
 ```ts
-const propDisplayMultipleItems = Number(props['display-multiple-items'])
-const displayMultipleItems = Number.isFinite(propDisplayMultipleItems)
-  ? Math.max(1, Math.floor(propDisplayMultipleItems))
-  : 1
+const displayMultipleItems = Number(props['display-multiple-items']) || 1
 ```
 
 ### 为什么这么改
 
 1. `display-multiple-items` 是小程序 swiper 的标准属性，RN runtime 需要在 wrapper 层感知它，因为 item 尺寸、边界和循环补位都依赖该值。
-2. 用 `Number.isFinite`、`Math.floor` 和 `Math.max(1, ...)` 做保护，避免业务传入空值、非数字、0、负数或小数时出现除 0、反向边界、clone 数量与 offset 计算不一致等问题。
+2. RN 模板编译后静态属性可能以字符串形式传入，使用 `Number()` 做必要的数值转换，避免补位数量计算中的 `+` 发生字符串拼接；未传值、传入 `0` 或无法转换为数字时通过 `|| 1` 使用默认值，不额外增加 `Number.isFinite`、取整或正数裁剪。
 3. `bindchangestart` 是业务事件回调，必须进入 props 类型，否则 TS 层无法表达该能力。
 
 ### prop 透传处理
@@ -87,6 +84,21 @@ const displayMultipleItems = Number.isFinite(propDisplayMultipleItems)
 ```
 
 原因是这两个字段是 Mpx runtime 层消费的逻辑 prop，不应该透传到 RN 原生 `View` 上，否则可能产生无效 native prop 或警告。
+
+### RN 编译能力声明
+
+原模板组件配置会在 iOS、Android 和 Harmony 编译时提示 `display-multiple-items` 不受支持。runtime 完成支持后，需要将该属性从 RN unsupported 规则中移除，避免编译器继续输出与实际能力不一致的 warning：
+
+```js
+{
+  test: /^(snap-to-edge|easing-function)$/,
+  ios: iosPropLog,
+  android: androidPropLog,
+  harmony: harmonyPropLog
+}
+```
+
+这里只移除 `display-multiple-items`，`snap-to-edge` 和 `easing-function` 等尚未支持的属性继续保持原 warning。模板编译测试同时覆盖“`display-multiple-items` 不告警”和“`snap-to-edge` 仍告警”，防止误放开整条规则。
 
 ## 方案二：基于 displayMultipleItems 重算 step
 
@@ -229,10 +241,10 @@ back clones = [0, 1, 2]
 在手势目标计算中，补位区的 `moveToIndex` 统一映射为真实索引：
 
 ```ts
-const circularIndex = (
-  (moveToIndex - patchElmNumShared.value) % childrenLength.value +
-  childrenLength.value
-) % childrenLength.value
+let circularIndex = (moveToIndex - patchElmNumShared.value) % childrenLength.value
+if (circularIndex < 0) {
+  circularIndex += childrenLength.value
+}
 ```
 
 ### 为什么这么改
@@ -254,7 +266,12 @@ front clones = [2, 3, 4]
 新映射 = [2, 3, 4]
 ```
 
-使用 modulo 后，前置补位、真实区、后置补位都能通过同一公式映射到真实索引。
+这里分为两步处理：
+
+1. `moveToIndex - patchElmNumShared.value` 先移除前置 clone 带来的索引偏移，再通过 `% childrenLength.value` 将索引限制在一个 children 周期内。
+2. JavaScript 对负数取余仍会得到负数，前置 clone 可能产生负余数，因此在结果小于 0 时加上 `childrenLength.value`，将其修正为有效的真实索引。
+
+这样前置补位、真实区、后置补位都能使用同一套映射逻辑。分步写法与双重取模结果一致，但更容易理解每一步的目的。
 
 ## 方案五：非循环边界调整
 
@@ -269,28 +286,29 @@ currentIndex.value === childrenLength.value - 1
 时停止。现在改为：
 
 ```ts
-if (currentIndex.value === childrenLength.value - displayMultipleItemsShared.value) {
+const maxIndex = Math.max(0, childrenLength.value - displayMultipleItemsShared.value)
+if (currentIndex.value >= maxIndex) {
   pauseLoop()
 }
 ```
 
-这与 `fix-drn-2.10.18` 的实现保持一致。
+### 为什么使用非负 maxIndex 和 >=
 
-### 为什么不额外使用 >=
-
-`>=` 可以覆盖异常越界 current，但它属于额外防御逻辑。为了让本次迁移尽量贴近 `fix-drn`，暂时不扩大 autoplay 停止条件，只保留多项展示所需的停止索引调整。
+非循环模式下，最后一个合法起始索引不能小于 0。当 `displayMultipleItems > childrenLength` 时，`childrenLength - displayMultipleItems` 会得到负数，但实际只能停在索引 0。使用 `Math.max(0, ...)` 可以让 autoplay、手势定位和阻力边界保持一致。使用 `>=` 则可以在 children 动态减少、当前索引已经超过新边界时及时停止 autoplay。
 
 ### 手势边界
 
 非循环模式下：
 
-1. `getTargetPosition` 将目标索引裁剪到 `[0, childrenLength - displayMultipleItems]`。
+1. `getTargetPosition` 将目标索引上限裁剪到 `maxIndex`。
 2. `canMove` 的末端边界改为 `-step * maxIndex`。
 3. `handleResistanceMove` 的末端阻力边界同样改为 `-step * maxIndex`。
 
 ### 为什么这么改
 
 多项展示时，滚动坐标含义仍然是“以第几个 item 作为视口起点”。非循环最后可滚动坐标应该让最后一屏刚好展示到最后一个真实 item，而不是以最后一个 item 作为起点。
+
+当 `displayMultipleItems > childrenLength` 时，非循环模式不会生成 clone，`maxIndex` 固定为 0；循环模式则继续通过重复 clone 填充可视区域，不受这组非循环边界调整影响。
 
 ## 方案六：changestart 事件
 
@@ -509,29 +527,24 @@ RN 的 `onLayout` 只在布局变化时触发。如果只改 `display-multiple-i
 
 如需完整对齐小程序，可单独评估 `source` 在 autoplay、touch、外部 current 更新中的语义。
 
-### 风险七：display-multiple-items 输入归一化
+### 风险七：display-multiple-items 非法输入
 
 风险：
 
-当前入口会将 `display-multiple-items` 归一化为正整数：
+当前入口只做必要的数值转换和默认值处理，不额外校验或归一化 `display-multiple-items`：
 
 ```ts
-const propDisplayMultipleItems = Number(props['display-multiple-items'])
-const displayMultipleItems = Number.isFinite(propDisplayMultipleItems)
-  ? Math.max(1, Math.floor(propDisplayMultipleItems))
-  : 1
+const displayMultipleItems = Number(props['display-multiple-items']) || 1
 ```
-
-这可以避免 0、负数、小数、非数字值导致 step、clone 数量和 offset 计算不一致。
 
 潜在影响：
 
-1. 如果历史业务误传小数，当前会向下取整，而不是按小数宽度展示。
-2. 如果历史业务误传非法值，当前会回退为 1，表现接近小程序默认值。
+1. `undefined`、`0`、空字符串、非法字符串和 `NaN` 经转换后会回退为 `1`。
+2. 负数、小数和 `Infinity` 等转换后的 truthy 数值会直接参与 step、clone 数量和边界计算，调用方需要遵循该属性应为正整数的约定。
 
 建议：
 
-方案 review 时确认这种正整数归一化是否符合业务兼容预期；如果需要更严格的告警，可后续补充开发态 warning。
+保留 `Number()` 解决 RN 模板输入的运行时类型问题，但不在本次实现中增加 `Number.isFinite`、`Math.floor` 或 `Math.max` 等额外容错；如后续确认需要统一校验，应作为组件属性校验策略单独评估。
 
 ### 风险八：测试覆盖不足
 
@@ -601,13 +614,13 @@ front clone mapped indexes = [2, 3, 4]
 
 代码 review 建议重点看：
 
-1. `displayMultipleItems` 正整数归一化是否符合业务兼容预期。
+1. `displayMultipleItems` 使用 `Number(props['display-multiple-items']) || 1` 完成类型转换和默认值处理是否符合业务兼容预期。
 2. `patchElmNum = displayMultipleItems + (hasEdgeMargin ? 1 : 0)` 是否满足所有循环边界场景。
 3. 外部越界 current 暂不统一裁剪是否符合本次“贴近 fix-drn”的取舍。
 4. `changestart` 是否需要补充 `source` 字段。
 5. 快速拖拽时多次 `changestart` 是否符合预期。
 6. margin 动态变化暂不按 `displayMultipleItems` 分摊 delta 是否可接受。
-7. `childrenLength <= displayMultipleItems` 时非循环和循环的行为是否需要额外限制。
+7. `childrenLength <= displayMultipleItems` 时循环模式重复 clone 的展示行为是否符合预期。
 8. 是否需要在文档或测试用例中明确 `display-multiple-items` 动态变化的支持范围。
 
 ## 后续建议
