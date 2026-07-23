@@ -228,7 +228,7 @@ components/
     >
       {{ title }}
     </text>
-    <view @_ios|_android|_harmony class="rn-extra">RN extra content</view>
+    <view @ios|android|harmony class="rn-extra">RN extra content</view>
   </view>
 </template>
 

@@ -142,7 +142,7 @@ function getRequireScript ({ script, ctorType, loaderContext }) {
 
 function buildGlobalParams ({
   moduleId,
-  scriptSrcMode,
+  srcMode,
   loaderContext,
   isProduction,
   jsonConfig,
@@ -187,7 +187,7 @@ function buildGlobalParams ({
       content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
     }
     content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-    content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+    content += `  global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
     content += `  global.currentInject = ${JSON.stringify({ moduleId })}\n`
     if (!isProduction) {
       content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`

@@ -82,15 +82,8 @@ function inferLoc (context, extra) {
   }
   if (input) {
     if (input.decl && input.decl.source) return normalizeLoc(input.decl.source.start)
-    if (input.rule && input.rule.source) return normalizeLoc(input.rule.source.start)
     if (input.loc) return normalizeLoc(input.loc)
   }
-}
-
-function inferSourceMap (context, extra, base) {
-  if (extra && extra.sourceMap) return extra.sourceMap
-  if (context && context.input && context.input.sourceMap) return context.input.sourceMap
-  return base && base.sourceMap
 }
 
 function createDiagnostic ({
@@ -104,6 +97,7 @@ function createDiagnostic ({
   const stack = []
   const file = diagnostic.file
   const source = diagnostic.source
+  const sourceMap = diagnostic.sourceMap
   const inputFileSystem = diagnostic.inputFileSystem
 
   function withContext (context, fn) {
@@ -120,7 +114,6 @@ function createDiagnostic ({
     const context = stack[stack.length - 1]
     const lines = []
     const loc = inferLoc(context, extra)
-    const sourceMap = inferSourceMap(context, extra, diagnostic)
     let finalFile = file
     let finalLoc = loc
     let finalSource = source

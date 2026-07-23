@@ -77,7 +77,7 @@ module.exports = function createHelpers (loaderContext) {
     // 允许外部强制关闭extract
     if (extraOptions.extract === false) delete options.extract
 
-    if (part.mode) options.mode = part.mode
+    if (part.srcMode) options.srcMode = part.srcMode
 
     if (src) {
       return loaderUtils.stringifyRequest(loaderContext, addQuery(src, options, true))

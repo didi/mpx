@@ -38,7 +38,7 @@ module.exports = function (content) {
   const mode = mpx.mode
   const env = mpx.env
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = queryObj.mode
+  const localSrcMode = queryObj.srcMode
   const srcMode = localSrcMode || globalSrcMode
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])

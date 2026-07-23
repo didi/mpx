@@ -1,4 +1,17 @@
-const { getClassMap } = require('../../../../lib/react/style-helper')
+const { getClassMap: buildClassMap } = require('../../../../lib/react/style-helper')
+
+function getClassMap (options) {
+  if (!options.styles) {
+    options = Object.assign({}, options, {
+      styles: [{
+        content: options.content,
+        filename: options.filename
+      }]
+    })
+    delete options.content
+  }
+  return buildClassMap(options)
+}
 
 describe('React Native style validation for CSS variables', () => {
   const createConfig = (mode = 'ios') => ({
@@ -7,6 +20,24 @@ describe('React Native style validation for CSS variables', () => {
     ctorType: 'component',
     warn: jest.fn(),
     error: jest.fn()
+  })
+
+  test('should preserve target-native style declarations', () => {
+    const config = createConfig()
+    const result = getClassMap({
+      styles: [{
+        content: '.text { color: red; }',
+        filename: 'native.css',
+        srcMode: 'ios'
+      }],
+      filename: 'test.css',
+      ...config
+    })
+
+    expect(result.text).toEqual({
+      color: '"red"'
+    })
+    expect(config.error).not.toHaveBeenCalled()
   })
 
   describe('CSS variable fallback validation', () => {

@@ -1,6 +1,6 @@
 const templateLoader = require('../../lib/react/template-loader')
 const compiler = require('../../lib/template-compiler/compiler')
-const { genNode: genNodeReact } = require('../../lib/template-compiler/gen-node-react')
+const { genNode: genNodeReact, genTemplate: genTemplateReact } = require('../../lib/template-compiler/gen-node-react')
 
 describe('RN template support', () => {
   const mockMpx = {
@@ -43,6 +43,37 @@ describe('RN template support', () => {
       isUrlRequest: () => false
     }, extraOptions))
   }
+
+  it('should preserve registered RN components for target-native templates', () => {
+    const output = compileReactTemplate('<View><Text>native</Text></View>', {
+      srcMode: 'ios',
+      usingComponentsInfo: {
+        View: {},
+        Text: {}
+      }
+    })
+
+    expect(output).toContain('getComponent("View")')
+    expect(output).toContain('getComponent("Text")')
+    expect(output).not.toContain('getComponent("mpx-view")')
+    expect(output).not.toContain('getComponent("mpx-text")')
+  })
+
+  it('should preserve srcMode inside local template definitions', () => {
+    const parsed = parseReactTemplate('<template name="native"><View><Text>native</Text></View></template>', {
+      srcMode: 'ios',
+      usingComponentsInfo: {
+        View: {},
+        Text: {}
+      }
+    })
+    const output = genTemplateReact(parsed.meta.templates.native)
+
+    expect(output).toContain('getComponent("View")')
+    expect(output).toContain('getComponent("Text")')
+    expect(output).not.toContain('getComponent("mpx-view")')
+    expect(output).not.toContain('getComponent("mpx-text")')
+  })
 
   it('should generate correct code for template import and definition', () => {
     const input = `

@@ -578,6 +578,9 @@ function parseComponent (content, options) {
       if (attr.name === 'mode') {
         block.mode = attr.value
       }
+      if (attr.name === 'src-mode' && attr.value === mode) {
+        block.srcMode = attr.value
+      }
       if (attr.name === 'name') {
         block.name = attr.value
       }
@@ -2907,13 +2910,11 @@ function isValidModeP (i) {
 
 const wrapRE = /^\((.*)\)$/
 
-// MATCH: mode 与 env 都匹配，节点/属性保留，但不做跨平台转换
-// IMPLICITMATCH: mode 与 env 匹配，节点/属性保留，属于隐式匹配，做跨平台转换
+// MATCH: mode 与 env 都匹配，节点/属性保留并正常执行跨平台转换
 // MISMATCH: mode 或 env不匹配，节点/属性直接删除
 const statusEnum = {
   MISMATCH: 1,
-  IMPLICITMATCH: 2,
-  MATCH: 3
+  MATCH: 2
 }
 
 // 父节点的atMode匹配状态不应该影响子节点，atMode的影响范围应该限制在当前节点本身
@@ -2969,8 +2970,7 @@ function processAtMode (el) {
       // 判断 mode 是否匹配
       // 额外处理attr value 场景
       for (let [defineMode, defineEnvArr] of conditionMap.entries()) {
-        const isImplicitMode = defineMode[0] === '_'
-        if (isImplicitMode) defineMode = defineMode.slice(1)
+        if (defineMode[0] === '_') defineMode = defineMode.slice(1)
 
         const isNoMode = defineMode === 'noMode'
         const isMatchMode = isNoMode || defineMode === mode
@@ -2978,25 +2978,13 @@ function processAtMode (el) {
         let matchStatus = statusEnum.MISMATCH
         // 是否为针对于节点的条件判断，否为节点属性
         if (isMatchMode && isMatchEnv) {
-          // mpxTagName 特殊标签，需要做转换保留处理
-          matchStatus = (isNoMode || isImplicitMode || replacedAttrName === 'mpxTagName') ? statusEnum.IMPLICITMATCH : statusEnum.MATCH
+          matchStatus = statusEnum.MATCH
         }
         setModeStatus(target, matchStatus)
       }
       // 解析处理attr._matchStatus
       if (replacedAttrName) {
-        switch (processedAttr._matchStatus) {
-          // IMPLICITMATCH保留属性并进行平台转换
-          case statusEnum.IMPLICITMATCH:
-            addAttrs(el, [processedAttr])
-            break
-          // MATCH保留属性并跳过平台转换
-          case statusEnum.MATCH:
-            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
-            break
-          default:
-          // MISMATCH丢弃属性
-        }
+        if (processedAttr._matchStatus === statusEnum.MATCH) addAttrs(el, [processedAttr])
         delete processedAttr._matchStatus
       }
     }
@@ -3024,14 +3012,6 @@ function processInjectWxsInfos (el, meta) {
       const { injectWxsRequest, injectWxsModuleName } = injectWxsInfo
       injectWxs(meta, injectWxsModuleName, injectWxsRequest)
     })
-  }
-}
-
-function processNoTransAttrs (el) {
-  // 转换完成，把不需要处理的attr挂回去
-  if (el.noTransAttrs) {
-    addAttrs(el, el.noTransAttrs)
-    delete el.noTransAttrs
   }
 }
 
@@ -3128,12 +3108,10 @@ function processElement (el, root, options, meta) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
-  if (rulesRunner && el._matchStatus !== statusEnum.MATCH) {
+  if (rulesRunner) {
     currentEl = el
     rulesRunner(el)
   }
-
-  processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
 

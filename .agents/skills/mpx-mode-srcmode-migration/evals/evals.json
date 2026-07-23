@@ -1,0 +1,23 @@
+{
+  "skill_name": "mpx-mode-srcmode-migration",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我检查这个从 Mpx 2.11 升级的项目，找出所有依赖 .ali.mpx、mode=\"ali\" 和 @ali 旧语义的位置，只出迁移报告，不要改代码。",
+      "expected_output": "运行扫描器并逐项核实，区分必须修改、需要确认、兼容清理和无需修改，给出文件行号与最小迁移建议。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "项目同时输出微信、支付宝和 RN。升级后 mode 只筛选了，请审计 modeRules、RN 条件区块以及 import/include 是否还会继承源码平台。",
+      "expected_output": "识别配置冲突与旧别名，正确区分小程序和 RN 的文件/区块差异，并沿小程序外部模板引用检查独立 srcModeRules。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "看看现有 @ali、@_ali、@:didi、mpxTagName@swan 哪些真要迁移，别一股脑全改。",
+      "expected_output": "只把显式非下划线 @mode 作为语义变更候选；使用 Skill 自带的 resolve-platform.js 和显式项目根目录定位实际安装的 @mpxjs/webpack-plugin/lib/platform，再核对 type、srcMode、test 和目标 mode 处理器；未实际命中则判定为安全直通且无需修改，只有会被转换时才给迁移建议；将 @_mode 标为兼容清理，并明确纯 env 与 mpxTagName@mode 不因本次升级要求修改。",
+      "files": []
+    }
+  ]
+}

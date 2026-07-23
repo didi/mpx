@@ -48,7 +48,7 @@ module.exports = function (content) {
   const env = mpx.env
   const i18n = mpx.i18n
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = queryObj.mode
+  const localSrcMode = queryObj.srcMode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isRuntimeMode = queryObj.isDynamic
@@ -94,6 +94,7 @@ module.exports = function (content) {
   const moduleId = mpx.getModuleId(resourcePath, ctorType === 'app')
   this._module.addPresentationalDependency(new RecordModuleIdMapDependency(moduleId, resourcePath))
 
+  const callback = this.async()
   const parts = parseComponent(content, {
     filePath,
     needMap: this.sourceMap,
@@ -105,13 +106,11 @@ module.exports = function (content) {
     getRequire
   } = createHelpers(loaderContext)
 
-  const callback = this.async()
-
   async.waterfall([
     (callback) => {
       preProcessJson({
         json: parts.json || {},
-        srcMode,
+        srcMode: (parts.json && parts.json.srcMode) || srcMode,
         emitWarning,
         emitError,
         ctorType,
@@ -287,11 +286,10 @@ module.exports = function (content) {
 
       // script
       output += '/* script */\n'
-      let scriptSrcMode = srcMode
+      const scriptSrcMode = (parts.script && parts.script.srcMode) || srcMode
       // 给予script默认值, 确保生成js request以自动补全js
       const script = parts.script || {}
       if (script) {
-        scriptSrcMode = script.mode || scriptSrcMode
         if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {

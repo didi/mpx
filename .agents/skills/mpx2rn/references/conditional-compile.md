@@ -6,6 +6,7 @@
 
 - [样式条件编译](#样式条件编译)
   - [避免产物中出现空选择器](#避免产物中出现空选择器)
+- [区块维度条件编译](#区块维度条件编译)
 - [模板条件编译](#模板条件编译)
   - [wx:if 条件编译](#wxif-条件编译)
   - [节点/属性维度条件编译](#节点属性维度条件编译)
@@ -64,6 +65,38 @@
 
 ---
 
+## 区块维度条件编译
+
+template、script、style、JSON 区块可以使用 `mode` 选择 RN 平台专用区块。RN mode 只参与区块筛选，不会成为区块的局部 `srcMode`；命中的区块仍需按照项目 `srcMode`（通常为微信/Mpx 规范）编写，并继续参与 RN 模板、脚本、样式和 JSON 转换。
+
+```html
+<template mode="ios">
+  <view bindtap="handleTap">RN 平台内容</view>
+</template>
+
+<style mode="ios">
+.container {
+  width: 100rpx;
+}
+</style>
+```
+
+Android 和 Harmony 使用各自的 `mode` 区块，规则相同。
+
+完整 RN 原生模板区块可同时声明 `src-mode`，并使用已注册的 `View`、`Text` 等 RN 原生组件：
+
+```html
+<template mode="ios" src-mode="ios">
+  <View>
+    <Text>RN 原生内容</Text>
+  </View>
+</template>
+```
+
+模板区块内部的 `<template name>` 定义继承当前区块的 `srcMode`；`<import>` / `<include>` 引用的是独立模板资源，不继承引用方 `srcMode`，其源码方言由资源自身命中的 `srcModeRules` 决定。`.mpx` 文件的 `<template src="..." src-mode="...">` 仍属于 SFC 模板区块，默认继承当前资源的 `srcMode`，显式 `src-mode` 优先。
+
+---
+
 ## 模板条件编译
 
 模板条件编译提供了两种，常用的有 `wx:if` 条件编译和 `@mode` / `@_mode` 节点/属性维度的条件编译。
@@ -88,25 +121,25 @@
 
 使用 `@` 和 `|` 符号来指定某个节点或属性只在某些平台下有效。这种方式更加灵活简洁。
 
-- **显式声明 (`@mode`)**：节点或属性仅在目标平台下输出，节点或属性为目标平台原生支持，**框架会跳过对该节点或属性的跨平台语法转换**。
-- **隐式声明 (`@_mode`)**：节点或属性仅在目标平台下输出，节点或属性为 Mpx 转换支持，**框架仍然会对其进行正常的跨平台语法转换**。
+- **`@mode`**：节点或属性仅在目标平台下输出，命中后继续继承资源 `srcMode` 并执行正常跨平台转换。
+- **`@_mode`**：`@mode` 的兼容别名，筛选和转换行为完全一致；新代码优先使用 `@mode`。
 - **标签名动态替换 (`mpxTagName@mode`)**：结合 `@mode` 属性，可以对模板组件的 `tagName` 进行分平台条件编译。当节点存在该属性时，在输出到对应平台时会将节点标签修改为该属性的值。
 
 **示例：**
 
 ```html
 <template>
-  <!-- 属性维度条件编译，仅在 RN 平台注入 numberOfLines，该属性为 RN 平台原生支持，使用 @mode 进行显式声明，输出 RN 时跳过属性跨平台语法转换-->
+  <!-- 仅在 RN 平台保留 numberOfLines；命中后仍正常进入转换流程，无匹配转换规则的 RN 原生属性会原样保留 -->
   <text
     class="title"
     numberOfLines@ios|android|harmony="{{1}}"
   >
     {{title}}
   </text>
-  <!-- 属性维度条件编译，仅在 RN 平台注入 is-simple，该属性为 Mpx 转换支持，使用 @_mode 进行隐式声明，输出 RN 时保留属性跨平台语法转换-->
+  <!-- 仅在 RN 平台保留 is-simple，并正常执行 Mpx2RN 属性转换 -->
   <text
     class="content"
-    is-simple@_ios|_android|_harmony
+    is-simple@ios|android|harmony
   >
     {{content}}
   </text>
@@ -115,8 +148,8 @@
 
 ```html
 <template>
-  <!-- 节点维度条件编译，使用 @_mode 进行隐式声明，仅在目标平台输出，并且保留节点与属性的跨平台语法转换 -->
-  <view @_ios|_android|_harmony bindtap="handleTap" class="rn-only">仅 RN 可见</view>
+  <!-- 节点仅在 RN 平台输出，命中后节点与属性仍正常执行 Mpx2RN 转换 -->
+  <view @ios|android|harmony bindtap="handleTap" class="rn-only">仅 RN 可见</view>
 </template>
 ```
 

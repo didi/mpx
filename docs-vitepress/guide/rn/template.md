@@ -44,7 +44,7 @@
 | 指令 | 支持状态 | 说明 |
 |------|---------|------|
 | [@mode](../../api/directives.md#mode) | ✅ | 平台条件编译 |
-| [@_mode](/api/directives.html#mode-1) | ✅ | 平台条件编译（保留转换能力）|
+| [@_mode](/api/directives.html#mode-1) | ✅ | `@mode` 的兼容别名，筛选和转换行为一致 |
 | [@env](../../api/directives.md#env) | ✅ | 自定义环境条件编译 |
 | [mpxTagName](../../api/directives.md#mpxtagname) | ✅ | 动态标签名 |
 
