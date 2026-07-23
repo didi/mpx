@@ -608,7 +608,7 @@ radio|是
 radio-group|是
 rich-text|是
 scroll-view|是|scroll-view 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
-swiper|是|swiper 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>当滑动方向为横向滚动，希望在另一方向保留原生的滚动时，scroll-options 可尝试传入 `{ eventPassthrough: vertical }`，反之可将 eventPassthrough 设置为 `horizontal`
+swiper|是|swiper 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持 `indicator-margin`、`indicator-spacing`、`indicator-radius`、`indicator-width`、`indicator-height`、`indicator-alignment` 和 `indicator-offset` 配置指示点样式与位置，其中 `indicator-alignment` 支持 `auto` 或长度为 2、取值范围为 `[-1, 1]` 的数组，`indicator-offset` 为 `[x, y]` 像素偏移量。<br/><br/>支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>当滑动方向为横向滚动，希望在另一方向保留原生的滚动时，scroll-options 可尝试传入 `{ eventPassthrough: vertical }`，反之可将 eventPassthrough 设置为 `horizontal`
 swiper-item|是
 switch|是
 slider|是
@@ -742,4 +742,3 @@ i18n|是
 :---|---
 wxs|支持
 animation|支持组件的animation属性，支持所有animation对象方法(export、step、width、height、rotate、scale、skew、translate等等)
-
