@@ -115,7 +115,7 @@
         </tbody>
       </table>
     </td></tr>
-    <tr><td>deviceOrientation</td><td>string</td><td>设备方向（注意：IOS客户端横屏游戏获取deviceOrientation可能不准，建议以屏幕宽高为准）值： portrait(竖屏)/landscape(横屏)</td><td></td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: green; font-weight: bold;">✓</span></td><td><span style="color: red; font-weight: bold;">✗</span></td></tr>
+    <tr><td>deviceOrientation</td><td>string</td><td>设备方向，值：portrait（竖屏）/ landscape（横屏）。RN 端根据屏幕宽高计算。</td><td></td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: green; font-weight: bold;">✓</span></td><td><span style="color: red; font-weight: bold;">✗</span></td></tr>
   </tbody>
 </table>
 
