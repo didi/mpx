@@ -186,7 +186,7 @@
 | `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例。RN 不能像小程序一样按 selector 遍历视图树，须在模板目标节点声明 **空 wx:ref**，由编译期建立 **`#id` / `.class` 与节点**的映射后，本 API 才能按小程序写法解析。 |
 | `selectAllComponents(selector)` | 方法 | 共用 | 取全部匹配实例数组，**RN 侧与 `selectComponent` 相同**：依赖模板 **空 wx:ref** 与编译期 selector 映射，仅支持 **`#id` / `.class`**。 |
 | `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。后续 **`select(selector)`** 等链式调用在 RN 上同样依赖目标节点 **空 wx:ref**，通过编译映射将 `#id` / `.class` 落到真实视图；命中非 virtualHost 自定义组件时，返回该组件实体 host 节点信息。 |
-| `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
+| `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。输出 RN 时应优先使用此实例方法，框架会自动将最近的滚动容器上下文填充为底层工厂方法的第三个参数。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
 | `$refs` | 属性 | 共用 | 模板 **`wx:ref="refName"`** 对应的懒解析访问器（如 `this.$refs.refName`）；**空 wx:ref 不会注册具名 ref**，但与 selector 映射可并存——需按名取子实例时再写 **`wx:ref="refName"`**。 |
 | `$watch` | 方法 | 共用 | 动态创建对数据路径或表达式的侦听，返回用于停止侦听的函数，行为与选项式 `watch` 对齐。 |
 | `$forceUpdate` | 方法 | 共用 | 强制触发视图更新，可传入数据对象参与本次刷新，RN 侧由 `MpxProxy` 与 React 更新调度配合完成。 |
