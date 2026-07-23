@@ -70,3 +70,14 @@
 - 改宿主 API 适配 → [packages/api-proxy/AGENTS.md](packages/api-proxy/AGENTS.md)。
 - 改纯工具函数 → [packages/utils/AGENTS.md](packages/utils/AGENTS.md)。
 - 跨多个子包的改动：从依赖上游开始读起（`utils` → `core` → `webpack-plugin` → 其他子包）。
+
+## 问题处理
+
+### 网络与依赖安装
+
+- 当 npm 安装依赖出现超时、长时间无输出等网络问题时，优先执行 `nrm use npm` 切换到 npm 官方源，再调用当前仓库内的 `network-proxy` Skill 设置代理后重试安装。
+- 代理地址、端口及应用方式以 `network-proxy` Skill 的当前指引为准，不要在此处写死或重复维护。
+
+### GitHub 工具
+
+- 使用 `gh` 等 GitHub 终端工具能力时，优先申请在宿主终端环境中执行，不要先在沙箱环境中反复尝试；用户的 GitHub 授权通常保存在宿主环境的凭据或 keyring 中，沙箱环境可能无法访问。

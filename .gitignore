@@ -25,3 +25,4 @@ packages/webpack-plugin/lib/runtime/components/react/dist/
 coverage/
 packages/perf/dist/
 .agent-workflows/
+.agents/skills/mpx/
