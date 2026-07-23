@@ -220,6 +220,14 @@
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions)
         this.bs = new BScroll(this.$refs.innerWrapper, bsOptions)
+        const slide = this.bs.plugins.slide
+        const slideNext = slide.next
+        slide.next = (...args) => {
+          if (this.autoplay) {
+            this.changeSource = 'autoplay'
+          }
+          return slideNext.apply(slide, args)
+        }
         this.bs.scroller.hooks.on('beforeRefresh', () => {
           this.initLayerComputed()
         })
