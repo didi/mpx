@@ -13,6 +13,7 @@
  * ✘ scale-value
  * ✔ animation
  * ✔ bindchange
+ * ✔ workletChange
  * ✘ bindscale
  * ✔ htouchmove
  * ✔ vtouchmove
@@ -116,7 +117,7 @@ const withWechatDecay = (
   currentPosition: number,
   clampRange: [min: number, max: number],
   frictionValue = 2,
-  callback?: () => void
+  callback?: (finished?: boolean) => void
 ) => {
   'worklet'
 
@@ -146,6 +147,10 @@ const withWechatDecay = (
   }, callback)
 }
 
+type ChangeSource = '' | 'touch' | 'touch-out-of-bounds' | 'out-of-bounds' | 'friction'
+type ChangePayload = { x: number; y: number; source?: ChangeSource }
+type ChangeDetail = { x: number; y: number; source: ChangeSource }
+
 interface MovableViewProps {
   children: ReactNode
   style?: Record<string, any>
@@ -159,6 +164,7 @@ interface MovableViewProps {
   id?: string
   changeThrottleTime?:number
   bindchange?: (event: unknown) => void
+  workletChange?: (detail: ChangeDetail) => void
   bindtouchstart?: (event: GestureTouchEvent) => void
   catchtouchstart?: (event: GestureTouchEvent) => void
   bindtouchmove?: (event: GestureTouchEvent) => void
@@ -192,12 +198,22 @@ const styles = StyleSheet.create({
     top: 0
   }
 })
+const getTouchChangeSource = (
+  offsetX: number,
+  offsetY: number,
+  xRange: [min: number, max: number],
+  yRange: [min: number, max: number]
+): ChangeSource => {
+  'worklet'
+  const hasOverBoundary = offsetX < xRange[0] || offsetX > xRange[1] ||
+    offsetY < yRange[0] || offsetY > yRange[1]
+  return hasOverBoundary ? 'touch-out-of-bounds' : 'touch'
+}
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((movableViewProps: MovableViewProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(movableViewProps)
   const movableGestureRef = useRef<PanGesture>()
   const layoutRef = useRef<any>({})
-  const changeSource = useRef<any>('')
   const hasLayoutRef = useRef(false)
   const propsRef = useRef<any>({})
   propsRef.current = (props || {}) as MovableViewProps
@@ -231,7 +247,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchtouchmove,
     bindtouchend,
     catchtouchend,
-    bindchange
+    bindchange,
+    workletChange
   } = props
 
   const {
@@ -261,9 +278,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
   const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
-  const isMoving = useSharedValue(false)
-  const xInertialMotion = useSharedValue(false)
-  const yInertialMotion = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
   const initialViewPosition = useSharedValue({ x: x || 0, y: y || 0 })
@@ -294,15 +308,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
   prevWaitForHandlersRef.current = waitFor || []
 
-  const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+  const handleTriggerChange = useCallback(({ x, y, source = '' }: ChangePayload) => {
     const { bindchange } = propsRef.current
     if (!bindchange) return
-    let source = ''
-    if (type !== 'setData') {
-      source = getTouchSource(x, y)
-    } else {
-      changeSource.current = ''
-    }
     bindchange(
       getCustomEvent('change', {}, {
         detail: {
@@ -314,6 +322,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }, propsRef.current)
     )
   }, [])
+
+  const handleTriggerWorkletChange = useCallback(({ x, y, source }: ChangePayload) => {
+    'worklet'
+    const changeSource = source === undefined
+      ? getTouchChangeSource(
+        x,
+        y,
+        draggableXRange.value,
+        draggableYRange.value
+      )
+      : source
+    workletChange && workletChange({ x, y, source: changeSource })
+  }, [workletChange])
 
   useEffect(() => {
     runOnUI(() => {
@@ -329,11 +350,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             ? withWechatSpring(newY, damping)
             : newY
         }
+        if (workletChange) {
+          handleTriggerWorkletChange({
+            x: newX,
+            y: newY,
+            source: ''
+          })
+        }
         if (bindchange) {
           runOnJS(runOnJSCallback)('handleTriggerChange', {
             x: newX,
             y: newY,
-            type: 'setData'
+            source: ''
           })
         }
       }
@@ -346,27 +374,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       resetBoundaryAndCheck({ width, height })
     }
   }, [MovableAreaLayout.height, MovableAreaLayout.width])
-
-  const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
-    const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
-      offsetY < draggableYRange.value[0] || offsetY > draggableYRange.value[1]
-    let source = changeSource.current
-    if (hasOverBoundary) {
-      if (isMoving.value) {
-        source = 'touch-out-of-bounds'
-      } else {
-        source = 'out-of-bounds'
-      }
-    } else {
-      if (isMoving.value) {
-        source = 'touch'
-      } else if ((xInertialMotion.value || yInertialMotion.value) && (changeSource.current === 'touch' || changeSource.current === 'friction')) {
-        source = 'friction'
-      }
-    }
-    changeSource.current = source
-    return source
-  }, [])
 
   const setBoundary = useCallback(({ width, height }: { width: number; height: number }) => {
     const top = (style.position === 'absolute' && style.top) || 0
@@ -514,12 +521,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
 
   // 节流版本的change事件触发
-  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+  const handleTriggerChangeThrottled = useCallback(({ x, y }: { x: number; y: number }) => {
     'worklet'
     const now = Date.now()
     if (now - lastChangeTime.value >= changeThrottleTime) {
       lastChangeTime.value = now
-      runOnJS(runOnJSCallback)('handleTriggerChange', { x, y, type })
+      const source = getTouchChangeSource(
+        x,
+        y,
+        draggableXRange.value,
+        draggableYRange.value
+      )
+      runOnJS(runOnJSCallback)('handleTriggerChange', { x, y, source })
     }
   }, [changeThrottleTime])
 
@@ -542,7 +555,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet'
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
-        isMoving.value = false
         startPosition.value = {
           x: changedTouches.x,
           y: changedTouches.y
@@ -561,7 +573,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
-        isMoving.value = true
         if (isFirstTouch.value) {
           touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
@@ -589,8 +600,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = applyBoundaryDecline(newY, draggableYRange.value)
           }
         }
+        if (workletChange) {
+          handleTriggerWorkletChange({
+            x: offsetX.value,
+            y: offsetY.value
+          })
+        }
         if (bindchange) {
-          // 使用节流版本减少 runOnJS 调用
           handleTriggerChangeThrottled({
             x: offsetX.value,
             y: offsetY.value
@@ -600,14 +616,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       .onTouchesUp((e: GestureTouchEvent) => {
         'worklet'
         isFirstTouch.value = true
-        isMoving.value = false
         if (bindtouchend || catchtouchend) {
           runOnJS(runOnJSCallback)('triggerEndOnJS', { e })
         }
       })
       .onEnd((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
-        isMoving.value = false
         if (disabled) return
         // 处理没有惯性且超出边界的回弹
         if (!inertia && outOfBounds) {
@@ -623,46 +637,68 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
                 ? withWechatSpring(y, damping)
                 : y
             }
+            if (workletChange) {
+              handleTriggerWorkletChange({
+                x,
+                y,
+                source: 'out-of-bounds'
+              })
+            }
             if (bindchange) {
               runOnJS(runOnJSCallback)('handleTriggerChange', {
                 x,
-                y
+                y,
+                source: 'out-of-bounds'
               })
             }
           }
         } else if (inertia) {
           // 惯性处理 - 使用微信小程序friction算法
           if (direction === 'horizontal' || direction === 'all') {
-            xInertialMotion.value = true
             offsetX.value = withWechatDecay(
               e.velocityX / 10,
               offsetX.value,
               draggableXRange.value,
               friction,
-              () => {
-                xInertialMotion.value = false
+              (finished) => {
+                if (!finished) return
+                if (workletChange) {
+                  handleTriggerWorkletChange({
+                    x: offsetX.value,
+                    y: offsetY.value,
+                    source: 'friction'
+                  })
+                }
                 if (bindchange) {
                   runOnJS(runOnJSCallback)('handleTriggerChange', {
                     x: offsetX.value,
-                    y: offsetY.value
+                    y: offsetY.value,
+                    source: 'friction'
                   })
                 }
               }
             )
           }
           if (direction === 'vertical' || direction === 'all') {
-            yInertialMotion.value = true
             offsetY.value = withWechatDecay(
               e.velocityY / 10,
               offsetY.value,
               draggableYRange.value,
               friction,
-              () => {
-                yInertialMotion.value = false
+              (finished) => {
+                if (!finished) return
+                if (workletChange) {
+                  handleTriggerWorkletChange({
+                    x: offsetX.value,
+                    y: offsetY.value,
+                    source: 'friction'
+                  })
+                }
                 if (bindchange) {
                   runOnJS(runOnJSCallback)('handleTriggerChange', {
                     x: offsetX.value,
-                    y: offsetY.value
+                    y: offsetY.value,
+                    source: 'friction'
                   })
                 }
               }
@@ -688,7 +724,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       gesturePan.requireExternalGestureToFail(...waitForHandlers)
     }
     return gesturePan
-  }, [disabled, direction, inertia, outOfBounds, gestureSwitch.current])
+  }, [disabled, direction, inertia, outOfBounds, gestureSwitch.current, workletChange, handleTriggerWorkletChange])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
@@ -731,7 +767,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'catchtouchmove',
     'catchvtouchmove',
     'catchhtouchmove',
-    'catchtouchend'
+    'catchtouchend',
+    'workletChange'
   ])
 
   const innerProps = useInnerProps(
