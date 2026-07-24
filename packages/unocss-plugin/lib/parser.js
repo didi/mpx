@@ -1,5 +1,5 @@
-const { parseMustache, stringifyAttr } = require('@mpxjs/webpack-plugin/lib/template-compiler/compiler')
-const { unescapeKey, mpUnescape } = require('@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr')
+import { parseMustache, stringifyAttr } from '@mpxjs/webpack-plugin/lib/template-compiler/compiler.js'
+import { mpUnescape, unescapeKey } from '@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr.js'
 
 function parseClasses (content) {
   const output = []
@@ -101,7 +101,7 @@ function parseMpxEscapeKeys (content, escapeMap) {
   return output
 }
 
-module.exports = {
+export {
   parseClasses,
   parseStrings,
   parseMpxEscapeKeys,

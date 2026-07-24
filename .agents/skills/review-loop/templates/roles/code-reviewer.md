@@ -11,8 +11,30 @@ coder fix a real issue.
 - `goal.md`
 - user-confirmed `plan.md`
 - `diffs/code-diff-N.patch`
+- `diffs/code-round-N.patch`
+- `diffs/code-scope-N.json`
 - validation results
 - relevant project instructions and local conventions
+
+The orchestrator must start this role as a fresh native subagent whose initial
+task input contains paths only and no coder conclusions or validation claims.
+Do not modify files; the orchestrator rejects input or Git-tree drift before
+persisting the review.
+
+## Context-Isolation Preflight
+
+Before reading any repository file, inspect only the conversation visible to
+you. The paths-only reviewer task must be the first user task message. System
+and developer instructions do not count as inherited parent conversation. If
+you can see any earlier planner, coder, or orchestrator user/assistant
+conversation, stop without reviewing and report that isolation failed. If you
+cannot, include this exact check in `evidence.checks`:
+
+```json
+{"command":"context-isolation-preflight","result":"passed: no parent planner/coder/orchestrator conversation visible"}
+```
+
+The orchestrator rejects reviewer output without this passed evidence.
 
 ## Responsibilities
 
@@ -26,7 +48,19 @@ coder fix a real issue.
 4. Check that the implementation stays surgical: no unrelated refactors,
    speculative flexibility, or style churn.
 5. Do not edit source files.
-6. Output JSON only.
+6. Return one strict JSON object to the orchestrator. Do not write it yourself.
+7. Read in this order: goal and repository constraints; cumulative diff, round
+   delta, and scope metadata; full changed functions, direct
+   callers/consumers, adjacent implementations, and relevant tests; confirmed
+   plan, coder log, and validation results last as claims to verify.
+8. Construct at least one counterexample capable of falsifying the changed
+   behavior. For UI/platform semantics distinguish intermediate values from
+   user-visible behavior.
+9. Check every unexpected path and record an `included`, `excluded`, or
+   `blocking` disposition with a reason. Do not approve a blocking disposition.
+10. Record complete review evidence. Return the required `reviewerConfig`
+    object for schema compliance; the orchestrator replaces it with the
+    host-native reviewer contract. Do not edit repository files.
 
 ## Review Policy
 
@@ -62,13 +96,37 @@ are nits, use `approved` unless the workflow explicitly asks to record nits.
 
 ## Output
 
-Write `reviews/code-review-N.json` with:
+Return one strict JSON object to the orchestrator, with no Markdown fence or
+surrounding text. The orchestrator will persist it as
+`reviews/code-review-N.json` after validation:
 
 ```json
 {
   "round": 1,
   "status": "approved",
   "summary": "No blocking findings.",
+  "evidence": {
+    "reviewedPaths": ["AGENTS.md", "src/example.js", "test/example.spec.js"],
+    "tracedSymbols": [
+      {"symbol": "example", "path": "src/example.js", "related": ["caller", "test"]}
+    ],
+    "checks": [
+      {"command": "context-isolation-preflight", "result": "passed: no parent planner/coder/orchestrator conversation visible"},
+      {"command": "npm test -- example", "result": "passed and assertions inspected"}
+    ],
+    "counterexamples": [{"scenario": "empty input", "result": "handled by implementation and test"}],
+    "diffScope": {
+      "cumulativeDiff": "diffs/code-diff-1.patch",
+      "roundDiff": "diffs/code-round-1.patch",
+      "unexpectedPaths": [],
+      "unexpectedDispositions": []
+    },
+    "residualRisks": [],
+    "reviewerConfig": {"model": "runner-normalized", "reasoningEffort": "high", "sandboxMode": "read-only", "source": "runner-normalized"}
+  },
   "findings": []
 }
 ```
+
+The orchestrator overwrites `reviewerConfig` with the host-native reviewer
+contract before validation and persistence.

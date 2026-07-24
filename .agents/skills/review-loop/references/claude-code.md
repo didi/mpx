@@ -1,10 +1,13 @@
 # Claude Code Integration
 
-Claude Code support requires real subagents. Do not run this workflow as single-agent roleplay.
+Claude Code support uses real native subagents for `planner`, `plan-reviewer`,
+`coder`, and `code-reviewer`. Do not run any role as single-agent roleplay and
+do not start standalone `claude -p` reviewer processes.
 
 ## Role Discovery
 
-Check project agents first:
+Prepare all four roles with `scripts/prepare-agent-roles.js` either as temporary
+task roles or project agents:
 
 ```text
 .claude/agents/planner.md
@@ -13,39 +16,38 @@ Check project agents first:
 .claude/agents/code-reviewer.md
 ```
 
-If all four exist, reuse them.
+Temporary roles are valid only when the host can register them for the current
+session. Project roles require explicit user confirmation and a `/agents`
+reload or session restart.
 
-If any are missing, ask the user to choose:
+## Starting Roles
 
-- temporary roles under `.agent-workflows/review-loop/<task-id>/runtime/roles/`
-- persistent project agents under `.claude/agents/`
+Start planner and coder as new named native subagents when required by the
+state machine. Start reviewers through Claude Code's native Agent/Task tool as
+new tasks with no resumed session or inherited planner/coder conversation.
+Restrict reviewer tools to read-only inspection when the host supports tool
+allow/deny configuration.
 
-Use `scripts/prepare-agent-roles.js` for either path.
+For a reviewer round:
 
-## Temporary Roles
+1. Run `review-manager.js --task-id <id> --kind plan|code --round N --prepare`.
+2. Pass the returned prompt unchanged to the matching reviewer role.
+3. Require the reviewer to run its context-isolation preflight before reading
+   repository files and return exactly one JSON object with no repository writes.
+4. Save the response to a temporary file outside the repository.
+5. Run `review-manager.js ... --finalize --input <file> --agent-id <id>`.
 
-Temporary roles are copied from `templates/roles/` to:
-
-```text
-.agent-workflows/review-loop/<task-id>/runtime/roles/
-```
-
-They are valid only for the current task.
-
-## Persistent Roles
-
-Persistent roles are copied from `templates/roles/` to:
-
-```text
-.claude/agents/
-```
-
-This requires explicit user confirmation because it modifies project-level agent configuration.
+Prepare binds input digests and the current Git tree. Finalize reconstructs the
+request and rejects input, snapshot, or worktree drift before writing the
+immutable reviewer-run and canonical review. The orchestrator normalizes
+`reviewerConfig` to the host-native contract with source
+`claude-native-subagent`; it does not trust reviewer self-reporting.
+Finalize also rejects output that lacks the exact passed
+`context-isolation-preflight` evidence. This self-check supplements, but does
+not replace, starting a new native task without a resumed session.
 
 ## Failure
 
-If Claude Code cannot create real subagents in the current session, stop the workflow and tell the user:
-
-```text
-review-loop requires real subagent support. Current Claude Code session cannot create subagents, so the workflow cannot continue.
-```
+If Claude Code cannot create fresh native subagents, stop the workflow and
+report that review-loop requires native planner, reviewer, and coder subagent
+support.

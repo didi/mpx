@@ -31,11 +31,11 @@
  * ✔ bindconfirm
  * ✘ bindkeyboardheightchange
  * ✘ bindnicknamereview
- * ✔ bind:selectionchange
- * ✘ bind:keyboardcompositionstart
- * ✘ bind:keyboardcompositionupdate
- * ✘ bind:keyboardcompositionend
- * ✘ bind:onkeyboardheightchange
+ * ✔ bindselectionchange
+ * ✘ bindkeyboardcompositionstart
+ * ✘ bindkeyboardcompositionupdate
+ * ✘ bindkeyboardcompositionend
+ * ✘ bindonkeyboardheightchange
  */
 import { JSX, forwardRef, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {
@@ -291,7 +291,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     setKeyboardAvoidContext()
   }
 
-  const onTouchEnd = (evt: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
+  const markEventOrigin = (evt: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
     evt.nativeEvent.origin = 'input'
   }
 
@@ -507,7 +507,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         placeholderTextColor: placeholderStyle?.color,
         multiline,
         onTouchStart,
-        onTouchEnd,
+        onTouchEnd: markEventOrigin,
+        onTouchMove: markEventOrigin,
         onFocus,
         onBlur,
         onChange,

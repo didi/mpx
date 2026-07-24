@@ -180,9 +180,10 @@ createPage({
 
 注意事项
 
-1. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
-2. 由于 tap 事件是由 touchend 事件模拟实现，所以在 RN 环境，如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
-3. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
+1. 仅 `tap`、`longpress`、`touchstart`、`touchmove`、`touchend`、`touchcancel` 事件支持阻止冒泡和捕获，其他事件使用 `catch`、`capture-bind` 或 `capture-catch` 时，编译器会给出警告并降级为普通 `bind` 绑定。
+2. `tap` 和 `longpress` 由 `touchstart` / `touchend` 等底层触摸事件模拟实现，因此子组件绑定 `catchtouchend` 后，父组件的 `tap` 事件不会响应。
+3. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
+4. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
    
 ## 生命周期 {#lifecycle}
 RN 环境支持 Mpx 除 SSR 外所有生命周期钩子，关于生命周期的完整说明和最佳实践，请参考 [**生命周期详细文档**](../basic/lifecycle.md)。
