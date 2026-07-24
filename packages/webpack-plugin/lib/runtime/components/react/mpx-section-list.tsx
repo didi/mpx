@@ -1,9 +1,9 @@
-import { forwardRef, useRef, useMemo, createElement, useImperativeHandle } from 'react'
+import { forwardRef, useRef, useMemo, createElement, useImperativeHandle, useEffect } from 'react'
 import type { ComponentType, ReactElement } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import type { SectionListData, SectionListProps as RNSectionListProps } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { hasOwn } from '@mpxjs/utils'
+import { error, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture, wrapChildren, splitStyle, useTextPassThrough, splitProps } from './utils'
 import Portal from './mpx-portal'
@@ -31,6 +31,57 @@ const TypedSectionList = SectionList as unknown as ComponentType<RNSectionListPr
 interface ItemHeightType {
   value?: number;
   getter?: (item: any, index: number) => number;
+}
+
+interface ItemLayoutInfo {
+  length: number;
+  offset: number;
+  index: number;
+}
+
+interface ItemExposureLayout {
+  offset: number;
+  length: number;
+}
+
+interface ItemExposureDetail {
+  index: number;
+  itemData: ListItem | null;
+  layout: ItemExposureLayout;
+  threshold: number;
+}
+
+interface ItemExposureViewToken {
+  item: Section | ListItem;
+  key: string;
+  index: number | null;
+  isViewable: boolean;
+  section?: any;
+}
+
+interface ItemExposureViewabilityConfig {
+  itemVisiblePercentThreshold: number;
+}
+
+interface ItemExposureViewabilityPair {
+  viewabilityConfig: ItemExposureViewabilityConfig;
+  onViewableItemsChanged: (info: {
+    viewableItems: ItemExposureViewToken[];
+    changed: ItemExposureViewToken[];
+  }) => void;
+}
+
+interface ItemExposureInfo {
+  index: number;
+  itemData: ListItem | null;
+  layout: ItemExposureLayout;
+}
+
+type ItemExposureType = 'header' | 'footer' | 'item'
+
+interface ItemExposureIndexInfo {
+  index: number;
+  type: ItemExposureType;
 }
 
 interface MpxSectionListProps {
@@ -64,11 +115,14 @@ interface MpxSectionListProps {
   'refresher-enabled'?: boolean;
   'show-scrollbar'?: boolean;
   'refresher-triggered'?: boolean;
+  'enable-item-exposure'?: boolean;
+  'item-exposure-threshold'?: number;
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
   bindrefresherrefresh?: (event: any) => void;
   bindscrolltolower?: (event: any) => void;
   bindscroll?: (event: any) => void;
+  binditemexposure?: (event: any) => void;
   [key: string]: any;
 }
 
@@ -82,6 +136,10 @@ interface ScrollPositionParams {
 const getGeneric = (generichash: string, generickey: string) => {
   if (!generichash || !generickey) return null
   return global.__mpxGenericsMap?.[generichash]?.[generickey]?.() || null
+}
+
+const getExposurePercentThreshold = (threshold = 0) => {
+  return Math.max(0, Math.min(100, threshold))
 }
 
 const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}, ref) => {
@@ -118,8 +176,11 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     'refresher-enabled': refresherEnabled,
     'show-scrollbar': showScrollbar = true,
     'refresher-triggered': refresherTriggered,
+    'enable-item-exposure': enableItemExposure = false,
+    'item-exposure-threshold': itemExposureThreshold = 0,
     'simultaneous-handlers': originSimultaneousHandlers,
-    'wait-for': waitFor
+    'wait-for': waitFor,
+    binditemexposure
   } = props
 
   const refreshing = !!refresherTriggered
@@ -130,6 +191,20 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
   const indexMap = useRef<{ [key: string]: string }>({})
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
+  const exposureIndexMap = useRef<{ [key: number]: ItemExposureIndexInfo }>({})
+  const itemLayoutsRef = useRef<ItemLayoutInfo[]>([])
+  const itemExposureState = useRef<{ [key: string]: boolean }>({})
+  const enableStickyRef = useRef(enableSticky)
+  const bindItemExposureRef = useRef<typeof binditemexposure>()
+  const propsRef = useRef(props)
+  const initialEnableItemExposureRef = useRef(enableItemExposure)
+  const enableItemExposureOnInit = initialEnableItemExposureRef.current
+  const itemExposureViewabilityConfig = useRef<ItemExposureViewabilityConfig>()
+  if (enableItemExposureOnInit && !itemExposureViewabilityConfig.current) {
+    itemExposureViewabilityConfig.current = {
+      itemVisiblePercentThreshold: getExposurePercentThreshold(itemExposureThreshold)
+    }
+  }
 
   const {
     normalStyle,
@@ -145,6 +220,14 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
   const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
+
+  if (enableItemExposureOnInit !== enableItemExposure) {
+    error('[Mpx runtime error]: [enable-item-exposure] cannot be toggled at runtime. Set its value once at component initialization.')
+  }
+
+  enableStickyRef.current = enableSticky
+  bindItemExposureRef.current = binditemexposure
+  propsRef.current = props
 
   const onRefresh = () => {
     const { bindrefresherrefresh } = props
@@ -177,10 +260,102 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     }
   }
 
+  const itemExposureViewabilityPairs = useRef<ItemExposureViewabilityPair[]>()
+  if (enableItemExposureOnInit && !itemExposureViewabilityPairs.current) {
+    const itemExposureViewabilityConfigValue = itemExposureViewabilityConfig.current as ItemExposureViewabilityConfig
+    itemExposureViewabilityPairs.current = [
+      {
+        viewabilityConfig: itemExposureViewabilityConfigValue,
+        onViewableItemsChanged: ({ changed }) => {
+          const bindItemExposure = bindItemExposureRef.current
+          if (!bindItemExposure) return
+
+          const exposedItems: ItemExposureDetail[] = []
+          changed.forEach((viewToken) => {
+            const exposureInfo = getItemExposureInfo(viewToken)
+            if (!exposureInfo) return
+
+            const { index, itemData, layout } = exposureInfo
+            const key = `${index}`
+
+            if (!viewToken.isViewable) {
+              delete itemExposureState.current[key]
+              return
+            }
+
+            if (!itemExposureState.current[key]) {
+              itemExposureState.current[key] = true
+              exposedItems.push({
+                index,
+                itemData,
+                layout,
+                threshold: itemExposureViewabilityConfigValue.itemVisiblePercentThreshold
+              })
+            }
+          })
+
+          if (exposedItems.length) {
+            bindItemExposure(
+              getCustomEvent('itemexposure', {}, {
+                detail: {
+                  items: exposedItems,
+                  time: Date.now()
+                },
+                layoutRef
+              }, propsRef.current)
+            )
+          }
+        }
+      }
+    ]
+  }
+
   // 通过sectionIndex和rowIndex获取原始索引
   const getOriginalIndex = (sectionIndex: number, rowIndex: number | 'header' | 'footer'): number => {
     const key = `${sectionIndex}_${rowIndex}`
     return reverseIndexMap.current[key] ?? -1 // 如果找不到，返回-1
+  }
+
+  const getItemExposureInfo = (viewToken: ItemExposureViewToken): ItemExposureInfo | null => {
+    const item = viewToken.item
+    if (!item) return null
+
+    const viewIndex = viewToken.index
+    if (viewIndex == null) return null
+    const indexInfo = exposureIndexMap.current[viewIndex]
+    if (!indexInfo) return null
+    if (indexInfo.type === 'header' && enableStickyRef.current) return null
+    const layoutInfo = itemLayoutsRef.current[viewIndex]
+    const layout = {
+      offset: layoutInfo ? layoutInfo.offset : 0,
+      length: layoutInfo ? layoutInfo.length : 0
+    }
+
+    if (indexInfo.type === 'header') {
+      // RN header/footer slot 的 item 即 section 对象
+      const section = item as Section
+      return {
+        index: indexInfo.index,
+        itemData: section.headerData || null,
+        layout
+      }
+    }
+
+    if (indexInfo.type === 'footer') {
+      // RN header/footer slot 的 item 即 section 对象
+      const section = item as Section
+      return {
+        index: indexInfo.index,
+        itemData: section.footerData || null,
+        layout
+      }
+    }
+
+    return {
+      index: indexInfo.index,
+      itemData: item as ListItem,
+      layout
+    }
   }
 
   const scrollToIndex = ({ index, animated, viewOffset = 0, viewPosition = 0 }: ScrollPositionParams) => {
@@ -237,42 +412,81 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     indexMap.current = {}
     // 清空反向索引映射
     reverseIndexMap.current = {}
+    if (enableItemExposureOnInit) {
+      exposureIndexMap.current = {}
+    }
 
     // 处理 listData 为空的情况
     if (!listData || !listData.length) {
       return sections
     }
 
+    let exposureIndex = 0
+    // 需与 RN SectionList 和 getItemLayout 的扁平顺序保持一致：每个 section 都是 [header, ...items, footer]
+    const createSection = (headerInfo?: { data: ListItem, index: number }): Section => {
+      const sectionIndex = sections.length
+      const section = {
+        headerData: headerInfo?.data || null,
+        footerData: null,
+        data: [],
+        hasSectionHeader: !!headerInfo,
+        hasSectionFooter: false
+      }
+
+      if (headerInfo) {
+        const { index } = headerInfo
+        indexMap.current[index] = `${sectionIndex}_header`
+        reverseIndexMap.current[`${sectionIndex}_header`] = index
+        if (enableItemExposureOnInit) {
+          exposureIndexMap.current[exposureIndex] = {
+            index,
+            type: 'header'
+          }
+        }
+      }
+      if (enableItemExposureOnInit) {
+        exposureIndex++
+      }
+
+      return section
+    }
+
+    const closeSection = () => {
+      const section = currentSection
+      if (!section) return
+
+      if (enableItemExposureOnInit) {
+        if (section.hasSectionFooter) {
+          const sectionIndex = sections.length
+          const index = getOriginalIndex(sectionIndex, 'footer')
+          if (index > -1) {
+            exposureIndexMap.current[exposureIndex] = {
+              index,
+              type: 'footer'
+            }
+          }
+        }
+        // RN SectionList 即使没有真实 footer，也会为每个 section 保留 footer slot
+        exposureIndex++
+      }
+
+      sections.push(section)
+      currentSection = null
+    }
+
     listData.forEach((item: ListItem, index: number) => {
       if (item.isSectionHeader) {
         // 如果已经存在一个 section，先把它添加到 sections 中
         if (currentSection) {
-          sections.push(currentSection)
+          closeSection()
         }
         // 创建新的 section
-        currentSection = {
-          headerData: item,
-          footerData: null,
-          data: [],
-          hasSectionHeader: true,
-          hasSectionFooter: false
-        }
-        // 为 section header 添加索引映射
-        const sectionIndex = sections.length
-        indexMap.current[index] = `${sectionIndex}_header`
-        // 添加反向索引映射
-        reverseIndexMap.current[`${sectionIndex}_header`] = index
+        currentSection = createSection({ data: item, index })
       } else if (item.isSectionFooter) {
         // 如果没有当前 section，创建一个默认的
         if (!currentSection) {
           // 创建默认section (无header的section)
-          currentSection = {
-            headerData: null,
-            footerData: null,
-            data: [],
-            hasSectionHeader: false,
-            hasSectionFooter: false
-          }
+          currentSection = createSection()
         }
         const sectionIndex = sections.length
         currentSection.footerData = item
@@ -280,47 +494,39 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
         indexMap.current[index] = `${sectionIndex}_footer`
         // 添加反向索引映射
         reverseIndexMap.current[`${sectionIndex}_footer`] = index
-        sections.push(currentSection)
-        currentSection = null
+        closeSection()
       } else {
         // 如果没有当前 section，创建一个默认的
         if (!currentSection) {
           // 创建默认section (无header的section)
-          currentSection = {
-            headerData: null,
-            footerData: null,
-            data: [],
-            hasSectionHeader: false,
-            hasSectionFooter: false
-          }
+          currentSection = createSection()
         }
         // 将 item 添加到当前 section 的 data 中
         const itemIndex = currentSection.data.length
         currentSection.data.push(item)
-        let sectionIndex
+        const sectionIndex = sections.length
         // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
-        if (!currentSection.hasSectionHeader && sections.length === 0) {
-          // 在默认section中(第一个且无header)
-          sectionIndex = 0
-          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-        } else {
-          // 在普通section中
-          sectionIndex = sections.length
-          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-        }
+        indexMap.current[index] = `${sectionIndex}_${itemIndex}`
         // 添加反向索引映射
         reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
+        if (enableItemExposureOnInit) {
+          exposureIndexMap.current[exposureIndex] = {
+            index,
+            type: 'item'
+          }
+          exposureIndex++
+        }
       }
     })
     // 添加最后一个 section
     if (currentSection) {
-      sections.push(currentSection)
+      closeSection()
     }
     return sections
-  }, [listData, listData?.length])
+  }, [listData, listData?.length, enableItemExposureOnInit])
 
   const { getItemLayout } = useMemo(() => {
-    const layouts: Array<{ length: number, offset: number, index: number }> = []
+    const layouts: ItemLayoutInfo[] = []
     let offset = 0
 
     if (useListHeader) {
@@ -360,11 +566,15 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
       })
       offset += footerHeight
     })
+    itemLayoutsRef.current = layouts
     return {
-      itemLayouts: layouts,
       getItemLayout: (data: any, index: number) => layouts[index]
     }
   }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight])
+
+  useEffect(() => {
+    itemExposureState.current = {}
+  }, [convertedListData, enableSticky])
 
   const scrollAdditionalProps = extendObject(
     {
@@ -389,6 +599,12 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     refresherEnabled ? { refreshing } : null,
     layoutProps
   )
+
+  if (enableItemExposureOnInit) {
+    extendObject(scrollAdditionalProps, {
+      viewabilityConfigCallbackPairs: itemExposureViewabilityPairs.current
+    })
+  }
 
   const nativeGesture = useMemo(() => {
     const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
@@ -438,9 +654,12 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     'end-reached-threshold',
     'refresher-triggered',
     'refresher-enabled',
+    'enable-item-exposure',
+    'item-exposure-threshold',
     'bindrefresherrefresh',
     'bindscrolltolower',
     'bindscroll',
+    'binditemexposure',
     'simultaneous-handlers',
     'wait-for'
   ], { layoutRef })
