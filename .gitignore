@@ -22,6 +22,7 @@ docs-vitepress/.vitepress/dist
 docs-vitepress/.vitepress/cache
 dev-dist
 packages/webpack-plugin/lib/runtime/components/react/dist/
+coverage/
 packages/perf/dist/
 .agent-workflows/
 .agents/skills/mpx/

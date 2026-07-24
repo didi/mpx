@@ -30,6 +30,7 @@ import Portal from './mpx-portal'
  * ✘ snap-to-edge
  */
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
+type ChangeSource = '' | 'touch' | 'autoplay'
 type StrAbsoType = 'absoluteX' | 'absoluteY'
 type StrVelocityType = 'velocityX' | 'velocityY'
 type EventDataType = {
@@ -201,6 +202,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const preMarginShared = useSharedValue(preMargin)
   const nextMarginShared = useSharedValue(nextMargin)
   const autoplayShared = useSharedValue(autoplay)
+  const changeSource = useSharedValue<ChangeSource>('')
   // 默认前后补位的元素个数
   const patchElmNum = circular ? (preMargin ? 2 : 1) : 0
   const patchElmNumShared = useSharedValue(patchElmNum)
@@ -419,6 +421,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           duration: easeDuration,
           easing: easeMap[easeingFunc]
         }, () => {
+          changeSource.value = 'autoplay'
           currentIndex.value = nextIndex
           runOnJS(runOnJSCallback)('loop')
         })
@@ -434,6 +437,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             const initOffset = -step.value * patchElmNumShared.value + preMarginShared.value
             // 将开始位置设置为真正的位置
             offset.value = initOffset
+            changeSource.value = 'autoplay'
             currentIndex.value = nextIndex
             runOnJS(runOnJSCallback)('loop')
           })
@@ -445,6 +449,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             duration: easeDuration,
             easing: easeMap[easeingFunc]
           }, () => {
+            changeSource.value = 'autoplay'
             currentIndex.value = nextIndex
             runOnJS(runOnJSCallback)('loop')
           })
@@ -474,8 +479,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [])
 
-  function handleSwiperChange (current: number) {
-    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+  function handleSwiperChange (current: number, source: ChangeSource = 'touch') {
+    const eventData = getCustomEvent('change', {}, { detail: { current, source }, layoutRef: layoutRef })
     bindchange && bindchange(eventData)
   }
 
@@ -508,6 +513,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           duration: easeDuration,
           easing: easeMap[easeingFunc]
         }, () => {
+          changeSource.value = ''
           currentIndex.value = propCurrent
         })
       } else {
@@ -526,7 +532,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     if (newIndex !== preIndex && bindchange && !isFirstRef.current) {
-      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
+      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, changeSource.value)
     }
     isFirstRef.current = false
   })
@@ -552,6 +558,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     childrenLength.value = children.length
     if (children.length - 1 < currentIndex.value) {
       pauseLoop()
+      changeSource.value = ''
       currentIndex.value = 0
       offset.value = getOffset(0, step.value)
       if (autoplay && children.length > 1) {
@@ -655,6 +662,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           easing: easeMap[easeingFunc]
         }, () => {
           if (touchfinish.value !== false) {
+            changeSource.value = 'touch'
             currentIndex.value = selectedIndex
             offset.value = resetOffset
             runOnJS(runOnJSCallback)('resumeLoop')
@@ -666,6 +674,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           easing: easeMap[easeingFunc]
         }, () => {
           if (touchfinish.value !== false) {
+            changeSource.value = 'touch'
             currentIndex.value = selectedIndex
             runOnJS(runOnJSCallback)('resumeLoop')
           }
@@ -688,6 +697,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         easing: easeMap[easeingFunc]
       }, () => {
         if (touchfinish.value !== false) {
+          changeSource.value = 'touch'
           currentIndex.value = moveToIndex
           runOnJS(runOnJSCallback)('resumeLoop')
         }
@@ -794,6 +804,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const offsetHalf = computeHalf()
         if (childrenLength.value > 1 && offsetHalf) {
           const { selectedIndex } = getTargetPosition({ transdir: moveDistance } as EventEndType)
+          changeSource.value = 'touch'
           currentIndex.value = selectedIndex
         }
         // 2. 非循环: 处理用户一直拖拽到临界点的场景,如果放到onFinalize无法阻止offset.value更新为越界的值

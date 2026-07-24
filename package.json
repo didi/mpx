@@ -7,7 +7,7 @@
     "lint": "eslint --ext .js,.ts,.tsx,.jsx packages/",
     "fix": "eslint --fix --ext .js,.ts,.tsx,.jsx packages/",
     "lint:js": "eslint --ext .js packages/",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests && npm run test:react -w @mpxjs/webpack-plugin",
     "test:review-loop": "jest --config .agents/skills/review-loop/jest.config.json --runInBand",
     "release": "npm run lint && npm run test && npx lerna version",
     "lerna:publish": "lerna publish from-package --yes",
