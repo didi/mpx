@@ -13,12 +13,14 @@ import { minimatch } from 'minimatch'
 import * as path from 'path'
 import {
   parseClasses,
+  parseMpxEscapeKeys,
   parseCommentConfig,
   parseComments,
   parseMustache,
   parseStrings,
   stringifyAttr
 } from './parser.js'
+import { escapeKey, mpEscapeMap } from '@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr.js'
 import platformPreflightsMap from './platform.js'
 import { UnoCSSRNWebpackPlugin } from './rn-plugin/index.js'
 import {
@@ -114,27 +116,7 @@ function normalizeOptions (options) {
     ...webOptions
   }
 
-  escapeMap = {
-    '(': '_pl_',
-    ')': '_pr_',
-    '[': '_bl_',
-    ']': '_br_',
-    '{': '_cl_',
-    '}': '_cr_',
-    '#': '_h_',
-    '!': '_i_',
-    '/': '_s_',
-    '.': '_d_',
-    ':': '_c_',
-    ',': '_2c_',
-    '%': '_p_',
-    '\'': '_q_',
-    '"': '_dq_',
-    '+': '_a_',
-    $: '_si_',
-    unknown: '_u_',
-    ...escapeMap
-  }
+  escapeMap = Object.assign({}, mpEscapeMap, { unknown: '_u_' }, escapeMap)
 
   scan.include = normalizeRules(scan.include, root)
   scan.exclude = normalizeRules(scan.exclude, root)
@@ -256,6 +238,10 @@ class MpxUnocssPlugin {
             result = transformClasses(result, classNameHandler)
             expSource.replace(start, end, result)
           })
+          parseMpxEscapeKeys(exp, this.options.escapeMap).forEach(({ result, start, end }) => {
+            const expanded = transformClasses(result, classNameHandler)
+            expSource.replace(start, end, escapeKey(expanded))
+          })
           return expSource.source()
         }, str => transformClasses(str, classNameHandler))
         if (replaced) {
@@ -314,6 +300,7 @@ class MpxUnocssPlugin {
     }, (compilation) => {
       const { __mpx__: mpx } = compilation
       mpx.hasUnoCSS = true
+      mpx.unocssEscapeMap = this.options.escapeMap
       if (isWeb(mode) || isReact(mode)) return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,

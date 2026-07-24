@@ -80,6 +80,11 @@ declare global {
     dynamicEntryInfo: Record<string, any>
 
     /**
+     * UnoCSS 小程序 class 转义映射
+     */
+    unocssEscapeMap?: Record<string, string>
+
+    /**
      * 记录 entryModule 与 entryNode 的对应关系，用于体积分析
      */
     entryNodeModulesMap: Map<any, any>
