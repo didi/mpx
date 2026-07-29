@@ -1,7 +1,6 @@
 import MpxUnocssPlugin from '../lib/index.js'
 import { getRawSource } from '../lib/source.js'
-import { createGenerator, e as cssEscape } from '@unocss/core'
-import { mpEscape } from '../lib/transform.js'
+import { createGenerator } from '@unocss/core'
 import presetMpx from '@mpxjs/unocss-base/lib/index.js'
 
 // const { presetLegacyCompat } = require('@unocss/preset-legacy-compat')
@@ -44,7 +43,7 @@ describe('test plugin', () => {
         return className
       }
       classmap[className] = true
-      return mpEscape(cssEscape(className), plugin.options.escapeMap)
+      return className
     })
     // 测试模板是否转义
     expect(newsource.source()).toMatchSnapshot()

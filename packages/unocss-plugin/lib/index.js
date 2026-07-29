@@ -1,10 +1,13 @@
 import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
 import mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
 import env from '@mpxjs/webpack-plugin/lib/utils/env.js'
+import escapeClassObjectKey from '@mpxjs/webpack-plugin/lib/utils/escape-class-object-key.js'
 import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js'
 import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js'
 import set from '@mpxjs/webpack-plugin/lib/utils/set.js'
+import sourceLocation from '@mpxjs/webpack-plugin/lib/utils/source-location.js'
 import toPosix from '@mpxjs/webpack-plugin/lib/utils/to-posix.js'
+import isValidIdentifierStr from '@mpxjs/webpack-plugin/lib/utils/is-valid-identifier-str.js'
 import { loadConfig } from '@unocss/config'
 import { createGenerator, e as cssEscape } from '@unocss/core'
 import transformerDirectives from '@unocss/transformer-directives'
@@ -13,14 +16,12 @@ import { minimatch } from 'minimatch'
 import * as path from 'path'
 import {
   parseClasses,
-  parseMpxEscapeKeys,
+  parseClassExpression,
   parseCommentConfig,
   parseComments,
   parseMustache,
-  parseStrings,
   stringifyAttr
 } from './parser.js'
-import { escapeKey, mpEscapeMap } from '@mpxjs/webpack-plugin/lib/template-compiler/trans-dynamic-class-expr.js'
 import platformPreflightsMap from './platform.js'
 import { UnoCSSRNWebpackPlugin } from './rn-plugin/index.js'
 import {
@@ -39,8 +40,72 @@ import { UnoCSSWebpackPlugin } from './web-plugin/index.js'
 
 const { isWeb, isReact } = env
 const { has } = set
+const { createCodeFrame, offsetToLoc, readSource } = sourceLocation
 
 const PLUGIN_NAME = 'MpxUnocssPlugin'
+
+/**
+ * 在原始模板源码中定位类名。
+ * 对象 key 基于 AST 偏移定位，避免误匹配源码中其他位置的相同文本。
+ *
+ * @param {string} source
+ * @param {string} className
+ * @param {boolean} objectKey
+ * @returns {{start: number, end: number}|undefined}
+ */
+function findOriginalClassLoc (source, className, objectKey) {
+  let result
+  parseClasses(source).some(({ result: classValue, start }) => {
+    if (!objectKey) {
+      const index = classValue.indexOf(className)
+      if (index > -1) {
+        result = {
+          start: start + index,
+          end: start + index + className.length
+        }
+        return true
+      }
+      return false
+    }
+    const mustacheReg = /{{([\s\S]*?)}}/g
+    let match
+    while (match = mustacheReg.exec(classValue)) {
+      const rawExp = match[1]
+      const exp = rawExp.trim()
+      const expStart = start + match.index + 2 + rawExp.indexOf(exp)
+      const key = parseClassExpression(exp).objectKeys.find(key => String(key.result) === className)
+      if (key) {
+        const rawKey = exp.slice(key.start, key.end + 1)
+        const valueStart = rawKey.indexOf(className)
+        result = {
+          start: expStart + key.start + Math.max(valueStart, 0),
+          end: expStart + key.start + (valueStart > -1 ? valueStart + className.length : rawKey.length)
+        }
+        return true
+      }
+    }
+    return false
+  })
+  return result
+}
+
+/**
+ * 创建包含源码位置的 UnoCSS 编译错误。
+ *
+ * @param {string} msg
+ * @param {{file?: string, source?: string, start?: number, end?: number}} options
+ * @returns {Error}
+ */
+function createUnocssError (msg, { file, source, start, end } = {}) {
+  let location = file
+  let frame = ''
+  if (source && start != null) {
+    const loc = offsetToLoc(source, start, end)
+    location += `:${loc.start.line}:${loc.start.column}`
+    frame = createCodeFrame(source, loc)
+  }
+  return new Error(`[Mpx Unocss error]${location ? `[${location}]` : ''}: ${msg}${frame ? `\n\n${frame}` : ''}`)
+}
 
 function filterFile (file, scan) {
   const { include = [], exclude = [] } = scan
@@ -92,7 +157,6 @@ function normalizeOptions (options) {
         'src/**/*'
       ]
     },
-    escapeMap = {},
     // 公共的配置
     root = process.cwd(),
     config,
@@ -116,8 +180,6 @@ function normalizeOptions (options) {
     ...webOptions
   }
 
-  escapeMap = Object.assign({}, mpEscapeMap, { unknown: '_u_' }, escapeMap)
-
   scan.include = normalizeRules(scan.include, root)
   scan.exclude = normalizeRules(scan.exclude, root)
 
@@ -126,7 +188,6 @@ function normalizeOptions (options) {
     styleIsolation,
     minCount,
     scan,
-    escapeMap,
     root,
     config,
     configFiles,
@@ -168,15 +229,28 @@ function getPlugin (compiler, curPlugin) {
   return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
 }
 
+/**
+ * 生成小程序样式，并保留 UnoCSS 实际匹配的原始类名。
+ *
+ * @param {import('@unocss/core').UnoGenerator} uno
+ * @param {string[]} classes
+ * @param {object} options
+ */
+async function generateStyleResult (uno, classes, options) {
+  const result = await uno.generate(new Set(classes), options)
+  return {
+    css: mpEscape(result.css),
+    matched: result.matched
+  }
+}
+
 class MpxUnocssPlugin {
   constructor (options = {}) {
     this.options = normalizeOptions(options)
   }
 
   async generateStyle (uno, classes = [], options = {}) {
-    const tokens = new Set(classes)
-    const result = await uno.generate(tokens, options)
-    return mpEscape(result.css, this.options.escapeMap)
+    return (await generateStyleResult(uno, classes, options)).css
   }
 
   getSafeListClasses (safelist) {
@@ -218,7 +292,7 @@ class MpxUnocssPlugin {
   getTemplateParser (uno) {
     // process classes
     const transformAlias = buildAliasTransformer(uno.config.alias)
-    const transformClasses = (source, classNameHandler = c => c) => {
+    const transformClasses = (source, classNameHandler, unknownClassChars, loc) => {
       // pre process
       source = transformAlias(source)
       if (this.options.transformGroups) {
@@ -226,27 +300,51 @@ class MpxUnocssPlugin {
       }
       const content = source.source()
       // escape & fill classesMap
-      return content.split(/\s+/).map(classNameHandler).join(' ')
+      return content.split(/\s+/).map((className) => {
+        return mpEscape(cssEscape(classNameHandler(className)), (char) => {
+          let chars = unknownClassChars.get(className)
+          if (!chars) {
+            chars = {
+              value: new Set(),
+              loc
+            }
+            unknownClassChars.set(className, chars)
+          }
+          chars.value.add(char)
+        })
+      }).join(' ')
     }
-    return (source, classNameHandler) => {
+    return (source, classNameHandler = c => c, error) => {
+      // 未知字符是否有效由样式生成结果统一判断，这里只记录类名和源码位置
+      const unknownClassChars = new Map()
       source = getReplaceSource(source)
       const content = source.original().source()
-      parseClasses(content).forEach(({ result, start, end }) => {
+      parseClasses(content).forEach(({ result, start: attrStart, end: attrEnd }) => {
         let { replaced, val } = parseMustache(result, (exp) => {
           const expSource = getReplaceSource(exp)
-          parseStrings(exp).forEach(({ result, start, end }) => {
-            result = transformClasses(result, classNameHandler)
+          const { strings, objectKeys } = parseClassExpression(exp)
+          strings.forEach(({ result, start, end }) => {
+            result = transformClasses(result, classNameHandler, unknownClassChars, { start: attrStart, end: attrEnd })
             expSource.replace(start, end, result)
           })
-          parseMpxEscapeKeys(exp, this.options.escapeMap).forEach(({ result, start, end }) => {
-            const expanded = transformClasses(result, classNameHandler)
-            expSource.replace(start, end, escapeKey(expanded))
+          objectKeys.forEach(({ result, start, end }) => {
+            if (typeof result !== 'string') {
+              error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`, { className: String(result), objectKey: true, start: attrStart, end: attrEnd })
+              return
+            }
+            const className = transformClasses(result, classNameHandler, unknownClassChars, { objectKey: true, start: attrStart, end: attrEnd })
+            const propertyName = escapeClassObjectKey(className)
+            if (!isValidIdentifierStr(propertyName)) {
+              error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`, { className: result, objectKey: true, start: attrStart, end: attrEnd })
+            } else {
+              expSource.replace(start, end, propertyName)
+            }
           })
           return expSource.source()
-        }, str => transformClasses(str, classNameHandler))
+        }, str => transformClasses(str, classNameHandler, unknownClassChars, { start: attrStart, end: attrEnd }))
         if (replaced) {
           val = stringifyAttr(val)
-          source.replace(start - 1, end + 1, val)
+          source.replace(attrStart - 1, attrEnd + 1, val)
         }
       })
       // process comments
@@ -262,7 +360,8 @@ class MpxUnocssPlugin {
       }
       return {
         newsource: source,
-        commentConfig
+        commentConfig,
+        unknownClassChars
       }
     }
   }
@@ -300,14 +399,13 @@ class MpxUnocssPlugin {
     }, (compilation) => {
       const { __mpx__: mpx } = compilation
       mpx.hasUnoCSS = true
-      mpx.unocssEscapeMap = this.options.escapeMap
       if (isWeb(mode) || isReact(mode)) return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, async (assets) => {
-        const error = (msg) => {
-          compilation.errors.push(new Error(msg))
+        const error = (msg, options) => {
+          compilation.errors.push(createUnocssError(msg, options))
         }
         // const warn = (msg) => {
         //   compilation.warnings.push(new Error(msg))
@@ -353,6 +451,7 @@ class MpxUnocssPlugin {
           main: {}
         }
         const commentConfigMap = {}
+        const unknownClassErrors = new Map()
 
         const mainClassesMap = packageClassesMaps.main
         // config中的safelist视为主包classes
@@ -363,9 +462,27 @@ class MpxUnocssPlugin {
         })
         const parseTemplate = this.getTemplateParser(uno)
 
-        const processTemplate = async (file, source) => {
+        const processTemplate = (file, source) => {
           const packageName = getPackageName(file)
           const filename = file.slice(0, -templateExt.length)
+          const content = source.source()
+          let resourcePath
+          const assetModules = assetsModulesMap.get(file)
+          // 一个模板产物可能关联多个模块，优先选择 type=template 的模块
+          has(assetModules, (module) => {
+            if (module.resource) {
+              const request = parseRequest(module.resource)
+              if (!resourcePath) {
+                resourcePath = toPosix(request.resourcePath)
+              }
+              if (request.queryObj.type === 'template') {
+                resourcePath = toPosix(request.resourcePath)
+                return true
+              }
+            }
+            return false
+          })
+          const resourceSource = readSource(resourcePath, compiler.inputFileSystem)
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
 
           // process classes
@@ -379,9 +496,32 @@ class MpxUnocssPlugin {
             } else if (!mainClassesMap[className]) {
               currentClassesMap[className] = true
             }
-            return mpEscape(cssEscape(className), this.options.escapeMap)
+            return className
           }
-          const { newsource, commentConfig } = parseTemplate(source, classNameHandler)
+          const getErrorOptions = (loc) => {
+            const originalLoc = resourceSource && findOriginalClassLoc(resourceSource, loc.className, loc.objectKey)
+            if (originalLoc) {
+              return Object.assign({
+                file: resourcePath,
+                source: resourceSource
+              }, originalLoc)
+            }
+            return Object.assign({ file, source: content }, loc)
+          }
+          const { newsource, commentConfig, unknownClassChars } = parseTemplate(source, classNameHandler, (msg, loc) => {
+            error(msg, getErrorOptions(loc))
+          })
+          unknownClassChars.forEach(({ value, loc }, className) => {
+            let records = unknownClassErrors.get(className)
+            if (!records) {
+              records = []
+              unknownClassErrors.set(className, records)
+            }
+            records.push({
+              chars: value,
+              options: getErrorOptions(Object.assign({ className }, loc))
+            })
+          })
           commentConfigMap[filename] = commentConfig
           assets[file] = newsource
         }
@@ -419,11 +559,14 @@ class MpxUnocssPlugin {
         Object.assign(mainClassesMap, commonClassesMap)
         // 生成主包uno.css
         let mainUnoFile
+        const matchedClasses = new Set()
         const mainClasses = Object.keys(mainClassesMap)
-        const mainUnoFileContent = await this.generateStyle(uno, mainClasses, {
+        const mainResult = await generateStyleResult(uno, mainClasses, {
           ...generateOptions,
           preflights: true
         })
+        mainResult.matched.forEach(className => matchedClasses.add(className))
+        const mainUnoFileContent = mainResult.css
         if (mainUnoFileContent) {
           mainUnoFile = this.options.unoFile + styleExt
           if (assets[mainUnoFile]) {
@@ -470,11 +613,13 @@ class MpxUnocssPlugin {
         await Promise.all(Object.entries(packageClassesMaps).map(async ([packageRoot, classesMap]) => {
           let unoFile
           const classes = Object.keys(classesMap)
-          const unoFileContent = await this.generateStyle(uno, classes, {
+          const result = await generateStyleResult(uno, classes, {
             ...generateOptions,
             // 独立分包中的unocss文件生成preflights
             ...independentSubpackagesMap[packageRoot] ? { preflights: true } : null
           })
+          result.matched.forEach(className => matchedClasses.add(className))
+          const unoFileContent = result.css
           if (unoFileContent) {
             unoFile = toPosix(path.join(packageRoot, this.options.unoFile + styleExt))
             if (assets[unoFile]) {
@@ -537,6 +682,15 @@ class MpxUnocssPlugin {
             }
           })
         }))
+        // 以实际生成结果为准，只有 UnoCSS 未处理的特殊字符类名才报错
+        unknownClassErrors.forEach((records, className) => {
+          if (matchedClasses.has(className)) return
+          records.forEach(({ chars, options }) => {
+            chars.forEach((char) => {
+              error(`Classname [${className}] contains unsupported character [${char}].`, options)
+            })
+          })
+        })
       })
     })
   }
