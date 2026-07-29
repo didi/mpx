@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough, isIOS } from './utils'
 import { TextPassThroughContextValue } from './context'
 import { error, warn, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
@@ -716,11 +716,11 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
   }), [])
 
-  function resolveBackgroundImageSize (width: number, height: number, request: number) {
+  function resolveBackgroundImageSize (width: number, height: number, request: number, cache = false) {
     // 只接收当前 src 的有效原图尺寸
     if (!width || !height || request !== imageRequest.current.id) return
-    // onLoad 得到的尺寸也写入缓存，切回同一背景图时无需再次等待
-    if (src) sizeCacheRef.current.set(src, { width, height })
+    // 仅缓存 getSize 的原图尺寸，避免 Android FastImage onLoad 的临时布局尺寸污染缓存
+    if (cache && src) sizeCacheRef.current.set(src, { width, height })
     const imageSizeChanged = setImageSize(width, height)
     if (!needLayout || layoutInfo.current) {
       imageSizeChanged && bumpVersion()
@@ -752,11 +752,11 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
         return
       }
       let cancelled = false
-      // 先挂载真实背景 Image；部分 iOS 图片的 getSize 可能既不成功也不失败
-      setShow(true)
+      // 仅 iOS 先挂载背景 Image 走 onLoad 兜底；非 iOS 保持原 getSize 流程
+      if (isIOS) setShow(true)
       Image.getSize(src, (width, height) => {
         if (cancelled) return
-        resolveBackgroundImageSize(width, height, request)
+        resolveBackgroundImageSize(width, height, request, true)
       })
       return () => { cancelled = true }
     }
@@ -793,6 +793,8 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   )
   const request = imageRequest.current.id
   const onBackgroundImageLoad = (evt: NativeSyntheticEvent<any>) => {
+    // getSize 已返回时不再让 FastImage onLoad 覆盖原图尺寸
+    if (sizeInfo.current) return
     // RN Image 尺寸在 nativeEvent.source；FastImage 尺寸直接在 nativeEvent 上
     const nativeEvent = evt.nativeEvent
     const source = nativeEvent.source
@@ -802,7 +804,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
       request
     )
   }
-  const runtimeImageProps: ImageProps = type === 'image' && needImageSize
+  const runtimeImageProps: ImageProps = isIOS && type === 'image' && needImageSize
     ? extendObject({}, imageProps, {
       // src 变化时重建背景 Image，确保缓存图片也触发当前批次的 onLoad
       key: src,
