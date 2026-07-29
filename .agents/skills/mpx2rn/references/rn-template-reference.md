@@ -824,6 +824,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | 事件名 | 说明 |
 | --- | --- |
 | bindchange | current 改变时会触发 change 事件，`event.detail = {current, source}` |
+| bindchangestart | swiper 切换开始时会触发 changestart 事件，`event.detail = {current}` |
 
 ### swiper-item
 

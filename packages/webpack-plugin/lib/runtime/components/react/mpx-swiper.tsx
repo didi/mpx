@@ -572,7 +572,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   useEffect(() => {
     childrenLength.value = children.length
-    if (children.length - 1 < currentIndex.value) {
+    const maxIndex = circular ? children.length - 1 : Math.max(0, children.length - displayMultipleItems)
+    if (!children.length || maxIndex < currentIndex.value) {
       pauseLoop()
       currentIndex.value = 0
       offset.value = getOffset(0, step.value)
@@ -719,6 +720,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const curIndex = currentOffset / step.value
       const moveToIndex = (transdir < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElmNumShared.value
       const targetOffset = -(moveToIndex + patchElmNumShared.value) * step.value + (circularShared.value ? preMarginShared.value : 0)
+      triggerChangeStart(moveToIndex)
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]

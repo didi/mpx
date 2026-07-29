@@ -183,6 +183,7 @@
 | 事件名           | 说明                |
 | ----------------| ------------------ |
 | bindchange| current 改变时会触发 change 事件，`event.detail = {current, source}`|
+| bindchangestart| swiper 切换开始时会触发 changestart 事件，`event.detail = {current}`|
 
 ### swiper-item
 仅可放置在swiper组件中，宽高自动设置为100%。
