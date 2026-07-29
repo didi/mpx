@@ -243,12 +243,19 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const [imageWidth, setImageWidth] = useState(0)
   const [imageHeight, setImageHeight] = useState(0)
   const [ratio, setRatio] = useState(0)
-  const [loaded, setLoaded] = useState(!isLayoutMode)
+  // 布局模式也要首屏挂载真实 Image，不能等待 getSize；部分 iOS WebP 的 getSize 可能不回调
+  const [loaded, setLoaded] = useState(true)
 
   const state = useRef<ImageState>({
     viewWidth,
     viewHeight
   })
+  // id 标识当前 src 的尺寸请求批次，避免旧图片的异步回调覆盖新图片尺寸
+  const sizeRequest = useRef({ id: 0, src })
+  if (sizeRequest.current.src !== src) {
+    // src 改变即开启新批次，之前 getSize/onLoad 捕获的 id 会自动失效
+    sizeRequest.current = { id: sizeRequest.current.id + 1, src }
+  }
 
   function setViewSize (viewWidth: number, viewHeight: number, ratio: number) {
     // 在特定模式下可预测 view 的变化，在onLayout触发时能以此避免重复render
@@ -269,6 +276,28 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         setViewHeight(viewHeight)
         setViewWidth(viewWidth)
         break
+    }
+  }
+
+  function resolveImageSize (width: number, height: number, request: number) {
+    // 忽略无效尺寸和旧批次结果
+    if (!width || !height || request !== sizeRequest.current.id) return
+    // ref 同步保存结果，保证 onLayout 先后顺序不同也能读取最新原图尺寸
+    state.current.imageWidth = width
+    state.current.imageHeight = height
+    state.current.ratio = height / width
+
+    // widthFix 依赖容器宽度，heightFix 依赖容器高度，裁剪模式同时依赖宽高
+    if (isWidthFixMode
+      ? state.current.viewWidth
+      : isHeightFixMode
+        ? state.current.viewHeight
+        : state.current.viewWidth && state.current.viewHeight) {
+      setRatio(state.current.ratio)
+      setImageWidth(width)
+      setImageHeight(height)
+      setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio)
+      setLoaded(true)
     }
   }
 
@@ -413,7 +442,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     )
   }
 
-  const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
+  const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>, request: number) => {
     evt.persist()
     const triggerLoad = (width: number, height: number) => {
       bindload && bindload(
@@ -428,27 +457,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         )
       )
     }
-    // RN Image 尺寸在 nativeEvent.source；FastImage 在 nativeEvent 上
+    // RN Image 尺寸在 nativeEvent.source；FastImage 尺寸直接在 nativeEvent 上
     const nativeEvent = evt.nativeEvent as any
     const source = nativeEvent.source
     const width = (source && source.width) || nativeEvent.width || 0
     const height = (source && source.height) || nativeEvent.height || 0
-    // 布局模式下，若 getImageSize 没拿到尺寸（iPhone 8 返回 0，ratio 仍为 0），用真实尺寸兜底同步 view
-    if (isLayoutMode && width && height && !state.current.ratio) {
-      state.current.imageWidth = width
-      state.current.imageHeight = height
-      state.current.ratio = height / width
-      if (isWidthFixMode
-        ? state.current.viewWidth
-        : isHeightFixMode
-          ? state.current.viewHeight
-          : state.current.viewWidth && state.current.viewHeight) {
-        setRatio(state.current.ratio)
-        setImageWidth(width)
-        setImageHeight(height)
-        setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio)
-      }
-    }
+    // 可见 Image 的 onLoad 是 getSize 不返回时的尺寸兜底
+    if (isLayoutMode) resolveImageSize(width, height, request)
     if (width && height) {
       triggerLoad(width, height)
       return
@@ -472,28 +487,16 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   useEffect(() => {
     if (!isSvg && isLayoutMode) {
+      // 捕获本次 effect 对应的批次，src 切换后旧回调会被 resolver 丢弃
+      const request = sizeRequest.current.id
       getImageSize(
         src,
         (width: number, height: number) => {
-          state.current.imageWidth = width
-          state.current.imageHeight = height
-          state.current.ratio = !width ? 0 : height / width
-
-          if (isWidthFixMode
-            ? state.current.viewWidth
-            : isHeightFixMode
-              ? state.current.viewHeight
-              : state.current.viewWidth && state.current.viewHeight) {
-            setRatio(state.current.ratio)
-            setImageWidth(width)
-            setImageHeight(height)
-            setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio!)
-
-            setLoaded(true)
-          }
+          resolveImageSize(width, height, request)
         },
         () => {
-          setLoaded(true)
+          // getSize 失败不影响图片展示，真实尺寸仍可由 Image onLoad 回填
+          if (request === sizeRequest.current.id) setLoaded(true)
         }
       )
     }
@@ -547,31 +550,23 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   function renderBaseImage () {
+    // onLoad 必须携带创建该 Image 时的批次，不能在回调时读取最新 id
+    const request = sizeRequest.current.id
     const baseImageStyle = isCropMode
       ? extendObject(
         { transformOrigin: 'left top', width: imageWidth, height: imageHeight },
         modeStyle
       )
       : BASE_IMAGE_FILL_STYLE
-    const imageStyle = isLayoutMode
-      ? extendObject(
-        {},
-        baseImageStyle,
-        {
-          // 布局模式下尺寸未知（ratio 为 0）前先隐藏，避免按默认高度闪一下（iPhone 8 getImageSize 返回 0 时尤其明显）
-          // ratio未0的情况只能是图片高度为0，如果高度为0不展示图片也是合理的，因此不单独判断ratio未0的情况
-          opacity: ratio ? 1 : 0
-        }
-      )
-      : baseImageStyle
     return renderImage(
       extendObject(
         {
           source: imageSource,
           resizeMode: resizeMode,
-          onLoad: (isLayoutMode || bindload) ? onImageLoad : undefined,
+          // 布局模式即使未传 bindload，也要监听 onLoad 获取原图尺寸
+          onLoad: (isLayoutMode || bindload) ? (evt: NativeSyntheticEvent<ImageLoadEventData>) => onImageLoad(evt, request) : undefined,
           onError: binderror && onImageError,
-          style: imageStyle
+          style: baseImageStyle
         },
         isLayoutMode ? {} : innerProps
       ),

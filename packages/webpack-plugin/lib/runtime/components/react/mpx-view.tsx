@@ -694,6 +694,12 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   const [version, setVersion] = useState(0)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
+  // id 标识当前背景图的尺寸请求批次，避免切换后旧图回调污染 contain 计算
+  const imageRequest = useRef({ id: 0, src })
+  if (imageRequest.current.src !== src) {
+    // src 改变即让旧 getSize/onLoad 回调失效
+    imageRequest.current = { id: imageRequest.current.id + 1, src }
+  }
   const sizeCacheRef = useRef<Map<string, Size>>(new Map())
   // sizeInfo / layoutInfo / setVersion 都是稳定引用，闭包整个生命周期只分配一次
   const { bumpVersion, setImageSize, setLayoutInfo } = useMemo(() => ({
@@ -709,6 +715,19 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
       return true
     }
   }), [])
+
+  function resolveBackgroundImageSize (width: number, height: number, request: number) {
+    // 只接收当前 src 的有效原图尺寸
+    if (!width || !height || request !== imageRequest.current.id) return
+    // onLoad 得到的尺寸也写入缓存，切回同一背景图时无需再次等待
+    if (src) sizeCacheRef.current.set(src, { width, height })
+    const imageSizeChanged = setImageSize(width, height)
+    if (!needLayout || layoutInfo.current) {
+      imageSizeChanged && bumpVersion()
+      setShow(true)
+    }
+  }
+
   useEffect(() => {
     sizeInfo.current = null
     if (type === 'linear') {
@@ -726,26 +745,18 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
 
     if (needImageSize) {
+      const request = imageRequest.current.id
       const cached = sizeCacheRef.current.get(src)
       if (cached) {
-        const imageSizeChanged = setImageSize(cached.width, cached.height)
-        if (!needLayout || layoutInfo.current) {
-          imageSizeChanged && bumpVersion()
-          setShow(true)
-        }
+        resolveBackgroundImageSize(cached.width, cached.height, request)
         return
       }
       let cancelled = false
+      // 先挂载真实背景 Image；部分 iOS 图片的 getSize 可能既不成功也不失败
+      setShow(true)
       Image.getSize(src, (width, height) => {
-        // cache 仍然填上，避免下次同 src 再发一次请求
-        sizeCacheRef.current.set(src, { width, height })
         if (cancelled) return
-        const imageSizeChanged = setImageSize(width, height)
-        // 1. 当需要绑定onLayout 2. 获取到布局信息
-        if (!needLayout || layoutInfo.current) {
-          imageSizeChanged && bumpVersion()
-          setShow(true)
-        }
+        resolveBackgroundImageSize(width, height, request)
       })
       return () => { cancelled = true }
     }
@@ -780,10 +791,32 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   const backgroundProps: ViewProps = extendObject({ key: 'backgroundImage' }, needLayout ? { onLayout } : {},
     { style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) }
   )
+  const request = imageRequest.current.id
+  const onBackgroundImageLoad = (evt: NativeSyntheticEvent<any>) => {
+    // RN Image 尺寸在 nativeEvent.source；FastImage 尺寸直接在 nativeEvent 上
+    const nativeEvent = evt.nativeEvent
+    const source = nativeEvent.source
+    resolveBackgroundImageSize(
+      (source && source.width) || nativeEvent.width || 0,
+      (source && source.height) || nativeEvent.height || 0,
+      request
+    )
+  }
+  const runtimeImageProps: ImageProps = type === 'image' && needImageSize
+    ? extendObject({}, imageProps, {
+      // src 变化时重建背景 Image，确保缓存图片也触发当前批次的 onLoad
+      key: src,
+      onLoad: onBackgroundImageLoad,
+      // 原图尺寸未知时用同一个背景 Image 透明启动；拿到尺寸后重新计算 contain 并恢复正常样式
+      style: sizeInfo.current
+        ? imageProps.style
+        : extendObject({}, imageProps.style, { width: 1, height: 1, opacity: 0 })
+    })
+    : imageProps as ImageProps
 
   return createElement(View, backgroundProps,
     show && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageProps as LinearImageProps)),
-    show && type === 'image' && renderImage(imageProps, enableFastImage)
+    show && type === 'image' && renderImage(runtimeImageProps, enableFastImage)
   )
 }
 
