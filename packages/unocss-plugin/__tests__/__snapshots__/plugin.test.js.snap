@@ -17,7 +17,7 @@ exports[`test plugin test-template 3`] = `
 .text-12px{font-size:12px;}"
 `;
 
-exports[`test plugin test-template 4`] = `"<view wx:class="{{(['translate-_bl_-50_p__br_',{'text-12px text-16px': false},'bg-_h_fff_s_10'])}}" />"`;
+exports[`test plugin test-template 4`] = `"<view wx:class="{{(['translate-_bl_-50_p__br_',{text_da_12px_sp_text_da_16pxMpxEscape: false},'bg-_h_fff_s_10'])}}" />"`;
 
 exports[`test plugin test-template 5`] = `
 [
