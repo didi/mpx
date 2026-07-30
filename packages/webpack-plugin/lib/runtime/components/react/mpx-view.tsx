@@ -276,6 +276,8 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
 function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
   const { sizeList, type } = preImageInfo
   if (!sizeList) return
+  // background-size 已负责计算最终宽高，普通图片内部只需铺满该矩形，避免 Android FastImage 再按 cover 二次裁剪 安卓会把图片放大
+  if (type === 'image') imageProps.resizeMode = 'stretch'
   const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
   const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
   const [width, height] = sizeList
