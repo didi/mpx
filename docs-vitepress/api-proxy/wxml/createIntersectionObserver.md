@@ -1,6 +1,6 @@
 ## [IntersectionObserver](https://developers.weixin.qq.com/miniprogram/dev/api/wxml/IntersectionObserver.html) mpx.createIntersectionObserver(Object component, Object options)
 
-创建并返回一个 IntersectionObserver 对象实例。在自定义组件或包含自定义组件的页面中，应使用 this.createIntersectionObserver([options]) 来代替。
+创建并返回一个 IntersectionObserver 对象实例。在自定义组件或包含自定义组件的页面中，应使用 `this.createIntersectionObserver([options])` 来代替。输出 RN 时，底层工厂方法要求第三个参数传入最近的滚动容器上下文；使用组件或页面实例方法时，该参数会由框架内部自动填充。
 
 支持情况： 微信、支付宝、web、RN
 

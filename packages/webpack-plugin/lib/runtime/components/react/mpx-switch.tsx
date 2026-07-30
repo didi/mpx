@@ -26,7 +26,6 @@ interface _SwitchProps extends SwitchProps {
   'parent-width'?: number
   'parent-height'?: number
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((props, ref): JSX.Element => {
@@ -39,13 +38,10 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     'enable-var': enableVar,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    bindchange,
-    catchchange
+    bindchange
   } = props
 
   const [isChecked, setIsChecked] = useState<boolean>(checked)
-
-  const changeHandler = bindchange || catchchange
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
@@ -85,10 +81,10 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   const onChange = (evt: NativeSyntheticEvent<TouchEvent> | boolean, { checked }: { checked?: boolean } = {}) => {
     if (type === 'switch') {
       setIsChecked(evt as boolean)
-      changeHandler && changeHandler(getCustomEvent('change', {}, { layoutRef, detail: { value: evt } }, props))
+      bindchange && bindchange(getCustomEvent('change', {}, { layoutRef, detail: { value: evt } }, props))
     } else {
       setIsChecked(checked as boolean)
-      changeHandler && changeHandler(getCustomEvent('change', evt, { layoutRef, detail: { value: checked } }, props))
+      bindchange && bindchange(getCustomEvent('change', evt, { layoutRef, detail: { value: checked } }, props))
     }
   }
 
@@ -133,8 +129,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
       'type',
       'color',
       'name',
-      'bindchange',
-      'catchchange'
+      'bindchange'
     ],
     { layoutRef }
   )

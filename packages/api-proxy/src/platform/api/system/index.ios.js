@@ -12,7 +12,7 @@ const getSystemInfoSync = function () {
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName().toLowerCase(),
-    deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
+    deviceOrientation: screenWidth > screenHeight ? 'landscape' : 'portrait',
     fontSizeSetting: PixelRatio.getFontScale()
   }
   Object.assign(result, windowInfo)

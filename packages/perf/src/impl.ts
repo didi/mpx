@@ -18,8 +18,8 @@ const now: () => number = (() => {
   return () => Date.now()
 })()
 
-// 跨作用域的起止配对靠 mark name 匹配；同步代码内首选用 scopeStart/scopeEnd。
-const marks = new Map<string, number>()
+// 跨作用域的起止配对靠 measure name 匹配；同步代码内首选用 scopeStart/scopeEnd。
+const measureStarts = new Map<string, number>()
 
 // scopeStart/scopeEnd 用平行数组持有进行中的 scope，避免每次 scope 分配闭包对象。
 // stackName / stackStart 同步增长；freeList 回收已结束的槽位 id。
@@ -59,28 +59,36 @@ export function scopeEnd (id: number): void {
 }
 
 /**
- * 仅记录时间戳，不进聚合。与 measure 配对使用以跨越作用域起止。
- * mark 单独不构成时长样本，故不调 bus.pushMeasure。
+ * 向当前录制窗口追加一条有序时间线事件；未录制时不读取时钟。
  */
 export function mark (name: string) {
-  marks.set(name, now())
+  if (!bus.isRecording()) return
+  bus.pushMark(name, now())
 }
 
 /**
- * 取 start mark 的时间，算出至今的时长，作为一条样本进聚合。
- * 用过即清，避免同名 mark 残留导致下一轮 measure 误命中旧时间戳。
+ * 注册一段跨作用域 measure 的具名起点。
  */
-export function measure (name: string, start: string) {
-  const s = marks.get(start)
-  if (s === undefined) return
-  const dur = now() - s
-  marks.delete(start)
-  bus.pushMeasure(name, dur)
+export function measureStart (name: string) {
+  measureStarts.set(name, now())
+}
+
+/**
+ * 结束同名 measure 并聚合耗时；起点命中后立即消费，重复结束安全 noop。
+ */
+export function measureEnd (name: string) {
+  const startedAt = measureStarts.get(name)
+  if (startedAt === undefined) return
+  measureStarts.delete(name)
+  bus.pushMeasure(name, now() - startedAt)
 }
 
 // 录制窗口控制
-export const start = () => bus.start()
-export const end = (reporter?: Reporter) => bus.end(reporter)
+export const start = () => bus.start(now())
+export const end = (reporter?: Reporter) => {
+  if (!bus.isRecording()) return
+  bus.end(now(), reporter)
+}
 
 // reporter 注册 API
 export const setReporter = (r: Reporter) => bus.setReporter(r)
