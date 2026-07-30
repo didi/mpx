@@ -12,24 +12,13 @@ describe('dynamic class object keys', () => {
     const uno = await createGenerator({ rules })
     const parseTemplate = plugin.getTemplateParser(uno)
     const classes = []
-    const { newsource, unknownClassChars } = parseTemplate(getRawSource(content), (className) => {
+    const { newsource } = await parseTemplate(getRawSource(content), (className) => {
       if (className) classes.push(className)
       return className
     }, (error, loc) => errors.push({ error, loc }))
-    const { matched } = await uno.generate(new Set(classes))
-    unknownClassChars.forEach(({ value, loc }, className) => {
-      if (matched.has(className)) return
-      value.forEach((char) => {
-        errors.push({
-          error: `Classname [${className}] contains unsupported character [${char}].`,
-          loc: Object.assign({ className }, loc)
-        })
-      })
-    })
     return {
       output: newsource.source(),
-      classes,
-      matched
+      classes
     }
   }
 
@@ -65,7 +54,7 @@ describe('dynamic class object keys', () => {
 
   test('allows configured classes containing special characters', async () => {
     const errors = []
-    const { output, matched } = await transformTemplate(
+    const { output } = await transformTemplate(
       '<view class="custom@blue" wx:class="{{ { \'custom@red\': flag } }}" />',
       errors,
       [
@@ -75,7 +64,6 @@ describe('dynamic class object keys', () => {
 
     expect(output).toContain('class="custom_u_blue"')
     expect(output).toMatch(/custom_u_red:\s*flag/)
-    expect(matched).toEqual(new Set(['custom@blue', 'custom@red']))
     expect(errors).toEqual([])
   })
 

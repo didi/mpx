@@ -5,9 +5,7 @@ const generate = require('@babel/generator').default
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 const escapeClassObjectKey = require('../utils/escape-class-object-key')
 
-module.exports = transDynamicClassExpr
-
-function transDynamicClassExpr (expr, { error } = {}) {
+module.exports = function transDynamicClassExpr (expr, { error } = {}) {
   try {
     const ast = babylon.parse(expr, {
       plugins: [

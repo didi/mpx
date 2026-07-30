@@ -229,28 +229,14 @@ function getPlugin (compiler, curPlugin) {
   return plugins.find(plugin => Object.getPrototypeOf(plugin).constructor === curPlugin)
 }
 
-/**
- * 生成小程序样式，并保留 UnoCSS 实际匹配的原始类名。
- *
- * @param {import('@unocss/core').UnoGenerator} uno
- * @param {string[]} classes
- * @param {object} options
- */
-async function generateStyleResult (uno, classes, options) {
-  const result = await uno.generate(new Set(classes), options)
-  return {
-    css: mpEscape(result.css),
-    matched: result.matched
-  }
-}
-
 class MpxUnocssPlugin {
   constructor (options = {}) {
     this.options = normalizeOptions(options)
   }
 
   async generateStyle (uno, classes = [], options = {}) {
-    return (await generateStyleResult(uno, classes, options)).css
+    const result = await uno.generate(new Set(classes), options)
+    return mpEscape(result.css)
   }
 
   getSafeListClasses (safelist) {
@@ -314,8 +300,8 @@ class MpxUnocssPlugin {
         })
       }).join(' ')
     }
-    return (source, classNameHandler = c => c, error) => {
-      // 未知字符是否有效由样式生成结果统一判断，这里只记录类名和源码位置
+    return async (source, classNameHandler = c => c, error) => {
+      // 单个模板内先去重，再由 UnoCSS 判断包含未知字符的类名是否有效
       const unknownClassChars = new Map()
       source = getReplaceSource(source)
       const content = source.original().source()
@@ -347,6 +333,13 @@ class MpxUnocssPlugin {
           source.replace(attrStart - 1, attrEnd + 1, val)
         }
       })
+      await Promise.all(Array.from(unknownClassChars).map(async ([className, { value, loc }]) => {
+        if (!await uno.parseToken(className)) {
+          value.forEach((char) => {
+            error && error(`Classname [${className}] contains unsupported character [${char}].`, Object.assign({ className }, loc))
+          })
+        }
+      }))
       // process comments
       const commentConfig = {}
       parseComments(content).forEach(({ result, start, end }) => {
@@ -360,8 +353,7 @@ class MpxUnocssPlugin {
       }
       return {
         newsource: source,
-        commentConfig,
-        unknownClassChars
+        commentConfig
       }
     }
   }
@@ -451,7 +443,6 @@ class MpxUnocssPlugin {
           main: {}
         }
         const commentConfigMap = {}
-        const unknownClassErrors = new Map()
 
         const mainClassesMap = packageClassesMaps.main
         // config中的safelist视为主包classes
@@ -462,7 +453,7 @@ class MpxUnocssPlugin {
         })
         const parseTemplate = this.getTemplateParser(uno)
 
-        const processTemplate = (file, source) => {
+        const processTemplate = async (file, source) => {
           const packageName = getPackageName(file)
           const filename = file.slice(0, -templateExt.length)
           const content = source.source()
@@ -508,19 +499,8 @@ class MpxUnocssPlugin {
             }
             return Object.assign({ file, source: content }, loc)
           }
-          const { newsource, commentConfig, unknownClassChars } = parseTemplate(source, classNameHandler, (msg, loc) => {
+          const { newsource, commentConfig } = await parseTemplate(source, classNameHandler, (msg, loc) => {
             error(msg, getErrorOptions(loc))
-          })
-          unknownClassChars.forEach(({ value, loc }, className) => {
-            let records = unknownClassErrors.get(className)
-            if (!records) {
-              records = []
-              unknownClassErrors.set(className, records)
-            }
-            records.push({
-              chars: value,
-              options: getErrorOptions(Object.assign({ className }, loc))
-            })
           })
           commentConfigMap[filename] = commentConfig
           assets[file] = newsource
@@ -559,14 +539,11 @@ class MpxUnocssPlugin {
         Object.assign(mainClassesMap, commonClassesMap)
         // 生成主包uno.css
         let mainUnoFile
-        const matchedClasses = new Set()
         const mainClasses = Object.keys(mainClassesMap)
-        const mainResult = await generateStyleResult(uno, mainClasses, {
+        const mainUnoFileContent = await this.generateStyle(uno, mainClasses, {
           ...generateOptions,
           preflights: true
         })
-        mainResult.matched.forEach(className => matchedClasses.add(className))
-        const mainUnoFileContent = mainResult.css
         if (mainUnoFileContent) {
           mainUnoFile = this.options.unoFile + styleExt
           if (assets[mainUnoFile]) {
@@ -613,13 +590,11 @@ class MpxUnocssPlugin {
         await Promise.all(Object.entries(packageClassesMaps).map(async ([packageRoot, classesMap]) => {
           let unoFile
           const classes = Object.keys(classesMap)
-          const result = await generateStyleResult(uno, classes, {
+          const unoFileContent = await this.generateStyle(uno, classes, {
             ...generateOptions,
             // 独立分包中的unocss文件生成preflights
             ...independentSubpackagesMap[packageRoot] ? { preflights: true } : null
           })
-          result.matched.forEach(className => matchedClasses.add(className))
-          const unoFileContent = result.css
           if (unoFileContent) {
             unoFile = toPosix(path.join(packageRoot, this.options.unoFile + styleExt))
             if (assets[unoFile]) {
@@ -682,15 +657,6 @@ class MpxUnocssPlugin {
             }
           })
         }))
-        // 以实际生成结果为准，只有 UnoCSS 未处理的特殊字符类名才报错
-        unknownClassErrors.forEach((records, className) => {
-          if (matchedClasses.has(className)) return
-          records.forEach(({ chars, options }) => {
-            chars.forEach((char) => {
-              error(`Classname [${className}] contains unsupported character [${char}].`, options)
-            })
-          })
-        })
       })
     })
   }

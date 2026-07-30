@@ -38,7 +38,7 @@ describe('test plugin', () => {
   }) {
     const source = getRawSource(content)
     const classmap = {}
-    const { newsource } = parseTemplate(source, (className) => {
+    const { newsource } = await parseTemplate(source, (className) => {
       if (!className) {
         return className
       }
