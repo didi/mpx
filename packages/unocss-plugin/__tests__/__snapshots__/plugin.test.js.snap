@@ -22,9 +22,9 @@ exports[`test plugin test-template 4`] = `"<view wx:class="{{(['translate-_bl_-5
 exports[`test plugin test-template 5`] = `
 [
   "translate-[-50%]",
+  "bg-#fff/10",
   "text-12px",
   "text-16px",
-  "bg-#fff/10",
 ]
 `;
 
