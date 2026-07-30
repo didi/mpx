@@ -1,6 +1,6 @@
 /**
- * mpxjs webview bridge v2.10.6
- * (c) 2025 @mpxjs team
+ * mpxjs webview bridge v2.11.1
+ * (c) 2026 @mpxjs team
  * @license Apache
  */
 (function (global, factory) {
@@ -108,7 +108,7 @@
 
   // 环境判断逻辑
   var systemUA = navigator.userAgent;
-  if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
+  if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1 || systemUA.indexOf("Touch 'n Go") > -1) {
     env = 'my';
   } else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
     env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';

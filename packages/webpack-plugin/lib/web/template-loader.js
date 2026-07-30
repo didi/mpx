@@ -31,14 +31,14 @@ module.exports = function (content) {
 
   const { resourcePath, rawResourcePath, queryObj } = parseRequest(loaderContext.resource)
 
-  const warn = (msg) => {
+  const warn = (msg, loc) => {
     loaderContext.emitWarning(
-      new Error('[Mpx template warning][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx template warning][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
     )
   }
-  const error = (msg) => {
+  const error = (msg, loc) => {
     loaderContext.emitError(
-      new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx template error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
     )
   }
 
@@ -114,7 +114,7 @@ module.exports = function (content) {
   const output = `
     var __optionProcessor = require(${loaderUtils.stringifyRequest(loaderContext, optionProcessorPath)});
     var getComponent = __optionProcessor.getComponent;
-    var createWxTemplateComponent = __optionProcessor.createWxTemplateComponent;
+    var createTemplateComponent = __optionProcessor.createTemplateComponent;
     var __wxsModules = {};
 ${wxsInitLines.join('\n')}
     module.exports = Object.assign({}, ${[...importExprs, localMapExpr].join(', ')});

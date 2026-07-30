@@ -693,15 +693,15 @@ set|支持
 setNavigationBarTitle|支持
 setNavigationBarColor|支持
 setStorage|支持
-setStorageSync|支持
+setStorageSync|不支持，请使用 setStorage
 getStorage|支持
-getStorageSync|支持
+getStorageSync|不支持，请使用 getStorage
 getStorageInfo|支持
-getStorageInfoSync|支持
+getStorageInfoSync|不支持，请使用 getStorageInfo
 removeStorage|支持
-removeStorageSync|支持
+removeStorageSync|不支持，请使用 removeStorage
 clearStorage|支持
-clearStorageSync|支持
+clearStorageSync|不支持，请使用 clearStorage
 getSystemInfo|支持
 getSystemInfoSync|支持
 showModal|支持
@@ -742,4 +742,3 @@ i18n|是
 :---|---
 wxs|支持
 animation|支持组件的animation属性，支持所有animation对象方法(export、step、width、height、rotate、scale、skew、translate等等)
-

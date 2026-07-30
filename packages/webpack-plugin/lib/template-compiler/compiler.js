@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR, MPX_WX_TEMPLATE_COMPONENT_PREFIX } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR, MPX_TEMPLATE_COMPONENT_PREFIX, STYLE_PAD_PLACEHOLDER } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -18,6 +18,9 @@ const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb, isNoMode } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
 const { isNativeMiniTag } = require('../utils/dom-tag-config')
+const { offsetToLoc } = require('../utils/source-location')
+
+const MPX_HOST_REF = '__mpxHost'
 
 const no = function () {
   return false
@@ -107,6 +110,8 @@ let isCustomText
 let runtimeCompile
 let rulesRunner
 let customBuiltInComponentsOpt
+let isUrlRequest
+let templateAssetId
 let currentEl
 let injectNodes = []
 let forScopes = []
@@ -341,7 +346,10 @@ function parseHTML (html, options) {
       advance(start[0].length)
       let end, attr
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+        const attrStart = index
         advance(attr[0].length)
+        attr.start = attrStart
+        attr.end = index
         match.attrs.push(attr)
       }
       if (end) {
@@ -393,7 +401,9 @@ function parseHTML (html, options) {
       }
       attrs[i] = {
         name: args[1],
-        value: decode(value)
+        value: decode(value),
+        start: args.start,
+        end: args.end
       }
     }
 
@@ -586,8 +596,7 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      // stylus编译遇到大量空行时会出现栈溢出，故针对stylus不走pad
-      if (options.pad && !(currentBlock.tag === 'style' && currentBlock.lang === 'stylus')) {
+      if (options.pad) {
         text = padContent(currentBlock, options.pad) + text
       }
       currentBlock.content = text
@@ -601,7 +610,7 @@ function parseComponent (content, options) {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
       const offset = content.slice(0, block.start).split(splitRE).length
-      const padChar = '\n'
+      const padChar = block.tag === 'style' ? `/* ${STYLE_PAD_PLACEHOLDER} */\n` : '\n'
       return Array(offset).join(padChar)
     }
   }
@@ -645,23 +654,25 @@ function parse (template, options) {
   usingComponentsInfo = options.usingComponentsInfo || {}
   usingComponents = Object.keys(usingComponentsInfo)
   customBuiltInComponentsOpt = options.customBuiltInComponents || null
+  isUrlRequest = options.isUrlRequest
+  templateAssetId = 0
 
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
 
-  const _warn = content => {
+  const _warn = (content, loc) => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
       errorArray: []
     }).get(currentEl)
-    currentElementRuleResult.warnArray.push(content)
+    currentElementRuleResult.warnArray.push({ content, loc })
   }
-  const _error = content => {
+  const _error = (content, loc) => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
       errorArray: []
     }).get(currentEl)
-    currentElementRuleResult.errorArray.push(content)
+    currentElementRuleResult.errorArray.push({ content, loc })
   }
 
   rulesRunner = getRulesRunner({
@@ -674,7 +685,11 @@ function parse (template, options) {
       customBuiltInComponents: customBuiltInComponentsOpt
     },
     warn: _warn,
-    error: _error
+    error: _error,
+    diagnostic: {
+      file: filePath,
+      source: template
+    }
   })
 
   const stack = []
@@ -704,12 +719,20 @@ function parse (template, options) {
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldKeepComment: true,
-    start: function start (tag, attrs, unary) {
+    start: function start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       const element = createASTElement(tag, attrs, currentParent)
+      element.start = start
+      element.end = end
+      element.loc = offsetToLoc(template, start, end)
+      element.attrsList.forEach((attr) => {
+        if (attr.start != null) {
+          attr.loc = offsetToLoc(template, attr.start, attr.end)
+        }
+      })
 
       if (ns) {
         element.ns = ns
@@ -823,14 +846,18 @@ function parse (template, options) {
   })
 
   rulesResultMap.forEach((val) => {
-    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
-    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
+    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item.content, item.loc))
+    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item.content, item.loc))
   })
 
   if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
+    // usingComponents 与 tagNames 均为 rulesRunner 处理后的名字（capitalToHyphen / mpx-com- 前缀已对齐），
+    // 反向排除 globalComponents 以避免对仅在 app 注册的组件误报「未使用」
+    const globalComponents = options.globalComponents || []
+    const componentPlaceholder = options.componentPlaceholder || []
     const arr = []
     usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
+      if (!tagNames.has(item) && !globalComponents.includes(item) && !componentPlaceholder.includes(item)) {
         arr.push(item)
       }
     })
@@ -2004,17 +2031,23 @@ const spreadREG = /\{\s*\.\.\.\s*([^,{]+?)\s*\}/g
 
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    const isTemplateData = el.tag === 'template' && attr.name === 'data'
+    const isTemplateData = el.tag === 'template' && attr.name === 'data' && attr.value
     const needWrap = isTemplateData && mode !== 'swan'
     let value = needWrap ? `{${attr.value}}` : attr.value
 
-    // 修复React Native环境下属性值中插值表达式带空格的问题
-    if (isReact(mode) && typeof value === 'string') {
-      // 检查是否为带空格的插值表达式
-      const trimmedValue = value.trim()
-      if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
-        // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
-        value = trimmedValue
+    if (isReact(mode)) {
+      // 修复React Native环境下属性值中插值表达式带空格的问题
+      if (typeof value === 'string') {
+        // 检查是否为带空格的插值表达式
+        const trimmedValue = value.trim()
+        if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
+          // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
+          value = trimmedValue
+        }
+      }
+      if (value === undefined) {
+        value = '{{true}}'
+        modifyAttr(el, attr.name, value)
       }
     }
 
@@ -2584,6 +2617,21 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
+const reactTemplateAssetTags = makeMap('mpx-image,mpx-video,mpx-audio', true)
+
+function processTemplateAssetReact (el, meta) {
+  if (!reactTemplateAssetTags(el.tag)) return
+  const src = el.attrsMap.src
+  if (!isUrlRequest(src)) return
+
+  const name = `__mpx_template_asset_${templateAssetId++}__`
+  if (!meta.templateAssets) {
+    meta.templateAssets = {}
+  }
+  meta.templateAssets[name] = src
+  addExp(el, name, false, 'src')
+}
+
 /** Web / RN 共用：<import src> 收集并移除 */
 function processTemplateImport (el, meta) {
   if (el.tag !== 'import') return false
@@ -2608,7 +2656,7 @@ function processTemplateImport (el, meta) {
 function processTemplateTranspile (el, meta) {
   if (processTemplateImport(el, meta)) return
 
-  if (el.tag !== 'template') return
+  if (el.tag !== 'template' || el.isBlock) return
 
   const is = getAndRemoveAttr(el, 'is').val
   if (is) {
@@ -2649,7 +2697,7 @@ function postProcessTemplateReact (el, meta) {
   collectTranspileTemplateDefinition(el, meta)
 }
 
-// Web：template 定义收集 + `<template is="...">` 使用节点替换为 mpx-wx-tpl-* / component
+// Web：template 定义收集 + `<template is="...">` 使用节点替换为 mpx-tpl-* / component
 function postProcessTemplateWeb (el, meta) {
   if (collectTranspileTemplateDefinition(el, meta)) return
   if (el.tag !== 'template' || !el.templateInfo) return
@@ -2661,11 +2709,11 @@ function postProcessTemplateWeb (el, meta) {
   if (literalMatch) {
     const name = literalMatch[1]
     const built = data ? [{ name: ':mpx-data', value: data }] : []
-    newNode = createASTElement(`${MPX_WX_TEMPLATE_COMPONENT_PREFIX}${name}`, baseAttrs.concat(built))
+    newNode = createASTElement(`${MPX_TEMPLATE_COMPONENT_PREFIX}${name}`, baseAttrs.concat(built))
     newNode.unary = true
   } else {
     const built = [
-      { name: ':is', value: `'${MPX_WX_TEMPLATE_COMPONENT_PREFIX}' + (${is})` },
+      { name: ':is', value: `'${MPX_TEMPLATE_COMPONENT_PREFIX}' + (${is})` },
       ...(data ? [{ name: ':mpx-data', value: data }] : [])
     ]
     newNode = createASTElement('component', baseAttrs.concat(built))
@@ -2770,6 +2818,10 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'ishost',
             value: '{{true}}'
+          },
+          {
+            name: config[mode].directive.ref,
+            value: MPX_HOST_REF
           }
         ])
         processElement(rootView, rootView, options, meta)
@@ -3112,6 +3164,8 @@ function processElement (el, root, options, meta) {
     const isReactComponent$1 = isReactComponent(el, options)
     // 收集内建组件
     processBuiltInComponents(el, meta)
+    // 处理模版内资源引用
+    processTemplateAssetReact(el, meta)
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)

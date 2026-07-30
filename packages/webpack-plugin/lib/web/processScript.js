@@ -55,12 +55,9 @@ module.exports = function (script, {
         ((wxTemplateComponentsInfo.imports && wxTemplateComponentsInfo.imports.length) ||
           (wxTemplateComponentsInfo.locals && wxTemplateComponentsInfo.locals.length)))
       const optionProcessorImports = ['processComponentOption', 'getComponent', 'getWxsMixin']
-      if (hasWxTemplate) optionProcessorImports.push('createWxTemplateComponent')
-      let content = `\n  import { ${optionProcessorImports.join(', ')} } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
-      let hasApp = true
-      if (!appInfo.name) {
-        hasApp = false
-      }
+      if (hasWxTemplate) optionProcessorImports.push('createTemplateComponent')
+      let content = `  import { ${optionProcessorImports.join(', ')} } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
+      const hasApp = !!appInfo.name
       // 注入wxs模块
       content += '  var wxsModules = {}\n'
       if (wxsModuleMap) {
@@ -128,7 +125,7 @@ module.exports = function (script, {
     wxsMixin: getWxsMixin(wxsModules),
     hasApp: ${hasApp},
     disablePageTransition: ${JSON.stringify(disablePageTransition)},
-  })\n`
+  })`
       return content
     }
   })
