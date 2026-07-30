@@ -10,6 +10,7 @@ requires, and verify the result.
 
 - user-confirmed `plan.md`
 - latest `reviews/code-review-N.json`, if present
+- current round changed-path manifest output path
 - relevant project instructions and local conventions
 
 ## Responsibilities
@@ -26,6 +27,9 @@ requires, and verify the result.
    before recording the remaining error and analysis.
 6. Update documentation or related knowledge sources when user-facing behavior
    changes and the project requires those updates.
+7. Write `runtime/code-round-N-paths.json` with the round number and every path
+   intentionally changed during the round. This is a claim for reviewer scope
+   analysis, not permission to omit other detected changes.
 
 ## Coding Rules
 

@@ -15,8 +15,7 @@ import {
   blockOrders,
   blockPlacements,
   blockPositions,
-  blockFloats,
-  blockBoxSizing
+  blockFloats
 } from './positions'
 import { blockFlex } from './flex'
 import { blockGlobalRules } from './global'
@@ -54,7 +53,6 @@ export const blocklistRules = [
   ...blockOrders,
   ...blockPlacements,
   ...blockFloats,
-  ...blockBoxSizing,
   // static
   ...blockStatics,
   ...blockVerticalAligns,

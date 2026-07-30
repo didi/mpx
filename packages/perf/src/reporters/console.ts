@@ -1,4 +1,4 @@
-import type { AggResult, Reporter } from '../types'
+import type { AggResult, MarkTimeline, Reporter } from '../types'
 
 export interface ConsoleReporterOptions {
   /** 排序字段，默认按 sum 降序 */
@@ -17,6 +17,12 @@ interface Row {
   max: number
 }
 
+interface TimelineRow {
+  index: number
+  at: number
+  name: string
+}
+
 function pad (s: string, width: number, right = false): string {
   if (s.length >= width) return s
   const fill = ' '.repeat(width - s.length)
@@ -27,11 +33,17 @@ function fmtMs (n: number): string {
   return n.toFixed(2) + 'ms'
 }
 
+function matchesFilter (name: string, filter?: RegExp | string): boolean {
+  if (!filter) return true
+  if (typeof filter === 'string') return name.startsWith(filter)
+  filter.lastIndex = 0
+  return filter.test(name)
+}
+
 /**
  * 工厂函数：根据 options 生成一个 console reporter。
  *
- * 入参从 bus 拿到的就是已聚合的 `Map<name, AggResult>`（实时聚合 only），
- * 不再有原始事件可遍历——所以也没有 raw 选项了。
+ * measure 直接读取实时聚合结果，mark 则读取有界的有序时间线。
  *
  * 输出形式刻意避开 console.table —— React Native 远程调试 / Hermes inspector
  * 对 console.table 的支持参差不齐（典型表现是把每行渲染成 `{…}` 不展开），
@@ -40,20 +52,14 @@ function fmtMs (n: number): string {
 export function createConsoleReporter (options: ConsoleReporterOptions = {}): Reporter {
   const { sortBy = 'sum', filter, header = true } = options
 
-  return (agg: Map<string, AggResult>) => {
+  return (agg: Map<string, AggResult>, timeline?: MarkTimeline) => {
     const rows: Row[] = []
     let totalCount = 0
-    for (const [name, s] of agg) {
-      if (filter) {
-        if (typeof filter === 'string') {
-          if (!name.startsWith(filter)) continue
-        } else if (!filter.test(name)) {
-          continue
-        }
-      }
+    agg.forEach((s, name) => {
+      if (!matchesFilter(name, filter)) return
       totalCount += s.count
       rows.push({ name, count: s.count, sum: s.sum, avg: s.avg, max: s.max })
-    }
+    })
 
     rows.sort((a, b) => b[sortBy] - a[sortBy])
 
@@ -85,15 +91,55 @@ export function createConsoleReporter (options: ConsoleReporterOptions = {}): Re
       `${pad(c.name, nameW)}  ${pad(c.count, countW, true)}  ${pad(c.sum, sumW, true)}  ${pad(c.avg, avgW, true)}  ${pad(c.max, maxW, true)}`
     )
 
-    const title = `[mpx perf] ${rows.length} buckets / ${totalCount} samples`
-    const text = rows.length
-      ? [title, headerLine, sepLine, ...bodyLines].join('\n')
-      : `${title}\n(empty)`
+    let title = `[mpx perf] ${rows.length} buckets / ${totalCount} samples`
+    let content = rows.length ? [headerLine, sepLine, ...bodyLines].join('\n') : '(empty)'
+
+    if (timeline) {
+      const timelineRows: TimelineRow[] = []
+      const lastIndex = timeline.events.length - 1
+      timeline.events.forEach((event, index) => {
+        const boundary = (index === 0 && event.name === 'start') ||
+          (index === lastIndex && event.name === 'end')
+        if (boundary || matchesFilter(event.name, filter)) {
+          timelineRows.push({ index, at: event.at, name: event.name })
+        }
+      })
+
+      let indexW = 'index'.length
+      let atW = 'at'.length
+      let timelineNameW = 'name'.length
+      const timelineCells = timelineRows.map(row => {
+        const cell = {
+          index: String(row.index),
+          at: fmtMs(row.at),
+          name: row.name
+        }
+        if (cell.index.length > indexW) indexW = cell.index.length
+        if (cell.at.length > atW) atW = cell.at.length
+        if (cell.name.length > timelineNameW) timelineNameW = cell.name.length
+        return cell
+      })
+      const timelineHeader = `${pad('index', indexW, true)}  ${pad('at', atW, true)}  ${pad('name', timelineNameW)}`
+      const timelineSep = `${'-'.repeat(indexW)}  ${'-'.repeat(atW)}  ${'-'.repeat(timelineNameW)}`
+      const timelineBody = timelineCells.map(cell =>
+        `${pad(cell.index, indexW, true)}  ${pad(cell.at, atW, true)}  ${pad(cell.name, timelineNameW)}`
+      )
+      const sections: string[] = []
+      if (rows.length) sections.push(['measures', headerLine, sepLine, ...bodyLines].join('\n'))
+      if (timelineRows.length) sections.push(['timeline', timelineHeader, timelineSep, ...timelineBody].join('\n'))
+      if (timeline.dropped > 0) {
+        sections.push(`[mpx perf] mark timeline truncated: ${timeline.dropped} events dropped after limit 256`)
+      }
+      title = `[mpx perf] ${rows.length} measure ${rows.length === 1 ? 'bucket' : 'buckets'} / ${timelineRows.length} marks`
+      content = sections.length ? sections.join('\n\n') : '(empty)'
+    }
+
+    const text = `${title}\n${content}`
 
     /* eslint-disable no-console */
     if (header && typeof console.group === 'function') {
       console.group(title)
-      console.log(rows.length ? [headerLine, sepLine, ...bodyLines].join('\n') : '(empty)')
+      console.log(content)
     } else {
       console.log(text)
     }

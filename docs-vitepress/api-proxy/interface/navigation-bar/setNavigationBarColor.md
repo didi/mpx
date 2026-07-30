@@ -121,6 +121,8 @@
 	</tbody>
 </table>
 
+> RN 会校验颜色参数：`frontColor` 仅接受 `#ffffff` / `#000000`，`backgroundColor` 接受 `#RGB` / `#RRGGBB` 格式。参数无效时触发 `fail` 与 `complete`，且不会修改导航栏配置。
+
 ### 示例代码 {#example-code}
 
 ```js

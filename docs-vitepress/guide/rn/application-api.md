@@ -221,6 +221,9 @@ module.exports = {
 > ⚠️ **注意：** 确保 Mpx 项目和容器中的 `react-native-reanimated` 版本一致
 
 ### 跨平台 API 使用限制 {#cross-platform-api-limit}
+
+> RN Android 的 `startWifi`、`stopWifi`、`getWifiList` 与 `getConnectedWifi` 成功回调 `errMsg` 均与微信文档一致，以 `:ok` 结尾。
+
 ### selectComponent/selectAllComponents
 在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式
   * id 选择器：`#id`

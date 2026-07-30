@@ -17,7 +17,7 @@ module.exports = function getSpec ({ warn, error }) {
       const meta = {
         modifierStr
       }
-      const data = { el, attr }
+      const data = { el, attr, eventName }
       const rPrefix = runRules(spec.event.prefix, prefix, { mode, data, diagnostic })
       const rEventName = runRules(eventRules, eventName, { mode, data, diagnostic })
       return {
@@ -42,6 +42,14 @@ module.exports = function getSpec ({ warn, error }) {
       return eventMap[eventName]
     } else {
       error(`React native environment does not support [${eventName}] event!`)
+    }
+  }
+
+  function rnEventPrefixRulesHandle (prefix, { eventName, el }) {
+    const supportCatch = prefix === 'catch' && el.tag === 'movable-view' && /^(htouchmove|vtouchmove)$/.test(eventName)
+    if (prefix !== 'bind' && !supportCatch && !/^(tap|longpress|longtap|touchstart|touchmove|touchend|touchcancel)$/.test(eventName)) {
+      warn(`React native environment does not support [${prefix}] event handling for [${eventName}] event, it will be converted to [bind]!`)
+      return 'bind'
     }
   }
 
@@ -533,29 +541,10 @@ module.exports = function getSpec ({ warn, error }) {
             const tempModifierStr = Object.keys(modifierMap).join('.')
             meta.modifierStr = tempModifierStr ? '.' + tempModifierStr : ''
             return '@'
-          }
-          // ios (prefix) {
-          //   const prefixMap = {
-          //     bind: 'on',
-          //     catch: 'catch'
-          //   }
-          //   if (!prefixMap[prefix]) {
-          //     error(`React native environment does not support [${prefix}] event handling!`)
-          //     return
-          //   }
-          //   return prefixMap[prefix]
-          // },
-          // android (prefix) {
-          //   const prefixMap = {
-          //     bind: 'on',
-          //     catch: 'catch'
-          //   }
-          //   if (!prefixMap[prefix]) {
-          //     error(`React native environment does not support [${prefix}] event handling!`)
-          //     return
-          //   }
-          //   return prefixMap[prefix]
-          // }
+          },
+          ios: rnEventPrefixRulesHandle,
+          android: rnEventPrefixRulesHandle,
+          harmony: rnEventPrefixRulesHandle
         }
       ],
       rules: [

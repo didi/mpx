@@ -1,1 +1,5 @@
-export { transitions as blockTransitions } from '@unocss/preset-mini/rules'
+const blockTransitions = [
+  raw => /^transition(?:-all)?(?:-\d+)?$/.test(raw)
+]
+
+export { blockTransitions }

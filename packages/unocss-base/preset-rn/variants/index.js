@@ -60,11 +60,11 @@ const transformVariants = function (variantsArr) {
 
 export default transformVariants([
   variantAria,
-  variantTaggedAriaAttributes,
+  variantTaggedAriaAttributes(),
   variantChildren,
   variantCombinators,
   variantContainerQuery,
-  variantTaggedDataAttributes,
+  variantTaggedDataAttributes(),
   variantLanguageDirections,
   variantStartingStyle,
   variantSupports,

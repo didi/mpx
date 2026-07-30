@@ -15,7 +15,8 @@ export const scopeStart = (_name: string): number => -1
 export const scopeEnd = (_id: number) => {}
 
 export const mark = (_name: string) => {}
-export const measure = (_name: string, _start: string) => {}
+export const measureStart = (_name: string) => {}
+export const measureEnd = (_name: string) => {}
 
 export const start = () => {}
 export const end = (_reporter?: Reporter) => {}
