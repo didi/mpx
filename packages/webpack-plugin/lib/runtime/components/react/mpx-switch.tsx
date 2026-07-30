@@ -23,12 +23,9 @@ interface _SwitchProps extends SwitchProps {
   disabled: boolean
   color: string
   'enable-var'?: boolean
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'external-var-context'?: Record<string, any>
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((props, ref): JSX.Element => {
@@ -39,17 +36,12 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     disabled = false,
     color = '#04BE02',
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    bindchange,
-    catchchange
+    bindchange
   } = props
 
   const [isChecked, setIsChecked] = useState<boolean>(checked)
-
-  const changeHandler = bindchange || catchchange
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
@@ -67,8 +59,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     hasPositionFixed
   } = useTransformStyle(style, {
     enableVar,
-    externalVarContext,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
@@ -91,10 +81,10 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   const onChange = (evt: NativeSyntheticEvent<TouchEvent> | boolean, { checked }: { checked?: boolean } = {}) => {
     if (type === 'switch') {
       setIsChecked(evt as boolean)
-      changeHandler && changeHandler(getCustomEvent('change', {}, { layoutRef, detail: { value: evt } }, props))
+      bindchange && bindchange(getCustomEvent('change', {}, { layoutRef, detail: { value: evt } }, props))
     } else {
       setIsChecked(checked as boolean)
-      changeHandler && changeHandler(getCustomEvent('change', evt, { layoutRef, detail: { value: checked } }, props))
+      bindchange && bindchange(getCustomEvent('change', evt, { layoutRef, detail: { value: checked } }, props))
     }
   }
 
@@ -137,7 +127,9 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
       'checked',
       'disabled',
       'type',
-      'color'
+      'color',
+      'name',
+      'bindchange'
     ],
     { layoutRef }
   )

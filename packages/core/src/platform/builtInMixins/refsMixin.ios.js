@@ -58,7 +58,7 @@ export default function getRefsMixin () {
           const refs = this.__refs[selector] || []
           const res = []
           refs.forEach(({ type, instance }) => {
-            if (type === refType) {
+            if (refType === 'all' || type === refType) {
               res.push(instance)
             }
           })

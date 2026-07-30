@@ -35,15 +35,15 @@ module.exports = function (jsonContent, {
 
   const context = loaderContext.context
 
-  const emitWarning = (msg) => {
+  const emitWarning = (msg, loc) => {
     loaderContext.emitWarning(
-      new Error('[Mpx json warning][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const emitError = (msg, loc) => {
     loaderContext.emitError(
-      new Error('[Mpx json error][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
     )
   }
 
@@ -107,6 +107,9 @@ module.exports = function (jsonContent, {
       waterfall: true,
       warn: emitWarning,
       error: emitError,
+      diagnostic: {
+        file: loaderContext.resourcePath
+      },
       data: {
         // polyfill global usingComponents
         globalComponents: mpx.globalComponents
