@@ -137,15 +137,14 @@ function getWifiList (options = {}) {
 }
 
 function onGetWifiList (callback) {
-  if (wifiListListeners.indexOf(callback) > -1) {
+  if (!startWifiReady && wifiListListeners.indexOf(callback) > -1) {
     return
   }
   wifiListListeners.push(callback)
 }
 
 function offGetWifiList (callback) {
-  if (callback == null) {
-    wifiListListeners.length = 0
+  if (!startWifiReady) {
     return
   }
   const index = wifiListListeners.indexOf(callback)
