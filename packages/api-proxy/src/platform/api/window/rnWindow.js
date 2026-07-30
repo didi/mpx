@@ -19,6 +19,7 @@ const addListener = function () {
 
 const removeListener = function () {
   subscription && subscription.remove()
+  subscription = null
 }
 
 function onWindowResize (callback) {

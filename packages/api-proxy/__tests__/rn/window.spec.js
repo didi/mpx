@@ -33,6 +33,16 @@ describe('RN window resize', () => {
     expect(subscription.remove).toHaveBeenCalledTimes(1)
   })
 
+  test('should not remove the same native subscription repeatedly', () => {
+    onWindowResize(jest.fn())
+    const subscription = mockSubscriptions[0]
+
+    offWindowResize()
+    offWindowResize()
+
+    expect(subscription.remove).toHaveBeenCalledTimes(1)
+  })
+
   test('should keep subscription until the last callback is removed', () => {
     const firstCallback = jest.fn()
     const secondCallback = jest.fn()

@@ -13,6 +13,23 @@ describe('test getNetworkType', () => {
 })
 
 describe('test onNetworkStatusChange', () => {
+  test('should return unknown when the browser comes online without Network Information API', () => {
+    Object.defineProperty(navigator, 'connection', {
+      configurable: true,
+      value: undefined
+    })
+    const callback = jest.fn()
+
+    onNetworkStatusChange(callback)
+    window.dispatchEvent(new Event('online'))
+
+    expect(callback).toHaveBeenCalledWith({
+      isConnected: true,
+      networkType: 'unknown'
+    })
+    offNetworkStatusChange(callback)
+  })
+
   test('should remove all proxy callbacks when the same callback is registered repeatedly', () => {
     // 模拟浏览器 Network Information API，并记录监听的注册和移除情况。
     const addEventListener = jest.fn()

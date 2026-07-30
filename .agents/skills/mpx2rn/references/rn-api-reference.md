@@ -1730,7 +1730,7 @@ mpx.config.rnConfig.bluetoothPermission = () => {
 | `stopWifi` | 结束 Wi‑Fi 模块并清空列表监听；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'stopWifi:ok' }`。 |
 | `getWifiList` | `startWifi` 就绪后扫描热点，通过 `onGetWifiList` 交付列表；RN iOS 目标直接走 `fail`。 | `success`：`{ errMsg: 'getWifiList:ok', errno: 0, errCode: 0 }`；热点列表不在此载荷中。 |
 | `onGetWifiList` | 注册接收热点列表的回调。 | `{ wifiList }`；每项含 `SSID`、`BSSID`、`frequency`、`signalStrength`。 |
-| `offGetWifiList` | 移除热点列表回调。 | 传入与注册时同一 `callback`；当前实现不支持省略参数清空全部。 |
+| `offGetWifiList` | 移除热点列表回调。 | 传入与注册时同一 `callback`；省略参数清空全部。 |
 | `getConnectedWifi` | 读取当前已连接 Wi‑Fi；支持 `partialInfo`，且需先 `startWifi` 成功就绪。 | `{ errMsg: 'getConnectedWifi:ok', wifi }`；`wifi` 含 `SSID`、`BSSID`、`signalStrength`、`frequency`。 |
 
 Wi-Fi API 的成功 `errMsg` 与微信文档保持一致，均以 `:ok` 结尾。
