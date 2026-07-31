@@ -21,6 +21,7 @@
 - [Mpx 运行时导出](#mpx-运行时导出)
   - [默认导出](#默认导出)
   - [命名导出](#命名导出)
+- [运行时性能探针](#运行时性能探针)
 - [Mpx.config.rnConfig](#mpxconfigrnconfig)
 - [全局 API](#全局-api)
 - [环境 API](#环境-api)
@@ -185,7 +186,7 @@
 | `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例。RN 不能像小程序一样按 selector 遍历视图树，须在模板目标节点声明 **空 wx:ref**，由编译期建立 **`#id` / `.class` 与节点**的映射后，本 API 才能按小程序写法解析。 |
 | `selectAllComponents(selector)` | 方法 | 共用 | 取全部匹配实例数组，**RN 侧与 `selectComponent` 相同**：依赖模板 **空 wx:ref** 与编译期 selector 映射，仅支持 **`#id` / `.class`**。 |
 | `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。后续 **`select(selector)`** 等链式调用在 RN 上同样依赖目标节点 **空 wx:ref**，通过编译映射将 `#id` / `.class` 落到真实视图；命中非 virtualHost 自定义组件时，返回该组件实体 host 节点信息。 |
-| `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
+| `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。输出 RN 时应优先使用此实例方法，框架会自动将最近的滚动容器上下文填充为底层工厂方法的第三个参数。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
 | `$refs` | 属性 | 共用 | 模板 **`wx:ref="refName"`** 对应的懒解析访问器（如 `this.$refs.refName`）；**空 wx:ref 不会注册具名 ref**，但与 selector 映射可并存——需按名取子实例时再写 **`wx:ref="refName"`**。 |
 | `$watch` | 方法 | 共用 | 动态创建对数据路径或表达式的侦听，返回用于停止侦听的函数，行为与选项式 `watch` 对齐。 |
 | `$forceUpdate` | 方法 | 共用 | 强制触发视图更新，可传入数据对象参与本次刷新，RN 侧由 `MpxProxy` 与 React 更新调度配合完成。 |
@@ -681,6 +682,41 @@ createComponent({
 #### 注意事项
 
 - **`Mpx.use`** 安装的插件会合并到 **`Mpx` 静态对象**与 **`Mpx.prototype`**，若与业务自定义全局名冲突，可为插件传入 **`prefix` / `postfix`** 选项。
+
+---
+
+## 运行时性能探针
+
+`@mpxjs/perf` 为 Mpx2RN 提供编译期按需开启的耗时聚合和 mark 时间线。使用前在 `mpx.config.js` 的 `pluginOptions.mpx.plugin.perf` 中设置 `enable` 与 `probes: ['framework', 'user']`；关闭态会通过 DefinePlugin、tree-shaking 与 Terser 消除探针实现和名称字符串。
+
+| API | RN 语义 |
+| --- | --- |
+| `start()` / `end(reporter?)` | 打开/结束录制窗口，并自动生成名为 start/end 的时间线边界。空窗口也会触发 reporter。 |
+| `scopeStart(name)` / `scopeEnd(id)` | 用数字句柄记录高频同步耗时；未录制时 start 返回 `-1`。 |
+| `measureStart(name)` / `measureEnd(name)` | 用同一个 name 配对跨作用域耗时，并聚合到同名桶。 |
+| `mark(name)` | 记录独立、有序的时间线里程碑，同名 mark 不合并。 |
+
+Reporter 签名为 `(measures: Map<string, AggResult>, timeline?: MarkTimeline) => void`。`MarkTimeline.events` 中的 `at` 是相对当前 `start()` 的毫秒偏移；包含边界在内最多保留 256 条（start + 最多 254 个显式 mark + end），超出数量记录在 `dropped`，end 始终保留。
+
+```ts
+import {
+  start, end, mark,
+  measureStart, measureEnd
+} from '@mpxjs/perf'
+
+if (__mpx_perf__) start()
+if (__mpx_perf_user__) measureStart('goods:request')
+
+loadPageData().finally(() => {
+  if (__mpx_perf_user__) {
+    measureEnd('goods:request')
+    mark('goods:data-ready')
+  }
+  if (__mpx_perf__) end()
+})
+```
+
+所有调用必须直接置于 `if (__mpx_perf__)`、`if (__mpx_perf_framework__)` 或 `if (__mpx_perf_user__)` 字面量门禁中，确保关闭分组时零残留。`mark` 仅用于时间线，不是 measure 起点；旧 `mark/measure` 耗时写法需直接迁移为 `measureStart/measureEnd`，旧 `measure` 不再导出。
 
 ---
 

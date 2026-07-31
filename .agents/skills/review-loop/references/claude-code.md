@@ -1,109 +1,53 @@
 # Claude Code Integration
 
-Claude Code support uses real planner/coder subagents and standalone reviewer
-CLI processes. Do not run planner or coder as single-agent roleplay.
+Claude Code support uses real native subagents for `planner`, `plan-reviewer`,
+`coder`, and `code-reviewer`. Do not run any role as single-agent roleplay and
+do not start standalone `claude -p` reviewer processes.
 
 ## Role Discovery
 
-Check project agents first:
+Prepare all four roles with `scripts/prepare-agent-roles.js` either as temporary
+task roles or project agents:
 
 ```text
 .claude/agents/planner.md
+.claude/agents/plan-reviewer.md
 .claude/agents/coder.md
+.claude/agents/code-reviewer.md
 ```
 
-If both exist, reuse them. Reviewer instructions remain under
-`templates/roles/` and are consumed by `run-reviewer.js`; do not create Claude
-Code reviewer agents.
-
-If either planner/coder role is missing, ask the user to choose:
-
-- temporary roles under `.agent-workflows/review-loop/<task-id>/runtime/roles/`
-- persistent project agents under `.claude/agents/`
-
-Use `scripts/prepare-agent-roles.js` for either path. `auto` mode compares only
-the planner and coder project roles with their generated definitions.
-
-## Agent Format
-
-Claude Code custom agents are Markdown files with YAML frontmatter:
-
-```yaml
----
-name: planner
-description: Planner for review-loop workflows.
----
-```
-
-Planner and coder inherit the parent model, effort, tools, and permission mode.
-
-## Temporary Roles
-
-Temporary planner/coder roles are copied from `templates/roles/` to:
-
-```text
-.agent-workflows/review-loop/<task-id>/runtime/roles/
-```
-
-They are valid only for the current task. Claude Code automatically discovers
-named agents only from its configured agent locations. Use temporary
-definitions only when the host can register them for the current session.
-Otherwise choose project roles.
-
-## Persistent Roles
-
-Persistent planner/coder roles are copied to:
-
-```text
-.claude/agents/
-```
-
-This requires explicit user confirmation because it modifies project-level
-agent configuration. Reload manually created agent files with `/agents` or
-restart the session before invoking them.
+Temporary roles are valid only when the host can register them for the current
+session. Project roles require explicit user confirmation and a `/agents`
+reload or session restart.
 
 ## Starting Roles
 
-Start planner and coder as new named subagent invocations when required by the
-state machine. Reviewers are started only through:
+Start planner and coder as new named native subagents when required by the
+state machine. Start reviewers through Claude Code's native Agent/Task tool as
+new tasks with no resumed session or inherited planner/coder conversation.
+Restrict reviewer tools to read-only inspection when the host supports tool
+allow/deny configuration.
 
-```bash
-node .agents/skills/review-loop/scripts/run-reviewer.js \
-  --task-id <task-id> \
-  --kind plan|code \
-  --round N
-```
+For a reviewer round:
 
-For plan review, the script starts a new `claude -p` process with a paths-only
-review prompt. For code review, it starts a new `claude -p` process whose user
-message invokes `/code-review high` against the cumulative round patch. The
-native skill may use its own internal reviewer agents; the workflow does not
-create or resume an outer reviewer subagent.
+1. Run `review-manager.js --task-id <id> --kind plan|code --round N --prepare`.
+2. Pass the returned prompt unchanged to the matching reviewer role.
+3. Require the reviewer to run its context-isolation preflight before reading
+   repository files and return exactly one JSON object with no repository writes.
+4. Save the response to a temporary file outside the repository.
+5. Run `review-manager.js ... --finalize --input <file> --agent-id <id>`.
 
-Both commands pin `model = opus`, `effort = high`,
-`permission-mode = plan`, deny direct edit tools, omit `--fix`, and set
-`--no-session-persistence`. They request `--output-format json` with
-`--json-schema`; the runner extracts `structured_output`, validates it, writes
-the immutable reviewer-run artifact, and persists the canonical review. Every
-initial input is bound to a SHA-256 digest. Code reviews additionally bind and
-revalidate the snapshot tree and patches before launch, after completion, and
-during later state validation.
-
-The runner derives `model = opus`, `reasoningEffort = high`, read-only mode, and
-the plan/code-specific source from the command and overwrites
-`evidence.reviewerConfig`; reviewer self-reporting is not trusted.
-
-The fresh CLI process does not inherit the planner/coder conversation. It still
-loads repository-visible Claude Code configuration and can inspect files in the
-working tree. This is conversation isolation, not repository-read isolation.
-
-Do not invoke `persist-review-json.js` directly for Claude Code reviews.
+Prepare binds input digests and the current Git tree. Finalize reconstructs the
+request and rejects input, snapshot, or worktree drift before writing the
+immutable reviewer-run and canonical review. The orchestrator normalizes
+`reviewerConfig` to the host-native contract with source
+`claude-native-subagent`; it does not trust reviewer self-reporting.
+Finalize also rejects output that lacks the exact passed
+`context-isolation-preflight` evidence. This self-check supplements, but does
+not replace, starting a new native task without a resumed session.
 
 ## Failure
 
-If Claude Code cannot create real planner/coder subagents in the current
-session, stop the workflow and tell the user:
-
-```text
-review-loop requires real planner/coder subagent support. Current Claude Code session cannot create subagents, so the workflow cannot continue.
-```
+If Claude Code cannot create fresh native subagents, stop the workflow and
+report that review-loop requires native planner, reviewer, and coder subagent
+support.

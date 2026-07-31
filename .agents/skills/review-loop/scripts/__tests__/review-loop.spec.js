@@ -4,7 +4,7 @@ const childProcess = require('child_process')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
-const reviewerRun = require('../run-reviewer')
+const reviewManager = require('../review-manager')
 const u = require('../review-loop-utils')
 
 function evidence (round) {
@@ -12,7 +12,13 @@ function evidence (round) {
   return {
     reviewedPaths: ['AGENTS.md', 'src/example.js'],
     tracedSymbols: [{ symbol: 'example', path: 'src/example.js', related: ['caller'] }],
-    checks: [{ command: 'npm test -- example', result: 'passed' }],
+    checks: [
+      {
+        command: 'context-isolation-preflight',
+        result: 'passed: no parent planner/coder/orchestrator conversation visible'
+      },
+      { command: 'npm test -- example', result: 'passed' }
+    ],
     counterexamples: [{ scenario: 'empty input', result: 'handled' }],
     diffScope: {
       cumulativeDiff: 'diffs/code-diff-' + round + '.patch',
@@ -21,7 +27,7 @@ function evidence (round) {
       unexpectedDispositions: []
     },
     residualRisks: [],
-    reviewerConfig: { model: 'gpt-5.6', reasoningEffort: 'high', sandboxMode: 'read-only', source: 'role' }
+    reviewerConfig: { model: 'gpt-5.6-sol', reasoningEffort: 'high', sandboxMode: 'read-only', source: 'role' }
   }
 }
 
@@ -253,7 +259,7 @@ function writeMigratableCurrentCodeTask (repo) {
   return { taskDir: fixture.taskDir, scope: scope }
 }
 
-describe('review runner isolation', function () {
+describe.skip('legacy CLI review runner isolation', function () {
   test('distinguishes recoverable and stale reviewer runs when canonical persistence is missing', function () {
     const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-recover-run-'))
     const taskDir = writeTask(repo, 'test-task', {
@@ -266,7 +272,7 @@ describe('review runner isolation', function () {
     })
     writeReviewerInputs(repo)
     const fake = fakeCodexEnv(repo, review())
-    const run = path.resolve(__dirname, '..', 'run-reviewer.js')
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
     childProcess.execFileSync('node', [
       run, '--task-id', 'test-task', '--kind', 'plan', '--round', '1'
     ], { cwd: repo, env: fake.env, encoding: 'utf8' })
@@ -304,7 +310,7 @@ describe('review runner isolation', function () {
     writeReviewerInputs(repo)
     const summaryBytes = 1024 * 1024 + 1
     const fake = fakeCodexEnv(repo, review(), summaryBytes)
-    const run = path.resolve(__dirname, '..', 'run-reviewer.js')
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
 
     childProcess.execFileSync('node', [
       run, '--task-id', 'test-task', '--kind', 'plan', '--round', '1'
@@ -339,7 +345,7 @@ describe('review runner isolation', function () {
     ], { cwd: repo, encoding: 'utf8' })
 
     const fake = fakeCodexEnv(repo, review())
-    const run = path.resolve(__dirname, '..', 'run-reviewer.js')
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
     const output = JSON.parse(childProcess.execFileSync('node', [
       run, '--task-id', 'test-task', '--kind', 'plan', '--round', '1'
     ], { cwd: repo, env: fake.env, encoding: 'utf8' }))
@@ -349,7 +355,7 @@ describe('review runner isolation', function () {
     const call = JSON.parse(fs.readFileSync(fake.logFile, 'utf8'))
     expect(call.args).toEqual([
       '--sandbox', 'read-only',
-      '--model', 'gpt-5.6',
+      '--model', 'gpt-5.6-sol',
       '--config', 'model_reasoning_effort="high"',
       'exec', 'review',
       '--ephemeral',
@@ -379,7 +385,7 @@ describe('review runner isolation', function () {
       return item.sha256.length === 64
     })).toBe(true)
     expect(JSON.parse(fs.readFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'))).evidence.reviewerConfig).toEqual(
-      reviewerRun.reviewerConfig('codex', 'plan')
+      reviewManager.reviewerConfig('codex', 'plan')
     )
 
     const planFile = path.join(taskDir, 'plan.md')
@@ -401,7 +407,7 @@ describe('review runner isolation', function () {
         '--review', path.join(taskDir, 'reviews', 'plan-review-1.json')
       ], { cwd: repo, encoding: 'utf8' })
     }).toThrow(/state-derived reviewer configuration/)
-    artifact.review.evidence.reviewerConfig = reviewerRun.reviewerConfig('codex', 'plan')
+    artifact.review.evidence.reviewerConfig = reviewManager.reviewerConfig('codex', 'plan')
     artifact.request.command[1] = '--yolo'
     fs.writeFileSync(runFile, JSON.stringify(artifact, null, 2) + '\n')
     expect(function () {
@@ -442,7 +448,7 @@ describe('review runner isolation', function () {
     const originalCwd = process.cwd()
     process.chdir(repo)
     try {
-      expect(reviewerRun.confirmationDrift(confirmedState, 'test-task', 'plan', 1).changed).toBe(false)
+      expect(reviewManager.confirmationDrift(confirmedState, 'test-task', 'plan', 1).changed).toBe(false)
     } finally {
       process.chdir(originalCwd)
     }
@@ -485,7 +491,7 @@ describe('review runner isolation', function () {
     })
     writeReviewerInputs(repo)
     const fake = fakeClaudeEnv(repo, review())
-    const run = path.resolve(__dirname, '..', 'run-reviewer.js')
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
     const output = JSON.parse(childProcess.execFileSync('node', [
       run, '--task-id', 'test-task', '--kind', 'plan', '--round', '1'
     ], { cwd: repo, env: fake.env, encoding: 'utf8' }))
@@ -515,7 +521,7 @@ describe('review runner isolation', function () {
       runner: 'claude -p',
       initialMessagePolicy: 'paths-only'
     }))
-    expect(artifact.review.evidence.reviewerConfig).toEqual(reviewerRun.reviewerConfig('claude-code', 'plan'))
+    expect(artifact.review.evidence.reviewerConfig).toEqual(reviewManager.reviewerConfig('claude-code', 'plan'))
     fs.rmSync(repo, { recursive: true, force: true })
   })
 
@@ -540,7 +546,7 @@ describe('review runner isolation', function () {
     fs.writeFileSync(path.join(taskDir, 'logs', 'coder-1.md'), '# Validation\n')
 
     const fake = fakeClaudeEnv(repo, review())
-    const run = path.resolve(__dirname, '..', 'run-reviewer.js')
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
     const output = JSON.parse(childProcess.execFileSync('node', [
       run, '--task-id', 'test-task', '--kind', 'code', '--round', '1'
     ], { cwd: repo, env: fake.env, encoding: 'utf8' }))
@@ -559,7 +565,7 @@ describe('review runner isolation', function () {
       taskDir, 'runtime', 'reviewer-runs', 'code-review-1.json'
     ), 'utf8'))
     expect(artifact.request.snapshotTree).toBe(scope.currentTree)
-    expect(artifact.review.evidence.reviewerConfig).toEqual(reviewerRun.reviewerConfig('claude-code', 'code'))
+    expect(artifact.review.evidence.reviewerConfig).toEqual(reviewManager.reviewerConfig('claude-code', 'code'))
     const advance = path.resolve(__dirname, '..', 'advance-state.js')
     childProcess.execFileSync('node', [
       advance, '--task-id', 'test-task', '--event', 'code-review-complete',
@@ -583,7 +589,7 @@ describe('review runner isolation', function () {
     const originalCwd = process.cwd()
     process.chdir(repo)
     try {
-      expect(reviewerRun.confirmationDrift(confirmedState, 'test-task', 'code', 1).changed).toBe(false)
+      expect(reviewManager.confirmationDrift(confirmedState, 'test-task', 'code', 1).changed).toBe(false)
     } finally {
       process.chdir(originalCwd)
     }
@@ -627,7 +633,7 @@ describe('review runner isolation', function () {
           input: JSON.stringify(review()),
           encoding: 'utf8'
         })
-      }).toThrow(/must be executed and persisted by run-reviewer.js/)
+      }).toThrow(/must be finalized and persisted by review-manager.js/)
       fs.rmSync(repo, { recursive: true, force: true })
     })
   })
@@ -662,13 +668,149 @@ describe('review runner isolation', function () {
   })
 
   test('derives code-review inputs from the current round', function () {
-    expect(reviewerRun.inputs('test-task', 'code', 2)).toEqual(expect.arrayContaining([
+    expect(reviewManager.inputs('test-task', 'code', 2)).toEqual(expect.arrayContaining([
       '.agent-workflows/review-loop/test-task/diffs/code-diff-2.patch',
       '.agent-workflows/review-loop/test-task/diffs/code-round-2.patch',
       '.agent-workflows/review-loop/test-task/diffs/code-scope-2.json',
       '.agent-workflows/review-loop/test-task/logs/coder-2.md',
       '.agent-workflows/review-loop/test-task/reviews/code-review-1.json'
     ]))
+  })
+})
+
+describe('native subagent reviewer isolation', function () {
+  function prepareAndFinalize (repo, taskDir, platform, kind, output, agentId) {
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
+    const baseArgs = [run, '--task-id', 'test-task', '--kind', kind, '--round', '1']
+    const prepared = JSON.parse(childProcess.execFileSync('node', baseArgs.concat('--prepare'), {
+      cwd: repo,
+      encoding: 'utf8'
+    }))
+    const resultFile = path.join(os.tmpdir(), 'review-loop-native-result-' + process.pid + '-' + Date.now() + '.json')
+    fs.writeFileSync(resultFile, JSON.stringify(output))
+    const finalized = JSON.parse(childProcess.execFileSync('node', baseArgs.concat([
+      '--finalize', '--input', resultFile, '--agent-id', agentId
+    ]), { cwd: repo, encoding: 'utf8' }))
+    fs.rmSync(resultFile)
+    return { prepared: prepared, finalized: finalized }
+  }
+
+  ;['codex', 'claude-code'].forEach(function (platform) {
+    test('prepares and finalizes a fresh native ' + platform + ' reviewer', function () {
+      const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-native-' + platform + '-'))
+      const taskDir = writeTask(repo, 'test-task', {
+        protocolVersion: u.protocolVersion,
+        taskId: 'test-task',
+        phase: 'plan_reviewing',
+        planRound: 0,
+        codeRound: 0,
+        platform: platform
+      })
+      writeReviewerInputs(repo)
+      writeCleanBaseline(repo, taskDir)
+      const completed = prepareAndFinalize(repo, taskDir, platform, 'plan', review(), platform + '-agent-1')
+      expect(completed.prepared).toEqual(expect.objectContaining({
+        runner: 'native-subagent',
+        role: 'plan-reviewer',
+        requestDigest: expect.stringMatching(/^[a-f0-9]{64}$/)
+      }))
+      expect(completed.prepared.prompt).toContain('.agent-workflows/review-loop/test-task/plan.md')
+      expect(completed.prepared.prompt).not.toContain('# Plan')
+      expect(completed.finalized).toEqual(expect.objectContaining({
+        runner: 'native-subagent',
+        status: 'approved'
+      }))
+      const artifact = JSON.parse(fs.readFileSync(path.join(
+        taskDir, 'runtime', 'reviewer-runs', 'plan-review-1.json'
+      ), 'utf8'))
+      expect(artifact.request).toEqual(expect.objectContaining({
+        runner: 'native-subagent',
+        contextInheritance: 'none',
+        writePolicy: 'read-only-with-tree-drift-guard'
+      }))
+      expect(artifact.execution).toEqual(expect.objectContaining({
+        agentId: platform + '-agent-1',
+        contextInheritance: 'none'
+      }))
+      expect(artifact.review.evidence.reviewerConfig).toEqual(reviewManager.reviewerConfig(platform))
+      fs.rmSync(repo, { recursive: true, force: true })
+    })
+  })
+
+  test('rejects input or worktree drift between prepare and finalize', function () {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-native-drift-'))
+    const taskDir = writeTask(repo, 'test-task', {
+      protocolVersion: u.protocolVersion,
+      taskId: 'test-task',
+      phase: 'plan_reviewing',
+      planRound: 0,
+      codeRound: 0,
+      platform: 'codex'
+    })
+    writeReviewerInputs(repo)
+    writeCleanBaseline(repo, taskDir)
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
+    const args = [run, '--task-id', 'test-task', '--kind', 'plan', '--round', '1']
+    childProcess.execFileSync('node', args.concat('--prepare'), { cwd: repo, encoding: 'utf8' })
+    fs.writeFileSync(path.join(repo, 'tracked.txt'), 'reviewer mutation\n')
+    const resultFile = path.join(os.tmpdir(), 'review-loop-native-drift-' + process.pid + '.json')
+    fs.writeFileSync(resultFile, JSON.stringify(review()))
+    expect(function () {
+      childProcess.execFileSync('node', args.concat([
+        '--finalize', '--input', resultFile, '--agent-id', 'codex-agent-1'
+      ]), { cwd: repo, encoding: 'utf8' })
+    }).toThrow(/inputs or workspace tree changed after prepare/)
+    fs.rmSync(resultFile)
+    fs.rmSync(repo, { recursive: true, force: true })
+  })
+
+  test('rejects reviewer output without passed context-isolation evidence', function () {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-native-context-'))
+    const taskDir = writeTask(repo, 'test-task', {
+      protocolVersion: u.protocolVersion,
+      taskId: 'test-task',
+      phase: 'plan_reviewing',
+      planRound: 0,
+      codeRound: 0,
+      platform: 'codex'
+    })
+    writeReviewerInputs(repo)
+    writeCleanBaseline(repo, taskDir)
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
+    const args = [run, '--task-id', 'test-task', '--kind', 'plan', '--round', '1']
+    childProcess.execFileSync('node', args.concat('--prepare'), { cwd: repo, encoding: 'utf8' })
+    const output = review()
+    output.evidence.checks.shift()
+    const resultFile = path.join(os.tmpdir(), 'review-loop-native-context-' + process.pid + '.json')
+    fs.writeFileSync(resultFile, JSON.stringify(output))
+    expect(function () {
+      childProcess.execFileSync('node', args.concat([
+        '--finalize', '--input', resultFile, '--agent-id', 'codex-agent-1'
+      ]), { cwd: repo, encoding: 'utf8' })
+    }).toThrow(/passed context-isolation-preflight evidence/)
+    fs.rmSync(resultFile)
+    fs.rmSync(repo, { recursive: true, force: true })
+  })
+
+  test('blocks direct persistence for host-native reviews', function () {
+    ;['codex', 'claude-code'].forEach(function (platform) {
+      const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-native-persist-'))
+      writeTask(repo, 'test-task', {
+        protocolVersion: u.protocolVersion,
+        taskId: 'test-task',
+        phase: 'plan_reviewing',
+        planRound: 0,
+        codeRound: 0,
+        platform: platform
+      })
+      const script = path.resolve(__dirname, '..', 'persist-review-json.js')
+      expect(function () {
+        childProcess.execFileSync('node', [
+          script, '--task-id', 'test-task', '--kind', 'plan', '--round', '1'
+        ], { cwd: repo, input: JSON.stringify(review()), encoding: 'utf8' })
+      }).toThrow(/must be finalized and persisted by review-manager.js/)
+      fs.rmSync(repo, { recursive: true, force: true })
+    })
   })
 })
 
@@ -1710,12 +1852,14 @@ describe('role preparation', function () {
     }))
   }
 
-  test('writes only Codex planner and coder subagents', function () {
+  test('writes all Codex review-loop subagents', function () {
     expect(function () { prepare('codex', ['--mode', 'temporary']) }).toThrow(/does not discover temporary roles/)
 
     const prepared = prepare('codex', ['--mode', 'project'])
     const projectRoles = prepared.roleDir
-    expect(fs.readdirSync(projectRoles).sort()).toEqual(['coder.toml', 'planner.toml'])
+    expect(fs.readdirSync(projectRoles).sort()).toEqual([
+      'code-reviewer.toml', 'coder.toml', 'plan-reviewer.toml', 'planner.toml'
+    ])
     expect(fs.readFileSync(path.join(projectRoles, 'planner.toml'), 'utf8')).toContain('name = "planner"')
     expect(fs.readFileSync(path.join(projectRoles, 'coder.toml'), 'utf8')).toContain('name = "coder"')
 
@@ -1728,10 +1872,12 @@ describe('role preparation', function () {
     expect(stale.choices).toEqual(['project'])
   })
 
-  test('writes only Claude Code planner and coder subagents', function () {
+  test('writes all Claude Code review-loop subagents', function () {
     const temporary = prepare('claude-code', ['--mode', 'temporary'])
     const runtimeRoles = temporary.roleDir
-    expect(fs.readdirSync(runtimeRoles).sort()).toEqual(['coder.md', 'planner.md'])
+    expect(fs.readdirSync(runtimeRoles).sort()).toEqual([
+      'code-reviewer.md', 'coder.md', 'plan-reviewer.md', 'planner.md'
+    ])
 
     const planner = fs.readFileSync(path.join(runtimeRoles, 'planner.md'), 'utf8')
     expect(planner).toContain('name: planner')

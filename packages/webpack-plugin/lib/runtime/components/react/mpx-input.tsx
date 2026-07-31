@@ -31,11 +31,11 @@
  * ✔ bindconfirm
  * ✘ bindkeyboardheightchange
  * ✘ bindnicknamereview
- * ✔ bind:selectionchange
- * ✘ bind:keyboardcompositionstart
- * ✘ bind:keyboardcompositionupdate
- * ✘ bind:keyboardcompositionend
- * ✘ bind:onkeyboardheightchange
+ * ✔ bindselectionchange
+ * ✘ bindkeyboardcompositionstart
+ * ✘ bindkeyboardcompositionupdate
+ * ✘ bindkeyboardcompositionend
+ * ✘ bindonkeyboardheightchange
  */
 import { JSX, forwardRef, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {

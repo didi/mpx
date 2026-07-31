@@ -16,10 +16,25 @@ coder fix a real issue.
 - validation results
 - relevant project instructions and local conventions
 
-The orchestrator must start this role with a fresh context. On Codex and Claude
-Code, `run-reviewer.js` enforces a separate read-only native review process
-whose initial task input contains paths only and no coder conclusions or
-validation claims.
+The orchestrator must start this role as a fresh native subagent whose initial
+task input contains paths only and no coder conclusions or validation claims.
+Do not modify files; the orchestrator rejects input or Git-tree drift before
+persisting the review.
+
+## Context-Isolation Preflight
+
+Before reading any repository file, inspect only the conversation visible to
+you. The paths-only reviewer task must be the first user task message. System
+and developer instructions do not count as inherited parent conversation. If
+you can see any earlier planner, coder, or orchestrator user/assistant
+conversation, stop without reviewing and report that isolation failed. If you
+cannot, include this exact check in `evidence.checks`:
+
+```json
+{"command":"context-isolation-preflight","result":"passed: no parent planner/coder/orchestrator conversation visible"}
+```
+
+The orchestrator rejects reviewer output without this passed evidence.
 
 ## Responsibilities
 
@@ -44,8 +59,8 @@ validation claims.
 9. Check every unexpected path and record an `included`, `excluded`, or
    `blocking` disposition with a reason. Do not approve a blocking disposition.
 10. Record complete review evidence. Return the required `reviewerConfig`
-    object for schema compliance; the runner replaces it with configuration
-    derived from the actual command. Do not edit repository files.
+    object for schema compliance; the orchestrator replaces it with the
+    host-native reviewer contract. Do not edit repository files.
 
 ## Review Policy
 
@@ -95,7 +110,10 @@ surrounding text. The orchestrator will persist it as
     "tracedSymbols": [
       {"symbol": "example", "path": "src/example.js", "related": ["caller", "test"]}
     ],
-    "checks": [{"command": "npm test -- example", "result": "passed and assertions inspected"}],
+    "checks": [
+      {"command": "context-isolation-preflight", "result": "passed: no parent planner/coder/orchestrator conversation visible"},
+      {"command": "npm test -- example", "result": "passed and assertions inspected"}
+    ],
     "counterexamples": [{"scenario": "empty input", "result": "handled by implementation and test"}],
     "diffScope": {
       "cumulativeDiff": "diffs/code-diff-1.patch",
@@ -110,6 +128,5 @@ surrounding text. The orchestrator will persist it as
 }
 ```
 
-The runner overwrites `reviewerConfig` with values derived from the actual
-platform command before validation and persistence. If read-only isolation is
-not enforced, report the failed precondition instead of returning a review.
+The orchestrator overwrites `reviewerConfig` with the host-native reviewer
+contract before validation and persistence.

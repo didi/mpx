@@ -44,7 +44,7 @@ function persist (taskId, kind, round, raw, options) {
   const validated = validate(taskId, kind, round, raw)
   if ((validated.state.platform === 'codex' || validated.state.platform === 'claude-code') &&
     !(options && options.reviewerRun)) {
-    u.fail('Codex and Claude Code reviews must be executed and persisted by run-reviewer.js')
+    u.fail('Codex and Claude Code reviews must be finalized and persisted by review-manager.js')
   }
   const review = validated.review
   const reviewFile = u.reviewArtifactPath(taskId, kind, round)

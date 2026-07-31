@@ -35,32 +35,36 @@ Files:
 - `diffs/code-scope-N.json`: cumulative/round paths plus claimed and unexpected paths.
 - `logs/*.md`: natural-language role logs.
 - `runtime/roles/`: temporary role definitions for hosts that can register them;
-  Codex planner/coder roles must use `.codex/agents/`, while reviewer templates
-  are consumed directly by `run-reviewer.js` on Codex and Claude Code.
+  Codex project roles use `.codex/agents/`.
 - `runtime/reviewer-runs/`: immutable review execution records. Each record
-  binds one platform, role, and round to a fixed read-only CLI invocation,
-  paths-only initial input, the SHA-256 digest of every input file, and the
-  validated reviewer result. Code reviews also bind the validated Git snapshot
-  tree.
+  binds one platform-native subagent, role, and round to paths-only initial
+  input, every input digest, the Git tree, execution evidence, and the validated
+  reviewer result.
 
 ## Reviewer Run Contract
 
 After entering `plan_reviewing` or `code_reviewing`, run:
 
 ```bash
-node .agents/skills/review-loop/scripts/run-reviewer.js \
+node .agents/skills/review-loop/scripts/review-manager.js \
   --task-id <task-id> \
   --kind plan|code \
-  --round N
+  --round N \
+  --prepare
 ```
 
-The command starts a separate platform CLI process with explicit read-only,
-model, and reasoning settings. Codex uses `codex exec review --output-schema`
-in ephemeral mode; Claude Code uses a
-structured `claude -p` plan-review prompt or its native `/code-review high`
-skill for code review. The fixed initial input contains state-derived
-repository paths but no planner/coder conversation or conclusions. After
-validating the strict JSON response, the runner writes exactly one
+Prepare freezes a paths-only request and returns the exact prompt for a fresh
+host-native reviewer subagent. The orchestrator starts that role with no
+inherited planner/coder conversation, stores its one strict JSON response in a
+temporary file outside the repository, then runs:
+
+```bash
+node .agents/skills/review-loop/scripts/review-manager.js \
+  --task-id <task-id> --kind plan|code --round N \
+  --finalize --input <temporary-json> --agent-id <native-agent-id>
+```
+
+Finalize reconstructs the request and Git tree before writing exactly one
 `runtime/reviewer-runs/{kind}-review-N.json` and the canonical review artifact.
 Retries reuse a completed immutable run record instead of resuming a session.
 Manual review persistence is rejected on both platforms.
@@ -71,8 +75,8 @@ An unchanged valid run may be retried to complete persistence; stale or invalid
 run evidence requires restarting the task. A code snapshot cannot be replaced
 after its reviewer-run exists.
 
-Before launch and again after reviewer completion, the runner recomputes every
-input digest. Code reviews also reconstruct the baseline/current trees, path
+Prepare and finalize recompute every input digest and the worktree. Code reviews
+also reconstruct the baseline/current trees, path
 partitions, and both patches. State advancement revalidates the same request;
 changed plans, reviewer instructions, prior reviews, coder logs, scope files,
 patches, or code trees invalidate the completed run instead of reusing its
@@ -96,9 +100,9 @@ During either confirmation phase, `check-recoverability.js` and
 canonical review artifact. Plan or Git-tree drift remains a user confirmation
 decision; missing or altered reviewer evidence requires restarting the task.
 
-This enforces conversation isolation at the process/thread boundary. It does
-not isolate repository reads: the reviewer can still inspect files available in
-the read-only workspace.
+This enforces conversation isolation through a fresh native subagent and guards
+the no-write contract with Git-tree drift checks. It does not isolate repository
+reads: the reviewer can inspect files visible to the host session.
 
 ## State Contract
 
@@ -179,7 +183,7 @@ Reviewer output must be JSON:
       "unexpectedDispositions": []
     },
     "residualRisks": [],
-    "reviewerConfig": {"model": "runner-selected-model", "reasoningEffort": "high", "sandboxMode": "read-only", "source": "platform-review-command"}
+    "reviewerConfig": {"model": "host-selected", "reasoningEffort": "host-selected", "sandboxMode": "read-only", "source": "platform-native-subagent"}
   },
   "findings": [
     {
@@ -204,17 +208,15 @@ Rules:
 - `evidence` is required for both statuses. Evidence must name reviewed paths,
   traced symbols and related callers/consumers, checks, counterexamples, diff
   scope, residual risks, and the reviewer configuration.
-- On Codex and Claude Code, `run-reviewer.js` overwrites
-  `evidence.reviewerConfig` with the model, effort, read-only mode, and source
-  derived from its actual command. Reviewer self-reporting is not trusted.
+- On Codex and Claude Code, finalize overwrites `evidence.reviewerConfig` with
+  the host-native reviewer contract. Reviewer self-reporting is not trusted.
 - Every unexpected path requires an `included`, `excluded`, or `blocking`
   disposition with a reason. An approval cannot contain a blocking disposition.
 
-The orchestrator must select an enforced read-only reviewer command before
-delegation; a role-file default alone is insufficient. A reviewer returns
-exactly one JSON object and does not write repository files. On Codex and
-Claude Code, `run-reviewer.js` normalizes the command-derived configuration,
-validates, and persists that response. Persistence validates the expected
+The orchestrator must start a fresh native reviewer with a no-write contract.
+A reviewer returns exactly one JSON object and does not write repository files.
+Prepare/finalize bind the Git tree and reject drift, normalize the host-native
+configuration, validate, and persist that response. Persistence validates the expected
 round, code scope, input digests, snapshot tree, and diff artifact references
 before writing `reviews/*-review-N.json`, and is allowed only in the matching
 reviewing phase for the next round derived from
