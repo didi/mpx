@@ -68,7 +68,7 @@ navigateBack()
         ```js
            // webapp app.web.js
             ...
-            mpx.config.webviewConfig = {
+            mpx.config.webConfig.webviewConfig = {
                 // 必须在webapp进行挂载否则h5中调用不到getLocation的返回
                 apiImplementations: {
                     getLocation () {
