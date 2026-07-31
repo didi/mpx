@@ -699,7 +699,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 | animation | object |  | 传递动画的实例， 可配合 mpx.createAnimation 方法一起使用 |
 | enable-background | boolean | `false ` | RN 环境特有属性，是否要开启 background-image、background-size 和 background-position 的相关计算或渲染，请根据实际情况开启 |
-| enable-animation | boolean | `false` | RN 环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
+| enable-animation | boolean \| `api` \| `transition` | 根据首次渲染的 `animation` 属性或 transition 样式自动检测 | RN 环境特有属性，显式指定 Animation API 或 CSS Transition 动画类型；`true` 等价于 `api` |
 | enable-fast-image | boolean | `false` | RN 环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 | is-simple | - | - | RN 环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
@@ -715,7 +715,8 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 - 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
-- 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
+- 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ 'transition' }}"`</span>。
+- CSS Transition 的 `transition-property` 在组件生命周期内必须保持稳定，不支持动态添加、移除或替换；`transition-duration`、`transition-delay`、`transition-timing-function` 支持动态更新。
 
 ### text
 
