@@ -374,9 +374,9 @@ export default function styleHelperMixin () {
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
               this.__dependentScreenSize = this.__dependentScreenSize || appStyle._dependentScreenSize
-            } else if (isObject(this.__props[className])) {
+            } else if (isObject(this.__mpxProxy.props[className])) {
               // externalClasses必定以对象形式传递下来
-              mergeToLayer('normal', this.__props[className])
+              mergeToLayer('normal', this.__mpxProxy.props[className])
             }
           })
 
