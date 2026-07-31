@@ -1618,7 +1618,7 @@ const dotTransition = computed(() => enableTransition.value ? '' : 'transition: 
 
 // ✅ Good 保持 transition-property transform 稳定，通过动态控制 transform-duration 来控制动画
 const dotTransition = computed(() => enableTransition.value ? 'transition: transform 0s' : 'transition: transform 0.5s')
-const dotTransition = computed(() => enableTransition.value ? 'transition-property:transform; transform-duration: 0;' : 'transition-property:transform; transform-duration: 0.5s;')
+const dotTransition = computed(() => enableTransition.value ? 'transition-property:transform; transition-duration: 0;' : 'transition-property:transform; transition-duration: 0.5s;')
 ```
 
 
