@@ -13,9 +13,24 @@ class Node {
 function keepLines(content) {
   return content.replace(/([^\r\n]*)(\r\n|\r|\n|$)/g, (all, line, lineBreak) => {
     if (!all) return ''
+    // 空行 / 纯空白行直接保留换行：directive 自身被 blankDirective 抹平后，
+    // 其前后 text token 里夹缝 \n 形成的"空行"如果再放占位注释，会变成 col 0 的
+    // /* mpx-style-pad-placeholder */，破坏 stylus / sass 的 indent 结构。
+    // 这里产生的连续空行最多只有 directive 链长度量级（个位数），远低于 stylus
+    // lexer 栈溢出阈值，安全。
+    if (!line.trim()) return lineBreak
     const indent = (/^[ \t]*/.exec(line) || [''])[0]
     return `${indent}/* ${STYLE_PAD_PLACEHOLDER} */${lineBreak}`
   })
+}
+
+// 仅保留换行、清掉所有非换行字符，让条件编译指令本身的列位置在
+// 缩进敏感的预处理器（stylus / sass）中完全透明。
+// 不能直接把整段都换成空行 —— stylus 的 lexer 在遇到大量连续空行时
+// 会递归判定 outdent 层级，触发调用栈溢出；因此被剥离的"内容"仍走
+// keepLines 走占位注释，只让"指令"这一行（通常 1 行）变成空行。
+function blankDirective(content) {
+  return content.replace(/[^\r\n]+/g, '')
 }
 
 // 提取 css string 为 token
@@ -123,22 +138,22 @@ function traverseAndEvaluate(ast, defs) {
         output += active ? node.value : keepLines(node.value)
       } else if (node.type === 'If') {
         // 直接判断 If 节点
-        output += keepLines(node.value)
+        output += blankDirective(node.value)
         const currentMatched = active && evaluateCondition(node.condition, defs)
         output += traverse(node.children, currentMatched)
         batchedIf = currentMatched
       } else if (node.type === 'ElseIf') {
-        output += keepLines(node.value)
+        output += blankDirective(node.value)
         const currentMatched = active && !batchedIf && evaluateCondition(node.condition, defs)
         output += traverse(node.children, currentMatched)
         batchedIf = batchedIf || currentMatched
       } else if (node.type === 'Else') {
-        output += keepLines(node.value)
+        output += blankDirective(node.value)
         const currentMatched = active && !batchedIf
         output += traverse(node.children, currentMatched)
         batchedIf = true
       } else if (node.type === 'EndIf') {
-        output += keepLines(node.value)
+        output += blankDirective(node.value)
       }
     }
     return output

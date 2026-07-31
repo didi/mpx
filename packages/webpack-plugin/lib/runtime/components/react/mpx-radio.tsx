@@ -10,7 +10,7 @@ import { warn } from '@mpxjs/utils'
 import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
 import Icon from './mpx-icon'
 import Portal from './mpx-portal'
 
@@ -22,8 +22,7 @@ export interface RadioProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
+  'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
   children: ReactNode
@@ -75,8 +74,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       color = '#09BB07',
       style = [],
       'enable-var': enableVar,
-      'external-var-context': externalVarContext,
-      'parent-font-size': parentFontSize,
+      'enable-text-pass-through': enableTextPassThrough,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
       bindtap
@@ -90,14 +88,12 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const labelContext = useContext(LabelContext)
 
-    const defaultStyle = extendObject(
+    const wrapperStyle = extendObject(
       {},
       styles.wrapper,
       isChecked ? styles.wrapperChecked : {},
       disabled ? styles.wrapperDisabled : {}
     )
-
-    const styleObj = extendObject({}, styles.container, style)
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled || isChecked) return
@@ -125,10 +121,10 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+    const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
     if (backgroundStyle) {
       warn('Radio does not support background image-related styles!')
@@ -136,7 +132,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, {
-      style: extendObject({}, defaultStyle, normalStyle),
+      style: normalStyle,
       change: onChange
     })
 
@@ -199,7 +195,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const finalComponent = createElement(View, innerProps,
       createElement(
         View,
-        { style: defaultStyle },
+        { style: wrapperStyle },
         createElement(Icon, {
           type: 'success',
           size: 24,
@@ -208,7 +204,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
         })
       ),
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
           varContext: varContextRef.current,

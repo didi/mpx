@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Grade outputs: no_skill vs mpx2rn_original vs mpx2rn_gene on iteration-4."""
+"""Grade outputs: no_skill vs mpx2rn_original on iteration-8."""
 import json
 import re
 import sys
@@ -681,7 +681,7 @@ OUTPUT_FILES = {
     4: "data-panel.mpx",
     5: "payment-page.mpx",
 }
-RUN_KINDS = ("no_skill", "mpx2rn_original", "mpx2rn_gene")
+RUN_KINDS = ("no_skill", "mpx2rn_original")
 
 
 def _first_present(data, keys):

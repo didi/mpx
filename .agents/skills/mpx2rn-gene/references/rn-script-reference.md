@@ -1,1 +1,0 @@
-../../mpx2rn/references/rn-script-reference.md

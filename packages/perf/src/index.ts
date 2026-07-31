@@ -3,7 +3,7 @@ import * as noop from './noop'
 import * as reporters from './reporters/console'
 
 // 总开关 __mpx_perf__ 由 webpack-plugin DefinePlugin 注入：
-//   true  → 走 impl / reporters，bus、reporter、scopeStart/End、mark/measure 全部生效；
+//   true  → 走 impl / reporters，bus、reporter、scope、mark、measure 全部生效；
 //   false → 全部走 noop。Terser 把 `false ? impl.x : noop.x` 静态折叠后，
 //           impl / reporters 两个模块都没有活引用，整段被 tree-shake，
 //           bundle 中不残留任何探针字节。
@@ -16,7 +16,8 @@ import * as reporters from './reporters/console'
 export const scopeStart = __mpx_perf__ ? impl.scopeStart : noop.scopeStart
 export const scopeEnd = __mpx_perf__ ? impl.scopeEnd : noop.scopeEnd
 export const mark = __mpx_perf__ ? impl.mark : noop.mark
-export const measure = __mpx_perf__ ? impl.measure : noop.measure
+export const measureStart = __mpx_perf__ ? impl.measureStart : noop.measureStart
+export const measureEnd = __mpx_perf__ ? impl.measureEnd : noop.measureEnd
 
 export const start = __mpx_perf__ ? impl.start : noop.start
 export const end = __mpx_perf__ ? impl.end : noop.end
@@ -29,4 +30,4 @@ export const clearReporter = __mpx_perf__ ? impl.clearReporter : noop.clearRepor
 export const createConsoleReporter = __mpx_perf__ ? reporters.createConsoleReporter : noop.createConsoleReporter
 export const consoleReporter = __mpx_perf__ ? reporters.consoleReporter : noop.consoleReporter
 
-export type { Reporter, AggResult } from './types'
+export type { Reporter, AggResult, MarkEvent, MarkTimeline } from './types'

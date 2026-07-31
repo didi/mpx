@@ -38,6 +38,7 @@
 
 - **文档**：更新 [docs-vitepress/](docs-vitepress/) 下对应位置的 `.md`，并按 [docs-vitepress/AGENTS.md](docs-vitepress/AGENTS.md) 的归档原则与索引要求同步侧边栏、导航及目录索引。
 - **Skill**：当变更涉及**跨端输出 RN 的能力**（模板/脚本/样式/JSON 配置维度、基础组件、环境 API 在 RN 平台的支持情况、Mpx2RN 编译行为等）时，必须同步更新 [.agents/skills/mpx2rn/](.agents/skills/mpx2rn/) 下的相关知识库（`references/` 中的 RN 模板/脚本/样式/API 参考与最佳实践等）。
+- 对当前仓库本身进行开发时，不需要预先读取 `mpx2rn` Skill；只有当变更确认需要同步更新 `.agents/skills/mpx2rn/` 相关内容时，才读取并使用该 Skill。
 - 仅修改内部实现、重构、测试、构建脚本而不改变对外使用方式时，无需更新文档或 Skill。
 
 ## 路径指引
@@ -58,6 +59,7 @@
 | `@mpxjs/unocss-plugin` | Mpx × UnoCSS 集成插件（小程序 + Web） | [packages/unocss-plugin/AGENTS.md](packages/unocss-plugin/AGENTS.md) |
 | `@mpxjs/unocss-base` | Mpx 专用 UnoCSS preset（rem → vw/rpx 换算） | [packages/unocss-base/AGENTS.md](packages/unocss-base/AGENTS.md) |
 | `@mpxjs/size-report` | 构建产物体积分析与可视化 | [packages/size-report/AGENTS.md](packages/size-report/AGENTS.md) |
+| `@mpxjs/perf` | Mpx2RN 运行时按需测速探针：开关式 scope/mark/measure 实时聚合 + DCE 关闭态零残留 | [packages/perf/AGENTS.md](packages/perf/AGENTS.md) |
 | `@mpxjs/webview-bridge` | H5 在小程序 webview 中的宿主 SDK 桥接 | [packages/webview-bridge/AGENTS.md](packages/webview-bridge/AGENTS.md) |
 | `@mpxjs/babel-plugin-inject-page-events` | 注入小程序页面副作用事件钩子的 Babel 插件 | [packages/babel-plugin-inject-page-events/AGENTS.md](packages/babel-plugin-inject-page-events/AGENTS.md) |
 
@@ -68,3 +70,14 @@
 - 改宿主 API 适配 → [packages/api-proxy/AGENTS.md](packages/api-proxy/AGENTS.md)。
 - 改纯工具函数 → [packages/utils/AGENTS.md](packages/utils/AGENTS.md)。
 - 跨多个子包的改动：从依赖上游开始读起（`utils` → `core` → `webpack-plugin` → 其他子包）。
+
+## 问题处理
+
+### 网络与依赖安装
+
+- 当 npm 安装依赖出现超时、长时间无输出等网络问题时，优先执行 `nrm use npm` 切换到 npm 官方源，再调用当前仓库内的 `network-proxy` Skill 设置代理后重试安装。
+- 代理地址、端口及应用方式以 `network-proxy` Skill 的当前指引为准，不要在此处写死或重复维护。
+
+### GitHub 工具
+
+- 使用 `gh` 等 GitHub 终端工具能力时，优先申请在宿主终端环境中执行，不要先在沙箱环境中反复尝试；用户的 GitHub 授权通常保存在宿主环境的凭据或 keyring 中，沙箱环境可能无法访问。

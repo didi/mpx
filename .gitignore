@@ -23,4 +23,5 @@ docs-vitepress/.vitepress/cache
 dev-dist
 packages/webpack-plugin/lib/runtime/components/react/dist/
 packages/perf/dist/
-CHANGELOG.md
+.agent-workflows/
+.agents/skills/mpx/

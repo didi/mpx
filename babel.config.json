@@ -13,12 +13,11 @@
   "env": {
     "test": {
       "presets": [
-        [
-          "@babel/env",
-          {
-            "shippedProposals": true
-          }
-        ]
+        ["@babel/env", { "shippedProposals": true }],
+        ["@babel/preset-typescript", { "isTSX": true, "allExtensions": true }]
+      ],
+      "plugins": [
+        ["@babel/plugin-transform-react-jsx", { "runtime": "automatic" }]
       ]
     }
   }

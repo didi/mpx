@@ -1,8 +1,8 @@
 ---
 name: mpx2rn
-description: Mpx 跨端输出 RN（简称 Mpx2RN 或 Mpx2DRN）的开发适配指南，覆盖模板、脚本、样式、JSON 配置四大维度。当用户要求对已有 Mpx 组件进行 RN 跨端适配改造、创建符合 RN 跨端兼容规范的 Mpx 组件、排查 Mpx2RN 编译报错或查询某项能力（模板指令、基础组件、样式属性、生命周期、环境 API、JSON 字段等）在 RN 平台的支持情况时强制调用。当用户问题不涉及 Mpx 跨端输出 RN 时不应调用，如小程序原生开发问题，纯 RN 原生开发问题、Web 端样式问题等。
+description: Mpx 跨端输出 RN（简称 Mpx2RN 或 Mpx2DRN）的开发适配指南，覆盖模板、脚本、样式、JSON 配置四大维度。当用户进行 Mpx2RN 相关任务时强制调用，包括但不限于：技术方案设计、页面 / 组件的开发迭代、旧项目跨端适配改造、编译和运行时报错排查、Code Review 等。当用户问题不涉及 Mpx2RN 时不应调用，如 Mpx 小程序开发问题，RN 原生开发问题、Mpx2Web 相关问题等。
 metadata:
-  version: "1.0.0"
+  version: "2.11.0"
   author: donghongping
 ---
 
@@ -10,12 +10,25 @@ metadata:
 
 ## 背景介绍
 
-Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展支持的跨端开发框架，支持将同一套代码输出到小程序（微信、支付宝、百度等）、Web 和 React Native 平台。Mpx 在编译时和运行时对包括模板、脚本、样式与 JSON 配置在内的开发能力进行了全面的跨端抹平，但在输出 RN 时与小程序、Web 平台仍存在一定能力差异。
+Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展支持的跨端开发框架，支持将同一套代码输出到小程序（微信、支付宝、百度等）、Web 和 React Native 平台。Mpx2RN 在编译时和运行时对模板、脚本、样式与 JSON 配置四大维度的开发能力进行了全面抹平，但与小程序、Web 平台仍存在一定能力差异。
 
-本 SKILL 面向以下两类任务：
+### 适用场景
 
-1. **任务一**：对已有的 Mpx 组件进行 RN 跨端适配改造（已基于小程序规范编写、需补齐 RN 兼容性）。
-2. **任务二**：从零创建一个符合 RN 跨端兼容规范的 Mpx 组件。
+本 SKILL 是 Mpx2RN 开发适配的统一指南，覆盖模板、脚本、样式、JSON 配置四大维度。涉及 Mpx2RN 的任务均应在动笔前阅读本 SKILL 的[通用约束与适配原则](#通用约束与适配原则)，包括但不限于：
+
+- **技术方案设计**：评估需求在 RN 平台的可行性、跨端兼容方案选型、是否需要文件级条件编译或混合开发等;
+- **旧项目跨端适配改造**：对已基于小程序规范编写、未适配 RN 的存量组件进行兼容性补齐（参见下文[任务一](#任务一对小程序-mpx-组件进行-rn-跨端适配改造)）;
+- **页面 / 组件开发迭代**：从零编写或迭代符合 RN 跨端兼容规范的 `.mpx` 页面与组件（参见下文[任务二](#任务二创建符合-rn-跨端兼容规范的-mpx-组件)）;
+- **编译和运行时报错排查**：定位 RN 平台特有的编译错误（如样式空选择器、保留关键字、缩进敏感预处理器报错等）与运行时差异;
+- **Code Review**：以本 SKILL 的[通用约束与适配原则](#通用约束与适配原则)为标准对照检查跨端兼容性。
+
+### 不适用场景
+
+以下场景与 Mpx2RN 无关，**不应调用**本 SKILL：
+
+- 仅面向小程序平台（微信、支付宝、百度等）的 Mpx 开发问题;
+- React Native 原生开发问题（不经 Mpx 编译的纯 RN 项目）;
+- Mpx 跨端输出 Web（Mpx2Web）相关问题。
 
 ## 知识库索引
 
@@ -27,6 +40,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 | [跨端输出 RN 脚本能力参考](./references/rn-script-reference.md) | 脚本部分跨端能力详情：构造选项、生命周期、实例方法/属性、组合式 API、运行时导出、状态管理 |
 | [跨端输出 RN 样式能力参考](./references/rn-style-reference.md) | 样式部分跨端能力详情：选择器、单位、颜色、文本继承、CSS 变量、媒体查询、动画、背景图与逐项样式属性支持情况 |
 | [跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md) | 常用选择器与样式属性的跨端兼容方案，遇到 RN 不支持或表现不一致的样式写法时优先查阅 |
+| [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md) | 基于 UnoCSS 的 RN 原子类接入、工具类、variants、directives 与 variant groups 支持范围、颜色透明度约束及编译排查；项目启用原子类或任务涉及 utility class 时读取 |
 | [跨端输出 RN 环境 API 参考](./references/rn-api-reference.md) | `@mpxjs/api-proxy` 提供的环境 API 跨端支持情况，涉及网络、存储、界面、设备、媒体、位置等 |
 | [跨端输出 RN JSON 配置参考](./references/rn-json-reference.md) | 应用、页面、组件三层 JSON 配置在 RN 平台的支持范围与差异 |
 | [Mpx 与 RN 混合开发](./references/rn-hybrid-dev.md) | 在 `.mpx` 内直接使用 React Native 组件、Hooks 的方式与跨端隔离方案 |
@@ -41,11 +55,12 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
    - 已有组件 RN 跨端适配改造：识别问题维度后再读对应能力参考的相关小节，通常 1–2 份足够（如样式改造主要查 `rn-style-practice.md`）。
    - 新建 RN 跨端兼容组件：先按本 SKILL.md 的通用约束起手，遇到能力存疑（某属性是否支持、某 API 是否存在）时再点查对应参考。
    - 排查特定编译报错：直接定位到报错维度的能力参考相关小节。
+   - 使用或排查原子类：读取 `rn-atomic-css.md`；仅需核对底层样式属性时再补读 `rn-style-reference.md`，不要预读全部样式参考。
 4. **何时读取 `single-file-component.md`**：仅当不熟悉 Mpx SFC 基本结构时读取；已熟悉 SFC 写法可跳过。
 
 ## 通用约束与适配原则
 
-无论是适配改造还是新建组件，跨端兼容均需严格遵循以下通用约束：
+无论是适配改造、新建组件还是 Code Review，跨端兼容均需严格遵循以下通用约束：
 
 ### 跨平台兼容约束
 
@@ -64,16 +79,14 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 4. **模板内方法调用**：模板 Mustache 表达式不支持普通方法调用，需通过 `computed` / `wxs` 实现（i18n 翻译函数除外）。
 5. **i18n**：组合式 API 中 `useI18n()` 解构出的翻译函数必须以原名 `t` / `tc` / `te` / `tm` 暴露至模板的 `return`，禁止重命名。
 6. **事件传参**：传递自定义参数给事件处理器时，优先使用事件内联传参语法（如 `bindtap="handleTap('param')"`），而不是通过 `data-` dataset 属性传参。
-7. **对象字面量 key 禁止加引号**：在模板插值（`wx:style` / `wx:class` 等）中使用对象字面量时，key **不允许**使用单引号或双引号包裹，否则会导致微信小程序模板编译报错。应使用 camelCase 形式的无引号 key。
-   - **Bad Example**: `wx:style="{{{'background-image': '...'}}}"`
-   - **Good Example**: `wx:style="{{{backgroundImage: '...'}}}"`
-8. **文字优先使用 `text` 包裹**：虽然框架支持在 `view` 中直接插入文字（编译时自动补 `text`），但会引入额外的 `view` 层级，存在性能开销。应优先使用 `text` 组件显式包裹文字内容；`text` 的跨平台布局对齐方案见 [样式开发最佳实践 · text 跨平台布局对齐](./references/rn-style-practice.md#text-跨平台布局对齐)。
+7. **文字优先使用 `text` 包裹**：虽然框架支持在 `view` 中直接插入文字（编译时自动补 `text`），但会引入额外的 `view` 层级，存在性能开销。应优先使用 `text` 组件显式包裹文字内容；`text` 的跨平台布局对齐方案见 [样式开发最佳实践 · text 跨平台布局对齐](./references/rn-style-practice.md#text-跨平台布局对齐)。
 
 ### 脚本（script）约束
 
 1. **生命周期 / 构造选项**：仅使用 [逻辑能力参考](./references/rn-script-reference.md) 中标注 RN 支持的生命周期与构造选项；避免使用 `onShareTimeline` / `onTabItemTap` / `onAddToFavorites` / `onSaveExitState` 等 RN 不支持项。
 2. **环境 API**：通过 `@mpxjs/api-proxy` 提供的统一 `mpx.xxx` API 调用环境能力，避免直接使用 `wx.xxx` / `my.xxx`；具体支持范围见 [环境 API 参考](./references/rn-api-reference.md)；如用户通过 `custom` 配置扩充拓展了环境 API 能力，以用户说明为准。
 3. **selector 映射**：脚本中的 `selectComponent` / `selectAllComponents` / `createSelectorQuery` / `createIntersectionObserver` 等 selector API 仅支持 `#id` / `.class`，且对应模板节点须声明空 `wx:ref` 以建立编译期 selector 映射。详见 [逻辑能力参考 · 实例方法与属性](./references/rn-script-reference.md#页面--组件实例方法与属性)。
+4. **保留关键字**：`id` / `dataset` / `data` 是页面/组件实例的保留关键字，任何挂载到实例上的数据 key（包括 `props` / `data` / `computed` / `methods` / `setup return` / `inject` 等）都不得使用这三个名称作为 key，否则会触发 `reserved keyword of miniprogram` 编译期/运行期报错。命名时使用语义化别名（如 `itemId` / `rowData` / `pageData`）替代。
 
 
 ### 样式（style）约束
@@ -82,6 +95,8 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 2. **选择器单类化**：禁止使用复合/伪类/伪元素等 RN 不支持的选择器，必须改造为单类等效实现，并同步修改 `<template>` 与 `<script>`（如 `createSelectorQuery`）中对应的引用。常见兼容方案见 [样式开发最佳实践 · 选择器使用建议](./references/rn-style-practice.md#选择器使用建议)。
    - **Bad Example**: `.list .item { color: red; }`
    - **Good Example**: `.list-item { color: red; }`
+   - **注意**：用逗号分隔的并列形式（如 `.classA, .classB { ... }`）等价于多条单类选择器规则共享同一样式块，仍属于**单类选择器**范畴，无需拆分或合并为新单类，可直接使用。
+   - **UnoCSS 例外**：原子类的 `hover:` variant 由编译器转换为组件 hover style，不等同于在 `<style>` 中编写 `.button:hover`；普通 CSS 伪类仍不支持。
 3. **优先使用模板指令进行动态样式绑定**：使用 `wx:class` / `wx:style` 指令，避免在 `class` / `style` 属性内拼接 `{{}}` 插值表达式。
    - **Bad Example**: `<view class="item {{isActive ? 'active' : ''}}">`
    - **Good Example**: `<view class="item" wx:class="{{ {active: isActive} }}">`
@@ -100,6 +115,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
      - 1rpx 极细线：原平台保留 `1rpx` 边框写法（用样式条件编译），RN 侧用 `hairlineWidth` 等效
      
 5. **保留单位注释**：保留原始样式中的 `/*use rpx*/` 与 `/*use px*/` 注释，编译期会据此批量切换样式单位。
+6. **原子 CSS**：项目启用 UnoCSS 或模板使用原子类时，读取 [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md)。只使用 RN preset 与 Mpx2RN 样式编译器共同支持的工具类和 variants；不支持项会作为编译错误且不会进入产物。颜色透明度统一使用 `bg-red-500/50` 等斜杠 alpha 语法，不要使用 `bg-red-500 bg-opacity-50` 等独立 opacity 组合。
 
 ### JSON 配置约束
 
@@ -122,7 +138,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
    - **Good Example (与块内属性同级)**: `/* @mpx-if ... */` 与 `position` 等属性同列缩进
 4. **各区块使用对应的条件编译语法**：样式条件编译使用 `/* @mpx-if (__mpx_mode__ === ... ) */` 注释语法；模板条件编译使用 `wx:if="{{__mpx_mode__ === ...}}"` 指令或 `@mode` / `@_mode` 属性后缀；脚本和 JSON 配置条件编译使用 `if (__mpx_mode__ === ...)` 条件语句，**避免误用**，详情参考 [条件编译](./references/conditional-compile.md)。
 
-## 任务一：对已有 Mpx 组件进行 RN 跨端适配改造
+## 任务一：对小程序 Mpx 组件进行 RN 跨端适配改造
 
 ### 输入
 
@@ -167,7 +183,8 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
      ```
 2. **选择器适配改造**：读取 [样式开发最佳实践 · 选择器使用建议](./references/rn-style-practice.md#选择器使用建议)，将 RN 不支持的选择器改造为跨端兼容的单类等效实现，并同步更新 `<template>` 与 `<script>` 中的类名引用。
 3. **样式属性适配改造**：读取 [样式能力参考](./references/rn-style-reference.md) 检查 `<style>`、`<template>`、`<script>` 中所有出现的样式属性的 RN 支持情况；读取 [样式开发最佳实践](./references/rn-style-practice.md) 改造为跨端兼容的等效实现。
-4. **不可兼容部分使用条件编译**：对无法跨端等效实现的选择器或样式属性，使用 [样式条件编译](./references/conditional-compile.md#样式条件编译) 对**整条规则**进行最小包裹，保留在原平台输出产物中，添加 `todo` 注释记录差异原因。
+4. **原子类适配改造**：项目已启用 UnoCSS 时，读取 [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md)，检查模板中的工具类、variants、动态类提取与颜色透明度写法；将 RN 不支持的工具类改为支持的原子类组合或普通跨端样式。
+5. **不可兼容部分使用条件编译**：对无法跨端等效实现的选择器、样式属性或原子类，使用 [样式条件编译](./references/conditional-compile.md#样式条件编译) 对**整条规则**进行最小包裹，保留在原平台输出产物中，添加 `todo` 注释记录差异原因。
    - **Good Example (整条规则一并条件编译，避免空选择器)**:
      ```css
      /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
@@ -195,16 +212,17 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 **模板（template）**
 - [ ] `<template>` 中使用的基础组件、属性、事件均在 [模板能力参考](./references/rn-template-reference.md) 标注为 RN 支持，或已通过模板条件编译进行平台隔离；如用户通过 `rnConfig.customBuiltInComponents` 编译配置扩充拓展了基础组件能力，以用户说明为准。
 - [ ] 动态 `class` / `style` 已改造为 `wx:class` / `wx:style` 指令，未在属性值内使用 `{{}}` 拼接。
-- [ ] `wx:class` / `wx:style` 等模板插值中的对象字面量 key 均未使用引号包裹，使用 camelCase 无引号形式。
 - [ ] selector 类 API 引用的模板节点均已声明空 `wx:ref` 完成编译期映射。
 
 **脚本（script）**
 - [ ] `<script>` 中使用的生命周期、构造选项、实例方法与环境 API 均在 [逻辑能力参考](./references/rn-script-reference.md) 与 [环境 API 参考](./references/rn-api-reference.md) 标注为 RN 支持，或已通过脚本条件编译进行平台隔离；如用户通过 `custom` 配置扩充拓展了环境 API 能力，以用户说明为准。
 - [ ] 平台直连 API（`wx.xxx` / `my.xxx`）已统一替换为 `mpx.xxx`；selector 类 API 仅使用 `#id` / `.class` 写法。
+- [ ] 挂载到实例上的数据 key（`props` / `data` / `computed` / `methods` / `<script setup>` 的 `return` / `inject` 等）均未使用保留关键字 `id` / `dataset` / `data`。
 
 **样式（style）**
 - [ ] `<style>` 中不存在嵌套选择器写法。
 - [ ] `<style>`、`<template>`、`<script>` 中使用的选择器和样式属性均在 [样式能力参考](./references/rn-style-reference.md) 标注为 RN 支持，或已通过样式条件编译进行平台隔离。
+- [ ] 项目启用 UnoCSS 时，模板中的工具类与 variants 均在 [原子 CSS 能力参考](./references/rn-atomic-css.md) 标注的 RN 支持范围内；动态类可被静态提取或已加入 `safelist`；颜色透明度未使用独立 `*-opacity-*` 组合。
 - [ ] `/*use rpx*/` / `/*use px*/` 单位注释已保留。
 
 **JSON 配置**
@@ -246,7 +264,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 - **`<script>`**：读取 [逻辑能力参考](./references/rn-script-reference.md) 与 [环境 API 参考](./references/rn-api-reference.md)，仅使用 RN 支持的生命周期、构造选项与 API；统一通过 `mpx.xxx` 调用环境能力。
   - **优先使用组合式 API**：新建组件优先使用 `<script setup>` 风格的组合式 API 编写逻辑，生命周期须在 `<script setup>` 顶层同步注册，详见 [逻辑能力参考 · 组合式 API](./references/rn-script-reference.md#组合式-api)。
   - **状态管理优先使用 `@mpxjs/pinia`**：新项目、新状态域或与组合式 API 协同时，使用 `@mpxjs/pinia`（Pinia 风格）；仅当工程已深度使用 `@mpxjs/store`（Vuex 风格）时继续维护沿用，避免同一业务域两套方案并存。详见 [逻辑能力参考 · 状态管理](./references/rn-script-reference.md#状态管理)。
-- **`<style>`**：读取 [样式能力参考](./references/rn-style-reference.md) 与 [样式开发最佳实践](./references/rn-style-practice.md)，从一开始就使用单类选择器、Flex 布局、`rpx` 单位、`hover-class` 等跨端兼容写法。
+- **`<style>`**：读取 [样式能力参考](./references/rn-style-reference.md) 与 [样式开发最佳实践](./references/rn-style-practice.md)，从一开始就使用单类选择器、Flex 布局、`rpx` 单位、`hover-class` 等跨端兼容写法；项目启用 UnoCSS 时再读取 [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md)，只使用 RN 支持的工具类与 variants。
 - **JSON 配置**：读取 [JSON 配置参考](./references/rn-json-reference.md)，仅使用 RN 支持的字段；当需要分平台注册组件或差异化配置时，使用 `<script name="json">` 形式动态生成。
 
 #### 3. 编译校验
