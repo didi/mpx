@@ -9,14 +9,13 @@ import { JSX, useRef, forwardRef, ReactNode, useMemo, createElement } from 'reac
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren, extendObject } from './utils'
+import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren, extendObject, useTextPassThrough } from './utils'
 interface FormProps {
   style?: Record<string, any>
   children?: ReactNode
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
+  'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
   bindsubmit?: (evt: {
@@ -32,8 +31,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   const {
     style,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -45,9 +43,10 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const formRef = useRef(null)
   useNodesRef(props, ref, formRef, {
@@ -113,12 +112,11 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     FormContext.Provider,
     { value: contextValue },
     wrapChildren(
-      props,
+      props.children,
       {
         hasVarDec,
         varContext: varContextRef.current,
-        textStyle,
-        textProps
+        textPassThrough
       }
     )
   ))

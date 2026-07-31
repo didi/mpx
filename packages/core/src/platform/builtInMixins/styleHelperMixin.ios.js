@@ -1,4 +1,5 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import * as perf from '@mpxjs/perf'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
@@ -15,16 +16,16 @@ global.__GCC = function (className, classMap, classMapValueCache) {
     const originalDependentScreenSize = dependentScreenSize
     dependentScreenSize = false
 
-    let styleObj = classMap[className]?.(formatValue)
-    if (!styleObj) return
-    if (!styleObj._media?.length) {
-      styleObj = {
-        _default: styleObj
-      }
+    const styleObj = classMap[className]?.(formatValue)
+    if (!styleObj) {
+      dependentScreenSize = originalDependentScreenSize
+      return
     }
 
-    // 记录是否依赖屏幕尺寸，在屏幕尺寸变化时决定是否重新渲染对应组件
-    styleObj._dependentScreenSize = dependentScreenSize
+    // 使用不可枚举属性记录屏幕尺寸依赖，避免该内部标记被合并到 RN 样式中
+    Object.defineProperty(styleObj, '_dependentScreenSize', {
+      value: dependentScreenSize
+    })
     dependentScreenSize = dependentScreenSize || originalDependentScreenSize
 
     classMapValueCache.set(className, styleObj)
@@ -95,14 +96,15 @@ const empty = {}
 
 // 记录style是否依赖屏幕尺寸
 let dependentScreenSize = false
+const isNum = (v) => !isNaN(+v)
 function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
-  if (unitType === 'hairlineWidth') {
-    return StyleSheet.hairlineWidth
-  }
   if (unitType && typeof unit[unitType] === 'function') {
     dependentScreenSize = true
     return unit[unitType](+value)
+  }
+  if (value === 'hairlineWidth') {
+    return StyleSheet.hairlineWidth
   }
   const matched = unitRegExp.exec(value)
   if (matched) {
@@ -112,40 +114,10 @@ function formatValue (value, unitType) {
       return unit[matched[2]](+matched[1])
     }
   }
-  if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
   return value
 }
 
 global.__formatValue = formatValue
-
-const escapeReg = /[()[\]{}#!.:,%'"+$]/g
-const escapeMap = {
-  '(': '_pl_',
-  ')': '_pr_',
-  '[': '_bl_',
-  ']': '_br_',
-  '{': '_cl_',
-  '}': '_cr_',
-  '#': '_h_',
-  '!': '_i_',
-  '/': '_s_',
-  '.': '_d_',
-  ':': '_c_',
-  ',': '_2c_',
-  '%': '_p_',
-  '\'': '_q_',
-  '"': '_dq_',
-  '+': '_a_',
-  $: '_si_'
-}
-
-const mpEscape = cached((str) => {
-  return str.replace(escapeReg, function (match) {
-    if (escapeMap[match]) return escapeMap[match]
-    // unknown escaped
-    return '_u_'
-  })
-})
 
 function concat (a = '', b = '') {
   return a ? b ? (a + ' ' + b) : a : b
@@ -187,8 +159,7 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
-const hairlineRegExp = /^\s*hairlineWidth\s*$/
+const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const varRegExp = /^--/
 
 const parseStyleText = cached((cssText) => {
@@ -231,8 +202,35 @@ function mergeObjectArray (arr) {
 function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop])
+    let value = styleObj[prop]
+
+    // check important
+    const importantValue = typeof value === 'string' && value.endsWith('!important')
+    if (importantValue) {
+      transformed._inlineLayer = transformed._inlineLayer || {}
+      transformed._inlineLayer.important = transformed._inlineLayer.important || {}
+      value = value.split('!')[0]
+    }
+
+    // format value
+    if (prop === 'lineHeight' && isNum(value)) {
+      if (+value === 0) {
+        value = 0
+      } else {
+        value = `${Math.round(value * 100)}%`
+      }
+    } else if (prop !== 'flex') {
+      value = formatValue(value)
+    }
+
+    // set value
+    if (importantValue) {
+      transformed._inlineLayer.important[prop] = value
+    } else {
+      transformed[prop] = value
+    }
   })
+
   return transformed
 }
 
@@ -261,6 +259,79 @@ function getMediaStyle (media) {
   }, {})
 }
 
+const createLayer = (isNativeStyle) => {
+  const layerMap = {
+    preflight: [],
+    app: [],
+    uno: [],
+    normal: [],
+    important: []
+  }
+
+  const checkInlineLayer = style => {
+    Object.keys(style._inlineLayer).forEach(l => {
+      mergeToLayer(l, style._inlineLayer[l])
+    })
+  }
+
+  const mergeToLayer = (name, style, mediaStyle) => {
+    const layer = layerMap[name] || layerMap.normal
+    layer.push(style)
+    if (mediaStyle) layer.push(mediaStyle)
+    if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
+  }
+
+  const mergeToLayerWithStyles = (name, styles) => {
+    styles.forEach(v => mergeToLayer(name, v))
+  }
+
+  const genResult = isNativeStyle
+    ? () => {
+        return [
+          ...layerMap.preflight,
+          ...layerMap.app,
+          ...layerMap.uno,
+          ...layerMap.normal,
+          ...layerMap.important
+        ]
+      }
+    : () => {
+        const res = Object.assign(
+          {},
+          ...layerMap.preflight,
+          ...layerMap.app,
+          ...layerMap.uno,
+          ...layerMap.normal,
+          ...layerMap.important
+        )
+        delete res._inlineLayer
+        return res
+      }
+
+  return {
+    mergeToLayer,
+    mergeToLayerWithStyles,
+    genResult
+  }
+}
+
+const HIDE_STYLE = {
+  // display: 'none'
+  // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
+  flex: 0,
+  height: 0,
+  width: 0,
+  paddingTop: 0,
+  paddingRight: 0,
+  paddingBottom: 0,
+  paddingLeft: 0,
+  marginTop: 0,
+  marginRight: 0,
+  marginBottom: 0,
+  marginLeft: 0,
+  overflow: 'hidden'
+}
+
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -271,65 +342,78 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
+        let idTotal = -1
+        if (__mpx_perf_framework__) idTotal = perf.scopeStart('getStyle:total')
+
         // 重置依赖标记
         dependentScreenSize = false
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
-        let result = isNativeStaticStyle ? [] : {}
-        const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
+
+        const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
 
         if (staticClass || dynamicClass) {
+          let idClass = -1
+          if (__mpx_perf_framework__) idClass = perf.scopeStart('getStyle:class')
+          let needAddUnoPreflight = false
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
-          const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
+          const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           classString.split(/\s+/).forEach((className) => {
-            let localStyle, appStyle
+            let localStyle, appStyle, unoStyle, unoVarStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              mergeResult(localStyle._default, getMediaStyle(localStyle._media))
+              mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
               // class style 计算可能触发缓存，需要单独在结果中记录是否依赖屏幕尺寸，不能直接使用全局变量。
               this.__dependentScreenSize = this.__dependentScreenSize || localStyle._dependentScreenSize
+            } else if (unoStyle = global.__getUnoStyle?.(className)) {
+              mergeToLayer(unoStyle._layer || 'uno', unoStyle, getMediaStyle(unoStyle._media))
+              this.__dependentScreenSize = this.__dependentScreenSize || unoStyle._dependentScreenSize
+              if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
+            } else if (unoVarStyle = global.__getUnoVarStyle?.(className)) {
+              mergeToLayer('important', unoVarStyle)
+              this.__dependentScreenSize = this.__dependentScreenSize || unoVarStyle._dependentScreenSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              mergeResult(appStyle._default, getMediaStyle(appStyle._media))
+              mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
               this.__dependentScreenSize = this.__dependentScreenSize || appStyle._dependentScreenSize
-            } else if (isObject(this.__mpxProxy.props[className])) {
+            } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              mergeResult(this.__mpxProxy.props[className])
+              mergeToLayer('normal', this.__props[className])
             }
           })
+
+          if (needAddUnoPreflight) {
+            const unoPreflightStyle = global.__getAppClassStyle?.('__uno_preflight')
+            mergeToLayer('preflight', unoPreflightStyle)
+            this.__dependentScreenSize = this.__dependentScreenSize || unoPreflightStyle._dependentScreenSize
+          }
+
+          if (__mpx_perf_framework__) perf.scopeEnd(idClass)
         }
 
         if (staticStyle || dynamicStyle) {
-          const styleObj = {}
+          let idStyle = -1
+          if (__mpx_perf_framework__) idStyle = perf.scopeStart('getStyle:style')
+
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
-              result = result.concat(staticStyle)
+              mergeToLayerWithStyles('normal', staticStyle)
             } else {
-              mergeResult(staticStyle)
+              mergeToLayer('normal', staticStyle)
             }
           } else {
-            Object.assign(styleObj, parseStyleText(staticStyle))
+            mergeToLayer('normal', transformStyleObj(parseStyleText(staticStyle)))
           }
-          Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
-          mergeResult(transformStyleObj(styleObj))
+
+          mergeToLayer('normal', transformStyleObj(normalizeDynamicStyle(dynamicStyle)))
+
+          if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
         }
 
         if (hide) {
-          mergeResult({
-            // display: 'none'
-            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
-            flex: 0,
-            height: 0,
-            width: 0,
-            paddingTop: 0,
-            paddingRight: 0,
-            paddingBottom: 0,
-            paddingLeft: 0,
-            marginTop: 0,
-            marginRight: 0,
-            marginBottom: 0,
-            marginLeft: 0,
-            overflow: 'hidden'
-          })
+          mergeToLayer('important', HIDE_STYLE)
         }
+
+        const result = genResult()
+
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
 
         // 仅在依赖屏幕尺寸时才触发__getSizeCount进行相应式关联，避免屏幕尺寸变化时不必要的性能损耗
@@ -337,6 +421,7 @@ export default function styleHelperMixin () {
         if (this.__dependentScreenSize) {
           this.__getSizeCount()
         }
+        if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
         return isEmpty ? empty : result
       }
     }

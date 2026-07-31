@@ -42,7 +42,9 @@ export interface WebviewMessage {
 }
 
 export interface CanvasInstance {
-  webview: WebView | null;
+  // react-native-webview@13.17+ 将 WebView 泛型默认值由 {} 改为 undefined，
+  // ref 回调推断出的 WebView<unknown> 无法赋给默认实参化后的类型，这里显式用 any 兼容各版本
+  webview: WebView<any> | null;
   bus: Bus | null;
   context2D: CanvasRenderingContext2D;
   getContext: (contextType: string) => CanvasRenderingContext2D | null;
