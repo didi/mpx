@@ -1,4 +1,5 @@
-import { connectSocket } from '../../src/platform/api/socket/index.web'
+import { connectSocket } from '../../src/platform/api/socket/index.ios'
+import { connectSocket as connectSocketWeb } from '../../src/platform/api/socket/index.web'
 
 class MockWebSocket {
   constructor (url, protocols, options) {
@@ -16,12 +17,7 @@ class MockWebSocket {
 
 describe('RN connectSocket', () => {
   beforeEach(() => {
-    global.__mpx_mode__ = 'ios'
     global.WebSocket = jest.fn((...args) => new MockWebSocket(...args))
-  })
-
-  afterEach(() => {
-    global.__mpx_mode__ = 'web'
   })
 
   it('should forward header and protocols to WebSocket', () => {
@@ -45,8 +41,7 @@ describe('RN connectSocket', () => {
   })
 
   it('should not forward header options on web', () => {
-    global.__mpx_mode__ = 'web'
-    connectSocket({
+    connectSocketWeb({
       url: 'wss://example.com',
       header: {
         Authorization: 'token'
