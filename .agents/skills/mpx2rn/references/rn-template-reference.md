@@ -699,7 +699,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 | animation | object |  | 传递动画的实例， 可配合 mpx.createAnimation 方法一起使用 |
 | enable-background | boolean | `false ` | RN 环境特有属性，是否要开启 background-image、background-size 和 background-position 的相关计算或渲染，请根据实际情况开启 |
-| enable-animation | boolean \| `api` \| `transition` | 根据首次渲染的 `animation` 属性或 transition 样式自动检测 | RN 环境特有属性，显式指定 Animation API 或 CSS Transition 动画类型；`true` 等价于 `api` |
+| enable-animation | boolean \| `api` \| `transition` | `false` | RN 环境特有属性，显式指定 Animation API 或 CSS Transition 动画类型；`true` 等价于 `api`；首次根据渲染的 `animation` 属性或 transition 样式自动检测；|
 | enable-fast-image | boolean | `false` | RN 环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 | is-simple | - | - | RN 环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
