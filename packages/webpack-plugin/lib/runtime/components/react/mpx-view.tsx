@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough, isIOS } from './utils'
 import { TextPassThroughContextValue } from './context'
 import { error, warn, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
@@ -276,6 +276,8 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
 function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
   const { sizeList, type } = preImageInfo
   if (!sizeList) return
+  // background-size 已负责计算最终宽高，普通图片内部只需铺满该矩形，避免 Android FastImage 再按 cover 二次裁剪 安卓会把图片放大
+  if (type === 'image') imageProps.resizeMode = 'stretch'
   const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
   const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
   const [width, height] = sizeList
@@ -694,6 +696,12 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   const [version, setVersion] = useState(0)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
+  // id 标识当前背景图的尺寸请求批次，避免切换后旧图回调污染 contain 计算
+  const imageRequest = useRef({ id: 0, src })
+  if (imageRequest.current.src !== src) {
+    // src 改变即让旧 getSize/onLoad 回调失效
+    imageRequest.current = { id: imageRequest.current.id + 1, src }
+  }
   const sizeCacheRef = useRef<Map<string, Size>>(new Map())
   // sizeInfo / layoutInfo / setVersion 都是稳定引用，闭包整个生命周期只分配一次
   const { bumpVersion, setImageSize, setLayoutInfo } = useMemo(() => ({
@@ -709,6 +717,19 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
       return true
     }
   }), [])
+
+  function resolveBackgroundImageSize (width: number, height: number, request: number, cache = false) {
+    // 只接收当前 src 的有效原图尺寸
+    if (!width || !height || request !== imageRequest.current.id) return
+    // 仅缓存 getSize 的原图尺寸，避免 Android FastImage onLoad 的临时布局尺寸污染缓存
+    if (cache && src) sizeCacheRef.current.set(src, { width, height })
+    const imageSizeChanged = setImageSize(width, height)
+    if (!needLayout || layoutInfo.current) {
+      imageSizeChanged && bumpVersion()
+      setShow(true)
+    }
+  }
+
   useEffect(() => {
     sizeInfo.current = null
     if (type === 'linear') {
@@ -726,26 +747,18 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
 
     if (needImageSize) {
+      const request = imageRequest.current.id
       const cached = sizeCacheRef.current.get(src)
       if (cached) {
-        const imageSizeChanged = setImageSize(cached.width, cached.height)
-        if (!needLayout || layoutInfo.current) {
-          imageSizeChanged && bumpVersion()
-          setShow(true)
-        }
+        resolveBackgroundImageSize(cached.width, cached.height, request)
         return
       }
       let cancelled = false
+      // 仅 iOS 先挂载背景 Image 走 onLoad 兜底；非 iOS 保持原 getSize 流程
+      if (isIOS) setShow(true)
       Image.getSize(src, (width, height) => {
-        // cache 仍然填上，避免下次同 src 再发一次请求
-        sizeCacheRef.current.set(src, { width, height })
         if (cancelled) return
-        const imageSizeChanged = setImageSize(width, height)
-        // 1. 当需要绑定onLayout 2. 获取到布局信息
-        if (!needLayout || layoutInfo.current) {
-          imageSizeChanged && bumpVersion()
-          setShow(true)
-        }
+        resolveBackgroundImageSize(width, height, request, true)
       })
       return () => { cancelled = true }
     }
@@ -780,10 +793,34 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   const backgroundProps: ViewProps = extendObject({ key: 'backgroundImage' }, needLayout ? { onLayout } : {},
     { style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) }
   )
+  const request = imageRequest.current.id
+  const onBackgroundImageLoad = (evt: NativeSyntheticEvent<any>) => {
+    // getSize 已返回时不再让 FastImage onLoad 覆盖原图尺寸
+    if (sizeInfo.current) return
+    // RN Image 尺寸在 nativeEvent.source；FastImage 尺寸直接在 nativeEvent 上
+    const nativeEvent = evt.nativeEvent
+    const source = nativeEvent.source
+    resolveBackgroundImageSize(
+      (source && source.width) || nativeEvent.width || 0,
+      (source && source.height) || nativeEvent.height || 0,
+      request
+    )
+  }
+  const runtimeImageProps: ImageProps = isIOS && type === 'image' && needImageSize
+    ? extendObject({}, imageProps, {
+      // src 变化时重建背景 Image，确保缓存图片也触发当前批次的 onLoad
+      key: src,
+      onLoad: onBackgroundImageLoad,
+      // 原图尺寸未知时用同一个背景 Image 透明启动；拿到尺寸后重新计算 contain 并恢复正常样式
+      style: sizeInfo.current
+        ? imageProps.style
+        : extendObject({}, imageProps.style, { width: 1, height: 1, opacity: 0 })
+    })
+    : imageProps as ImageProps
 
   return createElement(View, backgroundProps,
     show && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageProps as LinearImageProps)),
-    show && type === 'image' && renderImage(imageProps, enableFastImage)
+    show && type === 'image' && renderImage(runtimeImageProps, enableFastImage)
   )
 }
 
