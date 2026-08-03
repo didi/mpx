@@ -371,7 +371,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const onSvgLoad = (evt: LayoutChangeEvent) => {
     const { width, height } = evt.nativeEvent.layout
     state.current.imageHeight = height
-    setImageHeight(height)
+    state.current.imageWidth = width
     state.current.ratio = !width ? 0 : height / width
 
     if (isWidthFixMode
