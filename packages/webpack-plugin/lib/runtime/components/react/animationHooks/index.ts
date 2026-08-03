@@ -13,7 +13,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   const { style: originalStyle = {}, enableAnimation, animation, bindtransitionend, layoutRef } = props
   // 记录动画类型
   let animationType = ''
-  if (hasOwn(originalStyle, 'animation') || (hasOwn(originalStyle, 'animationName') && hasOwn(originalStyle, 'animationDuration'))) {
+  if (hasOwn(originalStyle, 'animation') || hasOwn(originalStyle, 'animationName')) {
     // css animation 只做检测提示
     animationType = 'animation'
   }
@@ -21,7 +21,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     animationType = 'api'
   }
   // 优先级 css transition > API
-  if (hasOwn(originalStyle, 'transition') || (hasOwn(originalStyle, 'transitionProperty') && hasOwn(originalStyle, 'transitionDuration'))) {
+  if (hasOwn(originalStyle, 'transition') || hasOwn(originalStyle, 'transitionProperty')) {
     animationType = 'transition'
   }
   // 优先以 enableAnimation 定义类型为准
