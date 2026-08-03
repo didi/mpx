@@ -440,7 +440,7 @@ Mpx 在 RN 平台支持以下动画方式：
     transitionDuration: this.enableTransition ? '0.5s' : '0s',
     transitionDelay: this.enableTransition ? '0.1s' : '0s',
     transitionTimingFunction: this.enableTransition ? 'ease-out' : 'linear',
-    transform: this.enableTransition ? 'translateX(100px)' : 'translateX(0)'
+    transform: this.shouldDisplay ? 'translateX(100px)' : 'translateX(0)'
   }
 </script>
 ```
@@ -450,7 +450,7 @@ Mpx 在 RN 平台支持以下动画方式：
 ```js
 this.dynamicStyle = {
   transition: this.enableTransition ? 'transform 0.5s ease-out 0.1s' : 'transform 0s linear 0s',
-  transform: this.enableTransition ? 'translateX(100px)' : 'translateX(0)'
+  transform: this.shouldDisplay ? 'translateX(100px)' : 'translateX(0)'
 }
 ```
 
