@@ -2,10 +2,10 @@ import { warn, successHandle, failHandle } from '../../../common/js'
 import SocketTask from './SocketTask'
 
 function connectSocket (options = { url: '' }) {
-  const { url, protocols, success, fail, complete } = options
+  const { url, protocols, header, success, fail, complete } = options
 
   try {
-    const socketTask = new SocketTask(url, protocols)
+    const socketTask = new SocketTask(url, protocols, __mpx_mode__ !== 'web' ? header : undefined)
     successHandle({ errMsg: 'connectSocket:ok' }, success, complete)
     return socketTask
   } catch (e) {

@@ -1106,9 +1106,10 @@ mpx.use(apiProxy, {
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `url` | `string` | 是 | `wss://` 或 `ws://` 地址。 |
+| `header` | `Object` | 否 | 请求头，会传递给 RN 原生 **WebSocket**。 |
 | `protocols` | `string[]` | 否 | 子协议列表。 |
 
-> 微信同名 API 的 `header`、`timeout`、`tcpNoDelay`、`perMessageDeflate` 等扩展参数**当前 RN 中暂不支持**。
+> 微信同名 API 的 `timeout`、`tcpNoDelay`、`perMessageDeflate` 等扩展参数**当前 RN 中暂不支持**。
 
 #### 返回值
 
