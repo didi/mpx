@@ -422,7 +422,7 @@ Mpx 在 RN 平台支持以下动画方式：
 
 - 仅 `view` 组件支持动画相关属性。
 
-**自动检测与 enable-animation：** 框架会在首次渲染时根据样式和属性中的动画定义确定动画类型（如检测到 `transition` 样式或 `animation` 属性），动画类型在组件生命周期内必须保持稳定。也可通过 `enable-animation="api"` / `enable-animation="transition"` 显式指定使用 Animation API / CSS Transition；布尔值 `true` 等价于 `api`，不能用于预声明 CSS Transition。如果首次渲染时只有 `transition-property`，时长等参数后续才通过 `wx:style` 动态设置，需使用 `enable-animation="transition"` 预先声明动画类型，同时保证 `transition-property` 从首次渲染起保持稳定。
+**自动检测与 enable-animation：** 框架会在首次渲染时根据样式和属性中的动画定义确定动画类型（如检测到 `transition` 样式或 `animation` 属性），动画类型在组件生命周期内必须保持稳定。也可通过 `enable-animation="api"` / `enable-animation="transition"` 显式指定使用 Animation API / CSS Transition；布尔值 `true` 等价于 `api`，不能用于预声明 CSS Transition。如果首次渲染时只有 `transition-property`，时长等参数后续才通过 `wx:style` 动态设置，需保证 `transition-property` 从首次渲染起保持稳定。
 
 ```html
 <template>
