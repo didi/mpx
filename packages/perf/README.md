@@ -1,22 +1,28 @@
 # @mpxjs/perf
 
-Mpx2RN 运行时按需性能探针，支持实时耗时聚合和有界 mark 时间线。
+Mpx2RN 运行时按需性能探针，提供区段聚类统计、区段序列统计和点序列统计。
 
 ## 设计原则
 
-「编译期常量开关 + 运行时探针实现 + tree-shaking 兜底」三层结构，关闭态下产物里**不含**探针代码、名称字符串或模块依赖。
+`@mpxjs/perf` 使用「编译期常量开关 + 运行时探针实现 + tree-shaking 兜底」。关闭态下，探针实现、名称字符串和模块依赖都不会进入最终产物。
 
-- measure 在录制窗口内实时聚合为 `Map<name, AggResult>`，不保存逐次耗时样本。
-- mark 按调用顺序保留为时间线事件，同名事件不合并。
-- 时间线包含自动生成的 `start` / `end` 边界，固定最多 256 条：1 个 start、最多 254 个显式 mark、1 个 end。
+| 统计类型 | API | 输出 | 典型用途 |
+| --- | --- | --- | --- |
+| 区段聚类统计 | `aggrStart` / `aggrEnd` | `Map<string, AggrResult>` | 高频 render、hook、函数的 count/sum/avg/max |
+| 区段序列统计 | `traceStart` / `traceEnd` | `TraceTimeline` | 模块火焰图、嵌套调用 profile、异步瀑布图 |
+| 点序列统计 | `mark` | `MarkTimeline` | 数据就绪、首次渲染、页面可交互等里程碑 |
+
+聚类统计不保留逐次样本，适合高频路径；trace 和 mark 会保留事件对象，只用于有限插桩点和诊断窗口。
 
 ## API
 
 ```ts
 import {
+  aggrStart, aggrEnd,
+  traceStart, traceEnd,
+  mark,
   scopeStart, scopeEnd,
   measureStart, measureEnd,
-  mark,
   start, end,
   setReporter, clearReporter,
   createConsoleReporter, consoleReporter
@@ -25,21 +31,18 @@ import {
 
 | API | 说明 |
 | --- | --- |
-| `scopeStart(name): number` | 开始同步 scope，返回数字句柄。未录制时返回 `-1`。高频同步路径首选。 |
-| `scopeEnd(id): void` | 结束 scope 并将耗时聚合到同名桶。`id < 0` 或重复结束安全 noop。 |
-| `measureStart(name): void` | 注册跨作用域耗时的具名起点。 |
-| `measureEnd(name): void` | 消费同名起点，并将耗时聚合到同名桶；找不到起点时 noop。 |
-| `mark(name): void` | 向当前窗口追加一条独立、有序的时间线事件；未录制时 noop。 |
-| `start(): void` | 打开录制窗口并生成 `{ name: 'start', at: 0 }`。重复 start 幂等。 |
-| `end(reporter?): void` | 生成 `end` 边界并同步触发全局及可选局部 reporter。未 start 时 noop。 |
-| `setReporter(r)` | 替换全局 reporter。 |
-| `clearReporter()` | 清空全局 reporter。 |
+| `aggrStart(name, useName?)` | 默认返回数字 id；传 `true` 时改用 name 配对且不返回 id。id 模式未录制时返回 `-1`。 |
+| `aggrEnd(idOrName)` | 结束聚合区段并写入同名桶；无效目标和重复结束安全 noop。 |
+| `traceStart(name, useName?)` | 默认返回数字 id；传 `true` 时改用 name 配对。必须在录制窗口中 start。 |
+| `traceEnd(idOrName, info?)` | 结束 trace，保存持续时长与可选 info。 |
+| `mark(name, info?)` | 保存独立、有序的点事件与可选 info。 |
+| `start(options?)` | 打开录制窗口；可配置 `markLimit` / `traceLimit`。重复 start 幂等。 |
+| `end(reporter?)` | 关闭窗口并同步触发全局及可选局部 reporter。 |
+| `setReporter(r)` / `clearReporter()` | 替换或清空全局 reporter。 |
 | `createConsoleReporter(opts?)` | 创建可配置的 console reporter。 |
 | `consoleReporter` | 默认 reporter，等价于 `createConsoleReporter()`。 |
 
-`AggResult` 包含 `count` / `sum` / `avg` / `max`，时长单位均为 ms。`MarkTimeline.events` 包含 `{ name, at }`，其中 `at` 是相对当前 `start()` 的毫秒偏移；`dropped` 表示超过时间线容量后丢弃的显式 mark 数。
-
-这是一次直接 API 变更：旧 `mark(name)` 起点改为 `measureStart(name)`，旧 `measure(resultName, startName)` 改为同名的 `measureEnd(name)`，不再导出旧 `measure`。
+`scopeStart/scopeEnd` 与 `measureStart/measureEnd` 保持兼容导出，内部只调用 `aggrStart/aggrEnd`。新代码优先使用 `aggr*`。
 
 ## 接入
 
@@ -62,98 +65,181 @@ module.exports = defineConfig({
 })
 ```
 
-### 录制窗口与时间线
+### 录制窗口
 
 ```ts
-import { start, mark, end } from '@mpxjs/perf'
+import { start, end } from '@mpxjs/perf'
 
-if (__mpx_perf__) start()
+if (__mpx_perf__) {
+  start({
+    markLimit: 2048,
+    traceLimit: 4096
+  })
+}
 
-loadPageData().then(() => {
-  if (__mpx_perf_user__) mark('goods:data-ready')
-})
+// 执行业务流程
 
-onPageInteractive(() => {
-  if (__mpx_perf_user__) mark('goods:interactive')
-  if (__mpx_perf__) end()
-})
+if (__mpx_perf__) end()
 ```
 
-即使没有 measure 和显式 mark，正常结束的窗口也会用 start/end 两条边界事件触发 reporter。
+两类序列默认容量均为 1024：
 
-当窗口内同时包含一个 measure 桶和两条显式 mark 时，默认 `consoleReporter` 会先输出聚合结果，再按调用顺序输出时间线：
+- `markLimit` 包含 start/end 边界，必须是不小于 2 的整数。
+- `traceLimit` 只计算 trace，必须是非负整数；传 `0` 可关闭当前窗口的 trace 存储。
+- 无效配置回退到 1024。
+- 录制中重复调用 `start(options)` 不清空数据，也不修改当前窗口容量。
 
-```text
-[mpx perf] 1 measure bucket / 4 marks
-measures
-name           count      sum      avg      max
--------------  -----  -------  -------  -------
-goods:request      1  86.20ms  86.20ms  86.20ms
+### 区段聚类统计
 
-timeline
-index        at  name
------  --------  -----------------
-    0    0.00ms  start
-    1   86.20ms  goods:data-ready
-    2  145.06ms  goods:interactive
-    3  145.11ms  end
-```
-
-默认 `header: true` 时会通过 `console.group` 包裹输出，不同控制台可能展示为可折叠分组，文本内容与上述结构一致。
-
-### 同步与跨作用域耗时
+同步高频路径使用默认 id 模式：
 
 ```ts
-import {
-  scopeStart, scopeEnd,
-  measureStart, measureEnd
-} from '@mpxjs/perf'
+import { aggrStart, aggrEnd } from '@mpxjs/perf'
 
 function expensiveCompute (data) {
   let id = -1
-  if (__mpx_perf_user__) id = scopeStart('myBiz:list:filter')
+  if (__mpx_perf_user__) id = aggrStart('myBiz:list:filter')
   const result = data.filter(/* ... */).sort(/* ... */)
-  if (__mpx_perf_user__) scopeEnd(id)
+  if (__mpx_perf_user__) aggrEnd(id)
   return result
 }
+```
 
-if (__mpx_perf_user__) measureStart('goods:request')
+跨作用域时显式使用 name 模式：
+
+```ts
+if (__mpx_perf_user__) aggrStart('goods:request', true)
+
 loadPageData().finally(() => {
-  if (__mpx_perf_user__) measureEnd('goods:request')
+  if (__mpx_perf_user__) aggrEnd('goods:request')
 })
 ```
 
-`measureStart` / `measureEnd` 使用同一个名称作为配对 key 和聚合桶名。同名并发 measure 会由后一次起点覆盖前一次；第一次成功的 `measureEnd` 会消费起点。
+id 模式支持嵌套、乱序结束和同名并发。name 模式中，后一次同名 start 会覆盖前一次起点。
 
-### 自定义 reporter
+### 区段序列统计
 
 ```ts
-import { setReporter } from '@mpxjs/perf'
-import type { AggResult, MarkTimeline } from '@mpxjs/perf'
+import { traceStart, traceEnd } from '@mpxjs/perf'
 
-if (__mpx_perf__) {
-  setReporter((measures: Map<string, AggResult>, timeline?: MarkTimeline) => {
-    MyAPM.reportMeasures(measures)
-    if (timeline) MyAPM.reportTimeline(timeline)
+let appId = -1
+let routerId = -1
+if (__mpx_perf_user__) {
+  appId = traceStart('module:app')
+  routerId = traceStart('module:router')
+}
+
+if (__mpx_perf_user__) {
+  traceEnd(routerId, { moduleId: 42 })
+  traceEnd(appId, { moduleId: 1 })
+}
+```
+
+trace 在 start 时预留位置，因此嵌套区段按 start 顺序输出。未完成区段不会进入 `events`，数量记录在 `incomplete`。name 模式适合不方便传递 id 的跨作用域区段；同名并发、递归和嵌套必须使用 id 模式。
+
+### 点序列统计
+
+```ts
+import { mark } from '@mpxjs/perf'
+
+if (__mpx_perf_user__) {
+  mark('goods:data-ready', {
+    source: 'cache',
+    itemCount: 20
   })
 }
 ```
 
-Reporter 签名为 `(measures, timeline?) => void`。通过 `start/end` 结束的窗口始终传入 timeline；第二参数保持可选，以兼容单参数 reporter 和手动调用。
+同名 mark 不合并。`info` 按引用保存，不复制、不校验、不序列化；建议只传小型、可序列化的诊断字段，不要传组件实例、完整 props、响应体或大数组。
 
-全局与 `end(localReporter)` 传入的局部 reporter 会依次收到同一份 Map 和 timeline 引用。不要修改它们；需要保留或改写时请自行复制。
+## 数据与 Reporter
 
-`createConsoleReporter({ sortBy, filter, header })` 会分别输出 measures 与 timeline。`sortBy` 只排序 measure；timeline 永远保持调用顺序。`filter` 会过滤 measure 和显式 mark，但不会隐藏内建 start/end；发生容量截断时会输出 dropped 提示。
+```ts
+interface AggrResult {
+  count: number
+  sum: number
+  avg: number
+  max: number
+}
 
-## 性能特性
+interface MarkEvent {
+  name: string
+  start: number
+  timestamp: number
+  info?: unknown
+}
 
-- `scopeStart` 录制态使用数组槽位和数字句柄，不分配闭包或事件对象。
-- measure push 阶段仅执行 `Map.get` 与数值累加，每个新桶分配一个 `AggResult`。
-- `mark` 未录制时只做一次状态判断；录制时每条事件分配一个小对象，最多保留 254 条显式事件。
-- `start/end` 每个窗口固定生成两个边界事件；达到 256 条总上限后只累计 `dropped`，并始终保留 end。
+interface TraceEvent {
+  name: string
+  start: number
+  timestamp: number
+  duration: number
+  info?: unknown
+}
 
-## Terser / Babel 约束
+type Reporter = (
+  aggregates: Map<string, AggrResult>,
+  marks?: MarkTimeline,
+  traces?: TraceTimeline
+) => void
+```
 
-- 最终构建依赖 `dist/index.js` 保留的顶层 `__mpx_perf__ ? impl.x : noop.x` 三元、`sideEffects: false` 和使用方 Terser 完成 DCE。
-- 探针调用必须直接放在 `if (__mpx_perf_user__)` / `if (__mpx_perf_framework__)` 字面量条件内。
-- 接入方需保留默认 Terser 的 `dead_code` / `conditionals` 优化；Babel 不应提前破坏顶层三元结构。
+`start` 是相对当前录制窗口起点的毫秒偏移，`timestamp` 是同一时钟源返回的原始值。它不保证是 Unix epoch，但同一运行环境和录制窗口内可以直接比较。
+
+通过正常 `start/end` 结束的窗口始终传入 marks 和 traces。参数保持可选，以兼容外部手动调用及旧的一、二参数 Reporter。全局和局部 Reporter 收到同一份 Map、marks 和 traces 引用，不要直接修改。
+
+```ts
+import { setReporter } from '@mpxjs/perf'
+import type {
+  AggrResult,
+  MarkTimeline,
+  TraceTimeline
+} from '@mpxjs/perf'
+
+if (__mpx_perf__) {
+  setReporter((
+    aggregates: Map<string, AggrResult>,
+    marks?: MarkTimeline,
+    traces?: TraceTimeline
+  ) => {
+    MyAPM.report({ aggregates, marks, traces })
+  })
+}
+```
+
+`TraceEvent` 可转换为 Chrome Trace Complete Event：
+
+```ts
+const chromeEvents = traces.events.map(event => ({
+  name: event.name,
+  ph: 'X',
+  ts: event.timestamp * 1000,
+  dur: event.duration * 1000,
+  args: event.info
+}))
+```
+
+核心包不内置文件写入或 Chrome Trace 转换器，业务 Reporter 可自行补充 `pid` / `tid` / `cat` 等字段。
+
+## Console Reporter
+
+`createConsoleReporter({ sortBy, filter, header })` 分别输出 aggregates、traces 和 marks：
+
+- `sortBy` 只影响 aggregates。
+- `filter` 同时作用于 aggregate、trace 和显式 mark，内建 start/end 不会被隐藏。
+- trace 与 mark 保持原始顺序。
+- 仅有事件包含 info 时才显示 info 列。
+- mark dropped、trace dropped 和 trace incomplete 会分别提示。
+- info 序列化失败不会中断业务或其他统计输出。
+
+## 性能与 DCE
+
+- `aggr` id 模式沿用数组槽位和 free list；录制稳态零对象、零闭包分配。
+- `aggr` name 模式使用 `Map<string, number>` 保存起点。
+- trace 每个被接受区段分配一个内部事件对象和一条进行中映射。
+- mark 每个被接受事件分配一个小对象；mark 和 trace 容量相互独立。
+- 超出容量的数据只增加对应 `dropped`，不会保存 name、时间或 info。
+
+最终构建依赖 `dist/index.js` 中的顶层 `__mpx_perf__ ? impl.x : noop.x` 三元、`sideEffects: false` 和使用方 Terser 完成 DCE。所有探针调用必须直接放在 `if (__mpx_perf_user__)` / `if (__mpx_perf_framework__)` 字面量条件内。
+
+`AggrResult` 是聚合结果的新类型名，不再导出旧 `AggResult`；显式类型导入需同步迁移。`MarkEvent.at` 已更名为 `start`，并增加 `timestamp` / `info`。
