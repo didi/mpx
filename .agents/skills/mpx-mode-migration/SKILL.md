@@ -1,5 +1,5 @@
 ---
-name: mpx-mode-srcmode-migration
+name: mpx-mode-migration
 description: 审计存量 Mpx 项目迁移到“mode 只负责目标筛选、srcMode 只负责源码方言”的新版编译语义。只要用户提到升级 Mpx 后检查条件编译、排查 .ali/.swan 等条件文件、mode/src-mode 区块、@mode/@_mode、modeRules/srcModeRules 或外部模板迁移，就应使用本 Skill；不用于与该语义变更无关的普通 Mpx 升级。
 compatibility: 需要 Node.js 14+；扫描脚本只读取目标项目，不会自动修改业务文件。
 ---

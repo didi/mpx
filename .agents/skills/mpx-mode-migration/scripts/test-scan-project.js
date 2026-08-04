@@ -18,7 +18,7 @@ function getFindings (report, code) {
 }
 
 function run () {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mpx-mode-srcmode-migration-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mpx-mode-migration-'))
 
   try {
     writeFixture(root, 'package.json', JSON.stringify({
