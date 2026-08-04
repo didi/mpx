@@ -32,11 +32,11 @@ describe('console reporter', () => {
     ])
     const timeline: MarkTimeline = {
       events: [
-        { name: 'start', at: 0 },
-        { name: 'hidden', at: 1 },
-        { name: 'keep:ready', at: 2 },
-        { name: 'keep:ready', at: 3 },
-        { name: 'end', at: 4 }
+        { name: 'start', at: 0, timestamp: 1000 },
+        { name: 'hidden', at: 1, timestamp: 1001 },
+        { name: 'keep:ready', at: 2, timestamp: 1002, info: { route: 'pages/index' } },
+        { name: 'keep:ready', at: 3, timestamp: 1003 },
+        { name: 'end', at: 4, timestamp: 1004 }
       ],
       dropped: 2
     }
@@ -47,6 +47,10 @@ describe('console reporter', () => {
     expect(output).toContain('[mpx perf] 1 measure bucket / 4 marks')
     expect(output).toContain('measures\n')
     expect(output).toContain('timeline\n')
+    expect(output).toContain('timestamp')
+    expect(output).toContain('info')
+    expect(output).toContain('{"route":"pages/index"}')
+    expect(output).toContain('1002')
     expect(output).not.toContain('  hidden')
     const timelineOutput = output.slice(output.indexOf('timeline\n'))
     expect(timelineOutput.indexOf('start')).toBeLessThan(timelineOutput.indexOf('keep:ready'))
@@ -58,7 +62,7 @@ describe('console reporter', () => {
   it('无 measure 时只输出 start/end 时间线', () => {
     const log = jest.spyOn(console, 'log').mockImplementation(() => undefined)
     const timeline: MarkTimeline = {
-      events: [{ name: 'start', at: 0 }, { name: 'end', at: 5 }],
+      events: [{ name: 'start', at: 0, timestamp: 1000 }, { name: 'end', at: 5, timestamp: 1005 }],
       dropped: 0
     }
 

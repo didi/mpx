@@ -20,7 +20,9 @@ interface Row {
 interface TimelineRow {
   index: number
   at: number
+  timestamp: number
   name: string
+  info?: unknown
 }
 
 function pad (s: string, width: number, right = false): string {
@@ -31,6 +33,17 @@ function pad (s: string, width: number, right = false): string {
 
 function fmtMs (n: number): string {
   return n.toFixed(2) + 'ms'
+}
+
+function fmtInfo (info: unknown): string {
+  if (info === undefined) return ''
+  if (typeof info === 'string') return info
+  try {
+    const result = JSON.stringify(info)
+    return result === undefined ? String(info) : result
+  } catch (e) {
+    return String(info)
+  }
 }
 
 function matchesFilter (name: string, filter?: RegExp | string): boolean {
@@ -101,28 +114,39 @@ export function createConsoleReporter (options: ConsoleReporterOptions = {}): Re
         const boundary = (index === 0 && event.name === 'start') ||
           (index === lastIndex && event.name === 'end')
         if (boundary || matchesFilter(event.name, filter)) {
-          timelineRows.push({ index, at: event.at, name: event.name })
+          timelineRows.push({ index, at: event.at, timestamp: event.timestamp, name: event.name, info: event.info })
         }
       })
 
+      const showInfo = timelineRows.some(row => row.info !== undefined)
       let indexW = 'index'.length
       let atW = 'at'.length
+      let timestampW = 'timestamp'.length
       let timelineNameW = 'name'.length
+      let infoW = 'info'.length
       const timelineCells = timelineRows.map(row => {
         const cell = {
           index: String(row.index),
           at: fmtMs(row.at),
-          name: row.name
+          timestamp: String(row.timestamp),
+          name: row.name,
+          info: fmtInfo(row.info)
         }
         if (cell.index.length > indexW) indexW = cell.index.length
         if (cell.at.length > atW) atW = cell.at.length
+        if (cell.timestamp.length > timestampW) timestampW = cell.timestamp.length
         if (cell.name.length > timelineNameW) timelineNameW = cell.name.length
+        if (cell.info.length > infoW) infoW = cell.info.length
         return cell
       })
-      const timelineHeader = `${pad('index', indexW, true)}  ${pad('at', atW, true)}  ${pad('name', timelineNameW)}`
-      const timelineSep = `${'-'.repeat(indexW)}  ${'-'.repeat(atW)}  ${'-'.repeat(timelineNameW)}`
+      let timelineHeader = `${pad('index', indexW, true)}  ${pad('at', atW, true)}  ${pad('timestamp', timestampW, true)}  ${pad('name', timelineNameW)}`
+      let timelineSep = `${'-'.repeat(indexW)}  ${'-'.repeat(atW)}  ${'-'.repeat(timestampW)}  ${'-'.repeat(timelineNameW)}`
+      if (showInfo) {
+        timelineHeader += `  ${pad('info', infoW)}`
+        timelineSep += `  ${'-'.repeat(infoW)}`
+      }
       const timelineBody = timelineCells.map(cell =>
-        `${pad(cell.index, indexW, true)}  ${pad(cell.at, atW, true)}  ${pad(cell.name, timelineNameW)}`
+        `${pad(cell.index, indexW, true)}  ${pad(cell.at, atW, true)}  ${pad(cell.timestamp, timestampW, true)}  ${pad(cell.name, timelineNameW)}${showInfo ? `  ${pad(cell.info, infoW)}` : ''}`
       )
       const sections: string[] = []
       if (rows.length) sections.push(['measures', headerLine, sepLine, ...bodyLines].join('\n'))

@@ -14,7 +14,7 @@ import type { Reporter } from './types'
 export const scopeStart = (_name: string): number => -1
 export const scopeEnd = (_id: number) => {}
 
-export const mark = (_name: string) => {}
+export const mark = (_name: string, _info?: unknown) => {}
 export const measureStart = (_name: string) => {}
 export const measureEnd = (_name: string) => {}
 

@@ -61,9 +61,9 @@ export function scopeEnd (id: number): void {
 /**
  * 向当前录制窗口追加一条有序时间线事件；未录制时不读取时钟。
  */
-export function mark (name: string) {
+export function mark (name: string, info?: unknown) {
   if (!bus.isRecording()) return
-  bus.pushMark(name, now())
+  bus.pushMark(name, now(), Date.now(), info)
 }
 
 /**
@@ -84,10 +84,10 @@ export function measureEnd (name: string) {
 }
 
 // 录制窗口控制
-export const start = () => bus.start(now())
+export const start = () => bus.start(now(), Date.now())
 export const end = (reporter?: Reporter) => {
   if (!bus.isRecording()) return
-  bus.end(now(), reporter)
+  bus.end(now(), Date.now(), reporter)
 }
 
 // reporter 注册 API

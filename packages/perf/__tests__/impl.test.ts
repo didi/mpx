@@ -101,12 +101,18 @@ describe('impl scope / measure / mark', () => {
   })
 
   it('mark 只写入有序时间线，同名事件不合并', () => {
+    const info = { route: 'pages/index' }
     start()
-    mark('ready')
+    mark('ready', info)
     mark('ready')
     end()
     expect(captured!.size).toBe(0)
     expect(timeline!.events.map(event => event.name)).toEqual(['start', 'ready', 'ready', 'end'])
+    expect(timeline!.events[1].info).toBe(info)
+    expect(timeline!.events[2].info).toBeUndefined()
+    timeline!.events.forEach(event => {
+      expect(event.timestamp).toEqual(expect.any(Number))
+    })
   })
 
   it('mark 不会注册 measure 起点', () => {

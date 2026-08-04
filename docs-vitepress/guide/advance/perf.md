@@ -1,8 +1,8 @@
-# RN 运行时按需测速 {#rn-runtime-perf-probe}
+# 跨端运行时按需测速 {#runtime-perf-probe}
 
-Mpx 跨端输出 React Native 时，运行时核心组件（`mpx-view` / `mpx-text` / `mpx-simple-view` / `mpx-simple-text` 等）以及 `useTransformStyle` / `__getStyle` 等公共函数是高频热路径，在大列表、复杂样式、嵌套文本场景下经常成为性能瓶颈。Hermes Profiler / Flipper 只能看到 RN 原生层调用栈，难以定位到 `splitStyle`、`useTransformStyle`、`wrapChildren` 这些 mpx 自身逻辑。
+Mpx 在小程序、Web、React Native 上都有实例初始化、模板执行、生命周期和卸载等框架热路径。平台 Profiler 通常只能看到宿主函数或底层调用栈，难以直接定位到 Mpx 语义阶段。
 
-`@mpxjs/perf` 是 Mpx 内置的运行时性能探针，提供「需要时打开、不需要时关闭、关闭态产物零字节残留」的能力。它同时提供实时聚合的 measure 数据和有序 mark 时间线，与 Hermes Profiler / Flipper / Perfetto 等系统级工具互补。
+`@mpxjs/perf` 是小程序、Web、RN 共用的运行时性能探针，提供「需要时打开、不需要时关闭、关闭态产物零字节残留」的能力。它同时提供实时聚合的 measure 数据和有序 mark 时间线，与浏览器 Performance、Hermes Profiler、Flipper、Perfetto 等系统级工具互补。
 
 ## 设计原则 {#design-principles}
 
@@ -53,7 +53,7 @@ module.exports = defineConfig({
 
 | 分组 | 控制对象 | 典型用法 |
 | --- | --- | --- |
-| `framework` | 框架内部探针（`view:render:*` / `text:render:*` / `getStyle:*`） | 调试 mpx 框架自身渲染性能 |
+| `framework` | 框架内部探针（`instance:*` / `scheduler:*` / `lifecycle:*` / 基础组件 render） | 调试 Mpx 框架自身热路径 |
 | `user` | 业务侧自定义探针（业务前缀如 `myBiz:list:filter`） | 定位业务函数耗时 |
 
 两个分组的开关粒度独立、产物 DCE 独立，但**共用同一根聚合 Map、mark 时间线与 reporter**——业务侧 reporter 可同时读取所有耗时桶和里程碑。
@@ -90,16 +90,16 @@ router.beforeLeave('/goods/:id', () => {
 measures
 name                count       sum      avg       max
 ------------------  -----  --------  -------  --------
-view:render:total     120  480.32ms   4.00ms   18.21ms
-view:render:style     120   92.15ms   0.77ms    3.42ms
-getStyle:total        120   21.08ms   0.18ms    1.10ms
-text:render:total      84    8.42ms   0.10ms    0.55ms
+view:render                    120  480.32ms   4.00ms   18.21ms
+view:render:style              120   92.15ms   0.77ms    3.42ms
+instance:render:getStyle       120   21.08ms   0.18ms    1.10ms
+text:render                     84    8.42ms   0.10ms    0.55ms
 
 timeline
-index      at  name
------  ------  -----
-    0  0.00ms  start
-    1  1420.00ms  end
+index        at      timestamp  name
+-----  --------  -------------  -----
+    0    0.00ms  1785211200000  start
+    1  1420.00ms  1785211201420  end
 ```
 
 > 默认 reporter 不使用 `console.table`——React Native 远程调试 / Hermes inspector 对它支持参差不齐（典型表现是把每行渲染成 `{…}` 不展开），改成对齐字符串 + 单条 `console.log`，在 RN console、Chrome DevTools、终端 Node 中都能直接读。
@@ -158,17 +158,8 @@ import type { AggResult, MarkTimeline } from '@mpxjs/perf'
 
 if (__mpx_perf__) {
   setReporter((agg: Map<string, AggResult>, timeline?: MarkTimeline) => {
-    // agg 是 bus 内部 Map 的引用，不要直接修改；如需保留请自行复制成普通对象。
-    const fw: Record<string, AggResult> = {}
-    const user: Record<string, AggResult> = {}
-    const FW_PREFIX = /^(view:|simple-view:|text:|simple-text:|getStyle:)/
-    for (const [name, s] of agg) {
-      if (FW_PREFIX.test(name)) fw[name] = s
-      else user[name] = s
-    }
-    MyAPM.report('mpx_perf_fw', fw)
-    MyAPM.report('mpx_perf_user', user)
-    if (timeline) MyAPM.report('mpx_perf_timeline', timeline)
+    // 同名框架指标不带平台前缀，由 __mpx_mode__ 区分平台基线。
+    MyAPM.report(__mpx_mode__, agg, timeline)
   })
 }
 ```
@@ -226,7 +217,7 @@ measure 只做实时聚合，**不保留**逐次耗时样本，因此无法在�
 
 ### Mark 时间线 {#mark-timeline}
 
-`mark(name)` 记录“某件事在何时发生”，不产生耗时聚合桶。每次调用都在 start/end 之间追加一条独立事件，数组顺序就是权威顺序：
+`mark(name, info?)` 记录“某件事在何时发生”，不产生耗时聚合桶；可选的 `info` 用于携带与该节点相关的自定义信息。每次调用都在 start/end 之间追加一条独立事件，数组顺序就是权威顺序：
 
 ```ts
 import { start, mark, end } from '@mpxjs/perf'
@@ -234,7 +225,7 @@ import { start, mark, end } from '@mpxjs/perf'
 if (__mpx_perf__) start()
 
 loadPageData().then(() => {
-  if (__mpx_perf_user__) mark('goods:data-ready')
+  if (__mpx_perf_user__) mark('goods:data-ready', { route: 'pages/goods' })
 })
 
 onFirstContentRendered(() => {
@@ -253,6 +244,8 @@ Reporter 得到的 `MarkTimeline` 结构为：
 interface MarkEvent {
   name: string
   at: number // 相对当前 start() 的毫秒偏移
+  timestamp: number // 事件发生时的 Unix epoch 毫秒时间戳
+  info?: unknown // mark() 调用方传入的自定义信息
 }
 
 interface MarkTimeline {
@@ -261,11 +254,11 @@ interface MarkTimeline {
 }
 ```
 
-内建 start 永远是首项，内建 end 永远是完整窗口的末项。总事件数固定最多 256：1 个 start、最多 254 个显式 mark、1 个 end。超过上限后保留前缀并增加 `dropped`，end 始终保留。业务 mark 应避免使用 `start` / `end` 名称。
+内建 start 永远是首项，内建 end 永远是完整窗口的末项。总事件数固定最多 256：1 个 start、最多 254 个显式 mark、1 个 end。超过上限后保留前缀并增加 `dropped`，end 始终保留。`at` 使用单调时钟，负责窗口内耗时和排序；`timestamp` 使用 `Date.now()`，用于与业务日志和 APM 对齐；`info` 原样保留调用方传入的值，默认 console reporter 在存在自定义信息时追加 `info` 列。系统时钟调整时，数组顺序和 `at` 仍是时序依据。业务 mark 应避免使用 `start` / `end` 名称。
 
 ## 业务侧自定义探针 {#user-probes}
 
-业务侧自有 RN 代码（非 `.mpx` 的纯 RN 封装、列表项、外置 hook 等）想接入同一根 reporter 通道时，使用 `__mpx_perf_user__` 分组开关。同步高频路径优先使用 `scopeStart` / `scopeEnd` 句柄式 API：
+业务侧代码想接入同一根 reporter 通道时，使用 `__mpx_perf_user__` 分组开关。同步高频路径优先使用 `scopeStart` / `scopeEnd` 句柄式 API：
 
 ```ts
 import { scopeStart, scopeEnd } from '@mpxjs/perf'
@@ -279,7 +272,7 @@ function expensiveCompute (data) {
 }
 ```
 
-事件名建议加业务前缀（`myBiz:` / 模块名 / 业务线代号）以与框架的 `view:` / `text:` / `getStyle:` 区分。
+事件名建议加业务前缀（`myBiz:` / 模块名 / 业务线代号）以与框架的 `instance:` / `lifecycle:` / 基础组件指标区分。
 
 ### 为什么是 scopeStart / scopeEnd 而不是闭包 {#why-handle}
 
@@ -319,7 +312,7 @@ loadPageData().finally(() => {
 | `scopeEnd(id): void` | 关闭 id 对应的 scope，累加进聚合。`id < 0` 或重复 end 安全 noop。 |
 | `measureStart(name): void` | 注册跨作用域耗时的具名起点。 |
 | `measureEnd(name): void` | 消费同名起点，将耗时聚合到同名桶；找不到起点时 noop。 |
-| `mark(name): void` | 向当前窗口追加独立、有序的时间线事件，同名 mark 不合并。 |
+| `mark(name, info?): void` | 向当前窗口追加独立、有序的时间线事件，可携带自定义信息，同名 mark 不合并。 |
 | `start(): void` | 打开录制窗口，新建聚合 Map 和时间线，并生成 start 边界。重复 `start` 幂等。 |
 | `end(reporter?): void` | 生成 end 边界，回填 measure 的 avg 后同步触发全局及可选局部 reporter。 |
 | `setReporter(r)` | 替换默认 reporter。可选，默认即 `consoleReporter`。 |
@@ -337,7 +330,7 @@ loadPageData().finally(() => {
 ### 录制窗口语义 {#recording-window}
 
 - **`start()` / `end()` 之间触发的 scope、mark 与完成的 measure 才会进入当前窗口**。未录制时 `scopeStart` 返回 `-1`，`mark` 不读取时钟也不分配事件。
-- **start/end 自动构成闭合时间线**：最小窗口也包含 `{ name: 'start', at: 0 }` 和名为 end 的末事件，因此没有显式 mark 和 measure 时仍会触发 reporter。
+- **start/end 自动构成闭合时间线**：最小窗口也包含 `{ name: 'start', at: 0, timestamp }` 和名为 end 的末事件，因此没有显式 mark 和 measure 时仍会触发 reporter。
 - **`end()` 同步触发 reporter**：调用 `end()` 后立即在 console 看到结果；`end(localReporter)` 不会替换全局 reporter，只对当前窗口追加一次局部上报。
 - **不强制配对**：误调 `end()`（未先 start）是 noop；重复 `start()` 沿用已有窗口（幂等）。
 - **强制重开新窗口**：先 `end()` 再 `start()`，第二次 start 会新建 Map、timeline 和 events。
@@ -346,55 +339,66 @@ loadPageData().finally(() => {
 
 ## 内置框架探针事件 schema {#schema}
 
-首版接入了四个内建组件 + 一个 core mixin 方法。统一只测**同步 render 耗时**（不含 `useEffect`、不含 commit 后副作用），每个组件至少产出一个 `*:render:total`，加若干 `*:render:<phase>`——子阶段相加 ≈ total，差值代表函数自身骨架开销。
+统一指标只描述 Mpx 语义，不使用 `mini:`、`web:`、`rn:` 平台前缀。Reporter 应结合 `__mpx_mode__` 分平台建立基线；不同平台缺少某个阶段时不会产生该指标。
 
-### `mpx-view` {#schema-view}
+### 实例、调度与生命周期 {#schema-instance}
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `view:render:total` | 整个 `forwardRef` 回调（最外层，含子阶段） |
-| `view:render:props` | `splitProps` + 解构 + `useHover` |
-| `view:render:style` | `useTransformStyle` + `splitStyle` + `useTextPassThroughValue` + `useLayout` + `useAnimationHooks` |
-| `view:render:innerProps` | `useInnerProps` |
-| `view:render:createElement` | `wrapWithChildren` + `createElement(View / Animated.View / GestureDetector / Portal)` 收尾 |
+| 指标 | 小程序 | Web | RN | 边界 |
+| --- | --- | --- | --- | --- |
+| `instance:init` | 是 | 是 | 是 | `beforeCreate` 完成后到 `created` 开始前的实例 state 初始化 |
+| `instance:init:setup` | 是 | 是 | 是 | 用户 `setup(props, context)` 同步调用 |
+| `instance:render` | 是 | 是 | 是 | 平台 render 同步执行；小程序覆盖非 vnode `ReactiveEffect` 主函数，Web 覆盖 Mpx 实例的 Vue `_render`；均从进入到正常返回 |
+| `instance:render:getStyle` | 否 | 否 | 是 | RN `__getStyle` 同步执行 |
+| `instance:render:getStyle:class` | 否 | 否 | 是 | RN class 样式解析 |
+| `instance:render:getStyle:style` | 否 | 否 | 是 | RN inline style 解析 |
+| `instance:unmount` | 是 | 是 | 是 | 前置卸载 hook 完成后的实例核心资源释放 |
+| `scheduler:flush` | 是 | 否 | 是 | 一次 Mpx scheduler 完整 drain，递归新增任务不重复计样本 |
+| `lifecycle:<hook>` | 按支持情况 | 按支持情况 | 按支持情况 | 存在真实 option hook 或组合式 hook 时的一次 Page / Component 生命周期调度 |
+| `lifecycle:app:<hook>` | 按支持情况 | 按支持情况 | 按支持情况 | 一次用户定义的 App 生命周期执行，含用户 mixin、不含内建 mixin |
 
-### `mpx-simple-view` {#schema-simple-view}
+不采集宿主 `setData` 调用到 callback 的异步耗时，该阶段受宿主调度影响。
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `simple-view:render:total` | 整个函数 |
-| `simple-view:render:style` | `splitProps` + `splitStyle`（含 `isBoxSizingAffectingStyle` 副检测）+ `useTextPassThroughValue` + `transformBoxSizing` |
-| `simple-view:render:innerProps` | `useInnerProps` |
-| `simple-view:render:createElement` | `wrapChildren` + `createElement(View, ...)` 收尾 |
+这些指标存在包含关系，不能直接相加。例如 `instance:init:setup` 是 `instance:init` 的子阶段，RN 的 `instance:render:getStyle` 及其 class/style 子阶段包含在 `instance:render` 中；Web 父实例卸载可能同步包含子实例卸载。
 
-### `mpx-text` {#schema-text}
+内建低频时间线节点为：
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `text:render:total` | 整个 `forwardRef` 回调 |
-| `text:render:props` | `useContext(TextPassThroughContext)` + `extendObject` 合并 inherited + 解构 |
-| `text:render:style` | `useTransformStyle` + 合并 inherited textStyle + `splitStyle`（提取 childTextStyle）+ `useTextPassThroughValue` + `useNodesRef` |
-| `text:render:innerProps` | `useInnerProps` |
-| `text:render:createElement` | `decode` + `wrapChildren` + `createElement(Text / Portal)` 收尾 |
+```text
+app:onLaunch:start
+page:onLoad:start
+page:onReady:start
+```
 
-### `mpx-simple-text` {#schema-simple-text}
+三个节点都在对应生命周期开始前产生。`page:onLoad:start` 和 `page:onReady:start` 的 `info` 均为 `{ route }`，用于标识当前页面。`page:onReady:start` 只表示目标平台开始调度 Mpx `onReady` 对应生命周期，不代表统一的 GPU 首帧或可交互时间。
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `simple-text:render:total` | 整个函数 |
-| `simple-text:render:style` | `useContext(TextPassThroughContext)` + 合并 mergedStyle + `splitStyle` + `transformBoxSizing` + 合并 mergedProps + `useTextPassThroughValue` |
-| `simple-text:render:innerProps` | `useInnerProps`（带 allowFontScaling / 最终 style） |
-| `simple-text:render:createElement` | `wrapChildren` + `createElement(Text, ...)` 收尾 |
+### 基础组件 render {#schema-components}
 
-### `@mpxjs/core: __getStyle` {#schema-getstyle}
+Web 的 `mpx-view`、`mpx-text`、`mpx-image`、`mpx-scroll-view` 每次真实 render 分别产生：
 
-`__getStyle` 是每个 mpx 组件 render 时都会被调一次的样式聚合入口，是除内建组件外测速的核心入口：
+```text
+view:render
+text:render
+image:render
+scroll-view:render
+```
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `getStyle:total` | 整个 `__getStyle` 函数 |
-| `getStyle:class` | classString 解析 + 遍历 `__getClassStyle` / `__getAppClassStyle` / externalClasses 查找 |
-| `getStyle:style` | `parseStyleText(staticStyle)` + `normalizeDynamicStyle(dynamicStyle)` + `transformStyleObj(styleObj)` |
+这些无后缀的 `:render` 指标代表组件 render 父阶段的同步整体耗时，排除 Vue scheduler、patch、DOM layout/paint、图片网络与解码、滚动事件及 observer callback。
+
+RN 的 getStyle 使用 `instance:render:getStyle` 父阶段及 `instance:render:getStyle:class`、`instance:render:getStyle:style` 子阶段。RN 同时保留既有 view、simple-view、text、simple-text 的 `:render` 父阶段与 `:render:<phase>` 子阶段，并增加：
+
+```text
+image:render
+image:render:props
+image:render:style
+image:render:innerProps
+image:render:createElement
+scroll-view:render
+scroll-view:render:props
+scroll-view:render:style
+scroll-view:render:innerProps
+scroll-view:render:createElement
+```
+
+RN 中无后缀的 `:render` 指标同样代表父阶段整体耗时；image 与 scroll-view 子阶段沿用现有 view/text 的 props、style/layout、innerProps 与 element 构造口径。scroll-view 的 style 阶段还包含状态、effect 注册、事件处理器与动画样式准备，createElement 阶段包含手势创建。所有 RN 组件指标都排除 effect callback、手势 worklet 和事件后续执行、React commit 与 Native layout。组件父阶段与子阶段、父模板 render 均可能存在包含关系，不应相加。
 
 ## 性能影响评估 {#perf-impact}
 
@@ -402,7 +406,7 @@ loadPageData().finally(() => {
 | --- | --- | --- | --- |
 | 单次 scope 额外耗时 | 0 | 一次 `isRecording()` 比较 → return | 状态判断 + freeList 取 id + 一次 `now()` + 两次数组下标写 + push 阶段 `Map.get` + 数值累加 |
 | 单次 scope 堆分配 | 0 | 0 | 0（首次出现新桶时一次 `AggResult` 对象） |
-| 单次 mark | 0 | 一次 `isRecording()` 比较，不读取时钟 | 一次 `now()`、相对时间计算和一次事件 push；达到容量后只增加 dropped |
+| 单次 mark | 0 | 一次 `isRecording()` 比较，不读取时钟 | 一次单调时钟、一次 `Date.now()`、相对时间计算和一次事件 push；达到容量后只增加 dropped |
 | 内存 | 0 | 0 | 桶数 × `AggResult` + 最多 256 个 MarkEvent。measure 不保存逐次样本 |
 | Hook 调用顺序 | 不变 | 不变（同一构建内常量恒定） | 不变 |
 | reporter 触发开销 | 无 | 无 | 仅 `end()` 触发一次同步调用，不在热路径上重复跑 |
@@ -418,7 +422,7 @@ loadPageData().finally(() => {
 ## 与现有方案的关系 {#vs-others}
 
 - **vs `__DEV__`**：`__DEV__` 区分开发 / 生产环境，无法支持「生产构建里临时开探针」；`__mpx_perf_*__` 是构建参数，可以打一个生产 + 开探针的内测包。
-- **vs Hermes Profiler**：Hermes 看 JS 函数级耗时，看不到 mpx 抽象（`useTransformStyle` 内部是若干小函数 + Hook，非单一函数）。本方案产生的 scope 时间戳与 Hermes 时间轴对齐（都用 `performance.now()` / `nativePerformanceNow`），可以一起分析。
+- **vs 平台 Profiler**：平台 Profiler 看函数或宿主层耗时，不直接表达 Mpx 语义阶段。本方案用 `at` 保持窗口内单调时序，用 mark 的 `timestamp` 与业务日志、APM 时间线对齐，再结合平台工具分析。
 - **vs 既有 APM**：本方案不替代业务 APM，只提供数据源；业务可用自定义 reporter 把聚合结果接入既有上报通道。
 
 ## Terser / babel 兼容性约束 {#terser-babel}

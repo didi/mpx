@@ -1,4 +1,4 @@
-import type { AggResult, MarkTimeline, Reporter } from './types'
+import type { AggResult, MarkEvent, MarkTimeline, Reporter } from './types'
 import { consoleReporter } from './reporters/console'
 
 const MARK_LIMIT = 256
@@ -28,20 +28,20 @@ export const bus = {
     _reporter = r
   },
 
-  start (startedAt: number) {
+  start (startedAt: number, timestamp: number) {
     // 重复 start 视为幂等：沿用已有窗口，不清空已采集的数据；
     // 想强制重开新窗口，先 end 再 start。
     if (_recording) return
     _recording = true
     recordingStart = startedAt
     aggMap = new Map()
-    timeline = { events: [{ name: 'start', at: 0 }], dropped: 0 }
+    timeline = { events: [{ name: 'start', at: 0, timestamp }], dropped: 0 }
   },
 
-  end (endedAt: number, reporter?: Reporter) {
+  end (endedAt: number, timestamp: number, reporter?: Reporter) {
     // 未 start 直接 end 是 noop，不报错也不调 reporter。
     if (!_recording) return
-    timeline.events.push({ name: 'end', at: endedAt - recordingStart })
+    timeline.events.push({ name: 'end', at: endedAt - recordingStart, timestamp })
     _recording = false
     // 最后一次性回填 avg，避免 push 阶段反复算除法。
     aggMap.forEach((s) => {
@@ -69,11 +69,13 @@ export const bus = {
     if (dur > s.max) s.max = dur
   },
 
-  pushMark (name: string, timestamp: number) {
+  pushMark (name: string, at: number, timestamp: number, info?: unknown) {
     if (!_recording) return
     // 为 end 固定预留最后一个位置，因此显式 mark 最多保留 254 条。
     if (timeline.events.length < MARK_LIMIT - 1) {
-      timeline.events.push({ name, at: timestamp - recordingStart })
+      const event: MarkEvent = { name, at: at - recordingStart, timestamp }
+      if (info !== undefined) event.info = info
+      timeline.events.push(event)
     } else {
       timeline.dropped++
     }

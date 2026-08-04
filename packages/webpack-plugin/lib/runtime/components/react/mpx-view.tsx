@@ -816,7 +816,7 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, bac
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   // 性能探针 - total
   let idTotal = -1
-  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render:total')
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render')
 
   // ───── props 阶段 ─────
   let idProps = -1

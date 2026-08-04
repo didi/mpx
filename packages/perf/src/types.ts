@@ -17,6 +17,10 @@ export interface MarkEvent {
   name: string
   /** 相对当前录制窗口 start() 的毫秒偏移。 */
   at: number
+  /** 事件发生时的 Unix epoch 毫秒时间戳。 */
+  timestamp: number
+  /** 调用 mark() 时传入的自定义信息。 */
+  info?: unknown
 }
 
 /** 当前录制窗口的有界 mark 时间线。 */

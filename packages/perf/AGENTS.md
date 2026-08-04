@@ -1,6 +1,6 @@
 # @mpxjs/perf
 
-Mpx2RN 运行时按需性能探针，提供实时耗时聚合与有界 mark 时间线。采用「编译期常量开关 + 运行时探针实现 + tree-shaking 兜底」三层结构，关闭态下产物中**不含**任何探针代码、字符串字面量、模块依赖。设计与背景见 [solutions/rn-runtime-perf-probe.md](../../solutions/rn-runtime-perf-probe.md) 和 [solutions/rn-runtime-perf-mark-timeline.md](../../solutions/rn-runtime-perf-mark-timeline.md)。
+Mpx 小程序、Web、RN 共用的按需性能探针，提供实时耗时聚合与有界 mark 时间线。采用「编译期常量开关 + 运行时探针实现 + tree-shaking 兜底」三层结构，关闭态下产物中**不含**任何探针代码、字符串字面量、模块依赖。统一框架指标见 [solutions/mpx-perf-framework-hot-path-and-user-milestone.md](../../solutions/mpx-perf-framework-hot-path-and-user-milestone.md)。
 
 ## 入口文件
 
@@ -13,15 +13,15 @@ Mpx2RN 运行时按需性能探针，提供实时耗时聚合与有界 mark 时�
 - [src/impl.ts](src/impl.ts)：录制态实现。
   - 内部 `now()` 优先 `performance.now`，回退 Hermes `globalThis.nativePerformanceNow`，再兜底 `Date.now`。
   - `scopeStart` / `scopeEnd` 用平行数组 `stackName` / `stackStart` + `freeList` 复用 id 槽位，**零对象 / 零闭包分配**，未录制态直接返回 `-1`。
-  - `measureStart` / `measureEnd` 用 `Map<string, number>` 暂存同名起点，命中后立即 `delete`；`mark` 只向 bus 追加时间线事件，两套状态互不复用。
+  - `measureStart` / `measureEnd` 用 `Map<string, number>` 暂存同名起点，命中后立即 `delete`；`mark(name, info?)` 只向 bus 追加包含可选自定义信息的时间线事件，两套状态互不复用。
 - [src/bus.ts](src/bus.ts)：录制状态机、实时聚合容器与 mark 时间线。
   - 维护 `_recording`、窗口起点、`aggMap: Map<name, AggResult>`、`MarkTimeline` 与全局 `_reporter`（默认 `consoleReporter`）。
-  - `start(startedAt)` 重建 Map 和 timeline，自动写入 start；重复 start 幂等。`end(endedAt)` 自动写入 end，再触发 reporter。
-  - `pushMeasure` 只做 `Map.get` + 累加，`end()` 时回填 avg；`pushMark` 保留最多 254 个显式事件，为 start/end 预留边界，总量固定最多 256。
+  - `start(startedAt, timestamp)` 重建 Map 和 timeline，自动写入 start；重复 start 幂等。`end(endedAt, timestamp)` 自动写入 end，再触发 reporter。
+  - `pushMeasure` 只做 `Map.get` + 累加，`end()` 时回填 avg；`pushMark` 原样保留可选 `info`，最多保存 254 个显式事件，为 start/end 预留边界，总量固定最多 256。
 - [src/noop.ts](src/noop.ts)：关闭态空实现。`scopeStart` 恒返回 `-1`，其他 API 为空函数；通过顶层三元让 Terser 把 `impl` / `bus` / `reporters` 整支 DCE。
 - [src/types.ts](src/types.ts)：对外类型 `AggResult`、`MarkEvent`、`MarkTimeline` 与 `Reporter = (measures, timeline?) => void`。
 - [src/reporters/console.ts](src/reporters/console.ts)：内置 console reporter。
-  - `createConsoleReporter(options?)` 工厂支持 `sortBy` / `filter` / `header`；分别输出 measure 与 timeline，timeline 保持原序，内建 start/end 不受 filter 影响，并显示 dropped 提示。
+  - `createConsoleReporter(options?)` 工厂支持 `sortBy` / `filter` / `header`；分别输出 measure 与 timeline 的 `at` / `timestamp`，存在自定义 `info` 时追加 info 列，timeline 保持原序，内建 start/end 不受 filter 影响，并显示 dropped 提示。
   - `consoleReporter` 是默认参数实例，bus 未被 `setReporter` 替换时使用它。
 
 ## 典型调用链
