@@ -797,11 +797,11 @@ API
 | bindleave | 离开时触发 |
 | bindafterleave | 离开后触发 |
 | bindclickoverlay | 点击遮罩层时触发 |
-| bindclose | RN 环境特有事件，容器关闭时触发，用于同步 `show` 状态到父组件，`event.detail = { value: false }` |
+| bindclose | RN 环境特有可选事件，容器关闭时触发，可用于同步 `show` 状态到父组件，`event.detail = { value: false }` |
 
 > [!tip] 注意
 >
-> - 在 RN 环境下，当容器显示时会禁用页面手势返回（iOS 左滑返回），并拦截系统返回事件，触发 `bindclose` 事件而非直接返回上一页。因此必须监听 `bindclose` 事件并将 `show` 同步设置为 `false`，否则无法正常关闭容器。
+> - 在 RN 环境下，当容器显示时会禁用页面手势返回（iOS 左滑返回），并拦截系统返回事件。若需要响应点击遮罩、系统返回或滑动关闭并同步受控的 `show` 状态，应监听 `bindclose` 并将 `show` 设置为 `false`。
 > - 为什么需要 `bindclose`？特殊场景：在微信小程序中 `show={{a}}` 在关闭`page-container`后，a会变为false（类似wx:model的效果）,所以需要bindclose来模拟此效果
 
 示例

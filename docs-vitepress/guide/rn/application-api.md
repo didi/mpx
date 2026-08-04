@@ -479,13 +479,13 @@ Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callb
 
 ### page-container {#page-container}
 
-#### mpx.config.rnConfig.disableSwipeBack
+#### mpx.config.rnConfig.setSwipeBackEnabled
 
 ```ts
-(options: { disable: boolean }) => void
+(enabled: boolean) => void
 ```
 
-禁用或启用 iOS 页面左滑手势返回，主要用于 DRN（混合容器）等场景。
+设置是否启用 iOS 页面侧滑返回，主要用于 DRN（混合容器）等场景。
 
 当页面内使用 `page-container` 组件时，框架会在容器显示时自动调用此方法禁用手势返回，以防止用户左滑时触发页面返回而非关闭容器；容器关闭或组件销毁时会再次调用以恢复。
 
@@ -493,9 +493,9 @@ Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callb
 
 ```javascript
 // 示例（DRN 场景）
-mpx.config.rnConfig.disableSwipeBack = ({ disable }) => {
+mpx.config.rnConfig.setSwipeBackEnabled = (enabled) => {
   // 调用 NA 提供的方法控制手势返回
-  NativeModules.NavigationModule.setSwipeBackEnabled(!disable)
+  NativeModules.NavigationModule.setSwipeBackEnabled(enabled)
 }
 ```
 

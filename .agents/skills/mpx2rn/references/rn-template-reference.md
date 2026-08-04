@@ -771,6 +771,16 @@ movable-view 的可移动区域。
 - wait-for 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 - RN 环境 movable 相关组件暂不支持缩放能力
 
+### page-container
+
+页面容器，可在页面内创建覆盖当前页面的弹层或抽屉。
+
+RN 支持 `show`、`duration`、`z-index`、`overlay`、`position`、`round`、`close-on-slide-down`、`overlay-style`、`custom-style` 以及进入、离开、遮罩点击事件。
+
+`bindclose` 是 RN 环境特有的可选事件。点击遮罩、系统返回或滑动关闭时，可通过该事件将父组件中受控的 `show` 同步为 `false`；未绑定时不会抛出异常，但业务状态也不会自动更新。
+
+容器显示期间会临时禁用 iOS 页面侧滑返回，关闭后恢复页面原有的 React Navigation 配置。DRN 等混合容器可通过 `Mpx.config.rnConfig.setSwipeBackEnabled` 对接宿主手势控制。
+
 ### image
 
 图片组件

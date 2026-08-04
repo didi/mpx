@@ -17,7 +17,7 @@
  * ✔ bindclickoverlay
  * ✔ bindclose RN下特有属性，用于同步show状态到父组件
  */
-import React, { createElement, forwardRef, useEffect, useRef, useState } from 'react'
+import React, { createElement, forwardRef, useContext, useEffect, useRef, useState } from 'react'
 import { StyleSheet, BackHandler, TouchableWithoutFeedback, StyleProp, ViewStyle } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation, runOnJS, WithTimingConfig, Easing, AnimationCallback } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
@@ -27,6 +27,7 @@ import { extendObject, useLayout, useNavigation, useRunOnJSCallback } from './ut
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
 import { noop } from '@mpxjs/utils'
+import { NavigationContainerContext } from './context'
 
 type Position = 'top' | 'bottom' | 'right' | 'center';
 
@@ -48,7 +49,7 @@ interface PageContainerProps {
     bindafterleave?: (event: CustomEvent) => void;
     bindclickoverlay?: (event: CustomEvent) => void;
 
-    bindclose: (event: CustomEvent<{ value: boolean}>) => void;
+    bindclose?: (event: CustomEvent<{ value: boolean}>) => void;
     children: React.ReactNode;
 }
 
@@ -91,6 +92,7 @@ function useDisablePageBack (show: boolean, close: () => void) {
    * 如果不是首页，则由RN逻辑完成拦截（usePreventRemove）
    */
   const navigation = useNavigation()!
+  const navigationContainerRef = useContext(NavigationContainerContext)
   // TODO resetRouterStack 可能会导致 isFirstPage 发生变化，需要监听路由变化
   const isFirstPage = navigation.getState().routes.length === 1
   const onBackPressRef = useRef(() => false as boolean)
@@ -111,16 +113,11 @@ function useDisablePageBack (show: boolean, close: () => void) {
     backHandlerSubscriptionRef.current = null
   }
 
-  // 记录组件挂载时的初始 gestureEnabled 值，用于组件销毁时还原
-  const originalGestureEnabledRef = useRef<boolean>(
-    navigation.getState().routes.at(-1)?.options?.gestureEnabled ?? true
-  )
-
   useEffect(() => {
     if (isFirstPage) {
-      if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
-        // DRN 问题，当 resetRouterStack 页面数为1时会关闭 disableSwipeBack，此时需要再次 disableSwipeBack
-        global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
+      if (typeof global.__mpx.config?.rnConfig?.setSwipeBackEnabled === 'function') {
+        // DRN 问题，当 resetRouterStack 页面数为1时会开启侧滑返回，此时需要再次关闭
+        global.__mpx.config.rnConfig.setSwipeBackEnabled(!show)
       }
 
       // 首页的返回事件无法通过usePreventRemove拦截，所以通过监听物理返回事件的方式来拦截
@@ -132,15 +129,16 @@ function useDisablePageBack (show: boolean, close: () => void) {
       }
       return () => {
         removeBackPressListener()
-        if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
-          global.__mpx.config.rnConfig.disableSwipeBack({ disable: false })
+        if (typeof global.__mpx.config?.rnConfig?.setSwipeBackEnabled === 'function') {
+          global.__mpx.config.rnConfig.setSwipeBackEnabled(true)
         }
       }
     } else if (__mpx_mode__ === 'ios' && show) {
       // 原生导航栏部分手势容器无法覆盖到，通过设置 gestureEnabled 来禁止系统手势返回
+      const gestureEnabled = navigationContainerRef?.current?.getCurrentOptions()?.gestureEnabled ?? true
       navigation.setOptions({ gestureEnabled: false })
       return () => {
-        navigation.setOptions({ gestureEnabled: originalGestureEnabledRef.current })
+        navigation.setOptions({ gestureEnabled })
       }
     }
   }, [show])
@@ -186,7 +184,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
   const triggerLeaveEvent = () => bindleave?.(getCustomEvent('leave', {}, {}, props))
   const triggerAfterLeaveEvent = () => bindafterleave?.(getCustomEvent('afterleave', {}, {}, props))
 
-  const close = () => bindclose(getCustomEvent('close', {}, { detail: { value: false, source: 'close' } }, props))
+  const close = () => bindclose?.(getCustomEvent('close', {}, { detail: { value: false, source: 'close' } }, props))
 
   // 控制组件是否挂载
   const [internalVisible, setInternalVisible] = useState(show)
@@ -343,11 +341,16 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
 
   useDisablePageBack(show, close)
 
+  const contentGestureCloseTriggered = useSharedValue(false)
   const contentGesture = Gesture.Pan()
     .activeOffsetY([0, 0]) // 只要开始下滑就激活
     .failOffsetX([-10, 10]) // 横向位移超过 10px 则 fail，确保只处理纵向滑动
+    .onBegin(() => {
+      contentGestureCloseTriggered.value = false
+    })
     .onUpdate((e) => {
-      if (e.translationY > 200) {
+      if (!contentGestureCloseTriggered.value && e.translationY > 200) {
+        contentGestureCloseTriggered.value = true
         runOnJS(invokeRunOnJS)('close')
       }
     })
@@ -355,12 +358,17 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
    * 全屏幕 IOS 左滑手势返回（ios默认页面返回存在页面跟手逻辑，page-container暂不支持，对齐微信小程序）
    * 1: 仅在屏幕左边缘滑动 才触发返回手势。
    */
+  const screenGestureCloseTriggered = useSharedValue(false)
   const screenGestureBase = Gesture.Pan()
     .activeOffsetX([0, 0]) // 只要开始右滑就激活
     .failOffsetY([-10, 10]) // 纵向位移超过 10px 则 fail，确保只处理横向滑动
     .hitSlop({ left: 0, width: 30 }) // 从屏幕左侧 30px 内触发才处理
+    .onBegin(() => {
+      screenGestureCloseTriggered.value = false
+    })
     .onUpdate((e) => {
-      if (e.translationX > 10) {
+      if (!screenGestureCloseTriggered.value && e.translationX > 10) {
+        screenGestureCloseTriggered.value = true
         runOnJS(invokeRunOnJS)('close')
       }
     })
