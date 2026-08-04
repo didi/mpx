@@ -95,7 +95,7 @@ const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
   }
   const isCustom = innerPageConfig.navigationStyle === 'custom'
   const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
-  // 状态栏的颜色
+  // 状态栏由 MpxNav 根据页面配置统一控制，避免 native-stack screenOptions 在页面切换时覆盖页面级配置。
   const statusBarElement = (
     <StatusBar
       translucent

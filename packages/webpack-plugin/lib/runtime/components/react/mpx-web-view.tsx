@@ -4,12 +4,17 @@ import Portal from './mpx-portal/index'
 import { usePreventRemove, PreventRemoveEvent } from '@react-navigation/native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
-import { WebView } from 'react-native-webview'
+import { WebView, WebViewProps as RNWebViewProps } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { getCurrentPage, useNavigation } from './utils'
 import { WebViewHttpErrorEvent, WebViewEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
 import { StyleSheet, View, Text } from 'react-native'
+
+// react-native-webview@13.17+ 将 WebView 泛型默认值由 {} 改为 undefined，
+// 导致 WebViewProps & undefined 塌成 never、JSX 直接使用时 props 全部不可赋值。
+// 显式实参化为 WebView<object>（其 props 即 WebViewProps），保留类实例签名使 ref 仍解析为 WebView，兼容各版本声明。
+const RNWebView = WebView as unknown as new (props: RNWebViewProps) => WebView<object>
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -30,6 +35,7 @@ interface WebViewProps {
   binderror?: (event: CommonCallbackEvent) => void
   [x: string]: any
 }
+type WebViewInstance = WebView<any>
 type Listener = (type: string, callback: (e: Event) => void) => () => void
 
 interface PayloadData {
@@ -77,7 +83,7 @@ const styles = StyleSheet.create({
   }
 })
 
-const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
+const _WebView = forwardRef<HandlerRef<WebViewInstance, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
   const mpx = global.__mpx
   const errorText: ErrorTextMap = {
@@ -98,7 +104,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const { pageId } = useContext(RouteContext) || {}
   const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
-  const webViewRef = useRef<WebView>(null)
+  const webViewRef = useRef<WebViewInstance>(null)
   const fristLoaded = useRef<boolean>(false)
   const isLoadError = useRef<boolean>(false)
   const isNavigateBack = useRef<boolean>(false)
@@ -123,7 +129,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     isNavigateBack.current = false
   })
 
-  useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
+  useNodesRef<WebViewInstance, WebViewProps>(props, ref, webViewRef, {
     style: defaultWebViewStyle
   })
 
@@ -352,7 +358,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             </View>
             )
           : (
-          <WebView
+          <RNWebView
             containerStyle={ defaultWebViewStyle }
             source={{ uri: src }}
             ref={webViewRef}
@@ -365,7 +371,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onHttpError={onHttpError}
             onError={onError}
             allowsBackForwardNavigationGestures={true}
-          ></WebView>)}
+          ></RNWebView>)}
       </Portal>
   )
 })

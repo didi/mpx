@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
 })
 
 const formatRangeFun = (range: RangeItem[], rangeKey = '') =>
-  rangeKey ? range.map((item: Obj) => item[rangeKey]) : range
+  rangeKey ? range.map((item) => (item as Obj)[rangeKey]) : range
 
 const formatValueFn = (value: number | number[]) => {
   return Array.isArray(value) ? value : [value]
@@ -54,8 +54,8 @@ const PickerMultiSelector = forwardRef<
     }
   }, [formatValue])
 
-  const updateRange = (newRange: RangeItem[]) => {
-    const range = formatRangeFun(newRange.slice(), props['range-key'])
+  const updateRange = (newRange: RangeItem[], rangeKey?: string) => {
+    const range = formatRangeFun(newRange.slice(), rangeKey)
     setFormatRange(range)
   }
 

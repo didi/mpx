@@ -100,9 +100,7 @@ function removeStorage (options = {}) {
   })
 }
 
-function removeStorageSync (key) {
-  AsyncStorage.removeItem(key)
-}
+const removeStorageSync = envError('removeStorageSync')
 
 function clearStorage (options = {}) {
   const { success, fail, complete } = options
@@ -121,9 +119,7 @@ function clearStorage (options = {}) {
   })
 }
 
-function clearStorageSync () {
-  AsyncStorage.clear()
-}
+const clearStorageSync = envError('clearStorageSync')
 
 export {
   setStorage,

@@ -5,7 +5,9 @@ Mpx 在支持小程序跨平台开发后，各大平台的小程序均提供了 
 
 为解决这一问题，Mpx 提供了一个抹平各平台差异的 Bridge 库：@mpxjs/webview-bridge。使用该库后，开发者只需统一调用一套接口，即可在多个小程序平台上实现一致的功能调用，有效降低开发复杂度和维护成本。
 
-**支持运行环境**：微信小程序、支付宝小程序、QQ小程序、头条小程序、百度小程序、web、RN
+**支持运行环境**：微信小程序、支付宝小程序、Touch 'n Go App 内小程序、QQ 小程序、头条小程序、百度小程序、Web、RN
+
+> Touch 'n Go App 内小程序中的 H5 页面会自动复用支付宝小程序的 Webview Bridge 能力，无需额外配置。
 
 ## 安装： {#install}
 ```shell
@@ -109,6 +111,8 @@ webviewBridge.navigateTo({
 在业务场景中，当 H5 需要调用扩展方法中的api能力（如通过 getLocation 获取地理位置）时，需与承载 H5 的「宿主环境」（如原生 App、小程序容器等）进行数据交互。
 
 针对这类需求，Mpx 框架内部已提供「宿主环境能力挂载」机制，同时在 webview-bridge 中支持 invoke 通信方法，可实现 H5 与宿主环境的双向调用。
+
+`webviewConfig` 需要按宿主环境配置在 `mpx.config.webConfig` 或 `mpx.config.rnConfig` 下。
 
 **宿主环境中挂载getLocation**
 ```javascript

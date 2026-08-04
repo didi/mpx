@@ -3,15 +3,14 @@ import Animated, { useAnimatedStyle, interpolate, SharedValue } from 'react-nati
 import { ReactNode, forwardRef, useRef, useContext, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, extendObject, isHarmony, useTextPassThroughValue } from './utils'
+import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, extendObject, isHarmony, useTextPassThrough } from './utils'
 import { SwiperContext } from './context'
 
 interface SwiperItemProps {
   'item-id'?: string
   'enable-offset'?: boolean
   'enable-var': boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
+  'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
   children?: ReactNode
@@ -30,7 +29,7 @@ interface ContextType {
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
   const {
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
+    'enable-text-pass-through': enableTextPassThrough,
     style,
     customStyle,
     itemIndex
@@ -51,9 +50,9 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar })
   const { textStyle, innerStyle } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
   useNodesRef(props, ref, nodeRef, {
     style: normalStyle
   })
@@ -77,7 +76,10 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     [
       'children',
       'enable-offset',
-      'style'
+      'style',
+      'item-id',
+      'customStyle',
+      'itemIndex'
     ],
     { layoutRef })
   const itemAnimatedStyle = useAnimatedStyle(() => {
@@ -100,7 +102,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     style: [innerStyle, layoutStyle, itemAnimatedStyle, customStyle],
     'data-itemId': props['item-id']
   })
-  return createElement(Animated.View, mergeProps, wrapChildren(props, {
+  return createElement(Animated.View, mergeProps, wrapChildren(props.children, {
     hasVarDec,
     varContext: varContextRef.current,
     textPassThrough

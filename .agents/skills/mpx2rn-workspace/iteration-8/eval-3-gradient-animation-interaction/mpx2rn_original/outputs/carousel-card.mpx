@@ -1,0 +1,268 @@
+<template>
+  <view class="carousel-card">
+    <view class="card-header">
+      <!-- enable-background 用于支持动态 wx:style 中的 background-image 渐变 -->
+      <view class="gradient-overlay" enable-background wx:style="{{bgStyle}}">
+        <text class="card-title">{{title}}</text>
+        <text class="card-subtitle">{{subtitle}}</text>
+      </view>
+    </view>
+
+    <view class="card-body">
+      <view
+        wx:for="{{items}}"
+        wx:key="id"
+        class="card-item"
+        hover-class="card-item-hover"
+        hover-stay-time="{{100}}"
+        enable-animation="transition"
+        wx:style="{{animStyle}}"
+        bindtap="handleItemTap(item.id)"
+      >
+        <image class="item-image" src="{{item.cover}}" mode="aspectFill" />
+        <view class="item-info">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-price">{{item.price}}</text>
+        </view>
+        <view wx:if="{{item.isNew}}" class="item-badge">NEW</view>
+      </view>
+    </view>
+
+    <view class="card-footer">
+      <view
+        class="load-trigger"
+        id="load-trigger"
+        wx:ref
+      >
+        <text wx:if="{{loading}}">loading...</text>
+      </view>
+    </view>
+
+    <view
+      class="toast-mask"
+      wx:show="{{showToast}}"
+      bindtap="hideToast"
+    >
+      <view class="toast-content">{{toastMsg}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent, ref, onMounted, computed } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    title: { type: String, value: 'Featured' },
+    subtitle: { type: String, value: '' }
+  },
+  setup (props, context) {
+    const items = ref([])
+    const loading = ref(false)
+    const showToast = ref(false)
+    const toastMsg = ref('')
+
+    const bgStyle = computed(() => {
+      return {
+        // todo: 原平台渐变使用 transparent 关键字；RN 中 transparent 等价于 rgba(0,0,0,0) 会导致渐变发灰
+        // 此处统一使用 rgba(255,107,107,0) 替代 transparent，在原平台与 RN 均可正常渲染
+        backgroundImage: `linear-gradient(180deg, #ff6b6b, rgba(255,107,107,0))`
+      }
+    })
+
+    const animStyle = computed(() => {
+      // todo: RN 不支持 transition-property: all，已改为显式列出需要过渡的属性
+      return {
+        transition: 'opacity 0.3s ease, transform 0.3s ease'
+      }
+    })
+
+    // 生命周期钩子须在 setup 执行期间同步注册
+    onMounted(() => {
+      initObserver()
+    })
+
+    function initObserver () {
+      const observer = context.createIntersectionObserver()
+      // 复合选择器 .card-body .card-item 已改为单类 .card-item，与 RN 单类 selector 映射要求对齐
+      observer.relativeTo('.card-item').observe('#load-trigger', (res) => {
+        if (res.intersectionRatio > 0) {
+          loadMore()
+        }
+      })
+    }
+
+    function loadMore () {
+      if (loading.value) return
+      loading.value = true
+      mpx.request({
+        url: '/api/items',
+        data: { page: items.value.length / 10 + 1 },
+        success (res) {
+          items.value = items.value.concat(res.data.list)
+          loading.value = false
+        }
+      })
+    }
+
+    function handleItemTap (id) {
+      mpx.navigateTo({ url: `/pages/detail/index?id=${id}` })
+    }
+
+    function hideToast () {
+      showToast.value = false
+    }
+
+    return {
+      items,
+      loading,
+      showToast,
+      toastMsg,
+      bgStyle,
+      animStyle,
+      handleItemTap,
+      hideToast
+    }
+  }
+})
+</script>
+
+<style>
+.carousel-card {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.card-header {
+  position: relative;
+  height: 360rpx;
+}
+
+.gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 30rpx;
+  /* todo: 原平台渐变终止色 transparent 在 RN 中会导致过渡区域发灰，已改用 rgba(255,107,107,0) 等效替代 */
+  background-image: linear-gradient(to bottom, #ff6b6b 0%, rgba(255,107,107,0) 100%);
+  background-size: cover;
+}
+
+.card-title {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: bold;
+}
+
+.card-subtitle {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 8rpx;
+}
+
+.card-body {
+  padding: 20rpx;
+}
+
+.card-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* todo: RN 不支持 :active 伪类，已改用 hover-class="card-item-hover" 实现点击态 */
+.card-item-hover {
+  background-color: #f5f5f5;
+}
+
+.item-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+}
+
+.item-info {
+  flex: 1;
+  margin-left: 24rpx;
+}
+
+.item-name {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.item-price {
+  font-size: 32rpx;
+  color: #ff4d4f;
+  margin-top: 8rpx;
+  font-weight: bold;
+}
+
+.item-badge {
+  padding: 4rpx 12rpx;
+  background-color: #ff4d4f;
+  color: #fff;
+  font-size: 20rpx;
+  border-radius: 4rpx;
+}
+
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+/* todo: RN 不支持 CSS @keyframes 动画，以下 keyframes 及 animation 属性仅在原平台保留 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-item {
+  animation: fadeIn 0.5s ease forwards;
+}
+/* @mpx-endif */
+
+.toast-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-content {
+  padding: 24rpx 48rpx;
+  background-color: #fff;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.card-footer {
+  padding: 20rpx;
+}
+
+.load-trigger {
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {
+    "lottie-view": "../../components/lottie-view/index"
+  },
+  "componentPlaceholder": {
+    "lottie-view": "view"
+  }
+}
+</script>

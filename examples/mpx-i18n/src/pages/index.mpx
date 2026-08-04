@@ -7,7 +7,12 @@
 
     <view class="title">时间</view>
 
-    <view class="text">{{ formattedDatetime }}</view>
+    <view class="title">i18n key 含 "+" 复现</view>
+    <!-- 对照组：普通 key，应正确显示翻译值 -->
+    <view class="text">对照(plainReviews): {{ $t('plainReviews') }}</view>
+    <!-- 问题组：key 含 "+"，期望显示翻译值，实际会原样返回 key "1000+ reviews" -->
+    <view class="text bug">问题(1000+ reviews): {{ $t('1000+ reviews') }}</view>
+    <view class="text tip">期望 zh-CN: "超过 1000 条评价" / en-US: "over 1000 reviews"</view>
 
     <button class="btn" bindtap="handleTap">切换语言</button>
   </view>
@@ -35,12 +40,11 @@
 
       // js中获取
       console.log(this.$t('message.hello', { msg: 'hello' }))
-    },
-    computed: {
-      formattedDatetime () {
-        // $d依赖的Intl方法在wxs里不支持，所以只能使用computed中转一次
-        return this.$d(new Date(), 'long')
-      }
+
+      // i18n key 含 "+" 问题复现：
+      // 对照组应输出翻译值，问题组期望输出翻译值但实际原样返回 key
+      console.log('[i18n bug] 对照 plainReviews =>', this.$t('plainReviews'))
+      console.log('[i18n bug] 问题 1000+ reviews =>', this.$t('1000+ reviews'))
     },
     methods: {
       handleTap () {
@@ -58,6 +62,13 @@
 
     .text
       margin 10px 0
+
+    .bug
+      color #e54d42
+
+    .tip
+      font-size 12px
+      color #999
 
     .title
       margin-bottom 10px

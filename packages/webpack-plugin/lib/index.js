@@ -30,6 +30,7 @@ const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 const DynamicRuntimePlugin = require('./resolver/DynamicRuntimePlugin')
 const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
+const ExtendComponentsPlugin = require('./resolver/ExtendComponentsPlugin')
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
@@ -53,6 +54,7 @@ const { transSubpackage } = require('./utils/trans-async-sub-rules')
 const { matchCondition } = require('./utils/match-condition')
 const { getPartialCompileRules } = require('./utils/partial-compile-rules')
 const processDefs = require('./utils/process-defs')
+const { PERF_GROUPS, normalizePerfOptions } = require('./utils/normalize-perf-options')
 const config = require('./config')
 const hash = require('hash-sum')
 const nativeLoaderPath = normalize.lib('native-loader')
@@ -164,13 +166,24 @@ class MpxWebpackPlugin {
     options.transMpxRules = options.transMpxRules || {
       include: () => true
     }
+    // 归一化 perf 配置：{ enable, probes: [...] } → { enable, framework, user, ... }
+    // 分组未知 / typo 在此直接抛错，避免静默失效。
+    const perf = normalizePerfOptions(options.perf)
+    options.perf = perf
     // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
     options.defs = Object.assign({}, options.defs, {
       __mpx_mode__: options.mode,
       __mpx_src_mode__: options.srcMode,
       __mpx_env__: options.env,
-      __mpx_dynamic_runtime__: options.dynamicRuntime
+      __mpx_dynamic_runtime__: options.dynamicRuntime,
+      // 总开关：@mpxjs/perf 包内部使用，决定 impl 是否进入 bundle。
+      __mpx_perf__: perf.enable
     })
+    // 分组开关：调用方点缀代码使用。开关粒度独立、产物 DCE 独立。
+    for (let i = 0; i < PERF_GROUPS.length; i++) {
+      const k = PERF_GROUPS[i]
+      options.defs[`__mpx_perf_${k}__`] = perf[k]
+    }
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
     options.generateBuildMap = options.generateBuildMap || false
@@ -404,11 +417,13 @@ class MpxWebpackPlugin {
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, this.options.normalNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
+    const extendComponentsPlugin = new ExtendComponentsPlugin('before-file', this.options.mode, 'file')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
+      compiler.options.resolve.plugins.push(extendComponentsPlugin)
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
-      compiler.options.resolve.plugins = [addModePlugin]
+      compiler.options.resolve.plugins = [extendComponentsPlugin, addModePlugin]
     }
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)

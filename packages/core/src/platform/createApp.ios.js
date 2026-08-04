@@ -134,7 +134,7 @@ export default function createApp (options) {
         cb(options)
       })
     } else if (value === 'hide' || value === 'exit') {
-       global.__mpxAppCbs.hide.forEach((cb) => {
+      global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
           reason: value === 'exit' ? 0 : 3
         })
@@ -214,9 +214,10 @@ export default function createApp (options) {
 
     const { initialRouteName, initialParams } = initialRouteRef.current
     const navScreenOpts = {
-      headerShown: false,
-      statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
-      statusBarBackgroundColor: 'transparent'
+      headerShown: false
+    }
+    if (Mpx.config.rnConfig.disablePageTransition) {
+      navScreenOpts.animation = 'none'
     }
 
     return createElement(SafeAreaProvider,
