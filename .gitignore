@@ -24,3 +24,4 @@ dev-dist
 packages/webpack-plugin/lib/runtime/components/react/dist/
 packages/perf/dist/
 .agent-workflows/
+.agents/skills/mpx/

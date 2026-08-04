@@ -21,6 +21,7 @@
 - [Mpx 运行时导出](#mpx-运行时导出)
   - [默认导出](#默认导出)
   - [命名导出](#命名导出)
+- [运行时性能探针](#运行时性能探针)
 - [Mpx.config.rnConfig](#mpxconfigrnconfig)
 - [全局 API](#全局-api)
 - [环境 API](#环境-api)
@@ -185,7 +186,7 @@
 | `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例。RN 不能像小程序一样按 selector 遍历视图树，须在模板目标节点声明 **空 wx:ref**，由编译期建立 **`#id` / `.class` 与节点**的映射后，本 API 才能按小程序写法解析。 |
 | `selectAllComponents(selector)` | 方法 | 共用 | 取全部匹配实例数组，**RN 侧与 `selectComponent` 相同**：依赖模板 **空 wx:ref** 与编译期 selector 映射，仅支持 **`#id` / `.class`**。 |
 | `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。后续 **`select(selector)`** 等链式调用在 RN 上同样依赖目标节点 **空 wx:ref**，通过编译映射将 `#id` / `.class` 落到真实视图；命中非 virtualHost 自定义组件时，返回该组件实体 host 节点信息。 |
-| `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
+| `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。输出 RN 时应优先使用此实例方法，框架会自动将最近的滚动容器上下文填充为底层工厂方法的第三个参数。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
 | `$refs` | 属性 | 共用 | 模板 **`wx:ref="refName"`** 对应的懒解析访问器（如 `this.$refs.refName`）；**空 wx:ref 不会注册具名 ref**，但与 selector 映射可并存——需按名取子实例时再写 **`wx:ref="refName"`**。 |
 | `$watch` | 方法 | 共用 | 动态创建对数据路径或表达式的侦听，返回用于停止侦听的函数，行为与选项式 `watch` 对齐。 |
 | `$forceUpdate` | 方法 | 共用 | 强制触发视图更新，可传入数据对象参与本次刷新，RN 侧由 `MpxProxy` 与 React 更新调度配合完成。 |
@@ -681,6 +682,53 @@ createComponent({
 #### 注意事项
 
 - **`Mpx.use`** 安装的插件会合并到 **`Mpx` 静态对象**与 **`Mpx.prototype`**，若与业务自定义全局名冲突，可为插件传入 **`prefix` / `postfix`** 选项。
+
+---
+
+## 运行时性能探针
+
+`@mpxjs/perf` 为 Mpx2RN 提供编译期按需开启的三类性能统计。使用前在 `mpx.config.js` 的 `pluginOptions.mpx.plugin.perf` 中设置 `enable` 与 `probes: ['framework', 'user']`；关闭态会通过 DefinePlugin、tree-shaking 与 Terser 消除探针实现和名称字符串。
+
+| API | RN 语义 |
+| --- | --- |
+| `aggrStart(name, useName?)` / `aggrEnd(idOrName)` | 区段聚类统计，输出 count/sum/avg/max。默认数字 id 模式适合高频、嵌套、同名并发；传 `true` 改用 name 配对。 |
+| `traceStart(name, useName?)` / `traceEnd(idOrName, info?)` | 区段序列统计，保存每次开始位置和持续时长，可生成火焰图/瀑布图。默认数字 id 模式；传 `true` 改用 name 配对。 |
+| `mark(name, info?)` | 点序列统计，记录独立、有序的时间线里程碑，同名 mark 不合并。 |
+| `start(options?)` / `end(reporter?)` | 打开/结束录制窗口。`start` 可配置 `markLimit` / `traceLimit`，并自动生成 mark 的 start/end 边界。 |
+| `scope*` / `measure*` | 旧聚类 API 兼容导出，内部复用 `aggr*`；新代码优先使用 `aggr*`。 |
+
+Reporter 签名为 `(aggregates: Map<string, AggrResult>, marks?: MarkTimeline, traces?: TraceTimeline) => void`。正常结束的窗口始终传入 marks 和 traces；后两个参数保持可选，兼容一、二参数 Reporter。
+
+`MarkEvent` 与 `TraceEvent` 都使用 `start` 表示相对录制窗口的毫秒偏移、`timestamp` 表示原始时钟值；TraceEvent 另含 `duration`。两类事件都可保存可选 `info` 引用，调用侧应只传小型、可序列化的诊断字段。mark 和 trace 的默认容量均为 1024，分别用 `start({ markLimit, traceLimit })` 覆盖；trace 未完成区段计入 `incomplete`，容量溢出计入各自 `dropped`。
+
+```ts
+import {
+  start, end, mark,
+  aggrStart, aggrEnd,
+  traceStart, traceEnd
+} from '@mpxjs/perf'
+
+if (__mpx_perf__) start({ traceLimit: 2048 })
+
+let renderId = -1
+let moduleId = -1
+if (__mpx_perf_user__) {
+  renderId = aggrStart('goods:render')
+  moduleId = traceStart('goods:module')
+}
+
+renderGoods()
+
+if (__mpx_perf_user__) {
+  aggrEnd(renderId)
+  traceEnd(moduleId, { module: 'goods' })
+  mark('goods:data-ready', { source: 'cache' })
+}
+
+if (__mpx_perf__) end()
+```
+
+所有调用必须直接置于 `if (__mpx_perf__)`、`if (__mpx_perf_framework__)` 或 `if (__mpx_perf_user__)` 字面量门禁中，确保关闭分组时零残留。聚类 id 模式沿用数组槽位和 free list，适合高频 render；trace/mark 会保留事件对象，只用于有限插桩点和诊断窗口。同名并发、递归或嵌套的 aggr/trace 必须使用默认 id 模式，name 模式后一次 start 会覆盖前一次映射。
 
 ---
 

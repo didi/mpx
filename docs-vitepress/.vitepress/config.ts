@@ -210,6 +210,10 @@ const sidebar: ExtendedSidebar = {
               link: '/api-proxy/base/arrayBufferToBase64',
             },
             {
+              text: 'canIUse',
+              link: '/api-proxy/base/canIUse',
+            },
+            {
               text: '系统',
               collapsed: true,
               items: [
