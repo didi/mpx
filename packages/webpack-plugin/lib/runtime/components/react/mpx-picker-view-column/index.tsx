@@ -66,14 +66,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   })
 
   const { height: pickerH, itemHeight } = wrapperStyle
-  const [itemRawH, setItemRawH] = useState(itemHeight)
+  const [itemRawH, setItemRawH] = useState(Math.round(itemHeight))
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const prevScrollingInfo = useRef({ index: initialIndex, y: 0 })
   const dragging = useRef(false)
   const scrolling = useRef(false)
-  const timerResetPosition = useRef<NodeJS.Timeout | null>(null)
-  const timerScrollTo = useRef<NodeJS.Timeout | null>(null)
-  const timerClickOnce = useRef<NodeJS.Timeout | null>(null)
+  const timerResetPosition = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timerScrollTo = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timerClickOnce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeIndex = useRef(initialIndex)
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
@@ -89,8 +89,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   })
 
   const paddingHeight = useMemo(
-    () => Math.round((pickerH - itemHeight) / 2),
-    [pickerH, itemHeight]
+    () => (pickerH - itemRawH) / 2,
+    [pickerH, itemRawH]
   )
 
   const snapToOffsets = useMemo(
@@ -140,6 +140,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }, [])
 
+  // `contentOffset` prop sets visual position but does not fire scroll events,
+  // so `offsetYShared` (from `useScrollViewOffset`) stays at 0 until the user scrolls.
+  // Directly sync it whenever `itemRawH` is established so wheel animation renders correctly.
+  useEffect(() => {
+    if (!itemRawH || dragging.current || scrolling.current) {
+      return
+    }
+    offsetYShared.value = activeIndex.current * itemRawH
+  }, [itemRawH])
+
   useEffect(() => {
     if (
       !scrollViewRef.current ||
@@ -164,13 +174,20 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }, isIOS ? 0 : 200)
   }, [itemRawH, maxIndex, initialIndex])
 
+  useEffect(() => {
+    const roundedH = Math.round(itemHeight)
+    if (roundedH) {
+      setItemRawH(roundedH)
+    }
+  }, [itemHeight])
+
   const onItemLayout = useCallback((e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
     const roundedH = Math.round(rawH)
-    if (roundedH && roundedH !== itemRawH) {
+    if (roundedH) {
       setItemRawH(roundedH)
     }
-  }, [itemRawH])
+  }, [])
 
   const resetScrollPosition = useCallback((y: number) => {
     if (dragging.current || scrolling.current) {
@@ -293,7 +310,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           key={index}
           item={item}
           index={index}
-          itemHeight={itemHeight}
+          itemHeight={itemRawH}
           visibleCount={visibleCount}
           onItemLayout={onItemLayout}
         />)
@@ -301,7 +318,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           key={index}
           item={item}
           index={index}
-          itemHeight={itemHeight}
+          itemHeight={itemRawH}
           onItemLayout={onItemLayout}
         />)
     })
@@ -346,14 +363,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const renderIndicator = () => (
     <PickerIndicator
-      itemHeight={itemHeight}
+      itemHeight={itemRawH}
       indicatorItemStyle={pickerIndicatorStyle}
     />
   )
 
   const renderMask = () => (
     <PickerMask
-      itemHeight={itemHeight}
+      itemHeight={itemRawH}
       maskContainerStyle={pickerMaskStyle}
     />
   )

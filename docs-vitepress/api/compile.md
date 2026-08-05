@@ -1880,7 +1880,7 @@ module.exports = defineConfig({
 
 ## MpxUnocssBase
 
-Mpx 内置的 unocss preset，继承自 `@unocss/preset-uno`，并额外提供小程序原子类的预设样式，安装示例如下：
+Mpx 内置的 unocss preset，继承自 `@unocss/preset-wind3`，并额外提供小程序原子类的预设样式，安装示例如下：
 
 ```bash
 npm install -D @mpxjs/unocss-base
@@ -1891,11 +1891,11 @@ yarn add -D @mpxjs/unocss-base
 使用示例如下：
 
 ```js
-  // uno.config.js
-  const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
+  // uno.config.mjs
+  import { defineConfig } from 'unocss'
+  import presetMpx from '@mpxjs/unocss-base'
 
-  module.exports = defineConfig({
+  export default defineConfig({
     presets: [
       presetMpx({
         // ...
@@ -1914,10 +1914,10 @@ yarn add -D @mpxjs/unocss-base
 同比换算1rem = 37.5rpx适配小程序
 ```js
   // uno.config.js
-  const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
+  import { defineConfig } from 'unocss'
+  import presetMpx from '@mpxjs/unocss-base'
 
-  module.exports = defineConfig({
+  export default defineConfig({
     presets: [
       presetMpx({
         baseFontSize: 37.5
@@ -1932,10 +1932,10 @@ yarn add -D @mpxjs/unocss-base
 是否生成预设样式
 ```js
   // uno.config.js
-  const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
+  import { defineConfig } from 'unocss'
+  import presetMpx from '@mpxjs/unocss-base'
 
-  module.exports = defineConfig({
+  export default defineConfig({
     presets: [
       presetMpx({
         preflight: true

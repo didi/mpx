@@ -35,6 +35,7 @@ interface WebViewProps {
   binderror?: (event: CommonCallbackEvent) => void
   [x: string]: any
 }
+type WebViewInstance = WebView<any>
 type Listener = (type: string, callback: (e: Event) => void) => () => void
 
 interface PayloadData {
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
   }
 })
 
-const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
+const _WebView = forwardRef<HandlerRef<WebViewInstance, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
   const mpx = global.__mpx
   const errorText: ErrorTextMap = {
@@ -103,7 +104,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const { pageId } = useContext(RouteContext) || {}
   const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
-  const webViewRef = useRef<WebView>(null)
+  const webViewRef = useRef<WebViewInstance>(null)
   const fristLoaded = useRef<boolean>(false)
   const isLoadError = useRef<boolean>(false)
   const isNavigateBack = useRef<boolean>(false)
@@ -128,7 +129,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     isNavigateBack.current = false
   })
 
-  useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
+  useNodesRef<WebViewInstance, WebViewProps>(props, ref, webViewRef, {
     style: defaultWebViewStyle
   })
 

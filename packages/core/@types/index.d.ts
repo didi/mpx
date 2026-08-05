@@ -270,9 +270,101 @@ interface AnyConstructor {
   prototype: any
 }
 
+export interface WebRouteConfig {
+  /**
+   * Web 路由模式。
+   *
+   * @default 'hash'
+   */
+  mode?: 'hash' | 'history' | 'abstract'
+
+  /**
+   * 应用的基路径。
+   */
+  base?: string
+
+  /**
+   * history 模式不可用时是否回退到 hash 模式。
+   *
+   * @default true
+   */
+  fallback?: boolean
+
+  /**
+   * 全局激活链接的 CSS 类名。
+   */
+  linkActiveClass?: string
+
+  /**
+   * 全局精确激活链接的 CSS 类名。
+   */
+  linkExactActiveClass?: string
+
+  /**
+   * 自定义查询字符串解析函数。
+   */
+  parseQuery?: (query: string) => Record<string, any>
+
+  /**
+   * 自定义查询参数序列化函数。
+   */
+  stringifyQuery?: (query: Record<string, any>) => string
+
+  /**
+   * 自定义页面滚动行为。
+   */
+  scrollBehavior?: (
+    to: Record<string, any>,
+    from: Record<string, any>,
+    savedPosition: { x: number; y: number } | null
+  ) => any
+
+  [key: string]: any
+}
+
 export interface WebviewConfig {
+  /**
+   * 允许加载的 H5 域名白名单。
+   */
   hostWhitelists?: Array<string>
-  apiImplementations?: object
+
+  /**
+   * WebView 调用的宿主 API 实现。
+   */
+  apiImplementations?: Record<string, (...args: Array<any>) => any>
+}
+
+export interface WebConfig {
+  /**
+   * Web 路由配置。
+   */
+  routeConfig?: WebRouteConfig
+
+  /**
+   * 是否禁用页面切换动画。
+   *
+   * @deprecated 请使用编译阶段的 webConfig.disablePageTransition。
+   */
+  disablePageTransition?: boolean
+
+  /**
+   * 是否在 Web 输出时启用内置标题栏。
+   *
+   * @default false
+   */
+  enableTitleBar?: boolean
+
+  /**
+   * Android 设备上标题栏顶部安全区的高度，单位为 px。
+   *
+   * @default 24
+   */
+  safeAreaInsetTop?: number
+
+  /**
+   * WebView 宿主能力配置。
+   */
+  webviewConfig?: WebviewConfig
 }
 
 /**
@@ -293,6 +385,13 @@ export interface RnConfig {
    * @param state 当前的导航状态对象
    */
   onStateChange?: (state: Record<string, any>) => void
+
+  /**
+   * 是否禁用页面转场动画。
+   *
+   * @default false
+   */
+  disablePageTransition?: boolean
 
   /**
    * 用于获取初始路由配置的函数。
@@ -319,6 +418,13 @@ export interface RnConfig {
    * 是否禁用框架内部的 AppStateChange 监听。
    */
   disableAppStateListener?: boolean
+
+  /**
+   * RN 导航状态栏是否默认透明。
+   *
+   * @default true
+   */
+  statusBarTranslucent?: boolean
 
   /**
    * RN 文本类组件是否允许跟随系统字体缩放。
@@ -445,14 +551,8 @@ interface MpxConfig {
   proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => void
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => void
   forceFlushSync: boolean,
-  webRouteConfig: object,
-  webConfig: object,
-  /*
-   * 支持两个属性
-   * hostWhitelists Array 类型 支持h5域名白名单安全校验
-   * apiImplementations webview JSSDK接口 例如getlocation
-  */
-  webviewConfig: WebviewConfig,
+  webRouteConfig: WebRouteConfig,
+  webConfig: WebConfig,
   /** react-native 相关配置，用于挂载事件等，如 onShareAppMessage */
   rnConfig: RnConfig,
 }
