@@ -34,7 +34,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 
 | 知识库 | 说明 |
 | --- | --- |
-| [Mpx 单文件组件](./references/single-file-component.md) | Mpx 单文件组件的基本结构与语法，开发任意 `.mpx` 文件前读取 |
+| [项目结构与单文件组件](./references/project-structure-and-single-file-component.md) | Mpx 项目的典型目录、页面与组件注册关系，以及 `.mpx` 单文件组件的基本结构与语法 |
 | [条件编译](./references/conditional-compile.md) | 模板、脚本、样式、JSON 等不同部分的条件编译语法，遇到无法跨端等效实现需分平台处理时读取 |
 | [跨端输出 RN 模板能力参考](./references/rn-template-reference.md) | 模板部分跨端能力详情：数据绑定、模板指令、事件、Slot、WXML 模板、i18n、无障碍访问、基础组件清单及其属性/事件支持情况 |
 | [跨端输出 RN 脚本能力参考](./references/rn-script-reference.md) | 脚本部分跨端能力详情：构造选项、生命周期、实例方法/属性、组合式 API、运行时导出、状态管理 |
@@ -56,7 +56,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
    - 新建 RN 跨端兼容组件：先按本 SKILL.md 的通用约束起手，遇到能力存疑（某属性是否支持、某 API 是否存在）时再点查对应参考。
    - 排查特定编译报错：直接定位到报错维度的能力参考相关小节。
    - 使用或排查原子类：读取 `rn-atomic-css.md`；仅需核对底层样式属性时再补读 `rn-style-reference.md`，不要预读全部样式参考。
-4. **何时读取 `single-file-component.md`**：仅当不熟悉 Mpx SFC 基本结构时读取；已熟悉 SFC 写法可跳过。
+4. **何时读取 `project-structure-and-single-file-component.md`**：仅当不熟悉 Mpx 项目结构、页面与组件注册关系或 SFC 基本结构时读取；已熟悉相关写法可跳过。
 
 ## 通用约束与适配原则
 
