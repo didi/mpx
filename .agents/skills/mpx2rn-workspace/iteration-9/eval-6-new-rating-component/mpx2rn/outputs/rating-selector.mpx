@@ -1,0 +1,157 @@
+<template>
+  <view class="rating-selector">
+    <text class="rating-title">{{ label }}</text>
+    <view class="rating-stars">
+      <view
+        wx:for="{{ starItems }}"
+        wx:key="*this"
+        class="rating-star"
+        wx:class="{{ {'rating-star-selected': item <= displayValue, 'rating-star-readonly': readonly} }}"
+        hover-class="{{ readonly ? 'none' : 'rating-star-pressed' }}"
+        bindtap="handleSelect(item)"
+      >
+        <text class="rating-star-symbol">★</text>
+      </view>
+    </view>
+    <text class="rating-summary">当前 {{ displayValue }} 分 / 总分 {{ normalizedMax }} 分</text>
+    <view class="rating-tip">
+      <component
+        is="{{ tipComponent }}"
+        range="rating-editable-tip,rating-readonly-tip"
+      ></component>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  props: {
+    ratingKey: {
+      type: String,
+      value: ''
+    },
+    value: {
+      type: Number,
+      value: 0
+    },
+    max: {
+      type: Number,
+      value: 5
+    },
+    readonly: {
+      type: Boolean,
+      value: false
+    },
+    label: {
+      type: String,
+      value: '请评分'
+    }
+  },
+  data () {
+    return {
+      currentRating: 0
+    }
+  },
+  computed: {
+    normalizedMax () {
+      return Math.max(0, Math.floor(this.max))
+    },
+    starItems () {
+      return Array.from({ length: this.normalizedMax }, (_, index) => index + 1)
+    },
+    displayValue () {
+      return Math.min(Math.max(this.currentRating, 0), this.normalizedMax)
+    },
+    tipComponent () {
+      return this.readonly ? 'rating-readonly-tip' : 'rating-editable-tip'
+    }
+  },
+  watch: {
+    value: {
+      immediate: true,
+      handler (value) {
+        this.currentRating = value
+      }
+    }
+  },
+  methods: {
+    handleSelect (value) {
+      if (this.readonly) return
+      this.currentRating = value
+      this.triggerEvent('change', {
+        ratingKey: this.ratingKey,
+        value
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.rating-selector {
+  display: flex;
+  flex-direction: column;
+  padding: 28rpx;
+  border-radius: 16rpx;
+  background-color: #ffffff;
+}
+
+.rating-title {
+  color: #222222;
+  font-size: 30rpx;
+  font-weight: bold;
+  line-height: 42rpx;
+}
+
+.rating-stars {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.rating-star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background-color: #f1f2f5;
+  color: #a6abb4;
+}
+
+.rating-star-selected {
+  background-color: #fff4cc;
+  color: #f5a623;
+}
+
+.rating-star-readonly {
+  opacity: 0.72;
+}
+
+.rating-star-pressed {
+  opacity: 0.56;
+}
+
+.rating-star-symbol {
+  font-size: 44rpx;
+  line-height: 56rpx;
+}
+
+.rating-summary {
+  margin-top: 16rpx;
+  color: #626874;
+  font-size: 26rpx;
+  line-height: 36rpx;
+}
+
+.rating-tip {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16rpx;
+}
+</style>

@@ -1,0 +1,25 @@
+{
+  "eval_id": 8,
+  "eval_name": "new-task-board-page",
+  "complexity": "tricky",
+  "focus": "new-page/composition-api/atomic-css",
+  "prompt": "请根据附件中的需求说明，从零创建一个 task-board.mpx 页面。页面需在微信小程序、Web 和 RN（iOS/Android/Harmony）保持一致的功能与布局表现。请将完整的 .mpx 单文件页面写入指定输出路径，不要创建额外业务文件。",
+  "files": ["input/task-board-requirements.md"],
+  "assertions": [
+    {"id": "a0", "text": "结构：输出包含 template、script setup 和页面 JSON，且不包含 style 区块", "category": "structure"},
+    {"id": "a1", "text": "脚本：使用 ref/computed/onLoad 组合式 API，并通过 defineExpose 暴露模板绑定", "category": "script"},
+    {"id": "a2", "text": "脚本：onLoad 在 setup 执行期同步注册，接收并优先使用 decodedQuery.category", "category": "script"},
+    {"id": "a3", "text": "模板：主体使用纵向 scroll-view 承载页面滚动", "category": "template"},
+    {"id": "a4", "text": "功能：渲染带稳定 key 的筛选项和任务列表，并使用 computed 产出筛选结果", "category": "function"},
+    {"id": "a5", "text": "功能：支持切换筛选分类和任务完成状态，并渲染空状态", "category": "function"},
+    {"id": "a6", "text": "模板：事件参数使用内联语法，不使用 data-* 或 dataset", "category": "template"},
+    {"id": "a7", "text": "模板：动态原子类使用 wx:class 完整 token，不在 class 属性或脚本中拼接类名", "category": "template"},
+    {"id": "a8", "text": "模板：Mustache 中不调用普通方法，用户可见文字使用 text 组件显式包裹", "category": "template"},
+    {"id": "a9", "text": "原子 CSS：视觉样式全部使用模板原子类，包含 Flex/间距/颜色/圆角等支持的 utility", "category": "atomic-css"},
+    {"id": "a10", "text": "原子 CSS：半透明颜色使用斜杠 alpha，不使用独立 *-opacity-* 工具类", "category": "atomic-css"},
+    {"id": "a11", "text": "原子 CSS：不使用 RN 不支持的工具类或 variants", "category": "atomic-css"},
+    {"id": "a12", "text": "交互：点击目标使用 hover-class，且不使用 active/focus 等不支持的交互 variant", "category": "interaction"},
+    {"id": "a13", "text": "JSON：导航栏标题为任务看板并设置 disableScroll:true，且不包含 RN 不支持的页面配置", "category": "json"},
+    {"id": "a14", "text": "跨端：不直接调用 wx/my API，也不包含不必要的平台条件分支或 uno.css 手动导入", "category": "cross-platform"}
+  ]
+}

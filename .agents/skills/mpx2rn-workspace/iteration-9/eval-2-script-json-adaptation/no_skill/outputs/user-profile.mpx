@@ -1,0 +1,245 @@
+<template>
+  <view class="profile-page">
+    <view class="user-section">
+      <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+      <view class="user-info">
+        <text class="nickname">{{userInfo.nickName}}</text>
+        <text class="user-id">ID: {{userInfo.userId}}</text>
+      </view>
+    </view>
+    <view class="menu-list">
+      <view
+        class="menu-item"
+        wx:for="{{menuItems}}"
+        wx:key="id"
+        bindtap="onMenuTap(item)"
+      >
+        <text class="menu-label">{{item.label}}</text>
+        <text class="menu-arrow">&gt;</text>
+      </view>
+    </view>
+    <view class="action-section">
+      <view class="btn-logout" bindtap="logout">
+        <text class="btn-text">退出登录</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import {
+  getLocation,
+  getStorageSync,
+  getUserProfile,
+  navigateTo,
+  reLaunch,
+  removeStorageSync,
+  removeTabBarBadge,
+  request,
+  setStorageSync,
+  setTabBarBadge,
+  showModal,
+  showToast
+} from '@mpxjs/api-proxy'
+
+createPage({
+  data: {
+    userInfo: {},
+    menuItems: [
+      { id: 1, label: '我的订单', path: '/pages/orders' },
+      { id: 2, label: '收货地址', path: '/pages/address' },
+      { id: 3, label: '账户设置', path: '/pages/settings' },
+      { id: 4, label: '关于我们', path: '/pages/about' }
+    ],
+    locationInfo: null
+  },
+  onLoad () {
+    this.loadUserInfo()
+    this.getLocation()
+  },
+  onShow () {
+    this.refreshBadge()
+  },
+  onShareTimeline () {
+    return {
+      title: '来看看我的主页',
+      imageUrl: this.userInfo.avatarUrl
+    }
+  },
+  onShareAppMessage () {
+    return {
+      title: '推荐给你这个应用',
+      path: '/pages/index'
+    }
+  },
+  onTabItemTap (item) {
+    if (item.index === 0) {
+      this.refreshData()
+    }
+  },
+  methods: {
+    loadUserInfo () {
+      const cachedInfo = getStorageSync('userInfo')
+      if (cachedInfo) {
+        try {
+          this.userInfo = typeof cachedInfo === 'string' ? JSON.parse(cachedInfo) : cachedInfo
+        } catch (e) {
+          removeStorageSync('userInfo')
+        }
+        return
+      }
+      getUserProfile({
+        desc: '用于展示用户信息',
+        success: (res) => {
+          this.userInfo = res.userInfo
+          setStorageSync('userInfo', JSON.stringify(res.userInfo))
+        },
+        fail: () => {
+          showToast({ title: '获取信息失败', icon: 'none' })
+        }
+      })
+    },
+    getLocation () {
+      getLocation({
+        type: 'gcj02',
+        success: (res) => {
+          this.locationInfo = { lat: res.latitude, lng: res.longitude }
+          setStorageSync('lastLocation', JSON.stringify(this.locationInfo))
+        }
+      })
+    },
+    onMenuTap (item) {
+      navigateTo({ url: item.path })
+    },
+    logout () {
+      showModal({
+        title: '确认退出',
+        content: '确定要退出登录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            removeStorageSync('userInfo')
+            removeStorageSync('token')
+            reLaunch({ url: '/pages/login' })
+          }
+        }
+      })
+    },
+    refreshBadge () {
+      request({
+        url: '/api/user/badge',
+        header: { Authorization: 'Bearer ' + getStorageSync('token') },
+        success: (res) => {
+          if (res.data.orderCount > 0) {
+            setTabBarBadge({
+              index: 2,
+              text: String(res.data.orderCount)
+            })
+          } else {
+            removeTabBarBadge({ index: 2 })
+          }
+        }
+      })
+    },
+    refreshData () {}
+  }
+})
+</script>
+
+<style lang="less">
+.profile-page {
+  flex: 1;
+  padding: 24rpx;
+  background-color: #f5f5f5;
+}
+
+.user-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 32rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  margin-right: 24rpx;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.nickname {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.user-id {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+.menu-list {
+  background-color: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #f0f0f0;
+}
+
+.menu-label {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.menu-arrow {
+  font-size: 28rpx;
+  color: #ccc;
+}
+
+.action-section {
+  margin-top: 40rpx;
+}
+
+.btn-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+}
+
+.btn-text {
+  font-size: 30rpx;
+  color: #ff4d4f;
+}
+</style>
+
+<script type="application/json">
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "个人中心",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 50,
+  "navigationBarBackgroundColor": "#ffffff",
+  "backgroundTextStyle": "dark"
+}
+</script>

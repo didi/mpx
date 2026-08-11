@@ -2,7 +2,7 @@
 name: mpx2rn
 description: Mpx 跨端输出 RN（简称 Mpx2RN 或 Mpx2DRN）的开发适配指南，覆盖模板、脚本、样式、JSON 配置四大维度。当用户进行 Mpx2RN 相关任务时强制调用，包括但不限于：技术方案设计、页面 / 组件的开发迭代、旧项目跨端适配改造、编译和运行时报错排查、Code Review 等。当用户问题不涉及 Mpx2RN 时不应调用，如 Mpx 小程序开发问题，RN 原生开发问题、Mpx2Web 相关问题等。
 metadata:
-  version: "2.11.0"
+  version: "2.12.0"
   author: donghongping
 ---
 
@@ -87,6 +87,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 2. **环境 API**：通过 `@mpxjs/api-proxy` 提供的统一 `mpx.xxx` API 调用环境能力，避免直接使用 `wx.xxx` / `my.xxx`；具体支持范围见 [环境 API 参考](./references/rn-api-reference.md)；如用户通过 `custom` 配置扩充拓展了环境 API 能力，以用户说明为准。
 3. **selector 映射**：脚本中的 `selectComponent` / `selectAllComponents` / `createSelectorQuery` / `createIntersectionObserver` 等 selector API 仅支持 `#id` / `.class`，且对应模板节点须声明空 `wx:ref` 以建立编译期 selector 映射。详见 [逻辑能力参考 · 实例方法与属性](./references/rn-script-reference.md#页面--组件实例方法与属性)。
 4. **保留关键字**：`id` / `dataset` / `data` 是页面/组件实例的保留关键字，任何挂载到实例上的数据 key（包括 `props` / `data` / `computed` / `methods` / `setup return` / `inject` 等）都不得使用这三个名称作为 key，否则会触发 `reserved keyword of miniprogram` 编译期/运行期报错。命名时使用语义化别名（如 `itemId` / `rowData` / `pageData`）替代。
+5. **`<script setup>` 显式暴露**：使用 `<script setup>` 时，顶层绑定不会自动暴露给模板，必须通过 `defineExpose()` 显式声明模板实际使用的数据与方法；不要暴露模板未使用的大型 store、RN 原生对象等无 UI 数据。
 
 
 ### 样式（style）约束
@@ -116,6 +117,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
      
 5. **保留单位注释**：保留原始样式中的 `/*use rpx*/` 与 `/*use px*/` 注释，编译期会据此批量切换样式单位。
 6. **原子 CSS**：项目启用 UnoCSS 或模板使用原子类时，读取 [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md)。只使用 RN preset 与 Mpx2RN 样式编译器共同支持的工具类和 variants；不支持项会作为编译错误且不会进入产物。颜色透明度统一使用 `bg-red-500/50` 等斜杠 alpha 语法，不要使用 `bg-red-500 bg-opacity-50` 等独立 opacity 组合。
+7. **垂直 margin 折叠**：RN 不会像小程序 / Web 普通块级布局那样折叠垂直 margin。适配时先按 [样式开发最佳实践 · 处理垂直 margin 折叠](./references/rn-style-practice.md#处理垂直-margin-折叠) 判断原平台是否发生折叠，不要仅因两个垂直 margin 同时存在就归到单侧；仅对确认发生折叠且同一间距由两侧共同表达的节点，将原平台折叠后的有效间距归到其中一侧，另一侧删除或置 `0`。不满足折叠条件或无法确认时保持原样。
 
 ### JSON 配置约束
 
@@ -183,8 +185,9 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
      ```
 2. **选择器适配改造**：读取 [样式开发最佳实践 · 选择器使用建议](./references/rn-style-practice.md#选择器使用建议)，将 RN 不支持的选择器改造为跨端兼容的单类等效实现，并同步更新 `<template>` 与 `<script>` 中的类名引用。
 3. **样式属性适配改造**：读取 [样式能力参考](./references/rn-style-reference.md) 检查 `<style>`、`<template>`、`<script>` 中所有出现的样式属性的 RN 支持情况；读取 [样式开发最佳实践](./references/rn-style-practice.md) 改造为跨端兼容的等效实现。
-4. **原子类适配改造**：项目已启用 UnoCSS 时，读取 [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md)，检查模板中的工具类、variants、动态类提取与颜色透明度写法；将 RN 不支持的工具类改为支持的原子类组合或普通跨端样式。
-5. **不可兼容部分使用条件编译**：对无法跨端等效实现的选择器、样式属性或原子类，使用 [样式条件编译](./references/conditional-compile.md#样式条件编译) 对**整条规则**进行最小包裹，保留在原平台输出产物中，添加 `todo` 注释记录差异原因。
+4. **垂直间距适配改造**：按 `<template>` 中的实际相邻关系审计垂直 margin，并展开理解 `margin` 简写以及 `margin-top` / `margin-bottom` 长写。先按 [样式开发最佳实践 · 处理垂直 margin 折叠](./references/rn-style-practice.md#处理垂直-margin-折叠) 的反向约束排除 Flex / Grid、浮动、`position: absolute/fixed`、clearance，以及父子关系中的 BFC 与分隔条件；仅当确认原平台会发生 margin 折叠且同一间距由两侧共同表达时，才归到单侧并保留原平台折叠后的有效间距，避免 RN 将两侧数值叠加。不要只检查属性是否受 RN 支持，因为 `margin` 本身受支持但布局语义不同。
+5. **原子类适配改造**：项目已启用 UnoCSS 时，读取 [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md)，检查模板中的工具类、variants、动态类提取与颜色透明度写法；将 RN 不支持的工具类改为支持的原子类组合或普通跨端样式。
+6. **不可兼容部分使用条件编译**：对无法跨端等效实现的选择器、样式属性或原子类，使用 [样式条件编译](./references/conditional-compile.md#样式条件编译) 对**整条规则**进行最小包裹，保留在原平台输出产物中，添加 `todo` 注释记录差异原因。
    - **Good Example (整条规则一并条件编译，避免空选择器)**:
      ```css
      /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
@@ -206,9 +209,6 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 
 按 SFC 各区块逐项核对，并确认条件编译与编译校验已收尾：
 
-**跨平台兼容**
-- [ ] 引入的「RN 支持但原平台不支持」的写法均已通过条件编译限定在 RN 输出；原平台原有写法已用条件编译保留，未因 RN 适配而被替换或删除。
-
 **模板（template）**
 - [ ] `<template>` 中使用的基础组件、属性、事件均在 [模板能力参考](./references/rn-template-reference.md) 标注为 RN 支持，或已通过模板条件编译进行平台隔离；如用户通过 `rnConfig.customBuiltInComponents` 编译配置扩充拓展了基础组件能力，以用户说明为准。
 - [ ] 动态 `class` / `style` 已改造为 `wx:class` / `wx:style` 指令，未在属性值内使用 `{{}}` 拼接。
@@ -218,10 +218,12 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 - [ ] `<script>` 中使用的生命周期、构造选项、实例方法与环境 API 均在 [逻辑能力参考](./references/rn-script-reference.md) 与 [环境 API 参考](./references/rn-api-reference.md) 标注为 RN 支持，或已通过脚本条件编译进行平台隔离；如用户通过 `custom` 配置扩充拓展了环境 API 能力，以用户说明为准。
 - [ ] 平台直连 API（`wx.xxx` / `my.xxx`）已统一替换为 `mpx.xxx`；selector 类 API 仅使用 `#id` / `.class` 写法。
 - [ ] 挂载到实例上的数据 key（`props` / `data` / `computed` / `methods` / `<script setup>` 的 `return` / `inject` 等）均未使用保留关键字 `id` / `dataset` / `data`。
+- [ ] 使用 `<script setup>` 时，模板引用的数据与方法均已通过 `defineExpose()` 显式声明，且未暴露模板未使用的大型 store、RN 原生对象等无 UI 数据。
 
 **样式（style）**
 - [ ] `<style>` 中不存在嵌套选择器写法。
 - [ ] `<style>`、`<template>`、`<script>` 中使用的选择器和样式属性均在 [样式能力参考](./references/rn-style-reference.md) 标注为 RN 支持，或已通过样式条件编译进行平台隔离。
+- [ ] 已按模板顺序检查垂直 margin（含 `margin` 简写），并按节点关系排除 Flex / Grid、浮动、`position: absolute/fixed`、clearance、父子关系中的 BFC 与分隔条件、空块阻断条件；仅将确认在原平台发生折叠的双侧 margin 归到单侧并保留折叠后的有效间距，不满足折叠条件或无法确认的 margin 保持原样。
 - [ ] 项目启用 UnoCSS 时，模板中的工具类与 variants 均在 [原子 CSS 能力参考](./references/rn-atomic-css.md) 标注的 RN 支持范围内；动态类可被静态提取或已加入 `safelist`；颜色透明度未使用独立 `*-opacity-*` 组合。
 - [ ] `/*use rpx*/` / `/*use px*/` 单位注释已保留。
 
@@ -229,6 +231,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 - [ ] `<script type="application/json">` / `<script name="json">` 中使用的字段均在 [JSON 配置参考](./references/rn-json-reference.md) 标注为 RN 支持，或已通过配置条件编译进行平台隔离。
 
 **条件编译**
+- [ ] 引入的「RN 支持但原平台不支持」的写法均已通过条件编译限定在 RN 输出；原平台原有写法已用条件编译保留，未因 RN 适配而被替换或删除。
 - [ ] 不存在大面积连续条件编译，仅最小包裹不兼容片段。
 - [ ] 样式条件编译处理后产物中不存在空选择器。
 - [ ] 各个区块内的条件编译语法都符合规范，不存在误用（如在模板区块中使用 `/* @mpx-if */` 注释语法等）。
@@ -292,7 +295,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 | `--no-ignore-sub-components` | 关闭 | 关闭默认子组件占位策略，递归编译所有子组件 |
 | `--json` | 关闭 | 输出结构化 JSON 结果 |
 
-退出码：`0` 校验通过；`1` 存在编译错误；`2` 运行期异常（如未找到 `@mpxjs/mpx-cli-service`）。
+退出码：`0` 校验通过（无错误、无警告）；`1` 存在编译错误或警告；`2` 运行期异常（如未找到 `@mpxjs/mpx-cli-service`）。
 
 ### 使用示例
 
@@ -315,4 +318,4 @@ node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=io
 node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios --no-ignore-sub-components
 ```
 
-校验失败时按错误的 `category` 字段回到对应任务步骤定位与修正问题，再次运行直至通过。
+校验失败时按错误或警告的 `category` 字段回到对应任务步骤定位与修正问题，再次运行直至无错误、无警告。

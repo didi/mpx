@@ -1,0 +1,19 @@
+{
+  "eval_id": 2,
+  "eval_name": "script-json-adaptation",
+  "complexity": "normal",
+  "focus": "script/json",
+  "prompt": "请对附件中的 user-profile.mpx 页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style/json），不要省略任何内容。",
+  "files": ["input/user-profile.mpx"],
+  "assertions": [
+    {"id": "j0", "text": "脚本：request/navigateTo/showModal/getStorageSync/setStorageSync/removeStorageSync/showToast/reLaunch 等 wx.xxx API 全部替换为 mpx.xxx", "category": "script"},
+    {"id": "j1", "text": "脚本：移除 onShareTimeline 或使用条件编译隔离（RN 不支持）", "category": "script"},
+    {"id": "j2", "text": "脚本：移除 onTabItemTap 或使用条件编译隔离（RN 不支持）", "category": "script"},
+    {"id": "j3", "text": "脚本：使用条件编译隔离 setTabBarBadge/removeTabBarBadge（RN 不支持）", "category": "script"},
+    {"id": "j4", "text": "脚本：隔离或替换 wx.getUserProfile（RN 不支持）", "category": "script"},
+    {"id": "j5", "text": "脚本：不使用 e.target.dataset，事件参数改为内联传递或使用 e.currentTarget.dataset", "category": "script"},
+    {"id": "j7", "text": "JSON：针对 RN 处理 enablePullDownRefresh（RN 页面默认不可滚动）", "category": "json"},
+    {"id": "j8", "text": "模板：移除 data- 属性并使用事件内联传参", "category": "template"},
+    {"id": "j9", "text": "脚本：保留 RN 支持的 onShareAppMessage，不应删除", "category": "script"}
+  ]
+}
