@@ -1,9 +1,12 @@
 const templateCompiler = require('../template-compiler/compiler')
 const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
+const normalize = require('../utils/normalize')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
 const { getWxTemplateComponentName, serializeWxTemplateDefinition, buildWebTemplateImportMergeExpr } = require('./template-shared')
+
+const titleBarPath = normalize.lib('runtime/components/web/mpx-titlebar.vue')
 
 module.exports = function (template, {
   loaderContext,
@@ -159,6 +162,15 @@ module.exports = function (template, {
             imports: importMergeExprs,
             locals
           }
+        }
+
+        // Page 在 web 模式下插入 titlebar 组件
+        if (ctorType === 'page') {
+          builtInComponentsMap['mpx-titlebar'] = {
+            resource: addQuery(titleBarPath, { isComponent: true })
+          }
+          const serialized = templateCompiler.serialize(root)
+          return `<mpx-titlebar :page-config="$options.__mpxPageConfig">${serialized}</mpx-titlebar>`
         }
 
         return templateCompiler.serialize(root)

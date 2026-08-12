@@ -1,7 +1,7 @@
 {
   "name": "@mpxjs/unocss-base",
   "description": "mpx unocss base preset",
-  "version": "2.10.21",
+  "version": "2.11.1",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib"
@@ -15,8 +15,8 @@
     "access": "public"
   },
   "dependencies": {
+    "@unocss/preset-legacy-compat": "^66.0.0",
     "@unocss/preset-mini": "^66.0.0",
-    "@unocss/preset-wind3": "^66.0.0",
-    "@unocss/preset-legacy-compat": "^66.0.0"
+    "@unocss/preset-wind3": "^66.0.0"
   }
 }
