@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, extendObject, useHover, useTextPassThrough } from './utils'
 import { TextPassThroughContextValue } from './context'
 import { error, warn, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
@@ -647,23 +647,21 @@ function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
   return !!(linearInfo?.direction && diagonalAngleMap[linearInfo.direction])
 }
 
-function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
-  const { borderWidth, borderRadius } = innerStyle
-  const borderStyles = ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
-  return pickStyle(innerStyle,
-    borderStyles,
-    borderWidth && borderRadius
-      ? (key, val) => {
-        // 盒子内圆角borderWith与borderRadius的关系
-        // 当borderRadius 小于 当borderWith 内边框为直角
-        // 当borderRadius 大于等于 当borderWith 内边框为圆角
-          if (borderStyles.includes(key)) {
-            const borderVal = +val - borderWidth
-            return borderVal > 0 ? borderVal : 0
-          }
-          return val
-        }
-      : undefined)
+function getInnerBorderRadiusStyle (innerStyle: ExtendedViewStyle = {}) {
+  const { borderWidth } = innerStyle
+  const borderRadiusKeys = ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
+  const result: ExtendedViewStyle = {}
+  borderRadiusKeys.forEach((key) => {
+    if (key in innerStyle) {
+      const val = innerStyle[key]
+      if (borderWidth && !isPercent(val)) {
+        result[key] = Math.max(+val - borderWidth, 0)
+      } else {
+        result[key] = val
+      }
+    }
+  })
+  return result
 }
 
 function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
@@ -778,7 +776,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   }
 
   const backgroundProps: ViewProps = extendObject({ key: 'backgroundImage' }, needLayout ? { onLayout } : {},
-    { style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) }
+    { style: extendObject({}, getInnerBorderRadiusStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) }
   )
 
   return createElement(View, backgroundProps,

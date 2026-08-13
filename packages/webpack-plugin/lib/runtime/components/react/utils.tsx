@@ -484,15 +484,6 @@ export function splitProps<T extends Record<string, any>> (props: T = {} as T): 
   return { textProps, innerProps }
 }
 
-export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
-  return pickedKeys.reduce<Record<string, any>>((acc, key) => {
-    if (key in styleObj) {
-      acc[key] = callback ? callback(key, styleObj[key]) : styleObj[key]
-    }
-    return acc
-  }, {})
-}
-
 // ============================================================
 // style transform pipeline
 // ============================================================
