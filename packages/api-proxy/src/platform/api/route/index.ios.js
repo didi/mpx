@@ -51,7 +51,6 @@ function navigateTo (options = {}) {
       route: finalPath,
       eventChannel
     }
-    navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateTo:ok', eventChannel }
       successHandle(res, options.success, options.complete)
@@ -60,6 +59,7 @@ function navigateTo (options = {}) {
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
+    navigation.push(finalPath, queryObj)
   }
 }
 
@@ -73,7 +73,6 @@ function redirectTo (options = {}) {
     const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
-    navigation.replace(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'redirectTo:ok' }
       successHandle(res, options.success, options.complete)
@@ -82,6 +81,7 @@ function redirectTo (options = {}) {
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
+    navigation.replace(finalPath, queryObj)
   }
 }
 
@@ -125,6 +125,14 @@ function reLaunch (options = {}) {
     const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
+    navigationHelper.lastSuccessCallback = () => {
+      const res = { errMsg: 'redirectTo:ok' }
+      successHandle(res, options.success, options.complete)
+    }
+    navigationHelper.lastFailCallback = (msg) => {
+      const res = { errMsg: `redirectTo:fail ${msg}` }
+      failHandle(res, options.fail, options.complete)
+    }
     navigation.reset({
       index: 0,
       routes: [
@@ -134,14 +142,6 @@ function reLaunch (options = {}) {
         }
       ]
     })
-    navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'redirectTo:ok' }
-      successHandle(res, options.success, options.complete)
-    }
-    navigationHelper.lastFailCallback = (msg) => {
-      const res = { errMsg: `redirectTo:fail ${msg}` }
-      failHandle(res, options.fail, options.complete)
-    }
   }
 }
 
