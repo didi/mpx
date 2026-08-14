@@ -144,6 +144,7 @@ const angleRegExp = /^\s*(-?\d+(?:\.\d+)?)(deg|turn|rad|grad)\b/
 const gradientToRegExp = /^to\b\s*/
 // 入口形态：仅在含 linear-gradient 时走解析；提取括号内内容
 const linearGradientRegExp = /linear-gradient\((.*)\)/
+const svgBase64RegExp = /^data:image\/svg\+xml(?:;[^,;]+)*;base64,/i
 // 顶层逗号切分（忽略 () / # 内部的逗号）
 const topLevelCommaRegExp = /,(?![^(#]*\))/
 // 色标内空白切分（忽略色函数里的逗号边界）
@@ -607,7 +608,7 @@ function parseBgImage (text?: string): {
 
   const src = parseUrl(text)
   if (src) {
-    if (svgRegExp.test(src)) {
+    if (svgRegExp.test(src) || svgBase64RegExp.test(src)) {
       error(`[mpx-view] background-image 暂不支持 SVG 图片，已丢弃，原值: ${text}`)
       return {}
     }
