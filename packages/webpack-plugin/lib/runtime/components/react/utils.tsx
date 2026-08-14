@@ -23,6 +23,19 @@ export const isAndroid = __mpx_mode__ === 'android'
 export const isHarmony = __mpx_mode__ === 'harmony'
 export const extendObject = Object.assign
 
+type ImageLoadEvent = {
+  nativeEvent: {
+    source?: { width: number, height: number }
+    width?: number
+    height?: number
+  }
+}
+
+export function getImageLoadSize (event: ImageLoadEvent) {
+  const { source, width, height } = event.nativeEvent
+  return source || { width: width as number, height: height as number }
+}
+
 const textStyleMap: Record<string, boolean> = {
   color: true,
   letterSpacing: true,
