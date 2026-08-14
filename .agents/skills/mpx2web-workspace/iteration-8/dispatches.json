@@ -1,0 +1,86 @@
+[
+  {
+    "eval_id": 0,
+    "eval_name": "storefront-style-compat",
+    "group": "without_skill",
+    "prompt": "不要读取或使用 mpx2web Skill。\n\n请将附件中的商城首页和商品卡组件适配到 Web，同时保持微信小程序现有交互与视觉不退化。Web 输出后，父页面的 title 和 image 规则污染了商品卡；目标业务 WebView 还会把商品卡中设计为 10px 的币种符号与‘起’字放大到约 12px，造成价格基线错位和卡片宽度变化。请输出修改后的完整首页和商品卡文件，不要省略内容，也不要把该 WebView 的小字号现象描述成所有浏览器的统一限制。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/input/src/pages/home/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/input/src/components/product-card.mpx\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/without_skill/outputs/src/pages/home/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/without_skill/outputs/src/components/product-card.mpx",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/without_skill/outputs"
+  },
+  {
+    "eval_id": 0,
+    "eval_name": "storefront-style-compat",
+    "group": "with_skill",
+    "prompt": "先完整读取并严格使用 Skill。\n\n请将附件中的商城首页和商品卡组件适配到 Web，同时保持微信小程序现有交互与视觉不退化。Web 输出后，父页面的 title 和 image 规则污染了商品卡；目标业务 WebView 还会把商品卡中设计为 10px 的币种符号与‘起’字放大到约 12px，造成价格基线错位和卡片宽度变化。请输出修改后的完整首页和商品卡文件，不要省略内容，也不要把该 WebView 的小字号现象描述成所有浏览器的统一限制。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/input/src/pages/home/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/input/src/components/product-card.mpx\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/with_skill/outputs/src/pages/home/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/with_skill/outputs/src/components/product-card.mpx\n\nSkill：/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web/SKILL.md",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-0-storefront-style-compat/with_skill/outputs"
+  },
+  {
+    "eval_id": 1,
+    "eval_name": "community-publish-bridge",
+    "group": "without_skill",
+    "prompt": "不要读取或使用 mpx2web Skill。\n\n请将附件中的社区动态发布页适配到 Web，并保持微信小程序的位置选择、地图查看、图片选择和发布链路不退化。当前 Web 应用的运行容器、宿主 Bridge、地图 SDK 与媒体 SDK 接入协议尚未确定。请输出修改后的完整 .mpx 文件，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-1-community-publish-bridge/input/src/pages/community/publish.mpx\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-1-community-publish-bridge/without_skill/outputs/src/pages/community/publish.mpx",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-1-community-publish-bridge/without_skill/outputs"
+  },
+  {
+    "eval_id": 1,
+    "eval_name": "community-publish-bridge",
+    "group": "with_skill",
+    "prompt": "先完整读取并严格使用 Skill。\n\n请将附件中的社区动态发布页适配到 Web，并保持微信小程序的位置选择、地图查看、图片选择和发布链路不退化。当前 Web 应用的运行容器、宿主 Bridge、地图 SDK 与媒体 SDK 接入协议尚未确定。请输出修改后的完整 .mpx 文件，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-1-community-publish-bridge/input/src/pages/community/publish.mpx\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-1-community-publish-bridge/with_skill/outputs/src/pages/community/publish.mpx\n\nSkill：/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web/SKILL.md",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-1-community-publish-bridge/with_skill/outputs"
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "member-share-lifecycle",
+    "group": "without_skill",
+    "prompt": "不要读取或使用 mpx2web Skill。\n\n请将附件中的会员邀请活动页适配到 Web，保留微信小程序原有好友分享和朋友圈分享卡片，为 Web 保留业务分享入口，并确保活动规则跳转和邀请数据加载正常。当前业务尚未提供 Web 分享 SDK、宿主 Bridge 或分享协议。请输出修改后的完整 .mpx 文件，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-2-member-share-lifecycle/input/src/pages/member/invite.mpx\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-2-member-share-lifecycle/without_skill/outputs/src/pages/member/invite.mpx",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-2-member-share-lifecycle/without_skill/outputs"
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "member-share-lifecycle",
+    "group": "with_skill",
+    "prompt": "先完整读取并严格使用 Skill。\n\n请将附件中的会员邀请活动页适配到 Web，保留微信小程序原有好友分享和朋友圈分享卡片，为 Web 保留业务分享入口，并确保活动规则跳转和邀请数据加载正常。当前业务尚未提供 Web 分享 SDK、宿主 Bridge 或分享协议。请输出修改后的完整 .mpx 文件，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-2-member-share-lifecycle/input/src/pages/member/invite.mpx\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-2-member-share-lifecycle/with_skill/outputs/src/pages/member/invite.mpx\n\nSkill：/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web/SKILL.md",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-2-member-share-lifecycle/with_skill/outputs"
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "order-center-realtime",
+    "group": "without_skill",
+    "prompt": "不要读取或使用 mpx2web Skill。\n\n请将附件中的订单中心页面、左滑订单组件和物流实时通道组件适配到 Web，同时保持微信小程序现有业务不退化。订单条目在小程序通过 WXS 保持高频左滑性能：最多露出 96px 删除区，滑过一半后展开，否则回弹；touchcancel 必须回弹；有效滑动后不能误触订单详情；多个订单实例手势互不干扰，禁用态不能滑动、打开或删除。Web 下还存在快速切换会员、连续重连或离开页面后，旧物流连接的晚到事件污染当前订单的问题。请保留订单筛选、详情、删除和实时物流更新，输出三个修改后的完整 .mpx 文件，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/input/src/pages/orders/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/input/src/components/swipe-order-item.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/input/src/components/logistics-channel.mpx\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/without_skill/outputs/src/pages/orders/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/without_skill/outputs/src/components/swipe-order-item.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/without_skill/outputs/src/components/logistics-channel.mpx",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/without_skill/outputs"
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "order-center-realtime",
+    "group": "with_skill",
+    "prompt": "先完整读取并严格使用 Skill。\n\n请将附件中的订单中心页面、左滑订单组件和物流实时通道组件适配到 Web，同时保持微信小程序现有业务不退化。订单条目在小程序通过 WXS 保持高频左滑性能：最多露出 96px 删除区，滑过一半后展开，否则回弹；touchcancel 必须回弹；有效滑动后不能误触订单详情；多个订单实例手势互不干扰，禁用态不能滑动、打开或删除。Web 下还存在快速切换会员、连续重连或离开页面后，旧物流连接的晚到事件污染当前订单的问题。请保留订单筛选、详情、删除和实时物流更新，输出三个修改后的完整 .mpx 文件，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/input/src/pages/orders/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/input/src/components/swipe-order-item.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/input/src/components/logistics-channel.mpx\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/with_skill/outputs/src/pages/orders/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/with_skill/outputs/src/components/swipe-order-item.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/with_skill/outputs/src/components/logistics-channel.mpx\n\nSkill：/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web/SKILL.md",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-3-order-center-realtime/with_skill/outputs"
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "campaign-webview-sdk",
+    "group": "without_skill",
+    "prompt": "不要读取或使用 mpx2web Skill。\n\n请将附件中的营销活动页和活动曝光追踪组件适配到 Web，同时保持微信小程序现有活动会场、领券、下单跳转和埋点链路不退化。Web 输出后，快速切换活动或离开页面时偶发旧活动回调覆盖新活动、卸载后继续上报、重复监听，以及嵌入页消息串到错误活动的问题；线上 Web 站点部署在 /mall/ 下，只允许受信任的活动域名通信。请输出修改后的完整页面、组件、应用入口和构建配置，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/input/src/pages/campaign/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/input/src/components/campaign-tracker.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/input/src/app.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/input/vue.config.js\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/without_skill/outputs/src/pages/campaign/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/without_skill/outputs/src/components/campaign-tracker.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/without_skill/outputs/src/app.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/without_skill/outputs/vue.config.js",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/without_skill/outputs"
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "campaign-webview-sdk",
+    "group": "with_skill",
+    "prompt": "先完整读取并严格使用 Skill。\n\n请将附件中的营销活动页和活动曝光追踪组件适配到 Web，同时保持微信小程序现有活动会场、领券、下单跳转和埋点链路不退化。Web 输出后，快速切换活动或离开页面时偶发旧活动回调覆盖新活动、卸载后继续上报、重复监听，以及嵌入页消息串到错误活动的问题；线上 Web 站点部署在 /mall/ 下，只允许受信任的活动域名通信。请输出修改后的完整页面、组件、应用入口和构建配置，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/input/src/pages/campaign/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/input/src/components/campaign-tracker.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/input/src/app.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/input/vue.config.js\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/with_skill/outputs/src/pages/campaign/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/with_skill/outputs/src/components/campaign-tracker.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/with_skill/outputs/src/app.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/with_skill/outputs/vue.config.js\n\nSkill：/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web/SKILL.md",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-4-campaign-webview-sdk/with_skill/outputs"
+  },
+  {
+    "eval_id": 5,
+    "eval_name": "ssr-product-platform",
+    "group": "without_skill",
+    "prompt": "不要读取或使用 mpx2web Skill。\n\n请将附件中的商品详情业务平台适配为部署在 /mall/ 下的 Web SSR，同时保持微信小程序的商品加载、规格切换、加购和相关推荐链路不退化。同一 Node 进程可能并发渲染不同商品，服务端首屏必须等待当前商品及首屏推荐数据且不能串请求；客户端接管同一商品时应复用注水状态，不重复首屏请求，切换到另一商品后仍能正确刷新。推荐组件依赖浏览器曝光 SDK，不能在 SSR 阶段访问 window、document 或静态加载该 SDK，快速切换商品或离开页面时也不能让旧初始化结果继续挂载或上报。请求地址不能写死 localhost。请输出修改后的完整页面、store、service、推荐组件、应用入口和构建配置，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/packageProduct/pages/detail/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/stores/product.js\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/services/product.js\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/components/product-recommendations.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/app.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/vue.config.js\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/without_skill/outputs/src/packageProduct/pages/detail/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/without_skill/outputs/src/stores/product.js\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/without_skill/outputs/src/services/product.js\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/without_skill/outputs/src/components/product-recommendations.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/without_skill/outputs/src/app.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/without_skill/outputs/vue.config.js",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/without_skill/outputs"
+  },
+  {
+    "eval_id": 5,
+    "eval_name": "ssr-product-platform",
+    "group": "with_skill",
+    "prompt": "先完整读取并严格使用 Skill。\n\n请将附件中的商品详情业务平台适配为部署在 /mall/ 下的 Web SSR，同时保持微信小程序的商品加载、规格切换、加购和相关推荐链路不退化。同一 Node 进程可能并发渲染不同商品，服务端首屏必须等待当前商品及首屏推荐数据且不能串请求；客户端接管同一商品时应复用注水状态，不重复首屏请求，切换到另一商品后仍能正确刷新。推荐组件依赖浏览器曝光 SDK，不能在 SSR 阶段访问 window、document 或静态加载该 SDK，快速切换商品或离开页面时也不能让旧初始化结果继续挂载或上报。请求地址不能写死 localhost。请输出修改后的完整页面、store、service、推荐组件、应用入口和构建配置，不要省略内容。\n\n输入文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/packageProduct/pages/detail/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/stores/product.js\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/services/product.js\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/components/product-recommendations.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/src/app.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/input/vue.config.js\n\n输出文件：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/with_skill/outputs/src/packageProduct/pages/detail/index.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/with_skill/outputs/src/stores/product.js\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/with_skill/outputs/src/services/product.js\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/with_skill/outputs/src/components/product-recommendations.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/with_skill/outputs/src/app.mpx\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/with_skill/outputs/vue.config.js\n\nSkill：/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web/SKILL.md",
+    "output_root": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-8/eval-5-ssr-product-platform/with_skill/outputs"
+  }
+]

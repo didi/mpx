@@ -1,0 +1,61 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支直接保留 wx.chooseLocation、wx.openLocation 与 wx.chooseMedia 调用，不以动态方法名或自定义适配器改写小程序能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:121 直接调用 wx.chooseLocation(...); :134 直接调用 wx.openLocation(...); :147 直接调用 wx.chooseMedia(...)，均位于 __mpx_mode__ === 'web' 提前返回后的非 Web 分支。"
+    },
+    {
+      "id": "a1",
+      "text": "仅在 choosePlace、openPlace、choosePhoto 三个方法内为 Web 缺失能力做最小分支，不以通用平台调用层重写请求、路由或提示能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:115-123、:128-140、:141-154 分别只在 choosePlace、openPlace、choosePhoto 内包含 __mpx_mode__ === 'web' 分支；:168-185 的提交链路仍直接使用 mpx.request、mpx.redirectTo、mpx.showToast。"
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择仅保留明确的业务 Bridge 或地图 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:117 注释为“TODO: 待 Web 运行容器、宿主 Bridge 与地图 SDK 协议确定后接入位置选择。”；该 Web 分支仅提示并返回，未声明或调用接入接口。"
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开仅保留明确的业务 Bridge 或地图 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:130 注释为“TODO: 待 Web 运行容器、宿主 Bridge 与地图 SDK 协议确定后接入地图查看。”；该 Web 分支仅提示并返回，未声明或调用接入接口。"
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择仅保留明确的业务 Bridge 或媒体 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:143 注释为“TODO: 待 Web 运行容器、宿主 Bridge 与媒体 SDK 协议确定后接入图片选择。”；该 Web 分支仅提示并返回，未声明或调用接入接口。"
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，不自行采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx 全文件未出现 globalThis、window、document 或 navigator；Web 分支仅保留 TODO 和 mpx.showToast。"
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续使用 mpx.request、mpx.redirectTo、mpx.showToast，不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:168 使用 mpx.request(...); :179 使用 mpx.redirectTo(...); :118、:131、:144、:182 使用 mpx.showToast(...); 全文件未出现 fetch(、location.assign( 或 alert(。"
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:99-108 保留 content、photos、place、topics、selectedTopic、allowComments 状态；:121-153 保留位置和图片选择；:160-165 保留话题与评论开关更新；:171-176 请求提交全部字段，:179 成功后跳转详情页。"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  }
+}

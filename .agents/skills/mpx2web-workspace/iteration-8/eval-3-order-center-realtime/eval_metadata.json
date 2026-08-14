@@ -1,0 +1,69 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "complexity": "complex",
+  "focus": "wxs-web-events/socket-task-race/cross-component-business",
+  "business_scenario": "订单中心左滑删除与实时物流状态更新",
+  "prompt": "请将附件中的订单中心页面、左滑订单组件和物流实时通道组件适配到 Web，同时保持微信小程序现有业务不退化。订单条目在小程序通过 WXS 保持高频左滑性能：最多露出 96px 删除区，滑过一半后展开，否则回弹；touchcancel 必须回弹；有效滑动后不能误触订单详情；多个订单实例手势互不干扰，禁用态不能滑动、打开或删除。Web 下还存在快速切换会员、连续重连或离开页面后，旧物流连接的晚到事件污染当前订单的问题。请保留订单筛选、详情、删除和实时物流更新，输出三个修改后的完整 .mpx 文件，不要省略内容。",
+  "files": [
+    "input/src/pages/orders/index.mpx",
+    "input/src/components/swipe-order-item.mpx",
+    "input/src/components/logistics-channel.mpx"
+  ],
+  "outputs": [
+    "src/pages/orders/index.mpx",
+    "src/components/swipe-order-item.mpx",
+    "src/components/logistics-channel.mpx"
+  ],
+  "preserves_cases": [
+    "iteration-4/eval-2-dynamic-event-wxs",
+    "iteration-4/eval-4-socket-task"
+  ],
+  "assertions": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "category": "cross-platform-regression"
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "category": "web-template"
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "category": "web-script"
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 回弹，滑动后抑制一次合成 tap，禁用态阻止选择和删除",
+      "category": "web-interaction"
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "category": "web-api"
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "category": "web-concurrency"
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "category": "web-concurrency"
+    },
+    {
+      "id": "r7",
+      "text": "发送前同时校验任务身份与 readyState === task.OPEN",
+      "category": "web-concurrency"
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "category": "business-regression"
+    }
+  ]
+}

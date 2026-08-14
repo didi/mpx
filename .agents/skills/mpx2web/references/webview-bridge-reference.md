@@ -87,7 +87,7 @@ import mpx from '@mpxjs/core'
 mpx.config.webConfig = {
   ...mpx.config.webConfig,
   webviewConfig: {
-    hostWhitelists: ['h5.example.com'],
+    hostWhitelists: ['https://h5.example.com'],
     apiImplementations: {
       async getSession () {
         return {
@@ -101,11 +101,21 @@ mpx.config.webConfig = {
 
 配置说明：
 
-- `hostWhitelists`：限制 iframe 可加载的 host，同时限制宿主接收消息的 `event.origin`；空数组表示不启用名单限制。
+- `hostWhitelists`：限制 iframe 可加载的 origin，同时限制宿主接收消息的 `event.origin`；空数组表示不启用名单限制。运行时当前对完整 origin 执行 `endsWith(item)`，因此条目使用含协议的完整可信 origin，例如 `https://h5.example.com`，不要只写 `h5.example.com`。裸 host 会让 `https://evilh5.example.com` 之类的相似域名也通过后缀匹配。
 - `apiImplementations`：注册 iframe 可通过 `invoke(name, options)` 调用的业务方法。实现可以返回普通值或 Promise。
 - 导航方法 `navigateTo`、`navigateBack`、`redirectTo`、`switchTab`、`reLaunch` 已由内建 WebView 处理，无需重复注册。
 
 只暴露嵌入页确实需要的最小 API，不要通过桥接返回长期凭证、隐私数据或任意执行能力。
+
+单向业务 `postMessage` 优先绑定 `<web-view bindmessage="handleMessage">`，让内建组件先完成白名单与 `clientUid` 实例隔离，再在页面处理器中校验当前业务主键。不要为了接收同一批消息再注册一套 `window.addEventListener('message', ...)`。
+
+只有内建 `bindmessage` 无法覆盖的独立协议才额外监听全局 `message`。此时处理副作用前同时校验：
+
+- `event.origin` 严格等于预期的完整 origin；
+- `event.source` 严格等于当前目标 iframe 的 `contentWindow`；
+- 消息携带的活动 ID、商品 ID 等业务身份严格等于当前页面状态。
+
+只校验 origin 和业务 ID 仍不足以区分同源的多个 iframe。若业务代码无法可靠取得当前 iframe 的 `contentWindow`，应调整协议走内建 `bindmessage`，而不是省略 source 校验。
 
 ---
 
@@ -152,7 +162,8 @@ webviewBridge.offLoadScriptError(handleLoadError)
 
 ## 安全与排查
 
-- `hostWhitelists` 当前使用 host 后缀匹配。配置完整可信域名并避免过宽后缀，同时结合服务端 CSP、鉴权和来源校验。
+- `hostWhitelists` 当前对完整 origin 使用后缀匹配。配置含协议的完整可信 origin，避免裸 host 或过宽后缀，同时结合服务端 CSP、鉴权和来源校验。
+- 单向业务消息优先通过内建 `web-view bindmessage` 接收；额外的全局 `message` 监听必须校验精确 origin、当前 iframe source 和当前业务身份。
 - bridge 向父页面发送消息时使用 `*` 作为目标来源，安全边界主要依赖宿主侧白名单与业务 API 权限控制；不要在不可信父页面中暴露敏感桥接能力。
 - 目标站点还需允许 iframe 嵌入，检查 CSP `frame-ancestors` 与 `X-Frame-Options`。
 - 自定义 API 无响应时，依次检查 `mpx_webview_id`、`clientUid`、消息 `type`、`callbackId` 和 `apiImplementations` 注册名称。

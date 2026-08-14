@@ -1,0 +1,53 @@
+{
+  "eval_id": 2,
+  "eval_name": "member-share-lifecycle",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "s0",
+      "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "passed": true,
+      "evidence": "非 Web 条件分支保留 open-type=\"share\" 按钮，以及 onShareAppMessage、onShareTimeline。"
+    },
+    {
+      "id": "s1",
+      "text": "Web 通过 implement(remove: true) 移除没有浏览器触发源的分享生命周期",
+      "passed": false,
+      "evidence": "候选代码未出现 implement(remove: true) 或等效的生命周期移除实现。"
+    },
+    {
+      "id": "s2",
+      "text": "Web 分享入口绑定独立的页面实例方法",
+      "passed": true,
+      "evidence": "Web 按钮使用 bindtap@web=\"shareOnWeb\"，且 methods 中定义了 shareOnWeb。"
+    },
+    {
+      "id": "s3",
+      "text": "Web 分享方法只保留明确的业务 SDK 或 Bridge TODO",
+      "passed": false,
+      "evidence": "shareOnWeb 直接调用 mpx.showToast，未见业务 SDK 调用或 Bridge TODO。"
+    },
+    {
+      "id": "s4",
+      "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "passed": true,
+      "evidence": "候选代码未出现 navigator.share、clipboard 或复制链接逻辑。"
+    },
+    {
+      "id": "s5",
+      "text": "详情跳转与请求使用 Mpx/api-proxy 统一入口，不直接调用 wx",
+      "passed": true,
+      "evidence": "fetchInviteSummary 使用 mpx.request，openCampaignDetail 使用 mpx.navigateTo；未直接调用 wx 进行请求或跳转。"
+    },
+    {
+      "id": "s6",
+      "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "passed": true,
+      "evidence": "保留邀请进度与 computed 百分比、campaign.rewards 阶梯渲染、invitees 最近邀请列表及空态。"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "total": 7
+  }
+}

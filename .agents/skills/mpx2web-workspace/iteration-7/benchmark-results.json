@@ -1,0 +1,22 @@
+{
+  "skill_name": "mpx2web",
+  "iteration": 7,
+  "isolation": {
+    "inherited_conversation": false,
+    "ephemeral_sessions": true,
+    "no_skill_read_skill": false
+  },
+  "results": [
+    { "configuration": "no_skill", "functional_passed": 8, "functional_total": 8, "passed": 8, "total": 9, "pass_rate": 0.8889, "total_tokens": 54575 },
+    { "configuration": "has_skill", "functional_passed": 8, "functional_total": 8, "passed": 9, "total": 9, "pass_rate": 1.0, "total_tokens": 40649 }
+  ],
+  "summary": {
+    "pass_rate_delta": 0.1111,
+    "token_delta": -13926
+  },
+  "analysis": [
+    "两组 Web 功能断言均为 8/8。",
+    "no_skill 删除 WXS 并让小程序 touchmove 进入逻辑线程，未保留原高频跟手路径；has_skill 保留 @wx WXS 并成对补齐 @web 实例方法。",
+    "has_skill 比 no_skill 少使用 13926 tokens，本轮同时改善质量与搜索成本。"
+  ]
+}

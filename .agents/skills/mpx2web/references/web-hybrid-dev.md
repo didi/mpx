@@ -41,6 +41,35 @@ createComponent({
 
 如果 SDK 需要容器节点，当前按 `../mpx2rn` 公共部分中的节点访问规则在客户端挂载后获取；未来替换为 mpx base skill。SDK 配置、密钥、回调域名、跨域和 CSP 仍需按 Web 安全要求处理。
 
+### 异步初始化与卸载清理
+
+动态 `import()` 和 SDK 自身初始化都可能在组件卸载后才完成。在每个异步边界后
+检查组件是否已卸载；卸载时销毁 SDK 实例、Observer 和事件监听。
+
+```js
+createComponent({
+  async ready () {
+    if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+    this.sdkDetached = false
+    const { default: sdk } = await import('third-party-h5-sdk')
+    if (this.sdkDetached) return
+    const instance = await sdk.init({})
+    if (this.sdkDetached) {
+      instance.destroy && instance.destroy()
+      return
+    }
+    this.sdkInstance = instance
+  },
+  detached () {
+    this.sdkDetached = true
+    if (this.sdkInstance && this.sdkInstance.destroy) this.sdkInstance.destroy()
+    if (this.resizeObserver) this.resizeObserver.disconnect()
+  }
+})
+```
+
+不要只处理顶层静态引入，还要处理快速切页、异步返回晚于卸载和重复进入造成的资源泄漏。
+
 ---
 
 ## Vue 生态组件

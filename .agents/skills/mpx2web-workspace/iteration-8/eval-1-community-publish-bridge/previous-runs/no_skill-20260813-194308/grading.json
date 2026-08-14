@@ -1,0 +1,61 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支直接保留 wx.chooseLocation、wx.openLocation 与 wx.chooseMedia 调用，不以动态方法名或自定义适配器改写小程序能力",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx：静态硬约束未通过：缺少直接调用 wx.chooseLocation；缺少直接调用 wx.openLocation；缺少直接调用 wx.chooseMedia。"
+    },
+    {
+      "id": "a1",
+      "text": "仅在 choosePlace、openPlace、choosePhoto 三个方法内为 Web 缺失能力做最小分支，不以通用平台调用层重写请求、路由或提示能力",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:93-164 定义了通用 getWebBridge、invoke、callPlatform，并重写 showToast、request、redirectTo；Web 分支不只存在于三个指定方法内。"
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择仅保留明确的业务 Bridge 或地图 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx：静态硬约束未通过：缺少位置选择的 Bridge 或地图 SDK 接入 TODO。"
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开仅保留明确的业务 Bridge 或地图 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx：静态硬约束未通过：缺少地图查看的 Bridge 或地图 SDK 接入 TODO。"
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择仅保留明确的业务 Bridge 或媒体 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx：静态硬约束未通过：缺少图片选择的 Bridge 或媒体 SDK 接入 TODO。"
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，不自行采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx：静态硬约束未通过：发现自行访问浏览器全局对象或在其上虚构接入协议。"
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续使用 mpx.request、mpx.redirectTo、mpx.showToast，不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx：静态硬约束未通过：缺少使用 mpx.request；缺少使用 mpx.redirectTo；缺少使用 mpx.showToast；发现自行用 fetch、location.assign 或 alert 重实现已有能力。"
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:9-35 提供内容和图片输入；39-56 提供位置选择与地图查看；63-65 提供话题选择；73-74 提供评论开关；231-242 提交 content、photos、place、topicId、allowComments，并在成功后调用 redirectToDetail(data.id)。"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 7,
+    "total": 8,
+    "pass_rate": 0.125
+  }
+}

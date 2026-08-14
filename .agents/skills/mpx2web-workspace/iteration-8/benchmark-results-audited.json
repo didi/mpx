@@ -1,0 +1,66 @@
+{
+  "skill_name": "mpx2web",
+  "iteration": 8,
+  "grading_mode": "existing independent grades with deterministic regression overrides",
+  "source_results": "benchmark-results.json",
+  "results": [
+    {"eval_id": 0, "eval_name": "storefront-style-compat", "configuration": "no_skill", "passed": 4, "total": 8, "pass_rate": 0.5},
+    {"eval_id": 0, "eval_name": "storefront-style-compat", "configuration": "has_skill", "passed": 8, "total": 8, "pass_rate": 1.0},
+    {"eval_id": 1, "eval_name": "community-publish-bridge", "configuration": "no_skill", "passed": 1, "total": 8, "pass_rate": 0.125},
+    {"eval_id": 1, "eval_name": "community-publish-bridge", "configuration": "has_skill", "passed": 8, "total": 8, "pass_rate": 1.0},
+    {"eval_id": 2, "eval_name": "member-share-lifecycle", "configuration": "no_skill", "passed": 5, "total": 7, "pass_rate": 0.7143},
+    {"eval_id": 2, "eval_name": "member-share-lifecycle", "configuration": "has_skill", "passed": 7, "total": 7, "pass_rate": 1.0},
+    {"eval_id": 3, "eval_name": "order-center-realtime", "configuration": "no_skill", "passed": 7, "total": 9, "pass_rate": 0.7778},
+    {"eval_id": 3, "eval_name": "order-center-realtime", "configuration": "has_skill", "passed": 9, "total": 9, "pass_rate": 1.0},
+    {"eval_id": 4, "eval_name": "campaign-webview-sdk", "configuration": "no_skill", "passed": 4, "total": 9, "pass_rate": 0.4444},
+    {"eval_id": 4, "eval_name": "campaign-webview-sdk", "configuration": "has_skill", "passed": 7, "total": 9, "pass_rate": 0.7778},
+    {"eval_id": 5, "eval_name": "ssr-product-platform", "configuration": "no_skill", "passed": 6, "total": 8, "pass_rate": 0.75},
+    {"eval_id": 5, "eval_name": "ssr-product-platform", "configuration": "has_skill", "passed": 8, "total": 8, "pass_rate": 1.0}
+  ],
+  "totals": {
+    "no_skill": {"passed": 27, "total": 49, "pass_rate": 0.551},
+    "has_skill": {"passed": 47, "total": 49, "pass_rate": 0.9592}
+  },
+  "deterministic_corrections": [
+    {
+      "eval_id": 3,
+      "configuration": "no_skill",
+      "assertion_id": "r1",
+      "previous": true,
+      "audited": false,
+      "reason": "无平台后缀的三元表达式仍混入 WXS 函数对象，不是显式 @wx/@web 配对。"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "has_skill",
+      "assertion_id": "h1",
+      "previous": true,
+      "audited": false,
+      "reason": "运行时按 origin.endsWith(item) 匹配，裸域名 campaign.example.com 不能满足精确来源要求。"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "has_skill",
+      "assertion_id": "h8",
+      "previous": false,
+      "audited": true,
+      "reason": "Web bindmessage 在业务分发前严格校验当前 campaignId；断言不应扩展要求微信小程序改变既有协议。"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "no_skill",
+      "assertion_id": "p2",
+      "previous": true,
+      "audited": false,
+      "reason": "新 ID 请求在 await 前未更新 productId 或 loaded；A→B→A 时第三次调用误复用 A 且不推进 requestId，B 的晚到结果仍会覆盖 A。"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "no_skill",
+      "assertion_id": "p7",
+      "previous": true,
+      "audited": false,
+      "reason": "onLoad 仅在 window 存在时加载商品，导致微信小程序路径被跳过。"
+    }
+  ]
+}

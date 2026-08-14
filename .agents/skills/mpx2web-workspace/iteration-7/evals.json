@@ -1,0 +1,9 @@
+[
+  {
+    "id": "eval-2-dynamic-event-wxs",
+    "name": "WXS 高频滑动事件适配",
+    "task": "商品条目在小程序中可以跟手左滑，最多露出 96px 操作区，滑过一半后松手保持展开，否则回弹；禁用态不能滑动、选择或删除，删除按钮也不会触发条目选择。输出到 Web 后滑动手势失效。请完成 Web 跨端适配并保留上述交互及小程序兼容性。",
+    "inputs": ["../iteration-4/eval-2-dynamic-event-wxs/input/slider-item.mpx"],
+    "outputs": ["slider-item.mpx"]
+  }
+]

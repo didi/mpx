@@ -84,7 +84,7 @@ mpx.use(apiProxy, {
 
 ### 支持范围
 
-本文展开说明的 API 可在 Web 使用。未在本文列出的 `mpx.xxx` API，默认按 Web 不支持处理；如能力存疑，应扫描 `@mpxjs/api-proxy` Web 侧源码确认。需要时提供 Web-only 替代方案，或使用 `custom.web` 扩展。
+本文展开说明的 API 可在 Web 使用。未在本文列出的 `mpx.xxx` API，默认按 Web 不支持处理；业务未指定 Web 实现时预留 TODO。
 
 ### 浏览器与 SSR
 
@@ -116,7 +116,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-同步将 `ArrayBuffer` 或可逐字节遍历的二进制数据编码为 Base64 字符串。
+Web 下暂不要使用该 API 处理标准 `ArrayBuffer`；跨端编码需求使用业务已验证的统一方案。
 
 #### 返回值
 
@@ -199,7 +199,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-同步获取**最近一次进入应用或回到前台**时的启动参数，与冷启动参数可能不同。
+同步返回应用创建时根据初始 Web 路由合成的进入参数。Web 不区分冷启动与热启动，应用恢复可见时不会更新该对象；当前返回值与 `getLaunchOptionsSync()` 相同。
 
 #### 入参
 
@@ -212,13 +212,10 @@ mpx.use(apiProxy, {
 | 字段名 | 类型 | 说明 |
 | --- | --- | --- |
 | `path` | `string` | 打开的页面路径或路由名。 |
-| `scene` | `number` | 场景值。 |
+| `scene` | `number` | 固定为 `0`。 |
 | `query` | `Object` | 查询参数键值对。 |
-| `shareTicket` | `string` | 分享票据。 |
-| `referrerInfo` | `Object` | 来源信息。 |
-| `apiCategory` | `string` | API 类目等。 |
-| `chatType` | `number` | 聊天场景枚举。 |
-| （其余） | - | 随启动场景变化的其他字段。 |
+| `shareTicket` | `string` | 固定为空字符串。 |
+| `referrerInfo` | `Object` | 固定为空对象。 |
 
 ---
 
@@ -226,7 +223,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-同步获取**应用冷启动**时的参数。
+同步返回应用创建时根据初始 Web 路由合成的启动参数。该结果不代表小程序冷启动场景，当前返回值与 `getEnterOptionsSync()` 相同。
 
 #### 入参
 
@@ -239,13 +236,10 @@ mpx.use(apiProxy, {
 | 字段名 | 类型 | 说明 |
 | --- | --- | --- |
 | `path` | `string` | 启动进入的页面路径或路由名。 |
-| `scene` | `number` | 场景值。 |
+| `scene` | `number` | 固定为 `0`。 |
 | `query` | `Object` | 查询参数键值对。 |
-| `shareTicket` | `string` | 分享票据。 |
-| `referrerInfo` | `Object` | 来源信息。 |
-| `apiCategory` | `string` | API 类目等。 |
-| `chatType` | `number` | 聊天场景枚举。 |
-| （其余） | - | 随启动场景变化的其他字段。 |
+| `shareTicket` | `string` | 固定为空字符串。 |
+| `referrerInfo` | `Object` | 固定为空对象。 |
 
 ---
 
@@ -843,7 +837,7 @@ Web 不支持。
 
 #### 返回值
 
-返回 **`Animation`** 实例；链式方法与 `export()` 以 Web 实现为准。带 `rpx` 的动画配置应在客户端使用。
+返回 **`Animation`** 实例，链式配置后调用 `export()` 导出动画数据。带 `rpx` 的动画配置应在客户端使用。
 
 ---
 
@@ -871,7 +865,7 @@ Web 不支持。
 
 ##### 说明
 
-监听窗口尺寸变化。Web 返回的是屏幕尺寸，不是文档视口尺寸。
+监听浏览器窗口的 `resize` 事件。当前回调返回屏幕尺寸，不等同于变化后的页面视口尺寸；需要视口宽高时读取 `getWindowInfo()` 或 DOM 视口尺寸。
 
 ##### 入参
 
@@ -893,7 +887,7 @@ Web 不支持。
 
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `callback` | `function` | 是 | 与注册时相同的函数引用。 |
+| `callback` | `function` | 否 | 传入时取消对应监听；不传时取消全部监听。 |
 
 ##### 返回值
 
@@ -942,6 +936,8 @@ Web 下不提供 `cookies`、`profile`、`exception` 字段。
 返回 `SocketTask`。
 
 Web 不支持全局 `sendSocketMessage`、`closeSocket`、`onSocketOpen`、`onSocketError`、`onSocketMessage`、`onSocketClose`，请使用 `SocketTask` 对应方法。
+
+组件允许重连或切换会话时，不要只覆盖 `this.socketTask`：每组回调捕获本次创建的任务，并在修改状态、派发消息或报告错误前确认它仍是当前任务。替换和卸载时先保存旧任务、清空当前任务身份，再关闭旧任务；创建新任务后才将其设为当前任务。发送时读取当前任务，并同时检查它仍存在且 `task.readyState === task.OPEN`。这样旧任务晚到的 `open/message/error/close` 不会修改新连接状态或继续派发消息。
 
 ---
 
@@ -1174,7 +1170,7 @@ Web 下仅支持 `urls` 和 `current` 字段。
 
 `requestBackgroundPlayback`、`exitBackgroundPlayback`、`exitPictureInPicture`、`sendDanmu` 在 Web 下不生效。全屏效果受浏览器支持与用户手势策略限制。
 
-`compressImage`、`chooseMedia` 和 `chooseImage` 在 Web 下不可用。
+`compressImage`、`chooseMedia` 和 `chooseImage` 在 Web 下不可用；未指定替代方案时预留 TODO。
 
 ---
 
@@ -1188,9 +1184,9 @@ Web 下仅支持 `urls` 和 `current` 字段。
 | --- | --- | --- | --- |
 | `isHighAccuracy` | `boolean` | `false` | 是否使用高精度定位。 |
 
-Web 下不提供 `horizontalAccuracy`、`verticalAccuracy`；`speed` 不建议作为真实移动速度使用。
+Web 下不提供 `horizontalAccuracy`、`verticalAccuracy`；`speed` 来自浏览器定位结果，浏览器无法提供时可能为 `null`。
 
-`openLocation`、`chooseLocation`、`onLocationChange`、`offLocationChange`、`startLocationUpdate`、`stopLocationUpdate` 在 Web 下不支持。
+`openLocation`、`chooseLocation`、`onLocationChange`、`offLocationChange`、`startLocationUpdate`、`stopLocationUpdate` 在 Web 下不支持；未指定替代方案时预留 TODO。
 
 ---
 
@@ -1198,8 +1194,8 @@ Web 下不提供 `horizontalAccuracy`、`verticalAccuracy`；`speed` 不建议�
 
 ### getNetworkType
 
-获取当前网络类型。浏览器无法识别时返回 `unknown`。
+获取浏览器报告的网络类型。当前结果未完全归一为微信小程序枚举，可能出现浏览器 `effectiveType` 的值；跨端业务不要直接按微信枚举分支。
 
 ### onNetworkStatusChange / offNetworkStatusChange
 
-监听或取消监听网络连接状态变化。不同浏览器能够提供的网络类型精度不同，无法识别时按未知网络处理。
+监听或取消监听网络连接状态变化。不同浏览器能够提供的网络类型精度不同；当前 `networkType` 未完全归一为微信小程序枚举，跨端业务优先使用 `isConnected` 判断连接状态。

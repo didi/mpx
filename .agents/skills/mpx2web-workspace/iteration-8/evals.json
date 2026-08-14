@@ -1,0 +1,433 @@
+{
+  "skill_name": "mpx2web",
+  "iteration": 8,
+  "evals": [
+    {
+      "id": 0,
+      "name": "storefront-style-compat",
+      "prompt": "请将附件中的商城首页和商品卡组件适配到 Web，同时保持微信小程序现有交互与视觉不退化。Web 输出后，父页面的 title 和 image 规则污染了商品卡；目标业务 WebView 还会把商品卡中设计为 10px 的币种符号与‘起’字放大到约 12px，造成价格基线错位和卡片宽度变化。请输出修改后的完整首页和商品卡文件，不要省略内容，也不要把该 WebView 的小字号现象描述成所有浏览器的统一限制。",
+      "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
+      "files": [
+        "eval-0-storefront-style-compat/input/src/pages/home/index.mpx",
+        "eval-0-storefront-style-compat/input/src/components/product-card.mpx"
+      ],
+      "outputs": [
+        "src/pages/home/index.mpx",
+        "src/components/product-card.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "w0",
+          "text": "商品卡在 Web 使用 scoped 隔离组件样式",
+          "category": "web-style"
+        },
+        {
+          "id": "w1",
+          "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+          "category": "web-style"
+        },
+        {
+          "id": "w2",
+          "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+          "category": "cross-platform-regression"
+        },
+        {
+          "id": "w3",
+          "text": "小程序保留币种与单位的原始 10px 字号",
+          "category": "cross-platform-regression"
+        },
+        {
+          "id": "w4",
+          "text": "WebView 小字号补偿使用较大基础字号配合 scale，还原视觉字号",
+          "category": "web-style"
+        },
+        {
+          "id": "w5",
+          "text": "WebView 缩放补偿设置 transform-origin 并校正布局占位",
+          "category": "web-style"
+        },
+        {
+          "id": "w6",
+          "text": "小字号补偿仅隔离在 Web 输出",
+          "category": "conditional-compile"
+        },
+        {
+          "id": "w7",
+          "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+          "category": "business-regression"
+        }
+      ],
+      "complexity": "normal",
+      "focus": "web-style-isolation/webview-small-font",
+      "fixture_digest": "04fa9418a5cca388be1eda5265950298e4da3a1cbe25ea413a00a47fec12b9c9"
+    },
+    {
+      "id": 1,
+      "name": "community-publish-bridge",
+      "prompt": "请将附件中的社区动态发布页适配到 Web，并保持微信小程序的位置选择、地图查看、图片选择和发布链路不退化。当前 Web 应用的运行容器、宿主 Bridge、地图 SDK 与媒体 SDK 接入协议尚未确定。请输出修改后的完整 .mpx 文件，不要省略内容。",
+      "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
+      "files": [
+        "eval-1-community-publish-bridge/input/src/pages/community/publish.mpx"
+      ],
+      "outputs": [
+        "src/pages/community/publish.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "a0",
+          "text": "非 Web 分支直接保留 wx.chooseLocation、wx.openLocation 与 wx.chooseMedia 调用，不以动态方法名或自定义适配器改写小程序能力",
+          "category": "cross-platform-regression",
+          "required_patterns": [
+            {
+              "pattern": "wx\\.chooseLocation\\s*\\(",
+              "description": "直接调用 wx.chooseLocation"
+            },
+            {
+              "pattern": "wx\\.openLocation\\s*\\(",
+              "description": "直接调用 wx.openLocation"
+            },
+            {
+              "pattern": "wx\\.chooseMedia\\s*\\(",
+              "description": "直接调用 wx.chooseMedia"
+            }
+          ]
+        },
+        {
+          "id": "a1",
+          "text": "仅在 choosePlace、openPlace、choosePhoto 三个方法内为 Web 缺失能力做最小分支，不以通用平台调用层重写请求、路由或提示能力",
+          "category": "conditional-compile"
+        },
+        {
+          "id": "a2",
+          "text": "Web 位置选择仅保留明确的业务 Bridge 或地图 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+          "category": "web-api",
+          "required_patterns": [
+            {
+              "pattern": "TODO[^\\n]*(?:Bridge|地图 SDK)[^\\n]*位置选择",
+              "description": "位置选择的 Bridge 或地图 SDK 接入 TODO"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "text": "Web 地图打开仅保留明确的业务 Bridge 或地图 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+          "category": "web-api",
+          "required_patterns": [
+            {
+              "pattern": "TODO[^\\n]*(?:Bridge|地图 SDK)[^\\n]*地图查看",
+              "description": "地图查看的 Bridge 或地图 SDK 接入 TODO"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "text": "Web 媒体选择仅保留明确的业务 Bridge 或媒体 SDK 接入 TODO，在协议未确定前不声明或调用虚构接口",
+          "category": "web-api",
+          "required_patterns": [
+            {
+              "pattern": "TODO[^\\n]*(?:Bridge|媒体 SDK)[^\\n]*图片选择",
+              "description": "图片选择的 Bridge 或媒体 SDK 接入 TODO"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "text": "未提供 Web 接入协议时，不自行采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现",
+          "category": "web-api",
+          "forbidden_patterns": [
+            {
+              "pattern": "\\b(?:globalThis|window|document|navigator)\\b",
+              "description": "自行访问浏览器全局对象或在其上虚构接入协议"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "text": "Web 已支持的请求、路由和提示继续使用 mpx.request、mpx.redirectTo、mpx.showToast，不用 fetch、location.assign、alert 或自定义包装重新实现",
+          "category": "web-api",
+          "required_patterns": [
+            {
+              "pattern": "mpx\\.request\\s*\\(",
+              "description": "使用 mpx.request"
+            },
+            {
+              "pattern": "mpx\\.redirectTo\\s*\\(",
+              "description": "使用 mpx.redirectTo"
+            },
+            {
+              "pattern": "mpx\\.showToast\\s*\\(",
+              "description": "使用 mpx.showToast"
+            }
+          ],
+          "forbidden_patterns": [
+            {
+              "pattern": "(?:\\bfetch\\s*\\(|\\blocation\\.assign\\s*\\(|\\balert\\s*\\()",
+              "description": "自行用 fetch、location.assign 或 alert 重实现已有能力"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+          "category": "business-regression"
+        }
+      ],
+      "complexity": "normal",
+      "focus": "web-missing-host-api/conditional-isolation",
+      "fixture_digest": "29dc2e7d418835d69dee35c228de49b1d432bb20d66800e0040a230f40b6ce0a"
+    },
+    {
+      "id": 2,
+      "name": "member-share-lifecycle",
+      "prompt": "请将附件中的会员邀请活动页适配到 Web，保留微信小程序原有好友分享和朋友圈分享卡片，为 Web 保留业务分享入口，并确保活动规则跳转和邀请数据加载正常。当前业务尚未提供 Web 分享 SDK、宿主 Bridge 或分享协议。请输出修改后的完整 .mpx 文件，不要省略内容。",
+      "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
+      "files": [
+        "eval-2-member-share-lifecycle/input/src/pages/member/invite.mpx"
+      ],
+      "outputs": [
+        "src/pages/member/invite.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "s0",
+          "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+          "category": "cross-platform-regression"
+        },
+        {
+          "id": "s1",
+          "text": "Web 通过 implement(remove: true) 移除没有浏览器触发源的分享生命周期",
+          "category": "web-lifecycle"
+        },
+        {
+          "id": "s2",
+          "text": "Web 分享入口绑定独立的页面实例方法",
+          "category": "web-template"
+        },
+        {
+          "id": "s3",
+          "text": "Web 分享方法只保留明确的业务 SDK 或 Bridge TODO",
+          "category": "web-lifecycle"
+        },
+        {
+          "id": "s4",
+          "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+          "category": "web-lifecycle"
+        },
+        {
+          "id": "s5",
+          "text": "详情跳转与请求使用 Mpx/api-proxy 统一入口，不直接调用 wx",
+          "category": "web-api"
+        },
+        {
+          "id": "s6",
+          "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+          "category": "business-regression"
+        }
+      ],
+      "complexity": "normal",
+      "focus": "web-missing-lifecycle/navigation-api",
+      "fixture_digest": "4498cdfde9c5f848cb9f88caf4e74ea2a0330e160b98f1a5e74b6875ce7dbf5b"
+    },
+    {
+      "id": 3,
+      "name": "order-center-realtime",
+      "prompt": "请将附件中的订单中心页面、左滑订单组件和物流实时通道组件适配到 Web，同时保持微信小程序现有业务不退化。订单条目在小程序通过 WXS 保持高频左滑性能：最多露出 96px 删除区，滑过一半后展开，否则回弹；touchcancel 必须回弹；有效滑动后不能误触订单详情；多个订单实例手势互不干扰，禁用态不能滑动、打开或删除。Web 下还存在快速切换会员、连续重连或离开页面后，旧物流连接的晚到事件污染当前订单的问题。请保留订单筛选、详情、删除和实时物流更新，输出三个修改后的完整 .mpx 文件，不要省略内容。",
+      "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
+      "files": [
+        "eval-3-order-center-realtime/input/src/pages/orders/index.mpx",
+        "eval-3-order-center-realtime/input/src/components/swipe-order-item.mpx",
+        "eval-3-order-center-realtime/input/src/components/logistics-channel.mpx"
+      ],
+      "outputs": [
+        "src/pages/orders/index.mpx",
+        "src/components/swipe-order-item.mpx",
+        "src/components/logistics-channel.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "r0",
+          "text": "微信小程序继续保留 WXS 高频手势路径",
+          "category": "cross-platform-regression"
+        },
+        {
+          "id": "r1",
+          "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+          "category": "web-template"
+        },
+        {
+          "id": "r2",
+          "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+          "category": "web-script"
+        },
+        {
+          "id": "r3",
+          "text": "touchcancel 回弹，滑动后抑制一次合成 tap，禁用态阻止选择和删除",
+          "category": "web-interaction"
+        },
+        {
+          "id": "r4",
+          "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+          "category": "web-api"
+        },
+        {
+          "id": "r5",
+          "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+          "category": "web-concurrency"
+        },
+        {
+          "id": "r6",
+          "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+          "category": "web-concurrency"
+        },
+        {
+          "id": "r7",
+          "text": "发送前同时校验任务身份与 readyState === task.OPEN",
+          "category": "web-concurrency"
+        },
+        {
+          "id": "r8",
+          "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+          "category": "business-regression"
+        }
+      ],
+      "complexity": "complex",
+      "focus": "wxs-web-events/socket-task-race/cross-component-business",
+      "fixture_digest": "c7a8c2ab81062414fb39c8c153c0d57af3da837fef5459dac6eb02286f0cf4e5"
+    },
+    {
+      "id": 4,
+      "name": "campaign-webview-sdk",
+      "prompt": "请将附件中的营销活动页和活动曝光追踪组件适配到 Web，同时保持微信小程序现有活动会场、领券、下单跳转和埋点链路不退化。Web 输出后，快速切换活动或离开页面时偶发旧活动回调覆盖新活动、卸载后继续上报、重复监听，以及嵌入页消息串到错误活动的问题；线上 Web 站点部署在 /mall/ 下，只允许受信任的活动域名通信。活动会场当前只通过 web-view postMessage 发送领券、打开商品等单向业务事件，没有自定义 invoke API 或请求—响应协议。请输出修改后的完整页面、组件、应用入口和构建配置，不要省略内容。",
+      "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
+      "files": [
+        "eval-4-campaign-webview-sdk/input/src/pages/campaign/index.mpx",
+        "eval-4-campaign-webview-sdk/input/src/components/campaign-tracker.mpx",
+        "eval-4-campaign-webview-sdk/input/src/app.mpx",
+        "eval-4-campaign-webview-sdk/input/vue.config.js"
+      ],
+      "outputs": [
+        "src/pages/campaign/index.mpx",
+        "src/components/campaign-tracker.mpx",
+        "src/app.mpx",
+        "vue.config.js"
+      ],
+      "assertions": [
+        {
+          "id": "h0",
+          "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
+          "category": "business-regression"
+        },
+        {
+          "id": "h1",
+          "text": "Web 宿主白名单只包含完整可信 origin https://campaign.example.com，避免后缀匹配误接纳相似恶意域名",
+          "category": "webview-security"
+        },
+        {
+          "id": "h2",
+          "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
+          "category": "web-deployment"
+        },
+        {
+          "id": "h3",
+          "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
+          "category": "web-sdk"
+        },
+        {
+          "id": "h4",
+          "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
+          "category": "web-concurrency"
+        },
+        {
+          "id": "h5",
+          "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
+          "category": "web-concurrency"
+        },
+        {
+          "id": "h6",
+          "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
+          "category": "web-cleanup"
+        },
+        {
+          "id": "h7",
+          "text": "业务消息优先使用内建 web-view 的白名单与 clientUid 实例隔离；任何额外手写 window message 监听都同时校验受信任 origin、当前 iframe source 和严格 campaignId",
+          "category": "webview-security"
+        },
+        {
+          "id": "h8",
+          "text": "Web 下 web-view bindmessage 的单向业务消息在领券或跳转前严格校验当前 campaignId；不要求改变微信小程序既有消息协议",
+          "category": "webview-security"
+        }
+      ],
+      "complexity": "complex",
+      "focus": "webview-bridge/h5-sdk-async-race/security-cleanup",
+      "fixture_digest": "6b0f1af8142d580406e356489c48ea2991d0206a4984e351c372d086adf21ed5"
+    },
+    {
+      "id": 5,
+      "name": "ssr-product-platform",
+      "prompt": "请将附件中的商品详情业务平台适配为部署在 /mall/ 下的 Web SSR，同时保持微信小程序的商品加载、规格切换、加购和相关推荐链路不退化。同一 Node 进程可能并发渲染不同商品，服务端首屏必须等待当前商品及首屏推荐数据且不能串请求；客户端接管同一商品时应复用注水状态，不重复首屏请求，切换到另一商品后仍能正确刷新。推荐组件依赖浏览器曝光 SDK，输入文件已注明该 SDK 的 create/track/destroy 契约；不能在 SSR 阶段访问 window、document 或静态加载该 SDK，快速切换商品或离开页面时也不能让旧初始化结果继续挂载或上报。请求地址不能写死 localhost。请输出修改后的完整页面、store、service、推荐组件、应用入口和构建配置，不要省略内容。",
+      "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
+      "files": [
+        "eval-5-ssr-product-platform/input/src/packageProduct/pages/detail/index.mpx",
+        "eval-5-ssr-product-platform/input/src/stores/product.js",
+        "eval-5-ssr-product-platform/input/src/services/product.js",
+        "eval-5-ssr-product-platform/input/src/components/product-recommendations.mpx",
+        "eval-5-ssr-product-platform/input/src/app.mpx",
+        "eval-5-ssr-product-platform/input/vue.config.js"
+      ],
+      "outputs": [
+        "src/packageProduct/pages/detail/index.mpx",
+        "src/stores/product.js",
+        "src/services/product.js",
+        "src/components/product-recommendations.mpx",
+        "src/app.mpx",
+        "vue.config.js"
+      ],
+      "assertions": [
+        {
+          "id": "p0",
+          "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia 实例",
+          "category": "ssr-isolation"
+        },
+        {
+          "id": "p1",
+          "text": "serverPrefetch 返回 Promise 并等待商品与首屏推荐数据",
+          "category": "ssr-prefetch"
+        },
+        {
+          "id": "p2",
+          "text": "store 同时记录当前 productId 和对应加载状态；同 ID 注水可复用，ID 变化立即使旧缓存复用条件失效并以请求身份阻止晚到结果，快速 A→B→A 时 B 不能覆盖 A",
+          "category": "ssr-hydration"
+        },
+        {
+          "id": "p3",
+          "text": "同构 service 返回 Promise 且不依赖 wx.request、浏览器全局或硬编码 localhost",
+          "category": "ssr-request"
+        },
+        {
+          "id": "p4",
+          "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，并在每个异步边界阻止卸载或旧商品结果挂载",
+          "category": "web-sdk"
+        },
+        {
+          "id": "p5",
+          "text": "推荐组件卸载或商品切换时销毁由 SDK create 返回的 tracker，并清理 Observer 和监听，旧回调不再上报",
+          "category": "web-cleanup"
+        },
+        {
+          "id": "p6",
+          "text": "SSR 使用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /mall/",
+          "category": "web-deployment"
+        },
+        {
+          "id": "p7",
+          "text": "微信小程序 onLoad 不受 window 存在性限制，继续保留商品加载、规格切换、加购和相关推荐业务链路",
+          "category": "business-regression"
+        }
+      ],
+      "complexity": "complex",
+      "focus": "ssr-request-isolation/hydration/client-only-sdk/deployment",
+      "fixture_digest": "a6dca9d2e77b6a5a64544d83f4c6a8bb25744dba03e531f05611706c7451647f"
+    }
+  ]
+}

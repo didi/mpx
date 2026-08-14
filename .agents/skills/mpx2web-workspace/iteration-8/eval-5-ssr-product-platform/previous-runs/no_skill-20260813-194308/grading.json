@@ -1,0 +1,61 @@
+{
+  "eval_id": 5,
+  "eval_name": "ssr-product-platform",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "p0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia 实例",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：onAppInit () { return { pinia: createPinia() } }，每次调用均创建并返回新的 Pinia。"
+    },
+    {
+      "id": "p1",
+      "text": "serverPrefetch 返回 Promise 并等待商品与首屏推荐数据",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx：serverPrefetch () { ... return this.ensureProduct(...) }；ensureProduct await store.loadProduct(...)，而 loadProduct 通过 await Promise.all([fetchProduct(...), fetchRecommendations(...)]) 等待两类数据。"
+    },
+    {
+      "id": "p2",
+      "text": "store 同时记录当前 productId 和对应加载状态；已注水且 ID 相同时复用数据，ID 变化时重新请求",
+      "passed": true,
+      "evidence": "outputs/src/stores/product.js：state 同时含 productId 与 loaded；loadProduct 中 if (!options.force && this.loaded && this.productId === productId) return this.product，ID 相同且已加载时复用；否则执行 fetchProduct 与 fetchRecommendations，并在结果有效时更新 productId、数据和 loaded。"
+    },
+    {
+      "id": "p3",
+      "text": "同构 service 返回 Promise 且不依赖 wx.request、浏览器全局或硬编码 localhost",
+      "passed": true,
+      "evidence": "outputs/src/services/product.js：request 明确 return new Promise(...)，使用 mpx.request 而非 wx.request；文件未访问 window/document 等浏览器全局，URL 由传入 baseUrl 与相对 /api 路径拼接，未硬编码 localhost。"
+    },
+    {
+      "id": "p4",
+      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，并在每个异步边界阻止卸载或旧商品结果挂载",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx：initTracker 先检查 window、document、IntersectionObserver，再 await import('@business/product-exposure-web')；await sdk.create 后检查 !this.mounted || token !== this.trackerToken || productId !== this.productId，命中即 tracker.destroy() 并 return，避免旧异步结果挂载。"
+    },
+    {
+      "id": "p5",
+      "text": "推荐组件卸载或商品切换时销毁由 SDK create 返回的 tracker，并清理 Observer 和监听，旧回调不再上报",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx：detached 调用 disposeTracker；productId/items observer 在已挂载时调用 initTracker，且 initTracker 起始即 disposeTracker。disposeTracker 会递增 trackerToken、observer.disconnect()、tracker.destroy()；IntersectionObserver 回调以 !this.mounted || token !== this.trackerToken 直接 return，阻止旧回调上报。"
+    },
+    {
+      "id": "p6",
+      "text": "SSR 使用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /mall/",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：publicPath: '/mall/'；webConfig 中 useSSR: true；routeConfig: { mode: 'history', base: '/mall/' }。"
+    },
+    {
+      "id": "p7",
+      "text": "微信小程序继续保留商品加载、规格切换、加购和相关推荐业务链路",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx 保留 ensureProduct/loadProduct 商品加载、selectSku 规格切换、addToCart 调用及 product-recommendations；outputs/src/components/product-recommendations.mpx 渲染 items 相关推荐并以 wx.navigateTo 跳转；outputs/src/services/product.js 保留 addCartItem 请求。"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  }
+}

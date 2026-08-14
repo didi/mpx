@@ -1,0 +1,52 @@
+<template>
+  <view class="product-detail">
+    <image class="cover" src="{{product.cover}}" mode="aspectFill" />
+    <view class="name">{{product.name}}</view>
+    <view class="price">¥{{product.price}}</view>
+    <button bindtap="addToCart">加入购物车</button>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    product: {}
+  },
+  onLoad (query) {
+    this.productId = query.id
+    wx.request({
+      url: `/api/products/${query.id}`,
+      success: ({ data }) => {
+        this.product = data
+      }
+    })
+  },
+  methods: {
+    addToCart () {
+      wx.showToast({ title: `已加入 ${this.product.name}` })
+    }
+  }
+})
+</script>
+
+<style>
+.product-detail {
+  padding: 32rpx;
+}
+.cover {
+  width: 686rpx;
+  height: 686rpx;
+}
+.name {
+  margin-top: 24rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+.price {
+  margin: 16rpx 0 32rpx;
+  color: #e64340;
+  font-size: 40rpx;
+}
+</style>

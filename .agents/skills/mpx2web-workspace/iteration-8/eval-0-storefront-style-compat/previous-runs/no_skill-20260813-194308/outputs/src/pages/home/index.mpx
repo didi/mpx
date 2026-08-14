@@ -1,0 +1,199 @@
+<template>
+  <view class="home-page">
+    <view class="home-header">
+      <view class="home-title-row">
+        <view class="home-title">今日好物</view>
+        <text class="home-subtitle">精选限时优惠</text>
+      </view>
+      <image class="home-banner" src="/assets/home/banner.png" mode="aspectFill" />
+    </view>
+
+    <view class="category-tabs">
+      <view
+        class="category-tab"
+        wx:for="{{categories}}"
+        wx:key="id"
+        wx:class="{{ {active: item.id === activeCategory} }}"
+        bindtap="switchCategory(item.id)"
+      >
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+
+    <view class="product-grid">
+      <product-card
+        wx:for="{{products}}"
+        wx:key="id"
+        product="{{item}}"
+        bindselect="openProduct"
+        bindaddcart="addToCart"
+      />
+    </view>
+
+    <view wx:if="{{loading}}" class="loading-row">
+      <text>商品加载中...</text>
+    </view>
+    <view wx:elif="{{!products.length}}" class="empty-state">
+      <text>当前分类暂无商品</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    activeCategory: 'featured',
+    categories: [
+      { id: 'featured', name: '精选' },
+      { id: 'fresh', name: '生鲜' },
+      { id: 'home', name: '家居' },
+      { id: 'digital', name: '数码' }
+    ],
+    products: [
+      {
+        id: 'sku-1001',
+        title: '云南高山蓝莓 4 盒装',
+        subtitle: '产地直发 · 当日采摘',
+        cover: '/assets/products/blueberry.png',
+        price: '39.90',
+        originalPrice: '59.90',
+        salesText: '已售 2.3 万件',
+        tag: '限时直降'
+      },
+      {
+        id: 'sku-1002',
+        title: '便携式手冲咖啡套装',
+        subtitle: '办公室也能喝现磨',
+        cover: '/assets/products/coffee.png',
+        price: '129.00',
+        originalPrice: '169.00',
+        salesText: '已售 8600 件',
+        tag: '新品'
+      }
+    ],
+    loading: false
+  },
+  methods: {
+    switchCategory (categoryId) {
+      if (categoryId === this.activeCategory) return
+      this.activeCategory = categoryId
+      this.fetchProducts()
+    },
+    fetchProducts () {
+      this.loading = true
+      wx.request({
+        url: '/api/mall/products',
+        data: { category: this.activeCategory },
+        success: ({ data }) => {
+          this.products = data.list
+        },
+        complete: () => {
+          this.loading = false
+        }
+      })
+    },
+    openProduct ({ detail }) {
+      wx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${detail.productId}`
+      })
+    },
+    addToCart ({ detail }) {
+      wx.request({
+        url: '/api/cart/items',
+        method: 'POST',
+        data: { productId: detail.productId, count: 1 },
+        success: () => {
+          wx.showToast({ title: '已加入购物车', icon: 'success' })
+        }
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.home-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: #f6f7fb;
+}
+
+.home-header {
+  padding: 24rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+}
+
+.home-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.home-title {
+  color: #e64340;
+  font-size: 40rpx;
+  font-weight: bold;
+}
+
+.home-subtitle {
+  color: #8a8f99;
+  font-size: 24rpx;
+}
+
+.home-banner {
+  width: 100%;
+  height: 220rpx;
+  border: 4rpx solid #e64340;
+  border-radius: 18rpx;
+}
+
+.category-tabs {
+  display: flex;
+  margin: 24rpx 0;
+  padding: 12rpx;
+  background: #ffffff;
+  border-radius: 18rpx;
+}
+
+.category-tab {
+  flex: 1;
+  padding: 14rpx 0;
+  color: #666666;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.category-tab.active {
+  color: #e64340;
+  font-weight: bold;
+}
+
+.product-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.loading-row,
+.empty-state {
+  padding: 64rpx 0;
+  color: #999999;
+  font-size: 26rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "今日好物",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 80,
+  "usingComponents": {
+    "product-card": "../../components/product-card"
+  }
+}
+</script>

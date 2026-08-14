@@ -1,0 +1,58 @@
+[
+  {
+    "id": "eval-0-small-font",
+    "name": "小于 12px 字号兼容",
+    "task": "这个组件在小程序中显示正常。输出到目标业务 WebView 后，币种符号和“起”字原本设计为 10px，却被显示成约 12px，导致基线错位且价格区域变宽。请保持小程序视觉和布局不变，修复该目标 WebView 中的 Web 输出；不要把特定 WebView 的现象描述成所有浏览器的统一限制。",
+    "inputs": ["eval-0-small-font/input/price-tag.mpx"],
+    "outputs": ["price-tag.mpx"]
+  },
+  {
+    "id": "eval-1-style-isolation",
+    "name": "Web 组件样式隔离",
+    "task": "附件中的账户页和资料卡组件在小程序中显示正常：页面标题为红色 40rpx，组件标题为深色 30rpx，组件头像为圆形且没有红色边框。输出到 Web 后，账户页的标题和 image 样式污染了资料卡内部。请进行 Web 跨端适配并保持小程序原有表现，输出修改后的两个完整 .mpx 文件。",
+    "inputs": [
+      "eval-1-style-isolation/input/account-page.mpx",
+      "eval-1-style-isolation/input/profile-card.mpx"
+    ],
+    "outputs": ["account-page.mpx", "profile-card.mpx"]
+  },
+  {
+    "id": "eval-2-dynamic-event-wxs",
+    "name": "WXS 高频滑动事件适配",
+    "task": "附件中的商品条目会在列表中同时渲染多个实例。小程序通过 WXS 保持高频左滑性能：最多露出 96px 操作区，滑过一半后松手保持展开，否则回弹；手势被系统取消时必须回弹；发生有效滑动后不能再误触条目选择。禁用态不能滑动、选择或删除，删除按钮也不会触发条目选择。输出到 Web 后手势失效，请完成跨端适配，同时保留小程序高频路径和各实例互不干扰。输出修改后的完整 .mpx 文件，不要省略内容。",
+    "inputs": ["eval-2-dynamic-event-wxs/input/slider-item.mpx"],
+    "outputs": ["slider-item.mpx"]
+  },
+  {
+    "id": "eval-3-unsupported-api",
+    "name": "Web 缺失位置与媒体 API",
+    "task": "请对附件中的 publish-page.mpx 小程序页面进行 Web 跨端适配，同时保留小程序原有发布能力。该 Web 应用的运行容器、宿主 Bridge、地图与媒体 SDK 接入协议目前尚未确定。输出修改后的完整 .mpx 文件，不要省略内容。",
+    "inputs": ["eval-3-unsupported-api/input/publish-page.mpx"],
+    "outputs": ["publish-page.mpx"]
+  },
+  {
+    "id": "eval-4-socket-task",
+    "name": "WebSocket SocketTask 适配",
+    "task": "请对附件中的 chat-room.mpx 小程序组件进行 Web 跨端适配。当前 Web 下快速切换 roomId 或连续点击“重新连接”时，偶发出现上一房间消息串入、连接状态闪回；离开组件后也偶发继续派发消息。请修复这些问题，保留房间连接、手动重连、发送消息和小程序兼容性。输出修改后的完整 .mpx 文件，不要省略内容。",
+    "inputs": ["eval-4-socket-task/input/chat-room.mpx"],
+    "outputs": ["chat-room.mpx"]
+  },
+  {
+    "id": "eval-5-web-lifecycle",
+    "name": "分享生命周期与宿主 API",
+    "task": "请将附件中的小程序分享页面适配到 Web，保留小程序原有分享卡片，为 Web 提供分享入口，并保证详情跳转正常。当前业务尚未提供 Web 分享 SDK 的接入说明。输出修改后的完整 .mpx 文件，不要省略内容。",
+    "inputs": ["eval-5-web-lifecycle/input/share-page.mpx"],
+    "outputs": ["share-page.mpx"]
+  },
+  {
+    "id": "eval-6-ssr-product-detail",
+    "name": "小程序商品详情页转 Web SSR",
+    "task": "请对附件中的商品详情小程序页面、应用入口和构建配置进行 Web SSR 跨端适配。同一 Node 进程可能并发渲染不同商品，数据不能串请求；服务端首屏必须等待当前商品数据，客户端接管时应复用同一商品的注水状态而不重复首屏请求。请求地址不能假设部署在 localhost。请保留小程序加载与加入购物车能力，输出修改后的三个完整文件，不要省略内容。",
+    "inputs": [
+      "eval-6-ssr-product-detail/input/product-detail.mpx",
+      "eval-6-ssr-product-detail/input/app.mpx",
+      "eval-6-ssr-product-detail/input/vue.config.js"
+    ],
+    "outputs": ["product-detail.mpx", "app.mpx", "vue.config.js"]
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "eval-2-dynamic-event-wxs",
+    "name": "WXS 高频滑动事件适配",
+    "task": "附件中的商品条目在小程序中可以跟手左滑：最多露出 96px 操作区，滑过一半后松手保持展开，否则回弹；禁用态不能滑动、选择或删除，删除按钮也不会触发条目选择。输出到 Web 后滑动手势失效。请完成 Web 跨端适配并保留上述交互及小程序兼容性，输出修改后的完整 .mpx 文件，不要省略内容。",
+    "inputs": ["../iteration-4/eval-2-dynamic-event-wxs/input/slider-item.mpx"],
+    "outputs": ["slider-item.mpx"]
+  },
+  {
+    "id": "eval-6-ssr-product-detail",
+    "name": "小程序商品详情页转 Web SSR",
+    "task": "请对附件中的商品详情小程序页面、应用入口和构建配置进行 Web SSR 跨端适配，确保服务端首屏能够渲染商品内容、客户端接管后页面正常交互，同时保留小程序平台兼容性。输出修改后的三个完整文件，不要省略内容。",
+    "inputs": [
+      "../iteration-4/eval-6-ssr-product-detail/input/product-detail.mpx",
+      "../iteration-4/eval-6-ssr-product-detail/input/app.mpx",
+      "../iteration-4/eval-6-ssr-product-detail/input/vue.config.js"
+    ],
+    "outputs": ["product-detail.mpx", "app.mpx", "vue.config.js"]
+  }
+]

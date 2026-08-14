@@ -1,0 +1,10 @@
+{
+  "status": "completed",
+  "stage": "completed",
+  "attempts": {
+    "generation": 1,
+    "grading": 1
+  },
+  "fixture_digest": "a6dca9d2e77b6a5a64544d83f4c6a8bb25744dba03e531f05611706c7451647f",
+  "configuration_digest": "634fd2858c0241c553cbbcb2943ac7a8b84b14ff212b8a6f90cd0e3caa2029b6"
+}

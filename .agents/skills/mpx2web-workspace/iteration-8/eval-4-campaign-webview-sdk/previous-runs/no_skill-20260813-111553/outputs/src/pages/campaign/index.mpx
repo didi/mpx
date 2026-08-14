@@ -1,0 +1,242 @@
+<template>
+  <view class="campaign-page">
+    <view class="campaign-header">
+      <text class="campaign-title">{{campaign.title}}</text>
+      <text class="campaign-subtitle">{{campaign.subtitle}}</text>
+    </view>
+
+    <view class="campaign-tabs">
+      <view
+        class="campaign-tab"
+        wx:for="{{campaigns}}"
+        wx:key="id"
+        wx:class="{{ {active: item.id === campaignId} }}"
+        bindtap="switchCampaign(item.id)"
+      >
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+
+    <web-view
+      wx:if="{{campaignUrl}}"
+      id="campaign-webview"
+      src="{{campaignUrl}}"
+      bindmessage="handleCampaignMessage"
+      bindload="handleCampaignLoad"
+      binderror="handleCampaignError"
+    />
+
+    <view wx:if="{{loading}}" class="campaign-loading">
+      <text>活动会场加载中...</text>
+    </view>
+    <view wx:if="{{errorText}}" class="campaign-error">
+      <text>{{errorText}}</text>
+      <button bindtap="reloadCampaign">重新加载</button>
+    </view>
+
+    <campaign-tracker
+      wx:if="{{campaignId}}"
+      campaignId="{{campaignId}}"
+      memberId="{{memberId}}"
+      sessionId="{{campaignSessionId}}"
+      trustedOrigin="{{trustedCampaignOrigin}}"
+      bindready="handleTrackerReady"
+      binderror="handleTrackerError"
+    />
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+const campaignDetails = {
+  'summer-sale': {
+    title: '夏日清凉特卖',
+    subtitle: '限时领券，爆款低至五折'
+  },
+  'member-day': {
+    title: '会员专享日',
+    subtitle: '会员好礼，限时加码'
+  },
+  'fresh-week': {
+    title: '生鲜特惠周',
+    subtitle: '每日鲜货，优惠直达'
+  }
+}
+
+function createSessionId (campaignId) {
+  return `${campaignId}-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+createPage({
+  data: {
+    memberId: 'member-10086',
+    campaignId: 'summer-sale',
+    campaigns: [
+      { id: 'summer-sale', name: '夏日特卖' },
+      { id: 'member-day', name: '会员日' },
+      { id: 'fresh-week', name: '生鲜周' }
+    ],
+    campaign: campaignDetails['summer-sale'],
+    campaignSessionId: '',
+    trustedCampaignOrigin: CAMPAIGN_ORIGIN,
+    campaignUrl: '',
+    loading: true,
+    errorText: '',
+    trackerReady: false
+  },
+  onLoad () {
+    this.loadCampaign(this.campaignId)
+  },
+  onUnload () {
+    this.campaignSessionId = ''
+    this.campaignUrl = ''
+  },
+  methods: {
+    loadCampaign (campaignId) {
+      const sessionId = createSessionId(campaignId)
+      this.campaignId = campaignId
+      this.campaign = campaignDetails[campaignId]
+      this.campaignSessionId = sessionId
+      this.loading = true
+      this.errorText = ''
+      this.trackerReady = false
+      this.campaignUrl = `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}&campaignId=${encodeURIComponent(campaignId)}&sessionId=${encodeURIComponent(sessionId)}`
+    },
+    switchCampaign (campaignId) {
+      if (campaignId === this.campaignId) return
+      this.loadCampaign(campaignId)
+    },
+    isCurrentEvent (event, message) {
+      if (__mpx_mode__ !== 'web') return true
+      return event.origin === CAMPAIGN_ORIGIN &&
+        message.campaignId === this.campaignId &&
+        message.sessionId === this.campaignSessionId
+    },
+    handleCampaignLoad (event) {
+      if (__mpx_mode__ === 'web' && event && event.target) {
+        const loadedUrl = event.target.src
+        if (loadedUrl && loadedUrl !== this.campaignUrl) return
+      }
+      this.loading = false
+      wx.reportAnalytics('campaign_webview_load', {
+        campaign_id: this.campaignId
+      })
+    },
+    handleCampaignError () {
+      this.loading = false
+      this.errorText = '活动会场暂时无法打开'
+    },
+    handleCampaignMessage (event) {
+      const data = event.detail && event.detail.data
+      const messages = Array.isArray(data) ? data : [event.data || data || {}]
+      const message = messages[messages.length - 1] || {}
+      if (!this.isCurrentEvent(event, message)) return
+      if (message.type === 'claim-coupon') {
+        this.claimCoupon(message.couponId)
+      }
+      if (message.type === 'open-product') {
+        this.openProduct(message.productId)
+      }
+    },
+    claimCoupon (couponId) {
+      const campaignId = this.campaignId
+      wx.request({
+        url: '/api/campaign/coupons/claim',
+        method: 'POST',
+        data: { campaignId, couponId },
+        success: () => {
+          if (campaignId !== this.campaignId) return
+          wx.showToast({ title: '领取成功', icon: 'success' })
+        }
+      })
+    },
+    openProduct (productId) {
+      wx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(this.campaignId)}`
+      })
+    },
+    reloadCampaign () {
+      this.loadCampaign(this.campaignId)
+    },
+    handleTrackerReady (event) {
+      const detail = event.detail || {}
+      if (detail.campaignId === this.campaignId && detail.sessionId === this.campaignSessionId) {
+        this.trackerReady = true
+      }
+    },
+    handleTrackerError (event) {
+      const detail = event.detail || {}
+      if (!detail.sessionId || detail.sessionId === this.campaignSessionId) {
+        this.trackerReady = false
+      }
+    }
+  }
+})
+</script>
+
+<style>
+.campaign-page {
+  min-height: 100vh;
+  background: #fff5eb;
+}
+
+.campaign-header {
+  padding: 32rpx 28rpx 20rpx;
+}
+
+.campaign-title,
+.campaign-subtitle {
+  display: block;
+}
+
+.campaign-title {
+  color: #7a3517;
+  font-size: 38rpx;
+  font-weight: bold;
+}
+
+.campaign-subtitle {
+  margin-top: 8rpx;
+  color: #b26b45;
+  font-size: 24rpx;
+}
+
+.campaign-tabs {
+  display: flex;
+  padding: 0 20rpx 20rpx;
+}
+
+.campaign-tab {
+  flex: 1;
+  padding: 14rpx 0;
+  color: #97684f;
+  font-size: 24rpx;
+  text-align: center;
+  background: #ffffff;
+}
+
+.campaign-tab.active {
+  color: #ffffff;
+  background: #ff7a45;
+}
+
+.campaign-loading,
+.campaign-error {
+  padding: 80rpx 24rpx;
+  color: #9b715c;
+  font-size: 25rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "限时活动",
+  "usingComponents": {
+    "campaign-tracker": "../../components/campaign-tracker"
+  }
+}
+</script>

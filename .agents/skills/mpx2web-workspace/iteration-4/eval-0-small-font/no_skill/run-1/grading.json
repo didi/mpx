@@ -1,0 +1,36 @@
+{
+  "eval_id": "eval-0-small-font",
+  "eval_name": "小于 12px 字号兼容",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "text": "保留小程序原始 10px 字号",
+      "passed": true,
+      "evidence": "静态契约检查"
+    },
+    {
+      "text": "Web 使用较大基础字号配合 scale 还原视觉字号",
+      "passed": true,
+      "evidence": "静态契约检查"
+    },
+    {
+      "text": "Web 缩放设置明确 transform-origin",
+      "passed": false,
+      "evidence": "静态契约检查"
+    },
+    {
+      "text": "缩放后校正布局占位",
+      "passed": true,
+      "evidence": "静态契约检查"
+    },
+    {
+      "text": "小字号补偿使用正确 Web 条件隔离",
+      "passed": true,
+      "evidence": "静态契约检查"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "total": 5
+  }
+}
