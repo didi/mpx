@@ -2,7 +2,7 @@
   <view class="home-page">
     <view class="home-header">
       <view class="home-title-row">
-        <view class="title">今日好物</view>
+        <view class="home-title">今日好物</view>
         <text class="home-subtitle">精选限时优惠</text>
       </view>
       <image class="home-banner" src="/assets/home/banner.png" mode="aspectFill" />
@@ -41,6 +41,7 @@
 
 <script>
 import { createPage } from '@mpxjs/core'
+import { navigateTo, request, showToast } from '@mpxjs/api-proxy'
 
 createPage({
   data: {
@@ -83,7 +84,7 @@ createPage({
     },
     fetchProducts () {
       this.loading = true
-      wx.request({
+      request({
         url: '/api/mall/products',
         data: { category: this.activeCategory },
         success: ({ data }) => {
@@ -95,17 +96,17 @@ createPage({
       })
     },
     openProduct ({ detail }) {
-      wx.navigateTo({
+      navigateTo({
         url: `/packageProduct/pages/detail/index?id=${detail.productId}`
       })
     },
     addToCart ({ detail }) {
-      wx.request({
+      request({
         url: '/api/cart/items',
         method: 'POST',
         data: { productId: detail.productId, count: 1 },
         success: () => {
-          wx.showToast({ title: '已加入购物车', icon: 'success' })
+          showToast({ title: '已加入购物车', icon: 'success' })
         }
       })
     }
@@ -133,7 +134,7 @@ createPage({
   margin-bottom: 20rpx;
 }
 
-.title {
+.home-title {
   color: #e64340;
   font-size: 40rpx;
   font-weight: bold;
@@ -147,8 +148,7 @@ createPage({
 .home-banner {
   width: 100%;
   height: 220rpx;
-  border: 4rpx solid #e64340;
-  border-radius: 0;
+  border-radius: 18rpx;
 }
 
 .category-tabs {

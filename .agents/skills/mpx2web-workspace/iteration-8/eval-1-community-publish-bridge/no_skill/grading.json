@@ -7,13 +7,13 @@
       "id": "a0",
       "text": "非 Web 分支直接保留 wx.chooseLocation、wx.openLocation 与 wx.chooseMedia 调用，不以动态方法名或自定义适配器改写小程序能力",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:137-145 在 !isWeb 分支直接调用 wx.chooseLocation；:172-182 直接调用 wx.openLocation；:194-207 直接调用 wx.chooseMedia。"
+      "evidence": "outputs/src/pages/community/publish.mpx:172、192、214 分别在非 Web 分支直接调用 `wx.chooseLocation(`、`wx.openLocation(`、`wx.chooseMedia(`。"
     },
     {
       "id": "a1",
       "text": "仅在 choosePlace、openPlace、choosePhoto 三个方法内为 Web 缺失能力做最小分支，不以通用平台调用层重写请求、路由或提示能力",
       "passed": false,
-      "evidence": "outputs/src/pages/community/publish.mpx:100-110 新增全局通用 Bridge 调用层 getWebBridge/invokeBridge；:257-325 还在 submitPost、publishFromBrowser、showMessage 中重写了 Web 请求、路由和提示处理。"
+      "evidence": "除三个指定方法外，outputs/src/pages/community/publish.mpx:149 的 `showError`、:244 的 `publishOnWeb`、:260 的 `redirectToDetail` 也包含 Web 分支，并分别改写提示、请求和路由。"
     },
     {
       "id": "a2",
@@ -41,7 +41,7 @@
     },
     {
       "id": "a6",
-      "text": "Web 已支持的请求、路由和提示继续使用 mpx.request、mpx.redirectTo、mpx.showToast，不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
       "passed": false,
       "evidence": "outputs/src/pages/community/publish.mpx：静态硬约束未通过：缺少使用 mpx.request；缺少使用 mpx.redirectTo；缺少使用 mpx.showToast；发现自行用 fetch、location.assign 或 alert 重实现已有能力。"
     },
@@ -49,7 +49,7 @@
       "id": "a7",
       "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:9-44 提供内容与图片输入；:48-78 提供位置和话题选择；:81-84 提供评论开关；:260-266 提交内容、图片、位置、话题和评论开关；:268-275 与 :286-294 在成功后跳转社区详情页。"
+      "evidence": "outputs/src/pages/community/publish.mpx:12-38 保留内容与图片输入，:43-75 保留位置和话题，:80-81 保留评论开关；:230-239 将内容、图片、位置、话题及 `allowComments` 组装为提交数据，:271-298 提交成功后调用 `redirectToDetail(data.id)`。"
     }
   ],
   "summary": {

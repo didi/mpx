@@ -17,16 +17,6 @@
       </view>
     </view>
 
-    <!-- @ifdef WEB -->
-    <iframe
-      wx:if="{{campaignUrl}}"
-      id="campaign-webview"
-      class="campaign-webview"
-      src="{{campaignUrl}}"
-      data-campaign-id="{{campaignId}}"
-      bindload="handleCampaignLoad"
-    ></iframe>
-    <!-- @endif -->
     <!-- @ifndef WEB -->
     <web-view
       wx:if="{{campaignUrl}}"
@@ -36,6 +26,17 @@
       bindload="handleCampaignLoad"
       binderror="handleCampaignError"
     />
+    <!-- @endif -->
+    <!-- @ifdef WEB -->
+    <iframe
+      wx:if="{{campaignUrl}}"
+      id="campaign-webview"
+      class="campaign-webview"
+      src="{{campaignUrl}}"
+      frameborder="0"
+      bindload="handleCampaignLoad"
+      binderror="handleCampaignError"
+    ></iframe>
     <!-- @endif -->
 
     <view wx:if="{{loading}}" class="campaign-loading">
@@ -50,6 +51,7 @@
       wx:if="{{campaignId}}"
       campaignId="{{campaignId}}"
       memberId="{{memberId}}"
+      iframeId="campaign-webview"
       bindready="handleTrackerReady"
       binderror="handleTrackerError"
     />
@@ -60,6 +62,11 @@
 import { createPage } from '@mpxjs/core'
 
 const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+const campaignMeta = {
+  'summer-sale': { title: '夏日清凉特卖', subtitle: '限时领券，爆款低至五折' },
+  'member-day': { title: '会员专享日', subtitle: '会员好礼，限时放送' },
+  'fresh-week': { title: '生鲜周', subtitle: '新鲜直达，每日特惠' }
+}
 
 createPage({
   data: {
@@ -70,70 +77,68 @@ createPage({
       { id: 'member-day', name: '会员日' },
       { id: 'fresh-week', name: '生鲜周' }
     ],
-    campaign: {
-      title: '夏日清凉特卖',
-      subtitle: '限时领券，爆款低至五折'
-    },
-    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086',
+    campaign: campaignMeta['summer-sale'],
+    campaignUrl: `${CAMPAIGN_ORIGIN}/summer-sale?memberId=member-10086`,
     loading: true,
     errorText: '',
     trackerReady: false
   },
-  onLoad () {
-    this.campaignVersion = 0
-    // @ifdef WEB
-    this.handleWebMessage = this.handleWebMessage.bind(this)
+  // @ifdef WEB
+  mounted () {
     window.addEventListener('message', this.handleWebMessage)
-    // @endif
   },
+  beforeDestroy () {
+    window.removeEventListener('message', this.handleWebMessage)
+  },
+  // @endif
   onUnload () {
-    this.pageDestroyed = true
-    this.campaignVersion++
     // @ifdef WEB
     window.removeEventListener('message', this.handleWebMessage)
     // @endif
   },
   methods: {
-    getCampaignUrl (campaignId) {
-      return `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}`
-    },
     switchCampaign (campaignId) {
       if (campaignId === this.campaignId) return
-      this.campaignVersion++
       this.campaignId = campaignId
+      this.campaign = campaignMeta[campaignId]
       this.loading = true
       this.errorText = ''
       this.trackerReady = false
-      this.campaignUrl = this.getCampaignUrl(campaignId)
+      this.campaignUrl = `${CAMPAIGN_ORIGIN}/${campaignId}?memberId=${encodeURIComponent(this.memberId)}`
     },
     handleCampaignLoad (event) {
       // @ifdef WEB
-      const campaignId = event.currentTarget.dataset.campaignId
-      if (campaignId !== this.campaignId || this.pageDestroyed) return
+      if (!this.isCurrentFrame(event.currentTarget)) return
       // @endif
       this.loading = false
       wx.reportAnalytics('campaign_webview_load', {
         campaign_id: this.campaignId
       })
     },
-    handleCampaignError () {
-      if (this.pageDestroyed) return
+    handleCampaignError (event) {
+      // @ifdef WEB
+      if (!this.isCurrentFrame(event.currentTarget)) return
+      // @endif
       this.loading = false
       this.errorText = '活动会场暂时无法打开'
     },
     handleCampaignMessage (event) {
       const messages = event.detail.data || []
-      this.handleBusinessMessage(messages[messages.length - 1] || {})
+      const message = messages[messages.length - 1] || {}
+      this.dispatchCampaignMessage(message)
     },
+    // @ifdef WEB
     handleWebMessage (event) {
-      if (event.origin !== CAMPAIGN_ORIGIN || this.pageDestroyed) return
-      const iframe = document.getElementById('campaign-webview')
-      if (!iframe || event.source !== iframe.contentWindow) return
-      const message = event.data || {}
-      if (message.campaignId && message.campaignId !== this.campaignId) return
-      this.handleBusinessMessage(message)
+      const frame = document.getElementById('campaign-webview')
+      if (event.origin !== CAMPAIGN_ORIGIN || !frame || event.source !== frame.contentWindow) return
+      this.dispatchCampaignMessage(event.data || {})
     },
-    handleBusinessMessage (message) {
+    isCurrentFrame (frame) {
+      return frame && frame === document.getElementById('campaign-webview') && frame.src === this.campaignUrl
+    },
+    // @endif
+    dispatchCampaignMessage (message) {
+      if (message.campaignId && message.campaignId !== this.campaignId) return
       if (message.type === 'claim-coupon') {
         this.claimCoupon(message.couponId)
       }
@@ -143,13 +148,12 @@ createPage({
     },
     claimCoupon (couponId) {
       const campaignId = this.campaignId
-      const version = this.campaignVersion
       wx.request({
         url: '/api/campaign/coupons/claim',
         method: 'POST',
         data: { campaignId, couponId },
         success: () => {
-          if (this.pageDestroyed || version !== this.campaignVersion || campaignId !== this.campaignId) return
+          if (campaignId !== this.campaignId) return
           wx.showToast({ title: '领取成功', icon: 'success' })
         }
       })
@@ -160,22 +164,24 @@ createPage({
       })
     },
     reloadCampaign () {
-      this.campaignVersion++
       const campaignUrl = this.campaignUrl
+      const campaignId = this.campaignId
       this.campaignUrl = ''
       this.loading = true
       this.errorText = ''
       this.$nextTick(() => {
-        if (!this.pageDestroyed) this.campaignUrl = campaignUrl
+        if (campaignId === this.campaignId && !this.campaignUrl) {
+          this.campaignUrl = campaignUrl
+        }
       })
     },
     handleTrackerReady (event) {
-      if (event.detail.campaignId === this.campaignId && !this.pageDestroyed) {
+      if (event.detail.campaignId === this.campaignId) {
         this.trackerReady = true
       }
     },
     handleTrackerError (event) {
-      if (!event.detail || !event.detail.campaignId || event.detail.campaignId === this.campaignId) {
+      if (!event.detail.campaignId || event.detail.campaignId === this.campaignId) {
         this.trackerReady = false
       }
     }
@@ -232,7 +238,7 @@ createPage({
 .campaign-webview {
   display: block;
   width: 100%;
-  height: calc(100vh - 190rpx);
+  height: calc(100vh - 210rpx);
   border: 0;
 }
 

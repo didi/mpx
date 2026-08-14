@@ -56,7 +56,7 @@
       "category": "web-api",
       "required_patterns": [
         {
-          "pattern": "TODO[^\\n]*(?:Bridge|地图 SDK)[^\\n]*地图查看",
+          "pattern": "TODO(?=[^\\n]*(?:Bridge|地图 SDK))(?=[^\\n]*(?:地图查看|打开地图))[^\\n]*",
           "description": "地图查看的 Bridge 或地图 SDK 接入 TODO"
         }
       ]
@@ -67,7 +67,7 @@
       "category": "web-api",
       "required_patterns": [
         {
-          "pattern": "TODO[^\\n]*(?:Bridge|媒体 SDK)[^\\n]*图片选择",
+          "pattern": "TODO(?=[^\\n]*(?:Bridge|媒体 SDK))(?=[^\\n]*(?:图片选择|选择图片))[^\\n]*",
           "description": "图片选择的 Bridge 或媒体 SDK 接入 TODO"
         }
       ]
@@ -85,7 +85,7 @@
     },
     {
       "id": "a6",
-      "text": "Web 已支持的请求、路由和提示继续使用 mpx.request、mpx.redirectTo、mpx.showToast，不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
       "category": "web-api",
       "required_patterns": [
         {
@@ -105,6 +105,10 @@
         {
           "pattern": "(?:\\bfetch\\s*\\(|\\blocation\\.assign\\s*\\(|\\balert\\s*\\()",
           "description": "自行用 fetch、location.assign 或 alert 重实现已有能力"
+        },
+        {
+          "pattern": "import\\s*\\{[^}]*\\b(?:request|redirectTo|showToast)\\b[^}]*\\}\\s*from\\s*['\"]@mpxjs/api-proxy['\"]",
+          "description": "命名导入原始 API，绕过应用入口的 API Proxy 配置"
         }
       ]
     },

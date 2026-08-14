@@ -12,68 +12,93 @@ createComponent({
     campaignId: {
       type: String,
       observer () {
-        this.initTracker()
+        if (this.trackerMounted) this.initTracker()
       }
     },
-    memberId: String
+    memberId: {
+      type: String,
+      observer () {
+        if (this.trackerMounted) this.initTracker()
+      }
+    }
   },
   data: {
     ready: false
   },
-  created () {
-    this.trackerInitId = 0
-    this.trackerDetached = false
-  },
   ready () {
+    this.trackerMounted = true
+    this.trackerDetached = false
+    this.trackerGeneration = 0
     this.initTracker()
   },
   detached () {
+    this.trackerMounted = false
     this.trackerDetached = true
-    this.trackerInitId++
+    this.trackerGeneration += 1
     this.cleanupTracker()
   },
   methods: {
+    cleanupTracker () {
+      if (__mpx_mode__ === 'web' && typeof document !== 'undefined' && this.visibilityListening) {
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+        this.visibilityListening = false
+      }
+      if (this.tracker && this.tracker.destroy) this.tracker.destroy()
+      this.tracker = null
+    },
+    isCurrentGeneration (generation, campaignId) {
+      return !this.trackerDetached && generation === this.trackerGeneration && campaignId === this.campaignId
+    },
     async initTracker () {
-      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || !this.campaignId) return
-      const initId = ++this.trackerInitId
+      if (!this.campaignId || this.trackerDetached) return
       const campaignId = this.campaignId
+      const memberId = this.memberId
+      const generation = (this.trackerGeneration || 0) + 1
+      this.trackerGeneration = generation
       this.ready = false
       this.cleanupTracker()
+
+      if (__mpx_mode__ !== 'web') {
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+        return
+      }
+
       try {
         const trackerModule = await import('@business/campaign-tracker-web')
-        if (!this.isCurrentInit(initId, campaignId)) return
-        const tracker = await (trackerModule.default || trackerModule).create({
-          campaignId,
-          memberId: this.memberId
-        })
-        if (!this.isCurrentInit(initId, campaignId)) {
-          tracker.destroy && tracker.destroy()
+        if (!this.isCurrentGeneration(generation, campaignId)) return
+        const campaignTracker = trackerModule.default || trackerModule
+        const tracker = await campaignTracker.create({ campaignId, memberId })
+        if (!this.isCurrentGeneration(generation, campaignId)) {
+          if (tracker && tracker.destroy) tracker.destroy()
           return
         }
         this.tracker = tracker
-        this.trackerCampaignId = campaignId
-        document.addEventListener('visibilitychange', this.handleVisibilityChange)
+        if (typeof document !== 'undefined') {
+          document.addEventListener('visibilitychange', this.handleVisibilityChange)
+          this.visibilityListening = true
+        }
         tracker.start()
         this.ready = true
         this.triggerEvent('ready', { campaignId })
       } catch (error) {
-        if (!this.isCurrentInit(initId, campaignId)) return
+        if (!this.isCurrentGeneration(generation, campaignId)) return
         this.ready = false
-        this.triggerEvent('error', { campaignId, message: error && error.message })
+        this.triggerEvent('error', { campaignId, error })
       }
     },
-    isCurrentInit (initId, campaignId) {
-      return !this.trackerDetached && initId === this.trackerInitId && campaignId === this.campaignId
-    },
-    cleanupTracker () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined') return
-      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
-      if (this.tracker && this.tracker.destroy) this.tracker.destroy()
-      this.tracker = null
-      this.trackerCampaignId = ''
+    trackEvent (eventName, payload) {
+      if (__mpx_mode__ === 'web') {
+        if (this.ready && this.tracker) this.tracker.track(eventName, payload)
+        return
+      }
+      wx.reportAnalytics(eventName === 'exposure' ? 'campaign_exposure' : eventName, Object.assign({
+        campaign_id: this.campaignId,
+        member_id: this.memberId
+      }, payload))
     },
     handleVisibilityChange () {
-      if (!this.tracker || this.trackerCampaignId !== this.campaignId) return
+      if (!this.tracker || this.trackerDetached || typeof document === 'undefined') return
       if (document.hidden) {
         this.tracker.pause()
       } else {

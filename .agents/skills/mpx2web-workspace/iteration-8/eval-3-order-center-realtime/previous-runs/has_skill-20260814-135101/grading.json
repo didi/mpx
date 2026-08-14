@@ -1,0 +1,67 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：`<script module=\"gesture\" lang=\"wxs\">` 定义 `onTouchStart/onTouchMove/onTouchEnd/onTouchCancel`，并在 move 中直接计算位移后 `event.instance.callMethod('syncSwipeOffset', current.offsetX)`。"
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：四类触摸事件均使用显式 @wx WXS 与 @web 实例方法配对。"
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：Web 状态写入实例字段 `this.webStartX`、`this.webOffsetX`、`this.webMoved`；`MAX_OFFSET = 96`，move 使用 `Math.max(-MAX_OFFSET, Math.min(0, ...))`，end 使用 `open: this.webOffsetX <= -OPEN_THRESHOLD`，且 `OPEN_THRESHOLD = MAX_OFFSET / 2`（-48）。"
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 回弹，滑动后抑制一次合成 tap，禁用态阻止选择和删除",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：`onWebTouchCancel` 调用 `cancelSwipe()`，后者调用 `resetSwipe()` 将 `offsetX = 0`；`finishSwipe` 设置 `this.suppressSelect = moved`，`selectOrder` 消费该标记后返回；`selectOrder` 和 `removeOrder` 均以 `if (this.disabled) return` 阻止操作，删除按钮也有 `disabled=\"{{disabled}}\"`。"
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：从 `@mpxjs/api-proxy` 导入 `connectSocket`，并以 `const socketTask = connectSocket({...})` 获取任务，后续通过 `socketTask.onOpen/onMessage/onError/onClose/send/close` 操作。"
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：`socketTask.onOpen`、`onMessage`、`onError`、`onClose` 的回调首行均为 `if (!this.isCurrentChannel(socketTask, generation, memberId)) return`；校验包含 `this.socketTask === socketTask`。"
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：`connectChannel` 先执行 `this.channelGeneration = generation` 再执行 `this.closeSocketTask()`；卸载调用的 `closeChannel` 先递增 `channelGeneration`，再调用 `closeSocketTask()`，而该方法先置 `this.socketTask = null` 后关闭旧任务。"
+    },
+    {
+      "id": "r7",
+      "text": "发送前同时校验任务身份与 readyState === task.OPEN",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx 的 `sendHeartbeat` 仅检查 `if (!this.connected || !this.socketTask) return` 后调用 `this.socketTask.send(...)`；未见任务身份校验或 `readyState === task.OPEN` 校验。"
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx：`switchStatus` 设置状态并调用 `fetchOrders`；`openOrder` 使用 `navigateTo` 进入详情；`removeOrder` 确认后请求 DELETE 并过滤订单；`handleLogisticsMessage` 按 `detail.orderId` 更新订单的状态与物流字段。"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "pass_rate": 0.8889
+  }
+}

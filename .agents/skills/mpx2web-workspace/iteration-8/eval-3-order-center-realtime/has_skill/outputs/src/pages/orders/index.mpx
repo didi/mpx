@@ -140,9 +140,8 @@ createPage({
       })
     },
     handleSwipeEnd ({ detail }) {
-      if (!detail.open) return
       this.orders = this.orders.map(order => {
-        return Object.assign({}, order, { locked: order.id !== detail.orderId })
+        return Object.assign({}, order, { locked: detail.open && order.id !== detail.orderId })
       })
     },
     handleConnectionChange ({ detail }) {
@@ -170,119 +169,23 @@ createPage({
 </script>
 
 <style>
-.order-page {
-  min-height: 100vh;
-  padding: 24rpx;
-  background: #f5f7fa;
-}
-
-.order-summary,
-.status-tabs {
-  background: #ffffff;
-  border-radius: 20rpx;
-}
-
-.order-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 26rpx;
-}
-
-.summary-title,
-.summary-subtitle {
-  display: block;
-}
-
-.summary-title {
-  color: #20242c;
-  font-size: 36rpx;
-  font-weight: bold;
-}
-
-.summary-subtitle {
-  margin-top: 6rpx;
-  color: #969ca7;
-  font-size: 22rpx;
-}
-
-.socket-state {
-  display: flex;
-  align-items: center;
-  color: #999fa9;
-  font-size: 21rpx;
-}
-
-.state-dot {
-  width: 14rpx;
-  height: 14rpx;
-  margin-right: 8rpx;
-  background: #b8bdc6;
-  border-radius: 50%;
-}
-
-.socket-state.online {
-  color: #36a269;
-}
-
-.socket-state.online .state-dot {
-  background: #36a269;
-}
-
-.status-tabs {
-  display: flex;
-  margin-top: 20rpx;
-  padding: 12rpx;
-}
-
-.status-tab {
-  position: relative;
-  flex: 1;
-  padding: 14rpx 0;
-  color: #69707b;
-  font-size: 25rpx;
-  text-align: center;
-}
-
-.status-tab.active {
-  color: #1677ff;
-  font-weight: bold;
-}
-
-.status-count {
-  position: absolute;
-  top: 0;
-  min-width: 26rpx;
-  height: 26rpx;
-  margin-left: 4rpx;
-  padding: 0 6rpx;
-  color: #ffffff;
-  font-size: 18rpx;
-  line-height: 26rpx;
-  background: #ff4d4f;
-  border-radius: 14rpx;
-}
-
-.order-list {
-  margin-top: 20rpx;
-}
-
-.order-loading,
-.order-empty {
-  padding: 80rpx 0;
-  color: #a0a5ae;
-  font-size: 25rpx;
-  text-align: center;
-}
-
-.shopping-button {
-  width: 220rpx;
-  margin-top: 20rpx;
-  color: #1677ff;
-  background: #ffffff;
-  border: 2rpx solid #1677ff;
-  border-radius: 36rpx;
-}
+.order-page { min-height: 100vh; padding: 24rpx; background: #f5f7fa; }
+.order-summary, .status-tabs { background: #ffffff; border-radius: 20rpx; }
+.order-summary { display: flex; align-items: center; justify-content: space-between; padding: 26rpx; }
+.summary-title, .summary-subtitle { display: block; }
+.summary-title { color: #20242c; font-size: 36rpx; font-weight: bold; }
+.summary-subtitle { margin-top: 6rpx; color: #969ca7; font-size: 22rpx; }
+.socket-state { display: flex; align-items: center; color: #999fa9; font-size: 21rpx; }
+.state-dot { width: 14rpx; height: 14rpx; margin-right: 8rpx; background: #b8bdc6; border-radius: 50%; }
+.socket-state.online { color: #36a269; }
+.socket-state.online .state-dot { background: #36a269; }
+.status-tabs { display: flex; margin-top: 20rpx; padding: 12rpx; }
+.status-tab { position: relative; flex: 1; padding: 14rpx 0; color: #69707b; font-size: 25rpx; text-align: center; }
+.status-tab.active { color: #1677ff; font-weight: bold; }
+.status-count { position: absolute; top: 0; min-width: 26rpx; height: 26rpx; margin-left: 4rpx; padding: 0 6rpx; color: #ffffff; font-size: 18rpx; line-height: 26rpx; background: #ff4d4f; border-radius: 14rpx; }
+.order-list { margin-top: 20rpx; }
+.order-loading, .order-empty { padding: 80rpx 0; color: #a0a5ae; font-size: 25rpx; text-align: center; }
+.shopping-button { width: 220rpx; margin-top: 20rpx; color: #1677ff; background: #ffffff; border: 2rpx solid #1677ff; border-radius: 36rpx; }
 </style>
 
 <script type="application/json">

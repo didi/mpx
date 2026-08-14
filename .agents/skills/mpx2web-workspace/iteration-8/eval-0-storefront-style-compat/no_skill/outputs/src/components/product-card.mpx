@@ -47,7 +47,7 @@ createComponent({
 })
 </script>
 
-<style scoped>
+<style>
 .product-card {
   width: 338rpx;
   margin-bottom: 24rpx;
@@ -65,7 +65,6 @@ createComponent({
   display: block;
   width: 100%;
   height: 300rpx;
-  border: 0;
   border-radius: 20rpx 20rpx 0 0;
 }
 
@@ -124,11 +123,28 @@ createComponent({
 .unit {
   font-size: 10px;
   line-height: 14px;
-  /* @mpx-if (mode === 'web') */
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
-  /* @mpx-endif */
 }
+
+/* @mpx-if (mode === 'web') */
+.currency,
+.unit {
+  font-size: 12px;
+  line-height: 16.8px;
+  transform: scale(0.833333);
+}
+
+.currency {
+  width: 10px;
+  margin-right: -1px;
+  transform-origin: right bottom;
+}
+
+.unit {
+  width: 10px;
+  margin-left: -1px;
+  transform-origin: left bottom;
+}
+/* @mpx-endif */
 
 .amount {
   margin: 0 2px;

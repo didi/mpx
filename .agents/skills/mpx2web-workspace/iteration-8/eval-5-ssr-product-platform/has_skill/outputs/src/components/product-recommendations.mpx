@@ -28,46 +28,50 @@ createComponent({
   },
   observers: {
     'productId, items' () {
-      if (this.componentReady) this.initExposureTracker()
+      if (this.recommendationsReady) this.setupExposure()
     }
   },
   ready () {
-    this.componentReady = true
-    this.initExposureTracker()
+    this.recommendationsReady = true
+    this.exposureVersion = 0
+    this.setupExposure()
   },
   detached () {
-    this.componentReady = false
-    this.disposeExposureTracker()
+    this.recommendationsReady = false
+    this.exposureVersion++
+    this.destroyExposure()
   },
   methods: {
-    disposeExposureTracker () {
-      this.exposureVersion = (this.exposureVersion || 0) + 1
-      if (this.exposureObserver) this.exposureObserver.disconnect()
-      if (this.exposureTracker) this.exposureTracker.destroy()
-      this.exposureObserver = null
-      this.exposureTracker = null
+    destroyExposure () {
+      if (this.observer) {
+        this.observer.disconnect()
+        this.observer = null
+      }
+      if (this.tracker) {
+        this.tracker.destroy()
+        this.tracker = null
+      }
     },
-    async initExposureTracker () {
-      if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+    async setupExposure () {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || !window.IntersectionObserver) return
 
-      this.disposeExposureTracker()
-      if (!this.productId || !this.items || !this.items.length) return
-
+      const exposureVersion = ++this.exposureVersion
       const productId = this.productId
-      const exposureVersion = this.exposureVersion
-      const sdkModule = await import('@business/product-exposure-web')
-      if (!this.componentReady || exposureVersion !== this.exposureVersion) return
+      this.destroyExposure()
 
-      const sdk = sdkModule.default || sdkModule
-      const tracker = await sdk.create({ productId })
-      if (!this.componentReady || exposureVersion !== this.exposureVersion) {
+      const sdkModule = await import('@business/product-exposure-web')
+      if (!this.recommendationsReady || exposureVersion !== this.exposureVersion) return
+
+      const exposureSdk = sdkModule.default || sdkModule
+      const tracker = await exposureSdk.create({ productId })
+      if (!this.recommendationsReady || exposureVersion !== this.exposureVersion) {
         tracker.destroy()
         return
       }
 
-      this.exposureTracker = tracker
-      this.exposureObserver = new window.IntersectionObserver((entries) => {
-        if (!this.componentReady || exposureVersion !== this.exposureVersion) return
+      this.tracker = tracker
+      this.observer = new window.IntersectionObserver((entries) => {
+        if (!this.recommendationsReady || exposureVersion !== this.exposureVersion) return
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             tracker.track('recommendation_exposure', {
@@ -78,7 +82,7 @@ createComponent({
         })
       })
       this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-        this.exposureObserver.observe(element)
+        this.observer.observe(element)
       })
     },
     openProduct (productId) {

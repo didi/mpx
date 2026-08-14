@@ -7,7 +7,7 @@
       "id": "r0",
       "text": "微信小程序继续保留 WXS 高频手势路径",
       "passed": true,
-      "evidence": "outputs/src/components/swipe-order-item.mpx：保留 `<script module=\"gesture\" lang=\"wxs\">`，并在模板中为 touchstart/move/end/cancel 均绑定 `@wx` 的 `gesture.onTouch*` 处理器。"
+      "evidence": "outputs/src/components/swipe-order-item.mpx:6-9 使用 catchtouchstart/move/end/cancel@wx 绑定 gesture WXS 模块；该模块在 :45-85 实现四个手势处理函数。"
     },
     {
       "id": "r1",
@@ -19,43 +19,43 @@
       "id": "r2",
       "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
       "passed": true,
-      "evidence": "outputs/src/components/swipe-order-item.mpx：Web 状态存于组件实例字段 `this.gestureStartX`、`this.gestureOffset`、`this.gestureMoved`；`onTouchMove` 使用 `Math.max(-96, Math.min(0, ...))`，`onTouchEnd` 使用 `open: this.gestureOffset <= -48`，`finishSwipe` 设置 `this.offsetX = open ? -96 : 0`。"
+      "evidence": "outputs/src/components/swipe-order-item.mpx:136-156 将 Web 状态保存在 this._touchStartX/_touchOffset/_touchMoved，按组件实例隔离；:145 限制位移 Math.max(-96, Math.min(0,...))，:151 以 this._touchOffset <= -48 判定展开，:124 展开后设为 -96。"
     },
     {
       "id": "r3",
       "text": "touchcancel 回弹，滑动后抑制一次合成 tap，禁用态阻止选择和删除",
       "passed": true,
-      "evidence": "outputs/src/components/swipe-order-item.mpx：`onTouchCancel` 调用 `this.cancelSwipe()`，而 `cancelSwipe` 设置 `this.offsetX = 0`；`finishSwipe` 设置 `this.suppressSelect = moved`，`selectOrder` 命中后清除该标记并返回；`selectOrder` 与 `removeOrder` 均以 `if (this.disabled) return` 阻止操作，删除按钮也有 `disabled=\"{{disabled}}\"`。"
+      "evidence": "outputs/src/components/swipe-order-item.mpx:158-159 的 onTouchCancel 调用 cancelSwipe，:128-134 将 offsetX 设为 0；:125 设置 _suppressSelect，:161-167 消费后清除该标志；:162 和 :170 分别阻止禁用态选择与删除。"
     },
     {
       "id": "r4",
       "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
       "passed": true,
-      "evidence": "outputs/src/components/logistics-channel.mpx：`const socketTask = mpx.connectSocket({...})`，后续通过 `socketTask.onOpen`、`socketTask.onMessage`、`socketTask.onError`、`socketTask.onClose` 和 `socketTask.close` 操作该任务。"
+      "evidence": "outputs/src/components/logistics-channel.mpx:47-52 调用 mpx.connectSocket(...)，将返回值 socketTask 保存为 this._socketTask，并在 :53-77 上注册任务回调。"
     },
     {
       "id": "r5",
       "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
       "passed": true,
-      "evidence": "outputs/src/components/logistics-channel.mpx：`isCurrent` 校验 `socketTask === this.socketTask`、generation、memberId 和 detached 状态；`socketTask.onOpen`、`onMessage`、`onError`、`onClose` 的回调开头均为 `if (!isCurrent()) return`。"
+      "evidence": "outputs/src/components/logistics-channel.mpx:53-54、:58-59、:67-68、:73-74 的四类回调均调用 isCurrentChannel(socketTask, generation, memberId)；:79-80 校验 this._socketTask === socketTask 及捕获的 generation/memberId。"
     },
     {
       "id": "r6",
       "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
       "passed": true,
-      "evidence": "outputs/src/components/logistics-channel.mpx：`connectChannel()` 和 `detached()` 都先调用 `closeChannel()`；其中 `closeChannel()` 先执行 `this.channelGeneration += 1`、保存旧 `socketTask` 并置 `this.socketTask = null`，之后才执行 `socketTask.close({})`。"
+      "evidence": "outputs/src/components/logistics-channel.mpx:31-32 卸载调用 closeChannel，:42-43 重连先调用 closeChannel；closeChannel 在 :36-40 先递增 generation、保存旧任务并将 this._socketTask 置空，再调用旧 socketTask.close。"
     },
     {
       "id": "r7",
       "text": "发送前同时校验任务身份与 readyState === task.OPEN",
       "passed": false,
-      "evidence": "outputs/src/components/logistics-channel.mpx 的 `sendHeartbeat` 仅检查 `if (!this.connected || !this.socketTask) return`，随后直接 `this.socketTask.send(...)`；未校验任务身份，也未检查 `readyState === task.OPEN`。"
+      "evidence": "outputs/src/components/logistics-channel.mpx:85-87 仅检查 this.connected 和 this._socketTask 后直接发送；没有任务身份校验，也没有 readyState === task.OPEN 检查。"
     },
     {
       "id": "r8",
       "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
       "passed": true,
-      "evidence": "outputs/src/pages/orders/index.mpx：`switchStatus` 更新状态后调用 `fetchOrders`，后者请求 `/api/orders`；`openOrder` 跳转订单详情；`removeOrder` 确认后请求 DELETE 并从 `orders` 过滤；`handleLogisticsMessage` 按 `detail.orderId` 映射更新订单的状态、物流文本和更新时间。"
+      "evidence": "outputs/src/pages/orders/index.mpx:104-121 切换状态并按 status 请求订单；:123-124 跳转订单详情；:126-140 确认后 DELETE 并移除订单；:150-159 根据物流消息更新对应订单的状态、文案与更新时间。"
     }
   ],
   "summary": {

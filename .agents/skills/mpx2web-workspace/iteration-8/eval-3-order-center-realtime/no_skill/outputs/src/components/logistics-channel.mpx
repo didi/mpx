@@ -19,7 +19,8 @@ createComponent({
     memberId: {
       type: String,
       observer (memberId, oldMemberId) {
-        if (memberId !== oldMemberId) this.connectChannel()
+        if (!this._attached || memberId === oldMemberId) return
+        this.connectChannel()
       }
     }
   },
@@ -36,77 +37,76 @@ createComponent({
     this.closeChannel()
   },
   methods: {
-    setConnected (connected, generation) {
-      if (!this.isCurrent(generation) || this.connected === connected) return
-      this.connected = connected
-      this.triggerEvent('connectedchange', { connected })
-    },
-    isCurrent (generation) {
-      return this._attached && generation === this._generation
-    },
     closeChannel () {
       this._generation = (this._generation || 0) + 1
-      const channel = this._channel
-      this._channel = null
-      if (channel) channel.close()
+      const socketTask = this._socketTask
+      this._socketTask = null
+      if (socketTask) socketTask.close()
       if (this.connected) {
         this.connected = false
         this.triggerEvent('connectedchange', { connected: false })
       }
     },
     connectChannel () {
-      if (!this._attached) return
       this.closeChannel()
-      if (!this.memberId) return
-      const generation = this._generation
-      const url = `wss://logistics.example.com/members/${encodeURIComponent(this.memberId)}`
-      const token = wx.getStorageSync('token')
-      let channel
-      if (__mpx_mode__ === 'web') {
-        channel = new WebSocket(url)
-        channel.onopen = () => this.setConnected(true, generation)
-        channel.onmessage = event => this.handleMessage(event.data, generation)
-        channel.onerror = error => this.handleError(error, generation)
-        channel.onclose = () => this.setConnected(false, generation)
-      } else {
-        channel = wx.connectSocket({
-          url,
-          header: { Authorization: `Bearer ${token}` }
-        })
-        channel.onOpen(() => this.setConnected(true, generation))
-        channel.onMessage(({ data }) => this.handleMessage(data, generation))
-        channel.onError(error => this.handleError(error, generation))
-        channel.onClose(() => this.setConnected(false, generation))
+      if (!this._attached || !this.memberId) return
+
+      const generation = ++this._generation
+      const memberId = this.memberId
+      const socketTask = wx.connectSocket({
+        url: `wss://logistics.example.com/members/${memberId}`,
+        header: {
+          Authorization: `Bearer ${wx.getStorageSync('token')}`
+        }
+      })
+      this._socketTask = socketTask
+
+      const isCurrent = () => {
+        return this._attached &&
+          this._generation === generation &&
+          this._socketTask === socketTask &&
+          this.memberId === memberId
       }
-      this._channel = channel
-    },
-    handleMessage (data, generation) {
-      if (!this.isCurrent(generation)) return
-      try {
-        const message = JSON.parse(data)
+
+      socketTask.onOpen(() => {
+        if (!isCurrent()) return
+        this.connected = true
+        this.triggerEvent('connectedchange', { connected: true })
+      })
+      socketTask.onMessage(({ data }) => {
+        if (!isCurrent()) return
+        let message
+        try {
+          message = JSON.parse(data)
+        } catch (error) {
+          this.triggerEvent('error', { error })
+          return
+        }
         if (message.type === 'logistics') {
           this.triggerEvent('logistics', message.payload)
         }
-      } catch (error) {
-        this.handleError(error, generation)
-      }
-    },
-    handleError (error, generation) {
-      if (!this.isCurrent(generation)) return
-      this.setConnected(false, generation)
-      this.triggerEvent('error', { error })
+      })
+      socketTask.onError((error) => {
+        if (!isCurrent()) return
+        this.connected = false
+        this.triggerEvent('connectedchange', { connected: false })
+        this.triggerEvent('error', { error })
+      })
+      socketTask.onClose(() => {
+        if (!isCurrent()) return
+        this._socketTask = null
+        this.connected = false
+        this.triggerEvent('connectedchange', { connected: false })
+      })
     },
     reconnect () {
       this.connectChannel()
     },
     sendHeartbeat () {
-      if (!this._channel || !this.connected) return
-      const data = JSON.stringify({ type: 'ping', memberId: this.memberId })
-      if (__mpx_mode__ === 'web') {
-        this._channel.send(data)
-      } else {
-        this._channel.send({ data })
-      }
+      if (!this.connected || !this._socketTask) return
+      this._socketTask.send({
+        data: JSON.stringify({ type: 'ping', memberId: this.memberId })
+      })
     }
   }
 })

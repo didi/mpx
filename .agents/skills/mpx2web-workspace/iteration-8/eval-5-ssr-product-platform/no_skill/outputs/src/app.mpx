@@ -9,7 +9,9 @@ createApp({
     }
   },
   onLaunch () {
-    if (typeof window !== 'undefined') wx.reportAnalytics('mall_launch', {})
+    if (typeof wx !== 'undefined' && wx.reportAnalytics) {
+      wx.reportAnalytics('mall_launch', {})
+    }
   }
 })
 </script>

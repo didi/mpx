@@ -1,0 +1,61 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "商品卡在 Web 使用 scoped 隔离组件样式",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：组件样式块为 `<style scoped>`，且组件 JSON 配置含 `\"styleIsolation\": \"isolated\"`。"
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：图片节点使用 `class=\"product-cover\"`，样式通过 `.product-cover { ... }` 定义，未使用 `image` 标签选择器。"
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx：`.title` 保留红色、`40rpx`、加粗标题样式；outputs/src/components/product-card.mpx：`.product-title` 保留 `30rpx`、加粗及单行省略样式，`.product-cover` 保留 `border-radius: 20rpx 20rpx 0 0`。"
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：基础规则 `.currency, .unit { font-size: 10px; line-height: 14px; }`；覆盖字号的规则位于 Web 条件编译块内。"
+    },
+    {
+      "id": "w4",
+      "text": "WebView 小字号补偿使用较大基础字号配合 scale，还原视觉字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：Web 条件编译块中 `.currency, .unit` 设置 `font-size: 12.5px` 与 `transform: scale(0.8)`，缩放后的视觉字号为 10px。"
+    },
+    {
+      "id": "w5",
+      "text": "WebView 缩放补偿设置 transform-origin 并校正布局占位",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：Web 条件编译块设置 `.currency { transform-origin: right bottom; }`、`.unit { transform-origin: left bottom; }`，并以 `width: 10px` 校正缩放元素的布局占位。"
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：补偿规则被 `/* @mpx-if (__mpx_mode__ === 'web') */` 与 `/* @mpx-endif */` 包裹。"
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx：分类项使用 `bindtap=\"switchCategory(item.id)\"`，`switchCategory` 更新分类并调用 `fetchProducts()`；商品卡绑定 `bindselect=\"openProduct\"`，`openProduct` 调用 `wx.navigateTo`；绑定 `bindaddcart=\"addToCart\"`，`addToCart` 通过 POST `/api/cart/items` 加入购物车。"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  }
+}

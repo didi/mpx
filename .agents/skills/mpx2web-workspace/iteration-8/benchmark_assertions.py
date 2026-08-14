@@ -168,21 +168,48 @@ def check_h8(root):
 def check_p7(root):
     path = "src/packageProduct/pages/detail/index.mpx"
     source = read_output(root, path)
-    body = method_body(source, "onLoad")
+    context = method_context(source, "onLoad")
     load_pattern = r"\b(?:this\.)?(?:loadProduct|ensureProduct)\s*\("
-    if not re.search(load_pattern, body):
+    if not re.search(load_pattern, context):
         return False, f"outputs/{path}：onLoad 没有触发商品加载。"
     browser_only_load = bool(re.search(
         rf"if\s*\(\s*typeof\s+window\s*!==\s*['\"]undefined['\"]\s*\)\s*"
         rf"(?:\{{[^}}]*{load_pattern}|{load_pattern})",
-        body,
+        context,
         re.S,
     ))
-    non_web_path = "__mpx_mode__ !== 'web'" in body or '__mpx_mode__ !== "web"' in body
-    conditional_non_web = bool(re.search(r"@mpx-if[^\n]*(?:mode\s*!==?\s*['\"]web|mode\s*===?\s*['\"]wx)", body))
+    non_web_path = "__mpx_mode__ !== 'web'" in context or '__mpx_mode__ !== "web"' in context
+    conditional_non_web = bool(re.search(r"@mpx-if[^\n]*(?:mode\s*!==?\s*['\"]web|mode\s*===?\s*['\"]wx)", context))
     if browser_only_load and not (non_web_path or conditional_non_web):
         return False, f"outputs/{path}：onLoad 的商品加载只在 window 存在时执行，小程序环境会被错误跳过。"
     return True, f"outputs/{path}：onLoad 为非 Web/小程序保留明确商品加载路径，未被 window 存在性挡住。"
+
+
+def check_p3(root):
+    path = "src/services/product.js"
+    source = read_output(root, path)
+    failures = []
+    if not re.search(r"\b(?:new\s+Promise|Promise\.resolve|async\s+function|async\s+\w+)", source):
+        failures.append("service 未返回 Promise")
+    if re.search(r"\bwx\.request\s*\(", source):
+        failures.append("依赖 wx.request")
+    if re.search(r"\b(?:window|document|navigator|location)\b", source):
+        failures.append("读取浏览器全局")
+    if re.search(r"\b(?:localhost|127\.0\.0\.1)\b", source, re.I):
+        failures.append("硬编码本机地址")
+    if re.search(r"\b(?:requestContext|ssrContext)\s*\.(?:request|requestClient)\b", source):
+        failures.append("自行假定未声明的 request/requestClient 契约")
+    has_request = bool(re.search(
+        r"\b([A-Za-z_$][\w$]*)\s*(?:&&\s*\1\s*)?(?:\?\.|\.)req\b",
+        source,
+    ))
+    has_host = bool(re.search(r"(?:headers\s*\[\s*['\"]x-forwarded-host['\"]\s*\]|headers\.host)", source))
+    has_protocol = bool(re.search(r"(?:x-forwarded-proto|socket\s*(?:&&|\?\.)[^\n]*encrypted)", source))
+    if not has_request or not has_host or not has_protocol:
+        failures.append("未从当前 SSR 上下文的 req 解析请求 origin")
+    if failures:
+        return False, f"outputs/{path}：{'；'.join(failures)}。"
+    return True, f"outputs/{path}：Promise 请求沿调用链接收 SSR 上下文，并从当前 req 解析服务端 origin。"
 
 
 def check_p2(root):
@@ -247,6 +274,7 @@ CHECKS = {
     "h7": check_h7,
     "h8": check_h8,
     "p2": check_p2,
+    "p3": check_p3,
     "p7": check_p7,
 }
 

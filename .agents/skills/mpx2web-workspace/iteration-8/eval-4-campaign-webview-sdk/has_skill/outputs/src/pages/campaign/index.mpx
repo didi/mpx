@@ -17,6 +17,7 @@
       </view>
     </view>
 
+    <!-- Web 业务消息统一走内建 bindmessage，由 WebView 的 clientUid 隔离当前 iframe 实例。 -->
     <web-view
       wx:if="{{campaignUrl}}"
       id="campaign-webview"
@@ -36,6 +37,8 @@
 
     <campaign-tracker
       wx:if="{{campaignId}}"
+      id="campaign-tracker"
+      wx:ref
       campaignId="{{campaignId}}"
       memberId="{{memberId}}"
       bindready="handleTrackerReady"
@@ -46,60 +49,56 @@
 
 <script>
 import { createPage } from '@mpxjs/core'
-import mpx from '@mpxjs/api-proxy'
+import { navigateTo, request, showToast } from '@mpxjs/api-proxy'
 
-const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
-const CAMPAIGN_DETAILS = {
-  'summer-sale': {
-    title: '夏日清凉特卖',
-    subtitle: '限时领券，爆款低至五折'
-  },
-  'member-day': {
-    title: '会员专属福利日',
-    subtitle: '会员领券，下单享专属优惠'
-  },
-  'fresh-week': {
-    title: '生鲜尝鲜周',
-    subtitle: '每日鲜货，限时直降'
-  }
-}
-
-function createCampaignUrl (campaignId, memberId, reloadKey) {
-  const query = `memberId=${encodeURIComponent(memberId)}&campaignId=${encodeURIComponent(campaignId)}`
-  return `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?${query}${reloadKey ? `&reload=${reloadKey}` : ''}`
-}
+const campaignOrigin = 'https://campaign.example.com'
 
 createPage({
   data: {
     memberId: 'member-10086',
     campaignId: 'summer-sale',
     campaigns: [
-      { id: 'summer-sale', name: '夏日特卖' },
-      { id: 'member-day', name: '会员日' },
-      { id: 'fresh-week', name: '生鲜周' }
+      { id: 'summer-sale', name: '夏日特卖', title: '夏日清凉特卖', subtitle: '限时领券，爆款低至五折' },
+      { id: 'member-day', name: '会员日', title: '会员专享日', subtitle: '会员好券与专属商品限时开放' },
+      { id: 'fresh-week', name: '生鲜周', title: '每周生鲜好物', subtitle: '新鲜直达，精选商品限时优惠' }
     ],
-    campaign: CAMPAIGN_DETAILS['summer-sale'],
-    campaignUrl: createCampaignUrl('summer-sale', 'member-10086'),
+    campaign: {
+      title: '夏日清凉特卖',
+      subtitle: '限时领券，爆款低至五折'
+    },
+    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086&campaignId=summer-sale&reload=0',
+    reloadCount: 0,
     loading: true,
     errorText: '',
     trackerReady: false
   },
   methods: {
+    buildCampaignUrl (campaignId) {
+      return `${campaignOrigin}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}&campaignId=${encodeURIComponent(campaignId)}&reload=${this.reloadCount}`
+    },
     switchCampaign (campaignId) {
       if (campaignId === this.campaignId) return
+      const campaign = this.campaigns.find((item) => item.id === campaignId)
+      if (!campaign) return
       this.campaignId = campaignId
-      this.campaign = CAMPAIGN_DETAILS[campaignId]
+      this.campaign = {
+        title: campaign.title,
+        subtitle: campaign.subtitle
+      }
+      this.reloadCount = 0
       this.loading = true
       this.errorText = ''
       this.trackerReady = false
-      this.campaignUrl = createCampaignUrl(campaignId, this.memberId)
+      this.campaignUrl = this.buildCampaignUrl(campaignId)
+    },
+    isCurrentWebviewEvent (event) {
+      if (__mpx_mode__ !== 'web') return true
+      return event.detail && event.detail.fullUrl === this.campaignUrl
     },
     handleCampaignLoad (event) {
       if (!this.isCurrentWebviewEvent(event)) return
       this.loading = false
-      mpx.reportAnalytics('campaign_webview_load', {
-        campaign_id: this.campaignId
-      })
+      this.trackCampaignEvent('campaign_webview_load', {})
     },
     handleCampaignError (event) {
       if (!this.isCurrentWebviewEvent(event)) return
@@ -107,41 +106,44 @@ createPage({
       this.errorText = '活动会场暂时无法打开'
     },
     handleCampaignMessage (event) {
-      const messages = event.detail && event.detail.data || []
+      const detail = event.detail || {}
+      const messages = Array.isArray(detail.data) ? detail.data : [detail.data]
       const message = messages[messages.length - 1] || {}
-      if (message.campaignId !== this.campaignId) return
-      if (message.type === 'claim-coupon' && message.couponId) {
-        this.claimCoupon(message.couponId, message.campaignId)
-      }
-      if (message.type === 'open-product' && message.productId) {
-        this.openProduct(message.productId, message.campaignId)
+      if (__mpx_mode__ === 'web' && message.campaignId !== this.campaignId) return
+      if (message.type === 'claim-coupon') {
+        this.claimCoupon(message.couponId)
+      } else if (message.type === 'open-product') {
+        this.openProduct(message.productId)
+      } else if (message.type === 'campaign-exposure') {
+        this.trackCampaignEvent('exposure', message.payload)
       }
     },
-    isCurrentWebviewEvent (event) {
-      const eventSrc = event.detail && event.detail.src
-      return !eventSrc || eventSrc === this.campaignUrl
-    },
-    claimCoupon (couponId, campaignId) {
-      mpx.request({
+    claimCoupon (couponId) {
+      const campaignId = this.campaignId
+      request({
         url: '/api/campaign/coupons/claim',
         method: 'POST',
         data: { campaignId, couponId },
         success: () => {
           if (campaignId !== this.campaignId) return
-          mpx.showToast({ title: '领取成功', icon: 'success' })
+          showToast({ title: '领取成功', icon: 'success' })
         }
       })
     },
-    openProduct (productId, campaignId) {
-      if (campaignId !== this.campaignId) return
-      mpx.navigateTo({
-        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(campaignId)}`
+    openProduct (productId) {
+      navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(this.campaignId)}`
       })
     },
     reloadCampaign () {
+      this.reloadCount += 1
       this.loading = true
       this.errorText = ''
-      this.campaignUrl = createCampaignUrl(this.campaignId, this.memberId, Date.now())
+      this.campaignUrl = this.buildCampaignUrl(this.campaignId)
+    },
+    trackCampaignEvent (eventName, payload) {
+      const tracker = this.selectComponent('#campaign-tracker')
+      if (tracker && tracker.trackEvent) tracker.trackEvent(eventName, payload || {})
     },
     handleTrackerReady (event) {
       if (event.detail.campaignId !== this.campaignId) return

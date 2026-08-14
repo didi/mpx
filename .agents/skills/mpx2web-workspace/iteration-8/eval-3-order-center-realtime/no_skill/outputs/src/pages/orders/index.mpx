@@ -107,16 +107,19 @@ createPage({
       this.fetchOrders()
     },
     fetchOrders () {
+      const requestId = this._orderRequestId = (this._orderRequestId || 0) + 1
+      const status = this.activeStatus
       this.loading = true
       wx.request({
         url: '/api/orders',
-        data: { status: this.activeStatus },
+        data: { status },
         success: ({ data }) => {
+          if (requestId !== this._orderRequestId || status !== this.activeStatus) return
           this.orders = data.list
           this.statusTabs = data.summary
         },
         complete: () => {
-          this.loading = false
+          if (requestId === this._orderRequestId) this.loading = false
         }
       })
     },
@@ -124,8 +127,6 @@ createPage({
       wx.navigateTo({ url: `/pages/orders/detail?id=${detail.orderId}` })
     },
     removeOrder ({ detail }) {
-      const order = this.orders.find(item => item.id === detail.orderId)
-      if (!order || order.locked) return
       wx.showModal({
         title: '删除订单',
         content: '删除后将无法在订单列表中查看，确认删除吗？',
@@ -135,7 +136,9 @@ createPage({
             url: `/api/orders/${detail.orderId}`,
             method: 'DELETE',
             success: () => {
-              this.orders = this.orders.filter(order => order.id !== detail.orderId)
+              this.orders = this.orders
+                .filter(order => order.id !== detail.orderId)
+                .map(order => Object.assign({}, order, { locked: false }))
             }
           })
         }
@@ -143,7 +146,9 @@ createPage({
     },
     handleSwipeEnd ({ detail }) {
       this.orders = this.orders.map(order => {
-        return Object.assign({}, order, { locked: detail.open && order.id !== detail.orderId })
+        return Object.assign({}, order, {
+          locked: detail.open && order.id !== detail.orderId
+        })
       })
     },
     handleConnectionChange ({ detail }) {
@@ -171,7 +176,13 @@ createPage({
 </script>
 
 <style>
-.order-page { min-height: 100vh; padding: 24rpx; background: #f5f7fa; box-sizing: border-box; }
+.order-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 24rpx;
+  background: #f5f7fa;
+}
+
 .order-summary,
 .status-tabs { background: #ffffff; border-radius: 20rpx; }
 .order-summary { display: flex; align-items: center; justify-content: space-between; padding: 26rpx; }
@@ -184,13 +195,17 @@ createPage({
 .socket-state.online { color: #36a269; }
 .socket-state.online .state-dot { background: #36a269; }
 .status-tabs { display: flex; margin-top: 20rpx; padding: 12rpx; }
-.status-tab { position: relative; flex: 1; padding: 14rpx 0; color: #69707b; font-size: 25rpx; text-align: center; }
+.status-tab { position: relative; flex: 1; padding: 14rpx 0; color: #69707b; font-size: 25rpx; text-align: center; cursor: pointer; }
 .status-tab.active { color: #1677ff; font-weight: bold; }
-.status-count { position: absolute; top: 0; min-width: 26rpx; height: 26rpx; margin-left: 4rpx; padding: 0 6rpx; color: #ffffff; font-size: 18rpx; line-height: 26rpx; background: #ff4d4f; border-radius: 14rpx; }
+.status-count { position: absolute; top: 0; min-width: 26rpx; height: 26rpx; box-sizing: content-box; margin-left: 4rpx; padding: 0 6rpx; color: #ffffff; font-size: 18rpx; line-height: 26rpx; background: #ff4d4f; border-radius: 14rpx; }
 .order-list { margin-top: 20rpx; }
 .order-loading,
 .order-empty { padding: 80rpx 0; color: #a0a5ae; font-size: 25rpx; text-align: center; }
 .shopping-button { width: 220rpx; margin-top: 20rpx; color: #1677ff; background: #ffffff; border: 2rpx solid #1677ff; border-radius: 36rpx; }
+
+/* @mpx-if (__mpx_mode__ === 'web') */
+.order-page { width: 100%; max-width: 960px; margin: 0 auto; }
+/* @mpx-endif */
 </style>
 
 <script type="application/json">

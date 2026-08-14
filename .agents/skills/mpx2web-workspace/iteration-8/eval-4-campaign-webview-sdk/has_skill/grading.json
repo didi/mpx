@@ -7,7 +7,7 @@
       "id": "h0",
       "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
       "passed": true,
-      "evidence": "outputs/src/pages/campaign/index.mpx：保留 <web-view src=\"{{campaignUrl}}\" bindmessage=\"handleCampaignMessage\">；handleCampaignMessage 调用 claimCoupon/openProduct，分别使用 mpx.request 领券和 mpx.navigateTo 跳转；handleCampaignLoad 调用 mpx.reportAnalytics('campaign_webview_load', ...) 。"
+      "evidence": "outputs/src/pages/campaign/index.mpx 保留 `<web-view src=\"{{campaignUrl}}\" bindmessage=\"handleCampaignMessage\" />`；`claimCoupon` 调用领券接口，`openProduct` 通过 `navigateTo` 跳转商品页。outputs/src/components/campaign-tracker.mpx 的非 Web 分支调用 `wx.reportAnalytics(...)`，保留活动埋点。"
     },
     {
       "id": "h1",
@@ -19,31 +19,31 @@
       "id": "h2",
       "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
       "passed": true,
-      "evidence": "outputs/vue.config.js：publicPath: '/mall/'，且 pluginOptions.mpx.plugin.webConfig.routeConfig.base: '/mall/'。"
+      "evidence": "outputs/vue.config.js 同时配置 `publicPath: '/mall/'` 与 `routeConfig: { mode: 'history', base: '/mall/' }`。"
     },
     {
       "id": "h3",
       "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
       "passed": true,
-      "evidence": "outputs/src/components/campaign-tracker.mpx：仅在 initTracker 中先判断 __mpx_mode__ !== 'web' 返回，随后执行 await import('@business/campaign-tracker-web')；模块顶层没有该 SDK 的静态 import。"
+      "evidence": "outputs/src/components/campaign-tracker.mpx 顶层仅静态引入 `@mpxjs/core`；`await import('@business/campaign-tracker-web')` 位于 `if (__mpx_mode__ !== 'web') return` 之后。"
     },
     {
       "id": "h4",
       "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
       "passed": true,
-      "evidence": "outputs/src/components/campaign-tracker.mpx：动态 import 完成后以 if (!this.isCurrentInit(initId, campaignId)) return 阻止继续；异步 create 完成后再次校验，失败时 tracker.destroy() 后返回。detached 中设置 trackerDetached = true 并递增 trackerInitId。"
+      "evidence": "outputs/src/components/campaign-tracker.mpx 在动态加载后执行 `if (!this.isCurrentGeneration(generation, campaignId)) return`；`campaignTracker.create(...)` 完成后再次校验，失效时执行 `tracker.destroy()`；`isCurrentGeneration` 同时要求 `!this.trackerDetached`、代际一致且 campaignId 一致。"
     },
     {
       "id": "h5",
       "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
       "passed": true,
-      "evidence": "outputs/src/components/campaign-tracker.mpx：每次初始化使用 ++this.trackerInitId，isCurrentInit 同时校验 initId、campaignId 和当前 this.campaignId；旧实例创建完成不会赋给 this.tracker。outputs/src/pages/campaign/index.mpx：领券 success 回调及 tracker 事件均校验 campaignId === this.campaignId。"
+      "evidence": "outputs/src/components/campaign-tracker.mpx 每次初始化递增 `this.trackerGeneration`，并以 `generation === this.trackerGeneration && campaignId === this.campaignId` 校验异步结果；旧结果不会赋值 `this.tracker` 或触发当前 ready 状态。"
     },
     {
       "id": "h6",
       "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
       "passed": true,
-      "evidence": "outputs/src/components/campaign-tracker.mpx：detached 调用 cleanupTracker()；该方法执行 document.removeEventListener('visibilitychange', this.handleVisibilityChange)，并执行 this.tracker.destroy()。"
+      "evidence": "outputs/src/components/campaign-tracker.mpx 的 `detached()` 调用 `cleanupTracker()`；后者执行 `document.removeEventListener('visibilitychange', this.handleVisibilityChange)`，并执行 `this.tracker.destroy()`。"
     },
     {
       "id": "h7",

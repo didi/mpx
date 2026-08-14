@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from benchmark_assertions import apply_deterministic_checks, audit_workspace
+from benchmark_assertions import apply_deterministic_checks, audit_workspace, check_p3, check_p7
 
 ROOT = Path(__file__).parent
 
@@ -130,6 +130,37 @@ alert('failed')
         self.assertFalse(by_id["a5"]["passed"])
         self.assertFalse(by_id["a6"]["passed"])
 
+    def test_eval1_static_rules_accept_todo_synonyms_but_reject_raw_named_api_imports(self):
+        runner = load_runner()
+        item = next(item for item in runner.load_evals(None) if item["id"] == 1)
+        expectations = [{
+            "id": assertion["id"],
+            "text": assertion["text"],
+            "passed": True,
+            "evidence": "outputs/src/pages/community/publish.mpx: model evidence"
+        } for assertion in item["assertions"]]
+        with tempfile.TemporaryDirectory() as output_dir:
+            root = Path(output_dir)
+            path = root / "outputs/src/pages/community/publish.mpx"
+            path.parent.mkdir(parents=True)
+            path.write_text("""
+// TODO: 宿主 Bridge/地图 SDK 协议确定后接入位置选择
+// TODO: 地图 SDK/宿主 Bridge 协议确定后打开地图
+// TODO: 媒体 SDK/宿主 Bridge 协议确定后选择图片
+mpx.request({})
+mpx.redirectTo({})
+mpx.showToast({})
+""")
+            checked = runner.apply_static_checks(item, expectations, root)
+            by_id = {entry["id"]: entry for entry in checked}
+            self.assertTrue(by_id["a3"]["passed"])
+            self.assertTrue(by_id["a4"]["passed"])
+            self.assertTrue(by_id["a6"]["passed"])
+
+            path.write_text(path.read_text() + "\nimport { request } from '@mpxjs/api-proxy'\n")
+            checked = runner.apply_static_checks(item, expectations, root)
+            self.assertFalse({entry["id"]: entry for entry in checked}["a6"]["passed"])
+
     def test_eval3_requires_explicit_wxs_web_event_pairs(self):
         no_skill = self.deterministic_grade(3, "no_skill")
         has_skill = self.deterministic_grade(3, "has_skill")
@@ -151,15 +182,69 @@ alert('failed')
         self.assertFalse(has_skill["h7"]["passed"])
         self.assertTrue(has_skill["h8"]["passed"])
 
-    def test_eval5_rejects_hydration_race_and_window_only_mini_program_load(self):
+    def test_eval5_rejects_hydration_race_without_misreading_forwarded_onload(self):
         no_skill = self.deterministic_grade(5, "no_skill")
         has_skill = self.deterministic_grade(5, "has_skill")
         self.assertFalse(no_skill["p2"]["passed"])
-        self.assertFalse(no_skill["p7"]["passed"])
+        self.assertTrue(no_skill["p7"]["passed"])
         self.assertTrue(has_skill["p2"]["passed"])
         self.assertTrue(has_skill["p7"]["passed"])
-        self.assertIn("A→B→A", no_skill["p2"]["evidence"])
         self.assertIn("A→B→A", has_skill["p2"]["evidence"])
+
+    def test_eval5_p7_follows_one_method_call_but_keeps_window_guard_detection(self):
+        with tempfile.TemporaryDirectory() as output_dir:
+            root = Path(output_dir)
+            path = root / "outputs/src/packageProduct/pages/detail/index.mpx"
+            path.parent.mkdir(parents=True)
+            path.write_text("""
+onLoad (options) {
+  this.prepareProduct(options.id)
+}
+prepareProduct (productId) {
+  return this.loadProduct(productId)
+}
+""")
+            self.assertTrue(check_p7(root)[0])
+
+            path.write_text("""
+onLoad (options) {
+  this.prepareProduct(options.id)
+}
+prepareProduct (productId) {
+  if (typeof window !== 'undefined') this.loadProduct(productId)
+}
+""")
+            self.assertFalse(check_p7(root)[0])
+
+    def test_eval5_p3_requires_declared_ssr_request_origin_contract(self):
+        with tempfile.TemporaryDirectory() as output_dir:
+            root = Path(output_dir)
+            path = root / "outputs/src/services/product.js"
+            path.parent.mkdir(parents=True)
+            path.write_text("""
+function getOrigin (requestContext) {
+  const request = requestContext && requestContext.req
+  const headers = request ? request.headers : {}
+  const protocol = headers['x-forwarded-proto'] || 'https'
+  const host = headers['x-forwarded-host'] || headers.host
+  return request && host ? `${protocol}://${host}` : ''
+}
+function request (path, requestContext) {
+  const origin = getOrigin(requestContext)
+  return new Promise((resolve) => resolve(origin + path))
+}
+""")
+            self.assertTrue(check_p3(root)[0])
+
+            path.write_text("""
+function request (options, requestContext) {
+  const requestClient = requestContext && requestContext.requestClient
+  return Promise.resolve(requestClient(options))
+}
+""")
+            passed, evidence = check_p3(root)
+            self.assertFalse(passed)
+            self.assertIn("requestClient", evidence)
 
     def test_audited_scores_match_regression_evidence(self):
         result = audit_workspace(ROOT)

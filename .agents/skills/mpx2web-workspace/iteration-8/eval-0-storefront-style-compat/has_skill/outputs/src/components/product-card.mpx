@@ -129,9 +129,9 @@ createComponent({
 .currency,
 .unit {
   width: 10px;
-  font-size: 12.5px;
-  line-height: 17.5px;
-  transform: scale(0.8);
+  font-size: 12px;
+  line-height: 16.8px;
+  transform: scale(0.833333);
 }
 
 .currency {

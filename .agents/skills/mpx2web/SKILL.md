@@ -2,7 +2,7 @@
 name: mpx2web
 description: Mpx 输出 Web（Mpx2Web）的 Web-only 差异指南，聚焦 Web 端特有配置、浏览器能力、H5 SDK、Vue 组件、Web CSS、路由部署、SSR/SEO 与 Web 运行时差异。当前尚无 mpx base skill，遇到通用 Mpx 基础语法、通用条件编译或通用组件开发问题时，先读取 mpx2rn skill 中可复用的公共部分，再回到本 skill 处理 Web-only 差异；未来有 mpx base skill 后替换该过渡指引。
 metadata:
-  version: "1.6.1"
+  version: "1.7.0"
   author: wangcuijuan
 ---
 

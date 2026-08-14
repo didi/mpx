@@ -8,65 +8,68 @@
 import { createComponent } from '@mpxjs/core'
 // @ifdef WEB
 import campaignTracker from '@business/campaign-tracker-web'
-// @endif
 
 const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+// @endif
 
 createComponent({
   properties: {
     campaignId: {
       type: String,
       observer () {
-        if (this.componentReady) this.initTracker()
+        if (this.trackerMounted) this.initTracker()
       }
     },
-    memberId: String
+    memberId: String,
+    iframeId: String
   },
   data: {
     ready: false
   },
-  ready () {
-    this.componentReady = true
-    this.trackerVersion = 0
-    // @ifdef WEB
-    this.handleWindowMessage = this.handleWindowMessage.bind(this)
-    this.handleVisibilityChange = this.handleVisibilityChange.bind(this)
+  // @ifdef WEB
+  created () {
+    this.trackerGeneration = 0
+    this.disposed = false
+    this.trackerMounted = false
+  },
+  mounted () {
+    this.trackerMounted = true
     window.addEventListener('message', this.handleWindowMessage)
     document.addEventListener('visibilitychange', this.handleVisibilityChange)
     this.initTracker()
-    // @endif
+  },
+  beforeDestroy () {
+    this.disposeTracker()
+  },
+  // @endif
+  ready () {
     // @ifndef WEB
     this.ready = true
     this.triggerEvent('ready', { campaignId: this.campaignId })
     // @endif
   },
   detached () {
-    this.componentDestroyed = true
-    this.trackerVersion++
     // @ifdef WEB
-    window.removeEventListener('message', this.handleWindowMessage)
-    document.removeEventListener('visibilitychange', this.handleVisibilityChange)
-    this.destroyTracker()
+    this.disposeTracker()
     // @endif
   },
   methods: {
-    destroyTracker () {
-      if (!this.tracker) return
-      this.tracker.destroy()
-      this.tracker = null
-    },
     async initTracker () {
+      // @ifdef WEB
+      if (!this.campaignId || this.disposed) return
+      const generation = ++this.trackerGeneration
       const campaignId = this.campaignId
-      const version = ++this.trackerVersion
       this.ready = false
-      this.destroyTracker()
-      if (!campaignId || this.componentDestroyed) return
+      if (this.tracker) {
+        this.tracker.destroy()
+        this.tracker = null
+      }
       try {
         const tracker = await campaignTracker.create({
           campaignId,
           memberId: this.memberId
         })
-        if (this.componentDestroyed || version !== this.trackerVersion || campaignId !== this.campaignId) {
+        if (this.disposed || generation !== this.trackerGeneration || campaignId !== this.campaignId) {
           tracker.destroy()
           return
         }
@@ -76,27 +79,46 @@ createComponent({
         this.ready = true
         this.triggerEvent('ready', { campaignId })
       } catch (error) {
-        if (this.componentDestroyed || version !== this.trackerVersion || campaignId !== this.campaignId) return
-        this.triggerEvent('error', { campaignId, error })
+        if (this.disposed || generation !== this.trackerGeneration || campaignId !== this.campaignId) return
+        this.triggerEvent('error', { campaignId })
+      }
+      // @endif
+    },
+    // @ifdef WEB
+    disposeTracker () {
+      if (this.disposed) return
+      this.disposed = true
+      this.trackerMounted = false
+      this.trackerGeneration++
+      window.removeEventListener('message', this.handleWindowMessage)
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      if (this.tracker) {
+        this.tracker.destroy()
+        this.tracker = null
       }
     },
     handleWindowMessage (event) {
-      if (event.origin !== CAMPAIGN_ORIGIN || !this.tracker || this.componentDestroyed) return
-      const iframe = document.getElementById('campaign-webview')
-      if (!iframe || event.source !== iframe.contentWindow) return
+      const frame = document.getElementById(this.iframeId)
       const message = event.data || {}
-      if (message.type === 'campaign-exposure' && (!message.campaignId || message.campaignId === this.campaignId)) {
+      if (
+        event.origin !== CAMPAIGN_ORIGIN ||
+        !frame ||
+        event.source !== frame.contentWindow ||
+        (message.campaignId && message.campaignId !== this.campaignId)
+      ) return
+      if (message.type === 'campaign-exposure' && this.tracker) {
         this.tracker.track('exposure', message.payload)
       }
     },
     handleVisibilityChange () {
-      if (!this.tracker || this.componentDestroyed) return
+      if (!this.tracker) return
       if (document.hidden) {
         this.tracker.pause()
       } else {
         this.tracker.resume()
       }
     }
+    // @endif
   }
 })
 </script>

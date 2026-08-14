@@ -45,8 +45,8 @@
     </view>
 
     <view class="action-row">
-      <button class="share-button share-button-wx" open-type="share" wx:if="{{__mpx_mode__ === 'wx'}}">分享给好友</button>
-      <button class="share-button share-button-web" bindtap="shareOnWeb" wx:if="{{__mpx_mode__ === 'web'}}">分享邀请活动</button>
+      <button @_wx class="share-button share-button-wx" open-type="share">分享给好友</button>
+      <button @_web class="share-button share-button-web" bindtap="shareOnWeb">分享邀请活动</button>
       <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
     </view>
 
@@ -71,8 +71,7 @@
 </template>
 
 <script>
-import { createPage, implement } from '@mpxjs/core'
-import { navigateTo, request, showToast } from '@mpxjs/api-proxy'
+import mpx, { createPage, implement } from '@mpxjs/core'
 
 if (__mpx_mode__ === 'web') {
   implement('onShareAppMessage', {
@@ -134,7 +133,7 @@ createPage({
   },
   onLoad () {
     if (__mpx_mode__ === 'wx') {
-      wx.showShareMenu({ withShareTicket: true })
+      mpx.showShareMenu({ withShareTicket: true })
     }
     this.fetchInviteSummary()
   },
@@ -154,7 +153,7 @@ createPage({
   },
   methods: {
     fetchInviteSummary () {
-      request({
+      mpx.request({
         url: `/api/member/${this.member.id}/invites`,
         success: ({ data }) => {
           this.inviteCount = data.count
@@ -163,11 +162,10 @@ createPage({
       })
     },
     shareOnWeb () {
-      // TODO: 接入业务提供的 Web 分享 SDK、宿主 Bridge 或分享协议。
-      showToast({ title: 'Web 分享能力暂未接入', icon: 'none' })
+      // TODO: 接入业务提供的 Web 分享 SDK、宿主 Bridge 或分享协议
     },
     openCampaignDetail () {
-      navigateTo({
+      mpx.navigateTo({
         url: `/pages/member/campaign-detail?id=${this.campaign.id}`
       })
     }

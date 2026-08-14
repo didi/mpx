@@ -14,7 +14,7 @@ if (__mpx_mode__ === 'web') {
 
 createApp({
   onLaunch () {
-    apiProxy.reportAnalytics('mall_launch', {})
+    if (__mpx_mode__ !== 'web') wx.reportAnalytics('mall_launch', {})
   }
 })
 </script>

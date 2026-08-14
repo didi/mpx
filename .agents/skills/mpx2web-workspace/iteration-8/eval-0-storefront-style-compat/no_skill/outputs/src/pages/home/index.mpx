@@ -113,7 +113,7 @@ createPage({
 })
 </script>
 
-<style scoped>
+<style>
 .home-page {
   min-height: 100vh;
   padding: 24rpx;

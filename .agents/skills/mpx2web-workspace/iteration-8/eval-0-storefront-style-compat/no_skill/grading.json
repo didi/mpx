@@ -6,56 +6,56 @@
     {
       "id": "w0",
       "text": "商品卡在 Web 使用 scoped 隔离组件样式",
-      "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx：商品卡样式块为 `<style scoped>`，组件 JSON 同时配置 `\"styleIsolation\": \"isolated\"`。"
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx 仅有 <style>，未见 Web scoped 样式标记；JSON 中的 \"styleIsolation\": \"isolated\" 不能证明 Web scoped 隔离。"
     },
     {
       "id": "w1",
       "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx：图片使用 `class=\"product-cover\"`，样式通过 `.product-cover { ... }` 定义，未使用 `image` 标签选择器。"
+      "evidence": "outputs/src/components/product-card.mpx：<image class=\"product-cover\" ... />，并以 .product-cover 定义图片样式；未使用 image 标签选择器。"
     },
     {
       "id": "w2",
       "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
       "passed": true,
-      "evidence": "outputs/src/pages/home/index.mpx 包含 `.home-title { color: #e64340; font-size: 40rpx; font-weight: bold; }`；outputs/src/components/product-card.mpx 包含 `.product-title { font-size: 30rpx; font-weight: bold; ... }` 和 `.product-cover { ... border-radius: 20rpx 20rpx 0 0; }`。"
+      "evidence": "outputs/src/pages/home/index.mpx 定义 .home-title { font-size: 40rpx; color: #e64340; }；outputs/src/components/product-card.mpx 定义 .product-title { font-size: 30rpx; font-weight: bold; } 及 .product-cover { border-radius: 20rpx 20rpx 0 0; }，三者分别保有独立视觉样式。"
     },
     {
       "id": "w3",
       "text": "小程序保留币种与单位的原始 10px 字号",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx：`.currency, .unit { font-size: 10px; ... }`；额外声明仅位于 `/* @mpx-if (mode === 'web') */` 条件编译块内，因此小程序侧保留 10px 声明。"
+      "evidence": "outputs/src/components/product-card.mpx：条件编译块外 .currency, .unit { font-size: 10px; line-height: 14px; }；Web 覆盖位于 /* @mpx-if (mode === 'web') */ 块内。"
     },
     {
       "id": "w4",
       "text": "WebView 小字号补偿使用较大基础字号配合 scale，还原视觉字号",
-      "passed": false,
-      "evidence": "outputs/src/components/product-card.mpx 的 `.currency, .unit` 仅设置 `font-size: 10px` 及 Web 条件下的 `text-size-adjust: none`，没有较大基础字号或 `transform: scale(...)`。"
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx 的 Web 条件块中：.currency, .unit { font-size: 12px; ... transform: scale(0.833333); }，12px × 0.833333 约为原始 10px 视觉字号。"
     },
     {
       "id": "w5",
       "text": "WebView 缩放补偿设置 transform-origin 并校正布局占位",
-      "passed": false,
-      "evidence": "outputs/src/components/product-card.mpx 未出现 `transform`、`transform-origin` 或用于缩放后布局占位校正的样式。"
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx 的 Web 条件块中，.currency 设置 width: 10px、margin-right: -1px、transform-origin: right bottom；.unit 设置 width: 10px、margin-left: -1px、transform-origin: left bottom。"
     },
     {
       "id": "w6",
       "text": "小字号补偿仅隔离在 Web 输出",
-      "passed": false,
-      "evidence": "outputs/src/components/product-card.mpx 虽将 `text-size-adjust` 放在 Web 条件编译块内，但未实现断言所指的字号缩放补偿（缺少较大字号与 scale）。"
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx 将 font-size: 12px、scale、transform-origin 和占位校正包裹在 /* @mpx-if (mode === 'web') */ 与 /* @mpx-endif */ 之间。"
     },
     {
       "id": "w7",
       "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
       "passed": true,
-      "evidence": "outputs/src/pages/home/index.mpx：分类标签绑定 `bindtap=\"switchCategory(item.id)\"`，`switchCategory` 更新分类并调用 `fetchProducts()`；商品卡绑定 `bindselect=\"openProduct\"`，`openProduct` 调用 `wx.navigateTo`；绑定 `bindaddcart=\"addToCart\"`，`addToCart` 通过 POST `/api/cart/items` 加入购物车。"
+      "evidence": "outputs/src/pages/home/index.mpx：分类项 bindtap=\"switchCategory(item.id)\"，switchCategory 调用 fetchProducts；product-card 绑定 bindselect=\"openProduct\" 和 bindaddcart=\"addToCart\"；openProduct 使用 wx.navigateTo 跳转详情，addToCart 向 /api/cart/items 发起 POST 请求。"
     }
   ],
   "summary": {
-    "passed": 5,
-    "failed": 3,
+    "passed": 7,
+    "failed": 1,
     "total": 8,
-    "pass_rate": 0.625
+    "pass_rate": 0.875
   }
 }

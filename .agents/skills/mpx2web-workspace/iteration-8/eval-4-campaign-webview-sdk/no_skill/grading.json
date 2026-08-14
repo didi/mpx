@@ -7,7 +7,7 @@
       "id": "h0",
       "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
       "passed": true,
-      "evidence": "outputs/src/pages/campaign/index.mpx：`@ifndef WEB` 分支保留 `<web-view ... bindmessage=\"handleCampaignMessage\" ... />`；`claimCoupon` 调用 `/api/campaign/coupons/claim`；`openProduct` 调用 `wx.navigateTo` 跳转商品详情；`handleCampaignLoad` 调用 `wx.reportAnalytics('campaign_webview_load', ...)`。"
+      "evidence": "outputs/src/pages/campaign/index.mpx：`@ifndef WEB` 下保留 `<web-view ... bindmessage=\"handleCampaignMessage\" .../>`；`claimCoupon` 请求 `/api/campaign/coupons/claim`，`openProduct` 使用 `wx.navigateTo` 跳转商品页；加载时调用 `wx.reportAnalytics('campaign_webview_load', ...)`。"
     },
     {
       "id": "h1",
@@ -19,31 +19,31 @@
       "id": "h2",
       "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
       "passed": true,
-      "evidence": "outputs/vue.config.js：`publicPath: '/mall/'`，且 `routeConfig: { mode: 'history', base: '/mall/' }`。"
+      "evidence": "outputs/vue.config.js：`publicPath: '/mall/'`，且 `webConfig.routeConfig.base: '/mall/'`。"
     },
     {
       "id": "h3",
       "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
       "passed": false,
-      "evidence": "outputs/src/components/campaign-tracker.mpx 在模块顶层存在 `import campaignTracker from '@business/campaign-tracker-web'`；即使包裹在 `@ifdef WEB` 注释中，也不是动态加载。"
+      "evidence": "outputs/src/components/campaign-tracker.mpx 在模块顶层使用静态导入：`import campaignTracker from '@business/campaign-tracker-web'`；未见动态加载代码。"
     },
     {
       "id": "h4",
       "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
       "passed": false,
-      "evidence": "outputs/src/components/campaign-tracker.mpx 的 `campaignTracker` 为模块顶层静态引入，缺少 SDK 动态加载边界及其卸载后校验；虽 `await campaignTracker.create(...)` 后有 `componentDestroyed`、`version`、`campaignId` 校验，但无法满足动态加载与异步初始化每个边界均受保护的完整断言。"
+      "evidence": "outputs/src/components/campaign-tracker.mpx 的异步 `campaignTracker.create` 后确有 `this.disposed`、`generation` 与 `campaignId` 校验，但 SDK 本身是模块顶层静态导入，并不存在可验证的动态加载边界及其卸载保护。"
     },
     {
       "id": "h5",
       "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
       "passed": true,
-      "evidence": "outputs/src/pages/campaign/index.mpx：`switchCampaign` 递增 `this.campaignVersion`，领券回调校验 `version !== this.campaignVersion || campaignId !== this.campaignId`。outputs/src/components/campaign-tracker.mpx：`initTracker` 使用 `const version = ++this.trackerVersion`，异步创建后校验 `version !== this.trackerVersion || campaignId !== this.campaignId`，旧实例会 `tracker.destroy()`。"
+      "evidence": "outputs/src/components/campaign-tracker.mpx：`const generation = ++this.trackerGeneration`，异步创建完成后校验 `generation !== this.trackerGeneration || campaignId !== this.campaignId`，不匹配时销毁旧 `tracker`；页面的重新加载回调也校验 `campaignId === this.campaignId`。"
     },
     {
       "id": "h6",
       "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
       "passed": true,
-      "evidence": "outputs/src/components/campaign-tracker.mpx 的 `detached` 中执行 `window.removeEventListener('message', this.handleWindowMessage)`、`document.removeEventListener('visibilitychange', this.handleVisibilityChange)` 和 `this.destroyTracker()`；`destroyTracker` 调用 `this.tracker.destroy()`。"
+      "evidence": "outputs/src/components/campaign-tracker.mpx：`beforeDestroy` 和 `detached` 调用 `disposeTracker()`；其中移除 `window` 的 `message` 监听、`document` 的 `visibilitychange` 监听，并执行 `this.tracker.destroy()`。"
     },
     {
       "id": "h7",

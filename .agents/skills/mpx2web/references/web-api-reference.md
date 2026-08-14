@@ -67,6 +67,13 @@ mpx.use(apiProxy, {
 
 若无需配置，可简写为 `mpx.use(apiProxy)`。
 
+### 跨平台 API 改造决策
+
+- 先查本文支持范围。API Proxy 已支持的能力在所有目标继续调用完成 `mpx.use(apiProxy, options)` 配置的 `mpx.xxx`，不要因为输出 Web 而增加平台分支。
+- 只有 Web 不支持的宿主能力才做最小范围条件编译；业务未提供 Bridge 或 SDK 协议时只保留 TODO，不虚构接口。
+- 不要从 `@mpxjs/api-proxy` 命名导入 `request`、`redirectTo`、`showToast` 等原始实现替代 `mpx.xxx`，否则会绕过应用入口的 `options`、`custom` 与 Promise 化配置。
+- 不为已支持 API 再增加 `fetch`、浏览器跳转、弹窗或通用平台包装层；保持原业务调用链，只隔离真正缺失的能力。
+
 ### options
 
 | 选项 | 类型 | 默认值 | 说明 |
@@ -937,7 +944,13 @@ Web 下不提供 `cookies`、`profile`、`exception` 字段。
 
 Web 不支持全局 `sendSocketMessage`、`closeSocket`、`onSocketOpen`、`onSocketError`、`onSocketMessage`、`onSocketClose`，请使用 `SocketTask` 对应方法。
 
-组件允许重连或切换会话时，不要只覆盖 `this.socketTask`：每组回调捕获本次创建的任务，并在修改状态、派发消息或报告错误前确认它仍是当前任务。替换和卸载时先保存旧任务、清空当前任务身份，再关闭旧任务；创建新任务后才将其设为当前任务。发送时读取当前任务，并同时检查它仍存在且 `task.readyState === task.OPEN`。这样旧任务晚到的 `open/message/error/close` 不会修改新连接状态或继续派发消息。
+组件允许重连或切换会话时，按以下身份检查管理任务，不能只覆盖 `this.socketTask`：
+
+- 每组 `open/message/error/close` 回调捕获本次创建的局部 `task`，修改状态或派发消息前确认 `this.socketTask === task`。
+- 替换和卸载时先保存旧任务、清空当前任务身份，再关闭旧任务；创建新任务后才把它设为当前任务。
+- 发送前读取局部 `task = this.socketTask`，同时确认任务存在、`this.socketTask === task` 且 `task.readyState === task.OPEN`，再调用 `task.send`。
+
+这样旧任务晚到的回调不会修改新连接状态或继续派发消息，未打开或已经被替换的任务也不会收到发送请求。
 
 ---
 

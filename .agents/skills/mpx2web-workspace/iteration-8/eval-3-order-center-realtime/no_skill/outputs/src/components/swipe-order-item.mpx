@@ -1,58 +1,39 @@
 <template>
+  <!-- @mpx-if (__mpx_mode__ === 'web') -->
   <view
     class="swipe-order"
     data-disabled="{{disabled}}"
-    wx:if="{{__mpx_mode__ !== 'web'}}"
+    bindtouchstart="onTouchStart"
+    catchtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
+    bindtouchcancel="onTouchCancel"
+  >
+  <!-- @mpx-else -->
+  <view
+    class="swipe-order"
+    data-order-id="{{order.id}}"
+    data-disabled="{{disabled}}"
+    data-offset="{{offsetX}}"
     catchtouchstart="{{gesture.onTouchStart}}"
     catchtouchmove="{{gesture.onTouchMove}}"
     catchtouchend="{{gesture.onTouchEnd}}"
     catchtouchcancel="{{gesture.onTouchCancel}}"
   >
+  <!-- @mpx-endif -->
     <view class="remove-action">
       <button class="remove-button" catchtap="removeOrder" disabled="{{disabled}}">删除</button>
     </view>
-    <view class="order-card" style="transform: translateX({{offsetX}}px)" bindtap="selectOrder">
-      <view class="order-head">
-        <text class="order-no">订单 {{order.orderNo}}</text>
-        <text class="order-status">{{order.statusText}}</text>
-      </view>
-      <view class="goods-row">
-        <image class="goods-cover" src="{{order.cover}}" mode="aspectFill" />
-        <view class="goods-copy">
-          <text class="goods-title">{{order.title}}</text>
-          <text class="goods-sku">{{order.skuText}}</text>
-          <view class="goods-price-row">
-            <text class="goods-price">¥{{order.amount}}</text>
-            <text class="goods-count">×{{order.count}}</text>
-          </view>
-        </view>
-      </view>
-      <view class="logistics-row">
-        <view class="logistics-copy">
-          <text class="logistics-text">{{order.logisticsText}}</text>
-          <text class="logistics-time">{{order.updatedAt}}</text>
-        </view>
-        <text class="logistics-arrow">›</text>
-      </view>
-    </view>
-  </view>
 
-  <view
-    class="swipe-order"
-    wx:else
-    @touchstart.stop="handleTouchStart"
-    @touchmove.stop="handleTouchMove"
-    @touchend.stop="handleTouchEnd"
-    @touchcancel.stop="handleTouchCancel"
-  >
-    <view class="remove-action">
-      <button class="remove-button" @click.stop="removeOrder" disabled="{{disabled}}">删除</button>
-    </view>
-    <view class="order-card" style="transform: translateX({{offsetX}}px)" @click="selectOrder">
+    <view
+      class="order-card {{dragging ? 'dragging' : ''}}"
+      style="transform: translateX({{offsetX}}px)"
+      bindtap="selectOrder"
+    >
       <view class="order-head">
         <text class="order-no">订单 {{order.orderNo}}</text>
         <text class="order-status">{{order.statusText}}</text>
       </view>
+
       <view class="goods-row">
         <image class="goods-cover" src="{{order.cover}}" mode="aspectFill" />
         <view class="goods-copy">
@@ -64,6 +45,7 @@
           </view>
         </view>
       </view>
+
       <view class="logistics-row">
         <view class="logistics-copy">
           <text class="logistics-text">{{order.logisticsText}}</text>
@@ -75,31 +57,62 @@
   </view>
 </template>
 
+<!-- @mpx-if (__mpx_mode__ !== 'web') -->
 <script module="gesture" lang="wxs">
+var gestures = {}
+
 function pointX(event) {
   var touches = event.touches && event.touches.length ? event.touches : event.changedTouches
   return touches && touches.length ? touches[0].clientX : 0
 }
 
+function key(event) {
+  return event.currentTarget.dataset.orderId
+}
+
 module.exports = {
   onTouchStart: function (event) {
     if (event.currentTarget.dataset.disabled) return
-    event.instance.callMethod('beginSwipe', pointX(event))
+    var id = key(event)
+    gestures[id] = {
+      startX: pointX(event),
+      startOffset: Number(event.currentTarget.dataset.offset) || 0,
+      offset: Number(event.currentTarget.dataset.offset) || 0,
+      moved: false
+    }
+    event.instance.callMethod('beginSwipe')
   },
   onTouchMove: function (event) {
     if (event.currentTarget.dataset.disabled) return
-    event.instance.callMethod('moveSwipe', pointX(event))
+    var state = gestures[key(event)]
+    if (!state) return
+    var delta = pointX(event) - state.startX
+    state.moved = state.moved || Math.abs(delta) > 5
+    state.offset = state.startOffset + delta
+    if (state.offset > 0) state.offset = 0
+    if (state.offset < -96) state.offset = -96
+    event.instance.callMethod('syncSwipeOffset', state.offset)
   },
   onTouchEnd: function (event) {
     if (event.currentTarget.dataset.disabled) return
-    event.instance.callMethod('endSwipe')
+    var id = key(event)
+    var state = gestures[id]
+    if (!state) return
+    event.instance.callMethod('finishSwipe', {
+      open: state.offset <= -48,
+      moved: state.moved
+    })
+    delete gestures[id]
   },
   onTouchCancel: function (event) {
-    if (event.currentTarget.dataset.disabled) return
+    var id = key(event)
+    if (!gestures[id]) return
+    delete gestures[id]
     event.instance.callMethod('cancelSwipe')
   }
 }
 </script>
+<!-- @mpx-endif -->
 
 <script>
 import { createComponent } from '@mpxjs/core'
@@ -118,70 +131,83 @@ createComponent({
     disabled: {
       type: Boolean,
       observer (disabled) {
-        if (disabled) this.resetSwipe()
+        if (!disabled) return
+        this.offsetX = 0
+        this.dragging = false
+        this._touchState = null
+        this._suppressSelect = false
       }
     }
   },
   data: {
-    offsetX: 0
+    offsetX: 0,
+    dragging: false
   },
   methods: {
-    beginSwipe (startX) {
+    beginSwipe () {
       if (this.disabled) return
-      this._startX = startX
-      this._startOffset = this.offsetX
-      this._moved = false
-      this._swiping = true
+      this.dragging = true
       this.triggerEvent('swipestart', { orderId: this.order.id })
     },
-    moveSwipe (currentX) {
-      if (this.disabled || !this._swiping) return
-      const deltaX = currentX - this._startX
-      if (Math.abs(deltaX) > 5) this._moved = true
-      this.offsetX = Math.max(-96, Math.min(0, this._startOffset + deltaX))
+    syncSwipeOffset (offsetX) {
+      if (this.disabled) return
+      this.offsetX = offsetX
     },
-    endSwipe () {
-      if (this.disabled || !this._swiping) return
-      this._swiping = false
-      this.finishSwipe(this.offsetX <= -48)
-    },
-    finishSwipe (open) {
+    finishSwipe (result) {
+      if (this.disabled) return
+      const open = typeof result === 'object' ? result.open : result
+      this.dragging = false
       this.offsetX = open ? -96 : 0
-      if (this._moved) {
-        this._suppressClick = true
-        setTimeout(() => { this._suppressClick = false }, 0)
-      }
+      this._suppressSelect = typeof result === 'object' && result.moved
       this.triggerEvent('swipeend', { orderId: this.order.id, open })
     },
     cancelSwipe () {
-      if (!this._swiping) return
-      this._swiping = false
-      this._moved = true
-      this.finishSwipe(false)
-    },
-    resetSwipe () {
-      this._swiping = false
-      this._moved = false
+      this.dragging = false
       this.offsetX = 0
+      this._touchState = null
+      this._suppressSelect = false
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
     },
-    handleTouchStart (event) {
-      this.beginSwipe(pointX(event))
+    onTouchStart (event) {
+      if (this.disabled) return
+      this._touchState = {
+        startX: pointX(event),
+        startOffset: this.offsetX,
+        offset: this.offsetX,
+        moved: false
+      }
+      this.beginSwipe()
     },
-    handleTouchMove (event) {
-      this.moveSwipe(pointX(event))
+    onTouchMove (event) {
+      if (this.disabled || !this._touchState) return
+      const delta = pointX(event) - this._touchState.startX
+      this._touchState.moved = this._touchState.moved || Math.abs(delta) > 5
+      this._touchState.offset = Math.max(-96, Math.min(0, this._touchState.startOffset + delta))
+      this.syncSwipeOffset(this._touchState.offset)
     },
-    handleTouchEnd () {
-      this.endSwipe()
+    onTouchEnd () {
+      if (this.disabled || !this._touchState) return
+      const result = {
+        open: this._touchState.offset <= -48,
+        moved: this._touchState.moved
+      }
+      this._touchState = null
+      this.finishSwipe(result)
     },
-    handleTouchCancel () {
+    onTouchCancel () {
+      if (!this._touchState) return
       this.cancelSwipe()
     },
     selectOrder () {
-      if (this.disabled || this._suppressClick) return
+      if (this.disabled) return
+      if (this._suppressSelect) {
+        this._suppressSelect = false
+        return
+      }
       this.triggerEvent('select', { orderId: this.order.id })
     },
     removeOrder () {
-      if (this.disabled || this.offsetX !== -96) return
+      if (this.disabled) return
       this.triggerEvent('remove', { orderId: this.order.id })
     }
   }
@@ -222,7 +248,12 @@ createComponent({
   z-index: 1;
   padding: 24rpx;
   background: #ffffff;
-  transition: transform 0.18s ease-out;
+  transition: transform 180ms ease-out;
+  will-change: transform;
+}
+
+.order-card.dragging {
+  transition: none;
 }
 
 .order-head,

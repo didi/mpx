@@ -46,9 +46,9 @@
 
     <view class="action-row">
       <!-- @mpx-if (mode === 'wx') -->
-      <button class="share-button" open-type="share">分享给好友</button>
-      <!-- @mpx-else -->
-      <button class="share-button" bindtap="shareOnWeb">分享邀请活动</button>
+      <button class="share-button share-button-wx" open-type="share">分享给好友</button>
+      <!-- @mpx-elif (mode === 'web') -->
+      <button class="share-button share-button-web" bindtap="shareOnWeb">分享邀请活动</button>
       <!-- @mpx-endif -->
       <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
     </view>
@@ -127,7 +127,6 @@ createPage({
     // @mpx-endif
     this.fetchInviteSummary()
   },
-  // @mpx-if (mode === 'wx')
   onShareAppMessage () {
     return {
       title: `${this.member.name} 邀你加入邻里商城`,
@@ -142,7 +141,6 @@ createPage({
       imageUrl: this.campaign.cover
     }
   },
-  // @mpx-endif
   methods: {
     fetchInviteSummary () {
       wx.request({
@@ -153,47 +151,9 @@ createPage({
         }
       })
     },
-    // @mpx-if (mode === 'web')
-    async shareOnWeb () {
-      const url = new URL('/pages/member/landing', window.location.origin)
-      url.searchParams.set('campaignId', this.campaign.id)
-      url.searchParams.set('inviter', this.member.id)
-      const shareData = {
-        title: `${this.member.name} 邀你加入邻里商城`,
-        text: this.campaign.summary,
-        url: url.toString()
-      }
-      if (navigator.share) {
-        try {
-          await navigator.share(shareData)
-        } catch (e) {
-          if (e.name !== 'AbortError') this.copyShareLink(shareData.url)
-        }
-        return
-      }
-      this.copyShareLink(shareData.url)
+    shareOnWeb () {
+      window.alert('当前暂不支持直接分享，请使用浏览器分享功能')
     },
-    copyShareLink (url) {
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(url).then(() => {
-          window.alert('邀请链接已复制')
-        }).catch(() => this.copyShareLinkByInput(url))
-        return
-      }
-      this.copyShareLinkByInput(url)
-    },
-    copyShareLinkByInput (url) {
-      const input = document.createElement('textarea')
-      input.value = url
-      input.style.position = 'fixed'
-      input.style.opacity = '0'
-      document.body.appendChild(input)
-      input.select()
-      const copied = document.execCommand('copy')
-      document.body.removeChild(input)
-      window.alert(copied ? '邀请链接已复制' : `请复制邀请链接：${url}`)
-    },
-    // @mpx-endif
     openCampaignDetail () {
       wx.navigateTo({
         url: `/pages/member/campaign-detail?id=${this.campaign.id}`
@@ -378,6 +338,7 @@ createPage({
   background: #ff7a45;
 }
 
+
 .detail-button {
   color: #ff7a45;
   background: #ffffff;
@@ -457,3 +418,4 @@ createPage({
   "usingComponents": {}
 }
 </script>
+

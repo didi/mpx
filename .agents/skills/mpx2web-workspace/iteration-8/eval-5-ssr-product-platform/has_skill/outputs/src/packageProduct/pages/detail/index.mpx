@@ -48,15 +48,7 @@ createPage({
   },
   onLoad (query) {
     this.productId = query.id
-    const productStore = useProductStore(this.$pinia)
-    if (productStore.loaded && productStore.productId === query.id) {
-      this.selectedSkuId = productStore.product.skus && productStore.product.skus[0]
-        ? productStore.product.skus[0].id
-        : ''
-    }
-    if (__mpx_mode__ !== 'web' || typeof window !== 'undefined') {
-      this.loadProduct(query.id)
-    }
+    if (!this.$ssrContext) this.loadProduct(query.id)
   },
   serverPrefetch () {
     return this.loadProduct(this.productId, this.$ssrContext)
@@ -64,13 +56,9 @@ createPage({
   methods: {
     async loadProduct (productId, requestContext) {
       const pageRequestVersion = ++this.pageRequestVersion
-      await useProductStore(this.$pinia).loadProduct(productId, requestContext)
-
-      if (pageRequestVersion !== this.pageRequestVersion || this.productId !== productId) return
-
-      this.selectedSkuId = this.product.skus && this.product.skus[0]
-        ? this.product.skus[0].id
-        : ''
+      const applied = await useProductStore(this.$pinia).loadProduct(productId, requestContext)
+      if (!applied || pageRequestVersion !== this.pageRequestVersion || this.productId !== productId) return
+      this.selectedSkuId = this.product.skus && this.product.skus[0] ? this.product.skus[0].id : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId
@@ -131,7 +119,7 @@ createPage({
   border-radius: 8rpx;
 }
 
-.sku-item.active {
+.active {
   color: #ffffff;
   background: #ff5a36;
 }

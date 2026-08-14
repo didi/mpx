@@ -114,7 +114,7 @@
           "category": "web-api",
           "required_patterns": [
             {
-              "pattern": "TODO[^\\n]*(?:Bridge|地图 SDK)[^\\n]*地图查看",
+              "pattern": "TODO(?=[^\\n]*(?:Bridge|地图 SDK))(?=[^\\n]*(?:地图查看|打开地图))[^\\n]*",
               "description": "地图查看的 Bridge 或地图 SDK 接入 TODO"
             }
           ]
@@ -125,7 +125,7 @@
           "category": "web-api",
           "required_patterns": [
             {
-              "pattern": "TODO[^\\n]*(?:Bridge|媒体 SDK)[^\\n]*图片选择",
+              "pattern": "TODO(?=[^\\n]*(?:Bridge|媒体 SDK))(?=[^\\n]*(?:图片选择|选择图片))[^\\n]*",
               "description": "图片选择的 Bridge 或媒体 SDK 接入 TODO"
             }
           ]
@@ -143,7 +143,7 @@
         },
         {
           "id": "a6",
-          "text": "Web 已支持的请求、路由和提示继续使用 mpx.request、mpx.redirectTo、mpx.showToast，不用 fetch、location.assign、alert 或自定义包装重新实现",
+          "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
           "category": "web-api",
           "required_patterns": [
             {
@@ -163,6 +163,10 @@
             {
               "pattern": "(?:\\bfetch\\s*\\(|\\blocation\\.assign\\s*\\(|\\balert\\s*\\()",
               "description": "自行用 fetch、location.assign 或 alert 重实现已有能力"
+            },
+            {
+              "pattern": "import\\s*\\{[^}]*\\b(?:request|redirectTo|showToast)\\b[^}]*\\}\\s*from\\s*['\"]@mpxjs/api-proxy['\"]",
+              "description": "命名导入原始 API，绕过应用入口的 API Proxy 配置"
             }
           ]
         },
@@ -174,7 +178,7 @@
       ],
       "complexity": "normal",
       "focus": "web-missing-host-api/conditional-isolation",
-      "fixture_digest": "29dc2e7d418835d69dee35c228de49b1d432bb20d66800e0040a230f40b6ce0a"
+      "fixture_digest": "ab31e1e5df93d740369351872ea8f75be2b66d537b7aed05ef79457478f9cad3"
     },
     {
       "id": 2,
@@ -365,7 +369,7 @@
     {
       "id": 5,
       "name": "ssr-product-platform",
-      "prompt": "请将附件中的商品详情业务平台适配为部署在 /mall/ 下的 Web SSR，同时保持微信小程序的商品加载、规格切换、加购和相关推荐链路不退化。同一 Node 进程可能并发渲染不同商品，服务端首屏必须等待当前商品及首屏推荐数据且不能串请求；客户端接管同一商品时应复用注水状态，不重复首屏请求，切换到另一商品后仍能正确刷新。推荐组件依赖浏览器曝光 SDK，输入文件已注明该 SDK 的 create/track/destroy 契约；不能在 SSR 阶段访问 window、document 或静态加载该 SDK，快速切换商品或离开页面时也不能让旧初始化结果继续挂载或上报。请求地址不能写死 localhost。请输出修改后的完整页面、store、service、推荐组件、应用入口和构建配置，不要省略内容。",
+      "prompt": "请将附件中的商品详情业务平台适配为部署在 /mall/ 下的 Web SSR，同时保持微信小程序的商品加载、规格切换、加购和相关推荐链路不退化。同一 Node 进程可能并发渲染不同商品，服务端首屏必须等待当前商品及首屏推荐数据且不能串请求；客户端接管同一商品时应复用注水状态，不重复首屏请求，切换到另一商品后仍能正确刷新。SSR 渲染上下文由页面的 this.$ssrContext 提供，当前 Node 原始请求位于 this.$ssrContext.req；service 在服务端应从该请求解析当前 origin，浏览器和小程序继续使用相对地址。推荐组件依赖浏览器曝光 SDK，输入文件已注明该 SDK 的 create/track/destroy 契约；不能在 SSR 阶段访问 window、document 或静态加载该 SDK，快速切换商品或离开页面时也不能让旧初始化结果继续挂载或上报。请求地址不能写死 localhost。请输出修改后的完整页面、store、service、推荐组件、应用入口和构建配置，不要省略内容。",
       "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
       "files": [
         "eval-5-ssr-product-platform/input/src/packageProduct/pages/detail/index.mpx",
@@ -401,7 +405,7 @@
         },
         {
           "id": "p3",
-          "text": "同构 service 返回 Promise 且不依赖 wx.request、浏览器全局或硬编码 localhost",
+          "text": "同构 service 返回 Promise；服务端沿调用链接收 $ssrContext 并从 requestContext.req 解析当前 origin，浏览器和小程序保留相对地址；不依赖 wx.request、浏览器全局、硬编码 localhost，也不自行假定 requestContext.request/requestClient 契约",
           "category": "ssr-request"
         },
         {
@@ -427,7 +431,7 @@
       ],
       "complexity": "complex",
       "focus": "ssr-request-isolation/hydration/client-only-sdk/deployment",
-      "fixture_digest": "a6dca9d2e77b6a5a64544d83f4c6a8bb25744dba03e531f05611706c7451647f"
+      "fixture_digest": "0e7a247c1be403725e880db12c28b9f554b98aa8533146aa300afa70954d1a15"
     }
   ]
 }

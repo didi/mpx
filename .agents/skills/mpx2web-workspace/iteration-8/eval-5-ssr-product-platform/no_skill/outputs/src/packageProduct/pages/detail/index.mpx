@@ -28,7 +28,6 @@
 import { createPage } from '@mpxjs/core'
 import mpx from '@mpxjs/api-proxy'
 import { useProductStore } from '../../../stores/product'
-import { addCartItem } from '../../../services/product'
 
 createPage({
   data: {
@@ -47,25 +46,43 @@ createPage({
     }
   },
   onLoad (query) {
-    this.prepareProduct(query.id)
+    this.productId = query.id
+    if (!this.$ssrContext) this.ensureProduct(query.id)
   },
   serverPrefetch () {
-    return this.prepareProduct(this.$route.query.id)
+    const productId = this.$route.query.id
+    this.productId = productId
+    return this.loadProduct(productId, this.$ssrContext.req)
   },
   methods: {
-    async prepareProduct (productId) {
-      this.productId = productId
-      const product = await useProductStore(this.$pinia).loadProduct(productId)
-      if (this.productId === productId) {
-        this.selectedSkuId = product.skus && product.skus[0] ? product.skus[0].id : ''
+    ensureProduct (productId) {
+      const store = useProductStore(this.$pinia)
+      if (store.productId === productId && store.loaded) {
+        this.selectDefaultSku()
+        return
       }
+      this.loadProduct(productId)
+    },
+    async loadProduct (productId, req) {
+      const committed = await useProductStore(this.$pinia).loadProduct(productId, req)
+      if (committed && this.productId === productId) this.selectDefaultSku()
+    },
+    selectDefaultSku () {
+      this.selectedSkuId = this.product.skus[0] && this.product.skus[0].id
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId
     },
-    async addToCart () {
-      await addCartItem(this.productId, this.selectedSkuId)
-      mpx.showToast({ title: '已加入购物车' })
+    addToCart () {
+      mpx.request({
+        url: '/api/cart/items',
+        method: 'POST',
+        data: {
+          productId: this.productId,
+          skuId: this.selectedSkuId
+        },
+        success: () => mpx.showToast({ title: '已加入购物车' })
+      })
     }
   }
 })
