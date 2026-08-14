@@ -140,12 +140,12 @@
       "eval_id": 0,
       "eval_name": "storefront-style-compat",
       "configuration": "no_skill",
-      "passed": 4,
+      "passed": 7,
       "total": 8,
-      "pass_rate": 0.5,
-      "total_tokens": 41364,
-      "duration_ms": 272637,
-      "total_duration_seconds": 272.637,
+      "pass_rate": 0.875,
+      "total_tokens": 21131,
+      "duration_ms": 868913,
+      "total_duration_seconds": 868.913,
       "generation_attempts": 1
     },
     {
@@ -155,9 +155,9 @@
       "passed": 8,
       "total": 8,
       "pass_rate": 1.0,
-      "total_tokens": 61083,
-      "duration_ms": 569405,
-      "total_duration_seconds": 569.405,
+      "total_tokens": 37803,
+      "duration_ms": 1612059,
+      "total_duration_seconds": 1612.059,
       "generation_attempts": 1
     },
     {
@@ -167,21 +167,21 @@
       "passed": 2,
       "total": 8,
       "pass_rate": 0.25,
-      "total_tokens": 43931,
-      "duration_ms": 495428,
-      "total_duration_seconds": 495.428,
+      "total_tokens": 32269,
+      "duration_ms": 257967,
+      "total_duration_seconds": 257.967,
       "generation_attempts": 1
     },
     {
       "eval_id": 1,
       "eval_name": "community-publish-bridge",
       "configuration": "has_skill",
-      "passed": 8,
+      "passed": 7,
       "total": 8,
-      "pass_rate": 1.0,
-      "total_tokens": 88602,
-      "duration_ms": 526113,
-      "total_duration_seconds": 526.113,
+      "pass_rate": 0.875,
+      "total_tokens": 69227,
+      "duration_ms": 1641686,
+      "total_duration_seconds": 1641.686,
       "generation_attempts": 1
     },
     {
@@ -283,17 +283,17 @@
   ],
   "totals": {
     "no_skill": {
-      "passed": 27,
+      "passed": 30,
       "total": 49,
-      "pass_rate": 0.551,
+      "pass_rate": 0.6122,
       "completed_runs": 6,
       "infrastructure_failures": 0,
       "task_failures": 0
     },
     "has_skill": {
-      "passed": 48,
+      "passed": 47,
       "total": 49,
-      "pass_rate": 0.9796,
+      "pass_rate": 0.9592,
       "completed_runs": 6,
       "infrastructure_failures": 0,
       "task_failures": 0

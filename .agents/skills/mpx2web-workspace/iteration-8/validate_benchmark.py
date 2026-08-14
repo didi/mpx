@@ -58,6 +58,13 @@ def main():
     if [item["complexity"] for item in public["evals"]].count("complex") != 3:
         return fail("benchmark must contain 3 complex evals")
 
+    eval0_prompt = metadata_list[0]["prompt"]
+    leaked_eval0_clues = ["10px", "12px", "放大", "基线错位", "卡片宽度变化", "选择器污染", "title 和 image", "transform", "scale"]
+    if any(clue.lower() in eval0_prompt.lower() for clue in leaked_eval0_clues):
+        return fail("eval-0 prompt leaks a hidden style defect or implementation clue")
+    if "已完成兼容性实测的目标业务 WebView" not in eval0_prompt:
+        return fail("eval-0 must identify a measured target WebView without disclosing the defect")
+
     prompts = "\n".join(item["prompt"] for item in metadata_list)
     metadata_text = json.dumps(metadata_list, ensure_ascii=False)
     required_topics = ["WebView", "WXS", "SocketTask", "SSR", "scoped", "分享"]

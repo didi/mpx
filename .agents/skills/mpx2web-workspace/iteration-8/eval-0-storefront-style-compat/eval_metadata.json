@@ -4,7 +4,7 @@
   "complexity": "normal",
   "focus": "web-style-isolation/webview-small-font",
   "business_scenario": "社区电商小程序首页商品瀑布流",
-  "prompt": "请将附件中的商城首页和商品卡组件适配到 Web，同时保持微信小程序现有交互与视觉不退化。Web 输出后，父页面的 title 和 image 规则污染了商品卡；目标业务 WebView 还会把商品卡中设计为 10px 的币种符号与‘起’字放大到约 12px，造成价格基线错位和卡片宽度变化。请输出修改后的完整首页和商品卡文件，不要省略内容，也不要把该 WebView 的小字号现象描述成所有浏览器的统一限制。",
+  "prompt": "请将附件中的商城首页和商品卡组件适配到已完成兼容性实测的目标业务 WebView，同时保持微信小程序现有交互、视觉与业务链路不退化。请检查并处理必要的 Web-only 差异，不要让目标 WebView 的兼容处理影响标准浏览器或小程序。请输出修改后的完整首页和商品卡文件，不要省略内容。",
   "files": [
     "input/src/pages/home/index.mpx",
     "input/src/components/product-card.mpx"

@@ -6,7 +6,7 @@
     </view>
 
     <view class="product-content">
-      <text class="product-title">{{product.title}}</text>
+      <text class="title">{{product.title}}</text>
       <text class="product-subtitle">{{product.subtitle}}</text>
 
       <view class="product-meta">
@@ -49,6 +49,7 @@ createComponent({
 
 <style>
 .product-card {
+  box-sizing: border-box;
   width: 338rpx;
   margin-bottom: 24rpx;
   overflow: hidden;
@@ -59,6 +60,8 @@ createComponent({
 
 .product-cover-wrap {
   position: relative;
+  overflow: hidden;
+  border-radius: 20rpx 20rpx 0 0;
 }
 
 .product-cover {
@@ -83,7 +86,7 @@ createComponent({
   padding: 20rpx;
 }
 
-.product-title {
+.product-content .title {
   display: block;
   overflow: hidden;
   color: #333333;
@@ -107,6 +110,7 @@ createComponent({
 
 .product-meta {
   display: flex;
+  align-items: center;
   align-items: baseline;
   justify-content: space-between;
   margin-top: 18rpx;
@@ -114,6 +118,7 @@ createComponent({
 
 .price-tag {
   display: flex;
+  align-items: center;
   align-items: baseline;
   height: 32px;
   color: #e64340;
@@ -124,27 +129,6 @@ createComponent({
   font-size: 10px;
   line-height: 14px;
 }
-
-/* @mpx-if (mode === 'web') */
-.currency,
-.unit {
-  font-size: 12px;
-  line-height: 16.8px;
-  transform: scale(0.833333);
-}
-
-.currency {
-  width: 10px;
-  margin-right: -1px;
-  transform-origin: right bottom;
-}
-
-.unit {
-  width: 10px;
-  margin-left: -1px;
-  transform-origin: left bottom;
-}
-/* @mpx-endif */
 
 .amount {
   margin: 0 2px;

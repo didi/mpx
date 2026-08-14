@@ -6,7 +6,7 @@
     </view>
 
     <view class="product-content">
-      <text class="product-title">{{product.title}}</text>
+      <text class="title">{{product.title}}</text>
       <text class="product-subtitle">{{product.subtitle}}</text>
 
       <view class="product-meta">
@@ -83,7 +83,7 @@ createComponent({
   padding: 20rpx;
 }
 
-.product-title {
+.title {
   display: block;
   overflow: hidden;
   color: #333333;
@@ -125,26 +125,6 @@ createComponent({
   line-height: 14px;
 }
 
-/* @mpx-if (__mpx_mode__ === 'web') */
-.currency,
-.unit {
-  width: 10px;
-  font-size: 12px;
-  line-height: 16.8px;
-  transform: scale(0.833333);
-}
-
-.currency {
-  text-align: right;
-  transform-origin: right bottom;
-}
-
-.unit {
-  text-align: left;
-  transform-origin: left bottom;
-}
-/* @mpx-endif */
-
 .amount {
   margin: 0 2px;
   font-size: 20px;
@@ -184,6 +164,26 @@ createComponent({
   background: #e64340;
   border-radius: 50%;
 }
+
+/* @mpx-if (__mpx_mode__ === 'web') */
+/* 目标业务 WebView 会放大 12px 以下文字，以 12px 排版后缩放并校正 flex 占位。 */
+.currency,
+.unit {
+  box-sizing: border-box;
+  width: 10px;
+  font-size: 12px;
+  line-height: 16.8px;
+  transform: scale(0.833333);
+}
+
+.currency {
+  transform-origin: right bottom;
+}
+
+.unit {
+  transform-origin: left bottom;
+}
+/* @mpx-endif */
 </style>
 
 <script type="application/json">

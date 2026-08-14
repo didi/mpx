@@ -1,7 +1,0 @@
-{
-  "status": "infrastructure_failed",
-  "stage": "generation",
-  "attempts": 3,
-  "fixture_digest": "04fa9418a5cca388be1eda5265950298e4da3a1cbe25ea413a00a47fec12b9c9",
-  "configuration_digest": "f357d48cbc5e1e666bbc9a132882815609a3d6c072a0d5c827170ab06b7f095f"
-}

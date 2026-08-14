@@ -7,55 +7,55 @@
       "id": "w0",
       "text": "商品卡在 Web 使用 scoped 隔离组件样式",
       "passed": false,
-      "evidence": "outputs/src/components/product-card.mpx 仅有 <style>，未见 Web scoped 样式标记；JSON 中的 \"styleIsolation\": \"isolated\" 不能证明 Web scoped 隔离。"
+      "evidence": "outputs/src/components/product-card.mpx 的样式块为 `<style>`，未见 `scoped` 属性或 Web 条件编译的样式隔离配置；JSON 中仅有 `\"styleIsolation\": \"isolated\"`。"
     },
     {
       "id": "w1",
       "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx：<image class=\"product-cover\" ... />，并以 .product-cover 定义图片样式；未使用 image 标签选择器。"
+      "evidence": "outputs/src/components/product-card.mpx：图片声明为 `<image class=\"product-cover\" ... />`，并使用 `.product-cover { ... }` 定义样式，未使用 `image` 标签选择器。"
     },
     {
       "id": "w2",
       "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
       "passed": true,
-      "evidence": "outputs/src/pages/home/index.mpx 定义 .home-title { font-size: 40rpx; color: #e64340; }；outputs/src/components/product-card.mpx 定义 .product-title { font-size: 30rpx; font-weight: bold; } 及 .product-cover { border-radius: 20rpx 20rpx 0 0; }，三者分别保有独立视觉样式。"
+      "evidence": "outputs/src/pages/home/index.mpx 使用 `.home-title-row .title { color: #e64340; font-size: 40rpx; font-weight: bold; }`；outputs/src/components/product-card.mpx 使用 `.product-content .title { color: #333333; font-size: 30rpx; ... }`，且 `.product-cover { ... border-radius: 20rpx 20rpx 0 0; }`。"
     },
     {
       "id": "w3",
       "text": "小程序保留币种与单位的原始 10px 字号",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx：条件编译块外 .currency, .unit { font-size: 10px; line-height: 14px; }；Web 覆盖位于 /* @mpx-if (mode === 'web') */ 块内。"
+      "evidence": "outputs/src/components/product-card.mpx：`.currency, .unit { font-size: 10px; line-height: 14px; }`，没有覆盖该字号的小程序条件分支。"
     },
     {
       "id": "w4",
       "text": "WebView 小字号补偿使用较大基础字号配合 scale，还原视觉字号",
-      "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx 的 Web 条件块中：.currency, .unit { font-size: 12px; ... transform: scale(0.833333); }，12px × 0.833333 约为原始 10px 视觉字号。"
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx 中 `.currency, .unit` 仅设置 `font-size: 10px`，未见更大基础字号或 `transform: scale(...)`。"
     },
     {
       "id": "w5",
       "text": "WebView 缩放补偿设置 transform-origin 并校正布局占位",
-      "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx 的 Web 条件块中，.currency 设置 width: 10px、margin-right: -1px、transform-origin: right bottom；.unit 设置 width: 10px、margin-left: -1px、transform-origin: left bottom。"
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx 未见 `transform-origin`、缩放 `transform` 或用于缩放后的布局占位校正样式。"
     },
     {
       "id": "w6",
       "text": "小字号补偿仅隔离在 Web 输出",
-      "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx 将 font-size: 12px、scale、transform-origin 和占位校正包裹在 /* @mpx-if (mode === 'web') */ 与 /* @mpx-endif */ 之间。"
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx 未见 Web 条件编译块；`.currency, .unit { font-size: 10px; }` 位于通用 `<style>` 中，且不存在小字号补偿实现。"
     },
     {
       "id": "w7",
       "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
       "passed": true,
-      "evidence": "outputs/src/pages/home/index.mpx：分类项 bindtap=\"switchCategory(item.id)\"，switchCategory 调用 fetchProducts；product-card 绑定 bindselect=\"openProduct\" 和 bindaddcart=\"addToCart\"；openProduct 使用 wx.navigateTo 跳转详情，addToCart 向 /api/cart/items 发起 POST 请求。"
+      "evidence": "outputs/src/pages/home/index.mpx：分类项绑定 `bindtap=\"switchCategory(item.id)\"`，`switchCategory` 更新分类并调用 `fetchProducts()`；商品卡绑定 `bindselect=\"openProduct\"`，`openProduct` 调用 `wx.navigateTo`；绑定 `bindaddcart=\"addToCart\"`，`addToCart` 向 `/api/cart/items` 发起 POST 请求。"
     }
   ],
   "summary": {
-    "passed": 7,
-    "failed": 1,
+    "passed": 4,
+    "failed": 4,
     "total": 8,
-    "pass_rate": 0.875
+    "pass_rate": 0.5
   }
 }

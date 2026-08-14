@@ -17,20 +17,20 @@
   "assertions": [
     {
       "id": "a0",
-      "text": "非 Web 分支直接保留 wx.chooseLocation、wx.openLocation 与 wx.chooseMedia 调用，不以动态方法名或自定义适配器改写小程序能力",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
       "category": "cross-platform-regression",
       "required_patterns": [
         {
-          "pattern": "wx\\.chooseLocation\\s*\\(",
-          "description": "直接调用 wx.chooseLocation"
+          "pattern": "(?:wx|mpx)\\.chooseLocation\\s*\\(",
+          "description": "通过 wx 或 mpx 直接调用 chooseLocation"
         },
         {
-          "pattern": "wx\\.openLocation\\s*\\(",
-          "description": "直接调用 wx.openLocation"
+          "pattern": "(?:wx|mpx)\\.openLocation\\s*\\(",
+          "description": "通过 wx 或 mpx 直接调用 openLocation"
         },
         {
-          "pattern": "wx\\.chooseMedia\\s*\\(",
-          "description": "直接调用 wx.chooseMedia"
+          "pattern": "(?:wx|mpx)\\.chooseMedia\\s*\\(",
+          "description": "通过 wx 或 mpx 直接调用 chooseMedia"
         }
       ]
     },

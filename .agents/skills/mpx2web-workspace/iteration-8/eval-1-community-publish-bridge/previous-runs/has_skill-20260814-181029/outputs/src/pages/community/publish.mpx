@@ -114,8 +114,8 @@ createPage({
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 运行容器与宿主 Bridge 协议确定后接入位置选择能力
-        mpx.showToast({ title: 'Web 端位置选择能力待接入', icon: 'none' })
+        // TODO: Web 运行容器与宿主 Bridge/地图 SDK 协议确定后接入位置选择。
+        mpx.showToast({ title: 'Web 端位置选择暂不可用', icon: 'none' })
         return
       }
       mpx.chooseLocation({
@@ -127,8 +127,8 @@ createPage({
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 地图 SDK 与宿主 Bridge 协议确定后接入地图查看能力
-        mpx.showToast({ title: 'Web 端地图能力待接入', icon: 'none' })
+        // TODO: Web 运行容器与宿主 Bridge/地图 SDK 协议确定后接入地图查看。
+        mpx.showToast({ title: 'Web 端地图查看暂不可用', icon: 'none' })
         return
       }
       mpx.openLocation({
@@ -140,8 +140,8 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 运行容器与媒体 SDK 协议确定后接入图片选择能力
-        mpx.showToast({ title: 'Web 端图片选择能力待接入', icon: 'none' })
+        // TODO: Web 运行容器与宿主 Bridge/媒体 SDK 协议确定后接入图片选择。
+        mpx.showToast({ title: 'Web 端图片选择暂不可用', icon: 'none' })
         return
       }
       mpx.chooseMedia({
@@ -192,6 +192,7 @@ createPage({
 
 <style>
 .publish-page {
+  box-sizing: border-box;
   min-height: 100vh;
   padding: 24rpx;
   background: #f6f7fb;
@@ -237,6 +238,7 @@ createPage({
 }
 
 .content-input {
+  box-sizing: border-box;
   width: 100%;
   min-height: 240rpx;
   color: #333333;
@@ -258,6 +260,7 @@ createPage({
 
 .photo-item,
 .photo-add {
+  box-sizing: border-box;
   width: 196rpx;
   height: 196rpx;
   margin: 0 16rpx 16rpx 0;
@@ -400,6 +403,8 @@ createPage({
 }
 
 .publish-button {
+  box-sizing: border-box;
+  width: 100%;
   color: #ffffff;
   font-size: 30rpx;
   background: #1677ff;
@@ -418,4 +423,3 @@ createPage({
   "usingComponents": {}
 }
 </script>
-

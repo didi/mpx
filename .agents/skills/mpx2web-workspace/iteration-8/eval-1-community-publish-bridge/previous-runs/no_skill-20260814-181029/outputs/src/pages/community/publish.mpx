@@ -86,7 +86,41 @@
 </template>
 
 <script>
-import mpx, { createPage } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
+
+const isWeb = __mpx_mode__ === 'web'
+
+function getWebBridge () {
+  return window.__MPX_COMMUNITY_PUBLISH_BRIDGE__ || window.MpxCommunityPublishBridge
+}
+
+function invokeBridge (name, payload) {
+  const bridge = getWebBridge()
+  if (!bridge || typeof bridge[name] !== 'function') return Promise.reject(new Error(`Web Bridge 未实现 ${name}`))
+  return Promise.resolve(bridge[name](payload))
+}
+
+function chooseBrowserImages (count) {
+  return new Promise((resolve) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.multiple = count > 1
+    input.style.display = 'none'
+    input.addEventListener('change', () => {
+      const files = Array.prototype.slice.call(input.files, 0, count)
+      document.body.removeChild(input)
+      resolve(files.map(file => ({
+        file,
+        size: file.size,
+        fileType: 'image',
+        tempFilePath: URL.createObjectURL(file)
+      })))
+    }, { once: true })
+    document.body.appendChild(input)
+    input.click()
+  })
+}
 
 createPage({
   data: {
@@ -112,13 +146,30 @@ createPage({
     updateContent (event) {
       this.content = event.detail.value
     },
-    choosePlace () {
-      if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 运行容器与宿主 Bridge 协议确定后接入位置选择能力
-        mpx.showToast({ title: 'Web 端位置选择能力待接入', icon: 'none' })
+    showError (title) {
+      if (isWeb) {
+        const bridge = getWebBridge()
+        if (bridge && typeof bridge.showToast === 'function') {
+          bridge.showToast({ title, icon: 'none' })
+        } else {
+          window.alert(title)
+        }
         return
       }
-      mpx.chooseLocation({
+      wx.showToast({ title, icon: 'none' })
+    },
+    choosePlace () {
+      if (isWeb) {
+        invokeBridge('chooseLocation', { current: this.place })
+          .then((place) => {
+            if (place) this.place = place
+          })
+          .catch(() => {
+            this.showError('当前环境暂不支持位置选择')
+          })
+        return
+      }
+      wx.chooseLocation({
         success: (place) => {
           this.place = place
         }
@@ -126,12 +177,19 @@ createPage({
     },
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
-      if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 地图 SDK 与宿主 Bridge 协议确定后接入地图查看能力
-        mpx.showToast({ title: 'Web 端地图能力待接入', icon: 'none' })
+      if (isWeb) {
+        const bridge = getWebBridge()
+        if (bridge && typeof bridge.openLocation === 'function') {
+          invokeBridge('openLocation', this.place).catch(() => {
+            this.showError('地图打开失败')
+          })
+          return
+        }
+        const query = encodeURIComponent(`${this.place.latitude},${this.place.longitude} ${this.place.name || ''}`)
+        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener,noreferrer')
         return
       }
-      mpx.openLocation({
+      wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
         name: this.place.name,
@@ -139,13 +197,22 @@ createPage({
       })
     },
     choosePhoto () {
-      if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 运行容器与媒体 SDK 协议确定后接入图片选择能力
-        mpx.showToast({ title: 'Web 端图片选择能力待接入', icon: 'none' })
+      const count = 9 - this.photos.length
+      if (isWeb) {
+        const bridge = getWebBridge()
+        const task = bridge && typeof bridge.chooseMedia === 'function'
+          ? invokeBridge('chooseMedia', { count, mediaType: ['image'], sourceType: ['album', 'camera'] })
+          : chooseBrowserImages(count)
+        task.then((result) => {
+          const tempFiles = Array.isArray(result) ? result : result.tempFiles
+          if (tempFiles && tempFiles.length) this.photos = this.photos.concat(tempFiles.slice(0, count))
+        }).catch(() => {
+          this.showError('图片选择失败，请重试')
+        })
         return
       }
-      mpx.chooseMedia({
-        count: 9 - this.photos.length,
+      wx.chooseMedia({
+        count,
         mediaType: ['image'],
         sourceType: ['album', 'camera'],
         success: ({ tempFiles }) => {
@@ -154,6 +221,8 @@ createPage({
       })
     },
     removePhoto (index) {
+      const photo = this.photos[index]
+      if (isWeb && photo.file && photo.tempFilePath.indexOf('blob:') === 0) URL.revokeObjectURL(photo.tempFilePath)
       this.photos.splice(index, 1)
     },
     selectTopic (event) {
@@ -162,30 +231,85 @@ createPage({
     toggleComments (event) {
       this.allowComments = event.detail.value
     },
+    getPostData () {
+      return {
+        content: this.content,
+        photos: this.photos.map(item => item.uploadUrl || item.url || item.tempFilePath),
+        place: this.place,
+        topicId: this.selectedTopic.id || '',
+        allowComments: this.allowComments
+      }
+    },
+    publishOnWeb (data) {
+      const bridge = getWebBridge()
+      if (bridge && typeof bridge.publishPost === 'function') return invokeBridge('publishPost', { data, photos: this.photos })
+      const formData = new FormData()
+      formData.append('data', JSON.stringify(data))
+      this.photos.forEach((item) => {
+        if (item.file) formData.append('photos', item.file, item.file.name)
+      })
+      return window.fetch('/api/community/posts', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      }).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return response.json()
+      })
+    },
+    redirectToDetail (id) {
+      if (isWeb) {
+        const bridge = getWebBridge()
+        const url = `/pages/community/detail?id=${encodeURIComponent(id)}`
+        if (bridge && typeof bridge.redirectTo === 'function') {
+          bridge.redirectTo({ url })
+        } else {
+          window.location.assign(url)
+        }
+        return
+      }
+      wx.redirectTo({ url: `/pages/community/detail?id=${id}` })
+    },
     submitPost () {
       if (!this.canSubmit || this.submitting) return
       this.submitting = true
-      mpx.request({
+      const data = this.getPostData()
+      if (isWeb) {
+        this.publishOnWeb(data)
+          .then((result) => {
+            const responseData = result && result.data ? result.data : result
+            if (!responseData || !responseData.id) throw new Error('发布结果缺少动态 id')
+            this.redirectToDetail(responseData.id)
+          })
+          .catch(() => {
+            this.showError('发布失败，请重试')
+          })
+          .then(() => {
+            this.submitting = false
+          })
+        return
+      }
+      wx.request({
         url: '/api/community/posts',
         method: 'POST',
-        data: {
-          content: this.content,
-          photos: this.photos.map(item => item.tempFilePath),
-          place: this.place,
-          topicId: this.selectedTopic.id || '',
-          allowComments: this.allowComments
-        },
+        data,
         success: ({ data }) => {
-          mpx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+          this.redirectToDetail(data.id)
         },
         fail: () => {
-          mpx.showToast({ title: '发布失败，请重试', icon: 'none' })
+          this.showError('发布失败，请重试')
         },
         complete: () => {
           this.submitting = false
         }
       })
     }
+  },
+  onUnload () {
+    if (!isWeb) return
+    this.photos.forEach((photo) => {
+      if (photo.file && photo.tempFilePath.indexOf('blob:') === 0) URL.revokeObjectURL(photo.tempFilePath)
+    })
   }
 })
 </script>
@@ -418,4 +542,3 @@ createPage({
   "usingComponents": {}
 }
 </script>
-

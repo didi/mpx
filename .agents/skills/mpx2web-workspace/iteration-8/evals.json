@@ -5,7 +5,7 @@
     {
       "id": 0,
       "name": "storefront-style-compat",
-      "prompt": "请将附件中的商城首页和商品卡组件适配到 Web，同时保持微信小程序现有交互与视觉不退化。Web 输出后，父页面的 title 和 image 规则污染了商品卡；目标业务 WebView 还会把商品卡中设计为 10px 的币种符号与‘起’字放大到约 12px，造成价格基线错位和卡片宽度变化。请输出修改后的完整首页和商品卡文件，不要省略内容，也不要把该 WebView 的小字号现象描述成所有浏览器的统一限制。",
+      "prompt": "请将附件中的商城首页和商品卡组件适配到已完成兼容性实测的目标业务 WebView，同时保持微信小程序现有交互、视觉与业务链路不退化。请检查并处理必要的 Web-only 差异，不要让目标 WebView 的兼容处理影响标准浏览器或小程序。请输出修改后的完整首页和商品卡文件，不要省略内容。",
       "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
       "files": [
         "eval-0-storefront-style-compat/input/src/pages/home/index.mpx",
@@ -59,7 +59,7 @@
       ],
       "complexity": "normal",
       "focus": "web-style-isolation/webview-small-font",
-      "fixture_digest": "04fa9418a5cca388be1eda5265950298e4da3a1cbe25ea413a00a47fec12b9c9"
+      "fixture_digest": "2c8b91aa0179c4130d26049af939d64897485249f5e6aaaaf801f71588d60c3a"
     },
     {
       "id": 1,
@@ -75,20 +75,20 @@
       "assertions": [
         {
           "id": "a0",
-          "text": "非 Web 分支直接保留 wx.chooseLocation、wx.openLocation 与 wx.chooseMedia 调用，不以动态方法名或自定义适配器改写小程序能力",
+          "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
           "category": "cross-platform-regression",
           "required_patterns": [
             {
-              "pattern": "wx\\.chooseLocation\\s*\\(",
-              "description": "直接调用 wx.chooseLocation"
+              "pattern": "(?:wx|mpx)\\.chooseLocation\\s*\\(",
+              "description": "通过 wx 或 mpx 直接调用 chooseLocation"
             },
             {
-              "pattern": "wx\\.openLocation\\s*\\(",
-              "description": "直接调用 wx.openLocation"
+              "pattern": "(?:wx|mpx)\\.openLocation\\s*\\(",
+              "description": "通过 wx 或 mpx 直接调用 openLocation"
             },
             {
-              "pattern": "wx\\.chooseMedia\\s*\\(",
-              "description": "直接调用 wx.chooseMedia"
+              "pattern": "(?:wx|mpx)\\.chooseMedia\\s*\\(",
+              "description": "通过 wx 或 mpx 直接调用 chooseMedia"
             }
           ]
         },
@@ -178,7 +178,7 @@
       ],
       "complexity": "normal",
       "focus": "web-missing-host-api/conditional-isolation",
-      "fixture_digest": "ab31e1e5df93d740369351872ea8f75be2b66d537b7aed05ef79457478f9cad3"
+      "fixture_digest": "2f6acc243de4a52416a44cdb9ffe0e93f583c05a1079dfb71ff2b089019c70ea"
     },
     {
       "id": 2,
