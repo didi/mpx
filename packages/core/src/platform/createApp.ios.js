@@ -11,6 +11,7 @@ import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
 import MpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
+import { NavigationContainerContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -158,6 +159,7 @@ export default function createApp (options) {
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
+    const navigationContainerRef = useRef(null)
     const initialRouteRef = useRef({
       initialRouteName: firstPage,
       initialParams: {}
@@ -220,17 +222,23 @@ export default function createApp (options) {
 
     return createElement(SafeAreaProvider,
       null,
-      createElement(NavigationContainer,
+      createElement(NavigationContainerContext.Provider,
         {
-          onStateChange,
-          onUnhandledAction
+          value: navigationContainerRef
         },
-        createElement(Stack.Navigator,
+        createElement(NavigationContainer,
           {
-            initialRouteName,
-            screenOptions: navScreenOpts
+            ref: navigationContainerRef,
+            onStateChange,
+            onUnhandledAction
           },
-          ...getPageScreens(initialRouteName, initialParams)
+          createElement(Stack.Navigator,
+            {
+              initialRouteName,
+              screenOptions: navScreenOpts
+            },
+            ...getPageScreens(initialRouteName, initialParams)
+          )
         )
       )
     )

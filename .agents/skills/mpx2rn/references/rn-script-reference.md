@@ -773,6 +773,7 @@ Mpx.config.rnConfig = {
 | `openTypeHandler.onShareAppMessage` | 对应模板中 `open-type="share"`：框架会先取当前页 `onShareAppMessage` 的返回（含与默认 `title` / `path` 的合并及可选 `promise` 异步结果），再调用本回调，入参为 `{ title, path, imageUrl? }`，由宿主调起系统分享等能力。 |
 | `openTypeHandler.onUserInfo` | 对应模板中 `open-type="getUserInfo"`：由宿主实现获取用户信息的逻辑，结果需满足按钮侧对 `bindgetuserinfo` 的约定（以 `@mpxjs/webpack-plugin` 中 `mpx-button` 运行时为准）。 |
 | `getBottomVirtualHeight` | Android 底部虚拟区域高度修正。 |
+| `setSwipeBackEnabled` | `(enabled) => void`，DRN 等混合容器用于设置宿主页面侧滑返回状态；`page-container` 展示和关闭时会分别传入 `false` 和 `true`。 |
 | `loadChunkAsync` | 异步分包加载实现。 |
 | `downloadChunkAsync` | 分包下载实现，用于实现 preloadRule。 |
 | `supportSubpackage` | 是否启用分包相关异步加载能力，与页面 `json` 中 `async` 等配合。 |
