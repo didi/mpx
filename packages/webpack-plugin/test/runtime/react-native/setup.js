@@ -4,6 +4,7 @@
 // Runs via jest's `setupFiles` before any spec import, guaranteeing visibility
 // even though babel hoists ES module imports.
 global.__mpx_mode__ = 'ios'
+global.__mpx_perf_framework__ = false
 // @mpxjs/utils 的 log.js / object.js / path.js 在 runtime 下由 Mpx 注入 mpxGlobal；
 // jest 环境没有 Mpx runtime，给最小 stub 让 warn/error 调用不抛 ReferenceError。
 global.mpxGlobal = global
@@ -31,3 +32,17 @@ global.__formatValue = function (v, unitType) {
   if (typeof __unit[m[2]] === 'function') return __unit[m[2]](Number(m[1]))
   return v
 }
+
+const React = require('react')
+const mockRNImage = React.forwardRef((props, ref) => React.createElement('Image', Object.assign({ ref }, props)))
+mockRNImage.getSize = jest.fn()
+mockRNImage.resolveAssetSource = jest.fn()
+
+jest.mock('react-native', () => ({
+  StyleSheet: {
+    hairlineWidth: 1 / 3,
+    absoluteFillObject: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }
+  },
+  Image: mockRNImage,
+  View: 'View'
+}))

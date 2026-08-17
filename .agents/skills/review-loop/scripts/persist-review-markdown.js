@@ -3,6 +3,7 @@
 
 const fs = require('fs')
 const path = require('path')
+const reviewMarkdown = require('./review-markdown')
 const u = require('./review-loop-utils')
 
 function readInput (args) {
@@ -21,23 +22,14 @@ function validate (taskId, kind, round, raw) {
   if (round !== expectedRound) u.fail('--round must equal state-derived next round ' + expectedRound)
   let review
   try {
-    review = JSON.parse(raw.trim())
+    review = reviewMarkdown.parse(raw)
   } catch (err) {
-    u.fail('Reviewer output must be one strict JSON object: ' + err.message)
+    u.fail('Reviewer output must be one pure Markdown document: ' + err.message)
   }
   const errors = u.validateReviewObject(review)
   if (review.round !== round) errors.push('review round must equal expected round ' + round)
-  let scopeFile = ''
-  if (kind === 'code') {
-    scopeFile = path.join(u.taskDir(taskId), 'diffs', 'code-scope-' + round + '.json')
-    if (!fs.existsSync(scopeFile)) {
-      errors.push('missing scope metadata: ' + scopeFile)
-    } else {
-      errors.push.apply(errors, u.validateReviewScope(review, u.readJson(scopeFile), round))
-    }
-  }
-  if (errors.length) u.fail('Invalid review JSON:\n- ' + errors.join('\n- '))
-  return { review: review, scope: scopeFile, state: state }
+  if (errors.length) u.fail('Invalid review Markdown:\n- ' + errors.join('\n- '))
+  return { review: review, state: state }
 }
 
 function persist (taskId, kind, round, raw, options) {
@@ -46,9 +38,8 @@ function persist (taskId, kind, round, raw, options) {
     !(options && options.reviewerRun)) {
     u.fail('Codex and Claude Code reviews must be finalized and persisted by review-manager.js')
   }
-  const review = validated.review
   const reviewFile = u.reviewArtifactPath(taskId, kind, round)
-  const content = JSON.stringify(review, null, 2) + '\n'
+  const content = reviewMarkdown.render(validated.review)
   try {
     fs.writeFileSync(reviewFile, content, { flag: 'wx' })
   } catch (err) {
@@ -60,8 +51,7 @@ function persist (taskId, kind, round, raw, options) {
   return {
     ok: true,
     review: reviewFile,
-    scope: validated.scope,
-    status: review.status
+    status: validated.review.status
   }
 }
 
