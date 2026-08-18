@@ -275,10 +275,65 @@ export interface WebviewConfig {
   apiImplementations?: object
 }
 
+export interface RnRenderProfileMeta {
+  type: 'page' | 'component'
+  moduleId: string
+  componentPath: string
+  resource: string
+}
+
+export interface RnRenderCause {
+  kind: 'mount' | 'reactive' | 'force-update' | 'unknown'
+  source?: 'props' | 'data' | 'setup' | 'store' | 'inject' | 'unknown'
+  operation?: 'set' | 'add' | 'delete' | 'array-mutation' | 'trigger-ref'
+  key?: string
+  method?: string
+  /** 同一批渲染中相同原因被触发的次数。 */
+  count: number
+}
+
+export interface RnRenderProfileEvent extends RnRenderProfileMeta {
+  instanceId: string
+  pageId: string
+  phase: 'mount' | 'update' | 'nested-update'
+  /** 已提交 render 在 React 中花费的 CPU 时间，包含该组件的已渲染子树。 */
+  actualDuration: number
+  baseDuration: number
+  startTime: number
+  commitTime: number
+  /** Mpx 组件包装层开始本次 render 的单调时钟时间。 */
+  renderStartedAt: number
+  /** Mpx 组件包装层本次 render 的同步执行时间。 */
+  wrapperDuration: number
+  /** 本次 render 中执行 Mpx 模板函数所花费的同步时间。 */
+  templateDuration: number
+  templateExecuted: boolean
+  updateScheduledAt: number | null
+  /** 首次响应式调度到 React commit 回调的耗时，使用框架单调时钟计算。 */
+  updateToCommitDuration: number | null
+  coalescedUpdateCount: number
+  /** 本次实际执行并提交的 Mpx 模板渲染原因。 */
+  causes: Array<RnRenderCause>
+  changedPropKeys: Array<string>
+}
+
+export interface RnRenderProfilerConfig {
+  enabled?: boolean
+  shouldProfile?: (meta: RnRenderProfileMeta) => boolean
+  onRender?: (event: RnRenderProfileEvent) => void
+}
+
 /**
  * 输出为 ReactNative 时使用的特殊配置，用于与容器进行功能桥接
  */
 export interface RnConfig {
+  /**
+   * RN React 渲染性能采集，仅建议在调试包中开启。
+   * 需要在对应页面或组件执行注册前完成配置，运行时切换不会影响已注册组件。
+   * actualDuration 表示 React render/reconciliation CPU 时间，不包含原生布局、绘制及上屏时间。
+   */
+  renderProfiler?: RnRenderProfilerConfig
+
   /**
    * 当导航状态发生变化时触发，例如页面跳转、返回等。
    *

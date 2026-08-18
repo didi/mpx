@@ -26,7 +26,7 @@ export function computed (getterOrOptions) {
         dirty = false
       }
       if (Dep.target) {
-        effect.depend()
+        effect.depend(Dep.target.computedTriggerRefs ? effect.computed : undefined)
       }
       return value
     },

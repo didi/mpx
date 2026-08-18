@@ -1,5 +1,12 @@
-import { reactive, shallowReactive, set, isReactive, setForceTrigger } from './reactive'
-import { RefKey } from '../helper/const'
+import {
+  reactive,
+  shallowReactive,
+  set,
+  isReactive,
+  setForceTrigger
+} from './reactive'
+import Dep from './dep'
+import { ObKey, RefKey } from '../helper/const'
 import {
   warn,
   isPlainObject,
@@ -7,9 +14,45 @@ import {
   extend
 } from '@mpxjs/utils'
 
+const profiledRefs = new WeakSet()
+let hasProfiledRefs = false
+let currentTriggerRef
+
+function runWithTriggerRef (ref, fn, value) {
+  if (!hasProfiledRefs || !profiledRefs.has(ref)) return fn.call(ref, value)
+  const previousTriggerRef = currentTriggerRef
+  currentTriggerRef = ref
+  try {
+    return fn.call(ref, value)
+  } finally {
+    currentTriggerRef = previousTriggerRef
+  }
+}
+
 export class RefImpl {
   constructor (options) {
-    Object.defineProperty(this, 'value', extend({ enumerable: true }, options))
+    const descriptor = extend({ enumerable: true }, options)
+    if (descriptor.get) {
+      const getter = descriptor.get
+      descriptor.get = () => {
+        const value = getter.call(this)
+        const target = Dep.target
+        if (target?.refTriggerDeps) {
+          target.trackRefTriggerValue(value, [this])
+          const observer = value && typeof value === 'object' ? value[ObKey] : undefined
+          if (observer && target.newDepIds.has(observer.dep.id)) {
+            target.addRefTriggerDeps(observer.dep, [this])
+          }
+          if (Array.isArray(value)) target.trackRefTriggerArray?.(value, [this])
+        }
+        return value
+      }
+    }
+    if (descriptor.set) {
+      const setter = descriptor.set
+      descriptor.set = (value) => runWithTriggerRef(this, setter, value)
+    }
+    Object.defineProperty(this, 'value', descriptor)
   }
 }
 
@@ -24,6 +67,19 @@ export function createRef (options, effect) {
 
 export function isRef (val) {
   return val instanceof RefImpl
+}
+
+// Render profiler only: enable transient ref identity metadata for a setup ref.
+// The business-facing key remains scoped to the owning component profiler state.
+export function trackRefTrigger (ref) {
+  if (isRef(ref)) {
+    hasProfiledRefs = true
+    profiledRefs.add(ref)
+  }
+}
+
+export function getCurrentTriggerRef () {
+  return currentTriggerRef
 }
 
 export function unref (ref) {
@@ -66,16 +122,18 @@ export function toRefs (obj) {
 
 export function customRef (factory) {
   const version = ref(0)
-  return createRef(
-    factory(
-      // track
-      () => version.value,
-      // trigger
-      () => {
-        version.value++
-      }
-    )
+  let custom = null
+  const triggerVersion = () => {
+    version.value++
+  }
+  const options = factory(
+    // track
+    () => version.value,
+    // trigger; retain the outer custom ref identity even when called async.
+    () => runWithTriggerRef(custom, triggerVersion)
   )
+  custom = createRef(options)
+  return custom
 }
 
 export function shallowRef (raw) {

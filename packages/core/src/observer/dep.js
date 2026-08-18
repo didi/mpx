@@ -20,17 +20,31 @@ export default class Dep {
     remove(this.subs, sub)
   }
 
-  depend () {
+  depend (computedRef, triggerRefs) {
     if (Dep.target) {
-      Dep.target.addDep(this)
+      Dep.target.addDep(this, computedRef, triggerRefs)
     }
   }
 
-  notify () {
+  notify (triggerType, triggerKey, triggerMethod, triggerSource, triggerRef) {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
+    let triggerInfo
     for (let i = 0, l = subs.length; i < l; i++) {
-      subs[i].update()
+      // 调试元数据只在确有订阅者需要时构造，避免性能面板关闭时
+      // 每次响应式写入都新增对象分配。
+      if (
+        triggerInfo === undefined &&
+        triggerType &&
+        typeof subs[i].onTrigger === 'function'
+      ) {
+        triggerInfo = { type: triggerType }
+        if (triggerSource) triggerInfo.source = triggerSource
+        if (triggerKey !== undefined) triggerInfo.key = triggerKey
+        if (triggerMethod !== undefined) triggerInfo.method = triggerMethod
+        if (triggerRef) triggerInfo.ref = triggerRef
+      }
+      subs[i].update(triggerInfo, this)
     }
   }
 }

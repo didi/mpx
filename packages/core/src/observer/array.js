@@ -32,7 +32,12 @@ export const arrayMethods = Object.create(arrayProto)
       }
       if (inserted) ob.observeArray(inserted)
       // notify change
-      ob.dep.notify()
+      ob.dep.notify(
+        'array-mutation',
+        undefined,
+        method,
+        ob.triggerSource
+      )
     }
     return result
   })

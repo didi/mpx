@@ -315,10 +315,10 @@ export default class MpxProxy {
     if (isReact) {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
-      reactive(this.processShallowReactive(this.props))
+      reactive(this.processShallowReactive(this.props), this.reactiveTriggerSources?.props)
     } else {
       this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
-      reactive(this.processShallowReactive(this.props))
+      reactive(this.processShallowReactive(this.props), this.reactiveTriggerSources?.props)
     }
     proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
   }
@@ -345,6 +345,7 @@ export default class MpxProxy {
         error(`Setup() should return a object, received: ${type(setupResult)}.`, this.options.mpxFileResource)
         return
       }
+      this.registerSetupRenderProfilerRefs?.(setupResult)
       setupResult = wrapMethodsWithErrorHandling(setupResult, this)
       proxy(this.target, setupResult, undefined, false, this.createProxyConflictHandler('setup result'))
       this.collectLocalKeys(setupResult, (key, val) => !isFunction(val))
@@ -360,7 +361,7 @@ export default class MpxProxy {
     if (isFunction(dataFn)) {
       Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
     }
-    reactive(this.processShallowReactive(this.data))
+    reactive(this.processShallowReactive(this.data), this.reactiveTriggerSources?.data)
     proxy(this.target, this.data, undefined, false, this.createProxyConflictHandler('data'))
     this.collectLocalKeys(this.data)
   }
@@ -382,6 +383,7 @@ export default class MpxProxy {
 
         computedObj[key] = computed({ get, set })
       })
+      this.registerSetupRenderProfilerRefs?.(computedObj)
       this.collectLocalKeys(computedObj)
       proxy(this.target, computedObj, undefined, false, this.createProxyConflictHandler('computed'))
     }

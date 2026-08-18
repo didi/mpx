@@ -1,7 +1,7 @@
 import Dep from './dep'
 import { arrayMethods } from './array'
 import { ObKey } from '../helper/const'
-import { isRef } from './ref'
+import { getCurrentTriggerRef, isRef } from './ref'
 import {
   hasOwn,
   isObject,
@@ -23,6 +23,8 @@ export function setForceTrigger (val) {
   isForceTrigger = val
 }
 
+// Render profiler only: associate a reactive value with the setup refs that
+// expose it. The WeakMap keeps this metadata out of business objects/events.
 /**
  * Observer class that are attached to each observed
  * object. Once attached, the observer converts target
@@ -32,9 +34,10 @@ export function setForceTrigger (val) {
 export class Observer {
   dep = new Dep()
 
-  constructor (value, shallow) {
+  constructor (value, shallow, triggerSource) {
     this.value = value
     this.shallow = shallow
+    if (triggerSource) this.triggerSource = triggerSource
     def(value, ObKey, this)
     if (Array.isArray(value)) {
       const augment = hasProto && arrayProtoAugment
@@ -63,7 +66,7 @@ export class Observer {
    */
   observeArray (arr) {
     for (let i = 0, l = arr.length; i < l; i++) {
-      observe(arr[i])
+      observe(arr[i], false, this.triggerSource)
     }
   }
 }
@@ -95,13 +98,19 @@ function copyAugment (target, src, keys) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
-function observe (value, shallow) {
+function observe (value, shallow, triggerSource) {
   if (!isObject(value) || rawSet.has(value)) {
     return
   }
   let ob = getObserver(value)
   if (!ob && (Array.isArray(value) || isPlainObject(value)) && Object.isExtensible(value)) {
-    ob = new Observer(value, shallow)
+    ob = new Observer(value, shallow, triggerSource)
+  } else if (ob && triggerSource) {
+    if (!ob.triggerSource || ob.triggerSource === triggerSource) {
+      ob.triggerSource = triggerSource
+    } else {
+      ob.triggerSource = 'unknown'
+    }
   }
   return ob
 }
@@ -121,18 +130,23 @@ export function defineReactive (obj, key, val, shallow) {
   const getter = property && property.get
   const setter = property && property.set
 
-  let childOb = shallow ? getObserver(val) : observe(val)
+  const triggerSource = getObserver(obj)?.triggerSource
+  let childOb = shallow ? getObserver(val) : observe(val, false, triggerSource)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        dep.depend()
+        const triggerRefs = Dep.target.refTriggerDeps
+          ? Dep.target.getCurrentRefTriggerRefs(obj)
+          : undefined
+        dep.depend(undefined, triggerRefs)
         if (childOb) {
-          childOb.dep.depend()
+          childOb.dep.depend(undefined, triggerRefs)
+          if (triggerRefs) Dep.target.trackRefTriggerValue(value, triggerRefs)
           if (Array.isArray(value)) {
-            dependArray(value)
+            dependArray(value, triggerRefs)
           }
         }
       }
@@ -150,8 +164,17 @@ export function defineReactive (obj, key, val, shallow) {
       } else {
         val = newVal
       }
-      childOb = shallow ? getObserver(newVal) : observe(newVal)
-      dep.notify()
+      const observer = getObserver(obj)
+      childOb = shallow
+        ? getObserver(newVal)
+        : observe(newVal, false, observer?.triggerSource)
+      dep.notify(
+        'set',
+        key,
+        undefined,
+        observer?.triggerSource,
+        getCurrentTriggerRef()
+      )
     }
   })
 }
@@ -177,7 +200,7 @@ export function set (target, key, val) {
     return val
   }
   defineReactive(ob.value, key, val, ob.shallow)
-  ob.dep.notify()
+  ob.dep.notify('add', key, undefined, ob.triggerSource)
   return val
 }
 
@@ -197,26 +220,29 @@ export function del (target, key) {
   if (!ob) {
     return
   }
-  ob.dep.notify()
+  ob.dep.notify('delete', key, undefined, ob.triggerSource)
 }
 
 /**
  * Collect dependencies on array elements when the array is touched, since
  * we cannot intercept array element access like property getters.
  */
-function dependArray (arr) {
+function dependArray (arr, triggerRefs) {
   for (let i = 0, l = arr.length; i < l; i++) {
     const item = arr[i]
     const ob = getObserver(item)
-    ob && ob.dep.depend()
+    if (ob) {
+      ob.dep.depend(undefined, triggerRefs)
+      if (triggerRefs) Dep.target.trackRefTriggerValue(item, triggerRefs)
+    }
     if (Array.isArray(item)) {
-      dependArray(item)
+      dependArray(item, triggerRefs)
     }
   }
 }
 
-export function reactive (value) {
-  observe(value)
+export function reactive (value, triggerSource) {
+  observe(value, false, triggerSource)
   return value
 }
 

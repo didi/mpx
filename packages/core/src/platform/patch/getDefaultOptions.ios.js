@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, Profiler, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -18,6 +18,42 @@ import {
 import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
+import {
+  appendRenderCause,
+  commitRenderCauseSnapshot,
+  createRenderCauseState,
+  createRenderProfilerId,
+  createRenderProfilerMeta,
+  getChangedPropKeys,
+  getPerformanceNow,
+  getUpdateToCommitDuration,
+  registerSetupRenderProfilerRefs,
+  resolveRenderProfiler,
+  snapshotRenderCauses
+} from './renderProfiler'
+
+const RenderProfilerContext = createContext(null)
+const renderProfilerStateMap = new WeakMap()
+
+function getRenderProfilerState (proxy) {
+  let renderProfilerState = renderProfilerStateMap.get(proxy)
+  if (!renderProfilerState) {
+    renderProfilerState = createRenderCauseState()
+    renderProfilerStateMap.set(proxy, renderProfilerState)
+  }
+  return renderProfilerState
+}
+
+function getRenderProfiler (type, rawOptions, currentInject) {
+  const meta = createRenderProfilerMeta(type, rawOptions, currentInject)
+  return resolveRenderProfiler(
+    Mpx.config.rnConfig && Mpx.config.rnConfig.renderProfiler,
+    meta,
+    (e) => {
+      error('Unhandled error occurs during execution of [rn render profiler filter]!', meta.resource, e)
+    }
+  )
+}
 
 function getSystemInfo () {
   const windowDimensions = global.__mpxAppDimensionsInfo.window
@@ -33,7 +69,7 @@ function getSystemInfo () {
   }
 }
 
-function createEffect (proxy, componentsMap) {
+function createEffect (proxy, componentsMap, renderProfiler) {
   const update = proxy.update = () => {
     // react update props in child render(async), do not need exec pre render
     // if (proxy.propsUpdatedFlag) {
@@ -66,6 +102,13 @@ function createEffect (proxy, componentsMap) {
     proxy.target.__resetInstance()
     return callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
   }, () => queueJob(update), proxy.scope)
+  if (renderProfiler) {
+    const renderProfilerState = getRenderProfilerState(proxy)
+    proxy.effect.enableComputedTriggerTracking()
+    proxy.effect.onTrigger = (info, computedTriggerRefs, refTriggerRefs) => {
+      appendRenderCause(renderProfilerState, info, undefined, computedTriggerRefs, refTriggerRefs)
+    }
+  }
   // render effect允许自触发
   proxy.toggleRecurse(true)
 }
@@ -211,7 +254,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides, renderProfiler }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -310,7 +353,29 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
-  proxy.created()
+  if (renderProfiler) {
+    proxy.reactiveTriggerSources = {
+      props: 'props',
+      data: 'data'
+    }
+    const renderProfilerState = getRenderProfilerState(proxy)
+    proxy.registerSetupRenderProfilerRefs = (setupResult) => {
+      registerSetupRenderProfilerRefs(renderProfilerState, setupResult)
+    }
+    const forceUpdate = proxy.forceUpdate
+    proxy.forceUpdate = function (...args) {
+      if (!proxy.isUnmounted()) {
+        appendRenderCause(renderProfilerState, { kind: 'force-update' })
+      }
+      return forceUpdate.apply(this, args)
+    }
+    instance.$forceUpdate = proxy.forceUpdate.bind(proxy)
+  }
+  try {
+    proxy.created()
+  } finally {
+    if (renderProfiler) delete proxy.registerSetupRenderProfilerRefs
+  }
 
   if (type === 'page') {
     const props = propsRef.current
@@ -329,7 +394,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, componentsMap)
+        createEffect(proxy, componentsMap, renderProfiler)
         proxy.stateVersion = Symbol()
       }
       proxy.onStoreChange = onStoreChange
@@ -345,7 +410,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, componentsMap)
+    createEffect(proxy, componentsMap, renderProfiler)
   }
 
   return instance
@@ -639,7 +704,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
-  const defaultOptions = memo(forwardRef((props, ref) => {
+  const renderProfiler = getRenderProfiler(type, rawOptions, currentInject)
+  const MpxComponent = forwardRef((props, ref) => {
+    const renderStartedAt = renderProfiler ? getPerformanceNow() : 0
+    let renderStateRef = null
+    if (renderProfiler) {
+      renderStateRef = useContext(RenderProfilerContext)
+    }
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
@@ -653,7 +724,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides, renderProfiler })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -661,6 +732,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     const proxy = instance.__mpxProxy
+    let profileUpdateState = null
+    if (renderProfiler) {
+      profileUpdateState = getRenderProfilerState(proxy)
+    }
 
     let hooksResult = proxy.callHook(REACTHOOKSEXEC, [props])
     if (isObject(hooksResult)) {
@@ -727,7 +802,20 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return proxy.finalMemoVersion
     }, [proxy.stateVersion, proxy.memoVersion])
 
-    let root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
+    let templateExecuted = false
+    let templateDuration = 0
+    let renderCauseSnapshot = null
+    let root = useMemo(() => {
+      if (!renderProfiler) return proxy.effect.run()
+      templateExecuted = true
+      renderCauseSnapshot = snapshotRenderCauses(profileUpdateState, !profileUpdateState.hasCommittedTemplate)
+      const templateStartedAt = getPerformanceNow()
+      try {
+        return proxy.effect.run()
+      } finally {
+        templateDuration = getPerformanceNow() - templateStartedAt
+      }
+    }, [finalMemoVersion])
     if (root && root.props.ishost) {
       // 对于组件未注册的属性继承到host节点上，如事件、样式和其他属性等
       const rootProps = getRootProps(props, validProps)
@@ -753,17 +841,91 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         }
       }, [relation])
 
-      return createElement(
+      root = createElement(
         RelationsContext.Provider,
         {
           value: relationProvide
         },
         root
       )
-    } else {
-      return root
     }
-  }))
+
+    if (renderProfiler && renderStateRef) {
+      const renderState = renderStateRef.current
+      const renderSequence = renderState.nextSequence + 1
+      renderState.nextSequence = renderSequence
+      const sample = {
+        sequence: renderSequence,
+        instanceId: String(proxy.uid),
+        pageId: pageId == null ? '' : String(pageId),
+        renderStartedAt,
+        wrapperDuration: getPerformanceNow() - renderStartedAt,
+        templateDuration,
+        templateExecuted,
+        updateScheduledAt: renderCauseSnapshot ? renderCauseSnapshot.updateScheduledAt : null,
+        coalescedUpdateCount: renderCauseSnapshot ? renderCauseSnapshot.updateCount : 0,
+        causes: renderCauseSnapshot ? renderCauseSnapshot.causes : [],
+        changedPropKeys: getChangedPropKeys(renderState.committedProps, props)
+      }
+      useLayoutEffect(() => {
+        renderState.committedSample = sample
+        renderState.committedProps = props
+        commitRenderCauseSnapshot(profileUpdateState, renderCauseSnapshot, templateExecuted)
+      })
+    }
+    return root
+  })
+
+  let defaultOptions
+  if (renderProfiler) {
+    const ProfiledMpxComponent = forwardRef((props, ref) => {
+      const renderStateRef = useRef(null)
+      if (!renderStateRef.current) {
+        renderStateRef.current = {
+          profilerId: createRenderProfilerId(renderProfiler.meta),
+          nextSequence: 0,
+          reportedSequence: 0,
+          committedProps: null,
+          committedSample: null
+        }
+      }
+      const handleRender = (id, phase, actualDuration, baseDuration, startTime, commitTime) => {
+        const renderState = renderStateRef.current
+        const sample = renderState.committedSample
+        if (!sample || sample.sequence === renderState.reportedSequence) return
+        renderState.reportedSequence = sample.sequence
+        try {
+          renderProfiler.config.onRender(Object.assign({}, renderProfiler.meta, sample, {
+            phase,
+            actualDuration,
+            baseDuration,
+            startTime,
+            commitTime,
+            updateToCommitDuration: getUpdateToCommitDuration(sample.updateScheduledAt)
+          }))
+        } catch (e) {
+          error('Unhandled error occurs during execution of [rn render profiler]!', renderProfiler.meta.resource, e)
+        }
+      }
+      return createElement(
+        RenderProfilerContext.Provider,
+        {
+          value: renderStateRef
+        },
+        createElement(
+          Profiler,
+          {
+            id: renderStateRef.current.profilerId,
+            onRender: handleRender
+          },
+          createElement(MpxComponent, Object.assign({}, props, { ref }))
+        )
+      )
+    })
+    defaultOptions = memo(ProfiledMpxComponent)
+  } else {
+    defaultOptions = memo(MpxComponent)
+  }
 
   if (rawOptions.options?.isCustomText) {
     defaultOptions.isCustomText = true
