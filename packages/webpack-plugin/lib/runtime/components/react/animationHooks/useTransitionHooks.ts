@@ -144,7 +144,7 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   const transitionMap = transitionData.reduce((acc, cur) => {
     // hasOwn(transitionSupportedProperty, dash2hump(val)) || val === Transform
     const { property = '', duration = 0, delay = 0, easing = Easing.inOut(Easing.ease) } = cur
-    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === 'transform') && duration > 0) {
+    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === 'transform') && duration >= 0) {
       acc[property] = {
         duration,
         delay,
@@ -157,17 +157,51 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   return transitionMap
 }
 
+const transitionKeys = ['transition', 'transitionDuration', 'transitionTimingFunction', 'transitionDelay', 'transitionProperty'] as const
+
+function getTransitionPropertyKeys (map: TransitionMap): string {
+  return Object.keys(map).sort().join(',')
+}
+
 export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useTransitionHooks, props=`, props)
   const { style: originalStyle = {}, transitionend } = props
   // style变更标识(首次render不执行)，初始值为0，首次渲染后为1
   const animationDeps = useRef(0)
-  // 记录上次style map
-  // const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
-  // ** 从 style 中获取动画数据
+  // transition 时序属性动态更新追踪
+  const lastTransitionStyleRef = useRef<Record<string, any>>(
+    transitionKeys.reduce((acc, key) => { acc[key] = originalStyle[key]; return acc }, {} as Record<string, any>)
+  )
+  const prevTransitionMapRef = useRef<TransitionMap | null>(null)
+  // ** 从 style 中获取动画数据(支持动态更新 transitionDuration/transitionDelay/transitionTimingFunction)
   const transitionMap = useMemo(() => {
-    return parseTransitionStyle(originalStyle)
-  }, [])
+    const prevStyle = lastTransitionStyleRef.current
+    // 检测 transition 时序属性是否变化并更新
+    let hasChanged = false
+    transitionKeys.forEach(key => {
+      if (prevStyle[key] !== originalStyle[key]) {
+        hasChanged = true
+        prevStyle[key] = originalStyle[key]
+      }
+    })
+    // 时序属性未变化且非首次计算，跳过重新解析
+    if (!hasChanged && prevTransitionMapRef.current) {
+      return prevTransitionMapRef.current
+    }
+    const newTransitionMap = parseTransitionStyle(originalStyle)
+    if (!prevTransitionMapRef.current) {
+      // 首次计算
+      prevTransitionMapRef.current = newTransitionMap
+      return newTransitionMap
+    }
+    // 检测 transitionProperty 是否变化，变化时直接返回上一次的 transitionMap
+    if (getTransitionPropertyKeys(newTransitionMap) !== getTransitionPropertyKeys(prevTransitionMapRef.current)) {
+      error('[Mpx runtime error]: dynamic setting transitionProperty is not supported')
+      return prevTransitionMapRef.current
+    }
+    prevTransitionMapRef.current = newTransitionMap
+    return newTransitionMap
+  }, [originalStyle])
   // ** style prop sharedValue  interpolateOutput: SharedValue<InterpolateOutput>
   const { shareValMap, animatedKeys, animatedStyleKeys } = useMemo(() => {
     // 记录需要执行动画的 propName

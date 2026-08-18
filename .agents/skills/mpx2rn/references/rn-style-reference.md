@@ -296,7 +296,9 @@ RN 仅原生支持部分 CSS 简写属性，Mpx 分别在**编译时**和**运�
 
 - **过渡简写**：`transition`
   - 在运行时将 `transition` 字符串简写解析为动画配置，如 `transition: opacity 0.3s ease` → 解析出 `property`、`duration`、`timingFunction` 等参数
-  - 仅 `view` 组件支持；`transition-property` 不支持 `all`，需显式指定属性名；不支持 `step-start`、`step-end`、`steps()` 等阶梯时间函数
+  - 仅 `view` 组件支持；`transition-property` 不支持 `all`，需显式指定属性名，且属性列表在组件生命周期内必须保持稳定
+  - 支持动态更新 `transition-duration`、`transition-delay`、`transition-timing-function`；也可动态更新 `transition` 简写中的对应值，但不能动态添加、移除或替换其中的 `transition-property`
+  - 不支持 `step-start`、`step-end`、`steps()` 等阶梯时间函数
 - **间距多值语法**：`margin`、`padding` 的 2-4 值语法
   - 如 `margin: 10px 20px` → `marginTop: 10, marginRight: 20, marginBottom: 10, marginLeft: 20`
   - 单值语法 RN 原生支持，运行时不展开
@@ -422,21 +424,36 @@ Mpx 在 RN 平台支持以下动画方式：
 
 - 仅 `view` 组件支持动画相关属性。
 
-**自动检测与 enable-animation：** 框架会自动检测样式和属性中的动画定义来确定动画类型（如检测到 `transition` 样式或 `animation` 属性）。如果样式中一开始不存在动画定义，但后续需要动态添加（如通过 `wx:style` 动态添加 `transition`），建议使用 `enable-animation` 属性预先声明动画类型。
+**自动检测与 enable-animation：** 框架会在首次渲染时根据样式和属性中的动画定义确定动画类型（如检测到 `transition` 样式或 `animation` 属性），动画类型在组件生命周期内必须保持稳定。也可通过 `enable-animation="api"` / `enable-animation="transition"` 显式指定使用 Animation API / CSS Transition；布尔值 `true` 等价于 `api`，不能用于预声明 CSS Transition。如果首次渲染时只有 `transition-property`，时长等参数后续才通过 `wx:style` 动态设置，需保证 `transition-property` 从首次渲染起保持稳定。
 
 ```html
 <template>
-  <!-- 场景：动态添加 transition 样式，需预先声明 -->
-  <view enable-animation="transition" wx:style="{{ dynamicStyle }}" />
+  <!-- 场景：首次渲染只声明 property，后续动态设置时序参数 -->
+  <view
+    enable-animation="transition"
+    style="transition-property: transform"
+    wx:style="{{ dynamicStyle }}"
+  />
 </template>
 
 <script>
   // ...
   this.dynamicStyle = {
-    transition: "opacity 0.3s ease",
-    opacity: 0.5
+    transitionDuration: this.enableTransition ? '0.5s' : '0s',
+    transitionDelay: this.enableTransition ? '0.1s' : '0s',
+    transitionTimingFunction: this.enableTransition ? 'ease-out' : 'linear',
+    transform: this.shouldDisplay ? 'translateX(100px)' : 'translateX(0)'
   }
 </script>
+```
+
+也可以动态更新 `transition` 简写，但其中的属性列表必须与首次渲染保持一致：
+
+```js
+this.dynamicStyle = {
+  transition: this.enableTransition ? 'transform 0.5s ease-out 0.1s' : 'transform 0s linear 0s',
+  transform: this.shouldDisplay ? 'translateX(100px)' : 'translateX(0)'
+}
 ```
 
 ### 背景图支持
@@ -602,10 +619,10 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 | 属性 | 值类型 | 说明 | 示例 |
 | --- | --- | --- | --- |
 | `transition` | `property duration timing-function delay` | 过渡简写 | `transition: opacity 0.3s ease`；`transition: width 0.5s ease-in-out 0.1s` |
-| `transition-property` | `string` | 过渡属性（不支持 `all`） | `transition-property: opacity, width` 指定多个过渡属性 |
-| `transition-duration` | `time` | 过渡持续时间 | `transition-duration: 0.3s`；`transition-duration: 300ms` |
-| `transition-delay` | `time` | 过渡延迟时间 | `transition-delay: 0.1s` 延迟 0.1 秒后开始过渡 |
-| `transition-timing-function` | `linear` \| `ease` \| `ease-in` \| `ease-out` \| `ease-in-out` \| `cubic-bezier` | 过渡时间函数 | `transition-timing-function: ease-in-out`；`transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)` |
+| `transition-property` | `string` | 过渡属性（不支持 `all`）；属性列表在组件生命周期内必须保持稳定，不支持动态添加、移除或替换 | `transition-property: opacity, width` 指定多个过渡属性 |
+| `transition-duration` | `time` | 过渡持续时间，支持动态更新 | `transition-duration: 0.3s`；`transition-duration: 300ms`；可设为 `0s` 临时关闭过渡 |
+| `transition-delay` | `time` | 过渡延迟时间，支持动态更新 | `transition-delay: 0.1s` 延迟 0.1 秒后开始过渡 |
+| `transition-timing-function` | `linear` \| `ease` \| `ease-in` \| `ease-out` \| `ease-in-out` \| `cubic-bezier` | 过渡时间函数，支持动态更新 | `transition-timing-function: ease-in-out`；`transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)` |
 
 ### 其他属性
 
