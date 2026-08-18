@@ -1,0 +1,59 @@
+{
+  "eval_id": 5,
+  "eval_name": "ssr-product-platform",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "p0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia 实例",
+      "passed": true,
+      "evidence": "app.mpx 的 onAppInit 每次调用均执行 createPinia() 并返回 { pinia }。"
+    },
+    {
+      "id": "p1",
+      "text": "serverPrefetch 返回 Promise 并等待商品与首屏推荐数据",
+      "passed": true,
+      "evidence": "页面 serverPrefetch 返回 this.loadProduct(productId)；loadProduct 等待 store.loadProduct，后者以 Promise.all 请求商品和推荐数据。"
+    },
+    {
+      "id": "p2",
+      "text": "store 按商品主键记录数据与加载状态，同商品 hydrate 复用注水、异商品重新请求",
+      "passed": false,
+      "evidence": "store 仅维护单组 productId、product、recommendations、loaded、loading 状态，未按商品主键保存多个数据与加载状态。"
+    },
+    {
+      "id": "p3",
+      "text": "同构 service 返回 Promise 且不依赖 wx.request、浏览器全局或硬编码 localhost",
+      "passed": true,
+      "evidence": "services/product.js 的 request 显式返回 Promise，使用 mpx.request，未出现 wx.request、window 等浏览器全局或 localhost。"
+    },
+    {
+      "id": "p4",
+      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，并在每个异步边界阻止卸载或旧商品结果挂载",
+      "passed": true,
+      "evidence": "仅 Web mounted 分支触发动态 import；定时器、import 完成后和 IntersectionObserver 回调均通过 _exposureMounted、version 与 productId 校验。"
+    },
+    {
+      "id": "p5",
+      "text": "推荐组件卸载或商品切换时销毁 SDK 实例、Observer 和监听，旧回调不再上报",
+      "passed": false,
+      "evidence": "组件会断开 IntersectionObserver、清理定时器并以版本号阻止旧回调，但未保存或销毁 exposure SDK 实例，也未见 SDK 监听清理。"
+    },
+    {
+      "id": "p6",
+      "text": "SSR 使用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /mall/",
+      "passed": true,
+      "evidence": "vue.config.js 配置 useSSR: true、routeConfig.mode: 'history'、routeConfig.base: '/mall/'，且 publicPath 也为 '/mall/'。"
+    },
+    {
+      "id": "p7",
+      "text": "微信小程序继续保留商品加载、规格切换、加购和相关推荐业务链路",
+      "passed": true,
+      "evidence": "页面 onLoad 在非 Web 调用 loadProduct，保留 selectSku、addToCart；推荐组件保留 navigateTo 跳转相关推荐。"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "total": 8
+  }
+}

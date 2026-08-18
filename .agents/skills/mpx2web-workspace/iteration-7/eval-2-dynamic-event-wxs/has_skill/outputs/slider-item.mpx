@@ -1,0 +1,117 @@
+<template>
+  <view
+    class="slider-item"
+    data-disabled="{{disabled}}"
+    catchtouchstart@wx="{{gesture.onTouchStart}}"
+    catchtouchmove@wx="{{gesture.onTouchMove}}"
+    catchtouchend@wx="{{gesture.onTouchEnd}}"
+    @touchstart@web="onWebTouchStart"
+    @touchmove@web="onWebTouchMove"
+    @touchend@web="onWebTouchEnd"
+  >
+    <view class="slider-item__content" style="transform: translateX({{offsetX}}px)" bindtap="selectItem">
+      <text>{{title}}</text>
+    </view>
+    <button class="slider-item__remove" catchtap="removeItem" disabled="{{disabled}}">删除</button>
+  </view>
+</template>
+
+<script module="gesture" lang="wxs">
+var startX = 0
+var currentOffset = 0
+
+function pointX(event) {
+  var touches = event.touches && event.touches.length ? event.touches : event.changedTouches
+  return touches && touches.length ? touches[0].clientX : 0
+}
+
+module.exports = {
+  onTouchStart: function (event) {
+    if (event.currentTarget.dataset.disabled) return
+    startX = pointX(event)
+    currentOffset = 0
+    event.instance.callMethod('beginSwipe')
+  },
+  onTouchMove: function (event) {
+    if (event.currentTarget.dataset.disabled) return
+    currentOffset = pointX(event) - startX
+    if (currentOffset > 0) currentOffset = 0
+    if (currentOffset < -96) currentOffset = -96
+    event.instance.callMethod('syncSwipeOffset', currentOffset)
+  },
+  onTouchEnd: function (event) {
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('finishSwipe', currentOffset <= -48)
+  }
+}
+</script>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+function pointX (event) {
+  const touches = event.touches && event.touches.length ? event.touches : event.changedTouches
+  return touches && touches.length ? touches[0].clientX : 0
+}
+
+createComponent({
+  properties: {
+    id: String,
+    title: String,
+    disabled: Boolean
+  },
+  data: {
+    offsetX: 0
+  },
+  methods: {
+    beginSwipe () {
+      this.triggerEvent('swipestart', { id: this.id })
+    },
+    syncSwipeOffset (offsetX) {
+      this.setData({ offsetX })
+    },
+    finishSwipe (open) {
+      this.setData({ offsetX: open ? -96 : 0 })
+      this.triggerEvent('swipeend', { id: this.id, open })
+    },
+    onWebTouchStart (event) {
+      if (this.disabled) return
+      event.stopPropagation()
+      this.webStartX = pointX(event)
+      this.webCurrentOffset = 0
+      this.beginSwipe()
+    },
+    onWebTouchMove (event) {
+      if (this.disabled) return
+      event.stopPropagation()
+      let offsetX = pointX(event) - this.webStartX
+      if (offsetX > 0) offsetX = 0
+      if (offsetX < -96) offsetX = -96
+      this.webCurrentOffset = offsetX
+      this.syncSwipeOffset(offsetX)
+    },
+    onWebTouchEnd (event) {
+      if (this.disabled) return
+      event.stopPropagation()
+      this.finishSwipe(this.webCurrentOffset <= -48)
+    },
+    selectItem () {
+      if (this.disabled) return
+      this.triggerEvent('select', { id: this.id })
+    },
+    removeItem () {
+      if (this.disabled) return
+      this.triggerEvent('remove', { id: this.id })
+    }
+  }
+})
+</script>
+
+<style>
+.slider-item { position: relative; overflow: hidden; }
+.slider-item__content { position: relative; z-index: 1; background: #fff; }
+.slider-item__remove { position: absolute; top: 0; right: 0; width: 96px; height: 100%; }
+/* @mpx-if (__mpx_mode__ === 'web') */
+.slider-item { touch-action: pan-y; }
+/* @mpx-endif */
+</style>

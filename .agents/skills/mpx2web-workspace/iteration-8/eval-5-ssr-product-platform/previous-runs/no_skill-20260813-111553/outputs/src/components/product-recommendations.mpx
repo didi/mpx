@@ -1,0 +1,148 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+
+createComponent({
+  properties: {
+    productId: String,
+    items: Array
+  },
+  observers: {
+    'productId, items': function () {
+      if (__mpx_mode__ === 'web' && this._exposureMounted) {
+        this.scheduleExposureInit()
+      }
+    }
+  },
+  mounted () {
+    if (__mpx_mode__ === 'web') {
+      this._exposureMounted = true
+      this.scheduleExposureInit()
+    }
+  },
+  beforeDestroy () {
+    this.disposeExposure()
+  },
+  detached () {
+    this.disposeExposure()
+  },
+  methods: {
+    disposeExposure () {
+      this._exposureMounted = false
+      this._exposureVersion = (this._exposureVersion || 0) + 1
+      if (this._exposureTimer) {
+        clearTimeout(this._exposureTimer)
+        this._exposureTimer = null
+      }
+      if (this._exposureObserver) {
+        this._exposureObserver.disconnect()
+        this._exposureObserver = null
+      }
+    },
+    scheduleExposureInit () {
+      const version = (this._exposureVersion || 0) + 1
+      this._exposureVersion = version
+      if (this._exposureTimer) clearTimeout(this._exposureTimer)
+      if (this._exposureObserver) {
+        this._exposureObserver.disconnect()
+        this._exposureObserver = null
+      }
+      this._exposureTimer = setTimeout(() => {
+        this._exposureTimer = null
+        this.initExposure(version)
+      }, 0)
+    },
+    async initExposure (version) {
+      if (!this._exposureMounted || version !== this._exposureVersion || !this.productId) return
+      const sdkModule = await import(/* webpackChunkName: "product-exposure-web" */ '@business/product-exposure-web')
+      if (!this._exposureMounted || version !== this._exposureVersion) return
+
+      const exposureSdk = sdkModule.default || sdkModule
+      const productId = this.productId
+      const observer = new window.IntersectionObserver((entries) => {
+        if (!this._exposureMounted || version !== this._exposureVersion || this.productId !== productId) return
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            exposureSdk.track('recommendation_exposure', {
+              productId,
+              recommendationId: entry.target.dataset.productId
+            })
+            observer.unobserve(entry.target)
+          }
+        })
+      })
+      this._exposureObserver = observer
+      this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
+        observer.observe(element)
+      })
+    },
+    openProduct (productId) {
+      mpx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #ffffff;
+}
+
+.section-title {
+  margin-bottom: 20rpx;
+  color: #222222;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+}
+
+.recommendation-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+}
+
+.recommendation-name {
+  flex: 1;
+  margin-left: 18rpx;
+  color: #333333;
+  font-size: 26rpx;
+}
+
+.recommendation-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

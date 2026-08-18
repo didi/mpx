@@ -1,0 +1,45 @@
+<template>
+  <view class="chat-room">
+    <button bindtap="sendMessage">发送</button>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({
+  data: { connected: false },
+  attached() {
+    if (__mpx_mode__ === 'web') {
+      const socket = this.socket = new WebSocket('wss://chat.example.com')
+      socket.onopen = () => { this.connected = true }
+      socket.onmessage = event => { this.triggerEvent('message', event.data) }
+      socket.onerror = error => { console.error(error) }
+      socket.onclose = () => { this.connected = false }
+      return
+    }
+    wx.connectSocket({ url: 'wss://chat.example.com' })
+    wx.onSocketOpen(() => { this.connected = true })
+    wx.onSocketMessage(event => { this.triggerEvent('message', event.data) })
+    wx.onSocketError(error => { console.error(error) })
+  },
+  detached() {
+    if (__mpx_mode__ === 'web') {
+      if (this.socket) this.socket.close()
+      this.socket = null
+      return
+    }
+    wx.closeSocket()
+  },
+  methods: {
+    sendMessage() {
+      if (__mpx_mode__ === 'web') {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+          this.socket.send(JSON.stringify({ type: 'ping' }))
+        }
+        return
+      }
+      wx.sendSocketMessage({ data: JSON.stringify({ type: 'ping' }) })
+    }
+  }
+})
+</script>

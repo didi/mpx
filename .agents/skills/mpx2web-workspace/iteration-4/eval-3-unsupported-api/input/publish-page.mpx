@@ -1,0 +1,26 @@
+<template>
+  <view class="publish-page">
+    <button bindtap="choosePlace">选择位置</button>
+    <button bindtap="openPlace">在地图中打开</button>
+    <button bindtap="choosePhoto">选择图片</button>
+    <text>{{place.name}}</text>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+createPage({
+  data: { place: {}, photos: [] },
+  methods: {
+    choosePlace() {
+      wx.chooseLocation({ success: place => { this.place = place } })
+    },
+    openPlace() {
+      wx.openLocation(this.place)
+    },
+    choosePhoto() {
+      wx.chooseMedia({ count: 3, success: res => { this.photos = res.tempFiles } })
+    }
+  }
+})
+</script>

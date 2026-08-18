@@ -1,0 +1,14 @@
+{
+  "eval_id": "eval-6-ssr-product-detail",
+  "eval_name": "小程序商品详情页转 Web SSR",
+  "prompt": "请对附件中的商品详情小程序页面、应用入口和构建配置进行 Web SSR 跨端适配，确保服务端首屏能够渲染商品内容、客户端接管后页面正常交互，同时保留小程序平台兼容性。输出修改后的三个完整文件，不要省略内容。",
+  "assertions": [
+    "SSR 首屏通过 serverPrefetch 等待商品数据",
+    "商品请求可在 Node 执行且不再直接调用 wx.request",
+    "小程序 onLoad 仍可加载同一商品业务",
+    "Pinia 在 onAppInit 中按 SSR 请求创建并返回",
+    "服务端执行路径不直接访问浏览器全局对象",
+    "异步分包 SSR 开启 useSSR 并使用 history 路由",
+    "保留商品分包和页面交互"
+  ]
+}

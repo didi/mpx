@@ -1,0 +1,565 @@
+<template>
+  <view class="publish-page">
+    <view class="publish-header">
+      <text class="publish-title">发布社区动态</text>
+      <text class="publish-tip">分享真实体验，帮助更多邻居</text>
+    </view>
+
+    <view class="form-card">
+      <textarea
+        class="content-input"
+        maxlength="500"
+        placeholder="说说商品体验、社区活动或闲置好物..."
+        value="{{content}}"
+        bindinput="updateContent"
+      />
+      <text class="word-count">{{content.length}} / 500</text>
+
+      <view class="photo-grid">
+        <view class="photo-item" wx:for="{{photos}}" wx:key="id">
+          <image class="photo-image" src="{{item.tempFilePath}}" mode="aspectFill" />
+          <view class="photo-remove" catchtap="removePhoto(index)" aria-role="button" aria-label="删除图片">
+            <text>×</text>
+          </view>
+        </view>
+        <view
+          wx:if="{{photos.length < 9}}"
+          class="photo-add"
+          bindtap="choosePhoto"
+          aria-role="button"
+          aria-label="添加图片"
+        >
+          <text class="photo-add-icon">+</text>
+          <text class="photo-add-label">添加图片</text>
+        </view>
+      </view>
+      <input
+        wx:if="{{isWeb}}"
+        id="community-photo-input"
+        class="web-file-input"
+        type="file"
+        accept="image/*"
+        multiple
+        bindchange="handleWebFiles"
+      />
+    </view>
+
+    <view class="publish-options">
+      <view class="option-row" bindtap="choosePlace">
+        <view class="option-main">
+          <text class="option-icon">⌖</text>
+          <view class="option-copy">
+            <text class="option-label">所在位置</text>
+            <text class="option-value">{{place.name || '选择位置'}}</text>
+          </view>
+        </view>
+        <text class="option-arrow">›</text>
+      </view>
+
+      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
+        <view class="place-copy">
+          <text class="place-name">{{place.name}}</text>
+          <text class="place-address">{{place.address}}</text>
+        </view>
+        <text class="place-action">查看地图</text>
+      </view>
+
+      <view class="option-row">
+        <view class="option-main">
+          <text class="option-icon">#</text>
+          <view class="option-copy">
+            <text class="option-label">社区话题</text>
+            <picker mode="selector" range="{{topics}}" range-key="name" bindchange="selectTopic">
+              <text class="option-value">{{selectedTopic.name || '选择话题'}}</text>
+            </picker>
+          </view>
+        </view>
+        <text class="option-arrow">›</text>
+      </view>
+    </view>
+
+    <view class="publish-notice">
+      <switch checked="{{allowComments}}" bindchange="toggleComments" color="#1677ff" />
+      <text class="notice-text">允许其他用户评论</text>
+    </view>
+
+    <button
+      class="publish-button"
+      loading="{{submitting}}"
+      disabled="{{!canSubmit || submitting}}"
+      bindtap="submitPost"
+    >
+      发布动态
+    </button>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined'
+
+function getWebBridge () {
+  return isWeb && window.__MPX_COMMUNITY_BRIDGE__
+}
+
+function invokeBridge (method, options) {
+  const bridge = getWebBridge()
+  if (!bridge || typeof bridge[method] !== 'function') return
+  return Promise.resolve(bridge[method](options))
+}
+
+createPage({
+  data: {
+    isWeb,
+    content: '',
+    photos: [],
+    place: {},
+    topics: [
+      { id: 'shopping', name: '社区好物' },
+      { id: 'activity', name: '邻里活动' },
+      { id: 'secondhand', name: '闲置交换' },
+      { id: 'service', name: '便民服务' }
+    ],
+    selectedTopic: {},
+    allowComments: true,
+    submitting: false
+  },
+  computed: {
+    canSubmit () {
+      return Boolean(this.content.trim() || this.photos.length)
+    }
+  },
+  methods: {
+    updateContent (event) {
+      this.content = event.detail.value
+    },
+    choosePlace () {
+      if (!isWeb) {
+        wx.chooseLocation({
+          success: (place) => {
+            this.place = place
+          }
+        })
+        return
+      }
+
+      const bridgeTask = invokeBridge('chooseLocation', { current: this.place })
+      if (bridgeTask) {
+        bridgeTask.then((place) => {
+          if (place) this.place = place
+        }).catch(() => {
+          this.showMessage('位置选择失败，请重试')
+        })
+        return
+      }
+
+      if (!navigator.geolocation) {
+        this.showMessage('当前浏览器不支持位置选择')
+        return
+      }
+      navigator.geolocation.getCurrentPosition(({ coords }) => {
+        this.place = {
+          name: '当前位置',
+          address: `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`,
+          latitude: coords.latitude,
+          longitude: coords.longitude
+        }
+      }, () => {
+        this.showMessage('无法获取位置，请检查定位权限')
+      })
+    },
+    openPlace () {
+      if (!this.place.latitude || !this.place.longitude) return
+      if (!isWeb) {
+        wx.openLocation({
+          latitude: this.place.latitude,
+          longitude: this.place.longitude,
+          name: this.place.name,
+          address: this.place.address
+        })
+        return
+      }
+
+      const bridgeTask = invokeBridge('openLocation', this.place)
+      if (bridgeTask) {
+        bridgeTask.catch(() => {
+          this.showMessage('地图打开失败，请重试')
+        })
+        return
+      }
+      const query = encodeURIComponent(`${this.place.latitude},${this.place.longitude} ${this.place.name || ''}`)
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener,noreferrer')
+    },
+    choosePhoto () {
+      if (!isWeb) {
+        wx.chooseMedia({
+          count: 9 - this.photos.length,
+          mediaType: ['image'],
+          sourceType: ['album', 'camera'],
+          success: ({ tempFiles }) => {
+            this.photos = this.photos.concat(tempFiles.map((item, index) => Object.assign({
+              id: `${Date.now()}-${index}`
+            }, item)))
+          }
+        })
+        return
+      }
+
+      const bridgeTask = invokeBridge('chooseMedia', {
+        count: 9 - this.photos.length,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera']
+      })
+      if (bridgeTask) {
+        bridgeTask.then((result) => {
+          const tempFiles = result && (result.tempFiles || result.files)
+          if (tempFiles) this.appendWebPhotos(tempFiles)
+        }).catch(() => {
+          this.showMessage('图片选择失败，请重试')
+        })
+        return
+      }
+      const input = document.getElementById('community-photo-input')
+      if (input) input.click()
+    },
+    handleWebFiles (event) {
+      const files = event.target && event.target.files
+      if (files) this.appendWebPhotos(Array.from(files))
+      if (event.target) event.target.value = ''
+    },
+    appendWebPhotos (files) {
+      const remaining = 9 - this.photos.length
+      const photos = Array.from(files).slice(0, remaining).map((item, index) => {
+        if (item.tempFilePath) {
+          return Object.assign({ id: `${Date.now()}-${index}` }, item)
+        }
+        return {
+          id: `${Date.now()}-${index}`,
+          tempFilePath: URL.createObjectURL(item),
+          file: item,
+          size: item.size
+        }
+      })
+      this.photos = this.photos.concat(photos)
+    },
+    removePhoto (index) {
+      const photo = this.photos[index]
+      if (isWeb && photo && photo.file && photo.tempFilePath) URL.revokeObjectURL(photo.tempFilePath)
+      this.photos.splice(index, 1)
+    },
+    selectTopic (event) {
+      this.selectedTopic = this.topics[Number(event.detail.value)]
+    },
+    toggleComments (event) {
+      this.allowComments = event.detail.value
+    },
+    submitPost () {
+      if (!this.canSubmit || this.submitting) return
+      this.submitting = true
+      const post = {
+        content: this.content,
+        photos: this.photos.map(item => item.tempFilePath),
+        place: this.place,
+        topicId: this.selectedTopic.id || '',
+        allowComments: this.allowComments
+      }
+
+      if (!isWeb) {
+        wx.request({
+          url: '/api/community/posts',
+          method: 'POST',
+          data: post,
+          success: ({ data }) => {
+            wx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+          },
+          fail: () => {
+            wx.showToast({ title: '发布失败，请重试', icon: 'none' })
+          },
+          complete: () => {
+            this.submitting = false
+          }
+        })
+        return
+      }
+
+      const bridgeTask = invokeBridge('publishPost', Object.assign({
+        files: this.photos.map(item => item.file).filter(Boolean)
+      }, post))
+      const request = bridgeTask || this.publishFromBrowser(post)
+      request.then((data) => {
+        const id = data && data.id
+        if (!id) throw new Error('Missing post id')
+        window.location.assign(`/pages/community/detail?id=${encodeURIComponent(id)}`)
+      }).catch(() => {
+        this.showMessage('发布失败，请重试')
+      }).then(() => {
+        this.submitting = false
+      })
+    },
+    publishFromBrowser (post) {
+      const files = this.photos.map(item => item.file).filter(Boolean)
+      let body
+      let headers
+      if (files.length) {
+        body = new FormData()
+        body.append('data', JSON.stringify(post))
+        files.forEach(file => body.append('photos', file))
+      } else {
+        body = JSON.stringify(post)
+        headers = { 'Content-Type': 'application/json' }
+      }
+      return fetch('/api/community/posts', {
+        method: 'POST',
+        headers,
+        body,
+        credentials: 'same-origin'
+      }).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return response.json()
+      })
+    },
+    showMessage (message) {
+      const bridgeTask = invokeBridge('showToast', { title: message, icon: 'none' })
+      if (!bridgeTask && isWeb) window.alert(message)
+    }
+  }
+})
+</script>
+
+<style>
+.publish-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: #f6f7fb;
+}
+
+.publish-header {
+  padding: 20rpx 8rpx 28rpx;
+}
+
+.publish-title,
+.publish-tip,
+.word-count,
+.photo-add-label,
+.option-label,
+.option-value,
+.place-name,
+.place-address,
+.place-action,
+.notice-text {
+  display: block;
+}
+
+.publish-title {
+  color: #20232a;
+  font-size: 38rpx;
+  font-weight: bold;
+}
+
+.publish-tip {
+  margin-top: 8rpx;
+  color: #8a8f99;
+  font-size: 24rpx;
+}
+
+.form-card,
+.publish-options {
+  background: #ffffff;
+  border-radius: 20rpx;
+}
+
+.form-card {
+  padding: 24rpx;
+}
+
+.content-input {
+  width: 100%;
+  min-height: 240rpx;
+  color: #333333;
+  font-size: 28rpx;
+  line-height: 42rpx;
+}
+
+.word-count {
+  color: #b4b8c0;
+  font-size: 22rpx;
+  text-align: right;
+}
+
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 20rpx;
+}
+
+.photo-item,
+.photo-add {
+  width: 196rpx;
+  height: 196rpx;
+  margin: 0 16rpx 16rpx 0;
+  border-radius: 14rpx;
+}
+
+.photo-item {
+  position: relative;
+}
+
+.photo-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 14rpx;
+}
+
+.photo-remove {
+  position: absolute;
+  top: -12rpx;
+  right: -12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40rpx;
+  height: 40rpx;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+}
+
+.photo-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #9da2ac;
+  background: #f3f5f8;
+  border: 2rpx dashed #d6dae1;
+}
+
+.photo-add-icon {
+  font-size: 52rpx;
+  line-height: 60rpx;
+}
+
+.photo-add-label {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+}
+
+.web-file-input {
+  position: fixed;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.publish-options {
+  margin-top: 24rpx;
+  padding: 0 24rpx;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 112rpx;
+  border-bottom: 1rpx solid #eef0f3;
+}
+
+.option-main {
+  display: flex;
+  align-items: center;
+}
+
+.option-icon {
+  width: 48rpx;
+  color: #1677ff;
+  font-size: 34rpx;
+}
+
+.option-copy {
+  margin-left: 12rpx;
+}
+
+.option-label {
+  color: #333333;
+  font-size: 28rpx;
+}
+
+.option-value {
+  margin-top: 4rpx;
+  color: #9297a1;
+  font-size: 23rpx;
+}
+
+.option-arrow {
+  color: #c4c8cf;
+  font-size: 40rpx;
+}
+
+.place-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16rpx 0;
+  padding: 20rpx;
+  background: #f4f8ff;
+  border-radius: 14rpx;
+}
+
+.place-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.place-name {
+  color: #333333;
+  font-size: 26rpx;
+}
+
+.place-address {
+  margin-top: 6rpx;
+  overflow: hidden;
+  color: #9297a1;
+  font-size: 22rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.place-action {
+  margin-left: 24rpx;
+  color: #1677ff;
+  font-size: 24rpx;
+}
+
+.publish-notice {
+  display: flex;
+  align-items: center;
+  margin: 24rpx 8rpx;
+}
+
+.notice-text {
+  margin-left: 16rpx;
+  color: #666666;
+  font-size: 25rpx;
+}
+
+.publish-button {
+  color: #ffffff;
+  font-size: 30rpx;
+  background: #1677ff;
+  border-radius: 44rpx;
+}
+
+.publish-button[disabled] {
+  color: #ffffff;
+  background: #b9d5ff;
+}
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "发布动态",
+  "usingComponents": {}
+}
+</script>

@@ -1,0 +1,127 @@
+<template>
+  <view class="product-detail">
+    <image class="cover" src="{{product.cover}}" mode="aspectFill" />
+    <view class="name">{{product.name}}</view>
+    <view class="price">¥{{product.price}}</view>
+    <button bindtap="addToCart">加入购物车</button>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { defineStore } from '@mpxjs/pinia'
+import mpx from '@mpxjs/api-proxy'
+
+const useProductStore = defineStore('product-detail', {
+  state: () => ({
+    productId: '',
+    product: {}
+  }),
+  actions: {
+    setProduct (productId, product) {
+      this.productId = productId
+      this.product = product
+    }
+  }
+})
+
+createPage({
+  setup () {
+    const productStore = useProductStore()
+    return {
+      productStore
+    }
+  },
+  data: {
+    productId: ''
+  },
+  computed: {
+    product () {
+      return this.productStore.product
+    }
+  },
+  onLoad (query) {
+    this.productId = String(query.id || '')
+
+    if (__mpx_mode__ === 'web') {
+      if (typeof window !== 'undefined' && this.productStore.productId !== this.productId) {
+        this.loadProduct()
+      }
+    } else {
+      this.loadProduct()
+    }
+  },
+  serverPrefetch () {
+    if (!this.productId || this.productStore.productId === this.productId) {
+      return Promise.resolve()
+    }
+    return this.loadProduct()
+  },
+  methods: {
+    getProductUrl () {
+      const path = `/api/products/${encodeURIComponent(this.productId)}`
+      if (typeof window !== 'undefined') {
+        return path
+      }
+
+      const request = this.$ssrContext && this.$ssrContext.req
+      if (!request || !request.headers || !request.headers.host) {
+        throw new Error('SSR product request requires the incoming request host')
+      }
+      const forwardedProtocol = request.headers['x-forwarded-proto']
+      const protocol = forwardedProtocol
+        ? String(forwardedProtocol).split(',')[0].trim()
+        : (request.socket && request.socket.encrypted ? 'https' : 'http')
+      return `${protocol}://${request.headers.host}${path}`
+    },
+    loadProduct () {
+      if (__mpx_mode__ === 'web') {
+        return fetch(this.getProductUrl())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`Failed to load product: ${response.status}`)
+            }
+            return response.json()
+          })
+          .then((product) => {
+            this.productStore.setProduct(this.productId, product)
+          })
+      }
+
+      return new Promise((resolve, reject) => {
+        wx.request({
+          url: `/api/products/${this.productId}`,
+          success: ({ data }) => {
+            this.productStore.setProduct(this.productId, data)
+            resolve()
+          },
+          fail: reject
+        })
+      })
+    },
+    addToCart () {
+      mpx.showToast({ title: `已加入 ${this.product.name}` })
+    }
+  }
+})
+</script>
+
+<style>
+.product-detail {
+  padding: 32rpx;
+}
+.cover {
+  width: 686rpx;
+  height: 686rpx;
+}
+.name {
+  margin-top: 24rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+.price {
+  margin: 16rpx 0 32rpx;
+  color: #e64340;
+  font-size: 40rpx;
+}
+</style>

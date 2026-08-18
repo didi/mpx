@@ -1,0 +1,67 @@
+{
+  "eval_id": 4,
+  "eval_name": "campaign-webview-sdk",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "h0",
+      "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx：保留 <web-view src=\"{{campaignUrl}}\" bindmessage=\"handleCampaignMessage\">；handleCampaignMessage 处理 claim-coupon/open-product，分别调用 claimCoupon 与 openProduct；openProduct 调用 mpx.navigateTo。handleCampaignLoad 在 __mpx_mode__ === 'wx' 时调用 mpx.reportAnalytics('campaign_webview_load', { campaign_id: this.campaignId })。"
+    },
+    {
+      "id": "h1",
+      "text": "Web 宿主只为受信任活动域名配置精确 host 白名单",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：仅在 __mpx_mode__ === 'web' 配置 webviewConfig.hostWhitelists: ['campaign.example.com']，为精确单一 host。"
+    },
+    {
+      "id": "h2",
+      "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：publicPath: '/mall/'，且 webConfig.routeConfig.base: '/mall/'。"
+    },
+    {
+      "id": "h3",
+      "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：模块顶层仅 import { createComponent } from '@mpxjs/core'；initTracker 在 __mpx_mode__ !== 'web' 时返回，之后才执行 await import('@business/campaign-tracker-web')。"
+    },
+    {
+      "id": "h4",
+      "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：detached 将 trackerDetached=true 并递增 trackerGeneration；动态 import、campaignTracker.create 与 tracker.start 的每个 await 后均通过 isStaleTracker(...)（含 trackerDetached）校验，过期实例会 destroy 或直接返回。"
+    },
+    {
+      "id": "h5",
+      "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：每次 initTracker 使用 generation = ++this.trackerGeneration；isStaleTracker 同时校验 generation、campaignId、memberId；start 后还校验 tracker !== this.tracker，防止旧实例写入 ready 或触发事件。"
+    },
+    {
+      "id": "h6",
+      "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：detached 调用 clearTracker；clearTracker 移除 window 的 message 和 document 的 visibilitychange 监听，并对 tracker 调用 destroy()。"
+    },
+    {
+      "id": "h7",
+      "text": "手写 window message 监听同时校验受信任 origin、来源 iframe 和当前活动标识",
+      "passed": false,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：handleWindowMessage 校验 event.origin === trustedCampaignOrigin 和 message.campaignId === this.campaignId，但未校验 event.source 是否为当前活动 iframe/window。"
+    },
+    {
+      "id": "h8",
+      "text": "web-view bindmessage 的单向业务消息校验当前 campaignId，旧活动消息不会触发领券或跳转",
+      "passed": false,
+      "evidence": "outputs/src/pages/campaign/index.mpx：handleCampaignMessage 仅在 __mpx_mode__ === 'web' 时校验 message.campaignId !== this.campaignId；微信小程序模式下旧 web-view 消息仍可进入 claimCoupon/openProduct，缺少当前 campaignId 校验。"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 2,
+    "total": 9,
+    "pass_rate": 0.7778
+  }
+}

@@ -1,0 +1,586 @@
+[
+  {
+    "eval_id": "eval-0-small-font",
+    "eval_name": "小于 12px 字号兼容",
+    "configuration": "no_skill",
+    "expectations": [
+      {
+        "text": "保留小程序原始 10px 字号",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 使用较大基础字号配合 scale 还原视觉字号",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 缩放设置明确 transform-origin",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "缩放后校正布局占位",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "小字号补偿使用正确 Web 条件隔离",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 4,
+      "total": 5
+    }
+  },
+  {
+    "eval_id": "eval-0-small-font",
+    "eval_name": "小于 12px 字号兼容",
+    "configuration": "has_skill",
+    "expectations": [
+      {
+        "text": "保留小程序原始 10px 字号",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 使用较大基础字号配合 scale 还原视觉字号",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 缩放设置明确 transform-origin",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "缩放后校正布局占位",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "小字号补偿使用正确 Web 条件隔离",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 5,
+      "total": 5
+    }
+  },
+  {
+    "eval_id": "eval-1-style-isolation",
+    "eval_name": "Web 组件样式隔离",
+    "configuration": "no_skill",
+    "expectations": [
+      {
+        "text": "完整输出本用例要求的全部文件",
+        "passed": true,
+        "evidence": "输出文件完整性检查"
+      },
+      {
+        "text": "Web 组件样式使用 scoped 隔离",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "基础标签节点增加稳定业务类名",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "组件样式不再依赖 image 标签选择器",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "保留父页面和组件各自的标题视觉",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "组件头像继续保持圆形且无父页面红色边框",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "保留小程序组件与 styleIsolation 配置",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 4,
+      "total": 7
+    }
+  },
+  {
+    "eval_id": "eval-1-style-isolation",
+    "eval_name": "Web 组件样式隔离",
+    "configuration": "has_skill",
+    "expectations": [
+      {
+        "text": "完整输出本用例要求的全部文件",
+        "passed": true,
+        "evidence": "输出文件完整性检查"
+      },
+      {
+        "text": "Web 组件样式使用 scoped 隔离",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "基础标签节点增加稳定业务类名",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "组件样式不再依赖 image 标签选择器",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "保留父页面和组件各自的标题视觉",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "组件头像继续保持圆形且无父页面红色边框",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "保留小程序组件与 styleIsolation 配置",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 7,
+      "total": 7
+    }
+  },
+  {
+    "eval_id": "eval-2-dynamic-event-wxs",
+    "eval_name": "动态事件与 WXS 引用",
+    "configuration": "no_skill",
+    "expectations": [
+      {
+        "text": "WXS 按平台保留，或改为全平台固定实例方法",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 事件使用有效属性绑定且没有伪条件编译注释",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 事件处理器是组件实例方法",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 删除事件不再绑定布尔动态值",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "删除处理器在 disabled 时阻止执行",
+        "passed": false,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 4,
+      "total": 5
+    }
+  },
+  {
+    "eval_id": "eval-2-dynamic-event-wxs",
+    "eval_name": "动态事件与 WXS 引用",
+    "configuration": "has_skill",
+    "expectations": [
+      {
+        "text": "WXS 按平台保留，或改为全平台固定实例方法",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 事件使用有效属性绑定且没有伪条件编译注释",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 事件处理器是组件实例方法",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 删除事件不再绑定布尔动态值",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "删除处理器在 disabled 时阻止执行",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 5,
+      "total": 5
+    }
+  },
+  {
+    "eval_id": "eval-3-unsupported-api",
+    "eval_name": "Web 缺失位置与媒体 API",
+    "configuration": "no_skill",
+    "expectations": [
+      {
+        "text": "小程序端保留选择位置、打开地图和选择媒体能力",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "缺失 API 与小程序实现按平台隔离",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 位置选择保留业务 Bridge/SDK TODO",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 地图打开保留业务 Bridge/SDK TODO",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 媒体选择保留业务 Bridge/SDK TODO",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "未擅自使用纯浏览器位置、地图或文件替代",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 3,
+      "total": 6
+    }
+  },
+  {
+    "eval_id": "eval-3-unsupported-api",
+    "eval_name": "Web 缺失位置与媒体 API",
+    "configuration": "has_skill",
+    "expectations": [
+      {
+        "text": "小程序端保留选择位置、打开地图和选择媒体能力",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "缺失 API 与小程序实现按平台隔离",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 位置选择保留业务 Bridge/SDK TODO",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 地图打开保留业务 Bridge/SDK TODO",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 媒体选择保留业务 Bridge/SDK TODO",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "未擅自使用纯浏览器位置、地图或文件替代",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 6,
+      "total": 6
+    }
+  },
+  {
+    "eval_id": "eval-4-socket-task",
+    "eval_name": "WebSocket SocketTask 适配",
+    "configuration": "no_skill",
+    "expectations": [
+      {
+        "text": "connectSocket 使用 Mpx/api-proxy 统一入口",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "保存 connectSocket 返回的 SocketTask",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "使用 SocketTask 监听连接、消息和错误",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "使用 SocketTask send 发送消息",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "卸载时通过 SocketTask close 清理连接",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "不再使用 Web 不支持的全局 Socket API",
+        "passed": false,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 2,
+      "total": 6
+    }
+  },
+  {
+    "eval_id": "eval-4-socket-task",
+    "eval_name": "WebSocket SocketTask 适配",
+    "configuration": "has_skill",
+    "expectations": [
+      {
+        "text": "connectSocket 使用 Mpx/api-proxy 统一入口",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "保存 connectSocket 返回的 SocketTask",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "使用 SocketTask 监听连接、消息和错误",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "使用 SocketTask send 发送消息",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "卸载时通过 SocketTask close 清理连接",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "不再使用 Web 不支持的全局 Socket API",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 6,
+      "total": 6
+    }
+  },
+  {
+    "eval_id": "eval-5-web-lifecycle",
+    "eval_name": "分享生命周期与宿主 API",
+    "configuration": "no_skill",
+    "expectations": [
+      {
+        "text": "保留小程序分享按钮和 onShareAppMessage",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 通过 implement remove 移除分享生命周期",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "宿主跳转使用 Mpx/api-proxy 统一入口",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 分享入口绑定独立的组件实例方法",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 分享方法保留明确的业务接入 TODO",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "未擅自选择 Web Share 或 clipboard 降级",
+        "passed": false,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 2,
+      "total": 6
+    }
+  },
+  {
+    "eval_id": "eval-5-web-lifecycle",
+    "eval_name": "分享生命周期与宿主 API",
+    "configuration": "has_skill",
+    "expectations": [
+      {
+        "text": "保留小程序分享按钮和 onShareAppMessage",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 通过 implement remove 移除分享生命周期",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "宿主跳转使用 Mpx/api-proxy 统一入口",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 分享入口绑定独立的组件实例方法",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Web 分享方法保留明确的业务接入 TODO",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "未擅自选择 Web Share 或 clipboard 降级",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 6,
+      "total": 6
+    }
+  },
+  {
+    "eval_id": "eval-6-ssr-product-detail",
+    "eval_name": "小程序商品详情页转 Web SSR",
+    "configuration": "no_skill",
+    "expectations": [
+      {
+        "text": "完整输出本用例要求的全部文件",
+        "passed": true,
+        "evidence": "输出文件完整性检查"
+      },
+      {
+        "text": "SSR 首屏通过 serverPrefetch 等待商品数据",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "商品请求使用 Mpx/api-proxy 且不再直接调用 wx.request",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "小程序 onLoad 仍可加载同一商品业务",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Pinia 在 onAppInit 中按 SSR 请求创建并返回",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "服务端执行路径不直接访问浏览器全局对象",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "异步分包 SSR 开启 useSSR 并使用 history 路由",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "保留商品分包和页面交互",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 6,
+      "total": 8
+    }
+  },
+  {
+    "eval_id": "eval-6-ssr-product-detail",
+    "eval_name": "小程序商品详情页转 Web SSR",
+    "configuration": "has_skill",
+    "expectations": [
+      {
+        "text": "完整输出本用例要求的全部文件",
+        "passed": true,
+        "evidence": "输出文件完整性检查"
+      },
+      {
+        "text": "SSR 首屏通过 serverPrefetch 等待商品数据",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "商品请求使用 Mpx/api-proxy 且不再直接调用 wx.request",
+        "passed": false,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "小程序 onLoad 仍可加载同一商品业务",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "Pinia 在 onAppInit 中按 SSR 请求创建并返回",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "服务端执行路径不直接访问浏览器全局对象",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "异步分包 SSR 开启 useSSR 并使用 history 路由",
+        "passed": true,
+        "evidence": "静态契约检查"
+      },
+      {
+        "text": "保留商品分包和页面交互",
+        "passed": true,
+        "evidence": "静态契约检查"
+      }
+    ],
+    "summary": {
+      "passed": 7,
+      "total": 8
+    }
+  }
+]

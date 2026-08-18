@@ -1,0 +1,47 @@
+<template>
+  <view class="chat-room">
+    <button bindtap="sendMessage">发送</button>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+
+createComponent({
+  data: {
+    connected: false
+  },
+  attached() {
+    const socketTask = this.socketTask = mpx.connectSocket({
+      url: 'wss://chat.example.com',
+      usePromise: false
+    })
+    socketTask.onOpen(() => {
+      if (this.socketTask === socketTask) this.connected = true
+    })
+    socketTask.onMessage(event => {
+      if (this.socketTask === socketTask) this.triggerEvent('message', event.data)
+    })
+    socketTask.onError(error => {
+      if (this.socketTask === socketTask) console.error(error)
+    })
+    socketTask.onClose(() => {
+      if (this.socketTask === socketTask) this.connected = false
+    })
+  },
+  detached() {
+    if (this.socketTask) {
+      this.socketTask.close({})
+      this.socketTask = null
+    }
+    this.connected = false
+  },
+  methods: {
+    sendMessage() {
+      if (!this.connected || !this.socketTask) return
+      this.socketTask.send({ data: JSON.stringify({ type: 'ping' }) })
+    }
+  }
+})
+</script>

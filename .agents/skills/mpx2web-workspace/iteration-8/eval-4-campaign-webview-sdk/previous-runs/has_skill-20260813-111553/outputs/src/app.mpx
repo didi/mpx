@@ -1,0 +1,39 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy)
+
+if (__mpx_mode__ === 'web') {
+  mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
+    webviewConfig: Object.assign({}, mpx.config.webConfig && mpx.config.webConfig.webviewConfig, {
+      hostWhitelists: ['https://campaign.example.com']
+    })
+  })
+}
+
+createApp({
+  onLaunch () {
+    if (__mpx_mode__ === 'wx') {
+      mpx.reportAnalytics('mall_launch', {})
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/home/index",
+    "pages/campaign/index"
+  ],
+  "packages": [
+    {
+      "root": "packageProduct",
+      "pages": [
+        "pages/detail/index"
+      ]
+    }
+  ]
+}
+</script>

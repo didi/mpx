@@ -1,0 +1,67 @@
+{
+  "eval_id": 4,
+  "eval_name": "campaign-webview-sdk",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "h0",
+      "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx：`<web-view ... bindmessage=\"handleCampaignMessage\" />`；`claimCoupon` 请求 `/api/campaign/coupons/claim`；`openProduct` 使用 `wx.navigateTo` 跳转商品详情；`handleCampaignLoad` 调用 `wx.reportAnalytics('campaign_webview_load', { campaign_id: this.campaignId })`。"
+    },
+    {
+      "id": "h1",
+      "text": "Web 宿主只为受信任活动域名配置精确 host 白名单",
+      "passed": false,
+      "evidence": "outputs 中仅见 `CAMPAIGN_ORIGIN = 'https://campaign.example.com'` 用于消息 origin 比较，未见 Web 宿主 web-view 的 host 白名单配置。"
+    },
+    {
+      "id": "h2",
+      "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：`publicPath: '/mall/'`，且 `webConfig.routeConfig.base: '/mall/'`。"
+    },
+    {
+      "id": "h3",
+      "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
+      "passed": false,
+      "evidence": "outputs/src/components/campaign-tracker.mpx 模块顶层存在静态导入：`import campaignTracker from '@business/campaign-tracker-web'`。"
+    },
+    {
+      "id": "h4",
+      "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
+      "passed": false,
+      "evidence": "候选代码未动态加载 SDK；`campaignTracker` 被模块顶层静态导入，因此不存在可验证的动态加载边界卸载防护。"
+    },
+    {
+      "id": "h5",
+      "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx：切换时递增 `this.requestVersion`；领券回调校验 `!this.active || requestVersion !== this.requestVersion || campaignId !== this.campaignId`。outputs/src/components/campaign-tracker.mpx：初始化以 `initVersion` 和 `campaignId` 校验，旧实例完成后执行 `tracker.destroy()` 并返回。"
+    },
+    {
+      "id": "h6",
+      "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：`detached` 调用 `cleanupTracker()`；其中移除 `window` 的 `message` 和 `document` 的 `visibilitychange` 监听，并执行 `this.tracker.destroy()`。"
+    },
+    {
+      "id": "h7",
+      "text": "手写 window message 监听同时校验受信任 origin、来源 iframe 和当前活动标识",
+      "passed": false,
+      "evidence": "outputs/src/pages/campaign/index.mpx 的 `handleWebMessage` 校验 origin 与 iframe 来源，但 `consumeCampaignMessage` 仅在 `message.campaignId` 存在且不匹配时返回：`if (message.campaignId && message.campaignId !== this.campaignId) return`，缺少活动标识的消息仍可被消费。"
+    },
+    {
+      "id": "h8",
+      "text": "web-view bindmessage 的单向业务消息校验当前 campaignId，旧活动消息不会触发领券或跳转",
+      "passed": false,
+      "evidence": "outputs/src/pages/campaign/index.mpx：`handleCampaignMessage` 直接将消息传给 `consumeCampaignMessage`；其中 campaignId 校验是可选的，`message.campaignId` 缺失时仍可执行 `claimCoupon` 或 `openProduct`。"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 5,
+    "total": 9,
+    "pass_rate": 0.4444
+  }
+}

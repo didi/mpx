@@ -1,0 +1,65 @@
+{
+  "eval_id": 4,
+  "eval_name": "campaign-webview-sdk",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "h0",
+      "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
+      "passed": true,
+      "evidence": "页面保留 web-view，处理 claim-coupon、open-product；wx 下调用 reportAnalytics('campaign_webview_load')。"
+    },
+    {
+      "id": "h1",
+      "text": "Web 宿主为活动域名配置精确 host 白名单和最小业务 API 实现",
+      "passed": true,
+      "evidence": "Web 配置 hostWhitelists 为唯一的 https://campaign.example.com，并实现领券请求与商品跳转。"
+    },
+    {
+      "id": "h2",
+      "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
+      "passed": true,
+      "evidence": "vue.config.js 同时设置 publicPath: '/mall/' 与 routeConfig.base: '/mall/'。"
+    },
+    {
+      "id": "h3",
+      "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
+      "passed": true,
+      "evidence": "SDK 仅在 __mpx_mode__ === 'web' 分支内通过 await import('@business/campaign-tracker-web') 加载。"
+    },
+    {
+      "id": "h4",
+      "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
+      "passed": true,
+      "evidence": "动态 import、create 和 start 的 await 后均以 isStaleTracker 校验代际、活动参数及 trackerDetached。"
+    },
+    {
+      "id": "h5",
+      "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
+      "passed": true,
+      "evidence": "trackerGeneration 递增，并校验 campaignId/memberId、generation 与 tracker !== this.tracker。"
+    },
+    {
+      "id": "h6",
+      "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
+      "passed": true,
+      "evidence": "detached 调用 clearTracker，移除 message 和 visibilitychange 监听，并执行 tracker.destroy()。"
+    },
+    {
+      "id": "h7",
+      "text": "iframe 消息同时校验受信任 origin、source 和当前活动标识",
+      "passed": false,
+      "evidence": "handleWindowMessage 校验 origin 和 campaignId，但未校验 event.source；页面消息处理也未校验 origin/source。"
+    },
+    {
+      "id": "h8",
+      "text": "活动消息按 requestId 或 callbackId 关联，过期响应不会完成当前请求",
+      "passed": false,
+      "evidence": "候选代码未出现 requestId 或 callbackId 的生成、传递或响应关联校验。"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "total": 9
+  }
+}

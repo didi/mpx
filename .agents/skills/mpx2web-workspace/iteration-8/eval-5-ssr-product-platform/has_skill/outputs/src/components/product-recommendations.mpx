@@ -1,0 +1,136 @@
+<template>
+  <view class="recommendations">
+    <text class="section-title">相关推荐</text>
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+
+// SDK contract: create({ productId }) returns Promise<Tracker>.
+// Tracker exposes track(eventName, payload) and destroy().
+createComponent({
+  properties: {
+    productId: String,
+    items: Array
+  },
+  observers: {
+    'productId, items' () {
+      if (this.componentReady) this.initExposureTracker()
+    }
+  },
+  ready () {
+    this.componentReady = true
+    this.initExposureTracker()
+  },
+  detached () {
+    this.componentReady = false
+    this.disposeExposureTracker()
+  },
+  methods: {
+    disposeExposureTracker () {
+      this.exposureVersion = (this.exposureVersion || 0) + 1
+      if (this.exposureObserver) this.exposureObserver.disconnect()
+      if (this.exposureTracker) this.exposureTracker.destroy()
+      this.exposureObserver = null
+      this.exposureTracker = null
+    },
+    async initExposureTracker () {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+
+      this.disposeExposureTracker()
+      if (!this.productId || !this.items || !this.items.length) return
+
+      const productId = this.productId
+      const exposureVersion = this.exposureVersion
+      const sdkModule = await import('@business/product-exposure-web')
+      if (!this.componentReady || exposureVersion !== this.exposureVersion) return
+
+      const sdk = sdkModule.default || sdkModule
+      const tracker = await sdk.create({ productId })
+      if (!this.componentReady || exposureVersion !== this.exposureVersion) {
+        tracker.destroy()
+        return
+      }
+
+      this.exposureTracker = tracker
+      this.exposureObserver = new window.IntersectionObserver((entries) => {
+        if (!this.componentReady || exposureVersion !== this.exposureVersion) return
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            tracker.track('recommendation_exposure', {
+              productId,
+              recommendationId: entry.target.dataset.productId
+            })
+          }
+        })
+      })
+      this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
+        this.exposureObserver.observe(element)
+      })
+    },
+    openProduct (productId) {
+      mpx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${productId}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #ffffff;
+}
+
+.section-title {
+  margin-bottom: 20rpx;
+  color: #222222;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+}
+
+.recommendation-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+}
+
+.recommendation-name {
+  flex: 1;
+  margin-left: 18rpx;
+  color: #333333;
+  font-size: 26rpx;
+}
+
+.recommendation-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

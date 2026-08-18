@@ -1,0 +1,67 @@
+<template>
+  <view class="publish-page">
+    <button bindtap="choosePlace">选择位置</button>
+    <button bindtap="openPlace">在地图中打开</button>
+    <button bindtap="choosePhoto">选择图片</button>
+    <text>{{place.name}}</text>
+    <text wx:if="{{unsupportedMessage}}" class="unsupported-message">
+      {{unsupportedMessage}}
+    </text>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    place: {},
+    photos: [],
+    unsupportedMessage: ''
+  },
+  methods: {
+    showWebUnsupported(feature) {
+      this.unsupportedMessage = `${feature}功能暂不可用，请等待 Web 宿主能力接入。`
+    },
+    choosePlace() {
+      if (__mpx_mode__ === 'web') {
+        this.showWebUnsupported('位置选择')
+        return
+      }
+      wx.chooseLocation({
+        success: place => {
+          this.place = place
+        }
+      })
+    },
+    openPlace() {
+      if (__mpx_mode__ === 'web') {
+        this.showWebUnsupported('地图打开')
+        return
+      }
+      wx.openLocation(this.place)
+    },
+    choosePhoto() {
+      if (__mpx_mode__ === 'web') {
+        this.showWebUnsupported('图片选择')
+        return
+      }
+      wx.chooseMedia({
+        count: 3,
+        success: res => {
+          this.photos = res.tempFiles
+        }
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.unsupported-message {
+  display: block;
+  margin-top: 24rpx;
+  color: #999;
+  font-size: 28rpx;
+}
+</style>

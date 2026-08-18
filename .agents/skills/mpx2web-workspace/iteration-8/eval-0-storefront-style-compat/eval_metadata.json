@@ -1,0 +1,62 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "complexity": "normal",
+  "focus": "web-style-isolation/webview-small-font",
+  "business_scenario": "社区电商小程序首页商品瀑布流",
+  "prompt": "请将附件中的商城首页和商品卡组件适配到 Web，同时保持微信小程序现有交互与视觉不退化。Web 输出后，父页面的 title 和 image 规则污染了商品卡；目标业务 WebView 还会把商品卡中设计为 10px 的币种符号与‘起’字放大到约 12px，造成价格基线错位和卡片宽度变化。请输出修改后的完整首页和商品卡文件，不要省略内容，也不要把该 WebView 的小字号现象描述成所有浏览器的统一限制。",
+  "files": [
+    "input/src/pages/home/index.mpx",
+    "input/src/components/product-card.mpx"
+  ],
+  "outputs": [
+    "src/pages/home/index.mpx",
+    "src/components/product-card.mpx"
+  ],
+  "preserves_cases": [
+    "iteration-4/eval-0-small-font",
+    "iteration-4/eval-1-style-isolation"
+  ],
+  "assertions": [
+    {
+      "id": "w0",
+      "text": "商品卡在 Web 使用 scoped 隔离组件样式",
+      "category": "web-style"
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "category": "web-style"
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "category": "cross-platform-regression"
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "category": "cross-platform-regression"
+    },
+    {
+      "id": "w4",
+      "text": "WebView 小字号补偿使用较大基础字号配合 scale，还原视觉字号",
+      "category": "web-style"
+    },
+    {
+      "id": "w5",
+      "text": "WebView 缩放补偿设置 transform-origin 并校正布局占位",
+      "category": "web-style"
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "category": "conditional-compile"
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "category": "business-regression"
+    }
+  ]
+}

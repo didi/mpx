@@ -1,0 +1,25 @@
+<template>
+  <view class="card">
+    <image class="avatar" src="{{avatar}}" mode="aspectFill" />
+    <view class="content">
+      <text class="title">{{name}}</text>
+      <text class="desc">{{description}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({ properties: { avatar: String, name: String, description: String } })
+</script>
+
+<style scoped>
+.avatar { width: 96rpx; height: 96rpx; border-radius: 50%; }
+.content { margin-left: 20rpx; }
+.title { color: #333; font-size: 30rpx; }
+.desc { color: #999; font-size: 24rpx; }
+</style>
+
+<json>
+{ "component": true, "styleIsolation": "isolated" }
+</json>

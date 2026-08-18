@@ -1,0 +1,59 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "商品卡在 Web 使用 scoped 隔离组件样式",
+      "passed": false,
+      "evidence": "product-card.mpx 的 <style> 未声明 scoped；JSON 中仅有 styleIsolation: isolated，未体现 Web scoped 样式。"
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "passed": true,
+      "evidence": "图片声明 class=\"product-cover\"，样式使用 .product-cover 选择器。"
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "passed": true,
+      "evidence": "保留 .home-title、.product-title 和 .product-cover 的独立样式；商品图片保留顶部圆角 border-radius。"
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "passed": true,
+      "evidence": ".currency, .unit 保持 font-size: 10px，Web 条件编译块未覆盖该字号。"
+    },
+    {
+      "id": "w4",
+      "text": "WebView 小字号补偿使用较大基础字号配合 scale，还原视觉字号",
+      "passed": false,
+      "evidence": "未见较大基础字号、transform: scale 或等效缩放补偿。"
+    },
+    {
+      "id": "w5",
+      "text": "WebView 缩放补偿设置 transform-origin 并校正布局占位",
+      "passed": false,
+      "evidence": "未见 transform-origin、缩放 transform 或布局占位校正样式。"
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "passed": false,
+      "evidence": "虽有 @mpx-if (mode === 'web') 的 text-size-adjust 设置，但没有可确认的小字号缩放补偿实现。"
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "passed": true,
+      "evidence": "保留 switchCategory/fetchProducts、openProduct 的 navigateTo，以及 addToCart 的 POST 请求和提示。"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "total": 8
+  }
+}
