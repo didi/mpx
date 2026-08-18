@@ -1,11 +1,7 @@
-import { warn, successHandle, failHandle, isBrowser, throwSSRWarning } from '../../../common/js'
+import { warn, successHandle, failHandle } from '../../../common/js'
 import SocketTask from './SocketTask'
 
 function connectSocket (options = { url: '' }) {
-  if (!isBrowser) {
-    throwSSRWarning('connectSocket API is running in non browser environments')
-    return
-  }
   const { url, protocols, success, fail, complete } = options
 
   try {

@@ -24,7 +24,7 @@ const getNetworkType = function (options = {}) {
     successHandle(result, success, complete)
   }).catch((err) => {
     const result = {
-      errMsg: err.message
+      errMsg: `getNetworkType:fail ${err.message}`
     }
     failHandle(result, fail, complete)
   })
@@ -45,7 +45,11 @@ const onNetworkStatusChange = function (callback) {
 const offNetworkStatusChange = function (callback) {
   if (callback && typeof callback === 'function') {
     _callbacks.delete(callback)
-  } else if (callback === undefined) {
+    if (!_callbacks.size) {
+      _unsubscribe && _unsubscribe()
+      _unsubscribe = null
+    }
+  } else if (callback == null) {
     _callbacks.clear()
     _unsubscribe && _unsubscribe()
     _unsubscribe = null

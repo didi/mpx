@@ -179,7 +179,7 @@ function closeBluetoothAdapter (options = {}) {
     complete(result)
   } catch (error) {
     const result = {
-      errMsg: 'closeBluetoothAdapter:fail ' + error.message
+      errMsg: 'closeBluetoothAdapter:fail ' + (error?.message != null ? error.message : '')
     }
     fail(result)
     complete(result)
@@ -197,7 +197,7 @@ function startBluetoothDevicesDiscovery (options = {}) {
   } = options
 
   if (!bleManagerInitialized) {
-    commonFailHandler('startBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hans\'t been opened or ble is unavailable.')
+    commonFailHandler('startBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hasn\'t been opened or ble is unavailable.')
     return
   }
   DiscoverPeripheralSubscription = BleManager.onDiscoverPeripheral((device) => {
@@ -257,7 +257,7 @@ function stopBluetoothDevicesDiscovery (options = {}) {
   const { success = noop, fail = noop, complete = noop } = options
 
   if (!bleManagerInitialized) {
-    commonFailHandler('stopBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hans\'t been opened or ble is unavailable.')
+    commonFailHandler('stopBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hasn\'t been opened or ble is unavailable.')
     return
   }
   removeBluetoothDevicesDiscovery()
@@ -397,7 +397,7 @@ function getBluetoothDevices (options = {}) { // 该能力只是获取应用级�
   const { success = noop, fail = noop, complete = noop } = options
   if (!bleManagerInitialized) {
     const result = {
-      errMsg: 'getBluetoothDevices:fail ble adapter hans\'t been opened or ble is unavailable.'
+      errMsg: 'getBluetoothDevices:fail ble adapter hasn\'t been opened or ble is unavailable.'
     }
     fail(result)
     complete(result)
@@ -576,15 +576,15 @@ function offBLECharacteristicValueChange () {
 function setBLEMTU (options = {}) {
   const BleManager = require('react-native-ble-manager').default
   const { deviceId, mtu, success = noop, fail = noop, complete = noop } = options
-  if (!deviceId && !mtu) {
+  if (deviceId == null && mtu == null) {
     commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;parameter.mtu should be Number instead of Undefined;')
     return
   }
-  if (!mtu) {
+  if (mtu == null) {
     commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.mtu should be Number instead of Undefined;')
     return
   }
-  if (!deviceId) {
+  if (deviceId == null) {
     commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;')
     return
   }

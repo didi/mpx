@@ -78,7 +78,6 @@ function stopWifi (options = {}) {
     return
   }
   startWifiReady = false
-  wifiListListeners.length = 0
   const result = {
     errMsg: 'stopWifi:ok'
   }
@@ -137,14 +136,15 @@ function getWifiList (options = {}) {
 }
 
 function onGetWifiList (callback) {
-  if (!startWifiReady && wifiListListeners.indexOf(callback) > -1) {
+  if (wifiListListeners.indexOf(callback) > -1) {
     return
   }
   wifiListListeners.push(callback)
 }
 
 function offGetWifiList (callback) {
-  if (!startWifiReady) {
+  if (callback == null) {
+    wifiListListeners.length = 0
     return
   }
   const index = wifiListListeners.indexOf(callback)
