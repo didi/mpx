@@ -2,7 +2,7 @@
 name: mpx2rn-simple
 description: Mpx 跨端输出 RN（简称 Mpx2RN 或 Mpx2DRN）的精简开发适配指南，覆盖模板、脚本、样式、JSON 配置四大维度。当用户进行 Mpx2RN 相关任务时强制调用，包括但不限于：技术方案设计、页面 / 组件的开发迭代、旧项目跨端适配改造、编译和运行时报错排查、Code Review 等。当用户问题不涉及 Mpx2RN 时不应调用，如 Mpx 小程序开发问题，RN 原生开发问题、Mpx2Web 相关问题等。
 metadata:
-  version: "2.12.0"
+  version: "2.12.1"
   author: donghongping
 ---
 
@@ -63,15 +63,11 @@ Mpx 是以微信小程序语法为基础、提供类 Vue 开发体验的跨端�
 ### 样式（style）约束
 
 1. **样式能力判断口径**：样式属性支持情况以 [样式能力参考](./references/rn-style-reference.md) 为准，不要基于 RN 原生样式支持能力判断。Mpx2RN 已抹平支持的简写属性展开、CSS 变量、`calc()`、媒体查询、`rpx` 单位、颜色格式、文本继承等能力可直接使用，无需条件编译或替换写法。
-2. **选择器单类化**：禁止使用复合/伪类/伪元素等 RN 不支持的选择器，必须改造为单类等效实现，并同步修改 `<template>` 与 `<script>`（如 `createSelectorQuery`）中对应的引用。逗号分隔的并列单类选择器可直接使用；UnoCSS 的 `hover:` variant 由编译器转换，不等同于普通 CSS 伪类。常见兼容方案见 [样式开发最佳实践 · 选择器使用建议](./references/rn-style-practice.md#选择器使用建议)。
+2. **选择器单类化**：禁止使用复合/伪类/伪元素等 RN 不支持的选择器，必须改造为单类等效实现，并同步修改 `<template>` 与 `<script>`（如 `createSelectorQuery`）中对应的引用。逗号分隔的并列单类选择器可直接使用。常见兼容方案见 [样式开发最佳实践 · 选择器使用建议](./references/rn-style-practice.md#选择器使用建议)。
 3. **优先使用模板指令进行动态样式绑定**：使用 `wx:class` / `wx:style`，避免在 `class` / `style` 属性值中拼接 `{{}}`。
-4. **优先使用跨端兼容方案**：按照 [样式开发最佳实践](./references/rn-style-practice.md) 改造不兼容写法，并同步模板与脚本：
-   - **等效替换**：
-     - 复合选择器拆为单类；子元素伪类改为 `wx:class` + 状态判断；
-     - `::before` / `::after` 改为真实节点；`:active` 改为组件 `hover-class` / `hover-stay-time`；
-     - `rem` / `em` 改为 `rpx`；数值 `font-weight` 优先改为 `normal` / `bold`；
-     - `grid` / `float` 改为 Flex；隐藏元素避免依赖 `display: none`，改用尺寸归零与 `overflow: hidden`。
-   - **双轨保留**：文本溢出和 1rpx 极细线等无法共用同一写法的场景，原平台保留原样式，RN 侧分别使用 `numberOfLines@ios|android|harmony`、`hairlineWidth` 等效实现，双方均通过条件编译限定平台。
+4. **优先使用跨端兼容方案**：常见样式属性的跨端兼容方案见 [样式开发最佳实践](./references/rn-style-practice.md)。根据等效写法的适用平台选择处理方式：
+   - **等效替换**：替换后的写法在原平台与 RN 平台均生效时，直接全平台使用。例如将复合选择器改为等效单类选择器、将伪元素改为真实节点、将 `grid` / `float` 改为 Flex 布局。
+   - **双轨保留**：RN 侧等效写法无法在原平台生效时，通过条件编译保留原平台原写法，并新增 RN 侧实现，禁止只保留 RN 一侧。例如文本溢出在原平台保留原样式、RN 侧使用 `numberOfLines@ios|android|harmony`；1rpx 极细线在原平台保留 `1rpx` 边框、RN 侧使用 `hairlineWidth`。
 5. **保留单位注释**：保留原始样式中的 `/*use rpx*/` 与 `/*use px*/` 注释，编译期会据此批量切换样式单位。
 6. **原子 CSS**：项目启用 UnoCSS 或模板使用原子类时，读取 [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md)。只使用 RN preset 与 Mpx2RN 样式编译器共同支持的工具类和 variants；不支持项会作为编译错误且不会进入产物。颜色透明度统一使用 `bg-red-500/50` 等斜杠 alpha 语法，不要使用 `bg-red-500 bg-opacity-50` 等独立 opacity 组合。
 7. **垂直 margin 折叠**：RN 不会像小程序 / Web 普通块级布局那样折叠垂直 margin。先按 [样式开发最佳实践 · 处理垂直 margin 折叠](./references/rn-style-practice.md#处理垂直-margin-折叠) 判断；只有确认原平台会折叠且同一间距由两侧共同表达时，才将有效间距归到一侧并移除或归零另一侧，其余情况保持原样。
@@ -91,7 +87,7 @@ Mpx 是以微信小程序语法为基础、提供类 Vue 开发体验的跨端�
 需遵循以下约束：
 
 1. **最小化使用**：条件编译是处理跨端不兼容的**最后手段**，不是首选方案。使用条件编译之前，应先确认是否存在无需条件编译的跨端兼容写法（参见[样式开发最佳实践](./references/rn-style-practice.md)与各能力参考）。需要用条件编译时，仅最小包裹真正不兼容的片段，不要整段代码都用条件编译分叉。
-2. **避免空选择器**：样式条件编译产物中不得留下空选择器（无样式内容的选择器），整条规则（含选择器与花括号内容）须一并被条件编译包裹。详见 [条件编译 · 避免产物中出现空选择器](./references/conditional-compile.md#避免产物中出现空选择器)。
+2. **避免空选择器**：样式条件编译应优先仅包裹真正不兼容的属性；仅当规则中的所有属性均被条件编译包裹，导致某些平台产物可能留下空选择器（无样式内容的选择器）时，才将整条规则（含选择器与花括号内容）一并纳入条件编译。详见 [条件编译 · 避免产物中出现空选择器](./references/conditional-compile.md#避免产物中出现空选择器)。
 3. **保持预处理器缩进**：在 stylus / sass 等缩进敏感预处理器中，条件编译注释须与所在块体同级缩进，否则占位注释可能截断块上下文并触发解析错误。
 4. **各区块使用对应的条件编译语法**：样式条件编译使用 `/* @mpx-if (__mpx_mode__ === ... ) */` 注释语法；模板条件编译使用 `wx:if="{{__mpx_mode__ === ...}}"` 指令或 `@mode` 属性后缀；脚本和 JSON 配置条件编译使用 `if (__mpx_mode__ === ...)` 条件语句，**避免误用**。`@_mode` 仅作为与 `@mode` 行为一致的历史兼容语法，新增代码不要使用，详情参考 [条件编译](./references/conditional-compile.md)。
 

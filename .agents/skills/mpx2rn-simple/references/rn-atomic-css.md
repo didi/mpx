@@ -134,20 +134,25 @@ export default defineConfig({
 - 屏幕断点：`sm:`、`md:`、`lg:`、`xl:`、`2xl:`，以及 `<sm:`、`@sm:` 等对应形式。
 - 主题：`dark:`、`light:`。
 - 方向：`portrait:`、`landscape:`。
-- 交互：仅 `hover:`，并且只应使用在支持 `hover-class` / hover style 的 Mpx 内建组件上。
 - important：`!utility` / `important:`；仅在普通原子类无法满足覆盖需求时使用。
 
 ### 不支持
 
 不要使用会生成复合选择器、父子关系或 RN 无法表达状态的 variants，例如：
 
-- `active:`、`focus:`、`visited:` 等非 hover 伪类
+- `hover:`、`active:`、`focus:`、`visited:` 等交互伪类 variant
 - child / sibling / combinator variants
 - aria / data attribute variants
 - container query、supports、scope、CSS layer variants
 - placeholder、motion、contrast、space/divide 等 variants
 
-使用这些 variant 会直接产生编译错误，不会降级为普通工具类。
+这些交互伪类 variant 当前可能会生成带伪类的选择器并进入编译产物，但模板中的原子类无法匹配带伪类的样式键，运行时不会生效，也可能不会产生编译错误。其中 `hover:` 不会自动转换为组件 `hover-style`。需要按下态时，使用 Mpx 内建组件的 `hover-class` 指向普通原子类：
+
+```html
+<view class="bg-white" hover-class="bg-blue-500/10"></view>
+```
+
+被 RN preset blocklist 命中的其他不支持 variant 会产生编译错误，不会降级为普通工具类。
 
 ## 颜色透明度约束
 
@@ -236,13 +241,13 @@ module.exports = defineConfig({
 分组写法示例：
 
 ```html
-<view class="md:(p-2 m-2) hover:(bg-blue-500 text-white)"></view>
+<view class="md:(p-2 m-2) dark:(bg-slate-900 text-white)"></view>
 ```
 
 等价于：
 
 ```html
-<view class="md:p-2 md:m-2 hover:bg-blue-500 hover:text-white"></view>
+<view class="md:p-2 md:m-2 dark:bg-slate-900 dark:text-white"></view>
 ```
 
 默认支持 `:` 与 `-` 两种分隔符，例如 `font-(bold sans)` 等价于 `font-bold font-sans`。分组只是书写简化，不会扩大 RN 能力；其中的每个 utility 与 variant 都必须处于本文档标注的支持范围内。
@@ -270,7 +275,7 @@ module.exports = defineConfig({
 自定义 UnoCSS rule 还需满足：
 
 - 只生成 Mpx2RN 支持的 CSS 属性和值。
-- 选择器最终为单类选择器；仅受支持的 `hover` 可形成单类 + pseudo。
+- 选择器最终为单类选择器，不包含伪类或伪元素。
 - at-rule 仅使用 Mpx2RN 可转换的 `@media`。
 - 不生成依赖 DOM 层级、伪元素或 Web 布局模型的 CSS。
 
@@ -296,7 +301,7 @@ module.exports = defineConfig({
 - [ ] variant group 展开后的所有 utility 与 variant 均在 RN 支持范围内。
 - [ ] directives 中只使用 RN 支持的 utility、属性、值、选择器和媒体查询。
 - [ ] 所有工具类及其底层 CSS 均在 RN 支持范围内。
-- [ ] 仅使用 RN 支持的 variants；交互 variant 仅使用 `hover:`。
+- [ ] 仅使用 RN 支持的 variants，未使用 `hover:`、`active:`、`focus:` 等交互伪类 variant；按下态使用 `hover-class` 指向普通原子类。
 - [ ] 颜色透明度使用 `color/alpha`，未使用独立 `*-opacity-*` 组合。
 - [ ] filter 已按目标 RN 版本与设备验证。
 - [ ] 构建中不存在 `[Mpx Unocss]`、`[Mpx style error]` 或相关 warning。

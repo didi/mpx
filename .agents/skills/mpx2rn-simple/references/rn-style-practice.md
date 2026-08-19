@@ -15,6 +15,7 @@
   - [谨慎使用 font-weight 数值](#谨慎使用-font-weight-数值)
 - [布局最佳实践](#布局最佳实践)
   - [使用 Flexbox 布局](#使用-flexbox-布局)
+  - [position: sticky 替代方案](#position-sticky-替代方案)
   - [嵌套 fixed 定位](#嵌套-fixed-定位)
   - [处理垂直 margin 折叠](#处理垂直-margin-折叠)
   - [避免使用 Grid 布局](#避免使用-grid-布局)
@@ -757,6 +758,68 @@ Flexbox 是跨平台最可靠的布局方式。
   </view>
 </template>
 ```
+
+### position: sticky 替代方案
+
+Mpx2RN 不支持 `position: sticky`。不要直接使用 `position: fixed` 替代：`fixed` 相对页面固定且不占据原布局空间，无法实现 `sticky` 滚动到阈值后吸顶并受滚动容器边界约束的行为。
+
+需要在滚动容器内实现吸顶时，使用 [`scroll-view`](./rn-template-reference.md#scroll-view) + [`sticky-header`](./rn-template-reference.md#sticky-header) 组件替代。`sticky-header` 必须是 `scroll-view` 的直接子节点，或作为 `sticky-section` 的直接子节点；RN 环境还必须在 `scroll-view` 上显式开启 `enable-sticky`。该属性是 RN 环境特有能力，应使用属性后缀将其限定在 RN 平台。
+
+**❌ 避免：**RN 不支持通过 `position: sticky` 实现吸顶。
+
+```html
+<template>
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="summary">概览内容</view>
+    <view class="filter-bar">筛选条件</view>
+    <view class="list">列表内容</view>
+  </scroll-view>
+</template>
+
+<style>
+  .page-scroll {
+    flex: 1;
+  }
+
+  .filter-bar {
+    position: sticky;
+    top: 0;
+  }
+</style>
+```
+
+**✅ 推荐：**用 `sticky-header` 表达吸顶节点，并为 RN 侧开启 sticky 能力。
+
+```html
+<template>
+  <scroll-view
+    class="page-scroll"
+    scroll-y
+    enable-sticky@ios|android|harmony="{{true}}"
+  >
+    <view class="summary">概览内容</view>
+    <sticky-header offset-top="{{0}}">
+      <view class="filter-bar">筛选条件</view>
+    </sticky-header>
+    <view class="list">列表内容</view>
+  </scroll-view>
+</template>
+
+<style>
+  .page-scroll {
+    flex: 1;
+  }
+
+  .filter-bar {
+    background-color: #fff;
+  }
+</style>
+```
+
+存在多组吸顶区域时，可将 [`sticky-section`](./rn-template-reference.md#sticky-section) 作为 `scroll-view` 的直接子节点，再把 `sticky-header` 放在对应的 `sticky-section` 内。需要注意：
+
+1. `sticky-header` / `sticky-section` 目前仅支持 RN、Web 和微信小程序 Skyline；还需输出其他平台时，应通过条件编译保留该平台原有的吸顶实现。
+2. RN Android 下更适合内容稳定、状态不频繁更新的吸顶区域；吸顶动画过程中立即更新状态、滚动内容高度突变，或通过 `scroll-into-view` / `scroll-top` 主动改变滚动位置时，可能出现闪烁或抖动。
 
 ### 嵌套 fixed 定位
 

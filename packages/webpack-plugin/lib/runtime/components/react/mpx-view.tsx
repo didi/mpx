@@ -951,7 +951,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 
-  if (enableHover) {
+  if (gesture) {
     finalComponent = createElement(GestureDetector, { gesture: gesture as PanGesture }, finalComponent)
   }
 

@@ -1,0 +1,174 @@
+<template>
+  <view class="rating-selector">
+    <text class="rating-label">{{ label }}</text>
+
+    <view class="rating-stars">
+      <view
+        wx:for="{{ starItems }}"
+        wx:key="*this"
+        class="rating-star"
+        hover-class="{{ starHoverClass }}"
+        hover-start-time="{{ 0 }}"
+        hover-stay-time="{{ 100 }}"
+        bindtap="handleSelect(item)"
+      >
+        <text
+          class="rating-star-text"
+          wx:class="{{ { 'rating-star-selected': item <= currentRating } }}"
+        >★</text>
+      </view>
+    </view>
+
+    <text class="rating-score">{{ scoreText }}</text>
+
+    <view class="rating-tip">
+      <component
+        is="{{ tipComponent }}"
+        range="rating-editable-tip,rating-readonly-tip"
+      />
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  props: {
+    ratingKey: {
+      type: String,
+      value: ''
+    },
+    value: {
+      type: Number,
+      value: 0
+    },
+    max: {
+      type: Number,
+      value: 5
+    },
+    readonly: {
+      type: Boolean,
+      value: false
+    },
+    label: {
+      type: String,
+      value: '请评分'
+    }
+  },
+
+  data: {
+    currentRating: 0
+  },
+
+  computed: {
+    normalizedMax () {
+      return Math.max(0, Math.floor(this.max))
+    },
+    starItems () {
+      return Array.from({ length: this.normalizedMax }, (_, index) => index + 1)
+    },
+    scoreText () {
+      return `${this.currentRating} / ${this.normalizedMax}`
+    },
+    starHoverClass () {
+      return this.readonly ? 'none' : 'rating-star-pressed'
+    },
+    tipComponent () {
+      return this.readonly ? 'rating-readonly-tip' : 'rating-editable-tip'
+    }
+  },
+
+  watch: {
+    value: {
+      immediate: true,
+      handler (value) {
+        this.syncRating(value)
+      }
+    },
+    max () {
+      this.syncRating(this.value)
+    }
+  },
+
+  methods: {
+    syncRating (value) {
+      this.currentRating = Math.min(this.normalizedMax, Math.max(0, value))
+    },
+    handleSelect (rating) {
+      if (this.readonly) return
+
+      this.currentRating = rating
+      this.triggerEvent('change', {
+        ratingKey: this.ratingKey,
+        value: rating
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.rating-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx;
+  border-radius: 20rpx;
+  background-color: #ffffff;
+}
+
+.rating-label {
+  color: #2c2c2c;
+  font-size: 32rpx;
+  font-weight: bold;
+  line-height: 44rpx;
+}
+
+.rating-stars {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 24rpx;
+}
+
+.rating-star {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+}
+
+.rating-star-text {
+  color: #c8c8c8;
+  font-size: 56rpx;
+  line-height: 72rpx;
+}
+
+.rating-star-selected {
+  color: #ffb400;
+}
+
+.rating-star-pressed {
+  background-color: #fff3cc;
+  opacity: 0.65;
+  transform: scale(0.9);
+}
+
+.rating-score {
+  margin-top: 20rpx;
+  color: #666666;
+  font-size: 28rpx;
+  line-height: 40rpx;
+}
+
+.rating-tip {
+  margin-top: 16rpx;
+}
+</style>

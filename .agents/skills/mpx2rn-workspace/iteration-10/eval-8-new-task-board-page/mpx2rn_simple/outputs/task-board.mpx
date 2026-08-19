@@ -1,0 +1,128 @@
+<template>
+  <view class="flex h-full flex-col bg-slate-50">
+    <view class="shrink-0 px-6 pb-5 pt-6">
+      <text class="text-3xl font-bold text-slate-900">任务看板</text>
+      <text class="mt-2 text-sm text-slate-500">当前显示 {{ filteredTasks.length }} 项任务</text>
+
+      <view class="mt-5 flex gap-3">
+        <view
+          wx:for="{{ filterOptions }}"
+          wx:for-item="filterItem"
+          wx:key="category"
+          class="rounded-full border px-5 py-2"
+          wx:class="{{ [currentCategory === filterItem.category ? 'border-blue-500 bg-blue-500/20' : 'border-slate-200 bg-white'] }}"
+          hover-class="opacity-80"
+          hover-start-time="{{ 0 }}"
+          hover-stay-time="{{ 80 }}"
+          bindtap="setCategory(filterItem.category)"
+        >
+          <text
+            class="text-sm font-bold"
+            wx:class="{{ [currentCategory === filterItem.category ? 'text-blue-700' : 'text-slate-600'] }}"
+          >{{ filterItem.label }}</text>
+        </view>
+      </view>
+    </view>
+
+    <scroll-view class="min-h-0 flex-1" scroll-y>
+      <view class="px-6 pb-8">
+        <view
+          wx:for="{{ filteredTasks }}"
+          wx:for-item="taskItem"
+          wx:key="taskKey"
+          class="mb-4 flex items-center rounded-2xl border p-5 shadow-sm"
+          wx:class="{{ [taskItem.completed ? 'border-emerald-200 bg-emerald-500/10' : 'border-slate-200 bg-white'] }}"
+          hover-class="opacity-80"
+          hover-start-time="{{ 0 }}"
+          hover-stay-time="{{ 80 }}"
+          bindtap="toggleTask(taskItem.taskKey)"
+        >
+          <view
+            class="mr-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2"
+            wx:class="{{ [taskItem.completed ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300 bg-white'] }}"
+          >
+            <text wx:if="{{ taskItem.completed }}" class="text-sm font-bold text-white">✓</text>
+          </view>
+
+          <view class="min-w-0 flex-1">
+            <text
+              class="text-base font-bold"
+              wx:class="{{ [taskItem.completed ? 'line-through text-slate-400' : 'text-slate-800'] }}"
+            >{{ taskItem.title }}</text>
+            <view class="mt-2 flex items-center justify-between">
+              <text class="text-xs text-slate-500">{{ taskItem.category === 'work' ? '工作' : '生活' }}</text>
+              <text
+                class="text-xs font-bold"
+                wx:class="{{ [taskItem.completed ? 'text-emerald-600' : 'text-amber-600'] }}"
+              >{{ taskItem.completed ? '已完成' : '待完成' }}</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{ filteredTasks.length === 0 }}" class="flex items-center justify-center rounded-2xl bg-white px-6 py-16">
+          <text class="text-base text-slate-400">当前分类暂无任务</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script setup>
+import { ref, computed, onLoad } from '@mpxjs/core'
+
+const ALL_CATEGORY = 'all'
+const filterOptions = [
+  { category: ALL_CATEGORY, label: '全部' },
+  { category: 'work', label: '工作' },
+  { category: 'life', label: '生活' }
+]
+
+const currentCategory = ref(ALL_CATEGORY)
+const tasks = ref([
+  { taskKey: 'prepare-weekly-report', title: '整理本周工作周报', category: 'work', completed: false },
+  { taskKey: 'review-project-plan', title: '复盘项目迭代计划', category: 'work', completed: true },
+  { taskKey: 'book-dentist', title: '预约周末牙科检查', category: 'life', completed: false },
+  { taskKey: 'buy-groceries', title: '购买晚餐所需食材', category: 'life', completed: false }
+])
+
+const filteredTasks = computed(() => {
+  if (currentCategory.value === ALL_CATEGORY) return tasks.value
+  return tasks.value.filter((taskItem) => taskItem.category === currentCategory.value)
+})
+
+function isValidCategory (category) {
+  return category === ALL_CATEGORY || category === 'work' || category === 'life'
+}
+
+function setCategory (category) {
+  currentCategory.value = isValidCategory(category) ? category : ALL_CATEGORY
+}
+
+function toggleTask (taskKey) {
+  tasks.value.forEach((taskItem) => {
+    if (taskItem.taskKey === taskKey) taskItem.completed = !taskItem.completed
+  })
+}
+
+onLoad((rawQuery, decodedQuery) => {
+  const category = decodedQuery && decodedQuery.category !== undefined
+    ? decodedQuery.category
+    : rawQuery && rawQuery.category
+  setCategory(category)
+})
+
+defineExpose({
+  filterOptions,
+  currentCategory,
+  filteredTasks,
+  setCategory,
+  toggleTask
+})
+</script>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "任务看板",
+  "disableScroll": true
+}
+</script>

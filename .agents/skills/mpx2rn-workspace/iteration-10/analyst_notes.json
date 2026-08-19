@@ -1,0 +1,9 @@
+[
+  "本次仅重跑 eval-6/7/8；eval-0～5 沿用 iteration-10 原结果。恢复 hover-class 点击态口径后的整体断言加权通过率为 mpx2rn 105/110=95.45%、mpx2rn_simple 104/110=94.55%、no_skill 67/110=60.91%。",
+  "eval-6 与 eval-7 中两版 Skill 均满分；no_skill 分别为 12/16 与 9/15，主要缺失选项式/组合式 API 结构约束、事件内联传参和 wx:class 动态类规范。",
+  "eval-8 现已具备区分度：mpx2rn_simple 15/15，mpx2rn 14/15，no_skill 7/15。",
+  "评分器先移除 style 内容中的注释和空白再判断是否为空；筛选项和任务卡片必须使用 hover-class，hover:/active:/focus:/visited: 均视为 RN 不支持，因此完整版仅失败 a12。",
+  "no_skill eval-8 失败 8 条，覆盖 script setup/defineExpose、onLoad decodedQuery、交互与空状态、内联事件传参、动态原子类、RN 支持的 utility 和页面 JSON 配置。",
+  "eval-0～5 的既有共同失败仍为 g3、g4、l1、c1；本次未重跑这些用例，不能据此判断新的随机波动。",
+  "每个配置每个 eval 仅执行 1 次，不能估计模型随机性；自动评分主要为静态文本与有限语义检查，不能替代真实编译和运行验证。"
+]
