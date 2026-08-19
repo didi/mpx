@@ -96,7 +96,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
    - **Bad Example**: `.list .item { color: red; }`
    - **Good Example**: `.list-item { color: red; }`
    - **注意**：用逗号分隔的并列形式（如 `.classA, .classB { ... }`）等价于多条单类选择器规则共享同一样式块，仍属于**单类选择器**范畴，无需拆分或合并为新单类，可直接使用。
-   - **UnoCSS 例外**：原子类的 `hover:` variant 由编译器转换为组件 hover style，不等同于在 `<style>` 中编写 `.button:hover`；普通 CSS 伪类仍不支持。
+   - **原子 CSS 同规则**：UnoCSS 等原子类产物与手写 CSS 使用相同的选择器限制；`hover:` 等最终生成 pseudo selector 的 variant 会触发编译错误且不会进入产物，不存在来源例外。点击态使用组件 `hover-class` 配合独立单类样式。
 3. **优先使用模板指令进行动态样式绑定**：使用 `wx:class` / `wx:style` 指令，避免在 `class` / `style` 属性内拼接 `{{}}` 插值表达式。
    - **Bad Example**: `<view class="item {{isActive ? 'active' : ''}}">`
    - **Good Example**: `<view class="item" wx:class="{{ {active: isActive} }}">`
