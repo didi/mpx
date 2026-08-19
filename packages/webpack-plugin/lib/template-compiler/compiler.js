@@ -1175,11 +1175,14 @@ function processStyleReact (el, options) {
   if (specialClassReg.test(el.tag)) {
     const staticClassNames = ['hover', 'indicator', 'mask', 'placeholder']
     staticClassNames.forEach((className) => {
-      let staticClass = el.attrsMap[className + '-class'] || ''
+      const classAttrName = className + '-class'
+      let staticClass = className === 'hover'
+        ? el.attrsMap[classAttrName] || ''
+        : getAndRemoveAttr(el, classAttrName).val || ''
       let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
       staticClass = staticClass.replace(/\s+/g, ' ')
       staticStyle = staticStyle.replace(/\s+/g, ' ')
-      if ((staticClass && staticClass !== 'none') || staticStyle) {
+      if (staticClass || staticStyle) {
         const staticClassExp = parseMustacheWithContext(staticClass).result
         const staticStyleExp = parseMustacheWithContext(staticStyle).result
         addAttrs(el, [{
@@ -1888,9 +1891,9 @@ function processFor (el) {
       if (val = getAndRemoveAttr(el, config[mode].directive.forItem).val) {
         el.for.item = val
       }
-      if (val = getAndRemoveAttr(el, config[mode].directive.key).val) {
-        el.for.key = val
-      }
+    }
+    if (val = getAndRemoveAttr(el, config[mode].directive.key).val) {
+      el.for.key = val
     }
     pushForScopes({
       index: el.for.index || 'index',

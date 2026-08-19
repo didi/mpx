@@ -7,6 +7,9 @@
   - [子元素伪类替代方案 (:first-child / :last-child / :nth-child)](#子元素伪类替代方案-first-child--last-child--nth-child)
   - [伪元素选择器替代方案 (::before / ::after)](#伪元素选择器替代方案-before--after)
   - [点击态处理 (:active)](#点击态处理-active)
+- [按需样式能力预声明](#按需样式能力预声明)
+  - [用户写法与预声明条件](#用户写法与预声明条件)
+  - [什么时候需要声明 enable 属性](#什么时候需要声明-enable-属性)
 - [样式单位使用建议](#样式单位使用建议)
   - [优先使用 px 和 rpx 单位](#优先使用-px-和-rpx-单位)
   - [使用百分比](#使用百分比)
@@ -377,7 +380,7 @@ RN 平台不支持 `::before` 和 `::after` 伪元素选择器。对于需要在
 
 RN 平台不支持 `:active` 伪类选择器，如需实现点击态样式，可以使用 `hover-class` 组件属性进行跨端兼容实现。
 
-**支持组件：** `view`、`button`、`navigator`
+**支持组件：** `view`、`button`、`navigator`、`cover-view`
 
 **❌ 避免：**
 
@@ -413,6 +416,48 @@ RN 平台不支持 `:active` 伪类选择器，如需实现点击态样式，可
     background-color: #f5f5f5;
   }
 </style>
+```
+
+---
+
+## 按需样式能力预声明
+
+Mpx2RN 的内建 `view` 出于性能考虑，会在首次渲染时检测 CSS 变量、文本样式透传、背景、Hover 和动画等增强能力，并只调用已启用能力所需的 React Hooks。同一组件实例后续可以更新普通样式值，但不能动态改变这些能力的启用状态或动画类型，否则会因 Hook 调用需要保持稳定而触发运行时报错。
+
+### 用户写法与预声明条件
+
+| 能力 | 会启用能力的用户写法 | 动态变更预声明 |
+| --- | --- | --- |
+| Hover | 存在 `hover-class` | 没有预声明属性，需保证整个生命周期内 `hover-class` 的存在状态稳定，条件分支复用场景使用独立 `key` 重新创建节点 |
+| CSS 变量 | 样式中声明普通 `--*` 变量或使用普通 `var(...)`；`--un-*` / `var(--un-*)` 不计入 | CSS 变量声明或使用可能发生动态变更时，添加 `enable-var="{{true}}"` |
+| 文本样式与文本属性透传 | 使用 `color`、`letter-spacing`、`line-height`、`include-font-padding`、`writing-direction`、`font-*`、`text-*` 样式，或 `ellipsizeMode`、`numberOfLines` 属性 | 上述文本样式或属性可能发生动态变更时，添加 `enable-text-pass-through="{{true}}"` |
+| 背景增强 | 使用 `background-image`、`background-size`、`background-repeat`、`background-position` 或包含这些属性的 `background` 简写；仅使用 `background-color` 不计入 | 上述背景样式可能发生动态变更时，添加 `enable-background="{{true}}"` |
+| 动画 | 使用模板 `animation` 属性或 `transition` 样式；CSS `animation` 当前不支持 | 对应写法可能发生动态变更时，API 动画添加 `enable-animation="api"`，transition 添加 `enable-animation="transition"`；同一节点不要切换类型 |
+
+仅普通属性值或样式值发生变化、能力类型始终存在时无需预声明。`enable-fast-image`、`background-color` 和普通布局样式不属于上述预声明条件。
+
+### 什么时候需要声明 enable 属性
+
+存在以下两种动态变更场景时，需要预声明或避免节点复用：
+
+1. **节点自身动态定义相关样式或属性**：当相关能力可能发生动态变更时，添加对应的 `enable-*`。
+
+```html
+<!-- dynamicStyle 初始为空，后续可能加入 background-image -->
+<view enable-background@ios|android|harmony="{{true}}" wx:style="{{dynamicStyle}}"></view>
+```
+
+2. **条件分支节点复用**：相邻条件分支的根节点标签相同且没有独立 `key` 时，分支切换可能复用同一节点。此时可以按各分支的能力并集预声明，更推荐为不同分支声明不同的 `key`，确保切换时不产生复用。
+
+```html
+<view
+  wx:if="{{hasCompleted}}"
+  key@ios|android|harmony="completed"
+  hover-class="control-pressed"
+>
+  <text>Clear completed</text>
+</view>
+<view wx:else key@ios|android|harmony="placeholder"></view>
 ```
 
 ---

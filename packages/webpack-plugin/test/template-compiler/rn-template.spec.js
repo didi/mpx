@@ -166,6 +166,29 @@ describe('RN template support', () => {
     expect(compileReactTemplate('<view id=""></view>')).toContain('id: ""')
   })
 
+  it('should preserve hover-class and remove other special classes after converting them to styles', () => {
+    const output = compileReactTemplate(`
+      <view hover-class="view-hover"></view>
+      <view hover-class="none"></view>
+      <button hover-class="button-hover"></button>
+      <picker-view indicator-class="indicator" mask-class="mask"></picker-view>
+      <input placeholder-class="placeholder" />
+    `)
+
+    expect(output).toContain('"hover-class": "view-hover"')
+    expect(output).toContain('"hover-style": (this.__getStyle("view-hover", null, ""))')
+    expect(output).toContain('"hover-class": "none"')
+    expect(output).toContain('"hover-style": (this.__getStyle("none", null, ""))')
+    expect(output).toContain('"hover-class": "button-hover"')
+    expect(output).toContain('"hover-style": (this.__getStyle("button-hover", null, ""))')
+    expect(output).not.toContain('"indicator-class"')
+    expect(output).toContain('"indicator-style": (this.__getStyle("indicator", null, ""))')
+    expect(output).not.toContain('"mask-class"')
+    expect(output).toContain('"mask-style": (this.__getStyle("mask", null, ""))')
+    expect(output).not.toContain('"placeholder-class"')
+    expect(output).toContain('"placeholder-style": (this.__getStyle("placeholder", null, ""))')
+  })
+
   it('should pass no-value attrs as boolean true to custom components', () => {
     const output = compileReactTemplate('<custom-comp enabled></custom-comp>', {
       usingComponentsInfo: {

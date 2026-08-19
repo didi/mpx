@@ -24,6 +24,7 @@ export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   animation?: AnimationProp
   children?: ReactNode | ReactNode[]
+  'hover-class'?: string
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
   'hover-stay-time'?: number
@@ -825,6 +826,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
   let {
     style = {},
+    'hover-class': hoverClass,
     'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
@@ -840,7 +842,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     bindtransitionend
   } = props
 
-  const enableHover = !!hoverStyle
+  const enableHover = hoverClass !== 'none' && !!hoverStyle
   const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
   const styleObj: ExtendedViewStyle = isHover

@@ -92,10 +92,13 @@ function getClassMap ({ styles, filename, inputFileSystem, mode, srcMode, ctorTy
       testKey: 'prop'
     }, platformOptions))
 
-    // 目前所有 AtRule 只支持 @media，其他全部给出错误提示
+    // 目前所有 AtRule 只支持 @media，其他全部给出 warning
     root.walkAtRules(rule => {
       if (rule.name !== 'media') {
-        reporter.warn(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`, {
+        const message = rule.name === 'font-face'
+          ? 'React Native output does not support @font-face. To use custom fonts, install them in the React Native host environment.'
+          : `Only @media rule is supported in react native mode temporarily, but got @${rule.name}`
+        reporter.warn(message, {
           node: rule,
           target: {
             kind: 'css-atrule',

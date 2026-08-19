@@ -137,6 +137,7 @@ Mpx 跨端输出 RN 时，支持以下模板指令。
 | wx:for | ✅ | 列表渲染 | `<view wx:for="{{list}}">...</view>` |
 | wx:for-item | ✅ | 指定循环项变量名 | `<view wx:for="{{list}}" wx:for-item="item">...</view>` |
 | wx:for-index | ✅ | 指定循环索引变量名 | `<view wx:for="{{list}}" wx:for-index="idx">...</view>` |
+| wx:key | ✅ | 指定列表项的唯一标识 | `<view wx:for="{{list}}" wx:key="id">...</view>` |
 | wx:class | ✅ | 动态类名绑定 | `<view wx:class="{{ {active: isActive} }}">...</view>` |
 | wx:style | ✅ | 动态样式绑定 | `<view wx:style="{{ {color: colorVar} }}">...</view>` |
 | wx:model | ✅ | 双向数据绑定 | `<input wx:model="{{value}}" />` |
@@ -145,6 +146,13 @@ Mpx 跨端输出 RN 时，支持以下模板指令。
 | wx:model-value-path | ✅ | 定义了双向绑定时从 `e.detail` 中获取更新值的访问路径，默认值为 `value`，即通过 `e.detail.value` 获取更新值，如通过 `e.detail` 直接作为更新值，可以设置 `wx:model-value-path="[]"` | `<custom-input wx:model="{{value}}" wx:model-value-path="[]" />` |
 | wx:model-filter | ✅ | 双向绑定过滤器，可绑定内建（如 trim）或组件实例方法，在双向绑定时对更新值进行过滤和修饰 | `<input wx:model="{{value}}" wx:model-filter="trim" />` |
 | wx:ref | ✅ | 获取基础组件节点或自定义组件实例 | `<view wx:ref="myView">...</view>` |
+
+**注意事项**
+
+- `wx:key` 需与 `wx:for` 配合使用，属性值不能使用 Mustache 数据绑定。传入普通字符串（如 `wx:key="id"`）时，会读取列表项的同名属性；传入保留关键字 `*this` 且列表项为基本类型时，会使用列表项本身；传入 `index` 或 `_` 时，会使用列表索引。如果解析出的 key 是对象类型，RN 平台会退化为使用列表索引。
+- RN 平台会将 `wx:key` 转换为 React 的 `key`。同一父节点下的列表项 key 必须唯一且稳定，重复或随渲染变化的 key 可能导致组件状态复用错误或渲染异常。
+- 对于可能插入、删除或重排的动态列表，应优先使用稳定的业务唯一标识，避免使用 `index`、`_`，以及对象列表中的 `*this` 或对象类型属性值；仅在列表顺序固定时使用索引作为 key。使用 `*this` 处理基本类型列表时，需确保列表项本身不存在重复值。
+- RN 平台下，同标签的 `wx:if` / `wx:elif` / `wx:else` 分支可能被 React 复用；当分支使用的按需样式能力不一致时，需通过预声明 `enable-*` 或添加独立 `key` 保证生命周期稳定。详见[样式开发最佳实践 · 按需样式能力预声明](./rn-style-practice.md#按需样式能力预声明)。
 
 ---
 
@@ -694,7 +702,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| hover-class | string |  | 指定按下去的样式类。 |
+| hover-class | string |  | 指定按下去的样式类。当 `hover-class="none"` 时，没有点击态效果。 |
 | hover-start-time | number | `50` | 按住后多久出现点击态，单位毫秒 |
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 | animation | object |  | 传递动画的实例， 可配合 mpx.createAnimation 方法一起使用 |
@@ -1285,7 +1293,7 @@ level 有效值：
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| hover-class | string | `false` | 指定按下去的样式类。 |
+| hover-class | string | `false` | 指定按下去的样式类。当 `hover-class="none"` 时，没有点击态效果。 |
 | hover-start-time | number | `50` | 按住后多久出现点击态，单位毫秒 |
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 | open-type | string | `navigate` | 可支持`navigateBack`、`redirect`、`switchTab`、`reLaunch`、`navigateTo` |
