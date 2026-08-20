@@ -5,7 +5,6 @@ const normalize = require('../utils/normalize')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
 const { getWxTemplateComponentName, serializeWxTemplateDefinition, buildWebTemplateImportMergeExpr } = require('./template-shared')
-
 const titleBarPath = normalize.lib('runtime/components/web/mpx-titlebar.vue')
 
 module.exports = function (template, {
