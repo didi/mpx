@@ -134,20 +134,19 @@ export default defineConfig({
 - 屏幕断点：`sm:`、`md:`、`lg:`、`xl:`、`2xl:`，以及 `<sm:`、`@sm:` 等对应形式。
 - 主题：`dark:`、`light:`。
 - 方向：`portrait:`、`landscape:`。
-- 交互：仅 `hover:`，并且只应使用在支持 `hover-class` / hover style 的 Mpx 内建组件上。
 - important：`!utility` / `important:`；仅在普通原子类无法满足覆盖需求时使用。
 
 ### 不支持
 
 不要使用会生成复合选择器、父子关系或 RN 无法表达状态的 variants，例如：
 
-- `active:`、`focus:`、`visited:` 等非 hover 伪类
+- `hover:`、`active:`、`focus:`、`visited:` 等会生成 pseudo selector 的交互 variant
 - child / sibling / combinator variants
 - aria / data attribute variants
 - container query、supports、scope、CSS layer variants
 - placeholder、motion、contrast、space/divide 等 variants
 
-使用这些 variant 会直接产生编译错误，不会降级为普通工具类。
+使用这些 variant 会直接产生编译错误，不会降级为普通工具类或进入 RN class map。点击态使用组件 `hover-class` 配合独立单类样式。
 
 ## 颜色透明度约束
 
@@ -236,13 +235,13 @@ module.exports = defineConfig({
 分组写法示例：
 
 ```html
-<view class="md:(p-2 m-2) hover:(bg-blue-500 text-white)"></view>
+<view class="md:(p-2 m-2)"></view>
 ```
 
 等价于：
 
 ```html
-<view class="md:p-2 md:m-2 hover:bg-blue-500 hover:text-white"></view>
+<view class="md:p-2 md:m-2"></view>
 ```
 
 默认支持 `:` 与 `-` 两种分隔符，例如 `font-(bold sans)` 等价于 `font-bold font-sans`。分组只是书写简化，不会扩大 RN 能力；其中的每个 utility 与 variant 都必须处于本文档标注的支持范围内。
@@ -270,11 +269,11 @@ module.exports = defineConfig({
 自定义 UnoCSS rule 还需满足：
 
 - 只生成 Mpx2RN 支持的 CSS 属性和值。
-- 选择器最终为单类选择器；仅受支持的 `hover` 可形成单类 + pseudo。
+- 选择器最终必须是单类选择器，不允许任何 pseudo。
 - at-rule 仅使用 Mpx2RN 可转换的 `@media`。
 - 不生成依赖 DOM 层级、伪元素或 Web 布局模型的 CSS。
 
-出现 `Only single class selector is supported`、`Only @media rule is supported` 或 `[Mpx style error]` 时，按生成后的 CSS 定位，不要只检查模板 className。
+所有来源生成的最终 pseudo selector 都会触发 `Only single class selector is supported` 编译错误且不会进入 RN class map。出现该错误、`Only @media rule is supported` 或 `[Mpx style error]` 时，按生成后的 CSS 定位，不要只检查模板 className。
 
 ### 类名存在但无样式
 
@@ -296,7 +295,7 @@ module.exports = defineConfig({
 - [ ] variant group 展开后的所有 utility 与 variant 均在 RN 支持范围内。
 - [ ] directives 中只使用 RN 支持的 utility、属性、值、选择器和媒体查询。
 - [ ] 所有工具类及其底层 CSS 均在 RN 支持范围内。
-- [ ] 仅使用 RN 支持的 variants；交互 variant 仅使用 `hover:`。
+- [ ] 仅使用 RN 支持的 variants，未使用会生成 pseudo selector 的交互 variant。
 - [ ] 颜色透明度使用 `color/alpha`，未使用独立 `*-opacity-*` 组合。
 - [ ] filter 已按目标 RN 版本与设备验证。
 - [ ] 构建中不存在 `[Mpx Unocss]`、`[Mpx style error]` 或相关 warning。

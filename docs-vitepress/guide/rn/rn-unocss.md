@@ -77,9 +77,9 @@ Only Screen
 | @xl   |   @media (min-width: 1280px) and (max-width: 1536px)    |      |
 | @2xl  |   @media (min-width: 1536px)    |      |
 
-* Pseudo Elements
+* Interaction Variants
 
-目前仅支持 `hover`
+RN 不支持 `hover:`、`active:`、`focus:`、`visited:` 等最终生成 pseudo selector 的交互 variant。包括 `hover:` 在内，这类产物会在 RN 编译阶段作为 error 上报，且不会生成对应的 class 样式。其他不生成非支持选择器的 variant 能力不受影响；点击态请使用组件 `hover-class` 配合独立单类样式。
 
 * Theme Variants
 
