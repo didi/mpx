@@ -1,5 +1,5 @@
 import { bus } from './bus'
-import type { Reporter } from './types'
+import type { PerfStartOptions, Reporter } from './types'
 
 // 优先 performance.now（DOM / RN web）→ Hermes nativePerformanceNow → Date.now 兜底。
 // Hermes 的 nativePerformanceNow 是 globalThis 上的专有 API，标准 lib.dom 类型里没有,
@@ -18,44 +18,57 @@ const now: () => number = (() => {
   return () => Date.now()
 })()
 
-// 跨作用域的起止配对靠 measure name 匹配；同步代码内首选用 scopeStart/scopeEnd。
-const measureStarts = new Map<string, number>()
+// name 模式通过名称配对；同名 start 后一次覆盖前一次。
+const namedAggrStarts = new Map<string, number>()
 
-// scopeStart/scopeEnd 用平行数组持有进行中的 scope，避免每次 scope 分配闭包对象。
-// stackName / stackStart 同步增长；freeList 回收已结束的槽位 id。
+// aggr id 模式用平行数组持有进行中的区段，避免每次 start 分配闭包对象。
+// aggrNames / aggrStarts 同步增长；aggrFreeList 回收已结束的槽位 id。
 // 不依赖严格栈序（freeList 处理乱序结束与提前 end）；React render 实际就是栈式，
 // freeList 池稳态后槽位数 == 最大并发深度，不再增长。
-const stackName: (string | null)[] = []
-const stackStart: number[] = []
-const freeList: number[] = []
-let stackTop = 0
+const aggrNames: (string | null)[] = []
+const aggrStarts: number[] = []
+const aggrFreeList: number[] = []
+let aggrTop = 0
 
 /**
- * 起一段 scope，返回 id 句柄；未录制时返回 -1，调用方据此跳过 scopeEnd。
- * 录制态下也仅做：状态判断、freeList/stackTop 取 id、一次 now()、两次数组下标写。
+ * 起一段聚合统计，默认返回 id 句柄；useName 为 true 时改用 name 配对。
+ * 录制态下也仅做：状态判断、freeList/aggrTop 取 id、一次 now()、两次数组下标写。
  * 全程无对象 / 闭包分配——这是高频 render 场景的核心优化。
  */
-export function scopeStart (name: string): number {
+export function aggrStart (name: string, useName?: false): number
+export function aggrStart (name: string, useName: true): void
+export function aggrStart (name: string, useName: boolean): number | void
+export function aggrStart (name: string, useName = false): number | void {
+  if (useName) {
+    namedAggrStarts.set(name, now())
+    return
+  }
   if (!bus.isRecording()) return -1
-  const id = freeList.length > 0 ? freeList.pop()! : stackTop++
-  stackName[id] = name
-  stackStart[id] = now()
+  const id = aggrFreeList.length > 0 ? aggrFreeList.pop()! : aggrTop++
+  aggrNames[id] = name
+  aggrStarts[id] = now()
   return id
 }
 
 /**
- * 关闭 id 对应的 scope，把时长累加进聚合。
- * id < 0（未录制时 scopeStart 的返回）或已被 end 过都安全 no-op。
+ * 关闭 id 或 name 对应的聚合区段，把时长累加进同名桶。
  */
-export function scopeEnd (id: number): void {
-  if (id < 0) return
-  const name = stackName[id]
-  if (name === null) return
-  const dur = now() - stackStart[id]
+export function aggrEnd (target: number | string): void {
+  if (typeof target === 'string') {
+    const startedAt = namedAggrStarts.get(target)
+    if (startedAt === undefined) return
+    namedAggrStarts.delete(target)
+    bus.pushAggr(target, now() - startedAt)
+    return
+  }
+  if (target < 0) return
+  const name = aggrNames[target]
+  if (name == null) return
+  const dur = now() - aggrStarts[target]
   // 清 name 表示该槽空闲，避免重复 end 重复累加；id 回收进 freeList。
-  stackName[id] = null
-  freeList.push(id)
-  bus.pushMeasure(name, dur)
+  aggrNames[target] = null
+  aggrFreeList.push(target)
+  bus.pushAggr(name, dur)
 }
 
 /**
@@ -63,31 +76,80 @@ export function scopeEnd (id: number): void {
  */
 export function mark (name: string, info?: unknown) {
   if (!bus.isRecording()) return
-  bus.pushMark(name, now(), Date.now(), info)
+  bus.pushMark(name, now, info)
 }
 
 /**
- * 注册一段跨作用域 measure 的具名起点。
+ * 起一段区段序列，默认返回 id 句柄；useName 为 true 时改用 name 配对。
  */
-export function measureStart (name: string) {
-  measureStarts.set(name, now())
+let nextTraceId = 0
+const traceIdToEvent = new Map<number, number>()
+const traceNameToEvent = new Map<string, number>()
+
+export function traceStart (name: string, useName?: false): number
+export function traceStart (name: string, useName: true): void
+export function traceStart (name: string, useName: boolean): number | void
+export function traceStart (name: string, useName = false): number | void {
+  if (!bus.isRecording()) {
+    if (!useName) return -1
+    return
+  }
+  const eventIndex = bus.reserveTrace(name, now)
+  if (eventIndex < 0) {
+    if (!useName) return -1
+    return
+  }
+  if (useName) {
+    traceNameToEvent.set(name, eventIndex)
+    return
+  }
+  const id = nextTraceId++
+  traceIdToEvent.set(id, eventIndex)
+  return id
 }
 
 /**
- * 结束同名 measure 并聚合耗时；起点命中后立即消费，重复结束安全 noop。
+ * 结束 id 或 name 对应的 trace，回填 duration 与可选 info。
  */
-export function measureEnd (name: string) {
-  const startedAt = measureStarts.get(name)
-  if (startedAt === undefined) return
-  measureStarts.delete(name)
-  bus.pushMeasure(name, now() - startedAt)
+export function traceEnd (target: number | string, info?: unknown): void {
+  if (!bus.isRecording()) return
+  const eventIndex = typeof target === 'string'
+    ? traceNameToEvent.get(target)
+    : traceIdToEvent.get(target)
+  if (eventIndex === undefined) return
+  if (typeof target === 'string') {
+    traceNameToEvent.delete(target)
+  } else {
+    traceIdToEvent.delete(target)
+  }
+  bus.finishTrace(eventIndex, now(), info)
+}
+
+// 旧聚类 API 保持原签名，只复用 aggr 实现。
+export function scopeStart (name: string): number {
+  return aggrStart(name)
+}
+
+export function scopeEnd (id: number): void {
+  aggrEnd(id)
+}
+
+export function measureStart (name: string): void {
+  aggrStart(name, true)
+}
+
+export function measureEnd (name: string): void {
+  aggrEnd(name)
 }
 
 // 录制窗口控制
-export const start = () => bus.start(now(), Date.now())
+export const start = (options?: PerfStartOptions) => bus.start(now(), options)
 export const end = (reporter?: Reporter) => {
   if (!bus.isRecording()) return
-  bus.end(now(), Date.now(), reporter)
+  const endedAt = now()
+  traceIdToEvent.clear()
+  traceNameToEvent.clear()
+  bus.end(endedAt, reporter)
 }
 
 // reporter 注册 API

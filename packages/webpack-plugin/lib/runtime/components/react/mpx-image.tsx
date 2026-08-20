@@ -262,6 +262,24 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   }
 
+  function updateImageSize (width: number, height: number) {
+    state.current.imageWidth = width
+    state.current.imageHeight = height
+    state.current.ratio = !width ? 0 : height / width
+
+    if (isWidthFixMode
+      ? state.current.viewWidth
+      : isHeightFixMode
+        ? state.current.viewHeight
+        : state.current.viewWidth && state.current.viewHeight) {
+      setRatio(state.current.ratio)
+      setImageWidth(width)
+      setImageHeight(height)
+      setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio)
+      setLoaded(true)
+    }
+  }
+
   const modeStyle: ImageStyle = useMemo(() => {
     if (noMeetCalcRule(isSvg, mode, viewWidth, viewHeight, ratio)) return {}
     switch (mode) {
@@ -379,21 +397,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const onSvgLoad = (evt: LayoutChangeEvent) => {
     const { width, height } = evt.nativeEvent.layout
-    state.current.imageHeight = height
-    setImageHeight(height)
-    state.current.ratio = !width ? 0 : height / width
-
-    if (isWidthFixMode
-      ? state.current.viewWidth
-      : isHeightFixMode
-        ? state.current.viewHeight
-        : state.current.viewWidth && state.current.viewHeight) {
-      setRatio(state.current.ratio)
-      setImageWidth(width)
-      setImageHeight(height)
-      setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio)
-      setLoaded(true)
-    }
+    updateImageSize(width, height)
 
     bindload && bindload(
       getCustomEvent(
@@ -464,22 +468,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       getImageSize(
         src,
         (width: number, height: number) => {
-          state.current.imageWidth = width
-          state.current.imageHeight = height
-          state.current.ratio = !width ? 0 : height / width
-
-          if (isWidthFixMode
-            ? state.current.viewWidth
-            : isHeightFixMode
-              ? state.current.viewHeight
-              : state.current.viewWidth && state.current.viewHeight) {
-            setRatio(state.current.ratio)
-            setImageWidth(width)
-            setImageHeight(height)
-            setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio!)
-
-            setLoaded(true)
-          }
+          updateImageSize(width, height)
         },
         () => {
           setLoaded(true)
