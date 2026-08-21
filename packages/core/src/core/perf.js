@@ -37,9 +37,10 @@ export function wrapAppLifecycleHooks (options) {
   if (!__mpx_perf_framework__) return
   Object.keys(appLifecycleMeasureNames).forEach((hookName) => {
     const hook = options[hookName]
-    if (typeof hook !== 'function') return
+    if (typeof hook !== 'function' && hookName !== 'onLaunch') return
     options[hookName] = function (...args) {
       if (hookName === 'onLaunch') perf.mark('app:onLaunch:start')
+      if (typeof hook !== 'function') return
       const id = perf.scopeStart(appLifecycleMeasureNames[hookName])
       const result = hook.apply(this, args)
       perf.scopeEnd(id)
