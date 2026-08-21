@@ -1,7 +1,6 @@
 import MpxUnocssPlugin from '../lib/index.js'
 import { getRawSource } from '../lib/source.js'
-import { createGenerator, e as cssEscape } from '@unocss/core'
-import { mpEscape } from '../lib/transform.js'
+import { createGenerator } from '@unocss/core'
 import presetMpx from '@mpxjs/unocss-base/lib/index.js'
 import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js'
 import { jest } from '@jest/globals'
@@ -41,12 +40,12 @@ describe('test plugin', () => {
   }) {
     const source = getRawSource(content)
     const classmap = {}
-    const { newsource } = parseTemplate(source, (className) => {
+    const { newsource } = await parseTemplate(source, (className) => {
       if (!className) {
         return className
       }
       classmap[className] = true
-      return mpEscape(cssEscape(className), plugin.options.escapeMap)
+      return className
     })
     // 测试模板是否转义
     expect(newsource.source()).toMatchSnapshot()

@@ -13,7 +13,7 @@ Mpx 与 UnoCSS 的集成插件：在小程序构建中扫描 wxml/mpx 模板提�
   - 装配 unocss generator（基于 `@unocss/core` + `@unocss/config`）。
   - 通过 `MpxWebpackPlugin` 钩子在小程序产物 emit 阶段扫描 wxml 资产，调用 [parser.js](lib/parser.js) 提取 class，生成新增的 wxss 资产。
   - 集成 `transformerDirectives` / `transformerVariantGroup`，在样式 transform 阶段调用 [transform.js](lib/transform.js)。
-- [lib/parser.js](lib/parser.js)：`parseClasses` / `parseStrings` / `parseMustache` / `stringifyAttr` / `parseComments` / `parseCommentConfig`，从模板/字符串/注释中提取 class 与配置。
+- [lib/parser.js](lib/parser.js)：`parseClasses` / `parseClassExpression` / `parseMustache` / `stringifyAttr` / `parseComments` / `parseCommentConfig`，从模板、表达式与注释中提取 class 和配置。
 - [lib/transform.js](lib/transform.js)：`transformStyle` / `buildAliasTransformer` / `transformGroups` / `mpEscape` / `cssRequiresTransform`，处理 unocss → 小程序 wxss 的转义（class 名转义、伪类、组合器等）。
 - [lib/source.js](lib/source.js)：`getReplaceSource` / `getConcatSource` / `getRawSource`，统一封装 webpack `Source` 对象的创建。
 - [lib/platform.js](lib/platform.js)：各小程序平台的 preflights / 选择器映射表（被主插件按 `mpx_mode` 取用）。
