@@ -54,7 +54,7 @@ export default function createApp (options) {
   const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const getPageScreens = (initialRouteName, initialParams) => {
+  const getPageScreens = () => {
     return Object.entries(pagesMap).map(([key, item]) => {
       const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
       const headerLayout = ({ navigation, children }) => {
@@ -73,14 +73,6 @@ export default function createApp (options) {
       }
       const getComponent = () => {
         return item.displayName ? item : callWithErrorHandling(item, null, 'require page script')
-      }
-      if (key === initialRouteName) {
-        return createElement(Stack.Screen, {
-          name: key,
-          getComponent,
-          initialParams,
-          layout: headerLayout
-        })
       }
       return createElement(Stack.Screen, {
         name: key,
@@ -122,7 +114,7 @@ export default function createApp (options) {
           const current = state.routes[state.index]
           options = {
             path: current.name,
-            query: current.params,
+            query: current.key === global.__mpxInitialRouteKey ? global.__mpxInitialRunParams : current.params,
             scene: 0,
             shareTicket: '',
             referrerInfo: {}
@@ -180,9 +172,10 @@ export default function createApp (options) {
         const state = navigation.getState()
         Mpx.config.rnConfig.onStateChange?.(state)
         const current = state.routes[state.index]
+        global.__mpxInitialRouteKey = current.key
         const options = {
           path: current.name,
-          query: current.params,
+          query: global.__mpxInitialRunParams,
           scene: 0,
           shareTicket: '',
           referrerInfo: {},
@@ -213,6 +206,10 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
+    if (!global.__mpxAppHotLaunched) {
+      global.__mpxInitialRouteKey = null
+      global.__mpxInitialRunParams = initialParams
+    }
     const navScreenOpts = {
       headerShown: false
     }
@@ -232,7 +229,7 @@ export default function createApp (options) {
             initialRouteName,
             screenOptions: navScreenOpts
           },
-          ...getPageScreens(initialRouteName, initialParams)
+          ...getPageScreens()
         )
       )
     )

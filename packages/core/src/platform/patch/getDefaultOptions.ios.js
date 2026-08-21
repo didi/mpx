@@ -301,12 +301,16 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     })
   }
 
+  let loadParams
   if (type === 'page') {
     const props = propsRef.current
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
     setFocusedNavigation(props.navigation)
+    if (!global.__mpxAppHotLaunched && global.__mpxInitialRunParams) {
+      loadParams = Object.assign({}, global.__mpxInitialRunParams)
+    }
     set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
@@ -320,7 +324,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   if (type === 'page') {
     const props = propsRef.current
     const decodedQuery = {}
-    const rawQuery = props.route.params || {}
+    const rawQuery = Object.assign({}, loadParams, props.route.params || {})
     if (isObject(rawQuery)) {
       for (const key in rawQuery) {
         try {
