@@ -13,8 +13,22 @@ global.__mpxPageSizeCountMap = reactive({})
 
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
-    const styleObj = classMap[className]?.(global.__formatValue)
-    styleObj && classMapValueCache.set(className, styleObj)
+    const originalDependentScreenSize = dependentScreenSize
+    dependentScreenSize = false
+
+    const styleObj = classMap[className]?.(formatValue)
+    if (!styleObj) {
+      dependentScreenSize = originalDependentScreenSize
+      return
+    }
+
+    // 使用不可枚举属性记录屏幕尺寸依赖，避免该内部标记被合并到 RN 样式中
+    Object.defineProperty(styleObj, '_dependentScreenSize', {
+      value: dependentScreenSize
+    })
+    dependentScreenSize = dependentScreenSize || originalDependentScreenSize
+
+    classMapValueCache.set(className, styleObj)
   }
   return classMapValueCache.get(className)
 }
@@ -80,11 +94,13 @@ const unit = {
 
 const empty = {}
 
+// 记录style是否依赖屏幕尺寸
+let dependentScreenSize = false
 const isNum = (v) => !isNaN(+v)
-
 function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
   if (unitType && typeof unit[unitType] === 'function') {
+    dependentScreenSize = true
     return unit[unitType](+value)
   }
   if (value === 'hairlineWidth') {
@@ -329,11 +345,11 @@ export default function styleHelperMixin () {
         let idTotal = -1
         if (__mpx_perf_framework__) idTotal = perf.scopeStart('instance:render:getStyle')
 
+        // 重置依赖标记
+        dependentScreenSize = false
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
         const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
-
-        this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
           let idClass = -1
@@ -346,21 +362,28 @@ export default function styleHelperMixin () {
             let localStyle, appStyle, unoStyle, unoVarStyle
             if (localStyle = this.__getClassStyle?.(className)) {
               mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
+              // class style 计算可能触发缓存，需要单独在结果中记录是否依赖屏幕尺寸，不能直接使用全局变量。
+              this.__dependentScreenSize = this.__dependentScreenSize || localStyle._dependentScreenSize
             } else if (unoStyle = global.__getUnoStyle?.(className)) {
               mergeToLayer(unoStyle._layer || 'uno', unoStyle, getMediaStyle(unoStyle._media))
+              this.__dependentScreenSize = this.__dependentScreenSize || unoStyle._dependentScreenSize
               if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
             } else if (unoVarStyle = global.__getUnoVarStyle?.(className)) {
               mergeToLayer('important', unoVarStyle)
+              this.__dependentScreenSize = this.__dependentScreenSize || unoVarStyle._dependentScreenSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
-            } else if (isObject(this.__props[className])) {
+              this.__dependentScreenSize = this.__dependentScreenSize || appStyle._dependentScreenSize
+            } else if (isObject(this.__mpxProxy.props[className])) {
               // externalClasses必定以对象形式传递下来
-              mergeToLayer('normal', this.__props[className])
+              mergeToLayer('normal', this.__mpxProxy.props[className])
             }
           })
 
           if (needAddUnoPreflight) {
-            mergeToLayer('preflight', global.__getAppClassStyle?.('__uno_preflight'))
+            const unoPreflightStyle = global.__getAppClassStyle?.('__uno_preflight')
+            mergeToLayer('preflight', unoPreflightStyle)
+            this.__dependentScreenSize = this.__dependentScreenSize || unoPreflightStyle._dependentScreenSize
           }
 
           if (__mpx_perf_framework__) perf.scopeEnd(idClass)
@@ -392,6 +415,12 @@ export default function styleHelperMixin () {
         const result = genResult()
 
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+
+        // 仅在依赖屏幕尺寸时才触发__getSizeCount进行相应式关联，避免屏幕尺寸变化时不必要的性能损耗
+        this.__dependentScreenSize = this.__dependentScreenSize || dependentScreenSize
+        if (this.__dependentScreenSize) {
+          this.__getSizeCount()
+        }
         if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
         return isEmpty ? empty : result
       }

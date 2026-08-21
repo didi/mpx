@@ -25,6 +25,7 @@ module.exports = function ({
   componentGenerics,
   componentPlaceholder,
   autoScope,
+  externalClasses,
   callback
 }) {
   if (ctorType === 'app' && !queryObj.isApp) {
@@ -97,7 +98,8 @@ module.exports = function ({
         wxsModuleMap: templateRes.wxsModuleMap,
         localComponentsMap: jsonRes.localComponentsMap,
         localPagesMap: jsonRes.localPagesMap,
-        rnConfig
+        rnConfig,
+        externalClasses
       }, callback)
     }
   ], (err, scriptRes) => {
