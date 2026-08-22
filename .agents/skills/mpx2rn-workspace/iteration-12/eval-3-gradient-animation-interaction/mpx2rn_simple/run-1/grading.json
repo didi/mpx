@@ -1,0 +1,79 @@
+{
+  "eval_id": 3,
+  "run_kind": "mpx2rn_simple",
+  "expectations": [
+    {
+      "id": "g0",
+      "text": "样式：linear-gradient 中的 transparent 替换为目标颜色的 rgba 形式",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g1",
+      "text": "样式：display:none 替换为 width:0;height:0;overflow:hidden 或 wx:if",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g2",
+      "text": "样式：transition-property:all 替换为具体属性名",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g3",
+      "text": "模板：动态 background-image 所在的 view 使用 RN 属性条件编译添加 enable-background",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g4",
+      "text": "模板：动态 transition 所在的 view 使用 RN 属性条件编译添加 enable-animation",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g5",
+      "text": "脚本：生命周期钩子在 setup 中同步注册，不在异步回调中注册",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g6",
+      "text": "脚本：relativeTo 使用简单选择器，不使用复合或后代选择器",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g7",
+      "text": "JSON：条件编译配置使用 script name=\"json\" 格式",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g8",
+      "text": "样式：带 bindtap 的元素不设置 opacity:0，避免 iOS 事件失效",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g9",
+      "text": "样式：@keyframes 通过条件编译限制在非 RN 平台，或替换为 transition",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "g10",
+      "text": "模板：CSS 变量能力不同的相邻条件分支使用不同的 RN key，或在两个分支都用 RN enable-var 预声明保持能力稳定",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 11,
+    "failed": 0,
+    "total": 11
+  },
+  "metrics": null
+}

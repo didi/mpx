@@ -70,7 +70,6 @@ module.exports = function (template, {
         return template.content
       }
       if (template.content) {
-        const templateSrcMode = template.mode || srcMode
         const warn = (msg, loc) => {
           loaderContext.emitWarning(
             new Error('[Mpx template error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
@@ -92,7 +91,7 @@ module.exports = function (template, {
           ctorType,
           mode,
           env,
-          srcMode: templateSrcMode,
+          srcMode,
           defs,
           decodeHTMLText,
           externalClasses,

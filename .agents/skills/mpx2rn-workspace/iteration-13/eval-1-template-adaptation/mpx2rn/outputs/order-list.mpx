@@ -1,0 +1,415 @@
+<template>
+  <view class="order-page">
+    <scroll-view
+      class="order-scroll"
+      scroll-y="{{true}}"
+      lower-threshold="{{50}}"
+      refresher-enabled="{{true}}"
+      refresher-triggered="{{refreshing}}"
+      bindscrolltolower="loadMore"
+      bindrefresherrefresh="refreshOrders"
+    >
+      <view class="order-content">
+        <view class="tab-bar">
+          <view
+            class="tab"
+            wx:for="{{tabs}}"
+            wx:key="key"
+            bindtap="switchTab(item.key)"
+          >
+            <text class="tab-text" wx:class="{{ { 'tab-active': activeTab === item.key } }}">{{item.label}}</text>
+            <view wx:if="{{item.badge > 0}}" class="badge">
+              <text class="badge-text">{{item.badge > 99 ? '99+' : item.badge}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="order-list">
+          <view
+            class="order-item"
+            wx:for="{{displayOrders}}"
+            wx:key="id"
+            bindtap="goOrderDetail(item.id)"
+            bindlongpress="showActions(item.id, item.status)"
+          >
+            <view class="order-header">
+              <text class="order-no">订单号: {{item.orderNo}}</text>
+              <text class="order-status" wx:style="{{ { color: item.statusColor } }}">{{item.statusText}}</text>
+            </view>
+            <view class="order-goods">
+              <image class="goods-img" src="{{item.goodsImg}}" mode="aspectFill"></image>
+              <view class="goods-info">
+                <text class="goods-name">{{item.goodsName}}</text>
+                <text class="goods-spec">{{item.spec}}</text>
+                <view class="goods-price-row">
+                  <text class="goods-price">¥{{item.price}}</text>
+                  <text class="goods-count">x{{item.count}}</text>
+                </view>
+              </view>
+            </view>
+            <view class="order-footer">
+              <text class="order-total">合计: ¥{{item.totalPrice}}</text>
+              <view class="order-actions">
+                <view
+                  wx:if="{{item.status === 'unpaid'}}"
+                  class="btn btn-primary"
+                  hover-class="btn-primary-hover"
+                  catchtap="payOrder(item.id)"
+                >
+                  <text class="btn-text">去支付</text>
+                </view>
+                <view
+                  wx:elif="{{item.status === 'shipped'}}"
+                  class="btn btn-default"
+                  hover-class="btn-default-hover"
+                  catchtap="confirmReceive(item.id)"
+                >
+                  <text class="btn-default-text">确认收货</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{loading}}" class="loading">
+          <text class="loading-text">加载中...</text>
+        </view>
+        <view wx:if="{{!loading && displayOrders.length === 0}}" class="empty">
+          <text class="empty-text">暂无订单</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+const statusColorMap = { unpaid: '#ff4d4f', shipped: '#1677ff', completed: '#52c41a' }
+const statusTextMap = { unpaid: '待付款', shipped: '已发货', completed: '已完成' }
+
+createPage({
+  data: {
+    activeTab: 'all',
+    tabs: [
+      { key: 'all', label: '全部', badge: 0 },
+      { key: 'unpaid', label: '待付款', badge: 3 },
+      { key: 'shipped', label: '待收货', badge: 1 },
+      { key: 'completed', label: '已完成', badge: 0 }
+    ],
+    orders: [],
+    loading: false,
+    refreshing: false
+  },
+  computed: {
+    displayOrders () {
+      return this.orders.map((order) => Object.assign({}, order, {
+        statusColor: statusColorMap[order.status] || '#999',
+        statusText: statusTextMap[order.status] || '未知'
+      }))
+    }
+  },
+  onLoad () {
+    this.fetchOrders()
+  },
+  methods: {
+    switchTab (key) {
+      this.activeTab = key
+      this.fetchOrders()
+    },
+    goOrderDetail (orderId) {
+      mpx.navigateTo({ url: '/pages/order-detail?id=' + orderId })
+    },
+    showActions (orderId, status) {
+      mpx.showActionSheet({
+        itemList: status === 'unpaid' ? ['取消订单', '联系客服'] : ['联系客服'],
+        success: (res) => {
+          if (res.tapIndex === 0 && status === 'unpaid') {
+            this.cancelOrder(orderId)
+          }
+        }
+      })
+    },
+    payOrder (orderId) {
+      mpx.navigateTo({ url: '/pages/pay?orderId=' + orderId })
+    },
+    confirmReceive (orderId) {
+      mpx.showModal({
+        title: '确认收货',
+        content: '确认已收到商品？',
+        success: (res) => {
+          if (res.confirm) {
+            this.doConfirmReceive(orderId)
+          }
+        }
+      })
+    },
+    refreshOrders () {
+      this.refreshing = true
+      this.fetchOrders()
+    },
+    fetchOrders () {
+      this.loading = true
+      mpx.request({
+        url: '/api/orders',
+        data: { status: this.activeTab },
+        success: (res) => {
+          this.orders = res.data.list
+        },
+        complete: () => {
+          this.loading = false
+          this.refreshing = false
+        }
+      })
+    },
+    loadMore () {},
+    cancelOrder (orderId) {},
+    doConfirmReceive (orderId) {}
+  }
+})
+</script>
+
+<style lang="less">
+.order-page,
+.order-scroll {
+  height: 100vh;
+}
+
+.order-page {
+  background-color: #f5f5f5;
+}
+
+.order-content {
+  padding: 0 24rpx;
+}
+
+.tab-bar {
+  display: flex;
+  flex-direction: row;
+  padding: 20rpx 0;
+  background-color: #fff;
+  border-radius: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 12rpx 0;
+}
+
+.tab-active {
+  color: #1677ff;
+  font-weight: bold;
+}
+
+.tab-text {
+  font-size: 28rpx;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 20rpx;
+  background-color: #ff4d4f;
+  border-radius: 16rpx;
+  padding: 0 8rpx;
+  min-width: 28rpx;
+  height: 28rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-text {
+  font-size: 20rpx;
+  color: #fff;
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-item {
+  background-color: #fff;
+  border-radius: 8rpx;
+  margin-bottom: 16rpx;
+  padding: 24rpx;
+}
+
+.order-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.order-no {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.order-status {
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.order-goods {
+  display: flex;
+  flex-direction: row;
+  padding: 16rpx 0;
+  border-style: solid;
+  border-top-color: #f0f0f0;
+  border-bottom-color: #f0f0f0;
+  /* @mpx-if (__mpx_mode__ === 'ios') */
+  border-top-width: hairlineWidth;
+  border-bottom-width: hairlineWidth;
+  /* @mpx-else */
+  border-top-width: 1rpx;
+  border-bottom-width: 1rpx;
+  /* @mpx-endif */
+}
+
+.goods-img {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 8rpx;
+  margin-right: 16rpx;
+}
+
+.goods-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.goods-name {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.goods-spec {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.goods-price-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.goods-price {
+  font-size: 28rpx;
+  color: #ff4d4f;
+  font-weight: bold;
+}
+
+.goods-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.order-footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16rpx;
+}
+
+.order-total {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.order-actions {
+  display: flex;
+  flex-direction: row;
+}
+
+.btn {
+  padding: 10rpx 24rpx;
+  border-radius: 32rpx;
+  margin-left: 16rpx;
+}
+
+.btn-primary {
+  background-color: #1677ff;
+}
+
+.btn-primary-hover {
+  background-color: #0958d9;
+}
+
+.btn-default,
+.btn-default-hover {
+  border-style: solid;
+  border-color: #ddd;
+  /* @mpx-if (__mpx_mode__ === 'ios') */
+  border-width: hairlineWidth;
+  /* @mpx-else */
+  border-width: 1rpx;
+  /* @mpx-endif */
+}
+
+.btn-default {
+  background-color: #fff;
+}
+
+.btn-default-hover {
+  background-color: #f5f5f5;
+}
+
+.btn-text,
+.btn-default-text {
+  font-size: 24rpx;
+}
+
+.btn-text {
+  color: #fff;
+}
+
+.btn-default-text {
+  color: #333;
+}
+
+.loading {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.empty {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding: 80rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+}
+</style>
+
+<script type="application/json">
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "My Orders",
+  "disableScroll": true
+}
+</script>

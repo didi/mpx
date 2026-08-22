@@ -79,7 +79,13 @@ Only Screen
 
 * Interaction Variants
 
-RN 不支持 `hover:`、`active:`、`focus:`、`visited:` 等最终生成 pseudo selector 的交互 variant。包括 `hover:` 在内，这类产物会在 RN 编译阶段作为 error 上报，且不会生成对应的 class 样式。其他不生成非支持选择器的 variant 能力不受影响；点击态请使用组件 `hover-class` 配合独立单类样式。
+RN 不支持 `hover:`、`active:`、`focus:`、`visited:` 等最终生成 pseudo selector 的交互 variant。包括 `hover:` 在内，这类产物会在 RN 编译阶段作为 error 上报，且不会生成对应的 class 样式。其他不生成非支持选择器的 variant 能力不受影响。
+
+需要按下态时，使用 Mpx 内建组件的 `hover-class` 指向普通原子类：
+
+```html
+<view class="bg-white" hover-class="bg-blue-500/10"></view>
+```
 
 * Theme Variants
 

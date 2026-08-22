@@ -146,7 +146,12 @@ export default defineConfig({
 - container query、supports、scope、CSS layer variants
 - placeholder、motion、contrast、space/divide 等 variants
 
-使用这些 variant 会直接产生编译错误，不会降级为普通工具类或进入 RN class map。点击态使用组件 `hover-class` 配合独立单类样式。
+这些交互伪类 variant 会产生编译错误，不会降级为普通工具类或进入 RN class map。其中 `hover:` 不会自动转换为组件 `hover-style`。需要按下态时，仅可在 Mpx 内建的 `view`、`button`、`navigator` 和 `cover-view` 组件上使用 `hover-class` 指向普通原子类：
+
+```html
+<view class="bg-white" hover-class="bg-blue-500/10"></view>
+```
+
 
 ## 颜色透明度约束
 
@@ -235,13 +240,13 @@ module.exports = defineConfig({
 分组写法示例：
 
 ```html
-<view class="md:(p-2 m-2)"></view>
+<view class="md:(p-2 m-2) dark:(bg-slate-900 text-white)"></view>
 ```
 
 等价于：
 
 ```html
-<view class="md:p-2 md:m-2"></view>
+<view class="md:p-2 md:m-2 dark:bg-slate-900 dark:text-white"></view>
 ```
 
 默认支持 `:` 与 `-` 两种分隔符，例如 `font-(bold sans)` 等价于 `font-bold font-sans`。分组只是书写简化，不会扩大 RN 能力；其中的每个 utility 与 variant 都必须处于本文档标注的支持范围内。
@@ -269,7 +274,7 @@ module.exports = defineConfig({
 自定义 UnoCSS rule 还需满足：
 
 - 只生成 Mpx2RN 支持的 CSS 属性和值。
-- 选择器最终必须是单类选择器，不允许任何 pseudo。
+- 选择器最终为单类选择器，不包含伪类或伪元素。
 - at-rule 仅使用 Mpx2RN 可转换的 `@media`。
 - 不生成依赖 DOM 层级、伪元素或 Web 布局模型的 CSS。
 
@@ -295,7 +300,7 @@ module.exports = defineConfig({
 - [ ] variant group 展开后的所有 utility 与 variant 均在 RN 支持范围内。
 - [ ] directives 中只使用 RN 支持的 utility、属性、值、选择器和媒体查询。
 - [ ] 所有工具类及其底层 CSS 均在 RN 支持范围内。
-- [ ] 仅使用 RN 支持的 variants，未使用会生成 pseudo selector 的交互 variant。
+- [ ] 仅使用 RN 支持的 variants，未使用 `hover:`、`active:`、`focus:` 等交互伪类 variant；按下态仅在 `view`、`button`、`navigator` 和 `cover-view` 上使用 `hover-class` 指向普通原子类。
 - [ ] 颜色透明度使用 `color/alpha`，未使用独立 `*-opacity-*` 组合。
 - [ ] filter 已按目标 RN 版本与设备验证。
 - [ ] 构建中不存在 `[Mpx Unocss]`、`[Mpx style error]` 或相关 warning。

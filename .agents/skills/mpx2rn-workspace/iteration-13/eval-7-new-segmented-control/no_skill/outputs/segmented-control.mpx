@@ -1,0 +1,155 @@
+<template>
+  <view class="segmented-control {{ disabled ? 'segmented-control--disabled' : '' }}">
+    <text class="segmented-control__title">{{ label }}</text>
+    <view class="segmented-control__options">
+      <view
+        wx:for="{{ options }}"
+        wx:key="value"
+        class="segmented-control__option {{ currentValue === item.value ? 'segmented-control__option--selected' : '' }} {{ disabled || item.disabled ? 'segmented-control__option--disabled' : '' }}"
+        hover-class="{{ disabled || item.disabled ? 'none' : 'segmented-control__option--pressed' }}"
+        data-index="{{ index }}"
+        bindtap="handleSelect"
+      >
+        <text class="segmented-control__option-label {{ currentValue === item.value ? 'segmented-control__option-label--selected' : '' }}">
+          {{ item.label }}
+        </text>
+      </view>
+    </view>
+    <text class="segmented-control__current">当前选择：{{ currentLabel }}</text>
+  </view>
+</template>
+
+<script>
+import { computed, createComponent, ref, watch } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    controlKey: {
+      type: String,
+      value: ''
+    },
+    options: {
+      type: Array,
+      value: []
+    },
+    value: {
+      type: String,
+      value: ''
+    },
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    label: {
+      type: String,
+      value: '请选择'
+    }
+  },
+  setup (props, { triggerEvent }) {
+    const currentValue = ref(props.value)
+
+    watch(() => props.value, (value) => {
+      currentValue.value = value
+    })
+
+    const currentLabel = computed(() => {
+      const selectedOption = props.options.find((option) => option.value === currentValue.value)
+      return selectedOption ? selectedOption.label : '未选择'
+    })
+
+    const handleSelect = (event) => {
+      const option = props.options[event.currentTarget.dataset.index]
+      if (props.disabled || option.disabled) return
+
+      currentValue.value = option.value
+      triggerEvent('change', {
+        controlKey: props.controlKey,
+        value: option.value
+      })
+    }
+
+    return {
+      currentValue,
+      currentLabel,
+      handleSelect
+    }
+  }
+})
+</script>
+
+<style>
+.segmented-control {
+  padding: 24px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #d9dee8;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.segmented-control--disabled {
+  opacity: 0.6;
+}
+
+.segmented-control__title {
+  margin-bottom: 16px;
+  color: #20242c;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.segmented-control__options {
+  display: flex;
+  flex-direction: row;
+  padding: 4px;
+  border-radius: 10px;
+  background-color: #f1f3f7;
+}
+
+.segmented-control__option {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding-right: 12px;
+  padding-left: 12px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+  border-radius: 8px;
+  background-color: transparent;
+}
+
+.segmented-control__option--selected {
+  border-color: #356df3;
+  background-color: #356df3;
+}
+
+.segmented-control__option--pressed {
+  border-color: #aebddb;
+  background-color: #dbe3f2;
+  opacity: 0.72;
+}
+
+.segmented-control__option--disabled {
+  opacity: 0.4;
+}
+
+.segmented-control__option-label {
+  color: #4b5565;
+  font-size: 14px;
+  text-align: center;
+}
+
+.segmented-control__option-label--selected {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.segmented-control__current {
+  margin-top: 16px;
+  color: #6b7380;
+  font-size: 14px;
+}
+</style>
