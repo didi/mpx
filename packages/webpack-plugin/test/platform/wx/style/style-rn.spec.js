@@ -40,6 +40,56 @@ describe('React Native style validation for CSS variables', () => {
     expect(config.error).not.toHaveBeenCalled()
   })
 
+  describe('Selector validation', () => {
+    test.each([
+      ['pseudo class', '.button:hover { color: red; }', 'button:hover'],
+      ['pseudo element', '.text::before { color: red; }', 'text::before'],
+      ['functional pseudo class', '.item:not(.disabled) { color: red; }', 'item:not(.disabled)'],
+      ['escaped UnoCSS class with pseudo', '.hover\\:bg-red-500:hover { color: red; }', 'hover:bg-red-500:hover']
+    ])('should reject %s selectors', (name, css, key) => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result).not.toHaveProperty(key)
+      expect(config.error).toHaveBeenCalledTimes(1)
+      expect(config.error.mock.calls[0][0]).toContain('Only single class selector is supported')
+    })
+
+    test('should support single class selectors and comma-separated single classes', () => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: '.single { color: red; } .first, .second { color: blue; }',
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.single).toEqual({ color: '"red"' })
+      expect(result.first).toEqual({ color: '"blue"' })
+      expect(result.second).toEqual({ color: '"blue"' })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should keep valid selectors while reporting invalid selectors in a comma-separated rule', () => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: '.valid, .invalid:hover { color: red; }',
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.valid).toEqual({ color: '"red"' })
+      expect(result).not.toHaveProperty('invalid:hover')
+      expect(config.error).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('CSS variable fallback validation', () => {
     test('should filter out letter-spacing with invalid "normal" fallback', () => {
       const css = '.text { letter-spacing: var(--x, normal); }'

@@ -77,17 +77,15 @@ Only Screen
 | @xl   |   @media (min-width: 1280px) and (max-width: 1536px)    |      |
 | @2xl  |   @media (min-width: 1536px)    |      |
 
-* Pseudo-class Variants
+* Interaction Variants
 
-RN 端当前不支持 `hover:`、`active:`、`focus:` 等交互伪类 variant。这些 variant 可能会生成带伪类的选择器并进入编译产物，但模板中的原子类无法匹配带伪类的样式键，运行时不会生效。其中 `hover:` 也不会自动转换为组件 `hover-style`。
+RN 不支持 `hover:`、`active:`、`focus:`、`visited:` 等最终生成 pseudo selector 的交互 variant。包括 `hover:` 在内，这类产物会在 RN 编译阶段作为 error 上报，且不会生成对应的 class 样式。其他不生成非支持选择器的 variant 能力不受影响。
 
 需要按下态时，使用 Mpx 内建组件的 `hover-class` 指向普通原子类：
 
 ```html
 <view class="bg-white" hover-class="bg-blue-500/10"></view>
 ```
-
-> 这些交互伪类 variant 当前可能不会产生编译错误，不要将“构建通过”视为 RN 端支持该 variant。
 
 * Theme Variants
 

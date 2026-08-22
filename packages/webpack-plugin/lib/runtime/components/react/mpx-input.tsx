@@ -31,11 +31,11 @@
  * ✔ bindconfirm
  * ✘ bindkeyboardheightchange
  * ✘ bindnicknamereview
- * ✔ bind:selectionchange
- * ✘ bind:keyboardcompositionstart
- * ✘ bind:keyboardcompositionupdate
- * ✘ bind:keyboardcompositionend
- * ✘ bind:onkeyboardheightchange
+ * ✔ bindselectionchange
+ * ✘ bindkeyboardcompositionstart
+ * ✘ bindkeyboardcompositionupdate
+ * ✘ bindkeyboardcompositionend
+ * ✘ bindonkeyboardheightchange
  */
 import { JSX, forwardRef, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {
@@ -125,6 +125,8 @@ const inputModeMap: Record<Type, string> = {
   idcard: 'text',
   digit: 'decimal'
 }
+
+const INPUT_SWITCH_BLUR_GUARD_DURATION = 100
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
   const {
@@ -281,7 +283,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, readyToShow: true }
+      const preventBlurUntil = keyboardAvoid.current && keyboardAvoid.current.ref !== nodeRef
+        ? Date.now() + INPUT_SWITCH_BLUR_GUARD_DURATION
+        : keyboardAvoid.current?.preventBlurUntil
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, preventBlurUntil }
     }
   }
 

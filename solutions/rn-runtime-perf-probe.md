@@ -484,11 +484,11 @@ function expensiveCompute (data) {
 }
 ```
 
-事件名建议加业务前缀（`myBiz:` / 模块名 / 业务线代号）以与框架的 `view: / text: / getStyle:` 区分，reporter 拿到完整 Map 时按前缀分流即可分别上报。
+事件名建议加业务前缀（`myBiz:` / 模块名 / 业务线代号）以与框架的 `view:` / `text:` / `instance:render:getStyle` 区分，reporter 拿到完整 Map 时按前缀分流即可分别上报。
 
 ### 4. 接入模板
 
-只测同步 render 阶段，**不**使用 `useEffect`。**统一用 `scopeStart / scopeEnd` 句柄**——total 与子阶段都是同一个同步函数体内的起止，句柄写法贴合该场景，且只产生一种点缀样式。
+只测同步 render 阶段，**不**使用 `useEffect`。**统一用 `scopeStart / scopeEnd` 句柄**——父阶段与子阶段都是同一个同步函数体内的起止，句柄写法贴合该场景，且只产生一种点缀样式。
 
 #### 4.1 mpx-view 接入示例
 
@@ -499,7 +499,7 @@ import * as perf from '@mpxjs/perf'
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   let idTotal = -1
-  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render:total')
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render')
 
   // ───── props 阶段 ─────
   let idProps = -1
@@ -548,21 +548,21 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
 1. **字面量条件**：所有探针调用必须直接包在 `if (__mpx_perf_framework__)`（框架探针）/ `if (__mpx_perf_user__)`（业务探针）字面量条件里，**不能**先把常量赋给变量再用——只有字面量条件才能被 DefinePlugin + Terser DCE 静态消除。绝**不要**跨类混用（在框架代码里用 user 常量 / 反之）。
 2. **不引入 useEffect 探针**：首版只测同步 render，避免 hook 顺序漂移；commit 阶段耗时如未来需要，再单独评估。
-3. **统一句柄风格**：所有探针（含 total）都用 `let id = -1; if (...) id = scopeStart(name); ...; if (...) scopeEnd(id)` 模板。不要混用 `mark + measure`——同步函数体内 `scopeStart / scopeEnd` 已足够；`mark + measure` 仅在「起止跨作用域」（例如未来某天需要从 render 测到 useEffect）时才需要。
+3. **统一句柄风格**：所有父阶段和子阶段探针都用 `let id = -1; if (...) id = scopeStart(name); ...; if (...) scopeEnd(id)` 模板。不要混用 `mark + measure`——同步函数体内 `scopeStart / scopeEnd` 已足够；`mark + measure` 仅在「起止跨作用域」（例如未来某天需要从 render 测到 useEffect）时才需要。
 4. **scopeStart / scopeEnd 必须配对**：用 `let id = -1` 提前声明，再 `if (__mpx_perf_framework__) id = scopeStart(...)` / `if (__mpx_perf_framework__) scopeEnd(id)`——这样关闭态下整组语句被 DCE 删除。**不要**写成 `const id = <常量> ? scopeStart(...) : -1`，那会把字面量字符串和分支保留在产物里。
-5. **total 与子阶段并列**：`*:total` 包整个函数体，子阶段拆 total 内连续代码段。子阶段相加 ≈ total，差值 = 函数自身的解构 / 调用开销，能直接看出"是子阶段慢还是骨架慢"。
+5. **父阶段与子阶段并列**：无子阶段后缀的父指标包整个函数体，子阶段拆分父阶段内的连续代码段。子阶段相加约等于父阶段，差值 = 函数自身的解构 / 调用开销，能直接看出“是子阶段慢还是骨架慢”。
 
 ### 5. 首批接入点与事件 schema
 
-首版接入四个内建组件 + 一个 core mixin 方法。**统一只测同步 render 耗时**（不含 `useEffect`、不含 commit 后副作用），再按各自结构拆出几个主要的细分阶段。每个组件都至少产出一个 `*:render:total` 总耗时，加若干 `*:render:<phase>` 子阶段；细分阶段的 `sum` 加起来约等于 `total`，方便做占比分析。
+首版接入四个内建组件 + 一个 core mixin 方法。**统一只测同步 render 耗时**（不含 `useEffect`、不含 commit 后副作用），再按各自结构拆出几个主要的细分阶段。每个组件都至少产出一个 `<component>:render` 父阶段整体耗时，加若干 `<component>:render:<phase>` 子阶段；细分阶段的 `sum` 加起来约等于父阶段，方便做占比分析。
 
-事件名使用 `<owner>:render:<phase>` 命名，全局统一，业务侧可以按 `owner` 前缀过滤。
+父阶段事件名使用 `<owner>:render`，子阶段使用 `<owner>:render:<phase>`，全局统一，业务侧可以按 `owner` 前缀过滤。
 
 #### 5.1 [mpx-view.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-view.tsx)
 
 | 事件名 | 覆盖代码段 |
 | --- | --- |
-| `view:render:total` | 整个 `forwardRef` 回调（最外层，含子阶段） |
+| `view:render` | 整个 `forwardRef` 回调（父阶段，含子阶段） |
 | `view:render:props` | `splitProps` + 解构 + `useHover` |
 | `view:render:style` | `useTransformStyle` + `splitStyle` + `useTextPassThroughValue` + `useLayout` + `useAnimationHooks`（产出 `animationStyle` 也属于算 style） |
 | `view:render:innerProps` | `useInnerProps` |
@@ -574,18 +574,18 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
 | 事件名 | 覆盖代码段 |
 | --- | --- |
-| `simple-view:render:total` | 整个函数 |
+| `simple-view:render` | 整个函数 |
 | `simple-view:render:style` | `splitProps` + `splitStyle`（含 `isBoxSizingAffectingStyle` 副检测） + `useTextPassThroughValue` + `transformBoxSizing` |
 | `simple-view:render:innerProps` | `useInnerProps`（合并 listeners 与最终 style） |
 | `simple-view:render:createElement` | `wrapChildren` + `createElement(View, ...)` 收尾 |
 
 #### 5.3 [mpx-text.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx)
 
-完整版 text，与 §5.1 mpx-view 子阶段对齐（`total / props / style / innerProps / createElement`）：
+完整版 text，与 §5.1 mpx-view 阶段对齐（父阶段及 `props / style / innerProps / createElement` 子阶段）：
 
 | 事件名 | 覆盖代码段 |
 | --- | --- |
-| `text:render:total` | 整个 `forwardRef` 回调 |
+| `text:render` | 整个 `forwardRef` 回调 |
 | `text:render:props` | `useContext(TextPassThroughContext)` + `extendObject` 合并 inherited + 解构 |
 | `text:render:style` | `useTransformStyle` + `extendObject` 合并 inherited textStyle + `splitStyle`（提取 childTextStyle） + `useTextPassThroughValue` + `useNodesRef` |
 | `text:render:innerProps` | `useInnerProps` |
@@ -593,11 +593,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
 #### 5.4 [mpx-simple-text.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-simple-text.tsx)
 
-与 §5.2 mpx-simple-view 子阶段对齐（`total / style / innerProps / createElement`）：
+与 §5.2 mpx-simple-view 阶段对齐（父阶段及 `style / innerProps / createElement` 子阶段）：
 
 | 事件名 | 覆盖代码段 |
 | --- | --- |
-| `simple-text:render:total` | 整个函数 |
+| `simple-text:render` | 整个函数 |
 | `simple-text:render:style` | `useContext(TextPassThroughContext)` + 合并 mergedStyle + `splitStyle`（含 `isBoxSizingAffectingStyle` 副检测） + `transformBoxSizing` + 合并 mergedProps + `useTextPassThroughValue` |
 | `simple-text:render:innerProps` | `useInnerProps`（带 allowFontScaling / 最终 style） |
 | `simple-text:render:createElement` | `wrapChildren` + `createElement(Text, ...)` 收尾 |
@@ -608,11 +608,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
 | 事件名 | 覆盖代码段 |
 | --- | --- |
-| `getStyle:total` | 整个 `__getStyle` 函数 |
-| `getStyle:class` | classString 解析 + 遍历 `__getClassStyle` / `__getAppClassStyle` / externalClasses 查找 |
-| `getStyle:style` | `parseStyleText(staticStyle)` + `normalizeDynamicStyle(dynamicStyle)` + `transformStyleObj(styleObj)` |
+| `instance:render:getStyle` | 整个 `__getStyle` 函数 |
+| `instance:render:getStyle:class` | classString 解析 + 遍历 `__getClassStyle` / `__getAppClassStyle` / externalClasses 查找 |
+| `instance:render:getStyle:style` | `parseStyleText(staticStyle)` + `normalizeDynamicStyle(dynamicStyle)` + `transformStyleObj(styleObj)` |
 
-`getStyle:total` 与两个子阶段并列，子阶段相加 ≈ total，差值代表函数自身骨架（`isNativeStyle` 判定 / `__getSizeCount` / `hide` 分支等）开销。
+`instance:render:getStyle` 是两个子阶段的父阶段，子阶段相加约等于父阶段，差值代表函数自身骨架（`isNativeStyle` 判定 / `__getSizeCount` / `hide` 分支等）开销。该阶段同时包含在 `instance:render` 中，不能与实例 render 父指标相加。
 
 ---
 
@@ -621,7 +621,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 **统一约定**：
 
 - 只测**同步 render 阶段**，不在 `useEffect` 里测 commit 耗时。
-- 统一使用 `scopeStart(name)` / `scopeEnd(id)` 起止包裹（包括 `*:total` 与子阶段），不混用 `mark + measure`。
+- 统一使用 `scopeStart(name)` / `scopeEnd(id)` 起止包裹（包括父阶段与子阶段），不混用 `mark + measure`。
 - 子阶段名固定枚举（见上方各表），不允许临时新加。新增 / 修改子阶段需要同步改本节文档与对应单测期望值。
 
 ### 6. 上报形态
@@ -663,10 +663,10 @@ export const createConsoleReporter = (options = {}): Reporter => (agg) => {
 [mpx perf] 4 buckets / 432 samples
 name                count       sum      avg       max
 ------------------  -----  --------  -------  --------
-view:render:total     120  480.32ms   4.00ms   18.21ms
+view:render           120  480.32ms   4.00ms   18.21ms
 view:render:style     120   92.15ms   0.77ms    3.42ms
-getStyle:total        120   21.08ms   0.18ms    1.10ms
-text:render:total      84    8.42ms   0.10ms    0.55ms
+instance:render:getStyle 120   21.08ms   0.18ms    1.10ms
+text:render            84    8.42ms   0.10ms    0.55ms
 ```
 
 #### 6.2 console reporter 工厂参数（可选）
@@ -702,7 +702,7 @@ if (__mpx_perf__) {
     // agg 是 bus 内部 Map 的引用，不要直接修改；如需保留请自行复制成普通对象。
     const fw: Record<string, AggResult> = {}
     const user: Record<string, AggResult> = {}
-    const FW = /^(view:|simple-view:|text:|simple-text:|getStyle:)/
+    const FW = /^(view:|simple-view:|text:|simple-text:|instance:render:getStyle)/
     for (const [name, s] of agg) (FW.test(name) ? fw : user)[name] = s
     MyAPM.report('mpx_perf_fw',   fw)
     MyAPM.report('mpx_perf_user', user)
@@ -776,7 +776,7 @@ DefinePlugin 把对应常量静态替换为 `false` 后，Terser 会做以下变
 4. `impl.ts` 引用的 `bus.ts` / `reporters/*.ts` 同样级联消失。
 5. `noop.ts` 的空函数被 Terser inline 后调用点也被消除（`scopeStart` 关闭态返回 `-1`，`scopeEnd` 是空函数，整段 `let id = -1; ...; perf.scopeEnd(id)` 被简化为 `let id = -1` 后再被 DCE 完全删除）。
 
-因此完全关闭态产物里既不存在探针代码，也不存在 `'view:render:total'` 这种字符串字面量。半开半闭态下：开启的分组点缀代码进入产物，关闭的分组整段被 DCE（事件名字面量、`scopeStart()` 调用都不残留），impl 模块仍进 bundle。`@mpxjs/perf` 的 `package.json` 设置 `"sideEffects": false` 是这条链路的关键。
+因此完全关闭态产物里既不存在探针代码，也不存在 `'view:render'` 这种字符串字面量。半开半闭态下：开启的分组点缀代码进入产物，关闭的分组整段被 DCE（事件名字面量、`scopeStart()` 调用都不残留），impl 模块仍进 bundle。`@mpxjs/perf` 的 `package.json` 设置 `"sideEffects": false` 是这条链路的关键。
 
 ## 性能影响评估
 
@@ -839,14 +839,14 @@ monorepo 工作区配置：根 `pnpm-workspace.yaml` / `lerna.json` 把 `package
 
 - [lib/index.js](packages/webpack-plugin/lib/index.js) options 归一化新增 `perf` 字段，形态为 `{ enable: boolean, probes: string[] }`；defs 注入 `__mpx_perf__`（总开关）+ `__mpx_perf_framework__` / `__mpx_perf_user__`（按 `probes` 包含关系派生）。`probes` 中出现未知值时抛 `unknown probe` 错误。
 - [lib/global.d.ts](packages/webpack-plugin/lib/global.d.ts) 追加 `declare const __mpx_perf__: boolean`、`declare const __mpx_perf_framework__: boolean` 与 `declare const __mpx_perf_user__: boolean`。
-- [lib/runtime/components/react/mpx-view.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-view.tsx)：按 §5.1 接入 5 个事件名（`view:render:total` + 4 子阶段），参考 §4.1 模板。
-- [lib/runtime/components/react/mpx-simple-view.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-simple-view.tsx)：按 §5.2 接入 4 个事件名（`simple-view:render:total` + 3 子阶段 `style / innerProps / createElement`）。
-- [lib/runtime/components/react/mpx-text.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx)：按 §5.3 接入 5 个事件名（`text:render:total` + 4 子阶段 `props / style / innerProps / createElement`）。
-- [lib/runtime/components/react/mpx-simple-text.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-simple-text.tsx)：按 §5.4 接入 4 个事件名（`simple-text:render:total` + 3 子阶段 `style / innerProps / createElement`）。
+- [lib/runtime/components/react/mpx-view.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-view.tsx)：按 §5.1 接入 5 个事件名（`view:render` 父阶段 + 4 子阶段），参考 §4.1 模板。
+- [lib/runtime/components/react/mpx-simple-view.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-simple-view.tsx)：按 §5.2 接入 4 个事件名（`simple-view:render` 父阶段 + 3 子阶段 `style / innerProps / createElement`）。
+- [lib/runtime/components/react/mpx-text.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx)：按 §5.3 接入 5 个事件名（`text:render` 父阶段 + 4 子阶段 `props / style / innerProps / createElement`）。
+- [lib/runtime/components/react/mpx-simple-text.tsx](packages/webpack-plugin/lib/runtime/components/react/mpx-simple-text.tsx)：按 §5.4 接入 4 个事件名（`simple-text:render` 父阶段 + 3 子阶段 `style / innerProps / createElement`）。
 
 #### `@mpxjs/core`
 
-- [src/platform/builtInMixins/styleHelperMixin.ios.js](packages/core/src/platform/builtInMixins/styleHelperMixin.ios.js)：按 §5.5 接入 3 个事件名（`getStyle:total` + 2 子阶段）。`__getStyle` 被每个 mpx 组件 render 调一次，是除内建组件外测速的核心入口。
+- [src/platform/builtInMixins/styleHelperMixin.ios.js](packages/core/src/platform/builtInMixins/styleHelperMixin.ios.js)：按 §5.5 接入 3 个事件名（`instance:render:getStyle` + 2 子阶段）。`__getStyle` 被每个 mpx 组件 render 调一次，是除内建组件外测速的核心入口。
 
 > 注意：`styleHelperMixin.ios.js` 是 RN 平台特化文件，不影响小程序 / web 产物。其他平台对应的 `styleHelperMixin.js` 不做改动——`__mpx_perf_framework__` 在非 RN mode 下也置为 false 即可（DCE 在其他平台天然不触发）。
 
@@ -854,13 +854,13 @@ monorepo 工作区配置：根 `pnpm-workspace.yaml` / `lerna.json` 把 `package
 
 落地后按以下顺序自检：
 
-1. **完全关闭态零残留**：默认（不传 `perf`）打包一份 RN bundle，全文搜不到 `__mpx_perf_framework__` / `__mpx_perf_user__` / `view:render:total` / `getStyle:total` / `@mpxjs/perf` 等字符串字面量；产物 size 与未加该 PR 的 baseline 字节级一致。
+1. **完全关闭态零残留**：默认（不传 `perf`）打包一份 RN bundle，全文搜不到 `__mpx_perf_framework__` / `__mpx_perf_user__` / `view:render` / `instance:render:getStyle` / `@mpxjs/perf` 等字符串字面量；产物 size 与未加该 PR 的 baseline 字节级一致。
 2. **打开态可用（默认 reporter）**：`perf: { enable: true, probes: ['framework', 'user'] }` 打包，业务 demo **不需要调 `setReporter`**，直接 `if (__mpx_perf__) start(); /* 触发若干渲染 */; if (__mpx_perf__) end()`，end 调用同步在 console 打印一次聚合表（默认 `consoleReporter`）。
 3. **clearReporter 即静默**：打开探针但**调 `clearReporter()`**，console 应无任何 perf 输出，且 JS 堆内存与「关闭态」对比无明显增长。
-4. **半开半闭 DCE 验证**：`{ enable: true, probes: ['framework'] }` 打包，全文搜不到业务侧 user 探针的事件名（如业务前缀 `myBiz:` 字符串字面量）；反向 `{ enable: true, probes: ['user'] }` 时搜不到 `view:render:total` / `getStyle:total` 等框架事件名。
+4. **半开半闭 DCE 验证**：`{ enable: true, probes: ['framework'] }` 打包，全文搜不到业务侧 user 探针的事件名（如业务前缀 `myBiz:` 字符串字面量）；反向 `{ enable: true, probes: ['user'] }` 时搜不到 `view:render` / `instance:render:getStyle` 等框架事件名。
 5. **未知 probe 报错**：`{ enable: true, probes: ['unknownXxx'] }` 打包时编译期抛 `unknown probe` 错误。
-6. **总耗时 ≈ 子阶段之和**：从 console 输出里抽一行 `view:render:total`，对照同周期其他 `view:render:*` 子阶段 sum 求和，差值 < 5%。
-7. **getStyle 接入正确性**：单测打开 framework 探针，构造一个含 staticClass + dynamicStyle 的 mpx 组件，断言 `getStyle:class` / `getStyle:style` 各 count >= 1，`getStyle:total` count 与组件 render 次数一致。
+6. **父阶段耗时 ≈ 子阶段之和**：从 console 输出里抽一行 `view:render`，对照同周期其他 `view:render:*` 子阶段 sum 求和，差值 < 5%。
+7. **getStyle 接入正确性**：单测打开 framework 探针，构造一个含 staticClass + dynamicStyle 的 mpx 组件，断言 `instance:render:getStyle:class` / `instance:render:getStyle:style` 各 count >= 1，`instance:render:getStyle` count 与组件 render 次数一致。
 8. **聚合语义正确性**：start → 多次 scope 同名 → end，断言聚合 Map 该桶的 count = 调用次数、sum = 各次 dur 之和、avg = sum/count、max = 各次 dur 最大值。
 9. **跨窗口 Map 引用安全**：start → scope → end（保存返回的 Map 引用）→ 立即 start → end 一次新窗口，断言旧 Map 引用的桶数据未被覆盖。
 10. **小程序 / web 不受影响**：mode=wx / web 打包，产物内不出现 `__mpx_perf_*__` 残留，跑现有 e2e 用例不退化。
@@ -896,10 +896,10 @@ monorepo 工作区配置：根 `pnpm-workspace.yaml` / `lerna.json` 把 `package
 
 ## 验收清单
 
-- [ ] 不传 `perf` 时打包，产物 size 与未集成方案的 baseline 一致（diff 0 字节），人工抽查无 `__mpx_perf_*__` / `view:render:total` / `setReporter` / `scopeStart` 等字符串残留。
-- [ ] `perf: { enable: true, probes: ['framework', 'user'] }` 且业务**不调 setReporter**（用默认 reporter）+ `start() / 触发渲染 / end()` 后，demo 中能在 console 看到 `view:render:*` / `text:*` / `getStyle:*` 等框架事件 + 业务自定义事件的聚合表。
+- [ ] 不传 `perf` 时打包，产物 size 与未集成方案的 baseline 一致（diff 0 字节），人工抽查无 `__mpx_perf_*__` / `view:render` / `setReporter` / `scopeStart` 等字符串残留。
+- [ ] `perf: { enable: true, probes: ['framework', 'user'] }` 且业务**不调 setReporter**（用默认 reporter）+ `start() / 触发渲染 / end()` 后，demo 中能在 console 看到 `view:render` / `view:render:<phase>` / `text:*` / `instance:render:getStyle` 等框架事件 + 业务自定义事件的聚合表。
 - [ ] `perf: { enable: true, probes: ['framework'] }` 时：产物中无业务 user 探针字符串（如业务前缀 `myBiz:`）；end() 收到的 Map 仅含框架事件名。
-- [ ] `perf: { enable: true, probes: ['user'] }` 时：产物中无 `view:render:total` / `getStyle:total` 等框架事件名；end() 收到的 Map 仅含业务事件名。
+- [ ] `perf: { enable: true, probes: ['user'] }` 时：产物中无 `view:render` / `instance:render:getStyle` 等框架事件名；end() 收到的 Map 仅含业务事件名。
 - [ ] `perf: { enable: true, probes: ['unknownXxx'] }` 时编译期抛 `unknown probe` 错。
 - [ ] 录制窗口外（未 start 或已 end 后）触发探针：`scopeStart` 返回 `-1`、console 无输出、聚合 Map 长度为 0（无内存增长）。
 - [ ] 误调 `end()`（未先 start）：noop，无报错、无 reporter 调用。

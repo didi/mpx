@@ -39,7 +39,6 @@ export interface _ViewProps extends ViewProps {
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 type Size = {
@@ -818,7 +817,7 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, bac
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   // 性能探针 - total
   let idTotal = -1
-  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render:total')
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render')
 
   // ───── props 阶段 ─────
   let idProps = -1
@@ -838,7 +837,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     animation,
-    catchtransitionend,
     bindtransitionend
   } = props
 
@@ -900,7 +898,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     animation,
     enableAnimation,
     style: viewStyle,
-    catchtransitionend,
     bindtransitionend
   })
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
@@ -927,7 +924,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       'enable-animation',
       'enable-fast-image',
       'animation',
-      'catchtransitionend',
       'bindtransitionend'
     ],
     {

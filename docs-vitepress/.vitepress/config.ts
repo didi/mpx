@@ -79,7 +79,7 @@ const sidebar: ExtendedSidebar = {
 
         { text: '国际化 i18n', link: '/guide/advance/i18n' },
         { text: '包体积分析', link: '/guide/advance/size-report' },
-        { text: 'RN 运行时测速', link: '/guide/advance/perf' },
+        { text: '跨端运行时测速', link: '/guide/advance/perf' },
         { text: '图像资源处理', link: '/guide/advance/image-process' },
         { text: '原生渐进迁移', link: '/guide/advance/progressive' },
         {
@@ -208,6 +208,10 @@ const sidebar: ExtendedSidebar = {
             {
               text: 'arrayBufferToBase64',
               link: '/api-proxy/base/arrayBufferToBase64',
+            },
+            {
+              text: 'canIUse',
+              link: '/api-proxy/base/canIUse',
             },
             {
               text: '系统',
