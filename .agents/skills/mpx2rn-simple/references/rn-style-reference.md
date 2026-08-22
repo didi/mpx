@@ -556,13 +556,17 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 
 ### 文本与字体
 
-**注意**：文本样式需遵循继承规则。
+**注意：**
+
+- 文本样式需遵循继承规则。
+- `font-family` 仅支持单值；传入多字体 fallback 时会取首值并去除引号。
+- RN 输出不支持 `@font-face`；编译时会发出专用 warning 并移除该声明。如需使用自定义字体，须先在 RN 宿主环境中安装，再通过 `font-family` 引用。
 
 | 属性 | 值类型 | 默认值 | 说明 | 示例 |
 | --- | --- | --- | --- | --- |
 | `color` | `color` | - | 文本颜色 | `color: #333`；`color: rgba(0, 0, 0, 0.8)` |
 | `font` | `[font-style] [small-caps] [font-weight] font-size [ / line-height ] font-family` | - | 字体简写，展开为字体相关长属性；`font-size` 与 `font-family` 必填，`/` 两侧可有空格 | `font: italic bold 16px / 1.5 Arial` |
-| `font-family` | `string` | - | 字体（仅支持单字体），多字体 fallback 自动取首值并去除引号 | `font-family: PingFangSC-Regular` |
+| `font-family` | `string` | - | 字体 | `font-family: PingFangSC-Regular` |
 | `font-size` | `length` \| `%` | - | 字体大小；百分比按文本透传字号基准解析 | `font-size: 28rpx`；`font-size: 16px`；`font-size: 120%` |
 | `font-weight` | `normal` \| `bold` \| `100-900` | `normal` | 字体粗细 | `font-weight: bold`；`font-weight: 500` |
 | `font-style` | `normal` \| `italic` | `normal` | 字体样式 | `font-style: italic` 斜体 |

@@ -1,0 +1,205 @@
+<template>
+  <view
+    class="segmented-control"
+    wx:class="{{ { 'segmented-control-disabled': disabled } }}"
+  >
+    <text class="segmented-control-label">{{label}}</text>
+    <text class="segmented-control-current">当前选择：{{selectedLabel || '暂无选择'}}</text>
+
+    <view wx:if="{{options.length}}" class="segmented-control-options">
+      <view
+        wx:for="{{options}}"
+        wx:key="value"
+        class="segmented-control-option"
+        wx:class="{{ {
+          'segmented-control-option-selected': item.value === selectedValue && !disabled && !item.disabled,
+          'segmented-control-option-disabled': disabled || item.disabled,
+          'segmented-control-option-selected-disabled': item.value === selectedValue && (disabled || item.disabled)
+        } }}"
+        hover-class="{{disabled || item.disabled ? 'none' : 'segmented-control-option-pressed'}}"
+        hover-start-time="{{0}}"
+        hover-stay-time="{{100}}"
+        bindtap="handleOptionTap(item)"
+      >
+        <text
+          class="segmented-control-option-text"
+          wx:class="{{ {
+            'segmented-control-option-text-selected': item.value === selectedValue && !disabled && !item.disabled,
+            'segmented-control-option-text-disabled': disabled || item.disabled,
+            'segmented-control-option-text-selected-disabled': item.value === selectedValue && (disabled || item.disabled)
+          } }}"
+        >{{item.label}}</text>
+      </view>
+    </view>
+    <view wx:else class="segmented-control-empty">
+      <text class="segmented-control-empty-text">暂无可选项</text>
+    </view>
+  </view>
+</template>
+
+<script setup>
+  import { computed, ref, toRefs, watch } from '@mpxjs/core'
+
+  const props = defineProps({
+    controlKey: {
+      type: String,
+      value: ''
+    },
+    options: {
+      type: Array,
+      value: []
+    },
+    value: {
+      type: String,
+      value: ''
+    },
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    label: {
+      type: String,
+      value: '请选择'
+    }
+  })
+  const { controlKey, options, value, disabled, label } = toRefs(props)
+  const context = useContext()
+  const selectedValue = ref(value.value)
+  const selectedLabel = computed(() => {
+    const selectedOption = options.value.find((option) => option.value === selectedValue.value)
+    return selectedOption ? selectedOption.label : ''
+  })
+
+  watch(value, (nextValue) => {
+    selectedValue.value = nextValue
+  })
+
+  function handleOptionTap (option) {
+    if (disabled.value || option.disabled) return
+
+    selectedValue.value = option.value
+    context.triggerEvent('change', {
+      controlKey: controlKey.value,
+      value: option.value
+    })
+  }
+
+  defineExpose({
+    options,
+    disabled,
+    label,
+    selectedValue,
+    selectedLabel,
+    handleOptionTap
+  })
+</script>
+
+<style>
+  .segmented-control {
+    display: flex;
+    flex-direction: column;
+    padding: 32rpx;
+    background-color: #ffffff;
+    border: 2rpx solid #e2e8f0;
+    border-radius: 20rpx;
+  }
+
+  .segmented-control-disabled {
+    background-color: #f8fafc;
+  }
+
+  .segmented-control-label {
+    color: #0f172a;
+    font-size: 30rpx;
+    font-weight: bold;
+    line-height: 42rpx;
+  }
+
+  .segmented-control-current {
+    margin-top: 8rpx;
+    color: #64748b;
+    font-size: 24rpx;
+    line-height: 34rpx;
+  }
+
+  .segmented-control-options {
+    display: flex;
+    flex-direction: row;
+    margin-top: 24rpx;
+    padding: 4rpx;
+    background-color: #e2e8f0;
+    border-radius: 16rpx;
+  }
+
+  .segmented-control-option {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-height: 72rpx;
+    margin: 4rpx;
+    padding: 8rpx 16rpx;
+    background-color: #ffffff;
+    border: 2rpx solid transparent;
+    border-radius: 12rpx;
+  }
+
+  .segmented-control-option-selected {
+    background-color: #2563eb;
+    border-color: #1d4ed8;
+  }
+
+  .segmented-control-option-disabled {
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+  }
+
+  .segmented-control-option-selected-disabled {
+    background-color: #94a3b8;
+    border-color: #64748b;
+  }
+
+  .segmented-control-option-pressed {
+    background-color: #bfdbfe;
+    border-color: #60a5fa;
+  }
+
+  .segmented-control-option-text {
+    color: #334155;
+    font-size: 26rpx;
+    line-height: 36rpx;
+    text-align: center;
+  }
+
+  .segmented-control-option-text-selected {
+    color: #ffffff;
+    font-weight: bold;
+  }
+
+  .segmented-control-option-text-disabled {
+    color: #94a3b8;
+  }
+
+  .segmented-control-option-text-selected-disabled {
+    color: #f8fafc;
+    font-weight: bold;
+  }
+
+  .segmented-control-empty {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-height: 80rpx;
+    margin-top: 24rpx;
+    background-color: #f8fafc;
+    border-radius: 12rpx;
+  }
+
+  .segmented-control-empty-text {
+    color: #94a3b8;
+    font-size: 24rpx;
+    line-height: 34rpx;
+  }
+</style>

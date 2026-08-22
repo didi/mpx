@@ -1,8 +1,14 @@
 # Mpx2RN 编译校验脚本
 
-编译校验脚本随 skill 分发，位于 `<skill-root>/scripts/compile-validate.js`。使用指向 skill 目录的实际路径调用，不要在宿主项目根目录或 `node_modules` 中查找。
+修改或新建 `.mpx` 文件后，必须使用 skill 随附的 `scripts/compile-validate.js` 进行真实编译校验。调用时使用指向 skill 目录的实际路径 `<skill-root>/scripts/compile-validate.js`，不要在宿主项目根目录或 `node_modules` 中查找该脚本。
 
 脚本基于宿主项目安装的 `@mpxjs/mpx-cli-service` 进行真实编译：从输入 `.mpx` 文件向上探测项目根目录，加载工程编译配置，按指定 target 编译，并按 `style / template / script / json / dependency / other` 聚合错误与警告。
+
+## 校验要求
+
+1. 按任务覆盖全部目标平台；页面入口添加 `--type=page`，组件入口使用默认的 `--type=component`。
+2. 错误或警告都会使校验失败。按输出的 `category` 回到对应维度修正并重新运行，直至无错误、无警告。
+3. 编译校验通过后，运行宿主项目针对改动文件的 ESLint 检查，例如 `npx eslint path/to/component.mpx`，确保无 lint 错误与警告。
 
 ## 命令行参数
 
@@ -24,8 +30,8 @@
 # 单组件，默认 target=ios
 node <skill-root>/scripts/compile-validate.js src/components/foo.mpx
 
-# 页面入口
-node <skill-root>/scripts/compile-validate.js src/pages/index.mpx --type=page --target=ios
+# 页面入口，按任务覆盖全部目标平台
+node <skill-root>/scripts/compile-validate.js src/pages/index.mpx --type=page --target=wx,ios,web
 
 # 跨端多目标校验
 node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=wx,ios,web
@@ -37,4 +43,4 @@ node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=io
 node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios --no-ignore-sub-components
 ```
 
-校验失败时按错误或警告的 `category` 回到对应维度定位并修正，再次运行直至无错误、无警告。普通文本输出和 `--json` 结果都会包含警告；汇总中的 `total` 与 `byCategory` 同时统计错误和警告。
+普通文本输出和 `--json` 结果都会包含警告；汇总中的 `total` 与 `byCategory` 同时统计错误和警告。

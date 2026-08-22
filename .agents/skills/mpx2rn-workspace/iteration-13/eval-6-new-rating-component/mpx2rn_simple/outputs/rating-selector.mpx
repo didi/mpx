@@ -1,0 +1,143 @@
+<template>
+  <view class="rating-selector">
+    <text class="rating-label">{{ label }}</text>
+    <view class="rating-stars">
+      <view
+        wx:for="{{ starItems }}"
+        wx:key="*this"
+        class="rating-star"
+        wx:class="{{ { 'rating-star-selected': item <= currentValue } }}"
+        hover-class="{{ readonly ? 'none' : 'rating-star-hover' }}"
+        hover-stay-time="{{ 100 }}"
+        bindtap="handleSelect(item)"
+      >
+        <text
+          class="rating-star-symbol"
+          wx:class="{{ { 'rating-star-symbol-selected': item <= currentValue } }}"
+        >★</text>
+      </view>
+    </view>
+    <text class="rating-score">{{ currentValue }} / {{ max }}</text>
+    <component
+      is="{{ tipComponent }}"
+      range="rating-editable-tip,rating-readonly-tip"
+    />
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  props: {
+    ratingKey: {
+      type: String,
+      value: ''
+    },
+    value: {
+      type: Number,
+      value: 0
+    },
+    max: {
+      type: Number,
+      value: 5
+    },
+    readonly: {
+      type: Boolean,
+      value: false
+    },
+    label: {
+      type: String,
+      value: '请评分'
+    }
+  },
+  data () {
+    return {
+      currentValue: this.value
+    }
+  },
+  computed: {
+    starItems () {
+      return Array.from({ length: this.max }, (item, index) => index + 1)
+    },
+    tipComponent () {
+      return this.readonly ? 'rating-readonly-tip' : 'rating-editable-tip'
+    }
+  },
+  watch: {
+    value (value) {
+      this.currentValue = value
+    }
+  },
+  methods: {
+    handleSelect (value) {
+      if (this.readonly) return
+      this.currentValue = value
+      this.triggerEvent('change', {
+        ratingKey: this.ratingKey,
+        value
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.rating-selector {
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  background-color: #ffffff;
+}
+
+.rating-label {
+  color: #1f2937;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.rating-stars {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.rating-star {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72rpx;
+  height: 72rpx;
+  margin-right: 12rpx;
+  border: 2rpx solid #d1d5db;
+  border-radius: 36rpx;
+  background-color: #f3f4f6;
+}
+
+.rating-star-selected {
+  border-color: #f59e0b;
+  background-color: #fef3c7;
+}
+
+.rating-star-hover {
+  opacity: 0.65;
+  transform: scale(0.92);
+}
+
+.rating-star-symbol {
+  color: #9ca3af;
+  font-size: 44rpx;
+}
+
+.rating-star-symbol-selected {
+  color: #f59e0b;
+}
+
+.rating-score {
+  margin-top: 16rpx;
+  color: #4b5563;
+  font-size: 28rpx;
+}
+</style>

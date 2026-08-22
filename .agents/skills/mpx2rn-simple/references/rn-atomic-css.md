@@ -146,7 +146,7 @@ export default defineConfig({
 - container query、supports、scope、CSS layer variants
 - placeholder、motion、contrast、space/divide 等 variants
 
-这些交互伪类 variant 当前可能会生成带伪类的选择器并进入编译产物，但模板中的原子类无法匹配带伪类的样式键，运行时不会生效，也可能不会产生编译错误。其中 `hover:` 不会自动转换为组件 `hover-style`。需要按下态时，使用 Mpx 内建组件的 `hover-class` 指向普通原子类：
+这些交互伪类 variant 当前可能会生成带伪类的选择器并进入编译产物，但模板中的原子类无法匹配带伪类的样式键，运行时不会生效，也可能不会产生编译错误。其中 `hover:` 不会自动转换为组件 `hover-style`。需要按下态时，仅可在 Mpx 内建的 `view`、`button`、`navigator` 和 `cover-view` 组件上使用 `hover-class` 指向普通原子类：
 
 ```html
 <view class="bg-white" hover-class="bg-blue-500/10"></view>
@@ -301,7 +301,7 @@ module.exports = defineConfig({
 - [ ] variant group 展开后的所有 utility 与 variant 均在 RN 支持范围内。
 - [ ] directives 中只使用 RN 支持的 utility、属性、值、选择器和媒体查询。
 - [ ] 所有工具类及其底层 CSS 均在 RN 支持范围内。
-- [ ] 仅使用 RN 支持的 variants，未使用 `hover:`、`active:`、`focus:` 等交互伪类 variant；按下态使用 `hover-class` 指向普通原子类。
+- [ ] 仅使用 RN 支持的 variants，未使用 `hover:`、`active:`、`focus:` 等交互伪类 variant；按下态仅在 `view`、`button`、`navigator` 和 `cover-view` 上使用 `hover-class` 指向普通原子类。
 - [ ] 颜色透明度使用 `color/alpha`，未使用独立 `*-opacity-*` 组合。
 - [ ] filter 已按目标 RN 版本与设备验证。
 - [ ] 构建中不存在 `[Mpx Unocss]`、`[Mpx style error]` 或相关 warning。

@@ -1,0 +1,170 @@
+<template>
+  <view class="segmented-control">
+    <view class="control-header">
+      <text class="control-title">{{ label }}</text>
+      <text class="control-current">当前选择：{{ selectedLabel }}</text>
+    </view>
+    <view class="segment-list">
+      <view
+        wx:for="{{ options }}"
+        wx:key="value"
+        class="segment-item"
+        wx:class="{{ {
+          'segment-item-disabled': disabled || item.disabled,
+          'segment-item-selected': item.value === currentValue
+        } }}"
+        hover-class="{{ disabled || item.disabled ? 'none' : 'segment-item-pressed' }}"
+        hover-stay-time="{{ 100 }}"
+        bindtap="handleSelect(item)"
+      >
+        <text
+          class="segment-label"
+          wx:class="{{ {
+            'segment-label-disabled': disabled || item.disabled,
+            'segment-label-selected': item.value === currentValue
+          } }}"
+        >{{ item.label }}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { computed, ref, toRefs, watch } from '@mpxjs/core'
+
+const props = defineProps({
+  controlKey: {
+    type: String,
+    value: ''
+  },
+  options: {
+    type: Array,
+    value: []
+  },
+  value: {
+    type: String,
+    value: ''
+  },
+  disabled: {
+    type: Boolean,
+    value: false
+  },
+  label: {
+    type: String,
+    value: '请选择'
+  }
+})
+
+const { controlKey, options, value, disabled, label } = toRefs(props)
+const context = useContext()
+const currentValue = ref(value.value)
+const selectedLabel = computed(() => {
+  const selectedOption = options.value.find(option => option.value === currentValue.value)
+  return selectedOption ? selectedOption.label : '未选择'
+})
+
+watch(value, (nextValue) => {
+  currentValue.value = nextValue
+})
+
+function handleSelect (option) {
+  if (disabled.value || option.disabled) return
+
+  currentValue.value = option.value
+  context.triggerEvent('change', {
+    controlKey: controlKey.value,
+    value: option.value
+  })
+}
+
+defineExpose({
+  options,
+  disabled,
+  label,
+  currentValue,
+  selectedLabel,
+  handleSelect
+})
+</script>
+
+<style>
+.segmented-control {
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  background-color: #ffffff;
+}
+
+.control-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.control-title {
+  flex-shrink: 1;
+  color: #1f2329;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.control-current {
+  flex-shrink: 1;
+  margin-left: 20rpx;
+  color: #646a73;
+  font-size: 24rpx;
+  text-align: right;
+}
+
+.segment-list {
+  display: flex;
+  flex-direction: row;
+  padding: 6rpx;
+  border-radius: 14rpx;
+  background-color: #f2f3f5;
+}
+
+.segment-item {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 68rpx;
+  padding: 12rpx 10rpx;
+  border-radius: 10rpx;
+  background-color: #f2f3f5;
+}
+
+.segment-item-disabled {
+  opacity: 0.45;
+  background-color: #e5e6eb;
+}
+
+.segment-item-selected {
+  background-color: #3370ff;
+}
+
+.segment-item-pressed {
+  opacity: 0.72;
+  background-color: #8fb0ff;
+}
+
+.segment-label {
+  color: #4e5969;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.segment-label-disabled {
+  color: #86909c;
+}
+
+.segment-label-selected {
+  color: #ffffff;
+  font-weight: bold;
+}
+</style>

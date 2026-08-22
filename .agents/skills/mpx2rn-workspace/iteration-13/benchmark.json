@@ -1,0 +1,2565 @@
+{
+  "metadata": {
+    "skill_name": "mpx2rn eval comparison",
+    "skill_path": "/Users/didi/work/mpx/.agents/skills/mpx2rn",
+    "executor_model": "gpt-5.6-sol (high)",
+    "analyzer_model": "gpt-5.6-sol (high)",
+    "timestamp": "2026-08-22T08:48:41Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s0",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b\u540e\u4ee3\u9009\u62e9\u5668\uff08\u5982 .parent .child\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s1",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u4f7f\u7528 display: grid\uff0c\u6539\u4e3a Flex \u5e03\u5c40",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s2",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b ::before \u4f2a\u5143\u7d20",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s3",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b :active \u4f2a\u7c7b\uff0c\u6539\u7528 hover-class",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s4",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b :first-child \u4f2a\u7c7b",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s5",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b + \u76f8\u90bb\u5144\u5f1f\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s6",
+          "text": "\u6837\u5f0f\uff1a\u6570\u503c\u578b font-weight\uff08500/600\uff09\u66ff\u6362\u4e3a bold/normal",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s7",
+          "text": "\u6837\u5f0f\uff1atext-overflow/white-space \u4f7f\u7528\u53cc\u8f68\u9002\u914d\uff0cRN \u7aef\u4f7f\u7528 numberOfLines",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s8",
+          "text": "\u6a21\u677f\uff1a\u4f7f\u7528\u771f\u5b9e\u8282\u70b9\u66ff\u4ee3 ::before \u4f2a\u5143\u7d20",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s9",
+          "text": "\u6837\u5f0f\uff1a\u6761\u4ef6\u7f16\u8bd1\u7ed3\u675f\u6807\u8bb0\u4f7f\u7528 @mpx-endif\uff0c\u4e0d\u4f7f\u7528 @mpx-end-if",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s10",
+          "text": "\u6837\u5f0f\uff1a\u79fb\u9664\u6ce8\u91ca\u540e\u4e0d\u5b58\u5728\u7a7a\u9009\u62e9\u5668\u89c4\u5219",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s11",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b > \u5b50\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s12",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b .a.b \u591a\u7c7b\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s13",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef tag-highlight \u573a\u666f\u4e0d\u5305\u542b + \u76f8\u90bb\u5144\u5f1f\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s14",
+          "text": "\u6a21\u677f\uff1awx:class \u5bf9\u8c61\u952e\u4fdd\u7559\u6a2a\u6746\u7c7b\u540d tag-highlight\uff0c\u4e0d\u8f6c\u6362\u4e3a tagHighlight",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 10,
+        "failed": 0,
+        "total": 10,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "t0",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t1",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u4f20\u53c2\uff0c\u4e0d\u4f7f\u7528 data- \u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t2",
+          "text": "\u6a21\u677f\uff1aMustache \u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5\uff0cgetStatusColor/getStatusText \u6539\u4e3a computed \u6216 wx:style \u7ed1\u5b9a",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t3",
+          "text": "\u6a21\u677f\uff1a\u9875\u9762\u6eda\u52a8\u6539\u7528 scroll-view\uff0c\u79fb\u9664 onPullDownRefresh/onReachBottom",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t4",
+          "text": "\u6a21\u677f\uff1ascroll-view \u58f0\u660e bindscrolltolower \u6216\u7b49\u6548\u6eda\u52a8\u4e8b\u4ef6",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t5",
+          "text": "\u811a\u672c\uff1a\u6240\u6709 wx.xxx API \u66ff\u6362\u4e3a mpx.xxx",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t6",
+          "text": "\u811a\u672c\uff1a\u4e0d\u4f7f\u7528 e.target.dataset\uff0c\u4e8b\u4ef6\u53c2\u6570\u6539\u4e3a\u5185\u8054\u4f20\u9012",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t7",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b .btn-default .btn-text \u590d\u5408\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t8",
+          "text": "\u6a21\u677f\uff1awx:style \u5bf9\u8c61\u952e\u4f7f\u7528\u4e0d\u52a0\u5f15\u53f7\u7684\u9a7c\u5cf0\u5199\u6cd5\uff0c\u4e0d\u4f7f\u7528\u5f15\u53f7\u6216\u6a2a\u6746\u5199\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t9",
+          "text": "\u6a21\u677f\uff1aHover \u80fd\u529b\u4e0d\u540c\u7684\u76f8\u90bb\u6761\u4ef6\u5206\u652f\u4f7f\u7528\u4e0d\u540c\u7684\u6709\u6548 key\uff0c\u6216\u8ba9\u4e24\u4e2a\u5206\u652f\u59cb\u7ec8\u5b58\u5728\u6709\u6548 hover-class",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "j0",
+          "text": "\u811a\u672c\uff1arequest/navigateTo/showModal/getStorageSync/setStorageSync/removeStorageSync/showToast/reLaunch \u7b49 wx.xxx API \u5168\u90e8\u66ff\u6362\u4e3a mpx.xxx",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j1",
+          "text": "\u811a\u672c\uff1a\u79fb\u9664 onShareTimeline \u6216\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j2",
+          "text": "\u811a\u672c\uff1a\u79fb\u9664 onTabItemTap \u6216\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j3",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb setTabBarBadge/removeTabBarBadge\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j4",
+          "text": "\u811a\u672c\uff1a\u9694\u79bb\u6216\u66ff\u6362 wx.getUserProfile\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j5",
+          "text": "\u811a\u672c\uff1a\u4e0d\u4f7f\u7528 e.target.dataset\uff0c\u4e8b\u4ef6\u53c2\u6570\u6539\u4e3a\u5185\u8054\u4f20\u9012\u6216\u4f7f\u7528 e.currentTarget.dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j7",
+          "text": "JSON\uff1a\u9488\u5bf9 RN \u5904\u7406 enablePullDownRefresh\uff08RN \u9875\u9762\u9ed8\u8ba4\u4e0d\u53ef\u6eda\u52a8\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j8",
+          "text": "\u6a21\u677f\uff1a\u79fb\u9664 data- \u5c5e\u6027\u5e76\u4f7f\u7528\u4e8b\u4ef6\u5185\u8054\u4f20\u53c2",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j9",
+          "text": "\u811a\u672c\uff1a\u4fdd\u7559 RN \u652f\u6301\u7684 onShareAppMessage\uff0c\u4e0d\u5e94\u5220\u9664",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 11,
+        "failed": 0,
+        "total": 11,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "g0",
+          "text": "\u6837\u5f0f\uff1alinear-gradient \u4e2d\u7684 transparent \u66ff\u6362\u4e3a\u76ee\u6807\u989c\u8272\u7684 rgba \u5f62\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g1",
+          "text": "\u6837\u5f0f\uff1adisplay:none \u66ff\u6362\u4e3a width:0;height:0;overflow:hidden \u6216 wx:if",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g2",
+          "text": "\u6837\u5f0f\uff1atransition-property:all \u66ff\u6362\u4e3a\u5177\u4f53\u5c5e\u6027\u540d",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g3",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 background-image \u6240\u5728\u7684 view \u4f7f\u7528 RN \u5c5e\u6027\u6761\u4ef6\u7f16\u8bd1\u6dfb\u52a0 enable-background",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g4",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 transition \u6240\u5728\u7684 view \u4f7f\u7528 RN \u5c5e\u6027\u6761\u4ef6\u7f16\u8bd1\u6dfb\u52a0 enable-animation",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g5",
+          "text": "\u811a\u672c\uff1a\u751f\u547d\u5468\u671f\u94a9\u5b50\u5728 setup \u4e2d\u540c\u6b65\u6ce8\u518c\uff0c\u4e0d\u5728\u5f02\u6b65\u56de\u8c03\u4e2d\u6ce8\u518c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g6",
+          "text": "\u811a\u672c\uff1arelativeTo \u4f7f\u7528\u7b80\u5355\u9009\u62e9\u5668\uff0c\u4e0d\u4f7f\u7528\u590d\u5408\u6216\u540e\u4ee3\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g7",
+          "text": "JSON\uff1a\u6761\u4ef6\u7f16\u8bd1\u914d\u7f6e\u4f7f\u7528 script name=\"json\" \u683c\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g8",
+          "text": "\u6837\u5f0f\uff1a\u5e26 bindtap \u7684\u5143\u7d20\u4e0d\u8bbe\u7f6e opacity:0\uff0c\u907f\u514d iOS \u4e8b\u4ef6\u5931\u6548",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g9",
+          "text": "\u6837\u5f0f\uff1a@keyframes \u901a\u8fc7\u6761\u4ef6\u7f16\u8bd1\u9650\u5236\u5728\u975e RN \u5e73\u53f0\uff0c\u6216\u66ff\u6362\u4e3a transition",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g10",
+          "text": "\u6a21\u677f\uff1aCSS \u53d8\u91cf\u80fd\u529b\u4e0d\u540c\u7684\u76f8\u90bb\u6761\u4ef6\u5206\u652f\u4f7f\u7528\u4e0d\u540c\u7684 RN key\uff0c\u6216\u5728\u4e24\u4e2a\u5206\u652f\u90fd\u7528 RN enable-var \u9884\u58f0\u660e\u4fdd\u6301\u80fd\u529b\u7a33\u5b9a",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 11,
+        "failed": 0,
+        "total": 11,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "l1",
+          "text": "\u6837\u5f0f\uff1aposition:sticky \u66ff\u6362\u4e3a sticky-header \u65b9\u6848",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l2",
+          "text": "\u6837\u5f0f\uff1a\u4fdd\u7559 /*use rpx*/ \u548c /*use px*/ \u5355\u4f4d\u8f6c\u6362\u6ce8\u91ca",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l3",
+          "text": "\u6837\u5f0f\uff1abackground-image \u4e0d\u5e94\u7528\u4e8e text \u5143\u7d20\u7c7b",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l5",
+          "text": "\u6a21\u677f\uff1ascroll-into-view \u76ee\u6807\u6dfb\u52a0 wx:ref",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l6",
+          "text": "\u6a21\u677f\uff1acreateSelectorQuery \u76ee\u6807\u6dfb\u52a0\u7a7a wx:ref",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l7",
+          "text": "\u811a\u672c\uff1a\u9009\u62e9\u5668 API \u4ec5\u4f7f\u7528 #id \u6216 .class \u7b80\u5355\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l8",
+          "text": "\u811a\u672c\uff1a\u975e\u89e6\u6478\u4e8b\u4ef6\u4e0d\u4f7f\u7528 catch \u524d\u7f00",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l9",
+          "text": "\u6837\u5f0f\uff1aradial-gradient \u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\u6216\u66ff\u6362",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l10",
+          "text": "\u6837\u5f0f\uff1a\u76f8\u90bb\u666e\u901a\u5757\u7ea7\u5144\u5f1f .chart-title-wrapper\uff08margin-bottom:24rpx\uff09\u4e0e .chart-container\uff08margin-top:12rpx\uff09\u7684\u6298\u53e0\u95f4\u8ddd\u5f52\u5230\u5355\u4fa7\uff0c\u4fdd\u6301 24rpx",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l11",
+          "text": "\u6837\u5f0f\uff1a\u7236\u5b50\u540c\u5411 margin \u6298\u53e0\u7684 .detail-section\uff08margin-top:20rpx\uff09\u4e0e\u9996\u5b50\u5143\u7d20 .detail-header\uff08margin-top:12rpx\uff09\u5f52\u5230\u7236\u5143\u7d20\u4fa7\uff0c\u4fdd\u6301 20rpx \u5e76\u6e05\u9664\u5b50\u5143\u7d20\u9876\u90e8 margin",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l12",
+          "text": "\u6837\u5f0f\uff1a.stats-section \u7684 flex item \u901a\u8fc7 .stat-card margin \u6216\u5305\u88c5\u5c42 margin/padding \u4fdd\u7559\u4e0a\u4e0b 16rpx \u95f4\u8ddd\uff0c\u4e0d\u6309 margin \u6298\u53e0\u573a\u666f\u5f52\u96f6",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 10,
+        "failed": 0,
+        "total": 10,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "c0",
+          "text": "\u6837\u5f0f\uff1a@mpx-if \u5305\u88f9\u5b8c\u6574\u89c4\u5219\uff0c\u4e0d\u4ea7\u751f\u7a7a\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c1",
+          "text": "\u6837\u5f0f\uff1aRN\uff08ios\uff09\u8f93\u51fa\u7684 font-family \u4f7f\u7528\u5355\u4e00\u5b57\u4f53\u540d",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c2",
+          "text": "\u6837\u5f0f\uff1a\u7edf\u4e00\u8bbe\u7f6e border-style\uff0c\u4e0d\u4f7f\u7528\u5355\u8fb9\u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c4",
+          "text": "\u6a21\u677f\uff1aselectComponent \u76ee\u6807\u81ea\u5b9a\u4e49\u7ec4\u4ef6\u6dfb\u52a0 wx:ref",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c5",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 CSS \u53d8\u91cf\u6240\u5728\u5143\u7d20\u8bbe\u7f6e enable-var",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c6",
+          "text": "\u811a\u672c\uff1asetup \u5c5e\u6027\u5bf9\u8c61\u4e0d\u76f4\u63a5\u89e3\u6784\uff1b\u6309\u5b57\u6bb5\u89e3\u6784\u65f6\u901a\u8fc7 toRefs/toRef \u4fdd\u6301\u54cd\u5e94\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c7",
+          "text": "\u6837\u5f0f\uff1abackground-repeat \u4ec5\u4f7f\u7528 no-repeat",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c8",
+          "text": "JSON\uff1a\u6761\u4ef6\u7f16\u8bd1\u4f7f\u7528 if(__mpx_mode__) \u8fd0\u884c\u65f6\u5224\u65ad\uff0c\u4e0d\u4f7f\u7528\u6ce8\u91ca\u8bed\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c9",
+          "text": "\u6837\u5f0f\uff1aiOS \u8f93\u51fa\u4fdd\u7559 dashed text-decoration-style \u548c text-decoration-color",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c10",
+          "text": "\u811a\u672c\uff1aonLoad \u4f7f\u7528\u7b2c\u4e8c\u4e2a\u53c2\u6570 decodedQuery",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "n0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u4e3a\u5305\u542b template\u3001\u666e\u901a script \u548c style \u7684\u5b8c\u6574\u7ec4\u4ef6 SFC\uff0c\u5e76\u4f7f\u7528 createComponent \u9009\u9879\u5f0f API",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n1",
+          "text": "\u811a\u672c\uff1a\u901a\u8fc7 properties \u6216 props \u5b9a\u4e49 ratingKey/value/max/readonly/label\uff0c\u5e76\u4f7f\u7528 data/computed/watch/methods \u7ec4\u7ec7\u903b\u8f91",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n2",
+          "text": "\u529f\u80fd\uff1a\u6839\u636e max \u6e32\u67d3\u5e26 key \u7684\u661f\u7ea7\u5217\u8868\uff0c\u5e76\u5728\u89c6\u89c9\u4e0a\u533a\u5206\u9009\u4e2d\u72b6\u6001",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n3",
+          "text": "\u529f\u80fd\uff1a\u70b9\u51fb\u5904\u7406\u5668\u6821\u9a8c readonly\uff0c\u5e76\u901a\u8fc7 change \u4e8b\u4ef6\u4f20\u51fa ratingKey \u548c\u9009\u4e2d\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n4",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 data \u4fdd\u5b58\u672c\u5730\u8bc4\u5206\u3001watch \u540c\u6b65 value\uff0c\u4e14\u5b9e\u4f8b\u6570\u636e\u952e\u4e0d\u4f7f\u7528 id/data/dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n5",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n6",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n7",
+          "text": "\u6a21\u677f\uff1aMustache \u8868\u8fbe\u5f0f\u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n8",
+          "text": "\u6a21\u677f\uff1a\u7528\u6237\u53ef\u89c1\u7684\u6807\u7b7e\u3001\u661f\u7ea7\u548c\u5206\u6570\u5747\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n9",
+          "text": "\u6837\u5f0f\uff1aRN \u8f93\u51fa\u4ec5\u4f7f\u7528\u53d7\u652f\u6301\u7684\u5355\u7c7b\u3001page \u6216 :host \u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n10",
+          "text": "\u6837\u5f0f\uff1a\u661f\u7ea7\u884c\u663e\u5f0f\u4f7f\u7528 flex-direction:row\uff0c\u4e14\u4e0d\u5305\u542b\u4e0d\u652f\u6301\u7684 CSS \u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n11",
+          "text": "\u4ea4\u4e92\uff1a\u70b9\u51fb\u76ee\u6807\u4f7f\u7528 hover-class\uff0c\u6837\u5f0f\u4e2d\u4e0d\u5305\u542b :active",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n12",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n13",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 component \u4f7f\u7528 is \u5207\u6362\u53ea\u8bfb/\u53ef\u7f16\u8f91\u63d0\u793a\uff0c\u5e76\u7528 range \u7cbe\u786e\u58f0\u660e\u4e24\u4e2a\u5019\u9009\u7ec4\u4ef6",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n14",
+          "text": "\u6837\u5f0f\uff1a\u901a\u8fc7 style \u4e2d\u7684\u8bed\u4e49\u5316\u666e\u901a class \u5b9e\u73b0\uff0c\u4e0d\u4f7f\u7528 UnoCSS \u6216\u539f\u5b50 utility class",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 14,
+        "failed": 0,
+        "total": 14,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "u0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u4e3a\u5305\u542b template\u3001script setup \u548c style \u7684\u5b8c\u6574\u7ec4\u4ef6 SFC",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u1",
+          "text": "\u811a\u672c\uff1adefineProps \u5b9a\u4e49 controlKey/options/value/disabled/label\uff0c\u5e76\u901a\u8fc7 defineExpose \u66b4\u9732\u6a21\u677f\u7ed1\u5b9a",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u2",
+          "text": "\u811a\u672c\uff1adefineProps \u8fd4\u56de\u7684\u5c5e\u6027\u5bf9\u8c61\u901a\u8fc7 toRefs/toRef \u4f7f\u7528\uff0c\u4e0d\u76f4\u63a5\u89e3\u6784",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u3",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 ref \u4fdd\u5b58\u672c\u5730\u9009\u4e2d\u503c\u5e76\u901a\u8fc7 watch \u540c\u6b65 value",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u4",
+          "text": "\u529f\u80fd\uff1a\u4f7f\u7528 computed \u6d3e\u751f\u5019\u9009\u9879\u72b6\u6001\u5e76\u6e32\u67d3\u5e26 key \u7684\u5019\u9009\u5217\u8868",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u5",
+          "text": "\u529f\u80fd\uff1a\u70b9\u51fb\u5904\u7406\u5668\u6821\u9a8c\u6574\u4f53\u4e0e\u5355\u9879\u7981\u7528\u72b6\u6001\uff0c\u5e76\u901a\u8fc7 change \u4e8b\u4ef6\u4f20\u51fa controlKey \u548c value",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u6",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u7",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u8",
+          "text": "\u6a21\u677f\uff1aMustache \u8868\u8fbe\u5f0f\u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u9",
+          "text": "\u6a21\u677f\uff1a\u6807\u9898\u3001\u5019\u9009\u9879\u548c\u5f53\u524d\u9009\u4e2d\u9879\u6587\u6848\u5747\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u10",
+          "text": "\u6837\u5f0f\uff1a\u901a\u8fc7 style \u4e2d\u7684\u8bed\u4e49\u5316\u666e\u901a class \u5b9e\u73b0\uff0c\u4e14\u4ec5\u4f7f\u7528 RN \u652f\u6301\u7684\u5355\u7c7b\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u11",
+          "text": "\u6837\u5f0f\uff1a\u5019\u9009\u9879\u5bb9\u5668\u663e\u5f0f\u4f7f\u7528 flex-direction:row\uff0c\u4e14\u4e0d\u5305\u542b\u4e0d\u652f\u6301\u7684 CSS \u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u12",
+          "text": "\u4ea4\u4e92\uff1a\u70b9\u51fb\u76ee\u6807\u4f7f\u7528 hover-class\uff0c\u6837\u5f0f\u4e2d\u4e0d\u5305\u542b :active \u6216 opacity:0",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u13",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "mpx2rn",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u5305\u542b template\u3001script setup \u548c\u9875\u9762 JSON\uff0c\u4e14\u4e0d\u5305\u542b\u975e\u7a7a style \u533a\u5757",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a1",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 ref/computed/onLoad \u7ec4\u5408\u5f0f API\uff0c\u5e76\u901a\u8fc7 defineExpose \u66b4\u9732\u6a21\u677f\u7ed1\u5b9a",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a2",
+          "text": "\u811a\u672c\uff1aonLoad \u5728 setup \u6267\u884c\u671f\u540c\u6b65\u6ce8\u518c\uff0c\u63a5\u6536\u5e76\u4f18\u5148\u4f7f\u7528 decodedQuery.category",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a3",
+          "text": "\u6a21\u677f\uff1a\u4e3b\u4f53\u4f7f\u7528\u7eb5\u5411 scroll-view \u627f\u8f7d\u9875\u9762\u6eda\u52a8",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a4",
+          "text": "\u529f\u80fd\uff1a\u6e32\u67d3\u5e26\u7a33\u5b9a key \u7684\u7b5b\u9009\u9879\u548c\u4efb\u52a1\u5217\u8868\uff0c\u5e76\u4f7f\u7528 computed \u4ea7\u51fa\u7b5b\u9009\u7ed3\u679c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a5",
+          "text": "\u529f\u80fd\uff1a\u652f\u6301\u5207\u6362\u7b5b\u9009\u5206\u7c7b\u548c\u4efb\u52a1\u5b8c\u6210\u72b6\u6001\uff0c\u5e76\u6e32\u67d3\u7a7a\u72b6\u6001",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a6",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a7",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u539f\u5b50\u7c7b\u4f7f\u7528 wx:class \u5b8c\u6574 token\uff0c\u4e0d\u5728 class \u5c5e\u6027\u6216\u811a\u672c\u4e2d\u62fc\u63a5\u7c7b\u540d",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a8",
+          "text": "\u6a21\u677f\uff1aMustache \u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5\uff0c\u7528\u6237\u53ef\u89c1\u6587\u5b57\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a9",
+          "text": "\u539f\u5b50 CSS\uff1a\u89c6\u89c9\u6837\u5f0f\u5168\u90e8\u4f7f\u7528\u6a21\u677f\u539f\u5b50\u7c7b\uff0c\u5305\u542b Flex/\u95f4\u8ddd/\u989c\u8272/\u5706\u89d2\u7b49\u652f\u6301\u7684 utility",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a10",
+          "text": "\u539f\u5b50 CSS\uff1a\u534a\u900f\u660e\u989c\u8272\u4f7f\u7528\u659c\u6760 alpha\uff0c\u4e0d\u4f7f\u7528\u72ec\u7acb *-opacity-* \u5de5\u5177\u7c7b",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a11",
+          "text": "\u539f\u5b50 CSS\uff1a\u4e0d\u4f7f\u7528 RN \u4e0d\u652f\u6301\u7684\u5de5\u5177\u7c7b\u6216 variants",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a12",
+          "text": "\u4ea4\u4e92\uff1a\u7b5b\u9009\u9879\u548c\u4efb\u52a1\u5361\u7247\u4f7f\u7528 hover-class\uff0c\u4e14\u4e0d\u4f7f\u7528 hover:/active:/focus:/visited: \u7b49 RN \u4e0d\u652f\u6301\u7684\u4ea4\u4e92 variant",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a13",
+          "text": "JSON\uff1a\u5bfc\u822a\u680f\u6807\u9898\u4e3a\u4efb\u52a1\u770b\u677f\u5e76\u8bbe\u7f6e disableScroll:true\uff0c\u4e14\u4e0d\u5305\u542b RN \u4e0d\u652f\u6301\u7684\u9875\u9762\u914d\u7f6e",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a14",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f\u6216 uno.css \u624b\u52a8\u5bfc\u5165",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.9333,
+        "passed": 14,
+        "failed": 1,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s0",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b\u540e\u4ee3\u9009\u62e9\u5668\uff08\u5982 .parent .child\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s1",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u4f7f\u7528 display: grid\uff0c\u6539\u4e3a Flex \u5e03\u5c40",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s2",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b ::before \u4f2a\u5143\u7d20",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s3",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b :active \u4f2a\u7c7b\uff0c\u6539\u7528 hover-class",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s4",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b :first-child \u4f2a\u7c7b",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s5",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b + \u76f8\u90bb\u5144\u5f1f\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s6",
+          "text": "\u6837\u5f0f\uff1a\u6570\u503c\u578b font-weight\uff08500/600\uff09\u66ff\u6362\u4e3a bold/normal",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "s7",
+          "text": "\u6837\u5f0f\uff1atext-overflow/white-space \u4f7f\u7528\u53cc\u8f68\u9002\u914d\uff0cRN \u7aef\u4f7f\u7528 numberOfLines",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s8",
+          "text": "\u6a21\u677f\uff1a\u4f7f\u7528\u771f\u5b9e\u8282\u70b9\u66ff\u4ee3 ::before \u4f2a\u5143\u7d20",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s9",
+          "text": "\u6837\u5f0f\uff1a\u6761\u4ef6\u7f16\u8bd1\u7ed3\u675f\u6807\u8bb0\u4f7f\u7528 @mpx-endif\uff0c\u4e0d\u4f7f\u7528 @mpx-end-if",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s10",
+          "text": "\u6837\u5f0f\uff1a\u79fb\u9664\u6ce8\u91ca\u540e\u4e0d\u5b58\u5728\u7a7a\u9009\u62e9\u5668\u89c4\u5219",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s11",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b > \u5b50\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s12",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b .a.b \u591a\u7c7b\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s13",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef tag-highlight \u573a\u666f\u4e0d\u5305\u542b + \u76f8\u90bb\u5144\u5f1f\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s14",
+          "text": "\u6a21\u677f\uff1awx:class \u5bf9\u8c61\u952e\u4fdd\u7559\u6a2a\u6746\u7c7b\u540d tag-highlight\uff0c\u4e0d\u8f6c\u6362\u4e3a tagHighlight",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 10,
+        "failed": 0,
+        "total": 10,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "t0",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t1",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u4f20\u53c2\uff0c\u4e0d\u4f7f\u7528 data- \u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t2",
+          "text": "\u6a21\u677f\uff1aMustache \u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5\uff0cgetStatusColor/getStatusText \u6539\u4e3a computed \u6216 wx:style \u7ed1\u5b9a",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t3",
+          "text": "\u6a21\u677f\uff1a\u9875\u9762\u6eda\u52a8\u6539\u7528 scroll-view\uff0c\u79fb\u9664 onPullDownRefresh/onReachBottom",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t4",
+          "text": "\u6a21\u677f\uff1ascroll-view \u58f0\u660e bindscrolltolower \u6216\u7b49\u6548\u6eda\u52a8\u4e8b\u4ef6",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t5",
+          "text": "\u811a\u672c\uff1a\u6240\u6709 wx.xxx API \u66ff\u6362\u4e3a mpx.xxx",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t6",
+          "text": "\u811a\u672c\uff1a\u4e0d\u4f7f\u7528 e.target.dataset\uff0c\u4e8b\u4ef6\u53c2\u6570\u6539\u4e3a\u5185\u8054\u4f20\u9012",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t7",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b .btn-default .btn-text \u590d\u5408\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t8",
+          "text": "\u6a21\u677f\uff1awx:style \u5bf9\u8c61\u952e\u4f7f\u7528\u4e0d\u52a0\u5f15\u53f7\u7684\u9a7c\u5cf0\u5199\u6cd5\uff0c\u4e0d\u4f7f\u7528\u5f15\u53f7\u6216\u6a2a\u6746\u5199\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t9",
+          "text": "\u6a21\u677f\uff1aHover \u80fd\u529b\u4e0d\u540c\u7684\u76f8\u90bb\u6761\u4ef6\u5206\u652f\u4f7f\u7528\u4e0d\u540c\u7684\u6709\u6548 key\uff0c\u6216\u8ba9\u4e24\u4e2a\u5206\u652f\u59cb\u7ec8\u5b58\u5728\u6709\u6548 hover-class",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "j0",
+          "text": "\u811a\u672c\uff1arequest/navigateTo/showModal/getStorageSync/setStorageSync/removeStorageSync/showToast/reLaunch \u7b49 wx.xxx API \u5168\u90e8\u66ff\u6362\u4e3a mpx.xxx",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j1",
+          "text": "\u811a\u672c\uff1a\u79fb\u9664 onShareTimeline \u6216\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j2",
+          "text": "\u811a\u672c\uff1a\u79fb\u9664 onTabItemTap \u6216\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j3",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb setTabBarBadge/removeTabBarBadge\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j4",
+          "text": "\u811a\u672c\uff1a\u9694\u79bb\u6216\u66ff\u6362 wx.getUserProfile\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j5",
+          "text": "\u811a\u672c\uff1a\u4e0d\u4f7f\u7528 e.target.dataset\uff0c\u4e8b\u4ef6\u53c2\u6570\u6539\u4e3a\u5185\u8054\u4f20\u9012\u6216\u4f7f\u7528 e.currentTarget.dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j7",
+          "text": "JSON\uff1a\u9488\u5bf9 RN \u5904\u7406 enablePullDownRefresh\uff08RN \u9875\u9762\u9ed8\u8ba4\u4e0d\u53ef\u6eda\u52a8\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j8",
+          "text": "\u6a21\u677f\uff1a\u79fb\u9664 data- \u5c5e\u6027\u5e76\u4f7f\u7528\u4e8b\u4ef6\u5185\u8054\u4f20\u53c2",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j9",
+          "text": "\u811a\u672c\uff1a\u4fdd\u7559 RN \u652f\u6301\u7684 onShareAppMessage\uff0c\u4e0d\u5e94\u5220\u9664",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8182,
+        "passed": 9,
+        "failed": 2,
+        "total": 11,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "g0",
+          "text": "\u6837\u5f0f\uff1alinear-gradient \u4e2d\u7684 transparent \u66ff\u6362\u4e3a\u76ee\u6807\u989c\u8272\u7684 rgba \u5f62\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g1",
+          "text": "\u6837\u5f0f\uff1adisplay:none \u66ff\u6362\u4e3a width:0;height:0;overflow:hidden \u6216 wx:if",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g2",
+          "text": "\u6837\u5f0f\uff1atransition-property:all \u66ff\u6362\u4e3a\u5177\u4f53\u5c5e\u6027\u540d",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g3",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 background-image \u6240\u5728\u7684 view \u4f7f\u7528 RN \u5c5e\u6027\u6761\u4ef6\u7f16\u8bd1\u6dfb\u52a0 enable-background",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g4",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 transition \u6240\u5728\u7684 view \u4f7f\u7528 RN \u5c5e\u6027\u6761\u4ef6\u7f16\u8bd1\u6dfb\u52a0 enable-animation",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g5",
+          "text": "\u811a\u672c\uff1a\u751f\u547d\u5468\u671f\u94a9\u5b50\u5728 setup \u4e2d\u540c\u6b65\u6ce8\u518c\uff0c\u4e0d\u5728\u5f02\u6b65\u56de\u8c03\u4e2d\u6ce8\u518c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g6",
+          "text": "\u811a\u672c\uff1arelativeTo \u4f7f\u7528\u7b80\u5355\u9009\u62e9\u5668\uff0c\u4e0d\u4f7f\u7528\u590d\u5408\u6216\u540e\u4ee3\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g7",
+          "text": "JSON\uff1a\u6761\u4ef6\u7f16\u8bd1\u914d\u7f6e\u4f7f\u7528 script name=\"json\" \u683c\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g8",
+          "text": "\u6837\u5f0f\uff1a\u5e26 bindtap \u7684\u5143\u7d20\u4e0d\u8bbe\u7f6e opacity:0\uff0c\u907f\u514d iOS \u4e8b\u4ef6\u5931\u6548",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "g9",
+          "text": "\u6837\u5f0f\uff1a@keyframes \u901a\u8fc7\u6761\u4ef6\u7f16\u8bd1\u9650\u5236\u5728\u975e RN \u5e73\u53f0\uff0c\u6216\u66ff\u6362\u4e3a transition",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g10",
+          "text": "\u6a21\u677f\uff1aCSS \u53d8\u91cf\u80fd\u529b\u4e0d\u540c\u7684\u76f8\u90bb\u6761\u4ef6\u5206\u652f\u4f7f\u7528\u4e0d\u540c\u7684 RN key\uff0c\u6216\u5728\u4e24\u4e2a\u5206\u652f\u90fd\u7528 RN enable-var \u9884\u58f0\u660e\u4fdd\u6301\u80fd\u529b\u7a33\u5b9a",
+          "passed": false,
+          "evidence": "FAIL"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8182,
+        "passed": 9,
+        "failed": 2,
+        "total": 11,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "l1",
+          "text": "\u6837\u5f0f\uff1aposition:sticky \u66ff\u6362\u4e3a sticky-header \u65b9\u6848",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l2",
+          "text": "\u6837\u5f0f\uff1a\u4fdd\u7559 /*use rpx*/ \u548c /*use px*/ \u5355\u4f4d\u8f6c\u6362\u6ce8\u91ca",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l3",
+          "text": "\u6837\u5f0f\uff1abackground-image \u4e0d\u5e94\u7528\u4e8e text \u5143\u7d20\u7c7b",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l5",
+          "text": "\u6a21\u677f\uff1ascroll-into-view \u76ee\u6807\u6dfb\u52a0 wx:ref",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l6",
+          "text": "\u6a21\u677f\uff1acreateSelectorQuery \u76ee\u6807\u6dfb\u52a0\u7a7a wx:ref",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l7",
+          "text": "\u811a\u672c\uff1a\u9009\u62e9\u5668 API \u4ec5\u4f7f\u7528 #id \u6216 .class \u7b80\u5355\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l8",
+          "text": "\u811a\u672c\uff1a\u975e\u89e6\u6478\u4e8b\u4ef6\u4e0d\u4f7f\u7528 catch \u524d\u7f00",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l9",
+          "text": "\u6837\u5f0f\uff1aradial-gradient \u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\u6216\u66ff\u6362",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l10",
+          "text": "\u6837\u5f0f\uff1a\u76f8\u90bb\u666e\u901a\u5757\u7ea7\u5144\u5f1f .chart-title-wrapper\uff08margin-bottom:24rpx\uff09\u4e0e .chart-container\uff08margin-top:12rpx\uff09\u7684\u6298\u53e0\u95f4\u8ddd\u5f52\u5230\u5355\u4fa7\uff0c\u4fdd\u6301 24rpx",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l11",
+          "text": "\u6837\u5f0f\uff1a\u7236\u5b50\u540c\u5411 margin \u6298\u53e0\u7684 .detail-section\uff08margin-top:20rpx\uff09\u4e0e\u9996\u5b50\u5143\u7d20 .detail-header\uff08margin-top:12rpx\uff09\u5f52\u5230\u7236\u5143\u7d20\u4fa7\uff0c\u4fdd\u6301 20rpx \u5e76\u6e05\u9664\u5b50\u5143\u7d20\u9876\u90e8 margin",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l12",
+          "text": "\u6837\u5f0f\uff1a.stats-section \u7684 flex item \u901a\u8fc7 .stat-card margin \u6216\u5305\u88c5\u5c42 margin/padding \u4fdd\u7559\u4e0a\u4e0b 16rpx \u95f4\u8ddd\uff0c\u4e0d\u6309 margin \u6298\u53e0\u573a\u666f\u5f52\u96f6",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 10,
+        "failed": 0,
+        "total": 10,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "c0",
+          "text": "\u6837\u5f0f\uff1a@mpx-if \u5305\u88f9\u5b8c\u6574\u89c4\u5219\uff0c\u4e0d\u4ea7\u751f\u7a7a\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c1",
+          "text": "\u6837\u5f0f\uff1aRN\uff08ios\uff09\u8f93\u51fa\u7684 font-family \u4f7f\u7528\u5355\u4e00\u5b57\u4f53\u540d",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c2",
+          "text": "\u6837\u5f0f\uff1a\u7edf\u4e00\u8bbe\u7f6e border-style\uff0c\u4e0d\u4f7f\u7528\u5355\u8fb9\u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c4",
+          "text": "\u6a21\u677f\uff1aselectComponent \u76ee\u6807\u81ea\u5b9a\u4e49\u7ec4\u4ef6\u6dfb\u52a0 wx:ref",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c5",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 CSS \u53d8\u91cf\u6240\u5728\u5143\u7d20\u8bbe\u7f6e enable-var",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c6",
+          "text": "\u811a\u672c\uff1asetup \u5c5e\u6027\u5bf9\u8c61\u4e0d\u76f4\u63a5\u89e3\u6784\uff1b\u6309\u5b57\u6bb5\u89e3\u6784\u65f6\u901a\u8fc7 toRefs/toRef \u4fdd\u6301\u54cd\u5e94\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c7",
+          "text": "\u6837\u5f0f\uff1abackground-repeat \u4ec5\u4f7f\u7528 no-repeat",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c8",
+          "text": "JSON\uff1a\u6761\u4ef6\u7f16\u8bd1\u4f7f\u7528 if(__mpx_mode__) \u8fd0\u884c\u65f6\u5224\u65ad\uff0c\u4e0d\u4f7f\u7528\u6ce8\u91ca\u8bed\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c9",
+          "text": "\u6837\u5f0f\uff1aiOS \u8f93\u51fa\u4fdd\u7559 dashed text-decoration-style \u548c text-decoration-color",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c10",
+          "text": "\u811a\u672c\uff1aonLoad \u4f7f\u7528\u7b2c\u4e8c\u4e2a\u53c2\u6570 decodedQuery",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "n0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u4e3a\u5305\u542b template\u3001\u666e\u901a script \u548c style \u7684\u5b8c\u6574\u7ec4\u4ef6 SFC\uff0c\u5e76\u4f7f\u7528 createComponent \u9009\u9879\u5f0f API",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n1",
+          "text": "\u811a\u672c\uff1a\u901a\u8fc7 properties \u6216 props \u5b9a\u4e49 ratingKey/value/max/readonly/label\uff0c\u5e76\u4f7f\u7528 data/computed/watch/methods \u7ec4\u7ec7\u903b\u8f91",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n2",
+          "text": "\u529f\u80fd\uff1a\u6839\u636e max \u6e32\u67d3\u5e26 key \u7684\u661f\u7ea7\u5217\u8868\uff0c\u5e76\u5728\u89c6\u89c9\u4e0a\u533a\u5206\u9009\u4e2d\u72b6\u6001",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n3",
+          "text": "\u529f\u80fd\uff1a\u70b9\u51fb\u5904\u7406\u5668\u6821\u9a8c readonly\uff0c\u5e76\u901a\u8fc7 change \u4e8b\u4ef6\u4f20\u51fa ratingKey \u548c\u9009\u4e2d\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n4",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 data \u4fdd\u5b58\u672c\u5730\u8bc4\u5206\u3001watch \u540c\u6b65 value\uff0c\u4e14\u5b9e\u4f8b\u6570\u636e\u952e\u4e0d\u4f7f\u7528 id/data/dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n5",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n6",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n7",
+          "text": "\u6a21\u677f\uff1aMustache \u8868\u8fbe\u5f0f\u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n8",
+          "text": "\u6a21\u677f\uff1a\u7528\u6237\u53ef\u89c1\u7684\u6807\u7b7e\u3001\u661f\u7ea7\u548c\u5206\u6570\u5747\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n9",
+          "text": "\u6837\u5f0f\uff1aRN \u8f93\u51fa\u4ec5\u4f7f\u7528\u53d7\u652f\u6301\u7684\u5355\u7c7b\u3001page \u6216 :host \u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n10",
+          "text": "\u6837\u5f0f\uff1a\u661f\u7ea7\u884c\u663e\u5f0f\u4f7f\u7528 flex-direction:row\uff0c\u4e14\u4e0d\u5305\u542b\u4e0d\u652f\u6301\u7684 CSS \u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n11",
+          "text": "\u4ea4\u4e92\uff1a\u70b9\u51fb\u76ee\u6807\u4f7f\u7528 hover-class\uff0c\u6837\u5f0f\u4e2d\u4e0d\u5305\u542b :active",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n12",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n13",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 component \u4f7f\u7528 is \u5207\u6362\u53ea\u8bfb/\u53ef\u7f16\u8f91\u63d0\u793a\uff0c\u5e76\u7528 range \u7cbe\u786e\u58f0\u660e\u4e24\u4e2a\u5019\u9009\u7ec4\u4ef6",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n14",
+          "text": "\u6837\u5f0f\uff1a\u901a\u8fc7 style \u4e2d\u7684\u8bed\u4e49\u5316\u666e\u901a class \u5b9e\u73b0\uff0c\u4e0d\u4f7f\u7528 UnoCSS \u6216\u539f\u5b50 utility class",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 14,
+        "failed": 0,
+        "total": 14,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "u0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u4e3a\u5305\u542b template\u3001script setup \u548c style \u7684\u5b8c\u6574\u7ec4\u4ef6 SFC",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u1",
+          "text": "\u811a\u672c\uff1adefineProps \u5b9a\u4e49 controlKey/options/value/disabled/label\uff0c\u5e76\u901a\u8fc7 defineExpose \u66b4\u9732\u6a21\u677f\u7ed1\u5b9a",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u2",
+          "text": "\u811a\u672c\uff1adefineProps \u8fd4\u56de\u7684\u5c5e\u6027\u5bf9\u8c61\u901a\u8fc7 toRefs/toRef \u4f7f\u7528\uff0c\u4e0d\u76f4\u63a5\u89e3\u6784",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u3",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 ref \u4fdd\u5b58\u672c\u5730\u9009\u4e2d\u503c\u5e76\u901a\u8fc7 watch \u540c\u6b65 value",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u4",
+          "text": "\u529f\u80fd\uff1a\u4f7f\u7528 computed \u6d3e\u751f\u5019\u9009\u9879\u72b6\u6001\u5e76\u6e32\u67d3\u5e26 key \u7684\u5019\u9009\u5217\u8868",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u5",
+          "text": "\u529f\u80fd\uff1a\u70b9\u51fb\u5904\u7406\u5668\u6821\u9a8c\u6574\u4f53\u4e0e\u5355\u9879\u7981\u7528\u72b6\u6001\uff0c\u5e76\u901a\u8fc7 change \u4e8b\u4ef6\u4f20\u51fa controlKey \u548c value",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u6",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u7",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u8",
+          "text": "\u6a21\u677f\uff1aMustache \u8868\u8fbe\u5f0f\u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u9",
+          "text": "\u6a21\u677f\uff1a\u6807\u9898\u3001\u5019\u9009\u9879\u548c\u5f53\u524d\u9009\u4e2d\u9879\u6587\u6848\u5747\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u10",
+          "text": "\u6837\u5f0f\uff1a\u901a\u8fc7 style \u4e2d\u7684\u8bed\u4e49\u5316\u666e\u901a class \u5b9e\u73b0\uff0c\u4e14\u4ec5\u4f7f\u7528 RN \u652f\u6301\u7684\u5355\u7c7b\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u11",
+          "text": "\u6837\u5f0f\uff1a\u5019\u9009\u9879\u5bb9\u5668\u663e\u5f0f\u4f7f\u7528 flex-direction:row\uff0c\u4e14\u4e0d\u5305\u542b\u4e0d\u652f\u6301\u7684 CSS \u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u12",
+          "text": "\u4ea4\u4e92\uff1a\u70b9\u51fb\u76ee\u6807\u4f7f\u7528 hover-class\uff0c\u6837\u5f0f\u4e2d\u4e0d\u5305\u542b :active \u6216 opacity:0",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u13",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "mpx2rn_simple",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u5305\u542b template\u3001script setup \u548c\u9875\u9762 JSON\uff0c\u4e14\u4e0d\u5305\u542b\u975e\u7a7a style \u533a\u5757",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a1",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 ref/computed/onLoad \u7ec4\u5408\u5f0f API\uff0c\u5e76\u901a\u8fc7 defineExpose \u66b4\u9732\u6a21\u677f\u7ed1\u5b9a",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a2",
+          "text": "\u811a\u672c\uff1aonLoad \u5728 setup \u6267\u884c\u671f\u540c\u6b65\u6ce8\u518c\uff0c\u63a5\u6536\u5e76\u4f18\u5148\u4f7f\u7528 decodedQuery.category",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a3",
+          "text": "\u6a21\u677f\uff1a\u4e3b\u4f53\u4f7f\u7528\u7eb5\u5411 scroll-view \u627f\u8f7d\u9875\u9762\u6eda\u52a8",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a4",
+          "text": "\u529f\u80fd\uff1a\u6e32\u67d3\u5e26\u7a33\u5b9a key \u7684\u7b5b\u9009\u9879\u548c\u4efb\u52a1\u5217\u8868\uff0c\u5e76\u4f7f\u7528 computed \u4ea7\u51fa\u7b5b\u9009\u7ed3\u679c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a5",
+          "text": "\u529f\u80fd\uff1a\u652f\u6301\u5207\u6362\u7b5b\u9009\u5206\u7c7b\u548c\u4efb\u52a1\u5b8c\u6210\u72b6\u6001\uff0c\u5e76\u6e32\u67d3\u7a7a\u72b6\u6001",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a6",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a7",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u539f\u5b50\u7c7b\u4f7f\u7528 wx:class \u5b8c\u6574 token\uff0c\u4e0d\u5728 class \u5c5e\u6027\u6216\u811a\u672c\u4e2d\u62fc\u63a5\u7c7b\u540d",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a8",
+          "text": "\u6a21\u677f\uff1aMustache \u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5\uff0c\u7528\u6237\u53ef\u89c1\u6587\u5b57\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a9",
+          "text": "\u539f\u5b50 CSS\uff1a\u89c6\u89c9\u6837\u5f0f\u5168\u90e8\u4f7f\u7528\u6a21\u677f\u539f\u5b50\u7c7b\uff0c\u5305\u542b Flex/\u95f4\u8ddd/\u989c\u8272/\u5706\u89d2\u7b49\u652f\u6301\u7684 utility",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a10",
+          "text": "\u539f\u5b50 CSS\uff1a\u534a\u900f\u660e\u989c\u8272\u4f7f\u7528\u659c\u6760 alpha\uff0c\u4e0d\u4f7f\u7528\u72ec\u7acb *-opacity-* \u5de5\u5177\u7c7b",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a11",
+          "text": "\u539f\u5b50 CSS\uff1a\u4e0d\u4f7f\u7528 RN \u4e0d\u652f\u6301\u7684\u5de5\u5177\u7c7b\u6216 variants",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a12",
+          "text": "\u4ea4\u4e92\uff1a\u7b5b\u9009\u9879\u548c\u4efb\u52a1\u5361\u7247\u4f7f\u7528 hover-class\uff0c\u4e14\u4e0d\u4f7f\u7528 hover:/active:/focus:/visited: \u7b49 RN \u4e0d\u652f\u6301\u7684\u4ea4\u4e92 variant",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a13",
+          "text": "JSON\uff1a\u5bfc\u822a\u680f\u6807\u9898\u4e3a\u4efb\u52a1\u770b\u677f\u5e76\u8bbe\u7f6e disableScroll:true\uff0c\u4e14\u4e0d\u5305\u542b RN \u4e0d\u652f\u6301\u7684\u9875\u9762\u914d\u7f6e",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a14",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f\u6216 uno.css \u624b\u52a8\u5bfc\u5165",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8667,
+        "passed": 13,
+        "failed": 2,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s0",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b\u540e\u4ee3\u9009\u62e9\u5668\uff08\u5982 .parent .child\uff09",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s1",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u4f7f\u7528 display: grid\uff0c\u6539\u4e3a Flex \u5e03\u5c40",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s2",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b ::before \u4f2a\u5143\u7d20",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s3",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b :active \u4f2a\u7c7b\uff0c\u6539\u7528 hover-class",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s4",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b :first-child \u4f2a\u7c7b",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s5",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b + \u76f8\u90bb\u5144\u5f1f\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s6",
+          "text": "\u6837\u5f0f\uff1a\u6570\u503c\u578b font-weight\uff08500/600\uff09\u66ff\u6362\u4e3a bold/normal",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "s7",
+          "text": "\u6837\u5f0f\uff1atext-overflow/white-space \u4f7f\u7528\u53cc\u8f68\u9002\u914d\uff0cRN \u7aef\u4f7f\u7528 numberOfLines",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s8",
+          "text": "\u6a21\u677f\uff1a\u4f7f\u7528\u771f\u5b9e\u8282\u70b9\u66ff\u4ee3 ::before \u4f2a\u5143\u7d20",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "s9",
+          "text": "\u6837\u5f0f\uff1a\u6761\u4ef6\u7f16\u8bd1\u7ed3\u675f\u6807\u8bb0\u4f7f\u7528 @mpx-endif\uff0c\u4e0d\u4f7f\u7528 @mpx-end-if",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s10",
+          "text": "\u6837\u5f0f\uff1a\u79fb\u9664\u6ce8\u91ca\u540e\u4e0d\u5b58\u5728\u7a7a\u9009\u62e9\u5668\u89c4\u5219",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s11",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b > \u5b50\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s12",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b .a.b \u591a\u7c7b\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s13",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef tag-highlight \u573a\u666f\u4e0d\u5305\u542b + \u76f8\u90bb\u5144\u5f1f\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "s14",
+          "text": "\u6a21\u677f\uff1awx:class \u5bf9\u8c61\u952e\u4fdd\u7559\u6a2a\u6746\u7c7b\u540d tag-highlight\uff0c\u4e0d\u8f6c\u6362\u4e3a tagHighlight",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 5,
+        "failed": 5,
+        "total": 10,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "t0",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "t1",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u4f20\u53c2\uff0c\u4e0d\u4f7f\u7528 data- \u5c5e\u6027",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "t2",
+          "text": "\u6a21\u677f\uff1aMustache \u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5\uff0cgetStatusColor/getStatusText \u6539\u4e3a computed \u6216 wx:style \u7ed1\u5b9a",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t3",
+          "text": "\u6a21\u677f\uff1a\u9875\u9762\u6eda\u52a8\u6539\u7528 scroll-view\uff0c\u79fb\u9664 onPullDownRefresh/onReachBottom",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t4",
+          "text": "\u6a21\u677f\uff1ascroll-view \u58f0\u660e bindscrolltolower \u6216\u7b49\u6548\u6eda\u52a8\u4e8b\u4ef6",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t5",
+          "text": "\u811a\u672c\uff1a\u6240\u6709 wx.xxx API \u66ff\u6362\u4e3a mpx.xxx",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "t6",
+          "text": "\u811a\u672c\uff1a\u4e0d\u4f7f\u7528 e.target.dataset\uff0c\u4e8b\u4ef6\u53c2\u6570\u6539\u4e3a\u5185\u8054\u4f20\u9012",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "t7",
+          "text": "\u6837\u5f0f\uff1aRN \u7aef\u4e0d\u5305\u542b .btn-default .btn-text \u590d\u5408\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t8",
+          "text": "\u6a21\u677f\uff1awx:style \u5bf9\u8c61\u952e\u4f7f\u7528\u4e0d\u52a0\u5f15\u53f7\u7684\u9a7c\u5cf0\u5199\u6cd5\uff0c\u4e0d\u4f7f\u7528\u5f15\u53f7\u6216\u6a2a\u6746\u5199\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "t9",
+          "text": "\u6a21\u677f\uff1aHover \u80fd\u529b\u4e0d\u540c\u7684\u76f8\u90bb\u6761\u4ef6\u5206\u652f\u4f7f\u7528\u4e0d\u540c\u7684\u6709\u6548 key\uff0c\u6216\u8ba9\u4e24\u4e2a\u5206\u652f\u59cb\u7ec8\u5b58\u5728\u6709\u6548 hover-class",
+          "passed": false,
+          "evidence": "FAIL"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.3333,
+        "passed": 3,
+        "failed": 6,
+        "total": 9,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "j0",
+          "text": "\u811a\u672c\uff1arequest/navigateTo/showModal/getStorageSync/setStorageSync/removeStorageSync/showToast/reLaunch \u7b49 wx.xxx API \u5168\u90e8\u66ff\u6362\u4e3a mpx.xxx",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "j1",
+          "text": "\u811a\u672c\uff1a\u79fb\u9664 onShareTimeline \u6216\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "j2",
+          "text": "\u811a\u672c\uff1a\u79fb\u9664 onTabItemTap \u6216\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "j3",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb setTabBarBadge/removeTabBarBadge\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "j4",
+          "text": "\u811a\u672c\uff1a\u9694\u79bb\u6216\u66ff\u6362 wx.getUserProfile\uff08RN \u4e0d\u652f\u6301\uff09",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "j5",
+          "text": "\u811a\u672c\uff1a\u4e0d\u4f7f\u7528 e.target.dataset\uff0c\u4e8b\u4ef6\u53c2\u6570\u6539\u4e3a\u5185\u8054\u4f20\u9012\u6216\u4f7f\u7528 e.currentTarget.dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j7",
+          "text": "JSON\uff1a\u9488\u5bf9 RN \u5904\u7406 enablePullDownRefresh\uff08RN \u9875\u9762\u9ed8\u8ba4\u4e0d\u53ef\u6eda\u52a8\uff09",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "j8",
+          "text": "\u6a21\u677f\uff1a\u79fb\u9664 data- \u5c5e\u6027\u5e76\u4f7f\u7528\u4e8b\u4ef6\u5185\u8054\u4f20\u53c2",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "j9",
+          "text": "\u811a\u672c\uff1a\u4fdd\u7559 RN \u652f\u6301\u7684 onShareAppMessage\uff0c\u4e0d\u5e94\u5220\u9664",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5455,
+        "passed": 6,
+        "failed": 5,
+        "total": 11,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "g0",
+          "text": "\u6837\u5f0f\uff1alinear-gradient \u4e2d\u7684 transparent \u66ff\u6362\u4e3a\u76ee\u6807\u989c\u8272\u7684 rgba \u5f62\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g1",
+          "text": "\u6837\u5f0f\uff1adisplay:none \u66ff\u6362\u4e3a width:0;height:0;overflow:hidden \u6216 wx:if",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g2",
+          "text": "\u6837\u5f0f\uff1atransition-property:all \u66ff\u6362\u4e3a\u5177\u4f53\u5c5e\u6027\u540d",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g3",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 background-image \u6240\u5728\u7684 view \u4f7f\u7528 RN \u5c5e\u6027\u6761\u4ef6\u7f16\u8bd1\u6dfb\u52a0 enable-background",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "g4",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 transition \u6240\u5728\u7684 view \u4f7f\u7528 RN \u5c5e\u6027\u6761\u4ef6\u7f16\u8bd1\u6dfb\u52a0 enable-animation",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "g5",
+          "text": "\u811a\u672c\uff1a\u751f\u547d\u5468\u671f\u94a9\u5b50\u5728 setup \u4e2d\u540c\u6b65\u6ce8\u518c\uff0c\u4e0d\u5728\u5f02\u6b65\u56de\u8c03\u4e2d\u6ce8\u518c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g6",
+          "text": "\u811a\u672c\uff1arelativeTo \u4f7f\u7528\u7b80\u5355\u9009\u62e9\u5668\uff0c\u4e0d\u4f7f\u7528\u590d\u5408\u6216\u540e\u4ee3\u9009\u62e9\u5668",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "g7",
+          "text": "JSON\uff1a\u6761\u4ef6\u7f16\u8bd1\u914d\u7f6e\u4f7f\u7528 script name=\"json\" \u683c\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g8",
+          "text": "\u6837\u5f0f\uff1a\u5e26 bindtap \u7684\u5143\u7d20\u4e0d\u8bbe\u7f6e opacity:0\uff0c\u907f\u514d iOS \u4e8b\u4ef6\u5931\u6548",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "g9",
+          "text": "\u6837\u5f0f\uff1a@keyframes \u901a\u8fc7\u6761\u4ef6\u7f16\u8bd1\u9650\u5236\u5728\u975e RN \u5e73\u53f0\uff0c\u6216\u66ff\u6362\u4e3a transition",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "g10",
+          "text": "\u6a21\u677f\uff1aCSS \u53d8\u91cf\u80fd\u529b\u4e0d\u540c\u7684\u76f8\u90bb\u6761\u4ef6\u5206\u652f\u4f7f\u7528\u4e0d\u540c\u7684 RN key\uff0c\u6216\u5728\u4e24\u4e2a\u5206\u652f\u90fd\u7528 RN enable-var \u9884\u58f0\u660e\u4fdd\u6301\u80fd\u529b\u7a33\u5b9a",
+          "passed": false,
+          "evidence": "FAIL"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0909,
+        "passed": 1,
+        "failed": 10,
+        "total": 11,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "l1",
+          "text": "\u6837\u5f0f\uff1aposition:sticky \u66ff\u6362\u4e3a sticky-header \u65b9\u6848",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l2",
+          "text": "\u6837\u5f0f\uff1a\u4fdd\u7559 /*use rpx*/ \u548c /*use px*/ \u5355\u4f4d\u8f6c\u6362\u6ce8\u91ca",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l3",
+          "text": "\u6837\u5f0f\uff1abackground-image \u4e0d\u5e94\u7528\u4e8e text \u5143\u7d20\u7c7b",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l5",
+          "text": "\u6a21\u677f\uff1ascroll-into-view \u76ee\u6807\u6dfb\u52a0 wx:ref",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l6",
+          "text": "\u6a21\u677f\uff1acreateSelectorQuery \u76ee\u6807\u6dfb\u52a0\u7a7a wx:ref",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l7",
+          "text": "\u811a\u672c\uff1a\u9009\u62e9\u5668 API \u4ec5\u4f7f\u7528 #id \u6216 .class \u7b80\u5355\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "l8",
+          "text": "\u811a\u672c\uff1a\u975e\u89e6\u6478\u4e8b\u4ef6\u4e0d\u4f7f\u7528 catch \u524d\u7f00",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l9",
+          "text": "\u6837\u5f0f\uff1aradial-gradient \u4f7f\u7528\u6761\u4ef6\u7f16\u8bd1\u9694\u79bb\u6216\u66ff\u6362",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l10",
+          "text": "\u6837\u5f0f\uff1a\u76f8\u90bb\u666e\u901a\u5757\u7ea7\u5144\u5f1f .chart-title-wrapper\uff08margin-bottom:24rpx\uff09\u4e0e .chart-container\uff08margin-top:12rpx\uff09\u7684\u6298\u53e0\u95f4\u8ddd\u5f52\u5230\u5355\u4fa7\uff0c\u4fdd\u6301 24rpx",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l11",
+          "text": "\u6837\u5f0f\uff1a\u7236\u5b50\u540c\u5411 margin \u6298\u53e0\u7684 .detail-section\uff08margin-top:20rpx\uff09\u4e0e\u9996\u5b50\u5143\u7d20 .detail-header\uff08margin-top:12rpx\uff09\u5f52\u5230\u7236\u5143\u7d20\u4fa7\uff0c\u4fdd\u6301 20rpx \u5e76\u6e05\u9664\u5b50\u5143\u7d20\u9876\u90e8 margin",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "l12",
+          "text": "\u6837\u5f0f\uff1a.stats-section \u7684 flex item \u901a\u8fc7 .stat-card margin \u6216\u5305\u88c5\u5c42 margin/padding \u4fdd\u7559\u4e0a\u4e0b 16rpx \u95f4\u8ddd\uff0c\u4e0d\u6309 margin \u6298\u53e0\u573a\u666f\u5f52\u96f6",
+          "passed": false,
+          "evidence": "FAIL"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 8,
+        "failed": 2,
+        "total": 10,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "c0",
+          "text": "\u6837\u5f0f\uff1a@mpx-if \u5305\u88f9\u5b8c\u6574\u89c4\u5219\uff0c\u4e0d\u4ea7\u751f\u7a7a\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c1",
+          "text": "\u6837\u5f0f\uff1aRN\uff08ios\uff09\u8f93\u51fa\u7684 font-family \u4f7f\u7528\u5355\u4e00\u5b57\u4f53\u540d",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c2",
+          "text": "\u6837\u5f0f\uff1a\u7edf\u4e00\u8bbe\u7f6e border-style\uff0c\u4e0d\u4f7f\u7528\u5355\u8fb9\u5c5e\u6027",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "c4",
+          "text": "\u6a21\u677f\uff1aselectComponent \u76ee\u6807\u81ea\u5b9a\u4e49\u7ec4\u4ef6\u6dfb\u52a0 wx:ref",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "c5",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 CSS \u53d8\u91cf\u6240\u5728\u5143\u7d20\u8bbe\u7f6e enable-var",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c6",
+          "text": "\u811a\u672c\uff1asetup \u5c5e\u6027\u5bf9\u8c61\u4e0d\u76f4\u63a5\u89e3\u6784\uff1b\u6309\u5b57\u6bb5\u89e3\u6784\u65f6\u901a\u8fc7 toRefs/toRef \u4fdd\u6301\u54cd\u5e94\u5f0f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c7",
+          "text": "\u6837\u5f0f\uff1abackground-repeat \u4ec5\u4f7f\u7528 no-repeat",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c8",
+          "text": "JSON\uff1a\u6761\u4ef6\u7f16\u8bd1\u4f7f\u7528 if(__mpx_mode__) \u8fd0\u884c\u65f6\u5224\u65ad\uff0c\u4e0d\u4f7f\u7528\u6ce8\u91ca\u8bed\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c9",
+          "text": "\u6837\u5f0f\uff1aiOS \u8f93\u51fa\u4fdd\u7559 dashed text-decoration-style \u548c text-decoration-color",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "c10",
+          "text": "\u811a\u672c\uff1aonLoad \u4f7f\u7528\u7b2c\u4e8c\u4e2a\u53c2\u6570 decodedQuery",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7333,
+        "passed": 11,
+        "failed": 4,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "n0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u4e3a\u5305\u542b template\u3001\u666e\u901a script \u548c style \u7684\u5b8c\u6574\u7ec4\u4ef6 SFC\uff0c\u5e76\u4f7f\u7528 createComponent \u9009\u9879\u5f0f API",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n1",
+          "text": "\u811a\u672c\uff1a\u901a\u8fc7 properties \u6216 props \u5b9a\u4e49 ratingKey/value/max/readonly/label\uff0c\u5e76\u4f7f\u7528 data/computed/watch/methods \u7ec4\u7ec7\u903b\u8f91",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n2",
+          "text": "\u529f\u80fd\uff1a\u6839\u636e max \u6e32\u67d3\u5e26 key \u7684\u661f\u7ea7\u5217\u8868\uff0c\u5e76\u5728\u89c6\u89c9\u4e0a\u533a\u5206\u9009\u4e2d\u72b6\u6001",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "n3",
+          "text": "\u529f\u80fd\uff1a\u70b9\u51fb\u5904\u7406\u5668\u6821\u9a8c readonly\uff0c\u5e76\u901a\u8fc7 change \u4e8b\u4ef6\u4f20\u51fa ratingKey \u548c\u9009\u4e2d\u503c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n4",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 data \u4fdd\u5b58\u672c\u5730\u8bc4\u5206\u3001watch \u540c\u6b65 value\uff0c\u4e14\u5b9e\u4f8b\u6570\u636e\u952e\u4e0d\u4f7f\u7528 id/data/dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n5",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "n6",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "n7",
+          "text": "\u6a21\u677f\uff1aMustache \u8868\u8fbe\u5f0f\u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n8",
+          "text": "\u6a21\u677f\uff1a\u7528\u6237\u53ef\u89c1\u7684\u6807\u7b7e\u3001\u661f\u7ea7\u548c\u5206\u6570\u5747\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n9",
+          "text": "\u6837\u5f0f\uff1aRN \u8f93\u51fa\u4ec5\u4f7f\u7528\u53d7\u652f\u6301\u7684\u5355\u7c7b\u3001page \u6216 :host \u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n10",
+          "text": "\u6837\u5f0f\uff1a\u661f\u7ea7\u884c\u663e\u5f0f\u4f7f\u7528 flex-direction:row\uff0c\u4e14\u4e0d\u5305\u542b\u4e0d\u652f\u6301\u7684 CSS \u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n11",
+          "text": "\u4ea4\u4e92\uff1a\u70b9\u51fb\u76ee\u6807\u4f7f\u7528 hover-class\uff0c\u6837\u5f0f\u4e2d\u4e0d\u5305\u542b :active",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n12",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "n13",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001 component \u4f7f\u7528 is \u5207\u6362\u53ea\u8bfb/\u53ef\u7f16\u8f91\u63d0\u793a\uff0c\u5e76\u7528 range \u7cbe\u786e\u58f0\u660e\u4e24\u4e2a\u5019\u9009\u7ec4\u4ef6",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "n14",
+          "text": "\u6837\u5f0f\uff1a\u901a\u8fc7 style \u4e2d\u7684\u8bed\u4e49\u5316\u666e\u901a class \u5b9e\u73b0\uff0c\u4e0d\u4f7f\u7528 UnoCSS \u6216\u539f\u5b50 utility class",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5714,
+        "passed": 8,
+        "failed": 6,
+        "total": 14,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "u0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u4e3a\u5305\u542b template\u3001script setup \u548c style \u7684\u5b8c\u6574\u7ec4\u4ef6 SFC",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "u1",
+          "text": "\u811a\u672c\uff1adefineProps \u5b9a\u4e49 controlKey/options/value/disabled/label\uff0c\u5e76\u901a\u8fc7 defineExpose \u66b4\u9732\u6a21\u677f\u7ed1\u5b9a",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "u2",
+          "text": "\u811a\u672c\uff1adefineProps \u8fd4\u56de\u7684\u5c5e\u6027\u5bf9\u8c61\u901a\u8fc7 toRefs/toRef \u4f7f\u7528\uff0c\u4e0d\u76f4\u63a5\u89e3\u6784",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "u3",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 ref \u4fdd\u5b58\u672c\u5730\u9009\u4e2d\u503c\u5e76\u901a\u8fc7 watch \u540c\u6b65 value",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u4",
+          "text": "\u529f\u80fd\uff1a\u4f7f\u7528 computed \u6d3e\u751f\u5019\u9009\u9879\u72b6\u6001\u5e76\u6e32\u67d3\u5e26 key \u7684\u5019\u9009\u5217\u8868",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "u5",
+          "text": "\u529f\u80fd\uff1a\u70b9\u51fb\u5904\u7406\u5668\u6821\u9a8c\u6574\u4f53\u4e0e\u5355\u9879\u7981\u7528\u72b6\u6001\uff0c\u5e76\u901a\u8fc7 change \u4e8b\u4ef6\u4f20\u51fa controlKey \u548c value",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u6",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "u7",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u7c7b\u540d\u4f7f\u7528 wx:class\uff0c\u4e0d\u5728 class \u5c5e\u6027\u4e2d\u63d2\u503c",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "u8",
+          "text": "\u6a21\u677f\uff1aMustache \u8868\u8fbe\u5f0f\u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u9",
+          "text": "\u6a21\u677f\uff1a\u6807\u9898\u3001\u5019\u9009\u9879\u548c\u5f53\u524d\u9009\u4e2d\u9879\u6587\u6848\u5747\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u10",
+          "text": "\u6837\u5f0f\uff1a\u901a\u8fc7 style \u4e2d\u7684\u8bed\u4e49\u5316\u666e\u901a class \u5b9e\u73b0\uff0c\u4e14\u4ec5\u4f7f\u7528 RN \u652f\u6301\u7684\u5355\u7c7b\u9009\u62e9\u5668",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u11",
+          "text": "\u6837\u5f0f\uff1a\u5019\u9009\u9879\u5bb9\u5668\u663e\u5f0f\u4f7f\u7528 flex-direction:row\uff0c\u4e14\u4e0d\u5305\u542b\u4e0d\u652f\u6301\u7684 CSS \u5c5e\u6027",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u12",
+          "text": "\u4ea4\u4e92\uff1a\u70b9\u51fb\u76ee\u6807\u4f7f\u7528 hover-class\uff0c\u6837\u5f0f\u4e2d\u4e0d\u5305\u542b :active \u6216 opacity:0",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "u13",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 9,
+        "failed": 6,
+        "total": 15,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a0",
+          "text": "\u7ed3\u6784\uff1a\u8f93\u51fa\u5305\u542b template\u3001script setup \u548c\u9875\u9762 JSON\uff0c\u4e14\u4e0d\u5305\u542b\u975e\u7a7a style \u533a\u5757",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a1",
+          "text": "\u811a\u672c\uff1a\u4f7f\u7528 ref/computed/onLoad \u7ec4\u5408\u5f0f API\uff0c\u5e76\u901a\u8fc7 defineExpose \u66b4\u9732\u6a21\u677f\u7ed1\u5b9a",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "a2",
+          "text": "\u811a\u672c\uff1aonLoad \u5728 setup \u6267\u884c\u671f\u540c\u6b65\u6ce8\u518c\uff0c\u63a5\u6536\u5e76\u4f18\u5148\u4f7f\u7528 decodedQuery.category",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "a3",
+          "text": "\u6a21\u677f\uff1a\u4e3b\u4f53\u4f7f\u7528\u7eb5\u5411 scroll-view \u627f\u8f7d\u9875\u9762\u6eda\u52a8",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a4",
+          "text": "\u529f\u80fd\uff1a\u6e32\u67d3\u5e26\u7a33\u5b9a key \u7684\u7b5b\u9009\u9879\u548c\u4efb\u52a1\u5217\u8868\uff0c\u5e76\u4f7f\u7528 computed \u4ea7\u51fa\u7b5b\u9009\u7ed3\u679c",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a5",
+          "text": "\u529f\u80fd\uff1a\u652f\u6301\u5207\u6362\u7b5b\u9009\u5206\u7c7b\u548c\u4efb\u52a1\u5b8c\u6210\u72b6\u6001\uff0c\u5e76\u6e32\u67d3\u7a7a\u72b6\u6001",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "a6",
+          "text": "\u6a21\u677f\uff1a\u4e8b\u4ef6\u53c2\u6570\u4f7f\u7528\u5185\u8054\u8bed\u6cd5\uff0c\u4e0d\u4f7f\u7528 data-* \u6216 dataset",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a7",
+          "text": "\u6a21\u677f\uff1a\u52a8\u6001\u539f\u5b50\u7c7b\u4f7f\u7528 wx:class \u5b8c\u6574 token\uff0c\u4e0d\u5728 class \u5c5e\u6027\u6216\u811a\u672c\u4e2d\u62fc\u63a5\u7c7b\u540d",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "a8",
+          "text": "\u6a21\u677f\uff1aMustache \u4e2d\u4e0d\u8c03\u7528\u666e\u901a\u65b9\u6cd5\uff0c\u7528\u6237\u53ef\u89c1\u6587\u5b57\u4f7f\u7528 text \u7ec4\u4ef6\u663e\u5f0f\u5305\u88f9",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "a9",
+          "text": "\u539f\u5b50 CSS\uff1a\u89c6\u89c9\u6837\u5f0f\u5168\u90e8\u4f7f\u7528\u6a21\u677f\u539f\u5b50\u7c7b\uff0c\u5305\u542b Flex/\u95f4\u8ddd/\u989c\u8272/\u5706\u89d2\u7b49\u652f\u6301\u7684 utility",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a10",
+          "text": "\u539f\u5b50 CSS\uff1a\u534a\u900f\u660e\u989c\u8272\u4f7f\u7528\u659c\u6760 alpha\uff0c\u4e0d\u4f7f\u7528\u72ec\u7acb *-opacity-* \u5de5\u5177\u7c7b",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a11",
+          "text": "\u539f\u5b50 CSS\uff1a\u4e0d\u4f7f\u7528 RN \u4e0d\u652f\u6301\u7684\u5de5\u5177\u7c7b\u6216 variants",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a12",
+          "text": "\u4ea4\u4e92\uff1a\u7b5b\u9009\u9879\u548c\u4efb\u52a1\u5361\u7247\u4f7f\u7528 hover-class\uff0c\u4e14\u4e0d\u4f7f\u7528 hover:/active:/focus:/visited: \u7b49 RN \u4e0d\u652f\u6301\u7684\u4ea4\u4e92 variant",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "a13",
+          "text": "JSON\uff1a\u5bfc\u822a\u680f\u6807\u9898\u4e3a\u4efb\u52a1\u770b\u677f\u5e76\u8bbe\u7f6e disableScroll:true\uff0c\u4e14\u4e0d\u5305\u542b RN \u4e0d\u652f\u6301\u7684\u9875\u9762\u914d\u7f6e",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "a14",
+          "text": "\u8de8\u7aef\uff1a\u4e0d\u76f4\u63a5\u8c03\u7528 wx/my API\uff0c\u4e5f\u4e0d\u5305\u542b\u4e0d\u5fc5\u8981\u7684\u5e73\u53f0\u6761\u4ef6\u5206\u652f\u6216 uno.css \u624b\u52a8\u5bfc\u5165",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "mpx2rn": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "mpx2rn_simple": {
+      "pass_rate": {
+        "mean": 0.9522,
+        "stddev": 0.079,
+        "min": 0.8182,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "no_skill": {
+      "pass_rate": {
+        "mean": 0.5601,
+        "stddev": 0.2394,
+        "min": 0.0909,
+        "max": 0.8667
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.05",
+      "time_seconds": "+0.0",
+      "tokens": "+0"
+    }
+  },
+  "notes": [
+    "9 个 eval、每组 110 条断言中，mpx2rn 为 110/110（100%），mpx2rn-simple 为 105/110（95.45%），no_skill 为 64/110（58.18%）；逐 eval 等权平均分别为 100%、95.22% 和 56.01%。",
+    "两种 Skill 同时通过而 no_skill 失败的断言有 42 条；63/110 条断言三组均通过。",
+    "mpx2rn 本轮全部通过；相较 mpx2rn-simple 多通过 5 条：eval-0/s6、eval-3/g8、eval-3/g10、eval-4/l10、eval-4/l11。",
+    "重跑后 eval-5 得分为 10/10、10/10、8/10，eval-8 为 15/15、15/15、9/15（依次为 mpx2rn、mpx2rn-simple、no_skill）。",
+    "三组已无共同失败断言；每种配置每个 eval 仅运行 1 次，不能据此判断随机波动。",
+    "子 Agent 完成通知未提供 token、耗时或工具调用统计，因此资源指标未采集。",
+    "评分器与调度脚本共 55 条单元测试全部通过；为匹配重生成的 eval-5 no_skill 结果，仅更新了现有产物快照预期，评分规则未改动。"
+  ]
+}

@@ -1,0 +1,174 @@
+<template>
+  <view class="segmented-control">
+    <text class="control-title">{{ label }}</text>
+    <view class="current-selection">
+      <text class="current-label">当前选择</text>
+      <text class="current-value">{{ selectedLabel || '未选择' }}</text>
+    </view>
+    <view class="segment-list">
+      <view
+        wx:for="{{ options }}"
+        wx:key="value"
+        class="segment-item"
+        wx:class="{{ {
+          'segment-item-selected': item.value === selectedValue,
+          'segment-item-disabled': disabled || item.disabled
+        } }}"
+        hover-class="{{ disabled || item.disabled ? 'none' : 'segment-item-pressed' }}"
+        hover-start-time="{{ 0 }}"
+        hover-stay-time="{{ 80 }}"
+        bindtap="handleSelect(item.value, item.disabled)"
+      >
+        <text
+          class="segment-label"
+          wx:class="{{ {'segment-label-selected': item.value === selectedValue} }}"
+        >{{ item.label }}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { computed, ref, toRefs, watch } from '@mpxjs/core'
+
+const props = defineProps({
+  controlKey: {
+    type: String,
+    value: ''
+  },
+  options: {
+    type: Array,
+    value: []
+  },
+  value: {
+    type: String,
+    value: ''
+  },
+  disabled: {
+    type: Boolean,
+    value: false
+  },
+  label: {
+    type: String,
+    value: '请选择'
+  }
+})
+
+const { controlKey, options, value, disabled, label } = toRefs(props)
+const context = useContext()
+const selectedValue = ref(value.value)
+const selectedLabel = computed(() => {
+  const selectedOption = options.value.find((option) => option.value === selectedValue.value)
+  return selectedOption ? selectedOption.label : ''
+})
+
+watch(value, (nextValue) => {
+  selectedValue.value = nextValue
+})
+
+function handleSelect (nextValue, optionDisabled) {
+  if (disabled.value || optionDisabled) return
+  selectedValue.value = nextValue
+  context.triggerEvent('change', {
+    controlKey: controlKey.value,
+    value: nextValue
+  })
+}
+
+defineExpose({
+  options,
+  disabled,
+  label,
+  selectedValue,
+  selectedLabel,
+  handleSelect
+})
+</script>
+
+<style>
+.segmented-control {
+  width: 100%;
+  padding: 24rpx;
+  box-sizing: border-box;
+  background-color: #ffffff;
+}
+
+.control-title {
+  color: #1f2937;
+  font-size: 30rpx;
+  font-weight: bold;
+  line-height: 42rpx;
+}
+
+.current-selection {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 12rpx;
+}
+
+.current-label {
+  color: #6b7280;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.current-value {
+  margin-left: 12rpx;
+  color: #2563eb;
+  font-size: 24rpx;
+  font-weight: bold;
+  line-height: 34rpx;
+}
+
+.segment-list {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  margin-top: 20rpx;
+  column-gap: 12rpx;
+}
+
+.segment-item {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 72rpx;
+  padding: 12rpx 8rpx;
+  box-sizing: border-box;
+  border-width: 2rpx;
+  border-style: solid;
+  border-color: #d7dce3;
+  border-radius: 12rpx;
+  background-color: #f5f7fa;
+}
+
+.segment-item-selected {
+  border-color: #2563eb;
+  background-color: #2563eb;
+}
+
+.segment-item-disabled {
+  opacity: 0.45;
+}
+
+.segment-item-pressed {
+  opacity: 0.65;
+  transform: scale(0.97);
+}
+
+.segment-label {
+  color: #374151;
+  font-size: 26rpx;
+  font-weight: normal;
+  line-height: 36rpx;
+  text-align: center;
+}
+
+.segment-label-selected {
+  color: #ffffff;
+  font-weight: bold;
+}
+</style>

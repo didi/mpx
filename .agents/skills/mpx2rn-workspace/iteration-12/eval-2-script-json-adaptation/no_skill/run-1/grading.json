@@ -1,0 +1,67 @@
+{
+  "eval_id": 2,
+  "run_kind": "no_skill",
+  "expectations": [
+    {
+      "id": "j0",
+      "text": "脚本：request/navigateTo/showModal/getStorageSync/setStorageSync/removeStorageSync/showToast/reLaunch 等 wx.xxx API 全部替换为 mpx.xxx",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "j1",
+      "text": "脚本：移除 onShareTimeline 或使用条件编译隔离（RN 不支持）",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "j2",
+      "text": "脚本：移除 onTabItemTap 或使用条件编译隔离（RN 不支持）",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "j3",
+      "text": "脚本：使用条件编译隔离 setTabBarBadge/removeTabBarBadge（RN 不支持）",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j4",
+      "text": "脚本：隔离或替换 wx.getUserProfile（RN 不支持）",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j5",
+      "text": "脚本：不使用 e.target.dataset，事件参数改为内联传递或使用 e.currentTarget.dataset",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j7",
+      "text": "JSON：针对 RN 处理 enablePullDownRefresh（RN 页面默认不可滚动）",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j8",
+      "text": "模板：移除 data- 属性并使用事件内联传参",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "j9",
+      "text": "脚本：保留 RN 支持的 onShareAppMessage，不应删除",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.5556,
+    "passed": 5,
+    "failed": 4,
+    "total": 9
+  },
+  "metrics": null
+}

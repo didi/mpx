@@ -1,0 +1,221 @@
+{
+  "skill_name": "mpx2rn eval comparison",
+  "iteration": 12,
+  "based_on": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-11",
+  "description": "eval-0~2 为常规适配任务，eval-3~5 为刁钻复杂适配任务，eval-6~8 分别验证选项式 API + 普通 class 组件、组合式 API + 普通 class 组件、组合式 API + 原子类页面的新建能力",
+  "runner": {
+    "prompt_templates": "prompt_templates.json",
+    "run_script": "run_evals.py",
+    "grade_script": "grade.py",
+    "usage": "1) python3 run_evals.py [--evals 0 1] [--groups mpx2rn mpx2rn_simple no_skill] [--model opus] 生成 agent dispatch JSON，每个 dispatch 包含 workdir、output_path 与 metrics_path; 2) 同一 eval 的三组 dispatch 同批并行执行，并将子 agent 工作目录固定为 workdir，子 agent 仅写入 output_path; 3) 若任务通知提供 usage，则写入对应 metrics_path; 4) 全部完成后运行 python3 grade.py 评分，再运行 python3 aggregate_benchmark.py 生成 benchmark.json/benchmark.md/result.md"
+  },
+  "comparison": {
+    "groups": [
+      {"id": "mpx2rn", "label": "使用 mpx2rn 完整版 skill", "skill": ".agents/skills/mpx2rn/SKILL.md"},
+      {"id": "mpx2rn_simple", "label": "使用 mpx2rn-simple 精简版 skill", "skill": ".agents/skills/mpx2rn-simple/SKILL.md"},
+      {"id": "no_skill", "label": "不使用 skill (baseline)"}
+    ]
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "style-adaptation",
+      "focus": "style",
+      "complexity": "normal",
+      "prompt": "请对附件中的 product-card.mpx 组件进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style），不要省略任何内容。",
+      "files": ["input/product-card.mpx"],
+      "assertions": [
+        {"id": "s0", "text": "样式：RN 端不包含后代选择器（如 .parent .child）"},
+        {"id": "s1", "text": "样式：RN 端不使用 display: grid，改为 Flex 布局"},
+        {"id": "s2", "text": "样式：RN 端不包含 ::before 伪元素"},
+        {"id": "s3", "text": "样式：RN 端不包含 :active 伪类，改用 hover-class"},
+        {"id": "s4", "text": "样式：RN 端不包含 :first-child 伪类"},
+        {"id": "s5", "text": "样式：RN 端不包含 + 相邻兄弟选择器"},
+        {"id": "s6", "text": "样式：数值型 font-weight（500/600）替换为 bold/normal"},
+        {"id": "s7", "text": "样式：text-overflow/white-space 使用双轨适配，RN 端使用 numberOfLines"},
+        {"id": "s8", "text": "模板：使用真实节点替代 ::before 伪元素"},
+        {"id": "s9", "text": "样式：条件编译结束标记使用 @mpx-endif，不使用 @mpx-end-if"},
+        {"id": "s10", "text": "样式：移除注释后不存在空选择器规则"},
+        {"id": "s11", "text": "样式：RN 端不包含 > 子选择器"},
+        {"id": "s12", "text": "样式：RN 端不包含 .a.b 多类选择器"},
+        {"id": "s13", "text": "样式：RN 端 tag-highlight 场景不包含 + 相邻兄弟选择器"},
+        {"id": "s14", "text": "模板：wx:class 对象键保留横杆类名 tag-highlight，不转换为 tagHighlight"}
+      ]
+    },
+    {
+      "id": 1,
+      "name": "template-adaptation",
+      "focus": "template",
+      "complexity": "normal",
+      "prompt": "请对附件中的 order-list.mpx 页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style），不要省略任何内容。",
+      "files": ["input/order-list.mpx"],
+      "assertions": [
+        {"id": "t0", "text": "模板：动态类名使用 wx:class，不在 class 属性中插值"},
+        {"id": "t1", "text": "模板：事件参数使用内联传参，不使用 data- 属性"},
+        {"id": "t2", "text": "模板：Mustache 中不调用普通方法，getStatusColor/getStatusText 改为 computed 或 wx:style 绑定"},
+        {"id": "t3", "text": "模板：页面滚动改用 scroll-view，移除 onPullDownRefresh/onReachBottom"},
+        {"id": "t4", "text": "模板：scroll-view 声明 bindscrolltolower 或等效滚动事件"},
+        {"id": "t5", "text": "脚本：所有 wx.xxx API 替换为 mpx.xxx"},
+        {"id": "t6", "text": "脚本：不使用 e.target.dataset，事件参数改为内联传递"},
+        {"id": "t7", "text": "样式：RN 端不包含 .btn-default .btn-text 复合选择器"},
+        {"id": "t8", "text": "模板：wx:style 对象键使用不加引号的驼峰写法，不使用引号或横杆写法"},
+        {"id": "t9", "text": "模板：Hover 能力不同的相邻条件分支使用不同的有效 key，或让两个分支始终存在有效 hover-class"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "script-json-adaptation",
+      "focus": "script/json",
+      "complexity": "normal",
+      "prompt": "请对附件中的 user-profile.mpx 页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style/json），不要省略任何内容。",
+      "files": ["input/user-profile.mpx"],
+      "assertions": [
+        {"id": "j0", "text": "脚本：request/navigateTo/showModal/getStorageSync/setStorageSync/removeStorageSync/showToast/reLaunch 等 wx.xxx API 全部替换为 mpx.xxx"},
+        {"id": "j1", "text": "脚本：移除 onShareTimeline 或使用条件编译隔离（RN 不支持）"},
+        {"id": "j2", "text": "脚本：移除 onTabItemTap 或使用条件编译隔离（RN 不支持）"},
+        {"id": "j3", "text": "脚本：使用条件编译隔离 setTabBarBadge/removeTabBarBadge（RN 不支持）"},
+        {"id": "j4", "text": "脚本：隔离或替换 wx.getUserProfile（RN 不支持）"},
+        {"id": "j5", "text": "脚本：不使用 e.target.dataset，事件参数改为内联传递或使用 e.currentTarget.dataset"},
+        {"id": "j7", "text": "JSON：针对 RN 处理 enablePullDownRefresh（RN 页面默认不可滚动）"},
+        {"id": "j8", "text": "模板：移除 data- 属性并使用事件内联传参"},
+        {"id": "j9", "text": "脚本：保留 RN 支持的 onShareAppMessage，不应删除"}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "gradient-animation-interaction",
+      "focus": "style/template/script/json",
+      "complexity": "tricky",
+      "prompt": "请对附件中的 carousel-card.mpx 组件进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style/json），不要省略任何内容。",
+      "files": ["input/carousel-card.mpx"],
+      "assertions": [
+        {"id": "g0", "text": "样式：linear-gradient 中的 transparent 替换为目标颜色的 rgba 形式"},
+        {"id": "g1", "text": "样式：display:none 替换为 width:0;height:0;overflow:hidden 或 wx:if"},
+        {"id": "g2", "text": "样式：transition-property:all 替换为具体属性名"},
+        {"id": "g3", "text": "模板：动态 background-image 所在的 view 使用 RN 属性条件编译添加 enable-background"},
+        {"id": "g4", "text": "模板：动态 transition 所在的 view 使用 RN 属性条件编译添加 enable-animation"},
+        {"id": "g5", "text": "脚本：生命周期钩子在 setup 中同步注册，不在异步回调中注册"},
+        {"id": "g6", "text": "脚本：relativeTo 使用简单选择器，不使用复合或后代选择器"},
+        {"id": "g7", "text": "JSON：条件编译配置使用 script name=\"json\" 格式"},
+        {"id": "g8", "text": "样式：带 bindtap 的元素不设置 opacity:0，避免 iOS 事件失效"},
+        {"id": "g9", "text": "样式：@keyframes 通过条件编译限制在非 RN 平台，或替换为 transition"},
+        {"id": "g10", "text": "模板：CSS 变量能力不同的相邻条件分支使用不同的 RN key，或在两个分支都用 RN enable-var 预声明保持能力稳定"}
+      ]
+    },
+    {
+      "id": 4,
+      "name": "text-layout-selector",
+      "focus": "style/template/script/json",
+      "complexity": "tricky",
+      "prompt": "请对附件中的 data-panel.mpx 组件进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style/json），不要省略任何内容。",
+      "files": ["input/data-panel.mpx"],
+      "assertions": [
+        {"id": "l1", "text": "样式：position:sticky 替换为 sticky-header 方案"},
+        {"id": "l2", "text": "样式：保留 /*use rpx*/ 和 /*use px*/ 单位转换注释"},
+        {"id": "l3", "text": "样式：background-image 不应用于 text 元素类"},
+        {"id": "l5", "text": "模板：scroll-into-view 目标添加 wx:ref"},
+        {"id": "l6", "text": "模板：createSelectorQuery 目标添加空 wx:ref"},
+        {"id": "l7", "text": "脚本：选择器 API 仅使用 #id 或 .class 简单选择器"},
+        {"id": "l8", "text": "脚本：非触摸事件不使用 catch 前缀"},
+        {"id": "l9", "text": "样式：radial-gradient 使用条件编译隔离或替换"},
+        {"id": "l10", "text": "样式：相邻普通块级兄弟 .chart-title-wrapper（margin-bottom:24rpx）与 .chart-container（margin-top:12rpx）的折叠间距归到单侧，保持 24rpx"},
+        {"id": "l11", "text": "样式：父子同向 margin 折叠的 .detail-section（margin-top:20rpx）与首子元素 .detail-header（margin-top:12rpx）归到父元素侧，保持 20rpx 并清除子元素顶部 margin"},
+        {"id": "l12", "text": "样式：.stats-section 的 flex item 通过 .stat-card margin 或包装层 margin/padding 保留上下 16rpx 间距，不按 margin 折叠场景归零"}
+      ]
+    },
+    {
+      "id": 5,
+      "name": "conditional-compile-advanced",
+      "focus": "style/template/script/json",
+      "complexity": "tricky",
+      "prompt": "请对附件中的 payment-page.mpx 页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style/json），不要省略任何内容。",
+      "files": ["input/payment-page.mpx"],
+      "assertions": [
+        {"id": "c0", "text": "样式：@mpx-if 包裹完整规则，不产生空选择器"},
+        {"id": "c1", "text": "样式：RN（ios）输出的 font-family 使用单一字体名"},
+        {"id": "c2", "text": "样式：统一设置 border-style，不使用单边属性"},
+        {"id": "c4", "text": "模板：selectComponent 目标自定义组件添加 wx:ref"},
+        {"id": "c5", "text": "模板：动态 CSS 变量所在元素设置 enable-var"},
+        {"id": "c6", "text": "脚本：setup 属性对象不直接解构；按字段解构时通过 toRefs/toRef 保持响应式"},
+        {"id": "c7", "text": "样式：background-repeat 仅使用 no-repeat"},
+        {"id": "c8", "text": "JSON：条件编译使用 if(__mpx_mode__) 运行时判断，不使用注释语法"},
+        {"id": "c9", "text": "样式：iOS 输出保留 dashed text-decoration-style 和 text-decoration-color"},
+        {"id": "c10", "text": "脚本：onLoad 使用第二个参数 decodedQuery"}
+      ]
+    },
+    {
+      "id": 6,
+      "name": "new-rating-component",
+      "focus": "new-component/options-api/regular-class",
+      "complexity": "normal",
+      "prompt": "请根据附件中的需求说明，从零创建一个 rating-selector.mpx 可复用组件。组件需在微信小程序、Web 和 RN（iOS/Android/Harmony）保持一致的功能与布局表现。请将完整的 .mpx 单文件组件写入指定输出路径，不要创建额外业务文件。",
+      "files": ["input/rating-selector-requirements.md"],
+      "assertions": [
+        {"id": "n0", "text": "结构：输出为包含 template、普通 script 和 style 的完整组件 SFC，并使用 createComponent 选项式 API"},
+        {"id": "n1", "text": "脚本：通过 properties 或 props 定义 ratingKey/value/max/readonly/label，并使用 data/computed/watch/methods 组织逻辑"},
+        {"id": "n2", "text": "功能：根据 max 渲染带 key 的星级列表，并在视觉上区分选中状态"},
+        {"id": "n3", "text": "功能：点击处理器校验 readonly，并通过 change 事件传出 ratingKey 和选中值"},
+        {"id": "n4", "text": "脚本：使用 data 保存本地评分、watch 同步 value，且实例数据键不使用 id/data/dataset"},
+        {"id": "n5", "text": "模板：事件参数使用内联语法，不使用 data-* 或 dataset"},
+        {"id": "n6", "text": "模板：动态类名使用 wx:class，不在 class 属性中插值"},
+        {"id": "n7", "text": "模板：Mustache 表达式中不调用普通方法"},
+        {"id": "n8", "text": "模板：用户可见的标签、星级和分数均使用 text 组件显式包裹"},
+        {"id": "n9", "text": "样式：RN 输出仅使用受支持的单类、page 或 :host 选择器"},
+        {"id": "n10", "text": "样式：星级行显式使用 flex-direction:row，且不包含不支持的 CSS 属性"},
+        {"id": "n11", "text": "交互：点击目标使用 hover-class，样式中不包含 :active"},
+        {"id": "n12", "text": "跨端：不直接调用 wx/my API，也不包含不必要的平台条件分支"},
+        {"id": "n13", "text": "模板：动态 component 使用 is 切换只读/可编辑提示，并用 range 精确声明两个候选组件"},
+        {"id": "n14", "text": "样式：通过 style 中的语义化普通 class 实现，不使用 UnoCSS 或原子 utility class"}
+      ]
+    },
+    {
+      "id": 7,
+      "name": "new-segmented-control",
+      "focus": "new-component/composition-api/regular-class",
+      "complexity": "normal",
+      "prompt": "请根据附件中的需求说明，从零创建一个 segmented-control.mpx 可复用组件。组件需在微信小程序、Web 和 RN（iOS/Android/Harmony）保持一致的功能与布局表现。请将完整的 .mpx 单文件组件写入指定输出路径，不要创建额外业务文件。",
+      "files": ["input/segmented-control-requirements.md"],
+      "assertions": [
+        {"id": "u0", "text": "结构：输出为包含 template、script setup 和 style 的完整组件 SFC"},
+        {"id": "u1", "text": "脚本：defineProps 定义 controlKey/options/value/disabled/label，并通过 defineExpose 暴露模板绑定"},
+        {"id": "u2", "text": "脚本：defineProps 返回的属性对象通过 toRefs/toRef 使用，不直接解构"},
+        {"id": "u3", "text": "脚本：使用 ref 保存本地选中值并通过 watch 同步 value"},
+        {"id": "u4", "text": "功能：使用 computed 派生候选项状态并渲染带 key 的候选列表"},
+        {"id": "u5", "text": "功能：点击处理器校验整体与单项禁用状态，并通过 change 事件传出 controlKey 和 value"},
+        {"id": "u6", "text": "模板：事件参数使用内联语法，不使用 data-* 或 dataset"},
+        {"id": "u7", "text": "模板：动态类名使用 wx:class，不在 class 属性中插值"},
+        {"id": "u8", "text": "模板：Mustache 表达式中不调用普通方法"},
+        {"id": "u9", "text": "模板：标题、候选项和当前选中项文案均使用 text 组件显式包裹"},
+        {"id": "u10", "text": "样式：通过 style 中的语义化普通 class 实现，且仅使用 RN 支持的单类选择器"},
+        {"id": "u11", "text": "样式：候选项容器显式使用 flex-direction:row，且不包含不支持的 CSS 属性"},
+        {"id": "u12", "text": "交互：点击目标使用 hover-class，样式中不包含 :active 或 opacity:0"},
+        {"id": "u13", "text": "跨端：不直接调用 wx/my API，也不包含不必要的平台条件分支"}
+      ]
+    },
+    {
+      "id": 8,
+      "name": "new-task-board-page",
+      "focus": "new-page/composition-api/atomic-css",
+      "complexity": "tricky",
+      "prompt": "请根据附件中的需求说明，从零创建一个 task-board.mpx 页面。页面需在微信小程序、Web 和 RN（iOS/Android/Harmony）保持一致的功能与布局表现。请将完整的 .mpx 单文件页面写入指定输出路径，不要创建额外业务文件。",
+      "files": ["input/task-board-requirements.md"],
+      "assertions": [
+        {"id": "a0", "text": "结构：输出包含 template、script setup 和页面 JSON，且不包含非空 style 区块"},
+        {"id": "a1", "text": "脚本：使用 ref/computed/onLoad 组合式 API，并通过 defineExpose 暴露模板绑定"},
+        {"id": "a2", "text": "脚本：onLoad 在 setup 执行期同步注册，接收并优先使用 decodedQuery.category"},
+        {"id": "a3", "text": "模板：主体使用纵向 scroll-view 承载页面滚动"},
+        {"id": "a4", "text": "功能：渲染带稳定 key 的筛选项和任务列表，并使用 computed 产出筛选结果"},
+        {"id": "a5", "text": "功能：支持切换筛选分类和任务完成状态，并渲染空状态"},
+        {"id": "a6", "text": "模板：事件参数使用内联语法，不使用 data-* 或 dataset"},
+        {"id": "a7", "text": "模板：动态原子类使用 wx:class 完整 token，不在 class 属性或脚本中拼接类名"},
+        {"id": "a8", "text": "模板：Mustache 中不调用普通方法，用户可见文字使用 text 组件显式包裹"},
+        {"id": "a9", "text": "原子 CSS：视觉样式全部使用模板原子类，包含 Flex/间距/颜色/圆角等支持的 utility"},
+        {"id": "a10", "text": "原子 CSS：半透明颜色使用斜杠 alpha，不使用独立 *-opacity-* 工具类"},
+        {"id": "a11", "text": "原子 CSS：不使用 RN 不支持的工具类或 variants"},
+        {"id": "a12", "text": "交互：筛选项和任务卡片使用 hover-class，且不使用 hover:/active:/focus:/visited: 等 RN 不支持的交互 variant"},
+        {"id": "a13", "text": "JSON：导航栏标题为任务看板并设置 disableScroll:true，且不包含 RN 不支持的页面配置"},
+        {"id": "a14", "text": "跨端：不直接调用 wx/my API，也不包含不必要的平台条件分支或 uno.css 手动导入"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+<template>
+  <view class="flex-1 bg-gray-50">
+    <scroll-view scroll-y class="flex-1">
+      <view class="px-5 pt-8 pb-10">
+        <view class="flex flex-row items-end justify-between mb-6">
+          <view>
+            <view><text class="text-3xl font-bold text-gray-900">任务看板</text></view>
+            <view class="mt-2"><text class="text-sm text-gray-500">安排好每一件重要的事</text></view>
+          </view>
+          <view class="flex flex-row items-center rounded-full bg-blue-500/15 px-3 py-2">
+            <text class="text-sm font-semibold text-blue-600">{{ filteredTasks.length }} 项</text>
+          </view>
+        </view>
+
+        <view class="flex flex-row rounded-2xl bg-white p-1 mb-6 shadow-sm">
+          <view
+            wx:for="{{ filters }}"
+            wx:key="value"
+            class="flex-1 flex items-center justify-center rounded-xl py-3"
+            :class="activeCategory === item.value ? 'bg-blue-500/20' : 'bg-transparent'"
+            hover-class="opacity-60"
+            @tap="selectCategory(item.value)"
+          >
+            <text
+              class="text-base"
+              :class="activeCategory === item.value ? 'font-semibold text-blue-600' : 'text-gray-500'"
+            >{{ item.label }}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{ filteredTasks.length }}">
+          <view
+            wx:for="{{ filteredTasks }}"
+            wx:key="taskKey"
+            class="flex flex-row items-center rounded-2xl border mb-4 px-4 py-5 shadow-sm"
+            :class="item.completed ? 'border-gray-200 bg-gray-100' : 'border-blue-100 bg-white'"
+            hover-class="opacity-60"
+            @tap="toggleTask(item.taskKey)"
+          >
+            <view
+              class="flex shrink-0 items-center justify-center w-7 h-7 rounded-full border-2 mr-4"
+              :class="item.completed ? 'border-blue-500 bg-blue-500' : 'border-gray-300 bg-white'"
+            >
+              <text wx:if="{{ item.completed }}" class="text-sm font-bold text-white">✓</text>
+            </view>
+
+            <view class="flex-1">
+              <text
+                class="text-base font-semibold"
+                :class="item.completed ? 'text-gray-400 line-through' : 'text-gray-900'"
+              >{{ item.title }}</text>
+              <view class="flex flex-row items-center mt-2">
+                <view
+                  class="rounded-full px-2 py-1"
+                  :class="item.category === 'work' ? 'bg-indigo-500/15' : 'bg-emerald-500/15'"
+                >
+                  <text
+                    class="text-xs font-medium"
+                    :class="item.category === 'work' ? 'text-indigo-600' : 'text-emerald-600'"
+                  >{{ categoryLabel(item.category) }}</text>
+                </view>
+                <text class="ml-2 text-xs text-gray-400">{{ item.completed ? '已完成' : '待完成' }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:else class="flex flex-col items-center justify-center rounded-2xl bg-white py-16 shadow-sm">
+          <view class="flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 mb-4">
+            <text class="text-3xl text-blue-500">✓</text>
+          </view>
+          <text class="text-lg font-semibold text-gray-800">这里还没有任务</text>
+          <text class="mt-2 text-sm text-gray-400">换个分类看看吧</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script setup>
+import { computed, onLoad, ref } from '@mpxjs/core'
+
+const filters = [
+  { label: '全部', value: 'all' },
+  { label: '工作', value: 'work' },
+  { label: '生活', value: 'life' }
+]
+
+const tasks = ref([
+  { taskKey: 'weekly-plan', title: '整理本周项目计划', category: 'work', completed: false },
+  { taskKey: 'review-report', title: '完成数据报告复盘', category: 'work', completed: true },
+  { taskKey: 'team-sync', title: '准备团队同步会材料', category: 'work', completed: false },
+  { taskKey: 'grocery-list', title: '购买本周生活用品', category: 'life', completed: false },
+  { taskKey: 'evening-run', title: '完成五公里夜跑', category: 'life', completed: true },
+  { taskKey: 'reading-time', title: '阅读三十分钟', category: 'life', completed: false }
+])
+
+const activeCategory = ref('all')
+
+const filteredTasks = computed(() => {
+  if (activeCategory.value === 'all') return tasks.value
+  return tasks.value.filter((task) => task.category === activeCategory.value)
+})
+
+onLoad((options = {}) => {
+  activeCategory.value = filters.some((filter) => filter.value === options.category)
+    ? options.category
+    : 'all'
+})
+
+function selectCategory(category) {
+  activeCategory.value = category
+}
+
+function toggleTask(taskKey) {
+  const task = tasks.value.find((item) => item.taskKey === taskKey)
+  if (task) task.completed = !task.completed
+}
+
+function categoryLabel(category) {
+  return category === 'work' ? '工作' : '生活'
+}
+</script>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "任务看板"
+}
+</script>

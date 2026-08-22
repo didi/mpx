@@ -1,0 +1,73 @@
+{
+  "eval_id": 1,
+  "run_kind": "no_skill",
+  "expectations": [
+    {
+      "id": "t0",
+      "text": "模板：动态类名使用 wx:class，不在 class 属性中插值",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "t1",
+      "text": "模板：事件参数使用内联传参，不使用 data- 属性",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "t2",
+      "text": "模板：Mustache 中不调用普通方法，getStatusColor/getStatusText 改为 computed 或 wx:style 绑定",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t3",
+      "text": "模板：页面滚动改用 scroll-view，移除 onPullDownRefresh/onReachBottom",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t4",
+      "text": "模板：scroll-view 声明 bindscrolltolower 或等效滚动事件",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t5",
+      "text": "脚本：所有 wx.xxx API 替换为 mpx.xxx",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "t6",
+      "text": "脚本：不使用 e.target.dataset，事件参数改为内联传递",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "t7",
+      "text": "样式：RN 端不包含 .btn-default .btn-text 复合选择器",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t8",
+      "text": "模板：wx:style 对象键使用不加引号的驼峰写法，不使用引号或横杆写法",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t9",
+      "text": "模板：Hover 能力不同的相邻条件分支使用不同的有效 key，或让两个分支始终存在有效 hover-class",
+      "passed": false,
+      "evidence": "FAIL"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.5,
+    "passed": 5,
+    "failed": 5,
+    "total": 10
+  },
+  "metrics": null
+}

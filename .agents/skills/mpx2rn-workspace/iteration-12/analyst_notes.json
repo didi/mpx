@@ -1,0 +1,13 @@
+[
+  "9 个 eval、每组 110 条断言中，mpx2rn 为 106/110（96.36%），mpx2rn-simple 为 105/110（95.45%），no_skill 为 64/110（58.18%）；逐 eval 等权平均分别为 96.23%、95.12% 和 56.75%。",
+  "按 wx/iOS 平台范围重新评分后，eval-5 的 mpx2rn 与 mpx2rn-simple 均为 10/10，no_skill 为 7/10。",
+  "eval-5 当前评分器失败项：mpx2rn 与 mpx2rn-simple 全部通过；no_skill 失败 c4、c5、c8。",
+  "所有条件编译评分统一为原平台只解析 wx、目标平台只解析 iOS；ali/Web/Android/Harmony 分支不参与评分，但解析器仍能识别这些平台名，以便它们在 wx/iOS 求值时正确得到 false。",
+  "c1 只检查 iOS 条件编译后的 font-family，wx 分支的多字体回退不参与判断；c9 也改为检查 iOS 输出是否保留 dashed text-decoration-style 与 text-decoration-color，不再套用 Android/Harmony 限制。",
+  "统一编译校验中，mpx2rn 与 mpx2rn-simple 的 wx、iOS 均为 0 错误、0 警告。no_skill 最终退出码和 JSON 汇总虽为 0，但日志反复出现裸 wx/ios 条件表达式未定义的 [Mpx style error]，因此不能视为真正的干净编译。",
+  "两种 Skill 同时通过而 no_skill 失败的断言为 41 条；63/110 条断言三组均通过。",
+  "三组共同失败的 3 条断言为 eval-0/s6（数值 font-weight）以及 eval-4/l10、l11（两类 margin 折叠处理）。",
+  "mpx2rn 与 mpx2rn-simple 在 3 条断言上结果不同：eval-1/t9 与 eval-4/l5 仅 mpx2rn 通过；eval-4/l12 仅 mpx2rn-simple 通过。",
+  "每种配置每个 eval 只有 1 次运行，不能据此判断随机波动或稳定性。",
+  "当前子任务完成通知未提供 token、耗时或工具调用统计，因此 27 个 run 的资源指标均为 0，仅 pass rate 可用于比较；评分器的 51 条单元测试全部通过。"
+]
