@@ -1,6 +1,0 @@
-{
-  "eval_id": 7,
-  "eval_name": "new-segmented-control",
-  "prompt": "请根据附件中的需求说明，从零创建一个 segmented-control.mpx 可复用组件。组件需在微信小程序、Web 和 RN（iOS/Android/Harmony）保持一致的功能与布局表现。请将完整的 .mpx 单文件组件写入指定输出路径，不要创建额外业务文件。",
-  "source_metadata": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-11/eval-7-new-segmented-control/eval_metadata.json"
-}
