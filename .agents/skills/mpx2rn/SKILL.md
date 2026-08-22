@@ -2,7 +2,7 @@
 name: mpx2rn
 description: Mpx 跨端输出 RN（简称 Mpx2RN 或 Mpx2DRN）的开发适配指南，覆盖模板、脚本、样式、JSON 配置四大维度。当用户进行 Mpx2RN 相关任务时强制调用，包括但不限于：技术方案设计、页面 / 组件的开发迭代、旧项目跨端适配改造、编译和运行时报错排查、Code Review 等。当用户问题不涉及 Mpx2RN 时不应调用，如 Mpx 小程序开发问题，RN 原生开发问题、Mpx2Web 相关问题等。
 metadata:
-  version: "2.12.4"
+  version: "2.12.5"
   author: donghongping
 ---
 
@@ -105,6 +105,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 
 1. **支持范围**：应用、页面与组件配置字段须在[JSON 配置参考](./references/rn-json-reference.md)标注的 RN 支持范围内；`tabBar` 等不支持字段通过条件编译隔离。
 2. **动态生成配置**：需要分平台或分环境定义配置时，使用 `<script name="json">` 并通过 `__mpx_mode__` / `__mpx_env__` 动态生成。
+3. **页面滚动**：页面 JSON 将 `disableScroll` 设为 `true`，样式声明 `page { height: 100%; }`，并使用开启 `scroll-y` 的 `scroll-view` 承载滚动内容。
 
 ### 条件编译开发约束
 
