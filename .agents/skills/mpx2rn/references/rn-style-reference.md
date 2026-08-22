@@ -312,6 +312,7 @@ RN 仅原生支持部分 CSS 简写属性，Mpx 分别在**编译时**和**运�
 - **边框简写**：`border`、`border-top`、`border-right`、`border-bottom`、`border-left`
   - 如 `border: 1px solid red` → `borderWidth: 1, borderStyle: 'solid', borderColor: 'red'`
   - 单边 `border-*` 中的 `<border-style>` 槽位会展开为 `borderStyle`（RN 不支持单边 `border-*-style`，统一作用于四边）
+  - 声明单边边框时优先使用单边 `border-*` 简写；确需组合使用 `border-style` 与 `border-*-width` 时，将其余三个不设置边框的方向宽度显式归零
   - `border: none` / `border: 1px none red` 会先保留 `borderStyle: 'none'`，最终在运行时统一转换为 `borderWidth: 0`
 - **外轮廓简写**：`outline`
   - 按值类型无序展开为 `outline-width` / `outline-style` / `outline-color`，合法值不强制书写顺序
@@ -535,6 +536,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 | 属性 | 值类型 | 说明 | 示例 |
 | --- | --- | --- | --- |
 | `border` | `width \|\| style \|\| color` | 边框简写 | `border: 1px solid #e5e5e5` |
+| `border-*` | `width \|\| style \|\| color` | 单边边框简写，优先用于声明单边边框 | `border-bottom: 1px solid #e5e5e5` |
 | `border-width` | `length` | 边框宽度（支持多值） | `border-width: 1px`；`border-width: 1px 2px` |
 | `border-color` | `color` | 边框颜色（支持多值） | `border-color: #ccc`；`border-color: red blue` |
 | `border-style` | `solid` \| `dotted` \| `dashed` \| `none` | 边框样式（不支持单边设置）；`none` 会在运行时转换为 `border-width: 0` | `border-style: dashed`；`border-style: none` |
