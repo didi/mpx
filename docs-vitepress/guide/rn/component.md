@@ -168,6 +168,7 @@
 | vertical                | boolean | `false`             | 滑动方向是否为纵向                      |
 | previous-margin         | string  | `0`                 | 前边距，可用于露出前一项的一小部分，接受px |
 | next-margin             | string  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
+| display-multiple-items  | number  | `1`                 | 同时显示的滑块数量 |
 | scale                   | boolean  | `false`            | 滑动时是否开启前后元素缩小,默认是缩放0.7倍, 暂不支持自定义 |
 | easing-function         | string  | `linear`      | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic|
 | simultaneous-handlers              | array\<object>|   `[]`          | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件|
@@ -179,9 +180,10 @@
 
 事件
 
-| 事件名           | 说明                |
-| ----------------| ------------------ |
+| 事件名        | 说明                |
+| ------------| ------------------ |
 | change| current 改变时会触发 change 事件，`event.detail = {current, source}`|
+| changestart| swiper 切换开始时会触发 changestart 事件，`event.detail = {current}`|
 
 ### swiper-item
 仅可放置在swiper组件中，宽高自动设置为100%。
