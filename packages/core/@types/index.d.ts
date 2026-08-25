@@ -125,7 +125,6 @@ interface Context {
   getOpenerEventChannel: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getOpenerEventChannel']
 }
 type ExtendedComponentOptions = {
-  disconnectOnUnmounted?: boolean
   shallowReactivePattern?: RegExp
   /**
    * 是否禁用render函数的useMemo，仅输出RN支持
