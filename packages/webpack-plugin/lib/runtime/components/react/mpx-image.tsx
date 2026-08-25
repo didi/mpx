@@ -27,7 +27,7 @@ import { hasOwn } from '@mpxjs/utils'
 import { LocalSvg, SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { svgRegExp, useLayout, useTransformStyle, renderImage, extendObject, getImageLoadSize, isAndroid } from './utils'
+import { svgRegExp, useLayout, useTransformStyle, renderImage, extendObject, getImageLoadSize, isAndroid, hiddenStyle } from './utils'
 import Portal from './mpx-portal'
 import * as perf from '@mpxjs/perf'
 
@@ -186,7 +186,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const commitLayout = (width: number, height: number) => {
     if (!(Number.isFinite(width) && width >= 0 && Number.isFinite(height) && height >= 0)) return
     const current = layoutInfoRef.current
-    if (current?.width === width && current.height === height) return
+    if (current && Math.abs(current.width - width) < 0.5 && Math.abs(current.height - height) < 0.5) return
     layoutInfoRef.current = { width, height }
     if (isLayoutModeRef.current && hasOwn(imageSizeRef.current, srcRef.current)) setVersion(version => version + 1)
   }
@@ -241,14 +241,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const modeStyle: ImageStyle = useMemo(() => {
     if (!isLayoutMode) return {}
     if (pending) {
-      return isSvg
-        ? extendObject({}, SVG_TRANSFORM_ORIGIN_STYLE, { opacity: 0 })
-        : { width: 1, height: 1, opacity: 0 }
+      return hiddenStyle
     }
     if (!isSvg && !isCropMode) return BASE_IMAGE_FILL_STYLE
     let style: ImageStyle = {}
     switch (mode) {
-      case 'scaleToFill': // wx 中 svg 图片的 scaleToFill 模式效果与 aspectFit 一致，不会就行图片缩放，此处保持一致
+      // SVG 的 scaleToFill 按小程序表现与 aspectFit 一致，均按完整显示比例缩放
+      case 'scaleToFill':
       case 'aspectFit': {
         const scale = getFitScale(imageWidth, imageHeight, viewWidth, viewHeight)
         style = {
@@ -260,6 +259,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         }
         break
       }
+      // SVG 按填满容器比例缩放
       case 'aspectFill': {
         const scale = getFillScale(imageWidth, imageHeight, viewWidth, viewHeight)
         style = {
@@ -271,6 +271,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         }
         break
       }
+      // SVG 外层尺寸已按原图比例修正，仅需等比缩放
       case 'widthFix':
       case 'heightFix': {
         const scale = getFitScale(imageWidth, imageHeight, viewWidth, viewHeight)
@@ -384,7 +385,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     const { width, height } = getImageLoadSize(evt)
-    commitImageSize(sourceKey, width, height)
+    // Android onLoad 返回渲染尺寸，图片真实尺寸仅通过 getSize 获取
+    if (!isAndroid) commitImageSize(sourceKey, width, height)
     bindload && bindload(
       getCustomEvent(
         'load',
@@ -461,7 +463,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       : createElement(LocalSvg, extendObject({ asset: src }, svgProps))
   }
 
-  function renderBaseImage () {
+  function renderBaseImage (extraProps?: Record<string, any>) {
     return renderImage(
       extendObject(
         {
@@ -471,7 +473,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
           onError: binderror && onImageError,
           style: modeStyle
         },
-        !isLayoutMode ? innerProps : {}
+        extraProps
       ),
       enableFastImage
     )
@@ -483,7 +485,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   let idCreate = -1
   if (__mpx_perf_framework__) idCreate = perf.scopeStart('image:render:createElement')
-  let finalComponent: JSX.Element = isLayoutMode ? renderLayout() : renderBaseImage()
+  let finalComponent: JSX.Element = isLayoutMode ? renderLayout() : renderBaseImage(innerProps)
 
   if (hasPositionFixed) {
     finalComponent = createElement(Portal, null, finalComponent)

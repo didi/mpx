@@ -4,6 +4,7 @@ import React from 'react'
 import { act, create, ReactTestRenderer } from 'react-test-renderer'
 import { Image as RNImage } from 'react-native'
 import MpxView, { __parseBgImageForTest } from '../../../lib/runtime/components/react/mpx-view'
+import * as runtimeUtils from '../../../lib/runtime/components/react/utils'
 
 const mockGetSize = RNImage.getSize as jest.Mock
 
@@ -59,6 +60,8 @@ concurrentActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
 
 describe('MpxView background image size resolution', () => {
   beforeEach(() => mockGetSize.mockReset())
+
+  afterEach(() => jest.restoreAllMocks())
 
   test('rejects SVG urls including query/hash forms', () => {
     expect(__parseBgImageForTest('url(https://example.com/a.svg)')).toEqual({})
@@ -132,13 +135,36 @@ describe('MpxView background image size resolution', () => {
     })
 
     const image = renderer!.root.findByType('Image')
-    expect(image.props.style).toMatchObject({ width: 1, height: 1, opacity: 0 })
+    expect(image.props.style).toMatchObject({ opacity: 0 })
     act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
     act(() => callbacks[0](400, 400))
     expect(renderer!.root.findByType('Image').props.style).toMatchObject({ width: 100, height: 100 })
 
     act(() => renderer!.root.findByType('Image').props.onLoad({ nativeEvent: { source: { width: 400, height: 200 } } }))
     expect(renderer!.root.findByType('Image').props.style).toMatchObject({ width: 100, height: 100 })
+    act(() => renderer!.unmount())
+  })
+
+  test('uses getSize without an onLoad size path on Android', () => {
+    jest.replaceProperty(runtimeUtils, 'isAndroid', true)
+    const callbacks: Array<(width: number, height: number) => void> = []
+    mockGetSize.mockImplementation((_src, success) => callbacks.push(success))
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(renderView({
+        width: 200,
+        height: 100,
+        backgroundImage: 'url(https://example.com/a.png)',
+        backgroundSize: ['contain']
+      }))
+    })
+    expect(renderer!.root.findByType('Image').props.onLoad).toBeUndefined()
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    expect(renderer!.root.findByType('Image').props.style.opacity).toBe(0)
+
+    act(() => callbacks[0](400, 400))
+    expect(renderer!.root.findByType('Image').props.style).toMatchObject({ width: 100, height: 100 })
+    expect(renderer!.root.findByType('Image').props.style.opacity).toBeUndefined()
     act(() => renderer!.unmount())
   })
 
@@ -167,6 +193,33 @@ describe('MpxView background image size resolution', () => {
     act(firstFact === 'image size' ? commitLayout : commitImageSize)
     expect(commits).toBe(commitsAfterMount + 1)
     expect(renderer!.root.findByType('Image').props.style).toMatchObject({ width: 200, height: 100 })
+    act(() => renderer!.unmount())
+  })
+
+  test('ignores background layout changes when both size deviations are below 0.5', () => {
+    let commits = 0
+    const renderProfiledView = () => React.createElement(
+      React.Profiler,
+      { id: 'view', onRender: () => { commits++ } },
+      renderView({
+        width: 200,
+        height: 100,
+        backgroundImage: 'url(https://example.com/a.png)',
+        backgroundSize: ['cover']
+      })
+    )
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(renderProfiledView())
+    })
+    act(() => renderer!.root.findByType('Image').props.onLoad({ nativeEvent: { source: { width: 400, height: 200 } } }))
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    const commitsAfterReady = commits
+
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200.4, 99.6)))
+    expect(commits).toBe(commitsAfterReady)
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100.5)))
+    expect(commits).toBe(commitsAfterReady + 1)
     act(() => renderer!.unmount())
   })
 

@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, extendObject, getImageLoadSize, svgRegExp, useHover, useTextPassThrough } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, extendObject, getImageLoadSize, svgRegExp, useHover, useTextPassThrough, hiddenStyle, isAndroid } from './utils'
 import { TextPassThroughContextValue } from './context'
 import { error, warn, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
@@ -712,7 +712,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   const commitLayout = (width: number, height: number) => {
     if (!(Number.isFinite(width) && width >= 0 && Number.isFinite(height) && height >= 0)) return
     const current = layoutInfoRef.current
-    if (current?.width === width && current.height === height) return
+    if (current && Math.abs(current.width - width) < 0.5 && Math.abs(current.height - height) < 0.5) return
     layoutInfoRef.current = { width, height }
     if (needLayoutRef.current && (!needImageSizeRef.current || (!!srcRef.current && hasOwn(imageSizeRef.current, srcRef.current)))) setVersion(version => version + 1)
   }
@@ -744,18 +744,23 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   )
 
   if (type === 'image' && src) {
-    imageProps.onLoad = (event) => {
-      const { width, height } = getImageLoadSize(event)
-      commitImageSize(src, width, height)
+    // Android onLoad 返回渲染尺寸，图片真实尺寸仅通过 getSize 获取
+    if (!isAndroid) {
+      imageProps.onLoad = (event) => {
+        const { width, height } = getImageLoadSize(event)
+        commitImageSize(src, width, height)
+      }
     }
     if (pending) {
-      imageProps.style = extendObject({}, imageProps.style, { width: 1, height: 1, opacity: 0 })
+      imageProps.style = extendObject({}, imageProps.style, hiddenStyle)
     }
   }
 
+  if (type === 'linear' && pending) return createElement(View, backgroundProps)
   return createElement(View, backgroundProps,
-    !pending && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageProps as LinearImageProps)),
-    type === 'image' && renderImage(imageProps, enableFastImage)
+    type === 'linear'
+      ? createElement(LinearGradient, extendObject({ useAngle: true }, imageProps as LinearImageProps))
+      : renderImage(imageProps, enableFastImage)
   )
 }
 

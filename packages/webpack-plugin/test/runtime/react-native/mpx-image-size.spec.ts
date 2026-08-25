@@ -4,6 +4,7 @@ import React from 'react'
 import { act, create, ReactTestRenderer } from 'react-test-renderer'
 import { Image as RNImage } from 'react-native'
 import MpxImage from '../../../lib/runtime/components/react/mpx-image'
+import * as runtimeUtils from '../../../lib/runtime/components/react/utils'
 
 const mockGetSize = RNImage.getSize as jest.Mock
 const mockResolveAssetSource = RNImage.resolveAssetSource as jest.Mock
@@ -50,6 +51,8 @@ describe('MpxImage size resolution', () => {
     mockResolveAssetSource.mockReset()
   })
 
+  afterEach(() => jest.restoreAllMocks())
+
   test.each(['scaleToFill', 'aspectFit', 'aspectFill'] as const)('renders %s directly without querying', (mode) => {
     let renderer: ReactTestRenderer
     act(() => {
@@ -84,7 +87,7 @@ describe('MpxImage size resolution', () => {
     })
     expect(renderer!.toJSON()).toMatchObject({ type: 'View' })
     expect(renderer!.root.findByType('View').props.onLayout).toEqual(expect.any(Function))
-    expect(renderer!.root.findByType('Image').props.style).toEqual({ width: 1, height: 1, opacity: 0 })
+    expect(renderer!.root.findByType('Image').props.style).toEqual({ opacity: 0 })
     act(() => renderer!.unmount())
   })
 
@@ -108,6 +111,48 @@ describe('MpxImage size resolution', () => {
     act(firstFact === 'image size' ? commitLayout : commitImageSize)
     expect(commits).toBe(commitsAfterMount + 1)
     expect(renderer!.root.findByType('Image').props.style).toMatchObject({ width: '100%', height: '100%' })
+    act(() => renderer!.unmount())
+  })
+
+  test('uses getSize instead of onLoad dimensions on Android', () => {
+    jest.replaceProperty(runtimeUtils, 'isAndroid', true)
+    const callbacks: Array<(width: number, height: number) => void> = []
+    mockGetSize.mockImplementation((_src, success) => callbacks.push(success))
+    const bindload = jest.fn()
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(renderImage({ src: 'https://example.com/a.png', mode: 'widthFix', bindload, 'enable-fast-image': false, style: { width: 200, height: 100 } }))
+    })
+    act(() => renderer!.root.findByType('View').props.onLayout(layoutEvent(200, 100)))
+    act(() => renderer!.root.findByType('Image').props.onLoad({ nativeEvent: { source: { width: 100, height: 400 } } }))
+    expect(bindload.mock.calls[0][0].detail).toEqual({ width: 100, height: 400 })
+    expect(renderer!.root.findByType('Image').props.style.opacity).toBe(0)
+
+    act(() => callbacks[0](400, 200))
+    expect(renderer!.root.findByType('View').props.style.height).toBe(100)
+    expect(renderer!.root.findByType('Image').props.style.opacity).toBeUndefined()
+    act(() => renderer!.unmount())
+  })
+
+  test('ignores layout changes when both size deviations are below 0.5', () => {
+    let commits = 0
+    const renderProfiledImage = () => React.createElement(
+      React.Profiler,
+      { id: 'image', onRender: () => { commits++ } },
+      renderImage({ src: 'https://example.com/a.png', mode: 'widthFix', 'enable-fast-image': false, style: { width: 200, height: 100 } })
+    )
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(renderProfiledImage())
+    })
+    act(() => renderer!.root.findByType('Image').props.onLoad({ nativeEvent: { source: { width: 400, height: 200 } } }))
+    act(() => renderer!.root.findByType('View').props.onLayout(layoutEvent(200, 100)))
+    const commitsAfterReady = commits
+
+    act(() => renderer!.root.findByType('View').props.onLayout(layoutEvent(200.4, 99.6)))
+    expect(commits).toBe(commitsAfterReady)
+    act(() => renderer!.root.findByType('View').props.onLayout(layoutEvent(200.5, 100)))
+    expect(commits).toBe(commitsAfterReady + 1)
     act(() => renderer!.unmount())
   })
 
@@ -140,7 +185,7 @@ describe('MpxImage size resolution', () => {
       renderer!.update(renderImage({ src: 'https://example.com/a.png', mode: 'widthFix', 'enable-fast-image': false, style: { width: 200, height: 100 } }))
     })
     expect(renderer!.toJSON()).toMatchObject({ type: 'View' })
-    expect(renderer!.root.findByType('Image').props.style).toEqual({ width: 1, height: 1, opacity: 0 })
+    expect(renderer!.root.findByType('Image').props.style).toEqual({ opacity: 0 })
     expect(mockGetSize).not.toHaveBeenCalled()
 
     act(() => renderer!.root.findByType('View').props.onLayout(layoutEvent(200, 100)))
@@ -223,7 +268,7 @@ describe('MpxImage size resolution', () => {
     act(() => renderer!.update(renderProfiledImage('widthFix')))
     expect(commits).toBe(commitsAfterMount + 1)
     expect(renderer!.toJSON()).toMatchObject({ type: 'View' })
-    expect(renderer!.root.findByType(imageType).props.style).toEqual({ width: 1, height: 1, opacity: 0 })
+    expect(renderer!.root.findByType(imageType).props.style).toEqual({ opacity: 0 })
     act(() => renderer!.root.findByType('View').props.onLayout(layoutEvent(200, 100)))
     expect(renderer!.root.findByType('View').props.style.height).toBe(100)
     expect(renderer!.root.findByType(imageType).props.style).toMatchObject({ width: '100%', height: '100%' })
@@ -252,7 +297,7 @@ describe('MpxImage size resolution', () => {
     const oldOnLoad = renderer!.root.findByType('Image').props.onLoad
 
     act(() => renderer!.update(renderImage(imageProps('https://example.com/b.png'))))
-    expect(renderer!.root.findByType('Image').props.style).toEqual({ width: 1, height: 1, opacity: 0 })
+    expect(renderer!.root.findByType('Image').props.style).toEqual({ opacity: 0 })
     act(() => callbacks[1](100, 100))
     expect(renderer!.root.findByType('View').props.style.height).toBe(200)
     act(() => callbacks[0](400, 200))
