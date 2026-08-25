@@ -808,7 +808,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-var': enableVar,
     'enable-background': enableBackground,
     'enable-text-pass-through': enableTextPassThrough,
-    'enable-fast-image': enableFastImage,
+    'enable-fast-image': enableFastImage = true,
     'enable-animation': enableAnimation,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
