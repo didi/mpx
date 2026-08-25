@@ -4,6 +4,7 @@
 .cache/
 .gitconfig
 node_modules/
+.mpx-lab/
 *.log
 package-lock.json
 pnpm-lock.yaml
