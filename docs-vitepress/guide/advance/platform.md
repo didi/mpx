@@ -218,9 +218,11 @@ Mpx跨平台编译的原则在于，`能转则转，转不了则报错提示`，
 
 mpx中我们支持了三种维度的条件编译，分别是文件维度，区块维度和代码维度，其中，文件维度和区块维度主要用于处理一些大块的平台差异性逻辑，而代码维度主要用于处理一些局部简单的平台差异。
 
+> 文件和区块维度的 `mode` 只负责选择目标平台内容，不会改变源码方言。命中的文件或区块默认继承资源 `srcMode` 并继续参与跨平台转换；完整目标平台原生文件使用 `srcModeRules` 声明源码方言，完整目标平台原生 SFC 区块使用 `src-mode` 声明源码方言。
+
 ### 文件维度条件编译 {#file-conditional-compile}
 
-文件维度条件编译简单的来说就是文件为维度进行跨平台差异代码的编写，例如在微信->支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，这时你可以在相同的位置新建一个map.ali.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的mode来加载对应模块，当mode为ali时，会优先加载map.ali.mpx，反之则会加载map.mpx。
+文件维度条件编译简单的来说就是以文件为维度编写跨平台差异代码。例如在微信 -> 支付宝项目中存在一个业务地图组件 `map.mpx`，可以在相同位置新建 `map.ali.mpx`；编译系统在 `mode` 为 `ali` 时优先加载 `map.ali.mpx`，其他 `mode` 加载 `map.mpx`。`map.ali.mpx` 默认仍按照资源 `srcMode` 编写并参与转换；若文件完整使用支付宝原生语法，需通过 `srcModeRules.ali` 显式声明源码方言。
 
 文件维度条件编译能够与webpack alias结合使用，对于npm包的文件我们并不方便在原本的文件位置创建.ali的条件编译文件，但我们可以通过webpack alias在相同位置创建一个`虚拟的`.ali文件，并将其指向项目中的其他文件位置。
 
@@ -245,13 +247,16 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
 
 ### 区块维度条件编译 {#block-conditional-compile}
 
-在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`属性定义该区块的目标平台即可，示例如下：
+在.mpx单文件中一般存在template、js、style、json四个区块。`mode` 只负责区块筛选，命中后仍继承资源 `srcMode` 并执行平台转换；完整目标平台原生 SFC 区块使用 `src-mode` 显式声明源码方言。仅当 `src-mode` 等于当前输出 `mode` 时生效，否则忽略并继续继承资源 `srcMode`：
 
 ```html
 <!--编译mode为ali时使用如下区块-->
 <template mode="ali">
-<!--该区块中的所有代码需采用支付宝的技术标准进行编写-->
-  <view>支付宝环境</view>
+  <view bindtap="handleTap">支付宝环境</view>
+</template>
+
+<template mode="ali" src-mode="ali">
+  <view onTap="handleTap">完整支付宝原生区块</view>
 </template>
 
 <!--其他编译mode时使用如下区块-->
@@ -259,6 +264,18 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
   <view>其他环境</view>
 </template>
 ```
+
+当 RN 区块声明 `src-mode="ios"` 时，区块会按照 RN 原生源码处理，模板应使用已注册的 `View`、`Text` 等 RN 原生组件，而不是依赖 `view`、`text` 的 Mpx2RN 转换。RN 原生组件的注册方式参见 [Mpx 与 RN 混合开发](../rn/hybrid-with-react-native.md)。
+
+```html
+<template mode="ios" src-mode="ios">
+  <View>
+    <Text>RN 原生区块</Text>
+  </View>
+</template>
+```
+
+`.mpx` 文件的 `<template src="..." src-mode="...">` 仍属于 SFC 模板区块：默认继承当前资源的 `srcMode`，并读取区块显式声明的 `src-mode`。模板区块内部的 `<template name>` 定义同样继承当前区块 `srcMode`；`<import>` / `<include>` 引用的是独立模板资源，不继承引用方 `srcMode`，若其使用目标平台原生语法，应通过 `srcModeRules` 对被引用资源本身进行声明。
 
 ### 代码维度条件编译 {#code-conditional-compile}
 
@@ -381,36 +398,26 @@ module.exports = {
 ```html
 <view @ali>this is view</view>
 ```
-需要注意使用上述用法时，节点自身在构建时框架不会对节点属性进行平台语法转换，但对于其子节点，框架并不会继承父级节点 mode，会进行正常跨平台语法转换。
-```html
-<!--错误示例-->
-<view @ali bindtap="otherClick">
-    <view bindtap="someClick">tap click</view>
-</view>
-// srcMode 为 wx 跨端输出 ali 结果为
-<view @ali bindtap="otherClick">
-    <view onTap="someClick">tap click</view>
-</view>
-```
-上述示例为错误写法，假如srcMode为微信小程序，用上述写法构建输出支付宝小程序时，父节点 bindtap 不会被转为 onTap，在支付宝平台执行时事件会无响应。
 
-正确写法如下：
+`@mode` 只负责筛选节点。节点命中后会继承资源 `srcMode`，节点自身及其子节点都会执行正常的平台语法转换，条件属性不会保留在输出中。例如 `srcMode` 为 `wx`、输出 `ali` 时：
+
 ```html
-<!--正确示例-->
-<view @ali onTap="otherClick">
-    <view bindtap="someClick">tap click</view>
+<!--源码-->
+<view @ali bindtap="otherClick">
+  <view bindtap="someClick">tap click</view>
 </view>
-// 输出 ali 产物
-<view @ali onTap="otherClick">
-    <view onTap="someClick">tap click</view>
+
+<!--输出 ali 产物-->
+<view onTap="otherClick">
+  <view onTap="someClick">tap click</view>
 </view>
 ```
-有时开发者期望使用 @ali 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力
+
+`@_mode` 是 `@mode` 的历史兼容别名，两者的筛选和转换行为完全一致。例如下面的写法也会将 `bindtap` 转换为 `onTap`，但新代码建议统一使用 `@mode`：
+
 ```html
-<!--srcMode为 wx，输出 ali 时，bindtap 会被正常转换为 onTap-->
 <view @_ali bindtap="someClick">test</view>
 ```
-在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
 
 有时候我们不仅需要对节点属性进行条件编译，可能还需要对节点标签进行条件编译。
 
@@ -442,31 +449,31 @@ module.exports = defineConfig({
 
 #### 文件维度条件编译 {#file-conditional-compile-1}
 
-微信转支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，而且这个地图组件在不同的目标环境中也有很大的差异，这时你可以在相同的位置新建一个 map.ali.didi.mpx 或 map.ali.qingju.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的 mode 和 env 来加载对应模块，当 mode 为 ali，env 为 didi 时，会优先加载 map.ali.didi.mpx、map.ali.mpx，如果没有定义 env，则会优先加载 map.ali.mpx，反之则会加载 map.mpx。
+微信转支付宝的项目中存在一个业务地图组件 `map.mpx`，而且这个地图组件在不同目标环境中也有较大差异时，可以在相同位置新建 `map.ali.didi.mpx` 或 `map.ali.qingju.mpx`。编译系统根据当前 `mode` 和 `env` 加载对应模块：当 `mode` 为 `ali`、`env` 为 `didi` 时，会依次尝试 `map.ali.didi.mpx`、`map.ali.mpx`，否则加载 `map.mpx`。条件文件默认仍按照资源 `srcMode` 编写并参与转换；若文件完整使用支付宝原生语法，需通过 `srcModeRules.ali` 显式声明源码方言。
 
 #### 区块维度条件编译 {#block-conditional-compile-1}
 
-在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`或`env`属性定义该区块的目标平台即可，示例如下：
+在 `.mpx` 单文件中一般存在 template、script、style、JSON 四个区块。`mode` 和 `env` 只负责区块筛选，命中后仍继承资源 `srcMode` 并执行平台转换，示例如下：
 
 ```html
 <!--编译mode为ali且env为didi时使用如下区块，优先级最高是4-->
 <template mode="ali" env="didi">
-  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+  <view bindtap="handleTap">支付宝 didi 环境</view>
 </template>
 
 <!--编译mode为ali时使用如下区块，优先级是3-->
 <template mode="ali">
-  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+  <view bindtap="handleTap">支付宝环境</view>
 </template>
 
 <!--编译env为didi时使用如下区块，优先级是2-->
 <template env="didi">
-  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+  <view bindtap="handleTap">didi 环境</view>
 </template>
 
 <!--其他环境，优先级是1-->
 <template>
-  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+  <view bindtap="handleTap">默认环境</view>
 </template>
 ```
 
@@ -693,15 +700,15 @@ set|支持
 setNavigationBarTitle|支持
 setNavigationBarColor|支持
 setStorage|支持
-setStorageSync|支持
+setStorageSync|不支持，请使用 setStorage
 getStorage|支持
-getStorageSync|支持
+getStorageSync|不支持，请使用 getStorage
 getStorageInfo|支持
-getStorageInfoSync|支持
+getStorageInfoSync|不支持，请使用 getStorageInfo
 removeStorage|支持
-removeStorageSync|支持
+removeStorageSync|不支持，请使用 removeStorage
 clearStorage|支持
-clearStorageSync|支持
+clearStorageSync|不支持，请使用 clearStorage
 getSystemInfo|支持
 getSystemInfoSync|支持
 showModal|支持
@@ -742,4 +749,3 @@ i18n|是
 :---|---
 wxs|支持
 animation|支持组件的animation属性，支持所有animation对象方法(export、step、width、height、rotate、scale、skew、translate等等)
-
