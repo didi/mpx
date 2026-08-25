@@ -567,14 +567,11 @@ interface ImplementOptions {
 
 export function toPureObject<T extends object> (obj: T): T
 
-declare type PluginInstallHandler = (app: Mpx, ...options: any[]) => any
+declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any
 
-declare type PluginInstallFunction = PluginInstallHandler & {
-  __installed?: boolean
-}
-
-export type Plugin = PluginInstallFunction | {
-  install: PluginInstallHandler
+export type Plugin = (PluginInstallFunction | {
+  install: PluginInstallFunction
+}) & {
   __installed?: boolean
 }
 
