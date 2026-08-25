@@ -1363,6 +1363,11 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       resolvedVarContext = varContextRef.current
     }
     if (varKeyPaths.length) transformVar(normalStyle, varKeyPaths, resolvedVarContext, visitOther)
+  } else if (varKeyPaths.length) {
+    // 首次渲染未启用 varContext 时，后续新增的 var() 无法正确解析，直接移除避免非法样式透传到 RN 组件。
+    varKeyPaths.forEach((varKeyPath) => {
+      setStyle(normalStyle, varKeyPath, ({ target, key }) => delete target[key])
+    })
   }
 
   // apply unocss var

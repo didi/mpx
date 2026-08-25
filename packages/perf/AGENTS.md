@@ -1,6 +1,6 @@
 # @mpxjs/perf
 
-Mpx2RN 运行时按需性能探针，提供实时区段聚合、有界 trace 区段序列和有界 mark 点序列。采用「编译期常量开关 + 运行时探针实现 + tree-shaking 兜底」三层结构，关闭态产物不含探针实现、名称字符串或模块依赖。设计与背景见 [solutions/rn-runtime-perf-probe.md](../../solutions/rn-runtime-perf-probe.md)、[solutions/rn-runtime-perf-mark-timeline.md](../../solutions/rn-runtime-perf-mark-timeline.md) 和 [solutions/rn-runtime-perf-profile.md](../../solutions/rn-runtime-perf-profile.md)。
+Mpx 小程序、Web、RN 共用的按需性能探针，提供实时区段聚合、有界 trace 区段序列和有界 mark 点序列。采用「编译期常量开关 + 运行时探针实现 + tree-shaking 兜底」三层结构，关闭态产物不含探针实现、名称字符串或模块依赖。统一框架指标与演进背景见 [solutions/mpx-perf-framework-hot-path-and-user-milestone.md](../../solutions/mpx-perf-framework-hot-path-and-user-milestone.md)、[solutions/rn-runtime-perf-probe.md](../../solutions/rn-runtime-perf-probe.md)、[solutions/rn-runtime-perf-mark-timeline.md](../../solutions/rn-runtime-perf-mark-timeline.md) 和 [solutions/rn-runtime-perf-profile.md](../../solutions/rn-runtime-perf-profile.md)。
 
 ## 入口文件
 

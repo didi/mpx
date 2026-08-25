@@ -184,8 +184,10 @@ class MpxWebpackPlugin {
       const k = PERF_GROUPS[i]
       options.defs[`__mpx_perf_${k}__`] = perf[k]
     }
-    // 批量指定源码mode
-    options.modeRules = options.modeRules || {}
+    if (options.srcModeRules && options.modeRules) {
+      errors.push('MpxWebpackPlugin cannot use srcModeRules and modeRules at the same time!')
+    }
+    options.srcModeRules = options.srcModeRules || options.modeRules || {}
     options.generateBuildMap = options.generateBuildMap || false
     options.attributes = options.attributes || []
     options.externals = (options.externals || []).map((external) => {
@@ -324,19 +326,15 @@ class MpxWebpackPlugin {
     })
   }
 
-  runModeRules (data) {
+  runSrcModeRules (data) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
-    if (queryObj.mode) {
-      return
-    }
+    if (queryObj.srcMode) return
     const mode = this.options.mode
-    const modeRule = this.options.modeRules[mode]
-    if (!modeRule) {
-      return
-    }
-    if (matchCondition(resourcePath, modeRule)) {
-      data.resource = addQuery(data.resource, { mode })
-      data.request = addQuery(data.request, { mode })
+    const rule = this.options.srcModeRules[mode]
+    if (rule && matchCondition(resourcePath, rule)) {
+      const query = { srcMode: mode }
+      data.resource = addQuery(data.resource, query)
+      data.request = addQuery(data.request, query)
     }
   }
 
@@ -405,10 +403,6 @@ class MpxWebpackPlugin {
       fileConditionRules: this.options.fileConditionRules
     }
     const mode = this.options.mode
-    if (mode === 'web' || mode === 'ios' || mode === 'android' || mode === 'harmony') {
-      // 'web' | 'ios' | 'android' | 'harmony' 下，使用implicitMode强制进行平台转换
-      addModeOptions.implicitMode = true
-    }
     if (mode === 'android' || mode === 'harmony') {
       // 'android' | 'harmony' 下，使用 mode = 'ios' 进行兼容兜底
       addModeOptions.defaultMode = 'ios'
@@ -1667,7 +1661,7 @@ class MpxWebpackPlugin {
             const module = parser.state.module
             const current = parser.state.current
             const { queryObj, resourcePath } = parseRequest(module.resource)
-            const localSrcMode = queryObj.mode
+            const localSrcMode = queryObj.srcMode
             const globalSrcMode = mpx.srcMode
             const srcMode = localSrcMode || globalSrcMode
             const mode = mpx.mode
@@ -2046,8 +2040,7 @@ try {
         }
 
         createData.request = stringifyLoadersAndResource(loaders, createData.resource)
-        // 根据用户传入的modeRules对特定资源添加mode query
-        this.runModeRules(createData)
+        this.runSrcModeRules(createData)
       })
     })
 

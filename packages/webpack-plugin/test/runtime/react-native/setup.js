@@ -4,6 +4,7 @@
 // Runs via jest's `setupFiles` before any spec import, guaranteeing visibility
 // even though babel hoists ES module imports.
 global.__mpx_mode__ = 'ios'
+global.__mpx_perf__ = false
 global.__mpx_perf_framework__ = false
 // @mpxjs/utils 的 log.js / object.js / path.js 在 runtime 下由 Mpx 注入 mpxGlobal；
 // jest 环境没有 Mpx runtime，给最小 stub 让 warn/error 调用不抛 ReferenceError。
