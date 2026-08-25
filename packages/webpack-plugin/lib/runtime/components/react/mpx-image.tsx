@@ -29,6 +29,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { svgRegExp, useLayout, useTransformStyle, renderImage, extendObject, isAndroid } from './utils'
 import Portal from './mpx-portal'
+import * as perf from '@mpxjs/perf'
 
 export type Mode =
   | 'scaleToFill'
@@ -171,6 +172,11 @@ const getFixedHeight = (viewWidth: number, viewHeight: number, ratio: number) =>
 }
 
 const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, ref): JSX.Element => {
+  let idTotal = -1
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('image:render')
+
+  let idProps = -1
+  if (__mpx_perf_framework__) idProps = perf.scopeStart('image:render:props')
   const {
     src = '',
     mode = 'scaleToFill',
@@ -194,26 +200,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const isCropMode = hasOwn(cropModeMap, mode)
   const isLayoutMode = isWidthFixMode || isHeightFixMode || isCropMode
   const resizeMode: ImageResizeMode = hasOwn(modeResizeMap, mode) ? modeResizeMap[mode] : 'stretch'
+  if (__mpx_perf_framework__) perf.scopeEnd(idProps)
 
-  const onLayout = ({ nativeEvent: { layout: { width, height } } }: LayoutChangeEvent) => {
-    state.current.viewWidth = width
-    state.current.viewHeight = height
-    // 实际渲染尺寸可能会指定的值不一致，误差低于 0.5 则认为没有变化
-    if (Math.abs(viewHeight - height) < 0.5 && Math.abs(viewWidth - width) < 0.5) {
-      if (state.current.imageWidth && state.current.imageHeight && state.current.ratio) {
-        if (!loaded) setLoaded(true)
-      }
-      return
-    }
-    if (state.current.imageWidth && state.current.imageHeight && state.current.ratio) {
-      setRatio(state.current.ratio)
-      setImageWidth(state.current.imageWidth)
-      setImageHeight(state.current.imageHeight)
-      setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio!)
-      setLoaded(true)
-    }
-  }
-
+  let idStyle = -1
+  if (__mpx_perf_framework__) idStyle = perf.scopeStart('image:render:style')
   const {
     hasPositionFixed,
     hasSelfPercent,
@@ -386,6 +376,25 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   }, [isSvg, mode, viewWidth, viewHeight, imageWidth, imageHeight, ratio])
 
+  function onLayout ({ nativeEvent: { layout: { width, height } } }: LayoutChangeEvent) {
+    state.current.viewWidth = width
+    state.current.viewHeight = height
+    // 实际渲染尺寸可能会指定的值不一致，误差低于 0.5 则认为没有变化
+    if (Math.abs(viewHeight - height) < 0.5 && Math.abs(viewWidth - width) < 0.5) {
+      if (state.current.imageWidth && state.current.imageHeight && state.current.ratio) {
+        if (!loaded) setLoaded(true)
+      }
+      return
+    }
+    if (state.current.imageWidth && state.current.imageHeight && state.current.ratio) {
+      setRatio(state.current.ratio)
+      setImageWidth(state.current.imageWidth)
+      setImageHeight(state.current.imageHeight)
+      setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio!)
+      setLoaded(true)
+    }
+  }
+
   const onSvgLoad = (evt: LayoutChangeEvent) => {
     const { width, height } = evt.nativeEvent.layout
     updateImageSize(width, height)
@@ -467,7 +476,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       )
     }
   }, [src, isSvg, isLayoutMode])
+  if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
+  let idInnerProps = -1
+  if (__mpx_perf_framework__) idInnerProps = perf.scopeStart('image:render:innerProps')
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -496,6 +508,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       layoutRef
     }
   )
+  if (__mpx_perf_framework__) perf.scopeEnd(idInnerProps)
 
   function renderSvgImage () {
     const svgProps = {
@@ -541,12 +554,16 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     return createElement(View, innerProps, loaded && renderBaseImage())
   }
 
-  const finalComponent = isSvg ? renderSvgImage() : isLayoutMode ? renderLayoutImage() : renderBaseImage()
+  let idCreate = -1
+  if (__mpx_perf_framework__) idCreate = perf.scopeStart('image:render:createElement')
+  let finalComponent: JSX.Element = isSvg ? renderSvgImage() : isLayoutMode ? renderLayoutImage() : renderBaseImage()
 
   if (hasPositionFixed) {
-    return createElement(Portal, null, finalComponent)
+    finalComponent = createElement(Portal, null, finalComponent)
   }
 
+  if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
+  if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
   return finalComponent
 })
 

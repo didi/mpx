@@ -337,7 +337,7 @@ export const measureEnd = __mpx_perf__ ? impl.measureEnd : noop.measureEnd
 measures
 name                count     sum     avg     max
 ------------------  -----  ------  ------  ------
-view:render:total       12  8.20ms  0.68ms  1.42ms
+view:render             12  8.20ms  0.68ms  1.42ms
 
 timeline
 index       at  name
