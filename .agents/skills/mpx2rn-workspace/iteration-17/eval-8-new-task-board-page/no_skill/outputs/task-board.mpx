@@ -1,0 +1,176 @@
+<template>
+  <scroll-view scroll-y class="h-screen bg-[#f5f7fb] text-slate-900">
+    <view class="box-border min-h-screen px-4 pb-8 pt-5">
+      <view class="mb-5 flex flex-row items-end justify-between">
+        <view>
+          <text class="block text-3xl font-bold leading-10 text-slate-900">任务看板</text>
+          <text class="mt-1 block text-sm leading-5 text-slate-500">安排好今天的每一件事</text>
+        </view>
+        <view class="flex h-9 min-w-9 flex-row items-center justify-center rounded-full bg-blue-600 px-2">
+          <text class="text-sm font-semibold text-white">{{ filteredTasks.length }}</text>
+        </view>
+      </view>
+
+      <view class="mb-5 flex flex-row rounded-2xl bg-white p-1 shadow-sm">
+        <block wx:for="{{ filterOptions }}" wx:key="value" wx:for-item="filter">
+          <view
+            wx:if="{{ currentCategory === filter.value }}"
+            class="mx-0.5 flex flex-1 flex-row items-center justify-center rounded-xl bg-[rgba(37,99,235,0.14)] py-2.5"
+            hover-class="opacity-60"
+            hover-start-time="0"
+            hover-stay-time="80"
+            @tap="setCategory(filter.value)"
+          >
+            <text class="text-sm font-semibold text-blue-700">{{ filter.label }}</text>
+          </view>
+          <view
+            wx:else
+            class="mx-0.5 flex flex-1 flex-row items-center justify-center rounded-xl py-2.5"
+            hover-class="bg-slate-100 opacity-60"
+            hover-start-time="0"
+            hover-stay-time="80"
+            @tap="setCategory(filter.value)"
+          >
+            <text class="text-sm font-medium text-slate-500">{{ filter.label }}</text>
+          </view>
+        </block>
+      </view>
+
+      <view class="mb-3 flex flex-row items-center justify-between px-1">
+        <text class="text-base font-semibold text-slate-800">{{ currentCategoryLabel }}</text>
+        <text class="text-xs text-slate-400">{{ filteredTasks.length }} 项任务</text>
+      </view>
+
+      <view wx:if="{{ filteredTasks.length }}">
+        <block wx:for="{{ filteredTasks }}" wx:key="taskKey" wx:for-item="task">
+          <view
+            wx:if="{{ task.completed }}"
+            class="mb-3 flex flex-row items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 opacity-70"
+            hover-class="opacity-45"
+            hover-start-time="0"
+            hover-stay-time="80"
+            @tap="toggleTask(task.taskKey)"
+          >
+            <view class="mr-3 flex h-6 w-6 shrink-0 flex-row items-center justify-center rounded-full bg-emerald-500">
+              <text class="text-sm font-bold leading-4 text-white">✓</text>
+            </view>
+            <view class="min-w-0 flex-1">
+              <text class="block text-base font-medium leading-6 text-slate-400 line-through">{{ task.title }}</text>
+              <view class="mt-1.5 flex flex-row items-center">
+                <text class="rounded-md bg-slate-200 px-2 py-0.5 text-xs text-slate-500">{{ categoryNames[task.category] }}</text>
+                <text class="ml-2 text-xs text-emerald-600">已完成</text>
+              </view>
+            </view>
+          </view>
+
+          <view
+            wx:else
+            class="mb-3 flex flex-row items-center rounded-2xl border border-white bg-white px-4 py-4 shadow-sm"
+            hover-class="opacity-70"
+            hover-start-time="0"
+            hover-stay-time="80"
+            @tap="toggleTask(task.taskKey)"
+          >
+            <view class="mr-3 h-6 w-6 shrink-0 rounded-full border-2 border-blue-400 bg-white"></view>
+            <view class="min-w-0 flex-1">
+              <text class="block text-base font-semibold leading-6 text-slate-800">{{ task.title }}</text>
+              <view class="mt-1.5 flex flex-row items-center">
+                <text
+                  wx:if="{{ task.category === 'work' }}"
+                  class="rounded-md bg-blue-50 px-2 py-0.5 text-xs text-blue-600"
+                >工作</text>
+                <text
+                  wx:else
+                  class="rounded-md bg-orange-50 px-2 py-0.5 text-xs text-orange-600"
+                >生活</text>
+                <text class="ml-2 text-xs text-slate-400">待完成</text>
+              </view>
+            </view>
+            <text class="ml-3 text-xl text-slate-300">›</text>
+          </view>
+        </block>
+      </view>
+
+      <view wx:else class="mt-12 flex flex-col items-center justify-center rounded-3xl bg-white px-6 py-12">
+        <view class="mb-4 flex h-16 w-16 flex-row items-center justify-center rounded-full bg-blue-50">
+          <text class="text-3xl text-blue-400">✓</text>
+        </view>
+        <text class="text-base font-semibold text-slate-700">这个分类还没有任务</text>
+        <text class="mt-2 text-center text-sm leading-5 text-slate-400">切换其他分类看看吧</text>
+      </view>
+    </view>
+  </scroll-view>
+</template>
+
+<script>
+import { computed, createPage, onLoad, ref } from '@mpxjs/core'
+
+const filterOptions = [
+  { label: '全部', value: 'all' },
+  { label: '工作', value: 'work' },
+  { label: '生活', value: 'life' }
+]
+
+const categoryNames = {
+  work: '工作',
+  life: '生活'
+}
+
+createPage({
+  setup () {
+    const currentCategory = ref('all')
+    const tasks = ref([
+      { taskKey: 'weekly-plan', title: '整理本周工作计划', category: 'work', completed: false },
+      { taskKey: 'project-review', title: '参加项目方案评审', category: 'work', completed: true },
+      { taskKey: 'email-reply', title: '回复重要邮件', category: 'work', completed: false },
+      { taskKey: 'report-data', title: '核对月度报告数据', category: 'work', completed: false },
+      { taskKey: 'team-sync', title: '准备团队同步会材料', category: 'work', completed: true },
+      { taskKey: 'grocery-list', title: '购买本周生活用品', category: 'life', completed: false },
+      { taskKey: 'exercise', title: '完成三十分钟运动', category: 'life', completed: true },
+      { taskKey: 'reading', title: '阅读一本书的两个章节', category: 'life', completed: false },
+      { taskKey: 'family-call', title: '给家人打电话', category: 'life', completed: false },
+      { taskKey: 'room-cleaning', title: '整理房间和书桌', category: 'life', completed: true }
+    ])
+
+    const filteredTasks = computed(() => {
+      if (currentCategory.value === 'all') return tasks.value
+      return tasks.value.filter(task => task.category === currentCategory.value)
+    })
+
+    const currentCategoryLabel = computed(() => {
+      return filterOptions.find(filter => filter.value === currentCategory.value).label
+    })
+
+    const setCategory = (category) => {
+      currentCategory.value = category
+    }
+
+    const toggleTask = (taskKey) => {
+      const task = tasks.value.find(item => item.taskKey === taskKey)
+      task.completed = !task.completed
+    }
+
+    onLoad((options) => {
+      if (filterOptions.some(filter => filter.value === options.category)) {
+        currentCategory.value = options.category
+      }
+    })
+
+    return {
+      categoryNames,
+      currentCategory,
+      currentCategoryLabel,
+      filteredTasks,
+      filterOptions,
+      setCategory,
+      toggleTask
+    }
+  }
+})
+</script>
+
+<json>
+{
+  "navigationBarTitleText": "任务看板"
+}
+</json>

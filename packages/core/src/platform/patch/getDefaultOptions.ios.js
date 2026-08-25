@@ -18,6 +18,7 @@ import {
 import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
+import * as perf from '@mpxjs/perf'
 
 function getSystemInfo () {
   const windowDimensions = global.__mpxAppDimensionsInfo.window
@@ -62,9 +63,13 @@ function createEffect (proxy, componentsMap) {
   }
 
   proxy.effect = new ReactiveEffect(() => {
+    let perfId = -1
+    if (__mpx_perf_framework__) perfId = perf.scopeStart('instance:render')
     // reset instance
     proxy.target.__resetInstance()
-    return callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
+    const result = callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
+    if (__mpx_perf_framework__) perf.scopeEnd(perfId)
+    return result
   }, () => queueJob(update), proxy.scope)
   // render effect允许自触发
   proxy.toggleRecurse(true)
