@@ -149,7 +149,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     src = '',
     mode = 'scaleToFill',
     style = {},
-    'enable-var': enableVar, 
+    'enable-var': enableVar,
     'enable-fast-image': enableFastImage = true,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
