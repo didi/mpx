@@ -1247,6 +1247,28 @@ module.exports = defineConfig({
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
 
+### asyncCommonSubpackage
+
+`boolean = true`
+
+在 Web 与 RN 输出中，控制被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块由 `SplitChunksPlugin` 的 `async` cacheGroup 抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块直接合并进 app 主入口 chunk，不再输出 `async-common/index.js`，异步分包可直接复用主包中的公共模块。
+
+```js
+// mpx.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        asyncCommonSubpackage: false
+      }
+    }
+  }
+})
+```
+
 ### transSubpackageRules
 
 `Array`

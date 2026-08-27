@@ -207,6 +207,7 @@ class MpxWebpackPlugin {
     options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
     options.disableRequireAsync = options.disableRequireAsync || false
+    options.asyncCommonSubpackage = options.asyncCommonSubpackage !== undefined ? options.asyncCommonSubpackage : true
     options.miniNpmPackages = options.miniNpmPackages || []
     options.normalNpmPackages = options.normalNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
@@ -1314,8 +1315,8 @@ class MpxWebpackPlugin {
             }
             if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
               splitChunksOptions.cacheGroups.async = {
-                chunks: 'async',
-                name: 'async-common/index',
+                chunks: this.options.asyncCommonSubpackage ? 'async' : 'all',
+                name: this.options.asyncCommonSubpackage ? 'async-common/index' : mpx.appInfo.name,
                 minChunks: 2,
                 minSize: 1
               }
