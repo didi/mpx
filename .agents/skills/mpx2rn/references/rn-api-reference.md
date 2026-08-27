@@ -117,7 +117,7 @@ mpx.use(apiProxy, {
 
 **Promise 化**
 
-只有异步 API 接口才会进行 Promise 化。**`whiteList`** 可指定 API 强制参与 Promise 化；**`blackList`** 从内置规则中排除 API，强制保持回调风格。对于 Promise 化后的 API 若同时写 `success` / `fail` 与 `.then()` / `.catch()`，两套回调都会触发，但混用更容易出现 `Unhandled Promise Rejection`，建议同一调用只选一种风格。单次调用若在**第一个参数对象**上写 **`usePromise: false`**，可临时关闭 Promise 化。
+只有异步 API 接口才会进行 Promise 化。**`whiteList`** 可指定 API 强制参与 Promise 化；**`blackList`** 从内置规则中排除 API，强制保持回调风格。开启 **`usePromise`** 后，参与 Promise 化的异步 API 必须使用 **`await`** 或 **`.then()` / `.catch()`** 处理结果，不得传入 **`success` / `fail`** 回调。确需使用回调风格时，在单次调用的**第一个参数对象**上设置 **`usePromise: false`**，或将该 API 加入 **`blackList`**。
 
 若某异步 API 在**未 Promise 化**时除 **`success` / `fail`** 外还有**同步返回值**（例如 **`request`** 的 **`RequestTask`**、**`connectSocket`** 的 **`SocketTask`**），则在 **`usePromise: true`** 时：调用表达式得到的是 **`Promise`**，**`await` / `.then()` 拿到的是与 `success` 对应的成功载荷**；原同步返回值挂在本次返回的 **`Promise`** 的 **`__returned`** 属性上（无同步句柄时 **`__returned`** 可能为 **`undefined`**）。
 
