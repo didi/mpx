@@ -2,7 +2,7 @@ import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
 
 function setNavigationBarTitle (options = {}) {
   handleSuccess(options, res => {
-    return changeOpts(res, {}, { errMsg: 'setScreenBrightness:ok' })
+    return changeOpts(res, {}, { errMsg: 'setNavigationBarTitle:ok' })
   })
   if (ENV_OBJ.canIUse('setNavigationBarTitle')) {
     return ENV_OBJ.setNavigationBarTitle(options)

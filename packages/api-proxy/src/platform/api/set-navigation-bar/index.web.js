@@ -19,10 +19,13 @@ function setNavigationBarColor (options = {}) {
     return
   }
   const { backgroundColor, success, complete } = options
-  const meta = document.createElement('meta')
-  meta.setAttribute('name', 'theme-color')
+  let meta = document.querySelector('meta[name="theme-color"]')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.setAttribute('name', 'theme-color')
+    document.head.appendChild(meta)
+  }
   meta.setAttribute('content', backgroundColor)
-  document.head.appendChild(meta)
   successHandle({ errMsg: 'setNavigationBarColor:ok' }, success, complete)
 }
 
