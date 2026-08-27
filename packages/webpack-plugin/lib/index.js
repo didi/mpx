@@ -1500,18 +1500,23 @@ class MpxWebpackPlugin {
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                // webpack 5.109.0 起不再在 AST 节点上提供 loc，需通过 parser.getLocation() 获取位置信息，
+                // 旧版本 webpack 不存在该方法，因此回退使用 expr.loc。
+                // 变更日志：https://github.com/webpack/webpack/releases/tag/v5.109.0
+                // 原始变更：https://github.com/webpack/webpack/pull/21451
+                const loc = typeof parser.getLocation === 'function' ? parser.getLocation(expr) : expr.loc
                 const depBlock = new AsyncDependenciesBlock(
                   {
                     name: tarRoot + '/index'
                   },
-                  expr.loc,
+                  loc,
                   request
                 )
                 const dep = new ImportDependency(request, expr.range, undefined, {
                   isRequireAsync: true,
                   retryRequireAsync: this.options.retryRequireAsync
                 })
-                dep.loc = expr.loc
+                dep.loc = loc
                 depBlock.addDependency(dep)
                 parser.state.current.addBlock(depBlock)
               } else {
