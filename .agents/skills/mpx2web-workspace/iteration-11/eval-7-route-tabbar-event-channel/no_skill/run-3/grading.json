@@ -1,0 +1,102 @@
+{
+  "eval_id": 7,
+  "eval_name": "route-tabbar-event-channel",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "n0",
+      "text": "结算页通过 mpx.navigateTo 的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择",
+      "passed": false,
+      "evidence": "outputs/src/pages/checkout/index.mpx：chooseAddress 未完整建立 navigateTo EventChannel 双向通道。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "n1",
+      "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后使用 mpx.navigateBack 返回",
+      "passed": true,
+      "evidence": "outputs/src/pages/address/select.mpx：地址页获取 opener EventChannel，emit 地址后返回上一页。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "n2",
+      "text": "订单 tab 只通过 mpx.switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx：五类 Mpx 路由 API 按普通页、返回、替换、重启与 tab 语义使用。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "n3",
+      "text": "navigator 的 open-type 使用模板支持值 navigate，而不是 API 名 navigateTo；不把 switchTab 模板分支当作稳定 Web 能力",
+      "passed": false,
+      "evidence": "outputs/src/pages/checkout/index.mpx：navigator open-type 未使用稳定值 navigate，或误用了 API 名/不稳定 switchTab 值。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "n4",
+      "text": "Web 路由只通过 mpx.config.webConfig.routeConfig 配置 history 与 /shop/ base，output.publicPath 同为 /shop/",
+      "passed": false,
+      "evidence": "outputs/src/app.mpx / outputs/vue.config.js：未通过推荐 routeConfig 对齐 history、/shop/ base 与 publicPath。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "n5",
+      "text": "业务代码不引入 this.$router、window.history、location 跳转或 getCurrentPages 回传地址",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx:17、27、30、33 分别使用 mpx.navigateTo、mpx.redirectTo、mpx.switchTab、mpx.reLaunch；outputs/src/pages/address/select.mpx:19-20 使用 getOpenerEventChannel().emit 和 mpx.navigateBack。对 outputs 全目录搜索 forbidden pattern（$router/window.history/location/getCurrentPages）无命中。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "n6",
+      "text": "地址展示、地址选择、返回、登录失效重启、支付结果替换和订单 tab 链路保持完整",
+      "passed": true,
+      "evidence": "地址展示：outputs/src/pages/checkout/index.mpx:4 显示 {{address.name}} {{address.detail}}。地址选择：:3 bindtap=\"chooseAddress\"，:17-23 navigateTo 地址页并通过 events 接收 selectAddress；outputs/src/pages/address/select.mpx:3 列表 bindtap=\"confirm(item)\"，:19 emit 所选地址。返回：outputs/src/pages/address/select.mpx:20 mpx.navigateBack。登录失效重启：outputs/src/pages/checkout/index.mpx:32-33 requireLogin 中 mpx.reLaunch 到 /pages/login/index。支付结果替换：:26-27 pay 中 mpx.redirectTo 到 /pages/pay/result。订单 tab：:29-30 openOrders 中 mpx.switchTab 到 /pages/orders/index，outputs/src/app.mpx:19-23 声明订单 tab。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 3,
+    "total": 7,
+    "pass_rate": 0.5714
+  },
+  "metrics": {
+    "total_tokens": 77902,
+    "input_tokens": 74436,
+    "output_tokens": 3466,
+    "tool_calls": 3,
+    "duration_ms": 203066,
+    "output_files": 4,
+    "output_lines": 106,
+    "output_nonempty_lines": 99,
+    "output_bytes": 2253
+  },
+  "timing": {
+    "total_tokens": 77902,
+    "duration_ms": 203066,
+    "total_duration_seconds": 203.066,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 3
+  }
+}

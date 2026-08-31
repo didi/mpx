@@ -452,6 +452,33 @@ Web 业务代码优先使用下列 Mpx 导航 API，由 Mpx Web 运行时映射�
 | `url` | `string` | 是 | 打开的页面路径。 |
 | `events` | `Object` | 否 | 页面间通信通道。 |
 
+`events` 用于当前页接收被打开页回传的数据；`success(res)` 中的 `res.eventChannel` 用于向被打开页发送初始化数据。两者职责不同，双向通信时都需要保留：
+
+```js
+mpx.navigateTo({
+  url: '/pages/address/select',
+  events: {
+    addressSelected: (address) => {
+      this.address = address
+    }
+  },
+  success: (res) => {
+    res.eventChannel.emit('checkoutReady', { address: this.address })
+  }
+})
+```
+
+被打开页从页面实例获取同一通道；Web 的 setup context 不提供 `getOpenerEventChannel`，不要用 `getCurrentPages` 或浏览器 history 模拟回传：
+
+```js
+const channel = this.getOpenerEventChannel()
+channel.on('checkoutReady', ({ address }) => {
+  this.address = address
+})
+channel.emit('addressSelected', this.address)
+mpx.navigateBack({ delta: 1 })
+```
+
 #### 返回值
 
 无同步返回值。

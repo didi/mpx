@@ -1,0 +1,101 @@
+{
+  "eval_id": 6,
+  "eval_name": "api-proxy-task-contract",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "q0",
+      "text": "应用入口安装 @mpxjs/api-proxy，并通过 mpx.use(apiProxy, { usePromise: true }) 明确启用 Promise 风格",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：应用入口通过 mpx.use(apiProxy, { usePromise: true }) 安装 API Proxy。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q1",
+      "text": "普通趋势词请求通过配置后的 mpx.request 使用 await 或 Promise 链，不混用 success/fail 回调",
+      "passed": true,
+      "evidence": "outputs/src/services/search.js: fetchTrendingKeywords() return mpx.request({ url: '/api/search/trending' }).then(({ data }) => data)，未配置 success/fail；outputs/src/pages/search/index.mpx: async onLoad() { this.trendingKeywords = await fetchTrendingKeywords() }",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "联想词请求单次显式 usePromise: false 并保存 RequestTask；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx：联想请求保存可取消任务，连续搜索与卸载均先废弃身份再 abort。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "联想词 success/fail 回调捕获本次任务和关键词，仅当前任务且关键词仍匹配时才更新结果或提示，旧响应不能覆盖新搜索",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx：联想回调未同时证明当前任务身份与当前关键词/请求代际。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "详情跳转与错误提示继续通过应用入口已配置的 mpx.navigateTo、mpx.showToast 调用",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx: catch 中调用 mpx.showToast({ title: '搜索失败', icon: 'none' })；openProduct(productId) 中调用 mpx.navigateTo({ url: `/pages/product/detail?id=${productId}` })",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "q5",
+      "text": "不从 @mpxjs/api-proxy 命名导入 request/navigateTo/showToast，也不用 fetch、location 或 alert 重写这些能力",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx 仅 import apiProxy from '@mpxjs/api-proxy'；outputs/src/services/search.js 使用 import mpx from '@mpxjs/core' 和 mpx.request；outputs/src/pages/search/index.mpx 使用 mpx.showToast/mpx.navigateTo；outputs 下未见从 @mpxjs/api-proxy 命名导入 request/navigateTo/showToast，也未见 fetch(、location 或 alert(",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "q6",
+      "text": "趋势词、连续输入、清空搜索、取消旧请求、结果展示和商品详情业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx: onLoad() 加载 this.trendingKeywords = await fetchTrendingKeywords()，模板 wx:if=\"{{!keyword}}\" 展示 trendingKeywords；bindinput=\"onKeywordInput\" 调用 search(event.detail.value.trim()) 支持连续输入；search() 中 this.cancelSuggestionRequest() 取消旧请求，if (!keyword) { this.suggestions = []; return } 支持清空；模板 wx:for=\"{{suggestions}}\" 展示结果并 bindtap=\"openProduct(item.id)\"；openProduct() 使用 mpx.navigateTo 跳转详情",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.8571
+  },
+  "metrics": {
+    "total_tokens": 457104,
+    "input_tokens": 450155,
+    "output_tokens": 6949,
+    "tool_calls": 32,
+    "duration_ms": 293983,
+    "output_files": 3,
+    "output_lines": 125,
+    "output_nonempty_lines": 117,
+    "output_bytes": 2929
+  },
+  "timing": {
+    "total_tokens": 457104,
+    "duration_ms": 293983,
+    "total_duration_seconds": 293.983,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 32
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "complexity": "normal",
+  "focus": "web-missing-host-api/conditional-isolation",
+  "business_scenario": "社区动态发布页的位置、地图与媒体选择",
+  "prompt": "社区动态发布页需要同时支持微信小程序和 Web。微信小程序已有位置选择、地图查看、图片选择和发布能力；Web 宿主的 Bridge、地图与媒体协议尚未确定，现阶段不能假定任何未声明接口。请完成安全的跨端改造并保留所有已支持业务，输出完整 .mpx 文件。",
+  "files": [
+    "input/src/pages/community/publish.mpx"
+  ],
+  "outputs": [
+    "src/pages/community/publish.mpx"
+  ],
+  "preserves_cases": [
+    "iteration-4/eval-3-unsupported-api"
+  ],
+  "assertions": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "category": "cross-platform-regression",
+      "required_patterns": [
+        {
+          "pattern": "(?:wx|mpx)\\.chooseLocation\\s*\\(",
+          "description": "通过 wx 或 mpx 直接调用 chooseLocation"
+        },
+        {
+          "pattern": "(?:wx|mpx)\\.openLocation\\s*\\(",
+          "description": "通过 wx 或 mpx 直接调用 openLocation"
+        },
+        {
+          "pattern": "(?:wx|mpx)\\.chooseMedia\\s*\\(",
+          "description": "通过 wx 或 mpx 直接调用 chooseMedia"
+        }
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "category": "conditional-compile"
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api"
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api"
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api"
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "category": "web-api"
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "category": "web-api",
+      "required_patterns": [
+        {
+          "pattern": "mpx\\.request\\s*\\(",
+          "description": "使用 mpx.request"
+        },
+        {
+          "pattern": "mpx\\.redirectTo\\s*\\(",
+          "description": "使用 mpx.redirectTo"
+        },
+        {
+          "pattern": "mpx\\.showToast\\s*\\(",
+          "description": "使用 mpx.showToast"
+        }
+      ],
+      "forbidden_patterns": [
+        {
+          "pattern": "(?:\\bfetch\\s*\\(|\\blocation\\.assign\\s*\\(|\\balert\\s*\\()",
+          "description": "自行用 fetch、location.assign 或 alert 重实现已有能力"
+        },
+        {
+          "pattern": "import\\s*\\{[^}]*\\b(?:request|redirectTo|showToast)\\b[^}]*\\}\\s*from\\s*['\"]@mpxjs/api-proxy['\"]",
+          "description": "命名导入原始 API，绕过应用入口的 API Proxy 配置"
+        }
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "category": "business-regression"
+    }
+  ]
+}

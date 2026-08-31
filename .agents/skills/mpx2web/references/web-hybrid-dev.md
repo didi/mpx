@@ -70,6 +70,8 @@ createComponent({
 
 不要只处理顶层静态引入，还要处理快速切页、异步返回晚于卸载和重复进入造成的资源泄漏。
 
+清理要沿资源所有权追踪到底：组件负责销毁它持有的 SDK/图表实例并断开自己创建的 Observer；SDK/helper 若在内部注册 DOM、window、AbortSignal 等事件，应由它返回实例的 `destroy()` 成对移除。调用侧不必重复移除 SDK 私有监听，但必须在正常卸载与异步晚到两条路径都调用该 `destroy()`。验收时同时检查组件文件和 SDK/helper 文件，不能只在组件生命周期方法中搜索 `removeEventListener`。
+
 ---
 
 ## Vue 生态组件

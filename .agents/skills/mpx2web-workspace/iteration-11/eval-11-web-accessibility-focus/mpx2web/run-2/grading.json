@@ -1,0 +1,90 @@
+{
+  "eval_id": 11,
+  "eval_name": "web-accessibility-focus",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "c0",
+      "text": "通用筛选触发器、选项与确认按钮使用 aria-role/aria-label 表达跨端语义，并保留 tap/遮罩触摸链路",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.mpx:3-8 触发器有 aria-role=\"button\"、aria-label=\"打开商品筛选\"；16-23 选项有 aria-role=\"checkbox\"、aria-label 和 aria-checked；9、14、22、24-25 保留 bindtap 遮罩/内容/选项/按钮链路。但 24-25 的确认按钮仅为 <button bindtap=\"confirm\">确定</button>，缺少 aria-role/aria-label，因此该多分句断言整体不满足。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c1",
+      "text": "完整浏览器 role=dialog、aria-modal、tabindex 与键盘事件只存在于 Web 文件或 Web-only 模板逻辑",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx:14-18 在 Web 文件中使用 role=\"dialog\"、aria-modal=\"true\"、tabindex=\"-1\"；80、85、98-128 的 document.addEventListener/removeEventListener('keydown') 与 onKeydown 键盘逻辑也只在 .web.mpx 中。outputs/src/components/filter-dialog.mpx:10-14 仅为跨端 aria-role=\"dialog\"/aria-label，未出现浏览器 role/aria-modal/tabindex/键盘监听。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c2",
+      "text": "Web 打开前记录真实触发元素，渲染完成后把焦点移入弹层；关闭后仅在元素仍连接文档时恢复焦点",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：焦点进入和安全恢复链路完整。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c3",
+      "text": "Escape 关闭弹层；Tab 与 Shift+Tab 在当前弹层的可聚焦元素首尾循环，遮罩点击不误触内容区",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：键盘关闭、双向焦点循环与遮罩点击隔离完整。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c4",
+      "text": "document/window 键盘或焦点监听在每次关闭和 detached/unmounted 时成对移除，快速开关不会重复注册",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：全局监听在关闭和卸载时幂等清理。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c5",
+      "text": "选项选择、清空、确认、取消、焦点恢复和微信小程序触摸业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.mpx:22、41-45 选项 bindtap=\"toggle(item.value)\" 且 toggle 选择/反选；24、46 清空；25、47-49 确认 triggerEvent('confirm', { selected: this.selected }) 后 close；9、38-40 遮罩 bindtap=\"close\"、内容 bindtap=\"stop\" 保留微信小程序触摸关闭/阻止冒泡链路。outputs/src/components/filter-dialog.web.mpx:70-76 close 路径负责关闭并在 trigger 仍在 document 中时恢复焦点。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.8333
+  },
+  "metrics": {
+    "total_tokens": 467541,
+    "input_tokens": 458572,
+    "output_tokens": 8969,
+    "tool_calls": 22,
+    "duration_ms": 353182,
+    "output_files": 2,
+    "output_lines": 184,
+    "output_nonempty_lines": 177,
+    "output_bytes": 5140
+  },
+  "timing": {
+    "total_tokens": 467541,
+    "duration_ms": 353182,
+    "total_duration_seconds": 353.182,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 22
+  }
+}

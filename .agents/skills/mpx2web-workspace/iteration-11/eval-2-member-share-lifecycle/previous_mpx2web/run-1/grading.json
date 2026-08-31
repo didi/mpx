@@ -1,0 +1,97 @@
+{
+  "eval_id": 2,
+  "eval_name": "member-share-lifecycle",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "s0",
+      "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:48 保留微信按钮 `<button @wx class=\"share-button\" open-type=\"share\">分享给好友</button>`；outputs/src/pages/member/invite.mpx:140-153 保留 `onShareAppMessage () { ... }` 与 `onShareTimeline () { ... }`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s1",
+      "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx：分享生命周期保留给小程序，并从 Web 构造选项中移除。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "s2",
+      "text": "Web 分享入口绑定独立的页面实例方法",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:49 Web 入口为 `<button @web class=\"share-button\" bindtap=\"shareOnWeb\">分享邀请活动</button>`；outputs/src/pages/member/invite.mpx:165-167 在 `methods` 中定义独立实例方法 `shareOnWeb () { ... }`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s3",
+      "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:165-167 `shareOnWeb () { // TODO: 待业务提供 Web 分享 SDK、宿主 Bridge 或降级协议后接入。 }`，方法体仅保留待接入边界，没有调用 SDK 或 Bridge。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s4",
+      "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:165-167 `shareOnWeb` 方法体只有待接入 TODO 注释；outputs/src/pages/member/invite.mpx 全文件未出现 `navigator.share`、`clipboard` 或复制链接相关调用。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s5",
+      "text": "详情跳转与请求使用 Mpx/api-proxy 统一入口，不直接调用 wx",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:74 `import mpx, { createPage, implement } from '@mpxjs/core'`；outputs/src/pages/member/invite.mpx:155-163 请求使用 `mpx.request({ ... })`；outputs/src/pages/member/invite.mpx:168-172 跳转使用 `mpx.navigateTo({ ... })`；全文件未直接调用 `wx` API。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s6",
+      "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:13-24 渲染会员邀请进度 `inviteCount`、`inviteGoal`、`invitePercent`；outputs/src/pages/member/invite.mpx:32-37 渲染奖励阶梯 `campaign.rewards`；outputs/src/pages/member/invite.mpx:53-69 渲染最近邀请列表 `invitees`；outputs/src/pages/member/invite.mpx:99-127 提供 campaign rewards 与 invitees 数据。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 598296,
+    "input_tokens": 589395,
+    "output_tokens": 8901,
+    "tool_calls": 12,
+    "duration_ms": 390236,
+    "output_files": 1,
+    "output_lines": 430,
+    "output_nonempty_lines": 380,
+    "output_bytes": 8697
+  },
+  "timing": {
+    "total_tokens": 598296,
+    "duration_ms": 390236,
+    "total_duration_seconds": 390.236,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 12
+  }
+}

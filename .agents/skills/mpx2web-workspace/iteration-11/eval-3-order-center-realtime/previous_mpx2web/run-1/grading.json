@@ -1,0 +1,119 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:7-10 使用 catchtouchstart@wx=\"{{gesture.onTouchStart}}\"、catchtouchmove@wx=\"{{gesture.onTouchMove}}\"、catchtouchend@wx=\"{{gesture.onTouchEnd}}\"、catchtouchcancel@wx=\"{{gesture.onTouchCancel}}\"；54 行为 <script module=\"gesture\" lang=\"wxs\">。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：四类触摸事件均使用显式 @wx WXS 与 @web 实例方法配对。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:128-135 将 offsetX、swiping、touchStartX、touchStartOffset、touchCurrentOffset、touchMoved、suppressNextTap 放在组件 data 中按实例隔离；190 行 Math.max(-96, Math.min(0, ...)) 限制 -96 位移；197 行 open: this.touchCurrentOffset < -48 实现 -48 展开阈值。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:201-203 handleTouchCancel 调 cancelSwipe；159-167 cancelSwipe 设置 offsetX = 0 回弹。149-157 finishSwipe 仅用 suppressNextTap = moved；205-209 selectOrder 命中后立即 suppressNextTap = false 并 return，未见 setTimeout/时间戳窗口。210-215 selectOrder/removeOrder 均 if (this.disabled) return；17 行删除按钮 disabled=\"{{disabled}}\"。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：连接由 connectSocket 返回的局部 SocketTask 承载，未混用全局 Socket API。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：open/message/error/close 四类回调均校验捕获任务仍为当前任务。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：重连与卸载均先废弃任务身份，再关闭旧 SocketTask。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：sendHeartbeat 在 task.send 前校验当前任务身份和 task.readyState/task.OPEN。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:14-24 状态 tab bindtap=\"switchStatus(item.key)\"；105-123 switchStatus/fetchOrders 请求 /api/orders 并更新 orders/statusTabs。33-34 swipe-order-item 绑定 select/remove；125-127 openOrder navigateTo 详情页；128-141 removeOrder 确认后 DELETE 并过滤删除订单。47-52 logistics-channel 绑定 bindlogistics；152-161 handleLogisticsMessage 按 orderId 更新 status/statusText/logisticsText/updatedAt。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 1141700,
+    "input_tokens": 1121579,
+    "output_tokens": 20121,
+    "tool_calls": 28,
+    "duration_ms": 641337,
+    "output_files": 3,
+    "output_lines": 823,
+    "output_nonempty_lines": 754,
+    "output_bytes": 19112
+  },
+  "timing": {
+    "total_tokens": 1141700,
+    "duration_ms": 641337,
+    "total_duration_seconds": 641.337,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 28
+  }
+}

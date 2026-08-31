@@ -1,0 +1,33 @@
+<template>
+  <view class="analytics-panel-web">
+    <scroll-view class="analytics-panel-web__scroll" scroll-y="{{true}}">
+      <analytics-chart metrics="{{metrics}}" bindselect="handleSelect" />
+    </scroll-view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    metrics: {
+      type: Array,
+      value: () => []
+    }
+  },
+  methods: {
+    handleSelect (event) {
+      this.triggerEvent('select', event && event.detail ? event.detail : event)
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "analytics-chart": "../web/AnalyticsChart.vue"
+  }
+}
+</script>

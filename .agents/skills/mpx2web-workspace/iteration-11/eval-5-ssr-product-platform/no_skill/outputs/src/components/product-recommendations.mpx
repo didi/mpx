@@ -1,0 +1,162 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+// SDK contract: create({ productId }) returns Promise<Tracker>.
+// Tracker exposes track(eventName, payload) and destroy().
+createComponent({
+  properties: {
+    productId: String,
+    items: Array
+  },
+  observers: {
+    'productId, items': function () {
+      if (this.componentReady && this.pageVisible) this.refreshTracker()
+    }
+  },
+  created () {
+    this.componentReady = false
+    this.pageVisible = true
+    this.trackerVersion = 0
+    this.tracker = null
+    this.intersectionObserver = null
+  },
+  ready () {
+    this.componentReady = true
+    this.refreshTracker()
+  },
+  detached () {
+    this.componentReady = false
+    this.disposeTracker()
+  },
+  pageLifetimes: {
+    show () {
+      this.pageVisible = true
+      if (this.componentReady) this.refreshTracker()
+    },
+    hide () {
+      this.pageVisible = false
+      this.disposeTracker()
+    }
+  },
+  methods: {
+    clearTracker () {
+      if (this.intersectionObserver) {
+        this.intersectionObserver.disconnect()
+        this.intersectionObserver = null
+      }
+      if (this.tracker) {
+        this.tracker.destroy()
+        this.tracker = null
+      }
+    },
+    disposeTracker () {
+      this.trackerVersion += 1
+      this.clearTracker()
+    },
+    async refreshTracker () {
+      const trackerVersion = ++this.trackerVersion
+      this.clearTracker()
+      if (
+        __mpx_mode__ !== 'web' ||
+        typeof window === 'undefined' ||
+        typeof IntersectionObserver === 'undefined' ||
+        !this.productId
+      ) return
+
+      const sdkModule = await import('@business/product-exposure-web')
+      if (trackerVersion !== this.trackerVersion || !this.pageVisible) return
+
+      const exposureSdk = sdkModule.default || sdkModule
+      const tracker = await exposureSdk.create({ productId: this.productId })
+      await new Promise(resolve => this.$nextTick(resolve))
+      if (trackerVersion !== this.trackerVersion || !this.componentReady || !this.pageVisible) {
+        tracker.destroy()
+        return
+      }
+
+      this.tracker = tracker
+      this.intersectionObserver = new IntersectionObserver((entries) => {
+        if (trackerVersion !== this.trackerVersion || tracker !== this.tracker || !this.pageVisible) return
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            tracker.track('recommendation_exposure', {
+              productId: this.productId,
+              recommendationId: entry.target.dataset.productId
+            })
+          }
+        })
+      })
+      this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
+        this.intersectionObserver.observe(element)
+      })
+    },
+    openProduct (productId) {
+      wx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${productId}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #ffffff;
+}
+
+.section-title {
+  margin-bottom: 20rpx;
+  color: #222222;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+}
+
+.recommendation-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+}
+
+.recommendation-name {
+  flex: 1;
+  margin-left: 18rpx;
+  color: #333333;
+  font-size: 26rpx;
+}
+
+.recommendation-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

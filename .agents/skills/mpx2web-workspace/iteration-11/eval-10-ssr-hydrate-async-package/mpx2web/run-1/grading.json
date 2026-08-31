@@ -1,0 +1,113 @@
+{
+  "eval_id": 10,
+  "eval_name": "ssr-hydrate-async-package",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "x0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia，不复用模块级请求状态",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：每次 onAppInit 调用都创建并返回独立 Pinia。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x1",
+      "text": "serverPrefetch 返回 Promise 并沿调用链传递 this.$ssrContext，服务端等待文章和首屏推荐数据",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/detail.mpx：serverPrefetch 等待文章加载并沿调用链传递请求上下文。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x2",
+      "text": "文章 store 同时维护 articleId、loaded 与请求代际；同 ID 注水可复用，新 ID 在 await 前失效旧缓存，晚到响应不能覆盖当前文章",
+      "passed": true,
+      "evidence": "outputs/src/stores/article.js：store 以 articleId/loaded/请求代际保护注水复用和晚到写入。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x3",
+      "text": "服务端与客户端首屏结构不由 Math.random、Date.now、new Date、视口或浏览器对象决定；浏览器专属节点只在 mounted/ready 后出现",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/detail.mpx：首屏结构确定，浏览器专属节点只在客户端挂载后出现。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x4",
+      "text": "自定义 onSSRAppCreated 若保留，完整处理 router.push(context.url)、router.onReady 成功/错误、context.state 写入并返回 app；不需要时删除以使用框架默认流程",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：删除自定义 onSSRAppCreated，使用框架默认 router ready 与状态写入流程。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x5",
+      "text": "异步推荐组件与分包保持有效，Web 配置同时启用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /content/",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：history、useSSR 与 /content/ 部署路径一致。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x6",
+      "text": "同构 article service 返回 Promise，服务端只从调用链传入的当前 SSR 上下文的 req 解析 origin，浏览器和小程序使用相对地址，不依赖特定参数名、不访问浏览器全局或硬编码 localhost",
+      "passed": true,
+      "evidence": "outputs/src/services/article.js：服务端 origin 来自 requestContext.req，其他目标保持相对 URL 和 Promise 返回。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x7",
+      "text": "微信小程序 onLoad 文章加载、收藏、推荐展示和文章跳转不受 window 守卫阻断",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/detail.mpx：onLoad 在无浏览器对象的小程序环境仍执行文章加载。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 704548,
+    "input_tokens": 694409,
+    "output_tokens": 10139,
+    "tool_calls": 23,
+    "duration_ms": 413522,
+    "output_files": 6,
+    "output_lines": 165,
+    "output_nonempty_lines": 151,
+    "output_bytes": 4376
+  },
+  "timing": {
+    "total_tokens": 704548,
+    "duration_ms": 413522,
+    "total_duration_seconds": 413.522,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 23
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "description": "eval-5 no_skill",
+  "cwd": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-2/eval-5-ssr-product-platform/no_skill",
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "high",
+  "status": "completed",
+  "attempts": [
+    {
+      "attempt": 1,
+      "command": [
+        "codex",
+        "exec",
+        "--ignore-user-config",
+        "--ephemeral",
+        "--disable",
+        "plugins",
+        "--disable",
+        "remote_plugin",
+        "--disable",
+        "apps",
+        "--skip-git-repo-check",
+        "-m",
+        "gpt-5.6-sol",
+        "-s",
+        "workspace-write",
+        "-c",
+        "model_reasoning_effort=\"high\"",
+        "-C",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-2/eval-5-ssr-product-platform/no_skill",
+        "--color",
+        "never",
+        "--json",
+        "<prompt-via-stdin>"
+      ],
+      "returncode": 0,
+      "duration_ms": 372488,
+      "missing_outputs": []
+    }
+  ],
+  "output_exists": true,
+  "duration_ms": 372488,
+  "published_evidence": {
+    "sample": 2,
+    "outputs": "eval-5-ssr-product-platform/no_skill/run-2/outputs",
+    "compile_status": "passed",
+    "artifact_inventory": {
+      "declared_files": [
+        "src/packageProduct/pages/detail/index.mpx",
+        "src/stores/product.js",
+        "src/services/product.js",
+        "src/components/product-recommendations.mpx",
+        "src/app.mpx",
+        "vue.config.js"
+      ],
+      "compiled_mpx_files": [
+        "src/packageProduct/pages/detail/index.mpx",
+        "src/components/product-recommendations.mpx"
+      ],
+      "support_files": [
+        "src/stores/product.js",
+        "src/services/product.js",
+        "src/app.mpx",
+        "vue.config.js"
+      ],
+      "missing_files": [],
+      "all_declared_files_present": true
+    }
+  }
+}

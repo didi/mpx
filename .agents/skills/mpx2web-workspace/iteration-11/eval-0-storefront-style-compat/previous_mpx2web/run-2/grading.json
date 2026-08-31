@@ -1,0 +1,106 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "候选商品卡文件通过 scoped 建立可直接验证的 Web 组件级样式隔离；小程序 JSON 的 styleIsolation 不能替代这项 Web 证据",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：商品卡通过 scoped 建立组件级 Web 样式隔离。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:4 商品图片为 <image class=\"product-cover\" ... />；outputs/src/components/product-card.mpx:64-69 使用 .product-cover 设置 display、width、height、border-radius，未使用 image 标签选择器。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:136-140 首页 .title 保留 color #e64340、font-size 40rpx、font-weight bold；outputs/src/components/product-card.mpx:86-95 商品 .title 保留 color #333333、font-size 30rpx、font-weight bold、单行省略；outputs/src/components/product-card.mpx:64-69 .product-cover 保留 width 100%、height 300rpx、border-radius 20rpx 20rpx 0 0。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:122-126 基础 scoped 样式中 .currency, .unit 设置 font-size: 10px 和 line-height: 14px；Web 覆盖被限制在 outputs/src/components/product-card.mpx:169 的 <style mode=\"web\" scoped>。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "目标 WebView 中币种与单位先以不触发强制放大的基础字号排版，再缩放回约 10px 的视觉字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:169-180 的 Web scoped 样式中 .currency, .unit 设置 font-size: 12px、line-height: 16.8px，并通过 transform: scale(0.833333) 缩放，12px * 0.833333 约等于 10px。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "目标 WebView 的缩放补偿具有与基线方向一致的 transform-origin，且校正 flex 布局占位，不改变卡片宽度或价格行基线",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:178-179 设置 transform: scale(0.833333) 与 transform-origin: left bottom；outputs/src/components/product-card.mpx:172-175 设置 display: inline-block、flex: 0 0 12px、width: 12px、margin-right: -2px 校正 flex 占位；卡片宽度仍在 outputs/src/components/product-card.mpx:51-52 的 .product-card width: 338rpx，价格行基线仍在 outputs/src/components/product-card.mpx:115-118 的 .price-tag display:flex、align-items: baseline，Web 样式块仅覆盖 .currency/.unit。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:169-180 将 12px + scale(0.833333) 的小字号补偿放在 <style mode=\"web\" scoped> 内；基础样式 outputs/src/components/product-card.mpx:122-126 仍是 .currency/.unit font-size: 10px。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:11-20 分类 tab 通过 bindtap=\"switchCategory(item.id)\" 切换；outputs/src/pages/home/index.mpx:23-30 product-card 绑定 bindselect=\"openProduct\" 和 bindaddcart=\"addToCart\"；outputs/src/pages/home/index.mpx:79-95 switchCategory 调用 fetchProducts 请求商品；outputs/src/pages/home/index.mpx:97-100 openProduct 调用 wx.navigateTo 进入详情；outputs/src/pages/home/index.mpx:102-110 addToCart POST /api/cart/items 并 showToast。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 484140,
+    "input_tokens": 472837,
+    "output_tokens": 11303,
+    "tool_calls": 15,
+    "duration_ms": 364058,
+    "output_files": 2,
+    "output_lines": 387,
+    "output_nonempty_lines": 348,
+    "output_bytes": 7752
+  },
+  "timing": {
+    "total_tokens": 484140,
+    "duration_ms": 364058,
+    "total_duration_seconds": 364.058,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 15
+  }
+}

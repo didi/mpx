@@ -1,0 +1,183 @@
+<template>
+  <view class="channel-panel">
+    <view wx:if="{{!connected}}" class="channel-offline">
+      <text class="channel-tip">物流实时更新暂不可用</text>
+      <button class="reconnect-button" bindtap="reconnect">重新连接</button>
+    </view>
+    <view wx:else class="channel-online">
+      <text class="channel-tip">物流通道已连接</text>
+      <button class="ping-button" bindtap="sendHeartbeat">检测连接</button>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    memberId: {
+      type: String,
+      observer (memberId, oldMemberId) {
+        if (!this._ready || memberId === oldMemberId) return
+        this.connectChannel()
+      }
+    }
+  },
+  data: {
+    connected: false
+  },
+  attached () {
+    this._ready = true
+    this._detached = false
+    this._connectionId = 0
+    this._socketTask = null
+    this.connectChannel()
+  },
+  detached () {
+    this._ready = false
+    this._detached = true
+    this.closeChannel()
+  },
+  methods: {
+    connectChannel () {
+      this.closeChannel()
+      if (!this.memberId || this._detached) return
+      const memberId = this.memberId
+      const connectionId = this._connectionId
+      let socketTask
+      try {
+        socketTask = wx.connectSocket({
+          url: `wss://logistics.example.com/members/${memberId}`,
+          header: {
+            Authorization: `Bearer ${wx.getStorageSync('token')}`
+          }
+        })
+      } catch (error) {
+        this.emitChannelError(error, memberId)
+        return
+      }
+      this._socketTask = socketTask
+      socketTask.onOpen(() => {
+        if (!this.isCurrentConnection(socketTask, connectionId, memberId)) return
+        this.setConnected(true, memberId)
+      })
+      socketTask.onMessage(({ data }) => {
+        if (!this.isCurrentConnection(socketTask, connectionId, memberId)) return
+        let message
+        try {
+          message = typeof data === 'string' ? JSON.parse(data) : data
+        } catch (error) {
+          this.emitChannelError(error, memberId)
+          return
+        }
+        if (message.type !== 'logistics') return
+        this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
+      })
+      socketTask.onError((error) => {
+        if (!this.isCurrentConnection(socketTask, connectionId, memberId)) return
+        this.setConnected(false, memberId)
+        this.emitChannelError(error, memberId)
+      })
+      socketTask.onClose(() => {
+        if (!this.isCurrentConnection(socketTask, connectionId, memberId)) return
+        this._socketTask = null
+        this.setConnected(false, memberId)
+      })
+    },
+    closeChannel () {
+      const socketTask = this._socketTask
+      this._socketTask = null
+      this._connectionId = (this._connectionId || 0) + 1
+      if (socketTask) socketTask.close()
+      if (this.connected) this.setConnected(false, this.memberId)
+    },
+    isCurrentConnection (socketTask, connectionId, memberId) {
+      return !this._detached && this._socketTask === socketTask &&
+        this._connectionId === connectionId && this.memberId === memberId
+    },
+    setConnected (connected, memberId) {
+      if (this.connected === connected) return
+      this.connected = connected
+      this.triggerEvent('connectedchange', { connected, memberId })
+    },
+    emitChannelError (error, memberId) {
+      if (this._detached || this.memberId !== memberId) return
+      this.triggerEvent('error', { error, memberId })
+    },
+    reconnect () {
+      if (this._detached) return
+      this.connectChannel()
+    },
+    sendHeartbeat () {
+      const socketTask = this._socketTask
+      const memberId = this.memberId
+      const connectionId = this._connectionId
+      if (!this.connected || !socketTask) return
+      socketTask.send({
+        data: JSON.stringify({ type: 'ping', memberId }),
+        fail: (error) => {
+          if (!this.isCurrentConnection(socketTask, connectionId, memberId)) return
+          this.setConnected(false, memberId)
+          this.emitChannelError(error, memberId)
+        }
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.channel-panel {
+  margin-top: 16rpx;
+}
+
+.channel-offline,
+.channel-online {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 24rpx;
+  border-radius: 14rpx;
+}
+
+.channel-offline {
+  background: #fff7e6;
+}
+
+.channel-online {
+  background: #f0fff7;
+}
+
+.channel-tip {
+  color: #747a84;
+  font-size: 22rpx;
+}
+
+.reconnect-button,
+.ping-button {
+  margin: 0;
+  padding: 0 20rpx;
+  font-size: 22rpx;
+  line-height: 52rpx;
+  background: #ffffff;
+  border-radius: 26rpx;
+}
+
+.reconnect-button {
+  color: #d48806;
+  border: 1rpx solid #ffd591;
+}
+
+.ping-button {
+  color: #219a61;
+  border: 1rpx solid #87e8b4;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

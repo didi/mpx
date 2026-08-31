@@ -1,0 +1,171 @@
+<template>
+  <view class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal-card" wx:for="{{cards}}" wx:key="id" bindtap="openCard(item.id)">{{item.title}}</view>
+    <button bindtap="toggleTheme">切换主题</button>
+    <button bindtap="openDialog">打开弹层</button>
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
+      <view class="dialog">门户设置</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+function canLockPageScroll () {
+  return typeof window !== 'undefined' && typeof document !== 'undefined'
+}
+
+function lockPageScroll (page) {
+  if (!canLockPageScroll() || page.__portalScrollState) return
+
+  const bodyStyle = document.body.style
+  const scrollX = window.pageXOffset
+  const scrollY = window.pageYOffset
+
+  page.__portalScrollState = {
+    scrollX,
+    scrollY,
+    overflow: bodyStyle.overflow,
+    position: bodyStyle.position,
+    top: bodyStyle.top,
+    left: bodyStyle.left,
+    right: bodyStyle.right,
+    width: bodyStyle.width
+  }
+
+  bodyStyle.overflow = 'hidden'
+  bodyStyle.position = 'fixed'
+  bodyStyle.top = `-${scrollY}px`
+  bodyStyle.left = `-${scrollX}px`
+  bodyStyle.right = '0'
+  bodyStyle.width = '100%'
+}
+
+function restorePageScroll (page) {
+  const state = page.__portalScrollState
+  if (!canLockPageScroll() || !state) return
+
+  const bodyStyle = document.body.style
+  bodyStyle.overflow = state.overflow
+  bodyStyle.position = state.position
+  bodyStyle.top = state.top
+  bodyStyle.left = state.left
+  bodyStyle.right = state.right
+  bodyStyle.width = state.width
+  page.__portalScrollState = null
+  window.scrollTo(state.scrollX, state.scrollY)
+}
+
+createPage({
+  data: {
+    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    dialogVisible: false,
+    dark: false
+  },
+  methods: {
+    openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
+    toggleTheme () { this.dark = !this.dark },
+    openDialog () {
+      this.dialogVisible = true
+      lockPageScroll(this)
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      restorePageScroll(this)
+    }
+  },
+  onHide () {
+    this.dialogVisible = false
+    restorePageScroll(this)
+  },
+  onUnload () {
+    restorePageScroll(this)
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  box-sizing: border-box;
+  min-height: 100vh;
+  color: var(--portal-text, #1f2329);
+  background: var(--portal-background, #f5f7fa);
+  padding: var(--portal-space, 24rpx);
+  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom, 0px));
+}
+.portal--dark {
+  color: var(--portal-dark-text, #f5f7fa);
+  background: var(--portal-dark-background, #17181a);
+}
+.portal-card {
+  margin-bottom: 16rpx;
+  padding: 24rpx;
+  color: var(--portal-card-text, inherit);
+  background: var(--portal-card-background, #ffffff);
+  border-radius: 12rpx;
+  box-shadow: 0 4rpx 16rpx rgba(31, 35, 41, 0.08);
+}
+.portal--dark .portal-card {
+  color: var(--portal-dark-card-text, inherit);
+  background: var(--portal-dark-card-background, #25272a);
+}
+.dialog-mask {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+  background: var(--portal-mask-background, rgba(0, 0, 0, 0.5));
+}
+.dialog {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 560rpx;
+  padding: 32rpx;
+  color: var(--portal-dialog-text, #1f2329);
+  background: var(--portal-dialog-background, #ffffff);
+  border-radius: 16rpx;
+}
+.portal--dark .dialog {
+  color: var(--portal-dark-dialog-text, #f5f7fa);
+  background: var(--portal-dark-dialog-background, #25272a);
+}
+@media (hover: hover) and (pointer: fine) {
+  .portal-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .portal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8rpx 24rpx rgba(31, 35, 41, 0.14);
+  }
+}
+</style>
+
+<style>
+@media (hover: hover) and (pointer: fine) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(31, 35, 41, 0.45) transparent;
+  }
+  html::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  html::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  html::-webkit-scrollbar-thumb {
+    background: rgba(31, 35, 41, 0.35);
+    border: 2px solid transparent;
+    border-radius: 4px;
+    background-clip: content-box;
+  }
+  html::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(31, 35, 41, 0.55);
+  }
+}
+</style>

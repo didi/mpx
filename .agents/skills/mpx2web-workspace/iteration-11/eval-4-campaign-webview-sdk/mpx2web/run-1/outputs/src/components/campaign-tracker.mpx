@@ -1,0 +1,120 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        if (__mpx_mode__ === 'web' && this.trackerAttached) {
+          this.initTracker()
+        }
+      }
+    },
+    memberId: String
+  },
+  data: {
+    ready: false
+  },
+  created () {
+    if (__mpx_mode__ === 'web') {
+      this.trackerGeneration = 0
+      this.trackerAttached = false
+    }
+  },
+  ready () {
+    if (__mpx_mode__ !== 'web') {
+      this.ready = true
+      this.triggerEvent('ready', { campaignId: this.campaignId })
+      return
+    }
+    this.trackerAttached = true
+    document.addEventListener('visibilitychange', this.handleVisibilityChange)
+    this.initTracker()
+  },
+  detached () {
+    if (__mpx_mode__ !== 'web') return
+    this.trackerAttached = false
+    this.trackerGeneration++
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+    this.destroyTracker()
+  },
+  methods: {
+    async initTracker () {
+      if (__mpx_mode__ !== 'web' || !this.trackerAttached || !this.campaignId) return
+      const generation = ++this.trackerGeneration
+      const campaignId = this.campaignId
+      let tracker
+      this.ready = false
+      this.destroyTracker()
+      try {
+        const { default: campaignTracker } = await import('@business/campaign-tracker-web')
+        if (!this.isCurrentTracker(generation, campaignId)) return
+        tracker = await campaignTracker.create({
+          campaignId,
+          memberId: this.memberId
+        })
+        if (!this.isCurrentTracker(generation, campaignId)) {
+          tracker.destroy()
+          return
+        }
+        tracker.start()
+        this.tracker = tracker
+        this.handleVisibilityChange()
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (tracker) tracker.destroy()
+        if (this.tracker === tracker) this.tracker = null
+        if (this.isCurrentTracker(generation, campaignId)) {
+          this.ready = false
+          this.triggerEvent('error', { campaignId })
+        }
+      }
+    },
+    isCurrentTracker (generation, campaignId) {
+      return this.trackerAttached && generation === this.trackerGeneration && campaignId === this.campaignId
+    },
+    destroyTracker () {
+      if (!this.tracker) return
+      this.tracker.destroy()
+      this.tracker = null
+    },
+    trackExposure (payload) {
+      if (__mpx_mode__ === 'web' && this.tracker) {
+        this.tracker.track('exposure', payload)
+      }
+    },
+    handleVisibilityChange () {
+      if (!this.tracker) return
+      if (document.hidden) {
+        this.tracker.pause()
+      } else {
+        this.tracker.resume()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

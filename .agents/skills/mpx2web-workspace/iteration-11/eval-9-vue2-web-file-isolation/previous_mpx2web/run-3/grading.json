@@ -1,0 +1,110 @@
+{
+  "eval_id": 9,
+  "eval_name": "vue2-web-file-isolation",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "v0",
+      "text": "通用 analytics-panel.mpx 保留可执行的小程序摘要卡与指标点击，不导入 Vue、图表 SDK 或浏览器对象",
+      "passed": true,
+      "evidence": "outputs/src/components/analytics-panel.mpx：小程序摘要卡独立可执行，未进入 Web-only 依赖图。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "v1",
+      "text": "差异较大的浏览器图表落在 analytics-panel.web.mpx 与 Web-only Vue 文件，Web-only 依赖不进入通用模块顶层",
+      "passed": true,
+      "evidence": "outputs/src/components/analytics-panel.web.mpx:2-3 Web 版使用 scroll-view 包 analytics-chart，:25-30 usingComponents 指向 ../web/AnalyticsChart.vue；outputs/src/web/AnalyticsChart.vue:6 才 import { createChart } from './chart-sdk'；outputs/src/components/analytics-panel.mpx:10-11 仅导入 @mpxjs/core。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v2",
+      "text": "AnalyticsChart.vue 使用 Vue 2.7 兼容的 SFC/组件 API，不使用 createApp、Vue 3 script setup、Teleport 或组合式生命周期挂载",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsChart.vue：Vue SFC 使用 Vue 2.7 兼容的组件选项。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "v3",
+      "text": "DOM 容器只在 Web 客户端 mounted/ready 后访问，SSR 或模块初始化阶段不读取 document/window",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsChart.vue:32-33 mounted 后调用 initChart，:50 才把 this.$refs.chart 传入 createChart，:59-63 ResizeObserver 也在 initChart 内访问；outputs/src/web/chart-sdk.js:1-42 模块顶层只声明函数，document.createElement 位于 render 函数内 :14-24，render 由 createChart 执行路径 :27-28 触发，未在模块初始化阶段读取 document/window。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v4",
+      "text": "图表 SDK 只进入 Web 依赖图；每个实际异步 import/create 边界都检查当前代际或卸载状态，晚到实例立即销毁。纯 Web 且模块顶层 DOM-safe 时允许静态 import",
+      "passed": true,
+      "evidence": "Web 图表动态加载 SDK，以代际状态或 AbortSignal 检查每个异步边界，并销毁晚到实例。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "v5",
+      "text": "卸载时销毁图表实例、disconnect ResizeObserver 并移除拥有的事件监听；数据变化可安全复用单一实例更新，但不得增加实例、Observer 或监听数量",
+      "passed": true,
+      "evidence": "Web 图表卸载流程销毁实例、断开 ResizeObserver，SDK/helper 也成对移除其内部监听。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "v6",
+      "text": "customBuiltInComponents 使用原始 key scroll-view；自定义 Vue 组件明确透传滚动属性、事件和默认 slot",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：以 scroll-view 覆盖内建实现，Vue 组件透传 attrs/listeners/default slot。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "v7",
+      "text": "指标摘要、指标点击、Web 图表更新和滚动容器业务链路保持完整",
+      "passed": true,
+      "evidence": "指标摘要：outputs/src/components/analytics-panel.mpx:2-6 渲染 metrics label/value。指标点击：analytics-panel.mpx:3、:21-22 触发 select；Web 图表点击链路为 outputs/src/web/chart-sdk.js:7-12 取 metric.key 调 options.onSelect，outputs/src/web/AnalyticsChart.vue:50-52 emit select，outputs/src/components/analytics-panel.web.mpx:3、:18-20 bindselect 后 triggerEvent。Web 图表更新：AnalyticsChart.vue:24-30 watcher 调 chart.update，chart-sdk.js:31-33 update 调 render。滚动容器：analytics-panel.web.mpx:2 使用 scroll-view scroll-y，outputs/vue.config.js:8-9 映射到 AnalyticsScroll，AnalyticsScroll.vue:5-8 透传属性/事件/slot，:25-27 scroll-y overflow-y:auto。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 960265,
+    "input_tokens": 945697,
+    "output_tokens": 14568,
+    "tool_calls": 18,
+    "duration_ms": 632560,
+    "output_files": 6,
+    "output_lines": 214,
+    "output_nonempty_lines": 197,
+    "output_bytes": 4438
+  },
+  "timing": {
+    "total_tokens": 960265,
+    "duration_ms": 632560,
+    "total_duration_seconds": 632.56,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 18
+  }
+}

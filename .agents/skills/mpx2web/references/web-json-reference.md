@@ -67,3 +67,5 @@ Web 输出通过 webpack 动态 `import()` 与浏览器 chunk 加载机制处理
 | `webConfig.useSSR` | SSR 模式下使用异步分包 / 异步组件时设为 `true`，详见 [SSR 专项参考](./ssr-reference.md)。 |
 | `webConfig.disablePageTransition` | 是否禁用 Web 页面切换动画，默认 `true`。 |
 | `output.publicPath` | webpack 静态资源加载路径；非根路径部署时需与资源发布路径匹配。 |
+
+运行时路由与构建资源路径可以分处不同文件：应用入口通过 `mpx.config.webConfig.routeConfig` 设置路由 `mode` / `base`，构建配置通过 `output.publicPath` 或项目等价入口设置静态资源路径。非根路径部署时两者必须对齐，但不要为了把它们写在同一个对象中而改回旧的 `mpx.config.webRouteConfig`。

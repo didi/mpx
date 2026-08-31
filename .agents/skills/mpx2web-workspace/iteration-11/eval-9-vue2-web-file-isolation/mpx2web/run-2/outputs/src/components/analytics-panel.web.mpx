@@ -1,0 +1,21 @@
+<template>
+  <scroll-view class="analytics-panel-web" scroll-y="{{true}}">
+    <analytics-chart metrics="{{metrics}}" />
+  </scroll-view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: { metrics: { type: Array, value: () => [] } }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "analytics-chart": "../web/AnalyticsChart.vue"
+  }
+}
+</script>

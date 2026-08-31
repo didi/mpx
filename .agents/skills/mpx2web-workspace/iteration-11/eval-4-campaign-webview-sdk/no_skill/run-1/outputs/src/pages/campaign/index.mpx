@@ -1,0 +1,259 @@
+<template>
+  <view class="campaign-page">
+    <view class="campaign-header">
+      <text class="campaign-title">{{campaign.title}}</text>
+      <text class="campaign-subtitle">{{campaign.subtitle}}</text>
+    </view>
+
+    <view class="campaign-tabs">
+      <view
+        class="campaign-tab"
+        wx:for="{{campaigns}}"
+        wx:key="id"
+        wx:class="{{ {active: item.id === campaignId} }}"
+        bindtap="switchCampaign(item.id)"
+      >
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+
+    <!-- @mpx-if (mode === 'web') -->
+    <iframe
+      wx:if="{{campaignUrl}}"
+      id="campaign-webview"
+      class="campaign-webview"
+      src="{{campaignUrl}}"
+      bindload="handleCampaignLoad"
+      binderror="handleCampaignError"
+    ></iframe>
+    <!-- @mpx-else -->
+    <web-view
+      wx:if="{{campaignUrl}}"
+      id="campaign-webview"
+      src="{{campaignUrl}}"
+      bindmessage="handleCampaignMessage"
+      bindload="handleCampaignLoad"
+      binderror="handleCampaignError"
+    />
+    <!-- @mpx-endif -->
+
+    <view wx:if="{{loading}}" class="campaign-loading">
+      <text>活动会场加载中...</text>
+    </view>
+    <view wx:if="{{errorText}}" class="campaign-error">
+      <text>{{errorText}}</text>
+      <button bindtap="reloadCampaign">重新加载</button>
+    </view>
+
+    <campaign-tracker
+      wx:if="{{campaignId}}"
+      campaignId="{{campaignId}}"
+      memberId="{{memberId}}"
+      bindready="handleTrackerReady"
+      binderror="handleTrackerError"
+    />
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+createPage({
+  data: {
+    memberId: 'member-10086',
+    campaignId: 'summer-sale',
+    campaigns: [
+      { id: 'summer-sale', name: '夏日特卖' },
+      { id: 'member-day', name: '会员日' },
+      { id: 'fresh-week', name: '生鲜周' }
+    ],
+    campaign: {
+      title: '夏日清凉特卖',
+      subtitle: '限时领券，爆款低至五折'
+    },
+    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086',
+    loading: true,
+    errorText: '',
+    trackerReady: false
+  },
+  onLoad () {
+    this.pageActive = true
+    this.campaignRenderVersion = 0
+    if (typeof window !== 'undefined') {
+      this.windowMessageHandler = this.handleWindowMessage.bind(this)
+      window.addEventListener('message', this.windowMessageHandler)
+    }
+  },
+  onUnload () {
+    this.pageActive = false
+    this.campaignRenderVersion++
+    if (typeof window !== 'undefined' && this.windowMessageHandler) {
+      window.removeEventListener('message', this.windowMessageHandler)
+      this.windowMessageHandler = null
+    }
+  },
+  methods: {
+    switchCampaign (campaignId) {
+      if (campaignId === this.campaignId) return
+      this.campaignId = campaignId
+      this.mountCampaign()
+    },
+    mountCampaign () {
+      const version = ++this.campaignRenderVersion
+      const campaignUrl = `${CAMPAIGN_ORIGIN}/${encodeURIComponent(this.campaignId)}?memberId=${encodeURIComponent(this.memberId)}`
+      this.loading = true
+      this.errorText = ''
+      this.campaignUrl = ''
+      this.$nextTick(() => {
+        if (this.pageActive && version === this.campaignRenderVersion) {
+          this.campaignUrl = campaignUrl
+        }
+      })
+    },
+    getCampaignFrame () {
+      if (typeof document === 'undefined') return null
+      return document.getElementById('campaign-webview')
+    },
+    isCurrentCampaignFrame (frame) {
+      return frame && frame === this.getCampaignFrame()
+    },
+    isTrustedCampaignMessage (event) {
+      const frame = this.getCampaignFrame()
+      return event.origin === CAMPAIGN_ORIGIN && frame && event.source === frame.contentWindow
+    },
+    handleCampaignLoad (event) {
+      if (!this.pageActive) return
+      if (typeof window !== 'undefined' && !this.isCurrentCampaignFrame(event.target)) return
+      this.loading = false
+      wx.reportAnalytics('campaign_webview_load', {
+        campaign_id: this.campaignId
+      })
+    },
+    handleCampaignError (event) {
+      if (!this.pageActive) return
+      if (typeof window !== 'undefined' && !this.isCurrentCampaignFrame(event.target)) return
+      this.loading = false
+      this.errorText = '活动会场暂时无法打开'
+    },
+    handleWindowMessage (event) {
+      if (!this.pageActive || !this.isTrustedCampaignMessage(event)) return
+      this.dispatchCampaignMessage(event.data)
+    },
+    handleCampaignMessage (event) {
+      if (!this.pageActive) return
+      const messages = event.detail.data || []
+      this.dispatchCampaignMessage(messages[messages.length - 1])
+    },
+    dispatchCampaignMessage (message) {
+      if (!message || typeof message !== 'object') return
+      if (message.type === 'claim-coupon') {
+        this.claimCoupon(message.couponId)
+      } else if (message.type === 'open-product') {
+        this.openProduct(message.productId)
+      }
+    },
+    claimCoupon (couponId) {
+      if (typeof couponId !== 'string' && typeof couponId !== 'number') return
+      const campaignId = this.campaignId
+      wx.request({
+        url: '/api/campaign/coupons/claim',
+        method: 'POST',
+        data: { campaignId, couponId },
+        success: () => {
+          if (this.pageActive && campaignId === this.campaignId) {
+            wx.showToast({ title: '领取成功', icon: 'success' })
+          }
+        }
+      })
+    },
+    openProduct (productId) {
+      if (typeof productId !== 'string' && typeof productId !== 'number') return
+      wx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(this.campaignId)}`
+      })
+    },
+    reloadCampaign () {
+      this.mountCampaign()
+    },
+    handleTrackerReady () {
+      if (this.pageActive) this.trackerReady = true
+    },
+    handleTrackerError () {
+      if (this.pageActive) this.trackerReady = false
+    }
+  }
+})
+</script>
+
+<style>
+.campaign-page {
+  min-height: 100vh;
+  background: #fff5eb;
+}
+
+.campaign-header {
+  padding: 32rpx 28rpx 20rpx;
+}
+
+.campaign-title,
+.campaign-subtitle {
+  display: block;
+}
+
+.campaign-title {
+  color: #7a3517;
+  font-size: 38rpx;
+  font-weight: bold;
+}
+
+.campaign-subtitle {
+  margin-top: 8rpx;
+  color: #b26b45;
+  font-size: 24rpx;
+}
+
+.campaign-tabs {
+  display: flex;
+  padding: 0 20rpx 20rpx;
+}
+
+.campaign-tab {
+  flex: 1;
+  padding: 14rpx 0;
+  color: #97684f;
+  font-size: 24rpx;
+  text-align: center;
+  background: #ffffff;
+}
+
+.campaign-tab.active {
+  color: #ffffff;
+  background: #ff7a45;
+}
+
+.campaign-webview {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 190rpx);
+  border: 0;
+}
+
+.campaign-loading,
+.campaign-error {
+  padding: 80rpx 24rpx;
+  color: #9b715c;
+  font-size: 25rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "限时活动",
+  "usingComponents": {
+    "campaign-tracker": "../../components/campaign-tracker"
+  }
+}
+</script>

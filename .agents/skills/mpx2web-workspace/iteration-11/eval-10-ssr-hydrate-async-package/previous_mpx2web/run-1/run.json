@@ -1,0 +1,69 @@
+{
+  "description": "eval-10 old_skill",
+  "cwd": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-1/eval-10-ssr-hydrate-async-package/old_skill",
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "high",
+  "status": "completed",
+  "attempts": [
+    {
+      "attempt": 1,
+      "command": [
+        "codex",
+        "exec",
+        "--ignore-user-config",
+        "--ephemeral",
+        "--disable",
+        "plugins",
+        "--disable",
+        "remote_plugin",
+        "--disable",
+        "apps",
+        "--skip-git-repo-check",
+        "-m",
+        "gpt-5.6-sol",
+        "-s",
+        "workspace-write",
+        "-c",
+        "model_reasoning_effort=\"high\"",
+        "-C",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-1/eval-10-ssr-hydrate-async-package/old_skill",
+        "--color",
+        "never",
+        "--json",
+        "<prompt-via-stdin>"
+      ],
+      "returncode": 0,
+      "duration_ms": 444031,
+      "missing_outputs": []
+    }
+  ],
+  "output_exists": true,
+  "duration_ms": 444031,
+  "published_evidence": {
+    "sample": 1,
+    "outputs": "eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs",
+    "compile_status": "passed",
+    "artifact_inventory": {
+      "declared_files": [
+        "src/app.mpx",
+        "src/pages/article/detail.mpx",
+        "src/packageRecommend/components/recommend-list.mpx",
+        "src/stores/article.js",
+        "src/services/article.js",
+        "vue.config.js"
+      ],
+      "compiled_mpx_files": [
+        "src/pages/article/detail.mpx",
+        "src/packageRecommend/components/recommend-list.mpx"
+      ],
+      "support_files": [
+        "src/app.mpx",
+        "src/stores/article.js",
+        "src/services/article.js",
+        "vue.config.js"
+      ],
+      "missing_files": [],
+      "all_declared_files_present": true
+    }
+  }
+}

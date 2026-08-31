@@ -1,0 +1,102 @@
+{
+  "eval_id": 12,
+  "eval_name": "web-style-runtime-config",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "t0",
+      "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx:97-99 使用 color: var(--portal-text, #1f2329)、background: var(--portal-background, #f5f7fa)、padding: var(--portal-space, 24rpx)；outputs/src/pages/portal/index.mpx:112 使用 env(safe-area-inset-bottom, 0px) 并复用 var(--portal-space, 24rpx)。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t1",
+      "text": "webConfig.transRpxFn 实现明确的 100rpx=1rem 规则，0 值保持 0，不产生 0rem 或依赖运行环境的非确定结果",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：rpx 转换规则稳定保留 0，并按 1/100 输出 rem。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t2",
+      "text": "移动 viewport 在 public/index.html 的 meta 中配置，组件样式和运行脚本不伪造或重复注入 viewport",
+      "passed": true,
+      "evidence": "outputs/public/index.html：移动 viewport 在 HTML 模板中配置，组件未重复注入。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t3",
+      "text": "hover、::-webkit-scrollbar 与浏览器 safe-area/私有 CSS 仅隔离在 Web 输出，不污染微信小程序样式",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx：浏览器专属 CSS 位于 Web 条件块。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t4",
+      "text": "Web 弹层打开时记录并锁定 body/应用挂载容器的原 overflow，关闭、页面切换和卸载时幂等恢复原值",
+      "passed": false,
+      "evidence": "outputs/src/pages/portal/index.mpx：滚动锁未保存原值，或关闭/卸载没有幂等恢复。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t5",
+      "text": "滚动锁只保护浏览器客户端 DOM，不阻断微信小程序页面滚动、卡片点击和弹层关闭",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx：DOM 滚动锁只在 Web 客户端执行，小程序业务方法仍可调用。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t6",
+      "text": "routeConfig.base、output.publicPath 与 /portal/ 部署路径一致，主题切换、弹层和门户卡片业务链路完整",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：history 路由 base 与 publicPath 均为 /portal/。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.8571
+  },
+  "metrics": {
+    "total_tokens": 589976,
+    "input_tokens": 577977,
+    "output_tokens": 11999,
+    "tool_calls": 17,
+    "duration_ms": 403182,
+    "output_files": 3,
+    "output_lines": 169,
+    "output_nonempty_lines": 158,
+    "output_bytes": 4374
+  },
+  "timing": {
+    "total_tokens": 589976,
+    "duration_ms": 403182,
+    "total_duration_seconds": 403.182,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 17
+  }
+}

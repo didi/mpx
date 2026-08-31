@@ -1,0 +1,108 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx: choosePlace 在 __mpx_mode__ === 'web' 分支 return 后直接调用 wx.chooseLocation({ ... })；openPlace 在 Web 分支 return 后直接调用 wx.openLocation({ latitude: this.place.latitude, ... })；choosePhoto 在 Web 分支 return 后直接调用 wx.chooseMedia({ count: 9 - this.photos.length, ... })。文件中未见动态方法名或自定义适配器。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx: 仅 choosePlace/openPlace/choosePhoto 内包含 if (__mpx_mode__ === 'web') 的缺失能力分支，分支内为 TODO 注释、mpx.showToast(...) 和 return；请求/路由/提示仍在 submitPost 中使用 mpx.request(...)、mpx.redirectTo(...)、mpx.showToast(...)，未见通用平台调用层或自定义包装。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx: choosePlace 的 Web 分支包含注释“TODO: 待 Web 宿主 Bridge 与地图选点协议确定后接入。”，随后仅调用 mpx.showToast({ title: 'Web 暂不支持位置选择', icon: 'none' }) 并 return；未声明或调用地图选点虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx: openPlace 的 Web 分支包含注释“TODO: 待 Web 宿主 Bridge 与地图查看协议确定后接入。”，随后仅调用 mpx.showToast({ title: 'Web 暂不支持地图查看', icon: 'none' }) 并 return；非 Web 才调用 wx.openLocation(...)。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx: choosePhoto 的 Web 分支包含注释“TODO: 待 Web 宿主 Bridge 与媒体选择协议确定后接入。”，随后仅调用 mpx.showToast({ title: 'Web 暂不支持图片选择', icon: 'none' }) 并 return；非 Web 才调用 wx.chooseMedia(...)。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx: import mpx, { createPage } from '@mpxjs/core'；submitPost 中使用 mpx.request({ url: '/api/community/posts', ... })，success 中使用 mpx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })，fail 及 Web 占位分支使用 mpx.showToast(...)；未见 fetch(...)、location.assign(...)、alert(...) 或 from '@mpxjs/api-proxy' 的命名导入。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx: 内容由 textarea value=\"{{content}}\" bindinput=\"updateContent\" 更新；图片由 photos 渲染、choosePhoto 添加、removePhoto 删除；位置由 choosePlace 设置 this.place 并 openPlace 查看；话题由 picker bindchange=\"selectTopic\" 设置 selectedTopic；评论开关由 switch checked=\"{{allowComments}}\" bindchange=\"toggleComments\" 更新；submitPost 发送 data: { content, photos: this.photos.map(item => item.tempFilePath), place, topicId, allowComments }，成功后 mpx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 775093,
+    "input_tokens": 765221,
+    "output_tokens": 9872,
+    "tool_calls": 17,
+    "duration_ms": 444749,
+    "output_files": 1,
+    "output_lines": 420,
+    "output_nonempty_lines": 376,
+    "output_bytes": 9040
+  },
+  "timing": {
+    "total_tokens": 775093,
+    "duration_ms": 444749,
+    "total_duration_seconds": 444.749,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 17
+  }
+}

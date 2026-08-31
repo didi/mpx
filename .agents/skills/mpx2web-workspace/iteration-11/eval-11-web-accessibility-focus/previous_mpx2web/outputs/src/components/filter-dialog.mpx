@@ -1,0 +1,84 @@
+<template>
+  <view class="filter">
+    <button
+      class="filter-trigger"
+      aria-role="button"
+      aria-label="打开商品筛选"
+      bindtap="open"
+    >
+      筛选
+    </button>
+    <view wx:if="{{visible}}" class="mask" bindtap="close">
+      <view
+        class="dialog"
+        aria-role="dialog"
+        aria-label="商品筛选"
+        catchtap="stop"
+      >
+        <text class="dialog-title">商品筛选</text>
+        <button
+          wx:for="{{optionStates}}"
+          wx:key="value"
+          wx:class="{{ {selected: item.selected} }}"
+          aria-role="checkbox"
+          aria-label="{{item.accessibleLabel}}"
+          aria-checked="{{item.selected}}"
+          bindtap="toggle(item.value)"
+        >
+          {{item.label}}
+        </button>
+        <button bindtap="clear">清空</button>
+        <button bindtap="confirm">确定</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    options: {
+      type: Array,
+      value: () => []
+    }
+  },
+  data: {
+    visible: false,
+    selected: []
+  },
+  computed: {
+    optionStates () {
+      return this.options.map((item) => {
+        const selected = this.selected.includes(item.value)
+        return Object.assign({}, item, {
+          selected,
+          accessibleLabel: `${item.label}，${selected ? '已选择' : '未选择'}`
+        })
+      })
+    }
+  },
+  methods: {
+    open () {
+      this.visible = true
+    },
+    close () {
+      this.visible = false
+    },
+    stop () {},
+    toggle (value) {
+      this.selected = this.selected.includes(value)
+        ? this.selected.filter((item) => item !== value)
+        : this.selected.concat(value)
+    },
+    clear () {
+      this.selected = []
+    },
+    confirm () {
+      this.triggerEvent('confirm', { selected: this.selected })
+      this.close()
+    }
+  }
+})
+</script>

@@ -1,0 +1,11 @@
+{
+  "total_tokens": 1265010,
+  "input_tokens": 1250989,
+  "output_tokens": 14021,
+  "tool_calls": 25,
+  "duration_ms": 485092,
+  "output_files": 1,
+  "output_lines": 438,
+  "output_nonempty_lines": 394,
+  "output_bytes": 9388
+}

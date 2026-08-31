@@ -94,7 +94,26 @@ Web 原生支持 CSS 变量，但变量未定义且 `var()` 没有回退值时�
 
 ## 小字号兼容
 
-Mpx2Web 没有统一的 `12px` 最小字号限制，标准浏览器通常可以渲染 `10px` 等更小字号。部分目标浏览器、WebView、系统字体设置或文本自动调整策略可能把小字号钳制或放大；只有在目标环境实测存在该问题时，才使用较大基础字号配合 `transform: scale()`，并同时校正缩放后的布局占位和变换原点。不要把环境兼容现象写成所有 Web 输出都成立的框架限制。
+Mpx2Web 没有统一的 `12px` 最小字号限制，标准浏览器通常可以渲染 `10px` 等更小字号。部分目标浏览器、WebView、系统字体设置或文本自动调整策略可能把小字号钳制或放大；只有在目标环境实测存在该问题时，才使用较大基础字号配合 `transform: scale()`。不要把环境兼容现象写成所有 Web 输出都成立的框架限制。
+
+CSS transform 只改变绘制结果，不会缩小 flex/inline 布局中的原始排版盒。若把 `12px` 文本缩放到视觉上的 `10px`，仍按 `12px` 盒子占位会改变价格行间距、卡片有效宽度或基线。兼容方案必须同时满足：
+
+- `transform-origin` 与排版方向一致；左到右文本通常使用左侧与基线方向的原点，例如 `left bottom`，不要无依据使用中心缩放。
+- 用包裹层的明确视觉宽度、匹配的 `width`/`flex-basis`，或按缩放差值计算的负尾边距补偿占位。补偿值应由基础字号、缩放比例和实际字形/设计宽度推导，不要复制固定像素。
+- 在真实 WebView 验证父级卡片宽度、相邻金额间距和整行 baseline；只出现 `scale()` 与 `transform-origin` 不能证明布局已对齐。
+
+下面仅展示“12px 排版盒缩到 10px，并把多出的 2px 占位收回”的结构，实际宽度应按业务字形测量：
+
+```css
+.small-text {
+  display: inline-block;
+  width: 12px;
+  font-size: 12px;
+  transform: scale(0.833333);
+  transform-origin: left bottom;
+  margin-inline-end: -2px;
+}
+```
 
 ---
 
@@ -110,11 +129,15 @@ Mpx2Web 没有统一的 `12px` 最小字号限制，标准浏览器通常可以�
 
 只在确认能力依赖浏览器 CSS 引擎、且小程序侧不需要该效果时，才将其作为 Web-only 样式隔离。小程序已支持的标准 CSS 能力属于通用样式，不在本文重复记录。
 
+隔离检查要覆盖文件中的每一次出现：即使 `:hover` 和 `::-webkit-scrollbar` 已放进 `<style mode="web">`，通用 style 块中遗留的 `env(safe-area-inset-*)`、厂商私有选择器或属性仍会进入小程序输出。整块均为浏览器增强时使用 `<style mode="web">`；局部增强时使用完整配对的 Web 样式条件注释，不要只在文件末尾增加一份 Web 覆盖而保留前面的未隔离声明。
+
 ---
 
 ## 内建滚动组件与 transform
 
 Web 的 `movable-view` 和 `scroll-view` 基于 BetterScroll，滚动或移动内容通常通过 `transform` 实现。`transform` 会创建新的 containing block 和 stacking context，Safari 等浏览器下可能影响后代 `position: fixed`、层叠与合成渲染；例如 `movable-view` 内的 fixed 节点可能改为相对该变换节点定位。
+
+如果常驻入口已经是 `scroll-view` 的兄弟节点，或位于其他变换子树之外，应继续使用 `position: fixed` 保持相对浏览器视口定位；不要仅因 Web 使用 BetterScroll 就把它改成相对页面容器的 `position: absolute`。只有 fixed 节点确实必须留在变换子树中时，才需要移动节点，或改用 Web-only 的浏览器原生滚动方案。
 
 `movable-view` 可通过 `scroll-options` 覆盖 BetterScroll 初始化配置；遇到硬件合成导致的展示问题时，可以关闭 `HWCompositing`：
 
@@ -124,7 +147,7 @@ Web 的 `movable-view` 和 `scroll-view` 基于 BetterScroll，滚动或移动�
 </movable-view>
 ```
 
-`scroll-view` 的 Web 滚动实现仍依赖 transform。若业务必须保留浏览器原生的 fixed 定位、层叠或滚动语义，使用普通 `view` 配合 Web CSS `overflow` 实现原生滚动，并通过 Web-only 组件或条件编译隔离差异。
+`scroll-view` 的 Web 滚动实现仍依赖 transform。若 fixed 节点确实必须留在滚动内容中，且业务必须保留浏览器原生的 fixed 定位、层叠或滚动语义，可使用普通 `view` 配合 Web CSS `overflow` 实现原生滚动，并通过 Web-only 组件或条件编译隔离差异。
 
 避免在 `scroll-view` 内容中连续引入多层 `display: initial` 的非虚拟组件根节点；这会保留额外包装层并可能干扰 BetterScroll 的内容尺寸和滑动计算。优先明确设置与布局匹配的 `block` / `flex`，或在确认模板满足单根约束后按组件能力启用 `virtualHost`，并在真实 Web 构建中验证滚动。
 

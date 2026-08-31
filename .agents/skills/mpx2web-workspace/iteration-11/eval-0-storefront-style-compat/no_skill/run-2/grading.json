@@ -1,0 +1,106 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "候选商品卡文件通过 scoped 建立可直接验证的 Web 组件级样式隔离；小程序 JSON 的 styleIsolation 不能替代这项 Web 证据",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx：商品卡没有可从候选文件直接验证的 Web scoped 样式隔离。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:4 商品图片为 <image class=\"product-cover\" ... />；outputs/src/components/product-card.mpx:67-74 使用 .product-card .product-cover 设置图片样式，未使用 image 标签选择器。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:139-143 .home-title 保留 color/font-size/font-weight；outputs/src/components/product-card.mpx:92-101 .product-title 保留标题字体、加粗、省略；outputs/src/components/product-card.mpx:67-74 .product-cover 保留 width/height 和 border-radius: 20rpx 20rpx 0 0。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:130-134 .price-currency, .price-unit 保持通用小程序样式 font-size: 20rpx; line-height: 28rpx。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "目标 WebView 中币种与单位先以不触发强制放大的基础字号排版，再缩放回约 10px 的视觉字号",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx:130-134 只有 .price-currency, .price-unit { font-size: 20rpx; line-height: 28rpx; }，未见 WebView 基础字号与 transform/scale 缩放补偿代码。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "目标 WebView 的缩放补偿具有与基线方向一致的 transform-origin，且校正 flex 布局占位，不改变卡片宽度或价格行基线",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx:121-128 .price-tag 仅 display:flex、align-items:baseline、height:64rpx；outputs/src/components/product-card.mpx:130-134 币种/单位仅设置 font-size/line-height，未见 transform-origin、scale 或布局占位校正。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx:50-182 只有一个通用 <style> 块；outputs/src/components/product-card.mpx:130-134 的小字号规则未包裹在 Web 条件编译中，且未见小字号补偿实现。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:11-20 分类 tab 绑定 bindtap=\"switchCategory(item.id)\"，79-95 switchCategory/fetchProducts 按分类请求商品；23-30 product-card 绑定 bindselect=\"openProduct\" 与 bindaddcart=\"addToCart\"；97-110 openProduct 调用 wx.navigateTo，addToCart POST /api/cart/items 并 showToast。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 4,
+    "total": 8,
+    "pass_rate": 0.5
+  },
+  "metrics": {
+    "total_tokens": 65087,
+    "input_tokens": 59585,
+    "output_tokens": 5502,
+    "tool_calls": 3,
+    "duration_ms": 226841,
+    "output_files": 2,
+    "output_lines": 393,
+    "output_nonempty_lines": 354,
+    "output_bytes": 8024
+  },
+  "timing": {
+    "total_tokens": 65087,
+    "duration_ms": 226841,
+    "total_duration_seconds": 226.841,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 3
+  }
+}

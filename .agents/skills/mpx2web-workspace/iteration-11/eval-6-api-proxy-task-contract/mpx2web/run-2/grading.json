@@ -1,0 +1,101 @@
+{
+  "eval_id": 6,
+  "eval_name": "api-proxy-task-contract",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "q0",
+      "text": "应用入口安装 @mpxjs/api-proxy，并通过 mpx.use(apiProxy, { usePromise: true }) 明确启用 Promise 风格",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：应用入口通过 mpx.use(apiProxy, { usePromise: true }) 安装 API Proxy。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q1",
+      "text": "普通趋势词请求通过配置后的 mpx.request 使用 await 或 Promise 链，不混用 success/fail 回调",
+      "passed": true,
+      "evidence": "outputs/src/services/search.js:3-7 `export async function fetchTrendingKeywords () { const { data } = await mpx.request({ url: '/api/search/trending' }) return data }`，该请求使用 `await mpx.request`，配置中未出现 success/fail 回调。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "联想词请求单次显式 usePromise: false 并保存 RequestTask；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx：联想请求保存可取消任务，连续搜索与卸载均先废弃身份再 abort。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "联想词 success/fail 回调捕获本次任务和关键词，仅当前任务且关键词仍匹配时才更新结果或提示，旧响应不能覆盖新搜索",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx：联想回调使用任务身份和关键词或请求代际拒绝晚到响应。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "详情跳转与错误提示继续通过应用入口已配置的 mpx.navigateTo、mpx.showToast 调用",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx:60-63 错误提示使用 `mpx.showToast({ title: '搜索失败', icon: 'none' })`；outputs/src/pages/search/index.mpx:69-71 详情跳转使用 `mpx.navigateTo({ url: `/pages/product/detail?id=${productId}` })`。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "q5",
+      "text": "不从 @mpxjs/api-proxy 命名导入 request/navigateTo/showToast，也不用 fetch、location 或 alert 重写这些能力",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx:2 仅默认导入 `import apiProxy from '@mpxjs/api-proxy'`；outputs/src/services/search.js:1 使用 `import mpx from '@mpxjs/core'` 并在 outputs/src/services/search.js:4、11 调用 `mpx.request`；outputs/src/pages/search/index.mpx:12 使用 `import mpx, { createPage } from '@mpxjs/core'` 并在 outputs/src/pages/search/index.mpx:60、69 调用 `mpx.showToast`/`mpx.navigateTo`。outputs 下未命中 forbidden_patterns 中的 api-proxy 命名导入、fetch、location 或 alert。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "q6",
+      "text": "趋势词、连续输入、清空搜索、取消旧请求、结果展示和商品详情业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx:3 输入框 `bindinput=\"onKeywordInput\"`；outputs/src/pages/search/index.mpx:4-6 在 `!keyword` 时展示 `trendingKeywords`；outputs/src/pages/search/index.mpx:7-9 展示 `suggestions` 并 `bindtap=\"openProduct(item.id)\"`；outputs/src/pages/search/index.mpx:24-25 `onLoad` 加载趋势词；outputs/src/pages/search/index.mpx:35-39 连续输入/选择趋势词进入 `search`；outputs/src/pages/search/index.mpx:42-49 搜索前取消旧请求，清空关键词时清空 `suggestions`；outputs/src/pages/search/index.mpx:52-56 成功后更新结果；outputs/src/pages/search/index.mpx:68-72 跳转商品详情。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 528740,
+    "input_tokens": 519798,
+    "output_tokens": 8942,
+    "tool_calls": 26,
+    "duration_ms": 353527,
+    "output_files": 3,
+    "output_lines": 121,
+    "output_nonempty_lines": 110,
+    "output_bytes": 2820
+  },
+  "timing": {
+    "total_tokens": 528740,
+    "duration_ms": 353527,
+    "total_duration_seconds": 353.527,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 26
+  }
+}

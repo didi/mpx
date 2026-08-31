@@ -1,0 +1,149 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+
+// SDK contract: create({ productId }) returns Promise<Tracker>.
+// Tracker exposes track(eventName, payload) and destroy().
+createComponent({
+  properties: {
+    productId: String,
+    items: Array
+  },
+  observers: {
+    'productId, items' () {
+      this.restartTracker()
+    }
+  },
+  ready () {
+    if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+    this.trackerReady = true
+    this.trackerGeneration = 0
+    this.restartTracker()
+  },
+  detached () {
+    if (__mpx_mode__ !== 'web') return
+    this.trackerReady = false
+    this.trackerGeneration++
+    this.destroyTracker()
+  },
+  methods: {
+    restartTracker () {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || !this.trackerReady) return
+
+      const generation = ++this.trackerGeneration
+      this.destroyTracker()
+      if (!this.items || !this.items.length) return
+      this.$nextTick(() => {
+        this.initializeTracker(generation).catch(() => {})
+      })
+    },
+    async initializeTracker (generation) {
+      const { default: exposureSdk } = await import('@business/product-exposure-web')
+      if (!this.isTrackerCurrent(generation)) return
+
+      const productId = this.productId
+      const tracker = await exposureSdk.create({ productId })
+      if (!this.isTrackerCurrent(generation)) {
+        tracker.destroy()
+        return
+      }
+
+      this.tracker = tracker
+      this.observer = new IntersectionObserver((entries) => {
+        if (!this.isTrackerCurrent(generation)) return
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            tracker.track('recommendation_exposure', {
+              productId,
+              recommendationId: entry.target.dataset.productId
+            })
+          }
+        })
+      })
+      this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
+        this.observer.observe(element)
+      })
+    },
+    isTrackerCurrent (generation) {
+      return this.trackerReady && generation === this.trackerGeneration
+    },
+    destroyTracker () {
+      if (this.observer) {
+        this.observer.disconnect()
+        this.observer = null
+      }
+      if (this.tracker) {
+        this.tracker.destroy()
+        this.tracker = null
+      }
+    },
+    openProduct (productId) {
+      mpx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${productId}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #ffffff;
+}
+
+.section-title {
+  margin-bottom: 20rpx;
+  color: #222222;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+}
+
+.recommendation-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+}
+
+.recommendation-name {
+  flex: 1;
+  margin-left: 18rpx;
+  color: #333333;
+  font-size: 26rpx;
+}
+
+.recommendation-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

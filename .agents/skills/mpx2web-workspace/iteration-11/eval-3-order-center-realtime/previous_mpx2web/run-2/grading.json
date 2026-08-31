@@ -1,0 +1,119 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx: root 节点保留 catchtouchstart@wx=\"{{gesture.onTouchStart}}\"、catchtouchmove@wx=\"{{gesture.onTouchMove}}\"、catchtouchend@wx=\"{{gesture.onTouchEnd}}\"、catchtouchcancel@wx=\"{{gesture.onTouchCancel}}\"；同文件包含 <script module=\"gesture\" lang=\"wxs\">，WXS 内实现 onTouchStart/onTouchMove/onTouchEnd/onTouchCancel，并在 move 中直接计算 offsetX 后 event.instance.callMethod('syncSwipeOffset', state.offsetX)。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：四类触摸事件均使用显式 @wx WXS 与 @web 实例方法配对。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx: Web 手势状态写在实例字段 this.gestureActive/this.gestureHorizontal/this.gestureStartX/this.gestureBaseOffset/this.gestureOffset，resetGestureState() 逐项重置。const MAX_OFFSET = 96；handleTouchMove 使用 this.gestureOffset = Math.max(-MAX_OFFSET, Math.min(0, this.gestureBaseOffset + deltaX)) 限制到 -96；handleTouchEnd 使用 open: this.gestureOffset < -MAX_OFFSET / 2，finishSwipe 中 this.offsetX = shouldOpen ? -MAX_OFFSET : 0，对应 -48 阈值和 -96 展开位移。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx: handleTouchCancel() 调用 this.cancelSwipe()，cancelSwipe() 设置 this.offsetX = 0、this.dragging = false、this.suppressNextTap = false。finishSwipe({ open, moved }) 中 this.suppressNextTap = !!moved；selectOrder() 中 if (this.suppressNextTap) { this.suppressNextTap = false; return }，只消费紧随其后一次 tap，未使用时间窗。selectOrder() 与 removeOrder() 均有 if (this.disabled) return，模板删除按钮还有 disabled=\"{{disabled}}\"。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：连接由 connectSocket 返回的局部 SocketTask 承载，未混用全局 Socket API。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：open/message/error/close 四类回调均校验捕获任务仍为当前任务。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：重连与卸载均先废弃任务身份，再关闭旧 SocketTask。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：sendHeartbeat 在 task.send 前校验当前任务身份和 task.readyState/task.OPEN。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx: 筛选链路为 status tab bindtap=\"switchStatus(item.key)\"，switchStatus 设置 activeStatus/openSwipeOrderId 并调用 fetchOrders()，fetchOrders 请求 /api/orders 且 data: { status: this.activeStatus }，成功后更新 orders/statusTabs。详情链路为 swipe-order-item bindselect=\"openOrder\"，openOrder navigateTo 到 /pages/orders/detail?id=${detail.orderId}。删除链路为 bindremove=\"removeOrder\"，removeOrder 确认后 DELETE /api/orders/${detail.orderId} 并 filter 移除订单。物流链路为 logistics-channel bindlogistics=\"handleLogisticsMessage\"，handleLogisticsMessage 校验 memberId 后 map orders，并 Object.assign 更新 status/statusText/logisticsText/updatedAt。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 1393098,
+    "input_tokens": 1365290,
+    "output_tokens": 27808,
+    "tool_calls": 46,
+    "duration_ms": 730338,
+    "output_files": 3,
+    "output_lines": 935,
+    "output_nonempty_lines": 861,
+    "output_bytes": 22013
+  },
+  "timing": {
+    "total_tokens": 1393098,
+    "duration_ms": 730338,
+    "total_duration_seconds": 730.338,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 46
+  }
+}

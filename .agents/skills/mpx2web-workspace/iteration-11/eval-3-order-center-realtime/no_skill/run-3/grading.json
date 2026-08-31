@@ -1,0 +1,119 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:64-147 定义 <script module=\"gesture\" lang=\"wxs\">；outputs/src/components/swipe-order-item.mpx:21-34 在非 web 分支保留 catchtouchstart=\"{{gesture.onTouchStart}}\"、catchtouchmove、catchtouchend、catchtouchcancel、catchtap 的 WXS 手势路径。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：touchstart 缺少显式 @wx WXS 绑定；touchstart 缺少同节点 @web 实例方法绑定；touchmove 缺少显式 @wx WXS 绑定；touchmove 缺少同节点 @web 实例方法绑定；touchend 缺少显式 @wx WXS 绑定；touchend 缺少同节点 @web 实例方法绑定；touchcancel 缺少显式 @wx WXS 绑定；touchcancel 缺少同节点 @web 实例方法绑定。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:204-215 Web touchstart 将状态写入 this._webGesture，属于组件实例；outputs/src/components/swipe-order-item.mpx:229-230 使用 Math.max(-96, Math.min(0, ...)) 限制 -96 位移；outputs/src/components/swipe-order-item.mpx:236-238 使用 open: gesture.offsetX < -48 实现展开阈值。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:241-244 touchcancel 清空 this._webGesture 并调用 cancelSwipe；194-198 cancelSwipe 设置 offsetX = 0 并 _suppressTap = true；246-250 handleWebTap 仅在下一次 tap 消费并立即将 _suppressTap = false，未见时间窗逻辑；258-264 selectOrder/removeOrder 均 if (this.disabled) return，4 删除按钮也 disabled=\"{{disabled}}\"。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：连接由 connectSocket 返回的局部 SocketTask 承载，未混用全局 Socket API。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：onOpen 未校验当前任务；onMessage 未校验当前任务；onError 未校验当前任务；onClose 未校验当前任务。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：重连与卸载均先废弃任务身份，再关闭旧 SocketTask。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：发送前没有同时证明任务身份有效且 readyState 为 task.OPEN。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:14-24 状态 tab 绑定 switchStatus(item.key)，112-126 switchStatus/fetchOrders 使用 activeStatus 请求订单；139-142 openOrder 跳转详情页；143-156 removeOrder 发 DELETE 并从 orders 过滤删除；49-55 logistics-channel 绑定 bindlogistics=\"handleLogisticsMessage\"，173-183 按 memberId/orderId 更新订单 status/statusText/logisticsText/updatedAt。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 3,
+    "total": 9,
+    "pass_rate": 0.6667
+  },
+  "metrics": {
+    "total_tokens": 287085,
+    "input_tokens": 269325,
+    "output_tokens": 17760,
+    "tool_calls": 8,
+    "duration_ms": 539770,
+    "output_files": 3,
+    "output_lines": 914,
+    "output_nonempty_lines": 843,
+    "output_bytes": 22521
+  },
+  "timing": {
+    "total_tokens": 287085,
+    "duration_ms": 539770,
+    "total_duration_seconds": 539.77,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 8
+  }
+}

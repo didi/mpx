@@ -1,0 +1,460 @@
+<template>
+  <view
+    class="swipe-order"
+    data-disabled="{{disabled}}"
+    data-gesture-key="{{gestureKey}}"
+    data-offset-x="{{offsetX}}"
+    catchtouchstart@wx="{{gesture.onTouchStart}}"
+    catchtouchmove@wx="{{gesture.onTouchMove}}"
+    catchtouchend@wx="{{gesture.onTouchEnd}}"
+    catchtouchcancel@wx="{{gesture.onTouchCancel}}"
+    @touchstart@web="handleTouchStart"
+    @touchmove@web="handleTouchMove"
+    @touchend@web="handleTouchEnd"
+    @touchcancel@web="handleTouchCancel"
+  >
+    <view class="remove-action">
+      <button class="remove-button" catchtap="removeOrder" disabled="{{disabled}}">删除</button>
+    </view>
+
+    <view
+      class="order-card"
+      wx:class="{{ {dragging: dragging} }}"
+      style="transform: translateX({{offsetX}}px)"
+      bindtap="selectOrder"
+    >
+      <view class="order-head">
+        <text class="order-no">订单 {{order.orderNo}}</text>
+        <text class="order-status">{{order.statusText}}</text>
+      </view>
+
+      <view class="goods-row">
+        <image class="goods-cover" src="{{order.cover}}" mode="aspectFill" />
+        <view class="goods-copy">
+          <text class="goods-title">{{order.title}}</text>
+          <text class="goods-sku">{{order.skuText}}</text>
+          <view class="goods-price-row">
+            <text class="goods-price">¥{{order.amount}}</text>
+            <text class="goods-count">×{{order.count}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="logistics-row">
+        <view class="logistics-copy">
+          <text class="logistics-text">{{order.logisticsText}}</text>
+          <text class="logistics-time">{{order.updatedAt}}</text>
+        </view>
+        <text class="logistics-arrow">›</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script module="gesture" lang="wxs">
+var sessions = {}
+var MOVE_THRESHOLD = 4
+var MAX_OFFSET = 96
+
+function abs(value) {
+  return value < 0 ? -value : value
+}
+
+function point(event) {
+  var touches = event.touches && event.touches.length ? event.touches : event.changedTouches
+  return touches && touches.length ? touches[0] : null
+}
+
+function disabled(event) {
+  var value = event.currentTarget.dataset.disabled
+  return value === true || value === 'true' || value === 1 || value === '1'
+}
+
+function gestureKey(event) {
+  return event.currentTarget.dataset.gestureKey
+}
+
+module.exports = {
+  onTouchStart: function (event) {
+    var key = gestureKey(event)
+    if (disabled(event)) {
+      delete sessions[key]
+      return
+    }
+    var touch = point(event)
+    if (!touch) return
+    sessions[key] = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      baseOffset: event.currentTarget.dataset.offsetX * 1 || 0,
+      offsetX: event.currentTarget.dataset.offsetX * 1 || 0,
+      moved: false,
+      horizontal: false,
+      vertical: false
+    }
+    event.instance.callMethod('beginSwipe')
+  },
+  onTouchMove: function (event) {
+    var key = gestureKey(event)
+    var state = sessions[key]
+    if (!state) return
+    if (disabled(event)) {
+      delete sessions[key]
+      event.instance.callMethod('resetSwipe')
+      return
+    }
+    var touch = point(event)
+    if (!touch) return
+    var deltaX = touch.clientX - state.startX
+    var deltaY = touch.clientY - state.startY
+    if (!state.horizontal && !state.vertical) {
+      if (abs(deltaX) < MOVE_THRESHOLD) return
+      if (abs(deltaX) <= abs(deltaY)) {
+        state.vertical = true
+        return
+      }
+      state.horizontal = true
+    }
+    if (!state.horizontal) return
+    state.moved = true
+    state.offsetX = state.baseOffset + deltaX
+    if (state.offsetX > 0) state.offsetX = 0
+    if (state.offsetX < -MAX_OFFSET) state.offsetX = -MAX_OFFSET
+    event.instance.callMethod('syncSwipeOffset', state.offsetX)
+  },
+  onTouchEnd: function (event) {
+    var key = gestureKey(event)
+    var state = sessions[key]
+    if (!state) return
+    delete sessions[key]
+    if (disabled(event)) {
+      event.instance.callMethod('resetSwipe')
+      return
+    }
+    event.instance.callMethod('finishSwipe', {
+      open: state.offsetX < -MAX_OFFSET / 2,
+      moved: state.moved
+    })
+  },
+  onTouchCancel: function (event) {
+    var key = gestureKey(event)
+    if (!sessions[key]) return
+    delete sessions[key]
+    event.instance.callMethod('cancelSwipe')
+  }
+}
+</script>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+const MOVE_THRESHOLD = 4
+const MAX_OFFSET = 96
+let gestureSeed = 0
+
+function touchPoint (event) {
+  const touches = event.touches && event.touches.length
+    ? event.touches
+    : event.changedTouches
+  return touches && touches.length ? touches[0] : null
+}
+
+createComponent({
+  properties: {
+    order: {
+      type: Object,
+      value: () => ({})
+    },
+    disabled: {
+      type: Boolean,
+      observer (value) {
+        if (value) this.resetSwipe()
+      }
+    },
+    activeOrderId: {
+      type: String,
+      observer (value) {
+        if (value !== this.order.id && this.offsetX) this.resetSwipe()
+      }
+    }
+  },
+  data: {
+    gestureKey: '',
+    offsetX: 0,
+    dragging: false
+  },
+  created () {
+    gestureSeed += 1
+    this.gestureKey = `swipe-order-${gestureSeed}`
+    this.suppressNextTap = false
+    this.resetGestureState()
+  },
+  methods: {
+    beginSwipe () {
+      if (this.disabled) return
+      this.suppressNextTap = false
+      this.dragging = true
+      this.triggerEvent('swipestart', { orderId: this.order.id })
+    },
+    syncSwipeOffset (offsetX) {
+      if (this.disabled) return
+      this.offsetX = offsetX
+    },
+    finishSwipe ({ open, moved }) {
+      const shouldOpen = !this.disabled && open
+      this.offsetX = shouldOpen ? -MAX_OFFSET : 0
+      this.dragging = false
+      this.suppressNextTap = !!moved
+      this.resetGestureState()
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: shouldOpen })
+    },
+    cancelSwipe () {
+      this.offsetX = 0
+      this.dragging = false
+      this.suppressNextTap = false
+      this.resetGestureState()
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
+    },
+    resetSwipe () {
+      this.offsetX = 0
+      this.dragging = false
+      this.suppressNextTap = false
+      this.resetGestureState()
+    },
+    resetGestureState () {
+      this.gestureActive = false
+      this.gestureHorizontal = false
+      this.gestureVertical = false
+      this.gestureMoved = false
+      this.gestureStartX = 0
+      this.gestureStartY = 0
+      this.gestureBaseOffset = 0
+      this.gestureOffset = 0
+    },
+    handleTouchStart (event) {
+      this.suppressNextTap = false
+      if (this.disabled) {
+        this.resetSwipe()
+        return
+      }
+      const touch = touchPoint(event)
+      if (!touch) return
+      this.gestureActive = true
+      this.gestureStartX = touch.clientX
+      this.gestureStartY = touch.clientY
+      this.gestureBaseOffset = this.offsetX
+      this.gestureOffset = this.offsetX
+      this.beginSwipe()
+    },
+    handleTouchMove (event) {
+      if (!this.gestureActive) return
+      if (this.disabled) {
+        this.resetSwipe()
+        return
+      }
+      const touch = touchPoint(event)
+      if (!touch) return
+      const deltaX = touch.clientX - this.gestureStartX
+      const deltaY = touch.clientY - this.gestureStartY
+      if (!this.gestureHorizontal && !this.gestureVertical) {
+        if (Math.abs(deltaX) < MOVE_THRESHOLD) return
+        if (Math.abs(deltaX) <= Math.abs(deltaY)) {
+          this.gestureVertical = true
+          return
+        }
+        this.gestureHorizontal = true
+      }
+      if (!this.gestureHorizontal) return
+      this.gestureMoved = true
+      this.gestureOffset = Math.max(-MAX_OFFSET, Math.min(0, this.gestureBaseOffset + deltaX))
+      this.syncSwipeOffset(this.gestureOffset)
+    },
+    handleTouchEnd () {
+      if (!this.gestureActive) return
+      if (this.disabled) {
+        this.resetSwipe()
+        return
+      }
+      this.finishSwipe({
+        open: this.gestureOffset < -MAX_OFFSET / 2,
+        moved: this.gestureMoved
+      })
+    },
+    handleTouchCancel () {
+      if (!this.gestureActive) return
+      this.cancelSwipe()
+    },
+    selectOrder () {
+      if (this.suppressNextTap) {
+        this.suppressNextTap = false
+        return
+      }
+      if (this.disabled) return
+      this.triggerEvent('select', { orderId: this.order.id })
+    },
+    removeOrder () {
+      if (this.disabled) return
+      this.triggerEvent('remove', { orderId: this.order.id })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.swipe-order {
+  position: relative;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+  border-radius: 20rpx;
+}
+
+.remove-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 96px;
+  background: #ff4d4f;
+}
+
+.remove-button {
+  width: 96px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  font-size: 28rpx;
+  background: #ff4d4f;
+  border-radius: 0;
+}
+
+.order-card {
+  position: relative;
+  z-index: 1;
+  padding: 24rpx;
+  background: #ffffff;
+  transition: transform 0.2s ease;
+}
+
+.order-card.dragging {
+  transition: none;
+}
+
+.order-head,
+.goods-price-row,
+.logistics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-no {
+  color: #8b919c;
+  font-size: 22rpx;
+}
+
+.order-status {
+  color: #1677ff;
+  font-size: 25rpx;
+  font-weight: bold;
+}
+
+.goods-row {
+  display: flex;
+  margin-top: 18rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #eef0f3;
+}
+
+.goods-cover {
+  width: 144rpx;
+  height: 144rpx;
+  border-radius: 14rpx;
+}
+
+.goods-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.goods-title,
+.goods-sku,
+.logistics-text,
+.logistics-time {
+  display: block;
+}
+
+.goods-title {
+  overflow: hidden;
+  color: #292d35;
+  font-size: 28rpx;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goods-sku {
+  margin-top: 8rpx;
+  color: #999fa8;
+  font-size: 22rpx;
+}
+
+.goods-price-row {
+  margin-top: auto;
+}
+
+.goods-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+
+.goods-count {
+  color: #999fa8;
+  font-size: 22rpx;
+}
+
+.logistics-row {
+  padding-top: 18rpx;
+}
+
+.logistics-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.logistics-text {
+  overflow: hidden;
+  color: #3d424b;
+  font-size: 24rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logistics-time {
+  margin-top: 5rpx;
+  color: #a2a7b0;
+  font-size: 20rpx;
+}
+
+.logistics-arrow {
+  margin-left: 16rpx;
+  color: #b7bbc3;
+  font-size: 38rpx;
+}
+</style>
+
+<style mode="web" scoped>
+.swipe-order {
+  touch-action: pan-y;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

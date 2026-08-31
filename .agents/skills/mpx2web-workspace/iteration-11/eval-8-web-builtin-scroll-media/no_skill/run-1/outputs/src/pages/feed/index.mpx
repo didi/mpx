@@ -1,0 +1,113 @@
+<template>
+  <view class="feed-page">
+    <scroll-view
+      class="feed-scroll"
+      scroll-y
+      enhanced
+      enable-sticky
+      using-sticky
+      binddragstart="onDragStart"
+      binddragging="onDragging"
+      binddragend="onDragEnd"
+    >
+      <sticky-header offset-top="{{0}}">
+        <view class="categories">
+          <text
+            wx:for="{{categories}}"
+            wx:key="id"
+            class="category {{activeCategoryId === item.id ? 'category-active' : ''}}"
+            data-category-id="{{item.id}}"
+            bindtap="selectCategory"
+          >{{item.name}}</text>
+        </view>
+      </sticky-header>
+      <view
+        wx:for="{{products}}"
+        wx:key="id"
+        class="product"
+        data-refresh-version="{{imageRefreshVersion}}"
+      >
+        <image class="product-image" src="{{item.image}}" mode="widthFix" bindload="onImageLoad" />
+        <product-video wx:if="{{item.video}}" product="{{item}}" />
+      </view>
+    </scroll-view>
+    <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    activeCategoryId: null,
+    imageRefreshVersion: 0,
+    cartCount: 2
+  },
+  async onLoad () {
+    const { data } = await mpx.request({ url: '/api/feed' })
+    this.categories = data.categories
+    this.products = data.products
+  },
+  methods: {
+    selectCategory (event) {
+      this.activeCategoryId = event.currentTarget.dataset.categoryId
+    },
+    onImageLoad () {
+      this.imageRefreshVersion++
+    },
+    onDragStart () {},
+    onDragging () {},
+    onDragEnd () {},
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.feed-scroll {
+  height: 100%;
+  touch-action: pan-y;
+}
+.categories {
+  display: flex;
+  background: #fff;
+}
+.category {
+  padding: 20rpx 24rpx;
+}
+.category-active {
+  color: #ff5a00;
+}
+.product {
+  padding: 24rpx;
+}
+.product-image {
+  display: block;
+  width: 100%;
+}
+.fixed-cart {
+  position: fixed;
+  right: 24rpx;
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  z-index: 100;
+}
+</style>

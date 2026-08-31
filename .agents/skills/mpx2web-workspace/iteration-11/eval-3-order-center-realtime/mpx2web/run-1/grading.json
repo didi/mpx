@@ -1,0 +1,119 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:13-16 在订单卡片上保留 catchtouchstart@wx=\"{{gesture.onTouchStart}}\"、catchtouchmove@wx=\"{{gesture.onTouchMove}}\"、catchtouchend@wx=\"{{gesture.onTouchEnd}}\"、catchtouchcancel@wx=\"{{gesture.onTouchCancel}}\"；outputs/src/components/swipe-order-item.mpx:51-91 定义 <script module=\"gesture\" lang=\"wxs\"> 并导出 onTouchStart/onTouchMove/onTouchEnd/onTouchCancel。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：touchstart 缺少显式 @wx WXS 绑定；touchstart 缺少同节点 @web 实例方法绑定；touchmove 缺少显式 @wx WXS 绑定；touchmove 缺少同节点 @web 实例方法绑定；touchend 缺少显式 @wx WXS 绑定；touchend 缺少同节点 @web 实例方法绑定；touchcancel 缺少显式 @wx WXS 绑定；touchcancel 缺少同节点 @web 实例方法绑定。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:135-154 Web 侧状态写在 this.swipeStartX/this.swipeStartOffset/this.swipeMoved 上，属于组件实例；145 使用 Math.max(-96, Math.min(0, ...)) 限制位移到 -96；151 使用 const open = this.offsetX <= -48；122-125 finishSwipe 将展开态 offsetX 设为 -96。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:156-158 handleTouchCancel 调用 cancelSwipe，128-133 cancelSwipe 将 offsetX 置 0 并触发 open:false；122-125 finishSwipe 只把 suppressNextTap 设为 moved，160-164 selectOrder 首次遇到 suppressNextTap 后立即置 false 并 return，未使用时间窗；4 删除按钮 disabled=\"{{disabled}}\"，165 selectOrder 禁用态 return，168-170 removeOrder 禁用态 return。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：连接由 connectSocket 返回的局部 SocketTask 承载，未混用全局 Socket API。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：open/message/error/close 四类回调均校验捕获任务仍为当前任务。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：重连与卸载均先废弃任务身份，再关闭旧 SocketTask。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：sendHeartbeat 在 task.send 前校验当前任务身份和 task.readyState/task.OPEN。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:14-24 状态 tab 绑定 bindtap=\"switchStatus(item.key)\"，111-128 switchStatus 更新 activeStatus 并 fetchOrders 请求 /api/orders；28-35 swipe-order-item 绑定 bindselect=\"openOrder\" 与 bindremove=\"removeOrder\"；130-132 openOrder 跳转详情页；133-147 removeOrder 弹窗确认后 DELETE 并过滤 orders；46-52 logistics-channel 绑定 bindlogistics=\"handleLogisticsMessage\"，152-161 按 detail.orderId 更新订单 status/statusText/logisticsText/updatedAt。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "pass_rate": 0.8889
+  },
+  "metrics": {
+    "total_tokens": 478882,
+    "input_tokens": 464396,
+    "output_tokens": 14486,
+    "tool_calls": 25,
+    "duration_ms": 481035,
+    "output_files": 3,
+    "output_lines": 785,
+    "output_nonempty_lines": 716,
+    "output_bytes": 18149
+  },
+  "timing": {
+    "total_tokens": 478882,
+    "duration_ms": 481035,
+    "total_duration_seconds": 481.035,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 25
+  }
+}

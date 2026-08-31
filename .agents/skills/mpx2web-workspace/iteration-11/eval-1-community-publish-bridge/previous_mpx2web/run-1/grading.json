@@ -1,0 +1,108 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:119-130 choosePlace 中 Web 分支 return 后直接调用 mpx.chooseLocation({...}); 132-144 openPlace 中 Web 分支 return 后直接调用 mpx.openLocation({...}); 146-160 choosePhoto 中 Web 分支 return 后直接调用 mpx.chooseMedia({...})，均未见动态方法名或自定义适配器。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:119-123、132-137、146-150 的 Web 缺失能力确实隔离在 choosePlace/openPlace/choosePhoto 内，但 116-118 定义 showWebUnavailable(title) { mpx.showToast({ title, icon: 'none' }) }，121-122、135-136、148-149 通过该方法包装提示能力，缺少“不改写提示能力”的充分证据。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:119-124 choosePlace 的 Web 分支包含注释“TODO: 待业务明确 Web 地图 SDK 或宿主 Bridge 的选点协议后接入。”，随后仅 this.showWebUnavailable('Web 暂不支持选择位置') 并 return；未声明或调用位置选择虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:132-138 openPlace 的 Web 分支包含注释“TODO: 待业务明确 Web 地图 SDK 或宿主 Bridge 的地图查看协议后接入。”，随后仅 this.showWebUnavailable('Web 暂不支持查看地图') 并 return；未声明或调用地图打开虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:146-151 choosePhoto 的 Web 分支包含注释“TODO: 待业务明确 Web 媒体选择或宿主 Bridge 协议后接入。”，随后仅 this.showWebUnavailable('Web 暂不支持添加图片') 并 return；未声明或调用媒体选择虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:175-195 使用 mpx.request，187 使用 mpx.redirectTo，117 与 190 使用 mpx.showToast；89 仅从 '@mpxjs/core' 导入 mpx 和 createPage，未见从 '@mpxjs/api-proxy' 命名导入，也未见 fetch/location.assign/alert。但 116-118 定义 showWebUnavailable 对 mpx.showToast 做自定义包装，缺少“不用自定义包装重新实现”的充分证据。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:9-15 内容输入绑定 updateContent，18-34 图片列表/添加绑定 photos 与 choosePhoto，39-56 位置选择与地图查看绑定 place/choosePlace/openPlace，63-65 话题 picker 绑定 selectTopic，72-74 评论开关绑定 allowComments/toggleComments；171-195 submitPost 提交 data 包含 content、photos、place、topicId、allowComments，并在 186-188 success 后 mpx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 2,
+    "total": 8,
+    "pass_rate": 0.75
+  },
+  "metrics": {
+    "total_tokens": 640199,
+    "input_tokens": 629273,
+    "output_tokens": 10926,
+    "tool_calls": 13,
+    "duration_ms": 433143,
+    "output_files": 1,
+    "output_lines": 428,
+    "output_nonempty_lines": 384,
+    "output_bytes": 9437
+  },
+  "timing": {
+    "total_tokens": 640199,
+    "duration_ms": 433143,
+    "total_duration_seconds": 433.143,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 13
+  }
+}

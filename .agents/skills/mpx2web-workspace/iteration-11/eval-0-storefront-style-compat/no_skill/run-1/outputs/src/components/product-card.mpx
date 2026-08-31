@@ -1,0 +1,185 @@
+<template>
+  <view class="product-card" bindtap="selectProduct">
+    <view class="product-cover-wrap">
+      <image class="product-cover" src="{{product.cover}}" mode="aspectFill" />
+      <text wx:if="{{product.tag}}" class="product-tag">{{product.tag}}</text>
+    </view>
+
+    <view class="product-content">
+      <text class="product-title">{{product.title}}</text>
+      <text class="product-subtitle">{{product.subtitle}}</text>
+
+      <view class="product-meta">
+        <view class="price-tag">
+          <text class="currency">¥</text>
+          <text class="amount">{{product.price}}</text>
+          <text class="unit">起</text>
+        </view>
+        <text class="product-sales">{{product.salesText}}</text>
+      </view>
+
+      <view class="product-footer">
+        <text class="original-price">¥{{product.originalPrice}}</text>
+        <button class="cart-button" catchtap="addToCart" aria-label="加入购物车">+</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: {
+      type: Object,
+      value: () => ({})
+    }
+  },
+  methods: {
+    selectProduct () {
+      this.triggerEvent('select', { productId: this.product.id })
+    },
+    addToCart () {
+      this.triggerEvent('addcart', { productId: this.product.id })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.product-card {
+  box-sizing: border-box;
+  width: 338rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(31, 35, 48, 0.08);
+}
+
+.product-cover-wrap {
+  position: relative;
+}
+
+.product-cover {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 300rpx;
+  border-radius: 20rpx 20rpx 0 0;
+}
+
+.product-tag {
+  position: absolute;
+  top: 16rpx;
+  left: 16rpx;
+  padding: 6rpx 12rpx;
+  color: #ffffff;
+  font-size: 20rpx;
+  background: #e64340;
+  border-radius: 8rpx;
+}
+
+.product-content {
+  padding: 20rpx;
+}
+
+.product-title {
+  display: block;
+  overflow: hidden;
+  color: #333333;
+  font-size: 30rpx;
+  font-weight: bold;
+  line-height: 42rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  overflow: hidden;
+  color: #999999;
+  font-size: 22rpx;
+  line-height: 32rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 18rpx;
+}
+
+.price-tag {
+  display: flex;
+  flex-shrink: 0;
+  align-items: baseline;
+  height: 64rpx;
+  color: #e64340;
+  white-space: nowrap;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+.currency,
+.unit {
+  font-size: 20rpx;
+  line-height: 28rpx;
+}
+
+.amount {
+  margin: 0 4rpx;
+  font-size: 40rpx;
+  font-weight: bold;
+  line-height: 48rpx;
+}
+
+.product-sales {
+  min-width: 0;
+  overflow: hidden;
+  color: #a0a4ad;
+  font-size: 20rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+
+.original-price {
+  color: #b6bac2;
+  font-size: 22rpx;
+  text-decoration: line-through;
+}
+
+.cart-button {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  width: 52rpx;
+  height: 52rpx;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  font-size: 34rpx;
+  line-height: 52rpx;
+  background: #e64340;
+  border-radius: 50%;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

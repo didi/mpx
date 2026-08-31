@@ -1,0 +1,152 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        if (this.componentReady) this.initTracker()
+      }
+    },
+    memberId: String
+  },
+  data: {
+    ready: false
+  },
+  created () {
+    this.componentReady = false
+    this.componentDetached = false
+    this.trackerVersion = 0
+    this.tracker = null
+    this.listenersAttached = false
+    if (typeof window !== 'undefined') {
+      this.windowMessageHandler = this.handleWindowMessage.bind(this)
+      this.visibilityChangeHandler = this.handleVisibilityChange.bind(this)
+    }
+  },
+  ready () {
+    this.componentReady = true
+    this.initTracker()
+  },
+  detached () {
+    this.componentDetached = true
+    this.trackerVersion++
+    this.removeListeners()
+    this.destroyTracker()
+  },
+  methods: {
+    async initTracker () {
+      const campaignId = this.campaignId
+      if (!campaignId || this.componentDetached) return
+
+      const version = ++this.trackerVersion
+      this.ready = false
+      this.removeListeners()
+      this.destroyTracker()
+
+      let tracker
+      try {
+        tracker = await campaignTracker.create({
+          campaignId,
+          memberId: this.memberId
+        })
+      } catch (error) {
+        if (version === this.trackerVersion && !this.componentDetached) {
+          this.triggerEvent('error', { campaignId })
+        }
+        return
+      }
+
+      if (version !== this.trackerVersion || this.componentDetached) {
+        tracker.destroy()
+        return
+      }
+
+      this.tracker = tracker
+      this.addListeners()
+      try {
+        await tracker.start()
+      } catch (error) {
+        if (version === this.trackerVersion && !this.componentDetached) {
+          this.removeListeners()
+          this.destroyTracker()
+          this.triggerEvent('error', { campaignId })
+        }
+        return
+      }
+
+      if (version !== this.trackerVersion || this.componentDetached || this.tracker !== tracker) return
+      this.ready = true
+      this.triggerEvent('ready', { campaignId })
+    },
+    addListeners () {
+      if (typeof window === 'undefined' || this.listenersAttached) return
+      window.addEventListener('message', this.windowMessageHandler)
+      document.addEventListener('visibilitychange', this.visibilityChangeHandler)
+      this.listenersAttached = true
+    },
+    removeListeners () {
+      if (typeof window === 'undefined' || !this.listenersAttached) return
+      window.removeEventListener('message', this.windowMessageHandler)
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler)
+      this.listenersAttached = false
+    },
+    destroyTracker () {
+      if (!this.tracker) return
+      const tracker = this.tracker
+      this.tracker = null
+      tracker.destroy()
+    },
+    getCampaignFrame () {
+      if (typeof document === 'undefined') return null
+      return document.getElementById('campaign-webview')
+    },
+    isTrustedCampaignMessage (event) {
+      const frame = this.getCampaignFrame()
+      const campaignUrl = `${CAMPAIGN_ORIGIN}/${encodeURIComponent(this.campaignId)}?memberId=${encodeURIComponent(this.memberId)}`
+      return event.origin === CAMPAIGN_ORIGIN && frame && event.source === frame.contentWindow && frame.src === campaignUrl
+    },
+    handleWindowMessage (event) {
+      if (!this.tracker || !this.isTrustedCampaignMessage(event)) return
+      const message = event.data
+      if (message && typeof message === 'object' && message.type === 'campaign-exposure') {
+        this.tracker.track('exposure', message.payload)
+      }
+    },
+    handleVisibilityChange () {
+      if (!this.tracker) return
+      if (document.hidden) {
+        this.tracker.pause()
+      } else {
+        this.tracker.resume()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

@@ -1,0 +1,146 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+/* @mpx-if (__mpx_mode__ === 'web') */
+import campaignTracker from '@business/campaign-tracker-web'
+/* @mpx-endif */
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        if (this._trackerActive) this.initTracker()
+      }
+    },
+    memberId: {
+      type: String,
+      observer () {
+        if (this._trackerActive) this.initTracker()
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  attached () {
+    this._trackerGeneration = 0
+    this._trackerActive = false
+    this._listenersBound = false
+    this.tracker = null
+  },
+  ready () {
+    this._trackerActive = true
+    /* @mpx-if (__mpx_mode__ === 'web') */
+    this.addListeners()
+    this.initTracker()
+    /* @mpx-else */
+    this.ready = true
+    this.triggerEvent('ready', { campaignId: this.campaignId })
+    /* @mpx-endif */
+  },
+  detached () {
+    this._trackerActive = false
+    this._trackerGeneration += 1
+    /* @mpx-if (__mpx_mode__ === 'web') */
+    this.removeListeners()
+    this.destroyTracker()
+    /* @mpx-endif */
+  },
+  methods: {
+    /* @mpx-if (__mpx_mode__ === 'web') */
+    async initTracker () {
+      if (!this.campaignId) return
+      const generation = ++this._trackerGeneration
+      const campaignId = this.campaignId
+      this.ready = false
+      this.destroyTracker()
+      try {
+        const tracker = await campaignTracker.create({
+          campaignId,
+          memberId: this.memberId
+        })
+        if (!this._trackerActive || generation !== this._trackerGeneration) {
+          tracker.destroy()
+          return
+        }
+        this.tracker = tracker
+        tracker.start()
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (!this._trackerActive || generation !== this._trackerGeneration) return
+        this.destroyTracker()
+        this.ready = false
+        this.triggerEvent('error', { campaignId, error })
+      }
+    },
+    destroyTracker () {
+      if (!this.tracker) return
+      this.tracker.destroy()
+      this.tracker = null
+    },
+    addListeners () {
+      if (this._listenersBound) return
+      window.addEventListener('message', this.handleWindowMessage)
+      document.addEventListener('visibilitychange', this.handleVisibilityChange)
+      this._listenersBound = true
+    },
+    removeListeners () {
+      if (!this._listenersBound) return
+      window.removeEventListener('message', this.handleWindowMessage)
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      this._listenersBound = false
+    },
+    handleWindowMessage (event) {
+      if (!this._trackerActive || !this.tracker || event.origin !== CAMPAIGN_ORIGIN) return
+      const iframe = document.getElementById('campaign-webview')
+      if (!iframe || event.source !== iframe.contentWindow) return
+      let message = event.data
+      if (typeof message === 'string') {
+        try {
+          message = JSON.parse(message)
+        } catch (e) {
+          return
+        }
+      }
+      if (!message || message.type !== 'campaign-exposure') return
+      const messageCampaignId = message.campaignId || (message.payload && message.payload.campaignId)
+      if (messageCampaignId && messageCampaignId !== this.campaignId) return
+      this.tracker.track('exposure', message.payload)
+    },
+    handleVisibilityChange () {
+      if (!this.tracker) return
+      if (document.hidden) {
+        this.tracker.pause()
+      } else {
+        this.tracker.resume()
+      }
+    }
+    /* @mpx-endif */
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

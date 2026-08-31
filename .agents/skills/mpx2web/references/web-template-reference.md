@@ -116,7 +116,26 @@ createComponent({
 
 如果小程序端为了高频触摸、拖动等交互必须使用 WXS 响应事件，保留小程序侧 WXS 绑定，并为 Web 提供普通实例方法的等效实现；每个 `@wx` 事件都必须在同一节点提供同事件类型的 `@web` 绑定，不能只增加 `@wx` 后结束改造。属性模式后缀会先于跨平台事件转换处理，因此 Web 分支直接使用转换后的 Vue 事件名 `@tap@web`，不要写 `bindtap@web`。不要在 Web 实例方法中调用 `this.tool` 作为通用跨端方案，因为 WXS 模块不是小程序脚本实例上的普通成员。
 
-迁移连续手势时，将起点、位移、是否发生滑动等状态保存在组件实例上，避免多个组件实例共享普通脚本模块变量。为 `touchcancel` 提供与中断语义一致的收尾。若滑动节点内部还有点击行为，有效移动后的 `touchend` 只清理起点和位移，保留一次性误触标记；紧随其后的合成 `tap` 先消费该标记并直接返回，超时或消费后再清除。`touchcancel` 不会形成有效选择，应回弹并清理全部状态。
+迁移连续手势时，将起点、位移、是否发生滑动等状态保存在组件实例上，避免多个组件实例共享普通脚本模块变量。为 `touchcancel` 提供与中断语义一致的收尾。若滑动节点内部还有点击行为，有效移动后的 `touchend` 只清理起点和位移，并设置与本次手势绑定的一次性误触标记；紧随其后的合成 `tap` 消费该标记并立即清除。下一次真实 `touchstart` 应先清除未被消费的旧标记，再建立新手势状态，这样浏览器没有派发合成 `tap` 时也不会吞掉后续合法点击。不要使用 `setTimeout`、时间戳或固定毫秒窗口抑制点击，因为窗口内的首个事件不一定来自刚结束的滑动。`touchcancel` 不会形成有效选择，应回弹并清理全部状态；禁用态同时阻止选择和删除。
+
+```js
+handleTouchStart (event) {
+  this.suppressNextTap = false
+  // 记录本次手势起点
+},
+finishSwipe ({ moved }) {
+  // 先清理位移等手势状态
+  this.suppressNextTap = moved
+},
+handleTap () {
+  if (this.suppressNextTap) {
+    this.suppressNextTap = false
+    return
+  }
+  if (this.disabled) return
+  this.selectItem()
+}
+```
 
 ```html
 <view
@@ -888,6 +907,8 @@ Web 内建基础组件。按 `open-type` 接入 navigate、redirect、navigateBa
 | delta | number | `1` | 当 open-type 为 `navigateBack` 时有效，表示回退的层数 |
 
 运行时组件保留了 `switchTab` 分支，但当前模板转换规则会对该值给出 Web 不支持提示，因此不要把它作为稳定能力使用；`navigateTo` 是 API 名，`navigator` 的 `open-type` 对应值是 `navigate`。
+
+修复已有 `navigator` 时优先保留它的模板入口并把错误值改为 `navigate`，不要仅为了绕开 `open-type` 差异把它无理由替换成按钮。tabBar 跳转使用脚本中的 `mpx.switchTab`，与普通页面的 `navigator open-type="navigate"` 分工。
 
 ### video
 

@@ -1,0 +1,106 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "候选商品卡文件通过 scoped 建立可直接验证的 Web 组件级样式隔离；小程序 JSON 的 styleIsolation 不能替代这项 Web 证据",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：商品卡通过 scoped 建立组件级 Web 样式隔离。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:4 商品图片为 `<image class=\"product-cover\" ...>`；outputs/src/components/product-card.mpx:64-69 使用 `.product-cover` 设置 `display/width/height/border-radius`，商品卡内未用 `image` 标签选择器定义商品图样式。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:5 首页标题使用 `class=\"title\"`，outputs/src/pages/home/index.mpx:136-140 设置红色、40rpx、bold；outputs/src/components/product-card.mpx:9 商品标题使用 `class=\"title\"`，outputs/src/components/product-card.mpx:86-95 设置 #333、30rpx、bold、单行省略；outputs/src/components/product-card.mpx:4 商品图使用 `class=\"product-cover\"`，outputs/src/components/product-card.mpx:64-69 设置 `border-radius: 20rpx 20rpx 0 0`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:122-126 在基础 scoped 样式中 `.currency, .unit` 保持 `font-size: 10px` 和 `line-height: 14px`；Web 专用覆盖位于 outputs/src/components/product-card.mpx:169-180 的 `mode=\"web\"` 样式块。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "目标 WebView 中币种与单位先以不触发强制放大的基础字号排版，再缩放回约 10px 的视觉字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:169-180 的 `<style scoped mode=\"web\">` 中 `.currency, .unit` 设置 `font-size: 12px`、`line-height: 16.8px`，再用 `transform: scale(0.833333)` 缩放，12px * 0.833333 约等于 10px。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "目标 WebView 的缩放补偿具有与基线方向一致的 transform-origin，且校正 flex 布局占位，不改变卡片宽度或价格行基线",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:115-120 `.price-tag` 为 `display: flex` 且 `align-items: baseline`；outputs/src/components/product-card.mpx:169-180 Web 补偿中 `.currency, .unit` 设置 `display: inline-block`、`flex: 0 0 12px`、`width: 12px`、`margin-right: -2px`、`transform-origin: left bottom`；outputs/src/components/product-card.mpx:51-58 卡片宽度仍为基础 `.product-card { width: 338rpx; ... }`，Web 样式块未覆盖卡片宽度。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:169-180 只有 `mode=\"web\"` 样式块包含 `font-size: 12px`、`transform: scale(0.833333)`、`transform-origin: left bottom` 的补偿；基础样式 outputs/src/components/product-card.mpx:122-126 仍为 `.currency, .unit { font-size: 10px; line-height: 14px; }`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:11-20 分类 tab 绑定 `bindtap=\"switchCategory(item.id)\"`，outputs/src/pages/home/index.mpx:79-83 `switchCategory` 更新分类并调用 `fetchProducts()`；outputs/src/pages/home/index.mpx:24-30 商品卡绑定 `bindselect=\"openProduct\"` 和 `bindaddcart=\"addToCart\"`；outputs/src/pages/home/index.mpx:97-100 `openProduct` 调用 `wx.navigateTo` 到详情页；outputs/src/pages/home/index.mpx:102-110 `addToCart` POST `/api/cart/items` 并显示成功 toast。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 418788,
+    "input_tokens": 409710,
+    "output_tokens": 9078,
+    "tool_calls": 16,
+    "duration_ms": 364823,
+    "output_files": 2,
+    "output_lines": 391,
+    "output_nonempty_lines": 351,
+    "output_bytes": 7783
+  },
+  "timing": {
+    "total_tokens": 418788,
+    "duration_ms": 364823,
+    "total_duration_seconds": 364.823,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 16
+  }
+}

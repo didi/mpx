@@ -1,0 +1,43 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  onAppInit () {
+    return {
+      pinia: createPinia()
+    }
+  },
+  onSSRAppCreated ({ pinia, router, app, context }) {
+    return new Promise((resolve, reject) => {
+      router.push(context.url)
+      router.onReady(() => {
+        context.rendered = () => {
+          context.state = pinia.state.value
+        }
+        resolve(app)
+      }, reject)
+    })
+  },
+  onLaunch () {
+    const isNode = typeof process !== 'undefined' && process.versions && process.versions.node
+    if (!isNode) wx.reportAnalytics('mall_launch', {})
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/home/index"
+  ],
+  "packages": [
+    {
+      "root": "packageProduct",
+      "pages": [
+        "pages/detail/index"
+      ]
+    }
+  ]
+}
+</script>

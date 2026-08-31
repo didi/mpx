@@ -1,0 +1,119 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "no_skill",
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:8-11 绑定 bindtouchstart/move/end/cancel 到 gesture.onTouchStart/onTouchMove/onTouchEnd/onTouchCancel；outputs/src/components/swipe-order-item.mpx:50 定义 <script module=\"gesture\" lang=\"wxs\">，保留 WXS 手势处理路径。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：touchstart 缺少显式 @wx WXS 绑定；touchstart 缺少同节点 @web 实例方法绑定；touchmove 缺少显式 @wx WXS 绑定；touchmove 缺少同节点 @web 实例方法绑定；touchend 缺少显式 @wx WXS 绑定；touchend 缺少同节点 @web 实例方法绑定；touchcancel 缺少显式 @wx WXS 绑定；touchcancel 缺少同节点 @web 实例方法绑定；仍用无平台后缀的动态表达式混合 WXS 函数对象。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:50-140 只有 WXS gesture 模块实现 states[key]、-96 限位和 -48 阈值；outputs/src/components/swipe-order-item.mpx:179-206 普通组件 methods 只有 beginSwipe/finishSwipe/cancelSwipe/selectOrder/removeOrder，未提供 Web start/move/end/cancel 手势实现，因此缺少 Web 手势状态隔离的充分证据。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:136 touchcancel 设置 setCardOffset(event, 0, false) 可回弹；outputs/src/components/swipe-order-item.mpx:196 和 204 禁用态阻止选择和删除；但 outputs/src/components/swipe-order-item.mpx:186、192 使用 this.suppressSelectUntil = Date.now() + 350，outputs/src/components/swipe-order-item.mpx:196 用时间窗抑制点击，违反“不能用时间窗”。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：没有统一使用 connectSocket 返回的 SocketTask，或仍混用了全局/原生 WebSocket API。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：缺少 onOpen；缺少 onMessage；缺少 onError；缺少 onClose。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：connectChannel 未在 close 前废弃任务身份。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：sendHeartbeat 未捕获当前 SocketTask。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:20、110-115 switchStatus 切换筛选并调用 fetchOrders；outputs/src/pages/orders/index.mpx:116-135 fetchOrders 按 activeStatus 请求 /api/orders 并更新 orders/statusTabs；outputs/src/pages/orders/index.mpx:34、136-139 选择订单后 navigateTo 详情页；outputs/src/pages/orders/index.mpx:35、140-156 删除链路确认后 DELETE 并过滤 orders；outputs/src/pages/orders/index.mpx:48-54 绑定 logistics-channel，outputs/src/pages/orders/index.mpx:168-178 handleLogisticsMessage 更新订单物流字段。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 7,
+    "total": 9,
+    "pass_rate": 0.2222
+  },
+  "metrics": {
+    "total_tokens": 300602,
+    "input_tokens": 282490,
+    "output_tokens": 18112,
+    "tool_calls": 9,
+    "duration_ms": 502870,
+    "output_files": 3,
+    "output_lines": 854,
+    "output_nonempty_lines": 784,
+    "output_bytes": 20549
+  },
+  "timing": {
+    "total_tokens": 300602,
+    "duration_ms": 502870,
+    "total_duration_seconds": 502.87,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 9
+  }
+}

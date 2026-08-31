@@ -1,0 +1,21 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy, { usePromise: true })
+
+createApp({
+  onLaunch () {
+    console.log('shop launched')
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/search/index",
+    "pages/product/detail"
+  ]
+}
+</script>

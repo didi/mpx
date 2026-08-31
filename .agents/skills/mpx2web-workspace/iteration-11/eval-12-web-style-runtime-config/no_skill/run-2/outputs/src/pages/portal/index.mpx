@@ -1,0 +1,223 @@
+<template>
+  <view class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal-grid">
+      <view class="portal-card" wx:for="{{cards}}" wx:key="id" bindtap="openCard(item.id)">{{item.title}}</view>
+    </view>
+    <view class="portal-actions">
+      <button class="portal-button" bindtap="toggleTheme">切换主题</button>
+      <button class="portal-button" bindtap="openDialog">打开弹层</button>
+    </view>
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
+      <view class="dialog">门户设置</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    dialogVisible: false,
+    dark: false
+  },
+  methods: {
+    openCard (id) {
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
+    toggleTheme () {
+      this.dark = !this.dark
+    },
+    openDialog () {
+      if (this.dialogVisible) return
+      this.dialogVisible = true
+      this.lockPageScroll()
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      this.unlockPageScroll()
+    },
+    lockPageScroll () {
+      if (typeof window === 'undefined' || typeof document === 'undefined' || this._portalScrollState) return
+      const body = document.body
+      const root = document.documentElement
+      if (!body || !root) return
+      const scrollX = window.pageXOffset
+      const scrollY = window.pageYOffset
+      this._portalScrollState = {
+        scrollX,
+        scrollY,
+        bodyStyle: {
+          overflow: body.style.overflow,
+          position: body.style.position,
+          top: body.style.top,
+          left: body.style.left,
+          right: body.style.right,
+          width: body.style.width
+        },
+        rootOverflow: root.style.overflow
+      }
+      Object.assign(body.style, {
+        overflow: 'hidden',
+        position: 'fixed',
+        top: `-${scrollY}px`,
+        left: `-${scrollX}px`,
+        right: '0',
+        width: '100%'
+      })
+      root.style.overflow = 'hidden'
+    },
+    unlockPageScroll () {
+      if (typeof window === 'undefined' || typeof document === 'undefined' || !this._portalScrollState) return
+      const state = this._portalScrollState
+      Object.assign(document.body.style, state.bodyStyle)
+      document.documentElement.style.overflow = state.rootOverflow
+      this._portalScrollState = null
+      window.scrollTo(state.scrollX, state.scrollY)
+    }
+  },
+  onHide () {
+    this.dialogVisible = false
+    this.unlockPageScroll()
+  },
+  onUnload () {
+    this.dialogVisible = false
+    this.unlockPageScroll()
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  box-sizing: border-box;
+  min-height: 100vh;
+  color: var(--portal-text, #1f2937);
+  background: var(--portal-background, #f5f7fa);
+  padding: var(--portal-space, 32rpx);
+  padding-bottom: calc(var(--portal-space, 32rpx) + env(safe-area-inset-bottom));
+}
+
+.portal--dark {
+  --portal-text: #f3f4f6;
+  --portal-background: #111827;
+  --portal-card-background: #1f2937;
+  --portal-card-border: #374151;
+}
+
+.portal-grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -8rpx 16rpx;
+}
+
+.portal-card {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(50% - 16rpx);
+  min-height: 160rpx;
+  margin: 0 8rpx 16rpx;
+  color: inherit;
+  background: var(--portal-card-background, #ffffff);
+  border: 1px solid var(--portal-card-border, #e5e7eb);
+  border-radius: 16rpx;
+  box-shadow: 0 8rpx 24rpx rgba(15, 23, 42, 0.08);
+}
+
+.portal-actions {
+  display: flex;
+  margin: 0 -8rpx;
+}
+
+.portal-button {
+  flex: 1;
+  margin: 0 8rpx;
+}
+
+.dialog-mask {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.dialog {
+  box-sizing: border-box;
+  width: min(560rpx, calc(100% - 64rpx));
+  padding: 40rpx 32rpx;
+  color: var(--portal-text, #1f2937);
+  background: var(--portal-card-background, #ffffff);
+  border-radius: 20rpx;
+}
+
+@media (max-width: 600px) {
+  .portal {
+    padding: var(--portal-space, 24rpx);
+    padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
+  }
+
+  .portal-card {
+    width: calc(100% - 16rpx);
+  }
+}
+
+/* @mpx-if (mode === 'web') */
+@media (hover: hover) and (pointer: fine) {
+  .portal-card {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .portal-card:hover {
+    box-shadow: 0 12rpx 32rpx rgba(15, 23, 42, 0.14);
+    transform: translateY(-4rpx);
+  }
+
+  .portal-button {
+    cursor: pointer;
+  }
+}
+/* @mpx-endif */
+</style>
+
+<style>
+/* @mpx-if (mode === 'web') */
+html {
+  scrollbar-color: rgba(100, 116, 139, 0.65) transparent;
+  scrollbar-width: thin;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.65);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.85);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+/* @mpx-endif */
+</style>

@@ -1,0 +1,164 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+// SDK contract: create({ productId }) returns Promise<Tracker>.
+// Tracker exposes track(eventName, payload) and destroy().
+createComponent({
+  properties: {
+    productId: {
+      type: String,
+      observer: 'handleProductChange'
+    },
+    items: {
+      type: Array,
+      observer: 'handleItemsChange'
+    }
+  },
+  ready () {
+    if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+    this.sdkReady = true
+    this.sdkDetached = false
+    this.initTracker(this.productId)
+  },
+  detached () {
+    this.sdkDetached = true
+    this.sdkReady = false
+    this.initVersion = (this.initVersion || 0) + 1
+    this.destroyTracker()
+  },
+  methods: {
+    handleProductChange (productId) {
+      if (this.sdkReady) this.initTracker(productId)
+    },
+    handleItemsChange () {
+      if (this.sdkReady && this.tracker) this.observeCards(this.initVersion, this.productId, this.tracker)
+    },
+    async initTracker (productId) {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+      const initVersion = (this.initVersion || 0) + 1
+      this.initVersion = initVersion
+      this.destroyTracker()
+      if (!productId || this.sdkDetached) return
+
+      const sdkModule = await import('@business/product-exposure-web')
+      if (this.sdkDetached || initVersion !== this.initVersion || productId !== this.productId) return
+      const exposureSdk = sdkModule.default || sdkModule
+      const tracker = await exposureSdk.create({ productId })
+      if (this.sdkDetached || initVersion !== this.initVersion || productId !== this.productId) {
+        tracker.destroy()
+        return
+      }
+      this.tracker = tracker
+      if (!window.IntersectionObserver || !this.$el) return
+      this.observer = new window.IntersectionObserver((entries) => {
+        if (
+          this.sdkDetached ||
+          initVersion !== this.initVersion ||
+          productId !== this.productId ||
+          tracker !== this.tracker
+        ) return
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            tracker.track('recommendation_exposure', {
+              productId,
+              recommendationId: entry.target.dataset.productId
+            })
+          }
+        })
+      })
+      this.observeCards(initVersion, productId, tracker)
+    },
+    observeCards (initVersion, productId, tracker) {
+      this.$nextTick(() => {
+        if (
+          this.sdkDetached ||
+          initVersion !== this.initVersion ||
+          productId !== this.productId ||
+          tracker !== this.tracker
+        ) return
+        this.observer.disconnect()
+        this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
+          this.observer.observe(element)
+        })
+      })
+    },
+    destroyTracker () {
+      if (this.observer) {
+        this.observer.disconnect()
+        this.observer = null
+      }
+      if (this.tracker) {
+        this.tracker.destroy()
+        this.tracker = null
+      }
+    },
+    openProduct (productId) {
+      wx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${productId}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #ffffff;
+}
+
+.section-title {
+  margin-bottom: 20rpx;
+  color: #222222;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+}
+
+.recommendation-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+}
+
+.recommendation-name {
+  flex: 1;
+  margin-left: 18rpx;
+  color: #333333;
+  font-size: 26rpx;
+}
+
+.recommendation-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

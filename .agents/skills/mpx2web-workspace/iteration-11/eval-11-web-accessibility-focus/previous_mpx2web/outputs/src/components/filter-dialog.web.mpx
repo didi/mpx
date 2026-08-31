@@ -1,0 +1,180 @@
+<template>
+  <div class="filter">
+    <button
+      ref="trigger"
+      class="filter-trigger"
+      type="button"
+      aria-haspopup="dialog"
+      :aria-expanded="visible ? 'true' : 'false'"
+      @click="open"
+    >
+      筛选
+    </button>
+    <div v-if="visible" class="mask" @click="close">
+      <div
+        ref="dialog"
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="商品筛选"
+        tabindex="-1"
+        @click.stop
+      >
+        <h2 class="dialog-title">商品筛选</h2>
+        <button
+          v-for="item in optionStates"
+          :key="item.value"
+          type="button"
+          :class="{ selected: item.selected }"
+          :aria-label="item.accessibleLabel"
+          :aria-pressed="item.selected ? 'true' : 'false'"
+          @click="toggle(item.value)"
+        >
+          {{item.label}}
+        </button>
+        <button type="button" @click="clear">清空</button>
+        <button type="button" @click="confirm">确定</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    options: {
+      type: Array,
+      value: () => []
+    }
+  },
+  data: {
+    visible: false,
+    selected: []
+  },
+  computed: {
+    optionStates () {
+      return this.options.map((item) => {
+        const selected = this.selected.includes(item.value)
+        return Object.assign({}, item, {
+          selected,
+          accessibleLabel: `${item.label}，${selected ? '已选择' : '未选择'}`
+        })
+      })
+    }
+  },
+  attached () {
+    this.isDetached = false
+    this.keydownListening = false
+    this.focusRequestId = 0
+    this.restoreFocusElement = null
+    this.keydownHandler = this.onKeydown
+  },
+  detached () {
+    this.isDetached = true
+    this.focusRequestId += 1
+    this.removeKeydownListener()
+    this.restoreFocusElement = null
+  },
+  methods: {
+    open (event) {
+      if (this.isDetached || this.visible) return
+      this.restoreFocusElement = this.getDomElement(
+        event && event.currentTarget ? event.currentTarget : this.$refs.trigger
+      )
+      this.visible = true
+      const requestId = ++this.focusRequestId
+      this.addKeydownListener()
+      this.$nextTick(() => {
+        if (this.isDetached || !this.visible || requestId !== this.focusRequestId) return
+        const dialog = this.getDomElement(this.$refs.dialog)
+        if (dialog && dialog.isConnected) dialog.focus()
+      })
+    },
+    close () {
+      if (!this.visible) return
+      const restoreFocusElement = this.restoreFocusElement
+      this.restoreFocusElement = null
+      this.visible = false
+      const requestId = ++this.focusRequestId
+      this.removeKeydownListener()
+      this.$nextTick(() => {
+        if (this.isDetached || this.visible || requestId !== this.focusRequestId) return
+        if (
+          restoreFocusElement &&
+          restoreFocusElement.isConnected &&
+          typeof restoreFocusElement.focus === 'function'
+        ) {
+          restoreFocusElement.focus()
+        }
+      })
+    },
+    toggle (value) {
+      this.selected = this.selected.includes(value)
+        ? this.selected.filter((item) => item !== value)
+        : this.selected.concat(value)
+    },
+    clear () {
+      this.selected = []
+    },
+    confirm () {
+      this.triggerEvent('confirm', { selected: this.selected })
+      this.close()
+    },
+    addKeydownListener () {
+      if (this.keydownListening || typeof document === 'undefined') return
+      document.addEventListener('keydown', this.keydownHandler, true)
+      this.keydownListening = true
+    },
+    removeKeydownListener () {
+      if (!this.keydownListening || typeof document === 'undefined') return
+      document.removeEventListener('keydown', this.keydownHandler, true)
+      this.keydownListening = false
+    },
+    onKeydown (event) {
+      if (!this.visible) return
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        this.close()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const dialog = this.getDomElement(this.$refs.dialog)
+      if (!dialog) return
+      const focusableElements = this.getFocusableElements(dialog)
+      if (!focusableElements.length) {
+        event.preventDefault()
+        dialog.focus()
+        return
+      }
+      const activeElement = document.activeElement
+      const activeIndex = focusableElements.indexOf(activeElement)
+      if (!dialog.contains(activeElement) || activeIndex === -1) {
+        event.preventDefault()
+        focusableElements[event.shiftKey ? focusableElements.length - 1 : 0].focus()
+      } else if (event.shiftKey && activeIndex === 0) {
+        event.preventDefault()
+        focusableElements[focusableElements.length - 1].focus()
+      } else if (!event.shiftKey && activeIndex === focusableElements.length - 1) {
+        event.preventDefault()
+        focusableElements[0].focus()
+      }
+    },
+    getFocusableElements (dialog) {
+      const elements = dialog.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), ' +
+        'textarea:not([disabled]), [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
+      )
+      return Array.prototype.filter.call(elements, (element) => {
+        return element.getAttribute('aria-hidden') !== 'true' &&
+          (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length)
+      })
+    },
+    getDomElement (target) {
+      return target && target.$el ? target.$el : target
+    }
+  }
+})
+</script>

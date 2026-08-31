@@ -1,0 +1,28 @@
+<template>
+  <view class="analytics-panel-web">
+    <analytics-chart metrics="{{metrics}}" />
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import { createApp } from 'vue'
+import AnalyticsChart from '../web/AnalyticsChart.vue'
+
+createComponent({
+  properties: { metrics: { type: Array, value: () => [] } },
+  attached () {
+    this.app = createApp(AnalyticsChart, { metrics: this.metrics })
+    this.app.mount(document.querySelector('.analytics-panel-web'))
+    this.resizeObserver = new ResizeObserver(() => this.app.resize())
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "analytics-chart": "../web/AnalyticsChart.vue"
+  }
+}
+</script>

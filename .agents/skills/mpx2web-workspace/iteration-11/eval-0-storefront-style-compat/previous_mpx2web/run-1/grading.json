@@ -1,0 +1,106 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "候选商品卡文件通过 scoped 建立可直接验证的 Web 组件级样式隔离；小程序 JSON 的 styleIsolation 不能替代这项 Web 证据",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：商品卡通过 scoped 建立组件级 Web 样式隔离。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx: 模板为 `<image class=\"product-cover\" ... />`，样式使用 `.product-cover { display: block; width: 100%; height: 300rpx; border-radius: 20rpx 20rpx 0 0; }`，未使用 `image` 标签选择器。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx: 首页标题 `.title { color: #e64340; font-size: 40rpx; font-weight: bold; }`；outputs/src/components/product-card.mpx: 商品标题 `.title { color: #333333; font-size: 30rpx; font-weight: bold; line-height: 42rpx; }`；商品图片 `.product-cover { ... border-radius: 20rpx 20rpx 0 0; }`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx: 通用样式中 `.currency, .unit { font-size: 10px; line-height: 14px; }`；Web 专用补偿放在单独的 `<style mode=\"web\" scoped>` 中。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "目标 WebView 中币种与单位先以不触发强制放大的基础字号排版，再缩放回约 10px 的视觉字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx: `<style mode=\"web\" scoped>` 中 `.currency, .unit { font-size: 12px; transform: scale(0.833333); }`，即先按 12px 排版，再缩放到约 10px 视觉字号。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "目标 WebView 的缩放补偿具有与基线方向一致的 transform-origin，且校正 flex 布局占位，不改变卡片宽度或价格行基线",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx: Web 补偿使用 `.currency, .unit { width: 12px; margin-right: -2px; transform: scale(0.833333); transform-origin: left bottom; }` 校正缩放后的 flex 占位；价格行 `.price-tag { display: flex; align-items: baseline; height: 32px; }`，卡片宽度仍为 `.product-card { width: 338rpx; }`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx: 小字号补偿规则 `font-size: 12px; transform: scale(0.833333); transform-origin: left bottom;` 只出现在 `<style mode=\"web\" scoped>`；通用样式仅保留 `.currency, .unit { font-size: 10px; line-height: 14px; }`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx: 分类保留 `wx:for=\"{{categories}}\"`、`bindtap=\"switchCategory(item.id)\"` 和 `switchCategory` 调用 `fetchProducts()`；商品详情链路保留 `<product-card ... bindselect=\"openProduct\" />` 与 `wx.navigateTo({ url: `/packageProduct/pages/detail/index?id=${detail.productId}` })`；购物车链路保留 `bindaddcart=\"addToCart\"` 与 `wx.request({ url: '/api/cart/items', method: 'POST', data: { productId: detail.productId, count: 1 } })`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 957105,
+    "input_tokens": 943233,
+    "output_tokens": 13872,
+    "tool_calls": 33,
+    "duration_ms": 513760,
+    "output_files": 2,
+    "output_lines": 385,
+    "output_nonempty_lines": 346,
+    "output_bytes": 7707
+  },
+  "timing": {
+    "total_tokens": 957105,
+    "duration_ms": 513760,
+    "total_duration_seconds": 513.76,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 33
+  }
+}

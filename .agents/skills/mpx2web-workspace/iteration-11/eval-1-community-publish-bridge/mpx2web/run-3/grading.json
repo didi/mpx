@@ -1,0 +1,108 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "has_skill",
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:115-147 中三个方法均先判断 __mpx_mode__ === 'web' 并 return，非 Web 分支直接调用 wx.chooseLocation(...), wx.openLocation(...), wx.chooseMedia(...)；未见动态方法名或自定义适配器。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:115-147 仅在 choosePlace/openPlace/choosePhoto 内包含 __mpx_mode__ === 'web' 分支；outputs/src/pages/community/publish.mpx:168-182 请求、路由、提示仍为 mpx.request(...), mpx.redirectTo(...), mpx.showToast(...)，未见通用平台调用层。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:115-119 的 choosePlace Web 分支包含注释 “TODO: 待 Web 宿主 Bridge 与地图选点协议确定后接入。”，随后仅调用 mpx.showToast(...) 并 return，未调用位置选择虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:127-133 的 openPlace Web 分支包含注释 “TODO: 待 Web 宿主 Bridge 与地图查看协议确定后接入。”，随后仅调用 mpx.showToast(...) 并 return，地图打开能力仍未接入虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:141-145 的 choosePhoto Web 分支包含注释 “TODO: 待 Web 宿主 Bridge 与媒体选择协议确定后接入。”，随后仅调用 mpx.showToast(...) 并 return，未声明或调用媒体选择虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:89 仅从 @mpxjs/core 导入 mpx/createPage；outputs/src/pages/community/publish.mpx:168 使用 mpx.request(...)，179 使用 mpx.redirectTo(...)，118/131/144/182 使用 mpx.showToast(...)；未见 fetch、location.assign、alert 或从 @mpxjs/api-proxy 命名导入 request/redirectTo/showToast。",
+      "verification_methods": [
+        "independent_code_review",
+        "static_contract"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:9-16 textarea 绑定 content/updateContent；18-34 展示 photos 并绑定 choosePhoto/removePhoto；39-55 绑定 choosePlace/openPlace；63-64 picker 绑定 selectTopic；72-74 switch 绑定 allowComments/toggleComments；168-179 submitPost 提交 content、photos、place、topicId、allowComments，并成功后 mpx.redirectTo 到 /pages/community/detail?id=${data.id}。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 622079,
+    "input_tokens": 615140,
+    "output_tokens": 6939,
+    "tool_calls": 15,
+    "duration_ms": 299664,
+    "output_files": 1,
+    "output_lines": 420,
+    "output_nonempty_lines": 376,
+    "output_bytes": 9040
+  },
+  "timing": {
+    "total_tokens": 622079,
+    "duration_ms": 299664,
+    "total_duration_seconds": 299.664,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 15
+  }
+}

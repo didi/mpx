@@ -1,0 +1,119 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:7-10 在微信端绑定 catchtouchstart@wx=\"{{gesture.onTouchStart}}\"、catchtouchmove@wx=\"{{gesture.onTouchMove}}\"、catchtouchend@wx=\"{{gesture.onTouchEnd}}\"、catchtouchcancel@wx=\"{{gesture.onTouchCancel}}\"；outputs/src/components/swipe-order-item.mpx:54-114 保留 <script module=\"gesture\" lang=\"wxs\">，WXS 内处理 start/move/end/cancel 并通过 event.instance.callMethod 同步实例方法。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：四类触摸事件均使用显式 @wx WXS 与 @web 实例方法配对。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:137-142 在 attached 中把 touchStartX、gestureStartOffset、gestureOffset、gestureMoved、suppressNextTap 写到 this 上；outputs/src/components/swipe-order-item.mpx:165-190 Web touch 方法均使用 this.* 状态。outputs/src/components/swipe-order-item.mpx:177-180 将位移限制到 0 到 -96；outputs/src/components/swipe-order-item.mpx:187 使用 this.gestureOffset < -48 判定展开，outputs/src/components/swipe-order-item.mpx:153-156 展开时 offsetX 设为 -96。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:192-194 handleTouchCancel 调 clearTouchState() 和 cancelSwipe()；outputs/src/components/swipe-order-item.mpx:159-163 cancelSwipe 将 offsetX 置 0 并清 suppressNextTap。outputs/src/components/swipe-order-item.mpx:153-157 finishSwipe 仅按 moved 设置 suppressNextTap；outputs/src/components/swipe-order-item.mpx:202-206 selectOrder 遇 suppressNextTap 后立即清 false 并 return，未使用 setTimeout/时间窗。outputs/src/components/swipe-order-item.mpx:207 selectOrder 禁用态 return；outputs/src/components/swipe-order-item.mpx:210-212 removeOrder 禁用态 return。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：没有统一使用 connectSocket 返回的 SocketTask，或仍混用了全局/原生 WebSocket API。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：open/message/error/close 四类回调均校验捕获任务仍为当前任务。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：重连与卸载均先废弃任务身份，再关闭旧 SocketTask。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：sendHeartbeat 在 task.send 前校验当前任务身份和 task.readyState/task.OPEN。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:202-212 仅能证明 select/remove 事件仍触发；outputs/src/components/logistics-channel.mpx:88-90 仅能证明 logistics 消息触发 logistics 事件。outputs 下候选文件未包含订单筛选逻辑或详情链路代码，无法逐项证明筛选、详情、删除和物流消息更新链路完整。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 2,
+    "total": 9,
+    "pass_rate": 0.7778
+  },
+  "metrics": {
+    "total_tokens": 1236795,
+    "input_tokens": 1216943,
+    "output_tokens": 19852,
+    "tool_calls": 22,
+    "duration_ms": 647738,
+    "output_files": 3,
+    "output_lines": 844,
+    "output_nonempty_lines": 773,
+    "output_bytes": 19321
+  },
+  "timing": {
+    "total_tokens": 1236795,
+    "duration_ms": 647738,
+    "total_duration_seconds": 647.738,
+    "generation_attempts": 1
+  },
+  "execution_metrics": {
+    "total_tool_calls": 22
+  }
+}
