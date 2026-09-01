@@ -42,11 +42,13 @@ describe('dynamic class object keys', () => {
       warn: jest.fn(),
       error: error => templateErrors.push(error)
     })
-    const { output, classes } = await transformTemplate(compiler.serialize(parsed.root), pluginErrors)
+    const compiledTemplate = compiler.serialize(parsed.root)
+    const { output, classes } = await transformTemplate(compiledTemplate, pluginErrors)
 
     expect(templateErrors).toEqual([])
     expect(pluginErrors).toEqual([])
     expect(plugin.options).not.toHaveProperty('escapeMap')
+    expect(compiledTemplate).toMatch(/"hover:bg_da_red_da_100MpxEscape":\s*flag/)
     expect(classes).toEqual(expect.arrayContaining(['text-24rpx', 'hover:bg-blue-100', 'hover:bg-red-100']))
     expect(output).toContain('"text-24rpx hover_c_bg-blue-100"')
     expect(output).toMatch(/hover_c_bg_da_red_da_100MpxEscape:\s*flag/)

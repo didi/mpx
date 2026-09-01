@@ -21,9 +21,9 @@ describe('dynamic class expression transform', () => {
     expect(error).toHaveBeenCalledTimes(4)
   })
 
-  test('skips dynamic class expression transform when UnoCSS is enabled', () => {
+  test('keeps base key escaping when UnoCSS is enabled', () => {
     const errors = []
-    const parsed = compiler.parse('<view wx:class="{{ { \'custom@red\': flag } }}" />', {
+    const parsed = compiler.parse('<view wx:class="{{ { \'foo-bar\': flag, \'hover:bg-red-100\': flag } }}" />', {
       mode: 'wx',
       srcMode: 'wx',
       defs: {},
@@ -35,7 +35,8 @@ describe('dynamic class expression transform', () => {
     })
     const output = compiler.serialize(parsed.root)
 
-    expect(output).toContain('"custom@red": flag')
+    expect(output).toMatch(/foo_da_barMpxEscape:\s*flag/)
+    expect(output).toMatch(/"hover:bg_da_red_da_100MpxEscape":\s*flag/)
     expect(errors).toEqual([])
   })
 })

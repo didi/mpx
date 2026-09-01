@@ -2416,12 +2416,10 @@ function processClass (el, meta) {
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
-    let dynamicClassExp = parseMustacheWithContext(dynamicClass).result
-    if (!hasUnoCSS) {
-      dynamicClassExp = transDynamicClassExpr(dynamicClassExp, {
-        error: error$1
-      })
-    }
+    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
+      error: error$1,
+      hasUnoCSS
+    })
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
@@ -3523,12 +3521,10 @@ function processClassDynamic (el) {
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
-    let dynamicClassExp = parseMustacheWithContext(dynamicClass).result
-    if (!hasUnoCSS) {
-      dynamicClassExp = transDynamicClassExpr(dynamicClassExp, {
-        error: error$1
-      })
-    }
+    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
+      error: error$1,
+      hasUnoCSS
+    })
     addAttrs(el, [{
       name: targetType,
       value: `{{[${staticClassExp},${dynamicClassExp}]}}`

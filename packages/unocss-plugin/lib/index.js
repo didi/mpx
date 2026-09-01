@@ -1,7 +1,7 @@
 import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
 import mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
 import env from '@mpxjs/webpack-plugin/lib/utils/env.js'
-import escapeClassObjectKey from '@mpxjs/webpack-plugin/lib/utils/escape-class-object-key.js'
+import escapeWxsObjectKey from '@mpxjs/webpack-plugin/lib/utils/escape-class-object-key.js'
 import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js'
 import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js'
 import set from '@mpxjs/webpack-plugin/lib/utils/set.js'
@@ -41,6 +41,7 @@ import { UnoCSSWebpackPlugin } from './web-plugin/index.js'
 const { isWeb, isReact } = env
 const { has } = set
 const { createCodeFrame, offsetToLoc, readSource } = sourceLocation
+const { unescapeWxsObjectKey } = escapeWxsObjectKey
 
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
@@ -314,12 +315,13 @@ class MpxUnocssPlugin {
             expSource.replace(start, end, result)
           })
           objectKeys.forEach(({ result, start, end }) => {
+            if (typeof result === 'string') result = unescapeWxsObjectKey(result)
             if (typeof result !== 'string') {
               error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`, { className: String(result), objectKey: true, start: attrStart, end: attrEnd })
               return
             }
             const className = transformClasses(result, classNameHandler, unknownClassChars, { objectKey: true, start: attrStart, end: attrEnd })
-            const propertyName = escapeClassObjectKey(className)
+            const propertyName = escapeWxsObjectKey(className)
             if (!isValidIdentifierStr(propertyName)) {
               error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`, { className: result, objectKey: true, start: attrStart, end: attrEnd })
             } else {

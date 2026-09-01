@@ -3,9 +3,9 @@ const t = require('@babel/types')
 const traverse = require('@babel/traverse').default
 const generate = require('@babel/generator').default
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
-const escapeClassObjectKey = require('../utils/escape-class-object-key')
+const escapeWxsObjectKey = require('../utils/escape-class-object-key')
 
-module.exports = function transDynamicClassExpr (expr, { error } = {}) {
+module.exports = function transDynamicClassExpr (expr, { error, hasUnoCSS } = {}) {
   try {
     const ast = babylon.parse(expr, {
       plugins: [
@@ -17,9 +17,13 @@ module.exports = function transDynamicClassExpr (expr, { error } = {}) {
         path.node.properties.forEach((property) => {
           if (t.isObjectProperty(property) && !property.computed) {
             const rawPropertyName = property.key.name || property.key.value
-            const propertyName = typeof rawPropertyName === 'string' ? escapeClassObjectKey(rawPropertyName) : ''
+            const propertyName = typeof rawPropertyName === 'string' ? escapeWxsObjectKey(rawPropertyName) : ''
             if (!isValidIdentifierStr(propertyName)) {
-              error && error(`Dynamic classname [${rawPropertyName}] can not be escaped as a valid identifier, which is not supported.`)
+              if (hasUnoCSS) {
+                if (typeof rawPropertyName === 'string') property.key = t.stringLiteral(propertyName)
+              } else {
+                error && error(`Dynamic classname [${rawPropertyName}] can not be escaped as a valid identifier, which is not supported.`)
+              }
             } else {
               property.key = t.identifier(propertyName)
             }
