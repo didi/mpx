@@ -6,6 +6,7 @@
 
 - [布局适配](#布局适配)
   - [不要依赖 BFC 和 margin 合并](#不要依赖-bfc-和-margin-合并)
+  - [使用正常流实现卡片与装饰条重叠](#使用正常流实现卡片与装饰条重叠)
   - [图文混排](#图文混排)
   - [页面滚动替代方案](#页面滚动替代方案)
   - [z-index 与层叠适配](#z-index-与层叠适配)
@@ -86,6 +87,103 @@ Skyline 没有 BFC（块级格式化上下文），也没有 margin 合并机制
 .list { padding-top: 24rpx; padding-bottom: 24rpx; }
 .list-item-gap { margin-top: 16rpx; }
 ```
+
+### 使用正常流实现卡片与装饰条重叠
+
+当提示条、背景条等下层装饰节点只露出上半部分、下半部分被后续卡片覆盖时，应让装饰条和卡片在正常流中形成稳定的占位与重叠关系。
+
+** ❌ Bad：依赖装饰条内部负 margin 控制高度 **
+
+```css
+.tips-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.content-card {
+  position: relative;
+  z-index: 3;
+  margin-top: -92rpx;
+}
+
+.tips-bar-container {
+  padding-bottom: 92rpx;
+}
+
+.tips-bar {
+  height: 92rpx;
+  margin-bottom: -28rpx;
+}
+```
+
+**Skyline 下的表现**：`tips-bar` 高度偏高。内部 `.tips-bar` 的 `margin-bottom: -28rpx` 未按预期削减占位高度，导致装饰条的实际高度与预期不符。
+
+**原因**：依赖自定义组件内部的 `height`、`padding-bottom` 和负 `margin-bottom` 共同决定正常流占位，Skyline 下 `margin-bottom: -28rpx` 没有产生预期的高度削减效果，因此基于预期组件高度设置的 `margin-top: -92rpx` 也无法得到目标露出高度。
+
+
+** ❌ Bad：装饰条绝对定位，卡片使用正 margin 人工占位 **
+
+```css
+.tips-wrapper {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.content-card {
+  position: relative;
+  z-index: 3;
+  margin-top: 68rpx;
+}
+```
+
+**Skyline 下的表现**：装饰条仍被后续卡片整体覆盖，无法形成装饰条上半部分露出、下半部分被卡片覆盖的包裹效果。
+
+**原因**：装饰条和卡片分别设置为 `z-index: 1` 和 `z-index: 3`，Skyline 按共同父级下的兄弟分支比较层级，低层级的装饰条分支被后续卡片分支整体覆盖。
+
+
+** ✅ Good：显式完整占位，卡片使用负 margin 覆盖 **
+
+将装饰条和卡片放在同一父节点下，并用真实 `view` 作为装饰条 wrapper，使二者成为可直接比较的兄弟节点：
+
+```html
+<view class="card-container">
+  <view class="tips-wrapper">
+    <tips-bar />
+  </view>
+  <view class="content-card">卡片内容</view>
+</view>
+```
+
+```css
+.card-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.tips-wrapper {
+  position: relative;
+  z-index: 1;
+  height: 94rpx;
+  overflow: visible;
+}
+
+.content-card {
+  position: relative;
+  z-index: 2;
+  margin-top: -30rpx;
+}
+```
+
+**Skyline 下的表现**：装饰条稳定露出 `64rpx`，卡片覆盖其余 `3rpx`；卡片顶部圆角外侧仍显示下层背景，装饰条不会因自定义组件内部布局变化而被整体覆盖。
+
+**原因**：
+- wrapper 在正常流中显式占据装饰条的完整绘制高度，卡片通过负 margin 定义固定覆盖量。布局关系满足：覆盖量 = 装饰条完整高度 - 期望露出高度 
+- 层级样式落在两个真实兄弟 `view` 上，`z-index` 只负责明确绘制顺序，不再承担布局修复。不要根据装饰条内部子节点的 `padding`、负 margin 或内容高度反推 wrapper 高度，也不要再通过 `top`、`transform` 或另一侧 margin 重复修正位置。
+
+该方案适用于装饰条需要占据布局空间，并与后续卡片稳定重叠的场景。纯悬浮且不需要参与布局的元素仍可使用绝对定位。
 
 ### 图文混排
 
