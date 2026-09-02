@@ -23,6 +23,7 @@
           </view>
         </view>
         <view
+          @wx
           wx:if="{{photos.length < 9}}"
           class="photo-add"
           bindtap="choosePhoto"
@@ -32,27 +33,46 @@
           <text class="photo-add-icon">+</text>
           <text class="photo-add-label">添加图片</text>
         </view>
+        <view
+          @web
+          wx:if="{{photos.length < 9}}"
+          class="photo-add photo-add-disabled"
+          aria-role="button"
+          aria-disabled="true"
+          aria-label="Web 端暂不支持添加图片"
+        >
+          <text class="photo-add-icon">+</text>
+          <text class="photo-add-label">暂不支持添加图片</text>
+        </view>
       </view>
     </view>
 
     <view class="publish-options">
-      <view class="option-row" bindtap="choosePlace">
+      <view class="option-row" bindtap@wx="choosePlace" aria-disabled@web="true">
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text class="option-value">{{place.name || '选择位置'}}</text>
+            <text @wx class="option-value">{{place.name || '选择位置'}}</text>
+            <text @web class="option-value">Web 端暂不支持选择位置</text>
           </view>
         </view>
-        <text class="option-arrow">›</text>
+        <text @wx class="option-arrow">›</text>
+        <text @web class="option-status">暂不可用</text>
       </view>
 
-      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
+      <view
+        wx:if="{{place.name}}"
+        class="place-card"
+        bindtap@wx="openPlace"
+        aria-disabled@web="true"
+      >
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
         </view>
-        <text class="place-action">查看地图</text>
+        <text @wx class="place-action">查看地图</text>
+        <text @web class="place-action place-action-disabled">Web 端暂不支持地图</text>
       </view>
 
       <view class="option-row">
@@ -86,7 +106,7 @@
 </template>
 
 <script>
-import mpx, { createPage } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
@@ -114,8 +134,7 @@ createPage({
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: Web 宿主 Bridge 与地图协议明确后接入位置选择。
-        mpx.showToast({ title: 'Web 端暂不支持选择位置', icon: 'none' })
+        // TODO(web): 待 Web 宿主明确位置选择协议后接入。
         return
       }
       wx.chooseLocation({
@@ -125,12 +144,11 @@ createPage({
       })
     },
     openPlace () {
-      if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO: Web 地图协议明确后接入地图查看。
-        mpx.showToast({ title: 'Web 端暂不支持查看地图', icon: 'none' })
+        // TODO(web): 待 Web 宿主明确地图查看协议后接入。
         return
       }
+      if (!this.place.latitude || !this.place.longitude) return
       wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
@@ -140,8 +158,7 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO: Web 宿主 Bridge 与媒体协议明确后接入图片选择。
-        mpx.showToast({ title: 'Web 端暂不支持选择图片', icon: 'none' })
+        // TODO(web): 待 Web 宿主明确媒体选择协议后接入。
         return
       }
       wx.chooseMedia({
@@ -165,8 +182,7 @@ createPage({
     submitPost () {
       if (!this.canSubmit || this.submitting) return
       this.submitting = true
-      const api = __mpx_mode__ === 'web' ? mpx : wx
-      api.request({
+      wx.request({
         url: '/api/community/posts',
         method: 'POST',
         data: {
@@ -177,10 +193,10 @@ createPage({
           allowComments: this.allowComments
         },
         success: ({ data }) => {
-          api.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+          wx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
         },
         fail: () => {
-          api.showToast({ title: '发布失败，请重试', icon: 'none' })
+          wx.showToast({ title: '发布失败，请重试', icon: 'none' })
         },
         complete: () => {
           this.submitting = false
@@ -299,6 +315,10 @@ createPage({
   border: 2rpx dashed #d6dae1;
 }
 
+.photo-add-disabled {
+  opacity: 0.65;
+}
+
 .photo-add-icon {
   font-size: 52rpx;
   line-height: 60rpx;
@@ -353,6 +373,11 @@ createPage({
   font-size: 40rpx;
 }
 
+.option-status {
+  color: #b4b8c0;
+  font-size: 22rpx;
+}
+
 .place-card {
   display: flex;
   align-items: center;
@@ -386,6 +411,10 @@ createPage({
   margin-left: 24rpx;
   color: #1677ff;
   font-size: 24rpx;
+}
+
+.place-action-disabled {
+  color: #b4b8c0;
 }
 
 .publish-notice {

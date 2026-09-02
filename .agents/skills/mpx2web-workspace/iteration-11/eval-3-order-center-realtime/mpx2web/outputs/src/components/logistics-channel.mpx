@@ -19,7 +19,7 @@ createComponent({
     memberId: {
       type: String,
       observer (memberId, oldMemberId) {
-        if (!this.channelAttached || memberId === oldMemberId) return
+        if (memberId === oldMemberId || !this._attached) return
         this.connectChannel()
       }
     }
@@ -28,71 +28,98 @@ createComponent({
     connected: false
   },
   attached () {
-    this.channelAttached = true
+    this._attached = true
     this.connectChannel()
   },
   detached () {
-    this.channelAttached = false
-    this.closeChannel()
+    this._attached = false
+    this.disconnectChannel()
   },
   methods: {
+    setConnected (connected, memberId) {
+      this.connected = connected
+      this.triggerEvent('connectedchange', { connected, memberId })
+    },
+    disconnectChannel () {
+      const task = this.socketTask
+      this.socketTask = null
+      if (this.connected) this.setConnected(false, this.memberId)
+      if (task && typeof task.close === 'function') {
+        task.close({ code: 1000, reason: 'connection replaced' })
+      }
+    },
     connectChannel () {
-      this.closeChannel()
-      if (!this.channelAttached || !this.memberId) return
-
       const memberId = this.memberId
-      const task = wx.connectSocket({
-        url: `wss://logistics.example.com/members/${memberId}`,
-        header: {
-          Authorization: `Bearer ${wx.getStorageSync('token')}`
-        },
-        usePromise: false
-      })
+      this.disconnectChannel()
+      if (!this._attached || !memberId) return
+
+      let task
+      try {
+        task = wx.connectSocket({
+          url: `wss://logistics.example.com/members/${memberId}`,
+          header: {
+            Authorization: `Bearer ${wx.getStorageSync('token')}`
+          },
+          usePromise: false
+        })
+      } catch (error) {
+        this.setConnected(false, memberId)
+        this.triggerEvent('error', { error, memberId })
+        return
+      }
+
+      if (!task) {
+        const error = new Error('物流连接创建失败')
+        this.setConnected(false, memberId)
+        this.triggerEvent('error', { error, memberId })
+        return
+      }
+
       this.socketTask = task
 
       task.onOpen(() => {
-        if (!this.isCurrentChannel(task, memberId)) return
-        this.updateConnected(true)
+        if (!this._attached || this.socketTask !== task || this.memberId !== memberId) return
+        this.setConnected(true, memberId)
       })
+
       task.onMessage(({ data }) => {
-        if (!this.isCurrentChannel(task, memberId)) return
-        const message = JSON.parse(data)
-        if (message.type === 'logistics') {
+        if (!this._attached || this.socketTask !== task || this.memberId !== memberId) return
+        let message
+        try {
+          message = typeof data === 'string' ? JSON.parse(data) : data
+        } catch (error) {
+          this.triggerEvent('error', { error, memberId })
+          return
+        }
+        if (message && message.type === 'logistics') {
           this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
         }
       })
+
       task.onError((error) => {
-        if (!this.isCurrentChannel(task, memberId)) return
-        this.updateConnected(false)
+        if (!this._attached || this.socketTask !== task || this.memberId !== memberId) return
+        this.setConnected(false, memberId)
         this.triggerEvent('error', { error, memberId })
       })
+
       task.onClose(() => {
-        if (!this.isCurrentChannel(task, memberId)) return
+        if (!this._attached || this.socketTask !== task || this.memberId !== memberId) return
         this.socketTask = null
-        this.updateConnected(false)
+        this.setConnected(false, memberId)
       })
     },
-    isCurrentChannel (task, memberId) {
-      return this.channelAttached && this.socketTask === task && this.memberId === memberId
-    },
-    updateConnected (connected) {
-      if (this.connected === connected) return
-      this.connected = connected
-      this.triggerEvent('connectedchange', { connected, memberId: this.memberId })
-    },
-    closeChannel () {
-      const task = this.socketTask
-      this.socketTask = null
-      this.updateConnected(false)
-      if (task) task.close()
-    },
     reconnect () {
+      if (!this._attached || !this.memberId) return
       this.connectChannel()
     },
     sendHeartbeat () {
       const task = this.socketTask
-      if (!task || this.socketTask !== task || !this.connected) return
-      if (task.readyState !== undefined && task.readyState !== task.OPEN) return
+      if (!task || this.socketTask !== task) return
+      if (__mpx_mode__ === 'web') {
+        if (task.readyState !== task.OPEN) return
+      } else if (!this.connected) {
+        return
+      }
       task.send({
         data: JSON.stringify({ type: 'ping', memberId: this.memberId })
       })

@@ -1,48 +1,72 @@
-import mpx from '@mpxjs/api-proxy'
+import mpx from '@mpxjs/core'
 
-function firstForwardedValue (value) {
-  return Array.isArray(value) ? value[0] : value.split(',')[0].trim()
+function firstHeaderValue (value) {
+  if (Array.isArray(value)) return value[0] || ''
+  return String(value || '').split(',')[0].trim()
 }
 
-function resolveUrl (path, requestContext) {
-  if (!requestContext || !requestContext.req) return path
+function getRequestOrigin (req) {
+  const headers = req.headers || {}
+  const forwardedProtocol = firstHeaderValue(headers['x-forwarded-proto'])
+  const protocol = forwardedProtocol || req.protocol ||
+    (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const forwardedHost = firstHeaderValue(headers['x-forwarded-host'])
+  const requestHost = typeof req.get === 'function' ? req.get('host') : headers.host
+  const host = forwardedHost || requestHost
 
-  const req = requestContext.req
-  const headers = req.headers
-  const protocol = headers['x-forwarded-proto']
-    ? firstForwardedValue(headers['x-forwarded-proto'])
-    : req.protocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
-  const host = firstForwardedValue(headers['x-forwarded-host'] || headers.host)
-  return `${protocol}://${host}${path}`
+  if (!host) {
+    throw new Error('Cannot resolve the current SSR request host')
+  }
+
+  return `${protocol}://${host}`
 }
 
-function resolveHeaders (requestContext) {
-  if (!requestContext || !requestContext.req) return
-
-  const requestHeaders = requestContext.req.headers
+function getForwardHeaders (req) {
+  const sourceHeaders = req.headers || {}
   const headers = {}
-  if (requestHeaders.cookie) headers.cookie = requestHeaders.cookie
-  if (requestHeaders.authorization) headers.authorization = requestHeaders.authorization
+
+  if (sourceHeaders.cookie) headers.cookie = sourceHeaders.cookie
+  if (sourceHeaders.authorization) headers.authorization = sourceHeaders.authorization
+
   return headers
 }
 
-function request (path, requestContext) {
+async function requestFromNode (path, req) {
+  const response = await fetch(`${getRequestOrigin(req)}${path}`, {
+    headers: getForwardHeaders(req)
+  })
+
+  if (!response.ok) {
+    throw new Error(`Product request failed with status ${response.status}`)
+  }
+
+  return response.json()
+}
+
+function requestFromClient (path) {
   return new Promise((resolve, reject) => {
-    const options = {
-      url: resolveUrl(path, requestContext),
+    mpx.request({
+      url: path,
       success: ({ data }) => resolve(data),
       fail: reject
-    }
-    const headers = resolveHeaders(requestContext)
-    if (headers) options.header = headers
-    mpx.request(options)
+    })
   })
 }
 
+function requestProductData (path, requestContext) {
+  const req = requestContext && requestContext.req
+  return req ? requestFromNode(path, req) : requestFromClient(path)
+}
+
 export function fetchProduct (productId, requestContext) {
-  return request(`/api/products/${encodeURIComponent(productId)}`, requestContext)
+  const encodedProductId = encodeURIComponent(productId)
+  return requestProductData(`/api/products/${encodedProductId}`, requestContext)
 }
 
 export function fetchRecommendations (productId, requestContext) {
-  return request(`/api/products/${encodeURIComponent(productId)}/recommendations`, requestContext)
+  const encodedProductId = encodeURIComponent(productId)
+  return requestProductData(
+    `/api/products/${encodedProductId}/recommendations`,
+    requestContext
+  )
 }

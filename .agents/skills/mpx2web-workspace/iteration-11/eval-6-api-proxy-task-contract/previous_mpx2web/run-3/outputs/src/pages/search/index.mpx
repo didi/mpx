@@ -18,14 +18,26 @@ createPage({
   data: {
     keyword: '',
     trendingKeywords: [],
-    suggestions: [],
-    requestTask: null
+    suggestions: []
   },
   async onLoad () {
-    this.trendingKeywords = await fetchTrendingKeywords()
+    this._suggestionRequest = null
+    this._isUnloaded = false
+
+    try {
+      const trendingKeywords = await fetchTrendingKeywords()
+      if (!this._isUnloaded) {
+        this.trendingKeywords = trendingKeywords
+      }
+    } catch (error) {
+      if (!this._isUnloaded) {
+        this.showSearchError()
+      }
+    }
   },
   onUnload () {
-    this.cancelSuggestions()
+    this._isUnloaded = true
+    this.cancelSuggestionRequest()
   },
   methods: {
     onKeywordInput (event) {
@@ -34,39 +46,48 @@ createPage({
     chooseKeyword (keyword) {
       this.search(keyword)
     },
-    cancelSuggestions () {
-      const requestTask = this.requestTask
-      this.requestTask = null
-      if (requestTask) requestTask.abort()
-    },
     search (keyword) {
       this.keyword = keyword
-      this.cancelSuggestions()
+      this.cancelSuggestionRequest()
+
       if (!keyword) {
         this.suggestions = []
         return
       }
-      const requestTask = requestSuggestions(keyword, {
-        success: ({ data }) => {
-          if (this.requestTask !== requestTask || this.keyword !== keyword) return
-          this.requestTask = null
-          this.suggestions = data.list
-        },
-        fail: () => {
-          if (this.requestTask !== requestTask || this.keyword !== keyword) return
-          this.requestTask = null
-          mpx.showToast({
-            title: '搜索失败',
-            icon: 'none'
-          }).catch(() => {})
-        }
+
+      const currentRequest = requestSuggestions(keyword)
+      this._suggestionRequest = currentRequest
+
+      currentRequest.then(({ data }) => {
+        if (this._suggestionRequest !== currentRequest) return
+
+        this._suggestionRequest = null
+        this.suggestions = data.list
+      }).catch(() => {
+        if (this._suggestionRequest !== currentRequest) return
+
+        this._suggestionRequest = null
+        this.showSearchError()
       })
-      this.requestTask = requestTask
+    },
+    cancelSuggestionRequest () {
+      const currentRequest = this._suggestionRequest
+      this._suggestionRequest = null
+
+      if (currentRequest) {
+        currentRequest.abort()
+      }
+    },
+    showSearchError () {
+      mpx.showToast({
+        title: '搜索失败',
+        icon: 'none'
+      }).catch(() => {})
     },
     openProduct (productId) {
-      mpx.navigateTo({
-        url: `/pages/product/detail?id=${productId}`
-      }).catch(() => {})
+      return mpx.navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+      })
     }
   }
 })

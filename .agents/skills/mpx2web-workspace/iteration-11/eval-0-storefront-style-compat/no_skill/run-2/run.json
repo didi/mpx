@@ -1,60 +1,37 @@
 {
-  "description": "eval-0 no_skill",
-  "cwd": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-2/eval-0-storefront-style-compat/no_skill",
-  "model": "gpt-5.6-sol",
-  "reasoning_effort": "high",
-  "status": "completed",
-  "attempts": [
-    {
-      "attempt": 1,
-      "command": [
-        "codex",
-        "exec",
-        "--ignore-user-config",
-        "--ephemeral",
-        "--disable",
-        "plugins",
-        "--disable",
-        "remote_plugin",
-        "--disable",
-        "apps",
-        "--skip-git-repo-check",
-        "-m",
-        "gpt-5.6-sol",
-        "-s",
-        "workspace-write",
-        "-c",
-        "model_reasoning_effort=\"high\"",
-        "-C",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-2/eval-0-storefront-style-compat/no_skill",
-        "--color",
-        "never",
-        "--json",
-        "<prompt-via-stdin>"
-      ],
-      "returncode": 0,
-      "duration_ms": 226841,
-      "missing_outputs": []
-    }
+  "description": "Eval-0 no_skill run-2",
+  "cwd": "isolated temporary workspace",
+  "command": [
+    "codex",
+    "exec",
+    "--ignore-user-config",
+    "--ephemeral",
+    "--disable",
+    "plugins",
+    "--disable",
+    "remote_plugin",
+    "--disable",
+    "apps",
+    "--skip-git-repo-check",
+    "-C",
+    "/private/var/folders/yf/mcf8m_nn1896w8kbdfxnhnw40000ks/T/mpx2web-eval-k53p8mrs",
+    "-s",
+    "workspace-write",
+    "-m",
+    "gpt-5.6-sol",
+    "-c",
+    "model_reasoning_effort=\"high\"",
+    "--color",
+    "never",
+    "--json",
+    "<prompt-via-stdin>"
   ],
-  "output_exists": true,
-  "duration_ms": 226841,
-  "published_evidence": {
-    "sample": 2,
-    "outputs": "eval-0-storefront-style-compat/no_skill/run-2/outputs",
-    "compile_status": "passed",
-    "artifact_inventory": {
-      "declared_files": [
-        "src/pages/home/index.mpx",
-        "src/components/product-card.mpx"
-      ],
-      "compiled_mpx_files": [
-        "src/pages/home/index.mpx",
-        "src/components/product-card.mpx"
-      ],
-      "support_files": [],
-      "missing_files": [],
-      "all_declared_files_present": true
-    }
-  }
+  "returncode": 0,
+  "outputs_complete": true,
+  "compile_status": "passed",
+  "compile_boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
+  "duration_ms": 253190,
+  "fingerprint": "bfa02752c16e628462eb9507d12a9ee2b422814c070365b0c5c4982d3018aa4f",
+  "fixture_digest": "ad95b9ecc465ab9f72a6aa62649af4b2c8374ba3632380d5182d93a914f27212",
+  "skill_digest": "20232f3aeb397f28e32d38cc016ce6dbffa2112effd52813b0cbec243c1307ce"
 }

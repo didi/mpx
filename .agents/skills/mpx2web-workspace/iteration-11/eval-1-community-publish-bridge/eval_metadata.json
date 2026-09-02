@@ -61,30 +61,12 @@
     },
     {
       "id": "a6",
-      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
       "category": "web-api",
-      "required_patterns": [
-        {
-          "pattern": "mpx\\.request\\s*\\(",
-          "description": "使用 mpx.request"
-        },
-        {
-          "pattern": "mpx\\.redirectTo\\s*\\(",
-          "description": "使用 mpx.redirectTo"
-        },
-        {
-          "pattern": "mpx\\.showToast\\s*\\(",
-          "description": "使用 mpx.showToast"
-        }
-      ],
       "forbidden_patterns": [
         {
           "pattern": "(?:\\bfetch\\s*\\(|\\blocation\\.assign\\s*\\(|\\balert\\s*\\()",
           "description": "自行用 fetch、location.assign 或 alert 重实现已有能力"
-        },
-        {
-          "pattern": "import\\s*\\{[^}]*\\b(?:request|redirectTo|showToast)\\b[^}]*\\}\\s*from\\s*['\"]@mpxjs/api-proxy['\"]",
-          "description": "命名导入原始 API，绕过应用入口的 API Proxy 配置"
         }
       ]
     },

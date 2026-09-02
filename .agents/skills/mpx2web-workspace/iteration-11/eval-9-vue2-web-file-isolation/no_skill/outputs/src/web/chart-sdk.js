@@ -1,65 +1,111 @@
-const activeCharts = new WeakMap()
+function normalizeMetrics (metrics) {
+  return Array.isArray(metrics) ? metrics : []
+}
+
+function metricKey (metric, index) {
+  if (metric && metric.key !== undefined && metric.key !== null) {
+    return String(metric.key)
+  }
+  return String(index)
+}
+
+function metricId (metric, index) {
+  if (metric && metric.id !== undefined && metric.id !== null) {
+    return String(metric.id)
+  }
+  return metricKey(metric, index)
+}
 
 export async function createChart (element, metrics, options = {}) {
   await Promise.resolve()
-  if (options.signal && options.signal.aborted) return null
 
-  const previousChart = activeCharts.get(element)
-  if (previousChart) previousChart.destroy()
+  if (!element) {
+    throw new Error('A chart container is required')
+  }
+
+  const root = document.createElement('div')
+  root.className = 'analytics-chart-sdk'
+  root.setAttribute('role', 'list')
+  element.appendChild(root)
 
   let destroyed = false
-  let currentMetrics = metrics
+  let currentMetrics = []
 
-  const render = () => {
-    const fragment = element.ownerDocument.createDocumentFragment()
-    currentMetrics.forEach((item, index) => {
-      const metric = element.ownerDocument.createElement('button')
-      metric.type = 'button'
-      metric.className = 'analytics-chart__metric'
-      metric.setAttribute('data-metric-index', index)
-      metric.textContent = `${item.label}:${item.value}`
-      fragment.appendChild(metric)
+  function render (nextMetrics) {
+    if (destroyed) return
+
+    currentMetrics = normalizeMetrics(nextMetrics).slice()
+    while (root.firstChild) {
+      root.removeChild(root.firstChild)
+    }
+
+    currentMetrics.forEach((metric, index) => {
+      const key = metricKey(metric, index)
+      const button = document.createElement('button')
+      const label = document.createElement('span')
+      const value = document.createElement('span')
+
+      button.type = 'button'
+      button.id = metricId(metric, index)
+      button.className = 'analytics-chart-sdk__metric'
+      button.setAttribute('data-metric-key', key)
+      button.setAttribute('role', 'listitem')
+
+      label.className = 'analytics-chart-sdk__label'
+      label.textContent = metric && metric.label !== undefined ? String(metric.label) : ''
+      value.className = 'analytics-chart-sdk__value'
+      value.textContent = metric && metric.value !== undefined ? String(metric.value) : ''
+
+      button.appendChild(label)
+      button.appendChild(value)
+      root.appendChild(button)
     })
-    element.textContent = ''
-    element.appendChild(fragment)
   }
 
-  const handleClick = (event) => {
+  function handleClick (event) {
+    if (destroyed || typeof options.onSelect !== 'function') return
+
     let target = event.target
-    while (target && target !== element && !target.hasAttribute('data-metric-index')) {
+    while (target && target !== root && !target.hasAttribute('data-metric-key')) {
       target = target.parentNode
     }
-    if (!target || target === element) return
+    if (!target || target === root) return
 
-    const metric = currentMetrics[Number(target.getAttribute('data-metric-index'))]
-    if (metric && options.onSelect) options.onSelect({ key: metric.key, metric })
+    const key = target.getAttribute('data-metric-key')
+    const index = currentMetrics.findIndex((metric, metricIndex) => {
+      return metricKey(metric, metricIndex) === key
+    })
+    const selectedMetric = index >= 0 ? currentMetrics[index] : undefined
+    const selectedKey = selectedMetric &&
+      selectedMetric.key !== undefined &&
+      selectedMetric.key !== null
+      ? selectedMetric.key
+      : key
+    options.onSelect({
+      key: selectedKey,
+      metric: selectedMetric
+    })
   }
 
-  const chart = {
+  root.addEventListener('click', handleClick)
+  render(metrics)
+
+  return {
     update (nextMetrics) {
-      if (destroyed) return
-      currentMetrics = nextMetrics
-      render()
+      render(nextMetrics)
     },
     resize () {
       if (destroyed) return
-      element.style.setProperty('--analytics-chart-width', `${element.clientWidth}px`)
+      root.classList.toggle('analytics-chart-sdk--compact', element.clientWidth < 560)
     },
     destroy () {
       if (destroyed) return
       destroyed = true
-      element.removeEventListener('click', handleClick)
-      if (options.signal) options.signal.removeEventListener('abort', chart.destroy)
-      if (activeCharts.get(element) === chart) {
-        activeCharts.delete(element)
-        element.textContent = ''
+      root.removeEventListener('click', handleClick)
+      if (root.parentNode === element) {
+        element.removeChild(root)
       }
+      currentMetrics = []
     }
   }
-
-  element.addEventListener('click', handleClick)
-  if (options.signal) options.signal.addEventListener('abort', chart.destroy, { once: true })
-  activeCharts.set(element, chart)
-  render()
-  return chart
 }

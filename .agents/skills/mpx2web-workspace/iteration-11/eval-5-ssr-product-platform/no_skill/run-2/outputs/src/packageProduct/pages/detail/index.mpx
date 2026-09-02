@@ -32,49 +32,58 @@ import { useProductStore } from '../../../stores/product'
 createPage({
   data: {
     productId: '',
-    selectedSkuId: ''
+    selectedSkuId: '',
+    pageRequestVersion: 0
   },
   computed: {
     product () {
-      return useProductStore(this.$pinia).product
+      const store = useProductStore(this.$pinia)
+      return store.productId === this.productId ? store.product : {}
     },
     recommendations () {
-      return useProductStore(this.$pinia).recommendations
+      const store = useProductStore(this.$pinia)
+      return store.productId === this.productId ? store.recommendations : []
     },
     selectedSku () {
       return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
     }
   },
   onLoad (query) {
-    this.productId = query.id
-    const store = useProductStore(this.$pinia)
-    if (store.loaded && store.productId === this.productId) {
-      this.setDefaultSku(store.product)
-      return
-    }
-    if (!this.$ssrContext) return this.loadProduct(this.productId)
-  },
-  onShow () {
-    if (!this.productId) return
-    const store = useProductStore(this.$pinia)
-    if (store.loaded && store.productId === this.productId) {
-      if (!this.selectedSkuId) this.setDefaultSku(store.product)
-    } else if (!this.$ssrContext) {
-      this.loadProduct(this.productId)
-    }
+    this.productId = String((query && query.id) || '')
+    this.selectedSkuId = ''
+
+    // serverPrefetch owns the Node request so that both first-screen requests
+    // are awaited with the current request's origin.
+    if (this.$ssrContext) return
+
+    this.loadProduct(this.productId).catch(() => {
+      mpx.showToast({ title: '商品加载失败', icon: 'none' })
+    })
   },
   serverPrefetch () {
-    const productId = this.$route.query.id
+    const routeQuery = this.$route && this.$route.query
+    const productId = this.productId || String((routeQuery && routeQuery.id) || '')
     this.productId = productId
-    return this.loadProduct(productId, this.$ssrContext.req)
+
+    return this.loadProduct(productId, this.$ssrContext && this.$ssrContext.req)
+  },
+  onUnload () {
+    this.pageRequestVersion += 1
   },
   methods: {
     async loadProduct (productId, req) {
-      const product = await useProductStore(this.$pinia).loadProduct(productId, req)
-      if (product && productId === this.productId) this.setDefaultSku(product)
-    },
-    setDefaultSku (product) {
-      this.selectedSkuId = product.skus && product.skus[0] ? product.skus[0].id : ''
+      const id = String(productId || '')
+      const version = this.pageRequestVersion + 1
+      this.pageRequestVersion = version
+
+      const committed = await useProductStore(this.$pinia).loadProduct(id, { req })
+      if (!committed || version !== this.pageRequestVersion || id !== this.productId) return
+
+      const skus = this.product.skus || []
+      const selectedStillExists = skus.some(item => item.id === this.selectedSkuId)
+      if (!selectedStillExists) {
+        this.selectedSkuId = skus[0] ? skus[0].id : ''
+      }
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

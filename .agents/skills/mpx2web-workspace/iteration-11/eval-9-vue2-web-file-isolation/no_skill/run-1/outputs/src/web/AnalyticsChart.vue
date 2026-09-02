@@ -1,5 +1,5 @@
 <template>
-  <div ref="chart" class="analytics-chart"></div>
+  <div ref="chart" class="analytics-chart" />
 </template>
 
 <script>
@@ -16,116 +16,180 @@ export default {
   data () {
     return {
       chart: null,
-      chartVersion: 0,
-      disposed: false
+      chartPromise: null,
+      chartGeneration: 0,
+      resizeObserver: null,
+      windowResizeHandler: null,
+      isDestroyed: false
     }
   },
   watch: {
     metrics: {
       deep: true,
       handler (metrics) {
-        if (this.chart) this.chart.update(metrics)
+        if (this.chart) {
+          this.chart.update(metrics)
+          return
+        }
+        this.startChart()
       }
     }
   },
   mounted () {
-    this.initChart()
+    this.isDestroyed = false
+    this.startResizeTracking()
+    this.startChart()
   },
   beforeDestroy () {
-    this.disposed = true
-    this.chartVersion++
-    if (this.chartAbortController) this.chartAbortController.abort()
-    if (this.resizeObserver) this.resizeObserver.disconnect()
-    if (this.windowResizeHandler) window.removeEventListener('resize', this.windowResizeHandler)
-    if (this.chart) this.chart.destroy()
-    this.chart = null
-    this.chartAbortController = null
-    this.resizeObserver = null
-    this.windowResizeHandler = null
+    this.isDestroyed = true
+    this.chartGeneration += 1
+    this.stopResizeTracking()
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
+    }
+    this.chartPromise = null
   },
   methods: {
-    async initChart () {
-      const version = ++this.chartVersion
+    async startChart () {
       const element = this.$refs.chart
-      const controller = typeof AbortController === 'function' ? new AbortController() : null
-      this.chartAbortController = controller
+      if (!element || this.chart || this.chartPromise || this.isDestroyed) return
+
+      const generation = this.chartGeneration
+      const promise = Promise.resolve(createChart(element, this.metrics, {
+        onSelect: this.handleSelect
+      }))
+      this.chartPromise = promise
 
       try {
-        const chart = await createChart(element, this.metrics, {
-          signal: controller && controller.signal,
-          onSelect: (key) => this.$emit('select', { key })
-        })
+        const chart = await promise
+        const isStale = this.isDestroyed ||
+          generation !== this.chartGeneration ||
+          element !== this.$refs.chart
 
-        if (this.disposed || version !== this.chartVersion || element !== this.$refs.chart) {
-          chart.destroy()
+        if (isStale) {
+          if (chart && typeof chart.destroy === 'function') chart.destroy()
           return
         }
 
         this.chart = chart
         this.chart.update(this.metrics)
-        this.observeSize(element)
+        this.chart.resize()
       } catch (error) {
-        if (!this.disposed && version === this.chartVersion) this.$emit('error', error)
+        if (!this.isDestroyed && generation === this.chartGeneration) {
+          this.$emit('chart-error', { detail: { error } })
+        }
+      } finally {
+        if (this.chartPromise === promise) this.chartPromise = null
       }
     },
-    observeSize (element) {
-      if (typeof ResizeObserver === 'function') {
-        this.resizeObserver = new ResizeObserver(() => {
-          if (this.chart && !this.disposed) this.chart.resize()
-        })
+    handleSelect (detail) {
+      if (!this.isDestroyed) this.$emit('select', { detail })
+    },
+    handleResize () {
+      if (!this.isDestroyed && this.chart) this.chart.resize()
+    },
+    startResizeTracking () {
+      const element = this.$refs.chart
+      if (!element) return
+
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver(this.handleResize)
         this.resizeObserver.observe(element)
         return
       }
 
-      this.windowResizeHandler = () => {
-        if (this.chart && !this.disposed) this.chart.resize()
+      if (typeof window !== 'undefined') {
+        this.windowResizeHandler = this.handleResize
+        window.addEventListener('resize', this.windowResizeHandler)
       }
-      window.addEventListener('resize', this.windowResizeHandler)
+    },
+    stopResizeTracking () {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
+      if (this.windowResizeHandler && typeof window !== 'undefined') {
+        window.removeEventListener('resize', this.windowResizeHandler)
+        this.windowResizeHandler = null
+      }
     }
   }
 }
 </script>
 
-<style scoped>
+<style>
 .analytics-chart {
-  width: 100%;
-  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  min-width: max-content;
+  min-height: 100%;
+  gap: 16px;
+  padding: 16px;
 }
 
-.analytics-chart :deep(.analytics-chart__items) {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  min-height: 180px;
-}
-
-.analytics-chart :deep(.analytics-chart__metric) {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-width: 72px;
-  height: 160px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
+.analytics-chart__metric {
+  box-sizing: border-box;
+  width: 220px;
+  min-height: 132px;
+  padding: 16px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #fff;
+  color: #101828;
   cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
-.analytics-chart :deep(.analytics-chart__bar) {
+.analytics-chart__metric:hover,
+.analytics-chart__metric:focus-visible {
+  border-color: #7f56d9;
+  box-shadow: 0 6px 18px rgba(127, 86, 217, 0.16);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.analytics-chart__label,
+.analytics-chart__value {
   display: block;
-  width: 100%;
-  min-height: 2px;
-  border-radius: 4px 4px 0 0;
-  background: #2f7cf6;
 }
 
-.analytics-chart :deep(.analytics-chart__label),
-.analytics-chart :deep(.analytics-chart__value) {
-  margin-top: 6px;
+.analytics-chart__label {
+  color: #667085;
+  font-size: 13px;
+}
+
+.analytics-chart__value {
+  margin-top: 8px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.analytics-chart__track {
+  display: block;
+  height: 8px;
+  margin-top: 20px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  border-radius: 999px;
+  background: #f2f4f7;
+}
+
+.analytics-chart__bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #7f56d9;
+  transition: width 0.25s ease;
+}
+
+.analytics-chart.is-compact {
+  gap: 10px;
+  padding: 10px;
+}
+
+.analytics-chart.is-compact .analytics-chart__metric {
+  width: 180px;
 }
 </style>

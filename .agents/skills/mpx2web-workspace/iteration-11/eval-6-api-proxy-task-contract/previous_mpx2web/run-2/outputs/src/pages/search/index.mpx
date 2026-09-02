@@ -19,13 +19,15 @@ createPage({
     keyword: '',
     trendingKeywords: [],
     suggestions: [],
-    requestTask: null
+    requestTask: null,
+    requestSequence: 0
   },
   async onLoad () {
     this.trendingKeywords = await fetchTrendingKeywords()
   },
   onUnload () {
-    this.cancelSuggestionRequest()
+    this.requestSequence += 1
+    this.abortSuggestionRequest()
   },
   methods: {
     onKeywordInput (event) {
@@ -34,37 +36,45 @@ createPage({
     chooseKeyword (keyword) {
       this.search(keyword)
     },
-    search (keyword) {
+    abortSuggestionRequest () {
+      if (!this.requestTask) return
+      this.requestTask.abort()
+      this.requestTask = null
+    },
+    async search (keyword) {
+      const requestSequence = ++this.requestSequence
+
+      this.abortSuggestionRequest()
       this.keyword = keyword
-      this.cancelSuggestionRequest()
+
       if (!keyword) {
         this.suggestions = []
         return
       }
+
       const requestTask = requestSuggestions(keyword)
       this.requestTask = requestTask
-      requestTask.promise.then(({ data }) => {
-        if (this.requestTask !== requestTask) return
+
+      try {
+        const { data } = await requestTask
+        if (requestSequence !== this.requestSequence) return
         this.suggestions = data.list
-        this.requestTask = null
-      }).catch(() => {
-        if (this.requestTask !== requestTask) return
-        this.requestTask = null
-        mpx.showToast({
+      } catch {
+        if (requestSequence !== this.requestSequence) return
+        await mpx.showToast({
           title: '搜索失败',
           icon: 'none'
-        }).catch(() => {})
+        })
+      } finally {
+        if (requestSequence === this.requestSequence) {
+          this.requestTask = null
+        }
+      }
+    },
+    async openProduct (productId) {
+      await mpx.navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
       })
-    },
-    cancelSuggestionRequest () {
-      const requestTask = this.requestTask
-      this.requestTask = null
-      if (requestTask) requestTask.abort()
-    },
-    openProduct (productId) {
-      mpx.navigateTo({
-        url: `/pages/product/detail?id=${productId}`
-      }).catch(() => {})
     }
   }
 })

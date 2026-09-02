@@ -2,9 +2,13 @@
 import mpx, { createApp } from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
-mpx.config.webConfig.routeConfig = {
-  mode: 'history',
-  base: '/shop/'
+if (__mpx_mode__ === 'web') {
+  mpx.config.webConfig = {
+    routeConfig: {
+      mode: 'history',
+      base: '/shop/'
+    }
+  }
 }
 
 mpx.use(apiProxy)

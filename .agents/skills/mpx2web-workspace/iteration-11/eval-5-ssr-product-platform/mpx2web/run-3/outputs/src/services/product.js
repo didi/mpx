@@ -1,45 +1,67 @@
 import mpx from '@mpxjs/api-proxy'
 
-function getHeaderValue (value) {
-  if (Array.isArray(value)) return value[0]
-  return value && value.split(',')[0].trim()
+function firstHeaderValue (value) {
+  const headerValue = Array.isArray(value) ? value[0] : value
+  return typeof headerValue === 'string' ? headerValue.split(',')[0].trim() : ''
 }
 
-function getRequestUrl (path, requestContext) {
-  const req = requestContext && requestContext.req
-  if (!req) return path
-
+function getServerOrigin (req) {
   const headers = req.headers || {}
-  const protocol = getHeaderValue(headers['x-forwarded-proto']) ||
-    req.protocol ||
+  const protocol = req.protocol ||
+    firstHeaderValue(headers['x-forwarded-proto']) ||
     (req.socket && req.socket.encrypted ? 'https' : 'http')
-  const host = getHeaderValue(headers['x-forwarded-host']) || getHeaderValue(headers.host)
-  if (!host) throw new Error('SSR request host is required')
-  return `${protocol}://${host}${path}`
+  const host = firstHeaderValue(headers['x-forwarded-host']) || firstHeaderValue(headers.host)
+
+  if (!host) {
+    throw new Error('Unable to resolve the SSR request origin')
+  }
+
+  return `${String(protocol).replace(/:$/, '')}://${host}`
 }
 
-function request (path, requestContext) {
+function getServerHeaders (req) {
+  const sourceHeaders = req.headers || {}
+  const headers = {}
+
+  ;['authorization', 'cookie', 'accept-language', 'user-agent'].forEach((name) => {
+    const value = sourceHeaders[name]
+    if (typeof value === 'string') headers[name] = value
+  })
+
+  return headers
+}
+
+function requestJson (path, requestContext) {
+  const req = requestContext && requestContext.req
+
+  if (req) {
+    if (typeof fetch !== 'function') {
+      return Promise.reject(new Error('The Node SSR runtime must provide fetch'))
+    }
+
+    return fetch(`${getServerOrigin(req)}${path}`, {
+      headers: getServerHeaders(req)
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`Product API request failed with status ${response.status}`)
+      }
+      return response.json()
+    })
+  }
+
   return new Promise((resolve, reject) => {
-    const req = requestContext && requestContext.req
-    const options = {
-      url: getRequestUrl(path, requestContext),
+    mpx.request({
+      url: path,
       success: ({ data }) => resolve(data),
       fail: reject
-    }
-    if (req) {
-      const header = {}
-      if (req.headers.cookie) header.cookie = req.headers.cookie
-      if (req.headers.authorization) header.authorization = req.headers.authorization
-      if (Object.keys(header).length) options.header = header
-    }
-    mpx.request(options)
+    })
   })
 }
 
 export function fetchProduct (productId, requestContext) {
-  return request(`/api/products/${encodeURIComponent(productId)}`, requestContext)
+  return requestJson(`/api/products/${encodeURIComponent(productId)}`, requestContext)
 }
 
 export function fetchRecommendations (productId, requestContext) {
-  return request(`/api/products/${encodeURIComponent(productId)}/recommendations`, requestContext)
+  return requestJson(`/api/products/${encodeURIComponent(productId)}/recommendations`, requestContext)
 }

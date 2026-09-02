@@ -1,17 +1,38 @@
 <template>
   <view class="search-page">
-    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
-    <view class="trending" wx:if="{{!keyword}}">
-      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    <view class="search-bar">
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        bindinput="onKeywordInput"
+        placeholder="搜索商品"
+      />
+      <view class="clear-button" wx:if="{{keyword}}" bindtap="clearSearch">清空</view>
     </view>
+
+    <view class="trending" wx:if="{{!keyword}}">
+      <view
+        class="keyword-item"
+        wx:for="{{trendingKeywords}}"
+        wx:key="*this"
+        bindtap="chooseKeyword(item)"
+      >{{item}}</view>
+    </view>
+
     <view class="suggestions">
-      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+      <view
+        class="suggestion-item"
+        wx:for="{{suggestions}}"
+        wx:key="id"
+        bindtap="openProduct(item.id)"
+      >{{item.name}}</view>
     </view>
   </view>
 </template>
 
 <script>
-import mpx, { createPage } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
+import { navigateTo, showToast } from '@mpxjs/api-proxy'
 import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
 
 createPage({
@@ -20,51 +41,84 @@ createPage({
     trendingKeywords: [],
     suggestions: []
   },
-  async onLoad () {
-    this.suggestionRequest = null
-    this.trendingKeywords = await fetchTrendingKeywords()
+  onLoad () {
+    this._suggestionRequest = null
+    this._requestVersion = 0
+    this._unloaded = false
+    this.loadTrendingKeywords()
   },
   onUnload () {
+    this._unloaded = true
+    this._requestVersion += 1
     this.cancelSuggestionRequest()
   },
   methods: {
+    loadTrendingKeywords () {
+      fetchTrendingKeywords().then((keywords) => {
+        if (!this._unloaded) {
+          this.trendingKeywords = Array.isArray(keywords) ? keywords : []
+        }
+      }).catch(() => {
+        if (!this._unloaded) this.showError('趋势词加载失败')
+      })
+    },
     onKeywordInput (event) {
       this.search(event.detail.value.trim())
     },
     chooseKeyword (keyword) {
       this.search(keyword)
     },
+    clearSearch () {
+      this.search('')
+    },
     cancelSuggestionRequest () {
-      const request = this.suggestionRequest
-      this.suggestionRequest = null
-      if (request && request.__returned) request.__returned.abort()
+      if (!this._suggestionRequest) return
+      this._suggestionRequest.abort()
+      this._suggestionRequest = null
     },
     search (keyword) {
-      this.keyword = keyword
+      const nextKeyword = keyword.trim()
+      const requestVersion = ++this._requestVersion
+
       this.cancelSuggestionRequest()
-      if (!keyword) {
+      this.keyword = nextKeyword
+
+      if (!nextKeyword) {
         this.suggestions = []
         return
       }
 
-      const request = requestSuggestions(keyword)
-      this.suggestionRequest = request
-      request.then(({ data }) => {
-        if (this.suggestionRequest !== request) return
-        this.suggestionRequest = null
-        this.suggestions = data.list
-      }, () => {
-        if (this.suggestionRequest !== request) return
-        this.suggestionRequest = null
-        mpx.showToast({
-          title: '搜索失败',
-          icon: 'none'
-        })
+      const currentRequest = requestSuggestions(nextKeyword)
+      this._suggestionRequest = currentRequest
+
+      currentRequest.promise.then((suggestions) => {
+        if (this._unloaded || requestVersion !== this._requestVersion) return
+        this.suggestions = Array.isArray(suggestions) ? suggestions : []
+      }).catch(() => {
+        if (
+          this._unloaded ||
+          currentRequest.aborted ||
+          requestVersion !== this._requestVersion
+        ) return
+        this.suggestions = []
+        this.showError('搜索失败')
+      }).then(() => {
+        if (this._suggestionRequest === currentRequest) {
+          this._suggestionRequest = null
+        }
       })
     },
+    showError (title) {
+      showToast({
+        title,
+        icon: 'none'
+      }).catch(() => {})
+    },
     openProduct (productId) {
-      return mpx.navigateTo({
-        url: `/pages/product/detail?id=${productId}`
+      navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+      }).catch(() => {
+        if (!this._unloaded) this.showError('跳转失败')
       })
     }
   }
@@ -72,6 +126,30 @@ createPage({
 </script>
 
 <style scoped>
-.search-page { padding: 24rpx; }
-.trending, .suggestions { margin-top: 24rpx; }
+.search-page {
+  padding: 24rpx;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+}
+
+.clear-button {
+  margin-left: 24rpx;
+}
+
+.trending,
+.suggestions {
+  margin-top: 24rpx;
+}
+
+.keyword-item,
+.suggestion-item {
+  padding: 12rpx 0;
+}
 </style>

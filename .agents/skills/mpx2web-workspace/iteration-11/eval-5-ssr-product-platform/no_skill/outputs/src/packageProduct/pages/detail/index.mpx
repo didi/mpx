@@ -46,35 +46,45 @@ createPage({
     }
   },
   onLoad (query) {
-    this.productId = query.id
-    const store = useProductStore(this.$pinia)
-    if (store.loaded && store.productId === this.productId) {
-      this.setDefaultSku(store.product)
-      return
-    }
-    if (!this.$ssrContext) return this.loadProduct(this.productId)
+    this.activateProduct(query && query.id)
+    // onLoad is shared by mini program and web, but SSR waits in serverPrefetch.
+    // Attaching a rejection handler here also prevents an ignored lifecycle promise.
+    this.loadProduct(this.productId, this.getSsrRequest()).catch(() => {})
   },
-  onShow () {
-    if (!this.productId) return
-    const store = useProductStore(this.$pinia)
-    if (store.loaded && store.productId === this.productId) {
-      if (!this.selectedSkuId) this.setDefaultSku(store.product)
-    } else if (!this.$ssrContext) {
-      this.loadProduct(this.productId)
-    }
-  },
-  serverPrefetch () {
-    const productId = this.$route.query.id
-    this.productId = productId
-    return this.loadProduct(productId, this.$ssrContext.req)
+  async serverPrefetch () {
+    const routeQuery = this.$route && this.$route.query
+    const productId = this.productId || (routeQuery && routeQuery.id)
+    if (!productId) return
+
+    this.activateProduct(productId)
+    // The action joins the onLoad request when both hooks run on the server.
+    // Resolving this hook guarantees that both product and recommendations are in SSR HTML.
+    await this.loadProduct(productId, this.getSsrRequest())
   },
   methods: {
-    async loadProduct (productId, req) {
-      const product = await useProductStore(this.$pinia).loadProduct(productId, req)
-      if (product && productId === this.productId) this.setDefaultSku(product)
+    getSsrRequest () {
+      return this.$ssrContext && this.$ssrContext.req
     },
-    setDefaultSku (product) {
-      this.selectedSkuId = product.skus && product.skus[0] ? product.skus[0].id : ''
+    activateProduct (productId) {
+      const normalizedId = String(productId || '')
+      if (this.productId !== normalizedId) this.selectedSkuId = ''
+      this.productId = normalizedId
+    },
+    async loadProduct (productId, req) {
+      if (!productId) return false
+
+      const normalizedId = String(productId)
+      const store = useProductStore(this.$pinia)
+      const applied = await store.loadProduct(normalizedId, req)
+      if (!applied || this.productId !== normalizedId || store.productId !== normalizedId) {
+        return false
+      }
+
+      const skus = store.product.skus || []
+      if (!skus.some(item => item.id === this.selectedSkuId)) {
+        this.selectedSkuId = skus[0] && skus[0].id
+      }
+      return true
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

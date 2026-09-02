@@ -1,6 +1,6 @@
 <template>
   <view class="checkout">
-    <view bindtap="chooseAddress">选择地址</view>
+    <button bindtap="chooseAddress">选择地址</button>
     <view wx:if="{{address}}">{{address.name}} {{address.detail}}</view>
     <button bindtap="pay">支付</button>
     <button bindtap="openOrders">查看订单</button>

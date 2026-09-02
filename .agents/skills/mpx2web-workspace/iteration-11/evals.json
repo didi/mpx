@@ -59,7 +59,7 @@
       ],
       "complexity": "normal",
       "focus": "web-style-isolation/webview-small-font",
-      "fixture_digest": "a3674268c3af6461d70434c71f720f5f3a463e2cf24ac9a9d452fb1126deafd0"
+      "fixture_digest": "ad95b9ecc465ab9f72a6aa62649af4b2c8374ba3632380d5182d93a914f27212"
     },
     {
       "id": 1,
@@ -119,30 +119,12 @@
         },
         {
           "id": "a6",
-          "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
+          "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
           "category": "web-api",
-          "required_patterns": [
-            {
-              "pattern": "mpx\\.request\\s*\\(",
-              "description": "使用 mpx.request"
-            },
-            {
-              "pattern": "mpx\\.redirectTo\\s*\\(",
-              "description": "使用 mpx.redirectTo"
-            },
-            {
-              "pattern": "mpx\\.showToast\\s*\\(",
-              "description": "使用 mpx.showToast"
-            }
-          ],
           "forbidden_patterns": [
             {
               "pattern": "(?:\\bfetch\\s*\\(|\\blocation\\.assign\\s*\\(|\\balert\\s*\\()",
               "description": "自行用 fetch、location.assign 或 alert 重实现已有能力"
-            },
-            {
-              "pattern": "import\\s*\\{[^}]*\\b(?:request|redirectTo|showToast)\\b[^}]*\\}\\s*from\\s*['\"]@mpxjs/api-proxy['\"]",
-              "description": "命名导入原始 API，绕过应用入口的 API Proxy 配置"
             }
           ]
         },
@@ -154,7 +136,7 @@
       ],
       "complexity": "normal",
       "focus": "web-missing-host-api/conditional-isolation",
-      "fixture_digest": "261fa18c76428214fc0b988ba91d6e4fa25fa9a6cf973cd0867f591e5ed6cbd3"
+      "fixture_digest": "8722c0299caa4b065bc99d36fc7888e198f695a46acd2ea6f3bd915f1b30bac6"
     },
     {
       "id": 2,
@@ -195,7 +177,7 @@
         },
         {
           "id": "s5",
-          "text": "详情跳转与请求使用 Mpx/api-proxy 统一入口，不直接调用 wx",
+          "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
           "category": "web-api"
         },
         {
@@ -206,7 +188,7 @@
       ],
       "complexity": "normal",
       "focus": "web-missing-lifecycle/navigation-api",
-      "fixture_digest": "5d3dfdbbfdc2e79957659227f5f8ecccc7a87f6aec8d291ee85e2015a34873f7"
+      "fixture_digest": "997f8aa844a1099c1fef529860d5c8ea258849eb54bde9769e3719904ea504a9"
     },
     {
       "id": 3,
@@ -272,7 +254,7 @@
       ],
       "complexity": "complex",
       "focus": "wxs-web-events/socket-task-race/cross-component-business",
-      "fixture_digest": "a11fdaf0d9f1468a85beb052f9b0c5038ecdda0d8caf843afc7d8e36267332e7"
+      "fixture_digest": "ef39bb4489d97fe45ff85c98a9404b7ea03e717603cf37e964547eaf054808e8"
     },
     {
       "id": 4,
@@ -340,7 +322,7 @@
       ],
       "complexity": "complex",
       "focus": "webview-bridge/h5-sdk-async-race/security-cleanup",
-      "fixture_digest": "d114d7834fbd3bccf7a80712eccc75c794d2afd6b6b71ca65254bcdd86e2bda8"
+      "fixture_digest": "ea9f132a97909350993b1cebd3b10b82372e332b4cf773b2ed75078b0ba4e096"
     },
     {
       "id": 5,
@@ -412,7 +394,7 @@
       ],
       "complexity": "complex",
       "focus": "ssr-request-isolation/hydration/client-only-sdk/deployment",
-      "fixture_digest": "560bb04b43abbacda9fa5b12f3645f462336000540ce2dd3fd2d9fddaca72494"
+      "fixture_digest": "4fa93dd39d1b7f797f4920b5989100716a54d0c916f683e169944586848b62d0"
     },
     {
       "id": 6,
@@ -437,12 +419,12 @@
         },
         {
           "id": "q1",
-          "text": "普通趋势词请求通过配置后的 mpx.request 使用 await 或 Promise 链，不混用 success/fail 回调",
+          "text": "Web 输出中的普通趋势词请求通过会返回 Promise 的 Mpx 官方 API 调用路径使用 await 或 Promise 链；可使用配置后的 mpx.request 或会被跨端编译转换到该入口的 wx.request。原始 @mpxjs/api-proxy 命名导入不会继承 Promise 化配置，不能直接按 Promise 使用；不得混用 success/fail 回调",
           "category": "web-api"
         },
         {
           "id": "q2",
-          "text": "联想词请求单次显式 usePromise: false 并保存 RequestTask；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+          "text": "联想词请求保存可取消任务：可通过单次 usePromise: false 或原始 @mpxjs/api-proxy 命名导入直接取得 RequestTask，也可从已 Promise 化调用的 Promise.__returned 取得框架保留的原始任务；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
           "category": "web-concurrency"
         },
         {
@@ -452,28 +434,14 @@
         },
         {
           "id": "q4",
-          "text": "详情跳转与错误提示继续通过应用入口已配置的 mpx.navigateTo、mpx.showToast 调用",
-          "category": "web-api",
-          "required_patterns": [
-            {
-              "pattern": "mpx\\.navigateTo\\s*\\(",
-              "description": "使用 mpx.navigateTo"
-            },
-            {
-              "pattern": "mpx\\.showToast\\s*\\(",
-              "description": "使用 mpx.showToast"
-            }
-          ]
+          "text": "详情跳转与错误提示继续走 Mpx 官方 API 链路；可保留会被跨端编译转换的 wx.navigateTo/wx.showToast，可沿用 mpx.xxx，也可在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入",
+          "category": "web-api"
         },
         {
           "id": "q5",
-          "text": "不从 @mpxjs/api-proxy 命名导入 request/navigateTo/showToast，也不用 fetch、location 或 alert 重写这些能力",
+          "text": "不用 fetch、location 或 alert 平行重写 request/navigateTo/showToast；若沿用 @mpxjs/api-proxy 命名导入，应明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置",
           "category": "web-api",
           "forbidden_patterns": [
-            {
-              "pattern": "import\\s*\\{[^}]*\\b(?:request|navigateTo|showToast)\\b[^}]*\\}\\s*from\\s*['\"]@mpxjs/api-proxy['\"]",
-              "description": "绕过应用入口配置命名导入 API"
-            },
             {
               "pattern": "(?:\\bfetch\\s*\\(|\\blocation(?:\\.|\\s*=)|\\balert\\s*\\()",
               "description": "使用浏览器能力重写已有 API Proxy 能力"
@@ -488,7 +456,7 @@
       ],
       "complexity": "complex",
       "focus": "api-proxy-install/promise-task-contract/request-race",
-      "fixture_digest": "d7889ceaab830f4ff970d37c6e943b7b8f6d3b001c39a1377b9ca229b5c479db"
+      "fixture_digest": "6042067a9a40b6122ff1077e25dc0235f200911a6bb03f2fa80901e747457c58"
     },
     {
       "id": 7,
@@ -510,22 +478,22 @@
       "assertions": [
         {
           "id": "n0",
-          "text": "结算页通过 mpx.navigateTo 的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择",
+          "text": "结算页通过 Mpx 官方 navigateTo 调用的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择；源码可以是 mpx.navigateTo 或会被跨端编译转换的 wx.navigateTo",
           "category": "web-route"
         },
         {
           "id": "n1",
-          "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后使用 mpx.navigateBack 返回",
+          "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后通过 Mpx 官方 navigateBack 返回；源码可以是 mpx.navigateBack 或会被跨端编译转换的 wx.navigateBack",
           "category": "web-route"
         },
         {
           "id": "n2",
-          "text": "订单 tab 只通过 mpx.switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack",
+          "text": "订单 tab 只通过 Mpx 官方 switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack；调用可采用项目现有的 mpx.xxx 或会被跨端编译转换的 wx.xxx",
           "category": "web-route"
         },
         {
           "id": "n3",
-          "text": "navigator 的 open-type 使用模板支持值 navigate，而不是 API 名 navigateTo；不把 switchTab 模板分支当作稳定 Web 能力",
+          "text": "需要 EventChannel 的地址入口使用 button 调用脚本中的 navigateTo，不强制保留 navigator；其他普通声明式导航若使用 navigator，open-type 使用模板值 navigate，而不是 API 名 navigateTo，也不使用不稳定的 switchTab 模板分支",
           "category": "web-template"
         },
         {
@@ -552,7 +520,7 @@
       ],
       "complexity": "complex",
       "focus": "event-channel/tabbar-routing/web-deployment",
-      "fixture_digest": "d0facf600b5e7df6f56345b06169675d7a6ccc7f31db2a60c9110cdecf5a8b25"
+      "fixture_digest": "2712c79eca34e9603fdd900f77f75beef08b6fca2b9ad5b4b5f147ee4f8f68d9"
     },
     {
       "id": 8,
@@ -580,7 +548,7 @@
         },
         {
           "id": "b2",
-          "text": "动态分类、异步商品和图片固有尺寸晚到后，使用运行时真实消费的观察机制或图片 load/metadata 后的 nextTick + scroll-view ref.refresh 保证滚动范围更新；仅声明未被消费的同名属性不算通过",
+          "text": "动态分类、异步商品和图片固有尺寸晚到后，使用运行时真实消费的观察机制或图片 load/metadata 后的 nextTick + scroll-view ref.refresh 保证滚动范围更新；ref 可使用标准 wx:ref 或可选的 Web 条件写法，必须隔离的是 Web-only refresh 调用链，可由 Web 条件事件或脚本平台/能力判断完成",
           "category": "web-scroll"
         },
         {
@@ -606,12 +574,12 @@
       ],
       "complexity": "complex",
       "focus": "scroll-view-transform/sticky/enhanced/video-events",
-      "fixture_digest": "6ff17cad4e3ecf4763382bd94461396aad87425eb72128180bd1533ff31753fb"
+      "fixture_digest": "0cc6c4a7653b37197068b6cb28f8173bab7f9d2efec05f4b839a0ba3d64878d7"
     },
     {
       "id": 9,
       "name": "vue2-web-file-isolation",
-      "prompt": "数据看板需要保持微信小程序可点击摘要卡，Web 使用 Vue 2.7 交互图表和项目自定义滚动实现。当前快速切换或重复进入时可能出现晚到图表、重复监听和尺寸观察泄漏；Web 依赖也不能进入小程序依赖图。请修复并让自定义滚动组件保留现有业务使用的属性、事件和子节点，输出全部完整文件。",
+      "prompt": "数据看板需要保持微信小程序可点击摘要卡，Web 使用 Vue 2.7 交互图表和项目自定义滚动实现。当前快速切换或重复进入时可能出现晚到图表、重复监听和尺寸观察泄漏；Web 依赖也不能进入小程序依赖图。请修复并让自定义 scroll-view 保留调用点已有的横纵滚动、scrollTop、scrollLeft、scrollIntoView、scroll、scrolltoupper、scrolltolower、默认子节点和指标点击回传，输出全部完整文件。",
       "expected_output": "输出 metadata.outputs 声明的全部完整文件，并满足 assertions。",
       "files": [
         "eval-9-vue2-web-file-isolation/input/src/components/analytics-panel.mpx",
@@ -662,18 +630,28 @@
         },
         {
           "id": "v6",
-          "text": "customBuiltInComponents 使用原始 key scroll-view；自定义 Vue 组件明确透传滚动属性、事件和默认 slot",
+          "text": "customBuiltInComponents 使用原始 key scroll-view，不使用 mpx-scroll-view；自定义 Vue 组件保留 $attrs、$listeners 和默认 slot 的结构透传",
           "category": "web-template"
         },
         {
           "id": "v7",
-          "text": "指标摘要、指标点击、Web 图表更新和滚动容器业务链路保持完整",
+          "text": "自定义滚动组件同时实现 scrollX/scrollY 横纵 overflow，并在挂载和 prop 更新时真正同步 scrollTop、scrollLeft；scrollIntoView 更新后只滚动当前容器内目标节点",
+          "category": "web-scroll"
+        },
+        {
+          "id": "v8",
+          "text": "自定义滚动组件在原生滚动时发出包含 scrollTop、scrollLeft、scrollHeight、scrollWidth、deltaX、deltaY 的 scroll 事件，并按 upper/lower threshold 与实际滚动轴发出方向为 top/left、bottom/right 的 scrolltoupper/scrolltolower，避免阈值内重复泛滥触发",
+          "category": "web-scroll"
+        },
+        {
+          "id": "v9",
+          "text": "调用点继续使用横纵滚动、受控位置、scrollIntoView、upper/lower threshold 和三类滚动事件；小程序指标摘要/点击、Web 图表更新、Web 指标点击逐层回传与滚动容器业务链路均完整",
           "category": "business-regression"
         }
       ],
       "complexity": "complex",
-      "focus": "web-file-resolution/vue2-sdk-lifecycle/custom-builtin",
-      "fixture_digest": "1772df6997f43069b8ccbf2bb40ddfed47cb6f382e60aa8d1ecbe29852870903"
+      "focus": "web-file-resolution/vue2-sdk-lifecycle/custom-builtin-scroll-contract",
+      "fixture_digest": "289664c306ee167622520955a086b1c4bef7deea8e2b6ca52de8641730676bd1"
     },
     {
       "id": 10,
@@ -740,7 +718,7 @@
       ],
       "complexity": "complex",
       "focus": "ssr-determinism/custom-bootstrap/async-hydrate",
-      "fixture_digest": "c74661bf03698ab1b8b6db0fde743149bbdfeb43dc395157a58aef534a51d110"
+      "fixture_digest": "a8ddd955fdc1f0d316755fba5ff893dcb9becfb454f64fe3feb40f56afe5681d"
     },
     {
       "id": 11,
@@ -789,7 +767,7 @@
       ],
       "complexity": "complex",
       "focus": "cross-platform-a11y/web-focus-trap/keyboard-cleanup",
-      "fixture_digest": "9490931c74fc7033fdad9ff13acf516d8c2bf7ac2419e7463f8fda6bac3705d0"
+      "fixture_digest": "5d62772e89ba0537cdd34c2229c216c05b7fec3329496a37c58683f51da46246"
     },
     {
       "id": 12,
@@ -845,7 +823,7 @@
       ],
       "complexity": "normal",
       "focus": "css-variable/viewport/rpx/web-only-scroll-lock",
-      "fixture_digest": "73f9bb58ae51203e119c0babcaa4c1c5fec6d85473310d98d4711de85869e894"
+      "fixture_digest": "d5ca5d9ae6d1672b9b02a0c8df2989c6f79f56ea2258b51761cd8df599fad84f"
     }
   ]
 }

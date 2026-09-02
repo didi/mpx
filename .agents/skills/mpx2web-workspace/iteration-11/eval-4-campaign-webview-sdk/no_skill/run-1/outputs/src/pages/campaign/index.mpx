@@ -17,25 +17,17 @@
       </view>
     </view>
 
-    <!-- @mpx-if (mode === 'web') -->
-    <iframe
-      wx:if="{{campaignUrl}}"
-      id="campaign-webview"
-      class="campaign-webview"
-      src="{{campaignUrl}}"
-      bindload="handleCampaignLoad"
-      binderror="handleCampaignError"
-    ></iframe>
-    <!-- @mpx-else -->
     <web-view
       wx:if="{{campaignUrl}}"
       id="campaign-webview"
+      key="{{webviewKey}}"
+      data-campaign-generation="{{webviewKey}}"
+      data-campaign-id="{{campaignId}}"
       src="{{campaignUrl}}"
       bindmessage="handleCampaignMessage"
       bindload="handleCampaignLoad"
       binderror="handleCampaignError"
     />
-    <!-- @mpx-endif -->
 
     <view wx:if="{{loading}}" class="campaign-loading">
       <text>活动会场加载中...</text>
@@ -60,6 +52,37 @@ import { createPage } from '@mpxjs/core'
 
 const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
 
+const CAMPAIGN_DETAILS = {
+  'summer-sale': {
+    title: '夏日清凉特卖',
+    subtitle: '限时领券，爆款低至五折'
+  },
+  'member-day': {
+    title: '会员专享日',
+    subtitle: '会员好礼与专享优惠限时开放'
+  },
+  'fresh-week': {
+    title: '生鲜周',
+    subtitle: '当季鲜货，每日限量特惠'
+  }
+}
+
+function isWebRuntime () {
+  return typeof window !== 'undefined' && typeof document !== 'undefined'
+}
+
+function getIframeFromNode (node) {
+  if (!node || typeof node !== 'object') return null
+  if (String(node.tagName || '').toLowerCase() === 'iframe') return node
+  if (typeof node.querySelector === 'function') return node.querySelector('iframe')
+  return null
+}
+
+function isValidMessageId (value) {
+  return (typeof value === 'string' && value.length > 0) ||
+    (typeof value === 'number' && Number.isFinite(value))
+}
+
 createPage({
   data: {
     memberId: 'member-10086',
@@ -69,85 +92,127 @@ createPage({
       { id: 'member-day', name: '会员日' },
       { id: 'fresh-week', name: '生鲜周' }
     ],
-    campaign: {
-      title: '夏日清凉特卖',
-      subtitle: '限时领券，爆款低至五折'
-    },
-    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086',
+    campaign: CAMPAIGN_DETAILS['summer-sale'],
+    campaignUrl: '',
+    webviewKey: 0,
     loading: true,
     errorText: '',
     trackerReady: false
   },
   onLoad () {
-    this.pageActive = true
-    this.campaignRenderVersion = 0
-    if (typeof window !== 'undefined') {
-      this.windowMessageHandler = this.handleWindowMessage.bind(this)
-      window.addEventListener('message', this.windowMessageHandler)
+    this._pageActive = true
+    this._campaignGeneration = 0
+    this._requestTasks = new Set()
+    this._handleWebMessage = (event) => this.handleCampaignMessage(event)
+    if (isWebRuntime()) {
+      window.addEventListener('message', this._handleWebMessage)
     }
+    this.activateCampaign(this.campaignId)
   },
   onUnload () {
-    this.pageActive = false
-    this.campaignRenderVersion++
-    if (typeof window !== 'undefined' && this.windowMessageHandler) {
-      window.removeEventListener('message', this.windowMessageHandler)
-      this.windowMessageHandler = null
+    this._pageActive = false
+    this._campaignGeneration += 1
+    if (isWebRuntime() && this._handleWebMessage) {
+      window.removeEventListener('message', this._handleWebMessage)
+    }
+    this._handleWebMessage = null
+    if (this._requestTasks) {
+      this._requestTasks.forEach((task) => {
+        if (task && typeof task.abort === 'function') task.abort()
+      })
+      this._requestTasks.clear()
     }
   },
   methods: {
-    switchCampaign (campaignId) {
-      if (campaignId === this.campaignId) return
-      this.campaignId = campaignId
-      this.mountCampaign()
+    buildCampaignUrl (campaignId, generation) {
+      return `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}&campaignSession=${generation}`
     },
-    mountCampaign () {
-      const version = ++this.campaignRenderVersion
-      const campaignUrl = `${CAMPAIGN_ORIGIN}/${encodeURIComponent(this.campaignId)}?memberId=${encodeURIComponent(this.memberId)}`
+    activateCampaign (campaignId) {
+      if (!this._pageActive || !CAMPAIGN_DETAILS[campaignId]) return
+
+      const generation = ++this._campaignGeneration
+      this.campaignId = campaignId
+      this.campaign = CAMPAIGN_DETAILS[campaignId]
       this.loading = true
       this.errorText = ''
+      this.trackerReady = false
+
+      // 先销毁旧 web-view，再挂载带唯一会话参数的新实例，避免旧页面事件晚到。
       this.campaignUrl = ''
       this.$nextTick(() => {
-        if (this.pageActive && version === this.campaignRenderVersion) {
-          this.campaignUrl = campaignUrl
-        }
+        if (!this._pageActive || generation !== this._campaignGeneration) return
+        this.webviewKey = generation
+        this.campaignUrl = this.buildCampaignUrl(campaignId, generation)
       })
     },
-    getCampaignFrame () {
-      if (typeof document === 'undefined') return null
-      return document.getElementById('campaign-webview')
+    switchCampaign (campaignId) {
+      if (campaignId === this.campaignId) return
+      this.activateCampaign(campaignId)
     },
-    isCurrentCampaignFrame (frame) {
-      return frame && frame === this.getCampaignFrame()
+    getActiveIframe () {
+      if (!isWebRuntime()) return null
+      return getIframeFromNode(document.getElementById('campaign-webview'))
     },
-    isTrustedCampaignMessage (event) {
-      const frame = this.getCampaignFrame()
-      return event.origin === CAMPAIGN_ORIGIN && frame && event.source === frame.contentWindow
+    isCurrentEventGeneration (event) {
+      const currentTarget = event && (event.currentTarget || event.target)
+      const dataset = currentTarget && currentTarget.dataset
+      if (!dataset) return true
+      const eventGeneration = dataset.campaignGeneration === undefined
+        ? dataset.campaigngeneration
+        : dataset.campaignGeneration
+      return eventGeneration === undefined || String(eventGeneration) === String(this.webviewKey)
+    },
+    isCurrentWebviewEvent (event) {
+      if (!this._pageActive) return false
+      if (!this.isCurrentEventGeneration(event)) return false
+      if (!isWebRuntime()) return true
+
+      const activeIframe = this.getActiveIframe()
+      if (!activeIframe) return false
+
+      const eventTarget = event && (event.target || event.currentTarget)
+      const eventIframe = getIframeFromNode(eventTarget)
+      if (eventIframe && eventIframe !== activeIframe) return false
+      if (eventTarget && typeof eventTarget.isConnected === 'boolean' && !eventTarget.isConnected) return false
+
+      const sourceUrl = activeIframe.getAttribute('src') || activeIframe.src || ''
+      return sourceUrl === this.campaignUrl || activeIframe.src === this.campaignUrl
     },
     handleCampaignLoad (event) {
-      if (!this.pageActive) return
-      if (typeof window !== 'undefined' && !this.isCurrentCampaignFrame(event.target)) return
+      if (!this.isCurrentWebviewEvent(event)) return
       this.loading = false
       wx.reportAnalytics('campaign_webview_load', {
         campaign_id: this.campaignId
       })
     },
     handleCampaignError (event) {
-      if (!this.pageActive) return
-      if (typeof window !== 'undefined' && !this.isCurrentCampaignFrame(event.target)) return
+      if (!this.isCurrentWebviewEvent(event)) return
       this.loading = false
       this.errorText = '活动会场暂时无法打开'
     },
-    handleWindowMessage (event) {
-      if (!this.pageActive || !this.isTrustedCampaignMessage(event)) return
-      this.dispatchCampaignMessage(event.data)
+    getMessageData (event) {
+      if (isWebRuntime()) {
+        // Web 只接收原生 MessageEvent；bindmessage 的二次包装会因缺少可信来源被忽略。
+        if (!event || event.origin !== CAMPAIGN_ORIGIN) return null
+        const activeIframe = this.getActiveIframe()
+        if (!activeIframe || event.source !== activeIframe.contentWindow) return null
+        return event.data && typeof event.data === 'object' ? event.data : null
+      }
+
+      if (!this.isCurrentEventGeneration(event)) return null
+
+      const messages = event && event.detail && Array.isArray(event.detail.data)
+        ? event.detail.data
+        : []
+      const message = messages[messages.length - 1]
+      return message && typeof message === 'object' ? message : null
     },
     handleCampaignMessage (event) {
-      if (!this.pageActive) return
-      const messages = event.detail.data || []
-      this.dispatchCampaignMessage(messages[messages.length - 1])
-    },
-    dispatchCampaignMessage (message) {
-      if (!message || typeof message !== 'object') return
+      if (!this._pageActive) return
+      const message = this.getMessageData(event)
+      if (!message) return
+      if (message.campaignId && message.campaignId !== this.campaignId) return
+
       if (message.type === 'claim-coupon') {
         this.claimCoupon(message.couponId)
       } else if (message.type === 'open-product') {
@@ -155,33 +220,42 @@ createPage({
       }
     },
     claimCoupon (couponId) {
-      if (typeof couponId !== 'string' && typeof couponId !== 'number') return
+      if (!isValidMessageId(couponId)) return
+      const generation = this._campaignGeneration
       const campaignId = this.campaignId
-      wx.request({
+      let requestTask
+      requestTask = wx.request({
         url: '/api/campaign/coupons/claim',
         method: 'POST',
         data: { campaignId, couponId },
         success: () => {
-          if (this.pageActive && campaignId === this.campaignId) {
-            wx.showToast({ title: '领取成功', icon: 'success' })
-          }
+          if (!this._pageActive || generation !== this._campaignGeneration) return
+          wx.showToast({ title: '领取成功', icon: 'success' })
+        },
+        complete: () => {
+          if (this._requestTasks) this._requestTasks.delete(requestTask)
         }
       })
+      if (requestTask && this._requestTasks) this._requestTasks.add(requestTask)
     },
     openProduct (productId) {
-      if (typeof productId !== 'string' && typeof productId !== 'number') return
+      if (!isValidMessageId(productId) || !this._pageActive) return
       wx.navigateTo({
         url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(this.campaignId)}`
       })
     },
     reloadCampaign () {
-      this.mountCampaign()
+      this.activateCampaign(this.campaignId)
     },
-    handleTrackerReady () {
-      if (this.pageActive) this.trackerReady = true
+    handleTrackerReady (event) {
+      const readyCampaignId = event && event.detail && event.detail.campaignId
+      if (!this._pageActive || (readyCampaignId && readyCampaignId !== this.campaignId)) return
+      this.trackerReady = true
     },
-    handleTrackerError () {
-      if (this.pageActive) this.trackerReady = false
+    handleTrackerError (event) {
+      const errorCampaignId = event && event.detail && event.detail.campaignId
+      if (!this._pageActive || (errorCampaignId && errorCampaignId !== this.campaignId)) return
+      this.trackerReady = false
     }
   }
 })
@@ -231,13 +305,6 @@ createPage({
 .campaign-tab.active {
   color: #ffffff;
   background: #ff7a45;
-}
-
-.campaign-webview {
-  display: block;
-  width: 100%;
-  height: calc(100vh - 190rpx);
-  border: 0;
 }
 
 .campaign-loading,

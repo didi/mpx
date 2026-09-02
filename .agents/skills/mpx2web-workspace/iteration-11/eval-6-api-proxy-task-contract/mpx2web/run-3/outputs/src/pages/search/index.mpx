@@ -35,37 +35,45 @@ createPage({
       this.search(keyword)
     },
     cancelSuggestionRequest () {
-      const requestTask = this.requestTask
+      const requestPromise = this.requestTask
       this.requestTask = null
-      if (requestTask) requestTask.abort()
+
+      const task = requestPromise && requestPromise.__returned
+      if (task && typeof task.abort === 'function') {
+        task.abort()
+      }
     },
-    search (keyword) {
+    async search (keyword) {
       this.keyword = keyword
       this.cancelSuggestionRequest()
+
       if (!keyword) {
         this.suggestions = []
         return
       }
-      const requestTask = requestSuggestions(keyword, {
-        success: ({ data }) => {
-          if (this.requestTask !== requestTask) return
+
+      const requestPromise = requestSuggestions(keyword)
+      this.requestTask = requestPromise
+
+      try {
+        const { data } = await requestPromise
+        if (this.requestTask !== requestPromise) return
+        this.suggestions = data.list
+      } catch (error) {
+        if (this.requestTask !== requestPromise) return
+        mpx.showToast({
+          title: '搜索失败',
+          icon: 'none'
+        })
+      } finally {
+        if (this.requestTask === requestPromise) {
           this.requestTask = null
-          this.suggestions = data.list
-        },
-        fail: () => {
-          if (this.requestTask !== requestTask) return
-          this.requestTask = null
-          mpx.showToast({
-            title: '搜索失败',
-            icon: 'none'
-          })
         }
-      })
-      this.requestTask = requestTask
+      }
     },
     openProduct (productId) {
       mpx.navigateTo({
-        url: `/pages/product/detail?id=${productId}`
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
       })
     }
   }

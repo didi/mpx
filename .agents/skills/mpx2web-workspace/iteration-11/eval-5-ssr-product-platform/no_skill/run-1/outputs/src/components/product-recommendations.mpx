@@ -17,111 +17,41 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
 
 function isBrowser () {
   return typeof window !== 'undefined' && typeof document !== 'undefined'
 }
 
-function getExposureSdk () {
-  // @mpx-if (mode === 'web')
-  const sdkModule = require('@business/product-exposure-web')
-  return sdkModule.default || sdkModule
-  // @mpx-else
-  return null
-  // @mpx-endif
+// Browser SDK contract:
+// create({ productId }) returns Promise<Tracker>;
+// Tracker exposes track(eventName, payload) and destroy().
+function loadExposureSdk () {
+  return import('@business/product-exposure-web').then(module => module.default || module)
 }
 
-// SDK contract: create({ productId }) returns Promise<Tracker>.
-// Tracker exposes track(eventName, payload) and destroy().
 createComponent({
   properties: {
     productId: String,
     items: Array
   },
   observers: {
-    productId () {
-      if (this._ready) this.createTracker()
-    },
-    items () {
-      if (this._ready && this._tracker) this.observeCards(this._generation)
+    'productId, items': function () {
+      if (this._componentReady) this.restartTracker()
     }
   },
   ready () {
-    this._ready = true
-    this._detached = false
-    this._generation = 0
-    this._observeGeneration = 0
-    this.createTracker()
+    this._componentReady = true
+    this._trackerVersion = 0
+    this.restartTracker()
   },
   detached () {
-    this._detached = true
+    this._componentReady = false
+    this._trackerVersion = (this._trackerVersion || 0) + 1
     this.destroyTracker()
   },
   methods: {
-    createTracker () {
-      this.destroyTracker()
-      if (!this.productId || !isBrowser()) return
-
-      const sdk = getExposureSdk()
-      if (!sdk) return
-
-      const generation = this._generation
-      const productId = this.productId
-      Promise.resolve(sdk.create({ productId })).then((tracker) => {
-        if (this._detached || generation !== this._generation || productId !== this.productId) {
-          tracker.destroy()
-          return
-        }
-        this._tracker = tracker
-        this.observeCards(generation)
-      }).catch(() => {})
-    },
-    observeCards (generation) {
-      if (this._observer) {
-        this._observer.disconnect()
-        this._observer = null
-      }
-      const observeGeneration = ++this._observeGeneration
-      this.$nextTick(() => {
-        if (
-          this._detached ||
-          generation !== this._generation ||
-          observeGeneration !== this._observeGeneration ||
-          !this._tracker ||
-          !window.IntersectionObserver ||
-          !this.$el
-        ) return
-
-        const tracker = this._tracker
-        const productId = this.productId
-        const observer = new window.IntersectionObserver((entries) => {
-          if (
-            this._detached ||
-            generation !== this._generation ||
-            observeGeneration !== this._observeGeneration ||
-            observer !== this._observer ||
-            tracker !== this._tracker ||
-            productId !== this.productId
-          ) return
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              tracker.track('recommendation_exposure', {
-                productId,
-                recommendationId: entry.target.dataset.productId
-              })
-              observer.unobserve(entry.target)
-            }
-          })
-        })
-        this._observer = observer
-        this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-          observer.observe(element)
-        })
-      })
-    },
     destroyTracker () {
-      this._generation++
-      this._observeGeneration++
       if (this._observer) {
         this._observer.disconnect()
         this._observer = null
@@ -131,8 +61,67 @@ createComponent({
         this._tracker = null
       }
     },
+
+    restartTracker () {
+      const version = (this._trackerVersion || 0) + 1
+      const productId = this.productId
+      this._trackerVersion = version
+      this.destroyTracker()
+
+      // Do not import, create, or inspect DOM-backed SDK state during SSR or in
+      // the mini program. The recommendation list/navigation remains cross-platform.
+      if (!isBrowser() || !productId) return
+
+      loadExposureSdk()
+        .then(sdk => sdk.create({ productId }))
+        .then(tracker => {
+          // A route/prop change may happen while create() is pending. Destroy the
+          // stale tracker immediately so it cannot mount observers or report.
+          if (!this._componentReady || version !== this._trackerVersion || productId !== this.productId) {
+            tracker.destroy()
+            return
+          }
+
+          this._tracker = tracker
+          this.observeCards(tracker, productId, version)
+        })
+        .catch(() => {
+          // Tracking must never break recommendation rendering or navigation.
+        })
+    },
+
+    observeCards (tracker, productId, version) {
+      if (typeof IntersectionObserver === 'undefined') return
+
+      this.$nextTick(() => {
+        if (!this._componentReady || version !== this._trackerVersion || tracker !== this._tracker) return
+
+        const seen = new Set()
+        const observer = new IntersectionObserver(entries => {
+          if (!this._componentReady || version !== this._trackerVersion || tracker !== this._tracker) return
+
+          entries.forEach(entry => {
+            const recommendationId = entry.target.dataset.productId
+            if (entry.isIntersecting && !seen.has(recommendationId)) {
+              seen.add(recommendationId)
+              tracker.track('recommendation_exposure', {
+                productId,
+                recommendationId
+              })
+            }
+          })
+        })
+
+        this._observer = observer
+        const root = this.$el
+        if (root && root.querySelectorAll) {
+          root.querySelectorAll('.recommendation-card').forEach(element => observer.observe(element))
+        }
+      })
+    },
+
     openProduct (productId) {
-      wx.navigateTo({
+      mpx.navigateTo({
         url: `/packageProduct/pages/detail/index?id=${productId}`
       })
     }

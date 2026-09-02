@@ -17,19 +17,26 @@
       </view>
     </view>
 
-    <!-- @mpx-if (__mpx_mode__ === 'web') -->
-    <web-view
+    <!-- @mpx-if (mode === 'web') -->
+    <iframe
       wx:if="{{campaignUrl}}"
-      id="campaign-webview"
+      id="{{frameId}}"
+      key="{{campaignSession}}"
+      class="campaign-webview"
       src="{{campaignUrl}}"
+      data-campaign-id="{{campaignId}}"
+      data-session-id="{{campaignSession}}"
       bindload="handleCampaignLoad"
       binderror="handleCampaignError"
-    />
+    ></iframe>
     <!-- @mpx-else -->
     <web-view
       wx:if="{{campaignUrl}}"
       id="campaign-webview"
+      key="{{campaignSession}}"
       src="{{campaignUrl}}"
+      data-campaign-id="{{campaignId}}"
+      data-session-id="{{campaignSession}}"
       bindmessage="handleCampaignMessage"
       bindload="handleCampaignLoad"
       binderror="handleCampaignError"
@@ -45,7 +52,8 @@
     </view>
 
     <campaign-tracker
-      wx:if="{{campaignId && pageActive}}"
+      wx:if="{{campaignId}}"
+      ref="campaignTracker"
       campaignId="{{campaignId}}"
       memberId="{{memberId}}"
       bindready="handleTrackerReady"
@@ -57,7 +65,7 @@
 <script>
 import { createPage } from '@mpxjs/core'
 
-const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+const TRUSTED_CAMPAIGN_ORIGIN = 'https://campaign.example.com'
 
 createPage({
   data: {
@@ -74,175 +82,250 @@ createPage({
         id: 'member-day',
         name: '会员日',
         title: '会员专享日',
-        subtitle: '会员好券与专享商品限时放送'
+        subtitle: '会员好礼与专属优惠限时放送'
       },
       {
         id: 'fresh-week',
         name: '生鲜周',
-        title: '生鲜狂欢周',
-        subtitle: '每日鲜货，优惠直达'
+        title: '生鲜尝鲜周',
+        subtitle: '新鲜直达，每日好价'
       }
     ],
     campaign: {
       title: '夏日清凉特卖',
       subtitle: '限时领券，爆款低至五折'
     },
-    campaignUrl: '',
-    campaignRequestId: 0,
+    campaignSession: 1,
+    frameId: 'campaign-frame-1',
+    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086&sessionId=1',
     loading: true,
     errorText: '',
-    trackerReady: false,
-    pageActive: true
+    trackerReady: false
   },
   onLoad () {
-    this._pageAlive = true
-    this.activateCampaign(this.campaignId)
+    this._isAlive = true
+    this._isVisible = true
+    this._claimRequest = null
+    this.bindWindowMessage()
+  },
+  onReady () {
+    this.updateTrackerVisibility(true)
   },
   onShow () {
-    this._pageAlive = true
-    this.pageActive = true
-    /* @mpx-if (__mpx_mode__ === 'web') */
-    this.addCampaignMessageListener()
-    /* @mpx-endif */
+    this._isVisible = true
+    this.updateTrackerVisibility(true)
   },
   onHide () {
-    this.pageActive = false
-    this.trackerReady = false
-    /* @mpx-if (__mpx_mode__ === 'web') */
-    this.removeCampaignMessageListener()
-    this._campaignWindow = null
-    /* @mpx-endif */
+    this._isVisible = false
+    this.updateTrackerVisibility(false)
   },
   onUnload () {
-    this._pageAlive = false
-    this.pageActive = false
-    /* @mpx-if (__mpx_mode__ === 'web') */
-    this.removeCampaignMessageListener()
-    this._campaignWindow = null
-    /* @mpx-endif */
+    this._isAlive = false
+    this._isVisible = false
+    this.campaignSession += 1
+    this.cancelClaimRequest()
+    this.unbindWindowMessage()
+    this.updateTrackerVisibility(false)
   },
   methods: {
-    activateCampaign (campaignId) {
+    switchCampaign (campaignId) {
+      if (campaignId === this.campaignId) return
       const campaign = this.campaigns.find((item) => item.id === campaignId)
       if (!campaign) return
-      this.campaignRequestId += 1
-      this.campaignId = campaignId
+
+      this.activateCampaign(campaign)
+    },
+    activateCampaign (campaign) {
+      const sessionId = this.campaignSession + 1
+
+      this.cancelClaimRequest()
+      this.campaignSession = sessionId
+      this.campaignId = campaign.id
       this.campaign = {
         title: campaign.title,
         subtitle: campaign.subtitle
       }
+      this.frameId = `campaign-frame-${sessionId}`
+      this.campaignUrl = ''
       this.loading = true
       this.errorText = ''
       this.trackerReady = false
-      /* @mpx-if (__mpx_mode__ === 'web') */
-      this._campaignWindow = null
-      /* @mpx-endif */
-      this.campaignUrl = `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}&campaignSession=${this.campaignRequestId}`
+
+      this.$nextTick(() => {
+        if (!this.isCurrentSession(campaign.id, sessionId)) return
+        this.campaignUrl = this.buildCampaignUrl(campaign.id, sessionId)
+      })
     },
-    switchCampaign (campaignId) {
-      if (campaignId === this.campaignId) return
-      this.activateCampaign(campaignId)
+    buildCampaignUrl (campaignId, sessionId) {
+      return `${TRUSTED_CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}&sessionId=${sessionId}`
     },
     handleCampaignLoad (event) {
-      if (!this.isCurrentCampaignEvent(event)) return
-      /* @mpx-if (__mpx_mode__ === 'web') */
-      const iframe = document.getElementById('campaign-webview')
-      this._campaignWindow = iframe && iframe.contentWindow
-      /* @mpx-endif */
+      const context = this.getEventContext(event)
+      if (!this.isCurrentSession(context.campaignId, context.sessionId)) return
+
       this.loading = false
+      this.errorText = ''
+      if (!this._isVisible) return
+
       wx.reportAnalytics('campaign_webview_load', {
-        campaign_id: this.campaignId
+        campaign_id: context.campaignId
       })
     },
     handleCampaignError (event) {
-      if (!this.isCurrentCampaignEvent(event)) return
-      /* @mpx-if (__mpx_mode__ === 'web') */
-      this._campaignWindow = null
-      /* @mpx-endif */
+      const context = this.getEventContext(event)
+      if (!this.isCurrentSession(context.campaignId, context.sessionId)) return
+
       this.loading = false
       this.errorText = '活动会场暂时无法打开'
     },
-    isCurrentCampaignEvent (event) {
-      if (!this._pageAlive) return false
-      /* @mpx-if (__mpx_mode__ === 'web') */
-      return event.detail && event.detail.fullUrl === this.campaignUrl
-      /* @mpx-else */
-      return true
-      /* @mpx-endif */
-    },
     handleCampaignMessage (event) {
-      const data = event.detail && event.detail.data
+      if (!this._isAlive || !this._isVisible) return
+
+      const context = this.getEventContext(event)
+      if (!this.isCurrentSession(context.campaignId, context.sessionId)) return
+
+      const data = event && event.detail ? event.detail.data : []
       const messages = Array.isArray(data) ? data : [data]
       messages.forEach((message) => {
-        this.handleCampaignAction(message || {})
+        this.dispatchCampaignMessage(this.parseMessage(message), context)
       })
     },
-    handleCampaignAction (message) {
-      const messageCampaignId = message.campaignId || (message.payload && message.payload.campaignId)
-      if (messageCampaignId && messageCampaignId !== this.campaignId) return
-      if (message.type === 'claim-coupon' && message.couponId) {
-        this.claimCoupon(message.couponId, this.campaignId)
+    bindWindowMessage () {
+      if (typeof window === 'undefined') return
+
+      this.unbindWindowMessage()
+      this._windowMessageHandler = (event) => {
+        this.handleWindowMessage(event)
       }
-      if (message.type === 'open-product' && message.productId) {
-        this.openProduct(message.productId, this.campaignId)
-      }
+      window.addEventListener('message', this._windowMessageHandler)
     },
-    claimCoupon (couponId, campaignId) {
-      wx.request({
-        url: '/api/campaign/coupons/claim',
-        method: 'POST',
-        data: { campaignId, couponId },
-        success: () => {
-          if (!this._pageAlive) return
-          wx.showToast({ title: '领取成功', icon: 'success' })
-        }
-      })
-    },
-    openProduct (productId, campaignId) {
-      wx.navigateTo({
-        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(campaignId)}`
-      })
-    },
-    reloadCampaign () {
-      this.activateCampaign(this.campaignId)
-    },
-    handleTrackerReady (event) {
-      if (event.detail && event.detail.campaignId === this.campaignId) {
-        this.trackerReady = true
-      }
-    },
-    handleTrackerError (event) {
-      if (!event.detail || event.detail.campaignId === this.campaignId) {
-        this.trackerReady = false
-      }
-    },
-    /* @mpx-if (__mpx_mode__ === 'web') */
-    addCampaignMessageListener () {
-      if (this._messageListening) return
-      window.addEventListener('message', this.handleWindowMessage)
-      this._messageListening = true
-    },
-    removeCampaignMessageListener () {
-      if (!this._messageListening) return
-      window.removeEventListener('message', this.handleWindowMessage)
-      this._messageListening = false
+    unbindWindowMessage () {
+      if (typeof window === 'undefined' || !this._windowMessageHandler) return
+
+      window.removeEventListener('message', this._windowMessageHandler)
+      this._windowMessageHandler = null
     },
     handleWindowMessage (event) {
-      if (!this._pageAlive || event.origin !== CAMPAIGN_ORIGIN) return
-      const iframe = document.getElementById('campaign-webview')
-      if (!iframe || event.source !== iframe.contentWindow || event.source !== this._campaignWindow) return
-      let message = event.data
-      if (typeof message === 'string') {
-        try {
-          message = JSON.parse(message)
-        } catch (e) {
-          return
-        }
+      if (!this._isAlive || !this._isVisible) return
+      if (!event || event.origin !== TRUSTED_CAMPAIGN_ORIGIN) return
+      if (typeof document === 'undefined') return
+
+      const frame = document.getElementById(this.frameId)
+      if (!frame || event.source !== frame.contentWindow) return
+
+      const context = {
+        campaignId: this.campaignId,
+        sessionId: this.campaignSession
       }
+      this.dispatchCampaignMessage(this.parseMessage(event.data), context)
+    },
+    parseMessage (message) {
+      if (typeof message !== 'string') return message
+      try {
+        return JSON.parse(message)
+      } catch (error) {
+        return null
+      }
+    },
+    dispatchCampaignMessage (message, context) {
       if (!message || typeof message !== 'object') return
-      this.handleCampaignAction(message)
+      if (!this.isCurrentSession(context.campaignId, context.sessionId)) return
+      if (message.campaignId && message.campaignId !== context.campaignId) return
+
+      if (message.type === 'claim-coupon' && this.isValidBusinessId(message.couponId)) {
+        this.claimCoupon(message.couponId, context)
+      } else if (message.type === 'open-product' && this.isValidBusinessId(message.productId)) {
+        this.openProduct(message.productId, context)
+      } else if (message.type === 'campaign-exposure') {
+        this.trackExposure(message.payload, context)
+      }
+    },
+    claimCoupon (couponId, context) {
+      if (!this.isCurrentSession(context.campaignId, context.sessionId)) return
+
+      this.cancelClaimRequest()
+      const request = wx.request({
+        url: '/api/campaign/coupons/claim',
+        method: 'POST',
+        data: {
+          campaignId: context.campaignId,
+          couponId
+        },
+        success: () => {
+          if (!this._isVisible || !this.isCurrentSession(context.campaignId, context.sessionId)) return
+          wx.showToast({ title: '领取成功', icon: 'success' })
+        },
+        complete: () => {
+          if (this._claimRequest === request) {
+            this._claimRequest = null
+          }
+        }
+      })
+      this._claimRequest = request
+    },
+    cancelClaimRequest () {
+      const request = this._claimRequest
+      this._claimRequest = null
+      if (request && typeof request.abort === 'function') {
+        request.abort()
+      }
+    },
+    openProduct (productId, context) {
+      if (!this._isVisible || !this.isCurrentSession(context.campaignId, context.sessionId)) return
+
+      wx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(context.campaignId)}`
+      })
+    },
+    trackExposure (payload, context) {
+      if (!this._isVisible || !this.isCurrentSession(context.campaignId, context.sessionId)) return
+
+      const tracker = this.$refs && this.$refs.campaignTracker
+      if (tracker && typeof tracker.trackExposure === 'function') {
+        tracker.trackExposure(payload, context.campaignId)
+      }
+    },
+    reloadCampaign () {
+      const campaign = this.campaigns.find((item) => item.id === this.campaignId)
+      if (!campaign) return
+      this.activateCampaign(campaign)
+    },
+    handleTrackerReady (event) {
+      const detail = event && event.detail ? event.detail : {}
+      if (!this._isAlive || detail.campaignId !== this.campaignId) return
+      this.trackerReady = true
+    },
+    handleTrackerError (event) {
+      const detail = event && event.detail ? event.detail : {}
+      if (!this._isAlive || detail.campaignId !== this.campaignId) return
+      this.trackerReady = false
+    },
+    updateTrackerVisibility (visible) {
+      const tracker = this.$refs && this.$refs.campaignTracker
+      if (tracker && typeof tracker.setPageVisible === 'function') {
+        tracker.setPageVisible(visible)
+      }
+    },
+    getEventContext (event) {
+      const currentTarget = event && event.currentTarget
+      const dataset = currentTarget && currentTarget.dataset ? currentTarget.dataset : {}
+      return {
+        campaignId: dataset.campaignId,
+        sessionId: Number(dataset.sessionId)
+      }
+    },
+    isCurrentSession (campaignId, sessionId) {
+      return Boolean(
+        this._isAlive &&
+        campaignId === this.campaignId &&
+        sessionId === this.campaignSession
+      )
+    },
+    isValidBusinessId (value) {
+      if (typeof value !== 'string' && typeof value !== 'number') return false
+      const normalized = String(value)
+      return normalized.length > 0 && normalized.length <= 128
     }
-    /* @mpx-endif */
   }
 })
 </script>
@@ -291,6 +374,13 @@ createPage({
 .campaign-tab.active {
   color: #ffffff;
   background: #ff7a45;
+}
+
+.campaign-webview {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 220rpx);
+  border: 0;
 }
 
 .campaign-loading,

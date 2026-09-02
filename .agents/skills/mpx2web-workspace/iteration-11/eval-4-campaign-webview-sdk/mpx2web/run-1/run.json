@@ -1,65 +1,37 @@
 {
-  "description": "eval-4 has_skill",
-  "cwd": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-1/eval-4-campaign-webview-sdk/has_skill",
-  "model": "gpt-5.6-sol",
-  "reasoning_effort": "high",
-  "status": "completed",
-  "attempts": [
-    {
-      "attempt": 1,
-      "command": [
-        "codex",
-        "exec",
-        "--ignore-user-config",
-        "--ephemeral",
-        "--disable",
-        "plugins",
-        "--disable",
-        "remote_plugin",
-        "--disable",
-        "apps",
-        "--skip-git-repo-check",
-        "-m",
-        "gpt-5.6-sol",
-        "-s",
-        "workspace-write",
-        "-c",
-        "model_reasoning_effort=\"high\"",
-        "-C",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-1/eval-4-campaign-webview-sdk/has_skill",
-        "--color",
-        "never",
-        "--json",
-        "<prompt-via-stdin>"
-      ],
-      "returncode": 0,
-      "duration_ms": 542379,
-      "missing_outputs": []
-    }
+  "description": "Eval-4 mpx2web run-1",
+  "cwd": "isolated temporary workspace",
+  "command": [
+    "codex",
+    "exec",
+    "--ignore-user-config",
+    "--ephemeral",
+    "--disable",
+    "plugins",
+    "--disable",
+    "remote_plugin",
+    "--disable",
+    "apps",
+    "--skip-git-repo-check",
+    "-C",
+    "/private/var/folders/yf/mcf8m_nn1896w8kbdfxnhnw40000ks/T/mpx2web-eval-bn41yn29",
+    "-s",
+    "workspace-write",
+    "-m",
+    "gpt-5.6-sol",
+    "-c",
+    "model_reasoning_effort=\"high\"",
+    "--color",
+    "never",
+    "--json",
+    "<prompt-via-stdin>"
   ],
-  "output_exists": true,
-  "duration_ms": 542379,
-  "published_evidence": {
-    "sample": 1,
-    "outputs": "eval-4-campaign-webview-sdk/mpx2web/run-1/outputs",
-    "compile_status": "passed",
-    "artifact_inventory": {
-      "declared_files": [
-        "src/pages/campaign/index.mpx",
-        "src/components/campaign-tracker.mpx",
-        "src/app.mpx",
-        "vue.config.js"
-      ],
-      "compiled_mpx_files": [
-        "src/pages/campaign/index.mpx",
-        "src/components/campaign-tracker.mpx"
-      ],
-      "support_files": [
-        "src/app.mpx",
-        "vue.config.js"
-      ],
-      "missing_files": [],
-      "all_declared_files_present": true
-    }
-  }
+  "returncode": 0,
+  "outputs_complete": true,
+  "compile_status": "passed",
+  "compile_boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
+  "duration_ms": 367896,
+  "fingerprint": "8f46a57287b9e21d30b93fe9a0ad0f965b9f7ebeb7dfde43eb93e97322fdfd08",
+  "fixture_digest": "ea9f132a97909350993b1cebd3b10b82372e332b4cf773b2ed75078b0ba4e096",
+  "skill_digest": "4bb29537075654ea646965b265b90341093b60dcc2b2b7cd13f59a3693120e17"
 }

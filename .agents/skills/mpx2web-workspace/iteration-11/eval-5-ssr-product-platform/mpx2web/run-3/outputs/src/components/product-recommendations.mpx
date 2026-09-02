@@ -22,91 +22,118 @@ import { createComponent } from '@mpxjs/core'
 // Tracker exposes track(eventName, payload) and destroy().
 createComponent({
   properties: {
-    productId: {
-      type: String,
-      observer: 'handleProductChange'
-    },
-    items: {
-      type: Array,
-      observer: 'handleItemsChange'
+    productId: String,
+    items: Array
+  },
+  observers: {
+    'productId, items': function () {
+      if (this.recommendationReady) this.restartTracker()
     }
   },
   ready () {
     if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
-    this.sdkReady = true
-    this.sdkDetached = false
-    this.initTracker(this.productId)
+
+    this.recommendationReady = true
+    this.trackerDetached = false
+    this.trackerPageHidden = false
+    this.trackerGeneration = 0
+    this.restartTracker()
+  },
+  pageLifetimes: {
+    show () {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || this.trackerDetached) return
+
+      this.trackerPageHidden = false
+      if (this.recommendationReady) this.restartTracker()
+    },
+    hide () {
+      if (__mpx_mode__ !== 'web') return
+
+      this.trackerPageHidden = true
+      this.trackerGeneration = (this.trackerGeneration || 0) + 1
+      this.releaseTracker()
+    }
   },
   detached () {
-    this.sdkDetached = true
-    this.sdkReady = false
-    this.initVersion = (this.initVersion || 0) + 1
-    this.destroyTracker()
+    this.trackerDetached = true
+    this.trackerPageHidden = true
+    this.recommendationReady = false
+    this.trackerGeneration = (this.trackerGeneration || 0) + 1
+    this.releaseTracker()
   },
   methods: {
-    handleProductChange (productId) {
-      if (this.sdkReady) this.initTracker(productId)
+    releaseTracker () {
+      if (this.recommendationObserver) {
+        this.recommendationObserver.disconnect()
+        this.recommendationObserver = null
+      }
+      if (this.exposureTracker) {
+        this.exposureTracker.destroy()
+        this.exposureTracker = null
+      }
     },
-    handleItemsChange () {
-      if (this.sdkReady && this.tracker) this.observeCards(this.initVersion, this.productId, this.tracker)
-    },
-    async initTracker (productId) {
-      if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
-      const initVersion = (this.initVersion || 0) + 1
-      this.initVersion = initVersion
-      this.destroyTracker()
-      if (!productId || this.sdkDetached) return
+    restartTracker () {
+      if (
+        __mpx_mode__ !== 'web' ||
+        typeof window === 'undefined' ||
+        this.trackerPageHidden
+      ) return
 
+      const generation = (this.trackerGeneration || 0) + 1
+      const productId = this.productId
+      this.trackerGeneration = generation
+      this.releaseTracker()
+
+      this.$nextTick(() => {
+        if (!this.isCurrentTracker(generation, productId)) return
+        this.createTracker(generation, productId)
+      })
+    },
+    isCurrentTracker (generation, productId) {
+      return !this.trackerDetached &&
+        !this.trackerPageHidden &&
+        this.recommendationReady &&
+        this.trackerGeneration === generation &&
+        this.productId === productId
+    },
+    async createTracker (generation, productId) {
       const sdkModule = await import('@business/product-exposure-web')
-      if (this.sdkDetached || initVersion !== this.initVersion || productId !== this.productId) return
+      if (!this.isCurrentTracker(generation, productId)) return
+
       const exposureSdk = sdkModule.default || sdkModule
       const tracker = await exposureSdk.create({ productId })
-      if (this.sdkDetached || initVersion !== this.initVersion || productId !== this.productId) {
+      if (!this.isCurrentTracker(generation, productId)) {
         tracker.destroy()
         return
       }
-      this.tracker = tracker
-      if (!window.IntersectionObserver || !this.$el) return
-      this.observer = new window.IntersectionObserver((entries) => {
-        if (
-          this.sdkDetached ||
-          initVersion !== this.initVersion ||
-          productId !== this.productId ||
-          tracker !== this.tracker
-        ) return
+
+      this.exposureTracker = tracker
+      const observer = new window.IntersectionObserver((entries) => {
+        if (!this.isCurrentTracker(generation, productId) || this.exposureTracker !== tracker) return
+
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            tracker.track('recommendation_exposure', {
-              productId,
-              recommendationId: entry.target.dataset.productId
-            })
-          }
+          if (!entry.isIntersecting) return
+          observer.unobserve(entry.target)
+          tracker.track('recommendation_exposure', {
+            productId,
+            recommendationId: entry.target.dataset.productId
+          })
         })
       })
-      this.observeCards(initVersion, productId, tracker)
-    },
-    observeCards (initVersion, productId, tracker) {
-      this.$nextTick(() => {
-        if (
-          this.sdkDetached ||
-          initVersion !== this.initVersion ||
-          productId !== this.productId ||
-          tracker !== this.tracker
-        ) return
-        this.observer.disconnect()
-        this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-          this.observer.observe(element)
-        })
-      })
-    },
-    destroyTracker () {
-      if (this.observer) {
-        this.observer.disconnect()
-        this.observer = null
+
+      if (!this.isCurrentTracker(generation, productId) || this.exposureTracker !== tracker) {
+        observer.disconnect()
+        tracker.destroy()
+        if (this.exposureTracker === tracker) this.exposureTracker = null
+        return
       }
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
+
+      this.recommendationObserver = observer
+      const root = this.$el
+      if (root && root.querySelectorAll) {
+        root.querySelectorAll('.recommendation-card').forEach((element) => {
+          observer.observe(element)
+        })
       }
     },
     openProduct (productId) {

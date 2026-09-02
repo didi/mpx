@@ -30,8 +30,10 @@
         wx:key="id"
         order="{{item}}"
         disabled="{{item.locked}}"
+        open="{{item.id === openOrderId}}"
         bindselect="openOrder"
         bindremove="removeOrder"
+        bindswipestart="handleSwipeStart"
         bindswipeend="handleSwipeEnd"
       />
     </view>
@@ -97,54 +99,91 @@ createPage({
         locked: false
       }
     ],
+    openOrderId: '',
     logisticsOnline: false,
-    loading: false,
-    openSwipeOrderId: ''
+    loading: false
+  },
+  onUnload () {
+    this._requestGeneration = (this._requestGeneration || 0) + 1
+    if (this._orderRequest && typeof this._orderRequest.abort === 'function') {
+      this._orderRequest.abort()
+    }
+    this._orderRequest = null
   },
   methods: {
     switchStatus (status) {
       if (status === this.activeStatus) return
       this.activeStatus = status
+      this.openOrderId = ''
       this.fetchOrders()
     },
     fetchOrders () {
+      const status = this.activeStatus
+      const generation = (this._requestGeneration || 0) + 1
+      this._requestGeneration = generation
+
+      if (this._orderRequest && typeof this._orderRequest.abort === 'function') {
+        this._orderRequest.abort()
+      }
+
       this.loading = true
-      mpx.request({
+      this._orderRequest = mpx.request({
         url: '/api/orders',
-        data: { status: this.activeStatus },
+        data: { status },
         usePromise: false,
         success: ({ data }) => {
+          if (this._requestGeneration !== generation || this.activeStatus !== status) return
           this.orders = data.list
           this.statusTabs = data.summary
+          this.openOrderId = ''
         },
         complete: () => {
+          if (this._requestGeneration !== generation) return
+          this._orderRequest = null
           this.loading = false
         }
       })
     },
+    findEnabledOrder (orderId) {
+      return this.orders.find(order => order.id === orderId && !order.locked)
+    },
     openOrder ({ detail }) {
+      if (!this.findEnabledOrder(detail.orderId)) return
       mpx.navigateTo({ url: `/pages/orders/detail?id=${detail.orderId}` })
     },
     removeOrder ({ detail }) {
+      if (!this.findEnabledOrder(detail.orderId)) return
       mpx.showModal({
         title: '删除订单',
         content: '删除后将无法在订单列表中查看，确认删除吗？',
         usePromise: false,
         success: ({ confirm }) => {
-          if (!confirm) return
+          if (!confirm || !this.findEnabledOrder(detail.orderId)) return
           mpx.request({
             url: `/api/orders/${detail.orderId}`,
             method: 'DELETE',
             usePromise: false,
             success: () => {
               this.orders = this.orders.filter(order => order.id !== detail.orderId)
+              if (this.openOrderId === detail.orderId) this.openOrderId = ''
             }
           })
         }
       })
     },
+    handleSwipeStart ({ detail }) {
+      if (!this.findEnabledOrder(detail.orderId)) return
+      if (this.openOrderId && this.openOrderId !== detail.orderId) {
+        this.openOrderId = ''
+      }
+    },
     handleSwipeEnd ({ detail }) {
-      this.openSwipeOrderId = detail.open ? detail.orderId : ''
+      if (!this.findEnabledOrder(detail.orderId)) return
+      if (detail.open) {
+        this.openOrderId = detail.orderId
+      } else if (this.openOrderId === detail.orderId) {
+        this.openOrderId = ''
+      }
     },
     handleConnectionChange ({ detail }) {
       this.logisticsOnline = detail.connected

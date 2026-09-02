@@ -1,40 +1,58 @@
 import mpx from '@mpxjs/api-proxy'
 
 function firstHeaderValue (value) {
-  return value && value.split(',')[0].trim()
+  const headerValue = Array.isArray(value) ? value[0] : value
+  return typeof headerValue === 'string'
+    ? headerValue.split(',')[0].trim()
+    : ''
 }
 
 function createRequestOptions (path, requestContext) {
-  const options = { url: path }
   const req = requestContext && requestContext.req
-  if (!req) return options
+  if (!req) {
+    return { url: path }
+  }
 
   const headers = req.headers || {}
-  const protocol = firstHeaderValue(headers['x-forwarded-proto']) || req.protocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
-  const host = firstHeaderValue(headers['x-forwarded-host']) || headers.host
-  options.url = `${protocol}://${host}${path}`
+  const forwardedProtocol = firstHeaderValue(headers['x-forwarded-proto'])
+  const requestProtocol = forwardedProtocol || req.protocol ||
+    (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const protocol = requestProtocol === 'https' ? 'https' : 'http'
+  const host = firstHeaderValue(headers['x-forwarded-host']) ||
+    firstHeaderValue(headers.host)
 
-  if (headers.cookie || headers.authorization) {
-    options.header = {}
-    if (headers.cookie) options.header.cookie = headers.cookie
-    if (headers.authorization) options.header.authorization = headers.authorization
+  if (!host) {
+    throw new Error('Cannot resolve the SSR request origin without a Host header')
   }
-  return options
+
+  const header = {}
+  if (headers.cookie) header.cookie = headers.cookie
+  if (headers.authorization) header.authorization = headers.authorization
+  if (headers['x-request-id']) header['x-request-id'] = headers['x-request-id']
+
+  return {
+    url: new URL(path, `${protocol}://${host}`).toString(),
+    header
+  }
 }
 
 function request (path, requestContext) {
   return new Promise((resolve, reject) => {
-    const options = createRequestOptions(path, requestContext)
-    options.success = ({ data }) => resolve(data)
-    options.fail = reject
-    mpx.request(options)
+    mpx.request({
+      ...createRequestOptions(path, requestContext),
+      success: ({ data }) => resolve(data),
+      fail: reject
+    })
   })
 }
 
 export function fetchProduct (productId, requestContext) {
-  return request(`/api/products/${productId}`, requestContext)
+  return request(`/api/products/${encodeURIComponent(productId)}`, requestContext)
 }
 
 export function fetchRecommendations (productId, requestContext) {
-  return request(`/api/products/${productId}/recommendations`, requestContext)
+  return request(
+    `/api/products/${encodeURIComponent(productId)}/recommendations`,
+    requestContext
+  )
 }

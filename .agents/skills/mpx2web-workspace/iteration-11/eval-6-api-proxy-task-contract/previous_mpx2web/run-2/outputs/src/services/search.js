@@ -1,14 +1,16 @@
 import mpx from '@mpxjs/core'
 
-export function fetchTrendingKeywords () {
-  return mpx.request({
+export async function fetchTrendingKeywords () {
+  const { data } = await mpx.request({
     url: '/api/search/trending'
-  }).then(({ data }) => data)
+  })
+  return data
 }
 
 export function requestSuggestions (keyword) {
   let requestTask
-  const promise = new Promise((resolve, reject) => {
+
+  const requestPromise = new Promise((resolve, reject) => {
     requestTask = mpx.request({
       url: '/api/search/suggest',
       data: { keyword },
@@ -17,10 +19,10 @@ export function requestSuggestions (keyword) {
       fail: reject
     })
   })
-  return {
-    promise,
-    abort () {
-      requestTask.abort()
-    }
+
+  requestPromise.abort = () => {
+    if (requestTask) requestTask.abort()
   }
+
+  return requestPromise
 }

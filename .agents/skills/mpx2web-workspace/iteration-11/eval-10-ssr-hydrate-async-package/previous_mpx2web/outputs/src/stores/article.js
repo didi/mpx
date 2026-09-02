@@ -11,19 +11,22 @@ export const useArticleStore = defineStore('article', {
   }),
   actions: {
     async loadArticle (articleId, requestContext) {
-      if (this.loaded && this.articleId === articleId) return
+      const normalizedArticleId = String(articleId || '')
+      if (this.loaded && this.articleId === normalizedArticleId) return this.article
 
       const requestVersion = ++this.requestVersion
-      this.articleId = articleId
+      this.articleId = normalizedArticleId
       this.article = null
       this.recommendations = []
       this.loaded = false
-      const data = await fetchArticle(articleId, requestContext)
 
-      if (requestVersion !== this.requestVersion || this.articleId !== articleId) return
+      const data = await fetchArticle(normalizedArticleId, requestContext)
+      if (requestVersion !== this.requestVersion || this.articleId !== normalizedArticleId) return
+
       this.article = data.article
       this.recommendations = data.recommendations
       this.loaded = true
+      return this.article
     }
   }
 })

@@ -100,41 +100,30 @@ createPage({
       }
     ],
     openedOrderId: '',
+    channelActive: false,
     logisticsOnline: false,
-    channelActive: true,
     loading: false
   },
-  watch: {
-    memberId (memberId, oldMemberId) {
-      if (memberId === oldMemberId) return
-      this.logisticsOnline = false
-      this.openedOrderId = ''
-      this.fetchOrders()
-    }
-  },
   onLoad () {
-    this._ordersRequestId = 0
-    this._ordersRequestTask = null
-    this._activeSwipeOrderId = ''
-    this._pageVisible = true
-    this._destroyed = false
+    this._requestGeneration = 0
+    this._ordersRequest = null
   },
   onShow () {
-    this._pageVisible = true
     this.channelActive = true
   },
   onHide () {
-    this._pageVisible = false
     this.channelActive = false
     this.logisticsOnline = false
     this.openedOrderId = ''
-    this.cancelOrdersRequest()
   },
   onUnload () {
-    this._destroyed = true
-    this._pageVisible = false
     this.channelActive = false
-    this.cancelOrdersRequest()
+    this.logisticsOnline = false
+    this._requestGeneration += 1
+    if (this._ordersRequest && typeof this._ordersRequest.abort === 'function') {
+      this._ordersRequest.abort()
+    }
+    this._ordersRequest = null
   },
   methods: {
     switchStatus (status) {
@@ -144,60 +133,50 @@ createPage({
       this.fetchOrders()
     },
     fetchOrders () {
-      this.cancelOrdersRequest()
-      const requestId = this._ordersRequestId + 1
+      const generation = ++this._requestGeneration
       const status = this.activeStatus
-      const memberId = this.memberId
-      this._ordersRequestId = requestId
+      if (this._ordersRequest && typeof this._ordersRequest.abort === 'function') {
+        this._ordersRequest.abort()
+      }
       this.loading = true
-      this._ordersRequestTask = wx.request({
+      this._ordersRequest = wx.request({
         url: '/api/orders',
-        data: { status, memberId },
+        data: { status },
         success: ({ data }) => {
-          if (!this.isCurrentOrdersRequest(requestId, status, memberId)) return
+          if (generation !== this._requestGeneration || status !== this.activeStatus) return
           this.orders = data.list
           this.statusTabs = data.summary
+          this.openedOrderId = ''
         },
         complete: () => {
-          if (this._ordersRequestId !== requestId) return
-          this._ordersRequestTask = null
+          if (generation !== this._requestGeneration) return
           this.loading = false
+          this._ordersRequest = null
         }
       })
     },
-    cancelOrdersRequest () {
-      this._ordersRequestId = (this._ordersRequestId || 0) + 1
-      if (this._ordersRequestTask) this._ordersRequestTask.abort()
-      this._ordersRequestTask = null
-      this.loading = false
-    },
-    isCurrentOrdersRequest (requestId, status, memberId) {
-      return !this._destroyed && this._pageVisible &&
-        this._ordersRequestId === requestId &&
-        this.activeStatus === status &&
-        this.memberId === memberId
-    },
-    isOrderEnabled (orderId) {
-      return this.orders.some(order => order.id === orderId && !order.locked)
-    },
     openOrder ({ detail }) {
-      if (!this.isOrderEnabled(detail.orderId)) return
-      wx.navigateTo({ url: `/pages/orders/detail?id=${detail.orderId}` })
+      const order = this.orders.find(item => item.id === detail.orderId)
+      if (!order || order.locked) return
+      this.openedOrderId = ''
+      wx.navigateTo({ url: `/pages/orders/detail?id=${encodeURIComponent(detail.orderId)}` })
     },
     removeOrder ({ detail }) {
-      if (!this.isOrderEnabled(detail.orderId)) return
-      const memberId = this.memberId
+      const order = this.orders.find(item => item.id === detail.orderId)
+      if (!order || order.locked) return
       wx.showModal({
         title: '删除订单',
         content: '删除后将无法在订单列表中查看，确认删除吗？',
         success: ({ confirm }) => {
-          if (!confirm || this._destroyed || memberId !== this.memberId) return
+          if (!confirm) {
+            if (this.openedOrderId === detail.orderId) this.openedOrderId = ''
+            return
+          }
           wx.request({
-            url: `/api/orders/${detail.orderId}`,
+            url: `/api/orders/${encodeURIComponent(detail.orderId)}`,
             method: 'DELETE',
             success: () => {
-              if (this._destroyed || memberId !== this.memberId) return
-              this.orders = this.orders.filter(order => order.id !== detail.orderId)
+              this.orders = this.orders.filter(item => item.id !== detail.orderId)
               if (this.openedOrderId === detail.orderId) this.openedOrderId = ''
             }
           })
@@ -205,22 +184,23 @@ createPage({
       })
     },
     handleSwipeStart ({ detail }) {
-      this._activeSwipeOrderId = detail.orderId
       if (this.openedOrderId && this.openedOrderId !== detail.orderId) {
         this.openedOrderId = ''
       }
     },
     handleSwipeEnd ({ detail }) {
-      if (this._activeSwipeOrderId !== detail.orderId) return
-      this._activeSwipeOrderId = ''
-      this.openedOrderId = detail.open ? detail.orderId : ''
+      if (detail.open) {
+        this.openedOrderId = detail.orderId
+      } else if (this.openedOrderId === detail.orderId) {
+        this.openedOrderId = ''
+      }
     },
     handleConnectionChange ({ detail }) {
-      if (!this._pageVisible || detail.memberId !== this.memberId) return
+      if (!this.channelActive || detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
-      if (!this._pageVisible || detail.memberId !== this.memberId) return
+      if (!this.channelActive || detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -232,8 +212,9 @@ createPage({
       })
     },
     handleChannelError ({ detail }) {
-      if (!this._pageVisible || detail.memberId !== this.memberId) return
-      this.logisticsOnline = false
+      if (!detail || detail.memberId === this.memberId) {
+        this.logisticsOnline = false
+      }
     },
     goShopping () {
       wx.switchTab({ url: '/pages/home/index' })

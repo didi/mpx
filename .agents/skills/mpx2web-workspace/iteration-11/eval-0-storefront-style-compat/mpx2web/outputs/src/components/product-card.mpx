@@ -6,14 +6,14 @@
     </view>
 
     <view class="product-content">
-      <text class="title">{{product.title}}</text>
+      <text class="product-title">{{product.title}}</text>
       <text class="product-subtitle">{{product.subtitle}}</text>
 
       <view class="product-meta">
         <view class="price-tag">
-          <text class="currency">¥</text>
-          <text class="amount">{{product.price}}</text>
-          <text class="unit">起</text>
+          <text class="product-currency">¥</text>
+          <text class="product-price-amount">{{product.price}}</text>
+          <text class="product-price-unit">起</text>
         </view>
         <text class="product-sales">{{product.salesText}}</text>
       </view>
@@ -49,6 +49,8 @@ createComponent({
 
 <style scoped>
 .product-card {
+  box-sizing: border-box;
+  flex: 0 0 338rpx;
   width: 338rpx;
   margin-bottom: 24rpx;
   overflow: hidden;
@@ -83,7 +85,7 @@ createComponent({
   padding: 20rpx;
 }
 
-.title {
+.product-title {
   display: block;
   overflow: hidden;
   color: #333333;
@@ -119,13 +121,13 @@ createComponent({
   color: #e64340;
 }
 
-.currency,
-.unit {
+.product-currency,
+.product-price-unit {
   font-size: 10px;
   line-height: 14px;
 }
 
-.amount {
+.product-price-amount {
   margin: 0 2px;
   font-size: 20px;
   font-weight: bold;
@@ -151,6 +153,7 @@ createComponent({
 }
 
 .cart-button {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -167,12 +170,14 @@ createComponent({
 </style>
 
 <style mode="web" scoped>
-.currency,
-.unit {
+.product-currency,
+.product-price-unit {
   display: inline-block;
+  flex: 0 0 12px;
   width: 12px;
   margin-right: -2px;
   font-size: 12px;
+  line-height: 16.8px;
   transform: scale(0.833333);
   transform-origin: left bottom;
 }

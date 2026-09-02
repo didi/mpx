@@ -1,12 +1,18 @@
 <script>
 import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
+import mpx from '@mpxjs/api-proxy'
+
+// The SSR bundle creates an app (and therefore a Pinia instance) for each render.
+// Request-specific data is never stored outside that instance.
+const pinia = createPinia()
 
 createApp({
-  pinia: () => createPinia(),
+  pinia,
   onLaunch () {
-    if (!this.$ssrContext && typeof wx !== 'undefined' && wx.reportAnalytics) {
-      wx.reportAnalytics('mall_launch', {})
+    // Web SSR has no browser analytics environment.
+    if (__mpx_mode__ !== 'web' || typeof window !== 'undefined') {
+      mpx.reportAnalytics('mall_launch', {})
     }
   }
 })

@@ -1,6 +1,8 @@
 <template>
   <view class="recommend-list">
-    <view wx:for="{{items}}" wx:key="id" bindtap="select(item.id)">{{item.title}}</view>
+    <view wx:for="{{items}}" wx:key="id" bindtap="select(item.id)">
+      <text>{{item.title}}</text>
+    </view>
   </view>
 </template>
 

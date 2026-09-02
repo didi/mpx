@@ -12,6 +12,27 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
+function saveInlineStyles (element, properties) {
+  return {
+    element,
+    properties: properties.map((property) => ({
+      property,
+      value: element.style.getPropertyValue(property),
+      priority: element.style.getPropertyPriority(property)
+    }))
+  }
+}
+
+function restoreInlineStyles (snapshot) {
+  snapshot.properties.forEach(({ property, value, priority }) => {
+    if (value) {
+      snapshot.element.style.setProperty(property, value, priority)
+    } else {
+      snapshot.element.style.removeProperty(property)
+    }
+  })
+}
+
 createPage({
   data: {
     cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
@@ -19,42 +40,76 @@ createPage({
     dark: false
   },
   onHide () {
-    if (__mpx_mode__ === 'web') this.closeDialog()
+    if (__mpx_mode__ === 'web') {
+      this.dialogVisible = false
+      this.restorePageScroll()
+    }
   },
   onUnload () {
-    if (__mpx_mode__ === 'web') this.closeDialog()
+    if (__mpx_mode__ === 'web') {
+      this.restorePageScroll()
+    }
   },
   methods: {
     openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
     toggleTheme () { this.dark = !this.dark },
     openDialog () {
       this.dialogVisible = true
-      if (__mpx_mode__ === 'web') this.lockPageScroll()
+      if (__mpx_mode__ === 'web') {
+        this.lockPageScroll()
+      }
     },
     closeDialog () {
       this.dialogVisible = false
-      if (__mpx_mode__ === 'web') this.restorePageScroll()
+      if (__mpx_mode__ === 'web') {
+        this.restorePageScroll()
+      }
     },
     lockPageScroll () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || this.portalScrollState) return
-      const targets = [document.documentElement, document.body, document.getElementById('app')].filter(Boolean)
-      this.portalScrollState = targets.map((target) => ({
-        target,
-        overflow: target.style.getPropertyValue('overflow'),
-        priority: target.style.getPropertyPriority('overflow')
-      }))
-      targets.forEach((target) => target.style.setProperty('overflow', 'hidden'))
+      if (
+        __mpx_mode__ !== 'web' ||
+        typeof window === 'undefined' ||
+        typeof document === 'undefined' ||
+        this._portalScrollLock
+      ) return
+
+      const body = document.body
+      if (!body) return
+
+      const mountNode = document.querySelector('#app')
+      const documentElement = document.documentElement
+      const scrollX = window.pageXOffset || (documentElement && documentElement.scrollLeft) || 0
+      const scrollY = window.pageYOffset || (documentElement && documentElement.scrollTop) || 0
+      const snapshots = [
+        saveInlineStyles(body, ['overflow', 'position', 'top', 'left', 'right', 'width'])
+      ]
+
+      if (mountNode) {
+        snapshots.push(saveInlineStyles(mountNode, ['overflow']))
+      }
+
+      this._portalScrollLock = { scrollX, scrollY, snapshots }
+
+      body.style.setProperty('overflow', 'hidden')
+      body.style.setProperty('position', 'fixed')
+      body.style.setProperty('top', `-${scrollY}px`)
+      body.style.setProperty('left', `-${scrollX}px`)
+      body.style.setProperty('right', '0')
+      body.style.setProperty('width', '100%')
+      if (mountNode) {
+        mountNode.style.setProperty('overflow', 'hidden')
+      }
     },
     restorePageScroll () {
-      if (__mpx_mode__ !== 'web' || !this.portalScrollState) return
-      this.portalScrollState.forEach(({ target, overflow, priority }) => {
-        if (overflow) {
-          target.style.setProperty('overflow', overflow, priority)
-        } else {
-          target.style.removeProperty('overflow')
-        }
-      })
-      this.portalScrollState = null
+      if (__mpx_mode__ !== 'web' || !this._portalScrollLock) return
+
+      const { scrollX, scrollY, snapshots } = this._portalScrollLock
+      this._portalScrollLock = null
+      snapshots.forEach(restoreInlineStyles)
+
+      if (typeof window !== 'undefined') {
+        window.scrollTo(scrollX, scrollY)
+      }
     }
   }
 })
@@ -62,22 +117,52 @@ createPage({
 
 <style scoped>
 .portal {
+  box-sizing: border-box;
   min-height: 100vh;
   color: var(--portal-text, #1f2937);
-  background: var(--portal-background, #f5f7fa);
+  background: var(--portal-background, #f5f7fb);
   padding: var(--portal-space, 24rpx);
 }
-.dialog-mask { position: fixed; inset: 0; }
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  background: var(--portal-mask-background, rgba(15, 23, 42, 0.48));
+}
+.dialog {
+  color: var(--portal-dialog-text, #1f2937);
+  background: var(--portal-dialog-background, #ffffff);
+}
 </style>
 
 <style mode="web">
 .portal {
   padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
+  scrollbar-width: thin;
+  scrollbar-color: var(--portal-scrollbar-thumb, #94a3b8) var(--portal-scrollbar-track, transparent);
 }
+
 @media (hover: hover) and (pointer: fine) {
-  .portal-card:hover { transform: translateY(-2px); }
+  .portal-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .portal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--portal-card-shadow, rgba(15, 23, 42, 0.12));
+  }
 }
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-.portal::-webkit-scrollbar { width: 6px; }
+
+.portal::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.portal::-webkit-scrollbar-track {
+  background: var(--portal-scrollbar-track, transparent);
+}
+
+.portal::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--portal-scrollbar-thumb, #94a3b8);
+}
 </style>

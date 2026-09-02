@@ -2,10 +2,11 @@
   <view class="product-video">
     <video
       id="product-video"
+      class="product-video__media"
       src="{{product.video}}"
       autoplay
+      muted="{{false}}"
       muted@web="{{true}}"
-      muted@wx="{{false}}"
       playsinline@web="{{true}}"
       enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
@@ -25,19 +26,43 @@ createComponent({
   },
   data: {
     progress: 0,
-    duration: 0
+    duration: 0,
+    videoSize: ''
   },
   methods: {
     onTimeUpdate (event) {
-      const video = __mpx_mode__ === 'web' ? event.target : event.detail
-      this.progress = video.currentTime
-      this.duration = video.duration
+      if (__mpx_mode__ === 'web') {
+        const media = event && (event.target || event.currentTarget)
+        this.progress = media && Number.isFinite(media.currentTime) ? media.currentTime : 0
+        this.duration = media && Number.isFinite(media.duration) ? media.duration : 0
+        return
+      }
+      const detail = event.detail || {}
+      this.progress = detail.currentTime || 0
+      this.duration = detail.duration || 0
     },
     onLoadedMetadata (event) {
-      const video = __mpx_mode__ === 'web' ? event.target : event.detail
-      this.duration = video.duration
-      this.videoSize = `${__mpx_mode__ === 'web' ? video.videoWidth : video.width}x${__mpx_mode__ === 'web' ? video.videoHeight : video.height}`
-      this.triggerEvent('loadedmetadata')
+      let width
+      let height
+      let duration
+
+      if (__mpx_mode__ === 'web') {
+        const media = event && (event.target || event.currentTarget)
+        width = media && media.videoWidth
+        height = media && media.videoHeight
+        duration = media && media.duration
+      } else {
+        const detail = event.detail || {}
+        width = detail.width
+        height = detail.height
+        duration = detail.duration
+      }
+
+      this.videoSize = `${width || 0}x${height || 0}`
+      if (Number.isFinite(duration)) {
+        this.duration = duration
+      }
+      this.triggerEvent('layoutchange', { width, height, duration })
     },
     onVideoError () {}
   }
@@ -46,4 +71,5 @@ createComponent({
 
 <style scoped>
 .product-video { width: 100%; }
+.product-video__media { display: block; width: 100%; }
 </style>

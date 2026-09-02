@@ -17,10 +17,10 @@
     "vue.config.js"
   ],
   "assertions": [
-    {"id": "n0", "text": "结算页通过 mpx.navigateTo 的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择", "category": "web-route"},
-    {"id": "n1", "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后使用 mpx.navigateBack 返回", "category": "web-route"},
-    {"id": "n2", "text": "订单 tab 只通过 mpx.switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack", "category": "web-route"},
-    {"id": "n3", "text": "navigator 的 open-type 使用模板支持值 navigate，而不是 API 名 navigateTo；不把 switchTab 模板分支当作稳定 Web 能力", "category": "web-template"},
+    {"id": "n0", "text": "结算页通过 Mpx 官方 navigateTo 调用的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择；源码可以是 mpx.navigateTo 或会被跨端编译转换的 wx.navigateTo", "category": "web-route"},
+    {"id": "n1", "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后通过 Mpx 官方 navigateBack 返回；源码可以是 mpx.navigateBack 或会被跨端编译转换的 wx.navigateBack", "category": "web-route"},
+    {"id": "n2", "text": "订单 tab 只通过 Mpx 官方 switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack；调用可采用项目现有的 mpx.xxx 或会被跨端编译转换的 wx.xxx", "category": "web-route"},
+    {"id": "n3", "text": "需要 EventChannel 的地址入口使用 button 调用脚本中的 navigateTo，不强制保留 navigator；其他普通声明式导航若使用 navigator，open-type 使用模板值 navigate，而不是 API 名 navigateTo，也不使用不稳定的 switchTab 模板分支", "category": "web-template"},
     {"id": "n4", "text": "Web 路由只通过 mpx.config.webConfig.routeConfig 配置 history 与 /shop/ base，output.publicPath 同为 /shop/", "category": "web-deployment"},
     {"id": "n5", "text": "业务代码不引入 this.$router、window.history、location 跳转或 getCurrentPages 回传地址", "category": "web-route", "forbidden_patterns": [
       {"pattern": "(?:\\$router|window\\.history|location(?:\\.|\\s*=)|getCurrentPages\\s*\\()", "description": "绕过 Mpx 路由或依赖小程序页面栈回传数据"}

@@ -2,7 +2,7 @@
   <view class="home-page">
     <view class="home-header">
       <view class="home-title-row">
-        <view class="home-title">今日好物</view>
+        <view class="title">今日好物</view>
         <text class="home-subtitle">精选限时优惠</text>
       </view>
       <image class="home-banner" src="/assets/home/banner.png" mode="aspectFill" />
@@ -133,7 +133,7 @@ createPage({
   margin-bottom: 20rpx;
 }
 
-.home-title {
+.title {
   color: #e64340;
   font-size: 40rpx;
   font-weight: bold;

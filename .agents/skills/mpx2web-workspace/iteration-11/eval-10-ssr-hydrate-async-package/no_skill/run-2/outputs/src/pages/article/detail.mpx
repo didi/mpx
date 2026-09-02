@@ -4,13 +4,21 @@
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
     <view wx:if="{{showBrowserShare}}" class="share-toolbar">复制链接</view>
-    <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
+    <recommend-list
+      article-id="{{articleId}}"
+      items="{{recommendations}}"
+      bindselect="openArticle"
+    />
   </view>
 </template>
 
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 import { useArticleStore } from '../../stores/article'
+
+function normalizeArticleId (articleId) {
+  return articleId == null ? '' : String(articleId)
+}
 
 createPage({
   data: {
@@ -19,26 +27,49 @@ createPage({
     favorite: false
   },
   computed: {
-    article () { return useArticleStore(this.$pinia).article || {} },
-    recommendations () { return useArticleStore(this.$pinia).recommendations }
+    article () {
+      const store = useArticleStore(this.$pinia)
+      return store.articleId === this.articleId ? (store.article || {}) : {}
+    },
+    recommendations () {
+      const store = useArticleStore(this.$pinia)
+      return store.articleId === this.articleId ? store.recommendations : []
+    }
   },
   onLoad (query) {
-    if (!this.$ssrContext) this.loadArticle(query.id)
+    const articleId = normalizeArticleId(query && query.id)
+    this.articleId = articleId
+
+    // SSR 由 serverPrefetch 负责首屏数据；浏览器 CSR 与小程序仍在 onLoad 拉取。
+    if (!this.$ssrContext) {
+      return this.loadArticle(articleId)
+    }
   },
-  mounted () {
-    this.showBrowserShare = true
+  onReady () {
+    // 等 hydrate 完成后再挂载浏览器专属工具，保证服务端与客户端首屏一致。
+    if (typeof window !== 'undefined') {
+      this.showBrowserShare = true
+    }
   },
   serverPrefetch () {
-    return this.loadArticle(this.$route.query.id, this.$ssrContext)
+    const routeQuery = (this.$route && this.$route.query) || {}
+    const articleId = normalizeArticleId(routeQuery.id || this.articleId)
+    this.articleId = articleId
+    return this.loadArticle(articleId, this.$ssrContext)
   },
   methods: {
     loadArticle (articleId, requestContext) {
-      this.articleId = articleId
       return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
     },
-    toggleFavorite () { this.favorite = !this.favorite },
+    toggleFavorite () {
+      this.favorite = !this.favorite
+    },
     openArticle (event) {
-      mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
+      const articleId = normalizeArticleId(event && event.detail && event.detail.articleId)
+      if (!articleId) return
+      mpx.navigateTo({
+        url: `/pages/article/detail?id=${encodeURIComponent(articleId)}`
+      })
     }
   }
 })

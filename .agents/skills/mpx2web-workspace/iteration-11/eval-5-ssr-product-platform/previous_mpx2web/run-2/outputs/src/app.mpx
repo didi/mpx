@@ -1,13 +1,7 @@
 <script>
-import mpx, { createApp } from '@mpxjs/core'
+import { createApp } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
 import { createPinia } from '@mpxjs/pinia'
-
-if (__mpx_mode__ === 'web') {
-  mpx.config.webConfig.routeConfig = {
-    mode: 'history',
-    base: '/mall/'
-  }
-}
 
 createApp({
   onAppInit () {
@@ -17,7 +11,7 @@ createApp({
   },
   onLaunch () {
     if (__mpx_mode__ === 'wx') {
-      wx.reportAnalytics('mall_launch', {})
+      mpx.reportAnalytics('mall_launch', {})
     }
   }
 })

@@ -2,8 +2,8 @@
   "eval_id": 9,
   "eval_name": "vue2-web-file-isolation",
   "complexity": "complex",
-  "focus": "web-file-resolution/vue2-sdk-lifecycle/custom-builtin",
-  "prompt": "数据看板需要保持微信小程序可点击摘要卡，Web 使用 Vue 2.7 交互图表和项目自定义滚动实现。当前快速切换或重复进入时可能出现晚到图表、重复监听和尺寸观察泄漏；Web 依赖也不能进入小程序依赖图。请修复并让自定义滚动组件保留现有业务使用的属性、事件和子节点，输出全部完整文件。",
+  "focus": "web-file-resolution/vue2-sdk-lifecycle/custom-builtin-scroll-contract",
+  "prompt": "数据看板需要保持微信小程序可点击摘要卡，Web 使用 Vue 2.7 交互图表和项目自定义滚动实现。当前快速切换或重复进入时可能出现晚到图表、重复监听和尺寸观察泄漏；Web 依赖也不能进入小程序依赖图。请修复并让自定义 scroll-view 保留调用点已有的横纵滚动、scrollTop、scrollLeft、scrollIntoView、scroll、scrolltoupper、scrolltolower、默认子节点和指标点击回传，输出全部完整文件。",
   "files": [
     "input/src/components/analytics-panel.mpx",
     "input/src/components/analytics-panel.web.mpx",
@@ -27,7 +27,9 @@
     {"id": "v3", "text": "DOM 容器只在 Web 客户端 mounted/ready 后访问，SSR 或模块初始化阶段不读取 document/window", "category": "web-sdk"},
     {"id": "v4", "text": "图表 SDK 只进入 Web 依赖图；每个实际异步 import/create 边界都检查当前代际或卸载状态，晚到实例立即销毁。纯 Web 且模块顶层 DOM-safe 时允许静态 import", "category": "web-concurrency"},
     {"id": "v5", "text": "卸载时销毁图表实例、disconnect ResizeObserver 并移除拥有的事件监听；数据变化可安全复用单一实例更新，但不得增加实例、Observer 或监听数量", "category": "web-cleanup"},
-    {"id": "v6", "text": "customBuiltInComponents 使用原始 key scroll-view；自定义 Vue 组件明确透传滚动属性、事件和默认 slot", "category": "web-template"},
-    {"id": "v7", "text": "指标摘要、指标点击、Web 图表更新和滚动容器业务链路保持完整", "category": "business-regression"}
+    {"id": "v6", "text": "customBuiltInComponents 使用原始 key scroll-view，不使用 mpx-scroll-view；自定义 Vue 组件保留 $attrs、$listeners 和默认 slot 的结构透传", "category": "web-template"},
+    {"id": "v7", "text": "自定义滚动组件同时实现 scrollX/scrollY 横纵 overflow，并在挂载和 prop 更新时真正同步 scrollTop、scrollLeft；scrollIntoView 更新后只滚动当前容器内目标节点", "category": "web-scroll"},
+    {"id": "v8", "text": "自定义滚动组件在原生滚动时发出包含 scrollTop、scrollLeft、scrollHeight、scrollWidth、deltaX、deltaY 的 scroll 事件，并按 upper/lower threshold 与实际滚动轴发出方向为 top/left、bottom/right 的 scrolltoupper/scrolltolower，避免阈值内重复泛滥触发", "category": "web-scroll"},
+    {"id": "v9", "text": "调用点继续使用横纵滚动、受控位置、scrollIntoView、upper/lower threshold 和三类滚动事件；小程序指标摘要/点击、Web 图表更新、Web 指标点击逐层回传与滚动容器业务链路均完整", "category": "business-regression"}
   ]
 }

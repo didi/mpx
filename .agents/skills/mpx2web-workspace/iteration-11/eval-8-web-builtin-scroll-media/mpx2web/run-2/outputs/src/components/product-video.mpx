@@ -1,11 +1,12 @@
 <template>
   <view class="product-video">
     <video
-      id="product-video"
+      id="product-video-{{product.id}}"
       src="{{product.video}}"
       autoplay
-      muted@web
-      playsinline@web
+      muted@web="{{true}}"
+      muted@wx="{{false}}"
+      playsinline@web="{{true}}"
       enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
@@ -29,21 +30,31 @@ createComponent({
   methods: {
     onTimeUpdate (event) {
       if (__mpx_mode__ === 'web') {
-        this.progress = event.target.currentTime
-        this.duration = event.target.duration
-      } else {
-        this.progress = event.detail.currentTime
-        this.duration = event.detail.duration
+        const video = event && event.target
+        if (video) {
+          this.progress = video.currentTime || 0
+          this.duration = video.duration || 0
+        }
+        return
       }
+
+      const detail = event.detail || {}
+      this.progress = detail.currentTime || 0
+      this.duration = detail.duration || 0
     },
     onLoadedMetadata (event) {
       if (__mpx_mode__ === 'web') {
-        this.videoSize = `${event.target.videoWidth}x${event.target.videoHeight}`
-        this.duration = event.target.duration
-      } else {
-        this.videoSize = `${event.detail.width}x${event.detail.height}`
-        this.duration = event.detail.duration
+        const video = event && event.target
+        if (video) {
+          this.videoSize = `${video.videoWidth || 0}x${video.videoHeight || 0}`
+          this.duration = video.duration || 0
+        }
+        return
       }
+
+      const detail = event.detail || {}
+      this.videoSize = `${detail.width || 0}x${detail.height || 0}`
+      this.duration = detail.duration || this.duration
     },
     onVideoError () {}
   }

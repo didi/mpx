@@ -1,6 +1,5 @@
 {
-  "total_tokens": 146899,
-  "duration_ms": 251741,
-  "total_duration_seconds": 251.741,
-  "generation_attempts": 1
+  "total_tokens": 100576,
+  "duration_ms": 113978,
+  "total_duration_seconds": 113.978
 }

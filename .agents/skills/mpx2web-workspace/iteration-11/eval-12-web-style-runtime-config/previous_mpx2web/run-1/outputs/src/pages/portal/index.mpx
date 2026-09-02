@@ -12,52 +12,6 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
-let webScrollLockState
-
-function lockWebPageScroll () {
-  if (webScrollLockState || typeof window === 'undefined' || typeof document === 'undefined') return
-  const body = document.body
-  const documentElement = document.documentElement
-  if (!body || !documentElement) return
-  const scrollX = window.pageXOffset || documentElement.scrollLeft || body.scrollLeft || 0
-  const scrollY = window.pageYOffset || documentElement.scrollTop || body.scrollTop || 0
-  webScrollLockState = {
-    scrollX,
-    scrollY,
-    bodyPosition: body.style.position,
-    bodyTop: body.style.top,
-    bodyLeft: body.style.left,
-    bodyWidth: body.style.width,
-    bodyOverflow: body.style.overflow,
-    documentOverflow: documentElement.style.overflow,
-    documentScrollBehavior: documentElement.style.scrollBehavior
-  }
-  documentElement.style.overflow = 'hidden'
-  body.style.position = 'fixed'
-  body.style.top = `-${scrollY}px`
-  body.style.left = `-${scrollX}px`
-  body.style.width = '100%'
-  body.style.overflow = 'hidden'
-}
-
-function restoreWebPageScroll () {
-  if (!webScrollLockState || typeof window === 'undefined' || typeof document === 'undefined') return
-  const body = document.body
-  const documentElement = document.documentElement
-  if (!body || !documentElement) return
-  const state = webScrollLockState
-  webScrollLockState = undefined
-  body.style.position = state.bodyPosition
-  body.style.top = state.bodyTop
-  body.style.left = state.bodyLeft
-  body.style.width = state.bodyWidth
-  body.style.overflow = state.bodyOverflow
-  documentElement.style.overflow = state.documentOverflow
-  documentElement.style.scrollBehavior = 'auto'
-  window.scrollTo(state.scrollX, state.scrollY)
-  documentElement.style.scrollBehavior = state.documentScrollBehavior
-}
-
 createPage({
   data: {
     cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
@@ -67,22 +21,67 @@ createPage({
   onHide () {
     if (__mpx_mode__ === 'web') {
       this.dialogVisible = false
-      restoreWebPageScroll()
+      this.unlockPageScroll()
     }
   },
   onUnload () {
-    if (__mpx_mode__ === 'web') restoreWebPageScroll()
+    if (__mpx_mode__ === 'web') {
+      this.dialogVisible = false
+      this.unlockPageScroll()
+    }
   },
   methods: {
     openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
     toggleTheme () { this.dark = !this.dark },
     openDialog () {
       this.dialogVisible = true
-      if (__mpx_mode__ === 'web') lockWebPageScroll()
+      this.lockPageScroll()
     },
     closeDialog () {
       this.dialogVisible = false
-      if (__mpx_mode__ === 'web') restoreWebPageScroll()
+      this.unlockPageScroll()
+    },
+    lockPageScroll () {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || typeof document === 'undefined') return
+      if (this._portalScrollLock || !document.body) return
+
+      const body = document.body
+      const documentElement = document.documentElement
+      const scrollX = window.pageXOffset || documentElement.scrollLeft || 0
+      const scrollY = window.pageYOffset || documentElement.scrollTop || 0
+
+      this._portalScrollLock = {
+        scrollX,
+        scrollY,
+        overflow: body.style.overflow,
+        position: body.style.position,
+        top: body.style.top,
+        left: body.style.left,
+        width: body.style.width
+      }
+
+      body.style.overflow = 'hidden'
+      body.style.position = 'fixed'
+      body.style.top = `-${scrollY}px`
+      body.style.left = `-${scrollX}px`
+      body.style.width = '100%'
+    },
+    unlockPageScroll () {
+      if (__mpx_mode__ !== 'web') return
+
+      const lock = this._portalScrollLock
+      if (!lock) return
+
+      this._portalScrollLock = null
+      if (typeof window === 'undefined' || typeof document === 'undefined' || !document.body) return
+
+      const body = document.body
+      body.style.overflow = lock.overflow
+      body.style.position = lock.position
+      body.style.top = lock.top
+      body.style.left = lock.left
+      body.style.width = lock.width
+      window.scrollTo(lock.scrollX, lock.scrollY)
     }
   }
 })
@@ -90,7 +89,6 @@ createPage({
 
 <style scoped>
 .portal {
-  box-sizing: border-box;
   min-height: 100vh;
   color: var(--portal-text, #1f2937);
   background: var(--portal-background, #f5f7fa);
@@ -101,19 +99,34 @@ createPage({
 
 <style mode="web">
 .portal {
+  box-sizing: border-box;
   padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
 }
+
 @media (hover: hover) and (pointer: fine) {
-  .portal-card:hover { transform: translateY(-2px); }
+  .portal-card:hover {
+    transform: translateY(-2px);
+  }
 }
+
+html {
+  scrollbar-color: var(--portal-scrollbar-thumb, #94a3b8) var(--portal-scrollbar-track, transparent);
+  scrollbar-width: thin;
+}
+
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   width: 6px;
-  height: 6px;
 }
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: var(--portal-scrollbar-track, transparent);
+}
+
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
-  background: rgba(31, 41, 55, 0.35);
   border-radius: 3px;
+  background: var(--portal-scrollbar-thumb, #94a3b8);
 }
 </style>

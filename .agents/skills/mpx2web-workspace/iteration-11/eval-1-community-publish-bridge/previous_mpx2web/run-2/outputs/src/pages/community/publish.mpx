@@ -30,7 +30,7 @@
           aria-label="添加图片"
         >
           <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">添加图片</text>
+          <text class="photo-add-label">{{isWeb ? 'Web 暂不可用' : '添加图片'}}</text>
         </view>
       </view>
     </view>
@@ -41,7 +41,7 @@
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text class="option-value">{{place.name || '选择位置'}}</text>
+            <text class="option-value">{{place.name || (isWeb ? 'Web 暂不可用' : '选择位置')}}</text>
           </view>
         </view>
         <text class="option-arrow">›</text>
@@ -101,7 +101,8 @@ createPage({
     ],
     selectedTopic: {},
     allowComments: true,
-    submitting: false
+    submitting: false,
+    isWeb: __mpx_mode__ === 'web'
   },
   computed: {
     canSubmit () {
@@ -112,21 +113,19 @@ createPage({
     updateContent (event) {
       this.content = event.detail.value
     },
-    showUnavailable (title) {
+    notifyWebCapabilityPending (capability) {
       mpx.showToast({
-        title,
-        icon: 'none',
-        usePromise: false
+        title: `${capability}暂不支持 Web`,
+        icon: 'none'
       })
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 待业务明确 Web 宿主 Bridge 与地图选点协议后接入。
-        this.showUnavailable('Web 端暂不支持选择位置')
+        // TODO: 待 Web 宿主明确位置选择协议后接入。
+        this.notifyWebCapabilityPending('位置选择')
         return
       }
-      mpx.chooseLocation({
-        usePromise: false,
+      wx.chooseLocation({
         success: (place) => {
           this.place = place
         }
@@ -135,29 +134,27 @@ createPage({
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 待业务明确 Web 宿主 Bridge 与地图查看协议后接入。
-        this.showUnavailable('Web 端暂不支持查看地图')
+        // TODO: 待 Web 宿主明确地图查看协议后接入。
+        this.notifyWebCapabilityPending('地图查看')
         return
       }
-      mpx.openLocation({
+      wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
         name: this.place.name,
-        address: this.place.address,
-        usePromise: false
+        address: this.place.address
       })
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 待业务明确 Web 宿主 Bridge 与媒体选择协议后接入。
-        this.showUnavailable('Web 端暂不支持选择图片')
+        // TODO: 待 Web 宿主明确媒体选择与文件地址协议后接入。
+        this.notifyWebCapabilityPending('图片选择')
         return
       }
-      mpx.chooseMedia({
+      wx.chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
         sourceType: ['album', 'camera'],
-        usePromise: false,
         success: ({ tempFiles }) => {
           this.photos = this.photos.concat(tempFiles)
         }
@@ -175,7 +172,9 @@ createPage({
     submitPost () {
       if (!this.canSubmit || this.submitting) return
       this.submitting = true
-      mpx.request({
+
+      const runtimeApi = __mpx_mode__ === 'web' ? mpx : wx
+      const requestOptions = {
         url: '/api/community/posts',
         method: 'POST',
         data: {
@@ -185,24 +184,21 @@ createPage({
           topicId: this.selectedTopic.id || '',
           allowComments: this.allowComments
         },
-        usePromise: false,
         success: ({ data }) => {
-          mpx.redirectTo({
-            url: `/pages/community/detail?id=${data.id}`,
-            usePromise: false
-          })
+          runtimeApi.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
         },
         fail: () => {
-          mpx.showToast({
-            title: '发布失败，请重试',
-            icon: 'none',
-            usePromise: false
-          })
+          runtimeApi.showToast({ title: '发布失败，请重试', icon: 'none' })
         },
         complete: () => {
           this.submitting = false
         }
-      })
+      }
+
+      if (__mpx_mode__ === 'web') {
+        requestOptions.usePromise = false
+      }
+      runtimeApi.request(requestOptions)
     }
   }
 })

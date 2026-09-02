@@ -1,20 +1,19 @@
 <template>
   <view class="product-video">
     <video
+      class="video"
       id="product-video-{{product.id}}"
-      class="product-video-player"
       src="{{product.video}}"
-      autoplay
-      muted="{{false}}"
-      muted@web="{{true}}"
-      playsinline@web="{{true}}"
-      show-mute-btn@web="{{true}}"
-      enable-danmu@wx="{{true}}"
+      autoplay="{{true}}"
+      muted="{{true}}"
+      controls="{{true}}"
+      enable-danmu="{{true}}"
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
-    <text>{{progress}} / {{duration}}</text>
+    <text wx:if="{{!videoError}}">{{progress}} / {{duration}}</text>
+    <text wx:else class="video-error">视频加载失败</text>
   </view>
 </template>
 
@@ -28,26 +27,20 @@ createComponent({
   data: {
     progress: 0,
     duration: 0,
-    videoSize: ''
+    videoSize: '',
+    videoError: false
   },
   methods: {
     onTimeUpdate (event) {
-      const detail = event.detail
-      const target = event.target
-      this.progress = typeof detail.currentTime === 'number' ? detail.currentTime : target.currentTime
-      this.duration = typeof detail.duration === 'number' ? detail.duration : target.duration
+      this.progress = event.detail.currentTime
+      this.duration = event.detail.duration
     },
     onLoadedMetadata (event) {
-      const detail = event.detail
-      const target = event.target
-      const width = detail.width || target.videoWidth
-      const height = detail.height || target.videoHeight
-      const duration = typeof detail.duration === 'number' ? detail.duration : target.duration
-      this.videoSize = `${width}x${height}`
-      if (typeof duration === 'number') this.duration = duration
+      this.videoSize = `${event.detail.width}x${event.detail.height}`
+      this.videoError = false
     },
-    onVideoError (event) {
-      this.$emit('error', event)
+    onVideoError () {
+      this.videoError = true
     }
   }
 })
@@ -55,7 +48,15 @@ createComponent({
 
 <style scoped>
 .product-video,
-.product-video-player {
+.video {
   width: 100%;
+}
+
+.video {
+  display: block;
+}
+
+.video-error {
+  color: #999;
 }
 </style>

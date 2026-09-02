@@ -1,23 +1,30 @@
 {
   "eval_id": 1,
   "eval_name": "community-publish-bridge",
-  "configuration": "old_skill",
+  "configuration": "previous_mpx2web",
+  "run_number": 3,
+  "grading_fingerprint": "7ce92d1f902b9965b87e6c351928acad984ea07fe03974d586afdc62f537da6e",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 122356
+  },
   "expectations": [
     {
       "id": "a0",
       "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
-      "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:116-125 在 web 分支 return 后直接调用 mpx.chooseLocation(；132-143 同样直接调用 mpx.openLocation(；151-161 同样直接调用 mpx.chooseMedia(。未见动态方法名或自定义适配器。",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:129、142、155 在非 Web 分支调用 mpx.chooseLocation/mpx.openLocation/mpx.chooseMedia；文件只在 89 行从 @mpxjs/core 导入 mpx，input/outputs 未提供应用入口已配置 API Proxy 的证据，也未保留 wx.xxx 直接调用。",
       "verification_methods": [
-        "independent_code_review",
-        "static_contract"
+        "independent_code_review"
       ]
     },
     {
       "id": "a1",
       "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:115-160 仅在 choosePlace/openPlace/choosePhoto 内判断 __mpx_mode__ === 'web' 并 return；183、195、201 仍直接使用 mpx.request、mpx.redirectTo、mpx.showToast，未见通用平台调用层或请求/路由/提示重写。",
+      "evidence": "outputs/src/pages/community/publish.mpx:123-163 仅在 choosePlace/openPlace/choosePhoto 中判断 isWeb；117-122 的 notifyWebCapabilityPending 是这些方法直接调用的专用待接入提示 helper，未引入通用平台调用层。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -26,7 +33,7 @@
       "id": "a2",
       "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:116-123 choosePlace 的 web 分支包含 TODO 注释“接入业务确认后的 Web 宿主 Bridge 或地图选址协议”，随后仅 mpx.showToast 提示并 return；125-130 的 mpx.chooseLocation 只在非 web 分支执行。",
+      "evidence": "outputs/src/pages/community/publish.mpx:123-128 的 Web 位置选择分支只有 TODO 待 Bridge/地图选点协议明确后接入、提示并 return，未调用虚构选点接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -35,7 +42,7 @@
       "id": "a3",
       "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:134-141 openPlace 的 web 分支包含 TODO 注释“接入业务确认后的 Web 宿主 Bridge 或地图查看协议”，随后仅 mpx.showToast 提示并 return；143-149 的 mpx.openLocation 只在非 web 分支执行。",
+      "evidence": "outputs/src/pages/community/publish.mpx:137-141 的 Web 地图查看分支只有 TODO 待 Web 地图查看协议明确后接入、提示并 return，未调用虚构地图接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -44,7 +51,7 @@
       "id": "a4",
       "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:152-159 choosePhoto 的 web 分支包含 TODO 注释“接入业务确认后的 Web 宿主 Bridge 或媒体选择协议”，随后仅 mpx.showToast 提示并 return；161-169 的 mpx.chooseMedia 只在非 web 分支执行。",
+      "evidence": "outputs/src/pages/community/publish.mpx:150-154 的 Web 媒体选择分支只有 TODO 待 Web 媒体选择与上传协议明确后接入、提示并 return，未调用虚构媒体接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -61,48 +68,97 @@
     },
     {
       "id": "a6",
-      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
-      "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:183 调用 mpx.request(；195 调用 mpx.redirectTo(；118、136、154、201 调用 mpx.showToast(。89 仅从 @mpxjs/core 导入 mpx/createPage；候选文件未出现 @mpxjs/api-proxy、fetch(、location.assign(、alert(。",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:176、187、190 将请求、跳转、失败提示改为 mpx.request/mpx.redirectTo/mpx.showToast，但 89 行 mpx 来自 @mpxjs/core，且 input/outputs 未提供项目既有 mpx.xxx 或应用级 API Proxy 配置证据；也未使用 @mpxjs/api-proxy 命名导入。",
       "verification_methods": [
-        "independent_code_review",
-        "static_contract"
+        "independent_code_review"
       ]
     },
     {
       "id": "a7",
       "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:9-16 内容输入绑定 updateContent，112-113 写入 content；18-34 图片展示/添加，151-169 chooseMedia 后 concat tempFiles，171-172 可删除；39-56 位置选择和地图入口，115-149 维护 place 并打开位置；63-65 话题 picker，174-175 写入 selectedTopic；72-74 评论 switch，177-178 写入 allowComments；183-192 提交 content/photos/place/topicId/allowComments；194-198 成功后 mpx.redirectTo 到 /pages/community/detail?id=${data.id}。",
+      "evidence": "outputs/src/pages/community/publish.mpx 保留 content/photos/place/topics/selectedTopic/allowComments/submitting 数据；176-195 提交 content、photos、place、topicId、allowComments，并在成功后 redirectTo 到 /pages/community/detail?id=${data.id}。",
       "verification_methods": [
         "independent_code_review"
       ]
     }
   ],
   "summary": {
-    "passed": 8,
-    "failed": 0,
+    "passed": 6,
+    "failed": 2,
     "total": 8,
-    "pass_rate": 1.0
+    "pass_rate": 0.75
   },
   "metrics": {
-    "total_tokens": 869512,
-    "input_tokens": 858521,
-    "output_tokens": 10991,
-    "tool_calls": 42,
-    "duration_ms": 425851,
-    "output_files": 1,
-    "output_lines": 443,
-    "output_nonempty_lines": 399,
-    "output_bytes": 9467
+    "total_tokens": 693611,
+    "input_tokens": 683276,
+    "output_tokens": 10335,
+    "tool_calls": 17,
+    "duration_ms": 248083
   },
   "timing": {
-    "total_tokens": 869512,
-    "duration_ms": 425851,
-    "total_duration_seconds": 425.851,
-    "generation_attempts": 1
+    "total_tokens": 693611,
+    "duration_ms": 248083,
+    "total_duration_seconds": 248.083
   },
-  "execution_metrics": {
-    "total_tool_calls": 42
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/previous_mpx2web/run-3/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/previous_mpx2web/run-3/outputs/src/pages/community/publish.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/previous_mpx2web/run-3/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3590
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "真正影响结论的缺口是：断言允许“应用入口已配置 API Proxy 的 mpx.xxx”，但本次只提供页面 input/output，没有应用入口配置或项目既有 mpx.xxx 证据，按证据不足判定 a0/a6 失败。"
+    ],
+    "overall": "Web 缺失能力隔离边界清晰，业务链路基本保留；主要问题是把已支持 API 改成缺少配置证据的 mpx.xxx。"
   }
 }

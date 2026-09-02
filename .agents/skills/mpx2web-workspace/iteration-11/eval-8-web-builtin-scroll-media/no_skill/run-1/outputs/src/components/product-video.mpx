@@ -1,19 +1,21 @@
 <template>
   <view class="product-video">
     <video
+      class="video"
       id="product-video-{{product.id}}"
-      class="product-video-player"
       src="{{product.video}}"
-      autoplay
-      muted="{{__mpx_mode__ === 'web'}}"
-      playsinline
-      show-mute-btn="{{__mpx_mode__ === 'web'}}"
-      enable-danmu="{{__mpx_mode__ !== 'web'}}"
+      poster="{{product.poster}}"
+      autoplay="{{true}}"
+      muted="{{true}}"
+      controls="{{true}}"
+      playsinline="{{true}}"
+      webkit-playsinline="true"
+      enable-danmu="{{true}}"
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
-    <text>{{progress}} / {{duration}}</text>
+    <text class="video-progress">{{progress}} / {{duration}}</text>
   </view>
 </template>
 
@@ -31,33 +33,39 @@ createComponent({
   },
   methods: {
     onTimeUpdate (event) {
-      if (__mpx_mode__ === 'web') {
-        this.progress = event.target.currentTime
-        this.duration = event.target.duration
-        return
-      }
-      this.progress = event.detail.currentTime
-      this.duration = event.detail.duration
+      const detail = event.detail || {}
+      this.progress = detail.currentTime || 0
+      this.duration = detail.duration || 0
     },
     onLoadedMetadata (event) {
-      if (__mpx_mode__ === 'web') {
-        const video = event.target
-        video.muted = true
-        const playResult = video.play()
-        if (playResult && playResult.catch) playResult.catch(() => {})
-        this.videoSize = `${video.videoWidth}x${video.videoHeight}`
-        return
-      }
-      this.videoSize = `${event.detail.width}x${event.detail.height}`
+      const detail = event.detail || {}
+      this.duration = detail.duration || this.duration
+      this.videoSize = detail.width && detail.height
+        ? `${detail.width}x${detail.height}`
+        : ''
     },
-    onVideoError () {}
+    onVideoError (event) {
+      this.triggerEvent('error', event.detail || {})
+    }
   }
 })
 </script>
 
 <style scoped>
-.product-video,
-.product-video-player {
+.product-video {
   width: 100%;
+  margin-top: 20rpx;
+}
+
+.video {
+  display: block;
+  width: 100%;
+}
+
+.video-progress {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 24rpx;
 }
 </style>

@@ -2,7 +2,7 @@
   <view class="channel-panel">
     <view wx:if="{{!connected}}" class="channel-offline">
       <text class="channel-tip">物流实时更新暂不可用</text>
-      <button class="reconnect-button" bindtap="reconnect">重新连接</button>
+      <button class="reconnect-button" bindtap="reconnect" disabled="{{!active || !memberId}}">重新连接</button>
     </view>
     <view wx:else class="channel-online">
       <text class="channel-tip">物流通道已连接</text>
@@ -14,13 +14,27 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 
+function safeCall (target, method, argument) {
+  if (!target || typeof target[method] !== 'function') return
+  try {
+    target[method](argument)
+  } catch (error) {}
+}
+
 createComponent({
   properties: {
     memberId: {
       type: String,
-      observer (memberId, previousMemberId) {
-        if (!this.channelAttached || memberId === previousMemberId) return
-        this.replaceChannel()
+      value: '',
+      observer () {
+        this.handleChannelInputsChange()
+      }
+    },
+    active: {
+      type: Boolean,
+      value: true,
+      observer () {
+        this.handleChannelInputsChange()
       }
     }
   },
@@ -28,92 +42,166 @@ createComponent({
     connected: false
   },
   attached () {
-    this.channelAttached = true
-    this.channelGeneration = 0
+    this._channelAttached = true
+    this._channelGeneration = 0
+    this._socketTask = null
+    this._socketListeners = null
     this.connectChannel()
   },
   detached () {
-    this.channelAttached = false
-    this.closeChannel(false)
+    this._channelAttached = false
+    this.disconnectChannel({ emit: false, reason: 'component detached' })
   },
   methods: {
-    isCurrentChannel (socketTask, generation, memberId) {
-      return this.channelAttached &&
-        this.socketTask === socketTask &&
-        this.channelGeneration === generation &&
+    handleChannelInputsChange () {
+      if (!this._channelAttached) return
+      if (!this.active || !this.memberId) {
+        this.disconnectChannel({ emit: true, reason: 'channel inactive' })
+        return
+      }
+      this.connectChannel()
+    },
+    isCurrentChannel (task, generation, memberId) {
+      return Boolean(
+        this._channelAttached &&
+        this.active &&
+        this._socketTask === task &&
+        this._channelGeneration === generation &&
         this.memberId === memberId
+      )
     },
     setConnected (connected, memberId) {
       if (this.connected === connected) return
       this.connected = connected
-      this.triggerEvent('connectedchange', { connected, memberId })
+      this.triggerEvent('connectedchange', {
+        connected,
+        memberId
+      })
+    },
+    disposeSocketTask (task, listeners, shouldClose, reason) {
+      if (!task) return
+      if (listeners) {
+        safeCall(task, 'offOpen', listeners.open)
+        safeCall(task, 'offMessage', listeners.message)
+        safeCall(task, 'offError', listeners.error)
+        safeCall(task, 'offClose', listeners.close)
+      }
+      if (shouldClose && typeof task.close === 'function') {
+        try {
+          task.close({
+            code: 1000,
+            reason: reason || 'channel reset'
+          })
+        } catch (error) {}
+      }
+    },
+    disconnectChannel (options) {
+      const config = options || {}
+      const oldMemberId = this.memberId
+      const task = this._socketTask
+      const listeners = this._socketListeners
+
+      this._channelGeneration = (this._channelGeneration || 0) + 1
+      this._socketTask = null
+      this._socketListeners = null
+      this.disposeSocketTask(task, listeners, true, config.reason)
+
+      if (config.emit === false) {
+        this.connected = false
+      } else {
+        this.setConnected(false, oldMemberId)
+      }
     },
     connectChannel () {
+      if (!this._channelAttached || !this.active || !this.memberId) return
+
       const memberId = this.memberId
-      if (!this.channelAttached || !memberId || this.socketTask) return
-      const generation = this.channelGeneration + 1
-      this.channelGeneration = generation
-      let socketTask
+      this.disconnectChannel({ emit: true, reason: 'channel replaced' })
+      const generation = this._channelGeneration
+      let task
+
       try {
-        socketTask = wx.connectSocket({
-          url: `wss://logistics.example.com/members/${memberId}`,
+        task = wx.connectSocket({
+          url: `wss://logistics.example.com/members/${encodeURIComponent(memberId)}`,
           header: {
             Authorization: `Bearer ${wx.getStorageSync('token')}`
           }
         })
       } catch (error) {
-        if (this.channelGeneration !== generation || this.memberId !== memberId) return
-        this.triggerEvent('error', { error, memberId })
+        if (this._channelAttached && this.memberId === memberId) {
+          this.triggerEvent('error', { error, memberId, generation })
+        }
         return
       }
-      this.socketTask = socketTask
-      socketTask.onOpen(() => {
-        if (!this.isCurrentChannel(socketTask, generation, memberId)) return
-        this.setConnected(true, memberId)
-      })
-      socketTask.onMessage(({ data }) => {
-        if (!this.isCurrentChannel(socketTask, generation, memberId)) return
-        let message
-        try {
-          message = JSON.parse(data)
-        } catch (error) {
-          this.triggerEvent('error', { error, memberId })
-          return
+
+      if (!task || typeof task.onOpen !== 'function') {
+        const error = new Error('connectSocket did not return a SocketTask')
+        this.triggerEvent('error', { error, memberId, generation })
+        return
+      }
+
+      this._socketTask = task
+      const listeners = {
+        open: () => {
+          if (!this.isCurrentChannel(task, generation, memberId)) return
+          this.setConnected(true, memberId)
+        },
+        message: ({ data }) => {
+          if (!this.isCurrentChannel(task, generation, memberId)) return
+          let message
+          try {
+            message = typeof data === 'string' ? JSON.parse(data) : data
+          } catch (error) {
+            this.triggerEvent('error', { error, memberId, generation })
+            return
+          }
+          if (!message || message.type !== 'logistics' || !message.payload) return
+
+          const payloadMemberId = message.memberId || message.payload.memberId
+          if (payloadMemberId && payloadMemberId !== memberId) return
+          this.triggerEvent('logistics', Object.assign({}, message.payload, {
+            memberId,
+            channelGeneration: generation
+          }))
+        },
+        error: (error) => {
+          if (!this.isCurrentChannel(task, generation, memberId)) return
+          this.setConnected(false, memberId)
+          this.triggerEvent('error', { error, memberId, generation })
+        },
+        close: () => {
+          if (!this.isCurrentChannel(task, generation, memberId)) return
+          const currentListeners = this._socketListeners
+          this._channelGeneration += 1
+          this._socketTask = null
+          this._socketListeners = null
+          this.disposeSocketTask(task, currentListeners, false)
+          this.setConnected(false, memberId)
         }
-        if (message.type !== 'logistics') return
-        this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
-      })
-      socketTask.onError((error) => {
-        if (!this.isCurrentChannel(socketTask, generation, memberId)) return
-        this.setConnected(false, memberId)
-        this.triggerEvent('error', { error, memberId })
-      })
-      socketTask.onClose(() => {
-        if (!this.isCurrentChannel(socketTask, generation, memberId)) return
-        this.socketTask = null
-        this.setConnected(false, memberId)
-      })
-    },
-    closeChannel (notify) {
-      const socketTask = this.socketTask
-      const memberId = this.memberId
-      this.channelGeneration = (this.channelGeneration || 0) + 1
-      this.socketTask = null
-      if (notify) this.setConnected(false, memberId)
-      else this.connected = false
-      if (socketTask) socketTask.close({ code: 1000, reason: 'channel replaced' })
-    },
-    replaceChannel () {
-      this.closeChannel(true)
-      this.connectChannel()
+      }
+      this._socketListeners = listeners
+      task.onOpen(listeners.open)
+      task.onMessage(listeners.message)
+      task.onError(listeners.error)
+      task.onClose(listeners.close)
     },
     reconnect () {
-      this.replaceChannel()
+      if (!this.active || !this.memberId) return
+      this.connectChannel()
     },
     sendHeartbeat () {
-      if (!this.connected || !this.socketTask) return
-      this.socketTask.send({
-        data: JSON.stringify({ type: 'ping', memberId: this.memberId })
+      const task = this._socketTask
+      const memberId = this.memberId
+      const generation = this._channelGeneration
+      if (!this.connected || !this.isCurrentChannel(task, generation, memberId)) return
+
+      task.send({
+        data: JSON.stringify({ type: 'ping', memberId }),
+        fail: (error) => {
+          if (!this.isCurrentChannel(task, generation, memberId)) return
+          this.setConnected(false, memberId)
+          this.triggerEvent('error', { error, memberId, generation })
+        }
       })
     }
   }

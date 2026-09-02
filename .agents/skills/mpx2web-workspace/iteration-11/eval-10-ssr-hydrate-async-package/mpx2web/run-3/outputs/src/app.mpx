@@ -4,7 +4,8 @@ import { createPinia } from '@mpxjs/pinia'
 
 createApp({
   onAppInit () {
-    return { pinia: createPinia() }
+    const pinia = createPinia()
+    return { pinia }
   }
 })
 </script>

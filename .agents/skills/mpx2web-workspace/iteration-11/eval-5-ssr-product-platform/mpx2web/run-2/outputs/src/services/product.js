@@ -1,31 +1,38 @@
 import mpx from '@mpxjs/api-proxy'
 
-function createServerUrl (path, req) {
-  const forwardedProtocol = req.headers['x-forwarded-proto']
-  const forwardedHost = req.headers['x-forwarded-host']
-  const protocol = req.protocol || (forwardedProtocol && forwardedProtocol.split(',')[0].trim()) || 'http'
-  const host = (forwardedHost && forwardedHost.split(',')[0].trim()) || req.headers.host
-  return `${protocol}://${host}${path}`
+function firstForwardedValue (value) {
+  if (Array.isArray(value)) return value[0]
+  return String(value || '').split(',')[0].trim()
 }
 
-function createServerHeaders (req) {
-  const headers = {}
-  if (req.headers.cookie) headers.cookie = req.headers.cookie
-  if (req.headers.authorization) headers.authorization = req.headers.authorization
-  return headers
+function getRequestOrigin (req) {
+  const headers = req.headers || {}
+  const protocol = firstForwardedValue(headers['x-forwarded-proto']) ||
+    req.protocol ||
+    (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = firstForwardedValue(headers['x-forwarded-host']) ||
+    firstForwardedValue(headers.host)
+
+  if (!host) throw new Error('Unable to determine the SSR request origin')
+  return `${protocol}://${host}`
 }
 
-function request (path, requestContext) {
-  if (requestContext && requestContext.req) {
-    const req = requestContext.req
-    return fetch(createServerUrl(path, req), {
-      headers: createServerHeaders(req)
-    }).then((response) => {
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`)
-      return response.json()
-    })
+async function requestFromNode (path, req) {
+  const headers = req.headers || {}
+  const response = await fetch(new URL(path, getRequestOrigin(req)).toString(), {
+    headers: {
+      ...(headers.cookie ? { cookie: headers.cookie } : {}),
+      ...(headers.authorization ? { authorization: headers.authorization } : {})
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Product request failed with status ${response.status}`)
   }
+  return response.json()
+}
 
+function requestFromHost (path) {
   return new Promise((resolve, reject) => {
     mpx.request({
       url: path,
@@ -35,10 +42,18 @@ function request (path, requestContext) {
   })
 }
 
+function requestProductApi (path, requestContext) {
+  const req = requestContext && requestContext.req
+  return req ? requestFromNode(path, req) : requestFromHost(path)
+}
+
 export function fetchProduct (productId, requestContext) {
-  return request(`/api/products/${encodeURIComponent(productId)}`, requestContext)
+  return requestProductApi(`/api/products/${encodeURIComponent(productId)}`, requestContext)
 }
 
 export function fetchRecommendations (productId, requestContext) {
-  return request(`/api/products/${encodeURIComponent(productId)}/recommendations`, requestContext)
+  return requestProductApi(
+    `/api/products/${encodeURIComponent(productId)}/recommendations`,
+    requestContext
+  )
 }

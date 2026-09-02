@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 import argparse
+import hashlib
+import html
 import json
 import re
+import shutil
+import statistics
+import subprocess
+import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -994,7 +1003,7 @@ def check_q0(root):
 
 
 def request_invalidation_before_abort(body):
-    abort = re.search(r"\b[A-Za-z_$][\w$]*\.abort\s*\(", body)
+    abort = re.search(r"\b[A-Za-z_$][\w$]*(?:\.__returned)?\.abort\s*\(", body)
     if not abort:
         return False
     invalidation = re.search(
@@ -1013,17 +1022,38 @@ def check_q2(root):
     service = read_output(root, service_path)
     search = recursive_callable_context(page, "search")
     unload = recursive_callable_context(page, "onUnload") or recursive_callable_context(page, "detached")
-    task_mode = re.search(r"(?:mpx\.)?request\s*\(\s*\{[\s\S]*?usePromise\s*:\s*false", service)
+    direct_task_mode = re.search(
+        r"(?:(?:mpx|wx)\.)?request\s*\(\s*\{[\s\S]*?usePromise\s*:\s*false",
+        service,
+    )
+    named_task_mode = (
+        re.search(
+            r"import\s*\{[^}]*\brequest\b[^}]*\}\s*from\s*['\"]@mpxjs/api-proxy['\"]",
+            service,
+        )
+        and re.search(r"(?<![.\w$])request\s*\(", service)
+    )
+    promise_task_mode = (
+        not direct_task_mode
+        and re.search(r"(?:mpx|wx)\.request\s*\(", service)
+        and re.search(r"\.__returned\b", page)
+    )
     saves_task = re.search(
         r"this\.[A-Za-z_$][\w$]*(?:task|request)[\w$]*\s*=\s*[A-Za-z_$][\w$]*",
         search,
         re.I,
     )
-    if not task_mode or not saves_task:
-        return False, f"outputs/{service_path} / outputs/{page_path}：联想请求未以 usePromise: false 返回并保存 RequestTask。"
+    contexts = f"{search}\n{unload}"
+    direct_abort = re.search(r"(?<!\.)\b[A-Za-z_$][\w$]*\.abort\s*\(", contexts)
+    promise_abort = re.search(r"\b[A-Za-z_$][\w$]*\.__returned\.abort\s*\(", contexts)
+    direct_contract = (direct_task_mode or named_task_mode) and direct_abort
+    promise_contract = promise_task_mode and promise_abort
+    if not (direct_contract or promise_contract) or not saves_task:
+        return False, f"outputs/{service_path} / outputs/{page_path}：联想请求未保存直接 RequestTask 或 Promise.__returned 原始任务。"
     if not request_invalidation_before_abort(search) or not request_invalidation_before_abort(unload):
         return False, f"outputs/{page_path}：连续搜索或卸载没有在 abort 前先废弃当前任务身份。"
-    return True, f"outputs/{page_path}：联想请求保存可取消任务，连续搜索与卸载均先废弃身份再 abort。"
+    mode = "直接 RequestTask" if direct_contract else "Promise.__returned 原始任务"
+    return True, f"outputs/{page_path}：联想请求保存{mode}，连续搜索与卸载均先废弃身份再 abort。"
 
 
 def check_q3(root):
@@ -1044,7 +1074,7 @@ def check_n0(root):
     body = recursive_callable_context(source, "chooseAddress")
     success = re.search(r"\bsuccess\s*(?::|\()", body)
     if not (
-        re.search(r"mpx\.navigateTo\s*\(\s*\{", body)
+        re.search(r"(?:mpx|wx)\.navigateTo\s*\(\s*\{", body)
         and re.search(r"\bevents\s*:\s*\{", body)
         and success
         and re.search(r"\.eventChannel\.emit\s*\(", body[success.end():])
@@ -1060,7 +1090,7 @@ def check_n1(root):
     if not (
         re.search(r"(?:this\.)?getOpenerEventChannel\s*\(\)", context)
         and re.search(r"\.emit\s*\(", context)
-        and re.search(r"mpx\.navigateBack\s*\(", context)
+        and re.search(r"(?:mpx|wx)\.navigateBack\s*\(", context)
     ):
         return False, f"outputs/{path}：地址页未通过页面实例 EventChannel 回传并 navigateBack。"
     return True, f"outputs/{path}：地址页获取 opener EventChannel，emit 地址后返回上一页。"
@@ -1070,20 +1100,37 @@ def check_n2(root):
     checkout_path = "src/pages/checkout/index.mpx"
     source = joined_outputs(root, checkout_path, "src/pages/address/select.mpx")
     required = ("navigateTo", "navigateBack", "redirectTo", "reLaunch", "switchTab")
-    missing = [name for name in required if not re.search(rf"mpx\.{name}\s*\(", source)]
-    wrong_tab = re.search(r"mpx\.navigateTo\s*\(\s*\{[^}]*url\s*:\s*['\"]/pages/orders/index", source, re.S)
+    missing = [name for name in required if not re.search(rf"(?:mpx|wx)\.{name}\s*\(", source)]
+    wrong_tab = re.search(
+        r"(?:mpx|wx)\.navigateTo\s*\(\s*\{[^}]*url\s*:\s*['\"]/pages/orders/index",
+        source,
+        re.S,
+    )
     if missing or wrong_tab:
         return False, f"outputs/{checkout_path}：路由 API 语义不完整或仍用 navigateTo 打开订单 tab；缺少 {missing}。"
-    return True, f"outputs/{checkout_path}：五类 Mpx 路由 API 按普通页、返回、替换、重启与 tab 语义使用。"
+    return True, f"outputs/{checkout_path}：五类 Mpx 官方路由 API 按普通页、返回、替换、重启与 tab 语义使用。"
 
 
 def check_n3(root):
     path = "src/pages/checkout/index.mpx"
     source = read_output(root, path)
-    values = re.findall(r"open-type\s*=\s*['\"]([^'\"]+)['\"]", source)
-    if "navigate" not in values or any(value in ("navigateTo", "switchTab") for value in values):
-        return False, f"outputs/{path}：navigator open-type 未使用稳定值 navigate，或误用了 API 名/不稳定 switchTab 值。"
-    return True, f"outputs/{path}：navigator 使用 open-type=\"navigate\"，tab 切换留给 mpx.switchTab。"
+    navigator_tags = re.findall(r"<navigator\b[^>]*>", source, re.I | re.S)
+    values = [
+        value
+        for tag in navigator_tags
+        for value in re.findall(r"open-type\s*=\s*['\"]([^'\"]+)['\"]", tag)
+    ]
+    invalid_values = [value for value in values if value in ("navigateTo", "switchTab")]
+    address_button = re.search(
+        r"<button\b[^>]*\bbindtap\s*=\s*['\"]chooseAddress['\"][^>]*>",
+        source,
+        re.I | re.S,
+    )
+    if invalid_values:
+        return False, f"outputs/{path}：navigator open-type 误用了 API 名或不稳定模板值：{invalid_values}。"
+    if not address_button:
+        return False, f"outputs/{path}：需要 EventChannel 的地址入口未使用 button 调用 chooseAddress。"
+    return True, f"outputs/{path}：EventChannel 地址入口使用 button 脚本导航，其他 navigator 未使用 navigateTo/switchTab 错误值。"
 
 
 def config_has_path(source, base):
@@ -1142,35 +1189,56 @@ def check_b2(root):
     source = read_output(root, path)
     tag = re.search(r"<scroll-view\b[^>]*>", source, re.I | re.S)
     text = tag.group(0) if tag else ""
-    ref = re.search(r"\b(?:ref@web|ref)\s*=\s*['\"]([A-Za-z_$][\w$]*)['\"]", text)
+    ref = re.search(
+        r"(?<![\w:-])(?P<kind>wx:ref|ref@web|ref)\s*=\s*['\"](?P<name>[A-Za-z_$][\w$]*)['\"]",
+        text,
+    )
     imperative_refresh = False
     if ref:
-        escaped = re.escape(ref.group(1))
+        escaped = re.escape(ref.group("name"))
         ref_access = (
             rf"this\.\$refs(?:\.{escaped}\b|\[\s*['\"]{escaped}['\"]\s*\])"
         )
-        alias = re.search(
-            rf"\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*{ref_access}",
-            source,
-        )
-        refresh_call = re.search(rf"{ref_access}\s*\.refresh\s*\(", source)
-        if alias:
-            refresh_call = refresh_call or re.search(
-                rf"\b{re.escape(alias.group(1))}\.refresh\s*\(", source
-            )
-        next_tick = re.search(r"(?:this\.)?\$?nextTick\s*\(", source)
-        web_guard = re.search(
-            r"__mpx_mode__\s*(?:===|!==)\s*['\"]web['\"]", source
-        )
         image_load = re.search(
-            r"<image\b[^>]*(?:bindload|@load)\s*=\s*['\"][^'\"]+['\"]",
+            r"<image\b[^>]*(?P<event>bindload(?:@web)?|@load(?:@web)?)\s*=\s*['\"](?P<handler>[A-Za-z_$][\w$]*)['\"]",
             source,
             re.I | re.S,
         )
-        imperative_refresh = bool(refresh_call and next_tick and web_guard and image_load)
+        handler_body = (
+            recursive_callable_context(source, image_load.group("handler"))
+            if image_load
+            else ""
+        )
+        alias = re.search(
+            rf"\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:this\.\$refs\s*&&\s*)?{ref_access}",
+            handler_body,
+        )
+        refresh_call = re.search(rf"{ref_access}\s*\.refresh\s*\(", handler_body)
+        if alias:
+            refresh_call = refresh_call or re.search(
+                rf"\b{re.escape(alias.group(1))}\.refresh\s*\(", handler_body
+            )
+        next_tick = re.search(r"(?:this\.)?\$?nextTick\s*\(", handler_body)
+        web_guard = re.search(
+            r"__mpx_mode__\s*(?:===|!==)\s*['\"]web['\"]", handler_body
+        )
+        web_event = image_load and image_load.group("event").lower().endswith("@web")
+        capability_guard = re.search(
+            r"typeof\s+[A-Za-z_$][\w$]*\.refresh\s*(?:===|!==)\s*['\"]function['\"]",
+            handler_body,
+        )
+        missing_ref_guard = False
+        if ref.group("kind") == "ref@web" and alias:
+            name = re.escape(alias.group(1))
+            missing_ref_guard = bool(
+                re.search(rf"if\s*\(\s*{name}\s*\)", handler_body)
+                or re.search(rf"\b{name}\?\.(?:refresh\??\.)?", handler_body)
+            )
+        isolated = web_event or web_guard or capability_guard or missing_ref_guard
+        imperative_refresh = bool(refresh_call and next_tick and image_load and isolated)
     if not imperative_refresh:
-        return False, f"outputs/{path}：图片尺寸晚到后缺少 image load + nextTick + scroll-view ref.refresh 的真实刷新链路。"
-    return True, f"outputs/{path}：图片 load 后经 Web nextTick 调用 scroll-view ref.refresh，覆盖固有尺寸晚到。"
+        return False, f"outputs/{path}：图片尺寸晚到后缺少安全隔离的 image load + nextTick + scroll-view ref.refresh 刷新链路。"
+    return True, f"outputs/{path}：图片 load 后经 Web 条件事件或脚本/能力判断安全调用 ref.refresh，覆盖固有尺寸晚到。"
 
 
 def web_css_projection(source):
@@ -1429,10 +1497,156 @@ def check_v6(root):
     config = read_output(root, config_path)
     component = read_output(root, component_path)
     valid_key = re.search(r"customBuiltInComponents\s*:\s*\{[\s\S]*?['\"]?scroll-view['\"]?\s*:", config)
-    passthrough = "<slot" in component and "$attrs" in component and "$listeners" in component
-    if not valid_key or not passthrough:
-        return False, f"outputs/{config_path} / outputs/{component_path}：自定义内建 key 或属性/事件/slot 透传不完整。"
-    return True, f"outputs/{config_path}：以 scroll-view 覆盖内建实现，Vue 组件透传 attrs/listeners/default slot。"
+    invalid_key = re.search(
+        r"customBuiltInComponents\s*:\s*\{[\s\S]*?['\"]?mpx-scroll-view['\"]?\s*:",
+        config,
+    )
+    default_slot = re.search(r"<slot\s*/?>", component, re.I)
+    passthrough = default_slot and "$attrs" in component and "$listeners" in component
+    if not valid_key or invalid_key or not passthrough:
+        return False, f"outputs/{config_path} / outputs/{component_path}：原始 key 或 attrs/listeners/default slot 结构透传不完整。"
+    return True, f"outputs/{config_path}：仅以 scroll-view 覆盖内建实现，并保留 attrs/listeners/default slot。"
+
+
+def check_v7(root):
+    path = "src/web/AnalyticsScroll.vue"
+    source = read_output(root, path)
+    props = ("scrollX", "scrollY", "scrollTop", "scrollLeft", "scrollIntoView")
+    missing_props = [name for name in props if not re.search(rf"\b{name}\b", source)]
+    axis_x = re.search(
+        r"(?:overflowX[\s\S]{0,100}?scrollX|scrollX[\s\S]{0,100}?overflowX|analytics-scroll--x)",
+        source,
+        re.I,
+    )
+    axis_y = re.search(
+        r"(?:overflowY[\s\S]{0,100}?scrollY|scrollY[\s\S]{0,100}?overflowY|analytics-scroll--y)",
+        source,
+        re.I,
+    )
+    top_watch = method_body(source, "scrollTop")
+    left_watch = method_body(source, "scrollLeft")
+    into_watch = method_body(source, "scrollIntoView")
+    mounted = recursive_method_context(source, "mounted")
+    direct_position = re.search(r"\.scrollTop\s*=", source) and re.search(r"\.scrollLeft\s*=", source)
+    dynamic_position = re.search(r"\[[^\]]*(?:property|key)[^\]]*\]\s*=", source, re.I)
+    initial_position = all(name in mounted for name in ("scrollTop", "scrollLeft"))
+    into_behavior = (
+        into_watch
+        and re.search(r"(?:\$nextTick|nextTick)", into_watch)
+        and re.search(r"\.scrollIntoView\s*\(", source)
+        and re.search(r"(?:\.contains\s*\(|this\.\$refs|this\.\$el)", source)
+        and re.search(r"(?:scrollIntoView|scrollToChild)", mounted)
+    )
+    if (
+        missing_props
+        or not axis_x
+        or not axis_y
+        or not top_watch
+        or not left_watch
+        or not (direct_position or dynamic_position)
+        or not initial_position
+        or not into_behavior
+    ):
+        return False, (
+            f"outputs/{path}：横纵轴、受控位置或容器内 scrollIntoView 行为不完整；"
+            f"缺少 props {missing_props}。"
+        )
+    return True, f"outputs/{path}：横纵 overflow、初始/更新位置与容器内 scrollIntoView 均有真实行为。"
+
+
+def check_v8(root):
+    path = "src/web/AnalyticsScroll.vue"
+    source = read_output(root, path)
+    body = method_body(source, "handleScroll")
+    if not re.search(r"\$emit\s*\(\s*['\"]scroll['\"]", body):
+        _, body = find_method(
+            source,
+            lambda candidate: bool(re.search(r"\$emit\s*\(\s*['\"]scroll['\"]", candidate)),
+        )
+    detail_fields = ("scrollTop", "scrollLeft", "scrollHeight", "scrollWidth", "deltaX", "deltaY")
+    missing_detail = [name for name in detail_fields if name not in body]
+    missing_events = [
+        name for name in ("scroll", "scrolltoupper", "scrolltolower")
+        if not re.search(rf"\$emit\s*\(\s*['\"]{name}['\"]", body)
+    ]
+    threshold_contract = all(name in source for name in ("upperThreshold", "lowerThreshold"))
+    axis_bounds = all(name in body for name in ("clientHeight", "clientWidth", "scrollHeight", "scrollWidth"))
+    directions = all(re.search(rf"['\"]{name}['\"]", body) for name in ("top", "left", "bottom", "right"))
+    state_patterns = (
+        r"(?:at|was|is|near)[A-Za-z_$]*Upper[A-Za-z_$]*X|(?:at|was|is|near)[A-Za-z_$]*X[A-Za-z_$]*Upper",
+        r"(?:at|was|is|near)[A-Za-z_$]*Upper[A-Za-z_$]*Y|(?:at|was|is|near)[A-Za-z_$]*Y[A-Za-z_$]*Upper",
+        r"(?:at|was|is|near)[A-Za-z_$]*Lower[A-Za-z_$]*X|(?:at|was|is|near)[A-Za-z_$]*X[A-Za-z_$]*Lower",
+        r"(?:at|was|is|near)[A-Za-z_$]*Lower[A-Za-z_$]*Y|(?:at|was|is|near)[A-Za-z_$]*Y[A-Za-z_$]*Lower",
+    )
+    axis_states = all(re.search(rf"\b(?:{pattern})\b", source, re.I) for pattern in state_patterns)
+    transition_guards = all(
+        re.search(rf"!\s*this\.(?:{pattern})\b", body, re.I)
+        for pattern in state_patterns
+    )
+    if (
+        not body
+        or missing_detail
+        or missing_events
+        or not threshold_contract
+        or not axis_bounds
+        or not directions
+        or not axis_states
+        or not transition_guards
+    ):
+        return False, (
+            f"outputs/{path}：scroll detail、双轴边界方向或边界去重状态不完整；"
+            f"缺少 detail {missing_detail}，缺少事件 {missing_events}。"
+        )
+    return True, f"outputs/{path}：scroll 详情完整，双轴 upper/lower 阈值按跨界状态发出四种方向。"
+
+
+def check_v9(root):
+    common_path = "src/components/analytics-panel.mpx"
+    web_path = "src/components/analytics-panel.web.mpx"
+    chart_path = "src/web/AnalyticsChart.vue"
+    sdk_path = "src/web/chart-sdk.js"
+    common = read_output(root, common_path)
+    web = read_output(root, web_path)
+    chart = read_output(root, chart_path)
+    sdk = read_output(root, sdk_path)
+    scroll = re.search(r"<scroll-view\b[^>]*>", web, re.I | re.S)
+    scroll_text = scroll.group(0) if scroll else ""
+    scroll_contract = (
+        "scroll-x", "scroll-y", "scroll-top", "scroll-left", "scroll-into-view",
+        "upper-threshold", "lower-threshold",
+        "bindscroll", "bindscrolltoupper", "bindscrolltolower",
+    )
+    missing_scroll = [
+        name for name in scroll_contract
+        if not re.search(rf"\b{re.escape(name)}\s*=", scroll_text, re.I)
+    ]
+    common_click = (
+        "metrics" in common
+        and re.search(r"(?:bindtap|@tap)", common)
+        and re.search(r"triggerEvent\s*\(\s*['\"]select['\"]", common)
+    )
+    web_relays = all(
+        re.search(rf"triggerEvent\s*\(\s*['\"]{name}['\"]", web)
+        for name in ("select", "scroll", "scrolltoupper", "scrolltolower")
+    )
+    chart_binding = re.search(r"<analytics-chart\b[^>]*(?:bindselect|@select)\s*=", web, re.I | re.S)
+    chart_select = re.search(r"\$emit\s*\(\s*['\"]select['\"]", chart)
+    sdk_select = re.search(r"(?:onSelect|data-metric-key|addEventListener\s*\(\s*['\"]click['\"])", sdk)
+    chart_update = "metrics" in chart and re.search(r"\.update\s*\(", chart)
+    if (
+        missing_scroll
+        or not common_click
+        or not web_relays
+        or not chart_binding
+        or not chart_select
+        or not sdk_select
+        or not chart_update
+    ):
+        return False, (
+            f"outputs/{common_path} / outputs/{web_path} / outputs/{chart_path}："
+            f"滚动调用点或指标点击/更新回传链路不完整；缺少 {missing_scroll}。"
+        )
+    return True, "小程序指标点击、Web 图表更新/点击回传和完整滚动调用点均保留。"
 
 
 def check_x0(root):
@@ -1816,6 +2030,9 @@ CHECKS = {
     "v4": check_v4,
     "v5": check_v5,
     "v6": check_v6,
+    "v7": check_v7,
+    "v8": check_v8,
+    "v9": check_v9,
     "x0": check_x0,
     "x1": check_x1,
     "x2": check_x2,
@@ -1856,34 +2073,422 @@ def apply_deterministic_checks(item, expectations, root):
 
 
 PUBLIC_GROUPS = ("mpx2web", "previous_mpx2web", "no_skill")
+GROUP_LABELS = {
+    "mpx2web": "Mpx2Web 1.9",
+    "previous_mpx2web": "Mpx2Web 1.8",
+    "no_skill": "No Skill",
+}
 
 
 def run_number(path):
     return int(path.name.removeprefix("run-"))
 
 
-def audit_workspace(root, write_grades=False):
+def sha256_json(value):
+    return hashlib.sha256(
+        json.dumps(value, ensure_ascii=False, sort_keys=True).encode()
+    ).hexdigest()
+
+
+def extract_final_message(stdout):
+    messages = []
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        item = event.get("item", {})
+        if event.get("type") == "item.completed" and item.get("type") == "agent_message":
+            messages.append(item.get("text", ""))
+    return messages[-1] if messages else ""
+
+
+def parse_json_payload(text):
+    candidate = text.strip()
+    if candidate.startswith("```"):
+        candidate = re.sub(r"^```(?:json)?\s*", "", candidate)
+        candidate = re.sub(r"\s*```$", "", candidate)
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError:
+        start = candidate.find("{")
+        end = candidate.rfind("}")
+        if start < 0 or end <= start:
+            raise ValueError("评分模型未返回 JSON 对象")
+        return json.loads(candidate[start:end + 1])
+
+
+def grader_fingerprint(item, run_root, grader_model, grader_reasoning_effort):
+    run = json.loads((run_root / "run.json").read_text())
+    return sha256_json({
+        "candidate_fingerprint": run.get("fingerprint"),
+        "grader_model": grader_model,
+        "grader_reasoning_effort": grader_reasoning_effort,
+        "assertions": item["assertions"],
+        "checker_digest": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    })
+
+
+def grading_complete(item, run_root, fingerprint):
+    path = run_root / "grading.json"
+    if not path.is_file():
+        return False
+    try:
+        grade = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    expected_ids = [assertion["id"] for assertion in item["assertions"]]
+    actual_ids = [entry.get("id") for entry in grade.get("expectations", [])]
+    return bool(
+        grade.get("grading_fingerprint") == fingerprint
+        and actual_ids == expected_ids
+        and all(isinstance(entry.get("passed"), bool) for entry in grade["expectations"])
+    )
+
+
+def build_grader_prompt(item):
+    assertions = "\n".join(
+        f"- {assertion['id']}: {assertion['text']}"
+        for assertion in item["assertions"]
+    )
+    return f"""你是独立验收模型。候选来自哪种配置已被隐藏；不要猜测或奖励其来源，只根据 input、outputs 和任务要求逐项判定。
+
+任务：{item['prompt']}
+
+待验收断言：
+{assertions}
+
+读取 ./input 与 ./outputs 中所有相关文件。每项只有 PASS/FAIL，不给部分分；证据不足即 FAIL。另请指出真正会造成结论偏差的断言缺口，不做无关挑刺。
+
+只返回一个 JSON 对象，不要 Markdown，不要写工作目录外文件。格式：
+{{
+  "expectations": [
+    {{"id": "断言 id", "passed": true, "evidence": "具体文件与代码证据"}}
+  ],
+  "claims": [],
+  "eval_feedback": {{"suggestions": [], "overall": "简短评价"}}
+}}
+必须且只能覆盖上面全部断言 id，顺序保持一致。"""
+
+
+def build_grader_command(model, reasoning_effort, workdir, codex_bin="codex"):
+    return [
+        codex_bin,
+        "exec",
+        "--ignore-user-config",
+        "--ephemeral",
+        "--disable",
+        "plugins",
+        "--disable",
+        "remote_plugin",
+        "--disable",
+        "apps",
+        "--skip-git-repo-check",
+        "-C",
+        str(workdir),
+        "-s",
+        "workspace-write",
+        "-m",
+        model,
+        "-c",
+        f'model_reasoning_effort="{reasoning_effort}"',
+        "--color",
+        "never",
+        "--json",
+        "-",
+    ]
+
+
+def normalize_model_grade(item, payload):
+    raw = payload.get("expectations", [])
+    by_id = {entry.get("id"): entry for entry in raw if entry.get("id")}
+    expectations = []
+    for assertion in item["assertions"]:
+        entry = by_id.get(assertion["id"], {})
+        passed = entry.get("passed") is True
+        evidence = entry.get("evidence") or "独立评分未提供该断言的可核验证据。"
+        expectations.append({
+            "id": assertion["id"],
+            "text": assertion["text"],
+            "passed": passed,
+            "evidence": evidence,
+            "verification_methods": ["independent_code_review"],
+        })
+    return expectations
+
+
+def compile_failure_evidence(run_root):
+    compile_path = Path(run_root) / "compile.json"
+    if not compile_path.is_file():
+        return "候选未通过编译/语义门禁，且缺少 compile.json 诊断。"
+    compile_result = json.loads(compile_path.read_text())
+    failures = []
+    for check in compile_result.get("checks", []):
+        if check.get("passed") is not False:
+            continue
+        kind = check.get("kind", "unknown-gate")
+        details = []
+        for file_result in check.get("detail", {}).get("files", []):
+            for error in file_result.get("errors", []):
+                details.append(
+                    f"{Path(file_result.get('file', '')).name}:{error.get('line', 0)} "
+                    f"{error.get('message', '')}"
+                )
+        failures.append(f"{kind}: {'; '.join(details[:3]) or '检查未通过'}")
+    suffix = "；".join(failures[:3]) or "至少一项编译/语义检查未通过"
+    return f"候选未通过硬门禁，按不可交付结果计 0 分：{suffix}"
+
+
+def grade_compile_failure(item, group, run_root, grader_model, grader_reasoning_effort):
+    fingerprint = grader_fingerprint(
+        item, run_root, grader_model, grader_reasoning_effort
+    )
+    evidence = compile_failure_evidence(run_root)
+    expectations = [{
+        "id": assertion["id"],
+        "text": assertion["text"],
+        "passed": False,
+        "evidence": evidence,
+        "verification_methods": ["compile_gate"],
+    } for assertion in item["assertions"]]
+    metrics_path = run_root / "metrics.json"
+    timing_path = run_root / "timing.json"
+    compile_path = run_root / "compile.json"
+    grade = {
+        "eval_id": item["id"],
+        "eval_name": item["name"],
+        "configuration": group,
+        "run_number": run_number(run_root),
+        "grading_fingerprint": fingerprint,
+        "grader": {
+            "model": grader_model,
+            "reasoning_effort": grader_reasoning_effort,
+            "blind_configuration": True,
+            "duration_ms": 0,
+            "invoked": False,
+            "skip_reason": "compile_or_semantic_gate_failed",
+        },
+        "expectations": expectations,
+        "summary": {
+            "passed": 0,
+            "failed": len(expectations),
+            "total": len(expectations),
+            "pass_rate": 0.0,
+        },
+        "metrics": json.loads(metrics_path.read_text()) if metrics_path.is_file() else {},
+        "timing": json.loads(timing_path.read_text()) if timing_path.is_file() else {},
+        "compile": json.loads(compile_path.read_text()) if compile_path.is_file() else {},
+        "claims": [],
+        "eval_feedback": {
+            "suggestions": ["先修复编译或条件编译语义错误，再进行功能评分。"],
+            "overall": evidence,
+        },
+    }
+    (run_root / "grading.json").write_text(
+        json.dumps(grade, ensure_ascii=False, indent=2) + "\n"
+    )
+    print(
+        f"[gate-failed] eval-{item['id']} {group} {run_root.name} "
+        f"0/{len(expectations)}",
+        flush=True,
+    )
+    return grade
+
+
+def grade_run(item, group, run_root, grader_model, grader_reasoning_effort, codex_bin="codex"):
+    run = json.loads((run_root / "run.json").read_text())
+    if run.get("returncode") != 0 or run.get("outputs_complete") is not True:
+        raise ValueError(f"候选生成未完成：{run_root}")
+    if run.get("compile_status") != "passed":
+        return grade_compile_failure(
+            item, group, run_root, grader_model, grader_reasoning_effort
+        )
+    fingerprint = grader_fingerprint(
+        item, run_root, grader_model, grader_reasoning_effort
+    )
+    print(
+        f"[grading] eval-{item['id']} {group} {run_root.name}", flush=True
+    )
+    started = time.monotonic()
+    with tempfile.TemporaryDirectory(prefix="mpx2web-grader-") as directory:
+        neutral_root = Path(directory).resolve()
+        eval_root = run_root.parents[1]
+        shutil.copytree(eval_root / "input", neutral_root / "input")
+        shutil.copytree(run_root / "outputs", neutral_root / "outputs")
+        command = build_grader_command(
+            grader_model, grader_reasoning_effort, neutral_root, codex_bin
+        )
+        result = subprocess.run(
+            command,
+            cwd=neutral_root,
+            input=build_grader_prompt(item),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"独立评分失败 {run_root}: {result.stderr[-2000:]}"
+            )
+        generated_path = neutral_root / "grading.json"
+        payload = (
+            json.loads(generated_path.read_text())
+            if generated_path.is_file()
+            else parse_json_payload(extract_final_message(result.stdout))
+        )
+    duration_ms = round((time.monotonic() - started) * 1000)
+    expectations = normalize_model_grade(item, payload)
+    expectations = apply_deterministic_checks(item, expectations, run_root)
+    passed = sum(entry["passed"] is True for entry in expectations)
+    metrics_path = run_root / "metrics.json"
+    timing_path = run_root / "timing.json"
+    compile_path = run_root / "compile.json"
+    grade = {
+        "eval_id": item["id"],
+        "eval_name": item["name"],
+        "configuration": group,
+        "run_number": run_number(run_root),
+        "grading_fingerprint": fingerprint,
+        "grader": {
+            "model": grader_model,
+            "reasoning_effort": grader_reasoning_effort,
+            "blind_configuration": True,
+            "duration_ms": duration_ms,
+        },
+        "expectations": expectations,
+        "summary": {
+            "passed": passed,
+            "failed": len(expectations) - passed,
+            "total": len(expectations),
+            "pass_rate": round(passed / len(expectations), 4),
+        },
+        "metrics": json.loads(metrics_path.read_text()) if metrics_path.is_file() else {},
+        "timing": json.loads(timing_path.read_text()) if timing_path.is_file() else {},
+        "compile": json.loads(compile_path.read_text()) if compile_path.is_file() else {},
+        "claims": payload.get("claims", []),
+        "eval_feedback": payload.get("eval_feedback", {}),
+    }
+    (run_root / "grading.json").write_text(
+        json.dumps(grade, ensure_ascii=False, indent=2) + "\n"
+    )
+    print(
+        f"[graded] eval-{item['id']} {group} {run_root.name} "
+        f"{passed}/{len(expectations)}",
+        flush=True,
+    )
+    return grade
+
+
+def collect_grade_jobs(root, samples):
+    public = json.loads((root / "evals.json").read_text())
+    jobs = []
+    for item in public["evals"]:
+        eval_root = root / f"eval-{item['id']}-{item['name']}"
+        for group in PUBLIC_GROUPS:
+            for sample in range(1, samples + 1):
+                run_root = eval_root / group / f"run-{sample}"
+                if not (run_root / "run.json").is_file():
+                    raise ValueError(f"缺少生成结果：{run_root / 'run.json'}")
+                jobs.append((item, group, run_root))
+    return jobs
+
+
+def run_independent_grading(root, samples, grader_model, grader_reasoning_effort, jobs=2, resume=False, codex_bin="codex"):
+    grade_jobs = []
+    for item, group, run_root in collect_grade_jobs(root, samples):
+        fingerprint = grader_fingerprint(
+            item, run_root, grader_model, grader_reasoning_effort
+        )
+        if resume and grading_complete(item, run_root, fingerprint):
+            print(f"[skip-grade] eval-{item['id']} {group} {run_root.name}", flush=True)
+            continue
+        grade_jobs.append((item, group, run_root))
+    if not grade_jobs:
+        return []
+    with ThreadPoolExecutor(max_workers=min(jobs, len(grade_jobs))) as executor:
+        futures = [
+            executor.submit(
+                grade_run,
+                item,
+                group,
+                run_root,
+                grader_model,
+                grader_reasoning_effort,
+                codex_bin,
+            )
+            for item, group, run_root in grade_jobs
+        ]
+        return [future.result() for future in futures]
+
+
+def output_stats(output_root):
+    files = [path for path in output_root.rglob("*") if path.is_file()]
+    lines = 0
+    nonempty = 0
+    size = 0
+    for path in files:
+        data = path.read_bytes()
+        size += len(data)
+        try:
+            text = data.decode()
+        except UnicodeDecodeError:
+            continue
+        split = text.splitlines()
+        lines += len(split)
+        nonempty += sum(bool(line.strip()) for line in split)
+    return {
+        "output_files": len(files),
+        "output_lines": lines,
+        "output_nonempty_lines": nonempty,
+        "output_bytes": size,
+    }
+
+
+def audit_workspace(root, write_grades=False, samples=None):
     public = json.loads((root / "evals.json").read_text())
     results = []
     totals = {}
     for item in public["evals"]:
         eval_root = root / f"eval-{item['id']}-{item['name']}"
         for group in PUBLIC_GROUPS:
-            run_dirs = sorted(
-                (
-                    path for path in (eval_root / group).glob("run-*")
-                    if path.is_dir() and path.name.removeprefix("run-").isdigit()
-                ),
-                key=run_number,
-            )
+            run_dirs = sorted((
+                path for path in (eval_root / group).glob("run-*")
+                if path.is_dir() and path.name.removeprefix("run-").isdigit()
+                and (samples is None or 1 <= run_number(path) <= samples)
+            ), key=run_number)
+            if samples is not None and [run_number(path) for path in run_dirs] != list(range(1, samples + 1)):
+                raise ValueError(f"{eval_root / group} 缺少 1..{samples} 完整采样")
             for run_root in run_dirs:
                 grade_path = run_root / "grading.json"
+                if not grade_path.is_file():
+                    raise ValueError(f"缺少独立评分：{grade_path}")
                 grade = json.loads(grade_path.read_text())
+                if samples is not None:
+                    grader = grade.get("grader", {})
+                    expected_fingerprint = grader_fingerprint(
+                        item,
+                        run_root,
+                        grader.get("model", ""),
+                        grader.get("reasoning_effort", ""),
+                    )
+                    if grade.get("grading_fingerprint") != expected_fingerprint:
+                        raise ValueError(f"评分已过期，必须重新独立评分：{grade_path}")
                 expectations = grade["expectations"]
                 by_id = {entry["id"]: entry for entry in expectations}
                 for assertion in item["assertions"]:
-                    by_id[assertion["id"]]["text"] = assertion["text"]
-                    by_id[assertion["id"]].setdefault(
+                    expectation = by_id.get(assertion["id"])
+                    if expectation is None:
+                        expectation = {
+                            "id": assertion["id"],
+                            "text": assertion["text"],
+                            "passed": None,
+                            "evidence": "旧评分未包含该新增断言，等待确定性复核或重新评分。",
+                            "verification_methods": ["deterministic_check"],
+                        }
+                        expectations.append(expectation)
+                        by_id[assertion["id"]] = expectation
+                    expectation["text"] = assertion["text"]
+                    expectation.setdefault(
                         "verification_methods", ["independent_code_review"]
                     )
                 expectations = apply_deterministic_checks(
@@ -1908,6 +2513,10 @@ def audit_workspace(root, write_grades=False):
                     if timing_path.is_file()
                     else {}
                 )
+                metrics_path = run_root / "metrics.json"
+                metrics = json.loads(metrics_path.read_text()) if metrics_path.is_file() else {}
+                compile_path = run_root / "compile.json"
+                compile_result = json.loads(compile_path.read_text()) if compile_path.is_file() else {}
                 results.append({
                     "eval_id": item["id"],
                     "eval_name": item["name"],
@@ -1915,6 +2524,12 @@ def audit_workspace(root, write_grades=False):
                     "run_number": run_number(run_root),
                     **audited["summary"],
                     **timing,
+                    **metrics,
+                    **output_stats(run_root / "outputs"),
+                    "compile_status": compile_result.get("status"),
+                    "compiled_mpx_count": compile_result.get("compiled_mpx_count", 0),
+                    "compile_eligible_mpx_count": compile_result.get("compile_eligible_mpx_count", 0),
+                    "all_declared_outputs_present": compile_result.get("all_declared_outputs_present", False),
                     "expectations": expectations,
                 })
     for group in PUBLIC_GROUPS:
@@ -1937,6 +2552,154 @@ def audit_workspace(root, write_grades=False):
     return payload
 
 
+def aggregate_benchmark(root, samples):
+    payload = audit_workspace(root, write_grades=False, samples=samples)
+    public = json.loads((root / "evals.json").read_text())
+    rows = payload["results"]
+    summaries = {}
+    for group in PUBLIC_GROUPS:
+        group_rows = [row for row in rows if row["configuration"] == group]
+        sample_rates = []
+        for sample in range(1, samples + 1):
+            sample_rows = [row for row in group_rows if row["run_number"] == sample]
+            passed = sum(row["passed"] for row in sample_rows)
+            total = sum(row["total"] for row in sample_rows)
+            sample_rates.append(round(passed / total, 4))
+        assertion_outcomes = {}
+        for row in group_rows:
+            for entry in row["expectations"]:
+                assertion_outcomes.setdefault(
+                    (row["eval_id"], entry["id"]), []
+                ).append(entry["passed"])
+        stable_pass = sum(all(values) for values in assertion_outcomes.values())
+        stable_fail = sum(not any(values) for values in assertion_outcomes.values())
+        variable = len(assertion_outcomes) - stable_pass - stable_fail
+        summaries[group] = {
+            **payload["totals"][group],
+            "label": GROUP_LABELS[group],
+            "sample_pass_rates": sample_rates,
+            "sample_mean": round(statistics.mean(sample_rates), 4),
+            "sample_stddev": round(statistics.pstdev(sample_rates), 4),
+            "sample_min": min(sample_rates),
+            "sample_max": max(sample_rates),
+            "stability": {
+                "stable_pass": stable_pass,
+                "stable_fail": stable_fail,
+                "variable": variable,
+            },
+            "compile": {
+                "status": "passed" if all(row["compile_status"] == "passed" for row in group_rows) else "failed",
+                "compiled_mpx": sum(row["compiled_mpx_count"] for row in group_rows),
+                "eligible_mpx": sum(row["compile_eligible_mpx_count"] for row in group_rows),
+                "declared_outputs_complete": all(row["all_declared_outputs_present"] for row in group_rows),
+            },
+            "efficiency": {
+                "total_tokens": sum(row.get("total_tokens", 0) for row in group_rows),
+                "duration_seconds": round(sum(row.get("duration_ms", 0) for row in group_rows) / 1000, 3),
+                "tool_calls": sum(row.get("tool_calls", 0) for row in group_rows),
+                "output_lines": sum(row.get("output_lines", 0) for row in group_rows),
+                "output_bytes": sum(row.get("output_bytes", 0) for row in group_rows),
+            },
+        }
+    deltas = {
+        "mpx2web_vs_previous": round(
+            summaries["mpx2web"]["sample_mean"] - summaries["previous_mpx2web"]["sample_mean"], 4
+        ),
+        "mpx2web_vs_no_skill": round(
+            summaries["mpx2web"]["sample_mean"] - summaries["no_skill"]["sample_mean"], 4
+        ),
+    }
+    benchmark = {
+        "metadata": {
+            "skill_name": public["skill_name"],
+            "iteration": public["iteration"],
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "samples_per_configuration": samples,
+            "configurations": GROUP_LABELS,
+            "grading_mode": "blind independent model review plus frozen deterministic overrides",
+            "compile_boundary": (
+                "All compile-eligible Mpx page/component outputs are built for Web; "
+                "app.mpx and non-Mpx support artifacts are reported separately."
+            ),
+        },
+        "runs": rows,
+        "run_summary": summaries,
+        "deltas": deltas,
+        "notes": [
+            "Pass rate is assertion-weighted; each sample also receives an independent aggregate rate.",
+            "Three samples estimate stochastic variance but do not prove behavior outside the 13 frozen scenarios.",
+        ],
+    }
+    (root / "benchmark.json").write_text(
+        json.dumps(benchmark, ensure_ascii=False, indent=2) + "\n"
+    )
+    lines = [
+        "# Mpx2Web iteration-11 reliability benchmark",
+        "",
+        f"- 采样：每组 {samples} 次，共 {len(rows)} 个候选结果",
+        "- 评分：隐藏配置标签的独立模型评审 + 冻结确定性检查器覆盖",
+        "- 编译：所有可作为 page/component 入口的 `.mpx` 均执行真实 Web 编译",
+        "",
+        "| 配置 | 加权通过率 | 三轮通过率 | 均值 ± 标准差 | 稳定通过/波动/稳定失败 | 编译 |",
+        "| --- | ---: | --- | ---: | ---: | --- |",
+    ]
+    for group in PUBLIC_GROUPS:
+        summary = summaries[group]
+        stability = summary["stability"]
+        rates = ", ".join(f"{rate:.1%}" for rate in summary["sample_pass_rates"])
+        compile_summary = summary["compile"]
+        lines.append(
+            f"| {summary['label']} | {summary['pass_rate']:.1%} | {rates} | "
+            f"{summary['sample_mean']:.1%} ± {summary['sample_stddev']:.1%} | "
+            f"{stability['stable_pass']}/{stability['variable']}/{stability['stable_fail']} | "
+            f"{compile_summary['compiled_mpx']}/{compile_summary['eligible_mpx']} |"
+        )
+    lines.extend([
+        "",
+        "## 差异",
+        "",
+        f"- 1.9 相对 1.8：{deltas['mpx2web_vs_previous']:+.1%}",
+        f"- 1.9 相对 No Skill：{deltas['mpx2web_vs_no_skill']:+.1%}",
+        "",
+        "## 结论边界",
+        "",
+        "该结论只覆盖冻结的 13 个场景和当前三次采样。`app.mpx`、HTML 与配置文件不是 compile-validate 支持的独立入口，不会被伪报为独立编译；它们的完整性和可解析性在各 run 的 `compile.json` 中单独记录。",
+        "",
+    ])
+    (root / "benchmark.md").write_text("\n".join(lines))
+    review_rows = []
+    for row in rows:
+        expectations = "".join(
+            f"<li class='{'pass' if entry['passed'] else 'fail'}'>"
+            f"<strong>{html.escape(entry['id'])}</strong> "
+            f"{html.escape(entry.get('text', ''))}<br>"
+            f"<small>{html.escape(entry.get('evidence', ''))}</small></li>"
+            for entry in row["expectations"]
+        )
+        review_rows.append(
+            f"<details><summary>eval-{row['eval_id']} · "
+            f"{html.escape(GROUP_LABELS[row['configuration']])} · run-{row['run_number']} · "
+            f"{row['passed']}/{row['total']}</summary><ul>{expectations}</ul></details>"
+        )
+    summary_rows = "".join(
+        f"<tr><td>{html.escape(summaries[group]['label'])}</td>"
+        f"<td>{summaries[group]['pass_rate']:.1%}</td>"
+        f"<td>{summaries[group]['sample_mean']:.1%} ± {summaries[group]['sample_stddev']:.1%}</td>"
+        f"<td>{summaries[group]['compile']['compiled_mpx']}/{summaries[group]['compile']['eligible_mpx']}</td></tr>"
+        for group in PUBLIC_GROUPS
+    )
+    review = f"""<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mpx2Web iteration-11 review</title>
+<style>body{{font:14px/1.55 system-ui,sans-serif;max-width:1180px;margin:32px auto;padding:0 20px;color:#222}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ddd;padding:8px;text-align:left}}details{{border:1px solid #ddd;border-radius:6px;margin:8px 0;padding:8px}}.pass{{color:#176b2c}}.fail{{color:#a21d1d}}small{{color:#555}}</style></head>
+<body><h1>Mpx2Web iteration-11 reliability review</h1>
+<p>独立盲评 + 确定性覆盖；每组 {samples} 次采样。编译边界详见 benchmark.md。</p>
+<table><thead><tr><th>配置</th><th>加权通过率</th><th>三轮均值 ± 标准差</th><th>Web 编译</th></tr></thead><tbody>{summary_rows}</tbody></table>
+<h2>逐项证据</h2>{''.join(review_rows)}</body></html>"""
+    (root / "review.html").write_text(review)
+    return benchmark
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="使用冻结的确定性检查器复核 iteration-11 三轮评分。"
@@ -1948,14 +2711,42 @@ def main():
         action="store_true",
         help="将修正后的确定性检查结果写回 grading.json；不重新生成候选或调用评分模型",
     )
+    parser.add_argument("--independent-grade", action="store_true")
+    parser.add_argument("--grader-model", default="gpt-5.5")
+    parser.add_argument("--grader-reasoning-effort", default="high")
+    parser.add_argument("--samples", type=int, default=3)
+    parser.add_argument("--jobs", type=int, default=2)
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--codex-bin", default="codex")
+    parser.add_argument("--aggregate", action="store_true")
     parser.add_argument(
         "--output",
         type=Path,
         help="将审计 JSON 写入指定文件；省略时输出到 stdout",
     )
     args = parser.parse_args()
-    payload = audit_workspace(args.workspace.resolve(), args.write_grades)
-    rendered = json.dumps(payload["totals"] if args.summary else payload, ensure_ascii=False, indent=2) + "\n"
+    root = args.workspace.resolve()
+    if args.samples < 1 or args.jobs < 1:
+        parser.error("--samples and --jobs must be at least 1")
+    if args.independent_grade:
+        run_independent_grading(
+            root,
+            args.samples,
+            args.grader_model,
+            args.grader_reasoning_effort,
+            jobs=args.jobs,
+            resume=args.resume,
+            codex_bin=args.codex_bin,
+        )
+    if args.aggregate:
+        payload = aggregate_benchmark(root, args.samples)
+    else:
+        payload = audit_workspace(root, args.write_grades, samples=args.samples if args.independent_grade else None)
+    if args.summary:
+        summary_payload = payload.get("totals") or payload.get("run_summary")
+        rendered = json.dumps(summary_payload, ensure_ascii=False, indent=2) + "\n"
+    else:
+        rendered = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     if args.output:
         args.output.write_text(rendered)
     else:

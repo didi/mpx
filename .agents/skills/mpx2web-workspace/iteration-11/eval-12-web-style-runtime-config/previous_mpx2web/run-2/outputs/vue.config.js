@@ -6,7 +6,7 @@ module.exports = {
         webConfig: {
           routeConfig: { mode: 'history', base: '/portal/' },
           transRpxFn: function (match, value) {
-            if (value === '0') return value
+            if (Number(value) === 0) return '0'
             return `${value * 0.01}rem`
           }
         }

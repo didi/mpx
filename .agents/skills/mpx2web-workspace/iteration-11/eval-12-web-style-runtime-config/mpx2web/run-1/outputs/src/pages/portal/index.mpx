@@ -18,74 +18,94 @@ createPage({
     dialogVisible: false,
     dark: false
   },
+  onHide () {
+    if (__mpx_mode__ === 'web') {
+      this.dialogVisible = false
+      this.restorePageScroll()
+    }
+  },
+  onUnload () {
+    this.restorePageScroll()
+  },
   methods: {
     openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
     toggleTheme () { this.dark = !this.dark },
     openDialog () {
       this.dialogVisible = true
-      /* @mpx-if (__mpx_mode__ === 'web') */
-      this.lockPageScroll()
-      /* @mpx-endif */
+      if (__mpx_mode__ === 'web') {
+        this.lockPageScroll()
+      }
     },
     closeDialog () {
       this.dialogVisible = false
-      /* @mpx-if (__mpx_mode__ === 'web') */
-      this.restorePageScroll()
-      /* @mpx-endif */
+      if (__mpx_mode__ === 'web') {
+        this.restorePageScroll()
+      }
     },
-    /* @mpx-if (__mpx_mode__ === 'web') */
     lockPageScroll () {
-      if (this._scrollLockTargets) return
-      this._scrollLockTargets = []
+      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || this._pageScrollLock) return
+
       const targets = [document.documentElement, document.body, document.querySelector('#app')]
-      targets.forEach((target) => {
-        if (!target) return
-        this._scrollLockTargets.push({
-          target,
-          overflow: target.style.overflow,
-          overflowX: target.style.overflowX,
-          overflowY: target.style.overflowY
-        })
-        target.style.overflow = 'hidden'
+        .filter((target, index, list) => target && list.indexOf(target) === index)
+
+      this._pageScrollLock = targets.map(target => ({
+        target,
+        overflow: target.style.getPropertyValue('overflow'),
+        priority: target.style.getPropertyPriority('overflow')
+      }))
+      targets.forEach(target => {
+        target.style.setProperty('overflow', 'hidden')
       })
     },
     restorePageScroll () {
-      if (!this._scrollLockTargets) return
-      this._scrollLockTargets.forEach(({ target, overflow, overflowX, overflowY }) => {
-        target.style.overflow = overflow
-        target.style.overflowX = overflowX
-        target.style.overflowY = overflowY
+      if (__mpx_mode__ !== 'web' || !this._pageScrollLock) return
+
+      this._pageScrollLock.forEach(({ target, overflow, priority }) => {
+        if (overflow) {
+          target.style.setProperty('overflow', overflow, priority)
+        } else {
+          target.style.removeProperty('overflow')
+        }
       })
-      this._scrollLockTargets = null
+      this._pageScrollLock = null
     }
-    /* @mpx-endif */
-  },
-  /* @mpx-if (__mpx_mode__ === 'web') */
-  onShow () {
-    if (this.dialogVisible) this.lockPageScroll()
-  },
-  onHide () {
-    this.restorePageScroll()
-  },
-  onUnload () {
-    this.restorePageScroll()
   }
-  /* @mpx-endif */
 })
 </script>
 
 <style scoped>
 .portal {
   min-height: 100vh;
-  color: var(--portal-text, #1f2937);
+  color: var(--portal-text, #1f2329);
   background: var(--portal-background, #f5f7fa);
-  padding: var(--portal-space, 24rpx);
+  padding: var(--portal-space, 32rpx);
 }
 .dialog-mask { position: fixed; inset: 0; }
 </style>
 
-<style scoped mode="web">
-.portal { padding-bottom: env(safe-area-inset-bottom); }
+<style mode="web" scoped>
+.portal {
+  padding-bottom: calc(var(--portal-space, 32rpx) + env(safe-area-inset-bottom));
+}
 .portal-card:hover { transform: translateY(-2px); }
-.portal::-webkit-scrollbar { width: 6px; }
+</style>
+
+<style mode="web">
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#app::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+#app::-webkit-scrollbar-thumb {
+  background: rgba(31, 35, 41, 0.28);
+  border-radius: 3px;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+#app::-webkit-scrollbar-track {
+  background: transparent;
+}
 </style>

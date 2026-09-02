@@ -1,7 +1,15 @@
 {
   "eval_id": 6,
   "eval_name": "api-proxy-task-contract",
-  "configuration": "old_skill",
+  "configuration": "previous_mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "47ecfe05a2e065745f6ed4608b5607364161a12831935d58fe05c40011f09d31",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 84256
+  },
   "expectations": [
     {
       "id": "q0",
@@ -15,18 +23,18 @@
     },
     {
       "id": "q1",
-      "text": "普通趋势词请求通过配置后的 mpx.request 使用 await 或 Promise 链，不混用 success/fail 回调",
+      "text": "Web 输出中的普通趋势词请求通过会返回 Promise 的 Mpx 官方 API 调用路径使用 await 或 Promise 链；可使用配置后的 mpx.request 或会被跨端编译转换到该入口的 wx.request。原始 @mpxjs/api-proxy 命名导入不会继承 Promise 化配置，不能直接按 Promise 使用；不得混用 success/fail 回调",
       "passed": true,
-      "evidence": "outputs/src/services/search.js: fetchTrendingKeywords() returns mpx.request({ url: '/api/search/trending' }).then(({ data }) => data); outputs/src/pages/search/index.mpx: async onLoad() { this.trendingKeywords = await fetchTrendingKeywords() }. 该趋势词请求未配置 success/fail 回调。",
+      "evidence": "outputs/src/services/search.js:1-6 uses mpx.request({ url: '/api/search/trending' }).then(({ data }) => data) for trending keywords, with no success/fail callbacks and no raw named @mpxjs/api-proxy request Promise usage.",
       "verification_methods": [
         "independent_code_review"
       ]
     },
     {
       "id": "q2",
-      "text": "联想词请求单次显式 usePromise: false 并保存 RequestTask；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "text": "联想词请求保存可取消任务：可通过单次 usePromise: false 或原始 @mpxjs/api-proxy 命名导入直接取得 RequestTask，也可从已 Promise 化调用的 Promise.__returned 取得框架保留的原始任务；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
       "passed": true,
-      "evidence": "outputs/src/pages/search/index.mpx：联想请求保存可取消任务，连续搜索与卸载均先废弃身份再 abort。",
+      "evidence": "outputs/src/pages/search/index.mpx：联想请求保存直接 RequestTask，连续搜索与卸载均先废弃身份再 abort。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -35,8 +43,8 @@
     {
       "id": "q3",
       "text": "联想词 success/fail 回调捕获本次任务和关键词，仅当前任务且关键词仍匹配时才更新结果或提示，旧响应不能覆盖新搜索",
-      "passed": false,
-      "evidence": "outputs/src/pages/search/index.mpx：联想回调未同时证明当前任务身份与当前关键词/请求代际。",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx：联想回调使用任务身份和关键词或请求代际拒绝晚到响应。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -44,58 +52,131 @@
     },
     {
       "id": "q4",
-      "text": "详情跳转与错误提示继续通过应用入口已配置的 mpx.navigateTo、mpx.showToast 调用",
+      "text": "详情跳转与错误提示继续走 Mpx 官方 API 链路；可保留会被跨端编译转换的 wx.navigateTo/wx.showToast，可沿用 mpx.xxx，也可在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入",
       "passed": true,
-      "evidence": "outputs/src/pages/search/index.mpx: fail 回调调用 mpx.showToast({ title: '搜索失败', icon: 'none' }); openProduct(productId) 调用 mpx.navigateTo({ url: `/pages/product/detail?id=${productId}` }).",
+      "evidence": "outputs/src/pages/search/index.mpx:91-95 uses mpx.showToast for error prompts, and lines 97-104 use mpx.navigateTo for product detail navigation with fallback showError('跳转失败').",
       "verification_methods": [
-        "independent_code_review",
-        "static_contract"
+        "independent_code_review"
       ]
     },
     {
       "id": "q5",
-      "text": "不从 @mpxjs/api-proxy 命名导入 request/navigateTo/showToast，也不用 fetch、location 或 alert 重写这些能力",
+      "text": "不用 fetch、location 或 alert 平行重写 request/navigateTo/showToast；若沿用 @mpxjs/api-proxy 命名导入，应明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置",
       "passed": true,
-      "evidence": "outputs/src/app.mpx 仅 default import apiProxy from '@mpxjs/api-proxy'；outputs/src/services/search.js 使用 import mpx from '@mpxjs/core' 并调用 mpx.request；outputs/src/pages/search/index.mpx 使用 mpx.showToast 和 mpx.navigateTo。outputs 下未见从 @mpxjs/api-proxy 命名导入 request/navigateTo/showToast，也未见 fetch(、location 或 alert(。",
+      "evidence": "outputs/src/pages/search/index.mpx and outputs/src/services/search.js contain no fetch, location, or alert usage. The only @mpxjs/api-proxy import in outputs is the default plugin import in outputs/src/app.mpx:3, not raw named request/navigateTo/showToast imports.",
       "verification_methods": [
-        "independent_code_review",
-        "static_contract"
+        "independent_code_review"
       ]
     },
     {
       "id": "q6",
       "text": "趋势词、连续输入、清空搜索、取消旧请求、结果展示和商品详情业务链路保持完整",
       "passed": true,
-      "evidence": "outputs/src/pages/search/index.mpx: onLoad() 设置 this.trendingKeywords = await fetchTrendingKeywords(); input bindinput=\"onKeywordInput\" 且 onKeywordInput 调用 this.search(event.detail.value.trim()); search() 中 !keyword 时 this.suggestions = []；连续搜索时先 this.requestId++、this.requestTask = null、旧 requestTask.abort()；模板 wx:for=\"{{suggestions}}\" 展示 {{item.name}}；bindtap=\"openProduct(item.id)\"，openProduct 调用 mpx.navigateTo 到 /pages/product/detail?id=${productId}。",
+      "evidence": "outputs/src/pages/search/index.mpx keeps trending display when !keyword at lines 4-6 and loads trends at lines 28-36; continuous input routes through onKeywordInput/search at lines 45-47 and 59-84; clearing keyword cancels old requests and empties suggestions at lines 63-67; result rendering remains at lines 7-9; detail navigation remains at lines 97-104.",
       "verification_methods": [
         "independent_code_review"
       ]
     }
   ],
   "summary": {
-    "passed": 6,
-    "failed": 1,
+    "passed": 7,
+    "failed": 0,
     "total": 7,
-    "pass_rate": 0.8571
+    "pass_rate": 1.0
   },
   "metrics": {
-    "total_tokens": 362602,
-    "input_tokens": 356746,
-    "output_tokens": 5856,
-    "tool_calls": 9,
-    "duration_ms": 273637,
-    "output_files": 3,
-    "output_lines": 119,
-    "output_nonempty_lines": 111,
-    "output_bytes": 2819
+    "total_tokens": 414654,
+    "input_tokens": 405506,
+    "output_tokens": 9148,
+    "tool_calls": 23,
+    "duration_ms": 262010
   },
   "timing": {
-    "total_tokens": 362602,
-    "duration_ms": 273637,
-    "total_duration_seconds": 273.637,
-    "generation_attempts": 1
+    "total_tokens": 414654,
+    "duration_ms": 262010,
+    "total_duration_seconds": 262.01
   },
-  "execution_metrics": {
-    "total_tool_calls": 9
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/pages/search/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/services/search.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/pages/search/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/services/search.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/pages/search/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3576
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-6-api-proxy-task-contract/previous_mpx2web/run-1/outputs/src/services/search.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "实现满足全部断言；API Proxy Promise 化入口、普通请求 Promise 路径、联想词取消与旧响应防护、错误提示和详情跳转链路均保留。"
   }
 }

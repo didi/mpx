@@ -25,9 +25,7 @@ createPage({
     this.trendingKeywords = await fetchTrendingKeywords()
   },
   onUnload () {
-    const requestTask = this.requestTask
-    this.requestTask = null
-    if (requestTask) requestTask.abort()
+    this.cancelSuggestionRequest()
   },
   methods: {
     onKeywordInput (event) {
@@ -36,38 +34,46 @@ createPage({
     chooseKeyword (keyword) {
       this.search(keyword)
     },
-    search (keyword) {
-      this.keyword = keyword
-
-      const requestTask = this.requestTask
+    cancelSuggestionRequest () {
+      const requestPromise = this.requestTask
       this.requestTask = null
-      if (requestTask) requestTask.abort()
+
+      const task = requestPromise && requestPromise.__returned
+      if (task && typeof task.abort === 'function') {
+        task.abort()
+      }
+    },
+    async search (keyword) {
+      this.keyword = keyword
+      this.cancelSuggestionRequest()
 
       if (!keyword) {
         this.suggestions = []
         return
       }
 
-      const task = requestSuggestions(keyword, {
-        success: ({ data }) => {
-          if (this.requestTask !== task || this.keyword !== keyword) return
+      const requestPromise = requestSuggestions(keyword)
+      this.requestTask = requestPromise
+
+      try {
+        const { data } = await requestPromise
+        if (this.requestTask !== requestPromise) return
+        this.suggestions = data.list
+      } catch (error) {
+        if (this.requestTask !== requestPromise) return
+        mpx.showToast({
+          title: '搜索失败',
+          icon: 'none'
+        })
+      } finally {
+        if (this.requestTask === requestPromise) {
           this.requestTask = null
-          this.suggestions = data.list
-        },
-        fail: () => {
-          if (this.requestTask !== task || this.keyword !== keyword) return
-          this.requestTask = null
-          mpx.showToast({
-            title: '搜索失败',
-            icon: 'none'
-          })
         }
-      })
-      this.requestTask = task
+      }
     },
     openProduct (productId) {
       mpx.navigateTo({
-        url: `/pages/product/detail?id=${productId}`
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
       })
     }
   }

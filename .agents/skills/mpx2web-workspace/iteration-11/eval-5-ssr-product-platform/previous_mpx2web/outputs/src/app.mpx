@@ -1,16 +1,14 @@
 <script>
 import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
 import { createPinia } from '@mpxjs/pinia'
 
-if (__mpx_mode__ === 'web') {
-  mpx.config.webConfig.routeConfig = {
-    mode: 'history',
-    base: '/mall/'
-  }
-}
+mpx.use(apiProxy)
 
 createApp({
   onAppInit () {
+    // SSR 每次 Node 请求都会创建独立 Pinia；客户端和小程序
+    // 创建应用时也获得各自的实例。
     return {
       pinia: createPinia()
     }

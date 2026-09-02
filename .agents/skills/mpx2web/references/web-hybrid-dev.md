@@ -116,6 +116,21 @@ module.exports = {
 - 命中的基础标签会优先使用自定义模块；属性、事件、子节点语义需要自定义组件自行对齐 Web 内建组件预期。
 - 该配置只影响 Web 输出。
 
+### 替换 `scroll-view` 时的契约核对
+
+自定义模块会完全替代框架 Web 内建实现，不会自动继承其行为。先搜索业务调用点，列出实际使用的属性和事件，再实现对应子集；不能只写 `v-bind="$attrs"`、`v-on="$listeners"` 和 `<slot />` 就宣称兼容。Vue 已声明为 prop 的值不会继续留在 `$attrs` 中，浏览器原生 `div` 也不会理解 Mpx 的滚动属性。
+
+业务使用到对应能力时，至少核对：
+
+- `scroll-x` / `scroll-y` 分别控制横纵滚动，不要只实现纵向 overflow。
+- `scroll-top` / `scroll-left` 在首次挂载和后续变化时都同步到真实滚动节点。
+- `scroll-into-view` 在子节点更新后查找当前滚动容器内的目标 id，并滚动到该节点；不要用未限定范围的全局节点作为完成证据。
+- 原生滚动时对外触发 `scroll`，`detail` 保留 `scrollTop`、`scrollLeft`、`scrollHeight`、`scrollWidth`、`deltaX`、`deltaY`。
+- 结合 `upper-threshold` / `lower-threshold` 和启用的轴触发 `scrolltoupper` / `scrolltolower`，方向分别覆盖 `top` / `left` 与 `bottom` / `right`，并避免停留在阈值内时重复泛滥触发。
+- 保留默认 slot 和业务实际使用的其它 slot；若内部接管 `scroll` 监听，应在合成 Mpx 事件后继续把事件交给调用方，而不是覆盖丢失。
+
+如果业务确实只使用 `scroll-y` 和默认子节点，可以只实现这一子集；但必须以调用点证据为准，不能删除输入中已有的受控滚动、边界通知或点击回传链路。
+
 ---
 
 ## 文件维度隔离

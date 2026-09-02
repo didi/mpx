@@ -18,11 +18,12 @@ export const useArticleStore = defineStore('article', {
       this.article = null
       this.recommendations = []
       this.loaded = false
+
       const data = await fetchArticle(articleId, requestContext)
 
       if (requestVersion !== this.requestVersion || this.articleId !== articleId) return
       this.article = data.article
-      this.recommendations = data.recommendations
+      this.recommendations = data.recommendations || []
       this.loaded = true
     }
   }

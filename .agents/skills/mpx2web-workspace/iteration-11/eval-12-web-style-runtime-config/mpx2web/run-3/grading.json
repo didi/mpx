@@ -1,13 +1,21 @@
 {
   "eval_id": 12,
   "eval_name": "web-style-runtime-config",
-  "configuration": "has_skill",
+  "configuration": "mpx2web",
+  "run_number": 3,
+  "grading_fingerprint": "dafa71572c6931a6b32e33a7c8406b6acb72f76fdb7003f281f256c38a8880df",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 100997
+  },
   "expectations": [
     {
       "id": "t0",
       "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
       "passed": true,
-      "evidence": "outputs/src/pages/portal/index.mpx:63-65 使用 CSS 变量并提供回退：color: var(--portal-text, #1f2937); background: var(--portal-background, #f5f7fa); padding: var(--portal-space, 24rpx)。outputs/src/pages/portal/index.mpx:87 也为 --portal-scrollbar 提供 #94a3b8 回退。",
+      "evidence": "outputs/src/pages/portal/index.mpx:95-100 为 --portal-text、--portal-background、--portal-space 提供 #1f2329、#f5f7fa、24rpx 回退；104-107 的 web safe-area 计算也为 --portal-space 提供回退。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -80,23 +88,101 @@
     "pass_rate": 0.8571
   },
   "metrics": {
-    "total_tokens": 287152,
-    "input_tokens": 279240,
-    "output_tokens": 7912,
-    "tool_calls": 10,
-    "duration_ms": 372905,
-    "output_files": 3,
-    "output_lines": 117,
-    "output_nonempty_lines": 113,
-    "output_bytes": 3057
+    "total_tokens": 311597,
+    "input_tokens": 302291,
+    "output_tokens": 9306,
+    "tool_calls": 23,
+    "duration_ms": 224536
   },
   "timing": {
-    "total_tokens": 287152,
-    "duration_ms": 372905,
-    "total_duration_seconds": 372.905,
-    "generation_attempts": 2
+    "total_tokens": 311597,
+    "duration_ms": 224536,
+    "total_duration_seconds": 224.536
   },
-  "execution_metrics": {
-    "total_tool_calls": 10
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/src/pages/portal/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/vue.config.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/public/index.html"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/src/pages/portal/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/vue.config.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/public/index.html",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/src/pages/portal/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3426
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-3/outputs/public/index.html"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "将 t6 中“主题切换完整”拆成可观察标准，例如 dark 是否必须驱动 class、CSS 变量或宿主主题 API；当前表述容易让仅保留状态切换的实现产生判定偏差。",
+      "明确 transRpxFn 回调 value 的参数类型；若实际可能是数字 0，字符串判断 value === '0' 的实现会改变 t1 结论。"
+    ],
+    "overall": "配置、viewport、Web 样式隔离和滚动锁基本到位；主要未满足点是主题切换状态没有实际作用到界面或主题变量。"
   }
 }

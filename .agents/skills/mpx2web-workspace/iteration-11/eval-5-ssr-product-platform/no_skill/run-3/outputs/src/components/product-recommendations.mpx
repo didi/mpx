@@ -17,6 +17,20 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+
+function canUseBrowserSdk () {
+  return typeof window !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    typeof window.IntersectionObserver === 'function'
+}
+
+function loadExposureSdk () {
+  if (!canUseBrowserSdk()) return null
+  // Loading is intentionally deferred: evaluating a browser SDK during SSR is unsafe.
+  const sdkModule = require('@business/product-exposure-web')
+  return sdkModule.default || sdkModule
+}
 
 // SDK contract: create({ productId }) returns Promise<Tracker>.
 // Tracker exposes track(eventName, payload) and destroy().
@@ -25,79 +39,91 @@ createComponent({
     productId: String,
     items: Array
   },
-  watch: {
-    productId () {
-      if (this.trackingReady) this.startTracking()
-    },
-    items () {
-      if (this.trackingReady) this.startTracking()
+  observers: {
+    'productId, items' () {
+      if (this._trackingReady) this.restartTracking()
     }
   },
   ready () {
-    this.trackingReady = true
-    this.trackingVersion = 0
-    this.startTracking()
+    this._trackingReady = true
+    this._trackingGeneration = 0
+    this.restartTracking()
   },
   detached () {
-    this.trackingReady = false
-    this.resetTracking()
+    this._trackingReady = false
+    this.invalidateTracking()
   },
   methods: {
-    resetTracking () {
-      this.trackingVersion += 1
-      if (this.observer) {
-        this.observer.disconnect()
-        this.observer = null
+    invalidateTracking () {
+      this._trackingGeneration = (this._trackingGeneration || 0) + 1
+      if (this._observer) {
+        this._observer.disconnect()
+        this._observer = null
       }
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
+      if (this._tracker) {
+        try {
+          this._tracker.destroy()
+        } catch (e) {}
+        this._tracker = null
       }
-      return this.trackingVersion
     },
-    startTracking () {
-      const trackingVersion = this.resetTracking()
-      if (
-        !this.productId ||
-        !this.items ||
-        !this.items.length ||
-        typeof window === 'undefined' ||
-        typeof document === 'undefined' ||
-        typeof window.IntersectionObserver === 'undefined'
-      ) return
+    restartTracking () {
+      this.invalidateTracking()
+      if (!this._trackingReady || !this.productId || !canUseBrowserSdk()) return
 
-      const productId = this.productId
+      const generation = this._trackingGeneration
+      const productId = String(this.productId)
+      const sdk = loadExposureSdk()
+      if (!sdk || typeof sdk.create !== 'function') return
+
       this.$nextTick(() => {
-        import('@business/product-exposure-web').then(({ default: exposureSdk }) => {
-          if (!this.trackingReady || trackingVersion !== this.trackingVersion) return
-          return exposureSdk.create({ productId }).then((tracker) => {
-            if (!this.trackingReady || trackingVersion !== this.trackingVersion) {
-              tracker.destroy()
-              return
-            }
+        if (!this.isCurrentTracking(generation, productId)) return
 
-            this.tracker = tracker
-            this.observer = new window.IntersectionObserver((entries) => {
-              if (trackingVersion !== this.trackingVersion || tracker !== this.tracker) return
-              entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                  tracker.track('recommendation_exposure', {
-                    productId,
-                    recommendationId: entry.target.dataset.productId
-                  })
-                }
-              })
-            })
-            this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-              this.observer.observe(element)
+        let trackerPromise
+        try {
+          trackerPromise = sdk.create({ productId })
+        } catch (e) {
+          return
+        }
+
+        Promise.resolve(trackerPromise).then((tracker) => {
+          if (!tracker) return
+          if (!this.isCurrentTracking(generation, productId)) {
+            if (typeof tracker.destroy === 'function') tracker.destroy()
+            return
+          }
+
+          this._tracker = tracker
+          const root = this.$el
+          if (!root || typeof root.querySelectorAll !== 'function') return
+
+          const observer = new window.IntersectionObserver((entries) => {
+            if (!this.isCurrentTracking(generation, productId) || this._tracker !== tracker) return
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return
+              try {
+                tracker.track('recommendation_exposure', {
+                  productId,
+                  recommendationId: entry.target.dataset.productId
+                })
+              } catch (e) {}
             })
           })
-        })
+          this._observer = observer
+          root.querySelectorAll('.recommendation-card').forEach((element) => {
+            observer.observe(element)
+          })
+        }).catch(() => {})
       })
     },
+    isCurrentTracking (generation, productId) {
+      return this._trackingReady &&
+        generation === this._trackingGeneration &&
+        productId === String(this.productId)
+    },
     openProduct (productId) {
-      wx.navigateTo({
-        url: `/packageProduct/pages/detail/index?id=${productId}`
+      mpx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}`
       })
     }
   }

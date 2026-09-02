@@ -10,18 +10,44 @@ export const useArticleStore = defineStore('article', {
   }),
   actions: {
     async loadArticle (articleId, requestContext) {
-      if (!articleId || (this.articleId === articleId && this.article)) return
+      const normalizedArticleId = articleId === undefined || articleId === null
+        ? ''
+        : String(articleId)
 
-      const requestId = ++this.requestId
-      this.articleId = articleId
+      if (!normalizedArticleId) return
+
+      if (this.articleId === normalizedArticleId && this.article) {
+        return {
+          article: this.article,
+          recommendations: this.recommendations
+        }
+      }
+
+      const requestId = this.requestId + 1
+      this.requestId = requestId
+      this.articleId = normalizedArticleId
       this.article = null
       this.recommendations = []
 
-      const data = await fetchArticle(articleId, requestContext)
-      if (requestId !== this.requestId || articleId !== this.articleId) return
+      try {
+        const data = await fetchArticle(normalizedArticleId, requestContext)
 
-      this.article = data.article
-      this.recommendations = data.recommendations
+        if (this.requestId !== requestId || this.articleId !== normalizedArticleId) {
+          return
+        }
+
+        this.article = data.article
+        this.recommendations = Array.isArray(data.recommendations) ? data.recommendations : []
+        return data
+      } catch (error) {
+        if (this.requestId !== requestId || this.articleId !== normalizedArticleId) {
+          return
+        }
+
+        this.article = null
+        this.recommendations = []
+        throw error
+      }
     }
   }
 })

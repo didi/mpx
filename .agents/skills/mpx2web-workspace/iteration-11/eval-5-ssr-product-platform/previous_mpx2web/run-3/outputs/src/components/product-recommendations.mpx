@@ -16,101 +16,131 @@
 </template>
 
 <script>
-import { createComponent } from '@mpxjs/core'
-import mpx from '@mpxjs/api-proxy'
+import mpx, { createComponent } from '@mpxjs/core'
 
 // SDK contract: create({ productId }) returns Promise<Tracker>.
 // Tracker exposes track(eventName, payload) and destroy().
 createComponent({
   properties: {
-    productId: {
-      type: String,
-      observer () {
-        this.restartTracker()
-      }
-    },
-    items: {
-      type: Array,
-      observer () {
-        this.scheduleObserverRefresh()
-      }
+    productId: String,
+    items: Array
+  },
+  observers: {
+    'productId, items': function () {
+      if (this.trackingReady) this.scheduleTracking()
     }
   },
   created () {
-    this.trackerActive = false
-    this.trackerVersion = 0
-    this.tracker = null
-    this.observer = null
+    this.trackingReady = false
+    this.trackingDetached = false
+    this.trackingVersion = 0
+    this.exposureTracker = null
+    this.exposureObserver = null
   },
   ready () {
     if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
-    this.trackerActive = true
-    this.restartTracker()
+
+    this.trackingReady = true
+    this.trackingDetached = false
+    this.scheduleTracking()
   },
   detached () {
-    this.trackerActive = false
-    this.trackerVersion++
-    this.destroyTracker()
+    this.trackingDetached = true
+    this.trackingReady = false
+    this.trackingVersion += 1
+    this.destroyActiveTracking()
   },
   methods: {
-    restartTracker () {
-      if (!this.trackerActive || !this.productId) return
+    scheduleTracking () {
+      if (
+        __mpx_mode__ !== 'web' ||
+        typeof window === 'undefined' ||
+        !this.trackingReady ||
+        this.trackingDetached
+      ) return
 
-      const trackerVersion = ++this.trackerVersion
-      const productId = this.productId
-      this.destroyTracker()
-      this.$nextTick(() => this.createTracker(trackerVersion, productId))
-    },
-    async createTracker (trackerVersion, productId) {
-      const { default: exposureSdk } = await import('@business/product-exposure-web')
-      if (!this.isTrackerCurrent(trackerVersion, productId)) return
+      const trackingVersion = ++this.trackingVersion
+      this.destroyActiveTracking()
 
-      const tracker = await exposureSdk.create({ productId })
-      if (!this.isTrackerCurrent(trackerVersion, productId)) {
-        tracker.destroy()
-        return
-      }
+      this.$nextTick(() => {
+        if (!this.isCurrentTracking(trackingVersion, this.productId)) return
+        this.createTracking(trackingVersion, this.productId)
+      })
+    },
+    async createTracking (trackingVersion, productId) {
+      if (!productId || !this.items || !this.items.length) return
 
-      this.tracker = tracker
-      this.refreshObserver(trackerVersion, productId)
-    },
-    isTrackerCurrent (trackerVersion, productId) {
-      return this.trackerActive &&
-        trackerVersion === this.trackerVersion &&
-        productId === this.productId
-    },
-    scheduleObserverRefresh () {
-      if (!this.trackerActive) return
-      this.$nextTick(() => this.refreshObserver(this.trackerVersion, this.productId))
-    },
-    refreshObserver (trackerVersion, productId) {
-      if (!this.tracker || !this.isTrackerCurrent(trackerVersion, productId)) return
-      if (this.observer) this.observer.disconnect()
+      let tracker = null
 
-      const tracker = this.tracker
-      this.observer = new window.IntersectionObserver((entries) => {
-        if (!this.isTrackerCurrent(trackerVersion, productId) || tracker !== this.tracker) return
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+      try {
+        const sdkModule = await import('@business/product-exposure-web')
+        if (!this.isCurrentTracking(trackingVersion, productId)) return
+
+        const exposureSdk = sdkModule.default || sdkModule
+        tracker = await exposureSdk.create({ productId })
+
+        if (!this.isCurrentTracking(trackingVersion, productId)) {
+          this.destroyTracker(tracker)
+          return
+        }
+
+        this.exposureTracker = tracker
+
+        if (typeof window.IntersectionObserver !== 'function') return
+
+        const observer = new window.IntersectionObserver((entries) => {
+          if (!this.isCurrentTracking(trackingVersion, productId)) return
+
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return
+
             tracker.track('recommendation_exposure', {
               productId,
               recommendationId: entry.target.dataset.productId
             })
-          }
+          })
         })
-      })
-      this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-        this.observer.observe(element)
-      })
-    },
-    destroyTracker () {
-      if (this.observer) {
-        this.observer.disconnect()
-        this.observer = null
+
+        if (!this.isCurrentTracking(trackingVersion, productId)) {
+          observer.disconnect()
+          this.destroyTracker(tracker)
+          if (this.exposureTracker === tracker) this.exposureTracker = null
+          return
+        }
+
+        this.exposureObserver = observer
+        const root = this.$el
+        if (root && root.querySelectorAll) {
+          root.querySelectorAll('.recommendation-card').forEach((element) => {
+            observer.observe(element)
+          })
+        }
+      } catch (error) {
+        if (tracker && !this.isCurrentTracking(trackingVersion, productId)) {
+          this.destroyTracker(tracker)
+        }
       }
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
+    },
+    isCurrentTracking (trackingVersion, productId) {
+      return Boolean(
+        !this.trackingDetached &&
+        this.trackingReady &&
+        trackingVersion === this.trackingVersion &&
+        productId === this.productId
+      )
+    },
+    destroyTracker (tracker) {
+      if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+    },
+    destroyActiveTracking () {
+      if (this.exposureObserver) {
+        this.exposureObserver.disconnect()
+        this.exposureObserver = null
+      }
+
+      if (this.exposureTracker) {
+        this.destroyTracker(this.exposureTracker)
+        this.exposureTracker = null
       }
     },
     openProduct (productId) {

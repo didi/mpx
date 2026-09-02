@@ -32,6 +32,7 @@
         disabled="{{item.locked}}"
         bindselect="openOrder"
         bindremove="removeOrder"
+        bindswipeend="handleSwipeEnd"
       />
     </view>
 
@@ -96,6 +97,7 @@ createPage({
         locked: false
       }
     ],
+    openOrderId: '',
     logisticsOnline: false,
     loading: false
   },
@@ -106,17 +108,23 @@ createPage({
       this.fetchOrders()
     },
     fetchOrders () {
+      const requestId = (this._ordersRequestId || 0) + 1
+      const status = this.activeStatus
+      this._ordersRequestId = requestId
       this.loading = true
       mpx.request({
         url: '/api/orders',
-        data: { status: this.activeStatus },
+        data: { status },
         usePromise: false,
         success: ({ data }) => {
+          if (this._ordersRequestId !== requestId || this.activeStatus !== status) return
           this.orders = data.list
           this.statusTabs = data.summary
         },
         complete: () => {
-          this.loading = false
+          if (this._ordersRequestId === requestId) {
+            this.loading = false
+          }
         }
       })
     },
@@ -144,10 +152,19 @@ createPage({
         }
       })
     },
+    handleSwipeEnd ({ detail }) {
+      if (detail.open) {
+        this.openOrderId = detail.orderId
+      } else if (this.openOrderId === detail.orderId) {
+        this.openOrderId = ''
+      }
+    },
     handleConnectionChange ({ detail }) {
+      if (!detail || detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
+      if (!detail || detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -158,7 +175,8 @@ createPage({
         })
       })
     },
-    handleChannelError () {
+    handleChannelError ({ detail }) {
+      if (detail && detail.memberId && detail.memberId !== this.memberId) return
       this.logisticsOnline = false
     },
     goShopping () {

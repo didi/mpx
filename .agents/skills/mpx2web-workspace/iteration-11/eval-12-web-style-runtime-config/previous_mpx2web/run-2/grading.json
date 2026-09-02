@@ -1,13 +1,21 @@
 {
   "eval_id": 12,
   "eval_name": "web-style-runtime-config",
-  "configuration": "old_skill",
+  "configuration": "previous_mpx2web",
+  "run_number": 2,
+  "grading_fingerprint": "6039a0b590e9aecf4029e1150be07522d060d8fe2cf0fb27112f4b2f97743a91",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 109134
+  },
   "expectations": [
     {
       "id": "t0",
       "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
       "passed": true,
-      "evidence": "outputs/src/pages/portal/index.mpx:93-95 使用 `color: var(--portal-text, #1f2329);`、`background: var(--portal-background, #f5f7fa);`、`padding: var(--portal-space, 24rpx);`；outputs/src/pages/portal/index.mpx:112/119/123 也为滚动条变量提供 `#a8abb2`、`transparent` 回退。",
+      "evidence": "outputs/src/pages/portal/index.mpx:208-210 为 --portal-text、--portal-background、--portal-space 分别提供 #1f2329、#f5f7fa、24rpx 回退值；217 的 safe-area 也带 env(..., 0px) 回退。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -15,8 +23,8 @@
     {
       "id": "t1",
       "text": "webConfig.transRpxFn 实现明确的 100rpx=1rem 规则，0 值保持 0，不产生 0rem 或依赖运行环境的非确定结果",
-      "passed": true,
-      "evidence": "outputs/vue.config.js：rpx 转换规则稳定保留 0，并按 1/100 输出 rem。",
+      "passed": false,
+      "evidence": "outputs/vue.config.js：transRpxFn 未同时证明 0 保持和 100rpx=1rem。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -55,8 +63,8 @@
     {
       "id": "t5",
       "text": "滚动锁只保护浏览器客户端 DOM，不阻断微信小程序页面滚动、卡片点击和弹层关闭",
-      "passed": true,
-      "evidence": "outputs/src/pages/portal/index.mpx：DOM 滚动锁只在 Web 客户端执行，小程序业务方法仍可调用。",
+      "passed": false,
+      "evidence": "outputs/src/pages/portal/index.mpx：openDialog 的 DOM 滚动逻辑未由 Web 客户端分支保护。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -74,29 +82,107 @@
     }
   ],
   "summary": {
-    "passed": 6,
-    "failed": 1,
+    "passed": 4,
+    "failed": 3,
     "total": 7,
-    "pass_rate": 0.8571
+    "pass_rate": 0.5714
   },
   "metrics": {
-    "total_tokens": 804349,
-    "input_tokens": 793852,
-    "output_tokens": 10497,
-    "tool_calls": 18,
-    "duration_ms": 392079,
-    "output_files": 3,
-    "output_lines": 156,
-    "output_nonempty_lines": 147,
-    "output_bytes": 3992
+    "total_tokens": 591454,
+    "input_tokens": 578240,
+    "output_tokens": 13214,
+    "tool_calls": 36,
+    "duration_ms": 286707
   },
   "timing": {
-    "total_tokens": 804349,
-    "duration_ms": 392079,
-    "total_duration_seconds": 392.079,
-    "generation_attempts": 1
+    "total_tokens": 591454,
+    "duration_ms": 286707,
+    "total_duration_seconds": 286.707
   },
-  "execution_metrics": {
-    "total_tool_calls": 18
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/src/pages/portal/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/vue.config.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/public/index.html"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/src/pages/portal/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/vue.config.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/public/index.html",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/src/pages/portal/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3288
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/previous_mpx2web/run-2/outputs/public/index.html"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "t4 未明确“应用挂载容器”是否必须是 public/index.html 中的 #app，还是允许 documentElement 代替；该解释会直接影响判定。",
+      "t6 未明确主题切换需要产生可观察的样式/变量变化，还是仅要求点击 handler 不报错；当前文件证据只能证明后者。"
+    ],
+    "overall": "候选修复了 viewport、/portal/ 路径、rpx 转 rem、主题变量回退和 Web 样式隔离；主要缺口是未处理 #app 挂载容器 overflow，且主题切换没有实际样式链路。"
   }
 }

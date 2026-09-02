@@ -18,8 +18,9 @@ createComponent({
   properties: {
     memberId: {
       type: String,
-      observer () {
-        if (this.channelAttached) this.connectChannel()
+      observer (memberId, previousMemberId) {
+        if (memberId === previousMemberId || !this._channelAttached) return
+        this.connectChannel()
       }
     }
   },
@@ -27,86 +28,121 @@ createComponent({
     connected: false
   },
   created () {
+    this._channelAttached = false
     this.socketTask = null
-    this.connectionGeneration = 0
-    this.channelAttached = false
+    this._socketHandlers = null
   },
   attached () {
-    this.channelAttached = true
+    this._channelAttached = true
     this.connectChannel()
   },
   detached () {
-    this.channelAttached = false
-    this.disposeSocket()
+    this._channelAttached = false
+    this._closeCurrentTask()
   },
   methods: {
     connectChannel () {
       const memberId = this.memberId
-      this.disposeSocket()
-      if (!this.channelAttached || !memberId) return
+      this._closeCurrentTask()
+      this._setConnected(false, memberId)
+      if (!this._channelAttached || !memberId) return
 
-      this.updateConnection(false, memberId, true)
-      const generation = ++this.connectionGeneration
-      const task = mpx.connectSocket({
-        url: `wss://logistics.example.com/members/${memberId}`,
-        header: {
-          Authorization: `Bearer ${mpx.getStorageSync('token')}`
-        },
-        usePromise: false
-      })
+      let task
+      try {
+        task = mpx.connectSocket({
+          url: `wss://logistics.example.com/members/${memberId}`,
+          header: {
+            Authorization: `Bearer ${mpx.getStorageSync('token')}`
+          },
+          usePromise: false
+        })
+      } catch (error) {
+        this._emitError(error, memberId)
+        return
+      }
+
+      if (!task) {
+        this._emitError(new Error('物流通道创建失败'), memberId)
+        return
+      }
+
       this.socketTask = task
 
-      task.onOpen(() => {
-        if (!this.isCurrentTask(task, generation, memberId)) return
-        this.updateConnection(true, memberId)
-      })
-      task.onMessage(({ data }) => {
-        if (!this.isCurrentTask(task, generation, memberId)) return
-        const message = JSON.parse(data)
-        if (message.type === 'logistics') {
-          this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
-        }
-      })
-      task.onError((error) => {
-        if (!this.isCurrentTask(task, generation, memberId)) return
-        this.updateConnection(false, memberId)
-        this.triggerEvent('error', { error, memberId })
-      })
-      task.onClose(() => {
-        if (!this.isCurrentTask(task, generation, memberId)) return
-        this.socketTask = null
-        this.updateConnection(false, memberId)
-      })
-    },
-    isCurrentTask (task, generation, memberId) {
-      return this.channelAttached &&
-        this.socketTask === task &&
-        this.connectionGeneration === generation &&
-        this.memberId === memberId
-    },
-    disposeSocket () {
-      const task = this.socketTask
-      this.socketTask = null
-      this.connectionGeneration += 1
-      this.connected = false
-      if (task) task.close()
-    },
-    updateConnection (connected, memberId, force) {
-      const changed = this.connected !== connected
-      this.connected = connected
-      if (changed || force) {
-        this.triggerEvent('connectedchange', { connected, memberId })
+      const onOpen = () => {
+        if (!this._isCurrentTask(task, memberId)) return
+        this._setConnected(true, memberId)
       }
+      const onMessage = ({ data }) => {
+        if (!this._isCurrentTask(task, memberId)) return
+        let message
+        try {
+          message = typeof data === 'string' ? JSON.parse(data) : data
+        } catch (error) {
+          this._emitError(error, memberId)
+          return
+        }
+        if (!message || message.type !== 'logistics') return
+        this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
+      }
+      const onError = (error) => {
+        if (!this._isCurrentTask(task, memberId)) return
+        this._setConnected(false, memberId)
+        this._emitError(error, memberId)
+      }
+      const onClose = () => {
+        if (!this._isCurrentTask(task, memberId)) return
+        this.socketTask = null
+        this._socketHandlers = null
+        this._setConnected(false, memberId)
+      }
+
+      this._socketHandlers = { task, onOpen, onMessage, onError, onClose }
+      task.onOpen(onOpen)
+      task.onMessage(onMessage)
+      task.onError(onError)
+      task.onClose(onClose)
     },
     reconnect () {
+      if (!this.memberId || !this._channelAttached) return
       this.connectChannel()
     },
     sendHeartbeat () {
       const task = this.socketTask
-      if (!task || this.socketTask !== task || task.readyState !== task.OPEN) return
+      if (!task || this.socketTask !== task || !this.connected) return
+      if (__mpx_mode__ === 'web' && task.readyState !== task.OPEN) return
       task.send({
         data: JSON.stringify({ type: 'ping', memberId: this.memberId })
       })
+    },
+    _isCurrentTask (task, memberId) {
+      return this._channelAttached && this.socketTask === task && this.memberId === memberId
+    },
+    _setConnected (connected, memberId) {
+      if (this.connected === connected) return
+      this.connected = connected
+      if (!this._channelAttached || this.memberId !== memberId) return
+      this.triggerEvent('connectedchange', { connected, memberId })
+    },
+    _emitError (error, memberId) {
+      if (!this._channelAttached || this.memberId !== memberId) return
+      this.triggerEvent('error', { error, memberId })
+    },
+    _closeCurrentTask () {
+      const task = this.socketTask
+      const handlers = this._socketHandlers
+      this.socketTask = null
+      this._socketHandlers = null
+      if (!task) return
+
+      if (handlers && handlers.task === task) {
+        if (task.offOpen) task.offOpen(handlers.onOpen)
+        if (task.offMessage) task.offMessage(handlers.onMessage)
+        if (task.offError) task.offError(handlers.onError)
+        if (task.offClose) task.offClose(handlers.onClose)
+      }
+      if (task.close) {
+        task.close({ code: 1000, reason: 'replace logistics channel' })
+      }
     }
   }
 })

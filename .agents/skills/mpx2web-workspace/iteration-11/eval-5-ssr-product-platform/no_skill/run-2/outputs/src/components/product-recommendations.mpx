@@ -17,99 +17,120 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
 
-// SDK contract: create({ productId }) returns Promise<Tracker>.
-// Tracker exposes track(eventName, payload) and destroy().
+function destroyTracker (tracker) {
+  if (!tracker || typeof tracker.destroy !== 'function') return
+  try {
+    tracker.destroy()
+  } catch (error) {}
+}
+
 createComponent({
   properties: {
-    productId: String,
-    items: Array
-  },
-  observers: {
-    'productId, items': function () {
-      if (this.componentReady && this.pageVisible) this.refreshTracker()
+    productId: {
+      type: String,
+      value: '',
+      observer () {
+        this.handleInputChange()
+      }
+    },
+    items: {
+      type: Array,
+      value: [],
+      observer () {
+        this.handleInputChange()
+      }
     }
-  },
-  created () {
-    this.componentReady = false
-    this.pageVisible = true
-    this.trackerVersion = 0
-    this.tracker = null
-    this.intersectionObserver = null
   },
   ready () {
-    this.componentReady = true
-    this.refreshTracker()
+    this._recommendationsReady = true
+    this.scheduleTrackerSetup()
   },
   detached () {
-    this.componentReady = false
-    this.disposeTracker()
-  },
-  pageLifetimes: {
-    show () {
-      this.pageVisible = true
-      if (this.componentReady) this.refreshTracker()
-    },
-    hide () {
-      this.pageVisible = false
-      this.disposeTracker()
-    }
+    this._recommendationsReady = false
+    this.stopTrackerSetup()
   },
   methods: {
-    clearTracker () {
-      if (this.intersectionObserver) {
-        this.intersectionObserver.disconnect()
-        this.intersectionObserver = null
-      }
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
-      }
+    handleInputChange () {
+      if (this._recommendationsReady) this.scheduleTrackerSetup()
     },
-    disposeTracker () {
-      this.trackerVersion += 1
-      this.clearTracker()
+    stopTrackerSetup () {
+      this._trackerRunId = (this._trackerRunId || 0) + 1
+
+      if (this._observer) {
+        this._observer.disconnect()
+        this._observer = null
+      }
+
+      destroyTracker(this._tracker)
+      this._tracker = null
+      this._trackedRecommendationIds = null
     },
-    async refreshTracker () {
-      const trackerVersion = ++this.trackerVersion
-      this.clearTracker()
-      if (
-        __mpx_mode__ !== 'web' ||
-        typeof window === 'undefined' ||
-        typeof IntersectionObserver === 'undefined' ||
-        !this.productId
-      ) return
+    scheduleTrackerSetup () {
+      this.stopTrackerSetup()
 
-      const sdkModule = await import('@business/product-exposure-web')
-      if (trackerVersion !== this.trackerVersion || !this.pageVisible) return
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' ||
+        typeof document === 'undefined' || !this.productId) return
 
-      const exposureSdk = sdkModule.default || sdkModule
-      const tracker = await exposureSdk.create({ productId: this.productId })
-      await new Promise(resolve => this.$nextTick(resolve))
-      if (trackerVersion !== this.trackerVersion || !this.componentReady || !this.pageVisible) {
-        tracker.destroy()
+      const runId = this._trackerRunId
+      const productId = this.productId
+      this.$nextTick(() => this.createTracker(runId, productId))
+    },
+    async createTracker (runId, productId) {
+      const isCurrent = () => this._recommendationsReady &&
+        this._trackerRunId === runId && this.productId === productId
+
+      if (!isCurrent()) return
+
+      let tracker
+      try {
+        const sdkModule = await import('@business/product-exposure-web')
+        if (!isCurrent()) return
+
+        const exposureSdk = sdkModule.default || sdkModule
+        tracker = await exposureSdk.create({ productId })
+      } catch (error) {
         return
       }
 
-      this.tracker = tracker
-      this.intersectionObserver = new IntersectionObserver((entries) => {
-        if (trackerVersion !== this.trackerVersion || tracker !== this.tracker || !this.pageVisible) return
+      if (!isCurrent()) {
+        destroyTracker(tracker)
+        return
+      }
+
+      this._tracker = tracker
+      this._trackedRecommendationIds = new Set()
+
+      if (typeof window.IntersectionObserver !== 'function') return
+
+      this._observer = new window.IntersectionObserver((entries) => {
+        if (!isCurrent() || this._tracker !== tracker) return
+
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            tracker.track('recommendation_exposure', {
-              productId: this.productId,
-              recommendationId: entry.target.dataset.productId
-            })
-          }
+          const recommendationId = entry.target && entry.target.dataset &&
+            entry.target.dataset.productId
+          if (!entry.isIntersecting || !recommendationId ||
+            this._trackedRecommendationIds.has(recommendationId)) return
+
+          this._trackedRecommendationIds.add(recommendationId)
+          tracker.track('recommendation_exposure', {
+            productId,
+            recommendationId
+          })
+          this._observer.unobserve(entry.target)
         })
       })
-      this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-        this.intersectionObserver.observe(element)
+
+      const root = this.$el
+      if (!root || typeof root.querySelectorAll !== 'function') return
+      root.querySelectorAll('.recommendation-card').forEach((element) => {
+        this._observer.observe(element)
       })
     },
     openProduct (productId) {
-      wx.navigateTo({
-        url: `/packageProduct/pages/detail/index?id=${productId}`
+      mpx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}`
       })
     }
   }

@@ -1,6 +1,9 @@
 <script>
-import { createApp } from '@mpxjs/core'
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
 import { createPinia } from '@mpxjs/pinia'
+
+mpx.use(apiProxy, { usePromise: true })
 
 createApp({
   onAppInit () {
@@ -12,7 +15,7 @@ createApp({
 <script type="application/json">
 {
   "pages": ["pages/article/detail"],
-  "packages": [
+  "subPackages": [
     {"root": "packageRecommend", "pages": []}
   ]
 }

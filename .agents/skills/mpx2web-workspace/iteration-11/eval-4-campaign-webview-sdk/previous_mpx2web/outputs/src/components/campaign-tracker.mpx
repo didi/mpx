@@ -11,7 +11,8 @@ createComponent({
   properties: {
     campaignId: {
       type: String,
-      observer () {
+      observer (campaignId, previousCampaignId) {
+        if (!this.trackerMounted || campaignId === previousCampaignId) return
         this.initTracker()
       }
     },
@@ -22,67 +23,120 @@ createComponent({
   },
   created () {
     this.tracker = null
-    this.trackerInitVersion = 0
-    this.trackerComponentReady = false
+    this.trackerGeneration = 0
+    this.trackerMounted = false
     this.trackerDetached = false
+    this.visibilityListening = false
+    this.pageActive = true
   },
   ready () {
-    this.trackerComponentReady = true
+    this.trackerMounted = true
     this.initTracker()
   },
   detached () {
     this.trackerDetached = true
-    this.trackerInitVersion += 1
-    this.cleanupTracker()
+    this.trackerMounted = false
+    this.trackerGeneration += 1
+    this.removeVisibilityListener()
+    this.destroyCurrentTracker()
   },
   methods: {
     async initTracker () {
-      if (__mpx_mode__ !== 'web' || !this.trackerComponentReady || !this.campaignId) return
-      const initVersion = ++this.trackerInitVersion
+      if (!this.trackerMounted || this.trackerDetached || !this.campaignId) return
+
       const campaignId = this.campaignId
+      const generation = this.trackerGeneration + 1
+      this.trackerGeneration = generation
       this.ready = false
-      this.cleanupTracker()
+      this.removeVisibilityListener()
+      this.destroyCurrentTracker()
+
+      if (__mpx_mode__ !== 'web') {
+        if (!this.isCurrentInitialization(generation, campaignId)) return
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+        return
+      }
+
+      let tracker
       try {
-        const campaignTracker = (await import('@business/campaign-tracker-web')).default
-        if (!this.isCurrentTrackerInit(initVersion, campaignId)) return
-        const tracker = await campaignTracker.create({
+        const trackerModule = await import('@business/campaign-tracker-web')
+        if (!this.isCurrentInitialization(generation, campaignId)) return
+        const campaignTracker = trackerModule.default || trackerModule
+        tracker = await campaignTracker.create({
           campaignId,
           memberId: this.memberId
         })
-        if (!this.isCurrentTrackerInit(initVersion, campaignId)) {
-          tracker.destroy()
+
+        if (!this.isCurrentInitialization(generation, campaignId)) {
+          this.destroyTrackerInstance(tracker)
           return
         }
+
         this.tracker = tracker
-        document.addEventListener('visibilitychange', this.handleVisibilityChange)
+        this.addVisibilityListener()
         tracker.start()
+        this.syncTrackerState()
         this.ready = true
         this.triggerEvent('ready', { campaignId })
       } catch (error) {
-        if (!this.isCurrentTrackerInit(initVersion, campaignId)) return
-        this.cleanupTracker()
-        this.triggerEvent('error', { campaignId })
+        if (tracker && tracker !== this.tracker) this.destroyTrackerInstance(tracker)
+        if (!this.isCurrentInitialization(generation, campaignId)) return
+        this.removeVisibilityListener()
+        this.destroyCurrentTracker()
+        this.ready = false
+        this.triggerEvent('error', {
+          campaignId,
+          message: error && error.message ? error.message : '活动追踪初始化失败'
+        })
       }
     },
-    isCurrentTrackerInit (initVersion, campaignId) {
-      return !this.trackerDetached &&
-        initVersion === this.trackerInitVersion &&
+    isCurrentInitialization (generation, campaignId) {
+      return this.trackerMounted &&
+        !this.trackerDetached &&
+        generation === this.trackerGeneration &&
         campaignId === this.campaignId
     },
-    cleanupTracker () {
-      if (__mpx_mode__ !== 'web') return
+    addVisibilityListener () {
+      if (__mpx_mode__ !== 'web' || this.visibilityListening || typeof document === 'undefined') return
+      document.addEventListener('visibilitychange', this.handleVisibilityChange)
+      this.visibilityListening = true
+    },
+    removeVisibilityListener () {
+      if (__mpx_mode__ !== 'web' || !this.visibilityListening || typeof document === 'undefined') return
       document.removeEventListener('visibilitychange', this.handleVisibilityChange)
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
-      }
+      this.visibilityListening = false
+    },
+    destroyTrackerInstance (tracker) {
+      if (tracker && tracker.destroy) tracker.destroy()
+    },
+    destroyCurrentTracker () {
+      const tracker = this.tracker
+      this.tracker = null
+      this.destroyTrackerInstance(tracker)
     },
     handleVisibilityChange () {
-      if (!this.tracker) return
-      if (document.hidden) {
-        this.tracker.pause()
-      } else {
-        this.tracker.resume()
+      this.syncTrackerState()
+    },
+    setPageActive (active) {
+      this.pageActive = Boolean(active)
+      this.syncTrackerState()
+    },
+    syncTrackerState () {
+      const tracker = this.tracker
+      if (!tracker) return
+      const documentHidden = __mpx_mode__ === 'web' &&
+        typeof document !== 'undefined' && document.hidden
+      if (!this.pageActive || documentHidden) {
+        if (tracker.pause) tracker.pause()
+      } else if (tracker.resume) {
+        tracker.resume()
+      }
+    },
+    trackExposure (payload, campaignId) {
+      if (!this.ready || this.trackerDetached || campaignId !== this.campaignId) return
+      if (this.tracker && this.tracker.track) {
+        this.tracker.track('exposure', payload)
       }
     }
   }

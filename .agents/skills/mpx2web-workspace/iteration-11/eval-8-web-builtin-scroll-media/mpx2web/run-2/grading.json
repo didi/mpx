@@ -1,7 +1,15 @@
 {
   "eval_id": 8,
   "eval_name": "web-builtin-scroll-media",
-  "configuration": "has_skill",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "grading_fingerprint": "539c91f8daed23d43db75a050e174e306bfe82a2c1fc60ceae14d82ea9d16074",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 274670
+  },
   "expectations": [
     {
       "id": "b0",
@@ -25,9 +33,9 @@
     },
     {
       "id": "b2",
-      "text": "动态分类、异步商品和图片固有尺寸晚到后，使用运行时真实消费的观察机制或图片 load/metadata 后的 nextTick + scroll-view ref.refresh 保证滚动范围更新；仅声明未被消费的同名属性不算通过",
-      "passed": false,
-      "evidence": "outputs/src/pages/feed/index.mpx：图片尺寸晚到后缺少 image load + nextTick + scroll-view ref.refresh 的真实刷新链路。",
+      "text": "动态分类、异步商品和图片固有尺寸晚到后，使用运行时真实消费的观察机制或图片 load/metadata 后的 nextTick + scroll-view ref.refresh 保证滚动范围更新；ref 可使用标准 wx:ref 或可选的 Web 条件写法，必须隔离的是 Web-only refresh 调用链，可由 Web 条件事件或脚本平台/能力判断完成",
+      "passed": true,
+      "evidence": "outputs/src/pages/feed/index.mpx：图片 load 后经 Web 条件事件或脚本/能力判断安全调用 ref.refresh，覆盖固有尺寸晚到。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -75,29 +83,107 @@
     }
   ],
   "summary": {
-    "passed": 6,
-    "failed": 1,
+    "passed": 7,
+    "failed": 0,
     "total": 7,
-    "pass_rate": 0.8571
+    "pass_rate": 1.0
   },
   "metrics": {
-    "total_tokens": 1191550,
-    "input_tokens": 1181462,
-    "output_tokens": 10088,
-    "tool_calls": 23,
-    "duration_ms": 398103,
-    "output_files": 2,
-    "output_lines": 131,
-    "output_nonempty_lines": 124,
-    "output_bytes": 3224
+    "total_tokens": 230357,
+    "input_tokens": 223131,
+    "output_tokens": 7226,
+    "tool_calls": 9,
+    "duration_ms": 179663
   },
   "timing": {
-    "total_tokens": 1191550,
-    "duration_ms": 398103,
-    "total_duration_seconds": 398.103,
-    "generation_attempts": 1
+    "total_tokens": 230357,
+    "duration_ms": 179663,
+    "total_duration_seconds": 179.663
   },
-  "execution_metrics": {
-    "total_tool_calls": 23
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 2,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-8-web-builtin-scroll-media/mpx2web/run-2/outputs/src/pages/feed/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-8-web-builtin-scroll-media/mpx2web/run-2/outputs/src/components/product-video.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 2,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-8-web-builtin-scroll-media/mpx2web/run-2/outputs/src/pages/feed/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-8-web-builtin-scroll-media/mpx2web/run-2/outputs/src/components/product-video.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-8-web-builtin-scroll-media/mpx2web/run-2/outputs/src/pages/feed/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3605
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-8-web-builtin-scroll-media/mpx2web/run-2/outputs/src/components/product-video.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2479
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "b1 未明确 drag handler 是否必须产生可观察状态变更；当前只能按 enhanced 与三阶段方法完整保留判定。",
+      "b4 未明确“用户手势继续播放”是否必须显式 bindtap/context.play；Mpx Web video 默认 controls=true 会影响该项结论。"
+    ],
+    "overall": "候选覆盖主要结构与 Web 运行时能力要求，关键修复依赖 Mpx Web scroll-view 运行时观察机制加图片 load 后 refresh。"
   }
 }

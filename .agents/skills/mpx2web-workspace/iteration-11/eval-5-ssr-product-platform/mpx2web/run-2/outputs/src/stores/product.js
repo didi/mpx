@@ -15,16 +15,20 @@ export const useProductStore = defineStore('product-platform', {
 
       const requestVersion = ++this.requestVersion
       this.productId = productId
+      this.loaded = false
       this.product = {}
       this.recommendations = []
-      this.loaded = false
 
       const [product, recommendations] = await Promise.all([
         fetchProduct(productId, requestContext),
         fetchRecommendations(productId, requestContext)
       ])
 
-      if (requestVersion !== this.requestVersion || this.productId !== productId) return false
+      if (
+        requestVersion !== this.requestVersion ||
+        this.productId !== productId
+      ) return false
+
       this.product = product
       this.recommendations = recommendations
       this.loaded = true

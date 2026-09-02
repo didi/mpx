@@ -1,95 +1,114 @@
-function createEmptyChart () {
-  return {
-    update () {},
-    resize () {},
-    destroy () {}
-  }
-}
-
 function normalizeMetrics (metrics) {
   return Array.isArray(metrics) ? metrics : []
 }
 
-export async function createChart (element, metrics, options) {
+function clearElement (element) {
+  while (element.firstChild) element.removeChild(element.firstChild)
+}
+
+function metricId (metric) {
+  if (metric && metric.id !== undefined && metric.id !== null) return String(metric.id)
+  if (metric && metric.key !== undefined && metric.key !== null) return String(metric.key)
+  return ''
+}
+
+function numericValue (metric) {
+  const value = Number(metric && metric.value)
+  return Number.isFinite(value) ? Math.abs(value) : 0
+}
+
+export async function createChart (element, metrics, options = {}) {
+  if (!element || element.nodeType !== 1) {
+    throw new TypeError('createChart requires a DOM element')
+  }
+
   await Promise.resolve()
 
-  const chartOptions = options || {}
-  if (chartOptions.signal && chartOptions.signal.aborted) return createEmptyChart()
-  if (!element) throw new Error('A chart element is required.')
-
-  const owner = {}
-  const document = element.ownerDocument
-  const root = document.createElement('div')
-  let currentMetrics = []
+  let currentMetrics = normalizeMetrics(metrics)
   let destroyed = false
 
-  root.className = 'analytics-chart__items'
-  element.__analyticsChartOwner = owner
-  element.textContent = ''
-  element.appendChild(root)
+  const handleClick = (event) => {
+    let target = event.target
+    while (target && target !== element && !target.hasAttribute('data-metric-index')) {
+      target = target.parentNode
+    }
+    if (!target || target === element) return
 
-  function update (nextMetrics) {
+    const index = Number(target.getAttribute('data-metric-index'))
+    const metric = currentMetrics[index]
+    if (!metric || typeof options.onSelect !== 'function') return
+    options.onSelect({ key: metric.key })
+  }
+
+  const render = () => {
     if (destroyed) return
+    clearElement(element)
+    element.setAttribute('role', 'list')
+    element.setAttribute('aria-label', '数据指标')
 
-    currentMetrics = normalizeMetrics(nextMetrics)
-    const maxValue = currentMetrics.reduce((max, item) => {
-      const value = Number(item.value)
-      return Number.isFinite(value) ? Math.max(max, Math.abs(value)) : max
-    }, 0)
+    const maxValue = currentMetrics.reduce(
+      (maximum, metric) => Math.max(maximum, numericValue(metric)),
+      0
+    )
+    const fragment = document.createDocumentFragment()
 
-    root.textContent = ''
-    currentMetrics.forEach((item, index) => {
-      const metric = document.createElement('button')
-      const bar = document.createElement('span')
+    currentMetrics.forEach((metric, index) => {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'analytics-chart__metric'
+      button.id = metricId(metric)
+      button.setAttribute('role', 'listitem')
+      button.setAttribute('data-metric-index', String(index))
+
       const label = document.createElement('span')
-      const value = document.createElement('span')
-      const numericValue = Number(item.value)
-      const ratio = maxValue && Number.isFinite(numericValue) ? Math.abs(numericValue) / maxValue : 0
-
-      metric.type = 'button'
-      metric.className = 'analytics-chart__metric'
-      metric.dataset.metricIndex = index
-      metric.setAttribute('aria-label', `${item.label}: ${item.value}`)
-      bar.className = 'analytics-chart__bar'
-      bar.style.height = `${Math.max(2, Math.round(ratio * 100))}%`
       label.className = 'analytics-chart__label'
-      label.textContent = item.label
+      label.textContent = metric && metric.label !== undefined ? String(metric.label) : ''
+
+      const value = document.createElement('span')
       value.className = 'analytics-chart__value'
-      value.textContent = item.value
-      metric.appendChild(bar)
-      metric.appendChild(label)
-      metric.appendChild(value)
-      root.appendChild(metric)
+      value.textContent = metric && metric.value !== undefined ? String(metric.value) : ''
+
+      const track = document.createElement('span')
+      track.className = 'analytics-chart__track'
+      track.setAttribute('aria-hidden', 'true')
+
+      const bar = document.createElement('span')
+      bar.className = 'analytics-chart__bar'
+      const percentage = maxValue > 0 ? numericValue(metric) / maxValue * 100 : 0
+      bar.style.width = `${percentage}%`
+
+      track.appendChild(bar)
+      button.appendChild(label)
+      button.appendChild(value)
+      button.appendChild(track)
+      fragment.appendChild(button)
     })
+
+    element.appendChild(fragment)
   }
 
-  function resize () {
-    if (!destroyed) root.style.width = `${element.clientWidth}px`
-  }
-
-  function handleClick (event) {
-    const metric = event.target.closest('.analytics-chart__metric')
-    if (!metric || !root.contains(metric) || typeof chartOptions.onSelect !== 'function') return
-
-    const selected = currentMetrics[Number(metric.dataset.metricIndex)]
-    if (selected) chartOptions.onSelect(selected.key)
-  }
-
-  root.addEventListener('click', handleClick)
-  update(metrics)
-  resize()
+  element.addEventListener('click', handleClick)
+  render()
 
   return {
-    update,
-    resize,
+    update (nextMetrics) {
+      if (destroyed) return
+      currentMetrics = normalizeMetrics(nextMetrics)
+      render()
+    },
+    resize () {
+      if (destroyed) return
+      element.classList.toggle('is-compact', element.clientWidth > 0 && element.clientWidth < 480)
+    },
     destroy () {
       if (destroyed) return
       destroyed = true
-      root.removeEventListener('click', handleClick)
-      if (element.__analyticsChartOwner === owner) {
-        element.textContent = ''
-        delete element.__analyticsChartOwner
-      }
+      element.removeEventListener('click', handleClick)
+      element.classList.remove('is-compact')
+      element.removeAttribute('role')
+      element.removeAttribute('aria-label')
+      clearElement(element)
+      currentMetrics = []
     }
   }
 }

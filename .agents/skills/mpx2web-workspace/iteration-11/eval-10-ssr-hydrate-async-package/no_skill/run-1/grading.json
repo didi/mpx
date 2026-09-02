@@ -2,6 +2,14 @@
   "eval_id": 10,
   "eval_name": "ssr-hydrate-async-package",
   "configuration": "no_skill",
+  "run_number": 1,
+  "grading_fingerprint": "cecc0371dd41003d6670076becac323ff5e12e774a621b5dcd1d117fe5647ff0",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 99738
+  },
   "expectations": [
     {
       "id": "x0",
@@ -91,23 +99,156 @@
     "pass_rate": 0.625
   },
   "metrics": {
-    "total_tokens": 522687,
-    "input_tokens": 511804,
-    "output_tokens": 10883,
-    "tool_calls": 17,
-    "duration_ms": 388662,
-    "output_files": 6,
-    "output_lines": 154,
-    "output_nonempty_lines": 142,
-    "output_bytes": 4221
+    "total_tokens": 138401,
+    "input_tokens": 128271,
+    "output_tokens": 10130,
+    "tool_calls": 20,
+    "duration_ms": 275172
   },
   "timing": {
-    "total_tokens": 522687,
-    "duration_ms": 388662,
-    "total_duration_seconds": 388.662,
-    "generation_attempts": 1
+    "total_tokens": 138401,
+    "duration_ms": 275172,
+    "total_duration_seconds": 275.172
   },
-  "execution_metrics": {
-    "total_tool_calls": 17
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 6,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/pages/article/detail.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/packageRecommend/components/recommend-list.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/stores/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/services/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 6,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/pages/article/detail.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/packageRecommend/components/recommend-list.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/stores/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/services/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/pages/article/detail.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4039
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/packageRecommend/components/recommend-list.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2535
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/stores/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/services/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言 x1 只要求服务端等待推荐数据，但未明确推荐组件首屏是否必须 SSR 渲染；当前实现会抓取 recommendations，却用 clientReady 让 recommend-list 只在 ready 后出现，这可能影响“首屏推荐展示”的判定。",
+      "x7 聚焦 window 守卫，但小程序文章加载还可能被 x6 中 localhost/非相对请求破坏；若要验收“小程序加载真实可用”，应把请求地址要求并入 x7 或明确跨断言联动。"
+    ],
+    "overall": "候选修复了独立 Pinia、SSR prefetch 链路、随机首屏差异、SSR 钩子和 /content/ history SSR 配置；主要缺口是 store 缺少 loaded 状态，以及同构 service 仍使用浏览器 origin 和 localhost 回退。"
   }
 }

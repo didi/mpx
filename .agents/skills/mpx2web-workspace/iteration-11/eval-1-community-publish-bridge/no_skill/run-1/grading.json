@@ -2,107 +2,204 @@
   "eval_id": 1,
   "eval_name": "community-publish-bridge",
   "configuration": "no_skill",
+  "run_number": 1,
+  "grading_fingerprint": "249ebfb129693cc92a6c1785fa578eedc002f0f4cb941b74012e6478d6bbfda4",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 0,
+    "invoked": false,
+    "skip_reason": "compile_or_semantic_gate_failed"
+  },
   "expectations": [
     {
       "id": "a0",
       "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
-      "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:131-150：choosePlace/openPlace/choosePhoto 均先 `if (this.isWeb) return`，非 Web 分支直接调用 `wx.chooseLocation({`、`wx.openLocation({`、`wx.chooseMedia({`；文件中未见动态方法名或自定义适配器包装这三项能力。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "static_contract"
+        "compile_gate"
       ]
     },
     {
       "id": "a1",
       "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
       "passed": false,
-      "evidence": "outputs/src/pages/community/publish.mpx:179-215：Web 分支 `this.submitWebPost(data)`，helper 内使用 `window.fetch('/api/community/posts', ...)` 和 `window.location.replace(...)`，改写了请求与路由能力，不满足断言。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review"
+        "compile_gate"
       ]
     },
     {
       "id": "a2",
       "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
-      "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:53-58 Web 位置区域展示 `Web 位置与地图能力待接入`；131-137 中 `choosePlace () { if (this.isWeb) return; wx.chooseLocation({ ... }) }`，Web 分支停留在 return 边界，未声明或调用 Web 位置虚构接口。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review"
+        "compile_gate"
       ]
     },
     {
       "id": "a3",
       "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
-      "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:53-58 Web 地图相关文案为 `Web 位置与地图能力待接入`；139-147 中 `openPlace () { if (this.isWeb || !this.place.latitude || !this.place.longitude) return; wx.openLocation({ ... }) }`，Web 分支直接 return，未调用虚构地图接口。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review"
+        "compile_gate"
       ]
     },
     {
       "id": "a4",
       "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
-      "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:36-38 Web 图片区域展示 `Web 图片能力待宿主协议确定后接入`；148-157 中 `choosePhoto () { if (this.isWeb) return; wx.chooseMedia({ ... }) }`，Web 分支停留在 return 边界，未调用虚构媒体接口。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review"
+        "compile_gate"
       ]
     },
     {
       "id": "a5",
       "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
-      "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "a6",
-      "text": "Web 已支持的请求、路由和提示继续通过应用入口已配置 API Proxy 的 mpx.request、mpx.redirectTo、mpx.showToast 调用，不从 @mpxjs/api-proxy 命名导入原始实现，也不用 fetch、location.assign、alert 或自定义包装重新实现",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
       "passed": false,
-      "evidence": "outputs/src/pages/community/publish.mpx：静态硬约束未通过：缺少使用 mpx.request；缺少使用 mpx.redirectTo；缺少使用 mpx.showToast；发现自行用 fetch、location.assign 或 alert 重实现已有能力。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "static_contract"
+        "compile_gate"
       ]
     },
     {
       "id": "a7",
       "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
-      "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:9-16 内容输入；18-34/148-157 图片展示与 `choosePhoto`；42-68/131-147 位置选择与地图打开；71-78/162-164 话题选择；85-87/165-167 评论开关；172-178 提交 data 包含 `content/photos/place/topicId/allowComments`；183-189 和 198-210 提交后跳转详情页。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review"
+        "compile_gate"
       ]
     }
   ],
   "summary": {
-    "passed": 6,
-    "failed": 2,
+    "passed": 0,
+    "failed": 8,
     "total": 8,
-    "pass_rate": 0.75
+    "pass_rate": 0.0
   },
   "metrics": {
-    "total_tokens": 227938,
-    "input_tokens": 218148,
-    "output_tokens": 9790,
-    "tool_calls": 11,
-    "duration_ms": 360110,
-    "output_files": 1,
-    "output_lines": 481,
-    "output_nonempty_lines": 430,
-    "output_bytes": 10397
+    "total_tokens": 118780,
+    "input_tokens": 109289,
+    "output_tokens": 9491,
+    "tool_calls": 6,
+    "duration_ms": 200477
   },
   "timing": {
-    "total_tokens": 227938,
-    "duration_ms": 360110,
-    "total_duration_seconds": 360.11,
-    "generation_attempts": 1
+    "total_tokens": 118780,
+    "duration_ms": 200477,
+    "total_duration_seconds": 200.477
   },
-  "execution_metrics": {
-    "total_tool_calls": 11
+  "compile": {
+    "status": "failed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 0,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": false,
+        "returncode": 1,
+        "detail": {
+          "success": false,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx",
+              "errors": [
+                {
+                  "line": 117,
+                  "directive": "/* @mpx-if (mode === 'wx') */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 122,
+                  "directive": "/* @mpx-endif */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 164,
+                  "directive": "/* @mpx-if (mode === 'wx') */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 170,
+                  "directive": "/* @mpx-endif */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 178,
+                  "directive": "/* @mpx-if (mode === 'wx') */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 185,
+                  "directive": "/* @mpx-endif */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 192,
+                  "directive": "/* @mpx-if (mode === 'wx') */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 201,
+                  "directive": "/* @mpx-endif */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 218,
+                  "directive": "/* @mpx-if (mode === 'wx') */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 240,
+                  "directive": "/* @mpx-endif */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                }
+              ]
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": false,
+        "returncode": 2,
+        "detail": {},
+        "stderr": "InvalidInputError: 检测到无效的条件编译注释：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:170 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:178 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:185 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:192 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:201 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:218 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx:240 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n"
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "先修复编译或条件编译语义错误，再进行功能评分。"
+    ],
+    "overall": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: publish.mpx:117 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:122 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); publish.mpx:164 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过"
   }
 }

@@ -6,120 +6,134 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+// @mpx-if (__mpx_mode__ === 'web')
 import campaignTracker from '@business/campaign-tracker-web'
-
-const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
-
-function isWebRuntime () {
-  return typeof window !== 'undefined' && typeof document !== 'undefined'
-}
+// @mpx-endif
 
 createComponent({
   properties: {
     campaignId: {
       type: String,
       observer () {
-        this.initTracker()
+        if (this._componentReady) this.initTracker()
       }
     },
     memberId: {
       type: String,
       observer () {
-        this.initTracker()
+        if (this._componentReady) this.initTracker()
       }
-    },
-    sessionId: Number
+    }
   },
   data: {
     ready: false
   },
   ready () {
     this._componentReady = true
-    this._detached = false
     this._trackerGeneration = 0
+    this._visibilityListening = false
     this.initTracker()
   },
   detached () {
-    this._detached = true
+    this._componentReady = false
     this._trackerGeneration += 1
-    this.disposeTracker()
+    this.removeVisibilityListener()
+    this.destroyTracker()
   },
   methods: {
     async initTracker () {
-      if (!this._componentReady || this._detached) return
-      const generation = this._trackerGeneration + 1
       const campaignId = this.campaignId
       const memberId = this.memberId
-      this._trackerGeneration = generation
-      this.ready = false
-      this.disposeTracker()
-      if (!campaignId) return
+      const generation = ++this._trackerGeneration
 
+      this.ready = false
+      this.removeVisibilityListener()
+      this.destroyTracker()
+      if (!this._componentReady || !campaignId) return
+
+      // @mpx-if (__mpx_mode__ !== 'web')
+      this.ready = true
+      this.triggerEvent('ready', { campaignId })
+      return
+      // @mpx-endif
+
+      // @mpx-if (__mpx_mode__ === 'web')
       let tracker
       try {
-        tracker = await campaignTracker.create({
-          campaignId,
-          memberId
-        })
-        if (this._detached || generation !== this._trackerGeneration) {
-          tracker.destroy()
-          return
+        tracker = await campaignTracker.create({ campaignId, memberId })
+      } catch (error) {
+        if (this.isCurrentGeneration(generation, campaignId, memberId)) {
+          this.triggerEvent('error', { campaignId })
         }
-        this.tracker = tracker
+        return
+      }
+
+      if (!this.isCurrentGeneration(generation, campaignId, memberId)) {
+        this.safeDestroy(tracker)
+        return
+      }
+
+      this.tracker = tracker
+      try {
         tracker.start()
-        this.addBrowserListeners()
+        if (document.hidden && typeof tracker.pause === 'function') {
+          tracker.pause()
+        }
+        document.addEventListener('visibilitychange', this.handleVisibilityChange)
+        this._visibilityListening = true
         this.ready = true
         this.triggerEvent('ready', { campaignId })
       } catch (error) {
-        if (this._detached || generation !== this._trackerGeneration) return
-        this.disposeTracker()
-        this.triggerEvent('error', { campaignId })
+        this.removeVisibilityListener()
+        this.destroyTracker()
+        if (this.isCurrentGeneration(generation, campaignId, memberId)) {
+          this.triggerEvent('error', { campaignId })
+        }
       }
+      // @mpx-endif
     },
-    disposeTracker () {
-      this.removeBrowserListeners()
-      const tracker = this.tracker
-      this.tracker = null
-      if (tracker) tracker.destroy()
+    isCurrentGeneration (generation, campaignId, memberId) {
+      return this._componentReady &&
+        generation === this._trackerGeneration &&
+        campaignId === this.campaignId &&
+        memberId === this.memberId
     },
-    addBrowserListeners () {
-      if (!isWebRuntime() || this._listenersAttached) return
-      window.addEventListener('message', this.handleWindowMessage)
-      document.addEventListener('visibilitychange', this.handleVisibilityChange)
-      this._listenersAttached = true
-    },
-    removeBrowserListeners () {
-      if (!isWebRuntime() || !this._listenersAttached) return
-      window.removeEventListener('message', this.handleWindowMessage)
-      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
-      this._listenersAttached = false
-    },
-    handleWindowMessage (event) {
-      if (!this.tracker || event.origin !== CAMPAIGN_ORIGIN) return
-      const campaignWindow = this.getCampaignWindow()
-      if (!campaignWindow || event.source !== campaignWindow) return
-      const message = event.data
-      if (!message || typeof message !== 'object') return
-      if (message.campaignId && message.campaignId !== this.campaignId) return
-      if (message.type === 'campaign-exposure') {
-        this.tracker.track('exposure', message.payload)
+    trackExposure (payload, campaignId) {
+      if (!this._componentReady || !this.ready || campaignId !== this.campaignId) return
+      // @mpx-if (__mpx_mode__ === 'web')
+      if (this.tracker && typeof this.tracker.track === 'function') {
+        this.tracker.track('exposure', payload)
       }
-    },
-    getCampaignWindow () {
-      if (!isWebRuntime()) return null
-      const webview = document.getElementById(`campaign-webview-${this.sessionId}`)
-      if (!webview) return null
-      if (webview.contentWindow) return webview.contentWindow
-      const iframe = webview.querySelector('iframe')
-      return iframe && iframe.contentWindow
+      // @mpx-endif
     },
     handleVisibilityChange () {
-      if (!this.tracker) return
+      // @mpx-if (__mpx_mode__ === 'web')
+      const tracker = this.tracker
+      if (!this._componentReady || !tracker) return
       if (document.hidden) {
-        this.tracker.pause()
-      } else {
-        this.tracker.resume()
+        if (typeof tracker.pause === 'function') tracker.pause()
+      } else if (typeof tracker.resume === 'function') {
+        tracker.resume()
       }
+      // @mpx-endif
+    },
+    removeVisibilityListener () {
+      // @mpx-if (__mpx_mode__ === 'web')
+      if (this._visibilityListening) {
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+        this._visibilityListening = false
+      }
+      // @mpx-endif
+    },
+    destroyTracker () {
+      const tracker = this.tracker
+      this.tracker = null
+      if (tracker) this.safeDestroy(tracker)
+    },
+    safeDestroy (tracker) {
+      try {
+        if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+      } catch (e) {}
     }
   }
 })

@@ -32,8 +32,7 @@ import { useProductStore } from '../../../stores/product'
 createPage({
   data: {
     productId: '',
-    selectedSkuId: '',
-    loadVersion: 0
+    selectedSkuId: ''
   },
   computed: {
     product () {
@@ -47,39 +46,51 @@ createPage({
     }
   },
   onLoad (query) {
-    const productId = query.id
-    const store = useProductStore(this.$pinia)
-    this.loadVersion++
-    this.productId = productId
+    this.productId = String((query && query.id) || '')
     this.selectedSkuId = ''
 
-    if (store.loaded && store.productId === productId) {
-      this.setDefaultSku(productId)
-      return
-    }
-
-    if (__mpx_mode__ !== 'web' || typeof window !== 'undefined') {
-      this.loadProduct(productId)
+    if (!this.$ssrContext) {
+      return this.loadProduct(this.productId)
     }
   },
   serverPrefetch () {
-    return this.loadProduct(this.productId, this.$ssrContext)
+    const routeProductId = this.$route && this.$route.query && this.$route.query.id
+    const productId = this.productId || String(routeProductId || '')
+    this.productId = productId
+    return this.loadProduct(productId, this.$ssrContext)
   },
   onUnload () {
-    this.loadVersion++
+    this._productRequestVersion = (this._productRequestVersion || 0) + 1
   },
   methods: {
     async loadProduct (productId, requestContext) {
-      const loadVersion = ++this.loadVersion
+      const requestVersion = (this._productRequestVersion || 0) + 1
+      this._productRequestVersion = requestVersion
       const store = useProductStore(this.$pinia)
-      await store.loadProduct(productId, requestContext)
-      if (loadVersion !== this.loadVersion || this.productId !== productId) return
-      this.setDefaultSku(productId)
-    },
-    setDefaultSku (productId) {
-      const store = useProductStore(this.$pinia)
-      if (!store.loaded || store.productId !== productId) return
-      this.selectedSkuId = store.product.skus[0] && store.product.skus[0].id
+
+      try {
+        await store.loadProduct(productId, requestContext)
+      } catch (error) {
+        if (
+          requestVersion !== this._productRequestVersion ||
+          this.productId !== productId
+        ) {
+          return
+        }
+        throw error
+      }
+
+      if (
+        requestVersion !== this._productRequestVersion ||
+        this.productId !== productId ||
+        !store.loaded ||
+        store.productId !== productId
+      ) {
+        return
+      }
+
+      const firstSku = (store.product.skus || [])[0]
+      this.selectedSkuId = firstSku ? firstSku.id : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

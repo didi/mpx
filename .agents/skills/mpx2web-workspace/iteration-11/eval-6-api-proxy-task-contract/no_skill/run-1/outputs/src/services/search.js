@@ -1,14 +1,33 @@
-import mpx from '@mpxjs/core'
+import { request } from '@mpxjs/api-proxy'
 
 export function fetchTrendingKeywords () {
-  return mpx.request({
+  return request({
     url: '/api/search/trending'
   }).then(({ data }) => data)
 }
 
 export function requestSuggestions (keyword) {
-  return mpx.request({
+  let requestTask = null
+  let aborted = false
+
+  const promise = request({
     url: '/api/search/suggest',
-    data: { keyword }
-  })
+    data: { keyword },
+    getTask (task) {
+      requestTask = task
+      if (aborted && requestTask && typeof requestTask.abort === 'function') {
+        requestTask.abort()
+      }
+    }
+  }).then(({ data }) => data.list)
+
+  return {
+    promise,
+    abort () {
+      aborted = true
+      if (requestTask && typeof requestTask.abort === 'function') {
+        requestTask.abort()
+      }
+    }
+  }
 }

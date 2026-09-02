@@ -1,16 +1,17 @@
 <script>
 import { createApp } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
 import { createPinia } from '@mpxjs/pinia'
 
+// Mpx creates the application module for each SSR application. Pinia state uses
+// store state factories, so each rendered application receives isolated state.
+const pinia = createPinia()
+
 createApp({
-  onAppInit () {
-    return {
-      pinia: createPinia()
-    }
-  },
+  pinia,
   onLaunch () {
     if (__mpx_mode__ === 'web' && typeof window === 'undefined') return
-    wx.reportAnalytics('mall_launch', {})
+    mpx.reportAnalytics('mall_launch', {})
   }
 })
 </script>

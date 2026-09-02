@@ -26,71 +26,114 @@ createComponent({
     items: Array
   },
   observers: {
-    'productId, items' () {
-      if (this.trackerReady) this.initTracker()
+    'productId, items': function () {
+      this.restartExposureTracker()
     }
   },
+  created () {
+    this._exposureGeneration = 0
+    this._exposureReady = false
+    this._exposureDetached = false
+    this._exposureTracker = null
+    this._exposureObserver = null
+  },
   ready () {
-    this.trackerReady = true
-    this.trackerDetached = false
-    this.trackerVersion = 0
-    this.initTracker()
+    if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+
+    this._exposureReady = true
+    this.restartExposureTracker()
   },
   detached () {
-    this.trackerReady = false
-    this.trackerDetached = true
-    this.trackerVersion++
-    this.releaseTracker()
+    this._exposureDetached = true
+    this._exposureReady = false
+    this._exposureGeneration += 1
+    this.destroyExposureResources()
   },
   methods: {
-    async initTracker () {
-      const trackerVersion = ++this.trackerVersion
-      this.releaseTracker()
-      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || !this.productId) return
+    isCurrentExposure (generation, productId) {
+      return !this._exposureDetached &&
+        this._exposureReady &&
+        generation === this._exposureGeneration &&
+        productId === this.productId
+    },
+    destroyExposureResources () {
+      if (this._exposureObserver) {
+        this._exposureObserver.disconnect()
+        this._exposureObserver = null
+      }
+      if (this._exposureTracker) {
+        this._exposureTracker.destroy()
+        this._exposureTracker = null
+      }
+    },
+    async restartExposureTracker () {
+      if (
+        __mpx_mode__ !== 'web' ||
+        typeof window === 'undefined' ||
+        !this._exposureReady ||
+        this._exposureDetached
+      ) {
+        return
+      }
 
+      const generation = ++this._exposureGeneration
       const productId = this.productId
-      const { default: exposureSdk } = await import('@business/product-exposure-web')
-      if (!this.isTrackerCurrent(trackerVersion, productId)) return
+      this.destroyExposureResources()
+      if (!productId) return
 
-      const tracker = await exposureSdk.create({ productId })
-      if (!this.isTrackerCurrent(trackerVersion, productId)) {
-        tracker.destroy()
-        return
-      }
+      try {
+        const sdkModule = await import('@business/product-exposure-web')
+        if (!this.isCurrentExposure(generation, productId)) return
 
-      await this.$nextTick()
-      if (!this.isTrackerCurrent(trackerVersion, productId)) {
-        tracker.destroy()
-        return
-      }
+        const exposureSdk = sdkModule.default || sdkModule
+        const tracker = await exposureSdk.create({ productId })
+        if (!this.isCurrentExposure(generation, productId)) {
+          tracker.destroy()
+          return
+        }
 
-      this.tracker = tracker
-      this.observer = new window.IntersectionObserver((entries) => {
-        if (!this.isTrackerCurrent(trackerVersion, productId) || this.tracker !== tracker) return
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            tracker.track('recommendation_exposure', {
-              productId,
-              recommendationId: entry.target.dataset.productId
-            })
+        this._exposureTracker = tracker
+        await this.$nextTick()
+        if (!this.isCurrentExposure(generation, productId)) {
+          if (this._exposureTracker === tracker) {
+            this._exposureTracker = null
+            tracker.destroy()
           }
+          return
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+          if (!this.isCurrentExposure(generation, productId)) return
+
+          entries.forEach((entry) => {
+            if (
+              entry.isIntersecting &&
+              this.isCurrentExposure(generation, productId)
+            ) {
+              tracker.track('recommendation_exposure', {
+                productId,
+                recommendationId: entry.target.dataset.productId
+              })
+            }
+          })
         })
-      })
-      this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-        this.observer.observe(element)
-      })
-    },
-    isTrackerCurrent (trackerVersion, productId) {
-      return !this.trackerDetached && this.trackerVersion === trackerVersion && this.productId === productId
-    },
-    releaseTracker () {
-      if (this.observer) {
-        this.observer.disconnect()
-        this.observer = null
-      }
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
+
+        if (!this.isCurrentExposure(generation, productId)) {
+          observer.disconnect()
+          return
+        }
+
+        this._exposureObserver = observer
+        const root = this.$el
+        if (root && root.querySelectorAll) {
+          root.querySelectorAll('.recommendation-card').forEach((element) => {
+            observer.observe(element)
+          })
+        }
+      } catch (error) {
+        if (this.isCurrentExposure(generation, productId)) {
+          this.destroyExposureResources()
+        }
       }
     },
     openProduct (productId) {

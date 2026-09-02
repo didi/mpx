@@ -1,20 +1,19 @@
 <template>
   <view class="product-video">
     <video
+      class="video"
       id="product-video-{{product.id}}"
-      class="product-video-player"
       src="{{product.video}}"
-      autoplay
-      muted="{{false}}"
-      muted@web="{{true}}"
-      playsinline@web="{{true}}"
-      show-mute-btn@web="{{true}}"
-      enable-danmu@wx="{{true}}"
+      autoplay="{{true}}"
+      muted="{{true}}"
+      playsinline="{{true}}"
+      webkit-playsinline="{{true}}"
+      enable-danmu="{{true}}"
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
-    <text>{{progress}} / {{duration}}</text>
+    <text class="video-progress">{{progress}} / {{duration}}</text>
   </view>
 </template>
 
@@ -32,30 +31,34 @@ createComponent({
   },
   methods: {
     onTimeUpdate (event) {
-      const detail = event.detail
-      const target = event.target
-      this.progress = typeof detail.currentTime === 'number' ? detail.currentTime : target.currentTime
-      this.duration = typeof detail.duration === 'number' ? detail.duration : target.duration
+      this.progress = event.detail.currentTime
+      this.duration = event.detail.duration
     },
     onLoadedMetadata (event) {
-      const detail = event.detail
-      const target = event.target
-      const width = detail.width || target.videoWidth
-      const height = detail.height || target.videoHeight
-      const duration = typeof detail.duration === 'number' ? detail.duration : target.duration
-      this.videoSize = `${width}x${height}`
-      if (typeof duration === 'number') this.duration = duration
+      const detail = event.detail || {}
+      this.duration = detail.duration || this.duration
+      this.videoSize = `${detail.width || 0}x${detail.height || 0}`
     },
-    onVideoError (event) {
-      this.$emit('error', event)
-    }
+    onVideoError () {}
   }
 })
 </script>
 
 <style scoped>
 .product-video,
-.product-video-player {
+.video {
   width: 100%;
+}
+
+.video {
+  display: block;
+  background: #000;
+}
+
+.video-progress {
+  display: block;
+  margin-top: 12rpx;
+  color: #666;
+  font-size: 24rpx;
 }
 </style>

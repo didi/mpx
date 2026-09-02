@@ -1,13 +1,21 @@
 {
   "eval_id": 4,
   "eval_name": "campaign-webview-sdk",
-  "configuration": "has_skill",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "4e2a4e42710e4ad180c1c66168a8cbcb0cee0de790b03c243305cc7568098ff4",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 102732
+  },
   "expectations": [
     {
       "id": "h0",
       "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
       "passed": true,
-      "evidence": "outputs/src/pages/campaign/index.mpx:20-27 保留 <web-view src=\"{{campaignUrl}}\" bindmessage=\"handleCampaignMessage\" bindload=\"handleCampaignLoad\">；153-161 claimCoupon 使用 wx.request 领券；163-166 openProduct 使用 wx.navigateTo 下单跳转；128-131 上报 campaign_webview_load，148-151 campaign-exposure 调用 tracker.trackExposure。",
+      "evidence": "outputs/src/pages/campaign/index.mpx:20-31 保留 web-view 会场及 bindmessage/bindload/binderror；162-174 保留 wx.request 领券；176-180 保留 wx.navigateTo 下单/商品跳转；126-132 保留 campaign_webview_load 埋点，outputs/src/app.mpx:15-18 保留 mall_launch 埋点。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -100,23 +108,127 @@
     "pass_rate": 1.0
   },
   "metrics": {
-    "total_tokens": 609442,
-    "input_tokens": 592878,
-    "output_tokens": 16564,
-    "tool_calls": 24,
-    "duration_ms": 542379,
-    "output_files": 4,
-    "output_lines": 425,
-    "output_nonempty_lines": 402,
-    "output_bytes": 10435
+    "total_tokens": 415362,
+    "input_tokens": 399917,
+    "output_tokens": 15445,
+    "tool_calls": 11,
+    "duration_ms": 367896
   },
   "timing": {
-    "total_tokens": 609442,
-    "duration_ms": 542379,
-    "total_duration_seconds": 542.379,
-    "generation_attempts": 1
+    "total_tokens": 415362,
+    "duration_ms": 367896,
+    "total_duration_seconds": 367.896
   },
-  "execution_metrics": {
-    "total_tool_calls": 24
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 4,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/pages/campaign/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/components/campaign-tracker.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 4,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/pages/campaign/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/components/campaign-tracker.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/pages/campaign/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3921
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/components/campaign-tracker.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3135
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "真正影响结论的缺口是缺少运行态生成产物或框架实现证据，无法静态确认内建 web-view 是否自动注入 clientUid；本次只能按候选源码中是否显式提供 clientUid 证据判定 h7。"
+    ],
+    "overall": "大部分生命周期、动态加载、活动代际隔离和 /mall/ 基路径修复成立；主要失败点是 h7 缺少 clientUid 实例隔离证据。"
   }
 }

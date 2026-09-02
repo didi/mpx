@@ -1,13 +1,21 @@
 {
   "eval_id": 12,
   "eval_name": "web-style-runtime-config",
-  "configuration": "has_skill",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "grading_fingerprint": "b1a6d9a374df0506efced247c2633562e00b283f9c6d475fafac5b72fea313e6",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 81364
+  },
   "expectations": [
     {
       "id": "t0",
       "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
       "passed": true,
-      "evidence": "outputs/src/pages/portal/index.mpx: .portal 使用 color: var(--portal-text, #1f2937)、background: var(--portal-background, #f5f7fa)、padding: var(--portal-space, 24rpx)；Web 样式 padding-bottom 也使用 var(--portal-space, 24rpx) 回退。",
+      "evidence": "outputs/src/pages/portal/index.mpx 中 .portal 使用 color: var(--portal-text, #1f2937)、background: var(--portal-background, #f5f7fb)、padding: var(--portal-space, 24rpx)，dialog-mask/dialog/scrollbar/card-shadow 变量也均有 fallback。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -80,23 +88,100 @@
     "pass_rate": 0.8571
   },
   "metrics": {
-    "total_tokens": 183265,
-    "input_tokens": 175981,
-    "output_tokens": 7284,
-    "tool_calls": 10,
-    "duration_ms": 280651,
-    "output_files": 3,
-    "output_lines": 110,
-    "output_nonempty_lines": 106,
-    "output_bytes": 3233
+    "total_tokens": 335235,
+    "input_tokens": 325839,
+    "output_tokens": 9396,
+    "tool_calls": 9,
+    "duration_ms": 212473
   },
   "timing": {
-    "total_tokens": 183265,
-    "duration_ms": 280651,
-    "total_duration_seconds": 280.651,
-    "generation_attempts": 1
+    "total_tokens": 335235,
+    "duration_ms": 212473,
+    "total_duration_seconds": 212.473
   },
-  "execution_metrics": {
-    "total_tool_calls": 10
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/src/pages/portal/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/vue.config.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/public/index.html"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/src/pages/portal/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/vue.config.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/public/index.html",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/src/pages/portal/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3472
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/public/index.html"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "t6 的“主题切换业务链路完整”缺少可观察标准；应明确是否必须通过 class、style 或 CSS 变量实际改变主题。"
+    ],
+    "overall": "主要 Web 适配、viewport、部署路径和滚动锁实现满足要求；主题切换状态未接入 UI，导致 t6 不通过。"
   }
 }

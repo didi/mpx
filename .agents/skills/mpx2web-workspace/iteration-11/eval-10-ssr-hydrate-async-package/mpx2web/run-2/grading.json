@@ -1,7 +1,15 @@
 {
   "eval_id": 10,
   "eval_name": "ssr-hydrate-async-package",
-  "configuration": "has_skill",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "grading_fingerprint": "c67425bd4cc0a2784fe4ed29aa6523722741b8f4acdfdb9b28cabfcdc957deef",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 102390
+  },
   "expectations": [
     {
       "id": "x0",
@@ -26,8 +34,8 @@
     {
       "id": "x2",
       "text": "文章 store 同时维护 articleId、loaded 与请求代际；同 ID 注水可复用，新 ID 在 await 前失效旧缓存，晚到响应不能覆盖当前文章",
-      "passed": true,
-      "evidence": "outputs/src/stores/article.js：store 以 articleId/loaded/请求代际保护注水复用和晚到写入。",
+      "passed": false,
+      "evidence": "outputs/src/stores/article.js：文章注水复用和 A→B→A 请求身份状态机不完整。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -66,8 +74,8 @@
     {
       "id": "x6",
       "text": "同构 article service 返回 Promise，服务端只从调用链传入的当前 SSR 上下文的 req 解析 origin，浏览器和小程序使用相对地址，不依赖特定参数名、不访问浏览器全局或硬编码 localhost",
-      "passed": true,
-      "evidence": "outputs/src/services/article.js：服务端 origin 来自 requestContext.req，其他目标保持相对 URL 和 Promise 返回。",
+      "passed": false,
+      "evidence": "outputs/src/services/article.js：同构 service 未从 requestContext.req 取服务端 origin，或仍依赖浏览器/localhost/非 Promise 请求。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -85,29 +93,161 @@
     }
   ],
   "summary": {
-    "passed": 8,
-    "failed": 0,
+    "passed": 6,
+    "failed": 2,
     "total": 8,
-    "pass_rate": 1.0
+    "pass_rate": 0.75
   },
   "metrics": {
-    "total_tokens": 1011259,
-    "input_tokens": 996901,
-    "output_tokens": 14358,
-    "tool_calls": 42,
-    "duration_ms": 507495,
-    "output_files": 6,
-    "output_lines": 143,
-    "output_nonempty_lines": 133,
-    "output_bytes": 3828
+    "total_tokens": 214432,
+    "input_tokens": 204855,
+    "output_tokens": 9577,
+    "tool_calls": 8,
+    "duration_ms": 204802
   },
   "timing": {
-    "total_tokens": 1011259,
-    "duration_ms": 507495,
-    "total_duration_seconds": 507.495,
-    "generation_attempts": 1
+    "total_tokens": 214432,
+    "duration_ms": 204802,
+    "total_duration_seconds": 204.802
   },
-  "execution_metrics": {
-    "total_tool_calls": 42
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 6,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/pages/article/detail.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/packageRecommend/components/recommend-list.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/stores/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/services/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 6,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/pages/article/detail.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/packageRecommend/components/recommend-list.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/stores/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/services/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/pages/article/detail.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4230
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/packageRecommend/components/recommend-list.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2497
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/stores/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/src/services/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/mpx2web/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "x6 的断言应明确是否接受框架提供的、已绑定当前 SSR 请求的 context.fetch；若接受，当前实现与“必须从 req 解析 origin”的静态判定会产生偏差。"
+    ],
+    "overall": "候选修复覆盖了 SSR Pinia 隔离、serverPrefetch 等待、store 竞态控制、首屏确定性、自定义 SSR 钩子删除、/content/ history SSR 配置和小程序 onLoad window 守卫问题；主要缺口是 article service 未按断言要求从当前 SSR context.req 解析 origin。"
   }
 }

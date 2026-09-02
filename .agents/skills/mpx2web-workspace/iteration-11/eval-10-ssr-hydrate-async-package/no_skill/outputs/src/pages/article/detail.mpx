@@ -3,7 +3,7 @@
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{showBrowserShare}}" class="share-toolbar">复制链接</view>
+    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
     <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
   </view>
 </template>
@@ -15,30 +15,51 @@ import { useArticleStore } from '../../stores/article'
 createPage({
   data: {
     articleId: '',
-    showBrowserShare: false,
+    isBrowser: false,
     favorite: false
   },
   computed: {
-    article () { return useArticleStore(this.$pinia).article || {} },
-    recommendations () { return useArticleStore(this.$pinia).recommendations }
+    article () {
+      return useArticleStore(this.$pinia).article || {}
+    },
+    recommendations () {
+      return useArticleStore(this.$pinia).recommendations
+    }
   },
   onLoad (query) {
-    if (!this.$ssrContext) this.loadArticle(query.id)
+    if (typeof window !== 'undefined' || typeof wx !== 'undefined') {
+      return this.loadArticle(query && query.id)
+    }
   },
-  mounted () {
-    this.showBrowserShare = true
+  onReady () {
+    if (typeof window !== 'undefined') {
+      this.isBrowser = true
+    }
   },
   serverPrefetch () {
-    return this.loadArticle(this.$route.query.id, this.$ssrContext)
+    const route = this.$route || {}
+    const query = route.query || {}
+    return this.loadArticle(query.id, this.$ssrContext)
   },
   methods: {
     loadArticle (articleId, requestContext) {
-      this.articleId = articleId
-      return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
+      if (articleId === undefined || articleId === null || articleId === '') {
+        return Promise.resolve()
+      }
+
+      this.articleId = String(articleId)
+      return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
     },
-    toggleFavorite () { this.favorite = !this.favorite },
+    toggleFavorite () {
+      this.favorite = !this.favorite
+    },
     openArticle (event) {
-      mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
+      const articleId = event && event.detail && event.detail.articleId
+      if (articleId === undefined || articleId === null || articleId === '') return
+
+      mpx.navigateTo({
+        url: `/pages/article/detail?id=${encodeURIComponent(String(articleId))}`
+      })
     }
   }
 })

@@ -147,8 +147,12 @@ createPage({
 .home-banner {
   width: 100%;
   height: 220rpx;
-  border: 4rpx solid #e64340;
   border-radius: 18rpx;
+}
+
+.home-banner {
+  border: 4rpx solid #e64340;
+  border-radius: 0;
 }
 
 .category-tabs {

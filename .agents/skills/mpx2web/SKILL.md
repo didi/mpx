@@ -2,7 +2,7 @@
 name: mpx2web
 description: Mpx 输出 Web（Mpx2Web）的 Web-only 差异指南，聚焦 Web 配置、浏览器能力、H5 SDK、Vue 组件、Web CSS、路由部署、SSR/SEO 与 Web 运行时差异。用于把已有 Mpx 页面或组件适配到 Web、排查 Web 构建或运行问题，以及核对跨端业务是否退化。
 metadata:
-  version: "1.9.0"
+  version: "1.9.1"
   author: wangcuijuan
 ---
 
@@ -63,7 +63,7 @@ Web-only 内容包括：
 1. 先读输入和任务症状，列出必须修改的 Web 差异、全部输出文件与原有业务不变量。优先保留可工作的代码，只修改能解释症状的最小范围。
 2. 使用知识库目录或文本搜索定位对应小节，只读取解决当前问题需要的段落；不要整篇读取大型 reference，不要扫描整个运行时源码。reference 仍不明确时，只查询对应组件、配置键或 API 的实现符号。
 3. 定位 Web-only 差异点：能力缺失、浏览器增强、H5 生态接入、Web 配置或 SSR。
-4. 优先保持通用 Mpx 实现不变，只把 Web-only 片段隔离出来；浏览器私有 CSS 的每一次出现都必须位于 Web-only 样式块或完整配对的 Web 条件块中。
+4. 优先保持通用 Mpx 实现不变，只把 Web-only 片段隔离出来；浏览器私有 CSS 的每一次出现都必须位于 Web-only 样式块或完整配对的 Web 条件块中。条件语法必须与所在区块匹配：模板节点使用 `@web` / `@wx` 或 `wx:if="{{__mpx_mode__ === 'web'}}"`，模板属性和事件使用 `属性@mode`，脚本使用真实的 `if (__mpx_mode__ ...)`，动态 JSON 使用 `<script name="json">` 中的 JS 表达式；`@mpx-if` 注释只允许出现在 `<style>` 中。严禁在脚本写 `// @mpx-if` / `// @mpx-else` / `// @mpx-endif`，也严禁在模板写 `<!-- @mpx-if -->` 一类伪指令，因为它们只是普通注释，不会删除任何分支。
 5. Web-only 依赖不要放在通用模块顶层静态引入；差异较大时使用 `.web.mpx` 文件维度隔离。
 6. 路由任务同时读取 [Web 环境 API 参考](./references/web-api-reference.md)、[Web 模板能力参考](./references/web-template-reference.md) 与 [Web JSON 配置参考](./references/web-json-reference.md)：区分 API 名与 `navigator` 的 `open-type` 值，通过 EventChannel 回传数据，并让 runtime route base 与构建 publicPath 对齐。
 7. SSR 场景下不要把“Web 编译目标”等同于“浏览器运行环境”；涉及数据预取时读取并完成 [SSR 专项参考](./references/ssr-reference.md) 的对应检查清单。
@@ -74,15 +74,17 @@ Web-only 内容包括：
 12. 用 `transform: scale()` 兼容小字号时，按 [Web 样式实践](./references/web-style-practice.md) 同时校正变换原点和布局占位；不能只让视觉字号变小。
 13. WebView 消息安全按 [WebView Bridge 参考](./references/webview-bridge-reference.md) 核对，重点定位含协议的完整可信 origin、内建 `bindmessage` 与当前 iframe `contentWindow` 三类约束。
 14. 存在 WXS 事件绑定时，先运行 `node <skill-root>/scripts/validate-wxs-web-events.js <file.mpx>` 检查小程序与 Web 事件是否成对。
-15. 自定义 Web 内建组件必须使用原始组件 key（例如 `scroll-view`），并透传当前业务需要的属性、监听与默认 slot；不要为了“完整兼容”重写整套内建组件契约。
+15. 自定义 Web 内建组件必须使用原始组件 key（例如 `scroll-view`）。先枚举所有调用点实际使用的属性、事件和子节点，再逐项实现；`$attrs`、`$listeners` 与默认 slot 只能证明结构透传，不能替代 `scroll-top`、`scroll-left`、`scroll-into-view`、滚动详情或边界事件等行为。不要为未使用能力重写整套内建组件，但已使用契约不能因替换实现而被简化。
 16. 页面滚动锁必须保存并恢复实际被锁定的每个目标。若任务或 HTML 模板要求同时锁定 `body` 与挂载容器，就两者都处理；关闭、切页、卸载必须幂等恢复原值。
-17. 重新读取所有输出文件，核对条件编译块完整配对、声明文件齐全和业务不变量，再对每个修改过的 `.mpx` 页面/组件执行 Web 目标真实构建；不要只编译一个入口推断其余文件可用。
+17. 重新读取所有输出文件，先执行 `node <skill-root>/scripts/validate-conditional-compile.js <file.mpx>...`，确认脚本和模板没有伪条件编译、样式条件块完整配对、声明文件齐全和业务不变量，再对每个修改过的 `.mpx` 页面/组件执行 Web 目标真实构建；不要只编译一个入口推断其余文件可用。静态语义检查与真实构建必须都通过，构建成功不能替代条件编译检查。
 
 ## 检查清单
 
 - [ ] 没有为了通用背景加载 RN Skill 或整篇大型 reference；只读取当前症状对应的小节或源码符号。
 - [ ] 修改保持最小范围，没有无关重写、重复平台抽象或为未使用能力补造完整实现。
 - [ ] Web-only 能力、Web-only CSS、H5 SDK、Vue 组件、SSR 客户端逻辑已被最小范围隔离。
+- [ ] 条件编译语法与区块匹配：模板用 `@mode` / `wx:if` / `属性@mode`，脚本用真实 `if`，动态 JSON 用 `<script name="json">`，只有样式可使用 `@mpx-if` 注释。
+- [ ] 脚本中没有 `// @mpx-if` 等伪指令，模板中没有 `<!-- @mpx-if -->` 等伪指令；已通过 `validate-conditional-compile.js`。
 - [ ] 涉及基础组件兼容性时，已区分“有 Web 内建实现”“属性/事件已实现”“完整对齐宿主能力”，没有仅凭标签可编译就宣称支持。
 - [ ] 模板、脚本、样式、配置、API、SSR 与 WebView 已分别按知识库索引核对，没有跨文件复制事实表。
 - [ ] 未指定实现的 Web 缺失 API 已预留 TODO。
@@ -94,7 +96,7 @@ Web-only 内容包括：
 - [ ] 图片等媒体尺寸晚到时使用真实 load/metadata + nextTick/ref 刷新路径，没有用无效同名属性替代实现。
 - [ ] Web-only 模块可在依赖图隔离且顶层 DOM-safe 时静态加载；只对真实异步边界逐次校验代际，晚到实例立即销毁。
 - [ ] 数据更新可安全复用实例时不强制重建；卸载或最终释放时 Observer、实例与其拥有的监听全部清理。
-- [ ] 自定义内建组件使用原始 key，并只实现、透传当前业务所需契约。
+- [ ] 自定义内建组件使用原始 key；调用点实际使用的每个属性、事件和默认子节点均有对应行为，未把 `$attrs` / `$listeners` / slot 透传误当作完整兼容。
 - [ ] 滚动锁覆盖任务要求的全部真实目标，并在关闭、切页和卸载时幂等恢复各自原值。
 - [ ] Web-only 弹层完成触发元素记录、焦点进入/恢复、Tab/Escape 与监听清理。
 - [ ] `:hover`、浏览器私有伪元素和 safe-area 等浏览器 CSS 的所有出现位置均已隔离到 Web 输出。
@@ -107,7 +109,13 @@ Web-only 内容包括：
 
 > 脚本位置：`<skill-root>/scripts/compile-validate.js`，其中 `<skill-root>` 是本 skill 的实际安装目录，例如 `.agents/skills/mpx2web`。
 
-该脚本基于业务项目内安装的 `@mpxjs/mpx-cli-service`、`@mpxjs/cli-shared-utils` 与 `@mpxjs/vue-cli-plugin-mpx` 进行 Web 目标真实编译校验。Mpx 核心仓库本身不一定包含业务构建依赖，应在安装了 Mpx CLI 的业务项目中执行，或使用业务项目已有 Web 构建命令。
+先运行不依赖业务构建环境的条件编译语义检查，再运行真实 Web 构建：
+
+```bash
+node <skill-root>/scripts/validate-conditional-compile.js src/components/foo.mpx src/pages/index.mpx
+```
+
+`compile-validate.js` 基于业务项目内安装的 `@mpxjs/mpx-cli-service`、`@mpxjs/cli-shared-utils` 与 `@mpxjs/vue-cli-plugin-mpx` 进行 Web 目标真实编译校验。Mpx 核心仓库本身不一定包含业务构建依赖，应在安装了 Mpx CLI 的业务项目中执行，或使用业务项目已有 Web 构建命令。
 
 ```bash
 node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=web

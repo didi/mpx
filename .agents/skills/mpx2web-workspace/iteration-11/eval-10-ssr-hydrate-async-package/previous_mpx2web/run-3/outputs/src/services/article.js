@@ -1,14 +1,18 @@
-import mpx from '@mpxjs/core'
+function getRequest (requestContext) {
+  if (requestContext && typeof requestContext.fetch === 'function') {
+    return requestContext.fetch.bind(requestContext)
+  }
+  if (requestContext && typeof requestContext.request === 'function') {
+    return requestContext.request.bind(requestContext)
+  }
+  return fetch
+}
 
 export function fetchArticle (articleId, requestContext) {
-  const path = `/api/articles/${articleId}`
-  const req = requestContext && requestContext.req
-  const headers = req && req.headers
-  const host = headers && (headers['x-forwarded-host'] || headers.host)
-  let protocol = 'http'
-  if (headers && headers['x-forwarded-proto']) protocol = headers['x-forwarded-proto']
-  else if (req && req.protocol) protocol = req.protocol
-  else if (req && req.socket && req.socket.encrypted) protocol = 'https'
-  const origin = req ? `${protocol}://${host}` : ''
-  return mpx.request({ url: `${origin}${path}` }).then((response) => response.data)
+  const request = getRequest(requestContext)
+  const url = `/api/articles/${encodeURIComponent(articleId)}`
+
+  return Promise.resolve(request(url)).then((response) => {
+    return response && typeof response.json === 'function' ? response.json() : response
+  })
 }

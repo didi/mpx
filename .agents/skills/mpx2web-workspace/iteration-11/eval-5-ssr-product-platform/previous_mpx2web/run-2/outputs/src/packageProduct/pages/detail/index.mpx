@@ -9,7 +9,7 @@
           class="sku-item"
           wx:for="{{product.skus}}"
           wx:key="id"
-          wx:class="{{ {active: item.id === selectedSkuId} }}"
+          wx:class="{{ {active: item.id === effectiveSelectedSkuId} }}"
           bindtap="selectSku(item.id)"
         >
           {{item.name}}
@@ -42,31 +42,43 @@ createPage({
     recommendations () {
       return useProductStore(this.$pinia).recommendations
     },
+    effectiveSelectedSkuId () {
+      const firstSku = (this.product.skus || [])[0]
+      return this.selectedSkuId || (firstSku && firstSku.id) || ''
+    },
     selectedSku () {
-      return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
+      return (this.product.skus || []).find(item => item.id === this.effectiveSelectedSkuId) || {}
     }
   },
   onLoad (query) {
-    this.productId = query.id
-    if (!this.$ssrContext) return this.loadProduct(query.id)
+    const productId = String((query && query.id) || '')
+    this.productId = productId
+    this.selectedSkuId = ''
+
+    if (!this.$ssrContext) {
+      this.loadProduct(productId).catch(() => {})
+    }
   },
   serverPrefetch () {
-    const productId = this.$route.query.id
-    this.productId = productId
-    return this.loadProduct(productId, this.$ssrContext)
+    return this.loadProduct(this.productId, this.$ssrContext)
   },
   methods: {
     async loadProduct (productId, requestContext) {
       const pageRequestVersion = ++this.pageRequestVersion
-      const productStore = useProductStore(this.$pinia)
-      await productStore.loadProduct(productId, requestContext)
+      const store = useProductStore(this.$pinia)
+      const loaded = await store.loadProduct(productId, requestContext)
+
       if (
+        !loaded ||
         pageRequestVersion !== this.pageRequestVersion ||
-        productId !== this.productId ||
-        !productStore.loaded ||
-        productStore.productId !== productId
-      ) return
-      this.selectedSkuId = this.product.skus[0] && this.product.skus[0].id
+        this.productId !== productId ||
+        store.productId !== productId
+      ) {
+        return
+      }
+
+      const firstSku = (store.product.skus || [])[0]
+      this.selectedSkuId = (firstSku && firstSku.id) || ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId
@@ -77,7 +89,7 @@ createPage({
         method: 'POST',
         data: {
           productId: this.productId,
-          skuId: this.selectedSkuId
+          skuId: this.effectiveSelectedSkuId
         },
         success: () => mpx.showToast({ title: '已加入购物车' })
       })

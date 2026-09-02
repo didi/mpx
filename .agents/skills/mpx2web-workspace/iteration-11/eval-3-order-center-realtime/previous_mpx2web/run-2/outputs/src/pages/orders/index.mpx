@@ -29,8 +29,7 @@
         wx:for="{{orders}}"
         wx:key="id"
         order="{{item}}"
-        disabled="{{item.locked}}"
-        activeOrderId="{{openSwipeOrderId}}"
+        disabled="{{item.locked || (openSwipeOrderId !== '' && openSwipeOrderId !== item.id)}}"
         bindselect="openOrder"
         bindremove="removeOrder"
         bindswipeend="handleSwipeEnd"
@@ -98,9 +97,12 @@ createPage({
         locked: false
       }
     ],
-    openSwipeOrderId: '',
     logisticsOnline: false,
-    loading: false
+    loading: false,
+    openSwipeOrderId: ''
+  },
+  created () {
+    this._ordersRequestVersion = 0
   },
   methods: {
     switchStatus (status) {
@@ -110,24 +112,35 @@ createPage({
       this.fetchOrders()
     },
     fetchOrders () {
+      this._ordersRequestVersion += 1
+      const requestVersion = this._ordersRequestVersion
+      const status = this.activeStatus
       this.loading = true
       mpx.request({
         url: '/api/orders',
-        data: { status: this.activeStatus },
+        data: { status },
         usePromise: false,
         success: ({ data }) => {
+          if (requestVersion !== this._ordersRequestVersion || status !== this.activeStatus) return
           this.orders = data.list
           this.statusTabs = data.summary
+          this.openSwipeOrderId = ''
         },
         complete: () => {
-          this.loading = false
+          if (requestVersion === this._ordersRequestVersion) this.loading = false
         }
       })
     },
     openOrder ({ detail }) {
+      const order = this.orders.find(item => item.id === detail.orderId)
+      if (!order || order.locked) return
+      if (this.openSwipeOrderId && this.openSwipeOrderId !== detail.orderId) return
       mpx.navigateTo({ url: `/pages/orders/detail?id=${detail.orderId}` })
     },
     removeOrder ({ detail }) {
+      const order = this.orders.find(item => item.id === detail.orderId)
+      if (!order || order.locked) return
+      if (this.openSwipeOrderId && this.openSwipeOrderId !== detail.orderId) return
       mpx.showModal({
         title: '删除订单',
         content: '删除后将无法在订单列表中查看，确认删除吗？',
@@ -139,7 +152,7 @@ createPage({
             method: 'DELETE',
             usePromise: false,
             success: () => {
-              this.orders = this.orders.filter(order => order.id !== detail.orderId)
+              this.orders = this.orders.filter(item => item.id !== detail.orderId)
               if (this.openSwipeOrderId === detail.orderId) this.openSwipeOrderId = ''
             }
           })

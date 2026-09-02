@@ -9,7 +9,7 @@
           class="sku-item"
           wx:for="{{product.skus}}"
           wx:key="id"
-          wx:class="{{ {active: item.id === activeSkuId} }}"
+          wx:class="{{ {active: item.id === effectiveSelectedSkuId} }}"
           bindtap="selectSku(item.id)"
         >
           {{item.name}}
@@ -25,15 +25,14 @@
 </template>
 
 <script>
-import { createPage } from '@mpxjs/core'
-import mpx from '@mpxjs/api-proxy'
+import mpx, { createPage } from '@mpxjs/core'
 import { useProductStore } from '../../../stores/product'
 
 createPage({
   data: {
     productId: '',
     selectedSkuId: '',
-    productRequestVersion: 0
+    pageRequestVersion: 0
   },
   computed: {
     product () {
@@ -42,32 +41,52 @@ createPage({
     recommendations () {
       return useProductStore(this.$pinia).recommendations
     },
-    activeSkuId () {
-      return this.selectedSkuId || ((this.product.skus || [])[0] || {}).id || ''
+    effectiveSelectedSkuId () {
+      const skus = this.product.skus || []
+      const selectedSkuExists = skus.some(item => item.id === this.selectedSkuId)
+      return selectedSkuExists ? this.selectedSkuId : ((skus[0] && skus[0].id) || '')
     },
     selectedSku () {
-      return (this.product.skus || []).find(item => item.id === this.activeSkuId) || {}
+      return (this.product.skus || []).find(item => item.id === this.effectiveSelectedSkuId) || {}
     }
   },
   onLoad (query) {
-    this.productId = query.id
+    const productId = query.id || ''
+    this.productId = productId
     this.selectedSkuId = ''
-    this.productLoadPromise = this.loadProduct(query.id, this.$ssrContext)
+
+    if (__mpx_mode__ !== 'web' || typeof window !== 'undefined') {
+      this.loadProduct(productId)
+    }
+  },
+  onShow () {
+    if (__mpx_mode__ === 'web' && typeof window === 'undefined') return
+    if (!this.productId) return
+    const productStore = useProductStore(this.$pinia)
+    if (productStore.productId !== this.productId) {
+      this.loadProduct(this.productId)
+    }
   },
   serverPrefetch () {
-    return this.productLoadPromise || this.loadProduct(this.productId, this.$ssrContext)
-  },
-  onUnload () {
-    this.productRequestVersion++
-    this.productLoadPromise = null
+    return this.loadProduct(this.productId, this.$ssrContext)
   },
   methods: {
     async loadProduct (productId, requestContext) {
-      const requestVersion = ++this.productRequestVersion
-      const store = useProductStore(this.$pinia)
-      await store.loadProduct(productId, requestContext)
-      if (requestVersion !== this.productRequestVersion || this.productId !== productId || !store.loaded || store.productId !== productId) return
-      this.selectedSkuId = (this.product.skus[0] || {}).id || ''
+      const normalizedProductId = productId == null ? '' : String(productId)
+      const pageRequestVersion = ++this.pageRequestVersion
+      this.productId = normalizedProductId
+      this.selectedSkuId = ''
+
+      const productStore = useProductStore(this.$pinia)
+      await productStore.loadProduct(normalizedProductId, requestContext)
+
+      if (
+        pageRequestVersion !== this.pageRequestVersion ||
+        this.productId !== normalizedProductId ||
+        productStore.productId !== normalizedProductId
+      ) {
+        return
+      }
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId
@@ -78,7 +97,7 @@ createPage({
         method: 'POST',
         data: {
           productId: this.productId,
-          skuId: this.activeSkuId
+          skuId: this.effectiveSelectedSkuId
         },
         success: () => mpx.showToast({ title: '已加入购物车' })
       })

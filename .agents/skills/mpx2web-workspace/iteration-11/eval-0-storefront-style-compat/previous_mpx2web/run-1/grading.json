@@ -1,7 +1,15 @@
 {
   "eval_id": 0,
   "eval_name": "storefront-style-compat",
-  "configuration": "old_skill",
+  "configuration": "previous_mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "c8ebf2ebfed301c445c2ccdf4a490555cff0c949b7894862c990e55b53728f82",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 68357
+  },
   "expectations": [
     {
       "id": "w0",
@@ -17,7 +25,7 @@
       "id": "w1",
       "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx: 模板为 `<image class=\"product-cover\" ... />`，样式使用 `.product-cover { display: block; width: 100%; height: 300rpx; border-radius: 20rpx 20rpx 0 0; }`，未使用 `image` 标签选择器。",
+      "evidence": "outputs/src/components/product-card.mpx 中商品图样式从 .product-card image 改为稳定业务类 .product-cover，模板 image 也保留 class=\"product-cover\"。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -26,7 +34,7 @@
       "id": "w2",
       "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
       "passed": true,
-      "evidence": "outputs/src/pages/home/index.mpx: 首页标题 `.title { color: #e64340; font-size: 40rpx; font-weight: bold; }`；outputs/src/components/product-card.mpx: 商品标题 `.title { color: #333333; font-size: 30rpx; font-weight: bold; line-height: 42rpx; }`；商品图片 `.product-cover { ... border-radius: 20rpx 20rpx 0 0; }`。",
+      "evidence": "outputs/src/pages/home/index.mpx 中首页 .title 仍为 #e64340、40rpx、bold；outputs/src/components/product-card.mpx 中商品 .title 仍为 #333333、30rpx、bold；.product-cover 仍保留 border-radius: 20rpx 20rpx 0 0。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -35,7 +43,7 @@
       "id": "w3",
       "text": "小程序保留币种与单位的原始 10px 字号",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx: 通用样式中 `.currency, .unit { font-size: 10px; line-height: 14px; }`；Web 专用补偿放在单独的 `<style mode=\"web\" scoped>` 中。",
+      "evidence": "outputs/src/components/product-card.mpx 的通用样式中 .currency,.unit 仍为 font-size: 10px; line-height: 14px，小程序侧未被改为 12px。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -44,7 +52,7 @@
       "id": "w4",
       "text": "目标 WebView 中币种与单位先以不触发强制放大的基础字号排版，再缩放回约 10px 的视觉字号",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx: `<style mode=\"web\" scoped>` 中 `.currency, .unit { font-size: 12px; transform: scale(0.833333); }`，即先按 12px 排版，再缩放到约 10px 视觉字号。",
+      "evidence": "outputs/src/components/product-card.mpx 新增 <style mode=\"web\" scoped>，Web 中 .currency,.unit 先以 font-size: 12px 排版，再通过 transform: scale(0.833333) 缩放为约 10px 视觉字号。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -53,7 +61,7 @@
       "id": "w5",
       "text": "目标 WebView 的缩放补偿具有与基线方向一致的 transform-origin，且校正 flex 布局占位，不改变卡片宽度或价格行基线",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx: Web 补偿使用 `.currency, .unit { width: 12px; margin-right: -2px; transform: scale(0.833333); transform-origin: left bottom; }` 校正缩放后的 flex 占位；价格行 `.price-tag { display: flex; align-items: baseline; height: 32px; }`，卡片宽度仍为 `.product-card { width: 338rpx; }`。",
+      "evidence": "outputs/src/components/product-card.mpx 的 Web 样式使用 transform-origin: left bottom 贴合价格行基线方向，并设置 display: inline-block、flex: 0 0 12px、width: 12px、margin-right: -2px 来补偿缩放后的 flex 占位。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -62,7 +70,7 @@
       "id": "w6",
       "text": "小字号补偿仅隔离在 Web 输出",
       "passed": true,
-      "evidence": "outputs/src/components/product-card.mpx: 小字号补偿规则 `font-size: 12px; transform: scale(0.833333); transform-origin: left bottom;` 只出现在 `<style mode=\"web\" scoped>`；通用样式仅保留 `.currency, .unit { font-size: 10px; line-height: 14px; }`。",
+      "evidence": "小字号补偿仅位于 outputs/src/components/product-card.mpx 的 <style mode=\"web\" scoped> 内，通用样式仍保留 10px，不影响小程序输出。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -71,7 +79,7 @@
       "id": "w7",
       "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
       "passed": true,
-      "evidence": "outputs/src/pages/home/index.mpx: 分类保留 `wx:for=\"{{categories}}\"`、`bindtap=\"switchCategory(item.id)\"` 和 `switchCategory` 调用 `fetchProducts()`；商品详情链路保留 `<product-card ... bindselect=\"openProduct\" />` 与 `wx.navigateTo({ url: `/packageProduct/pages/detail/index?id=${detail.productId}` })`；购物车链路保留 `bindaddcart=\"addToCart\"` 与 `wx.request({ url: '/api/cart/items', method: 'POST', data: { productId: detail.productId, count: 1 } })`。",
+      "evidence": "outputs/src/pages/home/index.mpx 保留分类 tabs、switchCategory/fetchProducts；product-card 仍 bindselect/openProduct 导航详情，bindaddcart/addToCart 请求购物车接口；outputs/src/components/product-card.mpx 仍触发 select 与 addcart 事件。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -84,23 +92,98 @@
     "pass_rate": 1.0
   },
   "metrics": {
-    "total_tokens": 957105,
-    "input_tokens": 943233,
-    "output_tokens": 13872,
-    "tool_calls": 33,
-    "duration_ms": 513760,
-    "output_files": 2,
-    "output_lines": 385,
-    "output_nonempty_lines": 346,
-    "output_bytes": 7707
+    "total_tokens": 247505,
+    "input_tokens": 238333,
+    "output_tokens": 9172,
+    "tool_calls": 9,
+    "duration_ms": 199789
   },
   "timing": {
-    "total_tokens": 957105,
-    "duration_ms": 513760,
-    "total_duration_seconds": 513.76,
-    "generation_attempts": 1
+    "total_tokens": 247505,
+    "duration_ms": 199789,
+    "total_duration_seconds": 199.789
   },
-  "execution_metrics": {
-    "total_tool_calls": 33
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 2,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-0-storefront-style-compat/previous_mpx2web/run-1/outputs/src/pages/home/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-0-storefront-style-compat/previous_mpx2web/run-1/outputs/src/components/product-card.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 2,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-0-storefront-style-compat/previous_mpx2web/run-1/outputs/src/pages/home/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-0-storefront-style-compat/previous_mpx2web/run-1/outputs/src/components/product-card.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-0-storefront-style-compat/previous_mpx2web/run-1/outputs/src/pages/home/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3781
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-0-storefront-style-compat/previous_mpx2web/run-1/outputs/src/components/product-card.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2617
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "候选修改覆盖了 WebView 字号补偿、组件样式隔离、图片选择器稳定化，并保留了首页与商品卡业务链路。"
   }
 }

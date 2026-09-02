@@ -697,6 +697,7 @@ Web 内建基础组件。基于 BetterScroll，支持横纵滚动、`scroll-top`
 - Web 实现基于 BetterScroll；内容或容器尺寸动态变化后由 MutationObserver、ResizeObserver 刷新，复杂异步布局仍应验证滚动范围是否及时更新。
 - `binddragstart`、`binddragging`、`binddragend` 仅在 `enhanced` 开启时触发。
 - 下拉刷新和鼠标滚轮行为受 BetterScroll 配置及浏览器输入设备影响。
+- 使用 `webConfig.customBuiltInComponents` 替换 `scroll-view` 后，上述行为不会由框架内建实现继续提供。`$attrs` / `$listeners` / slot 只能透传结构；调用点使用到的受控位置、`scroll-into-view`、滚动详情和上下/左右边界事件必须由自定义组件显式实现。
 
 ### sticky-header
 
@@ -908,7 +909,7 @@ Web 内建基础组件。按 `open-type` 接入 navigate、redirect、navigateBa
 
 运行时组件保留了 `switchTab` 分支，但当前模板转换规则会对该值给出 Web 不支持提示，因此不要把它作为稳定能力使用；`navigateTo` 是 API 名，`navigator` 的 `open-type` 对应值是 `navigate`。
 
-修复已有 `navigator` 时优先保留它的模板入口并把错误值改为 `navigate`，不要仅为了绕开 `open-type` 差异把它无理由替换成按钮。tabBar 跳转使用脚本中的 `mpx.switchTab`，与普通页面的 `navigator open-type="navigate"` 分工。
+普通声明式跳转保留 `navigator` 时，把错误值改为 `navigate`，不要仅为了绕开 `open-type` 差异无理由替换组件。若业务需要 `navigateTo({ events, success })` 建立 EventChannel，声明式 `navigator` 无法表达这组回调，此时应使用具备交互语义的 `button` 调用脚本导航；不要为了形式上保留 `navigator` 制造重复跳转。tabBar 跳转继续使用脚本中的 `mpx.switchTab`。
 
 ### video
 

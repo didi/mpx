@@ -6,7 +6,7 @@
     </view>
 
     <view class="product-content">
-      <text class="title">{{product.title}}</text>
+      <text class="product-title">{{product.title}}</text>
       <text class="product-subtitle">{{product.subtitle}}</text>
 
       <view class="product-meta">
@@ -49,6 +49,7 @@ createComponent({
 
 <style scoped>
 .product-card {
+  box-sizing: border-box;
   width: 338rpx;
   margin-bottom: 24rpx;
   overflow: hidden;
@@ -62,6 +63,7 @@ createComponent({
 }
 
 .product-cover {
+  box-sizing: border-box;
   display: block;
   width: 100%;
   height: 300rpx;
@@ -83,7 +85,7 @@ createComponent({
   padding: 20rpx;
 }
 
-.title {
+.product-title {
   display: block;
   overflow: hidden;
   color: #333333;
@@ -170,9 +172,11 @@ createComponent({
 .currency,
 .unit {
   display: inline-block;
+  flex: 0 0 12px;
   width: 12px;
   margin-right: -2px;
   font-size: 12px;
+  line-height: 16.8px;
   transform: scale(0.833333);
   transform-origin: left bottom;
 }

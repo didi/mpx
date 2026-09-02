@@ -6,7 +6,7 @@
       aria-label="打开商品筛选"
       bindtap="open"
     >
-      筛选
+      <text>筛选</text>
     </button>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
       <view
@@ -15,20 +15,23 @@
         aria-label="商品筛选"
         catchtap="stop"
       >
-        <text class="dialog-title">商品筛选</text>
         <button
-          wx:for="{{optionStates}}"
+          wx:for="{{renderedOptions}}"
           wx:key="value"
+          class="filter-option"
           wx:class="{{ {selected: item.selected} }}"
-          aria-role="checkbox"
-          aria-label="{{item.accessibleLabel}}"
-          aria-checked="{{item.selected}}"
+          aria-role="button"
+          aria-label="{{item.label}}{{item.selected ? '，已选中' : '，未选中'}}"
           bindtap="toggle(item.value)"
         >
-          {{item.label}}
+          <text>{{item.label}}</text>
         </button>
-        <button bindtap="clear">清空</button>
-        <button bindtap="confirm">确定</button>
+        <button aria-role="button" aria-label="清空筛选" bindtap="clear">
+          <text>清空</text>
+        </button>
+        <button aria-role="button" aria-label="确认筛选" bindtap="confirm">
+          <text>确定</text>
+        </button>
       </view>
     </view>
   </view>
@@ -49,14 +52,12 @@ createComponent({
     selected: []
   },
   computed: {
-    optionStates () {
-      return this.options.map((item) => {
-        const selected = this.selected.includes(item.value)
-        return Object.assign({}, item, {
-          selected,
-          accessibleLabel: `${item.label}，${selected ? '已选择' : '未选择'}`
-        })
-      })
+    renderedOptions () {
+      return this.options.map((item) => ({
+        value: item.value,
+        label: item.label,
+        selected: this.selected.includes(item.value)
+      }))
     }
   },
   methods: {
@@ -76,7 +77,7 @@ createComponent({
       this.selected = []
     },
     confirm () {
-      this.triggerEvent('confirm', { selected: this.selected })
+      this.triggerEvent('confirm', { selected: this.selected.slice() })
       this.close()
     }
   }

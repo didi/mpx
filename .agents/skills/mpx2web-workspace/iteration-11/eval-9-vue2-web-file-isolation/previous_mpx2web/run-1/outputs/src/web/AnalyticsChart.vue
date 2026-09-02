@@ -1,3 +1,7 @@
+<template>
+  <div ref="chart" class="analytics-chart" />
+</template>
+
 <script>
 import { createChart } from './chart-sdk'
 
@@ -9,58 +13,130 @@ export default {
       default: () => []
     }
   },
-  data () {
-    return {
-      chart: null,
-      chartGeneration: 0,
-      resizeObserver: null
-    }
-  },
   watch: {
     metrics: {
       deep: true,
       handler (metrics) {
-        if (this.chart) this.chart.update(metrics)
+        if (this.chartInstance) this.chartInstance.update(metrics)
       }
     }
   },
   mounted () {
-    this.initChart()
+    this.chartGeneration = 0
+    this.chartDetached = false
+    this.chartInstance = null
+    this.resizeObserver = null
+    this.observeChartSize()
+    this.mountChart()
   },
-  // Vue 2.7 cleanup hook.
-  // eslint-disable-next-line vue/no-deprecated-destroyed-lifecycle
   beforeDestroy () {
-    this.chartGeneration++
+    this.chartDetached = true
+    this.chartGeneration += 1
+
     if (this.resizeObserver) {
       this.resizeObserver.disconnect()
       this.resizeObserver = null
     }
-    if (this.chart) {
-      this.chart.destroy()
-      this.chart = null
+
+    if (this.chartInstance) {
+      this.chartInstance.destroy()
+      this.chartInstance = null
     }
   },
   methods: {
-    async initChart () {
+    async mountChart () {
+      const element = this.$refs.chart
       const generation = ++this.chartGeneration
-      const chart = await createChart(this.$refs.chart, this.metrics)
 
-      if (generation !== this.chartGeneration || this._isBeingDestroyed || this._isDestroyed) {
-        chart.destroy()
-        return
+      try {
+        const instance = await createChart(element, this.metrics, {
+          onSelect: (detail) => this.$emit('select', detail)
+        })
+
+        if (this.chartDetached || generation !== this.chartGeneration) {
+          instance.destroy()
+          return
+        }
+
+        this.chartInstance = instance
+        this.chartInstance.update(this.metrics)
+        this.chartInstance.resize()
+      } catch (error) {
+        if (!this.chartDetached && generation === this.chartGeneration) {
+          this.$emit('chart-error', error)
+        }
       }
+    },
+    observeChartSize () {
+      const element = this.$refs.chart
+      const ownerWindow = element && element.ownerDocument && element.ownerDocument.defaultView
+      const Observer = ownerWindow && ownerWindow.ResizeObserver
 
-      this.chart = chart
-      chart.update(this.metrics)
-      this.resizeObserver = new ResizeObserver(() => {
-        if (this.chart === chart) chart.resize()
+      if (!Observer || !element) return
+
+      this.resizeObserver = new Observer(() => {
+        if (this.chartInstance) this.chartInstance.resize()
       })
-      this.resizeObserver.observe(this.$refs.chart)
+      this.resizeObserver.observe(element)
     }
   }
 }
 </script>
 
-<template>
-  <div ref="chart" class="analytics-chart" />
-</template>
+<style>
+.analytics-chart {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 100%;
+  min-height: 180px;
+  box-sizing: border-box;
+  padding: 16px;
+}
+
+.analytics-chart__metric {
+  display: flex;
+  flex: 0 0 132px;
+  min-height: 148px;
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #dfe5ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.analytics-chart__metric:focus-visible {
+  outline: 2px solid #3478f6;
+  outline-offset: 2px;
+}
+
+.analytics-chart__bar {
+  width: 100%;
+  height: var(--analytics-bar-height, 2px);
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: #3478f6;
+}
+
+.analytics-chart__label,
+.analytics-chart__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-chart__label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.analytics-chart__value {
+  font-size: 18px;
+  font-weight: 600;
+}
+</style>

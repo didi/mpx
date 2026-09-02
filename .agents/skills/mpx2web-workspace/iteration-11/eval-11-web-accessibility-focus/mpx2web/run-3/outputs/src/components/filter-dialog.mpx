@@ -4,7 +4,6 @@
       class="filter-trigger"
       aria-role="button"
       aria-label="打开商品筛选"
-      tabindex="0"
       bindtap="open"
     >筛选</view>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
@@ -12,14 +11,13 @@
         class="dialog"
         aria-role="dialog"
         aria-label="商品筛选"
-        tabindex="-1"
         catchtap="stop"
       >
         <view
           wx:for="{{options}}"
           wx:key="value"
-          aria-role="checkbox"
-          aria-checked="{{selected.includes(item.value)}}"
+          aria-role="button"
+          aria-label="{{item.label}}"
           bindtap="toggle(item.value)"
         >{{item.label}}</view>
         <button bindtap="clear">清空</button>

@@ -5,17 +5,24 @@ import apiProxy from '@mpxjs/api-proxy'
 mpx.use(apiProxy)
 
 if (__mpx_mode__ === 'web') {
-  mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
-    webviewConfig: Object.assign({}, mpx.config.webConfig.webviewConfig, {
+  const webConfig = mpx.config.webConfig || {}
+  mpx.config.webConfig = {
+    ...webConfig,
+    routeConfig: {
+      ...(webConfig.routeConfig || {}),
+      mode: 'history',
+      base: '/mall/'
+    },
+    webviewConfig: {
       hostWhitelists: ['https://campaign.example.com']
-    })
-  })
+    }
+  }
 }
 
 createApp({
   onLaunch () {
-    if (__mpx_mode__ === 'wx') {
-      wx.reportAnalytics('mall_launch', {})
+    if (__mpx_mode__ !== 'web') {
+      mpx.reportAnalytics('mall_launch', {})
     }
   }
 })

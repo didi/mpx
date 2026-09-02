@@ -1,26 +1,26 @@
 <template>
-  <view class="product-card" bindtap="selectProduct">
-    <view class="product-cover-wrap">
-      <image class="product-cover" src="{{product.cover}}" mode="aspectFill" />
-      <text wx:if="{{product.tag}}" class="product-tag">{{product.tag}}</text>
+  <view class="mall-product-card" bindtap="selectProduct">
+    <view class="mall-product-card__cover-wrap">
+      <image class="mall-product-card__cover" src="{{product.cover}}" mode="aspectFill" />
+      <text wx:if="{{product.tag}}" class="mall-product-card__tag">{{product.tag}}</text>
     </view>
 
-    <view class="product-content">
-      <text class="product-title">{{product.title}}</text>
-      <text class="product-subtitle">{{product.subtitle}}</text>
+    <view class="mall-product-card__content">
+      <text class="mall-product-card__title">{{product.title}}</text>
+      <text class="mall-product-card__subtitle">{{product.subtitle}}</text>
 
-      <view class="product-meta">
-        <view class="price-tag">
-          <text class="price-currency">¥</text>
-          <text class="price-amount">{{product.price}}</text>
-          <text class="price-unit">起</text>
+      <view class="mall-product-card__meta">
+        <view class="mall-product-card__price">
+          <text class="mall-product-card__currency">¥</text>
+          <text class="mall-product-card__amount">{{product.price}}</text>
+          <text class="mall-product-card__unit">起</text>
         </view>
-        <text class="product-sales">{{product.salesText}}</text>
+        <text class="mall-product-card__sales">{{product.salesText}}</text>
       </view>
 
-      <view class="product-footer">
-        <text class="original-price">¥{{product.originalPrice}}</text>
-        <button class="cart-button" catchtap="addToCart" aria-label="加入购物车">+</button>
+      <view class="mall-product-card__footer">
+        <text class="mall-product-card__original-price">¥{{product.originalPrice}}</text>
+        <button class="mall-product-card__cart-button" catchtap="addToCart" aria-label="加入购物车">+</button>
       </view>
     </view>
   </view>
@@ -48,23 +48,23 @@ createComponent({
 </script>
 
 <style>
-.product-card {
+.mall-product-card {
   box-sizing: border-box;
   width: 338rpx;
+  min-width: 0;
   margin-bottom: 24rpx;
   overflow: hidden;
   background: #ffffff;
   border-radius: 20rpx;
   box-shadow: 0 8rpx 24rpx rgba(31, 35, 48, 0.08);
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
-.product-cover-wrap {
+.mall-product-card__cover-wrap {
   position: relative;
+  width: 100%;
 }
 
-.product-card .product-cover {
+.mall-product-card__cover {
   display: block;
   box-sizing: border-box;
   width: 100%;
@@ -73,7 +73,7 @@ createComponent({
   border-radius: 20rpx 20rpx 0 0;
 }
 
-.product-tag {
+.mall-product-card__tag {
   position: absolute;
   top: 16rpx;
   left: 16rpx;
@@ -84,12 +84,13 @@ createComponent({
   border-radius: 8rpx;
 }
 
-.product-content {
+.mall-product-card__content {
   box-sizing: border-box;
+  width: 100%;
   padding: 20rpx;
 }
 
-.product-title {
+.mall-product-card__title {
   display: block;
   overflow: hidden;
   color: #333333;
@@ -100,7 +101,7 @@ createComponent({
   white-space: nowrap;
 }
 
-.product-subtitle {
+.mall-product-card__subtitle {
   display: block;
   margin-top: 8rpx;
   overflow: hidden;
@@ -111,59 +112,64 @@ createComponent({
   white-space: nowrap;
 }
 
-.product-meta {
+.mall-product-card__meta {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  min-width: 0;
   margin-top: 18rpx;
 }
 
-.price-tag {
+.mall-product-card__price {
   display: flex;
-  flex-shrink: 0;
+  flex: 0 0 auto;
   align-items: baseline;
   height: 64rpx;
   color: #e64340;
   white-space: nowrap;
 }
 
-.price-currency,
-.price-unit {
+.mall-product-card__currency,
+.mall-product-card__unit {
   font-size: 20rpx;
   line-height: 28rpx;
 }
 
-.price-amount {
+.mall-product-card__amount {
   margin: 0 4rpx;
   font-size: 40rpx;
   font-weight: bold;
   line-height: 48rpx;
 }
 
-.product-sales {
+.mall-product-card__sales {
+  min-width: 0;
+  margin-left: 8rpx;
+  overflow: hidden;
   color: #a0a4ad;
   font-size: 20rpx;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.product-footer {
+.mall-product-card__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-top: 12rpx;
 }
 
-.original-price {
+.mall-product-card__original-price {
   color: #b6bac2;
   font-size: 22rpx;
   text-decoration: line-through;
 }
 
-.product-card .cart-button {
+.mall-product-card__cart-button {
   display: flex;
-  box-sizing: border-box;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   width: 52rpx;
   height: 52rpx;
   margin: 0;
@@ -176,7 +182,7 @@ createComponent({
   border-radius: 50%;
 }
 
-.product-card .cart-button::after {
+.mall-product-card__cart-button::after {
   border: 0;
 }
 </style>

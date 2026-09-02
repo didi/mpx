@@ -7,9 +7,6 @@ module.exports = {
           routeConfig: {
             mode: 'history',
             base: '/mall/'
-          },
-          webviewConfig: {
-            hostWhitelists: ['https://campaign.example.com']
           }
         }
       }

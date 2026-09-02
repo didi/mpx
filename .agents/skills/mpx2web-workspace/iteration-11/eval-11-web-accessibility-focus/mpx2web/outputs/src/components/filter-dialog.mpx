@@ -11,14 +11,13 @@
         class="dialog"
         aria-role="dialog"
         aria-label="商品筛选"
-        bindtap="stop"
+        catchtap="stop"
       >
         <view
           wx:for="{{options}}"
           wx:key="value"
-          aria-role="checkbox"
+          aria-role="button"
           aria-label="{{item.label}}"
-          aria-checked="{{selected.includes(item.value)}}"
           bindtap="toggle(item.value)"
         >{{item.label}}</view>
         <button bindtap="clear">清空</button>

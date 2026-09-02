@@ -1,62 +1,37 @@
 {
-  "description": "eval-3 has_skill",
-  "cwd": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-3/eval-3-order-center-realtime/has_skill",
-  "model": "gpt-5.6-sol",
-  "reasoning_effort": "high",
-  "status": "completed",
-  "attempts": [
-    {
-      "attempt": 1,
-      "command": [
-        "codex",
-        "exec",
-        "--ignore-user-config",
-        "--ephemeral",
-        "--disable",
-        "plugins",
-        "--disable",
-        "remote_plugin",
-        "--disable",
-        "apps",
-        "--skip-git-repo-check",
-        "-m",
-        "gpt-5.6-sol",
-        "-s",
-        "workspace-write",
-        "-c",
-        "model_reasoning_effort=\"high\"",
-        "-C",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-3/eval-3-order-center-realtime/has_skill",
-        "--color",
-        "never",
-        "--json",
-        "<prompt-via-stdin>"
-      ],
-      "returncode": 0,
-      "duration_ms": 612940,
-      "missing_outputs": []
-    }
+  "description": "Eval-3 mpx2web run-3",
+  "cwd": "isolated temporary workspace",
+  "command": [
+    "codex",
+    "exec",
+    "--ignore-user-config",
+    "--ephemeral",
+    "--disable",
+    "plugins",
+    "--disable",
+    "remote_plugin",
+    "--disable",
+    "apps",
+    "--skip-git-repo-check",
+    "-C",
+    "/private/var/folders/yf/mcf8m_nn1896w8kbdfxnhnw40000ks/T/mpx2web-eval-6fjomqak",
+    "-s",
+    "workspace-write",
+    "-m",
+    "gpt-5.6-sol",
+    "-c",
+    "model_reasoning_effort=\"high\"",
+    "--color",
+    "never",
+    "--json",
+    "<prompt-via-stdin>"
   ],
-  "output_exists": true,
-  "duration_ms": 612940,
-  "published_evidence": {
-    "sample": 3,
-    "outputs": "eval-3-order-center-realtime/mpx2web/run-3/outputs",
-    "compile_status": "passed",
-    "artifact_inventory": {
-      "declared_files": [
-        "src/pages/orders/index.mpx",
-        "src/components/swipe-order-item.mpx",
-        "src/components/logistics-channel.mpx"
-      ],
-      "compiled_mpx_files": [
-        "src/pages/orders/index.mpx",
-        "src/components/swipe-order-item.mpx",
-        "src/components/logistics-channel.mpx"
-      ],
-      "support_files": [],
-      "missing_files": [],
-      "all_declared_files_present": true
-    }
-  }
+  "returncode": 0,
+  "outputs_complete": true,
+  "compile_status": "passed",
+  "compile_boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
+  "duration_ms": 356538,
+  "fingerprint": "144e84c7bfb2e478981414b1b50768d8f03493e963de312b730ee06f21562001",
+  "fixture_digest": "ef39bb4489d97fe45ff85c98a9404b7ea03e717603cf37e964547eaf054808e8",
+  "skill_digest": "4bb29537075654ea646965b265b90341093b60dcc2b2b7cd13f59a3693120e17"
 }

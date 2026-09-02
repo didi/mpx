@@ -3,15 +3,17 @@ import mpx, { createApp } from '@mpxjs/core'
 
 if (__mpx_mode__ === 'web') {
   const webConfig = mpx.config.webConfig || {}
-  mpx.config.webConfig = Object.assign({}, webConfig, {
-    routeConfig: Object.assign({}, webConfig.routeConfig, {
+  mpx.config.webConfig = {
+    ...webConfig,
+    routeConfig: {
+      ...(webConfig.routeConfig || {}),
       mode: 'history',
       base: '/mall/'
-    }),
-    webviewConfig: Object.assign({}, webConfig.webviewConfig, {
+    },
+    webviewConfig: {
       hostWhitelists: ['https://campaign.example.com']
-    })
-  })
+    }
+  }
 }
 
 createApp({

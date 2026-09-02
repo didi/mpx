@@ -5,6 +5,10 @@
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
     </view>
 
+    <view wx:if="{{webCapabilityPending}}" class="web-capability-notice">
+      <text class="web-capability-notice-text">Web 端位置与图片能力待宿主协议确定，当前仍可发布纯文字动态。</text>
+    </view>
+
     <view class="form-card">
       <textarea
         class="content-input"
@@ -27,27 +31,40 @@
           class="photo-add"
           bindtap="choosePhoto"
           aria-role="button"
-          aria-label="添加图片"
+          aria-label="{{webCapabilityPending ? 'Web 端图片选择暂不可用' : '添加图片'}}"
         >
           <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">{{isWeb ? 'Web 暂不支持添加图片' : '添加图片'}}</text>
+          <text class="photo-add-label">{{webCapabilityPending ? '暂不支持' : '添加图片'}}</text>
         </view>
       </view>
     </view>
 
     <view class="publish-options">
-      <view class="option-row" bindtap="choosePlace">
+      <view
+        class="option-row"
+        bindtap="choosePlace"
+        aria-role="button"
+        aria-label="{{webCapabilityPending ? 'Web 端位置选择暂不可用' : '选择位置'}}"
+      >
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text class="option-value">{{place.name || (isWeb ? 'Web 暂不支持选择位置' : '选择位置')}}</text>
+            <text class="option-value">
+              {{place.name || (webCapabilityPending ? 'Web 端暂不可用' : '选择位置')}}
+            </text>
           </view>
         </view>
         <text class="option-arrow">›</text>
       </view>
 
-      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
+      <view
+        wx:if="{{place.name}}"
+        class="place-card"
+        bindtap="openPlace"
+        aria-role="button"
+        aria-label="查看地图"
+      >
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
@@ -102,7 +119,7 @@ createPage({
     selectedTopic: {},
     allowComments: true,
     submitting: false,
-    isWeb: __mpx_mode__ === 'web'
+    webCapabilityPending: __mpx_mode__ === 'web'
   },
   computed: {
     canSubmit () {
@@ -113,13 +130,17 @@ createPage({
     updateContent (event) {
       this.content = event.detail.value
     },
-    showWebUnavailable (title) {
-      mpx.showToast({ title, icon: 'none' })
+    showCapabilityPending (title) {
+      mpx.showToast({
+        title,
+        icon: 'none',
+        usePromise: false
+      })
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 待业务明确 Web 地图 SDK 或宿主 Bridge 的选点协议后接入。
-        this.showWebUnavailable('Web 暂不支持选择位置')
+        // TODO(web): 待业务声明 Web 地图选点或宿主 Bridge 协议后接入。
+        this.showCapabilityPending('Web 端暂不支持选择位置')
         return
       }
       mpx.chooseLocation({
@@ -132,28 +153,29 @@ createPage({
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO: 待业务明确 Web 地图 SDK 或宿主 Bridge 的地图查看协议后接入。
-        this.showWebUnavailable('Web 暂不支持查看地图')
+        // TODO(web): 待业务声明 Web 地图查看或宿主 Bridge 协议后接入。
+        this.showCapabilityPending('Web 端暂不支持查看地图')
         return
       }
       mpx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
         name: this.place.name,
-        address: this.place.address
+        address: this.place.address,
+        usePromise: false
       })
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 待业务明确 Web 媒体选择或宿主 Bridge 协议后接入。
-        this.showWebUnavailable('Web 暂不支持添加图片')
+        // TODO(web): 待业务声明 Web 媒体选择或宿主 Bridge 协议后接入。
+        this.showCapabilityPending('Web 端暂不支持选择图片')
         return
       }
       mpx.chooseMedia({
-        usePromise: false,
         count: 9 - this.photos.length,
         mediaType: ['image'],
         sourceType: ['album', 'camera'],
+        usePromise: false,
         success: ({ tempFiles }) => {
           this.photos = this.photos.concat(tempFiles)
         }
@@ -171,9 +193,7 @@ createPage({
     submitPost () {
       if (!this.canSubmit || this.submitting) return
       this.submitting = true
-      // Web 发布沿用 API Proxy 已支持的 HTTP 能力；不假定未声明的宿主 Bridge 接口。
       mpx.request({
-        usePromise: false,
         url: '/api/community/posts',
         method: 'POST',
         data: {
@@ -183,11 +203,19 @@ createPage({
           topicId: this.selectedTopic.id || '',
           allowComments: this.allowComments
         },
+        usePromise: false,
         success: ({ data }) => {
-          mpx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+          mpx.redirectTo({
+            url: `/pages/community/detail?id=${data.id}`,
+            usePromise: false
+          })
         },
         fail: () => {
-          mpx.showToast({ title: '发布失败，请重试', icon: 'none' })
+          mpx.showToast({
+            title: '发布失败，请重试',
+            icon: 'none',
+            usePromise: false
+          })
         },
         complete: () => {
           this.submitting = false
@@ -211,6 +239,7 @@ createPage({
 
 .publish-title,
 .publish-tip,
+.web-capability-notice-text,
 .word-count,
 .photo-add-label,
 .option-label,
@@ -232,6 +261,20 @@ createPage({
   margin-top: 8rpx;
   color: #8a8f99;
   font-size: 24rpx;
+}
+
+.web-capability-notice {
+  margin-bottom: 24rpx;
+  padding: 18rpx 20rpx;
+  background: #fff7e8;
+  border: 1rpx solid #ffd591;
+  border-radius: 14rpx;
+}
+
+.web-capability-notice-text {
+  color: #8a5a00;
+  font-size: 23rpx;
+  line-height: 34rpx;
 }
 
 .form-card,

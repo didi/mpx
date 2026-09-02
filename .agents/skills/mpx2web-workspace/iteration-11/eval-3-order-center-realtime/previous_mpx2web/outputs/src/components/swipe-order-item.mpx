@@ -2,8 +2,6 @@
   <view
     class="swipe-order"
     data-disabled="{{disabled}}"
-    data-gesture-key="{{gestureKey}}"
-    data-offset-x="{{offsetX}}"
     catchtouchstart@wx="{{gesture.onTouchStart}}"
     catchtouchmove@wx="{{gesture.onTouchMove}}"
     catchtouchend@wx="{{gesture.onTouchEnd}}"
@@ -19,8 +17,8 @@
 
     <view
       class="order-card"
-      wx:class="{{ {dragging: dragging} }}"
-      style="transform: translateX({{offsetX}}px)"
+      wx:class="{{ {dragging: gestureActive} }}"
+      wx:style="{{cardStyle}}"
       bindtap="selectOrder"
     >
       <view class="order-head">
@@ -52,95 +50,27 @@
 </template>
 
 <script module="gesture" lang="wxs">
-var sessions = {}
-var MOVE_THRESHOLD = 4
-var MAX_OFFSET = 96
-
-function abs(value) {
-  return value < 0 ? -value : value
-}
-
-function point(event) {
+function pointX(event) {
   var touches = event.touches && event.touches.length ? event.touches : event.changedTouches
-  return touches && touches.length ? touches[0] : null
-}
-
-function disabled(event) {
-  var value = event.currentTarget.dataset.disabled
-  return value === true || value === 'true' || value === 1 || value === '1'
-}
-
-function gestureKey(event) {
-  return event.currentTarget.dataset.gestureKey
+  return touches && touches.length ? touches[0].clientX : 0
 }
 
 module.exports = {
   onTouchStart: function (event) {
-    var key = gestureKey(event)
-    if (disabled(event)) {
-      delete sessions[key]
-      return
-    }
-    var touch = point(event)
-    if (!touch) return
-    sessions[key] = {
-      startX: touch.clientX,
-      startY: touch.clientY,
-      baseOffset: event.currentTarget.dataset.offsetX * 1 || 0,
-      offsetX: event.currentTarget.dataset.offsetX * 1 || 0,
-      moved: false,
-      horizontal: false,
-      vertical: false
-    }
-    event.instance.callMethod('beginSwipe')
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('handleGestureStart', pointX(event))
   },
   onTouchMove: function (event) {
-    var key = gestureKey(event)
-    var state = sessions[key]
-    if (!state) return
-    if (disabled(event)) {
-      delete sessions[key]
-      event.instance.callMethod('resetSwipe')
-      return
-    }
-    var touch = point(event)
-    if (!touch) return
-    var deltaX = touch.clientX - state.startX
-    var deltaY = touch.clientY - state.startY
-    if (!state.horizontal && !state.vertical) {
-      if (abs(deltaX) < MOVE_THRESHOLD) return
-      if (abs(deltaX) <= abs(deltaY)) {
-        state.vertical = true
-        return
-      }
-      state.horizontal = true
-    }
-    if (!state.horizontal) return
-    state.moved = true
-    state.offsetX = state.baseOffset + deltaX
-    if (state.offsetX > 0) state.offsetX = 0
-    if (state.offsetX < -MAX_OFFSET) state.offsetX = -MAX_OFFSET
-    event.instance.callMethod('syncSwipeOffset', state.offsetX)
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('handleGestureMove', pointX(event))
   },
   onTouchEnd: function (event) {
-    var key = gestureKey(event)
-    var state = sessions[key]
-    if (!state) return
-    delete sessions[key]
-    if (disabled(event)) {
-      event.instance.callMethod('resetSwipe')
-      return
-    }
-    event.instance.callMethod('finishSwipe', {
-      open: state.offsetX < -MAX_OFFSET / 2,
-      moved: state.moved
-    })
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('handleGestureEnd', pointX(event))
   },
   onTouchCancel: function (event) {
-    var key = gestureKey(event)
-    if (!sessions[key]) return
-    delete sessions[key]
-    event.instance.callMethod('cancelSwipe')
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('handleGestureCancel')
   }
 }
 </script>
@@ -148,15 +78,15 @@ module.exports = {
 <script>
 import { createComponent } from '@mpxjs/core'
 
-const MOVE_THRESHOLD = 4
-const MAX_OFFSET = 96
-let gestureSeed = 0
+const MAX_REVEAL = 96
+const OPEN_THRESHOLD = MAX_REVEAL / 2
+const MOVE_THRESHOLD = 5
 
-function touchPoint (event) {
+function eventPointX (event) {
   const touches = event.touches && event.touches.length
     ? event.touches
     : event.changedTouches
-  return touches && touches.length ? touches[0] : null
+  return touches && touches.length ? touches[0].clientX : 0
 }
 
 createComponent({
@@ -167,126 +97,86 @@ createComponent({
     },
     disabled: {
       type: Boolean,
-      observer (value) {
-        if (value) this.resetSwipe()
-      }
-    },
-    activeOrderId: {
-      type: String,
-      observer (value) {
-        if (value !== this.order.id && this.offsetX) this.resetSwipe()
+      value: false,
+      observer (disabled) {
+        if (!disabled) return
+        this.offsetX = 0
+        this.gestureActive = false
+        this._gestureStartX = 0
+        this._gestureStartOffset = 0
+        this._gestureMoved = false
+        this._suppressNextTap = false
       }
     }
   },
   data: {
-    gestureKey: '',
     offsetX: 0,
-    dragging: false
+    gestureActive: false
   },
-  created () {
-    gestureSeed += 1
-    this.gestureKey = `swipe-order-${gestureSeed}`
-    this.suppressNextTap = false
-    this.resetGestureState()
+  computed: {
+    cardStyle () {
+      return {
+        transform: `translateX(${this.offsetX}px)`
+      }
+    }
   },
   methods: {
-    beginSwipe () {
-      if (this.disabled) return
-      this.suppressNextTap = false
-      this.dragging = true
-      this.triggerEvent('swipestart', { orderId: this.order.id })
-    },
-    syncSwipeOffset (offsetX) {
-      if (this.disabled) return
-      this.offsetX = offsetX
-    },
-    finishSwipe ({ open, moved }) {
-      const shouldOpen = !this.disabled && open
-      this.offsetX = shouldOpen ? -MAX_OFFSET : 0
-      this.dragging = false
-      this.suppressNextTap = !!moved
-      this.resetGestureState()
-      this.triggerEvent('swipeend', { orderId: this.order.id, open: shouldOpen })
-    },
-    cancelSwipe () {
-      this.offsetX = 0
-      this.dragging = false
-      this.suppressNextTap = false
-      this.resetGestureState()
-      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
-    },
-    resetSwipe () {
-      this.offsetX = 0
-      this.dragging = false
-      this.suppressNextTap = false
-      this.resetGestureState()
-    },
-    resetGestureState () {
-      this.gestureActive = false
-      this.gestureHorizontal = false
-      this.gestureVertical = false
-      this.gestureMoved = false
-      this.gestureStartX = 0
-      this.gestureStartY = 0
-      this.gestureBaseOffset = 0
-      this.gestureOffset = 0
-    },
     handleTouchStart (event) {
-      this.suppressNextTap = false
-      if (this.disabled) {
-        this.resetSwipe()
-        return
-      }
-      const touch = touchPoint(event)
-      if (!touch) return
-      this.gestureActive = true
-      this.gestureStartX = touch.clientX
-      this.gestureStartY = touch.clientY
-      this.gestureBaseOffset = this.offsetX
-      this.gestureOffset = this.offsetX
-      this.beginSwipe()
+      this.handleGestureStart(eventPointX(event))
     },
     handleTouchMove (event) {
-      if (!this.gestureActive) return
-      if (this.disabled) {
-        this.resetSwipe()
-        return
-      }
-      const touch = touchPoint(event)
-      if (!touch) return
-      const deltaX = touch.clientX - this.gestureStartX
-      const deltaY = touch.clientY - this.gestureStartY
-      if (!this.gestureHorizontal && !this.gestureVertical) {
-        if (Math.abs(deltaX) < MOVE_THRESHOLD) return
-        if (Math.abs(deltaX) <= Math.abs(deltaY)) {
-          this.gestureVertical = true
-          return
-        }
-        this.gestureHorizontal = true
-      }
-      if (!this.gestureHorizontal) return
-      this.gestureMoved = true
-      this.gestureOffset = Math.max(-MAX_OFFSET, Math.min(0, this.gestureBaseOffset + deltaX))
-      this.syncSwipeOffset(this.gestureOffset)
+      this.handleGestureMove(eventPointX(event))
     },
-    handleTouchEnd () {
-      if (!this.gestureActive) return
-      if (this.disabled) {
-        this.resetSwipe()
-        return
-      }
-      this.finishSwipe({
-        open: this.gestureOffset < -MAX_OFFSET / 2,
-        moved: this.gestureMoved
-      })
+    handleTouchEnd (event) {
+      this.handleGestureEnd(eventPointX(event))
     },
     handleTouchCancel () {
-      if (!this.gestureActive) return
-      this.cancelSwipe()
+      this.handleGestureCancel()
+    },
+    handleGestureStart (startX) {
+      this._suppressNextTap = false
+      if (this.disabled) return
+      this._gestureStartX = startX
+      this._gestureStartOffset = this.offsetX
+      this._gestureMoved = false
+      this.gestureActive = true
+      this.triggerEvent('swipestart', { orderId: this.order.id })
+    },
+    handleGestureMove (currentX) {
+      if (this.disabled || !this.gestureActive) return
+      const deltaX = currentX - this._gestureStartX
+      const nextOffset = Math.max(-MAX_REVEAL, Math.min(0, this._gestureStartOffset + deltaX))
+      if (Math.abs(nextOffset - this._gestureStartOffset) > MOVE_THRESHOLD) {
+        this._gestureMoved = true
+      }
+      this.offsetX = nextOffset
+    },
+    handleGestureEnd (endX) {
+      if (this.disabled || !this.gestureActive) return
+      this.handleGestureMove(endX)
+      const moved = this._gestureMoved
+      const open = this.offsetX < -OPEN_THRESHOLD
+      this.gestureActive = false
+      this.offsetX = open ? -MAX_REVEAL : 0
+      this._gestureStartX = 0
+      this._gestureStartOffset = 0
+      this._gestureMoved = false
+      this._suppressNextTap = moved
+      this.triggerEvent('swipeend', { orderId: this.order.id, open })
+    },
+    handleGestureCancel () {
+      if (this.disabled) return
+      this.gestureActive = false
+      this.offsetX = 0
+      this._gestureStartX = 0
+      this._gestureStartOffset = 0
+      this._gestureMoved = false
+      this._suppressNextTap = false
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
     },
     selectOrder () {
-      if (this.suppressNextTap) {
-        this.suppressNextTap = false
+      if (this._suppressNextTap) {
+        this._suppressNextTap = false
         return
       }
       if (this.disabled) return
@@ -333,7 +223,7 @@ createComponent({
   z-index: 1;
   padding: 24rpx;
   background: #ffffff;
-  transition: transform 0.2s ease;
+  transition: transform 180ms ease-out;
 }
 
 .order-card.dragging {

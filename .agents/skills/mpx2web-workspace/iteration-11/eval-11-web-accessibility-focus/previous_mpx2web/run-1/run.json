@@ -1,60 +1,37 @@
 {
-  "description": "eval-11 old_skill",
-  "cwd": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-1/eval-11-web-accessibility-focus/old_skill",
-  "model": "gpt-5.6-sol",
-  "reasoning_effort": "high",
-  "status": "completed",
-  "attempts": [
-    {
-      "attempt": 1,
-      "command": [
-        "codex",
-        "exec",
-        "--ignore-user-config",
-        "--ephemeral",
-        "--disable",
-        "plugins",
-        "--disable",
-        "remote_plugin",
-        "--disable",
-        "apps",
-        "--skip-git-repo-check",
-        "-m",
-        "gpt-5.6-sol",
-        "-s",
-        "workspace-write",
-        "-c",
-        "model_reasoning_effort=\"high\"",
-        "-C",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-1/eval-11-web-accessibility-focus/old_skill",
-        "--color",
-        "never",
-        "--json",
-        "<prompt-via-stdin>"
-      ],
-      "returncode": 0,
-      "duration_ms": 465254,
-      "missing_outputs": []
-    }
+  "description": "Eval-11 previous_mpx2web run-1",
+  "cwd": "isolated temporary workspace",
+  "command": [
+    "codex",
+    "exec",
+    "--ignore-user-config",
+    "--ephemeral",
+    "--disable",
+    "plugins",
+    "--disable",
+    "remote_plugin",
+    "--disable",
+    "apps",
+    "--skip-git-repo-check",
+    "-C",
+    "/private/var/folders/yf/mcf8m_nn1896w8kbdfxnhnw40000ks/T/mpx2web-eval-p6trrs9n",
+    "-s",
+    "workspace-write",
+    "-m",
+    "gpt-5.6-sol",
+    "-c",
+    "model_reasoning_effort=\"high\"",
+    "--color",
+    "never",
+    "--json",
+    "<prompt-via-stdin>"
   ],
-  "output_exists": true,
-  "duration_ms": 465254,
-  "published_evidence": {
-    "sample": 1,
-    "outputs": "eval-11-web-accessibility-focus/previous_mpx2web/run-1/outputs",
-    "compile_status": "passed",
-    "artifact_inventory": {
-      "declared_files": [
-        "src/components/filter-dialog.mpx",
-        "src/components/filter-dialog.web.mpx"
-      ],
-      "compiled_mpx_files": [
-        "src/components/filter-dialog.mpx",
-        "src/components/filter-dialog.web.mpx"
-      ],
-      "support_files": [],
-      "missing_files": [],
-      "all_declared_files_present": true
-    }
-  }
+  "returncode": 0,
+  "outputs_complete": true,
+  "compile_status": "passed",
+  "compile_boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
+  "duration_ms": 390206,
+  "fingerprint": "ada0ac8617ec7799e3e0b95cb50eefa35243264e75038f79de9ce979b40dc657",
+  "fixture_digest": "5d62772e89ba0537cdd34c2229c216c05b7fec3329496a37c58683f51da46246",
+  "skill_digest": "e1706669a11f5afa78c8faedf28112ca6fb8612ed0d7aef9d21af5910ee4d0c9"
 }

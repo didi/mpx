@@ -32,6 +32,7 @@
         disabled="{{item.locked}}"
         bindselect="openOrder"
         bindremove="removeOrder"
+        bindswipeend="handleSwipeEnd"
       />
     </view>
 
@@ -44,7 +45,7 @@
     </view>
 
     <logistics-channel
-      wx:if="{{memberId && channelActive}}"
+      wx:if="{{memberId}}"
       memberId="{{memberId}}"
       bindconnectedchange="handleConnectionChange"
       bindlogistics="handleLogisticsMessage"
@@ -97,15 +98,7 @@ createPage({
       }
     ],
     logisticsOnline: false,
-    channelActive: true,
     loading: false
-  },
-  onShow () {
-    this.channelActive = true
-  },
-  onHide () {
-    this.channelActive = false
-    this.logisticsOnline = false
   },
   methods: {
     switchStatus (status) {
@@ -127,24 +120,34 @@ createPage({
         }
       })
     },
+    findEnabledOrder (orderId) {
+      return this.orders.find(order => order.id === orderId && !order.locked)
+    },
     openOrder ({ detail }) {
-      wx.navigateTo({ url: `/pages/orders/detail?id=${detail.orderId}` })
+      const order = this.findEnabledOrder(detail.orderId)
+      if (!order) return
+      wx.navigateTo({ url: `/pages/orders/detail?id=${order.id}` })
     },
     removeOrder ({ detail }) {
+      const order = this.findEnabledOrder(detail.orderId)
+      if (!order) return
       wx.showModal({
         title: '删除订单',
         content: '删除后将无法在订单列表中查看，确认删除吗？',
         success: ({ confirm }) => {
-          if (!confirm) return
+          if (!confirm || !this.findEnabledOrder(order.id)) return
           wx.request({
-            url: `/api/orders/${detail.orderId}`,
+            url: `/api/orders/${order.id}`,
             method: 'DELETE',
             success: () => {
-              this.orders = this.orders.filter(order => order.id !== detail.orderId)
+              this.orders = this.orders.filter(item => item.id !== order.id)
             }
           })
         }
       })
+    },
+    handleSwipeEnd () {
+      // 每个条目自行维护展开状态，不能借业务 locked 字段干扰其他实例。
     },
     handleConnectionChange ({ detail }) {
       if (detail.memberId !== this.memberId) return
@@ -163,7 +166,7 @@ createPage({
       })
     },
     handleChannelError ({ detail }) {
-      if (detail.memberId !== this.memberId) return
+      if (detail && detail.memberId !== this.memberId) return
       this.logisticsOnline = false
     },
     goShopping () {

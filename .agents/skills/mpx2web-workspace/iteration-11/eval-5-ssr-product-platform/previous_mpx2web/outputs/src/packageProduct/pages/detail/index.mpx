@@ -26,7 +26,7 @@
 
 <script>
 import { createPage } from '@mpxjs/core'
-import mpx from '@mpxjs/api-proxy'
+import mpx from '@mpxjs/core'
 import { useProductStore } from '../../../stores/product'
 
 createPage({
@@ -47,26 +47,44 @@ createPage({
     }
   },
   onLoad (query) {
-    this.productId = query.id
-    if (!this.$ssrContext) return this.loadProduct(query.id)
+    const productId = String((query && query.id) || '')
+    this.productId = productId
+
+    // Node 首屏由 serverPrefetch 返回 Promise；浏览器 hydrate
+    // 和小程序仍从通用 onLoad 进入数据链路。
+    if (!this.$ssrContext) {
+      return this.loadProduct(productId)
+    }
+  },
+  onShow () {
+    if (this.$ssrContext || !this.productId) return
+
+    const store = useProductStore(this.$pinia)
+    if (store.productId !== this.productId) {
+      return this.loadProduct(this.productId)
+    }
   },
   serverPrefetch () {
-    const productId = this.$route.query.id
-    this.productId = productId
-    return this.loadProduct(productId, this.$ssrContext)
+    return this.loadProduct(this.productId, this.$ssrContext)
   },
   methods: {
     async loadProduct (productId, requestContext) {
       const pageRequestVersion = ++this.pageRequestVersion
-      const productStore = useProductStore(this.$pinia)
-      await productStore.loadProduct(productId, requestContext)
+      const store = useProductStore(this.$pinia)
+
+      await store.loadProduct(productId, requestContext)
+
+      // 页面局部状态也校验请求身份，避免旧商品返回后
+      // 重置新商品的规格选择。
       if (
         pageRequestVersion !== this.pageRequestVersion ||
         productId !== this.productId ||
-        !productStore.loaded ||
-        productStore.productId !== productId
+        !store.loaded ||
+        store.productId !== productId
       ) return
-      this.selectedSkuId = this.product.skus[0] && this.product.skus[0].id
+
+      const skus = store.product.skus || []
+      this.selectedSkuId = skus[0] ? skus[0].id : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

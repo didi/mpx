@@ -10,7 +10,7 @@ import { createComponent } from '@mpxjs/core'
 createComponent({
   properties: {
     articleId: String,
-    items: { type: Array, value: () => [] }
+    items: { type: Array, value: [] }
   },
   methods: {
     select (articleId) {

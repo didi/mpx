@@ -2,121 +2,232 @@
   "eval_id": 4,
   "eval_name": "campaign-webview-sdk",
   "configuration": "no_skill",
+  "run_number": 2,
+  "grading_fingerprint": "54ea1907bb3c3621cbcd8e255231b9bb20275cab30fa3f071048f9395aa3f26c",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 0,
+    "invoked": false,
+    "skip_reason": "compile_or_semantic_gate_failed"
+  },
   "expectations": [
     {
       "id": "h0",
       "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
-      "passed": true,
-      "evidence": "outputs/src/pages/campaign/index.mpx:28-36 的非 Web 分支保留 <web-view src=\"{{campaignUrl}}\" bindmessage=\"handleCampaignMessage\" bindload=\"handleCampaignLoad\" binderror=\"handleCampaignError\" />；180-188 从消息分发 claim-coupon/open-product；190-199 wx.request 领券；201-204 wx.navigateTo 跳转商品页；152-155 wx.reportAnalytics('campaign_webview_load', { campaign_id: this.campaignId }) 保留活动埋点。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review"
+        "compile_gate"
       ]
     },
     {
       "id": "h1",
       "text": "Web 宿主白名单只包含完整可信 origin https://campaign.example.com，避免后缀匹配误接纳相似恶意域名",
       "passed": false,
-      "evidence": "outputs/src/app.mpx：hostWhitelists=未配置；当前运行时执行 origin.endsWith(item)，必须仅配置完整可信 origin https://campaign.example.com。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "h2",
       "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
-      "passed": true,
-      "evidence": "outputs/vue.config.js：publicPath 与 routeConfig.base 均为 /mall/。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "h3",
       "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
       "passed": false,
-      "evidence": "outputs/src/components/campaign-tracker.mpx：SDK 未被动态加载并限制在 Web 调用链，或仍存在模块顶层静态引入。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "h4",
       "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
       "passed": false,
-      "evidence": "outputs/src/components/campaign-tracker.mpx：动态 import/create 的异步边界后未逐次复核当前挂载身份。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "h5",
       "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
       "passed": false,
-      "evidence": "outputs/src/components/campaign-tracker.mpx：活动切换未同时推进初始化并校验代际与 campaignId。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "h6",
       "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
-      "passed": true,
-      "evidence": "outputs/src/components/campaign-tracker.mpx：detached 的清理链路移除监听并销毁 SDK 实例。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "h7",
       "text": "没有额外手写 window message 监听时，内建 web-view 的 host 白名单与 clientUid 实例隔离加 bindmessage 即构成消息入口证据；若额外手写监听，则必须同时校验受信任 origin、当前 iframe source 和严格 campaignId",
       "passed": false,
-      "evidence": "outputs/src/pages/campaign/index.mpx 的 handleWindowMessage 缺少严格 campaignId；outputs/src/components/campaign-tracker.mpx 的 handleWindowMessage 缺少严格 campaignId。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "h8",
       "text": "Web 下 web-view bindmessage 的单向业务消息在领券或跳转前严格校验当前 campaignId；不要求改变微信小程序既有消息协议",
       "passed": false,
-      "evidence": "outputs/src/pages/campaign/index.mpx：handleCampaignMessage 在 Web 消费领券或跳转消息前未严格要求 message.campaignId 等于当前活动。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     }
   ],
   "summary": {
-    "passed": 3,
-    "failed": 6,
+    "passed": 0,
+    "failed": 9,
     "total": 9,
-    "pass_rate": 0.3333
+    "pass_rate": 0.0
   },
   "metrics": {
-    "total_tokens": 370540,
-    "input_tokens": 358102,
-    "output_tokens": 12438,
-    "tool_calls": 9,
-    "duration_ms": 296026,
-    "output_files": 4,
-    "output_lines": 502,
-    "output_nonempty_lines": 478,
-    "output_bytes": 13268
+    "total_tokens": 220919,
+    "input_tokens": 204253,
+    "output_tokens": 16666,
+    "tool_calls": 8,
+    "duration_ms": 347962
   },
   "timing": {
-    "total_tokens": 370540,
-    "duration_ms": 296026,
-    "total_duration_seconds": 296.026,
-    "generation_attempts": 1
+    "total_tokens": 220919,
+    "duration_ms": 347962,
+    "total_duration_seconds": 347.962
   },
-  "execution_metrics": {
-    "total_tool_calls": 9
+  "compile": {
+    "status": "failed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 4,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/pages/campaign/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/components/campaign-tracker.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/vue.config.js"
+        ],
+        "passed": false,
+        "returncode": 1,
+        "detail": {
+          "success": false,
+          "checkedFiles": 4,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/pages/campaign/index.mpx",
+              "errors": [
+                {
+                  "line": 20,
+                  "directive": "<!-- @mpx-if (mode === 'web') -->",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 32,
+                  "directive": "<!-- @mpx-else -->",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 44,
+                  "directive": "<!-- @mpx-endif -->",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                }
+              ]
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/components/campaign-tracker.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/pages/campaign/index.mpx"
+        ],
+        "passed": false,
+        "returncode": 2,
+        "detail": {},
+        "stderr": "InvalidInputError: 检测到无效的条件编译注释：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/pages/campaign/index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/pages/campaign/index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/pages/campaign/index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n"
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/components/campaign-tracker.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3952
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/no_skill/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "先修复编译或条件编译语义错误，再进行功能评分。"
+    ],
+    "overall": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:20 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:32 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:44 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过"
   }
 }

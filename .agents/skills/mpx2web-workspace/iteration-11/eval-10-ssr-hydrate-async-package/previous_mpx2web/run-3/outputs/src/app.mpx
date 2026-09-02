@@ -1,14 +1,10 @@
 <script>
-import mpx, { createApp } from '@mpxjs/core'
-import apiProxy from '@mpxjs/api-proxy'
+import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
-
-mpx.use(apiProxy, { usePromise: true })
 
 createApp({
   onAppInit () {
-    const pinia = createPinia()
-    return { pinia }
+    return { pinia: createPinia() }
   }
 })
 </script>

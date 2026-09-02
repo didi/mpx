@@ -22,12 +22,12 @@
     },
     {
       "id": "q1",
-      "text": "普通趋势词请求通过配置后的 mpx.request 使用 await 或 Promise 链，不混用 success/fail 回调",
+      "text": "Web 输出中的普通趋势词请求通过会返回 Promise 的 Mpx 官方 API 调用路径使用 await 或 Promise 链；可使用配置后的 mpx.request 或会被跨端编译转换到该入口的 wx.request。原始 @mpxjs/api-proxy 命名导入不会继承 Promise 化配置，不能直接按 Promise 使用；不得混用 success/fail 回调",
       "category": "web-api"
     },
     {
       "id": "q2",
-      "text": "联想词请求单次显式 usePromise: false 并保存 RequestTask；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "text": "联想词请求保存可取消任务：可通过单次 usePromise: false 或原始 @mpxjs/api-proxy 命名导入直接取得 RequestTask，也可从已 Promise 化调用的 Promise.__returned 取得框架保留的原始任务；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
       "category": "web-concurrency"
     },
     {
@@ -37,19 +37,14 @@
     },
     {
       "id": "q4",
-      "text": "详情跳转与错误提示继续通过应用入口已配置的 mpx.navigateTo、mpx.showToast 调用",
-      "category": "web-api",
-      "required_patterns": [
-        {"pattern": "mpx\\.navigateTo\\s*\\(", "description": "使用 mpx.navigateTo"},
-        {"pattern": "mpx\\.showToast\\s*\\(", "description": "使用 mpx.showToast"}
-      ]
+      "text": "详情跳转与错误提示继续走 Mpx 官方 API 链路；可保留会被跨端编译转换的 wx.navigateTo/wx.showToast，可沿用 mpx.xxx，也可在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入",
+      "category": "web-api"
     },
     {
       "id": "q5",
-      "text": "不从 @mpxjs/api-proxy 命名导入 request/navigateTo/showToast，也不用 fetch、location 或 alert 重写这些能力",
+      "text": "不用 fetch、location 或 alert 平行重写 request/navigateTo/showToast；若沿用 @mpxjs/api-proxy 命名导入，应明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置",
       "category": "web-api",
       "forbidden_patterns": [
-        {"pattern": "import\\s*\\{[^}]*\\b(?:request|navigateTo|showToast)\\b[^}]*\\}\\s*from\\s*['\"]@mpxjs/api-proxy['\"]", "description": "绕过应用入口配置命名导入 API"},
         {"pattern": "(?:\\bfetch\\s*\\(|\\blocation(?:\\.|\\s*=)|\\balert\\s*\\()", "description": "使用浏览器能力重写已有 API Proxy 能力"}
       ]
     },

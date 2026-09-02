@@ -29,9 +29,10 @@
         wx:for="{{orders}}"
         wx:key="id"
         order="{{item}}"
-        disabled="{{item.locked}}"
+        disabled="{{item.locked || (openOrderId && openOrderId !== item.id)}}"
         bindselect="openOrder"
         bindremove="removeOrder"
+        bindswipeend="handleSwipeEnd"
       />
     </view>
 
@@ -44,7 +45,7 @@
     </view>
 
     <logistics-channel
-      wx:if="{{memberId && channelActive}}"
+      wx:if="{{memberId}}"
       memberId="{{memberId}}"
       bindconnectedchange="handleConnectionChange"
       bindlogistics="handleLogisticsMessage"
@@ -96,21 +97,15 @@ createPage({
         locked: false
       }
     ],
+    openOrderId: '',
     logisticsOnline: false,
-    channelActive: true,
     loading: false
-  },
-  onShow () {
-    this.channelActive = true
-  },
-  onHide () {
-    this.channelActive = false
-    this.logisticsOnline = false
   },
   methods: {
     switchStatus (status) {
       if (status === this.activeStatus) return
       this.activeStatus = status
+      this.openOrderId = ''
       this.fetchOrders()
     },
     fetchOrders () {
@@ -141,15 +136,25 @@ createPage({
             method: 'DELETE',
             success: () => {
               this.orders = this.orders.filter(order => order.id !== detail.orderId)
+              if (this.openOrderId === detail.orderId) this.openOrderId = ''
             }
           })
         }
       })
     },
+    handleSwipeEnd ({ detail }) {
+      if (detail.open) {
+        this.openOrderId = detail.orderId
+      } else if (this.openOrderId === detail.orderId) {
+        this.openOrderId = ''
+      }
+    },
     handleConnectionChange ({ detail }) {
+      if (detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
+      if (detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -160,7 +165,8 @@ createPage({
         })
       })
     },
-    handleChannelError () {
+    handleChannelError ({ detail }) {
+      if (detail.memberId !== this.memberId) return
       this.logisticsOnline = false
     },
     goShopping () {

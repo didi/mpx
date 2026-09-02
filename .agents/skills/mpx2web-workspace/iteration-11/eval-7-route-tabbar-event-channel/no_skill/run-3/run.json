@@ -1,65 +1,37 @@
 {
-  "description": "eval-7 no_skill",
-  "cwd": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-3/eval-7-route-tabbar-event-channel/no_skill",
-  "model": "gpt-5.6-sol",
-  "reasoning_effort": "high",
-  "status": "completed",
-  "attempts": [
-    {
-      "attempt": 1,
-      "command": [
-        "codex",
-        "exec",
-        "--ignore-user-config",
-        "--ephemeral",
-        "--disable",
-        "plugins",
-        "--disable",
-        "remote_plugin",
-        "--disable",
-        "apps",
-        "--skip-git-repo-check",
-        "-m",
-        "gpt-5.6-sol",
-        "-s",
-        "workspace-write",
-        "-c",
-        "model_reasoning_effort=\"high\"",
-        "-C",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/reliability-runs/sol-high__grader-gpt55-high__n3/sample-3/eval-7-route-tabbar-event-channel/no_skill",
-        "--color",
-        "never",
-        "--json",
-        "<prompt-via-stdin>"
-      ],
-      "returncode": 0,
-      "duration_ms": 203066,
-      "missing_outputs": []
-    }
+  "description": "Eval-7 no_skill run-3",
+  "cwd": "isolated temporary workspace",
+  "command": [
+    "codex",
+    "exec",
+    "--ignore-user-config",
+    "--ephemeral",
+    "--disable",
+    "plugins",
+    "--disable",
+    "remote_plugin",
+    "--disable",
+    "apps",
+    "--skip-git-repo-check",
+    "-C",
+    "/private/var/folders/yf/mcf8m_nn1896w8kbdfxnhnw40000ks/T/mpx2web-eval-8mdkswgu",
+    "-s",
+    "workspace-write",
+    "-m",
+    "gpt-5.6-sol",
+    "-c",
+    "model_reasoning_effort=\"high\"",
+    "--color",
+    "never",
+    "--json",
+    "<prompt-via-stdin>"
   ],
-  "output_exists": true,
-  "duration_ms": 203066,
-  "published_evidence": {
-    "sample": 3,
-    "outputs": "eval-7-route-tabbar-event-channel/no_skill/run-3/outputs",
-    "compile_status": "passed",
-    "artifact_inventory": {
-      "declared_files": [
-        "src/app.mpx",
-        "src/pages/checkout/index.mpx",
-        "src/pages/address/select.mpx",
-        "vue.config.js"
-      ],
-      "compiled_mpx_files": [
-        "src/pages/checkout/index.mpx",
-        "src/pages/address/select.mpx"
-      ],
-      "support_files": [
-        "src/app.mpx",
-        "vue.config.js"
-      ],
-      "missing_files": [],
-      "all_declared_files_present": true
-    }
-  }
+  "returncode": 0,
+  "outputs_complete": true,
+  "compile_status": "passed",
+  "compile_boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
+  "duration_ms": 126127,
+  "fingerprint": "b648613fad4d237b9c0973b59df8ba67951eceab8443b8192ab7680c9dfd95fc",
+  "fixture_digest": "2712c79eca34e9603fdd900f77f75beef08b6fca2b9ad5b4b5f147ee4f8f68d9",
+  "skill_digest": "20232f3aeb397f28e32d38cc016ce6dbffa2112effd52813b0cbec243c1307ce"
 }

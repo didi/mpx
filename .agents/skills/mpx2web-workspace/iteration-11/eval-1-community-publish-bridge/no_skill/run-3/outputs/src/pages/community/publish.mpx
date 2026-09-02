@@ -5,11 +5,6 @@
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
     </view>
 
-    <view wx:if="{{!isWx}}" class="web-notice">
-      <text class="web-notice-title">Web 端暂仅支持编辑</text>
-      <text class="web-notice-copy">当前宿主尚未接入位置、地图、图片和发布能力，接入前无法提交动态。</text>
-    </view>
-
     <view class="form-card">
       <textarea
         class="content-input"
@@ -28,51 +23,44 @@
           </view>
         </view>
         <view
-          wx:if="{{isWx && photos.length < 9}}"
-          class="photo-add"
+          wx:if="{{photos.length < 9}}"
+          class="photo-add {{isWeb ? 'is-unavailable' : ''}}"
           bindtap="choosePhoto"
           aria-role="button"
-          aria-label="添加图片"
+          aria-label="{{isWeb ? 'Web 端图片能力待接入' : '添加图片'}}"
+          aria-disabled="{{isWeb}}"
         >
           <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">添加图片</text>
-        </view>
-        <view wx:if="{{!isWx}}" class="photo-add photo-add-disabled">
-          <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">暂不支持图片</text>
+          <text class="photo-add-label">{{isWeb ? '图片待接入' : '添加图片'}}</text>
         </view>
       </view>
     </view>
 
     <view class="publish-options">
-      <view wx:if="{{isWx}}" class="option-row" bindtap="choosePlace">
+      <view
+        class="option-row {{isWeb ? 'is-unavailable' : ''}}"
+        bindtap="choosePlace"
+        aria-role="button"
+        aria-disabled="{{isWeb}}"
+      >
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text class="option-value">{{place.name || '选择位置'}}</text>
+            <text class="option-value">
+              {{place.name || (isWeb ? '位置能力待接入' : '选择位置')}}
+            </text>
           </view>
         </view>
         <text class="option-arrow">›</text>
       </view>
 
-      <view wx:else class="option-row option-row-disabled">
-        <view class="option-main">
-          <text class="option-icon option-icon-disabled">⌖</text>
-          <view class="option-copy">
-            <text class="option-label">所在位置</text>
-            <text class="option-value">Web 宿主暂未接入</text>
-          </view>
-        </view>
-        <text class="option-status">暂不可用</text>
-      </view>
-
-      <view wx:if="{{isWx && place.name}}" class="place-card" bindtap="openPlace">
+      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
         </view>
-        <text class="place-action">查看地图</text>
+        <text class="place-action">{{isWeb ? '地图待接入' : '查看地图'}}</text>
       </view>
 
       <view class="option-row">
@@ -94,13 +82,21 @@
       <text class="notice-text">允许其他用户评论</text>
     </view>
 
+    <view
+      wx:if="{{feedback.message}}"
+      class="feedback feedback-{{feedback.type}}"
+      aria-live="polite"
+    >
+      <text>{{feedback.message}}</text>
+    </view>
+
     <button
       class="publish-button"
       loading="{{submitting}}"
-      disabled="{{!isWx || !canSubmit || submitting}}"
+      disabled="{{!canSubmit || submitting}}"
       bindtap="submitPost"
     >
-      {{isWx ? '发布动态' : 'Web 暂不支持发布'}}
+      {{submitting ? '发布中...' : '发布动态'}}
     </button>
   </view>
 </template>
@@ -110,7 +106,6 @@ import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
-    isWx: __mpx_mode__ === 'wx',
     content: '',
     photos: [],
     place: {},
@@ -122,7 +117,17 @@ createPage({
     ],
     selectedTopic: {},
     allowComments: true,
-    submitting: false
+    submitting: false,
+    feedback: {
+      message: '',
+      type: 'info'
+    },
+    isWeb:
+      // @mpx-if (mode === 'web')
+      true
+      // @mpx-else
+      false
+      // @mpx-endif
   },
   computed: {
     canSubmit () {
@@ -133,25 +138,36 @@ createPage({
     updateContent (event) {
       this.content = event.detail.value
     },
+    showFeedback (message, type = 'info') {
+      this.feedback = { message, type }
+    },
     choosePlace () {
-      if (!this.isWx) return
+      // @mpx-if (mode === 'wx')
       wx.chooseLocation({
         success: (place) => {
           this.place = place
         }
       })
+      // @mpx-else
+      this.showFeedback('Web 宿主的位置选择协议尚未接入，暂时无法选择位置。')
+      // @mpx-endif
     },
     openPlace () {
-      if (!this.isWx || !this.place.latitude || !this.place.longitude) return
+      if (!this.place.latitude || !this.place.longitude) return
+
+      // @mpx-if (mode === 'wx')
       wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
         name: this.place.name,
         address: this.place.address
       })
+      // @mpx-else
+      this.showFeedback('Web 宿主的地图协议尚未接入，暂时无法查看地图。')
+      // @mpx-endif
     },
     choosePhoto () {
-      if (!this.isWx) return
+      // @mpx-if (mode === 'wx')
       wx.chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
@@ -160,29 +176,38 @@ createPage({
           this.photos = this.photos.concat(tempFiles)
         }
       })
+      // @mpx-else
+      this.showFeedback('Web 宿主的媒体协议尚未接入，暂时无法选择图片。')
+      // @mpx-endif
     },
     removePhoto (index) {
       this.photos.splice(index, 1)
     },
     selectTopic (event) {
-      this.selectedTopic = this.topics[Number(event.detail.value)]
+      this.selectedTopic = this.topics[Number(event.detail.value)] || {}
     },
     toggleComments (event) {
       this.allowComments = event.detail.value
     },
     submitPost () {
-      if (!this.isWx || !this.canSubmit || this.submitting) return
+      if (!this.canSubmit || this.submitting) return
+
+      const payload = {
+        content: this.content,
+        photos: this.photos.map(item => item.tempFilePath),
+        place: this.place,
+        topicId: this.selectedTopic.id || '',
+        allowComments: this.allowComments
+      }
+
       this.submitting = true
+      this.feedback = { message: '', type: 'info' }
+
+      // @mpx-if (mode === 'wx')
       wx.request({
         url: '/api/community/posts',
         method: 'POST',
-        data: {
-          content: this.content,
-          photos: this.photos.map(item => item.tempFilePath),
-          place: this.place,
-          topicId: this.selectedTopic.id || '',
-          allowComments: this.allowComments
-        },
+        data: payload,
         success: ({ data }) => {
           wx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
         },
@@ -193,6 +218,35 @@ createPage({
           this.submitting = false
         }
       })
+      // @mpx-else
+      if (typeof fetch !== 'function') {
+        this.submitting = false
+        this.showFeedback('当前 Web 环境不支持标准网络请求，发布失败。', 'error')
+        return
+      }
+
+      fetch('/api/community/posts', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          return response.json()
+        })
+        .then(() => {
+          this.showFeedback('发布成功。Web 宿主路由协议尚未声明，请留在当前页面继续操作。', 'success')
+        })
+        .catch(() => {
+          this.showFeedback('发布失败，请重试。', 'error')
+        })
+        .then(() => {
+          this.submitting = false
+        })
+      // @mpx-endif
     }
   }
 })
@@ -200,6 +254,7 @@ createPage({
 
 <style>
 .publish-page {
+  box-sizing: border-box;
   min-height: 100vh;
   padding: 24rpx;
   background: #f6f7fb;
@@ -211,8 +266,6 @@ createPage({
 
 .publish-title,
 .publish-tip,
-.web-notice-title,
-.web-notice-copy,
 .word-count,
 .photo-add-label,
 .option-label,
@@ -236,25 +289,6 @@ createPage({
   font-size: 24rpx;
 }
 
-.web-notice {
-  margin-bottom: 24rpx;
-  padding: 20rpx 24rpx;
-  color: #8a6116;
-  background: #fff7e6;
-  border-radius: 14rpx;
-}
-
-.web-notice-title {
-  font-size: 26rpx;
-  font-weight: bold;
-}
-
-.web-notice-copy {
-  margin-top: 6rpx;
-  font-size: 22rpx;
-  line-height: 34rpx;
-}
-
 .form-card,
 .publish-options {
   background: #ffffff;
@@ -266,6 +300,7 @@ createPage({
 }
 
 .content-input {
+  box-sizing: border-box;
   width: 100%;
   min-height: 240rpx;
   color: #333333;
@@ -287,6 +322,7 @@ createPage({
 
 .photo-item,
 .photo-add {
+  box-sizing: border-box;
   width: 196rpx;
   height: 196rpx;
   margin: 0 16rpx 16rpx 0;
@@ -327,11 +363,6 @@ createPage({
   border: 2rpx dashed #d6dae1;
 }
 
-.photo-add-disabled {
-  color: #b4b8c0;
-  background: #f7f8fa;
-}
-
 .photo-add-icon {
   font-size: 52rpx;
   line-height: 60rpx;
@@ -355,10 +386,6 @@ createPage({
   border-bottom: 1rpx solid #eef0f3;
 }
 
-.option-row-disabled {
-  cursor: default;
-}
-
 .option-main {
   display: flex;
   align-items: center;
@@ -368,10 +395,6 @@ createPage({
   width: 48rpx;
   color: #1677ff;
   font-size: 34rpx;
-}
-
-.option-icon-disabled {
-  color: #b4b8c0;
 }
 
 .option-copy {
@@ -394,9 +417,9 @@ createPage({
   font-size: 40rpx;
 }
 
-.option-status {
-  color: #b4b8c0;
-  font-size: 22rpx;
+.is-unavailable {
+  cursor: not-allowed;
+  opacity: 0.72;
 }
 
 .place-card {
@@ -446,10 +469,33 @@ createPage({
   font-size: 25rpx;
 }
 
+.feedback {
+  box-sizing: border-box;
+  margin: 0 8rpx 20rpx;
+  padding: 18rpx 20rpx;
+  color: #60656f;
+  font-size: 24rpx;
+  line-height: 36rpx;
+  background: #eef4ff;
+  border-radius: 12rpx;
+}
+
+.feedback-success {
+  color: #237804;
+  background: #f0f9eb;
+}
+
+.feedback-error {
+  color: #cf1322;
+  background: #fff1f0;
+}
+
 .publish-button {
+  box-sizing: border-box;
   color: #ffffff;
   font-size: 30rpx;
   background: #1677ff;
+  border: 0;
   border-radius: 44rpx;
 }
 

@@ -19,7 +19,7 @@ createComponent({
     memberId: {
       type: String,
       observer (memberId, oldMemberId) {
-        if (!this.channelAttached || memberId === oldMemberId) return
+        if (!this._channelAttached || memberId === oldMemberId) return
         this.connectChannel()
       }
     }
@@ -28,87 +28,111 @@ createComponent({
     connected: false
   },
   attached () {
-    this.channelAttached = true
-    this.socketTask = null
+    this._channelAttached = true
     this.connectChannel()
   },
   detached () {
-    this.channelAttached = false
+    this._channelAttached = false
     this.disconnectChannel()
+    this.connected = false
   },
   methods: {
-    setConnected (connected) {
-      if (this.connected === connected) return
-      this.connected = connected
-      this.triggerEvent('connectedchange', { connected })
+    connectChannel () {
+      if (!this._channelAttached) return
+
+      const memberId = this.memberId
+      this.disconnectChannel()
+      this.updateConnected(false, memberId)
+      if (!memberId) return
+
+      const task = mpx.connectSocket({
+        url: `wss://logistics.example.com/members/${encodeURIComponent(memberId)}`,
+        header: {
+          Authorization: `Bearer ${mpx.getStorageSync('token')}`
+        },
+        usePromise: false
+      })
+
+      const listeners = {
+        open: () => {
+          if (!this.isCurrentTask(task, memberId)) return
+          this.updateConnected(true, memberId)
+        },
+        message: ({ data }) => {
+          if (!this.isCurrentTask(task, memberId)) return
+          let message
+          try {
+            message = typeof data === 'string' ? JSON.parse(data) : data
+          } catch (error) {
+            this.triggerEvent('error', { error, memberId })
+            return
+          }
+          if (message && message.type === 'logistics') {
+            const detail = Object.assign({}, message.payload, { memberId })
+            this.triggerEvent('logistics', detail)
+          }
+        },
+        error: (error) => {
+          if (!this.isCurrentTask(task, memberId)) return
+          this.updateConnected(false, memberId)
+          this.triggerEvent('error', { error, memberId })
+        },
+        close: () => {
+          if (!this.isCurrentTask(task, memberId)) return
+          this.socketTask = null
+          this._socketListeners = null
+          this.unbindTask(task, listeners)
+          this.updateConnected(false, memberId)
+        }
+      }
+
+      this.socketTask = task
+      this._socketListeners = listeners
+      task.onOpen(listeners.open)
+      task.onMessage(listeners.message)
+      task.onError(listeners.error)
+      task.onClose(listeners.close)
     },
     isCurrentTask (task, memberId) {
-      return this.channelAttached && this.socketTask === task && this.memberId === memberId
+      return this._channelAttached && this.socketTask === task && this.memberId === memberId
+    },
+    updateConnected (connected, memberId) {
+      if (!this._channelAttached || this.memberId !== memberId || this.connected === connected) return
+      this.connected = connected
+      this.triggerEvent('connectedchange', { connected, memberId })
+    },
+    unbindTask (task, listeners) {
+      if (!task || !listeners) return
+      if (typeof task.offOpen === 'function') task.offOpen(listeners.open)
+      if (typeof task.offMessage === 'function') task.offMessage(listeners.message)
+      if (typeof task.offError === 'function') task.offError(listeners.error)
+      if (typeof task.offClose === 'function') task.offClose(listeners.close)
     },
     disconnectChannel () {
       const task = this.socketTask
+      const listeners = this._socketListeners
       this.socketTask = null
-      if (task) task.close()
-      this.setConnected(false)
-    },
-    connectChannel () {
-      const memberId = this.memberId
-      this.disconnectChannel()
-      if (!this.channelAttached || !memberId) return
-
-      let task
-      try {
-        task = mpx.connectSocket({
-          url: `wss://logistics.example.com/members/${memberId}`,
-          header: {
-            Authorization: `Bearer ${mpx.getStorageSync('token')}`
-          },
-          usePromise: false
-        })
-      } catch (error) {
-        this.triggerEvent('error', { error })
-        return
-      }
+      this._socketListeners = null
       if (!task) return
-
-      this.socketTask = task
-      task.onOpen(() => {
-        if (!this.isCurrentTask(task, memberId)) return
-        this.setConnected(true)
-      })
-      task.onMessage(({ data }) => {
-        if (!this.isCurrentTask(task, memberId)) return
-        let message
-        try {
-          message = JSON.parse(data)
-        } catch (error) {
-          this.triggerEvent('error', { error })
-          return
-        }
-        if (message.type === 'logistics') {
-          this.triggerEvent('logistics', message.payload)
-        }
-      })
-      task.onError((error) => {
-        if (!this.isCurrentTask(task, memberId)) return
-        this.setConnected(false)
-        this.triggerEvent('error', { error })
-      })
-      task.onClose(() => {
-        if (!this.isCurrentTask(task, memberId)) return
-        this.socketTask = null
-        this.setConnected(false)
-      })
+      this.unbindTask(task, listeners)
+      task.close({ code: 1000, reason: 'channel replaced' })
     },
     reconnect () {
+      if (!this.memberId) return
       this.connectChannel()
     },
     sendHeartbeat () {
       const task = this.socketTask
+      const memberId = this.memberId
       if (!task || this.socketTask !== task || !this.connected) return
-      if (task.readyState !== undefined && task.readyState !== task.OPEN) return
+      const openState = task.OPEN === undefined ? 1 : task.OPEN
+      if (task.readyState !== undefined && task.readyState !== openState) return
       task.send({
-        data: JSON.stringify({ type: 'ping', memberId: this.memberId })
+        data: JSON.stringify({ type: 'ping', memberId }),
+        fail: (error) => {
+          if (!this.isCurrentTask(task, memberId)) return
+          this.triggerEvent('error', { error, memberId })
+        }
       })
     }
   }

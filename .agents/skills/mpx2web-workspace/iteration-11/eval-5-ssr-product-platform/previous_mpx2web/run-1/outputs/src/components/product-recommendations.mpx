@@ -16,8 +16,7 @@
 </template>
 
 <script>
-import { createComponent } from '@mpxjs/core'
-import mpx from '@mpxjs/api-proxy'
+import mpx, { createComponent } from '@mpxjs/core'
 
 // SDK contract: create({ productId }) returns Promise<Tracker>.
 // Tracker exposes track(eventName, payload) and destroy().
@@ -31,58 +30,104 @@ createComponent({
       this.restartTracker()
     }
   },
+  created () {
+    this.sdkReady = false
+    this.sdkDetached = false
+    this.sdkGeneration = 0
+    this.tracker = null
+    this.observer = null
+  },
   ready () {
     if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
-    this.trackerReady = true
-    this.trackerGeneration = 0
+    this.sdkReady = true
+    this.sdkDetached = false
     this.restartTracker()
   },
   detached () {
-    if (__mpx_mode__ !== 'web') return
-    this.trackerReady = false
-    this.trackerGeneration++
+    this.sdkDetached = true
+    this.sdkReady = false
+    this.sdkGeneration += 1
     this.destroyTracker()
   },
   methods: {
     restartTracker () {
-      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || !this.trackerReady) return
+      if (
+        !this.sdkReady ||
+        this.sdkDetached ||
+        __mpx_mode__ !== 'web' ||
+        typeof window === 'undefined'
+      ) {
+        return
+      }
 
-      const generation = ++this.trackerGeneration
-      this.destroyTracker()
-      if (!this.items || !this.items.length) return
-      this.$nextTick(() => {
-        this.initializeTracker(generation).catch(() => {})
-      })
-    },
-    async initializeTracker (generation) {
-      const { default: exposureSdk } = await import('@business/product-exposure-web')
-      if (!this.isTrackerCurrent(generation)) return
-
+      const generation = ++this.sdkGeneration
       const productId = this.productId
+      this.destroyTracker()
+
+      if (!productId) return
+      this.initializeTracker(generation, productId).catch(() => {})
+    },
+    async initializeTracker (generation, productId) {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+      await new Promise(resolve => this.$nextTick(resolve))
+      if (!this.isTrackerCurrent(generation, productId)) return
+
+      const sdkModule = await import('@business/product-exposure-web')
+      if (!this.isTrackerCurrent(generation, productId)) return
+
+      const exposureSdk = sdkModule.default || sdkModule
       const tracker = await exposureSdk.create({ productId })
-      if (!this.isTrackerCurrent(generation)) {
-        tracker.destroy()
+
+      if (!this.isTrackerCurrent(generation, productId)) {
+        this.destroyTrackerInstance(tracker)
+        return
+      }
+
+      const root = this.$el
+      if (
+        !root ||
+        typeof root.querySelectorAll !== 'function' ||
+        typeof window.IntersectionObserver !== 'function'
+      ) {
+        this.destroyTrackerInstance(tracker)
         return
       }
 
       this.tracker = tracker
-      this.observer = new IntersectionObserver((entries) => {
-        if (!this.isTrackerCurrent(generation)) return
+      const observer = new window.IntersectionObserver((entries) => {
+        if (!this.isTrackerCurrent(generation, productId) || this.tracker !== tracker) return
+
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (!entry.isIntersecting || entry.target.isConnected === false) return
+
+          try {
             tracker.track('recommendation_exposure', {
               productId,
               recommendationId: entry.target.dataset.productId
             })
+          } finally {
+            observer.unobserve(entry.target)
           }
         })
       })
-      this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-        this.observer.observe(element)
+
+      if (!this.isTrackerCurrent(generation, productId)) {
+        observer.disconnect()
+        this.destroyTrackerInstance(tracker)
+        this.tracker = null
+        return
+      }
+
+      this.observer = observer
+      root.querySelectorAll('.recommendation-card').forEach((element) => {
+        observer.observe(element)
       })
     },
-    isTrackerCurrent (generation) {
-      return this.trackerReady && generation === this.trackerGeneration
+    isTrackerCurrent (generation, productId) {
+      return !this.sdkDetached &&
+        this.sdkReady &&
+        generation === this.sdkGeneration &&
+        productId === this.productId
     },
     destroyTracker () {
       if (this.observer) {
@@ -90,8 +135,13 @@ createComponent({
         this.observer = null
       }
       if (this.tracker) {
-        this.tracker.destroy()
+        this.destroyTrackerInstance(this.tracker)
         this.tracker = null
+      }
+    },
+    destroyTrackerInstance (tracker) {
+      if (tracker && typeof tracker.destroy === 'function') {
+        tracker.destroy()
       }
     },
     openProduct (productId) {

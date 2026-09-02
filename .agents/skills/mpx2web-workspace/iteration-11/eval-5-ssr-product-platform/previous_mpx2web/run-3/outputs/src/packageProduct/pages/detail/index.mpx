@@ -26,14 +26,14 @@
 
 <script>
 import { createPage } from '@mpxjs/core'
-import mpx from '@mpxjs/api-proxy'
+import mpx from '@mpxjs/core'
 import { useProductStore } from '../../../stores/product'
 
 createPage({
   data: {
     productId: '',
     selectedSkuId: '',
-    loadVersion: 0
+    pageRequestVersion: 0
   },
   computed: {
     product () {
@@ -47,32 +47,44 @@ createPage({
     }
   },
   onLoad (query) {
-    const productStore = useProductStore(this.$pinia)
-    this.productId = query.id
-    this.selectedSkuId = ''
+    const productId = String((query && query.id) || '')
+    this.productId = productId
 
-    if (productStore.loaded && productStore.productId === query.id) {
-      this.selectedSkuId = productStore.product.skus[0] && productStore.product.skus[0].id
-      return
+    // Node 首屏由 serverPrefetch 返回 Promise；浏览器 hydrate
+    // 和小程序仍从通用 onLoad 进入数据链路。
+    if (!this.$ssrContext) {
+      return this.loadProduct(productId)
     }
+  },
+  onShow () {
+    if (this.$ssrContext || !this.productId) return
 
-    if (!this.$ssrContext) this.loadProduct(query.id)
+    const store = useProductStore(this.$pinia)
+    if (store.productId !== this.productId) {
+      return this.loadProduct(this.productId)
+    }
   },
   serverPrefetch () {
     return this.loadProduct(this.productId, this.$ssrContext)
   },
   methods: {
     async loadProduct (productId, requestContext) {
-      const loadVersion = ++this.loadVersion
-      const productStore = useProductStore(this.$pinia)
-      await productStore.loadProduct(productId, requestContext)
+      const pageRequestVersion = ++this.pageRequestVersion
+      const store = useProductStore(this.$pinia)
+
+      await store.loadProduct(productId, requestContext)
+
+      // 页面局部状态也校验请求身份，避免旧商品返回后
+      // 重置新商品的规格选择。
       if (
-        loadVersion !== this.loadVersion ||
+        pageRequestVersion !== this.pageRequestVersion ||
         productId !== this.productId ||
-        !productStore.loaded ||
-        productStore.productId !== productId
+        !store.loaded ||
+        store.productId !== productId
       ) return
-      this.selectedSkuId = productStore.product.skus[0] && productStore.product.skus[0].id
+
+      const skus = store.product.skus || []
+      this.selectedSkuId = skus[0] ? skus[0].id : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

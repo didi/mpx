@@ -45,13 +45,19 @@
     </view>
 
     <view class="action-row">
-      <!-- @if (mode === 'wx') -->
-      <button class="share-button share-button-wx" open-type="share">分享给好友</button>
-      <!-- @endif -->
-      <!-- @if (mode === 'web') -->
-      <button class="share-button share-button-web" disabled>分享邀请活动（暂不可用）</button>
-      <text class="share-unavailable-tip">Web 分享能力暂未接入</text>
-      <!-- @endif -->
+      <button
+        wx:if="{{!isWeb}}"
+        class="share-button share-button-wx"
+        open-type="share"
+      >分享给好友</button>
+      <button
+        wx:if="{{isWeb}}"
+        class="share-button share-button-web"
+        bindtap="shareOnWeb"
+      >分享邀请活动</button>
+      <text wx:if="{{isWeb}}" class="web-share-status">
+        {{webShareNotice || 'Web 分享能力暂未接入'}}
+      </text>
       <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
     </view>
 
@@ -80,6 +86,8 @@ import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
+    isWeb: __mpx_mode__ === 'web',
+    webShareNotice: '',
     member: {
       id: 'member-10086',
       name: '林小满',
@@ -124,12 +132,14 @@ createPage({
     }
   },
   onLoad () {
-    // @if (mode === 'wx')
-    wx.showShareMenu({ withShareTicket: true })
-    // @endif
+    if (__mpx_mode__ === 'wx') {
+      wx.showShareMenu({
+        withShareTicket: true,
+        menus: ['shareAppMessage', 'shareTimeline']
+      })
+    }
     this.fetchInviteSummary()
   },
-  // @if (mode === 'wx')
   onShareAppMessage () {
     return {
       title: `${this.member.name} 邀你加入邻里商城`,
@@ -144,7 +154,6 @@ createPage({
       imageUrl: this.campaign.cover
     }
   },
-  // @endif
   methods: {
     fetchInviteSummary () {
       wx.request({
@@ -154,6 +163,9 @@ createPage({
           this.invitees = data.list
         }
       })
+    },
+    shareOnWeb () {
+      this.webShareNotice = '暂时无法分享：业务尚未接入 Web 分享能力'
     },
     openCampaignDetail () {
       wx.navigateTo({
@@ -212,7 +224,8 @@ createPage({
 .list-title,
 .list-count,
 .invitee-name,
-.invitee-time {
+.invitee-time,
+.web-share-status {
   display: block;
 }
 
@@ -339,17 +352,11 @@ createPage({
   background: #ff7a45;
 }
 
-.share-button-web[disabled] {
-  color: #ffffff;
-  background: #c9c2be;
-  opacity: 1;
-}
-
-.share-unavailable-tip {
-  display: block;
-  margin-top: 10rpx;
-  color: #9f948e;
+.web-share-status {
+  margin-top: 12rpx;
+  color: #8c7e76;
   font-size: 21rpx;
+  line-height: 32rpx;
   text-align: center;
 }
 

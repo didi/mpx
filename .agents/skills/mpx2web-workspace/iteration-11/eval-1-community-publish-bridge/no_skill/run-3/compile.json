@@ -1,0 +1,116 @@
+{
+  "status": "failed",
+  "all_declared_outputs_present": true,
+  "declared_output_count": 1,
+  "compile_eligible_mpx_count": 1,
+  "compiled_mpx_count": 0,
+  "checks": [
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx"
+      ],
+      "passed": false,
+      "returncode": 1,
+      "detail": {
+        "success": false,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx",
+            "errors": [
+              {
+                "line": 126,
+                "directive": "// @mpx-if (mode === 'web')",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 128,
+                "directive": "// @mpx-else",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 130,
+                "directive": "// @mpx-endif",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 145,
+                "directive": "// @mpx-if (mode === 'wx')",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 151,
+                "directive": "// @mpx-else",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 153,
+                "directive": "// @mpx-endif",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 158,
+                "directive": "// @mpx-if (mode === 'wx')",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 165,
+                "directive": "// @mpx-else",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 167,
+                "directive": "// @mpx-endif",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 170,
+                "directive": "// @mpx-if (mode === 'wx')",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 179,
+                "directive": "// @mpx-else",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 181,
+                "directive": "// @mpx-endif",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 206,
+                "directive": "// @mpx-if (mode === 'wx')",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 221,
+                "directive": "// @mpx-else",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 249,
+                "directive": "// @mpx-endif",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              }
+            ]
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "page",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx"
+      ],
+      "passed": false,
+      "returncode": 2,
+      "detail": {},
+      "stderr": "InvalidInputError: 检测到无效的条件编译注释：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:126 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:128 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:130 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:145 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:151 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:153 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:158 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:165 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:167 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:170 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:179 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:181 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:206 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:221 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/no_skill/run-3/outputs/src/pages/community/publish.mpx:249 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n"
+    }
+  ],
+  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+}

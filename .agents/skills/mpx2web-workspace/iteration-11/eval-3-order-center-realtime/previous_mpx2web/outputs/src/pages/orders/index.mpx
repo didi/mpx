@@ -30,7 +30,6 @@
         wx:key="id"
         order="{{item}}"
         disabled="{{item.locked}}"
-        activeOrderId="{{openSwipeOrderId}}"
         bindselect="openOrder"
         bindremove="removeOrder"
         bindswipeend="handleSwipeEnd"
@@ -98,7 +97,7 @@ createPage({
         locked: false
       }
     ],
-    openSwipeOrderId: '',
+    openOrderId: '',
     logisticsOnline: false,
     loading: false
   },
@@ -106,26 +105,34 @@ createPage({
     switchStatus (status) {
       if (status === this.activeStatus) return
       this.activeStatus = status
-      this.openSwipeOrderId = ''
       this.fetchOrders()
     },
     fetchOrders () {
+      const requestId = (this._ordersRequestId || 0) + 1
+      const status = this.activeStatus
+      this._ordersRequestId = requestId
       this.loading = true
       mpx.request({
         url: '/api/orders',
-        data: { status: this.activeStatus },
+        data: { status },
         usePromise: false,
         success: ({ data }) => {
+          if (this._ordersRequestId !== requestId || this.activeStatus !== status) return
           this.orders = data.list
           this.statusTabs = data.summary
         },
         complete: () => {
-          this.loading = false
+          if (this._ordersRequestId === requestId) {
+            this.loading = false
+          }
         }
       })
     },
     openOrder ({ detail }) {
-      mpx.navigateTo({ url: `/pages/orders/detail?id=${detail.orderId}` })
+      mpx.navigateTo({
+        url: `/pages/orders/detail?id=${detail.orderId}`,
+        usePromise: false
+      })
     },
     removeOrder ({ detail }) {
       mpx.showModal({
@@ -140,7 +147,6 @@ createPage({
             usePromise: false,
             success: () => {
               this.orders = this.orders.filter(order => order.id !== detail.orderId)
-              if (this.openSwipeOrderId === detail.orderId) this.openSwipeOrderId = ''
             }
           })
         }
@@ -148,17 +154,17 @@ createPage({
     },
     handleSwipeEnd ({ detail }) {
       if (detail.open) {
-        this.openSwipeOrderId = detail.orderId
-      } else if (this.openSwipeOrderId === detail.orderId) {
-        this.openSwipeOrderId = ''
+        this.openOrderId = detail.orderId
+      } else if (this.openOrderId === detail.orderId) {
+        this.openOrderId = ''
       }
     },
     handleConnectionChange ({ detail }) {
-      if (detail.memberId !== this.memberId) return
+      if (!detail || detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
-      if (detail.memberId !== this.memberId) return
+      if (!detail || detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -170,11 +176,14 @@ createPage({
       })
     },
     handleChannelError ({ detail }) {
-      if (detail.memberId !== this.memberId) return
+      if (detail && detail.memberId && detail.memberId !== this.memberId) return
       this.logisticsOnline = false
     },
     goShopping () {
-      mpx.switchTab({ url: '/pages/home/index' })
+      mpx.switchTab({
+        url: '/pages/home/index',
+        usePromise: false
+      })
     }
   }
 })

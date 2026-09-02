@@ -1,7 +1,15 @@
 {
   "eval_id": 10,
   "eval_name": "ssr-hydrate-async-package",
-  "configuration": "old_skill",
+  "configuration": "previous_mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "750d2608e24517e342505d8c9c6ff965323c074062cf716b447f08b0d62b04cf",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 98438
+  },
   "expectations": [
     {
       "id": "x0",
@@ -66,8 +74,8 @@
     {
       "id": "x6",
       "text": "同构 article service 返回 Promise，服务端只从调用链传入的当前 SSR 上下文的 req 解析 origin，浏览器和小程序使用相对地址，不依赖特定参数名、不访问浏览器全局或硬编码 localhost",
-      "passed": true,
-      "evidence": "outputs/src/services/article.js：服务端 origin 来自 requestContext.req，其他目标保持相对 URL 和 Promise 返回。",
+      "passed": false,
+      "evidence": "outputs/src/services/article.js：同构 service 未从 requestContext.req 取服务端 origin，或仍依赖浏览器/localhost/非 Promise 请求。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -76,8 +84,8 @@
     {
       "id": "x7",
       "text": "微信小程序 onLoad 文章加载、收藏、推荐展示和文章跳转不受 window 守卫阻断",
-      "passed": true,
-      "evidence": "outputs/src/pages/article/detail.mpx：onLoad 在无浏览器对象的小程序环境仍执行文章加载。",
+      "passed": false,
+      "evidence": "outputs/src/pages/article/detail.mpx：onLoad 的文章加载仍只在浏览器对象存在时执行。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -85,29 +93,161 @@
     }
   ],
   "summary": {
-    "passed": 8,
-    "failed": 0,
+    "passed": 6,
+    "failed": 2,
     "total": 8,
-    "pass_rate": 1.0
+    "pass_rate": 0.75
   },
   "metrics": {
-    "total_tokens": 1047317,
-    "input_tokens": 1034681,
-    "output_tokens": 12636,
-    "tool_calls": 22,
-    "duration_ms": 444031,
-    "output_files": 6,
-    "output_lines": 146,
-    "output_nonempty_lines": 136,
-    "output_bytes": 3862
+    "total_tokens": 442789,
+    "input_tokens": 430164,
+    "output_tokens": 12625,
+    "tool_calls": 13,
+    "duration_ms": 336026
   },
   "timing": {
-    "total_tokens": 1047317,
-    "duration_ms": 444031,
-    "total_duration_seconds": 444.031,
-    "generation_attempts": 1
+    "total_tokens": 442789,
+    "duration_ms": 336026,
+    "total_duration_seconds": 336.026
   },
-  "execution_metrics": {
-    "total_tool_calls": 22
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 6,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/pages/article/detail.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/packageRecommend/components/recommend-list.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/stores/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/services/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 6,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/pages/article/detail.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/packageRecommend/components/recommend-list.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/stores/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/services/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/pages/article/detail.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3521
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/packageRecommend/components/recommend-list.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2451
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/stores/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/src/services/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/previous_mpx2web/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "x6 的验收口径需要明确：如果允许 SSR context 提供 request/fetch 包装函数，则当前实现接近通过；如果必须从 context.req.headers 解析 origin，则应补充 req 场景断言，否则不同评审会对 service 是否合格产生偏差。"
+    ],
+    "overall": "主要 SSR 注水、竞态、防 hydrate 不一致、分包与小程序路径均已修复；唯一未满足的是 article service 没有按要求从当前 SSR context.req 解析 origin。"
   }
 }

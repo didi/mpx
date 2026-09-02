@@ -1,76 +1,101 @@
 <template>
   <view class="invite-page">
-    <view class="member-card">
-      <view class="member-head">
-        <image class="member-avatar" src="{{member.avatar}}" mode="aspectFill" />
-        <view class="member-copy">
-          <text class="member-name">{{member.name}}</text>
-          <text class="member-level">{{member.levelName}}</text>
+    <view class="page-content">
+      <view class="member-card">
+        <view class="member-head">
+          <image class="member-avatar" src="{{member.avatar}}" mode="aspectFill" />
+          <view class="member-copy">
+            <text class="member-name">{{member.name}}</text>
+            <text class="member-level">{{member.levelName}}</text>
+          </view>
+          <text class="member-points">{{member.points}} 积分</text>
         </view>
-        <text class="member-points">{{member.points}} 积分</text>
+
+        <view class="invite-progress">
+          <view class="progress-head">
+            <text>本月已邀请 {{inviteCount}} 人</text>
+            <text>目标 {{inviteGoal}} 人</text>
+          </view>
+          <progress
+            percent="{{invitePercent}}"
+            stroke-width="8"
+            activeColor="#ff7a45"
+            backgroundColor="#ffe7d6"
+          />
+        </view>
       </view>
 
-      <view class="invite-progress">
-        <view class="progress-head">
-          <text>本月已邀请 {{inviteCount}} 人</text>
-          <text>目标 {{inviteGoal}} 人</text>
-        </view>
-        <progress
-          percent="{{invitePercent}}"
-          stroke-width="8"
-          activeColor="#ff7a45"
-          backgroundColor="#ffe7d6"
-        />
-      </view>
-    </view>
-
-    <view class="campaign-card">
-      <image class="campaign-cover" src="{{campaign.cover}}" mode="aspectFill" />
-      <view class="campaign-content">
-        <text class="campaign-title">{{campaign.title}}</text>
-        <text class="campaign-summary">{{campaign.summary}}</text>
-        <view class="reward-row">
-          <view class="reward-item" wx:for="{{campaign.rewards}}" wx:key="step">
-            <text class="reward-step">邀请 {{item.step}} 人</text>
-            <text class="reward-value">{{item.reward}}</text>
+      <view class="campaign-card">
+        <image class="campaign-cover" src="{{campaign.cover}}" mode="aspectFill" />
+        <view class="campaign-content">
+          <text class="campaign-title">{{campaign.title}}</text>
+          <text class="campaign-summary">{{campaign.summary}}</text>
+          <view class="reward-row">
+            <view class="reward-item" wx:for="{{campaign.rewards}}" wx:key="step">
+              <text class="reward-step">邀请 {{item.step}} 人</text>
+              <text class="reward-value">{{item.reward}}</text>
+            </view>
           </view>
         </view>
       </view>
-    </view>
 
-    <view class="invite-code-card">
-      <text class="invite-code-title">我的邀请码</text>
-      <text class="invite-code">{{member.inviteCode}}</text>
-      <text class="invite-code-tip">好友注册时填写，双方都可获得奖励</text>
-    </view>
-
-    <view class="action-row">
-      <!-- @mpx-if (mode === 'web') -->
-      <button class="share-button" bindtap="shareOnWeb">分享邀请活动</button>
-      <text wx:if="{{webShareTipVisible}}" class="share-unavailable-tip">
-        Web 分享能力暂未接入，请稍后再试
-      </text>
-      <!-- @mpx-else -->
-      <button class="share-button" open-type="share">分享给好友</button>
-      <!-- @mpx-endif -->
-      <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
-    </view>
-
-    <view class="invite-list">
-      <view class="list-head">
-        <text class="list-title">最近邀请</text>
-        <text class="list-count">{{invitees.length}} 人</text>
+      <view class="invite-code-card">
+        <text class="invite-code-title">我的邀请码</text>
+        <text class="invite-code">{{member.inviteCode}}</text>
+        <text class="invite-code-tip">好友注册时填写，双方都可获得奖励</text>
       </view>
-      <view class="invitee-row" wx:for="{{invitees}}" wx:key="id">
-        <image class="invitee-avatar" src="{{item.avatar}}" mode="aspectFill" />
-        <view class="invitee-copy">
-          <text class="invitee-name">{{item.name}}</text>
-          <text class="invitee-time">{{item.joinedAt}}</text>
+
+      <view class="action-row">
+        <button
+          wx:if="{{!isWeb}}"
+          class="share-button share-button-wx"
+          open-type="share"
+        >分享给好友</button>
+        <button
+          wx:else
+          class="share-button share-button-web"
+          bindtap="shareOnWeb"
+        >分享邀请活动</button>
+        <view
+          wx:if="{{isWeb && webShareNoticeVisible}}"
+          class="web-share-notice"
+          role="status"
+        >
+          <text>Web 分享能力暂未接入，请在微信小程序内使用好友或朋友圈分享。</text>
         </view>
-        <text class="invitee-status">{{item.statusText}}</text>
+        <button class="detail-button" bindtap="openCampaignDetail">
+          {{isWeb && rulesExpanded ? '收起活动规则' : '查看活动规则'}}
+        </button>
       </view>
-      <view wx:if="{{!invitees.length}}" class="invite-empty">
-        <text>分享活动，邀请第一位好友吧</text>
+
+      <view wx:if="{{isWeb && rulesExpanded}}" class="rules-card">
+        <text class="rules-title">活动规则</text>
+        <text class="rules-summary">{{campaign.summary}}</text>
+        <view class="rule-item" wx:for="{{campaign.rewards}}" wx:key="step">
+          <text class="rule-index">{{index + 1}}</text>
+          <text class="rule-copy">成功邀请 {{item.step}} 人，可获得 {{item.reward}}</text>
+        </view>
+      </view>
+
+      <view class="invite-list">
+        <view class="list-head">
+          <text class="list-title">最近邀请</text>
+          <text class="list-count">{{invitees.length}} 人</text>
+        </view>
+        <view wx:if="{{inviteDataError}}" class="data-notice">
+          <text>{{inviteDataError}}</text>
+        </view>
+        <view class="invitee-row" wx:for="{{invitees}}" wx:key="id">
+          <image class="invitee-avatar" src="{{item.avatar}}" mode="aspectFill" />
+          <view class="invitee-copy">
+            <text class="invitee-name">{{item.name}}</text>
+            <text class="invitee-time">{{item.joinedAt}}</text>
+          </view>
+          <text class="invitee-status">{{item.statusText}}</text>
+        </view>
+        <view wx:if="{{!invitees.length}}" class="invite-empty">
+          <text>分享活动，邀请第一位好友吧</text>
+        </view>
       </view>
     </view>
   </view>
@@ -81,6 +106,10 @@ import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
+    isWeb: typeof window !== 'undefined' && typeof document !== 'undefined',
+    webShareNoticeVisible: false,
+    rulesExpanded: false,
+    inviteDataError: '',
     member: {
       id: 'member-10086',
       name: '林小满',
@@ -117,21 +146,20 @@ createPage({
         joinedAt: '08-11 09:16',
         statusText: '已注册'
       }
-    ],
-    webShareTipVisible: false
+    ]
   },
   computed: {
     invitePercent () {
+      if (!this.inviteGoal) return 0
       return Math.min(100, Math.round(this.inviteCount / this.inviteGoal * 100))
     }
   },
   onLoad () {
-    // @mpx-if (mode === 'wx')
-    wx.showShareMenu({ withShareTicket: true })
-    // @mpx-endif
+    if (!this.isWeb && typeof wx !== 'undefined' && typeof wx.showShareMenu === 'function') {
+      wx.showShareMenu({ withShareTicket: true })
+    }
     this.fetchInviteSummary()
   },
-  // @mpx-if (mode === 'wx')
   onShareAppMessage () {
     return {
       title: `${this.member.name} 邀你加入邻里商城`,
@@ -146,24 +174,62 @@ createPage({
       imageUrl: this.campaign.cover
     }
   },
-  // @mpx-endif
   methods: {
+    applyInviteSummary (data) {
+      if (!data || typeof data !== 'object') return
+      if (typeof data.count === 'number') this.inviteCount = data.count
+      if (Array.isArray(data.list)) this.invitees = data.list
+      this.inviteDataError = ''
+    },
     fetchInviteSummary () {
-      wx.request({
-        url: `/api/member/${this.member.id}/invites`,
-        success: ({ data }) => {
-          this.inviteCount = data.count
-          this.invitees = data.list
+      const url = `/api/member/${this.member.id}/invites`
+
+      if (this.isWeb) {
+        if (typeof fetch !== 'function') {
+          this.inviteDataError = '当前环境无法更新邀请数据，已展示页面内已有数据。'
+          return
         }
-      })
+
+        fetch(url, { credentials: 'same-origin' })
+          .then((response) => {
+            if (!response.ok) throw new Error(`Request failed: ${response.status}`)
+            return response.json()
+          })
+          .then((data) => {
+            this.applyInviteSummary(data)
+          })
+          .catch(() => {
+            this.inviteDataError = '邀请数据更新失败，已展示页面内已有数据。'
+          })
+        return
+      }
+
+      if (typeof wx !== 'undefined' && typeof wx.request === 'function') {
+        wx.request({
+          url,
+          success: ({ data }) => {
+            this.applyInviteSummary(data)
+          },
+          fail: () => {
+            this.inviteDataError = '邀请数据更新失败，已展示页面内已有数据。'
+          }
+        })
+      }
     },
     shareOnWeb () {
-      this.webShareTipVisible = true
+      this.webShareNoticeVisible = true
     },
     openCampaignDetail () {
-      wx.navigateTo({
-        url: `/pages/member/campaign-detail?id=${this.campaign.id}`
-      })
+      if (this.isWeb) {
+        this.rulesExpanded = !this.rulesExpanded
+        return
+      }
+
+      if (typeof wx !== 'undefined' && typeof wx.navigateTo === 'function') {
+        wx.navigateTo({
+          url: `/pages/member/campaign-detail?id=${this.campaign.id}`
+        })
+      }
     }
   }
 })
@@ -173,12 +239,20 @@ createPage({
 .invite-page {
   min-height: 100vh;
   padding: 24rpx;
+  box-sizing: border-box;
   background: #fff7f0;
+}
+
+.page-content {
+  width: 100%;
+  max-width: 750rpx;
+  margin: 0 auto;
 }
 
 .member-card,
 .campaign-card,
 .invite-code-card,
+.rules-card,
 .invite-list {
   background: #ffffff;
   border-radius: 22rpx;
@@ -214,11 +288,12 @@ createPage({
 .invite-code-title,
 .invite-code,
 .invite-code-tip,
+.rules-title,
+.rules-summary,
 .list-title,
 .list-count,
 .invitee-name,
-.invitee-time,
-.share-unavailable-tip {
+.invitee-time {
   display: block;
 }
 
@@ -288,6 +363,7 @@ createPage({
 .reward-item {
   width: 30%;
   padding: 18rpx 8rpx;
+  box-sizing: border-box;
   text-align: center;
   background: #fff4eb;
   border-radius: 14rpx;
@@ -345,17 +421,67 @@ createPage({
   background: #ff7a45;
 }
 
-.share-unavailable-tip {
-  margin-top: 12rpx;
-  color: #8c7e76;
-  font-size: 22rpx;
-  text-align: center;
-}
-
 .detail-button {
   color: #ff7a45;
   background: #ffffff;
   border: 2rpx solid #ffb184;
+}
+
+.web-share-notice,
+.data-notice {
+  padding: 18rpx 22rpx;
+  color: #806e64;
+  font-size: 22rpx;
+  line-height: 34rpx;
+  background: #fff0e5;
+  border-radius: 14rpx;
+}
+
+.web-share-notice {
+  margin-top: 12rpx;
+}
+
+.rules-card {
+  margin-top: 24rpx;
+  padding: 28rpx;
+}
+
+.rules-title {
+  color: #2f241f;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.rules-summary {
+  margin-top: 12rpx;
+  color: #80736c;
+  font-size: 24rpx;
+  line-height: 38rpx;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  margin-top: 18rpx;
+}
+
+.rule-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36rpx;
+  height: 36rpx;
+  color: #ffffff;
+  font-size: 20rpx;
+  background: #ff7a45;
+  border-radius: 50%;
+}
+
+.rule-copy {
+  margin-left: 14rpx;
+  color: #5f514a;
+  font-size: 24rpx;
 }
 
 .invite-list {
@@ -383,6 +509,10 @@ createPage({
 .list-count {
   color: #a69b95;
   font-size: 22rpx;
+}
+
+.data-notice {
+  margin: 12rpx 0;
 }
 
 .invitee-row {

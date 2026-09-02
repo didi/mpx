@@ -1,12 +1,13 @@
 <template>
   <view class="product-video">
     <video
+      id="product-video-{{product.id}}"
       class="product-video-player"
-      id="product-video"
       src="{{product.video}}"
       autoplay
       muted@web
-      show-mute-btn@web
+      muted@wx="{{false}}"
+      playsinline@web
       enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
@@ -19,28 +20,43 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 
+function firstFiniteNumber (...values) {
+  for (let index = 0; index < values.length; index++) {
+    const value = Number(values[index])
+    if (Number.isFinite(value)) return value
+  }
+  return 0
+}
+
+function getMediaTarget (event) {
+  if (!event) return {}
+  const target = event.target || event.currentTarget || {}
+  return target.video || target
+}
+
 createComponent({
   properties: {
     product: { type: Object, value: () => ({}) }
   },
   data: {
     progress: 0,
-    duration: 0
+    duration: 0,
+    videoSize: ''
   },
   methods: {
     onTimeUpdate (event) {
-      const media = __mpx_mode__ === 'web' ? event.target : event.detail
-      this.progress = media.currentTime
-      this.duration = media.duration
+      const detail = event.detail || {}
+      const media = getMediaTarget(event)
+      this.progress = firstFiniteNumber(detail.currentTime, media.currentTime)
+      this.duration = firstFiniteNumber(detail.duration, media.duration)
     },
     onLoadedMetadata (event) {
-      if (__mpx_mode__ === 'web') {
-        this.duration = event.target.duration
-        this.videoSize = `${event.target.videoWidth}x${event.target.videoHeight}`
-      } else {
-        this.duration = event.detail.duration
-        this.videoSize = `${event.detail.width}x${event.detail.height}`
-      }
+      const detail = event.detail || {}
+      const media = getMediaTarget(event)
+      const width = firstFiniteNumber(detail.width, media.videoWidth, media.width)
+      const height = firstFiniteNumber(detail.height, media.videoHeight, media.height)
+      this.videoSize = `${width}x${height}`
+      this.duration = firstFiniteNumber(detail.duration, media.duration, this.duration)
     },
     onVideoError () {}
   }
@@ -48,6 +64,8 @@ createComponent({
 </script>
 
 <style scoped>
-.product-video { display: block; width: 100%; }
-.product-video-player { width: 100%; }
+.product-video,
+.product-video-player {
+  width: 100%;
+}
 </style>

@@ -6,12 +6,9 @@ export function fetchTrendingKeywords () {
   }).then(({ data }) => data)
 }
 
-export function requestSuggestions (keyword, callbacks) {
+export function requestSuggestions (keyword) {
   return mpx.request({
     url: '/api/search/suggest',
-    data: { keyword },
-    usePromise: false,
-    success: callbacks.success,
-    fail: callbacks.fail
+    data: { keyword }
   })
 }

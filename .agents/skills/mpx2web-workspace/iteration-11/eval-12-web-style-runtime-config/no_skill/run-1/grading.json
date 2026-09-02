@@ -2,101 +2,192 @@
   "eval_id": 12,
   "eval_name": "web-style-runtime-config",
   "configuration": "no_skill",
+  "run_number": 1,
+  "grading_fingerprint": "8b276c14e4917f77145e3df46e91c7dc07fe5f458785bc8ebfbd57fe1d230a09",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 0,
+    "invoked": false,
+    "skip_reason": "compile_or_semantic_gate_failed"
+  },
   "expectations": [
     {
       "id": "t0",
       "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
-      "passed": true,
-      "evidence": "outputs/src/pages/portal/index.mpx:100-112 定义 --portal-fallback-text/background/surface/border/primary，并在 color/background/padding 中使用 var(--portal-text, var(--portal-fallback-text))、var(--portal-background, var(--portal-fallback-background))、var(--portal-space, 32rpx)；137-174 卡片和按钮也使用 var(..., fallback) 回退。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review"
+        "compile_gate"
       ]
     },
     {
       "id": "t1",
       "text": "webConfig.transRpxFn 实现明确的 100rpx=1rem 规则，0 值保持 0，不产生 0rem 或依赖运行环境的非确定结果",
       "passed": false,
-      "evidence": "outputs/vue.config.js：transRpxFn 未同时证明 0 保持和 100rpx=1rem。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "t2",
       "text": "移动 viewport 在 public/index.html 的 meta 中配置，组件样式和运行脚本不伪造或重复注入 viewport",
-      "passed": true,
-      "evidence": "outputs/public/index.html：移动 viewport 在 HTML 模板中配置，组件未重复注入。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "t3",
       "text": "hover、::-webkit-scrollbar 与浏览器 safe-area/私有 CSS 仅隔离在 Web 输出，不污染微信小程序样式",
       "passed": false,
-      "evidence": "outputs/src/pages/portal/index.mpx：Web-only hover/滚动条/safe-area CSS 未最小条件隔离。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "t4",
       "text": "Web 弹层打开时记录并锁定 body/应用挂载容器的原 overflow，关闭、页面切换和卸载时幂等恢复原值",
       "passed": false,
-      "evidence": "outputs/src/pages/portal/index.mpx：滚动锁未保存原值，或关闭/卸载没有幂等恢复。",
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "t5",
       "text": "滚动锁只保护浏览器客户端 DOM，不阻断微信小程序页面滚动、卡片点击和弹层关闭",
-      "passed": true,
-      "evidence": "outputs/src/pages/portal/index.mpx：DOM 滚动锁只在 Web 客户端执行，小程序业务方法仍可调用。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     },
     {
       "id": "t6",
       "text": "routeConfig.base、output.publicPath 与 /portal/ 部署路径一致，主题切换、弹层和门户卡片业务链路完整",
-      "passed": true,
-      "evidence": "outputs/vue.config.js：history 路由 base 与 publicPath 均为 /portal/。",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
       "verification_methods": [
-        "independent_code_review",
-        "deterministic_check"
+        "compile_gate"
       ]
     }
   ],
   "summary": {
-    "passed": 4,
-    "failed": 3,
+    "passed": 0,
+    "failed": 7,
     "total": 7,
-    "pass_rate": 0.5714
+    "pass_rate": 0.0
   },
   "metrics": {
-    "total_tokens": 87616,
-    "input_tokens": 79190,
-    "output_tokens": 8426,
-    "tool_calls": 3,
-    "duration_ms": 293217,
-    "output_files": 3,
-    "output_lines": 290,
-    "output_nonempty_lines": 262,
-    "output_bytes": 7736
+    "total_tokens": 98140,
+    "input_tokens": 88859,
+    "output_tokens": 9281,
+    "tool_calls": 4,
+    "duration_ms": 454727
   },
   "timing": {
-    "total_tokens": 87616,
-    "duration_ms": 293217,
-    "total_duration_seconds": 293.217,
-    "generation_attempts": 1
+    "total_tokens": 98140,
+    "duration_ms": 454727,
+    "total_duration_seconds": 454.727
   },
-  "execution_metrics": {
-    "total_tool_calls": 3
+  "compile": {
+    "status": "failed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 0,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/vue.config.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/public/index.html"
+        ],
+        "passed": false,
+        "returncode": 1,
+        "detail": {
+          "success": false,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx",
+              "errors": [
+                {
+                  "line": 84,
+                  "directive": "/* @mpx-if (mode === 'web') */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 123,
+                  "directive": "/* @mpx-endif */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 127,
+                  "directive": "/* @mpx-if (mode === 'web') */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                },
+                {
+                  "line": 148,
+                  "directive": "/* @mpx-endif */",
+                  "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+                }
+              ]
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/vue.config.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/public/index.html",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx"
+        ],
+        "passed": false,
+        "returncode": 2,
+        "detail": {},
+        "stderr": "InvalidInputError: 检测到无效的条件编译注释：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx:148 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-1/outputs/public/index.html"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "先修复编译或条件编译语义错误，再进行功能评分。"
+    ],
+    "overall": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: index.mpx:84 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:123 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); index.mpx:127 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过"
   }
 }

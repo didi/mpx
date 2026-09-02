@@ -45,11 +45,8 @@
     </view>
 
     <view class="action-row">
-      <!-- @mpx-if (__mpx_mode__ === 'web') -->
-      <button class="share-button" bindtap="shareOnWeb">分享邀请活动</button>
-      <!-- @mpx-else -->
-      <button class="share-button" open-type="share">分享给好友</button>
-      <!-- @mpx-endif -->
+      <button @wx class="share-button share-button-wx" open-type="share">分享给好友</button>
+      <button @web class="share-button share-button-web" bindtap="shareOnWeb">分享邀请活动</button>
       <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
     </view>
 
@@ -135,7 +132,7 @@ createPage({
     }
   },
   onLoad () {
-    if (__mpx_mode__ !== 'web') {
+    if (__mpx_mode__ === 'wx') {
       wx.showShareMenu({ withShareTicket: true })
     }
     this.fetchInviteSummary()

@@ -1,74 +1,71 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchProduct, fetchRecommendations } from '../services/product'
 
-const requestStates = new WeakMap()
-
-function getRequestState (store) {
-  let requestState = requestStates.get(store)
-  if (!requestState) {
-    requestState = {
-      sequence: 0,
-      pending: null
-    }
-    requestStates.set(store, requestState)
-  }
-  return requestState
-}
-
 export const useProductStore = defineStore('product-platform', {
   state: () => ({
-    productId: '',
-    product: {},
-    recommendations: [],
-    loaded: false,
-    loading: false
+    productsById: {},
+    recommendationsByProductId: {},
+    loadedByProductId: {},
+    requestVersionByProductId: {}
   }),
   actions: {
-    loadProduct (productId, req) {
-      productId = String(productId)
-      const requestState = getRequestState(this)
+    hasProduct (productId) {
+      return this.loadedByProductId[String(productId)] === true
+    },
 
-      if (this.loaded && this.productId === productId) {
-        return Promise.resolve({
-          product: this.product,
-          recommendations: this.recommendations
-        })
+    getProduct (productId) {
+      return this.productsById[String(productId)] || {}
+    },
+
+    getRecommendations (productId) {
+      return this.recommendationsByProductId[String(productId)] || []
+    },
+
+    async loadProduct (productId, ssrContext) {
+      const key = String(productId)
+
+      // SSR state is hydrated into Pinia, so the first client onLoad reuses it.
+      if (this.hasProduct(key)) {
+        return {
+          product: this.getProduct(key),
+          recommendations: this.getRecommendations(key)
+        }
       }
-      if (requestState.pending && requestState.pending.productId === productId) {
-        return requestState.pending.promise
+
+      const requestVersion = (this.requestVersionByProductId[key] || 0) + 1
+      this.requestVersionByProductId = {
+        ...this.requestVersionByProductId,
+        [key]: requestVersion
       }
 
-      const sequence = ++requestState.sequence
-      this.productId = productId
-      this.product = {}
-      this.recommendations = []
-      this.loaded = false
-      this.loading = true
+      // The request context is passed through this call only. No module-level request
+      // or origin is shared between concurrent Node renders.
+      const [product, recommendations] = await Promise.all([
+        fetchProduct(key, ssrContext),
+        fetchRecommendations(key, ssrContext)
+      ])
 
-      const promise = Promise.all([
-        fetchProduct(productId, req),
-        fetchRecommendations(productId, req)
-      ]).then(([product, recommendations]) => {
-        if (requestState.sequence === sequence) {
-          this.product = product
-          this.recommendations = recommendations
-          this.loaded = true
-          this.loading = false
-        }
-        if (requestState.pending && requestState.pending.sequence === sequence) {
-          requestState.pending = null
-        }
-        return { product, recommendations }
-      }, (error) => {
-        if (requestState.sequence === sequence) this.loading = false
-        if (requestState.pending && requestState.pending.sequence === sequence) {
-          requestState.pending = null
-        }
-        throw error
-      })
+      // If this id was requested again while the pair was in flight, only the
+      // newest pair may update the hydrated cache.
+      if (this.requestVersionByProductId[key] !== requestVersion) {
+        return { product, recommendations, stale: true }
+      }
 
-      requestState.pending = { productId, sequence, promise }
-      return promise
+      // Cache by id. A late response for one product cannot replace another product.
+      this.productsById = {
+        ...this.productsById,
+        [key]: product
+      }
+      this.recommendationsByProductId = {
+        ...this.recommendationsByProductId,
+        [key]: recommendations
+      }
+      this.loadedByProductId = {
+        ...this.loadedByProductId,
+        [key]: true
+      }
+
+      return { product, recommendations }
     }
   }
 })

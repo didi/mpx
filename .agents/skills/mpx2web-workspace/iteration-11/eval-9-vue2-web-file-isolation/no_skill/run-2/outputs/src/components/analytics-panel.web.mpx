@@ -1,22 +1,52 @@
 <template>
-  <scroll-view class="analytics-panel-web" scroll-y="{{true}}">
-    <analytics-chart metrics="{{metrics}}" bindselect="selectMetric" />
-  </scroll-view>
+  <view class="analytics-panel-web">
+    <scroll-view
+      class="analytics-panel-web__scroll"
+      scroll-x="{{scrollX}}"
+      scroll-y="{{scrollY}}"
+      scroll-top="{{scrollTop}}"
+      scroll-left="{{scrollLeft}}"
+      scroll-into-view="{{activeMetricId}}"
+      upper-threshold="{{edgeThreshold}}"
+      lower-threshold="{{edgeThreshold}}"
+      bindscroll="handleScroll"
+      bindscrolltoupper="handleUpper"
+      bindscrolltolower="handleLower"
+    >
+      <analytics-chart metrics="{{metrics}}" bindselect="handleSelect" />
+    </scroll-view>
+  </view>
 </template>
 
 <script>
 import { createComponent } from '@mpxjs/core'
 
+function eventDetail (event) {
+  return event && event.detail ? event.detail : event
+}
+
 createComponent({
   properties: {
-    metrics: {
-      type: Array,
-      value: () => []
-    }
+    metrics: { type: Array, value: () => [] },
+    scrollX: { type: Boolean, value: true },
+    scrollY: { type: Boolean, value: true },
+    scrollTop: { type: Number, value: 0 },
+    scrollLeft: { type: Number, value: 0 },
+    activeMetricId: { type: String, value: '' },
+    edgeThreshold: { type: Number, value: 24 }
   },
   methods: {
-    selectMetric (detail) {
-      this.triggerEvent('select', detail)
+    handleSelect (event) {
+      this.triggerEvent('select', eventDetail(event))
+    },
+    handleScroll (event) {
+      this.triggerEvent('scroll', eventDetail(event))
+    },
+    handleUpper (event) {
+      this.triggerEvent('scrolltoupper', eventDetail(event))
+    },
+    handleLower (event) {
+      this.triggerEvent('scrolltolower', eventDetail(event))
     }
   }
 })

@@ -5,6 +5,17 @@
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
     </view>
 
+    <view wx:if="{{hasUnavailableCapabilities}}" class="platform-notice">
+      <text class="platform-notice-title">Web 能力接入中</text>
+      <text class="platform-notice-copy">
+        位置、地图、图片和发布协议尚未确定，当前不会调用未声明的宿主接口。
+      </text>
+    </view>
+
+    <view wx:if="{{capabilityMessage}}" class="capability-message" aria-live="polite">
+      <text>{{capabilityMessage}}</text>
+    </view>
+
     <view class="form-card">
       <textarea
         class="content-input"
@@ -15,7 +26,7 @@
       />
       <text class="word-count">{{content.length}} / 500</text>
 
-      <view wx:if="{{!isWeb}}" class="photo-grid">
+      <view class="photo-grid">
         <view class="photo-item" wx:for="{{photos}}" wx:key="tempFilePath">
           <image class="photo-image" src="{{item.tempFilePath}}" mode="aspectFill" />
           <view class="photo-remove" catchtap="removePhoto(index)" aria-role="button" aria-label="删除图片">
@@ -24,51 +35,46 @@
         </view>
         <view
           wx:if="{{photos.length < 9}}"
-          class="photo-add"
+          class="photo-add {{capabilities.media ? '' : 'is-disabled'}}"
           bindtap="choosePhoto"
           aria-role="button"
-          aria-label="添加图片"
+          aria-label="{{capabilities.media ? '添加图片' : '图片选择暂不可用'}}"
+          aria-disabled="{{!capabilities.media}}"
         >
           <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">添加图片</text>
+          <text class="photo-add-label">{{capabilities.media ? '添加图片' : '暂不可用'}}</text>
         </view>
-      </view>
-      <view wx:else class="capability-notice">
-        <text class="capability-notice-text">Web 图片能力待宿主协议确定后接入</text>
       </view>
     </view>
 
     <view class="publish-options">
-      <view wx:if="{{!isWeb}}" class="option-row" bindtap="choosePlace">
+      <view
+        class="option-row {{capabilities.location ? '' : 'is-disabled'}}"
+        bindtap="choosePlace"
+        aria-role="button"
+        aria-disabled="{{!capabilities.location}}"
+      >
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text class="option-value">{{place.name || '选择位置'}}</text>
+            <text class="option-value">
+              {{place.name || (capabilities.location ? '选择位置' : 'Web 暂不可用')}}
+            </text>
           </view>
         </view>
         <text class="option-arrow">›</text>
       </view>
 
-      <view wx:else class="option-row option-row-disabled">
-        <view class="option-main">
-          <text class="option-icon option-icon-disabled">⌖</text>
-          <view class="option-copy">
-            <text class="option-label">所在位置</text>
-            <text class="option-value">Web 位置与地图能力待接入</text>
-          </view>
-        </view>
-      </view>
-
-      <view wx:if="{{!isWeb && place.name}}" class="place-card" bindtap="openPlace">
+      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
         </view>
-        <text class="place-action">查看地图</text>
+        <text class="place-action">{{capabilities.map ? '查看地图' : '地图暂不可用'}}</text>
       </view>
 
-      <view class="option-row option-row-topic">
+      <view class="option-row">
         <view class="option-main">
           <text class="option-icon">#</text>
           <view class="option-copy">
@@ -87,14 +93,13 @@
       <text class="notice-text">允许其他用户评论</text>
     </view>
 
-    <text wx:if="{{submitError}}" class="submit-error">{{submitError}}</text>
     <button
       class="publish-button"
       loading="{{submitting}}"
-      disabled="{{!canSubmit || submitting}}"
+      disabled="{{!capabilities.publish || !canSubmit || submitting}}"
       bindtap="submitPost"
     >
-      发布动态
+      {{capabilities.publish ? '发布动态' : 'Web 发布能力待接入'}}
     </button>
   </view>
 </template>
@@ -102,9 +107,22 @@
 <script>
 import { createPage } from '@mpxjs/core'
 
+const capabilities = {
+  location: false,
+  map: false,
+  media: false,
+  publish: false
+}
+
+/* @mpx-if (mode === 'wx') */
+capabilities.location = true
+capabilities.map = true
+capabilities.media = true
+capabilities.publish = true
+/* @mpx-endif */
+
 createPage({
   data: {
-    isWeb: __mpx_mode__ === 'web',
     content: '',
     photos: [],
     place: {},
@@ -117,36 +135,61 @@ createPage({
     selectedTopic: {},
     allowComments: true,
     submitting: false,
-    submitError: ''
+    capabilities,
+    capabilityMessage: ''
   },
   computed: {
     canSubmit () {
       return Boolean(this.content.trim() || this.photos.length)
+    },
+    hasUnavailableCapabilities () {
+      return !this.capabilities.location ||
+        !this.capabilities.map ||
+        !this.capabilities.media ||
+        !this.capabilities.publish
     }
   },
   methods: {
     updateContent (event) {
       this.content = event.detail.value
     },
+    showCapabilityMessage (feature) {
+      this.capabilityMessage = `${feature}能力尚未接入 Web 宿主，请稍后再试。`
+    },
     choosePlace () {
-      if (this.isWeb) return
+      if (!this.capabilities.location) {
+        this.showCapabilityMessage('位置选择')
+        return
+      }
+      /* @mpx-if (mode === 'wx') */
       wx.chooseLocation({
         success: (place) => {
           this.place = place
         }
       })
+      /* @mpx-endif */
     },
     openPlace () {
-      if (this.isWeb || !this.place.latitude || !this.place.longitude) return
+      if (!this.capabilities.map) {
+        this.showCapabilityMessage('地图查看')
+        return
+      }
+      if (!this.place.latitude || !this.place.longitude) return
+      /* @mpx-if (mode === 'wx') */
       wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
         name: this.place.name,
         address: this.place.address
       })
+      /* @mpx-endif */
     },
     choosePhoto () {
-      if (this.isWeb) return
+      if (!this.capabilities.media) {
+        this.showCapabilityMessage('图片选择')
+        return
+      }
+      /* @mpx-if (mode === 'wx') */
       wx.chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
@@ -155,6 +198,7 @@ createPage({
           this.photos = this.photos.concat(tempFiles)
         }
       })
+      /* @mpx-endif */
     },
     removePhoto (index) {
       this.photos.splice(index, 1)
@@ -166,24 +210,23 @@ createPage({
       this.allowComments = event.detail.value
     },
     submitPost () {
-      if (!this.canSubmit || this.submitting) return
-      this.submitting = true
-      this.submitError = ''
-      const data = {
-        content: this.content,
-        photos: this.photos.map(item => item.tempFilePath),
-        place: this.place,
-        topicId: this.selectedTopic.id || '',
-        allowComments: this.allowComments
-      }
-      if (this.isWeb) {
-        this.submitWebPost(data)
+      if (!this.capabilities.publish) {
+        this.showCapabilityMessage('发布')
         return
       }
+      if (!this.canSubmit || this.submitting) return
+      /* @mpx-if (mode === 'wx') */
+      this.submitting = true
       wx.request({
         url: '/api/community/posts',
         method: 'POST',
-        data,
+        data: {
+          content: this.content,
+          photos: this.photos.map(item => item.tempFilePath),
+          place: this.place,
+          topicId: this.selectedTopic.id || '',
+          allowComments: this.allowComments
+        },
         success: ({ data }) => {
           wx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
         },
@@ -194,24 +237,7 @@ createPage({
           this.submitting = false
         }
       })
-    },
-    submitWebPost (data) {
-      window.fetch('/api/community/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      }).then((response) => {
-        if (!response.ok) throw new Error('Request failed')
-        return response.json()
-      }).then((result) => {
-        this.submitting = false
-        window.location.replace(`/pages/community/detail?id=${encodeURIComponent(result.id)}`)
-      }).catch(() => {
-        this.submitting = false
-        this.submitError = '发布失败，请重试'
-      })
+      /* @mpx-endif */
     }
   }
 })
@@ -219,6 +245,7 @@ createPage({
 
 <style>
 .publish-page {
+  box-sizing: border-box;
   min-height: 100vh;
   padding: 24rpx;
   background: #f6f7fb;
@@ -230,16 +257,16 @@ createPage({
 
 .publish-title,
 .publish-tip,
+.platform-notice-title,
+.platform-notice-copy,
 .word-count,
 .photo-add-label,
-.capability-notice-text,
 .option-label,
 .option-value,
 .place-name,
 .place-address,
 .place-action,
-.notice-text,
-.submit-error {
+.notice-text {
   display: block;
 }
 
@@ -255,6 +282,37 @@ createPage({
   font-size: 24rpx;
 }
 
+.platform-notice,
+.capability-message {
+  margin-bottom: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 14rpx;
+}
+
+.platform-notice {
+  color: #805900;
+  background: #fff7e6;
+  border: 1rpx solid #ffe0a3;
+}
+
+.platform-notice-title {
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.platform-notice-copy {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  line-height: 34rpx;
+}
+
+.capability-message {
+  color: #245c9f;
+  font-size: 24rpx;
+  line-height: 36rpx;
+  background: #eaf3ff;
+}
+
 .form-card,
 .publish-options {
   background: #ffffff;
@@ -266,11 +324,17 @@ createPage({
 }
 
 .content-input {
+  box-sizing: border-box;
   width: 100%;
   min-height: 240rpx;
+  padding: 0;
   color: #333333;
   font-size: 28rpx;
   line-height: 42rpx;
+  background: transparent;
+  border: 0;
+  outline: none;
+  resize: none;
 }
 
 .word-count {
@@ -287,6 +351,7 @@ createPage({
 
 .photo-item,
 .photo-add {
+  box-sizing: border-box;
   width: 196rpx;
   height: 196rpx;
   margin: 0 16rpx 16rpx 0;
@@ -327,6 +392,12 @@ createPage({
   border: 2rpx dashed #d6dae1;
 }
 
+.photo-add.is-disabled,
+.option-row.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .photo-add-icon {
   font-size: 52rpx;
   line-height: 60rpx;
@@ -335,19 +406,6 @@ createPage({
 .photo-add-label {
   margin-top: 8rpx;
   font-size: 22rpx;
-}
-
-.capability-notice {
-  margin-top: 20rpx;
-  padding: 24rpx;
-  background: #f3f5f8;
-  border-radius: 14rpx;
-}
-
-.capability-notice-text {
-  color: #9297a1;
-  font-size: 23rpx;
-  text-align: center;
 }
 
 .publish-options {
@@ -363,14 +421,6 @@ createPage({
   border-bottom: 1rpx solid #eef0f3;
 }
 
-.option-row-disabled {
-  cursor: default;
-}
-
-.option-row-topic {
-  border-bottom: 0;
-}
-
 .option-main {
   display: flex;
   align-items: center;
@@ -380,10 +430,6 @@ createPage({
   width: 48rpx;
   color: #1677ff;
   font-size: 34rpx;
-}
-
-.option-icon-disabled {
-  color: #b4b8c0;
 }
 
 .option-copy {
@@ -453,17 +499,11 @@ createPage({
   font-size: 25rpx;
 }
 
-.submit-error {
-  margin: 0 8rpx 16rpx;
-  color: #d93026;
-  font-size: 24rpx;
-  text-align: center;
-}
-
 .publish-button {
   color: #ffffff;
   font-size: 30rpx;
   background: #1677ff;
+  border: 0;
   border-radius: 44rpx;
 }
 

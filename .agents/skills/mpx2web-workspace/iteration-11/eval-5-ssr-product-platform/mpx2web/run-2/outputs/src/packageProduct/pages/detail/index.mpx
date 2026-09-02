@@ -33,7 +33,7 @@ createPage({
   data: {
     productId: '',
     selectedSkuId: '',
-    loadVersion: 0
+    pageRequestVersion: 0
   },
   computed: {
     product () {
@@ -47,28 +47,36 @@ createPage({
     }
   },
   onLoad (query) {
-    const productId = query.id
-    const store = useProductStore(this.$pinia)
+    const productId = String(query.id || '')
     this.productId = productId
 
-    if (store.loaded && store.productId === productId) {
-      this.selectFirstSku()
-      return
+    // Web SSR is loaded by serverPrefetch. The browser reuses hydrated state,
+    // while the mini-program keeps using the regular onLoad path.
+    if (__mpx_mode__ !== 'web' || typeof window !== 'undefined') {
+      const store = useProductStore(this.$pinia)
+      if (store.loaded && store.productId === productId) {
+        this.selectedSkuId = store.product.skus[0] && store.product.skus[0].id
+      } else {
+        this.loadProduct(productId)
+      }
     }
-
-    if (!this.$ssrContext) this.loadProduct(productId)
   },
   serverPrefetch () {
     return this.loadProduct(this.productId, this.$ssrContext)
   },
   methods: {
     async loadProduct (productId, requestContext) {
-      const loadVersion = ++this.loadVersion
-      const loaded = await useProductStore(this.$pinia).loadProduct(productId, requestContext)
-      if (!loaded || loadVersion !== this.loadVersion || productId !== this.productId) return
-      this.selectFirstSku()
-    },
-    selectFirstSku () {
+      if (!productId) return
+
+      const pageRequestVersion = ++this.pageRequestVersion
+      const applied = await useProductStore(this.$pinia).loadProduct(productId, requestContext)
+
+      if (
+        !applied ||
+        pageRequestVersion !== this.pageRequestVersion ||
+        this.productId !== productId
+      ) return
+
       this.selectedSkuId = this.product.skus[0] && this.product.skus[0].id
     },
     selectSku (skuId) {

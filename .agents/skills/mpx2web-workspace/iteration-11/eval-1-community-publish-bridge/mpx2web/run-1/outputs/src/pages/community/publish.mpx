@@ -86,7 +86,7 @@
 </template>
 
 <script>
-import mpx, { createPage } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
@@ -114,8 +114,8 @@ createPage({
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 宿主 Bridge 与地图选点协议确定后接入。
-        mpx.showToast({ title: 'Web 暂不支持位置选择', icon: 'none' })
+        // TODO: 待 Web 宿主明确位置选择协议后接入。
+        wx.showToast({ title: 'Web 暂不支持选择位置', icon: 'none' })
         return
       }
       wx.chooseLocation({
@@ -127,8 +127,8 @@ createPage({
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 宿主 Bridge 与地图查看协议确定后接入。
-        mpx.showToast({ title: 'Web 暂不支持地图查看', icon: 'none' })
+        // TODO: 待 Web 宿主明确地图查看协议后接入。
+        wx.showToast({ title: 'Web 暂不支持查看地图', icon: 'none' })
         return
       }
       wx.openLocation({
@@ -140,8 +140,8 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 宿主 Bridge 与媒体选择协议确定后接入。
-        mpx.showToast({ title: 'Web 暂不支持图片选择', icon: 'none' })
+        // TODO: 待 Web 宿主明确媒体选择协议后接入。
+        wx.showToast({ title: 'Web 暂不支持选择图片', icon: 'none' })
         return
       }
       wx.chooseMedia({
@@ -165,7 +165,7 @@ createPage({
     submitPost () {
       if (!this.canSubmit || this.submitting) return
       this.submitting = true
-      mpx.request({
+      wx.request({
         url: '/api/community/posts',
         method: 'POST',
         data: {
@@ -176,10 +176,10 @@ createPage({
           allowComments: this.allowComments
         },
         success: ({ data }) => {
-          mpx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+          wx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
         },
         fail: () => {
-          mpx.showToast({ title: '发布失败，请重试', icon: 'none' })
+          wx.showToast({ title: '发布失败，请重试', icon: 'none' })
         },
         complete: () => {
           this.submitting = false

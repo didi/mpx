@@ -36,45 +36,76 @@ createPage({
   },
   computed: {
     product () {
-      return useProductStore(this.$pinia).product
+      return useProductStore(this.$pinia).getProduct(this.productId)
     },
     recommendations () {
-      return useProductStore(this.$pinia).recommendations
+      return useProductStore(this.$pinia).getRecommendations(this.productId)
     },
     selectedSku () {
       return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
     }
   },
   onLoad (query) {
-    this.productId = String(query.id)
-    const store = useProductStore(this.$pinia)
-    if (store.loaded && store.productId === this.productId) {
-      this.selectDefaultSku()
-    } else if (!this.$ssrContext) {
-      this.loadProduct(this.productId).catch(() => {
-        mpx.showToast({ title: '商品加载失败', icon: 'none' })
-      })
-    }
+    return this.enterProduct(query && query.id)
   },
   serverPrefetch () {
-    return this.loadProduct(this.productId, this.$ssrContext && this.$ssrContext.req)
+    const routeId = this.$route && this.$route.query && this.$route.query.id
+    return this.enterProduct(this.productId || routeId)
+  },
+  onUnload () {
+    this._loadVersion = (this._loadVersion || 0) + 1
+    this._loadPromise = null
+    this._loadingProductId = ''
   },
   methods: {
-    async loadProduct (productId, req) {
-      const store = useProductStore(this.$pinia)
-      await store.loadProduct(productId, req)
-      if (this.productId === productId && store.productId === productId) {
-        this.selectDefaultSku()
+    enterProduct (productId) {
+      if (productId === undefined || productId === null || productId === '') {
+        return Promise.resolve()
       }
+
+      const nextProductId = String(productId)
+      this.productId = nextProductId
+
+      // onLoad and serverPrefetch can both run during SSR. Share the page-local
+      // promise so product and recommendations are fetched exactly once.
+      if (this._loadingProductId === nextProductId && this._loadPromise) {
+        return this._loadPromise
+      }
+
+      return this.loadProduct(nextProductId)
     },
-    selectDefaultSku () {
-      this.selectedSkuId = this.product.skus && this.product.skus[0]
-        ? this.product.skus[0].id
-        : ''
+
+    loadProduct (productId) {
+      const version = (this._loadVersion || 0) + 1
+      this._loadVersion = version
+      this._loadingProductId = productId
+
+      const task = useProductStore(this.$pinia)
+        .loadProduct(productId, this.$ssrContext)
+        .then(({ product }) => {
+          if (version !== this._loadVersion || productId !== this.productId) return
+
+          const skus = product.skus || []
+          const selectedStillExists = skus.some(item => item.id === this.selectedSkuId)
+          if (!selectedStillExists) {
+            this.selectedSkuId = skus[0] ? skus[0].id : ''
+          }
+        })
+        .finally(() => {
+          if (version === this._loadVersion) {
+            this._loadPromise = null
+            this._loadingProductId = ''
+          }
+        })
+
+      this._loadPromise = task
+      return task
     },
+
     selectSku (skuId) {
       this.selectedSkuId = skuId
     },
+
     addToCart () {
       mpx.request({
         url: '/api/cart/items',

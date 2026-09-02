@@ -1,27 +1,18 @@
 <script>
 import { createApp } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
 import { createPinia } from '@mpxjs/pinia'
 
+// Mpx calls the pinia factory for each app instance. On Node this keeps every
+// concurrent SSR request on its own store graph.
 createApp({
-  onAppInit () {
-    return {
-      pinia: createPinia()
-    }
-  },
-  onSSRAppCreated ({ pinia, router, app, context }) {
-    return new Promise((resolve, reject) => {
-      router.push(context.url)
-      router.onReady(() => {
-        context.rendered = () => {
-          context.state = pinia.state.value
-        }
-        resolve(app)
-      }, reject)
-    })
-  },
+  pinia: () => createPinia(),
   onLaunch () {
-    const isNode = typeof process !== 'undefined' && process.versions && process.versions.node
-    if (!isNode) wx.reportAnalytics('mall_launch', {})
+    // Node SSR has neither browser window nor mini-program wx.
+    if (typeof window === 'undefined' && typeof wx === 'undefined') return
+    if (typeof mpx.reportAnalytics === 'function') {
+      mpx.reportAnalytics('mall_launch', {})
+    }
   }
 })
 </script>

@@ -6,22 +6,34 @@ export const useArticleStore = defineStore('article', {
     articleId: '',
     article: null,
     recommendations: [],
-    requestId: 0
+    requestVersion: 0
   }),
   actions: {
     async loadArticle (articleId, requestContext) {
-      if (!articleId || (this.articleId === articleId && this.article)) return
+      const normalizedId = articleId == null ? '' : String(articleId)
+      if (!normalizedId) return
 
-      const requestId = ++this.requestId
-      this.articleId = articleId
+      if (this.articleId === normalizedId && this.article) {
+        return {
+          article: this.article,
+          recommendations: this.recommendations
+        }
+      }
+
+      this.articleId = normalizedId
       this.article = null
       this.recommendations = []
 
-      const data = await fetchArticle(articleId, requestContext)
-      if (requestId !== this.requestId) return
+      const requestVersion = ++this.requestVersion
+      const data = await fetchArticle(normalizedId, requestContext)
+
+      if (requestVersion !== this.requestVersion || this.articleId !== normalizedId) {
+        return data
+      }
 
       this.article = data.article
-      this.recommendations = data.recommendations
+      this.recommendations = Array.isArray(data.recommendations) ? data.recommendations : []
+      return data
     }
   }
 })

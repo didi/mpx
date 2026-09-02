@@ -45,8 +45,8 @@
     </view>
 
     <view class="action-row">
-      <button @wx class="share-button" open-type="share">分享给好友</button>
-      <button @web class="share-button" bindtap="shareOnWeb">分享邀请活动</button>
+      <button @wx class="share-button share-button-wx" open-type="share">分享给好友</button>
+      <button @web class="share-button share-button-web" @tap@web="shareOnWeb">分享邀请活动</button>
       <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
     </view>
 
@@ -163,11 +163,12 @@ createPage({
       })
     },
     shareOnWeb () {
-      // TODO: 待业务提供 Web 分享 SDK、宿主 Bridge 或降级协议后接入。
+      // TODO: 接入业务提供的 Web 分享 SDK、宿主 Bridge 或明确的降级协议。
     },
     openCampaignDetail () {
       mpx.navigateTo({
-        url: `/pages/member/campaign-detail?id=${this.campaign.id}`
+        url: `/pages/member/campaign-detail?id=${this.campaign.id}`,
+        usePromise: false
       })
     }
   }

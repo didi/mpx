@@ -46,36 +46,53 @@ createPage({
     }
   },
   onLoad (query) {
-    this.productId = query.id
-    const store = useProductStore(this.$pinia)
-    if (store.loaded && store.productId === query.id) {
-      this.selectDefaultSku(store.product)
-    } else if (!this.$ssrContext) {
-      this.loadProduct(query.id)
+    this.productId = String(query.id || '')
+    this.selectedSkuId = ''
+    this.pageRequestVersion = 0
+
+    // SSR 由 serverPrefetch 发起并等待请求；浏览器 hydrate 和小程序仍走 onLoad。
+    if (!this.$ssrContext) {
+      return this.loadProduct(this.productId)
     }
+  },
+  onShow () {
+    // 返回页面栈中的旧详情页时，共享 store 可能已切换到另一个商品。
+    if (this.productId && !this.$ssrContext) {
+      return this.loadProduct(this.productId)
+    }
+  },
+  onHide () {
+    this.invalidatePageRequest()
+  },
+  onUnload () {
+    this.invalidatePageRequest()
   },
   serverPrefetch () {
     return this.loadProduct(this.productId, this.$ssrContext)
   },
-  onUnload () {
-    this.loadVersion = (this.loadVersion || 0) + 1
-  },
   methods: {
+    invalidatePageRequest () {
+      this.pageRequestVersion = (this.pageRequestVersion || 0) + 1
+    },
     async loadProduct (productId, requestContext) {
-      const loadVersion = (this.loadVersion || 0) + 1
-      this.loadVersion = loadVersion
+      if (!productId) return
+
+      const pageRequestVersion = (this.pageRequestVersion || 0) + 1
+      this.pageRequestVersion = pageRequestVersion
+
       const store = useProductStore(this.$pinia)
       await store.loadProduct(productId, requestContext)
+
       if (
-        loadVersion !== this.loadVersion ||
-        productId !== this.productId ||
+        pageRequestVersion !== this.pageRequestVersion ||
+        this.productId !== productId ||
         !store.loaded ||
         store.productId !== productId
       ) return
-      this.selectDefaultSku(store.product)
-    },
-    selectDefaultSku (product) {
-      this.selectedSkuId = product.skus[0] && product.skus[0].id
+
+      this.selectedSkuId = store.product.skus && store.product.skus[0]
+        ? store.product.skus[0].id
+        : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

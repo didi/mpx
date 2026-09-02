@@ -3,12 +3,9 @@
     <view
       class="filter-trigger"
       aria-role="button"
-      aria-label="筛选商品"
-      aria-expanded="{{visible}}"
+      aria-label="打开商品筛选"
       bindtap="open"
-    >
-      筛选
-    </view>
+    >筛选</view>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
       <view
         class="dialog"
@@ -19,12 +16,10 @@
         <view
           wx:for="{{options}}"
           wx:key="value"
-          aria-role="checkbox"
-          aria-checked="{{selected.includes(item.value)}}"
+          aria-role="button"
+          aria-label="{{item.label}}"
           bindtap="toggle(item.value)"
-        >
-          {{item.label}}
-        </view>
+        >{{item.label}}</view>
         <button bindtap="clear">清空</button>
         <button bindtap="confirm">确定</button>
       </view>
@@ -36,18 +31,29 @@
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
-  properties: { options: { type: Array, value: () => [] } },
-  data: { visible: false, selected: [] },
+  properties: {
+    options: { type: Array, value: () => [] }
+  },
+  data: {
+    visible: false,
+    selected: []
+  },
   methods: {
-    open () { this.visible = true },
-    close () { this.visible = false },
+    open () {
+      this.visible = true
+    },
+    close () {
+      this.visible = false
+    },
     stop () {},
     toggle (value) {
-      this.selected = this.selected.includes(value)
+      this.selected = this.selected.indexOf(value) !== -1
         ? this.selected.filter((item) => item !== value)
         : this.selected.concat(value)
     },
-    clear () { this.selected = [] },
+    clear () {
+      this.selected = []
+    },
     confirm () {
       this.triggerEvent('confirm', { selected: this.selected })
       this.close()

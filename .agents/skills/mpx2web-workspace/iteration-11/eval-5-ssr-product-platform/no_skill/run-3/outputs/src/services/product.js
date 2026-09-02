@@ -1,48 +1,46 @@
 import mpx from '@mpxjs/api-proxy'
 
-function getHeader (req, name) {
-  let value = req.headers && req.headers[name]
-  if (!value && typeof req.get === 'function') value = req.get(name)
+function firstHeaderValue (value) {
   if (Array.isArray(value)) value = value[0]
-  return value
+  return typeof value === 'string' ? value.split(',')[0].trim() : ''
 }
 
-function getForwardedHeader (req, name) {
-  const value = getHeader(req, name)
-  return typeof value === 'string' ? value.split(',')[0].trim() : value
-}
+function getServerOrigin (req) {
+  if (!req) return ''
 
-function resolveUrl (path, req) {
-  if (!req) return path
+  const headers = req.headers || {}
+  const forwardedProtocol = firstHeaderValue(headers['x-forwarded-proto'])
+  const protocol = forwardedProtocol === 'https' || forwardedProtocol === 'http'
+    ? forwardedProtocol
+    : (req.protocol || (req.socket && req.socket.encrypted ? 'https' : 'http'))
+  const host = firstHeaderValue(headers['x-forwarded-host']) || firstHeaderValue(headers.host)
 
-  const protocol = getForwardedHeader(req, 'x-forwarded-proto') || req.protocol ||
-    (req.socket && req.socket.encrypted ? 'https' : 'http')
-  const host = getForwardedHeader(req, 'x-forwarded-host') || getHeader(req, 'host')
-  if (!host) throw new Error('Unable to resolve the SSR request host')
-  return `${protocol}://${host}${path}`
-}
-
-function getRequestHeaders (req) {
-  if (!req) return
-
-  const header = {}
-  const cookie = getHeader(req, 'cookie')
-  const authorization = getHeader(req, 'authorization')
-  if (cookie) header.cookie = cookie
-  if (authorization) header.authorization = authorization
-  return Object.keys(header).length ? header : undefined
+  if (!host) {
+    throw new Error('Cannot resolve the API origin from the current SSR request')
+  }
+  return `${protocol}://${host}`
 }
 
 function request (path, req) {
+  const options = {
+    // Browsers and mini programs keep the root-relative URL. Only Node needs an origin.
+    url: `${getServerOrigin(req)}${path}`
+  }
+
+  // Keep request-bound credentials request-bound during SSR as well.
+  if (req && req.headers) {
+    const header = {}
+    if (req.headers.cookie) header.cookie = req.headers.cookie
+    if (req.headers.authorization) header.authorization = req.headers.authorization
+    if (Object.keys(header).length) options.header = header
+  }
+
   return new Promise((resolve, reject) => {
-    const options = {
-      url: resolveUrl(path, req),
+    mpx.request({
+      ...options,
       success: ({ data }) => resolve(data),
       fail: reject
-    }
-    const header = getRequestHeaders(req)
-    if (header) options.header = header
-    mpx.request(options)
+    })
   })
 }
 

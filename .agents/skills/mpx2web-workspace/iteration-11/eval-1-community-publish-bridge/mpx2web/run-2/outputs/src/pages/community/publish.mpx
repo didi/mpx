@@ -86,7 +86,7 @@
 </template>
 
 <script>
-import mpx, { createPage } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
@@ -112,10 +112,16 @@ createPage({
     updateContent (event) {
       this.content = event.detail.value
     },
+    showWebUnavailable (feature) {
+      wx.showToast({
+        title: `Web 端暂不支持${feature}`,
+        icon: 'none'
+      })
+    },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: Web 宿主 Bridge 与地图协议明确后接入位置选择。
-        mpx.showToast({ title: 'Web 端暂不支持选择位置', icon: 'none' })
+        // TODO: 待 Web 宿主明确位置选择 Bridge 或地图协议后接入。
+        this.showWebUnavailable('位置选择')
         return
       }
       wx.chooseLocation({
@@ -127,8 +133,8 @@ createPage({
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO: Web 地图协议明确后接入地图查看。
-        mpx.showToast({ title: 'Web 端暂不支持查看地图', icon: 'none' })
+        // TODO: 待 Web 宿主明确地图查看协议后接入。
+        this.showWebUnavailable('地图查看')
         return
       }
       wx.openLocation({
@@ -140,8 +146,8 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO: Web 宿主 Bridge 与媒体协议明确后接入图片选择。
-        mpx.showToast({ title: 'Web 端暂不支持选择图片', icon: 'none' })
+        // TODO: 待 Web 宿主明确媒体选择 Bridge 或上传协议后接入。
+        this.showWebUnavailable('图片选择')
         return
       }
       wx.chooseMedia({
@@ -165,8 +171,7 @@ createPage({
     submitPost () {
       if (!this.canSubmit || this.submitting) return
       this.submitting = true
-      const api = __mpx_mode__ === 'web' ? mpx : wx
-      api.request({
+      wx.request({
         url: '/api/community/posts',
         method: 'POST',
         data: {
@@ -177,10 +182,10 @@ createPage({
           allowComments: this.allowComments
         },
         success: ({ data }) => {
-          api.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+          wx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
         },
         fail: () => {
-          api.showToast({ title: '发布失败，请重试', icon: 'none' })
+          wx.showToast({ title: '发布失败，请重试', icon: 'none' })
         },
         complete: () => {
           this.submitting = false

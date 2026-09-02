@@ -2,12 +2,20 @@
   "eval_id": 12,
   "eval_name": "web-style-runtime-config",
   "configuration": "no_skill",
+  "run_number": 3,
+  "grading_fingerprint": "51db89c91f5274d91bb5065015821a8c06e5817b673855c5f9aeeb3dbd585601",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 91978
+  },
   "expectations": [
     {
       "id": "t0",
       "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
       "passed": true,
-      "evidence": "outputs/src/pages/portal/index.mpx:92-95 使用 color/background/padding 的 CSS 变量并带回退值：var(--portal-text, #1f2329)、var(--portal-background, #f5f7fa)、var(--portal-space, 24rpx)；101-121、123-134 对 card、mask、dialog 也提供颜色/背景回退。",
+      "evidence": "outputs/src/pages/portal/index.mpx:148-157 为 --portal-text、--portal-background、--portal-space、滚动条变量提供 fallback；185-193 为卡片颜色、背景、边框、圆角提供 fallback；216-232 为按钮主题变量提供 fallback；253、259-264 为弹层遮罩和内容提供 fallback。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -80,23 +88,102 @@
     "pass_rate": 0.5714
   },
   "metrics": {
-    "total_tokens": 62756,
-    "input_tokens": 56644,
-    "output_tokens": 6112,
-    "tool_calls": 3,
-    "duration_ms": 249227,
-    "output_files": 3,
-    "output_lines": 197,
-    "output_nonempty_lines": 186,
-    "output_bytes": 5030
+    "total_tokens": 77449,
+    "input_tokens": 69586,
+    "output_tokens": 7863,
+    "tool_calls": 5,
+    "duration_ms": 213715
   },
   "timing": {
-    "total_tokens": 62756,
-    "duration_ms": 249227,
-    "total_duration_seconds": 249.227,
-    "generation_attempts": 1
+    "total_tokens": 77449,
+    "duration_ms": 213715,
+    "total_duration_seconds": 213.715
   },
-  "execution_metrics": {
-    "total_tool_calls": 3
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/src/pages/portal/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/vue.config.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/public/index.html"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/src/pages/portal/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/vue.config.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/public/index.html",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/src/pages/portal/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3349
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-12-web-style-runtime-config/no_skill/run-3/outputs/public/index.html"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "修正 transRpxFn 对 0 的处理，例如 value 为 0 时直接返回 0。",
+      "将 hover、滚动条和 safe-area 等浏览器私有样式做 Web-only 隔离。",
+      "滚动锁补充记录并恢复应用挂载容器 #app 的 overflow。"
+    ],
+    "overall": "主要功能有改善，但 rpx 零值、Web 样式隔离和挂载容器滚动锁恢复未完全满足验收要求。"
   }
 }

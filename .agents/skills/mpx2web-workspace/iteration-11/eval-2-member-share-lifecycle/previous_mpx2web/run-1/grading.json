@@ -1,13 +1,21 @@
 {
   "eval_id": 2,
   "eval_name": "member-share-lifecycle",
-  "configuration": "old_skill",
+  "configuration": "previous_mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "e0be19876297f5c1e0389ecd96048f83b648e3a3149df9308e28e7edc5bca0ad",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 61672
+  },
   "expectations": [
     {
       "id": "s0",
       "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:48 保留微信按钮 `<button @wx class=\"share-button\" open-type=\"share\">分享给好友</button>`；outputs/src/pages/member/invite.mpx:140-153 保留 `onShareAppMessage () { ... }` 与 `onShareTimeline () { ... }`。",
+      "evidence": "outputs/src/pages/member/invite.mpx:48 保留微信小程序分享按钮 `<button @wx ... open-type=\"share\">分享给好友</button>`；outputs/src/pages/member/invite.mpx:140-153 保留 `onShareAppMessage` 与 `onShareTimeline`。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -26,7 +34,7 @@
       "id": "s2",
       "text": "Web 分享入口绑定独立的页面实例方法",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:49 Web 入口为 `<button @web class=\"share-button\" bindtap=\"shareOnWeb\">分享邀请活动</button>`；outputs/src/pages/member/invite.mpx:165-167 在 `methods` 中定义独立实例方法 `shareOnWeb () { ... }`。",
+      "evidence": "outputs/src/pages/member/invite.mpx:49 Web 分享入口为 `<button @web ... @tap@web=\"shareOnWeb\">`；outputs/src/pages/member/invite.mpx:165-167 定义独立页面实例方法 `shareOnWeb`。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -35,7 +43,7 @@
       "id": "s3",
       "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:165-167 `shareOnWeb () { // TODO: 待业务提供 Web 分享 SDK、宿主 Bridge 或降级协议后接入。 }`，方法体仅保留待接入边界，没有调用 SDK 或 Bridge。",
+      "evidence": "outputs/src/pages/member/invite.mpx:165-167 的 `shareOnWeb` 仅保留注释边界 `TODO: 接入业务提供的 Web 分享 SDK、宿主 Bridge 或明确的降级协议。`，未调用未声明 SDK 或 Bridge。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -44,16 +52,16 @@
       "id": "s4",
       "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:165-167 `shareOnWeb` 方法体只有待接入 TODO 注释；outputs/src/pages/member/invite.mpx 全文件未出现 `navigator.share`、`clipboard` 或复制链接相关调用。",
+      "evidence": "outputs/src/pages/member/invite.mpx 全文未出现 `navigator.share`、`clipboard`、`writeText`、复制链接等浏览器原生降级实现；`shareOnWeb` 为空边界注释。",
       "verification_methods": [
         "independent_code_review"
       ]
     },
     {
       "id": "s5",
-      "text": "详情跳转与请求使用 Mpx/api-proxy 统一入口，不直接调用 wx",
+      "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:74 `import mpx, { createPage, implement } from '@mpxjs/core'`；outputs/src/pages/member/invite.mpx:155-163 请求使用 `mpx.request({ ... })`；outputs/src/pages/member/invite.mpx:168-172 跳转使用 `mpx.navigateTo({ ... })`；全文件未直接调用 `wx` API。",
+      "evidence": "outputs/src/pages/member/invite.mpx:74 从 `@mpxjs/core` 引入 `mpx`；outputs/src/pages/member/invite.mpx:155-163 请求使用 `mpx.request`；outputs/src/pages/member/invite.mpx:168-172 跳转使用 `mpx.navigateTo`，未改为 `fetch`、`location.href` 等浏览器原生平行实现。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -62,7 +70,7 @@
       "id": "s6",
       "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:13-24 渲染会员邀请进度 `inviteCount`、`inviteGoal`、`invitePercent`；outputs/src/pages/member/invite.mpx:32-37 渲染奖励阶梯 `campaign.rewards`；outputs/src/pages/member/invite.mpx:53-69 渲染最近邀请列表 `invitees`；outputs/src/pages/member/invite.mpx:99-127 提供 campaign rewards 与 invitees 数据。",
+      "evidence": "outputs/src/pages/member/invite.mpx:13-24 保留会员邀请进度；outputs/src/pages/member/invite.mpx:99-108 保留奖励阶梯数据且模板 32-37 渲染 `campaign.rewards`；outputs/src/pages/member/invite.mpx:112-127 保留最近邀请列表数据且模板 53-68 渲染 `invitees` 与空态。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -75,23 +83,73 @@
     "pass_rate": 1.0
   },
   "metrics": {
-    "total_tokens": 598296,
-    "input_tokens": 589395,
-    "output_tokens": 8901,
-    "tool_calls": 12,
-    "duration_ms": 390236,
-    "output_files": 1,
-    "output_lines": 430,
-    "output_nonempty_lines": 380,
-    "output_bytes": 8697
+    "total_tokens": 520125,
+    "input_tokens": 511517,
+    "output_tokens": 8608,
+    "tool_calls": 13,
+    "duration_ms": 213355
   },
   "timing": {
-    "total_tokens": 598296,
-    "duration_ms": 390236,
-    "total_duration_seconds": 390.236,
-    "generation_attempts": 1
+    "total_tokens": 520125,
+    "duration_ms": 213355,
+    "total_duration_seconds": 213.355
   },
-  "execution_metrics": {
-    "total_tool_calls": 12
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-2-member-share-lifecycle/previous_mpx2web/run-1/outputs/src/pages/member/invite.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-2-member-share-lifecycle/previous_mpx2web/run-1/outputs/src/pages/member/invite.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-2-member-share-lifecycle/previous_mpx2web/run-1/outputs/src/pages/member/invite.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3405
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言未要求提供实际 Web 分享协议或验证编译产物；本次仅能依据 .mpx 源码中的平台隔离与方法边界判定。"
+    ],
+    "overall": "候选输出满足全部断言，未虚构 Web 分享能力，且保留邀请页核心业务与 Mpx API 链路。"
   }
 }

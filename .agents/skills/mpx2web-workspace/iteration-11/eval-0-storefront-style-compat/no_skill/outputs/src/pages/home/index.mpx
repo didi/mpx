@@ -22,6 +22,7 @@
 
     <view class="product-grid">
       <product-card
+        class="home-product-card-host"
         wx:for="{{products}}"
         wx:key="id"
         product="{{item}}"
@@ -119,35 +120,34 @@ createPage({
   min-height: 100vh;
   padding: 24rpx;
   background: #f6f7fb;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
-.home-header {
+.home-page > .home-header {
+  box-sizing: border-box;
   padding: 24rpx;
   background: #ffffff;
   border-radius: 24rpx;
 }
 
-.home-title-row {
+.home-header > .home-title-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 20rpx;
 }
 
-.home-title {
+.home-title-row > .home-title {
   color: #e64340;
   font-size: 40rpx;
   font-weight: bold;
 }
 
-.home-subtitle {
+.home-title-row > .home-subtitle {
   color: #8a8f99;
   font-size: 24rpx;
 }
 
-.home-banner {
+.home-header > .home-banner {
   display: block;
   box-sizing: border-box;
   width: 100%;
@@ -156,15 +156,16 @@ createPage({
   border-radius: 0;
 }
 
-.category-tabs {
+.home-page > .category-tabs {
   display: flex;
+  box-sizing: border-box;
   margin: 24rpx 0;
   padding: 12rpx;
   background: #ffffff;
   border-radius: 18rpx;
 }
 
-.category-tab {
+.category-tabs > .category-tab {
   flex: 1;
   padding: 14rpx 0;
   color: #666666;
@@ -172,19 +173,26 @@ createPage({
   text-align: center;
 }
 
-.category-tab.active {
+.category-tabs > .category-tab.active {
   color: #e64340;
   font-weight: bold;
 }
 
-.product-grid {
+.home-page > .product-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
 }
 
-.loading-row,
-.empty-state {
+.product-grid > .home-product-card-host {
+  display: block;
+  flex: 0 0 338rpx;
+  width: 338rpx;
+  min-width: 0;
+}
+
+.home-page > .loading-row,
+.home-page > .empty-state {
   padding: 64rpx 0;
   color: #999999;
   font-size: 26rpx;

@@ -11,7 +11,8 @@
 </template>
 
 <script>
-import mpx, { createPage } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
+import { navigateTo, showToast } from '@mpxjs/api-proxy'
 import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
 
 createPage({
@@ -22,49 +23,85 @@ createPage({
   },
   async onLoad () {
     this.suggestionRequest = null
-    this.trendingKeywords = await fetchTrendingKeywords()
+    this.searchVersion = 0
+    this.isUnloaded = false
+
+    try {
+      const trendingKeywords = await fetchTrendingKeywords()
+      if (!this.isUnloaded) {
+        this.trendingKeywords = trendingKeywords
+      }
+    } catch (error) {
+      if (!this.isUnloaded) {
+        this.showError('趋势词加载失败')
+      }
+    }
   },
   onUnload () {
-    this.cancelSuggestionRequest()
+    this.isUnloaded = true
+    this.searchVersion += 1
+    this.abortSuggestionRequest()
   },
   methods: {
     onKeywordInput (event) {
-      this.search(event.detail.value.trim())
+      this.search(event.detail.value)
     },
     chooseKeyword (keyword) {
       this.search(keyword)
     },
-    cancelSuggestionRequest () {
-      const request = this.suggestionRequest
-      this.suggestionRequest = null
-      if (request && request.__returned) request.__returned.abort()
-    },
     search (keyword) {
-      this.keyword = keyword
-      this.cancelSuggestionRequest()
-      if (!keyword) {
+      const normalizedKeyword = keyword.trim()
+      const currentVersion = ++this.searchVersion
+
+      this.keyword = normalizedKeyword
+      this.abortSuggestionRequest()
+
+      if (!normalizedKeyword) {
         this.suggestions = []
         return
       }
 
-      const request = requestSuggestions(keyword)
-      this.suggestionRequest = request
-      request.then(({ data }) => {
-        if (this.suggestionRequest !== request) return
+      this.suggestions = []
+      const suggestionRequest = requestSuggestions(normalizedKeyword)
+      this.suggestionRequest = suggestionRequest
+
+      suggestionRequest.promise.then(
+        (suggestions) => {
+          if (!this.isUnloaded && currentVersion === this.searchVersion) {
+            this.suggestions = suggestions
+          }
+          this.finishSuggestionRequest(currentVersion)
+        },
+        () => {
+          if (!this.isUnloaded && currentVersion === this.searchVersion) {
+            this.showError('搜索失败')
+          }
+          this.finishSuggestionRequest(currentVersion)
+        }
+      )
+    },
+    abortSuggestionRequest () {
+      if (this.suggestionRequest) {
+        this.suggestionRequest.abort()
         this.suggestionRequest = null
-        this.suggestions = data.list
-      }, () => {
-        if (this.suggestionRequest !== request) return
+      }
+    },
+    finishSuggestionRequest (version) {
+      if (version === this.searchVersion) {
         this.suggestionRequest = null
-        mpx.showToast({
-          title: '搜索失败',
-          icon: 'none'
-        })
-      })
+      }
+    },
+    showError (message) {
+      showToast({
+        title: message,
+        icon: 'none'
+      }).catch(() => {})
     },
     openProduct (productId) {
-      return mpx.navigateTo({
-        url: `/pages/product/detail?id=${productId}`
+      navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+      }).catch(() => {
+        this.showError('跳转失败')
       })
     }
   }

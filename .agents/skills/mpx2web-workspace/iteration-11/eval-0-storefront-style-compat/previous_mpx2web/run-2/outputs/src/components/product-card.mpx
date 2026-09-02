@@ -167,14 +167,18 @@ createComponent({
 </style>
 
 <style mode="web" scoped>
+.price-tag {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
 .currency,
 .unit {
   display: inline-block;
   flex: 0 0 12px;
   width: 12px;
-  margin-right: -2px;
+  margin-inline-end: -2px;
   font-size: 12px;
-  line-height: 16.8px;
   transform: scale(0.833333);
   transform-origin: left bottom;
 }

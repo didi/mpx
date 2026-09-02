@@ -1,18 +1,19 @@
 <template>
   <view class="product-video">
     <video
+      class="video"
       id="product-video-{{product.id}}"
-      class="product-media"
       src="{{product.video}}"
-      autoplay
-      muted="{{__mpx_mode__ === 'web'}}"
-      playsinline
-      enable-danmu="{{__mpx_mode__ !== 'web'}}"
+      autoplay="{{true}}"
+      muted="{{true}}"
+      controls="{{true}}"
+      enable-danmu="{{true}}"
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
-    <text>{{progress}} / {{duration}}</text>
+    <text wx:if="{{!videoError}}">{{progress}} / {{duration}}</text>
+    <text wx:else class="video-error">视频加载失败</text>
   </view>
 </template>
 
@@ -26,33 +27,36 @@ createComponent({
   data: {
     progress: 0,
     duration: 0,
-    videoSize: ''
+    videoSize: '',
+    videoError: false
   },
   methods: {
     onTimeUpdate (event) {
-      const detail = event.detail || {}
-      const target = event.target || {}
-      this.progress = detail.currentTime === undefined ? target.currentTime : detail.currentTime
-      this.duration = detail.duration === undefined ? target.duration : detail.duration
+      this.progress = event.detail.currentTime
+      this.duration = event.detail.duration
     },
     onLoadedMetadata (event) {
-      const detail = event.detail || {}
-      const target = event.target || {}
-      const width = detail.width === undefined ? target.videoWidth : detail.width
-      const height = detail.height === undefined ? target.videoHeight : detail.height
-      this.videoSize = `${width}x${height}`
-      if (detail.duration === undefined && target.duration !== undefined) {
-        this.duration = target.duration
-      }
+      this.videoSize = `${event.detail.width}x${event.detail.height}`
+      this.videoError = false
     },
-    onVideoError () {}
+    onVideoError () {
+      this.videoError = true
+    }
   }
 })
 </script>
 
 <style scoped>
 .product-video,
-.product-media {
+.video {
   width: 100%;
+}
+
+.video {
+  display: block;
+}
+
+.video-error {
+  color: #999;
 }
 </style>

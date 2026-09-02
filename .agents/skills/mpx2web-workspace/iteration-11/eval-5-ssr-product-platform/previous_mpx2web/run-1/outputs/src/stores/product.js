@@ -11,22 +11,34 @@ export const useProductStore = defineStore('product-platform', {
   }),
   actions: {
     async loadProduct (productId, requestContext) {
-      if (this.loaded && this.productId === productId) return
+      const normalizedProductId = productId == null ? '' : String(productId)
+
+      if (this.loaded && this.productId === normalizedProductId) {
+        return true
+      }
 
       const requestVersion = ++this.requestVersion
-      this.productId = productId
+      this.productId = normalizedProductId
       this.product = {}
       this.recommendations = []
       this.loaded = false
+
       const [product, recommendations] = await Promise.all([
-        fetchProduct(productId, requestContext),
-        fetchRecommendations(productId, requestContext)
+        fetchProduct(normalizedProductId, requestContext),
+        fetchRecommendations(normalizedProductId, requestContext)
       ])
 
-      if (requestVersion !== this.requestVersion || this.productId !== productId) return
+      if (
+        requestVersion !== this.requestVersion ||
+        this.productId !== normalizedProductId
+      ) {
+        return false
+      }
+
       this.product = product
       this.recommendations = recommendations
       this.loaded = true
+      return true
     }
   }
 })

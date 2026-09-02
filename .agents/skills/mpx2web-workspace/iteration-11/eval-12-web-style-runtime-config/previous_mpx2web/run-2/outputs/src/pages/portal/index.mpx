@@ -4,7 +4,7 @@
     <button bindtap="toggleTheme">切换主题</button>
     <button bindtap="openDialog">打开弹层</button>
     <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
-      <view class="dialog">门户设置</view>
+      <view class="dialog" tabindex@web="-1" role@web="dialog" aria-modal@web="true">门户设置</view>
     </view>
   </view>
 </template>
@@ -12,49 +12,157 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
-const isWeb = __mpx_mode__ === 'web'
-let scrollLockState
+const dialogStates = new WeakMap()
+const bodyLockProperties = ['position', 'top', 'left', 'right', 'width', 'overflow']
+const focusableSelector = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])'
+].join(',')
 
-function lockPageScroll () {
-  if (!isWeb || scrollLockState) return
-
-  const bodyStyle = document.body.style
-  const htmlStyle = document.documentElement.style
-  scrollLockState = {
-    x: window.scrollX,
-    y: window.scrollY,
-    bodyPosition: bodyStyle.position,
-    bodyTop: bodyStyle.top,
-    bodyLeft: bodyStyle.left,
-    bodyRight: bodyStyle.right,
-    bodyWidth: bodyStyle.width,
-    bodyOverflow: bodyStyle.overflow,
-    htmlOverflow: htmlStyle.overflow
-  }
-  bodyStyle.position = 'fixed'
-  bodyStyle.top = `-${scrollLockState.y}px`
-  bodyStyle.left = `-${scrollLockState.x}px`
-  bodyStyle.right = '0'
-  bodyStyle.width = '100%'
-  bodyStyle.overflow = 'hidden'
-  htmlStyle.overflow = 'hidden'
+function isWebBrowser () {
+  return __mpx_mode__ === 'web' && typeof window !== 'undefined' && typeof document !== 'undefined'
 }
 
-function unlockPageScroll () {
-  if (!isWeb || !scrollLockState) return
+function getDialogState (page) {
+  let state = dialogStates.get(page)
+  if (!state) {
+    state = {}
+    dialogStates.set(page, state)
+  }
+  return state
+}
 
-  const state = scrollLockState
-  const bodyStyle = document.body.style
-  const htmlStyle = document.documentElement.style
-  scrollLockState = null
-  bodyStyle.position = state.bodyPosition
-  bodyStyle.top = state.bodyTop
-  bodyStyle.left = state.bodyLeft
-  bodyStyle.right = state.bodyRight
-  bodyStyle.width = state.bodyWidth
-  bodyStyle.overflow = state.bodyOverflow
-  htmlStyle.overflow = state.htmlOverflow
-  window.scrollTo(state.x, state.y)
+function captureInlineProperty (element, property) {
+  return {
+    property,
+    value: element.style.getPropertyValue(property),
+    priority: element.style.getPropertyPriority(property)
+  }
+}
+
+function restoreInlineProperty (element, snapshot) {
+  if (snapshot.value) {
+    element.style.setProperty(snapshot.property, snapshot.value, snapshot.priority)
+  } else {
+    element.style.removeProperty(snapshot.property)
+  }
+}
+
+function focusWithoutScrolling (element) {
+  if (!element || typeof element.focus !== 'function') return
+  try {
+    element.focus({ preventScroll: true })
+  } catch (error) {
+    element.focus()
+  }
+}
+
+function lockWebPage (page) {
+  if (!isWebBrowser() || !document.body || !document.documentElement) return
+  const state = getDialogState(page)
+  if (state.scrollLock) return
+
+  const body = document.body
+  const root = document.documentElement
+  const scrollX = window.pageXOffset || root.scrollLeft || 0
+  const scrollY = window.pageYOffset || root.scrollTop || 0
+
+  state.scrollLock = {
+    body,
+    root,
+    scrollX,
+    scrollY,
+    bodyStyles: bodyLockProperties.map((property) => captureInlineProperty(body, property)),
+    rootOverflow: captureInlineProperty(root, 'overflow'),
+    rootScrollBehavior: captureInlineProperty(root, 'scroll-behavior')
+  }
+
+  root.style.setProperty('overflow', 'hidden')
+  body.style.setProperty('position', 'fixed')
+  body.style.setProperty('top', `${-scrollY}px`)
+  body.style.setProperty('left', `${-scrollX}px`)
+  body.style.setProperty('right', '0')
+  body.style.setProperty('width', '100%')
+  body.style.setProperty('overflow', 'hidden')
+}
+
+function unlockWebPage (page) {
+  const state = dialogStates.get(page)
+  if (!state || !state.scrollLock) return
+
+  const lock = state.scrollLock
+  state.scrollLock = null
+  lock.bodyStyles.forEach((snapshot) => restoreInlineProperty(lock.body, snapshot))
+  restoreInlineProperty(lock.root, lock.rootOverflow)
+  lock.root.style.setProperty('scroll-behavior', 'auto')
+  window.scrollTo(lock.scrollX, lock.scrollY)
+  restoreInlineProperty(lock.root, lock.rootScrollBehavior)
+}
+
+function removeDialogKeyboardListener (state) {
+  if (!state || !state.keydownHandler || !isWebBrowser()) return
+  document.removeEventListener('keydown', state.keydownHandler)
+  state.keydownHandler = null
+}
+
+function activateWebDialog (page) {
+  if (!isWebBrowser() || !page.dialogVisible) return
+  const state = getDialogState(page)
+  const dialog = document.querySelector('.dialog-mask .dialog')
+  if (!dialog) return
+
+  removeDialogKeyboardListener(state)
+  state.dialogElement = dialog
+  state.keydownHandler = (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      page.closeDialog()
+      return
+    }
+    if (event.key !== 'Tab') return
+
+    const focusableElements = Array.prototype.filter.call(
+      dialog.querySelectorAll(focusableSelector),
+      (element) => element.offsetParent !== null
+    )
+    if (!focusableElements.length) {
+      event.preventDefault()
+      focusWithoutScrolling(dialog)
+      return
+    }
+
+    const first = focusableElements[0]
+    const last = focusableElements[focusableElements.length - 1]
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      focusWithoutScrolling(last)
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      focusWithoutScrolling(first)
+    }
+  }
+  document.addEventListener('keydown', state.keydownHandler)
+  focusWithoutScrolling(dialog)
+}
+
+function cleanupWebDialog (page, restoreFocus) {
+  const state = dialogStates.get(page)
+  if (!state) return
+
+  const triggerElement = state.triggerElement
+  removeDialogKeyboardListener(state)
+  unlockWebPage(page)
+  dialogStates.delete(page)
+
+  if (restoreFocus && triggerElement && triggerElement.isConnected) {
+    page.$nextTick(() => {
+      if (triggerElement.isConnected) focusWithoutScrolling(triggerElement)
+    })
+  }
 }
 
 createPage({
@@ -63,25 +171,31 @@ createPage({
     dialogVisible: false,
     dark: false
   },
-  onShow () {
-    if (this.dialogVisible) lockPageScroll()
-  },
   onHide () {
-    unlockPageScroll()
+    this.dialogVisible = false
+    cleanupWebDialog(this, false)
   },
   onUnload () {
-    unlockPageScroll()
+    cleanupWebDialog(this, false)
   },
   methods: {
     openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
     toggleTheme () { this.dark = !this.dark },
     openDialog () {
+      if (this.dialogVisible) return
+      if (isWebBrowser()) {
+        const state = getDialogState(this)
+        state.triggerElement = document.activeElement
+        lockWebPage(this)
+      }
       this.dialogVisible = true
-      lockPageScroll()
+      if (isWebBrowser()) {
+        this.$nextTick(() => activateWebDialog(this))
+      }
     },
     closeDialog () {
       this.dialogVisible = false
-      unlockPageScroll()
+      cleanupWebDialog(this, true)
     }
   }
 })
@@ -89,6 +203,7 @@ createPage({
 
 <style scoped>
 .portal {
+  box-sizing: border-box;
   min-height: 100vh;
   color: var(--portal-text, #1f2329);
   background: var(--portal-background, #f5f7fa);
@@ -99,28 +214,40 @@ createPage({
 
 <style mode="web">
 .portal {
-  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom, 0px));
 }
+
 @media (hover: hover) and (pointer: fine) {
   .portal-card {
+    cursor: pointer;
     transition: transform 0.2s ease;
   }
+
   .portal-card:hover {
     transform: translateY(-2px);
   }
-  html {
-    scrollbar-color: var(--portal-scrollbar-thumb, #a8abb2) var(--portal-scrollbar-track, transparent);
+
+  html,
+  body {
+    scrollbar-color: rgba(31, 35, 41, 0.45) transparent;
     scrollbar-width: thin;
   }
-  html::-webkit-scrollbar {
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
-  html::-webkit-scrollbar-track {
-    background: var(--portal-scrollbar-track, transparent);
-  }
-  html::-webkit-scrollbar-thumb {
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    background: rgba(31, 35, 41, 0.45);
     border-radius: 3px;
-    background: var(--portal-scrollbar-thumb, #a8abb2);
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    background: transparent;
   }
 }
 </style>

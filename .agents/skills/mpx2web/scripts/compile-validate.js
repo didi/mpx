@@ -5,6 +5,7 @@ const fs = require('fs')
 const path = require('path')
 const os = require('os')
 const crypto = require('crypto')
+const validateConditionalCompile = require('./validate-conditional-compile')
 
 class MpxCliNotFoundError extends Error {
   constructor (msg) { super(msg); this.name = 'MpxCliNotFoundError' }
@@ -125,6 +126,15 @@ async function compileValidate (input, options = {}) {
     if (!fs.existsSync(p) || !fs.statSync(p).isFile()) {
       throw new InvalidInputError(`输入不是有效文件: ${p}`)
     }
+  }
+  const invalidConditions = mpxPaths.flatMap(p => {
+    const result = validateConditionalCompile(p)
+    return result.errors.map(error => `${result.file}:${error.line} ${error.message}`)
+  })
+  if (invalidConditions.length) {
+    throw new InvalidInputError(
+      `检测到无效的条件编译注释：\n- ${invalidConditions.join('\n- ')}`
+    )
   }
 
   const {

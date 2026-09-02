@@ -42,7 +42,7 @@
     },
     {
       "id": "s5",
-      "text": "详情跳转与请求使用 Mpx/api-proxy 统一入口，不直接调用 wx",
+      "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
       "category": "web-api"
     },
     {

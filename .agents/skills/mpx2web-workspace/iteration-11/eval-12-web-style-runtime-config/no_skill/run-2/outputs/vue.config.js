@@ -4,9 +4,12 @@ module.exports = {
     mpx: {
       plugin: {
         webConfig: {
-          routeConfig: { mode: 'history', base: '/portal/' },
+          routeConfig: {
+            mode: 'history',
+            base: '/portal/'
+          },
           transRpxFn: function (match, value) {
-            return `${value / 100}rem`
+            return `${value * 0.01}rem`
           }
         }
       }

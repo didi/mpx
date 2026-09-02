@@ -1,7 +1,9 @@
 <script>
-import { createApp } from '@mpxjs/core'
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
 import { createPinia } from '@mpxjs/pinia'
-import mpx from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy)
 
 createApp({
   onAppInit () {
@@ -10,7 +12,9 @@ createApp({
     }
   },
   onLaunch () {
-    if (__mpx_mode__ === 'wx') mpx.reportAnalytics('mall_launch', {})
+    if (__mpx_mode__ === 'wx') {
+      wx.reportAnalytics('mall_launch', {})
+    }
   }
 })
 </script>

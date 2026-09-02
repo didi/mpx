@@ -17,7 +17,9 @@ createPage({
   methods: {
     confirm (address) {
       const eventChannel = this.getOpenerEventChannel()
-      eventChannel.emit('addressSelected', address)
+      if (eventChannel) {
+        eventChannel.emit('addressSelected', address)
+      }
       mpx.navigateBack({ delta: 1 })
     }
   }

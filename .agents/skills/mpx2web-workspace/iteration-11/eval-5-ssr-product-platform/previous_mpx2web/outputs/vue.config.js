@@ -4,7 +4,11 @@ module.exports = {
     mpx: {
       plugin: {
         webConfig: {
-          useSSR: true
+          useSSR: true,
+          routeConfig: {
+            mode: 'history',
+            base: '/mall/'
+          }
         }
       }
     }

@@ -1,24 +1,35 @@
 import mpx from '@mpxjs/api-proxy'
 
-function getHeaderValue (value) {
-  if (Array.isArray(value)) return value[0]
-  return value && value.split(',')[0].trim()
+function firstHeaderValue (value) {
+  const header = Array.isArray(value) ? value[0] : value
+  return typeof header === 'string' ? header.split(',')[0].trim() : ''
 }
 
-function getRequestUrl (path, req) {
-  if (!req) return path
+function getRequestOrigin (req) {
+  if (!req) return ''
 
   const headers = req.headers || {}
-  const protocol = getHeaderValue(headers['x-forwarded-proto']) || req.protocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
-  const host = getHeaderValue(headers['x-forwarded-host']) || getHeaderValue(headers.host)
-  if (!host) throw new Error('Cannot resolve API origin from the SSR request')
-  return `${protocol}://${host}${path}`
+  const forwardedProtocol = firstHeaderValue(headers['x-forwarded-proto'])
+  const protocol = forwardedProtocol || req.protocol ||
+    ((req.socket && req.socket.encrypted) ? 'https' : 'http')
+  const forwardedHost = firstHeaderValue(headers['x-forwarded-host'])
+  const host = forwardedHost || firstHeaderValue(headers.host) ||
+    firstHeaderValue(headers[':authority'])
+
+  if (!/^(https?|HTTP|HTTPS)$/.test(protocol) || !host || /[\s/\\]/.test(host)) {
+    throw new Error('Unable to resolve a safe API origin from the SSR request')
+  }
+
+  return `${protocol.toLowerCase()}://${host}`
 }
 
 function request (path, req) {
+  const origin = getRequestOrigin(req)
+
   return new Promise((resolve, reject) => {
     mpx.request({
-      url: getRequestUrl(path, req),
+      url: origin ? `${origin}${path}` : path,
+      method: 'GET',
       success: ({ data }) => resolve(data),
       fail: reject
     })

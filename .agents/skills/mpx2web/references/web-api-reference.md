@@ -45,7 +45,13 @@
 
 ## 使用说明
 
-输出 Web 时，在应用入口执行 `mpx.use(apiProxy, options)`，即可通过 `mpx.xxx` 使用本参考中列出的 Web 环境 API。
+输出 Web 时，Mpx 提供三种官方 API 调用路径：
+
+- `srcMode: 'wx'` 的业务源码可以保留 `wx.xxx`。跨平台输出时，webpack-plugin 默认会在 `transMpxRules` 命中的模块中将宿主全局调用转换到 Mpx API。
+- 已经采用 `mpx.xxx` 的项目可以在应用入口执行 `mpx.use(apiProxy, options)`，继续使用本参考中列出的 Web 环境 API。
+- 也可以从 `@mpxjs/api-proxy` 命名导入 API；这种调用不经过应用级 `mpx.use`，因此不会继承其 `options`、`custom` 和 Promise 化设置。对于 `request` 等任务 API，原始命名导入会直接返回任务实例。
+
+不要仅因为输出 Web，就机械地把 `wx.xxx` 全部改成 `mpx.xxx`，或反向改写已有的 `mpx.xxx`。先确认项目的 `srcMode`、`transMpxRules` 和现有 API 接入方式，再保持原调用链。
 
 ```js
 import mpx from '@mpxjs/core'
@@ -69,10 +75,10 @@ mpx.use(apiProxy, {
 
 ### 跨平台 API 改造决策
 
-- 先查本文支持范围。API Proxy 已支持的能力在所有目标继续调用完成 `mpx.use(apiProxy, options)` 配置的 `mpx.xxx`，不要因为输出 Web 而增加平台分支。
+- 先查本文支持范围。API Proxy 已支持的能力继续走项目已有的官方调用路径：可保留会被跨端编译转换的 `wx.xxx`，可沿用应用入口配置后的 `mpx.xxx`，也可在不依赖应用级配置时使用 `@mpxjs/api-proxy` 命名导入。不要因为输出 Web 而增加平台分支或机械改名。
 - 只有 Web 不支持的宿主能力才做最小范围条件编译；业务未提供 Bridge 或 SDK 协议时只保留 TODO，不虚构接口。
-- 不要从 `@mpxjs/api-proxy` 命名导入 `request`、`redirectTo`、`showToast` 等原始实现替代 `mpx.xxx`，否则会绕过应用入口的 `options`、`custom` 与 Promise 化配置。
-- 不为已支持 API 再增加 `fetch`、浏览器跳转、弹窗或通用平台包装层；保持原业务调用链，只隔离真正缺失的能力。
+- 命名导入是官方用法，但它不继承应用入口的 `options`、`custom` 与 Promise 化配置。只有调用不依赖这些配置时才沿用或采用命名导入；依赖统一配置时使用应用级 `mpx.xxx`，或保留会被编译转换的宿主调用。
+- 不为已支持 API 再增加 `fetch`、浏览器跳转、弹窗或无业务协议的通用包装层；保持原业务调用链，只隔离真正缺失的能力。
 
 ### options
 
@@ -87,11 +93,11 @@ mpx.use(apiProxy, {
 
 同步 API、监听 API、名称以 `create` 开头的上下文工厂、名称以 `Sync` 结尾的 API，以及内置黑名单中的 API 默认不会 Promise 化。单次调用可在第一个参数对象中传入 `usePromise: false`，临时保留回调风格。
 
-`request`、`connectSocket` 等 API 可返回任务实例；开启 `usePromise: true` 后按 Promise 风格获取异步结果。需要操作任务实例时，优先使用回调风格调用。
+`request`、`connectSocket` 等 API 可返回任务实例。开启 `usePromise: true` 后，Promise 的 `__returned` 属性保留原始任务实例；需要取消任务时，可以通过 `promise.__returned.abort()` 操作。也可以为单次应用级调用传入 `usePromise: false`，或直接使用不经过 Promise 化的原始命名导入，取得任务实例并使用回调。这些都是框架支持的契约，应根据当前调用链选择，不要为了固定写法强制互换。
 
 ### 支持范围
 
-本文展开说明的 API 可在 Web 使用。未在本文列出的 `mpx.xxx` API，默认按 Web 不支持处理；业务未指定 Web 实现时预留 TODO。
+本文展开说明的 API 可在 Web 使用。未在本文列出的 Mpx/API Proxy API，默认按 Web 不支持处理；业务未指定 Web 实现时预留 TODO。
 
 ### 浏览器与 SSR
 

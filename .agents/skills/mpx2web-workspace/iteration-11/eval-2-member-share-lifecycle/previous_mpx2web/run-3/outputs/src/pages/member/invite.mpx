@@ -162,7 +162,7 @@ createPage({
       })
     },
     shareOnWeb () {
-      // TODO: 接入业务提供的 Web 分享 SDK、宿主 Bridge 或降级协议
+      // TODO: 接入业务指定的 Web 分享 SDK、宿主 Bridge 或降级协议。
     },
     openCampaignDetail () {
       mpx.navigateTo({

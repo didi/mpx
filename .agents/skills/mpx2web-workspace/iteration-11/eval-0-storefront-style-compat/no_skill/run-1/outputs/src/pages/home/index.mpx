@@ -1,16 +1,16 @@
 <template>
-  <view class="home-page">
-    <view class="home-header">
-      <view class="home-title-row">
-        <view class="home-title">今日好物</view>
-        <text class="home-subtitle">精选限时优惠</text>
+  <view class="mall-home-page">
+    <view class="mall-home-header">
+      <view class="mall-home-title-row">
+        <view class="mall-home-title">今日好物</view>
+        <text class="mall-home-subtitle">精选限时优惠</text>
       </view>
-      <image class="home-banner" src="/assets/home/banner.png" mode="aspectFill" />
+      <image class="mall-home-banner" src="/assets/home/banner.png" mode="aspectFill" />
     </view>
 
-    <view class="category-tabs">
+    <view class="mall-home-category-tabs">
       <view
-        class="category-tab"
+        class="mall-home-category-tab"
         wx:for="{{categories}}"
         wx:key="id"
         wx:class="{{ {active: item.id === activeCategory} }}"
@@ -20,7 +20,7 @@
       </view>
     </view>
 
-    <view class="product-grid">
+    <view class="mall-home-product-grid">
       <product-card
         wx:for="{{products}}"
         wx:key="id"
@@ -30,10 +30,10 @@
       />
     </view>
 
-    <view wx:if="{{loading}}" class="loading-row">
+    <view wx:if="{{loading}}" class="mall-home-loading-row">
       <text>商品加载中...</text>
     </view>
-    <view wx:elif="{{!products.length}}" class="empty-state">
+    <view wx:elif="{{!products.length}}" class="mall-home-empty-state">
       <text>当前分类暂无商品</text>
     </view>
   </view>
@@ -113,54 +113,60 @@ createPage({
 })
 </script>
 
-<style scoped>
-.home-page {
+<style>
+.mall-home-page {
   box-sizing: border-box;
   min-height: 100vh;
   padding: 24rpx;
   background: #f6f7fb;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
-.home-header {
+.mall-home-header {
+  box-sizing: border-box;
   padding: 24rpx;
   background: #ffffff;
   border-radius: 24rpx;
 }
 
-.home-title-row {
+.mall-home-title-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 20rpx;
 }
 
-.home-title {
+.mall-home-title {
   color: #e64340;
   font-size: 40rpx;
   font-weight: bold;
 }
 
-.home-subtitle {
+.mall-home-subtitle {
   color: #8a8f99;
   font-size: 24rpx;
 }
 
-.home-banner {
+.mall-home-banner {
   display: block;
+  box-sizing: border-box;
   width: 100%;
   height: 220rpx;
+  border: 0;
   border-radius: 18rpx;
 }
 
-.category-tabs {
+.mall-home-category-tabs {
   display: flex;
+  box-sizing: border-box;
   margin: 24rpx 0;
   padding: 12rpx;
   background: #ffffff;
   border-radius: 18rpx;
 }
 
-.category-tab {
+.mall-home-category-tab {
   flex: 1;
   padding: 14rpx 0;
   color: #666666;
@@ -168,19 +174,20 @@ createPage({
   text-align: center;
 }
 
-.category-tab.active {
+.mall-home-category-tab.active {
   color: #e64340;
   font-weight: bold;
 }
 
-.product-grid {
+.mall-home-product-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  width: 100%;
 }
 
-.loading-row,
-.empty-state {
+.mall-home-loading-row,
+.mall-home-empty-state {
   padding: 64rpx 0;
   color: #999999;
   font-size: 26rpx;

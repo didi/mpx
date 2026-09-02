@@ -1,11 +1,12 @@
 <template>
   <view class="product-video">
     <video
+      class="video-player"
       id="product-video"
       src="{{product.video}}"
       autoplay
-      muted@web
-      muted@wx="{{false}}"
+      muted
+      playsinline
       enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
@@ -24,24 +25,28 @@ createComponent({
   },
   data: {
     progress: 0,
-    duration: 0
+    duration: 0,
+    videoSize: ''
   },
   methods: {
     onTimeUpdate (event) {
-      if (__mpx_mode__ === 'web') {
-        this.progress = event.target.currentTime
-        this.duration = event.target.duration
-        return
-      }
-      this.progress = event.detail.currentTime
-      this.duration = event.detail.duration
+      const detail = event.detail || {}
+      const target = event.target || event.currentTarget || {}
+      const currentTime = detail.currentTime != null ? detail.currentTime : target.currentTime
+      const duration = detail.duration != null ? detail.duration : target.duration
+
+      if (Number.isFinite(currentTime)) this.progress = currentTime
+      if (Number.isFinite(duration)) this.duration = duration
     },
     onLoadedMetadata (event) {
-      if (__mpx_mode__ === 'web') {
-        this.videoSize = `${event.target.videoWidth}x${event.target.videoHeight}`
-        return
-      }
-      this.videoSize = `${event.detail.width}x${event.detail.height}`
+      const detail = event.detail || {}
+      const target = event.target || event.currentTarget || {}
+      const width = detail.width != null ? detail.width : target.videoWidth
+      const height = detail.height != null ? detail.height : target.videoHeight
+      const duration = detail.duration != null ? detail.duration : target.duration
+
+      if (width != null && height != null) this.videoSize = `${width}x${height}`
+      if (Number.isFinite(duration)) this.duration = duration
     },
     onVideoError () {}
   }
@@ -49,5 +54,8 @@ createComponent({
 </script>
 
 <style scoped>
-.product-video { width: 100%; }
+.product-video,
+.video-player {
+  width: 100%;
+}
 </style>

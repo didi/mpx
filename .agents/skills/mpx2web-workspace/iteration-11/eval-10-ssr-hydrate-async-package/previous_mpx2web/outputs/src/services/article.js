@@ -1,11 +1,18 @@
-function getRequestOrigin (requestContext) {
-  const req = requestContext && requestContext.req
-  if (!req) return ''
-
-  const protocol = req.headers['x-forwarded-proto'] || (req.socket && req.socket.encrypted ? 'https' : 'http')
-  return `${protocol}://${req.headers.host}`
+function getRequest (requestContext) {
+  if (requestContext && typeof requestContext.fetch === 'function') {
+    return requestContext.fetch.bind(requestContext)
+  }
+  if (requestContext && typeof requestContext.request === 'function') {
+    return requestContext.request.bind(requestContext)
+  }
+  return fetch
 }
 
 export function fetchArticle (articleId, requestContext) {
-  return fetch(`${getRequestOrigin(requestContext)}/api/articles/${articleId}`).then((response) => response.json())
+  const request = getRequest(requestContext)
+  const url = `/api/articles/${encodeURIComponent(articleId)}`
+
+  return Promise.resolve(request(url)).then((response) => {
+    return response && typeof response.json === 'function' ? response.json() : response
+  })
 }

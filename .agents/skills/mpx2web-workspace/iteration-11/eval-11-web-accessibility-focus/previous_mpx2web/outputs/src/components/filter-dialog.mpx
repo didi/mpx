@@ -1,13 +1,13 @@
 <template>
   <view class="filter">
-    <button
+    <view
       class="filter-trigger"
       aria-role="button"
       aria-label="打开商品筛选"
       bindtap="open"
     >
-      筛选
-    </button>
+      <text>筛选</text>
+    </view>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
       <view
         class="dialog"
@@ -15,20 +15,22 @@
         aria-label="商品筛选"
         catchtap="stop"
       >
-        <text class="dialog-title">商品筛选</text>
-        <button
-          wx:for="{{optionStates}}"
+        <view
+          wx:for="{{options}}"
           wx:key="value"
-          wx:class="{{ {selected: item.selected} }}"
           aria-role="checkbox"
-          aria-label="{{item.accessibleLabel}}"
-          aria-checked="{{item.selected}}"
+          aria-label="{{item.label}}"
+          aria-checked="{{selected.indexOf(item.value) !== -1}}"
           bindtap="toggle(item.value)"
         >
-          {{item.label}}
+          <text>{{item.label}}</text>
+        </view>
+        <button aria-label="清空已选筛选项" bindtap="clear">
+          <text>清空</text>
         </button>
-        <button bindtap="clear">清空</button>
-        <button bindtap="confirm">确定</button>
+        <button aria-label="确认商品筛选" bindtap="confirm">
+          <text>确定</text>
+        </button>
       </view>
     </view>
   </view>
@@ -47,17 +49,6 @@ createComponent({
   data: {
     visible: false,
     selected: []
-  },
-  computed: {
-    optionStates () {
-      return this.options.map((item) => {
-        const selected = this.selected.includes(item.value)
-        return Object.assign({}, item, {
-          selected,
-          accessibleLabel: `${item.label}，${selected ? '已选择' : '未选择'}`
-        })
-      })
-    }
   },
   methods: {
     open () {

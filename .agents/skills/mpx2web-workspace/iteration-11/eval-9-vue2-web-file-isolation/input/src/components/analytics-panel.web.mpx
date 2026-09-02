@@ -1,6 +1,20 @@
 <template>
   <view class="analytics-panel-web">
-    <analytics-chart metrics="{{metrics}}" />
+    <scroll-view
+      class="analytics-panel-web__scroll"
+      scroll-x="{{scrollX}}"
+      scroll-y="{{scrollY}}"
+      scroll-top="{{scrollTop}}"
+      scroll-left="{{scrollLeft}}"
+      scroll-into-view="{{activeMetricId}}"
+      upper-threshold="{{edgeThreshold}}"
+      lower-threshold="{{edgeThreshold}}"
+      bindscroll="handleScroll"
+      bindscrolltoupper="handleUpper"
+      bindscrolltolower="handleLower"
+    >
+      <analytics-chart metrics="{{metrics}}" bindselect="handleSelect" />
+    </scroll-view>
   </view>
 </template>
 
@@ -10,11 +24,33 @@ import { createApp } from 'vue'
 import AnalyticsChart from '../web/AnalyticsChart.vue'
 
 createComponent({
-  properties: { metrics: { type: Array, value: () => [] } },
+  properties: {
+    metrics: { type: Array, value: () => [] },
+    scrollX: { type: Boolean, value: true },
+    scrollY: { type: Boolean, value: true },
+    scrollTop: { type: Number, value: 0 },
+    scrollLeft: { type: Number, value: 0 },
+    activeMetricId: { type: String, value: '' },
+    edgeThreshold: { type: Number, value: 24 }
+  },
   attached () {
     this.app = createApp(AnalyticsChart, { metrics: this.metrics })
     this.app.mount(document.querySelector('.analytics-panel-web'))
     this.resizeObserver = new ResizeObserver(() => this.app.resize())
+  },
+  methods: {
+    handleSelect (event) {
+      this.triggerEvent('select', event && event.detail ? event.detail : event)
+    },
+    handleScroll (event) {
+      this.triggerEvent('scroll', event && event.detail ? event.detail : event)
+    },
+    handleUpper (event) {
+      this.triggerEvent('scrolltoupper', event && event.detail ? event.detail : event)
+    },
+    handleLower (event) {
+      this.triggerEvent('scrolltolower', event && event.detail ? event.detail : event)
+    }
   }
 })
 </script>

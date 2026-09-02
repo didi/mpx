@@ -2,6 +2,14 @@
   "eval_id": 10,
   "eval_name": "ssr-hydrate-async-package",
   "configuration": "no_skill",
+  "run_number": 2,
+  "grading_fingerprint": "398371bf9a21ff8e2e798bea396170fe8fe3fd4af8a9578140e1d101ddb16720",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 98796
+  },
   "expectations": [
     {
       "id": "x0",
@@ -36,8 +44,8 @@
     {
       "id": "x3",
       "text": "服务端与客户端首屏结构不由 Math.random、Date.now、new Date、视口或浏览器对象决定；浏览器专属节点只在 mounted/ready 后出现",
-      "passed": true,
-      "evidence": "outputs/src/pages/article/detail.mpx：首屏结构确定，浏览器专属节点只在客户端挂载后出现。",
+      "passed": false,
+      "evidence": "outputs/src/pages/article/detail.mpx：SSR 首屏仍含非确定值，或客户端专属节点未在挂载后开启。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -85,29 +93,161 @@
     }
   ],
   "summary": {
-    "passed": 6,
-    "failed": 2,
+    "passed": 5,
+    "failed": 3,
     "total": 8,
-    "pass_rate": 0.75
+    "pass_rate": 0.625
   },
   "metrics": {
-    "total_tokens": 608505,
-    "input_tokens": 596772,
-    "output_tokens": 11733,
-    "tool_calls": 17,
-    "duration_ms": 440912,
-    "output_files": 6,
-    "output_lines": 156,
-    "output_nonempty_lines": 142,
-    "output_bytes": 4313
+    "total_tokens": 112751,
+    "input_tokens": 102812,
+    "output_tokens": 9939,
+    "tool_calls": 13,
+    "duration_ms": 214472
   },
   "timing": {
-    "total_tokens": 608505,
-    "duration_ms": 440912,
-    "total_duration_seconds": 440.912,
-    "generation_attempts": 1
+    "total_tokens": 112751,
+    "duration_ms": 214472,
+    "total_duration_seconds": 214.472
   },
-  "execution_metrics": {
-    "total_tool_calls": 17
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 6,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/pages/article/detail.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/packageRecommend/components/recommend-list.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/stores/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/services/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 6,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/pages/article/detail.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/packageRecommend/components/recommend-list.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/stores/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/services/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/pages/article/detail.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4261
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/packageRecommend/components/recommend-list.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2597
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/stores/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/src/services/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-10-ssr-hydrate-async-package/no_skill/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "x7 只限定“window 守卫阻断”，无法单独判定小程序因 service 使用 localhost/绝对 URL 导致的真实加载失败；该风险目前主要由 x6 捕获，结论可能显得 x7 通过但小程序加载仍不可用。"
+    ],
+    "overall": "主要 SSR hydrate、独立 Pinia、serverPrefetch 等路径已修复；store 缺 loaded 状态，article service 的跨端 URL/origin 策略仍不满足要求。"
   }
 }

@@ -1,6 +1,6 @@
 <template>
   <view class="checkout">
-    <button bindtap="chooseAddress">选择地址</button>
+    <view bindtap="chooseAddress">选择地址</view>
     <view wx:if="{{address}}">{{address.name}} {{address.detail}}</view>
     <button bindtap="pay">支付</button>
     <button bindtap="openOrders">查看订单</button>
@@ -24,13 +24,13 @@ createPage({
       })
     },
     pay () {
-      mpx.redirectTo({ url: '/pages/pay/result' })
+      mpx.reLaunch({ url: '/pages/pay/result' })
     },
     openOrders () {
       mpx.switchTab({ url: '/pages/orders/index' })
     },
     requireLogin () {
-      mpx.reLaunch({ url: '/pages/login/index' })
+      mpx.redirectTo({ url: '/pages/login/index' })
     }
   }
 })

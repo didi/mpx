@@ -17,7 +17,7 @@ createPage({
       mpx.navigateTo({
         url: '/pages/address/select',
         events: {
-          selectAddress: (address) => {
+          addressSelected: (address) => {
             this.address = address
           }
         }

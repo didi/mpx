@@ -4,8 +4,9 @@
       id="product-video"
       src="{{product.video}}"
       autoplay
-      muted@web
-      playsinline@web
+      muted@web="{{true}}"
+      muted@wx="{{false}}"
+      playsinline@web="{{true}}"
       enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
@@ -27,23 +28,31 @@ createComponent({
     duration: 0
   },
   methods: {
-    onTimeUpdate (event) {
-      if (__mpx_mode__ === 'web') {
-        this.progress = event.target.currentTime
-        this.duration = event.target.duration
-      } else {
-        this.progress = event.detail.currentTime
-        this.duration = event.detail.duration
+    getVideoState (event) {
+      const detail = (event && event.detail) || {}
+      const player = detail.plyr
+      const media = (player && player.media) || (event && (event.target || event.currentTarget)) || {}
+      return {
+        currentTime: typeof detail.currentTime === 'number'
+          ? detail.currentTime
+          : (player && typeof player.currentTime === 'number' ? player.currentTime : media.currentTime),
+        duration: typeof detail.duration === 'number'
+          ? detail.duration
+          : (player && typeof player.duration === 'number' ? player.duration : media.duration),
+        width: typeof detail.width === 'number' ? detail.width : media.videoWidth,
+        height: typeof detail.height === 'number' ? detail.height : media.videoHeight
       }
     },
+    onTimeUpdate (event) {
+      const { currentTime, duration } = this.getVideoState(event)
+      if (typeof currentTime === 'number') this.progress = currentTime
+      if (typeof duration === 'number') this.duration = duration
+    },
     onLoadedMetadata (event) {
-      if (__mpx_mode__ === 'web') {
-        this.videoSize = `${event.target.videoWidth}x${event.target.videoHeight}`
-        this.duration = event.target.duration
-      } else {
-        this.videoSize = `${event.detail.width}x${event.detail.height}`
-        this.duration = event.detail.duration
-      }
+      const { width, height, duration } = this.getVideoState(event)
+      if (typeof duration === 'number') this.duration = duration
+      this.videoSize = `${width || 0}x${height || 0}`
+      this.triggerEvent('mediaready', { width, height, duration })
     },
     onVideoError () {}
   }

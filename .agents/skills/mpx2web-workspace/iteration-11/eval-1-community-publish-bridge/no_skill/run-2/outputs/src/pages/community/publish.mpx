@@ -5,6 +5,14 @@
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
     </view>
 
+    <view wx:if="{{isWeb}}" class="web-capability-notice">
+      <text class="web-capability-title">Web 端能力说明</text>
+      <text class="web-capability-text">
+        当前可编辑文字、选择话题和设置评论；位置、地图、图片与发布能力将在宿主协议确定后接入。
+      </text>
+      <text wx:if="{{webFeedback}}" class="web-capability-feedback">{{webFeedback}}</text>
+    </view>
+
     <view class="form-card">
       <textarea
         class="content-input"
@@ -24,37 +32,35 @@
         </view>
         <view
           wx:if="{{photos.length < 9}}"
-          class="photo-add {{mediaAvailable ? '' : 'is-unavailable'}}"
+          class="photo-add {{isWeb ? 'control-disabled' : ''}}"
           bindtap="choosePhoto"
           aria-role="button"
-          aria-label="{{mediaAvailable ? '添加图片' : '当前宿主暂不支持添加图片'}}"
+          aria-label="{{isWeb ? 'Web 端图片能力暂不可用' : '添加图片'}}"
         >
           <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">{{mediaAvailable ? '添加图片' : '暂不支持图片'}}</text>
+          <text class="photo-add-label">{{isWeb ? '暂不可用' : '添加图片'}}</text>
         </view>
       </view>
     </view>
 
     <view class="publish-options">
-      <view class="option-row" bindtap="choosePlace" aria-role="button">
+      <view class="option-row {{isWeb ? 'control-disabled' : ''}}" bindtap="choosePlace">
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text class="option-value">
-              {{place.name || (locationAvailable ? '选择位置' : '当前宿主暂不支持位置选择')}}
-            </text>
+            <text class="option-value">{{place.name || (isWeb ? 'Web 端暂不可用' : '选择位置')}}</text>
           </view>
         </view>
         <text class="option-arrow">›</text>
       </view>
 
-      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace" aria-role="button">
+      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
         </view>
-        <text class="place-action">{{mapAvailable ? '查看地图' : '地图暂不可用'}}</text>
+        <text class="place-action">查看地图</text>
       </view>
 
       <view class="option-row">
@@ -76,20 +82,13 @@
       <text class="notice-text">允许其他用户评论</text>
     </view>
 
-    <view wx:if="{{!publishAvailable}}" class="capability-notice">
-      当前宿主尚未提供动态发布能力，请在支持该能力的宿主中发布。
-    </view>
-    <view wx:if="{{feedbackMessage}}" class="feedback-message" aria-live="polite">
-      {{feedbackMessage}}
-    </view>
-
     <button
       class="publish-button"
       loading="{{submitting}}"
-      disabled="{{!canSubmit || submitting}}"
+      disabled="{{isWeb || !canSubmit || submitting}}"
       bindtap="submitPost"
     >
-      发布动态
+      {{isWeb ? '发布能力待接入' : '发布动态'}}
     </button>
   </view>
 </template>
@@ -97,18 +96,16 @@
 <script>
 import { createPage } from '@mpxjs/core'
 
-function getHostApi () {
-  if (typeof wx !== 'undefined') return wx
-  return null
-}
-
-function hasHostMethod (name) {
-  const hostApi = getHostApi()
-  return Boolean(hostApi && typeof hostApi[name] === 'function')
+const isWebRuntime = () => {
+  const webBuild = typeof __mpx_mode__ !== 'undefined' && __mpx_mode__ === 'web'
+  const browserRuntime = typeof window !== 'undefined' && typeof document !== 'undefined'
+  return webBuild || browserRuntime
 }
 
 createPage({
   data: {
+    isWeb: isWebRuntime(),
+    webFeedback: '',
     content: '',
     photos: [],
     place: {},
@@ -120,107 +117,57 @@ createPage({
     ],
     selectedTopic: {},
     allowComments: true,
-    submitting: false,
-    feedbackMessage: ''
+    submitting: false
   },
   computed: {
     canSubmit () {
       return Boolean(this.content.trim() || this.photos.length)
-    },
-    locationAvailable () {
-      return hasHostMethod('chooseLocation')
-    },
-    mapAvailable () {
-      return hasHostMethod('openLocation')
-    },
-    mediaAvailable () {
-      return hasHostMethod('chooseMedia')
-    },
-    publishAvailable () {
-      return hasHostMethod('request')
     }
-  },
-  onUnload () {
-    if (this.feedbackTimer) clearTimeout(this.feedbackTimer)
   },
   methods: {
     updateContent (event) {
       this.content = event.detail.value
     },
-    showFeedback (message) {
-      const hostApi = getHostApi()
-      if (hostApi && typeof hostApi.showToast === 'function') {
-        hostApi.showToast({ title: message, icon: 'none' })
-        return
-      }
-      if (this.feedbackTimer) clearTimeout(this.feedbackTimer)
-      this.feedbackMessage = message
-      this.feedbackTimer = setTimeout(() => {
-        this.feedbackMessage = ''
-        this.feedbackTimer = null
-      }, 3000)
+    showWebUnavailable (capability) {
+      this.webFeedback = `${capability}能力尚未接入 Web 宿主。`
     },
     choosePlace () {
-      const hostApi = getHostApi()
-      if (!hostApi || typeof hostApi.chooseLocation !== 'function') {
-        this.showFeedback('当前宿主暂不支持位置选择')
+      if (this.isWeb) {
+        this.showWebUnavailable('位置选择')
         return
       }
-      try {
-        hostApi.chooseLocation({
-          success: (place) => {
-            this.place = place
-          },
-          fail: () => {
-            this.showFeedback('位置选择失败，请重试')
-          }
-        })
-      } catch {
-        this.showFeedback('当前宿主暂不支持位置选择')
-      }
+      wx.chooseLocation({
+        success: (place) => {
+          this.place = place
+        }
+      })
     },
     openPlace () {
-      if (!this.place.latitude || !this.place.longitude) return
-      const hostApi = getHostApi()
-      if (!hostApi || typeof hostApi.openLocation !== 'function') {
-        this.showFeedback('当前宿主暂不支持地图查看')
+      if (this.isWeb) {
+        this.showWebUnavailable('地图查看')
         return
       }
-      try {
-        hostApi.openLocation({
-          latitude: this.place.latitude,
-          longitude: this.place.longitude,
-          name: this.place.name,
-          address: this.place.address,
-          fail: () => {
-            this.showFeedback('地图打开失败，请重试')
-          }
-        })
-      } catch {
-        this.showFeedback('当前宿主暂不支持地图查看')
-      }
+      if (!this.place.latitude || !this.place.longitude) return
+      wx.openLocation({
+        latitude: this.place.latitude,
+        longitude: this.place.longitude,
+        name: this.place.name,
+        address: this.place.address
+      })
     },
     choosePhoto () {
-      const hostApi = getHostApi()
-      if (!hostApi || typeof hostApi.chooseMedia !== 'function') {
-        this.showFeedback('当前宿主暂不支持图片选择')
+      if (this.isWeb) {
+        this.showWebUnavailable('图片选择')
         return
       }
-      try {
-        hostApi.chooseMedia({
-          count: 9 - this.photos.length,
-          mediaType: ['image'],
-          sourceType: ['album', 'camera'],
-          success: ({ tempFiles }) => {
-            this.photos = this.photos.concat(tempFiles)
-          },
-          fail: () => {
-            this.showFeedback('图片选择失败，请重试')
-          }
-        })
-      } catch {
-        this.showFeedback('当前宿主暂不支持图片选择')
-      }
+      wx.chooseMedia({
+        count: 9 - this.photos.length,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        success: ({ tempFiles }) => {
+          this.photos = this.photos.concat(tempFiles)
+        }
+      })
     },
     removePhoto (index) {
       this.photos.splice(index, 1)
@@ -232,42 +179,32 @@ createPage({
       this.allowComments = event.detail.value
     },
     submitPost () {
-      if (!this.canSubmit || this.submitting) return
-      const hostApi = getHostApi()
-      if (!hostApi || typeof hostApi.request !== 'function') {
-        this.showFeedback('当前宿主暂不支持动态发布')
+      if (this.isWeb) {
+        this.showWebUnavailable('发布')
         return
       }
+      if (!this.canSubmit || this.submitting) return
       this.submitting = true
-      try {
-        hostApi.request({
-          url: '/api/community/posts',
-          method: 'POST',
-          data: {
-            content: this.content,
-            photos: this.photos.map(item => item.tempFilePath),
-            place: this.place,
-            topicId: this.selectedTopic.id || '',
-            allowComments: this.allowComments
-          },
-          success: ({ data }) => {
-            if (typeof hostApi.redirectTo === 'function') {
-              hostApi.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
-              return
-            }
-            this.showFeedback('发布成功')
-          },
-          fail: () => {
-            this.showFeedback('发布失败，请重试')
-          },
-          complete: () => {
-            this.submitting = false
-          }
-        })
-      } catch {
-        this.submitting = false
-        this.showFeedback('当前宿主暂不支持动态发布')
-      }
+      wx.request({
+        url: '/api/community/posts',
+        method: 'POST',
+        data: {
+          content: this.content,
+          photos: this.photos.map(item => item.tempFilePath),
+          place: this.place,
+          topicId: this.selectedTopic.id || '',
+          allowComments: this.allowComments
+        },
+        success: ({ data }) => {
+          wx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+        },
+        fail: () => {
+          wx.showToast({ title: '发布失败，请重试', icon: 'none' })
+        },
+        complete: () => {
+          this.submitting = false
+        }
+      })
     }
   }
 })
@@ -278,6 +215,7 @@ createPage({
   min-height: 100vh;
   padding: 24rpx;
   background: #f6f7fb;
+  box-sizing: border-box;
 }
 
 .publish-header {
@@ -286,6 +224,9 @@ createPage({
 
 .publish-title,
 .publish-tip,
+.web-capability-title,
+.web-capability-text,
+.web-capability-feedback,
 .word-count,
 .photo-add-label,
 .option-label,
@@ -309,6 +250,31 @@ createPage({
   font-size: 24rpx;
 }
 
+.web-capability-notice {
+  margin-bottom: 24rpx;
+  padding: 20rpx 24rpx;
+  color: #765500;
+  background: #fff8df;
+  border: 1rpx solid #f2d783;
+  border-radius: 14rpx;
+}
+
+.web-capability-title {
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.web-capability-text,
+.web-capability-feedback {
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  line-height: 34rpx;
+}
+
+.web-capability-feedback {
+  color: #b54708;
+}
+
 .form-card,
 .publish-options {
   background: #ffffff;
@@ -325,6 +291,7 @@ createPage({
   color: #333333;
   font-size: 28rpx;
   line-height: 42rpx;
+  box-sizing: border-box;
 }
 
 .word-count {
@@ -345,6 +312,7 @@ createPage({
   height: 196rpx;
   margin: 0 16rpx 16rpx 0;
   border-radius: 14rpx;
+  box-sizing: border-box;
 }
 
 .photo-item {
@@ -381,11 +349,6 @@ createPage({
   border: 2rpx dashed #d6dae1;
 }
 
-.photo-add.is-unavailable {
-  color: #b4b8c0;
-  background: #f8f9fb;
-}
-
 .photo-add-icon {
   font-size: 52rpx;
   line-height: 60rpx;
@@ -407,6 +370,10 @@ createPage({
   justify-content: space-between;
   min-height: 112rpx;
   border-bottom: 1rpx solid #eef0f3;
+}
+
+.control-disabled {
+  opacity: 0.58;
 }
 
 .option-main {
@@ -485,22 +452,6 @@ createPage({
   margin-left: 16rpx;
   color: #666666;
   font-size: 25rpx;
-}
-
-.capability-notice,
-.feedback-message {
-  margin: 0 8rpx 20rpx;
-  padding: 16rpx 20rpx;
-  color: #7a5b20;
-  font-size: 23rpx;
-  line-height: 34rpx;
-  background: #fff8e8;
-  border-radius: 12rpx;
-}
-
-.feedback-message {
-  color: #4c5563;
-  background: #eef3fa;
 }
 
 .publish-button {

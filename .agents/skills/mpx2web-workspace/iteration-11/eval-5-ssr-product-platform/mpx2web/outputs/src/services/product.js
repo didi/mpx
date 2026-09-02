@@ -1,27 +1,50 @@
 import mpx from '@mpxjs/api-proxy'
 
-function createServerUrl (path, req) {
-  const forwardedProtocol = req.headers['x-forwarded-proto']
-  const forwardedHost = req.headers['x-forwarded-host']
-  const protocol = req.protocol || (forwardedProtocol && forwardedProtocol.split(',')[0].trim()) || 'http'
-  const host = (forwardedHost && forwardedHost.split(',')[0].trim()) || req.headers.host
-  return `${protocol}://${host}${path}`
+function firstHeaderValue (value) {
+  const headerValue = Array.isArray(value) ? value[0] : value
+  return typeof headerValue === 'string' ? headerValue.split(',')[0].trim() : ''
 }
 
-function createServerHeaders (req) {
+function getServerOrigin (req) {
+  const headers = req.headers || {}
+  const protocol = req.protocol ||
+    firstHeaderValue(headers['x-forwarded-proto']) ||
+    (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = firstHeaderValue(headers['x-forwarded-host']) || firstHeaderValue(headers.host)
+
+  if (!host) {
+    throw new Error('Unable to resolve the SSR request origin')
+  }
+
+  return `${String(protocol).replace(/:$/, '')}://${host}`
+}
+
+function getServerHeaders (req) {
+  const sourceHeaders = req.headers || {}
   const headers = {}
-  if (req.headers.cookie) headers.cookie = req.headers.cookie
-  if (req.headers.authorization) headers.authorization = req.headers.authorization
+
+  ;['authorization', 'cookie', 'accept-language', 'user-agent'].forEach((name) => {
+    const value = sourceHeaders[name]
+    if (typeof value === 'string') headers[name] = value
+  })
+
   return headers
 }
 
-function request (path, requestContext) {
-  if (requestContext && requestContext.req) {
-    const req = requestContext.req
-    return fetch(createServerUrl(path, req), {
-      headers: createServerHeaders(req)
+function requestJson (path, requestContext) {
+  const req = requestContext && requestContext.req
+
+  if (req) {
+    if (typeof fetch !== 'function') {
+      return Promise.reject(new Error('The Node SSR runtime must provide fetch'))
+    }
+
+    return fetch(`${getServerOrigin(req)}${path}`, {
+      headers: getServerHeaders(req)
     }).then((response) => {
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`)
+      if (!response.ok) {
+        throw new Error(`Product API request failed with status ${response.status}`)
+      }
       return response.json()
     })
   }
@@ -36,9 +59,9 @@ function request (path, requestContext) {
 }
 
 export function fetchProduct (productId, requestContext) {
-  return request(`/api/products/${encodeURIComponent(productId)}`, requestContext)
+  return requestJson(`/api/products/${encodeURIComponent(productId)}`, requestContext)
 }
 
 export function fetchRecommendations (productId, requestContext) {
-  return request(`/api/products/${encodeURIComponent(productId)}/recommendations`, requestContext)
+  return requestJson(`/api/products/${encodeURIComponent(productId)}/recommendations`, requestContext)
 }

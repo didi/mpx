@@ -1,18 +1,14 @@
 import mpx from '@mpxjs/core'
 
-export async function fetchTrendingKeywords () {
-  const { data } = await mpx.request({
+export function fetchTrendingKeywords () {
+  return mpx.request({
     url: '/api/search/trending'
-  })
-  return data
+  }).then(({ data }) => data)
 }
 
-export function requestSuggestions (keyword, callbacks) {
+export function requestSuggestions (keyword) {
   return mpx.request({
     url: '/api/search/suggest',
-    data: { keyword },
-    usePromise: false,
-    success: callbacks.success,
-    fail: callbacks.fail
+    data: { keyword }
   })
 }

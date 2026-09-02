@@ -1,13 +1,21 @@
 {
   "eval_id": 4,
   "eval_name": "campaign-webview-sdk",
-  "configuration": "old_skill",
+  "configuration": "previous_mpx2web",
+  "run_number": 3,
+  "grading_fingerprint": "fd9cc403833096a5819f80245bb1decf9090aed34b2e134b303ced8fd448e2b7",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 124880
+  },
   "expectations": [
     {
       "id": "h0",
       "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
-      "passed": true,
-      "evidence": "outputs/src/pages/campaign/index.mpx:21-28 保留 <web-view src=\"{{campaignUrl}}\" bindmessage=\"handleCampaignMessage\" bindload=\"handleCampaignLoad\" binderror=\"handleCampaignError\" />；112-124 从消息触发 claimCoupon/openProduct，117 仅 Web 校验 campaignId，微信小程序不改变既有协议；126-134 wx.request 领券；136-139 wx.navigateTo 下单/商品跳转；100-105 wx.reportAnalytics('campaign_webview_load', { campaign_id: this.campaignId }) 保留活动埋点。",
+      "passed": false,
+      "evidence": "./outputs/src/pages/campaign/index.mpx:20-27 保留了 web-view 与 bindmessage/load/error，155-162 保留 wx.reportAnalytics，192-206 保留领券请求和商品跳转；但 177-180 对所有端都要求 message.campaignId 或 payload.campaignId 严格匹配后才会执行 181-184 的 claim/open，没有 __mpx_mode__ === 'web' 分支保留 ./input/src/pages/campaign/index.mpx:86-94 中小程序既有仅按 type/couponId/productId 处理的消息链路，微信小程序旧会场消息兼容性证据不足。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -94,29 +102,133 @@
     }
   ],
   "summary": {
-    "passed": 9,
-    "failed": 0,
+    "passed": 8,
+    "failed": 1,
     "total": 9,
-    "pass_rate": 1.0
+    "pass_rate": 0.8889
   },
   "metrics": {
-    "total_tokens": 1534090,
-    "input_tokens": 1518833,
-    "output_tokens": 15257,
-    "tool_calls": 47,
-    "duration_ms": 672163,
-    "output_files": 4,
-    "output_lines": 372,
-    "output_nonempty_lines": 349,
-    "output_bytes": 9252
+    "total_tokens": 463259,
+    "input_tokens": 449440,
+    "output_tokens": 13819,
+    "tool_calls": 20,
+    "duration_ms": 301749
   },
   "timing": {
-    "total_tokens": 1534090,
-    "duration_ms": 672163,
-    "total_duration_seconds": 672.163,
-    "generation_attempts": 1
+    "total_tokens": 463259,
+    "duration_ms": 301749,
+    "total_duration_seconds": 301.749
   },
-  "execution_metrics": {
-    "total_tool_calls": 47
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 4,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/pages/campaign/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/components/campaign-tracker.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 4,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/pages/campaign/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/components/campaign-tracker.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/pages/campaign/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3464
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/components/campaign-tracker.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2508
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/previous_mpx2web/run-3/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言对“微信小程序既有消息协议是否允许不带 campaignId”的要求只在 h8 尾句间接出现，建议单独增加小程序端旧消息兼容断言，或明确会场已统一发送 campaignId，否则 h0 结论容易受解释偏差影响。"
+    ],
+    "overall": "Web 侧 origin 白名单、/mall/ 基路径、动态 SDK、代际校验和清理基本到位；主要风险是小程序端 bindmessage 协议被全端收紧，旧会场消息可能无法继续领券或跳转。"
   }
 }

@@ -1,7 +1,15 @@
 {
   "eval_id": 5,
   "eval_name": "ssr-product-platform",
-  "configuration": "old_skill",
+  "configuration": "previous_mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "2849d566ed1dc7eba65dcc568ed6fcbfc66f38649e083433cd9c9258a96927cc",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 97990
+  },
   "expectations": [
     {
       "id": "p0",
@@ -36,8 +44,8 @@
     {
       "id": "p3",
       "text": "同构 service 返回 Promise；服务端沿调用链接收当前 SSR 上下文并从其中的 req 解析 origin，浏览器和小程序保留相对地址；不依赖参数名、wx.request、浏览器全局、localhost 或未声明的 request/requestClient 契约",
-      "passed": false,
-      "evidence": "outputs/src/services/product.js：未从当前 SSR 上下文的 req 解析请求 origin。",
+      "passed": true,
+      "evidence": "outputs/src/services/product.js：Promise 请求沿调用链接收 SSR 上下文，并从当前 req 解析服务端 origin。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
@@ -87,36 +95,166 @@
       "id": "p8",
       "text": "规格切换、加购与相关推荐展示/跳转链路保持完整，且这些小程序业务路径不依赖浏览器全局对象",
       "passed": true,
-      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx:7-18 渲染 sku 列表、bindtap=\"selectSku(item.id)\" 与加购按钮；45-50 计算 activeSkuId/selectedSku；72-84 selectSku 更新 selectedSkuId，addToCart 使用 mpx.request 提交 productId 和 skuId。20-23 渲染 product-recommendations。outputs/src/components/product-recommendations.mpx:4-14 展示推荐商品并 bindtap=\"openProduct(item.id)\"；97-100 使用 mpx.navigateTo 跳转详情。上述业务路径未使用 window。",
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx:7-18 保留规格列表、选中态和加购按钮；91-103 保留 selectSku 与 mpx.request('/api/cart/items') 加购；outputs/src/components/product-recommendations.mpx:1-15 保留相关推荐展示，147-150 使用 mpx.navigateTo 跳转详情；这些规格、加购、推荐跳转路径未依赖 window/document 等浏览器全局。",
       "verification_methods": [
         "independent_code_review"
       ]
     }
   ],
   "summary": {
-    "passed": 8,
-    "failed": 1,
+    "passed": 9,
+    "failed": 0,
     "total": 9,
-    "pass_rate": 0.8889
+    "pass_rate": 1.0
   },
   "metrics": {
-    "total_tokens": 1557418,
-    "input_tokens": 1539455,
-    "output_tokens": 17963,
-    "tool_calls": 45,
-    "duration_ms": 601490,
-    "output_files": 6,
-    "output_lines": 428,
-    "output_nonempty_lines": 391,
-    "output_bytes": 10606
+    "total_tokens": 688291,
+    "input_tokens": 668789,
+    "output_tokens": 19502,
+    "tool_calls": 48,
+    "duration_ms": 429089
   },
   "timing": {
-    "total_tokens": 1557418,
-    "duration_ms": 601490,
-    "total_duration_seconds": 601.49,
-    "generation_attempts": 1
+    "total_tokens": 688291,
+    "duration_ms": 429089,
+    "total_duration_seconds": 429.089
   },
-  "execution_metrics": {
-    "total_tool_calls": 45
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 6,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/packageProduct/pages/detail/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/stores/product.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/services/product.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/components/product-recommendations.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 6,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/packageProduct/pages/detail/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/stores/product.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/services/product.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/components/product-recommendations.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/packageProduct/pages/detail/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4908
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/components/product-recommendations.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2654
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/stores/product.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/services/product.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-5-ssr-product-platform/previous_mpx2web/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "全部断言均有代码证据支持，未发现会影响结论的关键断言缺口。"
   }
 }

@@ -19,17 +19,13 @@ createPage({
     keyword: '',
     trendingKeywords: [],
     suggestions: [],
-    requestTask: null,
-    requestId: 0
+    requestTask: null
   },
   async onLoad () {
     this.trendingKeywords = await fetchTrendingKeywords()
   },
   onUnload () {
-    this.requestId++
-    const requestTask = this.requestTask
-    this.requestTask = null
-    if (requestTask) requestTask.abort()
+    this.cancelSuggestionRequest()
   },
   methods: {
     onKeywordInput (event) {
@@ -38,31 +34,43 @@ createPage({
     chooseKeyword (keyword) {
       this.search(keyword)
     },
+    cancelSuggestionRequest () {
+      const requestPromise = this.requestTask
+      this.requestTask = null
+      const requestTask = requestPromise && requestPromise.__returned
+      if (requestTask && typeof requestTask.abort === 'function') {
+        requestTask.abort()
+      }
+    },
     search (keyword) {
       this.keyword = keyword
-      const requestId = ++this.requestId
-      const requestTask = this.requestTask
-      this.requestTask = null
-      if (requestTask) requestTask.abort()
+      this.cancelSuggestionRequest()
+
       if (!keyword) {
         this.suggestions = []
         return
       }
-      this.requestTask = requestSuggestions(keyword, {
-        success: ({ data }) => {
-          if (requestId !== this.requestId) return
-          this.requestTask = null
+
+      const requestPromise = requestSuggestions(keyword)
+      this.requestTask = requestPromise
+
+      requestPromise
+        .then(({ data }) => {
+          if (this.requestTask !== requestPromise || this.keyword !== keyword) return
           this.suggestions = data.list
-        },
-        fail: () => {
-          if (requestId !== this.requestId) return
-          this.requestTask = null
+        })
+        .catch(() => {
+          if (this.requestTask !== requestPromise || this.keyword !== keyword) return
           mpx.showToast({
             title: '搜索失败',
             icon: 'none'
           })
-        }
-      })
+        })
+        .finally(() => {
+          if (this.requestTask === requestPromise) {
+            this.requestTask = null
+          }
+        })
     },
     openProduct (productId) {
       return mpx.navigateTo({
