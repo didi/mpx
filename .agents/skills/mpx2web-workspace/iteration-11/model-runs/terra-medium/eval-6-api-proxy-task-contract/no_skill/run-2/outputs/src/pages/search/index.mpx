@@ -1,0 +1,100 @@
+<template>
+  <view class="search-page">
+    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view class="trending" wx:if="{{!keyword}}">
+      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    </view>
+    <view class="suggestions">
+      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { navigateTo, showToast } from '@mpxjs/api-proxy'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: [],
+    requestTask: null,
+    suggestionRequestId: 0
+  },
+  onLoad () {
+    fetchTrendingKeywords()
+      .then((keywords) => {
+        this.trendingKeywords = keywords || []
+      })
+      .catch(() => {
+        showToast({
+          title: '趋势词加载失败',
+          icon: 'none'
+        })
+      })
+  },
+  onUnload () {
+    this.suggestionRequestId += 1
+    this.abortSuggestionRequest()
+  },
+  methods: {
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+    abortSuggestionRequest () {
+      if (this.requestTask && typeof this.requestTask.abort === 'function') {
+        this.requestTask.abort()
+      }
+      this.requestTask = null
+    },
+    search (keyword) {
+      const requestId = ++this.suggestionRequestId
+
+      this.keyword = keyword
+      this.abortSuggestionRequest()
+
+      if (!keyword) {
+        this.suggestions = []
+        return
+      }
+
+      const requestTask = requestSuggestions(keyword)
+      this.requestTask = requestTask
+
+      requestTask
+        .then(({ data }) => {
+          if (requestId !== this.suggestionRequestId) return
+          this.suggestions = (data && data.list) || []
+        })
+        .catch(() => {
+          if (requestId !== this.suggestionRequestId) return
+          this.suggestions = []
+          showToast({
+            title: '搜索失败',
+            icon: 'none'
+          })
+        })
+        .then(() => {
+          if (requestId === this.suggestionRequestId) {
+            this.requestTask = null
+          }
+        })
+    },
+    openProduct (productId) {
+      navigateTo({
+        url: `/pages/product/detail?id=${productId}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page { padding: 24rpx; }
+.trending, .suggestions { margin-top: 24rpx; }
+</style>

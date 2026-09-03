@@ -1,0 +1,289 @@
+<template>
+  <view class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal__header">
+      <view>
+        <view class="portal__eyebrow">PORTAL</view>
+        <view class="portal__title">服务门户</view>
+      </view>
+      <button class="portal__theme-button" bindtap="toggleTheme">{{dark ? '浅色模式' : '深色模式'}}</button>
+    </view>
+
+    <view class="portal__cards">
+      <view
+        class="portal-card"
+        wx:for="{{cards}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="openCard"
+      >
+        <view class="portal-card__title">{{item.title}}</view>
+        <view class="portal-card__arrow">›</view>
+      </view>
+    </view>
+
+    <button class="portal__settings-button" bindtap="openDialog">门户设置</button>
+
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog" catchtouchmove="noop">
+      <view class="dialog" catchtap="noop">
+        <view class="dialog__title">门户设置</view>
+        <view class="dialog__description">可在此处继续配置门户内容与显示偏好。</view>
+        <button class="dialog__close" bindtap="closeDialog">关闭</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    dialogVisible: false,
+    dark: false
+  },
+  methods: {
+    openCard (event) {
+      const id = event.currentTarget.dataset.id
+      this.closeDialog()
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
+    toggleTheme () {
+      this.dark = !this.dark
+    },
+    openDialog () {
+      this.dialogVisible = true
+      this.lockPageScroll()
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      this.restorePageScroll()
+    },
+    noop () {},
+    lockPageScroll () {
+      if (this._portalScrollLock || typeof document === 'undefined' || typeof window === 'undefined') return
+
+      const body = document.body
+      const root = document.documentElement
+      if (!body || !root) return
+
+      const x = window.pageXOffset || root.scrollLeft || body.scrollLeft || 0
+      const y = window.pageYOffset || root.scrollTop || body.scrollTop || 0
+      this._portalScrollLock = {
+        bodyCssText: body.style.cssText,
+        rootCssText: root.style.cssText,
+        x,
+        y
+      }
+
+      root.style.overflow = 'hidden'
+      body.style.position = 'fixed'
+      body.style.top = `-${y}px`
+      body.style.left = `-${x}px`
+      body.style.right = '0'
+      body.style.width = '100%'
+      body.style.overflow = 'hidden'
+    },
+    restorePageScroll () {
+      const lock = this._portalScrollLock
+      if (!lock) return
+      this._portalScrollLock = null
+
+      if (typeof document === 'undefined' || typeof window === 'undefined') return
+      const body = document.body
+      const root = document.documentElement
+      if (!body || !root) return
+
+      body.style.cssText = lock.bodyCssText
+      root.style.cssText = lock.rootCssText
+      const restore = () => window.scrollTo(lock.x, lock.y)
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(restore)
+      } else {
+        restore()
+      }
+    }
+  },
+  onHide () {
+    this.closeDialog()
+  },
+  onUnload () {
+    this.closeDialog()
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 64rpx 48rpx calc(64rpx + env(safe-area-inset-bottom));
+  color: var(--portal-text, #172033);
+  background: var(--portal-background, #f4f7fb);
+}
+
+.portal--dark {
+  --portal-text: #eef4ff;
+  --portal-background: #101827;
+  --portal-surface: #1b2638;
+  --portal-border: #324157;
+  --portal-muted: #a9b8cf;
+  --portal-primary: #72adff;
+}
+
+.portal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32rpx;
+  margin-bottom: 48rpx;
+}
+
+.portal__eyebrow {
+  margin-bottom: 12rpx;
+  color: var(--portal-primary, #246bdb);
+  font-size: 24rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+}
+
+.portal__title {
+  font-size: 52rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.portal__theme-button,
+.portal__settings-button,
+.dialog__close {
+  box-sizing: border-box;
+  border: 1rpx solid var(--portal-border, #d9e1ed);
+  border-radius: 16rpx;
+  color: var(--portal-text, #172033);
+  background: var(--portal-surface, #ffffff);
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.portal__theme-button {
+  flex: 0 0 auto;
+  padding: 24rpx;
+}
+
+.portal__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx;
+}
+
+.portal-card {
+  display: flex;
+  width: calc((100% - 24rpx) / 2);
+  align-items: center;
+  justify-content: space-between;
+  min-height: 196rpx;
+  padding: 32rpx;
+  box-sizing: border-box;
+  border: 1rpx solid var(--portal-border, #d9e1ed);
+  border-radius: 24rpx;
+  color: var(--portal-text, #172033);
+  background: var(--portal-surface, #ffffff);
+  box-shadow: 0 12rpx 32rpx rgba(25, 46, 85, 0.08);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.portal-card__title {
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.portal-card__arrow {
+  color: var(--portal-primary, #246bdb);
+  font-size: 52rpx;
+  line-height: 1;
+}
+
+.portal__settings-button {
+  width: 100%;
+  margin-top: 40rpx;
+  padding: 30rpx;
+  color: #ffffff;
+  border-color: var(--portal-primary, #246bdb);
+  background: var(--portal-primary, #246bdb);
+}
+
+.dialog-mask {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 48rpx;
+  background: rgba(9, 17, 31, 0.52);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 640rpx;
+  padding: 48rpx;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  color: var(--portal-text, #172033);
+  background: var(--portal-surface, #ffffff);
+  box-shadow: 0 24rpx 64rpx rgba(0, 0, 0, 0.24);
+}
+
+.dialog__title {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.dialog__description {
+  margin-top: 20rpx;
+  color: var(--portal-muted, #5f6f86);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.dialog__close {
+  width: 100%;
+  margin-top: 40rpx;
+  padding: 28rpx;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .portal-card:hover {
+    border-color: var(--portal-primary, #246bdb);
+    box-shadow: 0 18rpx 44rpx rgba(25, 46, 85, 0.16);
+    transform: translateY(-4rpx);
+  }
+
+  .portal__theme-button:hover,
+  .dialog__close:hover {
+    border-color: var(--portal-primary, #246bdb);
+    color: var(--portal-primary, #246bdb);
+  }
+
+  .portal__settings-button:hover {
+    filter: brightness(0.92);
+  }
+}
+
+@media (min-width: 960px) {
+  .portal {
+    max-width: 1200rpx;
+    margin: 0 auto;
+    padding-top: 80rpx;
+  }
+
+  .portal__cards {
+    gap: 24rpx;
+  }
+
+  .portal-card {
+    width: calc((100% - 48rpx) / 3);
+  }
+}
+</style>

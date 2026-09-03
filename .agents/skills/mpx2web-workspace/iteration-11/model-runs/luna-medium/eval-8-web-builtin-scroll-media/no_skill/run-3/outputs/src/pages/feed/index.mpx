@@ -1,0 +1,156 @@
+<template>
+  <view class="feed-page">
+    <view class="category-bar">
+      <scroll-view class="category-scroll" scroll-x>
+        <view class="categories">
+          <text
+            wx:for="{{categories}}"
+            wx:key="id"
+            class="category {{item.id == activeCategoryId ? 'active' : ''}}"
+            data-category-id="{{item.id}}"
+            bindtap="selectCategory"
+          >{{item.name}}</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <scroll-view
+      class="feed-scroll"
+      scroll-y
+      binddragstart="onDragStart"
+      binddragging="onDragging"
+      binddragend="onDragEnd"
+      bindtouchstart="onDragStart"
+      bindtouchmove="onDragging"
+      bindtouchend="onDragEnd"
+      bindtouchcancel="onDragEnd"
+    >
+      <view class="feed-content">
+        <view wx:for="{{products}}" wx:key="id" class="product">
+          <image
+            class="product-image"
+            src="{{item.image}}"
+            mode="widthFix"
+            bindload="onImageLoad"
+            binderror="onImageError"
+          />
+          <product-video wx:if="{{item.video}}" product="{{item}}" />
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    activeCategoryId: '',
+    cartCount: 2,
+    imageLoadVersion: 0
+  },
+  async onLoad () {
+    const { data } = await mpx.request({ url: '/api/feed' })
+    const categories = data.categories || []
+    this.setData({
+      categories,
+      products: data.products || [],
+      activeCategoryId: categories.length ? categories[0].id : ''
+    })
+  },
+  methods: {
+    getDragPoint (event, end = false) {
+      const touches = end ? event.changedTouches : event.touches
+      const touch = touches && touches[0]
+      if (touch) return { x: touch.clientX, y: touch.clientY }
+      const detail = event.detail || {}
+      if (typeof detail.x === 'number' && typeof detail.y === 'number') {
+        return { x: detail.x, y: detail.y }
+      }
+      return null
+    },
+    selectCategory (event) {
+      const categoryId = event.currentTarget.dataset.categoryId
+      this.setData({ activeCategoryId: categoryId })
+    },
+    onImageLoad () {
+      // Updating the bound content makes Web recalculate scroll-view's
+      // content height after an image changes its width-fixed height.
+      this.setData({ imageLoadVersion: this.data.imageLoadVersion + 1 })
+    },
+    onImageError () {
+      this.setData({ imageLoadVersion: this.data.imageLoadVersion + 1 })
+    },
+    onDragStart (event) {
+      const point = this.getDragPoint(event)
+      if (!point) return
+      this.dragState = {
+        startX: point.x,
+        startY: point.y,
+        lastX: point.x,
+        lastY: point.y,
+        horizontal: false
+      }
+    },
+    onDragging (event) {
+      if (!this.dragState) return
+      const point = this.getDragPoint(event)
+      if (!point) return
+      const deltaX = point.x - this.dragState.startX
+      const deltaY = point.y - this.dragState.startY
+      this.dragState.lastX = point.x
+      this.dragState.lastY = point.y
+      this.dragState.horizontal = Math.abs(deltaX) > Math.abs(deltaY)
+    },
+    onDragEnd (event) {
+      if (!this.dragState) return
+      const point = this.getDragPoint(event, true) || {
+        x: this.dragState.lastX,
+        y: this.dragState.lastY
+      }
+      const deltaX = point.x - this.dragState.startX
+      const horizontal = this.dragState.horizontal
+      this.dragState = null
+      if (!horizontal || Math.abs(deltaX) < 48) return
+
+      const index = this.data.categories.findIndex(item => item.id == this.data.activeCategoryId)
+      const nextIndex = Math.max(0, Math.min(
+        this.data.categories.length - 1,
+        index + (deltaX < 0 ? 1 : -1)
+      ))
+      const nextCategory = this.data.categories[nextIndex]
+      if (nextCategory) this.setData({ activeCategoryId: nextCategory.id })
+    },
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page { height: 100%; display: flex; flex-direction: column; }
+.category-bar { flex-shrink: 0; background: #fff; z-index: 10; }
+.category-scroll { white-space: nowrap; }
+.categories { display: flex; min-height: 88rpx; align-items: center; }
+.category { flex-shrink: 0; padding: 24rpx; color: #666; }
+.category.active { color: #111; font-weight: bold; }
+.feed-scroll { flex: 1; min-height: 0; }
+.feed-content { min-height: 100%; }
+.product { padding: 24rpx; }
+.product-image { display: block; width: 100%; }
+.fixed-cart { position: fixed; right: 24rpx; bottom: 40rpx; z-index: 20; }
+</style>

@@ -1,0 +1,60 @@
+<template>
+  <view class="product-video">
+    <video
+      id="product-video"
+      src="{{product.video}}"
+      autoplay
+      muted@web="{{true}}"
+      muted@wx="{{false}}"
+      playsinline@web="{{true}}"
+      enable-danmu@wx="{{true}}"
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
+      binderror="onVideoError"
+    />
+    <text>{{progress}} / {{duration}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: { type: Object, value: () => ({}) }
+  },
+  data: {
+    progress: 0,
+    duration: 0
+  },
+  methods: {
+    onTimeUpdate (event) {
+      const detail = event.detail || {}
+      const media = event.target || event.currentTarget || {}
+      const currentTime = detail.currentTime == null ? media.currentTime : detail.currentTime
+      const duration = detail.duration == null ? media.duration : detail.duration
+
+      this.progress = Number.isFinite(Number(currentTime)) ? Number(currentTime) : 0
+      this.duration = Number.isFinite(Number(duration)) ? Number(duration) : 0
+    },
+    onLoadedMetadata (event) {
+      const detail = event.detail || {}
+      const media = event.target || event.currentTarget || {}
+      const width = detail.width == null ? media.videoWidth : detail.width
+      const height = detail.height == null ? media.videoHeight : detail.height
+      const duration = detail.duration == null ? media.duration : detail.duration
+
+      this.videoSize = `${width || 0}x${height || 0}`
+      if (Number.isFinite(Number(duration))) {
+        this.duration = Number(duration)
+      }
+      this.triggerEvent('metadataready')
+    },
+    onVideoError () {}
+  }
+})
+</script>
+
+<style scoped>
+.product-video { width: 100%; }
+</style>

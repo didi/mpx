@@ -1,0 +1,321 @@
+<template>
+  <view class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal-content">
+      <view class="portal-list">
+        <view
+          class="portal-card"
+          wx:for="{{cards}}"
+          wx:key="id"
+          bindtap="openCard(item.id)"
+        >
+          {{item.title}}
+        </view>
+      </view>
+
+      <view class="portal-actions">
+        <button class="portal-button" bindtap="toggleTheme">切换主题</button>
+        <button class="portal-button portal-button--primary" bindtap="openDialog">打开弹层</button>
+      </view>
+    </view>
+
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
+      <view class="dialog" catchtap="noop">门户设置</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+function canUseWebDom () {
+  return typeof window !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    document.body &&
+    document.documentElement
+}
+
+function restoreInlineStyles (style, snapshot) {
+  Object.keys(snapshot).forEach((property) => {
+    style[property] = snapshot[property]
+  })
+}
+
+createPage({
+  data: {
+    cards: [
+      { id: 'news', title: '资讯' },
+      { id: 'service', title: '服务' }
+    ],
+    dialogVisible: false,
+    dark: false
+  },
+
+  onShow () {
+    if (this.dialogVisible) this.lockPageScroll()
+  },
+
+  onHide () {
+    this.restorePageScroll()
+  },
+
+  onUnload () {
+    this.restorePageScroll()
+  },
+
+  methods: {
+    openCard (id) {
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
+
+    toggleTheme () {
+      this.dark = !this.dark
+    },
+
+    openDialog () {
+      if (this.dialogVisible) return
+      this.dialogVisible = true
+      this.lockPageScroll()
+    },
+
+    closeDialog () {
+      this.dialogVisible = false
+      this.restorePageScroll()
+    },
+
+    noop () {},
+
+    lockPageScroll () {
+      if (!canUseWebDom() || this._portalScrollLock) return
+
+      const body = document.body
+      const root = document.documentElement
+      const scrollX = window.pageXOffset || root.scrollLeft || body.scrollLeft || 0
+      const scrollY = window.pageYOffset || root.scrollTop || body.scrollTop || 0
+      const scrollbarWidth = Math.max(0, window.innerWidth - root.clientWidth)
+
+      this._portalScrollLock = {
+        scrollX,
+        scrollY,
+        body: {
+          position: body.style.position,
+          top: body.style.top,
+          left: body.style.left,
+          right: body.style.right,
+          width: body.style.width,
+          overflow: body.style.overflow,
+          paddingRight: body.style.paddingRight
+        },
+        root: {
+          overflow: root.style.overflow,
+          scrollBehavior: root.style.scrollBehavior
+        }
+      }
+
+      if (scrollbarWidth) {
+        const currentPadding = parseFloat(window.getComputedStyle(body).paddingRight) || 0
+        body.style.paddingRight = `${currentPadding + scrollbarWidth}px`
+      }
+
+      root.style.overflow = 'hidden'
+      body.style.position = 'fixed'
+      body.style.top = `${-scrollY}px`
+      body.style.left = `${-scrollX}px`
+      body.style.right = '0'
+      body.style.width = '100%'
+      body.style.overflow = 'hidden'
+    },
+
+    restorePageScroll () {
+      if (!canUseWebDom() || !this._portalScrollLock) return
+
+      const lock = this._portalScrollLock
+      const body = document.body
+      const root = document.documentElement
+      this._portalScrollLock = null
+
+      restoreInlineStyles(body.style, lock.body)
+      restoreInlineStyles(root.style, lock.root)
+
+      const originalScrollBehavior = root.style.scrollBehavior
+      root.style.scrollBehavior = 'auto'
+      window.scrollTo(lock.scrollX, lock.scrollY)
+      root.style.scrollBehavior = originalScrollBehavior
+    }
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: var(--portal-space, 24rpx);
+  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom, 0px));
+  color: var(--portal-text, #182230);
+  background: var(--portal-background, #f4f7fb);
+  font-size: 32rpx;
+}
+
+.portal--dark {
+  color: var(--portal-text-dark, #f7f9fc);
+  background: var(--portal-background-dark, #111827);
+}
+
+.portal-content {
+  width: 100%;
+  max-width: 1200rpx;
+  margin: 0 auto;
+}
+
+.portal-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.portal-card {
+  box-sizing: border-box;
+  min-height: 160rpx;
+  margin-bottom: 20rpx;
+  padding: 32rpx;
+  border: 1px solid var(--portal-card-border, #dce3ed);
+  border-radius: 20rpx;
+  color: var(--portal-card-text, #182230);
+  background: var(--portal-card-background, #ffffff);
+  box-shadow: 0 8rpx 24rpx var(--portal-card-shadow, rgba(31, 41, 55, 0.08));
+}
+
+.portal--dark .portal-card {
+  border-color: var(--portal-card-border-dark, #344054);
+  color: var(--portal-card-text-dark, #f7f9fc);
+  background: var(--portal-card-background-dark, #1f2937);
+  box-shadow: 0 8rpx 24rpx var(--portal-card-shadow-dark, rgba(0, 0, 0, 0.28));
+}
+
+.portal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 12rpx -8rpx 0;
+}
+
+.portal-button {
+  box-sizing: border-box;
+  min-width: 220rpx;
+  margin: 8rpx;
+  padding: 18rpx 28rpx;
+  border: 1px solid var(--portal-button-border, #c8d2e1);
+  border-radius: 16rpx;
+  color: var(--portal-button-text, #25324a);
+  background: var(--portal-button-background, #ffffff);
+  font-size: 28rpx;
+  line-height: 1.4;
+}
+
+.portal-button--primary {
+  border-color: var(--portal-primary, #2563eb);
+  color: var(--portal-primary-text, #ffffff);
+  background: var(--portal-primary, #2563eb);
+}
+
+.portal--dark .portal-button {
+  border-color: var(--portal-button-border-dark, #475467);
+  color: var(--portal-button-text-dark, #f7f9fc);
+  background: var(--portal-button-background-dark, #273449);
+}
+
+.portal--dark .portal-button--primary {
+  border-color: var(--portal-primary-dark, #60a5fa);
+  color: var(--portal-primary-text-dark, #0b1220);
+  background: var(--portal-primary-dark, #60a5fa);
+}
+
+.dialog-mask {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  background: var(--portal-mask-background, rgba(15, 23, 42, 0.58));
+}
+
+.dialog {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 600rpx;
+  padding: 40rpx;
+  border-radius: 24rpx;
+  color: var(--portal-dialog-text, #182230);
+  background: var(--portal-dialog-background, #ffffff);
+  box-shadow: 0 24rpx 64rpx var(--portal-dialog-shadow, rgba(15, 23, 42, 0.24));
+}
+
+.portal--dark .dialog {
+  color: var(--portal-dialog-text-dark, #f7f9fc);
+  background: var(--portal-dialog-background-dark, #1f2937);
+}
+</style>
+
+<style mode="web">
+@media (min-width: 768px) {
+  .portal-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24rpx;
+  }
+
+  .portal-card {
+    margin-bottom: 0;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .portal-card,
+  .portal-button {
+    transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  }
+
+  .portal-card:hover {
+    transform: translateY(-6rpx);
+    box-shadow: 0 16rpx 36rpx var(--portal-card-hover-shadow, rgba(31, 41, 55, 0.16));
+    cursor: pointer;
+  }
+
+  .portal-button:hover {
+    filter: brightness(0.96);
+    transform: translateY(-2rpx);
+    cursor: pointer;
+  }
+
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--portal-scrollbar-thumb, #94a3b8) var(--portal-scrollbar-track, #e7ecf3);
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    background: var(--portal-scrollbar-track, #e7ecf3);
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    border: 2px solid var(--portal-scrollbar-track, #e7ecf3);
+    border-radius: 999px;
+    background: var(--portal-scrollbar-thumb, #94a3b8);
+  }
+
+  html::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover {
+    background: var(--portal-scrollbar-thumb-hover, #64748b);
+  }
+}
+</style>

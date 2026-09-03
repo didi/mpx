@@ -1,0 +1,108 @@
+<template>
+  <view class="analytics-panel-web">
+    <scroll-view
+      class="analytics-panel-web__scroll"
+      scroll-x="{{scrollX}}"
+      scroll-y="{{scrollY}}"
+      scroll-top="{{scrollTop}}"
+      scroll-left="{{scrollLeft}}"
+      scroll-into-view="{{activeMetricId}}"
+      upper-threshold="{{edgeThreshold}}"
+      lower-threshold="{{edgeThreshold}}"
+      bindscroll="handleScroll"
+      bindscrolltoupper="handleUpper"
+      bindscrolltolower="handleLower"
+    >
+      <view class="analytics-panel-web__chart-host"></view>
+    </scroll-view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import Vue from 'vue'
+import AnalyticsChart from '../web/AnalyticsChart.vue'
+
+createComponent({
+  properties: {
+    metrics: { type: Array, value: () => [] },
+    scrollX: { type: Boolean, value: true },
+    scrollY: { type: Boolean, value: true },
+    scrollTop: { type: Number, value: 0 },
+    scrollLeft: { type: Number, value: 0 },
+    activeMetricId: { type: String, value: '' },
+    edgeThreshold: { type: Number, value: 24 }
+  },
+  attached () {
+    this._webDestroyed = false
+    this._chartVersion = 0
+    const host = this.$el && this.$el.querySelector('.analytics-panel-web__chart-host')
+    if (!host) return
+
+    this._chartApp = new Vue({
+      render: h => h(AnalyticsChart, {
+        props: { metrics: this.metrics },
+        on: { select: event => this.handleSelect(event) }
+      })
+    })
+    this._chartApp.$mount(host)
+    if (typeof ResizeObserver !== 'undefined') {
+      this._resizeObserver = new ResizeObserver(() => {
+        if (this._webDestroyed || !this._chartApp) return
+        const chart = this._chartApp.$children[0]
+        if (chart && chart.resize) chart.resize()
+      })
+      this._resizeObserver.observe(host)
+    }
+    this._syncChartMetrics()
+  },
+  observers: {
+    metrics () {
+      this._syncChartMetrics()
+    }
+  },
+  detached () {
+    this._webDestroyed = true
+    this._chartVersion += 1
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect()
+      this._resizeObserver = null
+    }
+    if (this._chartApp) {
+      this._chartApp.$destroy()
+      this._chartApp.$el && this._chartApp.$el.parentNode && this._chartApp.$el.parentNode.removeChild(this._chartApp.$el)
+      this._chartApp = null
+    }
+  },
+  methods: {
+    _syncChartMetrics () {
+      if (this._webDestroyed || !this._chartApp) return
+      const chart = this._chartApp.$children[0]
+      if (chart) chart.metrics = Array.isArray(this.metrics) ? this.metrics : []
+    },
+    _detail (event) {
+      return event && event.detail !== undefined ? event.detail : event
+    },
+    handleSelect (event) {
+      this.triggerEvent('select', this._detail(event))
+    },
+    handleScroll (event) {
+      this.triggerEvent('scroll', this._detail(event))
+    },
+    handleUpper (event) {
+      this.triggerEvent('scrolltoupper', this._detail(event))
+    },
+    handleLower (event) {
+      this.triggerEvent('scrolltolower', this._detail(event))
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "analytics-chart": "../web/AnalyticsChart.vue"
+  }
+}
+</script>

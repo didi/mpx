@@ -1,0 +1,93 @@
+{
+  "status": "failed",
+  "all_declared_outputs_present": true,
+  "declared_output_count": 3,
+  "compile_eligible_mpx_count": 3,
+  "compiled_mpx_count": 1,
+  "checks": [
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/pages/orders/index.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 3,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/pages/orders/index.mpx",
+            "errors": []
+          },
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx",
+            "errors": []
+          },
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "page",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/pages/orders/index.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [],
+        "warnings": [],
+        "summary": {
+          "total": 0,
+          "byCategory": {}
+        },
+        "durationMs": 3892
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "component",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx"
+      ],
+      "passed": false,
+      "returncode": 1,
+      "detail": {
+        "success": false,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [
+          {
+            "category": "script",
+            "message": "Module build failed (from ./node_modules/babel-loader/lib/index.js):\nSyntaxError: /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx: Missing semicolon. (11:267)\n\n   9 |     isCurrentTask (task, memberId) { return this.channelAttached && this.socketTask === task && this.socketMemberId === memberId },\n  10 |     notifyConnection (connected, memberId) { this.connected = connected; this.triggerEvent('connectedchange', { connected, memberId }) },\n> 11 |     disconnectChannel () { const task = this.socketTask; const memberId = this.socketMemberId; this.socketTask = null; this.socketMemberId = ''; if (task && task.close) task.close({}); if (this.connected && this.channelAttached) this.notifyConnection(false, memberId) else this.connected = false },\n     |                                                                                                                                                                                                                                                                            ^\n  12 |     connectChannel () {\n  13 |       if (!this.channelAttached || !this.memberId) return\n  14 |       this.disconnectChannel()\n    at constructor (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:369:19)\n    at Parser.raise (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:6620:19)\n    at Parser.semicolon (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:6916:10)\n    at Parser.parseExpressionStatement (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13314:10)\n    at Parser.parseStatementContent (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12928:19)\n    at Parser.parseStatementLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12796:17)\n    at Parser.parseStatementOrSloppyAnnexBFunctionDeclaration (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12786:17)\n    at Parser.parseIfStatement (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13159:28)\n    at Parser.parseStatementContent (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12825:21)\n    at Parser.parseStatementLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12796:17)\n...",
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx",
+            "raw": "Module build failed (from ./node_modules/babel-loader/lib/index.js):\nSyntaxError: /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx: Missing semicolon. (11:267)\n\n   9 |     isCurrentTask (task, memberId) { return this.channelAttached && this.socketTask === task && this.socketMemberId === memberId },\n  10 |     notifyConnection (connected, memberId) { this.connected = connected; this.triggerEvent('connectedchange', { connected, memberId }) },\n> 11 |     disconnectChannel () { const task = this.socketTask; const memberId = this.socketMemberId; this.socketTask = null; this.socketMemberId = ''; if (task && task.close) task.close({}); if (this.connected && this.channelAttached) this.notifyConnection(false, memberId) else this.connected = false },\n     |                                                                                                                                                                                                                                                                            ^\n  12 |     connectChannel () {\n  13 |       if (!this.channelAttached || !this.memberId) return\n  14 |       this.disconnectChannel()\n    at constructor (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:369:19)\n    at Parser.raise (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:6620:19)\n    at Parser.semicolon (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:6916:10)\n    at Parser.parseExpressionStatement (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13314:10)\n    at Parser.parseStatementContent (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12928:19)\n    at Parser.parseStatementLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12796:17)\n    at Parser.parseStatementOrSloppyAnnexBFunctionDeclaration (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12786:17)\n    at Parser.parseIfStatement (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13159:28)\n    at Parser.parseStatementContent (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12825:21)\n    at Parser.parseStatementLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12796:17)\n    at Parser.parseStatementListItem (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12776:17)\n    at Parser.parseBlockOrModuleBlockBody (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13345:61)\n    at Parser.parseBlockBody (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13338:10)\n    at Parser.parseBlock (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13326:10)\n    at Parser.parseFunctionBody (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12129:24)\n    at Parser.parseFunctionBodyAndFinish (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12115:10)\n    at Parser.parseMethod (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12073:31)\n    at Parser.parseObjectMethod (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11973:19)\n    at Parser.parseObjPropValue (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12007:23)\n    at Parser.parsePropertyDefinition (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11944:17)\n    at Parser.parseObjectLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11861:21)\n    at Parser.parseExprAtom (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11365:23)\n    at Parser.parseExprSubscripts (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11102:23)\n    at Parser.parseUpdate (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11087:21)\n    at Parser.parseMaybeUnary (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11067:23)\n    at Parser.parseMaybeUnaryOrPrivate (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10920:61)\n    at Parser.parseExprOps (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10925:23)\n    at Parser.parseMaybeConditional (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10902:23)\n    at Parser.parseMaybeAssign (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10852:21)\n    at /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10821:39\n    at Parser.allowInAnd (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12455:12)\n    at Parser.parseMaybeAssignAllowIn (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10821:17)\n    at Parser.parseMaybeAssignAllowInOrVoidPattern (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12522:17)\n    at Parser.parseObjectProperty (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11979:83)\n    at Parser.parseObjPropValue (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12007:100)\n    at Parser.parsePropertyDefinition (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11944:17)\n    at Parser.parseObjectLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11861:21)\n    at Parser.parseExprAtom (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11365:23)\n    at Parser.parseExprSubscripts (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11102:23)\n    at Parser.parseUpdate (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11087:21)\n    at Parser.parseMaybeUnary (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11067:23)\n    at Parser.parseMaybeUnaryOrPrivate (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10920:61)\n    at Parser.parseExprOps (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10925:23)\n    at Parser.parseMaybeConditional (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10902:23)\n    at Parser.parseMaybeAssign (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10852:21)\n    at /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10821:39\n    at Parser.allowInAnd (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12455:12)\n    at Parser.parseMaybeAssignAllowIn (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10821:17)\n    at Parser.parseMaybeAssignAllowInOrVoidPattern (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12522:17)\n    at Parser.parseExprListItem (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12204:18)"
+          }
+        ],
+        "warnings": [],
+        "summary": {
+          "total": 1,
+          "byCategory": {
+            "script": 1
+          }
+        },
+        "durationMs": 2694
+      },
+      "stderr": ""
+    }
+  ],
+  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+}

@@ -1,0 +1,180 @@
+<template>
+  <view class="feed-page">
+    <scroll-view
+      class="feed-scroll"
+      scroll-y
+      bindscroll="onScroll"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+      bindtouchcancel="onTouchEnd"
+    >
+      <view class="feed-content">
+        <view class="categories" role="tablist">
+          <text
+            wx:for="{{categories}}"
+            wx:key="id"
+            class="category {{activeCategoryId === item.id ? 'category-active' : ''}}"
+            data-category-id="{{item.id}}"
+            bindtap="selectCategory"
+          >{{item.name}}</text>
+        </view>
+
+        <view wx:for="{{products}}" wx:key="id" class="product">
+          <image
+            class="product-image"
+            src="{{item.image}}"
+            mode="widthFix"
+            bindload="onImageLoad"
+            binderror="onImageError"
+          />
+          <product-video wx:if="{{item.video}}" product="{{item}}" />
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    cartCount: 2,
+    activeCategoryId: '',
+    scrollTop: 0
+  },
+  async onLoad () {
+    const { data } = await mpx.request({ url: '/api/feed' })
+    const categories = data.categories || []
+
+    this.categories = categories
+    this.products = data.products || []
+    this.activeCategoryId = categories.length ? categories[0].id : ''
+  },
+  methods: {
+    selectCategory (event) {
+      this.activeCategoryId = event.currentTarget.dataset.categoryId
+    },
+    onScroll (event) {
+      this.scrollTop = event.detail.scrollTop
+    },
+    // Do not prevent touchmove: vertical scrolling remains native and smooth.
+    onTouchStart (event) {
+      const touch = event.touches && event.touches[0]
+      if (!touch) return
+      this.touchStart = { x: touch.clientX, y: touch.clientY }
+    },
+    onTouchMove () {},
+    onTouchEnd (event) {
+      if (!this.touchStart) return
+
+      const touch = (event.changedTouches && event.changedTouches[0]) || null
+      const start = this.touchStart
+      this.touchStart = null
+      if (!touch) return
+
+      const deltaX = touch.clientX - start.x
+      const deltaY = touch.clientY - start.y
+      if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY)) return
+
+      this.moveCategory(deltaX < 0 ? 1 : -1)
+    },
+    moveCategory (step) {
+      const categories = this.categories || []
+      if (!categories.length) return
+
+      const currentIndex = categories.findIndex(item => item.id === this.activeCategoryId)
+      const nextIndex = Math.max(0, Math.min(categories.length - 1, currentIndex + step))
+      this.activeCategoryId = categories[nextIndex].id
+    },
+    // widthFix images update their intrinsic height after this event; no manual
+    // scroll-area measurement is needed when the scroll-view owns the layout.
+    onImageLoad () {},
+    onImageError () {},
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #f6f6f6;
+}
+
+.feed-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.feed-content {
+  min-height: 100%;
+  padding-bottom: 136rpx;
+}
+
+.categories {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  overflow-x: auto;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20rpx 24rpx;
+  background: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+}
+
+.category {
+  flex: none;
+  margin-right: 32rpx;
+  color: #666;
+}
+
+.category-active {
+  color: #111;
+  font-weight: 600;
+}
+
+.product {
+  padding: 24rpx;
+}
+
+.product-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.fixed-cart {
+  position: fixed;
+  z-index: 20;
+  right: 24rpx;
+  bottom: 40rpx;
+  padding: 20rpx 28rpx;
+  color: #fff;
+  background: #111;
+  border-radius: 40rpx;
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.2);
+}
+</style>

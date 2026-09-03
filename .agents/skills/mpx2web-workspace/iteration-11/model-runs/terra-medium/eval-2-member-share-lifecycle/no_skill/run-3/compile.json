@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "all_declared_outputs_present": true,
+  "declared_output_count": 1,
+  "compile_eligible_mpx_count": 1,
+  "compiled_mpx_count": 1,
+  "checks": [
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "page",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [],
+        "warnings": [
+          {
+            "category": "template",
+            "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx:48:35]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button\" open-type=\"share\" bindtap@web=\"shareOnWeb\">分享邀请活动</button>\n     |                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  50 |     </view>\n  51 |",
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx",
+            "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx:48:35]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button\" open-type=\"share\" bindtap@web=\"shareOnWeb\">分享邀请活动</button>\n     |                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  50 |     </view>\n  51 |"
+          }
+        ],
+        "summary": {
+          "total": 0,
+          "byCategory": {}
+        },
+        "durationMs": 4015
+      },
+      "stderr": ""
+    }
+  ],
+  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+}

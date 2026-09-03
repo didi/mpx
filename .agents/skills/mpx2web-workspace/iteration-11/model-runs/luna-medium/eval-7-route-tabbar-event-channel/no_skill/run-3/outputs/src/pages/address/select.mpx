@@ -1,0 +1,33 @@
+<template>
+  <view>
+    <view wx:for="{{addresses}}" wx:key="id" bindtap="confirm(item)">{{item.name}} {{item.detail}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+const ADDRESS_STORAGE_KEY = 'checkout:selectedAddress'
+
+createPage({
+  data: {
+    addresses: [
+      { id: 'home', name: '家', detail: '幸福路 1 号' },
+      { id: 'office', name: '公司', detail: '科技路 8 号' }
+    ]
+  },
+  onLoad () {
+    this.eventChannel = this.getOpenerEventChannel && this.getOpenerEventChannel()
+  },
+  methods: {
+    confirm (address) {
+      if (this.eventChannel && this.eventChannel.emit) {
+        this.eventChannel.emit('selectAddress', address)
+      }
+      // Fallback for Web history restoration and runtimes without channels.
+      mpx.setStorageSync(ADDRESS_STORAGE_KEY, address)
+      mpx.navigateBack({ delta: 1 })
+    }
+  }
+})
+</script>

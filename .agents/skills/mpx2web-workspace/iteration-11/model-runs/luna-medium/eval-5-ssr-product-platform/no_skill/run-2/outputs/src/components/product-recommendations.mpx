@@ -1,0 +1,85 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view class="recommendation-card" wx:for="{{items}}" wx:key="id" data-product-id="{{item.id}}" bindtap="openProduct(item.id)">
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+let exposureSdk
+
+createComponent({
+  properties: {
+    productId: { type: String, observer: 'refreshTracker' },
+    items: { type: Array, observer: 'refreshTracker' }
+  },
+  attached () {
+    this._active = true
+    this.refreshTracker()
+  },
+  refreshTracker () {
+    if (!this._active || typeof window === 'undefined' || typeof document === 'undefined' || typeof IntersectionObserver === 'undefined') return
+    const productId = this.productId
+    const generation = (this._trackerGeneration || 0) + 1
+    this._trackerGeneration = generation
+    this.cleanupTracker()
+    // Keep the browser-only SDK out of the SSR module path.
+    exposureSdk = exposureSdk || require('@business/product-exposure-web')
+    const trackerPromise = exposureSdk.create({ productId })
+    this._trackerPromise = trackerPromise
+    Promise.resolve(trackerPromise).then((tracker) => {
+      if (!this._active || generation !== this._trackerGeneration || productId !== this.productId) {
+        if (tracker && tracker.destroy) tracker.destroy()
+        return
+      }
+      this._tracker = tracker
+      this._observer = new IntersectionObserver((entries) => {
+        if (!this._active || generation !== this._trackerGeneration || this._tracker !== tracker) return
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) tracker.track('recommendation_exposure', {
+            productId,
+            recommendationId: entry.target.dataset.productId
+          })
+        })
+      })
+      document.querySelectorAll('.recommendation-card').forEach(element => this._observer.observe(element))
+    }).catch(() => {})
+  },
+  cleanupTracker () {
+    if (this._observer) this._observer.disconnect()
+    this._observer = null
+    if (this._tracker && this._tracker.destroy) this._tracker.destroy()
+    this._tracker = null
+  },
+  detached () {
+    this._active = false
+    this._trackerGeneration = (this._trackerGeneration || 0) + 1
+    this.cleanupTracker()
+  },
+  methods: {
+    openProduct (productId) {
+      if (typeof wx !== 'undefined' && wx.navigateTo) return wx.navigateTo({ url: `/packageProduct/pages/detail/index?id=${productId}` })
+      if (typeof window !== 'undefined') window.location.href = `/mall/packageProduct/pages/detail/index?id=${productId}`
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations { margin-top: 24rpx; padding: 24rpx; background: #ffffff; }
+.section-title { margin-bottom: 20rpx; color: #222222; font-size: 30rpx; font-weight: bold; }
+.recommendation-card { display: flex; align-items: center; margin-bottom: 18rpx; }
+.recommendation-cover { width: 120rpx; height: 120rpx; border-radius: 12rpx; }
+.recommendation-name { flex: 1; margin-left: 18rpx; color: #333333; font-size: 26rpx; }
+.recommendation-price { color: #e64340; font-size: 28rpx; }
+</style>
+
+<script type="application/json">
+{ "component": true }
+</script>

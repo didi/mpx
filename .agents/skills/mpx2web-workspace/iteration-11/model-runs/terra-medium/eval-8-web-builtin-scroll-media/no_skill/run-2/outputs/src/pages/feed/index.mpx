@@ -1,0 +1,199 @@
+<template>
+  <view
+    class="feed-page"
+    bindtouchstart="onTouchStart"
+    bindtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
+    bindtouchcancel="onTouchCancel"
+  >
+    <view class="category-header">
+      <scroll-view class="category-scroll" scroll-x>
+        <view class="categories">
+          <view
+            wx:for="{{categories}}"
+            wx:key="id"
+            class="category {{item.id === activeCategoryId ? 'category--active' : ''}}"
+            data-category-id="{{item.id}}"
+            bindtap="onCategoryTap"
+          >
+            <text>{{item.name}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="feed-content">
+      <view wx:for="{{products}}" wx:key="id" class="product">
+        <image
+          class="product-image"
+          src="{{item.image}}"
+          mode="widthFix"
+        />
+        <product-video wx:if="{{item.video}}" product="{{item}}" />
+      </view>
+    </view>
+
+    <view class="fixed-cart" bindtap="openCart">
+      <text>购物车 {{cartCount}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    cartCount: 2,
+    activeCategoryId: null
+  },
+  async onLoad () {
+    try {
+      const { data } = await mpx.request({ url: '/api/feed' })
+      const categories = data.categories || []
+      this.setData({
+        categories,
+        products: data.products || [],
+        activeCategoryId: categories.length ? categories[0].id : null
+      })
+    } catch (error) {
+      this.setData({ categories: [], products: [] })
+    }
+  },
+  methods: {
+    onCategoryTap (event) {
+      if (this.justSwiped) {
+        this.justSwiped = false
+        return
+      }
+      this.setData({ activeCategoryId: event.currentTarget.dataset.categoryId })
+    },
+    onTouchStart (event) {
+      const touch = event.touches && event.touches[0]
+      if (!touch) return
+      this.dragStartX = touch.clientX
+      this.dragStartY = touch.clientY
+      this.isHorizontalDrag = false
+    },
+    onTouchMove (event) {
+      const touch = event.touches && event.touches[0]
+      if (!touch || this.dragStartX === undefined) return
+      const deltaX = touch.clientX - this.dragStartX
+      const deltaY = touch.clientY - this.dragStartY
+      if (Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        this.isHorizontalDrag = true
+        this.dragDeltaX = deltaX
+      }
+    },
+    onTouchEnd () {
+      if (this.isHorizontalDrag && Math.abs(this.dragDeltaX) > 56) {
+        this.selectAdjacentCategory(this.dragDeltaX < 0 ? 1 : -1)
+        this.justSwiped = true
+      }
+      this.resetDrag()
+    },
+    onTouchCancel () {
+      this.resetDrag()
+    },
+    resetDrag () {
+      this.dragStartX = undefined
+      this.dragStartY = undefined
+      this.dragDeltaX = 0
+      this.isHorizontalDrag = false
+    },
+    selectAdjacentCategory (step) {
+      const { categories, activeCategoryId } = this
+      const activeIndex = categories.findIndex((category) => category.id === activeCategoryId)
+      const nextIndex = activeIndex + step
+      if (nextIndex >= 0 && nextIndex < categories.length) {
+        this.setData({ activeCategoryId: categories[nextIndex].id })
+      }
+    },
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page {
+  min-height: 100vh;
+  padding-bottom: 152rpx;
+  box-sizing: border-box;
+  background: #f5f5f5;
+}
+
+.category-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  border-bottom: 1rpx solid #eee;
+}
+
+.category-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.categories {
+  display: inline-flex;
+  min-width: 100%;
+  box-sizing: border-box;
+  padding: 0 24rpx;
+}
+
+.category {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 88rpx;
+  margin-right: 40rpx;
+  color: #666;
+  font-size: 28rpx;
+}
+
+.category--active {
+  color: #111;
+  font-weight: 600;
+  border-bottom: 4rpx solid #111;
+}
+
+.feed-content {
+  min-height: 100%;
+}
+
+.product {
+  margin-bottom: 16rpx;
+  padding: 24rpx;
+  background: #fff;
+}
+
+.product-image {
+  display: block;
+  width: 100%;
+}
+
+.fixed-cart {
+  position: fixed;
+  right: 24rpx;
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  z-index: 20;
+  padding: 22rpx 30rpx;
+  border-radius: 48rpx;
+  background: #111;
+  color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .2);
+}
+</style>

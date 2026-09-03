@@ -1,0 +1,23 @@
+{
+  "eval_id": 11,
+  "eval_name": "web-accessibility-focus",
+  "complexity": "complex",
+  "focus": "cross-platform-a11y/web-focus-trap/keyboard-cleanup",
+  "prompt": "商品筛选弹层需要在桌面 Web 中完整支持键盘：打开后焦点进入，Tab/Shift+Tab 不离开弹层，Escape 关闭并回到原触发按钮；快速开关和卸载不能留下监听或错误焦点。微信小程序仍要支持触摸打开、选择、确认和遮罩关闭。请保持跨端无障碍语义并输出全部完整文件。",
+  "files": [
+    "input/src/components/filter-dialog.mpx",
+    "input/src/components/filter-dialog.web.mpx"
+  ],
+  "outputs": [
+    "src/components/filter-dialog.mpx",
+    "src/components/filter-dialog.web.mpx"
+  ],
+  "assertions": [
+    {"id": "c0", "text": "通用筛选触发器、选项与确认按钮使用 aria-role/aria-label 表达跨端语义，并保留 tap/遮罩触摸链路", "category": "accessibility"},
+    {"id": "c1", "text": "完整浏览器 role=dialog、aria-modal、tabindex 与键盘事件只存在于 Web 文件或 Web-only 模板逻辑", "category": "web-template"},
+    {"id": "c2", "text": "Web 打开前记录真实触发元素，渲染完成后把焦点移入弹层；关闭后仅在元素仍连接文档时恢复焦点", "category": "web-focus"},
+    {"id": "c3", "text": "Escape 关闭弹层；Tab 与 Shift+Tab 在当前弹层的可聚焦元素首尾循环，遮罩点击不误触内容区", "category": "web-focus"},
+    {"id": "c4", "text": "document/window 键盘或焦点监听在每次关闭和 detached/unmounted 时成对移除，快速开关不会重复注册", "category": "web-cleanup"},
+    {"id": "c5", "text": "选项选择、清空、确认、取消、焦点恢复和微信小程序触摸业务链路保持完整", "category": "business-regression"}
+  ]
+}

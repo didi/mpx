@@ -1,0 +1,154 @@
+<template>
+  <view class="portal {{dark ? 'theme-dark' : ''}}">
+    <view class="portal-card" wx:for="{{cards}}" wx:key="id" bindtap="openCard(item.id)">{{item.title}}</view>
+    <button class="portal-button" bindtap="toggleTheme">切换主题</button>
+    <button class="portal-button" bindtap="openDialog">打开弹层</button>
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
+      <view class="dialog" catchtap="stopDialogTap">门户设置</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    dialogVisible: false,
+    dark: false,
+    webScrollLock: null
+  },
+  methods: {
+    isWeb () {
+      return typeof window !== 'undefined' && typeof document !== 'undefined'
+    },
+    openCard (id) {
+      this.unlockPageScroll()
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
+    toggleTheme () {
+      this.dark = !this.dark
+    },
+    openDialog () {
+      if (this.dialogVisible) return
+      this.dialogVisible = true
+      this.lockPageScroll()
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      this.unlockPageScroll()
+    },
+    stopDialogTap () {},
+    lockPageScroll () {
+      if (!this.isWeb() || this.webScrollLock) return
+      const body = document.body
+      const html = document.documentElement
+      const scrollTop = window.pageYOffset || window.scrollY || 0
+      this.webScrollLock = {
+        scrollTop,
+        bodyOverflow: body.style.overflow,
+        bodyPosition: body.style.position,
+        bodyTop: body.style.top,
+        bodyWidth: body.style.width,
+        htmlOverflow: html.style.overflow
+      }
+      body.style.position = 'fixed'
+      body.style.top = `-${scrollTop}px`
+      body.style.width = '100%'
+      body.style.overflow = 'hidden'
+      html.style.overflow = 'hidden'
+    },
+    unlockPageScroll () {
+      if (!this.isWeb() || !this.webScrollLock) return
+      const lock = this.webScrollLock
+      const body = document.body
+      const html = document.documentElement
+      body.style.overflow = lock.bodyOverflow
+      body.style.position = lock.bodyPosition
+      body.style.top = lock.bodyTop
+      body.style.width = lock.bodyWidth
+      html.style.overflow = lock.htmlOverflow
+      window.scrollTo(0, lock.scrollTop)
+      this.webScrollLock = null
+    }
+  },
+  onHide () {
+    this.unlockPageScroll()
+  },
+  onUnload () {
+    this.dialogVisible = false
+    this.unlockPageScroll()
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  --portal-text: #1f2937;
+  --portal-background: #f5f7fb;
+  --portal-surface: #ffffff;
+  --portal-border: #dbe3ef;
+  --portal-accent: #2563eb;
+  --portal-space: 24rpx;
+  box-sizing: border-box;
+  min-height: 100vh;
+  color: var(--portal-text, #1f2937);
+  background: var(--portal-background, #f5f7fb);
+  padding: var(--portal-space, 24rpx);
+  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
+}
+.theme-dark {
+  --portal-text: #e5e7eb;
+  --portal-background: #111827;
+  --portal-surface: #1f2937;
+  --portal-border: #374151;
+  --portal-accent: #60a5fa;
+}
+.portal-card {
+  box-sizing: border-box;
+  margin-bottom: 16rpx;
+  padding: 28rpx;
+  color: var(--portal-text, #1f2937);
+  background: var(--portal-surface, #ffffff);
+  border: 1px solid var(--portal-border, #dbe3ef);
+  border-radius: 12rpx;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.portal-button {
+  margin-top: 16rpx;
+  color: #fff;
+  background: var(--portal-accent, #2563eb);
+}
+.dialog-mask {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+  background: rgba(15, 23, 42, .56);
+}
+.dialog {
+  min-width: 480rpx;
+  padding: 40rpx;
+  color: var(--portal-text, #1f2937);
+  background: var(--portal-surface, #ffffff);
+  border-radius: 16rpx;
+}
+@media (hover: hover) and (pointer: fine) {
+  .portal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .12);
+  }
+  .portal-button:hover { filter: brightness(1.08); }
+}
+@media (min-width: 768px) {
+  .portal { max-width: 1200px; margin: 0 auto; }
+}
+.portal::-webkit-scrollbar { width: 8px; height: 8px; }
+.portal::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, .55); border-radius: 8px; }
+.portal::-webkit-scrollbar-track { background: transparent; }
+.portal { scrollbar-width: thin; scrollbar-color: rgba(100, 116, 139, .55) transparent; }
+</style>

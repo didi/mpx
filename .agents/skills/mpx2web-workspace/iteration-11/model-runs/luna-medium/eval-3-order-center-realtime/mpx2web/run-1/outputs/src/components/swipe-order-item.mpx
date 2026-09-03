@@ -1,0 +1,186 @@
+<template>
+  <view
+    class="swipe-order"
+    data-disabled="{{disabled}}"
+    catchtouchstart@wx="{{gesture.onTouchStart}}"
+    @touchstart@web="handleTouchStart"
+    catchtouchmove@wx="{{gesture.onTouchMove}}"
+    @touchmove@web="handleTouchMove"
+    catchtouchend@wx="{{gesture.onTouchEnd}}"
+    @touchend@web="handleTouchEnd"
+    catchtouchcancel@wx="{{gesture.onTouchCancel}}"
+    @touchcancel@web="handleTouchCancel"
+  >
+    <view class="remove-action">
+      <button class="remove-button" catchtap="removeOrder" disabled="{{disabled}}">删除</button>
+    </view>
+
+    <view
+      class="order-card"
+      wx:class="{{ {dragging: dragging} }}"
+      style="transform: translateX({{offsetX}}px)"
+      bindtap@wx="selectOrder"
+      @tap@web="selectOrder"
+    >
+      <view class="order-head">
+        <text class="order-no">订单 {{order.orderNo}}</text>
+        <text class="order-status">{{order.statusText}}</text>
+      </view>
+      <view class="goods-row">
+        <image class="goods-cover" src="{{order.cover}}" mode="aspectFill" />
+        <view class="goods-copy">
+          <text class="goods-title">{{order.title}}</text>
+          <text class="goods-sku">{{order.skuText}}</text>
+          <view class="goods-price-row">
+            <text class="goods-price">¥{{order.amount}}</text>
+            <text class="goods-count">×{{order.count}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="logistics-row">
+        <view class="logistics-copy">
+          <text class="logistics-text">{{order.logisticsText}}</text>
+          <text class="logistics-time">{{order.updatedAt}}</text>
+        </view>
+        <text class="logistics-arrow">›</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script module="gesture" lang="wxs">
+function pointX(event) {
+  var touches = event.touches && event.touches.length ? event.touches : event.changedTouches
+  return touches && touches.length ? touches[0].clientX : 0
+}
+
+function disabled(event) {
+  var value = event.currentTarget.dataset.disabled
+  return value === true || value === 'true'
+}
+
+module.exports = {
+  onTouchStart: function (event) {
+    if (disabled(event)) return
+    event.instance.callMethod('handleTouchStart', pointX(event))
+  },
+  onTouchMove: function (event) {
+    if (disabled(event)) return
+    event.instance.callMethod('handleTouchMove', pointX(event))
+  },
+  onTouchEnd: function (event) {
+    if (disabled(event)) return
+    event.instance.callMethod('handleTouchEnd', pointX(event))
+  },
+  onTouchCancel: function (event) {
+    if (disabled(event)) return
+    event.instance.callMethod('handleTouchCancel')
+  }
+}
+</script>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    order: { type: Object, value: () => ({}) },
+    disabled: Boolean
+  },
+  data: {
+    offsetX: 0,
+    dragging: false,
+    touchStartX: 0,
+    touchOffsetX: 0,
+    swipeMoved: false,
+    suppressNextTap: false
+  },
+  methods: {
+    handleTouchStart (startX) {
+      this.suppressNextTap = false
+      if (this.disabled) return
+      this.touchStartX = startX
+      this.touchOffsetX = 0
+      this.swipeMoved = false
+      this.dragging = true
+    },
+    handleTouchMove (currentX) {
+      if (this.disabled) return
+      this.touchOffsetX = currentX - this.touchStartX
+      if (this.touchOffsetX > 0) this.touchOffsetX = 0
+      if (this.touchOffsetX < -96) this.touchOffsetX = -96
+      if (Math.abs(this.touchOffsetX) > 8) this.swipeMoved = true
+      this.offsetX = this.touchOffsetX
+    },
+    handleTouchEnd (currentX) {
+      if (this.disabled) return
+      this.handleTouchMove(currentX)
+      this.finishSwipe(this.touchOffsetX < -48)
+    },
+    handleTouchCancel () {
+      if (this.disabled) return
+      this.touchStartX = 0
+      this.touchOffsetX = 0
+      this.swipeMoved = false
+      this.dragging = false
+      this.offsetX = 0
+      this.suppressNextTap = false
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
+    },
+    finishSwipe (open) {
+      var moved = this.swipeMoved
+      this.touchStartX = 0
+      this.touchOffsetX = 0
+      this.swipeMoved = false
+      this.dragging = false
+      this.offsetX = open ? -96 : 0
+      this.suppressNextTap = moved
+      this.triggerEvent('swipeend', { orderId: this.order.id, open })
+    },
+    selectOrder () {
+      if (this.suppressNextTap) {
+        this.suppressNextTap = false
+        return
+      }
+      if (this.disabled) return
+      this.triggerEvent('select', { orderId: this.order.id })
+    },
+    removeOrder () {
+      if (this.disabled) return
+      this.triggerEvent('remove', { orderId: this.order.id })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.swipe-order { position: relative; margin-bottom: 20rpx; overflow: hidden; border-radius: 20rpx; }
+.remove-action { position: absolute; top: 0; right: 0; bottom: 0; width: 96px; background: #ff4d4f; }
+.remove-button { width: 96px; height: 100%; margin: 0; padding: 0; color: #ffffff; font-size: 28rpx; background: #ff4d4f; border-radius: 0; }
+.order-card { position: relative; z-index: 1; padding: 24rpx; background: #ffffff; transition: transform 180ms ease; }
+.order-card.dragging { transition: none; }
+.order-head, .goods-price-row, .logistics-row { display: flex; align-items: center; justify-content: space-between; }
+.order-no { color: #8b919c; font-size: 22rpx; }
+.order-status { color: #1677ff; font-size: 25rpx; font-weight: bold; }
+.goods-row { display: flex; margin-top: 18rpx; padding-bottom: 20rpx; border-bottom: 1rpx solid #eef0f3; }
+.goods-cover { width: 144rpx; height: 144rpx; border-radius: 14rpx; }
+.goods-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; margin-left: 18rpx; }
+.goods-title, .goods-sku, .logistics-text, .logistics-time { display: block; }
+.goods-title { overflow: hidden; color: #292d35; font-size: 28rpx; font-weight: bold; text-overflow: ellipsis; white-space: nowrap; }
+.goods-sku { margin-top: 8rpx; color: #999fa8; font-size: 22rpx; }
+.goods-price-row { margin-top: auto; }
+.goods-price { color: #e64340; font-size: 28rpx; }
+.goods-count { color: #999fa8; font-size: 22rpx; }
+.logistics-row { padding-top: 18rpx; }
+.logistics-copy { flex: 1; min-width: 0; }
+.logistics-text { overflow: hidden; color: #3d424b; font-size: 24rpx; text-overflow: ellipsis; white-space: nowrap; }
+.logistics-time { margin-top: 5rpx; color: #a2a7b0; font-size: 20rpx; }
+.logistics-arrow { margin-left: 16rpx; color: #b7bbc3; font-size: 38rpx; }
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

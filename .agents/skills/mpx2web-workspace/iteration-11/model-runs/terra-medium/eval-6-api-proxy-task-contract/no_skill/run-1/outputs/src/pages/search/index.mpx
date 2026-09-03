@@ -1,0 +1,107 @@
+<template>
+  <view class="search-page">
+    <view class="search-bar">
+      <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+      <view wx:if="{{keyword}}" class="clear-button" bindtap="clearKeyword">清空</view>
+    </view>
+
+    <view class="trending" wx:if="{{!keyword}}">
+      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    </view>
+
+    <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
+
+    <view class="suggestions" wx:if="{{keyword}}">
+      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: [],
+    errorMessage: '',
+    suggestionRequest: null,
+    suggestionRequestId: 0
+  },
+  onLoad () {
+    this.loadTrendingKeywords()
+  },
+  onUnload () {
+    this.cancelSuggestionRequest()
+  },
+  methods: {
+    async loadTrendingKeywords () {
+      try {
+        this.trendingKeywords = await fetchTrendingKeywords()
+      } catch (error) {
+        this.errorMessage = '趋势词加载失败'
+      }
+    },
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+    clearKeyword () {
+      this.search('')
+    },
+    cancelSuggestionRequest () {
+      this.suggestionRequestId += 1
+      if (this.suggestionRequest) {
+        this.suggestionRequest.abort()
+        this.suggestionRequest = null
+      }
+    },
+    async search (keyword) {
+      this.keyword = keyword
+      this.errorMessage = ''
+      this.cancelSuggestionRequest()
+
+      if (!keyword) {
+        this.suggestions = []
+        return
+      }
+
+      const requestId = this.suggestionRequestId
+      const suggestionRequest = requestSuggestions(keyword)
+      this.suggestionRequest = suggestionRequest
+
+      try {
+        const data = await suggestionRequest.promise
+        if (requestId !== this.suggestionRequestId) return
+        this.suggestions = data.list || []
+      } catch (error) {
+        if (requestId !== this.suggestionRequestId) return
+        this.suggestions = []
+        this.errorMessage = '搜索失败，请稍后重试'
+      } finally {
+        if (requestId === this.suggestionRequestId) {
+          this.suggestionRequest = null
+        }
+      }
+    },
+    openProduct (productId) {
+      mpx.navigateTo({
+        url: `/pages/product/detail?id=${productId}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page { padding: 24rpx; }
+.search-bar { display: flex; align-items: center; }
+.search-bar input { flex: 1; }
+.clear-button { margin-left: 16rpx; }
+.trending, .suggestions, .error-message { margin-top: 24rpx; }
+.error-message { color: #e64340; }
+</style>

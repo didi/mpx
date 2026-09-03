@@ -1,0 +1,52 @@
+<template>
+  <view class="checkout">
+    <button bindtap="chooseAddress">选择地址</button>
+    <view wx:if="{{address}}">{{address.name}} {{address.detail}}</view>
+    <button bindtap="pay">支付</button>
+    <button bindtap="openOrders">查看订单</button>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+const ADDRESS_RESULT_PREFIX = 'checkout-address:'
+
+createPage({
+  data: {
+    address: null,
+    addressRequestId: ''
+  },
+  onShow () {
+    const requestId = this.addressRequestId
+    if (!requestId) return
+
+    const storageKey = `${ADDRESS_RESULT_PREFIX}${requestId}`
+    const address = mpx.getStorageSync(storageKey)
+    if (address) {
+      this.address = address
+      mpx.removeStorageSync(storageKey)
+      this.addressRequestId = ''
+    }
+  },
+  methods: {
+    chooseAddress () {
+      const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+      this.addressRequestId = requestId
+      mpx.removeStorageSync(`${ADDRESS_RESULT_PREFIX}${requestId}`)
+      mpx.navigateTo({
+        url: `/pages/address/select?requestId=${encodeURIComponent(requestId)}`
+      })
+    },
+    pay () {
+      mpx.redirectTo({ url: '/pages/pay/result' })
+    },
+    openOrders () {
+      mpx.switchTab({ url: '/pages/orders/index' })
+    },
+    requireLogin () {
+      mpx.reLaunch({ url: '/pages/login/index' })
+    }
+  }
+})
+</script>

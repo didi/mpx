@@ -1,0 +1,18 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  pinia: createPinia(),
+  onLaunch () {
+    if (typeof wx !== 'undefined' && wx.reportAnalytics) wx.reportAnalytics('mall_launch', {})
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": ["pages/home/index"],
+  "packages": [{ "root": "packageProduct", "pages": ["pages/detail/index"] }]
+}
+</script>

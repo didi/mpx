@@ -1,0 +1,20 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  onAppInit () {
+    // Each SSR application (and therefore each request) owns its Pinia instance.
+    return { pinia: createPinia() }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": ["pages/article/detail"],
+  "packages": [
+    {"root": "packageRecommend", "pages": []}
+  ]
+}
+</script>

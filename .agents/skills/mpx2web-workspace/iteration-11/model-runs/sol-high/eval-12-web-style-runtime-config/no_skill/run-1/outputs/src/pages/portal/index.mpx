@@ -1,0 +1,263 @@
+<template>
+  <view class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal-content">
+      <view class="portal-cards">
+        <view
+          class="portal-card"
+          wx:for="{{cards}}"
+          wx:key="id"
+          bindtap="openCard(item.id)"
+        >{{item.title}}</view>
+      </view>
+      <view class="portal-actions">
+        <button class="portal-button" bindtap="toggleTheme">切换主题</button>
+        <button class="portal-button portal-button--primary" bindtap="openDialog">打开弹层</button>
+      </view>
+    </view>
+
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
+      <view class="dialog" catchtap="noop">门户设置</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    dialogVisible: false,
+    dark: false
+  },
+
+  onHide () {
+    this.closeDialog()
+  },
+
+  onUnload () {
+    this.closeDialog()
+  },
+
+  methods: {
+    openCard (id) {
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
+
+    toggleTheme () {
+      this.dark = !this.dark
+    },
+
+    openDialog () {
+      if (this.dialogVisible) return
+      this.dialogVisible = true
+      this.lockPageScroll()
+    },
+
+    closeDialog () {
+      this.dialogVisible = false
+      this.restorePageScroll()
+    },
+
+    lockPageScroll () {
+      if (typeof window === 'undefined' || typeof document === 'undefined' || this._scrollLockState) return
+
+      const body = document.body
+      const root = document.documentElement
+      if (!body || !root) return
+
+      const scrollX = window.pageXOffset || root.scrollLeft || body.scrollLeft || 0
+      const scrollY = window.pageYOffset || root.scrollTop || body.scrollTop || 0
+      const bodyProperties = ['position', 'top', 'left', 'right', 'width', 'overflow']
+      const rootProperties = ['overflow']
+
+      this._scrollLockState = {
+        scrollX,
+        scrollY,
+        body,
+        root,
+        bodyStyles: this.captureInlineStyles(body, bodyProperties),
+        rootStyles: this.captureInlineStyles(root, rootProperties)
+      }
+
+      body.style.setProperty('position', 'fixed')
+      body.style.setProperty('top', `${-scrollY}px`)
+      body.style.setProperty('left', `${-scrollX}px`)
+      body.style.setProperty('right', '0')
+      body.style.setProperty('width', '100%')
+      body.style.setProperty('overflow', 'hidden')
+      root.style.setProperty('overflow', 'hidden')
+    },
+
+    restorePageScroll () {
+      const state = this._scrollLockState
+      if (!state) return
+
+      this._scrollLockState = null
+      this.restoreInlineStyles(state.body, state.bodyStyles)
+      this.restoreInlineStyles(state.root, state.rootStyles)
+
+      if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+        window.scrollTo(state.scrollX, state.scrollY)
+      }
+    },
+
+    captureInlineStyles (element, properties) {
+      return properties.map((property) => ({
+        property,
+        value: element.style.getPropertyValue(property),
+        priority: element.style.getPropertyPriority(property)
+      }))
+    },
+
+    restoreInlineStyles (element, styles) {
+      styles.forEach(({ property, value, priority }) => {
+        if (value) {
+          element.style.setProperty(property, value, priority)
+        } else {
+          element.style.removeProperty(property)
+        }
+      })
+    },
+
+    noop () {}
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  box-sizing: border-box;
+  min-height: 100vh;
+  color: var(--portal-text, #172033);
+  background: var(--portal-background, #f4f7fb);
+  padding: var(--portal-space, 32rpx);
+  padding-top: max(var(--portal-space, 32rpx), env(safe-area-inset-top));
+  padding-right: max(var(--portal-space, 32rpx), env(safe-area-inset-right));
+  padding-bottom: max(var(--portal-space, 32rpx), env(safe-area-inset-bottom));
+  padding-left: max(var(--portal-space, 32rpx), env(safe-area-inset-left));
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.portal--dark {
+  color: var(--portal-dark-text, #edf2ff);
+  background: var(--portal-dark-background, #101725);
+}
+
+.portal-content {
+  width: 100%;
+  max-width: 1200rpx;
+  margin: 0 auto;
+}
+
+.portal-cards {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -12rpx;
+}
+
+.portal-card {
+  box-sizing: border-box;
+  width: calc(50% - 24rpx);
+  min-height: 180rpx;
+  margin: 12rpx;
+  padding: 28rpx;
+  border: 1px solid var(--portal-card-border, rgba(23, 32, 51, 0.1));
+  border-radius: 20rpx;
+  background: var(--portal-card-background, #ffffff);
+  box-shadow: 0 8rpx 24rpx rgba(38, 55, 89, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.portal--dark .portal-card {
+  border-color: var(--portal-dark-card-border, rgba(255, 255, 255, 0.12));
+  background: var(--portal-dark-card-background, #1a2436);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.24);
+}
+
+.portal-actions {
+  display: flex;
+  margin: 28rpx -8rpx 0;
+}
+
+.portal-button {
+  flex: 1;
+  margin: 0 8rpx;
+  color: var(--portal-button-text, #25324a);
+  background: var(--portal-button-background, #ffffff);
+}
+
+.portal-button--primary {
+  color: var(--portal-primary-text, #ffffff);
+  background: var(--portal-primary, #246bfd);
+}
+
+.dialog-mask {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  background: var(--portal-mask, rgba(7, 13, 25, 0.58));
+}
+
+.dialog {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 640rpx;
+  padding: 40rpx;
+  border-radius: 24rpx;
+  color: var(--portal-dialog-text, #172033);
+  background: var(--portal-dialog-background, #ffffff);
+  box-shadow: 0 24rpx 64rpx rgba(0, 0, 0, 0.24);
+}
+
+.portal--dark .dialog {
+  color: var(--portal-dark-dialog-text, #edf2ff);
+  background: var(--portal-dark-dialog-background, #1a2436);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .portal-card:hover {
+    transform: translateY(-4rpx);
+    box-shadow: 0 14rpx 36rpx rgba(38, 55, 89, 0.16);
+  }
+}
+</style>
+
+<style mode="web">
+@media (hover: hover) and (pointer: fine) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--portal-scrollbar-thumb, #91a0b8) var(--portal-scrollbar-track, #eef2f7);
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    background: var(--portal-scrollbar-track, #eef2f7);
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    border: 2px solid var(--portal-scrollbar-track, #eef2f7);
+    border-radius: 8px;
+    background: var(--portal-scrollbar-thumb, #91a0b8);
+  }
+
+  html::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover {
+    background: var(--portal-scrollbar-thumb-hover, #65758f);
+  }
+}
+</style>

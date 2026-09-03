@@ -1,0 +1,30 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  onAppInit () {
+    // SSR calls this for every app instance, so Pinia state never crosses requests.
+    return { pinia: createPinia() }
+  },
+  onLaunch () {
+    wx.reportAnalytics('mall_launch', {})
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/home/index"
+  ],
+  "packages": [
+    {
+      "root": "packageProduct",
+      "pages": [
+        "pages/detail/index"
+      ]
+    }
+  ]
+}
+</script>

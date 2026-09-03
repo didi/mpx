@@ -1,0 +1,263 @@
+<template>
+  <view class="campaign-page">
+    <view class="campaign-header">
+      <text class="campaign-title">{{campaign.title}}</text>
+      <text class="campaign-subtitle">{{campaign.subtitle}}</text>
+    </view>
+
+    <view class="campaign-tabs">
+      <view
+        class="campaign-tab"
+        wx:for="{{campaigns}}"
+        wx:key="id"
+        wx:class="{{ {active: item.id === campaignId} }}"
+        bindtap="switchCampaign(item.id)"
+      >
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+
+    <web-view
+      wx:if="{{campaignUrl}}"
+      id="campaign-webview-{{webViewGeneration}}"
+      src="{{campaignUrl}}"
+      data-campaign-id="{{campaignId}}"
+      data-generation="{{webViewGeneration}}"
+      bindmessage="handleCampaignMessage"
+      bindload="handleCampaignLoad"
+      binderror="handleCampaignError"
+    />
+
+    <view wx:if="{{loading}}" class="campaign-loading">
+      <text>活动会场加载中...</text>
+    </view>
+    <view wx:if="{{errorText}}" class="campaign-error">
+      <text>{{errorText}}</text>
+      <button bindtap="reloadCampaign">重新加载</button>
+    </view>
+
+    <campaign-tracker
+      wx:if="{{campaignId}}"
+      campaignId="{{campaignId}}"
+      memberId="{{memberId}}"
+      active="{{pageActive}}"
+      bindready="handleTrackerReady"
+      binderror="handleTrackerError"
+    />
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+createPage({
+  data: {
+    memberId: 'member-10086',
+    campaignId: 'summer-sale',
+    campaigns: [
+      { id: 'summer-sale', name: '夏日特卖' },
+      { id: 'member-day', name: '会员日' },
+      { id: 'fresh-week', name: '生鲜周' }
+    ],
+    campaign: {
+      title: '夏日清凉特卖',
+      subtitle: '限时领券，爆款低至五折'
+    },
+    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086',
+    loading: true,
+    errorText: '',
+    trackerReady: false,
+    pageActive: true,
+    webViewGeneration: 0
+  },
+  onLoad () {
+    this._pageUnloaded = false
+  },
+  onShow () {
+    this.pageActive = true
+  },
+  onHide () {
+    this.pageActive = false
+    this.trackerReady = false
+  },
+  onUnload () {
+    this._pageUnloaded = true
+    this.pageActive = false
+    this.trackerReady = false
+    this.webViewGeneration += 1
+  },
+  methods: {
+    buildCampaignUrl (campaignId) {
+      return `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}`
+    },
+    switchCampaign (campaignId) {
+      if (campaignId === this.campaignId) return
+      const generation = this.webViewGeneration + 1
+      this.webViewGeneration = generation
+      this.campaignId = campaignId
+      const campaignUrl = this.buildCampaignUrl(campaignId)
+      this.campaignUrl = ''
+      this.loading = true
+      this.errorText = ''
+      this.trackerReady = false
+      this.$nextTick(() => {
+        if (this._pageUnloaded ||
+          generation !== this.webViewGeneration ||
+          campaignId !== this.campaignId) return
+        this.campaignUrl = campaignUrl
+      })
+    },
+    getWebViewIdentity (event) {
+      const currentTarget = event && event.currentTarget
+      const dataset = (currentTarget && currentTarget.dataset) || {}
+      return {
+        campaignId: String(dataset.campaignId || ''),
+        generation: String(dataset.generation == null ? '' : dataset.generation)
+      }
+    },
+    isCurrentWebViewEvent (event) {
+      if (this._pageUnloaded) return false
+      const identity = this.getWebViewIdentity(event)
+      return identity.campaignId === String(this.campaignId) &&
+        identity.generation === String(this.webViewGeneration)
+    },
+    handleCampaignLoad (event) {
+      if (!this.isCurrentWebViewEvent(event)) return
+      this.loading = false
+      if (!this.pageActive) return
+      wx.reportAnalytics('campaign_webview_load', {
+        campaign_id: this.campaignId
+      })
+    },
+    handleCampaignError (event) {
+      if (!this.isCurrentWebViewEvent(event)) return
+      this.loading = false
+      this.errorText = '活动会场暂时无法打开'
+    },
+    handleCampaignMessage (event) {
+      if (!this.pageActive || !this.isCurrentWebViewEvent(event)) return
+      const detail = (event && event.detail) || {}
+      const messages = Array.isArray(detail.data) ? detail.data : [detail.data]
+      const message = messages[messages.length - 1]
+      if (!message || typeof message !== 'object') return
+
+      const currentCampaignId = String(this.campaignId)
+      if (String(message.campaignId || '') !== currentCampaignId) return
+
+      if (message.type === 'claim-coupon' && message.couponId != null) {
+        this.claimCoupon(message.couponId, currentCampaignId)
+      }
+      if (message.type === 'open-product' && message.productId != null) {
+        this.openProduct(message.productId, currentCampaignId)
+      }
+    },
+    claimCoupon (couponId, campaignId) {
+      wx.request({
+        url: '/api/campaign/coupons/claim',
+        method: 'POST',
+        data: { campaignId, couponId },
+        success: () => {
+          if (this._pageUnloaded || !this.pageActive || campaignId !== this.campaignId) return
+          wx.showToast({ title: '领取成功', icon: 'success' })
+        }
+      })
+    },
+    openProduct (productId, campaignId) {
+      wx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(campaignId)}`
+      })
+    },
+    reloadCampaign () {
+      const campaignId = this.campaignId
+      const campaignUrl = this.buildCampaignUrl(campaignId)
+      const generation = this.webViewGeneration + 1
+      this.webViewGeneration = generation
+      this.campaignUrl = ''
+      this.loading = true
+      this.errorText = ''
+      this.$nextTick(() => {
+        if (this._pageUnloaded ||
+          generation !== this.webViewGeneration ||
+          campaignId !== this.campaignId) return
+        this.campaignUrl = campaignUrl
+      })
+    },
+    handleTrackerReady (event) {
+      const detail = (event && event.detail) || {}
+      if (detail.campaignId !== this.campaignId || !this.pageActive) return
+      this.trackerReady = true
+    },
+    handleTrackerError (event) {
+      const detail = (event && event.detail) || {}
+      if (detail.campaignId && detail.campaignId !== this.campaignId) return
+      this.trackerReady = false
+    }
+  }
+})
+</script>
+
+<style>
+.campaign-page {
+  min-height: 100vh;
+  background: #fff5eb;
+}
+
+.campaign-header {
+  padding: 32rpx 28rpx 20rpx;
+}
+
+.campaign-title,
+.campaign-subtitle {
+  display: block;
+}
+
+.campaign-title {
+  color: #7a3517;
+  font-size: 38rpx;
+  font-weight: bold;
+}
+
+.campaign-subtitle {
+  margin-top: 8rpx;
+  color: #b26b45;
+  font-size: 24rpx;
+}
+
+.campaign-tabs {
+  display: flex;
+  padding: 0 20rpx 20rpx;
+}
+
+.campaign-tab {
+  flex: 1;
+  padding: 14rpx 0;
+  color: #97684f;
+  font-size: 24rpx;
+  text-align: center;
+  background: #ffffff;
+}
+
+.campaign-tab.active {
+  color: #ffffff;
+  background: #ff7a45;
+}
+
+.campaign-loading,
+.campaign-error {
+  padding: 80rpx 24rpx;
+  color: #9b715c;
+  font-size: 25rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "限时活动",
+  "usingComponents": {
+    "campaign-tracker": "../../components/campaign-tracker"
+  }
+}
+</script>

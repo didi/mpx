@@ -1,0 +1,208 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "no_skill",
+  "run_number": 3,
+  "grading_fingerprint": "cbd529e579206bb134e3738c0a71773439c430b672e61a01909f0b326823894a",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 115890
+  },
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:50 定义 <script module=\"gesture\" lang=\"wxs\">，8-11 行 touchstart/move/end/cancel 仍绑定 gesture.onTouchStart/onTouchMove/onTouchEnd/onTouchCancel，保留小程序 WXS 高频手势路径。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：touchstart 缺少显式 @wx WXS 绑定；touchstart 缺少同节点 @web 实例方法绑定；touchmove 缺少显式 @wx WXS 绑定；touchmove 缺少同节点 @web 实例方法绑定；touchend 缺少显式 @wx WXS 绑定；touchend 缺少同节点 @web 实例方法绑定；touchcancel 缺少显式 @wx WXS 绑定；touchcancel 缺少同节点 @web 实例方法绑定；仍用无平台后缀的动态表达式混合 WXS 函数对象。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:51-95 在 WXS 中用 states 和 instanceKey 隔离并实现 MAX_OFFSET=96、OPEN_THRESHOLD=48，但文件没有 @web touchstart/move/end/cancel 组件实例方法绑定或 Web 手势实现，因此 Web 端实例隔离与 -96/-48 行为证据不足。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:144-149 touchcancel 会将 offsetX 置 0 回弹；151-157 禁用态阻止选择和删除。但 138-140、147-148 用 setTimeout 时间窗重置 suppressTap，151-152 只是按 suppressTap 直接 return，未消费并清除“紧随其后的一次”tap，可能吞掉同时间窗内后续合法点击或漏掉延迟合成 tap。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：没有统一使用 connectSocket 返回的 SocketTask，或仍混用了全局/原生 WebSocket API。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：缺少 onOpen；缺少 onMessage；缺少 onError；缺少 onClose。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：connectChannel 未在 close 前废弃任务身份；detached 未在 close 前废弃任务身份。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx：sendHeartbeat 未捕获当前 SocketTask。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "r8",
+      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:75-87 保留筛选 switchStatus/fetchOrders；89-91 保留详情跳转；92-104 保留删除确认、DELETE 请求和列表移除；39-46 绑定 logistics-channel，112-117 按物流消息更新订单 status/statusText/logisticsText/updatedAt。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 7,
+    "total": 9,
+    "pass_rate": 0.2222
+  },
+  "metrics": {
+    "total_tokens": 151492,
+    "input_tokens": 141063,
+    "output_tokens": 10429,
+    "tool_calls": 8,
+    "duration_ms": 225490
+  },
+  "timing": {
+    "total_tokens": 151492,
+    "duration_ms": 225490,
+    "total_duration_seconds": 225.49
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 3,
+    "compiled_mpx_count": 3,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/pages/orders/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/logistics-channel.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/pages/orders/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/logistics-channel.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/pages/orders/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4074
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/logistics-channel.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3329
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "候选只完整保留了 WXS 路径和业务链路；Web 手势绑定与 SocketTask 生命周期修复基本未落实，关键 Web 污染问题仍未解决。"
+  }
+}

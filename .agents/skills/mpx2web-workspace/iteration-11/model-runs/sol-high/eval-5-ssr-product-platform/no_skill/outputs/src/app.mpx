@@ -1,0 +1,35 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+function reportLaunchOutsideNode () {
+  const isNode = typeof process !== 'undefined' && process.versions && process.versions.node
+  if (!isNode && typeof wx !== 'undefined' && typeof wx.reportAnalytics === 'function') {
+    wx.reportAnalytics('mall_launch', {})
+  }
+}
+
+createApp({
+  // Mpx invokes the factory for each app instance, so every SSR request gets its own store graph.
+  pinia: () => createPinia(),
+  onLaunch () {
+    reportLaunchOutsideNode()
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/home/index"
+  ],
+  "packages": [
+    {
+      "root": "packageProduct",
+      "pages": [
+        "pages/detail/index"
+      ]
+    }
+  ]
+}
+</script>

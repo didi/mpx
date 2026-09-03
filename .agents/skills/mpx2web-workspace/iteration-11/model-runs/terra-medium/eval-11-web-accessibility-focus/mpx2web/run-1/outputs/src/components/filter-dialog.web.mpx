@@ -1,0 +1,150 @@
+<template>
+  <div class="filter">
+    <button
+      ref="trigger"
+      class="filter-trigger"
+      type="button"
+      aria-haspopup="dialog"
+      :aria-expanded="visible ? 'true' : 'false'"
+      aria-controls="filter-dialog"
+      @click="open"
+    >筛选</button>
+    <div v-if="visible" class="mask" @click.self="close">
+      <div
+        id="filter-dialog"
+        ref="dialog"
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="商品筛选"
+        tabindex="-1"
+      >
+        <button
+          v-for="item in options"
+          :key="item.value"
+          type="button"
+          role="checkbox"
+          :aria-checked="selected.includes(item.value) ? 'true' : 'false'"
+          @click="toggle(item.value)"
+        >{{item.label}}</button>
+        <button type="button" @click="clear">清空</button>
+        <button type="button" @click="confirm">确定</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+const focusableSelector = [
+  'button:not([disabled])',
+  '[href]',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])'
+].join(',')
+
+createComponent({
+  properties: { options: { type: Array, value: () => [] } },
+  data: { visible: false, selected: [] },
+  attached () {
+    this._destroyed = false
+    this._opener = null
+    this._listeningForKeys = false
+    this._onDocumentKeydown = (event) => this.onKeydown(event)
+  },
+  detached () {
+    this._destroyed = true
+    this.removeKeydownListener()
+    this._opener = null
+  },
+  methods: {
+    open (event) {
+      if (this.visible) return
+
+      const trigger = event && event.currentTarget
+      this._opener = trigger && typeof trigger.focus === 'function'
+        ? trigger
+        : this.$refs.trigger
+      this.visible = true
+      this.addKeydownListener()
+      Promise.resolve().then(() => {
+        if (!this._destroyed && this.visible) this.focusInitialElement()
+      })
+    },
+    close () {
+      if (!this.visible) return
+
+      this.visible = false
+      this.removeKeydownListener()
+      this.restoreOpenerFocus()
+    },
+    toggle (value) {
+      this.selected = this.selected.includes(value)
+        ? this.selected.filter((item) => item !== value)
+        : this.selected.concat(value)
+    },
+    clear () { this.selected = [] },
+    confirm () {
+      this.triggerEvent('confirm', { selected: this.selected })
+      this.close()
+    },
+    addKeydownListener () {
+      if (this._listeningForKeys) return
+
+      document.addEventListener('keydown', this._onDocumentKeydown)
+      this._listeningForKeys = true
+    },
+    removeKeydownListener () {
+      if (!this._listeningForKeys) return
+
+      document.removeEventListener('keydown', this._onDocumentKeydown)
+      this._listeningForKeys = false
+    },
+    onKeydown (event) {
+      if (!this.visible) return
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        this.close()
+        return
+      }
+
+      if (event.key === 'Tab') this.trapFocus(event)
+    },
+    focusInitialElement () {
+      const dialog = this.$refs.dialog
+      if (!dialog) return
+
+      const focusable = dialog.querySelector(focusableSelector)
+      ;(focusable || dialog).focus()
+    },
+    trapFocus (event) {
+      const dialog = this.$refs.dialog
+      if (!dialog) return
+
+      const focusable = Array.from(dialog.querySelectorAll(focusableSelector))
+      if (!focusable.length) {
+        event.preventDefault()
+        dialog.focus()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const activeElement = document.activeElement
+      if (event.shiftKey ? activeElement === first || !dialog.contains(activeElement) : activeElement === last || !dialog.contains(activeElement)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first).focus()
+      }
+    },
+    restoreOpenerFocus () {
+      const opener = this._opener
+      this._opener = null
+      if (!this._destroyed && opener && opener.isConnected) opener.focus()
+    }
+  }
+})
+</script>

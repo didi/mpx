@@ -1,0 +1,164 @@
+<template>
+  <view class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal-card" wx:for="{{cards}}" wx:key="id" bindtap="openCard(item.id)">{{item.title}}</view>
+    <button bindtap="toggleTheme">切换主题</button>
+    <button bindtap="openDialog">打开弹层</button>
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
+      <view
+        class="portal-dialog"
+        aria-role="dialog"
+        aria-label="门户设置"
+        role@web="dialog"
+        aria-modal@web="true"
+        tabindex@web="-1"
+      >门户设置</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    dialogVisible: false,
+    dark: false
+  },
+  methods: {
+    openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
+    toggleTheme () { this.dark = !this.dark },
+    openDialog () {
+      if (__mpx_mode__ === 'web' && typeof document !== 'undefined') {
+        this.dialogTrigger = document.activeElement
+        this.lockPageScroll()
+        this.bindDialogKeyboard()
+      }
+      this.dialogVisible = true
+      if (__mpx_mode__ === 'web' && typeof document !== 'undefined') {
+        this.$nextTick(() => {
+          if (!this.dialogVisible) return
+          const dialog = document.querySelector('.portal-dialog')
+          if (dialog) dialog.focus()
+        })
+      }
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      if (__mpx_mode__ === 'web') {
+        this.unbindDialogKeyboard()
+        this.unlockPageScroll()
+        this.restoreDialogFocus()
+      }
+    },
+    lockPageScroll () {
+      if (this.pageScrollLock || typeof window === 'undefined' || typeof document === 'undefined') return
+      const body = document.body
+      const app = document.getElementById('app')
+      const scrollX = window.pageXOffset || document.documentElement.scrollLeft || 0
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0
+      const targets = [body, app].filter(Boolean).map((element) => ({
+        element,
+        styles: {
+          overflow: element.style.overflow,
+          position: element.style.position,
+          top: element.style.top,
+          left: element.style.left,
+          width: element.style.width
+        }
+      }))
+
+      this.pageScrollLock = { scrollX, scrollY, targets }
+      body.style.overflow = 'hidden'
+      body.style.position = 'fixed'
+      body.style.top = `-${scrollY}px`
+      body.style.left = `-${scrollX}px`
+      body.style.width = '100%'
+      if (app) app.style.overflow = 'hidden'
+    },
+    unlockPageScroll () {
+      const lock = this.pageScrollLock
+      if (!lock || typeof window === 'undefined') return
+      lock.targets.forEach(({ element, styles }) => {
+        element.style.overflow = styles.overflow
+        element.style.position = styles.position
+        element.style.top = styles.top
+        element.style.left = styles.left
+        element.style.width = styles.width
+      })
+      this.pageScrollLock = null
+      window.scrollTo(lock.scrollX, lock.scrollY)
+    },
+    bindDialogKeyboard () {
+      if (this.dialogKeydown || typeof document === 'undefined') return
+      this.dialogKeydown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          this.closeDialog()
+          return
+        }
+        if (event.key === 'Tab') {
+          const dialog = document.querySelector('.portal-dialog')
+          if (dialog) {
+            event.preventDefault()
+            dialog.focus()
+          }
+        }
+      }
+      document.addEventListener('keydown', this.dialogKeydown)
+    },
+    unbindDialogKeyboard () {
+      if (!this.dialogKeydown || typeof document === 'undefined') return
+      document.removeEventListener('keydown', this.dialogKeydown)
+      this.dialogKeydown = null
+    },
+    restoreDialogFocus () {
+      const trigger = this.dialogTrigger
+      this.dialogTrigger = null
+      if (trigger && trigger.isConnected && typeof trigger.focus === 'function') trigger.focus()
+    }
+  },
+  onHide () {
+    this.closeDialog()
+  },
+  onUnload () {
+    this.closeDialog()
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  min-height: 100vh;
+  color: var(--portal-text, #1f2937);
+  background: var(--portal-background, #f6f8fb);
+  padding: var(--portal-space, 32rpx);
+  padding-bottom: var(--portal-space, 32rpx);
+}
+.portal-card {
+  color: var(--portal-card-text, #1f2937);
+  background: var(--portal-card-background, #ffffff);
+}
+.dialog-mask { position: fixed; inset: 0; }
+</style>
+
+<style mode="web">
+.portal {
+  padding-bottom: calc(var(--portal-space, 32rpx) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .portal-card:hover { transform: translateY(-2px); }
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+.portal::-webkit-scrollbar { width: 6px; }
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+.portal::-webkit-scrollbar-thumb {
+  background: var(--portal-scrollbar-thumb, rgba(31, 41, 55, 0.35));
+  border-radius: 3px;
+}
+</style>

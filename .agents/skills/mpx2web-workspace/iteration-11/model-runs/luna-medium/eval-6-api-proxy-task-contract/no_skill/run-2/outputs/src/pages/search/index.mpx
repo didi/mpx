@@ -1,0 +1,116 @@
+<template>
+  <view class="search-page">
+    <view class="search-bar">
+      <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+      <button wx:if="{{keyword}}" size="mini" bindtap="clearKeyword">清空</button>
+    </view>
+
+    <view class="error" wx:if="{{errorMessage}}">{{errorMessage}}</view>
+
+    <view class="trending" wx:if="{{!keyword}}">
+      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    </view>
+
+    <view class="suggestions">
+      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: [],
+    errorMessage: '',
+    requestTask: null,
+    requestVersion: 0,
+    unloaded: false
+  },
+
+  onLoad () {
+    this.unloaded = false
+    fetchTrendingKeywords()
+      .then((data) => {
+        if (!this.unloaded) this.trendingKeywords = data.list || data
+      })
+      .catch(() => {
+        if (!this.unloaded) this.errorMessage = '搜索失败'
+      })
+  },
+
+  onUnload () {
+    this.unloaded = true
+    this.requestVersion += 1
+    if (this.requestTask) {
+      this.requestTask.abort()
+      this.requestTask = null
+    }
+  },
+
+  methods: {
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+
+    clearKeyword () {
+      this.search('')
+    },
+
+    search (keyword) {
+      this.keyword = keyword
+      this.errorMessage = ''
+      const version = ++this.requestVersion
+
+      if (this.requestTask) {
+        this.requestTask.abort()
+        this.requestTask = null
+      }
+
+      if (!keyword) {
+        this.suggestions = []
+        return
+      }
+
+      const task = requestSuggestions(keyword)
+      this.requestTask = task
+      task.promise
+        .then((data) => {
+          if (!this.unloaded && version === this.requestVersion && keyword === this.keyword) {
+            this.suggestions = data.list || []
+          }
+        })
+        .catch((error) => {
+          if (!this.unloaded && version === this.requestVersion && !error.aborted) {
+            this.errorMessage = '搜索失败'
+          }
+        })
+        .then(() => {
+          if (version === this.requestVersion && this.requestTask === task) {
+            this.requestTask = null
+          }
+        })
+    },
+
+    openProduct (productId) {
+      mpx.navigateTo({ url: `/pages/product/detail?id=${productId}` })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page { padding: 24rpx; }
+.search-bar { display: flex; align-items: center; }
+.search-bar input { flex: 1; }
+.trending, .suggestions { margin-top: 24rpx; }
+.error { margin-top: 24rpx; color: #e64340; }
+</style>

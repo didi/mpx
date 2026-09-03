@@ -1,0 +1,72 @@
+<template>
+  <view class="article-page">
+    <text class="title">{{article.title}}</text>
+    <rich-text nodes="{{article.content}}" />
+    <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
+    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <view wx:if="{{!recommendReady}}" class="recommend-placeholder"></view>
+    <recommend-list
+      wx:if="{{recommendReady}}"
+      article-id="{{articleId}}"
+      items="{{recommendations}}"
+      bindselect="openArticle"
+    />
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { useArticleStore } from '../../stores/article'
+
+createPage({
+  data: {
+    articleId: '',
+    // Keep SSR and the initial browser hydration tree identical. Browser-only
+    // controls are enabled after the page has hydrated.
+    isBrowser: false,
+    recommendReady: false,
+    favorite: false
+  },
+  computed: {
+    article () { return useArticleStore(this.$pinia).article || {} },
+    recommendations () { return useArticleStore(this.$pinia).recommendations }
+  },
+  onLoad (query) {
+    this.articleId = query.id || ''
+    this.recommendReady = true
+
+    if (typeof window !== 'undefined') {
+      this.isBrowser = true
+    }
+
+    return this.loadArticle(this.articleId)
+  },
+  serverPrefetch () {
+    const articleId = this.$route.query.id || ''
+    this.articleId = articleId
+    return this.loadArticle(articleId, this.$ssrContext)
+  },
+  methods: {
+    loadArticle (articleId, requestContext) {
+      return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
+    },
+    toggleFavorite () {
+      this.favorite = !this.favorite
+    },
+    openArticle (event) {
+      mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "recommend-list": "../../packageRecommend/components/recommend-list?root=packageRecommend"
+  },
+  "componentPlaceholder": {
+    "recommend-list": "view"
+  }
+}
+</script>

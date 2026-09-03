@@ -1,0 +1,160 @@
+{
+  "eval_id": 2,
+  "eval_name": "member-share-lifecycle",
+  "configuration": "no_skill",
+  "run_number": 3,
+  "grading_fingerprint": "1ba56c6ef455402a6ed65eef017a1b891980202e309b421e72bca4221fad60a6",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 72845
+  },
+  "expectations": [
+    {
+      "id": "s0",
+      "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:48 保留 open-type=\"share\" 分享按钮；outputs/src/pages/member/invite.mpx:126-139 保留 onShareAppMessage 与 onShareTimeline。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s1",
+      "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "passed": false,
+      "evidence": "outputs/src/pages/member/invite.mpx：Web 未移除 onShareAppMessage；Web 未移除 onShareTimeline。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "s2",
+      "text": "Web 分享入口绑定独立的页面实例方法",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:48 的 Web 点击绑定 bindtap@web=\"shareOnWeb\"；outputs/src/pages/member/invite.mpx:150-155 在 methods 中定义页面实例方法 shareOnWeb。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s3",
+      "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:150-155 的 shareOnWeb 仅通过 wx.showToast 显示“暂未接入 Web 分享服务，当前无法分享”，未调用未声明的 Web 分享 SDK 或宿主 Bridge。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s4",
+      "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx 全文未出现 navigator.share、clipboard、复制链接等降级实现。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s5",
+      "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:141-148 请求继续使用 wx.request；outputs/src/pages/member/invite.mpx:156-160 详情跳转继续使用 wx.navigateTo，未改为 fetch、location.href 等浏览器原生平行实现。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s6",
+      "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:13-23、96-118 保留会员邀请进度；outputs/src/pages/member/invite.mpx:85-94 与 32-37 保留奖励阶梯；outputs/src/pages/member/invite.mpx:98-113 与 52-67 保留最近邀请列表；outputs/src/pages/member/invite.mpx:49、156-160 保留活动规则入口与跳转。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.8571
+  },
+  "metrics": {
+    "total_tokens": 99094,
+    "input_tokens": 96077,
+    "output_tokens": 3017,
+    "tool_calls": 5,
+    "duration_ms": 81728
+  },
+  "timing": {
+    "total_tokens": 99094,
+    "duration_ms": 81728,
+    "total_duration_seconds": 81.728
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [
+            {
+              "category": "template",
+              "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx:48:35]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button\" open-type=\"share\" bindtap@web=\"shareOnWeb\">分享邀请活动</button>\n     |                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  50 |     </view>\n  51 |",
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx",
+              "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-3/outputs/src/pages/member/invite.mpx:48:35]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button\" open-type=\"share\" bindtap@web=\"shareOnWeb\">分享邀请活动</button>\n     |                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  50 |     </view>\n  51 |"
+            }
+          ],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4015
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "除 Web 侧分享生命周期未做编译期平台隔离外，其余分享入口、待接入边界、官方 API 链路和业务数据展示均满足要求。"
+  }
+}

@@ -1,0 +1,112 @@
+<template>
+  <view class="search-page">
+    <view class="search-bar">
+      <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+      <view wx:if="{{keyword}}" class="clear-button" bindtap="clearKeyword">清空</view>
+    </view>
+
+    <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
+
+    <view wx:if="{{!keyword}}" class="trending">
+      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    </view>
+
+    <view class="suggestions">
+      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { navigateTo } from '@mpxjs/api-proxy'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: [],
+    errorMessage: '',
+    requestController: null,
+    requestSerial: 0
+  },
+
+  async onLoad () {
+    try {
+      this.trendingKeywords = await fetchTrendingKeywords()
+    } catch (error) {
+      this.errorMessage = '搜索失败'
+    }
+  },
+
+  onUnload () {
+    this.cancelSuggestionRequest()
+  },
+
+  methods: {
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+
+    chooseKeyword (keyword) {
+      this.search(keyword.trim())
+    },
+
+    clearKeyword () {
+      this.search('')
+    },
+
+    cancelSuggestionRequest () {
+      if (this.requestController) {
+        this.requestController.abort()
+        this.requestController = null
+      }
+    },
+
+    search (keyword) {
+      const serial = ++this.requestSerial
+      this.keyword = keyword
+      this.errorMessage = ''
+      this.cancelSuggestionRequest()
+
+      if (!keyword) {
+        this.suggestions = []
+        return
+      }
+
+      const controller = new AbortController()
+      this.requestController = controller
+
+      requestSuggestions(keyword, controller.signal)
+        .then((list) => {
+          if (serial !== this.requestSerial || controller.signal.aborted) return
+          this.suggestions = list
+        })
+        .catch(() => {
+          if (serial !== this.requestSerial || controller.signal.aborted) return
+          this.suggestions = []
+          this.errorMessage = '搜索失败'
+        })
+        .finally(() => {
+          if (serial === this.requestSerial) this.requestController = null
+        })
+    },
+
+    openProduct (productId) {
+      navigateTo({ url: `/pages/product/detail?id=${productId}` }).catch(() => {
+        this.errorMessage = '打开商品详情失败'
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page { padding: 24rpx; }
+.search-bar { display: flex; align-items: center; }
+.search-bar input { flex: 1; }
+.clear-button { margin-left: 16rpx; }
+.error-message { margin-top: 16rpx; color: #d93025; }
+.trending, .suggestions { margin-top: 24rpx; }
+</style>

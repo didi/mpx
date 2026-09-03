@@ -1,0 +1,155 @@
+{
+  "eval_id": 11,
+  "eval_name": "web-accessibility-focus",
+  "configuration": "mpx2web",
+  "run_number": 3,
+  "grading_fingerprint": "05a84556733b6db255b5f23e34dab22ac5140115b4963a975090985fc854667c",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 81674
+  },
+  "expectations": [
+    {
+      "id": "c0",
+      "text": "通用筛选触发器、选项与确认按钮使用 aria-role/aria-label 表达跨端语义，并保留 tap/遮罩触摸链路",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.mpx:3 触发器有 role=\"button\" 和 aria-label=\"筛选\"，:7-8 清空/确认按钮有 aria-label，且 :3-8 保留 bindtap/遮罩链路；但 :6 选项 view 仅有 bindtap=\"toggle(item.value)\"，没有 role 或 aria-label，Web 文件 :6 的选项按钮也没有 aria-label。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c1",
+      "text": "完整浏览器 role=dialog、aria-modal、tabindex 与键盘事件只存在于 Web 文件或 Web-only 模板逻辑",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx:5、:77-103 包含 Web dialog 语义和键盘逻辑；但 outputs/src/components/filter-dialog.mpx:5 也包含 role=\"dialog\"、aria-modal=\"true\"、tabindex=\"-1\" 和 bindkeydown=\"onKeydown\"，:34-36 也有键盘 Escape 逻辑，不满足只存在于 Web 文件或 Web-only 模板逻辑。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c2",
+      "text": "Web 打开前记录真实触发元素，渲染完成后把焦点移入弹层；关闭后仅在元素仍连接文档时恢复焦点",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：焦点进入和安全恢复链路完整。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c3",
+      "text": "Escape 关闭弹层；Tab 与 Shift+Tab 在当前弹层的可聚焦元素首尾循环，遮罩点击不误触内容区",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：键盘关闭、双向焦点循环与遮罩点击隔离完整。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c4",
+      "text": "document/window 键盘或焦点监听在每次关闭和 detached/unmounted 时成对移除，快速开关不会重复注册",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：全局监听在关闭和卸载时幂等清理。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c5",
+      "text": "选项选择、清空、确认、取消、焦点恢复和微信小程序触摸业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.mpx:3-8 保留微信小程序 bindtap 打开、遮罩关闭、内容 stop、选项选择、清空和确认触摸链路；:24-32 保留 toggle、clear、triggerEvent('confirm') 和 close。Web 文件 :67-75 保留选项选择、清空、确认并关闭，:58-65 关闭/取消路径恢复焦点。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "pass_rate": 0.6667
+  },
+  "metrics": {
+    "total_tokens": 203586,
+    "input_tokens": 198553,
+    "output_tokens": 5033,
+    "tool_calls": 9,
+    "duration_ms": 130239
+  },
+  "timing": {
+    "total_tokens": 203586,
+    "duration_ms": 130239,
+    "total_duration_seconds": 130.239
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 2,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-11-web-accessibility-focus/mpx2web/run-3/outputs/src/components/filter-dialog.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-11-web-accessibility-focus/mpx2web/run-3/outputs/src/components/filter-dialog.web.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 2,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-11-web-accessibility-focus/mpx2web/run-3/outputs/src/components/filter-dialog.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-11-web-accessibility-focus/mpx2web/run-3/outputs/src/components/filter-dialog.web.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-11-web-accessibility-focus/mpx2web/run-3/outputs/src/components/filter-dialog.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-11-web-accessibility-focus/mpx2web/run-3/outputs/src/components/filter-dialog.web.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3286
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "建议明确 c0 中“aria-role”具体指 role 属性还是某个跨端适配属性，并明确小程序通用模板中是否允许保留 dialog 的 role/aria-modal/tabindex，否则会影响 c0 与 c1 的判定边界。",
+      "建议把 c3 明确写入“初始焦点在 dialog 容器时 Shift+Tab 也必须被困住”，因为这是当前实现会漏掉的关键键盘路径。"
+    ],
+    "overall": "候选实现补上了 Web 焦点恢复和监听清理，但通用模板混入了 Web-only dialog/键盘语义，选项无障碍语义不完整，且初始聚焦容器时 Shift+Tab 可逃出弹层。"
+  }
+}

@@ -1,0 +1,59 @@
+<template>
+  <view class="article-page">
+    <text class="title">{{article.title}}</text>
+    <rich-text nodes="{{article.content}}" />
+    <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
+    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { useArticleStore } from '../../stores/article'
+
+createPage({
+  data: {
+    articleId: '',
+    // Keep this false during the SSR render and hydration pass. It is enabled
+    // only after the client page lifecycle starts.
+    isBrowser: false,
+    favorite: false
+  },
+  computed: {
+    article () { return useArticleStore(this.$pinia).article || {} },
+    recommendations () { return useArticleStore(this.$pinia).recommendations }
+  },
+  onLoad (query) {
+    if (typeof window !== 'undefined') this.isBrowser = true
+    return this.loadArticle(query && query.id)
+  },
+  serverPrefetch () {
+    const query = this.$route && this.$route.query
+    return this.loadArticle(query && query.id, this.$ssrContext)
+  },
+  methods: {
+    loadArticle (articleId, requestContext) {
+      if (!articleId) return Promise.resolve()
+      this.articleId = articleId
+      return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
+    },
+    toggleFavorite () { this.favorite = !this.favorite },
+    openArticle (event) {
+      const articleId = event && event.detail && event.detail.articleId
+      if (articleId) mpx.navigateTo({ url: `/pages/article/detail?id=${articleId}` })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "recommend-list": "../../packageRecommend/components/recommend-list?root=packageRecommend"
+  },
+  "componentPlaceholder": {
+    "recommend-list": "view"
+  }
+}
+</script>

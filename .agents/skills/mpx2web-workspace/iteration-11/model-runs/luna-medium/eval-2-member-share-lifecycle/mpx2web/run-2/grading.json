@@ -1,0 +1,153 @@
+{
+  "eval_id": 2,
+  "eval_name": "member-share-lifecycle",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "grading_fingerprint": "f63b4029ba00fc73705890fff7d655f7a5c5d43eaf01808c530c46f14f31fb02",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 122562
+  },
+  "expectations": [
+    {
+      "id": "s0",
+      "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:48 保留微信小程序分享按钮 `<button @wx ... open-type=\"share\">`；140-153 保留 `onShareAppMessage` 与 `onShareTimeline`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s1",
+      "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx：分享生命周期保留给小程序，并从 Web 构造选项中移除。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "s2",
+      "text": "Web 分享入口绑定独立的页面实例方法",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:49 Web 分享入口为 `<button @web ... bindtap=\"shareOnWeb\">`；164-166 定义独立页面实例方法 `shareOnWeb`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s3",
+      "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:164-166 的 `shareOnWeb` 方法仅保留待接入注释边界，未调用未声明的 Web 分享 SDK、宿主 Bridge 或降级协议。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s4",
+      "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx 全文件未出现 `navigator.share`、`clipboard`、`execCommand` 或复制链接实现；164-166 的 Web 分享方法没有选择浏览器原生分享或复制降级。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s5",
+      "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:155-162 请求仍使用 `wx.request`；167-170 详情跳转仍使用 `wx.navigateTo`，未改成浏览器原生 API 平行实现。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s6",
+      "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:13-23 保留会员邀请进度展示，129-132 保留进度计算；32-37 与 99-108 保留奖励阶梯；53-68、112-127、159-160 保留最近邀请列表数据与更新逻辑。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 301662,
+    "input_tokens": 295021,
+    "output_tokens": 6641,
+    "tool_calls": 14,
+    "duration_ms": 159593
+  },
+  "timing": {
+    "total_tokens": 301662,
+    "duration_ms": 159593,
+    "total_duration_seconds": 159.593
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/mpx2web/run-2/outputs/src/pages/member/invite.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/mpx2web/run-2/outputs/src/pages/member/invite.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/mpx2web/run-2/outputs/src/pages/member/invite.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3743
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "候选输出满足全部断言，Web 分享仅留下明确待接入边界，小程序分享能力和活动业务数据均保留。"
+  }
+}

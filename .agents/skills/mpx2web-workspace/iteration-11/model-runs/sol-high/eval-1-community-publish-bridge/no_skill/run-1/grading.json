@@ -1,0 +1,165 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "grading_fingerprint": "8f68a80e9267031a5a14366a6b7304331eb3be163226cea0795d2a83760dff48",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 60767
+  },
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:107-110 引入 getMiniProgramApi，非 Web 分支在 149-155、168-174、187-193 通过 wxApi.chooseLocation/openLocation/chooseMedia 间接调用，不是断言要求的 wx.xxx 或 mpx.xxx 直接调用。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:107-110 引入通用 getMiniProgramApi，并在 submitPost 的请求、跳转、提示链路中使用 wxApi.request/redirectTo/showToast（218-245）；同时 Web 发布在 213-216 被改写为待接入提示，不只隔离 choosePlace/openPlace/choosePhoto 三项缺失能力。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:143-147 中 choosePlace 的 Web 分支仅设置“Web 宿主的位置选择协议尚未接入。”并 return，未声明或调用虚构位置选择接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:161-166 中 openPlace 的 Web 分支仅设置“Web 宿主的地图查看协议尚未接入。”并 return，未声明或调用虚构地图接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:181-185 中 choosePhoto 的 Web 分支仅设置“Web 宿主的图片选择协议尚未接入。”并 return，未声明或调用虚构媒体接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "passed": false,
+      "evidence": "input/src/pages/community/publish.mpx:153-167 原有 wx.request、wx.redirectTo、wx.showToast 链路在 outputs/src/pages/community/publish.mpx:213-245 被 Web 分支拦截为发布待接入，并通过 getMiniProgramApi/wxApi 间接包装请求、路由和提示，未保持 Web 已支持能力的官方 API 链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:91-94 在 Web 下禁用发布按钮并改文案，213-216 在 submitPost 中直接 return；因此即使内容、话题、评论开关仍可编辑，发布请求和提交后详情跳转链路在 Web 被切断。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 4,
+    "total": 8,
+    "pass_rate": 0.5
+  },
+  "metrics": {
+    "total_tokens": 176786,
+    "input_tokens": 168155,
+    "output_tokens": 8631,
+    "tool_calls": 8,
+    "duration_ms": 192840
+  },
+  "timing": {
+    "total_tokens": 176786,
+    "duration_ms": 192840,
+    "total_duration_seconds": 192.84
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/no_skill/run-1/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3644
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言缺口：a0 对“直接调用”的边界需要更明确，例如 const api = wx 后 api.chooseLocation 是否一律不合格；否则类似 wxApi 纯别名会造成评审分歧。",
+      "断言缺口：a7 可明确“发布链路保持完整”是否要求 Web 端发布也必须可用；本次依据 a6 的 Web 请求/路由已支持前提判定禁用 Web 发布为失败。"
+    ],
+    "overall": "候选正确隔离了 Web 的位置、地图、媒体待接入边界，但过度抽象并改写了通用 API 链路，还禁用了 Web 发布，破坏了已支持业务。"
+  }
+}

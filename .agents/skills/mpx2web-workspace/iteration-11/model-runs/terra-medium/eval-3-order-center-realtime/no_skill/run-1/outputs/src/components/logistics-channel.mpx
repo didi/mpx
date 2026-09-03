@@ -1,0 +1,43 @@
+<template>
+  <view class="channel-panel"><view wx:if="{{!connected}}" class="channel-offline"><text class="channel-tip">物流实时更新暂不可用</text><button class="reconnect-button" bindtap="reconnect">重新连接</button></view><view wx:else class="channel-online"><text class="channel-tip">物流通道已连接</text><button class="ping-button" bindtap="sendHeartbeat">检测连接</button></view></view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({
+  properties: {
+    memberId: { type: String, observer () { if (this._attached) this.restartChannel() } },
+    active: { type: Boolean, value: true, observer (active) { if (!this._attached) return; active ? this.restartChannel() : this.stopChannel() } }
+  },
+  data: { connected: false },
+  attached () { this._attached = true; this._session = 0; if (this.active) this.connectChannel() },
+  detached () { this._attached = false; this.stopChannel() },
+  methods: {
+    emitConnection (connected, memberId, session) { if (this._attached && session === this._session) { this.connected = connected; this.triggerEvent('connectedchange', { connected, memberId }) } },
+    stopChannel () { const memberId = this.memberId; ++this._session; this.connected = false; if (this._attached) this.triggerEvent('connectedchange', { connected: false, memberId }); wx.closeSocket() },
+    restartChannel () { this.stopChannel(); if (this.active && this.memberId) this.connectChannel() },
+    connectChannel () {
+      if (!this._attached || !this.active || !this.memberId) return
+      const memberId = this.memberId; const session = ++this._session
+      wx.connectSocket({ url: `wss://logistics.example.com/members/${memberId}`, header: { Authorization: `Bearer ${wx.getStorageSync('token')}` } })
+      wx.onSocketOpen(() => { this.emitConnection(true, memberId, session) })
+      wx.onSocketMessage(({ data }) => {
+        if (!this._attached || !this.active || session !== this._session || this.memberId !== memberId) return
+        let message; try { message = JSON.parse(data) } catch (error) { return }
+        const payload = message && message.payload
+        const messageMemberId = (payload && payload.memberId) || message.memberId
+        if (message.type === 'logistics' && payload && messageMemberId === memberId) this.triggerEvent('logistics', Object.assign({}, payload, { memberId }))
+      })
+      wx.onSocketError((error) => { if (session !== this._session) return; this.emitConnection(false, memberId, session); this.triggerEvent('error', { error, memberId }) })
+      wx.onSocketClose(() => { this.emitConnection(false, memberId, session) })
+    },
+    reconnect () { if (this.active) this.restartChannel() },
+    sendHeartbeat () { if (!this.connected || !this.active) return; wx.sendSocketMessage({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) }) }
+  }
+})
+</script>
+
+<style scoped>
+.channel-panel { margin-top:16rpx; }.channel-offline,.channel-online { display:flex; align-items:center; justify-content:space-between; padding:18rpx 24rpx; border-radius:14rpx; }.channel-offline { background:#fff7e6; }.channel-online { background:#f0fff7; }.channel-tip { color:#747a84; font-size:22rpx; }.reconnect-button,.ping-button { margin:0; padding:0 20rpx; font-size:22rpx; line-height:52rpx; background:#fff; border-radius:26rpx; }.reconnect-button { color:#d48806; border:1rpx solid #ffd591; }.ping-button { color:#219a61; border:1rpx solid #87e8b4; }
+</style>
+<script type="application/json">{"component":true,"styleIsolation":"isolated"}</script>

@@ -1,0 +1,137 @@
+<template>
+  <div class="filter">
+    <button
+      ref="trigger"
+      class="filter-trigger"
+      aria-haspopup="dialog"
+      :aria-expanded="visible ? 'true' : 'false'"
+      @click="open"
+    >筛选</button>
+    <div v-if="visible" class="mask" @click="close">
+      <div
+        ref="dialog"
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="商品筛选"
+        tabindex="-1"
+        @click.stop
+      >
+        <button
+          v-for="item in options"
+          :key="item.value"
+          :aria-pressed="selected.includes(item.value) ? 'true' : 'false'"
+          @click="toggle(item.value)"
+        >{{item.label}}</button>
+        <button @click="clear">清空</button>
+        <button @click="confirm">确定</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: { options: { type: Array, value: () => [] } },
+  data: { visible: false, selected: [] },
+  attached () {
+    this.focusRequestId = 0
+    this.keyListenerAttached = false
+    this.opener = null
+  },
+  detached () {
+    this.focusRequestId += 1
+    this.removeKeyListener()
+    this.opener = null
+  },
+  methods: {
+    open () {
+      const activeElement = document.activeElement
+      this.opener = activeElement && activeElement.isConnected
+        ? activeElement
+        : this.$refs.trigger
+      this.visible = true
+      this.addKeyListener()
+
+      const requestId = ++this.focusRequestId
+      this.$nextTick(() => {
+        if (this.visible && requestId === this.focusRequestId && this.$refs.dialog) {
+          this.$refs.dialog.focus()
+        }
+      })
+    },
+    close () {
+      if (!this.visible) return
+
+      this.visible = false
+      const closeRequestId = ++this.focusRequestId
+      this.removeKeyListener()
+
+      const opener = this.opener
+      this.opener = null
+      this.$nextTick(() => {
+        if (!this.visible && closeRequestId === this.focusRequestId && opener && opener.isConnected) {
+          opener.focus()
+        }
+      })
+    },
+    addKeyListener () {
+      if (this.keyListenerAttached) return
+      document.addEventListener('keydown', this.onKeydown)
+      this.keyListenerAttached = true
+    },
+    removeKeyListener () {
+      if (!this.keyListenerAttached) return
+      document.removeEventListener('keydown', this.onKeydown)
+      this.keyListenerAttached = false
+    },
+    getFocusableElements () {
+      const dialog = this.$refs.dialog
+      if (!dialog) return []
+      return Array.prototype.slice.call(dialog.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter((element) => element.isConnected && element.getClientRects().length)
+    },
+    toggle (value) {
+      this.selected = this.selected.includes(value)
+        ? this.selected.filter((item) => item !== value)
+        : this.selected.concat(value)
+    },
+    clear () { this.selected = [] },
+    confirm () {
+      this.triggerEvent('confirm', { selected: this.selected })
+      this.close()
+    },
+    onKeydown (event) {
+      if (!this.visible) return
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        this.close()
+        return
+      }
+
+      if (event.key !== 'Tab') return
+
+      const focusableElements = this.getFocusableElements()
+      const dialog = this.$refs.dialog
+      if (!focusableElements.length) {
+        event.preventDefault()
+        if (dialog) dialog.focus()
+        return
+      }
+
+      const activeElement = document.activeElement
+      const currentIndex = focusableElements.indexOf(activeElement)
+      const nextIndex = event.shiftKey
+        ? (currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1)
+        : (currentIndex === focusableElements.length - 1 ? 0 : currentIndex + 1)
+
+      event.preventDefault()
+      focusableElements[nextIndex].focus()
+    }
+  }
+})
+</script>

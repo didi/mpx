@@ -1,0 +1,88 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view class="recommendation-card" wx:for="{{items}}" wx:key="id" data-product-id="{{item.id}}" bindtap="openProduct(item.id)">
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: { productId: String, items: Array },
+  observers: {
+    productId () {
+      if (this._ready) this.startTracking()
+    }
+  },
+  ready () {
+    this._ready = true
+    this._trackingVersion = 0
+    this.startTracking()
+  },
+  detached () {
+    this._ready = false
+    this.stopTracking(true)
+  },
+  methods: {
+    async startTracking () {
+      this.stopTracking()
+      this._disposed = false
+      if (typeof window === 'undefined' || !window.IntersectionObserver || !this.productId) return
+
+      const version = ++this._trackingVersion
+      const sdkModule = await import('@business/product-exposure-web')
+      if (this._disposed || version !== this._trackingVersion) return
+      const sdk = sdkModule.default || sdkModule
+      const tracker = await sdk.create({ productId: this.productId })
+      if (this._disposed || version !== this._trackingVersion) {
+        tracker.destroy()
+        return
+      }
+
+      this._tracker = tracker
+      this._observer = new window.IntersectionObserver((entries) => {
+        if (this._disposed || version !== this._trackingVersion || this._tracker !== tracker) return
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            tracker.track('recommendation_exposure', {
+              productId: this.productId,
+              recommendationId: entry.target.getAttribute('data-product-id')
+            })
+          }
+        })
+      })
+      const root = this.$el
+      if (root) root.querySelectorAll('.recommendation-card').forEach(element => this._observer.observe(element))
+    },
+    stopTracking (disposed) {
+      if (disposed) this._disposed = true
+      this._trackingVersion = (this._trackingVersion || 0) + 1
+      if (this._observer) this._observer.disconnect()
+      if (this._tracker) this._tracker.destroy()
+      this._observer = null
+      this._tracker = null
+    },
+    openProduct (productId) {
+      wx.navigateTo({ url: `/packageProduct/pages/detail/index?id=${productId}` })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations { margin-top: 24rpx; padding: 24rpx; background: #ffffff; }
+.section-title { margin-bottom: 20rpx; color: #222222; font-size: 30rpx; font-weight: bold; }
+.recommendation-card { display: flex; align-items: center; margin-bottom: 18rpx; }
+.recommendation-cover { width: 120rpx; height: 120rpx; border-radius: 12rpx; }
+.recommendation-name { flex: 1; margin-left: 18rpx; color: #333333; font-size: 26rpx; }
+.recommendation-price { color: #e64340; font-size: 28rpx; }
+</style>
+
+<script type="application/json">
+{ "component": true }
+</script>

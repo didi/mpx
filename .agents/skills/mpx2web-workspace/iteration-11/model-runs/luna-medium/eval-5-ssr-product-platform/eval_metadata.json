@@ -1,0 +1,74 @@
+{
+  "eval_id": 5,
+  "eval_name": "ssr-product-platform",
+  "complexity": "complex",
+  "focus": "ssr-request-isolation/hydration/client-only-sdk/deployment",
+  "business_scenario": "商品详情平台的 SSR 首屏、注水复用与客户端推荐位",
+  "prompt": "商品详情要作为部署在 /mall/ 的 Web SSR 运行，并继续支持微信小程序。Node 会并发渲染不同商品：首屏要等待商品和推荐且不能串请求；客户端接管同一商品不应重复请求，切换商品后旧响应不能覆盖当前内容。页面可获得 this.$ssrContext，其中 req 是当前 Node 请求；浏览器和小程序继续使用相对地址。推荐组件使用输入中已声明 create/track/destroy 契约的浏览器 SDK，SSR 不得触碰浏览器对象，切换或离页后旧初始化不能挂载或上报。不得硬编码 localhost。请输出全部完整文件并保留规格、加购和推荐业务。",
+  "files": [
+    "input/src/packageProduct/pages/detail/index.mpx",
+    "input/src/stores/product.js",
+    "input/src/services/product.js",
+    "input/src/components/product-recommendations.mpx",
+    "input/src/app.mpx",
+    "input/vue.config.js"
+  ],
+  "outputs": [
+    "src/packageProduct/pages/detail/index.mpx",
+    "src/stores/product.js",
+    "src/services/product.js",
+    "src/components/product-recommendations.mpx",
+    "src/app.mpx",
+    "vue.config.js"
+  ],
+  "preserves_cases": [
+    "iteration-4/eval-6-ssr-product-detail"
+  ],
+  "assertions": [
+    {
+      "id": "p0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia 实例",
+      "category": "ssr-isolation"
+    },
+    {
+      "id": "p1",
+      "text": "serverPrefetch 返回 Promise 并等待商品与首屏推荐数据",
+      "category": "ssr-prefetch"
+    },
+    {
+      "id": "p2",
+      "text": "store 以状态字段或请求记录维护当前商品与加载身份；同 ID 注水可复用，ID 变化立即使旧复用条件失效，快速 A→B→A 时 B 的晚到结果不能覆盖当前 A",
+      "category": "ssr-hydration"
+    },
+    {
+      "id": "p3",
+      "text": "同构 service 返回 Promise；服务端沿调用链接收当前 SSR 上下文并从其中的 req 解析 origin，浏览器和小程序保留相对地址；不依赖参数名、wx.request、浏览器全局、localhost 或未声明的 request/requestClient 契约",
+      "category": "ssr-request"
+    },
+    {
+      "id": "p4",
+      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，并在每个异步边界阻止卸载或旧商品结果挂载",
+      "category": "web-sdk"
+    },
+    {
+      "id": "p5",
+      "text": "推荐组件卸载或商品切换时销毁由 SDK create 返回的 tracker，并清理 Observer 和监听，旧回调不再上报",
+      "category": "web-cleanup"
+    },
+    {
+      "id": "p6",
+      "text": "SSR 使用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /mall/",
+      "category": "web-deployment"
+    },
+    {
+      "id": "p7",
+      "text": "微信小程序 onLoad 的商品加载具有明确执行路径，不得被 window 存在性或 Web-only 条件挡住",
+      "category": "business-regression"
+    },
+    {
+      "id": "p8",
+      "text": "规格切换、加购与相关推荐展示/跳转链路保持完整，且这些小程序业务路径不依赖浏览器全局对象",
+      "category": "business-regression"
+    }
+  ]
+}

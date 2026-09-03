@@ -1,0 +1,57 @@
+{
+  "eval_id": 6,
+  "eval_name": "api-proxy-task-contract",
+  "complexity": "complex",
+  "focus": "api-proxy-install/promise-task-contract/request-race",
+  "prompt": "商品搜索要同时运行在微信小程序和 Web。项目统一使用 API Proxy 的 Promise 风格，但联想词请求必须可取消，以便连续输入和卸载时终止旧请求；旧关键词响应不能覆盖新结果。请保留趋势词、清空、错误提示和商品详情跳转，不要新增通用平台适配层，输出全部完整文件。",
+  "files": [
+    "input/src/app.mpx",
+    "input/src/pages/search/index.mpx",
+    "input/src/services/search.js"
+  ],
+  "outputs": [
+    "src/app.mpx",
+    "src/pages/search/index.mpx",
+    "src/services/search.js"
+  ],
+  "assertions": [
+    {
+      "id": "q0",
+      "text": "应用入口安装 @mpxjs/api-proxy，并通过 mpx.use(apiProxy, { usePromise: true }) 明确启用 Promise 风格",
+      "category": "web-api"
+    },
+    {
+      "id": "q1",
+      "text": "Web 输出中的普通趋势词请求通过会返回 Promise 的 Mpx 官方 API 调用路径使用 await 或 Promise 链；可使用配置后的 mpx.request 或会被跨端编译转换到该入口的 wx.request。原始 @mpxjs/api-proxy 命名导入不会继承 Promise 化配置，不能直接按 Promise 使用；不得混用 success/fail 回调",
+      "category": "web-api"
+    },
+    {
+      "id": "q2",
+      "text": "联想词请求保存可取消任务：可通过单次 usePromise: false 或原始 @mpxjs/api-proxy 命名导入直接取得 RequestTask，也可从已 Promise 化调用的 Promise.__returned 取得框架保留的原始任务；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "category": "web-concurrency"
+    },
+    {
+      "id": "q3",
+      "text": "联想词 success/fail 回调捕获本次任务和关键词，仅当前任务且关键词仍匹配时才更新结果或提示，旧响应不能覆盖新搜索",
+      "category": "web-concurrency"
+    },
+    {
+      "id": "q4",
+      "text": "详情跳转与错误提示继续走 Mpx 官方 API 链路；可保留会被跨端编译转换的 wx.navigateTo/wx.showToast，可沿用 mpx.xxx，也可在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入",
+      "category": "web-api"
+    },
+    {
+      "id": "q5",
+      "text": "不用 fetch、location 或 alert 平行重写 request/navigateTo/showToast；若沿用 @mpxjs/api-proxy 命名导入，应明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置",
+      "category": "web-api",
+      "forbidden_patterns": [
+        {"pattern": "(?:\\bfetch\\s*\\(|\\blocation(?:\\.|\\s*=)|\\balert\\s*\\()", "description": "使用浏览器能力重写已有 API Proxy 能力"}
+      ]
+    },
+    {
+      "id": "q6",
+      "text": "趋势词、连续输入、清空搜索、取消旧请求、结果展示和商品详情业务链路保持完整",
+      "category": "business-regression"
+    }
+  ]
+}

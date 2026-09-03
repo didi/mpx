@@ -1,0 +1,32 @@
+<template>
+  <view>
+    <view wx:for="{{addresses}}" wx:key="id" bindtap="confirm(item)">{{item.name}} {{item.detail}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+const ADDRESS_RESULT_PREFIX = 'checkout-address:'
+
+createPage({
+  data: {
+    requestId: '',
+    addresses: [
+      { id: 'home', name: '家', detail: '幸福路 1 号' },
+      { id: 'office', name: '公司', detail: '科技路 8 号' }
+    ]
+  },
+  onLoad (query) {
+    this.requestId = query.requestId || ''
+  },
+  methods: {
+    confirm (address) {
+      if (this.requestId) {
+        mpx.setStorageSync(`${ADDRESS_RESULT_PREFIX}${this.requestId}`, address)
+      }
+      mpx.navigateBack({ delta: 1 })
+    }
+  }
+})
+</script>

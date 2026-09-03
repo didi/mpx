@@ -1,0 +1,20 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  onAppInit () {
+    // SSR 会为每个应用实例调用此钩子，不能复用模块级的 Pinia。
+    return { pinia: createPinia() }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": ["pages/article/detail"],
+  "packages": [
+    {"root": "packageRecommend", "pages": []}
+  ]
+}
+</script>

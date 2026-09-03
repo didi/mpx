@@ -1,0 +1,119 @@
+<template>
+  <view
+    class="feed-page"
+    bindtouchstart="onTouchStart"
+    bindtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
+    bindtouchcancel="onTouchEnd"
+  >
+    <scroll-view class="feed-scroll" scroll-y enable-flex>
+      <view class="feed-content" data-layout-revision="{{layoutRevision}}">
+        <view class="categories-wrap">
+          <scroll-view class="categories-scroll" scroll-x show-scrollbar="{{false}}">
+            <view class="categories">
+              <text
+                wx:for="{{categories}}"
+                wx:key="id"
+                class="{{item.id == activeCategoryId ? 'category active' : 'category'}}"
+                data-category-id="{{item.id}}"
+                bindtap="selectCategory"
+              >{{item.name}}</text>
+          </view>
+          </scroll-view>
+        </view>
+
+        <view wx:for="{{products}}" wx:key="id" class="product">
+          <image
+            class="product-image"
+            src="{{item.image}}"
+            mode="widthFix"
+            lazy-load
+            bindload="onImageLoad"
+          />
+          <product-video wx:if="{{item.video}}" product="{{item}}" />
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    activeCategoryId: '',
+    cartCount: 2,
+    layoutRevision: 0,
+    dragging: false
+  },
+  async onLoad () {
+    const { data } = await mpx.request({ url: '/api/feed' })
+    this.setData({
+      categories: data.categories || [],
+      products: data.products || [],
+      activeCategoryId: data.categories && data.categories.length ? data.categories[0].id : ''
+    })
+  },
+  methods: {
+    selectCategory (event) {
+      this.setData({ activeCategoryId: event.currentTarget.dataset.categoryId })
+    },
+    onImageLoad () {
+      // Re-rendering this marker after intrinsic image sizing makes Web scroll-view
+      // recalculate its content range when an image resolves asynchronously.
+      this.setData({ layoutRevision: this.data.layoutRevision + 1 })
+    },
+    onTouchStart () {
+      this.setData({ dragging: true })
+    },
+    onTouchMove () {},
+    onTouchEnd () {
+      this.setData({ dragging: false })
+    },
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page { position: relative; height: 100%; }
+.feed-scroll { height: 100%; }
+.feed-content { min-height: 100%; padding-bottom: 140rpx; }
+.categories-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+}
+.categories-scroll { white-space: nowrap; }
+.categories { display: flex; min-width: max-content; background: #fff; }
+.category { display: inline-block; padding: 24rpx 28rpx; color: #666; }
+.category.active { color: #111; font-weight: 600; }
+.product { padding: 24rpx; }
+.product-image { display: block; width: 100%; }
+.fixed-cart {
+  position: fixed;
+  right: 24rpx;
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  z-index: 20;
+  padding: 20rpx 28rpx;
+  border-radius: 999rpx;
+  background: #111;
+  color: #fff;
+}
+</style>

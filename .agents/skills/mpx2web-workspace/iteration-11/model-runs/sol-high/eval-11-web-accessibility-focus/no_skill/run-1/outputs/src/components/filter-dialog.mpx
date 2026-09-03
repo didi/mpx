@@ -1,0 +1,73 @@
+<template>
+  <view class="filter">
+    <button
+      class="filter-trigger"
+      role="button"
+      aria-haspopup="dialog"
+      aria-expanded="{{visible ? 'true' : 'false'}}"
+      bindtap="open"
+    >筛选</button>
+    <view wx:if="{{visible}}" class="mask" bindtap="close">
+      <view
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="商品筛选"
+        tabindex="-1"
+        catchtap="stop"
+        bindkeydown="onKeydown"
+      >
+        <button
+          wx:for="{{options}}"
+          wx:key="value"
+          class="filter-option"
+          aria-pressed="{{selected.indexOf(item.value) !== -1 ? 'true' : 'false'}}"
+          bindtap="toggle(item.value)"
+        >{{item.label}}</button>
+        <button bindtap="clear">清空</button>
+        <button bindtap="confirm">确定</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    options: {
+      type: Array,
+      value: () => []
+    }
+  },
+  data: {
+    visible: false,
+    selected: []
+  },
+  methods: {
+    open () {
+      this.visible = true
+    },
+    close () {
+      this.visible = false
+    },
+    stop () {},
+    toggle (value) {
+      this.selected = this.selected.includes(value)
+        ? this.selected.filter((item) => item !== value)
+        : this.selected.concat(value)
+    },
+    clear () {
+      this.selected = []
+    },
+    confirm () {
+      this.triggerEvent('confirm', { selected: this.selected.slice() })
+      this.close()
+    },
+    onKeydown (event) {
+      if (event.key === 'Escape') this.close()
+    }
+  }
+})
+</script>

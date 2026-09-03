@@ -1,0 +1,178 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      value: '',
+      observer (campaignId, previousCampaignId) {
+        if (this._componentAlive && campaignId !== previousCampaignId) {
+          this.initTracker()
+        }
+      }
+    },
+    memberId: {
+      type: String,
+      value: '',
+      observer (memberId, previousMemberId) {
+        if (this._componentAlive && memberId !== previousMemberId) {
+          this.initTracker()
+        }
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  ready () {
+    this._componentAlive = true
+    this._initToken = 0
+    this._pageVisible = true
+    this._documentVisible = typeof document === 'undefined' || !document.hidden
+
+    if (typeof document !== 'undefined') {
+      this._boundVisibilityChange = () => this.handleVisibilityChange()
+      document.addEventListener('visibilitychange', this._boundVisibilityChange)
+    }
+
+    this.initTracker()
+  },
+  detached () {
+    this._componentAlive = false
+    this._initToken = (this._initToken || 0) + 1
+
+    if (typeof document !== 'undefined' && this._boundVisibilityChange) {
+      document.removeEventListener('visibilitychange', this._boundVisibilityChange)
+      this._boundVisibilityChange = null
+    }
+
+    const tracker = this.tracker
+    this.tracker = null
+    this.safeDestroy(tracker)
+  },
+  methods: {
+    async initTracker () {
+      if (!this._componentAlive) return
+
+      const token = (this._initToken || 0) + 1
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      this._initToken = token
+      this.ready = false
+
+      const previousTracker = this.tracker
+      this.tracker = null
+      await this.safeDestroy(previousTracker)
+
+      if (!this.isCurrentInit(token, campaignId) || !campaignId) return
+
+      let tracker = null
+      try {
+        tracker = await campaignTracker.create({ campaignId, memberId })
+
+        if (!this.isCurrentInit(token, campaignId)) {
+          await this.safeDestroy(tracker)
+          return
+        }
+
+        this.tracker = tracker
+        await Promise.resolve(tracker.start())
+
+        if (!this.isCurrentInit(token, campaignId) || this.tracker !== tracker) {
+          if (this.tracker === tracker) this.tracker = null
+          await this.safeDestroy(tracker)
+          return
+        }
+
+        this.ready = true
+        this.syncTrackerState()
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (this.tracker === tracker) this.tracker = null
+        await this.safeDestroy(tracker)
+
+        if (!this.isCurrentInit(token, campaignId)) return
+        this.ready = false
+        this.triggerEvent('error', { campaignId })
+      }
+    },
+    isCurrentInit (token, campaignId) {
+      return this._componentAlive && token === this._initToken && campaignId === this.campaignId
+    },
+    async safeDestroy (tracker) {
+      if (!tracker || typeof tracker.destroy !== 'function') return
+      try {
+        await Promise.resolve(tracker.destroy())
+      } catch (error) {
+        // 销毁失败不能让过期实例重新成为当前实例。
+      }
+    },
+    handleVisibilityChange () {
+      this._documentVisible = !document.hidden
+      this.syncTrackerState()
+    },
+    pauseTracking () {
+      this._pageVisible = false
+      this.syncTrackerState()
+    },
+    resumeTracking () {
+      this._pageVisible = true
+      this.syncTrackerState()
+    },
+    syncTrackerState () {
+      const tracker = this.tracker
+      if (!tracker || !this.ready) return
+
+      const shouldRun = this._pageVisible && this._documentVisible
+      const method = shouldRun ? 'resume' : 'pause'
+      if (typeof tracker[method] !== 'function') return
+
+      try {
+        const result = tracker[method]()
+        if (result && typeof result.catch === 'function') {
+          result.catch(() => {})
+        }
+      } catch (error) {
+        // 页面显隐同步失败不影响实例清理与后续重试。
+      }
+    },
+    trackExposure (payload) {
+      const tracker = this.tracker
+      if (!this._componentAlive || !this.ready || !tracker || typeof tracker.track !== 'function') return
+
+      try {
+        const result = tracker.track('exposure', payload || {})
+        if (result && typeof result.catch === 'function') {
+          result.catch(() => {})
+        }
+      } catch (error) {
+        // 单次曝光失败不应破坏 tracker 生命周期。
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

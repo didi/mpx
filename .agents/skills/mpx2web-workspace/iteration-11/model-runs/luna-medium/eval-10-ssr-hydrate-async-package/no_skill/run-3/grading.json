@@ -1,0 +1,253 @@
+{
+  "eval_id": 10,
+  "eval_name": "ssr-hydrate-async-package",
+  "configuration": "no_skill",
+  "run_number": 3,
+  "grading_fingerprint": "a6d05e953805181345f1b995e754cd6fd97f633ac235fec34fc437c6b8fccf45",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 94671
+  },
+  "expectations": [
+    {
+      "id": "x0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia，不复用模块级请求状态",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：每次 onAppInit 调用都创建并返回独立 Pinia。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x1",
+      "text": "serverPrefetch 返回 Promise 并沿调用链传递 this.$ssrContext，服务端等待文章和首屏推荐数据",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/detail.mpx：serverPrefetch 等待文章加载并沿调用链传递请求上下文。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x2",
+      "text": "文章 store 同时维护 articleId、loaded 与请求代际；同 ID 注水可复用，新 ID 在 await 前失效旧缓存，晚到响应不能覆盖当前文章",
+      "passed": false,
+      "evidence": "outputs/src/stores/article.js：文章注水复用和 A→B→A 请求身份状态机不完整。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x3",
+      "text": "服务端与客户端首屏结构不由 Math.random、Date.now、new Date、视口或浏览器对象决定；浏览器专属节点只在 mounted/ready 后出现",
+      "passed": false,
+      "evidence": "outputs/src/pages/article/detail.mpx：SSR 首屏仍含非确定值，或客户端专属节点未在挂载后开启。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x4",
+      "text": "自定义 onSSRAppCreated 若保留，完整处理 router.push(context.url)、router.onReady 成功/错误、context.state 写入并返回 app；不需要时删除以使用框架默认流程",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：删除自定义 onSSRAppCreated，使用框架默认 router ready 与状态写入流程。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x5",
+      "text": "异步推荐组件与分包保持有效，Web 配置同时启用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /content/",
+      "passed": false,
+      "evidence": "outputs/vue.config.js：异步 SSR 未对齐 history/useSSR/base/publicPath。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x6",
+      "text": "同构 article service 返回 Promise，服务端只从调用链传入的当前 SSR 上下文的 req 解析 origin，浏览器和小程序使用相对地址，不依赖特定参数名、不访问浏览器全局或硬编码 localhost",
+      "passed": false,
+      "evidence": "outputs/src/services/article.js：同构 service 未从 requestContext.req 取服务端 origin，或仍依赖浏览器/localhost/非 Promise 请求。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "x7",
+      "text": "微信小程序 onLoad 文章加载、收藏、推荐展示和文章跳转不受 window 守卫阻断",
+      "passed": false,
+      "evidence": "outputs/src/pages/article/detail.mpx：onLoad 的文章加载仍只在浏览器对象存在时执行。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 5,
+    "total": 8,
+    "pass_rate": 0.375
+  },
+  "metrics": {
+    "total_tokens": 82058,
+    "input_tokens": 76410,
+    "output_tokens": 5648,
+    "tool_calls": 5,
+    "duration_ms": 135300
+  },
+  "timing": {
+    "total_tokens": 82058,
+    "duration_ms": 135300,
+    "total_duration_seconds": 135.3
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 6,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/pages/article/detail.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/packageRecommend/components/recommend-list.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/stores/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/services/article.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 6,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/pages/article/detail.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/packageRecommend/components/recommend-list.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/stores/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/services/article.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/pages/article/detail.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3261
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/packageRecommend/components/recommend-list.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2623
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/stores/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/src/services/article.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-3/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "x3 建议明确 Mpx Web SSR 中 `onLoad` 是否可视为 hydrate 后生命周期；当前断言写的是 mounted/ready，若评测实现把 onLoad 视为可接受，会造成判定差异。"
+    ],
+    "overall": "修复覆盖了独立 Pinia、serverPrefetch Promise 链和小程序 onLoad 基本行为，但 store 缺 loaded、/content/ 部署配置错误、article service 仍有 localhost/window/origin 参数依赖，SSR 部署问题未完整解决。"
+  }
+}

@@ -1,0 +1,151 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        this.syncTracker()
+      }
+    },
+    memberId: {
+      type: String,
+      observer () {
+        this.syncTracker()
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  created () {
+    this.destroyed = false
+    this.tracker = null
+    this.trackerKey = ''
+    this.creatingKey = ''
+    this.trackerRequest = 0
+    this.listenersAttached = false
+    this.onWindowMessage = (event) => this.handleWindowMessage(event)
+    this.onVisibilityChange = () => this.handleVisibilityChange()
+  },
+  ready () {
+    this.syncTracker()
+  },
+  detached () {
+    this.destroyed = true
+    this.trackerRequest += 1
+    this.creatingKey = ''
+    this.destroyTracker()
+  },
+  methods: {
+    trackerIdentity () {
+      return this.campaignId && this.memberId
+        ? `${this.campaignId}:${this.memberId}`
+        : ''
+    },
+    async syncTracker () {
+      const key = this.trackerIdentity()
+      if (!key) {
+        this.trackerRequest += 1
+        this.creatingKey = ''
+        this.destroyTracker()
+        return
+      }
+      if (this.destroyed || key === this.trackerKey || key === this.creatingKey) return
+
+      const request = ++this.trackerRequest
+      this.creatingKey = key
+      this.destroyTracker()
+      this.ready = false
+
+      let tracker
+      try {
+        tracker = await campaignTracker.create({
+          campaignId: this.campaignId,
+          memberId: this.memberId
+        })
+      } catch (error) {
+        if (!this.destroyed && request === this.trackerRequest) {
+          this.creatingKey = ''
+          this.triggerEvent('error', { campaignId: this.campaignId })
+        }
+        return
+      }
+
+      if (this.destroyed || request !== this.trackerRequest || key !== this.trackerIdentity()) {
+        if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+        return
+      }
+
+      this.tracker = tracker
+      this.trackerKey = key
+      this.creatingKey = ''
+      this.addBrowserListeners()
+      tracker.start()
+      this.ready = true
+      this.triggerEvent('ready', { campaignId: this.campaignId })
+    },
+    addBrowserListeners () {
+      if (this.listenersAttached || typeof window === 'undefined' || typeof document === 'undefined') return
+      window.addEventListener('message', this.onWindowMessage)
+      document.addEventListener('visibilitychange', this.onVisibilityChange)
+      this.listenersAttached = true
+    },
+    removeBrowserListeners () {
+      if (!this.listenersAttached) return
+      window.removeEventListener('message', this.onWindowMessage)
+      document.removeEventListener('visibilitychange', this.onVisibilityChange)
+      this.listenersAttached = false
+    },
+    destroyTracker () {
+      this.removeBrowserListeners()
+      if (this.tracker && typeof this.tracker.destroy === 'function') {
+        this.tracker.destroy()
+      }
+      this.tracker = null
+      this.trackerKey = ''
+      this.ready = false
+    },
+    handleWindowMessage (event) {
+      if (!this.tracker || event.origin !== CAMPAIGN_ORIGIN) return
+      const message = event.data
+      if (!message || message.type !== 'campaign-exposure' || message.campaignId !== this.campaignId) return
+      this.tracker.track('exposure', message.payload)
+    },
+    handleVisibilityChange () {
+      if (!this.tracker || typeof document === 'undefined') return
+      if (document.hidden) {
+        this.tracker.pause()
+      } else {
+        this.tracker.resume()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

@@ -1,0 +1,224 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        this.handleConfigChange()
+      }
+    },
+    memberId: {
+      type: String,
+      observer () {
+        this.handleConfigChange()
+      }
+    },
+    webviewId: {
+      type: String,
+      observer () {
+        this.handleConfigChange()
+      }
+    },
+    channelId: {
+      type: String,
+      observer () {
+        this.handleConfigChange()
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  ready () {
+    this._componentReady = true
+    this._disposed = false
+    this._initGeneration = 0
+    this._scheduleGeneration = 0
+    this._tracker = null
+    this._listenersAttached = false
+    this._windowMessageHandler = (event) => this.handleWindowMessage(event)
+    this._visibilityHandler = () => this.handleVisibilityChange()
+    this.initTracker()
+  },
+  detached () {
+    this._componentReady = false
+    this._disposed = true
+    this._scheduleGeneration = (this._scheduleGeneration || 0) + 1
+    this._initGeneration = (this._initGeneration || 0) + 1
+    this.cleanupActiveTracker()
+  },
+  methods: {
+    handleConfigChange () {
+      if (!this._componentReady || this._disposed) return
+
+      const scheduleGeneration = ++this._scheduleGeneration
+      ++this._initGeneration
+      this.ready = false
+      this.cleanupActiveTracker()
+
+      const restart = () => {
+        if (this._disposed || scheduleGeneration !== this._scheduleGeneration) return
+        this.initTracker()
+      }
+      if (typeof this.$nextTick === 'function') {
+        this.$nextTick(restart)
+      } else {
+        setTimeout(restart, 0)
+      }
+    },
+    async initTracker () {
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      const webviewId = this.webviewId
+      const channelId = this.channelId
+      const generation = ++this._initGeneration
+
+      this.ready = false
+      this.cleanupActiveTracker()
+      if (!campaignId || this._disposed) return
+
+      // 非浏览器目标保留组件与事件链路，但不加载 DOM 监听或启动 Web tracker。
+      if (typeof window === 'undefined' || typeof document === 'undefined') {
+        if (!this._disposed && generation === this._initGeneration) {
+          this.ready = true
+          this.triggerEvent('ready', { campaignId, channelId })
+        }
+        return
+      }
+
+      let tracker = null
+      try {
+        tracker = await campaignTracker.create({
+          campaignId,
+          memberId
+        })
+
+        const isStale = this._disposed ||
+          generation !== this._initGeneration ||
+          campaignId !== this.campaignId ||
+          memberId !== this.memberId ||
+          webviewId !== this.webviewId ||
+          channelId !== this.channelId
+        if (isStale) {
+          this.safeDestroyTracker(tracker)
+          return
+        }
+
+        this._tracker = tracker
+        tracker.start()
+        this.addGlobalListeners()
+        if (document.hidden && typeof tracker.pause === 'function') tracker.pause()
+        this.ready = true
+        this.triggerEvent('ready', { campaignId, channelId })
+      } catch (error) {
+        if (tracker && tracker !== this._tracker) this.safeDestroyTracker(tracker)
+        if (generation !== this._initGeneration || this._disposed) return
+        this.cleanupActiveTracker()
+        this.ready = false
+        this.triggerEvent('error', {
+          campaignId,
+          channelId,
+          message: error && error.message ? error.message : '活动追踪初始化失败'
+        })
+      }
+    },
+    addGlobalListeners () {
+      if (this._listenersAttached || typeof window === 'undefined' || typeof document === 'undefined') return
+      window.addEventListener('message', this._windowMessageHandler)
+      document.addEventListener('visibilitychange', this._visibilityHandler)
+      this._listenersAttached = true
+    },
+    removeGlobalListeners () {
+      if (!this._listenersAttached) return
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('message', this._windowMessageHandler)
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', this._visibilityHandler)
+      }
+      this._listenersAttached = false
+    },
+    cleanupActiveTracker () {
+      this.removeGlobalListeners()
+      const tracker = this._tracker
+      this._tracker = null
+      if (tracker) this.safeDestroyTracker(tracker)
+    },
+    safeDestroyTracker (tracker) {
+      if (!tracker || typeof tracker.destroy !== 'function') return
+      try {
+        tracker.destroy()
+      } catch (error) {}
+    },
+    handleWindowMessage (event) {
+      const tracker = this._tracker
+      if (!tracker || this._disposed || !event || event.origin !== CAMPAIGN_ORIGIN) return
+
+      const frameWindow = this.getCurrentCampaignFrameWindow()
+      if (!frameWindow || event.source !== frameWindow) return
+
+      const message = event.data
+      if (!message || typeof message !== 'object' || Array.isArray(message)) return
+      if (message.type !== 'campaign-exposure') return
+      if (message.campaignId && message.campaignId !== this.campaignId) return
+      if (message.channelId && message.channelId !== this.channelId) return
+
+      try {
+        tracker.track('exposure', message.payload || {})
+      } catch (error) {
+        if (!this._disposed) {
+          this.triggerEvent('error', {
+            campaignId: this.campaignId,
+            channelId: this.channelId,
+            message: error && error.message ? error.message : '活动追踪上报失败'
+          })
+        }
+      }
+    },
+    getCurrentCampaignFrameWindow () {
+      if (typeof document === 'undefined' || !this.webviewId) return null
+      const webview = document.getElementById(this.webviewId)
+      if (!webview) return null
+      if (webview.contentWindow) return webview.contentWindow
+      const iframe = typeof webview.querySelector === 'function' ? webview.querySelector('iframe') : null
+      return iframe && iframe.contentWindow ? iframe.contentWindow : null
+    },
+    handleVisibilityChange () {
+      const tracker = this._tracker
+      if (!tracker || this._disposed || typeof document === 'undefined') return
+      if (document.hidden) {
+        if (typeof tracker.pause === 'function') tracker.pause()
+      } else if (typeof tracker.resume === 'function') {
+        tracker.resume()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

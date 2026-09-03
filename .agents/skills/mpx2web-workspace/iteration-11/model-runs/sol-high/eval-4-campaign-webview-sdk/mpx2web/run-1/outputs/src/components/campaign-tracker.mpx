@@ -1,0 +1,154 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        this.initTracker()
+      }
+    },
+    memberId: {
+      type: String,
+      observer () {
+        this.initTracker()
+      }
+    },
+    active: {
+      type: Boolean,
+      value: true,
+      observer () {
+        this.initTracker()
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  created () {
+    this._componentReady = false
+    this._trackerDetached = false
+    this._trackerGeneration = 0
+    this._tracker = null
+    this._visibilityListening = false
+    this._handleVisibilityChange = () => this.handleVisibilityChange()
+  },
+  ready () {
+    this._componentReady = true
+    this.initTracker()
+  },
+  detached () {
+    this._componentReady = false
+    this._trackerDetached = true
+    this._trackerGeneration += 1
+    this.releaseTracker()
+  },
+  methods: {
+    isCurrentTracker (generation, campaignId, memberId) {
+      return this._componentReady &&
+        !this._trackerDetached &&
+        this.active &&
+        generation === this._trackerGeneration &&
+        campaignId === this.campaignId &&
+        memberId === this.memberId
+    },
+    async initTracker () {
+      if (!this._componentReady || this._trackerDetached) return
+
+      const generation = this._trackerGeneration + 1
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      this._trackerGeneration = generation
+      this.ready = false
+      this.releaseTracker()
+
+      if (!campaignId || !this.active) return
+
+      if (__mpx_mode__ !== 'web') {
+        if (!this.isCurrentTracker(generation, campaignId, memberId)) return
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+        return
+      }
+
+      let tracker
+      try {
+        const trackerModule = await import('@business/campaign-tracker-web')
+        if (!this.isCurrentTracker(generation, campaignId, memberId)) return
+
+        const campaignTracker = trackerModule.default || trackerModule
+        tracker = await campaignTracker.create({
+          campaignId,
+          memberId
+        })
+
+        if (!this.isCurrentTracker(generation, campaignId, memberId)) {
+          if (tracker && tracker.destroy) tracker.destroy()
+          return
+        }
+
+        this._tracker = tracker
+        tracker.start()
+        this.addVisibilityListener()
+        if (typeof document !== 'undefined' && document.hidden) tracker.pause()
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (tracker && tracker !== this._tracker && tracker.destroy) tracker.destroy()
+        if (!this.isCurrentTracker(generation, campaignId, memberId)) return
+        this.releaseTracker()
+        this.ready = false
+        this.triggerEvent('error', { campaignId })
+      }
+    },
+    addVisibilityListener () {
+      if (this._visibilityListening || typeof document === 'undefined') return
+      document.addEventListener('visibilitychange', this._handleVisibilityChange)
+      this._visibilityListening = true
+    },
+    removeVisibilityListener () {
+      if (!this._visibilityListening || typeof document === 'undefined') return
+      document.removeEventListener('visibilitychange', this._handleVisibilityChange)
+      this._visibilityListening = false
+    },
+    releaseTracker () {
+      this.removeVisibilityListener()
+      const tracker = this._tracker
+      this._tracker = null
+      if (tracker && tracker.destroy) tracker.destroy()
+    },
+    handleVisibilityChange () {
+      const tracker = this._tracker
+      if (!tracker || this._trackerDetached || !this.active || typeof document === 'undefined') return
+      if (document.hidden) {
+        tracker.pause()
+      } else {
+        tracker.resume()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

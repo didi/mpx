@@ -1,0 +1,66 @@
+<template>
+  <view class="article-page">
+    <text class="title">{{article.title}}</text>
+    <rich-text nodes="{{article.content}}" />
+    <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
+    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { useArticleStore } from '../../stores/article'
+
+createPage({
+  data: {
+    articleId: '',
+    isBrowser: false,
+    favorite: false
+  },
+  computed: {
+    article () { return useArticleStore(this.$pinia).article || {} },
+    recommendations () { return useArticleStore(this.$pinia).recommendations }
+  },
+  onLoad (query) {
+    const articleId = query && query.id
+    this.articleId = articleId || ''
+
+    // SSR 由 serverPrefetch 取数；浏览器 hydration 和微信小程序在客户端加载。
+    if (typeof window !== 'undefined' || typeof wx !== 'undefined') {
+      return this.loadArticle(articleId)
+    }
+  },
+  onReady () {
+    // 保持服务端与客户端 hydration 的初始树一致，分享工具仅在挂载后出现。
+    if (typeof window !== 'undefined') this.isBrowser = true
+  },
+  serverPrefetch () {
+    const articleId = this.$route && this.$route.query && this.$route.query.id
+    this.articleId = articleId || ''
+    return this.loadArticle(articleId, this.$ssrContext)
+  },
+  methods: {
+    loadArticle (articleId, requestContext) {
+      if (!articleId) return Promise.resolve()
+      this.articleId = String(articleId)
+      return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
+    },
+    toggleFavorite () { this.favorite = !this.favorite },
+    openArticle (event) {
+      mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "recommend-list": "../../packageRecommend/components/recommend-list?root=packageRecommend"
+  },
+  "componentPlaceholder": {
+    "recommend-list": "view"
+  }
+}
+</script>

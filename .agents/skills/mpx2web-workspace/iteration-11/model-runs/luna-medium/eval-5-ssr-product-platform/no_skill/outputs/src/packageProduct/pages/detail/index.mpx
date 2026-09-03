@@ -1,0 +1,92 @@
+<template>
+  <view class="product-detail">
+    <image class="product-cover" src="{{product.cover}}" mode="aspectFill" />
+    <view class="product-info">
+      <view class="product-name">{{product.name}}</view>
+      <view class="product-price">¥{{selectedSku.price || product.price}}</view>
+      <view class="sku-list">
+        <view wx:for="{{product.skus}}" wx:key="id" class="sku-item" wx:class="{{ {active: item.id === selectedSkuId} }}" bindtap="selectSku(item.id)">
+          {{item.name}}
+        </view>
+      </view>
+      <button class="cart-button" bindtap="addToCart">加入购物车</button>
+    </view>
+    <product-recommendations productId="{{productId}}" items="{{recommendations}}" />
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+import { useProductStore } from '../../../stores/product'
+
+createPage({
+  data: {
+    productId: '',
+    selectedSkuId: ''
+  },
+  computed: {
+    product () {
+      return useProductStore(this.$pinia).product
+    },
+    recommendations () {
+      return useProductStore(this.$pinia).recommendations
+    },
+    selectedSku () {
+      return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
+    }
+  },
+  async onLoad (query) {
+    await this.loadProduct(query && query.id, !!this.$ssrContext)
+  },
+  // The SSR renderer awaits this hook, so product and recommendations are both
+  // present before the HTML is emitted. The store also makes this a hydration no-op.
+  async onSSR (query) {
+    await this.loadProduct(query && query.id, true)
+  },
+  methods: {
+    async loadProduct (productId, isSSR) {
+      if (!productId) return
+      this.productId = productId
+      const requestId = (this._requestId || 0) + 1
+      this._requestId = requestId
+      const store = useProductStore(this.$pinia)
+      await store.loadProduct(productId, {
+        ssrContext: isSSR ? this.$ssrContext : undefined
+      })
+      if (this._requestId !== requestId || this.productId !== productId) return
+      this.selectedSkuId = (store.product.skus || [])[0] && store.product.skus[0].id
+    },
+    selectSku (skuId) {
+      this.selectedSkuId = skuId
+    },
+    addToCart () {
+      mpx.request({
+        url: '/api/cart/items',
+        method: 'POST',
+        data: { productId: this.productId, skuId: this.selectedSkuId },
+        success: () => mpx.showToast({ title: '已加入购物车' })
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.product-detail { min-height: 100vh; background: #f5f5f5; }
+.product-cover { width: 750rpx; height: 750rpx; }
+.product-info { padding: 28rpx; background: #ffffff; }
+.product-name { color: #222222; font-size: 36rpx; font-weight: bold; }
+.product-price { margin: 18rpx 0; color: #e64340; font-size: 42rpx; }
+.sku-list { display: flex; flex-wrap: wrap; }
+.sku-item { margin: 0 16rpx 16rpx 0; padding: 12rpx 20rpx; color: #555555; background: #f2f2f2; border-radius: 8rpx; }
+.sku-item.active { color: #ffffff; background: #ff5a36; }
+.cart-button { margin-top: 20rpx; color: #ffffff; background: #ff5a36; }
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "商品详情",
+  "usingComponents": { "product-recommendations": "../../../components/product-recommendations" }
+}
+</script>

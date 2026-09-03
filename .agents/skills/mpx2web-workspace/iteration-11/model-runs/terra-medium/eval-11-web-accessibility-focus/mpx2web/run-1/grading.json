@@ -1,0 +1,158 @@
+{
+  "eval_id": 11,
+  "eval_name": "web-accessibility-focus",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "6151a9c756eb39f5f36eb9a9485b73b9d09166db0151c6a56d1b35a791c9025d",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 85218
+  },
+  "expectations": [
+    {
+      "id": "c0",
+      "text": "通用筛选触发器、选项与确认按钮使用 aria-role/aria-label 表达跨端语义，并保留 tap/遮罩触摸链路",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.mpx:5-8 的通用触发器有 aria-role/aria-label 且 bindtap=\"open\"，18-24 的选项有 aria-role/aria-label/aria-checked 且 bindtap=\"toggle(item.value)\"，10 的遮罩保留 bindtap=\"close\"；但 27 的确认按钮只有 <button bindtap=\"confirm\">确定</button>，缺少 aria-role/aria-label。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c1",
+      "text": "完整浏览器 role=dialog、aria-modal、tabindex 与键盘事件只存在于 Web 文件或 Web-only 模板逻辑",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx:17-20 提供 Web dialog 的 role=\"dialog\"、aria-modal=\"true\"、tabindex=\"-1\"，106-115 处理键盘事件；但通用 outputs/src/components/filter-dialog.mpx:7 和 15 仍包含 tabindex，不满足 tabindex 只存在于 Web 文件或 Web-only 模板逻辑的字面要求。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c2",
+      "text": "Web 打开前记录真实触发元素，渲染完成后把焦点移入弹层；关闭后仅在元素仍连接文档时恢复焦点",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：打开流程未记录触发元素并在渲染后移入焦点。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c3",
+      "text": "Escape 关闭弹层；Tab 与 Shift+Tab 在当前弹层的可聚焦元素首尾循环，遮罩点击不误触内容区",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：键盘关闭、双向焦点循环与遮罩点击隔离完整。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c4",
+      "text": "document/window 键盘或焦点监听在每次关闭和 detached/unmounted 时成对移除，快速开关不会重复注册",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx：全局监听在关闭和卸载时幂等清理。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "c5",
+      "text": "选项选择、清空、确认、取消、焦点恢复和微信小程序触摸业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.mpx:40-51 保留微信小程序 open/close/toggle/clear/confirm 业务链路，10 的遮罩 bindtap=\"close\"、16 的内容 bindtap=\"stop\"、24 的选项 bindtap、26-27 的清空/确认 bindtap 均完整；outputs/src/components/filter-dialog.web.mpx:84-92 保留选项切换、清空、确认事件并关闭，77-82/143-147 支持取消式关闭后的焦点恢复。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 3,
+    "total": 6,
+    "pass_rate": 0.5
+  },
+  "metrics": {
+    "total_tokens": 259776,
+    "input_tokens": 254401,
+    "output_tokens": 5375,
+    "tool_calls": 8,
+    "duration_ms": 146712
+  },
+  "timing": {
+    "total_tokens": 259776,
+    "duration_ms": 146712,
+    "total_duration_seconds": 146.712
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 2,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-11-web-accessibility-focus/mpx2web/run-1/outputs/src/components/filter-dialog.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-11-web-accessibility-focus/mpx2web/run-1/outputs/src/components/filter-dialog.web.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 2,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-11-web-accessibility-focus/mpx2web/run-1/outputs/src/components/filter-dialog.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-11-web-accessibility-focus/mpx2web/run-1/outputs/src/components/filter-dialog.web.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-11-web-accessibility-focus/mpx2web/run-1/outputs/src/components/filter-dialog.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-11-web-accessibility-focus/mpx2web/run-1/outputs/src/components/filter-dialog.web.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4179
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [
+    "c1 对通用模板中的 tabindex 是否属于“浏览器 tabindex”有解释空间；本次按断言字面判定为 Web-only 违规。",
+    "c5 未定义独立取消按钮或取消事件；本次将 close、遮罩关闭和 Escape 关闭视为取消链路。若要求显式取消控件，结论会改变。"
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      "为通用确认按钮补充 aria-role/aria-label。",
+      "将通用模板中的 tabindex 移到 Web-only 文件或 Web-only 模板逻辑中。"
+    ],
+    "overall": "Web 焦点管理和键盘陷阱基本完整，主要问题是通用文件语义与 Web-only 属性边界不够严格。"
+  }
+}

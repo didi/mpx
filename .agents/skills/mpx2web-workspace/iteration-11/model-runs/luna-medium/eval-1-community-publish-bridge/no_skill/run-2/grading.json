@@ -1,0 +1,162 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "no_skill",
+  "run_number": 2,
+  "grading_fingerprint": "ad130fc8099ca9e29051dc4659d7ab98909918a2ac22e311858c234dd443d97f",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 94406
+  },
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:92-95 定义 getWechatApi，并在 123-155 通过 api.chooseLocation/api.openLocation/api.chooseMedia 调用宿主能力，不是 wx.xxx 或已配置 API Proxy 的 mpx.xxx 直接调用。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:92-95 引入通用 getWechatApi；该 helper 不只服务 choosePlace/openPlace/choosePhoto，还在 174-199 被 submitPost 用于 request、redirectTo、showToast，改写了请求、路由和提示链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:123-127 在 choosePlace 中检测 chooseLocation 不存在时设置“当前 Web 宿主暂未接入位置选择能力”并 return，未声明 window/globalThis 等虚构 Web 位置接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:136-140 在 openPlace 中检测 openLocation 不存在时设置“当前 Web 宿主暂未接入地图查看能力”并 return，未声明或调用虚构地图接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:150-154 在 choosePhoto 中检测 chooseMedia 不存在时设置“当前 Web 宿主暂未接入图片选择能力”并 return，未声明或调用虚构媒体选择接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:176-199 将 request、redirectTo、showToast 改为 getWechatApi 返回值上的 api.request/api.redirectTo/api.showToast，并在 177-180 增加“Web 宿主暂未接入动态发布接口”分支，未继续保持 wx.xxx/mpx.xxx 的 Mpx 官方 API 链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:182-199 虽保留 content/photos/place/topicId/allowComments 提交数据和详情跳转代码，但发布与跳转依赖 getWechatApi；Web 下 wx 不存在时 177-180 直接返回，已支持的发布到详情跳转链路不能确认保持完整。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 4,
+    "total": 8,
+    "pass_rate": 0.5
+  },
+  "metrics": {
+    "total_tokens": 81967,
+    "input_tokens": 76516,
+    "output_tokens": 5451,
+    "tool_calls": 5,
+    "duration_ms": 129583
+  },
+  "timing": {
+    "total_tokens": 81967,
+    "duration_ms": 129583,
+    "total_duration_seconds": 129.583
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-1-community-publish-bridge/no_skill/run-2/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-1-community-publish-bridge/no_skill/run-2/outputs/src/pages/community/publish.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-1-community-publish-bridge/no_skill/run-2/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3190
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "改造对三项 Web 缺失能力保留了待接入边界，但引入了通用 API 获取层，并把请求、路由、提示也迁移到该层，破坏了题目要求保留的 Mpx 官方 API 链路。"
+  }
+}

@@ -1,0 +1,209 @@
+<template>
+  <view id@web="portal-page" class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal-card" wx:for="{{cards}}" wx:key="id" bindtap="openCard(item.id)">{{item.title}}</view>
+    <button bindtap="toggleTheme">切换主题</button>
+    <button bindtap="openDialog">打开弹层</button>
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
+      <view
+        id@web="portal-dialog"
+        class="dialog"
+        role@web="dialog"
+        aria-modal@web="true"
+        tabindex@web="-1"
+        catchtap@web="stopDialogTap"
+      >门户设置</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    dialogVisible: false,
+    dark: false
+  },
+  onHide () {
+    if (__mpx_mode__ === 'web') {
+      this.dialogVisible = false
+      this.restoreDialogEnvironment(false)
+    }
+  },
+  onUnload () {
+    if (__mpx_mode__ === 'web') {
+      this.dialogVisible = false
+      this.restoreDialogEnvironment(false)
+    }
+  },
+  methods: {
+    openCard (id) {
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
+    toggleTheme () {
+      this.dark = !this.dark
+    },
+    openDialog (event) {
+      if (this.dialogVisible) return
+
+      if (__mpx_mode__ === 'web' && typeof document !== 'undefined') {
+        const currentTarget = event && event.currentTarget
+        this.dialogTrigger = currentTarget && typeof currentTarget.focus === 'function'
+          ? currentTarget
+          : document.activeElement
+        this.lockPageScroll()
+      }
+
+      this.dialogVisible = true
+
+      if (__mpx_mode__ === 'web' && typeof document !== 'undefined') {
+        this.$nextTick(() => {
+          if (!this.dialogVisible) return
+
+          const dialog = document.getElementById('portal-dialog')
+          if (!dialog) return
+
+          this.dialogElement = dialog
+          this.dialogKeydownHandler = (event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              this.closeDialog()
+              return
+            }
+
+            if (event.key === 'Tab') {
+              event.preventDefault()
+              dialog.focus()
+            }
+          }
+          document.addEventListener('keydown', this.dialogKeydownHandler)
+          dialog.focus()
+        })
+      }
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      this.restoreDialogEnvironment(true)
+    },
+    stopDialogTap () {},
+    lockPageScroll () {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || typeof document === 'undefined') return
+      if (this.pageScrollLock) return
+
+      const targets = [
+        document.documentElement,
+        document.body,
+        document.getElementById('app'),
+        document.getElementById('portal-page')
+      ].filter((target, index, list) => target && list.indexOf(target) === index)
+
+      this.pageScrollLock = {
+        windowX: window.pageXOffset,
+        windowY: window.pageYOffset,
+        targets: targets.map((target) => ({
+          target,
+          overflow: target.style.overflow,
+          overflowX: target.style.overflowX,
+          overflowY: target.style.overflowY,
+          scrollLeft: target.scrollLeft,
+          scrollTop: target.scrollTop
+        }))
+      }
+
+      targets.forEach((target) => {
+        target.style.overflow = 'hidden'
+      })
+    },
+    restoreDialogEnvironment (restoreFocus) {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || typeof document === 'undefined') return
+
+      if (this.dialogKeydownHandler) {
+        document.removeEventListener('keydown', this.dialogKeydownHandler)
+        this.dialogKeydownHandler = null
+      }
+      this.dialogElement = null
+
+      const scrollLock = this.pageScrollLock
+      this.pageScrollLock = null
+      if (scrollLock) {
+        scrollLock.targets.forEach(({ target, overflow, overflowX, overflowY, scrollLeft, scrollTop }) => {
+          target.style.overflow = overflow
+          target.style.overflowX = overflowX
+          target.style.overflowY = overflowY
+          target.scrollLeft = scrollLeft
+          target.scrollTop = scrollTop
+        })
+        window.scrollTo(scrollLock.windowX, scrollLock.windowY)
+      }
+
+      const trigger = this.dialogTrigger
+      this.dialogTrigger = null
+      if (restoreFocus && trigger && trigger.isConnected && typeof trigger.focus === 'function') {
+        trigger.focus()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  min-height: 100vh;
+  box-sizing: border-box;
+  color: var(--portal-text, #1f2329);
+  background: var(--portal-background, #f5f7fa);
+  padding: var(--portal-space, 24rpx);
+}
+.portal--dark {
+  --portal-text: #f5f7fa;
+  --portal-background: #1f2329;
+}
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+}
+</style>
+
+<style mode="web">
+.portal {
+  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .portal-card:hover {
+    transform: translateY(-2px);
+  }
+
+  html,
+  body,
+  #app,
+  .portal {
+    scrollbar-width: thin;
+    scrollbar-color: var(--portal-scrollbar-thumb, #8f959e) var(--portal-scrollbar-track, transparent);
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  #app::-webkit-scrollbar,
+  .portal::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb,
+  #app::-webkit-scrollbar-thumb,
+  .portal::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: var(--portal-scrollbar-thumb, #8f959e);
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track,
+  #app::-webkit-scrollbar-track,
+  .portal::-webkit-scrollbar-track {
+    background: var(--portal-scrollbar-track, transparent);
+  }
+}
+</style>

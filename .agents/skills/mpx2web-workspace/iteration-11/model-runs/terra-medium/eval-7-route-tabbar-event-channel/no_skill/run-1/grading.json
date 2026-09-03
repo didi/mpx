@@ -1,0 +1,198 @@
+{
+  "eval_id": 7,
+  "eval_name": "route-tabbar-event-channel",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "grading_fingerprint": "94f8c6a5f31f8aeffe5cdb09ed0cf6cf2fe85aba6b26f5f55d4b24bf73901ecf",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 0,
+    "invoked": false,
+    "skip_reason": "compile_or_semantic_gate_failed"
+  },
+  "expectations": [
+    {
+      "id": "n0",
+      "text": "结算页通过 Mpx 官方 navigateTo 调用的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择；源码可以是 mpx.navigateTo 或会被跨端编译转换的 wx.navigateTo",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "verification_methods": [
+        "compile_gate"
+      ]
+    },
+    {
+      "id": "n1",
+      "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后通过 Mpx 官方 navigateBack 返回；源码可以是 mpx.navigateBack 或会被跨端编译转换的 wx.navigateBack",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "verification_methods": [
+        "compile_gate"
+      ]
+    },
+    {
+      "id": "n2",
+      "text": "订单 tab 只通过 Mpx 官方 switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack；调用可采用项目现有的 mpx.xxx 或会被跨端编译转换的 wx.xxx",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "verification_methods": [
+        "compile_gate"
+      ]
+    },
+    {
+      "id": "n3",
+      "text": "需要 EventChannel 的地址入口使用 button 调用脚本中的 navigateTo，不强制保留 navigator；其他普通声明式导航若使用 navigator，open-type 使用模板值 navigate，而不是 API 名 navigateTo，也不使用不稳定的 switchTab 模板分支",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "verification_methods": [
+        "compile_gate"
+      ]
+    },
+    {
+      "id": "n4",
+      "text": "Web 路由只通过 mpx.config.webConfig.routeConfig 配置 history 与 /shop/ base，output.publicPath 同为 /shop/",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "verification_methods": [
+        "compile_gate"
+      ]
+    },
+    {
+      "id": "n5",
+      "text": "业务代码不引入 this.$router、window.history、location 跳转或 getCurrentPages 回传地址",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "verification_methods": [
+        "compile_gate"
+      ]
+    },
+    {
+      "id": "n6",
+      "text": "地址展示、地址选择、返回、登录失效重启、支付结果替换和订单 tab 链路保持完整",
+      "passed": false,
+      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "verification_methods": [
+        "compile_gate"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 7,
+    "total": 7,
+    "pass_rate": 0.0
+  },
+  "metrics": {
+    "total_tokens": 46736,
+    "input_tokens": 43498,
+    "output_tokens": 3238,
+    "tool_calls": 2,
+    "duration_ms": 77022
+  },
+  "timing": {
+    "total_tokens": 46736,
+    "duration_ms": 77022,
+    "total_duration_seconds": 77.022
+  },
+  "compile": {
+    "status": "failed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 4,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 0,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 4,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx"
+        ],
+        "passed": false,
+        "returncode": 1,
+        "detail": {
+          "success": false,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [
+            {
+              "category": "template",
+              "message": "Module Error (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx:3:43]: <navigator>'s property 'open-type' does not support '[navigateTo]' value in web environment!\nTarget: <navigator open-type=\"navigateTo\">\nMode: wx -> web\n\n  1 |\n  2 |   <view class=\"checkout\">\n> 3 |     <navigator url=\"/pages/address/select\" open-type=\"navigateTo\">选择地址</navigator>\n    |                                           ^^^^^^^^^^^^^^^^^^^^^^^\n  4 |     <view wx:if=\"{{address}}\">{{address.name}} {{address.detail}}</view>\n  5 |     <button bindtap=\"pay\">支付</button>\n  6 |     <button bindtap=\"openOrders\">查看订单</button>",
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
+              "raw": "Module Error (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx:3:43]: <navigator>'s property 'open-type' does not support '[navigateTo]' value in web environment!\nTarget: <navigator open-type=\"navigateTo\">\nMode: wx -> web\n\n  1 |\n  2 |   <view class=\"checkout\">\n> 3 |     <navigator url=\"/pages/address/select\" open-type=\"navigateTo\">选择地址</navigator>\n    |                                           ^^^^^^^^^^^^^^^^^^^^^^^\n  4 |     <view wx:if=\"{{address}}\">{{address.name}} {{address.detail}}</view>\n  5 |     <button bindtap=\"pay\">支付</button>\n  6 |     <button bindtap=\"openOrders\">查看订单</button>"
+            }
+          ],
+          "warnings": [],
+          "summary": {
+            "total": 1,
+            "byCategory": {
+              "template": 1
+            }
+          },
+          "durationMs": 3305
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "先修复编译或条件编译语义错误，再进行功能评分。"
+    ],
+    "overall": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过"
+  }
+}
