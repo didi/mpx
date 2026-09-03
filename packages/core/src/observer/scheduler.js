@@ -1,5 +1,6 @@
 import { warn, isArray, callWithErrorHandling, isDev, isReact } from '@mpxjs/utils'
 import Mpx from '../index'
+import * as perf from '@mpxjs/perf'
 
 let isFlushing = false
 let isFlushPending = false
@@ -98,10 +99,18 @@ export function hasPendingJob (job) {
 function queueFlush () {
   if (!isFlushing && !isFlushPending) {
     isFlushPending = true
+    let flush = flushJobs
+    if (__mpx_perf_framework__) {
+      flush = () => {
+        const perfId = perf.scopeStart('scheduler:flush')
+        flushJobs()
+        perf.scopeEnd(perfId)
+      }
+    }
     if (Mpx.config.forceFlushSync) {
-      flushJobs()
+      flush()
     } else {
-      currentFlushPromise = resolvedPromise.then(flushJobs)
+      currentFlushPromise = resolvedPromise.then(flush)
     }
   }
 }

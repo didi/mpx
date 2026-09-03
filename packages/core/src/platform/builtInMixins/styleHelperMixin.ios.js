@@ -343,7 +343,7 @@ export default function styleHelperMixin () {
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         let idTotal = -1
-        if (__mpx_perf_framework__) idTotal = perf.scopeStart('getStyle:total')
+        if (__mpx_perf_framework__) idTotal = perf.scopeStart('instance:render:getStyle')
 
         // 重置依赖标记
         dependentScreenSize = false
@@ -353,7 +353,7 @@ export default function styleHelperMixin () {
 
         if (staticClass || dynamicClass) {
           let idClass = -1
-          if (__mpx_perf_framework__) idClass = perf.scopeStart('getStyle:class')
+          if (__mpx_perf_framework__) idClass = perf.scopeStart('instance:render:getStyle:class')
           let needAddUnoPreflight = false
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -391,7 +391,7 @@ export default function styleHelperMixin () {
 
         if (staticStyle || dynamicStyle) {
           let idStyle = -1
-          if (__mpx_perf_framework__) idStyle = perf.scopeStart('getStyle:style')
+          if (__mpx_perf_framework__) idStyle = perf.scopeStart('instance:render:getStyle:style')
 
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
