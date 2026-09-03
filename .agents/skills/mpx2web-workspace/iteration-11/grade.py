@@ -2072,11 +2072,10 @@ def apply_deterministic_checks(item, expectations, root):
     return expectations
 
 
-PUBLIC_GROUPS = ("mpx2web", "previous_mpx2web", "no_skill")
+PUBLIC_GROUPS = ("mpx2web", "no_skill")
 GROUP_LABELS = {
-    "mpx2web": "Mpx2Web 1.9",
-    "previous_mpx2web": "Mpx2Web 1.8",
-    "no_skill": "No Skill",
+    "mpx2web": "使用 Skill",
+    "no_skill": "无 Skill",
 }
 
 
@@ -2602,9 +2601,6 @@ def aggregate_benchmark(root, samples):
             },
         }
     deltas = {
-        "mpx2web_vs_previous": round(
-            summaries["mpx2web"]["sample_mean"] - summaries["previous_mpx2web"]["sample_mean"], 4
-        ),
         "mpx2web_vs_no_skill": round(
             summaries["mpx2web"]["sample_mean"] - summaries["no_skill"]["sample_mean"], 4
         ),
@@ -2658,8 +2654,7 @@ def aggregate_benchmark(root, samples):
         "",
         "## 差异",
         "",
-        f"- 1.9 相对 1.8：{deltas['mpx2web_vs_previous']:+.1%}",
-        f"- 1.9 相对 No Skill：{deltas['mpx2web_vs_no_skill']:+.1%}",
+        f"- 使用 Skill 相对无 Skill：{deltas['mpx2web_vs_no_skill']:+.1%}",
         "",
         "## 结论边界",
         "",

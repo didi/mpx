@@ -172,7 +172,7 @@ class GradeContractTest(unittest.TestCase):
 
     def test_public_audit_covers_all_three_samples(self):
         payload = GRADE.audit_workspace(WORKSPACE)
-        self.assertEqual(len(payload["results"]), 117)
+        self.assertEqual(len(payload["results"]), 78)
         self.assertEqual(
             {row["run_number"] for row in payload["results"]},
             {1, 2, 3},

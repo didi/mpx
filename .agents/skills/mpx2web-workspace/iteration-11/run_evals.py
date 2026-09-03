@@ -15,19 +15,12 @@ WORKSPACE = Path(__file__).parent
 PROJECT_ROOT = WORKSPACE.parents[3]
 EVAL_WORKDIR = WORKSPACE.parent.resolve()
 SKILL = PROJECT_ROOT / ".agents/skills/mpx2web/SKILL.md"
-BASELINE_COMMIT = "3793d5be5639dfa0ead4c9498c96c9246670aef2"
-BASELINE_SKILL_TOKEN = "__FROZEN_MPX2WEB_1_8_SKILL__"
-BASELINE_GIT_ROOTS = (
-    ".agents/skills/mpx2web/references",
-    ".agents/skills/mpx2web/scripts",
-    ".agents/skills/mpx2rn",
-)
 COMPILE_SCRIPT = SKILL.parent / "scripts/compile-validate.js"
 CONDITIONAL_VALIDATE_SCRIPT = (
     SKILL.parent / "scripts/validate-conditional-compile.js"
 )
 PROMPT_TEMPLATES = WORKSPACE / "prompt_templates.json"
-PUBLIC_GROUPS = ("mpx2web", "previous_mpx2web", "no_skill")
+PUBLIC_GROUPS = ("mpx2web", "no_skill")
 STALE_REPORTS = ("benchmark.json", "benchmark.md", "review.html")
 
 
@@ -52,46 +45,6 @@ def tree_digest(root):
         digest.update(path.read_bytes())
         digest.update(b"\0")
     return digest.hexdigest()
-
-
-def git_output(*args, text=True):
-    result = subprocess.run(
-        ["git", "-C", str(PROJECT_ROOT), *args],
-        capture_output=True,
-        text=text,
-        check=False,
-    )
-    if result.returncode != 0:
-        stderr = result.stderr if text else result.stderr.decode(errors="replace")
-        raise ValueError(f"git {' '.join(args)} 失败：{stderr.strip()}")
-    return result.stdout
-
-
-def baseline_source_digest(frozen_skill):
-    tree_ids = [
-        git_output("rev-parse", f"{BASELINE_COMMIT}:{path}").strip()
-        for path in BASELINE_GIT_ROOTS
-    ]
-    return sha256_bytes((frozen_skill.strip() + "\n" + "\n".join(tree_ids)).encode())
-
-
-def materialize_baseline(destination, frozen_skill):
-    destination = Path(destination)
-    paths = git_output(
-        "ls-tree", "-r", "--name-only", BASELINE_COMMIT, "--", *BASELINE_GIT_ROOTS
-    ).splitlines()
-    if not paths:
-        raise ValueError("冻结提交中找不到 Mpx2Web 1.8 references/scripts")
-    for repository_path in paths:
-        relative = Path(repository_path).relative_to(".agents/skills")
-        target = destination / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(
-            git_output("show", f"{BASELINE_COMMIT}:{repository_path}", text=False)
-        )
-    skill_path = destination / "mpx2web/SKILL.md"
-    skill_path.write_text(frozen_skill.strip() + "\n")
-    return skill_path
 
 
 def validate_contract(evals_config=None, templates=None):
@@ -159,20 +112,6 @@ def validate_contract(evals_config=None, templates=None):
                 errors.append(f"重复 assertion id: {assertion_id}")
             seen_assertion_ids.add(assertion_id)
 
-    frozen = templates.get("templates", {}).get("previous_mpx2web", {}).get(
-        "frozen_skill_text", ""
-    ).strip()
-    if 'version: "1.8.0"' not in frozen:
-        errors.append("prompt_templates.json 缺少完整的 1.8 Skill 冻结入口")
-    configured_commit = templates.get("templates", {}).get(
-        "previous_mpx2web", {}
-    ).get("frozen_source_commit")
-    if configured_commit != BASELINE_COMMIT:
-        errors.append("1.8 frozen_source_commit 与执行器常量不一致")
-    try:
-        baseline_source_digest(frozen)
-    except ValueError as error:
-        errors.append(str(error))
     if errors:
         raise ValueError("评测契约校验失败：\n- " + "\n- ".join(errors))
     return True
@@ -190,23 +129,14 @@ def load_configs(validate=True):
 
 def group_instruction(group, templates):
     template = templates["templates"][group]
-    instruction = template["instruction"].replace(
+    return template["instruction"].replace(
         "{{MPX2WEB_SKILL_PATH}}", str(SKILL)
     )
-    if group == "previous_mpx2web":
-        return instruction.replace(
-            "{{PREVIOUS_MPX2WEB_SKILL_PATH}}", BASELINE_SKILL_TOKEN
-        )
-    return instruction
 
 
 def group_skill_digest(group):
     if group == "mpx2web":
         return tree_digest(SKILL.parent)
-    if group == "previous_mpx2web":
-        _, templates = load_configs(validate=False)
-        frozen = templates["templates"][group]["frozen_skill_text"]
-        return baseline_source_digest(frozen)
     return sha256_bytes(b"no-skill")
 
 
@@ -379,9 +309,7 @@ def write_metrics(metrics_path, metrics):
     )
 
 
-def staged_prompt(
-    dispatch, workdir, staged_inputs, staged_outputs, baseline_skill=None
-):
+def staged_prompt(dispatch, workdir, staged_inputs, staged_outputs):
     prompt = dispatch["prompt"]
     for source, staged in zip(dispatch["input_paths"], staged_inputs):
         prompt = prompt.replace(source, str(staged))
@@ -390,8 +318,6 @@ def staged_prompt(
     prompt = prompt.replace(
         f"固定工作目录：{EVAL_WORKDIR}", f"固定工作目录：{workdir}"
     )
-    if baseline_skill is not None:
-        prompt = prompt.replace(BASELINE_SKILL_TOKEN, str(baseline_skill))
     return prompt
 
 
@@ -574,13 +500,6 @@ def run_dispatch(dispatch, codex_bin="codex"):
     started = time.monotonic()
     with tempfile.TemporaryDirectory(prefix="mpx2web-eval-") as directory:
         isolated_root = Path(directory).resolve()
-        baseline_skill = None
-        if dispatch["group"] == "previous_mpx2web":
-            _, templates = load_configs(validate=False)
-            baseline_skill = materialize_baseline(
-                isolated_root / "skills",
-                templates["templates"]["previous_mpx2web"]["frozen_skill_text"],
-            )
         staged_inputs = [
             isolated_root / "input" / relative
             for relative in dispatch["input_relative_paths"]
@@ -605,7 +524,6 @@ def run_dispatch(dispatch, codex_bin="codex"):
                 isolated_root,
                 staged_inputs,
                 staged_outputs,
-                baseline_skill=baseline_skill,
             ),
             capture_output=True,
             text=True,
@@ -631,6 +549,10 @@ def run_dispatch(dispatch, codex_bin="codex"):
     )
     run_result = {
         "description": dispatch["description"],
+        "configuration": dispatch["group"],
+        "run_number": dispatch["run_number"],
+        "model": dispatch["model"],
+        "reasoning_effort": dispatch["reasoning_effort"],
         "cwd": "isolated temporary workspace",
         "command": command[:-1] + ["<prompt-via-stdin>"],
         "returncode": result.returncode,

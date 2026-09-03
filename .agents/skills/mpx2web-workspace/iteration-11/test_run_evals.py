@@ -16,15 +16,15 @@ SPEC.loader.exec_module(RUN_EVALS)
 
 
 class DispatchContractTest(unittest.TestCase):
-    def test_full_matrix_has_three_isolated_configurations(self):
+    def test_full_matrix_has_two_isolated_configurations(self):
         dispatches = RUN_EVALS.build_prompts(
             model="gpt-5.6-sol",
             reasoning_effort="high",
         )
-        self.assertEqual(len(dispatches), 39)
+        self.assertEqual(len(dispatches), 26)
         self.assertEqual(
             {dispatch["group"] for dispatch in dispatches},
-            {"mpx2web", "previous_mpx2web", "no_skill"},
+            {"mpx2web", "no_skill"},
         )
         self.assertTrue(all(dispatch["fork_turns"] == "none" for dispatch in dispatches))
 
@@ -37,33 +37,6 @@ class DispatchContractTest(unittest.TestCase):
         )[0]
         self.assertNotIn(str(RUN_EVALS.SKILL), dispatch["prompt"])
         self.assertIn("不要读取或使用任何 Mpx2Web Skill", dispatch["prompt"])
-
-    def test_previous_skill_uses_complete_frozen_1_8_snapshot(self):
-        dispatch = RUN_EVALS.build_prompts(
-            eval_ids=[0],
-            groups=["previous_mpx2web"],
-            model="gpt-5.6-sol",
-            reasoning_effort="high",
-        )[0]
-        self.assertIn(RUN_EVALS.BASELINE_SKILL_TOKEN, dispatch["prompt"])
-        self.assertNotIn(str(RUN_EVALS.SKILL.parent / "references"), dispatch["prompt"])
-        _, templates = RUN_EVALS.load_configs(validate=False)
-        self.assertIn(
-            'version: "1.8.0"',
-            templates["templates"]["previous_mpx2web"]["frozen_skill_text"],
-        )
-        self.assertNotIn("iteration-11-internal", dispatch["prompt"])
-
-    def test_previous_skill_materializes_from_frozen_commit(self):
-        _, templates = RUN_EVALS.load_configs(validate=False)
-        with tempfile.TemporaryDirectory() as directory:
-            skill = RUN_EVALS.materialize_baseline(
-                Path(directory) / "skills",
-                templates["templates"]["previous_mpx2web"]["frozen_skill_text"],
-            )
-            self.assertIn('version: "1.8.0"', skill.read_text())
-            self.assertTrue((skill.parents[1] / "mpx2rn/SKILL.md").is_file())
-            self.assertTrue((skill.parent / "references/web-api-reference.md").is_file())
 
     def test_command_forces_workspace_and_model(self):
         dispatch = RUN_EVALS.build_prompts(
@@ -80,7 +53,7 @@ class DispatchContractTest(unittest.TestCase):
         self.assertIn("--ephemeral", command)
         self.assertIn("--skip-git-repo-check", command)
 
-    def test_frozen_contract_and_fixture_digests_are_current(self):
+    def test_contract_and_fixture_digests_are_current(self):
         self.assertTrue(RUN_EVALS.validate_contract())
 
     def test_each_sample_writes_an_isolated_output_snapshot(self):
