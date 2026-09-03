@@ -12,6 +12,7 @@ import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
 import MpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import { NavigationContainerContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import { wrapAppLifecycleHooks } from '../core/perf'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -34,6 +35,7 @@ export default function createApp (options) {
   const appData = {}
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(options, 'app', false)
+  if (__mpx_perf_framework__) wrapAppLifecycleHooks(rawOptions)
   initAppProvides(rawOptions.provide, rawOptions)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
   // 在页面script执行前填充getApp()

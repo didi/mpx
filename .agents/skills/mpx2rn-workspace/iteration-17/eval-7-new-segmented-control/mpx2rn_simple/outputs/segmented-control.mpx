@@ -1,0 +1,185 @@
+<template>
+  <view class="segmented-control">
+    <view class="segmented-control-header">
+      <text class="segmented-control-title">{{ label }}</text>
+      <view class="segmented-control-current">
+        <text class="segmented-control-current-label">当前选择</text>
+        <text class="segmented-control-current-value">{{ selectedLabel || '未选择' }}</text>
+      </view>
+    </view>
+
+    <view class="segmented-control-options">
+      <view
+        wx:for="{{ options }}"
+        wx:key="value"
+        class="segmented-control-option"
+        wx:class="{{ {
+          'segmented-control-option-selected': currentValue === item.value,
+          'segmented-control-option-disabled': disabled || item.disabled
+        } }}"
+        hover-class="{{ disabled || item.disabled ? 'none' : 'segmented-control-option-hover' }}"
+        hover-start-time="{{ 0 }}"
+        hover-stay-time="{{ 100 }}"
+        bindtap="handleSelect(item)"
+      >
+        <text
+          class="segmented-control-option-text"
+          wx:class="{{ {
+            'segmented-control-option-text-selected': currentValue === item.value,
+            'segmented-control-option-text-disabled': disabled || item.disabled
+          } }}"
+        >{{ item.label }}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { computed, ref, toRefs, watch } from '@mpxjs/core'
+
+const props = defineProps({
+  controlKey: {
+    type: String,
+    value: ''
+  },
+  options: {
+    type: Array,
+    value: []
+  },
+  value: {
+    type: String,
+    value: ''
+  },
+  disabled: {
+    type: Boolean,
+    value: false
+  },
+  label: {
+    type: String,
+    value: '请选择'
+  }
+})
+
+const { controlKey, options, value, disabled, label } = toRefs(props)
+const { triggerEvent } = useContext()
+const currentValue = ref(value.value)
+const selectedLabel = computed(() => {
+  const selectedOption = options.value.find((option) => option.value === currentValue.value)
+  return selectedOption ? selectedOption.label : ''
+})
+
+watch(value, (nextValue) => {
+  currentValue.value = nextValue
+})
+
+function handleSelect (option) {
+  if (disabled.value || option.disabled) return
+
+  currentValue.value = option.value
+  triggerEvent('change', {
+    controlKey: controlKey.value,
+    value: option.value
+  })
+}
+
+defineExpose({
+  options,
+  disabled,
+  label,
+  currentValue,
+  selectedLabel,
+  handleSelect
+})
+</script>
+
+<style>
+.segmented-control {
+  padding: 24rpx;
+  border: 1px solid #e5e7eb;
+  border-radius: 16rpx;
+  background-color: #ffffff;
+}
+
+.segmented-control-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.segmented-control-title {
+  color: #1f2937;
+  font-size: 30rpx;
+  font-weight: bold;
+  line-height: 42rpx;
+}
+
+.segmented-control-current {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.segmented-control-current-label {
+  margin-right: 8rpx;
+  color: #9ca3af;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.segmented-control-current-value {
+  color: #2563eb;
+  font-size: 26rpx;
+  font-weight: bold;
+  line-height: 36rpx;
+}
+
+.segmented-control-options {
+  display: flex;
+  flex-direction: row;
+  padding: 6rpx;
+  border-radius: 12rpx;
+  background-color: #f3f4f6;
+}
+
+.segmented-control-option {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 68rpx;
+  padding: 8rpx 12rpx;
+  border-radius: 8rpx;
+  background-color: #f3f4f6;
+}
+
+.segmented-control-option-selected {
+  background-color: #2563eb;
+}
+
+.segmented-control-option-disabled {
+  opacity: 0.45;
+}
+
+.segmented-control-option-hover {
+  background-color: #bfdbfe;
+  opacity: 0.72;
+}
+
+.segmented-control-option-text {
+  color: #4b5563;
+  font-size: 26rpx;
+  line-height: 36rpx;
+  text-align: center;
+}
+
+.segmented-control-option-text-selected {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.segmented-control-option-text-disabled {
+  color: #6b7280;
+}
+</style>
