@@ -18,6 +18,7 @@ import {
 import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
+import * as perf from '@mpxjs/perf'
 
 function getSystemInfo () {
   const windowDimensions = global.__mpxAppDimensionsInfo.window
@@ -62,9 +63,13 @@ function createEffect (proxy, componentsMap) {
   }
 
   proxy.effect = new ReactiveEffect(() => {
+    let perfId = -1
+    if (__mpx_perf_framework__) perfId = perf.scopeStart('instance:render')
     // reset instance
     proxy.target.__resetInstance()
-    return callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
+    const result = callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
+    if (__mpx_perf_framework__) perf.scopeEnd(perfId)
+    return result
   }, () => queueJob(update), proxy.scope)
   // render effect允许自触发
   proxy.toggleRecurse(true)
@@ -534,6 +539,24 @@ function getLayoutData (headerHeight) {
   }
 }
 
+let hasResolvedSafeAreaTop = false
+
+function getSafeAreaInsetsWithInitialTop (safeAreaInsets) {
+  if (ReactNative.Platform.OS !== 'android' || hasResolvedSafeAreaTop) {
+    return safeAreaInsets
+  }
+  const initialTop = initialWindowMetrics?.insets?.top || 0
+  if (safeAreaInsets?.top === 0 && initialTop) {
+    // Android 初始化时 top 可能连续为 0（如红米 10 的 bottom 已更新但 top 仍为 0），此时持续兜底并保留其他 insets 的最新值。
+    // 返回新对象，避免修改 useSafeAreaInsets/context 返回的引用。
+    return Object.assign({}, safeAreaInsets, { top: initialTop })
+  } else {
+    // 拿到真实 top 或没有可用初始值后，后续完全使用 useSafeAreaInsets 的更新。
+    hasResolvedSafeAreaTop = true
+  }
+  return safeAreaInsets
+}
+
 export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom ({ navigation, route, ...props }) {
     const keyboardAvoidRef = useRef(null)
@@ -582,8 +605,8 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
         )
       )
     }
-    // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
-    navigation.insets = useSafeAreaInsets()
+    // Android 初始化期间持续兜底 safe area top，直到 useSafeAreaInsets 返回真实值。
+    navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
     return withKeyboardAvoidingView(
       createElement(ReactNative.View,
         {

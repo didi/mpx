@@ -43,7 +43,7 @@ Mpx 框架在样式处理方面的工作分为两大类：
 - ✅ CSS 函数处理：`env()`、`calc()`、`var()`
 ## CSS 选择器 {#css-selectors}
 
-RN 环境下仅支持**单类选择器**、**page选择器**、**:host选择器**，不支持类名组合选择器，不过逗号组合的选择器本质上还是单类选择器，是可以支持的。
+RN 环境下仅支持编译器转换后的**单类选择器**。逗号并列的多条单类选择器仍受支持；`page` 和 `:host` 会在进入 RN class map 前由编译器转换为内部单类，因此也可使用。
 
 ```css
 /* ✅ 支持的选择器 */
@@ -70,6 +70,26 @@ view, text {
 
 .classA .classB {
   color: red;
+}
+
+.button:hover {
+  color: blue;
+}
+
+.text::before {
+  content: '';
+}
+```
+
+任意来源最终生成的伪类、伪元素、组合器及其他非支持选择器都会在构建阶段作为 error 上报，且不会生成对应的 class 样式；UnoCSS 等原子 CSS 产物也遵循相同规则。点击态请使用组件的 `hover-class` 属性，并为其声明独立的单类样式：
+
+```html
+<view class="button" hover-class="button-hover">按钮</view>
+```
+
+```css
+.button-hover {
+  color: blue;
 }
 ```
 
@@ -106,37 +126,52 @@ RN 原生较多属性不支持百分比，或对百分比的支持存在 bug（�
 
 ##### font-size
 
-`font-size` 百分比计算依赖开发者传入的 `parent-font-size` 属性：
+`font-size` 百分比会在文本样式透传阶段解析，计算基准按以下优先级获取：当前已解析的 `font-size`、继承文本样式中的 `font-size`，若都不存在则使用 `16` 作为默认字号基准。
 
 ```html
-<text parent-font-size="16" style="font-size: 120%;">文本内容</text>
+<view style="font-size: 16px;">
+  <text style="font-size: 120%;">文本内容</text>
+</view>
 ```
 
 > [!tip] 注意事项
 >
-> 当 `font-size` 设置为百分比时：
-> - 未设置 `parent-font-size` 属性会报错
-> - `parent-font-size` 属性值非数值会报错
-> - 若出现以上两种情况，框架不会计算 `font-size`，直接返回原值
+> 当容器或 `text` 节点已通过文本样式继承拿到明确字号时，本地 `font-size` 百分比会优先基于继承字号计算；没有可继承字号时按默认字号 `16` 计算。
 
 ##### line-height
 
-和 Web/小程序类似，当设置 `line-height: 1.2` 或 `line-height: 120%` 时，实际都按百分比计算。
+和 Web/小程序类似，当设置 `line-height: 120%` 或在 `font` 简写中设置 `font: 16px / 1.5 Arial` 时，实际都按百分比计算。
 
-`line-height` 的百分比计算基准是 `font-size` 的大小，所以设置 `line-height` 为数值或百分比时，要保证同时设置了 `font-size` 大小。
+`line-height` 的百分比计算基准是最终文本节点合并后的 `font-size`；没有当前字号时，会继续使用继承字号或默认字号 `16`。因此同一段继承链内混合不同字号时，相同的相对 `line-height` 会在每个最终 `text` 节点上得到不同的 RN `lineHeight` 数值。
 
 ```css
 .text {
   font-size: 16px;
-  line-height: 1.5; /* 相当于 150% */
+  line-height: 150%;
 }
 ```
 
 > [!tip] 注意事项
 >
-> 设置 `line-height` 时要注意区分有无单位：
-> - `line-height: 12` 会按照 `line-height: 1200%` 来计算处理
-> - `line-height: 12px` 会按照正常单位计算
+> 设置 `line-height` 时要注意区分值类型：
+> - RN 运行时中的数值型 `lineHeight` 会作为绝对行高保留，不会再按字号倍数放大
+> - 如需表达相对行高，优先使用百分比，或在 `font` 简写中使用 `/ 1.5` 这类 unit-less line-height；这类相对值会保留到最终文本节点再按该节点字号计算
+
+##### gap / row-gap / column-gap
+
+RN 原生要求 `gap` / `row-gap` / `column-gap` 最终为数值，Mpx 会在运行时将百分比换算为数值。
+
+```html
+<view parent-width="{{ 300 }}" parent-height="{{ 400 }}" style="gap: 10% 20%;">
+  内容
+</view>
+```
+
+> [!tip] 注意事项
+>
+> - `row-gap` 百分比基于父节点高度计算，需要传入 `parent-height`
+> - `column-gap` 百分比基于父节点宽度计算，需要传入 `parent-width`
+> - `gap` 单值会同时作用于行列间距，并分别按上述基准计算
 
 ##### 根据自身宽高计算百分比 {#calc-percent-by-self}
 
@@ -227,6 +262,10 @@ Mpx 的文本相关能力主要分为以下几类：
 4. **全局字体缩放**：`allowFontScaling` 不参与继承或迁移，默认值由 `mpx.config.rnConfig.allowFontScaling` 控制，组件显式设置的 `allowFontScaling` 优先。
 5. **自动包裹**：`view` 节点直接包裹裸文本时，Mpx 编译时会自动添加 `text` 节点包裹文本。
 
+本地文本样式中的 `font-size` 百分比会在文本透传阶段基于继承字号解析为确定字号；`line-height` 百分比和 `font` 简写中的 unit-less line-height 会保留到每个最终 `text` 节点消费时，再按该节点合并后的 `font-size` 解析。祖先透传下来的文本样式只作为继承值和字号基准，不会在子节点重复执行 CSS 变量、`calc()`、`font` 简写等转换。
+
+> 出于性能考虑，文本样式透传采用按需启用策略。容器会在首次渲染时根据文本样式和 `numberOfLines`、`ellipsizeMode` 等文本属性决定是否订阅透传上下文；如果这些样式或属性后续可能通过动态数据才出现，需要在该容器上显式声明 <span v-pre>`enable-text-pass-through="{{ true }}"`</span>。
+
 ### 示例 {#example}
 
 ```html
@@ -300,12 +339,13 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 
 | 属性类型 | 简写属性 |
 |----------|----------|
-| **文本相关** | `text-shadow`、`text-decoration` |
+| **文本相关** | `text-shadow`、`text-decoration`、`font` |
 | **布局相关** | `flex`、`flex-flow` |
-| **间距相关** | `margin`、`padding` |
-| **背景相关** | `background` |
+| **间距相关** | `margin`、`padding`、`gap` |
+| **定位相关** | `inset` |
+| **背景相关** | `background`（支持 `background-position / background-size`） |
 | **阴影相关** | `box-shadow` |
-| **边框相关** | `border-radius`、`border-width`、`border-color`、`border` |
+| **边框相关** | `border-radius`、`border-width`、`border-color`、`border`、`outline` |
 | **方向边框** | `border-top`、`border-right`、`border-bottom`、`border-left` |
 
 ### 示例 {#example-1}
@@ -316,13 +356,20 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
   /* 边距简写 */
   margin: 10px 20px;        /* 转换为 marginTop, marginRight, marginBottom, marginLeft */
   padding: 15px;            /* 转换为 paddingTop, paddingRight, paddingBottom, paddingLeft */
+  gap: 20px 10px;           /* 转换为 rowGap, columnGap */
+  inset: 0;                 /* 单值透传给 RN */
+  inset: 0 10px;            /* 多值转换为 top, right, bottom, left */
   
   /* 边框简写 */
   border: 1px solid red;    /* 转换为 borderWidth, borderStyle, borderColor */
   border-radius: 5px;       /* 转换为各个角的 borderRadius */
+  outline: 1px solid red;   /* 转换为 outlineWidth, outlineStyle, outlineColor */
   
   /* 弹性布局简写 */
-  flex: 1 0 auto;          /* 转换为 flexGrow, flexShrink, flexBasis */
+  flex: 1 0 auto;           /* 转换为 flexGrow, flexShrink, flexBasis */
+
+  /* 字体简写 */
+  font: italic bold 16px / 1.5 Arial; /* 转换为 fontStyle, fontWeight, fontSize, lineHeight, fontFamily */
 }
 ```
 
@@ -330,8 +377,8 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 
 > [!tip] 编译时 vs 运行时
 >
-> - ✅ **class 类样式**：考虑到运行时转化的性能开销问题，简写属性只会在编译时转换
-> - ❌ **style 属性**：简写属性不会在运行时转换，RN 不支持的简写属性无法使用
+> - ✅ **class 类样式**：编译时会自动展开 RN 不支持的简写属性
+> - ✅ **style 属性**：运行时会自动展开受支持的简写属性
 >
 > **CSS 变量限制**
 > - ❌ 简写属性不支持单个 `var()` 函数，编译时会报错并原样返回
@@ -817,11 +864,33 @@ flex-flow: row nowrap;  /* 方向 + 换行 */
 
 **值类型**：`number`，支持[所有数值单位](#numeric-units)
 
+> [!important] Mpx 增强
+>
+> - `gap` 支持单值和双值，单值同时设置行列间距，双值按 `row-gap column-gap` 展开
+> - 百分比值会在运行时换算为数值，`row-gap` 基于 `parent-height`，`column-gap` 基于 `parent-width`
+
 ```css
 gap: 16px;          /* 行列间距都是 16px */
 gap: 20px 10px;     /* 行间距 20px，列间距 10px */
 row-gap: 20px;      /* 仅行间距 */
 column-gap: 10px;   /* 仅列间距 */
+gap: 10% 20%;       /* 行间距基于父高度，列间距基于父宽度 */
+```
+
+### inset
+
+`top`、`right`、`bottom`、`left` 的定位偏移简写。
+
+**值类型**：`number`，支持[所有数值单位](#numeric-units)
+
+> [!important] Mpx 增强
+>
+> RN 0.74+ 支持 `inset` 单值，Mpx 会保留单值写法；2-4 值写法会展开为 `top`、`right`、`bottom`、`left`。
+
+```css
+inset: 0;                 /* 单值透传给 RN */
+inset: 10px 20px;         /* 展开为 top/right/bottom/left：上下 10px，左右 20px */
+inset: 1px 2px 3px 4px;   /* 展开为 top/right/bottom/left：上 | 右 | 下 | 左 */
 ```
 
 ### width / height
@@ -919,16 +988,18 @@ padding-left: 20px;   /* 左内边距 */
 
 边框的简写属性。
 
-**值类型**：`<border-width>` `<border-style>` `<border-color>`
+**值类型**：`<border-width>` || `<border-style>` || `<border-color>`
 
 > [!important] 💡 Mpx 增强
 >
-> 值按固定顺序分别赋值给 `border-width` `border-style` `border-color`，若值个数不够则后置位属性不设置；和所有简写属性一致，仅支持定义在 class 类上
+> 按值类型识别并展开为 `border-width`、`border-style`、`border-color`，合法值不强制书写顺序；缺省 `border-style` 时按 CSS 规范补为 `none`，最终在运行时统一清除边框；`border-width` 仅支持数值单位和 `hairlineWidth`，不支持 `thin` / `medium` / `thick`
 
 ```css
-border: 1px solid red;    /* 宽度 样式 颜色 */
-border: 2px dotted;       /* 宽度 样式（颜色不设置） */
-border: 1px;              /* 宽度（样式和颜色不设置） */
+border: 1px solid red;
+border: red solid 1px;
+border: solid #e5e5e5;
+border: none;             /* 最终清除边框 */
+border: 1px none red;     /* border-style 为 none，最终清除边框 */
 ```
 
 ### border-width
@@ -967,15 +1038,16 @@ border-color: red blue green;   /* 上 | 左右 | 下 */
 
 设置边框样式。
 
-**值类型**：`solid` | `dotted` | `dashed`
+**值类型**：`solid` | `dotted` | `dashed` | `none`
 
 > [!tip] 注意
-> RN 不支持单独设置各边的样式，只能整体设置，所以 RN 上 border-style 不支持简写形式
+> RN 不支持单独设置各边的样式，只能整体设置，所以 RN 上 border-style 不支持简写形式；`border-style: none` 会在运行时转换为 `border-width: 0`
 
 ```css
 border-style: solid;  /* 实线 */
 border-style: dotted; /* 点线 */
 border-style: dashed; /* 虚线 */
+border-style: none;   /* 清除边框 */
 ```
 
 ### border-radius
@@ -1010,15 +1082,44 @@ border-bottom-right-radius: 8px; /* 右下角 */
 
 单边边框的简写属性。
 
-**值类型**：`<border-width>` `<border-style>` `<border-color>`
+**值类型**：`<border-width>` || `<border-style>` || `<border-color>`
 
 > [!important] 💡 Mpx 增强
 >
-> 值按固定顺序分别赋值，若值个数不够则后置位属性不设置；仅支持定义在 class 类上
+> 按值类型识别并展开，合法值不强制书写顺序：
+> - `<border-width>` → `border-*-width`（对应方向）
+> - `<border-color>` → `border-*-color`（对应方向）
+> - `<border-style>` → `border-style`（RN 不支持单边 `border-*-style`，统一作用于四边）
 
 ```css
 border-top: 1px solid red;    /* 上边框：宽度 样式 颜色 */
+border-top: red solid 1px;    /* 顺序不敏感 */
 border-left: 2px dotted blue; /* 左边框：宽度 样式 颜色 */
+border-left: none;            /* border-style 为 none，最终清除边框 */
+```
+
+### outline / outline-style
+
+外轮廓相关属性。
+
+**值类型**：
+
+- `outline`：`<outline-width>` || `<outline-style>` || `<outline-color>`
+- `outline-style`：`solid` | `dotted` | `dashed` | `none`
+
+> [!important] Mpx 增强
+>
+> - `outline` 按值类型识别并展开为 `outline-width`、`outline-style`、`outline-color`，合法值不强制书写顺序
+> - `outline` 与 `border` 使用一致的缺省值：缺省 `outline-width` 时补 `3px`，缺省 `outline-style` 时补 `none`
+> - `outline: none`、`outline: 0`、`outline: 1px none red` 和 `outline-style: none` 会在运行时转换为 `outline-width: 0`
+> - `outline` 系属性在 RN 0.76+ 生效；更低版本会被 RN 忽略
+
+```css
+outline: 1px solid red;
+outline: red solid 1px;
+outline: solid;          /* 补 outline-width: 3px */
+outline: none;           /* 最终清除 outline */
+outline-style: none;     /* 最终清除 outline */
 ```
 
 ### background
@@ -1032,6 +1133,7 @@ border-left: 2px dotted blue; /* 左边框：宽度 样式 颜色 */
 
 ```css
 background: url("image.jpg") no-repeat center;
+background: url("image.jpg") no-repeat center/cover;
 background: linear-gradient(45deg, red, blue);
 background: #f0f0f0;
 ```
@@ -1173,11 +1275,29 @@ color: rgba(255, 0, 0, 0.8);
 > [!tip] 注意
 >
 > - 仅支持设置单一字体
-> - 不支持字体文件引入
+> - RN 输出不支持通过 `@font-face` 引入字体文件；编译时会发出 warning 并移除该声明
+> - 使用自定义字体时，需先在 RN 宿主环境中安装，再通过 `font-family` 引用
 > - 遵循[文本样式继承规则](#text-style-inheritance)
 
 ```css
 font-family: PingFangSC-Regular;
+```
+
+### font
+
+设置字体简写，会展开为 `font-style`、`font-variant`、`font-weight`、`font-size`、`line-height`、`font-family` 等长属性。
+
+**值类型**：`[font-style] [small-caps] [font-weight] font-size [ / line-height ] font-family`
+
+> [!tip] 注意
+>
+> - `font-size` 与 `font-family` 必填
+> - `font-family` 多字体 fallback 会自动取首值并去除引号
+> - `/` 两侧可以有空格
+
+```css
+font: 16px PingFangSC-Regular;
+font: italic bold 16px / 1.5 Arial;
 ```
 
 ### font-size
@@ -1194,7 +1314,7 @@ font-family: PingFangSC-Regular;
 ```css
 font-size: 16px;
 font-size: 1.2rem;
-font-size: 120%; /* 需要 parent-font-size 属性 */
+font-size: 120%; /* 优先基于当前或继承字号计算 */
 ```
 
 ### font-weight
@@ -1231,12 +1351,13 @@ font-style: italic;
 
 设置行高。
 
-**值类型**：`number`，支持[所有数值单位](#numeric-units)
+**值类型**：`number`，支持[所有数值单位](#numeric-units)和百分比
 
 > [!tip] 注意
 >
 > - 遵循[文本样式继承规则](#inheritance-rule)
 > - 百分比计算规则详见[百分比计算规则](#percentage-calculation-rules)
+> - 百分比和 unit-less 倍率会按最终文本节点合并后的 `font-size` 计算；数值型 `lineHeight` 是绝对行高
 
 ```css
 line-height: 20px;   /* 固定行高 */
@@ -1279,20 +1400,23 @@ vertical-align: top;    /* 顶部对齐 */
 
 文本装饰线的简写属性。
 
-**值类型**：`<text-decoration-line>` `<text-decoration-style>` `<text-decoration-color>`
+**值类型**：`<text-decoration-line>` || `<text-decoration-style>` || `<text-decoration-color>`
 
 > [!tip] 注意
 >
-> - 按 `<text-decoration-line>`、`<text-decoration-style>`、`<text-decoration-color>` 顺序赋值
+> - 按值类型识别并展开为 `text-decoration-line`、`text-decoration-style`、`text-decoration-color`，合法值不强制书写顺序
+> - `text-decoration-line` 唯一支持的多值组合是 `underline line-through`；`none` 只作为单值生效
 > - 赋值过程中，如遇到不支持的属性会忽略该属性；若属性值校验不合法，则忽略该值，继续校验下一个值是否合法，合法则赋值，不合法则继续校验下一个值
-> - RN 原生不支持 `text-decoration` 简写，可使用是由框架编译时处理，所以仅支持定义在 class 类上
-> - android 下仅转换`<text-decoration-line>`，`<text-decoration-style>`/`<text-decoration-color>` 因不支持不会添加
+> - RN 原生不支持 `text-decoration` 简写，可使用是由框架编译和运行时处理
+> - Android / Harmony 下 `<text-decoration-style>` 仅支持 `solid`；`<text-decoration-color>` 因不支持不会添加
 > - 遵循[文本样式继承规则](#inheritance-rule)
 
 ```css
 text-decoration: underline;           /* 下划线 */
 text-decoration: line-through;        /* 删除线 */
-text-decoration: underline dotted red; /* 样式 + 颜色（iOS） */
+text-decoration: underline dotted red; /* 样式 + 颜色（iOS；Android / Harmony 仅支持 solid 样式） */
+text-decoration: red underline solid; /* 顺序不敏感（iOS） */
+text-decoration: underline line-through red; /* 下划线 + 删除线 */
 ```
 
 ### text-transform
@@ -1334,14 +1458,17 @@ letter-spacing: 2rpx; /* 字符间距 2rpx */
 
 设置文本阴影偏移量、模糊半径和颜色。
 
-**值类型**：`<offset-x> <offset-y> <blur-radius> <color>`
+**值类型**：`<color>? && <offset-x> <offset-y> <blur-radius>?`
 
 > [!important] 💡 Mpx 增强
 >
 > RN 不支持 `text-shadow` 属性，Mpx 按 RN 支持的 `textShadowOffset`、`textShadowRadius`、`textShadowColor` 属性转换
 >
 > **简写规则**：
-> - 按 `offset-x` `offset-y` `blur-radius` `color` 顺序赋值
+> - `<offset-x>` 与 `<offset-y>` 必填；`<blur-radius>` 与 `<color>` 可选
+> - 颜色可以写在长度组前后任意位置
+> - 长度组内部保持顺序：第一个长度为 `offset-x`，第二个长度为 `offset-y`，第三个长度为 `blur-radius`
+> - 编译时和运行时如缺省 `<offset-y>` 都会发出 warn 并按 `0` 兜底
 > - 不支持的属性会被忽略，值校验不合法时跳过该值继续校验下一个
 > - 遵循[文本样式继承规则](#inheritance-rule)
 
@@ -1355,6 +1482,9 @@ text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 
 /* offset-x | offset-y | color（省略模糊半径） */
 text-shadow: 2px 2px #000;
+
+/* color | offset-x | offset-y | blur-radius */
+text-shadow: #000 2px 2px 4px;
 ```
 
 ### font-variant
@@ -1370,6 +1500,7 @@ text-shadow: 2px 2px #000;
 ```css
 font-variant: small-caps;     /* 小型大写字母 */
 font-variant: tabular-nums;   /* 等宽数字 */
+font-variant: small-caps tabular-nums; /* 支持空格分隔的多值 */
 ```
 
 ### direction

@@ -43,6 +43,14 @@ interface EventConfigDetail {
   hasCatch: boolean
 }
 
+interface EventMeta {
+  bitFlag: string
+  events: string[]
+  eventName: string
+  eventType: EventType
+  hasCatch: boolean
+}
+
 type EventConfig = {
   innerRef: InnerRef
   propsRef: PropsRef
@@ -50,6 +58,15 @@ type EventConfig = {
   layoutRef: LayoutRef
   navigation: Navigation
   [index: string]: EventConfigDetail
+}
+
+type EventConfigRef = MutableRefObject<EventConfig>
+
+type TouchHandler = (e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) => void
+
+interface TouchHandlerConfig {
+  type: EventType
+  handler: TouchHandler
 }
 
 interface RawConfig {
@@ -101,7 +118,10 @@ export {
   Navigation,
   ExtendedNativeTouchEvent,
   EventConfig,
+  EventConfigRef,
+  EventMeta,
   RawConfig,
   EventType,
-  GlobalEventState
+  GlobalEventState,
+  TouchHandlerConfig
 }

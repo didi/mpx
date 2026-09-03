@@ -11,7 +11,6 @@ module.exports = function (styles, {
   moduleId
 }, callback) {
   const { getRequestString } = createHelpers(loaderContext)
-  let content = ''
   const styleResults = []
   let output = '/* styles */\n'
   if (styles.length) {
@@ -25,9 +24,10 @@ module.exports = function (styles, {
         new Error('[Mpx style error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
       )
     }
-    const { mode, srcMode } = loaderContext.getMpx()
+    const { mode, srcMode, hasUnoCSS } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
+      const styleSrcMode = style.srcMode || srcMode
       const extraOptions = {
         moduleId,
         scoped,
@@ -41,16 +41,16 @@ module.exports = function (styles, {
             styleResults.push({
               content: css,
               map: item[3],
-              filename: loaderContext.resourcePath
+              filename: loaderContext.resourcePath,
+              srcMode: styleSrcMode
             })
-            content += css.trim() + '\n'
           })
         } else {
           styleResults.push({
             content: result,
-            filename: loaderContext.resourcePath
+            filename: loaderContext.resourcePath,
+            srcMode: styleSrcMode
           })
-          content += result.trim() + '\n'
         }
         callback()
       }).catch((e) => {
@@ -66,7 +66,6 @@ module.exports = function (styles, {
           global.__classCaches.push(__classCache)`
         const formatValueName = '_f'
         const classMap = getClassMap({
-          content,
           styles: styleResults,
           filename: loaderContext.resourcePath,
           inputFileSystem: loaderContext._compiler && loaderContext._compiler.inputFileSystem,
@@ -84,13 +83,44 @@ module.exports = function (styles, {
         }, '')
         if (ctorType === 'app') {
           output += `
-          var __appClassMap
-          global.__getAppClassStyle = function(className) {
-            if(!__appClassMap) {
-              __appClassMap = {${classMapCode}};
-            }
-            return global.__GCC(className, __appClassMap, __classCache);
-          };\n`
+          global.__classCaches = global.__classCaches || [];
+          var __classCache = new Map();
+          global.__classCaches.push(__classCache);\n`
+
+          if (hasUnoCSS) {
+            output += `
+            var __unoClassMap;
+            global.__getUnoStyle = function(className) {
+              if (!__unoClassMap) {
+                __unoClassMap = {__unoCssMapPlaceholder__}
+              }
+              return global.__GCC(className, __unoClassMap, __classCache);
+            };
+            var __unoVarClassMap;
+            global.__getUnoVarStyle = function(className) {
+              if (!__unoVarClassMap) {
+                __unoVarClassMap = {__unoVarUtilitiesCssMap__}
+              }
+              return global.__GCC(className, __unoVarClassMap, __classCache);
+            };\n`
+            output += `
+            var __appClassMap
+            global.__getAppClassStyle = function(className) {
+              if(!__appClassMap) {
+                __appClassMap = {__unoCssMapPreflights__, ${classMapCode}};
+              }
+              return global.__GCC(className, __appClassMap, __classCache);
+            };\n`
+          } else {
+            output += `
+            var __appClassMap
+            global.__getAppClassStyle = function(className) {
+              if(!__appClassMap) {
+                __appClassMap = {${classMapCode}};
+              }
+              return global.__GCC(className, __appClassMap, __classCache);
+            };\n`
+          }
         } else {
           output += `
           var __classMap

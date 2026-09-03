@@ -1,5 +1,6 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native'
 import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import { type } from '@mpxjs/utils'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 
 let isLoadingShow
@@ -51,8 +52,16 @@ const styles = StyleSheet.create({
 const toastMap = new Map()
 const timerMap = new Map()
 function showToast (options = {}) {
-  const id = getCurrentPageId()
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
+  if (type(title) !== 'String') {
+    const result = {
+      errMsg: `showToast:fail parameter error: parameter.title should be String instead of ${type(title)};`,
+      errno: 1001
+    }
+    failHandle(result, fail, complete)
+    return
+  }
+  const id = getCurrentPageId()
   if (id === null) {
     const result = {
       errMsg: 'showToast:fail cannot be invoked outside the mpx life cycle in React Native environments'
@@ -171,10 +180,10 @@ function showLoading (options = {}) {
       successHandle(result, success, complete)
     },
     fail (res) {
-      const result = {
+      const result = Object.assign({}, res, {
         errMsg: res.errMsg.replace('showToast', 'showLoading')
-      }
-      failHandle(result, success, complete)
+      })
+      failHandle(result, fail, complete)
     }
   })
 }

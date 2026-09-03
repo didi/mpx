@@ -30,6 +30,7 @@ const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 const DynamicRuntimePlugin = require('./resolver/DynamicRuntimePlugin')
 const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
+const ExtendComponentsPlugin = require('./resolver/ExtendComponentsPlugin')
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
@@ -53,6 +54,7 @@ const { transSubpackage } = require('./utils/trans-async-sub-rules')
 const { matchCondition } = require('./utils/match-condition')
 const { getPartialCompileRules } = require('./utils/partial-compile-rules')
 const processDefs = require('./utils/process-defs')
+const { PERF_GROUPS, normalizePerfOptions } = require('./utils/normalize-perf-options')
 const config = require('./config')
 const hash = require('hash-sum')
 const nativeLoaderPath = normalize.lib('native-loader')
@@ -164,15 +166,28 @@ class MpxWebpackPlugin {
     options.transMpxRules = options.transMpxRules || {
       include: () => true
     }
+    // 归一化 perf 配置：{ enable, probes: [...] } → { enable, framework, user, ... }
+    // 分组未知 / typo 在此直接抛错，避免静默失效。
+    const perf = normalizePerfOptions(options.perf)
+    options.perf = perf
     // 通过默认defs配置实现mode及srcMode的注入，简化内部处理逻辑
     options.defs = Object.assign({}, options.defs, {
       __mpx_mode__: options.mode,
       __mpx_src_mode__: options.srcMode,
       __mpx_env__: options.env,
-      __mpx_dynamic_runtime__: options.dynamicRuntime
+      __mpx_dynamic_runtime__: options.dynamicRuntime,
+      // 总开关：@mpxjs/perf 包内部使用，决定 impl 是否进入 bundle。
+      __mpx_perf__: perf.enable
     })
-    // 批量指定源码mode
-    options.modeRules = options.modeRules || {}
+    // 分组开关：调用方点缀代码使用。开关粒度独立、产物 DCE 独立。
+    for (let i = 0; i < PERF_GROUPS.length; i++) {
+      const k = PERF_GROUPS[i]
+      options.defs[`__mpx_perf_${k}__`] = perf[k]
+    }
+    if (options.srcModeRules && options.modeRules) {
+      errors.push('MpxWebpackPlugin cannot use srcModeRules and modeRules at the same time!')
+    }
+    options.srcModeRules = options.srcModeRules || options.modeRules || {}
     options.generateBuildMap = options.generateBuildMap || false
     options.attributes = options.attributes || []
     options.externals = (options.externals || []).map((external) => {
@@ -311,19 +326,15 @@ class MpxWebpackPlugin {
     })
   }
 
-  runModeRules (data) {
+  runSrcModeRules (data) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
-    if (queryObj.mode) {
-      return
-    }
+    if (queryObj.srcMode) return
     const mode = this.options.mode
-    const modeRule = this.options.modeRules[mode]
-    if (!modeRule) {
-      return
-    }
-    if (matchCondition(resourcePath, modeRule)) {
-      data.resource = addQuery(data.resource, { mode })
-      data.request = addQuery(data.request, { mode })
+    const rule = this.options.srcModeRules[mode]
+    if (rule && matchCondition(resourcePath, rule)) {
+      const query = { srcMode: mode }
+      data.resource = addQuery(data.resource, query)
+      data.request = addQuery(data.request, query)
     }
   }
 
@@ -392,10 +403,6 @@ class MpxWebpackPlugin {
       fileConditionRules: this.options.fileConditionRules
     }
     const mode = this.options.mode
-    if (mode === 'web' || mode === 'ios' || mode === 'android' || mode === 'harmony') {
-      // 'web' | 'ios' | 'android' | 'harmony' 下，使用implicitMode强制进行平台转换
-      addModeOptions.implicitMode = true
-    }
     if (mode === 'android' || mode === 'harmony') {
       // 'android' | 'harmony' 下，使用 mode = 'ios' 进行兼容兜底
       addModeOptions.defaultMode = 'ios'
@@ -404,11 +411,13 @@ class MpxWebpackPlugin {
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, this.options.normalNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
+    const extendComponentsPlugin = new ExtendComponentsPlugin('before-file', this.options.mode, 'file')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
+      compiler.options.resolve.plugins.push(extendComponentsPlugin)
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
-      compiler.options.resolve.plugins = [addModePlugin]
+      compiler.options.resolve.plugins = [extendComponentsPlugin, addModePlugin]
     }
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)
@@ -1491,18 +1500,23 @@ class MpxWebpackPlugin {
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                // webpack 5.109.0 起不再在 AST 节点上提供 loc，需通过 parser.getLocation() 获取位置信息，
+                // 旧版本 webpack 不存在该方法，因此回退使用 expr.loc。
+                // 变更日志：https://github.com/webpack/webpack/releases/tag/v5.109.0
+                // 原始变更：https://github.com/webpack/webpack/pull/21451
+                const loc = typeof parser.getLocation === 'function' ? parser.getLocation(expr) : expr.loc
                 const depBlock = new AsyncDependenciesBlock(
                   {
                     name: tarRoot + '/index'
                   },
-                  expr.loc,
+                  loc,
                   request
                 )
                 const dep = new ImportDependency(request, expr.range, undefined, {
                   isRequireAsync: true,
                   retryRequireAsync: this.options.retryRequireAsync
                 })
-                dep.loc = expr.loc
+                dep.loc = loc
                 depBlock.addDependency(dep)
                 parser.state.current.addBlock(depBlock)
               } else {
@@ -1652,7 +1666,7 @@ class MpxWebpackPlugin {
             const module = parser.state.module
             const current = parser.state.current
             const { queryObj, resourcePath } = parseRequest(module.resource)
-            const localSrcMode = queryObj.mode
+            const localSrcMode = queryObj.srcMode
             const globalSrcMode = mpx.srcMode
             const srcMode = localSrcMode || globalSrcMode
             const mode = mpx.mode
@@ -2031,8 +2045,7 @@ try {
         }
 
         createData.request = stringifyLoadersAndResource(loaders, createData.resource)
-        // 根据用户传入的modeRules对特定资源添加mode query
-        this.runModeRules(createData)
+        this.runSrcModeRules(createData)
       })
     })
 

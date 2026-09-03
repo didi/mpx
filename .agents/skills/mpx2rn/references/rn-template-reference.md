@@ -12,19 +12,23 @@
 - [Slot](#slot)
   - [默认插槽](#默认插槽)
   - [具名插槽与 `multipleSlots`](#具名插槽与-multipleslots)
+- [动态组件](#动态组件)
+  - [基础用法](#基础用法)
+  - [注意事项](#注意事项-2)
 - [WXML 模板](#wxml-模板)
   - [模板内联定义](#模板内联定义)
   - [import 外联引入](#import-外联引入)
-  - [注意事项](#注意事项-2)
+  - [注意事项](#注意事项-3)
 - [i18n 国际化](#i18n-国际化)
   - [工程配置示例](#工程配置示例)
   - [模板中使用翻译函数](#模板中使用翻译函数)
   - [JS 中使用翻译函数](#js-中使用翻译函数)
-  - [注意事项](#注意事项-3)
+  - [注意事项](#注意事项-4)
 - [无障碍访问](#无障碍访问)
   - [模板属性](#模板属性)
   - [示例](#示例)
-  - [注意事项](#注意事项-4)
+  - [注意事项](#注意事项-5)
+- [模板相关编译配置](#模板相关编译配置)
 - [基础组件](#基础组件)
   - [通用属性](#通用属性)
   - [view](#view)
@@ -58,6 +62,7 @@
   - [video](#video)
   - [web-view](#web-view)
   - [root-portal](#root-portal)
+  - [section-list](#section-list)
   - [sticky-section](#sticky-section)
   - [sticky-header](#sticky-header)
   - [cover-view](#cover-view)
@@ -132,6 +137,7 @@ Mpx 跨端输出 RN 时，支持以下模板指令。
 | wx:for | ✅ | 列表渲染 | `<view wx:for="{{list}}">...</view>` |
 | wx:for-item | ✅ | 指定循环项变量名 | `<view wx:for="{{list}}" wx:for-item="item">...</view>` |
 | wx:for-index | ✅ | 指定循环索引变量名 | `<view wx:for="{{list}}" wx:for-index="idx">...</view>` |
+| wx:key | ✅ | 指定列表项的唯一标识 | `<view wx:for="{{list}}" wx:key="id">...</view>` |
 | wx:class | ✅ | 动态类名绑定 | `<view wx:class="{{ {active: isActive} }}">...</view>` |
 | wx:style | ✅ | 动态样式绑定 | `<view wx:style="{{ {color: colorVar} }}">...</view>` |
 | wx:model | ✅ | 双向数据绑定 | `<input wx:model="{{value}}" />` |
@@ -140,6 +146,12 @@ Mpx 跨端输出 RN 时，支持以下模板指令。
 | wx:model-value-path | ✅ | 定义了双向绑定时从 `e.detail` 中获取更新值的访问路径，默认值为 `value`，即通过 `e.detail.value` 获取更新值，如通过 `e.detail` 直接作为更新值，可以设置 `wx:model-value-path="[]"` | `<custom-input wx:model="{{value}}" wx:model-value-path="[]" />` |
 | wx:model-filter | ✅ | 双向绑定过滤器，可绑定内建（如 trim）或组件实例方法，在双向绑定时对更新值进行过滤和修饰 | `<input wx:model="{{value}}" wx:model-filter="trim" />` |
 | wx:ref | ✅ | 获取基础组件节点或自定义组件实例 | `<view wx:ref="myView">...</view>` |
+
+**注意事项**
+
+- `wx:key` 需与 `wx:for` 配合使用，属性值不能使用 Mustache 数据绑定。传入普通字符串（如 `wx:key="id"`）时，会读取列表项的同名属性；传入保留关键字 `*this` 且列表项为基本类型时，会使用列表项本身；传入 `index` 或 `_` 时，会使用列表索引。如果解析出的 key 是对象类型，RN 平台会退化为使用列表索引。
+- 通过 `wx:key` 规则获取到的 key 值必须为数值或字符串字面量，同一父节点下的列表项 key 值必须唯一，不合法的 key 值会直接导致运行时报错，随渲染变化的不稳定 key 值可能导致组件状态复用错误或渲染异常。
+- RN 平台下，同标签的 `wx:if` / `wx:elif` / `wx:else` 分支可能被 React 复用；当分支使用的按需样式能力不一致时，需通过预声明 `enable-*` 或添加独立 `key` 保证生命周期稳定。详见[样式开发最佳实践 · 按需样式能力预声明](./rn-style-practice.md#按需样式能力预声明)。
 
 ---
 
@@ -247,10 +259,10 @@ createComponent({
 
 ### 注意事项
 
-1. 除基础通用事件外，其余所有事件均不支持事件冒泡和捕获。
-2. 当使用了事件委托想获取 `e.target.dataset` 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 `e.currentTarget` 来获取 `dataset` 等数据。
-3. 由于 `tap` 和 `longpress` 事件是由 `touchstart` / `touchend` 等底层触摸事件模拟实现，所以在 RN 环境，如果子组件绑定了 `catchtouchend`，那么父组件的 `tap` 事件将不会响应。
-4. 如果元素上设置了 `opacity: 0` 的样式，会导致 ios 事件无法响应。
+1. 仅 `tap`、`longpress`、`touchstart`、`touchmove`、`touchend`、`touchcancel` 事件支持阻止冒泡和捕获，其他事件使用 `catch`、`capture-bind` 或 `capture-catch` 时，编译器会给出警告并降级为普通 `bind` 绑定。
+2. `tap` 和 `longpress` 由 `touchstart` / `touchend` 等底层触摸事件模拟实现，因此子组件绑定 `catchtouchend` 后，父组件的 `tap` 事件不会响应。
+3. 如果元素上设置了 `opacity: 0` 的样式，会导致 ios 事件无法响应。
+4. 传递自定义参数给事件处理器时，优先使用**事件内联传参**语法（如 `bindtap="handleTap('param')"`），而不是通过 `data-` dataset 属性传参。
 
 ---
 
@@ -309,6 +321,66 @@ createComponent({
   <view slot="after">后置区域</view>
 </my-panel>
 ```
+
+---
+
+## 动态组件
+
+跨端输出 RN 时支持通过 `<component is="...">` 在同一占位上按数据切换渲染不同的自定义组件，与微信小程序写法一致。`is` 接受 Mustache 表达式，值为目标组件在 `usingComponents` 中注册的标签名（全局注册同样生效）；切换 `is` 的值即切换被渲染的组件。
+
+`<component>` 中可以使用 **`range`** 属性用于控制候选组件范围：值为逗号分隔的组件名列表，用于显式声明 `is` 可能命中的组件子集。**未声明 `range` 时，框架会把当前文件 `usingComponents` 中所有组件都视为候选**，在小程序端会把这些组件全部纳入产物并参与运行时分发，造成不必要的体积与性能开销；声明 `range` 后只有列表内的组件会被纳入候选集合。
+
+### 基础用法
+
+在 `json` 区块中注册候选组件，在模板中通过 `is` 绑定当前要渲染的组件名，并通过 `range` 把候选范围收敛为实际会切换的组件。`<component>` 节点上书写的属性会作为 props 透传给目标组件，子节点会作为默认插槽内容。
+
+```html
+<template>
+  <view>
+    <view class="tabs">
+      <text bindtap="switchTab('com-a')">A</text>
+      <text bindtap="switchTab('com-b')">B</text>
+    </view>
+    <!-- range 显式限定候选组件，避免把 usingComponents 里其它组件也算进候选集 -->
+    <!-- is 绑定组件名，title 会作为 props 透传给目标组件 -->
+    <component is="{{ current }}" range="com-a,com-b" title="{{ title }}">
+      <text>默认插槽内容</text>
+    </component>
+  </view>
+</template>
+
+<script>
+import { createComponent, ref } from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    const current = ref('com-a')
+    const title = ref('hello')
+    function switchTab (name) {
+      current.value = name
+    }
+    return { current, title, switchTab }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "com-a": "../components/com-a",
+    "com-b": "../components/com-b",
+    "other-com": "../components/other-com"
+  }
+}
+</script>
+```
+
+### 注意事项
+
+1. `is` 的取值必须是已经在当前组件 `usingComponents` 中注册的标签名，或通过全局注册可见的组件名；未注册的名称无法渲染。
+2. `is` 仅用于切换**自定义组件**，不要传入 `view`、`text` 等基础组件名。
+3. 切换 `is` 时目标组件会被销毁并重新创建，组件内部的本地状态不会保留，对状态有连续性要求时应将状态提升到外层。
+4. **建议始终显式声明 `range`**，仅列出实际会被 `is` 切换到的组件名（逗号分隔）。未声明时默认以整个 `usingComponents` 作为候选集合，会拖累**小程序端产物体积与运行时性能**；列表中的组件名需与 `usingComponents` 中注册的一致。
 
 ---
 
@@ -559,6 +631,41 @@ createComponent({
 
 ---
 
+## 模板相关编译配置
+
+下列配置是 `@mpxjs/webpack-plugin` 中会影响 RN 模板编译结果的配置。按 `Rules` 匹配的配置均以组件文件路径为匹配对象；业务模板中不需要也不应额外书写这些配置名对应的属性。
+
+| 配置 | 作用 | 适用场景 |
+| --- | --- | --- |
+| `autoVirtualHostRules` | 命中的组件会按 virtual host 语义编译，跨平台输出时不再为该组件额外生成实体 host 包裹节点，引用方传入的外层 `class` / `style` / `wx:show` 等会作用到组件根结构。 | 组件希望自身根节点直接承接布局、样式或显隐语义，避免跨端产物多一层默认 host 节点影响布局。 |
+| `customTextRules` | 命中的组件会按文本类组件处理，跨平台输出时可将该自定义组件识别为文本节点；当组件仍需要实体 host 节点时，会使用文本容器而不是视图容器。 | 自定义组件本质是 `text` 的封装，或需要作为文本节点参与嵌套、文本样式透传、文本上下文判断。 |
+| `externalClasses` | 声明模板中需要识别的外部样式类名。跨平台输出时会把这些外部类转换为目标平台可承接的样式传递形式，默认值为 `['custom-class', 'i-class']`。 | 跨端开发时使用微信 `externalClasses` 语法传递外部样式类，让组件内部能够访问到外部定义的样式。 |
+| `rnConfig.customBuiltInComponents` | RN 输出时覆盖或扩展模板编译期识别的基础组件：同名 key 覆盖内置基础组件，新 key 作为扩展基础组件使用；详见下方[基础组件](#基础组件)中的自定义覆盖与扩展说明。 | 内置基础组件不满足业务需求，或需要在 RN 模板中直接使用一组宿主特有基础组件。 |
+
+`defs` / `env` / `mode` 也会参与模板表达式和条件编译判断，其中 `__mpx_mode__`、`__mpx_env__` 与自定义 `defs` 的模板访问方式见[数据绑定](#数据绑定)。
+
+需要跨平台获得稳定一致的 virtual host 或自定义文本组件行为时，应通过 `autoVirtualHostRules` 与 `customTextRules` 配置控制，不要依赖仅部分平台支持的组件 `options` 选项。这样可以由编译链路统一抹平跨端差异，并按平台或目录精确控制生效范围。
+
+```js
+// vue.config.js
+module.exports = {
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        autoVirtualHostRules: {
+          include: [/src\/components\/layout/]
+        },
+        customTextRules: {
+          include: [/src\/components\/text/]
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
 ## 基础组件
 
 Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文档。
@@ -576,13 +683,15 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | style | string |  | 组件内联样式 |
 | enable-offset | boolean | `false` | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息 |
 | enable-var | boolean | `true` | 默认支持使用 css variable，若想关闭该功能可设置为 false |
-| parent-font-size | number |  | 父组件字体大小，主要用于百分比计算的场景，如 font-size: 100% |
+| enable-text-pass-through | boolean | `false` | RN 环境特有属性，开启文本样式和文本属性透传上下文，请在动态添加文本样式或文本属性时开启 |
 | parent-width | number |  | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度 |
 | parent-height | number |  | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度 |
 
 以上基础组件的通用属性仅在 RN 环境中支持。在跨平台输出到小程序或 Web 时，这些属性将无法使用。
 
 由于 view、text、scroll-view、image 和 input 组件都是基于 RN 原生组件实现的，因此这些组件默认继承原生组件支持的属性。
+
+与微信小程序一致，RN 输出支持只传递属性名不传递属性值的布尔写法，例如 `<scroll-view scroll-y />` 等价于 `<scroll-view scroll-y="{{ true }}" />`。
 
 ### view
 
@@ -592,7 +701,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| hover-class | string |  | 指定按下去的样式类。 |
+| hover-class | string |  | 指定按下去的样式类。当 `hover-class="none"` 时，没有点击态效果。 |
 | hover-start-time | number | `50` | 按住后多久出现点击态，单位毫秒 |
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 | animation | object |  | 传递动画的实例， 可配合 mpx.createAnimation 方法一起使用 |
@@ -605,14 +714,15 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindtransitionend | 动画结束时触发,`event.detail = { elapsedTime, finished, current }` |
+| transitionend | 动画结束时触发,`event.detail = { elapsedTime, finished, current }` |
 
 #### 注意事项
 
+- **view 内可直接插入文字**：Mpx2RN 支持在 `view` 等非 `text` 组件中直接插入文字内容，无需严格遵循 RN 中文字必须由 `text` 组件包裹的限制，框架会在编译时自动为裸文字插入一个 `text` 包裹节点。但该行为存在性能开销——会额外多引入一个 `view` 层级，因此如果可以直接使用 `text` 组件包裹文字，仍应优先使用 `text`，以获得更优的渲染性能。`view` 内多个 `text` 的跨平台布局对齐方案见 [样式开发最佳实践 · text 跨平台布局对齐](./rn-style-practice.md#text-跨平台布局对齐)。
 - 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
-- 出于性能考虑，基础组件的样式增强能力（如 `enable-var`、`enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
+- 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
 
 ### text
 
@@ -629,7 +739,6 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 #### 注意事项
 
-- 未包裹 text 标签的文本，会自动包裹 text 标签。
 - text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
 
 ### scroll-view
@@ -669,14 +778,14 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 事件名               | 说明                                       |
 | -------------------- | ------------------------------------------ |
-| binddragstart        | 滑动开始事件，同时开启 enhanced 属性后生效 |
-| binddragging         | 滑动事件，同时开启 enhanced 属性后生效     |
-| binddragend          | 滑动结束事件，同时开启 enhanced 属性后生效 |
-| bindscrolltoupper    | 滚动到顶部/左边触发                        |
-| bindscrolltolower    | 滚动到底部/右边触发                        |
-| bindscroll           | 滚动时触发                                 |
-| bindscrollend        | 滚动结束时触发                             |
-| bindrefresherrefresh | 自定义下拉刷新被触发                       |
+| dragstart        | 滑动开始事件，同时开启 enhanced 属性后生效 |
+| dragging         | 滑动事件，同时开启 enhanced 属性后生效     |
+| dragend          | 滑动结束事件，同时开启 enhanced 属性后生效 |
+| scrolltoupper    | 滚动到顶部/左边触发                        |
+| scrolltolower    | 滚动到底部/右边触发                        |
+| scroll           | 滚动时触发                                 |
+| scrollend        | 滚动结束时触发                             |
+| refresherrefresh | 自定义下拉刷新被触发                       |
 
 #### 注意事项
 
@@ -720,7 +829,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | current 改变时会触发 change 事件，`event.detail = {current, source}` |
+| change | current 改变时会触发 change 事件，`event.detail = {current, source}` |
 
 ### swiper-item
 
@@ -759,11 +868,11 @@ movable-view 的可移动区域。
 
 #### 事件
 
-| 事件名     | 说明                                                  |
-| ---------- | ----------------------------------------------------- |
-| bindchange | 拖动过程中触发的事件，`event.detail = {x, y, source}` |
-| htouchmove | 初次手指触摸后移动为横向的移动时触发                  |
-| vtouchmove | 初次手指触摸后移动为纵向的移动时触发                  |
+| 事件名     | 说明                                                         |
+| ---------- | ------------------------------------------------------------ |
+| change     | 拖动过程中触发，`event.detail = {x, y, source}`              |
+| htouchmove | 初次手指触摸后横向移动时触发，支持使用 `catch` 阻止事件冒泡 |
+| vtouchmove | 初次手指触摸后纵向移动时触发，支持使用 `catch` 阻止事件冒泡 |
 
 #### 注意事项
 
@@ -779,21 +888,23 @@ movable-view 的可移动区域。
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| src | string | `false` | 图片资源地址及 base64 格式数据 |
+| src | string | `false` | 图片资源地址、base64 格式数据或本地静态资源相对路径 |
 | mode | string | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right` |
 | enable-fast-image | boolean | `false` | RN 环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| is-svg | boolean | `false` | RN 环境特有属性，传递为 `true` 时强制使用 SVG 方式渲染图片 |
 
 #### 事件
 
 | 事件名    | 说明                                                     |
 | --------- | -------------------------------------------------------- |
-| binderror | 当错误发生时触发，`event.detail = { errMsg }`            |
-| bindload  | 当图片载入完毕时触发，`event.detail = { height, width }` |
+| error | 当错误发生时触发，`event.detail = { errMsg }`            |
+| load  | 当图片载入完毕时触发，`event.detail = { height, width }` |
 
 #### 注意事项
 
 - image 组件默认宽度 320px、高度 240px
 - image 组件进行缩放时，计算出来的宽高可能带有小数，在不同 webview 内核下渲染可能会被抹去小数部分
+- RN 输出支持 `<image src="./logo.png" />` / `<image src="./icon.svg" />` 这类本地静态资源写法，编译后会通过 webpack 资源 loader 处理；动态绑定本地图片时建议在脚本中 `import` 后再绑定。
 
 ### icon
 
@@ -859,7 +970,7 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | checkbox-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 checkbox 的 value 的数组 ] } ` |
+| change | checkbox-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 checkbox 的 value 的数组 ] } ` |
 
 ### radio
 
@@ -882,7 +993,7 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | radio-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 radio 的 value 的数组 ] }` |
+| change | radio-group 中选中项发生改变时触发 change 事件，`detail = { value: [ 选中的 radio 的 value 的数组 ] }` |
 
 ### form
 
@@ -894,8 +1005,8 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindsubmit | 携带 form 中的数据触发 submit 事件，`event.detail = {value : {'name': 'value'} }` |
-| bindreset | 表单重置时会触发 reset 事件 |
+| submit | 携带 form 中的数据触发 submit 事件，`event.detail = {value : {'name': 'value'} }` |
+| reset | 表单重置时会触发 reset 事件 |
 
 ### input
 
@@ -929,11 +1040,11 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindinput | 键盘输入时触发，`event.detail = { value, cursor }`，不支持 `keyCode` |
-| bindfocus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
-| bindblur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
-| bindconfirm | 点击完成按钮时触发，`event.detail = { value }` |
-| bind:selectionchange | 选区改变事件, `event.detail = { selectionStart, selectionEnd }` |
+| input | 键盘输入时触发，`event.detail = { value, cursor }`，不支持 `keyCode` |
+| focus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
+| blur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
+| confirm | 点击完成按钮时触发，`event.detail = { value }` |
+| selectionchange | 选区改变事件, `event.detail = { selectionStart, selectionEnd }` |
 
 ### textarea
 
@@ -967,12 +1078,12 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindinput | 键盘输入时触发，`event.detail = { value, cursor }`，不支持 `keyCode` |
-| bindfocus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
-| bindblur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
-| bindconfirm | 点击完成按钮时触发，`event.detail = { value }` |
-| bindlinechange | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx` |
-| bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}` |
+| input | 键盘输入时触发，`event.detail = { value, cursor }`，不支持 `keyCode` |
+| focus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
+| blur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
+| confirm | 点击完成按钮时触发，`event.detail = { value }` |
+| linechange | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx` |
+| selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}` |
 
 #### 注意事项
 
@@ -999,7 +1110,7 @@ movable-view 的可移动区域。
 
 | 事件名        | 说明                                         |
 | ------------- | -------------------------------------------- |
-| bindactiveend | 动画完成时触发，`event.detail = { percent }` |
+| activeend | 动画完成时触发，`event.detail = { percent }` |
 
 #### 注意事项
 
@@ -1026,7 +1137,7 @@ movable-view 的可移动区域。
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | 滚动选择时触发 change 事件，`event.detail = {value}`，其中 `value` 为数组，表示 picker-view 内的 [picker-view-column](#picker-view-column) 当前选择的是第几项（下标从 0 开始） |
+| change | 滚动选择时触发 change 事件，`event.detail = {value}`，其中 `value` 为数组，表示 picker-view 内的 [picker-view-column](#picker-view-column) 当前选择的是第几项（下标从 0 开始） |
 
 触感反馈回调方法
 
@@ -1044,6 +1155,8 @@ movable-view 的可移动区域。
 
 从底部弹起的滚动选择器。
 
+`picker` 节点上的文本样式（如 `color`、`font-size` 等）会透传给触发区域的子节点，用于对齐小程序中父节点文本样式影响子内容的表现。
+
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
@@ -1056,8 +1169,8 @@ movable-view 的可移动区域。
 
 | 事件名     | 说明                                                   |
 | ---------- | ------------------------------------------------------ |
-| bindcancel | 取消选择时触发                                         |
-| bindchange | value 改变时触发 change 事件，`event.detail = {value}` |
+| cancel | 取消选择时触发                                         |
+| change | value 改变时触发 change 事件，`event.detail = {value}` |
 
 #### 普通选择器：mode = selector
 
@@ -1078,7 +1191,7 @@ movable-view 的可移动区域。
 | range | array[object]/array | `[]` | mode 为 selector 或 multiSelector 时，range 有效 |
 | range-key | string | `false` | 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器显示内容 |
 | value | array | `[]` | 表示选择了 range 中的第几个（下标从 0 开始） |
-| bindcolumnchange | function |  | 列改变时触发 |
+| columnchange | function |  | 列改变时触发 |
 
 #### 多列选择器：时间选择器：mode = time
 
@@ -1145,8 +1258,8 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | 完成一次拖动后触发，`event.detail = { value }` |
-| bindchanging | 拖动过程中触发，`event.detail = { value }` |
+| change | 完成一次拖动后触发，`event.detail = { value }` |
+| changing | 拖动过程中触发，`event.detail = { value }` |
 
 #### 注意事项
 
@@ -1169,7 +1282,7 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindchange | 点击导致 checked 改变时会触发 change 事件，`event.detail = { value }` |
+| change | 点击导致 checked 改变时会触发 change 事件，`event.detail = { value }` |
 
 ### navigator
 
@@ -1179,7 +1292,7 @@ level 有效值：
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| hover-class | string | `false` | 指定按下去的样式类。 |
+| hover-class | string | `false` | 指定按下去的样式类。当 `hover-class="none"` 时，没有点击态效果。 |
 | hover-start-time | number | `50` | 按住后多久出现点击态，单位毫秒 |
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 | open-type | string | `navigate` | 可支持`navigateBack`、`redirect`、`switchTab`、`reLaunch`、`navigateTo` |
@@ -1204,12 +1317,12 @@ level 有效值：
 
 | 事件名          | 说明                                              |
 | --------------- | ------------------------------------------------- |
-| bindtouchstart  | 手指触摸动作开始                                  |
-| bindtouchmove   | 手指触摸后移动                                    |
-| bindtouchend    | 手指触摸动作结束                                  |
-| bindtouchcancel | 手指触摸动作被打断                                |
-| bindlongtap     | 手指长按 350ms 之后触发                           |
-| binderror       | 当发生错误时触发 error 事件， `detail = {errMsg}` |
+| touchstart  | 手指触摸动作开始                                  |
+| touchmove   | 手指触摸后移动                                    |
+| touchend    | 手指触摸动作结束                                  |
+| touchcancel | 手指触摸动作被打断                                |
+| longtap     | 手指长按 350ms 之后触发                           |
+| error       | 当发生错误时触发 error 事件， `detail = {errMsg}` |
 
 #### API
 
@@ -1245,10 +1358,10 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindinitdone | 相机初始化完成时触发，`event.detail = { maxZoom }` |
-| bindstop | 摄像头在非正常终止时触发 |
-| binderror | 相机发生错误时触发 |
-| bindscancode | 在 `scanCode` 模式下识别到二维码时触发，`event.detail = { result, type, scanArea }` |
+| initdone | 相机初始化完成时触发，`event.detail = { maxZoom }` |
+| stop | 摄像头在非正常终止时触发 |
+| error | 相机发生错误时触发 |
+| scancode | 在 `scanCode` 模式下识别到二维码时触发，`event.detail = { result, type, scanArea }` |
 
 #### API
 
@@ -1271,7 +1384,7 @@ level 有效值：
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| src | string |  | 要播放视频的资源地址 |
+| src | string |  | 要播放视频的资源地址或本地静态资源相对路径 |
 | controls | boolean | `true` | 是否显示默认播放控件 |
 | autoplay | boolean | `false` | 是否自动播放 |
 | loop | boolean | `false` | 是否循环播放 |
@@ -1290,16 +1403,16 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindplay | 当开始/继续播放时触发 play 事件 |
-| bindpause | 当暂停播放时触发 pause 事件 |
-| bindended | 当播放到末尾时触发 ended 事件 |
-| bindtimeupdate | 播放进度变化时触发，`event.detail = {currentTime, duration}` |
-| bindfullscreenchange | 视频进入和退出全屏时触发，`event.detail = {fullScreen` } |
-| bindwaiting | 视频出现缓冲时触发 |
-| binderror | 视频播放出错时触发 |
-| bindloadedmetadata | 视频元数据加载完成时触发。`event.detail = {width, height, duration}` |
-| bindcontrolstoggle | 切换 controls 显示隐藏时触发。`event.detail = {show}` |
-| bindseekcomplete | seek 完成时触发 |
+| play | 当开始/继续播放时触发 play 事件 |
+| pause | 当暂停播放时触发 pause 事件 |
+| ended | 当播放到末尾时触发 ended 事件 |
+| timeupdate | 播放进度变化时触发，`event.detail = {currentTime, duration}` |
+| fullscreenchange | 视频进入和退出全屏时触发，`event.detail = {fullScreen` } |
+| waiting | 视频出现缓冲时触发 |
+| error | 视频播放出错时触发 |
+| loadedmetadata | 视频元数据加载完成时触发。`event.detail = {width, height, duration}` |
+| controlstoggle | 切换 controls 显示隐藏时触发。`event.detail = {show}` |
+| seekcomplete | seek 完成时触发 |
 
 #### 注意事项
 
@@ -1320,9 +1433,9 @@ level 有效值：
 
 | 事件名      | 说明                                |
 | ----------- | ----------------------------------- |
-| bindmessage | 网页向 RN 通过 postMessage 传递数据 |
-| bindload    | 网页加载成功时候触发此事件          |
-| binderror   | 网页加载失败的时候触发此事件        |
+| message | 网页向 RN 通过 postMessage 传递数据 |
+| load    | 网页加载成功时候触发此事件          |
+| error   | 网页加载失败的时候触发此事件        |
 
 #### 注意事项
 
@@ -1341,6 +1454,65 @@ level 有效值：
 #### 注意事项
 
 - style 样式中不支持使用百分比计算、css variable
+
+### section-list
+
+跨端虚拟列表组件，可自定义分组头、列表头、列表项，自动分段渲染兼容各端。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| height | string \| number | `100%` | 组件高度 |
+| width | string \| number | `100%` | 组件宽度 |
+| list-data | array | `[]` | 列表数据；分组头数据需包含 `isSectionHeader: true`，分组尾数据需包含 `isSectionFooter: true` |
+| enable-sticky | boolean | `false` | 启用分组吸顶 |
+| scroll-event-throttle | number | `0` | 控制 scroll 事件触发频率 |
+| enhanced | boolean | `false` | 开启滚动增强能力 |
+| bounces | boolean | `true` | iOS 下边界弹性控制，需同时开启 `enhanced` |
+| use-list-header | boolean | `false` | 使用自定义列表头 |
+| list-header-data | object | `{}` | 列表头数据 |
+| use-list-footer | boolean | `false` | 使用自定义列表页脚 |
+| list-footer-data | object | `{}` | 列表页脚数据 |
+| generic:recycle-item | string |  | 列表项抽象节点组件名 |
+| generic:section-header | string |  | 列表分组头抽象节点组件名 |
+| generic:section-footer | string |  | 列表分组尾抽象节点组件名 |
+| generic:list-header | string |  | 列表头抽象节点组件名 |
+| generic:list-footer | string |  | 列表页脚抽象节点组件名 |
+| item-height | object | `{}` | 列表项高度配置，支持 `getter` / `value` |
+| section-header-height | object | `{}` | 分组头部高度配置，支持 `getter` / `value` |
+| section-footer-height | object | `{}` | 分组尾部高度配置，支持 `getter` / `value` |
+| list-header-height | number | `0` | 列表头部固定高度，不支持 `getter` / `value` |
+| enable-back-to-top | boolean | `false` | 点击状态栏时滚动到顶部，仅 iOS 环境支持 |
+| end-reached-threshold | number | `0.1` | 触底事件触发阈值 |
+| refresher-enabled | boolean | `false` | 开启自定义下拉刷新 |
+| refresher-triggered | boolean | `false` | 设置当前下拉刷新状态，true 表示已触发 |
+| show-scrollbar | boolean | `true` | 滚动条显隐控制 |
+| enable-item-exposure | boolean | `false` | 开启列表项曝光通知 |
+| item-exposure-threshold | number | `0` | 列表项露出比例达到多少后触发曝光通知，取值 0-100 |
+| simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，允许多个手势同时识别和处理 |
+| wait-for | array\<object> | `[]` | RN 环境特有属性，允许延迟激活处理某些手势 |
+
+#### 事件
+
+| 事件名 | 说明 |
+| --- | --- |
+| scroll | 滚动时触发，`event.detail.scrollTop` 返回纵向滚动位置 |
+| scrolltolower | 滚动到底部 / 触底通知 |
+| refresherrefresh | 自定义下拉刷新被触发 |
+| itemexposure | 列表项露出比例达到阈值时触发 |
+
+#### 方法
+
+| 方法名 | 说明 |
+| --- | --- |
+| scrollToIndex | 通过 ref 获取实例后可调用，`scrollToIndex({ index, animated, viewOffset, viewPosition })`，用于滚动到指定索引 |
+
+#### 注意事项
+
+- 当使用列表项、列表头、自定义分组头或者自定义分组尾，必须配置对应 `item-height`、`section-header-height`、`section-footer-height`、`list-header-height` 高度参数，否则会出现滚动异常。
+- `enable-item-exposure` 与 `item-exposure-threshold` 不支持运行时动态修改，请在组件初始化时确定。
+- `section-header` 曝光统计仅支持 `enable-sticky=false` 场景；开启 `enable-sticky` 时暂不支持统计 `section-header` 曝光。
 
 ### sticky-section
 
@@ -1365,7 +1537,7 @@ level 有效值：
 
 | 事件名 | 说明 |
 | --- | --- |
-| bindstickontopchange | 吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false |
+| stickontopchange | 吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false |
 
 #### 注意事项
 

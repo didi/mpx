@@ -38,9 +38,10 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE, useRunOnJSCallback, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, hiddenStyle, useRunOnJSCallback, useTextPassThrough } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 import Portal from './mpx-portal'
+import * as perf from '@mpxjs/perf'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -66,8 +67,7 @@ interface ScrollViewProps {
   'scroll-into-view'?: string;
   'enable-trigger-intersection-observer'?: boolean;
   'enable-var'?: boolean;
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
+  'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
   'parent-height'?: number;
   'enable-sticky'?: boolean;
@@ -118,6 +118,12 @@ const REFRESH_COLOR = {
 }
 
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
+  let idTotal = -1
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('scroll-view:render')
+
+  // ───── props 阶段 ─────
+  let idProps = -1
+  if (__mpx_perf_framework__) idProps = perf.scopeStart('scroll-view:render:props')
   const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
     enhanced = false,
@@ -145,8 +151,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-left': scrollLeft = 0,
     'refresher-triggered': refresherTriggered,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'simultaneous-handlers': originSimultaneousHandlers,
@@ -164,7 +169,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const { refresherContent, otherContent } = getRefresherContent(props.children)
   const hasRefresher = refresherContent && refresherEnabled
+  if (__mpx_perf_framework__) perf.scopeEnd(idProps)
 
+  // ───── style 阶段 ─────
+  let idStyle = -1
+  if (__mpx_perf_framework__) idStyle = perf.scopeStart('scroll-view:render:style')
   const [refreshing, setRefreshing] = useState(false)
   const [enableScroll, setEnableScroll] = useState(true)
   const [scrollBounces, setScrollBounces] = useState(false)
@@ -200,10 +209,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     hasPositionFixed,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const scrollViewRef = useRef<ScrollView>(null)
 
@@ -255,7 +264,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const hasRefresherLayoutRef = useRef(false)
 
   // layout 完成前先隐藏，避免安卓闪烁问题
-  const refresherLayoutStyle = useMemo(() => { return !hasRefresherLayoutRef.current ? HIDDEN_STYLE : {} }, [hasRefresherLayoutRef.current])
+  const refresherLayoutStyle = useMemo(() => { return !hasRefresherLayoutRef.current ? hiddenStyle : {} }, [hasRefresherLayoutRef.current])
   const lastOffset = useRef(0)
 
   if (scrollX && scrollY) {
@@ -729,7 +738,96 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       runOnJS(runOnJSCallback)('setScrollBounces', newValue)
     }
   }
+  if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
 
+  // ───── innerProps 阶段 ─────
+  let idInnerProps = -1
+  if (__mpx_perf_framework__) idInnerProps = perf.scopeStart('scroll-view:render:innerProps')
+  const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
+    {
+      style: extendObject(hasOwn(innerStyle, 'flex') || hasOwn(innerStyle, 'flexGrow')
+        ? {}
+        : {
+            flexGrow: 0
+          }, innerStyle, layoutStyle),
+      pinchGestureEnabled: false,
+      alwaysBounceVertical: false,
+      alwaysBounceHorizontal: false,
+      horizontal: scrollX && !scrollY,
+      scrollEventThrottle: scrollEventThrottle,
+      scrollsToTop: enableBackToTop,
+      showsHorizontalScrollIndicator: scrollX && showScrollbar,
+      showsVerticalScrollIndicator: scrollY && showScrollbar,
+      scrollEnabled: !enableScroll ? false : !!(scrollX || scrollY),
+      bounces: false,
+      overScrollMode: 'never',
+      ref: scrollViewRef,
+      onScroll: enableSticky ? scrollHandler : onScroll,
+      onContentSizeChange: onContentSizeChange,
+      bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
+      onScrollBeginDrag: onScrollDragStart,
+      onScrollEndDrag: onScrollDragEnd,
+      onMomentumScrollEnd: onScrollEnd
+    },
+    (simultaneousHandlers ? { simultaneousHandlers } : {}),
+    (waitForHandlers ? { waitFor: waitForHandlers } : {}),
+    layoutProps
+  )
+
+  if (enhanced) {
+    Object.assign(scrollAdditionalProps, {
+      bounces: hasRefresher ? scrollBounces : !!bounces,
+      pagingEnabled
+    })
+  }
+
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      scrollAdditionalProps
+    ),
+    [
+      'id',
+      'scroll-x',
+      'scroll-y',
+      'enable-back-to-top',
+      'enable-trigger-intersection-observer',
+      'paging-enabled',
+      'show-scrollbar',
+      'upper-threshold',
+      'lower-threshold',
+      'scroll-top',
+      'scroll-left',
+      'scroll-with-animation',
+      'refresher-triggered',
+      'refresher-enabled',
+      'refresher-default-style',
+      'refresher-threshold',
+      'refresher-background',
+      'scroll-into-view',
+      'enable-sticky',
+      'wait-for',
+      'simultaneous-handlers',
+      'scroll-event-throttle',
+      'scroll-into-view-offset',
+      '__selectRef',
+      'children',
+      'enhanced',
+      'binddragstart',
+      'binddragging',
+      'binddragend',
+      'bindscroll',
+      'bindscrolltoupper',
+      'bindscrolltolower',
+      'bindrefresherrefresh',
+      'bindscrollend'
+    ], { layoutRef })
+  if (__mpx_perf_framework__) perf.scopeEnd(idInnerProps)
+
+  // ───── createElement 阶段 ─────
+  let idCreate = -1
+  if (__mpx_perf_framework__) idCreate = perf.scopeStart('scroll-view:render:createElement')
   // 处理下拉刷新的手势 - 使用 useMemo 避免每次渲染都创建
   const panGesture = useMemo(() => {
     return Gesture.Pan()
@@ -796,82 +894,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       .simultaneousWithExternalGesture(scrollViewRef)
   }, [enhanced, bounces, refreshing, refresherThreshold])
 
-  const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
-    {
-      style: extendObject(hasOwn(innerStyle, 'flex') || hasOwn(innerStyle, 'flexGrow')
-        ? {}
-        : {
-            flexGrow: 0
-          }, innerStyle, layoutStyle),
-      pinchGestureEnabled: false,
-      alwaysBounceVertical: false,
-      alwaysBounceHorizontal: false,
-      horizontal: scrollX && !scrollY,
-      scrollEventThrottle: scrollEventThrottle,
-      scrollsToTop: enableBackToTop,
-      showsHorizontalScrollIndicator: scrollX && showScrollbar,
-      showsVerticalScrollIndicator: scrollY && showScrollbar,
-      scrollEnabled: !enableScroll ? false : !!(scrollX || scrollY),
-      bounces: false,
-      overScrollMode: 'never',
-      ref: scrollViewRef,
-      onScroll: enableSticky ? scrollHandler : onScroll,
-      onContentSizeChange: onContentSizeChange,
-      bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
-      onScrollBeginDrag: onScrollDragStart,
-      onScrollEndDrag: onScrollDragEnd,
-      onMomentumScrollEnd: onScrollEnd
-    },
-    (simultaneousHandlers ? { simultaneousHandlers } : {}),
-    (waitForHandlers ? { waitFor: waitForHandlers } : {}),
-    layoutProps
-  )
-
-  if (enhanced) {
-    Object.assign(scrollAdditionalProps, {
-      bounces: hasRefresher ? scrollBounces : !!bounces,
-      pagingEnabled
-    })
-  }
-
-  const innerProps = useInnerProps(
-    extendObject(
-      {},
-      props,
-      scrollAdditionalProps
-    ),
-    [
-      'id',
-      'scroll-x',
-      'scroll-y',
-      'enable-back-to-top',
-      'enable-trigger-intersection-observer',
-      'paging-enabled',
-      'show-scrollbar',
-      'upper-threshold',
-      'lower-threshold',
-      'scroll-top',
-      'scroll-left',
-      'scroll-with-animation',
-      'refresher-triggered',
-      'refresher-enabled',
-      'refresher-default-style',
-      'refresher-background',
-      'children',
-      'enhanced',
-      'binddragstart',
-      'binddragging',
-      'binddragend',
-      'bindscroll',
-      'bindscrolltoupper',
-      'bindscrolltolower',
-      'bindrefresherrefresh'
-    ], { layoutRef })
-
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
 
   const createScrollViewContent = () => {
-    const wrappedChildren = wrapChildren(hasRefresher ? extendObject({}, props, { children: otherContent }) : props,
+    const wrappedChildren = wrapChildren(hasRefresher ? otherContent : props.children,
       {
         hasVarDec,
         varContext: varContextRef.current,
@@ -924,6 +950,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   if (hasPositionFixed) {
     scrollViewComponent = createElement(Portal, null, scrollViewComponent)
   }
+  if (__mpx_perf_framework__) perf.scopeEnd(idCreate)
+  if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
   return scrollViewComponent
 })
 

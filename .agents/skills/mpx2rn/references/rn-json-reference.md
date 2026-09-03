@@ -24,7 +24,9 @@
 
 ## 应用配置
 
-应用 JSON 配置用于注册页面、默认窗口样式、分包、预下载规则等。示例如下（字段可按需取舍）：
+应用 JSON 配置用于注册页面、默认窗口样式、分包、预下载规则等，写在 `app.mpx` 文件的 JSON 块中。
+
+示例如下（字段可按需取舍）：
 
 ```JSON5
 {
@@ -65,6 +67,8 @@
 
 ## 页面配置
 
+写在各页面 `.mpx` 文件的 JSON 块中。
+
 以下为页面的 JSON 配置示例：
 
 ```JSON5
@@ -97,11 +101,13 @@
 | `onReachBottomDistance` | 输出 RN 时无效，应在模板中结合 `scroll-view` 相关能力进行跨端兼容实现。 |
 | `disableKeyboardAvoiding` | 仅输出 RN 时有效，为 `true` 时关闭框架自带的键盘避让包裹，开发者自行处理键盘遮挡。 |
 
-**注意**：跨端输出时 **`disableScroll` 宜为 `true`**，在 `<template>` 里用 **`scroll-y` 的 `scroll-view`** 包裹需要滚动的内容，与 RN 侧行为对齐。下拉刷新、触底等请结合 `scroll-view` 事件与业务逻辑实现。
+**注意**：跨端输出 RN 时 **`disableScroll` 设为 `true`**，同时在 `<style>` 中声明 **`page { height: 100%; }`**，并在 `<template>` 里用开启 **`scroll-y`** 的 `scroll-view` 包裹需要滚动的内容，与 RN 侧行为对齐。下拉刷新、触底等请结合 `scroll-view` 事件与业务逻辑实现。
 
 ---
 
 ## 组件配置
+
+写在各组件 `.mpx` 文件的 JSON 块中。
 
 以下为自定义组件的 JSON 配置示例：
 

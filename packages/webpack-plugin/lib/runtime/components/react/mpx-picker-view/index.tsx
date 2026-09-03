@@ -9,9 +9,8 @@ import {
   wrapChildren,
   useTransformStyle,
   extendObject,
-  useTextPassThroughValue
+  useTextPassThrough
 } from '../utils'
-import { PickerViewStyleContext } from './pickerVIewContext'
 import Portal from '../mpx-portal'
 import type { AnyFunc } from '../types/common'
 /**
@@ -38,7 +37,7 @@ interface PickerViewProps {
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>,
+  'enable-text-pass-through'?: boolean
   'enable-offset'?: boolean
 }
 
@@ -75,7 +74,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     'indicator-style': indicatorStyle = {},
     'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext
+    'enable-text-pass-through': enableTextPassThrough
+
   } = props
   const { height: indicatorH, ...pickerIndicatorStyle } = indicatorStyle
   const nodeRef = useRef(null)
@@ -92,7 +92,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight,
     hasPositionFixed
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar })
 
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
     style: normalStyle
@@ -105,7 +105,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     const activeValue = activeValueRef.current
@@ -158,7 +158,10 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       'indicator-style',
       'indicator-class',
       'mask-style',
-      'mask-class'
+      'mask-class',
+      'value',
+      'bindchange',
+      'enable-wheel-animation'
     ],
     { layoutRef }
   )
@@ -184,17 +187,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         enableWheelAnimation
       }
     )
-    const realElement = React.cloneElement(child, wrappedProps)
-    return wrapChildren(
-      {
-        children: realElement
-      },
-      {
-        hasVarDec,
-        varContext: varContextRef.current,
-        textPassThrough
-      }
-    )
+    return React.cloneElement(child, wrappedProps)
   }
 
   const validateChildInitialIndex = (index: number, data: React.ReactNode[]) => {
@@ -229,15 +222,18 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const finalComponent = createElement(
-    PickerViewStyleContext.Provider,
-    { value: textStyle },
+    View,
+    innerProps,
     createElement(
       View,
-      innerProps,
-      createElement(
-        View,
-        { style: [styles.wrapper] },
-        renderPickerColumns()
+      { style: [styles.wrapper] },
+      wrapChildren(
+        renderPickerColumns(),
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textPassThrough
+        }
       )
     )
   )
