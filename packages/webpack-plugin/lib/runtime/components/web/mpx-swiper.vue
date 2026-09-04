@@ -6,6 +6,19 @@
   import throttle from 'lodash/throttle'
   import { processSize } from '../../utils'
 
+  function getSwiperIndicatorStyle (alignment, offset, margin, vertical) {
+    const [x, y] = alignment === 'auto' ? (vertical ? [1, 0] : [0, 1]) : alignment
+    const [offsetX, offsetY] = offset
+    const xRatio = (x + 1) / 2
+    const yRatio = (y + 1) / 2
+
+    return {
+      left: `${xRatio * 100}%`,
+      top: `${yRatio * 100}%`,
+      transform: `translate(${-xRatio * 100}%, ${-yRatio * 100}%) translate(${offsetX - x * margin}px, ${offsetY - y * margin}px)`
+    }
+  }
+
   BScroll.use(Slide)
   BScroll.use(ObserveDOM)
 
@@ -20,6 +33,34 @@
       indicatorActiveColor: {
         type: String,
         default: '#000000'
+      },
+      indicatorMargin: {
+        type: Number,
+        default: 10
+      },
+      indicatorSpacing: {
+        type: Number,
+        default: 4
+      },
+      indicatorRadius: {
+        type: Number,
+        default: 4
+      },
+      indicatorWidth: {
+        type: Number,
+        default: 8
+      },
+      indicatorHeight: {
+        type: Number,
+        default: 8
+      },
+      indicatorAlignment: {
+        type: [Array, String],
+        default: 'auto'
+      },
+      indicatorOffset: {
+        type: Array,
+        default: () => [0, 0]
       },
       autoplay: Boolean,
       current: {
@@ -99,6 +140,9 @@
       _nextMargin () {
         return processSize(this.nextMargin) || 0
       },
+      _indicatorStyle () {
+        return getSwiperIndicatorStyle(this.indicatorAlignment, this.indicatorOffset, this.indicatorMargin, this.vertical)
+      }
     },
     updated () {
       this.setCurrentChildLength()
@@ -298,7 +342,11 @@
             createElement('span', {
               class: 'mpx-swiper-dots-item',
               style: {
-                backgroundColor: i === this.currentIndex ? this.indicatorActiveColor : this.indicatorColor
+                backgroundColor: i === this.currentIndex ? this.indicatorActiveColor : this.indicatorColor,
+                margin: `${this.indicatorSpacing}px`,
+                width: `${this.indicatorWidth}px`,
+                height: `${this.indicatorHeight}px`,
+                borderRadius: `${this.indicatorRadius}px`
               }
             })
           )
@@ -307,7 +355,8 @@
           class: {
             'mpx-swiper-dots': true,
             vertical: this.vertical
-          }
+          },
+          style: this._indicatorStyle
         }, dotsItems)
         children.push(dots)
       }
@@ -343,22 +392,12 @@
 
   .mpx-swiper-dots
     position absolute
-    right 50%
-    bottom 4px
-    transform translateX(50%)
     display flex
 
     &.vertical
-      right 4px
-      bottom 50%
-      transform translateY(50%)
       flex-direction column
 
     .mpx-swiper-dots-item
       display block
-      margin 4px
-      width 8px
-      height 8px
-      border-radius 50%
 
 </style>
