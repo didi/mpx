@@ -447,7 +447,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 **支持特性：**
 
 - **背景颜色**：RN 原生支持 `background-color`。
-- **背景图**：支持 `background-image: url()` 引用图片，也支持 `background-image: none` 清空背景图。
+- **背景图**：支持 `background-image: url()` 引用位图，也支持 `background-image: none` 清空背景图；SVG 图片会输出错误并丢弃。
 - **渐变背景**：支持 `background-image: linear-gradient()` 线性渐变。
 - **相关属性**：完整支持 `background-size` 和 `background-position`。
 
@@ -553,7 +553,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 | --- | --- | --- | --- |
 | `background` | `<background-color>` \| `<background-image>` \| `<background-repeat>` \| `<background-position>` / `<background-size>` | 背景简写，支持用 `/` 分隔的背景位置和尺寸 | `background: #f5f5f5`；`background: url(https://example.com/bg.png) no-repeat center/cover` |
 | `background-color` | `color` | 背景色 | `background-color: #fff`；`background-color: rgba(0, 0, 0, 0.5)` 半透明黑色 |
-| `background-image` | `url()` \| `linear-gradient()` \| `none` | 背景图/渐变 | `background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none` |
+| `background-image` | `url()` \| `linear-gradient()` \| `none` | `url()` 仅支持位图，SVG 会输出错误并丢弃；渐变不受影响 | `background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none` |
 | `background-size` | `cover` \| `contain` \| `auto` \| `length` \| `%` | 背景尺寸 | `background-size: cover` 覆盖填充；`background-size: 200rpx 100rpx` |
 | `background-repeat` | `no-repeat` | 仅支持不重复 | `background-repeat: no-repeat` |
 | `background-position` | `center` \| `left` \| `right` \| `top` \| `bottom` \| `number` \| `%` | 背景位置 | `background-position: center`；`background-position: 50% 50%` |
