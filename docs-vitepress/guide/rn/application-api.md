@@ -474,11 +474,28 @@ mpx.config.rnConfig.disablePageTransition = true
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
-在某些情况下，我们可能不希望当前应用全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 尺寸信息来得到想要的渲染效果。
+在某些情况下，我们可能不希望当前应用全屏展示。Mpx 内部将屏幕和窗口尺寸作为 `rpx`、`vh`、`vw`、媒体查询、`onResize` 等能力的计算基准，此时可通过 `mpx.config.rnConfig.customDimensions` 自定义 `screen` 和 `window` 尺寸。
 
-可在此方法中返回修改后的 dimensions，如果无返回或返回 undefined，则以入参作为返回值
+回调入参包含当前的 `screen` 与 `window` 尺寸，两者至少包含 `width` 和 `height`。返回的完整尺寸对象会同时用于样式计算，以及 RN 环境下 `mpx.getWindowInfo()`、`mpx.getSystemInfoSync()`、`mpx.getSystemInfo()` 返回的 `screenWidth`、`screenHeight`、`windowWidth`、`windowHeight`。`getSystemInfo` 系列 API 的 `deviceOrientation` 也会根据自定义后的屏幕宽高计算。
 
-例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
+如果回调未返回值或返回 `undefined`，Mpx 会继续使用原始尺寸。`safeArea`、`statusBarHeight` 和 `screenTop` 仍基于 RN 原生窗口与安全区信息计算，不受该配置影响。
+
+例如，在折叠屏展开时只使用一半屏幕区域，可同时调整 `screen` 和 `window` 的宽度：
+
+```js
+mpx.config.rnConfig.customDimensions = function (dimensions) {
+  if (!isFoldableExpanded()) return
+
+  return {
+    screen: Object.assign({}, dimensions.screen, {
+      width: dimensions.screen.width / 2
+    }),
+    window: Object.assign({}, dimensions.window, {
+      width: dimensions.window.width / 2
+    })
+  }
+}
+```
 
 
 ### 前后台切换 {#app-state-change}
