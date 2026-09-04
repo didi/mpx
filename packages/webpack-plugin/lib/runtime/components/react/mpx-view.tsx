@@ -24,6 +24,7 @@ export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
   animation?: AnimationProp
   children?: ReactNode | ReactNode[]
+  'hover-class'?: string
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
   'hover-stay-time'?: number
@@ -816,7 +817,7 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, bac
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   // 性能探针 - total
   let idTotal = -1
-  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render:total')
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('view:render')
 
   // ───── props 阶段 ─────
   let idProps = -1
@@ -824,6 +825,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
   let {
     style = {},
+    'hover-class': hoverClass,
     'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
@@ -838,7 +840,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     bindtransitionend
   } = props
 
-  const enableHover = !!hoverStyle
+  const enableHover = hoverClass !== 'none' && !!hoverStyle
   const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
   const styleObj: ExtendedViewStyle = isHover
@@ -947,7 +949,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 
-  if (enableHover) {
+  if (gesture) {
     finalComponent = createElement(GestureDetector, { gesture: gesture as PanGesture }, finalComponent)
   }
 

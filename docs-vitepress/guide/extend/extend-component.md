@@ -118,7 +118,7 @@ height: {
 - 会统计 `recycle-item`、`section-header`、`section-footer`，不统计 `list-header`、`list-footer`。
 - `section-header` 曝光统计仅支持 `enable-sticky=false` 场景；开启 `enable-sticky` 时暂不支持统计 `section-header` 曝光。
 - 同一个 item 达到阈值后不会在停留期间重复触发；当它划出列表可视区域后会重置本轮状态，再次划入并达到阈值时可再次触发。
-- RN 的 `viewabilityConfig` 不支持运行时动态修改，`enable-item-exposure` 与 `item-exposure-threshold` 请在组件初始化时确定。
+- `enable-item-exposure` 与 `item-exposure-threshold` 不支持运行时动态修改， 请在组件初始化时确定。
 
 ### 方法 {#section-list-methods}
 
