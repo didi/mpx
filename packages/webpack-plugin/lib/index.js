@@ -384,6 +384,7 @@ class MpxWebpackPlugin {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
       }
       compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
+      compiler.options.output.environment.globalThis = false
       if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
         compiler.options.optimization.chunkIds = 'total-size'
         compiler.options.optimization.moduleIds = 'natural'
@@ -391,6 +392,8 @@ class MpxWebpackPlugin {
         compiler.options.output.globalObject = 'g'
         // todo chunkLoadingGlobal不具备项目唯一性，在多构建产物混编时可能存在问题，尤其在支付宝使用全局对象传递的情况下
         compiler.options.output.chunkLoadingGlobal = 'c'
+      } else {
+        compiler.options.output.globalObject = '__mpx_chunk_global__'
       }
     }
 
@@ -1500,18 +1503,23 @@ class MpxWebpackPlugin {
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                // webpack 5.109.0 起不再在 AST 节点上提供 loc，需通过 parser.getLocation() 获取位置信息，
+                // 旧版本 webpack 不存在该方法，因此回退使用 expr.loc。
+                // 变更日志：https://github.com/webpack/webpack/releases/tag/v5.109.0
+                // 原始变更：https://github.com/webpack/webpack/pull/21451
+                const loc = typeof parser.getLocation === 'function' ? parser.getLocation(expr) : expr.loc
                 const depBlock = new AsyncDependenciesBlock(
                   {
                     name: tarRoot + '/index'
                   },
-                  expr.loc,
+                  loc,
                   request
                 )
                 const dep = new ImportDependency(request, expr.range, undefined, {
                   isRequireAsync: true,
                   retryRequireAsync: this.options.retryRequireAsync
                 })
-                dep.loc = expr.loc
+                dep.loc = loc
                 depBlock.addDependency(dep)
                 parser.state.current.addBlock(depBlock)
               } else {
