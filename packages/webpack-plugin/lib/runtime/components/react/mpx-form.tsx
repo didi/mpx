@@ -23,7 +23,7 @@ interface FormProps {
       value: any
     }
   }) => void
-  bindreset?: () => void
+  bindreset?: (evt: Record<string, any>) => void
 }
 
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: FormProps, ref): JSX.Element => {
@@ -98,7 +98,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
 
     const reset = () => {
       const { bindreset } = propsRef.current
-      bindreset && bindreset()
+      bindreset && bindreset(getCustomEvent('reset', {}, { layoutRef }, propsRef.current))
       formValuesMap.forEach(item => item.resetValue())
     }
     return {
