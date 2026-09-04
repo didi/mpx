@@ -1,4 +1,5 @@
 global.__mpx_mode__ = 'wx'
+global.__mpx_perf_framework__ = false
 global.mpxGlobal = {}
 global.wx = {}
 
