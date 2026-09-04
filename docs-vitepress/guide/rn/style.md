@@ -83,19 +83,13 @@ Mpx 转 RN 支持以下单位，部分单位在特定情况下存在使用限制
 |------|---------|----------|
 | `%` | ✅ 支持 | 百分比单位参考 [百分比单位说明](#percentage-unit-explanation) |
 | `px` | ✅ 支持 | 绝对像素单位 |
-| `rpx` | ✅ 支持 | 响应式像素，根据屏幕宽度动态计算 |
-| `vh` | ✅ 支持 | 相对于视口的高度 |
-| `vw` | ✅ 支持 | 相对视口的宽度 |
+| `rpx` | ✅ 支持 | 响应式像素，根据 Window 宽度动态计算 |
+| `vh` | ✅ 支持 | Window 高度的百分比 |
+| `vw` | ✅ 支持 | Window 宽度的百分比 |
 
-> [!tip] vh 单位使用注意
+> [!tip] Window 尺寸说明
 >
-> - **问题**：使用系统默认导航栏时，`vh` 的计算基准可能会发生变化
->   - 页面首次加载：`100vh = 屏幕总高度`
->   - 状态更新后：`100vh = 屏幕高度 - 导航栏高度`
->
-> - **影响**：可能导致布局在运行时突然变化
->
-> - **建议**：如需使用 `vh` 单位，推荐配合自定义导航栏使用，以确保计算基准始终一致
+> `rpx` / `vw` / `vh` 和媒体查询均使用 React Native `Dimensions.get('window')` 的尺寸。Window 尺寸变化时，依赖这些能力的组件会重新计算样式。
 ### 百分比单位说明 {#percentage-unit-explanation}
 
 RN 原生较多属性不支持百分比，或对百分比的支持存在 bug（如 `font-size`、`translate` 等），但这些属性在编写 Web/小程序代码时使用较多，所以框架进行了抹平支持。
@@ -511,6 +505,9 @@ https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries/Using_media_q
 - aspect-ratio-视口（viewport）的宽高比，暂不支持
 - orientation-视口的旋转方向，暂不支持
 - prefers-color-scheme 系统的主题色设置为亮色或者暗色，暂不支持
+
+宽度条件基于运行时的 `window.width` 判断。
+
 ### 逻辑运算符 {#logical-operators}
 - **and 支持**
 - not 不支持

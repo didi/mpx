@@ -12,8 +12,27 @@ global.__mpxPageSizeCountMap = reactive({})
 
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
-    const styleObj = classMap[className]?.(global.__formatValue)
-    styleObj && classMapValueCache.set(className, styleObj)
+    const originalDependentWindowSize = dependentWindowSize
+    dependentWindowSize = false
+
+    let styleObj = classMap[className]?.(formatValue)
+    if (!styleObj) {
+      dependentWindowSize = originalDependentWindowSize
+      return
+    }
+    if (!styleObj._media?.length) {
+      styleObj = {
+        _default: styleObj
+      }
+    }
+
+    // 使用不可枚举属性记录窗口尺寸依赖，避免该内部标记被合并到 RN 样式中
+    Object.defineProperty(styleObj, '_dependentWindowSize', {
+      value: dependentWindowSize
+    })
+    dependentWindowSize = dependentWindowSize || originalDependentWindowSize
+
+    classMapValueCache.set(className, styleObj)
   }
   return classMapValueCache.get(className)
 }
@@ -28,16 +47,16 @@ function useDimensionsInfo (dimensions) {
   global.__mpxAppDimensionsInfo.screen = dimensions.screen
 }
 
-function getPageSize (window = global.__mpxAppDimensionsInfo.screen) {
+function getWindowSize (window = global.__mpxAppDimensionsInfo.window) {
   return window.width + 'x' + window.height
 }
 
 Dimensions.addEventListener('change', ({ window, screen }) => {
-  const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
+  const oldWindowSize = getWindowSize()
   useDimensionsInfo({ window, screen })
 
-  // 对比 screen 高宽是否存在变化
-  if (getPageSize(screen) === oldScreen) return
+  // 对比自定义处理后的 window 高宽是否存在变化
+  if (getWindowSize() === oldWindowSize) return
 
   global.__classCaches?.forEach(cache => cache?.clear())
 
@@ -54,21 +73,20 @@ Dimensions.addEventListener('change', ({ window, screen }) => {
   }
 })
 
-// TODO: 1 目前测试鸿蒙下折叠屏screen固定为展开状态下屏幕尺寸，仅window会变化，且window包含状态栏高度
-// TODO: 2 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions监听到的width/height尺寸错误，并触发多次问题
+// TODO: 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions 监听到的 width/height 尺寸错误，并触发多次问题
 function rpx (value) {
-  const screenInfo = global.__mpxAppDimensionsInfo.screen
+  const windowInfo = global.__mpxAppDimensionsInfo.window
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
-  // px = rpx * (750 / 屏幕宽度)
-  return value * screenInfo.width / 750
+  // px = rpx * (窗口宽度 / 750)
+  return value * windowInfo.width / 750
 }
 function vw (value) {
-  const screenInfo = global.__mpxAppDimensionsInfo.screen
-  return value * screenInfo.width / 100
+  const windowInfo = global.__mpxAppDimensionsInfo.window
+  return value * windowInfo.width / 100
 }
 function vh (value) {
-  const screenInfo = global.__mpxAppDimensionsInfo.screen
-  return value * screenInfo.height / 100
+  const windowInfo = global.__mpxAppDimensionsInfo.window
+  return value * windowInfo.height / 100
 }
 
 const unit = {
@@ -79,12 +97,15 @@ const unit = {
 
 const empty = {}
 
+// 记录 style 是否依赖窗口尺寸
+let dependentWindowSize = false
 function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
   if (unitType === 'hairlineWidth') {
     return StyleSheet.hairlineWidth
   }
   if (unitType && typeof unit[unitType] === 'function') {
+    dependentWindowSize = true
     return unit[unitType](+value)
   }
   const matched = unitRegExp.exec(value)
@@ -92,6 +113,7 @@ function formatValue (value, unitType) {
     if (!matched[2] || matched[2] === 'px') {
       return +matched[1]
     } else {
+      dependentWindowSize = true
       return unit[matched[2]](+matched[1])
     }
   }
@@ -229,17 +251,19 @@ function isNativeStyle (style) {
 
 function getMediaStyle (media) {
   if (!media || !media.length) return {}
-  const { width } = global.__mpxAppDimensionsInfo.screen
+  dependentWindowSize = true
+  const { width } = global.__mpxAppDimensionsInfo.window
   return media.reduce((styleObj, item) => {
     const { options = {}, value = {} } = item
     const { minWidth, maxWidth } = options
-    if (!isNaN(minWidth) && !isNaN(maxWidth) && width >= minWidth && width <= maxWidth) {
-      Object.assign(styleObj, value)
-    } else if (!isNaN(minWidth) && width >= minWidth) {
-      Object.assign(styleObj, value)
-    } else if (!isNaN(maxWidth) && width <= maxWidth) {
-      Object.assign(styleObj, value)
-    }
+    const hasMinWidth = !isNaN(minWidth)
+    const hasMaxWidth = !isNaN(maxWidth)
+    const matched = hasMinWidth && hasMaxWidth
+      ? width >= minWidth && width <= maxWidth
+      : hasMinWidth
+        ? width >= minWidth
+        : hasMaxWidth && width <= maxWidth
+    if (matched) Object.assign(styleObj, value)
     return styleObj
   }, {})
 }
@@ -254,11 +278,11 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
+        // 重置依赖标记
+        dependentWindowSize = false
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
-        // 使用一下 __getSizeCount 触发其 get
-        this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
@@ -267,20 +291,15 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              if (localStyle._media?.length) {
-                mergeResult(localStyle, getMediaStyle(localStyle._media))
-              } else {
-                mergeResult(localStyle)
-              }
+              mergeResult(localStyle._default, getMediaStyle(localStyle._media))
+              // class style 计算可能触发缓存，需要单独在结果中记录是否依赖窗口尺寸，不能直接使用全局变量。
+              this.__dependentWindowSize = this.__dependentWindowSize || localStyle._dependentWindowSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              if (appStyle._media?.length) {
-                mergeResult(appStyle, getMediaStyle(appStyle._media))
-              } else {
-                mergeResult(appStyle)
-              }
-            } else if (isObject(this.__props[className])) {
+              mergeResult(appStyle._default, getMediaStyle(appStyle._media))
+              this.__dependentWindowSize = this.__dependentWindowSize || appStyle._dependentWindowSize
+            } else if (isObject(this.__mpxProxy.props[className])) {
               // externalClasses必定以对象形式传递下来
-              mergeResult(this.__props[className])
+              mergeResult(this.__mpxProxy.props[className])
             }
           })
         }
@@ -319,6 +338,12 @@ export default function styleHelperMixin () {
           })
         }
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+
+        // 仅在依赖窗口尺寸时才触发 __getSizeCount 进行响应式关联，避免窗口尺寸变化时不必要的性能损耗
+        this.__dependentWindowSize = this.__dependentWindowSize || dependentWindowSize
+        if (this.__dependentWindowSize) {
+          this.__getSizeCount()
+        }
         return isEmpty ? empty : result
       }
     }

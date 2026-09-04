@@ -409,19 +409,20 @@ function usePageEffect (mpxProxy, pageId, type) {
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
-    if (hasShowHook || hasHideHook || hasResizeHook) {
+    // Page 即使没有注册页面生命周期，也需要监听 show 来追平后台期间错过的尺寸版本。
+    // Component 仍仅在声明了对应生命周期时监听，避免无意义的 watcher。
+    if (type === 'page' || hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
+            // 后台页面重新显示时先追平尺寸版本，驱动依赖 rpx/vw/vh 和媒体查询的组件刷新。
+            if (type === 'page' && newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
+            }
+
             triggerPageStatusHook(mpxProxy, newVal)
             // 仅在尺寸确实变化时才触发resize事件
             triggerResizeEvent(mpxProxy, sizeRef)
-
-            // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
-            if (type === 'page' && newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
-              // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
-              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
-            }
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy, sizeRef)
           }
@@ -664,6 +665,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
   }
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  if (global.__externalClasses && global.__externalClasses.length > 0) {
+    global.__externalClasses.forEach((name) => {
+      validProps[name] = null
+    })
+  }
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {

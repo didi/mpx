@@ -5,6 +5,7 @@ describe('React Native style validation for CSS variables', () => {
     mode,
     srcMode: 'wx',
     ctorType: 'component',
+    formatValueName: '_f',
     warn: jest.fn(),
     error: jest.fn()
   })
@@ -279,6 +280,43 @@ describe('React Native style validation for CSS variables', () => {
 
       expect(result.text).toEqual({
         letterSpacing: '2'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should keep media declarations out of the default class style', () => {
+      const css = `
+        .media-box {
+          width: 280px;
+          background-color: red;
+        }
+        @media (min-width: 600px) {
+          .media-box {
+            width: 50vw;
+            background-color: green;
+          }
+        }
+      `
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result['media-box']).toEqual({
+        _default: {
+          width: '280',
+          backgroundColor: '"red"'
+        },
+        _media: [{
+          options: { minWidth: 600 },
+          value: {
+            width: "_f(50, 'vw')",
+            backgroundColor: '"green"'
+          }
+        }]
       })
       expect(config.error).not.toHaveBeenCalled()
     })

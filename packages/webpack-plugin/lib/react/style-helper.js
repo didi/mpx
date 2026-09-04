@@ -135,18 +135,24 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          // set css defalut value
-          const val = classMap[key] || {}
-          classMap[key] = Object.assign(val, classMapValue)
-
-          // set css media
+          let defaultStyle = classMap[key]?._default
+          let mediaStyle = classMap[key]?._media
           if (isMedia) {
-            const _media = classMap[key]?._media || []
-            _media.push({
+            defaultStyle = defaultStyle || classMap[key] || {}
+            mediaStyle = mediaStyle || []
+            mediaStyle.push({
               options,
               value: classMapValue
             })
-            classMap[key]._media = _media
+            classMap[key] = {
+              _default: defaultStyle,
+              _media: mediaStyle
+            }
+          } else if (defaultStyle) {
+            Object.assign(defaultStyle, classMapValue)
+          } else {
+            const val = classMap[key] || {}
+            classMap[key] = Object.assign(val, classMapValue)
           }
         }
       })
