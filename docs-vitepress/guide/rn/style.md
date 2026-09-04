@@ -43,7 +43,7 @@ Mpx 框架在样式处理方面的工作分为两大类：
 - ✅ CSS 函数处理：`env()`、`calc()`、`var()`
 ## CSS 选择器 {#css-selectors}
 
-RN 环境下仅支持**单类选择器**、**page选择器**、**:host选择器**，不支持类名组合选择器，不过逗号组合的选择器本质上还是单类选择器，是可以支持的。
+RN 环境下仅支持编译器转换后的**单类选择器**。逗号并列的多条单类选择器仍受支持；`page` 和 `:host` 会在进入 RN class map 前由编译器转换为内部单类，因此也可使用。
 
 ```css
 /* ✅ 支持的选择器 */
@@ -70,6 +70,26 @@ view, text {
 
 .classA .classB {
   color: red;
+}
+
+.button:hover {
+  color: blue;
+}
+
+.text::before {
+  content: '';
+}
+```
+
+任意来源最终生成的伪类、伪元素、组合器及其他非支持选择器都会在构建阶段作为 error 上报，且不会生成对应的 class 样式；UnoCSS 等原子 CSS 产物也遵循相同规则。点击态请使用组件的 `hover-class` 属性，并为其声明独立的单类样式：
+
+```html
+<view class="button" hover-class="button-hover">按钮</view>
+```
+
+```css
+.button-hover {
+  color: blue;
 }
 ```
 
@@ -1255,7 +1275,8 @@ color: rgba(255, 0, 0, 0.8);
 > [!tip] 注意
 >
 > - 仅支持设置单一字体
-> - 不支持字体文件引入
+> - RN 输出不支持通过 `@font-face` 引入字体文件；编译时会发出 warning 并移除该声明
+> - 使用自定义字体时，需先在 RN 宿主环境中安装，再通过 `font-family` 引用
 > - 遵循[文本样式继承规则](#text-style-inheritance)
 
 ```css

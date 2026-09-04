@@ -18,7 +18,6 @@ module.exports = function ({ print }) {
           if (value !== 'live') {
             baiduValueLogError({ name, value })
           }
-          return false
         }
       },
       {
