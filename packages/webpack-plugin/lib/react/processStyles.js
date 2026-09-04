@@ -11,7 +11,6 @@ module.exports = function (styles, {
   moduleId
 }, callback) {
   const { getRequestString } = createHelpers(loaderContext)
-  let content = ''
   const styleResults = []
   let output = '/* styles */\n'
   if (styles.length) {
@@ -28,6 +27,7 @@ module.exports = function (styles, {
     const { mode, srcMode, hasUnoCSS } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
+      const styleSrcMode = style.srcMode || srcMode
       const extraOptions = {
         moduleId,
         scoped,
@@ -41,16 +41,16 @@ module.exports = function (styles, {
             styleResults.push({
               content: css,
               map: item[3],
-              filename: loaderContext.resourcePath
+              filename: loaderContext.resourcePath,
+              srcMode: styleSrcMode
             })
-            content += css.trim() + '\n'
           })
         } else {
           styleResults.push({
             content: result,
-            filename: loaderContext.resourcePath
+            filename: loaderContext.resourcePath,
+            srcMode: styleSrcMode
           })
-          content += result.trim() + '\n'
         }
         callback()
       }).catch((e) => {
@@ -66,7 +66,6 @@ module.exports = function (styles, {
           global.__classCaches.push(__classCache)`
         const formatValueName = '_f'
         const classMap = getClassMap({
-          content,
           styles: styleResults,
           filename: loaderContext.resourcePath,
           inputFileSystem: loaderContext._compiler && loaderContext._compiler.inputFileSystem,

@@ -7,10 +7,10 @@ const u = require('./review-loop-utils')
 
 const roles = ['planner', 'plan-reviewer', 'coder', 'code-reviewer']
 const roleDescriptions = {
-  planner: 'Planner for review-loop workflows.',
-  'plan-reviewer': 'Plan reviewer for review-loop workflows.',
-  coder: 'Coder for review-loop workflows.',
-  'code-reviewer': 'Code reviewer for review-loop workflows.'
+  planner: '负责 review-loop 工作流技术方案编写与修订。',
+  'plan-reviewer': '负责 review-loop 工作流技术方案评审。',
+  coder: '负责 review-loop 工作流代码实现与修订。',
+  'code-reviewer': '负责 review-loop 工作流代码评审。'
 }
 
 function roleTemplatePath (role) {

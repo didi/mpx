@@ -137,6 +137,7 @@ Mpx 跨端输出 RN 时，支持以下模板指令。
 | wx:for | ✅ | 列表渲染 | `<view wx:for="{{list}}">...</view>` |
 | wx:for-item | ✅ | 指定循环项变量名 | `<view wx:for="{{list}}" wx:for-item="item">...</view>` |
 | wx:for-index | ✅ | 指定循环索引变量名 | `<view wx:for="{{list}}" wx:for-index="idx">...</view>` |
+| wx:key | ✅ | 指定列表项的唯一标识 | `<view wx:for="{{list}}" wx:key="id">...</view>` |
 | wx:class | ✅ | 动态类名绑定 | `<view wx:class="{{ {active: isActive} }}">...</view>` |
 | wx:style | ✅ | 动态样式绑定 | `<view wx:style="{{ {color: colorVar} }}">...</view>` |
 | wx:model | ✅ | 双向数据绑定 | `<input wx:model="{{value}}" />` |
@@ -145,6 +146,12 @@ Mpx 跨端输出 RN 时，支持以下模板指令。
 | wx:model-value-path | ✅ | 定义了双向绑定时从 `e.detail` 中获取更新值的访问路径，默认值为 `value`，即通过 `e.detail.value` 获取更新值，如通过 `e.detail` 直接作为更新值，可以设置 `wx:model-value-path="[]"` | `<custom-input wx:model="{{value}}" wx:model-value-path="[]" />` |
 | wx:model-filter | ✅ | 双向绑定过滤器，可绑定内建（如 trim）或组件实例方法，在双向绑定时对更新值进行过滤和修饰 | `<input wx:model="{{value}}" wx:model-filter="trim" />` |
 | wx:ref | ✅ | 获取基础组件节点或自定义组件实例 | `<view wx:ref="myView">...</view>` |
+
+**注意事项**
+
+- `wx:key` 需与 `wx:for` 配合使用，属性值不能使用 Mustache 数据绑定。传入普通字符串（如 `wx:key="id"`）时，会读取列表项的同名属性；传入保留关键字 `*this` 且列表项为基本类型时，会使用列表项本身；传入 `index` 或 `_` 时，会使用列表索引。如果解析出的 key 是对象类型，RN 平台会退化为使用列表索引。
+- 通过 `wx:key` 规则获取到的 key 值必须为数值或字符串字面量，同一父节点下的列表项 key 值必须唯一，不合法的 key 值会直接导致运行时报错，随渲染变化的不稳定 key 值可能导致组件状态复用错误或渲染异常。
+- RN 平台下，同标签的 `wx:if` / `wx:elif` / `wx:else` 分支可能被 React 复用；当分支使用的按需样式能力不一致时，需通过预声明 `enable-*` 或添加独立 `key` 保证生命周期稳定。详见[样式开发最佳实践 · 按需样式能力预声明](./rn-style-practice.md#按需样式能力预声明)。
 
 ---
 
@@ -694,7 +701,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| hover-class | string |  | 指定按下去的样式类。 |
+| hover-class | string |  | 指定按下去的样式类。当 `hover-class="none"` 时，没有点击态效果。 |
 | hover-start-time | number | `50` | 按住后多久出现点击态，单位毫秒 |
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 | animation | object |  | 传递动画的实例， 可配合 mpx.createAnimation 方法一起使用 |
@@ -1287,7 +1294,7 @@ level 有效值：
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| hover-class | string | `false` | 指定按下去的样式类。 |
+| hover-class | string | `false` | 指定按下去的样式类。当 `hover-class="none"` 时，没有点击态效果。 |
 | hover-start-time | number | `50` | 按住后多久出现点击态，单位毫秒 |
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 | open-type | string | `navigate` | 可支持`navigateBack`、`redirect`、`switchTab`、`reLaunch`、`navigateTo` |
@@ -1483,6 +1490,8 @@ level 有效值：
 | refresher-enabled | boolean | `false` | 开启自定义下拉刷新 |
 | refresher-triggered | boolean | `false` | 设置当前下拉刷新状态，true 表示已触发 |
 | show-scrollbar | boolean | `true` | 滚动条显隐控制 |
+| enable-item-exposure | boolean | `false` | 开启列表项曝光通知 |
+| item-exposure-threshold | number | `0` | 列表项露出比例达到多少后触发曝光通知，取值 0-100 |
 | simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，允许多个手势同时识别和处理 |
 | wait-for | array\<object> | `[]` | RN 环境特有属性，允许延迟激活处理某些手势 |
 
@@ -1493,6 +1502,7 @@ level 有效值：
 | scroll | 滚动时触发，`event.detail.scrollTop` 返回纵向滚动位置 |
 | scrolltolower | 滚动到底部 / 触底通知 |
 | refresherrefresh | 自定义下拉刷新被触发 |
+| itemexposure | 列表项露出比例达到阈值时触发 |
 
 #### 方法
 
@@ -1503,7 +1513,8 @@ level 有效值：
 #### 注意事项
 
 - 当使用列表项、列表头、自定义分组头或者自定义分组尾，必须配置对应 `item-height`、`section-header-height`、`section-footer-height`、`list-header-height` 高度参数，否则会出现滚动异常。
-- RN 环境中，section-list 通过 RN 的 `SectionList` 实现分组吸顶。开启 `enable-sticky` 且快速滑动时，自定义分组头有时会出现闪烁，属于 RN 底层实现限制。
+- `enable-item-exposure` 与 `item-exposure-threshold` 不支持运行时动态修改，请在组件初始化时确定。
+- `section-header` 曝光统计仅支持 `enable-sticky=false` 场景；开启 `enable-sticky` 时暂不支持统计 `section-header` 曝光。
 
 ### sticky-section
 
