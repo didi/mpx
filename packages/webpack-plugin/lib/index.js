@@ -393,7 +393,7 @@ class MpxWebpackPlugin {
         // todo chunkLoadingGlobal不具备项目唯一性，在多构建产物混编时可能存在问题，尤其在支付宝使用全局对象传递的情况下
         compiler.options.output.chunkLoadingGlobal = 'c'
       } else {
-        compiler.options.output.globalObject = '__mpxChunkGlobal__'
+        compiler.options.output.globalObject = '__mpx_chunk_global__'
       }
     }
 

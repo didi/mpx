@@ -31,9 +31,9 @@ async function resolveOutputOptions ({ mode, mpxMode, optimizeSize }) {
 
 describe('output global object', () => {
   test.each([
-    ['serve miniprogram', { mode: 'development', mpxMode: 'wx', optimizeSize: false }, '__mpxChunkGlobal__', false],
-    ['optimized serve miniprogram', { mode: 'development', mpxMode: 'wx', optimizeSize: true }, '__mpxChunkGlobal__', false],
-    ['production miniprogram', { mode: 'production', mpxMode: 'wx', optimizeSize: false }, '__mpxChunkGlobal__', false],
+    ['serve miniprogram', { mode: 'development', mpxMode: 'wx', optimizeSize: false }, '__mpx_chunk_global__', false],
+    ['optimized serve miniprogram', { mode: 'development', mpxMode: 'wx', optimizeSize: true }, '__mpx_chunk_global__', false],
+    ['production miniprogram', { mode: 'production', mpxMode: 'wx', optimizeSize: false }, '__mpx_chunk_global__', false],
     ['optimized production miniprogram', { mode: 'production', mpxMode: 'wx', optimizeSize: true }, 'g', false],
     ['web', { mode: 'development', mpxMode: 'web', optimizeSize: false }, 'globalThis', true],
     ['react', { mode: 'development', mpxMode: 'ios', optimizeSize: false }, 'globalThis', true]
