@@ -209,7 +209,6 @@ class MpxWebpackPlugin {
     options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
     options.disableRequireAsync = options.disableRequireAsync || false
-    options.asyncCommonSubpackage = options.asyncCommonSubpackage !== undefined ? options.asyncCommonSubpackage : true
     options.miniNpmPackages = options.miniNpmPackages || []
     options.normalNpmPackages = options.normalNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
@@ -221,8 +220,10 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
+    options.webConfig.asyncCommonSubpackage = options.webConfig.asyncCommonSubpackage !== undefined ? options.webConfig.asyncCommonSubpackage : true
     options.rnConfig = options.rnConfig || {}
     options.rnConfig.supportSubpackage = options.rnConfig.supportSubpackage !== undefined ? options.rnConfig.supportSubpackage : true
+    options.rnConfig.asyncCommonSubpackage = options.rnConfig.asyncCommonSubpackage !== undefined ? options.rnConfig.asyncCommonSubpackage : true
     options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
@@ -1307,10 +1308,14 @@ class MpxWebpackPlugin {
               }
               needInit = true
             }
-            if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
-              splitChunksOptions.cacheGroups.async = {
-                chunks: this.options.asyncCommonSubpackage ? 'async' : 'all',
-                name: this.options.asyncCommonSubpackage ? 'async-common/index' : mpx.appInfo.name,
+            const asyncCommonSubpackage = isWeb(mpx.mode)
+              ? this.options.webConfig.asyncCommonSubpackage
+              : this.options.rnConfig.asyncCommonSubpackage
+            const cacheGroupName = asyncCommonSubpackage ? 'async' : 'mainCommon'
+            if (!hasOwn(splitChunksOptions.cacheGroups, cacheGroupName)) {
+              splitChunksOptions.cacheGroups[cacheGroupName] = {
+                chunks: asyncCommonSubpackage ? 'async' : 'all',
+                name: asyncCommonSubpackage ? 'async-common/index' : mpx.appInfo.name,
                 minChunks: 2,
                 minSize: 1
               }

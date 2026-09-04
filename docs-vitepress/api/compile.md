@@ -842,6 +842,16 @@ module.exports = defineConfig({
 
 为 `true` 时 **禁用** 页面切换动画；设为 **`false`** 可 **开启** 切换过渡效果。
 
+#### webConfig.asyncCommonSubpackage
+
+`boolean = true`
+
+控制 Web 输出中被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
+
+
 #### webConfig.customBuiltInComponents {#webconfig-custombuiltincomponents}
 
 `Record<string, string> | undefined`
@@ -871,6 +881,7 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         webConfig: {
+          asyncCommonSubpackage: false,
           transRpxFn: function (match, $1) {
             if ($1 === '0') return $1
             return `${$1 * +(100 / 750).toFixed(8)}vw`
@@ -904,6 +915,15 @@ module.exports = defineConfig({
 `boolean = true`
 
 为 `true` 时，RN 输出下页面与组件可走异步分包与 `import()` 等逻辑；为 `false` 时关闭相关能力。插件初始化时若未传入则默认为 `true`。
+
+#### rnConfig.asyncCommonSubpackage
+
+`boolean = true`
+
+控制 RN 输出中被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
 
 #### rnConfig.asyncChunk
 
@@ -941,6 +961,7 @@ module.exports = defineConfig({
         rnConfig: {
           projectName: 'MyMpxApp',
           supportSubpackage: true,
+          asyncCommonSubpackage: false,
           asyncChunk: {
             timeout: 10000,
             fallback: path.resolve(__dirname, 'src/rn/PageFallback.mpx'),
@@ -1248,28 +1269,6 @@ module.exports = defineConfig({
 * 若placeholder配置使用自定义组件，注意一定要配置 placeholder 中的 resource 字段
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
-
-### asyncCommonSubpackage
-
-`boolean = true`
-
-在 Web 与 RN 输出中，控制被多个异步分包共享的公共模块如何输出：
-
-- 为 `true`（默认）时，公共模块由 `SplitChunksPlugin` 的 `async` cacheGroup 抽取到 `async-common/index.js`，运行时按需加载。
-- 为 `false` 时，公共模块直接合并进 app 主入口 chunk，不再输出 `async-common/index.js`，异步分包可直接复用主包中的公共模块。
-
-```js
-// mpx.config.js
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      plugin: {
-        asyncCommonSubpackage: false
-      }
-    }
-  }
-})
-```
 
 ### transSubpackageRules
 
