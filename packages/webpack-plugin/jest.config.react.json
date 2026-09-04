@@ -1,0 +1,47 @@
+{
+  "transform": {
+    "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { "rootMode": "upward" }]
+  },
+  "testEnvironment": "node",
+  "coverageProvider": "v8",
+  "moduleNameMapper": {
+    "\\.(css|styl)$": "identity-obj-proxy",
+    "^@mpxjs/utils$": "<rootDir>/../utils/src/index.js",
+    "^react-native$": "<rootDir>/test/__mocks__/react-native-pure.js",
+    "^react-native-safe-area-context$": "<rootDir>/test/__mocks__/react-native-safe-area-context.js",
+    "^react-native-linear-gradient$": "<rootDir>/test/__mocks__/react-native-linear-gradient.js",
+    "^react-native-gesture-handler$": "<rootDir>/test/__mocks__/react-native-gesture-handler.js",
+    "^react-native-reanimated$": "<rootDir>/test/__mocks__/react-native-reanimated.js",
+    "^react-native-fast-image$": "<rootDir>/test/__mocks__/react-native-fast-image.js",
+    "^@d11/react-native-fast-image$": "<rootDir>/test/__mocks__/react-native-fast-image.js",
+    "\\.(png|jpg|jpeg|gif|webp)$": "<rootDir>/test/__mocks__/fileMock.js"
+  },
+  "setupFilesAfterEnv": [
+    "<rootDir>/test/runtime/react-native/components/setup.js"
+  ],
+  "testMatch": [
+    "<rootDir>/test/runtime/react-native/components/**/*.test.(js|jsx|ts|tsx)"
+  ],
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/dist/"
+  ],
+  "collectCoverageFrom": [
+    "lib/runtime/components/react/**/*.{ts,tsx}",
+    "!lib/runtime/components/react/**/*.d.ts",
+    "!lib/runtime/components/react/dist/**",
+    "!lib/runtime/components/react/mpx-canvas/html.ts",
+    "!lib/runtime/components/react/mpx-picker/type.ts"
+  ],
+  "coverageThreshold": {
+    "global": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90,
+      "branches": 90
+    }
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(\\.pnpm/)?(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs))"
+  ]
+}

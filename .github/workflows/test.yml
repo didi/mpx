@@ -2,6 +2,10 @@ name: test
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   tsc:
     runs-on: ubuntu-latest
@@ -19,6 +23,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: detect RN component changes
+        id: changes
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            rn_components:
+              - 'packages/webpack-plugin/lib/runtime/components/react/**'
+              - 'packages/webpack-plugin/test/runtime/react-native/components/**'
+              - 'packages/webpack-plugin/test/__mocks__/**'
+              - 'packages/webpack-plugin/jest.config.react.json'
       - name: Cache node modules
         id: cache
         uses: actions/cache@v4
@@ -59,4 +73,8 @@ jobs:
         run: npm run build:tsc
 
       - name: exec unit test
-        run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
+        run: npm run test:base && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
+
+      - name: exec RN component unit test
+        if: steps.changes.outputs.rn_components == 'true'
+        run: npm run test:react -w @mpxjs/webpack-plugin
