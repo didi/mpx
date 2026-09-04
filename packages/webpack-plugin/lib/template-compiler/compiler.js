@@ -107,6 +107,7 @@ let isNative
 let hasScoped
 let hasVirtualHost
 let isCustomText
+let hasUnoCSS
 let runtimeCompile
 let rulesRunner
 let customBuiltInComponentsOpt
@@ -640,6 +641,7 @@ function parse (template, options) {
   hasScoped = options.hasScoped
   hasVirtualHost = options.hasVirtualHost
   isCustomText = options.isCustomText
+  hasUnoCSS = options.hasUnoCSS
   filePath = options.filePath
   i18n = options.i18n
   runtimeCompile = options.runtimeCompile
@@ -2421,7 +2423,8 @@ function processClass (el, meta) {
   if (dynamicClass) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
     const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
-      error: error$1
+      error: error$1,
+      hasUnoCSS
     })
     addAttrs(el, [{
       name: targetType,
@@ -3500,7 +3503,8 @@ function processClassDynamic (el) {
   if (dynamicClass) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
     const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
-      error: error$1
+      error: error$1,
+      hasUnoCSS
     })
     addAttrs(el, [{
       name: targetType,

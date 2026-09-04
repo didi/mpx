@@ -1680,34 +1680,6 @@ module.exports = defineConfig({
 })
 ```
 
-### escapeMap
-
-`object`
-
-针对原子类中出现的`[` `(` `,`等特殊字符，在web中会通过转义字符`\`进行转义，由于小程序环境下不支持css选择器中出现`\`转义字符，我们内置支持了一套不带`\`的转义规则对这些特殊字符进行转义，同时替换模版和css文件中的类名，内建的默认转义规则，可自定义转译规则
-```js
-// vue.config.js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      unocss: {
-        escapeMap: {
-          ':': '_d_',
-        }
-      }
-    }
-  }
-})
-```
-```css
-  <view class="dark:text-green-400"/>
-```
-将会转化为
-```css
-  .dark .dark_d_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
-```
-
 ### root
 
 `string = process.cwd()`

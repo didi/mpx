@@ -80,6 +80,11 @@ declare global {
     dynamicEntryInfo: Record<string, any>
 
     /**
+     * 是否使用 UnoCSS
+     */
+    hasUnoCSS?: boolean
+
+    /**
      * 记录 entryModule 与 entryNode 的对应关系，用于体积分析
      */
     entryNodeModulesMap: Map<any, any>
