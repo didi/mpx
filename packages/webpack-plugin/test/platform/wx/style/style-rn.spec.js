@@ -90,6 +90,41 @@ describe('React Native style validation for CSS variables', () => {
     })
   })
 
+  describe('Media queries', () => {
+    test('keeps media declarations out of the default class style', () => {
+      const config = createConfig()
+      const result = getClassMap({
+        content: `
+          .media-box {
+            width: 280px;
+            background-color: red;
+          }
+          @media (min-width: 600px) {
+            .media-box {
+              width: 520px;
+              background-color: green;
+            }
+          }
+        `,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result['media-box']).toEqual({
+        width: '280',
+        backgroundColor: '"red"',
+        _media: [{
+          options: { minWidth: 600 },
+          value: {
+            width: '520',
+            backgroundColor: '"green"'
+          }
+        }]
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+  })
+
   describe('CSS variable fallback validation', () => {
     test('should filter out letter-spacing with invalid "normal" fallback', () => {
       const css = '.text { letter-spacing: var(--x, normal); }'

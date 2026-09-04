@@ -15,7 +15,8 @@ module.exports = function (script, {
   localPagesMap,
   rnConfig,
   componentGenerics,
-  genericsInfo
+  genericsInfo,
+  externalClasses
 }, callback) {
   const { appInfo, i18n } = loaderContext.getMpx()
 
@@ -46,7 +47,7 @@ import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext,
       jsonConfig,
       rnConfig
     })
-    output += buildGlobalParams({ moduleId, srcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp })
+    output += buildGlobalParams({ moduleId, srcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp, externalClasses })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
