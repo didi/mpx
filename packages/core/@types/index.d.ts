@@ -476,7 +476,7 @@ export interface RnConfig {
   }) => void
 
   /**
-   * 自定义屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
+   * 自定义窗口和屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
    *
    * @param dimensions 包含 window 和 screen 的尺寸信息
    * @returns 返回修改后的尺寸对象，或 void 表示不修改

@@ -474,11 +474,11 @@ mpx.config.rnConfig.disablePageTransition = true
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
-在某些情况下，我们可能不希望当前应用全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 尺寸信息来得到想要的渲染效果。
+在某些情况下，我们可能不希望当前应用全屏展示。Mpx 内部基于 `window.width` 与 `window.height` 计算 `rpx` / `vh` / `vw` 与媒体查询，并在 Window 尺寸变化时触发相关的响应式更新与 `onResize`。此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 window 尺寸信息，得到想要的渲染效果。
 
-可在此方法中返回修改后的 dimensions，如果无返回或返回 undefined，则以入参作为返回值
+可在此方法中返回修改后的 dimensions，如果无返回或返回 `undefined`，则使用原始入参。
 
-例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
+例如，折叠屏展开时如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
 
 
 ### 前后台切换 {#app-state-change}
