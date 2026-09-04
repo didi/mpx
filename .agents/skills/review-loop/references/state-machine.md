@@ -1,46 +1,37 @@
-# Review Loop State Machine
+# 评审循环状态机
 
-The orchestrator must use `scripts/advance-state.js` for state transitions.
+编排者必须使用 `scripts/advance-state.js` 完成状态转换。
 
-## States
+## 状态
 
-| Phase | Meaning | Next phase |
+| 阶段 | 含义 | 下一阶段 |
 | --- | --- | --- |
-| `plan_drafting` | planner writes or revises `plan.md` | `plan_reviewing` |
-| `plan_reviewing` | plan-reviewer reviews `plan.md` | `plan_drafting` or `awaiting_plan_confirm` |
-| `awaiting_plan_confirm` | waiting for user plan confirmation | `code_drafting` or `plan_drafting` |
-| `code_drafting` | coder implements confirmed plan | `code_reviewing` |
-| `code_reviewing` | code-reviewer reviews diff | `code_drafting` or `awaiting_final_confirm` |
-| `awaiting_final_confirm` | waiting for final user confirmation | `done` or `code_drafting` |
-| `done` | workflow complete | none |
+| `plan_drafting` | planner 编写或修订 `plan.md` | `plan_reviewing` |
+| `plan_reviewing` | plan-reviewer 评审 `plan.md` | `plan_drafting` 或 `awaiting_plan_confirm` |
+| `awaiting_plan_confirm` | 等待用户确认方案 | `code_drafting` 或 `plan_drafting` |
+| `code_drafting` | coder 实施已确认方案 | `code_reviewing` |
+| `code_reviewing` | code-reviewer 评审差异 | `code_drafting` 或 `awaiting_final_confirm` |
+| `awaiting_final_confirm` | 等待用户最终确认 | `done` 或 `code_drafting` |
+| `done` | 工作流完成 | 无 |
 
-Migration validates these phase invariants before upgrading a legacy
-workspace: plan-only phases have `codeRound = 0`; code phases have at least one
-completed plan round; final-confirmation and done phases have at least one
-completed code round. The latest plan review supporting
-`awaiting_plan_confirm` or a later phase, and the latest code review supporting
-`awaiting_final_confirm` or `done`, must be approved or have reached
-`maxRounds`. A `changes_requested` review below that limit cannot support a
-confirmation phase.
+升级旧工作区前，迁移会校验这些阶段不变量：仅方案阶段的 `codeRound = 0`；代码阶段至少已完成一轮方案评审；最终确认和完成阶段至少已完成一轮代码评审。支撑 `awaiting_plan_confirm` 或更晚阶段的最新方案评审，以及支撑 `awaiting_final_confirm` 或 `done` 的最新代码评审，必须是 `approved`，或者已达到 `maxRounds`。低于该上限的 `changes_requested` 评审不能支撑确认阶段。
 
-## Plan Loop
+## 方案循环
 
-1. `plan_drafting`: run `planner`.
-2. Advance with `--event planner-complete`.
-3. `plan_reviewing`: run `review-manager.js --kind plan --round N --prepare`,
-   start a fresh native `plan-reviewer` subagent with the returned prompt, then
-   run `--finalize --input <file> --agent-id <id>` to persist its result.
-4. Advance with `--event plan-review-complete --review <path>`.
+1. `plan_drafting`：运行 `planner`，用中文编写方案或修订记录；第 2 轮及后续轮次可以复用原 planner 实例。
+2. 使用 `--event planner-complete` 推进。
+3. `plan_reviewing`：运行 `review-manager.js --kind plan --round N --prepare`，使用返回的提示词为当前轮次新建全新、独立且不继承父级会话上下文的原生 `plan-reviewer` 子 Agent，不得恢复或复用任何历史 reviewer；再运行 `--finalize --input <file> --agent-id <id>` 校验 Agent ID 并持久化其中文评审结果。
+4. 使用 `--event plan-review-complete --review <path>` 推进。
 
-If review status is `approved`, advance to `awaiting_plan_confirm`.
+如果评审状态为 `approved`，推进到 `awaiting_plan_confirm`。
 
-If status is `changes_requested` and `planRound < maxRounds`, advance back to `plan_drafting`.
+如果状态为 `changes_requested` 且 `planRound < maxRounds`，返回 `plan_drafting`。
 
-If status is `changes_requested` and `planRound >= maxRounds`, advance to `awaiting_plan_confirm` with `terminationReason=max_rounds_reached`.
+如果状态为 `changes_requested` 且 `planRound >= maxRounds`，推进到 `awaiting_plan_confirm`，并设置 `terminationReason=max_rounds_reached`。
 
-## Plan Confirmation
+## 方案确认
 
-Only after explicit user confirmation:
+先用中文向用户展示技术方案、按轮次整理的评审结论、修订记录、未接受问题及终止原因，并用中文提问。只有用户明确确认后，才执行：
 
 ```bash
 node .agents/skills/review-loop/scripts/advance-state.js \
@@ -48,55 +39,39 @@ node .agents/skills/review-loop/scripts/advance-state.js \
   --event confirm-plan
 ```
 
-This advances to `code_drafting`.
+该操作会推进到 `code_drafting`。
 
-The transition compares only the current `plan.md` with the reviewed plan
-digest. Reviewer templates, schemas, prior reviews, and other non-plan inputs
-may change without blocking confirmation. If the plan changed, prefer a new
-plan round. When the user's current message explicitly accepts the manual
-change, use:
+转换只比较当前 `plan.md` 和已评审方案的摘要。Reviewer 模板、schema、之前的评审及其他非方案输入发生变化，不会阻塞确认。如果方案已变化，优先开启新一轮方案评审。只有用户当前消息明确接受手动变化时，才使用：
 
 ```bash
 node .agents/skills/review-loop/scripts/advance-state.js \
   --task-id <task-id> \
   --event confirm-plan \
   --accept-changed-inputs true \
-  --override-reason "<why the unreviewed plan change is accepted>"
+  --override-reason "<接受未经评审方案变化的中文理由>"
 ```
 
-The override is recorded in `state.json.confirmationOverrides`.
+覆盖记录会写入 `state.json.confirmationOverrides`。
 
-If the user rejects an approved plan, use `--event reject-plan` and return to
-`plan_drafting`. At a `max_rounds_reached` gate, first obtain explicit user
-confirmation for a higher limit and use `set-max-rounds`; `reject-plan` cannot
-bypass the configured limit.
+如果用户拒绝已通过的方案，使用 `--event reject-plan` 返回 `plan_drafting`。在 `max_rounds_reached` 节点，必须先获得用户对更高上限的明确确认并使用 `set-max-rounds`；`reject-plan` 不能绕过已配置上限。
 
-## Code Loop
+## 代码循环
 
-1. `code_drafting`: run `coder`.
-2. Run relevant validations.
-3. Run `snapshot-diff.js` for exactly `state.codeRound + 1`. Rerunning the
-   current unreviewed round is allowed in `code_drafting`; it is also allowed in
-   `code_reviewing` only to recover artifacts before an immutable reviewer-run
-   or canonical review is persisted.
-4. Advance with `--event coder-complete`. The transition rejects missing or
-   mismatched current-round snapshot artifacts. It reconstructs the current
-   Git tree, path partitions, cumulative patch, and round patch, so any code
-   change after snapshotting requires rerunning `snapshot-diff.js`.
-5. `code_reviewing`: run `review-manager.js --kind code --round N --prepare`,
-   start a fresh native `code-reviewer` subagent with the returned prompt, then
-   run `--finalize --input <file> --agent-id <id>` to persist its result.
-6. Advance with `--event code-review-complete --review <path>`.
+1. `code_drafting`：运行 `coder`；第 2 轮及后续轮次可以复用原 coder 实例。
+2. 运行相关验证。
+3. 使用 `--event coder-complete` 推进。转换会校验初始基线与当前工作树可以安全重建，但不生成轮次范围或相邻轮次增量。
+4. `code_reviewing`：运行 `review-manager.js --kind code --round N --prepare`。Prepare 会写入 `diffs/code-diff-N.patch`，将其加入 reviewer 输入并绑定内容摘要。使用返回的提示词为当前轮次新建全新、独立且不继承父级会话上下文的原生 `code-reviewer` 子 Agent，不得恢复或复用任何历史 reviewer。Reviewer 评审该 patch，但不查找或记录中间轮次变化；再运行 `--finalize --input <file> --agent-id <id>` 校验 Agent ID、输入、树摘要及评审 patch 并持久化其中文评审结果。
+5. 使用 `--event code-review-complete --review <path>` 推进。
 
-If review status is `approved`, advance to `awaiting_final_confirm`.
+如果评审状态为 `approved`，推进到 `awaiting_final_confirm`。
 
-If status is `changes_requested` and `codeRound < maxRounds`, advance back to `code_drafting`.
+如果状态为 `changes_requested` 且 `codeRound < maxRounds`，返回 `code_drafting`。
 
-If status is `changes_requested` and `codeRound >= maxRounds`, advance to `awaiting_final_confirm` with `terminationReason=max_rounds_reached`.
+如果状态为 `changes_requested` 且 `codeRound >= maxRounds`，推进到 `awaiting_final_confirm`，并设置 `terminationReason=max_rounds_reached`。
 
-## Final Confirmation
+## 最终确认
 
-Only after explicit user confirmation:
+先用中文向用户展示差异摘要、按轮次整理的代码评审结论、执行与修订记录、验证结果、剩余风险及终止原因，并用中文提问。只有用户明确确认后，才执行：
 
 ```bash
 node .agents/skills/review-loop/scripts/advance-state.js \
@@ -104,35 +79,25 @@ node .agents/skills/review-loop/scripts/advance-state.js \
   --event confirm-final
 ```
 
-This advances to `done`.
+该操作会推进到 `done`。
 
-The transition compares only the current Git tree with the reviewed snapshot
-tree. Later edits to ignored task-workspace patches, scope metadata, reviews,
-or coder logs do not block final confirmation by themselves. Any non-ignored
-repository change remains Git tree drift; prefer a new code round, or use the
-explicit override when the user accepts it:
+转换比较当前 Git 树与已评审树，并校验 `diffs/code-diff-N.patch` 与绑定树完全一致。之后对被忽略的任务工作区评审或 coder 日志所做的编辑，本身不会阻塞最终确认；评审 patch 缺失或被修改时必须恢复原内容或重新开始评审。任何未忽略的仓库变化仍属于 Git 树漂移；优先开启新一轮代码评审，或者在用户接受变化时使用显式覆盖：
 
 ```bash
 node .agents/skills/review-loop/scripts/advance-state.js \
   --task-id <task-id> \
   --event confirm-final \
   --accept-changed-inputs true \
-  --override-reason "<why the unreviewed code change is accepted>"
+  --override-reason "<接受未经评审代码变化的中文理由>"
 ```
 
-The override records the reviewed/current trees and changed paths.
+覆盖记录会保存已评审/当前树以及变更路径。
 
-If the user rejects approved final output, use `--event reject-final` and
-return to `code_drafting`. At a `max_rounds_reached` gate, first obtain explicit
-user confirmation for a higher limit and use `set-max-rounds`; `reject-final`
-cannot bypass the configured limit.
+如果用户拒绝已通过的最终结果，使用 `--event reject-final` 返回 `code_drafting`。在 `max_rounds_reached` 节点，必须先获得用户对更高上限的明确确认并使用 `set-max-rounds`；`reject-final` 不能绕过已配置上限。
 
-## Increasing maxRounds
+## 增加 maxRounds
 
-Only increase `maxRounds` after the workflow has stopped with
-`terminationReason=max_rounds_reached` and the user explicitly asks in the
-current message to continue with a concrete higher limit. Do not reuse an
-earlier general instruction such as "continue" as confirmation. Use:
+只有工作流因 `terminationReason=max_rounds_reached` 停止，且用户在当前消息中明确要求继续并给出具体的更高上限后，才可增加 `maxRounds`。不得把更早的“继续”等笼统指令复用为确认。执行：
 
 ```bash
 node .agents/skills/review-loop/scripts/advance-state.js \
@@ -142,9 +107,6 @@ node .agents/skills/review-loop/scripts/advance-state.js \
   --user-confirmed true
 ```
 
-The command is rejected before the limit is reached, without the confirmation
-flag, or when the new value is not greater than the current limit. A successful
-command clears the confirmation gate and resumes the corresponding plan or
-code drafting phase.
+在达到上限前、缺少确认标记时，或新值不大于当前上限时，命令都会被拒绝。命令成功后会清除确认节点，并恢复对应的方案或代码起草阶段。
 
-Do not edit `state.json` manually.
+不得手动编辑 `state.json`。
