@@ -1495,12 +1495,13 @@ class MpxWebpackPlugin {
                 }
               }
             }
+            const originalRoot = tarRoot
+            // root仅用于包归属计算，不应进入最终module request
+            if (queryObj.root) request = addQuery(request, {}, false, ['root'])
             // TODO 后续考虑和 asyncSubpackageRules 配置合并
             if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
 
             if (tarRoot && mpx.supportRequireAsync) {
-              // 删除root query
-              if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                 // webpack 5.109.0 起不再在 AST 节点上提供 loc，需通过 parser.getLocation() 获取位置信息，
@@ -1537,7 +1538,7 @@ class MpxWebpackPlugin {
             } else {
               const dep = new CommonJsAsyncDependency(request, expr.range)
               parser.state.current.addDependency(dep)
-              if (!tarRoot) {
+              if (!originalRoot) {
                 compilation.warnings.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
               }
             }
