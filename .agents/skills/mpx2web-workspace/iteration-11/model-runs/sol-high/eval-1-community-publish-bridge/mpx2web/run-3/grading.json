@@ -1,0 +1,162 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "mpx2web",
+  "run_number": 3,
+  "grading_fingerprint": "e9b8db17bb23e57c4ccd9c71360aeb668688c0bb34143cf94dfacb70b492ab3b",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 82327
+  },
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "passed": true,
+      "evidence": "./outputs/src/pages/community/publish.mpx:117-127、129-141、143-156：非 Web 分支在 __mpx_mode__ guard 后直接调用 wx.chooseLocation、wx.openLocation、wx.chooseMedia，未见动态方法名或自定义适配器。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "passed": true,
+      "evidence": "./outputs/src/pages/community/publish.mpx:117-156：Web 缺失能力仅在 choosePlace、openPlace、choosePhoto 内处理；./outputs/src/pages/community/publish.mpx:170-184 仍直接使用 wx.request、wx.redirectTo、wx.showToast，未引入通用平台调用层或改写请求、路由、提示能力。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "./outputs/src/pages/community/publish.mpx:118-121：Web 位置选择分支包含 TODO(web) 待宿主明确位置选择 Bridge 或地图协议后接入，并 return；未调用虚构位置接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "./outputs/src/pages/community/publish.mpx:131-134：Web 地图查看分支包含 TODO(web) 待宿主明确地图查看 Bridge 或地图协议后接入，并 return；未调用虚构地图接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "./outputs/src/pages/community/publish.mpx:144-147：Web 媒体选择分支包含 TODO(web) 待宿主明确媒体选择 Bridge 或媒体协议后接入，并 return；未调用虚构媒体接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "passed": true,
+      "evidence": "./outputs/src/pages/community/publish.mpx:120、133、146、170-184：提示、请求、跳转均继续使用 wx.showToast、wx.request、wx.redirectTo；未改为 fetch、location.assign、alert，也未引入 @mpxjs/api-proxy 或自定义包装。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": true,
+      "evidence": "./outputs/src/pages/community/publish.mpx:9-16 保留内容输入，18-35/143-156 保留图片选择与 photos，40-58/117-141 保留位置选择和地图查看链路，60-67/161-163 保留话题选择，74-76/164-165 保留评论开关，167-188 提交 content、photos、place、topicId、allowComments 并成功后跳转详情。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 350723,
+    "input_tokens": 342786,
+    "output_tokens": 7937,
+    "tool_calls": 10,
+    "duration_ms": 171862
+  },
+  "timing": {
+    "total_tokens": 350723,
+    "duration_ms": 171862,
+    "total_duration_seconds": 171.862
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/mpx2web/run-3/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/mpx2web/run-3/outputs/src/pages/community/publish.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/mpx2web/run-3/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4033
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "输出仅在 Web 未定协议能力处加待接入边界，未虚构宿主接口，已支持发布链路保持完整。"
+  }
+}

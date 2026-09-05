@@ -1,0 +1,191 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+// SDK contract: create({ productId }) returns Promise<Tracker>.
+// Tracker exposes track(eventName, payload) and destroy().
+createComponent({
+  properties: {
+    productId: String,
+    items: Array
+  },
+  observers: {
+    'productId, items': function () {
+      this.restartExposureTracker()
+    }
+  },
+  created () {
+    this._exposureGeneration = 0
+    this._exposureReady = false
+    this._exposureDetached = false
+    this._exposureTracker = null
+    this._exposureObserver = null
+  },
+  ready () {
+    if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+
+    this._exposureReady = true
+    this.restartExposureTracker()
+  },
+  detached () {
+    this._exposureDetached = true
+    this._exposureReady = false
+    this._exposureGeneration += 1
+    this.destroyExposureResources()
+  },
+  methods: {
+    isCurrentExposure (generation, productId) {
+      return !this._exposureDetached &&
+        this._exposureReady &&
+        generation === this._exposureGeneration &&
+        productId === this.productId
+    },
+    destroyExposureResources () {
+      if (this._exposureObserver) {
+        this._exposureObserver.disconnect()
+        this._exposureObserver = null
+      }
+      if (this._exposureTracker) {
+        this._exposureTracker.destroy()
+        this._exposureTracker = null
+      }
+    },
+    async restartExposureTracker () {
+      if (
+        __mpx_mode__ !== 'web' ||
+        typeof window === 'undefined' ||
+        !this._exposureReady ||
+        this._exposureDetached
+      ) {
+        return
+      }
+
+      const generation = ++this._exposureGeneration
+      const productId = this.productId
+      this.destroyExposureResources()
+      if (!productId) return
+
+      try {
+        const sdkModule = await import('@business/product-exposure-web')
+        if (!this.isCurrentExposure(generation, productId)) return
+
+        const exposureSdk = sdkModule.default || sdkModule
+        const tracker = await exposureSdk.create({ productId })
+        if (!this.isCurrentExposure(generation, productId)) {
+          tracker.destroy()
+          return
+        }
+
+        this._exposureTracker = tracker
+        await this.$nextTick()
+        if (!this.isCurrentExposure(generation, productId)) {
+          if (this._exposureTracker === tracker) {
+            this._exposureTracker = null
+            tracker.destroy()
+          }
+          return
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+          if (!this.isCurrentExposure(generation, productId)) return
+
+          entries.forEach((entry) => {
+            if (
+              entry.isIntersecting &&
+              this.isCurrentExposure(generation, productId)
+            ) {
+              tracker.track('recommendation_exposure', {
+                productId,
+                recommendationId: entry.target.dataset.productId
+              })
+            }
+          })
+        })
+
+        if (!this.isCurrentExposure(generation, productId)) {
+          observer.disconnect()
+          return
+        }
+
+        this._exposureObserver = observer
+        const root = this.$el
+        if (root && root.querySelectorAll) {
+          root.querySelectorAll('.recommendation-card').forEach((element) => {
+            observer.observe(element)
+          })
+        }
+      } catch (error) {
+        if (this.isCurrentExposure(generation, productId)) {
+          this.destroyExposureResources()
+        }
+      }
+    },
+    openProduct (productId) {
+      wx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${productId}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #ffffff;
+}
+
+.section-title {
+  margin-bottom: 20rpx;
+  color: #222222;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+}
+
+.recommendation-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+}
+
+.recommendation-name {
+  flex: 1;
+  margin-left: 18rpx;
+  color: #333333;
+  font-size: 26rpx;
+}
+
+.recommendation-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

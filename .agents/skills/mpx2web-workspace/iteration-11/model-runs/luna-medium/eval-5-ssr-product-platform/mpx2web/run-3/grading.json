@@ -1,0 +1,260 @@
+{
+  "eval_id": 5,
+  "eval_name": "ssr-product-platform",
+  "configuration": "mpx2web",
+  "run_number": 3,
+  "grading_fingerprint": "3723915953f41fea7118a381aab75d30aabe693c3c1908acef74cf34ec393c18",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 137311
+  },
+  "expectations": [
+    {
+      "id": "p0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia 实例",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：createPinia 位于 onAppInit 返回路径中，每次 SSR 初始化独立创建。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p1",
+      "text": "serverPrefetch 返回 Promise 并等待商品与首屏推荐数据",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx 返回商品加载 Promise，outputs/src/stores/product.js 等待商品与推荐两路数据。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p2",
+      "text": "store 以状态字段或请求记录维护当前商品与加载身份；同 ID 注水可复用，ID 变化立即使旧复用条件失效，快速 A→B→A 时 B 的晚到结果不能覆盖当前 A",
+      "passed": true,
+      "evidence": "outputs/src/stores/product.js：以 store 状态或请求记录完成同 ID 复用、新 ID 失效和 A→B→A 晚到写入保护。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p3",
+      "text": "同构 service 返回 Promise；服务端沿调用链接收当前 SSR 上下文并从其中的 req 解析 origin，浏览器和小程序保留相对地址；不依赖参数名、wx.request、浏览器全局、localhost 或未声明的 request/requestClient 契约",
+      "passed": true,
+      "evidence": "outputs/src/services/product.js：Promise 请求沿调用链接收 SSR 上下文，并从当前 req 解析服务端 origin。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p4",
+      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，并在每个异步边界阻止卸载或旧商品结果挂载",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx：initTracker 在 Web 客户端动态加载曝光 SDK，且各 await 后复核挂载与商品代际。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p5",
+      "text": "推荐组件卸载或商品切换时销毁由 SDK create 返回的 tracker，并清理 Observer 和监听，旧回调不再上报",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx：卸载清理链路断开 Observer、销毁 tracker，回调守卫阻止旧代际上报。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p6",
+      "text": "SSR 使用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /mall/",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：useSSR、history 与两处 /mall/ 部署基路径配置齐全。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p7",
+      "text": "微信小程序 onLoad 的商品加载具有明确执行路径，不得被 window 存在性或 Web-only 条件挡住",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx：onLoad 为非 Web/小程序保留明确商品加载路径，未被 window 存在性挡住。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p8",
+      "text": "规格切换、加购与相关推荐展示/跳转链路保持完整，且这些小程序业务路径不依赖浏览器全局对象",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx:7-18、45-47、64-76 保留规格选择、价格、加购逻辑；outputs/src/components/product-recommendations.mpx:1-15 展示推荐，73-79 保留跳转，且小程序分支使用 wx.navigateTo，不依赖浏览器全局；曝光相关浏览器对象被 34、40 的 web/window 条件隔离。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 344632,
+    "input_tokens": 336417,
+    "output_tokens": 8215,
+    "tool_calls": 13,
+    "duration_ms": 198137
+  },
+  "timing": {
+    "total_tokens": 344632,
+    "duration_ms": 198137,
+    "total_duration_seconds": 198.137
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 6,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/packageProduct/pages/detail/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/stores/product.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/services/product.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/components/product-recommendations.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 6,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/packageProduct/pages/detail/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/stores/product.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/services/product.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/components/product-recommendations.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/packageProduct/pages/detail/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3891
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/components/product-recommendations.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2617
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/stores/product.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/services/product.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-5-ssr-product-platform/mpx2web/run-3/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "全部断言均有代码证据支持，未发现会造成结论偏差的断言缺口。"
+  }
+}

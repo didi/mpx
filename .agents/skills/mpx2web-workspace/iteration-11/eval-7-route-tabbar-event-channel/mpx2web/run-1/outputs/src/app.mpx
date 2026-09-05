@@ -1,0 +1,33 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.config.webConfig = {
+  routeConfig: {
+    mode: 'history',
+    base: '/shop/'
+  }
+}
+
+mpx.use(apiProxy)
+createApp({})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/home/index",
+    "pages/orders/index",
+    "pages/checkout/index",
+    "pages/address/select",
+    "pages/pay/result",
+    "pages/login/index"
+  ],
+  "tabBar": {
+    "list": [
+      {"pagePath": "pages/home/index", "text": "首页"},
+      {"pagePath": "pages/orders/index", "text": "订单"}
+    ]
+  }
+}
+</script>

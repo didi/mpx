@@ -1,0 +1,160 @@
+<template>
+  <view class="feed-page">
+    <scroll-view
+      class="feed-scroll"
+      scroll-y="{{true}}"
+      enhanced="{{true}}"
+      scroll-anchoring="{{true}}"
+      binddragstart="onDragStart"
+      binddragging="onDragging"
+      binddragend="onDragEnd"
+    >
+      <view class="feed-content">
+        <view class="categories-sticky">
+          <view class="categories">
+            <text
+              wx:for="{{categories}}"
+              wx:key="id"
+              class="category {{activeCategoryId === item.id ? 'category-active' : ''}}"
+              data-category-id="{{item.id}}"
+              bindtap="selectCategory"
+            >{{item.name}}</text>
+          </view>
+        </view>
+
+        <view wx:for="{{products}}" wx:key="id" class="product">
+          <image
+            class="product-image"
+            src="{{item.image}}"
+            mode="widthFix"
+            lazy-load="{{true}}"
+          />
+          <product-video wx:if="{{item.video}}" product="{{item}}" />
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    activeCategoryId: null,
+    cartCount: 2,
+    isDragging: false
+  },
+  async onLoad () {
+    const { data } = await mpx.request({ url: '/api/feed' })
+    const categories = data.categories || []
+
+    this.categories = categories
+    this.products = data.products || []
+    if (this.activeCategoryId === null && categories.length) {
+      this.activeCategoryId = categories[0].id
+    }
+  },
+  methods: {
+    selectCategory (event) {
+      const categoryId = event.currentTarget.dataset.categoryId
+      const category = this.categories.find((item) => String(item.id) === String(categoryId))
+      this.activeCategoryId = category ? category.id : categoryId
+    },
+    onDragStart () {
+      this.isDragging = true
+    },
+    onDragging () {
+      if (!this.isDragging) this.isDragging = true
+    },
+    onDragEnd () {
+      this.isDragging = false
+    },
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page {
+  position: relative;
+  height: 100vh;
+  min-height: 100%;
+  background: #f7f7f7;
+}
+
+.feed-scroll {
+  height: 100vh;
+  overflow-anchor: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.feed-content {
+  min-height: 100%;
+  padding-bottom: calc(136rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.categories-sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  overflow-anchor: none;
+  background: #fff;
+}
+
+.categories {
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+.category {
+  flex: none;
+  padding: 24rpx;
+  color: #666;
+}
+
+.category-active {
+  color: #111;
+  font-weight: 600;
+}
+
+.product {
+  padding: 24rpx;
+  background: #fff;
+}
+
+.product-image {
+  display: block;
+  width: 100%;
+}
+
+.fixed-cart {
+  position: fixed;
+  z-index: 100;
+  right: 24rpx;
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  padding: 20rpx 28rpx;
+  border-radius: 999rpx;
+  color: #fff;
+  background: #ff4d4f;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.18);
+}
+</style>

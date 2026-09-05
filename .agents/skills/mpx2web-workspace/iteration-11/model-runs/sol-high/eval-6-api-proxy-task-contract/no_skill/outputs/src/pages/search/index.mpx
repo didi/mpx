@@ -1,0 +1,193 @@
+<template>
+  <view class="search-page">
+    <view class="search-bar">
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        bindinput="onKeywordInput"
+        placeholder="搜索商品"
+      />
+      <view
+        class="clear-button"
+        wx:if="{{keyword}}"
+        bindtap="clearSearch"
+      >清空</view>
+    </view>
+
+    <view class="trending" wx:if="{{!keyword}}">
+      <view class="section-title">趋势搜索</view>
+      <view class="keyword-list">
+        <view
+          class="keyword-item"
+          wx:for="{{trendingKeywords}}"
+          wx:key="*this"
+          bindtap="chooseKeyword(item)"
+        >{{item}}</view>
+      </view>
+    </view>
+
+    <view class="suggestions" wx:if="{{keyword}}">
+      <view
+        class="suggestion-item"
+        wx:for="{{suggestions}}"
+        wx:key="id"
+        bindtap="openProduct(item.id)"
+      >{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { navigateTo, showToast } from '@mpxjs/api-proxy'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: []
+  },
+  onLoad () {
+    this.suggestionRequest = null
+    this.suggestionRequestVersion = 0
+    this.pageUnloaded = false
+    this.loadTrendingKeywords()
+  },
+  onUnload () {
+    this.pageUnloaded = true
+    this.suggestionRequestVersion += 1
+    this.abortSuggestionRequest()
+  },
+  methods: {
+    async loadTrendingKeywords () {
+      try {
+        const keywords = await fetchTrendingKeywords()
+        if (!this.pageUnloaded) {
+          this.trendingKeywords = Array.isArray(keywords) ? keywords : []
+        }
+      } catch (error) {
+        if (!this.pageUnloaded) {
+          showToast({
+            title: '趋势词加载失败',
+            icon: 'none'
+          })
+        }
+      }
+    },
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+    clearSearch () {
+      this.search('')
+    },
+    abortSuggestionRequest () {
+      const requestTask = this.suggestionRequest
+      this.suggestionRequest = null
+      if (requestTask && typeof requestTask.abort === 'function') {
+        requestTask.abort()
+      }
+    },
+    async search (keyword) {
+      const requestVersion = ++this.suggestionRequestVersion
+
+      this.abortSuggestionRequest()
+      this.keyword = keyword
+      this.suggestions = []
+
+      if (!keyword) return
+
+      const requestTask = requestSuggestions(keyword)
+      this.suggestionRequest = requestTask
+
+      try {
+        const { data } = await requestTask
+        if (
+          !this.pageUnloaded &&
+          requestVersion === this.suggestionRequestVersion &&
+          keyword === this.keyword
+        ) {
+          this.suggestions = data && Array.isArray(data.list) ? data.list : []
+        }
+      } catch (error) {
+        if (
+          !this.pageUnloaded &&
+          requestVersion === this.suggestionRequestVersion &&
+          keyword === this.keyword
+        ) {
+          this.suggestions = []
+          showToast({
+            title: '搜索失败',
+            icon: 'none'
+          })
+        }
+      } finally {
+        if (this.suggestionRequest === requestTask) {
+          this.suggestionRequest = null
+        }
+      }
+    },
+    openProduct (productId) {
+      navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+      }).catch(() => {
+        showToast({
+          title: '页面打开失败',
+          icon: 'none'
+        })
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page {
+  padding: 24rpx;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.clear-button {
+  margin-left: 20rpx;
+  color: #576b95;
+}
+
+.trending,
+.suggestions {
+  margin-top: 24rpx;
+}
+
+.section-title {
+  margin-bottom: 16rpx;
+  color: #888;
+}
+
+.keyword-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.keyword-item {
+  margin-right: 16rpx;
+  margin-bottom: 16rpx;
+  padding: 8rpx 16rpx;
+  background: #f5f5f5;
+}
+
+.suggestion-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eee;
+}
+</style>

@@ -1,0 +1,183 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+
+function destroyTracker (tracker) {
+  if (!tracker || typeof tracker.destroy !== 'function') return
+  try {
+    tracker.destroy()
+  } catch (error) {}
+}
+
+createComponent({
+  properties: {
+    productId: {
+      type: String,
+      value: '',
+      observer () {
+        this.handleInputChange()
+      }
+    },
+    items: {
+      type: Array,
+      value: [],
+      observer () {
+        this.handleInputChange()
+      }
+    }
+  },
+  ready () {
+    this._recommendationsReady = true
+    this.scheduleTrackerSetup()
+  },
+  detached () {
+    this._recommendationsReady = false
+    this.stopTrackerSetup()
+  },
+  methods: {
+    handleInputChange () {
+      if (this._recommendationsReady) this.scheduleTrackerSetup()
+    },
+    stopTrackerSetup () {
+      this._trackerRunId = (this._trackerRunId || 0) + 1
+
+      if (this._observer) {
+        this._observer.disconnect()
+        this._observer = null
+      }
+
+      destroyTracker(this._tracker)
+      this._tracker = null
+      this._trackedRecommendationIds = null
+    },
+    scheduleTrackerSetup () {
+      this.stopTrackerSetup()
+
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' ||
+        typeof document === 'undefined' || !this.productId) return
+
+      const runId = this._trackerRunId
+      const productId = this.productId
+      this.$nextTick(() => this.createTracker(runId, productId))
+    },
+    async createTracker (runId, productId) {
+      const isCurrent = () => this._recommendationsReady &&
+        this._trackerRunId === runId && this.productId === productId
+
+      if (!isCurrent()) return
+
+      let tracker
+      try {
+        const sdkModule = await import('@business/product-exposure-web')
+        if (!isCurrent()) return
+
+        const exposureSdk = sdkModule.default || sdkModule
+        tracker = await exposureSdk.create({ productId })
+      } catch (error) {
+        return
+      }
+
+      if (!isCurrent()) {
+        destroyTracker(tracker)
+        return
+      }
+
+      this._tracker = tracker
+      this._trackedRecommendationIds = new Set()
+
+      if (typeof window.IntersectionObserver !== 'function') return
+
+      this._observer = new window.IntersectionObserver((entries) => {
+        if (!isCurrent() || this._tracker !== tracker) return
+
+        entries.forEach((entry) => {
+          const recommendationId = entry.target && entry.target.dataset &&
+            entry.target.dataset.productId
+          if (!entry.isIntersecting || !recommendationId ||
+            this._trackedRecommendationIds.has(recommendationId)) return
+
+          this._trackedRecommendationIds.add(recommendationId)
+          tracker.track('recommendation_exposure', {
+            productId,
+            recommendationId
+          })
+          this._observer.unobserve(entry.target)
+        })
+      })
+
+      const root = this.$el
+      if (!root || typeof root.querySelectorAll !== 'function') return
+      root.querySelectorAll('.recommendation-card').forEach((element) => {
+        this._observer.observe(element)
+      })
+    },
+    openProduct (productId) {
+      mpx.navigateTo({
+        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #ffffff;
+}
+
+.section-title {
+  margin-bottom: 20rpx;
+  color: #222222;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18rpx;
+}
+
+.recommendation-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+}
+
+.recommendation-name {
+  flex: 1;
+  margin-left: 18rpx;
+  color: #333333;
+  font-size: 26rpx;
+}
+
+.recommendation-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

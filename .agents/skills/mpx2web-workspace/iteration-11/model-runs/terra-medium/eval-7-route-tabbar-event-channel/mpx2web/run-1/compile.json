@@ -1,0 +1,84 @@
+{
+  "status": "passed",
+  "all_declared_outputs_present": true,
+  "declared_output_count": 4,
+  "compile_eligible_mpx_count": 2,
+  "compiled_mpx_count": 2,
+  "checks": [
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/app.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/address/select.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/vue.config.js"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 4,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/app.mpx",
+            "errors": []
+          },
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx",
+            "errors": []
+          },
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/address/select.mpx",
+            "errors": []
+          },
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/vue.config.js",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "page",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/address/select.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [],
+        "warnings": [],
+        "summary": {
+          "total": 0,
+          "byCategory": {}
+        },
+        "durationMs": 3395
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "declared-support-artifact",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/app.mpx"
+      ],
+      "passed": true,
+      "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+    },
+    {
+      "kind": "javascript-syntax",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/vue.config.js"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "stderr": ""
+    }
+  ],
+  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+}

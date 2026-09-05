@@ -1,0 +1,76 @@
+<template>
+  <view class="product-video">
+    <video
+      id="product-video-{{product.id}}"
+      class="video"
+      src="{{product.video}}"
+      poster="{{product.videoPoster}}"
+      autoplay
+      muted="{{true}}"
+      controls
+      object-fit="cover"
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
+      bindplay="onPlay"
+      bindpause="onPause"
+      binderror="onVideoError"
+    />
+    <text class="video-progress">{{progress}} / {{duration}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: { type: Object, value: () => ({}) }
+  },
+  data: {
+    progress: 0,
+    duration: 0,
+    playing: false,
+    videoSize: ''
+  },
+  methods: {
+    onTimeUpdate (event) {
+      this.progress = Math.floor(event.detail.currentTime || 0)
+      this.duration = Math.floor(event.detail.duration || 0)
+    },
+    onLoadedMetadata (event) {
+      const detail = event.detail || {}
+      this.duration = Math.floor(detail.duration || 0)
+      this.videoSize = `${detail.width || 0}x${detail.height || 0}`
+    },
+    onPlay () {
+      this.playing = true
+    },
+    onPause () {
+      this.playing = false
+    },
+    onVideoError () {
+      this.playing = false
+    }
+  }
+})
+</script>
+
+<style scoped>
+.product-video {
+  width: 100%;
+  margin-top: 16rpx;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  background: #000;
+}
+
+.video-progress {
+  display: block;
+  margin-top: 8rpx;
+  color: #888;
+  font-size: 24rpx;
+}
+</style>

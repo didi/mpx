@@ -1,0 +1,113 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        this.initTracker()
+      }
+    },
+    memberId: String,
+    webviewId: String
+  },
+  data: {
+    ready: false
+  },
+  ready () {
+    this._trackerGeneration = this._trackerGeneration || 0
+    this._tracker = null
+    this._listenersAttached = false
+    this.initTracker()
+  },
+  detached () {
+    this._trackerGeneration = (this._trackerGeneration || 0) + 1
+    this.cleanupTracker()
+  },
+  methods: {
+    cleanupTracker () {
+      if (__mpx_mode__ === 'web' && this._listenersAttached) {
+        window.removeEventListener('message', this.handleWindowMessage)
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+        this._listenersAttached = false
+      }
+      const tracker = this._tracker
+      this._tracker = null
+      this.tracker = null
+      if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+      this.ready = false
+    },
+    async initTracker () {
+      if (!this.campaignId || __mpx_mode__ !== 'web') return
+      const generation = (this._trackerGeneration || 0) + 1
+      this._trackerGeneration = generation
+      this.cleanupTracker()
+      this.ready = false
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      let tracker
+      try {
+        tracker = await campaignTracker.create({ campaignId, memberId })
+      } catch (error) {
+        if (generation === this._trackerGeneration && campaignId === this.campaignId) {
+          this.triggerEvent('error', { campaignId, error })
+        }
+        return
+      }
+      if (generation !== this._trackerGeneration || campaignId !== this.campaignId) {
+        if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+        return
+      }
+      this._tracker = tracker
+      this.tracker = tracker
+      window.addEventListener('message', this.handleWindowMessage)
+      document.addEventListener('visibilitychange', this.handleVisibilityChange)
+      this._listenersAttached = true
+      tracker.start()
+      this.ready = true
+      this.triggerEvent('ready', { campaignId })
+    },
+    handleWindowMessage (event) {
+      if (__mpx_mode__ !== 'web' || event.origin !== 'https://campaign.example.com') return
+      const message = event.data || {}
+      const tracker = this._tracker
+      if (!tracker || message.campaignId !== this.campaignId || message.type !== 'campaign-exposure') return
+      const webview = document.getElementById(this.webviewId)
+      const frame = webview && (webview.contentWindow || webview.querySelector('iframe'))
+      const targetWindow = frame && frame.contentWindow ? frame.contentWindow : frame
+      if (!targetWindow || event.source !== targetWindow) return
+      tracker.track('exposure', message.payload)
+    },
+    handleVisibilityChange () {
+      const tracker = this._tracker
+      if (!tracker) return
+      if (document.hidden) tracker.pause()
+      else tracker.resume()
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

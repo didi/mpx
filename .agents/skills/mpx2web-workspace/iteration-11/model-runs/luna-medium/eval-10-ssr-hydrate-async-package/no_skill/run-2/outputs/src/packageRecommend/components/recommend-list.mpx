@@ -1,0 +1,22 @@
+<template>
+  <view class="recommend-list">
+    <view wx:for="{{items}}" wx:key="id" data-article-id="{{item.id}}" bindtap="select">{{item.title}}</view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    articleId: String,
+    items: { type: Array, value: () => [] }
+  },
+  methods: {
+    select (event) {
+      const articleId = event && event.currentTarget && event.currentTarget.dataset.articleId
+      if (articleId) this.triggerEvent('select', { articleId })
+    }
+  }
+})
+</script>

@@ -1,0 +1,171 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "37fc11a2093048b83138519e73283d544447a0ec1f3f258e20275c88ccb4e345",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 62455
+  },
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:130-167 中 choosePlace/openPlace/choosePhoto 的非 Web 分支分别直接调用 wx.chooseLocation、wx.openLocation、wx.chooseMedia，未使用动态方法名或自定义适配器。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:130-167 仅在 choosePlace/openPlace/choosePhoto 内判断 __mpx_mode__ === 'web' 并 return；文件未新增通用平台调用层，请求/路由/提示仍在 submitPost 中直接使用 wx.request、wx.redirectTo、wx.showToast。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:130-134 的 Web 位置选择分支只有 TODO 注释“确认 Web 宿主的位置选择协议后接入”并 return；模板 54-60 行显示“位置服务待接入”，未声明或调用虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:141-145 的 Web 地图打开分支只有 TODO 注释“确认 Web 宿主的地图查看协议后接入”并 return；模板 69-70 行用 @web 展示“地图待接入”，未调用虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:154-158 的 Web 媒体选择分支只有 TODO 注释“确认 Web 宿主的媒体选择与上传协议后接入”并 return；模板 36-39 行显示“图片待接入”，未调用虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:180-199 中发布请求、详情跳转、失败提示继续使用 wx.request、wx.redirectTo、wx.showToast；未改为 fetch、location.assign、alert 或自定义包装。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:127-199 保留 content 更新、photos 增删、place 赋值/打开、topic 选择、allowComments 切换、submitPost 提交数据及成功后跳转详情；提交 data 仍包含 content、photos、place、topicId、allowComments。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 415983,
+    "input_tokens": 408806,
+    "output_tokens": 7177,
+    "tool_calls": 11,
+    "duration_ms": 172827
+  },
+  "timing": {
+    "total_tokens": 415983,
+    "duration_ms": 172827,
+    "total_duration_seconds": 172.827
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [
+            {
+              "category": "template",
+              "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx]: Your target mode is \"web\", but used \"wx:if\". Did you mean \"v-if\"?",
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx",
+              "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx]: Your target mode is \"web\", but used \"wx:if\". Did you mean \"v-if\"?"
+            }
+          ],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3763
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言未要求验证 @wx/@web、bindtap@wx 条件编译语法是否匹配当前项目的 Mpx 版本；若当前编译器不支持该写法，会影响“完整 .mpx 文件”的实际可用性判断。"
+    ],
+    "overall": "输出将 Web 未确定能力保留在待接入边界，同时保留微信端已有能力和发布业务链路。"
+  }
+}

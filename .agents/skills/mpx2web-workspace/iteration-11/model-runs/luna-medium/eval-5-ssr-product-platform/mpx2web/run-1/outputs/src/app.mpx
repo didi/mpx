@@ -1,0 +1,35 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+const clientPinia = createPinia()
+
+createApp({
+  pinia: clientPinia,
+  onAppInit () {
+    // A server app is created per request; the browser keeps one hydrated Pinia instance.
+    return { pinia: typeof window === 'undefined' ? createPinia() : clientPinia }
+  },
+  onLaunch () {
+    if (typeof wx !== 'undefined' && wx.reportAnalytics) {
+      wx.reportAnalytics('mall_launch', {})
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/home/index"
+  ],
+  "packages": [
+    {
+      "root": "packageProduct",
+      "pages": [
+        "pages/detail/index"
+      ]
+    }
+  ]
+}
+</script>

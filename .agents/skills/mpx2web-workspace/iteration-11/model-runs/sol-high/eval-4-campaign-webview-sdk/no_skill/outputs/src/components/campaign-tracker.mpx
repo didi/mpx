@@ -1,0 +1,224 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+function isWebRuntime () {
+  return typeof window !== 'undefined' && typeof document !== 'undefined'
+}
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        this.scheduleInitTracker()
+      }
+    },
+    campaignSession: {
+      type: Number,
+      observer () {
+        this.scheduleInitTracker()
+      }
+    },
+    memberId: {
+      type: String,
+      observer () {
+        this.scheduleInitTracker()
+      }
+    },
+    webviewId: String,
+    webviewLoading: Boolean
+  },
+  data: {
+    ready: false
+  },
+  created () {
+    this._componentAlive = true
+    this._componentReady = false
+    this._pageVisible = true
+    this._initVersion = 0
+    this._initSchedule = 0
+    this._tracker = null
+    this._startingTracker = null
+    this._listenersAttached = false
+    this._windowMessageHandler = (event) => this.handleWindowMessage(event)
+    this._visibilityHandler = () => this.handleVisibilityChange()
+  },
+  ready () {
+    this._componentReady = true
+    this.scheduleInitTracker()
+  },
+  detached () {
+    this.disposeTracker()
+  },
+  beforeDestroy () {
+    this.disposeTracker()
+  },
+  pageLifetimes: {
+    show () {
+      this._pageVisible = true
+      if (this._tracker && (!isWebRuntime() || !document.hidden)) {
+        this._tracker.resume()
+      }
+    },
+    hide () {
+      this._pageVisible = false
+      if (this._tracker) this._tracker.pause()
+    }
+  },
+  methods: {
+    scheduleInitTracker () {
+      this._initSchedule = (this._initSchedule || 0) + 1
+      const schedule = this._initSchedule
+      Promise.resolve().then(() => {
+        if (!this._componentAlive || !this._componentReady) return
+        if (schedule !== this._initSchedule) return
+        this.initTracker()
+      })
+    },
+    async initTracker () {
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      const campaignSession = this.campaignSession
+      this._initVersion += 1
+      const version = this._initVersion
+      this.ready = false
+      this.cleanupCurrentTracker()
+      if (!campaignId || !this._componentAlive) return
+
+      let tracker
+      try {
+        tracker = await campaignTracker.create({
+          campaignId,
+          memberId
+        })
+        if (!this.isCurrentInit(version, campaignId, memberId, campaignSession)) {
+          this.destroyTracker(tracker)
+          return
+        }
+
+        this._startingTracker = tracker
+        await Promise.resolve(tracker.start())
+        if (!this.isCurrentInit(version, campaignId, memberId, campaignSession)) {
+          this.destroyTracker(tracker)
+          if (this._startingTracker === tracker) this._startingTracker = null
+          return
+        }
+
+        this._startingTracker = null
+        this._tracker = tracker
+        this.attachListeners()
+        this.ready = true
+        this.triggerEvent('ready', { campaignId, campaignSession })
+      } catch (error) {
+        if (tracker) this.destroyTracker(tracker)
+        if (this._startingTracker === tracker) this._startingTracker = null
+        if (!this.isCurrentInit(version, campaignId, memberId, campaignSession)) return
+        this.ready = false
+        this.triggerEvent('error', { campaignId, campaignSession })
+      }
+    },
+    isCurrentInit (version, campaignId, memberId, campaignSession) {
+      return Boolean(
+        this._componentAlive &&
+        version === this._initVersion &&
+        campaignId === this.campaignId &&
+        memberId === this.memberId &&
+        String(campaignSession) === String(this.campaignSession)
+      )
+    },
+    attachListeners () {
+      if (!isWebRuntime() || this._listenersAttached) return
+      window.addEventListener('message', this._windowMessageHandler)
+      document.addEventListener('visibilitychange', this._visibilityHandler)
+      this._listenersAttached = true
+    },
+    removeListeners () {
+      if (!isWebRuntime() || !this._listenersAttached) return
+      window.removeEventListener('message', this._windowMessageHandler)
+      document.removeEventListener('visibilitychange', this._visibilityHandler)
+      this._listenersAttached = false
+    },
+    cleanupCurrentTracker () {
+      this.removeListeners()
+      const tracker = this._tracker
+      const startingTracker = this._startingTracker
+      this._tracker = null
+      this._startingTracker = null
+      if (tracker) this.destroyTracker(tracker)
+      if (startingTracker && startingTracker !== tracker) this.destroyTracker(startingTracker)
+    },
+    destroyTracker (tracker) {
+      if (!tracker || typeof tracker.destroy !== 'function') return
+      try {
+        if (typeof tracker.pause === 'function') tracker.pause()
+        const result = tracker.destroy()
+        if (result && typeof result.catch === 'function') result.catch(() => {})
+      } catch (error) {}
+    },
+    disposeTracker () {
+      if (!this._componentAlive) return
+      this._componentAlive = false
+      this._initVersion += 1
+      this._initSchedule += 1
+      this.ready = false
+      this.cleanupCurrentTracker()
+    },
+    getCampaignWindow () {
+      if (!isWebRuntime() || !this.webviewId) return null
+      const webview = document.getElementById(this.webviewId)
+      if (!webview) return null
+      const iframe = webview.tagName === 'IFRAME'
+        ? webview
+        : webview.querySelector && webview.querySelector('iframe')
+      return webview.contentWindow || (iframe && iframe.contentWindow) || null
+    },
+    handleWindowMessage (event) {
+      if (!this._tracker || !this._componentAlive || !this._pageVisible) return
+      if (this.webviewLoading || event.origin !== CAMPAIGN_ORIGIN) return
+      const campaignWindow = this.getCampaignWindow()
+      if (!campaignWindow || event.source !== campaignWindow) return
+
+      const message = event.data
+      if (!message || typeof message !== 'object') return
+      if (message.campaignId && message.campaignId !== this.campaignId) return
+      if (message.session !== undefined && String(message.session) !== String(this.campaignSession)) return
+      if (message.type === 'campaign-exposure') {
+        this._tracker.track('exposure', message.payload)
+      }
+    },
+    handleVisibilityChange () {
+      if (!this._tracker || !this._componentAlive) return
+      if (document.hidden || !this._pageVisible) {
+        this._tracker.pause()
+      } else {
+        this._tracker.resume()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

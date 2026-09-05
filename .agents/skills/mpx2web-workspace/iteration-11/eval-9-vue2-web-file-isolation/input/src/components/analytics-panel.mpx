@@ -1,0 +1,25 @@
+<template>
+  <view class="analytics-panel">
+    <view wx:for="{{metrics}}" wx:key="key" class="metric" bindtap="selectMetric(item.key)">
+      <text>{{item.label}}</text>
+      <text>{{item.value}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import { createChart } from '../web/chart-sdk'
+
+createComponent({
+  properties: { metrics: { type: Array, value: () => [] } },
+  attached () {
+    this.chart = createChart(document.querySelector('.analytics-panel'), this.metrics)
+  },
+  methods: {
+    selectMetric (key) {
+      this.triggerEvent('select', { key })
+    }
+  }
+})
+</script>

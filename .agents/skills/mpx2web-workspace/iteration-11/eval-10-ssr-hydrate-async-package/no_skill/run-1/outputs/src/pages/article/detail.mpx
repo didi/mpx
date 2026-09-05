@@ -1,0 +1,86 @@
+<template>
+  <view class="article-page">
+    <text class="title">{{article.title}}</text>
+    <rich-text nodes="{{article.content}}" />
+    <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
+    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <recommend-list
+      wx:if="{{clientReady}}"
+      article-id="{{articleId}}"
+      items="{{recommendations}}"
+      bindselect="openArticle"
+    />
+    <view wx:else class="recommend-placeholder" />
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { useArticleStore } from '../../stores/article'
+
+createPage({
+  data: {
+    articleId: '',
+    clientReady: false,
+    isBrowser: false,
+    favorite: false
+  },
+  computed: {
+    article () {
+      const store = useArticleStore(this.$pinia)
+      return store.articleId === this.articleId ? (store.article || {}) : {}
+    },
+    recommendations () {
+      const store = useArticleStore(this.$pinia)
+      return store.articleId === this.articleId ? store.recommendations : []
+    }
+  },
+  onLoad (query = {}) {
+    if (!this.$ssrContext) {
+      return this.loadArticle(query.id)
+    }
+  },
+  onShow () {
+    if (!this.articleId) return
+
+    const store = useArticleStore(this.$pinia)
+    if (store.articleId !== this.articleId) {
+      return store.loadArticle(this.articleId)
+    }
+  },
+  onReady () {
+    this.clientReady = true
+    this.isBrowser = typeof window !== 'undefined'
+  },
+  serverPrefetch () {
+    const query = (this.$route && this.$route.query) || {}
+    return this.loadArticle(query.id, this.$ssrContext)
+  },
+  methods: {
+    loadArticle (articleId, requestContext) {
+      const normalizedId = articleId == null ? '' : String(articleId)
+      this.articleId = normalizedId
+
+      if (!normalizedId) return Promise.resolve()
+      return useArticleStore(this.$pinia).loadArticle(normalizedId, requestContext)
+    },
+    toggleFavorite () {
+      this.favorite = !this.favorite
+    },
+    openArticle (event) {
+      mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "recommend-list": "../../packageRecommend/components/recommend-list?root=packageRecommend"
+  },
+  "componentPlaceholder": {
+    "recommend-list": "view"
+  }
+}
+</script>

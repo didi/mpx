@@ -1,0 +1,343 @@
+<template>
+  <view class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal__header">
+      <view>
+        <view class="portal__eyebrow">PORTAL</view>
+        <view class="portal__title">门户中心</view>
+        <view class="portal__subtitle">发现资讯与便民服务</view>
+      </view>
+      <button class="portal__theme" bindtap="toggleTheme">{{dark ? '浅色' : '深色'}}主题</button>
+    </view>
+
+    <view class="portal__grid">
+      <view
+        class="portal-card"
+        wx:for="{{cards}}"
+        wx:key="id"
+        bindtap="openCard(item.id)"
+      >
+        <view class="portal-card__title">{{item.title}}</view>
+        <view class="portal-card__description">{{item.description}}</view>
+        <view class="portal-card__arrow">→</view>
+      </view>
+    </view>
+
+    <button class="portal__settings" bindtap="openDialog">门户设置</button>
+
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog" catchtouchmove="preventScroll">
+      <view class="dialog" catchtap="preventClose">
+        <view class="dialog__title">门户设置</view>
+        <view class="dialog__text">当前主题：{{dark ? '深色' : '浅色'}}</view>
+        <button class="dialog__close" bindtap="closeDialog">完成</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    cards: [
+      { id: 'news', title: '资讯', description: '查看最新动态' },
+      { id: 'service', title: '服务', description: '办理常用事项' }
+    ],
+    dialogVisible: false,
+    dark: false
+  },
+  onHide () {
+    this.closeDialog()
+  },
+  onUnload () {
+    this.releasePageScroll()
+  },
+  methods: {
+    openCard (id) {
+      this.closeDialog()
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
+    toggleTheme () {
+      this.dark = !this.dark
+    },
+    openDialog () {
+      if (this.dialogVisible) return
+      this.dialogVisible = true
+      this.lockPageScroll()
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      this.releasePageScroll()
+    },
+    preventClose () {},
+    preventScroll () {},
+    lockPageScroll () {
+      // document/window only exist in the Web runtime. Keeping this guard makes
+      // the same page safe to run in a Mini Program.
+      if (typeof document === 'undefined' || typeof window === 'undefined' || this._pageScrollLock) return
+
+      const body = document.body
+      const root = document.documentElement
+      const scrollTop = window.pageYOffset || root.scrollTop || body.scrollTop || 0
+
+      this._pageScrollLock = {
+        scrollTop,
+        body,
+        root,
+        bodyOverflow: body.style.overflow,
+        bodyPosition: body.style.position,
+        bodyTop: body.style.top,
+        bodyLeft: body.style.left,
+        bodyRight: body.style.right,
+        bodyWidth: body.style.width,
+        rootOverflow: root.style.overflow
+      }
+
+      root.style.overflow = 'hidden'
+      body.style.overflow = 'hidden'
+      body.style.position = 'fixed'
+      body.style.top = `-${scrollTop}px`
+      body.style.left = '0'
+      body.style.right = '0'
+      body.style.width = '100%'
+    },
+    releasePageScroll () {
+      if (typeof window === 'undefined' || !this._pageScrollLock) return
+
+      const lock = this._pageScrollLock
+      this._pageScrollLock = null
+      lock.root.style.overflow = lock.rootOverflow
+      lock.body.style.overflow = lock.bodyOverflow
+      lock.body.style.position = lock.bodyPosition
+      lock.body.style.top = lock.bodyTop
+      lock.body.style.left = lock.bodyLeft
+      lock.body.style.right = lock.bodyRight
+      lock.body.style.width = lock.bodyWidth
+
+      const restorePosition = () => window.scrollTo(0, lock.scrollTop)
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(restorePosition)
+      } else {
+        restorePosition()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 64rpx 40rpx calc(64rpx + env(safe-area-inset-bottom));
+  color: var(--portal-text, #182235);
+  background: var(--portal-background, #f4f7fc);
+  transition: color 180ms ease, background-color 180ms ease;
+}
+
+.portal--dark {
+  --portal-text: #edf3ff;
+  --portal-muted: #aebbd0;
+  --portal-background: #101827;
+  --portal-surface: #1b2638;
+  --portal-border: #30415c;
+  --portal-accent: #8ab4ff;
+}
+
+.portal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin: 0 auto 56rpx;
+  max-width: 1200rpx;
+}
+
+.portal__eyebrow {
+  margin-bottom: 12rpx;
+  color: var(--portal-accent, #246bdb);
+  font-size: 24rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+}
+
+.portal__title {
+  font-size: 56rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.portal__subtitle {
+  margin-top: 16rpx;
+  color: var(--portal-muted, #60708a);
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+.portal__theme,
+.portal__settings,
+.dialog__close {
+  margin: 0;
+  border: 0;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.portal__theme {
+  flex: 0 0 auto;
+  padding: 24rpx;
+  color: var(--portal-text, #182235);
+  background: var(--portal-surface, #ffffff);
+  box-shadow: 0 8rpx 24rpx rgba(31, 53, 86, 0.1);
+}
+
+.portal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28rpx;
+  margin: 0 auto;
+  max-width: 1200rpx;
+}
+
+.portal-card {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 280rpx;
+  padding: 40rpx;
+  overflow: hidden;
+  border: 2rpx solid var(--portal-border, #e1e7f0);
+  border-radius: 24rpx;
+  color: var(--portal-text, #182235);
+  background: var(--portal-surface, #ffffff);
+  box-shadow: 0 12rpx 32rpx rgba(31, 53, 86, 0.08);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.portal-card__title {
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.portal-card__description {
+  margin-top: 16rpx;
+  color: var(--portal-muted, #60708a);
+  font-size: 28rpx;
+}
+
+.portal-card__arrow {
+  position: absolute;
+  right: 40rpx;
+  bottom: 32rpx;
+  color: var(--portal-accent, #246bdb);
+  font-size: 48rpx;
+  line-height: 1;
+}
+
+.portal__settings {
+  display: block;
+  width: 100%;
+  max-width: 1200rpx;
+  margin: 40rpx auto 0;
+  padding: 30rpx;
+  color: #ffffff;
+  background: var(--portal-accent, #246bdb);
+}
+
+.dialog-mask {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 40rpx;
+  background: rgba(9, 18, 32, 0.5);
+}
+
+.dialog {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 600rpx;
+  padding: 48rpx 40rpx 40rpx;
+  border-radius: 24rpx;
+  color: var(--portal-text, #182235);
+  background: var(--portal-surface, #ffffff);
+  box-shadow: 0 24rpx 64rpx rgba(0, 0, 0, 0.22);
+}
+
+.dialog__title {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.dialog__text {
+  margin-top: 20rpx;
+  color: var(--portal-muted, #60708a);
+  font-size: 28rpx;
+}
+
+.dialog__close {
+  width: 100%;
+  margin-top: 40rpx;
+  padding: 28rpx;
+  color: #ffffff;
+  background: var(--portal-accent, #246bdb);
+}
+
+@media (min-width: 768px) {
+  .portal {
+    padding-top: 80rpx;
+    padding-bottom: 80rpx;
+  }
+
+  .portal-card:hover {
+    border-color: var(--portal-accent, #246bdb);
+    box-shadow: 0 20rpx 48rpx rgba(31, 53, 86, 0.16);
+    transform: translateY(-8rpx);
+  }
+
+  .portal__theme:hover,
+  .portal__settings:hover,
+  .dialog__close:hover {
+    filter: brightness(0.96);
+  }
+
+}
+
+@media (max-width: 767px) {
+  .portal__header {
+    margin-bottom: 48rpx;
+  }
+
+  .portal__grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<style>
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 10rpx;
+    height: 10rpx;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f4f7fc;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 3rpx solid #f4f7fc;
+    border-radius: 999px;
+    background: #aebbd0;
+  }
+}
+</style>

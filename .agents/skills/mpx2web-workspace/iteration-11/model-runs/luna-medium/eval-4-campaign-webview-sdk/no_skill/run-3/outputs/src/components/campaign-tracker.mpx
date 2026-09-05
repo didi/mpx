@@ -1,0 +1,97 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+const TRUSTED_ORIGIN = 'https://campaign.example.com'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () { this.resetAndInit() }
+    },
+    memberId: String
+  },
+  data: { ready: false },
+  ready () { this.resetAndInit() },
+  detached () { this.invalidateAndDestroy() },
+  methods: {
+    resetAndInit () {
+      this.invalidateAndDestroy()
+      this.initToken = (this.initToken || 0) + 1
+      this.initTracker(this.initToken, this.campaignId, this.memberId)
+    },
+    invalidateAndDestroy () {
+      this.initToken = (this.initToken || 0) + 1
+      this.ready = false
+      this.removeListeners()
+      const tracker = this.tracker
+      this.tracker = null
+      if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+    },
+    async initTracker (token, campaignId, memberId) {
+      if (!campaignId) return
+      try {
+        const tracker = await campaignTracker.create({ campaignId, memberId })
+        if (token !== this.initToken || campaignId !== this.campaignId) {
+          if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+          return
+        }
+        this.tracker = tracker
+        this.addListeners()
+        tracker.start()
+        if (token !== this.initToken) {
+          this.invalidateAndDestroy()
+          return
+        }
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (token === this.initToken && campaignId === this.campaignId) {
+          this.triggerEvent('error', { campaignId, message: error && error.message })
+        }
+      }
+    },
+    addListeners () {
+      if (this.listenersAttached || typeof window === 'undefined') return
+      window.addEventListener('message', this.handleWindowMessage)
+      if (typeof document !== 'undefined') document.addEventListener('visibilitychange', this.handleVisibilityChange)
+      this.listenersAttached = true
+    },
+    removeListeners () {
+      if (!this.listenersAttached || typeof window === 'undefined') return
+      window.removeEventListener('message', this.handleWindowMessage)
+      if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      this.listenersAttached = false
+    },
+    handleWindowMessage (event) {
+      const tracker = this.tracker
+      const message = event && event.data
+      if (!tracker || event.origin !== TRUSTED_ORIGIN || !message || message.type !== 'campaign-exposure') return
+      const messageCampaignId = message.campaignId || (message.payload && message.payload.campaignId)
+      if (messageCampaignId !== this.campaignId) return
+      tracker.track('exposure', message.payload || {})
+    },
+    handleVisibilityChange () {
+      const tracker = this.tracker
+      if (!tracker) return
+      if (document.hidden) tracker.pause()
+      else tracker.resume()
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state { padding: 14rpx 24rpx; color: #ad7354; font-size: 21rpx; text-align: center; }
+</style>
+
+<script type="application/json">
+{ "component": true, "styleIsolation": "isolated" }
+</script>

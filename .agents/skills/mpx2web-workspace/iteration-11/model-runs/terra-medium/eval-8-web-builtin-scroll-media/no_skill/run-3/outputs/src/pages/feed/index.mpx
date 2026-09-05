@@ -1,0 +1,191 @@
+<template>
+  <view class="feed-page">
+    <scroll-view
+      class="feed-scroll"
+      scroll-y
+      scroll-top="{{scrollTop}}"
+      scroll-with-animation="{{false}}"
+      bindscroll="onScroll"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+      bindtouchcancel="onTouchEnd"
+    >
+      <view class="feed-content" data-content-version="{{contentVersion}}">
+        <view class="categories">
+          <view
+            wx:for="{{categories}}"
+            wx:key="id"
+            class="category {{activeCategoryId === item.id ? 'category--active' : ''}}"
+            data-category-id="{{item.id}}"
+            bindtap="selectCategory"
+          >
+            <text>{{item.name}}</text>
+          </view>
+        </view>
+
+        <view wx:for="{{products}}" wx:key="id" class="product">
+          <image
+            class="product-image"
+            src="{{item.image}}"
+            mode="widthFix"
+            bindload="onImageLoad"
+            binderror="onImageError"
+          />
+          <product-video wx:if="{{item.video}}" product="{{item}}" />
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="fixed-cart" bindtap="openCart">
+      <text>购物车 {{cartCount}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    cartCount: 2,
+    activeCategoryId: '',
+    contentVersion: 0,
+    scrollTop: 0,
+    isDragging: false
+  },
+  async onLoad () {
+    const { data } = await mpx.request({ url: '/api/feed' })
+    const categories = data.categories || []
+    this.setData({
+      categories,
+      products: data.products || [],
+      activeCategoryId: categories.length ? categories[0].id : ''
+    })
+  },
+  methods: {
+    selectCategory (event) {
+      this.setData({ activeCategoryId: event.currentTarget.dataset.categoryId })
+    },
+    onScroll (event) {
+      this.setData({ scrollTop: event.detail.scrollTop || 0 })
+    },
+    onImageLoad () {
+      // widthFix changes the item height after the image is available. Updating a
+      // bound value lets scroll-view recalculate its content extent on every end.
+      this.setData({ contentVersion: this.contentVersion + 1 })
+    },
+    onImageError () {
+      this.setData({ contentVersion: this.contentVersion + 1 })
+    },
+    onTouchStart (event) {
+      const touch = event.touches && event.touches[0]
+      if (!touch) return
+      this.dragStart = { x: touch.clientX, y: touch.clientY }
+      this.dragAxis = ''
+      this.setData({ isDragging: false })
+    },
+    onTouchMove (event) {
+      const touch = event.touches && event.touches[0]
+      if (!touch || !this.dragStart) return
+      const deltaX = touch.clientX - this.dragStart.x
+      const deltaY = touch.clientY - this.dragStart.y
+      if (!this.dragAxis && (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)) {
+        this.dragAxis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y'
+      }
+      // Only expose a horizontal drag as a gesture. Vertical motion remains the
+      // scroll-view's native scroll so momentum and page reachability are intact.
+      if (this.dragAxis === 'x' && !this.isDragging) {
+        this.setData({ isDragging: true })
+      }
+    },
+    onTouchEnd () {
+      this.dragStart = null
+      this.dragAxis = ''
+      if (this.isDragging) this.setData({ isDragging: false })
+    },
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  background: #f6f6f6;
+}
+
+.feed-scroll {
+  height: 100%;
+}
+
+.feed-content {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding-bottom: 144rpx;
+}
+
+.categories {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  overflow-x: auto;
+  box-sizing: border-box;
+  min-height: 88rpx;
+  padding: 0 24rpx;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.category {
+  flex: 0 0 auto;
+  padding: 24rpx 20rpx;
+  color: #666;
+}
+
+.category--active {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+
+.product {
+  padding: 24rpx;
+  background: #fff;
+}
+
+.product + .product {
+  margin-top: 16rpx;
+}
+
+.product-image {
+  display: block;
+  width: 100%;
+}
+
+.fixed-cart {
+  position: fixed;
+  right: 24rpx;
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  z-index: 20;
+  padding: 20rpx 28rpx;
+  border-radius: 48rpx;
+  background: #ff4d4f;
+  color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .18);
+}
+</style>

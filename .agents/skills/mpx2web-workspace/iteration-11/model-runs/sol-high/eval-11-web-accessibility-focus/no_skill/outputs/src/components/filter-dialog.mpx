@@ -1,0 +1,77 @@
+<template>
+  <view class="filter">
+    <view
+      class="filter-trigger"
+      role="button"
+      tabindex="0"
+      aria-haspopup="dialog"
+      aria-expanded="{{visible ? 'true' : 'false'}}"
+      bindtap="open"
+    >筛选</view>
+    <view wx:if="{{visible}}" class="mask" bindtap="close">
+      <view
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="商品筛选"
+        tabindex="-1"
+        catchtap="stop"
+      >
+        <button
+          wx:for="{{options}}"
+          wx:key="value"
+          class="filter-option {{selectedMap[item.value] ? 'is-selected' : ''}}"
+          aria-pressed="{{selectedMap[item.value] ? 'true' : 'false'}}"
+          bindtap="toggle(item.value)"
+        >{{item.label}}</button>
+        <button bindtap="clear">清空</button>
+        <button bindtap="confirm">确定</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    options: { type: Array, value: () => [] }
+  },
+  data: {
+    visible: false,
+    selected: [],
+    selectedMap: {}
+  },
+  methods: {
+    open () {
+      this.visible = true
+    },
+    close () {
+      this.visible = false
+    },
+    stop () {},
+    toggle (value) {
+      const selected = this.selected.indexOf(value) === -1
+        ? this.selected.concat(value)
+        : this.selected.filter((item) => item !== value)
+      const selectedMap = {}
+
+      selected.forEach((item) => {
+        selectedMap[item] = true
+      })
+
+      this.selected = selected
+      this.selectedMap = selectedMap
+    },
+    clear () {
+      this.selected = []
+      this.selectedMap = {}
+    },
+    confirm () {
+      this.triggerEvent('confirm', { selected: this.selected.slice() })
+      this.close()
+    }
+  }
+})
+</script>

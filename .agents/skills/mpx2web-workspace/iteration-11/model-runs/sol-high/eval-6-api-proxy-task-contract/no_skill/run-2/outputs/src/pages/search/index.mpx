@@ -1,0 +1,154 @@
+<template>
+  <view class="search-page">
+    <view class="search-bar">
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        bindinput="onKeywordInput"
+        placeholder="搜索商品"
+      />
+      <view class="clear-button" wx:if="{{keyword}}" bindtap="clearSearch">清空</view>
+    </view>
+
+    <view class="trending" wx:if="{{!keyword}}">
+      <view
+        class="keyword-item"
+        wx:for="{{trendingKeywords}}"
+        wx:key="*this"
+        bindtap="chooseKeyword(item)"
+      >{{item}}</view>
+    </view>
+
+    <view class="suggestions">
+      <view
+        class="suggestion-item"
+        wx:for="{{suggestions}}"
+        wx:key="id"
+        bindtap="openProduct(item.id)"
+      >{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { navigateTo, showToast } from '@mpxjs/api-proxy'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+function isAbortError (error) {
+  if (!error) return false
+  const message = error.errMsg || error.message || ''
+  return error.name === 'AbortError' || /abort/i.test(message)
+}
+
+function showError (title) {
+  showToast({
+    title,
+    icon: 'none'
+  }).catch(() => {})
+}
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: []
+  },
+  async onLoad () {
+    this._searchSerial = 0
+    this._suggestionRequest = null
+    this._unloaded = false
+
+    try {
+      const keywords = await fetchTrendingKeywords()
+      if (!this._unloaded) this.trendingKeywords = keywords
+    } catch (error) {
+      if (!this._unloaded && !isAbortError(error)) showError('趋势词加载失败')
+    }
+  },
+  onUnload () {
+    this._unloaded = true
+    this._searchSerial += 1
+    this.cancelSuggestionRequest()
+  },
+  methods: {
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+    clearSearch () {
+      this.search('')
+    },
+    cancelSuggestionRequest () {
+      const requestTask = this._suggestionRequest
+      this._suggestionRequest = null
+      if (requestTask && typeof requestTask.abort === 'function') {
+        requestTask.abort()
+      }
+    },
+    search (keyword) {
+      const currentKeyword = keyword.trim()
+      const serial = ++this._searchSerial
+
+      this.cancelSuggestionRequest()
+      this.keyword = currentKeyword
+      this.suggestions = []
+
+      if (!currentKeyword) return
+
+      const requestTask = requestSuggestions(currentKeyword)
+      this._suggestionRequest = requestTask
+
+      requestTask.then((suggestions) => {
+        if (this._suggestionRequest === requestTask) {
+          this._suggestionRequest = null
+        }
+        if (this._unloaded || serial !== this._searchSerial || this.keyword !== currentKeyword) return
+        this.suggestions = suggestions
+      }).catch((error) => {
+        if (this._suggestionRequest === requestTask) {
+          this._suggestionRequest = null
+        }
+        if (this._unloaded || serial !== this._searchSerial || isAbortError(error)) return
+        showError('搜索失败')
+      })
+    },
+    openProduct (productId) {
+      navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+      }).catch(() => showError('商品详情打开失败'))
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page {
+  padding: 24rpx;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+}
+
+.clear-button {
+  margin-left: 24rpx;
+}
+
+.trending,
+.suggestions {
+  margin-top: 24rpx;
+}
+
+.keyword-item,
+.suggestion-item {
+  padding: 16rpx 0;
+}
+</style>

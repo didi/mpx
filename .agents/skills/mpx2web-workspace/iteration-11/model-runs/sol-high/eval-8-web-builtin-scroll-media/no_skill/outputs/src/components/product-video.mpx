@@ -1,0 +1,51 @@
+<template>
+  <view class="product-video">
+    <video
+      id="product-video-{{product.id}}"
+      class="video"
+      src="{{product.video}}"
+      autoplay
+      muted
+      playsinline
+      webkit-playsinline
+      enable-danmu
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
+      binderror="onVideoError"
+    />
+    <text>{{progress}} / {{duration}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: { type: Object, value: () => ({}) }
+  },
+  data: {
+    progress: 0,
+    duration: 0,
+    videoSize: ''
+  },
+  methods: {
+    onTimeUpdate (event) {
+      this.progress = event.detail.currentTime
+      this.duration = event.detail.duration
+    },
+    onLoadedMetadata (event) {
+      this.videoSize = `${event.detail.width}x${event.detail.height}`
+      this.duration = event.detail.duration || this.duration
+    },
+    onVideoError () {}
+  }
+})
+</script>
+
+<style scoped>
+.product-video,
+.video {
+  width: 100%;
+}
+</style>

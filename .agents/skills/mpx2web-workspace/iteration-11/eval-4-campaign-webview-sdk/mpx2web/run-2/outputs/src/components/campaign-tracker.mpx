@@ -1,0 +1,141 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        this.handleTrackerInputChange()
+      }
+    },
+    memberId: {
+      type: String,
+      observer () {
+        this.handleTrackerInputChange()
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  ready () {
+    this._trackerMounted = true
+    this._trackerGeneration = 0
+    if (__mpx_mode__ === 'web') {
+      this.initTracker()
+    } else {
+      this.ready = true
+      this.triggerEvent('ready', { campaignId: this.campaignId })
+    }
+  },
+  detached () {
+    this._trackerMounted = false
+    this._trackerGeneration = (this._trackerGeneration || 0) + 1
+    this.cleanupTracker()
+    this.ready = false
+  },
+  methods: {
+    handleTrackerInputChange () {
+      if (!this._trackerMounted) return
+      if (__mpx_mode__ === 'web') {
+        this.initTracker()
+      } else {
+        this.triggerEvent('ready', { campaignId: this.campaignId })
+      }
+    },
+    isCurrentTracker (generation, campaignId, memberId) {
+      return this._trackerMounted &&
+        generation === this._trackerGeneration &&
+        campaignId === this.campaignId &&
+        memberId === this.memberId
+    },
+    async initTracker () {
+      if (__mpx_mode__ !== 'web' || !this.campaignId || !this._trackerMounted) return
+
+      const generation = (this._trackerGeneration || 0) + 1
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      this._trackerGeneration = generation
+      this.ready = false
+      this.cleanupTracker()
+
+      let tracker
+      try {
+        const trackerModule = await import('@business/campaign-tracker-web')
+        if (!this.isCurrentTracker(generation, campaignId, memberId)) return
+
+        const campaignTracker = trackerModule.default || trackerModule
+        tracker = await campaignTracker.create({ campaignId, memberId })
+        if (!this.isCurrentTracker(generation, campaignId, memberId)) {
+          this.destroyTracker(tracker)
+          return
+        }
+
+        this.tracker = tracker
+        document.addEventListener('visibilitychange', this.handleVisibilityChange)
+        tracker.start()
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (tracker && tracker !== this.tracker) {
+          this.destroyTracker(tracker)
+        }
+        if (!this.isCurrentTracker(generation, campaignId, memberId)) return
+        this.cleanupTracker()
+        this.ready = false
+        this.triggerEvent('error', {
+          campaignId,
+          message: error && error.message ? error.message : 'tracker init failed'
+        })
+      }
+    },
+    cleanupTracker () {
+      if (__mpx_mode__ === 'web' && typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      }
+      if (this.tracker) {
+        const tracker = this.tracker
+        this.tracker = null
+        this.destroyTracker(tracker)
+      }
+    },
+    destroyTracker (tracker) {
+      if (tracker && typeof tracker.destroy === 'function') {
+        tracker.destroy()
+      }
+    },
+    handleVisibilityChange () {
+      const tracker = this.tracker
+      if (!tracker || !this._trackerMounted) return
+      if (document.hidden) {
+        tracker.pause()
+      } else {
+        tracker.resume()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

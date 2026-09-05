@@ -1,0 +1,77 @@
+<template>
+  <view class="article-page">
+    <text class="title">{{article.title}}</text>
+    <rich-text nodes="{{article.content}}" />
+    <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
+    <view wx:if="{{showShareToolbar}}" class="share-toolbar">复制链接</view>
+
+    <!-- Keep the SSR and hydration trees stable while the async subpackage loads. -->
+    <recommend-list wx:if="{{showRecommendComponent}}" article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
+    <view wx:else class="recommend-list">
+      <view wx:for="{{recommendations}}" wx:key="id" data-article-id="{{item.id}}" bindtap="openArticle">{{item.title}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { useArticleStore } from '../../stores/article'
+
+createPage({
+  data: {
+    articleId: '',
+    favorite: false,
+    showShareToolbar: false,
+    showRecommendComponent: false
+  },
+  computed: {
+    article () {
+      const store = useArticleStore(this.$pinia)
+      return store.articleId === this.articleId ? (store.article || {}) : {}
+    },
+    recommendations () {
+      const store = useArticleStore(this.$pinia)
+      return store.articleId === this.articleId ? store.recommendations : []
+    }
+  },
+  onLoad (query) {
+    if (typeof window !== 'undefined') return this.loadArticle(query.id)
+  },
+  onReady () {
+    // These browser-only features are enabled after hydration, never during SSR.
+    if (typeof window !== 'undefined') {
+      this.showShareToolbar = true
+      this.showRecommendComponent = true
+    }
+  },
+  serverPrefetch () {
+    return this.loadArticle(this.$route.query.id, this.$ssrContext)
+  },
+  methods: {
+    loadArticle (articleId, requestContext) {
+      this.articleId = String(articleId || '')
+      if (!this.articleId) return Promise.resolve()
+      return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
+    },
+    toggleFavorite () {
+      this.favorite = !this.favorite
+    },
+    openArticle (event) {
+      const articleId = (event.detail && event.detail.articleId) ||
+        (event.currentTarget && event.currentTarget.dataset.articleId)
+      if (articleId) mpx.navigateTo({ url: `/pages/article/detail?id=${articleId}` })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "recommend-list": "../../packageRecommend/components/recommend-list?root=packageRecommend"
+  },
+  "componentPlaceholder": {
+    "recommend-list": "view"
+  }
+}
+</script>

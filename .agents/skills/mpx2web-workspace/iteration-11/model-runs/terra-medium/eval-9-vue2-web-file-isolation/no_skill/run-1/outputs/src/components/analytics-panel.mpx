@@ -1,0 +1,61 @@
+<template>
+  <view class="analytics-panel">
+    <view
+      wx:for="{{metrics}}"
+      wx:key="key"
+      class="metric"
+      data-key="{{item.key}}"
+      bindtap="selectMetric"
+    >
+      <text class="metric__label">{{item.label}}</text>
+      <text class="metric__value">{{item.value}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+// This is intentionally the mini-program implementation.  Keep Web-only
+// chart code in analytics-panel.web.mpx so it cannot enter this dependency graph.
+createComponent({
+  properties: {
+    metrics: { type: Array, value: () => [] }
+  },
+  methods: {
+    selectMetric (event) {
+      const key = event && event.currentTarget && event.currentTarget.dataset
+        ? event.currentTarget.dataset.key
+        : undefined
+      this.triggerEvent('select', { key })
+    }
+  }
+})
+</script>
+
+<style>
+.analytics-panel {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.metric {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 150rpx;
+  padding: 20rpx;
+}
+
+.metric__label {
+  color: #667085;
+  font-size: 24rpx;
+}
+
+.metric__value {
+  margin-top: 8rpx;
+  color: #101828;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+</style>

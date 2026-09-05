@@ -1,0 +1,84 @@
+<template>
+  <view class="search-page">
+    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view class="trending" wx:if="{{!keyword}}">
+      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    </view>
+    <view class="suggestions">
+      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: [],
+    requestTask: null,
+    requestVersion: 0
+  },
+  async onLoad () {
+    try {
+      this.trendingKeywords = await fetchTrendingKeywords()
+    } catch (error) {
+      alert('搜索失败')
+    }
+  },
+  onUnload () {
+    this.requestVersion += 1
+    this.abortRequest()
+  },
+  methods: {
+    abortRequest () {
+      if (this.requestTask && this.requestTask.__returned) {
+        this.requestTask.__returned.abort()
+      }
+      this.requestTask = null
+    },
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+    search (keyword) {
+      this.keyword = keyword
+      this.requestVersion += 1
+      const version = this.requestVersion
+      this.abortRequest()
+      if (!keyword) {
+        this.suggestions = []
+        return
+      }
+      const requestTask = requestSuggestions(keyword)
+      this.requestTask = requestTask
+      requestTask.then(({ data }) => {
+        if (this.requestTask === requestTask && this.requestVersion === version) {
+          this.suggestions = data.list
+        }
+      }).catch(() => {
+        if (this.requestTask === requestTask && this.requestVersion === version) {
+          alert('搜索失败')
+        }
+      }).finally(() => {
+        if (this.requestTask === requestTask) this.requestTask = null
+      })
+    },
+    openProduct (productId) {
+      mpx.navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page { padding: 24rpx; }
+.trending, .suggestions { margin-top: 24rpx; }
+</style>

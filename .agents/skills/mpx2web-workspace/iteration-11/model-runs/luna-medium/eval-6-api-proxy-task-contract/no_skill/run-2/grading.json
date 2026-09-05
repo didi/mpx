@@ -1,0 +1,185 @@
+{
+  "eval_id": 6,
+  "eval_name": "api-proxy-task-contract",
+  "configuration": "no_skill",
+  "run_number": 2,
+  "grading_fingerprint": "55aa197cec29d969825c859a261651639489c98af24037791057592b845c7c8a",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 83444
+  },
+  "expectations": [
+    {
+      "id": "q0",
+      "text": "应用入口安装 @mpxjs/api-proxy，并通过 mpx.use(apiProxy, { usePromise: true }) 明确启用 Promise 风格",
+      "passed": false,
+      "evidence": "outputs/src/app.mpx：未证明应用入口以 usePromise: true 安装 API Proxy。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q1",
+      "text": "Web 输出中的普通趋势词请求通过会返回 Promise 的 Mpx 官方 API 调用路径使用 await 或 Promise 链；可使用配置后的 mpx.request 或会被跨端编译转换到该入口的 wx.request。原始 @mpxjs/api-proxy 命名导入不会继承 Promise 化配置，不能直接按 Promise 使用；不得混用 success/fail 回调",
+      "passed": false,
+      "evidence": "outputs/src/services/search.js:1-7 趋势词请求直接使用 import { request } from '@mpxjs/api-proxy' 后调用 request(...).then(...)；该命名导入不能继承应用入口 Promise 化配置，且 app.mpx 也未配置 apiProxy。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "联想词请求保存可取消任务：可通过单次 usePromise: false 或原始 @mpxjs/api-proxy 命名导入直接取得 RequestTask，也可从已 Promise 化调用的 Promise.__returned 取得框架保留的原始任务；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "passed": false,
+      "evidence": "outputs/src/services/search.js / outputs/src/pages/search/index.mpx：联想请求未保存直接 RequestTask 或 Promise.__returned 原始任务。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "联想词 success/fail 回调捕获本次任务和关键词，仅当前任务且关键词仍匹配时才更新结果或提示，旧响应不能覆盖新搜索",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx：联想回调使用任务身份和关键词或请求代际拒绝晚到响应。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "详情跳转与错误提示继续走 Mpx 官方 API 链路；可保留会被跨端编译转换的 wx.navigateTo/wx.showToast，可沿用 mpx.xxx，也可在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx:103-105 详情跳转使用 mpx.navigateTo，符合官方 API 链路；但 outputs/src/pages/search/index.mpx:41-43、91-94 错误提示仅设置 errorMessage，没有使用 mpx.showToast、wx.showToast 或 api-proxy showToast。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q5",
+      "text": "不用 fetch、location 或 alert 平行重写 request/navigateTo/showToast；若沿用 @mpxjs/api-proxy 命名导入，应明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置",
+      "passed": false,
+      "evidence": "outputs 中未见 fetch、location 或 alert；但 outputs/src/services/search.js:1 仍沿用 @mpxjs/api-proxy 命名导入，并在 3-7、9-38 直接依赖 Promise 化行为，未明确或规避其不继承应用入口 options/custom/Promise 化配置的问题。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q6",
+      "text": "趋势词、连续输入、清空搜索、取消旧请求、结果展示和商品详情业务链路保持完整",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx:64-80 保留了清空和结果清理，83-100 有结果展示更新链路，103-105 有详情跳转；但趋势词和联想词请求依赖错误的 Promise 化 api-proxy 命名导入，旧请求取消也没有拿到真实 RequestTask，因此趋势词、取消旧请求和完整连续输入链路证据不足。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 6,
+    "total": 7,
+    "pass_rate": 0.1429
+  },
+  "metrics": {
+    "total_tokens": 75524,
+    "input_tokens": 70481,
+    "output_tokens": 5043,
+    "tool_calls": 3,
+    "duration_ms": 117071
+  },
+  "timing": {
+    "total_tokens": 75524,
+    "duration_ms": 117071,
+    "total_duration_seconds": 117.071
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/pages/search/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/services/search.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/pages/search/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/services/search.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/pages/search/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3501
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-6-api-proxy-task-contract/no_skill/run-2/outputs/src/services/search.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "q2 允许 Promise.__returned 路径，但 q3 又限定 success/fail 回调；若候选使用 Promise.__returned 加 then/catch 且做了任务身份与关键词保护，q3 文字可能造成误判，建议明确 Promise 链保护是否也可接受。",
+      "q5 中“明确这些调用不继承应用级配置”建议说明必须体现在代码实现、注释还是验收说明中，否则对完整文件类输出的判定边界不够清晰。"
+    ],
+    "overall": "该输出未在应用入口安装并启用 api-proxy Promise 风格，且把命名导入 request 当 Promise 使用，导致趋势词、联想词取消和错误提示链路均不满足核心要求。"
+  }
+}

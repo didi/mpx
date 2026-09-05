@@ -1,0 +1,165 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "grading_fingerprint": "9e9b83718e783637990324ae65d7c25d197b5629fbe2b66a5428dfb867ab94ca",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 60582
+  },
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:116-156 中 choosePlace/openPlace/choosePhoto 先判断 __mpx_mode__ === 'web' 并 return，非 Web 分支直接调用 wx.chooseLocation、wx.openLocation、wx.chooseMedia，没有动态方法名或自定义适配器。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:116-156 仅在 choosePlace、openPlace、choosePhoto 三个方法内隔离 Web 缺失能力；文件未引入通用平台调用层，submitPost 仍在 outputs/src/pages/community/publish.mpx:166-189 直接使用 wx.request、wx.redirectTo、wx.showToast。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:117-120 的 Web 位置选择分支包含 TODO(Web) 边界说明“等宿主声明位置选择协议后接入”，只提示并 return，未声明或调用位置 Bridge/SDK。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:130-133 的 Web 地图打开分支包含 TODO(Web) 边界说明“等宿主声明地图查看协议后接入”，只提示并 return，未构造地图跳转或调用虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:143-146 的 Web 媒体选择分支包含 TODO(Web) 边界说明“等宿主声明媒体选择/上传协议后接入”，只提示并 return，未假定 input、Bridge 或媒体 SDK。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:169-183 发布请求、提交后跳转和失败提示继续使用 wx.request、wx.redirectTo、wx.showToast；未改成 fetch、location.assign、alert 或自定义包装。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:10-35 保留内容输入与图片展示/添加入口，116-156 保留非 Web 位置、地图、图片选择能力，157-165 保留删图、话题选择和评论开关，166-189 提交 content/photos/place/topicId/allowComments 并跳转 /pages/community/detail?id=${data.id}。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 416650,
+    "input_tokens": 411932,
+    "output_tokens": 4718,
+    "tool_calls": 11,
+    "duration_ms": 132001
+  },
+  "timing": {
+    "total_tokens": 416650,
+    "duration_ms": 132001,
+    "total_duration_seconds": 132.001
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3907
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言未明确要求校验 __mpx_mode__ 在目标工程中的编译期可用性；若该宏不可用，当前结论可能高估实现可构建性。",
+      "断言允许 Web 缺失能力内使用提示能力，但未区分 wx.showToast 在 Web 产物中是否一定由项目配置支持；若宿主未配置官方 API 转换链路，a2-a4 与 a6 的判定可能受影响。"
+    ],
+    "overall": "候选将 Web 未确定协议限制在三个业务方法内，未虚构 Bridge 或浏览器实现，且保留原有发布业务链路。"
+  }
+}

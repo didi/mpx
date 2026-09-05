@@ -1,0 +1,114 @@
+<template>
+  <view class="search-page">
+    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view class="trending" wx:if="{{!keyword}}">
+      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    </view>
+    <view class="suggestions">
+      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { navigateTo, showToast } from '@mpxjs/api-proxy'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: []
+  },
+  async onLoad () {
+    this.suggestionRequest = null
+    this.searchVersion = 0
+    this.isUnloaded = false
+
+    try {
+      const trendingKeywords = await fetchTrendingKeywords()
+      if (!this.isUnloaded) {
+        this.trendingKeywords = trendingKeywords
+      }
+    } catch (error) {
+      if (!this.isUnloaded) {
+        this.showError('趋势词加载失败')
+      }
+    }
+  },
+  onUnload () {
+    this.isUnloaded = true
+    this.searchVersion += 1
+    this.abortSuggestionRequest()
+  },
+  methods: {
+    onKeywordInput (event) {
+      this.search(event.detail.value)
+    },
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+    search (keyword) {
+      const normalizedKeyword = keyword.trim()
+      const currentVersion = ++this.searchVersion
+
+      this.keyword = normalizedKeyword
+      this.abortSuggestionRequest()
+
+      if (!normalizedKeyword) {
+        this.suggestions = []
+        return
+      }
+
+      this.suggestions = []
+      const suggestionRequest = requestSuggestions(normalizedKeyword)
+      this.suggestionRequest = suggestionRequest
+
+      suggestionRequest.promise.then(
+        (suggestions) => {
+          if (!this.isUnloaded && currentVersion === this.searchVersion) {
+            this.suggestions = suggestions
+          }
+          this.finishSuggestionRequest(currentVersion)
+        },
+        () => {
+          if (!this.isUnloaded && currentVersion === this.searchVersion) {
+            this.showError('搜索失败')
+          }
+          this.finishSuggestionRequest(currentVersion)
+        }
+      )
+    },
+    abortSuggestionRequest () {
+      if (this.suggestionRequest) {
+        this.suggestionRequest.abort()
+        this.suggestionRequest = null
+      }
+    },
+    finishSuggestionRequest (version) {
+      if (version === this.searchVersion) {
+        this.suggestionRequest = null
+      }
+    },
+    showError (message) {
+      showToast({
+        title: message,
+        icon: 'none'
+      }).catch(() => {})
+    },
+    openProduct (productId) {
+      navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+      }).catch(() => {
+        this.showError('跳转失败')
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page { padding: 24rpx; }
+.trending, .suggestions { margin-top: 24rpx; }
+</style>

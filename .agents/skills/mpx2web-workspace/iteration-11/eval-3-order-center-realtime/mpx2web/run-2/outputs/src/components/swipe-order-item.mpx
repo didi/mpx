@@ -1,0 +1,419 @@
+<template>
+  <view
+    class="swipe-order"
+    wx:class="{{ {disabled: disabled} }}"
+    data-disabled="{{disabled ? 1 : 0}}"
+    data-gesture-key="{{gestureKey}}"
+    data-offset="{{offsetX}}"
+    catchtouchstart@wx="{{gesture.onTouchStart}}"
+    catchtouchmove@wx="{{gesture.onTouchMove}}"
+    catchtouchend@wx="{{gesture.onTouchEnd}}"
+    catchtouchcancel@wx="{{gesture.onTouchCancel}}"
+    @touchstart@web="handleTouchStart"
+    @touchmove@web="handleTouchMove"
+    @touchend@web="handleTouchEnd"
+    @touchcancel@web="handleTouchCancel"
+  >
+    <view class="remove-action">
+      <button class="remove-button" catchtap="removeOrder" disabled="{{disabled}}">删除</button>
+    </view>
+
+    <view
+      class="order-card"
+      wx:class="{{ {dragging: dragging} }}"
+      style="transform: translateX({{offsetX}}px)"
+      bindtap="selectOrder"
+    >
+      <view class="order-head">
+        <text class="order-no">订单 {{order.orderNo}}</text>
+        <text class="order-status">{{order.statusText}}</text>
+      </view>
+
+      <view class="goods-row">
+        <image class="goods-cover" src="{{order.cover}}" mode="aspectFill" />
+        <view class="goods-copy">
+          <text class="goods-title">{{order.title}}</text>
+          <text class="goods-sku">{{order.skuText}}</text>
+          <view class="goods-price-row">
+            <text class="goods-price">¥{{order.amount}}</text>
+            <text class="goods-count">×{{order.count}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="logistics-row">
+        <view class="logistics-copy">
+          <text class="logistics-text">{{order.logisticsText}}</text>
+          <text class="logistics-time">{{order.updatedAt}}</text>
+        </view>
+        <text class="logistics-arrow">›</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script module="gesture" lang="wxs">
+var gestures = {}
+
+function pointX(event) {
+  var touches = event.touches && event.touches.length ? event.touches : event.changedTouches
+  return touches && touches.length ? touches[0].clientX : 0
+}
+
+function clampOffset(offset) {
+  if (offset > 0) return 0
+  if (offset < -96) return -96
+  return offset
+}
+
+function gestureKey(event) {
+  return String(event.currentTarget.dataset.gestureKey || '')
+}
+
+function isDisabled(event) {
+  var disabled = event.currentTarget.dataset.disabled
+  return disabled === true || disabled === 1 || disabled === '1'
+}
+
+module.exports = {
+  onTouchStart: function (event) {
+    if (isDisabled(event)) return
+    var key = gestureKey(event)
+    gestures[key] = {
+      startX: pointX(event),
+      baseOffset: Number(event.currentTarget.dataset.offset) || 0,
+      offset: Number(event.currentTarget.dataset.offset) || 0,
+      moved: false
+    }
+    event.instance.callMethod('beginSwipe')
+  },
+  onTouchMove: function (event) {
+    if (isDisabled(event)) return
+    var state = gestures[gestureKey(event)]
+    if (!state) return
+    var deltaX = pointX(event) - state.startX
+    state.moved = state.moved || Math.abs(deltaX) > 4
+    state.offset = clampOffset(state.baseOffset + deltaX)
+    event.instance.callMethod('syncSwipeOffset', state.offset)
+  },
+  onTouchEnd: function (event) {
+    var key = gestureKey(event)
+    var state = gestures[key]
+    if (!state) return
+    delete gestures[key]
+    if (isDisabled(event)) {
+      event.instance.callMethod('cancelSwipe')
+      return
+    }
+    event.instance.callMethod('finishSwipe', {
+      open: state.offset < -48,
+      moved: state.moved
+    })
+  },
+  onTouchCancel: function (event) {
+    var key = gestureKey(event)
+    if (gestures[key]) delete gestures[key]
+    event.instance.callMethod('cancelSwipe')
+  }
+}
+</script>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+const MAX_OFFSET = 96
+const OPEN_THRESHOLD = MAX_OFFSET / 2
+const MOVE_SLOP = 4
+let gestureSeed = 0
+
+function pointX (event) {
+  const touches = event.touches && event.touches.length
+    ? event.touches
+    : event.changedTouches
+  return touches && touches.length ? touches[0].clientX : 0
+}
+
+function clampOffset (offset) {
+  return Math.max(-MAX_OFFSET, Math.min(0, offset))
+}
+
+createComponent({
+  properties: {
+    order: {
+      type: Object,
+      value: () => ({})
+    },
+    disabled: {
+      type: Boolean,
+      value: false,
+      observer (disabled) {
+        if (disabled) this.resetSwipe()
+      }
+    }
+  },
+  data: {
+    offsetX: 0,
+    dragging: false,
+    gestureKey: ''
+  },
+  attached () {
+    this.gestureKey = `swipe-${++gestureSeed}`
+    this.resetGestureState()
+  },
+  methods: {
+    resetGestureState () {
+      this._gestureActive = false
+      this._gestureStartX = 0
+      this._gestureBaseOffset = 0
+      this._gestureMoved = false
+      this._suppressNextTap = false
+    },
+    resetSwipe () {
+      this._gestureActive = false
+      this._gestureMoved = false
+      this._suppressNextTap = false
+      this.dragging = false
+      this.offsetX = 0
+    },
+    beginSwipe () {
+      if (this.disabled) return
+      this._suppressNextTap = false
+      this.dragging = true
+      this.triggerEvent('swipestart', { orderId: this.order.id })
+    },
+    syncSwipeOffset (offsetX) {
+      if (this.disabled) return
+      this.offsetX = clampOffset(Number(offsetX) || 0)
+    },
+    finishSwipe (result) {
+      const open = typeof result === 'object' ? result.open : result
+      const moved = typeof result === 'object' ? result.moved : true
+      this._gestureActive = false
+      this._gestureMoved = false
+      this._suppressNextTap = Boolean(moved)
+      this.dragging = false
+      this.offsetX = open && !this.disabled ? -MAX_OFFSET : 0
+      this.triggerEvent('swipeend', {
+        orderId: this.order.id,
+        open: this.offsetX === -MAX_OFFSET
+      })
+    },
+    cancelSwipe () {
+      this._gestureActive = false
+      this._gestureMoved = false
+      this._suppressNextTap = false
+      this.dragging = false
+      this.offsetX = 0
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
+    },
+    handleTouchStart (event) {
+      if (this.disabled) return
+      this._suppressNextTap = false
+      this._gestureActive = true
+      this._gestureStartX = pointX(event)
+      this._gestureBaseOffset = this.offsetX
+      this._gestureMoved = false
+      this.beginSwipe()
+    },
+    handleTouchMove (event) {
+      if (!this._gestureActive || this.disabled) return
+      const deltaX = pointX(event) - this._gestureStartX
+      if (Math.abs(deltaX) > MOVE_SLOP) this._gestureMoved = true
+      this.offsetX = clampOffset(this._gestureBaseOffset + deltaX)
+    },
+    handleTouchEnd (event) {
+      if (!this._gestureActive) return
+      if (this.disabled) {
+        this.cancelSwipe()
+        return
+      }
+      const deltaX = pointX(event) - this._gestureStartX
+      if (Math.abs(deltaX) > MOVE_SLOP) this._gestureMoved = true
+      const finalOffset = clampOffset(this._gestureBaseOffset + deltaX)
+      this.finishSwipe({
+        open: finalOffset < -OPEN_THRESHOLD,
+        moved: this._gestureMoved
+      })
+    },
+    handleTouchCancel () {
+      if (!this._gestureActive) return
+      this.cancelSwipe()
+    },
+    selectOrder () {
+      if (this._suppressNextTap) {
+        this._suppressNextTap = false
+        return
+      }
+      if (this.disabled) return
+      this.triggerEvent('select', { orderId: this.order.id })
+    },
+    removeOrder () {
+      if (this.disabled) return
+      this.triggerEvent('remove', { orderId: this.order.id })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.swipe-order {
+  position: relative;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+  border-radius: 20rpx;
+}
+
+.remove-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 96px;
+  background: #ff4d4f;
+}
+
+.remove-button {
+  width: 96px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  font-size: 28rpx;
+  background: #ff4d4f;
+  border-radius: 0;
+}
+
+.order-card {
+  position: relative;
+  z-index: 1;
+  padding: 24rpx;
+  background: #ffffff;
+  transition: transform 180ms ease-out;
+}
+
+.order-card.dragging {
+  transition: none;
+}
+
+.swipe-order.disabled .order-card {
+  opacity: 0.65;
+}
+
+.order-head,
+.goods-price-row,
+.logistics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-no {
+  color: #8b919c;
+  font-size: 22rpx;
+}
+
+.order-status {
+  color: #1677ff;
+  font-size: 25rpx;
+  font-weight: bold;
+}
+
+.goods-row {
+  display: flex;
+  margin-top: 18rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #eef0f3;
+}
+
+.goods-cover {
+  width: 144rpx;
+  height: 144rpx;
+  border-radius: 14rpx;
+}
+
+.goods-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.goods-title,
+.goods-sku,
+.logistics-text,
+.logistics-time {
+  display: block;
+}
+
+.goods-title {
+  overflow: hidden;
+  color: #292d35;
+  font-size: 28rpx;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goods-sku {
+  margin-top: 8rpx;
+  color: #999fa8;
+  font-size: 22rpx;
+}
+
+.goods-price-row {
+  margin-top: auto;
+}
+
+.goods-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+
+.goods-count {
+  color: #999fa8;
+  font-size: 22rpx;
+}
+
+.logistics-row {
+  padding-top: 18rpx;
+}
+
+.logistics-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.logistics-text {
+  overflow: hidden;
+  color: #3d424b;
+  font-size: 24rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logistics-time {
+  margin-top: 5rpx;
+  color: #a2a7b0;
+  font-size: 20rpx;
+}
+
+.logistics-arrow {
+  margin-left: 16rpx;
+  color: #b7bbc3;
+  font-size: 38rpx;
+}
+
+/* @mpx-if (__mpx_mode__ === 'web') */
+.swipe-order {
+  touch-action: pan-y;
+}
+/* @mpx-endif */
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

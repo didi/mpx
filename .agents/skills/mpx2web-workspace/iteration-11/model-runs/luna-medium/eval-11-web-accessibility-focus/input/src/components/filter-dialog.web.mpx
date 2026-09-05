@@ -1,0 +1,37 @@
+<template>
+  <div class="filter">
+    <button class="filter-trigger" @click="open">筛选</button>
+    <div v-if="visible" class="mask" @click="close">
+      <div class="dialog" role="dialog" tabindex="-1">
+        <button v-for="item in options" :key="item.value" @click="toggle(item.value)">{{item.label}}</button>
+        <button @click="clear">清空</button>
+        <button @click="confirm">确定</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: { options: { type: Array, value: () => [] } },
+  data: { visible: false, selected: [] },
+  attached () {
+    document.addEventListener('keydown', this.onKeydown)
+  },
+  methods: {
+    open () {
+      this.visible = true
+      document.querySelector('.dialog').focus()
+    },
+    close () { this.visible = false },
+    toggle (value) { this.selected = this.selected.concat(value) },
+    clear () { this.selected = [] },
+    confirm () { this.close() },
+    onKeydown (event) {
+      if (event.key === 'Escape') this.close()
+    }
+  }
+})
+</script>

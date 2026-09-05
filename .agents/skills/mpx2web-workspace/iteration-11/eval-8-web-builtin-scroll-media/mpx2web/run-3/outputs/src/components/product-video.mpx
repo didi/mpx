@@ -1,0 +1,64 @@
+<template>
+  <view class="product-video">
+    <video
+      id="product-video"
+      src="{{product.video}}"
+      autoplay
+      muted@web="{{true}}"
+      muted@wx="{{false}}"
+      playsinline@web="{{true}}"
+      enable-danmu@wx
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
+      binderror="onVideoError"
+    />
+    <text>{{progress}} / {{duration}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: { type: Object, value: () => ({}) }
+  },
+  data: {
+    progress: 0,
+    duration: 0
+  },
+  methods: {
+    getVideoState (event) {
+      const detail = (event && event.detail) || {}
+      const player = detail.plyr
+      const media = (player && player.media) || (event && (event.target || event.currentTarget)) || {}
+      return {
+        currentTime: typeof detail.currentTime === 'number'
+          ? detail.currentTime
+          : (player && typeof player.currentTime === 'number' ? player.currentTime : media.currentTime),
+        duration: typeof detail.duration === 'number'
+          ? detail.duration
+          : (player && typeof player.duration === 'number' ? player.duration : media.duration),
+        width: typeof detail.width === 'number' ? detail.width : media.videoWidth,
+        height: typeof detail.height === 'number' ? detail.height : media.videoHeight
+      }
+    },
+    onTimeUpdate (event) {
+      const { currentTime, duration } = this.getVideoState(event)
+      if (typeof currentTime === 'number') this.progress = currentTime
+      if (typeof duration === 'number') this.duration = duration
+    },
+    onLoadedMetadata (event) {
+      const { width, height, duration } = this.getVideoState(event)
+      if (typeof duration === 'number') this.duration = duration
+      this.videoSize = `${width || 0}x${height || 0}`
+      this.triggerEvent('mediaready', { width, height, duration })
+    },
+    onVideoError () {}
+  }
+})
+</script>
+
+<style scoped>
+.product-video { width: 100%; }
+</style>

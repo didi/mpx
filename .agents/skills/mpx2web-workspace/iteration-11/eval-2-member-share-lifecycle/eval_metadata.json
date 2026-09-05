@@ -1,0 +1,54 @@
+{
+  "eval_id": 2,
+  "eval_name": "member-share-lifecycle",
+  "complexity": "normal",
+  "focus": "web-missing-lifecycle/navigation-api",
+  "business_scenario": "会员邀请活动页的小程序分享与 Web 分享入口",
+  "prompt": "会员邀请活动页需要输出到 Web，同时保留微信小程序好友分享、朋友圈分享、活动规则和邀请数据。Web 需要保留可见的分享入口，但业务尚未提供 Web 分享 SDK、宿主 Bridge 或降级协议。请避免虚构能力并输出完整 .mpx 文件。",
+  "files": [
+    "input/src/pages/member/invite.mpx"
+  ],
+  "outputs": [
+    "src/pages/member/invite.mpx"
+  ],
+  "preserves_cases": [
+    "iteration-4/eval-5-web-lifecycle"
+  ],
+  "assertions": [
+    {
+      "id": "s0",
+      "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "category": "cross-platform-regression"
+    },
+    {
+      "id": "s1",
+      "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "category": "web-lifecycle"
+    },
+    {
+      "id": "s2",
+      "text": "Web 分享入口绑定独立的页面实例方法",
+      "category": "web-template"
+    },
+    {
+      "id": "s3",
+      "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "category": "web-lifecycle"
+    },
+    {
+      "id": "s4",
+      "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "category": "web-lifecycle"
+    },
+    {
+      "id": "s5",
+      "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "category": "web-api"
+    },
+    {
+      "id": "s6",
+      "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "category": "business-regression"
+    }
+  ]
+}

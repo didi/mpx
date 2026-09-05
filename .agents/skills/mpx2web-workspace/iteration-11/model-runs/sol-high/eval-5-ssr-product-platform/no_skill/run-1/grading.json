@@ -1,0 +1,262 @@
+{
+  "eval_id": 5,
+  "eval_name": "ssr-product-platform",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "grading_fingerprint": "bc981a6a002b7279a82e76b06a524ebf2c3b6a680ddc17f1c558de1a00d4c53e",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 126569
+  },
+  "expectations": [
+    {
+      "id": "p0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia 实例",
+      "passed": false,
+      "evidence": "outputs/src/app.mpx：onAppInit 没有为当前请求创建并返回新的 Pinia。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p1",
+      "text": "serverPrefetch 返回 Promise 并等待商品与首屏推荐数据",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx 返回商品加载 Promise，outputs/src/stores/product.js 等待商品与推荐两路数据。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p2",
+      "text": "store 以状态字段或请求记录维护当前商品与加载身份；同 ID 注水可复用，ID 变化立即使旧复用条件失效，快速 A→B→A 时 B 的晚到结果不能覆盖当前 A",
+      "passed": false,
+      "evidence": "outputs/src/stores/product.js：同 ID 复用、新 ID 立即失效或晚到请求身份保护不完整。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p3",
+      "text": "同构 service 返回 Promise；服务端沿调用链接收当前 SSR 上下文并从其中的 req 解析 origin，浏览器和小程序保留相对地址；不依赖参数名、wx.request、浏览器全局、localhost 或未声明的 request/requestClient 契约",
+      "passed": true,
+      "evidence": "outputs/src/services/product.js：Promise 请求沿调用链接收 SSR 上下文，并从当前 req 解析服务端 origin。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p4",
+      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，并在每个异步边界阻止卸载或旧商品结果挂载",
+      "passed": false,
+      "evidence": "outputs/src/components/product-recommendations.mpx：曝光 SDK 未被 Web 客户端动态隔离，或异步边界缺少旧商品/卸载校验。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p5",
+      "text": "推荐组件卸载或商品切换时销毁由 SDK create 返回的 tracker，并清理 Observer 和监听，旧回调不再上报",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx：卸载清理链路断开 Observer、销毁 tracker，回调守卫阻止旧代际上报。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p6",
+      "text": "SSR 使用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /mall/",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：useSSR、history 与两处 /mall/ 部署基路径配置齐全。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p7",
+      "text": "微信小程序 onLoad 的商品加载具有明确执行路径，不得被 window 存在性或 Web-only 条件挡住",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx：onLoad 为非 Web/小程序保留明确商品加载路径，未被 window 存在性挡住。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "p8",
+      "text": "规格切换、加购与相关推荐展示/跳转链路保持完整，且这些小程序业务路径不依赖浏览器全局对象",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx:7-18、71-78 保留规格展示与切换；79-88 保留加购并使用相对 /api/cart/items；outputs/src/components/product-recommendations.mpx:2-14 保留相关推荐展示，124-127 保留跳转到商品详情；这些小程序业务路径未依赖 window/document 等浏览器全局。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 3,
+    "total": 9,
+    "pass_rate": 0.6667
+  },
+  "metrics": {
+    "total_tokens": 173713,
+    "input_tokens": 159916,
+    "output_tokens": 13797,
+    "tool_calls": 24,
+    "duration_ms": 272517
+  },
+  "timing": {
+    "total_tokens": 173713,
+    "duration_ms": 272517,
+    "total_duration_seconds": 272.517
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 6,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/packageProduct/pages/detail/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/stores/product.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/services/product.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/components/product-recommendations.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 6,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/packageProduct/pages/detail/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/stores/product.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/services/product.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/components/product-recommendations.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/packageProduct/pages/detail/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3712
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/components/product-recommendations.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2963
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/stores/product.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/services/product.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-5-ssr-product-platform/no_skill/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言对 Web 端相关推荐点击跳转是否必须可用表述不够明确；当前 p8 更像只覆盖小程序业务路径，因此无法据此判定 wx.navigateTo 在 Web SSR 客户端是否满足跳转要求。"
+    ],
+    "overall": "主要缺陷是缺少 onAppInit 级别的每请求 Pinia 隔离；其余 SSR 预取、状态身份、同构请求、曝光 SDK 生命周期和 /mall/ 配置基本满足断言。"
+  }
+}

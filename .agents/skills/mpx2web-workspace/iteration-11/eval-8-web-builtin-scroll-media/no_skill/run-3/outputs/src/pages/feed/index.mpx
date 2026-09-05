@@ -1,0 +1,130 @@
+<template>
+  <view class="feed-page">
+    <scroll-view
+      class="feed-scroll"
+      scroll-y="{{true}}"
+      enhanced="{{true}}"
+      scroll-anchoring="{{true}}"
+      binddragstart="onDragStart"
+      binddragging="onDragging"
+      binddragend="onDragEnd"
+    >
+      <view class="feed-content">
+        <sticky-header class="category-sticky" offset-top="{{0}}">
+          <view class="categories">
+            <text
+              wx:for="{{categories}}"
+              wx:key="id"
+              class="category {{activeCategoryId === item.id ? 'category--active' : ''}}"
+              data-category-id="{{item.id}}"
+              bindtap="selectCategory"
+            >{{item.name}}</text>
+          </view>
+        </sticky-header>
+
+        <view wx:for="{{products}}" wx:key="id" class="product">
+          <image class="product-image" src="{{item.image}}" mode="widthFix" />
+          <product-video wx:if="{{item.video}}" product="{{item}}" />
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    cartCount: 2,
+    activeCategoryId: null,
+    dragging: false
+  },
+  async onLoad () {
+    const { data } = await mpx.request({ url: '/api/feed' })
+    this.categories = data.categories
+    this.products = data.products
+  },
+  methods: {
+    selectCategory (event) {
+      this.activeCategoryId = event.currentTarget.dataset.categoryId
+    },
+    onDragStart () {
+      this.dragging = true
+    },
+    onDragging (event) {
+      this._lastDragDetail = event.detail
+    },
+    onDragEnd () {
+      this.dragging = false
+    },
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.feed-scroll {
+  height: 100%;
+}
+
+.feed-content {
+  min-height: 100%;
+}
+
+.category-sticky {
+  z-index: 10;
+}
+
+.categories {
+  display: flex;
+  overflow-x: auto;
+  background: #fff;
+}
+
+.category {
+  flex: none;
+  padding: 20rpx 24rpx;
+}
+
+.category--active {
+  color: #ff5a36;
+  font-weight: 600;
+}
+
+.product {
+  padding: 24rpx;
+}
+
+.product-image {
+  display: block;
+  width: 100%;
+}
+
+.fixed-cart {
+  position: fixed;
+  right: 24rpx;
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+</style>

@@ -1,0 +1,48 @@
+<template>
+  <view class="checkout">
+    <button bindtap="chooseAddress">选择地址</button>
+    <view wx:if="{{address}}">{{address.name}} {{address.detail}}</view>
+    <button bindtap="pay">支付</button>
+    <button bindtap="openOrders">查看订单</button>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+const ADDRESS_STORAGE_KEY = 'checkout:selectedAddress'
+
+createPage({
+  data: { address: null },
+  onShow () {
+    const selectedAddress = mpx.getStorageSync(ADDRESS_STORAGE_KEY)
+    if (selectedAddress) {
+      this.address = selectedAddress
+      mpx.removeStorageSync(ADDRESS_STORAGE_KEY)
+    }
+  },
+  methods: {
+    chooseAddress () {
+      mpx.navigateTo({
+        url: '/pages/address/select',
+        events: {
+          selectAddress: (address) => {
+            this.address = address
+          }
+        }
+      })
+    },
+    pay () {
+      // Payment completion replaces checkout so Back cannot resubmit it.
+      mpx.redirectTo({ url: '/pages/pay/result' })
+    },
+    openOrders () {
+      mpx.switchTab({ url: '/pages/orders/index' })
+    },
+    requireLogin () {
+      // Do not leave a protected page in history after session expiry.
+      mpx.reLaunch({ url: '/pages/login/index' })
+    }
+  }
+})
+</script>

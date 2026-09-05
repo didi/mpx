@@ -1,0 +1,234 @@
+{
+  "eval_id": 4,
+  "eval_name": "campaign-webview-sdk",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "grading_fingerprint": "462cc01735b8a74c2c9c1b99690647e49c0fa01acd8acb96d15ae96ad0c13b53",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 105498
+  },
+  "expectations": [
+    {
+      "id": "h0",
+      "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx:20-28 保留 web-view 会场及 bindmessage/load/error；142-153 保留领券 wx.request；154-158 保留下单/商品详情跳转并携带 campaignId；114-119 保留活动加载埋点，outputs/src/app.mpx:19-22 保留启动埋点。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h1",
+      "text": "Web 宿主白名单只包含完整可信 origin https://campaign.example.com，避免后缀匹配误接纳相似恶意域名",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx：hostWhitelists 仅包含完整可信 origin https://campaign.example.com。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "h2",
+      "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：publicPath 与 routeConfig.base 均为 /mall/。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "h3",
+      "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：SDK 在 initTracker 中动态加载，方法自身或全部直接调用点受 Web 分支保护。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "h4",
+      "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：initTracker 的每个 SDK 异步边界后都复核挂载状态与初始化代际。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "h5",
+      "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：活动属性变化会触发 initTracker，当前身份守卫同时校验代际与 campaignId。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "h6",
+      "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx：detached 的清理链路移除监听并销毁 SDK 实例。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "h7",
+      "text": "没有额外手写 window message 监听时，内建 web-view 的 host 白名单与 clientUid 实例隔离加 bindmessage 即构成消息入口证据；若额外手写监听，则必须同时校验受信任 origin、当前 iframe source 和严格 campaignId",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx：没有重复手写 window message 监听，业务消息由内建 web-view 的 host 白名单与 clientUid 实例隔离后通过 bindmessage 进入。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "h8",
+      "text": "Web 下 web-view bindmessage 的单向业务消息在领券或跳转前严格校验当前 campaignId；不要求改变微信小程序既有消息协议",
+      "passed": false,
+      "evidence": "outputs/src/pages/campaign/index.mpx：handleCampaignMessage 在 Web 消费领券或跳转消息前未严格要求 message.campaignId 等于当前活动。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "pass_rate": 0.8889
+  },
+  "metrics": {
+    "total_tokens": 388300,
+    "input_tokens": 374249,
+    "output_tokens": 14051,
+    "tool_calls": 14,
+    "duration_ms": 299374
+  },
+  "timing": {
+    "total_tokens": 388300,
+    "duration_ms": 299374,
+    "total_duration_seconds": 299.374
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 4,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/pages/campaign/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/components/campaign-tracker.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/app.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 4,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/pages/campaign/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/components/campaign-tracker.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/app.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/pages/campaign/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 4294
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/components/campaign-tracker.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2468
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-4-campaign-webview-sdk/mpx2web/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "将 Web bindmessage 业务消息校验改为要求 message.campaignId === view.campaignId 后再执行领券或跳转；如需兼容微信小程序旧协议，可按平台分支处理。"
+    ],
+    "overall": "主要生命周期、白名单、动态加载和代际隔离修复到位；唯一未通过点是 Web bindmessage 对消息内 campaignId 的校验仍为可选。"
+  }
+}

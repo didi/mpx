@@ -1,0 +1,115 @@
+<template>
+  <view class="search-page">
+    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view class="trending" wx:if="{{!keyword}}">
+      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    </view>
+    <view class="suggestions">
+      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: []
+  },
+  async onLoad () {
+    this.suggestionRequest = null
+    this.isUnloaded = false
+
+    try {
+      const trendingKeywords = await fetchTrendingKeywords()
+      if (!this.isUnloaded) {
+        this.trendingKeywords = trendingKeywords
+      }
+    } catch (error) {
+      if (!this.isUnloaded) {
+        await this.showError('趋势词加载失败')
+      }
+    }
+  },
+  onUnload () {
+    this.isUnloaded = true
+    this.cancelSuggestionRequest()
+  },
+  methods: {
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+    cancelSuggestionRequest () {
+      const requestPromise = this.suggestionRequest
+      this.suggestionRequest = null
+
+      const requestTask = requestPromise && requestPromise.__returned
+      if (requestTask && typeof requestTask.abort === 'function') {
+        requestTask.abort()
+      }
+    },
+    async search (keyword) {
+      this.keyword = keyword
+      this.cancelSuggestionRequest()
+      this.suggestions = []
+
+      if (!keyword) return
+
+      const requestPromise = requestSuggestions(keyword)
+      this.suggestionRequest = requestPromise
+
+      try {
+        const { data } = await requestPromise
+        if (
+          this.isUnloaded ||
+          this.suggestionRequest !== requestPromise ||
+          this.keyword !== keyword
+        ) return
+
+        this.suggestions = data.list
+      } catch (error) {
+        if (
+          this.isUnloaded ||
+          this.suggestionRequest !== requestPromise ||
+          this.keyword !== keyword
+        ) return
+
+        await this.showError('搜索失败')
+      } finally {
+        if (this.suggestionRequest === requestPromise) {
+          this.suggestionRequest = null
+        }
+      }
+    },
+    async showError (title) {
+      try {
+        await mpx.showToast({
+          title,
+          icon: 'none'
+        })
+      } catch (error) {}
+    },
+    async openProduct (productId) {
+      try {
+        await mpx.navigateTo({
+          url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+        })
+      } catch (error) {
+        await this.showError('跳转失败')
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page { padding: 24rpx; }
+.trending, .suggestions { margin-top: 24rpx; }
+</style>

@@ -1,0 +1,187 @@
+{
+  "eval_id": 12,
+  "eval_name": "web-style-runtime-config",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "grading_fingerprint": "39f4cd915d36a7ade5d61df6e37ed86aa858c1190ba9cd1fbcf768e33198c2bd",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 63591
+  },
+  "expectations": [
+    {
+      "id": "t0",
+      "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx:151-157 为 .portal 的 color、background、padding 提供 var(--portal-text, #1f2329)、var(--portal-background, #f5f7fa)、var(--portal-space, 24rpx) 回退；outputs/src/pages/portal/index.mpx:182-206 的滚动条变量也有回退值。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t1",
+      "text": "webConfig.transRpxFn 实现明确的 100rpx=1rem 规则，0 值保持 0，不产生 0rem 或依赖运行环境的非确定结果",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：rpx 转换规则稳定保留 0，并按 1/100 输出 rem。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t2",
+      "text": "移动 viewport 在 public/index.html 的 meta 中配置，组件样式和运行脚本不伪造或重复注入 viewport",
+      "passed": true,
+      "evidence": "outputs/public/index.html：移动 viewport 在 HTML 模板中配置，组件未重复注入。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t3",
+      "text": "hover、::-webkit-scrollbar 与浏览器 safe-area/私有 CSS 仅隔离在 Web 输出，不污染微信小程序样式",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx：浏览器专属 CSS 位于 Web 条件块。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t4",
+      "text": "Web 弹层打开时记录并锁定 body/应用挂载容器的原 overflow，关闭、页面切换和卸载时幂等恢复原值",
+      "passed": false,
+      "evidence": "outputs/src/pages/portal/index.mpx：滚动锁未保存原值，或关闭/卸载没有幂等恢复。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t5",
+      "text": "滚动锁只保护浏览器客户端 DOM，不阻断微信小程序页面滚动、卡片点击和弹层关闭",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx：DOM 滚动锁只在 Web 客户端执行，小程序业务方法仍可调用。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "t6",
+      "text": "routeConfig.base、output.publicPath 与 /portal/ 部署路径一致，主题切换、弹层和门户卡片业务链路完整",
+      "passed": true,
+      "evidence": "outputs/vue.config.js：history 路由 base 与 publicPath 均为 /portal/。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.8571
+  },
+  "metrics": {
+    "total_tokens": 446877,
+    "input_tokens": 434965,
+    "output_tokens": 11912,
+    "tool_calls": 12,
+    "duration_ms": 256482
+  },
+  "timing": {
+    "total_tokens": 446877,
+    "duration_ms": 256482,
+    "total_duration_seconds": 256.482
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 3,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/src/pages/portal/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/vue.config.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/public/index.html"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 3,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/src/pages/portal/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/vue.config.js",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/public/index.html",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/src/pages/portal/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3241
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "javascript-syntax",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "stderr": ""
+      },
+      {
+        "kind": "declared-support-artifact",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-2/outputs/public/index.html"
+        ],
+        "passed": true,
+        "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "真正的缺口是当前断言主要基于源码形态，未要求检查 Web 与微信小程序的实际编译产物；若 Mpx 编译器对 `<style mode=\"web\">`、`id@web` 或 `catchtap@web` 的处理异常，源码验收可能无法暴露。"
+    ],
+    "overall": "outputs 针对所有断言均有直接代码证据，配置、样式隔离和滚动锁恢复链路完整。"
+  }
+}

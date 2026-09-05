@@ -1,0 +1,20 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  // The framework creates this app for each SSR render; Pinia state is therefore
+  // serialized with that render and reused by its browser hydration.
+  pinia: createPinia(),
+  onLaunch () {
+    if (typeof wx !== 'undefined' && wx.reportAnalytics) wx.reportAnalytics('mall_launch', {})
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": ["pages/home/index"],
+  "packages": [{ "root": "packageProduct", "pages": ["pages/detail/index"] }]
+}
+</script>

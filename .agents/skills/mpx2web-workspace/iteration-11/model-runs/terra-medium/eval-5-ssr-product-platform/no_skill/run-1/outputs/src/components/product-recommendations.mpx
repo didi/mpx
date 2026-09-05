@@ -1,0 +1,98 @@
+<template>
+  <view class="recommendations">
+    <view class="section-title">相关推荐</view>
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
+      <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
+      <text class="recommendation-name">{{item.name}}</text>
+      <text class="recommendation-price">¥{{item.price}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+
+const canUseBrowserSdk = () => typeof window !== 'undefined' && typeof document !== 'undefined' && typeof IntersectionObserver !== 'undefined'
+
+createComponent({
+  properties: { productId: String, items: Array },
+  ready () {
+    this.startTracking()
+  },
+  detached () {
+    this.stopTracking()
+  },
+  observers: {
+    productId () { this.restartTracking() },
+    items () { this.restartTracking() }
+  },
+  methods: {
+    restartTracking () {
+      if (this._trackingStarted) this.startTracking()
+    },
+    stopTracking () {
+      this._trackingVersion = (this._trackingVersion || 0) + 1
+      if (this._observer) this._observer.disconnect()
+      this._observer = null
+      if (this._tracker) this._tracker.destroy()
+      this._tracker = null
+    },
+    async startTracking () {
+      this.stopTracking()
+      this._trackingStarted = true
+      if (!canUseBrowserSdk() || !this.productId) return
+
+      const version = this._trackingVersion
+      const productId = this.productId
+      const sdkModule = await import('@business/product-exposure-web')
+      const sdk = sdkModule.default || sdkModule
+      const tracker = await sdk.create({ productId })
+
+      // A pending SDK creation is invalid as soon as props change or we unmount.
+      if (version !== this._trackingVersion || productId !== this.productId) {
+        tracker.destroy()
+        return
+      }
+      this._tracker = tracker
+      this._observer = new IntersectionObserver((entries) => {
+        if (version !== this._trackingVersion || !this._tracker) return
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) tracker.track('recommendation_exposure', {
+            productId,
+            recommendationId: entry.target.dataset.productId
+          })
+        })
+      })
+      // Limit observation to this component. Detail pages may remain in the
+      // navigation stack, so a document-wide selector would report stale cards.
+      const root = this.$el
+      if (root && root.querySelectorAll) {
+        root.querySelectorAll('.recommendation-card').forEach((element) => this._observer.observe(element))
+      }
+    },
+    openProduct (productId) {
+      mpx.navigateTo({ url: `/packageProduct/pages/detail/index?id=${productId}` })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.recommendations { margin-top: 24rpx; padding: 24rpx; background: #ffffff; }
+.section-title { margin-bottom: 20rpx; color: #222222; font-size: 30rpx; font-weight: bold; }
+.recommendation-card { display: flex; align-items: center; margin-bottom: 18rpx; }
+.recommendation-cover { width: 120rpx; height: 120rpx; border-radius: 12rpx; }
+.recommendation-name { flex: 1; margin-left: 18rpx; color: #333333; font-size: 26rpx; }
+.recommendation-price { color: #e64340; font-size: 28rpx; }
+</style>
+
+<script type="application/json">
+{ "component": true }
+</script>

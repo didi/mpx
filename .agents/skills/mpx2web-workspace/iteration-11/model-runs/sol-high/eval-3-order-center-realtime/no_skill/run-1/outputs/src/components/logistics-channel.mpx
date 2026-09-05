@@ -1,0 +1,236 @@
+<template>
+  <view class="channel-panel">
+    <view wx:if="{{!connected}}" class="channel-offline">
+      <text class="channel-tip">物流实时更新暂不可用</text>
+      <button class="reconnect-button" bindtap="reconnect">重新连接</button>
+    </view>
+    <view wx:else class="channel-online">
+      <text class="channel-tip">物流通道已连接</text>
+      <button class="ping-button" bindtap="sendHeartbeat">检测连接</button>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    memberId: {
+      type: String,
+      value: '',
+      observer (memberId, oldMemberId) {
+        if (memberId === oldMemberId || !this._channelAttached) return
+        this.connectChannel()
+      }
+    }
+  },
+  data: {
+    connected: false
+  },
+  created () {
+    this._channelAttached = false
+    this._connectionVersion = 0
+    this._socketTask = null
+    this._socketHandlers = null
+    this._connectedMemberId = ''
+  },
+  attached () {
+    this._channelAttached = true
+    this.connectChannel()
+  },
+  detached () {
+    this._channelAttached = false
+    this.disposeSocket(false)
+  },
+  methods: {
+    isCurrentConnection (version, task, memberId) {
+      return this._channelAttached &&
+        version === this._connectionVersion &&
+        task === this._socketTask &&
+        memberId === this.memberId
+    },
+    connectChannel () {
+      if (!this._channelAttached || !this.memberId) {
+        this.disposeSocket(false)
+        return
+      }
+
+      const memberId = this.memberId
+      this.disposeSocket(true)
+      const version = this._connectionVersion + 1
+      this._connectionVersion = version
+
+      let task
+      try {
+        task = wx.connectSocket({
+          url: `wss://logistics.example.com/members/${encodeURIComponent(memberId)}`,
+          header: {
+            Authorization: `Bearer ${wx.getStorageSync('token')}`
+          }
+        })
+      } catch (error) {
+        if (version !== this._connectionVersion || memberId !== this.memberId) return
+        this.connected = false
+        this.triggerEvent('connectedchange', { connected: false, channelMemberId: memberId })
+        this.triggerEvent('error', { error, channelMemberId: memberId })
+        return
+      }
+
+      if (!task || typeof task.onOpen !== 'function') {
+        const error = new Error('当前环境未返回可管理的 SocketTask')
+        this.connected = false
+        this.triggerEvent('connectedchange', { connected: false, channelMemberId: memberId })
+        this.triggerEvent('error', { error, channelMemberId: memberId })
+        return
+      }
+
+      const handlers = {
+        open: () => {
+          if (!this.isCurrentConnection(version, task, memberId)) return
+          this._connectedMemberId = memberId
+          this.connected = true
+          this.triggerEvent('connectedchange', { connected: true, channelMemberId: memberId })
+        },
+        message: ({ data }) => {
+          if (!this.isCurrentConnection(version, task, memberId)) return
+          let message
+          try {
+            message = typeof data === 'string' ? JSON.parse(data) : data
+          } catch (error) {
+            this.triggerEvent('error', { error, channelMemberId: memberId })
+            return
+          }
+          if (!message || message.type !== 'logistics' || !message.payload) return
+          if (message.memberId && message.memberId !== memberId) return
+          if (message.payload.memberId && message.payload.memberId !== memberId) return
+          this.triggerEvent('logistics', Object.assign({}, message.payload, {
+            channelMemberId: memberId
+          }))
+        },
+        error: (error) => {
+          if (!this.isCurrentConnection(version, task, memberId)) return
+          this.connected = false
+          this.triggerEvent('connectedchange', { connected: false, channelMemberId: memberId })
+          this.triggerEvent('error', { error, channelMemberId: memberId })
+        },
+        close: () => {
+          if (!this.isCurrentConnection(version, task, memberId)) return
+          this.removeTaskListeners(task, handlers)
+          this._socketTask = null
+          this._socketHandlers = null
+          this._connectedMemberId = ''
+          this.connected = false
+          this.triggerEvent('connectedchange', { connected: false, channelMemberId: memberId })
+        }
+      }
+
+      this._socketTask = task
+      this._socketHandlers = handlers
+      task.onOpen(handlers.open)
+      task.onMessage(handlers.message)
+      task.onError(handlers.error)
+      task.onClose(handlers.close)
+    },
+    removeTaskListeners (task, handlers) {
+      if (!task || !handlers) return
+      if (typeof task.offOpen === 'function') task.offOpen(handlers.open)
+      if (typeof task.offMessage === 'function') task.offMessage(handlers.message)
+      if (typeof task.offError === 'function') task.offError(handlers.error)
+      if (typeof task.offClose === 'function') task.offClose(handlers.close)
+    },
+    disposeSocket (notify) {
+      this._connectionVersion = (this._connectionVersion || 0) + 1
+      const task = this._socketTask
+      const handlers = this._socketHandlers
+      const memberId = this._connectedMemberId || this.memberId
+      this._socketTask = null
+      this._socketHandlers = null
+      this._connectedMemberId = ''
+      this.removeTaskListeners(task, handlers)
+      if (task && typeof task.close === 'function') {
+        try {
+          task.close({ code: 1000, reason: 'channel replaced' })
+        } catch (e) {}
+      }
+      this.connected = false
+      if (notify && this._channelAttached && memberId) {
+        this.triggerEvent('connectedchange', { connected: false, channelMemberId: this.memberId })
+      }
+    },
+    reconnect () {
+      if (!this._channelAttached || !this.memberId) return
+      this.connectChannel()
+    },
+    sendHeartbeat () {
+      const task = this._socketTask
+      const memberId = this.memberId
+      if (!this.connected || !task || memberId !== this._connectedMemberId) return
+      task.send({
+        data: JSON.stringify({ type: 'ping', memberId }),
+        fail: (error) => {
+          if (!this._channelAttached || task !== this._socketTask || memberId !== this.memberId) return
+          this.connected = false
+          this.triggerEvent('connectedchange', { connected: false, channelMemberId: memberId })
+          this.triggerEvent('error', { error, channelMemberId: memberId })
+        }
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.channel-panel {
+  margin-top: 16rpx;
+}
+
+.channel-offline,
+.channel-online {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 24rpx;
+  border-radius: 14rpx;
+}
+
+.channel-offline {
+  background: #fff7e6;
+}
+
+.channel-online {
+  background: #f0fff7;
+}
+
+.channel-tip {
+  color: #747a84;
+  font-size: 22rpx;
+}
+
+.reconnect-button,
+.ping-button {
+  margin: 0;
+  padding: 0 20rpx;
+  font-size: 22rpx;
+  line-height: 52rpx;
+  background: #ffffff;
+  border-radius: 26rpx;
+}
+
+.reconnect-button {
+  color: #d48806;
+  border: 1rpx solid #ffd591;
+}
+
+.ping-button {
+  color: #219a61;
+  border: 1rpx solid #87e8b4;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

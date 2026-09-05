@@ -1,0 +1,39 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+
+mpx.config.webConfig = {
+  ...mpx.config.webConfig,
+  routeConfig: {
+    ...mpx.config.webConfig && mpx.config.webConfig.routeConfig,
+    mode: 'history',
+    base: '/mall/'
+  },
+  webviewConfig: {
+    ...mpx.config.webConfig && mpx.config.webConfig.webviewConfig,
+    hostWhitelists: ['https://campaign.example.com']
+  }
+}
+
+createApp({
+  onLaunch () {
+    wx.reportAnalytics('mall_launch', {})
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/home/index",
+    "pages/campaign/index"
+  ],
+  "packages": [
+    {
+      "root": "packageProduct",
+      "pages": [
+        "pages/detail/index"
+      ]
+    }
+  ]
+}
+</script>

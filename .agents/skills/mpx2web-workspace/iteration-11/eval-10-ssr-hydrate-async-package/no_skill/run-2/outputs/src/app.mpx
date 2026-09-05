@@ -1,0 +1,21 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  onAppInit () {
+    return {
+      pinia: createPinia()
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": ["pages/article/detail"],
+  "packages": [
+    {"root": "packageRecommend", "pages": []}
+  ]
+}
+</script>

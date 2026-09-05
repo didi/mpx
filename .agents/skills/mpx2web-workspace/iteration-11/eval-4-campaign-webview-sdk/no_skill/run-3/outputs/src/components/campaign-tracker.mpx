@@ -1,0 +1,156 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+// @mpx-if (__mpx_mode__ === 'web')
+import campaignTracker from '@business/campaign-tracker-web'
+// @mpx-endif
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        if (this._componentReady) this.initTracker()
+      }
+    },
+    memberId: {
+      type: String,
+      observer () {
+        if (this._componentReady) this.initTracker()
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  ready () {
+    this._componentReady = true
+    this._trackerGeneration = 0
+    this._visibilityListening = false
+    this.initTracker()
+  },
+  detached () {
+    this._componentReady = false
+    this._trackerGeneration += 1
+    this.removeVisibilityListener()
+    this.destroyTracker()
+  },
+  methods: {
+    async initTracker () {
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      const generation = ++this._trackerGeneration
+
+      this.ready = false
+      this.removeVisibilityListener()
+      this.destroyTracker()
+      if (!this._componentReady || !campaignId) return
+
+      // @mpx-if (__mpx_mode__ !== 'web')
+      this.ready = true
+      this.triggerEvent('ready', { campaignId })
+      return
+      // @mpx-endif
+
+      // @mpx-if (__mpx_mode__ === 'web')
+      let tracker
+      try {
+        tracker = await campaignTracker.create({ campaignId, memberId })
+      } catch (error) {
+        if (this.isCurrentGeneration(generation, campaignId, memberId)) {
+          this.triggerEvent('error', { campaignId })
+        }
+        return
+      }
+
+      if (!this.isCurrentGeneration(generation, campaignId, memberId)) {
+        this.safeDestroy(tracker)
+        return
+      }
+
+      this.tracker = tracker
+      try {
+        tracker.start()
+        if (document.hidden && typeof tracker.pause === 'function') {
+          tracker.pause()
+        }
+        document.addEventListener('visibilitychange', this.handleVisibilityChange)
+        this._visibilityListening = true
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        this.removeVisibilityListener()
+        this.destroyTracker()
+        if (this.isCurrentGeneration(generation, campaignId, memberId)) {
+          this.triggerEvent('error', { campaignId })
+        }
+      }
+      // @mpx-endif
+    },
+    isCurrentGeneration (generation, campaignId, memberId) {
+      return this._componentReady &&
+        generation === this._trackerGeneration &&
+        campaignId === this.campaignId &&
+        memberId === this.memberId
+    },
+    trackExposure (payload, campaignId) {
+      if (!this._componentReady || !this.ready || campaignId !== this.campaignId) return
+      // @mpx-if (__mpx_mode__ === 'web')
+      if (this.tracker && typeof this.tracker.track === 'function') {
+        this.tracker.track('exposure', payload)
+      }
+      // @mpx-endif
+    },
+    handleVisibilityChange () {
+      // @mpx-if (__mpx_mode__ === 'web')
+      const tracker = this.tracker
+      if (!this._componentReady || !tracker) return
+      if (document.hidden) {
+        if (typeof tracker.pause === 'function') tracker.pause()
+      } else if (typeof tracker.resume === 'function') {
+        tracker.resume()
+      }
+      // @mpx-endif
+    },
+    removeVisibilityListener () {
+      // @mpx-if (__mpx_mode__ === 'web')
+      if (this._visibilityListening) {
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+        this._visibilityListening = false
+      }
+      // @mpx-endif
+    },
+    destroyTracker () {
+      const tracker = this.tracker
+      this.tracker = null
+      if (tracker) this.safeDestroy(tracker)
+    },
+    safeDestroy (tracker) {
+      try {
+        if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+      } catch (e) {}
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

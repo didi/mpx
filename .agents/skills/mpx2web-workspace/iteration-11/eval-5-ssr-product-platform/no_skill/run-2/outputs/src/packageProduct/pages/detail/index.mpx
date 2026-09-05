@@ -1,0 +1,166 @@
+<template>
+  <view class="product-detail">
+    <image class="product-cover" src="{{product.cover}}" mode="aspectFill" />
+    <view class="product-info">
+      <view class="product-name">{{product.name}}</view>
+      <view class="product-price">¥{{selectedSku.price || product.price}}</view>
+      <view class="sku-list">
+        <view
+          class="sku-item"
+          wx:for="{{product.skus}}"
+          wx:key="id"
+          wx:class="{{ {active: item.id === selectedSkuId} }}"
+          bindtap="selectSku(item.id)"
+        >
+          {{item.name}}
+        </view>
+      </view>
+      <button class="cart-button" bindtap="addToCart">加入购物车</button>
+    </view>
+    <product-recommendations
+      productId="{{productId}}"
+      items="{{recommendations}}"
+    />
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
+import { useProductStore } from '../../../stores/product'
+
+createPage({
+  data: {
+    productId: '',
+    selectedSkuId: '',
+    pageRequestVersion: 0
+  },
+  computed: {
+    product () {
+      const store = useProductStore(this.$pinia)
+      return store.productId === this.productId ? store.product : {}
+    },
+    recommendations () {
+      const store = useProductStore(this.$pinia)
+      return store.productId === this.productId ? store.recommendations : []
+    },
+    selectedSku () {
+      return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
+    }
+  },
+  onLoad (query) {
+    this.productId = String((query && query.id) || '')
+    this.selectedSkuId = ''
+
+    // serverPrefetch owns the Node request so that both first-screen requests
+    // are awaited with the current request's origin.
+    if (this.$ssrContext) return
+
+    this.loadProduct(this.productId).catch(() => {
+      mpx.showToast({ title: '商品加载失败', icon: 'none' })
+    })
+  },
+  serverPrefetch () {
+    const routeQuery = this.$route && this.$route.query
+    const productId = this.productId || String((routeQuery && routeQuery.id) || '')
+    this.productId = productId
+
+    return this.loadProduct(productId, this.$ssrContext && this.$ssrContext.req)
+  },
+  onUnload () {
+    this.pageRequestVersion += 1
+  },
+  methods: {
+    async loadProduct (productId, req) {
+      const id = String(productId || '')
+      const version = this.pageRequestVersion + 1
+      this.pageRequestVersion = version
+
+      const committed = await useProductStore(this.$pinia).loadProduct(id, { req })
+      if (!committed || version !== this.pageRequestVersion || id !== this.productId) return
+
+      const skus = this.product.skus || []
+      const selectedStillExists = skus.some(item => item.id === this.selectedSkuId)
+      if (!selectedStillExists) {
+        this.selectedSkuId = skus[0] ? skus[0].id : ''
+      }
+    },
+    selectSku (skuId) {
+      this.selectedSkuId = skuId
+    },
+    addToCart () {
+      mpx.request({
+        url: '/api/cart/items',
+        method: 'POST',
+        data: {
+          productId: this.productId,
+          skuId: this.selectedSkuId
+        },
+        success: () => mpx.showToast({ title: '已加入购物车' })
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.product-detail {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.product-cover {
+  width: 750rpx;
+  height: 750rpx;
+}
+
+.product-info {
+  padding: 28rpx;
+  background: #ffffff;
+}
+
+.product-name {
+  color: #222222;
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.product-price {
+  margin: 18rpx 0;
+  color: #e64340;
+  font-size: 42rpx;
+}
+
+.sku-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.sku-item {
+  margin: 0 16rpx 16rpx 0;
+  padding: 12rpx 20rpx;
+  color: #555555;
+  background: #f2f2f2;
+  border-radius: 8rpx;
+}
+
+.sku-item.active {
+  color: #ffffff;
+  background: #ff5a36;
+}
+
+.cart-button {
+  margin-top: 20rpx;
+  color: #ffffff;
+  background: #ff5a36;
+}
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "商品详情",
+  "usingComponents": {
+    "product-recommendations": "../../../components/product-recommendations"
+  }
+}
+</script>

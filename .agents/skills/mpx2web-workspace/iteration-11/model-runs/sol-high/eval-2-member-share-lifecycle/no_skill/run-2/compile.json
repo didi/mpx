@@ -1,0 +1,111 @@
+{
+  "status": "failed",
+  "all_declared_outputs_present": true,
+  "declared_output_count": 1,
+  "compile_eligible_mpx_count": 1,
+  "compiled_mpx_count": 0,
+  "checks": [
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx"
+      ],
+      "passed": false,
+      "returncode": 1,
+      "detail": {
+        "success": false,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx",
+            "errors": [
+              {
+                "line": 48,
+                "directive": "<!-- @mpx-if (mode === 'wx') -->",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 50,
+                "directive": "<!-- @mpx-endif -->",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 51,
+                "directive": "<!-- @mpx-if (mode === 'web') -->",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 57,
+                "directive": "<!-- @mpx-endif -->",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 136,
+                "directive": "/* @mpx-if (mode === 'wx') */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 141,
+                "directive": "/* @mpx-endif */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 144,
+                "directive": "/* @mpx-if (mode === 'wx') */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 159,
+                "directive": "/* @mpx-endif */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 170,
+                "directive": "/* @mpx-if (mode === 'web') */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 182,
+                "directive": "/* @mpx-else */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 192,
+                "directive": "/* @mpx-endif */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 200,
+                "directive": "/* @mpx-if (mode === 'web') */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 202,
+                "directive": "/* @mpx-else */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              },
+              {
+                "line": 204,
+                "directive": "/* @mpx-endif */",
+                "message": "@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)"
+              }
+            ]
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "page",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx"
+      ],
+      "passed": false,
+      "returncode": 2,
+      "detail": {},
+      "stderr": "InvalidInputError: 检测到无效的条件编译注释：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:57 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:136 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:141 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:144 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:159 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:170 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:182 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:192 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:200 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:202 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:204 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n"
+    }
+  ],
+  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+}

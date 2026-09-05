@@ -1,0 +1,90 @@
+<template>
+  <view class="product-video">
+    <video
+      id="product-video-{{product.id}}"
+      class="video"
+      src="{{product.video}}"
+      poster="{{product.image}}"
+      autoplay="{{true}}"
+      muted="{{true}}"
+      loop="{{true}}"
+      controls="{{false}}"
+      show-center-play-btn="{{true}}"
+      enable-progress-gesture="{{true}}"
+      object-fit="cover"
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
+      bindplay="onPlay"
+      bindpause="onPause"
+      bindended="onEnded"
+      binderror="onVideoError"
+    />
+    <text class="video-progress">{{progress}} / {{duration}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: { type: Object, value: () => ({}) }
+  },
+  data: {
+    progress: 0,
+    duration: 0,
+    isPlaying: false,
+    videoSize: ''
+  },
+  methods: {
+    onTimeUpdate (event) {
+      const detail = event.detail || {}
+      this.setData({
+        progress: Math.floor(detail.currentTime || 0),
+        duration: Math.floor(detail.duration || this.duration || 0)
+      })
+    },
+    onLoadedMetadata (event) {
+      const detail = event.detail || {}
+      this.setData({
+        duration: Math.floor(detail.duration || 0),
+        videoSize: `${detail.width || 0}x${detail.height || 0}`
+      })
+    },
+    onPlay () {
+      this.setData({ isPlaying: true })
+    },
+    onPause () {
+      this.setData({ isPlaying: false })
+    },
+    onEnded () {
+      this.setData({ isPlaying: false, progress: 0 })
+    },
+    onVideoError () {
+      this.setData({ isPlaying: false })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.product-video {
+  width: 100%;
+  margin-top: 16rpx;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  min-height: 360rpx;
+  border-radius: 12rpx;
+  background: #000;
+}
+
+.video-progress {
+  display: block;
+  margin-top: 12rpx;
+  color: #999;
+  font-size: 24rpx;
+}
+</style>

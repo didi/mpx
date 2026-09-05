@@ -1,0 +1,156 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
+function isWebRuntime () {
+  return typeof window !== 'undefined' && typeof document !== 'undefined'
+}
+
+function getActiveCampaignWindow () {
+  if (!isWebRuntime()) return null
+  const node = document.getElementById('campaign-webview')
+  if (!node) return null
+  const iframe = String(node.tagName || '').toLowerCase() === 'iframe'
+    ? node
+    : (typeof node.querySelector === 'function' ? node.querySelector('iframe') : null)
+  return iframe ? iframe.contentWindow : null
+}
+
+function safelyCall (target, method, ...args) {
+  if (!target || typeof target[method] !== 'function') return
+  try {
+    const result = target[method](...args)
+    if (result && typeof result.catch === 'function') result.catch(() => {})
+  } catch (e) {}
+}
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer (value, oldValue) {
+        if (value !== oldValue && this._trackerMounted) this.initTracker()
+      }
+    },
+    memberId: {
+      type: String,
+      observer (value, oldValue) {
+        if (value !== oldValue && this._trackerMounted) this.initTracker()
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  attached () {
+    this._trackerMounted = true
+    this._trackerGeneration = 0
+    this._listenersAttached = false
+  },
+  ready () {
+    this.attachListeners()
+    this.initTracker()
+  },
+  detached () {
+    this._trackerMounted = false
+    this._trackerGeneration += 1
+    this.detachListeners()
+    this.disposeTracker()
+  },
+  methods: {
+    attachListeners () {
+      if (!isWebRuntime() || this._listenersAttached) return
+      window.addEventListener('message', this.handleWindowMessage)
+      document.addEventListener('visibilitychange', this.handleVisibilityChange)
+      this._listenersAttached = true
+    },
+    detachListeners () {
+      if (!isWebRuntime() || !this._listenersAttached) return
+      window.removeEventListener('message', this.handleWindowMessage)
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      this._listenersAttached = false
+    },
+    disposeTracker () {
+      const tracker = this.tracker
+      this.tracker = null
+      if (tracker) safelyCall(tracker, 'destroy')
+    },
+    async initTracker () {
+      if (!this._trackerMounted || !this.campaignId) return
+
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      const generation = ++this._trackerGeneration
+      this.ready = false
+      this.disposeTracker()
+
+      let tracker
+      try {
+        tracker = await campaignTracker.create({ campaignId, memberId })
+        if (
+          !this._trackerMounted ||
+          generation !== this._trackerGeneration ||
+          campaignId !== this.campaignId ||
+          memberId !== this.memberId
+        ) {
+          safelyCall(tracker, 'destroy')
+          return
+        }
+
+        this.tracker = tracker
+        safelyCall(tracker, 'start')
+        if (!this._trackerMounted || generation !== this._trackerGeneration) {
+          this.disposeTracker()
+          return
+        }
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (tracker) safelyCall(tracker, 'destroy')
+        if (!this._trackerMounted || generation !== this._trackerGeneration) return
+        this.ready = false
+        this.triggerEvent('error', { campaignId })
+      }
+    },
+    handleWindowMessage (event) {
+      if (!this._trackerMounted || !this.tracker) return
+      if (event.origin !== CAMPAIGN_ORIGIN) return
+      const activeCampaignWindow = getActiveCampaignWindow()
+      if (!activeCampaignWindow || event.source !== activeCampaignWindow) return
+
+      const message = event.data && typeof event.data === 'object' ? event.data : null
+      if (!message || message.type !== 'campaign-exposure') return
+      if (message.campaignId && message.campaignId !== this.campaignId) return
+      safelyCall(this.tracker, 'track', 'exposure', message.payload)
+    },
+    handleVisibilityChange () {
+      if (!this._trackerMounted || !this.tracker) return
+      safelyCall(this.tracker, document.hidden ? 'pause' : 'resume')
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

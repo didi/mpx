@@ -1,0 +1,197 @@
+<template>
+  <view class="channel-panel">
+    <view wx:if="{{!connected}}" class="channel-offline">
+      <text class="channel-tip">物流实时更新暂不可用</text>
+      <button class="reconnect-button" bindtap="reconnect">重新连接</button>
+    </view>
+    <view wx:else class="channel-online">
+      <text class="channel-tip">物流通道已连接</text>
+      <button class="ping-button" bindtap="sendHeartbeat">检测连接</button>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    memberId: {
+      type: String,
+      observer (memberId, oldMemberId) {
+        if (memberId === oldMemberId || !this._channelAttached) return
+        this.connectChannel()
+      }
+    }
+  },
+  data: {
+    connected: false
+  },
+  attached () {
+    this._channelAttached = true
+    this.connectChannel()
+  },
+  detached () {
+    this._channelAttached = false
+    this.disposeSocket()
+  },
+  methods: {
+    setConnected (connected) {
+      if (this.connected === connected) return
+      this.connected = connected
+      this.triggerEvent('connectedchange', { connected })
+    },
+    removeSocketListeners (task, listeners) {
+      if (!task || !listeners) return
+      if (task.offOpen) task.offOpen(listeners.open)
+      if (task.offMessage) task.offMessage(listeners.message)
+      if (task.offError) task.offError(listeners.error)
+      if (task.offClose) task.offClose(listeners.close)
+    },
+    disposeSocket () {
+      const task = this.socketTask
+      const listeners = this.socketListeners
+      this.socketTask = null
+      this.socketListeners = null
+      this.removeSocketListeners(task, listeners)
+      if (task && task.close) {
+        task.close({ code: 1000, reason: 'channel replaced' })
+      }
+      this.setConnected(false)
+    },
+    connectChannel () {
+      if (!this._channelAttached) return
+
+      this.disposeSocket()
+      const memberId = this.memberId
+      if (!memberId) return
+
+      let task
+      try {
+        const returned = wx.connectSocket({
+          url: `wss://logistics.example.com/members/${memberId}`,
+          header: {
+            Authorization: `Bearer ${wx.getStorageSync('token')}`
+          },
+          usePromise: false
+        })
+        task = returned && returned.__returned ? returned.__returned : returned
+      } catch (error) {
+        this.triggerEvent('error', { error })
+        return
+      }
+
+      if (!task || !task.onOpen || !task.onMessage || !task.onError || !task.onClose) {
+        this.triggerEvent('error', { error: new Error('WebSocket task is unavailable') })
+        return
+      }
+
+      const isCurrentTask = () => {
+        return this._channelAttached && this.socketTask === task && this.memberId === memberId
+      }
+      const listeners = {
+        open: () => {
+          if (!isCurrentTask()) return
+          this.setConnected(true)
+        },
+        message: ({ data }) => {
+          if (!isCurrentTask()) return
+          let message
+          try {
+            message = typeof data === 'string' ? JSON.parse(data) : data
+          } catch (error) {
+            this.triggerEvent('error', { error })
+            return
+          }
+          if (!isCurrentTask() || !message || message.type !== 'logistics') return
+          this.triggerEvent('logistics', message.payload)
+        },
+        error: (error) => {
+          if (!isCurrentTask()) return
+          this.setConnected(false)
+          this.triggerEvent('error', { error })
+        },
+        close: () => {
+          if (!isCurrentTask()) return
+          this.socketTask = null
+          this.socketListeners = null
+          this.setConnected(false)
+        }
+      }
+
+      this.socketTask = task
+      this.socketListeners = listeners
+      task.onOpen(listeners.open)
+      task.onMessage(listeners.message)
+      task.onError(listeners.error)
+      task.onClose(listeners.close)
+    },
+    reconnect () {
+      this.connectChannel()
+    },
+    sendHeartbeat () {
+      const task = this.socketTask
+      if (!task || this.socketTask !== task || !this.connected) return
+      if (typeof task.readyState === 'number' && task.readyState !== task.OPEN) return
+      task.send({
+        data: JSON.stringify({ type: 'ping', memberId: this.memberId })
+      })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.channel-panel {
+  margin-top: 16rpx;
+}
+
+.channel-offline,
+.channel-online {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 24rpx;
+  border-radius: 14rpx;
+}
+
+.channel-offline {
+  background: #fff7e6;
+}
+
+.channel-online {
+  background: #f0fff7;
+}
+
+.channel-tip {
+  color: #747a84;
+  font-size: 22rpx;
+}
+
+.reconnect-button,
+.ping-button {
+  margin: 0;
+  padding: 0 20rpx;
+  font-size: 22rpx;
+  line-height: 52rpx;
+  background: #ffffff;
+  border-radius: 26rpx;
+}
+
+.reconnect-button {
+  color: #d48806;
+  border: 1rpx solid #ffd591;
+}
+
+.ping-button {
+  color: #219a61;
+  border: 1rpx solid #87e8b4;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

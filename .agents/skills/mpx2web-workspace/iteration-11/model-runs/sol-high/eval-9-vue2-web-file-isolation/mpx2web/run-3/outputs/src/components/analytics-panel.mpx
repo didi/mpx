@@ -1,0 +1,23 @@
+<template>
+  <view class="analytics-panel">
+    <view wx:for="{{metrics}}" wx:key="key" class="metric" bindtap="selectMetric(item.key)">
+      <text>{{item.label}}</text>
+      <text>{{item.value}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    metrics: { type: Array, value: () => [] }
+  },
+  methods: {
+    selectMetric (key) {
+      this.triggerEvent('select', { key })
+    }
+  }
+})
+</script>

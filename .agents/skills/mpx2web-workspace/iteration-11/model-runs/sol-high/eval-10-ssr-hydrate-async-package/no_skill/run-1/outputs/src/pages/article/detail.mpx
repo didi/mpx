@@ -1,0 +1,78 @@
+<template>
+  <view class="article-page">
+    <text class="title">{{article.title}}</text>
+    <rich-text nodes="{{article.content}}" />
+    <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
+    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { useArticleStore } from '../../stores/article'
+
+createPage({
+  data: {
+    articleId: '',
+    isBrowser: false,
+    clientReady: false,
+    favorite: false
+  },
+  computed: {
+    article () { return useArticleStore(this.$pinia).article || {} },
+    recommendations () { return useArticleStore(this.$pinia).recommendations }
+  },
+  onLoad (query) {
+    this.articleId = query && query.id ? String(query.id) : ''
+
+    // A mini-program has no serverPrefetch phase, so it keeps loading on onLoad.
+    // Web waits until hydration has completed; an SSR request is handled below.
+    if (__mpx_mode__ !== 'web') return this.loadArticle(this.articleId)
+  },
+  onShow () {
+    if (__mpx_mode__ !== 'web' || this.clientReady) {
+      return this.ensureArticle()
+    }
+  },
+  onReady () {
+    this.clientReady = typeof window !== 'undefined'
+    this.isBrowser = this.clientReady
+    if (this.clientReady) return this.ensureArticle()
+  },
+  serverPrefetch () {
+    const articleId = this.$route && this.$route.query && this.$route.query.id
+    this.articleId = articleId ? String(articleId) : ''
+    return this.loadArticle(this.articleId, this.$ssrContext)
+  },
+  methods: {
+    ensureArticle () {
+      if (!this.articleId) return Promise.resolve(null)
+      return useArticleStore(this.$pinia).loadArticle(this.articleId)
+    },
+    loadArticle (articleId, requestContext) {
+      this.articleId = articleId ? String(articleId) : ''
+      return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
+    },
+    toggleFavorite () {
+      this.favorite = !this.favorite
+    },
+    openArticle (event) {
+      const articleId = event && event.detail && event.detail.articleId
+      if (articleId === undefined || articleId === null) return
+      mpx.navigateTo({ url: `/pages/article/detail?id=${encodeURIComponent(articleId)}` })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "recommend-list": "../../packageRecommend/components/recommend-list?root=packageRecommend"
+  },
+  "componentPlaceholder": {
+    "recommend-list": "view"
+  }
+}
+</script>

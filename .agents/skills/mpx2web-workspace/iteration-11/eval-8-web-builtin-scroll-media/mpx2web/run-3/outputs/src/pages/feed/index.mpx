@@ -1,0 +1,87 @@
+<template>
+  <view class="feed-page">
+    <scroll-view
+      wx:ref="feedScroll"
+      class="feed-scroll"
+      scroll-y
+      enhanced
+      binddragstart="onDragStart"
+      binddragging="onDragging"
+      binddragend="onDragEnd"
+    >
+      <sticky-header @web offset-top="0">
+        <view class="categories">
+          <text wx:for="{{categories}}" wx:key="id" bindtap="selectCategory(item.id)">{{item.name}}</text>
+        </view>
+      </sticky-header>
+      <view @wx class="categories">
+        <text wx:for="{{categories}}" wx:key="id" bindtap="selectCategory(item.id)">{{item.name}}</text>
+      </view>
+      <view wx:for="{{products}}" wx:key="id" class="product">
+        <image src="{{item.image}}" mode="widthFix" bindload="onMediaReady" />
+        <product-video
+          wx:if="{{item.video}}"
+          product="{{item}}"
+          bindmediaready="onMediaReady"
+        />
+      </view>
+    </scroll-view>
+    <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    categories: [],
+    products: [],
+    cartCount: 2
+  },
+  async onLoad () {
+    const { data } = await mpx.request({ url: '/api/feed' })
+    this.categories = data.categories
+    this.products = data.products
+    this.refreshFeedScroll()
+  },
+  methods: {
+    selectCategory (categoryId) {
+      this.activeCategoryId = categoryId
+    },
+    onMediaReady () {
+      this.refreshFeedScroll()
+    },
+    refreshFeedScroll () {
+      if (__mpx_mode__ !== 'web') return
+      this.$nextTick(() => {
+        const feedScroll = this.$refs.feedScroll
+        if (feedScroll && typeof feedScroll.refresh === 'function') {
+          feedScroll.refresh()
+        }
+      })
+    },
+    onDragStart () {},
+    onDragging () {},
+    onDragEnd () {},
+    openCart () {
+      mpx.navigateTo({ url: '/pages/cart/index' })
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "product-video": "../../components/product-video"
+  }
+}
+</script>
+
+<style scoped>
+.feed-page, .feed-scroll { height: 100%; }
+.categories { display: flex; background: #fff; }
+.product { padding: 24rpx; }
+.fixed-cart { position: fixed; z-index: 10; right: 24rpx; bottom: 40rpx; }
+</style>

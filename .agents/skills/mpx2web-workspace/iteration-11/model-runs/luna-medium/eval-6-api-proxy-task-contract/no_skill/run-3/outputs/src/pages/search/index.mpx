@@ -1,0 +1,122 @@
+<template>
+  <view class="search-page">
+    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
+    <view class="trending" wx:if="{{!keyword}}">
+      <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
+    </view>
+    <view class="suggestions">
+      <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+import { fetchTrendingKeywords, requestSuggestions } from '../../services/search'
+
+createPage({
+  data: {
+    keyword: '',
+    trendingKeywords: [],
+    suggestions: [],
+    errorMessage: ''
+  },
+
+  onLoad () {
+    this._suggestionController = null
+    this._searchVersion = 0
+    this._unloaded = false
+    this.loadTrendingKeywords()
+  },
+
+  async loadTrendingKeywords () {
+    try {
+      const trendingKeywords = await fetchTrendingKeywords()
+      if (!this._unloaded) this.trendingKeywords = trendingKeywords
+    } catch (error) {
+      if (!this._unloaded && !this.isAbortError(error)) {
+        this.errorMessage = '搜索失败'
+      }
+    }
+  },
+
+  onUnload () {
+    this._unloaded = true
+    this.cancelSuggestionRequest()
+    this._searchVersion += 1
+  },
+
+  methods: {
+    onKeywordInput (event) {
+      this.search(event.detail.value.trim())
+    },
+
+    chooseKeyword (keyword) {
+      this.search(keyword)
+    },
+
+    search (keyword) {
+      this.keyword = keyword
+      this.errorMessage = ''
+      this.cancelSuggestionRequest()
+      const version = ++this._searchVersion
+
+      if (!keyword) {
+        this.suggestions = []
+        return
+      }
+
+      const controller = new AbortController()
+      this._suggestionController = controller
+
+      requestSuggestions(keyword, { signal: controller.signal })
+        .then((suggestions) => {
+          if (!this._unloaded && version === this._searchVersion) {
+            this.suggestions = suggestions
+          }
+        })
+        .catch((error) => {
+          if (
+            !this._unloaded &&
+            version === this._searchVersion &&
+            !this.isAbortError(error)
+          ) {
+            this.suggestions = []
+            this.errorMessage = '搜索失败'
+          }
+        })
+        .finally(() => {
+          if (version === this._searchVersion) {
+            this._suggestionController = null
+          }
+        })
+    },
+
+    cancelSuggestionRequest () {
+      if (this._suggestionController) {
+        this._suggestionController.abort()
+        this._suggestionController = null
+      }
+    },
+
+    isAbortError (error) {
+      return Boolean(
+        error &&
+        (error.name === 'AbortError' ||
+          (typeof error.errMsg === 'string' && /abort|cancel/i.test(error.errMsg)))
+      )
+    },
+
+    openProduct (productId) {
+      mpx.navigateTo({ url: `/pages/product/detail?id=${productId}` })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.search-page { padding: 24rpx; }
+.trending, .suggestions { margin-top: 24rpx; }
+.error-message { margin-top: 16rpx; color: #d93025; }
+</style>

@@ -1,0 +1,191 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "grading_fingerprint": "7825307069f8941378f0df1ef08bfd2c3d70925825e10d6cbef9169f420dcb17",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 102032
+  },
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "候选商品卡文件通过 scoped 建立可直接验证的 Web 组件级样式隔离；小程序 JSON 的 styleIsolation 不能替代这项 Web 证据",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx：商品卡通过 scoped 建立组件级 Web 样式隔离。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:4 给图片保留 class=\"product-cover\"，64-69 使用 .product-cover 设置尺寸与圆角，已移除 input 中 .product-card image 标签选择器依赖。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:136-140 保留首页 .title 的 40rpx 红色加粗；outputs/src/components/product-card.mpx:86-95 保留商品标题 30rpx 深色加粗单行省略；64-69 保留商品图片顶部 20rpx 圆角。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "passed": false,
+      "evidence": "input/src/components/product-card.mpx:122-126 原始 .currency,.unit 为 font-size: 10px；outputs/src/components/product-card.mpx:122-131 改为 font-size: 24rpx + transform，且没有小程序条件分支，因此小程序未保留原始 10px 字号。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "目标 WebView 中币种与单位先以不触发强制放大的基础字号排版，再缩放回约 10px 的视觉字号",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:122-131 对 .currency,.unit 使用 font-size: 24rpx 作为基础字号，并通过 transform: scale(0.833333) 缩放，按常见 750rpx/375px 换算可从约 12px 缩放到约 10px。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "目标 WebView 的缩放补偿具有与基线方向一致的 transform-origin，且校正 flex 布局占位，不改变卡片宽度或价格行基线",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:115-119 价格行仍 display:flex 且 align-items:baseline；122-131 设置 inline-block、flex: 0 0 24rpx、width: 24rpx、transform-origin: left bottom 和 margin-inline-end: -4rpx，对缩放后的占位做补偿；51-57 卡片宽度仍为 338rpx。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx:50-173 只有通用 <style scoped>，.currency,.unit 的 font-size:24rpx、transform 和占位补偿没有 Web-only 条件，因此小字号补偿没有仅隔离在 Web 输出。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:11-20 和 78-83 保留分类切换；23-30 继续绑定 product-card 的 select/addcart；97-100 保留商品详情 navigateTo；102-110 保留加入购物车 POST 与 toast；outputs/src/components/product-card.mpx:40-45 继续触发 select 和 addcart 事件。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 2,
+    "total": 8,
+    "pass_rate": 0.75
+  },
+  "metrics": {
+    "total_tokens": 163483,
+    "input_tokens": 156148,
+    "output_tokens": 7335,
+    "tool_calls": 12,
+    "duration_ms": 170388
+  },
+  "timing": {
+    "total_tokens": 163483,
+    "duration_ms": 170388,
+    "total_duration_seconds": 170.388
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 2,
+    "compile_eligible_mpx_count": 2,
+    "compiled_mpx_count": 2,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-0-storefront-style-compat/mpx2web/run-1/outputs/src/pages/home/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-0-storefront-style-compat/mpx2web/run-1/outputs/src/components/product-card.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 2,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-0-storefront-style-compat/mpx2web/run-1/outputs/src/pages/home/index.mpx",
+              "errors": []
+            },
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-0-storefront-style-compat/mpx2web/run-1/outputs/src/components/product-card.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-0-storefront-style-compat/mpx2web/run-1/outputs/src/pages/home/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3911
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-0-storefront-style-compat/mpx2web/run-1/outputs/src/components/product-card.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2452
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "w4/w5 依赖源码中 rpx 到 Web CSS 像素的换算推断；若要避免结论偏差，断言应要求提供目标 WebView 编译后 CSS 或明确 viewport 与 rpx 换算基准。"
+    ],
+    "overall": "候选修复了 scoped 隔离、图片选择器和业务链路，但小字号缩放写在通用样式中，导致小程序原始 10px 字号和 Web-only 隔离要求不满足。"
+  }
+}

@@ -1,0 +1,211 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        this.requestTrackerInit()
+      }
+    },
+    memberId: {
+      type: String,
+      observer () {
+        this.requestTrackerInit()
+      }
+    },
+    exposureEvent: {
+      type: Object,
+      observer (event) {
+        this.handleExposureEvent(event)
+      }
+    }
+  },
+  data: {
+    ready: false
+  },
+  created () {
+    this._componentReady = false
+    this._detached = false
+    this._trackerGeneration = 0
+    this._tracker = null
+    this._pendingTracker = null
+    this._pendingExposureEvents = []
+    this._disposedTrackers = []
+    this._visibilityListening = false
+  },
+  ready () {
+    this._componentReady = true
+    this.initTracker()
+  },
+  detached () {
+    this._detached = true
+    this._componentReady = false
+    this._trackerGeneration += 1
+    this.ready = false
+    this._pendingExposureEvents = []
+    this.cleanupTracker()
+  },
+  methods: {
+    requestTrackerInit () {
+      if (!this._componentReady || this._detached) return
+      this.initTracker()
+    },
+    async loadWebTrackerFactory () {
+      const trackerModule = await import('@business/campaign-tracker-web')
+      return trackerModule.default || trackerModule
+    },
+    isCurrentTrackerGeneration (generation, campaignId) {
+      return Boolean(
+        !this._detached &&
+        this._componentReady &&
+        generation === this._trackerGeneration &&
+        String(campaignId) === String(this.campaignId)
+      )
+    },
+    async initTracker () {
+      const campaignId = this.campaignId
+      const memberId = this.memberId
+      const generation = ++this._trackerGeneration
+
+      this.ready = false
+      this._pendingExposureEvents = []
+      this.cleanupTracker()
+      if (!campaignId || this._detached || !this._componentReady) return
+
+      if (__mpx_mode__ !== 'web') {
+        if (!this.isCurrentTrackerGeneration(generation, campaignId)) return
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+        return
+      }
+
+      let tracker = null
+      try {
+        const campaignTracker = await this.loadWebTrackerFactory()
+        if (!this.isCurrentTrackerGeneration(generation, campaignId)) return
+
+        tracker = await campaignTracker.create({ campaignId, memberId })
+        if (!this.isCurrentTrackerGeneration(generation, campaignId)) {
+          this.disposeTracker(tracker)
+          return
+        }
+
+        this._pendingTracker = tracker
+        await Promise.resolve(tracker.start())
+        if (!this.isCurrentTrackerGeneration(generation, campaignId)) {
+          if (this._pendingTracker === tracker) this._pendingTracker = null
+          this.disposeTracker(tracker)
+          return
+        }
+
+        this._pendingTracker = null
+        this._tracker = tracker
+        this.addVisibilityListener()
+        this.ready = true
+        this.flushPendingExposures(campaignId)
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (this._pendingTracker === tracker) this._pendingTracker = null
+        this.disposeTracker(tracker)
+        if (!this.isCurrentTrackerGeneration(generation, campaignId)) return
+        this.ready = false
+        this.triggerEvent('error', {
+          campaignId,
+          message: error && error.message ? error.message : 'tracker init failed'
+        })
+      }
+    },
+    handleExposureEvent (event) {
+      if (!event || this._detached || !this._componentReady) return
+      if (String(event.campaignId) !== String(this.campaignId)) return
+
+      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {}
+      if (__mpx_mode__ !== 'web') {
+        wx.reportAnalytics('campaign_exposure', {
+          ...payload,
+          campaign_id: this.campaignId
+        })
+        return
+      }
+
+      if (this.ready && this._tracker) {
+        this._tracker.track('exposure', payload)
+      } else {
+        this._pendingExposureEvents = this._pendingExposureEvents || []
+        this._pendingExposureEvents.push({ campaignId: event.campaignId, payload })
+      }
+    },
+    flushPendingExposures (campaignId) {
+      const pendingEvents = this._pendingExposureEvents || []
+      this._pendingExposureEvents = []
+      pendingEvents.forEach((event) => {
+        if (!this._tracker || String(event.campaignId) !== String(campaignId)) return
+        this._tracker.track('exposure', event.payload)
+      })
+    },
+    addVisibilityListener () {
+      if (__mpx_mode__ !== 'web' || this._visibilityListening || typeof document === 'undefined') return
+      document.addEventListener('visibilitychange', this.handleVisibilityChange)
+      this._visibilityListening = true
+      this.handleVisibilityChange()
+    },
+    removeVisibilityListener () {
+      if (__mpx_mode__ !== 'web' || !this._visibilityListening || typeof document === 'undefined') return
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      this._visibilityListening = false
+    },
+    handleVisibilityChange () {
+      if (__mpx_mode__ !== 'web' || this._detached || !this._tracker || typeof document === 'undefined') return
+      if (document.hidden) {
+        if (typeof this._tracker.pause === 'function') this._tracker.pause()
+      } else if (typeof this._tracker.resume === 'function') {
+        this._tracker.resume()
+      }
+    },
+    cleanupTracker () {
+      this.removeVisibilityListener()
+      const tracker = this._tracker
+      const pendingTracker = this._pendingTracker
+      this._tracker = null
+      this._pendingTracker = null
+      this.disposeTracker(tracker)
+      if (pendingTracker !== tracker) this.disposeTracker(pendingTracker)
+    },
+    disposeTracker (tracker) {
+      if (!tracker || this._disposedTrackers.indexOf(tracker) !== -1) return
+      this._disposedTrackers.push(tracker)
+      if (typeof tracker.destroy === 'function') {
+        try {
+          tracker.destroy()
+        } catch (e) {
+          void e
+        }
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

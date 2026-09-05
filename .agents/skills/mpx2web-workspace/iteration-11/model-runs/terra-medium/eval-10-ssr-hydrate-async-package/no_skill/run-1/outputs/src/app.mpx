@@ -1,0 +1,22 @@
+<script>
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  // Create application state for this app instance.  In SSR an app instance is
+  // created for every request, so this keeps one visitor's article out of
+  // another visitor's serialized state.
+  onAppInit () {
+    return { pinia: createPinia() }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": ["pages/article/detail"],
+  "packages": [
+    {"root": "packageRecommend", "pages": []}
+  ]
+}
+</script>

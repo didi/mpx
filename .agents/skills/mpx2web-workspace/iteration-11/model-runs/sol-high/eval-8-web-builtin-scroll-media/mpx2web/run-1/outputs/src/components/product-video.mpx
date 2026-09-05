@@ -1,0 +1,65 @@
+<template>
+  <view class="product-video">
+    <video
+      class="video"
+      id="product-video"
+      src="{{product.video}}"
+      autoplay
+      muted@web="{{true}}"
+      muted@wx="{{false}}"
+      playsinline@web="{{true}}"
+      enable-danmu@wx="{{true}}"
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
+      binderror="onVideoError"
+    />
+    <text>{{progress}} / {{duration}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: { type: Object, value: () => ({}) }
+  },
+  data: {
+    progress: 0,
+    duration: 0,
+    videoSize: ''
+  },
+  methods: {
+    getMediaTarget (event) {
+      const detail = event && event.detail
+      return (detail && detail.target) || (event && (event.target || event.currentTarget)) || {}
+    },
+    getMediaNumber (event, detailKey, targetKey) {
+      const detail = event && event.detail
+      if (detail && typeof detail[detailKey] === 'number') {
+        return detail[detailKey]
+      }
+      const target = this.getMediaTarget(event)
+      return typeof target[targetKey] === 'number' ? target[targetKey] : 0
+    },
+    onTimeUpdate (event) {
+      this.progress = this.getMediaNumber(event, 'currentTime', 'currentTime')
+      this.duration = this.getMediaNumber(event, 'duration', 'duration')
+    },
+    onLoadedMetadata (event) {
+      const width = this.getMediaNumber(event, 'width', 'videoWidth')
+      const height = this.getMediaNumber(event, 'height', 'videoHeight')
+      const duration = this.getMediaNumber(event, 'duration', 'duration')
+      this.videoSize = `${width}x${height}`
+      if (duration) this.duration = duration
+      this.triggerEvent('metadataready')
+    },
+    onVideoError () {}
+  }
+})
+</script>
+
+<style scoped>
+.product-video { display: block; width: 100%; }
+.video { display: block; width: 100%; }
+</style>

@@ -1,0 +1,62 @@
+<template>
+  <view class="product-video">
+    <video
+      class="video"
+      id="product-video-{{product.id}}"
+      src="{{product.video}}"
+      autoplay="{{true}}"
+      muted="{{true}}"
+      controls="{{true}}"
+      enable-danmu="{{true}}"
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
+      binderror="onVideoError"
+    />
+    <text wx:if="{{!videoError}}">{{progress}} / {{duration}}</text>
+    <text wx:else class="video-error">视频加载失败</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: { type: Object, value: () => ({}) }
+  },
+  data: {
+    progress: 0,
+    duration: 0,
+    videoSize: '',
+    videoError: false
+  },
+  methods: {
+    onTimeUpdate (event) {
+      this.progress = event.detail.currentTime
+      this.duration = event.detail.duration
+    },
+    onLoadedMetadata (event) {
+      this.videoSize = `${event.detail.width}x${event.detail.height}`
+      this.videoError = false
+    },
+    onVideoError () {
+      this.videoError = true
+    }
+  }
+})
+</script>
+
+<style scoped>
+.product-video,
+.video {
+  width: 100%;
+}
+
+.video {
+  display: block;
+}
+
+.video-error {
+  color: #999;
+}
+</style>

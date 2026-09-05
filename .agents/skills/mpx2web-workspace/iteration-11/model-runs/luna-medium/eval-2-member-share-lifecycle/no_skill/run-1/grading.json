@@ -1,0 +1,163 @@
+{
+  "eval_id": 2,
+  "eval_name": "member-share-lifecycle",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "grading_fingerprint": "2035249800f526106b7a9c4f9f44a0d4c91addb3600eee832ac3430d9feb0422",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 112878
+  },
+  "expectations": [
+    {
+      "id": "s0",
+      "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:48 保留 open-type=\"share\" 按钮；outputs/src/pages/member/invite.mpx:143-149 保留 onShareAppMessage；outputs/src/pages/member/invite.mpx:150-156 保留 onShareTimeline。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s1",
+      "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "passed": false,
+      "evidence": "outputs/src/pages/member/invite.mpx：Web 未移除 onShareAppMessage；Web 未移除 onShareTimeline。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ]
+    },
+    {
+      "id": "s2",
+      "text": "Web 分享入口绑定独立的页面实例方法",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:49 的 Web 可见分享入口绑定 bindtap=\"shareOnWeb\"；outputs/src/pages/member/invite.mpx:168-170 在 methods 中定义独立页面实例方法 shareOnWeb。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s3",
+      "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:168-170 的 shareOnWeb 仅设置 webShareMessage，文案明确 Web 分享能力尚未接入并等待分享 SDK 或宿主 Bridge，未调用未声明 SDK 或 Bridge。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s4",
+      "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:168-170 的 shareOnWeb 仅展示待接入提示；全文件未出现 navigator.share、clipboard、Clipboard 或复制链接降级实现。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s5",
+      "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "passed": false,
+      "evidence": "outputs/src/pages/member/invite.mpx:158-166 请求仍使用 wx.request；但 outputs/src/pages/member/invite.mpx:171-173 将 openCampaignDetail 改为 this.showRules = true，已移除 input/src/pages/member/invite.mpx:153-155 原有 wx.navigateTo 详情跳转链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s6",
+      "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:15-20 保留会员邀请进度展示，100-103 保留奖励阶梯数据且 33-36 渲染 rewards，54-69 保留最近邀请列表，111-128 保留 inviteCount、inviteGoal、invitees 数据，163-164 仍更新邀请人数与列表。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.7143
+  },
+  "metrics": {
+    "total_tokens": 81715,
+    "input_tokens": 76617,
+    "output_tokens": 5098,
+    "tool_calls": 4,
+    "duration_ms": 118178
+  },
+  "timing": {
+    "total_tokens": 81715,
+    "duration_ms": 118178,
+    "total_duration_seconds": 118.178
+  },
+  "compile": {
+    "status": "passed",
+    "all_declared_outputs_present": true,
+    "declared_output_count": 1,
+    "compile_eligible_mpx_count": 1,
+    "compiled_mpx_count": 1,
+    "checks": [
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [
+            {
+              "category": "template",
+              "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:48:51]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <text wx:if=\"{{webShareMessage}}\" class=\"web-share-message\">{{webShareMessage}}</text>\n  51 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>",
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx",
+              "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:48:51]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <text wx:if=\"{{webShareMessage}}\" class=\"web-share-message\">{{webShareMessage}}</text>\n  51 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>"
+            }
+          ],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3714
+        },
+        "stderr": ""
+      }
+    ],
+    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "s1 的结论依赖源文件中是否显式体现 Web 编译期隔离；若存在未提供的外部编译规则自动移除分享生命周期，当前 input/outputs 文件无法证明。",
+      "s6 未明确邀请数据是否必须在 Web onLoad 中无条件请求；候选把 fetchInviteSummary 放进 wx.showShareMenu 存在性判断内，可能影响 Web 数据刷新，但该风险主要已由 s5 的 API 链路要求覆盖。"
+    ],
+    "overall": "候选保留了主要页面数据和 Web 分享待接入边界，但未隔离小程序分享生命周期到非 Web 构造，且活动详情跳转被改成了本地弹层，未继续走 Mpx 官方跳转链路。"
+  }
+}

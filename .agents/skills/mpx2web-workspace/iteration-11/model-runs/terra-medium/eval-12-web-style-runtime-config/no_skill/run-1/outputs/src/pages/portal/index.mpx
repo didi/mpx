@@ -1,0 +1,161 @@
+<template>
+  <view class="portal {{dark ? 'portal--dark' : ''}}">
+    <view class="portal-card" wx:for="{{cards}}" wx:key="id" bindtap="openCard(item.id)">
+      {{item.title}}
+    </view>
+    <button class="portal-button" bindtap="toggleTheme">切换主题</button>
+    <button class="portal-button" bindtap="openDialog">打开弹层</button>
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
+      <view class="dialog" catchtap="noop">门户设置</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    dialogVisible: false,
+    dark: false
+  },
+  methods: {
+    noop () {},
+    openCard (id) {
+      this.closeDialog()
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
+    toggleTheme () {
+      this.dark = !this.dark
+    },
+    openDialog () {
+      this.dialogVisible = true
+      this.lockPageScroll()
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      this.restorePageScroll()
+    },
+    lockPageScroll () {
+      // 小程序不存在 DOM；仅在 Web 宿主执行页面滚动锁定。
+      if (typeof window === 'undefined' || typeof document === 'undefined' || this._scrollLock) return
+
+      const body = document.body
+      const root = document.documentElement
+      const scrollY = window.pageYOffset || root.scrollTop || body.scrollTop || 0
+      const scrollX = window.pageXOffset || root.scrollLeft || body.scrollLeft || 0
+
+      this._scrollLock = {
+        scrollX,
+        scrollY,
+        bodyCssText: body.style.cssText,
+        rootCssText: root.style.cssText
+      }
+      body.style.position = 'fixed'
+      body.style.top = `-${scrollY}px`
+      body.style.left = `-${scrollX}px`
+      body.style.right = '0'
+      body.style.width = '100%'
+      body.style.overflow = 'hidden'
+      root.style.overflow = 'hidden'
+    },
+    restorePageScroll () {
+      if (typeof window === 'undefined' || typeof document === 'undefined' || !this._scrollLock) return
+
+      const { scrollX, scrollY, bodyCssText, rootCssText } = this._scrollLock
+      document.body.style.cssText = bodyCssText
+      document.documentElement.style.cssText = rootCssText
+      window.scrollTo(scrollX, scrollY)
+      this._scrollLock = null
+    }
+  },
+  onHide () {
+    this.restorePageScroll()
+  },
+  onUnload () {
+    this.restorePageScroll()
+  }
+})
+</script>
+
+<style scoped>
+.portal {
+  --portal-text-color: var(--portal-text, #1f2937);
+  --portal-bg-color: var(--portal-background, #f5f7fb);
+  --portal-card-color: var(--portal-card-background, #ffffff);
+  --portal-border-color: var(--portal-border, #e2e8f0);
+  --portal-accent-color: var(--portal-primary, #2563eb);
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  color: var(--portal-text-color);
+  background: var(--portal-bg-color);
+  padding: var(--portal-space, 0.32rem);
+  padding-bottom: calc(var(--portal-space, 0.32rem) + env(safe-area-inset-bottom));
+}
+
+.portal--dark {
+  --portal-text-color: var(--portal-text-dark, #e5e7eb);
+  --portal-bg-color: var(--portal-background-dark, #111827);
+  --portal-card-color: var(--portal-card-background-dark, #1f2937);
+  --portal-border-color: var(--portal-border-dark, #374151);
+  --portal-accent-color: var(--portal-primary-dark, #60a5fa);
+}
+
+.portal-card {
+  box-sizing: border-box;
+  margin-bottom: 0.2rem;
+  padding: 0.28rem 0.32rem;
+  border: 1px solid var(--portal-border-color);
+  border-radius: 0.12rem;
+  color: var(--portal-text-color);
+  background: var(--portal-card-color);
+  box-shadow: 0 0.04rem 0.12rem rgb(15 23 42 / 8%);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.portal-button {
+  margin: 0.12rem 0.16rem 0 0;
+  color: #ffffff;
+  background: var(--portal-accent-color);
+}
+
+.dialog-mask {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0.32rem;
+  background: rgb(15 23 42 / 52%);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 6rem;
+  box-sizing: border-box;
+  padding: 0.4rem;
+  border-radius: 0.16rem;
+  color: var(--portal-text-color);
+  background: var(--portal-card-color);
+  box-shadow: 0 0.16rem 0.48rem rgb(15 23 42 / 25%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .portal-card:hover {
+    border-color: var(--portal-accent-color);
+    box-shadow: 0 0.08rem 0.2rem rgb(15 23 42 / 14%);
+    transform: translateY(-0.02rem);
+  }
+
+  .portal-button:hover {
+    filter: brightness(1.08);
+  }
+}
+</style>

@@ -1,0 +1,40 @@
+<template>
+  <view class="checkout">
+    <navigator url="/pages/address/select" open-type="navigateTo">选择地址</navigator>
+    <view wx:if="{{address}}">{{address.name}} {{address.detail}}</view>
+    <button bindtap="pay">支付</button>
+    <button bindtap="openOrders">查看订单</button>
+  </view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: { address: null },
+  onShow () {
+    const app = getApp()
+    const selectedAddress = app && app.globalData && app.globalData.selectedAddress
+    if (selectedAddress) {
+      this.setData({ address: selectedAddress })
+      app.globalData.selectedAddress = null
+    }
+  },
+  methods: {
+    chooseAddress () {
+      mpx.navigateTo({ url: '/pages/address/select' })
+    },
+    pay () {
+      // Payment completion replaces checkout, so browser back cannot repay it.
+      mpx.redirectTo({ url: '/pages/pay/result' })
+    },
+    openOrders () {
+      mpx.switchTab({ url: '/pages/orders/index' })
+    },
+    requireLogin () {
+      // An expired session starts a fresh login flow on every platform.
+      mpx.reLaunch({ url: '/pages/login/index' })
+    }
+  }
+})
+</script>

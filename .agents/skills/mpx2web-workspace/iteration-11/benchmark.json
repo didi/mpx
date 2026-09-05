@@ -1,0 +1,252 @@
+{
+  "metadata": {
+    "skill_name": "mpx2web",
+    "iteration": 11,
+    "generated_at": "2026-09-02T22:01:25.406541+00:00",
+    "models": [
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-5.6-sol"
+    ],
+    "samples_per_model_configuration": 3,
+    "configurations": {
+      "mpx2web": "使用 Skill",
+      "no_skill": "无 Skill"
+    },
+    "grader_model": "gpt-5.5",
+    "grader_reasoning_effort": "high",
+    "grading_mode": "blind independent model review plus frozen deterministic overrides"
+  },
+  "models": [
+    {
+      "slug": "luna-medium",
+      "label": "5.6 Luna / medium",
+      "model": "gpt-5.6-luna",
+      "reasoning_effort": "medium",
+      "has_skill": {
+        "runs": 39,
+        "passed": 234,
+        "total": 306,
+        "pass_rate": 0.7647,
+        "label": "使用 Skill",
+        "sample_pass_rates": [
+          0.7549,
+          0.7353,
+          0.8039
+        ],
+        "sample_mean": 0.7647,
+        "sample_stddev": 0.0289,
+        "sample_min": 0.7353,
+        "sample_max": 0.8039,
+        "stability": {
+          "stable_pass": 68,
+          "stable_fail": 15,
+          "variable": 19
+        },
+        "compile": {
+          "status": "passed",
+          "compiled_mpx": 69,
+          "eligible_mpx": 69,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 12360225,
+          "duration_seconds": 6572.981,
+          "tool_calls": 422,
+          "output_lines": 11056,
+          "output_bytes": 284551
+        }
+      },
+      "no_skill": {
+        "runs": 39,
+        "passed": 128,
+        "total": 306,
+        "pass_rate": 0.4183,
+        "label": "无 Skill",
+        "sample_pass_rates": [
+          0.3725,
+          0.4412,
+          0.4412
+        ],
+        "sample_mean": 0.4183,
+        "sample_stddev": 0.0324,
+        "sample_min": 0.3725,
+        "sample_max": 0.4412,
+        "stability": {
+          "stable_pass": 32,
+          "stable_fail": 50,
+          "variable": 20
+        },
+        "compile": {
+          "status": "failed",
+          "compiled_mpx": 67,
+          "eligible_mpx": 69,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 3955386,
+          "duration_seconds": 5296.472,
+          "tool_calls": 204,
+          "output_lines": 10259,
+          "output_bytes": 293498
+        }
+      },
+      "delta": 0.3464
+    },
+    {
+      "slug": "terra-medium",
+      "label": "5.6 Terra / medium",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "has_skill": {
+        "runs": 39,
+        "passed": 254,
+        "total": 306,
+        "pass_rate": 0.8301,
+        "label": "使用 Skill",
+        "sample_pass_rates": [
+          0.8235,
+          0.8431,
+          0.8235
+        ],
+        "sample_mean": 0.83,
+        "sample_stddev": 0.0092,
+        "sample_min": 0.8235,
+        "sample_max": 0.8431,
+        "stability": {
+          "stable_pass": 72,
+          "stable_fail": 7,
+          "variable": 23
+        },
+        "compile": {
+          "status": "failed",
+          "compiled_mpx": 67,
+          "eligible_mpx": 69,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 10168634,
+          "duration_seconds": 6187.384,
+          "tool_calls": 324,
+          "output_lines": 11614,
+          "output_bytes": 302062
+        }
+      },
+      "no_skill": {
+        "runs": 39,
+        "passed": 142,
+        "total": 306,
+        "pass_rate": 0.4641,
+        "label": "无 Skill",
+        "sample_pass_rates": [
+          0.4216,
+          0.4706,
+          0.5
+        ],
+        "sample_mean": 0.4641,
+        "sample_stddev": 0.0323,
+        "sample_min": 0.4216,
+        "sample_max": 0.5,
+        "stability": {
+          "stable_pass": 35,
+          "stable_fail": 45,
+          "variable": 22
+        },
+        "compile": {
+          "status": "failed",
+          "compiled_mpx": 67,
+          "eligible_mpx": 69,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 3748602,
+          "duration_seconds": 5067.909,
+          "tool_calls": 168,
+          "output_lines": 10769,
+          "output_bytes": 316487
+        }
+      },
+      "delta": 0.3659
+    },
+    {
+      "slug": "sol-high",
+      "label": "5.6 Sol / high",
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "high",
+      "has_skill": {
+        "runs": 39,
+        "passed": 254,
+        "total": 306,
+        "pass_rate": 0.8301,
+        "label": "使用 Skill",
+        "sample_pass_rates": [
+          0.8529,
+          0.8039,
+          0.8333
+        ],
+        "sample_mean": 0.83,
+        "sample_stddev": 0.0201,
+        "sample_min": 0.8039,
+        "sample_max": 0.8529,
+        "stability": {
+          "stable_pass": 77,
+          "stable_fail": 10,
+          "variable": 15
+        },
+        "compile": {
+          "status": "passed",
+          "compiled_mpx": 69,
+          "eligible_mpx": 69,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 14154714,
+          "duration_seconds": 9654.502,
+          "tool_calls": 685,
+          "output_lines": 14307,
+          "output_bytes": 347584
+        }
+      },
+      "no_skill": {
+        "runs": 39,
+        "passed": 153,
+        "total": 306,
+        "pass_rate": 0.5,
+        "label": "无 Skill",
+        "sample_pass_rates": [
+          0.5392,
+          0.4902,
+          0.4706
+        ],
+        "sample_mean": 0.5,
+        "sample_stddev": 0.0289,
+        "sample_min": 0.4706,
+        "sample_max": 0.5392,
+        "stability": {
+          "stable_pass": 38,
+          "stable_fail": 37,
+          "variable": 27
+        },
+        "compile": {
+          "status": "failed",
+          "compiled_mpx": 65,
+          "eligible_mpx": 69,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 6370876,
+          "duration_seconds": 8878.274,
+          "tool_calls": 472,
+          "output_lines": 16254,
+          "output_bytes": 397499
+        }
+      },
+      "delta": 0.33
+    }
+  ],
+  "overall": {
+    "has_skill_mean": 0.8082,
+    "no_skill_mean": 0.4608,
+    "delta": 0.3474
+  }
+}
