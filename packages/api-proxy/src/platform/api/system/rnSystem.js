@@ -16,6 +16,20 @@ const getWindowInfo = function () {
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
   const windowHeight = layoutHeight || screenHeight
+  const localDimensions = {
+    screen: {
+      width: screenWidth,
+      height: screenHeight
+    },
+    window: {
+      width: layoutWidth || screenWidth,
+      height: windowHeight
+    }
+  }
+  let customDimensions = localDimensions
+  if (typeof mpxGlobal.__mpx?.config?.rnConfig?.customDimensions === 'function') {
+    customDimensions = mpxGlobal.__mpx.config.rnConfig.customDimensions(localDimensions) || localDimensions
+  }
   try {
     safeArea = {
       left,
@@ -29,10 +43,10 @@ const getWindowInfo = function () {
   }
   const result = {
     pixelRatio: PixelRatio.get(),
-    windowWidth: layoutWidth || screenWidth,
-    windowHeight, // 取不到layout的时候有个兜底
-    screenWidth: screenWidth,
-    screenHeight: screenHeight,
+    windowWidth: customDimensions.window.width,
+    windowHeight: customDimensions.window.height, // 取不到layout的时候有个兜底
+    screenWidth: customDimensions.screen.width,
+    screenHeight: customDimensions.screen.height,
     screenTop: screenHeight - windowHeight,
     statusBarHeight: safeArea.top,
     safeArea
