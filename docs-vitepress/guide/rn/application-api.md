@@ -417,7 +417,7 @@ createComponent({
 用于获取初始路由配置的函数，参数为 RN 根组件接收到的参数
 
 - initialRouteName: 首页路径，例如 pages/index
-- initialParams: 将作为 首页onLoad 与 应用onLaunch 的参数，例如 \{ a: 1 \}
+- initialParams: 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`，例如 \{ a: 1 \}。后续通过路由 API 再次打开同路径页面时不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，NA 可能会向 RN 的根组件传递 props，此时可在 parseAppProps 中接受 props 并进行处理和透传到页面
 

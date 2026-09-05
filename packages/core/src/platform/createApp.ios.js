@@ -54,7 +54,7 @@ export default function createApp (options) {
   const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const getPageScreens = (initialRouteName, initialParams) => {
+  const getPageScreens = () => {
     return Object.entries(pagesMap).map(([key, item]) => {
       const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
       const headerLayout = ({ navigation, children }) => {
@@ -73,14 +73,6 @@ export default function createApp (options) {
       }
       const getComponent = () => {
         return item.displayName ? item : callWithErrorHandling(item, null, 'require page script')
-      }
-      if (key === initialRouteName) {
-        return createElement(Stack.Screen, {
-          name: key,
-          getComponent,
-          initialParams,
-          layout: headerLayout
-        })
       }
       return createElement(Stack.Screen, {
         name: key,
@@ -213,6 +205,12 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
+    const initialState = {
+      routes: [{
+        name: initialRouteName,
+        params: initialParams
+      }]
+    }
     const navScreenOpts = {
       headerShown: false
     }
@@ -224,6 +222,7 @@ export default function createApp (options) {
       null,
       createElement(NavigationContainer,
         {
+          initialState,
           onStateChange,
           onUnhandledAction
         },
@@ -232,7 +231,7 @@ export default function createApp (options) {
             initialRouteName,
             screenOptions: navScreenOpts
           },
-          ...getPageScreens(initialRouteName, initialParams)
+          ...getPageScreens()
         )
       )
     )
