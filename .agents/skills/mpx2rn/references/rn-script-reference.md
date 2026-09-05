@@ -150,7 +150,7 @@
 | `pageLifetimes.show` | 组件 | 所在页面展示或重新获得焦点时触发，与页面 `onShow` 时机对齐。 |
 | `pageLifetimes.hide` | 组件 | 所在页面隐藏或失焦时触发，与页面 `onHide` 时机对齐。 |
 | `pageLifetimes.resize` | 组件 | 所在页面可视区域尺寸变化时触发，与页面 `onResize` 时机对齐。 |
-| `onLoad` | 页面 | 页面创建后调用，**两个参数** `(rawQuery, decodedQuery)`；冷启动首次首页会保留 `parseAppProps` 返回的原始 `initialParams`，并与路由参数合并。 |
+| `onLoad` | 页面 | 页面创建后调用，**两个参数** `(rawQuery, decodedQuery)`；RN 根组件初始化时，首个页面实例会收到 `parseAppProps` 返回的 `initialParams`，后续创建的同路径页面实例不会自动继承。 |
 | `created` | 组件 | 组件实例刚创建，RN 由 `MpxProxy` 在实例建立阶段调度，此时不宜依赖完整视图。 |
 | `attached` | 组件 | 组件进入节点树，RN 对齐为挂载流程中的对应阶段，详见 `docs-vitepress/guide/basic/lifecycle.md` 映射表。 |
 | `ready` | 组件 | 组件布局完成、可与视图交互，RN 对应 React 挂载后的就绪时机，与页面 `onReady` 同属一套内置映射。 |
@@ -753,7 +753,7 @@ Mpx.config.rnConfig = {
 | 配置项 | 说明 |
 | --- | --- |
 | `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
-| `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由；`initialParams` 会原样传给冷启动首次首页的 `onLoad`，并在初始路由实例存续期间作为应用 `onLaunch` / `onShow` 的 `query`。 |
+| `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由；`initialParams` 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准。 |
 | `onStateChange` | 导航 state 变化时回调。 |
 | `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
 | `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |

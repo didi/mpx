@@ -112,7 +112,7 @@ export default function createApp (options) {
           const current = state.routes[state.index]
           options = {
             path: current.name,
-            query: current.key === global.__mpxInitialRouteKey ? global.__mpxInitialRunParams : current.params,
+            query: current.params,
             scene: 0,
             shareTicket: '',
             referrerInfo: {}
@@ -170,10 +170,9 @@ export default function createApp (options) {
         const state = navigation.getState()
         Mpx.config.rnConfig.onStateChange?.(state)
         const current = state.routes[state.index]
-        global.__mpxInitialRouteKey = current.key
         const options = {
           path: current.name,
-          query: global.__mpxInitialRunParams,
+          query: current.params,
           scene: 0,
           shareTicket: '',
           referrerInfo: {},
@@ -204,9 +203,11 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
-    if (!global.__mpxAppHotLaunched) {
-      global.__mpxInitialRouteKey = null
-      global.__mpxInitialRunParams = initialParams
+    const initialState = {
+      routes: [{
+        name: initialRouteName,
+        params: initialParams
+      }]
     }
     const navScreenOpts = {
       headerShown: false
@@ -219,6 +220,7 @@ export default function createApp (options) {
       null,
       createElement(NavigationContainer,
         {
+          initialState,
           onStateChange,
           onUnhandledAction
         },
