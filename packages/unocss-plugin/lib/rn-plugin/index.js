@@ -20,6 +20,13 @@ const classMapToCode = (classMap) => Object.entries(classMap).reduce((result, [k
   return result
 }, '')
 
+const getBlockedTokens = async (uno, tokens) => {
+  return (await Promise.all([...tokens].map(async token => {
+    const result = await uno.parseToken(token)
+    if (result === undefined) return token
+  }))).filter(Boolean)
+}
+
 function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {
@@ -60,8 +67,9 @@ function WebpackPlugin (configOrPath, defaults) {
             }
           }
           const result = await uno.generate(tokens, { minify: true })
-          if (uno.blocked.size) {
-            compilation.errors.push(`[Mpx Unocss]: all those '${[...uno.blocked].join(', ')}' class utilities is not supported in react native mode`)
+          const blockedTokens = await getBlockedTokens(uno, tokens)
+          if (blockedTokens.length) {
+            compilation.errors.push(`[Mpx Unocss]: all those '${blockedTokens.join(', ')}' class utilities is not supported in react native mode`)
           }
 
           const getLayersClassMap = (layers) => {

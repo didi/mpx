@@ -72,7 +72,7 @@ describe('test plugin', () => {
 
       expect(result.css).toContain('.box-border{box-sizing:border-box;}')
       expect(result.css).toContain('.box-content{box-sizing:content-box;}')
-      expect(uno.blocked).not.toContain('box-content')
+      expect(uno.isBlocked('box-content')).toBe(false)
     } finally {
       if (targetMode === undefined) {
         delete process.env.MPX_CURRENT_TARGET_MODE
@@ -88,7 +88,9 @@ describe('test plugin', () => {
 
     try {
       const uno = await createReactGenerator()
-      const result = await uno.generate(['transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition', 'transition-1', 'transition-all', 'transition-all-1', 'transition-all-foo', 'transition-colors', 'transition-[opacity,transform]'], { preflights: false })
+      const tokens = ['transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition', 'transition-1', 'transition-all', 'transition-all-1', 'transition-all-foo', 'transition-colors', 'transition-[opacity,transform]']
+      const result = await uno.generate(tokens, { preflights: false })
+      const blockedTokens = tokens.filter(token => uno.isBlocked(token))
 
       expect(result.css).toContain('transition-property:opacity;')
       expect(result.css).toContain('transition-duration:300ms;')
@@ -96,8 +98,8 @@ describe('test plugin', () => {
       expect(result.css).toContain('transition-delay:150ms;')
       expect(result.css).toContain('transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;')
       expect(result.css).toContain('transition-property:opacity,transform;')
-      expect([...uno.blocked]).toEqual(expect.arrayContaining(['transition', 'transition-1', 'transition-all', 'transition-all-1']))
-      expect([...uno.blocked]).toEqual(expect.not.arrayContaining(['transition-all-foo', 'transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition-colors', 'transition-[opacity,transform]']))
+      expect(blockedTokens).toEqual(expect.arrayContaining(['transition', 'transition-1', 'transition-all', 'transition-all-1']))
+      expect(blockedTokens).toEqual(expect.not.arrayContaining(['transition-all-foo', 'transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition-colors', 'transition-[opacity,transform]']))
     } finally {
       if (targetMode === undefined) {
         delete process.env.MPX_CURRENT_TARGET_MODE
