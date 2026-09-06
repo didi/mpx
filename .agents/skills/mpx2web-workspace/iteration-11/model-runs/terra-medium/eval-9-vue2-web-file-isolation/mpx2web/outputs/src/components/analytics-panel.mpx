@@ -1,11 +1,6 @@
 <template>
   <view class="analytics-panel">
-    <view
-      wx:for="{{metrics}}"
-      wx:key="key"
-      class="metric"
-      bindtap="selectMetric(item.key)"
-    >
+    <view wx:for="{{metrics}}" wx:key="key" class="metric" bindtap="selectMetric(item.key)">
       <text>{{item.label}}</text>
       <text>{{item.value}}</text>
     </view>

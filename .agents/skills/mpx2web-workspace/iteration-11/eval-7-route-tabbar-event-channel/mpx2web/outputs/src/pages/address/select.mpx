@@ -1,6 +1,9 @@
 <template>
   <view>
-    <view wx:for="{{addresses}}" wx:key="id" bindtap="confirm(item)">{{item.name}} {{item.detail}}</view>
+    <view wx:for="{{addresses}}" wx:key="id" bindtap="confirm(item)">
+      {{item.name}} {{item.detail}}
+      <text wx:if="{{selectedAddress && selectedAddress.id === item.id}}">（当前）</text>
+    </view>
   </view>
 </template>
 
@@ -12,12 +15,22 @@ createPage({
     addresses: [
       { id: 'home', name: '家', detail: '幸福路 1 号' },
       { id: 'office', name: '公司', detail: '科技路 8 号' }
-    ]
+    ],
+    selectedAddress: null
+  },
+  onLoad () {
+    const channel = this.getOpenerEventChannel()
+    this._openerEventChannel = channel
+    if (channel) {
+      channel.on('checkoutReady', ({ address } = {}) => {
+        this.selectedAddress = address || null
+      })
+    }
   },
   methods: {
     confirm (address) {
-      const eventChannel = this.getOpenerEventChannel()
-      if (eventChannel) eventChannel.emit('addressSelected', address)
+      const channel = this._openerEventChannel || this.getOpenerEventChannel()
+      if (channel) channel.emit('addressSelected', address)
       mpx.navigateBack({ delta: 1 })
     }
   }

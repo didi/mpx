@@ -14,10 +14,7 @@ createComponent({
   },
   methods: {
     select (articleId) {
-      this.triggerEvent('select', {
-        articleId,
-        sourceArticleId: this.articleId
-      })
+      this.triggerEvent('select', { articleId })
     }
   }
 })

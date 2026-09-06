@@ -1,5 +1,11 @@
 <script>
-import { createApp } from '@mpxjs/core'
+import mpx, { createApp } from '@mpxjs/core'
+
+mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
+  webviewConfig: {
+    hostWhitelists: ['https://campaign.example.com']
+  }
+})
 
 createApp({
   onLaunch () {

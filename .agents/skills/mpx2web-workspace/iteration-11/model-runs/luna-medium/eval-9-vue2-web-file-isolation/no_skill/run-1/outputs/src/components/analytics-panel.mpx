@@ -10,11 +10,8 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 
-// Keep the native summary cards independent from every Web-only module.
 createComponent({
-  properties: {
-    metrics: { type: Array, value: () => [] }
-  },
+  properties: { metrics: { type: Array, value: () => [] } },
   methods: {
     selectMetric (key) {
       this.triggerEvent('select', { key })

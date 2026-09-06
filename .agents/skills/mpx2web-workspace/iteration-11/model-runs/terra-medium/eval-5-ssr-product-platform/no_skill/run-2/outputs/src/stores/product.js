@@ -6,39 +6,27 @@ export const useProductStore = defineStore('product-platform', {
     productId: '',
     product: {},
     recommendations: [],
-    pendingProductId: '',
-    pendingRequest: null
+    loadedProductId: '',
+    requestVersion: 0
   }),
   actions: {
     async loadProduct (productId, ssrContext) {
-      const id = String(productId || '')
-      if (!id) return
+      // SSR state is serialized into this request's Pinia instance.  Reusing it
+      // on hydration avoids fetching the same product a second time.
+      if (this.loadedProductId === productId) return
 
-      // Hydrated data for the current route is already complete.
-      if (this.productId === id && this.product && this.product.id && !this.pendingRequest) return
-      if (this.pendingRequest && this.pendingProductId === id) return this.pendingRequest
+      const version = ++this.requestVersion
+      const [product, recommendations] = await Promise.all([
+        fetchProduct(productId, ssrContext),
+        fetchRecommendations(productId, ssrContext)
+      ])
 
-      this.pendingProductId = id
-      const request = Promise.all([
-        fetchProduct(id, ssrContext),
-        fetchRecommendations(id, ssrContext)
-      ]).then(([product, recommendations]) => {
-        // A later navigation owns the state; an old network response may not.
-        if (this.pendingProductId === id) {
-          this.productId = id
-          this.product = product
-          this.recommendations = recommendations
-        }
-        return { product, recommendations }
-      }).finally(() => {
-        if (this.pendingProductId === id) {
-          this.pendingProductId = ''
-          this.pendingRequest = null
-        }
-      })
-
-      this.pendingRequest = request
-      return request
+      // Keep product and recommendations atomic and ignore an obsolete route.
+      if (version !== this.requestVersion) return
+      this.productId = productId
+      this.product = product
+      this.recommendations = recommendations
+      this.loadedProductId = productId
     }
   }
 })

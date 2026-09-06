@@ -1,8 +1,10 @@
 <template>
   <div
-    ref="scroller"
+    ref="scroll"
     class="analytics-scroll"
-    :style="scrollStyle"
+    :class="axisClass"
+    v-bind="$attrs"
+    v-on="passthroughListeners"
     @scroll="handleScroll"
   >
     <slot />
@@ -12,100 +14,159 @@
 <script>
 export default {
   name: 'AnalyticsScroll',
+  inheritAttrs: false,
   props: {
     scrollX: { type: Boolean, default: false },
     scrollY: { type: Boolean, default: false },
     scrollTop: { type: Number, default: 0 },
     scrollLeft: { type: Number, default: 0 },
     scrollIntoView: { type: String, default: '' },
+    scrollWithAnimation: { type: Boolean, default: false },
     upperThreshold: { type: Number, default: 50 },
-    lowerThreshold: { type: Number, default: 50 },
-    scrollWithAnimation: { type: Boolean, default: false }
+    lowerThreshold: { type: Number, default: 50 }
   },
   data () {
     return {
-      upperReached: Object.create(null),
-      lowerReached: Object.create(null),
-      previousLeft: 0,
-      previousTop: 0
+      mutationObserver: null,
+      resizeObserver: null,
+      refreshQueued: false,
+      atUpper: { top: false, left: false },
+      atLower: { bottom: false, right: false },
+      lastScrollTop: 0,
+      lastScrollLeft: 0
     }
   },
   computed: {
-    scrollStyle () {
+    axisClass () {
       return {
-        overflowX: this.scrollX ? 'auto' : 'hidden',
-        overflowY: this.scrollY ? 'auto' : 'hidden'
+        'analytics-scroll--x': this.scrollX,
+        'analytics-scroll--y': this.scrollY
       }
+    },
+    passthroughListeners () {
+      const listeners = Object.assign({}, this.$listeners)
+      delete listeners.scroll
+      delete listeners.scrolltoupper
+      delete listeners.scrolltolower
+      return listeners
     }
   },
   watch: {
     scrollTop () { this.syncPosition() },
     scrollLeft () { this.syncPosition() },
-    scrollIntoView () { this.scrollToTarget() }
+    scrollIntoView () { this.scrollTargetIntoView() },
+    scrollX () { this.$nextTick(this.refresh) },
+    scrollY () { this.$nextTick(this.refresh) }
   },
   mounted () {
-    this.$nextTick(() => {
-      this.syncPosition()
-      this.scrollToTarget()
-    })
+    this.lastScrollTop = this.$refs.scroll.scrollTop
+    this.lastScrollLeft = this.$refs.scroll.scrollLeft
+    this.observeLayout()
+    this.$nextTick(this.refresh)
+  },
+  updated () {
+    this.queueRefresh()
+  },
+  beforeDestroy () {
+    this.releaseObservers()
   },
   methods: {
-    syncPosition () {
+    observeLayout () {
+      const node = this.$refs.scroll
+      if (typeof MutationObserver !== 'undefined') {
+        this.mutationObserver = new MutationObserver(() => this.queueRefresh())
+        this.mutationObserver.observe(node, { childList: true, subtree: true, attributes: true })
+      }
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver(() => this.queueRefresh())
+        this.resizeObserver.observe(node)
+      }
+    },
+    releaseObservers () {
+      if (this.mutationObserver) this.mutationObserver.disconnect()
+      if (this.resizeObserver) this.resizeObserver.disconnect()
+      this.mutationObserver = null
+      this.resizeObserver = null
+    },
+    queueRefresh () {
+      if (this.refreshQueued) return
+      this.refreshQueued = true
       this.$nextTick(() => {
-        const scroller = this.$refs.scroller
-        if (!scroller) return
-        const behavior = this.scrollWithAnimation ? 'smooth' : 'auto'
-        scroller.scrollTo({
-          left: this.scrollX ? Number(this.scrollLeft) || 0 : scroller.scrollLeft,
-          top: this.scrollY ? Number(this.scrollTop) || 0 : scroller.scrollTop,
-          behavior
-        })
+        this.refreshQueued = false
+        this.refresh()
       })
     },
-    scrollToTarget () {
-      this.$nextTick(() => {
-        const scroller = this.$refs.scroller
-        const targetId = this.scrollIntoView
-        if (!scroller || !targetId) return
-        const target = Array.prototype.find.call(scroller.querySelectorAll('[id]'), (node) => node.id === targetId)
-        if (!target) return
-        const left = target.offsetLeft - scroller.offsetLeft
-        const top = target.offsetTop - scroller.offsetTop
-        scroller.scrollTo({ left, top, behavior: this.scrollWithAnimation ? 'smooth' : 'auto' })
-      })
+    refresh () {
+      this.syncPosition()
+      this.scrollTargetIntoView()
+    },
+    syncPosition () {
+      const node = this.$refs.scroll
+      if (!node) return
+      const top = Number(this.scrollTop)
+      const left = Number(this.scrollLeft)
+      const nextTop = Number.isFinite(top) ? top : 0
+      const nextLeft = Number.isFinite(left) ? left : 0
+      if (this.scrollWithAnimation && node.scrollTo) {
+        node.scrollTo({ top: nextTop, left: nextLeft, behavior: 'smooth' })
+      } else {
+        if (this.scrollY) node.scrollTop = nextTop
+        if (this.scrollX) node.scrollLeft = nextLeft
+      }
+    },
+    scrollTargetIntoView () {
+      const node = this.$refs.scroll
+      const targetId = this.scrollIntoView
+      if (!node || !targetId) return
+      const target = Array.prototype.find.call(node.querySelectorAll('[id]'), (item) => item.id === targetId)
+      if (!target) return
+      const targetRect = target.getBoundingClientRect()
+      const nodeRect = node.getBoundingClientRect()
+      const top = node.scrollTop + targetRect.top - nodeRect.top
+      const left = node.scrollLeft + targetRect.left - nodeRect.left
+      if (this.scrollWithAnimation && node.scrollTo) {
+        node.scrollTo({ top: this.scrollY ? top : node.scrollTop, left: this.scrollX ? left : node.scrollLeft, behavior: 'smooth' })
+      } else {
+        if (this.scrollY) node.scrollTop = top
+        if (this.scrollX) node.scrollLeft = left
+      }
     },
     handleScroll () {
-      const scroller = this.$refs.scroller
-      if (!scroller) return
+      const node = this.$refs.scroll
       const detail = {
-        scrollTop: scroller.scrollTop,
-        scrollLeft: scroller.scrollLeft,
-        scrollHeight: scroller.scrollHeight,
-        scrollWidth: scroller.scrollWidth,
-        deltaX: scroller.scrollLeft - this.previousLeft,
-        deltaY: scroller.scrollTop - this.previousTop
+        scrollTop: node.scrollTop,
+        scrollLeft: node.scrollLeft,
+        scrollHeight: node.scrollHeight,
+        scrollWidth: node.scrollWidth,
+        deltaX: node.scrollLeft - this.lastScrollLeft,
+        deltaY: node.scrollTop - this.lastScrollTop
       }
-      this.previousLeft = scroller.scrollLeft
-      this.previousTop = scroller.scrollTop
+      this.lastScrollTop = node.scrollTop
+      this.lastScrollLeft = node.scrollLeft
       this.$emit('scroll', detail)
-      this.emitEdges(scroller, detail)
+      this.emitEdges(node)
     },
-    emitEdges (scroller, detail) {
-      const upperThreshold = Number(this.upperThreshold) || 0
-      const lowerThreshold = Number(this.lowerThreshold) || 0
-      const directions = []
+    emitEdges (node) {
+      const upper = Math.max(0, Number(this.upperThreshold) || 0)
+      const lower = Math.max(0, Number(this.lowerThreshold) || 0)
       if (this.scrollY) {
-        directions.push({ name: 'top', upper: scroller.scrollTop <= upperThreshold, lower: scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - lowerThreshold })
+        this.emitEdge('top', node.scrollTop <= upper, 'upper')
+        this.emitEdge('bottom', node.scrollTop >= node.scrollHeight - node.clientHeight - lower, 'lower')
       }
       if (this.scrollX) {
-        directions.push({ name: 'left', upper: scroller.scrollLeft <= upperThreshold, lower: scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - lowerThreshold })
+        this.emitEdge('left', node.scrollLeft <= upper, 'upper')
+        this.emitEdge('right', node.scrollLeft >= node.scrollWidth - node.clientWidth - lower, 'lower')
       }
-      directions.forEach(({ name, upper, lower }) => {
-        if (upper && !this.upperReached[name]) this.$emit('scrolltoupper', Object.assign({ direction: name }, detail))
-        if (lower && !this.lowerReached[name]) this.$emit('scrolltolower', Object.assign({ direction: name === 'top' ? 'bottom' : 'right' }, detail))
-        this.upperReached[name] = upper
-        this.lowerReached[name] = lower
-      })
+    },
+    emitEdge (direction, active, edge) {
+      const state = edge === 'upper' ? this.atUpper : this.atLower
+      if (!active) {
+        state[direction] = false
+        return
+      }
+      if (state[direction]) return
+      state[direction] = true
+      this.$emit(edge === 'upper' ? 'scrolltoupper' : 'scrolltolower', { direction })
     }
   }
 }
@@ -113,8 +174,14 @@ export default {
 
 <style scoped>
 .analytics-scroll {
-  box-sizing: border-box;
-  height: 100%;
-  width: 100%;
+  overflow: hidden;
+}
+
+.analytics-scroll--x {
+  overflow-x: auto;
+}
+
+.analytics-scroll--y {
+  overflow-y: auto;
 }
 </style>

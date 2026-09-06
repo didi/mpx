@@ -4,7 +4,7 @@ import { createPinia } from '@mpxjs/pinia'
 
 createApp({
   onAppInit () {
-    // Each SSR request (and each client app) gets an isolated store instance.
+    // Pinia must be request-scoped so concurrent SSR renders cannot share data.
     return { pinia: createPinia() }
   }
 })

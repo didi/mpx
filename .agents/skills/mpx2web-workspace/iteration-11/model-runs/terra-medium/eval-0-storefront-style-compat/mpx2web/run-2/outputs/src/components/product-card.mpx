@@ -6,7 +6,7 @@
     </view>
 
     <view class="product-content">
-      <text class="title">{{product.title}}</text>
+      <text class="product-title">{{product.title}}</text>
       <text class="product-subtitle">{{product.subtitle}}</text>
 
       <view class="product-meta">
@@ -83,7 +83,7 @@ createComponent({
   padding: 20rpx;
 }
 
-.title {
+.product-title {
   display: block;
   overflow: hidden;
   color: #333333;
@@ -164,20 +164,24 @@ createComponent({
   background: #e64340;
   border-radius: 50%;
 }
-</style>
 
-<style mode="web" scoped>
+/* @mpx-if (__mpx_mode__ === 'web') */
+.product-card {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 .currency,
 .unit {
   display: inline-block;
-  flex: 0 0 12px;
-  width: 12px;
-  margin-inline-end: -2px;
+  flex: 0 0 10px;
+  width: 10px;
   font-size: 12px;
   line-height: 14px;
   transform: scale(0.833333);
   transform-origin: left bottom;
 }
+/* @mpx-endif */
 </style>
 
 <script type="application/json">

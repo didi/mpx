@@ -1,24 +1,28 @@
-function getServerOrigin (requestContext) {
-  const request = requestContext && (requestContext.req || requestContext.request)
-  const headers = request && request.headers
-  const host = headers && headers.host
-  if (!host) return 'http://localhost:3000'
-
+function getServerRequest (requestContext = {}) {
+  const request = requestContext.req || requestContext.request || {}
+  const headers = requestContext.headers || request.headers || {}
   const forwardedProtocol = headers['x-forwarded-proto']
-  const protocol = (forwardedProtocol && forwardedProtocol.split(',')[0]) || request.protocol || 'http'
-  return `${protocol}://${host}`
+  const protocol = requestContext.protocol || (forwardedProtocol && forwardedProtocol.split(',')[0]) || 'http'
+  const forwardedHost = headers['x-forwarded-host']
+  const host = (forwardedHost && forwardedHost.split(',')[0]) || headers.host || 'localhost:3000'
+  const origin = requestContext.origin || `${protocol}://${host}`
+  const cookie = headers.cookie
+
+  return {
+    origin,
+    headers: cookie ? { cookie } : undefined
+  }
 }
 
 export function fetchArticle (articleId, requestContext) {
   const id = encodeURIComponent(String(articleId))
   const isBrowser = typeof window !== 'undefined'
-  const origin = isBrowser ? window.location.origin : getServerOrigin(requestContext)
-  const request = requestContext && (requestContext.req || requestContext.request)
-  const cookie = !isBrowser && request && request.headers && request.headers.cookie
-  const options = cookie ? { headers: { cookie } } : undefined
+  const serverRequest = isBrowser ? null : getServerRequest(requestContext)
+  const url = isBrowser ? `/api/articles/${id}` : `${serverRequest.origin}/api/articles/${id}`
 
-  return fetch(`${origin}/api/articles/${id}`, options).then((response) => {
-    if (!response.ok) throw new Error(`Unable to load article ${id}`)
-    return response.json()
-  })
+  return fetch(url, serverRequest && serverRequest.headers ? { headers: serverRequest.headers } : undefined)
+    .then((response) => {
+      if (!response.ok) throw new Error(`Failed to load article ${id}: ${response.status}`)
+      return response.json()
+    })
 }

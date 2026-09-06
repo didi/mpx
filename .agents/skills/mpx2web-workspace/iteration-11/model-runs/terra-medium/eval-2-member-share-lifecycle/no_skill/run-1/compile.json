@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "7b72665105414e7422e5f9583f0a7c4540a7da870df3bea63d636539b083a951",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 1,
@@ -40,19 +41,19 @@
         "warnings": [
           {
             "category": "template",
-            "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:43:35]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  41 |\n  42 |     <view class=\"action-row\">\n> 43 |       <button class=\"share-button\" open-type=\"share\" bindtap@web=\"shareOnWeb\">分享给好友</button>\n     |                                   ^^^^^^^^^^^^^^^^^^\n  44 |       <text wx:if=\"{{shareNotice}}\" class=\"share-notice\">{{shareNotice}}</text>\n  45 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  46 |     </view>",
+            "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:48:51]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap@web=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  51 |       <text wx:if=\"{{pageNotice}}\" class=\"page-notice\">{{pageNotice}}</text>",
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx",
-            "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:43:35]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  41 |\n  42 |     <view class=\"action-row\">\n> 43 |       <button class=\"share-button\" open-type=\"share\" bindtap@web=\"shareOnWeb\">分享给好友</button>\n     |                                   ^^^^^^^^^^^^^^^^^^\n  44 |       <text wx:if=\"{{shareNotice}}\" class=\"share-notice\">{{shareNotice}}</text>\n  45 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  46 |     </view>"
+            "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:48:51]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap@web=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  51 |       <text wx:if=\"{{pageNotice}}\" class=\"page-notice\">{{pageNotice}}</text>"
           }
         ],
         "summary": {
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 3787
+        "durationMs": 3107
       },
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

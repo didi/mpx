@@ -4,14 +4,7 @@
     <button bindtap="toggleTheme">切换主题</button>
     <button bindtap="openDialog">打开弹层</button>
     <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
-      <view
-        class="portal-dialog"
-        aria-role="dialog"
-        aria-label="门户设置"
-        role@web="dialog"
-        aria-modal@web="true"
-        tabindex@web="-1"
-      >门户设置</view>
+      <view class="dialog">门户设置</view>
     </view>
   </view>
 </template>
@@ -26,49 +19,39 @@ createPage({
     dark: false
   },
   methods: {
-    openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
+    openCard (id) {
+      this.restorePageScroll()
+      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+    },
     toggleTheme () { this.dark = !this.dark },
     openDialog () {
-      if (__mpx_mode__ === 'web' && typeof document !== 'undefined') {
-        this.dialogTrigger = document.activeElement
-        this.lockPageScroll()
-        this.bindDialogKeyboard()
-      }
       this.dialogVisible = true
-      if (__mpx_mode__ === 'web' && typeof document !== 'undefined') {
-        this.$nextTick(() => {
-          if (!this.dialogVisible) return
-          const dialog = document.querySelector('.portal-dialog')
-          if (dialog) dialog.focus()
-        })
-      }
+      this.lockPageScroll()
     },
     closeDialog () {
       this.dialogVisible = false
-      if (__mpx_mode__ === 'web') {
-        this.unbindDialogKeyboard()
-        this.unlockPageScroll()
-        this.restoreDialogFocus()
-      }
+      this.restorePageScroll()
     },
     lockPageScroll () {
-      if (this.pageScrollLock || typeof window === 'undefined' || typeof document === 'undefined') return
+      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || this.pageScrollLock) return
+
       const body = document.body
       const app = document.getElementById('app')
-      const scrollX = window.pageXOffset || document.documentElement.scrollLeft || 0
-      const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0
-      const targets = [body, app].filter(Boolean).map((element) => ({
-        element,
-        styles: {
-          overflow: element.style.overflow,
-          position: element.style.position,
-          top: element.style.top,
-          left: element.style.left,
-          width: element.style.width
-        }
-      }))
-
-      this.pageScrollLock = { scrollX, scrollY, targets }
+      const scrollX = window.pageXOffset || 0
+      const scrollY = window.pageYOffset || 0
+      this.pageScrollLock = {
+        app,
+        bodyStyles: {
+          overflow: body.style.overflow,
+          position: body.style.position,
+          top: body.style.top,
+          left: body.style.left,
+          width: body.style.width
+        },
+        appOverflow: app ? app.style.overflow : null,
+        scrollX,
+        scrollY
+      }
       body.style.overflow = 'hidden'
       body.style.position = 'fixed'
       body.style.top = `-${scrollY}px`
@@ -76,53 +59,27 @@ createPage({
       body.style.width = '100%'
       if (app) app.style.overflow = 'hidden'
     },
-    unlockPageScroll () {
+    restorePageScroll () {
+      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || !this.pageScrollLock) return
+
       const lock = this.pageScrollLock
-      if (!lock || typeof window === 'undefined') return
-      lock.targets.forEach(({ element, styles }) => {
-        element.style.overflow = styles.overflow
-        element.style.position = styles.position
-        element.style.top = styles.top
-        element.style.left = styles.left
-        element.style.width = styles.width
-      })
+      const body = document.body
+      body.style.overflow = lock.bodyStyles.overflow
+      body.style.position = lock.bodyStyles.position
+      body.style.top = lock.bodyStyles.top
+      body.style.left = lock.bodyStyles.left
+      body.style.width = lock.bodyStyles.width
+      if (lock.app) lock.app.style.overflow = lock.appOverflow
       this.pageScrollLock = null
       window.scrollTo(lock.scrollX, lock.scrollY)
-    },
-    bindDialogKeyboard () {
-      if (this.dialogKeydown || typeof document === 'undefined') return
-      this.dialogKeydown = (event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault()
-          this.closeDialog()
-          return
-        }
-        if (event.key === 'Tab') {
-          const dialog = document.querySelector('.portal-dialog')
-          if (dialog) {
-            event.preventDefault()
-            dialog.focus()
-          }
-        }
-      }
-      document.addEventListener('keydown', this.dialogKeydown)
-    },
-    unbindDialogKeyboard () {
-      if (!this.dialogKeydown || typeof document === 'undefined') return
-      document.removeEventListener('keydown', this.dialogKeydown)
-      this.dialogKeydown = null
-    },
-    restoreDialogFocus () {
-      const trigger = this.dialogTrigger
-      this.dialogTrigger = null
-      if (trigger && trigger.isConnected && typeof trigger.focus === 'function') trigger.focus()
     }
   },
-  onHide () {
-    this.closeDialog()
-  },
   onUnload () {
-    this.closeDialog()
+    this.restorePageScroll()
+  },
+  onHide () {
+    this.dialogVisible = false
+    this.restorePageScroll()
   }
 })
 </script>
@@ -133,32 +90,60 @@ createPage({
   color: var(--portal-text, #1f2937);
   background: var(--portal-background, #f6f8fb);
   padding: var(--portal-space, 32rpx);
-  padding-bottom: var(--portal-space, 32rpx);
 }
+
+.portal--dark {
+  color: var(--portal-text-dark, #f8fafc);
+  background: var(--portal-background-dark, #18212f);
+}
+
 .portal-card {
+  margin-bottom: 24rpx;
+  padding: 32rpx;
+  border-radius: 16rpx;
   color: var(--portal-card-text, #1f2937);
   background: var(--portal-card-background, #ffffff);
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
-.dialog-mask { position: fixed; inset: 0; }
+
+.portal--dark .portal-card {
+  color: var(--portal-card-text-dark, #f8fafc);
+  background: var(--portal-card-background-dark, #253247);
+}
+
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.dialog {
+  padding: 48rpx;
+  border-radius: 16rpx;
+  color: var(--portal-dialog-text, #1f2937);
+  background: var(--portal-dialog-background, #ffffff);
+}
 </style>
 
-<style mode="web">
+<style mode="web" scoped>
 .portal {
-  padding-bottom: calc(var(--portal-space, 32rpx) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(var(--portal-space, 32rpx), env(safe-area-inset-bottom));
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .portal-card:hover { transform: translateY(-2px); }
+.portal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(31, 41, 55, 0.12);
 }
 
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-.portal::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar {
+  width: 6px;
+}
 
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb,
-.portal::-webkit-scrollbar-thumb {
-  background: var(--portal-scrollbar-thumb, rgba(31, 41, 55, 0.35));
-  border-radius: 3px;
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--portal-scrollbar-thumb, #a8b3c5);
 }
 </style>

@@ -5,35 +5,40 @@ export const useArticleStore = defineStore('article', {
   state: () => ({
     articleId: '',
     article: null,
-    recommendations: [],
-    requestVersion: 0
+    recommendations: []
   }),
   actions: {
     async loadArticle (articleId, requestContext) {
-      const normalizedId = articleId == null ? '' : String(articleId)
-      if (!normalizedId) return
+      const id = String(articleId || '')
+      const requestId = (this._articleRequestId || 0) + 1
+      this._articleRequestId = requestId
 
-      if (this.articleId === normalizedId && this.article) {
-        return {
-          article: this.article,
-          recommendations: this.recommendations
-        }
-      }
+      if (this._articleAbortController) this._articleAbortController.abort()
+      this._articleAbortController = typeof AbortController === 'undefined'
+        ? null
+        : new AbortController()
 
-      this.articleId = normalizedId
+      this.articleId = id
       this.article = null
       this.recommendations = []
 
-      const requestVersion = ++this.requestVersion
-      const data = await fetchArticle(normalizedId, requestContext)
+      try {
+        const data = await fetchArticle(id, requestContext, {
+          signal: this._articleAbortController && this._articleAbortController.signal
+        })
 
-      if (requestVersion !== this.requestVersion || this.articleId !== normalizedId) {
+        // A response may only update the state of the request that started it.
+        if (this._articleRequestId === requestId) {
+          this.article = data.article || null
+          this.recommendations = data.recommendations || []
+        }
         return data
+      } catch (error) {
+        if (this._articleRequestId !== requestId || error.name === 'AbortError') return
+        throw error
+      } finally {
+        if (this._articleRequestId === requestId) this._articleAbortController = null
       }
-
-      this.article = data.article
-      this.recommendations = Array.isArray(data.recommendations) ? data.recommendations : []
-      return data
     }
   }
 })

@@ -30,6 +30,7 @@
         wx:key="id"
         order="{{item}}"
         disabled="{{item.locked}}"
+        opened="{{item.id === openSwipeOrderId}}"
         bindselect="openOrder"
         bindremove="removeOrder"
         bindswipeend="handleSwipeEnd"
@@ -98,7 +99,8 @@ createPage({
       }
     ],
     logisticsOnline: false,
-    loading: false
+    loading: false,
+    openSwipeOrderId: ''
   },
   methods: {
     switchStatus (status) {
@@ -140,14 +142,14 @@ createPage({
       })
     },
     handleSwipeEnd ({ detail }) {
-      // Each row owns its gesture state. Do not disable unrelated rows here.
+      this.openSwipeOrderId = detail.open ? detail.orderId : ''
     },
     handleConnectionChange ({ detail }) {
       if (detail.memberId && detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
-      if (detail.memberId && detail.memberId !== this.memberId) return
+      if (detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -158,8 +160,7 @@ createPage({
         })
       })
     },
-    handleChannelError ({ detail }) {
-      if (detail.memberId && detail.memberId !== this.memberId) return
+    handleChannelError () {
       this.logisticsOnline = false
     },
     goShopping () {

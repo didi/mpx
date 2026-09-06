@@ -1,27 +1,37 @@
 import mpx from '@mpxjs/api-proxy'
 
-function getServerOrigin (ssrContext) {
+function getHeader (req, name) {
+  if (!req || !req.headers) return ''
+  const value = req.headers[name] || req.headers[name.toLowerCase()]
+  return Array.isArray(value) ? value[0] : (value || '')
+}
+
+// Mini Program and browser requests intentionally stay relative.  During SSR,
+// mpx.request needs an absolute URL, which is derived from this render's req.
+function getRequestUrl (path, ssrContext) {
   const req = ssrContext && ssrContext.req
-  if (!req) return ''
+  if (!req) return path
 
-  const headers = req.headers || {}
-  const forwardedProto = headers['x-forwarded-proto']
-  const protocol = (forwardedProto && forwardedProto.split(',')[0].trim()) ||
-    (req.protocol || (req.connection && req.connection.encrypted ? 'https' : 'http'))
-  const forwardedHost = headers['x-forwarded-host']
-  const host = (forwardedHost && forwardedHost.split(',')[0].trim()) || headers.host
+  const forwardedProtocol = getHeader(req, 'x-forwarded-proto').split(',')[0].trim()
+  const protocol = forwardedProtocol || req.protocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = getHeader(req, 'x-forwarded-host').split(',')[0].trim() || getHeader(req, 'host')
 
-  return host ? `${protocol}://${host}` : ''
+  if (!host) {
+    throw new Error('SSR product request is missing its Host header')
+  }
+  return `${protocol}://${host}${path}`
 }
 
 function request (path, ssrContext) {
-  const origin = getServerOrigin(ssrContext)
-  const headers = ssrContext && ssrContext.req && ssrContext.req.headers
+  const req = ssrContext && ssrContext.req
+  const header = {}
+  const cookie = getHeader(req, 'cookie')
+  if (cookie) header.cookie = cookie
+
   return new Promise((resolve, reject) => {
     mpx.request({
-      // Keep relative URLs in browsers and mini-programs; Node needs the request origin.
-      url: origin ? `${origin}${path}` : path,
-      header: headers && origin ? { cookie: headers.cookie || '' } : undefined,
+      url: getRequestUrl(path, ssrContext),
+      header,
       success: ({ data }) => resolve(data),
       fail: reject
     })

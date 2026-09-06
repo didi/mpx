@@ -3,19 +3,21 @@
   "eval_name": "member-share-lifecycle",
   "configuration": "no_skill",
   "run_number": 1,
-  "grading_fingerprint": "2035249800f526106b7a9c4f9f44a0d4c91addb3600eee832ac3430d9feb0422",
+  "grading_fingerprint": "9839d5b2353811a2a8f1a3dca455ef5b4e29e0709870a355044f3eda57764f85",
+  "model_grading_fingerprint": "d43e63aa7143c430749bdc09b60d1337e33e6880d61cbd581f64df8f12b535d9",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 112878
+    "duration_ms": 119161
   },
   "expectations": [
     {
       "id": "s0",
       "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "category": "cross-platform-regression",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:48 保留 open-type=\"share\" 按钮；outputs/src/pages/member/invite.mpx:143-149 保留 onShareAppMessage；outputs/src/pages/member/invite.mpx:150-156 保留 onShareTimeline。",
+      "evidence": "outputs/src/pages/member/invite.mpx:48 保留 open-type=\"share\" 的微信分享按钮；outputs/src/pages/member/invite.mpx:145-158 保留 onShareAppMessage 与 onShareTimeline，分别返回 title/path/imageUrl 和 title/query/imageUrl。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -23,18 +25,24 @@
     {
       "id": "s1",
       "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "category": "web-lifecycle",
       "passed": false,
       "evidence": "outputs/src/pages/member/invite.mpx：Web 未移除 onShareAppMessage；Web 未移除 onShareTimeline。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/pages/member/invite.mpx：Web 未移除 onShareAppMessage；Web 未移除 onShareTimeline。"
+      }
     },
     {
       "id": "s2",
       "text": "Web 分享入口绑定独立的页面实例方法",
+      "category": "web-template",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:49 的 Web 可见分享入口绑定 bindtap=\"shareOnWeb\"；outputs/src/pages/member/invite.mpx:168-170 在 methods 中定义独立页面实例方法 shareOnWeb。",
+      "evidence": "outputs/src/pages/member/invite.mpx:49 的 Web 可见分享入口绑定 bindtap=\"shareOnWeb\"；outputs/src/pages/member/invite.mpx:171-173 在 methods 中定义了独立页面实例方法 shareOnWeb。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -42,8 +50,9 @@
     {
       "id": "s3",
       "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "category": "web-lifecycle",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:168-170 的 shareOnWeb 仅设置 webShareMessage，文案明确 Web 分享能力尚未接入并等待分享 SDK 或宿主 Bridge，未调用未声明 SDK 或 Bridge。",
+      "evidence": "outputs/src/pages/member/invite.mpx:171-173 的 shareOnWeb 只设置 webShareNoticeVisible = true；outputs/src/pages/member/invite.mpx:53-55 显示“当前 Web 端暂未接入分享服务”的边界提示，未调用任何未声明 Web 分享 SDK 或宿主 Bridge。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -51,8 +60,9 @@
     {
       "id": "s4",
       "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "category": "web-lifecycle",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:168-170 的 shareOnWeb 仅展示待接入提示；全文件未出现 navigator.share、clipboard、Clipboard 或复制链接降级实现。",
+      "evidence": "outputs/src/pages/member/invite.mpx 全文件未出现 navigator.share、clipboard、writeText、execCommand 或复制链接实现；shareOnWeb 仅切换本地提示状态。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -60,8 +70,9 @@
     {
       "id": "s5",
       "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "category": "web-api",
       "passed": false,
-      "evidence": "outputs/src/pages/member/invite.mpx:158-166 请求仍使用 wx.request；但 outputs/src/pages/member/invite.mpx:171-173 将 openCampaignDetail 改为 this.showRules = true，已移除 input/src/pages/member/invite.mpx:153-155 原有 wx.navigateTo 详情跳转链路。",
+      "evidence": "outputs/src/pages/member/invite.mpx:161-169 的请求被 typeof wx === 'undefined' || !wx.request 直接 return 拦截；outputs/src/pages/member/invite.mpx:174-182 的详情跳转仅在 wx.navigateTo 存在时走 wx.navigateTo，否则改为 this.rulesVisible = true 的页面内规则弹层，未保证 Web 继续走 Mpx 官方 API 链路。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -69,8 +80,9 @@
     {
       "id": "s6",
       "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "category": "business-regression",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:15-20 保留会员邀请进度展示，100-103 保留奖励阶梯数据且 33-36 渲染 rewards，54-69 保留最近邀请列表，111-128 保留 inviteCount、inviteGoal、invitees 数据，163-164 仍更新邀请人数与列表。",
+      "evidence": "outputs/src/pages/member/invite.mpx:13-21 与 113-134 保留会员邀请进度和 invitePercent；outputs/src/pages/member/invite.mpx:32-36 与 103-110 保留奖励阶梯 rewards；outputs/src/pages/member/invite.mpx:57-71 与 115-131 保留最近邀请列表 invitees。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -82,19 +94,27 @@
     "total": 7,
     "pass_rate": 0.7143
   },
+  "strict_delivery_summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.7143,
+    "compile_passed": true
+  },
   "metrics": {
-    "total_tokens": 81715,
-    "input_tokens": 76617,
-    "output_tokens": 5098,
-    "tool_calls": 4,
-    "duration_ms": 118178
+    "total_tokens": 102925,
+    "input_tokens": 97257,
+    "output_tokens": 5668,
+    "tool_calls": 5,
+    "duration_ms": 129038
   },
   "timing": {
-    "total_tokens": 81715,
-    "duration_ms": 118178,
-    "total_duration_seconds": 118.178
+    "total_tokens": 102925,
+    "duration_ms": 129038,
+    "total_duration_seconds": 129.038
   },
   "compile": {
+    "compile_fingerprint": "3a78315c3e6efb894abc9646b36134221ef9d3ef4979e93923823d0aa3afe442",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 1,
@@ -136,28 +156,28 @@
           "warnings": [
             {
               "category": "template",
-              "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:48:51]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <text wx:if=\"{{webShareMessage}}\" class=\"web-share-message\">{{webShareMessage}}</text>\n  51 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>",
+              "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:48:72]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button wx:if=\"{{isWechat}}\" class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                                        ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  51 |     </view>",
               "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx",
-              "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:48:51]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <text wx:if=\"{{webShareMessage}}\" class=\"web-share-message\">{{webShareMessage}}</text>\n  51 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>"
+              "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-1/outputs/src/pages/member/invite.mpx:48:72]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button wx:if=\"{{isWechat}}\" class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                                        ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>\n  51 |     </view>"
             }
           ],
           "summary": {
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3714
+          "durationMs": 3014
         },
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
     "suggestions": [
-      "s1 的结论依赖源文件中是否显式体现 Web 编译期隔离；若存在未提供的外部编译规则自动移除分享生命周期，当前 input/outputs 文件无法证明。",
-      "s6 未明确邀请数据是否必须在 Web onLoad 中无条件请求；候选把 fetchInviteSummary 放进 wx.showShareMenu 存在性判断内，可能影响 Web 数据刷新，但该风险主要已由 s5 的 API 链路要求覆盖。"
+      "s3/s4 未明确“提示用户复制邀请码”是否也算未经约定的 Web 分享降级，会影响边界类实现的判定。",
+      "s5 未明确 srcMode=wx 下对 typeof wx/!wx.request 运行时守卫的接受标准，以及 Web 页面内展示活动规则是否可替代 navigateTo。"
     ],
-    "overall": "候选保留了主要页面数据和 Web 分享待接入边界，但未隔离小程序分享生命周期到非 Web 构造，且活动详情跳转被改成了本地弹层，未继续走 Mpx 官方跳转链路。"
+    "overall": "未通过的核心点是分享生命周期没有做 Web 编译期隔离，且请求和详情跳转在 Web 分支未稳定保留 Mpx 官方 API 链路。"
   }
 }

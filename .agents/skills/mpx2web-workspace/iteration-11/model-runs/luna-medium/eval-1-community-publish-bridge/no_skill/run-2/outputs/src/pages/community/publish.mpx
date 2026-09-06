@@ -3,7 +3,6 @@
     <view class="publish-header">
       <text class="publish-title">发布社区动态</text>
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
-      <text wx:if="{{platformNotice}}" class="platform-notice">{{platformNotice}}</text>
     </view>
 
     <view class="form-card">
@@ -19,7 +18,13 @@
       <view class="photo-grid">
         <view class="photo-item" wx:for="{{photos}}" wx:key="tempFilePath">
           <image class="photo-image" src="{{item.tempFilePath}}" mode="aspectFill" />
-          <view class="photo-remove" catchtap="removePhoto(index)" aria-role="button" aria-label="删除图片">
+          <view
+            class="photo-remove"
+            data-index="{{index}}"
+            catchtap="removePhoto"
+            aria-role="button"
+            aria-label="删除图片"
+          >
             <text>×</text>
           </view>
         </view>
@@ -70,6 +75,10 @@
       </view>
     </view>
 
+    <view wx:if="{{capabilityMessage}}" class="capability-message" role="status">
+      <text>{{capabilityMessage}}</text>
+    </view>
+
     <view class="publish-notice">
       <switch checked="{{allowComments}}" bindchange="toggleComments" color="#1677ff" />
       <text class="notice-text">允许其他用户评论</text>
@@ -89,11 +98,6 @@
 <script>
 import { createPage } from '@mpxjs/core'
 
-function getWechatApi () {
-  if (typeof wx === 'undefined') return null
-  return wx
-}
-
 createPage({
   data: {
     content: '',
@@ -108,7 +112,7 @@ createPage({
     selectedTopic: {},
     allowComments: true,
     submitting: false,
-    platformNotice: ''
+    capabilityMessage: ''
   },
   computed: {
     canSubmit () {
@@ -116,29 +120,39 @@ createPage({
     }
   },
   methods: {
+    getWxApi () {
+      return typeof wx === 'undefined' ? null : wx
+    },
+    notifyUnavailable (message) {
+      const api = this.getWxApi()
+      if (api && typeof api.showToast === 'function') {
+        api.showToast({ title: message, icon: 'none' })
+      } else {
+        this.capabilityMessage = message
+      }
+    },
     updateContent (event) {
       this.content = event.detail.value
     },
     choosePlace () {
-      const api = getWechatApi()
+      const api = this.getWxApi()
       if (!api || typeof api.chooseLocation !== 'function') {
-        this.platformNotice = '当前 Web 宿主暂未接入位置选择能力'
+        this.notifyUnavailable('当前端暂不支持位置选择')
         return
       }
       api.chooseLocation({
         success: (place) => {
           this.place = place
-          this.platformNotice = ''
         }
       })
     },
     openPlace () {
-      const api = getWechatApi()
+      if (!this.place.latitude || !this.place.longitude) return
+      const api = this.getWxApi()
       if (!api || typeof api.openLocation !== 'function') {
-        this.platformNotice = '当前 Web 宿主暂未接入地图查看能力'
+        this.notifyUnavailable('当前端暂不支持地图查看')
         return
       }
-      if (!this.place.latitude || !this.place.longitude) return
       api.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
@@ -147,9 +161,9 @@ createPage({
       })
     },
     choosePhoto () {
-      const api = getWechatApi()
+      const api = this.getWxApi()
       if (!api || typeof api.chooseMedia !== 'function') {
-        this.platformNotice = '当前 Web 宿主暂未接入图片选择能力'
+        this.notifyUnavailable('当前端暂不支持图片选择')
         return
       }
       api.chooseMedia({
@@ -158,12 +172,13 @@ createPage({
         sourceType: ['album', 'camera'],
         success: ({ tempFiles }) => {
           this.photos = this.photos.concat(tempFiles)
-          this.platformNotice = ''
         }
       })
     },
-    removePhoto (index) {
-      this.photos.splice(index, 1)
+    removePhoto (event) {
+      const index = Number(event.currentTarget.dataset.index)
+      if (!Number.isInteger(index) || index < 0 || index >= this.photos.length) return
+      this.photos = this.photos.slice(0, index).concat(this.photos.slice(index + 1))
     },
     selectTopic (event) {
       this.selectedTopic = this.topics[Number(event.detail.value)]
@@ -173,9 +188,9 @@ createPage({
     },
     submitPost () {
       if (!this.canSubmit || this.submitting) return
-      const api = getWechatApi()
+      const api = this.getWxApi()
       if (!api || typeof api.request !== 'function') {
-        this.platformNotice = '当前 Web 宿主暂未接入动态发布接口'
+        this.notifyUnavailable('当前端暂不支持发布动态')
         return
       }
       this.submitting = true
@@ -190,14 +205,12 @@ createPage({
           allowComments: this.allowComments
         },
         success: ({ data }) => {
-          if (data && data.id && typeof api.redirectTo === 'function') {
+          if (typeof api.redirectTo === 'function' && data && data.id) {
             api.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
           }
         },
         fail: () => {
-          if (typeof api.showToast === 'function') {
-            api.showToast({ title: '发布失败，请重试', icon: 'none' })
-          }
+          this.notifyUnavailable('发布失败，请重试')
         },
         complete: () => {
           this.submitting = false
@@ -221,7 +234,6 @@ createPage({
 
 .publish-title,
 .publish-tip,
-.platform-notice,
 .word-count,
 .photo-add-label,
 .option-label,
@@ -229,7 +241,8 @@ createPage({
 .place-name,
 .place-address,
 .place-action,
-.notice-text {
+.notice-text,
+.capability-message {
   display: block;
 }
 
@@ -243,12 +256,6 @@ createPage({
   margin-top: 8rpx;
   color: #8a8f99;
   font-size: 24rpx;
-}
-
-.platform-notice {
-  margin-top: 12rpx;
-  color: #9a6700;
-  font-size: 23rpx;
 }
 
 .form-card,
@@ -409,6 +416,12 @@ createPage({
 .place-action {
   margin-left: 24rpx;
   color: #1677ff;
+  font-size: 24rpx;
+}
+
+.capability-message {
+  margin: 20rpx 8rpx 0;
+  color: #8a5a00;
   font-size: 24rpx;
 }
 

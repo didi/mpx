@@ -1,49 +1,43 @@
 import mpx from '@mpxjs/api-proxy'
 
 function firstHeaderValue (value) {
-  const headerValue = Array.isArray(value) ? value[0] : value
-  return typeof headerValue === 'string' ? headerValue.split(',')[0].trim() : ''
+  return String(value || '').split(',')[0].trim()
 }
 
-function getServerOrigin (req) {
+function requestOrigin (requestContext) {
+  const req = requestContext && requestContext.req
+  if (!req) return ''
+
   const headers = req.headers || {}
-  const protocol = req.protocol ||
-    firstHeaderValue(headers['x-forwarded-proto']) ||
+  const forwardedProtocol = firstHeaderValue(headers['x-forwarded-proto'])
+  const forwardedHost = firstHeaderValue(headers['x-forwarded-host'])
+  const protocol = forwardedProtocol || req.protocol ||
     (req.socket && req.socket.encrypted ? 'https' : 'http')
-  const host = firstHeaderValue(headers['x-forwarded-host']) || firstHeaderValue(headers.host)
+  const host = forwardedHost || headers.host
 
-  if (!host) {
-    throw new Error('Unable to resolve the SSR request origin')
-  }
-
-  return `${String(protocol).replace(/:$/, '')}://${host}`
+  if (!host) throw new Error('SSR request host is missing')
+  return `${protocol}://${host}`
 }
 
-function getServerHeaders (req) {
-  const sourceHeaders = req.headers || {}
-  const headers = {}
+function serverHeaders (requestContext) {
+  const req = requestContext && requestContext.req
+  const headers = req && req.headers ? req.headers : {}
+  const result = {}
 
-  ;['authorization', 'cookie', 'accept-language', 'user-agent'].forEach((name) => {
-    const value = sourceHeaders[name]
-    if (typeof value === 'string') headers[name] = value
-  })
-
-  return headers
+  if (headers.cookie) result.cookie = headers.cookie
+  if (headers.authorization) result.authorization = headers.authorization
+  return result
 }
 
 function requestJson (path, requestContext) {
-  const req = requestContext && requestContext.req
+  const origin = requestOrigin(requestContext)
 
-  if (req) {
-    if (typeof fetch !== 'function') {
-      return Promise.reject(new Error('The Node SSR runtime must provide fetch'))
-    }
-
-    return fetch(`${getServerOrigin(req)}${path}`, {
-      headers: getServerHeaders(req)
+  if (origin) {
+    return fetch(`${origin}${path}`, {
+      headers: serverHeaders(requestContext)
     }).then((response) => {
       if (!response.ok) {
-        throw new Error(`Product API request failed with status ${response.status}`)
+        throw new Error(`Product request failed with status ${response.status}`)
       }
       return response.json()
     })
@@ -59,9 +53,11 @@ function requestJson (path, requestContext) {
 }
 
 export function fetchProduct (productId, requestContext) {
-  return requestJson(`/api/products/${encodeURIComponent(productId)}`, requestContext)
+  const encodedProductId = encodeURIComponent(productId)
+  return requestJson(`/api/products/${encodedProductId}`, requestContext)
 }
 
 export function fetchRecommendations (productId, requestContext) {
-  return requestJson(`/api/products/${encodeURIComponent(productId)}/recommendations`, requestContext)
+  const encodedProductId = encodeURIComponent(productId)
+  return requestJson(`/api/products/${encodedProductId}/recommendations`, requestContext)
 }

@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "b2317c4477b4b8eea3b6c83a38e59771333fa3f09b9c3928d6db03087e232ca0",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 6,
@@ -8,39 +9,109 @@
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.web.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/AnalyticsChart.vue",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/AnalyticsScroll.vue",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/chart-sdk.js",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.web.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.web.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/AnalyticsChart.vue"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/AnalyticsChart.vue",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/AnalyticsScroll.vue"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/AnalyticsScroll.vue",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/chart-sdk.js"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/chart-sdk.js",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/vue.config.js"
       ],
       "passed": true,
       "returncode": 0,
       "detail": {
         "success": true,
-        "checkedFiles": 6,
+        "checkedFiles": 1,
         "files": [
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.web.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/AnalyticsChart.vue",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/AnalyticsScroll.vue",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/web/chart-sdk.js",
-            "errors": []
-          },
           {
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/vue.config.js",
             "errors": []
@@ -53,7 +124,28 @@
       "kind": "mpx-web-compile",
       "type": "component",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [],
+        "warnings": [],
+        "summary": {
+          "total": 0,
+          "byCategory": {}
+        },
+        "durationMs": 2590
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "component",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-1/outputs/src/components/analytics-panel.web.mpx"
       ],
       "passed": true,
@@ -68,7 +160,7 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 3416
+        "durationMs": 2434
       },
       "stderr": ""
     },
@@ -107,5 +199,5 @@
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

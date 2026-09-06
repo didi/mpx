@@ -3,13 +3,13 @@
     class="swipe-order"
     data-disabled="{{disabled}}"
     catchtouchstart@wx="{{gesture.onTouchStart}}"
-    @touchstart@web="handleTouchStart"
     catchtouchmove@wx="{{gesture.onTouchMove}}"
-    @touchmove@web="handleTouchMove"
     catchtouchend@wx="{{gesture.onTouchEnd}}"
-    @touchend@web="handleTouchEnd"
     catchtouchcancel@wx="{{gesture.onTouchCancel}}"
-    @touchcancel@web="handleTouchCancel"
+    @touchstart@web="onTouchStart"
+    @touchmove@web="onTouchMove"
+    @touchend@web="onTouchEnd"
+    @touchcancel@web="onTouchCancel"
   >
     <view class="remove-action">
       <button class="remove-button" catchtap="removeOrder" disabled="{{disabled}}">删除</button>
@@ -17,15 +17,14 @@
 
     <view
       class="order-card"
-      wx:class="{{ {dragging: dragging} }}"
       style="transform: translateX({{offsetX}}px)"
-      bindtap@wx="selectOrder"
-      @tap@web="selectOrder"
+      bindtap="selectOrder"
     >
       <view class="order-head">
         <text class="order-no">订单 {{order.orderNo}}</text>
         <text class="order-status">{{order.statusText}}</text>
       </view>
+
       <view class="goods-row">
         <image class="goods-cover" src="{{order.cover}}" mode="aspectFill" />
         <view class="goods-copy">
@@ -37,6 +36,7 @@
           </view>
         </view>
       </view>
+
       <view class="logistics-row">
         <view class="logistics-copy">
           <text class="logistics-text">{{order.logisticsText}}</text>
@@ -54,27 +54,22 @@ function pointX(event) {
   return touches && touches.length ? touches[0].clientX : 0
 }
 
-function disabled(event) {
-  var value = event.currentTarget.dataset.disabled
-  return value === true || value === 'true'
-}
-
 module.exports = {
   onTouchStart: function (event) {
-    if (disabled(event)) return
-    event.instance.callMethod('handleTouchStart', pointX(event))
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('onTouchStart', pointX(event))
   },
   onTouchMove: function (event) {
-    if (disabled(event)) return
-    event.instance.callMethod('handleTouchMove', pointX(event))
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('onTouchMove', pointX(event))
   },
   onTouchEnd: function (event) {
-    if (disabled(event)) return
-    event.instance.callMethod('handleTouchEnd', pointX(event))
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('onTouchEnd')
   },
   onTouchCancel: function (event) {
-    if (disabled(event)) return
-    event.instance.callMethod('handleTouchCancel')
+    if (event.currentTarget.dataset.disabled) return
+    event.instance.callMethod('onTouchCancel')
   }
 }
 </script>
@@ -84,58 +79,52 @@ import { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
-    order: { type: Object, value: () => ({}) },
+    order: {
+      type: Object,
+      value: () => ({})
+    },
     disabled: Boolean
   },
   data: {
-    offsetX: 0,
-    dragging: false,
-    touchStartX: 0,
-    touchOffsetX: 0,
-    swipeMoved: false,
-    suppressNextTap: false
+    offsetX: 0
   },
   methods: {
-    handleTouchStart (startX) {
+    onTouchStart (startX) {
+      if (this.disabled) return
       this.suppressNextTap = false
-      if (this.disabled) return
-      this.touchStartX = startX
-      this.touchOffsetX = 0
-      this.swipeMoved = false
-      this.dragging = true
+      this.gestureStartX = startX
+      this.gestureOffsetX = 0
+      this.gestureMoved = false
+      this.triggerEvent('swipestart', { orderId: this.order.id })
     },
-    handleTouchMove (currentX) {
-      if (this.disabled) return
-      this.touchOffsetX = currentX - this.touchStartX
-      if (this.touchOffsetX > 0) this.touchOffsetX = 0
-      if (this.touchOffsetX < -96) this.touchOffsetX = -96
-      if (Math.abs(this.touchOffsetX) > 8) this.swipeMoved = true
-      this.offsetX = this.touchOffsetX
+    onTouchMove (pointX) {
+      if (this.disabled || this.gestureStartX === null || this.gestureStartX === undefined) return
+      let offsetX = pointX - this.gestureStartX
+      if (offsetX > 0) offsetX = 0
+      if (offsetX < -96) offsetX = -96
+      this.gestureOffsetX = offsetX
+      if (Math.abs(offsetX) > 8) this.gestureMoved = true
+      this.offsetX = offsetX
     },
-    handleTouchEnd (currentX) {
+    onTouchEnd () {
       if (this.disabled) return
-      this.handleTouchMove(currentX)
-      this.finishSwipe(this.touchOffsetX < -48)
-    },
-    handleTouchCancel () {
-      if (this.disabled) return
-      this.touchStartX = 0
-      this.touchOffsetX = 0
-      this.swipeMoved = false
-      this.dragging = false
-      this.offsetX = 0
-      this.suppressNextTap = false
-      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
-    },
-    finishSwipe (open) {
-      var moved = this.swipeMoved
-      this.touchStartX = 0
-      this.touchOffsetX = 0
-      this.swipeMoved = false
-      this.dragging = false
-      this.offsetX = open ? -96 : 0
+      const open = this.gestureOffsetX <= -48
+      const moved = this.gestureMoved
+      this.gestureStartX = null
+      this.gestureOffsetX = 0
+      this.gestureMoved = false
       this.suppressNextTap = moved
+      this.offsetX = open ? -96 : 0
       this.triggerEvent('swipeend', { orderId: this.order.id, open })
+    },
+    onTouchCancel () {
+      if (this.disabled) return
+      this.gestureStartX = null
+      this.gestureOffsetX = 0
+      this.gestureMoved = false
+      this.suppressNextTap = false
+      this.offsetX = 0
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
     },
     selectOrder () {
       if (this.suppressNextTap) {
@@ -157,8 +146,7 @@ createComponent({
 .swipe-order { position: relative; margin-bottom: 20rpx; overflow: hidden; border-radius: 20rpx; }
 .remove-action { position: absolute; top: 0; right: 0; bottom: 0; width: 96px; background: #ff4d4f; }
 .remove-button { width: 96px; height: 100%; margin: 0; padding: 0; color: #ffffff; font-size: 28rpx; background: #ff4d4f; border-radius: 0; }
-.order-card { position: relative; z-index: 1; padding: 24rpx; background: #ffffff; transition: transform 180ms ease; }
-.order-card.dragging { transition: none; }
+.order-card { position: relative; z-index: 1; padding: 24rpx; background: #ffffff; }
 .order-head, .goods-price-row, .logistics-row { display: flex; align-items: center; justify-content: space-between; }
 .order-no { color: #8b919c; font-size: 22rpx; }
 .order-status { color: #1677ff; font-size: 25rpx; font-weight: bold; }

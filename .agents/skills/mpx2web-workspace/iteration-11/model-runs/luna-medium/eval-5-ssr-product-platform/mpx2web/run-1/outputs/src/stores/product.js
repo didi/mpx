@@ -1,9 +1,6 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchProduct, fetchRecommendations } from '../services/product'
 
-// Kept outside Pinia state so promises are never serialized into SSR state.
-const pendingByStore = new WeakMap()
-
 export const useProductStore = defineStore('product-platform', {
   state: () => ({
     productId: '',
@@ -13,35 +10,37 @@ export const useProductStore = defineStore('product-platform', {
     requestVersion: 0
   }),
   actions: {
-    loadProduct (productId, ssrContext) {
-      if (this.loaded && this.productId === productId) return Promise.resolve()
-
-      const pending = pendingByStore.get(this)
-      if (pending && pending.productId === productId && pending.version === this.requestVersion) {
-        return pending.promise
+    async loadProduct (productId, requestContext) {
+      if (this.loaded && this.productId === productId) return
+      if (this._pendingProductId === productId &&
+        this._pendingVersion === this.requestVersion) {
+        return this._pendingLoad
       }
 
-      const version = ++this.requestVersion
+      const requestVersion = ++this.requestVersion
       this.productId = productId
       this.loaded = false
-      this.product = {}
-      this.recommendations = []
 
-      const promise = Promise.all([
-        fetchProduct(productId, ssrContext),
-        fetchRecommendations(productId, ssrContext)
+      const pendingLoad = Promise.all([
+        fetchProduct(productId, requestContext),
+        fetchRecommendations(productId, requestContext)
       ]).then(([product, recommendations]) => {
-        if (version !== this.requestVersion || this.productId !== productId) return
+        if (requestVersion !== this.requestVersion || this.productId !== productId) return
         this.product = product
         this.recommendations = recommendations
         this.loaded = true
       }).finally(() => {
-        const current = pendingByStore.get(this)
-        if (current && current.version === version) pendingByStore.delete(this)
+        if (this._pendingLoad === pendingLoad) {
+          this._pendingLoad = null
+          this._pendingProductId = ''
+          this._pendingVersion = 0
+        }
       })
 
-      pendingByStore.set(this, { productId, version, promise })
-      return promise
+      this._pendingLoad = pendingLoad
+      this._pendingProductId = productId
+      this._pendingVersion = requestVersion
+      return pendingLoad
     }
   }
 })

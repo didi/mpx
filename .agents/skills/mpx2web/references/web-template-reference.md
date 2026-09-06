@@ -262,6 +262,8 @@ createComponent({
 
 需要完整的浏览器 ARIA、键盘和焦点能力时，按下方 [Web 标准属性](#web-标准属性) 使用 Web-only 模板，并在桌面键盘、移动端和主流读屏软件中验证。
 
+带可见文本的原生 `button` 已有控件语义和可访问名称，不需要重复添加 `aria-role="button"` / `aria-label`；非原生可点击节点才补对应语义。若项目已经提供 `.web.mpx` 弹层实现，浏览器专属的 `role="dialog"`、`aria-modal`、`tabindex`、keydown 与焦点陷阱应只放在 Web 文件，通用 `.mpx` 继续保留小程序的 `aria-role`、`aria-label` 和触摸事件，避免把浏览器属性复制回小程序模板。
+
 ---
 
 ## Web 原生标签
@@ -691,6 +693,10 @@ Web 内建基础组件。基于 BetterScroll，支持横纵滚动、`scroll-top`
 | bindrefresherrefresh | 自定义下拉刷新被触发                       |
 | bindrefresherrestore | 自定义下拉刷新被复位时触发                 |
 | bindrefresherabort   | 自定义下拉刷新被中止时触发                 |
+
+上表是 `.mpx` 调用点的事件语法，因此业务页面使用 `bindscroll`、`bindscrolltoupper`、`bindscrolltolower`。自定义实现若是 Vue 2 `.vue` 文件，内部监听原生 DOM 才使用 `@scroll` / `v-on:scroll`，并通过 `$emit('scroll' | 'scrolltoupper' | 'scrolltolower', ...)` 还原对外契约；不要把 Vue 的 `@scroll` 写回 `.mpx` 调用点。
+
+自定义组件需要继续使用 `$listeners` 透传未接管的业务事件，但根 DOM 已有 `@scroll` 且组件会 `$emit('scroll', detail)` 时，不要再把 `$listeners.scroll` 原样绑定到根 DOM，否则父组件会先收到原生 Event、再收到兼容 detail。可从 `$listeners` 派生 `passthroughListeners`，删除 `scroll`、`scrolltoupper`、`scrolltolower` 后再用 `v-on="passthroughListeners"`，其余点击等监听保持透传。
 
 #### 注意事项
 

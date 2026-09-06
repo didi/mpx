@@ -3,6 +3,8 @@
     ref="scroller"
     class="analytics-scroll"
     :style="scrollStyle"
+    v-bind="$attrs"
+    v-on="passthroughListeners"
     @scroll="handleScroll"
   >
     <slot />
@@ -10,13 +12,15 @@
 </template>
 
 <script>
-function toNumber (value, fallback) {
-  const result = Number(value)
-  return Number.isFinite(result) ? result : fallback
-}
+const FORWARDED_SCROLL_EVENTS = [
+  'scroll',
+  'scrolltoupper',
+  'scrolltolower'
+]
 
 export default {
   name: 'AnalyticsScroll',
+  inheritAttrs: false,
   props: {
     scrollX: {
       type: Boolean,
@@ -39,212 +43,217 @@ export default {
       default: ''
     },
     upperThreshold: {
-      type: Number,
+      type: [Number, String],
       default: 50
     },
     lowerThreshold: {
-      type: Number,
+      type: [Number, String],
       default: 50
-    }
-  },
-  data () {
-    return {
-      mutationObserver: null,
-      intoViewScheduled: false,
-      previousTop: 0,
-      previousLeft: 0,
-      edgeState: {
-        upperY: false,
-        upperX: false,
-        lowerY: false,
-        lowerX: false
-      }
     }
   },
   computed: {
     scrollStyle () {
       return {
         overflowX: this.scrollX ? 'auto' : 'hidden',
-        overflowY: this.scrollY ? 'auto' : 'hidden',
-        WebkitOverflowScrolling: 'touch'
+        overflowY: this.scrollY ? 'auto' : 'hidden'
       }
+    },
+    passthroughListeners () {
+      const listeners = { ...this.$listeners }
+      FORWARDED_SCROLL_EVENTS.forEach((eventName) => {
+        delete listeners[eventName]
+      })
+      return listeners
     }
   },
   watch: {
-    scrollTop (value) {
-      this.syncScrollTop(value)
+    scrollTop () {
+      this.queuePositionSync()
     },
-    scrollLeft (value) {
-      this.syncScrollLeft(value)
+    scrollLeft () {
+      this.queuePositionSync()
     },
     scrollIntoView () {
-      this.scheduleScrollIntoView()
+      this.queueScrollIntoView()
     },
     scrollX () {
-      this.resetDisabledAxis()
+      this.queueEdgeRefresh()
     },
     scrollY () {
-      this.resetDisabledAxis()
+      this.queueEdgeRefresh()
+    },
+    upperThreshold () {
+      this.queueEdgeRefresh()
+    },
+    lowerThreshold () {
+      this.queueEdgeRefresh()
     }
+  },
+  created () {
+    this._scrollDestroyed = false
+    this._lastScrollTop = 0
+    this._lastScrollLeft = 0
+    this._edgeState = {
+      top: false,
+      left: false,
+      bottom: false,
+      right: false
+    }
+    this._mutationObserver = null
+    this._resizeObserver = null
   },
   mounted () {
-    this.syncScrollTop(this.scrollTop)
-    this.syncScrollLeft(this.scrollLeft)
-    this.previousTop = this.$refs.scroller.scrollTop
-    this.previousLeft = this.$refs.scroller.scrollLeft
-    this.observeChildren()
-    this.scheduleScrollIntoView()
+    this.syncControlledPosition()
+    this._lastScrollTop = this.$refs.scroller.scrollTop
+    this._lastScrollLeft = this.$refs.scroller.scrollLeft
+    this.refreshEdgeState(false)
+    this.observeLayoutChanges()
+    this.queueScrollIntoView()
+  },
+  updated () {
+    this.queueScrollIntoView()
   },
   beforeDestroy () {
-    if (this.mutationObserver) {
-      this.mutationObserver.disconnect()
-      this.mutationObserver = null
-    }
-    this.intoViewScheduled = false
+    this._scrollDestroyed = true
+    const mutationObserver = this._mutationObserver
+    const resizeObserver = this._resizeObserver
+    this._mutationObserver = null
+    this._resizeObserver = null
+    if (mutationObserver) mutationObserver.disconnect()
+    if (resizeObserver) resizeObserver.disconnect()
   },
   methods: {
-    syncScrollTop (value) {
+    queuePositionSync () {
       this.$nextTick(() => {
-        if (this.$refs.scroller && this.scrollY) {
-          this.$refs.scroller.scrollTop = Math.max(0, toNumber(value, 0))
-        }
+        if (!this._scrollDestroyed) this.syncControlledPosition()
       })
     },
-    syncScrollLeft (value) {
+    syncControlledPosition () {
+      const scroller = this.$refs.scroller
+      if (!scroller) return
+      const top = this.toPosition(this.scrollTop)
+      const left = this.toPosition(this.scrollLeft)
+      if (this.scrollY && scroller.scrollTop !== top) scroller.scrollTop = top
+      if (this.scrollX && scroller.scrollLeft !== left) scroller.scrollLeft = left
+    },
+    queueScrollIntoView () {
       this.$nextTick(() => {
-        if (this.$refs.scroller && this.scrollX) {
-          this.$refs.scroller.scrollLeft = Math.max(0, toNumber(value, 0))
-        }
+        if (!this._scrollDestroyed) this.applyScrollIntoView()
       })
     },
-    resetDisabledAxis () {
-      this.$nextTick(() => {
-        const scroller = this.$refs.scroller
-        if (!scroller) return
-        if (!this.scrollY) scroller.scrollTop = 0
-        if (!this.scrollX) scroller.scrollLeft = 0
-        this.previousTop = scroller.scrollTop
-        this.previousLeft = scroller.scrollLeft
-        this.resetEdgeState()
-      })
-    },
-    observeChildren () {
-      if (typeof MutationObserver === 'undefined') return
-      this.mutationObserver = new MutationObserver(() => {
-        this.scheduleScrollIntoView()
-      })
-      this.mutationObserver.observe(this.$refs.scroller, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['id']
-      })
-    },
-    scheduleScrollIntoView () {
-      if (!this.scrollIntoView || this.intoViewScheduled) return
-      this.intoViewScheduled = true
-      this.$nextTick(() => {
-        this.intoViewScheduled = false
-        this.syncScrollIntoView()
-      })
-    },
-    syncScrollIntoView () {
+    applyScrollIntoView () {
       const scroller = this.$refs.scroller
       const targetId = this.scrollIntoView
-      if (!scroller || !targetId) return
+      if (!scroller || !targetId || (!this.scrollX && !this.scrollY)) return
 
-      const target = Array.prototype.find.call(
-        scroller.querySelectorAll('[id]'),
-        (node) => node.id === targetId
-      )
+      const candidates = scroller.querySelectorAll('[id]')
+      let target = null
+      for (let index = 0; index < candidates.length; index += 1) {
+        if (candidates[index].id === targetId) {
+          target = candidates[index]
+          break
+        }
+      }
       if (!target) return
 
       const scrollerRect = scroller.getBoundingClientRect()
       const targetRect = target.getBoundingClientRect()
       if (this.scrollY) {
-        scroller.scrollTop += targetRect.top - scrollerRect.top
+        scroller.scrollTop += targetRect.top - scrollerRect.top - scroller.clientTop
       }
       if (this.scrollX) {
-        scroller.scrollLeft += targetRect.left - scrollerRect.left
-      }
-    },
-    makeDetail (scroller, deltaX, deltaY) {
-      return {
-        scrollTop: scroller.scrollTop,
-        scrollLeft: scroller.scrollLeft,
-        scrollHeight: scroller.scrollHeight,
-        scrollWidth: scroller.scrollWidth,
-        deltaX,
-        deltaY
+        scroller.scrollLeft += targetRect.left - scrollerRect.left - scroller.clientLeft
       }
     },
     handleScroll () {
       const scroller = this.$refs.scroller
       if (!scroller) return
-
-      const deltaX = scroller.scrollLeft - this.previousLeft
-      const deltaY = scroller.scrollTop - this.previousTop
-      this.previousLeft = scroller.scrollLeft
-      this.previousTop = scroller.scrollTop
-
-      const detail = this.makeDetail(scroller, deltaX, deltaY)
-      this.$emit('scroll', detail)
-      this.emitEdgeEvents(scroller, detail)
+      const scrollTop = scroller.scrollTop
+      const scrollLeft = scroller.scrollLeft
+      const detail = {
+        scrollTop,
+        scrollLeft,
+        scrollHeight: scroller.scrollHeight,
+        scrollWidth: scroller.scrollWidth,
+        deltaX: scrollLeft - this._lastScrollLeft,
+        deltaY: scrollTop - this._lastScrollTop
+      }
+      this._lastScrollTop = scrollTop
+      this._lastScrollLeft = scrollLeft
+      this.$emit('scroll', { detail })
+      this.refreshEdgeState(true)
     },
-    emitEdgeEvents (scroller, detail) {
-      const upper = Math.max(0, toNumber(this.upperThreshold, 50))
-      const lower = Math.max(0, toNumber(this.lowerThreshold, 50))
+    refreshEdgeState (emitCrossing) {
+      const scroller = this.$refs.scroller
+      if (!scroller) return
+      const upperThreshold = this.toThreshold(this.upperThreshold)
+      const lowerThreshold = this.toThreshold(this.lowerThreshold)
       const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
       const maxLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth)
-
-      this.updateEdge(
-        'upperY',
-        this.scrollY && maxTop > 0 && scroller.scrollTop <= upper,
-        'scrolltoupper',
-        'top',
-        detail
-      )
-      this.updateEdge(
-        'upperX',
-        this.scrollX && maxLeft > 0 && scroller.scrollLeft <= upper,
-        'scrolltoupper',
-        'left',
-        detail
-      )
-      this.updateEdge(
-        'lowerY',
-        this.scrollY && maxTop > 0 && maxTop - scroller.scrollTop <= lower,
-        'scrolltolower',
-        'bottom',
-        detail
-      )
-      this.updateEdge(
-        'lowerX',
-        this.scrollX && maxLeft > 0 && maxLeft - scroller.scrollLeft <= lower,
-        'scrolltolower',
-        'right',
-        detail
-      )
-    },
-    updateEdge (key, inside, eventName, direction, detail) {
-      if (inside && !this.edgeState[key]) {
-        this.$emit(eventName, Object.assign({ direction }, detail))
+      const nextState = {
+        top: this.scrollY && scroller.scrollTop <= upperThreshold,
+        left: this.scrollX && scroller.scrollLeft <= upperThreshold,
+        bottom: this.scrollY && maxTop - scroller.scrollTop <= lowerThreshold,
+        right: this.scrollX && maxLeft - scroller.scrollLeft <= lowerThreshold
       }
-      this.edgeState[key] = inside
+
+      if (emitCrossing) {
+        if (nextState.top && !this._edgeState.top) this.emitEdge('scrolltoupper', 'top')
+        if (nextState.left && !this._edgeState.left) this.emitEdge('scrolltoupper', 'left')
+        if (nextState.bottom && !this._edgeState.bottom) this.emitEdge('scrolltolower', 'bottom')
+        if (nextState.right && !this._edgeState.right) this.emitEdge('scrolltolower', 'right')
+      }
+      this._edgeState = nextState
     },
-    resetEdgeState () {
-      Object.keys(this.edgeState).forEach((key) => {
-        this.edgeState[key] = false
+    emitEdge (eventName, direction) {
+      this.$emit(eventName, { detail: { direction } })
+    },
+    queueEdgeRefresh () {
+      this.$nextTick(() => {
+        if (!this._scrollDestroyed) this.refreshEdgeState(false)
       })
+    },
+    observeLayoutChanges () {
+      const scroller = this.$refs.scroller
+      if (!scroller) return
+      if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(() => {
+          if (this._scrollDestroyed || this._mutationObserver !== observer) return
+          this.queueScrollIntoView()
+          this.refreshEdgeState(false)
+        })
+        this._mutationObserver = observer
+        observer.observe(scroller, { childList: true, subtree: true })
+      }
+      if (typeof ResizeObserver !== 'undefined') {
+        const observer = new ResizeObserver(() => {
+          if (this._scrollDestroyed || this._resizeObserver !== observer) return
+          this.queueScrollIntoView()
+          this.refreshEdgeState(false)
+        })
+        this._resizeObserver = observer
+        observer.observe(scroller)
+        Array.prototype.forEach.call(scroller.children, (child) => observer.observe(child))
+      }
+    },
+    toPosition (value) {
+      const position = Number(value)
+      return Number.isFinite(position) ? Math.max(0, position) : 0
+    },
+    toThreshold (value) {
+      const threshold = Number(value)
+      return Number.isFinite(threshold) ? Math.max(0, threshold) : 0
     }
   }
 }
 </script>
 
-<style scoped>
+<style>
 .analytics-scroll {
-  box-sizing: border-box;
+  display: block;
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 </style>

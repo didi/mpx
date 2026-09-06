@@ -3,85 +3,103 @@
   "eval_name": "member-share-lifecycle",
   "configuration": "no_skill",
   "run_number": 2,
-  "grading_fingerprint": "b69f56ffec417b89a3717bfdc30ec2e4cdda591a03f7d6297b1b5aee24fee2fa",
+  "grading_fingerprint": "9839e0e179e915a407c714730e974f1f415002ba05435d2a02be6979556923bb",
+  "model_grading_fingerprint": "40395cd02788d3b60fa653e483a74d3d87c245a4e6a14bd4d7e0febc34a89f2b",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 0,
-    "invoked": false,
-    "skip_reason": "compile_or_semantic_gate_failed"
+    "duration_ms": 80424
   },
   "expectations": [
     {
       "id": "s0",
       "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:48-50 在 wx 条件块内保留 open-type=\"share\" 分享按钮；144-159 在 wx 条件块内保留 onShareAppMessage 与 onShareTimeline；135-142 保留 wx.showShareMenu。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     },
     {
       "id": "s1",
       "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "category": "web-lifecycle",
       "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
+      "evidence": "outputs/src/pages/member/invite.mpx：Web 未移除 onShareAppMessage；Web 未移除 onShareTimeline。",
       "verification_methods": [
-        "compile_gate"
-      ]
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/pages/member/invite.mpx：Web 未移除 onShareAppMessage；Web 未移除 onShareTimeline。"
+      }
     },
     {
       "id": "s2",
       "text": "Web 分享入口绑定独立的页面实例方法",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:51-57 Web 条件块内分享入口 bindtap=\"shareOnWeb\"；194-196 在页面 methods 中定义独立实例方法 shareOnWeb。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     },
     {
       "id": "s3",
       "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
+      "category": "web-lifecycle",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:53-56 明示 Web 分享能力暂未接入，未配置 Web 分享 SDK、宿主 Bridge 或降级协议；194-196 shareOnWeb 仅设置 webShareNoticeVisible，不调用未声明 SDK 或 Bridge。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     },
     {
       "id": "s4",
       "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
+      "category": "web-lifecycle",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx 全文未出现 navigator.share、clipboard、writeText、execCommand、复制链接等降级实现；shareOnWeb 仅展示待接入提示。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     },
     {
       "id": "s5",
       "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "category": "web-api",
       "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
+      "evidence": "outputs/src/pages/member/invite.mpx:170-181 Web 请求改为 window.fetch；200-204 Web 详情跳转改为 window.location.assign。断言要求请求与跳转继续走 Mpx 官方 API 链路，不得改成浏览器原生 API 平行实现。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     },
     {
       "id": "s6",
       "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:13-24、108-133 保留会员进度与 invitePercent；27-37、97-106 保留活动与奖励阶梯；61-80、110-125、161-192 保留最近邀请列表数据展示与更新逻辑。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     }
   ],
   "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.7143
+  },
+  "strict_delivery_summary": {
     "passed": 0,
     "failed": 7,
     "total": 7,
-    "pass_rate": 0.0
+    "pass_rate": 0.0,
+    "compile_passed": false
   },
   "metrics": {
     "total_tokens": 95494,
@@ -96,6 +114,7 @@
     "total_duration_seconds": 149.308
   },
   "compile": {
+    "compile_fingerprint": "3aa5eb4c94e973f81385ab783d666e641a275b0d177ba82bb7deaa39acc00015",
     "status": "failed",
     "all_declared_outputs_present": true,
     "declared_output_count": 1,
@@ -204,13 +223,13 @@
         "stderr": "InvalidInputError: 检测到无效的条件编译注释：\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:57 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:136 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:141 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:144 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:159 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:170 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:182 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:192 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:200 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:202 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n- /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:204 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)\n"
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
     "suggestions": [
-      "先修复编译或条件编译语义错误，再进行功能评分。"
+      "s1 建议明确“等价的编译期平台隔离”可接受的具体语法或要求提供 Web 编译产物；否则对 @mpx-if 注释是否实际移除生命周期的判断会影响结论。"
     ],
-    "overall": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-conditional-compile-semantics: invite.mpx:48 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:50 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...); invite.mpx:51 @mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，脚本请使用真实的 if (__mpx_mode__ ...)；mpx-web-compile: 检查未通过"
+    "overall": "除 Web 请求与详情跳转擅自使用浏览器原生 API 导致 s5 失败外，分享入口隔离、待接入边界和邀请业务数据基本保留。"
   }
 }

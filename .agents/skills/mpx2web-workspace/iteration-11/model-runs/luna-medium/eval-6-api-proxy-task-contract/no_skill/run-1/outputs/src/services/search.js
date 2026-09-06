@@ -6,10 +6,9 @@ export function fetchTrendingKeywords () {
   }).then(({ data }) => data)
 }
 
-export function requestSuggestions (keyword, signal) {
+export function requestSuggestions (keyword) {
   return request({
     url: '/api/search/suggest',
-    data: { keyword },
-    signal
-  }).then(({ data }) => data.list)
+    data: { keyword }
+  })
 }

@@ -1,0 +1,82 @@
+{
+  "eval_id": 11,
+  "eval_name": "web-accessibility-focus",
+  "configuration": "no_skill",
+  "run_number": 2,
+  "model_grading_fingerprint": "50f7c88eb75b94041476157e53541de55c2463facbc90538f5905765d7d78bb2",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 134572
+  },
+  "expectations": [
+    {
+      "id": "c0",
+      "text": "通用筛选触发器、选项与确认入口具有可访问的控件语义和名称，并保留 tap/遮罩触摸链路；带可见文本的原生 button 不要求重复添加 aria-role/aria-label，非原生可点击节点使用 aria-role",
+      "category": "accessibility",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.mpx:3-10 与 21-28 中触发器和选项是可点击 view，但使用的是 role=\"button\"/role=\"checkbox\"，不是断言要求的 aria-role；确认入口 outputs/src/components/filter-dialog.mpx:29-30 是带可见文本的原生 button，tap 与遮罩链路见 9、11、27、29、30 行。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c1",
+      "text": "完整浏览器 role=dialog、aria-modal、tabindex 与键盘事件只存在于 Web 文件或 Web-only 模板逻辑",
+      "category": "web-template",
+      "passed": false,
+      "evidence": "浏览器 dialog/键盘属性没有限定在 Web：outputs/src/components/filter-dialog.mpx:14-19 在通用文件中包含 role=\"dialog\"、aria-modal=\"true\"、tabindex=\"-1\" 和 bindkeydown=\"onKeydown\"，触发器/选项也有 tabindex 于 6、26 行。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c2",
+      "text": "Web 打开前记录真实触发元素，渲染完成后把焦点移入弹层；关闭后仅在元素仍连接文档时恢复焦点",
+      "category": "web-focus",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx:50-58 在打开前保存 document.activeElement 到 _returnFocus，设置 visible 后通过 $nextTick 聚焦 this.$refs.dialog；60-72 关闭时保存 returnFocus，并仅在 returnFocus.isConnected !== false 且 focus 为函数时恢复焦点。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c3",
+      "text": "Escape 关闭弹层；Tab 与 Shift+Tab 在当前弹层的可聚焦元素首尾循环，遮罩点击不误触内容区",
+      "category": "web-focus",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx:87-92 Escape preventDefault 后 close；94-116 处理 Tab/Shift+Tab，在 dialog 可聚焦元素为空时回到 dialog，有首尾元素时循环聚焦；10 行遮罩点击 close，18 行 dialog 点击 stop，74-76 调用 stopPropagation，避免内容区点击冒泡到遮罩。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c4",
+      "text": "document/window 键盘或焦点监听在每次关闭和 detached/unmounted 时成对移除，快速开关不会重复注册",
+      "category": "web-cleanup",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx 没有 document/window addEventListener；键盘处理仅模板内 @keydown 于 19 行。41-48 初始化并在 detached 增加 _focusCycle、清空 _returnFocus；50-72 的 open/close 通过 _focusCycle 让快速开关后的过期 $nextTick 回调失效，未见重复注册或遗留全局监听。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c5",
+      "text": "选项选择、清空、确认、取消、焦点恢复和微信小程序触摸业务链路保持完整",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "选项切换、清空、确认和焦点恢复分别见 outputs/src/components/filter-dialog.web.mpx:77-85、60-72，通用小程序 tap 打开/遮罩关闭/选项/清空/确认见 outputs/src/components/filter-dialog.mpx:9、11、27、29、30、43-56；但小程序内容区仍是 bindtap=\"stop\"（18 行），stop 只在 event.stopPropagation 存在时调用（45-47 行），没有使用 catchtap 或等效阻止冒泡写法，证据不足以保证触摸选项/清空不会冒泡触发遮罩 close，微信小程序触摸业务链路不完整。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "c5 中“取消”未定义为显式取消按钮、遮罩关闭还是 Escape，容易造成判定口径偏差；建议明确取消入口。"
+    ],
+    "overall": "Web 焦点进入、恢复、Escape 和 Tab 循环基本实现，但通用小程序文件混入 Web-only dialog/键盘属性，且小程序可点击 view 未按断言使用 aria-role，触摸冒泡阻断也不足。"
+  }
+}

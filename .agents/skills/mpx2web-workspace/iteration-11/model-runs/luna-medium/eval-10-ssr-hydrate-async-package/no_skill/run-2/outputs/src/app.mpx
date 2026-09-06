@@ -2,11 +2,10 @@
 import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
-const pinia = createPinia()
-
+// Keep the store container per app instance; SSR requests must not share it.
 createApp({
   onAppInit () {
-    return { pinia }
+    return { pinia: createPinia() }
   }
 })
 </script>

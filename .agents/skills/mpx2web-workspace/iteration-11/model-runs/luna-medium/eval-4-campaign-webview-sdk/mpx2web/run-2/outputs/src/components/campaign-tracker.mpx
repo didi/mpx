@@ -6,80 +6,80 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
-
-const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+import campaignTracker from '@business/campaign-tracker-web'
 
 createComponent({
   properties: {
-    campaignId: {
-      type: String,
-      observer () {
-        this.initTracker()
-      }
-    },
-    memberId: String
+    campaignId: { type: String, observer () { this.initTracker() } },
+    memberId: { type: String, observer () { this.initTracker() } }
   },
   data: { ready: false },
-  ready () {
-    this.initTracker()
-  },
+  ready () { this.destroyed = false; this.initGeneration = 0; this.initTracker() },
   detached () {
-    this.destroyTracker()
+    this.destroyed = true
+    this.initGeneration += 1
+    this.cleanupTracker()
   },
   methods: {
-    destroyTracker () {
-      this.trackerGeneration = (this.trackerGeneration || 0) + 1
-      if (this._messageHandler) {
-        window.removeEventListener('message', this._messageHandler)
-        this._messageHandler = null
+    isCurrent (generation, tracker) {
+      return !this.destroyed && generation === this.initGeneration && tracker === this.tracker
+    },
+    cleanupTracker () {
+      if (this.windowMessageBound && typeof window !== 'undefined') {
+        window.removeEventListener('message', this.handleWindowMessage)
       }
-      if (this._visibilityHandler) {
-        document.removeEventListener('visibilitychange', this._visibilityHandler)
-        this._visibilityHandler = null
+      if (this.visibilityBound && typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
       }
+      this.windowMessageBound = false
+      this.visibilityBound = false
       const tracker = this.tracker
       this.tracker = null
       this.ready = false
-      if (tracker && tracker.destroy) tracker.destroy()
+      if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
     },
     async initTracker () {
-      if (__mpx_mode__ !== 'web' || !this.campaignId) return
-      this.destroyTracker()
-      const generation = this.trackerGeneration
-      const campaignId = this.campaignId
+      if (!this.campaignId || this.destroyed) return
+      const generation = ++this.initGeneration
+      this.cleanupTracker()
       try {
-        const module = await import('@business/campaign-tracker-web')
-        const tracker = await module.default.create({ campaignId, memberId: this.memberId })
-        if (generation !== this.trackerGeneration || campaignId !== this.campaignId) {
-          if (tracker && tracker.destroy) tracker.destroy()
+        const tracker = await campaignTracker.create({ campaignId: this.campaignId, memberId: this.memberId })
+        if (this.destroyed || generation !== this.initGeneration || !this.campaignId) {
+          if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
           return
         }
         this.tracker = tracker
-        this._messageHandler = (event) => this.handleWindowMessage(event, generation, campaignId)
-        this._visibilityHandler = () => this.handleVisibilityChange(generation)
-        window.addEventListener('message', this._messageHandler)
-        document.addEventListener('visibilitychange', this._visibilityHandler)
+        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+          window.addEventListener('message', this.handleWindowMessage)
+          document.addEventListener('visibilitychange', this.handleVisibilityChange)
+          this.windowMessageBound = true
+          this.visibilityBound = true
+        }
+        if (!this.isCurrent(generation, tracker)) {
+          this.cleanupTracker()
+          return
+        }
         tracker.start()
         this.ready = true
-        this.triggerEvent('ready', { campaignId })
+        this.triggerEvent('ready', { campaignId: this.campaignId })
       } catch (error) {
-        if (generation === this.trackerGeneration && campaignId === this.campaignId) {
-          this.triggerEvent('error', { campaignId, error })
-        }
+        if (this.destroyed || generation !== this.initGeneration) return
+        this.ready = false
+        this.triggerEvent('error', { campaignId: this.campaignId, error })
       }
     },
-    handleWindowMessage (event, generation, campaignId) {
-      if (generation !== this.trackerGeneration || campaignId !== this.campaignId ||
-          event.origin !== CAMPAIGN_ORIGIN || !event.source) return
-      const iframe = document.querySelector('#campaign-webview iframe') || document.querySelector('iframe#campaign-webview')
-      if (!iframe || event.source !== iframe.contentWindow) return
-      const message = event.data || {}
-      if (message.type === 'campaign-exposure' && message.campaignId === campaignId && this.tracker) {
-        this.tracker.track('exposure', message.payload)
-      }
+    handleWindowMessage (event) {
+      const message = event && event.data
+      if (!this.tracker || !message || message.type !== 'campaign-exposure') return
+      if (event.origin !== 'https://campaign.example.com' || message.campaignId !== this.campaignId) return
+      const frame = typeof document !== 'undefined'
+        ? document.querySelector('iframe[src^="https://campaign.example.com/"]')
+        : null
+      if (!frame || event.source !== frame.contentWindow) return
+      this.tracker.track('exposure', message.payload)
     },
-    handleVisibilityChange (generation) {
-      if (generation !== this.trackerGeneration || !this.tracker) return
+    handleVisibilityChange () {
+      if (!this.tracker || typeof document === 'undefined') return
       if (document.hidden) this.tracker.pause()
       else this.tracker.resume()
     }
@@ -88,12 +88,7 @@ createComponent({
 </script>
 
 <style scoped>
-.tracker-state {
-  padding: 14rpx 24rpx;
-  color: #ad7354;
-  font-size: 21rpx;
-  text-align: center;
-}
+.tracker-state { padding: 14rpx 24rpx; color: #ad7354; font-size: 21rpx; text-align: center; }
 </style>
 
 <script type="application/json">

@@ -12,12 +12,19 @@ createPage({
     addresses: [
       { id: 'home', name: '家', detail: '幸福路 1 号' },
       { id: 'office', name: '公司', detail: '科技路 8 号' }
-    ]
+    ],
+    currentAddress: null
+  },
+  onLoad () {
+    const eventChannel = this.getOpenerEventChannel()
+    this._eventChannel = eventChannel
+    eventChannel.on('checkoutReady', ({ address }) => {
+      this.currentAddress = address
+    })
   },
   methods: {
     confirm (address) {
-      const eventChannel = this.getOpenerEventChannel()
-      eventChannel.emit('addressSelected', address)
+      this._eventChannel.emit('addressSelected', address)
       mpx.navigateBack({ delta: 1 })
     }
   }

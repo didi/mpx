@@ -8,9 +8,8 @@ module.exports = {
             mode: 'history',
             base: '/portal/'
           },
-          // 设计稿约定 100rpx = 1rem。
           transRpxFn: function (match, value) {
-            return `${value * 0.01}rem`
+            return `${Number(value) / 100}rem`
           }
         }
       }

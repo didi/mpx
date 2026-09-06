@@ -42,26 +42,23 @@ createPage({
     suggestions: []
   },
   onLoad () {
-    this._suggestionRequest = null
-    this._requestVersion = 0
-    this._unloaded = false
-    this.loadTrendingKeywords()
+    this.suggestionRequest = null
+    this.suggestionRequestId = 0
+    this.unloaded = false
+
+    fetchTrendingKeywords()
+      .then((keywords) => {
+        if (!this.unloaded) this.trendingKeywords = keywords
+      })
+      .catch(() => {
+        if (!this.unloaded) this.showError('趋势词加载失败')
+      })
   },
   onUnload () {
-    this._unloaded = true
-    this._requestVersion += 1
+    this.unloaded = true
     this.cancelSuggestionRequest()
   },
   methods: {
-    loadTrendingKeywords () {
-      fetchTrendingKeywords().then((keywords) => {
-        if (!this._unloaded) {
-          this.trendingKeywords = Array.isArray(keywords) ? keywords : []
-        }
-      }).catch(() => {
-        if (!this._unloaded) this.showError('趋势词加载失败')
-      })
-    },
     onKeywordInput (event) {
       this.search(event.detail.value.trim())
     },
@@ -72,13 +69,16 @@ createPage({
       this.search('')
     },
     cancelSuggestionRequest () {
-      if (!this._suggestionRequest) return
-      this._suggestionRequest.abort()
-      this._suggestionRequest = null
+      this.suggestionRequestId += 1
+
+      if (this.suggestionRequest && typeof this.suggestionRequest.abort === 'function') {
+        this.suggestionRequest.abort()
+      }
+
+      this.suggestionRequest = null
     },
     search (keyword) {
       const nextKeyword = keyword.trim()
-      const requestVersion = ++this._requestVersion
 
       this.cancelSuggestionRequest()
       this.keyword = nextKeyword
@@ -88,25 +88,35 @@ createPage({
         return
       }
 
-      const currentRequest = requestSuggestions(nextKeyword)
-      this._suggestionRequest = currentRequest
+      const requestId = this.suggestionRequestId
+      const requestTask = requestSuggestions(nextKeyword)
+      this.suggestionRequest = requestTask
 
-      currentRequest.promise.then((suggestions) => {
-        if (this._unloaded || requestVersion !== this._requestVersion) return
-        this.suggestions = Array.isArray(suggestions) ? suggestions : []
-      }).catch(() => {
-        if (
-          this._unloaded ||
-          currentRequest.aborted ||
-          requestVersion !== this._requestVersion
-        ) return
-        this.suggestions = []
-        this.showError('搜索失败')
-      }).then(() => {
-        if (this._suggestionRequest === currentRequest) {
-          this._suggestionRequest = null
-        }
-      })
+      requestTask
+        .then(({ data }) => {
+          if (
+            !this.unloaded &&
+            requestId === this.suggestionRequestId &&
+            nextKeyword === this.keyword
+          ) {
+            this.suggestions = data.list
+          }
+        })
+        .catch(() => {
+          if (
+            !this.unloaded &&
+            requestId === this.suggestionRequestId &&
+            nextKeyword === this.keyword
+          ) {
+            this.suggestions = []
+            this.showError('搜索失败')
+          }
+        })
+        .then(() => {
+          if (requestId === this.suggestionRequestId) {
+            this.suggestionRequest = null
+          }
+        })
     },
     showError (title) {
       showToast({
@@ -118,7 +128,7 @@ createPage({
       navigateTo({
         url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
       }).catch(() => {
-        if (!this._unloaded) this.showError('跳转失败')
+        this.showError('打开商品失败')
       })
     }
   }
@@ -150,6 +160,6 @@ createPage({
 
 .keyword-item,
 .suggestion-item {
-  padding: 12rpx 0;
+  padding: 16rpx 0;
 }
 </style>

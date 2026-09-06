@@ -8,8 +8,10 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+import AnalyticsChart from '../web/AnalyticsChart.vue'
 
 createComponent({
+  components: { AnalyticsChart },
   properties: {
     metrics: { type: Array, value: () => [] },
     scrollX: { type: Boolean, value: true },
@@ -28,8 +30,6 @@ createComponent({
 })
 </script>
 
-<script type="application/json">
-{
-  "usingComponents": { "analytics-chart": "../web/AnalyticsChart.vue" }
-}
+<script name="json">
+module.exports = { usingComponents: { 'analytics-chart': '../web/AnalyticsChart.vue' } }
 </script>

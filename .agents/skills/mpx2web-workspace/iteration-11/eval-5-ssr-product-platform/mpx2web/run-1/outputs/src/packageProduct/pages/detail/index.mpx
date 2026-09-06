@@ -46,51 +46,36 @@ createPage({
     }
   },
   onLoad (query) {
-    this.productId = String((query && query.id) || '')
-    this.selectedSkuId = ''
+    this.productId = query.id
+    this.pageRequestVersion = (this.pageRequestVersion || 0) + 1
 
+    // SSR 的首屏请求由 serverPrefetch 返回并等待；浏览器 hydrate 与小程序
+    // 仍沿用 onLoad，且 hydrate 时 store 会按已注水的商品主键直接复用。
     if (!this.$ssrContext) {
-      return this.loadProduct(this.productId)
+      this.loadProduct(query.id)
     }
   },
   serverPrefetch () {
-    const routeProductId = this.$route && this.$route.query && this.$route.query.id
-    const productId = this.productId || String(routeProductId || '')
-    this.productId = productId
-    return this.loadProduct(productId, this.$ssrContext)
+    return this.loadProduct(this.productId, this.$ssrContext)
   },
   onUnload () {
-    this._productRequestVersion = (this._productRequestVersion || 0) + 1
+    this.pageRequestVersion = (this.pageRequestVersion || 0) + 1
   },
   methods: {
     async loadProduct (productId, requestContext) {
-      const requestVersion = (this._productRequestVersion || 0) + 1
-      this._productRequestVersion = requestVersion
+      const pageRequestVersion = this.pageRequestVersion || 0
       const store = useProductStore(this.$pinia)
+      const loaded = await store.loadProduct(productId, requestContext)
 
-      try {
-        await store.loadProduct(productId, requestContext)
-      } catch (error) {
-        if (
-          requestVersion !== this._productRequestVersion ||
-          this.productId !== productId
-        ) {
-          return
-        }
-        throw error
-      }
-
-      if (
-        requestVersion !== this._productRequestVersion ||
+      if (!loaded ||
+        pageRequestVersion !== (this.pageRequestVersion || 0) ||
         this.productId !== productId ||
         !store.loaded ||
-        store.productId !== productId
-      ) {
-        return
-      }
+        store.productId !== productId) return
 
-      const firstSku = (store.product.skus || [])[0]
-      this.selectedSkuId = firstSku ? firstSku.id : ''
+      this.selectedSkuId = store.product.skus && store.product.skus[0]
+        ? store.product.skus[0].id
+        : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

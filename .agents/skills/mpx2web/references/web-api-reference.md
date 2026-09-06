@@ -963,6 +963,39 @@ Web 不支持。
 
 Web 下不提供 `cookies`、`profile`、`exception` 字段。
 
+连续联想搜索要同时管理“可取消任务”和“晚到响应身份”。应用全局启用 `usePromise: true` 时，可从 Promise 的 `__returned` 取得原始任务；取消时先清空当前身份并推进代际，再 abort：
+
+```js
+searchSuggestions (keyword) {
+  this.cancelSuggestionRequest()
+  const generation = this.suggestionGeneration
+  const promise = mpx.request({
+    url: '/api/suggestions',
+    data: { keyword }
+  })
+  const task = promise.__returned
+  this.suggestionTask = task
+  return promise.then((result) => {
+    if (this.suggestionTask !== task || this.suggestionGeneration !== generation) return
+    if (this.keyword !== keyword) return
+    this.suggestions = result.data
+  })
+}
+
+cancelSuggestionRequest () {
+  const task = this.suggestionTask
+  this.suggestionTask = null
+  this.suggestionGeneration = (this.suggestionGeneration || 0) + 1
+  if (task && task.abort) task.abort()
+}
+
+onUnload () {
+  this.cancelSuggestionRequest()
+}
+```
+
+若调用点显式设置 `usePromise: false`，`mpx.request()` 的返回值本身就是 `RequestTask`；不要在这一分支再读取 `__returned`。两种契约只能按项目实际配置选择其一。
+
 ---
 
 ### connectSocket
@@ -984,6 +1017,50 @@ Web 不支持全局 `sendSocketMessage`、`closeSocket`、`onSocketOpen`、`onSo
 - 发送前读取局部 `task = this.socketTask`，同时确认任务存在、`this.socketTask === task` 且 `task.readyState === task.OPEN`，再调用 `task.send`。
 
 这样旧任务晚到的回调不会修改新连接状态或继续派发消息，未打开或已经被替换的任务也不会收到发送请求。
+
+可复用的完整结构如下；四类回调都检查捕获的局部任务，重连与卸载共用同一条“先废弃身份、再关闭”链路：
+
+```js
+connectChannel () {
+  this.disconnectChannel()
+  const task = mpx.connectSocket({ url: this.channelUrl })
+  this.socketTask = task
+  task.onOpen(() => {
+    if (this.socketTask !== task) return
+    this.channelState = 'open'
+  })
+  task.onMessage((message) => {
+    if (this.socketTask !== task) return
+    this.handleChannelMessage(message)
+  })
+  task.onError((error) => {
+    if (this.socketTask !== task) return
+    this.channelState = 'error'
+    this.channelError = error
+  })
+  task.onClose(() => {
+    if (this.socketTask !== task) return
+    this.socketTask = null
+    this.channelState = 'closed'
+  })
+}
+
+sendHeartbeat () {
+  const task = this.socketTask
+  if (!task || this.socketTask !== task || task.readyState !== task.OPEN) return
+  task.send({ data: 'ping' })
+}
+
+disconnectChannel () {
+  const task = this.socketTask
+  this.socketTask = null
+  if (task) task.close()
+}
+
+detached () {
+  this.disconnectChannel()
+}
+```
 
 ---
 

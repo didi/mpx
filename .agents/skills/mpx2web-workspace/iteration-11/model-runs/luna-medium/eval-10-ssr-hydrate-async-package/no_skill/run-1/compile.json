@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "b51909251f9de8738de9f3aee19ec934c7e768268f26be2f33ba3df6e90d83c4",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 6,
@@ -8,39 +9,109 @@
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/app.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/pages/article/detail.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/packageRecommend/components/recommend-list.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/stores/article.js",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/services/article.js",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/app.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/app.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/pages/article/detail.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/pages/article/detail.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/packageRecommend/components/recommend-list.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/packageRecommend/components/recommend-list.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/stores/article.js"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/stores/article.js",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/services/article.js"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/services/article.js",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/vue.config.js"
       ],
       "passed": true,
       "returncode": 0,
       "detail": {
         "success": true,
-        "checkedFiles": 6,
+        "checkedFiles": 1,
         "files": [
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/app.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/pages/article/detail.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/packageRecommend/components/recommend-list.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/stores/article.js",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/src/services/article.js",
-            "errors": []
-          },
           {
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-10-ssr-hydrate-async-package/no_skill/run-1/outputs/vue.config.js",
             "errors": []
@@ -67,7 +138,7 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 4050
+        "durationMs": 3044
       },
       "stderr": ""
     },
@@ -89,7 +160,7 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 2493
+        "durationMs": 2492
       },
       "stderr": ""
     },
@@ -129,5 +200,5 @@
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

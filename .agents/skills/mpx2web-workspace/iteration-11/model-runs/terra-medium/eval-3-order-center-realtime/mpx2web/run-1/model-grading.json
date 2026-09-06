@@ -1,0 +1,143 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "model_grading_fingerprint": "38275af8ce277a685bf6019048ef93001219cddf96674310ef97b2fa5ca94639",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 109258
+  },
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:47-93 保留 <script module=\"gesture\" lang=\"wxs\">，touchmove 高频路径仍在 WXS 中计算 offset 并 callMethod 同步。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:7-14 在同一 swipe-order 节点上为 start/move/end/cancel 分别绑定 catchtouch*@wx=\"{{gesture.*}}\" 和 @touch*@web=\"handleTouch*\"。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "category": "web-script",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:98-100 定义了 MAX_OFFSET=96 和 OPEN_THRESHOLD=48，113-116 将 swipeState 放在组件实例上；但 128-133 的 Web handleTouchMove 使用 pointX(event) - state.startX + this.offsetX，每次 move 后 this.offsetX 已被 syncSwipeOffset 更新，导致位移累加，-48 展开阈值不再对应真实拖动超过一半。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "category": "web-interaction",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:141-145 的 Web touchcancel 调 cancelSwipe，155-159 回弹到 0；87-90 的 WXS cancel 也调 cancelSwipe。149-164 仅用 suppressNextTap 抑制下一次 tap 并立即清除，无时间窗；161-171 的 select/remove 均检查 disabled，17 删除按钮也 disabled。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:46-52 使用 const task = wx.connectSocket(...) 的返回值并保存为 this.socketTask，后续使用 task.onOpen/onMessage/onError/onClose，没有使用 wx.onSocket* 全局回调。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:52-70 中 open、message、error、close 四类回调均校验 !this.channelAttached、this.socketTask !== task、this.memberId !== memberId 后直接 return。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:36-40 disconnectChannel 先保存旧 task，再将 this.socketTask = null，最后 close；42-44 connectChannel 重连前先 disconnectChannel，26-29 detached 也通过 disconnectChannel 废弃身份后关闭。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:76-79 sendHeartbeat 每次先 const task = this.socketTask，再校验 task 存在、this.socketTask === task、task.readyState === task.OPEN 后才 task.send。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8a",
+      "text": "订单状态筛选入口和筛选结果更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:4 保留状态 tab bindtap=\"switchStatus(item.key)\"；26-29 switchStatus 更新 activeStatus 并 fetchOrders，fetchOrders 用 status 请求并更新 orders 与 statusTabs。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8b",
+      "text": "订单详情入口与原有详情跳转链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:5 绑定 bindselect=\"openOrder\"；31 openOrder navigateTo 到 /pages/orders/detail?id=...；outputs/src/components/swipe-order-item.mpx:161-167 selectOrder 触发 select 并携带 orderId。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8c",
+      "text": "订单删除或撤销操作及其列表状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:17、169-171 删除按钮触发 remove；outputs/src/pages/orders/index.mpx:32-36 removeOrder 弹确认、DELETE 请求成功后 filter 更新订单列表，并清理 openedOrderId。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8d",
+      "text": "物流入口、SocketTask 消息接收与物流状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:8 保留 logistics-channel 入口及 bindlogistics；outputs/src/components/logistics-channel.mpx:56-63 接收 SocketTask message、解析 logistics 并 triggerEvent；outputs/src/pages/orders/index.mpx:43-46 校验 memberId 后更新订单物流状态字段。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "r2 应明确要求每次 move 必须基于 touchstart 捕获的 baseOffset 计算，而不能基于已更新的当前 offset，否则只检查 -96 和 -48 常量会漏掉累积位移问题。",
+      "断言未单独覆盖小程序 WXS 多实例状态隔离；当前 WXS 用 orderId 分桶，若订单 id 缺失或重复仍可能互相影响。"
+    ],
+    "overall": "SocketTask 生命周期和物流链路修复较完整；主要问题是 Web 滑动位移计算会在连续 move 中累加，导致展开阈值判断偏离真实拖动距离。"
+  }
+}

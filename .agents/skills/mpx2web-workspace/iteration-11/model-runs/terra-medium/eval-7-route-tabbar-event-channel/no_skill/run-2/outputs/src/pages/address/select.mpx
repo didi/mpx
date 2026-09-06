@@ -7,24 +7,17 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
-const ADDRESS_RESULT_PREFIX = 'checkout-address:'
-
 createPage({
   data: {
-    requestId: '',
     addresses: [
       { id: 'home', name: '家', detail: '幸福路 1 号' },
       { id: 'office', name: '公司', detail: '科技路 8 号' }
     ]
   },
-  onLoad (query) {
-    this.requestId = query.requestId || ''
-  },
   methods: {
     confirm (address) {
-      if (this.requestId) {
-        mpx.setStorageSync(`${ADDRESS_RESULT_PREFIX}${this.requestId}`, address)
-      }
+      // 不依赖 getCurrentPages() 中的前一页实例，Web history 回退同样可用。
+      getApp().setSelectedAddress(address)
       mpx.navigateBack({ delta: 1 })
     }
   }

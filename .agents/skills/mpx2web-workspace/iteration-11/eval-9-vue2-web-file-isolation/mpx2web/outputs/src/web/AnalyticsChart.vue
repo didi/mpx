@@ -1,128 +1,105 @@
 <template>
-  <div ref="chartElement" class="analytics-chart"></div>
+  <div ref="chart" class="analytics-chart"></div>
 </template>
 
-<script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+<script>
 import { createChart } from './chart-sdk'
 
-const props = defineProps({
-  metrics: {
-    type: Array,
-    default: () => []
-  }
-})
-const emit = defineEmits(['select'])
-const chartElement = ref(null)
-
-let chart = null
-let resizeObserver = null
-let createGeneration = 0
-let creating = false
-let disposed = false
-
-async function ensureChart () {
-  if (disposed || creating || !chartElement.value) return
-
-  creating = true
-  const generation = ++createGeneration
-  const element = chartElement.value
-  let nextChart
-
-  try {
-    nextChart = await createChart(element, props.metrics, {
-      onSelect (detail) {
-        if (!disposed && generation === createGeneration) emit('select', detail)
-      }
-    })
-  } catch (error) {
-    if (!disposed && generation === createGeneration) {
-      console.error('Failed to create analytics chart.', error)
+export default {
+  name: 'AnalyticsChart',
+  props: {
+    metrics: {
+      type: Array,
+      default: () => []
     }
-    return
-  } finally {
-    if (generation === createGeneration) creating = false
-  }
-
-  if (disposed || generation !== createGeneration || element !== chartElement.value) {
-    nextChart.destroy()
-    return
-  }
-
-  chart = nextChart
-  chart.update(props.metrics)
-  chart.resize()
-}
-
-watch(
-  () => props.metrics,
-  (metrics) => {
-    if (chart) {
-      chart.update(metrics)
-      return
-    }
-    nextTick(ensureChart)
   },
-  { deep: true }
-)
+  data () {
+    return {
+      chartInstance: null,
+      resizeObserver: null,
+      chartGeneration: 0,
+      chartDisposed: false
+    }
+  },
+  watch: {
+    metrics: {
+      deep: true,
+      handler (metrics) {
+        if (this.chartInstance) this.chartInstance.update(metrics || [])
+      }
+    }
+  },
+  mounted () {
+    this.chartDisposed = false
+    this.initChart()
+  },
+  beforeDestroy () {
+    this.chartDisposed = true
+    this.chartGeneration += 1
+    this.releaseChartResources()
+  },
+  methods: {
+    isCurrentChart (generation, element) {
+      return !this.chartDisposed &&
+        !this._isBeingDestroyed &&
+        !this._isDestroyed &&
+        this.chartGeneration === generation &&
+        this.$refs.chart === element
+    },
+    async initChart () {
+      const generation = this.chartGeneration + 1
+      const element = this.$refs.chart
+      this.chartGeneration = generation
+      this.releaseChartResources()
 
-onMounted(() => {
-  disposed = false
-  if (typeof ResizeObserver !== 'undefined' && chartElement.value) {
-    resizeObserver = new ResizeObserver(() => {
-      if (chart) chart.resize()
-    })
-    resizeObserver.observe(chartElement.value)
-  }
-  ensureChart()
-})
+      let instance
+      try {
+        instance = await createChart(element, this.metrics || [], {
+          onSelect: (detail) => {
+            if (!this.isCurrentChart(generation, element) ||
+              this.chartInstance !== instance) return
+            this.$emit('select', detail)
+          }
+        })
+      } catch (error) {
+        if (this.isCurrentChart(generation, element)) {
+          this.$emit('chart-error', error)
+        }
+        return
+      }
 
-onBeforeUnmount(() => {
-  disposed = true
-  createGeneration += 1
-  creating = false
+      if (!this.isCurrentChart(generation, element)) {
+        if (instance && instance.destroy) instance.destroy()
+        return
+      }
 
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-    resizeObserver = null
+      this.chartInstance = instance
+      instance.update(this.metrics || [])
+      this.bindResizeObserver(generation, element, instance)
+    },
+    bindResizeObserver (generation, element, instance) {
+      const browserWindow = element && element.ownerDocument &&
+        element.ownerDocument.defaultView
+      const ResizeObserverClass = browserWindow && browserWindow.ResizeObserver
+      if (!ResizeObserverClass) return
+
+      const observer = new ResizeObserverClass(() => {
+        if (!this.isCurrentChart(generation, element) ||
+          this.chartInstance !== instance ||
+          this.resizeObserver !== observer) return
+        instance.resize()
+      })
+      this.resizeObserver = observer
+      observer.observe(element)
+    },
+    releaseChartResources () {
+      const observer = this.resizeObserver
+      const instance = this.chartInstance
+      this.resizeObserver = null
+      this.chartInstance = null
+      if (observer) observer.disconnect()
+      if (instance && instance.destroy) instance.destroy()
+    }
   }
-  if (chart) {
-    chart.destroy()
-    chart = null
-  }
-})
+}
 </script>
-
-<style>
-.analytics-chart {
-  display: flex;
-  align-items: stretch;
-  min-width: 100%;
-  min-height: 100%;
-  gap: 12px;
-}
-
-.analytics-chart__metric {
-  display: inline-flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 120px;
-  padding: 12px 16px;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
-  background: #fff;
-  color: inherit;
-  cursor: pointer;
-}
-
-.analytics-chart__label {
-  font-size: 12px;
-  color: #666;
-}
-
-.analytics-chart__value {
-  margin-top: 6px;
-  font-size: 20px;
-}
-</style>

@@ -1,18 +1,18 @@
 <template>
-  <div class="analytics-chart">
-    <div ref="chart" class="analytics-chart__plot"></div>
+  <section class="analytics-chart">
+    <div ref="chart" class="analytics-chart__canvas" aria-label="指标图表"></div>
     <button
-      v-for="metric in safeMetrics"
-      :id="metric.key"
+      v-for="metric in normalizedMetrics"
+      :id="metricId(metric)"
       :key="metric.key"
       class="analytics-chart__metric"
       type="button"
       @click="selectMetric(metric.key)"
     >
       <span>{{ metric.label }}</span>
-      <span>{{ metric.value }}</span>
+      <strong>{{ metric.value }}</strong>
     </button>
-  </div>
+  </section>
 </template>
 
 <script>
@@ -29,70 +29,75 @@ export default {
   data () {
     return {
       chart: null,
-      chartGeneration: 0,
       destroyed: false,
+      generation: 0,
       resizeObserver: null
     }
   },
   computed: {
-    safeMetrics () {
-      return Array.isArray(this.metrics) ? this.metrics : []
+    normalizedMetrics () {
+      return this.metrics || []
     }
   },
   watch: {
     metrics: {
       deep: true,
-      handler () {
-        this.renderChart()
+      handler (metrics) {
+        this.updateChart(metrics || [])
       }
     }
   },
   mounted () {
-    this.installResizeObserver()
-    this.renderChart()
+    this.destroyed = false
+    this.createChart(this.normalizedMetrics)
   },
   beforeDestroy () {
     this.destroyed = true
-    this.chartGeneration += 1
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect()
-      this.resizeObserver = null
-    }
-    this.destroyChart()
+    this.releaseChart()
   },
   methods: {
-    async renderChart () {
-      if (this.destroyed || !this.$refs.chart) return
-
-      if (this.chart) {
-        this.chart.update(this.safeMetrics)
+    isCurrent (generation) {
+      return !this.destroyed && this.generation === generation
+    },
+    releaseChart () {
+      this.generation += 1
+      const observer = this.resizeObserver
+      this.resizeObserver = null
+      if (observer) observer.disconnect()
+      const chart = this.chart
+      this.chart = null
+      if (chart && chart.destroy) chart.destroy()
+    },
+    async createChart (metrics) {
+      this.releaseChart()
+      const generation = this.generation
+      const element = this.$refs.chart
+      if (!element) return
+      const chart = await createChart(element, metrics)
+      if (!this.isCurrent(generation) || this.$refs.chart !== element) {
+        if (chart && chart.destroy) chart.destroy()
         return
       }
-
-      const generation = ++this.chartGeneration
-      const nextMetrics = this.safeMetrics.slice()
-      const chart = await createChart(this.$refs.chart, nextMetrics)
-
-      if (this.destroyed || generation !== this.chartGeneration) {
-        chart.destroy()
-        return
-      }
-
-      this.destroyChart()
       this.chart = chart
-    },
-    destroyChart () {
-      if (this.chart) {
-        this.chart.destroy()
-        this.chart = null
+      if (typeof ResizeObserver === 'function') {
+        const observer = new ResizeObserver(() => {
+          if (!this.isCurrent(generation) || this.chart !== chart || this.resizeObserver !== observer) return
+          if (chart.resize) chart.resize()
+        })
+        this.resizeObserver = observer
+        observer.observe(element)
       }
     },
-    installResizeObserver () {
-      if (typeof ResizeObserver === 'undefined' || !this.$refs.chart) return
-      this.resizeObserver = new ResizeObserver(() => {
-        if (this.chart) this.chart.resize()
-      })
-      this.resizeObserver.observe(this.$refs.chart)
+    updateChart (metrics) {
+      const chart = this.chart
+      if (chart && chart.update) {
+        chart.update(metrics)
+      } else if (!this.destroyed && this.$el) {
+        this.createChart(metrics)
+      }
+    },
+    metricId (metric) {
+      return String(metric.key)
     },
     selectMetric (key) {
       this.$emit('select', { key })
@@ -100,3 +105,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.analytics-chart { display: grid; gap: 12px; min-width: max-content; }
+.analytics-chart__canvas { min-height: 120px; }
+.analytics-chart__metric { display: flex; justify-content: space-between; gap: 16px; }
+</style>

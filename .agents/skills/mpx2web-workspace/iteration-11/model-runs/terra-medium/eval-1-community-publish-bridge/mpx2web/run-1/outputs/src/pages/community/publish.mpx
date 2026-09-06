@@ -33,9 +33,15 @@
           <text class="photo-add-icon">+</text>
           <text class="photo-add-label">添加图片</text>
         </view>
-        <view @web wx:if="{{photos.length < 9}}" class="photo-add photo-add-unavailable">
+        <view
+          @web
+          wx:if="{{photos.length < 9}}"
+          class="photo-add photo-unavailable"
+          aria-role="button"
+          aria-label="图片选择暂未接入"
+        >
           <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">图片待接入</text>
+          <text class="photo-add-label">图片选择暂未接入</text>
         </view>
       </view>
     </view>
@@ -51,23 +57,22 @@
         </view>
         <text class="option-arrow">›</text>
       </view>
-      <view @web class="option-row option-row-unavailable">
+      <view @web class="option-row option-unavailable">
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text class="option-value">位置服务待接入</text>
+            <text class="option-value">位置服务暂未接入</text>
           </view>
         </view>
       </view>
 
-      <view wx:if="{{place.name}}" class="place-card" bindtap@wx="openPlace">
+      <view @wx wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
         </view>
-        <text @wx class="place-action">查看地图</text>
-        <text @web class="place-action">地图待接入</text>
+        <text class="place-action">查看地图</text>
       </view>
 
       <view class="option-row">
@@ -129,7 +134,8 @@ createPage({
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 确认 Web 宿主的位置选择协议后接入。
+        // TODO: 接入已声明且经安全校验的 Web 宿主位置选择协议后再启用。
+        wx.showToast({ title: '位置服务暂未接入', icon: 'none' })
         return
       }
       wx.chooseLocation({
@@ -140,7 +146,8 @@ createPage({
     },
     openPlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 确认 Web 宿主的地图查看协议后接入。
+        // TODO: 接入已声明且经安全校验的 Web 宿主地图查看协议后再启用。
+        wx.showToast({ title: '地图查看暂未接入', icon: 'none' })
         return
       }
       if (!this.place.latitude || !this.place.longitude) return
@@ -153,7 +160,8 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 确认 Web 宿主的媒体选择与上传协议后接入。
+        // TODO: 接入已声明且经安全校验的 Web 宿主媒体选择协议后再启用。
+        wx.showToast({ title: '图片选择暂未接入', icon: 'none' })
         return
       }
       wx.chooseMedia({
@@ -310,8 +318,8 @@ createPage({
   border: 2rpx dashed #d6dae1;
 }
 
-.photo-add-unavailable,
-.option-row-unavailable {
+.photo-unavailable,
+.option-unavailable {
   opacity: 0.65;
 }
 

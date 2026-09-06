@@ -13,7 +13,7 @@
     "src/components/filter-dialog.web.mpx"
   ],
   "assertions": [
-    {"id": "c0", "text": "通用筛选触发器、选项与确认按钮使用 aria-role/aria-label 表达跨端语义，并保留 tap/遮罩触摸链路", "category": "accessibility"},
+    {"id": "c0", "text": "通用筛选触发器、选项与确认入口具有可访问的控件语义和名称，并保留 tap/遮罩触摸链路；带可见文本的原生 button 不要求重复添加 aria-role/aria-label，非原生可点击节点使用 aria-role", "category": "accessibility"},
     {"id": "c1", "text": "完整浏览器 role=dialog、aria-modal、tabindex 与键盘事件只存在于 Web 文件或 Web-only 模板逻辑", "category": "web-template"},
     {"id": "c2", "text": "Web 打开前记录真实触发元素，渲染完成后把焦点移入弹层；关闭后仅在元素仍连接文档时恢复焦点", "category": "web-focus"},
     {"id": "c3", "text": "Escape 关闭弹层；Tab 与 Shift+Tab 在当前弹层的可聚焦元素首尾循环，遮罩点击不误触内容区", "category": "web-focus"},

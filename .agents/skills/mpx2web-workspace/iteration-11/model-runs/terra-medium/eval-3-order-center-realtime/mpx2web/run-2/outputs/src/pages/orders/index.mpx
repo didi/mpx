@@ -30,8 +30,10 @@
         wx:key="id"
         order="{{item}}"
         disabled="{{item.locked}}"
+        opened="{{openedOrderId === item.id}}"
         bindselect="openOrder"
         bindremove="removeOrder"
+        bindswipestart="handleSwipeStart"
         bindswipeend="handleSwipeEnd"
       />
     </view>
@@ -61,6 +63,7 @@ createPage({
   data: {
     memberId: 'member-10086',
     activeStatus: 'all',
+    openedOrderId: '',
     statusTabs: [
       { key: 'all', label: '全部', count: 0 },
       { key: 'paying', label: '待付款', count: 1 },
@@ -69,32 +72,10 @@ createPage({
     ],
     orders: [
       {
-        id: 'order-20260812001',
-        orderNo: '20260812001',
-        status: 'shipping',
-        statusText: '运输中',
-        logisticsText: '包裹已到达上海转运中心',
-        updatedAt: '今天 10:26',
-        cover: '/assets/orders/blueberry.png',
-        title: '云南高山蓝莓 4 盒装',
-        skuText: '125g × 4 盒',
-        amount: '39.90',
-        count: 1,
-        locked: false
+        id: 'order-20260812001', orderNo: '20260812001', status: 'shipping', statusText: '运输中', logisticsText: '包裹已到达上海转运中心', updatedAt: '今天 10:26', cover: '/assets/orders/blueberry.png', title: '云南高山蓝莓 4 盒装', skuText: '125g × 4 盒', amount: '39.90', count: 1, locked: false
       },
       {
-        id: 'order-20260811008',
-        orderNo: '20260811008',
-        status: 'shipping',
-        statusText: '已揽收',
-        logisticsText: '快递员已揽收',
-        updatedAt: '昨天 18:42',
-        cover: '/assets/orders/coffee.png',
-        title: '便携式手冲咖啡套装',
-        skuText: '黑色 · 标准版',
-        amount: '129.00',
-        count: 1,
-        locked: false
+        id: 'order-20260811008', orderNo: '20260811008', status: 'shipping', statusText: '已揽收', logisticsText: '快递员已揽收', updatedAt: '昨天 18:42', cover: '/assets/orders/coffee.png', title: '便携式手冲咖啡套装', skuText: '黑色 · 标准版', amount: '129.00', count: 1, locked: false
       }
     ],
     logisticsOnline: false,
@@ -104,6 +85,7 @@ createPage({
     switchStatus (status) {
       if (status === this.activeStatus) return
       this.activeStatus = status
+      this.openedOrderId = ''
       this.fetchOrders()
     },
     fetchOrders () {
@@ -114,10 +96,9 @@ createPage({
         success: ({ data }) => {
           this.orders = data.list
           this.statusTabs = data.summary
+          this.openedOrderId = ''
         },
-        complete: () => {
-          this.loading = false
-        }
+        complete: () => { this.loading = false }
       })
     },
     openOrder ({ detail }) {
@@ -134,24 +115,24 @@ createPage({
             method: 'DELETE',
             success: () => {
               this.orders = this.orders.filter(order => order.id !== detail.orderId)
+              if (this.openedOrderId === detail.orderId) this.openedOrderId = ''
             }
           })
         }
       })
     },
+    handleSwipeStart ({ detail }) {
+      if (this.openedOrderId && this.openedOrderId !== detail.orderId) this.openedOrderId = ''
+    },
     handleSwipeEnd ({ detail }) {
-      if (!detail.open) return
-      this.orders = this.orders.map(order => {
-        return Object.assign({}, order, { locked: order.id !== detail.orderId })
-      })
+      if (detail.open) {
+        this.openedOrderId = detail.orderId
+      } else if (this.openedOrderId === detail.orderId) {
+        this.openedOrderId = ''
+      }
     },
-    handleConnectionChange ({ detail }) {
-      if (detail.memberId !== this.memberId) return
-      this.logisticsOnline = detail.connected
-    },
+    handleConnectionChange ({ detail }) { this.logisticsOnline = detail.connected },
     handleLogisticsMessage ({ detail }) {
-      // A channel always stamps its own member identity; ignore a callback from a replaced channel.
-      if (detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -162,13 +143,8 @@ createPage({
         })
       })
     },
-    handleChannelError ({ detail }) {
-      if (detail.memberId !== this.memberId) return
-      this.logisticsOnline = false
-    },
-    goShopping () {
-      wx.switchTab({ url: '/pages/home/index' })
-    }
+    handleChannelError () { this.logisticsOnline = false },
+    goShopping () { wx.switchTab({ url: '/pages/home/index' }) }
   }
 })
 </script>

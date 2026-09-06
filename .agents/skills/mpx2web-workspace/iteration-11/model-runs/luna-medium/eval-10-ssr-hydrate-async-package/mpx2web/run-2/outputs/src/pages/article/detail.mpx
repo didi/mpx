@@ -1,22 +1,37 @@
 <template>
   <view class="article-page">
+    <text class="nonce">{{renderNonce}}</text>
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <view @web wx:if="{{clientMounted}}" class="share-toolbar" bindtap="shareOnWeb">浏览器分享</view>
     <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
   </view>
 </template>
 
 <script>
-import mpx, { createPage } from '@mpxjs/core'
+import mpx, { createPage, implement } from '@mpxjs/core'
 import { useArticleStore } from '../../stores/article'
+
+if (__mpx_mode__ === 'web') {
+  implement('onShareAppMessage', {
+    modes: ['web'],
+    remove: true,
+    processor: () => {}
+  })
+  implement('onShareTimeline', {
+    modes: ['web'],
+    remove: true,
+    processor: () => {}
+  })
+}
 
 createPage({
   data: {
     articleId: '',
-    // Keep browser-only UI out of the SSR render and enable it after hydration.
-    isBrowser: false,
+    // Keep the first render deterministic on both SSR and the client.
+    renderNonce: '',
+    clientMounted: false,
     favorite: false
   },
   computed: {
@@ -24,22 +39,31 @@ createPage({
     recommendations () { return useArticleStore(this.$pinia).recommendations }
   },
   onLoad (query) {
-    this.loadArticle(query.id, this.$ssrContext)
-  },
-  onReady () {
-    if (typeof window !== 'undefined') this.isBrowser = true
+    return this.loadArticle(query.id)
   },
   serverPrefetch () {
     return this.loadArticle(this.$route.query.id, this.$ssrContext)
   },
+  onReady () {
+    if (__mpx_mode__ === 'web') this.clientMounted = true
+  },
+  onShareAppMessage () {
+    return { title: this.article.title, path: `/pages/article/detail?id=${this.articleId}` }
+  },
+  onShareTimeline () {
+    return { title: this.article.title }
+  },
   methods: {
     loadArticle (articleId, requestContext) {
-      this.articleId = articleId
-      return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
+      this.articleId = articleId || ''
+      return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
     },
     toggleFavorite () { this.favorite = !this.favorite },
     openArticle (event) {
       mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
+    },
+    shareOnWeb () {
+      // TODO: connect the product-approved Web sharing SDK here.
     }
   }
 })

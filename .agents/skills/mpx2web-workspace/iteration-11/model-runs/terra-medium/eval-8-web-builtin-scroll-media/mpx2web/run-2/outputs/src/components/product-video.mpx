@@ -4,8 +4,7 @@
       id="product-video"
       src="{{product.video}}"
       autoplay
-      muted@web="{{true}}"
-      muted@wx="{{false}}"
+      muted@web
       playsinline@web
       enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
@@ -28,40 +27,32 @@ createComponent({
     duration: 0
   },
   methods: {
-    onTimeUpdate (event) {
+    getMediaState (event) {
       const detail = event.detail || {}
-      if (typeof detail.currentTime === 'number') {
-        this.progress = detail.currentTime
+      const target = detail.target || detail.currentTarget || event.target || event.currentTarget || {}
+      return {
+        currentTime: detail.currentTime === undefined ? target.currentTime : detail.currentTime,
+        duration: detail.duration === undefined ? target.duration : detail.duration,
+        width: detail.width === undefined ? target.videoWidth : detail.width,
+        height: detail.height === undefined ? target.videoHeight : detail.height
       }
-      if (typeof detail.duration === 'number') {
-        this.duration = detail.duration
-      }
+    },
+    onTimeUpdate (event) {
+      const media = this.getMediaState(event)
+      this.progress = Number(media.currentTime) || 0
+      this.duration = Number(media.duration) || 0
     },
     onLoadedMetadata (event) {
-      const detail = event.detail || {}
-      if (typeof detail.duration === 'number') {
-        this.duration = detail.duration
-      }
-      if (typeof detail.width === 'number' && typeof detail.height === 'number') {
-        this.videoSize = `${detail.width}x${detail.height}`
-      }
-      this.notifyLayoutChange()
+      const media = this.getMediaState(event)
+      this.duration = Number(media.duration) || 0
+      this.videoSize = `${Number(media.width) || 0}x${Number(media.height) || 0}`
+      this.triggerEvent('mediaready')
     },
-    onVideoError () {
-      this.notifyLayoutChange()
-    },
-    notifyLayoutChange () {
-      const emit = () => this.triggerEvent('layoutchange')
-      if (typeof this.$nextTick === 'function') {
-        this.$nextTick(emit)
-      } else {
-        emit()
-      }
-    }
+    onVideoError () {}
   }
 })
 </script>
 
 <style scoped>
-.product-video { display: block; width: 100%; }
+.product-video { width: 100%; }
 </style>

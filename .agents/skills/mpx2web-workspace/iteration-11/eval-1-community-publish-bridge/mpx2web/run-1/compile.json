@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "0c7794773566bd7ef54736cb5e7d01af404c59071118752086c268b9f239f2cf",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 1,
@@ -8,7 +9,7 @@
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx"
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx"
       ],
       "passed": true,
       "returncode": 0,
@@ -17,7 +18,7 @@
         "checkedFiles": 1,
         "files": [
           {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx",
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx",
             "errors": []
           }
         ]
@@ -28,7 +29,7 @@
       "kind": "mpx-web-compile",
       "type": "page",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/eval-1-community-publish-bridge/mpx2web/run-1/outputs/src/pages/community/publish.mpx"
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx"
       ],
       "passed": true,
       "returncode": 0,
@@ -42,10 +43,10 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 3789
+        "durationMs": 3070
       },
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

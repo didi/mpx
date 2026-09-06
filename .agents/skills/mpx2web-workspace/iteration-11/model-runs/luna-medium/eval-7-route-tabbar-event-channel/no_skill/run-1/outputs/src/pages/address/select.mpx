@@ -7,6 +7,8 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
+const SELECTED_ADDRESS_KEY = 'checkout:selectedAddress'
+
 createPage({
   data: {
     addresses: [
@@ -16,8 +18,9 @@ createPage({
   },
   methods: {
     confirm (address) {
-      const app = getApp()
-      if (app && app.globalData) app.globalData.selectedAddress = address
+      // Do not reach into the previous page instance: Web history can restore
+      // a different instance. The Mpx storage API keeps this wx-compatible.
+      mpx.setStorageSync(SELECTED_ADDRESS_KEY, address)
       mpx.navigateBack({ delta: 1 })
     }
   }

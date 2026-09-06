@@ -1,6 +1,13 @@
 <template>
   <view class="filter">
-    <view class="filter-trigger" role="button" tabindex="0" aria-label="打开商品筛选" bindtap="open">筛选</view>
+    <view
+      class="filter-trigger"
+      role="button"
+      tabindex="0"
+      aria-haspopup="dialog"
+      aria-expanded="{{visible}}"
+      bindtap="open"
+    >筛选</view>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
       <view
         class="dialog"
@@ -8,8 +15,7 @@
         aria-modal="true"
         aria-label="商品筛选"
         tabindex="-1"
-        catchtap="stop"
-        bindkeydown="onKeydown"
+        bindtap="stop"
       >
         <view
           wx:for="{{options}}"
@@ -45,9 +51,6 @@ createComponent({
     confirm () {
       this.triggerEvent('confirm', { selected: this.selected })
       this.close()
-    },
-    onKeydown (event) {
-      if (event.key === 'Escape') this.close()
     }
   }
 })

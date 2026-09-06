@@ -1,0 +1,93 @@
+{
+  "eval_id": 8,
+  "eval_name": "web-builtin-scroll-media",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "model_grading_fingerprint": "b9eb4cde13d7e0eae5c522f02633afbe6805bb041960adf2e49680bf50271bd1",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 164751
+  },
+  "expectations": [
+    {
+      "id": "b0",
+      "text": "sticky-header 在 Web 内建结构中是 scroll-view 或 sticky-section 的直接子节点，吸顶不依赖其内容中的 viewport fixed",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/pages/feed/index.mpx:3-23 使用 Web 内建 scroll-view；sticky-header 在 12-16 行直接位于 scroll-view 下，feed-content 从 17 行才开始；样式 76-77 行仅设置 z-index/background，没有依赖 sticky 内容里的 viewport fixed。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b1",
+      "text": "使用 binddragstart/binddragging/binddragend 时显式开启 enhanced，并保留完整的开始、过程、结束处理",
+      "category": "web-interaction",
+      "passed": true,
+      "evidence": "outputs/src/pages/feed/index.mpx:7-10 在 scroll-view 上同时声明 enhanced、binddragstart、binddragging、binddragend；55-57 行保留 onDragStart/onDragging/onDragEnd 三段处理入口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b2",
+      "text": "动态分类、异步商品和图片固有尺寸晚到后，使用运行时真实消费的观察机制或图片 load/metadata 后的 nextTick + scroll-view ref.refresh 保证滚动范围更新；ref 可使用标准 wx:ref 或可选的 Web 条件写法，必须隔离的是 Web-only refresh 调用链，可由 Web 条件事件或脚本平台/能力判断完成",
+      "category": "web-scroll",
+      "passed": true,
+      "evidence": "outputs/src/pages/feed/index.mpx:3-4 使用内建 scroll-view 和 wx:ref=\"feedScroll\"；19 行 image bindload=\"onProductImageLoad\"；46-53 行在 Web 分支中 nextTick 后通过 this.$refs.feedScroll.refresh() 刷新。动态分类/商品 DOM 变更由内建 scroll-view 的运行时观察机制消费，图片尺寸晚到由 load 后 refresh 覆盖。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b3",
+      "text": "常驻购物车位于 scroll-view 变换内容之外，并在 Web 保持相对浏览器视口的 position: fixed；不得仅为规避 BetterScroll transform 将其降级为相对页面容器的 absolute",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/pages/feed/index.mpx:24 fixed-cart 已放在 </scroll-view> 之后，不在 BetterScroll 变换内容内；79 行 .fixed-cart 使用 position: fixed，未降级为 absolute。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b4",
+      "text": "视频自动播放遵守浏览器策略：自动播放时静音并支持用户手势继续播放，不假定有声 autoplay 必然成功",
+      "category": "web-media",
+      "passed": true,
+      "evidence": "outputs/src/components/product-video.mpx:6-9 autoplay 同时在 Web 设置 muted@web=\"{{true}}\" 和 playsinline@web=\"{{true}}\"；未设置 controls=false，Web 内建 video controls 默认可用，用户可通过控件手势继续播放；wx 侧 muted@wx=\"{{false}}\" 保留原业务。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b5",
+      "text": "timeupdate 与 loadedmetadata 处理兼容 Web 原生转发事件，不无条件读取微信专属 detail.currentTime/detail.width 结构",
+      "category": "web-media",
+      "passed": true,
+      "evidence": "outputs/src/components/product-video.mpx:32-51 getMediaNumber 先兼容微信 detail，再从 originalEvent.target、event.target、currentTarget 读取 Web 原生媒体字段；53-61 行 timeupdate/loadedmetadata 未无条件读取 event.detail.currentTime 或 event.detail.width。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b6",
+      "text": "只使用参考中 Web 实际消费的视频属性和事件；商品分类、滚动选择、视频播放与购物车业务链路在微信小程序继续可执行",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/product-video.mpx:5-13 Web video 仅使用 src、autoplay、muted@web、playsinline@web、bindtimeupdate、bindloadedmetadata、binderror 等 Web 参考列出的属性/事件；enable-danmu 通过 enable-danmu@wx 隔离到小程序。outputs/src/pages/feed/index.mpx:14 保留分类 bindtap，18-20 保留商品/视频渲染，8-10 保留滚动拖动事件，24 和 58-60 保留购物车跳转链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "b1 未明确空处理函数是否算“完整处理”，当前只能按事件绑定和三段方法存在判定。",
+      "b4 可进一步明确默认 controls 是否可作为“用户手势继续播放入口”，否则应要求显式 controls 或 bindtap/play 处理。"
+    ],
+    "overall": "候选输出按 Web 内建组件能力完成了结构、滚动刷新、固定购物车、视频属性隔离和事件兼容，微信小程序业务入口也保留。"
+  }
+}

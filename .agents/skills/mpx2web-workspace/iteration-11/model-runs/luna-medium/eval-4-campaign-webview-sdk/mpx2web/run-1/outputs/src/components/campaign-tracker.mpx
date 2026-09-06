@@ -6,91 +6,97 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
-import campaignTracker from '@business/campaign-tracker-web'
 
 createComponent({
   properties: {
     campaignId: {
       type: String,
       observer () {
+        this.cleanupTracker()
         this.initTracker()
       }
     },
-    memberId: String,
-    webviewId: String
+    memberId: String
   },
   data: {
     ready: false
   },
   ready () {
-    this._trackerGeneration = this._trackerGeneration || 0
-    this._tracker = null
-    this._listenersAttached = false
+    this._mounted = true
     this.initTracker()
   },
   detached () {
-    this._trackerGeneration = (this._trackerGeneration || 0) + 1
+    this._mounted = false
     this.cleanupTracker()
   },
   methods: {
-    cleanupTracker () {
-      if (__mpx_mode__ === 'web' && this._listenersAttached) {
-        window.removeEventListener('message', this.handleWindowMessage)
-        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
-        this._listenersAttached = false
-      }
-      const tracker = this._tracker
-      this._tracker = null
-      this.tracker = null
-      if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
-      this.ready = false
-    },
     async initTracker () {
-      if (!this.campaignId || __mpx_mode__ !== 'web') return
-      const generation = (this._trackerGeneration || 0) + 1
-      this._trackerGeneration = generation
-      this.cleanupTracker()
-      this.ready = false
+      if (__mpx_mode__ !== 'web' || !this._mounted || !this.campaignId) return
+      if (this._initializingCampaignId === this.campaignId || this._activeCampaignId === this.campaignId) return
       const campaignId = this.campaignId
-      const memberId = this.memberId
+      const generation = (this._generation || 0) + 1
+      this._generation = generation
+      this._initializingCampaignId = campaignId
+      this.ready = false
       let tracker
       try {
-        tracker = await campaignTracker.create({ campaignId, memberId })
+        const { default: campaignTracker } = await import('@business/campaign-tracker-web')
+        if (!this._mounted || generation !== this._generation || campaignId !== this.campaignId) return
+        tracker = await campaignTracker.create({
+          campaignId,
+          memberId: this.memberId
+        })
       } catch (error) {
-        if (generation === this._trackerGeneration && campaignId === this.campaignId) {
+        if (this._mounted && generation === this._generation && campaignId === this.campaignId) {
+          this._initializingCampaignId = ''
           this.triggerEvent('error', { campaignId, error })
         }
         return
       }
-      if (generation !== this._trackerGeneration || campaignId !== this.campaignId) {
-        if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+      if (!this._mounted || generation !== this._generation || campaignId !== this.campaignId) {
+        if (tracker && tracker.destroy) tracker.destroy()
         return
       }
-      this._tracker = tracker
       this.tracker = tracker
+      this._activeCampaignId = campaignId
+      this._initializingCampaignId = ''
       window.addEventListener('message', this.handleWindowMessage)
       document.addEventListener('visibilitychange', this.handleVisibilityChange)
-      this._listenersAttached = true
       tracker.start()
       this.ready = true
       this.triggerEvent('ready', { campaignId })
     },
+    cleanupTracker () {
+      this._generation = (this._generation || 0) + 1
+      this._initializingCampaignId = ''
+      this._activeCampaignId = ''
+      if (__mpx_mode__ === 'web' && typeof window !== 'undefined') {
+        window.removeEventListener('message', this.handleWindowMessage)
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      }
+      const tracker = this.tracker
+      this.tracker = null
+      if (tracker && tracker.destroy) tracker.destroy()
+      this.ready = false
+    },
     handleWindowMessage (event) {
-      if (__mpx_mode__ !== 'web' || event.origin !== 'https://campaign.example.com') return
+      if (__mpx_mode__ !== 'web' || !this._mounted || !this.tracker) return
+      if (event.origin !== 'https://campaign.example.com') return
       const message = event.data || {}
-      const tracker = this._tracker
-      if (!tracker || message.campaignId !== this.campaignId || message.type !== 'campaign-exposure') return
-      const webview = document.getElementById(this.webviewId)
-      const frame = webview && (webview.contentWindow || webview.querySelector('iframe'))
-      const targetWindow = frame && frame.contentWindow ? frame.contentWindow : frame
-      if (!targetWindow || event.source !== targetWindow) return
-      tracker.track('exposure', message.payload)
+      if (message.campaignId !== this._activeCampaignId) return
+      const frame = document.querySelector('#campaign-webview iframe')
+      if (!frame || event.source !== frame.contentWindow) return
+      if (message.type === 'campaign-exposure') {
+        this.tracker.track('exposure', message.payload)
+      }
     },
     handleVisibilityChange () {
-      const tracker = this._tracker
-      if (!tracker) return
-      if (document.hidden) tracker.pause()
-      else tracker.resume()
+      if (!this.tracker || !this._mounted) return
+      if (document.hidden) {
+        this.tracker.pause()
+      } else {
+        this.tracker.resume()
+      }
     }
   }
 })

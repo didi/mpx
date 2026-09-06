@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "a3624f952c93e163b8a51aed2766ac338d9811067d86099f2ca2046a6cd7081a",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 2,
@@ -8,19 +9,33 @@
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.web.mpx"
       ],
       "passed": true,
       "returncode": 0,
       "detail": {
         "success": true,
-        "checkedFiles": 2,
+        "checkedFiles": 1,
         "files": [
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.mpx",
-            "errors": []
-          },
           {
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.web.mpx",
             "errors": []
@@ -33,7 +48,28 @@
       "kind": "mpx-web-compile",
       "type": "component",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [],
+        "warnings": [],
+        "summary": {
+          "total": 0,
+          "byCategory": {}
+        },
+        "durationMs": 2547
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "component",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-11-web-accessibility-focus/mpx2web/run-2/outputs/src/components/filter-dialog.web.mpx"
       ],
       "passed": true,
@@ -48,10 +84,10 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 3406
+        "durationMs": 2428
       },
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

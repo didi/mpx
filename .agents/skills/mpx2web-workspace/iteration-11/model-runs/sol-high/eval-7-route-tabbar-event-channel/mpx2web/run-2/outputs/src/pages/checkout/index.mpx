@@ -20,6 +20,9 @@ createPage({
           addressSelected: (address) => {
             this.address = address
           }
+        },
+        success: (res) => {
+          res.eventChannel.emit('checkoutReady', { address: this.address })
         }
       })
     },

@@ -23,6 +23,7 @@
           </view>
         </view>
         <view
+          @wx
           wx:if="{{photos.length < 9}}"
           class="photo-add"
           bindtap="choosePhoto"
@@ -32,15 +33,21 @@
           <text class="photo-add-icon">+</text>
           <text class="photo-add-label">添加图片</text>
         </view>
+        <view
+          @web
+          wx:if="{{photos.length < 9}}"
+          class="photo-add photo-add-disabled"
+          aria-role="text"
+          aria-label="Web 暂不支持添加图片"
+        >
+          <text class="photo-add-icon">+</text>
+          <text class="photo-add-label">图片功能暂未开放</text>
+        </view>
       </view>
     </view>
 
-    <view @web wx:if="{{webUnsupportedMessage}}" class="web-capability-notice" aria-role="status">
-      <text>{{webUnsupportedMessage}}</text>
-    </view>
-
     <view class="publish-options">
-      <view class="option-row" bindtap="choosePlace">
+      <view @wx class="option-row" bindtap="choosePlace">
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
@@ -50,8 +57,17 @@
         </view>
         <text class="option-arrow">›</text>
       </view>
+      <view @web class="option-row option-row-disabled" aria-role="text" aria-label="Web 暂不支持选择位置">
+        <view class="option-main">
+          <text class="option-icon">⌖</text>
+          <view class="option-copy">
+            <text class="option-label">所在位置</text>
+            <text class="option-value">位置功能暂未开放</text>
+          </view>
+        </view>
+      </view>
 
-      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
+      <view @wx wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
@@ -105,8 +121,7 @@ createPage({
     ],
     selectedTopic: {},
     allowComments: true,
-    submitting: false,
-    webUnsupportedMessage: ''
+    submitting: false
   },
   computed: {
     canSubmit () {
@@ -117,16 +132,11 @@ createPage({
     updateContent (event) {
       this.content = event.detail.value
     },
-    notifyWebCapabilityUnavailable (capability) {
-      // TODO: connect the approved Web host Bridge when its media/map contract is defined.
-      this.webUnsupportedMessage = `${capability}暂未在 Web 端提供，请在微信小程序中使用。`
-    },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        this.notifyWebCapabilityUnavailable('位置选择')
+        // TODO: 接入已声明的 Web 宿主位置选择协议后再启用。
         return
       }
-
       wx.chooseLocation({
         success: (place) => {
           this.place = place
@@ -135,12 +145,10 @@ createPage({
     },
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
-
       if (__mpx_mode__ === 'web') {
-        this.notifyWebCapabilityUnavailable('地图查看')
+        // TODO: 接入已声明的 Web 宿主地图查看协议后再启用。
         return
       }
-
       wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
@@ -150,10 +158,9 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        this.notifyWebCapabilityUnavailable('图片选择')
+        // TODO: 接入已声明的 Web 宿主媒体选择协议后再启用。
         return
       }
-
       wx.chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
@@ -220,8 +227,7 @@ createPage({
 .place-name,
 .place-address,
 .place-action,
-.notice-text,
-.web-capability-notice {
+.notice-text {
   display: block;
 }
 
@@ -309,6 +315,11 @@ createPage({
   border: 2rpx dashed #d6dae1;
 }
 
+.photo-add-disabled,
+.option-row-disabled {
+  opacity: 0.6;
+}
+
 .photo-add-icon {
   font-size: 52rpx;
   line-height: 60rpx;
@@ -317,15 +328,6 @@ createPage({
 .photo-add-label {
   margin-top: 8rpx;
   font-size: 22rpx;
-}
-
-.web-capability-notice {
-  margin-top: 16rpx;
-  padding: 16rpx 20rpx;
-  color: #8a5a00;
-  font-size: 24rpx;
-  background: #fff7e6;
-  border-radius: 14rpx;
 }
 
 .publish-options {

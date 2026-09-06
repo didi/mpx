@@ -3,34 +3,30 @@ import { fetchArticle } from '../services/article'
 
 export const useArticleStore = defineStore('article', {
   state: () => ({
+    activeArticleId: '',
     article: null,
     recommendations: [],
-    currentArticleId: '',
-    requestVersion: 0
+    requestSequence: 0
   }),
   actions: {
     async loadArticle (articleId, requestContext) {
       const id = String(articleId || '')
 
-      if (!id) {
-        this.article = null
-        this.recommendations = []
-        this.currentArticleId = ''
-        return
-      }
+      // Hydrated SSR state already contains this article. Avoid a client-side
+      // request racing the hydration render for the same route.
+      if (this.activeArticleId === id && this.article) return this.article
 
-      // Reuse the hydrated result for this exact article only.
-      if (this.currentArticleId === id && this.article) return
-
-      this.currentArticleId = id
-      const version = ++this.requestVersion
+      this.activeArticleId = id
+      const sequence = ++this.requestSequence
       const data = await fetchArticle(id, requestContext)
 
-      // A newer navigation has started while this request was in flight.
-      if (version !== this.requestVersion || id !== this.currentArticleId) return
+      // A slow request for a previous route may finish later; it must not
+      // replace the data selected by the latest route.
+      if (sequence !== this.requestSequence || this.activeArticleId !== id) return data
 
-      this.article = data.article || null
-      this.recommendations = Array.isArray(data.recommendations) ? data.recommendations : []
+      this.article = data.article
+      this.recommendations = data.recommendations || []
+      return data.article
     }
   }
 })

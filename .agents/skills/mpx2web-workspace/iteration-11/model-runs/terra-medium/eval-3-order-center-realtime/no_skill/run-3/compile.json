@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "a92f2e44c218ea61e7f90d867164ec4f430f83bed56287c8c091dc7936870094",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 3,
@@ -8,24 +9,52 @@
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/pages/orders/index.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/pages/orders/index.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/pages/orders/index.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/logistics-channel.mpx"
       ],
       "passed": true,
       "returncode": 0,
       "detail": {
         "success": true,
-        "checkedFiles": 3,
+        "checkedFiles": 1,
         "files": [
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/pages/orders/index.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx",
-            "errors": []
-          },
           {
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/logistics-channel.mpx",
             "errors": []
@@ -52,7 +81,7 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 4198
+        "durationMs": 3135
       },
       "stderr": ""
     },
@@ -60,7 +89,28 @@
       "kind": "mpx-web-compile",
       "type": "component",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/swipe-order-item.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [],
+        "warnings": [],
+        "summary": {
+          "total": 0,
+          "byCategory": {}
+        },
+        "durationMs": 2609
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "component",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/no_skill/run-3/outputs/src/components/logistics-channel.mpx"
       ],
       "passed": true,
@@ -75,10 +125,10 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 3450
+        "durationMs": 2934
       },
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

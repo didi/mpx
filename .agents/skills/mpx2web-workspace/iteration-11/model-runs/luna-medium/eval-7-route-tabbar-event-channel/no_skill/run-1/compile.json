@@ -1,36 +1,79 @@
 {
+  "compile_fingerprint": "52f40e9f4c04b24b5d15a40b991ed65338a1c7fe390848075e562a2c9e1c9f0a",
   "status": "failed",
   "all_declared_outputs_present": true,
   "declared_output_count": 4,
   "compile_eligible_mpx_count": 2,
-  "compiled_mpx_count": 0,
+  "compiled_mpx_count": 1,
   "checks": [
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/vue.config.js"
       ],
       "passed": true,
       "returncode": 0,
       "detail": {
         "success": true,
-        "checkedFiles": 4,
+        "checkedFiles": 1,
         "files": [
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx",
-            "errors": []
-          },
           {
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/vue.config.js",
             "errors": []
@@ -43,8 +86,7 @@
       "kind": "mpx-web-compile",
       "type": "page",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx"
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx"
       ],
       "passed": false,
       "returncode": 1,
@@ -67,7 +109,29 @@
             "template": 1
           }
         },
-        "durationMs": 3418
+        "durationMs": 2417
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "page",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [],
+        "warnings": [],
+        "summary": {
+          "total": 0,
+          "byCategory": {}
+        },
+        "durationMs": 2639
       },
       "stderr": ""
     },
@@ -89,5 +153,5 @@
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

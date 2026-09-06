@@ -3,19 +3,21 @@
   "eval_name": "member-share-lifecycle",
   "configuration": "mpx2web",
   "run_number": 2,
-  "grading_fingerprint": "f63b4029ba00fc73705890fff7d655f7a5c5d43eaf01808c530c46f14f31fb02",
+  "grading_fingerprint": "c9b55d355aedde4879a45358d9774170e7fd8d12905bcb0eebb31f6a31cfe3e7",
+  "model_grading_fingerprint": "6ab45e2d8e10d4a10019c11f2962f4b5b96e9660f4f5a99ca92899c47c8faf7d",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 122562
+    "duration_ms": 83365
   },
   "expectations": [
     {
       "id": "s0",
       "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "category": "cross-platform-regression",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:48 保留微信小程序分享按钮 `<button @wx ... open-type=\"share\">`；140-153 保留 `onShareAppMessage` 与 `onShareTimeline`。",
+      "evidence": "outputs/src/pages/member/invite.mpx:48 保留微信小程序分享按钮 `<button @wx ... open-type=\"share\">`；outputs/src/pages/member/invite.mpx:140-146 保留 `onShareAppMessage`；outputs/src/pages/member/invite.mpx:147-153 保留 `onShareTimeline`。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -23,18 +25,24 @@
     {
       "id": "s1",
       "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "category": "web-lifecycle",
       "passed": true,
       "evidence": "outputs/src/pages/member/invite.mpx：分享生命周期保留给小程序，并从 Web 构造选项中移除。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/member/invite.mpx：分享生命周期保留给小程序，并从 Web 构造选项中移除。"
+      }
     },
     {
       "id": "s2",
       "text": "Web 分享入口绑定独立的页面实例方法",
+      "category": "web-template",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:49 Web 分享入口为 `<button @web ... bindtap=\"shareOnWeb\">`；164-166 定义独立页面实例方法 `shareOnWeb`。",
+      "evidence": "outputs/src/pages/member/invite.mpx:49 的 Web 分享入口使用 `bindtap@web=\"shareOnWeb\"`；outputs/src/pages/member/invite.mpx:164-166 在页面 `methods` 中定义独立实例方法 `shareOnWeb`。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -42,8 +50,9 @@
     {
       "id": "s3",
       "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "category": "web-lifecycle",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:164-166 的 `shareOnWeb` 方法仅保留待接入注释边界，未调用未声明的 Web 分享 SDK、宿主 Bridge 或降级协议。",
+      "evidence": "outputs/src/pages/member/invite.mpx:164-166 的 `shareOnWeb` 仅保留 `TODO: 接入业务指定的 Web 分享 SDK、宿主 Bridge 或降级协议` 边界注释，未调用未声明 SDK 或 Bridge。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -51,8 +60,9 @@
     {
       "id": "s4",
       "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "category": "web-lifecycle",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx 全文件未出现 `navigator.share`、`clipboard`、`execCommand` 或复制链接实现；164-166 的 Web 分享方法没有选择浏览器原生分享或复制降级。",
+      "evidence": "outputs/src/pages/member/invite.mpx 全文件未出现 `navigator.share`、`clipboard`、复制链接或剪贴板相关降级实现；Web 分享方法为空边界。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -60,8 +70,9 @@
     {
       "id": "s5",
       "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "category": "web-api",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:155-162 请求仍使用 `wx.request`；167-170 详情跳转仍使用 `wx.navigateTo`，未改成浏览器原生 API 平行实现。",
+      "evidence": "outputs/src/pages/member/invite.mpx:155-162 请求仍使用 `wx.request`；outputs/src/pages/member/invite.mpx:167-171 详情跳转仍使用 `wx.navigateTo`；未改为 `fetch`、`location.href`、`history.pushState` 等浏览器原生平行实现。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -69,8 +80,9 @@
     {
       "id": "s6",
       "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "category": "business-regression",
       "passed": true,
-      "evidence": "outputs/src/pages/member/invite.mpx:13-23 保留会员邀请进度展示，129-132 保留进度计算；32-37 与 99-108 保留奖励阶梯；53-68、112-127、159-160 保留最近邀请列表数据与更新逻辑。",
+      "evidence": "outputs/src/pages/member/invite.mpx:13-23 保留会员进度展示，129-132 保留 `invitePercent` 计算；32-36 与 99-108 保留奖励阶梯；53-68 与 112-127 保留最近邀请列表与空态；155-162 保留邀请数据刷新逻辑。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -82,19 +94,27 @@
     "total": 7,
     "pass_rate": 1.0
   },
+  "strict_delivery_summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0,
+    "compile_passed": true
+  },
   "metrics": {
-    "total_tokens": 301662,
-    "input_tokens": 295021,
-    "output_tokens": 6641,
-    "tool_calls": 14,
-    "duration_ms": 159593
+    "total_tokens": 249580,
+    "input_tokens": 243322,
+    "output_tokens": 6258,
+    "tool_calls": 8,
+    "duration_ms": 140786
   },
   "timing": {
-    "total_tokens": 301662,
-    "duration_ms": 159593,
-    "total_duration_seconds": 159.593
+    "total_tokens": 249580,
+    "duration_ms": 140786,
+    "total_duration_seconds": 140.786
   },
   "compile": {
+    "compile_fingerprint": "e804ac8456c4fd87bfafb7f0933ef13f4baee067f75768c67e38b5369f9aab01",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 1,
@@ -138,16 +158,18 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3743
+          "durationMs": 3023
         },
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
-    "suggestions": [],
-    "overall": "候选输出满足全部断言，Web 分享仅留下明确待接入边界，小程序分享能力和活动业务数据均保留。"
+    "suggestions": [
+      "s1 依赖对 `implement(remove: true)` 编译语义的静态判断；若要完全排除 Web 构造选项残留分享生命周期，需要补充编译产物检查。"
+    ],
+    "overall": "输出基本满足任务要求：微信分享能力被保留，Web 分享入口可见且仅暴露待接入边界，没有虚构浏览器分享、剪贴板或宿主能力，核心邀请业务内容保持完整。"
   }
 }

@@ -1,11 +1,11 @@
 <template>
   <view class="product-video">
     <video
+      wx:ref="productVideo"
       id="product-video"
       src="{{product.video}}"
       autoplay
       muted
-      controls
       playsinline
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
@@ -28,23 +28,17 @@ createComponent({
   },
   methods: {
     onTimeUpdate (event) {
-      const detail = event && event.detail
-      const video = event && (event.target || event.currentTarget)
-      this.progress = typeof detail?.currentTime === 'number'
-        ? detail.currentTime
-        : (video && typeof video.currentTime === 'number' ? video.currentTime : 0)
-      this.duration = typeof detail?.duration === 'number'
-        ? detail.duration
-        : (video && typeof video.duration === 'number' ? video.duration : this.duration)
+      const detail = event.detail || event
+      this.progress = detail.currentTime || 0
+      this.duration = detail.duration || 0
     },
     onLoadedMetadata (event) {
-      const detail = event && event.detail
-      const video = event && (event.target || event.currentTarget)
-      const width = detail?.width || (video && video.videoWidth)
-      const height = detail?.height || (video && video.videoHeight)
-      if (width && height) this.videoSize = `${width}x${height}`
-      if (typeof detail?.duration === 'number') this.duration = detail.duration
-      else if (video && typeof video.duration === 'number') this.duration = video.duration
+      const detail = event.detail || event
+      const target = detail.target || {}
+      const width = detail.width || target.videoWidth
+      const height = detail.height || target.videoHeight
+      this.videoSize = `${width || 0}x${height || 0}`
+      this.duration = detail.duration || target.duration || this.duration
     },
     onVideoError () {}
   }

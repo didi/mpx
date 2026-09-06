@@ -5,16 +5,15 @@ module.exports = {
   pluginOptions: {
     mpx: {
       plugin: {
+        webRouteConfig: {
+          mode: 'history',
+          base: '/shop/'
+        },
         srcMode: 'wx'
       }
     }
   },
   configureWebpack: {
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } }
-  },
-  devServer: {
-    historyApiFallback: {
-      index: '/shop/'
-    }
   }
 }

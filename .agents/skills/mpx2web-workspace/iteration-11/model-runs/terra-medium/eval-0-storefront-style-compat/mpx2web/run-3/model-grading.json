@@ -1,0 +1,100 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "mpx2web",
+  "run_number": 3,
+  "model_grading_fingerprint": "e1e9b0f42d9fa8fd50b6097936ae84239f0408c04a099a532db73995fc337e56",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 78959
+  },
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "候选商品卡文件通过 scoped 建立可直接验证的 Web 组件级样式隔离；小程序 JSON 的 styleIsolation 不能替代这项 Web 证据",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:50 使用 <style scoped>，outputs/src/components/product-card.mpx:169 的 Web 专用样式也使用 scoped；不是仅依赖 outputs/src/components/product-card.mpx:184 的 styleIsolation。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:4 图片节点使用 class=\"product-cover\"，outputs/src/components/product-card.mpx:64 用 .product-cover 选择器设置图片样式，已不依赖 image 标签选择器。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:136-140 保留首页 .title 的红色 40rpx 粗体；outputs/src/components/product-card.mpx:86-95 保留商品 .title 的 30rpx、#333、单行省略；outputs/src/components/product-card.mpx:64-68 保留商品图 20rpx 20rpx 0 0 圆角。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:122-126 的通用样式仍为 .currency,.unit font-size: 10px; line-height: 14px；Web 补偿放在 mode=\"web\" 中，不影响小程序。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "目标 WebView 中币种与单位先以不触发强制放大的基础字号排版，再缩放回约 10px 的视觉字号",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:169-178 在 <style mode=\"web\" scoped> 中将 .currency,.unit 先设为 font-size: 12px，再用 transform: scale(0.833333) 缩放，视觉字号约为 10px。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "目标 WebView 的缩放补偿具有与基线方向一致的 transform-origin，且校正 flex 布局占位，不改变卡片宽度或价格行基线",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:115-118 保持 price-tag 为 flex 且 align-items: baseline；outputs/src/components/product-card.mpx:172-177 为缩放元素设置 inline-block、width: 12px、margin-inline-end: -2px、transform-origin: left bottom，补偿布局占位并锚定到底部基线方向；卡片宽度 outputs/src/components/product-card.mpx:51-52 仍为 338rpx。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "category": "conditional-compile",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx:169-179 将 12px + scale 的小字号补偿限定在 <style mode=\"web\" scoped>，通用样式仅保留原始 10px。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx:11-20 和 79-83 保留分类切换；outputs/src/pages/home/index.mpx:24-30 绑定商品卡 select/addcart；outputs/src/pages/home/index.mpx:97-100 保留商品详情 navigateTo；outputs/src/pages/home/index.mpx:102-110 保留加入购物车 POST 与成功 toast；outputs/src/components/product-card.mpx:40-44 继续触发 select/addcart 事件。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "所有断言均有直接代码证据支撑，Web 隔离、图片选择器、WebView 小字号补偿和业务链路均保留。"
+  }
+}

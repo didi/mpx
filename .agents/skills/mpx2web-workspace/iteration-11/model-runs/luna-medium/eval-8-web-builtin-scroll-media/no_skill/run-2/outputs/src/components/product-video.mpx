@@ -1,23 +1,26 @@
 <template>
   <view class="product-video">
     <video
-      id="product-video-{{product.id}}"
+      id="{{videoId}}"
       class="video"
       src="{{product.video}}"
       autoplay
       muted
+      playsinline
       controls
-      enable-danmu
+      show-center-play-btn
+      bindtap="playVideo"
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
     <text>{{progress}} / {{duration}}</text>
+    <text wx:if="{{videoError}}" class="video-error" bindtap="playVideo">点击重试播放</text>
   </view>
 </template>
 
 <script>
-import { createComponent } from '@mpxjs/core'
+import mpx, { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
@@ -26,26 +29,47 @@ createComponent({
   data: {
     progress: 0,
     duration: 0,
-    videoSize: '',
-    videoError: false
+    videoError: false,
+    videoId: ''
+  },
+  lifetimes: {
+    attached () {
+      const productId = this.properties.product && this.properties.product.id
+      this.setData({ videoId: `product-video-${productId || Date.now()}` })
+    }
   },
   methods: {
     onTimeUpdate (event) {
-      this.progress = event.detail.currentTime
-      this.duration = event.detail.duration
+      this.setData({
+        progress: event.detail.currentTime,
+        duration: event.detail.duration
+      })
     },
     onLoadedMetadata (event) {
       this.videoSize = `${event.detail.width}x${event.detail.height}`
-      this.videoError = false
+      this.setData({ videoError: false, duration: event.detail.duration || this.data.duration })
+    },
+    playVideo () {
+      this.setData({ videoError: false })
+      const context = mpx.createVideoContext(this.data.videoId, this)
+      if (context && context.play) context.play()
     },
     onVideoError () {
-      this.videoError = true
+      this.setData({ videoError: true })
     }
   }
 })
 </script>
 
 <style scoped>
-.product-video { width: 100%; }
-.video { display: block; width: 100%; height: 420rpx; }
+.product-video {
+  width: 100%;
+}
+.video {
+  display: block;
+  width: 100%;
+}
+.video-error {
+  color: #d33;
+}
 </style>

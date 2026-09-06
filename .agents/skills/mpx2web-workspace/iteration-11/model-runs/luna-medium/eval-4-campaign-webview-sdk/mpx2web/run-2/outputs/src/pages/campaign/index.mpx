@@ -19,11 +19,10 @@
 
     <web-view
       wx:if="{{campaignUrl}}"
-      id="campaign-webview"
-      data-campaign-id="{{campaignId}}"
-      data-view-token="{{viewToken}}"
+      id="campaign-webview-{{campaignGeneration}}"
       src="{{campaignUrl}}"
-      bindmessage="handleCampaignMessage"
+      bindmessage@wx="handleMiniProgramMessage"
+      bindmessage@web="handleWebMessage"
       bindload="handleCampaignLoad"
       binderror="handleCampaignError"
     />
@@ -49,8 +48,6 @@
 <script>
 import { createPage } from '@mpxjs/core'
 
-const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
-
 createPage({
   data: {
     memberId: 'member-10086',
@@ -64,155 +61,136 @@ createPage({
       title: '夏日清凉特卖',
       subtitle: '限时领券，爆款低至五折'
     },
-    campaignUrl: `${CAMPAIGN_ORIGIN}/summer-sale?memberId=member-10086&campaignId=summer-sale&viewToken=1`,
-    viewToken: 1,
+    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086',
+    campaignGeneration: 1,
     loading: true,
     errorText: '',
     trackerReady: false
   },
   methods: {
+    buildCampaignUrl (campaignId) {
+      return `https://campaign.example.com/${campaignId}?memberId=${encodeURIComponent(this.memberId)}`
+    },
+    invalidateCampaignLoad () {
+      this.campaignGeneration += 1
+      if (this.campaignReloadTimer) {
+        clearTimeout(this.campaignReloadTimer)
+        this.campaignReloadTimer = null
+      }
+      return this.campaignGeneration
+    },
     switchCampaign (campaignId) {
       if (campaignId === this.campaignId) return
-      const viewToken = this.viewToken + 1
+      const generation = this.invalidateCampaignLoad()
       this.campaignId = campaignId
-      this.viewToken = viewToken
       this.loading = true
       this.errorText = ''
-      // Remove the old iframe before mounting the new one. The token also
-      // makes late load/error events from an old iframe harmless.
+      this.trackerReady = false
       this.campaignUrl = ''
-      wx.nextTick(() => {
-        if (this.campaignId !== campaignId || this.viewToken !== viewToken) return
-        this.campaignUrl = `${CAMPAIGN_ORIGIN}/${campaignId}?memberId=${this.memberId}&campaignId=${campaignId}&viewToken=${viewToken}`
-      })
+      this.campaignReloadTimer = setTimeout(() => {
+        this.campaignReloadTimer = null
+        if (generation !== this.campaignGeneration) return
+        this.campaignUrl = this.buildCampaignUrl(campaignId)
+      }, 0)
     },
-    isCurrentWebViewEvent (event) {
-      const dataset = event && event.currentTarget && event.currentTarget.dataset
-      return dataset && String(dataset.campaignId) === String(this.campaignId) &&
-        String(dataset.viewToken) === String(this.viewToken)
+    isCurrentWebviewEvent (event) {
+      if (!event || !event.currentTarget || !event.currentTarget.id) return true
+      return event.currentTarget.id === `campaign-webview-${this.campaignGeneration}`
     },
     handleCampaignLoad (event) {
-      if (!this.isCurrentWebViewEvent(event)) return
+      if (!this.campaignUrl || !this.isCurrentWebviewEvent(event)) return
       this.loading = false
       wx.reportAnalytics('campaign_webview_load', {
         campaign_id: this.campaignId
       })
     },
     handleCampaignError (event) {
-      if (!this.isCurrentWebViewEvent(event)) return
+      if (!this.campaignUrl || !this.isCurrentWebviewEvent(event)) return
       this.loading = false
       this.errorText = '活动会场暂时无法打开'
     },
-    handleCampaignMessage (event) {
+    getMessage (event) {
       const messages = event && event.detail && event.detail.data
-      const message = Array.isArray(messages) ? messages[messages.length - 1] : messages
+      if (!Array.isArray(messages)) return messages || {}
+      return messages[messages.length - 1] || {}
+    },
+    handleMiniProgramMessage (event) {
+      this.handleCampaignMessage(this.getMessage(event))
+    },
+    handleWebMessage (event) {
+      const message = this.getMessage(event)
       if (!message || message.campaignId !== this.campaignId) return
+      this.handleCampaignMessage(message)
+    },
+    handleCampaignMessage (message) {
+      if (!message || !this.campaignId) return
+      const campaignId = this.campaignId
+      const generation = this.campaignGeneration
       if (message.type === 'claim-coupon' && message.couponId) {
-        this.claimCoupon(message.couponId, this.campaignId)
+        this.claimCoupon(message.couponId, campaignId, generation)
       }
       if (message.type === 'open-product' && message.productId) {
-        this.openProduct(message.productId, this.campaignId)
+        this.openProduct(message.productId, campaignId, generation)
       }
     },
-    claimCoupon (couponId, campaignId) {
+    claimCoupon (couponId, campaignId, generation) {
       wx.request({
         url: '/api/campaign/coupons/claim',
         method: 'POST',
         data: { campaignId, couponId },
         success: () => {
-          if (campaignId !== this.campaignId) return
+          if (generation !== this.campaignGeneration || campaignId !== this.campaignId) return
           wx.showToast({ title: '领取成功', icon: 'success' })
         }
       })
     },
-    openProduct (productId, campaignId) {
-      if (campaignId !== this.campaignId) return
+    openProduct (productId, campaignId, generation) {
+      if (generation !== this.campaignGeneration || campaignId !== this.campaignId) return
       wx.navigateTo({
         url: `/packageProduct/pages/detail/index?id=${productId}&campaignId=${campaignId}`
       })
     },
     reloadCampaign () {
+      const generation = this.invalidateCampaignLoad()
       const campaignId = this.campaignId
-      const viewToken = this.viewToken + 1
-      this.viewToken = viewToken
       this.campaignUrl = ''
-      wx.nextTick(() => {
-        if (this.campaignId !== campaignId || this.viewToken !== viewToken) return
-        this.campaignUrl = `${CAMPAIGN_ORIGIN}/${campaignId}?memberId=${this.memberId}&campaignId=${campaignId}&viewToken=${viewToken}`
-      })
       this.loading = true
       this.errorText = ''
+      this.campaignReloadTimer = setTimeout(() => {
+        this.campaignReloadTimer = null
+        if (generation !== this.campaignGeneration) return
+        this.campaignUrl = this.buildCampaignUrl(campaignId)
+      }, 0)
     },
-    handleTrackerReady (event) {
-      if (!event || event.detail.campaignId === this.campaignId) this.trackerReady = true
+    handleTrackerReady () {
+      this.trackerReady = true
     },
     handleTrackerError () {
       this.trackerReady = false
     }
+  },
+  onUnload () {
+    this.invalidateCampaignLoad()
+    this.campaignUrl = ''
   }
 })
 </script>
 
 <style>
-.campaign-page {
-  min-height: 100vh;
-  background: #fff5eb;
-}
-
-.campaign-header {
-  padding: 32rpx 28rpx 20rpx;
-}
-
-.campaign-title,
-.campaign-subtitle {
-  display: block;
-}
-
-.campaign-title {
-  color: #7a3517;
-  font-size: 38rpx;
-  font-weight: bold;
-}
-
-.campaign-subtitle {
-  margin-top: 8rpx;
-  color: #b26b45;
-  font-size: 24rpx;
-}
-
-.campaign-tabs {
-  display: flex;
-  padding: 0 20rpx 20rpx;
-}
-
-.campaign-tab {
-  flex: 1;
-  padding: 14rpx 0;
-  color: #97684f;
-  font-size: 24rpx;
-  text-align: center;
-  background: #ffffff;
-}
-
-.campaign-tab.active {
-  color: #ffffff;
-  background: #ff7a45;
-}
-
-.campaign-loading,
-.campaign-error {
-  padding: 80rpx 24rpx;
-  color: #9b715c;
-  font-size: 25rpx;
-  text-align: center;
-}
+.campaign-page { min-height: 100vh; background: #fff5eb; }
+.campaign-header { padding: 32rpx 28rpx 20rpx; }
+.campaign-title, .campaign-subtitle { display: block; }
+.campaign-title { color: #7a3517; font-size: 38rpx; font-weight: bold; }
+.campaign-subtitle { margin-top: 8rpx; color: #b26b45; font-size: 24rpx; }
+.campaign-tabs { display: flex; padding: 0 20rpx 20rpx; }
+.campaign-tab { flex: 1; padding: 14rpx 0; color: #97684f; font-size: 24rpx; text-align: center; background: #ffffff; }
+.campaign-tab.active { color: #ffffff; background: #ff7a45; }
+.campaign-loading, .campaign-error { padding: 80rpx 24rpx; color: #9b715c; font-size: 25rpx; text-align: center; }
 </style>
 
 <script type="application/json">
 {
   "navigationBarTitleText": "限时活动",
-  "usingComponents": {
-    "campaign-tracker": "../../components/campaign-tracker"
-  }
+  "usingComponents": { "campaign-tracker": "../../components/campaign-tracker" }
 }
 </script>

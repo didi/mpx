@@ -13,6 +13,9 @@ module.exports = {
       }
     }
   },
+  devServer: {
+    historyApiFallback: true
+  },
   configureWebpack: {
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } }
   }

@@ -10,37 +10,40 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
-const ADDRESS_STORAGE_KEY = 'checkout:selectedAddress'
-
 createPage({
   data: { address: null },
   onShow () {
-    const selectedAddress = mpx.getStorageSync(ADDRESS_STORAGE_KEY)
-    if (selectedAddress) {
-      this.address = selectedAddress
-      mpx.removeStorageSync(ADDRESS_STORAGE_KEY)
+    const pages = getCurrentPages()
+    const current = pages[pages.length - 1]
+    if (current && current.data && current.data.selectedAddress) {
+      this.address = current.data.selectedAddress
     }
   },
   methods: {
     chooseAddress () {
+      const updateAddress = (data) => {
+        if (data && data.address) this.address = data.address
+      }
       mpx.navigateTo({
         url: '/pages/address/select',
         events: {
-          selectAddress: (address) => {
-            this.address = address
+          addressSelected: updateAddress
+        },
+        success: (res) => {
+          if (res && res.eventChannel) {
+            res.eventChannel.on('addressSelected', updateAddress)
           }
         }
       })
     },
     pay () {
-      // Payment completion replaces checkout so Back cannot resubmit it.
+      // Replace checkout with the payment result after payment completes.
       mpx.redirectTo({ url: '/pages/pay/result' })
     },
     openOrders () {
       mpx.switchTab({ url: '/pages/orders/index' })
     },
     requireLogin () {
-      // Do not leave a protected page in history after session expiry.
       mpx.reLaunch({ url: '/pages/login/index' })
     }
   }

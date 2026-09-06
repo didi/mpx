@@ -10,14 +10,17 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
+const SELECTED_ADDRESS_KEY = 'checkout:selectedAddress'
+
 createPage({
   data: { address: null },
   onShow () {
-    const app = getApp()
-    const selectedAddress = app && app.globalData && app.globalData.selectedAddress
+    // The storage hand-off is shared by wx and Web and also survives a
+    // browser history return when the page instance is recreated.
+    const selectedAddress = mpx.getStorageSync(SELECTED_ADDRESS_KEY)
     if (selectedAddress) {
-      this.setData({ address: selectedAddress })
-      app.globalData.selectedAddress = null
+      this.address = selectedAddress
+      mpx.removeStorageSync(SELECTED_ADDRESS_KEY)
     }
   },
   methods: {
@@ -25,14 +28,15 @@ createPage({
       mpx.navigateTo({ url: '/pages/address/select' })
     },
     pay () {
-      // Payment completion replaces checkout, so browser back cannot repay it.
-      mpx.redirectTo({ url: '/pages/pay/result' })
+      // Orders is a tabBar page, so a completed payment returns through the
+      // tabBar navigation semantics on both wx and Web.
+      mpx.switchTab({ url: '/pages/orders/index' })
     },
     openOrders () {
       mpx.switchTab({ url: '/pages/orders/index' })
     },
     requireLogin () {
-      // An expired session starts a fresh login flow on every platform.
+      // Expired authentication clears the current stack before login.
       mpx.reLaunch({ url: '/pages/login/index' })
     }
   }

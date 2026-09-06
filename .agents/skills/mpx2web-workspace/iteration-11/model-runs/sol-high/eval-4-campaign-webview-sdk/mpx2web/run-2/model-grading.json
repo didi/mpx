@@ -1,0 +1,110 @@
+{
+  "eval_id": 4,
+  "eval_name": "campaign-webview-sdk",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "model_grading_fingerprint": "73cb7e4ddd51c501516f80c80f081eabd399d93797d20885161d781fc8ca8d62",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 69631
+  },
+  "expectations": [
+    {
+      "id": "h0",
+      "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx 保留 <web-view src=\"{{campaignUrl}}\">，微信端使用 bindmessage@wx=\"handleMiniProgramMessage\"；claimCoupon 仍调用 wx.request('/api/campaign/coupons/claim')；openProduct 仍 wx.navigateTo('/packageProduct/pages/detail/index?...&campaignId=...')；handleCampaignLoad 仍 wx.reportAnalytics('campaign_webview_load')；页面继续挂载 campaign-tracker 并传入 campaignId/memberId。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h1",
+      "text": "Web 宿主白名单只包含完整可信 origin https://campaign.example.com，避免后缀匹配误接纳相似恶意域名",
+      "category": "webview-security",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx 在 __mpx_mode__ === 'web' 下设置 mpx.config.webConfig.webviewConfig.hostWhitelists: ['https://campaign.example.com']，仅包含完整可信 origin，没有后缀或通配匹配配置。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h2",
+      "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/vue.config.js 同时设置 publicPath: '/mall/' 与 pluginOptions.mpx.plugin.webConfig.routeConfig.base: '/mall/'。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h3",
+      "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
+      "category": "web-sdk",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx 顶层只 import { createComponent } from '@mpxjs/core'；@business/campaign-tracker-web 仅在 initTracker 内且 __mpx_mode__ === 'web' 分支后通过 await import('@business/campaign-tracker-web') 动态加载。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h4",
+      "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx 使用 _detached 与 _trackerGeneration；await import 后调用 isCurrentTracker 校验，await campaignTracker.create 后再次校验且晚到时 destroyTracker(tracker)，tracker.start 返回 Promise 时 await 后再次校验，catch 中也先校验当前代际。detached 会置 _detached=true 并递增代际。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h5",
+      "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx 使用 campaignGeneration，replaceCampaignWebView 递增代际并在 $nextTick 前校验；isCurrentWebViewEvent 校验 dataset.campaignId 与 dataset.generation 是否匹配当前 campaignId/campaignGeneration，load/error/message 都先调用该校验。outputs/src/components/campaign-tracker.mpx 也用 _trackerGeneration 校验 tracker 异步结果。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h6",
+      "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
+      "category": "web-cleanup",
+      "passed": true,
+      "evidence": "outputs/src/components/campaign-tracker.mpx detached 调用 releaseTracker；releaseTracker 在 Web 下 removeEventListener('visibilitychange', visibilityHandler)，清空 tracker 并调用 destroyTracker。原 input 中的 window.addEventListener('message', ...) 已不存在；页面 onUnload 调用 cancelClaimRequest，中止未完成领券请求。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h7",
+      "text": "没有额外手写 window message 监听时，内建 web-view 的 host 白名单与 clientUid 实例隔离加 bindmessage 即构成消息入口证据；若额外手写监听，则必须同时校验受信任 origin、当前 iframe source 和严格 campaignId",
+      "category": "webview-security",
+      "passed": true,
+      "evidence": "outputs 中未出现 window.addEventListener('message') 手写监听；消息入口为 outputs/src/pages/campaign/index.mpx 的内建 <web-view> bindmessage@web/bindmessage@wx。outputs/src/app.mpx 配置 webviewConfig.hostWhitelists: ['https://campaign.example.com']，页面还通过 data-campaign-id/data-generation 与 isCurrentWebViewEvent 做实例隔离。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h8",
+      "text": "Web 下 web-view bindmessage 的单向业务消息在领券或跳转前严格校验当前 campaignId；不要求改变微信小程序既有消息协议",
+      "category": "webview-security",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx 的 handleWebMessage 先调用 isCurrentWebViewEvent，再要求 message.campaignId === this.campaignId，之后才 dispatchCampaignMessage；claim-coupon 和 open-product 只有通过该校验后才会进入 claimCoupon/openProduct。微信端 handleMiniProgramMessage 未强制改变既有消息协议。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "修复覆盖白名单、/mall/ 基路径、Web-only SDK 动态加载、代际校验、卸载清理和 Web bindmessage 活动隔离；未发现会改变结论的断言缺口。"
+  }
+}

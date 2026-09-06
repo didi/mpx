@@ -23,7 +23,7 @@
           </view>
         </view>
         <view
-          wx:if="{{photos.length < 9 && supportsMedia}}"
+          wx:if="{{photos.length < 9}}"
           class="photo-add"
           bindtap="choosePhoto"
           aria-role="button"
@@ -33,7 +33,6 @@
           <text class="photo-add-label">添加图片</text>
         </view>
       </view>
-      <text wx:if="{{!supportsMedia}}" class="capability-tip">当前 Web 环境暂未配置图片选择能力</text>
     </view>
 
     <view class="publish-options">
@@ -55,7 +54,6 @@
         </view>
         <text class="place-action">查看地图</text>
       </view>
-      <text wx:if="{{!supportsLocation}}" class="capability-tip option-tip">当前 Web 环境暂未配置位置与地图能力</text>
 
       <view class="option-row">
         <view class="option-main">
@@ -90,13 +88,29 @@
 <script>
 import { createPage } from '@mpxjs/core'
 
+// Web does not currently define a host bridge for location, map, or media.
+// Keep calls behind capability checks so the same page can render safely there.
+const getPlatformApi = (name) => {
+  if (typeof wx === 'undefined' || typeof wx[name] !== 'function') return null
+  return wx[name].bind(wx)
+}
+
+const notify = (title) => {
+  const showToast = getPlatformApi('showToast')
+  if (showToast) {
+    showToast({ title, icon: 'none' })
+    return
+  }
+  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+    console.warn(title)
+  }
+}
+
 createPage({
   data: {
     content: '',
     photos: [],
     place: {},
-    supportsMedia: typeof wx !== 'undefined' && typeof wx.chooseMedia === 'function',
-    supportsLocation: typeof wx !== 'undefined' && typeof wx.chooseLocation === 'function',
     topics: [
       { id: 'shopping', name: '社区好物' },
       { id: 'activity', name: '邻里活动' },
@@ -113,58 +127,50 @@ createPage({
     }
   },
   methods: {
-    getMiniProgramApi () {
-      return typeof wx !== 'undefined' ? wx : null
-    },
-    showMessage (title) {
-      const api = this.getMiniProgramApi()
-      if (api && typeof api.showToast === 'function') {
-        api.showToast({ title, icon: 'none' })
-      } else if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-        window.alert(title)
-      }
-    },
     updateContent (event) {
       this.content = event.detail.value
     },
     choosePlace () {
-      const api = this.getMiniProgramApi()
-      if (!api || typeof api.chooseLocation !== 'function') {
-        this.showMessage('当前环境暂不支持位置选择')
+      const chooseLocation = getPlatformApi('chooseLocation')
+      if (!chooseLocation) {
+        notify('当前环境暂不支持位置选择')
         return
       }
-      api.chooseLocation({
+      chooseLocation({
         success: (place) => {
           this.place = place
         }
       })
     },
     openPlace () {
-      if (!this.place.latitude || !this.place.longitude) return
-      const api = this.getMiniProgramApi()
-      if (!api || typeof api.openLocation !== 'function') {
-        this.showMessage('当前环境暂不支持查看地图')
+      const latitude = Number(this.place.latitude)
+      const longitude = Number(this.place.longitude)
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return
+
+      const openLocation = getPlatformApi('openLocation')
+      if (!openLocation) {
+        notify('当前环境暂不支持查看地图')
         return
       }
-      api.openLocation({
-        latitude: this.place.latitude,
-        longitude: this.place.longitude,
+      openLocation({
+        latitude,
+        longitude,
         name: this.place.name,
         address: this.place.address
       })
     },
     choosePhoto () {
-      const api = this.getMiniProgramApi()
-      if (!api || typeof api.chooseMedia !== 'function') {
-        this.showMessage('当前环境暂不支持图片选择')
+      const chooseMedia = getPlatformApi('chooseMedia')
+      if (!chooseMedia) {
+        notify('当前环境暂不支持添加图片')
         return
       }
-      api.chooseMedia({
+      chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
         sourceType: ['album', 'camera'],
-        success: ({ tempFiles }) => {
-          this.photos = this.photos.concat(tempFiles)
+        success: ({ tempFiles = [] }) => {
+          this.photos = this.photos.concat(tempFiles).slice(0, 9)
         }
       })
     },
@@ -172,67 +178,46 @@ createPage({
       this.photos.splice(index, 1)
     },
     selectTopic (event) {
-      this.selectedTopic = this.topics[Number(event.detail.value)]
+      this.selectedTopic = this.topics[Number(event.detail.value)] || {}
     },
     toggleComments (event) {
       this.allowComments = event.detail.value
     },
-    createPostPayload () {
-      return {
-        content: this.content,
-        photos: this.photos.map(item => item.tempFilePath),
-        place: this.place,
-        topicId: this.selectedTopic.id || '',
-        allowComments: this.allowComments
-      }
-    },
-    handlePublishSuccess (data) {
-      const api = this.getMiniProgramApi()
-      if (api && typeof api.redirectTo === 'function' && data && data.id) {
-        api.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
-        return
-      }
-      this.showMessage('发布成功')
-    },
     submitPost () {
       if (!this.canSubmit || this.submitting) return
+
+      const request = getPlatformApi('request')
+      if (!request) {
+        notify('当前环境暂不支持发布动态')
+        return
+      }
+
       this.submitting = true
-      const api = this.getMiniProgramApi()
-      const payload = this.createPostPayload()
-
-      if (api && typeof api.request === 'function') {
-        api.request({
-          url: '/api/community/posts',
-          method: 'POST',
-          data: payload,
-          success: ({ data }) => this.handlePublishSuccess(data),
-          fail: () => this.showMessage('发布失败，请重试'),
-          complete: () => {
-            this.submitting = false
-          }
-        })
-        return
-      }
-
-      if (typeof fetch !== 'function') {
-        this.submitting = false
-        this.showMessage('当前环境暂不支持发布')
-        return
-      }
-      fetch('/api/community/posts', {
+      request({
+        url: '/api/community/posts',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then((response) => {
-          if (!response.ok) throw new Error('Publish request failed')
-          return response.json()
-        })
-        .then(data => this.handlePublishSuccess(data))
-        .catch(() => this.showMessage('发布失败，请重试'))
-        .finally(() => {
+        data: {
+          content: this.content,
+          photos: this.photos.map(item => item.tempFilePath),
+          place: this.place,
+          topicId: this.selectedTopic.id || '',
+          allowComments: this.allowComments
+        },
+        success: ({ data = {} }) => {
+          const redirectTo = getPlatformApi('redirectTo')
+          if (data.id && redirectTo) {
+            redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+            return
+          }
+          notify(data.id ? '发布成功' : '发布失败，请重试')
+        },
+        fail: () => {
+          notify('发布失败，请重试')
+        },
+        complete: () => {
           this.submitting = false
-        })
+        }
+      })
     }
   }
 })
@@ -253,7 +238,6 @@ createPage({
 .publish-tip,
 .word-count,
 .photo-add-label,
-.capability-tip,
 .option-label,
 .option-value,
 .place-name,
@@ -357,12 +341,6 @@ createPage({
   font-size: 22rpx;
 }
 
-.capability-tip {
-  margin-top: 4rpx;
-  color: #9297a1;
-  font-size: 22rpx;
-}
-
 .publish-options {
   margin-top: 24rpx;
   padding: 0 24rpx;
@@ -440,10 +418,6 @@ createPage({
   margin-left: 24rpx;
   color: #1677ff;
   font-size: 24rpx;
-}
-
-.option-tip {
-  margin: 16rpx 0;
 }
 
 .publish-notice {

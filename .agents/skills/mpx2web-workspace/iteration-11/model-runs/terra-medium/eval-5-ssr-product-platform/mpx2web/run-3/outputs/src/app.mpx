@@ -9,7 +9,9 @@ createApp({
     }
   },
   onLaunch () {
-    if (__mpx_mode__ === 'wx') wx.reportAnalytics('mall_launch', {})
+    if (__mpx_mode__ === 'wx') {
+      wx.reportAnalytics('mall_launch', {})
+    }
   }
 })
 </script>

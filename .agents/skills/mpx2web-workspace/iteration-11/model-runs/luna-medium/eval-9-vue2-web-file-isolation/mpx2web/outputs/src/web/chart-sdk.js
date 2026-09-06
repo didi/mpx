@@ -1,24 +1,32 @@
 export async function createChart (element, metrics, onSelect) {
   await Promise.resolve()
-  if (!element) return { destroy () {} }
-  let currentMetrics = Array.isArray(metrics) ? metrics : []
-  const handleClick = (event) => {
-    const item = event.target.closest && event.target.closest('[data-metric-key]')
-    if (item && element.contains(item) && onSelect) onSelect({ key: item.getAttribute('data-metric-key') })
+  let destroyed = false
+  if (element && 'isConnected' in element && !element.isConnected) {
+    return { update () {}, resize () {}, destroy () { destroyed = true } }
   }
-  element.addEventListener('click', handleClick)
-  const render = () => {
+  const handleClick = (event) => {
+    const target = event.target.closest('[data-metric-key]')
+    if (target && onSelect) onSelect(target.getAttribute('data-metric-key'))
+  }
+  const render = (items) => {
+    if (destroyed || !element) return
     element.textContent = ''
-    currentMetrics.forEach((item) => {
-      const button = document.createElement('button'); button.type = 'button'
-      button.setAttribute('data-metric-key', item.key); button.textContent = `${item.label}:${item.value}`
+    ;(items || []).forEach((item) => {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.id = item.key
+      button.setAttribute('data-metric-key', item.key)
+      button.textContent = `${item.label}:${item.value}`
       element.appendChild(button)
     })
   }
-  render()
+  if (element) element.addEventListener('click', handleClick)
+  render(metrics)
   return {
-    update (nextMetrics) { currentMetrics = Array.isArray(nextMetrics) ? nextMetrics : []; render() },
-    resize () {},
-    destroy () { element.removeEventListener('click', handleClick); element.textContent = '' }
+    update (nextMetrics) { render(nextMetrics) }, resize () {},
+    destroy () {
+      destroyed = true
+      if (element) { element.removeEventListener('click', handleClick); element.textContent = '' }
+    }
   }
 }

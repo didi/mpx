@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "0e346712d32b86285b480c55b5243dde3daa993f1ee3ff41b4639ffcaf674a54",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 1,
@@ -42,10 +43,10 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 3924
+        "durationMs": 2909
       },
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

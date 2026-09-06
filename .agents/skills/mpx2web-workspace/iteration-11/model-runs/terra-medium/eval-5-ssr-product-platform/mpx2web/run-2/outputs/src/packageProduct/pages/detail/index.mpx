@@ -17,10 +17,7 @@
       </view>
       <button class="cart-button" bindtap="addToCart">加入购物车</button>
     </view>
-    <product-recommendations
-      productId="{{productId}}"
-      items="{{recommendations}}"
-    />
+    <product-recommendations productId="{{productId}}" items="{{recommendations}}" />
   </view>
 </template>
 
@@ -32,50 +29,44 @@ import { useProductStore } from '../../../stores/product'
 createPage({
   data: {
     productId: '',
-    selectedSkuId: ''
+    selectedSkuId: '',
+    loadVersion: 0
   },
   computed: {
-    product () {
-      return useProductStore(this.$pinia).product
-    },
-    recommendations () {
-      return useProductStore(this.$pinia).recommendations
-    },
+    product () { return useProductStore(this.$pinia).product },
+    recommendations () { return useProductStore(this.$pinia).recommendations },
     selectedSku () {
       return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
     }
   },
+  onLoad (query) {
+    this.productId = query.id || ''
+    this.loadProduct(this.productId, this.$ssrContext)
+  },
   serverPrefetch () {
-    const productId = this.productId || (this.$route && this.$route.query && this.$route.query.id)
-    if (!productId) return Promise.resolve()
+    const route = this.$route || {}
+    const productId = this.productId || (route.query && route.query.id) || ''
     this.productId = productId
     return this.loadProduct(productId, this.$ssrContext)
   },
-  onLoad (query) {
-    this.productId = query.id
-    return this.loadProduct(query.id)
-  },
   methods: {
-    async loadProduct (productId, requestContext) {
-      const pageRequestVersion = (this.pageRequestVersion || 0) + 1
-      this.pageRequestVersion = pageRequestVersion
+    async loadProduct (productId, ssrContext) {
+      if (!productId) return
+      const loadVersion = this.loadVersion + 1
+      this.loadVersion = loadVersion
+      this.productId = productId
       const store = useProductStore(this.$pinia)
-      const applied = await store.loadProduct(productId, requestContext)
-
-      if (!applied || pageRequestVersion !== this.pageRequestVersion || store.productId !== productId || !store.loaded) return
-      this.selectedSkuId = (store.product.skus || [])[0] && store.product.skus[0].id
+      await store.loadProduct(productId, ssrContext)
+      if (loadVersion !== this.loadVersion || this.productId !== productId ||
+        !store.loaded || store.productId !== productId) return
+      this.selectedSkuId = this.product.skus[0] && this.product.skus[0].id
     },
-    selectSku (skuId) {
-      this.selectedSkuId = skuId
-    },
+    selectSku (skuId) { this.selectedSkuId = skuId },
     addToCart () {
       mpx.request({
         url: '/api/cart/items',
         method: 'POST',
-        data: {
-          productId: this.productId,
-          skuId: this.selectedSkuId
-        },
+        data: { productId: this.productId, skuId: this.selectedSkuId },
         success: () => mpx.showToast({ title: '已加入购物车' })
       })
     }
@@ -84,56 +75,15 @@ createPage({
 </script>
 
 <style>
-.product-detail {
-  min-height: 100vh;
-  background: #f5f5f5;
-}
-
-.product-cover {
-  width: 750rpx;
-  height: 750rpx;
-}
-
-.product-info {
-  padding: 28rpx;
-  background: #ffffff;
-}
-
-.product-name {
-  color: #222222;
-  font-size: 36rpx;
-  font-weight: bold;
-}
-
-.product-price {
-  margin: 18rpx 0;
-  color: #e64340;
-  font-size: 42rpx;
-}
-
-.sku-list {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.sku-item {
-  margin: 0 16rpx 16rpx 0;
-  padding: 12rpx 20rpx;
-  color: #555555;
-  background: #f2f2f2;
-  border-radius: 8rpx;
-}
-
-.sku-item.active {
-  color: #ffffff;
-  background: #ff5a36;
-}
-
-.cart-button {
-  margin-top: 20rpx;
-  color: #ffffff;
-  background: #ff5a36;
-}
+.product-detail { min-height: 100vh; background: #f5f5f5; }
+.product-cover { width: 750rpx; height: 750rpx; }
+.product-info { padding: 28rpx; background: #ffffff; }
+.product-name { color: #222222; font-size: 36rpx; font-weight: bold; }
+.product-price { margin: 18rpx 0; color: #e64340; font-size: 42rpx; }
+.sku-list { display: flex; flex-wrap: wrap; }
+.sku-item { margin: 0 16rpx 16rpx 0; padding: 12rpx 20rpx; color: #555555; background: #f2f2f2; border-radius: 8rpx; }
+.sku-item.active { color: #ffffff; background: #ff5a36; }
+.cart-button { margin-top: 20rpx; color: #ffffff; background: #ff5a36; }
 </style>
 
 <script type="application/json">

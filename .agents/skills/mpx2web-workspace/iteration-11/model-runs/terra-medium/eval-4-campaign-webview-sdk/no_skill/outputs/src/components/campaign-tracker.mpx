@@ -12,74 +12,60 @@ const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
 
 createComponent({
   properties: {
-    campaignId: { type: String, observer () { this.scheduleTrackerInit() } },
-    memberId: { type: String, observer () { this.scheduleTrackerInit() } }
+    campaignId: { type: String, observer () { this.initTracker() } },
+    memberId: String
   },
   data: { ready: false },
   ready () {
-    this._attached = true
-    this._revision = 0
-    this._listening = false
-    this._boundWindowMessage = this.handleWindowMessage.bind(this)
-    this._boundVisibilityChange = this.handleVisibilityChange.bind(this)
+    this._alive = true
+    this._generation = 0
     this.initTracker()
   },
   detached () {
-    this._attached = false
-    this._revision += 1
-    this.disposeTracker()
+    this._alive = false
+    this._generation += 1
+    this.teardownTracker()
   },
   methods: {
-    scheduleTrackerInit () {
-      if (this._attached) this.initTracker()
-    },
-    disposeTracker () {
-      if (this._listening && typeof window !== 'undefined' && typeof document !== 'undefined') {
-        window.removeEventListener('message', this._boundWindowMessage)
-        document.removeEventListener('visibilitychange', this._boundVisibilityChange)
-      }
-      this._listening = false
-      const tracker = this._tracker
-      this._tracker = null
-      if (tracker && tracker.destroy) tracker.destroy()
+    teardownTracker () {
+      if (typeof window !== 'undefined') window.removeEventListener('message', this.handleWindowMessage)
+      if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      if (this.tracker && this.tracker.destroy) this.tracker.destroy()
+      this.tracker = null
+      this.ready = false
     },
     async initTracker () {
-      if (!this._attached || !this.campaignId) return
-      const revision = ++this._revision
+      if (!this._alive || !this.campaignId) return
+      const generation = ++this._generation
       const campaignId = this.campaignId
-      const memberId = this.memberId
-      this.ready = false
-      this.disposeTracker()
+      this.teardownTracker()
       try {
-        const tracker = await campaignTracker.create({ campaignId, memberId })
-        if (!this._attached || revision !== this._revision || campaignId !== this.campaignId) {
+        const tracker = await campaignTracker.create({ campaignId, memberId: this.memberId })
+        if (!this._alive || generation !== this._generation || campaignId !== this.campaignId) {
           if (tracker && tracker.destroy) tracker.destroy()
           return
         }
-        this._tracker = tracker
-        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-          window.addEventListener('message', this._boundWindowMessage)
-          document.addEventListener('visibilitychange', this._boundVisibilityChange)
-          this._listening = true
-        }
+        this.tracker = tracker
+        if (typeof window !== 'undefined') window.addEventListener('message', this.handleWindowMessage)
+        if (typeof document !== 'undefined') document.addEventListener('visibilitychange', this.handleVisibilityChange)
         tracker.start()
         this.ready = true
         this.triggerEvent('ready', { campaignId })
       } catch (error) {
-        if (!this._attached || revision !== this._revision) return
-        this.triggerEvent('error', { campaignId })
+        if (!this._alive || generation !== this._generation) return
+        this.triggerEvent('error', { campaignId, error })
       }
     },
     handleWindowMessage (event) {
-      if (event.origin !== CAMPAIGN_ORIGIN) return
+      if (!this._alive || !this.tracker || event.origin !== CAMPAIGN_ORIGIN) return
       const message = event.data || {}
       if (message.type !== 'campaign-exposure' || message.campaignId !== this.campaignId) return
-      if (this._tracker && this._tracker.track) this._tracker.track('exposure', message.payload)
+      this.tracker.track('exposure', message.payload)
     },
     handleVisibilityChange () {
-      if (!this._tracker || typeof document === 'undefined') return
-      if (document.hidden) this._tracker.pause()
-      else this._tracker.resume()
+      if (!this._alive || !this.tracker) return
+      if (document.hidden) this.tracker.pause()
+      else this.tracker.resume()
     }
   }
 })

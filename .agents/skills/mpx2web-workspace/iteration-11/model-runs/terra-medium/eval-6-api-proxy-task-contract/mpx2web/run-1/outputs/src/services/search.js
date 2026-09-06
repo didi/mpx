@@ -1,13 +1,13 @@
-import mpx from '@mpxjs/core'
+import { request } from '@mpxjs/api-proxy'
 
 export function fetchTrendingKeywords () {
-  return mpx.request({
+  return request({
     url: '/api/search/trending'
   }).then(({ data }) => data)
 }
 
 export function requestSuggestions (keyword) {
-  return mpx.request({
+  return request({
     url: '/api/search/suggest',
     data: { keyword }
   })

@@ -4,8 +4,9 @@ import { createPinia } from '@mpxjs/pinia'
 
 createApp({
   onAppInit () {
-    // SSR calls this for every app instance, so Pinia state never crosses requests.
-    return { pinia: createPinia() }
+    return {
+      pinia: createPinia()
+    }
   },
   onLaunch () {
     wx.reportAnalytics('mall_launch', {})

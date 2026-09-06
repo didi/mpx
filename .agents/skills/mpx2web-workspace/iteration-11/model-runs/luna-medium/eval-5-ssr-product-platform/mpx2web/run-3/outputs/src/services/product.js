@@ -1,22 +1,23 @@
 import mpx from '@mpxjs/api-proxy'
 
-function requestUrl (path, requestContext) {
+function requestOrigin (requestContext) {
   const req = requestContext && requestContext.req
-  if (!req) return path
+  if (!req) return ''
 
   const headers = req.headers || {}
-  const forwardedProtocol = headers['x-forwarded-proto']
-  const protocol = forwardedProtocol
-    ? String(forwardedProtocol).split(',')[0].trim()
-    : (req.protocol || (req.socket && req.socket.encrypted ? 'https' : 'http'))
-  const host = headers.host || req.headers && req.headers.Host
-  return host ? `${protocol}://${host}${path}` : path
+  const forwardedProtocol = String(headers['x-forwarded-proto'] || '').split(',')[0].trim()
+  const forwardedHost = String(headers['x-forwarded-host'] || '').split(',')[0].trim()
+  const protocol = forwardedProtocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = forwardedHost || headers.host
+  if (!host) throw new Error('SSR request host is missing')
+  return `${protocol}://${host}`
 }
 
-function request (url, requestContext) {
+function request (path, requestContext) {
+  const origin = requestOrigin(requestContext)
   return new Promise((resolve, reject) => {
     mpx.request({
-      url: requestUrl(url, requestContext),
+      url: origin ? `${origin}${path}` : path,
       success: ({ data }) => resolve(data),
       fail: reject
     })

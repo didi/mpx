@@ -7,12 +7,12 @@
         bindinput="onKeywordInput"
         placeholder="搜索商品"
       />
-      <view class="clear" wx:if="{{keyword}}" bindtap="clearSearch">清空</view>
+      <view class="clear-button" wx:if="{{keyword}}" bindtap="clearSearch">清空</view>
     </view>
 
     <view class="trending" wx:if="{{!keyword}}">
       <view
-        class="trending-item"
+        class="keyword-item"
         wx:for="{{trendingKeywords}}"
         wx:key="*this"
         bindtap="chooseKeyword(item)"
@@ -41,25 +41,21 @@ createPage({
     trendingKeywords: [],
     suggestions: []
   },
-  async onLoad () {
+  onLoad () {
     this.suggestionRequest = null
     this.suggestionRequestId = 0
-    this.pageUnloaded = false
+    this.unloaded = false
 
-    try {
-      const keywords = await fetchTrendingKeywords()
-      if (!this.pageUnloaded) {
-        this.trendingKeywords = keywords
-      }
-    } catch (error) {
-      if (!this.pageUnloaded) {
-        await this.showError('趋势词加载失败')
-      }
-    }
+    fetchTrendingKeywords()
+      .then((keywords) => {
+        if (!this.unloaded) this.trendingKeywords = keywords
+      })
+      .catch(() => {
+        if (!this.unloaded) this.showError('趋势词加载失败')
+      })
   },
   onUnload () {
-    this.pageUnloaded = true
-    this.suggestionRequestId += 1
+    this.unloaded = true
     this.cancelSuggestionRequest()
   },
   methods: {
@@ -72,57 +68,68 @@ createPage({
     clearSearch () {
       this.search('')
     },
+    cancelSuggestionRequest () {
+      this.suggestionRequestId += 1
+
+      if (this.suggestionRequest && typeof this.suggestionRequest.abort === 'function') {
+        this.suggestionRequest.abort()
+      }
+
+      this.suggestionRequest = null
+    },
     search (keyword) {
-      const requestId = ++this.suggestionRequestId
+      const nextKeyword = keyword.trim()
 
       this.cancelSuggestionRequest()
-      this.keyword = keyword
-      this.suggestions = []
+      this.keyword = nextKeyword
 
-      if (!keyword) return
+      if (!nextKeyword) {
+        this.suggestions = []
+        return
+      }
 
-      const suggestionRequest = requestSuggestions(keyword)
-      this.suggestionRequest = suggestionRequest
+      const requestId = this.suggestionRequestId
+      const requestTask = requestSuggestions(nextKeyword)
+      this.suggestionRequest = requestTask
 
-      suggestionRequest.promise
-        .then((suggestions) => {
-          if (requestId === this.suggestionRequestId && !this.pageUnloaded) {
-            this.suggestions = suggestions
+      requestTask
+        .then(({ data }) => {
+          if (
+            !this.unloaded &&
+            requestId === this.suggestionRequestId &&
+            nextKeyword === this.keyword
+          ) {
+            this.suggestions = data.list
           }
         })
-        .catch(async () => {
-          if (requestId === this.suggestionRequestId && !this.pageUnloaded) {
-            await this.showError('搜索失败')
+        .catch(() => {
+          if (
+            !this.unloaded &&
+            requestId === this.suggestionRequestId &&
+            nextKeyword === this.keyword
+          ) {
+            this.suggestions = []
+            this.showError('搜索失败')
           }
         })
-        .finally(() => {
-          if (requestId === this.suggestionRequestId && this.suggestionRequest === suggestionRequest) {
+        .then(() => {
+          if (requestId === this.suggestionRequestId) {
             this.suggestionRequest = null
           }
         })
     },
-    cancelSuggestionRequest () {
-      if (this.suggestionRequest) {
-        this.suggestionRequest.abort()
-        this.suggestionRequest = null
-      }
+    showError (title) {
+      showToast({
+        title,
+        icon: 'none'
+      }).catch(() => {})
     },
-    async showError (title) {
-      try {
-        await showToast({
-          title,
-          icon: 'none'
-        })
-      } catch (error) {}
-    },
-    async openProduct (productId) {
-      try {
-        await navigateTo({
-          url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
-        })
-      } catch (error) {
-        await this.showError('跳转失败')
-      }
+    openProduct (productId) {
+      navigateTo({
+        url: `/pages/product/detail?id=${encodeURIComponent(productId)}`
+      }).catch(() => {
+        this.showError('打开商品失败')
+      })
     }
   }
 })
@@ -142,7 +149,7 @@ createPage({
   flex: 1;
 }
 
-.clear {
+.clear-button {
   margin-left: 24rpx;
 }
 
@@ -151,7 +158,7 @@ createPage({
   margin-top: 24rpx;
 }
 
-.trending-item,
+.keyword-item,
 .suggestion-item {
   padding: 16rpx 0;
 }

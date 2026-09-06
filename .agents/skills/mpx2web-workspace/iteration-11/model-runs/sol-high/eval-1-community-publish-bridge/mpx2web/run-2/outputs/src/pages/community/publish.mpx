@@ -5,10 +5,6 @@
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
     </view>
 
-    <view @web class="web-capability-notice">
-      Web 端当前支持发布文字动态；图片、位置和地图能力将在宿主协议明确后开放。
-    </view>
-
     <view class="form-card">
       <textarea
         class="content-input"
@@ -27,7 +23,6 @@
           </view>
         </view>
         <view
-          @wx
           wx:if="{{photos.length < 9}}"
           class="photo-add"
           bindtap="choosePhoto"
@@ -37,15 +32,11 @@
           <text class="photo-add-icon">+</text>
           <text class="photo-add-label">添加图片</text>
         </view>
-        <view @web wx:if="{{photos.length < 9}}" class="photo-add photo-add-disabled">
-          <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">暂不支持图片</text>
-        </view>
       </view>
     </view>
 
     <view class="publish-options">
-      <view @wx class="option-row" bindtap="choosePlace">
+      <view class="option-row" bindtap="choosePlace">
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
@@ -56,17 +47,7 @@
         <text class="option-arrow">›</text>
       </view>
 
-      <view @web class="option-row option-row-disabled">
-        <view class="option-main">
-          <text class="option-icon">⌖</text>
-          <view class="option-copy">
-            <text class="option-label">所在位置</text>
-            <text class="option-value">暂不支持位置选择</text>
-          </view>
-        </view>
-      </view>
-
-      <view @wx wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
+      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
@@ -133,7 +114,8 @@ createPage({
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 接入业务明确的宿主位置选择协议后再启用。
+        // TODO(web): 待 Web 宿主明确位置选择协议后接入。
+        wx.showToast({ title: 'Web 端暂不支持选择位置', icon: 'none' })
         return
       }
       wx.chooseLocation({
@@ -143,11 +125,12 @@ createPage({
       })
     },
     openPlace () {
+      if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 接入业务明确的宿主地图协议后再启用。
+        // TODO(web): 待 Web 宿主明确地图查看协议后接入。
+        wx.showToast({ title: 'Web 端暂不支持查看地图', icon: 'none' })
         return
       }
-      if (!this.place.latitude || !this.place.longitude) return
       wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
@@ -157,7 +140,8 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 接入业务明确的宿主媒体选择协议后再启用。
+        // TODO(web): 待 Web 宿主明确媒体选择与上传协议后接入。
+        wx.showToast({ title: 'Web 端暂不支持选择图片', icon: 'none' })
         return
       }
       wx.chooseMedia({
@@ -242,16 +226,6 @@ createPage({
   font-size: 24rpx;
 }
 
-.web-capability-notice {
-  margin-bottom: 24rpx;
-  padding: 18rpx 20rpx;
-  color: #7a5b16;
-  font-size: 24rpx;
-  line-height: 36rpx;
-  background: #fff8e6;
-  border-radius: 14rpx;
-}
-
 .form-card,
 .publish-options {
   background: #ffffff;
@@ -322,11 +296,6 @@ createPage({
   color: #9da2ac;
   background: #f3f5f8;
   border: 2rpx dashed #d6dae1;
-}
-
-.photo-add-disabled,
-.option-row-disabled {
-  color: #b4b8c0;
 }
 
 .photo-add-icon {

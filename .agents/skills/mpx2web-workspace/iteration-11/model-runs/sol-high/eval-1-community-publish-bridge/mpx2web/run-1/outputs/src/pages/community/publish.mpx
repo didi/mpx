@@ -69,10 +69,6 @@
       </view>
     </view>
 
-    <text @web class="web-capability-tip">
-      Web 端暂不支持选择位置、查看地图和添加图片，可先发布文字动态。
-    </text>
-
     <view class="publish-notice">
       <switch checked="{{allowComments}}" bindchange="toggleComments" color="#1677ff" />
       <text class="notice-text">允许其他用户评论</text>
@@ -116,13 +112,13 @@ createPage({
     updateContent (event) {
       this.content = event.detail.value
     },
-    showWebCapabilityTip (title) {
+    showWebCapabilityUnavailable (title) {
       wx.showToast({ title, icon: 'none' })
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 接入业务明确提供并完成安全审查的位置选择协议。
-        this.showWebCapabilityTip('Web 端暂不支持选择位置')
+        // TODO: Web 宿主位置选择 Bridge 协议确定后在此接入。
+        this.showWebCapabilityUnavailable('Web 暂不支持选择位置')
         return
       }
       wx.chooseLocation({
@@ -132,12 +128,12 @@ createPage({
       })
     },
     openPlace () {
+      if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 接入业务明确提供并完成安全审查的地图查看协议。
-        this.showWebCapabilityTip('Web 端暂不支持查看地图')
+        // TODO: Web 宿主地图查看协议确定后在此接入。
+        this.showWebCapabilityUnavailable('Web 暂不支持查看地图')
         return
       }
-      if (!this.place.latitude || !this.place.longitude) return
       wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
@@ -147,8 +143,8 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 接入业务明确提供并完成安全审查的媒体选择协议。
-        this.showWebCapabilityTip('Web 端暂不支持添加图片')
+        // TODO: Web 宿主媒体选择与上传协议确定后在此接入。
+        this.showWebCapabilityUnavailable('Web 暂不支持选择图片')
         return
       }
       wx.chooseMedia({
@@ -416,16 +412,6 @@ createPage({
 .publish-button[disabled] {
   color: #ffffff;
   background: #b9d5ff;
-}
-</style>
-
-<style mode="web">
-.web-capability-tip {
-  display: block;
-  margin: 16rpx 8rpx 0;
-  color: #9297a1;
-  font-size: 22rpx;
-  line-height: 34rpx;
 }
 </style>
 

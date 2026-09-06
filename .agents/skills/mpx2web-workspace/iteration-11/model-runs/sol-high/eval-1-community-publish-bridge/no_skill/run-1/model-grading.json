@@ -1,0 +1,102 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "model_grading_fingerprint": "ac246c32f083edc2a133c7e4d6c63e2194d1bccea3d5e1e65bc93062afb90496",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 59541
+  },
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "category": "cross-platform-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:107-110 定义 getMiniProgramApi 返回 wx，149-155、168-174、187-193 非 Web 分支通过 wxApi.chooseLocation/openLocation/chooseMedia 间接调用，不是断言要求的 wx.xxx 或 mpx.xxx 直接调用。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "category": "conditional-compile",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:107-110 引入通用 getMiniProgramApi；218-225、236-244 也用它改写 request、redirectTo、showToast，不仅隔离 choosePlace/openPlace/choosePhoto 三项缺失能力。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:143-147 中 Web 分支仅提示“Web 宿主的位置选择协议尚未接入”并 return，未声明或调用虚构位置选择接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:161-165 中 Web 分支仅提示“Web 宿主的地图查看协议尚未接入”并 return，未声明或调用虚构地图接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:181-184 中 Web 分支仅提示“Web 宿主的图片选择协议尚未接入”并 return，未声明或调用虚构媒体选择接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx 仅在 102-105 使用 window/document 做 Web 环境判断；未出现 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代媒体/地图/位置实现。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:211-216 在 Web 直接阻断发布；218-225、236-244 将 request、redirectTo、showToast 改为 wxApi 间接调用及能力探测，不符合继续走 wx.xxx/mpx.xxx 官方链路的要求。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:91-94 将 Web 发布按钮禁用并显示“Web 发布能力待接入”，211-216 Web submitPost 直接 return，导致内容、话题、评论开关等发布及提交后详情跳转链路在 Web 不完整。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言已覆盖主要偏差：候选把未声明能力范围扩大到发布，并引入通用 API 获取层。未见会实质影响结论的断言缺口。"
+    ],
+    "overall": "Web 三项缺失能力边界处理合格，但非 Web 宿主能力调用方式、官方请求/路由/提示链路和发布业务完整性不满足要求。"
+  }
+}

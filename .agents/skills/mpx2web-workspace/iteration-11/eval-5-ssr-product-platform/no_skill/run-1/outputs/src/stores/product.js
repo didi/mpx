@@ -1,71 +1,49 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchProduct, fetchRecommendations } from '../services/product'
 
+const pendingByStore = new WeakMap()
+
 export const useProductStore = defineStore('product-platform', {
   state: () => ({
-    productsById: {},
-    recommendationsByProductId: {},
-    loadedByProductId: {},
-    requestVersionByProductId: {}
+    productId: '',
+    product: {},
+    recommendations: [],
+    loadingProductId: ''
   }),
   actions: {
-    hasProduct (productId) {
-      return this.loadedByProductId[String(productId)] === true
-    },
-
-    getProduct (productId) {
-      return this.productsById[String(productId)] || {}
-    },
-
-    getRecommendations (productId) {
-      return this.recommendationsByProductId[String(productId)] || []
-    },
-
     async loadProduct (productId, ssrContext) {
-      const key = String(productId)
+      if (!productId) return { product: {}, recommendations: [] }
 
-      // SSR state is hydrated into Pinia, so the first client onLoad reuses it.
-      if (this.hasProduct(key)) {
-        return {
-          product: this.getProduct(key),
-          recommendations: this.getRecommendations(key)
-        }
+      if (this.productId === productId && this.product && this.product.id) {
+        return { product: this.product, recommendations: this.recommendations }
       }
 
-      const requestVersion = (this.requestVersionByProductId[key] || 0) + 1
-      this.requestVersionByProductId = {
-        ...this.requestVersionByProductId,
-        [key]: requestVersion
+      // Mark the selection before awaiting anything. A response for an older
+      // selection can then never commit after a switch.
+      this.loadingProductId = productId
+      let requestCache = pendingByStore.get(this)
+      if (!requestCache) {
+        requestCache = new Map()
+        pendingByStore.set(this, requestCache)
+      }
+      let pending = requestCache.get(productId)
+      if (!pending) {
+        pending = Promise.all([
+          fetchProduct(productId, ssrContext),
+          fetchRecommendations(productId, ssrContext)
+        ]).then(([product, recommendations]) => ({ product, recommendations }))
+        requestCache.set(productId, pending)
       }
 
-      // The request context is passed through this call only. No module-level request
-      // or origin is shared between concurrent Node renders.
-      const [product, recommendations] = await Promise.all([
-        fetchProduct(key, ssrContext),
-        fetchRecommendations(key, ssrContext)
-      ])
-
-      // If this id was requested again while the pair was in flight, only the
-      // newest pair may update the hydrated cache.
-      if (this.requestVersionByProductId[key] !== requestVersion) {
-        return { product, recommendations, stale: true }
+      const result = await pending
+      // A late result is still useful to its caller, but must not overwrite a
+      // newer product selected in this store.
+      if (this.loadingProductId === productId) {
+        this.productId = productId
+        this.product = result.product
+        this.recommendations = result.recommendations
       }
-
-      // Cache by id. A late response for one product cannot replace another product.
-      this.productsById = {
-        ...this.productsById,
-        [key]: product
-      }
-      this.recommendationsByProductId = {
-        ...this.recommendationsByProductId,
-        [key]: recommendations
-      }
-      this.loadedByProductId = {
-        ...this.loadedByProductId,
-        [key]: true
-      }
-
-      return { product, recommendations }
+      return result
     }
   }
 })

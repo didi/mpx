@@ -1,7 +1,18 @@
+function requestOrigin (requestContext) {
+  const req = requestContext && requestContext.req
+  if (!req) return ''
+
+  const headers = req.headers || {}
+  const forwardedProtocol = String(headers['x-forwarded-proto'] || '').split(',')[0].trim()
+  const forwardedHost = String(headers['x-forwarded-host'] || '').split(',')[0].trim()
+  const protocol = forwardedProtocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = forwardedHost || headers.host
+  if (!host) throw new Error('SSR request host is missing')
+  return `${protocol}://${host}`
+}
+
 export function fetchArticle (articleId, requestContext) {
-  const context = requestContext || {}
-  const request = context.fetch || globalThis.fetch
-  const origin = context.origin || ''
-  const url = `${origin}/api/articles/${encodeURIComponent(articleId)}`
-  return request(url, context.fetchOptions).then((response) => response.json())
+  const path = `/api/articles/${encodeURIComponent(articleId)}`
+  const origin = requestOrigin(requestContext)
+  return fetch(origin ? `${origin}${path}` : path).then((response) => response.json())
 }

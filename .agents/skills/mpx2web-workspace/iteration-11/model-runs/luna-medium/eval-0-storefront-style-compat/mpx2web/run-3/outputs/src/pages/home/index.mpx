@@ -150,13 +150,6 @@ createPage({
   border-radius: 18rpx;
 }
 
-.home-banner {
-  display: block;
-  box-sizing: border-box;
-  border: 4rpx solid #e64340;
-  border-radius: 0;
-}
-
 .category-tabs {
   display: flex;
   margin: 24rpx 0;

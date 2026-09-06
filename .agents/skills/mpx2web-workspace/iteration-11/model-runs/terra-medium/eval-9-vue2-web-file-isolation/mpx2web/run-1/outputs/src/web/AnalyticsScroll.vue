@@ -1,14 +1,16 @@
 <template>
   <div
-    ref="viewport"
+    ref="scroller"
     class="analytics-scroll"
     :class="$attrs.class"
-    :style="[scrollStyle, $attrs.style]"
-    v-bind="forwardedAttrs"
-    v-on="forwardedListeners"
-    @scroll="onScroll"
+    :style="[$attrs.style, scrollStyle]"
+    :data-scroll-x="scrollX"
+    :data-scroll-y="scrollY"
+    v-bind="passthroughAttrs"
+    v-on="passthroughListeners"
+    @scroll="handleScroll"
   >
-    <slot></slot>
+    <slot />
   </div>
 </template>
 
@@ -21,115 +23,105 @@ export default {
     scrollY: { type: Boolean, default: false },
     scrollTop: { type: Number, default: 0 },
     scrollLeft: { type: Number, default: 0 },
-    scrollIntoView: { type: [String, Number], default: '' },
+    scrollIntoView: { type: String, default: '' },
     upperThreshold: { type: Number, default: 50 },
-    lowerThreshold: { type: Number, default: 50 }
+    lowerThreshold: { type: Number, default: 50 },
+    scrollWithAnimation: { type: Boolean, default: false }
   },
   data () {
     return {
-      lastScrollTop: 0,
-      lastScrollLeft: 0,
-      upperActive: { top: false, left: false },
-      lowerActive: { bottom: false, right: false }
+      lastTop: 0,
+      lastLeft: 0,
+      upperEdges: { top: false, left: false },
+      lowerEdges: { bottom: false, right: false }
     }
   },
   computed: {
+    passthroughAttrs () {
+      const attrs = Object.assign({}, this.$attrs)
+      delete attrs.class
+      delete attrs.style
+      return attrs
+    },
+    passthroughListeners () {
+      const listeners = Object.assign({}, this.$listeners)
+      delete listeners.scroll
+      delete listeners.scrolltoupper
+      delete listeners.scrolltolower
+      return listeners
+    },
     scrollStyle () {
       return {
         overflowX: this.scrollX ? 'auto' : 'hidden',
-        overflowY: this.scrollY ? 'auto' : 'hidden'
+        overflowY: this.scrollY ? 'auto' : 'hidden',
+        scrollBehavior: this.scrollWithAnimation ? 'smooth' : 'auto'
       }
-    },
-    forwardedListeners () {
-      const listeners = {}
-      Object.keys(this.$listeners).forEach((name) => {
-        if (name !== 'scroll' && name !== 'scrolltoupper' && name !== 'scrolltolower') {
-          listeners[name] = this.$listeners[name]
-        }
-      })
-      return listeners
-    },
-    forwardedAttrs () {
-      const attrs = {}
-      Object.keys(this.$attrs).forEach((name) => {
-        if (name !== 'class' && name !== 'style') attrs[name] = this.$attrs[name]
-      })
-      return attrs
     }
   },
   watch: {
-    scrollTop: { immediate: true, handler (value) { this.setScrollPosition('top', value) } },
-    scrollLeft: { immediate: true, handler (value) { this.setScrollPosition('left', value) } },
-    scrollIntoView: { immediate: true, handler () { this.scrollToTarget() } }
+    scrollTop (value) { this.setPosition('top', value) },
+    scrollLeft (value) { this.setPosition('left', value) },
+    scrollIntoView () { this.scrollTargetIntoView() }
   },
   mounted () {
-    const viewport = this.$refs.viewport
-    this.lastScrollTop = viewport.scrollTop
-    this.lastScrollLeft = viewport.scrollLeft
-    this.updateBoundaryState(false)
+    this.setPosition('top', this.scrollTop)
+    this.setPosition('left', this.scrollLeft)
+    this.scrollTargetIntoView()
+  },
+  updated () {
+    this.scrollTargetIntoView()
   },
   methods: {
-    setScrollPosition (axis, value) {
+    setPosition (axis, value) {
       this.$nextTick(() => {
-        const viewport = this.$refs.viewport
-        const position = Number(value)
-        if (!viewport || !Number.isFinite(position)) return
-        if (axis === 'top' && this.scrollY) viewport.scrollTop = position
-        if (axis === 'left' && this.scrollX) viewport.scrollLeft = position
+        const node = this.$refs.scroller
+        if (!node) return
+        node[axis === 'top' ? 'scrollTop' : 'scrollLeft'] = Number(value) || 0
       })
     },
-    scrollToTarget () {
+    scrollTargetIntoView () {
+      const id = this.scrollIntoView
+      if (!id) return
       this.$nextTick(() => {
-        const viewport = this.$refs.viewport
-        const targetId = this.scrollIntoView
-        if (!viewport || targetId === '' || targetId === null || targetId === undefined) return
-        const target = Array.prototype.find.call(viewport.querySelectorAll('[id]'), (node) => node.id === String(targetId))
+        const node = this.$refs.scroller
+        if (!node || !node.querySelector) return
+        const target = Array.prototype.slice.call(node.querySelectorAll('[id]')).find((item) => item.id === id)
         if (!target) return
-        const viewportRect = viewport.getBoundingClientRect()
-        const targetRect = target.getBoundingClientRect()
-        if (this.scrollY) viewport.scrollTop += targetRect.top - viewportRect.top
-        if (this.scrollX) viewport.scrollLeft += targetRect.left - viewportRect.left
+        node.scrollLeft = target.offsetLeft - node.offsetLeft
+        node.scrollTop = target.offsetTop - node.offsetTop
       })
     },
-    onScroll () {
-      const viewport = this.$refs.viewport
+    handleScroll (event) {
+      const node = event.currentTarget
       const detail = {
-        scrollTop: viewport.scrollTop,
-        scrollLeft: viewport.scrollLeft,
-        scrollHeight: viewport.scrollHeight,
-        scrollWidth: viewport.scrollWidth,
-        deltaX: viewport.scrollLeft - this.lastScrollLeft,
-        deltaY: viewport.scrollTop - this.lastScrollTop
+        scrollTop: node.scrollTop,
+        scrollLeft: node.scrollLeft,
+        scrollHeight: node.scrollHeight,
+        scrollWidth: node.scrollWidth,
+        deltaX: node.scrollLeft - this.lastLeft,
+        deltaY: node.scrollTop - this.lastTop
       }
-      this.lastScrollTop = viewport.scrollTop
-      this.lastScrollLeft = viewport.scrollLeft
+      this.lastTop = node.scrollTop
+      this.lastLeft = node.scrollLeft
       this.$emit('scroll', detail)
-      this.updateBoundaryState(true)
+      this.emitEdges(node, detail)
     },
-    updateBoundaryState (emitEvents) {
-      const viewport = this.$refs.viewport
-      if (!viewport) return
-      const upperThreshold = Math.max(0, Number(this.upperThreshold) || 0)
-      const lowerThreshold = Math.max(0, Number(this.lowerThreshold) || 0)
-      const states = {
-        top: this.scrollY && viewport.scrollTop <= upperThreshold,
-        left: this.scrollX && viewport.scrollLeft <= upperThreshold,
-        bottom: this.scrollY && viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop <= lowerThreshold,
-        right: this.scrollX && viewport.scrollWidth - viewport.clientWidth - viewport.scrollLeft <= lowerThreshold
-      }
-      ;['top', 'left'].forEach((direction) => {
-        if (emitEvents && states[direction] && !this.upperActive[direction]) {
-          this.$emit('scrolltoupper', { direction })
-        }
-        this.upperActive[direction] = states[direction]
-      })
-      ;['bottom', 'right'].forEach((direction) => {
-        if (emitEvents && states[direction] && !this.lowerActive[direction]) {
-          this.$emit('scrolltolower', { direction })
-        }
-        this.lowerActive[direction] = states[direction]
-      })
+    emitEdges (node, detail) {
+      const upper = Number(this.upperThreshold) || 0
+      const lower = Number(this.lowerThreshold) || 0
+      this.emitEdge('top', this.scrollY && node.scrollTop <= upper, detail, this.upperEdges, 'scrolltoupper')
+      this.emitEdge('left', this.scrollX && node.scrollLeft <= upper, detail, this.upperEdges, 'scrolltoupper')
+      this.emitEdge('bottom', this.scrollY && node.scrollHeight - node.clientHeight - node.scrollTop <= lower, detail, this.lowerEdges, 'scrolltolower')
+      this.emitEdge('right', this.scrollX && node.scrollWidth - node.clientWidth - node.scrollLeft <= lower, detail, this.lowerEdges, 'scrolltolower')
+    },
+    emitEdge (direction, active, detail, state, eventName) {
+      if (active && !state[direction]) this.$emit(eventName, Object.assign({ direction }, detail))
+      state[direction] = active
     }
   }
 }
 </script>
+
+<style scoped>
+.analytics-scroll { box-sizing: border-box; }
+</style>

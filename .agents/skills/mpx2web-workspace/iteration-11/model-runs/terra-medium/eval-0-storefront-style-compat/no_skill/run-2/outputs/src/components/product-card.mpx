@@ -54,8 +54,8 @@ createComponent({
   overflow: hidden;
   background: #ffffff;
   border-radius: 20rpx;
-  box-sizing: border-box;
   box-shadow: 0 8rpx 24rpx rgba(31, 35, 48, 0.08);
+  box-sizing: border-box;
 }
 
 .product-cover-wrap {
@@ -85,6 +85,13 @@ createComponent({
   box-sizing: border-box;
 }
 
+.product-title,
+.product-subtitle,
+.product-sales,
+.original-price {
+  min-width: 0;
+}
+
 .product-title {
   display: block;
   overflow: hidden;
@@ -109,14 +116,15 @@ createComponent({
 
 .product-meta {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
   margin-top: 18rpx;
 }
 
 .price-tag {
   display: flex;
-  align-items: baseline;
+  flex: 0 0 auto;
+  align-items: flex-end;
   height: 48rpx;
   color: #e64340;
   white-space: nowrap;
@@ -124,6 +132,7 @@ createComponent({
 
 .price-currency,
 .price-unit {
+  padding-bottom: 4rpx;
   font-size: 20rpx;
   line-height: 28rpx;
 }
@@ -136,8 +145,12 @@ createComponent({
 }
 
 .product-sales {
+  overflow: hidden;
   color: #a0a4ad;
   font-size: 20rpx;
+  line-height: 28rpx;
+  text-align: right;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -156,10 +169,12 @@ createComponent({
 
 .cart-button {
   display: flex;
+  flex: 0 0 52rpx;
   align-items: center;
   justify-content: center;
   width: 52rpx;
   height: 52rpx;
+  min-width: 0;
   margin: 0;
   padding: 0;
   color: #ffffff;
@@ -169,6 +184,10 @@ createComponent({
   border: 0;
   border-radius: 50%;
   box-sizing: border-box;
+}
+
+.cart-button::after {
+  border: 0;
 }
 </style>
 

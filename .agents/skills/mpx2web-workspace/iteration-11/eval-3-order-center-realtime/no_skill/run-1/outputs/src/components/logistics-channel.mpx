@@ -19,8 +19,8 @@ createComponent({
     memberId: {
       type: String,
       value: '',
-      observer (memberId, previousMemberId) {
-        if (!this._attached || memberId === previousMemberId) return
+      observer (value, oldValue) {
+        if (value === oldValue || !this._attached) return
         this.connectChannel()
       }
     }
@@ -28,55 +28,60 @@ createComponent({
   data: {
     connected: false
   },
-  created () {
-    this._attached = false
-    this._channelGeneration = 0
-    this._socketTask = null
-  },
   attached () {
     this._attached = true
+    this._channelVersion = 0
+    this._socketTask = null
+    this._activeMemberId = ''
     this.connectChannel()
   },
   detached () {
     this._attached = false
-    this.destroyChannel(false)
+    this.closeChannel(false)
   },
   methods: {
-    isCurrentChannel (generation, memberId, task) {
+    isCurrentChannel (task, version, memberId) {
       return this._attached &&
-        generation === this._channelGeneration &&
-        memberId === this.memberId &&
-        task === this._socketTask
+        this._socketTask === task &&
+        this._channelVersion === version &&
+        this._activeMemberId === memberId &&
+        this.memberId === memberId
     },
-    updateConnected (connected, memberId) {
+    updateConnection (connected, memberId) {
       if (this.connected === connected) return
       this.connected = connected
       this.triggerEvent('connectedchange', { connected, memberId })
     },
-    closeTask (task) {
-      if (!task || typeof task.close !== 'function') return
-      try {
-        task.close({ code: 1000, reason: 'channel replaced' })
-      } catch (error) {}
-    },
-    destroyChannel (notify) {
-      this._channelGeneration += 1
+    closeChannel (notify) {
+      this._channelVersion = (this._channelVersion || 0) + 1
       const task = this._socketTask
+      const memberId = this._activeMemberId
       this._socketTask = null
-      this.closeTask(task)
+      this._activeMemberId = ''
       if (notify) {
-        this.updateConnected(false, this.memberId)
+        this.updateConnection(false, memberId)
       } else {
         this.connected = false
       }
+      if (task && typeof task.close === 'function') {
+        try {
+          task.close({ code: 1000, reason: 'channel replaced' })
+        } catch (error) {}
+      }
     },
     connectChannel () {
-      const memberId = this.memberId
-      this.destroyChannel(true)
-      if (!this._attached || !memberId) return
+      if (!this._attached) return
+      const previousMemberId = this._activeMemberId
+      this.closeChannel(true)
 
-      const generation = this._channelGeneration
+      const memberId = this.memberId
+      if (!memberId) return
+      if (previousMemberId !== memberId) {
+        this.triggerEvent('connectedchange', { connected: false, memberId })
+      }
+      const version = this._channelVersion
       let task
+
       try {
         task = wx.connectSocket({
           url: `wss://logistics.example.com/members/${encodeURIComponent(memberId)}`,
@@ -85,14 +90,11 @@ createComponent({
           }
         })
       } catch (error) {
-        if (generation !== this._channelGeneration || memberId !== this.memberId) return
         this.triggerEvent('error', { error, memberId })
         return
       }
 
-      this._socketTask = task
       if (!task || typeof task.onOpen !== 'function') {
-        this._socketTask = null
         this.triggerEvent('error', {
           error: new Error('SocketTask is unavailable'),
           memberId
@@ -100,12 +102,16 @@ createComponent({
         return
       }
 
+      this._socketTask = task
+      this._activeMemberId = memberId
+
       task.onOpen(() => {
-        if (!this.isCurrentChannel(generation, memberId, task)) return
-        this.updateConnected(true, memberId)
+        if (!this.isCurrentChannel(task, version, memberId)) return
+        this.updateConnection(true, memberId)
       })
+
       task.onMessage(({ data }) => {
-        if (!this.isCurrentChannel(generation, memberId, task)) return
+        if (!this.isCurrentChannel(task, version, memberId)) return
         let message
         try {
           message = typeof data === 'string' ? JSON.parse(data) : data
@@ -114,34 +120,36 @@ createComponent({
           return
         }
         if (!message || message.type !== 'logistics' || !message.payload) return
-        if (message.payload.memberId && message.payload.memberId !== memberId) return
         this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
       })
+
       task.onError((error) => {
-        if (!this.isCurrentChannel(generation, memberId, task)) return
-        this.updateConnected(false, memberId)
+        if (!this.isCurrentChannel(task, version, memberId)) return
+        this.updateConnection(false, memberId)
         this.triggerEvent('error', { error, memberId })
       })
+
       task.onClose(() => {
-        if (!this.isCurrentChannel(generation, memberId, task)) return
+        if (!this.isCurrentChannel(task, version, memberId)) return
         this._socketTask = null
-        this.updateConnected(false, memberId)
+        this._activeMemberId = ''
+        this.updateConnection(false, memberId)
       })
     },
     reconnect () {
-      if (!this._attached || !this.memberId) return
+      if (!this.memberId || !this._attached) return
       this.connectChannel()
     },
     sendHeartbeat () {
       const task = this._socketTask
-      if (!this.connected || !task || typeof task.send !== 'function') return
-      const generation = this._channelGeneration
-      const memberId = this.memberId
+      const memberId = this._activeMemberId
+      const version = this._channelVersion
+      if (!this.connected || !this.isCurrentChannel(task, version, memberId)) return
       task.send({
         data: JSON.stringify({ type: 'ping', memberId }),
         fail: (error) => {
-          if (!this.isCurrentChannel(generation, memberId, task)) return
-          this.updateConnected(false, memberId)
+          if (!this.isCurrentChannel(task, version, memberId)) return
+          this.updateConnection(false, memberId)
           this.triggerEvent('error', { error, memberId })
         }
       })

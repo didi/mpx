@@ -71,7 +71,20 @@
 </template>
 
 <script>
-import { createPage } from '@mpxjs/core'
+import { createPage, implement } from '@mpxjs/core'
+
+if (__mpx_mode__ === 'web') {
+  implement('onShareAppMessage', {
+    modes: ['web'],
+    remove: true,
+    processor: () => {}
+  })
+  implement('onShareTimeline', {
+    modes: ['web'],
+    remove: true,
+    processor: () => {}
+  })
+}
 
 createPage({
   data: {
@@ -149,8 +162,7 @@ createPage({
       })
     },
     shareOnWeb () {
-      // TODO: 接入业务提供的 Web 分享 SDK、宿主 Bridge 或降级协议后在此发起分享。
-      wx.showToast({ title: 'Web 分享能力暂未接入', icon: 'none' })
+      // TODO: 接入业务指定的 Web 分享 SDK、宿主 Bridge 或降级协议。
     },
     openCampaignDetail () {
       wx.navigateTo({
@@ -336,10 +348,6 @@ createPage({
   background: #ff7a45;
 }
 
-.share-button-web {
-  display: none;
-}
-
 .detail-button {
   color: #ff7a45;
   background: #ffffff;
@@ -410,12 +418,6 @@ createPage({
   color: #aaa09a;
   font-size: 24rpx;
   text-align: center;
-}
-</style>
-
-<style mode="web">
-.share-button-web {
-  display: block;
 }
 </style>
 

@@ -3,7 +3,7 @@
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{showShareToolbar}}" class="share-toolbar">复制链接</view>
+    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
     <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
   </view>
 </template>
@@ -15,7 +15,9 @@ import { useArticleStore } from '../../stores/article'
 createPage({
   data: {
     articleId: '',
-    showShareToolbar: false,
+    // Keep this false during hydration. It is enabled only after the client
+    // page is ready, so browser-only UI cannot change the SSR markup.
+    isBrowser: false,
     favorite: false
   },
   computed: {
@@ -23,21 +25,23 @@ createPage({
     recommendations () { return useArticleStore(this.$pinia).recommendations }
   },
   onLoad (query) {
-    if (typeof window !== 'undefined') this.loadArticle(query.id)
+    this.loadArticle(query && query.id)
   },
   onReady () {
-    if (typeof window !== 'undefined') this.showShareToolbar = true
+    if (typeof window !== 'undefined') this.isBrowser = true
   },
   serverPrefetch () {
-    return this.loadArticle(this.$route.query.id, this.$ssrContext)
+    const articleId = this.$route.query && this.$route.query.id
+    return this.loadArticle(articleId, this.$ssrContext)
   },
   methods: {
     loadArticle (articleId, requestContext) {
-      if (!articleId) return Promise.resolve()
-      this.articleId = articleId
+      this.articleId = articleId || ''
       return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
     },
-    toggleFavorite () { this.favorite = !this.favorite },
+    toggleFavorite () {
+      this.favorite = !this.favorite
+    },
     openArticle (event) {
       mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
     }

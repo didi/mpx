@@ -1,58 +1,60 @@
 <template>
   <view class="product-video">
     <video
-      id="product-video-{{product.id}}"
+      id="{{videoId}}"
       class="video"
       src="{{product.video}}"
-      poster="{{product.image}}"
-      autoplay="{{true}}"
-      muted="{{true}}"
-      loop="{{true}}"
-      controls="{{false}}"
-      show-center-play-btn="{{true}}"
-      enable-progress-gesture="{{true}}"
+      autoplay
+      muted
+      playsinline
+      webkit-playsinline
+      enable-play-gesture
       object-fit="cover"
-      bindtimeupdate="onTimeUpdate"
-      bindloadedmetadata="onLoadedMetadata"
+      bindcanplay="onCanPlay"
       bindplay="onPlay"
       bindpause="onPause"
       bindended="onEnded"
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
-    <text class="video-progress">{{progress}} / {{duration}}</text>
+    <view class="video-meta">
+      <text>{{progress}} / {{duration}}</text>
+      <text wx:if="{{hasError}}" class="video-error">视频加载失败</text>
+    </view>
   </view>
 </template>
 
 <script>
-import { createComponent } from '@mpxjs/core'
+import mpx, { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
     product: { type: Object, value: () => ({}) }
   },
   data: {
+    videoId: '',
     progress: 0,
     duration: 0,
-    isPlaying: false,
-    videoSize: ''
+    hasError: false,
+    isPlaying: false
+  },
+  attached () {
+    const product = this.properties.product || {}
+    this.setData({ videoId: `product-video-${product.id || Date.now()}` })
   },
   methods: {
-    onTimeUpdate (event) {
-      const detail = event.detail || {}
-      this.setData({
-        progress: Math.floor(detail.currentTime || 0),
-        duration: Math.floor(detail.duration || this.duration || 0)
-      })
-    },
-    onLoadedMetadata (event) {
-      const detail = event.detail || {}
-      this.setData({
-        duration: Math.floor(detail.duration || 0),
-        videoSize: `${detail.width || 0}x${detail.height || 0}`
-      })
+    onCanPlay () {
+      // Mobile browsers permit programmatic autoplay only for muted media. The
+      // autoplay attribute handles the normal case; the context is a fallback
+      // when the source becomes ready after the component is mounted.
+      if (this.hasRequestedPlay || !this.data.videoId) return
+      this.hasRequestedPlay = true
+      const context = mpx.createVideoContext(this.data.videoId, this)
+      if (context && context.play) context.play()
     },
     onPlay () {
-      this.setData({ isPlaying: true })
+      this.setData({ isPlaying: true, hasError: false })
     },
     onPause () {
       this.setData({ isPlaying: false })
@@ -60,8 +62,20 @@ createComponent({
     onEnded () {
       this.setData({ isPlaying: false, progress: 0 })
     },
+    onTimeUpdate (event) {
+      const detail = event.detail || {}
+      this.setData({
+        progress: Math.floor(detail.currentTime || 0),
+        duration: Math.floor(detail.duration || this.data.duration || 0)
+      })
+    },
+    onLoadedMetadata (event) {
+      const detail = event.detail || {}
+      this.videoSize = `${detail.width || 0}x${detail.height || 0}`
+      this.setData({ duration: Math.floor(detail.duration || 0) })
+    },
     onVideoError () {
-      this.setData({ isPlaying: false })
+      this.setData({ hasError: true, isPlaying: false })
     }
   }
 })
@@ -76,15 +90,19 @@ createComponent({
 .video {
   display: block;
   width: 100%;
-  min-height: 360rpx;
   border-radius: 12rpx;
   background: #000;
 }
 
-.video-progress {
-  display: block;
-  margin-top: 12rpx;
+.video-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8rpx;
   color: #999;
   font-size: 24rpx;
+}
+
+.video-error {
+  color: #e64340;
 }
 </style>

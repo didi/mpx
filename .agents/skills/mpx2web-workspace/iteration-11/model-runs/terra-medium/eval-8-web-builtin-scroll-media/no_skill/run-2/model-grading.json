@@ -1,0 +1,94 @@
+{
+  "eval_id": 8,
+  "eval_name": "web-builtin-scroll-media",
+  "configuration": "no_skill",
+  "run_number": 2,
+  "model_grading_fingerprint": "96b040721ebe574793244dfd87d5b7ed43c7aac019ebdb7383b740c63572773c",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 226309
+  },
+  "expectations": [
+    {
+      "id": "b0",
+      "text": "sticky-header 在 Web 内建结构中是 scroll-view 或 sticky-section 的直接子节点，吸顶不依赖其内容中的 viewport fixed",
+      "category": "web-template",
+      "passed": false,
+      "evidence": "outputs/src/pages/feed/index.mpx:5-17 将分类栏改为独立的横向 scroll-view，outputs/src/pages/feed/index.mpx:19-42 才是纵向 feed-scroll；输出中没有 sticky-header/sticky-section，因此无法满足 sticky-header 作为 scroll-view 或 sticky-section 直接子节点的断言。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b1",
+      "text": "使用 binddragstart/binddragging/binddragend 时显式开启 enhanced，并保留完整的开始、过程、结束处理",
+      "category": "web-interaction",
+      "passed": false,
+      "evidence": "outputs/src/pages/feed/index.mpx:19-28 的纵向 scroll-view 只有 enable-flex、bindscroll、bindtouchstart/bindtouchmove/bindtouchend，没有 enhanced，也没有 binddragstart/binddragging/binddragend；outputs/src/pages/feed/index.mpx:86-112 仅实现 touch 开始、过程、结束处理。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b2",
+      "text": "动态分类、异步商品和图片固有尺寸晚到后，使用运行时真实消费的观察机制或图片 load/metadata 后的 nextTick + scroll-view ref.refresh 保证滚动范围更新；ref 可使用标准 wx:ref 或可选的 Web 条件写法，必须隔离的是 Web-only refresh 调用链，可由 Web 条件事件或脚本平台/能力判断完成",
+      "category": "web-scroll",
+      "passed": false,
+      "evidence": "outputs/src/pages/feed/index.mpx:31-36 给图片加了 bindload/binderror，outputs/src/pages/feed/index.mpx:113-128 调用 refreshScrollRange，但该方法只改 scrollTop 并 nextTick 还原，没有 scroll-view wx:ref/ref.refresh；outputs/src/pages/feed/index.mpx:69-76 异步写入 categories/products 后也没有 nextTick + refresh，outputs/src/components/product-video.mpx:70-72 的 loadedmetadata 未触发父级 scroll-view refresh。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b3",
+      "text": "常驻购物车位于 scroll-view 变换内容之外，并在 Web 保持相对浏览器视口的 position: fixed；不得仅为规避 BetterScroll transform 将其降级为相对页面容器的 absolute",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/pages/feed/index.mpx:42 关闭 feed-scroll，outputs/src/pages/feed/index.mpx:47 的 fixed-cart 位于 scroll-view 之外；outputs/src/pages/feed/index.mpx:162 明确使用 position: fixed、right、bottom 和 z-index，未降级为 absolute。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b4",
+      "text": "视频自动播放遵守浏览器策略：自动播放时静音并支持用户手势继续播放，不假定有声 autoplay 必然成功",
+      "category": "web-media",
+      "passed": true,
+      "evidence": "outputs/src/components/product-video.mpx:8-9 将 autoplay 和 muted 绑定到数据，outputs/src/components/product-video.mpx:36-37 默认 autoPlay: true 且 muted: true；outputs/src/components/product-video.mpx:2 和 44-53 通过用户点击 enableSoundAndPlay 后取消静音并调用 createVideoContext(...).play()。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b5",
+      "text": "timeupdate 与 loadedmetadata 处理兼容 Web 原生转发事件，不无条件读取微信专属 detail.currentTime/detail.width 结构",
+      "category": "web-media",
+      "passed": false,
+      "evidence": "outputs/src/components/product-video.mpx:66-72 无条件读取 event.detail.currentTime 和 event.detail.duration；若 Web 原生转发事件没有微信 detail 结构会直接访问失败，也没有从 event.target/currentTarget 的 currentTime、duration、videoWidth、videoHeight 等字段兜底。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b6",
+      "text": "只使用参考中 Web 实际消费的视频属性和事件；商品分类、滚动选择、视频播放与购物车业务链路在微信小程序继续可执行",
+      "category": "cross-platform-regression",
+      "passed": false,
+      "evidence": "outputs/src/components/product-video.mpx:10-12 无条件使用 controls、show-center-play-btn、object-fit，未见 Web 实际消费属性的条件隔离；同时 outputs/src/components/product-video.mpx:66-72 的视频事件处理仍依赖微信 detail 结构，视频 Web 链路不满足要求。分类和购物车链路在 outputs/src/pages/feed/index.mpx:77-82、129-130 有保留，但该断言是合取条件。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "b0 未明确“将分类栏移出纵向 scroll-view 并常驻”是否可替代 sticky-header 方案；若允许替代实现，该项结论可能改变。",
+      "b1 未明确 touchstart/touchmove/touchend 自实现手势是否可替代 enhanced + binddrag*；当前按断言文本要求判 FAIL。",
+      "b6 提到“参考中 Web 实际消费的视频属性和事件”，但本次可读文件只有 input/outputs；若另有未提供的参考清单，视频属性判断可能需要按该清单复核。"
+    ],
+    "overall": "候选只较完整地修了购物车常驻和静音自动播放；sticky、enhanced drag、scroll-view 真实 refresh、Web 原生视频事件兼容仍不满足验收要求。"
+  }
+}

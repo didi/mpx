@@ -1,10 +1,10 @@
 <template>
   <view class="feed-page">
     <scroll-view
-      ref="feedScroll"
       class="feed-scroll"
       scroll-y
       enhanced
+      wx:ref="feedScroll"
       binddragstart="onDragStart"
       binddragging="onDragging"
       binddragend="onDragEnd"
@@ -16,7 +16,7 @@
       </sticky-header>
       <view class="feed-content">
         <view wx:for="{{products}}" wx:key="id" class="product">
-          <image class="product-image" src="{{item.image}}" mode="widthFix" bindload="onImageLoad" />
+          <image src="{{item.image}}" mode="widthFix" bindload="onImageLoad" />
           <product-video wx:if="{{item.video}}" product="{{item}}" />
         </view>
       </view>
@@ -32,8 +32,8 @@ createPage({
   data: {
     categories: [],
     products: [],
-    activeCategoryId: null,
-    cartCount: 2
+    cartCount: 2,
+    isDragging: false
   },
   async onLoad () {
     const { data } = await mpx.request({ url: '/api/feed' })
@@ -46,15 +46,17 @@ createPage({
     },
     onImageLoad () {
       mpx.nextTick(() => {
-        const scrollView = this.$refs.feedScroll
-        if (scrollView && typeof scrollView.refresh === 'function') {
-          scrollView.refresh()
-        }
+        const scroll = this.$refs.feedScroll
+        if (scroll && typeof scroll.refresh === 'function') scroll.refresh()
       })
     },
-    onDragStart () {},
+    onDragStart () {
+      this.isDragging = true
+    },
     onDragging () {},
-    onDragEnd () {},
+    onDragEnd () {
+      this.isDragging = false
+    },
     openCart () {
       mpx.navigateTo({ url: '/pages/cart/index' })
     }
@@ -75,6 +77,5 @@ createPage({
 .feed-content { min-height: 100%; }
 .categories { display: flex; background: #fff; }
 .product { padding: 24rpx; }
-.product-image { display: block; width: 100%; }
 .fixed-cart { position: fixed; right: 24rpx; bottom: 40rpx; }
 </style>

@@ -1,19 +1,20 @@
 import mpx from '@mpxjs/api-proxy'
 
-function requestOrigin (ssrContext) {
-  if (typeof window !== 'undefined') return ''
-  const req = ssrContext && ssrContext.req
-  if (!req) return ''
+function requestUrl (path, options) {
+  const req = options && (options.req || (options.ssrContext && options.ssrContext.req))
+  if (!req) return path
+
   const headers = req.headers || {}
-  const protocol = (headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0].trim()
-  const host = (headers['x-forwarded-host'] || headers.host || '').split(',')[0].trim()
-  return host ? `${protocol}://${host}` : ''
+  const protocol = headers['x-forwarded-proto'] || req.protocol || 'http'
+  const host = headers['x-forwarded-host'] || headers.host
+  if (!host) throw new Error('SSR product request requires the current request host')
+  return `${protocol.split(',')[0].trim()}://${host}${path}`
 }
 
-function request (path, options = {}) {
+function get (path, options) {
   return new Promise((resolve, reject) => {
     mpx.request({
-      url: `${requestOrigin(options.ssrContext)}${path}`,
+      url: requestUrl(path, options),
       success: ({ data }) => resolve(data),
       fail: reject
     })
@@ -21,9 +22,9 @@ function request (path, options = {}) {
 }
 
 export function fetchProduct (productId, options) {
-  return request(`/api/products/${encodeURIComponent(productId)}`, options)
+  return get(`/api/products/${encodeURIComponent(productId)}`, options)
 }
 
 export function fetchRecommendations (productId, options) {
-  return request(`/api/products/${encodeURIComponent(productId)}/recommendations`, options)
+  return get(`/api/products/${encodeURIComponent(productId)}/recommendations`, options)
 }

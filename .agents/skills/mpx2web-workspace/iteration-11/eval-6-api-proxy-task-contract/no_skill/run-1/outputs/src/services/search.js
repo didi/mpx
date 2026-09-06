@@ -7,27 +7,8 @@ export function fetchTrendingKeywords () {
 }
 
 export function requestSuggestions (keyword) {
-  let requestTask = null
-  let aborted = false
-
-  const promise = request({
+  return request({
     url: '/api/search/suggest',
-    data: { keyword },
-    getTask (task) {
-      requestTask = task
-      if (aborted && requestTask && typeof requestTask.abort === 'function') {
-        requestTask.abort()
-      }
-    }
-  }).then(({ data }) => data.list)
-
-  return {
-    promise,
-    abort () {
-      aborted = true
-      if (requestTask && typeof requestTask.abort === 'function') {
-        requestTask.abort()
-      }
-    }
-  }
+    data: { keyword }
+  })
 }

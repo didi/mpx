@@ -11,7 +11,9 @@
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
-  properties: { metrics: { type: Array, value: () => [] } },
+  properties: {
+    metrics: { type: Array, value: () => [] }
+  },
   methods: {
     selectMetric (key) {
       this.triggerEvent('select', { key })

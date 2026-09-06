@@ -12,88 +12,115 @@ const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
 
 createComponent({
   properties: {
-    campaignId: { type: String, observer () { if (this._componentReady) this.initTracker() } },
+    campaignId: {
+      type: String,
+      observer () {
+        if (this._attached) this.initTracker()
+      }
+    },
     memberId: String
   },
-  data: { ready: false },
+  data: {
+    ready: false
+  },
+  created () {
+    this._attached = false
+    this._initToken = 0
+    this._listenersAttached = false
+    this.tracker = null
+    this._windowMessageHandler = (event) => this.handleWindowMessage(event)
+    this._visibilityChangeHandler = () => this.handleVisibilityChange()
+  },
   ready () {
-    this._destroyed = false
-    this._componentReady = true
-    this._trackerGeneration = 0
-    this._onWindowMessage = (event) => this.handleWindowMessage(event)
-    this._onVisibilityChange = () => this.handleVisibilityChange()
+    this._attached = true
     this.initTracker()
   },
   detached () {
-    this._destroyed = true
-    this._componentReady = false
-    this._trackerGeneration += 1
-    this.stopTracker()
+    this._attached = false
+    this._initToken += 1
+    this.detachListeners()
+    this.destroyTracker()
   },
   methods: {
-    hasBrowserListeners () {
+    isWebRuntime () {
       return typeof window !== 'undefined' && typeof document !== 'undefined'
     },
-    removeListeners () {
-      if (!this._listening || !this.hasBrowserListeners()) return
-      window.removeEventListener('message', this._onWindowMessage)
-      document.removeEventListener('visibilitychange', this._onVisibilityChange)
-      this._listening = false
+    attachListeners () {
+      if (!this.isWebRuntime() || this._listenersAttached) return
+      window.addEventListener('message', this._windowMessageHandler)
+      document.addEventListener('visibilitychange', this._visibilityChangeHandler)
+      this._listenersAttached = true
     },
-    stopTracker () {
-      this.removeListeners()
+    detachListeners () {
+      if (!this.isWebRuntime() || !this._listenersAttached) return
+      window.removeEventListener('message', this._windowMessageHandler)
+      document.removeEventListener('visibilitychange', this._visibilityChangeHandler)
+      this._listenersAttached = false
+    },
+    destroyTracker () {
       const tracker = this.tracker
       this.tracker = null
       if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
-      this.setData({ ready: false })
     },
     async initTracker () {
-      const generation = (this._trackerGeneration || 0) + 1
-      this._trackerGeneration = generation
-      this.stopTracker()
       const campaignId = this.campaignId
       const memberId = this.memberId
-      if (!campaignId) return
+      const initToken = this._initToken + 1
+      this._initToken = initToken
+      this.ready = false
+      this.detachListeners()
+      this.destroyTracker()
+      if (!this._attached || !campaignId) return
+
       try {
         const tracker = await campaignTracker.create({ campaignId, memberId })
-        if (this._destroyed || generation !== this._trackerGeneration || campaignId !== this.campaignId) {
+        if (!this._attached || initToken !== this._initToken || campaignId !== this.campaignId) {
           if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
           return
         }
+
         this.tracker = tracker
-        if (this.hasBrowserListeners()) {
-          window.addEventListener('message', this._onWindowMessage)
-          document.addEventListener('visibilitychange', this._onVisibilityChange)
-          this._listening = true
-        }
+        this.attachListeners()
         tracker.start()
-        this.setData({ ready: true })
+        this.ready = true
         this.triggerEvent('ready', { campaignId })
       } catch (error) {
-        if (!this._destroyed && generation === this._trackerGeneration) {
-          this.triggerEvent('error', { campaignId })
-        }
+        if (!this._attached || initToken !== this._initToken) return
+        this.ready = false
+        this.triggerEvent('error', { campaignId })
       }
     },
     handleWindowMessage (event) {
+      if (!this._attached || event.origin !== CAMPAIGN_ORIGIN || !this.tracker) return
       const message = event.data
-      if (!this.tracker || event.origin !== CAMPAIGN_ORIGIN || !message ||
-        message.type !== 'campaign-exposure' || message.campaignId !== this.campaignId) return
-      this.tracker.track('exposure', message.payload)
+      const messageCampaignId = message && (message.campaignId || (message.payload && message.payload.campaignId))
+      if (!message || message.type !== 'campaign-exposure' || messageCampaignId !== this.campaignId) return
+      if (typeof this.tracker.track === 'function') this.tracker.track('exposure', message.payload)
     },
     handleVisibilityChange () {
-      if (!this.tracker || typeof document === 'undefined') return
-      if (document.hidden) this.tracker.pause()
-      else this.tracker.resume()
+      if (!this._attached || !this.tracker || !this.isWebRuntime()) return
+      if (document.hidden) {
+        if (typeof this.tracker.pause === 'function') this.tracker.pause()
+      } else if (typeof this.tracker.resume === 'function') {
+        this.tracker.resume()
+      }
     }
   }
 })
 </script>
 
 <style scoped>
-.tracker-state { padding: 14rpx 24rpx; color: #ad7354; font-size: 21rpx; text-align: center; }
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
 </style>
 
 <script type="application/json">
-{ "component": true, "styleIsolation": "isolated" }
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
 </script>

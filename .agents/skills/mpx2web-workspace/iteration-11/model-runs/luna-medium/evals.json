@@ -247,8 +247,23 @@
           "category": "web-concurrency"
         },
         {
-          "id": "r8",
-          "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
+          "id": "r8a",
+          "text": "订单状态筛选入口和筛选结果更新链路保持完整",
+          "category": "business-regression"
+        },
+        {
+          "id": "r8b",
+          "text": "订单详情入口与原有详情跳转链路保持完整",
+          "category": "business-regression"
+        },
+        {
+          "id": "r8c",
+          "text": "订单删除或撤销操作及其列表状态更新链路保持完整",
+          "category": "business-regression"
+        },
+        {
+          "id": "r8d",
+          "text": "物流入口、SocketTask 消息接收与物流状态更新链路保持完整",
           "category": "business-regression"
         }
       ],
@@ -367,9 +382,19 @@
           "category": "ssr-request"
         },
         {
-          "id": "p4",
-          "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，并在每个异步边界阻止卸载或旧商品结果挂载",
+          "id": "p4a",
+          "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，不进入 SSR 或小程序执行路径",
           "category": "web-sdk"
+        },
+        {
+          "id": "p4b",
+          "text": "SDK 动态 import、create 等实际异步边界后复核挂载状态、初始化代际和商品身份，晚到实例不得挂载",
+          "category": "web-concurrency"
+        },
+        {
+          "id": "p4c",
+          "text": "商品切换触发重新初始化并推进身份代际，旧 productId 的异步结果不能覆盖当前商品",
+          "category": "web-concurrency"
         },
         {
           "id": "p5",
@@ -639,13 +664,28 @@
           "category": "web-scroll"
         },
         {
-          "id": "v8",
-          "text": "自定义滚动组件在原生滚动时发出包含 scrollTop、scrollLeft、scrollHeight、scrollWidth、deltaX、deltaY 的 scroll 事件，并按 upper/lower threshold 与实际滚动轴发出方向为 top/left、bottom/right 的 scrolltoupper/scrolltolower，避免阈值内重复泛滥触发",
+          "id": "v8a",
+          "text": "自定义滚动组件发出的 scroll 事件包含 scrollTop、scrollLeft、scrollHeight、scrollWidth、deltaX 和 deltaY",
           "category": "web-scroll"
         },
         {
-          "id": "v9",
-          "text": "调用点继续使用横纵滚动、受控位置、scrollIntoView、upper/lower threshold 和三类滚动事件；小程序指标摘要/点击、Web 图表更新、Web 指标点击逐层回传与滚动容器业务链路均完整",
+          "id": "v8b",
+          "text": "自定义滚动组件按 upper/lower threshold 与实际滚动轴发出方向为 top/left、bottom/right 的 scrolltoupper/scrolltolower",
+          "category": "web-scroll"
+        },
+        {
+          "id": "v8c",
+          "text": "上、左、下、右边界分别维护跨界状态，只在进入阈值时触发，离开后复位，避免阈值内重复泛滥",
+          "category": "web-scroll"
+        },
+        {
+          "id": "v9a",
+          "text": "通用小程序指标摘要保留展示、点击和 select 业务回传，且不依赖 Web 图表模块",
+          "category": "business-regression"
+        },
+        {
+          "id": "v9b",
+          "text": "Web 图表在指标变化时安全 update 或销毁后重建，指标点击经 Vue select、Mpx bindselect 和 triggerEvent 逐层回传",
           "category": "business-regression"
         }
       ],
@@ -736,7 +776,7 @@
       "assertions": [
         {
           "id": "c0",
-          "text": "通用筛选触发器、选项与确认按钮使用 aria-role/aria-label 表达跨端语义，并保留 tap/遮罩触摸链路",
+          "text": "通用筛选触发器、选项与确认入口具有可访问的控件语义和名称，并保留 tap/遮罩触摸链路；带可见文本的原生 button 不要求重复添加 aria-role/aria-label，非原生可点击节点使用 aria-role",
           "category": "accessibility"
         },
         {

@@ -20,7 +20,7 @@ createPage({
     trendingKeywords: [],
     suggestions: [],
     requestTask: null,
-    suggestionRequestId: 0
+    suggestionGeneration: 0
   },
   async onLoad () {
     this.trendingKeywords = await fetchTrendingKeywords()
@@ -36,38 +36,33 @@ createPage({
       this.search(keyword)
     },
     cancelSuggestionRequest () {
-      this.suggestionRequestId += 1
-      if (this.requestTask) {
-        this.requestTask.abort()
-        this.requestTask = null
-      }
+      const task = this.requestTask
+      this.requestTask = null
+      this.suggestionGeneration += 1
+      if (task && task.abort) task.abort()
     },
     search (keyword) {
       this.keyword = keyword
       this.cancelSuggestionRequest()
-
       if (!keyword) {
         this.suggestions = []
         return
       }
 
-      const requestId = this.suggestionRequestId
-      const requestPromise = requestSuggestions(keyword)
-      this.requestTask = requestPromise.__returned
+      const generation = this.suggestionGeneration
+      const promise = requestSuggestions(keyword)
+      const task = promise.__returned
+      this.requestTask = task
 
-      requestPromise.then(({ data }) => {
-        if (this.suggestionRequestId !== requestId || this.keyword !== keyword) return
+      promise.then(({ data }) => {
+        if (this.requestTask !== task || this.suggestionGeneration !== generation || this.keyword !== keyword) return
         this.suggestions = data.list
       }).catch(() => {
-        if (this.suggestionRequestId !== requestId || this.keyword !== keyword) return
+        if (this.requestTask !== task || this.suggestionGeneration !== generation || this.keyword !== keyword) return
         mpx.showToast({
           title: '搜索失败',
           icon: 'none'
         })
-      }).finally(() => {
-        if (this.suggestionRequestId === requestId) {
-          this.requestTask = null
-        }
       })
     },
     openProduct (productId) {

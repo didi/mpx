@@ -46,9 +46,19 @@
       "category": "ssr-request"
     },
     {
-      "id": "p4",
-      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，并在每个异步边界阻止卸载或旧商品结果挂载",
+      "id": "p4a",
+      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，不进入 SSR 或小程序执行路径",
       "category": "web-sdk"
+    },
+    {
+      "id": "p4b",
+      "text": "SDK 动态 import、create 等实际异步边界后复核挂载状态、初始化代际和商品身份，晚到实例不得挂载",
+      "category": "web-concurrency"
+    },
+    {
+      "id": "p4c",
+      "text": "商品切换触发重新初始化并推进身份代际，旧 productId 的异步结果不能覆盖当前商品",
+      "category": "web-concurrency"
     },
     {
       "id": "p5",

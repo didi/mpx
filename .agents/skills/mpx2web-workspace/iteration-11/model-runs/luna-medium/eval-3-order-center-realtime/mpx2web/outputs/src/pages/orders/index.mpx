@@ -100,6 +100,11 @@ createPage({
     logisticsOnline: false,
     loading: false
   },
+  onUnload () {
+    // 让离页后排队到达的旧事件无法再匹配当前会员。
+    this.memberId = ''
+    this.logisticsOnline = false
+  },
   methods: {
     switchStatus (status) {
       if (status === this.activeStatus) return
@@ -139,14 +144,15 @@ createPage({
         }
       })
     },
-    handleSwipeEnd ({ detail }) {
-      if (!detail.open) return
+    handleSwipeEnd () {
+      // 每个订单组件自行维护滑动状态；locked 只表示业务禁用，不用于互相关闭。
     },
     handleConnectionChange ({ detail }) {
+      if (!detail || detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
-      if (detail.memberId && detail.memberId !== this.memberId) return
+      if (!detail || detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -157,8 +163,10 @@ createPage({
         })
       })
     },
-    handleChannelError () {
-      this.logisticsOnline = false
+    handleChannelError ({ detail }) {
+      if (!detail || !detail.memberId || detail.memberId === this.memberId) {
+        this.logisticsOnline = false
+      }
     },
     goShopping () {
       wx.switchTab({ url: '/pages/home/index' })
@@ -292,3 +300,5 @@ createPage({
   }
 }
 </script>
+
+

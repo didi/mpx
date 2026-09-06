@@ -33,7 +33,7 @@
   "returncode": 0,
   "outputs_complete": true,
   "compile_status": "passed",
-  "compile_boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
+  "compile_boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
   "duration_ms": 236519,
   "fingerprint": "99ebf110c4722908569546cbaa45f2adddefdbd033b0d3b4fcf4b6b5444cbc78",
   "fixture_digest": "ad95b9ecc465ab9f72a6aa62649af4b2c8374ba3632380d5182d93a914f27212",

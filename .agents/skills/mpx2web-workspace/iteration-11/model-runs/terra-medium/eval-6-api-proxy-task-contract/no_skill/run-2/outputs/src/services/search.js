@@ -7,8 +7,17 @@ export function fetchTrendingKeywords () {
 }
 
 export function requestSuggestions (keyword) {
-  return request({
+  const requestTask = request({
     url: '/api/search/suggest',
     data: { keyword }
   })
+  const suggestionPromise = requestTask.then(({ data }) => data)
+
+  suggestionPromise.abort = () => {
+    if (typeof requestTask.abort === 'function') {
+      requestTask.abort()
+    }
+  }
+
+  return suggestionPromise
 }

@@ -18,13 +18,13 @@
     </view>
 
     <web-view
-      wx:for="{{campaignFrames}}"
-      wx:key="sessionId"
+      wx:if="{{campaignUrl}}"
       id="campaign-webview"
-      src="{{item.url}}"
-      data-campaign-id="{{item.campaignId}}"
-      data-session-id="{{item.sessionId}}"
-      bindmessage="handleCampaignMessage"
+      src="{{campaignUrl}}"
+      data-campaign-id="{{campaignId}}"
+      data-generation="{{campaignGeneration}}"
+      bindmessage@wx="handleMiniProgramMessage"
+      bindmessage@web="handleWebMessage"
       bindload="handleCampaignLoad"
       binderror="handleCampaignError"
     />
@@ -38,10 +38,9 @@
     </view>
 
     <campaign-tracker
-      wx:if="{{campaignId && pageActive}}"
+      wx:if="{{campaignId}}"
       campaignId="{{campaignId}}"
       memberId="{{memberId}}"
-      exposureEvent="{{trackerExposure}}"
       bindready="handleTrackerReady"
       binderror="handleTrackerError"
     />
@@ -67,173 +66,141 @@ createPage({
       subtitle: '限时领券，爆款低至五折'
     },
     campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086',
-    campaignSessionId: 1,
-    campaignFrames: [
-      {
-        campaignId: 'summer-sale',
-        sessionId: 1,
-        url: 'https://campaign.example.com/summer-sale?memberId=member-10086'
-      }
-    ],
+    campaignGeneration: 1,
     loading: true,
     errorText: '',
-    trackerReady: false,
-    trackerExposure: null,
-    pageActive: true
+    trackerReady: false
   },
   onLoad () {
     this._pageAlive = true
-    this._pageVisible = true
-    this._campaignSessionSeed = this.campaignSessionId
-    this._trackerEventSeed = 0
-  },
-  onShow () {
-    this._pageVisible = true
-    this.pageActive = true
-    if (!this.campaignFrames.length && this.campaignUrl) {
-      this.mountCampaignFrame(this.campaignId, this.campaignUrl)
-    }
-  },
-  onHide () {
-    this.deactivateCampaignPage()
+    this._claimRequestTask = null
+    this._claimRequestGeneration = 0
   },
   onUnload () {
-    this.deactivateCampaignPage()
     this._pageAlive = false
+    this.campaignGeneration += 1
+    this.cancelClaimRequest()
   },
   methods: {
-    switchCampaign (campaignId) {
-      if (campaignId === this.campaignId) return
-      const campaignUrl = this.buildCampaignUrl(campaignId)
-      this.campaignId = campaignId
-      this.trackerReady = false
-      this.trackerExposure = null
-      this.mountCampaignFrame(campaignId, campaignUrl)
-    },
     buildCampaignUrl (campaignId) {
       return `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}`
     },
-    nextCampaignSessionId () {
-      const currentSeed = Math.max(this._campaignSessionSeed || 0, this.campaignSessionId || 0)
-      this._campaignSessionSeed = currentSeed + 1
-      this.campaignSessionId = this._campaignSessionSeed
-      return this._campaignSessionSeed
-    },
-    mountCampaignFrame (campaignId, campaignUrl) {
-      const sessionId = this.nextCampaignSessionId()
-      this.campaignUrl = campaignUrl
+    switchCampaign (campaignId) {
+      if (!this._pageAlive || campaignId === this.campaignId) return
+      this.cancelClaimRequest()
+      this.campaignId = campaignId
+      this.trackerReady = false
       this.loading = true
       this.errorText = ''
-      this.campaignFrames = this.pageActive
-        ? [{ campaignId, sessionId, url: campaignUrl }]
-        : []
+      this.replaceCampaignWebView(this.buildCampaignUrl(campaignId))
     },
-    deactivateCampaignPage () {
-      if (!this._pageVisible && !this.campaignFrames.length) return
-      this._pageVisible = false
-      this.pageActive = false
-      this.nextCampaignSessionId()
-      this.campaignFrames = []
-      this.loading = false
-      this.trackerReady = false
-      this.trackerExposure = null
+    replaceCampaignWebView (campaignUrl) {
+      const generation = this.campaignGeneration + 1
+      this.campaignGeneration = generation
+      this.campaignUrl = ''
+      this.$nextTick(() => {
+        if (!this._pageAlive || generation !== this.campaignGeneration) return
+        this.campaignUrl = campaignUrl
+      })
     },
-    getCampaignEventIdentity (event) {
+    isCurrentWebViewEvent (event) {
       const currentTarget = event && event.currentTarget
-      const dataset = (currentTarget && currentTarget.dataset) || {}
-      return {
-        campaignId: dataset.campaignId,
-        sessionId: dataset.sessionId
-      }
-    },
-    isCurrentCampaignSession (campaignId, sessionId) {
+      const dataset = currentTarget && currentTarget.dataset
       return Boolean(
         this._pageAlive &&
-        this._pageVisible &&
-        String(campaignId) === String(this.campaignId) &&
-        String(sessionId) === String(this.campaignSessionId)
+        dataset &&
+        dataset.campaignId === this.campaignId &&
+        String(dataset.generation) === String(this.campaignGeneration)
       )
     },
-    isCurrentCampaignEvent (event) {
-      const identity = this.getCampaignEventIdentity(event)
-      return this.isCurrentCampaignSession(identity.campaignId, identity.sessionId)
+    getLatestMessage (event) {
+      const data = event && event.detail && event.detail.data
+      if (Array.isArray(data)) return data[data.length - 1] || null
+      return data || null
     },
     handleCampaignLoad (event) {
-      if (!this.isCurrentCampaignEvent(event)) return
-      const { campaignId } = this.getCampaignEventIdentity(event)
+      if (!this.isCurrentWebViewEvent(event)) return
       this.loading = false
       wx.reportAnalytics('campaign_webview_load', {
-        campaign_id: campaignId
+        campaign_id: this.campaignId
       })
     },
     handleCampaignError (event) {
-      if (!this.isCurrentCampaignEvent(event)) return
+      if (!this.isCurrentWebViewEvent(event)) return
       this.loading = false
       this.errorText = '活动会场暂时无法打开'
     },
-    handleCampaignMessage (event) {
-      if (!this.isCurrentCampaignEvent(event)) return
-
-      const { campaignId, sessionId } = this.getCampaignEventIdentity(event)
-      const detail = (event && event.detail) || {}
-      const messages = Array.isArray(detail.data) ? detail.data : [detail.data]
-      const message = messages[messages.length - 1]
-      if (!message || typeof message !== 'object') return
-      if (message.campaignId != null && String(message.campaignId) !== String(campaignId)) return
-
+    handleMiniProgramMessage (event) {
+      if (!this.isCurrentWebViewEvent(event)) return
+      this.dispatchCampaignMessage(this.getLatestMessage(event))
+    },
+    handleWebMessage (event) {
+      if (!this.isCurrentWebViewEvent(event)) return
+      const message = this.getLatestMessage(event)
+      if (!message || message.campaignId !== this.campaignId) return
+      this.dispatchCampaignMessage(message)
+    },
+    dispatchCampaignMessage (message) {
+      if (!message) return
       if (message.type === 'claim-coupon') {
-        this.claimCoupon(message.couponId, campaignId, sessionId)
-      } else if (message.type === 'open-product') {
-        this.openProduct(message.productId, campaignId, sessionId)
-      } else if (message.type === 'campaign-exposure') {
-        this.forwardCampaignExposure(message.payload, campaignId, sessionId)
+        this.claimCoupon(message.couponId)
+      }
+      if (message.type === 'open-product') {
+        this.openProduct(message.productId)
       }
     },
-    claimCoupon (couponId, campaignId, sessionId) {
-      if (couponId == null || couponId === '') return
-      if (!this.isCurrentCampaignSession(campaignId, sessionId)) return
-
-      wx.request({
+    claimCoupon (couponId) {
+      if (!this._pageAlive) return
+      this.cancelClaimRequest()
+      const campaignId = this.campaignId
+      const requestGeneration = this._claimRequestGeneration
+      let task = null
+      task = wx.request({
+        usePromise: false,
         url: '/api/campaign/coupons/claim',
         method: 'POST',
         data: { campaignId, couponId },
         success: () => {
-          if (!this.isCurrentCampaignSession(campaignId, sessionId)) return
+          if (!this._pageAlive) return
+          if (this._claimRequestTask !== task) return
+          if (this._claimRequestGeneration !== requestGeneration) return
+          if (this.campaignId !== campaignId) return
           wx.showToast({ title: '领取成功', icon: 'success' })
+        },
+        complete: () => {
+          if (this._claimRequestTask === task) {
+            this._claimRequestTask = null
+          }
         }
       })
+      this._claimRequestTask = task
     },
-    openProduct (productId, campaignId, sessionId) {
-      if (productId == null || productId === '') return
-      if (!this.isCurrentCampaignSession(campaignId, sessionId)) return
-
+    cancelClaimRequest () {
+      const task = this._claimRequestTask
+      this._claimRequestTask = null
+      this._claimRequestGeneration = (this._claimRequestGeneration || 0) + 1
+      if (task && task.abort) task.abort()
+    },
+    openProduct (productId) {
+      if (!this._pageAlive) return
       wx.navigateTo({
-        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(campaignId)}`
+        url: `/packageProduct/pages/detail/index?id=${productId}&campaignId=${this.campaignId}`
       })
     },
-    forwardCampaignExposure (payload, campaignId, sessionId) {
-      if (!this.isCurrentCampaignSession(campaignId, sessionId)) return
-      this._trackerEventSeed = (this._trackerEventSeed || 0) + 1
-      this.trackerExposure = {
-        id: this._trackerEventSeed,
-        campaignId,
-        payload: payload && typeof payload === 'object' ? payload : {}
-      }
-    },
     reloadCampaign () {
-      if (!this._pageAlive || !this._pageVisible) return
-      this.mountCampaignFrame(this.campaignId, this.campaignUrl)
+      if (!this._pageAlive) return
+      this.loading = true
+      this.errorText = ''
+      this.replaceCampaignWebView(this.buildCampaignUrl(this.campaignId))
     },
     handleTrackerReady (event) {
-      const detail = (event && event.detail) || {}
-      if (!this._pageAlive || !this._pageVisible) return
-      if (String(detail.campaignId) !== String(this.campaignId)) return
+      const campaignId = event && event.detail && event.detail.campaignId
+      if (!this._pageAlive || campaignId !== this.campaignId) return
       this.trackerReady = true
     },
     handleTrackerError (event) {
-      const detail = (event && event.detail) || {}
-      if (!this._pageAlive || !this._pageVisible) return
-      if (String(detail.campaignId) !== String(this.campaignId)) return
+      const campaignId = event && event.detail && event.detail.campaignId
+      if (!this._pageAlive || campaignId !== this.campaignId) return
       this.trackerReady = false
     }
   }

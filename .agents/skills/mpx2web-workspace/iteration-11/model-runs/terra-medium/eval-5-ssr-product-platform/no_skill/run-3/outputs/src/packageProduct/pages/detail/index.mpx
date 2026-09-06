@@ -26,6 +26,12 @@ import { createPage } from '@mpxjs/core'
 import mpx from '@mpxjs/api-proxy'
 import { useProductStore } from '../../../stores/product'
 
+function getRouteProductId (page) {
+  const context = page.$ssrContext || {}
+  const query = context.query || (context.route && context.route.query) || (page.$route && page.$route.query) || {}
+  return query.id || ''
+}
+
 createPage({
   data: {
     productId: '',
@@ -42,24 +48,26 @@ createPage({
       return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
     }
   },
-  async onLoad (query) {
-    await this.loadProduct(query.id)
+  onLoad (query) {
+    const productId = query.id || getRouteProductId(this)
+    this.productId = productId
+    return this.loadProduct(productId, this.$ssrContext)
   },
-  // Vue SSR awaits this hook before rendering HTML.
-  async serverPrefetch () {
-    const query = (this.$route && this.$route.query) || {}
-    await this.loadProduct(query.id, this.$ssrContext)
+  // The renderer waits for this hook, so the HTML contains both product blocks.
+  onServerPrefetch () {
+    const productId = this.productId || getRouteProductId(this)
+    this.productId = productId
+    return this.loadProduct(productId, this.$ssrContext)
   },
   methods: {
     async loadProduct (productId, ssrContext) {
-      const id = String(productId || '')
-      if (!id) return
-      if (this.productId !== id) this.selectedSkuId = ''
-      this.productId = id
-      await useProductStore(this.$pinia).loadProduct(id, ssrContext)
-      if (this.productId === id && !this.selectedSkuId) {
-        this.selectedSkuId = this.product.skus && this.product.skus[0] && this.product.skus[0].id
-      }
+      if (!productId) return
+      const loadVersion = (this._loadVersion || 0) + 1
+      this._loadVersion = loadVersion
+      const didApply = await useProductStore(this.$pinia).loadProduct(productId, ssrContext)
+      if (loadVersion !== this._loadVersion || !didApply || this.productId !== productId) return
+      const firstSku = (this.product.skus || [])[0]
+      this.selectedSkuId = firstSku ? firstSku.id : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

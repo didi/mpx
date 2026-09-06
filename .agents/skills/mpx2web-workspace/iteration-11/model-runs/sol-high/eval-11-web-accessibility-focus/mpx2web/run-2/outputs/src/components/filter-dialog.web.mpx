@@ -21,7 +21,7 @@
           v-for="item in options"
           :key="item.value"
           type="button"
-          :aria-pressed="isSelected(item.value) ? 'true' : 'false'"
+          :aria-pressed="selected.includes(item.value) ? 'true' : 'false'"
           @click="toggle(item.value)"
         >{{item.label}}</button>
         <button type="button" @click="clear">清空</button>
@@ -34,180 +34,129 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 
-const FOCUSABLE_SELECTOR = [
+const focusableSelector = [
   'a[href]',
   'area[href]',
-  'button:not([disabled])',
   'input:not([disabled]):not([type="hidden"])',
   'select:not([disabled])',
   'textarea:not([disabled])',
-  '[contenteditable="true"]',
+  'button:not([disabled])',
   '[tabindex]:not([tabindex="-1"])'
 ].join(',')
 
 createComponent({
-  properties: {
-    options: { type: Array, value: () => [] }
-  },
-  data: {
-    visible: false,
-    selected: []
-  },
+  properties: { options: { type: Array, value: () => [] } },
+  data: { visible: false, selected: [] },
   attached () {
-    this._isDetached = false
-    this._focusRequestId = 0
-    this._triggerElement = null
-    this._keydownListening = false
-    this._keydownHandler = this.onKeydown.bind(this)
+    this.dialogGeneration = 0
+    this.dialogDetached = false
+    this.keyboardListening = false
+    this.triggerElement = null
   },
   detached () {
-    this._isDetached = true
-    this._focusRequestId += 1
-    this.removeKeydownListener()
-    this._triggerElement = null
+    this.dialogDetached = true
+    this.dialogGeneration += 1
+    this.removeKeyboardListener()
+    this.triggerElement = null
   },
   methods: {
     open (event) {
-      if (this.visible) return
+      if (this.visible || this.dialogDetached) return
 
-      this._triggerElement = this.getTriggerElement(event)
+      const doc = typeof document === 'undefined' ? null : document
+      this.triggerElement = event && event.currentTarget
+        ? event.currentTarget
+        : doc && doc.activeElement
+
+      const generation = ++this.dialogGeneration
       this.visible = true
-      const requestId = ++this._focusRequestId
-      this.addKeydownListener()
-
+      this.addKeyboardListener()
       this.$nextTick(() => {
         if (
-          this._isDetached ||
+          this.dialogDetached ||
           !this.visible ||
-          requestId !== this._focusRequestId
+          generation !== this.dialogGeneration
         ) return
 
-        const dialog = this.getDialogElement()
-        if (dialog) this.focusElement(dialog)
+        const dialog = this.$refs.dialog
+        if (this.isConnected(dialog)) dialog.focus()
       })
     },
     close () {
-      this.removeKeydownListener()
-      if (!this.visible) return
-
-      const triggerElement = this._triggerElement
-      this._triggerElement = null
+      this.dialogGeneration += 1
       this.visible = false
-      const requestId = ++this._focusRequestId
+      this.removeKeyboardListener()
 
-      this.$nextTick(() => {
-        if (
-          this._isDetached ||
-          this.visible ||
-          requestId !== this._focusRequestId ||
-          !this.isConnected(triggerElement)
-        ) return
-
-        this.focusElement(triggerElement)
-      })
-    },
-    isSelected (value) {
-      return this.selected.includes(value)
+      const trigger = this.triggerElement
+      this.triggerElement = null
+      if (this.isConnected(trigger)) trigger.focus()
     },
     toggle (value) {
-      this.selected = this.isSelected(value)
+      this.selected = this.selected.includes(value)
         ? this.selected.filter((item) => item !== value)
         : this.selected.concat(value)
     },
-    clear () {
-      this.selected = []
-    },
+    clear () { this.selected = [] },
     confirm () {
-      this.triggerEvent('confirm', { selected: this.selected.slice() })
+      this.triggerEvent('confirm', { selected: this.selected })
       this.close()
     },
-    addKeydownListener () {
-      if (
-        this._keydownListening ||
-        !this._keydownHandler ||
-        typeof document === 'undefined'
-      ) return
-
-      document.addEventListener('keydown', this._keydownHandler)
-      this._keydownListening = true
+    addKeyboardListener () {
+      if (this.keyboardListening || typeof document === 'undefined') return
+      document.addEventListener('keydown', this.onKeydown)
+      this.keyboardListening = true
     },
-    removeKeydownListener () {
-      if (
-        !this._keydownListening ||
-        !this._keydownHandler ||
-        typeof document === 'undefined'
-      ) return
-
-      document.removeEventListener('keydown', this._keydownHandler)
-      this._keydownListening = false
+    removeKeyboardListener () {
+      if (!this.keyboardListening || typeof document === 'undefined') return
+      document.removeEventListener('keydown', this.onKeydown)
+      this.keyboardListening = false
+    },
+    isConnected (element) {
+      if (!element || typeof element.focus !== 'function' || typeof document === 'undefined') {
+        return false
+      }
+      return element.ownerDocument === document && document.documentElement.contains(element)
+    },
+    getFocusableElements (dialog) {
+      return Array.prototype.filter.call(
+        dialog.querySelectorAll(focusableSelector),
+        (element) => element.tabIndex >= 0 && element.getAttribute('aria-hidden') !== 'true'
+      )
     },
     onKeydown (event) {
       if (!this.visible) return
 
       if (event.key === 'Escape') {
         event.preventDefault()
+        event.stopPropagation()
         this.close()
         return
       }
-
       if (event.key !== 'Tab') return
 
-      const dialog = this.getDialogElement()
-      if (!dialog) return
+      const dialog = this.$refs.dialog
+      if (!this.isConnected(dialog)) return
 
-      const focusableElements = Array.prototype.filter.call(
-        dialog.querySelectorAll(FOCUSABLE_SELECTOR),
-        (element) => element.getAttribute('aria-hidden') !== 'true'
-      )
-
+      const focusableElements = this.getFocusableElements(dialog)
       if (!focusableElements.length) {
         event.preventDefault()
-        this.focusElement(dialog)
+        dialog.focus()
         return
       }
 
-      const activeElement = document.activeElement
       const firstElement = focusableElements[0]
       const lastElement = focusableElements[focusableElements.length - 1]
-      const activeIndex = focusableElements.indexOf(activeElement)
+      const activeElement = document.activeElement
 
-      if (activeElement === dialog || activeIndex === -1) {
+      if (!dialog.contains(activeElement)) {
         event.preventDefault()
-        this.focusElement(event.shiftKey ? lastElement : firstElement)
-      } else if (event.shiftKey && activeElement === firstElement) {
+        ;(event.shiftKey ? lastElement : firstElement).focus()
+      } else if (event.shiftKey && (activeElement === firstElement || activeElement === dialog)) {
         event.preventDefault()
-        this.focusElement(lastElement)
+        lastElement.focus()
       } else if (!event.shiftKey && activeElement === lastElement) {
         event.preventDefault()
-        this.focusElement(firstElement)
-      }
-    },
-    getTriggerElement (event) {
-      const eventTarget = event && event.currentTarget
-      if (eventTarget && typeof eventTarget.focus === 'function') {
-        return eventTarget
-      }
-
-      const root = this.$el
-      return root && typeof root.querySelector === 'function'
-        ? root.querySelector('.filter-trigger')
-        : null
-    },
-    getDialogElement () {
-      const dialog = this.$refs && this.$refs.dialog
-      return dialog && typeof dialog.focus === 'function' ? dialog : null
-    },
-    isConnected (element) {
-      if (!element || typeof element.focus !== 'function') return false
-      if (typeof element.isConnected === 'boolean') return element.isConnected
-      return typeof document !== 'undefined' && document.documentElement.contains(element)
-    },
-    focusElement (element) {
-      if (!element || typeof element.focus !== 'function') return
-      try {
-        element.focus({ preventScroll: true })
-      } catch (error) {
-        element.focus()
+        firstElement.focus()
       }
     }
   }

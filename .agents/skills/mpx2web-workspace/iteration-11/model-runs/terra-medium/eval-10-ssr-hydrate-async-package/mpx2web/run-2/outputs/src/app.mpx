@@ -4,6 +4,7 @@ import { createPinia } from '@mpxjs/pinia'
 
 createApp({
   onAppInit () {
+    // SSR must receive a fresh state container for every request.
     return { pinia: createPinia() }
   }
 })

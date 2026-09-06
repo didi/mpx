@@ -1,14 +1,13 @@
 <template>
   <div class="filter">
     <button
-      ref="trigger"
       class="filter-trigger"
       type="button"
       aria-haspopup="dialog"
       :aria-expanded="visible ? 'true' : 'false'"
       @click="open"
     >筛选</button>
-    <div v-if="visible" class="mask" @click="close">
+    <div v-if="visible" class="mask" @click.self="close">
       <div
         ref="dialog"
         class="dialog"
@@ -16,7 +15,6 @@
         aria-modal="true"
         aria-label="商品筛选"
         tabindex="-1"
-        @click.stop
       >
         <button
           v-for="item in options"
@@ -49,18 +47,19 @@ createComponent({
   properties: { options: { type: Array, value: () => [] } },
   data: { visible: false, selected: [] },
   attached () {
-    this.isAttached = true
-    this.focusRequest = 0
+    this._isDestroyed = false
+    this._isListening = false
+    this._triggerElement = null
   },
   detached () {
-    this.isAttached = false
-    this.focusRequest += 1
+    this._isDestroyed = true
     this.removeKeydownListener()
   },
   methods: {
-    open () {
-      if (this.visible) return
-
+    open (event) {
+      this._triggerElement = event && event.currentTarget
+        ? event.currentTarget
+        : this._triggerElement
       this.visible = true
       this.addKeydownListener()
       this.focusDialog()
@@ -69,9 +68,8 @@ createComponent({
       if (!this.visible) return
 
       this.visible = false
-      this.focusRequest += 1
       this.removeKeydownListener()
-      this.restoreTriggerFocus()
+      this.focusTrigger()
     },
     toggle (value) {
       this.selected = this.selected.includes(value)
@@ -84,40 +82,38 @@ createComponent({
       this.close()
     },
     addKeydownListener () {
-      if (this.isListening) return
+      if (this._isListening) return
       document.addEventListener('keydown', this.onKeydown)
-      this.isListening = true
+      this._isListening = true
     },
     removeKeydownListener () {
-      if (!this.isListening) return
+      if (!this._isListening) return
       document.removeEventListener('keydown', this.onKeydown)
-      this.isListening = false
+      this._isListening = false
     },
     focusDialog () {
-      const request = ++this.focusRequest
       this.$nextTick(() => {
-        if (!this.isAttached || !this.visible || request !== this.focusRequest) return
-
-        const dialog = this.$refs.dialog
-        if (!dialog) return
-        const focusables = this.getFocusableElements(dialog)
-        ;(focusables[0] || dialog).focus()
+        if (!this._isDestroyed && this.visible && this.$refs.dialog) {
+          this.$refs.dialog.focus()
+        }
       })
     },
-    restoreTriggerFocus () {
+    focusTrigger () {
+      const trigger = this._triggerElement
       this.$nextTick(() => {
-        if (!this.isAttached || this.visible) return
-
-        const trigger = this.$refs.trigger
-        if (trigger && document.contains(trigger)) trigger.focus()
+        if (!this._isDestroyed && trigger && typeof trigger.focus === 'function') {
+          trigger.focus()
+        }
       })
     },
-    getFocusableElements (dialog) {
+    getFocusableElements () {
+      const dialog = this.$refs.dialog
+      if (!dialog) return []
       return Array.from(dialog.querySelectorAll(focusableSelector))
-        .filter((element) => !element.hasAttribute('disabled') && element.tabIndex >= 0)
+        .filter((element) => !element.hasAttribute('hidden'))
     },
     onKeydown (event) {
-      if (!this.visible) return
+      if (!this.visible || this._isDestroyed) return
 
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -128,21 +124,17 @@ createComponent({
       if (event.key !== 'Tab') return
 
       const dialog = this.$refs.dialog
-      if (!dialog) return
-      const focusables = this.getFocusableElements(dialog)
-      if (!focusables.length) {
-        event.preventDefault()
-        dialog.focus()
-        return
-      }
+      const focusable = this.getFocusableElements()
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
 
-      const first = focusables[0]
-      const last = focusables[focusables.length - 1]
-      const activeElement = document.activeElement
-      if (event.shiftKey && (activeElement === first || !dialog.contains(activeElement))) {
+      if (!first) {
+        event.preventDefault()
+        dialog && dialog.focus()
+      } else if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog || !dialog.contains(document.activeElement))) {
         event.preventDefault()
         last.focus()
-      } else if (!event.shiftKey && (activeElement === last || !dialog.contains(activeElement))) {
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
         event.preventDefault()
         first.focus()
       }

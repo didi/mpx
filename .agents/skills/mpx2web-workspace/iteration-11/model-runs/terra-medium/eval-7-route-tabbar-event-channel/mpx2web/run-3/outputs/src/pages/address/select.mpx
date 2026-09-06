@@ -12,12 +12,24 @@ createPage({
     addresses: [
       { id: 'home', name: '家', detail: '幸福路 1 号' },
       { id: 'office', name: '公司', detail: '科技路 8 号' }
-    ]
+    ],
+    currentAddress: null
+  },
+  onLoad () {
+    this.openerEventChannel = this.getOpenerEventChannel()
+    if (!this.openerEventChannel) return
+    this.openerEventChannel.on('checkoutReady', ({ address }) => {
+      this.currentAddress = address
+    })
   },
   methods: {
     confirm (address) {
-      this.getOpenerEventChannel().emit('addressSelected', address)
-      mpx.navigateBack({ delta: 1 })
+      if (this.openerEventChannel) {
+        this.openerEventChannel.emit('addressSelected', address)
+        mpx.navigateBack({ delta: 1 })
+      } else {
+        mpx.reLaunch({ url: '/pages/checkout/index' })
+      }
     }
   }
 })

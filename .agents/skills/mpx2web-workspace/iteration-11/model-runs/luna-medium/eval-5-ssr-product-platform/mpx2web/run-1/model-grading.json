@@ -1,0 +1,132 @@
+{
+  "eval_id": 5,
+  "eval_name": "ssr-product-platform",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "model_grading_fingerprint": "b7f2ed982189a5f2056aa195634a9fffb4725a3f5f8994a42f73743760f9015b",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 179901
+  },
+  "expectations": [
+    {
+      "id": "p0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia 实例",
+      "category": "ssr-isolation",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx:6-8 在 onAppInit 内部调用 createPinia() 并返回 { pinia }，没有沿用模块级单例。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p1",
+      "text": "serverPrefetch 返回 Promise 并等待商品与首屏推荐数据",
+      "category": "ssr-prefetch",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx:52-55 的 serverPrefetch 返回 this.loadProduct(...)；outputs/src/packageProduct/pages/detail/index.mpx:58-61 等待 store.loadProduct；outputs/src/stores/product.js:24-27 用 Promise.all 并发等待 fetchProduct 和 fetchRecommendations。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p2",
+      "text": "store 以状态字段或请求记录维护当前商品与加载身份；同 ID 注水可复用，ID 变化立即使旧复用条件失效，快速 A→B→A 时 B 的晚到结果不能覆盖当前 A",
+      "category": "ssr-hydration",
+      "passed": true,
+      "evidence": "outputs/src/stores/product.js:5-10 维护 productId、loaded、requestVersion；13-18 对同 ID 已加载或同版本 pending 请求复用；20-31 在 ID 变化时递增版本并立即写 productId，then 中用 requestVersion 和 productId 双校验，A→B→A 时 B 晚到不会覆盖当前 A。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p3",
+      "text": "同构 service 返回 Promise；服务端沿调用链接收当前 SSR 上下文并从其中的 req 解析 origin，浏览器和小程序保留相对地址；不依赖参数名、wx.request、浏览器全局、localhost 或未声明的 request/requestClient 契约",
+      "category": "ssr-request",
+      "passed": true,
+      "evidence": "outputs/src/services/product.js:3-13 从 requestContext.req.headers 解析协议和 host，15-21 服务端 origin 存在时用 fetch(`${origin}${path}`) 返回 Promise，24-30 无 req 时用 mpx.request 的相对 path；33-39 fetchProduct/fetchRecommendations 均返回 requestJson Promise。输出中未使用 localhost、wx.request、浏览器全局或 request/requestClient。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p4a",
+      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，不进入 SSR 或小程序执行路径",
+      "category": "web-sdk",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx:18-20 没有静态导入浏览器 SDK；79-85 在 __mpx_mode__ === 'web' 且 window 存在后才动态 import('@business/product-exposure-web')，SSR 和小程序路径不会触碰 SDK。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p4b",
+      "text": "SDK 动态 import、create 等实际异步边界后复核挂载状态、初始化代际和商品身份，晚到实例不得挂载",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx:39-43 定义挂载状态、代际和 productId 校验；84-90 在动态 import 和 exposureSdk.create 两个异步边界后都复核 isCurrentTracker，晚到 tracker 会 destroy 后返回。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p4c",
+      "text": "商品切换触发重新初始化并推进身份代际，旧 productId 的异步结果不能覆盖当前商品",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx:31-36 监听 productId 切换，resetTracker 后重新 initTracker；54-58 和 79-83 推进 trackerGeneration 并记录 trackerProductId；85-90 阻止旧 productId 的异步结果挂载。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p5",
+      "text": "推荐组件卸载或商品切换时销毁由 SDK create 返回的 tracker，并清理 Observer 和监听，旧回调不再上报",
+      "category": "web-cleanup",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx:44-52 disconnect observer 并 destroy tracker；54-58 商品切换时 resetTracker 清理旧实例；62-77 observer 回调上报前校验 generation、productId、tracker 和 observer 身份；101-103 detached 时标记 sdkDetached 并清理。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p6",
+      "text": "SSR 使用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /mall/",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/vue.config.js:2 设置 publicPath: '/mall/'；7 设置 useSSR: true；8-10 设置 routeConfig.mode: 'history' 且 base: '/mall/'。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p7",
+      "text": "微信小程序 onLoad 的商品加载具有明确执行路径，不得被 window 存在性或 Web-only 条件挡住",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx:48-50 onLoad 无 window 或 Web-only 条件，直接从 query.id 设置 productId 并调用 loadProduct；outputs/src/services/product.js:24-30 在无 SSR req 时走相对地址 mpx.request，适用于小程序。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p8",
+      "text": "规格切换、加购与相关推荐展示/跳转链路保持完整，且这些小程序业务路径不依赖浏览器全局对象",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx:7-18、44-45、63-75 保留规格切换、价格选择和加购；outputs/src/components/product-recommendations.mpx:1-15 展示相关推荐，95-99 保留推荐商品跳转；这些小程序业务路径未使用 window、document 或 IntersectionObserver，浏览器对象只在 SDK 初始化的 Web 分支中使用。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "p1 的结论依赖 Mpx SSR 生命周期中 onLoad 会先写入 this.productId；若验收器不建模该生命周期，可补充断言要求 serverPrefetch 直接从路由 query 或 SSR 上下文取得商品 id。"
+    ],
+    "overall": "候选输出覆盖了全部断言，主要风险仅是 serverPrefetch 对 onLoad 初始化顺序的框架假设。"
+  }
+}

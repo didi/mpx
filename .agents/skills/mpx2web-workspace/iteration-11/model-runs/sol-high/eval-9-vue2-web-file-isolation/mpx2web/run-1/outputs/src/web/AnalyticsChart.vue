@@ -15,70 +15,90 @@ export default {
   },
   data () {
     return {
-      chart: null,
-      chartGeneration: 0,
+      chartInstance: null,
       resizeObserver: null,
-      disposed: false
+      chartGeneration: 0,
+      chartDisposed: false
     }
   },
   watch: {
     metrics: {
       deep: true,
       handler (metrics) {
-        if (this.chart) this.chart.update(metrics)
+        if (this.chartInstance) this.chartInstance.update(metrics || [])
       }
     }
   },
   mounted () {
-    this.disposed = false
-    this.createChartInstance()
+    this.chartDisposed = false
+    this.initChart()
   },
   beforeDestroy () {
-    this.disposed = true
+    this.chartDisposed = true
     this.chartGeneration += 1
-    this.disconnectResizeObserver()
-    if (this.chart) this.chart.destroy()
-    this.chart = null
+    this.releaseChartResources()
   },
   methods: {
-    async createChartInstance () {
-      const generation = ++this.chartGeneration
+    isCurrentChart (generation, element) {
+      return !this.chartDisposed &&
+        !this._isBeingDestroyed &&
+        !this._isDestroyed &&
+        this.chartGeneration === generation &&
+        this.$refs.chart === element
+    },
+    async initChart () {
+      const generation = this.chartGeneration + 1
       const element = this.$refs.chart
-      let chart
+      this.chartGeneration = generation
+      this.releaseChartResources()
 
+      let instance
       try {
-        chart = await createChart(element, this.metrics, {
-          onSelect: (detail) => this.$emit('select', detail)
+        instance = await createChart(element, this.metrics || [], {
+          onSelect: (detail) => {
+            if (!this.isCurrentChart(generation, element) ||
+              this.chartInstance !== instance) return
+            this.$emit('select', detail)
+          }
         })
       } catch (error) {
-        if (!this.disposed && generation === this.chartGeneration) {
+        if (this.isCurrentChart(generation, element)) {
           this.$emit('chart-error', error)
         }
         return
       }
 
-      if (this.disposed || generation !== this.chartGeneration || this.$refs.chart !== element) {
-        chart.destroy()
+      if (!this.isCurrentChart(generation, element)) {
+        if (instance && instance.destroy) instance.destroy()
         return
       }
 
-      if (this.chart) this.chart.destroy()
-      this.chart = chart
-      this.chart.update(this.metrics)
-      this.observeChartSize(element, chart)
+      this.chartInstance = instance
+      instance.update(this.metrics || [])
+      this.bindResizeObserver(generation, element, instance)
     },
-    observeChartSize (element, chart) {
-      this.disconnectResizeObserver()
-      if (typeof ResizeObserver === 'undefined') return
+    bindResizeObserver (generation, element, instance) {
+      const browserWindow = element && element.ownerDocument &&
+        element.ownerDocument.defaultView
+      const ResizeObserverClass = browserWindow && browserWindow.ResizeObserver
+      if (!ResizeObserverClass) return
 
-      this.resizeObserver = new ResizeObserver(() => {
-        if (!this.disposed && this.chart === chart) chart.resize()
+      const observer = new ResizeObserverClass(() => {
+        if (!this.isCurrentChart(generation, element) ||
+          this.chartInstance !== instance ||
+          this.resizeObserver !== observer) return
+        instance.resize()
       })
-      this.resizeObserver.observe(element)
+      this.resizeObserver = observer
+      observer.observe(element)
     },
-    disconnectResizeObserver () {
-      if (this.resizeObserver) this.resizeObserver.disconnect()
+    releaseChartResources () {
+      const observer = this.resizeObserver
+      const instance = this.chartInstance
       this.resizeObserver = null
+      this.chartInstance = null
+      if (observer) observer.disconnect()
+      if (instance && instance.destroy) instance.destroy()
     }
   }
 }

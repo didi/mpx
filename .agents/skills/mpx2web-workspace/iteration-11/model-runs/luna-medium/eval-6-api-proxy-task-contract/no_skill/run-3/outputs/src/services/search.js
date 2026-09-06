@@ -6,10 +6,26 @@ export function fetchTrendingKeywords () {
   }).then(({ data }) => data)
 }
 
-export function requestSuggestions (keyword, { signal } = {}) {
-  return request({
+export function requestSuggestions (keyword) {
+  const controller = typeof AbortController === 'function'
+    ? new AbortController()
+    : null
+  const requestOptions = {
     url: '/api/search/suggest',
-    data: { keyword },
-    signal
-  }).then(({ data }) => data.list)
+    data: { keyword }
+  }
+
+  if (controller) requestOptions.signal = controller.signal
+
+  const requestPromise = request(requestOptions)
+  const promise = requestPromise.then(({ data }) => data.list)
+
+  promise.abort = () => {
+    if (controller) controller.abort()
+    if (requestPromise && typeof requestPromise.abort === 'function') {
+      requestPromise.abort()
+    }
+  }
+
+  return promise
 }

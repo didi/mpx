@@ -1,18 +1,5 @@
 <template>
-  <div class="analytics-chart">
-    <div ref="plot" class="analytics-chart__plot"></div>
-    <button
-      v-for="item in metrics"
-      :id="metricId(item)"
-      :key="item.key"
-      type="button"
-      class="analytics-chart__metric"
-      @click="selectMetric(item.key)"
-    >
-      <span>{{ item.label }}</span>
-      <span>{{ item.value }}</span>
-    </button>
-  </div>
+  <div ref="chart" class="analytics-chart"></div>
 </template>
 
 <script>
@@ -27,54 +14,61 @@ export default {
     return {
       chart: null,
       chartGeneration: 0,
-      destroyed: false
+      detached: false,
+      resizeObserver: null
     }
   },
   mounted () {
     this.initChart()
-  },
-  beforeDestroy () {
-    this.destroyed = true
-    this.chartGeneration += 1
-    this.destroyChart()
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => {
+        if (!this.detached && this.resizeObserver === observer) this.resize()
+      })
+      this.resizeObserver = observer
+      this.resizeObserver.observe(this.$refs.chart)
+    }
   },
   watch: {
     metrics: {
       deep: true,
       handler (metrics) {
-        if (this.chart && this.chart.update) this.chart.update(metrics)
+        if (this.chart) this.chart.update(metrics)
+        else this.initChart()
       }
     }
   },
   methods: {
-    metricId (item) {
-      return `metric-${String(item.key).replace(/[^a-zA-Z0-9_-]/g, '-')}`
+    isCurrent (generation) {
+      return !this.detached && this.chartGeneration === generation && this.$refs.chart
     },
-    selectMetric (key) {
-      this.$emit('select', { key })
+    releaseChart () {
+      const chart = this.chart
+      this.chart = null
+      if (chart && chart.destroy) chart.destroy()
     },
     async initChart () {
       const generation = ++this.chartGeneration
-      const element = this.$refs.plot
-      const instance = await createChart(element, this.metrics)
-      if (this.destroyed || generation !== this.chartGeneration || !element || element.isConnected === false) {
-        if (instance && instance.destroy) instance.destroy()
+      const element = this.$refs.chart
+      if (!element || this.detached) return
+      const chart = await createChart(element)
+      if (!this.isCurrent(generation)) {
+        if (chart && chart.destroy) chart.destroy()
         return
       }
-      this.chart = instance
-    },
-    destroyChart () {
-      if (this.chart && this.chart.destroy) this.chart.destroy()
-      this.chart = null
+      this.releaseChart()
+      this.chart = chart
+      chart.update(this.metrics)
     },
     resize () {
       if (this.chart && this.chart.resize) this.chart.resize()
     }
+  },
+  beforeDestroy () {
+    this.detached = true
+    ++this.chartGeneration
+    if (this.resizeObserver) this.resizeObserver.disconnect()
+    this.resizeObserver = null
+    this.releaseChart()
   }
 }
 </script>
-
-<style scoped>
-.analytics-chart { display: flex; flex-wrap: wrap; gap: 8px; }
-.analytics-chart__metric { cursor: pointer; }
-</style>

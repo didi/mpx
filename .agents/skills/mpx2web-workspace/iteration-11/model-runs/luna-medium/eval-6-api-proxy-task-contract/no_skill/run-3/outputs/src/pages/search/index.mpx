@@ -1,10 +1,16 @@
 <template>
   <view class="search-page">
-    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view class="search-bar">
+      <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+      <button wx:if="{{keyword}}" bindtap="clearKeyword">清空</button>
+    </view>
+
     <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
-    <view class="trending" wx:if="{{!keyword}}">
+
+    <view wx:if="{{!keyword}}" class="trending">
       <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
     </view>
+
     <view class="suggestions">
       <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
     </view>
@@ -20,31 +26,25 @@ createPage({
     keyword: '',
     trendingKeywords: [],
     suggestions: [],
-    errorMessage: ''
+    errorMessage: '',
+    requestTask: null,
+    requestVersion: 0
   },
 
-  onLoad () {
-    this._suggestionController = null
-    this._searchVersion = 0
-    this._unloaded = false
-    this.loadTrendingKeywords()
-  },
-
-  async loadTrendingKeywords () {
+  async onLoad () {
     try {
-      const trendingKeywords = await fetchTrendingKeywords()
-      if (!this._unloaded) this.trendingKeywords = trendingKeywords
+      this.trendingKeywords = await fetchTrendingKeywords()
     } catch (error) {
-      if (!this._unloaded && !this.isAbortError(error)) {
-        this.errorMessage = '搜索失败'
-      }
+      this.errorMessage = '搜索失败'
     }
   },
 
   onUnload () {
-    this._unloaded = true
-    this.cancelSuggestionRequest()
-    this._searchVersion += 1
+    this.requestVersion += 1
+    if (this.requestTask && typeof this.requestTask.abort === 'function') {
+      this.requestTask.abort()
+    }
+    this.requestTask = null
   },
 
   methods: {
@@ -56,56 +56,39 @@ createPage({
       this.search(keyword)
     },
 
+    clearKeyword () {
+      this.search('')
+    },
+
     search (keyword) {
       this.keyword = keyword
       this.errorMessage = ''
-      this.cancelSuggestionRequest()
-      const version = ++this._searchVersion
+      const version = ++this.requestVersion
+
+      if (this.requestTask && typeof this.requestTask.abort === 'function') {
+        this.requestTask.abort()
+      }
+      this.requestTask = null
 
       if (!keyword) {
         this.suggestions = []
         return
       }
 
-      const controller = new AbortController()
-      this._suggestionController = controller
+      const requestTask = requestSuggestions(keyword)
+      this.requestTask = requestTask
 
-      requestSuggestions(keyword, { signal: controller.signal })
-        .then((suggestions) => {
-          if (!this._unloaded && version === this._searchVersion) {
-            this.suggestions = suggestions
-          }
-        })
-        .catch((error) => {
-          if (
-            !this._unloaded &&
-            version === this._searchVersion &&
-            !this.isAbortError(error)
-          ) {
-            this.suggestions = []
-            this.errorMessage = '搜索失败'
-          }
-        })
-        .finally(() => {
-          if (version === this._searchVersion) {
-            this._suggestionController = null
-          }
-        })
-    },
-
-    cancelSuggestionRequest () {
-      if (this._suggestionController) {
-        this._suggestionController.abort()
-        this._suggestionController = null
-      }
-    },
-
-    isAbortError (error) {
-      return Boolean(
-        error &&
-        (error.name === 'AbortError' ||
-          (typeof error.errMsg === 'string' && /abort|cancel/i.test(error.errMsg)))
-      )
+      requestTask.then((suggestions) => {
+        if (version !== this.requestVersion || this.keyword !== keyword) return
+        this.suggestions = suggestions
+      }).catch(() => {
+        if (version !== this.requestVersion || this.keyword !== keyword) return
+        this.errorMessage = '搜索失败'
+      }).then(() => {
+        if (version === this.requestVersion && this.requestTask === requestTask) {
+          this.requestTask = null
+        }
+      })
     },
 
     openProduct (productId) {
@@ -117,6 +100,8 @@ createPage({
 
 <style scoped>
 .search-page { padding: 24rpx; }
+.search-bar { display: flex; align-items: center; }
+.search-bar input { flex: 1; }
 .trending, .suggestions { margin-top: 24rpx; }
 .error-message { margin-top: 16rpx; color: #d93025; }
 </style>

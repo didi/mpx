@@ -20,7 +20,9 @@
     <web-view
       wx:if="{{campaignUrl}}"
       id="campaign-webview"
-      key="{{webviewKey}}"
+      key="{{campaignGeneration}}"
+      data-campaign-id="{{campaignId}}"
+      data-campaign-generation="{{campaignGeneration}}"
       src="{{campaignUrl}}"
       bindmessage="handleCampaignMessage"
       bindload="handleCampaignLoad"
@@ -61,89 +63,110 @@ createPage({
       title: '夏日清凉特卖',
       subtitle: '限时领券，爆款低至五折'
     },
-    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086&campaignId=summer-sale',
-    webviewKey: 'summer-sale-0',
+    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086',
+    campaignGeneration: 0,
     loading: true,
     errorText: '',
     trackerReady: false
   },
   onLoad () {
-    this._isActive = true
-    this._campaignGeneration = 0
+    this._pageAlive = true
   },
   onUnload () {
-    this._isActive = false
-    this._campaignGeneration += 1
+    this._pageAlive = false
+    this.campaignGeneration += 1
   },
   methods: {
-    makeCampaignUrl (campaignId) {
-      return `https://campaign.example.com/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}&campaignId=${encodeURIComponent(campaignId)}`
-    },
-    activateCampaign (campaignId) {
-      const generation = (this._campaignGeneration || 0) + 1
-      this._campaignGeneration = generation
-      this.campaignId = campaignId
-      this.webviewKey = `${campaignId}-${generation}`
-      this.campaignUrl = ''
-      this.loading = true
-      this.errorText = ''
-      this.trackerReady = false
-      this.$nextTick(() => {
-        if (!this._isActive || generation !== this._campaignGeneration || campaignId !== this.campaignId) return
-        this.campaignUrl = this.makeCampaignUrl(campaignId)
-      })
-    },
     switchCampaign (campaignId) {
       if (campaignId === this.campaignId) return
       this.activateCampaign(campaignId)
     },
-    handleCampaignLoad () {
-      if (!this._isActive || !this.campaignUrl) return
-      this.loading = false
-      wx.reportAnalytics('campaign_webview_load', {
-        campaign_id: this.campaignId
+    activateCampaign (campaignId) {
+      const generation = this.campaignGeneration + 1
+      this.campaignGeneration = generation
+      this.campaignId = campaignId
+      this.loading = true
+      this.errorText = ''
+      this.trackerReady = false
+
+      // Remove the old iframe before mounting the new generation, so its bridge
+      // instance cannot continue delivering events for the next campaign.
+      this.campaignUrl = ''
+      this.$nextTick(() => {
+        if (!this._pageAlive || this.campaignGeneration !== generation || this.campaignId !== campaignId) return
+        this.campaignUrl = `https://campaign.example.com/${campaignId}?memberId=${this.memberId}`
       })
     },
-    handleCampaignError () {
-      if (!this._isActive || !this.campaignUrl) return
+    getVenueEventIdentity (event) {
+      const dataset = (event.currentTarget && event.currentTarget.dataset) || {}
+      return {
+        campaignId: dataset.campaignId,
+        generation: Number(dataset.campaignGeneration)
+      }
+    },
+    isCurrentVenueEvent (event) {
+      const identity = this.getVenueEventIdentity(event)
+      return this._pageAlive &&
+        identity.campaignId === this.campaignId &&
+        identity.generation === this.campaignGeneration
+    },
+    handleCampaignLoad (event) {
+      if (!this.isCurrentVenueEvent(event)) return
+      const campaignId = this.getVenueEventIdentity(event).campaignId
+      this.loading = false
+      wx.reportAnalytics('campaign_webview_load', {
+        campaign_id: campaignId
+      })
+    },
+    handleCampaignError (event) {
+      if (!this.isCurrentVenueEvent(event)) return
       this.loading = false
       this.errorText = '活动会场暂时无法打开'
     },
     handleCampaignMessage (event) {
-      const messages = event.detail.data || []
-      const message = messages[messages.length - 1] || {}
-      if (!this._isActive || message.campaignId !== this.campaignId) return
-      if (message.type === 'claim-coupon' && message.couponId) {
-        this.claimCoupon(message.couponId, message.campaignId)
-      } else if (message.type === 'open-product' && message.productId) {
-        this.openProduct(message.productId, message.campaignId)
-      }
+      if (!this.isCurrentVenueEvent(event)) return
+      const messages = (event.detail && event.detail.data) || []
+      const currentCampaignId = this.campaignId
+      const currentGeneration = this.campaignGeneration
+
+      messages.forEach((message) => {
+        // The bridge already checks the trusted host and iframe instance. The
+        // business key is still mandatory before any coupon or navigation effect.
+        if (!message || message.campaignId !== currentCampaignId) return
+        if (message.type === 'claim-coupon' && message.couponId) {
+          this.claimCoupon(message.couponId, currentCampaignId, currentGeneration)
+        } else if (message.type === 'open-product' && message.productId) {
+          this.openProduct(message.productId, currentCampaignId, currentGeneration)
+        }
+      })
     },
-    claimCoupon (couponId, campaignId) {
+    claimCoupon (couponId, campaignId, generation) {
       wx.request({
         url: '/api/campaign/coupons/claim',
         method: 'POST',
         data: { campaignId, couponId },
         success: () => {
-          if (!this._isActive || campaignId !== this.campaignId) return
+          if (!this._pageAlive || this.campaignId !== campaignId || this.campaignGeneration !== generation) return
           wx.showToast({ title: '领取成功', icon: 'success' })
         }
       })
     },
-    openProduct (productId, campaignId) {
-      if (!this._isActive || campaignId !== this.campaignId) return
+    openProduct (productId, campaignId, generation) {
+      if (!this._pageAlive || this.campaignId !== campaignId || this.campaignGeneration !== generation) return
       wx.navigateTo({
-        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(campaignId)}`
+        url: `/packageProduct/pages/detail/index?id=${productId}&campaignId=${campaignId}`
       })
     },
     reloadCampaign () {
       this.activateCampaign(this.campaignId)
     },
     handleTrackerReady (event) {
-      this.trackerReady = event.detail.campaignId === this.campaignId
+      const detail = event.detail || {}
+      this.trackerReady = detail.campaignId === this.campaignId
     },
-    handleTrackerError () {
-      this.trackerReady = false
+    handleTrackerError (event) {
+      const detail = event.detail || {}
+      if (detail.campaignId === this.campaignId) this.trackerReady = false
     }
   }
 })

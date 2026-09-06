@@ -5,6 +5,7 @@
 ## 目录
 
 - [Web 页面配置](#web-页面配置)
+- [动态 JSON 配置](#动态-json-配置)
 - [Web tabBar](#web-tabbar)
 - [Web 分包与异步组件](#web-分包与异步组件)
 - [Web 运行配置](#web-运行配置)
@@ -23,6 +24,26 @@
 | `onReachBottomDistance` | 配置 Web 页面触底触发距离，默认 `50`。 |
 | `backgroundColor` | 用于 Web 下拉刷新加载区域背景色。 |
 | `backgroundTextStyle` | 用于 Web 下拉刷新加载样式。 |
+
+---
+
+## 动态 JSON 配置
+
+需要按输出平台动态生成页面或组件配置时，`<script name="json">` 的内容是 JavaScript，不是普通 JSON；最终必须通过 `module.exports` 导出可序列化对象：
+
+```html
+<script name="json">
+const usingComponents = __mpx_mode__ === 'web'
+  ? { 'web-chart': './web-chart' }
+  : {}
+
+module.exports = {
+  usingComponents
+}
+</script>
+```
+
+不能在该脚本块中直接写 `{ "usingComponents": {} }`；裸对象不会成为模块导出，并可能按 JavaScript 解析失败。
 
 ---
 

@@ -1,71 +1,74 @@
-function normalizeMetrics (metrics) {
+function normalizedMetrics (metrics) {
   return Array.isArray(metrics) ? metrics : []
 }
 
-export async function createChart (element, metrics, options = {}) {
-  await Promise.resolve()
+function metricKey (metric) {
+  return String(metric && metric.key !== undefined ? metric.key : '')
+}
 
+export async function createChart (element, metrics, options = {}) {
   if (!element) throw new Error('A chart container is required')
 
-  const chartRoot = document.createElement('div')
-  chartRoot.className = 'analytics-chart__canvas'
+  await Promise.resolve()
+
+  const ownerDocument = element.ownerDocument
+  const chartRoot = ownerDocument.createElement('div')
+  chartRoot.className = 'analytics-chart__content'
   element.appendChild(chartRoot)
 
-  let currentMetrics = []
   let destroyed = false
+  let currentMetrics = normalizedMetrics(metrics)
 
-  const handleClick = (event) => {
-    let target = event.target
-    while (target && target !== chartRoot && !target.hasAttribute('data-metric-index')) {
-      target = target.parentNode
-    }
-    if (!target || target === chartRoot) return
-
-    const index = Number(target.getAttribute('data-metric-index'))
-    const metric = currentMetrics[index]
-    if (metric && typeof options.onSelect === 'function') {
-      options.onSelect({ key: metric.key })
-    }
+  function render () {
+    if (destroyed) return
+    chartRoot.textContent = ''
+    const fragment = ownerDocument.createDocumentFragment()
+    currentMetrics.forEach((item) => {
+      const metric = item || {}
+      const key = metricKey(metric)
+      const button = ownerDocument.createElement('button')
+      button.type = 'button'
+      button.className = 'analytics-chart__metric'
+      button.dataset.metricKey = key
+      button.id = String(metric.id !== undefined && metric.id !== '' ? metric.id : key)
+      button.textContent = `${metric.label === undefined ? '' : metric.label}:${metric.value === undefined ? '' : metric.value}`
+      fragment.appendChild(button)
+    })
+    chartRoot.appendChild(fragment)
   }
 
-  const render = (nextMetrics) => {
-    currentMetrics = normalizeMetrics(nextMetrics).slice()
-    while (chartRoot.firstChild) chartRoot.removeChild(chartRoot.firstChild)
-
-    currentMetrics.forEach((metric, index) => {
-      const item = document.createElement('button')
-      item.type = 'button'
-      item.className = 'analytics-chart__metric'
-      item.setAttribute('data-metric-index', String(index))
-      if (metric && metric.key != null) item.id = String(metric.key)
-
-      const label = document.createElement('span')
-      label.className = 'analytics-chart__label'
-      label.textContent = metric && metric.label != null ? String(metric.label) : ''
-
-      const value = document.createElement('span')
-      value.className = 'analytics-chart__value'
-      value.textContent = metric && metric.value != null ? String(metric.value) : ''
-
-      item.appendChild(label)
-      item.appendChild(value)
-      chartRoot.appendChild(item)
-    })
+  function handleClick (event) {
+    let target = event.target
+    while (target && target !== chartRoot) {
+      if (target.dataset && target.dataset.metricKey !== undefined) {
+        const key = target.dataset.metricKey
+        const metric = currentMetrics.find((item) => metricKey(item) === key)
+        if (typeof options.onSelect === 'function') {
+          options.onSelect({
+            key: metric && metric.key !== undefined ? metric.key : key
+          })
+        }
+        return
+      }
+      target = target.parentNode
+    }
   }
 
   chartRoot.addEventListener('click', handleClick)
-  render(metrics)
+  render()
 
   return {
     update (nextMetrics) {
-      if (!destroyed) render(nextMetrics)
+      if (destroyed) return
+      currentMetrics = normalizedMetrics(nextMetrics)
+      render()
     },
     resize () {},
     destroy () {
       if (destroyed) return
       destroyed = true
       chartRoot.removeEventListener('click', handleClick)
-      if (chartRoot.parentNode) chartRoot.parentNode.removeChild(chartRoot)
+      if (chartRoot.parentNode === element) element.removeChild(chartRoot)
       currentMetrics = []
     }
   }

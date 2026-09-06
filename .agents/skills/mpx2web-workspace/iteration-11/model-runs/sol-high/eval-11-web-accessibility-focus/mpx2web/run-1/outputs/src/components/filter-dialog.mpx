@@ -1,6 +1,11 @@
 <template>
   <view class="filter">
-    <button class="filter-trigger" aria-label="打开商品筛选" bindtap="open">筛选</button>
+    <view
+      class="filter-trigger"
+      aria-role="button"
+      aria-label="打开商品筛选"
+      bindtap="open"
+    >筛选</view>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
       <view
         class="dialog"
@@ -8,12 +13,14 @@
         aria-label="商品筛选"
         catchtap="stop"
       >
-        <button
+        <view
           wx:for="{{options}}"
           wx:key="value"
+          aria-role="checkbox"
           aria-label="{{item.label}}"
+          aria-checked="{{selected.indexOf(item.value) !== -1 ? 'true' : 'false'}}"
           bindtap="toggle(item.value)"
-        >{{item.label}}</button>
+        >{{item.label}}</view>
         <button bindtap="clear">清空</button>
         <button bindtap="confirm">确定</button>
       </view>

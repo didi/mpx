@@ -46,49 +46,32 @@ createPage({
     }
   },
   onLoad (query) {
-    this.productId = String(query.id || '')
-    this.selectedSkuId = ''
-    this.pageRequestVersion = 0
+    this.productId = query.id
+    this.pageRequestVersion = (this.pageRequestVersion || 0) + 1
 
-    // SSR 由 serverPrefetch 发起并等待请求；浏览器 hydrate 和小程序仍走 onLoad。
+    // SSR 的首屏请求由 serverPrefetch 返回并等待；浏览器 hydrate 与小程序
+    // 仍沿用 onLoad，且 hydrate 时 store 会按已注水的商品主键直接复用。
     if (!this.$ssrContext) {
-      return this.loadProduct(this.productId)
+      this.loadProduct(query.id)
     }
-  },
-  onShow () {
-    // 返回页面栈中的旧详情页时，共享 store 可能已切换到另一个商品。
-    if (this.productId && !this.$ssrContext) {
-      return this.loadProduct(this.productId)
-    }
-  },
-  onHide () {
-    this.invalidatePageRequest()
-  },
-  onUnload () {
-    this.invalidatePageRequest()
   },
   serverPrefetch () {
     return this.loadProduct(this.productId, this.$ssrContext)
   },
+  onUnload () {
+    this.pageRequestVersion = (this.pageRequestVersion || 0) + 1
+  },
   methods: {
-    invalidatePageRequest () {
-      this.pageRequestVersion = (this.pageRequestVersion || 0) + 1
-    },
     async loadProduct (productId, requestContext) {
-      if (!productId) return
-
-      const pageRequestVersion = (this.pageRequestVersion || 0) + 1
-      this.pageRequestVersion = pageRequestVersion
-
+      const pageRequestVersion = this.pageRequestVersion || 0
       const store = useProductStore(this.$pinia)
-      await store.loadProduct(productId, requestContext)
+      const loaded = await store.loadProduct(productId, requestContext)
 
-      if (
-        pageRequestVersion !== this.pageRequestVersion ||
+      if (!loaded ||
+        pageRequestVersion !== (this.pageRequestVersion || 0) ||
         this.productId !== productId ||
         !store.loaded ||
-        store.productId !== productId
-      ) return
+        store.productId !== productId) return
 
       this.selectedSkuId = store.product.skus && store.product.skus[0]
         ? store.product.skus[0].id

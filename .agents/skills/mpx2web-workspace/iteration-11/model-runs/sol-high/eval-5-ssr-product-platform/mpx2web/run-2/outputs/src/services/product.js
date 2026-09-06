@@ -1,83 +1,63 @@
 import mpx from '@mpxjs/api-proxy'
 
 function firstHeaderValue (value) {
-  if (Array.isArray(value)) return value[0] || ''
   return String(value || '').split(',')[0].trim()
 }
 
-function readRequestHeader (req, name) {
-  if (typeof req.get === 'function') return req.get(name) || ''
+function requestOrigin (requestContext) {
+  const req = requestContext && requestContext.req
+  if (!req) return ''
+
   const headers = req.headers || {}
-  return headers[name.toLowerCase()] || ''
+  const forwardedProtocol = firstHeaderValue(headers['x-forwarded-proto'])
+  const forwardedHost = firstHeaderValue(headers['x-forwarded-host'])
+  const protocol = forwardedProtocol || req.protocol ||
+    (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = forwardedHost || headers.host
+
+  if (!host) throw new Error('SSR request host is missing')
+  return `${protocol}://${host}`
 }
 
-function getRequestOrigin (req) {
-  const host = firstHeaderValue(
-    readRequestHeader(req, 'x-forwarded-host') || readRequestHeader(req, 'host')
-  )
-  let protocol = firstHeaderValue(readRequestHeader(req, 'x-forwarded-proto')) || req.protocol
-  if (!protocol) protocol = req.socket && req.socket.encrypted ? 'https' : 'http'
-  protocol = String(protocol).replace(/:$/, '')
+function serverHeaders (requestContext) {
+  const req = requestContext && requestContext.req
+  const headers = req && req.headers ? req.headers : {}
+  const result = {}
 
-  if (!host || !/^https?$/.test(protocol)) {
-    throw new Error('Unable to determine the current SSR request origin')
-  }
-
-  return new URL('/', `${protocol}://${host}`).origin
+  if (headers.cookie) result.cookie = headers.cookie
+  if (headers.authorization) result.authorization = headers.authorization
+  return result
 }
 
-function getForwardHeaders (req) {
-  const headers = {}
-  ;['cookie', 'authorization', 'accept-language', 'user-agent', 'x-request-id'].forEach((name) => {
-    const value = readRequestHeader(req, name)
-    if (value) headers[name] = value
-  })
-  return headers
-}
+function requestJson (path, requestContext) {
+  const origin = requestOrigin(requestContext)
 
-async function requestFromNode (path, ssrContext) {
-  const req = ssrContext.req
-  const requestFetch = typeof ssrContext.fetch === 'function'
-    ? ssrContext.fetch.bind(ssrContext)
-    : globalThis.fetch
-
-  if (typeof requestFetch !== 'function') {
-    throw new Error('SSR requires a fetch implementation on the context or Node runtime')
-  }
-
-  const response = await requestFetch(new URL(path, getRequestOrigin(req)).toString(), {
-    headers: getForwardHeaders(req)
-  })
-  if (!response.ok) {
-    throw new Error(`Product API request failed with status ${response.status}`)
-  }
-  return response.json()
-}
-
-function requestJson (path, ssrContext) {
-  if (ssrContext && ssrContext.req) {
-    return requestFromNode(path, ssrContext)
+  if (origin) {
+    return fetch(`${origin}${path}`, {
+      headers: serverHeaders(requestContext)
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`Product request failed with status ${response.status}`)
+      }
+      return response.json()
+    })
   }
 
   return new Promise((resolve, reject) => {
     mpx.request({
       url: path,
-      success: ({ data, statusCode }) => {
-        if (statusCode && statusCode >= 400) {
-          reject(new Error(`Product API request failed with status ${statusCode}`))
-          return
-        }
-        resolve(data)
-      },
+      success: ({ data }) => resolve(data),
       fail: reject
     })
   })
 }
 
-export function fetchProduct (productId, ssrContext) {
-  return requestJson(`/api/products/${encodeURIComponent(productId)}`, ssrContext)
+export function fetchProduct (productId, requestContext) {
+  const encodedProductId = encodeURIComponent(productId)
+  return requestJson(`/api/products/${encodedProductId}`, requestContext)
 }
 
-export function fetchRecommendations (productId, ssrContext) {
-  return requestJson(`/api/products/${encodeURIComponent(productId)}/recommendations`, ssrContext)
+export function fetchRecommendations (productId, requestContext) {
+  const encodedProductId = encodeURIComponent(productId)
+  return requestJson(`/api/products/${encodedProductId}/recommendations`, requestContext)
 }

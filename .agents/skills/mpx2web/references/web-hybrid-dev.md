@@ -28,16 +28,19 @@ Mpx 输出 Web 时运行在真实 DOM 环境中。只有在需要浏览器专属
 
 ## 第三方 H5 SDK
 
-第三方 H5 SDK 通常依赖浏览器全局对象，应延迟到客户端加载，不要在通用模块顶层静态引入。
+第三方 H5 SDK 通常依赖浏览器全局对象。位于通用 `.mpx` 文件时，应在客户端分支动态加载，不要在模块顶层静态引入；只有文件或依赖图确定只进入 Web、且模块顶层不会访问 DOM 时才可保留静态 import。
 
 ```js
 createComponent({
-  async ready () {
-    const sdk = await import('third-party-h5-sdk')
-    sdk.init({})
+  ready () {
+    if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
+    this.sdkDetached = false
+    this.initSdk()
   }
 })
 ```
+
+这里的生命周期只负责进入客户端初始化链；`initSdk()` 仍需按下一节处理每个异步边界和卸载竞态，不能把上例简化成无保护的 `await import()` 后直接挂载。
 
 如果 SDK 需要容器节点，当前按 `../mpx2rn` 公共部分中的节点访问规则在客户端挂载后获取；未来替换为 mpx base skill。SDK 配置、密钥、回调域名、跨域和 CSP 仍需按 Web 安全要求处理。
 
@@ -48,25 +51,72 @@ createComponent({
 
 ```js
 createComponent({
-  async ready () {
+  ready () {
     if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
     this.sdkDetached = false
-    const { default: sdk } = await import('third-party-h5-sdk')
-    if (this.sdkDetached) return
-    const instance = await sdk.init({})
-    if (this.sdkDetached) {
-      instance.destroy && instance.destroy()
-      return
+    this.initTracker(this.campaignId)
+  },
+  methods: {
+    isCurrentTrackerInit (generation, campaignId) {
+      return !this.sdkDetached &&
+        this.trackerGeneration === generation &&
+        this.campaignId === campaignId
+    },
+    releaseTrackerInstance () {
+      const instance = this.trackerInstance
+      this.trackerInstance = null
+      if (instance && instance.destroy) instance.destroy()
+    },
+    async initTracker (campaignId) {
+      const generation = (this.trackerGeneration || 0) + 1
+      this.trackerGeneration = generation
+      const { default: sdk } = await import('third-party-h5-sdk')
+      if (!this.isCurrentTrackerInit(generation, campaignId)) return
+      const instance = await sdk.create({ campaignId })
+      if (!this.isCurrentTrackerInit(generation, campaignId)) {
+        if (instance && instance.destroy) instance.destroy()
+        return
+      }
+      this.releaseTrackerInstance()
+      this.trackerInstance = instance
     }
-    this.sdkInstance = instance
   },
   detached () {
     this.sdkDetached = true
-    if (this.sdkInstance && this.sdkInstance.destroy) this.sdkInstance.destroy()
+    this.trackerGeneration = (this.trackerGeneration || 0) + 1
+    this.releaseTrackerInstance()
     if (this.resizeObserver) this.resizeObserver.disconnect()
   }
 })
 ```
+
+活动、商品等业务主键变化时，在更新 `this.campaignId` 后再次调用 `initTracker(newCampaignId)`。`generation` 区分同一组件里的多次初始化，`campaignId` 防止旧活动结果写入新活动；两者解决的问题不同，不能只保留其中一个。`releaseTrackerInstance()` 只释放实例、不推进代际，避免成功安装当前实例前把自己判成过期。
+
+Observer 可以放在独立 helper 中，但回调必须捕获本次资源身份并在上报前复核。这样即使 `disconnect()` 前已经排队的旧回调晚到，也不会借用新实例上报旧节点：
+
+```js
+bindExposureObserver (generation, campaignId) {
+  this.releaseExposureObserver()
+  const tracker = this.trackerInstance
+  const observer = new IntersectionObserver((entries) => {
+    if (!this.isCurrentTrackerInit(generation, campaignId) ||
+      this.trackerInstance !== tracker ||
+      this.exposureObserver !== observer) return
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) tracker.track('exposure', { campaignId })
+    })
+  })
+  this.exposureObserver = observer
+}
+
+releaseExposureObserver () {
+  const observer = this.exposureObserver
+  this.exposureObserver = null
+  if (observer) observer.disconnect()
+}
+```
+
+业务主键切换与卸载都调用同一个幂等清理链：先推进代际，再断开 Observer、清空当前资源身份并销毁 SDK 实例。不要只在创建 Observer 的方法里寻找保护；真正需要保护的是回调执行到上报之间的资源所有权。
 
 不要只处理顶层静态引入，还要处理快速切页、异步返回晚于卸载和重复进入造成的资源泄漏。
 

@@ -1,0 +1,92 @@
+{
+  "eval_id": 7,
+  "eval_name": "route-tabbar-event-channel",
+  "configuration": "mpx2web",
+  "run_number": 3,
+  "model_grading_fingerprint": "c39e8be1e469f9f4af5690174eef8e759db2c10353aff9f15b1af523906a6a68",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 72822
+  },
+  "expectations": [
+    {
+      "id": "n0",
+      "text": "结算页通过 Mpx 官方 navigateTo 调用的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择；源码可以是 mpx.navigateTo 或会被跨端编译转换的 wx.navigateTo",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx: chooseAddress 使用 mpx.navigateTo({ url: '/pages/address/select', events: { addressSelected: ... }, success: (res) => { res.eventChannel.emit('checkoutReady', { address: this.address }) } })。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n1",
+      "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后通过 Mpx 官方 navigateBack 返回；源码可以是 mpx.navigateBack 或会被跨端编译转换的 wx.navigateBack",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "outputs/src/pages/address/select.mpx: onLoad 中通过 this.getOpenerEventChannel() 获取通道；confirm(address) 中执行 this.eventChannel.emit('addressSelected', address) 后调用 mpx.navigateBack({ delta: 1 })。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n2",
+      "text": "订单 tab 只通过 Mpx 官方 switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack；调用可采用项目现有的 mpx.xxx 或会被跨端编译转换的 wx.xxx",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx: openOrders 使用 mpx.switchTab({ url: '/pages/orders/index' })；chooseAddress 使用 mpx.navigateTo；pay 使用 mpx.redirectTo；requireLogin 使用 mpx.reLaunch；outputs/src/pages/address/select.mpx 使用 mpx.navigateBack。rg 未发现 outputs 中还有 navigateTo 打开订单 tab。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n3",
+      "text": "需要 EventChannel 的地址入口使用 button 调用脚本中的 navigateTo，不强制保留 navigator；其他普通声明式导航若使用 navigator，open-type 使用模板值 navigate，而不是 API 名 navigateTo，也不使用不稳定的 switchTab 模板分支",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx: 地址入口模板为 <button bindtap=\"chooseAddress\">选择地址</button>，脚本 chooseAddress 中调用 mpx.navigateTo 并配置 EventChannel；outputs 中未发现 navigator/open-type 使用。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n4",
+      "text": "Web 路由只通过 mpx.config.webConfig.routeConfig 配置 history 与 /shop/ base，output.publicPath 同为 /shop/",
+      "category": "web-deployment",
+      "passed": false,
+      "evidence": "outputs/vue.config.js: publicPath 已为 '/shop/'，但 Web 路由配置写在 pluginOptions.mpx.plugin.webRouteConfig: { mode: 'history', base: '/shop/' }，不是断言要求的 mpx.config.webConfig.routeConfig。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n5",
+      "text": "业务代码不引入 this.$router、window.history、location 跳转或 getCurrentPages 回传地址",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "rg 检查 outputs 未发现 this.$router、window.history、location 跳转或 getCurrentPages；地址回传改为 EventChannel。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n6",
+      "text": "地址展示、地址选择、返回、登录失效重启、支付结果替换和订单 tab 链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx 保留地址展示 {{address.name}} {{address.detail}}、选择地址按钮、pay redirectTo('/pages/pay/result')、openOrders switchTab('/pages/orders/index')、requireLogin reLaunch('/pages/login/index')；outputs/src/pages/address/select.mpx 保留地址列表、确认 emit 后 navigateBack 返回。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "n4 只能静态判断 Mpx/publicPath 配置，未覆盖 history 模式在 /shop/ 深链刷新时所需的服务端 fallback/重写配置；若部署环境没有兜底到入口文件，实际刷新仍可能失败。"
+    ],
+    "overall": "候选基本修正了 EventChannel 地址回传和页面跳转语义，但 Web 路由配置位置不符合断言要求。"
+  }
+}

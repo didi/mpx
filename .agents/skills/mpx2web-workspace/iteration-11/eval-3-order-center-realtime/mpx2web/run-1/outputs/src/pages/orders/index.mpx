@@ -29,9 +29,11 @@
         wx:for="{{orders}}"
         wx:key="id"
         order="{{item}}"
-        disabled="{{item.locked || (openOrderId && openOrderId !== item.id)}}"
+        disabled="{{item.locked}}"
+        opened="{{openOrderId === item.id}}"
         bindselect="openOrder"
         bindremove="removeOrder"
+        bindswipestart="handleSwipeStart"
         bindswipeend="handleSwipeEnd"
       />
     </view>
@@ -45,7 +47,7 @@
     </view>
 
     <logistics-channel
-      wx:if="{{memberId}}"
+      wx:if="{{memberId && pageActive}}"
       memberId="{{memberId}}"
       bindconnectedchange="handleConnectionChange"
       bindlogistics="handleLogisticsMessage"
@@ -97,15 +99,29 @@ createPage({
         locked: false
       }
     ],
-    openOrderId: '',
     logisticsOnline: false,
-    loading: false
+    loading: false,
+    openOrderId: '',
+    pageActive: true
+  },
+  onShow () {
+    this.pageActive = true
+  },
+  onHide () {
+    this.pageActive = false
+    this.logisticsOnline = false
+    this.openOrderId = ''
+  },
+  onUnload () {
+    this.pageActive = false
+    this.logisticsOnline = false
+    this.openOrderId = ''
   },
   methods: {
     switchStatus (status) {
       if (status === this.activeStatus) return
-      this.activeStatus = status
       this.openOrderId = ''
+      this.activeStatus = status
       this.fetchOrders()
     },
     fetchOrders () {
@@ -135,12 +151,17 @@ createPage({
             url: `/api/orders/${detail.orderId}`,
             method: 'DELETE',
             success: () => {
-              this.orders = this.orders.filter(order => order.id !== detail.orderId)
               if (this.openOrderId === detail.orderId) this.openOrderId = ''
+              this.orders = this.orders.filter(order => order.id !== detail.orderId)
             }
           })
         }
       })
+    },
+    handleSwipeStart ({ detail }) {
+      if (this.openOrderId && this.openOrderId !== detail.orderId) {
+        this.openOrderId = ''
+      }
     },
     handleSwipeEnd ({ detail }) {
       if (detail.open) {
@@ -150,11 +171,11 @@ createPage({
       }
     },
     handleConnectionChange ({ detail }) {
-      if (detail.memberId !== this.memberId) return
+      if (!this.pageActive || detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
-      if (detail.memberId !== this.memberId) return
+      if (!this.pageActive || detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -166,7 +187,7 @@ createPage({
       })
     },
     handleChannelError ({ detail }) {
-      if (detail.memberId !== this.memberId) return
+      if (!this.pageActive || detail.memberId !== this.memberId) return
       this.logisticsOnline = false
     },
     goShopping () {

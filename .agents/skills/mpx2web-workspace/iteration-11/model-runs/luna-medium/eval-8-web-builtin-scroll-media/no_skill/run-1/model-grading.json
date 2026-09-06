@@ -1,0 +1,92 @@
+{
+  "eval_id": 8,
+  "eval_name": "web-builtin-scroll-media",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "model_grading_fingerprint": "e93a1ca44053d0fa76fb0fc4fa1f1fccbeb1238f07e0eb804a3d6afdee04845d",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 123329
+  },
+  "expectations": [
+    {
+      "id": "b0",
+      "text": "sticky-header 在 Web 内建结构中是 scroll-view 或 sticky-section 的直接子节点，吸顶不依赖其内容中的 viewport fixed",
+      "category": "web-template",
+      "passed": false,
+      "evidence": "outputs/src/pages/feed/index.mpx:3-38 中 scroll-view 的直接子节点是 .feed-content，吸顶区域是 .feed-content 内的 view.categories-sticky（16），且未使用 sticky-header/sticky-section 作为 Web 内建直接子结构；样式仅用 CSS position: sticky（111-116）。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b1",
+      "text": "使用 binddragstart/binddragging/binddragend 时显式开启 enhanced，并保留完整的开始、过程、结束处理",
+      "category": "web-interaction",
+      "passed": false,
+      "evidence": "outputs/src/pages/feed/index.mpx:6 已开启 enhanced，但模板使用 bindtouchstart/bindtouchmove/bindtouchend/bindtouchcancel（10-13），没有保留 binddragstart/binddragging/binddragend；脚本虽有 onDragStart/onDragging/onDragEnd（74-91），但未绑定到内建 enhanced drag 事件。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b2",
+      "text": "动态分类、异步商品和图片固有尺寸晚到后，使用运行时真实消费的观察机制或图片 load/metadata 后的 nextTick + scroll-view ref.refresh 保证滚动范围更新；ref 可使用标准 wx:ref 或可选的 Web 条件写法，必须隔离的是 Web-only refresh 调用链，可由 Web 条件事件或脚本平台/能力判断完成",
+      "category": "web-scroll",
+      "passed": false,
+      "evidence": "outputs/src/pages/feed/index.mpx:28-34 给 image 绑定了 bindload，onImageLoad 仅 setData layoutVersion 并空调用 $nextTick（69-73），没有 scroll-view ref，也没有调用 ref.refresh；异步 categories/products setData 后（56-62）同样没有真实观察机制或 Web-only refresh 调用链。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b3",
+      "text": "常驻购物车位于 scroll-view 变换内容之外，并在 Web 保持相对浏览器视口的 position: fixed；不得仅为规避 BetterScroll transform 将其降级为相对页面容器的 absolute",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/pages/feed/index.mpx:39 将 .fixed-cart 放在 scroll-view 结束标签之后，位于滚动变换内容外；样式 .fixed-cart 使用 position: fixed（122-130），未降级为 absolute。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b4",
+      "text": "视频自动播放遵守浏览器策略：自动播放时静音并支持用户手势继续播放，不假定有声 autoplay 必然成功",
+      "category": "web-media",
+      "passed": true,
+      "evidence": "outputs/src/components/product-video.mpx:6-9 同时设置 autoplay、muted 和 controls，符合浏览器静音自动播放策略，并保留用户通过控件手势继续播放的入口；bindplay/onPlay（12,43-45）用于恢复播放状态。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b5",
+      "text": "timeupdate 与 loadedmetadata 处理兼容 Web 原生转发事件，不无条件读取微信专属 detail.currentTime/detail.width 结构",
+      "category": "web-media",
+      "passed": false,
+      "evidence": "outputs/src/components/product-video.mpx:33-41 在 timeupdate 和 loadedmetadata 中无条件读取 event.detail.currentTime/event.detail.duration/event.detail.width/event.detail.height，未兼容 Web 原生转发事件可能通过 event.target/currentTarget 提供 currentTime、duration、videoWidth、videoHeight 的结构。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "b6",
+      "text": "只使用参考中 Web 实际消费的视频属性和事件；商品分类、滚动选择、视频播放与购物车业务链路在微信小程序继续可执行",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/product-video.mpx:6-13 仅使用 video 的 autoplay、muted、loop、controls 以及 timeupdate/loadedmetadata/play/error 这类 Web/小程序可执行属性事件，已移除 input 中的 enable-danmu；outputs/src/pages/feed/index.mpx:18-24、65-68 保留分类选择，35 保留 product-video，39 和 92-94 保留购物车跳转链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "b1 对“不使用 binddrag* 而改用 touch 事件”的候选实现是否应直接失败可以写得更明确，否则存在按条件句误读的空间。"
+    ],
+    "overall": "候选只实质修复了购物车脱离滚动内容和静音 autoplay；sticky 内建结构、enhanced drag 事件、滚动范围 refresh、Web 视频事件兼容仍不满足要求。"
+  }
+}

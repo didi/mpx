@@ -2,18 +2,12 @@
 import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
-const clientPinia = createPinia()
-
 createApp({
-  pinia: clientPinia,
   onAppInit () {
-    // A server app is created per request; the browser keeps one hydrated Pinia instance.
-    return { pinia: typeof window === 'undefined' ? createPinia() : clientPinia }
+    return { pinia: createPinia() }
   },
   onLaunch () {
-    if (typeof wx !== 'undefined' && wx.reportAnalytics) {
-      wx.reportAnalytics('mall_launch', {})
-    }
+    if (__mpx_mode__ !== 'web') wx.reportAnalytics('mall_launch', {})
   }
 })
 </script>

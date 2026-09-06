@@ -106,12 +106,20 @@ if (__mpx_mode__ === 'web') {
     remove: true,
     processor: () => {}
   })
+  implement('onShareTimeline', {
+    modes: ['web'],
+    remove: true,
+    processor: () => {}
+  })
 }
 
 createPage({
-  // 原有 onShareAppMessage 继续服务小程序输出
+  // 原有分享生命周期继续服务小程序输出
   onShareAppMessage () {
     return { title: '分享标题', path: '/pages/detail/index' }
+  },
+  onShareTimeline () {
+    return { title: '分享标题' }
   },
   methods: {
     shareOnWeb () {
@@ -122,7 +130,7 @@ createPage({
 ```
 
 `remove: true` 会让 Web 转换/选项合并流程移除该能力；页面原有
-`onShareAppMessage` 可继续服务小程序输出。Web 分享按钮按平台绑定到单独的实例方法；若需求没有明确指定 H5 SDK、宿主 bridge 或分享协议，该方法只保留清晰的 TODO 接入位。不要擅自选择 `navigator.share`、clipboard、复制链接或其它降级行为，因为这些方案的可用环境、授权、埋点和产品语义均属于业务约束。
+`onShareAppMessage` 和 `onShareTimeline` 可继续服务小程序输出。两个生命周期必须分别登记，不能用脚本中的 `// @mpx-if` 一类普通注释代替。Web 分享按钮按平台绑定到单独的实例方法；若需求没有明确指定 H5 SDK、宿主 bridge 或分享协议，该方法只保留清晰的 TODO 接入位。不要擅自选择 `navigator.share`、clipboard、复制链接或其它降级行为，因为这些方案的可用环境、授权、埋点和产品语义均属于业务约束。
 
 ---
 

@@ -16,77 +16,150 @@ import { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
-    memberId: { type: String, observer () { this.connectChannel() } },
-    enabled: { type: Boolean, value: true, observer () { this.syncEnabled() } }
-  },
-  data: { connected: false },
-  attached () { this.connectChannel() },
-  detached () { this.invalidateChannel(true) },
-  methods: {
-    syncEnabled () {
-      if (this.enabled) this.connectChannel()
-      else this.invalidateChannel(true)
+    memberId: {
+      type: String,
+      observer () {
+        this.restartChannel()
+      }
     },
-    invalidateChannel (close) {
-      this.channelGeneration = (this.channelGeneration || 0) + 1
+    active: {
+      type: Boolean,
+      value: true,
+      observer (active) {
+        if (active) this.connectChannel()
+        else this.disconnectChannel()
+      }
+    }
+  },
+  data: {
+    connected: false,
+    socketTask: null,
+    connectionToken: 0
+  },
+  attached () {
+    if (this.active) this.connectChannel()
+  },
+  detached () {
+    this.disconnectChannel()
+  },
+  methods: {
+    disconnectChannel () {
+      this.connectionToken += 1
+      var task = this.socketTask
+      this.socketTask = null
       this.connected = false
-      if (close) wx.closeSocket()
-      this.triggerEvent('connectedchange', { connected: false, sessionId: this.channelGeneration })
+      if (task && task.close) task.close({ code: 1000, reason: 'inactive' })
+      this.triggerEvent('connectedchange', { connected: false, memberId: this.memberId })
+    },
+    restartChannel () {
+      this.disconnectChannel()
+      this.connectChannel()
     },
     connectChannel () {
-      if (!this.enabled || !this.memberId) return
-      this.invalidateChannel(true)
-      var generation = this.channelGeneration
+      if (!this.memberId || !this.active || this.socketTask) return
       var memberId = this.memberId
-      wx.connectSocket({
+      var token = this.connectionToken + 1
+      this.connectionToken = token
+      var task = wx.connectSocket({
         url: `wss://logistics.example.com/members/${memberId}`,
-        header: { Authorization: `Bearer ${wx.getStorageSync('token')}` }
-      })
-      wx.onSocketOpen(() => {
-        if (generation !== this.channelGeneration || memberId !== this.memberId || !this.enabled) return
-        this.connected = true
-        this.triggerEvent('connectedchange', { connected: true, sessionId: generation, memberId })
-      })
-      wx.onSocketMessage(({ data }) => {
-        if (generation !== this.channelGeneration || memberId !== this.memberId || !this.enabled) return
-        var message
-        try { message = typeof data === 'string' ? JSON.parse(data) : data } catch (error) { return }
-        if (message && message.type === 'logistics' && message.payload) {
-          this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId, sessionId: generation }))
+        header: {
+          Authorization: `Bearer ${wx.getStorageSync('token')}`
         }
       })
-      wx.onSocketError((error) => {
-        if (generation !== this.channelGeneration) return
-        this.connected = false
-        this.triggerEvent('connectedchange', { connected: false, sessionId: generation, memberId })
-        this.triggerEvent('error', { error, sessionId: generation })
+      this.socketTask = task
+      var isCurrent = () => this.active && this.memberId === memberId && this.connectionToken === token && this.socketTask === task
+      task.onOpen(() => {
+        if (!isCurrent()) return
+        this.connected = true
+        this.triggerEvent('connectedchange', { connected: true, memberId })
       })
-      wx.onSocketClose(() => {
-        if (generation !== this.channelGeneration) return
+      task.onMessage(({ data }) => {
+        if (!isCurrent()) return
+        var message
+        try {
+          message = typeof data === 'string' ? JSON.parse(data) : data
+        } catch (error) {
+          return
+        }
+        if (message.type === 'logistics') this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
+      })
+      task.onError((error) => {
+        if (!isCurrent()) return
         this.connected = false
-        this.triggerEvent('connectedchange', { connected: false, sessionId: generation, memberId })
+        this.socketTask = null
+        this.triggerEvent('connectedchange', { connected: false, memberId })
+        this.triggerEvent('error', { error })
+      })
+      task.onClose(() => {
+        if (!isCurrent()) return
+        this.connected = false
+        this.socketTask = null
+        this.triggerEvent('connectedchange', { connected: false, memberId })
       })
     },
-    reconnect () { this.connectChannel() },
+    reconnect () {
+      this.disconnectChannel()
+      this.connectChannel()
+    },
     sendHeartbeat () {
-      if (!this.enabled || !this.connected) return
-      wx.sendSocketMessage({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) })
+      if (!this.socketTask || !this.connected) return
+      this.socketTask.send({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) })
     }
   }
 })
 </script>
 
 <style scoped>
-.channel-panel { margin-top: 16rpx; }
-.channel-offline, .channel-online { display: flex; align-items: center; justify-content: space-between; padding: 18rpx 24rpx; border-radius: 14rpx; }
-.channel-offline { background: #fff7e6; }
-.channel-online { background: #f0fff7; }
-.channel-tip { color: #747a84; font-size: 22rpx; }
-.reconnect-button, .ping-button { margin: 0; padding: 0 20rpx; font-size: 22rpx; line-height: 52rpx; background: #fff; border-radius: 26rpx; }
-.reconnect-button { color: #d48806; border: 1rpx solid #ffd591; }
-.ping-button { color: #219a61; border: 1rpx solid #87e8b4; }
+.channel-panel {
+  margin-top: 16rpx;
+}
+
+.channel-offline,
+.channel-online {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 24rpx;
+  border-radius: 14rpx;
+}
+
+.channel-offline {
+  background: #fff7e6;
+}
+
+.channel-online {
+  background: #f0fff7;
+}
+
+.channel-tip {
+  color: #747a84;
+  font-size: 22rpx;
+}
+
+.reconnect-button,
+.ping-button {
+  margin: 0;
+  padding: 0 20rpx;
+  font-size: 22rpx;
+  line-height: 52rpx;
+  background: #ffffff;
+  border-radius: 26rpx;
+}
+
+.reconnect-button {
+  color: #d48806;
+  border: 1rpx solid #ffd591;
+}
+
+.ping-button {
+  color: #219a61;
+  border: 1rpx solid #87e8b4;
+}
 </style>
 
 <script type="application/json">
-{ "component": true, "styleIsolation": "isolated" }
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
 </script>

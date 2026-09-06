@@ -3,144 +3,243 @@
   "eval_name": "order-center-realtime",
   "configuration": "mpx2web",
   "run_number": 2,
-  "grading_fingerprint": "ee78c5645bf7d94d3a202b320633b5ec165ad6165c61f3f80dc62d6856526606",
+  "grading_fingerprint": "fbecb3c16070581515e3f2edfb3a2e257e443011de2af53e4d47ae0e15f73f48",
+  "model_grading_fingerprint": "c208b8160a18b42751c4772c88a1927c893a88b56e57f2401ad90037d09afbb1",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 0,
-    "invoked": false,
-    "skip_reason": "compile_or_semantic_gate_failed"
+    "duration_ms": 96063
   },
   "expectations": [
     {
       "id": "r0",
       "text": "微信小程序继续保留 WXS 高频手势路径",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:25-36 保留 <script module=\"gesture\" lang=\"wxs\">，且 touchstart/move/end/cancel 的 @wx 绑定走 gesture.onTouchStart/onTouchMove/onTouchEnd/onTouchCancel。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     },
     {
       "id": "r1",
       "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx：四类触摸事件均使用显式 @wx WXS 与 @web 实例方法配对。",
       "verification_methods": [
-        "compile_gate"
-      ]
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/components/swipe-order-item.mpx：四类触摸事件均使用显式 @wx WXS 与 @web 实例方法配对。"
+      }
     },
     {
       "id": "r2",
       "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "category": "web-script",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:40-58 使用组件实例字段 webStartX/webStartOffset/webMoved 隔离 Web 手势状态；MAX_OFFSET=96、OPEN_THRESHOLD=48，syncSwipeOffset clamp 到 -96..0，handleTouchEnd 用 offsetX <= -OPEN_THRESHOLD 展开。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     },
     {
       "id": "r3",
       "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "category": "web-interaction",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:54、58 touchcancel 调 cancelSwipe 并 offsetX=0 回弹；53、59 只设置 suppressNextTap 并在 selectOrder 中清除一次，无时间窗；55-60 和模板 16 的 disabled 阻止滑动、选择和删除。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
       ]
     },
     {
       "id": "r4",
       "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：连接由 connectSocket 返回的局部 SocketTask 承载，未混用全局 Socket API。",
       "verification_methods": [
-        "compile_gate"
-      ]
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/components/logistics-channel.mpx：连接由 connectSocket 返回的局部 SocketTask 承载，未混用全局 Socket API。"
+      }
     },
     {
       "id": "r5",
       "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：open/message/error/close 四类回调均校验捕获任务仍为当前任务。",
       "verification_methods": [
-        "compile_gate"
-      ]
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/components/logistics-channel.mpx：open/message/error/close 四类回调均校验捕获任务仍为当前任务。"
+      }
     },
     {
       "id": "r6",
       "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：重连与卸载均先废弃任务身份，再关闭旧 SocketTask。",
       "verification_methods": [
-        "compile_gate"
-      ]
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/components/logistics-channel.mpx：重连与卸载均先废弃任务身份，再关闭旧 SocketTask。"
+      }
     },
     {
       "id": "r7",
       "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx：sendHeartbeat 在 task.send 前校验当前任务身份和 task.readyState/task.OPEN。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/components/logistics-channel.mpx：sendHeartbeat 在 task.send 前校验当前任务身份和 task.readyState/task.OPEN。"
+      }
+    },
+    {
+      "id": "r8a",
+      "text": "订单状态筛选入口和筛选结果更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:14-24 保留状态筛选入口；85-103 switchStatus 更新 activeStatus 并 fetchOrders，fetchOrders 请求 /api/orders 并更新 orders/statusTabs/loading。",
+      "verification_methods": [
+        "independent_code_review"
       ]
     },
     {
-      "id": "r8",
-      "text": "订单筛选、详情、删除和物流消息更新链路保持完整",
-      "passed": false,
-      "evidence": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过",
+      "id": "r8b",
+      "text": "订单详情入口与原有详情跳转链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:28-38 swipe-order-item 保留 bindselect=\"openOrder\"；outputs/src/components/swipe-order-item.mpx:17、59 点击订单触发 select；outputs/src/pages/orders/index.mpx:104-106 openOrder 调 wx.navigateTo 到详情页。",
       "verification_methods": [
-        "compile_gate"
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8c",
+      "text": "订单删除或撤销操作及其列表状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:35 保留 bindremove；outputs/src/components/swipe-order-item.mpx:16、60 删除按钮触发 remove；outputs/src/pages/orders/index.mpx:107-123 弹确认框、DELETE 请求成功后从 orders 过滤删除并清理 openedOrderId。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8d",
+      "text": "物流入口、SocketTask 消息接收与物流状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:49-55 保留 logistics-channel 入口和 bindlogistics；outputs/src/components/logistics-channel.mpx:44-49 SocketTask onMessage 解析 logistics 消息并 triggerEvent；outputs/src/pages/orders/index.mpx:135-145 handleLogisticsMessage 更新订单物流状态。",
+      "verification_methods": [
+        "independent_code_review"
       ]
     }
   ],
   "summary": {
-    "passed": 0,
-    "failed": 9,
-    "total": 9,
-    "pass_rate": 0.0
+    "passed": 12,
+    "failed": 0,
+    "total": 12,
+    "pass_rate": 1.0
+  },
+  "strict_delivery_summary": {
+    "passed": 12,
+    "failed": 0,
+    "total": 12,
+    "pass_rate": 1.0,
+    "compile_passed": true
   },
   "metrics": {
-    "total_tokens": 284948,
-    "input_tokens": 273806,
-    "output_tokens": 11142,
+    "total_tokens": 288392,
+    "input_tokens": 278945,
+    "output_tokens": 9447,
     "tool_calls": 7,
-    "duration_ms": 230656
+    "duration_ms": 208668
   },
   "timing": {
-    "total_tokens": 284948,
-    "duration_ms": 230656,
-    "total_duration_seconds": 230.656
+    "total_tokens": 288392,
+    "duration_ms": 208668,
+    "total_duration_seconds": 208.668
   },
   "compile": {
-    "status": "failed",
+    "compile_fingerprint": "e99f47983a6fc9ce81f2c6d1081e5272af9dd248f9c48f994abc3309aba7aefa",
+    "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 3,
     "compile_eligible_mpx_count": 3,
-    "compiled_mpx_count": 1,
+    "compiled_mpx_count": 3,
     "checks": [
       {
         "kind": "mpx-conditional-compile-semantics",
         "files": [
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/pages/orders/index.mpx",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/pages/orders/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/pages/orders/index.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
           "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx"
         ],
         "passed": true,
         "returncode": 0,
         "detail": {
           "success": true,
-          "checkedFiles": 3,
+          "checkedFiles": 1,
           "files": [
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/pages/orders/index.mpx",
-              "errors": []
-            },
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx",
-              "errors": []
-            },
             {
               "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx",
               "errors": []
@@ -167,7 +266,7 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3892
+          "durationMs": 3076
         },
         "stderr": ""
       },
@@ -175,42 +274,54 @@
         "kind": "mpx-web-compile",
         "type": "component",
         "files": [
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx"
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/swipe-order-item.mpx"
         ],
-        "passed": false,
-        "returncode": 1,
+        "passed": true,
+        "returncode": 0,
         "detail": {
-          "success": false,
+          "success": true,
           "target": "web",
           "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
-          "errors": [
-            {
-              "category": "script",
-              "message": "Module build failed (from ./node_modules/babel-loader/lib/index.js):\nSyntaxError: /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx: Missing semicolon. (11:267)\n\n   9 |     isCurrentTask (task, memberId) { return this.channelAttached && this.socketTask === task && this.socketMemberId === memberId },\n  10 |     notifyConnection (connected, memberId) { this.connected = connected; this.triggerEvent('connectedchange', { connected, memberId }) },\n> 11 |     disconnectChannel () { const task = this.socketTask; const memberId = this.socketMemberId; this.socketTask = null; this.socketMemberId = ''; if (task && task.close) task.close({}); if (this.connected && this.channelAttached) this.notifyConnection(false, memberId) else this.connected = false },\n     |                                                                                                                                                                                                                                                                            ^\n  12 |     connectChannel () {\n  13 |       if (!this.channelAttached || !this.memberId) return\n  14 |       this.disconnectChannel()\n    at constructor (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:369:19)\n    at Parser.raise (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:6620:19)\n    at Parser.semicolon (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:6916:10)\n    at Parser.parseExpressionStatement (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13314:10)\n    at Parser.parseStatementContent (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12928:19)\n    at Parser.parseStatementLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12796:17)\n    at Parser.parseStatementOrSloppyAnnexBFunctionDeclaration (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12786:17)\n    at Parser.parseIfStatement (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13159:28)\n    at Parser.parseStatementContent (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12825:21)\n    at Parser.parseStatementLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12796:17)\n...",
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx",
-              "raw": "Module build failed (from ./node_modules/babel-loader/lib/index.js):\nSyntaxError: /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx: Missing semicolon. (11:267)\n\n   9 |     isCurrentTask (task, memberId) { return this.channelAttached && this.socketTask === task && this.socketMemberId === memberId },\n  10 |     notifyConnection (connected, memberId) { this.connected = connected; this.triggerEvent('connectedchange', { connected, memberId }) },\n> 11 |     disconnectChannel () { const task = this.socketTask; const memberId = this.socketMemberId; this.socketTask = null; this.socketMemberId = ''; if (task && task.close) task.close({}); if (this.connected && this.channelAttached) this.notifyConnection(false, memberId) else this.connected = false },\n     |                                                                                                                                                                                                                                                                            ^\n  12 |     connectChannel () {\n  13 |       if (!this.channelAttached || !this.memberId) return\n  14 |       this.disconnectChannel()\n    at constructor (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:369:19)\n    at Parser.raise (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:6620:19)\n    at Parser.semicolon (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:6916:10)\n    at Parser.parseExpressionStatement (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13314:10)\n    at Parser.parseStatementContent (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12928:19)\n    at Parser.parseStatementLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12796:17)\n    at Parser.parseStatementOrSloppyAnnexBFunctionDeclaration (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12786:17)\n    at Parser.parseIfStatement (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13159:28)\n    at Parser.parseStatementContent (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12825:21)\n    at Parser.parseStatementLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12796:17)\n    at Parser.parseStatementListItem (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12776:17)\n    at Parser.parseBlockOrModuleBlockBody (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13345:61)\n    at Parser.parseBlockBody (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13338:10)\n    at Parser.parseBlock (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:13326:10)\n    at Parser.parseFunctionBody (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12129:24)\n    at Parser.parseFunctionBodyAndFinish (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12115:10)\n    at Parser.parseMethod (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12073:31)\n    at Parser.parseObjectMethod (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11973:19)\n    at Parser.parseObjPropValue (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12007:23)\n    at Parser.parsePropertyDefinition (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11944:17)\n    at Parser.parseObjectLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11861:21)\n    at Parser.parseExprAtom (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11365:23)\n    at Parser.parseExprSubscripts (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11102:23)\n    at Parser.parseUpdate (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11087:21)\n    at Parser.parseMaybeUnary (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11067:23)\n    at Parser.parseMaybeUnaryOrPrivate (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10920:61)\n    at Parser.parseExprOps (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10925:23)\n    at Parser.parseMaybeConditional (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10902:23)\n    at Parser.parseMaybeAssign (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10852:21)\n    at /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10821:39\n    at Parser.allowInAnd (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12455:12)\n    at Parser.parseMaybeAssignAllowIn (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10821:17)\n    at Parser.parseMaybeAssignAllowInOrVoidPattern (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12522:17)\n    at Parser.parseObjectProperty (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11979:83)\n    at Parser.parseObjPropValue (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12007:100)\n    at Parser.parsePropertyDefinition (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11944:17)\n    at Parser.parseObjectLike (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11861:21)\n    at Parser.parseExprAtom (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11365:23)\n    at Parser.parseExprSubscripts (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11102:23)\n    at Parser.parseUpdate (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11087:21)\n    at Parser.parseMaybeUnary (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:11067:23)\n    at Parser.parseMaybeUnaryOrPrivate (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10920:61)\n    at Parser.parseExprOps (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10925:23)\n    at Parser.parseMaybeConditional (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10902:23)\n    at Parser.parseMaybeAssign (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10852:21)\n    at /Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10821:39\n    at Parser.allowInAnd (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12455:12)\n    at Parser.parseMaybeAssignAllowIn (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:10821:17)\n    at Parser.parseMaybeAssignAllowInOrVoidPattern (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12522:17)\n    at Parser.parseExprListItem (/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/node_modules/@babel/parser/lib/index.js:12204:18)"
-            }
-          ],
+          "errors": [],
           "warnings": [],
           "summary": {
-            "total": 1,
-            "byCategory": {
-              "script": 1
-            }
+            "total": 0,
+            "byCategory": {}
           },
-          "durationMs": 2694
+          "durationMs": 2667
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-3-order-center-realtime/mpx2web/run-2/outputs/src/components/logistics-channel.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 3079
         },
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
     "suggestions": [
-      "先修复编译或条件编译语义错误，再进行功能评分。"
+      "建议新增断言覆盖微信小程序 WXS 手势状态也必须按组件实例隔离；当前断言只明确要求 Web 隔离，可能漏掉 WXS module 全局状态按 orderId 键控导致的多实例互扰。"
     ],
-    "overall": "候选未通过硬门禁，按不可交付结果计 0 分：mpx-web-compile: 检查未通过"
+    "overall": "主体链路基本保留，Web 手势和 SocketTask 防污染修复到位；主要未通过点是 @wx WXS 事件仍使用了动态表达式绑定。"
   }
 }

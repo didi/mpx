@@ -3,7 +3,12 @@ import mpx, { createApp } from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy)
-createApp({})
+
+createApp({
+  globalData: {
+    selectedAddress: null
+  }
+})
 </script>
 
 <script type="application/json">

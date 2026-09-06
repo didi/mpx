@@ -269,6 +269,117 @@ if (__mpx_mode__ === 'web') useWebSdk()
                 semantic["detail"]["files"][0]["errors"][0]["message"],
             )
 
+    def test_compile_gate_compiles_each_entry_separately(self):
+        with tempfile.TemporaryDirectory(dir=RUN_EVALS.EVAL_WORKDIR) as directory:
+            root = Path(directory)
+            page = root / "outputs/src/pages/home/index.mpx"
+            component = root / "outputs/src/components/card.mpx"
+            for path in (page, component):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("<template><view /></template>\n")
+            run_root = root / "run-1"
+            run_root.mkdir()
+            dispatch = {
+                "output_paths": [str(page), str(component)],
+                "output_relative_paths": [
+                    "src/pages/home/index.mpx",
+                    "src/components/card.mpx",
+                ],
+                "metrics_path": str(run_root / "metrics.json"),
+            }
+
+            calls = []
+
+            def fake_run(command, **kwargs):
+                calls.append(command)
+                if str(RUN_EVALS.CONDITIONAL_VALIDATE_SCRIPT) in command:
+                    return CompletedProcess(command, 0, stdout='{"success": true}', stderr="")
+                if "--type=page" in command:
+                    return CompletedProcess(command, 0, stdout='{"success": true}', stderr="")
+                return CompletedProcess(command, 1, stdout='{"success": false}', stderr="compile failed")
+
+            with patch.object(RUN_EVALS.subprocess, "run", side_effect=fake_run):
+                result = RUN_EVALS.run_compile_gate(dispatch)
+
+            compile_calls = [
+                command for command in calls if str(RUN_EVALS.COMPILE_SCRIPT) in command
+            ]
+            self.assertEqual(len(compile_calls), 2)
+            self.assertEqual(result["compile_eligible_mpx_count"], 2)
+            self.assertEqual(result["compiled_mpx_count"], 1)
+            self.assertEqual(result["status"], "failed")
+            self.assertTrue(all(len(check["files"]) == 1 for check in result["checks"]))
+
+    def test_recompile_dispatch_updates_only_compile_evidence(self):
+        with tempfile.TemporaryDirectory(dir=RUN_EVALS.EVAL_WORKDIR) as directory:
+            root = Path(directory)
+            output = root / "run-1/outputs/src/pages/home/index.mpx"
+            output.parent.mkdir(parents=True)
+            output.write_text("<template><view /></template>\n")
+            dispatch = {
+                "description": "Eval-0 mpx2web run-1",
+                "fingerprint": "candidate-fingerprint",
+                "output_paths": [str(output)],
+                "output_relative_paths": ["src/pages/home/index.mpx"],
+                "metrics_path": str(root / "run-1/metrics.json"),
+            }
+            run_path = root / "run-1/run.json"
+            run_path.write_text(json.dumps({
+                "fingerprint": dispatch["fingerprint"],
+                "returncode": 0,
+                "outputs_complete": True,
+                "compile_status": "failed",
+            }))
+            refreshed = {
+                "status": "passed",
+                "compiled_mpx_count": 1,
+                "compile_eligible_mpx_count": 1,
+                "boundary": "逐文件编译",
+            }
+
+            with patch.object(RUN_EVALS, "run_compile_gate", return_value=refreshed):
+                result = RUN_EVALS.recompile_dispatch(dispatch)
+
+            self.assertEqual(result, refreshed)
+            run = json.loads(run_path.read_text())
+            self.assertEqual(run["fingerprint"], dispatch["fingerprint"])
+            self.assertEqual(run["compile_status"], "passed")
+            self.assertEqual(run["compile_boundary"], "逐文件编译")
+
+    def test_recompile_dispatch_skips_current_compile_evidence(self):
+        with tempfile.TemporaryDirectory(dir=RUN_EVALS.EVAL_WORKDIR) as directory:
+            root = Path(directory)
+            output = root / "run-1/outputs/src/pages/home/index.mpx"
+            output.parent.mkdir(parents=True)
+            output.write_text("<template><view /></template>\n")
+            dispatch = {
+                "description": "Eval-0 mpx2web run-1",
+                "fingerprint": "candidate-fingerprint",
+                "output_paths": [str(output)],
+                "output_relative_paths": ["src/pages/home/index.mpx"],
+                "metrics_path": str(root / "run-1/metrics.json"),
+            }
+            run_path = root / "run-1/run.json"
+            run_path.write_text(json.dumps({
+                "fingerprint": dispatch["fingerprint"],
+                "returncode": 0,
+                "outputs_complete": True,
+                "compile_status": "passed",
+            }))
+            current = {
+                "compile_fingerprint": RUN_EVALS.compile_fingerprint(dispatch),
+                "status": "passed",
+                "compiled_mpx_count": 1,
+                "compile_eligible_mpx_count": 1,
+            }
+            (root / "run-1/compile.json").write_text(json.dumps(current))
+
+            with patch.object(RUN_EVALS, "run_compile_gate") as compile_gate:
+                result = RUN_EVALS.recompile_dispatch(dispatch)
+
+            compile_gate.assert_not_called()
+            self.assertEqual(result, current)
+
     def test_runner_has_no_internal_workspace_dependency(self):
         self.assertNotIn(
             "iteration-11-internal",

@@ -1,16 +1,16 @@
 <template>
   <view class="search-page">
-    <view class="search-input">
+    <view class="search-bar">
       <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
-      <button wx:if="{{keyword}}" bindtap="clearSearch">清空</button>
+      <button wx:if="{{keyword}}" bindtap="clear">清空</button>
     </view>
+    <view class="error" wx:if="{{errorMessage}}">{{errorMessage}}</view>
     <view class="trending" wx:if="{{!keyword}}">
       <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
     </view>
     <view class="suggestions">
       <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
     </view>
-    <view class="error" wx:if="{{errorMessage}}">{{errorMessage}}</view>
   </view>
 </template>
 
@@ -24,21 +24,18 @@ createPage({
     trendingKeywords: [],
     suggestions: [],
     errorMessage: '',
-    requestTask: null,
-    requestId: 0,
-    isUnloading: false
+    suggestionTask: null,
+    suggestionGeneration: 0
   },
   async onLoad () {
     try {
       this.trendingKeywords = await fetchTrendingKeywords()
     } catch (error) {
-      if (!this.isUnloading) this.errorMessage = '搜索失败'
+      this.errorMessage = '搜索失败'
     }
   },
   onUnload () {
-    this.isUnloading = true
-    this.requestId += 1
-    this.abortSuggestionRequest()
+    this.cancelSuggestionRequest()
   },
   methods: {
     onKeywordInput (event) {
@@ -47,38 +44,39 @@ createPage({
     chooseKeyword (keyword) {
       this.search(keyword)
     },
-    clearSearch () {
+    clear () {
       this.search('')
     },
-    abortSuggestionRequest () {
-      if (this.requestTask && this.requestTask.__returned) {
-        this.requestTask.__returned.abort()
-      }
-      this.requestTask = null
+    cancelSuggestionRequest () {
+      const task = this.suggestionTask
+      this.suggestionTask = null
+      this.suggestionGeneration += 1
+      if (task && task.abort) task.abort()
     },
     search (keyword) {
+      this.cancelSuggestionRequest()
       this.keyword = keyword
       this.errorMessage = ''
-      const requestId = ++this.requestId
-
-      this.abortSuggestionRequest()
       if (!keyword) {
         this.suggestions = []
         return
       }
 
-      const requestTask = requestSuggestions(keyword)
-      this.requestTask = requestTask
-      requestTask.then(({ data }) => {
-        if (!this.isUnloading && requestId === this.requestId) {
-          this.suggestions = data.list
-        }
+      const generation = this.suggestionGeneration
+      const promise = requestSuggestions(keyword)
+      const task = promise.__returned
+      this.suggestionTask = task
+      promise.then(({ data }) => {
+        if (this.suggestionTask !== task || this.suggestionGeneration !== generation) return
+        if (this.keyword !== keyword) return
+        this.suggestions = data.list
+        this.suggestionTask = null
       }).catch(() => {
-        if (!this.isUnloading && requestId === this.requestId) {
-          this.errorMessage = '搜索失败'
-        }
-      }).finally(() => {
-        if (requestId === this.requestId) this.requestTask = null
+        if (this.suggestionTask !== task || this.suggestionGeneration !== generation) return
+        if (this.keyword !== keyword) return
+        this.suggestions = []
+        this.errorMessage = '搜索失败'
+        this.suggestionTask = null
       })
     },
     openProduct (productId) {
@@ -92,8 +90,8 @@ createPage({
 
 <style scoped>
 .search-page { padding: 24rpx; }
-.search-input { display: flex; align-items: center; }
-.search-input input { flex: 1; }
+.search-bar { display: flex; align-items: center; }
+.search-bar input { flex: 1; }
 .trending, .suggestions { margin-top: 24rpx; }
-.error { margin-top: 24rpx; color: #d93025; }
+.error { margin-top: 16rpx; color: #d93025; }
 </style>

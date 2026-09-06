@@ -3,7 +3,7 @@ import { fetchArticle } from '../services/article'
 
 export const useArticleStore = defineStore('article', {
   state: () => ({
-    articleId: '',
+    resourceId: '',
     article: null,
     recommendations: [],
     loaded: false,
@@ -11,16 +11,17 @@ export const useArticleStore = defineStore('article', {
   }),
   actions: {
     async loadArticle (articleId, requestContext) {
-      if (this.loaded && this.articleId === articleId) return
+      if (this.loaded && this.resourceId === articleId) return
 
       const requestVersion = ++this.requestVersion
-      this.articleId = articleId
+      this.resourceId = articleId
       this.loaded = false
       this.article = null
       this.recommendations = []
 
       const data = await fetchArticle(articleId, requestContext)
-      if (requestVersion !== this.requestVersion || this.articleId !== articleId) return
+      if (requestVersion !== this.requestVersion || this.resourceId !== articleId) return
+
       this.article = data.article
       this.recommendations = data.recommendations
       this.loaded = true

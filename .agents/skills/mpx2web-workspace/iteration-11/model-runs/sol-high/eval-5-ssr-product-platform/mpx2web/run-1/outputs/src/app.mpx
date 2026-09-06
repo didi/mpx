@@ -9,9 +9,8 @@ createApp({
     }
   },
   onLaunch () {
-    if (__mpx_mode__ !== 'web') {
-      wx.reportAnalytics('mall_launch', {})
-    }
+    if (__mpx_mode__ === 'web' && typeof window === 'undefined') return
+    wx.reportAnalytics('mall_launch', {})
   }
 })
 </script>

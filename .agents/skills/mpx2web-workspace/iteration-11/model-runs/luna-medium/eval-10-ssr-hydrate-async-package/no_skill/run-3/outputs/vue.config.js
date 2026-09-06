@@ -1,11 +1,11 @@
 module.exports = {
-  publicPath: '/',
+  publicPath: '/content/',
   pluginOptions: {
     mpx: {
       plugin: {
         webConfig: {
           useSSR: true,
-          routeConfig: { mode: 'history', base: '/' }
+          routeConfig: { mode: 'history', base: '/content/' }
         }
       }
     }

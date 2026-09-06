@@ -2,10 +2,12 @@
   <div
     ref="viewport"
     class="analytics-scroll"
-    :class="{ 'analytics-scroll--x': scrollX, 'analytics-scroll--y': scrollY }"
-    @scroll="handleNativeScroll"
+    :style="viewportStyle"
+    v-bind="$attrs"
+    v-on="passthroughListeners"
+    @scroll="onScroll"
   >
-    <div ref="content" class="analytics-scroll__content"><slot /></div>
+    <slot />
   </div>
 </template>
 
@@ -20,94 +22,111 @@ export default {
     scrollLeft: { type: Number, default: 0 },
     scrollIntoView: { type: String, default: '' },
     upperThreshold: { type: Number, default: 50 },
-    lowerThreshold: { type: Number, default: 50 },
-    scrollWithAnimation: { type: Boolean, default: false }
+    lowerThreshold: { type: Number, default: 50 }
   },
   data () {
-    return { lastTop: 0, lastLeft: 0, atTop: true, atLeft: true, atBottom: false, atRight: false, resizeObserver: null, mutationObserver: null }
+    return { lastTop: 0, lastLeft: 0, edgeState: {}, mutationObserver: null, resizeObserver: null }
   },
-  mounted () {
-    this.syncPosition()
-    this.refreshObservers()
-    this.$nextTick(this.scrollToTarget)
-  },
-  beforeDestroy () {
-    if (this.resizeObserver) this.resizeObserver.disconnect()
-    if (this.mutationObserver) this.mutationObserver.disconnect()
+  computed: {
+    viewportStyle () {
+      return {
+        overflowX: this.scrollX ? 'auto' : 'hidden',
+        overflowY: this.scrollY ? 'auto' : 'hidden'
+      }
+    },
+    passthroughListeners () {
+      const listeners = Object.assign({}, this.$listeners)
+      delete listeners.scroll
+      delete listeners.scrolltoupper
+      delete listeners.scrolltolower
+      return listeners
+    }
   },
   watch: {
-    scrollTop () { this.syncPosition() },
-    scrollLeft () { this.syncPosition() },
-    scrollIntoView () { this.$nextTick(this.scrollToTarget) },
-    scrollX () { this.$nextTick(this.refreshObservers) },
-    scrollY () { this.$nextTick(this.refreshObservers) }
+    scrollTop () { this.applyPosition() },
+    scrollLeft () { this.applyPosition() },
+    scrollIntoView () { this.$nextTick(this.applyIntoView) },
+    scrollX () { this.resetEdges() },
+    scrollY () { this.resetEdges() }
+  },
+  mounted () {
+    this.applyPosition()
+    this.$nextTick(this.applyIntoView)
+    if (typeof MutationObserver !== 'undefined') {
+      this.mutationObserver = new MutationObserver(() => this.$nextTick(this.refresh))
+      this.mutationObserver.observe(this.$refs.viewport, { childList: true, subtree: true })
+    }
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.refresh())
+      this.resizeObserver.observe(this.$refs.viewport)
+    }
   },
   methods: {
-    refreshObservers () {
-      const viewport = this.$refs.viewport
-      const content = this.$refs.content
-      if (!viewport || !content) return
-      if (this.resizeObserver) this.resizeObserver.disconnect()
-      if (this.mutationObserver) this.mutationObserver.disconnect()
-      if (typeof ResizeObserver !== 'undefined') {
-        this.resizeObserver = new ResizeObserver(() => this.$nextTick(this.scrollToTarget))
-        this.resizeObserver.observe(viewport)
-        this.resizeObserver.observe(content)
-      }
-      if (typeof MutationObserver !== 'undefined') {
-        this.mutationObserver = new MutationObserver(() => this.$nextTick(this.scrollToTarget))
-        this.mutationObserver.observe(content, { childList: true, subtree: true, attributes: true })
-      }
-    },
-    syncPosition () {
+    applyPosition () {
       const node = this.$refs.viewport
       if (!node) return
-      const behavior = this.scrollWithAnimation ? 'smooth' : 'auto'
-      if (node.scrollTo) node.scrollTo({ top: this.scrollTop, left: this.scrollLeft, behavior })
-      else { node.scrollTop = this.scrollTop; node.scrollLeft = this.scrollLeft }
+      if (this.scrollY) node.scrollTop = Number(this.scrollTop) || 0
+      if (this.scrollX) node.scrollLeft = Number(this.scrollLeft) || 0
     },
-    scroll (options = {}) {
+    applyIntoView () {
+      const node = this.$refs.viewport
+      if (!node || !this.scrollIntoView) return
+      const target = Array.from(node.querySelectorAll('[id]')).find((item) => item.id === this.scrollIntoView)
+      if (!target) return
+      const viewportRect = node.getBoundingClientRect()
+      const targetRect = target.getBoundingClientRect()
+      if (this.scrollY) node.scrollTop += targetRect.top - viewportRect.top
+      if (this.scrollX) node.scrollLeft += targetRect.left - viewportRect.left
+    },
+    scroll (options) {
+      const next = options || {}
       const node = this.$refs.viewport
       if (!node) return
-      const top = options.top === undefined ? node.scrollTop : options.top
-      const left = options.left === undefined ? node.scrollLeft : options.left
-      const behavior = options.behavior || (this.scrollWithAnimation ? 'smooth' : 'auto')
-      if (node.scrollTo) node.scrollTo({ top, left, behavior })
-      else { node.scrollTop = top; node.scrollLeft = left }
+      if (next.scrollTop != null && this.scrollY) node.scrollTop = Number(next.scrollTop) || 0
+      if (next.scrollLeft != null && this.scrollX) node.scrollLeft = Number(next.scrollLeft) || 0
     },
-    scrollToTarget () {
-      if (!this.scrollIntoView) return
-      const node = this.$refs.viewport
-      const target = node && node.querySelector(`#${this.escapeId(this.scrollIntoView)}`)
-      if (target) target.scrollIntoView({ behavior: this.scrollWithAnimation ? 'smooth' : 'auto', block: 'nearest', inline: 'nearest' })
+    scrollIntoViewById (id) {
+      this.$emit('update:scrollIntoView', id)
+      this.$nextTick(() => this.applyIntoView())
     },
-    escapeId (id) { return String(id).replace(/([\\.#:[\],])/g, '\\$1') },
-    handleNativeScroll (event) {
+    refresh () {
+      this.applyPosition()
+      this.applyIntoView()
+    },
+    resetEdges () { this.edgeState = {} },
+    onScroll (event) {
       const node = event.currentTarget
       const top = node.scrollTop
       const left = node.scrollLeft
-      const maxTop = Math.max(0, node.scrollHeight - node.clientHeight)
-      const maxLeft = Math.max(0, node.scrollWidth - node.clientWidth)
-      const detail = { scrollTop: top, scrollLeft: left, scrollHeight: node.scrollHeight, scrollWidth: node.scrollWidth, deltaX: left - this.lastLeft, deltaY: top - this.lastTop }
-      this.lastTop = top; this.lastLeft = left
+      const detail = {
+        scrollTop: top,
+        scrollLeft: left,
+        scrollHeight: node.scrollHeight,
+        scrollWidth: node.scrollWidth,
+        deltaX: left - this.lastLeft,
+        deltaY: top - this.lastTop
+      }
+      this.lastTop = top
+      this.lastLeft = left
       this.$emit('scroll', { detail })
-      const topEdge = this.scrollY && top <= this.upperThreshold
-      const leftEdge = this.scrollX && left <= this.upperThreshold
-      const bottomEdge = this.scrollY && maxTop - top <= this.lowerThreshold
-      const rightEdge = this.scrollX && maxLeft - left <= this.lowerThreshold
-      if (topEdge && !this.atTop) this.$emit('scrolltoupper', { detail: { ...detail, direction: 'top' } })
-      if (leftEdge && !this.atLeft) this.$emit('scrolltoupper', { detail: { ...detail, direction: 'left' } })
-      if (bottomEdge && !this.atBottom) this.$emit('scrolltolower', { detail: { ...detail, direction: 'bottom' } })
-      if (rightEdge && !this.atRight) this.$emit('scrolltolower', { detail: { ...detail, direction: 'right' } })
-      this.atTop = topEdge; this.atLeft = leftEdge; this.atBottom = bottomEdge; this.atRight = rightEdge
+      this.emitEdge('top', this.scrollY && top <= this.upperThreshold, detail)
+      this.emitEdge('left', this.scrollX && left <= this.upperThreshold, detail)
+      this.emitEdge('bottom', this.scrollY && node.scrollHeight - node.clientHeight - top <= this.lowerThreshold, detail)
+      this.emitEdge('right', this.scrollX && node.scrollWidth - node.clientWidth - left <= this.lowerThreshold, detail)
+    },
+    emitEdge (edge, active, detail) {
+      if (!active) { this.$set(this.edgeState, edge, false); return }
+      if (this.edgeState[edge]) return
+      this.$set(this.edgeState, edge, true)
+      if (edge === 'top' || edge === 'left') this.$emit('scrolltoupper', { detail })
+      else this.$emit('scrolltolower', { detail })
     }
+  },
+  beforeDestroy () {
+    if (this.mutationObserver) this.mutationObserver.disconnect()
+    if (this.resizeObserver) this.resizeObserver.disconnect()
+    this.mutationObserver = null
+    this.resizeObserver = null
   }
 }
 </script>
-
-<style scoped>
-.analytics-scroll { width: 100%; max-height: 100%; }
-.analytics-scroll--x { overflow-x: auto; }
-.analytics-scroll--y { overflow-y: auto; }
-.analytics-scroll__content { min-width: max-content; }
-</style>

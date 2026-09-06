@@ -3,19 +3,21 @@
   "eval_name": "community-publish-bridge",
   "configuration": "no_skill",
   "run_number": 2,
-  "grading_fingerprint": "a072766a1051f3aaa152dd4f357fde5ce4c3bddf6ac7adc893768b4d41b4f204",
+  "grading_fingerprint": "dbc2554c5afc40aa899811dbc659d6054efe0692a0ad6ab3062c4fb2ee1717f1",
+  "model_grading_fingerprint": "a360e1a015b82d591434ae1ead5e26a46d3d204e4b649bb37ae5c7421b873a21",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 96857
+    "duration_ms": 81738
   },
   "expectations": [
     {
       "id": "a0",
       "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "category": "cross-platform-regression",
       "passed": false,
-      "evidence": "outputs/src/pages/community/publish.mpx:116-117 新增 getMiniProgramApi 返回 wx，choosePlace/openPlace/choosePhoto 在 130-169 通过 const api 后调用 api.chooseLocation/api.openLocation/api.chooseMedia，不是 wx.xxx 或 mpx.xxx 直接调用。",
+      "evidence": "outputs/src/pages/community/publish.mpx:93-96 定义 getPlatformApi(name) 并通过 wx[name] 动态取方法；choosePlace/openPlace/choosePhoto 在 134、150、163 行分别用字符串动态获取 chooseLocation/openLocation/chooseMedia，而不是非 Web 分支直接 wx.xxx 或 mpx.xxx 调用。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -23,8 +25,9 @@
     {
       "id": "a1",
       "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "category": "conditional-compile",
       "passed": false,
-      "evidence": "outputs/src/pages/community/publish.mpx:116-125 新增通用 getMiniProgramApi/showMessage；189-195 新增 handlePublishSuccess 改写路由成功处理；197-235 submitPost 改写请求链路并加入 fetch。缺失能力未仅隔离在 choosePlace/openPlace/choosePhoto 或其专用 helper。",
+      "evidence": "outputs/src/pages/community/publish.mpx:93-96 引入通用平台调用层 getPlatformApi；且 99、189、207 行也用它包装 showToast、request、redirectTo，超出了 choosePlace/openPlace/choosePhoto 及其专用 helper 的隔离范围。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -32,8 +35,9 @@
     {
       "id": "a2",
       "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:130-135 在缺少 chooseLocation 时仅提示“当前环境暂不支持位置选择”并 return；未声明或调用 Web 位置选择虚构接口。",
+      "evidence": "outputs/src/pages/community/publish.mpx:91-92 明确注释 Web 尚未定义 location/map/media host bridge；choosePlace 在 134-138 行仅做能力缺失提示并返回，未声明或调用 Web 虚构位置选择接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -41,8 +45,9 @@
     {
       "id": "a3",
       "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:142-148 在缺少 openLocation 时仅提示“当前环境暂不支持查看地图”并 return；未声明或调用 Web 地图虚构接口。",
+      "evidence": "outputs/src/pages/community/publish.mpx:91-92 明确注释 Web 尚未定义相关 bridge；openPlace 在 150-154 行仅在缺少 openLocation 时提示并返回，未声明或调用 Web 虚构地图打开接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -50,8 +55,9 @@
     {
       "id": "a4",
       "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:156-161 在缺少 chooseMedia 时仅提示“当前环境暂不支持图片选择”并 return；未声明或调用 Web 媒体选择虚构接口。",
+      "evidence": "outputs/src/pages/community/publish.mpx:91-92 明确注释 Web 尚未定义 media host bridge；choosePhoto 在 163-167 行仅在缺少 chooseMedia 时提示并返回，未声明或调用 Web 虚构媒体选择接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -59,18 +65,24 @@
     {
       "id": "a5",
       "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
-      "passed": false,
-      "evidence": "outputs/src/pages/community/publish.mpx：choosePlace, openPlace, choosePhoto 在未声明协议的能力分支中访问了浏览器全局对象或自行假定 Bridge/SDK 接口。",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。"
+      }
     },
     {
       "id": "a6",
       "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "category": "web-api",
       "passed": false,
-      "evidence": "outputs/src/pages/community/publish.mpx:119-125 将提示降级为 window.alert；197-235 将发布请求改为 api.request 或 fetch fallback；189-195 将详情跳转改为 api.redirectTo 或仅 showMessage。未保持请求、路由、提示继续走 wx/mpx 官方 API 链路。",
+      "evidence": "outputs/src/pages/community/publish.mpx:189-196 将 request 改为 getPlatformApi('request') 间接调用；207-209 将 redirectTo 改为 getPlatformApi('redirectTo')；99-101 将 showToast 改为 getPlatformApi('showToast')。这些已支持能力没有继续直接走 wx.xxx/mpx.xxx 官方链路。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -78,32 +90,41 @@
     {
       "id": "a7",
       "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "category": "business-regression",
       "passed": false,
-      "evidence": "outputs/src/pages/community/publish.mpx:180-187 保留了 content/photos/place/topicId/allowComments payload，但 189-195 在无 redirectTo 时仅提示“发布成功”，没有保持提交后跳转详情页链路。",
+      "evidence": "outputs/src/pages/community/publish.mpx:199-204 保留了 content/photos/place/topicId/allowComments payload，但 189-193 在无 wx.request 时直接提示“当前环境暂不支持发布动态”并返回，207-212 在无 redirectTo 时不跳转详情，导致 Web 发布与提交后详情跳转业务链路不完整。",
       "verification_methods": [
         "independent_code_review"
       ]
     }
   ],
   "summary": {
-    "passed": 3,
-    "failed": 5,
+    "passed": 4,
+    "failed": 4,
     "total": 8,
-    "pass_rate": 0.375
+    "pass_rate": 0.5
+  },
+  "strict_delivery_summary": {
+    "passed": 4,
+    "failed": 4,
+    "total": 8,
+    "pass_rate": 0.5,
+    "compile_passed": true
   },
   "metrics": {
-    "total_tokens": 72911,
-    "input_tokens": 66891,
-    "output_tokens": 6020,
-    "tool_calls": 3,
-    "duration_ms": 128080
+    "total_tokens": 106621,
+    "input_tokens": 100884,
+    "output_tokens": 5737,
+    "tool_calls": 5,
+    "duration_ms": 133720
   },
   "timing": {
-    "total_tokens": 72911,
-    "duration_ms": 128080,
-    "total_duration_seconds": 128.08
+    "total_tokens": 106621,
+    "duration_ms": 133720,
+    "total_duration_seconds": 133.72
   },
   "compile": {
+    "compile_fingerprint": "372223bc53389374fedb343432bd28320d3dbd4ef7236521920045dcf3ec2737",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 1,
@@ -147,18 +168,18 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3714
+          "durationMs": 3126
         },
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
     "suggestions": [
-      "a0 对“直接调用”的边界会影响 api = wx 后再 api.chooseLocation 这类写法的判定；本次按断言文本要求的 wx.xxx/mpx.xxx 直接调用执行。"
+      "主要缺口是候选把 wx 能力统一抽成动态 getPlatformApi，并连请求、路由、提示一起改写；应只隔离 Web 未确定的 chooseLocation/openLocation/chooseMedia，已支持能力继续使用项目官方 API 链路。"
     ],
-    "overall": "候选保留了部分业务数据结构，但引入了通用 API 包装、fetch 和 window.alert fallback，违反 Web 未声明协议下的安全跨端约束。"
+    "overall": "未通过：Web 缺失能力边界本身有占位，但通用适配层和已支持能力改写破坏了多项验收要求。"
   }
 }

@@ -1,34 +1,30 @@
 import mpx from '@mpxjs/api-proxy'
 
-function getRequestUrl (path, requestContext) {
-  const req = requestContext && requestContext.req
-  if (!req) return path
-
+function requestOrigin (ssrContext) {
+  const req = ssrContext && ssrContext.req
+  if (!req) return ''
   const headers = req.headers || {}
-  const host = headers['x-forwarded-host'] || headers.host
-  const forwardedProtocol = headers['x-forwarded-proto']
-  const protocol = (forwardedProtocol && forwardedProtocol.split(',')[0]) ||
-    (req.socket && req.socket.encrypted ? 'https' : 'http')
-
-  return host ? `${protocol}://${host}${path}` : path
+  const host = headers.host
+  if (!host) throw new Error('SSR request host is missing')
+  const protocol = req.socket && req.socket.encrypted ? 'https' : 'http'
+  return `${protocol}://${host}`
 }
 
-function request (path, requestContext) {
-  const req = requestContext && requestContext.req
+function requestJson (path, ssrContext) {
+  const origin = requestOrigin(ssrContext)
   return new Promise((resolve, reject) => {
     mpx.request({
-      url: getRequestUrl(path, requestContext),
-      header: req && req.headers,
+      url: origin ? `${origin}${path}` : path,
       success: ({ data }) => resolve(data),
       fail: reject
     })
   })
 }
 
-export function fetchProduct (productId, requestContext) {
-  return request(`/api/products/${productId}`, requestContext)
+export function fetchProduct (productId, ssrContext) {
+  return requestJson(`/api/products/${encodeURIComponent(productId)}`, ssrContext)
 }
 
-export function fetchRecommendations (productId, requestContext) {
-  return request(`/api/products/${productId}/recommendations`, requestContext)
+export function fetchRecommendations (productId, ssrContext) {
+  return requestJson(`/api/products/${encodeURIComponent(productId)}/recommendations`, ssrContext)
 }

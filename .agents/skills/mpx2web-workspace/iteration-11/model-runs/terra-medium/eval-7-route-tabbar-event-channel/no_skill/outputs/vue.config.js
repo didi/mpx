@@ -2,6 +2,11 @@ const path = require('path')
 
 module.exports = {
   publicPath: '/shop/',
+  devServer: {
+    historyApiFallback: {
+      index: '/shop/'
+    }
+  },
   pluginOptions: {
     mpx: {
       plugin: {

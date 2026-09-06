@@ -84,8 +84,7 @@ Mpx Web 宿主通过 `mpx.config.webConfig.webviewConfig` 配置白名单与自�
 ```js
 import mpx from '@mpxjs/core'
 
-mpx.config.webConfig = {
-  ...mpx.config.webConfig,
+mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
   webviewConfig: {
     hostWhitelists: ['https://h5.example.com'],
     apiImplementations: {
@@ -96,7 +95,7 @@ mpx.config.webConfig = {
       }
     }
   }
-}
+})
 ```
 
 配置说明：
@@ -107,13 +106,50 @@ mpx.config.webConfig = {
 
 只暴露嵌入页确实需要的最小 API，不要通过桥接返回长期凭证、隐私数据或任意执行能力。
 
-单向业务 `postMessage` 优先绑定 `<web-view bindmessage="handleMessage">`，让内建组件先完成白名单与 `clientUid` 实例隔离，再在页面处理器中校验当前业务主键。不要为了接收同一批消息再注册一套 `window.addEventListener('message', ...)`。
+单向业务 `postMessage` 优先绑定 `web-view` 的 `bindmessage`，让内建组件先完成白名单与 `clientUid` 实例隔离，再在页面处理器中校验当前业务主键。不要为了接收同一批消息再注册一套 `window.addEventListener('message', ...)`。
+
+安全增强不得改变输入中已有的小程序宿主协议。比如原小程序 `bindmessage` 只传 `{ type, payload }`，而新增 Web 协议声明了 `campaignId`，就用属性平台后缀拆开处理器；Web 分支严格拒绝缺失或不匹配的 ID，小程序分支继续按既有协议处理：
+
+```html
+<web-view
+  bindmessage@wx="handleMiniProgramMessage"
+  bindmessage@web="handleWebMessage"
+/>
+```
+
+```js
+handleMiniProgramMessage (event) {
+  const message = event.detail && event.detail.data
+  this.handleCampaignMessage(message)
+}
+
+handleWebMessage (event) {
+  const message = event.detail && event.detail.data
+  if (!message || message.campaignId !== this.campaignId) return
+  this.handleCampaignMessage(message)
+}
+```
+
+若保留一个无平台后缀的处理器，也必须用真实的 `if (__mpx_mode__ === 'web')` 只对 Web 协议执行严格业务主键检查；不要用脚本注释模拟条件编译。`if (message.campaignId && message.campaignId !== this.campaignId)` 不是严格检查，因为缺失 ID 会被放行。
+
+不要为了复用 Web 检查器，反向要求小程序 `bindmessage` 也新增 `campaignId`、`origin` 或 `source`；除非这些字段本来就是双方已声明的业务协议。
 
 只有内建 `bindmessage` 无法覆盖的独立协议才额外监听全局 `message`。此时处理副作用前同时校验：
 
 - `event.origin` 严格等于预期的完整 origin；
 - `event.source` 严格等于当前目标 iframe 的 `contentWindow`；
 - 消息携带的活动 ID、商品 ID 等业务身份严格等于当前页面状态。
+
+```js
+handleWebWindowMessage (event) {
+  const frame = this.$refs.campaignFrame
+  if (event.origin !== this.campaignOrigin) return
+  if (!frame || event.source !== frame.contentWindow) return
+  const message = event.data
+  if (!message || message.campaignId !== this.campaignId) return
+  this.handleCampaignMessage(message)
+}
+```
 
 只校验 origin 和业务 ID 仍不足以区分同源的多个 iframe。若业务代码无法可靠取得当前 iframe 的 `contentWindow`，应调整协议走内建 `bindmessage`，而不是省略 source 校验。
 

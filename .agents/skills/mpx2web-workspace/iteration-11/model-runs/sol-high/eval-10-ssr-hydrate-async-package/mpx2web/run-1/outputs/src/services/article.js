@@ -1,35 +1,41 @@
-import mpx from '@mpxjs/core'
+function requestOrigin (requestContext) {
+  const req = requestContext && requestContext.req
+  if (!req) return ''
 
-function getRequestOrigin (requestContext) {
-  if (!requestContext) return ''
-  if (requestContext.origin) return requestContext.origin
+  const headers = req.headers || {}
+  const forwardedProtocol = String(headers['x-forwarded-proto'] || '').split(',')[0].trim()
+  const forwardedHost = String(headers['x-forwarded-host'] || '').split(',')[0].trim()
+  const protocol = forwardedProtocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = forwardedHost || headers.host
 
-  const request = requestContext.req || requestContext.request
-  if (!request || typeof request === 'function') return ''
-  if (request.origin) return request.origin
+  if (!host) throw new Error('SSR request host is missing')
+  return `${protocol}://${host}`
+}
 
-  const headers = request.headers || {}
-  const forwardedProtocol = headers['x-forwarded-proto']
-  const forwardedHost = headers['x-forwarded-host']
-  const protocol = String(forwardedProtocol || request.protocol || 'http').split(',')[0].trim()
-  const host = String(forwardedHost || headers.host || '').split(',')[0].trim()
-  return host ? `${protocol}://${host}` : ''
+function requestArticleInMiniProgram (path) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url: path,
+      success (response) {
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          resolve(response.data)
+          return
+        }
+        reject(new Error(`Article request failed with status ${response.statusCode}`))
+      },
+      fail: reject
+    })
+  })
 }
 
 export function fetchArticle (articleId, requestContext) {
   const path = `/api/articles/${encodeURIComponent(articleId)}`
 
-  if (__mpx_mode__ !== 'web') {
-    return new Promise((resolve, reject) => {
-      mpx.request({
-        url: path,
-        success: (response) => resolve(response.data),
-        fail: reject
-      })
-    })
-  }
+  if (__mpx_mode__ !== 'web') return requestArticleInMiniProgram(path)
 
-  const request = requestContext && requestContext.fetch
-  const fetcher = typeof request === 'function' ? request : fetch
-  return fetcher(`${getRequestOrigin(requestContext)}${path}`).then((response) => response.json())
+  const origin = requestOrigin(requestContext)
+  return fetch(origin ? `${origin}${path}` : path).then((response) => {
+    if (!response.ok) throw new Error(`Article request failed with status ${response.status}`)
+    return response.json()
+  })
 }

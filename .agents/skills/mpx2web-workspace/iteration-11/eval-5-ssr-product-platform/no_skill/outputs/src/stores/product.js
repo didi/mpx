@@ -1,66 +1,49 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchProduct, fetchRecommendations } from '../services/product'
 
-// The WeakMap only deduplicates work inside one store instance. It never carries
-// product data between app/SSR-request store instances and is not serialized.
-const pendingLoads = new WeakMap()
+const pendingByStore = new WeakMap()
 
 export const useProductStore = defineStore('product-platform', {
   state: () => ({
     productId: '',
     product: {},
     recommendations: [],
-    loaded: false,
-    loading: false,
-    requestRevision: 0,
-    error: ''
+    loadingProductId: ''
   }),
   actions: {
-    loadProduct (productId, req) {
-      const normalizedId = String(productId || '')
-      if (!normalizedId) return Promise.reject(new Error('A product id is required'))
+    async loadProduct (productId, ssrContext) {
+      if (!productId) return { product: {}, recommendations: [] }
 
-      if (this.loaded && this.productId === normalizedId) {
-        return Promise.resolve(true)
+      if (this.productId === productId && this.product && this.product.id) {
+        return { product: this.product, recommendations: this.recommendations }
       }
 
-      const pending = pendingLoads.get(this)
-      if (pending && pending.productId === normalizedId) return pending.promise
+      // Mark the selection before awaiting anything. A response for an older
+      // selection can then never commit after a switch.
+      this.loadingProductId = productId
+      let requestCache = pendingByStore.get(this)
+      if (!requestCache) {
+        requestCache = new Map()
+        pendingByStore.set(this, requestCache)
+      }
+      let pending = requestCache.get(productId)
+      if (!pending) {
+        pending = Promise.all([
+          fetchProduct(productId, ssrContext),
+          fetchRecommendations(productId, ssrContext)
+        ]).then(([product, recommendations]) => ({ product, recommendations }))
+        requestCache.set(productId, pending)
+      }
 
-      const revision = this.requestRevision + 1
-      this.requestRevision = revision
-      this.productId = normalizedId
-      this.product = {}
-      this.recommendations = []
-      this.loaded = false
-      this.loading = true
-      this.error = ''
-
-      const promise = Promise.all([
-        fetchProduct(normalizedId, req),
-        fetchRecommendations(normalizedId, req)
-      ]).then(([product, recommendations]) => {
-        if (this.requestRevision !== revision || this.productId !== normalizedId) return false
-
-        this.product = product || {}
-        this.recommendations = Array.isArray(recommendations) ? recommendations : []
-        this.loaded = true
-        this.loading = false
-        return true
-      }).catch((error) => {
-        if (this.requestRevision === revision && this.productId === normalizedId) {
-          this.loading = false
-          this.loaded = false
-          this.error = error && error.message ? error.message : String(error)
-        }
-        throw error
-      }).finally(() => {
-        const current = pendingLoads.get(this)
-        if (current && current.revision === revision) pendingLoads.delete(this)
-      })
-
-      pendingLoads.set(this, { productId: normalizedId, revision, promise })
-      return promise
+      const result = await pending
+      // A late result is still useful to its caller, but must not overwrite a
+      // newer product selected in this store.
+      if (this.loadingProductId === productId) {
+        this.productId = productId
+        this.product = result.product
+        this.recommendations = result.recommendations
+      }
+      return result
     }
   }
 })

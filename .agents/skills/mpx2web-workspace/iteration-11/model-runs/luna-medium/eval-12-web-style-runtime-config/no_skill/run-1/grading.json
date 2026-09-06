@@ -3,19 +3,21 @@
   "eval_name": "web-style-runtime-config",
   "configuration": "no_skill",
   "run_number": 1,
-  "grading_fingerprint": "b3edc09b5f36e024b300c8c0e538beea57ef20d3c936ebc85a0025405817595e",
+  "grading_fingerprint": "8bb106f75435cc289aac9bae4b128c15bd646c577e59586d92bfdcf0b1268d48",
+  "model_grading_fingerprint": "ec2d051fd4f2500fd97c67da7da6f7d035cbcf45b317c894b0ffb5cfc7c4a119",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 70809
+    "duration_ms": 115767
   },
   "expectations": [
     {
       "id": "t0",
       "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
-      "passed": true,
-      "evidence": "outputs/src/pages/portal/index.mpx:104-115 在 .portal 内定义 --portal-text、--portal-background、--portal-card-background、--portal-border、--portal-accent、--portal-space，并在 color/background/padding 中使用 var(..., fallback)；126-139、151-155 对卡片、按钮、弹层继续提供颜色背景回退。",
+      "category": "web-style",
+      "passed": false,
+      "evidence": "outputs/src/pages/portal/index.mpx:106-117 为颜色主题变量提供了 var(..., fallback)，但间距改成 padding: 24rpx、margin/padding 固定值，没有为原 --portal-space 等跨组件间距主题变量提供 var(--token, fallback) 回退；证据不足以满足颜色、间距等主题变量均有回退。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -23,83 +25,121 @@
     {
       "id": "t1",
       "text": "webConfig.transRpxFn 实现明确的 100rpx=1rem 规则，0 值保持 0，不产生 0rem 或依赖运行环境的非确定结果",
+      "category": "web-style",
       "passed": false,
       "evidence": "outputs/vue.config.js：transRpxFn 未同时证明 0 保持和 100rpx=1rem。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/vue.config.js：transRpxFn 未同时证明 0 保持和 100rpx=1rem。"
+      }
     },
     {
       "id": "t2",
       "text": "移动 viewport 在 public/index.html 的 meta 中配置，组件样式和运行脚本不伪造或重复注入 viewport",
+      "category": "web-deployment",
       "passed": true,
       "evidence": "outputs/public/index.html：移动 viewport 在 HTML 模板中配置，组件未重复注入。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/public/index.html：移动 viewport 在 HTML 模板中配置，组件未重复注入。"
+      }
     },
     {
       "id": "t3",
       "text": "hover、::-webkit-scrollbar 与浏览器 safe-area/私有 CSS 仅隔离在 Web 输出，不污染微信小程序样式",
+      "category": "conditional-compile",
       "passed": false,
       "evidence": "outputs/src/pages/portal/index.mpx：Web-only hover/滚动条/safe-area CSS 未最小条件隔离。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/pages/portal/index.mpx：Web-only hover/滚动条/safe-area CSS 未最小条件隔离。"
+      }
     },
     {
       "id": "t4",
       "text": "Web 弹层打开时记录并锁定 body/应用挂载容器的原 overflow，关闭、页面切换和卸载时幂等恢复原值",
+      "category": "web-cleanup",
       "passed": false,
       "evidence": "outputs/src/pages/portal/index.mpx：滚动锁未保存原值，或关闭/卸载没有幂等恢复。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/pages/portal/index.mpx：滚动锁未保存原值，或关闭/卸载没有幂等恢复。"
+      }
     },
     {
       "id": "t5",
       "text": "滚动锁只保护浏览器客户端 DOM，不阻断微信小程序页面滚动、卡片点击和弹层关闭",
+      "category": "cross-platform-regression",
       "passed": false,
       "evidence": "outputs/src/pages/portal/index.mpx：openDialog 的 DOM 滚动逻辑未由 Web 客户端分支保护。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/pages/portal/index.mpx：openDialog 的 DOM 滚动逻辑未由 Web 客户端分支保护。"
+      }
     },
     {
       "id": "t6",
       "text": "routeConfig.base、output.publicPath 与 /portal/ 部署路径一致，主题切换、弹层和门户卡片业务链路完整",
+      "category": "web-deployment",
       "passed": true,
       "evidence": "outputs/vue.config.js：history 路由 base 与 publicPath 均为 /portal/。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/vue.config.js：history 路由 base 与 publicPath 均为 /portal/。"
+      }
     }
   ],
   "summary": {
-    "passed": 3,
-    "failed": 4,
+    "passed": 2,
+    "failed": 5,
     "total": 7,
-    "pass_rate": 0.4286
+    "pass_rate": 0.2857
+  },
+  "strict_delivery_summary": {
+    "passed": 2,
+    "failed": 5,
+    "total": 7,
+    "pass_rate": 0.2857,
+    "compile_passed": true
   },
   "metrics": {
-    "total_tokens": 59966,
-    "input_tokens": 56210,
-    "output_tokens": 3756,
-    "tool_calls": 3,
-    "duration_ms": 91792
+    "total_tokens": 78735,
+    "input_tokens": 73000,
+    "output_tokens": 5735,
+    "tool_calls": 4,
+    "duration_ms": 123186
   },
   "timing": {
-    "total_tokens": 59966,
-    "duration_ms": 91792,
-    "total_duration_seconds": 91.792
+    "total_tokens": 78735,
+    "duration_ms": 123186,
+    "total_duration_seconds": 123.186
   },
   "compile": {
+    "compile_fingerprint": "001f75cc2cd019a5e0d831f799ca6bbfea3c89b5d1db8d0b46f688877978e6cb",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 3,
@@ -109,24 +149,52 @@
       {
         "kind": "mpx-conditional-compile-semantics",
         "files": [
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/vue.config.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/vue.config.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/vue.config.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
           "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/public/index.html"
         ],
         "passed": true,
         "returncode": 0,
         "detail": {
           "success": true,
-          "checkedFiles": 3,
+          "checkedFiles": 1,
           "files": [
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/src/pages/portal/index.mpx",
-              "errors": []
-            },
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/vue.config.js",
-              "errors": []
-            },
             {
               "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-12-web-style-runtime-config/no_skill/run-1/outputs/public/index.html",
               "errors": []
@@ -153,7 +221,7 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3523
+          "durationMs": 2438
         },
         "stderr": ""
       },
@@ -175,13 +243,14 @@
         "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
     "suggestions": [
-      "补齐 transRpxFn 对 0 的显式返回 0；将 hover、滚动条、safe-area 等浏览器样式放入 Web 平台专用样式；滚动锁同时保存和恢复 #app 等应用挂载容器 overflow。"
+      "建议补充构建产物级断言，直接检查微信小程序输出 CSS 中不存在 hover、::-webkit-scrollbar、env/safe-area 等 Web 私有规则；同时补充对 #app 或实际挂载容器 overflow 记录和恢复的运行时断言。",
+      "建议 transRpxFn 验收包含 0、100、24 等样例，明确要求 0 返回字符串 0 或数值 0。"
     ],
-    "overall": "主要配置和业务链路基本完成，但 0rpx 转换、Web 样式隔离和挂载容器滚动锁仍不满足验收要求。"
+    "overall": "候选修复了 /portal/ 基础路径、viewport meta、部分主题颜色回退和 Web DOM 保护，但 rpx 零值、Web 样式隔离、间距主题回退以及挂载容器滚动锁仍不满足要求。"
   }
 }

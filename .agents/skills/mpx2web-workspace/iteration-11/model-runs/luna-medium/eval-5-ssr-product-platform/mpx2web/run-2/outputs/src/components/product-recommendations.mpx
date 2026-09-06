@@ -22,56 +22,46 @@ createComponent({
   properties: {
     productId: {
       type: String,
-      observer: 'onProductIdChange'
+      observer (productId) {
+        if (this.trackerReady && productId && productId !== this.trackerProductId) {
+          this.initTracker(productId)
+        }
+      }
     },
     items: Array
   },
-  data: {
-    webReady: false,
-    sdkDetached: false,
-    tracker: null,
-    observer: null,
-    trackerVersion: 0
-  },
   ready () {
     if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
-    this.webReady = true
-    this.sdkDetached = false
-    this.startTracker(this.productId)
-  },
-  detached () {
-    this.sdkDetached = true
-    this.webReady = false
-    this.trackerVersion += 1
-    this.disconnectTracker()
+    this.trackerReady = true
+    this.initTracker(this.productId)
   },
   methods: {
-    onProductIdChange (productId, oldProductId) {
-      if (!this.webReady || productId === oldProductId) return
-      this.startTracker(productId)
+    isCurrentTracker (generation, productId) {
+      return !this.trackerDetached &&
+        this.trackerGeneration === generation &&
+        this.productId === productId
     },
-    disconnectTracker () {
-      if (this.observer) this.observer.disconnect()
-      this.observer = null
-      if (this.tracker && this.tracker.destroy) this.tracker.destroy()
+    releaseExposureObserver () {
+      const observer = this.exposureObserver
+      this.exposureObserver = null
+      if (observer) observer.disconnect()
+    },
+    releaseTracker () {
+      const tracker = this.tracker
       this.tracker = null
+      if (tracker && tracker.destroy) tracker.destroy()
     },
-    async startTracker (productId) {
-      const version = ++this.trackerVersion
-      this.disconnectTracker()
-      if (!productId || this.sdkDetached) return
-
-      const { default: exposureSdk } = await import('@business/product-exposure-web')
-      if (this.sdkDetached || version !== this.trackerVersion) return
-      const tracker = await exposureSdk.create({ productId })
-      if (this.sdkDetached || version !== this.trackerVersion) {
-        if (tracker && tracker.destroy) tracker.destroy()
-        return
-      }
-
-      this.tracker = tracker
-      this.observer = new IntersectionObserver((entries) => {
-        if (this.sdkDetached || version !== this.trackerVersion || this.tracker !== tracker) return
+    releaseResources () {
+      this.trackerGeneration = (this.trackerGeneration || 0) + 1
+      this.releaseExposureObserver()
+      this.trackerProductId = ''
+      this.releaseTracker()
+    },
+    bindExposureObserver (generation, productId, tracker) {
+      this.releaseExposureObserver()
+      const observer = new IntersectionObserver((entries) => {
+        if (!this.isCurrentTracker(generation, productId) ||
+          this.tracker !== tracker || this.exposureObserver !== observer) return
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             tracker.track('recommendation_exposure', {
@@ -81,16 +71,34 @@ createComponent({
           }
         })
       })
-      const root = this.$el || document
-      root.querySelectorAll('.recommendation-card').forEach((element) => {
-        this.observer.observe(element)
-      })
+      this.exposureObserver = observer
+      document.querySelectorAll('.recommendation-card').forEach((element) => observer.observe(element))
+    },
+    async initTracker (productId) {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || !productId) return
+      this.releaseResources()
+      const generation = this.trackerGeneration
+      const { default: exposureSdk } = await import('@business/product-exposure-web')
+      if (!this.isCurrentTracker(generation, productId)) return
+      const tracker = await exposureSdk.create({ productId })
+      if (!this.isCurrentTracker(generation, productId)) {
+        if (tracker && tracker.destroy) tracker.destroy()
+        return
+      }
+      this.releaseTracker()
+      this.tracker = tracker
+      this.trackerProductId = productId
+      this.bindExposureObserver(generation, productId, tracker)
     },
     openProduct (productId) {
       wx.navigateTo({
         url: `/packageProduct/pages/detail/index?id=${productId}`
       })
     }
+  },
+  detached () {
+    this.trackerDetached = true
+    this.releaseResources()
   }
 })
 </script>

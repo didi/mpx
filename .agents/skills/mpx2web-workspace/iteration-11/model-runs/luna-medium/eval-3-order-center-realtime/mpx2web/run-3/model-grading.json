@@ -1,0 +1,142 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "mpx2web",
+  "run_number": 3,
+  "model_grading_fingerprint": "00b194ef986a8fae3b6c60bc1e331befbbf065d3238b9b37beee52429bc1f033",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 161278
+  },
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:53-82 保留 <script module=\"gesture\" lang=\"wxs\">，并在 65-80 提供 onTouchStart/onTouchMove/onTouchEnd/onTouchCancel WXS 手势处理。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:6-13 在同一个 swipe-order 节点上成对绑定 catchtouchstart/move/end/cancel@wx 到 gesture WXS 方法，并绑定 @touchstart/move/end/cancel@web 到组件实例方法。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "category": "web-script",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:100-120 将 swipeStartX、swipeCurrentOffset、offsetX 存在组件实例 this 上；107-118 对 Web/组件方法路径实现位移最大 -96，结束阈值 <= -48 展开到 -96，否则回 0。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "category": "web-interaction",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:124-130 cancelSwipe 将 offsetX 回到 0，150-152 touchcancel 调用 cancelSwipe；114-122 有效滑动后设置 suppressNextTap，154-158 selectOrder 只消费并清除一次；132-152、159、162-163 对 disabled 做了触摸、选择、删除入口拦截。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:51-57 使用 const task = wx.connectSocket(...) 并保存 this.channelTask；61-89 使用 task.onOpen/onMessage/onError/onClose，95-99 使用 task.send，未使用 wx.onSocketMessage 或 wx.sendSocketMessage 等全局 Socket API。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:58-60 定义 isCurrent 校验 this.channelTask === task、generation 和 memberId；61-89 的 open、message、error、close 四类回调进入后均先调用 isCurrent。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:36-42 disposeChannel 先递增 channelGeneration 并置空 channelTask，再关闭旧 task；43-45 replaceChannel 和 91-92 reconnect 复用该流程；32-33 detached 也调用 disposeChannel。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx:95-99 sendHeartbeat 仅取 this.channelTask 并检查 readyState；没有像回调路径一样校验捕获 task 仍为当前任务、generation/memberId 仍匹配，且 task.OPEN === undefined 时会绕过 readyState === task.OPEN 的严格校验。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8a",
+      "text": "订单状态筛选入口和筛选结果更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:14-24 保留状态筛选入口并 bindtap 到 switchStatus；109-126 switchStatus 更新 activeStatus 后调用 fetchOrders，fetchOrders 按 status 请求并更新 orders 与 statusTabs。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8b",
+      "text": "订单详情入口与原有详情跳转链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:23 订单卡片 bindtap=\"selectOrder\"，154-160 selectOrder 触发 select 事件；outputs/src/pages/orders/index.mpx:33 绑定 bindselect=\"openOrder\"，128-130 openOrder 继续 navigateTo 到 /pages/orders/detail。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8c",
+      "text": "订单删除或撤销操作及其列表状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:16 删除按钮绑定 catchtap=\"removeOrder\"，但 162-165 的 removeOrder 方法在 disabled 检查后被截断，没有 triggerEvent('remove')，文件也未闭合；虽然 outputs/src/pages/orders/index.mpx:131-146 保留了确认删除、DELETE 请求和过滤列表，但组件到页面的删除事件链路断开。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8d",
+      "text": "物流入口、SocketTask 消息接收与物流状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:47-53 保留 logistics-channel 入口并绑定 logistics 事件；outputs/src/components/logistics-channel.mpx:66-76 SocketTask onMessage 解析 logistics 消息并触发 logistics；outputs/src/pages/orders/index.mpx:154-164 校验 memberId 后更新订单物流状态。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "当前断言缺少独立的“输出 .mpx 文件完整且可编译”检查；outputs/src/components/swipe-order-item.mpx 在 removeOrder 中途截断，这会显著影响对手势和入口链路的实际运行结论。"
+    ],
+    "overall": "主要修复方向基本覆盖，但 send 前任务身份校验不足，且 swipe-order-item.mpx 文件不完整导致删除链路实际不可用。"
+  }
+}

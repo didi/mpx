@@ -1,0 +1,103 @@
+{
+  "eval_id": 0,
+  "eval_name": "storefront-style-compat",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "model_grading_fingerprint": "57e34cbf54fcc4e15b3689a83f3b1247674288711e42c0059a983de7842e0af4",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 52569
+  },
+  "expectations": [
+    {
+      "id": "w0",
+      "text": "候选商品卡文件通过 scoped 建立可直接验证的 Web 组件级样式隔离；小程序 JSON 的 styleIsolation 不能替代这项 Web 证据",
+      "category": "web-style",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx 仍为 `<style>`，没有 `<style scoped>` 或其他可直接验证的 Web 组件级 scoped 样式隔离；仅保留 JSON 中的 `\"styleIsolation\": \"isolated\"`，这不能作为 Web 证据。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w1",
+      "text": "商品图片使用稳定业务类选择器，不依赖 image 标签选择器",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/components/product-card.mpx 使用 `<image class=\"product-cover\">`，样式选择器为 `.product-cover`，不再依赖 `image` 或 `.product-card image` 标签选择器。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w2",
+      "text": "首页标题、商品标题和商品圆角图片继续保持各自视觉",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx 将首页标题改为 `.home-title` 并保持 `font-size: 40rpx; color: #e64340; font-weight: bold;`；outputs/src/components/product-card.mpx 将商品标题改为 `.product-title` 并保持 30rpx 加粗单行省略；商品图 `.product-cover` 保持 `border-radius: 20rpx 20rpx 0 0`。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w3",
+      "text": "小程序保留币种与单位的原始 10px 字号",
+      "category": "cross-platform-regression",
+      "passed": false,
+      "evidence": "input/src/components/product-card.mpx 中 `.currency, .unit` 为 `font-size: 10px; line-height: 14px;`；outputs/src/components/product-card.mpx 改为 `.product-price-currency, .product-price-unit { font-size: 20rpx; line-height: 28rpx; }`，没有保留小程序原始 10px 字号。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w4",
+      "text": "目标 WebView 中币种与单位先以不触发强制放大的基础字号排版，再缩放回约 10px 的视觉字号",
+      "category": "web-style",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx 没有 Web 专用条件样式，也没有先使用不触发强制放大的基础字号再通过 `transform: scale(...)` 缩放回约 10px 的实现。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w5",
+      "text": "目标 WebView 的缩放补偿具有与基线方向一致的 transform-origin，且校正 flex 布局占位，不改变卡片宽度或价格行基线",
+      "category": "web-style",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx 没有 `transform-origin`，也没有通过 wrapper、宽度/占位补偿或 flex 子项校正来避免缩放影响卡片宽度与价格行基线。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w6",
+      "text": "小字号补偿仅隔离在 Web 输出",
+      "category": "conditional-compile",
+      "passed": false,
+      "evidence": "outputs/src/components/product-card.mpx 没有 Web-only 的小字号补偿；价格字号变更直接写在普通样式中，会同时影响所有输出端。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "w7",
+      "text": "商城首页仍保留分类切换、商品详情和加入购物车业务链路",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/home/index.mpx 仍保留分类 tabs 与 `switchCategory`/`fetchProducts`；`openProduct` 仍 `wx.navigateTo` 到商品详情；`addToCart` 仍 POST `/api/cart/items` 并显示加入购物车 toast；product-card 仍触发 `select` 与 `addcart` 事件。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "主要缺口是候选只做了类名隔离和布局类修正，没有提供 Web scoped 样式隔离，也没有实现 Web-only 的最小字号缩放补偿。",
+      "断言缺口：w4/w5 依赖目标 WebView 的实际最小字号阈值，但任务未给出明确阈值；不过候选完全没有 transform 缩放与 Web 条件隔离代码，因此不影响本次 FAIL 结论。"
+    ],
+    "overall": "候选保住了业务链路并修复了部分选择器串扰风险，但核心 WebView 价格小字号放大问题没有按要求实现。"
+  }
+}

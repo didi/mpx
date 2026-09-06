@@ -1,9 +1,6 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchProduct, fetchRecommendations } from '../services/product'
 
-// Promise 不进入可序列化 state；WeakMap 以每个 Pinia store 实例隔离 SSR 请求。
-const pendingLoads = new WeakMap()
-
 export const useProductStore = defineStore('product-platform', {
   state: () => ({
     productId: '',
@@ -13,58 +10,35 @@ export const useProductStore = defineStore('product-platform', {
     requestVersion: 0
   }),
   actions: {
-    loadProduct (productId, requestContext) {
-      const normalizedProductId = String(productId || '')
-      if (!normalizedProductId) return Promise.resolve(false)
+    async loadProduct (productId, requestContext) {
+      if (this.loaded && this.productId === productId) return true
 
-      if (this.loaded && this.productId === normalizedProductId) {
-        return Promise.resolve(true)
-      }
-
-      const pendingLoad = pendingLoads.get(this)
-      if (
-        pendingLoad &&
-        pendingLoad.productId === normalizedProductId &&
-        pendingLoad.requestVersion === this.requestVersion &&
-        this.productId === normalizedProductId
-      ) {
-        return pendingLoad.promise
-      }
-
-      const requestVersion = this.requestVersion + 1
-      this.requestVersion = requestVersion
-      this.productId = normalizedProductId
-      this.loaded = false
+      const requestVersion = ++this.requestVersion
+      this.productId = productId
       this.product = {}
       this.recommendations = []
+      this.loaded = false
 
-      const promise = Promise.all([
-        fetchProduct(normalizedProductId, requestContext),
-        fetchRecommendations(normalizedProductId, requestContext)
-      ]).then(([product, recommendations]) => {
-        if (
-          this.requestVersion !== requestVersion ||
-          this.productId !== normalizedProductId
-        ) return false
+      try {
+        const [product, recommendations] = await Promise.all([
+          fetchProduct(productId, requestContext),
+          fetchRecommendations(productId, requestContext)
+        ])
+
+        if (requestVersion !== this.requestVersion || this.productId !== productId) {
+          return false
+        }
 
         this.product = product
         this.recommendations = recommendations
         this.loaded = true
         return true
-      }).finally(() => {
-        const currentPendingLoad = pendingLoads.get(this)
-        if (currentPendingLoad && currentPendingLoad.requestVersion === requestVersion) {
-          pendingLoads.delete(this)
+      } catch (error) {
+        if (requestVersion === this.requestVersion && this.productId === productId) {
+          this.loaded = false
         }
-      })
-
-      pendingLoads.set(this, {
-        productId: normalizedProductId,
-        requestVersion,
-        promise
-      })
-
-      return promise
+        throw error
+      }
     }
   }
 })

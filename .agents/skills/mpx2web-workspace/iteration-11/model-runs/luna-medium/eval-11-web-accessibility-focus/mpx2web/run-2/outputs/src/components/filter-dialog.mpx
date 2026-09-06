@@ -1,31 +1,11 @@
 <template>
   <view class="filter">
-    <view
-      class="filter-trigger"
-      aria-role="button"
-      aria-label="筛选"
-      tabindex="0"
-      bindtap="open"
-    >筛选</view>
+    <view class="filter-trigger" aria-role="button" aria-label="筛选" tabindex="0" bindtap="open">筛选</view>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
-      <view
-        class="dialog"
-        aria-role="dialog"
-        aria-label="筛选条件"
-        aria-modal="true"
-        tabindex="-1"
-        bindtap="stop"
-        bindkeydown="onKeydown"
-      >
-        <view
-          wx:for="{{options}}"
-          wx:key="value"
-          aria-role="button"
-          aria-label="{{item.label}}"
-          bindtap="toggle(item.value)"
-        >{{item.label}}</view>
-        <button aria-label="清空筛选" bindtap="clear">清空</button>
-        <button aria-label="确认筛选" bindtap="confirm">确定</button>
+      <view class="dialog" aria-role="dialog" tabindex="-1" bindtap="stop" bindkeydown="onKeydown">
+        <view wx:for="{{options}}" wx:key="value" bindtap="toggle(item.value)">{{item.label}}</view>
+        <button bindtap="clear">清空</button>
+        <button bindtap="confirm">确定</button>
       </view>
     </view>
   </view>

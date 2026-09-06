@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "4d604b63b0f52217dcf3568cfa9b48788bb50758034568bbc56537318910c6dc",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 3,
@@ -8,24 +9,52 @@
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/src/pages/portal/index.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/vue.config.js",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/src/pages/portal/index.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/src/pages/portal/index.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/vue.config.js"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/vue.config.js",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/public/index.html"
       ],
       "passed": true,
       "returncode": 0,
       "detail": {
         "success": true,
-        "checkedFiles": 3,
+        "checkedFiles": 1,
         "files": [
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/src/pages/portal/index.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/vue.config.js",
-            "errors": []
-          },
           {
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-12-web-style-runtime-config/mpx2web/run-1/outputs/public/index.html",
             "errors": []
@@ -52,7 +81,7 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 3263
+        "durationMs": 2519
       },
       "stderr": ""
     },
@@ -74,5 +103,5 @@
       "note": "该文件不是 compile-validate 支持的 page/component 入口；记录完整性门禁，不把它伪报为独立 Mpx 编译。"
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

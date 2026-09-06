@@ -166,13 +166,13 @@ createComponent({
 }
 </style>
 
-<style mode="web" scoped>
+<style scoped mode="web">
 .currency,
 .unit {
   display: inline-block;
   flex: 0 0 12px;
   width: 12px;
-  margin-right: -2px;
+  margin-inline-end: -2px;
   font-size: 12px;
   transform: scale(0.833333);
   transform-origin: left bottom;

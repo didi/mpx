@@ -1,41 +1,50 @@
 <template>
-  <view
-    class="feed-page"
-    bindtouchstart="onTouchStart"
-    bindtouchmove="onTouchMove"
-    bindtouchend="onTouchEnd"
-    bindtouchcancel="onTouchCancel"
-  >
-    <view class="category-header">
-      <scroll-view class="category-scroll" scroll-x>
-        <view class="categories">
-          <view
-            wx:for="{{categories}}"
-            wx:key="id"
-            class="category {{item.id === activeCategoryId ? 'category--active' : ''}}"
-            data-category-id="{{item.id}}"
-            bindtap="onCategoryTap"
-          >
-            <text>{{item.name}}</text>
-          </view>
+  <view class="feed-page">
+    <!-- Keep the category bar out of the vertical scroll-view.  This works in
+         both Web and WeChat without depending on a Web-only sticky component. -->
+    <scroll-view class="category-scroll" scroll-x enable-flex>
+      <view class="categories">
+        <view
+          wx:for="{{categories}}"
+          wx:key="id"
+          class="category {{item.id === activeCategoryId ? 'category--active' : ''}}"
+          data-category-id="{{item.id}}"
+          bindtap="selectCategory"
+        >
+          <text>{{item.name}}</text>
         </view>
-      </scroll-view>
-    </view>
-
-    <view class="feed-content">
-      <view wx:for="{{products}}" wx:key="id" class="product">
-        <image
-          class="product-image"
-          src="{{item.image}}"
-          mode="widthFix"
-        />
-        <product-video wx:if="{{item.video}}" product="{{item}}" />
       </view>
-    </view>
+    </scroll-view>
 
-    <view class="fixed-cart" bindtap="openCart">
-      <text>购物车 {{cartCount}}</text>
+    <scroll-view
+      class="feed-scroll"
+      scroll-y
+      enable-flex
+      scroll-top="{{scrollTop}}"
+      bindscroll="onScroll"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+    >
+      <view class="feed-content">
+        <view wx:for="{{products}}" wx:key="id" class="product">
+          <image
+            class="product-image"
+            src="{{item.image}}"
+            mode="widthFix"
+            bindload="onImageLoad"
+            binderror="onImageError"
+          />
+          <product-video wx:if="{{item.video}}" product="{{item}}" />
+        </view>
+        <view class="feed-bottom-space" />
+      </view>
+    </scroll-view>
+
+    <view class="pull-tip {{pullDistance ? 'pull-tip--visible' : ''}}" style="transform: translateY({{pullDistance}}px)">
+      <text>{{isRefreshing ? '正在刷新…' : pullDistance >= refreshThreshold ? '松开刷新' : '下拉刷新'}}</text>
     </view>
+    <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
   </view>
 </template>
 
@@ -47,69 +56,75 @@ createPage({
     categories: [],
     products: [],
     cartCount: 2,
-    activeCategoryId: null
+    activeCategoryId: '',
+    scrollTop: 0,
+    pullDistance: 0,
+    refreshThreshold: 72,
+    isRefreshing: false
   },
   async onLoad () {
-    try {
-      const { data } = await mpx.request({ url: '/api/feed' })
-      const categories = data.categories || []
-      this.setData({
-        categories,
-        products: data.products || [],
-        activeCategoryId: categories.length ? categories[0].id : null
-      })
-    } catch (error) {
-      this.setData({ categories: [], products: [] })
-    }
+    await this.loadFeed()
   },
   methods: {
-    onCategoryTap (event) {
-      if (this.justSwiped) {
-        this.justSwiped = false
-        return
+    async loadFeed () {
+      const { data } = await mpx.request({ url: '/api/feed' })
+      this.categories = data.categories || []
+      this.products = data.products || []
+      if (!this.activeCategoryId && this.categories.length) {
+        this.activeCategoryId = this.categories[0].id
       }
-      this.setData({ activeCategoryId: event.currentTarget.dataset.categoryId })
+    },
+    selectCategory (event) {
+      this.activeCategoryId = event.currentTarget.dataset.categoryId
+      // The feed is the only vertical scroller, so returning to its top is
+      // predictable on Web and in a WeChat mini-program.
+      this.scrollTop = 0
+    },
+    onScroll (event) {
+      this.currentScrollTop = event.detail.scrollTop || 0
     },
     onTouchStart (event) {
       const touch = event.touches && event.touches[0]
       if (!touch) return
-      this.dragStartX = touch.clientX
-      this.dragStartY = touch.clientY
-      this.isHorizontalDrag = false
+      this.touchStartX = touch.pageX
+      this.touchStartY = touch.pageY
+      this.pullDistance = 0
     },
     onTouchMove (event) {
       const touch = event.touches && event.touches[0]
-      if (!touch || this.dragStartX === undefined) return
-      const deltaX = touch.clientX - this.dragStartX
-      const deltaY = touch.clientY - this.dragStartY
-      if (Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY)) {
-        this.isHorizontalDrag = true
-        this.dragDeltaX = deltaX
+      if (!touch || this.currentScrollTop > 0) return
+      const deltaY = touch.pageY - this.touchStartY
+      const deltaX = Math.abs(touch.pageX - this.touchStartX)
+      // Do not steal horizontal swipes (for example from the category strip).
+      if (deltaY <= 0 || deltaY <= deltaX) return
+      this.pullDistance = Math.min(Math.round(deltaY * 0.45), this.refreshThreshold + 28)
+    },
+    async onTouchEnd () {
+      const shouldRefresh = this.pullDistance >= this.refreshThreshold && !this.isRefreshing
+      this.pullDistance = 0
+      if (!shouldRefresh) return
+      this.isRefreshing = true
+      try {
+        await this.loadFeed()
+      } finally {
+        this.isRefreshing = false
       }
     },
-    onTouchEnd () {
-      if (this.isHorizontalDrag && Math.abs(this.dragDeltaX) > 56) {
-        this.selectAdjacentCategory(this.dragDeltaX < 0 ? 1 : -1)
-        this.justSwiped = true
-      }
-      this.resetDrag()
+    onImageLoad () {
+      this.refreshScrollRange()
     },
-    onTouchCancel () {
-      this.resetDrag()
+    onImageError () {
+      this.refreshScrollRange()
     },
-    resetDrag () {
-      this.dragStartX = undefined
-      this.dragStartY = undefined
-      this.dragDeltaX = 0
-      this.isHorizontalDrag = false
-    },
-    selectAdjacentCategory (step) {
-      const { categories, activeCategoryId } = this
-      const activeIndex = categories.findIndex((category) => category.id === activeCategoryId)
-      const nextIndex = activeIndex + step
-      if (nextIndex >= 0 && nextIndex < categories.length) {
-        this.setData({ activeCategoryId: categories[nextIndex].id })
-      }
+    refreshScrollRange () {
+      // Mpx Web's scroll-view observes scroll-top changes. Re-applying the
+      // current position after widthFix images settle makes its measured range
+      // include the new image height without visibly moving the reader.
+      const top = this.currentScrollTop || 0
+      this.scrollTop = top + 0.01
+      mpx.nextTick(() => {
+        this.scrollTop = top
+      })
     },
     openCart () {
       mpx.navigateTo({ url: '/pages/cart/index' })
@@ -128,72 +143,23 @@ createPage({
 
 <style scoped>
 .feed-page {
-  min-height: 100vh;
-  padding-bottom: 152rpx;
-  box-sizing: border-box;
-  background: #f5f5f5;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #f6f7f9;
 }
-
-.category-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
-}
-
-.category-scroll {
-  width: 100%;
-  white-space: nowrap;
-}
-
-.categories {
-  display: inline-flex;
-  min-width: 100%;
-  box-sizing: border-box;
-  padding: 0 24rpx;
-}
-
-.category {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  height: 88rpx;
-  margin-right: 40rpx;
-  color: #666;
-  font-size: 28rpx;
-}
-
-.category--active {
-  color: #111;
-  font-weight: 600;
-  border-bottom: 4rpx solid #111;
-}
-
-.feed-content {
-  min-height: 100%;
-}
-
-.product {
-  margin-bottom: 16rpx;
-  padding: 24rpx;
-  background: #fff;
-}
-
-.product-image {
-  display: block;
-  width: 100%;
-}
-
-.fixed-cart {
-  position: fixed;
-  right: 24rpx;
-  bottom: calc(40rpx + env(safe-area-inset-bottom));
-  z-index: 20;
-  padding: 22rpx 30rpx;
-  border-radius: 48rpx;
-  background: #111;
-  color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .2);
-}
+.category-scroll { flex: none; white-space: nowrap; background: #fff; box-shadow: 0 1px 0 rgba(0, 0, 0, .08); z-index: 2; }
+.categories { display: flex; min-width: max-content; padding: 0 16rpx; }
+.category { flex: none; padding: 24rpx 20rpx 18rpx; color: #666; font-size: 28rpx; }
+.category--active { color: #e64340; font-weight: 600; border-bottom: 4rpx solid #e64340; }
+.feed-scroll { flex: 1; min-height: 0; height: 0; }
+.feed-content { box-sizing: border-box; min-height: 100%; padding-bottom: 144rpx; }
+.product { margin: 20rpx 24rpx 0; overflow: hidden; border-radius: 16rpx; background: #fff; }
+.product-image { display: block; width: 100%; }
+.feed-bottom-space { height: 24rpx; }
+.fixed-cart { position: fixed; right: 24rpx; bottom: calc(40rpx + env(safe-area-inset-bottom)); z-index: 10; padding: 20rpx 28rpx; border-radius: 44rpx; color: #fff; background: #e64340; box-shadow: 0 8rpx 24rpx rgba(230, 67, 64, .3); }
+.pull-tip { position: absolute; top: 92rpx; left: 0; right: 0; z-index: 3; opacity: 0; text-align: center; color: #888; font-size: 24rpx; pointer-events: none; transition: opacity .15s; }
+.pull-tip--visible { opacity: 1; }
 </style>

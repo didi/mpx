@@ -47,36 +47,33 @@ createPage({
     }
   },
   onLoad (query) {
-    this.productId = query.id
+    this.productId = String((query && query.id) || '')
     if (!this.$ssrContext) {
-      this.loadProduct(query.id)
+      this.loadProduct(this.productId)
     }
   },
   serverPrefetch () {
-    const routeProductId = this.$route && this.$route.query && this.$route.query.id
-    const productId = routeProductId || this.productId
-    this.productId = productId
-    return this.loadProduct(productId, this.$ssrContext)
+    return this.loadProduct(this.productId, this.$ssrContext)
   },
   methods: {
     async loadProduct (productId, requestContext) {
+      const normalizedProductId = String(productId || '')
       const loadVersion = ++this.loadVersion
+      this.selectedSkuId = ''
+
+      const loaded = await useProductStore(this.$pinia).loadProduct(
+        normalizedProductId,
+        requestContext
+      )
       const store = useProductStore(this.$pinia)
-      if (store.loaded && store.productId === productId) {
-        this.selectedSkuId = store.product.skus[0] && store.product.skus[0].id
-        return
-      }
 
-      await store.loadProduct(productId, requestContext)
+      if (!loaded ||
+        this.loadVersion !== loadVersion ||
+        this.productId !== normalizedProductId ||
+        store.productId !== normalizedProductId ||
+        !store.loaded) return
 
-      if (
-        loadVersion !== this.loadVersion ||
-        productId !== this.productId ||
-        productId !== store.productId ||
-        !store.loaded
-      ) return
-
-      this.selectedSkuId = store.product.skus[0] && store.product.skus[0].id
+      this.selectedSkuId = this.product.skus[0] && this.product.skus[0].id
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

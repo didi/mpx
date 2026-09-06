@@ -6,7 +6,7 @@ module.exports = {
       plugin: {
         webConfig: {
           customBuiltInComponents: {
-            'scroll-view': path.resolve(__dirname, 'src/web/AnalyticsScroll.vue')
+            'mpx-scroll-view': path.resolve(__dirname, 'src/web/AnalyticsScroll.vue')
           }
         }
       }

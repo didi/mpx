@@ -1,11 +1,11 @@
 <template>
   <view class="filter">
-    <view class="filter-trigger" role="button" tabindex="0" aria-label="筛选" bindtap="open">筛选</view>
+    <view class="filter-trigger" aria-role="button" aria-label="筛选" bindtap="open">筛选</view>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
-      <view class="dialog" role="dialog" aria-modal="true" aria-label="商品筛选" tabindex="-1" bindtap="stop" bindkeydown="onKeydown">
+      <view class="dialog" aria-role="dialog" bindtap="stop">
         <view wx:for="{{options}}" wx:key="value" bindtap="toggle(item.value)">{{item.label}}</view>
-        <button aria-label="清空筛选" bindtap="clear">清空</button>
-        <button aria-label="确认筛选" bindtap="confirm">确定</button>
+        <button bindtap="clear">清空</button>
+        <button bindtap="confirm">确定</button>
       </view>
     </view>
   </view>
@@ -30,9 +30,6 @@ createComponent({
     confirm () {
       this.triggerEvent('confirm', { selected: this.selected })
       this.close()
-    },
-    onKeydown (event) {
-      if (event.key === 'Escape') this.close()
     }
   }
 })

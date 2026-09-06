@@ -1,5 +1,5 @@
 module.exports = {
-  publicPath: '/',
+  publicPath: '/content/',
   pluginOptions: {
     mpx: {
       plugin: {

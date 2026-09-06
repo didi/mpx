@@ -1,5 +1,9 @@
 <template>
-  <div ref="chart" class="analytics-chart"></div>
+  <div ref="chart" class="analytics-chart">
+    <button v-for="metric in metrics" :id="metric.id || metric.key" :key="metric.key" type="button" class="analytics-chart__metric" @click="selectMetric(metric.key)">
+      <span>{{ metric.label }}</span><span>{{ metric.value }}</span>
+    </button>
+  </div>
 </template>
 
 <script>
@@ -8,41 +12,24 @@ import { createChart } from './chart-sdk'
 export default {
   name: 'AnalyticsChart',
   props: { metrics: { type: Array, default: () => [] } },
-  data () { return { chart: null, initId: 0, resizeObserver: null, destroyed: false } },
-  mounted () {
-    this.destroyed = false
-    this.initChart()
-    if (typeof ResizeObserver !== 'undefined') {
-      this.resizeObserver = new ResizeObserver(() => { if (this.chart) this.chart.resize() })
-      this.resizeObserver.observe(this.$refs.chart)
-    }
-  },
+  data () { return { chartInstance: null, generation: 0, detached: false } },
+  mounted () { this.detached = false; this.startChart() },
+  beforeDestroy () { this.detached = true; this.generation += 1; this.releaseChart() },
   watch: {
-    metrics: { deep: true, handler (nextMetrics) { if (this.chart) this.chart.update(nextMetrics) } }
+    metrics: { deep: true, handler (metrics) { if (this.chartInstance) this.chartInstance.update(metrics); else if (!this.detached) this.startChart() } }
   },
   methods: {
-    async initChart () {
-      const id = ++this.initId
+    isCurrent (generation) { return !this.detached && this.generation === generation },
+    releaseChart () { const instance = this.chartInstance; this.chartInstance = null; if (instance && instance.destroy) instance.destroy() },
+    async startChart () {
+      const generation = ++this.generation
       const instance = await createChart(this.$refs.chart, this.metrics)
-      if (id !== this.initId || this.destroyed) {
-        if (instance && instance.destroy) instance.destroy()
-        return
-      }
-      instance.update(this.metrics)
-      this.chart = instance
-    }
-  },
-  beforeDestroy () {
-    this.destroyed = true
-    ++this.initId
-    if (this.resizeObserver) this.resizeObserver.disconnect()
-    if (this.chart && this.chart.destroy) this.chart.destroy()
-    this.resizeObserver = null
-    this.chart = null
+      if (!this.isCurrent(generation)) { if (instance && instance.destroy) instance.destroy(); return }
+      this.releaseChart()
+      this.chartInstance = instance
+    },
+    resize () { if (this.chartInstance && this.chartInstance.resize) this.chartInstance.resize() },
+    selectMetric (key) { this.$emit('select', { detail: { key } }) }
   }
 }
 </script>
-
-<style scoped>
-.analytics-chart { min-width: 100%; min-height: 1px; }
-</style>

@@ -10,7 +10,7 @@ export const useProductStore = defineStore('product-platform', {
     requestVersion: 0
   }),
   actions: {
-    async loadProduct (productId, ssrContext) {
+    async loadProduct (productId, requestContext) {
       if (this.loaded && this.productId === productId) return
 
       const requestVersion = ++this.requestVersion
@@ -19,15 +19,22 @@ export const useProductStore = defineStore('product-platform', {
       this.product = {}
       this.recommendations = []
 
-      const [product, recommendations] = await Promise.all([
-        fetchProduct(productId, ssrContext),
-        fetchRecommendations(productId, ssrContext)
-      ])
+      try {
+        const [product, recommendations] = await Promise.all([
+          fetchProduct(productId, requestContext),
+          fetchRecommendations(productId, requestContext)
+        ])
 
-      if (requestVersion !== this.requestVersion || this.productId !== productId) return
-      this.product = product
-      this.recommendations = recommendations
-      this.loaded = true
+        if (requestVersion !== this.requestVersion || this.productId !== productId) return
+        this.product = product
+        this.recommendations = recommendations
+        this.loaded = true
+      } catch (error) {
+        if (requestVersion === this.requestVersion && this.productId === productId) {
+          this.loaded = false
+        }
+        throw error
+      }
     }
   }
 })

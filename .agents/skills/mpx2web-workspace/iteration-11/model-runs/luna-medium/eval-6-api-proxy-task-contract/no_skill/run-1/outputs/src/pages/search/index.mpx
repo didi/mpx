@@ -1,16 +1,9 @@
 <template>
   <view class="search-page">
-    <view class="search-bar">
-      <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
-      <view wx:if="{{keyword}}" class="clear-button" bindtap="clearKeyword">清空</view>
-    </view>
-
-    <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
-
-    <view wx:if="{{!keyword}}" class="trending">
+    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view class="trending" wx:if="{{!keyword}}">
       <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
     </view>
-
     <view class="suggestions">
       <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
     </view>
@@ -27,76 +20,70 @@ createPage({
     keyword: '',
     trendingKeywords: [],
     suggestions: [],
-    errorMessage: '',
-    requestController: null,
-    requestSerial: 0
+    requestTask: null,
+    requestVersion: 0
   },
-
-  async onLoad () {
-    try {
-      this.trendingKeywords = await fetchTrendingKeywords()
-    } catch (error) {
-      this.errorMessage = '搜索失败'
-    }
+  onLoad () {
+    fetchTrendingKeywords()
+      .then((data) => {
+        this.trendingKeywords = data
+      })
+      .catch(() => {
+        this.trendingKeywords = []
+      })
   },
-
   onUnload () {
-    this.cancelSuggestionRequest()
+    this.requestVersion += 1
+    this.abortSuggestionRequest()
   },
-
   methods: {
     onKeywordInput (event) {
       this.search(event.detail.value.trim())
     },
-
     chooseKeyword (keyword) {
-      this.search(keyword.trim())
+      this.search(keyword)
     },
-
-    clearKeyword () {
-      this.search('')
-    },
-
-    cancelSuggestionRequest () {
-      if (this.requestController) {
-        this.requestController.abort()
-        this.requestController = null
+    abortSuggestionRequest () {
+      if (this.requestTask && typeof this.requestTask.abort === 'function') {
+        this.requestTask.abort()
       }
+      this.requestTask = null
     },
-
     search (keyword) {
-      const serial = ++this.requestSerial
       this.keyword = keyword
-      this.errorMessage = ''
-      this.cancelSuggestionRequest()
+      this.requestVersion += 1
+      const version = this.requestVersion
+
+      this.abortSuggestionRequest()
 
       if (!keyword) {
         this.suggestions = []
         return
       }
 
-      const controller = new AbortController()
-      this.requestController = controller
+      const requestTask = requestSuggestions(keyword)
+      this.requestTask = requestTask
 
-      requestSuggestions(keyword, controller.signal)
-        .then((list) => {
-          if (serial !== this.requestSerial || controller.signal.aborted) return
-          this.suggestions = list
+      requestTask
+        .then(({ data }) => {
+          if (version === this.requestVersion && this.requestTask === requestTask) {
+            this.suggestions = data.list
+          }
         })
-        .catch(() => {
-          if (serial !== this.requestSerial || controller.signal.aborted) return
-          this.suggestions = []
-          this.errorMessage = '搜索失败'
+        .catch((error) => {
+          const isAborted = error && ((error.errMsg && error.errMsg.indexOf('abort') !== -1) || error.name === 'AbortError')
+          if (version === this.requestVersion && this.requestTask === requestTask && !isAborted) {
+            alert('搜索失败')
+          }
         })
-        .finally(() => {
-          if (serial === this.requestSerial) this.requestController = null
+        .then(() => {
+          if (this.requestTask === requestTask) {
+            this.requestTask = null
+          }
         })
     },
-
     openProduct (productId) {
-      navigateTo({ url: `/pages/product/detail?id=${productId}` }).catch(() => {
-        this.errorMessage = '打开商品详情失败'
-      })
+      navigateTo({ url: `/pages/product/detail?id=${productId}` })
     }
   }
 })
@@ -104,9 +91,5 @@ createPage({
 
 <style scoped>
 .search-page { padding: 24rpx; }
-.search-bar { display: flex; align-items: center; }
-.search-bar input { flex: 1; }
-.clear-button { margin-left: 16rpx; }
-.error-message { margin-top: 16rpx; color: #d93025; }
 .trending, .suggestions { margin-top: 24rpx; }
 </style>

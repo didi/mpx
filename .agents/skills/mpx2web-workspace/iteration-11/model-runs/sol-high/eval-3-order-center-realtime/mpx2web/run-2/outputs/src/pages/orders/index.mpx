@@ -30,7 +30,7 @@
         wx:key="id"
         order="{{item}}"
         disabled="{{item.locked}}"
-        expanded="{{activeSwipeOrderId === item.id}}"
+        opened="{{openedOrderId === item.id}}"
         bindselect="openOrder"
         bindremove="removeOrder"
         bindswipestart="handleSwipeStart"
@@ -47,8 +47,9 @@
     </view>
 
     <logistics-channel
-      wx:if="{{memberId}}"
+      wx:if="{{memberId && channelActive}}"
       memberId="{{memberId}}"
+      sessionId="{{channelSessionId}}"
       bindconnectedchange="handleConnectionChange"
       bindlogistics="handleLogisticsMessage"
       binderror="handleChannelError"
@@ -63,7 +64,6 @@ createPage({
   data: {
     memberId: 'member-10086',
     activeStatus: 'all',
-    activeSwipeOrderId: '',
     statusTabs: [
       { key: 'all', label: '全部', count: 0 },
       { key: 'paying', label: '待付款', count: 1 },
@@ -101,13 +101,32 @@ createPage({
       }
     ],
     logisticsOnline: false,
-    loading: false
+    loading: false,
+    openedOrderId: '',
+    channelActive: false,
+    channelSessionId: 0
+  },
+  onShow () {
+    this.channelSessionId += 1
+    this.channelActive = true
+  },
+  onHide () {
+    this.deactivateChannel()
+  },
+  onUnload () {
+    this.deactivateChannel()
   },
   methods: {
+    deactivateChannel () {
+      this.channelSessionId += 1
+      this.channelActive = false
+      this.logisticsOnline = false
+      this.openedOrderId = ''
+    },
     switchStatus (status) {
       if (status === this.activeStatus) return
       this.activeStatus = status
-      this.activeSwipeOrderId = ''
+      this.openedOrderId = ''
       this.fetchOrders()
     },
     fetchOrders () {
@@ -118,6 +137,9 @@ createPage({
         success: ({ data }) => {
           this.orders = data.list
           this.statusTabs = data.summary
+          if (!this.orders.some(order => order.id === this.openedOrderId)) {
+            this.openedOrderId = ''
+          }
         },
         complete: () => {
           this.loading = false
@@ -125,6 +147,7 @@ createPage({
       })
     },
     openOrder ({ detail }) {
+      this.openedOrderId = ''
       wx.navigateTo({ url: `/pages/orders/detail?id=${detail.orderId}` })
     },
     removeOrder ({ detail }) {
@@ -138,30 +161,36 @@ createPage({
             method: 'DELETE',
             success: () => {
               this.orders = this.orders.filter(order => order.id !== detail.orderId)
-              if (this.activeSwipeOrderId === detail.orderId) {
-                this.activeSwipeOrderId = ''
-              }
+              if (this.openedOrderId === detail.orderId) this.openedOrderId = ''
             }
           })
         }
       })
     },
-    handleSwipeStart ({ detail }) {
-      this.activeSwipeOrderId = detail.orderId
-    },
     handleSwipeEnd ({ detail }) {
       if (detail.open) {
-        this.activeSwipeOrderId = detail.orderId
-      } else if (this.activeSwipeOrderId === detail.orderId) {
-        this.activeSwipeOrderId = ''
+        this.openedOrderId = detail.orderId
+      } else if (this.openedOrderId === detail.orderId) {
+        this.openedOrderId = ''
       }
     },
+    handleSwipeStart ({ detail }) {
+      if (this.openedOrderId && this.openedOrderId !== detail.orderId) {
+        this.openedOrderId = ''
+      }
+    },
+    isCurrentChannelEvent (detail) {
+      return !!detail &&
+        this.channelActive &&
+        detail.memberId === this.memberId &&
+        detail.sessionId === this.channelSessionId
+    },
     handleConnectionChange ({ detail }) {
-      if (!detail || detail.memberId !== this.memberId) return
+      if (!this.isCurrentChannelEvent(detail)) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
-      if (!detail || detail.memberId !== this.memberId) return
+      if (!this.isCurrentChannelEvent(detail)) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -173,7 +202,7 @@ createPage({
       })
     },
     handleChannelError ({ detail }) {
-      if (!detail || detail.memberId !== this.memberId) return
+      if (!this.isCurrentChannelEvent(detail)) return
       this.logisticsOnline = false
     },
     goShopping () {

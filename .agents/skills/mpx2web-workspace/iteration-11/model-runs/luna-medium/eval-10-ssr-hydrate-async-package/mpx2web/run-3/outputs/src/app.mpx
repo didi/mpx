@@ -4,7 +4,6 @@ import { createPinia } from '@mpxjs/pinia'
 
 createApp({
   onAppInit () {
-    // Pinia must belong to this SSR request, never to the module singleton.
     return { pinia: createPinia() }
   }
 })

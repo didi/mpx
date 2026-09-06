@@ -6,29 +6,38 @@ export const useProductStore = defineStore('product-platform', {
     productId: '',
     product: {},
     recommendations: [],
-    _requestVersion: 0
+    _requestId: 0,
+    _pendingProductId: '',
+    _pendingRequest: null
   }),
   actions: {
     async loadProduct (productId, ssrContext) {
-      const id = String(productId || '')
-      if (!id) return
+      if (!productId) return false
+      // Hydrated SSR state already contains this product, so takeover is silent.
+      if (this.productId === productId && this.product && Object.keys(this.product).length) return true
+      if (this._pendingProductId === productId && this._pendingRequest) return this._pendingRequest
 
-      // Hydrated SSR state is already authoritative for this product.
-      if (this.productId === id && Object.keys(this.product || {}).length) return
+      const requestId = ++this._requestId
+      this._pendingProductId = productId
+      const pendingRequest = Promise.all([
+        fetchProduct(productId, ssrContext),
+        fetchRecommendations(productId, ssrContext)
+      ]).then(([product, recommendations]) => {
+        // A response for a page the user has already left must not replace it.
+        if (requestId !== this._requestId) return false
+        this.productId = productId
+        this.product = product || {}
+        this.recommendations = recommendations || []
+        return true
+      }).finally(() => {
+        if (this._pendingRequest === pendingRequest) {
+          this._pendingRequest = null
+          this._pendingProductId = ''
+        }
+      })
 
-      const version = ++this._requestVersion
-      this.productId = id
-      this.product = {}
-      this.recommendations = []
-      const [product, recommendations] = await Promise.all([
-        fetchProduct(id, ssrContext),
-        fetchRecommendations(id, ssrContext)
-      ])
-
-      // A slower request for a previous route must never replace newer content.
-      if (version !== this._requestVersion) return
-      this.product = product || {}
-      this.recommendations = recommendations || []
+      this._pendingRequest = pendingRequest
+      return pendingRequest
     }
   }
 })

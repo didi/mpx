@@ -16,12 +16,12 @@
         aria-label="商品筛选"
         tabindex="-1"
         bindtap="stop"
+        bindkeydown="onKeydown"
       >
         <view
           wx:for="{{options}}"
           wx:key="value"
-          role="checkbox"
-          aria-checked="{{selected.includes(item.value)}}"
+          role="button"
           tabindex="0"
           bindtap="toggle(item.value)"
         >{{item.label}}</view>
@@ -51,6 +51,9 @@ createComponent({
     confirm () {
       this.triggerEvent('confirm', { selected: this.selected })
       this.close()
+    },
+    onKeydown (event) {
+      if (event.key === 'Escape') this.close()
     }
   }
 })

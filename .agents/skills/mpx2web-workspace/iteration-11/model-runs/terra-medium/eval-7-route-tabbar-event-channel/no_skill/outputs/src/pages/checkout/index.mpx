@@ -10,15 +10,15 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
-const SELECTED_ADDRESS_KEY = 'checkout:selected-address'
-
 createPage({
-  data: { address: null },
+  data: {
+    address: null
+  },
   onShow () {
-    const address = mpx.getStorageSync(SELECTED_ADDRESS_KEY)
-    if (address) {
-      this.setData({ address })
-      mpx.removeStorageSync(SELECTED_ADDRESS_KEY)
+    const selectedAddress = getApp().globalData.selectedAddress
+
+    if (selectedAddress) {
+      this.setData({ address: selectedAddress })
     }
   },
   methods: {

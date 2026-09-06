@@ -25,7 +25,8 @@
         <view
           wx:if="{{photos.length < 9}}"
           class="photo-add"
-          bindtap="choosePhoto"
+          bindtap@wx="choosePhoto"
+          bindtap@web="handleWebMediaUnavailable"
           aria-role="button"
           aria-label="添加图片"
         >
@@ -35,12 +36,8 @@
       </view>
     </view>
 
-    <view wx:if="{{webCapabilityNotice}}" class="capability-notice">
-      <text>{{webCapabilityNotice}}</text>
-    </view>
-
     <view class="publish-options">
-      <view class="option-row" bindtap="choosePlace">
+      <view class="option-row" bindtap@wx="choosePlace" bindtap@web="handleWebLocationUnavailable">
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
@@ -51,7 +48,7 @@
         <text class="option-arrow">›</text>
       </view>
 
-      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
+      <view wx:if="{{place.name}}" class="place-card" bindtap@wx="openPlace" bindtap@web="handleWebLocationUnavailable">
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
@@ -97,7 +94,6 @@ createPage({
     content: '',
     photos: [],
     place: {},
-    webCapabilityNotice: '',
     topics: [
       { id: 'shopping', name: '社区好物' },
       { id: 'activity', name: '邻里活动' },
@@ -118,24 +114,17 @@ createPage({
       this.content = event.detail.value
     },
     choosePlace () {
-      if (__mpx_mode__ === 'web') {
-        // TODO: 接入业务明确的 Web 位置选择协议后，再在此调用宿主能力。
-        this.webCapabilityNotice = 'Web 暂不支持位置选择'
-        return
-      }
-      this.webCapabilityNotice = ''
       wx.chooseLocation({
         success: (place) => {
           this.place = place
         }
       })
     },
+    handleWebLocationUnavailable () {
+      // TODO(Web): 接入已声明的 Web 位置选择/地图协议后再实现。
+      wx.showToast({ title: 'Web 暂不支持位置选择或地图查看', icon: 'none' })
+    },
     openPlace () {
-      if (__mpx_mode__ === 'web') {
-        // TODO: 接入业务明确的 Web 地图协议后，再在此打开地图。
-        this.webCapabilityNotice = 'Web 暂不支持地图查看'
-        return
-      }
       if (!this.place.latitude || !this.place.longitude) return
       wx.openLocation({
         latitude: this.place.latitude,
@@ -145,12 +134,6 @@ createPage({
       })
     },
     choosePhoto () {
-      if (__mpx_mode__ === 'web') {
-        // TODO: 接入业务明确的 Web 媒体选择/上传协议后，再在此选择图片。
-        this.webCapabilityNotice = 'Web 暂不支持图片选择'
-        return
-      }
-      this.webCapabilityNotice = ''
       wx.chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
@@ -159,6 +142,10 @@ createPage({
           this.photos = this.photos.concat(tempFiles)
         }
       })
+    },
+    handleWebMediaUnavailable () {
+      // TODO(Web): 接入已声明的 Web 媒体选择协议后再实现。
+      wx.showToast({ title: 'Web 暂不支持图片选择', icon: 'none' })
     },
     removePhoto (index) {
       this.photos.splice(index, 1)
@@ -313,15 +300,6 @@ createPage({
 .photo-add-label {
   margin-top: 8rpx;
   font-size: 22rpx;
-}
-
-.capability-notice {
-  margin-top: 16rpx;
-  padding: 16rpx 20rpx;
-  color: #8a5a00;
-  font-size: 24rpx;
-  background: #fff7e6;
-  border-radius: 12rpx;
 }
 
 .publish-options {

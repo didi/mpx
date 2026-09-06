@@ -3,7 +3,7 @@
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <view @web wx:if="{{clientMounted}}" class="share-toolbar">复制链接</view>
     <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
   </view>
 </template>
@@ -14,25 +14,29 @@ import { useArticleStore } from '../../stores/article'
 
 createPage({
   data: {
-    isBrowser: false,
+    articleId: '',
+    clientMounted: false,
     favorite: false
   },
   computed: {
-    articleId () { return useArticleStore(this.$pinia).articleId },
     article () { return useArticleStore(this.$pinia).article || {} },
     recommendations () { return useArticleStore(this.$pinia).recommendations }
   },
   onLoad (query) {
-    this.loadArticle(query.id)
+    const articleId = query && query.id ? String(query.id) : ''
+    this.articleId = articleId
+    if (!this.$ssrContext) return this.loadArticle(articleId)
   },
-  ready () {
-    if (typeof window !== 'undefined') this.isBrowser = true
+  onReady () {
+    if (__mpx_mode__ === 'web') this.clientMounted = true
   },
   serverPrefetch () {
-    return this.loadArticle(this.$route.query.id, this.$ssrContext)
+    const articleId = String(this.$route.query.id || '')
+    return this.loadArticle(articleId, this.$ssrContext)
   },
   methods: {
     loadArticle (articleId, requestContext) {
+      this.articleId = articleId
       return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
     },
     toggleFavorite () { this.favorite = !this.favorite },

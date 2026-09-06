@@ -3,7 +3,7 @@
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <view @web wx:if="{{clientMounted}}" class="share-toolbar">复制链接</view>
     <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
   </view>
 </template>
@@ -15,28 +15,38 @@ import { useArticleStore } from '../../stores/article'
 createPage({
   data: {
     articleId: '',
-    isBrowser: false,
+    clientMounted: false,
     favorite: false
   },
   computed: {
-    article () { return useArticleStore(this.$pinia).article || {} },
-    recommendations () { return useArticleStore(this.$pinia).recommendations }
+    article () {
+      const store = useArticleStore(this.$pinia)
+      return store.loaded && store.articleId === this.articleId ? (store.article || {}) : {}
+    },
+    recommendations () {
+      const store = useArticleStore(this.$pinia)
+      return store.loaded && store.articleId === this.articleId ? store.recommendations : []
+    }
   },
   onLoad (query) {
-    return this.loadArticle(query.id, this.$ssrContext)
+    if (__mpx_mode__ !== 'web' || typeof window !== 'undefined') {
+      return this.loadArticle(query.id)
+    }
   },
   onReady () {
-    if (__mpx_mode__ === 'web') this.isBrowser = true
+    if (__mpx_mode__ === 'web') this.clientMounted = true
   },
   serverPrefetch () {
     return this.loadArticle(this.$route.query.id, this.$ssrContext)
   },
   methods: {
     loadArticle (articleId, requestContext) {
-      this.articleId = articleId
-      return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
+      this.articleId = String(articleId || '')
+      return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
     },
-    toggleFavorite () { this.favorite = !this.favorite },
+    toggleFavorite () {
+      this.favorite = !this.favorite
+    },
     openArticle (event) {
       mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
     }

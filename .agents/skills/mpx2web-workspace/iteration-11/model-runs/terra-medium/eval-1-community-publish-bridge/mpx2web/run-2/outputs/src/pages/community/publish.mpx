@@ -23,7 +23,6 @@
           </view>
         </view>
         <view
-          @wx
           wx:if="{{photos.length < 9}}"
           class="photo-add"
           bindtap="choosePhoto"
@@ -32,10 +31,6 @@
         >
           <text class="photo-add-icon">+</text>
           <text class="photo-add-label">添加图片</text>
-        </view>
-        <view @web wx:if="{{photos.length < 9}}" class="photo-add photo-add-disabled" aria-role="note">
-          <text class="photo-add-icon">+</text>
-          <text class="photo-add-label">Web 端暂不支持添加图片</text>
         </view>
       </view>
     </view>
@@ -46,8 +41,7 @@
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text @wx class="option-value">{{place.name || '选择位置'}}</text>
-            <text @web class="option-value">{{place.name || 'Web 端暂不支持位置选择'}}</text>
+            <text class="option-value">{{place.name || '选择位置'}}</text>
           </view>
         </view>
         <text class="option-arrow">›</text>
@@ -118,19 +112,12 @@ createPage({
     updateContent (event) {
       this.content = event.detail.value
     },
-    showWebCapabilityUnavailable (capability) {
-      wx.showToast({
-        title: `Web 端暂不支持${capability}`,
-        icon: 'none'
-      })
-    },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 接入已定义且经宿主确认的位置选择协议后，再提供 Web 端位置选择。
+        // TODO: 接入已定义的 Web 宿主位置选择协议后替换此降级提示。
         this.showWebCapabilityUnavailable('位置选择')
         return
       }
-
       wx.chooseLocation({
         success: (place) => {
           this.place = place
@@ -139,13 +126,11 @@ createPage({
     },
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
-
       if (__mpx_mode__ === 'web') {
-        // TODO: 接入已定义且经宿主确认的地图查看协议后，再提供 Web 端地图查看。
+        // TODO: 接入已定义的 Web 宿主地图查看协议后替换此降级提示。
         this.showWebCapabilityUnavailable('地图查看')
         return
       }
-
       wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
@@ -155,11 +140,10 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 接入已定义且经宿主确认的媒体选择协议后，再提供 Web 端图片选择。
+        // TODO: 接入已定义的 Web 宿主媒体选择协议后替换此降级提示。
         this.showWebCapabilityUnavailable('图片选择')
         return
       }
-
       wx.chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
@@ -167,6 +151,12 @@ createPage({
         success: ({ tempFiles }) => {
           this.photos = this.photos.concat(tempFiles)
         }
+      })
+    },
+    showWebCapabilityUnavailable (capability) {
+      wx.showToast({
+        title: '当前 Web 暂不支持' + capability,
+        icon: 'none'
       })
     },
     removePhoto (index) {
@@ -312,10 +302,6 @@ createPage({
   color: #9da2ac;
   background: #f3f5f8;
   border: 2rpx dashed #d6dae1;
-}
-
-.photo-add-disabled {
-  color: #b4b8c0;
 }
 
 .photo-add-icon {

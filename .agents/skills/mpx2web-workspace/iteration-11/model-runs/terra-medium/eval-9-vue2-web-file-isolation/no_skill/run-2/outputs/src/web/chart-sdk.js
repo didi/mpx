@@ -2,28 +2,39 @@ function normalizeMetrics (metrics) {
   return Array.isArray(metrics) ? metrics : []
 }
 
-function render (element, metrics) {
-  element.textContent = normalizeMetrics(metrics)
-    .map((item) => `${item.label}:${item.value}`)
-    .join(' | ')
-}
+export async function createChart (element, metrics, options) {
+  options = options || {}
+  var destroyed = false
+  var onSelect = typeof options.onSelect === 'function' ? options.onSelect : function () {}
 
-export async function createChart (element, metrics, options = {}) {
+  // Keep the asynchronous boundary used by the real SDK, while allowing callers
+  // to reject this instance safely if their component is replaced meanwhile.
   await Promise.resolve()
-  if (!element || (options.isCurrent && !options.isCurrent())) return null
 
-  let destroyed = false
-  render(element, metrics)
+  function render (nextMetrics) {
+    if (destroyed || !element) return
+    element.textContent = ''
+    normalizeMetrics(nextMetrics).forEach(function (item) {
+      var metric = item || {}
+      var button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'analytics-chart__metric'
+      if (metric.key != null) button.id = String(metric.key)
+      button.textContent = String(metric.label == null ? '' : metric.label) + ':' + String(metric.value == null ? '' : metric.value)
+      button.addEventListener('click', function () {
+        if (!destroyed) onSelect(metric.key)
+      })
+      element.appendChild(button)
+    })
+  }
 
+  render(metrics)
   return {
-    update (nextMetrics) {
-      if (!destroyed) render(element, nextMetrics)
-    },
-    resize () {},
-    destroy () {
-      if (destroyed) return
+    update: render,
+    resize: function () {},
+    destroy: function () {
       destroyed = true
-      element.textContent = ''
+      if (element) element.textContent = ''
     }
   }
 }

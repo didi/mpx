@@ -1,13 +1,11 @@
 <template>
   <view class="filter">
-    <view
+    <button
       class="filter-trigger"
       role="button"
-      tabindex="0"
-      aria-haspopup="dialog"
       aria-expanded="{{visible}}"
       bindtap="open"
-    >筛选</view>
+    >筛选</button>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
       <view
         class="dialog"
@@ -15,17 +13,15 @@
         aria-modal="true"
         aria-label="商品筛选"
         tabindex="-1"
-        bindtap="stop"
+        catchtap="stop"
         bindkeydown="onKeydown"
       >
-        <view
+        <button
           wx:for="{{options}}"
           wx:key="value"
-          role="button"
-          tabindex="0"
-          aria-pressed="{{selected.indexOf(item.value) !== -1}}"
+          aria-pressed="{{selected.includes(item.value)}}"
           bindtap="toggle(item.value)"
-        >{{item.label}}</view>
+        >{{item.label}}</button>
         <button bindtap="clear">清空</button>
         <button bindtap="confirm">确定</button>
       </view>
@@ -54,7 +50,7 @@ createComponent({
       this.close()
     },
     onKeydown (event) {
-      if (event.key === 'Escape' || event.keyCode === 27) this.close()
+      if (event.key === 'Escape') this.close()
     }
   }
 })

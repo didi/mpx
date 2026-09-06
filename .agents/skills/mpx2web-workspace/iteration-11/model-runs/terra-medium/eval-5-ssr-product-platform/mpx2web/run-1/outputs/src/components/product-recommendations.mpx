@@ -17,74 +17,73 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
-import mpx from '@mpxjs/api-proxy'
 
-// The browser SDK contract is create({ productId }) -> Promise<Tracker>,
-// followed by tracker.track(eventName, payload) and tracker.destroy().
+// SDK contract: create({ productId }) returns Promise<Tracker>.
+// Tracker exposes track(eventName, payload) and destroy().
 createComponent({
   properties: {
     productId: String,
     items: Array
   },
-  observers: {
-    productId (productId) {
-      if (this._componentReady) this.initializeTracker(productId)
-    },
-    items () {
-      if (this._componentReady) this.observeCards(this._trackerVersion)
-    }
-  },
   ready () {
-    this._componentReady = true
-    this._destroyed = false
-    this._trackerVersion = 0
-    this.initializeTracker(this.productId)
+    this.sdkDetached = false
+    this.refreshTracker(this.productId)
+  },
+  updated () {
+    if (this.trackedProductId !== this.productId) this.refreshTracker(this.productId)
   },
   detached () {
-    this.destroyTracker()
+    this.sdkDetached = true
+    this.releaseTracking()
   },
   methods: {
-    destroyTracker () {
-      this._destroyed = true
-      this._trackerVersion = (this._trackerVersion || 0) + 1
-
-      if (this.observer) {
-        this.observer.disconnect()
-        this.observer = null
-      }
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
-      }
+    isCurrentTracker (generation, productId) {
+      return __mpx_mode__ === 'web' &&
+        typeof window !== 'undefined' &&
+        !this.sdkDetached &&
+        this.trackerGeneration === generation &&
+        this.productId === productId
     },
-    async initializeTracker (productId) {
-      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || !productId) return
+    releaseTracking () {
+      this.trackerGeneration = (this.trackerGeneration || 0) + 1
+      this.trackedProductId = ''
 
-      this._destroyed = false
-      const trackerVersion = (this._trackerVersion || 0) + 1
-      this._trackerVersion = trackerVersion
-      if (this.observer) {
-        this.observer.disconnect()
-        this.observer = null
-      }
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
-      }
+      const observer = this.exposureObserver
+      this.exposureObserver = null
+      if (observer) observer.disconnect()
 
-      const module = await import('@business/product-exposure-web')
-      if (this._destroyed || trackerVersion !== this._trackerVersion || productId !== this.productId) return
+      const tracker = this.tracker
+      this.tracker = null
+      if (tracker && tracker.destroy) tracker.destroy()
+    },
+    async refreshTracker (productId) {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
 
-      const exposureSdk = module.default || module
-      const tracker = await exposureSdk.create({ productId })
-      if (this._destroyed || trackerVersion !== this._trackerVersion || productId !== this.productId) {
-        tracker.destroy()
+      this.releaseTracking()
+      if (!productId) return
+      const generation = this.trackerGeneration
+      const sdkModule = await import('@business/product-exposure-web')
+      if (!this.isCurrentTracker(generation, productId)) return
+
+      const sdk = sdkModule.default || sdkModule
+      const tracker = await sdk.create({ productId })
+      if (!this.isCurrentTracker(generation, productId)) {
+        if (tracker && tracker.destroy) tracker.destroy()
         return
       }
 
       this.tracker = tracker
-      this.observer = new IntersectionObserver((entries) => {
-        if (this._destroyed || trackerVersion !== this._trackerVersion || this.tracker !== tracker) return
+      this.trackedProductId = productId
+      this.bindExposureObserver(generation, productId)
+    },
+    bindExposureObserver (generation, productId) {
+      const tracker = this.tracker
+      const root = this.$el
+      if (!tracker || !root || typeof IntersectionObserver === 'undefined') return
+
+      const observer = new IntersectionObserver((entries) => {
+        if (!this.isCurrentTracker(generation, productId) ||
+          this.tracker !== tracker || this.exposureObserver !== observer) return
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             tracker.track('recommendation_exposure', {
@@ -94,20 +93,11 @@ createComponent({
           }
         })
       })
-      this.observeCards(trackerVersion)
-    },
-    observeCards (trackerVersion) {
-      if (__mpx_mode__ !== 'web' || typeof window === 'undefined') return
-
-      this.$nextTick(() => {
-        if (this._destroyed || trackerVersion !== this._trackerVersion || !this.observer || !this.$el) return
-        this.$el.querySelectorAll('.recommendation-card').forEach((element) => {
-          this.observer.observe(element)
-        })
-      })
+      this.exposureObserver = observer
+      root.querySelectorAll('.recommendation-card').forEach(element => observer.observe(element))
     },
     openProduct (productId) {
-      mpx.navigateTo({
+      wx.navigateTo({
         url: `/packageProduct/pages/detail/index?id=${productId}`
       })
     }

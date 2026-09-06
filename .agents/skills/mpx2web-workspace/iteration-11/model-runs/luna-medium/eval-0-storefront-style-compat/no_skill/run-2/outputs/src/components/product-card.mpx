@@ -11,9 +11,9 @@
 
       <view class="product-meta">
         <view class="price-tag">
-          <text class="currency">¥</text>
-          <text class="amount">{{product.price}}</text>
-          <text class="unit">起</text>
+          <text class="price-currency">¥</text>
+          <text class="price-amount">{{product.price}}</text>
+          <text class="price-unit">起</text>
         </view>
         <text class="product-sales">{{product.salesText}}</text>
       </view>
@@ -116,17 +116,18 @@ createComponent({
 .price-tag {
   display: flex;
   align-items: baseline;
+  min-width: 0;
   height: 32rpx;
   color: #e64340;
 }
 
-.currency,
-.unit {
+.price-currency,
+.price-unit {
   font-size: 20rpx;
   line-height: 28rpx;
 }
 
-.amount {
+.price-amount {
   margin: 0 2rpx;
   font-size: 40rpx;
   font-weight: bold;
@@ -134,8 +135,10 @@ createComponent({
 }
 
 .product-sales {
+  margin-left: 8rpx;
   color: #a0a4ad;
   font-size: 20rpx;
+  white-space: nowrap;
 }
 
 .product-footer {

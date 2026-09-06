@@ -18,8 +18,8 @@ createComponent({
   properties: {
     memberId: {
       type: String,
-      observer (memberId, oldMemberId) {
-        if (memberId === oldMemberId || !this._attached) return
+      observer (memberId, previousMemberId) {
+        if (!this.channelActive || memberId === previousMemberId) return
         this.connectChannel()
       }
     }
@@ -28,30 +28,34 @@ createComponent({
     connected: false
   },
   attached () {
-    this._attached = true
+    this.channelActive = true
+    this.socketTask = null
     this.connectChannel()
   },
   detached () {
-    this._attached = false
+    this.channelActive = false
     this.disconnectChannel()
   },
   methods: {
-    setConnected (connected, memberId) {
+    isCurrentChannel (task, memberId) {
+      return this.channelActive &&
+        this.socketTask === task &&
+        this.memberId === memberId
+    },
+    emitConnection (connected, memberId) {
       this.connected = connected
       this.triggerEvent('connectedchange', { connected, memberId })
     },
-    disconnectChannel () {
-      const task = this.socketTask
-      this.socketTask = null
-      if (this.connected) this.setConnected(false, this.memberId)
-      if (task && typeof task.close === 'function') {
-        task.close({ code: 1000, reason: 'connection replaced' })
-      }
-    },
     connectChannel () {
       const memberId = this.memberId
+      if (!this.channelActive) {
+        this.disconnectChannel()
+        return
+      }
+
       this.disconnectChannel()
-      if (!this._attached || !memberId) return
+      this.emitConnection(false, memberId)
+      if (!memberId) return
 
       let task
       try {
@@ -63,14 +67,7 @@ createComponent({
           usePromise: false
         })
       } catch (error) {
-        this.setConnected(false, memberId)
-        this.triggerEvent('error', { error, memberId })
-        return
-      }
-
-      if (!task) {
-        const error = new Error('物流连接创建失败')
-        this.setConnected(false, memberId)
+        if (!this.channelActive || this.memberId !== memberId) return
         this.triggerEvent('error', { error, memberId })
         return
       }
@@ -78,48 +75,52 @@ createComponent({
       this.socketTask = task
 
       task.onOpen(() => {
-        if (!this._attached || this.socketTask !== task || this.memberId !== memberId) return
-        this.setConnected(true, memberId)
+        if (!this.isCurrentChannel(task, memberId)) return
+        this.emitConnection(true, memberId)
       })
 
       task.onMessage(({ data }) => {
-        if (!this._attached || this.socketTask !== task || this.memberId !== memberId) return
+        if (!this.isCurrentChannel(task, memberId)) return
         let message
         try {
           message = typeof data === 'string' ? JSON.parse(data) : data
         } catch (error) {
+          if (!this.isCurrentChannel(task, memberId)) return
           this.triggerEvent('error', { error, memberId })
           return
         }
+        if (!this.isCurrentChannel(task, memberId)) return
         if (message && message.type === 'logistics') {
           this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
         }
       })
 
       task.onError((error) => {
-        if (!this._attached || this.socketTask !== task || this.memberId !== memberId) return
-        this.setConnected(false, memberId)
+        if (!this.isCurrentChannel(task, memberId)) return
+        this.emitConnection(false, memberId)
         this.triggerEvent('error', { error, memberId })
       })
 
       task.onClose(() => {
-        if (!this._attached || this.socketTask !== task || this.memberId !== memberId) return
+        if (!this.isCurrentChannel(task, memberId)) return
         this.socketTask = null
-        this.setConnected(false, memberId)
+        this.emitConnection(false, memberId)
       })
     },
+    disconnectChannel () {
+      const task = this.socketTask
+      this.socketTask = null
+      this.connected = false
+      if (task) task.close()
+    },
     reconnect () {
-      if (!this._attached || !this.memberId) return
+      if (!this.channelActive) return
       this.connectChannel()
     },
     sendHeartbeat () {
       const task = this.socketTask
-      if (!task || this.socketTask !== task) return
-      if (__mpx_mode__ === 'web') {
-        if (task.readyState !== task.OPEN) return
-      } else if (!this.connected) {
-        return
-      }
+      if (!task || this.socketTask !== task || !this.connected) return
+      if (__mpx_mode__ === 'web' && task.readyState !== task.OPEN) return
       task.send({
         data: JSON.stringify({ type: 'ping', memberId: this.memberId })
       })

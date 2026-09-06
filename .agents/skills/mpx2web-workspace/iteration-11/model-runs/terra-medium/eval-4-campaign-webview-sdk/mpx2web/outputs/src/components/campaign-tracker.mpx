@@ -12,7 +12,7 @@ createComponent({
     campaignId: {
       type: String,
       observer () {
-        this.initTracker()
+        if (this.isMounted) this.initTracker()
       }
     },
     memberId: String
@@ -21,72 +21,75 @@ createComponent({
     ready: false
   },
   ready () {
-    this.componentActive = true
+    this.isMounted = true
+    this.trackerGeneration = 0
     this.initTracker()
   },
   detached () {
-    this.componentActive = false
-    this.trackerGeneration = (this.trackerGeneration || 0) + 1
-    this.destroyTracker()
+    this.isMounted = false
+    this.disposeTracker()
   },
   methods: {
-    destroyTracker () {
-      if (typeof document !== 'undefined') {
-        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+    disposeTracker () {
+      this.trackerGeneration = (this.trackerGeneration || 0) + 1
+      if (this.visibilityListener && typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', this.visibilityListener)
       }
+      this.visibilityListener = null
       const tracker = this.tracker
       this.tracker = null
-      if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+      if (tracker) {
+        if (typeof tracker.stop === 'function') tracker.stop()
+        if (typeof tracker.destroy === 'function') tracker.destroy()
+      }
     },
     async initTracker () {
-      const generation = (this.trackerGeneration || 0) + 1
-      this.trackerGeneration = generation
-      this.destroyTracker()
+      this.disposeTracker()
+      if (!this.isMounted || !this.campaignId) return
+
+      const generation = ++this.trackerGeneration
+      const campaignId = this.campaignId
+      const memberId = this.memberId
       this.ready = false
 
-      if (!this.campaignId) return
       if (__mpx_mode__ !== 'web') {
-        this.ready = true
-        this.triggerEvent('ready', { campaignId: this.campaignId })
+        if (this.isMounted && generation === this.trackerGeneration && campaignId === this.campaignId) {
+          this.ready = true
+          this.triggerEvent('ready', { campaignId })
+        }
         return
       }
 
       try {
         const trackerModule = await import('@business/campaign-tracker-web')
-        const trackerFactory = trackerModule.default || trackerModule
-        const campaignId = this.campaignId
-        const tracker = await trackerFactory.create({
-          campaignId,
-          memberId: this.memberId
-        })
+        const campaignTracker = trackerModule.default || trackerModule
+        if (!this.isMounted || generation !== this.trackerGeneration || campaignId !== this.campaignId) return
 
-        if (!this.componentActive || generation !== this.trackerGeneration || campaignId !== this.campaignId) {
+        const tracker = await campaignTracker.create({ campaignId, memberId })
+        if (!this.isMounted || generation !== this.trackerGeneration || campaignId !== this.campaignId) {
           if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
           return
         }
 
         this.tracker = tracker
-        document.addEventListener('visibilitychange', this.handleVisibilityChange)
-        await tracker.start()
-
-        if (!this.componentActive || generation !== this.trackerGeneration || this.tracker !== tracker) return
+        this.visibilityListener = () => {
+          if (!this.isMounted || generation !== this.trackerGeneration || this.tracker !== tracker) return
+          if (document.hidden) {
+            if (typeof tracker.pause === 'function') tracker.pause()
+          } else if (typeof tracker.resume === 'function') {
+            tracker.resume()
+          }
+        }
+        document.addEventListener('visibilitychange', this.visibilityListener)
+        tracker.start()
+        if (!this.isMounted || generation !== this.trackerGeneration || this.tracker !== tracker) return
         this.ready = true
         this.triggerEvent('ready', { campaignId })
       } catch (error) {
-        if (this.componentActive && generation === this.trackerGeneration) {
-          this.destroyTracker()
-          this.ready = false
-          this.triggerEvent('error', { campaignId: this.campaignId, error })
-        }
-      }
-    },
-    handleVisibilityChange () {
-      const tracker = this.tracker
-      if (!tracker) return
-      if (document.hidden) {
-        tracker.pause()
-      } else {
-        tracker.resume()
+        if (!this.isMounted || generation !== this.trackerGeneration || campaignId !== this.campaignId) return
+        this.disposeTracker()
+        this.ready = false
+        this.triggerEvent('error', { campaignId, error })
       }
     }
   }

@@ -3,19 +3,21 @@
   "eval_name": "member-share-lifecycle",
   "configuration": "mpx2web",
   "run_number": 1,
-  "grading_fingerprint": "baf62b9491e851c3d4fc4b4349036a05bc8c15b75eff454fbae1f5285fb49b18",
+  "grading_fingerprint": "197c632028a4a6f4e2cbea668ca007e22b5c07f4b5af6e969b1272b403f39f3d",
+  "model_grading_fingerprint": "df55c866db72161b4131310cc762c8193363f3e7310fd6359dd33b2122b57445",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 68266
+    "duration_ms": 84046
   },
   "expectations": [
     {
       "id": "s0",
       "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "category": "cross-platform-regression",
       "passed": true,
-      "evidence": "./outputs/src/pages/member/invite.mpx:43 保留微信小程序分享按钮 `<button ... @wx open-type=\"share\">`；123-129 保留 onShareAppMessage；130-136 保留 onShareTimeline。",
+      "evidence": "./outputs/src/pages/member/invite.mpx:48 保留微信小程序分享按钮 open-type@wx=\"share\"；140-153 保留 onShareAppMessage 与 onShareTimeline。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -23,18 +25,24 @@
     {
       "id": "s1",
       "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "category": "web-lifecycle",
       "passed": true,
       "evidence": "outputs/src/pages/member/invite.mpx：分享生命周期保留给小程序，并从 Web 构造选项中移除。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/member/invite.mpx：分享生命周期保留给小程序，并从 Web 构造选项中移除。"
+      }
     },
     {
       "id": "s2",
       "text": "Web 分享入口绑定独立的页面实例方法",
+      "category": "web-template",
       "passed": true,
-      "evidence": "./outputs/src/pages/member/invite.mpx:44 Web 分享入口使用 `@web bindtap=\"shareOnWeb\"`，147-149 在页面 methods 中定义独立实例方法 shareOnWeb。",
+      "evidence": "./outputs/src/pages/member/invite.mpx:49 Web 分享入口使用 bindtap@web=\"shareOnWeb\"；164-166 在 methods 中定义了独立页面实例方法 shareOnWeb。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -42,8 +50,9 @@
     {
       "id": "s3",
       "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "category": "web-lifecycle",
       "passed": true,
-      "evidence": "./outputs/src/pages/member/invite.mpx:147-149 的 shareOnWeb 仅保留待接入注释边界，未调用任何未声明的 Web 分享 SDK、宿主 Bridge 或降级协议。",
+      "evidence": "./outputs/src/pages/member/invite.mpx:164-166 的 shareOnWeb 仅保留待接入注释边界，未调用未声明的 Web 分享 SDK、宿主 Bridge 或其他分享实现。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -51,8 +60,9 @@
     {
       "id": "s4",
       "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "category": "web-lifecycle",
       "passed": true,
-      "evidence": "./outputs/src/pages/member/invite.mpx 全文未出现 `navigator.share`、`clipboard`、复制链接或类似主动降级实现；shareOnWeb 为空待接入边界。",
+      "evidence": "检索 ./outputs/src/pages/member/invite.mpx 未发现 navigator.share、clipboard、execCommand、copy link 等降级实现；shareOnWeb 为空边界。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -60,8 +70,9 @@
     {
       "id": "s5",
       "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "category": "web-api",
       "passed": true,
-      "evidence": "./outputs/src/pages/member/invite.mpx:138-145 请求继续使用 `wx.request`；150-154 详情跳转继续使用 `wx.navigateTo`；未改为 fetch、location、history 等浏览器原生平行实现。",
+      "evidence": "./outputs/src/pages/member/invite.mpx:155-162 请求继续使用 wx.request；167-171 活动规则跳转继续使用 wx.navigateTo，未改为 fetch、location、history 等浏览器原生平行实现。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -69,8 +80,9 @@
     {
       "id": "s6",
       "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "category": "business-regression",
       "passed": true,
-      "evidence": "./outputs/src/pages/member/invite.mpx:13-18、105-115 保留会员邀请进度与 invitePercent；27-31、94-103 保留奖励阶梯；48-63、107-109、141-143 保留最近邀请列表展示与请求后更新。",
+      "evidence": "./outputs/src/pages/member/invite.mpx:13-23 保留会员邀请进度展示；99-108 与 27-39 保留奖励阶梯数据和渲染；112-127 与 53-68 保留最近邀请列表数据和渲染；155-162 请求回写 inviteCount 与 invitees。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -82,19 +94,27 @@
     "total": 7,
     "pass_rate": 1.0
   },
+  "strict_delivery_summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0,
+    "compile_passed": true
+  },
   "metrics": {
-    "total_tokens": 269657,
-    "input_tokens": 263827,
-    "output_tokens": 5830,
-    "tool_calls": 8,
-    "duration_ms": 137265
+    "total_tokens": 325703,
+    "input_tokens": 319111,
+    "output_tokens": 6592,
+    "tool_calls": 15,
+    "duration_ms": 162900
   },
   "timing": {
-    "total_tokens": 269657,
-    "duration_ms": 137265,
-    "total_duration_seconds": 137.265
+    "total_tokens": 325703,
+    "duration_ms": 162900,
+    "total_duration_seconds": 162.9
   },
   "compile": {
+    "compile_fingerprint": "e58676cd852a79768a967b6f03914583c5569f06b82037418ad0565b039ae1b9",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 1,
@@ -138,16 +158,18 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 5287
+          "durationMs": 3376
         },
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
-    "suggestions": [],
-    "overall": "输出基本满足任务要求：Web 分享入口保留为待接入边界，小程序分享生命周期通过平台隔离保留，业务数据与 Mpx API 链路未被破坏。"
+    "suggestions": [
+      "可补充断言：Web 端不应残留没有 bindtap@web 或等价处理的微信分享按钮；当前断言能识别独立 Web 分享入口和无虚构能力，但不能覆盖 open-type@wx 去属性后元素仍可见且无效的情况。"
+    ],
+    "overall": "全部断言通过；主要能力边界清晰，未虚构 Web 分享降级。"
   }
 }

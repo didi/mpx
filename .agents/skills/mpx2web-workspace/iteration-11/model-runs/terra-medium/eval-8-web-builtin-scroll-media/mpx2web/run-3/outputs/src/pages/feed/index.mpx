@@ -9,14 +9,17 @@
       binddragging="onDragging"
       binddragend="onDragEnd"
     >
-      <sticky-header offset-top="0">
+      <sticky-header @web offset-top="0">
         <view class="categories">
           <text wx:for="{{categories}}" wx:key="id" bindtap="selectCategory(item.id)">{{item.name}}</text>
         </view>
       </sticky-header>
+      <view @wx class="categories">
+        <text wx:for="{{categories}}" wx:key="id" bindtap="selectCategory(item.id)">{{item.name}}</text>
+      </view>
       <view wx:for="{{products}}" wx:key="id" class="product">
-        <image class="product-image" src="{{item.image}}" mode="widthFix" bindload="onMediaLoad" />
-        <product-video wx:if="{{item.video}}" product="{{item}}" bindmediaload="onMediaLoad" />
+        <image src="{{item.image}}" mode="widthFix" bindload="onMediaLoad" />
+        <product-video wx:if="{{item.video}}" product="{{item}}" bindlayoutchange="onMediaLoad" />
       </view>
     </scroll-view>
     <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
@@ -30,35 +33,43 @@ createPage({
   data: {
     categories: [],
     products: [],
+    cartCount: 2,
     activeCategoryId: '',
-    cartCount: 2
+    isDragging: false,
+    dragOffset: 0
   },
   async onLoad () {
     const { data } = await mpx.request({ url: '/api/feed' })
     this.categories = data.categories
     this.products = data.products
+    this.refreshFeedScroll()
   },
   methods: {
     selectCategory (categoryId) {
       this.activeCategoryId = categoryId
     },
+    onDragStart () {
+      this.isDragging = true
+      this.dragOffset = 0
+    },
+    onDragging (event) {
+      const detail = event.detail || {}
+      this.dragOffset = typeof detail.deltaY === 'number' ? detail.deltaY : 0
+    },
+    onDragEnd () {
+      this.isDragging = false
+      this.dragOffset = 0
+    },
     onMediaLoad () {
-      if (__mpx_mode__ !== 'web') return
+      this.refreshFeedScroll()
+    },
+    refreshFeedScroll () {
       this.$nextTick(() => {
         const feedScroll = this.$refs.feedScroll
         if (feedScroll && typeof feedScroll.refresh === 'function') {
           feedScroll.refresh()
         }
       })
-    },
-    onDragStart (event) {
-      this.dragOffset = event.detail.scrollTop
-    },
-    onDragging (event) {
-      this.dragOffset = event.detail.scrollTop
-    },
-    onDragEnd (event) {
-      this.dragOffset = event.detail.scrollTop
     },
     openCart () {
       mpx.navigateTo({ url: '/pages/cart/index' })
@@ -78,7 +89,12 @@ createPage({
 <style scoped>
 .feed-page, .feed-scroll { height: 100%; }
 .categories { display: flex; background: #fff; }
-.product { display: block; padding: 24rpx; }
-.product-image { display: block; width: 100%; }
+.product { padding: 24rpx; }
 .fixed-cart { position: fixed; right: 24rpx; bottom: 40rpx; z-index: 10; }
+</style>
+
+<style mode="web" scoped>
+.feed-page { height: 100vh; overflow: hidden; }
+.feed-scroll { height: 100%; }
+.fixed-cart { position: fixed; }
 </style>

@@ -1,14 +1,13 @@
 <template>
   <view class="product-video">
     <video
-      class="video"
       id="product-video"
       src="{{product.video}}"
       autoplay
       muted@web="{{true}}"
       muted@wx="{{false}}"
       playsinline@web="{{true}}"
-      enable-danmu@wx="{{true}}"
+      enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
@@ -30,17 +29,26 @@ createComponent({
     videoSize: ''
   },
   methods: {
-    getMediaTarget (event) {
-      const detail = event && event.detail
-      return (detail && detail.target) || (event && (event.target || event.currentTarget)) || {}
-    },
-    getMediaNumber (event, detailKey, targetKey) {
+    getMediaNumber (event, detailKey, mediaKey) {
       const detail = event && event.detail
       if (detail && typeof detail[detailKey] === 'number') {
         return detail[detailKey]
       }
-      const target = this.getMediaTarget(event)
-      return typeof target[targetKey] === 'number' ? target[targetKey] : 0
+
+      const originalEvent = event && event.originalEvent
+      const mediaTargets = [
+        detail && detail.target,
+        originalEvent && originalEvent.target,
+        event && event.target,
+        event && event.currentTarget
+      ]
+      for (let i = 0; i < mediaTargets.length; i++) {
+        const target = mediaTargets[i]
+        if (target && typeof target[mediaKey] === 'number') {
+          return target[mediaKey]
+        }
+      }
+      return 0
     },
     onTimeUpdate (event) {
       this.progress = this.getMediaNumber(event, 'currentTime', 'currentTime')
@@ -49,10 +57,8 @@ createComponent({
     onLoadedMetadata (event) {
       const width = this.getMediaNumber(event, 'width', 'videoWidth')
       const height = this.getMediaNumber(event, 'height', 'videoHeight')
-      const duration = this.getMediaNumber(event, 'duration', 'duration')
+      this.duration = this.getMediaNumber(event, 'duration', 'duration')
       this.videoSize = `${width}x${height}`
-      if (duration) this.duration = duration
-      this.triggerEvent('metadataready')
     },
     onVideoError () {}
   }
@@ -60,6 +66,5 @@ createComponent({
 </script>
 
 <style scoped>
-.product-video { display: block; width: 100%; }
-.video { display: block; width: 100%; }
+.product-video { width: 100%; }
 </style>

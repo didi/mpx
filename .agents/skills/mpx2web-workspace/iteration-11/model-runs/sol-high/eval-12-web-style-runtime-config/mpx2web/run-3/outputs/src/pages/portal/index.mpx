@@ -18,65 +18,85 @@ createPage({
     dialogVisible: false,
     dark: false
   },
-  onShow () {
-    if (this.dialogVisible) this.lockWebPageScroll()
-  },
   onHide () {
-    this.restoreWebPageScroll()
+    if (__mpx_mode__ === 'web') {
+      this.dialogVisible = false
+      this.restorePageScroll()
+    }
   },
   onUnload () {
-    this.restoreWebPageScroll()
+    if (__mpx_mode__ === 'web') {
+      this.restorePageScroll()
+    }
   },
   methods: {
     openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
     toggleTheme () { this.dark = !this.dark },
     openDialog () {
       this.dialogVisible = true
-      this.lockWebPageScroll()
+      if (__mpx_mode__ === 'web') {
+        this.lockPageScroll()
+      }
     },
     closeDialog () {
       this.dialogVisible = false
-      this.restoreWebPageScroll()
+      if (__mpx_mode__ === 'web') {
+        this.restorePageScroll()
+      }
     },
-    lockWebPageScroll () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || this._webScrollLockState) return
+    lockPageScroll () {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || typeof document === 'undefined' || this._portalScrollLock) return
 
-      const candidates = [
-        document.scrollingElement,
-        document.documentElement,
-        document.body,
-        document.querySelector('#app')
-      ]
-      const targets = candidates.filter((target, index) => target && candidates.indexOf(target) === index)
-      const scrollX = typeof window !== 'undefined' ? window.pageXOffset : 0
-      const scrollY = typeof window !== 'undefined' ? window.pageYOffset : 0
+      const scrollX = window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
+      const app = document.getElementById('app')
+      const targets = [document.documentElement, document.body, app].filter(Boolean)
+      const snapshots = targets.map((element) => ({
+        element,
+        overflow: element.style.overflow
+      }))
+      const bodyStyle = document.body.style
 
-      this._webScrollLockState = {
+      this._portalScrollLock = {
         scrollX,
         scrollY,
-        targets: targets.map((target) => ({
-          target,
-          overflow: target.style.getPropertyValue('overflow'),
-          overflowPriority: target.style.getPropertyPriority('overflow')
-        }))
+        snapshots,
+        body: {
+          position: bodyStyle.position,
+          top: bodyStyle.top,
+          left: bodyStyle.left,
+          right: bodyStyle.right,
+          width: bodyStyle.width
+        }
       }
 
-      targets.forEach((target) => target.style.setProperty('overflow', 'hidden'))
+      snapshots.forEach(({ element }) => {
+        element.style.overflow = 'hidden'
+      })
+      bodyStyle.position = 'fixed'
+      bodyStyle.top = `${-scrollY}px`
+      bodyStyle.left = `${-scrollX}px`
+      bodyStyle.right = '0'
+      bodyStyle.width = '100%'
     },
-    restoreWebPageScroll () {
-      if (__mpx_mode__ !== 'web' || !this._webScrollLockState) return
+    restorePageScroll () {
+      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || typeof document === 'undefined') return
 
-      const state = this._webScrollLockState
-      this._webScrollLockState = null
-      state.targets.forEach(({ target, overflow, overflowPriority }) => {
-        if (overflow) {
-          target.style.setProperty('overflow', overflow, overflowPriority)
-        } else {
-          target.style.removeProperty('overflow')
-        }
+      const lock = this._portalScrollLock
+      if (!lock) return
+
+      this._portalScrollLock = null
+      lock.snapshots.forEach(({ element, overflow }) => {
+        element.style.overflow = overflow
       })
 
-      if (typeof window !== 'undefined') window.scrollTo(state.scrollX, state.scrollY)
+      const bodyStyle = document.body.style
+      bodyStyle.position = lock.body.position
+      bodyStyle.top = lock.body.top
+      bodyStyle.left = lock.body.left
+      bodyStyle.right = lock.body.right
+      bodyStyle.width = lock.body.width
+      window.scrollTo(lock.scrollX, lock.scrollY)
     }
   }
 })
@@ -84,25 +104,57 @@ createPage({
 
 <style scoped>
 .portal {
+  box-sizing: border-box;
   min-height: 100vh;
-  color: var(--portal-text, #1f2937);
+  color: var(--portal-text, #1f2329);
   background: var(--portal-background, #f5f7fa);
   padding: var(--portal-space, 24rpx);
 }
-.dialog-mask { position: fixed; inset: 0; }
+.dialog-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
 </style>
 
-<style scoped mode="web">
+<style mode="web">
 .portal {
   padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
 }
+
 @media (hover: hover) and (pointer: fine) {
-  .portal-card:hover { transform: translateY(-2px); }
-}
-.portal::-webkit-scrollbar { width: 6px; }
-.portal::-webkit-scrollbar-track { background: transparent; }
-.portal::-webkit-scrollbar-thumb {
-  background: rgba(31, 41, 55, 0.28);
-  border-radius: 3px;
+  .portal-card {
+    transition: transform 0.2s ease;
+  }
+
+  .portal-card:hover {
+    transform: translateY(-2px);
+  }
+
+  html,
+  body,
+  #app,
+  .portal {
+    scrollbar-color: var(--portal-scrollbar-thumb, #aab2bf) transparent;
+    scrollbar-width: thin;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  #app::-webkit-scrollbar,
+  .portal::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb,
+  #app::-webkit-scrollbar-thumb,
+  .portal::-webkit-scrollbar-thumb {
+    background: var(--portal-scrollbar-thumb, #aab2bf);
+    border-radius: 3px;
+  }
 }
 </style>

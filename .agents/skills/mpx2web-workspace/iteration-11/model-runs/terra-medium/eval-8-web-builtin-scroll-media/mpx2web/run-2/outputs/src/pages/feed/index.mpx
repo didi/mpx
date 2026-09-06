@@ -10,34 +10,22 @@
       binddragend="onDragEnd"
     >
       <sticky-header offset-top="0">
-        <view
-          class="categories"
-          bindtouchstart="onCategoryTouchStart"
-          bindtouchmove="onCategoryTouchMove"
-          bindtouchend="onCategoryTouchEnd"
-          bindtouchcancel="onCategoryTouchCancel"
-        >
+        <view class="categories">
           <text
             wx:for="{{categories}}"
             wx:key="id"
-            class="category"
+            bindtouchstart="onCategoryTouchStart"
+            bindtouchmove="onCategoryTouchMove"
+            bindtouchend="onCategoryTouchEnd"
+            bindtouchcancel="onCategoryTouchCancel"
             bindtap="selectCategory(item.id)"
           >{{item.name}}</text>
         </view>
       </sticky-header>
       <view class="feed-content">
         <view wx:for="{{products}}" wx:key="id" class="product">
-          <image
-            class="product-image"
-            src="{{item.image}}"
-            mode="widthFix"
-            bindload="onImageLoad"
-          />
-          <product-video
-            wx:if="{{item.video}}"
-            product="{{item}}"
-            bindlayoutchange="onMediaLayoutChange"
-          />
+          <image src="{{item.image}}" mode="widthFix" bindload="onProductImageLoad" />
+          <product-video wx:if="{{item.video}}" product="{{item}}" bindmediaready="onProductMediaReady" />
         </view>
       </view>
     </scroll-view>
@@ -52,9 +40,7 @@ createPage({
   data: {
     categories: [],
     products: [],
-    cartCount: 2,
-    activeCategoryId: '',
-    isDragging: false
+    cartCount: 2
   },
   async onLoad () {
     const { data } = await mpx.request({ url: '/api/feed' })
@@ -70,54 +56,65 @@ createPage({
       }
       this.activeCategoryId = categoryId
     },
-    onDragStart () {
-      this.isDragging = true
-    },
-    onDragging () {},
-    onDragEnd () {
-      this.isDragging = false
-    },
     onCategoryTouchStart (event) {
-      const touch = event.touches && event.touches[0]
       this.suppressNextCategoryTap = false
-      this.categoryTouchStartY = touch ? touch.clientY : null
-      this.categoryTouchMoved = false
+      const point = this.getTouchPoint(event)
+      this.categoryTouchStart = point && { x: point.x, y: point.y }
+      this.categoryMoved = false
     },
     onCategoryTouchMove (event) {
-      const touch = event.touches && event.touches[0]
-      if (!touch || this.categoryTouchStartY === null) return
-      if (Math.abs(touch.clientY - this.categoryTouchStartY) > 8) {
-        this.categoryTouchMoved = true
+      if (!this.categoryTouchStart) return
+      const point = this.getTouchPoint(event)
+      if (!point) return
+      const deltaX = point.x - this.categoryTouchStart.x
+      const deltaY = point.y - this.categoryTouchStart.y
+      if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
+        this.categoryMoved = true
       }
     },
     onCategoryTouchEnd () {
-      this.suppressNextCategoryTap = this.categoryTouchMoved
-      this.categoryTouchStartY = null
-      this.categoryTouchMoved = false
+      this.suppressNextCategoryTap = this.categoryMoved
+      this.categoryTouchStart = null
+      this.categoryMoved = false
     },
     onCategoryTouchCancel () {
       this.suppressNextCategoryTap = false
-      this.categoryTouchStartY = null
-      this.categoryTouchMoved = false
+      this.categoryTouchStart = null
+      this.categoryMoved = false
     },
-    onImageLoad () {
+    getTouchPoint (event) {
+      const touches = event.touches || event.changedTouches || []
+      const touch = touches[0]
+      if (!touch) return null
+      return {
+        x: touch.clientX === undefined ? touch.pageX : touch.clientX,
+        y: touch.clientY === undefined ? touch.pageY : touch.clientY
+      }
+    },
+    onDragStart (event) {
+      this.isDragging = true
+      this.lastDragDetail = event.detail
+    },
+    onDragging (event) {
+      this.lastDragDetail = event.detail
+    },
+    onDragEnd (event) {
+      this.isDragging = false
+      this.lastDragDetail = event.detail
+    },
+    onProductImageLoad () {
       this.refreshFeedScroll()
     },
-    onMediaLayoutChange () {
+    onProductMediaReady () {
       this.refreshFeedScroll()
     },
     refreshFeedScroll () {
-      const refresh = () => {
+      this.$nextTick(() => {
         const feedScroll = this.$refs && this.$refs.feedScroll
         if (feedScroll && typeof feedScroll.refresh === 'function') {
           feedScroll.refresh()
         }
-      }
-      if (typeof this.$nextTick === 'function') {
-        this.$nextTick(refresh)
-      } else {
-        refresh()
-      }
+      })
     },
     openCart () {
       mpx.navigateTo({ url: '/pages/cart/index' })
@@ -135,12 +132,9 @@ createPage({
 </script>
 
 <style scoped>
-.feed-page { display: flex; flex-direction: column; height: 100%; }
-.feed-scroll { flex: 1; height: 0; }
+.feed-page, .feed-scroll { height: 100%; }
 .feed-content { min-height: 100%; }
 .categories { display: flex; background: #fff; }
-.category { padding: 16rpx 24rpx; }
-.product { display: block; padding: 24rpx; }
-.product-image { display: block; width: 100%; }
-.fixed-cart { position: fixed; right: 24rpx; bottom: 40rpx; z-index: 10; }
+.product { padding: 24rpx; }
+.fixed-cart { position: fixed; right: 24rpx; bottom: 40rpx; }
 </style>

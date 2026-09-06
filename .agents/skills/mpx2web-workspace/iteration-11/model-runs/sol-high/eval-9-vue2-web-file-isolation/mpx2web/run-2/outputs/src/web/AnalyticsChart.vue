@@ -13,104 +13,120 @@ export default {
       default: () => []
     }
   },
-  data () {
-    return {
-      chart: null,
-      resizeObserver: null,
-      resizeListenerAttached: false,
-      initGeneration: 0,
-      isDisposed: false
-    }
-  },
   watch: {
     metrics: {
       deep: true,
       handler (metrics) {
-        if (this.chart && this.chart.update) {
-          this.chart.update(metrics || [])
+        if (this._chartInstance) {
+          this._chartInstance.update(this.snapshotMetrics(metrics))
+          return
         }
+        if (this._chartMounted) this.createChartInstance(metrics)
       }
     }
   },
+  created () {
+    this._chartMounted = false
+    this._chartGeneration = 0
+    this._chartInstance = null
+    this._resizeObserver = null
+  },
   mounted () {
-    this.isDisposed = false
-    this.observeSize()
-    this.initChart()
+    this._chartMounted = true
+    this.createChartInstance(this.metrics)
   },
   beforeDestroy () {
-    this.isDisposed = true
-    this.initGeneration += 1
-
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect()
-      this.resizeObserver = null
-    }
-    if (this.resizeListenerAttached) {
-      window.removeEventListener('resize', this.handleResize)
-      this.resizeListenerAttached = false
-    }
-    if (this.chart && this.chart.destroy) {
-      this.chart.destroy()
-    }
-    this.chart = null
+    this._chartMounted = false
+    this._chartGeneration += 1
+    this.releaseChartResources()
   },
   methods: {
-    async initChart () {
-      const generation = ++this.initGeneration
-      let chart
+    snapshotMetrics (metrics) {
+      if (!Array.isArray(metrics)) return []
+      return metrics.map((item) => ({ ...item }))
+    },
+    isCurrentChart (generation, element) {
+      return this._chartMounted &&
+        this._chartGeneration === generation &&
+        this.$refs.chart === element
+    },
+    async createChartInstance (metrics) {
+      const generation = this._chartGeneration + 1
+      this._chartGeneration = generation
+      const element = this.$refs.chart
+      const metricSnapshot = this.snapshotMetrics(metrics)
+      if (!element) return
 
+      let instance
       try {
-        chart = await createChart(this.$refs.chart, this.metrics || [], {
-          onSelect: (key) => {
-            if (!this.isDisposed && generation === this.initGeneration) {
-              this.$emit('select', { key })
-            }
+        instance = await createChart(element, metricSnapshot, {
+          isCurrent: () => this.isCurrentChart(generation, element),
+          onSelect: (detail) => {
+            if (!this.isCurrentChart(generation, element) ||
+              this._chartInstance !== instance) return
+            this.$emit('select', detail)
           }
         })
       } catch (error) {
-        if (!this.isDisposed && generation === this.initGeneration) {
+        if (this.isCurrentChart(generation, element)) {
           this.$emit('error', error)
         }
         return
       }
 
-      if (this.isDisposed || generation !== this.initGeneration) {
-        if (chart && chart.destroy) chart.destroy()
+      if (!this.isCurrentChart(generation, element)) {
+        if (instance && instance.destroy) instance.destroy()
+        if (this._chartInstance) {
+          this._chartInstance.update(this.snapshotMetrics(this.metrics))
+        }
         return
       }
 
-      if (this.chart && this.chart.destroy) this.chart.destroy()
-      this.chart = chart
-      if (this.chart && this.chart.update) {
-        this.chart.update(this.metrics || [])
-      }
-      this.handleResize()
+      this.releaseChartResources()
+      this._chartInstance = instance
+      this.observeChartSize(generation, element, instance)
     },
-    observeSize () {
-      if (typeof ResizeObserver !== 'undefined') {
-        this.resizeObserver = new ResizeObserver(this.handleResize)
-        this.resizeObserver.observe(this.$refs.chart)
-        return
-      }
-
-      window.addEventListener('resize', this.handleResize)
-      this.resizeListenerAttached = true
+    observeChartSize (generation, element, instance) {
+      if (typeof ResizeObserver === 'undefined') return
+      const observer = new ResizeObserver(() => {
+        if (!this.isCurrentChart(generation, element) ||
+          this._chartInstance !== instance ||
+          this._resizeObserver !== observer) return
+        instance.resize()
+      })
+      this._resizeObserver = observer
+      observer.observe(element)
     },
-    handleResize () {
-      if (!this.isDisposed && this.chart && this.chart.resize) {
-        this.chart.resize()
-      }
+    releaseChartResources () {
+      const observer = this._resizeObserver
+      const instance = this._chartInstance
+      this._resizeObserver = null
+      this._chartInstance = null
+      if (observer) observer.disconnect()
+      if (instance && instance.destroy) instance.destroy()
     }
   }
 }
 </script>
 
-<style scoped>
+<style>
 .analytics-chart {
-  box-sizing: border-box;
-  display: inline-block;
   min-width: 100%;
-  vertical-align: top;
-  white-space: nowrap;
+  min-height: 100%;
+}
+
+.analytics-chart__content {
+  display: flex;
+  gap: 12px;
+}
+
+.analytics-chart__metric {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 8px;
+  color: inherit;
+  background: #f5f7fa;
+  cursor: pointer;
 }
 </style>

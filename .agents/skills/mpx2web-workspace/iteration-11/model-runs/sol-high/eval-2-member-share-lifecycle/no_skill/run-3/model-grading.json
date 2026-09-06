@@ -1,0 +1,92 @@
+{
+  "eval_id": 2,
+  "eval_name": "member-share-lifecycle",
+  "configuration": "no_skill",
+  "run_number": 3,
+  "model_grading_fingerprint": "40ecb1362949dc0ced2b264dd7b6e307ce50003774fe1013a1e73e82d81451bb",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 61342
+  },
+  "expectations": [
+    {
+      "id": "s0",
+      "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:48-49 在 wx 条件分支保留 open-type=\"share\" 分享按钮；:138-151 保留 onShareAppMessage 与 onShareTimeline；:130-134 仍调用 wx.showShareMenu 并包含 shareAppMessage/shareTimeline。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s1",
+      "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "category": "web-lifecycle",
+      "passed": false,
+      "evidence": "outputs/src/pages/member/invite.mpx:138-151 的 onShareAppMessage 与 onShareTimeline 直接位于 createPage 选项中，未使用 implement(remove: true) 或 @mpx-if 等编译期隔离从 Web 构造选项移除。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s2",
+      "text": "Web 分享入口绑定独立的页面实例方法",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:50-51 的 Web 分支分享入口绑定 bindtap=\"shareOnWeb\"；:186-188 在 methods 中定义独立页面实例方法 shareOnWeb。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s3",
+      "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "category": "web-lifecycle",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:186-188 的 shareOnWeb 仅设置 webShareNotice 为“Web 分享能力暂未接入，请稍后再试”，形成待接入边界，未调用未声明的 Web 分享 SDK 或宿主 Bridge。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s4",
+      "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "category": "web-lifecycle",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx 全文未出现 navigator.share、clipboard、writeText、execCommand 或复制链接类降级实现；shareOnWeb 仅展示未接入提示。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s5",
+      "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/pages/member/invite.mpx:161-177 为 Web 请求新增 window.fetch 平行实现；:192-193 为详情跳转新增 window.location.assign 平行实现，未继续走 wx.request/wx.navigateTo、mpx.xxx 或 @mpxjs/api-proxy 链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s6",
+      "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:13-23、103-127 保留会员邀请进度与计算；:32-36、92-101 保留奖励阶梯；:59-74、105-120 保留最近邀请列表；:153-184 仍更新邀请 count/list。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言缺口：s1 只要求 Web 构造选项隔离分享生命周期，但未明确 onShareAppMessage/onShareTimeline 是否必须用具体 Mpx 写法隔离，验收只能按源码中是否存在有效编译期隔离判断。"
+    ],
+    "overall": "候选保留了业务展示与 Web 分享待接入边界，但 Web 未隔离分享生命周期，且请求/跳转改成浏览器原生平行实现。"
+  }
+}

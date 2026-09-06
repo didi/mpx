@@ -18,14 +18,12 @@
     </view>
 
     <web-view
-      wx:for="{{campaignFrames}}"
-      wx:for-item="frame"
-      wx:key="generation"
+      wx:if="{{campaignUrl}}"
       id="campaign-webview"
-      src="{{frame.url}}"
-      data-campaign-id="{{frame.campaignId}}"
-      data-generation="{{frame.generation}}"
-      bindmessage="handleCampaignMessage"
+      data-campaign-id="{{campaignId}}"
+      src="{{campaignUrl}}"
+      bindmessage@wx="handleMiniProgramMessage"
+      bindmessage@web="handleWebMessage"
       bindload="handleCampaignLoad"
       binderror="handleCampaignError"
     />
@@ -41,10 +39,7 @@
     <campaign-tracker
       wx:if="{{campaignId}}"
       campaignId="{{campaignId}}"
-      campaignGeneration="{{campaignGeneration}}"
       memberId="{{memberId}}"
-      pageActive="{{pageActive}}"
-      message="{{trackerMessage}}"
       bindready="handleTrackerReady"
       binderror="handleTrackerError"
     />
@@ -54,13 +49,10 @@
 <script>
 import { createPage } from '@mpxjs/core'
 
-const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
-
 createPage({
   data: {
     memberId: 'member-10086',
     campaignId: 'summer-sale',
-    campaignGeneration: 1,
     campaigns: [
       { id: 'summer-sale', name: '夏日特卖' },
       { id: 'member-day', name: '会员日' },
@@ -70,63 +62,30 @@ createPage({
       title: '夏日清凉特卖',
       subtitle: '限时领券，爆款低至五折'
     },
-    campaignFrames: [{
-      campaignId: 'summer-sale',
-      generation: 1,
-      url: 'https://campaign.example.com/summer-sale?memberId=member-10086&reload=1'
-    }],
+    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086',
     loading: true,
     errorText: '',
-    trackerReady: false,
-    trackerMessage: null,
-    pageActive: true
-  },
-  onLoad () {
-    this._disposed = false
-    this._trackerMessageSequence = 0
-  },
-  onShow () {
-    this.pageActive = true
-  },
-  onHide () {
-    this.pageActive = false
-  },
-  onUnload () {
-    this._disposed = true
-    this.pageActive = false
-    this.campaignGeneration += 1
-    this.trackerMessage = null
+    trackerReady: false
   },
   methods: {
-    buildCampaignUrl (campaignId, generation) {
-      return `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}&reload=${generation}`
-    },
     switchCampaign (campaignId) {
       if (campaignId === this.campaignId) return
-      const generation = this.campaignGeneration + 1
       this.campaignId = campaignId
-      this.campaignGeneration = generation
       this.loading = true
       this.errorText = ''
-      this.trackerReady = false
-      this.trackerMessage = null
-      this.campaignFrames = [{
-        campaignId,
-        generation,
-        url: this.buildCampaignUrl(campaignId, generation)
-      }]
+      this.campaignUrl = ''
+      this.campaignUrl = `https://campaign.example.com/${campaignId}?memberId=${this.memberId}`
     },
     isCurrentWebViewEvent (event) {
-      const currentTarget = event && event.currentTarget
-      const dataset = (currentTarget && currentTarget.dataset) || {}
-      return !this._disposed &&
-        dataset.campaignId === this.campaignId &&
-        Number(dataset.generation) === this.campaignGeneration
+      const dataset = event && event.currentTarget && event.currentTarget.dataset
+      if (__mpx_mode__ === 'web') {
+        return !!dataset && dataset.campaignId === this.campaignId
+      }
+      return true
     },
     handleCampaignLoad (event) {
       if (!this.isCurrentWebViewEvent(event)) return
       this.loading = false
-      if (!this.pageActive) return
       wx.reportAnalytics('campaign_webview_load', {
         campaign_id: this.campaignId
       })
@@ -136,72 +95,54 @@ createPage({
       this.loading = false
       this.errorText = '活动会场暂时无法打开'
     },
-    handleCampaignMessage (event) {
-      if (!this.pageActive || !this.isCurrentWebViewEvent(event)) return
-      const data = event && event.detail && event.detail.data
-      const messages = Array.isArray(data) ? data : [data]
+    handleMiniProgramMessage (event) {
+      const messages = event.detail.data || []
       const message = messages[messages.length - 1] || {}
-
-      if (message.campaignId !== this.campaignId) return
-
-      if (message.type === 'claim-coupon' && message.couponId) {
-        this.claimCoupon(message.couponId)
-      } else if (message.type === 'open-product' && message.productId) {
-        this.openProduct(message.productId)
-      } else if (message.type === 'campaign-exposure') {
-        this._trackerMessageSequence += 1
-        this.trackerMessage = {
-          sequence: this._trackerMessageSequence,
-          type: message.type,
-          campaignId: this.campaignId,
-          generation: this.campaignGeneration,
-          payload: message.payload || {}
-        }
+      this.handleCampaignMessage(message, this.campaignId)
+    },
+    handleWebMessage (event) {
+      const messages = event.detail.data || []
+      const message = messages[messages.length - 1] || {}
+      if (!message || message.campaignId !== this.campaignId) return
+      this.handleCampaignMessage(message, this.campaignId)
+    },
+    handleCampaignMessage (message, campaignId) {
+      if (!message || campaignId !== this.campaignId) return
+      if (message.type === 'claim-coupon') {
+        this.claimCoupon(message.couponId, campaignId)
+      }
+      if (message.type === 'open-product') {
+        this.openProduct(message.productId, campaignId)
       }
     },
-    claimCoupon (couponId) {
-      const campaignId = this.campaignId
-      const generation = this.campaignGeneration
+    claimCoupon (couponId, campaignId = this.campaignId) {
       wx.request({
         url: '/api/campaign/coupons/claim',
         method: 'POST',
         data: { campaignId, couponId },
         success: () => {
-          if (this._disposed || !this.pageActive) return
-          if (campaignId !== this.campaignId || generation !== this.campaignGeneration) return
+          if (campaignId !== this.campaignId) return
           wx.showToast({ title: '领取成功', icon: 'success' })
         }
       })
     },
-    openProduct (productId) {
-      const campaignId = this.campaignId
+    openProduct (productId, campaignId = this.campaignId) {
+      if (campaignId !== this.campaignId) return
       wx.navigateTo({
-        url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(campaignId)}`
+        url: `/packageProduct/pages/detail/index?id=${productId}&campaignId=${campaignId}`
       })
     },
     reloadCampaign () {
-      const generation = this.campaignGeneration + 1
-      this.campaignGeneration = generation
+      const campaignUrl = this.campaignUrl
+      this.campaignUrl = ''
+      this.campaignUrl = campaignUrl
       this.loading = true
       this.errorText = ''
-      this.trackerReady = false
-      this.trackerMessage = null
-      this.campaignFrames = [{
-        campaignId: this.campaignId,
-        generation,
-        url: this.buildCampaignUrl(this.campaignId, generation)
-      }]
     },
     handleTrackerReady (event) {
-      const detail = (event && event.detail) || {}
-      if (this._disposed || detail.campaignId !== this.campaignId) return
-      if (detail.generation !== this.campaignGeneration) return
-      this.trackerReady = true
+      this.trackerReady = !!(event && event.detail && event.detail.campaignId === this.campaignId)
     },
-    handleTrackerError (event) {
-      const detail = (event && event.detail) || {}
-      if (detail.campaignId !== this.campaignId) return
-      if (detail.generation !== this.campaignGeneration) return
+    handleTrackerError () {
       this.trackerReady = false
     }
   }

@@ -4,24 +4,26 @@
       class="feed-scroll"
       scroll-y
       scroll-top="{{scrollTop}}"
-      scroll-with-animation="{{false}}"
       bindscroll="onScroll"
-      bindtouchstart="onTouchStart"
-      bindtouchmove="onTouchMove"
-      bindtouchend="onTouchEnd"
-      bindtouchcancel="onTouchEnd"
     >
-      <view class="feed-content" data-content-version="{{contentVersion}}">
-        <view class="categories">
-          <view
-            wx:for="{{categories}}"
-            wx:key="id"
-            class="category {{activeCategoryId === item.id ? 'category--active' : ''}}"
-            data-category-id="{{item.id}}"
-            bindtap="selectCategory"
-          >
-            <text>{{item.name}}</text>
-          </view>
+      <view class="feed-content">
+        <view
+          class="categories-wrap"
+          bindtouchstart="onCategoryTouchStart"
+          bindtouchmove="onCategoryTouchMove"
+          bindtouchend="onCategoryTouchEnd"
+          bindtouchcancel="onCategoryTouchEnd"
+        >
+          <scroll-view class="categories" scroll-x enable-flex>
+            <view
+              wx:for="{{categories}}"
+              wx:key="id"
+              class="category {{item.id === activeCategoryId ? 'category-active' : ''}}"
+              bindtap="selectCategory(item.id)"
+            >
+              <text>{{item.name}}</text>
+            </view>
+          </scroll-view>
         </view>
 
         <view wx:for="{{products}}" wx:key="id" class="product">
@@ -29,16 +31,27 @@
             class="product-image"
             src="{{item.image}}"
             mode="widthFix"
-            bindload="onImageLoad"
-            binderror="onImageError"
+            bindload="onImageLayoutChange"
+            binderror="onImageLayoutChange"
           />
           <product-video wx:if="{{item.video}}" product="{{item}}" />
         </view>
+
+        <view wx:if="{{!products.length}}" class="feed-empty">暂无活动商品</view>
       </view>
     </scroll-view>
 
-    <view class="fixed-cart" bindtap="openCart">
-      <text>购物车 {{cartCount}}</text>
+    <!-- Keep this outside scroll-view so it is always positioned against the viewport. -->
+    <view
+      class="fixed-cart {{isCartDragging ? 'fixed-cart-dragging' : ''}}"
+      style="transform: translate3d({{cartOffsetX}}px, {{cartOffsetY}}px, 0);"
+      bindtouchstart="onCartTouchStart"
+      bindtouchmove="onCartTouchMove"
+      bindtouchend="onCartTouchEnd"
+      bindtouchcancel="onCartTouchEnd"
+      bindtap="openCart"
+    >
+      购物车 {{cartCount}}
     </view>
   </view>
 </template>
@@ -46,67 +59,110 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
+const SWIPE_THRESHOLD = 48
+
 createPage({
   data: {
     categories: [],
     products: [],
-    cartCount: 2,
     activeCategoryId: '',
-    contentVersion: 0,
+    cartCount: 2,
     scrollTop: 0,
-    isDragging: false
+    imageLayoutVersion: 0,
+    cartOffsetX: 0,
+    cartOffsetY: 0,
+    isCartDragging: false
   },
   async onLoad () {
-    const { data } = await mpx.request({ url: '/api/feed' })
-    const categories = data.categories || []
-    this.setData({
-      categories,
-      products: data.products || [],
-      activeCategoryId: categories.length ? categories[0].id : ''
-    })
+    try {
+      const { data } = await mpx.request({ url: '/api/feed' })
+      const categories = data && data.categories ? data.categories : []
+      const products = data && data.products ? data.products : []
+      this.setData({
+        categories,
+        products,
+        activeCategoryId: categories.length ? categories[0].id : ''
+      })
+    } catch (error) {
+      this.setData({ categories: [], products: [] })
+    }
   },
   methods: {
-    selectCategory (event) {
-      this.setData({ activeCategoryId: event.currentTarget.dataset.categoryId })
+    getTouch (event) {
+      const touches = event.touches && event.touches.length
+        ? event.touches
+        : event.changedTouches
+      return touches && touches.length ? touches[0] : null
+    },
+    selectCategory (categoryId) {
+      this.setData({ activeCategoryId: categoryId })
     },
     onScroll (event) {
-      this.setData({ scrollTop: event.detail.scrollTop || 0 })
+      this.scrollTop = event.detail && event.detail.scrollTop ? event.detail.scrollTop : 0
     },
-    onImageLoad () {
-      // widthFix changes the item height after the image is available. Updating a
-      // bound value lets scroll-view recalculate its content extent on every end.
-      this.setData({ contentVersion: this.contentVersion + 1 })
+    onImageLayoutChange () {
+      // Images using widthFix acquire their final height asynchronously. Updating
+      // reactive state after each load lets the Web scroll-view flush its new range
+      // without resetting the reader to the top.
+      this.setData({
+        imageLayoutVersion: this.data.imageLayoutVersion + 1,
+        scrollTop: this.scrollTop || 0
+      })
     },
-    onImageError () {
-      this.setData({ contentVersion: this.contentVersion + 1 })
-    },
-    onTouchStart (event) {
-      const touch = event.touches && event.touches[0]
+    onCategoryTouchStart (event) {
+      const touch = this.getTouch(event)
       if (!touch) return
-      this.dragStart = { x: touch.clientX, y: touch.clientY }
-      this.dragAxis = ''
-      this.setData({ isDragging: false })
+      this.categoryTouchStart = { x: touch.clientX, y: touch.clientY }
     },
-    onTouchMove (event) {
-      const touch = event.touches && event.touches[0]
-      if (!touch || !this.dragStart) return
-      const deltaX = touch.clientX - this.dragStart.x
-      const deltaY = touch.clientY - this.dragStart.y
-      if (!this.dragAxis && (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)) {
-        this.dragAxis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y'
-      }
-      // Only expose a horizontal drag as a gesture. Vertical motion remains the
-      // scroll-view's native scroll so momentum and page reachability are intact.
-      if (this.dragAxis === 'x' && !this.isDragging) {
-        this.setData({ isDragging: true })
-      }
+    onCategoryTouchMove (event) {
+      const touch = this.getTouch(event)
+      if (!touch || !this.categoryTouchStart) return
+      this.categorySwipeX = touch.clientX - this.categoryTouchStart.x
     },
-    onTouchEnd () {
-      this.dragStart = null
-      this.dragAxis = ''
-      if (this.isDragging) this.setData({ isDragging: false })
+    onCategoryTouchEnd () {
+      const start = this.categoryTouchStart
+      const distance = this.categorySwipeX || 0
+      this.categoryTouchStart = null
+      this.categorySwipeX = 0
+      if (!start || Math.abs(distance) < SWIPE_THRESHOLD || !this.data.categories.length) return
+
+      const currentIndex = this.data.categories.findIndex((item) => item.id === this.data.activeCategoryId)
+      const step = distance < 0 ? 1 : -1
+      const nextIndex = Math.max(0, Math.min(this.data.categories.length - 1, currentIndex + step))
+      this.selectCategory(this.data.categories[nextIndex].id)
+    },
+    onCartTouchStart (event) {
+      const touch = this.getTouch(event)
+      if (!touch) return
+      this.cartTouchStart = {
+        x: touch.clientX,
+        y: touch.clientY,
+        offsetX: this.data.cartOffsetX,
+        offsetY: this.data.cartOffsetY
+      }
+      this.cartMoved = false
+    },
+    onCartTouchMove (event) {
+      const touch = this.getTouch(event)
+      if (!touch || !this.cartTouchStart) return
+      const deltaX = touch.clientX - this.cartTouchStart.x
+      const deltaY = touch.clientY - this.cartTouchStart.y
+      if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) this.cartMoved = true
+      this.setData({
+        cartOffsetX: this.cartTouchStart.offsetX + deltaX,
+        cartOffsetY: this.cartTouchStart.offsetY + deltaY,
+        isCartDragging: true
+      })
+    },
+    onCartTouchEnd () {
+      this.cartTouchStart = null
+      this.setData({ isCartDragging: false })
     },
     openCart () {
+      if (this.cartMoved) {
+        this.cartMoved = false
+        return
+      }
       mpx.navigateTo({ url: '/pages/cart/index' })
     }
   }
@@ -126,7 +182,7 @@ createPage({
   position: relative;
   height: 100vh;
   overflow: hidden;
-  background: #f6f6f6;
+  background: #f5f5f5;
 }
 
 .feed-scroll {
@@ -134,42 +190,45 @@ createPage({
 }
 
 .feed-content {
-  box-sizing: border-box;
   min-height: 100%;
-  padding-bottom: 144rpx;
+  padding-bottom: calc(144rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
 }
 
-.categories {
+.categories-wrap {
   position: sticky;
   top: 0;
   z-index: 10;
-  display: flex;
-  overflow-x: auto;
-  box-sizing: border-box;
-  min-height: 88rpx;
-  padding: 0 24rpx;
   background: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.categories {
+  display: flex;
+  width: 100%;
   white-space: nowrap;
 }
 
 .category {
-  flex: 0 0 auto;
-  padding: 24rpx 20rpx;
+  display: inline-flex;
+  min-width: 144rpx;
+  height: 88rpx;
+  padding: 0 24rpx;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   color: #666;
 }
 
-.category--active {
-  color: #ff4d4f;
+.category-active {
+  color: #e64340;
   font-weight: 600;
 }
 
 .product {
   padding: 24rpx;
   background: #fff;
-}
-
-.product + .product {
-  margin-top: 16rpx;
+  border-bottom: 16rpx solid #f5f5f5;
 }
 
 .product-image {
@@ -177,15 +236,26 @@ createPage({
   width: 100%;
 }
 
+.feed-empty {
+  padding: 96rpx 24rpx;
+  color: #999;
+  text-align: center;
+}
+
 .fixed-cart {
   position: fixed;
   right: 24rpx;
   bottom: calc(40rpx + env(safe-area-inset-bottom));
   z-index: 20;
-  padding: 20rpx 28rpx;
-  border-radius: 48rpx;
-  background: #ff4d4f;
+  padding: 22rpx 32rpx;
+  border-radius: 44rpx;
+  background: #e64340;
   color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .18);
+  box-shadow: 0 8rpx 20rpx rgba(230, 67, 64, 0.32);
+  touch-action: none;
+}
+
+.fixed-cart-dragging {
+  opacity: 0.9;
 }
 </style>

@@ -30,9 +30,10 @@
         wx:key="id"
         order="{{item}}"
         disabled="{{item.locked}}"
-        opened="{{openSwipeId === item.id}}"
+        opened="{{openOrderId === item.id}}"
         bindselect="openOrder"
         bindremove="removeOrder"
+        bindswipestart="handleSwipeStart"
         bindswipeend="handleSwipeEnd"
       />
     </view>
@@ -46,7 +47,7 @@
     </view>
 
     <logistics-channel
-      wx:if="{{memberId && channelActive}}"
+      wx:if="{{memberId && pageActive}}"
       memberId="{{memberId}}"
       bindconnectedchange="handleConnectionChange"
       bindlogistics="handleLogisticsMessage"
@@ -100,42 +101,39 @@ createPage({
     ],
     logisticsOnline: false,
     loading: false,
-    openSwipeId: '',
-    channelActive: true
+    openOrderId: '',
+    pageActive: true
   },
   onShow () {
-    this.channelActive = true
+    this.pageActive = true
   },
   onHide () {
-    this.channelActive = false
+    this.pageActive = false
     this.logisticsOnline = false
-    this.openSwipeId = ''
+    this.openOrderId = ''
   },
   onUnload () {
-    this._ordersRequestGeneration = (this._ordersRequestGeneration || 0) + 1
+    this.pageActive = false
+    this.logisticsOnline = false
+    this.openOrderId = ''
   },
   methods: {
     switchStatus (status) {
       if (status === this.activeStatus) return
+      this.openOrderId = ''
       this.activeStatus = status
-      this.openSwipeId = ''
       this.fetchOrders()
     },
     fetchOrders () {
-      const generation = (this._ordersRequestGeneration || 0) + 1
-      this._ordersRequestGeneration = generation
       this.loading = true
       wx.request({
         url: '/api/orders',
         data: { status: this.activeStatus },
         success: ({ data }) => {
-          if (this._ordersRequestGeneration !== generation) return
           this.orders = data.list
           this.statusTabs = data.summary
-          this.openSwipeId = ''
         },
         complete: () => {
-          if (this._ordersRequestGeneration !== generation) return
           this.loading = false
         }
       })
@@ -153,28 +151,31 @@ createPage({
             url: `/api/orders/${detail.orderId}`,
             method: 'DELETE',
             success: () => {
+              if (this.openOrderId === detail.orderId) this.openOrderId = ''
               this.orders = this.orders.filter(order => order.id !== detail.orderId)
-              if (this.openSwipeId === detail.orderId) this.openSwipeId = ''
             }
           })
         }
       })
     },
+    handleSwipeStart ({ detail }) {
+      if (this.openOrderId && this.openOrderId !== detail.orderId) {
+        this.openOrderId = ''
+      }
+    },
     handleSwipeEnd ({ detail }) {
       if (detail.open) {
-        this.openSwipeId = detail.orderId
-      } else if (this.openSwipeId === detail.orderId) {
-        this.openSwipeId = ''
+        this.openOrderId = detail.orderId
+      } else if (this.openOrderId === detail.orderId) {
+        this.openOrderId = ''
       }
     },
     handleConnectionChange ({ detail }) {
-      if (!this.channelActive) return
-      if (detail.memberId && detail.memberId !== this.memberId) return
+      if (!this.pageActive || detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
-      if (!this.channelActive) return
-      if (detail.memberId && detail.memberId !== this.memberId) return
+      if (!this.pageActive || detail.memberId !== this.memberId) return
       this.orders = this.orders.map(order => {
         if (order.id !== detail.orderId) return order
         return Object.assign({}, order, {
@@ -186,8 +187,7 @@ createPage({
       })
     },
     handleChannelError ({ detail }) {
-      if (!this.channelActive) return
-      if (detail && detail.memberId && detail.memberId !== this.memberId) return
+      if (!this.pageActive || detail.memberId !== this.memberId) return
       this.logisticsOnline = false
     },
     goShopping () {

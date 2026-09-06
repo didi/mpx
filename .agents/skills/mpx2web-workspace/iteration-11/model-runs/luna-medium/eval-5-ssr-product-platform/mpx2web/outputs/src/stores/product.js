@@ -16,6 +16,9 @@ export const useProductStore = defineStore('product-platform', {
       const requestVersion = ++this.requestVersion
       this.productId = productId
       this.loaded = false
+      this.product = {}
+      this.recommendations = []
+
       const [product, recommendations] = await Promise.all([
         fetchProduct(productId, requestContext),
         fetchRecommendations(productId, requestContext)

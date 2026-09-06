@@ -3,7 +3,8 @@
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
+    <!-- Browser-only UI is enabled after hydration, never in the SSR tree. -->
+    <view wx:if="{{browserReady}}" class="share-toolbar">复制链接</view>
     <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
   </view>
 </template>
@@ -15,35 +16,31 @@ import { useArticleStore } from '../../stores/article'
 createPage({
   data: {
     articleId: '',
-    // Keep browser-only UI out of both the SSR HTML and the hydration frame.
-    isBrowser: false,
+    browserReady: false,
     favorite: false
   },
   computed: {
     article () { return useArticleStore(this.$pinia).article || {} },
     recommendations () { return useArticleStore(this.$pinia).recommendations }
   },
-  onLoad (query) {
-    if (typeof window !== 'undefined') this.loadArticle(query && query.id)
-  },
-  onReady () {
-    if (typeof window !== 'undefined') this.isBrowser = true
+  onLoad (query = {}) {
+    if (typeof window !== 'undefined') this.loadArticle(query.id)
   },
   serverPrefetch () {
-    const articleId = this.$route.query && this.$route.query.id
-    this.articleId = articleId || ''
-    return this.loadArticle(articleId, this.$ssrContext)
+    return this.loadArticle(this.$route.query.id, this.$ssrContext)
+  },
+  onReady () {
+    if (typeof window !== 'undefined') this.browserReady = true
   },
   methods: {
     loadArticle (articleId, requestContext) {
-      if (!articleId) return Promise.resolve()
-      this.articleId = String(articleId)
+      this.articleId = articleId || ''
+      if (!this.articleId) return Promise.resolve()
       return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
     },
     toggleFavorite () { this.favorite = !this.favorite },
     openArticle (event) {
-      const articleId = event && event.detail && event.detail.articleId
-      if (articleId) mpx.navigateTo({ url: `/pages/article/detail?id=${encodeURIComponent(articleId)}` })
+      mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
     }
   }
 })

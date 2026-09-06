@@ -4,9 +4,8 @@ import { createPinia } from '@mpxjs/pinia'
 
 createApp({
   onAppInit () {
-    return {
-      pinia: createPinia()
-    }
+    // A fresh Pinia instance keeps SSR state scoped to the app/request.
+    return { pinia: createPinia() }
   }
 })
 </script>

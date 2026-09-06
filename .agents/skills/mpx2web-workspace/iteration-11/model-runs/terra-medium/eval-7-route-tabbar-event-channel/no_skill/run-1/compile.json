@@ -1,36 +1,79 @@
 {
-  "status": "failed",
+  "compile_fingerprint": "e4fa5fd37e4f0d8dc3505e8bab05a0a3aa42f71113ef88fb6eb3b869453dbfbe",
+  "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 4,
   "compile_eligible_mpx_count": 2,
-  "compiled_mpx_count": 0,
+  "compiled_mpx_count": 2,
   "checks": [
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/vue.config.js"
       ],
       "passed": true,
       "returncode": 0,
       "detail": {
         "success": true,
-        "checkedFiles": 4,
+        "checkedFiles": 1,
         "files": [
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/app.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx",
-            "errors": []
-          },
           {
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/vue.config.js",
             "errors": []
@@ -43,31 +86,43 @@
       "kind": "mpx-web-compile",
       "type": "page",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx"
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx"
       ],
-      "passed": false,
-      "returncode": 1,
+      "passed": true,
+      "returncode": 0,
       "detail": {
-        "success": false,
+        "success": true,
         "target": "web",
         "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
-        "errors": [
-          {
-            "category": "template",
-            "message": "Module Error (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx:3:43]: <navigator>'s property 'open-type' does not support '[navigateTo]' value in web environment!\nTarget: <navigator open-type=\"navigateTo\">\nMode: wx -> web\n\n  1 |\n  2 |   <view class=\"checkout\">\n> 3 |     <navigator url=\"/pages/address/select\" open-type=\"navigateTo\">选择地址</navigator>\n    |                                           ^^^^^^^^^^^^^^^^^^^^^^^\n  4 |     <view wx:if=\"{{address}}\">{{address.name}} {{address.detail}}</view>\n  5 |     <button bindtap=\"pay\">支付</button>\n  6 |     <button bindtap=\"openOrders\">查看订单</button>",
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx",
-            "raw": "Module Error (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/checkout/index.mpx:3:43]: <navigator>'s property 'open-type' does not support '[navigateTo]' value in web environment!\nTarget: <navigator open-type=\"navigateTo\">\nMode: wx -> web\n\n  1 |\n  2 |   <view class=\"checkout\">\n> 3 |     <navigator url=\"/pages/address/select\" open-type=\"navigateTo\">选择地址</navigator>\n    |                                           ^^^^^^^^^^^^^^^^^^^^^^^\n  4 |     <view wx:if=\"{{address}}\">{{address.name}} {{address.detail}}</view>\n  5 |     <button bindtap=\"pay\">支付</button>\n  6 |     <button bindtap=\"openOrders\">查看订单</button>"
-          }
-        ],
+        "errors": [],
         "warnings": [],
         "summary": {
-          "total": 1,
-          "byCategory": {
-            "template": 1
-          }
+          "total": 0,
+          "byCategory": {}
         },
-        "durationMs": 3305
+        "durationMs": 2493
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-web-compile",
+      "type": "page",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/no_skill/run-1/outputs/src/pages/address/select.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "target": "web",
+        "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+        "errors": [],
+        "warnings": [],
+        "summary": {
+          "total": 0,
+          "byCategory": {}
+        },
+        "durationMs": 2573
       },
       "stderr": ""
     },
@@ -89,5 +144,5 @@
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

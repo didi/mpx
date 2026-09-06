@@ -45,10 +45,8 @@
     </view>
 
     <view class="action-row">
-      <button @wx class="share-button" open-type="share">分享给好友</button>
-      <!-- TODO: 业务提供 Web 分享 SDK、宿主 Bridge 或降级协议后，再启用 Web 分享入口。 -->
-      <button @web class="share-button" disabled>分享邀请活动（暂未开放）</button>
-      <text @web class="share-unavailable-tip">Web 分享能力待业务接入</text>
+      <button @wx class="share-button share-button-wx" open-type="share">分享给好友</button>
+      <button @web class="share-button share-button-web" bindtap="shareOnWeb">分享邀请活动</button>
       <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
     </view>
 
@@ -73,7 +71,20 @@
 </template>
 
 <script>
-import { createPage } from '@mpxjs/core'
+import { createPage, implement } from '@mpxjs/core'
+
+if (__mpx_mode__ === 'web') {
+  implement('onShareAppMessage', {
+    modes: ['web'],
+    remove: true,
+    processor: () => {}
+  })
+  implement('onShareTimeline', {
+    modes: ['web'],
+    remove: true,
+    processor: () => {}
+  })
+}
 
 createPage({
   data: {
@@ -149,6 +160,9 @@ createPage({
           this.invitees = data.list
         }
       })
+    },
+    shareOnWeb () {
+      // TODO: 接入业务指定的 Web 分享 SDK、宿主 Bridge 或降级协议。
     },
     openCampaignDetail () {
       wx.navigateTo({
@@ -334,12 +348,8 @@ createPage({
   background: #ff7a45;
 }
 
-.share-unavailable-tip {
-  display: block;
-  margin-top: 12rpx;
-  color: #a69b95;
-  font-size: 22rpx;
-  text-align: center;
+.share-button-web {
+  display: none;
 }
 
 .detail-button {
@@ -412,6 +422,12 @@ createPage({
   color: #aaa09a;
   font-size: 24rpx;
   text-align: center;
+}
+</style>
+
+<style mode="web">
+.share-button-web {
+  display: block;
 }
 </style>
 

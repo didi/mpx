@@ -18,57 +18,51 @@ createPage({
     dialogVisible: false,
     dark: false
   },
-  onHide () {
-    if (__mpx_mode__ === 'web') {
-      this.dialogVisible = false
-      this.restorePageScroll()
-    }
-  },
-  onUnload () {
-    this.restorePageScroll()
-  },
   methods: {
     openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
     toggleTheme () { this.dark = !this.dark },
     openDialog () {
       this.dialogVisible = true
-      if (__mpx_mode__ === 'web') {
-        this.lockPageScroll()
-      }
+      this.lockPageScroll()
     },
     closeDialog () {
       this.dialogVisible = false
-      if (__mpx_mode__ === 'web') {
-        this.restorePageScroll()
-      }
+      this.restorePageScroll()
     },
     lockPageScroll () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || this._pageScrollLock) return
+      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || this._webScrollLockRecords) return
 
       const targets = [document.documentElement, document.body, document.querySelector('#app')]
         .filter((target, index, list) => target && list.indexOf(target) === index)
 
-      this._pageScrollLock = targets.map(target => ({
+      this._webScrollLockRecords = targets.map((target) => ({
         target,
         overflow: target.style.getPropertyValue('overflow'),
         priority: target.style.getPropertyPriority('overflow')
       }))
-      targets.forEach(target => {
-        target.style.setProperty('overflow', 'hidden')
-      })
+      targets.forEach((target) => target.style.setProperty('overflow', 'hidden'))
     },
     restorePageScroll () {
-      if (__mpx_mode__ !== 'web' || !this._pageScrollLock) return
+      if (__mpx_mode__ !== 'web' || !this._webScrollLockRecords) return
 
-      this._pageScrollLock.forEach(({ target, overflow, priority }) => {
+      const records = this._webScrollLockRecords
+      this._webScrollLockRecords = null
+      records.forEach(({ target, overflow, priority }) => {
         if (overflow) {
           target.style.setProperty('overflow', overflow, priority)
         } else {
           target.style.removeProperty('overflow')
         }
       })
-      this._pageScrollLock = null
     }
+  },
+  onHide () {
+    this.dialogVisible = false
+    this.restorePageScroll()
+  },
+  onUnload () {
+    this.dialogVisible = false
+    this.restorePageScroll()
   }
 })
 </script>
@@ -76,36 +70,53 @@ createPage({
 <style scoped>
 .portal {
   min-height: 100vh;
-  color: var(--portal-text, #1f2329);
+  box-sizing: border-box;
+  color: var(--portal-text, #1f2937);
   background: var(--portal-background, #f5f7fa);
-  padding: var(--portal-space, 32rpx);
+  padding: var(--portal-space, 24rpx);
 }
 .dialog-mask { position: fixed; inset: 0; }
 </style>
 
-<style mode="web" scoped>
-.portal {
-  padding-bottom: calc(var(--portal-space, 32rpx) + env(safe-area-inset-bottom));
-}
-.portal-card:hover { transform: translateY(-2px); }
-</style>
-
 <style mode="web">
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-#app::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.portal {
+  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
 }
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb,
-#app::-webkit-scrollbar-thumb {
-  background: rgba(31, 35, 41, 0.28);
-  border-radius: 3px;
-}
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track,
-#app::-webkit-scrollbar-track {
-  background: transparent;
+
+@media (hover: hover) and (pointer: fine) {
+  .portal-card:hover {
+    transform: translateY(-2px);
+  }
+
+  html,
+  body,
+  #app,
+  .portal {
+    scrollbar-width: thin;
+    scrollbar-color: var(--portal-scrollbar-thumb, #94a3b8) var(--portal-scrollbar-track, transparent);
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  #app::-webkit-scrollbar,
+  .portal::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track,
+  #app::-webkit-scrollbar-track,
+  .portal::-webkit-scrollbar-track {
+    background: var(--portal-scrollbar-track, transparent);
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb,
+  #app::-webkit-scrollbar-thumb,
+  .portal::-webkit-scrollbar-thumb {
+    background: var(--portal-scrollbar-thumb, #94a3b8);
+    border-radius: 3px;
+  }
 }
 </style>

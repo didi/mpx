@@ -2,15 +2,14 @@
 import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
-createApp(() => ({
-  // A fresh Pinia instance keeps concurrent SSR requests isolated.
+createApp({
+  // Create the container for each app instance so concurrent SSR requests do
+  // not share a product store.
   pinia: createPinia(),
   onLaunch () {
-    if (typeof wx !== 'undefined' && wx.reportAnalytics) {
-      wx.reportAnalytics('mall_launch', {})
-    }
+    if (typeof wx !== 'undefined' && wx.reportAnalytics) wx.reportAnalytics('mall_launch', {})
   }
-}))
+})
 </script>
 
 <script type="application/json">

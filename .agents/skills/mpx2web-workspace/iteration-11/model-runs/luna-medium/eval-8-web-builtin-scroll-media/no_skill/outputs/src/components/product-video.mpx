@@ -1,14 +1,16 @@
 <template>
-  <view class="product-video">
+  <view class="product-video" bindtap="onVideoTap">
     <video
-      id="product-video-{{product.id}}"
+      id="product-video"
+      class="product-video-player"
       src="{{product.video}}"
       autoplay
       muted
+      playsinline
       controls
-      enable-danmu
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
+      bindplay="onPlay"
       binderror="onVideoError"
     />
     <text>{{progress}} / {{duration}}</text>
@@ -16,7 +18,7 @@
 </template>
 
 <script>
-import { createComponent } from '@mpxjs/core'
+import mpx, { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
@@ -28,15 +30,19 @@ createComponent({
   },
   methods: {
     onTimeUpdate (event) {
-      this.setData({
-        progress: event.detail.currentTime,
-        duration: event.detail.duration
-      })
+      this.progress = event.detail.currentTime
+      this.duration = event.detail.duration
     },
     onLoadedMetadata (event) {
       this.videoSize = `${event.detail.width}x${event.detail.height}`
-      this.setData({ duration: event.detail.duration || this.data.duration })
+      this.duration = event.detail.duration || this.duration
     },
+    onVideoTap () {
+      // A tap supplies the user gesture required by Web when autoplay is blocked.
+      const context = mpx.createVideoContext('product-video', this)
+      if (context && context.play) context.play()
+    },
+    onPlay () {},
     onVideoError () {}
   }
 })
@@ -44,4 +50,5 @@ createComponent({
 
 <style scoped>
 .product-video { width: 100%; }
+.product-video-player { display: block; width: 100%; }
 </style>

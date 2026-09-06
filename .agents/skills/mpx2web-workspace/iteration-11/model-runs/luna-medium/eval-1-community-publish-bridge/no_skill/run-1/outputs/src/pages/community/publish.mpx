@@ -5,10 +5,6 @@
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
     </view>
 
-    <view wx:if="{{capabilityNotice}}" class="capability-notice">
-      <text>{{capabilityNotice}}</text>
-    </view>
-
     <view class="form-card">
       <textarea
         class="content-input"
@@ -78,6 +74,7 @@
       <text class="notice-text">允许其他用户评论</text>
     </view>
 
+    <text wx:if="{{capabilityNotice}}" class="capability-notice">{{capabilityNotice}}</text>
     <button
       class="publish-button"
       loading="{{submitting}}"
@@ -91,6 +88,10 @@
 
 <script>
 import { createPage } from '@mpxjs/core'
+
+// Access the host API only when it is actually provided. Web must not be
+// coupled to an undeclared bridge or to a guessed map/media protocol.
+const getWxApi = () => (typeof wx !== 'undefined' ? wx : null)
 
 createPage({
   data: {
@@ -114,33 +115,34 @@ createPage({
     }
   },
   methods: {
-    hasWxApi (name) {
-      return typeof wx !== 'undefined' && typeof wx[name] === 'function'
-    },
-    notifyUnsupported (message) {
-      this.capabilityNotice = message
-    },
     updateContent (event) {
       this.content = event.detail.value
+      this.capabilityNotice = ''
+    },
+    notifyUnavailable (message) {
+      this.capabilityNotice = message
     },
     choosePlace () {
-      if (!this.hasWxApi('chooseLocation')) {
-        this.notifyUnsupported('Web 端位置选择能力待宿主协议确定')
+      const wxApi = getWxApi()
+      if (!wxApi || typeof wxApi.chooseLocation !== 'function') {
+        this.notifyUnavailable('当前平台暂未提供位置选择能力')
         return
       }
-      wx.chooseLocation({
+      wxApi.chooseLocation({
         success: (place) => {
           this.place = place
+          this.capabilityNotice = ''
         }
       })
     },
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
-      if (!this.hasWxApi('openLocation')) {
-        this.notifyUnsupported('Web 端地图查看能力待宿主协议确定')
+      const wxApi = getWxApi()
+      if (!wxApi || typeof wxApi.openLocation !== 'function') {
+        this.notifyUnavailable('当前平台暂未提供地图查看能力')
         return
       }
-      wx.openLocation({
+      wxApi.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
         name: this.place.name,
@@ -148,21 +150,23 @@ createPage({
       })
     },
     choosePhoto () {
-      if (!this.hasWxApi('chooseMedia')) {
-        this.notifyUnsupported('Web 端图片选择能力待宿主协议确定')
+      const wxApi = getWxApi()
+      if (!wxApi || typeof wxApi.chooseMedia !== 'function') {
+        this.notifyUnavailable('当前平台暂未提供图片选择能力')
         return
       }
-      wx.chooseMedia({
+      wxApi.chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
         sourceType: ['album', 'camera'],
         success: ({ tempFiles }) => {
           this.photos = this.photos.concat(tempFiles)
+          this.capabilityNotice = ''
         }
       })
     },
     removePhoto (index) {
-      this.photos.splice(index, 1)
+      this.photos = this.photos.filter((photo, photoIndex) => photoIndex !== Number(index))
     },
     selectTopic (event) {
       this.selectedTopic = this.topics[Number(event.detail.value)]
@@ -172,12 +176,13 @@ createPage({
     },
     submitPost () {
       if (!this.canSubmit || this.submitting) return
-      if (!this.hasWxApi('request')) {
-        this.notifyUnsupported('Web 端发布接口待宿主协议确定')
+      const wxApi = getWxApi()
+      if (!wxApi || typeof wxApi.request !== 'function') {
+        this.notifyUnavailable('当前平台暂未提供动态发布能力')
         return
       }
       this.submitting = true
-      wx.request({
+      wxApi.request({
         url: '/api/community/posts',
         method: 'POST',
         data: {
@@ -188,17 +193,17 @@ createPage({
           allowComments: this.allowComments
         },
         success: ({ data }) => {
-          if (this.hasWxApi('redirectTo') && data && data.id) {
-            wx.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+          if (typeof wxApi.redirectTo === 'function' && data && data.id) {
+            wxApi.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
           } else {
-            this.notifyUnsupported('发布成功后的页面跳转能力待宿主协议确定')
+            this.notifyUnavailable('发布成功，但当前平台暂未提供页面跳转能力')
           }
         },
         fail: () => {
-          if (this.hasWxApi('showToast')) {
-            wx.showToast({ title: '发布失败，请重试', icon: 'none' })
+          if (typeof wxApi.showToast === 'function') {
+            wxApi.showToast({ title: '发布失败，请重试', icon: 'none' })
           } else {
-            this.notifyUnsupported('发布失败，请重试')
+            this.notifyUnavailable('发布失败，请重试')
           }
         },
         complete: () => {
@@ -221,16 +226,6 @@ createPage({
   padding: 20rpx 8rpx 28rpx;
 }
 
-.capability-notice {
-  margin: 0 8rpx 20rpx;
-  padding: 16rpx 20rpx;
-  color: #8a5a00;
-  font-size: 24rpx;
-  line-height: 36rpx;
-  background: #fff7e6;
-  border-radius: 12rpx;
-}
-
 .publish-title,
 .publish-tip,
 .word-count,
@@ -240,7 +235,8 @@ createPage({
 .place-name,
 .place-address,
 .place-action,
-.notice-text {
+.notice-text,
+.capability-notice {
   display: block;
 }
 
@@ -427,6 +423,12 @@ createPage({
   margin-left: 16rpx;
   color: #666666;
   font-size: 25rpx;
+}
+
+.capability-notice {
+  margin: 0 8rpx 16rpx;
+  color: #d46b08;
+  font-size: 23rpx;
 }
 
 .publish-button {

@@ -5,7 +5,10 @@ module.exports = {
       plugin: {
         webConfig: {
           useSSR: true,
-          routeConfig: { mode: 'history', base: '/mall/' }
+          routeConfig: {
+            mode: 'history',
+            base: '/mall/'
+          }
         }
       }
     }

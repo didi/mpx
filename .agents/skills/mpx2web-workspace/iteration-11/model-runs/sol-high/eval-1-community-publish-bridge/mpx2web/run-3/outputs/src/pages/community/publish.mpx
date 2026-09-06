@@ -30,8 +30,7 @@
           aria-label="添加图片"
         >
           <text class="photo-add-icon">+</text>
-          <text class="photo-add-label" @wx>添加图片</text>
-          <text class="photo-add-label" @web>Web 暂不支持</text>
+          <text class="photo-add-label">添加图片</text>
         </view>
       </view>
     </view>
@@ -42,8 +41,7 @@
           <text class="option-icon">⌖</text>
           <view class="option-copy">
             <text class="option-label">所在位置</text>
-            <text class="option-value" @wx>{{place.name || '选择位置'}}</text>
-            <text class="option-value" @web>{{place.name || 'Web 暂不支持选择位置'}}</text>
+            <text class="option-value">{{place.name || '选择位置'}}</text>
           </view>
         </view>
         <text class="option-arrow">›</text>
@@ -116,7 +114,7 @@ createPage({
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 待宿主明确位置选择 Bridge 或地图协议后接入。
+        // TODO: 待 Web 宿主明确 Bridge 与地图选点协议后接入。
         wx.showToast({ title: 'Web 端暂不支持选择位置', icon: 'none' })
         return
       }
@@ -129,7 +127,7 @@ createPage({
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 待宿主明确地图查看 Bridge 或地图协议后接入。
+        // TODO: 待 Web 宿主明确 Bridge 与地图查看协议后接入。
         wx.showToast({ title: 'Web 端暂不支持查看地图', icon: 'none' })
         return
       }
@@ -142,7 +140,7 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO(web): 待宿主明确媒体选择 Bridge 或媒体协议后接入。
+        // TODO: 待 Web 宿主明确媒体选择与发布文件协议后接入。
         wx.showToast({ title: 'Web 端暂不支持选择图片', icon: 'none' })
         return
       }

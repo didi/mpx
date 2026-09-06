@@ -61,7 +61,7 @@ createComponent({
   position: relative;
 }
 
-.product-card image {
+.product-cover {
   display: block;
   width: 100%;
   height: 300rpx;

@@ -6,7 +6,7 @@
     </view>
 
     <view class="product-content">
-      <text class="title">{{product.title}}</text>
+      <text class="product-title">{{product.title}}</text>
       <text class="product-subtitle">{{product.subtitle}}</text>
 
       <view class="product-meta">
@@ -83,7 +83,7 @@ createComponent({
   padding: 20rpx;
 }
 
-.title {
+.product-title {
   display: block;
   overflow: hidden;
   color: #333333;
@@ -115,27 +115,21 @@ createComponent({
 .price-tag {
   display: flex;
   align-items: baseline;
-  height: 64rpx;
+  height: 32px;
   color: #e64340;
 }
 
 .currency,
 .unit {
-  display: inline-block;
-  flex: 0 0 24rpx;
-  width: 24rpx;
-  font-size: 24rpx;
-  line-height: 28rpx;
-  transform: scale(0.833333);
-  transform-origin: left bottom;
-  margin-inline-end: -4rpx;
+  font-size: 10px;
+  line-height: 14px;
 }
 
 .amount {
-  margin: 0 4rpx;
-  font-size: 40rpx;
+  margin: 0 2px;
+  font-size: 20px;
   font-weight: bold;
-  line-height: 48rpx;
+  line-height: 24px;
 }
 
 .product-sales {
@@ -169,6 +163,23 @@ createComponent({
   line-height: 52rpx;
   background: #e64340;
   border-radius: 50%;
+}
+</style>
+
+<style mode="web">
+.product-card .price-tag {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.product-card .currency,
+.product-card .unit {
+  display: inline-block;
+  flex: 0 0 10px;
+  width: 10px;
+  font-size: 12px;
+  transform: scale(0.833333);
+  transform-origin: left bottom;
 }
 </style>
 

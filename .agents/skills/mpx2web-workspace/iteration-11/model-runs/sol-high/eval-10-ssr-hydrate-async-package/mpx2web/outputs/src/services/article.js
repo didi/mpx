@@ -1,59 +1,43 @@
-function readHeader (headers, name) {
-  if (!headers) return ''
-  if (typeof headers.get === 'function') return headers.get(name) || ''
+import mpx from '@mpxjs/core'
 
-  const value = headers[name] || headers[name.toLowerCase()]
-  if (Array.isArray(value)) return value[0] || ''
-  return value || ''
-}
+function requestOrigin (requestContext) {
+  const req = requestContext && requestContext.req
+  if (!req) return ''
 
-function firstHeaderValue (value) {
-  return String(value || '').split(',')[0].trim()
-}
+  const headers = req.headers || {}
+  const forwardedProtocol = String(headers['x-forwarded-proto'] || '').split(',')[0].trim()
+  const forwardedHost = String(headers['x-forwarded-host'] || '').split(',')[0].trim()
+  const protocol = forwardedProtocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = forwardedHost || headers.host
 
-function getRequest (requestContext) {
-  if (!requestContext) return null
-  return requestContext.req || requestContext.request || null
-}
-
-function getOrigin (requestContext) {
-  if (!requestContext) return ''
-  if (requestContext.origin) return String(requestContext.origin).replace(/\/$/, '')
-
-  const request = getRequest(requestContext)
-  if (request && request.origin) return String(request.origin).replace(/\/$/, '')
-
-  const headers = (request && request.headers) || requestContext.headers
-  const host = firstHeaderValue(readHeader(headers, 'x-forwarded-host') || readHeader(headers, 'host'))
-  if (!host) return ''
-
-  const protocol = firstHeaderValue(
-    readHeader(headers, 'x-forwarded-proto') ||
-    (request && request.protocol) ||
-    (request && request.socket && request.socket.encrypted ? 'https' : 'http')
-  )
+  if (!host) throw new Error('SSR request host is missing')
   return `${protocol}://${host}`
 }
 
-function getForwardHeaders (requestContext) {
-  const request = getRequest(requestContext)
-  const headers = (request && request.headers) || (requestContext && requestContext.headers)
-  const cookie = readHeader(headers, 'cookie')
-  const authorization = readHeader(headers, 'authorization')
-  const forwardHeaders = {}
-
-  if (cookie) forwardHeaders.cookie = cookie
-  if (authorization) forwardHeaders.authorization = authorization
-
-  return forwardHeaders
+function fetchWithMpx (url) {
+  return new Promise((resolve, reject) => {
+    mpx.request({
+      url,
+      success (response) {
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          resolve(response.data)
+          return
+        }
+        reject(new Error(`Article request failed with status ${response.statusCode}`))
+      },
+      fail: reject
+    })
+  })
 }
 
 export function fetchArticle (articleId, requestContext) {
   const path = `/api/articles/${encodeURIComponent(articleId)}`
-  const origin = getOrigin(requestContext)
-  const requestFetch = requestContext && requestContext.fetch
-  const fetcher = typeof requestFetch === 'function' ? requestFetch.bind(requestContext) : fetch
-  const options = requestContext ? { headers: getForwardHeaders(requestContext) } : undefined
 
-  return fetcher(`${origin}${path}`, options).then((response) => response.json())
+  if (__mpx_mode__ !== 'web') return fetchWithMpx(path)
+
+  const origin = requestOrigin(requestContext)
+  return fetch(origin ? `${origin}${path}` : path).then((response) => {
+    if (!response.ok) throw new Error(`Article request failed with status ${response.status}`)
+    return response.json()
+  })
 }

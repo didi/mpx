@@ -1,26 +1,26 @@
 import mpx from '@mpxjs/api-proxy'
 
-function request (url, ssrContext) {
+function apiUrl (path, ssrContext) {
   const req = ssrContext && ssrContext.req
-  const isServer = typeof window === 'undefined'
-  let requestUrl = url
-  const header = {}
+  if (!req) return path
 
-  // Node needs an absolute URL.  The current request supplies the public host,
-  // while browsers and mini programs deliberately keep using relative URLs.
-  if (isServer && req) {
-    const forwardedProto = req.headers && req.headers['x-forwarded-proto']
-    const protocol = (forwardedProto ? forwardedProto.split(',')[0] : null) || req.protocol || 'http'
-    const host = req.headers && req.headers.host
-    if (!host) return Promise.reject(new Error('SSR product request is missing a Host header'))
-    requestUrl = `${protocol}://${host}${url}`
-    if (req.headers && req.headers.cookie) header.cookie = req.headers.cookie
-  }
+  const headers = req.headers || {}
+  const forwardedProto = headers['x-forwarded-proto']
+  const forwardedHost = headers['x-forwarded-host']
+  const protocolValue = Array.isArray(forwardedProto) ? forwardedProto[0] : (forwardedProto || req.protocol || 'http')
+  const hostValue = Array.isArray(forwardedHost) ? forwardedHost[0] : (forwardedHost || headers.host || '')
+  const protocol = protocolValue.split(',')[0].trim()
+  const host = hostValue.split(',')[0].trim()
 
+  // A real Node request supplies Host.  Falling back to the relative URL keeps
+  // this service usable in non-HTTP render tests without inventing an origin.
+  return host ? `${protocol}://${host}${path}` : path
+}
+
+function request (path, ssrContext) {
   return new Promise((resolve, reject) => {
     mpx.request({
-      url: requestUrl,
-      header,
+      url: apiUrl(path, ssrContext),
       success: ({ data }) => resolve(data),
       fail: reject
     })

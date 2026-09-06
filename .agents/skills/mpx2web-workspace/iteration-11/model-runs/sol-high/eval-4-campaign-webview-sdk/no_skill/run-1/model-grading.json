@@ -1,0 +1,113 @@
+{
+  "eval_id": 4,
+  "eval_name": "campaign-webview-sdk",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "model_grading_fingerprint": "c9c3e5406945f960a08e830d8f92230cebd28d9ad78487ff2880e801e0468b76",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 101385
+  },
+  "expectations": [
+    {
+      "id": "h0",
+      "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx:20-28 保留 web-view 与 bindmessage/bindload/binderror；222-233 保留领券 wx.request；235-238 保留下单/商品跳转 wx.navigateTo；160-165 保留 campaign_webview_load 埋点；38-46 保留 campaign-tracker 组件链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h1",
+      "text": "Web 宿主白名单只包含完整可信 origin https://campaign.example.com，避免后缀匹配误接纳相似恶意域名",
+      "category": "webview-security",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx:53 定义 CAMPAIGN_ORIGIN 为完整 origin https://campaign.example.com，157-158 只用该 origin 生成会场 URL，191-199 用 event.origin !== CAMPAIGN_ORIGIN 精确等值校验；outputs/src/components/campaign-tracker.mpx:11、164-169 同样使用精确 origin 与 iframe source 校验，未见后缀匹配。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h2",
+      "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/vue.config.js:2 publicPath 为 /mall/；outputs/vue.config.js:7-9 routeConfig.base 也为 /mall/。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h3",
+      "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
+      "category": "web-sdk",
+      "passed": false,
+      "evidence": "outputs/src/components/campaign-tracker.mpx:9 仍在模块顶层静态 import campaignTracker from '@business/campaign-tracker-web'，不是仅 Web 客户端动态加载。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h4",
+      "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/components/campaign-tracker.mpx:9 静态引入 SDK，缺少动态 import 边界及其卸载/代际校验；虽然 100-127 对 campaignTracker.create 的 await 后做了 generation/_disposed 校验，但未覆盖 SDK 动态加载边界。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h5",
+      "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx:124-145 生成 campaignSessionId/webviewId，$nextTick 晚到挂载前校验 _pageActive 与当前 session；160-170 load/error 通过 isCurrentWebviewEvent 过滤当前实例；outputs/src/components/campaign-tracker.mpx:80-127 使用 _initGeneration 与 campaignId/memberId/webviewId/channelId 快照校验，旧初始化结果会 destroy 后返回。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h6",
+      "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
+      "category": "web-cleanup",
+      "passed": true,
+      "evidence": "outputs/src/pages/campaign/index.mpx:109-114 onUnload 标记失活并调用 removeWindowMessageListener，243-247 移除 window message；outputs/src/components/campaign-tracker.mpx:54-60 detached 标记 disposed 并 cleanupActiveTracker，142-156 移除 message/visibilitychange 监听并销毁 _tracker，158-162 安全 destroy SDK 实例。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h7",
+      "text": "没有额外手写 window message 监听时，内建 web-view 的 host 白名单与 clientUid 实例隔离加 bindmessage 即构成消息入口证据；若额外手写监听，则必须同时校验受信任 origin、当前 iframe source 和严格 campaignId",
+      "category": "webview-security",
+      "passed": false,
+      "evidence": "outputs/src/pages/campaign/index.mpx:104-107 和 outputs/src/components/campaign-tracker.mpx:138-139 额外手写 window message 监听；两处都校验了 origin 与当前 iframe source（页面 196-198，组件 166-169），但 campaignId 校验是可选字段：页面 177 为 if (message.campaignId && message.campaignId !== this.campaignId) return，组件 174 同样允许缺失 campaignId 的消息通过，不满足严格 campaignId。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "h8",
+      "text": "Web 下 web-view bindmessage 的单向业务消息在领券或跳转前严格校验当前 campaignId；不要求改变微信小程序既有消息协议",
+      "category": "webview-security",
+      "passed": false,
+      "evidence": "outputs/src/pages/campaign/index.mpx:172-184 在 claim-coupon/open-product 前只做可选 campaignId/channelId 校验：177-178 允许缺失 campaignId 或 channelId 的业务消息继续执行；180-183 会在缺少 campaignId 时仍 claimCoupon/openProduct，不满足 Web 下严格校验当前 campaignId。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言对“严格 campaignId”是否要求消息必须携带 campaignId 已能影响 h7/h8 结论；建议明确写成 message.campaignId === current campaignId，而不是仅在存在时比较。",
+      "h1 提到“宿主白名单”，但样例文件中没有独立白名单配置字段；本次只能依据输出代码中的可信 origin 常量、URL 构造和 origin 等值校验判定。"
+    ],
+    "overall": "主要生命周期与活动切换竞态已有处理，但 H5 SDK 仍静态引入，且手写 message 监听与业务消息入口未强制要求 campaignId 等于当前活动。"
+  }
+}

@@ -3,7 +3,7 @@
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{browserReady}}" class="share-toolbar">复制链接</view>
+    <view @web wx:if="{{clientMounted}}" class="share-toolbar">复制链接</view>
     <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
   </view>
 </template>
@@ -15,7 +15,7 @@ import { useArticleStore } from '../../stores/article'
 createPage({
   data: {
     articleId: '',
-    browserReady: false,
+    clientMounted: false,
     favorite: false
   },
   computed: {
@@ -25,17 +25,16 @@ createPage({
   onLoad (query) {
     return this.loadArticle(query.id)
   },
+  onReady () {
+    this.clientMounted = true
+  },
   serverPrefetch () {
     return this.loadArticle(this.$route.query.id, this.$ssrContext)
   },
-  onReady () {
-    // Keep the hydrated tree identical to SSR; browser-only controls appear after mount.
-    if (typeof window !== 'undefined') this.browserReady = true
-  },
   methods: {
     loadArticle (articleId, requestContext) {
-      this.articleId = articleId
-      return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
+      this.articleId = articleId || ''
+      return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
     },
     toggleFavorite () { this.favorite = !this.favorite },
     openArticle (event) {

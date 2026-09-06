@@ -1,0 +1,93 @@
+{
+  "eval_id": 6,
+  "eval_name": "api-proxy-task-contract",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "model_grading_fingerprint": "c0a48751e154f1663e7161c0f39a0fd90d59bf8f7c21e1dff2119d04d5472da6",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 97446
+  },
+  "expectations": [
+    {
+      "id": "q0",
+      "text": "应用入口安装 @mpxjs/api-proxy，并通过 mpx.use(apiProxy, { usePromise: true }) 明确启用 Promise 风格",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx:2-7 imports @mpxjs/core and @mpxjs/api-proxy, then calls mpx.use(apiProxy, { usePromise: true }).",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q1",
+      "text": "Web 输出中的普通趋势词请求通过会返回 Promise 的 Mpx 官方 API 调用路径使用 await 或 Promise 链；可使用配置后的 mpx.request 或会被跨端编译转换到该入口的 wx.request。原始 @mpxjs/api-proxy 命名导入不会继承 Promise 化配置，不能直接按 Promise 使用；不得混用 success/fail 回调",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/services/search.js:1-6 fetchTrendingKeywords uses configured mpx.request(...).then(({ data }) => data); outputs/src/pages/search/index.mpx:30-34 awaits fetchTrendingKeywords(). No success/fail callbacks or raw @mpxjs/api-proxy named request are used for the trend request.",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "联想词请求保存可取消任务：可通过单次 usePromise: false 或原始 @mpxjs/api-proxy 命名导入直接取得 RequestTask，也可从已 Promise 化调用的 Promise.__returned 取得框架保留的原始任务；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/services/search.js:9-13 returns the Promise from mpx.request for suggestions; outputs/src/pages/search/index.mpx:65-68 reads promise.__returned into task and stores it as suggestionTask. outputs/src/pages/search/index.mpx:50-55 sets suggestionTask = null and increments suggestionGeneration before aborting the old task; search() calls this at 56-57 and onUnload calls it at 37-38.",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "联想词 success/fail 回调捕获本次任务和关键词，仅当前任务且关键词仍匹配时才更新结果或提示，旧响应不能覆盖新搜索",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx:65-79 captures generation, promise.__returned task, and keyword in the response handlers. Both then and catch return early unless this.suggestionTask === task, this.suggestionGeneration === generation, and this.keyword === keyword, so stale responses cannot update suggestions or errorMessage.",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "详情跳转与错误提示继续走 Mpx 官方 API 链路；可保留会被跨端编译转换的 wx.navigateTo/wx.showToast，可沿用 mpx.xxx，也可在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx:82-85 uses mpx.navigateTo for product detail, but error提示 is implemented only by setting inline errorMessage at 33-35 and 74-79. There is no mpx.showToast/wx.showToast or other Mpx official API call for error提示.",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q5",
+      "text": "不用 fetch、location 或 alert 平行重写 request/navigateTo/showToast；若沿用 @mpxjs/api-proxy 命名导入，应明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "rg finds no fetch, location, or alert in outputs. outputs/src/services/search.js uses mpx.request; outputs/src/pages/search/index.mpx:82-85 uses mpx.navigateTo. The only @mpxjs/api-proxy import is the default plugin install in outputs/src/app.mpx:3-7, not raw named API calls used as Promise APIs.",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q6",
+      "text": "趋势词、连续输入、清空搜索、取消旧请求、结果展示和商品详情业务链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx keeps trend display and selection at 8-10 and 44-46, continuous input at 41-43, clear at 5 and 47-49, old request cancellation at 50-57, suggestion rendering at 11-13 and updates at 69-79, error display at 7 and 33-35/74-79, and product detail navigation at 82-85.",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "q3 should explicitly state whether Promise then/catch handlers count as success/fail handlers when q2 permits Promise.__returned; otherwise equivalent Promise-based implementations can be judged inconsistently.",
+      "q4 should clarify whether 错误提示 must be toast/API-based, or whether an inline bound error message is acceptable."
+    ],
+    "overall": "核心请求 Promise 化、可取消任务、竞态防护和业务链路基本完整；主要不通过点是错误提示未走 Mpx 官方 API 链路。"
+  }
+}

@@ -5,6 +5,10 @@ module.exports = {
   pluginOptions: {
     mpx: {
       plugin: {
+        webRouteConfig: {
+          mode: 'history',
+          base: '/shop/'
+        },
         srcMode: 'wx'
       }
     }

@@ -3,9 +3,8 @@ import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
 createApp({
+  // This hook runs for every app instance, so SSR requests never share a store.
   onAppInit () {
-    // The app-init hook runs for each SSR app instance, so this state is never
-    // shared by concurrent requests.
     return { pinia: createPinia() }
   }
 })

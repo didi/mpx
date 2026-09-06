@@ -7,33 +7,63 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+
 createComponent({
-  properties: { memberId: { type: String, observer () { if (this.channelAttached) this.connectChannel() } } },
+  properties: {
+    memberId: { type: String, observer () { this.connectChannel() } }
+  },
   data: { connected: false },
-  attached () { this.channelAttached = true; this.connectChannel() },
-  detached () { this.channelAttached = false; this.disconnectChannel() },
+  attached () { this.connectChannel() },
+  detached () { this.disconnectChannel() },
   methods: {
-    isCurrentTask (task, memberId) { return this.channelAttached && this.socketTask === task && this.socketMemberId === memberId },
-    notifyConnection (connected, memberId) { this.connected = connected; this.triggerEvent('connectedchange', { connected, memberId }) },
-    disconnectChannel () { const task = this.socketTask; const memberId = this.socketMemberId; this.socketTask = null; this.socketMemberId = ''; if (task && task.close) task.close({}); if (this.connected && this.channelAttached) this.notifyConnection(false, memberId) else this.connected = false },
+    setConnected (connected) {
+      if (this.connected === connected) return
+      this.connected = connected
+      this.triggerEvent('connectedchange', { connected })
+    },
+    disconnectChannel () {
+      const task = this.socketTask
+      this.socketTask = null
+      this.setConnected(false)
+      if (task) task.close()
+    },
     connectChannel () {
-      if (!this.channelAttached || !this.memberId) return
       this.disconnectChannel()
       const memberId = this.memberId
-      let task
-      try { task = wx.connectSocket({ url: `wss://logistics.example.com/members/${memberId}`, header: { Authorization: `Bearer ${wx.getStorageSync('token')}` } }) } catch (error) { this.triggerEvent('error', { error, memberId }); return }
-      this.socketTask = task
-      this.socketMemberId = memberId
-      task.onOpen(() => { if (this.isCurrentTask(task, memberId)) this.notifyConnection(true, memberId) })
-      task.onMessage(({ data }) => {
-        if (!this.isCurrentTask(task, memberId)) return
-        try { const message = JSON.parse(data); if (message.type === 'logistics') this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId })) } catch (error) { this.triggerEvent('error', { error, memberId }) }
+      if (!memberId) return
+      const task = wx.connectSocket({
+        url: `wss://logistics.example.com/members/${memberId}`,
+        header: { Authorization: `Bearer ${wx.getStorageSync('token')}` },
+        usePromise: false
       })
-      task.onError((error) => { if (!this.isCurrentTask(task, memberId)) return; this.notifyConnection(false, memberId); this.triggerEvent('error', { error, memberId }) })
-      task.onClose(() => { if (!this.isCurrentTask(task, memberId)) return; this.socketTask = null; this.socketMemberId = ''; this.notifyConnection(false, memberId) })
+      this.socketTask = task
+      task.onOpen(() => {
+        if (this.socketTask !== task || this.memberId !== memberId) return
+        this.setConnected(true)
+      })
+      task.onMessage(({ data }) => {
+        if (this.socketTask !== task || this.memberId !== memberId) return
+        let message
+        try { message = JSON.parse(data) } catch (error) { return }
+        if (message.type === 'logistics') this.triggerEvent('logistics', message.payload)
+      })
+      task.onError((error) => {
+        if (this.socketTask !== task || this.memberId !== memberId) return
+        this.setConnected(false)
+        this.triggerEvent('error', { error })
+      })
+      task.onClose(() => {
+        if (this.socketTask !== task || this.memberId !== memberId) return
+        this.socketTask = null
+        this.setConnected(false)
+      })
     },
     reconnect () { this.connectChannel() },
-    sendHeartbeat () { const task = this.socketTask; if (!task || this.socketTask !== task || task.readyState !== task.OPEN) return; task.send({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) }) }
+    sendHeartbeat () {
+      const task = this.socketTask
+      if (!task || this.socketTask !== task || task.readyState !== task.OPEN) return
+      task.send({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) })
+    }
   }
 })
 </script>

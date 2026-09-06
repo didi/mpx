@@ -18,7 +18,7 @@
     "apps",
     "--skip-git-repo-check",
     "-C",
-    "/private/var/folders/yf/mcf8m_nn1896w8kbdfxnhnw40000ks/T/mpx2web-eval-12c58p7d",
+    "/private/var/folders/yf/mcf8m_nn1896w8kbdfxnhnw40000ks/T/mpx2web-eval-1kx_qbyi",
     "-s",
     "workspace-write",
     "-m",
@@ -33,9 +33,9 @@
   "returncode": 0,
   "outputs_complete": true,
   "compile_status": "passed",
-  "compile_boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
-  "duration_ms": 225733,
-  "fingerprint": "d9f2a6b77af9d2179b0257dc82df9c976c0d5c18bc3760f86d1428b801cea707",
+  "compile_boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。",
+  "duration_ms": 252126,
+  "fingerprint": "3584095ff2a1acb24902779a37dfaf97234cd945f69a0873fe54fc639616e4ee",
   "fixture_digest": "ef39bb4489d97fe45ff85c98a9404b7ea03e717603cf37e964547eaf054808e8",
-  "skill_digest": "4bb29537075654ea646965b265b90341093b60dcc2b2b7cd13f59a3693120e17"
+  "skill_digest": "1f123b81a318ea271594c560de2eab455e72e094edaaa74da9063b92d8c61169"
 }

@@ -48,9 +48,13 @@ createComponent({
 </script>
 
 <style>
-.product-card {
+.product-card,
+.product-card * {
   box-sizing: border-box;
-  width: 338rpx;
+}
+
+.product-card {
+  width: 100%;
   margin-bottom: 24rpx;
   overflow: hidden;
   background: #ffffff;
@@ -64,9 +68,9 @@ createComponent({
 
 .product-cover {
   display: block;
-  box-sizing: border-box;
   width: 100%;
   height: 300rpx;
+  border: 0;
   border-radius: 20rpx 20rpx 0 0;
 }
 
@@ -117,18 +121,20 @@ createComponent({
 .price-tag {
   display: flex;
   align-items: baseline;
-  height: 48rpx;
+  height: 64rpx;
   color: #e64340;
   white-space: nowrap;
 }
 
 .price-currency,
 .price-unit {
+  flex: 0 0 auto;
   font-size: 20rpx;
   line-height: 28rpx;
 }
 
 .price-amount {
+  flex: 0 0 auto;
   margin: 0 4rpx;
   font-size: 40rpx;
   font-weight: bold;
@@ -136,8 +142,11 @@ createComponent({
 }
 
 .product-sales {
+  overflow: hidden;
   color: #a0a4ad;
   font-size: 20rpx;
+  text-align: right;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -158,15 +167,16 @@ createComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
   width: 52rpx;
   height: 52rpx;
+  min-width: 52rpx;
   margin: 0;
   padding: 0;
   color: #ffffff;
   font-size: 34rpx;
   line-height: 52rpx;
   background: #e64340;
+  border: 0;
   border-radius: 50%;
 }
 </style>

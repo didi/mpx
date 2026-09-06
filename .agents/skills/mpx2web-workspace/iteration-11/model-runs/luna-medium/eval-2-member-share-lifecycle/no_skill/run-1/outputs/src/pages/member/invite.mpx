@@ -45,10 +45,13 @@
     </view>
 
     <view class="action-row">
-      <button class="share-button share-button-wx" open-type="share">分享给好友</button>
+      <button wx:if="{{isWechat}}" class="share-button share-button-wx" open-type="share">分享给好友</button>
       <button class="share-button share-button-web" bindtap="shareOnWeb">分享邀请活动</button>
-      <text wx:if="{{webShareMessage}}" class="web-share-message">{{webShareMessage}}</text>
       <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
+    </view>
+
+    <view wx:if="{{webShareNoticeVisible}}" class="web-share-notice">
+      <text>当前 Web 端暂未接入分享服务，请复制邀请码 {{member.inviteCode}} 邀请好友。</text>
     </view>
 
     <view class="invite-list">
@@ -69,10 +72,10 @@
       </view>
     </view>
 
-    <view wx:if="{{showRules}}" class="rules-mask" bindtap="closeCampaignDetail">
-      <view class="rules-card" catchtap="stopRulesTap">
+    <view wx:if="{{rulesVisible}}" class="rules-mask" bindtap="closeCampaignDetail">
+      <view class="rules-card" catchtap="noop">
         <text class="rules-title">活动规则</text>
-        <text class="rules-item" wx:for="{{campaign.rules}}" wx:key="index">{{index + 1}}. {{item}}</text>
+        <text class="rules-content">{{campaign.rules}}</text>
         <button class="rules-close" bindtap="closeCampaignDetail">知道了</button>
       </view>
     </view>
@@ -84,6 +87,9 @@ import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
+    isWechat: false,
+    webShareNoticeVisible: false,
+    rulesVisible: false,
     member: {
       id: 'member-10086',
       name: '林小满',
@@ -102,11 +108,7 @@ createPage({
         { step: 3, reward: '30 元券' },
         { step: 5, reward: '100 元券' }
       ],
-      rules: [
-        '每位好友成功注册后计入邀请人数。',
-        '好友完成首单后，邀请奖励按对应档位发放。',
-        '同一好友仅可被一位会员邀请，具体发放以活动记录为准。'
-      ]
+      rules: '每邀请一位好友注册并完成首单即可计入活动进度。达到对应人数后，奖励将按活动规则发放；同一好友仅计入一次。'
     },
     inviteCount: 2,
     inviteGoal: 5,
@@ -125,9 +127,7 @@ createPage({
         joinedAt: '08-11 09:16',
         statusText: '已注册'
       }
-    ],
-    showRules: false,
-    webShareMessage: ''
+    ]
   },
   computed: {
     invitePercent () {
@@ -135,7 +135,9 @@ createPage({
     }
   },
   onLoad () {
-    if (typeof wx !== 'undefined' && wx.showShareMenu) {
+    const canUseWechatApi = typeof wx !== 'undefined'
+    this.isWechat = canUseWechatApi
+    if (canUseWechatApi) {
       wx.showShareMenu({ withShareTicket: true })
       this.fetchInviteSummary()
     }
@@ -160,48 +162,40 @@ createPage({
       wx.request({
         url: `/api/member/${this.member.id}/invites`,
         success: ({ data }) => {
+          if (!data) return
           this.inviteCount = data.count
-          this.invitees = data.list
+          this.invitees = data.list || []
         }
       })
     },
     shareOnWeb () {
-      this.webShareMessage = 'Web 分享能力尚未接入，请等待业务提供分享 SDK 或宿主 Bridge。'
+      this.webShareNoticeVisible = true
     },
     openCampaignDetail () {
-      this.showRules = true
+      if (typeof wx !== 'undefined' && wx.navigateTo) {
+        wx.navigateTo({
+          url: `/pages/member/campaign-detail?id=${this.campaign.id}`
+        })
+        return
+      }
+      this.rulesVisible = true
     },
     closeCampaignDetail () {
-      this.showRules = false
+      this.rulesVisible = false
     },
-    stopRulesTap () {}
+    noop () {}
   }
 })
 </script>
 
 <style>
-.invite-page {
-  min-height: 100vh;
-  padding: 24rpx;
-  background: #fff7f0;
-}
-
-.member-card,
-.campaign-card,
-.invite-code-card,
-.invite-list {
-  background: #ffffff;
-  border-radius: 22rpx;
-  box-shadow: 0 8rpx 24rpx rgba(88, 54, 31, 0.06);
-}
-
+.invite-page { min-height: 100vh; padding: 24rpx; background: #fff7f0; }
+.member-card, .campaign-card, .invite-code-card, .invite-list { background: #ffffff; border-radius: 22rpx; box-shadow: 0 8rpx 24rpx rgba(88, 54, 31, 0.06); }
 .member-card { padding: 28rpx; }
-.member-head, .list-head, .invitee-row { display: flex; align-items: center; }
+.member-head { display: flex; align-items: center; }
 .member-avatar { width: 96rpx; height: 96rpx; border-radius: 50%; }
-.member-copy, .invitee-copy { flex: 1; margin-left: 20rpx; }
-.member-name, .member-level, .campaign-title, .campaign-summary, .reward-step, .reward-value,
-.invite-code-title, .invite-code, .invite-code-tip, .list-title, .list-count, .invitee-name, .invitee-time,
-.web-share-message, .rules-title, .rules-item { display: block; }
+.member-copy { flex: 1; margin-left: 20rpx; }
+.member-name, .member-level, .campaign-title, .campaign-summary, .reward-step, .reward-value, .invite-code-title, .invite-code, .invite-code-tip, .list-title, .list-count, .invitee-name, .invitee-time, .web-share-notice, .rules-title, .rules-content { display: block; }
 .member-name { color: #2f241f; font-size: 32rpx; font-weight: bold; }
 .member-level { margin-top: 4rpx; color: #c07845; font-size: 22rpx; }
 .member-points { color: #ff7a45; font-size: 25rpx; font-weight: bold; }
@@ -223,16 +217,16 @@ createPage({
 .action-row { margin-top: 24rpx; }
 .share-button, .detail-button, .rules-close { margin-top: 16rpx; border-radius: 44rpx; }
 .share-button { color: #ffffff; background: #ff7a45; }
-.share-button-web { display: block; }
-.web-share-message { margin: 12rpx 20rpx 0; color: #9c795f; font-size: 22rpx; line-height: 32rpx; }
 .detail-button { color: #ff7a45; background: #ffffff; border: 2rpx solid #ffb184; }
+.web-share-notice { margin-top: 16rpx; padding: 18rpx 24rpx; color: #8c5b3e; font-size: 22rpx; line-height: 34rpx; background: #fff0e3; border-radius: 12rpx; }
 .invite-list { margin-top: 24rpx; padding: 24rpx; }
+.list-head, .invitee-row { display: flex; align-items: center; }
 .list-head { justify-content: space-between; margin-bottom: 12rpx; }
 .list-title { color: #2f241f; font-size: 30rpx; font-weight: bold; }
 .list-count { color: #a69b95; font-size: 22rpx; }
 .invitee-row { padding: 20rpx 0; border-bottom: 1rpx solid #f1ece8; }
 .invitee-avatar { width: 72rpx; height: 72rpx; border-radius: 50%; }
-.invitee-copy { margin-left: 16rpx; }
+.invitee-copy { flex: 1; margin-left: 16rpx; }
 .invitee-name { color: #403630; font-size: 26rpx; }
 .invitee-time { margin-top: 4rpx; color: #b0a59f; font-size: 20rpx; }
 .invitee-status { color: #ff7a45; font-size: 22rpx; }
@@ -240,7 +234,7 @@ createPage({
 .rules-mask { position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center; padding: 40rpx; background: rgba(47, 36, 31, 0.45); }
 .rules-card { width: 100%; padding: 32rpx; background: #ffffff; border-radius: 22rpx; }
 .rules-title { color: #2f241f; font-size: 32rpx; font-weight: bold; text-align: center; }
-.rules-item { margin-top: 20rpx; color: #6e625c; font-size: 24rpx; line-height: 36rpx; }
+.rules-content { margin-top: 24rpx; color: #6f625c; font-size: 25rpx; line-height: 42rpx; }
 .rules-close { color: #ffffff; background: #ff7a45; }
 </style>
 

@@ -10,9 +10,17 @@ createApp({
 
 <script type="application/json">
 {
-  "pages": ["pages/home/index", "pages/campaign/index"],
+  "pages": [
+    "pages/home/index",
+    "pages/campaign/index"
+  ],
   "packages": [
-    { "root": "packageProduct", "pages": ["pages/detail/index"] }
+    {
+      "root": "packageProduct",
+      "pages": [
+        "pages/detail/index"
+      ]
+    }
   ]
 }
 </script>

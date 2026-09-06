@@ -20,8 +20,12 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+import AnalyticsChart from '../web/AnalyticsChart.vue'
 
 createComponent({
+  components: {
+    AnalyticsChart
+  },
   properties: {
     metrics: { type: Array, value: () => [] },
     scrollX: { type: Boolean, value: true },
@@ -32,20 +36,17 @@ createComponent({
     edgeThreshold: { type: Number, value: 24 }
   },
   methods: {
-    eventDetail (event) {
-      return event && event.detail ? event.detail : event
-    },
     handleSelect (event) {
-      this.triggerEvent('select', this.eventDetail(event))
+      this.triggerEvent('select', event && event.detail ? event.detail : event)
     },
     handleScroll (event) {
-      this.triggerEvent('scroll', this.eventDetail(event))
+      this.triggerEvent('scroll', event && event.detail ? event.detail : event)
     },
     handleUpper (event) {
-      this.triggerEvent('scrolltoupper', this.eventDetail(event))
+      this.triggerEvent('scrolltoupper', event && event.detail ? event.detail : event)
     },
     handleLower (event) {
-      this.triggerEvent('scrolltolower', this.eventDetail(event))
+      this.triggerEvent('scrolltolower', event && event.detail ? event.detail : event)
     }
   }
 })

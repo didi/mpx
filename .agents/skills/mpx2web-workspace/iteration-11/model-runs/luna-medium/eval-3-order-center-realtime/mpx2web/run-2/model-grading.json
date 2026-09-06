@@ -1,0 +1,142 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "model_grading_fingerprint": "c41404ec6e0957e204386c25c478bee10b6c24b765bc1add3d1b4c214af1e4f8",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 163048
+  },
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:53-105 保留 <script module=\"gesture\" lang=\"wxs\">，touchstart/move/end/cancel 高频逻辑仍在 WXS 内处理，并通过 event.instance.callMethod 同步组件状态。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:6-13 在同一个根节点上成对绑定 catchtouchstart/move/end/cancel@wx=\"{{gesture...}}\" 与 @touchstart/move/end/cancel@web=\"onTouch...\"，未看到跨端动态表达式混合 WXS 函数对象。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "category": "web-script",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:119-125 将 Web 手势状态放在组件 data 中，实例隔离；173-184 将位移限制在 0 到 -96，并以 touchOffsetX <= -48 判定展开。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "category": "web-interaction",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx:96-102 与 188-192 处理 touchcancel 并调用 cancelSwipe；150-155 将 offsetX 置 0 回弹；142-160 用 suppressNextTap 布尔值只吞掉下一次 tap；162、166、174、183、189、195 以及 16 均检查或传递 disabled，阻止禁用态选择和删除。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:43-49 使用 wx.connectSocket 返回值保存为 task/socketTask；51-73 使用 task.onOpen/onMessage/onError/onClose；75-80 使用 task.close，未使用 wx.onSocket*、wx.sendSocketMessage 或 wx.closeSocket 全局通道 API。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:50 定义 isCurrent 校验 this.socketTask === task、generation 和 memberId；51-73 的 onOpen、onMessage、onError、onClose 回调均先执行 if (!isCurrent()) return。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/logistics-channel.mpx:34-35 detached 调用 closeChannel；75-80 closeChannel 先 connectionGeneration += 1 并将 socketTask 置 null，再 close 旧 task；82-83 reconnect 通过 connectChannel，connectChannel:40 先 closeChannel 再创建新任务。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx:85-88 sendHeartbeat 只读取 this.socketTask 并检查 (task.OPEN && task.readyState !== task.OPEN)，没有像回调一样校验捕获任务仍为当前任务或 generation/memberId 身份；且当 task.OPEN 为假值时会跳过 readyState === task.OPEN 的严格校验。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8a",
+      "text": "订单状态筛选入口和筛选结果更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:14-24 保留状态筛选入口；106-123 switchStatus 更新 activeStatus 并调用 fetchOrders，fetchOrders 按 activeStatus 请求并更新 orders 与 statusTabs。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8b",
+      "text": "订单详情入口与原有详情跳转链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:28-36 绑定 bindselect=\"openOrder\"；125-127 openOrder 调用 wx.navigateTo 跳转 /pages/orders/detail?id=...；outputs/src/components/swipe-order-item.mpx:157-164 selectOrder 触发 select 事件。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8c",
+      "text": "订单删除或撤销操作及其列表状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:35 绑定 bindremove=\"removeOrder\"；128-143 保留删除确认、DELETE 请求和 orders.filter 列表更新；outputs/src/components/swipe-order-item.mpx:194-197 removeOrder 在非 disabled 时触发 remove。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8d",
+      "text": "物流入口、SocketTask 消息接收与物流状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx:48-54 保留 logistics-channel 入口和 bindlogistics；outputs/src/components/logistics-channel.mpx:56-61 SocketTask onMessage 接收 logistics 消息并触发事件；outputs/src/pages/orders/index.mpx:151-161 校验 memberId 后更新对应订单物流状态。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "当前断言未显式覆盖 .mpx/JS 可编译性；outputs/src/components/swipe-order-item.mpx:116-117 的 disabled: Boolean 与 opened: Boolean 之间缺少逗号，会导致脚本解析失败，从而使若干静态 PASS 在实际运行中偏乐观。"
+    ],
+    "overall": "主要功能链路基本保留，但 send 前任务身份与 readyState 校验不满足 r7，且存在会影响真实验收的语法完整性缺口。"
+  }
+}

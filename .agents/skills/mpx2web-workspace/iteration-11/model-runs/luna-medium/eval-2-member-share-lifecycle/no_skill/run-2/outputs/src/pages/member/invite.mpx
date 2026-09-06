@@ -45,17 +45,15 @@
     </view>
 
     <view class="action-row">
-      <button class="share-button share-button-wx" open-type="share">分享给好友</button>
-      <button class="share-button share-button-web" bindtap="shareOnWeb">分享邀请活动</button>
-      <text wx:if="{{webShareMessage}}" class="web-share-message">{{webShareMessage}}</text>
-      <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
+      <button wx:if="{{isWechatMiniProgram}}" class="share-button share-button-wx" open-type="share">分享给好友</button>
+      <button wx:else class="share-button share-button-web" bindtap="shareOnWeb">分享邀请活动</button>
+      <text wx:if="{{!isWechatMiniProgram}}" class="web-share-note">Web 分享能力暂未接入，请联系业务方配置分享 SDK 或宿主 Bridge。</text>
+      <button class="detail-button" bindtap="toggleCampaignRules">{{showRules ? '收起活动规则' : '查看活动规则'}}</button>
     </view>
 
     <view wx:if="{{showRules}}" class="rules-card">
       <text class="rules-title">活动规则</text>
-      <text class="rules-item">1. 邀请好友加入社区商城，可按活动页面展示的档位获得奖励。</text>
-      <text class="rules-item">2. 好友注册时需填写邀请码：{{member.inviteCode}}。</text>
-      <text class="rules-item">3. 当前活动奖励：{{campaign.summary}}</text>
+      <text class="rule-item" wx:for="{{campaign.rules}}" wx:key="index">{{index + 1}}. {{item}}</text>
     </view>
 
     <view class="invite-list">
@@ -83,6 +81,8 @@ import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
+    isWechatMiniProgram: false,
+    showRules: false,
     member: {
       id: 'member-10086',
       name: '林小满',
@@ -100,6 +100,11 @@ createPage({
         { step: 1, reward: '10 元券' },
         { step: 3, reward: '30 元券' },
         { step: 5, reward: '100 元券' }
+      ],
+      rules: [
+        '每位好友仅可被一位会员邀请。',
+        '好友完成注册并满足活动条件后，邀请记录会更新。',
+        '奖励以活动页面展示为准，具体发放时间请以平台通知为准。'
       ]
     },
     inviteCount: 2,
@@ -119,20 +124,20 @@ createPage({
         joinedAt: '08-11 09:16',
         statusText: '已注册'
       }
-    ],
-    showRules: false,
-    webShareMessage: ''
+    ]
   },
   computed: {
     invitePercent () {
+      if (!this.inviteGoal) return 0
       return Math.min(100, Math.round(this.inviteCount / this.inviteGoal * 100))
     }
   },
   onLoad () {
-    if (typeof wx !== 'undefined') {
+    this.isWechatMiniProgram = typeof wx !== 'undefined'
+    if (this.isWechatMiniProgram) {
       wx.showShareMenu({ withShareTicket: true })
-      this.fetchInviteSummary()
     }
+    this.fetchInviteSummary()
   },
   onShareAppMessage () {
     return {
@@ -149,53 +154,45 @@ createPage({
     }
   },
   methods: {
+    applyInviteSummary (data) {
+      if (!data) return
+      this.inviteCount = data.count
+      this.invitees = data.list || []
+    },
     fetchInviteSummary () {
-      if (typeof wx === 'undefined') return
-      wx.request({
-        url: `/api/member/${this.member.id}/invites`,
-        success: ({ data }) => {
-          this.inviteCount = data.count
-          this.invitees = data.list
-        }
-      })
+      const url = `/api/member/${this.member.id}/invites`
+      if (this.isWechatMiniProgram) {
+        wx.request({
+          url,
+          success: ({ data }) => this.applyInviteSummary(data)
+        })
+        return
+      }
+      if (typeof fetch === 'function') {
+        fetch(url)
+          .then(response => response.json())
+          .then(data => this.applyInviteSummary(data))
+          .catch(() => {})
+      }
     },
     shareOnWeb () {
-      this.webShareMessage = 'Web 分享能力尚未接入，请联系业务配置分享 SDK 或宿主 Bridge。'
+      return false
     },
-    openCampaignDetail () {
+    toggleCampaignRules () {
       this.showRules = !this.showRules
-      if (typeof wx !== 'undefined') {
-        wx.navigateTo({
-          url: `/pages/member/campaign-detail?id=${this.campaign.id}`
-        })
-      }
     }
   }
 })
 </script>
 
 <style>
-.invite-page {
-  min-height: 100vh;
-  padding: 24rpx;
-  background: #fff7f0;
-}
-
-.member-card,
-.campaign-card,
-.invite-code-card,
-.invite-list,
-.rules-card {
-  background: #ffffff;
-  border-radius: 22rpx;
-  box-shadow: 0 8rpx 24rpx rgba(88, 54, 31, 0.06);
-}
-
+.invite-page { min-height: 100vh; padding: 24rpx; background: #fff7f0; }
+.member-card, .campaign-card, .invite-code-card, .invite-list, .rules-card { background: #ffffff; border-radius: 22rpx; box-shadow: 0 8rpx 24rpx rgba(88, 54, 31, 0.06); }
 .member-card { padding: 28rpx; }
 .member-head { display: flex; align-items: center; }
 .member-avatar { width: 96rpx; height: 96rpx; border-radius: 50%; }
 .member-copy { flex: 1; margin-left: 20rpx; }
-.member-name, .member-level, .campaign-title, .campaign-summary, .reward-step, .reward-value, .invite-code-title, .invite-code, .invite-code-tip, .list-title, .list-count, .invitee-name, .invitee-time, .rules-title, .rules-item, .web-share-message { display: block; }
+.member-name, .member-level, .campaign-title, .campaign-summary, .reward-step, .reward-value, .invite-code-title, .invite-code, .invite-code-tip, .list-title, .list-count, .invitee-name, .invitee-time, .rules-title, .rule-item, .web-share-note { display: block; }
 .member-name { color: #2f241f; font-size: 32rpx; font-weight: bold; }
 .member-level { margin-top: 4rpx; color: #c07845; font-size: 22rpx; }
 .member-points { color: #ff7a45; font-size: 25rpx; font-weight: bold; }
@@ -217,12 +214,12 @@ createPage({
 .action-row { margin-top: 24rpx; }
 .share-button, .detail-button { margin-top: 16rpx; border-radius: 44rpx; }
 .share-button { color: #ffffff; background: #ff7a45; }
-.share-button-web { background: #d95f31; }
-.web-share-message { padding: 12rpx 20rpx 0; color: #9c795f; font-size: 22rpx; line-height: 32rpx; text-align: center; }
+.share-button-web { display: block; }
+.web-share-note { margin: 12rpx 20rpx 0; color: #9c8d84; font-size: 21rpx; line-height: 32rpx; text-align: center; }
 .detail-button { color: #ff7a45; background: #ffffff; border: 2rpx solid #ffb184; }
-.rules-card { margin-top: 24rpx; padding: 24rpx; }
+.rules-card { margin-top: 24rpx; padding: 24rpx 28rpx; }
 .rules-title { color: #2f241f; font-size: 30rpx; font-weight: bold; }
-.rules-item { margin-top: 14rpx; color: #80736c; font-size: 24rpx; line-height: 36rpx; }
+.rule-item { margin-top: 14rpx; color: #6f625b; font-size: 23rpx; line-height: 36rpx; }
 .invite-list { margin-top: 24rpx; padding: 24rpx; }
 .list-head, .invitee-row { display: flex; align-items: center; }
 .list-head { justify-content: space-between; margin-bottom: 12rpx; }

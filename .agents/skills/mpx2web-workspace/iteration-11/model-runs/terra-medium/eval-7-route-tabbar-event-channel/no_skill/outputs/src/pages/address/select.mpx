@@ -7,8 +7,6 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
-const SELECTED_ADDRESS_KEY = 'checkout:selected-address'
-
 createPage({
   data: {
     addresses: [
@@ -18,7 +16,7 @@ createPage({
   },
   methods: {
     confirm (address) {
-      mpx.setStorageSync(SELECTED_ADDRESS_KEY, address)
+      getApp().globalData.selectedAddress = address
       mpx.navigateBack({ delta: 1 })
     }
   }

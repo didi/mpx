@@ -4,18 +4,21 @@
       class="video"
       id="product-video-{{product.id}}"
       src="{{product.video}}"
-      poster="{{product.poster}}"
+      poster="{{product.poster || product.image}}"
       autoplay="{{true}}"
       muted="{{true}}"
       controls="{{true}}"
-      playsinline="{{true}}"
-      webkit-playsinline="true"
+      object-fit="contain"
       enable-danmu="{{true}}"
+      bindplay="onPlay"
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
-    <text class="video-progress">{{progress}} / {{duration}}</text>
+    <view class="video-meta">
+      <text>{{progress}} / {{duration}}</text>
+      <text wx:if="{{videoError}}" class="video-error">{{videoError}}</text>
+    </view>
   </view>
 </template>
 
@@ -29,23 +32,24 @@ createComponent({
   data: {
     progress: 0,
     duration: 0,
-    videoSize: ''
+    videoSize: '',
+    videoError: ''
   },
   methods: {
+    onPlay () {
+      this.videoError = ''
+    },
     onTimeUpdate (event) {
-      const detail = event.detail || {}
-      this.progress = detail.currentTime || 0
-      this.duration = detail.duration || 0
+      this.progress = Math.floor(event.detail.currentTime || 0)
+      this.duration = Math.floor(event.detail.duration || 0)
     },
     onLoadedMetadata (event) {
-      const detail = event.detail || {}
-      this.duration = detail.duration || this.duration
-      this.videoSize = detail.width && detail.height
-        ? `${detail.width}x${detail.height}`
-        : ''
+      const { width = 0, height = 0, duration = 0 } = event.detail || {}
+      this.videoSize = `${width}x${height}`
+      this.duration = Math.floor(duration || this.duration)
     },
-    onVideoError (event) {
-      this.triggerEvent('error', event.detail || {})
+    onVideoError () {
+      this.videoError = '视频加载失败，请稍后重试'
     }
   }
 })
@@ -60,12 +64,18 @@ createComponent({
 .video {
   display: block;
   width: 100%;
+  background: #000;
 }
 
-.video-progress {
-  display: block;
-  margin-top: 8rpx;
-  color: #666;
+.video-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  color: #999;
   font-size: 24rpx;
+}
+
+.video-error {
+  color: #d93025;
 }
 </style>

@@ -4,7 +4,7 @@ import { createPinia } from '@mpxjs/pinia'
 
 createApp({
   onAppInit () {
-    // SSR 会为每个应用实例调用此钩子，不能复用模块级的 Pinia。
+    // SSR must get a new state container for every request.
     return { pinia: createPinia() }
   }
 })

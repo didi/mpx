@@ -29,37 +29,54 @@ import { createPage } from '@mpxjs/core'
 import mpx from '@mpxjs/api-proxy'
 import { useProductStore } from '../../../stores/product'
 
+function hasProduct (product) {
+  return !!(product && product.id)
+}
+
+function getSsrProductId (ssrContext) {
+  const routeQuery = ssrContext && ssrContext.route && ssrContext.route.query
+  if (routeQuery && routeQuery.id) return routeQuery.id
+  const url = ssrContext && ssrContext.req && ssrContext.req.url
+  const match = url && String(url).match(/[?&]id=([^&#]+)/)
+  return match ? decodeURIComponent(match[1]) : ''
+}
+
 createPage({
   data: {
     productId: '',
-    selectedSkuId: '',
-    loadVersion: 0
+    product: {},
+    recommendations: [],
+    selectedSkuId: ''
   },
   computed: {
-    product () {
-      return useProductStore(this.$pinia).product
-    },
-    recommendations () {
-      return useProductStore(this.$pinia).recommendations
-    },
     selectedSku () {
       return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
     }
   },
-  async onLoad (query) {
-    const productId = query.id
-    this.productId = productId
-    const version = ++this.loadVersion
-    await this.loadProduct(productId)
-    if (version === this.loadVersion && this.productId === productId) {
-      this.selectedSkuId = (this.product.skus || [])[0] && this.product.skus[0].id
-    }
+  // Mpx SSR waits for the returned promise before rendering the page.
+  async onServerPrefetch () {
+    const id = this.productId || getSsrProductId(this.$ssrContext)
+    if (id) await this.loadProduct(id, this.$ssrContext)
+  },
+  onLoad (query) {
+    this.loadProduct(query.id)
   },
   methods: {
-    loadProduct (productId) {
-      return useProductStore(this.$pinia).loadProduct(productId, {
-        ssrContext: this.$ssrContext
-      })
+    async loadProduct (productId, ssrContext) {
+      if (!productId) return
+      this.productId = productId
+      const store = useProductStore(this.$pinia)
+      if (!ssrContext && store.productId === productId && hasProduct(store.product)) {
+        this.product = store.product
+        this.recommendations = store.recommendations
+        this.selectedSkuId = this.product.skus && this.product.skus[0] && this.product.skus[0].id
+        return
+      }
+      const result = await store.loadProduct(productId, ssrContext)
+      if (this.productId !== productId) return
+      this.product = result.product
+      this.recommendations = result.recommendations
+      this.selectedSkuId = this.product.skus && this.product.skus[0] && this.product.skus[0].id
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

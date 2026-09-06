@@ -3,69 +3,96 @@
   "eval_name": "route-tabbar-event-channel",
   "configuration": "mpx2web",
   "run_number": 1,
-  "grading_fingerprint": "10f78ca6f0ca640eecc3672b19a761699b7f9f4b5374114a11dd5f35ad406142",
+  "grading_fingerprint": "e077199c2479d5dd4fc8882b726a840637d2048b7b52f0505e3a8c021e938b91",
+  "model_grading_fingerprint": "23749a34afa52879ed35b3d96d795796f04c6839a1f1f1747512f6ad8f9afb65",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 64536
+    "duration_ms": 69888
   },
   "expectations": [
     {
       "id": "n0",
       "text": "结算页通过 Mpx 官方 navigateTo 调用的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择；源码可以是 mpx.navigateTo 或会被跨端编译转换的 wx.navigateTo",
+      "category": "web-route",
       "passed": true,
       "evidence": "outputs/src/pages/checkout/index.mpx：navigateTo.events 接收地址，success 中的 eventChannel 向地址页发送当前值。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/checkout/index.mpx：navigateTo.events 接收地址，success 中的 eventChannel 向地址页发送当前值。"
+      }
     },
     {
       "id": "n1",
       "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后通过 Mpx 官方 navigateBack 返回；源码可以是 mpx.navigateBack 或会被跨端编译转换的 wx.navigateBack",
+      "category": "web-route",
       "passed": true,
       "evidence": "outputs/src/pages/address/select.mpx：地址页获取 opener EventChannel，emit 地址后返回上一页。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/address/select.mpx：地址页获取 opener EventChannel，emit 地址后返回上一页。"
+      }
     },
     {
       "id": "n2",
       "text": "订单 tab 只通过 Mpx 官方 switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack；调用可采用项目现有的 mpx.xxx 或会被跨端编译转换的 wx.xxx",
+      "category": "web-route",
       "passed": true,
       "evidence": "outputs/src/pages/checkout/index.mpx：五类 Mpx 官方路由 API 按普通页、返回、替换、重启与 tab 语义使用。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/checkout/index.mpx：五类 Mpx 官方路由 API 按普通页、返回、替换、重启与 tab 语义使用。"
+      }
     },
     {
       "id": "n3",
       "text": "需要 EventChannel 的地址入口使用 button 调用脚本中的 navigateTo，不强制保留 navigator；其他普通声明式导航若使用 navigator，open-type 使用模板值 navigate，而不是 API 名 navigateTo，也不使用不稳定的 switchTab 模板分支",
+      "category": "web-template",
       "passed": true,
       "evidence": "outputs/src/pages/checkout/index.mpx：EventChannel 地址入口使用 button 脚本导航，其他 navigator 未使用 navigateTo/switchTab 错误值。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/checkout/index.mpx：EventChannel 地址入口使用 button 脚本导航，其他 navigator 未使用 navigateTo/switchTab 错误值。"
+      }
     },
     {
       "id": "n4",
       "text": "Web 路由只通过 mpx.config.webConfig.routeConfig 配置 history 与 /shop/ base，output.publicPath 同为 /shop/",
-      "passed": false,
-      "evidence": "outputs/src/app.mpx / outputs/vue.config.js：未通过推荐 routeConfig 对齐 history、/shop/ base 与 publicPath。",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx / outputs/vue.config.js：runtime routeConfig 与构建 publicPath 均对齐 /shop/。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/app.mpx / outputs/vue.config.js：runtime routeConfig 与构建 publicPath 均对齐 /shop/。"
+      }
     },
     {
       "id": "n5",
       "text": "业务代码不引入 this.$router、window.history、location 跳转或 getCurrentPages 回传地址",
+      "category": "web-route",
       "passed": true,
-      "evidence": "对 outputs 全量搜索 this.$router、window.history、location 跳转、getCurrentPages 均无命中；地址回传改为 outputs/src/pages/checkout/index.mpx:19-25 与 outputs/src/pages/address/select.mpx:19-28 的 EventChannel。",
+      "evidence": "对 outputs 执行检索未发现 this.$router、window.history、location 跳转或 getCurrentPages；相关跳转均使用 mpx 官方路由 API。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -73,32 +100,41 @@
     {
       "id": "n6",
       "text": "地址展示、地址选择、返回、登录失效重启、支付结果替换和订单 tab 链路保持完整",
+      "category": "business-regression",
       "passed": true,
-      "evidence": "outputs/src/pages/checkout/index.mpx:4 展示已选地址，20-22 接收 addressSelected 并更新 this.address，29-36 保留支付 redirectTo、订单 switchTab、登录 reLaunch 链路；outputs/src/pages/address/select.mpx:3 提供地址列表选择，27-28 emit 后 navigateBack；outputs/src/app.mpx:22-34 注册 checkout/address/pay/login/orders 页面且 orders 位于 tabBar。",
+      "evidence": "outputs/src/pages/checkout/index.mpx:4 保留地址展示；3 和 17-27 保留地址选择入口及 EventChannel 回传；outputs/src/pages/address/select.mpx:3、25-28 保留地址选择和返回；outputs/src/pages/checkout/index.mpx:30 支付结果 redirectTo 替换当前页，33 订单 tab switchTab，36 登录失效 reLaunch。",
       "verification_methods": [
         "independent_code_review"
       ]
     }
   ],
   "summary": {
-    "passed": 6,
-    "failed": 1,
+    "passed": 7,
+    "failed": 0,
     "total": 7,
-    "pass_rate": 0.8571
+    "pass_rate": 1.0
+  },
+  "strict_delivery_summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0,
+    "compile_passed": true
   },
   "metrics": {
-    "total_tokens": 286815,
-    "input_tokens": 282394,
-    "output_tokens": 4421,
-    "tool_calls": 9,
-    "duration_ms": 114571
+    "total_tokens": 160635,
+    "input_tokens": 156842,
+    "output_tokens": 3793,
+    "tool_calls": 6,
+    "duration_ms": 95804
   },
   "timing": {
-    "total_tokens": 286815,
-    "duration_ms": 114571,
-    "total_duration_seconds": 114.571
+    "total_tokens": 160635,
+    "duration_ms": 95804,
+    "total_duration_seconds": 95.804
   },
   "compile": {
+    "compile_fingerprint": "48f0178b8ffa4e3e9d65f1ddb73c7d7897d8ec5f24126885d50c9f0836a242e8",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 4,
@@ -108,29 +144,71 @@
       {
         "kind": "mpx-conditional-compile-semantics",
         "files": [
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/app.mpx",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/address/select.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/app.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/app.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/address/select.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/address/select.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
           "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/vue.config.js"
         ],
         "passed": true,
         "returncode": 0,
         "detail": {
           "success": true,
-          "checkedFiles": 4,
+          "checkedFiles": 1,
           "files": [
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/app.mpx",
-              "errors": []
-            },
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx",
-              "errors": []
-            },
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/address/select.mpx",
-              "errors": []
-            },
             {
               "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/vue.config.js",
               "errors": []
@@ -143,7 +221,28 @@
         "kind": "mpx-web-compile",
         "type": "page",
         "files": [
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/checkout/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2469
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "page",
+        "files": [
           "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-7-route-tabbar-event-channel/mpx2web/run-1/outputs/src/pages/address/select.mpx"
         ],
         "passed": true,
@@ -158,7 +257,7 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3395
+          "durationMs": 2660
         },
         "stderr": ""
       },
@@ -180,13 +279,11 @@
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
-    "suggestions": [
-      "真正可能影响结论的缺口：给定 outputs 中没有 pages/pay/result、pages/login/index、pages/orders/index、pages/home/index 的页面文件，也没有 Web 服务器 rewrite 配置；因此只能依据 app 注册、tabBar 配置、Mpx routeConfig/publicPath 和发起跳转调用判断链路语义，不能验证目标页面实现或生产环境深链刷新 rewrite。"
-    ],
-    "overall": "候选输出满足 n0-n6；核心问题从 getCurrentPages/navigator/navigateTo tab 错用，改为 Mpx EventChannel、switchTab、redirectTo、reLaunch 与 Web history base 配置。"
+    "suggestions": [],
+    "overall": "全部断言均有源码证据支撑；未发现会造成结论偏差的断言缺口。"
   }
 }

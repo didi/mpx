@@ -4,7 +4,8 @@ import { createPinia } from '@mpxjs/pinia'
 
 createApp({
   onAppInit () {
-    // Keep stores isolated per app/SSR request.
+    // Create one Pinia instance per app/SSR request. A module-level instance
+    // would allow state from one article request to leak into another.
     return { pinia: createPinia() }
   }
 })

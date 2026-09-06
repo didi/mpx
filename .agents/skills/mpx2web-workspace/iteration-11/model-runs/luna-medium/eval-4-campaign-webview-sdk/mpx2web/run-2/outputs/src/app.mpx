@@ -17,9 +17,7 @@ createApp({
   "packages": [
     {
       "root": "packageProduct",
-      "pages": [
-        "pages/detail/index"
-      ]
+      "pages": ["pages/detail/index"]
     }
   ]
 }

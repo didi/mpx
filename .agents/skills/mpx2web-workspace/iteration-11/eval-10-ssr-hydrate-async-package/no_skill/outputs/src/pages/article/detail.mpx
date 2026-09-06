@@ -3,8 +3,9 @@
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
-    <recommend-list article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
+    <view wx:if="{{shareToolbarVisible}}" class="share-toolbar">复制链接</view>
+    <recommend-list wx:if="{{recommendReady}}" article-id="{{articleId}}" items="{{recommendations}}" bindselect="openArticle" />
+    <view wx:else class="recommend-list"></view>
   </view>
 </template>
 
@@ -15,51 +16,38 @@ import { useArticleStore } from '../../stores/article'
 createPage({
   data: {
     articleId: '',
-    isBrowser: false,
-    favorite: false
+    favorite: false,
+    // These values deliberately begin the same on SSR and the client.
+    shareToolbarVisible: false,
+    recommendReady: false
   },
   computed: {
-    article () {
-      return useArticleStore(this.$pinia).article || {}
-    },
-    recommendations () {
-      return useArticleStore(this.$pinia).recommendations
-    }
+    article () { return useArticleStore(this.$pinia).article || {} },
+    recommendations () { return useArticleStore(this.$pinia).recommendations }
   },
   onLoad (query) {
-    if (typeof window !== 'undefined' || typeof wx !== 'undefined') {
-      return this.loadArticle(query && query.id)
-    }
+    const articleId = query.id || ''
+    this.articleId = articleId
+    if (typeof window !== 'undefined' || typeof wx !== 'undefined') return this.loadArticle(articleId)
   },
   onReady () {
-    if (typeof window !== 'undefined') {
-      this.isBrowser = true
-    }
+    // This lifecycle does not run during SSR, so it is safe to load the subpackage here.
+    this.recommendReady = true
+    if (typeof window !== 'undefined') this.shareToolbarVisible = true
   },
   serverPrefetch () {
-    const route = this.$route || {}
-    const query = route.query || {}
-    return this.loadArticle(query.id, this.$ssrContext)
+    const articleId = this.$route.query.id || ''
+    this.articleId = articleId
+    return this.loadArticle(articleId, this.$ssrContext)
   },
   methods: {
     loadArticle (articleId, requestContext) {
-      if (articleId === undefined || articleId === null || articleId === '') {
-        return Promise.resolve()
-      }
-
-      this.articleId = String(articleId)
+      this.articleId = articleId || ''
       return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
     },
-    toggleFavorite () {
-      this.favorite = !this.favorite
-    },
+    toggleFavorite () { this.favorite = !this.favorite },
     openArticle (event) {
-      const articleId = event && event.detail && event.detail.articleId
-      if (articleId === undefined || articleId === null || articleId === '') return
-
-      mpx.navigateTo({
-        url: `/pages/article/detail?id=${encodeURIComponent(String(articleId))}`
-      })
+      mpx.navigateTo({ url: `/pages/article/detail?id=${encodeURIComponent(event.detail.articleId)}` })
     }
   }
 })

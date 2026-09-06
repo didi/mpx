@@ -14,10 +14,15 @@ createPage({
       { id: 'office', name: '公司', detail: '科技路 8 号' }
     ]
   },
+  onLoad () {
+    this.eventChannel = this.getOpenerEventChannel()
+    if (this.eventChannel) this.eventChannel.on('checkoutReady', ({ address }) => {
+      if (address) this.selectedAddress = address
+    })
+  },
   methods: {
     confirm (address) {
-      const eventChannel = this.getOpenerEventChannel()
-      eventChannel.emit('addressSelected', address)
+      if (this.eventChannel) this.eventChannel.emit('addressSelected', address)
       mpx.navigateBack({ delta: 1 })
     }
   }

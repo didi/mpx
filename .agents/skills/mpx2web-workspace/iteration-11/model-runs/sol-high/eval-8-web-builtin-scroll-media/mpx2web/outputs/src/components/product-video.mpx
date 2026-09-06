@@ -29,25 +29,36 @@ createComponent({
     videoSize: ''
   },
   methods: {
+    getMediaState (event) {
+      const detail = event && event.detail
+      if (detail && (
+        typeof detail.currentTime === 'number' ||
+        typeof detail.duration === 'number' ||
+        typeof detail.width === 'number'
+      )) {
+        return detail
+      }
+      return (event && (event.target || event.currentTarget)) || {}
+    },
     onTimeUpdate (event) {
-      const detail = event.detail || {}
-      const media = event.target || event.currentTarget
-      const currentTime = detail.currentTime != null ? detail.currentTime : media && media.currentTime
-      const duration = detail.duration != null ? detail.duration : media && media.duration
-
-      if (Number.isFinite(currentTime)) this.progress = currentTime
-      if (Number.isFinite(duration)) this.duration = duration
+      const media = this.getMediaState(event)
+      if (typeof media.currentTime === 'number') {
+        this.progress = media.currentTime
+      }
+      if (typeof media.duration === 'number' && Number.isFinite(media.duration)) {
+        this.duration = media.duration
+      }
     },
     onLoadedMetadata (event) {
-      const detail = event.detail || {}
-      const media = event.target || event.currentTarget
-      const width = detail.width != null ? detail.width : media && media.videoWidth
-      const height = detail.height != null ? detail.height : media && media.videoHeight
-      const duration = detail.duration != null ? detail.duration : media && media.duration
+      const media = this.getMediaState(event)
+      const width = media.width || media.videoWidth || 0
+      const height = media.height || media.videoHeight || 0
 
-      if (width && height) this.videoSize = `${width}x${height}`
-      if (Number.isFinite(duration)) this.duration = duration
-      this.triggerEvent('loaded')
+      if (typeof media.duration === 'number' && Number.isFinite(media.duration)) {
+        this.duration = media.duration
+      }
+      this.videoSize = `${width}x${height}`
+      this.triggerEvent('layoutchange')
     },
     onVideoError () {}
   }
@@ -55,5 +66,8 @@ createComponent({
 </script>
 
 <style scoped>
-.product-video { width: 100%; }
+.product-video {
+  display: block;
+  width: 100%;
+}
 </style>

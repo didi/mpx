@@ -1,0 +1,90 @@
+{
+  "eval_id": 7,
+  "eval_name": "route-tabbar-event-channel",
+  "configuration": "mpx2web",
+  "run_number": 1,
+  "model_grading_fingerprint": "23749a34afa52879ed35b3d96d795796f04c6839a1f1f1747512f6ad8f9afb65",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 69888
+  },
+  "expectations": [
+    {
+      "id": "n0",
+      "text": "结算页通过 Mpx 官方 navigateTo 调用的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择；源码可以是 mpx.navigateTo 或会被跨端编译转换的 wx.navigateTo",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx:17-27 使用 mpx.navigateTo 打开 /pages/address/select，配置 events.addressSelected 接收回传，并在 success 中通过 res.eventChannel.emit('checkoutReady', { address: this.address }) 发送当前选择。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n1",
+      "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后通过 Mpx 官方 navigateBack 返回；源码可以是 mpx.navigateBack 或会被跨端编译转换的 wx.navigateBack",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "outputs/src/pages/address/select.mpx:19 通过 this.getOpenerEventChannel() 获取通道；26-28 在 confirm 中再次获取通道，emit('addressSelected', address)，随后 mpx.navigateBack({ delta: 1 }) 返回。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n2",
+      "text": "订单 tab 只通过 Mpx 官方 switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack；调用可采用项目现有的 mpx.xxx 或会被跨端编译转换的 wx.xxx",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx:33 对订单 tab /pages/orders/index 使用 mpx.switchTab；17 对地址页使用 mpx.navigateTo；30 对支付结果页使用 mpx.redirectTo；36 对登录页使用 mpx.reLaunch；outputs/src/pages/address/select.mpx:28 使用 mpx.navigateBack。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n3",
+      "text": "需要 EventChannel 的地址入口使用 button 调用脚本中的 navigateTo，不强制保留 navigator；其他普通声明式导航若使用 navigator，open-type 使用模板值 navigate，而不是 API 名 navigateTo，也不使用不稳定的 switchTab 模板分支",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx:3 地址入口改为 <button bindtap=\"chooseAddress\">，脚本中 17-27 调用 mpx.navigateTo；outputs 中未检出 navigator/open-type。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n4",
+      "text": "Web 路由只通过 mpx.config.webConfig.routeConfig 配置 history 与 /shop/ base，output.publicPath 同为 /shop/",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx:7-13 仅通过 mpx.config.webConfig.routeConfig 配置 mode: 'history' 与 base: '/shop/'；outputs/vue.config.js:4 publicPath 为 '/shop/'，且 vue.config.js 中未再配置 webRouteConfig。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n5",
+      "text": "业务代码不引入 this.$router、window.history、location 跳转或 getCurrentPages 回传地址",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "对 outputs 执行检索未发现 this.$router、window.history、location 跳转或 getCurrentPages；相关跳转均使用 mpx 官方路由 API。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n6",
+      "text": "地址展示、地址选择、返回、登录失效重启、支付结果替换和订单 tab 链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/checkout/index.mpx:4 保留地址展示；3 和 17-27 保留地址选择入口及 EventChannel 回传；outputs/src/pages/address/select.mpx:3、25-28 保留地址选择和返回；outputs/src/pages/checkout/index.mpx:30 支付结果 redirectTo 替换当前页，33 订单 tab switchTab，36 登录失效 reLaunch。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "全部断言均有源码证据支撑；未发现会造成结论偏差的断言缺口。"
+  }
+}

@@ -3,10 +3,9 @@
     <text class="title">{{article.title}}</text>
     <rich-text nodes="{{article.content}}" />
     <button bindtap="toggleFavorite">{{favorite ? '已收藏' : '收藏'}}</button>
-    <view wx:if="{{isBrowser}}" class="share-toolbar">复制链接</view>
-    <view wx:if="{{!recommendReady}}" class="recommend-placeholder"></view>
+    <view wx:if="{{isClientReady}}" class="share-toolbar">复制链接</view>
     <recommend-list
-      wx:if="{{recommendReady}}"
+      wx:if="{{isClientReady}}"
       article-id="{{articleId}}"
       items="{{recommendations}}"
       bindselect="openArticle"
@@ -21,34 +20,34 @@ import { useArticleStore } from '../../stores/article'
 createPage({
   data: {
     articleId: '',
-    // Keep SSR and the initial browser hydration tree identical. Browser-only
-    // controls are enabled after the page has hydrated.
-    isBrowser: false,
-    recommendReady: false,
-    favorite: false
+    favorite: false,
+    // Keep the SSR and hydration trees identical. Browser-only features are
+    // mounted after hydration, when the async subpackage is available.
+    isClientReady: false
   },
   computed: {
-    article () { return useArticleStore(this.$pinia).article || {} },
-    recommendations () { return useArticleStore(this.$pinia).recommendations }
+    article () {
+      const store = useArticleStore(this.$pinia)
+      return store.activeArticleId === this.articleId ? (store.article || {}) : {}
+    },
+    recommendations () {
+      const store = useArticleStore(this.$pinia)
+      return store.activeArticleId === this.articleId ? store.recommendations : []
+    }
   },
   onLoad (query) {
-    this.articleId = query.id || ''
-    this.recommendReady = true
-
-    if (typeof window !== 'undefined') {
-      this.isBrowser = true
-    }
-
-    return this.loadArticle(this.articleId)
+    if (typeof window !== 'undefined') this.loadArticle(query.id)
+  },
+  onReady () {
+    if (typeof window !== 'undefined') this.isClientReady = true
   },
   serverPrefetch () {
-    const articleId = this.$route.query.id || ''
-    this.articleId = articleId
-    return this.loadArticle(articleId, this.$ssrContext)
+    return this.loadArticle(this.$route.query.id, this.$ssrContext)
   },
   methods: {
     loadArticle (articleId, requestContext) {
-      return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
+      this.articleId = String(articleId || '')
+      return useArticleStore(this.$pinia).loadArticle(this.articleId, requestContext)
     },
     toggleFavorite () {
       this.favorite = !this.favorite

@@ -9,22 +9,22 @@ import mpx, { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
-    selectedAddress: null,
     addresses: [
       { id: 'home', name: '家', detail: '幸福路 1 号' },
       { id: 'office', name: '公司', detail: '科技路 8 号' }
-    ]
+    ],
+    currentAddress: null
   },
   onLoad () {
     const channel = this.getOpenerEventChannel()
     channel.on('checkoutReady', ({ address }) => {
-      this.selectedAddress = address
+      this.currentAddress = address
     })
-    this.openerEventChannel = channel
   },
   methods: {
     confirm (address) {
-      this.openerEventChannel.emit('addressSelected', address)
+      const channel = this.getOpenerEventChannel()
+      channel.emit('addressSelected', address)
       mpx.navigateBack({ delta: 1 })
     }
   }

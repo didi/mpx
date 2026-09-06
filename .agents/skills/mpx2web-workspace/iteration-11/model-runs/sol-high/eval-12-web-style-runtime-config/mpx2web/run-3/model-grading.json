@@ -1,0 +1,93 @@
+{
+  "eval_id": 12,
+  "eval_name": "web-style-runtime-config",
+  "configuration": "mpx2web",
+  "run_number": 3,
+  "model_grading_fingerprint": "943e29e9c61f3fe6792bc16befb31a20341e0d4a6e3dd03a2e2da3abf7883020",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 79184
+  },
+  "expectations": [
+    {
+      "id": "t0",
+      "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx:109-111 为 --portal-text、--portal-background、--portal-space 提供 #1f2329、#f5f7fa、24rpx 回退；outputs/src/pages/portal/index.mpx:140、156 为 --portal-scrollbar-thumb 提供 #aab2bf 回退。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t1",
+      "text": "webConfig.transRpxFn 实现明确的 100rpx=1rem 规则，0 值保持 0，不产生 0rem 或依赖运行环境的非确定结果",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/vue.config.js:8-10 的 webConfig.transRpxFn 对 value === '0' 直接 return value，非 0 使用 value * 0.01 + 'rem'，明确对应 100rpx=1rem 且不会输出 0rem。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t2",
+      "text": "移动 viewport 在 public/index.html 的 meta 中配置，组件样式和运行脚本不伪造或重复注入 viewport",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/public/index.html:5 配置唯一 viewport meta：width=device-width, initial-scale=1, viewport-fit=cover；outputs/src/pages/portal/index.mpx 中未出现 viewport 注入代码或样式。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t3",
+      "text": "hover、::-webkit-scrollbar 与浏览器 safe-area/私有 CSS 仅隔离在 Web 输出，不污染微信小程序样式",
+      "category": "conditional-compile",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx:122-159 将 env(safe-area-inset-bottom)、@media hover、scrollbar-color、scrollbar-width、::-webkit-scrollbar 全部放在 <style mode=\"web\"> 内，公共样式区未包含 hover、webkit scrollbar 或 safe-area 私有 CSS。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t4",
+      "text": "Web 弹层打开时记录并锁定 body/应用挂载容器的原 overflow，关闭、页面切换和卸载时幂等恢复原值",
+      "category": "web-cleanup",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx:47-80 在 Web 且客户端 DOM 存在时记录 documentElement、body、#app 的原 overflow，并记录 body position/top/left/right/width 与 scrollX/scrollY 后锁定；outputs/src/pages/portal/index.mpx:82-99 在关闭时幂等恢复并 scrollTo；outputs/src/pages/portal/index.mpx:21-30 在 onHide 和 onUnload 调用恢复。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t5",
+      "text": "滚动锁只保护浏览器客户端 DOM，不阻断微信小程序页面滚动、卡片点击和弹层关闭",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx:37-45 仅在 __mpx_mode__ === 'web' 时调用滚动锁/恢复；outputs/src/pages/portal/index.mpx:48、83 还检查 window/document，避免小程序 DOM 访问；outputs/src/pages/portal/index.mpx:3-6 保留卡片 bindtap、打开弹层和遮罩关闭链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t6",
+      "text": "routeConfig.base、output.publicPath 与 /portal/ 部署路径一致，主题切换、弹层和门户卡片业务链路完整",
+      "category": "web-deployment",
+      "passed": false,
+      "evidence": "outputs/vue.config.js:2、7 已将 publicPath 和 routeConfig.base 都设为 /portal/；outputs/src/pages/portal/index.mpx:33、35-45 保留卡片导航和弹层打开/关闭。但 outputs/src/pages/portal/index.mpx:34 仅切换 dark 数据，模板与样式中没有绑定 dark class/style 或更新主题变量，无法证明主题切换业务链路完整。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言未要求验证编译后的 mode=\"web\" 实际产物，因此对 Web 样式隔离的结论依赖 Mpx 对 style mode 的预期语义。",
+      "主题切换是否只要求保留事件链路，还是要求产生可见主题变化，断言表述不够精确；这会直接影响 t6 判定。"
+    ],
+    "overall": "候选修复覆盖了 viewport、/portal/ 部署、rpx 转换、Web 私有样式隔离和滚动锁恢复；主要缺口是主题切换没有实际应用到样式或 CSS 变量。"
+  }
+}

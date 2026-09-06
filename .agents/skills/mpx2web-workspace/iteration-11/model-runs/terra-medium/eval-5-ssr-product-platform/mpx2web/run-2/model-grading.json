@@ -1,0 +1,130 @@
+{
+  "eval_id": 5,
+  "eval_name": "ssr-product-platform",
+  "configuration": "mpx2web",
+  "run_number": 2,
+  "model_grading_fingerprint": "d69d61b087c90a9df2c07f377e1d410b0507ebee285f243f2e40b927da5a847b",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 126674
+  },
+  "expectations": [
+    {
+      "id": "p0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia 实例",
+      "category": "ssr-isolation",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx 在 createApp 配置中实现 onAppInit () { return { pinia: createPinia() } }，没有复用模块级 pinia 实例。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p1",
+      "text": "serverPrefetch 返回 Promise 并等待商品与首屏推荐数据",
+      "category": "ssr-prefetch",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx 的 serverPrefetch 返回 this.loadProduct(productId, this.$ssrContext)；outputs/src/stores/product.js 的 loadProduct 使用 Promise.all([fetchProduct(...), fetchRecommendations(...)]) 并返回 pendingPromise，商品和推荐并发等待。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p2",
+      "text": "store 以状态字段或请求记录维护当前商品与加载身份；同 ID 注水可复用，ID 变化立即使旧复用条件失效，快速 A→B→A 时 B 的晚到结果不能覆盖当前 A",
+      "category": "ssr-hydration",
+      "passed": true,
+      "evidence": "outputs/src/stores/product.js state 包含 productId、loaded、requestVersion、pendingProductId、pendingPromise；同 ID 且 loaded 时直接复用，同 ID pending 时返回 pendingPromise；新 ID 会递增 requestVersion 并更新 productId，then 中用 requestVersion 和 productId 双重校验，旧响应不会覆盖当前商品。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p3",
+      "text": "同构 service 返回 Promise；服务端沿调用链接收当前 SSR 上下文并从其中的 req 解析 origin，浏览器和小程序保留相对地址；不依赖参数名、wx.request、浏览器全局、localhost 或未声明的 request/requestClient 契约",
+      "category": "ssr-request",
+      "passed": true,
+      "evidence": "outputs/src/services/product.js 的 fetchProduct/fetchRecommendations 返回 requestJson 创建的 Promise；requestOrigin(ssrContext) 从 ssrContext.req.headers.host 和 req.socket.encrypted 解析 origin；无 req 时返回空字符串，使浏览器和小程序使用 /api/... 相对地址；代码未使用 localhost、wx.request、浏览器全局或未声明的 requestClient。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p4a",
+      "text": "浏览器曝光 SDK 仅在 Web 客户端动态加载，不进入 SSR 或小程序执行路径",
+      "category": "web-sdk",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx 没有顶层 import 浏览器 SDK；startTracker 中先判断 __mpx_mode__ !== 'web' 或 typeof window === 'undefined' 时返回，之后才 await import('@business/product-exposure-web')，SSR 和小程序路径不会加载 SDK。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p4b",
+      "text": "SDK 动态 import、create 等实际异步边界后复核挂载状态、初始化代际和商品身份，晚到实例不得挂载",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx 的 startTracker 在 await import 后调用 isCurrentTracker(generation, productId) 复核，await exposureSdk.create 后再次复核；若失效会 destroy 晚到 tracker 并返回。bindExposureObserver 在 $nextTick、IntersectionObserver 回调和 observe 前也复核 generation、productId、tracker 和 observer 身份。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p4c",
+      "text": "商品切换触发重新初始化并推进身份代际，旧 productId 的异步结果不能覆盖当前商品",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx 的 observers.productId 在 trackerReady 后调用 startTracker(productId)；startTracker 先 releaseTracker，releaseTracker 会递增 trackerGeneration 并销毁旧 tracker；异步完成后通过 isCurrentTracker 校验 productId 和 generation，旧 productId 的结果不能挂载到当前商品。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p5",
+      "text": "推荐组件卸载或商品切换时销毁由 SDK create 返回的 tracker，并清理 Observer 和监听，旧回调不再上报",
+      "category": "web-cleanup",
+      "passed": true,
+      "evidence": "outputs/src/components/product-recommendations.mpx 的 detached 调用 releaseTracker；商品切换时 startTracker 也先 releaseTracker；releaseTracker 递增 trackerGeneration、releaseExposureObserver 并调用 tracker.destroy；releaseExposureObserver 对旧 IntersectionObserver 调用 disconnect；回调中还校验当前 generation、productId、tracker 和 exposureObserver，旧回调不会继续上报。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p6",
+      "text": "SSR 使用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /mall/",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/vue.config.js 设置 publicPath: '/mall/'，webConfig.useSSR: true，routeConfig.mode: 'history'，routeConfig.base: '/mall/'，base 与 publicPath 对齐。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p7",
+      "text": "微信小程序 onLoad 的商品加载具有明确执行路径，不得被 window 存在性或 Web-only 条件挡住",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx 的 onLoad(query) 无条件设置 this.productId 并调用 this.loadProduct(this.productId, this.$ssrContext)；loadProduct 和 service 请求路径没有 window 或 Web-only 条件阻断，小程序无 ssrContext 时使用相对 /api 地址。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "p8",
+      "text": "规格切换、加购与相关推荐展示/跳转链路保持完整，且这些小程序业务路径不依赖浏览器全局对象",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/packageProduct/pages/detail/index.mpx 保留规格列表、selectSku、addToCart 和 product-recommendations；addToCart 使用 mpx.request('/api/cart/items') 和 mpx.showToast，不依赖浏览器全局；outputs/src/components/product-recommendations.mpx 保留推荐展示和 openProduct 的 wx.navigateTo 跳转，SDK 曝光逻辑在小程序中因 __mpx_mode__/window 判断提前返回。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "全部断言均有对应代码证据，未发现会实质影响结论的断言缺口。"
+  }
+}

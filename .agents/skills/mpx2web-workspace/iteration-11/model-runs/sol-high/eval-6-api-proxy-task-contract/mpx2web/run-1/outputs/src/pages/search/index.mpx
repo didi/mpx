@@ -18,16 +18,15 @@ createPage({
   data: {
     keyword: '',
     trendingKeywords: [],
-    suggestions: []
+    suggestions: [],
+    requestTask: null,
+    requestGeneration: 0
   },
   async onLoad () {
-    this.suggestionRequest = null
-    this.suggestionRequestId = 0
     this.trendingKeywords = await fetchTrendingKeywords()
   },
   onUnload () {
-    this.suggestionRequestId++
-    this.abortSuggestionRequest()
+    this.cancelSuggestionRequest()
   },
   methods: {
     onKeywordInput (event) {
@@ -36,45 +35,43 @@ createPage({
     chooseKeyword (keyword) {
       this.search(keyword)
     },
-    abortSuggestionRequest () {
-      const request = this.suggestionRequest
-      const requestTask = request && request.__returned
-
-      this.suggestionRequest = null
-      if (requestTask && typeof requestTask.abort === 'function') {
-        requestTask.abort()
-      }
-    },
     search (keyword) {
+      this.cancelSuggestionRequest()
       this.keyword = keyword
-      const requestId = ++this.suggestionRequestId
 
-      this.abortSuggestionRequest()
       if (!keyword) {
         this.suggestions = []
         return
       }
 
-      const request = requestSuggestions(keyword)
-      this.suggestionRequest = request
+      const generation = this.requestGeneration
+      const requestPromise = requestSuggestions(keyword)
+      const task = requestPromise.__returned
+      this.requestTask = task
 
-      request
-        .then(({ data }) => {
-          if (requestId !== this.suggestionRequestId || this.suggestionRequest !== request) return
-          this.suggestions = data.list
+      requestPromise.then(({ data }) => {
+        if (!this.isCurrentSuggestionRequest(task, generation, keyword)) return
+        this.requestTask = null
+        this.suggestions = data.list
+      }, () => {
+        if (!this.isCurrentSuggestionRequest(task, generation, keyword)) return
+        this.requestTask = null
+        mpx.showToast({
+          title: '搜索失败',
+          icon: 'none'
         })
-        .catch(() => {
-          if (requestId !== this.suggestionRequestId || this.suggestionRequest !== request) return
-          mpx.showToast({
-            title: '搜索失败',
-            icon: 'none'
-          })
-        })
-        .then(() => {
-          if (this.suggestionRequest === request) {
-            this.suggestionRequest = null
-          }
-        })
+      })
+    },
+    isCurrentSuggestionRequest (task, generation, keyword) {
+      return this.requestTask === task &&
+        this.requestGeneration === generation &&
+        this.keyword === keyword
+    },
+    cancelSuggestionRequest () {
+      const task = this.requestTask
+      this.requestTask = null
+      this.requestGeneration += 1
+      if (task && task.abort) task.abort()
     },
     openProduct (productId) {
       mpx.navigateTo({

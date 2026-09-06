@@ -1,20 +1,54 @@
 <template>
   <view class="order-page">
     <view class="order-summary">
-      <view class="summary-copy"><text class="summary-title">我的订单</text><text class="summary-subtitle">物流状态会实时更新</text></view>
-      <view class="socket-state" wx:class="{{ {online: logisticsOnline} }}"><view class="state-dot"></view><text>{{logisticsOnline ? '实时物流已连接' : '实时物流连接中'}}</text></view>
-    </view>
-    <view class="status-tabs">
-      <view class="status-tab" wx:for="{{statusTabs}}" wx:key="key" wx:class="{{ {active: item.key === activeStatus} }}" bindtap="switchStatus(item.key)">
-        <text>{{item.label}}</text><text wx:if="{{item.count}}" class="status-count">{{item.count}}</text>
+      <view class="summary-copy">
+        <text class="summary-title">我的订单</text>
+        <text class="summary-subtitle">物流状态会实时更新</text>
+      </view>
+      <view class="socket-state" wx:class="{{ {online: logisticsOnline} }}">
+        <view class="state-dot"></view>
+        <text>{{logisticsOnline ? '实时物流已连接' : '实时物流连接中'}}</text>
       </view>
     </view>
-    <view class="order-list">
-      <swipe-order-item wx:for="{{orders}}" wx:key="id" order="{{item}}" disabled="{{item.locked}}" bindselect="openOrder" bindremove="removeOrder" bindswipeend="handleSwipeEnd" />
+
+    <view class="status-tabs">
+      <view
+        class="status-tab"
+        wx:for="{{statusTabs}}"
+        wx:key="key"
+        wx:class="{{ {active: item.key === activeStatus} }}"
+        bindtap="switchStatus(item.key)"
+      >
+        <text>{{item.label}}</text>
+        <text wx:if="{{item.count}}" class="status-count">{{item.count}}</text>
+      </view>
     </view>
+
+    <view class="order-list">
+      <swipe-order-item
+        wx:for="{{orders}}"
+        wx:key="id"
+        order="{{item}}"
+        disabled="{{item.locked}}"
+        bindselect="openOrder"
+        bindremove="removeOrder"
+        bindswipeend="handleSwipeEnd"
+      />
+    </view>
+
     <view wx:if="{{loading}}" class="order-loading"><text>订单加载中...</text></view>
-    <view wx:elif="{{!orders.length}}" class="order-empty"><text>当前没有订单</text><button class="shopping-button" bindtap="goShopping">去逛逛</button></view>
-    <logistics-channel wx:if="{{memberId}}" memberId="{{memberId}}" bindconnectedchange="handleConnectionChange" bindlogistics="handleLogisticsMessage" binderror="handleChannelError" />
+    <view wx:elif="{{!orders.length}}" class="order-empty">
+      <text>当前没有订单</text>
+      <button class="shopping-button" bindtap="goShopping">去逛逛</button>
+    </view>
+
+    <logistics-channel
+      wx:if="{{memberId}}"
+      memberId="{{memberId}}"
+      bindconnectedchange="handleConnectionChange"
+      bindlogistics="handleLogisticsMessage"
+      binderror="handleChannelError"
+    />
   </view>
 </template>
 
@@ -23,19 +57,21 @@ import { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
-    memberId: 'member-10086', activeStatus: 'all',
+    memberId: 'member-10086',
+    activeStatus: 'all',
     statusTabs: [
-      { key: 'all', label: '全部', count: 0 }, { key: 'paying', label: '待付款', count: 1 },
-      { key: 'shipping', label: '待收货', count: 2 }, { key: 'done', label: '已完成', count: 0 }
+      { key: 'all', label: '全部', count: 0 },
+      { key: 'paying', label: '待付款', count: 1 },
+      { key: 'shipping', label: '待收货', count: 2 },
+      { key: 'done', label: '已完成', count: 0 }
     ],
     orders: [
       { id: 'order-20260812001', orderNo: '20260812001', status: 'shipping', statusText: '运输中', logisticsText: '包裹已到达上海转运中心', updatedAt: '今天 10:26', cover: '/assets/orders/blueberry.png', title: '云南高山蓝莓 4 盒装', skuText: '125g × 4 盒', amount: '39.90', count: 1, locked: false },
       { id: 'order-20260811008', orderNo: '20260811008', status: 'shipping', statusText: '已揽收', logisticsText: '快递员已揽收', updatedAt: '昨天 18:42', cover: '/assets/orders/coffee.png', title: '便携式手冲咖啡套装', skuText: '黑色 · 标准版', amount: '129.00', count: 1, locked: false }
     ],
-    logisticsOnline: false, loading: false, pageActive: true
+    logisticsOnline: false,
+    loading: false
   },
-  onLoad () { this.pageActive = true },
-  onUnload () { this.pageActive = false },
   methods: {
     switchStatus (status) {
       if (status === this.activeStatus) return
@@ -44,50 +80,53 @@ createPage({
     },
     fetchOrders () {
       this.loading = true
-      var status = this.activeStatus
       wx.request({
-        url: '/api/orders', data: { status },
+        url: '/api/orders',
+        data: { status: this.activeStatus },
         success: ({ data }) => {
-          if (this.pageActive && status === this.activeStatus) {
-            this.orders = data.list
-            this.statusTabs = data.summary
-          }
+          this.orders = data.list
+          this.statusTabs = data.summary
         },
-        complete: () => { if (status === this.activeStatus) this.loading = false }
+        complete: () => { this.loading = false }
       })
     },
     openOrder ({ detail }) {
-      if (!this.pageActive) return
       wx.navigateTo({ url: `/pages/orders/detail?id=${detail.orderId}` })
     },
     removeOrder ({ detail }) {
-      if (!this.pageActive) return
       wx.showModal({
-        title: '删除订单', content: '删除后将无法在订单列表中查看，确认删除吗？',
+        title: '删除订单',
+        content: '删除后将无法在订单列表中查看，确认删除吗？',
         success: ({ confirm }) => {
-          if (!confirm || !this.pageActive) return
-          wx.request({ url: `/api/orders/${detail.orderId}`, method: 'DELETE', success: () => {
-            if (this.pageActive) this.orders = this.orders.filter(order => order.id !== detail.orderId)
-          } })
+          if (!confirm) return
+          wx.request({
+            url: `/api/orders/${detail.orderId}`,
+            method: 'DELETE',
+            success: () => { this.orders = this.orders.filter(order => order.id !== detail.orderId) }
+          })
         }
       })
     },
     handleSwipeEnd ({ detail }) {
-      if (!detail.open) return
+      if (!detail.open) {
+        this.orders = this.orders.map(order => Object.assign({}, order, { locked: false }))
+        return
+      }
       this.orders = this.orders.map(order => Object.assign({}, order, { locked: order.id !== detail.orderId }))
     },
     handleConnectionChange ({ detail }) {
-      if (!this.pageActive || detail.memberId !== this.memberId) return
+      if (!detail || detail.memberId !== this.memberId) return
       this.logisticsOnline = detail.connected
     },
     handleLogisticsMessage ({ detail }) {
-      if (!this.pageActive || detail.memberId !== this.memberId) return
-      this.orders = this.orders.map(order => order.id !== detail.orderId ? order : Object.assign({}, order, {
-        status: detail.status, statusText: detail.statusText, logisticsText: detail.logisticsText, updatedAt: detail.updatedAt
-      }))
+      if (!detail || detail.memberId !== this.memberId) return
+      this.orders = this.orders.map(order => {
+        if (order.id !== detail.orderId) return order
+        return Object.assign({}, order, { status: detail.status, statusText: detail.statusText, logisticsText: detail.logisticsText, updatedAt: detail.updatedAt })
+      })
     },
     handleChannelError ({ detail }) {
-      if (!this.pageActive || !detail || detail.memberId !== this.memberId) return
+      if (!detail || detail.memberId !== this.memberId) return
       this.logisticsOnline = false
     },
     goShopping () { wx.switchTab({ url: '/pages/home/index' }) }
@@ -118,6 +157,9 @@ createPage({
 <script type="application/json">
 {
   "navigationBarTitleText": "我的订单",
-  "usingComponents": { "swipe-order-item": "../../components/swipe-order-item", "logistics-channel": "../../components/logistics-channel" }
+  "usingComponents": {
+    "swipe-order-item": "../../components/swipe-order-item",
+    "logistics-channel": "../../components/logistics-channel"
+  }
 }
 </script>

@@ -6,7 +6,7 @@ mpx.use(apiProxy)
 
 createApp({
   globalData: {
-    selectedAddress: null
+    pendingCheckoutAddress: null
   }
 })
 </script>

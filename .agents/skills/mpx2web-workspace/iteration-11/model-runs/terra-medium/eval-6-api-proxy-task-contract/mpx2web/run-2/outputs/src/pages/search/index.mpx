@@ -19,22 +19,13 @@ createPage({
     keyword: '',
     trendingKeywords: [],
     suggestions: [],
-    suggestionRequest: null,
-    searchVersion: 0,
-    isUnloaded: false
+    requestTask: null,
+    suggestionGeneration: 0
   },
-  onLoad () {
-    fetchTrendingKeywords()
-      .then((keywords) => {
-        if (!this.isUnloaded) this.trendingKeywords = keywords
-      })
-      .catch(() => {
-        if (!this.isUnloaded) this.showSearchError()
-      })
+  async onLoad () {
+    this.trendingKeywords = await fetchTrendingKeywords()
   },
   onUnload () {
-    this.isUnloaded = true
-    this.searchVersion++
     this.cancelSuggestionRequest()
   },
   methods: {
@@ -45,42 +36,43 @@ createPage({
       this.search(keyword)
     },
     search (keyword) {
-      const version = ++this.searchVersion
-      this.keyword = keyword
       this.cancelSuggestionRequest()
+      this.keyword = keyword
 
       if (!keyword) {
         this.suggestions = []
         return
       }
 
-      const request = requestSuggestions(keyword)
-      this.suggestionRequest = request
-      request
-        .then(({ data }) => {
-          if (!this.isUnloaded && version === this.searchVersion) {
-            this.suggestions = data.list
-          }
-        })
-        .catch(() => {
-          if (!this.isUnloaded && version === this.searchVersion) {
-            this.showSearchError()
-          }
-        })
-        .then(() => {
-          if (this.suggestionRequest === request) this.suggestionRequest = null
-        })
+      const generation = this.suggestionGeneration
+      const promise = requestSuggestions(keyword)
+      const task = promise.__returned
+      this.requestTask = task
+
+      promise.then(({ data }) => {
+        if (!this.isCurrentSuggestionRequest(task, generation, keyword)) return
+        this.suggestions = data.list
+      }).catch(() => {
+        if (!this.isCurrentSuggestionRequest(task, generation, keyword)) return
+        this.showSearchError()
+      })
     },
     cancelSuggestionRequest () {
-      const request = this.suggestionRequest
-      if (request && request.__returned) request.__returned.abort()
-      this.suggestionRequest = null
+      const task = this.requestTask
+      this.requestTask = null
+      this.suggestionGeneration += 1
+      if (task && task.abort) task.abort()
+    },
+    isCurrentSuggestionRequest (task, generation, keyword) {
+      return this.requestTask === task &&
+        this.suggestionGeneration === generation &&
+        this.keyword === keyword
     },
     showSearchError () {
       mpx.showToast({
         title: '搜索失败',
         icon: 'none'
-      })
+      }).catch(() => {})
     },
     openProduct (productId) {
       mpx.navigateTo({

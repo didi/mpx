@@ -33,30 +33,34 @@ createPage({
     categories: [],
     products: [],
     cartCount: 2,
-    activeCategoryId: null
+    dragging: false
   },
   async onLoad () {
     const { data } = await mpx.request({ url: '/api/feed' })
     this.categories = data.categories
     this.products = data.products
-    this.refreshFeedScroll()
   },
   methods: {
-    refreshFeedScroll () {
-      mpx.nextTick(() => {
-        const scroll = this.$refs.feedScroll
-        if (scroll && typeof scroll.refresh === 'function') scroll.refresh()
-      })
-    },
-    onImageLoad () {
-      this.refreshFeedScroll()
-    },
     selectCategory (categoryId) {
       this.activeCategoryId = categoryId
     },
-    onDragStart () {},
-    onDragging () {},
-    onDragEnd () {},
+    onImageLoad () {
+      mpx.nextTick(() => {
+        const feedScroll = this.$refs.feedScroll
+        if (feedScroll && typeof feedScroll.refresh === 'function') {
+          feedScroll.refresh()
+        }
+      })
+    },
+    onDragStart () {
+      this.dragging = true
+    },
+    onDragging () {
+      this.dragging = true
+    },
+    onDragEnd () {
+      this.dragging = false
+    },
     openCart () {
       mpx.navigateTo({ url: '/pages/cart/index' })
     }
@@ -77,5 +81,5 @@ createPage({
 .feed-content { min-height: 100%; }
 .categories { display: flex; background: #fff; }
 .product { padding: 24rpx; }
-.fixed-cart { position: fixed; right: 24rpx; bottom: 40rpx; }
+.fixed-cart { position: fixed; right: 24rpx; bottom: 40rpx; z-index: 10; }
 </style>

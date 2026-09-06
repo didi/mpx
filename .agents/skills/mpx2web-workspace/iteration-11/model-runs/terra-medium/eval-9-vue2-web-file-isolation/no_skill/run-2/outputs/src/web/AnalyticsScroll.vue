@@ -1,22 +1,15 @@
 <template>
   <div
-    ref="scroll" 
+    ref="viewport"
     class="analytics-scroll"
-    :class="{
-      'analytics-scroll--x': scrollX,
-      'analytics-scroll--y': scrollY
-    }"
+    :style="viewportStyle"
+    @scroll="handleScroll"
   >
     <slot />
   </div>
 </template>
 
 <script>
-function numberOrZero (value) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : 0
-}
-
 export default {
   name: 'AnalyticsScroll',
   props: {
@@ -28,86 +21,88 @@ export default {
     upperThreshold: { type: Number, default: 50 },
     lowerThreshold: { type: Number, default: 50 }
   },
-  data () {
+  data: function () {
     return {
+      lastTop: 0,
+      lastLeft: 0,
       atUpper: false,
       atLower: false
     }
   },
+  computed: {
+    viewportStyle: function () {
+      return {
+        overflowX: this.scrollX ? 'auto' : 'hidden',
+        overflowY: this.scrollY ? 'auto' : 'hidden'
+      }
+    }
+  },
   watch: {
-    scrollTop (value) {
-      this.setScrollPosition('top', value)
-    },
-    scrollLeft (value) {
-      this.setScrollPosition('left', value)
-    },
-    scrollIntoView () {
-      this.scrollToView()
-    }
+    scrollTop: 'applyScrollTop',
+    scrollLeft: 'applyScrollLeft',
+    scrollIntoView: 'scrollToTarget'
   },
-  mounted () {
-    this.$refs.scroll.addEventListener('scroll', this.handleScroll, { passive: true })
-    this.setScrollPosition('top', this.scrollTop)
-    this.setScrollPosition('left', this.scrollLeft)
-    this.scrollToView()
-  },
-  beforeDestroy () {
-    if (this.$refs.scroll) {
-      this.$refs.scroll.removeEventListener('scroll', this.handleScroll)
-    }
+  mounted: function () {
+    this.applyScrollTop(this.scrollTop)
+    this.applyScrollLeft(this.scrollLeft)
+    this.$nextTick(this.scrollToTarget)
   },
   methods: {
-    setScrollPosition (axis, value) {
-      const element = this.$refs.scroll
-      if (!element) return
-      const position = numberOrZero(value)
-      if (axis === 'top' && element.scrollTop !== position) element.scrollTop = position
-      if (axis === 'left' && element.scrollLeft !== position) element.scrollLeft = position
+    applyScrollTop: function (value) {
+      if (this.scrollY && this.$refs.viewport) this.$refs.viewport.scrollTop = Number(value) || 0
     },
-    scrollToView () {
-      const id = this.scrollIntoView
-      if (!id) return
-      this.$nextTick(() => {
-        const element = this.$refs.scroll
-        if (!element) return
-        const target = Array.prototype.find.call(
-          element.querySelectorAll('[id]'),
-          (node) => node.id === id
-        )
-        if (target && typeof target.scrollIntoView === 'function') {
-          target.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-        }
-      })
+    applyScrollLeft: function (value) {
+      if (this.scrollX && this.$refs.viewport) this.$refs.viewport.scrollLeft = Number(value) || 0
     },
-    handleScroll () {
-      const element = this.$refs.scroll
-      const detail = {
-        scrollLeft: element.scrollLeft,
-        scrollTop: element.scrollTop,
-        scrollHeight: element.scrollHeight,
-        scrollWidth: element.scrollWidth,
-        clientHeight: element.clientHeight,
-        clientWidth: element.clientWidth
+    scrollToTarget: function (id) {
+      id = typeof id === 'string' ? id : this.scrollIntoView
+      var viewport = this.$refs.viewport
+      if (!id || !viewport || typeof document === 'undefined') return
+      var target = document.getElementById(id)
+      if (!target || !viewport.contains(target)) return
+      var viewportRect = viewport.getBoundingClientRect()
+      var targetRect = target.getBoundingClientRect()
+      if (this.scrollY) {
+        if (targetRect.top < viewportRect.top) viewport.scrollTop += targetRect.top - viewportRect.top
+        if (targetRect.bottom > viewportRect.bottom) viewport.scrollTop += targetRect.bottom - viewportRect.bottom
       }
+      if (this.scrollX) {
+        if (targetRect.left < viewportRect.left) viewport.scrollLeft += targetRect.left - viewportRect.left
+        if (targetRect.right > viewportRect.right) viewport.scrollLeft += targetRect.right - viewportRect.right
+      }
+    },
+    handleScroll: function () {
+      var viewport = this.$refs.viewport
+      if (!viewport) return
+      var detail = {
+        scrollTop: viewport.scrollTop,
+        scrollLeft: viewport.scrollLeft,
+        scrollHeight: viewport.scrollHeight,
+        scrollWidth: viewport.scrollWidth,
+        deltaY: viewport.scrollTop - this.lastTop,
+        deltaX: viewport.scrollLeft - this.lastLeft
+      }
+      this.lastTop = viewport.scrollTop
+      this.lastLeft = viewport.scrollLeft
       this.$emit('scroll', detail)
 
-      const upper = this.isAtUpper(element)
-      const lower = this.isAtLower(element)
-      if (upper && !this.atUpper) this.$emit('scrolltoupper', detail)
-      if (lower && !this.atLower) this.$emit('scrolltolower', detail)
-      this.atUpper = upper
-      this.atLower = lower
-    },
-    isAtUpper (element) {
-      const threshold = Math.max(0, numberOrZero(this.upperThreshold))
-      return (this.scrollY && element.scrollTop <= threshold) ||
-        (this.scrollX && element.scrollLeft <= threshold)
-    },
-    isAtLower (element) {
-      const threshold = Math.max(0, numberOrZero(this.lowerThreshold))
-      const vertical = element.scrollHeight - element.clientHeight - element.scrollTop <= threshold
-      const horizontal = element.scrollWidth - element.clientWidth - element.scrollLeft <= threshold
-      return (this.scrollY && vertical) || (this.scrollX && horizontal)
+      var threshold = Math.max(0, Number(this.upperThreshold) || 0)
+      var position = this.scrollY ? viewport.scrollTop : viewport.scrollLeft
+      var remaining = this.scrollY
+        ? viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop
+        : viewport.scrollWidth - viewport.clientWidth - viewport.scrollLeft
+      if (position <= threshold) {
+        if (!this.atUpper) this.$emit('scrolltoupper', detail)
+        this.atUpper = true
+      } else {
+        this.atUpper = false
+      }
+      if (remaining <= Math.max(0, Number(this.lowerThreshold) || 0)) {
+        if (!this.atLower) this.$emit('scrolltolower', detail)
+        this.atLower = true
+      } else {
+        this.atLower = false
+      }
     }
   }
 }
@@ -115,14 +110,8 @@ export default {
 
 <style scoped>
 .analytics-scroll {
-  overflow: hidden;
-}
-
-.analytics-scroll--x {
-  overflow-x: auto;
-}
-
-.analytics-scroll--y {
-  overflow-y: auto;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
 }
 </style>

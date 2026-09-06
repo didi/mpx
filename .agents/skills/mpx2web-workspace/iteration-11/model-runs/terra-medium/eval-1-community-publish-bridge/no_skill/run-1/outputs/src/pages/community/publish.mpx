@@ -5,6 +5,10 @@
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
     </view>
 
+    <view wx:if="{{feedback}}" class="publish-feedback" role="status">
+      <text>{{feedback}}</text>
+    </view>
+
     <view class="form-card">
       <textarea
         class="content-input"
@@ -69,8 +73,6 @@
       </view>
     </view>
 
-    <text wx:if="{{operationMessage}}" class="operation-message" aria-live="polite">{{operationMessage}}</text>
-
     <view class="publish-notice">
       <switch checked="{{allowComments}}" bindchange="toggleComments" color="#1677ff" />
       <text class="notice-text">允许其他用户评论</text>
@@ -104,7 +106,7 @@ createPage({
     selectedTopic: {},
     allowComments: true,
     submitting: false,
-    operationMessage: ''
+    feedback: ''
   },
   computed: {
     canSubmit () {
@@ -112,40 +114,42 @@ createPage({
     }
   },
   methods: {
-    getWxMethod (name) {
-      const api = typeof wx !== 'undefined' ? wx : null
-      return api && typeof api[name] === 'function' ? api[name].bind(api) : null
+    getMiniProgramApi () {
+      return typeof wx === 'undefined' ? null : wx
     },
-    showMessage (message) {
-      this.operationMessage = message
+    hasMiniProgramCapability (name) {
+      const api = this.getMiniProgramApi()
+      return Boolean(api && typeof api[name] === 'function')
+    },
+    showFeedback (message) {
+      this.feedback = message
+      const api = this.getMiniProgramApi()
+      if (api && typeof api.showToast === 'function') {
+        api.showToast({ title: message, icon: 'none' })
+      }
     },
     updateContent (event) {
       this.content = event.detail.value
     },
     choosePlace () {
-      const chooseLocation = this.getWxMethod('chooseLocation')
-      if (!chooseLocation) {
-        this.showMessage('当前位置选择暂未在 Web 端开放')
+      if (!this.hasMiniProgramCapability('chooseLocation')) {
+        this.showFeedback('当前位置功能暂未接入 Web 端')
         return
       }
-      chooseLocation({
+      this.getMiniProgramApi().chooseLocation({
         success: (place) => {
           this.place = place
-          this.operationMessage = ''
-        },
-        fail: () => {
-          this.showMessage('位置选择失败，请重试')
+          this.feedback = ''
         }
       })
     },
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
-      const openLocation = this.getWxMethod('openLocation')
-      if (!openLocation) {
-        this.showMessage('地图查看暂未在 Web 端开放')
+      if (!this.hasMiniProgramCapability('openLocation')) {
+        this.showFeedback('地图查看功能暂未接入 Web 端')
         return
       }
-      openLocation({
+      this.getMiniProgramApi().openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
         name: this.place.name,
@@ -153,21 +157,17 @@ createPage({
       })
     },
     choosePhoto () {
-      const chooseMedia = this.getWxMethod('chooseMedia')
-      if (!chooseMedia) {
-        this.showMessage('图片选择暂未在 Web 端开放')
+      if (!this.hasMiniProgramCapability('chooseMedia')) {
+        this.showFeedback('图片选择功能暂未接入 Web 端')
         return
       }
-      chooseMedia({
+      this.getMiniProgramApi().chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
         sourceType: ['album', 'camera'],
         success: ({ tempFiles }) => {
-          this.photos = this.photos.concat(tempFiles || [])
-          this.operationMessage = ''
-        },
-        fail: () => {
-          this.showMessage('图片选择失败，请重试')
+          this.photos = this.photos.concat(tempFiles)
+          this.feedback = ''
         }
       })
     },
@@ -175,66 +175,43 @@ createPage({
       this.photos.splice(index, 1)
     },
     selectTopic (event) {
-      this.selectedTopic = this.topics[Number(event.detail.value)] || {}
+      this.selectedTopic = this.topics[Number(event.detail.value)]
     },
     toggleComments (event) {
       this.allowComments = event.detail.value
     },
     submitPost () {
       if (!this.canSubmit || this.submitting) return
-      const payload = {
-        content: this.content,
-        photos: this.photos.map(item => item.tempFilePath),
-        place: this.place,
-        topicId: this.selectedTopic.id || '',
-        allowComments: this.allowComments
+      if (!this.hasMiniProgramCapability('request')) {
+        this.showFeedback('发布服务暂未接入 Web 端')
+        return
       }
-      const request = this.getWxMethod('request')
-
       this.submitting = true
-      this.operationMessage = ''
-      if (request) {
-        request({
-          url: '/api/community/posts',
-          method: 'POST',
-          data: payload,
-          success: ({ data }) => this.handlePublishSuccess(data),
-          fail: () => this.showMessage('发布失败，请重试'),
-          complete: () => {
-            this.submitting = false
-          }
-        })
-        return
-      }
-
-      if (typeof fetch !== 'function') {
-        this.submitting = false
-        this.showMessage('当前环境不支持发布，请稍后重试')
-        return
-      }
-
-      fetch('/api/community/posts', {
+      this.getMiniProgramApi().request({
+        url: '/api/community/posts',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then((response) => {
-          if (!response.ok) throw new Error('request failed')
-          return response.json()
-        })
-        .then(data => this.handlePublishSuccess(data))
-        .catch(() => this.showMessage('发布失败，请重试'))
-        .then(() => {
+        data: {
+          content: this.content,
+          photos: this.photos.map(item => item.tempFilePath),
+          place: this.place,
+          topicId: this.selectedTopic.id || '',
+          allowComments: this.allowComments
+        },
+        success: ({ data }) => {
+          const api = this.getMiniProgramApi()
+          if (api && typeof api.redirectTo === 'function' && data && data.id) {
+            api.redirectTo({ url: `/pages/community/detail?id=${data.id}` })
+          } else {
+            this.showFeedback('发布成功')
+          }
+        },
+        fail: () => {
+          this.showFeedback('发布失败，请重试')
+        },
+        complete: () => {
           this.submitting = false
-        })
-    },
-    handlePublishSuccess (data) {
-      const redirectTo = this.getWxMethod('redirectTo')
-      if (redirectTo && data && data.id) {
-        redirectTo({ url: `/pages/community/detail?id=${data.id}` })
-        return
-      }
-      this.showMessage('发布成功')
+        }
+      })
     }
   }
 })
@@ -253,6 +230,7 @@ createPage({
 
 .publish-title,
 .publish-tip,
+.publish-feedback text,
 .word-count,
 .photo-add-label,
 .option-label,
@@ -260,8 +238,7 @@ createPage({
 .place-name,
 .place-address,
 .place-action,
-.notice-text,
-.operation-message {
+.notice-text {
   display: block;
 }
 
@@ -275,6 +252,15 @@ createPage({
   margin-top: 8rpx;
   color: #8a8f99;
   font-size: 24rpx;
+}
+
+.publish-feedback {
+  margin-bottom: 16rpx;
+  padding: 16rpx 20rpx;
+  color: #7a5712;
+  font-size: 24rpx;
+  background: #fff8e8;
+  border-radius: 12rpx;
 }
 
 .form-card,
@@ -435,12 +421,6 @@ createPage({
 .place-action {
   margin-left: 24rpx;
   color: #1677ff;
-  font-size: 24rpx;
-}
-
-.operation-message {
-  margin: 20rpx 8rpx 0;
-  color: #8a5a00;
   font-size: 24rpx;
 }
 

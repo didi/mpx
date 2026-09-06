@@ -1,25 +1,30 @@
 <template>
   <view class="filter">
-    <button
+    <view
       class="filter-trigger"
+      role="button"
+      tabindex="0"
       aria-haspopup="dialog"
       aria-expanded="{{visible}}"
       bindtap="open"
-    >筛选</button>
+    >筛选</view>
     <view wx:if="{{visible}}" class="mask" bindtap="close">
       <view
         class="dialog"
         role="dialog"
         aria-modal="true"
         aria-label="商品筛选"
-        catchtap="stop"
+        tabindex="-1"
+        bindtap="stop"
+        bindkeydown="onKeydown"
       >
-        <button
+        <view
           wx:for="{{options}}"
           wx:key="value"
-          aria-pressed="{{selectedMap[item.value] ? true : false}}"
+          role="button"
+          tabindex="0"
           bindtap="toggle(item.value)"
-        >{{item.label}}</button>
+        >{{item.label}}</view>
         <button bindtap="clear">清空</button>
         <button bindtap="confirm">确定</button>
       </view>
@@ -31,38 +36,24 @@
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
-  properties: {
-    options: { type: Array, value: () => [] }
-  },
-  data: {
-    visible: false,
-    selected: [],
-    selectedMap: {}
-  },
+  properties: { options: { type: Array, value: () => [] } },
+  data: { visible: false, selected: [] },
   methods: {
-    open () {
-      this.visible = true
-    },
-    close () {
-      this.visible = false
-    },
+    open () { this.visible = true },
+    close () { this.visible = false },
     stop () {},
     toggle (value) {
       this.selected = this.selected.includes(value)
         ? this.selected.filter((item) => item !== value)
         : this.selected.concat(value)
-      this.selectedMap = this.selected.reduce((result, item) => {
-        result[item] = true
-        return result
-      }, {})
     },
-    clear () {
-      this.selected = []
-      this.selectedMap = {}
-    },
+    clear () { this.selected = [] },
     confirm () {
-      this.triggerEvent('confirm', { selected: this.selected.slice() })
+      this.triggerEvent('confirm', { selected: this.selected })
       this.close()
+    },
+    onKeydown (event) {
+      if (event.key === 'Escape') this.close()
     }
   }
 })

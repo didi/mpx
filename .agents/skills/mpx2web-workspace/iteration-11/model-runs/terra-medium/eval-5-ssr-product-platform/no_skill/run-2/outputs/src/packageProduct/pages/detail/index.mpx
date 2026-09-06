@@ -17,7 +17,10 @@
       </view>
       <button class="cart-button" bindtap="addToCart">加入购物车</button>
     </view>
-    <product-recommendations productId="{{productId}}" items="{{recommendations}}" />
+    <product-recommendations
+      productId="{{productId}}"
+      items="{{recommendations}}"
+    />
   </view>
 </template>
 
@@ -27,37 +30,50 @@ import mpx from '@mpxjs/api-proxy'
 import { useProductStore } from '../../../stores/product'
 
 createPage({
-  data: { productId: '', selectedSkuId: '' },
+  data: {
+    productId: '',
+    selectedSkuId: '',
+    loadVersion: 0
+  },
   computed: {
-    product () { return useProductStore(this.$pinia).product },
-    recommendations () { return useProductStore(this.$pinia).recommendations },
-    selectedSku () { return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {} }
+    product () {
+      return useProductStore(this.$pinia).product
+    },
+    recommendations () {
+      return useProductStore(this.$pinia).recommendations
+    },
+    selectedSku () {
+      return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
+    }
   },
   onLoad (query) {
-    return this.loadProduct(query.id)
-  },
-  // SSR waits for this promise and serializes the request-local Pinia state.
-  onServerPrefetch () {
-    const query = (this.$route && this.$route.query) || {}
-    return this.loadProduct(query.id || this.productId)
+    const productId = query.id
+    this.productId = productId
+    // Returning this promise makes SSR wait for both parts of the first screen.
+    return this.loadProduct(productId)
   },
   methods: {
     async loadProduct (productId) {
-      const id = String(productId || '')
-      if (!id) return
-      this.productId = id
-      const result = await useProductStore(this.$pinia).loadProduct(id, this.$ssrContext)
-      // Do not let a page that has navigated elsewhere update its selection.
-      if (this.productId === id) {
-        const product = result && result.product
-        this.selectedSkuId = product && product.skus && product.skus[0] ? product.skus[0].id : ''
-      }
+      const version = ++this.loadVersion
+      const store = useProductStore(this.$pinia)
+      await store.loadProduct(productId, this.$ssrContext)
+
+      // A route change may finish before an earlier request.  Never let that
+      // earlier completion choose a SKU for the current page.
+      if (version !== this.loadVersion || productId !== this.productId) return
+      this.selectedSkuId = (store.product.skus || [])[0] && store.product.skus[0].id
     },
-    selectSku (skuId) { this.selectedSkuId = skuId },
+    selectSku (skuId) {
+      this.selectedSkuId = skuId
+    },
     addToCart () {
       mpx.request({
-        url: '/api/cart/items', method: 'POST',
-        data: { productId: this.productId, skuId: this.selectedSkuId },
+        url: '/api/cart/items',
+        method: 'POST',
+        data: {
+          productId: this.productId,
+          skuId: this.selectedSkuId
+        },
         success: () => mpx.showToast({ title: '已加入购物车' })
       })
     }
@@ -66,20 +82,63 @@ createPage({
 </script>
 
 <style>
-.product-detail { min-height: 100vh; background: #f5f5f5; }
-.product-cover { width: 750rpx; height: 750rpx; }
-.product-info { padding: 28rpx; background: #ffffff; }
-.product-name { color: #222222; font-size: 36rpx; font-weight: bold; }
-.product-price { margin: 18rpx 0; color: #e64340; font-size: 42rpx; }
-.sku-list { display: flex; flex-wrap: wrap; }
-.sku-item { margin: 0 16rpx 16rpx 0; padding: 12rpx 20rpx; color: #555555; background: #f2f2f2; border-radius: 8rpx; }
-.sku-item.active { color: #ffffff; background: #ff5a36; }
-.cart-button { margin-top: 20rpx; color: #ffffff; background: #ff5a36; }
+.product-detail {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.product-cover {
+  width: 750rpx;
+  height: 750rpx;
+}
+
+.product-info {
+  padding: 28rpx;
+  background: #ffffff;
+}
+
+.product-name {
+  color: #222222;
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.product-price {
+  margin: 18rpx 0;
+  color: #e64340;
+  font-size: 42rpx;
+}
+
+.sku-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.sku-item {
+  margin: 0 16rpx 16rpx 0;
+  padding: 12rpx 20rpx;
+  color: #555555;
+  background: #f2f2f2;
+  border-radius: 8rpx;
+}
+
+.sku-item.active {
+  color: #ffffff;
+  background: #ff5a36;
+}
+
+.cart-button {
+  margin-top: 20rpx;
+  color: #ffffff;
+  background: #ff5a36;
+}
 </style>
 
 <script type="application/json">
 {
   "navigationBarTitleText": "商品详情",
-  "usingComponents": { "product-recommendations": "../../../components/product-recommendations" }
+  "usingComponents": {
+    "product-recommendations": "../../../components/product-recommendations"
+  }
 }
 </script>

@@ -4,9 +4,8 @@
       id="product-video"
       src="{{product.video}}"
       autoplay
-      muted="{{true}}"
+      muted
       playsinline
-      enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
@@ -29,17 +28,17 @@ createComponent({
   methods: {
     onTimeUpdate (event) {
       const detail = event.detail || event
-      const currentTime = typeof detail.currentTime === 'number' ? detail.currentTime : detail.target && detail.target.currentTime
-      const duration = typeof detail.duration === 'number' ? detail.duration : detail.target && detail.target.duration
-      if (typeof currentTime === 'number') this.progress = currentTime
-      if (typeof duration === 'number' && isFinite(duration)) this.duration = duration
+      const target = event.target || detail.target || {}
+      this.progress = detail.currentTime != null ? detail.currentTime : target.currentTime || 0
+      this.duration = detail.duration != null ? detail.duration : target.duration || 0
     },
     onLoadedMetadata (event) {
       const detail = event.detail || event
-      const width = detail.width || detail.videoWidth
-      const height = detail.height || detail.videoHeight
-      if (width && height) this.videoSize = `${width}x${height}`
-      if (typeof detail.duration === 'number' && isFinite(detail.duration)) this.duration = detail.duration
+      const target = event.target || detail.target || {}
+      const width = detail.width != null ? detail.width : target.videoWidth
+      const height = detail.height != null ? detail.height : target.videoHeight
+      this.videoSize = `${width || 0}x${height || 0}`
+      this.duration = detail.duration != null ? detail.duration : target.duration || 0
     },
     onVideoError () {}
   }

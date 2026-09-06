@@ -33,7 +33,7 @@ createPage({
   data: {
     productId: '',
     selectedSkuId: '',
-    requestVersion: 0
+    productRequestVersion: 0
   },
   computed: {
     product () {
@@ -55,9 +55,9 @@ createPage({
   },
   methods: {
     async loadProduct (productId, requestContext) {
-      const requestVersion = ++this.requestVersion
+      const version = ++this.productRequestVersion
       await useProductStore(this.$pinia).loadProduct(productId, requestContext)
-      if (requestVersion !== this.requestVersion || this.productId !== productId) return
+      if (version !== this.productRequestVersion || this.productId !== productId) return
       const skus = this.product.skus || []
       this.selectedSkuId = skus[0] && skus[0].id
     },
@@ -107,10 +107,29 @@ createPage({
   font-size: 42rpx;
 }
 
-.sku-list { display: flex; flex-wrap: wrap; }
-.sku-item { margin: 0 16rpx 16rpx 0; padding: 12rpx 20rpx; color: #555555; background: #f2f2f2; border-radius: 8rpx; }
-.sku-item.active { color: #ffffff; background: #ff5a36; }
-.cart-button { margin-top: 20rpx; color: #ffffff; background: #ff5a36; }
+.sku-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.sku-item {
+  margin: 0 16rpx 16rpx 0;
+  padding: 12rpx 20rpx;
+  color: #555555;
+  background: #f2f2f2;
+  border-radius: 8rpx;
+}
+
+.sku-item.active {
+  color: #ffffff;
+  background: #ff5a36;
+}
+
+.cart-button {
+  margin-top: 20rpx;
+  color: #ffffff;
+  background: #ff5a36;
+}
 </style>
 
 <script type="application/json">

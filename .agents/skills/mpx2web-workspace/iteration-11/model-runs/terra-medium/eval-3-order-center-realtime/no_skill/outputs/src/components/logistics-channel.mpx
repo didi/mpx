@@ -10,64 +10,68 @@ import { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
-    memberId: { type: String, observer () { if (this._attached) this.connectChannel() } }
+    memberId: {
+      type: String,
+      value: '',
+      observer (memberId) {
+        if (this._attached) this.connectChannel(memberId)
+      }
+    }
   },
   data: { connected: false },
-  attached () { this._attached = true; this.connectChannel() },
+  attached () { this._attached = true; this._generation = 0; this.connectChannel(this.memberId) },
   detached () { this._attached = false; this.invalidateChannel() },
   methods: {
     invalidateChannel () {
       this._generation = (this._generation || 0) + 1
       const task = this._socketTask
       this._socketTask = null
-      if (task && task.close) task.close({ code: 1000 })
+      if (task && task.close) task.close()
       this.connected = false
     },
-    isCurrent (generation, memberId, task) {
-      return this._attached && generation === this._generation && memberId === this.memberId && task === this._socketTask
-    },
-    connectChannel () {
-      if (!this._attached || !this.memberId) return
+    connectChannel (memberId) {
       this.invalidateChannel()
+      if (!this._attached || !memberId) return
       const generation = this._generation
-      const memberId = this.memberId
-      // 先发布新代际的离线状态；页面因此不会继续接受上一代际的消息。
-      this.triggerEvent('connectedchange', { connected: false, memberId, generation })
+      const isCurrent = () => this._attached && generation === this._generation && memberId === this.memberId
+      const emitConnection = (connected) => { if (!isCurrent()) return; this.connected = connected; this.triggerEvent('connectedchange', { connected, memberId }) }
+      const onOpen = () => emitConnection(true)
+      const onClose = () => emitConnection(false)
+      const onError = (error) => { if (!isCurrent()) return; emitConnection(false); this.triggerEvent('error', { error, memberId }) }
+      const onMessage = ({ data }) => {
+        if (!isCurrent()) return
+        let message
+        try { message = typeof data === 'string' ? JSON.parse(data) : data } catch (error) { onError(error); return }
+        if (!message || message.type !== 'logistics' || !message.payload) return
+        const payload = message.payload
+        // A server message for a different member must never update this page.
+        if (payload.memberId && payload.memberId !== memberId) return
+        this.triggerEvent('logistics', Object.assign({}, payload, { memberId }))
+      }
       const task = wx.connectSocket({
-        url: `wss://logistics.example.com/members/${encodeURIComponent(memberId)}`,
+        url: `wss://logistics.example.com/members/${memberId}`,
         header: { Authorization: `Bearer ${wx.getStorageSync('token')}` }
       })
       this._socketTask = task
-      task.onOpen(() => {
-        if (!this.isCurrent(generation, memberId, task)) return
-        this.connected = true
-        this.triggerEvent('connectedchange', { connected: true, memberId, generation })
-      })
-      task.onMessage(({ data }) => {
-        if (!this.isCurrent(generation, memberId, task)) return
-        let message
-        try { message = typeof data === 'string' ? JSON.parse(data) : data } catch (error) { return }
-        if (!message || message.type !== 'logistics') return
-        const payload = message.payload || {}
-        if (payload.memberId && payload.memberId !== memberId) return
-        this.triggerEvent('logistics', Object.assign({}, payload, { memberId, generation }))
-      })
-      task.onError((error) => {
-        if (!this.isCurrent(generation, memberId, task)) return
-        this.connected = false
-        this.triggerEvent('connectedchange', { connected: false, memberId, generation })
-        this.triggerEvent('error', { error, memberId, generation })
-      })
-      task.onClose(() => {
-        if (!this.isCurrent(generation, memberId, task)) return
-        this.connected = false
-        this.triggerEvent('connectedchange', { connected: false, memberId, generation })
-      })
+      // SocketTask handlers are connection-scoped on both Mini Program and Web.
+      // The generation check also makes queued callbacks from a retired task harmless.
+      if (task && task.onOpen) {
+        task.onOpen(onOpen)
+        task.onMessage(onMessage)
+        task.onError(onError)
+        task.onClose(onClose)
+      } else {
+        wx.onSocketOpen(onOpen)
+        wx.onSocketMessage(onMessage)
+        wx.onSocketError(onError)
+        wx.onSocketClose(onClose)
+      }
     },
-    reconnect () { this.connectChannel() },
+    reconnect () { this.connectChannel(this.memberId) },
     sendHeartbeat () {
       const task = this._socketTask
-      if (task && this.connected) task.send({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) })
+      if (!this.connected || !task || !task.send) return
+      task.send({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) })
     }
   }
 })
@@ -76,6 +80,7 @@ createComponent({
 <style scoped>
 .channel-panel { margin-top: 16rpx; }.channel-offline, .channel-online { display: flex; align-items: center; justify-content: space-between; padding: 18rpx 24rpx; border-radius: 14rpx; }.channel-offline { background: #fff7e6; }.channel-online { background: #f0fff7; }.channel-tip { color: #747a84; font-size: 22rpx; }.reconnect-button, .ping-button { margin: 0; padding: 0 20rpx; font-size: 22rpx; line-height: 52rpx; background: #fff; border-radius: 26rpx; }.reconnect-button { color: #d48806; border: 1rpx solid #ffd591; }.ping-button { color: #219a61; border: 1rpx solid #87e8b4; }
 </style>
+
 <script type="application/json">
-{ "component": true, "styleIsolation": "isolated" }
+{"component":true,"styleIsolation":"isolated"}
 </script>

@@ -47,43 +47,38 @@ createPage({
     }
   },
   onLoad (query) {
-    const productId = query.id
-    const store = useProductStore(this.$pinia)
-
-    this.productId = productId
-
-    // Hydration happens before the client page is created. Reuse matching SSR data
-    // synchronously so the first client render is identical to the server render.
-    if (store.loaded && store.productId === productId) {
-      this.setInitialSku(productId)
-      return
-    }
-
-    // The server fetch is owned by serverPrefetch so the renderer can await it.
-    if (!this.$ssrContext) {
-      this.loadProduct(productId)
-    }
+    this.productId = String(query.id || '')
+    if (__mpx_mode__ === 'web' && typeof window === 'undefined') return
+    this.loadProduct(this.productId).catch(() => {})
   },
   serverPrefetch () {
     return this.loadProduct(this.productId, this.$ssrContext)
   },
+  onUnload () {
+    this.loadVersion += 1
+  },
   methods: {
-    async loadProduct (productId, requestContext) {
-      const loadVersion = ++this.loadVersion
-      this.selectedSkuId = ''
-
-      const committed = await useProductStore(this.$pinia).loadProduct(productId, requestContext)
-      if (!committed || loadVersion !== this.loadVersion || this.productId !== productId) return
-
-      this.setInitialSku(productId)
+    applyDefaultSku (productId, loadVersion, store) {
+      if (loadVersion !== this.loadVersion || this.productId !== productId) return
+      if (!store.loaded || store.productId !== productId) return
+      const skus = store.product.skus || []
+      this.selectedSkuId = skus[0] ? skus[0].id : ''
     },
-    setInitialSku (productId) {
+    loadProduct (productId, requestContext) {
+      const normalizedProductId = String(productId || '')
+      const loadVersion = ++this.loadVersion
       const store = useProductStore(this.$pinia)
-      if (!store.loaded || store.productId !== productId || this.productId !== productId) return
 
-      this.selectedSkuId = store.product.skus && store.product.skus[0]
-        ? store.product.skus[0].id
-        : ''
+      if (store.loaded && store.productId === normalizedProductId) {
+        this.applyDefaultSku(normalizedProductId, loadVersion, store)
+        return Promise.resolve(true)
+      }
+
+      return store.loadProduct(normalizedProductId, requestContext).then((committed) => {
+        if (!committed) return false
+        this.applyDefaultSku(normalizedProductId, loadVersion, store)
+        return true
+      })
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

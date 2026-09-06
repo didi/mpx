@@ -47,16 +47,20 @@ createPage({
   },
   onLoad (query) {
     this.productId = query.id
-    if (!this.$ssrContext) this.loadProduct(query.id)
+    this.loadProduct(query.id, this.$ssrContext)
   },
   serverPrefetch () {
     return this.loadProduct(this.productId, this.$ssrContext)
   },
   methods: {
     async loadProduct (productId, requestContext) {
+      const pageVersion = (this.productLoadVersion || 0) + 1
+      this.productLoadVersion = pageVersion
+      this.productId = productId
       await useProductStore(this.$pinia).loadProduct(productId, requestContext)
-      if (this.productId !== productId) return
-      this.selectedSkuId = this.product.skus[0] && this.product.skus[0].id
+      if (this.productLoadVersion !== pageVersion || this.productId !== productId) return
+      const product = useProductStore(this.$pinia).product
+      this.selectedSkuId = product.skus && product.skus[0] && product.skus[0].id
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

@@ -29,19 +29,6 @@ import { createPage } from '@mpxjs/core'
 import mpx from '@mpxjs/api-proxy'
 import { useProductStore } from '../../../stores/product'
 
-function getProductIdFromRequest (requestContext) {
-  const req = requestContext && requestContext.req
-  const url = req && req.url
-  const query = url && url.split('?')[1]
-  if (!query) return ''
-
-  return query.split('&').reduce((productId, entry) => {
-    if (productId) return productId
-    const pair = entry.split('=')
-    return pair[0] === 'id' ? decodeURIComponent((pair[1] || '').replace(/\+/g, ' ')) : ''
-  }, '')
-}
-
 createPage({
   data: {
     productId: '',
@@ -58,27 +45,32 @@ createPage({
       return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
     }
   },
+  onLoad (query) {
+    const productId = this.getProductId(query)
+    this.productId = productId
+    return this.loadProduct(productId)
+  },
   serverPrefetch () {
-    const productId = getProductIdFromRequest(this.$ssrContext)
+    const productId = this.getProductId()
+    this.productId = productId
     return this.loadProduct(productId, this.$ssrContext)
   },
-  onLoad (query) {
-    this.loadProduct(query.id)
-  },
   methods: {
-    async loadProduct (productId, requestContext) {
+    getProductId (query) {
+      const routeQuery = this.$route && this.$route.query
+      return (query && query.id) || (routeQuery && routeQuery.id) || this.productId
+    },
+    async loadProduct (productId, ssrContext) {
       if (!productId) return
 
-      const pageRequestVersion = (this._pageRequestVersion || 0) + 1
-      this._pageRequestVersion = pageRequestVersion
+      const pageRequestVersion = (this.pageRequestVersion || 0) + 1
+      this.pageRequestVersion = pageRequestVersion
       this.productId = productId
+      await useProductStore(this.$pinia).loadProduct(productId, ssrContext)
 
-      const loaded = await useProductStore(this.$pinia).loadProduct(productId, requestContext)
-      if (!loaded || pageRequestVersion !== this._pageRequestVersion || this.productId !== productId) return
-
-      const skus = this.product.skus || []
-      const selectedSkuExists = skus.some(item => item.id === this.selectedSkuId)
-      this.selectedSkuId = selectedSkuExists ? this.selectedSkuId : (skus[0] && skus[0].id) || ''
+      if (pageRequestVersion !== this.pageRequestVersion || this.productId !== productId) return
+      const firstSku = (this.product.skus || [])[0]
+      this.selectedSkuId = firstSku ? firstSku.id : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

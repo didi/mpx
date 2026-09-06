@@ -16,8 +16,8 @@ createPage({
   },
   methods: {
     confirm (address) {
-      const eventChannel = this.getOpenerEventChannel()
-      eventChannel.emit('addressSelected', address)
+      // 不依赖 getCurrentPages() 中的前一页实例，Web history 回退同样可用。
+      getApp().setSelectedAddress(address)
       mpx.navigateBack({ delta: 1 })
     }
   }

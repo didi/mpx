@@ -163,7 +163,6 @@ createPage({
     },
     shareOnWeb () {
       // TODO: 接入业务指定的 Web 分享 SDK、宿主 Bridge 或降级协议。
-      wx.showToast({ title: 'Web 分享能力暂未接入', icon: 'none' })
     },
     openCampaignDetail () {
       wx.navigateTo({

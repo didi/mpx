@@ -10,17 +10,17 @@
       <text class="product-subtitle">{{product.subtitle}}</text>
 
       <view class="product-meta">
-        <view class="price-tag">
-          <text class="price-currency">¥</text>
-          <text class="price-amount">{{product.price}}</text>
-          <text class="price-unit">起</text>
+        <view class="product-price">
+          <text class="product-price-currency">¥</text>
+          <text class="product-price-amount">{{product.price}}</text>
+          <text class="product-price-unit">起</text>
         </view>
         <text class="product-sales">{{product.salesText}}</text>
       </view>
 
       <view class="product-footer">
-        <text class="original-price">¥{{product.originalPrice}}</text>
-        <button class="cart-button" catchtap="addToCart" aria-label="加入购物车">+</button>
+        <text class="product-original-price">¥{{product.originalPrice}}</text>
+        <button class="product-cart-button" catchtap="addToCart" aria-label="加入购物车">+</button>
       </view>
     </view>
   </view>
@@ -48,6 +48,11 @@ createComponent({
 </script>
 
 <style>
+.product-card,
+.product-card * {
+  box-sizing: border-box;
+}
+
 .product-card {
   width: 338rpx;
   margin-bottom: 24rpx;
@@ -59,12 +64,16 @@ createComponent({
 
 .product-cover-wrap {
   position: relative;
+  width: 100%;
+  height: 300rpx;
+  overflow: hidden;
 }
 
 .product-cover {
   display: block;
   width: 100%;
   height: 300rpx;
+  border: 0;
   border-radius: 20rpx 20rpx 0 0;
 }
 
@@ -112,22 +121,22 @@ createComponent({
   margin-top: 18rpx;
 }
 
-.price-tag {
+.product-price {
   display: flex;
   flex-shrink: 0;
   align-items: baseline;
   height: 64rpx;
   color: #e64340;
-  line-height: 1;
+  white-space: nowrap;
 }
 
-.price-currency,
-.price-unit {
+.product-price-currency,
+.product-price-unit {
   font-size: 20rpx;
   line-height: 28rpx;
 }
 
-.price-amount {
+.product-price-amount {
   margin: 0 4rpx;
   font-size: 40rpx;
   font-weight: bold;
@@ -152,17 +161,18 @@ createComponent({
   margin-top: 12rpx;
 }
 
-.original-price {
+.product-original-price {
   color: #b6bac2;
   font-size: 22rpx;
   text-decoration: line-through;
 }
 
-.cart-button {
+.product-cart-button {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 52rpx;
+  min-width: 52rpx;
   height: 52rpx;
   margin: 0;
   padding: 0;
@@ -172,10 +182,6 @@ createComponent({
   background: #e64340;
   border: 0;
   border-radius: 50%;
-}
-
-.cart-button::after {
-  border: 0;
 }
 </style>
 

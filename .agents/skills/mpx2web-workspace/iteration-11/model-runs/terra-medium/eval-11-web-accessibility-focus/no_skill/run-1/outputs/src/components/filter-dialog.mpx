@@ -13,17 +13,15 @@
         class="dialog"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="filter-dialog-title"
+        aria-label="商品筛选"
+        tabindex="-1"
         bindtap="stop"
       >
-        <view id="filter-dialog-title" class="dialog-title">商品筛选</view>
         <view
           wx:for="{{options}}"
           wx:key="value"
-          class="filter-option"
-          role="button"
-          tabindex="0"
-          aria-pressed="{{selected.includes(item.value)}}"
+          role="checkbox"
+          aria-checked="{{selected.includes(item.value)}}"
           bindtap="toggle(item.value)"
         >{{item.label}}</view>
         <button bindtap="clear">清空</button>

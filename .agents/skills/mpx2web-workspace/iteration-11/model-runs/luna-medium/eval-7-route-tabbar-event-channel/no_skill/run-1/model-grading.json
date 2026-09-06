@@ -1,0 +1,92 @@
+{
+  "eval_id": 7,
+  "eval_name": "route-tabbar-event-channel",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "model_grading_fingerprint": "a700b95c7a58e6997c8fce99deab4caacb33797b22d543dff17d849fbc8569f8",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 83249
+  },
+  "expectations": [
+    {
+      "id": "n0",
+      "text": "结算页通过 Mpx 官方 navigateTo 调用的 events 建立 EventChannel，并在 success 中通过 res.eventChannel 向地址页发送当前选择；源码可以是 mpx.navigateTo 或会被跨端编译转换的 wx.navigateTo",
+      "category": "web-route",
+      "passed": false,
+      "evidence": "outputs/src/pages/checkout/index.mpx:28 仅调用 mpx.navigateTo({ url: '/pages/address/select' })，没有 events，也没有 success 中通过 res.eventChannel 发送当前 address。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n1",
+      "text": "地址页从页面实例 getOpenerEventChannel 获取通道，确认时 emit 所选地址后通过 Mpx 官方 navigateBack 返回；源码可以是 mpx.navigateBack 或会被跨端编译转换的 wx.navigateBack",
+      "category": "web-route",
+      "passed": false,
+      "evidence": "outputs/src/pages/address/select.mpx:24-25 使用 mpx.setStorageSync(SELECTED_ADDRESS_KEY, address) 后 mpx.navigateBack({ delta: 1 })；未调用 this.getOpenerEventChannel，也未 emit 所选地址。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n2",
+      "text": "订单 tab 只通过 Mpx 官方 switchTab 打开，非 tab 页面分别按语义使用 navigateTo、redirectTo、reLaunch、navigateBack；调用可采用项目现有的 mpx.xxx 或会被跨端编译转换的 wx.xxx",
+      "category": "web-route",
+      "passed": false,
+      "evidence": "outputs/src/pages/checkout/index.mpx:33、36 打开 /pages/orders/index 使用 mpx.switchTab，订单 tab 语义正确；但支付流程 outputs/src/pages/checkout/index.mpx:31-33 直接 switchTab 到订单页，没有对非 tab 的 /pages/pay/result 使用 redirectTo，候选输出中也未提供支付结果页链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n3",
+      "text": "需要 EventChannel 的地址入口使用 button 调用脚本中的 navigateTo，不强制保留 navigator；其他普通声明式导航若使用 navigator，open-type 使用模板值 navigate，而不是 API 名 navigateTo，也不使用不稳定的 switchTab 模板分支",
+      "category": "web-template",
+      "passed": false,
+      "evidence": "outputs/src/pages/checkout/index.mpx:3 地址入口仍是 <navigator url=\"/pages/address/select\" open-type=\"navigateTo\">，未使用 button 绑定脚本 chooseAddress；且 navigator 的 open-type 使用了 API 名 navigateTo，而不是模板值 navigate。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n4",
+      "text": "Web 路由只通过 mpx.config.webConfig.routeConfig 配置 history 与 /shop/ base，output.publicPath 同为 /shop/",
+      "category": "web-deployment",
+      "passed": false,
+      "evidence": "outputs/vue.config.js:4 publicPath 为 /shop/，outputs/vue.config.js:8-11 配置 history 与 /shop/；但配置位置是 pluginOptions.mpx.plugin.webRouteConfig，不是断言要求的 mpx.config.webConfig.routeConfig。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n5",
+      "text": "业务代码不引入 this.$router、window.history、location 跳转或 getCurrentPages 回传地址",
+      "category": "web-route",
+      "passed": true,
+      "evidence": "全局搜索 outputs 未发现 this.$router、window.history、location 跳转或 getCurrentPages；outputs/src/pages/address/select.mpx:24 改用 mpx.setStorageSync，checkout 使用 mpx.getStorageSync/removeStorageSync。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "n6",
+      "text": "地址展示、地址选择、返回、登录失效重启、支付结果替换和订单 tab 链路保持完整",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/checkout/index.mpx:5 可展示 address，outputs/src/pages/address/select.mpx:24-25 可存储并 navigateBack，outputs/src/pages/checkout/index.mpx:40 登录失效 reLaunch 到登录页，outputs/src/pages/checkout/index.mpx:33、36 订单页使用 switchTab；但地址入口 outputs/src/pages/checkout/index.mpx:3 使用不符合断言的 navigator open-type=\"navigateTo\" 且未绑定 chooseAddress，支付 outputs/src/pages/checkout/index.mpx:31-33 直接 switchTab 到订单页，缺失支付结果 redirectTo/替换链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "n4 对配置路径要求非常具体，但候选采用 webRouteConfig 也表达了 history/base/publicPath；若该项目版本实际只支持 webRouteConfig，断言应明确版本或允许等价官方配置路径，否则可能造成结论偏差。"
+    ],
+    "overall": "候选只修正了订单 tab 的部分 switchTab 和 Web publicPath/history/base，核心 EventChannel 回传、地址入口模板语义、支付结果替换链路均未满足。"
+  }
+}

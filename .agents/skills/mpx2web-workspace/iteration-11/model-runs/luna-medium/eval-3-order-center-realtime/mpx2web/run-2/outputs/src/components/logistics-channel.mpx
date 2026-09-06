@@ -25,97 +25,67 @@ createComponent({
   },
   data: {
     connected: false,
-    connectionVersion: 0
+    socketTask: null,
+    connectionGeneration: 0
   },
   attached () {
     this.connectChannel()
   },
-  pageHide () {
-    this.invalidateChannel()
-  },
-  pageShow () {
-    if (this.memberId && !this.connected) this.connectChannel()
-  },
-  detached () {
-    this.invalidateChannel()
+    detached () {
+      this.closeChannel()
   },
   methods: {
-    invalidateChannel () {
-      this.connectionVersion += 1
-      this.connected = false
-      this.removeSocketListeners()
-      wx.closeSocket()
-    },
-    removeSocketListeners () {
-      if (!this.socketHandlers) return
-      wx.offSocketOpen(this.socketHandlers.open)
-      wx.offSocketMessage(this.socketHandlers.message)
-      wx.offSocketError(this.socketHandlers.error)
-      wx.offSocketClose(this.socketHandlers.close)
-      this.socketHandlers = null
-    },
     connectChannel () {
       if (!this.memberId) return
-      const version = this.connectionVersion + 1
+      this.closeChannel()
+      const generation = this.connectionGeneration
       const memberId = this.memberId
-      this.connectionVersion = version
-      this.removeSocketListeners()
-      wx.closeSocket()
-      this.connected = false
-      const isCurrent = () => version === this.connectionVersion && memberId === this.memberId
-      const handlers = {
-        open: () => {
-          if (!isCurrent()) return
-          this.connected = true
-          this.triggerEvent('connectedchange', { connected: true, memberId })
-        },
-        message: ({ data }) => {
-          if (!isCurrent()) return
-          let message
-          try {
-            message = typeof data === 'string' ? JSON.parse(data) : data
-          } catch (error) {
-            return
-          }
-          if (!message) return
-          if (message.type !== 'logistics') return
-          const payload = message.payload || {}
-          const messageMemberId = payload.memberId || message.memberId
-          if (messageMemberId && messageMemberId !== memberId) return
-          this.triggerEvent('logistics', Object.assign({}, payload, { memberId }))
-        },
-        error: (error) => {
-          if (!isCurrent()) return
-          this.connected = false
-          this.triggerEvent('connectedchange', { connected: false, memberId })
-          this.triggerEvent('error', { error, memberId })
-        },
-        close: () => {
-          if (!isCurrent()) return
-          this.connected = false
-          this.triggerEvent('connectedchange', { connected: false, memberId })
-        }
-      }
-      this.socketHandlers = handlers
-      wx.onSocketOpen(handlers.open)
-      wx.onSocketMessage(handlers.message)
-      wx.onSocketError(handlers.error)
-      wx.onSocketClose(handlers.close)
-      wx.connectSocket({
+      const task = wx.connectSocket({
         url: `wss://logistics.example.com/members/${memberId}`,
         header: {
           Authorization: `Bearer ${wx.getStorageSync('token')}`
         }
       })
+      this.socketTask = task
+      const isCurrent = () => this.socketTask === task && this.connectionGeneration === generation && this.memberId === memberId
+      task.onOpen(() => {
+        if (!isCurrent()) return
+        this.connected = true
+        this.triggerEvent('connectedchange', { connected: true, memberId })
+      })
+      task.onMessage(({ data }) => {
+        if (!isCurrent()) return
+        const message = JSON.parse(data)
+        if (message.type === 'logistics') {
+          this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
+        }
+      })
+      task.onError((error) => {
+        if (!isCurrent()) return
+        this.connected = false
+        this.triggerEvent('connectedchange', { connected: false, memberId })
+        this.triggerEvent('error', { error })
+      })
+      task.onClose(() => {
+        if (!isCurrent()) return
+        this.connected = false
+        this.triggerEvent('connectedchange', { connected: false, memberId })
+      })
+    },
+    closeChannel () {
+      this.connectionGeneration += 1
+      const task = this.socketTask
+      this.socketTask = null
+      this.connected = false
+      if (task && typeof task.close === 'function') task.close({ code: 1000, reason: 'replace' })
     },
     reconnect () {
       this.connectChannel()
     },
     sendHeartbeat () {
-      if (!this.connected || !this.memberId) return
-      wx.sendSocketMessage({
-        data: JSON.stringify({ type: 'ping', memberId: this.memberId })
-      })
+      const task = this.socketTask
+      if (!task || (task.OPEN && task.readyState !== task.OPEN)) return
+      task.send({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) })
     }
   }
 })

@@ -2,7 +2,7 @@
   <view
     class="swipe-order"
     data-disabled="{{disabled}}"
-    data-open="{{isOpen}}"
+    data-offset="{{offsetX}}"
     catchtouchstart="{{gesture.onTouchStart}}"
     catchtouchmove="{{gesture.onTouchMove}}"
     catchtouchend="{{gesture.onTouchEnd}}"
@@ -14,6 +14,7 @@
 
     <view
       class="order-card"
+      wx:class="{{ {dragging: dragging, disabled: disabled} }}"
       style="transform: translateX({{offsetX}}px)"
       bindtap="selectOrder"
     >
@@ -48,117 +49,121 @@
 <script module="gesture" lang="wxs">
 var MAX_OFFSET = 96
 var OPEN_THRESHOLD = 48
-var MOVE_THRESHOLD = 6
+var DIRECTION_THRESHOLD = 4
+var TAP_THRESHOLD = 6
 
 function point(event) {
   var touches = event.touches && event.touches.length ? event.touches : event.changedTouches
-  if (!touches || !touches.length) return { x: 0, y: 0 }
+  var touch = touches && touches.length ? touches[0] : null
   return {
-    x: touches[0].clientX,
-    y: touches[0].clientY
+    x: touch ? touch.clientX : 0,
+    y: touch ? touch.clientY : 0
   }
 }
 
-function absolute(value) {
-  return value < 0 ? -value : value
+function disabled(event) {
+  var value = event.currentTarget.dataset.disabled
+  return value === true || value === 'true'
 }
 
-function truthy(value) {
-  return value === true || value === 'true' || value === 1 || value === '1'
+function number(value) {
+  var result = Number(value)
+  return isNaN(result) ? 0 : result
 }
 
-function setCardOffset(instance, offset, animate) {
+function clamp(value) {
+  if (value > 0) return 0
+  if (value < -MAX_OFFSET) return -MAX_OFFSET
+  return value
+}
+
+function render(instance, offset, animate) {
   var card = instance.selectComponent('.order-card')
   if (!card) return
   card.setStyle({
     transform: 'translateX(' + offset + 'px)',
-    transition: animate ? 'transform 180ms ease' : 'none'
+    transition: animate ? 'transform 180ms ease-out' : 'none'
   })
+}
+
+function resetState(state) {
+  state.tracking = false
+  state.axis = ''
+  state.moved = false
+  state.currentOffset = 0
 }
 
 module.exports = {
   onTouchStart: function (event) {
-    if (truthy(event.currentTarget.dataset.disabled)) return
-
+    if (disabled(event)) return
     var state = event.instance.getState()
-    var currentPoint = point(event)
-    var opened = truthy(event.currentTarget.dataset.open)
-    state.startX = currentPoint.x
-    state.startY = currentPoint.y
-    state.startOffset = opened ? -MAX_OFFSET : 0
-    state.offsetX = state.startOffset
+    var current = point(event)
+    var baseOffset = clamp(number(event.currentTarget.dataset.offset))
+    state.tracking = true
     state.axis = ''
     state.moved = false
-    state.opened = opened
-    setCardOffset(event.instance, state.startOffset, false)
+    state.startX = current.x
+    state.startY = current.y
+    state.baseOffset = baseOffset
+    state.currentOffset = baseOffset
+    render(event.instance, baseOffset, false)
+    event.instance.callMethod('beginSwipe')
   },
   onTouchMove: function (event) {
-    if (truthy(event.currentTarget.dataset.disabled)) return
-
+    if (disabled(event)) return
     var state = event.instance.getState()
-    if (state.startX === undefined) return
+    if (!state.tracking) return
+    var current = point(event)
+    var deltaX = current.x - state.startX
+    var deltaY = current.y - state.startY
 
-    var currentPoint = point(event)
-    var deltaX = currentPoint.x - state.startX
-    var deltaY = currentPoint.y - state.startY
-
-    if (!state.axis) {
-      if (absolute(deltaX) < MOVE_THRESHOLD && absolute(deltaY) < MOVE_THRESHOLD) return
-      state.axis = absolute(deltaX) > absolute(deltaY) ? 'x' : 'y'
-      if (state.axis === 'x') {
-        event.instance.callMethod('beginSwipe')
-      }
+    if (!state.axis && (Math.abs(deltaX) > DIRECTION_THRESHOLD || Math.abs(deltaY) > DIRECTION_THRESHOLD)) {
+      state.axis = Math.abs(deltaX) >= Math.abs(deltaY) ? 'x' : 'y'
     }
     if (state.axis !== 'x') return
 
-    var nextOffset = state.startOffset + deltaX
-    if (nextOffset > 0) nextOffset = 0
-    if (nextOffset < -MAX_OFFSET) nextOffset = -MAX_OFFSET
-    state.offsetX = nextOffset
-    state.moved = state.moved || absolute(deltaX) >= MOVE_THRESHOLD
-    setCardOffset(event.instance, nextOffset, false)
+    state.currentOffset = clamp(state.baseOffset + deltaX)
+    state.moved = state.moved || Math.abs(deltaX) > TAP_THRESHOLD
+    render(event.instance, state.currentOffset, false)
   },
   onTouchEnd: function (event) {
-    if (truthy(event.currentTarget.dataset.disabled)) return
-
     var state = event.instance.getState()
-    if (state.startX === undefined) return
-    var finalOffset = state.axis === 'x' ? state.offsetX : state.startOffset
-    var open = finalOffset < -OPEN_THRESHOLD
-    var targetOffset = open ? -MAX_OFFSET : 0
-    setCardOffset(event.instance, targetOffset, true)
-    state.offsetX = targetOffset
-    state.opened = open
+    if (!state.tracking) return
+    if (disabled(event)) {
+      render(event.instance, 0, true)
+      resetState(state)
+      event.instance.callMethod('cancelSwipe', { suppressTap: true })
+      return
+    }
+
+    var horizontal = state.axis === 'x'
+    var finalOffset = horizontal
+      ? (state.currentOffset < -OPEN_THRESHOLD ? -MAX_OFFSET : 0)
+      : state.baseOffset
+    var suppressTap = horizontal && state.moved
+    render(event.instance, finalOffset, true)
+    resetState(state)
     event.instance.callMethod('finishSwipe', {
-      open: open,
-      moved: state.moved === true
+      open: finalOffset === -MAX_OFFSET,
+      suppressTap: suppressTap
     })
-    state.startX = undefined
-    state.startY = undefined
-    state.axis = ''
   },
   onTouchCancel: function (event) {
-    if (truthy(event.currentTarget.dataset.disabled)) return
-
     var state = event.instance.getState()
-    if (state.startX === undefined) return
-    var open = state.startOffset === -MAX_OFFSET
-    setCardOffset(event.instance, state.startOffset, true)
-    state.offsetX = state.startOffset
-    state.opened = open
-    event.instance.callMethod('cancelSwipe', {
-      open: open,
-      moved: state.moved === true
-    })
-    state.startX = undefined
-    state.startY = undefined
-    state.axis = ''
+    if (!state.tracking) return
+    var suppressTap = state.moved
+    render(event.instance, 0, true)
+    resetState(state)
+    event.instance.callMethod('cancelSwipe', { suppressTap: suppressTap })
   }
 }
 </script>
 
 <script>
 import { createComponent } from '@mpxjs/core'
+
+const MAX_OFFSET = 96
+const TAP_GUARD_MS = 350
 
 createComponent({
   properties: {
@@ -176,34 +181,44 @@ createComponent({
   },
   data: {
     offsetX: 0,
-    isOpen: false
+    dragging: false
   },
   methods: {
     beginSwipe () {
+      if (this.disabled) return
+      this.dragging = true
       this.triggerEvent('swipestart', { orderId: this.order.id })
     },
-    finishSwipe ({ open, moved }) {
-      this.offsetX = open ? -96 : 0
-      this.isOpen = open
-      this._suppressSelectUntil = moved ? Date.now() + 350 : 0
+    syncSwipeOffset (offsetX) {
+      if (this.disabled) return
+      this.offsetX = Math.max(-MAX_OFFSET, Math.min(0, Number(offsetX) || 0))
+    },
+    finishSwipe (result) {
+      const detail = result || {}
+      const open = !this.disabled && detail.open === true
+      this.dragging = false
+      this.offsetX = open ? -MAX_OFFSET : 0
+      if (detail.suppressTap) this._tapGuardUntil = Date.now() + TAP_GUARD_MS
       this.triggerEvent('swipeend', { orderId: this.order.id, open })
     },
-    cancelSwipe ({ open, moved }) {
-      this.offsetX = open ? -96 : 0
-      this.isOpen = open
-      this._suppressSelectUntil = moved ? Date.now() + 350 : 0
-      this.triggerEvent('swipeend', { orderId: this.order.id, open })
+    cancelSwipe (result) {
+      this.dragging = false
+      this.offsetX = 0
+      if (result && result.suppressTap) this._tapGuardUntil = Date.now() + TAP_GUARD_MS
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
     },
     resetSwipe () {
+      this.dragging = false
       this.offsetX = 0
-      this.isOpen = false
-      this._suppressSelectUntil = 0
     },
     selectOrder () {
       if (this.disabled) return
-      if (Date.now() < (this._suppressSelectUntil || 0)) return
-      if (this.isOpen) {
-        this.resetSwipe()
+      if (this._tapGuardUntil && Date.now() < this._tapGuardUntil) {
+        this._tapGuardUntil = 0
+        return
+      }
+      if (this.offsetX !== 0) {
+        this.offsetX = 0
         this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
         return
       }
@@ -211,6 +226,7 @@ createComponent({
     },
     removeOrder () {
       if (this.disabled) return
+      this._tapGuardUntil = 0
       this.triggerEvent('remove', { orderId: this.order.id })
     }
   }
@@ -251,8 +267,16 @@ createComponent({
   z-index: 1;
   padding: 24rpx;
   background: #ffffff;
-  transition: transform 180ms ease;
+  transition: transform 180ms ease-out;
   will-change: transform;
+}
+
+.order-card.dragging {
+  transition: none;
+}
+
+.order-card.disabled {
+  opacity: 0.62;
 }
 
 .order-head,

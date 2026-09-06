@@ -6,10 +6,11 @@
       autoplay
       muted@web="{{true}}"
       muted@wx="{{false}}"
-      playsinline@web="{{true}}"
       enable-danmu@wx
-      bindtimeupdate="onTimeUpdate"
-      bindloadedmetadata="onLoadedMetadata"
+      bindtimeupdate@web="onWebTimeUpdate"
+      bindtimeupdate@wx="onTimeUpdate"
+      bindloadedmetadata@web="onWebLoadedMetadata"
+      bindloadedmetadata@wx="onLoadedMetadata"
       binderror="onVideoError"
     />
     <text>{{progress}} / {{duration}}</text>
@@ -17,7 +18,7 @@
 </template>
 
 <script>
-import { createComponent } from '@mpxjs/core'
+import mpx, { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
@@ -29,34 +30,25 @@ createComponent({
   },
   methods: {
     onTimeUpdate (event) {
-      const detail = event.detail || {}
-      const target = detail.target || event.target || {}
-
-      this.progress = typeof detail.currentTime === 'number'
-        ? detail.currentTime
-        : (target.currentTime || 0)
-      this.duration = typeof detail.duration === 'number'
-        ? detail.duration
-        : (target.duration || 0)
+      this.progress = event.detail.currentTime
+      this.duration = event.detail.duration
+    },
+    onWebTimeUpdate (event) {
+      const video = event.target
+      this.progress = video.currentTime || 0
+      this.duration = video.duration || 0
     },
     onLoadedMetadata (event) {
-      const detail = event.detail || {}
-      const target = detail.target || event.target || {}
-      const width = detail.width || target.videoWidth
-      const height = detail.height || target.videoHeight
-
-      if (width && height) {
-        this.videoSize = `${width}x${height}`
+      this.videoSize = `${event.detail.width}x${event.detail.height}`
+    },
+    onWebLoadedMetadata (event) {
+      const video = event.target
+      this.videoSize = `${video.videoWidth}x${video.videoHeight}`
+      this.duration = video.duration || 0
+      const context = mpx.createVideoContext('product-video', this)
+      if (context && typeof context.play === 'function') {
+        context.play()
       }
-      if (typeof detail.duration === 'number') {
-        this.duration = detail.duration
-      } else if (target.duration) {
-        this.duration = target.duration
-      }
-
-      this.$nextTick(() => {
-        this.triggerEvent('layoutchange')
-      })
     },
     onVideoError () {}
   }

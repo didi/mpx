@@ -29,20 +29,10 @@ import { createPage } from '@mpxjs/core'
 import mpx from '@mpxjs/api-proxy'
 import { useProductStore } from '../../../stores/product'
 
-function getProductIdFromContext (context) {
-  const req = context && context.req
-  if (!req) return ''
-  if (req.query && req.query.id) return req.query.id
-
-  const match = (req.url || '').match(/[?&]id=([^&]+)/)
-  return match ? decodeURIComponent(match[1]) : ''
-}
-
 createPage({
   data: {
     productId: '',
-    selectedSkuId: '',
-    loadVersion: 0
+    selectedSkuId: ''
   },
   computed: {
     product () {
@@ -56,20 +46,23 @@ createPage({
     }
   },
   serverPrefetch () {
-    const routeQuery = (this.$route && this.$route.query) || {}
-    const productId = routeQuery.id || getProductIdFromContext(this.$ssrContext)
+    const productId = this.productId || (this.$route && this.$route.query && this.$route.query.id)
+    if (!productId) return Promise.resolve()
+
+    this.productId = productId
     return this.loadProduct(productId, this.$ssrContext)
   },
   onLoad (query) {
-    this.loadProduct(query.id)
+    const productId = query.id
+    this.productId = productId
+    return this.loadProduct(productId)
   },
   methods: {
-    async loadProduct (productId, ssrContext) {
-      if (!productId) return
+    async loadProduct (productId, requestContext) {
+      const loadVersion = (this.loadVersion || 0) + 1
+      this.loadVersion = loadVersion
 
-      const loadVersion = ++this.loadVersion
-      this.productId = productId
-      await useProductStore(this.$pinia).loadProduct(productId, ssrContext)
+      await useProductStore(this.$pinia).loadProduct(productId, requestContext)
       if (loadVersion !== this.loadVersion || this.productId !== productId) return
 
       this.selectedSkuId = this.product.skus[0] && this.product.skus[0].id

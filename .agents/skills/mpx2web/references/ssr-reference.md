@@ -129,6 +129,30 @@ async loadResource (resourceId, requestContext) {
 
 具体请求实现由业务项目的同构请求层决定。
 
+若项目没有注入请求客户端，而是明确把 Node 请求对象放在 `requestContext.req`，可从当前请求解析 origin。浏览器调用没有 `requestContext` 时仍使用相对 URL：
+
+```js
+function requestOrigin (requestContext) {
+  const req = requestContext && requestContext.req
+  if (!req) return ''
+  const headers = req.headers || {}
+  const forwardedProtocol = String(headers['x-forwarded-proto'] || '').split(',')[0].trim()
+  const forwardedHost = String(headers['x-forwarded-host'] || '').split(',')[0].trim()
+  const protocol = forwardedProtocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
+  const host = forwardedHost || headers.host
+  if (!host) throw new Error('SSR request host is missing')
+  return `${protocol}://${host}`
+}
+
+export function fetchResource (resourceId, requestContext) {
+  const path = `/api/resources/${encodeURIComponent(resourceId)}`
+  const origin = requestOrigin(requestContext)
+  return fetch(origin ? `${origin}${path}` : path).then(response => response.json())
+}
+```
+
+只有位于可信反向代理之后时才接受 `x-forwarded-proto` / `x-forwarded-host`；否则使用部署层已经校验并注入的 origin。不要自行假定 `requestContext.request`、`requestClient` 等题目或项目未声明的字段。
+
 ---
 
 ## 浏览器对象限制
@@ -158,6 +182,25 @@ SSR 页面如果使用异步页面、异步组件或 Web 分包，客户端 hydr
 - 是否在渲染过程中使用了时间、随机数、浏览器尺寸等非确定性值。
 - 是否有只在客户端可见的 Web-only 节点没有用条件或 mounted 状态隔离。
 - `publicPath`、`routeConfig.base` 与服务端 HTML 资源路径是否一致。
+
+首屏模板、同步 computed 和初始化 data 不要直接调用 `Math.random()`、`Date.now()`、`new Date()`，也不要读取视口尺寸来决定节点数量或结构。需要稳定 ID 时从路由、业务数据或服务端注水状态派生；需要当前时间时由服务端生成并随状态注水，或等客户端挂载后再显示。浏览器专属节点可使用初始为 `false` 的状态，在客户端生命周期中开启：
+
+```html
+<view @web wx:if="{{clientMounted}}" class="browser-share">浏览器分享</view>
+```
+
+```js
+createPage({
+  data: {
+    clientMounted: false
+  },
+  onReady () {
+    if (__mpx_mode__ === 'web') this.clientMounted = true
+  }
+})
+```
+
+不要用忽略 hydration 警告或在服务端/客户端各算一次随机值来掩盖结构不一致；两端首次渲染必须来自同一份确定状态。
 
 ---
 

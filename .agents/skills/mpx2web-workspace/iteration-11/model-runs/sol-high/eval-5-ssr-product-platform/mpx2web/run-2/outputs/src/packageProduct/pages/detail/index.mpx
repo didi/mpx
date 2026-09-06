@@ -45,43 +45,37 @@ createPage({
       return (this.product.skus || []).find(item => item.id === this.selectedSkuId) || {}
     }
   },
-  onLoad (query = {}) {
-    this.productId = query.id == null ? '' : String(query.id)
-    if (!this.productId || this.$ssrContext) return
-    return this.loadProduct(this.productId)
+  onLoad (query) {
+    this.productId = query.id
+    this.pageRequestVersion = (this.pageRequestVersion || 0) + 1
+
+    // SSR 的首屏请求由 serverPrefetch 返回并等待；浏览器 hydrate 与小程序
+    // 仍沿用 onLoad，且 hydrate 时 store 会按已注水的商品主键直接复用。
+    if (!this.$ssrContext) {
+      this.loadProduct(query.id)
+    }
   },
   serverPrefetch () {
-    if (!this.productId) return Promise.resolve()
     return this.loadProduct(this.productId, this.$ssrContext)
   },
   onUnload () {
-    this.productLoadVersion = (this.productLoadVersion || 0) + 1
+    this.pageRequestVersion = (this.pageRequestVersion || 0) + 1
   },
   methods: {
-    syncSelectedSku (productId, product) {
-      if (this.productId !== productId) return
-      const skus = (product && product.skus) || []
-      this.selectedSkuId = skus[0] ? skus[0].id : ''
-    },
     async loadProduct (productId, requestContext) {
-      const normalizedProductId = String(productId)
-      const loadVersion = (this.productLoadVersion || 0) + 1
-      this.productLoadVersion = loadVersion
-
+      const pageRequestVersion = this.pageRequestVersion || 0
       const store = useProductStore(this.$pinia)
-      if (store.loaded && store.productId === normalizedProductId) {
-        this.syncSelectedSku(normalizedProductId, store.product)
-        return
-      }
+      const loaded = await store.loadProduct(productId, requestContext)
 
-      const result = await store.loadProduct(normalizedProductId, requestContext)
-      if (
-        loadVersion !== this.productLoadVersion ||
-        this.productId !== normalizedProductId ||
-        !result.applied
-      ) return
+      if (!loaded ||
+        pageRequestVersion !== (this.pageRequestVersion || 0) ||
+        this.productId !== productId ||
+        !store.loaded ||
+        store.productId !== productId) return
 
-      this.syncSelectedSku(normalizedProductId, result.product)
+      this.selectedSkuId = store.product.skus && store.product.skus[0]
+        ? store.product.skus[0].id
+        : ''
     },
     selectSku (skuId) {
       this.selectedSkuId = skuId

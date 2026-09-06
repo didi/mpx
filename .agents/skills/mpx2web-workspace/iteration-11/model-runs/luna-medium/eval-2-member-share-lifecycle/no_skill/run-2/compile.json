@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "816031d65ee7c87e56307bcf1c485a6db695b406392286d8ed85e15bbba3b330",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 1,
@@ -40,19 +41,19 @@
         "warnings": [
           {
             "category": "template",
-            "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:48:51]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <text wx:if=\"{{webShareMessage}}\" class=\"web-share-message\">{{webShareMessage}}</text>\n  51 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>",
+            "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:48:83]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button wx:if=\"{{isWechatMiniProgram}}\" class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button wx:else class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <text wx:if=\"{{!isWechatMiniProgram}}\" class=\"web-share-note\">Web 分享能力暂未接入，请联系业务方配置分享 SDK 或宿主 Bridge。</text>\n  51 |       <button class=\"detail-button\" bindtap=\"toggleCampaignRules\">{{showRules ? '收起活动规则' : '查看活动规则'}}</button>",
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx",
-            "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:48:51]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <text wx:if=\"{{webShareMessage}}\" class=\"web-share-message\">{{webShareMessage}}</text>\n  51 |       <button class=\"detail-button\" bindtap=\"openCampaignDetail\">查看活动规则</button>"
+            "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-2-member-share-lifecycle/no_skill/run-2/outputs/src/pages/member/invite.mpx:48:83]: <button> does not support [open-type] property in web environment!\nTarget: <button open-type=\"share\">\nMode: wx -> web\n\n  46 |\n  47 |     <view class=\"action-row\">\n> 48 |       <button wx:if=\"{{isWechatMiniProgram}}\" class=\"share-button share-button-wx\" open-type=\"share\">分享给好友</button>\n     |                                                                                   ^^^^^^^^^^^^^^^^^^\n  49 |       <button wx:else class=\"share-button share-button-web\" bindtap=\"shareOnWeb\">分享邀请活动</button>\n  50 |       <text wx:if=\"{{!isWechatMiniProgram}}\" class=\"web-share-note\">Web 分享能力暂未接入，请联系业务方配置分享 SDK 或宿主 Bridge。</text>\n  51 |       <button class=\"detail-button\" bindtap=\"toggleCampaignRules\">{{showRules ? '收起活动规则' : '查看活动规则'}}</button>"
           }
         ],
         "summary": {
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 4086
+        "durationMs": 2944
       },
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

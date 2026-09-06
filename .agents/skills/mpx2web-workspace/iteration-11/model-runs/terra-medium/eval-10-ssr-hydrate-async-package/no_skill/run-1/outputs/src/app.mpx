@@ -3,10 +3,8 @@ import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
 createApp({
-  // Create application state for this app instance.  In SSR an app instance is
-  // created for every request, so this keeps one visitor's article out of
-  // another visitor's serialized state.
   onAppInit () {
+    // A fresh Pinia instance keeps SSR state scoped to the app/request.
     return { pinia: createPinia() }
   }
 })

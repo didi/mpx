@@ -4,16 +4,21 @@
       class="video"
       id="product-video-{{product.id}}"
       src="{{product.video}}"
+      poster="{{product.poster || product.image}}"
       autoplay="{{true}}"
       muted="{{true}}"
       controls="{{true}}"
+      object-fit="contain"
       enable-danmu="{{true}}"
+      bindplay="onPlay"
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
-    <text wx:if="{{!videoError}}">{{progress}} / {{duration}}</text>
-    <text wx:else class="video-error">视频加载失败</text>
+    <view class="video-meta">
+      <text>{{progress}} / {{duration}}</text>
+      <text wx:if="{{videoError}}" class="video-error">{{videoError}}</text>
+    </view>
   </view>
 </template>
 
@@ -28,35 +33,49 @@ createComponent({
     progress: 0,
     duration: 0,
     videoSize: '',
-    videoError: false
+    videoError: ''
   },
   methods: {
+    onPlay () {
+      this.videoError = ''
+    },
     onTimeUpdate (event) {
-      this.progress = event.detail.currentTime
-      this.duration = event.detail.duration
+      this.progress = Math.floor(event.detail.currentTime || 0)
+      this.duration = Math.floor(event.detail.duration || 0)
     },
     onLoadedMetadata (event) {
-      this.videoSize = `${event.detail.width}x${event.detail.height}`
-      this.videoError = false
+      const { width = 0, height = 0, duration = 0 } = event.detail || {}
+      this.videoSize = `${width}x${height}`
+      this.duration = Math.floor(duration || this.duration)
     },
     onVideoError () {
-      this.videoError = true
+      this.videoError = '视频加载失败，请稍后重试'
     }
   }
 })
 </script>
 
 <style scoped>
-.product-video,
-.video {
+.product-video {
   width: 100%;
+  margin-top: 20rpx;
 }
 
 .video {
   display: block;
+  width: 100%;
+  background: #000;
+}
+
+.video-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  color: #999;
+  font-size: 24rpx;
 }
 
 .video-error {
-  color: #999;
+  color: #d93025;
 }
 </style>

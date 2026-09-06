@@ -1,6 +1,6 @@
 <template>
   <view class="recommend-list">
-    <view wx:for="{{items}}" wx:key="id" data-article-id="{{item.id}}" bindtap="select">{{item.title}}</view>
+    <view wx:for="{{items}}" wx:key="id" data-id="{{item.id}}" bindtap="select">{{item.title}}</view>
   </view>
 </template>
 
@@ -14,8 +14,7 @@ createComponent({
   },
   methods: {
     select (event) {
-      const articleId = event && event.currentTarget && event.currentTarget.dataset.articleId
-      if (articleId) this.triggerEvent('select', { articleId })
+      this.triggerEvent('select', { articleId: event.currentTarget.dataset.id })
     }
   }
 })

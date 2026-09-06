@@ -3,6 +3,8 @@ import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
 createApp({
+  // Mpx creates an app instance for each SSR render; this Pinia state is then
+  // serialized into that response and hydrated by its matching browser app.
   pinia: createPinia(),
   onLaunch () {
     if (typeof wx !== 'undefined' && wx.reportAnalytics) wx.reportAnalytics('mall_launch', {})

@@ -15,8 +15,8 @@ import { useArticleStore } from '../../stores/article'
 createPage({
   data: {
     articleId: '',
-    // Keep this false during the SSR render and hydration pass. It is enabled
-    // only after the client page lifecycle starts.
+    // Keep the SSR and hydration render identical. Browser-only UI is enabled
+    // after the initial render in onReady.
     isBrowser: false,
     favorite: false
   },
@@ -25,23 +25,24 @@ createPage({
     recommendations () { return useArticleStore(this.$pinia).recommendations }
   },
   onLoad (query) {
+    this.loadArticle(query && query.id)
+  },
+  onReady () {
     if (typeof window !== 'undefined') this.isBrowser = true
-    return this.loadArticle(query && query.id)
   },
   serverPrefetch () {
-    const query = this.$route && this.$route.query
-    return this.loadArticle(query && query.id, this.$ssrContext)
+    return this.loadArticle(this.$route.query.id, this.$ssrContext)
   },
   methods: {
     loadArticle (articleId, requestContext) {
       if (!articleId) return Promise.resolve()
+      if (this.articleId !== articleId) this.favorite = false
       this.articleId = articleId
       return useArticleStore(this.$pinia).loadArticle(articleId, requestContext)
     },
     toggleFavorite () { this.favorite = !this.favorite },
     openArticle (event) {
-      const articleId = event && event.detail && event.detail.articleId
-      if (articleId) mpx.navigateTo({ url: `/pages/article/detail?id=${articleId}` })
+      mpx.navigateTo({ url: `/pages/article/detail?id=${event.detail.articleId}` })
     }
   }
 })

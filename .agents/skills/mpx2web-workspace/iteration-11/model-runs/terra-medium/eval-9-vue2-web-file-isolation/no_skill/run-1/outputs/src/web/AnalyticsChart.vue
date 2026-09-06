@@ -1,5 +1,5 @@
 <template>
-  <div ref="chart" class="analytics-chart" />
+  <div ref="chart" class="analytics-chart" role="list" aria-label="数据指标图表"></div>
 </template>
 
 <script>
@@ -16,70 +16,89 @@ export default {
   data () {
     return {
       chart: null,
-      disposed: false,
-      generation: 0,
+      requestId: 0,
       resizeObserver: null,
-      resizeListener: null
+      resizeFrame: null,
+      removeWindowResize: null
     }
   },
   watch: {
     metrics: {
       deep: true,
-      handler (metrics) {
-        if (this.chart) this.chart.update(metrics || [])
+      handler () {
+        this.renderChart()
       }
     }
   },
   mounted () {
-    this.createChart()
     this.observeSize()
+    this.renderChart()
   },
   beforeDestroy () {
-    this.disposed = true
-    this.generation += 1
-    if (this.resizeObserver) this.resizeObserver.disconnect()
-    if (this.resizeListener && typeof window !== 'undefined') {
-      window.removeEventListener('resize', this.resizeListener)
-    }
-    if (this.chart) this.chart.destroy()
-    this.chart = null
+    this.requestId += 1
+    this.disconnectSizeObserver()
+    this.destroyChart()
   },
   methods: {
-    createChart () {
-      const generation = ++this.generation
+    renderChart () {
+      const requestId = ++this.requestId
       const element = this.$refs.chart
-      if (!element) return
+      const metrics = Array.isArray(this.metrics) ? this.metrics.slice() : []
 
-      createChart(element, this.metrics || [], {
-        isCancelled: () => this.disposed || generation !== this.generation,
-        onSelect: (key) => this.$emit('select', { key })
+      this.destroyChart()
+      createChart(element, metrics, {
+        onSelect: this.handleSelect,
+        isCurrent: () => this.requestId === requestId && !this._isBeingDestroyed
       }).then((chart) => {
-        // A previous route/component can resolve after this one has gone away.
-        if (this.disposed || generation !== this.generation) {
+        if (!chart) return
+        if (this.requestId !== requestId || this._isBeingDestroyed) {
           chart.destroy()
           return
         }
         this.chart = chart
-        chart.update(this.metrics || [])
-        chart.resize()
-      }).catch((error) => {
-        // Ignore cancellation; surface genuine chart failures to the host app.
-        if (!this.disposed && generation === this.generation) this.$emit('error', error)
+        this.resizeChart()
       })
     },
+    handleSelect (metric) {
+      this.$emit('select', { key: metric.key })
+    },
+    destroyChart () {
+      if (!this.chart) return
+      this.chart.destroy()
+      this.chart = null
+    },
     observeSize () {
-      const element = this.$refs.chart
-      if (!element) return
-      const resize = () => {
-        if (!this.disposed && this.chart) this.chart.resize()
+      const onResize = () => {
+        if (this.resizeFrame !== null) return
+        this.resizeFrame = requestAnimationFrame(() => {
+          this.resizeFrame = null
+          this.resizeChart()
+        })
       }
       if (typeof ResizeObserver !== 'undefined') {
-        this.resizeObserver = new ResizeObserver(resize)
-        this.resizeObserver.observe(element)
-      } else if (typeof window !== 'undefined') {
-        this.resizeListener = resize
-        window.addEventListener('resize', resize)
+        this.resizeObserver = new ResizeObserver(onResize)
+        this.resizeObserver.observe(this.$el)
+      } else {
+        window.addEventListener('resize', onResize)
+        this.removeWindowResize = () => window.removeEventListener('resize', onResize)
       }
+    },
+    disconnectSizeObserver () {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
+      if (this.removeWindowResize) {
+        this.removeWindowResize()
+        this.removeWindowResize = null
+      }
+      if (this.resizeFrame !== null) {
+        cancelAnimationFrame(this.resizeFrame)
+        this.resizeFrame = null
+      }
+    },
+    resizeChart () {
+      if (this.chart) this.chart.resize()
     }
   }
 }
@@ -87,8 +106,6 @@ export default {
 
 <style scoped>
 .analytics-chart {
-  box-sizing: border-box;
   min-width: 100%;
-  min-height: 160px;
 }
 </style>

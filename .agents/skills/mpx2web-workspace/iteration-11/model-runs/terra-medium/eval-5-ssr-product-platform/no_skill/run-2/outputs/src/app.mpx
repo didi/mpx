@@ -1,16 +1,12 @@
 <script>
 import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
-import mpx from '@mpxjs/api-proxy'
 
 createApp({
-  // The SSR runtime creates an app from this definition per request, so each
-  // render receives a fresh Pinia container rather than sharing product data.
+  // Do not keep Pinia in module scope: SSR needs a fresh store tree per render.
   pinia: createPinia(),
   onLaunch () {
-    if (typeof window !== 'undefined' || typeof wx !== 'undefined') {
-      mpx.reportAnalytics('mall_launch', {})
-    }
+    wx.reportAnalytics('mall_launch', {})
   }
 })
 </script>
@@ -18,6 +14,9 @@ createApp({
 <script type="application/json">
 {
   "pages": ["pages/home/index"],
-  "packages": [{ "root": "packageProduct", "pages": ["pages/detail/index"] }]
+  "packages": [{
+    "root": "packageProduct",
+    "pages": ["pages/detail/index"]
+  }]
 }
 </script>

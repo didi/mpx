@@ -1,5 +1,5 @@
 <template>
-  <view class="portal {{dark ? 'portal--dark' : ''}}">
+  <view class="portal">
     <view class="portal-card" wx:for="{{cards}}" wx:key="id" bindtap="openCard(item.id)">{{item.title}}</view>
     <button bindtap="toggleTheme">切换主题</button>
     <button bindtap="openDialog">打开弹层</button>
@@ -25,60 +25,66 @@ createPage({
     }
   },
   onUnload () {
-    this.restorePageScroll()
+    if (__mpx_mode__ === 'web') {
+      this.dialogVisible = false
+      this.restorePageScroll()
+    }
   },
   methods: {
-    openCard (id) {
-      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
-    },
-    toggleTheme () {
-      this.dark = !this.dark
-    },
+    openCard (id) { mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` }) },
+    toggleTheme () { this.dark = !this.dark },
     openDialog () {
-      if (this.dialogVisible) return
+      this.dialogVisible = true
       if (__mpx_mode__ === 'web') {
         this.lockPageScroll()
       }
-      this.dialogVisible = true
     },
     closeDialog () {
       this.dialogVisible = false
-      this.restorePageScroll()
+      if (__mpx_mode__ === 'web') {
+        this.restorePageScroll()
+      }
     },
     lockPageScroll () {
-      if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || typeof document === 'undefined' || this._pageScrollLock) return
+      if (__mpx_mode__ !== 'web' || this._portalScrollLock) return
 
-      const targets = [document.documentElement, document.body, document.getElementById('app')]
-        .filter((target, index, list) => target && list.indexOf(target) === index)
-      const records = targets.map((target) => ({
-        target,
-        overflow: target.style.overflow,
-        scrollLeft: target.scrollLeft,
-        scrollTop: target.scrollTop
-      }))
+      const targets = [
+        document.documentElement,
+        document.body,
+        document.querySelector('#app')
+      ].filter(Boolean)
 
-      this._pageScrollLock = {
-        records,
-        scrollX: window.pageXOffset,
-        scrollY: window.pageYOffset
+      this._portalScrollLock = {
+        x: window.pageXOffset,
+        y: window.pageYOffset,
+        targets: targets.map((node) => ({
+          node,
+          overflow: node.style.getPropertyValue('overflow'),
+          overflowPriority: node.style.getPropertyPriority('overflow'),
+          scrollLeft: node.scrollLeft,
+          scrollTop: node.scrollTop
+        }))
       }
-      records.forEach(({ target }) => {
-        target.style.overflow = 'hidden'
+
+      this._portalScrollLock.targets.forEach(({ node }) => {
+        node.style.setProperty('overflow', 'hidden', 'important')
       })
     },
     restorePageScroll () {
-      if (__mpx_mode__ !== 'web' || !this._pageScrollLock) return
+      if (__mpx_mode__ !== 'web' || !this._portalScrollLock) return
 
-      const { records, scrollX, scrollY } = this._pageScrollLock
-      this._pageScrollLock = null
-      records.forEach(({ target, overflow, scrollLeft, scrollTop }) => {
-        target.style.overflow = overflow
-        target.scrollLeft = scrollLeft
-        target.scrollTop = scrollTop
+      const lock = this._portalScrollLock
+      this._portalScrollLock = null
+      lock.targets.forEach(({ node, overflow, overflowPriority, scrollLeft, scrollTop }) => {
+        if (overflow) {
+          node.style.setProperty('overflow', overflow, overflowPriority)
+        } else {
+          node.style.removeProperty('overflow')
+        }
+        node.scrollLeft = scrollLeft
+        node.scrollTop = scrollTop
       })
-      if (typeof window !== 'undefined') {
-        window.scrollTo(scrollX, scrollY)
-      }
+      window.scrollTo(lock.x, lock.y)
     }
   }
 })
@@ -88,61 +94,21 @@ createPage({
 .portal {
   box-sizing: border-box;
   min-height: 100vh;
-  color: var(--portal-text, #1f2329);
+  color: var(--portal-text, #1f2937);
   background: var(--portal-background, #f5f7fa);
-  padding: var(--portal-space, 24rpx);
+  padding: var(--portal-space, 32rpx);
 }
-
-.portal--dark {
-  color: var(--portal-dark-text, #f5f7fa);
-  background: var(--portal-dark-background, #181c24);
-}
-
-.portal-card {
-  margin-bottom: var(--portal-card-gap, 16rpx);
-  padding: var(--portal-card-space, 20rpx);
-  background: var(--portal-card-background, #ffffff);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.portal--dark .portal-card {
-  background: var(--portal-dark-card-background, #252b36);
-}
-
-.dialog-mask {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--portal-mask-background, rgba(0, 0, 0, 0.45));
-}
-
-.dialog {
-  min-width: 420rpx;
-  padding: var(--portal-dialog-space, 32rpx);
-  color: var(--portal-dialog-text, #1f2329);
-  background: var(--portal-dialog-background, #ffffff);
-}
+.dialog-mask { position: fixed; inset: 0; }
 </style>
 
 <style mode="web">
 .portal {
-  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--portal-space, 32rpx) + env(safe-area-inset-bottom));
 }
 
 @media (hover: hover) and (pointer: fine) {
   .portal-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px var(--portal-card-shadow, rgba(31, 35, 41, 0.12));
-  }
-
-  html,
-  body,
-  #app,
-  .portal {
-    scrollbar-width: thin;
-    scrollbar-color: var(--portal-scrollbar-thumb, #aab2bf) var(--portal-scrollbar-track, transparent);
   }
 
   html::-webkit-scrollbar,
@@ -150,22 +116,14 @@ createPage({
   #app::-webkit-scrollbar,
   .portal::-webkit-scrollbar {
     width: 6px;
-    height: 6px;
-  }
-
-  html::-webkit-scrollbar-track,
-  body::-webkit-scrollbar-track,
-  #app::-webkit-scrollbar-track,
-  .portal::-webkit-scrollbar-track {
-    background: var(--portal-scrollbar-track, transparent);
   }
 
   html::-webkit-scrollbar-thumb,
   body::-webkit-scrollbar-thumb,
   #app::-webkit-scrollbar-thumb,
   .portal::-webkit-scrollbar-thumb {
-    background: var(--portal-scrollbar-thumb, #aab2bf);
     border-radius: 3px;
+    background: var(--portal-scrollbar-thumb, rgba(31, 41, 55, 0.35));
   }
 }
 </style>

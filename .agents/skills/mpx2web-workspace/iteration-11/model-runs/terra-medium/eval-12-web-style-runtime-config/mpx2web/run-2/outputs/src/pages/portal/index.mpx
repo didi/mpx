@@ -4,7 +4,18 @@
     <button bindtap="toggleTheme">切换主题</button>
     <button bindtap="openDialog">打开弹层</button>
     <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
-      <view class="dialog" role@web="dialog" aria-modal@web="true" tabindex@web="-1">门户设置</view>
+      <view
+        id="portal-dialog"
+        class="dialog"
+        aria-role="dialog"
+        role@web="dialog"
+        aria-modal@web="true"
+        aria-label="门户设置"
+        tabindex@web="-1"
+        catchtap="preventDialogClose"
+      >
+        门户设置
+      </view>
     </view>
   </view>
 </template>
@@ -18,197 +29,173 @@ createPage({
     dialogVisible: false,
     dark: false
   },
-  onHide () {
-    this.closeDialog()
-  },
-  onUnload () {
-    this.closeDialog()
-  },
   methods: {
     openCard (id) {
       this.closeDialog()
       mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
     },
-    toggleTheme () {
-      this.dark = !this.dark
-    },
+    toggleTheme () { this.dark = !this.dark },
     openDialog (event) {
-      if (__mpx_mode__ === 'web' && event && event.currentTarget) this._dialogTrigger = event.currentTarget
       this.dialogVisible = true
-      this.lockPageScroll()
-      this.focusDialog()
+
+      if (__mpx_mode__ === 'web') {
+        this._dialogTrigger = event && event.currentTarget ? event.currentTarget : document.activeElement
+        this.lockPageScroll()
+        this._dialogKeydownHandler = (keyboardEvent) => this.onDialogKeydown(keyboardEvent)
+        document.addEventListener('keydown', this._dialogKeydownHandler)
+        mpx.nextTick(() => {
+          const dialog = document.getElementById('portal-dialog')
+          if (dialog) dialog.focus()
+        })
+      }
     },
     closeDialog () {
       this.dialogVisible = false
-      this.removeDialogKeyboardListener()
-      this.restorePageScroll()
-      this.restoreDialogTrigger()
-    },
-    lockPageScroll () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || this._portalScrollLock) return
 
-      const html = document.documentElement
-      const body = document.body
-      const app = document.getElementById('app')
-      const scrollTop = typeof window !== 'undefined'
-        ? (window.pageYOffset || html.scrollTop || body.scrollTop || 0)
-        : (html.scrollTop || body.scrollTop || 0)
-
-      this._portalScrollLock = {
-        app,
-        bodyOverflow: body.style.overflow,
-        bodyPosition: body.style.position,
-        bodyTop: body.style.top,
-        bodyWidth: body.style.width,
-        htmlOverflow: html.style.overflow,
-        appOverflow: app ? app.style.overflow : '',
-        scrollTop
+      if (__mpx_mode__ === 'web') {
+        this.releasePageScroll()
+        if (this._dialogKeydownHandler) {
+          document.removeEventListener('keydown', this._dialogKeydownHandler)
+          this._dialogKeydownHandler = null
+        }
+        if (this._dialogTrigger && document.contains(this._dialogTrigger)) {
+          this._dialogTrigger.focus()
+        }
+        this._dialogTrigger = null
       }
-
-      html.style.overflow = 'hidden'
-      body.style.overflow = 'hidden'
-      body.style.position = 'fixed'
-      body.style.top = `-${scrollTop}px`
-      body.style.width = '100%'
-      if (app) app.style.overflow = 'hidden'
     },
-    restorePageScroll () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || !this._portalScrollLock) return
-
-      const lock = this._portalScrollLock
-      document.documentElement.style.overflow = lock.htmlOverflow
-      document.body.style.overflow = lock.bodyOverflow
-      document.body.style.position = lock.bodyPosition
-      document.body.style.top = lock.bodyTop
-      document.body.style.width = lock.bodyWidth
-      if (lock.app) lock.app.style.overflow = lock.appOverflow
-      this._portalScrollLock = null
-
-      if (typeof window !== 'undefined') window.scrollTo(0, lock.scrollTop)
-    },
-    focusDialog () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined') return
-
-      this.$nextTick(() => {
-        if (!this.dialogVisible) return
-        const dialog = document.querySelector('.dialog')
-        if (!dialog) return
-        dialog.focus()
-        this._dialogKeydownHandler = this.handleDialogKeydown.bind(this)
-        document.addEventListener('keydown', this._dialogKeydownHandler)
-      })
-    },
-    removeDialogKeyboardListener () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined' || !this._dialogKeydownHandler) return
-
-      document.removeEventListener('keydown', this._dialogKeydownHandler)
-      this._dialogKeydownHandler = null
-    },
-    handleDialogKeydown (event) {
+    preventDialogClose () {},
+    onDialogKeydown (event) {
       if (event.key === 'Escape') {
         event.preventDefault()
         this.closeDialog()
         return
       }
+
       if (event.key !== 'Tab') return
-
-      const dialog = document.querySelector('.dialog')
+      const dialog = document.getElementById('portal-dialog')
       if (!dialog) return
-      const focusable = dialog.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')
-      const nodes = Array.prototype.slice.call(focusable)
-      if (!nodes.length) {
-        event.preventDefault()
-        dialog.focus()
-        return
-      }
-
-      const currentIndex = nodes.indexOf(document.activeElement)
-      const nextIndex = event.shiftKey
-        ? (currentIndex <= 0 ? nodes.length - 1 : currentIndex - 1)
-        : (currentIndex === nodes.length - 1 ? 0 : currentIndex + 1)
       event.preventDefault()
-      nodes[nextIndex].focus()
+      dialog.focus()
     },
-    restoreDialogTrigger () {
-      if (__mpx_mode__ !== 'web' || typeof document === 'undefined') return
+    lockPageScroll () {
+      if (this._scrollLock) return
 
-      const trigger = this._dialogTrigger
-      this._dialogTrigger = null
-      if (trigger && trigger.isConnected && typeof trigger.focus === 'function') trigger.focus()
+      const app = document.getElementById('app')
+      const scrollX = window.pageXOffset
+      const scrollY = window.pageYOffset
+      const targets = [document.body, app].filter(Boolean).map((element) => ({
+        element,
+        overflow: element.style.overflow,
+        position: element.style.position,
+        top: element.style.top,
+        left: element.style.left,
+        width: element.style.width
+      }))
+
+      targets.forEach(({ element }) => {
+        element.style.overflow = 'hidden'
+      })
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.left = `-${scrollX}px`
+      document.body.style.width = '100%'
+      this._scrollLock = { scrollX, scrollY, targets }
+    },
+    releasePageScroll () {
+      if (!this._scrollLock) return
+
+      const { scrollX, scrollY, targets } = this._scrollLock
+      targets.forEach(({ element, overflow, position, top, left, width }) => {
+        element.style.overflow = overflow
+        element.style.position = position
+        element.style.top = top
+        element.style.left = left
+        element.style.width = width
+      })
+      this._scrollLock = null
+      window.scrollTo(scrollX, scrollY)
     }
+  },
+  onHide () {
+    this.closeDialog()
+  },
+  onUnload () {
+    this.closeDialog()
   }
 })
 </script>
 
 <style scoped>
 .portal {
+  --portal-text-default: #1f2937;
+  --portal-background-default: #f5f7fb;
+  --portal-surface-default: #ffffff;
+  --portal-border-default: #dce3ef;
   min-height: 100vh;
-  color: var(--portal-text, #172033);
-  background: var(--portal-background, #f5f7fb);
-  padding: var(--portal-space, 32rpx);
+  box-sizing: border-box;
+  color: var(--portal-text, var(--portal-text-default));
+  background: var(--portal-background, var(--portal-background-default));
+  padding: var(--portal-space, 24rpx);
 }
 
 .portal--dark {
-  color: var(--portal-text-dark, #f8fafc);
-  background: var(--portal-background-dark, #172033);
+  --portal-text-default: #f3f4f6;
+  --portal-background-default: #161b22;
+  --portal-surface-default: #242b36;
+  --portal-border-default: #3c4656;
 }
 
 .portal-card {
-  margin-bottom: 20rpx;
-  padding: 28rpx;
+  margin-bottom: 16rpx;
+  padding: 24rpx;
+  border: 1rpx solid var(--portal-border, var(--portal-border-default));
   border-radius: 12rpx;
-  color: var(--portal-card-text, #172033);
-  background: var(--portal-card-background, #ffffff);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.portal--dark .portal-card {
-  color: var(--portal-card-text-dark, #f8fafc);
-  background: var(--portal-card-background-dark, #243044);
+  background: var(--portal-surface, var(--portal-surface-default));
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .dialog-mask {
   position: fixed;
   inset: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 32rpx;
+  box-sizing: border-box;
   background: rgba(0, 0, 0, 0.45);
 }
 
 .dialog {
-  padding: 40rpx;
+  width: 100%;
+  max-width: 560rpx;
+  padding: 32rpx;
   border-radius: 16rpx;
-  color: var(--portal-dialog-text, #172033);
-  background: var(--portal-dialog-background, #ffffff);
+  box-sizing: border-box;
+  color: var(--portal-text, var(--portal-text-default));
+  background: var(--portal-surface, var(--portal-surface-default));
 }
 </style>
 
-<style mode="web">
+<style mode="web" scoped>
 .portal {
-  padding-bottom: max(var(--portal-space, 32rpx), env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--portal-space, 24rpx) + env(safe-area-inset-bottom));
 }
 
 .portal-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(23, 32, 51, 0.14);
+  box-shadow: 0 8px 20px rgba(31, 41, 55, 0.14);
 }
+</style>
 
-html {
-  scrollbar-color: var(--portal-scrollbar-thumb, #9aa7b8) var(--portal-scrollbar-track, #eef2f7);
-  scrollbar-width: thin;
-}
-
-html::-webkit-scrollbar {
+<style mode="web">
+body::-webkit-scrollbar {
   width: 6px;
 }
 
-html::-webkit-scrollbar-track {
-  background: var(--portal-scrollbar-track, #eef2f7);
-}
-
-html::-webkit-scrollbar-thumb {
-  border-radius: 6px;
-  background: var(--portal-scrollbar-thumb, #9aa7b8);
+body::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(100, 116, 139, 0.65);
 }
 </style>

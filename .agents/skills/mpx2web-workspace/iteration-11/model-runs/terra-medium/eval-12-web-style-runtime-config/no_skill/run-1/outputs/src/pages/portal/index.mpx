@@ -1,18 +1,89 @@
 <template>
-  <view class="portal {{dark ? 'portal--dark' : ''}}">
-    <view class="portal-card" wx:for="{{cards}}" wx:key="id" bindtap="openCard(item.id)">
-      {{item.title}}
+  <view class="portal" wx:class="{{dark ? 'portal--dark' : ''}}">
+    <view class="portal__header">
+      <text class="portal__eyebrow">PORTAL</text>
+      <text class="portal__title">门户中心</text>
+      <text class="portal__description">快速访问资讯与服务</text>
     </view>
-    <button class="portal-button" bindtap="toggleTheme">切换主题</button>
-    <button class="portal-button" bindtap="openDialog">打开弹层</button>
+
+    <view class="portal__cards">
+      <view
+        class="portal-card"
+        wx:for="{{cards}}"
+        wx:key="id"
+        bindtap="openCard(item.id)"
+      >
+        <text class="portal-card__title">{{item.title}}</text>
+        <text class="portal-card__hint">查看详情</text>
+      </view>
+    </view>
+
+    <view class="portal__actions">
+      <button class="portal-button portal-button--secondary" bindtap="toggleTheme">切换主题</button>
+      <button class="portal-button" bindtap="openDialog">打开弹层</button>
+    </view>
+
     <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
-      <view class="dialog" catchtap="noop">门户设置</view>
+      <view class="dialog" catchtap="stopDialogTap">
+        <text class="dialog__title">门户设置</text>
+        <text class="dialog__content">当前显示设置将应用于本次访问。</text>
+        <button class="portal-button dialog__button" bindtap="closeDialog">完成</button>
+      </view>
     </view>
   </view>
 </template>
 
 <script>
 import mpx, { createPage } from '@mpxjs/core'
+
+let scrollLock = null
+
+function lockPageScroll () {
+  if (typeof window === 'undefined' || typeof document === 'undefined' || scrollLock) return
+
+  const body = document.body
+  const html = document.documentElement
+  const scrollTop = window.pageYOffset || html.scrollTop || body.scrollTop || 0
+
+  scrollLock = {
+    scrollTop,
+    body: {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow
+    },
+    htmlOverflow: html.style.overflow
+  }
+
+  html.style.overflow = 'hidden'
+  body.style.position = 'fixed'
+  body.style.top = `-${scrollTop}px`
+  body.style.left = '0'
+  body.style.right = '0'
+  body.style.width = '100%'
+  body.style.overflow = 'hidden'
+}
+
+function unlockPageScroll () {
+  if (typeof window === 'undefined' || typeof document === 'undefined' || !scrollLock) return
+
+  const { scrollTop, body: previousBody, htmlOverflow } = scrollLock
+  const body = document.body
+  const html = document.documentElement
+
+  body.style.position = previousBody.position
+  body.style.top = previousBody.top
+  body.style.left = previousBody.left
+  body.style.right = previousBody.right
+  body.style.width = previousBody.width
+  body.style.overflow = previousBody.overflow
+  html.style.overflow = htmlOverflow
+  scrollLock = null
+  window.scrollTo(0, scrollTop)
+}
 
 createPage({
   data: {
@@ -21,7 +92,6 @@ createPage({
     dark: false
   },
   methods: {
-    noop () {},
     openCard (id) {
       this.closeDialog()
       mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
@@ -30,132 +100,87 @@ createPage({
       this.dark = !this.dark
     },
     openDialog () {
+      if (this.dialogVisible) return
       this.dialogVisible = true
-      this.lockPageScroll()
+      lockPageScroll()
     },
     closeDialog () {
       this.dialogVisible = false
-      this.restorePageScroll()
+      unlockPageScroll()
     },
-    lockPageScroll () {
-      // 小程序不存在 DOM；仅在 Web 宿主执行页面滚动锁定。
-      if (typeof window === 'undefined' || typeof document === 'undefined' || this._scrollLock) return
-
-      const body = document.body
-      const root = document.documentElement
-      const scrollY = window.pageYOffset || root.scrollTop || body.scrollTop || 0
-      const scrollX = window.pageXOffset || root.scrollLeft || body.scrollLeft || 0
-
-      this._scrollLock = {
-        scrollX,
-        scrollY,
-        bodyCssText: body.style.cssText,
-        rootCssText: root.style.cssText
-      }
-      body.style.position = 'fixed'
-      body.style.top = `-${scrollY}px`
-      body.style.left = `-${scrollX}px`
-      body.style.right = '0'
-      body.style.width = '100%'
-      body.style.overflow = 'hidden'
-      root.style.overflow = 'hidden'
-    },
-    restorePageScroll () {
-      if (typeof window === 'undefined' || typeof document === 'undefined' || !this._scrollLock) return
-
-      const { scrollX, scrollY, bodyCssText, rootCssText } = this._scrollLock
-      document.body.style.cssText = bodyCssText
-      document.documentElement.style.cssText = rootCssText
-      window.scrollTo(scrollX, scrollY)
-      this._scrollLock = null
-    }
+    stopDialogTap () {}
   },
   onHide () {
-    this.restorePageScroll()
+    this.closeDialog()
   },
   onUnload () {
-    this.restorePageScroll()
+    this.closeDialog()
   }
 })
 </script>
 
-<style scoped>
+<style>
 .portal {
-  --portal-text-color: var(--portal-text, #1f2937);
-  --portal-bg-color: var(--portal-background, #f5f7fb);
-  --portal-card-color: var(--portal-card-background, #ffffff);
-  --portal-border-color: var(--portal-border, #e2e8f0);
-  --portal-accent-color: var(--portal-primary, #2563eb);
+  --portal-text: #1d2738;
+  --portal-muted: #65738a;
+  --portal-background: #f4f7fb;
+  --portal-surface: #ffffff;
+  --portal-border: #dce4ef;
+  --portal-primary: #2563eb;
+  --portal-primary-pressed: #1d4ed8;
   min-height: 100vh;
   min-height: 100dvh;
   box-sizing: border-box;
-  color: var(--portal-text-color);
-  background: var(--portal-bg-color);
-  padding: var(--portal-space, 0.32rem);
-  padding-bottom: calc(var(--portal-space, 0.32rem) + env(safe-area-inset-bottom));
+  padding: 0.32rem;
+  padding-bottom: calc(0.32rem + env(safe-area-inset-bottom, 0px));
+  color: var(--portal-text, #1d2738);
+  background: var(--portal-background, #f4f7fb);
 }
 
 .portal--dark {
-  --portal-text-color: var(--portal-text-dark, #e5e7eb);
-  --portal-bg-color: var(--portal-background-dark, #111827);
-  --portal-card-color: var(--portal-card-background-dark, #1f2937);
-  --portal-border-color: var(--portal-border-dark, #374151);
-  --portal-accent-color: var(--portal-primary-dark, #60a5fa);
+  --portal-text: #eff6ff;
+  --portal-muted: #b7c4d8;
+  --portal-background: #111827;
+  --portal-surface: #1f2937;
+  --portal-border: #374151;
+  --portal-primary: #60a5fa;
+  --portal-primary-pressed: #93c5fd;
 }
 
-.portal-card {
-  box-sizing: border-box;
-  margin-bottom: 0.2rem;
-  padding: 0.28rem 0.32rem;
-  border: 1px solid var(--portal-border-color);
-  border-radius: 0.12rem;
-  color: var(--portal-text-color);
-  background: var(--portal-card-color);
-  box-shadow: 0 0.04rem 0.12rem rgb(15 23 42 / 8%);
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-}
+.portal__header { margin: 0.16rem 0 0.32rem; }
+.portal__eyebrow { display: block; color: var(--portal-primary, #2563eb); font-size: 0.14rem; font-weight: 700; letter-spacing: 0.08em; }
+.portal__title { display: block; margin-top: 0.08rem; font-size: 0.32rem; font-weight: 700; line-height: 1.25; }
+.portal__description { display: block; margin-top: 0.08rem; color: var(--portal-muted, #65738a); font-size: 0.16rem; }
+.portal__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.16rem; }
+.portal-card { box-sizing: border-box; min-height: 1.5rem; padding: 0.2rem; border: 1px solid var(--portal-border, #dce4ef); border-radius: 0.16rem; background: var(--portal-surface, #ffffff); box-shadow: 0 0.04rem 0.12rem rgba(15, 23, 42, 0.06); }
+.portal-card__title { display: block; font-size: 0.2rem; font-weight: 600; }
+.portal-card__hint { display: block; margin-top: 0.12rem; color: var(--portal-muted, #65738a); font-size: 0.14rem; }
+.portal__actions { display: flex; gap: 0.12rem; margin-top: 0.28rem; }
+.portal-button { flex: 1; margin: 0; border: 0; border-radius: 0.1rem; color: #ffffff; background: var(--portal-primary, #2563eb); font-size: 0.16rem; line-height: 0.46rem; }
+.portal-button::after { border: 0; }
+.portal-button--secondary { color: var(--portal-text, #1d2738); background: var(--portal-surface, #ffffff); border: 1px solid var(--portal-border, #dce4ef); }
+.dialog-mask { position: fixed; z-index: 10; inset: 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0.24rem; background: rgba(15, 23, 42, 0.52); }
+.dialog { box-sizing: border-box; width: min(100%, 4.2rem); padding: 0.28rem; border-radius: 0.16rem; color: var(--portal-text, #1d2738); background: var(--portal-surface, #ffffff); box-shadow: 0 0.16rem 0.48rem rgba(15, 23, 42, 0.24); }
+.dialog__title { display: block; font-size: 0.22rem; font-weight: 700; }
+.dialog__content { display: block; margin-top: 0.12rem; color: var(--portal-muted, #65738a); font-size: 0.16rem; line-height: 1.6; }
+.dialog__button { width: 100%; margin-top: 0.24rem; }
 
-.portal-button {
-  margin: 0.12rem 0.16rem 0 0;
-  color: #ffffff;
-  background: var(--portal-accent-color);
-}
-
-.dialog-mask {
-  position: fixed;
-  z-index: 1000;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 0.32rem;
-  background: rgb(15 23 42 / 52%);
-}
-
-.dialog {
-  width: 100%;
-  max-width: 6rem;
-  box-sizing: border-box;
-  padding: 0.4rem;
-  border-radius: 0.16rem;
-  color: var(--portal-text-color);
-  background: var(--portal-card-color);
-  box-shadow: 0 0.16rem 0.48rem rgb(15 23 42 / 25%);
+@media (max-width: 480px) {
+  .portal { padding-right: 0.2rem; padding-left: 0.2rem; }
+  .portal__cards { gap: 0.12rem; }
+  .portal-card { min-height: 1.3rem; padding: 0.16rem; }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .portal-card:hover {
-    border-color: var(--portal-accent-color);
-    box-shadow: 0 0.08rem 0.2rem rgb(15 23 42 / 14%);
-    transform: translateY(-0.02rem);
-  }
-
-  .portal-button:hover {
-    filter: brightness(1.08);
-  }
+  .portal-card { cursor: pointer; transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease; }
+  .portal-card:hover { border-color: var(--portal-primary, #2563eb); transform: translateY(-0.02rem); box-shadow: 0 0.1rem 0.24rem rgba(15, 23, 42, 0.12); }
+  .portal-button { cursor: pointer; transition: background-color 160ms ease, transform 160ms ease; }
+  .portal-button:hover { background: var(--portal-primary-pressed, #1d4ed8); }
+  .portal-button--secondary:hover { background: var(--portal-background, #f4f7fb); }
+  .portal-button:active { transform: translateY(0.01rem); }
+  ::-webkit-scrollbar { width: 0.08rem; height: 0.08rem; }
+  ::-webkit-scrollbar-track { background: var(--portal-background, #f4f7fb); }
+  ::-webkit-scrollbar-thumb { border-radius: 999px; background: #a7b4c7; }
+  ::-webkit-scrollbar-thumb:hover { background: #7b8aa1; }
 }
 </style>

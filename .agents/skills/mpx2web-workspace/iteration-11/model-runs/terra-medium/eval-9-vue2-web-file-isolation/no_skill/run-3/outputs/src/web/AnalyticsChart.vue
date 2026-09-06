@@ -1,20 +1,5 @@
 <template>
-  <section class="analytics-chart" aria-label="Analytics chart">
-    <div ref="canvas" class="analytics-chart__canvas"></div>
-    <div class="analytics-chart__metrics">
-      <button
-        v-for="metric in safeMetrics"
-        :id="metricId(metric)"
-        :key="metric.key"
-        type="button"
-        class="analytics-chart__metric"
-        @click="selectMetric(metric)"
-      >
-        <span>{{ metric.label }}</span>
-        <strong>{{ metric.value }}</strong>
-      </button>
-    </div>
-  </section>
+  <div ref="chart" class="analytics-chart"></div>
 </template>
 
 <script>
@@ -25,23 +10,22 @@ export default {
   props: {
     metrics: {
       type: Array,
-      default: function () { return [] }
+      default: function () {
+        return []
+      }
     }
   },
   data: function () {
     return {
       chart: null,
-      generation: 0,
-      resizeObserver: null
-    }
-  },
-  computed: {
-    safeMetrics: function () {
-      return Array.isArray(this.metrics) ? this.metrics : []
+      disposed: false,
+      chartRequest: 0,
+      resizeObserver: null,
+      removeWindowResize: null
     }
   },
   watch: {
-    safeMetrics: {
+    metrics: {
       deep: true,
       handler: function (metrics) {
         if (this.chart) this.chart.update(metrics)
@@ -49,52 +33,64 @@ export default {
     }
   },
   mounted: function () {
-    this.mountChart()
+    this.createChart()
   },
   beforeDestroy: function () {
-    this.generation += 1
-    if (this.resizeObserver) this.resizeObserver.disconnect()
-    this.resizeObserver = null
-    if (this.chart) this.chart.destroy()
-    this.chart = null
+    this.disposed = true
+    this.chartRequest += 1
+    this.stopObserving()
+    if (this.chart) {
+      this.chart.destroy()
+      this.chart = null
+    }
   },
   methods: {
-    mountChart: function () {
-      const generation = ++this.generation
-      const element = this.$refs.canvas
-      createChart(element, this.safeMetrics).then((chart) => {
-        // The component may have been left and mounted again while the SDK loaded.
-        if (generation !== this.generation || this._isBeingDestroyed || this._isDestroyed) {
+    createChart: function () {
+      var self = this
+      var request = ++this.chartRequest
+      createChart(this.$refs.chart, this.metrics, {
+        isActive: function () {
+          return !self.disposed && self.chartRequest === request
+        },
+        onSelect: function (detail) {
+          if (!self.disposed && self.chartRequest === request) self.$emit('select', detail)
+        }
+      }).then(function (chart) {
+        if (self.disposed || self.chartRequest !== request) {
           chart.destroy()
           return
         }
-        this.chart = chart
-        chart.update(this.safeMetrics)
-        this.observeResize()
-      }).catch(() => {
-        // A failed or cancelled lazy chart must not leave an old instance active.
+        self.chart = chart
+        // Props may have changed while the asynchronous chart was being created.
+        chart.update(self.metrics)
+        self.startObserving()
       })
     },
-    observeResize: function () {
-      if (typeof ResizeObserver === 'undefined' || this.resizeObserver) return
-      this.resizeObserver = new ResizeObserver(() => {
-        if (this.chart) this.chart.resize()
-      })
-      this.resizeObserver.observe(this.$el)
+    startObserving: function () {
+      var self = this
+      var resize = function () {
+        if (!self.disposed && self.chart) self.chart.resize()
+      }
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver(resize)
+        this.resizeObserver.observe(this.$refs.chart)
+      } else if (typeof window !== 'undefined') {
+        window.addEventListener('resize', resize)
+        this.removeWindowResize = function () {
+          window.removeEventListener('resize', resize)
+        }
+      }
     },
-    metricId: function (metric) {
-      return String(metric.key)
-    },
-    selectMetric: function (metric) {
-      this.$emit('select', { key: metric.key })
+    stopObserving: function () {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
+      if (this.removeWindowResize) {
+        this.removeWindowResize()
+        this.removeWindowResize = null
+      }
     }
   }
 }
 </script>
-
-<style scoped>
-.analytics-chart { min-width: max-content; }
-.analytics-chart__canvas { min-height: 112px; }
-.analytics-chart__metrics { display: flex; gap: 8px; padding-top: 12px; }
-.analytics-chart__metric { cursor: pointer; }
-</style>

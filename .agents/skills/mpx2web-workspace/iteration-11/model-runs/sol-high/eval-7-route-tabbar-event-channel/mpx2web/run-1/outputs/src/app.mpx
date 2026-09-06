@@ -6,10 +6,10 @@ mpx.use(apiProxy)
 
 if (__mpx_mode__ === 'web') {
   mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
-    routeConfig: Object.assign({}, mpx.config.webConfig && mpx.config.webConfig.routeConfig, {
+    routeConfig: {
       mode: 'history',
       base: '/shop/'
-    })
+    }
   })
 }
 

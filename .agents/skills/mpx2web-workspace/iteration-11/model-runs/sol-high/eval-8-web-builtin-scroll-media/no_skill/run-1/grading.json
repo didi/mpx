@@ -3,83 +3,119 @@
   "eval_name": "web-builtin-scroll-media",
   "configuration": "no_skill",
   "run_number": 1,
-  "grading_fingerprint": "d0a65f5197af567baf835a77a501bdbcdf031f9f38b45d2f1819069924dc660a",
+  "grading_fingerprint": "4fc74b1a34d17d96bf2e73d27e5ac12bcf106fabb8c6d39c6ea9a9f4c58e8569",
+  "model_grading_fingerprint": "c2447bbc373a4897a6b8d072069bdc765f64db00d30da86843ed4346bfba29a4",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 283917
+    "duration_ms": 94940
   },
   "expectations": [
     {
       "id": "b0",
       "text": "sticky-header 在 Web 内建结构中是 scroll-view 或 sticky-section 的直接子节点，吸顶不依赖其内容中的 viewport fixed",
+      "category": "web-template",
       "passed": true,
       "evidence": "outputs/src/pages/feed/index.mpx：sticky-header 为内建滚动直接子节点，常驻 fixed 入口位于变换内容之外。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/feed/index.mpx：sticky-header 为内建滚动直接子节点，常驻 fixed 入口位于变换内容之外。"
+      }
     },
     {
       "id": "b1",
       "text": "使用 binddragstart/binddragging/binddragend 时显式开启 enhanced，并保留完整的开始、过程、结束处理",
+      "category": "web-interaction",
       "passed": true,
       "evidence": "outputs/src/pages/feed/index.mpx：enhanced 与 dragstart/dragging/dragend 成组启用。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/feed/index.mpx：enhanced 与 dragstart/dragging/dragend 成组启用。"
+      }
     },
     {
       "id": "b2",
       "text": "动态分类、异步商品和图片固有尺寸晚到后，使用运行时真实消费的观察机制或图片 load/metadata 后的 nextTick + scroll-view ref.refresh 保证滚动范围更新；ref 可使用标准 wx:ref 或可选的 Web 条件写法，必须隔离的是 Web-only refresh 调用链，可由 Web 条件事件或脚本平台/能力判断完成",
+      "category": "web-scroll",
       "passed": false,
       "evidence": "outputs/src/pages/feed/index.mpx：图片尺寸晚到后缺少安全隔离的 image load + nextTick + scroll-view ref.refresh 刷新链路。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/pages/feed/index.mpx：图片尺寸晚到后缺少安全隔离的 image load + nextTick + scroll-view ref.refresh 刷新链路。"
+      }
     },
     {
       "id": "b3",
       "text": "常驻购物车位于 scroll-view 变换内容之外，并在 Web 保持相对浏览器视口的 position: fixed；不得仅为规避 BetterScroll transform 将其降级为相对页面容器的 absolute",
+      "category": "web-style",
       "passed": true,
       "evidence": "outputs/src/pages/feed/index.mpx：fixed-cart 位于变换内容之外，且 Web 最终 position 为 fixed。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/feed/index.mpx：fixed-cart 位于变换内容之外，且 Web 最终 position 为 fixed。"
+      }
     },
     {
       "id": "b4",
       "text": "视频自动播放遵守浏览器策略：自动播放时静音并支持用户手势继续播放，不假定有声 autoplay 必然成功",
+      "category": "web-media",
       "passed": true,
       "evidence": "outputs/src/components/product-video.mpx：视频自动播放配置符合静音/用户手势策略。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/components/product-video.mpx：视频自动播放配置符合静音/用户手势策略。"
+      }
     },
     {
       "id": "b5",
       "text": "timeupdate 与 loadedmetadata 处理兼容 Web 原生转发事件，不无条件读取微信专属 detail.currentTime/detail.width 结构",
+      "category": "web-media",
       "passed": false,
       "evidence": "outputs/src/components/product-video.mpx：onTimeUpdate, onLoadedMetadata 仍无条件假定微信 detail 结构。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/components/product-video.mpx：onTimeUpdate, onLoadedMetadata 仍无条件假定微信 detail 结构。"
+      }
     },
     {
       "id": "b6",
       "text": "只使用参考中 Web 实际消费的视频属性和事件；商品分类、滚动选择、视频播放与购物车业务链路在微信小程序继续可执行",
+      "category": "cross-platform-regression",
       "passed": false,
       "evidence": "outputs/src/components/product-video.mpx：Web video 仍暴露未实际消费的属性 ['enable-danmu']。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/components/product-video.mpx：Web video 仍暴露未实际消费的属性 ['enable-danmu']。"
+      }
     }
   ],
   "summary": {
@@ -87,6 +123,13 @@
     "failed": 3,
     "total": 7,
     "pass_rate": 0.5714
+  },
+  "strict_delivery_summary": {
+    "passed": 4,
+    "failed": 3,
+    "total": 7,
+    "pass_rate": 0.5714,
+    "compile_passed": true
   },
   "metrics": {
     "total_tokens": 113632,
@@ -101,6 +144,7 @@
     "total_duration_seconds": 209.438
   },
   "compile": {
+    "compile_fingerprint": "7f232b6abe45f8ffe52041efb6450044b253145f29b345a97a5243f65c32137f",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 2,
@@ -110,19 +154,33 @@
       {
         "kind": "mpx-conditional-compile-semantics",
         "files": [
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-8-web-builtin-scroll-media/no_skill/run-1/outputs/src/pages/feed/index.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-8-web-builtin-scroll-media/no_skill/run-1/outputs/src/pages/feed/index.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-8-web-builtin-scroll-media/no_skill/run-1/outputs/src/pages/feed/index.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
           "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-8-web-builtin-scroll-media/no_skill/run-1/outputs/src/components/product-video.mpx"
         ],
         "passed": true,
         "returncode": 0,
         "detail": {
           "success": true,
-          "checkedFiles": 2,
+          "checkedFiles": 1,
           "files": [
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-8-web-builtin-scroll-media/no_skill/run-1/outputs/src/pages/feed/index.mpx",
-              "errors": []
-            },
             {
               "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/sol-high/eval-8-web-builtin-scroll-media/no_skill/run-1/outputs/src/components/product-video.mpx",
               "errors": []
@@ -149,7 +207,7 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3553
+          "durationMs": 2491
         },
         "stderr": ""
       },
@@ -171,19 +229,20 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 2523
+          "durationMs": 2495
         },
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
     "suggestions": [
-      "b4 未明确“用户手势继续播放”是否必须是业务按钮/显式 play 调用，还是 controls=true 即可；本次按 controls=true 可提供用户手势播放判 PASS。",
-      "b2 中“运行时真实消费的观察机制”建议明确是否接受 Mpx scroll-view 默认 MutationObserver；本次因图片固有尺寸晚到没有 bindload/ref.refresh 或内容尺寸观察证据判 FAIL。"
+      "补充 scroll-view 的标准 ref，并在异步商品/分类更新、图片 load、视频 metadata 后通过 Web-only 能力判断调用 nextTick 后的 ref.refresh。",
+      "规范化 video 的 timeupdate/loadedmetadata 事件读取，兼容 event.detail 与 Web 原生 video/currentTarget 数据来源。",
+      "移除或隔离 Mpx Web video 参考未实际消费的属性。"
     ],
-    "overall": "结构、拖动增强、购物车固定和静音 autoplay 基本满足；核心缺口是异步图片/元数据后的滚动刷新链路缺失，以及视频事件未兼容 Web 原生转发。"
+    "overall": "结构性修复了吸顶、拖动启用、购物车固定和静音自动播放，但滚动范围刷新与 Web 视频事件兼容仍缺失。"
   }
 }

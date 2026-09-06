@@ -1,7 +1,13 @@
 <template>
   <view class="recommendations">
     <view class="section-title">相关推荐</view>
-    <view class="recommendation-card" wx:for="{{items}}" wx:key="id" data-product-id="{{item.id}}" bindtap="openProduct(item.id)">
+    <view
+      class="recommendation-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-product-id="{{item.id}}"
+      bindtap="openProduct(item.id)"
+    >
       <image class="recommendation-cover" src="{{item.cover}}" mode="aspectFill" />
       <text class="recommendation-name">{{item.name}}</text>
       <text class="recommendation-price">¥{{item.price}}</text>
@@ -11,64 +17,76 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/api-proxy'
 
 createComponent({
-  properties: { productId: String, items: Array },
+  properties: {
+    productId: String,
+    items: { type: Array, default: () => [] }
+  },
   observers: {
     productId () {
-      if (this._ready) this.startTracking()
+      if (this._trackingReady) this.startTracking()
+    },
+    items () {
+      if (this._trackingReady) this.observeCards()
     }
   },
   ready () {
-    this._ready = true
-    this._trackingVersion = 0
+    this._trackingReady = true
     this.startTracking()
   },
   detached () {
-    this._ready = false
-    this.stopTracking(true)
+    this.stopTracking()
+  },
+  beforeDestroy () {
+    this.stopTracking()
   },
   methods: {
     async startTracking () {
+      // This component is also rendered by SSR and by Mini Program; neither has DOM APIs.
+      if (typeof window === 'undefined' || typeof document === 'undefined' || typeof IntersectionObserver === 'undefined') return
       this.stopTracking()
-      this._disposed = false
-      if (typeof window === 'undefined' || !window.IntersectionObserver || !this.productId) return
+      const version = this._trackingVersion
+      const productId = this.productId
+      if (!productId) return
 
-      const version = ++this._trackingVersion
-      const sdkModule = await import('@business/product-exposure-web')
-      if (this._disposed || version !== this._trackingVersion) return
-      const sdk = sdkModule.default || sdkModule
-      const tracker = await sdk.create({ productId: this.productId })
-      if (this._disposed || version !== this._trackingVersion) {
+      const module = await import('@business/product-exposure-web')
+      const exposureSdk = module.default || module
+      const tracker = await exposureSdk.create({ productId })
+      if (!this._trackingReady || version !== this._trackingVersion || productId !== this.productId) {
         tracker.destroy()
         return
       }
 
       this._tracker = tracker
-      this._observer = new window.IntersectionObserver((entries) => {
-        if (this._disposed || version !== this._trackingVersion || this._tracker !== tracker) return
+      this._observer = new IntersectionObserver((entries) => {
+        if (version !== this._trackingVersion || this._tracker !== tracker) return
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             tracker.track('recommendation_exposure', {
-              productId: this.productId,
-              recommendationId: entry.target.getAttribute('data-product-id')
+              productId,
+              recommendationId: entry.target.dataset.productId
             })
           }
         })
       })
-      const root = this.$el
-      if (root) root.querySelectorAll('.recommendation-card').forEach(element => this._observer.observe(element))
+      this.observeCards()
     },
-    stopTracking (disposed) {
-      if (disposed) this._disposed = true
+    observeCards () {
+      if (!this._observer || !this.$el) return
+      this._observer.disconnect()
+      this.$el.querySelectorAll('.recommendation-card').forEach(element => this._observer.observe(element))
+    },
+    stopTracking () {
       this._trackingVersion = (this._trackingVersion || 0) + 1
       if (this._observer) this._observer.disconnect()
-      if (this._tracker) this._tracker.destroy()
       this._observer = null
+      if (this._tracker) this._tracker.destroy()
       this._tracker = null
     },
     openProduct (productId) {
-      wx.navigateTo({ url: `/packageProduct/pages/detail/index?id=${productId}` })
+      mpx.navigateTo({ url: `/packageProduct/pages/detail/index?id=${productId}` })
     }
   }
 })

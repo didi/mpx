@@ -1,0 +1,92 @@
+{
+  "eval_id": 6,
+  "eval_name": "api-proxy-task-contract",
+  "configuration": "no_skill",
+  "run_number": 2,
+  "model_grading_fingerprint": "4700f722bb08071af3871df88edae475c4803bf32e13991bb550bb8eac840bae",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 82874
+  },
+  "expectations": [
+    {
+      "id": "q0",
+      "text": "应用入口安装 @mpxjs/api-proxy，并通过 mpx.use(apiProxy, { usePromise: true }) 明确启用 Promise 风格",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/app.mpx:2-8 仅 import mpx 并 createApp，未 import @mpxjs/api-proxy，也没有 mpx.use(apiProxy, { usePromise: true })。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q1",
+      "text": "Web 输出中的普通趋势词请求通过会返回 Promise 的 Mpx 官方 API 调用路径使用 await 或 Promise 链；可使用配置后的 mpx.request 或会被跨端编译转换到该入口的 wx.request。原始 @mpxjs/api-proxy 命名导入不会继承 Promise 化配置，不能直接按 Promise 使用；不得混用 success/fail 回调",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/services/search.js:1-6 从 @mpxjs/api-proxy 命名导入 request 后直接 return request(...).then(...)；该路径不会继承入口 mpx.use 的 Promise 化配置，且 outputs/src/app.mpx 也未安装 apiProxy。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "联想词请求保存可取消任务：可通过单次 usePromise: false 或原始 @mpxjs/api-proxy 命名导入直接取得 RequestTask，也可从已 Promise 化调用的 Promise.__returned 取得框架保留的原始任务；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/services/search.js:9-30 未通过 usePromise:false、RequestTask 或 Promise.__returned 获取框架保留的可取消任务，而是对命名导入 request 的返回值调用 then 并自造 suggestionsPromise.abort；outputs/src/pages/search/index.mpx:84-89 虽先置空再 abort，但保存的不是断言允许的官方可取消任务路径。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "联想词 success/fail 回调捕获本次任务和关键词，仅当前任务且关键词仍匹配时才更新结果或提示，旧响应不能覆盖新搜索",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/services/search.js:13-20 联想词请求没有传入 success/fail 回调；outputs/src/pages/search/index.mpx:104-116 使用 Promise then/catch 做身份与序号校验，不满足“success/fail 回调捕获本次任务和关键词”的要求。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "详情跳转与错误提示继续走 Mpx 官方 API 链路；可保留会被跨端编译转换的 wx.navigateTo/wx.showToast，可沿用 mpx.xxx，也可在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/search/index.mpx:35 从 @mpxjs/api-proxy 导入 navigateTo/showToast；44-48 使用 showToast 展示错误，118-121 使用 navigateTo 跳转详情，未继续使用 input/src/pages/search/index.mpx:48 的 alert 或 52 的 location.assign。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q5",
+      "text": "不用 fetch、location 或 alert 平行重写 request/navigateTo/showToast；若沿用 @mpxjs/api-proxy 命名导入，应明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs 中未发现 fetch/location/alert，但 outputs/src/services/search.js:1、3-6、20-21 以及 outputs/src/pages/search/index.mpx:35、44-48、119-121 均沿用 @mpxjs/api-proxy 命名导入并按 Promise 使用，没有明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q6",
+      "text": "趋势词、连续输入、清空搜索、取消旧请求、结果展示和商品详情业务链路保持完整",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx:13-29 保留趋势词和结果展示，75-83 支持连续输入、选词和清空，84-116 尝试取消旧请求并防旧响应，118-121 保留详情跳转；但 outputs/src/services/search.js:3-30 的趋势词和联想词请求依赖不成立的命名导入 Promise/AbortController 路径，导致请求和取消链路不能可靠运行。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言缺口：q4 允许 @mpxjs/api-proxy 命名导入用于 navigateTo/showToast，但未明确这些调用是否可以 Promise 化；这会和 q5 对命名导入不继承 Promise 化配置的要求产生判定边界。"
+    ],
+    "overall": "候选保留了部分页面业务代码，但入口未安装 api-proxy，普通请求和联想词请求都错误地把命名导入 request 当作已 Promise 化 API 使用，取消路径也不是官方 RequestTask/.__returned 路径。"
+  }
+}

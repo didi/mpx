@@ -14,14 +14,19 @@
       bindscrolltolower="handleLower"
     >
       <analytics-chart metrics="{{metrics}}" bindselect="handleSelect" />
+      <slot />
     </scroll-view>
   </view>
 </template>
 
 <script>
 import { createComponent } from '@mpxjs/core'
+import AnalyticsChart from '../web/AnalyticsChart.vue'
 
 createComponent({
+  components: {
+    AnalyticsChart
+  },
   properties: {
     metrics: { type: Array, value: () => [] },
     scrollX: { type: Boolean, value: true },
@@ -49,12 +54,4 @@ createComponent({
     }
   }
 })
-</script>
-
-<script type="application/json">
-{
-  "usingComponents": {
-    "analytics-chart": "../web/AnalyticsChart.vue"
-  }
-}
 </script>

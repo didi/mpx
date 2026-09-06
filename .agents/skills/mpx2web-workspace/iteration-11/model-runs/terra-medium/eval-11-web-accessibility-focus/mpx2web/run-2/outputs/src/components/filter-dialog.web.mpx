@@ -1,12 +1,6 @@
 <template>
   <div class="filter">
-    <button
-      ref="trigger"
-      class="filter-trigger"
-      aria-haspopup="dialog"
-      :aria-expanded="visible ? 'true' : 'false'"
-      @click="open"
-    >筛选</button>
+    <button ref="trigger" class="filter-trigger" @click="open">筛选</button>
     <div v-if="visible" class="mask" @click="close">
       <div
         ref="dialog"
@@ -20,11 +14,12 @@
         <button
           v-for="item in options"
           :key="item.value"
+          type="button"
           :aria-pressed="selected.includes(item.value) ? 'true' : 'false'"
           @click="toggle(item.value)"
         >{{item.label}}</button>
-        <button @click="clear">清空</button>
-        <button @click="confirm">确定</button>
+        <button type="button" @click="clear">清空</button>
+        <button type="button" @click="confirm">确定</button>
       </div>
     </div>
   </div>
@@ -37,62 +32,68 @@ createComponent({
   properties: { options: { type: Array, value: () => [] } },
   data: { visible: false, selected: [] },
   attached () {
-    this.focusRequestId = 0
-    this.keyListenerAttached = false
-    this.opener = null
+    this.isDetached = false
+    this.focusGeneration = 0
+    this.keydownListening = false
+    this.triggerElement = null
   },
   detached () {
-    this.focusRequestId += 1
-    this.removeKeyListener()
-    this.opener = null
+    this.isDetached = true
+    this.focusGeneration += 1
+    this.removeKeydownListener()
+    this.triggerElement = null
   },
   methods: {
-    open () {
-      const activeElement = document.activeElement
-      this.opener = activeElement && activeElement.isConnected
-        ? activeElement
-        : this.$refs.trigger
-      this.visible = true
-      this.addKeyListener()
+    open (event) {
+      if (this.isDetached) return
 
-      const requestId = ++this.focusRequestId
+      this.focusGeneration += 1
+      this.triggerElement = (event && event.currentTarget) || this.$refs.trigger || document.activeElement
+      this.visible = true
+      this.addKeydownListener()
+
+      const generation = this.focusGeneration
       this.$nextTick(() => {
-        if (this.visible && requestId === this.focusRequestId && this.$refs.dialog) {
-          this.$refs.dialog.focus()
-        }
+        if (this.isDetached || !this.visible || generation !== this.focusGeneration) return
+        const dialog = this.$refs.dialog
+        if (dialog && dialog.isConnected) dialog.focus()
       })
     },
     close () {
       if (!this.visible) return
 
+      this.focusGeneration += 1
+      const generation = this.focusGeneration
       this.visible = false
-      const closeRequestId = ++this.focusRequestId
-      this.removeKeyListener()
+      this.removeKeydownListener()
 
-      const opener = this.opener
-      this.opener = null
       this.$nextTick(() => {
-        if (!this.visible && closeRequestId === this.focusRequestId && opener && opener.isConnected) {
-          opener.focus()
-        }
+        if (this.isDetached || this.visible || generation !== this.focusGeneration) return
+        this.restoreTriggerFocus()
       })
     },
-    addKeyListener () {
-      if (this.keyListenerAttached) return
+    addKeydownListener () {
+      if (this.keydownListening || typeof document === 'undefined') return
       document.addEventListener('keydown', this.onKeydown)
-      this.keyListenerAttached = true
+      this.keydownListening = true
     },
-    removeKeyListener () {
-      if (!this.keyListenerAttached) return
+    removeKeydownListener () {
+      if (!this.keydownListening || typeof document === 'undefined') return
       document.removeEventListener('keydown', this.onKeydown)
-      this.keyListenerAttached = false
+      this.keydownListening = false
+    },
+    restoreTriggerFocus () {
+      const trigger = this.triggerElement
+      this.triggerElement = null
+      if (trigger && trigger.isConnected && typeof trigger.focus === 'function') trigger.focus()
     },
     getFocusableElements () {
       const dialog = this.$refs.dialog
       if (!dialog) return []
+
       return Array.prototype.slice.call(dialog.querySelectorAll(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )).filter((element) => element.isConnected && element.getClientRects().length)
+      )).filter((element) => element.offsetParent !== null)
     },
     toggle (value) {
       this.selected = this.selected.includes(value)
@@ -105,7 +106,7 @@ createComponent({
       this.close()
     },
     onKeydown (event) {
-      if (!this.visible) return
+      if (!this.visible || this.isDetached) return
 
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -115,22 +116,27 @@ createComponent({
 
       if (event.key !== 'Tab') return
 
-      const focusableElements = this.getFocusableElements()
       const dialog = this.$refs.dialog
-      if (!focusableElements.length) {
-        event.preventDefault()
-        if (dialog) dialog.focus()
-        return
-      }
+      const focusable = this.getFocusableElements()
+      if (!dialog || !dialog.isConnected) return
 
       const activeElement = document.activeElement
-      const currentIndex = focusableElements.indexOf(activeElement)
-      const nextIndex = event.shiftKey
-        ? (currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1)
-        : (currentIndex === focusableElements.length - 1 ? 0 : currentIndex + 1)
-
-      event.preventDefault()
-      focusableElements[nextIndex].focus()
+      if (!focusable.length) {
+        event.preventDefault()
+        dialog.focus()
+      } else if (!dialog.contains(activeElement)) {
+        event.preventDefault()
+        focusable[event.shiftKey ? focusable.length - 1 : 0].focus()
+      } else if (event.shiftKey && activeElement === focusable[0]) {
+        event.preventDefault()
+        focusable[focusable.length - 1].focus()
+      } else if (!event.shiftKey && activeElement === focusable[focusable.length - 1]) {
+        event.preventDefault()
+        focusable[0].focus()
+      } else if (event.shiftKey && activeElement === dialog) {
+        event.preventDefault()
+        focusable[focusable.length - 1].focus()
+      }
     }
   }
 })

@@ -1,5 +1,5 @@
 <template>
-  <div ref="chart" class="analytics-chart"></div>
+  <div ref="chart" class="analytics-chart" role="list" aria-label="数据指标图表"></div>
 </template>
 
 <script>
@@ -15,172 +15,97 @@ export default {
   },
   data () {
     return {
-      chartInstance: null,
-      chartRequestId: 0,
-      latestMetrics: [],
+      chart: null,
+      requestId: 0,
       resizeObserver: null,
       resizeFrame: null,
-      windowResizeHandler: null,
-      componentDestroyed: false
+      removeWindowResize: null
     }
   },
   watch: {
     metrics: {
       deep: true,
-      immediate: true,
-      handler (metrics) {
-        this.latestMetrics = Array.isArray(metrics) ? metrics.slice() : []
-        if (this.chartInstance) {
-          this.chartInstance.update(this.latestMetrics)
-          this.queueResize()
-        }
+      handler () {
+        this.renderChart()
       }
     }
   },
   mounted () {
-    this.initializeChart()
+    this.observeSize()
+    this.renderChart()
   },
   beforeDestroy () {
-    this.componentDestroyed = true
-    this.chartRequestId += 1
-    this.stopObservingSize()
-
-    if (this.chartInstance) {
-      this.chartInstance.destroy()
-      this.chartInstance = null
-    }
+    this.requestId += 1
+    this.disconnectSizeObserver()
+    this.destroyChart()
   },
   methods: {
-    async initializeChart () {
+    renderChart () {
+      const requestId = ++this.requestId
       const element = this.$refs.chart
-      const requestId = ++this.chartRequestId
+      const metrics = Array.isArray(this.metrics) ? this.metrics.slice() : []
 
-      try {
-        const instance = await createChart(element, this.latestMetrics, {
-          onSelect: (detail) => {
-            if (!this.componentDestroyed && requestId === this.chartRequestId) {
-              this.$emit('select', detail)
-            }
-          }
-        })
-
-        if (
-          this.componentDestroyed ||
-          requestId !== this.chartRequestId ||
-          element !== this.$refs.chart
-        ) {
-          instance.destroy()
+      this.destroyChart()
+      createChart(element, metrics, {
+        onSelect: this.handleSelect,
+        isCurrent: () => this.requestId === requestId && !this._isBeingDestroyed
+      }).then((chart) => {
+        if (!chart) return
+        if (this.requestId !== requestId || this._isBeingDestroyed) {
+          chart.destroy()
           return
         }
-
-        this.chartInstance = instance
-        this.chartInstance.update(this.latestMetrics)
-        this.startObservingSize()
-        this.queueResize()
-      } catch (error) {
-        if (!this.componentDestroyed && requestId === this.chartRequestId) {
-          this.$emit('chart-error', { error })
-        }
-      }
+        this.chart = chart
+        this.resizeChart()
+      })
     },
-    startObservingSize () {
-      const element = this.$refs.chart
-      if (!element || this.resizeObserver || this.windowResizeHandler) return
-
+    handleSelect (metric) {
+      this.$emit('select', { key: metric.key })
+    },
+    destroyChart () {
+      if (!this.chart) return
+      this.chart.destroy()
+      this.chart = null
+    },
+    observeSize () {
+      const onResize = () => {
+        if (this.resizeFrame !== null) return
+        this.resizeFrame = requestAnimationFrame(() => {
+          this.resizeFrame = null
+          this.resizeChart()
+        })
+      }
       if (typeof ResizeObserver !== 'undefined') {
-        this.resizeObserver = new ResizeObserver(() => this.queueResize())
-        this.resizeObserver.observe(element)
-        return
-      }
-
-      if (typeof window !== 'undefined') {
-        this.windowResizeHandler = () => this.queueResize()
-        window.addEventListener('resize', this.windowResizeHandler)
+        this.resizeObserver = new ResizeObserver(onResize)
+        this.resizeObserver.observe(this.$el)
+      } else {
+        window.addEventListener('resize', onResize)
+        this.removeWindowResize = () => window.removeEventListener('resize', onResize)
       }
     },
-    stopObservingSize () {
+    disconnectSizeObserver () {
       if (this.resizeObserver) {
         this.resizeObserver.disconnect()
         this.resizeObserver = null
       }
-
-      if (this.windowResizeHandler && typeof window !== 'undefined') {
-        window.removeEventListener('resize', this.windowResizeHandler)
-        this.windowResizeHandler = null
+      if (this.removeWindowResize) {
+        this.removeWindowResize()
+        this.removeWindowResize = null
       }
-
-      if (this.resizeFrame !== null && typeof cancelAnimationFrame === 'function') {
+      if (this.resizeFrame !== null) {
         cancelAnimationFrame(this.resizeFrame)
-      }
-      this.resizeFrame = null
-    },
-    queueResize () {
-      if (!this.chartInstance || this.componentDestroyed) return
-
-      if (typeof requestAnimationFrame !== 'function') {
-        this.chartInstance.resize()
-        return
-      }
-
-      if (this.resizeFrame !== null) return
-      this.resizeFrame = requestAnimationFrame(() => {
         this.resizeFrame = null
-        if (this.chartInstance && !this.componentDestroyed) {
-          this.chartInstance.resize()
-        }
-      })
+      }
+    },
+    resizeChart () {
+      if (this.chart) this.chart.resize()
     }
   }
 }
 </script>
 
-<style>
+<style scoped>
 .analytics-chart {
-  box-sizing: border-box;
   min-width: 100%;
-  min-height: 100%;
-}
-
-.analytics-chart-sdk {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(144px, 1fr);
-  gap: 12px;
-  box-sizing: border-box;
-  min-width: 100%;
-  padding: 12px;
-}
-
-.analytics-chart-sdk__metric {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-height: 88px;
-  padding: 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: #111827;
-  cursor: pointer;
-}
-
-.analytics-chart-sdk__metric:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-}
-
-.analytics-chart-sdk__label {
-  color: #6b7280;
-  font-size: 13px;
-}
-
-.analytics-chart-sdk__value {
-  margin-top: 8px;
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.analytics-chart-sdk--compact {
-  grid-auto-columns: minmax(124px, 1fr);
 }
 </style>

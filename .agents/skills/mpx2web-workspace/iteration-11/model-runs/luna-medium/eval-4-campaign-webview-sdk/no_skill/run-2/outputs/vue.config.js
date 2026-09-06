@@ -4,10 +4,7 @@ module.exports = {
     mpx: {
       plugin: {
         webConfig: {
-          routeConfig: {
-            mode: 'history',
-            base: '/mall/'
-          }
+          routeConfig: { mode: 'history', base: '/mall/' }
         }
       }
     }

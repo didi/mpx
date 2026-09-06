@@ -6,8 +6,8 @@
       autoplay
       muted@web="{{true}}"
       muted@wx="{{false}}"
-      playsinline@web
-      enable-danmu@wx
+      playsinline@web="{{true}}"
+      enable-danmu@wx="{{true}}"
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
@@ -25,27 +25,25 @@ createComponent({
   },
   data: {
     progress: 0,
-    duration: 0
+    duration: 0,
+    videoSize: ''
   },
   methods: {
     onTimeUpdate (event) {
       const detail = event.detail || {}
-      const media = event.target || {}
-      this.progress = detail.currentTime !== undefined ? detail.currentTime : (media.currentTime || 0)
-      this.duration = detail.duration !== undefined ? detail.duration : (media.duration || 0)
+      if (typeof detail.currentTime === 'number') {
+        this.progress = detail.currentTime
+      }
+      if (typeof detail.duration === 'number') {
+        this.duration = detail.duration
+      }
     },
     onLoadedMetadata (event) {
       const detail = event.detail || {}
-      const media = event.target || {}
-      const width = detail.width !== undefined ? detail.width : media.videoWidth
-      const height = detail.height !== undefined ? detail.height : media.videoHeight
-      this.videoSize = `${width || 0}x${height || 0}`
-      if (detail.duration !== undefined) {
-        this.duration = detail.duration
-      } else if (media.duration) {
-        this.duration = media.duration
+      if (typeof detail.width === 'number' && typeof detail.height === 'number') {
+        this.videoSize = `${detail.width}x${detail.height}`
       }
-      this.triggerEvent('mediaload')
+      this.triggerEvent('layoutchange')
     },
     onVideoError () {}
   }
@@ -53,5 +51,5 @@ createComponent({
 </script>
 
 <style scoped>
-.product-video { display: block; width: 100%; }
+.product-video { width: 100%; }
 </style>

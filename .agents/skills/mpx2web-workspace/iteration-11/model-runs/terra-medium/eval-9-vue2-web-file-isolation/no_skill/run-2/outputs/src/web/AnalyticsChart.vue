@@ -1,18 +1,5 @@
 <template>
-  <div class="analytics-chart">
-    <div ref="canvas" class="analytics-chart__canvas" />
-    <button
-      v-for="metric in metricList"
-      :id="metric.key"
-      :key="metric.key"
-      type="button"
-      class="analytics-chart__metric"
-      @click="selectMetric(metric.key)"
-    >
-      <span>{{ metric.label }}</span>
-      <span>{{ metric.value }}</span>
-    </button>
-  </div>
+  <div ref="chart" class="analytics-chart"></div>
 </template>
 
 <script>
@@ -23,43 +10,36 @@ export default {
   props: {
     metrics: {
       type: Array,
-      default: () => []
+      default: function () { return [] }
     }
   },
-  data () {
+  data: function () {
     return {
       chart: null,
-      chartRequest: 0,
       resizeObserver: null,
-      isAlive: false
-    }
-  },
-  computed: {
-    metricList () {
-      return Array.isArray(this.metrics) ? this.metrics : []
+      renderVersion: 0,
+      isDisposed: false
     }
   },
   watch: {
     metrics: {
       deep: true,
-      handler () {
-        if (this.chart) this.chart.update(this.metricList)
+      handler: function (nextMetrics) {
+        if (this.chart) {
+          this.chart.update(nextMetrics || [])
+        } else {
+          this.mountChart()
+        }
       }
     }
   },
-  mounted () {
-    this.isAlive = true
-    this.createChart()
-    if (typeof ResizeObserver !== 'undefined') {
-      this.resizeObserver = new ResizeObserver(() => {
-        if (this.chart) this.chart.resize()
-      })
-      this.resizeObserver.observe(this.$el)
-    }
+  mounted: function () {
+    this.mountChart()
+    this.observeSize()
   },
-  beforeDestroy () {
-    this.isAlive = false
-    this.chartRequest += 1
+  beforeDestroy: function () {
+    this.isDisposed = true
+    this.renderVersion += 1
     if (this.resizeObserver) {
       this.resizeObserver.disconnect()
       this.resizeObserver = null
@@ -70,23 +50,41 @@ export default {
     }
   },
   methods: {
-    createChart () {
-      const request = ++this.chartRequest
-      createChart(this.$refs.canvas, this.metricList, {
-        isCurrent: () => this.isAlive && request === this.chartRequest
-      }).then((chart) => {
-        if (!chart) return
-        if (!this.isAlive || request !== this.chartRequest) {
-          chart.destroy()
-          return
-        }
-        this.chart = chart
-        this.chart.update(this.metricList)
+    async mountChart () {
+      var version = ++this.renderVersion
+      var element = this.$refs.chart
+      if (!element || this.isDisposed) return
+
+      var nextChart = await createChart(element, this.metrics || [], {
+        onSelect: this.handleSelect
       })
+
+      // An async factory may finish after this component has been replaced.
+      if (this.isDisposed || version !== this.renderVersion || element !== this.$refs.chart) {
+        nextChart.destroy()
+        return
+      }
+
+      if (this.chart) this.chart.destroy()
+      this.chart = nextChart
     },
-    selectMetric (key) {
-      this.$emit('select', { key })
+    observeSize: function () {
+      var element = this.$refs.chart
+      if (!element || typeof ResizeObserver === 'undefined') return
+      this.resizeObserver = new ResizeObserver(() => {
+        if (!this.isDisposed && this.chart) this.chart.resize()
+      })
+      this.resizeObserver.observe(element)
+    },
+    handleSelect: function (key) {
+      this.$emit('select', { key: key })
     }
   }
 }
 </script>
+
+<style scoped>
+.analytics-chart {
+  min-width: max-content;
+}
+</style>

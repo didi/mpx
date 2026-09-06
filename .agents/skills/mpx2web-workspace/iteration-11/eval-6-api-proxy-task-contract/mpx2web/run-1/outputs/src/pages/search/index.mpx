@@ -1,6 +1,7 @@
 <template>
   <view class="search-page">
     <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view class="error" wx:if="{{errorMessage}}">{{errorMessage}}</view>
     <view class="trending" wx:if="{{!keyword}}">
       <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
     </view>
@@ -19,10 +20,17 @@ createPage({
     keyword: '',
     trendingKeywords: [],
     suggestions: [],
-    requestTask: null
+    errorMessage: '',
+    requestTask: null,
+    suggestionGeneration: 0
   },
   async onLoad () {
-    this.trendingKeywords = await fetchTrendingKeywords()
+    try {
+      this.trendingKeywords = await fetchTrendingKeywords()
+    } catch (error) {
+      this.errorMessage = '搜索失败'
+      mpx.showToast({ title: '搜索失败', icon: 'none' })
+    }
   },
   onUnload () {
     this.cancelSuggestionRequest()
@@ -35,45 +43,38 @@ createPage({
       this.search(keyword)
     },
     cancelSuggestionRequest () {
-      const requestPromise = this.requestTask
+      const task = this.requestTask
       this.requestTask = null
-      const requestTask = requestPromise && requestPromise.__returned
-      if (requestTask && typeof requestTask.abort === 'function') {
-        requestTask.abort()
-      }
+      this.suggestionGeneration += 1
+      if (task && task.abort) task.abort()
     },
     search (keyword) {
-      this.keyword = keyword
       this.cancelSuggestionRequest()
-
+      this.keyword = keyword
+      this.errorMessage = ''
       if (!keyword) {
         this.suggestions = []
         return
       }
 
-      const requestPromise = requestSuggestions(keyword)
-      this.requestTask = requestPromise
+      const generation = this.suggestionGeneration
+      const promise = requestSuggestions(keyword)
+      const task = promise.__returned
+      this.requestTask = task
 
-      requestPromise
-        .then(({ data }) => {
-          if (this.requestTask !== requestPromise || this.keyword !== keyword) return
-          this.suggestions = data.list
-        })
-        .catch(() => {
-          if (this.requestTask !== requestPromise || this.keyword !== keyword) return
-          mpx.showToast({
-            title: '搜索失败',
-            icon: 'none'
-          })
-        })
-        .finally(() => {
-          if (this.requestTask === requestPromise) {
-            this.requestTask = null
-          }
-        })
+      promise.then(({ data }) => {
+        if (this.requestTask !== task || this.suggestionGeneration !== generation || this.keyword !== keyword) return
+        this.requestTask = null
+        this.suggestions = data.list
+      }).catch(() => {
+        if (this.requestTask !== task || this.suggestionGeneration !== generation || this.keyword !== keyword) return
+        this.requestTask = null
+        this.errorMessage = '搜索失败'
+        mpx.showToast({ title: '搜索失败', icon: 'none' })
+      })
     },
     openProduct (productId) {
-      return mpx.navigateTo({
+      mpx.navigateTo({
         url: `/pages/product/detail?id=${productId}`
       })
     }
@@ -84,4 +85,5 @@ createPage({
 <style scoped>
 .search-page { padding: 24rpx; }
 .trending, .suggestions { margin-top: 24rpx; }
+.error { margin-top: 16rpx; color: #d93025; }
 </style>

@@ -1,0 +1,92 @@
+{
+  "eval_id": 12,
+  "eval_name": "web-style-runtime-config",
+  "configuration": "no_skill",
+  "run_number": 2,
+  "model_grading_fingerprint": "d8e2fa053f67fe6d93266ab7ebd7c5345091fd43983a749a00ac6350e9e6b379",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 101989
+  },
+  "expectations": [
+    {
+      "id": "t0",
+      "text": "跨组件主题 CSS 变量在宿主未注入时提供可用的颜色、间距等回退值",
+      "category": "web-style",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx:105-123 在 .portal 内声明 --portal-text、--portal-background、--portal-card、--portal-border、--portal-accent、--portal-space 默认值，并在 color/background/padding 等处使用 var(..., fallback)；134-143 卡片颜色、背景、边框也提供字面值与 CSS 变量回退。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t1",
+      "text": "webConfig.transRpxFn 实现明确的 100rpx=1rem 规则，0 值保持 0，不产生 0rem 或依赖运行环境的非确定结果",
+      "category": "web-style",
+      "passed": false,
+      "evidence": "outputs/vue.config.js:8-11 的 transRpxFn 为 return `${value * 0.01}rem`，0rpx 会输出 0rem，没有显式保持为 0。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t2",
+      "text": "移动 viewport 在 public/index.html 的 meta 中配置，组件样式和运行脚本不伪造或重复注入 viewport",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/public/index.html:5 配置 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">；outputs/src/pages/portal/index.mpx 中未出现 viewport meta 创建或注入逻辑。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t3",
+      "text": "hover、::-webkit-scrollbar 与浏览器 safe-area/私有 CSS 仅隔离在 Web 输出，不污染微信小程序样式",
+      "category": "conditional-compile",
+      "passed": false,
+      "evidence": "outputs/src/pages/portal/index.mpx 只有普通 <style scoped>，176-184 写入 hover，187-203 写入 ::-webkit-scrollbar，117 写入 env(safe-area-inset-bottom, 0px)，未使用 Web-only style/mode 隔离，存在污染微信小程序样式的风险。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t4",
+      "text": "Web 弹层打开时记录并锁定 body/应用挂载容器的原 overflow，关闭、页面切换和卸载时幂等恢复原值",
+      "category": "web-cleanup",
+      "passed": false,
+      "evidence": "outputs/src/pages/portal/index.mpx:51-65 打开弹层时仅记录并锁定 document.body 的 overflow/position/top/width；70-79 关闭、onHide/onUnload 时恢复 body。代码未记录或锁定应用挂载容器 #app 的原 overflow。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t5",
+      "text": "滚动锁只保护浏览器客户端 DOM，不阻断微信小程序页面滚动、卡片点击和弹层关闭",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/portal/index.mpx:15 通过 typeof document/window 判断 hasDOM；51 和 69 在无 DOM 时直接返回，因此微信小程序不会执行 body 滚动锁。模板 3 行卡片 bindtap、7 行遮罩 bindtap closeDialog、8 行弹层 catchtap noop 保持业务点击与关闭链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "t6",
+      "text": "routeConfig.base、output.publicPath 与 /portal/ 部署路径一致，主题切换、弹层和门户卡片业务链路完整",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/vue.config.js:2 publicPath 为 /portal/，7 routeConfig.base 为 /portal/；outputs/src/pages/portal/index.mpx:2 绑定 portal--dark，31-33 toggleTheme 切换 dark，35-43/70-79 弹层开关与恢复链路存在，24-27 openCard 调用 mpx.navigateTo 到详情页。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "t4 建议明确 body/应用挂载容器中的斜杠语义：是二选一，还是 body 与 #app 都必须锁定并恢复。该点会直接影响 t4 判定。"
+    ],
+    "overall": "输出修复了主题回退、viewport 与 /portal/ 配置，但 rpx 零值、Web-only 样式隔离和 #app 滚动锁恢复仍不满足验收要求。"
+  }
+}

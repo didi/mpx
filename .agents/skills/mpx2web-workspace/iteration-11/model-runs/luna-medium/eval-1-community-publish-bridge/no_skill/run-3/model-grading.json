@@ -1,0 +1,102 @@
+{
+  "eval_id": 1,
+  "eval_name": "community-publish-bridge",
+  "configuration": "no_skill",
+  "run_number": 3,
+  "model_grading_fingerprint": "d6a28674413e1b1a2ae61476d12fd9826d5279dc8b8d11115561bb4dab398b7f",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 93565
+  },
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "category": "cross-platform-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:117-119 定义 getWxApi 返回 wx，131-137、143-150、157-163 分别通过 api.chooseLocation、api.openLocation、api.chooseMedia 调用宿主能力；不是非 Web 分支内直接 wx.xxx 或 mpx.xxx 调用。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a1",
+      "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "category": "conditional-compile",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:117-127 引入通用 getWxApi 与 showCapabilityNotice；181-201 又用同一 getWxApi 改写 request 与 redirectTo 调用，Web 缺失能力未只隔离在 choosePlace、openPlace、choosePhoto 或其专用 helper 中。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a2",
+      "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:131-135 在 choosePlace 中检测不到 chooseLocation 时提示“当前端暂未接入位置选择能力”并 return，未声明或调用 Web 位置虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a3",
+      "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:143-148 在 openPlace 中检测不到 openLocation 时提示“当前端暂未接入地图查看能力”并 return，未声明或调用 Web 地图虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a4",
+      "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx:157-161 在 choosePhoto 中检测不到 chooseMedia 时提示“当前端暂未接入图片选择能力”并 return，未声明或调用 Web 媒体虚构接口。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a5",
+      "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "category": "web-api",
+      "passed": true,
+      "evidence": "outputs/src/pages/community/publish.mpx 全文件搜索未出现 globalThis、window、document、navigator、Bridge、SDK 等浏览器或宿主替代实现；三项缺失能力仅检测 wx/api 方法存在性。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a6",
+      "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "input/src/pages/community/publish.mpx:153-167 原先直接使用 wx.request、wx.redirectTo、wx.showToast；outputs/src/pages/community/publish.mpx:120-127、181-201 改为 getWxApi 派生的 api.request、api.redirectTo、api.showToast，并在无 api.request 时中断发布，不是保留 Mpx 官方 API 链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "a7",
+      "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/community/publish.mpx:189-198 仍保留 content、photos、place、topicId、allowComments 提交字段，但 181-187 在无 api.request 时直接 return，199-204 在无 api.redirectTo 或 data.id 时只提示“发布成功”而不跳转详情，提交后详情跳转链路不完整。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "建议明确 a2-a4 是否必须使用显式 Web 分支或编译期平台条件；当前“运行时检测 wx 方法不存在后提示待接入”是否算 Web 待接入边界，会影响这些断言的判定。"
+    ],
+    "overall": "候选保留了待接入提示且未虚构 Web Bridge，但引入了通用 wx 获取层，并把请求、路由、提示也改走该层，破坏了已支持业务链路。"
+  }
+}

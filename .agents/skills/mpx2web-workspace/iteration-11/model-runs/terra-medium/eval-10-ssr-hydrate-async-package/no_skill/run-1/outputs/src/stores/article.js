@@ -5,32 +5,40 @@ export const useArticleStore = defineStore('article', {
   state: () => ({
     articleId: '',
     article: null,
-    recommendations: [],
-    requestToken: 0
+    recommendations: []
   }),
   actions: {
     async loadArticle (articleId, requestContext) {
       const id = String(articleId || '')
+      const requestId = (this._articleRequestId || 0) + 1
+      this._articleRequestId = requestId
 
-      // The hydrated article is already the right first client render.  Avoid
-      // replacing it with a second request during hydration.
-      if (this.articleId === id && this.article) return this.article
+      if (this._articleAbortController) this._articleAbortController.abort()
+      this._articleAbortController = typeof AbortController === 'undefined'
+        ? null
+        : new AbortController()
 
-      const token = this.requestToken + 1
-      this.requestToken = token
       this.articleId = id
       this.article = null
       this.recommendations = []
 
-      const data = await fetchArticle(id, requestContext)
+      try {
+        const data = await fetchArticle(id, requestContext, {
+          signal: this._articleAbortController && this._articleAbortController.signal
+        })
 
-      // Only the request for the currently selected article may commit.  This
-      // prevents a slow previous navigation from overwriting a newer one.
-      if (this.requestToken !== token || this.articleId !== id) return null
-
-      this.article = data.article
-      this.recommendations = data.recommendations || []
-      return this.article
+        // A response may only update the state of the request that started it.
+        if (this._articleRequestId === requestId) {
+          this.article = data.article || null
+          this.recommendations = data.recommendations || []
+        }
+        return data
+      } catch (error) {
+        if (this._articleRequestId !== requestId || error.name === 'AbortError') return
+        throw error
+      } finally {
+        if (this._articleRequestId === requestId) this._articleAbortController = null
+      }
     }
   }
 })

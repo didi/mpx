@@ -1,0 +1,92 @@
+{
+  "eval_id": 6,
+  "eval_name": "api-proxy-task-contract",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "model_grading_fingerprint": "f4b97f9320df3e525f617779da49031edde852776320128c56a5094e54ea8112",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 87914
+  },
+  "expectations": [
+    {
+      "id": "q0",
+      "text": "应用入口安装 @mpxjs/api-proxy，并通过 mpx.use(apiProxy, { usePromise: true }) 明确启用 Promise 风格",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/app.mpx:1-8 只 import mpx 并 createApp；没有 import @mpxjs/api-proxy，也没有 mpx.use(apiProxy, { usePromise: true })。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q1",
+      "text": "Web 输出中的普通趋势词请求通过会返回 Promise 的 Mpx 官方 API 调用路径使用 await 或 Promise 链；可使用配置后的 mpx.request 或会被跨端编译转换到该入口的 wx.request。原始 @mpxjs/api-proxy 命名导入不会继承 Promise 化配置，不能直接按 Promise 使用；不得混用 success/fail 回调",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/services/search.js:1-6 从 @mpxjs/api-proxy 命名导入 request 后直接对 request(...).then 使用 Promise 链；outputs/src/app.mpx 未安装 apiProxy Promise 化配置，命名导入也不继承 mpx.use 配置。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "联想词请求保存可取消任务：可通过单次 usePromise: false 或原始 @mpxjs/api-proxy 命名导入直接取得 RequestTask，也可从已 Promise 化调用的 Promise.__returned 取得框架保留的原始任务；连续搜索与卸载会先废弃当前任务身份再 abort 旧任务",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/services/search.js:9-13 的 requestSuggestions 直接返回 @mpxjs/api-proxy 命名导入 request 的返回值，可作为原始 RequestTask；outputs/src/pages/search/index.mpx:64-65 保存到 this.requestTask，46-50 调用 abort 并清空，35-37 和 52-57 在卸载及连续搜索时先递增 requestVersion 再 abort 旧请求。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "联想词 success/fail 回调捕获本次任务和关键词，仅当前任务且关键词仍匹配时才更新结果或提示，旧响应不能覆盖新搜索",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx:67-83 使用 requestTask.then/catch，而不是 success/fail 回调；判断只比较 requestVersion 和 requestTask，未捕获并校验本次 keyword 仍匹配。outputs/src/services/search.js:9-13 的联想词请求也没有传入 success/fail 回调。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "详情跳转与错误提示继续走 Mpx 官方 API 链路；可保留会被跨端编译转换的 wx.navigateTo/wx.showToast，可沿用 mpx.xxx，也可在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx:85-87 详情跳转使用 @mpxjs/api-proxy 的 navigateTo，符合官方 API 链路；但 73-77 错误提示使用 alert('搜索失败')，没有走 wx.showToast、mpx.showToast 或 @mpxjs/api-proxy showToast。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q5",
+      "text": "不用 fetch、location 或 alert 平行重写 request/navigateTo/showToast；若沿用 @mpxjs/api-proxy 命名导入，应明确这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx:76 使用 alert('搜索失败') 平行重写错误提示；outputs/src/services/search.js:1 和 outputs/src/pages/search/index.mpx:15 沿用 @mpxjs/api-proxy 命名导入，但代码没有明确说明这些调用不继承应用入口 mpx.use 的 options/custom/Promise 化配置。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "q6",
+      "text": "趋势词、连续输入、清空搜索、取消旧请求、结果展示和商品详情业务链路保持完整",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/search/index.mpx:1-9 保留了趋势词、输入、结果展示和点击详情模板，59-61 保留清空搜索；但 outputs/src/services/search.js:3-6 的趋势词 Promise 链依赖未 Promise 化的命名导入 request，outputs/src/pages/search/index.mpx:67-83 又把可取消 RequestTask 当 Promise 使用，联想词结果和错误提示链路会失效。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "q2 建议明确“废弃当前任务身份”是否允许用递增版本号实现，还是必须先把 requestTask 置空后再 abort；该歧义会影响类似实现的判定。"
+    ],
+    "overall": "候选未在应用入口启用 API Proxy Promise 风格，并把 @mpxjs/api-proxy 命名导入 request 当 Promise 使用，导致趋势词和联想词主链路不满足要求。"
+  }
+}

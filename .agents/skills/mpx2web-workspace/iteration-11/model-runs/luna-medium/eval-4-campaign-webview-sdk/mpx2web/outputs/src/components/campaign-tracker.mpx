@@ -8,6 +8,8 @@
 import { createComponent } from '@mpxjs/core'
 import campaignTracker from '@business/campaign-tracker-web'
 
+const CAMPAIGN_ORIGIN = 'https://campaign.example.com'
+
 createComponent({
   properties: {
     campaignId: {
@@ -16,73 +18,79 @@ createComponent({
         this.initTracker()
       }
     },
-    memberId: String,
-    webViewId: String
+    memberId: String
   },
   data: {
     ready: false
   },
   ready () {
-    this._destroyed = false
+    this.destroyed = false
+    this.trackerGeneration = 0
     this.initTracker()
   },
   detached () {
-    this.dispose()
+    this.destroyed = true
+    this.cleanupTracker()
   },
   methods: {
     cleanupTracker () {
-      if (this._visibilityListening && typeof document !== 'undefined') {
-        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
-        this._visibilityListening = false
-      }
+      this.trackerGeneration = (this.trackerGeneration || 0) + 1
       const tracker = this.tracker
       this.tracker = null
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('message', this.handleWindowMessage)
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      }
       if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
     },
-    dispose () {
-      this._destroyed = true
-      this._generation = (this._generation || 0) + 1
-      this.cleanupTracker()
-      this.ready = false
+    getCampaignFrame () {
+      if (typeof document === 'undefined') return null
+      return document.querySelector('iframe[src^="https://campaign.example.com/"]')
     },
     async initTracker () {
-      const generation = (this._generation || 0) + 1
-      this._generation = generation
+      if (!this.campaignId || this.destroyed) return
       this.cleanupTracker()
-      if (this._destroyed || !this.campaignId) return
-      this.ready = false
+      const generation = this.trackerGeneration
       const campaignId = this.campaignId
-      const tracker = await campaignTracker.create({
-        campaignId,
-        memberId: this.memberId
-      })
-      if (this._destroyed || generation !== this._generation || campaignId !== this.campaignId) {
-        if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
-        return
-      }
-      this.tracker = tracker
-      if (__mpx_mode__ === 'web' && typeof document !== 'undefined') {
+      this.ready = false
+      try {
+        const tracker = await campaignTracker.create({
+          campaignId,
+          memberId: this.memberId
+        })
+        if (this.destroyed || generation !== this.trackerGeneration || campaignId !== this.campaignId) {
+          if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
+          return
+        }
+        this.tracker = tracker
+        window.addEventListener('message', this.handleWindowMessage)
         document.addEventListener('visibilitychange', this.handleVisibilityChange)
-        this._visibilityListening = true
+        if (this.destroyed || generation !== this.trackerGeneration || campaignId !== this.campaignId) {
+          this.cleanupTracker()
+          return
+        }
+        tracker.start()
+        this.ready = true
+        this.triggerEvent('ready', { campaignId })
+      } catch (error) {
+        if (!this.destroyed && generation === this.trackerGeneration && campaignId === this.campaignId) {
+          this.triggerEvent('error', { campaignId, error })
+        }
       }
-      tracker.start()
-      this.ready = true
-      this.triggerEvent('ready', { campaignId })
     },
-    pauseTracking () {
-      if (this.tracker && typeof this.tracker.pause === 'function') this.tracker.pause()
-    },
-    resumeTracking () {
-      if (this.tracker && typeof this.tracker.resume === 'function') this.tracker.resume()
-    },
-    trackExposure (payload, campaignId) {
-      if (campaignId !== this.campaignId || !this.tracker) return
-      this.tracker.track('exposure', payload)
+    handleWindowMessage (event) {
+      const tracker = this.tracker
+      const message = event && event.data
+      const frame = this.getCampaignFrame()
+      if (!tracker || !frame || event.origin !== CAMPAIGN_ORIGIN || event.source !== frame.contentWindow) return
+      if (!message || message.type !== 'campaign-exposure' || message.campaignId !== this.campaignId) return
+      tracker.track('exposure', message.payload)
     },
     handleVisibilityChange () {
-      if (!this.tracker) return
-      if (document.hidden) this.tracker.pause()
-      else this.tracker.resume()
+      const tracker = this.tracker
+      if (!tracker) return
+      if (document.hidden) tracker.pause()
+      else tracker.resume()
     }
   }
 })

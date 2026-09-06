@@ -20,9 +20,8 @@ export const useArticleStore = defineStore('article', {
       this.recommendations = []
 
       const data = await fetchArticle(articleId, requestContext)
-
-      // A late response from an older article must not mutate shared state.
       if (requestVersion !== this.requestVersion || this.articleId !== articleId) return
+
       this.article = data.article
       this.recommendations = data.recommendations || []
       this.loaded = true

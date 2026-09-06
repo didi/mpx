@@ -3,29 +3,36 @@
   "eval_name": "vue2-web-file-isolation",
   "configuration": "no_skill",
   "run_number": 2,
-  "grading_fingerprint": "d9fd0fe08ebfa13c845f49ebb685a55db9eb958b2ab97dce3be0cb9df7e0e0ff",
+  "grading_fingerprint": "dd80a2bb41d84d72a1b5ad6079d20330df43fc65d2692934b93bf6d1341ecced",
+  "model_grading_fingerprint": "a166f49d4b4f900443bd156ba828782b8674c3bd2b1598426bf31ff5101615ab",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 140660
+    "duration_ms": 106935
   },
   "expectations": [
     {
       "id": "v0",
       "text": "通用 analytics-panel.mpx 保留可执行的小程序摘要卡与指标点击，不导入 Vue、图表 SDK 或浏览器对象",
+      "category": "cross-platform-regression",
       "passed": true,
       "evidence": "outputs/src/components/analytics-panel.mpx：小程序摘要卡独立可执行，未进入 Web-only 依赖图。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/components/analytics-panel.mpx：小程序摘要卡独立可执行，未进入 Web-only 依赖图。"
+      }
     },
     {
       "id": "v1",
       "text": "差异较大的浏览器图表落在 analytics-panel.web.mpx 与 Web-only Vue 文件，Web-only 依赖不进入通用模块顶层",
+      "category": "conditional-compile",
       "passed": true,
-      "evidence": "./outputs/src/components/analytics-panel.web.mpx:1-35 放置 Web 版 scroll-view 与 analytics-chart；./outputs/src/web/AnalyticsChart.vue 和 ./outputs/src/web/chart-sdk.js 承载图表实现；./outputs/src/components/analytics-panel.mpx:10-21 未引入 Web-only 依赖。",
+      "evidence": "outputs/src/components/analytics-panel.web.mpx:3-17 使用 Web 分支 scroll-view 与 analytics-chart；53-59 仅在 .web.mpx usingComponents 指向 ../web/AnalyticsChart.vue；通用 outputs/src/components/analytics-panel.mpx 无 Web-only 顶层依赖。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -33,18 +40,24 @@
     {
       "id": "v2",
       "text": "AnalyticsChart.vue 使用 Vue 2.7 兼容的 SFC/组件 API，不使用 createApp、Vue 3 script setup、Teleport 或组合式生命周期挂载",
+      "category": "web-vue",
       "passed": true,
       "evidence": "outputs/src/web/AnalyticsChart.vue：Vue SFC 使用 Vue 2.7 兼容的组件选项。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/web/AnalyticsChart.vue：Vue SFC 使用 Vue 2.7 兼容的组件选项。"
+      }
     },
     {
       "id": "v3",
       "text": "DOM 容器只在 Web 客户端 mounted/ready 后访问，SSR 或模块初始化阶段不读取 document/window",
+      "category": "web-sdk",
       "passed": true,
-      "evidence": "./outputs/src/web/AnalyticsChart.vue:14-19 在 mounted 后使用 this.$refs.chart 和 ResizeObserver；./outputs/src/web/chart-sdk.js:12-21 的 DOM 操作在 createChart 调用后执行；./outputs/src/web/AnalyticsScroll.vue:27-45 的 document.getElementById 仅由 mounted 或 prop watcher 调用，模块初始化阶段未读取 document/window。",
+      "evidence": "outputs/src/web/AnalyticsChart.vue:16-21 只在 mounted 后访问 this.$refs.chart 和 ResizeObserver；outputs/src/web/AnalyticsScroll.vue:27-50 只在 mounted/watch 方法中访问 this.$refs.scroller；模块顶层未读取 document/window。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -52,83 +65,166 @@
     {
       "id": "v4",
       "text": "图表 SDK 只进入 Web 依赖图；每个实际异步 import/create 边界都检查当前代际或卸载状态，晚到实例立即销毁。纯 Web 且模块顶层 DOM-safe 时允许静态 import",
+      "category": "web-concurrency",
       "passed": true,
       "evidence": "Web-only 文件静态加载 DOM-safe 图表 SDK，不存在异步挂载边界。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "Web-only 文件静态加载 DOM-safe 图表 SDK，不存在异步挂载边界。"
+      }
     },
     {
       "id": "v5",
       "text": "卸载时销毁图表实例、disconnect ResizeObserver 并移除拥有的事件监听；数据变化可安全复用单一实例更新，但不得增加实例、Observer 或监听数量",
+      "category": "web-cleanup",
       "passed": true,
       "evidence": "Web 图表卸载流程销毁实例、断开 ResizeObserver，SDK/helper 也成对移除其内部监听。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "Web 图表卸载流程销毁实例、断开 ResizeObserver，SDK/helper 也成对移除其内部监听。"
+      }
     },
     {
       "id": "v6",
       "text": "customBuiltInComponents 使用原始 key scroll-view，不使用 mpx-scroll-view；自定义 Vue 组件保留 $attrs、$listeners 和默认 slot 的结构透传",
+      "category": "web-template",
       "passed": false,
       "evidence": "outputs/vue.config.js / outputs/src/web/AnalyticsScroll.vue：原始 key 或 attrs/listeners/default slot 结构透传不完整。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/vue.config.js / outputs/src/web/AnalyticsScroll.vue：原始 key 或 attrs/listeners/default slot 结构透传不完整。"
+      }
     },
     {
       "id": "v7",
       "text": "自定义滚动组件同时实现 scrollX/scrollY 横纵 overflow，并在挂载和 prop 更新时真正同步 scrollTop、scrollLeft；scrollIntoView 更新后只滚动当前容器内目标节点",
+      "category": "web-scroll",
       "passed": false,
       "evidence": "outputs/src/web/AnalyticsScroll.vue：横纵轴、受控位置或容器内 scrollIntoView 行为不完整；缺少 props []。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/web/AnalyticsScroll.vue：横纵轴、受控位置或容器内 scrollIntoView 行为不完整；缺少 props []。"
+      }
     },
     {
-      "id": "v8",
-      "text": "自定义滚动组件在原生滚动时发出包含 scrollTop、scrollLeft、scrollHeight、scrollWidth、deltaX、deltaY 的 scroll 事件，并按 upper/lower threshold 与实际滚动轴发出方向为 top/left、bottom/right 的 scrolltoupper/scrolltolower，避免阈值内重复泛滥触发",
+      "id": "v8a",
+      "text": "自定义滚动组件发出的 scroll 事件包含 scrollTop、scrollLeft、scrollHeight、scrollWidth、deltaX 和 deltaY",
+      "category": "web-scroll",
       "passed": false,
-      "evidence": "outputs/src/web/AnalyticsScroll.vue：scroll detail、双轴边界方向或边界去重状态不完整；缺少 detail ['deltaX', 'deltaY']，缺少事件 []。",
+      "evidence": "outputs/src/web/AnalyticsScroll.vue：scroll detail 缺少 ['deltaX', 'deltaY']，或没有发出 scroll 事件。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/web/AnalyticsScroll.vue：scroll detail 缺少 ['deltaX', 'deltaY']，或没有发出 scroll 事件。"
+      }
     },
     {
-      "id": "v9",
-      "text": "调用点继续使用横纵滚动、受控位置、scrollIntoView、upper/lower threshold 和三类滚动事件；小程序指标摘要/点击、Web 图表更新、Web 指标点击逐层回传与滚动容器业务链路均完整",
-      "passed": true,
-      "evidence": "小程序指标点击、Web 图表更新/点击回传和完整滚动调用点均保留。",
+      "id": "v8b",
+      "text": "自定义滚动组件按 upper/lower threshold 与实际滚动轴发出方向为 top/left、bottom/right 的 scrolltoupper/scrolltolower",
+      "category": "web-scroll",
+      "passed": false,
+      "evidence": "outputs/src/web/AnalyticsScroll.vue：双轴边界事件不完整；缺少事件 []，缺少方向 ['top', 'left', 'bottom', 'right']，threshold=True，双轴尺寸=True。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/web/AnalyticsScroll.vue：双轴边界事件不完整；缺少事件 []，缺少方向 ['top', 'left', 'bottom', 'right']，threshold=True，双轴尺寸=True。"
+      }
+    },
+    {
+      "id": "v8c",
+      "text": "上、左、下、右边界分别维护跨界状态，只在进入阈值时触发，离开后复位，避免阈值内重复泛滥",
+      "category": "web-scroll",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsScroll.vue：以 atLower 记录跨界状态，仅在进入或离开阈值时更新。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/web/AnalyticsScroll.vue：以 atLower 记录跨界状态，仅在进入或离开阈值时更新。"
+      }
+    },
+    {
+      "id": "v9a",
+      "text": "通用小程序指标摘要保留展示、点击和 select 业务回传，且不依赖 Web 图表模块",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/analytics-panel.mpx：小程序摘要卡保留指标展示、点击和 select 回传，且未引入 Web 依赖。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/components/analytics-panel.mpx：小程序摘要卡保留指标展示、点击和 select 回传，且未引入 Web 依赖。"
+      }
+    },
+    {
+      "id": "v9b",
+      "text": "Web 图表在指标变化时安全 update 或销毁后重建，指标点击经 Vue select、Mpx bindselect 和 triggerEvent 逐层回传",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/components/analytics-panel.web.mpx / outputs/src/web/AnalyticsChart.vue：缺少可触发的图表点击、Vue select、Mpx bindselect 或 triggerEvent('select') 中的一环。",
+      "verification_methods": [
+        "independent_code_review",
+        "deterministic_check"
+      ],
+      "deterministic_check": {
+        "status": "fail",
+        "evidence": "outputs/src/components/analytics-panel.web.mpx / outputs/src/web/AnalyticsChart.vue：缺少可触发的图表点击、Vue select、Mpx bindselect 或 triggerEvent('select') 中的一环。"
+      }
     }
   ],
   "summary": {
-    "passed": 7,
-    "failed": 3,
-    "total": 10,
-    "pass_rate": 0.7
+    "passed": 8,
+    "failed": 5,
+    "total": 13,
+    "pass_rate": 0.6154
+  },
+  "strict_delivery_summary": {
+    "passed": 8,
+    "failed": 5,
+    "total": 13,
+    "pass_rate": 0.6154,
+    "compile_passed": true
   },
   "metrics": {
-    "total_tokens": 168026,
-    "input_tokens": 158754,
-    "output_tokens": 9272,
+    "total_tokens": 139772,
+    "input_tokens": 133420,
+    "output_tokens": 6352,
     "tool_calls": 7,
-    "duration_ms": 200189
+    "duration_ms": 141749
   },
   "timing": {
-    "total_tokens": 168026,
-    "duration_ms": 200189,
-    "total_duration_seconds": 200.189
+    "total_tokens": 139772,
+    "duration_ms": 141749,
+    "total_duration_seconds": 141.749
   },
   "compile": {
+    "compile_fingerprint": "db41df032f198a9ff52e603be9880d315cca4e95bb0ba8f50ce525aa0f09038e",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 6,
@@ -138,39 +234,109 @@
       {
         "kind": "mpx-conditional-compile-semantics",
         "files": [
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.mpx",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.web.mpx",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/AnalyticsChart.vue",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/AnalyticsScroll.vue",
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/chart-sdk.js",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.web.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.web.mpx",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/AnalyticsChart.vue"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/AnalyticsChart.vue",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/AnalyticsScroll.vue"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/AnalyticsScroll.vue",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/chart-sdk.js"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "checkedFiles": 1,
+          "files": [
+            {
+              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/chart-sdk.js",
+              "errors": []
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-conditional-compile-semantics",
+        "files": [
           "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/vue.config.js"
         ],
         "passed": true,
         "returncode": 0,
         "detail": {
           "success": true,
-          "checkedFiles": 6,
+          "checkedFiles": 1,
           "files": [
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.mpx",
-              "errors": []
-            },
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.web.mpx",
-              "errors": []
-            },
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/AnalyticsChart.vue",
-              "errors": []
-            },
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/AnalyticsScroll.vue",
-              "errors": []
-            },
-            {
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/web/chart-sdk.js",
-              "errors": []
-            },
             {
               "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/vue.config.js",
               "errors": []
@@ -183,7 +349,28 @@
         "kind": "mpx-web-compile",
         "type": "component",
         "files": [
-          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.mpx",
+          "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.mpx"
+        ],
+        "passed": true,
+        "returncode": 0,
+        "detail": {
+          "success": true,
+          "target": "web",
+          "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 2534
+        },
+        "stderr": ""
+      },
+      {
+        "kind": "mpx-web-compile",
+        "type": "component",
+        "files": [
           "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/luna-medium/eval-9-vue2-web-file-isolation/no_skill/run-2/outputs/src/components/analytics-panel.web.mpx"
         ],
         "passed": true,
@@ -198,7 +385,7 @@
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3283
+          "durationMs": 2410
         },
         "stderr": ""
       },
@@ -237,14 +424,13 @@
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
     "suggestions": [
-      "真正可能影响结论的缺口：断言未明确 scroll-into-view 传入值应是业务 key 还是 DOM id。当前 Web 图表生成 id=\"metric-${key}\"，而调用点直接传 activeMetricId；若上游传原始 key，滚动定位仍会失败。",
-      "断言 v7 对“只滚动当前容器”可以更明确要求手动计算容器 scrollTop/scrollLeft，还是允许 target.scrollIntoView；后者可能连带滚动外层页面。"
+      "v4 对“实际异步 import/create 边界”的判定依赖候选是否允许把 createChart 从 async API 改为同步返回实例；若真实 SDK 创建仍异步，当前断言最好要求保持并验证异步 create 的代际销毁路径。"
     ],
-    "overall": "候选修掉了通用模块污染和图表生命周期的大部分问题，但自定义 scroll-view 的注册 key、attrs/listeners 透传和滚动事件语义仍不满足验收要求。"
+    "overall": "通用小程序隔离和 Vue 2.7 图表生命周期修复基本成立，但自定义 scroll-view 配置、透传、滚动边界事件和 Web 指标点击回传仍不满足要求。"
   }
 }

@@ -1,14 +1,13 @@
-import mpx from '@mpxjs/core'
+import { request } from '@mpxjs/api-proxy'
 
-export async function fetchTrendingKeywords () {
-  const { data } = await mpx.request({
+export function fetchTrendingKeywords () {
+  return request({
     url: '/api/search/trending'
-  })
-  return data
+  }).then(({ data }) => data)
 }
 
 export function requestSuggestions (keyword) {
-  return mpx.request({
+  return request({
     url: '/api/search/suggest',
     data: { keyword }
   })

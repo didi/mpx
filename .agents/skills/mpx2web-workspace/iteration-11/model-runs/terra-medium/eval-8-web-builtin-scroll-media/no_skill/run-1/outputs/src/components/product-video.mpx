@@ -4,52 +4,80 @@
       id="product-video-{{product.id}}"
       class="video"
       src="{{product.video}}"
-      poster="{{product.videoPoster}}"
-      autoplay
+      poster="{{product.image}}"
+      autoplay="{{autoplay}}"
       muted="{{true}}"
-      controls
+      loop="{{loop}}"
+      controls="{{showControls}}"
+      preload="auto"
       object-fit="cover"
-      bindtimeupdate="onTimeUpdate"
-      bindloadedmetadata="onLoadedMetadata"
       bindplay="onPlay"
       bindpause="onPause"
+      bindended="onEnded"
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
     />
-    <text class="video-progress">{{progress}} / {{duration}}</text>
+    <view class="video-status" wx:if="{{duration}}">
+      <text>{{progressText}} / {{durationText}}</text>
+    </view>
   </view>
 </template>
 
 <script>
 import { createComponent } from '@mpxjs/core'
 
+const formatTime = (seconds) => {
+  const value = Math.max(0, Math.floor(Number(seconds) || 0))
+  const minutes = Math.floor(value / 60)
+  const remainder = value % 60
+  return `${minutes}:${remainder < 10 ? '0' : ''}${remainder}`
+}
+
 createComponent({
   properties: {
-    product: { type: Object, value: () => ({}) }
+    product: { type: Object, value: () => ({}) },
+    // Muted autoplay is permitted by mobile browsers and remains valid in WeChat.
+    autoplay: { type: Boolean, value: true },
+    loop: { type: Boolean, value: true },
+    showControls: { type: Boolean, value: true }
   },
   data: {
     progress: 0,
     duration: 0,
+    progressText: '0:00',
+    durationText: '0:00',
     playing: false,
-    videoSize: ''
+    hasError: false
   },
   methods: {
+    onPlay () {
+      this.setData({ playing: true, hasError: false })
+    },
+    onPause () {
+      this.setData({ playing: false })
+    },
+    onEnded () {
+      this.setData({ playing: false })
+    },
     onTimeUpdate (event) {
-      this.progress = Math.floor(event.detail.currentTime || 0)
-      this.duration = Math.floor(event.detail.duration || 0)
+      const detail = event.detail || {}
+      const progress = Number(detail.currentTime) || 0
+      const duration = Number(detail.duration) || this.duration || 0
+      this.setData({
+        progress,
+        duration,
+        progressText: formatTime(progress),
+        durationText: formatTime(duration)
+      })
     },
     onLoadedMetadata (event) {
       const detail = event.detail || {}
-      this.duration = Math.floor(detail.duration || 0)
-      this.videoSize = `${detail.width || 0}x${detail.height || 0}`
-    },
-    onPlay () {
-      this.playing = true
-    },
-    onPause () {
-      this.playing = false
+      const duration = Number(detail.duration) || 0
+      this.setData({ duration, durationText: formatTime(duration), hasError: false })
     },
     onVideoError () {
-      this.playing = false
+      this.setData({ playing: false, hasError: true })
     }
   }
 })
@@ -57,20 +85,25 @@ createComponent({
 
 <style scoped>
 .product-video {
+  position: relative;
   width: 100%;
-  margin-top: 16rpx;
+  background: #000;
 }
 
 .video {
   display: block;
   width: 100%;
-  background: #000;
 }
 
-.video-progress {
-  display: block;
-  margin-top: 8rpx;
-  color: #888;
-  font-size: 24rpx;
+.video-status {
+  position: absolute;
+  right: 16rpx;
+  bottom: 16rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 16rpx;
+  background: rgba(0, 0, 0, .52);
+  color: #fff;
+  font-size: 22rpx;
+  line-height: 32rpx;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <view class="product-video">
     <video
-      id="product-video"
+      class="product-video-player"
       src="{{product.video}}"
       autoplay
       muted
@@ -27,16 +27,33 @@ createComponent({
   },
   methods: {
     onTimeUpdate (event) {
-      const detail = event.detail || event
-      this.progress = detail.currentTime || 0
-      this.duration = detail.duration || 0
+      const detail = event && event.detail
+      const media = event && event.target
+      const currentTime = detail && typeof detail.currentTime === 'number'
+        ? detail.currentTime
+        : media && media.currentTime
+      const duration = detail && typeof detail.duration === 'number'
+        ? detail.duration
+        : media && media.duration
+      if (typeof currentTime === 'number') this.progress = currentTime
+      if (typeof duration === 'number' && Number.isFinite(duration)) this.duration = duration
     },
     onLoadedMetadata (event) {
-      const detail = event.detail || event
-      const width = detail.videoWidth || detail.width || 0
-      const height = detail.videoHeight || detail.height || 0
-      this.videoSize = `${width}x${height}`
-      this.duration = detail.duration || this.duration
+      const detail = event && event.detail
+      const media = event && event.target
+      const width = detail && typeof detail.width === 'number'
+        ? detail.width
+        : media && media.videoWidth
+      const height = detail && typeof detail.height === 'number'
+        ? detail.height
+        : media && media.videoHeight
+      const duration = detail && typeof detail.duration === 'number'
+        ? detail.duration
+        : media && media.duration
+      if (typeof duration === 'number' && Number.isFinite(duration)) this.duration = duration
+      if (typeof width === 'number' && typeof height === 'number') {
+        this.videoSize = `${width}x${height}`
+      }
     },
     onVideoError () {}
   }

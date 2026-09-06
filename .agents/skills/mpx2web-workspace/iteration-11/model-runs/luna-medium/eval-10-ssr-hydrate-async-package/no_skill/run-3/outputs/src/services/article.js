@@ -1,19 +1,18 @@
-function getOrigin (requestContext) {
-  if (requestContext && requestContext.origin) return requestContext.origin
-  if (typeof window !== 'undefined') return window.location.origin
-  return 'http://localhost:3000'
+function getServerOrigin (requestContext) {
+  const request = requestContext && (requestContext.req || requestContext.request)
+  const headers = request && request.headers
+  const host = headers && (headers.host || (typeof headers.get === 'function' && headers.get('host')))
+  const protocol = (request && request.protocol) || 'http'
+  return host ? `${protocol}://${host}` : 'http://localhost:3000'
 }
 
 export function fetchArticle (articleId, requestContext) {
-  const fetcher = requestContext && typeof requestContext.fetch === 'function'
-    ? requestContext.fetch.bind(requestContext)
-    : fetch
-  const options = requestContext && requestContext.signal
-    ? { signal: requestContext.signal }
-    : undefined
-  const url = `${getOrigin(requestContext)}/api/articles/${encodeURIComponent(articleId)}`
-  return fetcher(url, options).then((response) => {
-    if (response.ok === false) throw new Error(`Failed to load article: ${response.status}`)
+  const origin = typeof window === 'undefined'
+    ? getServerOrigin(requestContext)
+    : window.location.origin
+  const encodedId = encodeURIComponent(articleId)
+  return fetch(`${origin}/api/articles/${encodedId}`).then((response) => {
+    if (response.ok === false) throw new Error(`Failed to fetch article: ${response.status}`)
     return response.json()
   })
 }

@@ -3,14 +3,15 @@ import { fetchArticle } from '../services/article'
 
 export const useArticleStore = defineStore('article', {
   state: () => ({
+    articleId: '',
     article: null,
     recommendations: [],
-    articleId: '',
     loaded: false,
     requestVersion: 0
   }),
   actions: {
     async loadArticle (articleId, requestContext) {
+      if (!articleId) return
       if (this.loaded && this.articleId === articleId) return
 
       const requestVersion = ++this.requestVersion
@@ -23,7 +24,7 @@ export const useArticleStore = defineStore('article', {
 
       if (requestVersion !== this.requestVersion || this.articleId !== articleId) return
       this.article = data.article
-      this.recommendations = data.recommendations
+      this.recommendations = data.recommendations || []
       this.loaded = true
     }
   }

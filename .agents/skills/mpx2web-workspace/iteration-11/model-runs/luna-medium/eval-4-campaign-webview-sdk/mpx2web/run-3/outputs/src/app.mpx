@@ -1,18 +1,11 @@
 <script>
 import mpx, { createApp } from '@mpxjs/core'
 
-mpx.config.webConfig = {
-  ...mpx.config.webConfig,
-  routeConfig: {
-    ...mpx.config.webConfig && mpx.config.webConfig.routeConfig,
-    mode: 'history',
-    base: '/mall/'
-  },
+mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
   webviewConfig: {
-    ...mpx.config.webConfig && mpx.config.webConfig.webviewConfig,
     hostWhitelists: ['https://campaign.example.com']
   }
-}
+})
 
 createApp({
   onLaunch () {

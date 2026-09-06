@@ -1,30 +1,45 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchArticle } from '../services/article'
 
+// Pending requests are deliberately outside serialized Pinia state.  A
+// WeakMap keeps them scoped to a particular app/store instance (and therefore
+// to one SSR request) without leaking them into the hydration payload.
+const pendingByStore = new WeakMap()
+
 export const useArticleStore = defineStore('article', {
   state: () => ({
-    articleId: '',
-    article: null,
-    recommendations: [],
-    requestToken: 0
+    articlesById: {},
+    recommendationsById: {}
   }),
   actions: {
-    async loadArticle (articleId, requestContext) {
+    loadArticle (articleId, requestContext) {
       const id = String(articleId || '')
-      if (!id) return
-      if (this.articleId === id && this.article) return
+      if (!id) return Promise.resolve()
+      if (this.articlesById[id]) return Promise.resolve()
 
-      const token = ++this.requestToken
-      this.articleId = id
-      this.article = null
-      this.recommendations = []
+      let pending = pendingByStore.get(this)
+      if (!pending) {
+        pending = new Map()
+        pendingByStore.set(this, pending)
+      }
+      if (pending.has(id)) return pending.get(id)
 
-      const data = await fetchArticle(id, requestContext)
-      // A newer navigation may have started while this request was in flight.
-      if (token !== this.requestToken || id !== this.articleId) return
+      const request = fetchArticle(id, requestContext)
+        .then((data) => {
+          // Results are stored under their own id.  Thus a slower request for
+          // an old route can only fill its own cache entry and cannot replace
+          // the article currently selected by the page.
+          this.articlesById[id] = data.article || {}
+          this.recommendationsById[id] = Array.isArray(data.recommendations)
+            ? data.recommendations
+            : []
+        })
+        .finally(() => {
+          pending.delete(id)
+        })
 
-      this.article = data.article || null
-      this.recommendations = data.recommendations || []
+      pending.set(id, request)
+      return request
     }
   }
 })

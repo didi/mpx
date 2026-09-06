@@ -1,47 +1,41 @@
-function emptyChart () {
-  return { update () {}, resize () {}, destroy () {} }
+function metricId (metric, index) {
+  return String(metric.id || metric.key || `metric-${index}`)
+}
+
+function drawChart (element, metrics, onSelect) {
+  if (!element) return
+  element.textContent = ''
+
+  const list = document.createElement('div')
+  list.className = 'analytics-chart__metrics'
+  metrics.forEach((metric, index) => {
+    const item = document.createElement('button')
+    item.type = 'button'
+    item.id = metricId(metric, index)
+    item.className = 'analytics-chart__metric'
+    item.setAttribute('role', 'listitem')
+    item.textContent = `${metric.label}:${metric.value}`
+    item.addEventListener('click', () => onSelect(metric))
+    list.appendChild(item)
+  })
+  element.appendChild(list)
 }
 
 export async function createChart (element, metrics, options = {}) {
-  // Real chart SDKs commonly resolve asynchronously.  Honour cancellation on
-  // both sides of that boundary so a late chart never writes into a new view.
   await Promise.resolve()
-  if (!element || (options.isCancelled && options.isCancelled())) return emptyChart()
+  if (!element || (options.isCurrent && !options.isCurrent())) return null
 
-  let destroyed = false
-  let currentMetrics = []
+  const currentMetrics = Array.isArray(metrics) ? metrics : []
+  const onSelect = typeof options.onSelect === 'function' ? options.onSelect : () => {}
+  drawChart(element, currentMetrics, onSelect)
 
-  const render = (nextMetrics) => {
-    if (destroyed || !element) return
-    currentMetrics = Array.isArray(nextMetrics) ? nextMetrics : []
-    while (element.firstChild) element.removeChild(element.firstChild)
-
-    const list = document.createElement('div')
-    list.className = 'analytics-chart__metrics'
-    currentMetrics.forEach((metric) => {
-      const item = document.createElement('button')
-      item.type = 'button'
-      item.className = 'analytics-chart__metric'
-      item.id = metric.key || ''
-      item.textContent = `${metric.label}: ${metric.value}`
-      item.addEventListener('click', () => {
-        if (!destroyed && options.onSelect) options.onSelect(metric.key, metric)
-      })
-      list.appendChild(item)
-    })
-    element.appendChild(list)
-  }
-
-  render(metrics)
   return {
-    update (nextMetrics) { render(nextMetrics) },
-    resize () {
-      // Rendering is flow-based; the method remains an SDK-compatible hook.
-      if (!destroyed) render(currentMetrics)
+    update (nextMetrics) {
+      drawChart(element, Array.isArray(nextMetrics) ? nextMetrics : [], onSelect)
     },
+    resize () {},
     destroy () {
-      destroyed = true
-      if (element) while (element.firstChild) element.removeChild(element.firstChild)
+      if (element) element.textContent = ''
     }
   }
 }

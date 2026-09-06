@@ -15,7 +15,12 @@
           <text>本月已邀请 {{inviteCount}} 人</text>
           <text>目标 {{inviteGoal}} 人</text>
         </view>
-        <progress percent="{{invitePercent}}" stroke-width="8" activeColor="#ff7a45" backgroundColor="#ffe7d6" />
+        <progress
+          percent="{{invitePercent}}"
+          stroke-width="8"
+          activeColor="#ff7a45"
+          backgroundColor="#ffe7d6"
+        />
       </view>
     </view>
 
@@ -40,8 +45,8 @@
     </view>
 
     <view class="action-row">
-      <button class="share-button share-button-wx" @wx open-type="share">分享给好友</button>
-      <button class="share-button share-button-web" @web bindtap="shareOnWeb">分享邀请活动</button>
+      <button class="share-button share-button-wx" open-type@wx="share">分享给好友</button>
+      <button class="share-button share-button-web" bindtap@web="shareOnWeb">分享邀请活动</button>
       <button class="detail-button" bindtap="openCampaignDetail">查看活动规则</button>
     </view>
 
@@ -105,8 +110,20 @@ createPage({
     inviteCount: 2,
     inviteGoal: 5,
     invitees: [
-      { id: 'user-1', name: '陈晓雨', avatar: '/assets/member/friend-a.png', joinedAt: '08-10 14:20', statusText: '已完成首单' },
-      { id: 'user-2', name: '周远', avatar: '/assets/member/friend-b.png', joinedAt: '08-11 09:16', statusText: '已注册' }
+      {
+        id: 'user-1',
+        name: '陈晓雨',
+        avatar: '/assets/member/friend-a.png',
+        joinedAt: '08-10 14:20',
+        statusText: '已完成首单'
+      },
+      {
+        id: 'user-2',
+        name: '周远',
+        avatar: '/assets/member/friend-b.png',
+        joinedAt: '08-11 09:16',
+        statusText: '已注册'
+      }
     ]
   },
   computed: {
@@ -145,7 +162,7 @@ createPage({
       })
     },
     shareOnWeb () {
-      // TODO: 接入业务提供的 Web 分享 SDK、宿主 Bridge 或降级协议
+      // TODO: 接入业务指定的 Web 分享 SDK、宿主 Bridge 或降级协议
     },
     openCampaignDetail () {
       wx.navigateTo({
@@ -157,18 +174,43 @@ createPage({
 </script>
 
 <style>
-.invite-page { min-height: 100vh; padding: 24rpx; background: #fff7f0; }
-.member-card, .campaign-card, .invite-code-card, .invite-list { background: #ffffff; border-radius: 22rpx; box-shadow: 0 8rpx 24rpx rgba(88, 54, 31, 0.06); }
+.invite-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: #fff7f0;
+}
+
+.member-card,
+.campaign-card,
+.invite-code-card,
+.invite-list {
+  background: #ffffff;
+  border-radius: 22rpx;
+  box-shadow: 0 8rpx 24rpx rgba(88, 54, 31, 0.06);
+}
+
 .member-card { padding: 28rpx; }
-.member-head, .progress-head, .list-head, .invitee-row { display: flex; align-items: center; }
+.member-head { display: flex; align-items: center; }
 .member-avatar { width: 96rpx; height: 96rpx; border-radius: 50%; }
 .member-copy { flex: 1; margin-left: 20rpx; }
-.member-name, .member-level, .campaign-title, .campaign-summary, .reward-step, .reward-value, .invite-code-title, .invite-code, .invite-code-tip, .list-title, .list-count, .invitee-name, .invitee-time { display: block; }
+.member-name,
+.member-level,
+.campaign-title,
+.campaign-summary,
+.reward-step,
+.reward-value,
+.invite-code-title,
+.invite-code,
+.invite-code-tip,
+.list-title,
+.list-count,
+.invitee-name,
+.invitee-time { display: block; }
 .member-name { color: #2f241f; font-size: 32rpx; font-weight: bold; }
 .member-level { margin-top: 4rpx; color: #c07845; font-size: 22rpx; }
 .member-points { color: #ff7a45; font-size: 25rpx; font-weight: bold; }
 .invite-progress { margin-top: 28rpx; }
-.progress-head { justify-content: space-between; margin-bottom: 14rpx; color: #7a6d66; font-size: 22rpx; }
+.progress-head { display: flex; justify-content: space-between; margin-bottom: 14rpx; color: #7a6d66; font-size: 22rpx; }
 .campaign-card { margin-top: 24rpx; overflow: hidden; }
 .campaign-cover { width: 100%; height: 280rpx; }
 .campaign-content { padding: 24rpx; }
@@ -183,11 +225,14 @@ createPage({
 .invite-code { margin-top: 12rpx; color: #ff6b2c; font-size: 48rpx; font-weight: bold; letter-spacing: 6rpx; }
 .invite-code-tip { margin-top: 10rpx; color: #b0a59f; font-size: 21rpx; }
 .action-row { margin-top: 24rpx; }
-.share-button, .detail-button { margin-top: 16rpx; border-radius: 44rpx; }
+.share-button,
+.detail-button { margin-top: 16rpx; border-radius: 44rpx; }
 .share-button { color: #ffffff; background: #ff7a45; }
 .share-button-web { display: none; }
 .detail-button { color: #ff7a45; background: #ffffff; border: 2rpx solid #ffb184; }
 .invite-list { margin-top: 24rpx; padding: 24rpx; }
+.list-head,
+.invitee-row { display: flex; align-items: center; }
 .list-head { justify-content: space-between; margin-bottom: 12rpx; }
 .list-title { color: #2f241f; font-size: 30rpx; font-weight: bold; }
 .list-count { color: #a69b95; font-size: 22rpx; }

@@ -1,11 +1,11 @@
 <template>
   <div class="filter">
-    <button class="filter-trigger" aria-label="筛选" wx:ref="trigger" @click="open">筛选</button>
+    <button class="filter-trigger" wx:ref="trigger" @click="open">筛选</button>
     <div v-if="visible" class="mask" @click="close">
-      <div class="dialog" role="dialog" aria-modal="true" aria-label="商品筛选" tabindex="-1" wx:ref="dialog" @click.stop>
+      <div class="dialog" wx:ref="dialog" role="dialog" aria-modal="true" tabindex="-1" @click.stop>
         <button v-for="item in options" :key="item.value" @click="toggle(item.value)">{{item.label}}</button>
-        <button aria-label="清空筛选" @click="clear">清空</button>
-        <button aria-label="确认筛选" @click="confirm">确定</button>
+        <button @click="clear">清空</button>
+        <button @click="confirm">确定</button>
       </div>
     </div>
   </div>
@@ -18,51 +18,52 @@ createComponent({
   properties: { options: { type: Array, value: () => [] } },
   data: { visible: false, selected: [] },
   attached () {
-    this.__keydownHandler = (event) => this.onKeydown(event)
-    this.__focusOrigin = null
+    this.keyboardListening = false
+    this.lastTrigger = null
   },
   detached () {
-    this.removeKeydownListener()
-    this.__focusOrigin = null
+    this.removeKeyboardListener()
+    this.restoreFocus()
   },
   methods: {
-    getDialog () {
-      const ref = this.$refs && this.$refs.dialog
-      return (ref && (ref.$el || ref)) || (this.$el && this.$el.querySelector('.dialog'))
-    },
-    getTrigger () {
-      const ref = this.$refs && this.$refs.trigger
-      return (ref && (ref.$el || ref)) || null
-    },
-    addKeydownListener () {
-      if (typeof document !== 'undefined' && this.__keydownHandler) {
-        document.addEventListener('keydown', this.__keydownHandler)
-      }
-    },
-    removeKeydownListener () {
-      if (typeof document !== 'undefined' && this.__keydownHandler) {
-        document.removeEventListener('keydown', this.__keydownHandler)
-      }
-    },
-    open (event) {
+    open () {
       if (this.visible) return
-      this.__focusOrigin = (event && event.currentTarget) || this.getTrigger()
+      const activeElement = document.activeElement
+      this.lastTrigger = activeElement && activeElement !== document.body
+        ? activeElement
+        : this.$refs.trigger
       this.visible = true
-      this.addKeydownListener()
+      this.addKeyboardListener()
       this.$nextTick(() => {
         if (!this.visible) return
-        const dialog = this.getDialog()
+        const dialog = this.$refs.dialog
         if (dialog && typeof dialog.focus === 'function') dialog.focus()
       })
     },
     close () {
-      this.removeKeydownListener()
+      if (!this.visible) return
       this.visible = false
-      const origin = this.__focusOrigin
-      this.__focusOrigin = null
-      if (origin && typeof origin.focus === 'function' && origin.isConnected !== false) {
-        origin.focus()
+      this.removeKeyboardListener()
+      this.$nextTick(() => {
+        if (!this.visible) this.restoreFocus()
+      })
+    },
+    addKeyboardListener () {
+      if (!this.keyboardListening) {
+        document.addEventListener('keydown', this.onKeydown)
+        this.keyboardListening = true
       }
+    },
+    removeKeyboardListener () {
+      if (this.keyboardListening) {
+        document.removeEventListener('keydown', this.onKeydown)
+        this.keyboardListening = false
+      }
+    },
+    restoreFocus () {
+      const trigger = this.lastTrigger
+      this.lastTrigger = null
+      if (trigger && trigger.isConnected && typeof trigger.focus === 'function') trigger.focus()
     },
     toggle (value) {
       this.selected = this.selected.includes(value)
@@ -75,6 +76,7 @@ createComponent({
       this.close()
     },
     onKeydown (event) {
+      if (!this.visible) return
       if (event.key === 'Escape') {
         event.preventDefault()
         this.close()
@@ -82,22 +84,25 @@ createComponent({
       }
       if (event.key !== 'Tab') return
 
-      const dialog = this.getDialog()
+      const dialog = this.$refs.dialog
       if (!dialog) return
       const focusable = Array.from(dialog.querySelectorAll(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )).filter((node) => node.offsetParent !== null || node === document.activeElement)
-      if (!focusable.length) {
+        'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
+      )).filter((element) => !element.disabled && element.getAttribute('aria-hidden') !== 'true')
+      if (focusable.length === 0) {
         event.preventDefault()
         dialog.focus()
         return
       }
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
         event.preventDefault()
         last.focus()
       } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      } else if (!dialog.contains(document.activeElement)) {
         event.preventDefault()
         first.focus()
       }

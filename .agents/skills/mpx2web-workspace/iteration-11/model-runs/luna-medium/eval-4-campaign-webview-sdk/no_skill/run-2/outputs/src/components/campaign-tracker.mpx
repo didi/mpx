@@ -1,8 +1,4 @@
-<template>
-  <view class="tracker-state">
-    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
-  </view>
-</template>
+<template><view class="tracker-state"><text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text></view></template>
 
 <script>
 import { createComponent } from '@mpxjs/core'
@@ -12,79 +8,76 @@ const TRUSTED_ORIGIN = 'https://campaign.example.com'
 
 createComponent({
   properties: {
-    campaignId: {
-      type: String,
-      observer () { this.initTracker() }
-    },
+    campaignId: { type: String, observer () { this.initTracker() } },
     memberId: String
   },
   data: { ready: false },
   created () {
-    this.destroyed = false
-    this.initToken = 0
     this.tracker = null
-    this.handleWindowMessage = this.handleWindowMessage.bind(this)
-    this.handleVisibilityChange = this.handleVisibilityChange.bind(this)
+    this.initToken = 0
+    this.initializing = false
+    this.initializingCampaignId = ''
+    this.attachedListeners = false
   },
   ready () { this.initTracker() },
   detached () {
-    this.destroyed = true
     this.initToken += 1
-    this.teardownTracker()
+    this.removeListeners()
+    if (this.tracker) { this.tracker.destroy(); this.tracker = null }
+    this.ready = false
   },
   methods: {
-    teardownTracker () {
-      if (typeof window !== 'undefined') window.removeEventListener('message', this.handleWindowMessage)
-      if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', this.handleVisibilityChange)
-      const tracker = this.tracker
-      this.tracker = null
-      if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
-      this.ready = false
+    removeListeners () {
+      if (!this.attachedListeners || typeof window === 'undefined') return
+      window.removeEventListener('message', this.handleWindowMessage)
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+      this.attachedListeners = false
     },
     async initTracker () {
-      if (this.destroyed || !this.campaignId) return
+      if (!this.campaignId || (this.initializing && this.initializingCampaignId === this.campaignId)) return
       const token = ++this.initToken
-      this.teardownTracker()
       const campaignId = this.campaignId
+      this.initializing = true
+      this.initializingCampaignId = campaignId
+      this.ready = false
+      this.removeListeners()
+      if (this.tracker) { this.tracker.destroy(); this.tracker = null }
       try {
         const tracker = await campaignTracker.create({ campaignId, memberId: this.memberId })
-        if (this.destroyed || token !== this.initToken || campaignId !== this.campaignId) {
-          if (tracker && typeof tracker.destroy === 'function') tracker.destroy()
-          return
-        }
+        if (token !== this.initToken || campaignId !== this.campaignId) { tracker.destroy(); return }
         this.tracker = tracker
-        if (typeof window !== 'undefined') window.addEventListener('message', this.handleWindowMessage)
-        if (typeof document !== 'undefined') document.addEventListener('visibilitychange', this.handleVisibilityChange)
+        if (typeof window !== 'undefined') {
+          window.addEventListener('message', this.handleWindowMessage)
+          document.addEventListener('visibilitychange', this.handleVisibilityChange)
+          this.attachedListeners = true
+        }
         tracker.start()
         this.ready = true
         this.triggerEvent('ready', { campaignId })
       } catch (error) {
-        if (!this.destroyed && token === this.initToken) this.triggerEvent('error', { campaignId, error })
+        if (token === this.initToken) this.triggerEvent('error', { campaignId, error })
+      } finally {
+        if (token === this.initToken) {
+          this.initializing = false
+          this.initializingCampaignId = ''
+        }
       }
     },
     handleWindowMessage (event) {
-      const message = event && event.data ? event.data : {}
-      if (event.origin !== TRUSTED_ORIGIN || message.campaignId !== this.campaignId) return
       const tracker = this.tracker
-      if (tracker && message.type === 'campaign-exposure') tracker.track('exposure', message.payload)
+      const message = event && event.data ? event.data : {}
+      if (!tracker || event.origin !== TRUSTED_ORIGIN || message.type !== 'campaign-exposure' || message.campaignId !== this.campaignId) return
+      tracker.track('exposure', message.payload)
     },
     handleVisibilityChange () {
-      const tracker = this.tracker
-      if (!tracker) return
-      if (document.hidden) tracker.pause()
-      else tracker.resume()
+      if (!this.tracker) return
+      if (document.hidden) this.tracker.pause()
+      else this.tracker.resume()
     }
   }
 })
 </script>
 
-<style scoped>
-.tracker-state { padding: 14rpx 24rpx; color: #ad7354; font-size: 21rpx; text-align: center; }
-</style>
+<style scoped>.tracker-state { padding: 14rpx 24rpx; color: #ad7354; font-size: 21rpx; text-align: center; }</style>
 
-<script type="application/json">
-{
-  "component": true,
-  "styleIsolation": "isolated"
-}
-</script>
+<script type="application/json">{ "component": true, "styleIsolation": "isolated" }</script>

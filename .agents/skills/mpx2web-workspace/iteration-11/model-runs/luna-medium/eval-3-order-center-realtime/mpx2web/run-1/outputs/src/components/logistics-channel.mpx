@@ -18,73 +18,88 @@ createComponent({
   properties: {
     memberId: {
       type: String,
-      observer () {
-        this.connectChannel()
+      observer (memberId) {
+        if (!this.isAttached) return
+        this.disconnectChannel()
+        this.connectChannel(memberId)
       }
     }
   },
   data: {
-    connected: false,
-    channelGeneration: 0
+    connected: false
   },
   attached () {
-    this.connectChannel()
+    this.isAttached = true
+    this.connectChannel(this.memberId)
   },
   detached () {
-    this.channelGeneration += 1
-    wx.closeSocket()
+    this.isAttached = false
+    this.disconnectChannel()
   },
   methods: {
-    isCurrentChannel (generation, memberId) {
-      return generation === this.channelGeneration && memberId === this.memberId
+    isCurrentTask (task, memberId, generation) {
+      return this.isAttached && this.socketTask === task && this.channelMemberId === memberId && this.channelGeneration === generation
     },
-    connectChannel () {
-      if (!this.memberId) return
-      var memberId = this.memberId
-      var generation = this.channelGeneration + 1
+    connectChannel (memberId) {
+      if (!memberId || !this.isAttached) return
+      const generation = (this.channelGeneration || 0) + 1
       this.channelGeneration = generation
-      wx.closeSocket()
-      wx.connectSocket({
+      const task = wx.connectSocket({
         url: `wss://logistics.example.com/members/${memberId}`,
-        header: { Authorization: `Bearer ${wx.getStorageSync('token')}` }
+        header: {
+          Authorization: `Bearer ${wx.getStorageSync('token')}`
+        }
       })
-      wx.onSocketOpen(() => {
-        if (!this.isCurrentChannel(generation, memberId)) return
+      this.socketTask = task
+      this.channelMemberId = memberId
+      this.connected = false
+
+      task.onOpen(() => {
+        if (!this.isCurrentTask(task, memberId, generation)) return
         this.connected = true
         this.triggerEvent('connectedchange', { connected: true, memberId })
       })
-      wx.onSocketMessage(({ data }) => {
-        if (!this.isCurrentChannel(generation, memberId)) return
-        var message
+      task.onMessage(({ data }) => {
+        if (!this.isCurrentTask(task, memberId, generation)) return
+        let message
         try {
-          message = JSON.parse(data)
+          message = typeof data === 'string' ? JSON.parse(data) : data
         } catch (error) {
           return
         }
-        if (message.type === 'logistics' && message.payload) {
+        if (message && message.type === 'logistics' && message.payload) {
           this.triggerEvent('logistics', Object.assign({}, message.payload, { memberId }))
         }
       })
-      wx.onSocketError((error) => {
-        if (!this.isCurrentChannel(generation, memberId)) return
+      task.onError((error) => {
+        if (!this.isCurrentTask(task, memberId, generation)) return
         this.connected = false
         this.triggerEvent('connectedchange', { connected: false, memberId })
         this.triggerEvent('error', { error, memberId })
       })
-      wx.onSocketClose(() => {
-        if (!this.isCurrentChannel(generation, memberId)) return
+      task.onClose(() => {
+        if (!this.isCurrentTask(task, memberId, generation)) return
+        this.socketTask = null
         this.connected = false
         this.triggerEvent('connectedchange', { connected: false, memberId })
       })
     },
+    disconnectChannel () {
+      const task = this.socketTask
+      this.socketTask = null
+      this.channelMemberId = null
+      this.channelGeneration = (this.channelGeneration || 0) + 1
+      this.connected = false
+      if (task) task.close()
+    },
     reconnect () {
-      this.connectChannel()
+      this.disconnectChannel()
+      this.connectChannel(this.memberId)
     },
     sendHeartbeat () {
-      if (!this.connected || !this.memberId) return
-      wx.sendSocketMessage({
-        data: JSON.stringify({ type: 'ping', memberId: this.memberId })
-      })
+      const task = this.socketTask
+      if (!task || this.socketTask !== task || task.readyState !== task.OPEN) return
+      task.send({ data: JSON.stringify({ type: 'ping', memberId: this.memberId }) })
     }
   }
 })

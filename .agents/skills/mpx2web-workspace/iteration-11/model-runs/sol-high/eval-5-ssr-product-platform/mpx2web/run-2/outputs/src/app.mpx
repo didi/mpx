@@ -2,25 +2,18 @@
 import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
-const appOptions = {
-  onLaunch () {
-    if (__mpx_mode__ !== 'web') {
-      wx.reportAnalytics('mall_launch', {})
-    }
-  }
-}
-
-if (__mpx_mode__ === 'web') {
-  appOptions.onAppInit = function () {
+createApp({
+  onAppInit () {
     return {
       pinia: createPinia()
     }
+  },
+  onLaunch () {
+    if (__mpx_mode__ === 'wx') {
+      wx.reportAnalytics('mall_launch', {})
+    }
   }
-} else {
-  appOptions.pinia = createPinia()
-}
-
-createApp(appOptions)
+})
 </script>
 
 <script type="application/json">

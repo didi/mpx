@@ -1,10 +1,13 @@
 <template>
   <view class="search-page">
-    <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+    <view class="search-bar">
+      <input value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索商品" />
+      <view wx:if="{{keyword}}" class="clear" bindtap="clearKeyword">清空</view>
+    </view>
     <view class="trending" wx:if="{{!keyword}}">
       <view wx:for="{{trendingKeywords}}" wx:key="*this" bindtap="chooseKeyword(item)">{{item}}</view>
     </view>
-    <view class="suggestions">
+    <view class="suggestions" wx:if="{{keyword}}">
       <view wx:for="{{suggestions}}" wx:key="id" bindtap="openProduct(item.id)">{{item.name}}</view>
     </view>
   </view>
@@ -20,24 +23,19 @@ createPage({
     keyword: '',
     trendingKeywords: [],
     suggestions: [],
-    requestTask: null,
+    suggestionRequest: null,
     suggestionRequestId: 0
   },
-  onLoad () {
-    fetchTrendingKeywords()
-      .then((keywords) => {
-        this.trendingKeywords = keywords || []
-      })
-      .catch(() => {
-        showToast({
-          title: '趋势词加载失败',
-          icon: 'none'
-        })
-      })
+  async onLoad () {
+    try {
+      const data = await fetchTrendingKeywords()
+      this.trendingKeywords = data.list || data
+    } catch (error) {
+      this.showSearchError()
+    }
   },
   onUnload () {
-    this.suggestionRequestId += 1
-    this.abortSuggestionRequest()
+    this.cancelSuggestionRequest()
   },
   methods: {
     onKeywordInput (event) {
@@ -46,44 +44,46 @@ createPage({
     chooseKeyword (keyword) {
       this.search(keyword)
     },
-    abortSuggestionRequest () {
-      if (this.requestTask && typeof this.requestTask.abort === 'function') {
-        this.requestTask.abort()
-      }
-      this.requestTask = null
+    clearKeyword () {
+      this.search('')
     },
-    search (keyword) {
-      const requestId = ++this.suggestionRequestId
-
-      this.keyword = keyword
-      this.abortSuggestionRequest()
-
-      if (!keyword) {
-        this.suggestions = []
-        return
+    cancelSuggestionRequest () {
+      const request = this.suggestionRequest
+      this.suggestionRequest = null
+      this.suggestionRequestId += 1
+      if (request && typeof request.abort === 'function') {
+        request.abort()
       }
+    },
+    async search (keyword) {
+      this.keyword = keyword
+      this.cancelSuggestionRequest()
+      this.suggestions = []
 
-      const requestTask = requestSuggestions(keyword)
-      this.requestTask = requestTask
+      if (!keyword) return
 
-      requestTask
-        .then(({ data }) => {
-          if (requestId !== this.suggestionRequestId) return
-          this.suggestions = (data && data.list) || []
-        })
-        .catch(() => {
-          if (requestId !== this.suggestionRequestId) return
-          this.suggestions = []
-          showToast({
-            title: '搜索失败',
-            icon: 'none'
-          })
-        })
-        .then(() => {
-          if (requestId === this.suggestionRequestId) {
-            this.requestTask = null
-          }
-        })
+      const requestId = this.suggestionRequestId
+      const request = requestSuggestions(keyword)
+      this.suggestionRequest = request
+
+      try {
+        const data = await request
+        if (this.suggestionRequest !== request || this.suggestionRequestId !== requestId) return
+        this.suggestions = data.list || []
+      } catch (error) {
+        if (this.suggestionRequest !== request || this.suggestionRequestId !== requestId) return
+        this.showSearchError()
+      } finally {
+        if (this.suggestionRequest === request) {
+          this.suggestionRequest = null
+        }
+      }
+    },
+    showSearchError () {
+      showToast({
+        title: '搜索失败',
+        icon: 'none'
+      })
     },
     openProduct (productId) {
       navigateTo({
@@ -96,5 +96,8 @@ createPage({
 
 <style scoped>
 .search-page { padding: 24rpx; }
+.search-bar { display: flex; align-items: center; }
+.search-bar input { flex: 1; }
+.clear { margin-left: 16rpx; }
 .trending, .suggestions { margin-top: 24rpx; }
 </style>

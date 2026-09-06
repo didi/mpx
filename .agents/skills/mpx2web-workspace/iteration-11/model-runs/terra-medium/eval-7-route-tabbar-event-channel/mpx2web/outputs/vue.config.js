@@ -9,6 +9,11 @@ module.exports = {
       }
     }
   },
+  devServer: {
+    historyApiFallback: {
+      index: '/shop/index.html'
+    }
+  },
   configureWebpack: {
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } }
   }

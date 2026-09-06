@@ -1,46 +1,56 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchProduct, fetchRecommendations } from '../services/product'
 
+const pendingLoads = new WeakMap()
+
 export const useProductStore = defineStore('product-platform', {
   state: () => ({
     productId: '',
     product: {},
     recommendations: [],
-    loaded: false,
-    loading: false
+    loading: false,
+    error: null
   }),
   actions: {
     async loadProduct (productId, ssrContext) {
-      if (!productId) return false
-      if (this.loaded && this.productId === productId) return true
-      if (this._pendingProductId === productId && this._pendingLoad) return this._pendingLoad
+      if (!productId) return
 
-      // The generation belongs to this store instance, so an old response
-      // cannot commit after navigation to another product.
-      this._loadGeneration = (this._loadGeneration || 0) + 1
-      const generation = this._loadGeneration
+      // Hydration and repeated lifecycle hooks reuse the server result.
+      if (String(this.productId) === String(productId) && String(this.product.id) === String(productId) && Array.isArray(this.recommendations)) {
+        return { product: this.product, recommendations: this.recommendations }
+      }
+
+      const pending = pendingLoads.get(this)
+      if (pending && pending.productId === productId) return pending.promise
+
+      // A request belongs to the id it started for. The local sequence prevents
+      // a slower navigation from publishing data into the newer product.
+      const sequence = (this._loadSequence || 0) + 1
+      this._loadSequence = sequence
       this.loading = true
-      this._pendingProductId = productId
-      this._pendingLoad = Promise.all([
-        fetchProduct(productId, ssrContext),
-        fetchRecommendations(productId, ssrContext)
-      ]).then((results) => {
-        if (generation !== this._loadGeneration) return false
-        this.productId = productId
-        this.product = results[0] || {}
-        this.recommendations = results[1] || []
-        this.loaded = true
-        this.loading = false
-        return true
-      }).finally(() => {
-        if (this._pendingProductId === productId) {
-          this._pendingProductId = ''
-          this._pendingLoad = null
-          this.loading = false
+      this.error = null
+      const promise = (async () => {
+        try {
+          const [product, recommendations] = await Promise.all([
+          fetchProduct(productId, ssrContext),
+          fetchRecommendations(productId, ssrContext)
+          ])
+          if (sequence !== this._loadSequence) return
+          this.productId = productId
+          this.product = product || {}
+          this.recommendations = recommendations || []
+          return { product: this.product, recommendations: this.recommendations }
+        } catch (error) {
+          if (sequence === this._loadSequence) this.error = error
+          throw error
+        } finally {
+          if (sequence === this._loadSequence) this.loading = false
+          const current = pendingLoads.get(this)
+          if (current && current.promise === promise) pendingLoads.delete(this)
         }
-      })
-
-      return this._pendingLoad
+      })()
+      pendingLoads.set(this, { productId, promise })
+      return promise
     }
   }
 })

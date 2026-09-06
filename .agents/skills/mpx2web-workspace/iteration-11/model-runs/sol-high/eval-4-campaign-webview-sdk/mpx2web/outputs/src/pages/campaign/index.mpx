@@ -18,12 +18,14 @@
     </view>
 
     <web-view
-      wx:if="{{campaignUrl}}"
+      wx:for="{{campaignFrames}}"
+      wx:key="key"
       id="campaign-webview"
-      src="{{campaignUrl}}"
-      data-campaign-id="{{campaignId}}"
-      data-generation="{{campaignGeneration}}"
-      bindmessage="handleCampaignMessage"
+      src="{{item.url}}"
+      data-campaign-id="{{item.campaignId}}"
+      data-campaign-generation="{{item.generation}}"
+      bindmessage@wx="handleMiniProgramCampaignMessage"
+      bindmessage@web="handleWebCampaignMessage"
       bindload="handleCampaignLoad"
       binderror="handleCampaignError"
     />
@@ -37,7 +39,8 @@
     </view>
 
     <campaign-tracker
-      wx:if="{{campaignId && trackerActive}}"
+      wx:if="{{campaignId}}"
+      wx:ref="campaignTracker"
       campaignId="{{campaignId}}"
       memberId="{{memberId}}"
       bindready="handleTrackerReady"
@@ -64,71 +67,73 @@ createPage({
       title: '夏日清凉特卖',
       subtitle: '限时领券，爆款低至五折'
     },
-    campaignUrl: 'https://campaign.example.com/summer-sale?memberId=member-10086&campaignId=summer-sale',
-    campaignGeneration: 0,
+    campaignGeneration: 1,
+    campaignFrames: [
+      {
+        key: 'summer-sale-1',
+        campaignId: 'summer-sale',
+        generation: 1,
+        url: 'https://campaign.example.com/summer-sale?memberId=member-10086'
+      }
+    ],
     loading: true,
     errorText: '',
-    trackerReady: false,
-    trackerActive: true
+    trackerReady: false
   },
   onLoad () {
-    this._pageAlive = true
-    this._pageActive = true
+    this._campaignPageAlive = true
+    this._campaignPageActive = true
   },
   onShow () {
-    this._pageActive = true
-    this.trackerActive = true
-    if (this._pageAlive && !this.campaignUrl && this.campaignId) {
-      this.loadCampaign(this.campaignId)
+    this._campaignPageActive = true
+    const tracker = this.$refs && this.$refs.campaignTracker
+    if (tracker && typeof tracker.activateTracking === 'function') {
+      tracker.activateTracking()
     }
   },
   onHide () {
-    this._pageActive = false
-    this.trackerActive = false
-    this.trackerReady = false
-    this.campaignGeneration += 1
-    this.campaignUrl = ''
-    this.loading = true
-    this.errorText = ''
+    this._campaignPageActive = false
+    const tracker = this.$refs && this.$refs.campaignTracker
+    if (tracker && typeof tracker.deactivateTracking === 'function') {
+      tracker.deactivateTracking()
+    }
   },
   onUnload () {
-    this._pageAlive = false
-    this._pageActive = false
-    this.trackerActive = false
-    this.trackerReady = false
-    this.campaignGeneration += 1
+    this._campaignPageAlive = false
+    this._campaignPageActive = false
+    const tracker = this.$refs && this.$refs.campaignTracker
+    if (tracker && typeof tracker.deactivateTracking === 'function') {
+      tracker.deactivateTracking()
+    }
   },
   methods: {
+    createCampaignFrame (campaignId, generation) {
+      const encodedCampaignId = encodeURIComponent(campaignId)
+      const encodedMemberId = encodeURIComponent(this.memberId)
+      return {
+        key: `${campaignId}-${generation}`,
+        campaignId,
+        generation,
+        url: `${CAMPAIGN_ORIGIN}/${encodedCampaignId}?memberId=${encodedMemberId}`
+      }
+    },
     switchCampaign (campaignId) {
       if (campaignId === this.campaignId) return
-      this.campaignId = campaignId
-      this.trackerReady = false
-      this.loadCampaign(campaignId)
-    },
-    buildCampaignUrl (campaignId) {
-      return `${CAMPAIGN_ORIGIN}/${encodeURIComponent(campaignId)}?memberId=${encodeURIComponent(this.memberId)}&campaignId=${encodeURIComponent(campaignId)}`
-    },
-    loadCampaign (campaignId) {
       const generation = this.campaignGeneration + 1
+      this.campaignId = campaignId
       this.campaignGeneration = generation
+      this.campaignFrames = [this.createCampaignFrame(campaignId, generation)]
       this.loading = true
       this.errorText = ''
-      this.campaignUrl = ''
-
-      this.$nextTick(() => {
-        if (!this._pageAlive || !this._pageActive || generation !== this.campaignGeneration || campaignId !== this.campaignId) return
-        this.campaignUrl = this.buildCampaignUrl(campaignId)
-      })
+      this.trackerReady = false
     },
     isCurrentCampaignEvent (event) {
       const currentTarget = event && event.currentTarget
       const dataset = (currentTarget && currentTarget.dataset) || {}
-      return Boolean(
-        this._pageAlive &&
-        this._pageActive &&
+      return this._campaignPageAlive !== false &&
+        this._campaignPageActive !== false &&
         dataset.campaignId === this.campaignId &&
-        String(dataset.generation) === String(this.campaignGeneration)
-      )
+        Number(dataset.campaignGeneration) === this.campaignGeneration
     },
     handleCampaignLoad (event) {
       if (!this.isCurrentCampaignEvent(event)) return
@@ -142,50 +147,73 @@ createPage({
       this.loading = false
       this.errorText = '活动会场暂时无法打开'
     },
-    handleCampaignMessage (event) {
-      if (!this.isCurrentCampaignEvent(event)) return
-
-      const data = event.detail && event.detail.data
-      const messages = Array.isArray(data) ? data : [data]
-      const message = messages[messages.length - 1] || {}
-      if (message.campaignId != null && message.campaignId !== this.campaignId) return
-
-      const campaignId = this.campaignId
-      if (message.type === 'claim-coupon') {
+    getLatestCampaignMessage (event) {
+      const data = event && event.detail && event.detail.data
+      if (Array.isArray(data)) {
+        return data[data.length - 1] || null
+      }
+      return data || null
+    },
+    handleMiniProgramCampaignMessage (event) {
+      const message = this.getLatestCampaignMessage(event)
+      if (!message || !this.isCurrentCampaignEvent(event)) return
+      this.handleCampaignMessage(message, this.campaignId)
+    },
+    handleWebCampaignMessage (event) {
+      const message = this.getLatestCampaignMessage(event)
+      if (!message || !this.isCurrentCampaignEvent(event)) return
+      if (message.campaignId !== this.campaignId) return
+      this.handleCampaignMessage(message, this.campaignId)
+    },
+    handleCampaignMessage (message, campaignId) {
+      if (campaignId !== this.campaignId) return
+      if (message.type === 'claim-coupon' && message.couponId) {
         this.claimCoupon(message.couponId, campaignId)
-      } else if (message.type === 'open-product') {
+      }
+      if (message.type === 'open-product' && message.productId) {
         this.openProduct(message.productId, campaignId)
+      }
+      if (message.type === 'campaign-exposure') {
+        const tracker = this.$refs && this.$refs.campaignTracker
+        if (tracker && typeof tracker.trackExposure === 'function') {
+          tracker.trackExposure(message.payload, campaignId)
+        }
       }
     },
     claimCoupon (couponId, campaignId) {
-      if (couponId === undefined || couponId === null || couponId === '') return
+      if (campaignId !== this.campaignId || this._campaignPageActive === false) return
       wx.request({
         url: '/api/campaign/coupons/claim',
         method: 'POST',
         data: { campaignId, couponId },
         success: () => {
-          if (!this._pageAlive || !this._pageActive || campaignId !== this.campaignId) return
+          if (this._campaignPageAlive === false || this._campaignPageActive === false) return
+          if (campaignId !== this.campaignId) return
           wx.showToast({ title: '领取成功', icon: 'success' })
         }
       })
     },
     openProduct (productId, campaignId) {
-      if (productId === undefined || productId === null || productId === '') return
+      if (campaignId !== this.campaignId || this._campaignPageActive === false) return
       wx.navigateTo({
         url: `/packageProduct/pages/detail/index?id=${encodeURIComponent(productId)}&campaignId=${encodeURIComponent(campaignId)}`
       })
     },
     reloadCampaign () {
-      this.loadCampaign(this.campaignId)
+      const generation = this.campaignGeneration + 1
+      this.campaignGeneration = generation
+      this.campaignFrames = [this.createCampaignFrame(this.campaignId, generation)]
+      this.loading = true
+      this.errorText = ''
     },
     handleTrackerReady (event) {
       const detail = (event && event.detail) || {}
-      if (!this._pageAlive || !this._pageActive || detail.campaignId !== this.campaignId) return
+      if (detail.campaignId !== this.campaignId) return
       this.trackerReady = true
     },
     handleTrackerError (event) {
       const detail = (event && event.detail) || {}
-      if (!this._pageAlive || detail.campaignId !== this.campaignId) return
+      if (detail.campaignId && detail.campaignId !== this.campaignId) return
       this.trackerReady = false
     }
   }

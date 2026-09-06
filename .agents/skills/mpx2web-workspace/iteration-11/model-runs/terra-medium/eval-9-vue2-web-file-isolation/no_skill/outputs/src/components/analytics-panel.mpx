@@ -4,8 +4,7 @@
       wx:for="{{metrics}}"
       wx:key="key"
       class="metric"
-      bindtap="selectMetric"
-      data-key="{{item.key}}"
+      bindtap="selectMetric(item.key)"
     >
       <text>{{item.label}}</text>
       <text>{{item.value}}</text>
@@ -18,33 +17,12 @@ import { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
-    metrics: {
-      type: Array,
-      value: () => []
-    }
+    metrics: { type: Array, value: () => [] }
   },
   methods: {
-    selectMetric (event) {
-      const dataset = (event && event.currentTarget && event.currentTarget.dataset) || {}
-      this.triggerEvent('select', { key: dataset.key })
+    selectMetric (key) {
+      this.triggerEvent('select', { key })
     }
   }
 })
 </script>
-
-<style>
-.analytics-panel {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-}
-
-.metric {
-  display: flex;
-  flex: 1 1 200rpx;
-  flex-direction: column;
-  padding: 24rpx;
-  border-radius: 12rpx;
-  background: #fff;
-}
-</style>

@@ -14,14 +14,12 @@ createPage({
       { id: 'office', name: '公司', detail: '科技路 8 号' }
     ]
   },
-  onLoad () {
-    this.eventChannel = this.getOpenerEventChannel && this.getOpenerEventChannel()
-  },
   methods: {
     confirm (address) {
-      if (this.eventChannel && this.eventChannel.emit) {
-        this.eventChannel.emit('acceptDataFromOpenedPage', address)
-      }
+      // Shared app state works for both wx and Web history navigation. The
+      // checkout page consumes it from onShow after navigateBack completes.
+      const app = getApp()
+      app.globalData.selectedAddress = address
       mpx.navigateBack({ delta: 1 })
     }
   }

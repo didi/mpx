@@ -1,12 +1,12 @@
 <template>
   <view class="product-video">
     <video
-      id="product-video"
-      class="product-video__media"
+      id="product-video-{{product.id}}"
       src="{{product.video}}"
       autoplay
-      muted="{{false}}"
+      controls
       muted@web="{{true}}"
+      muted@wx="{{false}}"
       playsinline@web="{{true}}"
       enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
@@ -20,49 +20,41 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 
+function getMediaTarget (event) {
+  if (!event) return null
+  if (event.detail && event.detail.target) return event.detail.target
+  if (event.target) return event.target
+  return null
+}
+
+function getNumber (primary, fallback) {
+  if (typeof primary === 'number' && Number.isFinite(primary)) return primary
+  if (typeof fallback === 'number' && Number.isFinite(fallback)) return fallback
+  return 0
+}
+
 createComponent({
   properties: {
     product: { type: Object, value: () => ({}) }
   },
   data: {
     progress: 0,
-    duration: 0,
-    videoSize: ''
+    duration: 0
   },
   methods: {
     onTimeUpdate (event) {
-      if (__mpx_mode__ === 'web') {
-        const media = event && (event.target || event.currentTarget)
-        this.progress = media && Number.isFinite(media.currentTime) ? media.currentTime : 0
-        this.duration = media && Number.isFinite(media.duration) ? media.duration : 0
-        return
-      }
       const detail = event.detail || {}
-      this.progress = detail.currentTime || 0
-      this.duration = detail.duration || 0
+      const media = getMediaTarget(event)
+      this.progress = getNumber(detail.currentTime, media && media.currentTime)
+      this.duration = getNumber(detail.duration, media && media.duration)
     },
     onLoadedMetadata (event) {
-      let width
-      let height
-      let duration
-
-      if (__mpx_mode__ === 'web') {
-        const media = event && (event.target || event.currentTarget)
-        width = media && media.videoWidth
-        height = media && media.videoHeight
-        duration = media && media.duration
-      } else {
-        const detail = event.detail || {}
-        width = detail.width
-        height = detail.height
-        duration = detail.duration
-      }
-
-      this.videoSize = `${width || 0}x${height || 0}`
-      if (Number.isFinite(duration)) {
-        this.duration = duration
-      }
-      this.triggerEvent('layoutchange', { width, height, duration })
+      const detail = event.detail || {}
+      const media = getMediaTarget(event)
+      const width = getNumber(detail.width, media && media.videoWidth)
+      const height = getNumber(detail.height, media && media.videoHeight)
+      this.duration = getNumber(detail.duration, media && media.duration)
+      this.videoSize = `${width}x${height}`
     },
     onVideoError () {}
   }
@@ -71,5 +63,4 @@ createComponent({
 
 <style scoped>
 .product-video { width: 100%; }
-.product-video__media { display: block; width: 100%; }
 </style>

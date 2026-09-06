@@ -10,41 +10,28 @@
 <script>
 import mpx, { createPage } from '@mpxjs/core'
 
-const ADDRESS_RESULT_PREFIX = 'checkout-address:'
-
 createPage({
-  data: {
-    address: null,
-    addressRequestId: ''
-  },
+  data: { address: null },
   onShow () {
-    const requestId = this.addressRequestId
-    if (!requestId) return
-
-    const storageKey = `${ADDRESS_RESULT_PREFIX}${requestId}`
-    const address = mpx.getStorageSync(storageKey)
+    const address = getApp().consumeSelectedAddress()
     if (address) {
-      this.address = address
-      mpx.removeStorageSync(storageKey)
-      this.addressRequestId = ''
+      this.setData({ address })
     }
   },
   methods: {
     chooseAddress () {
-      const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-      this.addressRequestId = requestId
-      mpx.removeStorageSync(`${ADDRESS_RESULT_PREFIX}${requestId}`)
-      mpx.navigateTo({
-        url: `/pages/address/select?requestId=${encodeURIComponent(requestId)}`
-      })
+      mpx.navigateTo({ url: '/pages/address/select' })
     },
     pay () {
+      // 支付结果替换结算页，返回不会再次提交同一笔订单。
       mpx.redirectTo({ url: '/pages/pay/result' })
     },
     openOrders () {
+      // 订单中心是 tabBar 页面，不能通过 navigateTo 打开。
       mpx.switchTab({ url: '/pages/orders/index' })
     },
     requireLogin () {
+      // 登录失效后清空受保护页面，避免浏览器返回到失效页面。
       mpx.reLaunch({ url: '/pages/login/index' })
     }
   }

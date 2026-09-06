@@ -1,67 +1,28 @@
-function readHeader (headers, name) {
-  if (!headers) return ''
-  if (typeof headers.get === 'function') return headers.get(name) || ''
-  return headers[name] || headers[name.toLowerCase()] || ''
+function getServerOrigin (requestContext) {
+  if (requestContext && requestContext.origin) return requestContext.origin
+
+  const request = requestContext && (requestContext.req || requestContext.request)
+  const headers = request && request.headers
+  const host = headers && (headers['x-forwarded-host'] || headers.host)
+  const protocol = headers && headers['x-forwarded-proto']
+
+  if (host) return `${protocol || 'http'}://${host}`
+  return 'http://localhost:3000'
 }
 
-function firstHeaderValue (value) {
-  return String(value || '').split(',')[0].trim()
-}
+export function fetchArticle (articleId, requestContext, options = {}) {
+  const isServer = typeof window === 'undefined'
+  const origin = isServer ? getServerOrigin(requestContext) : window.location.origin
+  const request = requestContext && (requestContext.req || requestContext.request)
+  const cookie = isServer && request && request.headers && request.headers.cookie
+  const headers = cookie ? { cookie } : undefined
+  const id = encodeURIComponent(String(articleId || ''))
 
-function getRequest (requestContext) {
-  if (!requestContext) return null
-  return requestContext.req || requestContext.request || null
-}
-
-function getRequestHeaders (requestContext) {
-  const request = getRequest(requestContext)
-  return (request && request.headers) || (requestContext && requestContext.headers) || null
-}
-
-function getOrigin (requestContext) {
-  if (typeof window !== 'undefined') return window.location.origin
-
-  if (requestContext && requestContext.origin) {
-    return String(requestContext.origin).replace(/\/$/, '')
-  }
-
-  const request = getRequest(requestContext)
-  const headers = getRequestHeaders(requestContext)
-  const host = firstHeaderValue(readHeader(headers, 'x-forwarded-host')) ||
-    firstHeaderValue(readHeader(headers, 'host'))
-  const protocol = firstHeaderValue(readHeader(headers, 'x-forwarded-proto')) ||
-    (request && request.protocol) ||
-    (requestContext && requestContext.protocol) ||
-    'http'
-
-  return host ? `${protocol}://${host}` : 'http://localhost:3000'
-}
-
-function getRequestOptions (requestContext) {
-  if (typeof window !== 'undefined') return undefined
-
-  const sourceHeaders = getRequestHeaders(requestContext)
-  const cookie = readHeader(sourceHeaders, 'cookie')
-  const authorization = readHeader(sourceHeaders, 'authorization')
-  const headers = {}
-
-  if (cookie) headers.cookie = cookie
-  if (authorization) headers.authorization = authorization
-
-  return Object.keys(headers).length ? { headers } : undefined
-}
-
-export function fetchArticle (articleId, requestContext) {
-  const origin = getOrigin(requestContext)
-  const url = `${origin}/api/articles/${encodeURIComponent(String(articleId))}`
-  const requestFetch = requestContext && typeof requestContext.fetch === 'function'
-    ? requestContext.fetch.bind(requestContext)
-    : fetch
-
-  return requestFetch(url, getRequestOptions(requestContext)).then((response) => {
-    if (typeof response.ok === 'boolean' && !response.ok) {
-      throw new Error(`Failed to load article ${articleId}: ${response.status}`)
-    }
+  return fetch(`${origin}/api/articles/${id}`, {
+    signal: options.signal,
+    headers
+  }).then((response) => {
+    if (!response.ok) throw new Error(`Unable to load article: ${response.status}`)
     return response.json()
   })
 }

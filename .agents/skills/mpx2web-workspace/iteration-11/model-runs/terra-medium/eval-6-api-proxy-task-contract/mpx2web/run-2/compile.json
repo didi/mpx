@@ -1,4 +1,5 @@
 {
+  "compile_fingerprint": "51d4c155815ee57ac690bff84020ea61fae97da643c5a2ff6d89993d30a26fbe",
   "status": "passed",
   "all_declared_outputs_present": true,
   "declared_output_count": 3,
@@ -8,24 +9,52 @@
     {
       "kind": "mpx-conditional-compile-semantics",
       "files": [
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/app.mpx",
-        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/pages/search/index.mpx",
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/app.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/app.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
+        "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/pages/search/index.mpx"
+      ],
+      "passed": true,
+      "returncode": 0,
+      "detail": {
+        "success": true,
+        "checkedFiles": 1,
+        "files": [
+          {
+            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/pages/search/index.mpx",
+            "errors": []
+          }
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "kind": "mpx-conditional-compile-semantics",
+      "files": [
         "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/services/search.js"
       ],
       "passed": true,
       "returncode": 0,
       "detail": {
         "success": true,
-        "checkedFiles": 3,
+        "checkedFiles": 1,
         "files": [
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/app.mpx",
-            "errors": []
-          },
-          {
-            "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/pages/search/index.mpx",
-            "errors": []
-          },
           {
             "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-6-api-proxy-task-contract/mpx2web/run-2/outputs/src/services/search.js",
             "errors": []
@@ -52,7 +81,7 @@
           "total": 0,
           "byCategory": {}
         },
-        "durationMs": 2697
+        "durationMs": 2650
       },
       "stderr": ""
     },
@@ -74,5 +103,5 @@
       "stderr": ""
     }
   ],
-  "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+  "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
 }

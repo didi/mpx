@@ -1,0 +1,92 @@
+{
+  "eval_id": 2,
+  "eval_name": "member-share-lifecycle",
+  "configuration": "no_skill",
+  "run_number": 2,
+  "model_grading_fingerprint": "9bdac8cbb686e16179b8136dccbe98624bbdc0143815200d34266f411f896fbd",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 74820
+  },
+  "expectations": [
+    {
+      "id": "s0",
+      "text": "微信小程序继续保留分享按钮、onShareAppMessage 与 onShareTimeline",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:48 保留微信小程序 open-type=\"share\" 分享按钮；outputs/src/pages/member/invite.mpx:142-155 保留 onShareAppMessage 与 onShareTimeline。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s1",
+      "text": "Web 构造选项中不存在没有浏览器触发源的分享生命周期；可使用 implement(remove: true) 或等价的编译期平台隔离，同时小程序仍保留原生命周期",
+      "category": "web-lifecycle",
+      "passed": false,
+      "evidence": "outputs/src/pages/member/invite.mpx:142-155 在 createPage 选项中无条件声明 onShareAppMessage 和 onShareTimeline，未见 implement(remove: true) 或等价编译期平台隔离，因此 Web 构造选项仍会包含无浏览器触发源的分享生命周期。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s2",
+      "text": "Web 分享入口绑定独立的页面实例方法",
+      "category": "web-template",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:49 Web 分享入口绑定 bindtap=\"shareOnWeb\"；outputs/src/pages/member/invite.mpx:178-180 在页面 methods 中定义了独立的 shareOnWeb 方法。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s3",
+      "text": "Web 分享方法在协议未提供时只保留可识别的待接入边界，不要求固定 TODO 文案，也不调用未声明的 SDK 或 Bridge",
+      "category": "web-lifecycle",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:50 明示 Web 分享能力暂未接入 SDK 或宿主 Bridge；outputs/src/pages/member/invite.mpx:178-180 的 shareOnWeb 仅 return false，未调用未声明 SDK 或 Bridge。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s4",
+      "text": "未擅自选择 navigator.share、clipboard 或复制链接作为降级",
+      "category": "web-lifecycle",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx 全文未出现 navigator.share、clipboard、execCommand 或复制链接等 Web 降级实现。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s5",
+      "text": "详情跳转与请求继续走 Mpx 官方 API 链路：srcMode=wx 源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx 或在不依赖应用级配置时使用 @mpxjs/api-proxy 命名导入；不得改成浏览器原生 API 的平行实现",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/pages/member/invite.mpx:51 将活动规则按钮改为 toggleCampaignRules，outputs/src/pages/member/invite.mpx:181-183 仅切换内联规则展示，原 wx.navigateTo 详情跳转被移除；outputs/src/pages/member/invite.mpx:171-175 在非小程序分支使用浏览器原生 fetch 请求，未继续走 wx.request、mpx.xxx 或 @mpxjs/api-proxy。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "s6",
+      "text": "会员进度、奖励阶梯和最近邀请列表业务保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/member/invite.mpx:13-24 保留会员邀请进度；outputs/src/pages/member/invite.mpx:32-37 与 99-103 保留奖励阶梯；outputs/src/pages/member/invite.mpx:59-75 与 110-127 保留最近邀请列表及数据。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "可补充断言要求 Web 分享入口在 Web 编译产物中确实可见，并禁止用 typeof wx 这类可能被跨端运行时污染的运行时判断来区分平台。"
+    ],
+    "overall": "候选保留了主要展示数据和 Web 分享入口，但未隔离小程序分享生命周期，并把 Web 请求改成了原生 fetch，违反关键跨端约束。"
+  }
+}

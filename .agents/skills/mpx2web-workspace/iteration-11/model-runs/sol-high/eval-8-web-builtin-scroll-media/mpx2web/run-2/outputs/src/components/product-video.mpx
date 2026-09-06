@@ -1,13 +1,14 @@
 <template>
   <view class="product-video">
     <video
-      id="product-video"
+      id="product-video-{{product.id}}"
       src="{{product.video}}"
       autoplay
+      controls
       muted@web="{{true}}"
       muted@wx="{{false}}"
       playsinline@web="{{true}}"
-      enable-danmu@wx="{{true}}"
+      enable-danmu@wx
       bindtimeupdate="onTimeUpdate"
       bindloadedmetadata="onLoadedMetadata"
       binderror="onVideoError"
@@ -18,6 +19,19 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+
+function getMediaTarget (event) {
+  if (!event) return null
+  if (event.detail && event.detail.target) return event.detail.target
+  if (event.target) return event.target
+  return null
+}
+
+function getNumber (primary, fallback) {
+  if (typeof primary === 'number' && Number.isFinite(primary)) return primary
+  if (typeof fallback === 'number' && Number.isFinite(fallback)) return fallback
+  return 0
+}
 
 createComponent({
   properties: {
@@ -30,25 +44,17 @@ createComponent({
   methods: {
     onTimeUpdate (event) {
       const detail = event.detail || {}
-      const media = event.target || event.currentTarget || {}
-      const currentTime = detail.currentTime == null ? media.currentTime : detail.currentTime
-      const duration = detail.duration == null ? media.duration : detail.duration
-
-      this.progress = Number.isFinite(Number(currentTime)) ? Number(currentTime) : 0
-      this.duration = Number.isFinite(Number(duration)) ? Number(duration) : 0
+      const media = getMediaTarget(event)
+      this.progress = getNumber(detail.currentTime, media && media.currentTime)
+      this.duration = getNumber(detail.duration, media && media.duration)
     },
     onLoadedMetadata (event) {
       const detail = event.detail || {}
-      const media = event.target || event.currentTarget || {}
-      const width = detail.width == null ? media.videoWidth : detail.width
-      const height = detail.height == null ? media.videoHeight : detail.height
-      const duration = detail.duration == null ? media.duration : detail.duration
-
-      this.videoSize = `${width || 0}x${height || 0}`
-      if (Number.isFinite(Number(duration))) {
-        this.duration = Number(duration)
-      }
-      this.triggerEvent('metadataready')
+      const media = getMediaTarget(event)
+      const width = getNumber(detail.width, media && media.videoWidth)
+      const height = getNumber(detail.height, media && media.videoHeight)
+      this.duration = getNumber(detail.duration, media && media.duration)
+      this.videoSize = `${width}x${height}`
     },
     onVideoError () {}
   }

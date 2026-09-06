@@ -16,12 +16,14 @@ export const useArticleStore = defineStore('article', {
       const requestVersion = ++this.requestVersion
       this.articleId = articleId
       this.loaded = false
+      this.article = null
+      this.recommendations = []
 
       const data = await fetchArticle(articleId, requestContext)
-      if (requestVersion !== this.requestVersion || this.articleId !== articleId) return
 
+      if (requestVersion !== this.requestVersion || this.articleId !== articleId) return
       this.article = data.article
-      this.recommendations = data.recommendations
+      this.recommendations = data.recommendations || []
       this.loaded = true
     }
   }

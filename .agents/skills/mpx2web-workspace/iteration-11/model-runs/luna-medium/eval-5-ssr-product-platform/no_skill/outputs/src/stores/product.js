@@ -1,16 +1,17 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchProduct, fetchRecommendations } from '../services/product'
 
-// WeakMap keeps in-flight requests isolated per Pinia instance (and therefore
-// prevents one concurrent SSR request from deduping against another).
+// This map is keyed by a Pinia instance, so concurrent SSR renders cannot share
+// either data or an in-flight request. It also deduplicates onLoad/SSR takeover.
 const requestsByStore = new WeakMap()
 
 export const useProductStore = defineStore('product-platform', {
   state: () => ({
     productId: '',
-    loadedProductId: '',
     product: {},
-    recommendations: []
+    recommendations: [],
+    loadedProductId: '',
+    requestVersion: 0
   }),
   actions: {
     loadProduct (productId, options = {}) {
@@ -24,22 +25,23 @@ export const useProductStore = defineStore('product-platform', {
       }
       if (requests.has(productId)) return requests.get(productId)
 
-      const requestVersion = (this._requestVersion || 0) + 1
-      this._requestVersion = requestVersion
-      const promise = Promise.all([
+      const version = ++this.requestVersion
+      const request = Promise.all([
         fetchProduct(productId, options),
         fetchRecommendations(productId, options)
       ]).then(([product, recommendations]) => {
-        if (this._requestVersion === requestVersion) {
+        // A late response from an old navigation is never allowed to commit.
+        if (version === this.requestVersion) {
           this.productId = productId
+          this.product = product || {}
+          this.recommendations = recommendations || []
           this.loadedProductId = productId
-          this.product = product
-          this.recommendations = recommendations
         }
         return { product, recommendations }
       }).finally(() => requests.delete(productId))
-      requests.set(productId, promise)
-      return promise
+
+      requests.set(productId, request)
+      return request
     }
   }
 })

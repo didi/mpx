@@ -48,10 +48,10 @@ createComponent({
 })
 </script>
 
-<script type="application/json">
-{
-  "usingComponents": {
-    "analytics-chart": "../web/AnalyticsChart.vue"
+<script name="json">
+module.exports = {
+  usingComponents: {
+    'analytics-chart': '../web/AnalyticsChart.vue'
   }
 }
 </script>

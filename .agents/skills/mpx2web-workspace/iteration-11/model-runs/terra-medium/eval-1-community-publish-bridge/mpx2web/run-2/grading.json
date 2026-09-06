@@ -3,19 +3,21 @@
   "eval_name": "community-publish-bridge",
   "configuration": "mpx2web",
   "run_number": 2,
-  "grading_fingerprint": "40bd7e30eaca4d8dde8a97f6f193fa657f59a8b62de38b4cb4c6dcdba4f0e2b9",
+  "grading_fingerprint": "fd48d81d0814ec4eb4704f4e3260e409458eb56c67814ea85cb5cb21f0ef3ab5",
+  "model_grading_fingerprint": "d464b067552ba607e0435b4dfa56bba012438beff6a7ffda551e967b80cdf587",
   "grader": {
     "model": "gpt-5.5",
     "reasoning_effort": "high",
     "blind_configuration": true,
-    "duration_ms": 82467
+    "duration_ms": 70984
   },
   "expectations": [
     {
       "id": "a0",
       "text": "非 Web 分支通过 wx.xxx 或应用入口已配置 API Proxy 的 mpx.xxx 直接调用 chooseLocation、openLocation 与 chooseMedia，不以动态方法名或自定义适配器改写宿主能力",
+      "category": "cross-platform-regression",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:127-139、140-155、156-171：Web 分支提前 return，非 Web 分支分别直接调用 wx.chooseLocation、wx.openLocation、wx.chooseMedia；未见动态方法名或自定义宿主适配器。",
+      "evidence": "outputs/src/pages/community/publish.mpx:116-125、127-139、141-154：Web 分支先 return；非 Web 分支分别直接调用 wx.chooseLocation、wx.openLocation、wx.chooseMedia，未使用动态方法名或自定义适配器。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -23,8 +25,9 @@
     {
       "id": "a1",
       "text": "Web 缺失能力只在 choosePlace、openPlace、choosePhoto 或由它们直接调用的专用 helper 中隔离；不得引入通用平台调用层，也不得改写请求、路由或提示能力",
+      "category": "conditional-compile",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:127-171：Web 缺失能力判断只出现在 choosePlace、openPlace、choosePhoto，并仅调用直接 helper showWebCapabilityUnavailable；outputs/src/pages/community/publish.mpx:181-203 保持 wx.request、wx.redirectTo、wx.showToast，未引入通用平台调用层。",
+      "evidence": "outputs/src/pages/community/publish.mpx:115-160：Web 缺失能力逻辑只出现在 choosePlace、openPlace、choosePhoto 及其直接调用的 showWebCapabilityUnavailable；请求 wx.request、路由 wx.redirectTo、原失败提示 wx.showToast 仍在 submitPost 内保持原链路，未引入通用平台调用层。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -32,8 +35,9 @@
     {
       "id": "a2",
       "text": "Web 位置选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:127-132：choosePlace 的 Web 分支只有 TODO 边界说明、提示和 return，未声明或调用位置选择虚构接口。",
+      "evidence": "outputs/src/pages/community/publish.mpx:116-119：Web 位置选择仅有 TODO 待接入注释和不可用提示后 return，未声明或调用宿主 Bridge/SDK/浏览器替代接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -41,8 +45,9 @@
     {
       "id": "a3",
       "text": "Web 地图打开在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:143-147：openPlace 的 Web 分支只有 TODO 边界说明、提示和 return，wx.openLocation 位于非 Web 分支。",
+      "evidence": "outputs/src/pages/community/publish.mpx:129-132：Web 地图查看仅有 TODO 待接入注释和不可用提示后 return，未声明或调用虚构地图接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -50,8 +55,9 @@
     {
       "id": "a4",
       "text": "Web 媒体选择在协议未确定时必须停留在可识别的待接入边界（空分支、注释或结构化占位均可，措辞不限），不得声明或调用虚构接口",
+      "category": "web-api",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:156-161：choosePhoto 的 Web 分支只有 TODO 边界说明、提示和 return，wx.chooseMedia 位于非 Web 分支。",
+      "evidence": "outputs/src/pages/community/publish.mpx:142-145：Web 媒体选择仅有 TODO 待接入注释和不可用提示后 return，未声明或调用文件选择、Bridge、SDK 等替代接口。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -59,18 +65,24 @@
     {
       "id": "a5",
       "text": "未提供 Web 接入协议时，三项缺失能力及其专用 helper 不得采用或虚构 globalThis/window/document/navigator 上的 Bridge、SDK 或浏览器替代实现；文件中与这些能力无关的浏览器环境守卫不因此判错",
+      "category": "web-api",
       "passed": true,
       "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。",
       "verification_methods": [
         "independent_code_review",
         "deterministic_check"
-      ]
+      ],
+      "deterministic_check": {
+        "status": "pass",
+        "evidence": "outputs/src/pages/community/publish.mpx：三项缺失能力的方法均未自行发明浏览器、Bridge 或 SDK 协议。"
+      }
     },
     {
       "id": "a6",
       "text": "Web 已支持的请求、路由和提示继续走 Mpx 官方 API 链路：srcMode=wx 的源码可保留会被跨端编译转换的 wx.xxx，也可沿用项目现有的 mpx.xxx；仅在不依赖应用级 options/custom/Promise 化配置时使用 @mpxjs/api-proxy 命名导入。不得为输出 Web 改成 fetch、location.assign、alert 或无业务协议的自定义包装",
+      "category": "web-api",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:121-125、181-203：提示、请求和跳转继续使用 wx.showToast、wx.request、wx.redirectTo；全文件未出现 fetch、location.assign、alert 或无业务协议包装。",
+      "evidence": "outputs/src/pages/community/publish.mpx:157-160、174-193：提示、请求和路由继续使用 wx.showToast、wx.request、wx.redirectTo；未改成 fetch、location.assign、alert、自定义请求/路由/提示包装，也未引入 @mpxjs/api-proxy 命名导入。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -78,8 +90,9 @@
     {
       "id": "a7",
       "text": "发布内容、图片、位置、话题、评论开关与提交后详情跳转业务链路保持完整",
+      "category": "business-regression",
       "passed": true,
-      "evidence": "outputs/src/pages/community/publish.mpx:9-16、18-39、43-62、64-80、127-203：内容输入、图片展示/删除/非 Web 选择、位置选择/查看边界、话题 picker、评论 switch、提交数据 content/photos/place/topicId/allowComments 以及成功后详情页 redirectTo 均保留。",
+      "evidence": "outputs/src/pages/community/publish.mpx:112-193：content 输入、photos 追加/删除、place 保存/打开、topic 选择、allowComments 开关均保留；submitPost 仍提交 content/photos/place/topicId/allowComments，并在成功后跳转 /pages/community/detail?id=${data.id}。",
       "verification_methods": [
         "independent_code_review"
       ]
@@ -91,19 +104,27 @@
     "total": 8,
     "pass_rate": 1.0
   },
+  "strict_delivery_summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0,
+    "compile_passed": true
+  },
   "metrics": {
-    "total_tokens": 188224,
-    "input_tokens": 182008,
-    "output_tokens": 6216,
-    "tool_calls": 7,
-    "duration_ms": 142461
+    "total_tokens": 249395,
+    "input_tokens": 246256,
+    "output_tokens": 3139,
+    "tool_calls": 8,
+    "duration_ms": 109225
   },
   "timing": {
-    "total_tokens": 188224,
-    "duration_ms": 142461,
-    "total_duration_seconds": 142.461
+    "total_tokens": 249395,
+    "duration_ms": 109225,
+    "total_duration_seconds": 109.225
   },
   "compile": {
+    "compile_fingerprint": "ee02bd3d45dcb5aceb9e631b1464e9ead758ad7b79d5c8f1ac89a219e8770452",
     "status": "passed",
     "all_declared_outputs_present": true,
     "declared_output_count": 1,
@@ -142,28 +163,21 @@
           "target": "web",
           "projectRoot": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace",
           "errors": [],
-          "warnings": [
-            {
-              "category": "template",
-              "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx]: Your target mode is \"web\", but used \"wx:if\". Did you mean \"v-if\"?",
-              "file": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx",
-              "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template error][/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web-workspace/iteration-11/model-runs/terra-medium/eval-1-community-publish-bridge/mpx2web/run-2/outputs/src/pages/community/publish.mpx]: Your target mode is \"web\", but used \"wx:if\". Did you mean \"v-if\"?"
-            }
-          ],
+          "warnings": [],
           "summary": {
             "total": 0,
             "byCategory": {}
           },
-          "durationMs": 3923
+          "durationMs": 3030
         },
         "stderr": ""
       }
     ],
-    "boundary": "所有声明输出先检查条件编译语义；所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
+    "boundary": "所有声明输出逐文件检查条件编译语义；所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
   },
   "claims": [],
   "eval_feedback": {
     "suggestions": [],
-    "overall": "输出按断言完成安全跨端隔离，Web 未虚构宿主能力，已支持业务链路保留。"
+    "overall": "全部断言通过；输出只隔离 Web 未定协议能力，原有发布业务链路保持完整。"
   }
 }

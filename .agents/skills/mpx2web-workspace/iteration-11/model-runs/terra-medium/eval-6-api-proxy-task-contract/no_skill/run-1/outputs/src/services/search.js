@@ -7,17 +7,10 @@ export function fetchTrendingKeywords () {
 }
 
 export function requestSuggestions (keyword) {
-  const requestTask = request({
+  // API Proxy returns a Promise-compatible request task. Its abort method is
+  // kept intact so callers can cancel an in-flight suggestion request.
+  return request({
     url: '/api/search/suggest',
     data: { keyword }
   })
-
-  return {
-    promise: requestTask.then(({ data }) => data),
-    abort () {
-      if (typeof requestTask.abort === 'function') {
-        requestTask.abort()
-      }
-    }
-  }
 }

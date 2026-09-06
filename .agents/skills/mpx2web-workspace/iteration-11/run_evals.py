@@ -330,58 +330,93 @@ def compile_entry_type(relative):
     return "component"
 
 
+def compile_fingerprint(dispatch):
+    """Bind compile evidence to candidate bytes and validator implementations."""
+    outputs = []
+    for relative, raw_path in zip(
+        dispatch["output_relative_paths"], dispatch["output_paths"]
+    ):
+        path = Path(raw_path)
+        outputs.append({
+            "relative": relative,
+            "sha256": sha256_bytes(path.read_bytes()) if path.is_file() else None,
+        })
+    payload = {
+        "version": 2,
+        "candidate_fingerprint": dispatch.get("fingerprint"),
+        "outputs": outputs,
+        "compile_validator_sha256": sha256_bytes(COMPILE_SCRIPT.read_bytes()),
+        "conditional_validator_sha256": sha256_bytes(
+            CONDITIONAL_VALIDATE_SCRIPT.read_bytes()
+        ),
+        "target": "web",
+        "mode": "one-entry-per-build",
+    }
+    return sha256_bytes(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()
+    )
+
+
+def compile_evidence_current(dispatch):
+    compile_path = Path(dispatch["metrics_path"]).parent / "compile.json"
+    if not compile_path.is_file():
+        return False
+    try:
+        payload = json.loads(compile_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    return payload.get("compile_fingerprint") == compile_fingerprint(dispatch)
+
+
 def run_compile_gate(dispatch):
     output_paths = [Path(path) for path in dispatch["output_paths"]]
     relative_paths = dispatch["output_relative_paths"]
     checks = []
     success = True
-    conditional_command = [
-        "node",
-        str(CONDITIONAL_VALIDATE_SCRIPT),
-        "--json",
-        *(str(path) for path in output_paths),
-    ]
-    conditional_result = subprocess.run(
-        conditional_command,
-        cwd=EVAL_WORKDIR,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    try:
-        conditional_detail = (
-            json.loads(conditional_result.stdout)
-            if conditional_result.stdout.strip()
-            else {}
-        )
-    except json.JSONDecodeError:
-        conditional_detail = {"raw_stdout": conditional_result.stdout[-8000:]}
-    conditional_passed = (
-        conditional_result.returncode == 0
-        and conditional_detail.get("success") is True
-    )
-    success = success and conditional_passed
-    checks.append({
-        "kind": "mpx-conditional-compile-semantics",
-        "files": [str(path) for path in output_paths],
-        "passed": conditional_passed,
-        "returncode": conditional_result.returncode,
-        "detail": conditional_detail,
-        "stderr": conditional_result.stderr[-8000:],
-    })
-
-    for entry_type in ("page", "component"):
-        entries = [
-            path for path, relative in zip(output_paths, relative_paths)
-            if Path(relative).suffix == ".mpx"
-            and compile_entry_type(relative) == entry_type
+    for path in output_paths:
+        conditional_command = [
+            "node",
+            str(CONDITIONAL_VALIDATE_SCRIPT),
+            "--json",
+            str(path),
         ]
-        if not entries:
+        conditional_result = subprocess.run(
+            conditional_command,
+            cwd=EVAL_WORKDIR,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        try:
+            conditional_detail = (
+                json.loads(conditional_result.stdout)
+                if conditional_result.stdout.strip()
+                else {}
+            )
+        except json.JSONDecodeError:
+            conditional_detail = {"raw_stdout": conditional_result.stdout[-8000:]}
+        conditional_passed = (
+            conditional_result.returncode == 0
+            and conditional_detail.get("success") is True
+        )
+        success = success and conditional_passed
+        checks.append({
+            "kind": "mpx-conditional-compile-semantics",
+            "files": [str(path)],
+            "passed": conditional_passed,
+            "returncode": conditional_result.returncode,
+            "detail": conditional_detail,
+            "stderr": conditional_result.stderr[-8000:],
+        })
+
+    for path, relative in zip(output_paths, relative_paths):
+        entry_type = compile_entry_type(relative)
+        if Path(relative).suffix != ".mpx" or entry_type is None:
             continue
         command = [
             "node",
             str(COMPILE_SCRIPT),
-            *(str(path) for path in entries),
+            str(path),
             "--target=web",
             f"--type={entry_type}",
             f"--project-root={EVAL_WORKDIR}",
@@ -403,7 +438,7 @@ def run_compile_gate(dispatch):
         checks.append({
             "kind": "mpx-web-compile",
             "type": entry_type,
-            "files": [str(path) for path in entries],
+            "files": [str(path)],
             "passed": passed,
             "returncode": result.returncode,
             "detail": detail,
@@ -446,11 +481,12 @@ def run_compile_gate(dispatch):
         relative for relative in relative_paths
         if Path(relative).suffix == ".mpx" and compile_entry_type(relative)
     ]
-    compiled = [
+    compiled = {
         file for check in checks if check["kind"] == "mpx-web-compile"
         and check["passed"] for file in check["files"]
-    ]
+    }
     payload = {
+        "compile_fingerprint": compile_fingerprint(dispatch),
         "status": "passed" if success else "failed",
         "all_declared_outputs_present": all(path.is_file() for path in output_paths),
         "declared_output_count": len(output_paths),
@@ -458,8 +494,8 @@ def run_compile_gate(dispatch):
         "compiled_mpx_count": len(compiled),
         "checks": checks,
         "boundary": (
-            "所有声明输出先检查条件编译语义；"
-            "所有可作为 page/component 入口的 .mpx 均执行真实 Web 编译；"
+            "所有声明输出逐文件检查条件编译语义；"
+            "所有可作为 page/component 入口的 .mpx 均逐文件执行真实 Web 编译；"
             "app.mpx、HTML 和独立配置仅做完整性门禁，JS 另做语法检查。"
         ),
     }
@@ -468,6 +504,37 @@ def run_compile_gate(dispatch):
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     )
     return payload
+
+
+def recompile_dispatch(dispatch):
+    """Refresh compile evidence for an existing fingerprint-matched candidate."""
+    run_dir = Path(dispatch["metrics_path"]).parent
+    run_path = run_dir / "run.json"
+    if not run_path.is_file():
+        raise ValueError(f"缺少生成结果：{run_path}")
+    run_result = json.loads(run_path.read_text())
+    if (
+        run_result.get("fingerprint") != dispatch["fingerprint"]
+        or run_result.get("returncode") != 0
+        or run_result.get("outputs_complete") is not True
+        or not all(Path(path).is_file() for path in dispatch["output_paths"])
+    ):
+        raise ValueError(f"候选指纹或产物不完整，不能仅重跑编译：{run_dir}")
+    if compile_evidence_current(dispatch):
+        compile_result = json.loads((run_dir / "compile.json").read_text())
+        print(f"[skip-compile] {dispatch['description']}", flush=True)
+        return compile_result
+    compile_result = run_compile_gate(dispatch)
+    run_result["compile_status"] = compile_result["status"]
+    run_result["compile_boundary"] = compile_result.get("boundary")
+    run_path.write_text(json.dumps(run_result, ensure_ascii=False, indent=2) + "\n")
+    print(
+        f"[recompiled] {dispatch['description']} "
+        f"{compile_result['compiled_mpx_count']}/"
+        f"{compile_result['compile_eligible_mpx_count']}",
+        flush=True,
+    )
+    return compile_result
 
 
 def run_dispatch(dispatch, codex_bin="codex"):
@@ -640,6 +707,11 @@ def main():
     parser.add_argument("--reasoning-effort", required=True)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument(
+        "--recompile-only",
+        action="store_true",
+        help="只对现有指纹一致的候选逐文件刷新 compile.json，不调用生成模型",
+    )
+    parser.add_argument(
         "--resume",
         action="store_true",
         help="只跳过指纹一致且产物完整的成功任务",
@@ -662,8 +734,17 @@ def main():
             run_number=number,
         ))
     if not args.execute:
+        if args.recompile_only:
+            parser.error("--recompile-only requires --execute")
         print(json.dumps(dispatches, ensure_ascii=False, indent=2))
         print(f"\n# Total: {len(dispatches)} agent dispatches", file=sys.stderr)
+        return
+    if args.recompile_only:
+        results = [recompile_dispatch(dispatch) for dispatch in dispatches]
+        invalidate_aggregate_reports()
+        print(json.dumps(results, ensure_ascii=False, indent=2))
+        if any(result["status"] == "not-run" for result in results):
+            raise SystemExit(1)
         return
     if args.resume:
         pending = []

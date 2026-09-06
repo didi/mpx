@@ -18,67 +18,49 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 import mpx from '@mpxjs/api-proxy'
-import exposureSdk from '@business/product-exposure-web'
 
 createComponent({
-  properties: {
-    productId: String,
-    items: Array
-  },
-  data: {
-    exposureVersion: 0
-  },
+  properties: { productId: String, items: Array },
+  data: { tracker: null, observer: null, generation: 0 },
+  ready () { this.initExposure() },
   observers: {
-    productId () {
-      this.initExposure()
-    }
+    productId () { this.initExposure() },
+    items () { this.initExposure() }
   },
-  ready () {
-    this.initExposure()
-  },
-  detached () {
-    this.destroyExposure()
-  },
-  pageLifetimes: {
-    hide () {
-      this.destroyExposure()
-    },
-    show () {
-      this.initExposure()
-    }
-  },
+  detached () { this.teardownExposure() },
   methods: {
-    destroyExposure () {
-      this.exposureVersion = (this.exposureVersion || 0) + 1
+    teardownExposure () {
+      this.generation += 1
       if (this.observer) this.observer.disconnect()
       this.observer = null
-      if (this.tracker) this.tracker.destroy()
+      if (this.tracker && this.tracker.destroy) this.tracker.destroy()
       this.tracker = null
     },
     async initExposure () {
+      // SSR and mini-program runtimes must never evaluate browser globals or SDK setup.
       if (typeof window === 'undefined' || typeof document === 'undefined' || typeof IntersectionObserver === 'undefined') return
-
-      this.destroyExposure()
-      const version = this.exposureVersion
       const productId = this.productId
+      const generation = ++this.generation
+      if (this.observer) this.observer.disconnect()
+      if (this.tracker && this.tracker.destroy) this.tracker.destroy()
+      this.observer = null
+      this.tracker = null
+      const sdkModule = await import('@business/product-exposure-web')
+      const exposureSdk = sdkModule.default || sdkModule
       const tracker = await exposureSdk.create({ productId })
-      if (version !== this.exposureVersion || productId !== this.productId) {
-        tracker.destroy()
+      if (generation !== this.generation || productId !== this.productId) {
+        if (tracker && tracker.destroy) tracker.destroy()
         return
       }
       this.tracker = tracker
       this.observer = new IntersectionObserver((entries) => {
-        if (version !== this.exposureVersion || !this.tracker) return
+        if (generation !== this.generation || !this.tracker) return
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            this.tracker.track('recommendation_exposure', {
-              productId,
-              recommendationId: entry.target.dataset.productId
-            })
-          }
+          if (entry.isIntersecting) this.tracker.track('recommendation_exposure', { productId, recommendationId: entry.target.dataset.productId })
         })
       })
-      document.querySelectorAll('.recommendation-card').forEach(element => this.observer.observe(element))
+      const root = this.$el || document
+      root.querySelectorAll('.recommendation-card').forEach(element => this.observer.observe(element))
     },
     openProduct (productId) {
       mpx.navigateTo({ url: `/packageProduct/pages/detail/index?id=${productId}` })

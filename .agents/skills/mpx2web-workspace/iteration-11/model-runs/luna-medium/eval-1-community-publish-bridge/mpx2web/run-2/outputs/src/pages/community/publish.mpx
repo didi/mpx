@@ -3,7 +3,6 @@
     <view class="publish-header">
       <text class="publish-title">发布社区动态</text>
       <text class="publish-tip">分享真实体验，帮助更多邻居</text>
-      <text @web class="web-capability-note">Web 端暂未接入位置、地图与图片选择</text>
     </view>
 
     <view class="form-card">
@@ -23,10 +22,11 @@
             <text>×</text>
           </view>
         </view>
-        <view
-          wx:if="{{photos.length < 9}}"
-          class="photo-add"
-          bindtap="choosePhoto"
+          <view
+            wx:if="{{photos.length < 9}}"
+            class="photo-add"
+          bindtap@wx="choosePhoto"
+          bindtap@web="choosePhotoOnWeb"
           aria-role="button"
           aria-label="添加图片"
         >
@@ -37,7 +37,7 @@
     </view>
 
     <view class="publish-options">
-      <view class="option-row" bindtap="choosePlace">
+      <view class="option-row" bindtap@wx="choosePlace" bindtap@web="choosePlaceOnWeb">
         <view class="option-main">
           <text class="option-icon">⌖</text>
           <view class="option-copy">
@@ -48,7 +48,7 @@
         <text class="option-arrow">›</text>
       </view>
 
-      <view wx:if="{{place.name}}" class="place-card" bindtap="openPlace">
+      <view wx:if="{{place.name}}" class="place-card" bindtap@wx="openPlace" bindtap@web="openPlaceOnWeb">
         <view class="place-copy">
           <text class="place-name">{{place.name}}</text>
           <text class="place-address">{{place.address}}</text>
@@ -114,24 +114,18 @@ createPage({
       this.content = event.detail.value
     },
     choosePlace () {
-      if (__mpx_mode__ === 'web') {
-        // TODO(Web): 等宿主声明位置选择协议后接入，不调用未声明的 Bridge 或地图 SDK。
-        wx.showToast({ title: 'Web 端暂未接入位置选择', icon: 'none' })
-        return
-      }
       wx.chooseLocation({
         success: (place) => {
           this.place = place
         }
       })
     },
+    choosePlaceOnWeb () {
+      // TODO(Web): 等宿主声明位置选择协议后接入；当前不调用未声明的 Bridge 或地图 SDK。
+      wx.showToast({ title: 'Web 端暂不支持选择位置', icon: 'none' })
+    },
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
-      if (__mpx_mode__ === 'web') {
-        // TODO(Web): 等宿主声明地图查看协议后接入，不构造浏览器地图跳转。
-        wx.showToast({ title: 'Web 端暂未接入地图查看', icon: 'none' })
-        return
-      }
       wx.openLocation({
         latitude: this.place.latitude,
         longitude: this.place.longitude,
@@ -139,12 +133,11 @@ createPage({
         address: this.place.address
       })
     },
+    openPlaceOnWeb () {
+      // TODO(Web): 等宿主声明地图查看协议后接入；当前不猜测地图 URL、Bridge 或 SDK。
+      wx.showToast({ title: 'Web 端暂不支持查看地图', icon: 'none' })
+    },
     choosePhoto () {
-      if (__mpx_mode__ === 'web') {
-        // TODO(Web): 等宿主声明媒体选择/上传协议后接入，不假定 input 或 Bridge 契约。
-        wx.showToast({ title: 'Web 端暂未接入图片选择', icon: 'none' })
-        return
-      }
       wx.chooseMedia({
         count: 9 - this.photos.length,
         mediaType: ['image'],
@@ -153,6 +146,10 @@ createPage({
           this.photos = this.photos.concat(tempFiles)
         }
       })
+    },
+    choosePhotoOnWeb () {
+      // TODO(Web): 等宿主声明媒体选择/上传协议后接入；当前不调用 chooseMedia 或未声明接口。
+      wx.showToast({ title: 'Web 端暂不支持添加图片', icon: 'none' })
     },
     removePhoto (index) {
       this.photos.splice(index, 1)
@@ -410,15 +407,6 @@ createPage({
 .publish-button[disabled] {
   color: #ffffff;
   background: #b9d5ff;
-}
-</style>
-
-<style mode="web">
-.web-capability-note {
-  display: block;
-  margin-top: 12rpx;
-  color: #b87800;
-  font-size: 22rpx;
 }
 </style>
 

@@ -3,10 +3,10 @@
     <view class="portal-content">
       <view class="portal-header">
         <view class="portal-title">门户中心</view>
-        <view class="portal-subtitle">选择需要访问的服务</view>
+        <view class="portal-subtitle">选择你要访问的服务</view>
       </view>
 
-      <view class="portal-cards">
+      <view class="portal-grid">
         <view
           class="portal-card"
           wx:for="{{cards}}"
@@ -23,15 +23,10 @@
       </view>
     </view>
 
-    <view
-      wx:if="{{dialogVisible}}"
-      class="dialog-mask"
-      bindtap="closeDialog"
-      catchtouchmove="noop"
-    >
+    <view wx:if="{{dialogVisible}}" class="dialog-mask" bindtap="closeDialog">
       <view class="dialog" catchtap="noop">
         <view class="dialog-title">门户设置</view>
-        <button class="portal-button portal-button--primary dialog-close" bindtap="closeDialog">关闭</button>
+        <button class="portal-button portal-button--primary" bindtap="closeDialog">关闭</button>
       </view>
     </view>
   </view>
@@ -42,113 +37,109 @@ import mpx, { createPage } from '@mpxjs/core'
 
 createPage({
   data: {
-    cards: [{ id: 'news', title: '资讯' }, { id: 'service', title: '服务' }],
+    cards: [
+      { id: 'news', title: '资讯' },
+      { id: 'service', title: '服务' }
+    ],
     dialogVisible: false,
     dark: false
   },
-
-  onShow () {
-    if (this.dialogVisible) this.lockPageScroll()
-  },
-
-  onHide () {
-    this.unlockPageScroll()
-  },
-
-  onUnload () {
-    this.unlockPageScroll()
-  },
-
   methods: {
     openCard (id) {
-      mpx.navigateTo({ url: `/pages/portal/detail?id=${id}` })
+      mpx.navigateTo({
+        url: `/pages/portal/detail?id=${encodeURIComponent(id)}`
+      })
     },
-
     toggleTheme () {
       this.dark = !this.dark
     },
-
     openDialog () {
       if (this.dialogVisible) return
+
       this.dialogVisible = true
-      this.lockPageScroll()
-    },
-
-    closeDialog () {
-      if (!this.dialogVisible) return
-      this.dialogVisible = false
-      this.unlockPageScroll()
-    },
-
-    lockPageScroll () {
       /* @mpx-if (mode === 'web') */
-      if (this.__portalScrollLock || typeof window === 'undefined' || typeof document === 'undefined') return
+      this.lockPageScroll()
+      /* @mpx-endif */
+    },
+    closeDialog () {
+      this.dialogVisible = false
+      /* @mpx-if (mode === 'web') */
+      this.restorePageScroll()
+      /* @mpx-endif */
+    },
+    noop () {},
+    /* @mpx-if (mode === 'web') */
+    lockPageScroll () {
+      if (this._portalScrollLock || typeof window === 'undefined' || typeof document === 'undefined') return
 
+      const html = document.documentElement
       const body = document.body
-      const root = document.documentElement
-      if (!body || !root) return
+      if (!html || !body) return
 
-      const portal = document.querySelector('.portal')
-      const scrollX = window.pageXOffset || root.scrollLeft || body.scrollLeft || 0
-      const scrollY = window.pageYOffset || root.scrollTop || body.scrollTop || 0
+      const scrollX = window.pageXOffset || html.scrollLeft || body.scrollLeft || 0
+      const scrollY = window.pageYOffset || html.scrollTop || body.scrollTop || 0
+      const scrollbarWidth = Math.max(0, window.innerWidth - html.clientWidth)
+      const bodyStyle = body.style
+      const htmlStyle = html.style
 
-      this.__portalScrollLock = {
-        body,
-        root,
-        portal,
+      this._portalScrollLock = {
         scrollX,
         scrollY,
-        portalScrollLeft: portal ? portal.scrollLeft : 0,
-        portalScrollTop: portal ? portal.scrollTop : 0,
-        bodyStyle: {
-          overflow: body.style.overflow,
-          position: body.style.position,
-          top: body.style.top,
-          left: body.style.left,
-          right: body.style.right,
-          width: body.style.width
-        },
-        rootOverflow: root.style.overflow,
-        portalOverflow: portal ? portal.style.overflow : ''
+        htmlOverflow: htmlStyle.overflow,
+        bodyOverflow: bodyStyle.overflow,
+        bodyPosition: bodyStyle.position,
+        bodyTop: bodyStyle.top,
+        bodyLeft: bodyStyle.left,
+        bodyRight: bodyStyle.right,
+        bodyWidth: bodyStyle.width,
+        bodyPaddingRight: bodyStyle.paddingRight
       }
 
-      root.style.overflow = 'hidden'
-      body.style.overflow = 'hidden'
-      body.style.position = 'fixed'
-      body.style.top = `${-scrollY}px`
-      body.style.left = `${-scrollX}px`
-      body.style.right = '0'
-      body.style.width = '100%'
-      if (portal) portal.style.overflow = 'hidden'
-      /* @mpx-endif */
+      htmlStyle.overflow = 'hidden'
+      bodyStyle.overflow = 'hidden'
+      bodyStyle.position = 'fixed'
+      bodyStyle.top = `${-scrollY}px`
+      bodyStyle.left = `${-scrollX}px`
+      bodyStyle.right = '0'
+      bodyStyle.width = '100%'
+
+      if (scrollbarWidth > 0) {
+        const currentPaddingRight = parseFloat(window.getComputedStyle(body).paddingRight) || 0
+        bodyStyle.paddingRight = `${currentPaddingRight + scrollbarWidth}px`
+      }
     },
+    restorePageScroll () {
+      const lock = this._portalScrollLock
+      if (!lock || typeof window === 'undefined' || typeof document === 'undefined') return
 
-    unlockPageScroll () {
-      /* @mpx-if (mode === 'web') */
-      const lock = this.__portalScrollLock
-      if (!lock) return
+      const html = document.documentElement
+      const body = document.body
+      this._portalScrollLock = null
 
-      const { body, root, portal, bodyStyle } = lock
-      root.style.overflow = lock.rootOverflow
-      body.style.overflow = bodyStyle.overflow
-      body.style.position = bodyStyle.position
-      body.style.top = bodyStyle.top
-      body.style.left = bodyStyle.left
-      body.style.right = bodyStyle.right
-      body.style.width = bodyStyle.width
+      if (!html || !body) return
 
-      if (portal) {
-        portal.style.overflow = lock.portalOverflow
-        portal.scrollLeft = lock.portalScrollLeft
-        portal.scrollTop = lock.portalScrollTop
-      }
-
+      html.style.overflow = lock.htmlOverflow
+      body.style.overflow = lock.bodyOverflow
+      body.style.position = lock.bodyPosition
+      body.style.top = lock.bodyTop
+      body.style.left = lock.bodyLeft
+      body.style.right = lock.bodyRight
+      body.style.width = lock.bodyWidth
+      body.style.paddingRight = lock.bodyPaddingRight
       window.scrollTo(lock.scrollX, lock.scrollY)
-      this.__portalScrollLock = null
-      /* @mpx-endif */
-    },
-
-    noop () {}
+    }
+    /* @mpx-endif */
+  },
+  onHide () {
+    this.dialogVisible = false
+    /* @mpx-if (mode === 'web') */
+    this.restorePageScroll()
+    /* @mpx-endif */
+  },
+  onUnload () {
+    /* @mpx-if (mode === 'web') */
+    this.restorePageScroll()
+    /* @mpx-endif */
   }
 })
 </script>
@@ -157,19 +148,15 @@ createPage({
 .portal {
   box-sizing: border-box;
   min-height: 100vh;
-  padding: calc(32rpx + env(safe-area-inset-top)) 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
   color: var(--portal-text, #1f2937);
   background: var(--portal-background, #f4f7fb);
-}
-
-.portal,
-.portal * {
-  box-sizing: border-box;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 .portal--dark {
-  color: var(--portal-dark-text, #f3f4f6);
-  background: var(--portal-dark-background, #111827);
+  color: var(--portal-text-dark, #f3f4f6);
+  background: var(--portal-background-dark, #111827);
 }
 
 .portal-content {
@@ -179,84 +166,83 @@ createPage({
 }
 
 .portal-header {
-  margin-bottom: 32rpx;
+  margin-bottom: 28rpx;
 }
 
 .portal-title {
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 700;
   line-height: 1.3;
 }
 
 .portal-subtitle {
   margin-top: 8rpx;
-  color: var(--portal-muted, #6b7280);
-  font-size: 26rpx;
+  color: var(--portal-muted, #64748b);
+  font-size: 24rpx;
   line-height: 1.5;
 }
 
 .portal--dark .portal-subtitle {
-  color: var(--portal-dark-muted, #9ca3af);
+  color: var(--portal-muted-dark, #a7b0c0);
 }
 
-.portal-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 24rpx;
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20rpx;
 }
 
 .portal-card {
-  min-height: 168rpx;
-  padding: 32rpx;
-  border: 1px solid var(--portal-border, #e5e7eb);
-  border-radius: 20rpx;
-  color: var(--portal-card-text, #1f2937);
+  box-sizing: border-box;
+  min-height: 160rpx;
+  padding: 28rpx;
+  border: 1px solid var(--portal-border, #dbe3ee);
+  border-radius: 18rpx;
+  color: var(--portal-card-text, #1e293b);
   background: var(--portal-card-background, #ffffff);
-  box-shadow: 0 8rpx 24rpx var(--portal-shadow, rgba(15, 23, 42, 0.08));
-  font-size: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(15, 23, 42, 0.08);
+  font-size: 30rpx;
   font-weight: 600;
-  line-height: 1.5;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .portal--dark .portal-card {
-  border-color: var(--portal-dark-border, #374151);
-  color: var(--portal-dark-card-text, #f3f4f6);
-  background: var(--portal-dark-card-background, #1f2937);
-  box-shadow: 0 8rpx 24rpx var(--portal-dark-shadow, rgba(0, 0, 0, 0.24));
+  border-color: var(--portal-border-dark, #334155);
+  color: var(--portal-card-text-dark, #f8fafc);
+  background: var(--portal-card-background-dark, #1e293b);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.24);
 }
 
 .portal-actions {
   display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  margin-top: 32rpx;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 28rpx;
 }
 
 .portal-button {
-  width: 100%;
+  box-sizing: border-box;
+  min-width: 180rpx;
   margin: 0;
-  border: 1px solid var(--portal-border, #d1d5db);
-  border-radius: 14rpx;
-  color: var(--portal-button-text, #374151);
+  padding: 0 24rpx;
+  border: 1px solid var(--portal-button-border, #cbd5e1);
+  border-radius: 12rpx;
+  color: var(--portal-button-text, #334155);
   background: var(--portal-button-background, #ffffff);
-  font-size: 28rpx;
-  line-height: 80rpx;
-}
-
-.portal-button::after {
-  border: 0;
+  font-size: 26rpx;
+  line-height: 72rpx;
 }
 
 .portal-button--primary {
   border-color: var(--portal-primary, #2563eb);
-  color: var(--portal-primary-text, #ffffff);
+  color: var(--portal-on-primary, #ffffff);
   background: var(--portal-primary, #2563eb);
 }
 
 .portal--dark .portal-button:not(.portal-button--primary) {
-  border-color: var(--portal-dark-border, #4b5563);
-  color: var(--portal-dark-button-text, #f3f4f6);
-  background: var(--portal-dark-button-background, #1f2937);
+  border-color: var(--portal-button-border-dark, #475569);
+  color: var(--portal-button-text-dark, #e2e8f0);
+  background: var(--portal-button-background-dark, #273449);
 }
 
 .dialog-mask {
@@ -266,101 +252,94 @@ createPage({
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   padding: 32rpx;
   background: var(--portal-mask, rgba(15, 23, 42, 0.58));
 }
 
 .dialog {
+  box-sizing: border-box;
   width: 100%;
   max-width: 560rpx;
-  padding: 40rpx;
+  padding: 32rpx;
   border-radius: 20rpx;
   color: var(--portal-dialog-text, #1f2937);
   background: var(--portal-dialog-background, #ffffff);
-  box-shadow: 0 24rpx 64rpx var(--portal-dialog-shadow, rgba(0, 0, 0, 0.2));
+  box-shadow: 0 24rpx 60rpx rgba(15, 23, 42, 0.24);
 }
 
 .portal--dark .dialog {
-  color: var(--portal-dark-dialog-text, #f3f4f6);
-  background: var(--portal-dark-dialog-background, #1f2937);
+  color: var(--portal-dialog-text-dark, #f8fafc);
+  background: var(--portal-dialog-background-dark, #1e293b);
 }
 
 .dialog-title {
-  font-size: 34rpx;
+  margin-bottom: 28rpx;
+  font-size: 32rpx;
   font-weight: 700;
   line-height: 1.4;
 }
 
-.dialog-close {
-  margin-top: 32rpx;
+@media (max-width: 480px) {
+  .portal-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .portal-actions,
+  .portal-button {
+    width: 100%;
+  }
 }
 
 /* @mpx-if (mode === 'web') */
-.portal {
-  height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-color: var(--portal-scrollbar-thumb, #94a3b8) var(--portal-scrollbar-track, transparent);
-  scrollbar-width: thin;
-}
-
-@supports (height: 100dvh) {
-  .portal {
-    height: 100dvh;
-  }
-}
-
-.portal::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.portal::-webkit-scrollbar-track {
-  background: var(--portal-scrollbar-track, transparent);
-}
-
-.portal::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background: var(--portal-scrollbar-thumb, #94a3b8);
-  background-clip: padding-box;
-}
-
-.portal--dark::-webkit-scrollbar-thumb {
-  background: var(--portal-dark-scrollbar-thumb, #64748b);
-  background-clip: padding-box;
-}
-
-@media (min-width: 768px) {
-  .portal-cards {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .portal-actions {
-    flex-direction: row;
-  }
-}
-
 @media (hover: hover) and (pointer: fine) {
-  .portal-card,
-  .portal-button {
-    transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
-  }
-
   .portal-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 14rpx 36rpx var(--portal-hover-shadow, rgba(15, 23, 42, 0.14));
+    border-color: var(--portal-primary, #2563eb);
+    box-shadow: 0 14rpx 32rpx rgba(15, 23, 42, 0.14);
+    transform: translateY(-4rpx);
+    cursor: pointer;
   }
 
   .portal-button:hover {
     filter: brightness(0.97);
+    cursor: pointer;
   }
 
-  .portal-card:active,
-  .portal-button:active {
-    transform: translateY(0);
+  .portal-button--primary:hover {
+    filter: brightness(1.08);
   }
 }
 /* @mpx-endif */
 </style>
+
+<!-- @mpx-if (mode === 'web') -->
+<style>
+html {
+  scrollbar-color: var(--portal-scrollbar-thumb, #94a3b8) var(--portal-scrollbar-track, #e2e8f0);
+  scrollbar-width: thin;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: var(--portal-scrollbar-track, #e2e8f0);
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  border: 2px solid var(--portal-scrollbar-track, #e2e8f0);
+  border-radius: 999px;
+  background: var(--portal-scrollbar-thumb, #94a3b8);
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: var(--portal-scrollbar-thumb-hover, #64748b);
+}
+</style>
+<!-- @mpx-endif -->

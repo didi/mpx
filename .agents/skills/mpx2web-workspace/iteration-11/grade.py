@@ -25,6 +25,8 @@ def method_body(source, name):
         rf"\b(?:[A-Za-z_$][\w$]*\.)?{re.escape(name)}\s*=\s*"
         rf"(?:async\s+)?function\s*\([^)]*\)\s*\{{",
         rf"\b{re.escape(name)}\s*:\s*(?:async\s+)?function\s*\([^)]*\)\s*\{{",
+        rf"\b{re.escape(name)}\s*:\s*(?:async\s*)?"
+        rf"(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*\{{",
         rf"\b(?:[A-Za-z_$][\w$]*\.)?{re.escape(name)}\s*=\s*"
         rf"(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*\{{",
     )
@@ -85,10 +87,17 @@ def method_context(source, name):
 def method_names(source):
     reserved = {"if", "for", "while", "switch", "catch", "function"}
     names = []
-    for match in re.finditer(
+    patterns = (
         r"(?m)^\s*(?:async\s+)?([A-Za-z_$][\w$]*)\s*\([^)\n]*\)\s*\{",
-        source,
-    ):
+        r"(?m)^\s*([A-Za-z_$][\w$]*)\s*:\s*(?:async\s+)?function\s*\([^)\n]*\)\s*\{",
+        r"(?m)^\s*([A-Za-z_$][\w$]*)\s*:\s*(?:async\s*)?"
+        r"(?:\([^)\n]*\)|[A-Za-z_$][\w$]*)\s*=>\s*\{",
+    )
+    matches = sorted(
+        (match for pattern in patterns for match in re.finditer(pattern, source)),
+        key=lambda match: match.start(),
+    )
+    for match in matches:
         name = match.group(1)
         if name not in reserved and name not in names:
             names.append(name)
@@ -211,7 +220,7 @@ def strict_state_comparison(source, terms):
 
 def has_liveness_state(source):
     return bool(re.search(
-        r"\bthis\.[A-Za-z_$][\w$]*(?:mounted|attached|ready|active|alive|detached|destroyed|disposed|visible)\b",
+        r"\bthis\.(?=[A-Za-z_$])[\w$]*(?:mounted|attached|ready|active|alive|detached|destroyed|disposed|visible)[\w$]*\b",
         source,
         re.I,
     ))
@@ -273,8 +282,8 @@ def has_generation_advance(source):
 
 def has_liveness_invalidation(source):
     return bool(re.search(
-        r"\bthis\.[A-Za-z_$][\w$]*(?:mounted|attached|ready|active|alive|visible)\s*=\s*false\b|"
-        r"\bthis\.[A-Za-z_$][\w$]*(?:detached|destroyed|disposed)\s*=\s*true\b",
+        r"\bthis\.(?=[A-Za-z_$])[\w$]*(?:mounted|attached|ready|active|alive|visible)[\w$]*\s*=\s*false\b|"
+        r"\bthis\.(?=[A-Za-z_$])[\w$]*(?:detached|destroyed|disposed)[\w$]*\s*=\s*true\b",
         source,
         re.I,
     ))
@@ -336,6 +345,43 @@ def braced(source, open_index):
     return "", open_index
 
 
+def object_property_body(source, name):
+    """Return the body of a named object property whose value is an object."""
+    match = re.search(rf"\b{re.escape(name)}\s*:\s*\{{", source)
+    if not match:
+        return ""
+    body, _ = braced(source, match.end() - 1)
+    return body
+
+
+def watcher_context(source, name):
+    """Resolve Vue 2 method, string and object-form watchers plus helper calls."""
+    watch = object_property_body(source, "watch")
+    if not watch:
+        return ""
+    body = method_body(watch, name)
+    string_handler = re.search(
+        rf"\b{re.escape(name)}\s*:\s*['\"]([A-Za-z_$][\w$]*)['\"]",
+        watch,
+    )
+    if string_handler:
+        body += "\n" + recursive_callable_context(source, string_handler.group(1))
+    property_body = object_property_body(watch, name)
+    if property_body:
+        body += "\n" + (method_body(property_body, "handler") or property_body)
+    for called in set(re.findall(r"\bthis\.([A-Za-z_$][\w$]*)\s*\(?", body)):
+        context = recursive_callable_context(source, called)
+        if context and context not in body:
+            body += "\n" + context
+    return body
+
+
+def watcher_is_immediate(source, name):
+    watch = object_property_body(source, "watch")
+    property_body = object_property_body(watch, name) if watch else ""
+    return bool(re.search(r"\bimmediate\s*:\s*true\b", property_body))
+
+
 def web_guarded_call(body, method_name):
     calls = list(re.finditer(rf"\bthis\.{re.escape(method_name)}\s*\(", body))
     for call in calls:
@@ -384,6 +430,54 @@ def guard_positions(source, body, predicate):
         if condition and re.search(r"\breturn\b", body[end:end + 320]) and predicate(condition):
             positions.append(match.start())
     return sorted(set(positions))
+
+
+def intersection_observer_callbacks(source):
+    """Return callback bodies without assuming which helper owns the Observer."""
+    patterns = (
+        r"\bnew\s+(?:window\.)?IntersectionObserver\s*\(\s*(?:async\s*)?"
+        r"(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*\{",
+        r"\bnew\s+(?:window\.)?IntersectionObserver\s*\(\s*"
+        r"(?:async\s+)?function\s*\([^)]*\)\s*\{",
+    )
+    callbacks = []
+    matches = sorted(
+        (match for pattern in patterns for match in re.finditer(pattern, source)),
+        key=lambda match: match.start(),
+    )
+    for match in matches:
+        body, _ = braced(source, match.end() - 1)
+        if body:
+            callbacks.append(body)
+    return callbacks
+
+
+def observer_callback_is_current(source, callback):
+    """Accept generation, resource-identity, or business-key stale guards."""
+    report = re.search(r"\.(?:track|report|emit)\s*\(", callback)
+    if not report:
+        return False
+    before_report = callback[:report.start()]
+    helper_guards = guard_positions(
+        source,
+        before_report,
+        lambda candidate: current_guard(candidate, "productid"),
+    )
+    if helper_guards or current_guard(before_report, "productid"):
+        return True
+    if strict_state_comparison(before_report, ("tracker", "instance")):
+        return True
+    if strict_state_comparison(before_report, ("observer",)):
+        return True
+    current_resource_exists = re.search(
+        r"!\s*this\.(?=[A-Za-z_$])[\w$]*(?:tracker|instance)[\w$]*\b",
+        before_report,
+        re.I,
+    )
+    return bool(
+        strict_state_comparison(before_report, ("productid",))
+        and current_resource_exists
+    )
 
 
 def every_await_is_guarded(body, positions, minimum=2):
@@ -515,11 +609,7 @@ def check_s1(root):
             rf"implement\s*\(\s*['\"]{lifecycle}['\"][\s\S]{{0,320}}?remove\s*:\s*true",
             source,
         )
-        wx_only = re.search(
-            rf"@mpx-if[^\n]*(?:__mpx_mode__\s*===\s*['\"]wx['\"]|mode\s*===?\s*['\"]wx['\"])[\s\S]*?\b{lifecycle}\s*\(",
-            source,
-        )
-        if not removal and not wx_only:
+        if not removal:
             failures.append(f"Web 未移除 {lifecycle}")
     if failures:
         return False, f"outputs/{path}：{'；'.join(failures)}。"
@@ -721,6 +811,19 @@ def check_h6(root):
     return True, f"outputs/{path}：detached 的清理链路移除监听并销毁 SDK 实例。"
 
 
+def web_bindmessage_handler(source):
+    """Prefer an explicit Web handler; otherwise use the unqualified binding."""
+    for tag in re.findall(r"<web-view\b[^>]*>", source, re.I | re.S):
+        for pattern in (
+            r"\bbindmessage@web\s*=\s*['\"]\s*([A-Za-z_$][\w$]*)",
+            r"\bbindmessage(?!@)\s*=\s*['\"]\s*([A-Za-z_$][\w$]*)",
+        ):
+            match = re.search(pattern, tag, re.I)
+            if match:
+                return match.group(1)
+    return ""
+
+
 def check_h7(root):
     paths = ("src/pages/campaign/index.mpx", "src/components/campaign-tracker.mpx")
     sources = [(path, read_output(root, path)) for path in paths]
@@ -733,7 +836,7 @@ def check_h7(root):
             listeners.append((path, source, match.group(1)))
     if not listeners:
         page = sources[0][1]
-        if re.search(r"<web-view\b[^>]*\bbindmessage\s*=", page, re.S):
+        if web_bindmessage_handler(page):
             return True, (
                 "outputs/src/pages/campaign/index.mpx：没有重复手写 window message 监听，"
                 "业务消息由内建 web-view 的 host 白名单与 clientUid 实例隔离后通过 bindmessage 进入。"
@@ -758,20 +861,15 @@ def check_h7(root):
 def check_h8(root):
     path = "src/pages/campaign/index.mpx"
     source = read_output(root, path)
-    binding = re.search(
-        r"<web-view\b[^>]*\bbindmessage\s*=\s*['\"]\s*"
-        r"([A-Za-z_$][\w$]*)(?:\s*\([^'\"]*\))?\s*['\"]",
-        source,
-        re.S,
-    )
-    if not binding:
-        return False, f"outputs/{path}：缺少 web-view bindmessage 处理器。"
-    context = method_context(source, binding.group(1))
+    handler = web_bindmessage_handler(source)
+    if not handler:
+        return False, f"outputs/{path}：缺少 Web 可达的 web-view bindmessage 处理器。"
+    context = recursive_callable_context(source, handler)
     if not strict_campaign_guard(context):
-        return False, f"outputs/{path}：{binding.group(1)} 在 Web 消费领券或跳转消息前未严格要求 message.campaignId 等于当前活动。"
+        return False, f"outputs/{path}：{handler} 在 Web 消费领券或跳转消息前未严格要求 message.campaignId 等于当前活动。"
     if not all(name in context for name in ("claimCoupon", "openProduct")):
-        return False, f"outputs/{path}：{binding.group(1)} 未保留领券和商品跳转两类单向业务消息。"
-    return True, f"outputs/{path}：{binding.group(1)} 在 Web 业务分发前严格校验当前 campaignId，且保留领券和跳转。"
+        return False, f"outputs/{path}：{handler} 未保留领券和商品跳转两类单向业务消息。"
+    return True, f"outputs/{path}：{handler} 在 Web 业务分发前严格校验当前 campaignId，且保留领券和跳转。"
 
 
 def check_p7(root):
@@ -836,7 +934,7 @@ def check_p1(root):
     return True, f"outputs/{page_path} 返回商品加载 Promise，outputs/{store_path} 等待商品与推荐两路数据。"
 
 
-def check_p4(root):
+def product_sdk_context(root):
     path = "src/components/product-recommendations.mpx"
     source = read_output(root, path)
     static_import = re.search(
@@ -851,53 +949,147 @@ def check_p4(root):
             candidate,
         )),
     )
-    callers = [
+    return path, source, static_import, init_name, body
+
+
+def product_sdk_callers(source, init_name):
+    return [
         method_body(source, name)
         for name in method_names(source)
-        if name != init_name and re.search(rf"\bthis\.{re.escape(init_name)}\s*\(", method_body(source, name))
+        if name != init_name
+        and re.search(rf"\bthis\.{re.escape(init_name)}\s*\(", method_body(source, name))
     ] if init_name else []
-    client_guard = (
+
+
+def check_p4a(root):
+    path, source, static_import, init_name, body = product_sdk_context(root)
+    if static_import:
+        return False, f"outputs/{path}：曝光 SDK 仍在模块顶层静态引入。"
+    if not init_name:
+        return False, f"outputs/{path}：没有动态加载 @business/product-exposure-web。"
+    callers = product_sdk_callers(source, init_name)
+    direct_guard = (
         "__mpx_mode__" in body and "web" in body
-        or bool(re.search(r"typeof\s+window\s*===\s*['\"]undefined['\"]", body))
-        or callers and all(
-            web_guarded_call(caller, init_name)
-            or ("__mpx_mode__" in caller and "web" in caller)
-            for caller in callers
+        or bool(re.search(r"typeof\s+window\s*={2,3}\s*['\"]undefined['\"]", body))
+    )
+    caller_guard = bool(callers) and all(
+        web_guarded_call(caller, init_name)
+        or ("__mpx_mode__" in caller and "web" in caller)
+        or (
+            re.search(r"typeof\s+window\s*={2,3}\s*['\"]undefined['\"]", caller)
+            and re.search(r"\breturn\b", caller)
         )
+        for caller in callers
     )
-    generation_advance = has_generation_advance(body) or any(
-        has_generation_advance(caller) for caller in callers
+    transitive_guard = any(
+        f"this.{init_name}" in recursive_method_context(source, name, max_depth=4)
+        and (
+            ("__mpx_mode__" in method_body(source, name) and "web" in method_body(source, name))
+            or (
+                re.search(r"typeof\s+window\s*={2,3}\s*['\"]undefined['\"]", method_body(source, name))
+                and re.search(r"\breturn\b", method_body(source, name))
+            )
+        )
+        for name in method_names(source)
     )
+    if direct_guard or caller_guard or transitive_guard:
+        return True, f"outputs/{path}：曝光 SDK 动态加载，且初始化方法或全部直接调用点受 Web 客户端守卫。"
+    if "__mpx_mode__" in source or "typeof window" in source:
+        return None, f"outputs/{path}：存在 Web 客户端守卫，但静态检查无法证明它覆盖全部初始化调用点。"
+    return False, f"outputs/{path}：曝光 SDK 动态加载路径没有 Web 客户端守卫。"
+
+
+def check_p4b(root):
+    path, source, _, init_name, body = product_sdk_context(root)
+    if not init_name:
+        return False, f"outputs/{path}：没有可验收的曝光 SDK 初始化方法。"
+    awaits = list(re.finditer(r"\bawait\b", body))
+    if not awaits:
+        return False, f"outputs/{path}：SDK Promise 初始化没有可验证的 await 边界。"
     guards = guard_positions(source, body, current_guard)
-    if (
-        static_import
-        or not init_name
-        or not client_guard
-        or not generation_advance
-        or not every_await_is_guarded(body, guards)
-    ):
-        return False, f"outputs/{path}：曝光 SDK 未被 Web 客户端动态隔离，或异步边界缺少旧商品/卸载校验。"
-    return True, f"outputs/{path}：{init_name} 在 Web 客户端动态加载曝光 SDK，且各 await 后复核挂载与商品代际。"
+    if every_await_is_guarded(body, guards, minimum=len(awaits)):
+        return True, f"outputs/{path}：{init_name} 的每个 await 后均复核挂载、代际和业务身份。"
+    recursive = recursive_callable_context(source, init_name)
+    has_current_helper = any(
+        current_guard(method_body(source, name))
+        for name in method_names(source)
+        if re.search(r"(?:current|valid|alive)", name, re.I)
+    )
+    has_identity_guard = (
+        has_generation_guard(recursive)
+        and (
+            strict_state_comparison(recursive, ("productid",))
+            or re.search(r"\bproductId\b", recursive)
+        )
+        and (has_liveness_state(recursive) or has_current_helper)
+    )
+    if has_identity_guard:
+        return None, f"outputs/{path}：存在完整身份守卫，但静态位置分析无法证明每个异步边界均被覆盖。"
+    return False, f"outputs/{path}：异步初始化后缺少挂载、代际或 productId 身份保护。"
+
+
+def check_p4c(root):
+    path, source, _, init_name, body = product_sdk_context(root)
+    if not init_name:
+        return False, f"outputs/{path}：没有可验收的曝光 SDK 初始化方法。"
+    callers = product_sdk_callers(source, init_name)
+    switch_context = "\n".join(
+        recursive_method_context(source, name, max_depth=4)
+        for name in method_names(source)
+        if re.search(r"(?:product|restart|refresh|reload|start|ready|observer)", name, re.I)
+    )
+    initialization_context = "\n".join([body, switch_context] + callers)
+    advances = has_generation_advance(initialization_context)
+    generation_guard = has_generation_guard(initialization_context)
+    product_guard = strict_state_comparison(initialization_context, ("productid",))
+    switches_product = bool(
+        re.search(r"\bproductId\b", switch_context)
+        and re.search(rf"\bthis\.{re.escape(init_name)}\s*\(", switch_context)
+    )
+    if advances and generation_guard and product_guard and switches_product:
+        return True, f"outputs/{path}：商品切换推进初始化代际，并以代际和 productId 拒绝晚到结果。"
+    if not switches_product or (not advances and not generation_guard):
+        return False, f"outputs/{path}：商品切换未形成可验证的重新初始化和旧代际失效链路。"
+    return None, f"outputs/{path}：存在商品切换和部分身份状态，静态检查无法完整证明代际与 productId 联合保护。"
+
+
+def check_p4(root):
+    """Compatibility aggregate for older reports; new evals use p4a/p4b/p4c."""
+    results = [check_p4a(root), check_p4b(root), check_p4c(root)]
+    failures = [evidence for passed, evidence in results if passed is False]
+    unknown = [evidence for passed, evidence in results if passed is None]
+    if failures:
+        return False, "；".join(failures)
+    if unknown:
+        return None, "；".join(unknown)
+    return True, "；".join(evidence for _, evidence in results)
 
 
 def check_p5(root):
     path = "src/components/product-recommendations.mpx"
     source = read_output(root, path)
-    init_name, body = sdk_initializer(source, "@business/product-exposure-web")
-    detached = recursive_method_context(source, "detached")
-    observer = body.find("IntersectionObserver")
-    guards = guard_positions(source, body, current_guard)
+    init_name, _ = sdk_initializer(source, "@business/product-exposure-web")
+    init_context = recursive_callable_context(source, init_name) if init_name else ""
+    detached = recursive_callable_context(source, "detached")
+    callbacks = intersection_observer_callbacks(source)
+    added_listeners = len(re.findall(r"\baddEventListener\s*\(", source))
+    removed_listeners = len(re.findall(r"\bremoveEventListener\s*\(", detached))
     checks = (
         bool(init_name),
         has_liveness_invalidation(detached),
         has_generation_advance(detached),
         bool(re.search(r"\.disconnect\s*\(", detached)),
         bool(re.search(r"\.destroy\s*\(", detached)),
-        observer >= 0 and any(position > observer for position in guards),
+        bool(re.search(r"\.disconnect\s*\(", init_context)),
+        bool(re.search(r"\.destroy\s*\(", init_context)),
+        bool(callbacks) and all(
+            observer_callback_is_current(source, callback) for callback in callbacks
+        ),
+        not added_listeners or removed_listeners >= added_listeners,
     )
     if not all(checks):
-        return False, f"outputs/{path}：卸载/切换未同时废弃代际、断开 Observer 并销毁 tracker。"
-    return True, f"outputs/{path}：卸载清理链路断开 Observer、销毁 tracker，回调守卫阻止旧代际上报。"
+        return False, f"outputs/{path}：卸载/切换清理、监听释放或 Observer 旧回调身份保护不完整。"
+    return True, f"outputs/{path}：卸载与切换均断开 Observer、销毁 tracker，回调以代际/业务主键/资源身份拒绝旧上报。"
 
 
 def check_p6(root):
@@ -986,6 +1178,50 @@ def joined_outputs(root, *paths):
     return "\n".join(read_output(root, path) for path in paths)
 
 
+def template_source(source):
+    match = re.search(r"<template\b[^>]*>([\s\S]*?)</template>", source, re.I)
+    return match.group(1) if match else source
+
+
+def template_control(source, required_patterns):
+    """Return a simple, non-nested template control and its visible content."""
+    for match in re.finditer(
+        r"<(?P<tag>[A-Za-z][\w-]*)\b(?P<attrs>[^>]*)>",
+        template_source(source),
+        re.I | re.S,
+    ):
+        attrs = match.group("attrs")
+        if not all(re.search(pattern, attrs, re.I | re.S) for pattern in required_patterns):
+            continue
+        tag = match.group("tag")
+        closing = re.search(
+            rf"</{re.escape(tag)}\s*>",
+            template_source(source)[match.end():],
+            re.I,
+        )
+        content = (
+            template_source(source)[match.end():match.end() + closing.start()]
+            if closing
+            else ""
+        )
+        return tag.lower(), attrs, content
+    return None
+
+
+def accessible_control(control):
+    if not control:
+        return False
+    tag, attrs, content = control
+    role = re.search(
+        r"\baria-role\s*=\s*['\"](?:button|checkbox|radio)['\"]",
+        attrs,
+        re.I,
+    )
+    named = re.search(r"\baria-label\s*=\s*['\"][^'\"]+['\"]", attrs, re.I)
+    visible = re.sub(r"<[^>]+>|<!--.*?-->", "", content, flags=re.S).strip()
+    return bool((tag == "button" or role) and (named or visible))
+
+
 def check_q0(root):
     path = "src/app.mpx"
     source = read_output(root, path)
@@ -1045,7 +1281,47 @@ def check_q2(root):
     )
     contexts = f"{search}\n{unload}"
     direct_abort = re.search(r"(?<!\.)\b[A-Za-z_$][\w$]*\.abort\s*\(", contexts)
-    promise_abort = re.search(r"\b[A-Za-z_$][\w$]*\.__returned\.abort\s*\(", contexts)
+    returned_aliases = set(re.findall(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*"
+        r"[A-Za-z_$][\w$]*\.__returned\b",
+        page,
+    ))
+    returned_states = set(re.findall(
+        r"\bthis\.([A-Za-z_$][\w$]*(?:task|request)[\w$]*)\s*=\s*"
+        r"[A-Za-z_$][\w$]*\.__returned\b",
+        page,
+        re.I,
+    ))
+    for state, alias in re.findall(
+        r"\bthis\.([A-Za-z_$][\w$]*(?:task|request)[\w$]*)\s*=\s*"
+        r"([A-Za-z_$][\w$]*)\b",
+        page,
+        re.I,
+    ):
+        if alias in returned_aliases:
+            returned_states.add(state)
+    cancellation_aliases = set(returned_aliases)
+    for alias, state in re.findall(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*"
+        r"this\.([A-Za-z_$][\w$]*)\b",
+        contexts,
+    ):
+        if state in returned_states:
+            cancellation_aliases.add(alias)
+    promise_abort = re.search(
+        r"\b[A-Za-z_$][\w$]*\.__returned\.abort\s*\(",
+        contexts,
+    )
+    if not promise_abort:
+        promise_abort = any(re.search(
+            rf"(?<![.\w$]){re.escape(alias)}\.abort\s*\(",
+            contexts,
+        ) for alias in cancellation_aliases)
+    if not promise_abort:
+        promise_abort = any(re.search(
+            rf"\bthis\.{re.escape(state)}\.abort\s*\(",
+            contexts,
+        ) for state in returned_states)
     direct_contract = (direct_task_mode or named_task_mode) and direct_abort
     promise_contract = promise_task_mode and promise_abort
     if not (direct_contract or promise_contract) or not saves_task:
@@ -1146,6 +1422,11 @@ def check_n4(root):
     recommended = (
         re.search(r"mpx\.config\.webConfig\.routeConfig\s*=", source)
         or re.search(r"\bwebConfig\s*:\s*\{[\s\S]*?\brouteConfig\s*:", source)
+        or re.search(
+            r"mpx\.config\.webConfig\s*=\s*(?:Object\.assign\s*\([\s\S]{0,1200}?)?"
+            r"\{[\s\S]{0,1200}?\brouteConfig\s*:",
+            source,
+        )
     )
     legacy = re.search(r"(?:mpx\.config\.)?webRouteConfig\s*(?::|=)", source)
     if not recommended or not config_has_path(source, "/shop/") or legacy:
@@ -1523,19 +1804,57 @@ def check_v7(root):
         source,
         re.I,
     )
-    top_watch = method_body(source, "scrollTop")
-    left_watch = method_body(source, "scrollLeft")
-    into_watch = method_body(source, "scrollIntoView")
-    mounted = recursive_method_context(source, "mounted")
+    top_watch = watcher_context(source, "scrollTop")
+    left_watch = watcher_context(source, "scrollLeft")
+    into_watch = watcher_context(source, "scrollIntoView")
+    into_references = set(re.findall(r"\bthis\.([A-Za-z_$][\w$]*)\b", into_watch))
+    for referenced in into_references:
+        referenced_body = recursive_callable_context(source, referenced)
+        if referenced_body and referenced_body not in into_watch:
+            into_watch += "\n" + referenced_body
+    mounted = recursive_callable_context(source, "mounted")
     direct_position = re.search(r"\.scrollTop\s*=", source) and re.search(r"\.scrollLeft\s*=", source)
     dynamic_position = re.search(r"\[[^\]]*(?:property|key)[^\]]*\]\s*=", source, re.I)
-    initial_position = all(name in mounted for name in ("scrollTop", "scrollLeft"))
+    scroll_to_position = re.search(
+        r"\.scrollTo\s*\(\s*\{[\s\S]{0,500}?\bleft\s*:[\s\S]{0,500}?\btop\s*:",
+        source,
+    ) or re.search(
+        r"\.scrollTo\s*\(\s*\{[\s\S]{0,500}?\btop\s*:[\s\S]{0,500}?\bleft\s*:",
+        source,
+    )
+    initial_position = (
+        all(name in mounted for name in ("scrollTop", "scrollLeft"))
+        or all(watcher_is_immediate(source, name) for name in ("scrollTop", "scrollLeft"))
+    )
+    target_lookup = re.search(r"\.(?:querySelector|querySelectorAll|getElementById)\s*\(", into_watch)
+    scoped_target = (
+        re.search(r"\.contains\s*\(", into_watch)
+        or (
+            re.search(r"(?:this\.\$refs|this\.\$el)", into_watch)
+            and re.search(r"\.(?:querySelector|querySelectorAll)\s*\(", into_watch)
+            and not re.search(r"\bdocument\.(?:querySelector|querySelectorAll)\s*\(", into_watch)
+        )
+    )
+    native_movement = re.search(r"\.scrollIntoView\s*\(", into_watch)
+    offset_movement = (
+        re.search(r"(?:getBoundingClientRect|offsetTop|offsetLeft)", into_watch)
+        and (
+            re.search(r"\.scroll(?:Top|Left)\s*(?:\+=|-=|=)", into_watch)
+            or re.search(r"\.scrollTo\s*\(", into_watch)
+            or re.search(r"\bthis\.[A-Za-z_$][\w$]*\s*\(\s*\{[\s\S]{0,300}?(?:top|left)\s*:", into_watch)
+        )
+    )
     into_behavior = (
         into_watch
         and re.search(r"(?:\$nextTick|nextTick)", into_watch)
-        and re.search(r"\.scrollIntoView\s*\(", source)
-        and re.search(r"(?:\.contains\s*\(|this\.\$refs|this\.\$el)", source)
-        and re.search(r"(?:scrollIntoView|scrollToChild)", mounted)
+        and target_lookup
+        and scoped_target
+        and (native_movement or offset_movement)
+        and (
+            watcher_is_immediate(source, "scrollIntoView")
+            or "scrollIntoView" in mounted
+            or any(re.search(rf"\b{re.escape(name)}\b", mounted) for name in into_references)
+        )
     )
     if (
         missing_props
@@ -1543,7 +1862,7 @@ def check_v7(root):
         or not axis_y
         or not top_watch
         or not left_watch
-        or not (direct_position or dynamic_position)
+        or not (direct_position or dynamic_position or scroll_to_position)
         or not initial_position
         or not into_behavior
     ):
@@ -1554,35 +1873,115 @@ def check_v7(root):
     return True, f"outputs/{path}：横纵 overflow、初始/更新位置与容器内 scrollIntoView 均有真实行为。"
 
 
-def check_v8(root):
+def _legacy_check_v8(root):
     path = "src/web/AnalyticsScroll.vue"
     source = read_output(root, path)
-    body = method_body(source, "handleScroll")
-    if not re.search(r"\$emit\s*\(\s*['\"]scroll['\"]", body):
-        _, body = find_method(
+    handler = "handleScroll"
+    body = method_body(source, handler)
+    if not re.search(r"\$emit\s*\(\s*['\"]scroll['\"]", recursive_callable_context(source, handler)):
+        handler, body = find_method(
             source,
             lambda candidate: bool(re.search(r"\$emit\s*\(\s*['\"]scroll['\"]", candidate)),
         )
+    body = recursive_callable_context(source, handler) if handler else body
     detail_fields = ("scrollTop", "scrollLeft", "scrollHeight", "scrollWidth", "deltaX", "deltaY")
     missing_detail = [name for name in detail_fields if name not in body]
+    dynamic_event_emit = re.search(
+        r"\$emit\s*\(\s*(?!['\"])(?:"
+        r"(?:this\.)?[A-Za-z_$][\w$]*(?:\[[^\]]+\])?|"
+        r"[^,\n]*\?[^,\n]*:[^,\n]*)\s*,",
+        body,
+        re.I,
+    )
     missing_events = [
         name for name in ("scroll", "scrolltoupper", "scrolltolower")
         if not re.search(rf"\$emit\s*\(\s*['\"]{name}['\"]", body)
+        and not (dynamic_event_emit and re.search(rf"['\"]{name}['\"]", body))
     ]
     threshold_contract = all(name in source for name in ("upperThreshold", "lowerThreshold"))
     axis_bounds = all(name in body for name in ("clientHeight", "clientWidth", "scrollHeight", "scrollWidth"))
-    directions = all(re.search(rf"['\"]{name}['\"]", body) for name in ("top", "left", "bottom", "right"))
-    state_patterns = (
-        r"(?:at|was|is|near)[A-Za-z_$]*Upper[A-Za-z_$]*X|(?:at|was|is|near)[A-Za-z_$]*X[A-Za-z_$]*Upper",
-        r"(?:at|was|is|near)[A-Za-z_$]*Upper[A-Za-z_$]*Y|(?:at|was|is|near)[A-Za-z_$]*Y[A-Za-z_$]*Upper",
-        r"(?:at|was|is|near)[A-Za-z_$]*Lower[A-Za-z_$]*X|(?:at|was|is|near)[A-Za-z_$]*X[A-Za-z_$]*Lower",
-        r"(?:at|was|is|near)[A-Za-z_$]*Lower[A-Za-z_$]*Y|(?:at|was|is|near)[A-Za-z_$]*Y[A-Za-z_$]*Lower",
+    directions = all(
+        re.search(rf"['\"]{name}['\"]", body)
+        or re.search(rf"(?:^|[{{,])\s*{name}\s*:", body, re.M)
+        for name in ("top", "left", "bottom", "right")
     )
-    axis_states = all(re.search(rf"\b(?:{pattern})\b", source, re.I) for pattern in state_patterns)
-    transition_guards = all(
-        re.search(rf"!\s*this\.(?:{pattern})\b", body, re.I)
-        for pattern in state_patterns
+    state_names = {
+        name
+        for name in re.findall(r"this\.([A-Za-z_$][\w$]*)", body)
+        if (
+            any(term in name.lower() for term in ("boundary", "edge", "upper", "lower"))
+            or name.lower() in {"attop", "atleft", "atbottom", "atright"}
+        )
+        and not method_body(source, name)
+    }
+    stateful_dedup = False
+    computed_state = (
+        r"this\s*\[\s*[^\]]*(?:active|edge|boundary|upper|lower)[^\]]*\]"
+        r"(?:\s*\[[^\]]+\]|\.[A-Za-z_$][\w$]*)?"
     )
+    if (
+        re.search(rf"!\s*{computed_state}", body, re.I)
+        and re.search(rf"{computed_state}\s*=", body, re.I)
+    ):
+        stateful_dedup = True
+    state_aliases = set()
+    for alias_match in re.finditer(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)",
+        body,
+    ):
+        if any(
+            re.search(rf"\bthis\.{re.escape(state_name)}\b", alias_match.group(2))
+            for state_name in state_names
+        ):
+            state_aliases.add(alias_match.group(1))
+    for state_name in state_names:
+        state_targets = [rf"this\.{re.escape(state_name)}"]
+        state_targets.extend(re.escape(alias) for alias in state_aliases)
+        state = rf"(?:{'|'.join(state_targets)})(?:\[[^\]]+\]|\.[A-Za-z_$][\w$]*)?"
+        guarded = (
+            re.search(rf"!\s*{state}", body, re.I)
+            or re.search(rf"if\s*\(\s*{state}\s*\)\s*return", body, re.I)
+            or re.search(rf"if\s*\([^)]*{state}[^)]*\)\s*return", body, re.I)
+        )
+        updated = (
+            re.search(rf"{state}\s*=", body, re.I)
+            or re.search(rf"this\.{re.escape(state_name)}\s*=", body, re.I)
+            or re.search(
+                rf"this\.\$(?:set|delete)\s*\(\s*this\.{re.escape(state_name)}\s*,",
+                body,
+                re.I,
+            )
+        )
+        if guarded and updated:
+            stateful_dedup = True
+            break
+    dynamic_axis_state = any(
+        re.search(rf"this\.{re.escape(state_name)}\s*\[[^\]]+\]", body, re.I)
+        for state_name in state_names
+    ) or any(
+        re.search(rf"\b{re.escape(alias)}\s*\[[^\]]+\]", body, re.I)
+        for alias in state_aliases
+    ) or bool(re.search(computed_state, body, re.I))
+    flat_axis_state = all(any(
+        first in state_name.lower() and second in state_name.lower()
+        for state_name in state_names
+    ) for first, second in (
+        ("upper", "x"),
+        ("upper", "y"),
+        ("lower", "x"),
+        ("lower", "y"),
+    )) or all(any(
+        first in state_name.lower() and second in state_name.lower()
+        for state_name in state_names
+    ) for first, second in (
+        ("upper", "left"),
+        ("upper", "top"),
+        ("lower", "right"),
+        ("lower", "bottom"),
+    )) or all(any(
+        direction in state_name.lower()
+        for state_name in state_names
+    ) for direction in ("top", "left", "bottom", "right"))
     if (
         not body
         or missing_detail
@@ -1590,8 +1989,8 @@ def check_v8(root):
         or not threshold_contract
         or not axis_bounds
         or not directions
-        or not axis_states
-        or not transition_guards
+        or not stateful_dedup
+        or not (dynamic_axis_state or flat_axis_state)
     ):
         return False, (
             f"outputs/{path}：scroll detail、双轴边界方向或边界去重状态不完整；"
@@ -1600,7 +1999,140 @@ def check_v8(root):
     return True, f"outputs/{path}：scroll 详情完整，双轴 upper/lower 阈值按跨界状态发出四种方向。"
 
 
-def check_v9(root):
+def check_v8_context(root):
+    path = "src/web/AnalyticsScroll.vue"
+    source = read_output(root, path)
+    handler = "handleScroll"
+    body = recursive_callable_context(source, handler)
+    if not re.search(r"\$emit\s*\(\s*['\"]scroll['\"]", body):
+        handler, _ = find_method(
+            source,
+            lambda candidate: bool(re.search(r"\$emit\s*\(\s*['\"]scroll['\"]", candidate)),
+        )
+        body = recursive_callable_context(source, handler) if handler else ""
+    return path, source, handler, body
+
+
+def check_v8a(root):
+    path, _, _, body = check_v8_context(root)
+    fields = ("scrollTop", "scrollLeft", "scrollHeight", "scrollWidth", "deltaX", "deltaY")
+    missing = [name for name in fields if name not in body]
+    emits_scroll = bool(re.search(r"\$emit\s*\(\s*['\"]scroll['\"]", body))
+    if not body or not emits_scroll or missing:
+        return False, f"outputs/{path}：scroll detail 缺少 {missing}，或没有发出 scroll 事件。"
+    return True, f"outputs/{path}：scroll 事件包含位置、尺寸以及 deltaX/deltaY。"
+
+
+def check_v8b(root):
+    path, source, _, body = check_v8_context(root)
+    dynamic_event_emit = re.search(
+        r"\$emit\s*\(\s*(?!['\"])(?:(?:this\.)?[A-Za-z_$][\w$]*(?:\[[^\]]+\])?|"
+        r"[^,\n]*\?[^,\n]*:[^,\n]*)\s*,",
+        body,
+        re.I,
+    )
+    missing_events = [
+        name for name in ("scrolltoupper", "scrolltolower")
+        if not re.search(rf"\$emit\s*\(\s*['\"]{name}['\"]", body)
+        and not (dynamic_event_emit and re.search(rf"['\"]{name}['\"]", body))
+    ]
+    missing_directions = [
+        direction for direction in ("top", "left", "bottom", "right")
+        if not re.search(rf"['\"]{direction}['\"]", body)
+        and not re.search(rf"(?:^|[{{,])\s*{direction}\s*:", body, re.M)
+    ]
+    thresholds = all(name in source for name in ("upperThreshold", "lowerThreshold"))
+    dimensions = all(name in body for name in ("clientHeight", "clientWidth", "scrollHeight", "scrollWidth"))
+    if missing_events or missing_directions or not thresholds or not dimensions:
+        return False, (
+            f"outputs/{path}：双轴边界事件不完整；缺少事件 {missing_events}，"
+            f"缺少方向 {missing_directions}，threshold={thresholds}，双轴尺寸={dimensions}。"
+        )
+    return True, f"outputs/{path}：upper/lower threshold 按真实横纵轴发出 top/left/bottom/right。"
+
+
+def boundary_state_targets(body):
+    targets = set(re.findall(
+        r"\bthis\.[A-Za-z_$][\w$]*(?:\.(?:top|left|bottom|right)|\[[^\]]+\])",
+        body,
+        re.I,
+    ))
+    targets.update(re.findall(
+        r"\b[A-Za-z_$][\w$]*\s*\[(?:[^\]]*(?:direction|edge|axis|key)[^\]]*|['\"](?:top|left|bottom|right)['\"])\]",
+        body,
+        re.I,
+    ))
+    return targets
+
+
+def check_v8c(root):
+    path, source, _, body = check_v8_context(root)
+    state_names = {
+        name
+        for name in re.findall(r"this\.([A-Za-z_$][\w$]*)", body)
+        if any(term in name.lower() for term in (
+            "active", "boundary", "edge", "upper", "lower", "attop",
+            "atleft", "atbottom", "atright",
+        ))
+        and not method_body(source, name)
+    }
+    computed_state = (
+        r"this\s*\[\s*[^\]]*(?:active|edge|boundary|upper|lower)[^\]]*\]"
+        r"(?:\s*\[[^\]]+\]|\.[A-Za-z_$][\w$]*)?"
+    )
+    if (
+        re.search(rf"!\s*{computed_state}", body, re.I)
+        and re.search(rf"{computed_state}\s*=", body, re.I)
+    ):
+        return True, f"outputs/{path}：计算属性按方向记录并更新边界跨越状态。"
+
+    aliases = set()
+    for match in re.finditer(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)", body
+    ):
+        if any(
+            re.search(rf"\bthis\.{re.escape(name)}\b", match.group(2))
+            for name in state_names
+        ):
+            aliases.add(match.group(1))
+    for name in state_names:
+        targets = [rf"this\.{re.escape(name)}"]
+        targets.extend(re.escape(alias) for alias in aliases)
+        state = rf"(?:{'|'.join(targets)})(?:\[[^\]]+\]|\.[A-Za-z_$][\w$]*)?"
+        guarded = (
+            re.search(rf"!\s*{state}", body, re.I)
+            or re.search(rf"if\s*\(\s*{state}\s*\)\s*(?:\{{\s*)?return", body, re.I)
+            or re.search(rf"if\s*\([^)]*{state}[^)]*\)\s*(?:\{{\s*)?return", body, re.I)
+        )
+        updated = (
+            re.search(rf"{state}\s*=", body, re.I)
+            or re.search(
+                rf"this\.\$(?:set|delete)\s*\(\s*this\.{re.escape(name)}\s*,",
+                body,
+                re.I,
+            )
+        )
+        if guarded and updated:
+            return True, f"outputs/{path}：以 {name} 记录跨界状态，仅在进入或离开阈值时更新。"
+
+    if not state_names and not re.search(computed_state, body, re.I):
+        return False, f"outputs/{path}：边界事件没有持久状态，处于阈值内时会重复触发。"
+    return None, f"outputs/{path}：存在边界状态更新，但静态检查无法确认是否仅在跨越阈值时触发。"
+
+
+def check_v8(root):
+    """Compatibility aggregate for older reports; new evals use v8a/v8b/v8c."""
+    results = [check_v8a(root), check_v8b(root), check_v8c(root)]
+    failures = [evidence for passed, evidence in results if passed is False]
+    unknown = [evidence for passed, evidence in results if passed is None]
+    if failures:
+        return False, "；".join(failures)
+    if unknown:
+        return None, "；".join(unknown)
+    return True, "；".join(evidence for _, evidence in results)
+
+
+def _legacy_check_v9(root):
     common_path = "src/components/analytics-panel.mpx"
     web_path = "src/components/analytics-panel.web.mpx"
     chart_path = "src/web/AnalyticsChart.vue"
@@ -1647,6 +2179,66 @@ def check_v9(root):
             f"滚动调用点或指标点击/更新回传链路不完整；缺少 {missing_scroll}。"
         )
     return True, "小程序指标点击、Web 图表更新/点击回传和完整滚动调用点均保留。"
+
+
+def check_v9a(root):
+    path = "src/components/analytics-panel.mpx"
+    source = read_output(root, path)
+    has_metrics = "metrics" in source
+    click_binding = re.search(r"(?:bindtap|@tap)\s*=", source)
+    emits_select = re.search(r"triggerEvent\s*\(\s*['\"]select['\"]", source)
+    forbidden = re.search(r"(?:\.vue['\"]|/web/|chart-sdk|\bwindow\b|\bdocument\b)", source)
+    if has_metrics and click_binding and emits_select and not forbidden:
+        return True, f"outputs/{path}：小程序摘要卡保留指标展示、点击和 select 回传，且未引入 Web 依赖。"
+    return False, f"outputs/{path}：小程序指标摘要、点击回传或依赖隔离不完整。"
+
+
+def check_v9b(root):
+    web_path = "src/components/analytics-panel.web.mpx"
+    chart_path = "src/web/AnalyticsChart.vue"
+    sdk_path = "src/web/chart-sdk.js"
+    web = read_output(root, web_path)
+    chart = read_output(root, chart_path)
+    sdk = read_output(root, sdk_path)
+    chart_binding = re.search(r"<analytics-chart\b[^>]*(?:bindselect|@select)\s*=", web, re.I | re.S)
+    web_relay = re.search(r"triggerEvent\s*\(\s*['\"]select['\"]", web)
+    chart_select = re.search(r"\$emit\s*\(\s*['\"]select['\"]", chart)
+    click_source = re.search(
+        r"(?:@click|v-on:click|addEventListener\s*\(\s*['\"]click['\"]|onSelect|data-metric-key)",
+        chart + "\n" + sdk,
+        re.I,
+    )
+    updates_in_place = "metrics" in chart and re.search(r"\.update\s*\(", chart)
+    recreates_safely = (
+        "metrics" in chart
+        and re.search(r"(?:watch\s*:|\bwatch\s*\()", chart)
+        and re.search(r"\.destroy\s*\(", chart)
+        and re.search(r"(?:\.create\s*\(|createChart\s*\()", chart + "\n" + sdk)
+    )
+    chain = chart_binding and web_relay and chart_select and click_source
+    if not chain:
+        return False, (
+            f"outputs/{web_path} / outputs/{chart_path}：缺少可触发的图表点击、Vue select、"
+            "Mpx bindselect 或 triggerEvent('select') 中的一环。"
+        )
+    if updates_in_place or recreates_safely:
+        mode = "复用 update" if updates_in_place else "销毁后重建"
+        return True, f"outputs/{chart_path}：指标变化通过{mode}刷新，点击逐层回传到 Mpx 业务事件。"
+    if "metrics" in chart and re.search(r"(?:create|render|mount)", chart, re.I):
+        return None, f"outputs/{chart_path}：点击回传完整，但静态检查无法确认指标变化时是否安全刷新实例。"
+    return False, f"outputs/{chart_path}：指标变化没有可验证的图表更新或安全重建路径。"
+
+
+def check_v9(root):
+    """Compatibility aggregate for older reports; new evals use v9a/v9b."""
+    results = [check_v9a(root), check_v9b(root)]
+    failures = [evidence for passed, evidence in results if passed is False]
+    unknown = [evidence for passed, evidence in results if passed is None]
+    if failures:
+        return False, "；".join(failures)
+    if unknown:
+        return None, "；".join(unknown)
+    return True, "；".join(evidence for _, evidence in results)
 
 
 def check_x0(root):
@@ -1711,7 +2303,7 @@ def check_x3(root):
         condition = match.group(1) if match else ""
     flags = re.findall(r"\b([A-Za-z_$][\w$]*)\s*:\s*false\b", source)
     active_flags = [flag for flag in flags if re.search(rf"\b{re.escape(flag)}\b", condition)]
-    ready = "\n".join(method_body(source, name) for name in ("ready", "mounted", "attached"))
+    ready = "\n".join(method_body(source, name) for name in ("onReady", "ready", "mounted", "attached"))
     ready_true = any(re.search(
         rf"this\.{re.escape(flag)}\s*=\s*(?:true|typeof\s+window\s*!==\s*['\"]undefined['\"])",
         ready,
@@ -1780,6 +2372,67 @@ def check_x7(root):
     if browser_guard and not non_web_path:
         return False, f"outputs/{path}：onLoad 的文章加载仍只在浏览器对象存在时执行。"
     return True, f"outputs/{path}：onLoad 在无浏览器对象的小程序环境仍执行文章加载。"
+
+
+def check_c0(root):
+    path = "src/components/filter-dialog.mpx"
+    source = read_output(root, path)
+    trigger = template_control(source, (
+        r"\bclass\s*=\s*['\"][^'\"]*filter-trigger",
+        r"\bbindtap\s*=\s*['\"]open['\"]",
+    ))
+    option = template_control(source, (
+        r"\bwx:for\s*=",
+        r"\bbindtap\s*=\s*['\"]toggle(?:\([^'\"]*\))?['\"]",
+    ))
+    confirm = template_control(source, (
+        r"\bbindtap\s*=\s*['\"]confirm['\"]",
+    ))
+    mask = template_control(source, (
+        r"\bclass\s*=\s*['\"][^'\"]*mask",
+        r"\bbindtap\s*=\s*['\"]close['\"]",
+    ))
+    dialog = template_control(source, (
+        r"\bclass\s*=\s*['\"][^'\"]*dialog",
+        r"\b(?:catchtap|bindtap)\s*=\s*['\"]stop['\"]",
+    ))
+    if not all(accessible_control(control) for control in (trigger, option, confirm)):
+        return False, f"outputs/{path}：触发器、选项或确认入口缺少原生 button 语义，或非原生控件缺少 aria-role/可访问名称。"
+    if not mask or not dialog:
+        return False, f"outputs/{path}：tap 打开、遮罩关闭或内容区阻止误触链路不完整。"
+    return True, f"outputs/{path}：交互入口具有原生或 aria-role 语义和可访问名称，并保留触摸链路。"
+
+
+def check_c1(root):
+    common_path = "src/components/filter-dialog.mpx"
+    web_path = "src/components/filter-dialog.web.mpx"
+    common = template_source(read_output(root, common_path))
+    web_source = read_output(root, web_path)
+    web = template_source(web_source)
+    common_browser_only = re.search(
+        r"(?<!aria-)\brole\s*=|\baria-modal\s*=|\btabindex\s*=|"
+        r"(?:bind|catch|@)keydown(?:@web)?\s*=",
+        common,
+        re.I,
+    )
+    dialog = template_control(web_source, (
+        r"\bclass\s*=\s*['\"][^'\"]*dialog",
+    ))
+    dialog_attrs = dialog[1] if dialog else ""
+    complete_dialog = all(re.search(pattern, dialog_attrs, re.I) for pattern in (
+        r"(?<!aria-)\brole\s*=\s*['\"]dialog['\"]",
+        r"\baria-modal\s*=\s*['\"]true['\"]",
+        r"\btabindex\s*=\s*['\"]-1['\"]",
+    ))
+    keyboard = re.search(
+        r"(?:@keydown(?:\.[\w-]+)*|bindkeydown)\s*=|"
+        r"addEventListener\s*\(\s*['\"]keydown['\"]",
+        web_source,
+        re.I,
+    )
+    if common_browser_only or not complete_dialog or not keyboard:
+        return False, f"outputs/{common_path} / outputs/{web_path}：浏览器 dialog/键盘语义未完整隔离到 Web 文件。"
+    return True, f"outputs/{web_path}：完整浏览器 dialog、焦点与键盘语义只位于 Web 文件。"
 
 
 def check_c2(root):
@@ -1881,10 +2534,10 @@ def check_t3(root):
 def check_t4(root):
     path = "src/pages/portal/index.mpx"
     source = read_output(root, path)
-    open_body = recursive_method_context(source, "openDialog")
-    close_body = recursive_method_context(source, "closeDialog")
+    open_body = recursive_callable_context(source, "openDialog")
+    close_body = recursive_callable_context(source, "closeDialog")
     unload = "\n".join(
-        recursive_method_context(source, name)
+        recursive_callable_context(source, name)
         for name in ("onHide", "onUnload", "detached", "unmounted")
     )
 
@@ -1897,6 +2550,90 @@ def check_t4(root):
         re.I,
     ))
     required_target_count = 2 if requires_app else 1
+    overflow_snapshot_count = len(re.findall(
+        r"\.style\.(?:overflow|getPropertyValue\s*\(\s*['\"]overflow['\"])",
+        open_body,
+        re.I,
+    ))
+    collection_snapshot = (
+        re.search(r"\.style\.(?:overflow|getPropertyValue\s*\(\s*['\"]overflow['\"])", open_body, re.I)
+        and re.search(r"(?:\.map\s*\(|\.forEach\s*\(|save[A-Za-z_$][\w$]*\s*\()", open_body)
+    ) or overflow_snapshot_count >= required_target_count
+    collection_lock = (
+        re.search(
+            r"\.style\.(?:overflow\s*=\s*['\"]hidden['\"]|"
+            r"setProperty\s*\(\s*['\"]overflow['\"]\s*,\s*['\"]hidden['\"])",
+            open_body,
+            re.I,
+        )
+        and (re.search(r"\.forEach\s*\(", open_body) or has_app_target or not requires_app)
+    )
+    collection_restore = re.search(
+        r"\.style\.(?:overflow\s*=|setProperty\s*\(\s*['\"]overflow['\"]|"
+        r"removeProperty\s*\(\s*['\"]overflow['\"])",
+        close_body,
+        re.I,
+    )
+    unload_restore = re.search(
+        r"\.style\.(?:overflow\s*=|setProperty\s*\(\s*['\"]overflow['\"]|"
+        r"removeProperty\s*\(\s*['\"]overflow['\"])",
+        unload,
+        re.I,
+    )
+    instance_states = set(re.findall(
+        r"this\.([A-Za-z_$][\w$]*(?:scroll|lock|snapshot)[\w$]*)\s*=",
+        open_body,
+        re.I,
+    ))
+    module_states = set(re.findall(
+        r"\b(?:let|var)\s+([A-Za-z_$][\w$]*(?:scroll|lock|snapshot)[\w$]*)\s*=\s*null",
+        source,
+        re.I,
+    ))
+    module_object_states = set(re.findall(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*(?:scroll|lock|snapshot)[\w$]*)\s*=\s*\{",
+        source,
+        re.I,
+    ))
+    persisted_state = False
+    for state in instance_states:
+        if (
+            re.search(rf"this\.{re.escape(state)}\b", close_body)
+            and re.search(rf"this\.{re.escape(state)}\s*=\s*null\b", close_body)
+        ):
+            persisted_state = True
+            break
+    if not persisted_state:
+        for state in module_states:
+            if (
+                re.search(rf"\b{re.escape(state)}\s*=", open_body)
+                and re.search(rf"\b{re.escape(state)}\b", close_body)
+                and re.search(rf"\b{re.escape(state)}\s*=\s*null\b", close_body)
+            ):
+                persisted_state = True
+                break
+    if not persisted_state:
+        for state in module_object_states:
+            escaped = re.escape(state)
+            mutated_open = re.search(rf"\b{escaped}\.[A-Za-z_$][\w$]*\s*=", open_body)
+            reset_close = re.search(
+                rf"\b{escaped}\.[A-Za-z_$][\w$]*\s*=\s*(?:false|null|\[\]|\{{\}})",
+                close_body,
+            )
+            if mutated_open and reset_close:
+                persisted_state = True
+                break
+    collection_contract = (
+        has_body_target
+        and (not requires_app or has_app_target)
+        and collection_snapshot
+        and collection_lock
+        and collection_restore
+        and unload_restore
+        and persisted_state
+    )
+    if collection_contract:
+        return True, f"outputs/{path}：Web 滚动锁以持久化快照覆盖 body/挂载容器，并在关闭、切页与卸载时幂等恢复。"
     saved_overflow_count = len(re.findall(
         r"this\.[A-Za-z_$][\w$]*\s*=\s*(?:document\.body|[A-Za-z_$][\w$]*)\.style\.overflow\b",
         open_body,
@@ -2007,6 +2744,9 @@ CHECKS = {
     "p2": check_p2,
     "p3": check_p3,
     "p4": check_p4,
+    "p4a": check_p4a,
+    "p4b": check_p4b,
+    "p4c": check_p4c,
     "p5": check_p5,
     "p6": check_p6,
     "p7": check_p7,
@@ -2032,7 +2772,12 @@ CHECKS = {
     "v6": check_v6,
     "v7": check_v7,
     "v8": check_v8,
+    "v8a": check_v8a,
+    "v8b": check_v8b,
+    "v8c": check_v8c,
     "v9": check_v9,
+    "v9a": check_v9a,
+    "v9b": check_v9b,
     "x0": check_x0,
     "x1": check_x1,
     "x2": check_x2,
@@ -2041,6 +2786,8 @@ CHECKS = {
     "x5": check_x5,
     "x6": check_x6,
     "x7": check_x7,
+    "c0": check_c0,
+    "c1": check_c1,
     "c2": check_c2,
     "c3": check_c3,
     "c4": check_c4,
@@ -2064,9 +2811,18 @@ def apply_deterministic_checks(item, expectations, root):
             continue
         passed, evidence = check(Path(root))
         expectation = by_id[assertion["id"]]
+        methods = expectation.setdefault("verification_methods", ["independent_code_review"])
+        status = "pass" if passed is True else "fail" if passed is False else "unknown"
+        expectation["deterministic_check"] = {
+            "status": status,
+            "evidence": evidence,
+        }
+        if passed is None:
+            if "deterministic_check_inconclusive" not in methods:
+                methods.append("deterministic_check_inconclusive")
+            continue
         expectation["passed"] = passed
         expectation["evidence"] = evidence
-        methods = expectation.setdefault("verification_methods", ["independent_code_review"])
         if "deterministic_check" not in methods:
             methods.append("deterministic_check")
     return expectations
@@ -2117,13 +2873,21 @@ def parse_json_payload(text):
         return json.loads(candidate[start:end + 1])
 
 
-def grader_fingerprint(item, run_root, grader_model, grader_reasoning_effort):
+def model_grader_fingerprint(item, run_root, grader_model, grader_reasoning_effort):
     run = json.loads((run_root / "run.json").read_text())
     return sha256_json({
         "candidate_fingerprint": run.get("fingerprint"),
         "grader_model": grader_model,
         "grader_reasoning_effort": grader_reasoning_effort,
         "assertions": item["assertions"],
+    })
+
+
+def grader_fingerprint(item, run_root, grader_model, grader_reasoning_effort):
+    return sha256_json({
+        "model_grader_fingerprint": model_grader_fingerprint(
+            item, run_root, grader_model, grader_reasoning_effort
+        ),
         "checker_digest": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     })
 
@@ -2140,6 +2904,23 @@ def grading_complete(item, run_root, fingerprint):
     actual_ids = [entry.get("id") for entry in grade.get("expectations", [])]
     return bool(
         grade.get("grading_fingerprint") == fingerprint
+        and actual_ids == expected_ids
+        and all(isinstance(entry.get("passed"), bool) for entry in grade["expectations"])
+    )
+
+
+def model_grading_complete(item, run_root, fingerprint):
+    path = run_root / "model-grading.json"
+    if not path.is_file():
+        return False
+    try:
+        grade = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    expected_ids = [assertion["id"] for assertion in item["assertions"]]
+    actual_ids = [entry.get("id") for entry in grade.get("expectations", [])]
+    return bool(
+        grade.get("model_grading_fingerprint") == fingerprint
         and actual_ids == expected_ids
         and all(isinstance(entry.get("passed"), bool) for entry in grade["expectations"])
     )
@@ -2209,6 +2990,7 @@ def normalize_model_grade(item, payload):
         expectations.append({
             "id": assertion["id"],
             "text": assertion["text"],
+            "category": assertion.get("category", "uncategorized"),
             "passed": passed,
             "evidence": evidence,
             "verification_methods": ["independent_code_review"],
@@ -2294,7 +3076,7 @@ def grade_compile_failure(item, group, run_root, grader_model, grader_reasoning_
     return grade
 
 
-def grade_run(item, group, run_root, grader_model, grader_reasoning_effort, codex_bin="codex"):
+def _legacy_grade_run(item, group, run_root, grader_model, grader_reasoning_effort, codex_bin="codex"):
     run = json.loads((run_root / "run.json").read_text())
     if run.get("returncode") != 0 or run.get("outputs_complete") is not True:
         raise ValueError(f"候选生成未完成：{run_root}")
@@ -2373,6 +3155,130 @@ def grade_run(item, group, run_root, grader_model, grader_reasoning_effort, code
     print(
         f"[graded] eval-{item['id']} {group} {run_root.name} "
         f"{passed}/{len(expectations)}",
+        flush=True,
+    )
+    return grade
+
+
+def grade_run(item, group, run_root, grader_model, grader_reasoning_effort, codex_bin="codex"):
+    """Grade functional behavior independently from the candidate compile status."""
+    run = json.loads((run_root / "run.json").read_text())
+    if run.get("returncode") != 0 or run.get("outputs_complete") is not True:
+        raise ValueError(f"候选生成未完成：{run_root}")
+
+    model_fingerprint = model_grader_fingerprint(
+        item, run_root, grader_model, grader_reasoning_effort
+    )
+    model_grade_path = run_root / "model-grading.json"
+    if model_grading_complete(item, run_root, model_fingerprint):
+        model_grade = json.loads(model_grade_path.read_text())
+        model_expectations = model_grade["expectations"]
+        payload = {
+            "claims": model_grade.get("claims", []),
+            "eval_feedback": model_grade.get("eval_feedback", {}),
+        }
+        duration_ms = model_grade.get("grader", {}).get("duration_ms", 0)
+        print(
+            f"[reuse-model-grade] eval-{item['id']} {group} {run_root.name}",
+            flush=True,
+        )
+    else:
+        print(f"[grading] eval-{item['id']} {group} {run_root.name}", flush=True)
+        started = time.monotonic()
+        with tempfile.TemporaryDirectory(prefix="mpx2web-grader-") as directory:
+            neutral_root = Path(directory).resolve()
+            eval_root = run_root.parents[1]
+            shutil.copytree(eval_root / "input", neutral_root / "input")
+            shutil.copytree(run_root / "outputs", neutral_root / "outputs")
+            command = build_grader_command(
+                grader_model, grader_reasoning_effort, neutral_root, codex_bin
+            )
+            result = subprocess.run(
+                command,
+                cwd=neutral_root,
+                input=build_grader_prompt(item),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"独立评分失败 {run_root}: {result.stderr[-2000:]}")
+            generated_path = neutral_root / "grading.json"
+            payload = (
+                json.loads(generated_path.read_text())
+                if generated_path.is_file()
+                else parse_json_payload(extract_final_message(result.stdout))
+            )
+        duration_ms = round((time.monotonic() - started) * 1000)
+        model_expectations = normalize_model_grade(item, payload)
+        model_grade = {
+            "eval_id": item["id"],
+            "eval_name": item["name"],
+            "configuration": group,
+            "run_number": run_number(run_root),
+            "model_grading_fingerprint": model_fingerprint,
+            "grader": {
+                "model": grader_model,
+                "reasoning_effort": grader_reasoning_effort,
+                "blind_configuration": True,
+                "duration_ms": duration_ms,
+            },
+            "expectations": model_expectations,
+            "claims": payload.get("claims", []),
+            "eval_feedback": payload.get("eval_feedback", {}),
+        }
+        model_grade_path.write_text(
+            json.dumps(model_grade, ensure_ascii=False, indent=2) + "\n"
+        )
+
+    expectations = apply_deterministic_checks(
+        item,
+        [dict(entry) for entry in model_expectations],
+        run_root,
+    )
+    passed = sum(entry["passed"] is True for entry in expectations)
+    total = len(expectations)
+    compile_passed = run.get("compile_status") == "passed"
+    strict_passed = passed if compile_passed else 0
+    metrics_path = run_root / "metrics.json"
+    timing_path = run_root / "timing.json"
+    compile_path = run_root / "compile.json"
+    grade = {
+        "eval_id": item["id"],
+        "eval_name": item["name"],
+        "configuration": group,
+        "run_number": run_number(run_root),
+        "grading_fingerprint": grader_fingerprint(
+            item, run_root, grader_model, grader_reasoning_effort
+        ),
+        "model_grading_fingerprint": model_fingerprint,
+        "grader": model_grade["grader"],
+        "expectations": expectations,
+        "summary": {
+            "passed": passed,
+            "failed": total - passed,
+            "total": total,
+            "pass_rate": round(passed / total, 4),
+        },
+        "strict_delivery_summary": {
+            "passed": strict_passed,
+            "failed": total - strict_passed,
+            "total": total,
+            "pass_rate": round(strict_passed / total, 4),
+            "compile_passed": compile_passed,
+        },
+        "metrics": json.loads(metrics_path.read_text()) if metrics_path.is_file() else {},
+        "timing": json.loads(timing_path.read_text()) if timing_path.is_file() else {},
+        "compile": json.loads(compile_path.read_text()) if compile_path.is_file() else {},
+        "claims": payload.get("claims", []),
+        "eval_feedback": payload.get("eval_feedback", {}),
+    }
+    (run_root / "grading.json").write_text(
+        json.dumps(grade, ensure_ascii=False, indent=2) + "\n"
+    )
+    print(
+        f"[graded] eval-{item['id']} {group} {run_root.name} "
+        f"functional={passed}/{total} strict={strict_passed}/{total}",
         flush=True,
     )
     return grade
@@ -2462,6 +3368,12 @@ def audit_workspace(root, write_grades=False, samples=None):
                 if not grade_path.is_file():
                     raise ValueError(f"缺少独立评分：{grade_path}")
                 grade = json.loads(grade_path.read_text())
+                compile_path = run_root / "compile.json"
+                compile_result = (
+                    json.loads(compile_path.read_text())
+                    if compile_path.is_file()
+                    else {}
+                )
                 if samples is not None:
                     grader = grade.get("grader", {})
                     expected_fingerprint = grader_fingerprint(
@@ -2474,6 +3386,7 @@ def audit_workspace(root, write_grades=False, samples=None):
                         raise ValueError(f"评分已过期，必须重新独立评分：{grade_path}")
                 expectations = grade["expectations"]
                 by_id = {entry["id"]: entry for entry in expectations}
+                current_expectations = []
                 for assertion in item["assertions"]:
                     expectation = by_id.get(assertion["id"])
                     if expectation is None:
@@ -2484,25 +3397,57 @@ def audit_workspace(root, write_grades=False, samples=None):
                             "evidence": "旧评分未包含该新增断言，等待确定性复核或重新评分。",
                             "verification_methods": ["deterministic_check"],
                         }
-                        expectations.append(expectation)
                         by_id[assertion["id"]] = expectation
                     expectation["text"] = assertion["text"]
+                    expectation["category"] = assertion.get("category", "uncategorized")
                     expectation.setdefault(
                         "verification_methods", ["independent_code_review"]
                     )
+                    current_expectations.append(expectation)
+                expectations = current_expectations
                 expectations = apply_deterministic_checks(
                     item, expectations, run_root
                 )
                 passed = sum(entry["passed"] is True for entry in expectations)
+                total = len(expectations)
+                compile_passed = compile_result.get("status") == "passed"
+                strict_passed = passed if compile_passed else 0
                 audited = dict(grade)
                 audited["expectations"] = expectations
                 audited["summary"] = {
                     "passed": passed,
-                    "failed": len(expectations) - passed,
-                    "total": len(expectations),
-                    "pass_rate": round(passed / len(expectations), 4),
+                    "failed": total - passed,
+                    "total": total,
+                    "pass_rate": round(passed / total, 4),
+                }
+                audited["strict_delivery_summary"] = {
+                    "passed": strict_passed,
+                    "failed": total - strict_passed,
+                    "total": total,
+                    "pass_rate": round(strict_passed / total, 4),
+                    "compile_passed": compile_passed,
                 }
                 if write_grades:
+                    grader = audited.get("grader", {})
+                    model_fingerprint = model_grader_fingerprint(
+                        item,
+                        run_root,
+                        grader.get("model", ""),
+                        grader.get("reasoning_effort", ""),
+                    )
+                    if model_grading_complete(item, run_root, model_fingerprint):
+                        audited["grading_fingerprint"] = grader_fingerprint(
+                            item,
+                            run_root,
+                            grader.get("model", ""),
+                            grader.get("reasoning_effort", ""),
+                        )
+                        audited.pop("grading_status", None)
+                    else:
+                        # A checker-only audit must never impersonate a fresh blind
+                        # model review after assertions or grader inputs change.
+                        audited.pop("grading_fingerprint", None)
+                        audited["grading_status"] = "requires_independent_regrade"
                     grade_path.write_text(
                         json.dumps(audited, ensure_ascii=False, indent=2) + "\n"
                     )
@@ -2514,8 +3459,6 @@ def audit_workspace(root, write_grades=False, samples=None):
                 )
                 metrics_path = run_root / "metrics.json"
                 metrics = json.loads(metrics_path.read_text()) if metrics_path.is_file() else {}
-                compile_path = run_root / "compile.json"
-                compile_result = json.loads(compile_path.read_text()) if compile_path.is_file() else {}
                 results.append({
                     "eval_id": item["id"],
                     "eval_name": item["name"],
@@ -2526,6 +3469,9 @@ def audit_workspace(root, write_grades=False, samples=None):
                     **metrics,
                     **output_stats(run_root / "outputs"),
                     "compile_status": compile_result.get("status"),
+                    "strict_passed": strict_passed,
+                    "strict_failed": total - strict_passed,
+                    "strict_pass_rate": round(strict_passed / total, 4),
                     "compiled_mpx_count": compile_result.get("compiled_mpx_count", 0),
                     "compile_eligible_mpx_count": compile_result.get("compile_eligible_mpx_count", 0),
                     "all_declared_outputs_present": compile_result.get("all_declared_outputs_present", False),
@@ -2535,20 +3481,60 @@ def audit_workspace(root, write_grades=False, samples=None):
         rows = [row for row in results if row["configuration"] == group]
         passed = sum(row["passed"] for row in rows)
         total = sum(row["total"] for row in rows)
+        strict_passed = sum(row["strict_passed"] for row in rows)
         totals[group] = {
             "runs": len(rows),
             "passed": passed,
             "total": total,
             "pass_rate": round(passed / total, 4),
+            "strict_passed": strict_passed,
+            "strict_pass_rate": round(strict_passed / total, 4),
         }
     payload = {
         "skill_name": public["skill_name"],
         "iteration": public["iteration"],
-        "grading_mode": "existing independent grades with deterministic regression overrides",
+        "grading_mode": "cached blind independent review with conclusive deterministic overrides",
         "results": results,
         "totals": totals,
     }
     return payload
+
+
+PRESERVATION_CATEGORIES = frozenset({
+    "business-regression",
+    "cross-platform-regression",
+})
+
+
+def score_expectations(rows, predicate):
+    entries = [
+        entry
+        for row in rows
+        for entry in row["expectations"]
+        if predicate(entry)
+    ]
+    passed = sum(entry["passed"] is True for entry in entries)
+    total = len(entries)
+    return {
+        "passed": passed,
+        "total": total,
+        "pass_rate": round(passed / total, 4) if total else None,
+    }
+
+
+def format_optional_rate(value):
+    return "—" if value is None else f"{value:.1%}"
+
+
+def sample_macro_eval_rate(rows):
+    rates = []
+    for eval_id in sorted({row["eval_id"] for row in rows}):
+        eval_rows = [row for row in rows if row["eval_id"] == eval_id]
+        passed = sum(row["passed"] for row in eval_rows)
+        total = sum(row["total"] for row in eval_rows)
+        if total:
+            rates.append(passed / total)
+    return round(statistics.mean(rates), 4) if rates else 0.0
 
 
 def aggregate_benchmark(root, samples):
@@ -2559,11 +3545,16 @@ def aggregate_benchmark(root, samples):
     for group in PUBLIC_GROUPS:
         group_rows = [row for row in rows if row["configuration"] == group]
         sample_rates = []
+        strict_sample_rates = []
+        macro_sample_rates = []
         for sample in range(1, samples + 1):
             sample_rows = [row for row in group_rows if row["run_number"] == sample]
             passed = sum(row["passed"] for row in sample_rows)
             total = sum(row["total"] for row in sample_rows)
             sample_rates.append(round(passed / total, 4))
+            strict_passed = sum(row["strict_passed"] for row in sample_rows)
+            strict_sample_rates.append(round(strict_passed / total, 4))
+            macro_sample_rates.append(sample_macro_eval_rate(sample_rows))
         assertion_outcomes = {}
         for row in group_rows:
             for entry in row["expectations"]:
@@ -2581,6 +3572,27 @@ def aggregate_benchmark(root, samples):
             "sample_stddev": round(statistics.pstdev(sample_rates), 4),
             "sample_min": min(sample_rates),
             "sample_max": max(sample_rates),
+            "strict_delivery": {
+                "passed": payload["totals"][group]["strict_passed"],
+                "total": payload["totals"][group]["total"],
+                "pass_rate": payload["totals"][group]["strict_pass_rate"],
+                "sample_pass_rates": strict_sample_rates,
+                "sample_mean": round(statistics.mean(strict_sample_rates), 4),
+                "sample_stddev": round(statistics.pstdev(strict_sample_rates), 4),
+            },
+            "macro_eval": {
+                "sample_pass_rates": macro_sample_rates,
+                "sample_mean": round(statistics.mean(macro_sample_rates), 4),
+                "sample_stddev": round(statistics.pstdev(macro_sample_rates), 4),
+            },
+            "capability": score_expectations(
+                group_rows,
+                lambda entry: entry.get("category") not in PRESERVATION_CATEGORIES,
+            ),
+            "business_preservation": score_expectations(
+                group_rows,
+                lambda entry: entry.get("category") in PRESERVATION_CATEGORIES,
+            ),
             "stability": {
                 "stable_pass": stable_pass,
                 "stable_fail": stable_fail,
@@ -2590,6 +3602,8 @@ def aggregate_benchmark(root, samples):
                 "status": "passed" if all(row["compile_status"] == "passed" for row in group_rows) else "failed",
                 "compiled_mpx": sum(row["compiled_mpx_count"] for row in group_rows),
                 "eligible_mpx": sum(row["compile_eligible_mpx_count"] for row in group_rows),
+                "candidate_passed": sum(row["compile_status"] == "passed" for row in group_rows),
+                "candidate_total": len(group_rows),
                 "declared_outputs_complete": all(row["all_declared_outputs_present"] for row in group_rows),
             },
             "efficiency": {
@@ -2601,8 +3615,18 @@ def aggregate_benchmark(root, samples):
             },
         }
     deltas = {
-        "mpx2web_vs_no_skill": round(
+        "functional_mpx2web_vs_no_skill": round(
             summaries["mpx2web"]["sample_mean"] - summaries["no_skill"]["sample_mean"], 4
+        ),
+        "strict_delivery_mpx2web_vs_no_skill": round(
+            summaries["mpx2web"]["strict_delivery"]["sample_mean"]
+            - summaries["no_skill"]["strict_delivery"]["sample_mean"],
+            4,
+        ),
+        "capability_mpx2web_vs_no_skill": round(
+            summaries["mpx2web"]["capability"]["pass_rate"]
+            - summaries["no_skill"]["capability"]["pass_rate"],
+            4,
         ),
     }
     benchmark = {
@@ -2612,9 +3636,9 @@ def aggregate_benchmark(root, samples):
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "samples_per_configuration": samples,
             "configurations": GROUP_LABELS,
-            "grading_mode": "blind independent model review plus frozen deterministic overrides",
+            "grading_mode": "blind independent model review plus conclusive tri-state deterministic overrides",
             "compile_boundary": (
-                "All compile-eligible Mpx page/component outputs are built for Web; "
+                "All compile-eligible Mpx page/component outputs are built individually for Web; "
                 "app.mpx and non-Mpx support artifacts are reported separately."
             ),
         },
@@ -2622,7 +3646,9 @@ def aggregate_benchmark(root, samples):
         "run_summary": summaries,
         "deltas": deltas,
         "notes": [
-            "Pass rate is assertion-weighted; each sample also receives an independent aggregate rate.",
+            "Functional, business-preservation, compile and strict-delivery scores are reported separately.",
+            "Deterministic UNKNOWN results retain the blind independent model verdict.",
+            "No Skill candidates may be reused under --resume only when candidate fingerprints match; all final grades use the current grading fingerprint.",
             "Three samples estimate stochastic variance but do not prove behavior outside the 13 frozen scenarios.",
         ],
     }
@@ -2633,11 +3659,12 @@ def aggregate_benchmark(root, samples):
         "# Mpx2Web iteration-11 reliability benchmark",
         "",
         f"- 采样：每组 {samples} 次，共 {len(rows)} 个候选结果",
-        "- 评分：隐藏配置标签的独立模型评审 + 冻结确定性检查器覆盖",
-        "- 编译：所有可作为 page/component 入口的 `.mpx` 均执行真实 Web 编译",
+        "- 评分：隐藏配置标签的独立模型评审 + 三态确定性检查；UNKNOWN 保留独立评审结论",
+        "- 编译：每个可作为 page/component 入口的 `.mpx` 均单独执行真实 Web 编译",
+        "- 分数：功能、业务保真、编译和严格交付分别报告，不再以一次编译失败覆盖功能证据",
         "",
-        "| 配置 | 加权通过率 | 三轮通过率 | 均值 ± 标准差 | 稳定通过/波动/稳定失败 | 编译 |",
-        "| --- | ---: | --- | ---: | ---: | --- |",
+        "| 配置 | 功能正确率 | 业务保真率 | 严格交付率 | 三轮功能分 | 场景宏平均 | 编译文件 | 编译候选 |",
+        "| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |",
     ]
     for group in PUBLIC_GROUPS:
         summary = summaries[group]
@@ -2645,20 +3672,86 @@ def aggregate_benchmark(root, samples):
         rates = ", ".join(f"{rate:.1%}" for rate in summary["sample_pass_rates"])
         compile_summary = summary["compile"]
         lines.append(
-            f"| {summary['label']} | {summary['pass_rate']:.1%} | {rates} | "
-            f"{summary['sample_mean']:.1%} ± {summary['sample_stddev']:.1%} | "
-            f"{stability['stable_pass']}/{stability['variable']}/{stability['stable_fail']} | "
-            f"{compile_summary['compiled_mpx']}/{compile_summary['eligible_mpx']} |"
+            f"| {summary['label']} | {summary['pass_rate']:.1%} | "
+            f"{format_optional_rate(summary['business_preservation']['pass_rate'])} | "
+            f"{summary['strict_delivery']['pass_rate']:.1%} | {rates} | "
+            f"{summary['macro_eval']['sample_mean']:.1%} ± {summary['macro_eval']['sample_stddev']:.1%} | "
+            f"{compile_summary['compiled_mpx']}/{compile_summary['eligible_mpx']} | "
+            f"{compile_summary['candidate_passed']}/{compile_summary['candidate_total']} |"
         )
     lines.extend([
         "",
         "## 差异",
         "",
-        f"- 使用 Skill 相对无 Skill：{deltas['mpx2web_vs_no_skill']:+.1%}",
+        f"- 功能正确率：{deltas['functional_mpx2web_vs_no_skill'] * 100:+.1f}pp",
+        f"- 适配能力：{deltas['capability_mpx2web_vs_no_skill'] * 100:+.1f}pp",
+        f"- 严格交付率：{deltas['strict_delivery_mpx2web_vs_no_skill'] * 100:+.1f}pp",
+        "",
+        "## 稳定性与效率",
+        "",
+    ])
+    for group in PUBLIC_GROUPS:
+        summary = summaries[group]
+        stability = summary["stability"]
+        efficiency = summary["efficiency"]
+        lines.append(
+            f"- {summary['label']}：稳定通过/波动/稳定失败 "
+            f"{stability['stable_pass']}/{stability['variable']}/{stability['stable_fail']}；"
+            f"tokens={efficiency['total_tokens']}，耗时={efficiency['duration_seconds']}s，"
+            f"工具调用={efficiency['tool_calls']}，输出行数={efficiency['output_lines']}"
+        )
+    lines.extend([
+        "",
+        "## 分场景结果",
+        "",
+        "| Eval | 配置 | 功能通过 | 严格交付通过 | 编译候选 |",
+        "| --- | --- | ---: | ---: | ---: |",
+    ])
+    for item in public["evals"]:
+        for group in PUBLIC_GROUPS:
+            eval_rows = [
+                row for row in rows
+                if row["eval_id"] == item["id"] and row["configuration"] == group
+            ]
+            lines.append(
+                f"| eval-{item['id']} {item['name']} | {GROUP_LABELS[group]} | "
+                f"{sum(row['passed'] for row in eval_rows)}/{sum(row['total'] for row in eval_rows)} | "
+                f"{sum(row['strict_passed'] for row in eval_rows)}/{sum(row['total'] for row in eval_rows)} | "
+                f"{sum(row['compile_status'] == 'passed' for row in eval_rows)}/{len(eval_rows)} |"
+            )
+    lines.extend([
+        "",
+        "## 未稳定通过的断言",
+        "",
+    ])
+    for group in PUBLIC_GROUPS:
+        lines.append(f"### {GROUP_LABELS[group]}")
+        lines.append("")
+        failures = []
+        for item in public["evals"]:
+            eval_rows = [
+                row for row in rows
+                if row["eval_id"] == item["id"] and row["configuration"] == group
+            ]
+            for assertion in item["assertions"]:
+                outcomes = [
+                    entry["passed"]
+                    for row in eval_rows
+                    for entry in row["expectations"]
+                    if entry["id"] == assertion["id"]
+                ]
+                if outcomes and not all(outcomes):
+                    failures.append(
+                        f"- eval-{item['id']} `{assertion['id']}`："
+                        f"{sum(outcomes)}/{len(outcomes)} — {assertion['text']}"
+                    )
+        lines.extend(failures or ["- 无"])
+        lines.append("")
+    lines.extend([
         "",
         "## 结论边界",
         "",
-        "该结论只覆盖冻结的 13 个场景和当前三次采样。`app.mpx`、HTML 与配置文件不是 compile-validate 支持的独立入口，不会被伪报为独立编译；它们的完整性和可解析性在各 run 的 `compile.json` 中单独记录。",
+        "该结论只覆盖冻结的 13 个场景和当前三次采样，属于源码契约检查与隔离 Web 编译结果，不等同于真实浏览器 E2E。No Skill 仅在候选指纹完全匹配时允许通过 `--resume` 复用，最终评分均使用当前评分指纹。`app.mpx`、HTML 与配置文件不是 compile-validate 支持的独立入口，其完整性和可解析性在各 run 的 `compile.json` 中单独记录。",
         "",
     ])
     (root / "benchmark.md").write_text("\n".join(lines))
@@ -2679,7 +3772,10 @@ def aggregate_benchmark(root, samples):
     summary_rows = "".join(
         f"<tr><td>{html.escape(summaries[group]['label'])}</td>"
         f"<td>{summaries[group]['pass_rate']:.1%}</td>"
+        f"<td>{format_optional_rate(summaries[group]['business_preservation']['pass_rate'])}</td>"
+        f"<td>{summaries[group]['strict_delivery']['pass_rate']:.1%}</td>"
         f"<td>{summaries[group]['sample_mean']:.1%} ± {summaries[group]['sample_stddev']:.1%}</td>"
+        f"<td>{summaries[group]['compile']['candidate_passed']}/{summaries[group]['compile']['candidate_total']}</td>"
         f"<td>{summaries[group]['compile']['compiled_mpx']}/{summaries[group]['compile']['eligible_mpx']}</td></tr>"
         for group in PUBLIC_GROUPS
     )
@@ -2689,7 +3785,7 @@ def aggregate_benchmark(root, samples):
 <style>body{{font:14px/1.55 system-ui,sans-serif;max-width:1180px;margin:32px auto;padding:0 20px;color:#222}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ddd;padding:8px;text-align:left}}details{{border:1px solid #ddd;border-radius:6px;margin:8px 0;padding:8px}}.pass{{color:#176b2c}}.fail{{color:#a21d1d}}small{{color:#555}}</style></head>
 <body><h1>Mpx2Web iteration-11 reliability review</h1>
 <p>独立盲评 + 确定性覆盖；每组 {samples} 次采样。编译边界详见 benchmark.md。</p>
-<table><thead><tr><th>配置</th><th>加权通过率</th><th>三轮均值 ± 标准差</th><th>Web 编译</th></tr></thead><tbody>{summary_rows}</tbody></table>
+<table><thead><tr><th>配置</th><th>功能正确率</th><th>业务保真率</th><th>严格交付率</th><th>三轮均值 ± 标准差</th><th>编译候选</th><th>逐文件 Web 编译</th></tr></thead><tbody>{summary_rows}</tbody></table>
 <h2>逐项证据</h2>{''.join(review_rows)}</body></html>"""
     (root / "review.html").write_text(review)
     return benchmark

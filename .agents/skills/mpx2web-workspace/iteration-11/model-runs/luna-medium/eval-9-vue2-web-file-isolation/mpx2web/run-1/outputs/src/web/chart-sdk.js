@@ -1,15 +1,13 @@
-export async function createChart (element, metrics) {
+export async function createChart (element) {
   await Promise.resolve()
-  if (!element) return null
-  const render = (nextMetrics) => {
-    if (element.isConnected !== false) element.textContent = nextMetrics.map((item) => `${item.label}:${item.value}`).join(' | ')
-  }
-  render(metrics || [])
   return {
-    update (nextMetrics) { render(nextMetrics || []) },
+    update (metrics) {
+      if (!element || element.isConnected === false) return
+      element.textContent = (metrics || []).map((item) => `${item.label}:${item.value}`).join(' | ')
+    },
     resize () {},
     destroy () {
-      element.textContent = ''
+      if (element && element.isConnected !== false) element.textContent = ''
     }
   }
 }

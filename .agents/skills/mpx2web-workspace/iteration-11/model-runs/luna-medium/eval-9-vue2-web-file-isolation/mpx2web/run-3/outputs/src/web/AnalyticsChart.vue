@@ -8,50 +8,42 @@ import { createChart } from './chart-sdk'
 export default {
   name: 'AnalyticsChart',
   props: { metrics: { type: Array, default: () => [] } },
-  data () {
-    return { chart: null, chartGeneration: 0, destroyed: false, resizeObserver: null }
-  },
-  mounted () {
-    this.createChart()
-    if (typeof ResizeObserver !== 'undefined') {
-      this.resizeObserver = new ResizeObserver(() => this.resize())
-      this.resizeObserver.observe(this.$refs.chart)
-    }
-  },
-  beforeDestroy () {
-    this.destroyed = true
-    this.chartGeneration += 1
-    if (this.resizeObserver) this.resizeObserver.disconnect()
-    this.destroyChart()
-  },
+  data () { return { chart: null, chartGeneration: 0 } },
+  mounted () { this.initChart(this.metrics) },
   watch: {
     metrics: {
       deep: true,
       handler (metrics) {
-        if (this.chart) this.chart.update(metrics)
-        else this.createChart()
+        if (this.chart && this.chart.update) this.chart.update(metrics || [])
+        else this.initChart(metrics || [])
       }
     }
   },
   methods: {
-    async createChart () {
+    async initChart (metrics) {
       const generation = ++this.chartGeneration
-      const instance = await createChart(this.$refs.chart, this.metrics, (detail) => {
-        this.$emit('select', detail)
-      })
-      if (this.destroyed || generation !== this.chartGeneration) {
+      const instance = await createChart(this.$refs.chart, metrics || [], (key) => this.$emit('select', { key }))
+      if (this._isDestroyed || generation !== this.chartGeneration) {
         if (instance && instance.destroy) instance.destroy()
         return
       }
+      this.releaseChart()
       this.chart = instance
     },
-    destroyChart () {
-      if (this.chart && this.chart.destroy) this.chart.destroy()
+    releaseChart () {
+      const chart = this.chart
       this.chart = null
+      if (chart && chart.destroy) chart.destroy()
     },
-    resize () {
-      if (this.chart && this.chart.resize) this.chart.resize()
-    }
+    resize () { if (this.chart && this.chart.resize) this.chart.resize() }
+  },
+  beforeDestroy () {
+    this.chartGeneration += 1
+    this.releaseChart()
   }
 }
 </script>
+
+<style>
+.analytics-chart { min-width: 100%; min-height: 120px; }
+</style>

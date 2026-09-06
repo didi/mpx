@@ -1,43 +1,32 @@
 <template>
-  <view class="feed-page">
-    <view class="category-bar">
-      <scroll-view class="category-scroll" scroll-x>
-        <view class="categories">
-          <text
-            wx:for="{{categories}}"
-            wx:key="id"
-            class="category {{item.id == activeCategoryId ? 'active' : ''}}"
-            data-category-id="{{item.id}}"
-            bindtap="selectCategory"
-          >{{item.name}}</text>
-        </view>
-      </scroll-view>
-    </view>
-
-    <scroll-view
-      class="feed-scroll"
-      scroll-y
-      binddragstart="onDragStart"
-      binddragging="onDragging"
-      binddragend="onDragEnd"
-      bindtouchstart="onDragStart"
-      bindtouchmove="onDragging"
-      bindtouchend="onDragEnd"
-      bindtouchcancel="onDragEnd"
-    >
-      <view class="feed-content">
-        <view wx:for="{{products}}" wx:key="id" class="product">
-          <image
-            class="product-image"
-            src="{{item.image}}"
-            mode="widthFix"
-            bindload="onImageLoad"
-            binderror="onImageError"
-          />
-          <product-video wx:if="{{item.video}}" product="{{item}}" />
-        </view>
+  <view
+    class="feed-page"
+    bindtouchstart="onTouchStart"
+    bindtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
+    bindtouchcancel="onTouchEnd"
+  >
+    <view class="feed-content">
+      <view class="categories">
+        <text
+          wx:for="{{categories}}"
+          wx:key="id"
+          class="category {{item.id === activeCategoryId ? 'category-active' : ''}}"
+          data-category-id="{{item.id}}"
+          bindtap="selectCategory"
+        >{{item.name}}</text>
       </view>
-    </scroll-view>
+
+      <view wx:for="{{products}}" wx:key="id" class="product">
+        <image
+          class="product-image"
+          src="{{item.image}}"
+          mode="widthFix"
+          bindload="onImageLoad"
+        />
+        <product-video wx:if="{{item.video}}" product="{{item}}" />
+      </view>
+    </view>
 
     <view class="fixed-cart" bindtap="openCart">购物车 {{cartCount}}</view>
   </view>
@@ -52,79 +41,52 @@ createPage({
     products: [],
     activeCategoryId: '',
     cartCount: 2,
-    imageLoadVersion: 0
+    imagesLoaded: 0,
+    dragging: false
   },
   async onLoad () {
     const { data } = await mpx.request({ url: '/api/feed' })
-    const categories = data.categories || []
-    this.setData({
-      categories,
-      products: data.products || [],
-      activeCategoryId: categories.length ? categories[0].id : ''
-    })
+    this.categories = data.categories || []
+    this.products = data.products || []
+    if (this.categories.length) this.activeCategoryId = this.categories[0].id
   },
   methods: {
-    getDragPoint (event, end = false) {
-      const touches = end ? event.changedTouches : event.touches
-      const touch = touches && touches[0]
-      if (touch) return { x: touch.clientX, y: touch.clientY }
-      const detail = event.detail || {}
-      if (typeof detail.x === 'number' && typeof detail.y === 'number') {
-        return { x: detail.x, y: detail.y }
-      }
-      return null
-    },
     selectCategory (event) {
-      const categoryId = event.currentTarget.dataset.categoryId
-      this.setData({ activeCategoryId: categoryId })
+      this.activeCategoryId = event.currentTarget.dataset.categoryId
     },
     onImageLoad () {
-      // Updating the bound content makes Web recalculate scroll-view's
-      // content height after an image changes its width-fixed height.
-      this.setData({ imageLoadVersion: this.data.imageLoadVersion + 1 })
+      // Keep this reactive so Web recalculates the natural document layout
+      // after images that arrive after the feed request.
+      this.imagesLoaded += 1
     },
-    onImageError () {
-      this.setData({ imageLoadVersion: this.data.imageLoadVersion + 1 })
+    onTouchStart (event) {
+      const touch = event.touches && event.touches[0]
+      if (!touch) return
+      this.touchStartX = touch.clientX
+      this.touchStartY = touch.clientY
+      this.dragging = true
     },
-    onDragStart (event) {
-      const point = this.getDragPoint(event)
-      if (!point) return
-      this.dragState = {
-        startX: point.x,
-        startY: point.y,
-        lastX: point.x,
-        lastY: point.y,
-        horizontal: false
-      }
+    onTouchMove (event) {
+      if (!this.dragging) return
+      const touch = event.touches && event.touches[0]
+      if (!touch) return
+      this.touchDeltaX = touch.clientX - this.touchStartX
+      this.touchDeltaY = touch.clientY - this.touchStartY
     },
-    onDragging (event) {
-      if (!this.dragState) return
-      const point = this.getDragPoint(event)
-      if (!point) return
-      const deltaX = point.x - this.dragState.startX
-      const deltaY = point.y - this.dragState.startY
-      this.dragState.lastX = point.x
-      this.dragState.lastY = point.y
-      this.dragState.horizontal = Math.abs(deltaX) > Math.abs(deltaY)
-    },
-    onDragEnd (event) {
-      if (!this.dragState) return
-      const point = this.getDragPoint(event, true) || {
-        x: this.dragState.lastX,
-        y: this.dragState.lastY
-      }
-      const deltaX = point.x - this.dragState.startX
-      const horizontal = this.dragState.horizontal
-      this.dragState = null
-      if (!horizontal || Math.abs(deltaX) < 48) return
+    onTouchEnd () {
+      if (!this.dragging) return
+      const deltaX = this.touchDeltaX || 0
+      const deltaY = this.touchDeltaY || 0
+      this.dragging = false
+      this.touchDeltaX = 0
+      this.touchDeltaY = 0
+      if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY)) return
 
-      const index = this.data.categories.findIndex(item => item.id == this.data.activeCategoryId)
-      const nextIndex = Math.max(0, Math.min(
-        this.data.categories.length - 1,
-        index + (deltaX < 0 ? 1 : -1)
-      ))
-      const nextCategory = this.data.categories[nextIndex]
-      if (nextCategory) this.setData({ activeCategoryId: nextCategory.id })
+      const currentIndex = this.categories.findIndex(item => item.id === this.activeCategoryId)
+      const nextIndex = currentIndex + (deltaX < 0 ? 1 : -1)
+      if (nextIndex >= 0 && nextIndex < this.categories.length) {
+        this.activeCategoryId = this.categories[nextIndex].id
+      }
     },
     openCart () {
       mpx.navigateTo({ url: '/pages/cart/index' })
@@ -142,15 +104,29 @@ createPage({
 </script>
 
 <style scoped>
-.feed-page { height: 100%; display: flex; flex-direction: column; }
-.category-bar { flex-shrink: 0; background: #fff; z-index: 10; }
-.category-scroll { white-space: nowrap; }
-.categories { display: flex; min-height: 88rpx; align-items: center; }
-.category { flex-shrink: 0; padding: 24rpx; color: #666; }
-.category.active { color: #111; font-weight: bold; }
-.feed-scroll { flex: 1; min-height: 0; }
-.feed-content { min-height: 100%; }
+.feed-page { min-height: 100vh; padding-bottom: 136rpx; }
+.feed-content { min-height: 100vh; }
+.categories {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: #fff;
+}
+.category { flex: 0 0 auto; padding: 28rpx 24rpx; color: #666; }
+.category-active { color: #111; font-weight: 600; }
 .product { padding: 24rpx; }
 .product-image { display: block; width: 100%; }
-.fixed-cart { position: fixed; right: 24rpx; bottom: 40rpx; z-index: 20; }
+.fixed-cart {
+  position: fixed;
+  right: 24rpx;
+  bottom: 40rpx;
+  z-index: 20;
+  padding: 20rpx 28rpx;
+  border-radius: 999rpx;
+  background: #111;
+  color: #fff;
+}
 </style>

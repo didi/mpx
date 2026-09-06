@@ -114,8 +114,8 @@ createPage({
     },
     choosePlace () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 宿主明确位置选择协议后接入。
-        wx.showToast({ title: 'Web 暂不支持选择位置', icon: 'none' })
+        // TODO(web): 待 Web 宿主明确位置选择协议后接入。
+        wx.showToast({ title: 'Web 端暂不支持选择位置', icon: 'none' })
         return
       }
       wx.chooseLocation({
@@ -127,8 +127,8 @@ createPage({
     openPlace () {
       if (!this.place.latitude || !this.place.longitude) return
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 宿主明确地图查看协议后接入。
-        wx.showToast({ title: 'Web 暂不支持查看地图', icon: 'none' })
+        // TODO(web): 待 Web 宿主明确地图查看协议后接入。
+        wx.showToast({ title: 'Web 端暂不支持查看地图', icon: 'none' })
         return
       }
       wx.openLocation({
@@ -140,8 +140,8 @@ createPage({
     },
     choosePhoto () {
       if (__mpx_mode__ === 'web') {
-        // TODO: 待 Web 宿主明确媒体选择协议后接入。
-        wx.showToast({ title: 'Web 暂不支持选择图片', icon: 'none' })
+        // TODO(web): 待 Web 宿主明确媒体选择与上传协议后接入。
+        wx.showToast({ title: 'Web 端暂不支持选择图片', icon: 'none' })
         return
       }
       wx.chooseMedia({

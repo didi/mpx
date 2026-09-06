@@ -1,0 +1,102 @@
+{
+  "eval_id": 10,
+  "eval_name": "ssr-hydrate-async-package",
+  "configuration": "no_skill",
+  "run_number": 3,
+  "model_grading_fingerprint": "d5d7674f1ebfe5a95ca4dc78a95de3785e1e5fd3019eb27591c085964526e6b3",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 99031
+  },
+  "expectations": [
+    {
+      "id": "x0",
+      "text": "onAppInit 为每次 SSR 请求创建并返回独立 Pinia，不复用模块级请求状态",
+      "category": "ssr-isolation",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx: onAppInit 内直接 return { pinia: createPinia() }，没有模块级 const pinia，因此每次应用/SSR 请求可获得独立 Pinia。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "x1",
+      "text": "serverPrefetch 返回 Promise 并沿调用链传递 this.$ssrContext，服务端等待文章和首屏推荐数据",
+      "category": "ssr-prefetch",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/detail.mpx: serverPrefetch () { return this.loadArticle(this.$route.query.id, this.$ssrContext) }；loadArticle 将 requestContext 传给 useArticleStore(...).loadArticle；outputs/src/stores/article.js 中 await fetchArticle(id, requestContext) 后同时写入 article 与 recommendations。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "x2",
+      "text": "文章 store 同时维护 articleId、loaded 与请求代际；同 ID 注水可复用，新 ID 在 await 前失效旧缓存，晚到响应不能覆盖当前文章",
+      "category": "ssr-hydration",
+      "passed": false,
+      "evidence": "outputs/src/stores/article.js 维护 activeArticleId 和 requestSequence，但没有 loaded 状态；新 ID 请求前只设置 this.activeArticleId = id，没有在 await fetchArticle 前清空 this.article/this.recommendations 或标记未加载，旧缓存未被显式失效。晚到响应用 sequence 与 activeArticleId 做了保护，但断言要求未完整满足。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "x3",
+      "text": "服务端与客户端首屏结构不由 Math.random、Date.now、new Date、视口或浏览器对象决定；浏览器专属节点只在 mounted/ready 后出现",
+      "category": "ssr-hydration",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/detail.mpx 已删除 renderNonce: Math.random()，首屏 data 中 isClientReady 初始为 false；share-toolbar 使用 wx:if=\"{{isClientReady}}\"，并只在 onReady 中设置 true，未见 Date.now/new Date/视口或浏览器对象决定 SSR 首屏结构。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "x4",
+      "text": "自定义 onSSRAppCreated 若保留，完整处理 router.push(context.url)、router.onReady 成功/错误、context.state 写入并返回 app；不需要时删除以使用框架默认流程",
+      "category": "ssr-bootstrap",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx 已删除自定义 onSSRAppCreated，仅保留 onAppInit，因此使用框架默认 SSR 流程。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "x5",
+      "text": "异步推荐组件与分包保持有效，Web 配置同时启用 history、useSSR，并让 routeConfig.base 与 publicPath 对齐 /content/",
+      "category": "web-deployment",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/detail.mpx 仍声明 usingComponents: recommend-list 指向 ../../packageRecommend/components/recommend-list?root=packageRecommend，componentPlaceholder 保留；outputs/src/app.mpx packages 保留 packageRecommend；outputs/vue.config.js 设置 publicPath: '/content/'、useSSR: true、routeConfig: { mode: 'history', base: '/content/' }。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "x6",
+      "text": "同构 article service 返回 Promise，服务端只从调用链传入的当前 SSR 上下文的 req 解析 origin，浏览器和小程序使用相对地址，不依赖特定参数名、不访问浏览器全局或硬编码 localhost",
+      "category": "ssr-request",
+      "passed": false,
+      "evidence": "outputs/src/services/article.js 的 fetchArticle 返回 Promise，但浏览器分支使用 window.location.origin 拼绝对地址，不是相对地址；小程序无 window 时会走 getServerOrigin(requestContext || {})，默认 host 为 'localhost:3000'，存在硬编码 localhost；服务端 origin 还可来自 requestContext.origin/protocol/host，不是只从当前 SSR 上下文 req 解析。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "x7",
+      "text": "微信小程序 onLoad 文章加载、收藏、推荐展示和文章跳转不受 window 守卫阻断",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/article/detail.mpx: onLoad (query) { if (typeof window !== 'undefined') this.loadArticle(query.id) }，微信小程序中 window 不存在，文章不会在 onLoad 加载；recommend-list 又被 wx:if=\"{{isClientReady}}\" 包裹，而 onReady 也只有 typeof window !== 'undefined' 时才置 true，小程序推荐展示会被阻断。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言存在一个可能影响结论的缺口：x1/x5 检查了推荐数据预取和异步分包配置，但没有明确要求推荐组件必须参与 SSR 首屏实际渲染，因此候选可以通过把推荐列表延迟到客户端 ready 来规避 hydrate 风险。"
+    ],
+    "overall": "候选修复了独立 Pinia、serverPrefetch 返回链路、SSR 钩子删除和 /content/ history SSR 配置，但文章 store 的 loaded/旧缓存失效不完整，article service 不满足同构相对地址要求，并且 window 守卫破坏了微信小程序加载与推荐展示。"
+  }
+}

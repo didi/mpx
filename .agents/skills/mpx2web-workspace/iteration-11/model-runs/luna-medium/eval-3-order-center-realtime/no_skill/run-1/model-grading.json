@@ -1,0 +1,142 @@
+{
+  "eval_id": 3,
+  "eval_name": "order-center-realtime",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "model_grading_fingerprint": "5bb6e9e4312ff6120027b22582ed2c4fae813a05975fef573360e204617c7acd",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 100520
+  },
+  "expectations": [
+    {
+      "id": "r0",
+      "text": "微信小程序继续保留 WXS 高频手势路径",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx 保留 <script module=\"gesture\" lang=\"wxs\">，模板 touchstart/touchmove/touchend/touchcancel 仍绑定 gesture.onTouchStart/onTouchMove/onTouchEnd/onTouchCancel。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r1",
+      "text": "start、move、end、cancel 均显式使用 @wx WXS 与同节点 @web 组件实例方法成对绑定，不用动态表达式混合 WXS 函数对象",
+      "category": "web-template",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx 仅有 catchtouchstart=\"{{gesture.onTouchStart}}\" 等 WXS 动态表达式绑定，没有 start/move/end/cancel 的 @wx WXS 与同节点 @web 组件实例方法成对绑定。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r2",
+      "text": "Web 手势状态按组件实例隔离，并完整实现 -96 位移与 -48 展开阈值",
+      "category": "web-script",
+      "passed": false,
+      "evidence": "outputs/src/components/swipe-order-item.mpx 只在 WXS 中用全局 states 按 orderId 记录手势状态，并实现 -96/-48；没有 @web 组件实例触摸方法，因此 Web 手势状态隔离与阈值链路证据不足。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r3",
+      "text": "touchcancel 必须回弹；一次有效滑动只抑制紧随其后的一次合成 tap，不能用时间窗吞掉后续合法点击；禁用态阻止选择和删除",
+      "category": "web-interaction",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx 的 onTouchCancel 调用 cancelSwipe，cancelSwipe 将 offsetX 设为 0；finishSwipe 按 moved 设置 tapBlocked，selectOrder 遇到 tapBlocked 后立即清除并返回；selectOrder/removeOrder 均检查 disabled，删除按钮也 disabled=\"{{disabled}}\"。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r4",
+      "text": "物流通道使用 connectSocket 返回的 SocketTask，而不是 Web 不支持的全局 Socket API",
+      "category": "web-api",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx 调用 wx.connectSocket(...) 后未保存返回的 SocketTask，仍使用 wx.onSocketOpen/wx.onSocketMessage/wx.closeSocket/wx.sendSocketMessage 等全局 Socket API。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r5",
+      "text": "SocketTask 的 open、message、error、close 回调都校验捕获任务仍为当前任务",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx 的 open/message/error/close 回调使用全局 wx.onSocketOpen/onSocketMessage/onSocketError/onSocketClose，只校验 generation/memberId/alive，没有校验捕获的 SocketTask 是否仍为当前任务。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r6",
+      "text": "重连与卸载先废弃当前任务身份再关闭旧任务",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx 的 invalidateSocket 先递增 socketGeneration 再调用 wx.closeSocket，但没有保存或关闭 connectSocket 返回的旧 SocketTask，无法保证废弃并关闭的是具体旧任务。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r7",
+      "text": "每次 send 前都使用本次捕获的 SocketTask 同时校验当前任务身份与 readyState === task.OPEN，不能只依赖可能滞后的 connected 布尔值",
+      "category": "web-concurrency",
+      "passed": false,
+      "evidence": "outputs/src/components/logistics-channel.mpx 的 sendHeartbeat 只检查 this.connected，然后调用 wx.sendSocketMessage；没有使用本次捕获的 SocketTask，也没有校验当前任务身份和 readyState === task.OPEN。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8a",
+      "text": "订单状态筛选入口和筛选结果更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx 保留 statusTabs 筛选入口 bindtap=\"switchStatus(item.key)\"；switchStatus 更新 activeStatus 并调用 fetchOrders；fetchOrders 请求 /api/orders 并在 success 中更新 orders 和 statusTabs。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8b",
+      "text": "订单详情入口与原有详情跳转链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/pages/orders/index.mpx 中 swipe-order-item 保留 bindselect=\"openOrder\"，openOrder 跳转 /pages/orders/detail?id=${detail.orderId}；outputs/src/components/swipe-order-item.mpx 的 selectOrder 触发 select 事件并传 orderId。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8c",
+      "text": "订单删除或撤销操作及其列表状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/swipe-order-item.mpx 的 removeOrder 触发 remove 事件；outputs/src/pages/orders/index.mpx 保留 bindremove=\"removeOrder\"，确认后 DELETE /api/orders/${detail.orderId}，成功后 filter 更新 orders。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "r8d",
+      "text": "物流入口、SocketTask 消息接收与物流状态更新链路保持完整",
+      "category": "business-regression",
+      "passed": false,
+      "evidence": "outputs/src/pages/orders/index.mpx 保留 logistics-channel 和 handleLogisticsMessage 更新订单物流字段；但 outputs/src/components/logistics-channel.mpx 使用全局 wx.onSocketMessage 接收消息，没有 SocketTask.onMessage 消息接收链路。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "r3 对“紧随其后的一次合成 tap”的可判定条件不够精确；当前实现的 tapBlocked 只在 selectOrder 中清除，若滑动后先点删除或其他区域，再点详情，是否应判为吞掉后续合法点击存在口径偏差。"
+    ],
+    "overall": "小程序 WXS 路径和订单业务链路大体保留，但 Web 手势分支缺失，物流通道仍基于全局 Socket API，未解决 SocketTask 身份校验与旧事件污染问题。"
+  }
+}

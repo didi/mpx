@@ -27,65 +27,101 @@ createComponent({
   },
   ready () {
     this.sdkDetached = false
-    this.refreshTracker()
+    this.trackerGeneration = 0
+    this.trackerProductId = ''
+    this.trackerInstance = null
+    this.exposureObserver = null
+    this.syncTracker()
   },
   updated () {
-    this.refreshTracker()
-  },
-  detached () {
-    this.sdkDetached = true
-    this.trackerVersion = (this.trackerVersion || 0) + 1
-    this.destroyTracker()
+    this.syncTracker()
   },
   methods: {
-    getTrackerSignature () {
-      return `${this.productId || ''}:${(this.items || []).map(item => item.id).join(',')}`
+    isCurrentTracker (generation, productId) {
+      return __mpx_mode__ === 'web' &&
+        typeof window !== 'undefined' &&
+        !this.sdkDetached &&
+        this.trackerGeneration === generation &&
+        this.trackerProductId === productId
     },
-    destroyTracker () {
-      if (this.recommendationObserver) {
-        this.recommendationObserver.disconnect()
-        this.recommendationObserver = null
-      }
-      if (this.tracker) {
-        this.tracker.destroy()
-        this.tracker = null
-      }
+    releaseExposureObserver () {
+      const observer = this.exposureObserver
+      this.exposureObserver = null
+      if (observer) observer.disconnect()
     },
-    async refreshTracker () {
+    releaseTrackerInstance () {
+      const instance = this.trackerInstance
+      this.trackerInstance = null
+      if (instance && instance.destroy) instance.destroy()
+    },
+    releaseTracker () {
+      this.releaseExposureObserver()
+      this.releaseTrackerInstance()
+    },
+    syncTracker () {
       if (__mpx_mode__ !== 'web' || typeof window === 'undefined' || this.sdkDetached) return
 
-      const signature = this.getTrackerSignature()
-      if (signature === this.trackerSignature) return
-      this.trackerSignature = signature
-      const trackerVersion = (this.trackerVersion || 0) + 1
-      this.trackerVersion = trackerVersion
-      this.destroyTracker()
-
-      const sdkModule = await import('@business/product-exposure-web')
-      if (this.sdkDetached || trackerVersion !== this.trackerVersion) return
-      const exposureSdk = sdkModule.default || sdkModule
-      const tracker = await exposureSdk.create({ productId: this.productId })
-      if (this.sdkDetached || trackerVersion !== this.trackerVersion) {
-        tracker.destroy()
+      const productId = this.productId
+      if (!productId) {
+        this.trackerGeneration += 1
+        this.trackerProductId = ''
+        this.releaseTracker()
+        return
+      }
+      if (this.trackerProductId === productId) {
+        if (this.trackerInstance) this.bindExposureObserver(this.trackerGeneration, productId)
         return
       }
 
-      this.tracker = tracker
-      const root = this.$el
-      if (!root) return
-      this.recommendationObserver = new IntersectionObserver((entries) => {
-        if (this.sdkDetached || trackerVersion !== this.trackerVersion) return
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            tracker.track('recommendation_exposure', {
-              productId: this.productId,
-              recommendationId: entry.target.dataset.productId
-            })
-          }
+      this.trackerGeneration += 1
+      this.trackerProductId = productId
+      this.releaseTracker()
+      this.initTracker(this.trackerGeneration, productId)
+    },
+    async initTracker (generation, productId) {
+      const sdkModule = await import('@business/product-exposure-web')
+      if (!this.isCurrentTracker(generation, productId)) return
+
+      const exposureSdk = sdkModule.default || sdkModule
+      const instance = await exposureSdk.create({ productId })
+      if (!this.isCurrentTracker(generation, productId)) {
+        if (instance && instance.destroy) instance.destroy()
+        return
+      }
+
+      this.releaseTrackerInstance()
+      this.trackerInstance = instance
+      this.bindExposureObserver(generation, productId)
+    },
+    bindExposureObserver (generation, productId) {
+      this.releaseExposureObserver()
+      const tracker = this.trackerInstance
+      if (!tracker || !this.isCurrentTracker(generation, productId) || typeof IntersectionObserver === 'undefined') return
+
+      this.$nextTick(() => {
+        if (!this.isCurrentTracker(generation, productId) || this.trackerInstance !== tracker) return
+
+        const root = this.$el
+        if (!root || !root.querySelectorAll) return
+        const observer = new IntersectionObserver((entries) => {
+          if (!this.isCurrentTracker(generation, productId) ||
+            this.trackerInstance !== tracker || this.exposureObserver !== observer) return
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              tracker.track('recommendation_exposure', {
+                productId,
+                recommendationId: entry.target.dataset.productId
+              })
+            }
+          })
         })
-      })
-      root.querySelectorAll('.recommendation-card').forEach((element) => {
-        this.recommendationObserver.observe(element)
+
+        if (!this.isCurrentTracker(generation, productId) || this.trackerInstance !== tracker) {
+          observer.disconnect()
+          return
+        }
+        this.exposureObserver = observer
+        root.querySelectorAll('.recommendation-card').forEach((element) => observer.observe(element))
       })
     },
     openProduct (productId) {
@@ -93,6 +129,12 @@ createComponent({
         url: `/packageProduct/pages/detail/index?id=${productId}`
       })
     }
+  },
+  detached () {
+    this.sdkDetached = true
+    this.trackerGeneration = (this.trackerGeneration || 0) + 1
+    this.trackerProductId = ''
+    this.releaseTracker()
   }
 })
 </script>

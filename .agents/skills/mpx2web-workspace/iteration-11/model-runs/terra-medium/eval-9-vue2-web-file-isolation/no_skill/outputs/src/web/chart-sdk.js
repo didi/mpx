@@ -2,33 +2,57 @@ function normaliseMetrics (metrics) {
   return Array.isArray(metrics) ? metrics : []
 }
 
-export async function createChart (element, metrics) {
-  // Simulate an asynchronously loaded chart package while keeping ownership local.
-  await Promise.resolve()
-  if (!element) throw new Error('A chart element is required')
+function createInactiveChart () {
+  return {
+    update: function () {},
+    resize: function () {},
+    destroy: function () {}
+  }
+}
 
-  let destroyed = false
-  let currentMetrics = normaliseMetrics(metrics)
-  const render = (nextMetrics) => {
-    if (destroyed) return
-    currentMetrics = normaliseMetrics(nextMetrics)
-    const items = currentMetrics
-    const max = Math.max(1, ...items.map((item) => Number(item.value) || 0))
-    element.innerHTML = items.map((item) => {
-      const value = Number(item.value) || 0
-      const width = Math.max(0, Math.min(100, (value / max) * 100))
-      return '<div class="analytics-chart-bar" aria-label="' + String(item.label) + ': ' + String(item.value) + '">' +
-        '<span>' + String(item.label) + '</span><i style="width:' + width + '%"></i><b>' + String(item.value) + '</b></div>'
-    }).join('')
+export async function createChart (element, metrics, options) {
+  var config = options || {}
+  // A real chart library can resolve after navigation.  Keep this boundary async
+  // and let the caller invalidate it before it is allowed to touch the DOM.
+  await Promise.resolve()
+  if (!element || (config.isActive && !config.isActive())) return createInactiveChart()
+
+  var destroyed = false
+  var currentMetrics = []
+  var onClick = function (event) {
+    var target = event.target
+    while (target && target !== element && (target.nodeType !== 1 || !target.hasAttribute('data-metric-key'))) target = target.parentNode
+    if (!target || target === element || target.nodeType !== 1 || destroyed || !config.onSelect) return
+    config.onSelect({ key: target.getAttribute('data-metric-key') })
   }
 
+  function render (nextMetrics) {
+    if (destroyed) return
+    currentMetrics = normaliseMetrics(nextMetrics)
+    element.textContent = ''
+    var fragment = document.createDocumentFragment()
+    currentMetrics.forEach(function (metric) {
+      var button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'analytics-chart__metric'
+      button.setAttribute('data-metric-key', metric.key)
+      button.textContent = String(metric.label) + ':' + String(metric.value)
+      fragment.appendChild(button)
+    })
+    element.appendChild(fragment)
+  }
+
+  element.addEventListener('click', onClick)
   render(metrics)
   return {
     update: render,
-    resize: function () { render(currentMetrics) },
+    resize: function () {},
     destroy: function () {
+      if (destroyed) return
       destroyed = true
+      element.removeEventListener('click', onClick)
       element.textContent = ''
+      currentMetrics = []
     }
   }
 }
