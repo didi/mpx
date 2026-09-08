@@ -3,9 +3,10 @@
 
 const fs = require('fs')
 const path = require('path')
+const reviewMarkdown = require('./review-markdown')
 
-const protocolVersion = '2.0.0'
-const legacyProtocolVersions = ['1.0.0']
+const protocolVersion = '3.0.0'
+const legacyProtocolVersions = ['1.0.0', '2.0.0']
 const phases = [
   'plan_drafting',
   'plan_reviewing',
@@ -115,6 +116,7 @@ function canonicalDirectory (dir, expected, label) {
 
 function resolveReviewArtifact (file) {
   const resolvedFile = path.resolve(file)
+  if (path.extname(resolvedFile) !== '.md') fail('Review artifact must be a Markdown file: ' + resolvedFile)
   const reviewsDir = path.dirname(resolvedFile)
   const workspace = path.dirname(reviewsDir)
   const canonicalWorkspace = canonicalDirectory(workspace, '', 'Task workspace')
@@ -130,16 +132,20 @@ function resolveReviewArtifact (file) {
 }
 
 function reviewArtifactPath (taskId, kind, round) {
-  return resolveReviewArtifact(path.join(
-    taskDir(taskId),
-    'reviews',
-    kind + '-review-' + round + '.json'
-  )).file
+  return resolveReviewArtifact(path.join(taskDir(taskId), 'reviews', kind + '-review-' + round + '.md')).file
 }
 
 function readReviewArtifact (file) {
   const artifact = resolveReviewArtifact(file)
   return readRegularText(artifact.file, 'Review artifact')
+}
+
+function parseReviewArtifact (file) {
+  return reviewMarkdown.parse(readReviewArtifact(file))
+}
+
+function formatReviewArtifact (review) {
+  return reviewMarkdown.render(review)
 }
 
 function writeText (file, content) {
@@ -231,13 +237,6 @@ function validateReviewObject (review) {
   if (review.status === 'approved' && findings.length) {
     errors.push('approved review must have no findings')
   }
-  if (review.status === 'approved' && review.evidence && review.evidence.diffScope &&
-    Array.isArray(review.evidence.diffScope.unexpectedDispositions) &&
-    review.evidence.diffScope.unexpectedDispositions.some(function (item) {
-      return item && item.disposition === 'blocking'
-    })) {
-    errors.push('approved review must not have blocking unexpected path dispositions')
-  }
   if (review.status === 'changes_requested') {
     const blocking = findings.some(function (finding) {
       return finding && finding.severity !== 'nit'
@@ -262,163 +261,14 @@ function validateStringArray (value, field, errors, requireItem) {
   })
 }
 
-function validateObjectArray (value, field, required, errors) {
-  if (!Array.isArray(value)) {
-    errors.push(field + ' must be an array')
-    return
-  }
-  if (!value.length) errors.push(field + ' must not be empty')
-  value.forEach(function (item, index) {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) {
-      errors.push(field + '[' + index + '] must be an object')
-      return
-    }
-    validateAllowedKeys(item, required, field + '[' + index + ']', errors)
-    required.forEach(function (key) {
-      if (!isNonEmptyString(item[key])) errors.push(field + '[' + index + '].' + key + ' must be a non-empty string')
-    })
-  })
-}
-
 function validateEvidence (evidence, errors) {
   if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) {
     errors.push('evidence must be an object')
     return
   }
-  validateAllowedKeys(evidence, [
-    'reviewedPaths',
-    'tracedSymbols',
-    'checks',
-    'counterexamples',
-    'diffScope',
-    'residualRisks',
-    'reviewerConfig'
-  ], 'evidence', errors)
+  validateAllowedKeys(evidence, ['reviewedPaths', 'residualRisks'], 'evidence', errors)
   validateStringArray(evidence.reviewedPaths, 'evidence.reviewedPaths', errors, true)
-  validateObjectArray(evidence.checks, 'evidence.checks', ['command', 'result'], errors)
-  validateObjectArray(evidence.counterexamples, 'evidence.counterexamples', ['scenario', 'result'], errors)
   validateStringArray(evidence.residualRisks, 'evidence.residualRisks', errors, false)
-  if (!Array.isArray(evidence.tracedSymbols)) {
-    errors.push('evidence.tracedSymbols must be an array')
-  } else {
-    if (!evidence.tracedSymbols.length) errors.push('evidence.tracedSymbols must not be empty')
-    evidence.tracedSymbols.forEach(function (item, index) {
-      const field = 'evidence.tracedSymbols[' + index + ']'
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        errors.push(field + ' must be an object')
-        return
-      }
-      validateAllowedKeys(item, ['symbol', 'path', 'related'], field, errors)
-      ;['symbol', 'path'].forEach(function (key) {
-        if (!isNonEmptyString(item[key])) errors.push(field + '.' + key + ' must be a non-empty string')
-      })
-      validateStringArray(item.related, field + '.related', errors, true)
-    })
-  }
-  const diffScope = evidence.diffScope
-  if (!diffScope || typeof diffScope !== 'object' || Array.isArray(diffScope)) {
-    errors.push('evidence.diffScope must be an object')
-  } else {
-    validateAllowedKeys(diffScope, [
-      'cumulativeDiff',
-      'roundDiff',
-      'unexpectedPaths',
-      'unexpectedDispositions'
-    ], 'evidence.diffScope', errors)
-    ;['cumulativeDiff', 'roundDiff'].forEach(function (key) {
-      if (!isNonEmptyString(diffScope[key])) errors.push('evidence.diffScope.' + key + ' must be a non-empty string')
-    })
-    validateStringArray(diffScope.unexpectedPaths, 'evidence.diffScope.unexpectedPaths', errors, false)
-    const dispositions = Array.isArray(diffScope.unexpectedDispositions) ? diffScope.unexpectedDispositions : []
-    if (!Array.isArray(diffScope.unexpectedDispositions)) {
-      errors.push('evidence.diffScope.unexpectedDispositions must be an array')
-    }
-    const dispositionPaths = new Set()
-    dispositions.forEach(function (item, index) {
-      const field = 'evidence.diffScope.unexpectedDispositions[' + index + ']'
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        errors.push(field + ' must be an object')
-        return
-      }
-      validateAllowedKeys(item, ['path', 'disposition', 'reason'], field, errors)
-      ;['path', 'reason'].forEach(function (key) {
-        if (!isNonEmptyString(item[key])) errors.push(field + '.' + key + ' must be a non-empty string')
-      })
-      if (!['included', 'excluded', 'blocking'].includes(item.disposition)) {
-        errors.push(field + '.disposition must be included, excluded, or blocking')
-      }
-      if (dispositionPaths.has(item.path)) errors.push(field + '.path must be unique')
-      dispositionPaths.add(item.path)
-    })
-    if (Array.isArray(diffScope.unexpectedPaths)) {
-      diffScope.unexpectedPaths.forEach(function (unexpectedPath) {
-        if (!dispositionPaths.has(unexpectedPath)) {
-          errors.push('unexpected path requires disposition: ' + unexpectedPath)
-        }
-      })
-      dispositions.forEach(function (item) {
-        if (item && !diffScope.unexpectedPaths.includes(item.path)) {
-          errors.push('unexpected disposition path is not listed: ' + item.path)
-        }
-      })
-    }
-  }
-  const config = evidence.reviewerConfig
-  if (!config || typeof config !== 'object' || Array.isArray(config)) {
-    errors.push('evidence.reviewerConfig must be an object')
-  } else {
-    validateAllowedKeys(config, ['model', 'reasoningEffort', 'sandboxMode', 'source'], 'evidence.reviewerConfig', errors)
-    ;['model', 'reasoningEffort', 'sandboxMode', 'source'].forEach(function (key) {
-      if (!isNonEmptyString(config[key])) errors.push('evidence.reviewerConfig.' + key + ' must be a non-empty string')
-    })
-    if (config.sandboxMode !== 'read-only') {
-      errors.push('evidence.reviewerConfig.sandboxMode must be read-only')
-    }
-  }
-}
-
-function validateReviewScope (review, scope, expectedRound) {
-  const errors = []
-  if (!scope || typeof scope !== 'object' || Array.isArray(scope)) {
-    return ['scope metadata must be an object']
-  }
-  if (expectedRound !== undefined && review.round !== expectedRound) {
-    errors.push('review round must equal expected round ' + expectedRound)
-  }
-  if (expectedRound !== undefined && scope.round !== expectedRound) {
-    errors.push('scope metadata round must equal expected round ' + expectedRound)
-  }
-  if (!Array.isArray(scope.unexpectedPaths)) return ['scope metadata unexpectedPaths must be an array']
-  const actual = review && review.evidence && review.evidence.diffScope && review.evidence.diffScope.unexpectedPaths
-  if (!Array.isArray(actual)) return ['evidence.diffScope.unexpectedPaths must be an array']
-  const expectedPaths = Array.from(new Set(scope.unexpectedPaths)).sort()
-  const actualPaths = Array.from(new Set(actual)).sort()
-  if (JSON.stringify(actualPaths) !== JSON.stringify(expectedPaths)) {
-    errors.push('evidence.diffScope.unexpectedPaths must match scope metadata')
-  }
-  if (expectedRound !== undefined && review && review.evidence && review.evidence.diffScope) {
-    const diffScope = review.evidence.diffScope
-    if (diffScope.cumulativeDiff !== 'diffs/code-diff-' + expectedRound + '.patch') {
-      errors.push('evidence.diffScope.cumulativeDiff must reference expected round ' + expectedRound)
-    }
-    if (diffScope.roundDiff !== 'diffs/code-round-' + expectedRound + '.patch') {
-      errors.push('evidence.diffScope.roundDiff must reference expected round ' + expectedRound)
-    }
-  }
-  return errors
-}
-
-function validateLegacyReviewObject (review) {
-  const errors = []
-  if (!review || typeof review !== 'object' || Array.isArray(review)) return ['review must be an object']
-  if (!isPositiveInteger(review.round)) errors.push('round must be a positive integer')
-  if (!reviewStatuses.includes(review.status)) errors.push('status must be approved or changes_requested')
-  if (!isNonEmptyString(review.summary)) errors.push('summary must be a non-empty string')
-  if (!Array.isArray(review.findings)) errors.push('findings must be an array')
-  if (review.status === 'approved' && Array.isArray(review.findings) && review.findings.length) {
-    errors.push('approved review must have no findings')
-  }
-  return errors
 }
 
 module.exports = {
@@ -437,6 +287,8 @@ module.exports = {
   resolveReviewArtifact,
   reviewArtifactPath,
   readReviewArtifact,
+  parseReviewArtifact,
+  formatReviewArtifact,
   writeText,
   readJson,
   writeJson,
@@ -448,7 +300,5 @@ module.exports = {
   relativeToTask,
   isPositiveInteger,
   requireCurrentProtocol,
-  validateReviewObject,
-  validateReviewScope,
-  validateLegacyReviewObject
+  validateReviewObject
 }

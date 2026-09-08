@@ -11,6 +11,10 @@ class Node {
 }
 
 function keepLines(content) {
+  // 同一被剔除分支统一使用首个有效行的缩进，避免深层占位注释被 Stylus
+  // 识别成新的缩进块，导致分支后的同级选择器触发 outdent 解析错误。
+  const matchedIndent = content.match(/^[ \t]*(?=\S)/m)
+  const indent = matchedIndent ? matchedIndent[0] : ''
   return content.replace(/([^\r\n]*)(\r\n|\r|\n|$)/g, (all, line, lineBreak) => {
     if (!all) return ''
     // 空行 / 纯空白行直接保留换行：directive 自身被 blankDirective 抹平后，
@@ -19,7 +23,6 @@ function keepLines(content) {
     // 这里产生的连续空行最多只有 directive 链长度量级（个位数），远低于 stylus
     // lexer 栈溢出阈值，安全。
     if (!line.trim()) return lineBreak
-    const indent = (/^[ \t]*/.exec(line) || [''])[0]
     return `${indent}/* ${STYLE_PAD_PLACEHOLDER} */${lineBreak}`
   })
 }

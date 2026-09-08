@@ -2,6 +2,7 @@ import { walkChildren, parseSelector, error, hasOwn, collectDataset, getByPath }
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { EffectScope } from 'vue'
 import { PausedState } from '../../helper/const'
+import * as perf from '@mpxjs/perf'
 
 const hackEffectScope = () => {
   EffectScope.prototype.pause = function () {
@@ -56,6 +57,17 @@ const hackEffectScope = () => {
 }
 
 export default function install (Vue) {
+  if (__mpx_perf_framework__) {
+    const originalRender = Vue.prototype._render
+    Vue.prototype._render = function (...args) {
+      if (!this.__mpxProxy) return originalRender.apply(this, args)
+      const perfId = perf.scopeStart('instance:render')
+      const result = originalRender.apply(this, args)
+      perf.scopeEnd(perfId)
+      return result
+    }
+  }
+
   const originalWatch = Vue.prototype.$watch
   Vue.prototype.$watch = function (expOrFn, cb, options) {
     if (typeof expOrFn === 'string' && expOrFn.indexOf(',') > -1) {

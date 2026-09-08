@@ -1,6 +1,6 @@
-# RN 运行时按需测速 {#rn-runtime-perf-probe}
+# 跨端运行时按需测速 {#runtime-perf-probe}
 
-Mpx 跨端输出 React Native 时，运行时核心组件（`mpx-view` / `mpx-text` / `mpx-simple-view` / `mpx-simple-text` 等）以及 `useTransformStyle` / `__getStyle` 等公共函数是高频热路径。Hermes Profiler / Flipper 难以直接表达 Mpx 自身的逻辑分段，`@mpxjs/perf` 提供可按构建关闭、关闭态零残留的显式性能探针。
+Mpx 在小程序、Web、React Native 上都有实例初始化、模板执行、生命周期和卸载等框架热路径，平台 Profiler 难以直接表达 Mpx 自身的语义阶段。`@mpxjs/perf` 提供跨端共用、可按构建关闭且关闭态零残留的显式性能探针。
 
 ## 三类统计能力 {#statistics}
 
@@ -56,7 +56,7 @@ module.exports = defineConfig({
 
 | 分组 | 控制对象 | 典型用途 |
 | --- | --- | --- |
-| `framework` | 框架内建探针，如 `view:render:*` / `getStyle:*` | 调试 Mpx 框架自身渲染性能 |
+| `framework` | 框架内建探针，如 `instance:*` / `scheduler:*` / `lifecycle:*` / 基础组件 render | 调试 Mpx 框架自身热路径 |
 | `user` | 业务自定义探针 | 定位业务流程和函数耗时 |
 
 两个分组独立 DCE，但共享同一个录制窗口和 Reporter。
@@ -319,53 +319,40 @@ const chromeEvents = traces.events.map(event => ({
 
 ## 内置框架探针事件 schema {#schema}
 
-现有框架探针继续通过兼容的 `scopeStart/scopeEnd` 采集同步 render 聚合耗时。
+统一指标只描述 Mpx 语义，不使用 `mini:`、`web:`、`rn:` 平台前缀。Reporter 应结合 `__mpx_mode__` 分平台建立基线；不同平台缺少某个阶段时不会产生该指标。现有框架探针继续通过兼容的 `scopeStart/scopeEnd` 采集聚合耗时。
 
-### `mpx-view` {#schema-view}
+### 实例、调度与生命周期 {#schema-instance}
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `view:render:total` | 整个 `forwardRef` 回调 |
-| `view:render:props` | `splitProps` + 解构 + `useHover` |
-| `view:render:style` | `useTransformStyle` + `splitStyle` + 布局和动画 Hook |
-| `view:render:innerProps` | `useInnerProps` |
-| `view:render:createElement` | `wrapWithChildren` + `createElement` 收尾 |
+| 指标 | 小程序 | Web | RN | 边界 |
+| --- | --- | --- | --- | --- |
+| `instance:init` | 是 | 是 | 是 | `beforeCreate` 完成后到 `created` 开始前的实例 state 初始化 |
+| `instance:init:setup` | 是 | 是 | 是 | 用户 `setup(props, context)` 同步调用 |
+| `instance:render` | 是 | 是 | 是 | 平台 render 同步执行；小程序覆盖非 vnode `ReactiveEffect` 主函数，Web 覆盖 Mpx 实例的 Vue `_render`；均从进入到正常返回 |
+| `instance:render:getStyle` | 否 | 否 | 是 | RN `__getStyle` 同步执行 |
+| `instance:render:getStyle:class` | 否 | 否 | 是 | RN class 样式解析 |
+| `instance:render:getStyle:style` | 否 | 否 | 是 | RN inline style 解析 |
+| `instance:unmount` | 是 | 是 | 是 | 前置卸载 hook 完成后的实例核心资源释放 |
+| `scheduler:flush` | 是 | 否 | 是 | 一次 Mpx scheduler 完整 drain，递归新增任务不重复计样本 |
+| `lifecycle:<hook>` | 按支持情况 | 按支持情况 | 按支持情况 | 存在真实 option hook 或组合式 hook 时的一次 Page / Component 生命周期调度 |
+| `lifecycle:app:<hook>` | 按支持情况 | 按支持情况 | 按支持情况 | 一次用户定义的 App 生命周期执行，含用户 mixin、不含内建 mixin |
 
-### `mpx-simple-view` {#schema-simple-view}
+不采集宿主 `setData` 调用到 callback 的异步耗时，该阶段受宿主调度影响。这些指标存在包含关系，不能直接相加。例如 `instance:init:setup` 是 `instance:init` 的子阶段，RN 的 `instance:render:getStyle` 及其 class/style 子阶段包含在 `instance:render` 中。
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `simple-view:render:total` | 整个函数 |
-| `simple-view:render:style` | `splitProps` + `splitStyle` + 样式变换 |
-| `simple-view:render:innerProps` | `useInnerProps` |
-| `simple-view:render:createElement` | `wrapChildren` + `createElement` 收尾 |
+内建低频 mark 节点为：
 
-### `mpx-text` {#schema-text}
+```text
+app:onLaunch:start
+page:onLoad:start
+page:onReady:start
+```
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `text:render:total` | 整个 `forwardRef` 回调 |
-| `text:render:props` | 文本上下文 + props 合并 |
-| `text:render:style` | 样式转换、继承与拆分 |
-| `text:render:innerProps` | `useInnerProps` |
-| `text:render:createElement` | `decode` + `wrapChildren` + `createElement` 收尾 |
+三个节点都在对应生命周期开始前产生。`page:onLoad:start` 和 `page:onReady:start` 的 `info` 均为 `{ route }`，用于标识当前页面。`page:onReady:start` 只表示目标平台开始调度 Mpx `onReady` 对应生命周期，不代表统一的 GPU 首帧或可交互时间。
 
-### `mpx-simple-text` {#schema-simple-text}
+### 基础组件 render {#schema-components}
 
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `simple-text:render:total` | 整个函数 |
-| `simple-text:render:style` | 文本上下文、样式和 props 合并 |
-| `simple-text:render:innerProps` | `useInnerProps` |
-| `simple-text:render:createElement` | `wrapChildren` + `createElement` 收尾 |
+Web 的 `mpx-view`、`mpx-text`、`mpx-image`、`mpx-scroll-view` 每次真实 render 分别产生 `view:render`、`text:render`、`image:render`、`scroll-view:render`。这些指标代表组件 render 父阶段的同步整体耗时，排除 Vue scheduler、patch、DOM layout/paint、图片网络与解码、滚动事件及 observer callback。
 
-### `@mpxjs/core: __getStyle` {#schema-getstyle}
-
-| 事件名 | 覆盖代码段 |
-| --- | --- |
-| `getStyle:total` | 整个 `__getStyle` 函数 |
-| `getStyle:class` | class 解析与样式查找 |
-| `getStyle:style` | 静态/动态 style 解析与转换 |
+RN 的 getStyle 使用 `instance:render:getStyle` 父阶段及 `instance:render:getStyle:class`、`instance:render:getStyle:style` 子阶段。RN 同时采集 view、simple-view、text、simple-text、image 与 scroll-view 的 `:render` 父阶段和 `:render:<phase>` 子阶段；phase 包括组件支持的 `props`、`style`、`innerProps`、`createElement`。所有 RN 组件指标都排除 effect callback、手势 worklet 和事件后续执行、React commit 与 Native layout。组件父阶段与子阶段、父模板 render 可能存在包含关系，不应相加。
 
 ## 性能影响评估 {#perf-impact}
 
@@ -382,7 +369,7 @@ const chromeEvents = traces.events.map(event => ({
 
 ## 与现有工具的关系 {#vs-others}
 
-- **Hermes Profiler**：提供 JS 函数级采样；trace 提供 Mpx 业务语义明确的区段序列，两者可使用相同 performance 时钟对照分析。
+- **平台 Profiler**：提供函数或宿主层采样；trace 提供 Mpx 语义明确的区段序列，同一平台内可按 performance 时钟对照分析。
 - **Perfetto / Chrome Trace**：Perf 的 trace 是稳定数据源，业务 Reporter 负责转换和补充进程、线程、分类字段。
 - **业务 APM**：Perf 不替代 APM，只提供聚合、区段和里程碑数据。
 

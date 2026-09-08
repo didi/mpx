@@ -32,31 +32,28 @@ function main () {
   ;['goal.md', 'plan.md', 'state.json', path.join('runtime', 'baseline', 'manifest.json')].forEach(function (file) {
     if (!existsInTask(taskId, file)) errors.push('missing ' + file)
   })
-  ;['reviews', 'diffs', 'logs', path.join('runtime', 'roles')].forEach(function (dir) {
+  ;['reviews', 'logs', path.join('runtime', 'roles')].forEach(function (dir) {
     if (!existsInTask(taskId, dir)) errors.push('missing ' + dir + '/')
   })
   if (state.lastReviewFile && !existsInTask(taskId, state.lastReviewFile)) {
     errors.push('lastReviewFile does not exist: ' + state.lastReviewFile)
-  }
-  if (state.phase === 'code_reviewing') {
-    const round = state.codeRound + 1
-    ;[
-      path.join('diffs', 'code-diff-' + round + '.patch'),
-      path.join('diffs', 'code-round-' + round + '.patch'),
-      path.join('diffs', 'code-scope-' + round + '.json')
-    ].forEach(function (file) {
-      if (!existsInTask(taskId, file)) errors.push('missing ' + file)
-    })
   }
   if ((state.platform === 'codex' || state.platform === 'claude-code') &&
     (state.phase === 'plan_reviewing' || state.phase === 'code_reviewing')) {
     const kind = state.phase === 'plan_reviewing' ? 'plan' : 'code'
     const round = state[kind + 'Round'] + 1
     const runFile = reviewManager.artifactPath(taskId, kind, round)
+    const requestFile = reviewManager.requestPath(taskId, kind, round)
     const reviewFile = u.reviewArtifactPath(taskId, kind, round)
     if (fs.existsSync(runFile) || fs.existsSync(reviewFile)) {
       try {
         reviewManager.requireForState(state, taskId, kind, round)
+      } catch (err) {
+        errors.push(err.message)
+      }
+    } else if (fs.existsSync(requestFile)) {
+      try {
+        reviewManager.requirePrepared(taskId, kind, round, state.platform)
       } catch (err) {
         errors.push(err.message)
       }

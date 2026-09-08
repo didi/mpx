@@ -116,7 +116,10 @@ describe('test plugin', () => {
       const result = await uno.generate(['hover:bg-red-500'], { preflights: false })
       const error = jest.fn()
       const classMap = getClassMap({
-        content: result.css,
+        styles: [{
+          content: result.css,
+          filename: 'mpx2rn-unocss'
+        }],
         filename: 'mpx2rn-unocss',
         mode: 'ios',
         srcMode: 'wx',
