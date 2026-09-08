@@ -1,7 +1,0 @@
-{
-  "total_tokens": 76772,
-  "input_tokens": 72735,
-  "output_tokens": 4037,
-  "tool_calls": 4,
-  "duration_ms": 101859
-}
