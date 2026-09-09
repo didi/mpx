@@ -19,6 +19,8 @@ mpx.createBLEConnection(Object object)
 | fail | function |  | 否 | 接口调用失败的回调函数 | **<span style="color: green;">✓</span>** |
 | complete | function |  | 否 | 接口调用结束的回调函数（调用成功、失败都会执行） | **<span style="color: green;">✓</span>** |
 
+> RN 平台未传 `deviceId` 时进入 `fail` 回调，`errMsg` 为 `createBLEConnection:fail parameter error`，随后以同一结果调用 `complete`。
+
 
 ### 错误 {#error}
 

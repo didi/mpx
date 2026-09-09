@@ -24,7 +24,7 @@ import { createPinia } from '@mpxjs/pinia'
 const pinia = createPinia()
 ```
 
-如果你的应用想使用 SSR 渲染模式，请将 pinia 的创建放在 `onAppInit` 钩子中执行
+如果你的应用需要输出 Web 并使用 SSR 渲染模式，请将 pinia 的创建放在 `onAppInit` 钩子中执行并返回。
 ```js
 // app.mpx
 
