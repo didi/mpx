@@ -225,7 +225,7 @@ describe('RN createApp initial params', () => {
     const stackNavigator = navigationContainer.props.children[0]
 
     expect(error).toHaveBeenCalledTimes(1)
-    expect(error).toHaveBeenCalledWith('Initial page [pages/missing] is not registered, fallback to [pages/index].')
+    expect(error).toHaveBeenCalledWith('The initial page [pages/missing] is not registered in the application. Mpx will fall back to the first page [pages/index].')
     expect(navigationContainer.props.initialState).toEqual({
       routes: [{
         name: 'pages/index',

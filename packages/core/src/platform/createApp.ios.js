@@ -206,7 +206,7 @@ export default function createApp (options) {
 
     const initialRoute = initialRouteRef.current
     if (!hasOwn(pagesMap, initialRoute.initialRouteName)) {
-      error(`Initial page [${initialRoute.initialRouteName}] is not registered, fallback to [${firstPage}].`)
+      error(`The initial page [${initialRoute.initialRouteName}] is not registered in the application. Mpx will fall back to the first page [${firstPage}].`)
       initialRoute.initialRouteName = firstPage
       initialRoute.initialParams = {}
     }
