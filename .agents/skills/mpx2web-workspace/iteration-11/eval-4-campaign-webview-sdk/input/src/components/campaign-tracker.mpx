@@ -1,0 +1,76 @@
+<template>
+  <view class="tracker-state">
+    <text>{{ready ? '活动追踪已就绪' : '活动追踪初始化中'}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import campaignTracker from '@business/campaign-tracker-web'
+
+createComponent({
+  properties: {
+    campaignId: {
+      type: String,
+      observer () {
+        this.initTracker()
+      }
+    },
+    memberId: String
+  },
+  data: {
+    ready: false
+  },
+  ready () {
+    this.initTracker()
+  },
+  detached () {
+    this.tracker.destroy()
+  },
+  methods: {
+    async initTracker () {
+      if (!this.campaignId) return
+      this.ready = false
+      const tracker = await campaignTracker.create({
+        campaignId: this.campaignId,
+        memberId: this.memberId
+      })
+      this.tracker = tracker
+      window.addEventListener('message', this.handleWindowMessage)
+      document.addEventListener('visibilitychange', this.handleVisibilityChange)
+      tracker.start()
+      this.ready = true
+      this.triggerEvent('ready', { campaignId: this.campaignId })
+    },
+    handleWindowMessage (event) {
+      const message = event.data || {}
+      if (message.type === 'campaign-exposure') {
+        this.tracker.track('exposure', message.payload)
+      }
+    },
+    handleVisibilityChange () {
+      if (document.hidden) {
+        this.tracker.pause()
+      } else {
+        this.tracker.resume()
+      }
+    }
+  }
+})
+</script>
+
+<style scoped>
+.tracker-state {
+  padding: 14rpx 24rpx;
+  color: #ad7354;
+  font-size: 21rpx;
+  text-align: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

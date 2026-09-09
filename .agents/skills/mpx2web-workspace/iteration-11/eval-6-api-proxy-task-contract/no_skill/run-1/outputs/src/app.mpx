@@ -1,0 +1,18 @@
+<script>
+import mpx from '@mpxjs/core'
+
+mpx.createApp({
+  onLaunch () {
+    console.log('shop launched')
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/search/index",
+    "pages/product/detail"
+  ]
+}
+</script>

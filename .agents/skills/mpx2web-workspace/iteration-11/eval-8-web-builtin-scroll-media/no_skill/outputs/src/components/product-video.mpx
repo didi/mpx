@@ -1,0 +1,81 @@
+<template>
+  <view class="product-video">
+    <video
+      class="video"
+      id="product-video-{{product.id}}"
+      src="{{product.video}}"
+      poster="{{product.poster || product.image}}"
+      autoplay="{{true}}"
+      muted="{{true}}"
+      controls="{{true}}"
+      object-fit="contain"
+      enable-danmu="{{true}}"
+      bindplay="onPlay"
+      bindtimeupdate="onTimeUpdate"
+      bindloadedmetadata="onLoadedMetadata"
+      binderror="onVideoError"
+    />
+    <view class="video-meta">
+      <text>{{progress}} / {{duration}}</text>
+      <text wx:if="{{videoError}}" class="video-error">{{videoError}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    product: { type: Object, value: () => ({}) }
+  },
+  data: {
+    progress: 0,
+    duration: 0,
+    videoSize: '',
+    videoError: ''
+  },
+  methods: {
+    onPlay () {
+      this.videoError = ''
+    },
+    onTimeUpdate (event) {
+      this.progress = Math.floor(event.detail.currentTime || 0)
+      this.duration = Math.floor(event.detail.duration || 0)
+    },
+    onLoadedMetadata (event) {
+      const { width = 0, height = 0, duration = 0 } = event.detail || {}
+      this.videoSize = `${width}x${height}`
+      this.duration = Math.floor(duration || this.duration)
+    },
+    onVideoError () {
+      this.videoError = '视频加载失败，请稍后重试'
+    }
+  }
+})
+</script>
+
+<style scoped>
+.product-video {
+  width: 100%;
+  margin-top: 20rpx;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  background: #000;
+}
+
+.video-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  color: #999;
+  font-size: 24rpx;
+}
+
+.video-error {
+  color: #d93025;
+}
+</style>

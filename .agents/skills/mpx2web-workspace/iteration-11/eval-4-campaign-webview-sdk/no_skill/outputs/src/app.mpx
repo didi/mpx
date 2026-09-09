@@ -1,0 +1,28 @@
+<script>
+import { createApp } from '@mpxjs/core'
+
+createApp({
+  onLaunch () {
+    if (typeof wx !== 'undefined' && typeof wx.reportAnalytics === 'function') {
+      wx.reportAnalytics('mall_launch', {})
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/home/index",
+    "pages/campaign/index"
+  ],
+  "packages": [
+    {
+      "root": "packageProduct",
+      "pages": [
+        "pages/detail/index"
+      ]
+    }
+  ]
+}
+</script>

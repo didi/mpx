@@ -1,0 +1,11 @@
+{
+  "slug": "sol-high",
+  "label": "5.6 Sol / high",
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "high",
+  "run_number": 2,
+  "functional_rate": 0.4444,
+  "strict_rate": 0.4444,
+  "selection": "median functional score across three models and three samples",
+  "source": "model-runs/sol-high/eval-4-campaign-webview-sdk/no_skill/run-2"
+}

@@ -1,0 +1,11 @@
+{
+  "slug": "luna-medium",
+  "label": "5.6 Luna / medium",
+  "model": "gpt-5.6-luna",
+  "reasoning_effort": "medium",
+  "run_number": 1,
+  "functional_rate": 0.8889,
+  "strict_rate": 0.8889,
+  "selection": "median functional score across three models and three samples",
+  "source": "model-runs/luna-medium/eval-4-campaign-webview-sdk/mpx2web/run-1"
+}

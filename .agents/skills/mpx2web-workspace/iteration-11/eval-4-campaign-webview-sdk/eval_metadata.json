@@ -1,0 +1,70 @@
+{
+  "eval_id": 4,
+  "eval_name": "campaign-webview-sdk",
+  "complexity": "complex",
+  "focus": "webview-bridge/h5-sdk-async-race/security-cleanup",
+  "business_scenario": "营销活动页嵌入 H5 会场并接入 Web 端行为追踪 SDK",
+  "prompt": "营销活动页输出到 Web 后，快速切换活动或离页时偶发旧活动覆盖新活动、卸载后继续上报、监听重复，以及嵌入页消息串到错误活动。线上站点位于 /mall/，只信任 https://campaign.example.com。会场只发送领券和打开商品等单向消息，没有 invoke 或请求—响应协议。请修复并保持微信小程序会场、领券、下单与埋点链路，输出全部完整文件。",
+  "files": [
+    "input/src/pages/campaign/index.mpx",
+    "input/src/components/campaign-tracker.mpx",
+    "input/src/app.mpx",
+    "input/vue.config.js"
+  ],
+  "outputs": [
+    "src/pages/campaign/index.mpx",
+    "src/components/campaign-tracker.mpx",
+    "src/app.mpx",
+    "vue.config.js"
+  ],
+  "preserves_cases": [
+    "iteration-4/eval-5-web-lifecycle"
+  ],
+  "assertions": [
+    {
+      "id": "h0",
+      "text": "微信小程序继续保留 web-view 会场、领券、下单跳转与活动埋点链路",
+      "category": "business-regression"
+    },
+    {
+      "id": "h1",
+      "text": "Web 宿主白名单只包含完整可信 origin https://campaign.example.com，避免后缀匹配误接纳相似恶意域名",
+      "category": "webview-security"
+    },
+    {
+      "id": "h2",
+      "text": "Web 部署基路径同时反映在 routeConfig.base 与 publicPath",
+      "category": "web-deployment"
+    },
+    {
+      "id": "h3",
+      "text": "H5 SDK 仅在 Web 客户端动态加载，不在模块顶层静态引入",
+      "category": "web-sdk"
+    },
+    {
+      "id": "h4",
+      "text": "SDK 动态加载和异步初始化的每个边界都阻止卸载后的晚到挂载",
+      "category": "web-concurrency"
+    },
+    {
+      "id": "h5",
+      "text": "活动切换使用代际或实例身份校验，旧活动异步结果不会覆盖当前活动",
+      "category": "web-concurrency"
+    },
+    {
+      "id": "h6",
+      "text": "卸载时销毁 SDK 实例并移除消息、可见性或尺寸监听",
+      "category": "web-cleanup"
+    },
+    {
+      "id": "h7",
+      "text": "没有额外手写 window message 监听时，内建 web-view 的 host 白名单与 clientUid 实例隔离加 bindmessage 即构成消息入口证据；若额外手写监听，则必须同时校验受信任 origin、当前 iframe source 和严格 campaignId",
+      "category": "webview-security"
+    },
+    {
+      "id": "h8",
+      "text": "Web 下 web-view bindmessage 的单向业务消息在领券或跳转前严格校验当前 campaignId；不要求改变微信小程序既有消息协议",
+      "category": "webview-security"
+    }
+  ]
+}

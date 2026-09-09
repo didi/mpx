@@ -1,0 +1,474 @@
+{
+  "metadata": {
+    "skill_name": "mpx2web",
+    "iteration": 11,
+    "generated_at": "2026-09-05T18:47:03.200474+00:00",
+    "models": [
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-5.6-sol"
+    ],
+    "samples_per_model_configuration": 3,
+    "configurations": {
+      "mpx2web": "使用 Skill",
+      "no_skill": "无 Skill"
+    },
+    "grader_model": "gpt-5.5",
+    "grader_reasoning_effort": "high",
+    "grading_mode": "blind independent model review plus conclusive tri-state deterministic overrides"
+  },
+  "models": [
+    {
+      "slug": "luna-medium",
+      "label": "5.6 Luna / medium",
+      "model": "gpt-5.6-luna",
+      "reasoning_effort": "medium",
+      "has_skill": {
+        "runs": 39,
+        "passed": 289,
+        "total": 330,
+        "pass_rate": 0.8758,
+        "strict_passed": 279,
+        "strict_pass_rate": 0.8455,
+        "label": "使用 Skill",
+        "sample_pass_rates": [
+          0.8909,
+          0.8636,
+          0.8727
+        ],
+        "sample_mean": 0.8757,
+        "sample_stddev": 0.0113,
+        "sample_min": 0.8636,
+        "sample_max": 0.8909,
+        "strict_delivery": {
+          "passed": 279,
+          "total": 330,
+          "pass_rate": 0.8455,
+          "sample_pass_rates": [
+            0.8909,
+            0.7727,
+            0.8727
+          ],
+          "sample_mean": 0.8454,
+          "sample_stddev": 0.052
+        },
+        "macro_eval": {
+          "sample_pass_rates": [
+            0.8843,
+            0.8592,
+            0.8818
+          ],
+          "sample_mean": 0.8751,
+          "sample_stddev": 0.0113
+        },
+        "capability": {
+          "passed": 223,
+          "total": 258,
+          "pass_rate": 0.8643
+        },
+        "business_preservation": {
+          "passed": 66,
+          "total": 72,
+          "pass_rate": 0.9167
+        },
+        "stability": {
+          "stable_pass": 81,
+          "stable_fail": 1,
+          "variable": 28
+        },
+        "compile": {
+          "status": "failed",
+          "compiled_mpx": 68,
+          "eligible_mpx": 69,
+          "candidate_passed": 38,
+          "candidate_total": 39,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 10397778,
+          "duration_seconds": 5837.127,
+          "tool_calls": 372,
+          "output_lines": 10845,
+          "output_bytes": 286163
+        }
+      },
+      "no_skill": {
+        "runs": 39,
+        "passed": 153,
+        "total": 330,
+        "pass_rate": 0.4636,
+        "strict_passed": 150,
+        "strict_pass_rate": 0.4545,
+        "label": "无 Skill",
+        "sample_pass_rates": [
+          0.4455,
+          0.4545,
+          0.4909
+        ],
+        "sample_mean": 0.4636,
+        "sample_stddev": 0.0196,
+        "sample_min": 0.4455,
+        "sample_max": 0.4909,
+        "strict_delivery": {
+          "passed": 150,
+          "total": 330,
+          "pass_rate": 0.4545,
+          "sample_pass_rates": [
+            0.4364,
+            0.4364,
+            0.4909
+          ],
+          "sample_mean": 0.4546,
+          "sample_stddev": 0.0257
+        },
+        "macro_eval": {
+          "sample_pass_rates": [
+            0.4367,
+            0.4457,
+            0.4678
+          ],
+          "sample_mean": 0.4501,
+          "sample_stddev": 0.0131
+        },
+        "capability": {
+          "passed": 106,
+          "total": 258,
+          "pass_rate": 0.4109
+        },
+        "business_preservation": {
+          "passed": 47,
+          "total": 72,
+          "pass_rate": 0.6528
+        },
+        "stability": {
+          "stable_pass": 36,
+          "stable_fail": 48,
+          "variable": 26
+        },
+        "compile": {
+          "status": "failed",
+          "compiled_mpx": 67,
+          "eligible_mpx": 69,
+          "candidate_passed": 37,
+          "candidate_total": 39,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 4073500,
+          "duration_seconds": 5326.674,
+          "tool_calls": 216,
+          "output_lines": 10101,
+          "output_bytes": 299836
+        }
+      },
+      "delta": 0.4121
+    },
+    {
+      "slug": "terra-medium",
+      "label": "5.6 Terra / medium",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "has_skill": {
+        "runs": 39,
+        "passed": 316,
+        "total": 330,
+        "pass_rate": 0.9576,
+        "strict_passed": 316,
+        "strict_pass_rate": 0.9576,
+        "label": "使用 Skill",
+        "sample_pass_rates": [
+          0.9364,
+          0.9909,
+          0.9455
+        ],
+        "sample_mean": 0.9576,
+        "sample_stddev": 0.0238,
+        "sample_min": 0.9364,
+        "sample_max": 0.9909,
+        "strict_delivery": {
+          "passed": 316,
+          "total": 330,
+          "pass_rate": 0.9576,
+          "sample_pass_rates": [
+            0.9364,
+            0.9909,
+            0.9455
+          ],
+          "sample_mean": 0.9576,
+          "sample_stddev": 0.0238
+        },
+        "macro_eval": {
+          "sample_pass_rates": [
+            0.935,
+            0.9915,
+            0.9493
+          ],
+          "sample_mean": 0.9586,
+          "sample_stddev": 0.024
+        },
+        "capability": {
+          "passed": 248,
+          "total": 258,
+          "pass_rate": 0.9612
+        },
+        "business_preservation": {
+          "passed": 68,
+          "total": 72,
+          "pass_rate": 0.9444
+        },
+        "stability": {
+          "stable_pass": 100,
+          "stable_fail": 0,
+          "variable": 10
+        },
+        "compile": {
+          "status": "passed",
+          "compiled_mpx": 69,
+          "eligible_mpx": 69,
+          "candidate_passed": 39,
+          "candidate_total": 39,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 10256349,
+          "duration_seconds": 6125.593,
+          "tool_calls": 315,
+          "output_lines": 10995,
+          "output_bytes": 301728
+        }
+      },
+      "no_skill": {
+        "runs": 39,
+        "passed": 173,
+        "total": 330,
+        "pass_rate": 0.5242,
+        "strict_passed": 173,
+        "strict_pass_rate": 0.5242,
+        "label": "无 Skill",
+        "sample_pass_rates": [
+          0.5182,
+          0.5182,
+          0.5364
+        ],
+        "sample_mean": 0.5243,
+        "sample_stddev": 0.0086,
+        "sample_min": 0.5182,
+        "sample_max": 0.5364,
+        "strict_delivery": {
+          "passed": 173,
+          "total": 330,
+          "pass_rate": 0.5242,
+          "sample_pass_rates": [
+            0.5182,
+            0.5182,
+            0.5364
+          ],
+          "sample_mean": 0.5243,
+          "sample_stddev": 0.0086
+        },
+        "macro_eval": {
+          "sample_pass_rates": [
+            0.4976,
+            0.5081,
+            0.5179
+          ],
+          "sample_mean": 0.5079,
+          "sample_stddev": 0.0083
+        },
+        "capability": {
+          "passed": 121,
+          "total": 258,
+          "pass_rate": 0.469
+        },
+        "business_preservation": {
+          "passed": 52,
+          "total": 72,
+          "pass_rate": 0.7222
+        },
+        "stability": {
+          "stable_pass": 45,
+          "stable_fail": 41,
+          "variable": 24
+        },
+        "compile": {
+          "status": "passed",
+          "compiled_mpx": 69,
+          "eligible_mpx": 69,
+          "candidate_passed": 39,
+          "candidate_total": 39,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 3379574,
+          "duration_seconds": 4918.617,
+          "tool_calls": 148,
+          "output_lines": 11317,
+          "output_bytes": 327297
+        }
+      },
+      "delta": 0.4333
+    },
+    {
+      "slug": "sol-high",
+      "label": "5.6 Sol / high",
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "high",
+      "has_skill": {
+        "runs": 39,
+        "passed": 320,
+        "total": 330,
+        "pass_rate": 0.9697,
+        "strict_passed": 320,
+        "strict_pass_rate": 0.9697,
+        "label": "使用 Skill",
+        "sample_pass_rates": [
+          0.9636,
+          0.9818,
+          0.9636
+        ],
+        "sample_mean": 0.9697,
+        "sample_stddev": 0.0086,
+        "sample_min": 0.9636,
+        "sample_max": 0.9818,
+        "strict_delivery": {
+          "passed": 320,
+          "total": 330,
+          "pass_rate": 0.9697,
+          "sample_pass_rates": [
+            0.9636,
+            0.9818,
+            0.9636
+          ],
+          "sample_mean": 0.9697,
+          "sample_stddev": 0.0086
+        },
+        "macro_eval": {
+          "sample_pass_rates": [
+            0.9711,
+            0.9776,
+            0.9637
+          ],
+          "sample_mean": 0.9708,
+          "sample_stddev": 0.0057
+        },
+        "capability": {
+          "passed": 249,
+          "total": 258,
+          "pass_rate": 0.9651
+        },
+        "business_preservation": {
+          "passed": 71,
+          "total": 72,
+          "pass_rate": 0.9861
+        },
+        "stability": {
+          "stable_pass": 102,
+          "stable_fail": 0,
+          "variable": 8
+        },
+        "compile": {
+          "status": "passed",
+          "compiled_mpx": 69,
+          "eligible_mpx": 69,
+          "candidate_passed": 39,
+          "candidate_total": 39,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 14196015,
+          "duration_seconds": 10695.051,
+          "tool_calls": 787,
+          "output_lines": 14309,
+          "output_bytes": 352412
+        }
+      },
+      "no_skill": {
+        "runs": 39,
+        "passed": 199,
+        "total": 330,
+        "pass_rate": 0.603,
+        "strict_passed": 180,
+        "strict_pass_rate": 0.5455,
+        "label": "无 Skill",
+        "sample_pass_rates": [
+          0.5909,
+          0.6091,
+          0.6091
+        ],
+        "sample_mean": 0.603,
+        "sample_stddev": 0.0086,
+        "sample_min": 0.5909,
+        "sample_max": 0.6091,
+        "strict_delivery": {
+          "passed": 180,
+          "total": 330,
+          "pass_rate": 0.5455,
+          "sample_pass_rates": [
+            0.5909,
+            0.5273,
+            0.5182
+          ],
+          "sample_mean": 0.5455,
+          "sample_stddev": 0.0323
+        },
+        "macro_eval": {
+          "sample_pass_rates": [
+            0.5815,
+            0.5935,
+            0.5988
+          ],
+          "sample_mean": 0.5913,
+          "sample_stddev": 0.0072
+        },
+        "capability": {
+          "passed": 144,
+          "total": 258,
+          "pass_rate": 0.5581
+        },
+        "business_preservation": {
+          "passed": 55,
+          "total": 72,
+          "pass_rate": 0.7639
+        },
+        "stability": {
+          "stable_pass": 56,
+          "stable_fail": 33,
+          "variable": 21
+        },
+        "compile": {
+          "status": "failed",
+          "compiled_mpx": 65,
+          "eligible_mpx": 69,
+          "candidate_passed": 35,
+          "candidate_total": 39,
+          "declared_outputs_complete": true
+        },
+        "efficiency": {
+          "total_tokens": 6370876,
+          "duration_seconds": 8878.274,
+          "tool_calls": 472,
+          "output_lines": 16254,
+          "output_bytes": 397499
+        }
+      },
+      "delta": 0.3667
+    }
+  ],
+  "overall": {
+    "functional": {
+      "has_skill_mean": 0.9343,
+      "no_skill_mean": 0.5303,
+      "delta": 0.404
+    },
+    "capability": {
+      "has_skill_mean": 0.9302,
+      "no_skill_mean": 0.4793,
+      "delta": 0.4509
+    },
+    "strict_delivery": {
+      "has_skill_mean": 0.9242,
+      "no_skill_mean": 0.5081,
+      "delta": 0.4161
+    }
+  }
+}
