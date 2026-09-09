@@ -100,6 +100,8 @@ mpx.use(test)
 mpx.use(test, {prefix: 'mpx'}, 'otherparams')
 ```
 
+插件成功安装后，Mpx 会将插件对象或函数的 `__installed` 属性设置为 `true`，外部代码可以通过该标记判断插件是否已经安装。Mpx 内部仍使用独立的插件列表避免重复安装。
+
 ### watch
 
 watch 可以通过全局实例访问，也可以使用具名导出的方式，二者逻辑相同，我们推荐使用具名导出的方式。[查看详情](reactivity-api/computed-watch-api.html#watch)
