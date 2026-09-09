@@ -102,3 +102,56 @@ describe('mpx-view linear-gradient parser', () => {
     act(() => renderer!.unmount())
   })
 })
+
+describe('mpx-view full-size gradient layout', () => {
+  const render = (style: Record<string, any> = {}) => React.createElement(MpxView, {
+    'enable-background': true,
+    style: Object.assign({ width: 200, height: 100, backgroundImage: 'linear-gradient(90deg, red, blue)' }, style)
+  })
+  const fillStyle = { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }
+
+  test.each([
+    [undefined], [['auto']], [['cover']], [['contain']], [['100%', '100%']]
+  ])('renders full-size gradient immediately for %j', (backgroundSize) => {
+    let renderer: ReactTestRenderer
+    act(() => { renderer = create(render(backgroundSize ? { backgroundSize } : {})) })
+    expect(renderer!.root.findByType('LinearGradient').props.style).toEqual(fillStyle)
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    act(() => renderer!.update(render({ backgroundSize, backgroundImage: 'linear-gradient(90deg, green, blue)' })))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toEqual(fillStyle)
+    act(() => renderer!.unmount())
+  })
+
+  test.each([
+    ['left', 20, 'top', 0], ['right', 20, 'bottom', 10], ['left', -20, 'top', 0]
+  ])('keeps full dimensions for offset %s %s %s %s', (x, dx, y, dy) => {
+    let renderer: ReactTestRenderer
+    act(() => { renderer = create(render({ backgroundPosition: [x, dx, y, dy] })) })
+    expect(renderer!.root.findAllByType('LinearGradient')).toHaveLength(0)
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toEqual({ position: 'absolute', width: '100%', height: '100%', [x]: dx, [y]: dy })
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(0, 100)))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toMatchObject({ width: 0, height: 0 })
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toMatchObject({ width: '100%', height: '100%' })
+    act(() => renderer!.unmount())
+  })
+
+  test('switches between fill and layout-dependent styles using the cached layout', () => {
+    let renderer: ReactTestRenderer
+    act(() => { renderer = create(render()) })
+    expect(renderer!.root.findByType('LinearGradient').props.style).toEqual(fillStyle)
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    act(() => renderer!.update(render({ backgroundSize: ['50%', '100%'], backgroundPosition: ['center', 'center'] })))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toEqual({ position: 'absolute', width: '50%', height: '100%', left: 50, top: 0 })
+    act(() => renderer!.update(render()))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toEqual(fillStyle)
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(0, 100)))
+    act(() => renderer!.update(render({ backgroundImage: 'linear-gradient(90deg, green, blue)' })))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toEqual(fillStyle)
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    act(() => renderer!.update(render({ backgroundPosition: ['center', 'center'] })))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toEqual({ position: 'absolute', width: '100%', height: '100%', left: 0, top: 0 })
+    act(() => renderer!.unmount())
+  })
+})
