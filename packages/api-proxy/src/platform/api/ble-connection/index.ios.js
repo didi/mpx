@@ -187,14 +187,20 @@ function closeBluetoothAdapter (options = {}) {
 }
 
 function startBluetoothDevicesDiscovery (options = {}) {
-  const BleManager = require('react-native-ble-manager').default
+  const { default: BleManager, BleScanMode } = require('react-native-ble-manager')
   const {
     services = [],
     allowDuplicatesKey = false,
+    powerLevel = 'medium',
     success = noop,
     fail = noop,
     complete = noop
   } = options
+  const scanMode = {
+    low: BleScanMode.LowPower,
+    medium: BleScanMode.Balanced,
+    high: BleScanMode.LowLatency
+  }[powerLevel]
 
   if (!bleManagerInitialized) {
     commonFailHandler('startBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hans\'t been opened or ble is unavailable.')
@@ -230,7 +236,7 @@ function startBluetoothDevicesDiscovery (options = {}) {
     getDevices.push(deviceInfo)
     // 处理设备发现逻辑
   })
-  BleManager.scan(services, 0, allowDuplicatesKey).then((res) => { // 必须，没有开启扫描，onDiscoverPeripheral回调不会触发
+  BleManager.scan(services, 0, allowDuplicatesKey, scanMode == null ? {} : { scanMode }).then((res) => { // 必须，没有开启扫描，onDiscoverPeripheral回调不会触发
     onStateChangeCallbacks.forEach(cb => {
       if (type(cb) === 'Function') {
         cb({

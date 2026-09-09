@@ -125,7 +125,6 @@ interface Context {
   getOpenerEventChannel: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getOpenerEventChannel']
 }
 type ExtendedComponentOptions = {
-  disconnectOnUnmounted?: boolean
   shallowReactivePattern?: RegExp
   /**
    * 是否禁用render函数的useMemo，仅输出RN支持
@@ -569,8 +568,10 @@ export function toPureObject<T extends object> (obj: T): T
 
 declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any
 
-export type Plugin = PluginInstallFunction | {
+export type Plugin = (PluginInstallFunction | {
   install: PluginInstallFunction
+}) & {
+  __installed?: boolean
 }
 
 export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never

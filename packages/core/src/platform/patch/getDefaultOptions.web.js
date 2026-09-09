@@ -11,6 +11,7 @@ import {
   UNMOUNTED,
   SERVERPREFETCH
 } from '../../core/innerLifecycle'
+import * as perf from '@mpxjs/perf'
 
 function filterOptions (options) {
   const newOptions = {}
@@ -53,7 +54,9 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
       const instance = getCurrentVueInstance().proxy
       initProxy(instance, rawOptions)
       setCurrentInstance(instance.__mpxProxy)
-      const newContext = {
+      let perfId = -1
+      if (__mpx_perf_framework__) perfId = perf.scopeStart('instance:init:setup')
+      const setupRes = rawSetup(props, {
         triggerEvent: instance.triggerEvent.bind(instance),
         refs: instance.$refs,
         forceUpdate: instance.$forceUpdate.bind(instance),
@@ -62,8 +65,8 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
         createSelectorQuery: instance.createSelectorQuery.bind(instance),
         createIntersectionObserver: instance.createIntersectionObserver.bind(instance),
         getPageId: instance.getPageId.bind(instance)
-      }
-      const setupRes = rawSetup(props, newContext)
+      })
+      if (__mpx_perf_framework__) perf.scopeEnd(perfId)
       unsetCurrentInstance(instance.__mpxProxy)
       return wrapMethodsWithErrorHandling(setupRes, instance.__mpxProxy)
     }
@@ -71,9 +74,18 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
   const rootMixins = [{
     beforeCreate () {
       initProxy(this, rawOptions)
+      if (__mpx_perf_framework__ && this.__mpxProxy) {
+        this.__mpxProxy._perfInitId = perf.scopeStart('instance:init')
+      }
     },
     created () {
-      if (this.__mpxProxy) this.__mpxProxy.created()
+      if (this.__mpxProxy) {
+        if (__mpx_perf_framework__) {
+          perf.scopeEnd(this.__mpxProxy._perfInitId)
+          this.__mpxProxy._perfInitId = -1
+        }
+        this.__mpxProxy.created()
+      }
     },
     mounted () {
       if (this.__mpxProxy) this.__mpxProxy.mounted()
@@ -85,10 +97,17 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
       if (this.__mpxProxy) this.__mpxProxy.callHook(UPDATED)
     },
     beforeDestroy () {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(BEFOREUNMOUNT)
+      if (this.__mpxProxy) {
+        this.__mpxProxy.callHook(BEFOREUNMOUNT)
+        if (__mpx_perf_framework__) this.__mpxProxy._perfUnmountId = perf.scopeStart('instance:unmount')
+      }
     },
     destroyed () {
       if (this.__mpxProxy) {
+        if (__mpx_perf_framework__) {
+          perf.scopeEnd(this.__mpxProxy._perfUnmountId)
+          this.__mpxProxy._perfUnmountId = -1
+        }
         this.__mpxProxy.callHook(UNMOUNTED)
         this.__mpxProxy.state = UNMOUNTED
       }
