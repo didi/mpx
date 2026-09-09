@@ -15,7 +15,7 @@ describe('dynamic class object keys', () => {
     const { newsource } = await parseTemplate(getRawSource(content), (className) => {
       if (className) classes.push(className)
       return className
-    }, (error, loc) => errors.push({ error, loc }))
+    }, error => errors.push(error))
     return {
       output: newsource.source(),
       classes
@@ -75,22 +75,8 @@ describe('dynamic class object keys', () => {
 
     expect(output).toContain('class="qwe_u_da _u_asd"')
     expect(errors).toEqual([
-      {
-        error: 'Classname [qwe@da] contains unsupported character [@].',
-        loc: {
-          className: 'qwe@da',
-          start: 13,
-          end: 23
-        }
-      },
-      {
-        error: 'Classname [*asd] contains unsupported character [*].',
-        loc: {
-          className: '*asd',
-          start: 13,
-          end: 23
-        }
-      }
+      'Classname [qwe@da] contains unsupported character [@].',
+      'Classname [*asd] contains unsupported character [*].'
     ])
   })
 
@@ -100,24 +86,8 @@ describe('dynamic class object keys', () => {
 
     expect(output).toContain("'custom😀red': flag")
     expect(errors).toEqual([
-      {
-        error: 'Dynamic classname [custom😀red] can not be escaped as a valid identifier, which is not supported.',
-        loc: {
-          className: 'custom😀red',
-          objectKey: true,
-          start: 16,
-          end: 54
-        }
-      },
-      {
-        error: 'Dynamic classname [12] can not be escaped as a valid identifier, which is not supported.',
-        loc: {
-          className: '12',
-          objectKey: true,
-          start: 16,
-          end: 54
-        }
-      }
+      'Dynamic classname [custom😀red] can not be escaped as a valid identifier, which is not supported.',
+      'Dynamic classname [12] can not be escaped as a valid identifier, which is not supported.'
     ])
   })
 })
