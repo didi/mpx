@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling, error } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -204,7 +204,13 @@ export default function createApp (options) {
       }
     }, [])
 
-    const { initialRouteName, initialParams } = initialRouteRef.current
+    const initialRoute = initialRouteRef.current
+    if (!hasOwn(pagesMap, initialRoute.initialRouteName)) {
+      error(`Initial page [${initialRoute.initialRouteName}] is not registered, fallback to [${firstPage}].`)
+      initialRoute.initialRouteName = firstPage
+      initialRoute.initialParams = {}
+    }
+    const { initialRouteName, initialParams } = initialRoute
     const initialState = {
       routes: [{
         name: initialRouteName,
@@ -228,7 +234,6 @@ export default function createApp (options) {
         },
         createElement(Stack.Navigator,
           {
-            initialRouteName,
             screenOptions: navScreenOpts
           },
           ...getPageScreens()

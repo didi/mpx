@@ -1,6 +1,7 @@
 import createApp from '../../src/platform/createApp.ios'
 import transferOptions from '../../src/core/transferOptions'
 import Mpx from '../../src/index'
+import { error } from '@mpxjs/utils'
 
 jest.mock('../../src/core/transferOptions', () => ({
   __esModule: true,
@@ -20,7 +21,8 @@ jest.mock('@mpxjs/utils', () => ({
   spreadProp: (options) => options,
   getFocusedNavigation: jest.fn(),
   hasOwn: (target, key) => Object.prototype.hasOwnProperty.call(target, key),
-  callWithErrorHandling: jest.fn()
+  callWithErrorHandling: jest.fn(),
+  error: jest.fn()
 }), { virtual: true })
 
 jest.mock('../../src/convertor/mergeLifecycle', () => ({
@@ -125,18 +127,21 @@ describe('RN createApp initial params', () => {
     })
   })
 
-  it('stores initial params on the initial route state instead of Screen defaults', () => {
+  it('uses initialState for a non-first Screen instead of Navigator and Screen defaults', () => {
     const initialParams = { a: 1 }
     const onLaunch = jest.fn()
     const onStateChange = jest.fn()
+    const HomePage = () => null
+    HomePage.displayName = 'HomePage'
     const IndexPage = () => null
     IndexPage.displayName = 'IndexPage'
     transferOptions.mockReturnValue({
       rawOptions: { onLaunch },
       currentInject: {
         moduleId: 'app',
-        firstPage: 'pages/index',
+        firstPage: 'pages/home',
         pagesMap: {
+          'pages/home': HomePage,
           'pages/index': IndexPage
         }
       }
@@ -153,7 +158,7 @@ describe('RN createApp initial params', () => {
     const tree = global.__mpxOptionsMap.app({})
     const navigationContainer = tree.props.children[0]
     const stackNavigator = navigationContainer.props.children[0]
-    const indexScreen = stackNavigator.props.children[0]
+    const indexScreen = stackNavigator.props.children[1]
 
     expect(navigationContainer.props.initialState).toEqual({
       routes: [{
@@ -161,6 +166,11 @@ describe('RN createApp initial params', () => {
         params: initialParams
       }]
     })
+    expect(stackNavigator.props.children.map(screen => screen.props.name)).toEqual([
+      'pages/home',
+      'pages/index'
+    ])
+    expect(stackNavigator.props).not.toHaveProperty('initialRouteName')
     expect(indexScreen.props).not.toHaveProperty('initialParams')
     expect(global.__mpxInitialRouteKey).toBeUndefined()
     expect(global.__mpxInitialRunParams).toBeUndefined()
@@ -186,5 +196,42 @@ describe('RN createApp initial params', () => {
       query: initialParams,
       isLaunch: true
     }))
+  })
+
+  it('reports and falls back when the initial route is not registered', () => {
+    const initialParams = { fromMissing: true }
+    const IndexPage = () => null
+    IndexPage.displayName = 'IndexPage'
+    transferOptions.mockReturnValue({
+      rawOptions: {},
+      currentInject: {
+        moduleId: 'app',
+        firstPage: 'pages/index',
+        pagesMap: {
+          'pages/index': IndexPage
+        }
+      }
+    })
+    Mpx.config.rnConfig = {
+      parseAppProps: () => ({
+        initialRouteName: 'pages/missing',
+        initialParams
+      })
+    }
+
+    createApp({})
+    const tree = global.__mpxOptionsMap.app({})
+    const navigationContainer = tree.props.children[0]
+    const stackNavigator = navigationContainer.props.children[0]
+
+    expect(error).toHaveBeenCalledTimes(1)
+    expect(error).toHaveBeenCalledWith('Initial page [pages/missing] is not registered, fallback to [pages/index].')
+    expect(navigationContainer.props.initialState).toEqual({
+      routes: [{
+        name: 'pages/index',
+        params: {}
+      }]
+    })
+    expect(stackNavigator.props).not.toHaveProperty('initialRouteName')
   })
 })
