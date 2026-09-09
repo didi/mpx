@@ -20,6 +20,8 @@ const { capitalToHyphen } = require('../utils/string')
 const { isNativeMiniTag } = require('../utils/dom-tag-config')
 const { offsetToLoc } = require('../utils/source-location')
 
+const MPX_HOST_REF = '__mpxHost'
+
 const no = function () {
   return false
 }
@@ -108,6 +110,8 @@ let isCustomText
 let runtimeCompile
 let rulesRunner
 let customBuiltInComponentsOpt
+let isUrlRequest
+let templateAssetId
 let currentEl
 let injectNodes = []
 let forScopes = []
@@ -574,6 +578,9 @@ function parseComponent (content, options) {
       if (attr.name === 'mode') {
         block.mode = attr.value
       }
+      if (attr.name === 'src-mode' && attr.value === mode) {
+        block.srcMode = attr.value
+      }
       if (attr.name === 'name') {
         block.name = attr.value
       }
@@ -650,6 +657,8 @@ function parse (template, options) {
   usingComponentsInfo = options.usingComponentsInfo || {}
   usingComponents = Object.keys(usingComponentsInfo)
   customBuiltInComponentsOpt = options.customBuiltInComponents || null
+  isUrlRequest = options.isUrlRequest
+  templateAssetId = 0
 
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
@@ -845,9 +854,13 @@ function parse (template, options) {
   })
 
   if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
+    // usingComponents 与 tagNames 均为 rulesRunner 处理后的名字（capitalToHyphen / mpx-com- 前缀已对齐），
+    // 反向排除 globalComponents 以避免对仅在 app 注册的组件误报「未使用」
+    const globalComponents = options.globalComponents || []
+    const componentPlaceholder = options.componentPlaceholder || []
     const arr = []
     usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
+      if (!tagNames.has(item) && !globalComponents.includes(item) && !componentPlaceholder.includes(item)) {
         arr.push(item)
       }
     })
@@ -1162,11 +1175,14 @@ function processStyleReact (el, options) {
   if (specialClassReg.test(el.tag)) {
     const staticClassNames = ['hover', 'indicator', 'mask', 'placeholder']
     staticClassNames.forEach((className) => {
-      let staticClass = el.attrsMap[className + '-class'] || ''
+      const classAttrName = className + '-class'
+      let staticClass = className === 'hover'
+        ? el.attrsMap[classAttrName] || ''
+        : getAndRemoveAttr(el, classAttrName).val || ''
       let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
       staticClass = staticClass.replace(/\s+/g, ' ')
       staticStyle = staticStyle.replace(/\s+/g, ' ')
-      if ((staticClass && staticClass !== 'none') || staticStyle) {
+      if (staticClass || staticStyle) {
         const staticClassExp = parseMustacheWithContext(staticClass).result
         const staticStyleExp = parseMustacheWithContext(staticStyle).result
         addAttrs(el, [{
@@ -1875,9 +1891,9 @@ function processFor (el) {
       if (val = getAndRemoveAttr(el, config[mode].directive.forItem).val) {
         el.for.item = val
       }
-      if (val = getAndRemoveAttr(el, config[mode].directive.key).val) {
-        el.for.key = val
-      }
+    }
+    if (val = getAndRemoveAttr(el, config[mode].directive.key).val) {
+      el.for.key = val
     }
     pushForScopes({
       index: el.for.index || 'index',
@@ -2021,17 +2037,23 @@ const spreadREG = /\{\s*\.\.\.\s*([^,{]+?)\s*\}/g
 
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    const isTemplateData = el.tag === 'template' && attr.name === 'data'
+    const isTemplateData = el.tag === 'template' && attr.name === 'data' && attr.value
     const needWrap = isTemplateData && mode !== 'swan'
     let value = needWrap ? `{${attr.value}}` : attr.value
 
-    // 修复React Native环境下属性值中插值表达式带空格的问题
-    if (isReact(mode) && typeof value === 'string') {
-      // 检查是否为带空格的插值表达式
-      const trimmedValue = value.trim()
-      if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
-        // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
-        value = trimmedValue
+    if (isReact(mode)) {
+      // 修复React Native环境下属性值中插值表达式带空格的问题
+      if (typeof value === 'string') {
+        // 检查是否为带空格的插值表达式
+        const trimmedValue = value.trim()
+        if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
+          // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
+          value = trimmedValue
+        }
+      }
+      if (value === undefined) {
+        value = '{{true}}'
+        modifyAttr(el, attr.name, value)
       }
     }
 
@@ -2601,6 +2623,21 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
+const reactTemplateAssetTags = makeMap('mpx-image,mpx-video,mpx-audio', true)
+
+function processTemplateAssetReact (el, meta) {
+  if (!reactTemplateAssetTags(el.tag)) return
+  const src = el.attrsMap.src
+  if (!isUrlRequest(src)) return
+
+  const name = `__mpx_template_asset_${templateAssetId++}__`
+  if (!meta.templateAssets) {
+    meta.templateAssets = {}
+  }
+  meta.templateAssets[name] = src
+  addExp(el, name, false, 'src')
+}
+
 /** Web / RN 共用：<import src> 收集并移除 */
 function processTemplateImport (el, meta) {
   if (el.tag !== 'import') return false
@@ -2625,7 +2662,7 @@ function processTemplateImport (el, meta) {
 function processTemplateTranspile (el, meta) {
   if (processTemplateImport(el, meta)) return
 
-  if (el.tag !== 'template') return
+  if (el.tag !== 'template' || el.isBlock) return
 
   const is = getAndRemoveAttr(el, 'is').val
   if (is) {
@@ -2787,6 +2824,10 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'ishost',
             value: '{{true}}'
+          },
+          {
+            name: config[mode].directive.ref,
+            value: MPX_HOST_REF
           }
         ])
         processElement(rootView, rootView, options, meta)
@@ -2872,13 +2913,11 @@ function isValidModeP (i) {
 
 const wrapRE = /^\((.*)\)$/
 
-// MATCH: mode 与 env 都匹配，节点/属性保留，但不做跨平台转换
-// IMPLICITMATCH: mode 与 env 匹配，节点/属性保留，属于隐式匹配，做跨平台转换
+// MATCH: mode 与 env 都匹配，节点/属性保留并正常执行跨平台转换
 // MISMATCH: mode 或 env不匹配，节点/属性直接删除
 const statusEnum = {
   MISMATCH: 1,
-  IMPLICITMATCH: 2,
-  MATCH: 3
+  MATCH: 2
 }
 
 // 父节点的atMode匹配状态不应该影响子节点，atMode的影响范围应该限制在当前节点本身
@@ -2934,8 +2973,7 @@ function processAtMode (el) {
       // 判断 mode 是否匹配
       // 额外处理attr value 场景
       for (let [defineMode, defineEnvArr] of conditionMap.entries()) {
-        const isImplicitMode = defineMode[0] === '_'
-        if (isImplicitMode) defineMode = defineMode.slice(1)
+        if (defineMode[0] === '_') defineMode = defineMode.slice(1)
 
         const isNoMode = defineMode === 'noMode'
         const isMatchMode = isNoMode || defineMode === mode
@@ -2943,25 +2981,13 @@ function processAtMode (el) {
         let matchStatus = statusEnum.MISMATCH
         // 是否为针对于节点的条件判断，否为节点属性
         if (isMatchMode && isMatchEnv) {
-          // mpxTagName 特殊标签，需要做转换保留处理
-          matchStatus = (isNoMode || isImplicitMode || replacedAttrName === 'mpxTagName') ? statusEnum.IMPLICITMATCH : statusEnum.MATCH
+          matchStatus = statusEnum.MATCH
         }
         setModeStatus(target, matchStatus)
       }
       // 解析处理attr._matchStatus
       if (replacedAttrName) {
-        switch (processedAttr._matchStatus) {
-          // IMPLICITMATCH保留属性并进行平台转换
-          case statusEnum.IMPLICITMATCH:
-            addAttrs(el, [processedAttr])
-            break
-          // MATCH保留属性并跳过平台转换
-          case statusEnum.MATCH:
-            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
-            break
-          default:
-          // MISMATCH丢弃属性
-        }
+        if (processedAttr._matchStatus === statusEnum.MATCH) addAttrs(el, [processedAttr])
         delete processedAttr._matchStatus
       }
     }
@@ -2989,14 +3015,6 @@ function processInjectWxsInfos (el, meta) {
       const { injectWxsRequest, injectWxsModuleName } = injectWxsInfo
       injectWxs(meta, injectWxsModuleName, injectWxsRequest)
     })
-  }
-}
-
-function processNoTransAttrs (el) {
-  // 转换完成，把不需要处理的attr挂回去
-  if (el.noTransAttrs) {
-    addAttrs(el, el.noTransAttrs)
-    delete el.noTransAttrs
   }
 }
 
@@ -3093,12 +3111,10 @@ function processElement (el, root, options, meta) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
-  if (rulesRunner && el._matchStatus !== statusEnum.MATCH) {
+  if (rulesRunner) {
     currentEl = el
     rulesRunner(el)
   }
-
-  processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
 
@@ -3129,6 +3145,8 @@ function processElement (el, root, options, meta) {
     const isReactComponent$1 = isReactComponent(el, options)
     // 收集内建组件
     processBuiltInComponents(el, meta)
+    // 处理模版内资源引用
+    processTemplateAssetReact(el, meta)
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)

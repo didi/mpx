@@ -1,6 +1,6 @@
-const MagicString = require('magic-string')
-const transformerDirectives = require('@unocss/transformer-directives').default
-const { getReplaceSource } = require('./source')
+import MagicString from 'magic-string'
+import transformerDirectives from '@unocss/transformer-directives' // default
+import { getReplaceSource } from './source.js'
 const escapedReg = /\\(.)/g
 
 function mpEscape (str, escapeMap = {}) {
@@ -64,24 +64,30 @@ function transformGroups (source, options = {}) {
 const hasDirectiveTest = /@(apply|screen|layer)\s/
 const hasThemeFunctionTest = /theme\(.*?\)/
 
-function cssRequiresTransform (source) {
-  return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source)
+function cssRequiresTransform (source, transformCSS) {
+  let checkApplyReg
+  if (transformCSS) {
+    const checkApplyList = transformCSS.applyVariable || ['--at-apply', '--uno-apply', '--uno']
+    checkApplyReg = new RegExp(`(${checkApplyList.join('|')})(\\s)?:`)
+  }
+  return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source) || (checkApplyReg && checkApplyReg.test(source))
 }
 
 async function transformStyle (
   code,
   id,
-  uno
+  uno,
+  options
 ) {
   const s = new MagicString(code)
-  await transformerDirectives().transform(s, id, { uno })
+  await transformerDirectives(options).transform(s, id, { uno })
   if (s.hasChanged()) {
     code = s.toString()
   }
   return code
 }
 
-module.exports = {
+export {
   cssRequiresTransform,
   transformGroups,
   mpEscape,

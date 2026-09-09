@@ -7,13 +7,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm i && npm run build:tsc
+      - name: Cache node modules
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            packages/*/node_modules
+          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
+          restore-keys: |
+            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
+      - run: npm i
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: npm run build:tsc
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm i && npm run lint
+      - name: Cache node modules
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            packages/*/node_modules
+          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
+          restore-keys: |
+            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
+      - run: npm i
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: npm run lint
 
   unit:
     runs-on: ubuntu-latest
@@ -22,8 +48,6 @@ jobs:
       - name: Cache node modules
         id: cache
         uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
         with:
           path: |
             ~/.npm
@@ -33,11 +57,12 @@ jobs:
             packages/webpack-plugin/node_modules
             packages/core/node_modules
             packages/api-proxy/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+            packages/perf/node_modules
+            packages/unocss-base/node_modules
+            packages/unocss-plugin/node_modules
+          key: unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+            unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
 
       - name: install deps
         if: steps.cache.outputs.cache-hit != 'true'
@@ -51,6 +76,9 @@ jobs:
 
       - name: build-plugin
         run: npm run build --prefix test/e2e/plugin-project
+
+      - name: build-tsc
+        run: npm run build:tsc
 
       - name: exec unit test
         run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project

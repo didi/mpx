@@ -7,6 +7,7 @@
   import MouseWheel from '@better-scroll/mouse-wheel'
   import throttle from 'lodash/throttle'
   import debounce from 'lodash/debounce'
+  import * as perf from '@mpxjs/perf'
 
   BScroll.use(PullDown)
   BScroll.use(MouseWheel)
@@ -470,6 +471,8 @@
       }
     },
     render (createElement) {
+      let id = -1
+      if (__mpx_perf_framework__) id = perf.scopeStart('scroll-view:render')
       const data = {
         class: 'mpx-scroll-view',
         on: getInnerListeners(this, { ignoredListeners: ['scroll', 'scrolltoupper', 'scrolltolower'] }),
@@ -482,18 +485,18 @@
       }, this.$slots.default)
 
       const pullDownContent = this.refresherDefaultStyle !== 'none' ? createElement('div', {
-          class: this._pullDownContentClassName,
-        }, [
-          createElement('div', {
-            class: 'circle circle-a'
-          }),
-          createElement('div', {
-            class: 'circle circle-b'
-          }),
-          createElement('div', {
-            class: 'circle circle-c'
-          }),
-        ]
+        class: this._pullDownContentClassName,
+      }, [
+        createElement('div', {
+          class: 'circle circle-a'
+        }),
+        createElement('div', {
+          class: 'circle circle-b'
+        }),
+        createElement('div', {
+          class: 'circle circle-c'
+        }),
+      ]
       ) : this.$slots.refresher
         ? createElement('div', {
           class: 'mpx-pull-down-slot',
@@ -510,7 +513,9 @@
         ref: 'scrollContent'
       }, [pullDownWrapper, innerWrapper])
 
-      return createElement('div', data, [content])
+      const result = createElement('div', data, [content])
+      if (__mpx_perf_framework__) perf.scopeEnd(id)
+      return result
     }
   }
 </script>
@@ -520,6 +525,9 @@
     overflow hidden
     position relative
 
+    .mpx-scroll-view-content
+      flex-shrink 0 // 解决内容区域被挤压导致的滚动异常问题，在scroll-view开启增强特性时会有子元素使用flex布局的场景
+      
     .mpx-pull-down-wrapper
       position: absolute
       width: 100%
