@@ -174,7 +174,7 @@ const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val ==
 
 const isFullSizeGradient = ({ type, sizeList, backgroundPosition, linearInfo }: PreImageInfo): boolean => {
   // 四边撑满仅适用于无偏移、无需计算对角方向的全尺寸渐变。
-  return type === 'linear' && sizeList[0] === '100%' && sizeList[1] === '100%' &&
+  return __mpx_mode__ !== 'ios' && type === 'linear' && sizeList[0] === '100%' && sizeList[1] === '100%' &&
     !(linearInfo?.direction && diagonalAngleMap[linearInfo.direction]) &&
     (!backgroundPosition.length || (backgroundPosition[1] === 0 && backgroundPosition[3] === 0))
 }
@@ -324,6 +324,11 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       if (isFullSizeGradient(preImageInfo)) {
         dimensions = StyleSheet.absoluteFillObject
+      } else if (__mpx_mode__ === 'ios' && type === 'linear') {
+        dimensions = {
+          width: calcPercent(width as NumberVal, layoutWidth || 0),
+          height: calcPercent(height as NumberVal, layoutHeight || 0)
+        }
       } else if (type === 'linear' && (!layoutWidth || !layoutHeight) && (isPercent(width) || isPercent(height))) {
         // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，通过设置 % 的方式会渲染不出来，即使后面再更新为正常宽高也渲染不出来
         // 所以 hack 手动先将 linear 宽高也设置为 0，后面再更新为正确的数值或 %。
@@ -763,7 +768,8 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
   }
 
-  if (type === 'linear' && pending) return createElement(View, backgroundProps)
+  // iOS DRN 的渐变在零尺寸下挂载后，即使尺寸恢复也可能不再绘制。
+  if (type === 'linear' && (pending || (__mpx_mode__ === 'ios' && needLayout && !(layoutInfo && layoutInfo.width > 0 && layoutInfo.height > 0)))) return createElement(View, backgroundProps)
   return createElement(View, backgroundProps,
     type === 'linear'
       ? createElement(LinearGradient, extendObject({ useAngle: true }, imageProps as LinearImageProps))

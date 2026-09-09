@@ -97,13 +97,15 @@ describe('mpx-view linear-gradient parser', () => {
 
     act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
     const gradient = renderer!.root.findByType('LinearGradient')
-    expect(gradient.props.style).toMatchObject({ width: '100%', height: '100%' })
+    expect(gradient.props.style).toMatchObject({ width: 200, height: 100 })
     expect(gradient.props.angle).toBeCloseTo(26.565)
     act(() => renderer!.unmount())
   })
 })
 
 describe('mpx-view full-size gradient layout', () => {
+  beforeEach(() => { global.__mpx_mode__ = 'android' })
+  afterEach(() => { global.__mpx_mode__ = 'ios' })
   const render = (style: Record<string, any> = {}) => React.createElement(MpxView, {
     'enable-background': true,
     style: Object.assign({ width: 200, height: 100, backgroundImage: 'linear-gradient(90deg, red, blue)' }, style)
@@ -152,6 +154,28 @@ describe('mpx-view full-size gradient layout', () => {
     act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
     act(() => renderer!.update(render({ backgroundPosition: ['center', 'center'] })))
     expect(renderer!.root.findByType('LinearGradient').props.style).toEqual({ position: 'absolute', width: '100%', height: '100%', left: 0, top: 0 })
+    act(() => renderer!.unmount())
+  })
+})
+
+describe('iOS gradient visibility restoration', () => {
+  test('does not mount at zero size and remounts with numeric size after restoration', () => {
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(React.createElement(MpxView, {
+        'enable-background': true,
+        style: { width: 100, height: 100, backgroundImage: 'linear-gradient(179deg, #fff 0%, #000 76%)', backgroundSize: ['100%', '100%'] }
+      }))
+    })
+    expect(renderer!.root.findAllByType('LinearGradient')).toHaveLength(0)
+    ;[0, 98, 0, 98].forEach(height => {
+      act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(98, height)))
+      if (height) {
+        expect(renderer!.root.findByType('LinearGradient').props.style).toMatchObject({ width: 98, height: 98 })
+      } else {
+        expect(renderer!.root.findAllByType('LinearGradient')).toHaveLength(0)
+      }
+    })
     act(() => renderer!.unmount())
   })
 })
