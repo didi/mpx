@@ -568,8 +568,10 @@ export function toPureObject<T extends object> (obj: T): T
 
 declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any
 
-export type Plugin = PluginInstallFunction | {
+export type Plugin = (PluginInstallFunction | {
   install: PluginInstallFunction
+}) & {
+  __installed?: boolean
 }
 
 export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never
