@@ -86,11 +86,11 @@ describe('RN window info API', () => {
       screenHeight: 844,
       safeArea: {
         left: 0,
-        right: 390,
+        right: 320,
         top: 44,
         bottom: 810,
         height: 766,
-        width: 390
+        width: 320
       }
     }))
   })

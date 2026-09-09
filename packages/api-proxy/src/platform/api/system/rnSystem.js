@@ -9,7 +9,7 @@ const getWindowInfo = function () {
   }
   const hasCustomDimensions = typeof mpxGlobal.__mpx?.config?.rnConfig?.customDimensions === 'function'
   const dimensions = hasCustomDimensions ? global.__getMpxAppDimensionsInfo() : nativeDimensions
-  const dimensionsScreen = nativeDimensions.screen
+  const dimensionsScreen = dimensions.screen
   const navigation = getFocusedNavigation() || {}
   const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
   const navigationInsets = navigation.insets || {}
@@ -35,10 +35,10 @@ const getWindowInfo = function () {
   }
   const result = {
     pixelRatio: PixelRatio.get(),
-    windowWidth: hasCustomDimensions ? dimensions.window.width : layoutWidth || screenWidth,
-    windowHeight: hasCustomDimensions ? dimensions.window.height : windowHeight, // 取不到layout的时候有个兜底
-    screenWidth: hasCustomDimensions ? dimensions.screen.width : screenWidth,
-    screenHeight: hasCustomDimensions ? dimensions.screen.height : screenHeight,
+    windowWidth: layoutWidth || screenWidth,
+    windowHeight, // 取不到layout的时候有个兜底
+    screenWidth: screenWidth,
+    screenHeight: screenHeight,
     screenTop: screenHeight - windowHeight,
     statusBarHeight: safeArea.top,
     safeArea
