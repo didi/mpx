@@ -24,6 +24,10 @@ function onUnhandledRejection (callback) {
 }
 
 function offUnhandledRejection (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.rejection.length = 0
+    return
+  }
   off(global.__mpxAppCbs.rejection, callback)
 }
 
@@ -34,6 +38,10 @@ function onError (callback) {
 }
 
 function offError (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.error.length = 0
+    return
+  }
   off(global.__mpxAppCbs.error, callback)
 }
 
@@ -44,6 +52,10 @@ function onAppShow (callback) {
 }
 
 function offAppShow (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.show.length = 0
+    return
+  }
   off(global.__mpxAppCbs.show, callback)
 }
 
@@ -54,6 +66,10 @@ function onAppHide (callback) {
 }
 
 function offAppHide (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.hide.length = 0
+    return
+  }
   off(global.__mpxAppCbs.hide, callback)
 }
 
@@ -65,6 +81,10 @@ function onLazyLoadError (callback) {
 
 function offLazyLoadError (callback) {
   if (isReact) {
+    if (callback == null) {
+      global.__mpxAppCbs.lazyLoad.length = 0
+      return
+    }
     off(global.__mpxAppCbs.lazyLoad, callback)
   }
 }
