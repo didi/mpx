@@ -115,7 +115,7 @@ Mpx 在 RN 平台完整支持静态和动态的类名及样式绑定，与小程
 
 ### 选择器支持
 
-RN 环境下支持的选择器范围有限，主要是**单类选择器**、`page` 选择器和 `:host` 选择器。
+RN 环境下支持的选择器范围有限，主要是编译器转换后的**单类选择器**。`page` 和 `:host` 会在进入 RN class map 前转换为内部单类，因此也受支持。
 
 ✅ **支持的选择器：**
 
@@ -156,6 +156,8 @@ text {
 .button.primary {
 } /* 组合选择器 */
 ```
+
+任意来源最终生成的伪类、伪元素、组合器及其他非支持选择器都会触发编译错误，且不会进入 RN class map。手写 CSS、UnoCSS、其他预处理器和自定义 rule 使用完全相同的校验，不存在 UnoCSS `hover:` 等来源例外。点击态使用组件 `hover-class` 配合独立单类样式。
 
 ### 样式单位与转换
 
@@ -310,6 +312,7 @@ RN 仅原生支持部分 CSS 简写属性，Mpx 分别在**编译时**和**运�
 - **边框简写**：`border`、`border-top`、`border-right`、`border-bottom`、`border-left`
   - 如 `border: 1px solid red` → `borderWidth: 1, borderStyle: 'solid', borderColor: 'red'`
   - 单边 `border-*` 中的 `<border-style>` 槽位会展开为 `borderStyle`（RN 不支持单边 `border-*-style`，统一作用于四边）
+  - 声明单边边框时优先使用单边 `border-*` 简写；确需组合使用 `border-style` 与 `border-*-width` 时，将其余三个不设置边框的方向宽度显式归零
   - `border: none` / `border: 1px none red` 会先保留 `borderStyle: 'none'`，最终在运行时统一转换为 `borderWidth: 0`
 - **外轮廓简写**：`outline`
   - 按值类型无序展开为 `outline-width` / `outline-style` / `outline-color`，合法值不强制书写顺序
@@ -444,7 +447,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 **支持特性：**
 
 - **背景颜色**：RN 原生支持 `background-color`。
-- **背景图**：支持 `background-image: url()` 引用图片，也支持 `background-image: none` 清空背景图。
+- **背景图**：支持 `background-image: url()` 引用位图，也支持 `background-image: none` 清空背景图；SVG 图片会输出错误并丢弃。
 - **渐变背景**：支持 `background-image: linear-gradient()` 线性渐变。
 - **相关属性**：完整支持 `background-size` 和 `background-position`。
 
@@ -533,6 +536,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 | 属性 | 值类型 | 说明 | 示例 |
 | --- | --- | --- | --- |
 | `border` | `width \|\| style \|\| color` | 边框简写 | `border: 1px solid #e5e5e5` |
+| `border-*` | `width \|\| style \|\| color` | 单边边框简写，优先用于声明单边边框 | `border-bottom: 1px solid #e5e5e5` |
 | `border-width` | `length` | 边框宽度（支持多值） | `border-width: 1px`；`border-width: 1px 2px` |
 | `border-color` | `color` | 边框颜色（支持多值） | `border-color: #ccc`；`border-color: red blue` |
 | `border-style` | `solid` \| `dotted` \| `dashed` \| `none` | 边框样式（不支持单边设置）；`none` 会在运行时转换为 `border-width: 0` | `border-style: dashed`；`border-style: none` |
@@ -549,27 +553,31 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 | --- | --- | --- | --- |
 | `background` | `<background-color>` \| `<background-image>` \| `<background-repeat>` \| `<background-position>` / `<background-size>` | 背景简写，支持用 `/` 分隔的背景位置和尺寸 | `background: #f5f5f5`；`background: url(https://example.com/bg.png) no-repeat center/cover` |
 | `background-color` | `color` | 背景色 | `background-color: #fff`；`background-color: rgba(0, 0, 0, 0.5)` 半透明黑色 |
-| `background-image` | `url()` \| `linear-gradient()` \| `none` | 背景图/渐变 | `background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none` |
+| `background-image` | `url()` \| `linear-gradient()` \| `none` | `url()` 仅支持位图，SVG 会输出错误并丢弃；渐变不受影响 | `background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none` |
 | `background-size` | `cover` \| `contain` \| `auto` \| `length` \| `%` | 背景尺寸 | `background-size: cover` 覆盖填充；`background-size: 200rpx 100rpx` |
 | `background-repeat` | `no-repeat` | 仅支持不重复 | `background-repeat: no-repeat` |
 | `background-position` | `center` \| `left` \| `right` \| `top` \| `bottom` \| `number` \| `%` | 背景位置 | `background-position: center`；`background-position: 50% 50%` |
 
 ### 文本与字体
 
-**注意**：文本样式需遵循继承规则。
+**注意：**
+
+- 文本样式需遵循继承规则。
+- `font-family` 仅支持单值；传入多字体 fallback 时会取首值并去除引号。
+- RN 输出不支持 `@font-face`；编译时会发出专用 warning 并移除该声明。如需使用自定义字体，须先在 RN 宿主环境中安装，再通过 `font-family` 引用。
 
 | 属性 | 值类型 | 默认值 | 说明 | 示例 |
 | --- | --- | --- | --- | --- |
 | `color` | `color` | - | 文本颜色 | `color: #333`；`color: rgba(0, 0, 0, 0.8)` |
 | `font` | `[font-style] [small-caps] [font-weight] font-size [ / line-height ] font-family` | - | 字体简写，展开为字体相关长属性；`font-size` 与 `font-family` 必填，`/` 两侧可有空格 | `font: italic bold 16px / 1.5 Arial` |
-| `font-family` | `string` | - | 字体（仅支持单字体），多字体 fallback 自动取首值并去除引号 | `font-family: PingFangSC-Regular` |
+| `font-family` | `string` | - | 字体 | `font-family: PingFangSC-Regular` |
 | `font-size` | `length` \| `%` | - | 字体大小；百分比按文本透传字号基准解析 | `font-size: 28rpx`；`font-size: 16px`；`font-size: 120%` |
 | `font-weight` | `normal` \| `bold` \| `100-900` | `normal` | 字体粗细 | `font-weight: bold`；`font-weight: 500` |
 | `font-style` | `normal` \| `italic` | `normal` | 字体样式 | `font-style: italic` 斜体 |
 | `line-height` | `length` \| `number` \| `%` | - | 行高，纯数字值自动转换为百分比（如 `1.5` → `150%`），最终按文本节点合并后的 `font-size` 解析；运行时数值型 `lineHeight` 表示绝对行高；多字号混排需统一设置外层行高 | `line-height: 40rpx`；`line-height: 1.5` |
 | `text-align` | `left` \| `right` \| `center` \| `justify` | `auto` | 文本对齐；`auto` 是 RN 默认值，不支持在用户源码中显式书写 | `text-align: center` 文本居中 |
 | `vertical-align` | `auto` \| `top` \| `bottom` \| `middle` | - | 垂直对齐（Android / Harmony 支持，iOS 不支持） | `vertical-align: middle` |
-| `text-decoration` | `line \|\| style \|\| color` | - | 装饰线简写；`text-decoration-style` / `text-decoration-color` 仅 iOS 支持；line 支持多值组合 `underline line-through` | `text-decoration: underline`；`text-decoration: line-through solid red` |
+| `text-decoration` | `line \|\| style \|\| color` | - | 装饰线简写；`text-decoration-style` 在 Android / Harmony 仅支持 `solid`，`text-decoration-color` 仅 iOS 支持；line 支持多值组合 `underline line-through` | `text-decoration: underline`；`text-decoration: line-through solid red` |
 | `text-transform` | `none` \| `uppercase` \| `lowercase` \| `capitalize` | `none` | 大小写转换 | `text-transform: uppercase` 全部大写 |
 | `letter-spacing` | `length` | - | 字符间距 | `letter-spacing: 2rpx` |
 | `text-shadow` | `offset-x offset-y blur color` | - | 文本阴影（Mpx 增强） | `text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3)` |
@@ -632,4 +640,5 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 以下属性存在平台差异：
 
 - iOS 不支持 `vertical-align`
-- Android / Harmony 不支持 `text-decoration-style`、`text-decoration-color`、`shadow-offset`、`shadow-opacity`、`shadow-radius`
+- Android / Harmony 的 `text-decoration-style` 仅支持 `solid`
+- Android / Harmony 不支持 `text-decoration-color`、`shadow-offset`、`shadow-opacity`、`shadow-radius`

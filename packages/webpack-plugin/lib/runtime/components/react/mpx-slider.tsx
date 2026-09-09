@@ -53,9 +53,7 @@ export interface SliderProps {
   'block-color'?: string
   name?: string
   bindchange?: (event: any) => void
-  catchchange?: (event: any) => void
   bindchanging?: (event: any) => void
-  catchchanging?: (event: any) => void
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
@@ -145,16 +143,14 @@ const Slider = forwardRef<
     triggerChangeEvent: (newValue: number) => {
       setCurrentValue(newValue)
       const currentProps = propsRef.current
-      const changeHandler = currentProps.bindchange || currentProps.catchchange
-      if (changeHandler) {
-        changeHandler(getCustomEvent('change', {}, { layoutRef, detail: { value: newValue } }, currentProps))
+      if (currentProps.bindchange) {
+        currentProps.bindchange(getCustomEvent('change', {}, { layoutRef, detail: { value: newValue } }, currentProps))
       }
     },
     triggerChangingEvent: (newValue: number) => {
       const currentProps = propsRef.current
-      const changingHandler = currentProps.bindchanging || currentProps.catchchanging
-      if (changingHandler) {
-        changingHandler(getCustomEvent('changing', {}, { layoutRef, detail: { value: newValue } }, currentProps))
+      if (currentProps.bindchanging) {
+        currentProps.bindchanging(getCustomEvent('changing', {}, { layoutRef, detail: { value: newValue } }, currentProps))
       }
     }
   })
@@ -393,9 +389,7 @@ const Slider = forwardRef<
       'block-size',
       'block-color',
       'bindchange',
-      'catchchange',
       'bindchanging',
-      'catchchanging',
       'name'
     ],
     { layoutRef }

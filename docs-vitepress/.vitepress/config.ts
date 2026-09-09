@@ -79,7 +79,7 @@ const sidebar: ExtendedSidebar = {
 
         { text: '国际化 i18n', link: '/guide/advance/i18n' },
         { text: '包体积分析', link: '/guide/advance/size-report' },
-        { text: 'RN 运行时测速', link: '/guide/advance/perf' },
+        { text: '跨端运行时测速', link: '/guide/advance/perf' },
         { text: '图像资源处理', link: '/guide/advance/image-process' },
         { text: '原生渐进迁移', link: '/guide/advance/progressive' },
         {
@@ -118,6 +118,7 @@ const sidebar: ExtendedSidebar = {
         { text: '跨端样式', link: '/guide/rn/style' },
         { text: '应用能力', link: '/guide/rn/application-api' },
         { text: '混合编写 RN', link: '/guide/rn/hybrid-with-react-native' },
+        { text: '使用原子类', link: '/guide/rn/rn-unocss' }
       ],
     },
     {
@@ -146,6 +147,7 @@ const sidebar: ExtendedSidebar = {
         { text: '网络请求', link: '/guide/extend/fetch' },
         { text: '数据 Mock', link: '/guide/extend/mock' },
         { text: 'WebView Bridge', link: '/guide/extend/webview-bridge' },
+        { text: '扩展组件', link: '/guide/extend/extend-component' },
       ],
     },
     {
@@ -206,6 +208,10 @@ const sidebar: ExtendedSidebar = {
             {
               text: 'arrayBufferToBase64',
               link: '/api-proxy/base/arrayBufferToBase64',
+            },
+            {
+              text: 'canIUse',
+              link: '/api-proxy/base/canIUse',
             },
             {
               text: '系统',
@@ -692,6 +698,10 @@ const sidebar: ExtendedSidebar = {
               text: '蓝牙-低功耗中心设备',
               collapsed: true,
               items: [
+                {
+                  text: 'startBluetoothDevicesDiscovery',
+                  link: '/api-proxy/device/bluetooth-ble/startBluetoothDevicesDiscovery',
+                },
                 {
                   text: 'closeBLEConnection',
                   link: '/api-proxy/device/bluetooth-ble/closeBLEConnection',

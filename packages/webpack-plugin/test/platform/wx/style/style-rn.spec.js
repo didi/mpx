@@ -1,4 +1,17 @@
-const { getClassMap } = require('../../../../lib/react/style-helper')
+const { getClassMap: buildClassMap } = require('../../../../lib/react/style-helper')
+
+function getClassMap (options) {
+  if (!options.styles) {
+    options = Object.assign({}, options, {
+      styles: [{
+        content: options.content,
+        filename: options.filename
+      }]
+    })
+    delete options.content
+  }
+  return buildClassMap(options)
+}
 
 describe('React Native style validation for CSS variables', () => {
   const createConfig = (mode = 'ios') => ({
@@ -7,6 +20,74 @@ describe('React Native style validation for CSS variables', () => {
     ctorType: 'component',
     warn: jest.fn(),
     error: jest.fn()
+  })
+
+  test('should preserve target-native style declarations', () => {
+    const config = createConfig()
+    const result = getClassMap({
+      styles: [{
+        content: '.text { color: red; }',
+        filename: 'native.css',
+        srcMode: 'ios'
+      }],
+      filename: 'test.css',
+      ...config
+    })
+
+    expect(result.text).toEqual({
+      color: '"red"'
+    })
+    expect(config.error).not.toHaveBeenCalled()
+  })
+
+  describe('Selector validation', () => {
+    test.each([
+      ['pseudo class', '.button:hover { color: red; }', 'button:hover'],
+      ['pseudo element', '.text::before { color: red; }', 'text::before'],
+      ['functional pseudo class', '.item:not(.disabled) { color: red; }', 'item:not(.disabled)'],
+      ['escaped UnoCSS class with pseudo', '.hover\\:bg-red-500:hover { color: red; }', 'hover:bg-red-500:hover']
+    ])('should reject %s selectors', (name, css, key) => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result).not.toHaveProperty(key)
+      expect(config.error).toHaveBeenCalledTimes(1)
+      expect(config.error.mock.calls[0][0]).toContain('Only single class selector is supported')
+    })
+
+    test('should support single class selectors and comma-separated single classes', () => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: '.single { color: red; } .first, .second { color: blue; }',
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.single).toEqual({ color: '"red"' })
+      expect(result.first).toEqual({ color: '"blue"' })
+      expect(result.second).toEqual({ color: '"blue"' })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should keep valid selectors while reporting invalid selectors in a comma-separated rule', () => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: '.valid, .invalid:hover { color: red; }',
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.valid).toEqual({ color: '"red"' })
+      expect(result).not.toHaveProperty('invalid:hover')
+      expect(config.error).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('CSS variable fallback validation', () => {
@@ -382,6 +463,69 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).not.toHaveBeenCalled()
     })
 
+    test('should only allow solid text-decoration-style in android and harmony text-decoration shorthand', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.solid { text-decoration: underline solid; } .dotted { text-decoration: underline dotted; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result.solid).toEqual({
+          textDecorationStyle: '"solid"',
+          textDecorationLine: '"underline"'
+        })
+        expect(result.dotted).toEqual({
+          textDecorationLine: '"underline"'
+        })
+        expect(config.warn.mock.calls[0][0]).toEqual(expect.stringContaining('text-decoration:underline dotted'))
+        expect(config.error).not.toHaveBeenCalled()
+      })
+    })
+
+    test('should keep text-decoration shorthand without color on android and harmony without warning', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration: underline solid; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result.text).toEqual({
+          textDecorationStyle: '"solid"',
+          textDecorationLine: '"underline"'
+        })
+        expect(config.warn).not.toHaveBeenCalled()
+        expect(config.error).not.toHaveBeenCalled()
+      })
+    })
+
+    test('should reject text-decoration-color in android and harmony text-decoration shorthand', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration: underline solid red; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result.text).toEqual({
+          textDecorationStyle: '"solid"',
+          textDecorationLine: '"underline"'
+        })
+        expect(config.warn.mock.calls[0][0]).toEqual(expect.stringContaining('contains unsupported value [red]'))
+        expect(config.error).not.toHaveBeenCalled()
+      })
+    })
+
     test('should expand unordered flex-flow and text-shadow shorthand', () => {
       const css = '.flow { flex-flow: wrap row; } .shadow { text-shadow: red 1px 2px 3px; } .shadow2 { text-shadow: 1px 2px red; }'
       const config = createConfig()
@@ -726,6 +870,88 @@ describe('React Native style validation for CSS variables', () => {
 
       expect(result.text).toEqual({
         verticalAlign: '"middle"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should keep text-decoration-style: solid on android and harmony', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration-style: solid; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result.text).toEqual({
+          textDecorationStyle: '"solid"'
+        })
+        expect(config.error).not.toHaveBeenCalled()
+      })
+    })
+
+    test('should reject non-solid text-decoration-style on android and harmony', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration-style: dotted; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result).toEqual({})
+        expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('eg solid'))
+      })
+    })
+
+    test('should keep other text-decoration-style values on ios', () => {
+      const css = '.text { text-decoration-style: dotted; }'
+      const config = createConfig('ios')
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.text).toEqual({
+        textDecorationStyle: '"dotted"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should reject text-decoration-color on android and harmony', () => {
+      ;['android', 'harmony'].forEach(mode => {
+        const css = '.text { text-decoration-color: red; }'
+        const config = createConfig(mode)
+
+        const result = getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+
+        expect(result).toEqual({})
+        expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('text-decoration-color'))
+      })
+    })
+
+    test('should keep text-decoration-color on ios', () => {
+      const css = '.text { text-decoration-color: red; }'
+      const config = createConfig('ios')
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.text).toEqual({
+        textDecorationColor: '"red"'
       })
       expect(config.error).not.toHaveBeenCalled()
     })

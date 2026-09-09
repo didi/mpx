@@ -10,7 +10,7 @@ import type { _ViewProps } from '../mpx-view'
 export type AnimationType = 'api'|'animation'|'transition'|'none'
 
 export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean | AnimationType, layoutRef: MutableRefObject<any> }) {
-  const { style: originalStyle = {}, enableAnimation, animation, catchtransitionend, bindtransitionend, layoutRef } = props
+  const { style: originalStyle = {}, enableAnimation, animation, bindtransitionend, layoutRef } = props
   // 记录动画类型
   let animationType = ''
   if (hasOwn(originalStyle, 'animation') || (hasOwn(originalStyle, 'animationName') && hasOwn(originalStyle, 'animationDuration'))) {
@@ -41,11 +41,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   if (!animationTypeRef.current) return { enableStyleAnimation: false }
 
   const hooksProps = { style: originalStyle }
-  const transitionend = typeof catchtransitionend === 'function'
-    ? catchtransitionend
-    : typeof bindtransitionend === 'function'
-      ? bindtransitionend
-      : undefined
+  const transitionend = typeof bindtransitionend === 'function' ? bindtransitionend : undefined
   if (transitionend && typeof transitionend === 'function') {
     function withTimingCallback (finished?: boolean, current?: AnimatableValue, duration?: number) {
       const target = {

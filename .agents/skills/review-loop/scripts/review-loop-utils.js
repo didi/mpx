@@ -3,8 +3,10 @@
 
 const fs = require('fs')
 const path = require('path')
+const reviewMarkdown = require('./review-markdown')
 
-const protocolVersion = '1.0.0'
+const protocolVersion = '3.0.0'
+const legacyProtocolVersions = ['1.0.0', '2.0.0']
 const phases = [
   'plan_drafting',
   'plan_reviewing',
@@ -70,6 +72,82 @@ function readText (file) {
   return fs.readFileSync(file, 'utf8')
 }
 
+function readRegularText (file, label) {
+  const description = label || 'File'
+  let stat
+  try {
+    stat = fs.lstatSync(file)
+  } catch (err) {
+    if (err.code === 'ENOENT') fail(description + ' does not exist: ' + file)
+    throw err
+  }
+  if (stat.isSymbolicLink() || !stat.isFile()) {
+    fail(description + ' must be a regular non-symlink file: ' + file)
+  }
+  const fd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0))
+  try {
+    if (!fs.fstatSync(fd).isFile()) {
+      fail(description + ' must be a regular non-symlink file: ' + file)
+    }
+    return fs.readFileSync(fd, 'utf8')
+  } finally {
+    fs.closeSync(fd)
+  }
+}
+
+function canonicalDirectory (dir, expected, label) {
+  const description = label || 'Directory'
+  let stat
+  try {
+    stat = fs.lstatSync(dir)
+  } catch (err) {
+    if (err.code === 'ENOENT') fail(description + ' does not exist: ' + dir)
+    throw err
+  }
+  if (stat.isSymbolicLink() || !stat.isDirectory()) {
+    fail(description + ' must be a canonical non-symlink directory: ' + dir)
+  }
+  const canonical = fs.realpathSync(dir)
+  if (expected && canonical !== expected) {
+    fail(description + ' must be the expected canonical directory: ' + dir)
+  }
+  return canonical
+}
+
+function resolveReviewArtifact (file) {
+  const resolvedFile = path.resolve(file)
+  if (path.extname(resolvedFile) !== '.md') fail('Review artifact must be a Markdown file: ' + resolvedFile)
+  const reviewsDir = path.dirname(resolvedFile)
+  const workspace = path.dirname(reviewsDir)
+  const canonicalWorkspace = canonicalDirectory(workspace, '', 'Task workspace')
+  const canonicalReviewsDir = canonicalDirectory(
+    reviewsDir,
+    path.join(canonicalWorkspace, 'reviews'),
+    'Reviews directory'
+  )
+  return {
+    file: resolvedFile,
+    canonicalFile: path.join(canonicalReviewsDir, path.basename(resolvedFile))
+  }
+}
+
+function reviewArtifactPath (taskId, kind, round) {
+  return resolveReviewArtifact(path.join(taskDir(taskId), 'reviews', kind + '-review-' + round + '.md')).file
+}
+
+function readReviewArtifact (file) {
+  const artifact = resolveReviewArtifact(file)
+  return readRegularText(artifact.file, 'Review artifact')
+}
+
+function parseReviewArtifact (file) {
+  return reviewMarkdown.parse(readReviewArtifact(file))
+}
+
+function formatReviewArtifact (review) {
+  return reviewMarkdown.render(review)
+}
+
 function writeText (file, content) {
   ensureDir(path.dirname(file))
   fs.writeFileSync(file, content)
@@ -114,15 +192,31 @@ function isPositiveInteger (value) {
   return Number.isInteger(value) && value > 0
 }
 
+function requireCurrentProtocol (state) {
+  if (state.protocolVersion === protocolVersion) return
+  if (legacyProtocolVersions.includes(state.protocolVersion)) {
+    fail('Legacy workspace is read-only; run migrate-workspace.js before resuming')
+  }
+  fail('Unsupported protocolVersion: ' + state.protocolVersion)
+}
+
+function validateAllowedKeys (value, allowed, field, errors) {
+  Object.keys(value).forEach(function (key) {
+    if (!allowed.includes(key)) errors.push(field + ' must not contain additional property ' + key)
+  })
+}
+
 function validateReviewObject (review) {
   const errors = []
   if (!review || typeof review !== 'object' || Array.isArray(review)) {
     return ['review must be an object']
   }
+  validateAllowedKeys(review, ['round', 'status', 'summary', 'findings', 'evidence'], 'review', errors)
   if (!isPositiveInteger(review.round)) errors.push('round must be a positive integer')
   if (!reviewStatuses.includes(review.status)) errors.push('status must be approved or changes_requested')
   if (typeof review.summary !== 'string' || !review.summary.trim()) errors.push('summary must be a non-empty string')
   if (!Array.isArray(review.findings)) errors.push('findings must be an array')
+  validateEvidence(review.evidence, errors)
   const findings = Array.isArray(review.findings) ? review.findings : []
   findings.forEach(function (finding, index) {
     const prefix = 'findings[' + index + ']'
@@ -130,6 +224,7 @@ function validateReviewObject (review) {
       errors.push(prefix + ' must be an object')
       return
     }
+    validateAllowedKeys(finding, ['id', 'severity', 'category', 'target', 'comment', 'suggestion'], prefix, errors)
     ;['id', 'category', 'target', 'comment', 'suggestion'].forEach(function (key) {
       if (typeof finding[key] !== 'string' || !finding[key].trim()) {
         errors.push(prefix + '.' + key + ' must be a non-empty string')
@@ -151,8 +246,34 @@ function validateReviewObject (review) {
   return errors
 }
 
+function isNonEmptyString (value) {
+  return typeof value === 'string' && Boolean(value.trim())
+}
+
+function validateStringArray (value, field, errors, requireItem) {
+  if (!Array.isArray(value)) {
+    errors.push(field + ' must be an array')
+    return
+  }
+  if (requireItem && !value.length) errors.push(field + ' must not be empty')
+  value.forEach(function (item, index) {
+    if (!isNonEmptyString(item)) errors.push(field + '[' + index + '] must be a non-empty string')
+  })
+}
+
+function validateEvidence (evidence, errors) {
+  if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) {
+    errors.push('evidence must be an object')
+    return
+  }
+  validateAllowedKeys(evidence, ['reviewedPaths', 'residualRisks'], 'evidence', errors)
+  validateStringArray(evidence.reviewedPaths, 'evidence.reviewedPaths', errors, true)
+  validateStringArray(evidence.residualRisks, 'evidence.residualRisks', errors, false)
+}
+
 module.exports = {
   protocolVersion,
+  legacyProtocolVersions,
   phases,
   parseArgs,
   fail,
@@ -162,6 +283,12 @@ module.exports = {
   taskDir,
   ensureDir,
   readText,
+  readRegularText,
+  resolveReviewArtifact,
+  reviewArtifactPath,
+  readReviewArtifact,
+  parseReviewArtifact,
+  formatReviewArtifact,
   writeText,
   readJson,
   writeJson,
@@ -172,5 +299,6 @@ module.exports = {
   writeState,
   relativeToTask,
   isPositiveInteger,
+  requireCurrentProtocol,
   validateReviewObject
 }

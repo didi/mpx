@@ -6,10 +6,11 @@ import PickerMultiSelector from './multiSelector'
 import PickerTime from './time'
 import PickerDate from './date'
 import PickerRegion from './region'
+import Portal from '../mpx-portal'
 import { FormContext, FormFieldValue, RouteContext } from '../context'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
-import { extendObject, useLayout } from '../utils'
+import { extendObject, splitProps, splitStyle, useLayout, useTextPassThrough, useTransformStyle, wrapChildren } from '../utils'
 import { createPopupManager } from '../mpx-popup'
 import { EventType, LanguageCode, PickerMode, PickerProps } from './type'
 
@@ -78,13 +79,13 @@ const styles = StyleSheet.create({
   }
 })
 
-const pickerModalMap: Record<PickerMode, React.ComponentType<PickerProps>> = {
+const pickerModalMap = {
   [PickerMode.SELECTOR]: PickerSelector,
   [PickerMode.MULTI_SELECTOR]: PickerMultiSelector,
   [PickerMode.TIME]: PickerTime,
   [PickerMode.DATE]: PickerDate,
   [PickerMode.REGION]: PickerRegion
-}
+} satisfies Record<PickerMode, React.ComponentType<any>>
 
 const getDefaultValue = (mode: PickerMode) => {
   switch (mode) {
@@ -111,17 +112,26 @@ const buttonTextMap: Record<LanguageCode, { cancel: string; confirm: string }> =
 }
 
 const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
-  (props: PickerProps, ref): React.JSX.Element => {
+  (pickerProps: PickerProps, ref): React.JSX.Element => {
+    const { textProps, innerProps: splitInnerProps } = splitProps(pickerProps)
+    const props = (splitInnerProps || {}) as PickerProps
     const {
       mode,
       value,
-      range = null,
+      range = [],
       children,
       disabled,
       bindcancel,
       bindchange,
-      'header-text': headerText = ''
+      'header-text': headerText = '',
+      style,
+      'enable-var': enableVar,
+      'enable-text-pass-through': enableTextPassThrough,
+      'parent-width': parentWidth,
+      'parent-height': parentHeight
     } = props
+    const modalProps = props as any
+    const rangeKey = modalProps['range-key']
 
     const { pageId } = useContext(RouteContext) || {}
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
@@ -129,12 +139,31 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     pickerValue.current = Array.isArray(value) ? value.slice() : value
     const nodeRef = useRef<View>(null)
     const pickerRef = useRef<any>(null)
-    const { open, show, hide, remove } = useRef(createPopupManager()).current
+    const { open, show, hide, remove, update } = useRef(createPopupManager()).current
+    const {
+      normalStyle,
+      hasVarDec,
+      varContextRef,
+      hasSelfPercent,
+      hasPositionFixed,
+      setWidth,
+      setHeight
+    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
+    const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+    const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
-    useNodesRef<View, PickerProps>(props, ref, nodeRef)
-    const { layoutRef, layoutProps } = useLayout({
+    if (backgroundStyle) {
+      warn('Picker does not support background image-related styles!')
+    }
+
+    useNodesRef<View, PickerProps>(props, ref, nodeRef, {
+      style: normalStyle
+    })
+    const { layoutRef, layoutProps, layoutStyle } = useLayout({
       props,
-      hasSelfPercent: false,
+      hasSelfPercent,
+      setWidth,
+      setHeight,
       nodeRef
     })
 
@@ -143,7 +172,8 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         {},
         props,
         {
-          ref: nodeRef
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle)
         },
         layoutProps
       ),
@@ -151,6 +181,12 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         'mode',
         'value',
         'range',
+        'range-key',
+        'start',
+        'end',
+        'fields',
+        'level',
+        'custom-item',
         'disabled',
         'bindcancel',
         'bindchange',
@@ -163,9 +199,9 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
 
     useEffect(() => {
       if (range && pickerRef.current && mode === PickerMode.MULTI_SELECTOR) {
-        pickerRef.current.updateRange?.(range)
+        pickerRef.current.updateRange?.(range, rangeKey)
       }
-    }, [JSON.stringify(range)])
+    }, [JSON.stringify(range), rangeKey, mode])
 
     /** --- form 表单组件内部方法 --- */
     const getValue = () => {
@@ -228,15 +264,9 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       hide()
     }
 
-    const specificProps = extendObject({}, innerProps, {
-      mode,
-      children,
-      bindchange: onChange,
-      bindcolumnchange: onColumnChange,
-      getRange: () => range
-    })
+    const getContentHeight = () => headerText ? 350 : 310
 
-    const renderPickerContent = () => {
+    const getPickerContent = () => {
       if (disabled) {
         return null
       }
@@ -244,9 +274,21 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!(_mode in pickerModalMap)) {
         return warn(`[Mpx runtime warn]: Unsupported <picker> mode: ${mode}`)
       }
+      const specificProps = {
+        mode: _mode,
+        range,
+        'range-key': rangeKey,
+        start: modalProps.start,
+        end: modalProps.end,
+        fields: modalProps.fields,
+        level: modalProps.level,
+        'custom-item': modalProps['custom-item'],
+        bindchange: onChange,
+        bindcolumnchange: onColumnChange
+      } as PickerProps
       const _value: any = value
-      const PickerModal = pickerModalMap[_mode]
-      const renderPickerModal = (
+      const PickerModal = pickerModalMap[_mode] as React.ComponentType<PickerProps>
+      return (
         <>
           {headerText && (
             <View style={[styles.header]}>
@@ -270,22 +312,51 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
           </View>
         </>
       )
-      const contentHeight = headerText ? 350 : 310
-      open(renderPickerModal, pageId, { contentHeight })
+    }
+
+    const openPickerContent = () => {
+      const renderPickerModal = getPickerContent()
+      if (!renderPickerModal) {
+        return
+      }
+      open(renderPickerModal, pageId, { contentHeight: getContentHeight() })
     }
 
     useEffect(() => {
-      renderPickerContent()
+      openPickerContent()
       return () => {
         remove()
       }
     }, [])
 
-    return createElement(
+    const showPicker = () => {
+      const renderPickerModal = getPickerContent()
+      if (!renderPickerModal) {
+        return
+      }
+      update(renderPickerModal, { contentHeight: getContentHeight() })
+      show()
+    }
+
+    const finalComponent = createElement(
       TouchableWithoutFeedback,
-      { onPress: show },
-      createElement(View, innerProps, children)
+      { onPress: showPicker },
+      createElement(
+        View,
+        innerProps,
+        wrapChildren(children, {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textPassThrough
+        })
+      )
     )
+
+    if (hasPositionFixed) {
+      return createElement(Portal, null, finalComponent)
+    }
+
+    return finalComponent
   }
 )
 

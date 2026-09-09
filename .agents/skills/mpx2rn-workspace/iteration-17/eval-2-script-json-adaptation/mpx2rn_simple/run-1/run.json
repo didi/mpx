@@ -1,0 +1,23 @@
+{
+  "description": "Eval-2 mpx2rn_simple",
+  "cwd": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace",
+  "command": [
+    "codex",
+    "exec",
+    "-C",
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace",
+    "-s",
+    "workspace-write",
+    "-m",
+    "gpt-5.6-sol",
+    "-c",
+    "model_reasoning_effort=\"high\"",
+    "--color",
+    "never",
+    "--json",
+    "<prompt-via-stdin>"
+  ],
+  "returncode": 0,
+  "output_exists": true,
+  "duration_ms": 231075
+}

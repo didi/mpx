@@ -6,6 +6,7 @@ import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { initAppProvides } from './export/inject'
+import { wrapAppLifecycleHooks } from '../core/perf'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -28,6 +29,7 @@ export default function createApp (options, config = {}) {
   const appData = {}
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(options, 'app', false)
+  if (__mpx_perf_framework__) wrapAppLifecycleHooks(rawOptions)
   const builtInMixins = [{
     // 在App中挂载mpx对象供周边工具访问，如e2e测试
     getMpx () {

@@ -47,6 +47,7 @@
     "@mpxjs/mpx-jest": "^0.0.31",
     "@mpxjs/template-engine": "^2.8.7",
     "@mpxjs/webpack-plugin": "^2.10.7",
+    "@types/node": "14.18.63",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "autoprefixer": "^6.3.1",
