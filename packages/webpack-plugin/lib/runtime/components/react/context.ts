@@ -1,5 +1,5 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent, Animated } from 'react-native'
+import type { NativeSyntheticEvent, Animated, ScaledSize, TextStyle } from 'react-native'
 import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
@@ -10,8 +10,12 @@ export type KeyboardAvoidContextValue = MutableRefObject<{
   cursorSpacing: number
   ref: MutableRefObject<any>
   adjustPosition: boolean
+  holdKeyboard?: boolean
   keyboardHeight?: number
+  /** @internal bindfocus 异步延迟上报方法 */
   onKeyboardShow?: () => void
+  /** @internal 切换 Input 时禁止 keyboardDidHide 主动失焦的截止时间 */
+  preventBlurUntil?: number
 } | null>
 
 export interface GroupValue {
@@ -48,7 +52,7 @@ export interface PortalContextValue {
 
 export interface ScrollViewContextValue {
   gestureRef: React.RefObject<any> | null
-  scrollOffset: Animated.Value
+  scrollOffset: Animated.Value | null
 }
 
 export interface RouteContextValue {
@@ -56,9 +60,19 @@ export interface RouteContextValue {
   navigation: Record<string, any>
 }
 
+export interface DimensionsValue {
+  window: ScaledSize;
+  screen: ScaledSize;
+}
+
 export interface StickyContextValue {
   registerStickyHeader: Function
   unregisterStickyHeader: Function
+}
+
+export interface TextPassThroughContextValue {
+  textStyle?: TextStyle
+  pendingTextProps?: Record<string, any>
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
@@ -75,6 +89,8 @@ export const PickerContext = createContext(null)
 
 export const VarContext = createContext({})
 
+export const TextPassThroughContext = createContext<TextPassThroughContextValue | null>(null)
+
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 
 export const RouteContext = createContext<RouteContextValue | null>(null)
@@ -83,7 +99,7 @@ export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
-export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: null })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
 

@@ -1,0 +1,9 @@
+<template>
+  <view></view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({})
+</script>

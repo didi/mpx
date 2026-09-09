@@ -1,4 +1,4 @@
-# 实例 API
+# 实例 API {#instance-api}
 
 ## $set
 
@@ -9,7 +9,7 @@ function $set(target: Object | Array, property: string | number, value: any): vo
 这是全局 `mpx.set` 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。
 它必须用于向响应式对象上添加新 property，因为 Mpx 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
 
-- **参考**：[mpx.set](global-api.html#set)
+- **参考**：[mpx.set](global-api.md#set)
 
 ## $watch
 
@@ -128,7 +128,7 @@ this.$watch('someObject', callback, {
 
 const someObjectWatch = this.$getWatcherByName('someObject')
 ```
-**参考**：[mpx.watch](global-api.html#watch)
+**参考**：[mpx.watch](global-api.md#watch)
 
 ## $delete
 
@@ -157,7 +157,7 @@ function $delete(target: Object, key: string | number): void
   }
   })
 ```
-**参考：** [Mpx.delete](global-api.html#delete)
+**参考：** [Mpx.delete](global-api.md#delete)
 
 ## $refs
 
@@ -183,7 +183,7 @@ ready (){
   },
 })
 ```
-**参考：** [组件 ref](../guide/basic/refs.html)
+**参考：** [组件 ref](../guide/basic/refs.md)
 
 ## $asyncRefs
 **仅字节小程序可用**，因为字节小程序 `selectComponent` 和 `selectAllComponents` 方法为异步方法，因此使用 $refs 同步获取组件实例并不保证能够拿到正确的组件实例，需使用异步 `$asyncRefs`。

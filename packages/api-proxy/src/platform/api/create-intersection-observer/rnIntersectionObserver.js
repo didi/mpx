@@ -74,10 +74,19 @@ class RNIntersectionObserver {
       return
     }
     let targetRef = null
-    if (this.observeAll) {
-      targetRef = this.component.__selectRef(selector, 'node', true)
-    } else {
-      targetRef = this.component.__selectRef(selector, 'node')
+    // 支持传递 ref 对象或数组
+    if (isArray(selector)) {
+      const refs = [].concat(...selector.map(item => (item && item.nodeRefs) || []))
+      targetRef = this.observeAll ? refs : refs[0]
+    } else if (isObject(selector)) {
+      const refs = selector.nodeRefs || []
+      targetRef = this.observeAll ? refs : refs[0]
+    } else if (isString(selector)) {
+      if (this.observeAll) {
+        targetRef = this.component.__selectRef(selector, 'node', true)
+      } else {
+        targetRef = this.component.__selectRef(selector, 'node')
+      }
     }
     if (!targetRef || targetRef.length === 0) {
       warn('intersection observer target not found', this.mpxFileResource)
@@ -175,20 +184,17 @@ class RNIntersectionObserver {
       right: this._restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.right),
       bottom: this._restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.bottom)
     }
+    visibleRect.width = visibleRect.right - visibleRect.left
+    visibleRect.height = visibleRect.bottom - visibleRect.top
 
     const targetArea = (observeRect.bottom - observeRect.top) * (observeRect.right - observeRect.left)
-    const visibleArea = (visibleRect.bottom - visibleRect.top) * (visibleRect.right - visibleRect.left)
+    const visibleArea = visibleRect.width * visibleRect.height
     const intersectionRatio = targetArea ? visibleArea / targetArea : 0
     const isInsected = isInit ? intersectionRatio > this.initialRatio : !(this._getRatioIndex(intersectionRatio, this.thresholds) === this._getRatioIndex(this.previousIntersectionRatio[observeIndex], this.thresholds))
     this.previousIntersectionRatio[observeIndex] = intersectionRatio
     return {
       intersectionRatio,
-      intersectionRect: {
-        top: visibleRect.top,
-        bottom: relativeRect.bottom,
-        left: visibleRect.left,
-        right: relativeRect.right
-      },
+      intersectionRect: visibleRect,
       isInsected
     }
   }
@@ -201,6 +207,9 @@ class RNIntersectionObserver {
 
   // 计算节点的rect信息
   _measureTarget (isInit = false) {
+    if (!this.observerRefs || !this.relativeRef) {
+      return
+    }
     Promise.all([
       this._getReferenceRect(this.observerRefs),
       this._getReferenceRect(this.relativeRef)

@@ -7,7 +7,8 @@
     "defs": {
         "isMobile": true,
         "hasFeature": true
-    }
+    },
+    "dependencies": []
 }
 ```
 
@@ -15,8 +16,8 @@
 
 ```css
 header {}
-
+/*@mpx-if(isMobile)*/
 .mobile { display: block; }
-
+/*@mpx-endif */
 body {}
 ```

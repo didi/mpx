@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -11,12 +11,9 @@ import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
 import MpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
+import { wrapAppLifecycleHooks } from '../core/perf'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
-
-function getPageSize (window = ReactNative.Dimensions.get('window')) {
-  return window.width + 'x' + window.height
-}
 
 function filterOptions (options, appData) {
   const newOptions = {}
@@ -37,6 +34,7 @@ export default function createApp (options) {
   const appData = {}
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(options, 'app', false)
+  if (__mpx_perf_framework__) wrapAppLifecycleHooks(rawOptions)
   initAppProvides(rawOptions.provide, rawOptions)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
   // 在页面script执行前填充getApp()
@@ -74,7 +72,7 @@ export default function createApp (options) {
         )
       }
       const getComponent = () => {
-        return item.displayName ? item : item()
+        return item.displayName ? item : callWithErrorHandling(item, null, 'require page script')
       }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
@@ -137,7 +135,7 @@ export default function createApp (options) {
         cb(options)
       })
     } else if (value === 'hide' || value === 'exit') {
-       global.__mpxAppCbs.hide.forEach((cb) => {
+      global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
           reason: value === 'exit' ? 0 : 3
         })
@@ -208,30 +206,18 @@ export default function createApp (options) {
         if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
-
-      let count = 0
-      let lastPageSize = getPageSize()
-      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const pageSize = getPageSize(window)
-        if (pageSize === lastPageSize) return
-        lastPageSize = pageSize
-        const navigation = getFocusedNavigation()
-        if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-          global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
-        }
-      })
       return () => {
         appState.state = 'exit'
         changeSubscription && changeSubscription.remove()
-        resizeSubScription && resizeSubScription.remove()
       }
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
     const navScreenOpts = {
-      headerShown: false,
-      statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
-      statusBarBackgroundColor: 'transparent'
+      headerShown: false
+    }
+    if (Mpx.config.rnConfig.disablePageTransition) {
+      navScreenOpts.animation = 'none'
     }
 
     return createElement(SafeAreaProvider,

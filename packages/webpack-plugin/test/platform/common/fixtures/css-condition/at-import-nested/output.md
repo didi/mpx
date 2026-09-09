@@ -4,7 +4,11 @@
 {
     "lang": "stylus",
     "resourcePath": "index.styl",
-    "defs": {}
+    "defs": {},
+    "dependencies": [
+        "nest1/nest2/s2.styl",
+        "nest1/s1.styl"
+    ]
 }
 ```
 
@@ -12,11 +16,15 @@
 
 ```stylus
 
-.s3
+
+
+.s2
     color green
+
 
 .s1
     color: blue
+
 
 .index
     color: red

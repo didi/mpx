@@ -6,7 +6,8 @@
     "resourcePath": "index.css",
     "defs": {
         "isMobile": true
-    }
+    },
+    "dependencies": []
 }
 ```
 

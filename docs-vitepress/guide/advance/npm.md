@@ -1,10 +1,10 @@
-# 使用npm
+# 使用npm {#use-npm}
 
 Mpx项目中用户能够方便自然地引用 npm 资源，像 web 开发中一样
 
 在 Mpx 中使用 npm，通过 Webpack 插件在编译时将引用的 npm 包输出为小程序文件，所以 Mpx 的构建产物不需要在开发工具再次进行 npm 构建。
 
-## 下载npm包
+## 下载npm包 {#download-npm-package}
 
 在项目 package.json 所在的目录中执行命令安装项目 npm 包
 
@@ -18,7 +18,7 @@ npm install mpx-ui
 ```
 如若之前未接触过 npm，请翻阅 [官方 npm 文档](https://docs.npmjs.com/about-npm/index.html) 进行学习。
 
-## 引用npm模块
+## 引用npm模块 {#import-npm-module}
 
 直接使用模块路径引用，可以直接通过 ES6 的 import 语法来引用 JS 文件，并且无需额外执行npm构建
 
@@ -26,7 +26,7 @@ npm install mpx-ui
 import { createPage } from '@mpxjs/core'
 ```
 
-## 引用npm组件/页面
+## 引用npm组件/页面 {#import-npm-component-page}
 
 在页面 script 标签中的 json 对象中使用 usingComponents 引入第三方组件，直接使用模块路径引用
 
@@ -109,7 +109,7 @@ Mpx npm构建的优势主要有两点：1. 按需构建；2. 支持分包
 
 所以使用 Mpx 框架开发小程序，可以享受最舒适最自然最好用的 npm 机制，详细原理介绍请移步[Mpx编译构建原理](../understand/compile.md)
 
-## 兼容原生小程序路径规范
+## 兼容原生小程序路径规范 {#compatible-native-path}
 
 组件或者页面的引入有绝对路径和相对路径，或者引入 npm 第三方包，原生小程序中，我们通过相对路径引入一个组件时
 ```js

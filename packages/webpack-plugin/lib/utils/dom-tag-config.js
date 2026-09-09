@@ -91,7 +91,7 @@ const isBuildInReactTag = makeMap(
   'mpx-movable-area,mpx-label,mpx-input,' +
   'mpx-image,mpx-form,mpx-checkbox,mpx-checkbox-group,mpx-button,' +
   'mpx-rich-text,mpx-picker-view-column,mpx-picker-view,mpx-picker,' +
-  'mpx-icon,mpx-canvas'
+  'mpx-icon,mpx-canvas,mpx-camera'
 )
 
 const isSpace = makeMap('ensp,emsp,nbsp')

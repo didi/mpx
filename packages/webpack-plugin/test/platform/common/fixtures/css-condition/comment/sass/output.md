@@ -4,7 +4,8 @@
 {
     "lang": "scss",
     "resourcePath": "index.scss",
-    "defs": {}
+    "defs": {},
+    "dependencies": []
 }
 ```
 
@@ -13,8 +14,7 @@
 ```scss
 
 $color: red; // this is a comment
- .selector {
+.selector {
   color: $color; // another comment
-
 }
 ```

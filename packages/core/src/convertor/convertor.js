@@ -9,6 +9,7 @@ import wxToTtRule from './wxToTt'
 import wxToDdRule from './wxToDd'
 import wxToJdRule from './wxToJd'
 import wxToReactRule from './wxToReact'
+import wxToKsRule from './wxToKs'
 
 /**
  * 转换规则包含四点
@@ -38,7 +39,8 @@ const rulesMap = {
   wxToJd: extend({}, defaultConvertRule, wxToJdRule),
   wxToIos: extend({}, defaultConvertRule, wxToReactRule),
   wxToAndroid: extend({}, defaultConvertRule, wxToReactRule),
-  wxToHarmony: extend({}, defaultConvertRule, wxToReactRule)
+  wxToHarmony: extend({}, defaultConvertRule, wxToReactRule),
+  wxToKs: extend({}, defaultConvertRule, wxToKsRule)
 }
 
 export function getConvertRule (convertMode) {

@@ -1,6 +1,5 @@
 import { useState, ComponentType, useEffect, useCallback, useRef, ReactNode, createElement } from 'react'
 import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native'
-import FastImage from '@d11/react-native-fast-image'
 import { AnyFunc } from './types/common'
 
 const asyncChunkMap = new Map()
@@ -57,6 +56,7 @@ const styles = StyleSheet.create({
 
 interface DefaultFallbackProps {
   onReload: () => void
+  bindreload: () => void
 }
 
 const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
@@ -82,6 +82,9 @@ const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
 }
 
 const DefaultLoading = () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const FastImageModule = require('@d11/react-native-fast-image')
+  const FastImage = FastImageModule.default || FastImageModule
   return (
     <View style={styles.container}>
       <FastImage
@@ -169,7 +172,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   } else if (status === 'error') {
     if (type === 'page') {
       const fallback = getFallback ? getFallback() : DefaultFallback
-      return createElement(fallback as ComponentType<DefaultFallbackProps>, { onReload: reloadPage })
+      return createElement(fallback as ComponentType<DefaultFallbackProps>, { onReload: reloadPage, bindreload: reloadPage })
     } else {
       return getFallback ? createElement(getFallback(), innerProps) : null
     }

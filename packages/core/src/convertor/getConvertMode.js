@@ -8,7 +8,8 @@ const convertModes = {
   'wx-dd': 'wxToDd',
   'wx-ios': 'wxToIos',
   'wx-android': 'wxToAndroid',
-  'wx-harmony': 'wxToHarmony'
+  'wx-harmony': 'wxToHarmony',
+  'wx-ks': 'wxToKs'
 }
 
 export function getConvertMode (srcMode) {

@@ -1,4 +1,4 @@
-import { successHandle, failHandle, resolvePath } from '../../../common/js'
+import { envError, successHandle, failHandle, resolvePath } from '../../../common/js'
 import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
 import { nextTick } from '../next-tick'
 import { EventChannel } from '../event-channel'
@@ -14,14 +14,18 @@ function getBasePath (navigation) {
 let timerId = null
 function isLock (navigationHelper, type, options) {
   if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-    const res = { errMsg: `${type}:fail the previous routing event didn't complete` }
+    const { path } = parseUrl(options.url || '')
+    const res = {
+      errMsg: `${type}:fail the previous routing event didn't complete`,
+      path
+    }
     failHandle(res, options.fail, options.complete)
     return true
   }
   clearTimeout(timerId)
   timerId = setTimeout(() => {
     if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-      navigationHelper.lastFailCallback('timeout')
+      navigationHelper.lastFailCallback(`${type}:fail timeout ${options.url || ''}`)
       navigationHelper.lastFailCallback = null
     }
   }, 1000)
@@ -39,7 +43,7 @@ function navigateTo (options = {}) {
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
 
@@ -66,7 +70,7 @@ function redirectTo (options = {}) {
     return
   }
   if (navigation && navigationHelper) {
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.replace(finalPath, queryObj)
@@ -100,8 +104,10 @@ function navigateBack (options = {}) {
     }
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
-        navigationHelper.lastSuccessCallback()
-        navigationHelper.lastSuccessCallback = null
+        if (navigationHelper.lastSuccessCallback) {
+          navigationHelper.lastSuccessCallback()
+          navigationHelper.lastSuccessCallback = null
+        }
       })
     } else {
       navigation.pop(delta)
@@ -116,7 +122,7 @@ function reLaunch (options = {}) {
     return
   }
   if (navigation && navigationHelper) {
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.reset({
@@ -129,19 +135,17 @@ function reLaunch (options = {}) {
       ]
     })
     navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'redirectTo:ok' }
+      const res = { errMsg: 'reLaunch:ok' }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
-      const res = { errMsg: `redirectTo:fail ${msg}` }
+      const res = { errMsg: `reLaunch:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
   }
 }
 
-function switchTab () {
-
-}
+const switchTab = envError('switchTab')
 
 export {
   redirectTo,

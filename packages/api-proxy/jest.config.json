@@ -1,6 +1,6 @@
 {
   "transform": {
-    "^.+\\.(js|jsx)?$": "babel-jest"
+    "^.+\\.(js|jsx)?$": ["babel-jest", { "rootMode": "upward" }]
   },
   "testEnvironment": "jsdom",
   "moduleNameMapper": {

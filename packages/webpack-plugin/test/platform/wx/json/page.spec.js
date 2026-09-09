@@ -71,4 +71,65 @@ describe('json should transform page json correct', function () {
     })
     expect(warnFn).not.toHaveBeenCalled()
   })
+
+  it('should keep supported page json when trans to rn', function () {
+    const input = {
+      navigationBarTitleText: '首页',
+      navigationBarTextStyle: 'white',
+      navigationBarBackgroundColor: '#000000',
+      navigationStyle: 'custom',
+      backgroundColorContent: '#f5f5f5',
+      disableScroll: true,
+      disableKeyboardAvoiding: true,
+      usingComponents: {
+        'my-list': './list'
+      },
+      componentPlaceholder: {
+        'async-list': 'my-list'
+      }
+    }
+    const output = compileJson(input, {
+      type: 'page',
+      mode: 'ios'
+    })
+    expect(output).toEqual({
+      navigationBarTitleText: '首页',
+      navigationBarTextStyle: 'white',
+      navigationBarBackgroundColor: '#000000',
+      navigationStyle: 'custom',
+      backgroundColorContent: '#f5f5f5',
+      disableScroll: true,
+      disableKeyboardAvoiding: true,
+      usingComponents: {
+        'my-list': './list'
+      },
+      componentPlaceholder: {
+        'async-list': 'my-list'
+      }
+    })
+    expect(warnFn).not.toHaveBeenCalled()
+    expect(errorFn).not.toHaveBeenCalled()
+  })
+
+  it('should warn and remove unsupported page json when trans to rn', function () {
+    const input = {
+      navigationBarTitleText: '首页',
+      backgroundColor: '#eeeeee',
+      backgroundTextStyle: 'light',
+      backgroundColorTop: '#ffffff',
+      backgroundColorBottom: '#000000',
+      enablePullDownRefresh: true,
+      onReachBottomDistance: 100,
+      pageOrientation: 'landscape'
+    }
+    const output = compileJson(input, {
+      type: 'page',
+      mode: 'harmony'
+    })
+    expect(output).toEqual({
+      navigationBarTitleText: '首页'
+    })
+    expect(warnFn).toHaveBeenCalledTimes(7)
+    expect(errorFn).not.toHaveBeenCalled()
+  })
 })

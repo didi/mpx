@@ -15,17 +15,12 @@ type AddParam<O, V extends (...args: any) => any> =
 
 type PickApiValue<T extends keyof WechatMiniprogram.Wx> = Pick<WechatMiniprogram.Wx, T>[T]
 
-interface GetLocationInterface extends WechatMiniprogram.GetLocationOption {
-  aliType?: number
-}
-
 interface RequestPaymentInterface extends WechatMiniprogram.RequestPaymentOption {
   tradeNO?: string
 }
 
 declare module '@mpxjs/core' {
   interface Mpx extends AddPromise<WechatMiniprogram.Wx> {
-    getLocation: AddParam<GetLocationInterface, PickApiValue<'getLocation'>>
     requestPayment: AddParam<RequestPaymentInterface, PickApiValue<'requestPayment'>>
   }
 }
@@ -34,6 +29,7 @@ export const getProxy: (...args: any) => void
 
 export const promisify: (listObj: object, whiteList?: string[], customBlackList?: string[]) => Record<string, any>
 
+export const getLocation: WechatMiniprogram.Wx['getLocation']
 export const showActionSheet: WechatMiniprogram.Wx['showActionSheet']
 export const addPhoneContact: WechatMiniprogram.Wx['addPhoneContact']
 export const onAppShow: WechatMiniprogram.Wx['onAppShow']
@@ -45,9 +41,36 @@ export const offError: WechatMiniprogram.Wx['offError']
 export const createInnerAudioContext: WechatMiniprogram.Wx['createInnerAudioContext']
 export const base64ToArrayBuffer: WechatMiniprogram.Wx['base64ToArrayBuffer']
 export const arrayBufferToBase64: WechatMiniprogram.Wx['arrayBufferToBase64']
+export const openBluetoothAdapter: WechatMiniprogram.Wx['openBluetoothAdapter']
+export const closeBluetoothAdapter: WechatMiniprogram.Wx['closeBluetoothAdapter']
+export const startBluetoothDevicesDiscovery: WechatMiniprogram.Wx['startBluetoothDevicesDiscovery']
+export const stopBluetoothDevicesDiscovery: WechatMiniprogram.Wx['stopBluetoothDevicesDiscovery']
+export const onBluetoothDeviceFound: WechatMiniprogram.Wx['onBluetoothDeviceFound']
+export const offBluetoothDeviceFound: WechatMiniprogram.Wx['offBluetoothDeviceFound']
+export const getConnectedBluetoothDevices: WechatMiniprogram.Wx['getConnectedBluetoothDevices']
+export const getBluetoothAdapterState: WechatMiniprogram.Wx['getBluetoothAdapterState']
+export const onBluetoothAdapterStateChange: WechatMiniprogram.Wx['onBluetoothAdapterStateChange']
+export const offBluetoothAdapterStateChange: WechatMiniprogram.Wx['offBluetoothAdapterStateChange']
+export const getBluetoothDevices: WechatMiniprogram.Wx['getBluetoothDevices']
+export const writeBLECharacteristicValue: WechatMiniprogram.Wx['writeBLECharacteristicValue']
+export const readBLECharacteristicValue: WechatMiniprogram.Wx['readBLECharacteristicValue']
+export const notifyBLECharacteristicValueChange: WechatMiniprogram.Wx['notifyBLECharacteristicValueChange']
+export const onBLECharacteristicValueChange: WechatMiniprogram.Wx['onBLECharacteristicValueChange']
+export const offBLECharacteristicValueChange: WechatMiniprogram.Wx['offBLECharacteristicValueChange']
+export const setBLEMTU: WechatMiniprogram.Wx['setBLEMTU']
+export const getBLEDeviceRSSI: WechatMiniprogram.Wx['getBLEDeviceRSSI']
+export const getBLEDeviceServices: WechatMiniprogram.Wx['getBLEDeviceServices']
+export const getBLEDeviceCharacteristics: WechatMiniprogram.Wx['getBLEDeviceCharacteristics']
 export const closeBLEConnection: WechatMiniprogram.Wx['closeBLEConnection']
 export const createBLEConnection: WechatMiniprogram.Wx['createBLEConnection']
 export const onBLEConnectionStateChange: WechatMiniprogram.Wx['onBLEConnectionStateChange']
+export const offBLEConnectionStateChange: WechatMiniprogram.Wx['offBLEConnectionStateChange']
+export const startWifi: WechatMiniprogram.Wx['startWifi']
+export const stopWifi: WechatMiniprogram.Wx['stopWifi']
+export const getWifiList: WechatMiniprogram.Wx['getWifiList']
+export const onGetWifiList: WechatMiniprogram.Wx['onGetWifiList']
+export const offGetWifiList: WechatMiniprogram.Wx['offGetWifiList']
+export const getConnectedWifi: WechatMiniprogram.Wx['getConnectedWifi']
 export const createCanvasContext: WechatMiniprogram.Wx['createCanvasContext']
 export const canvasToTempFilePath: WechatMiniprogram.Wx['canvasToTempFilePath']
 export const canvasGetImageData: WechatMiniprogram.Wx['canvasGetImageData']
@@ -101,6 +124,8 @@ export const clearStorage: WechatMiniprogram.Wx['clearStorage']
 export const clearStorageSync: WechatMiniprogram.Wx['clearStorageSync']
 export const getSystemInfo: WechatMiniprogram.Wx['getSystemInfo']
 export const getSystemInfoSync: WechatMiniprogram.Wx['getSystemInfoSync']
+export const getDeviceInfo: WechatMiniprogram.Wx['getDeviceInfo']
+export const getLaunchOptionsSync: WechatMiniprogram.Wx['getLaunchOptionsSync']
 export const getWindowInfo: WechatMiniprogram.Wx['getWindowInfo']
 export const setTabBarItem: WechatMiniprogram.Wx['setTabBarItem']
 export const setTabBarStyle: WechatMiniprogram.Wx['setTabBarStyle']
@@ -132,6 +157,10 @@ export const onLocationChange: WechatMiniprogram.Wx['onLocationChange']
 export const offLocationChange: WechatMiniprogram.Wx['offLocationChange']
 export const startLocationUpdate: WechatMiniprogram.Wx['startLocationUpdate']
 export const stopLocationUpdate: WechatMiniprogram.Wx['stopLocationUpdate']
+export const onKeyboardHeightChange: WechatMiniprogram.Wx['onKeyboardHeightChange']
+export const offKeyboardHeightChange: WechatMiniprogram.Wx['offKeyboardHeightChange']
+export const hideKeyboard: WechatMiniprogram.Wx['hideKeyboard']
+export const createCameraContext: WechatMiniprogram.Wx['createCameraContext']
 
 declare const install: (...args: any) => any
 

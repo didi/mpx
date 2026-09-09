@@ -5,6 +5,7 @@ module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -35,6 +36,10 @@ module.exports = function ({ print }) {
       {
         test: /^(nodes)$/,
         jd: jdPropLog
+      },
+      {
+        test: /^(user-select)$/,
+        ks: ksPropLog
       }
     ]
   }

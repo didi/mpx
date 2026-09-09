@@ -1,9 +1,9 @@
-# 跨平台
-## 多平台支持
+# 跨平台 {#cross-platform}
+## 多平台支持 {#multi-platform-support}
 
 Mpx支持在多个小程序平台中进行增强，目前支持的小程序平台包括微信，支付宝，百度，qq和头条，不过自2.0版本后，Mpx支持了以微信增强语法为base的跨平台输出，实现了一套业务源码在多端输出运行的能力，大大提升了多小程序平台业务的开发效率，详情可以查看[跨平台编译](#跨平台编译)
 
-### template增强特性
+### template增强特性 {#template-enhancement}
 
 不同平台上的模板增强指令按照平台的指令风格进行设计，文档和代码示例为了方便统一采用微信小程序下的书写方式。
 
@@ -21,7 +21,7 @@ Mpx支持在多个小程序平台中进行增强，目前支持的小程序平�
 获取节点/组件实例|wx:ref|a:ref|s-ref|qq:ref|tt:ref
 显示/隐藏|wx:show|a:show|s-show|qq:show|tt:show
 
-### script增强特性
+### script增强特性 {#script-enhancement}
 
 增强字段|微信|支付宝|百度|qq|头条
 ----|----|----|----|----|----
@@ -29,22 +29,22 @@ computed|支持|支持|支持|支持|部分支持，无法作为props传递(待�
 watch|支持|支持|支持|支持|支持
 mixins|支持|支持|支持|支持|支持
 
-### style增强特性
+### style增强特性 {#style-enhancement}
 
 无平台差异
 
-### json增强特性
+### json增强特性 {#json-enhancement}
 
 增强字段|微信|支付宝|百度|qq|头条
 ----|----|----|----|----|----
 packages|支持|支持|支持|支持|部分支持，无法分包
 
 
-## 跨平台输出小程序
+## 跨平台输出小程序 {#cross-platform-output}
 
 自2.0版本开始，mpx开始支持跨小程序平台编译，不同于常规跨平台框架重新定义一套DSL的方式，mpx支持基于现有平台的源码编译为其他已支持平台的目标代码。跨平台编译能力依赖于mpx的多平台支持，目前mpx已经支持将微信小程序跨平台编译为支付宝、百度、qq和头条小程序。
 
-### 使用方法
+### 使用方法 {#usage}
 
 如果你是使用`mpx init xxx`新生成的项目，package.json里script部分有`npm run build:cross`，直接执行`npm run build:cross`（watch同理），如果仅需构建某几个平台的，可以修改该script，按已有的格式删除或增添某些某些平台
 
@@ -70,15 +70,15 @@ new MpxwebpackPlugin({
 }
 ```
 
-### 跨平台差异抹平
+### 跨平台差异抹平 {#cross-platform-diff-flatten}
 
 为了实现小程序的跨平台编译，我们在编译和运行时做了很多工作以抹平小程序开发中各个方面的跨平台差异
 
-#### 模板语法差异抹平
+#### 模板语法差异抹平 {#template-syntax-diff}
 
 对于通用指令/事件处理的差异，mpx提供了统一的编译转换抹平操作；而对于平台组件和组件属性的差异，我们也在力所能及的范围内进行了转换抹平，对于平台差异性过大无法转换的部分会在编译阶段报错指出。
 
-#### 组件/页面对象差异抹平
+#### 组件/页面对象差异抹平 {#component-page-object-diff}
 
 不同平台间组件/页面对象的差异主要体现在生命周期上，我们在支持多平台能力时已经将不同平台的生命周期映射到mpx框架的一套内部生命周期中，基于这个统一的映射，不同平台的生命周期差异也得到了抹平。
 
@@ -96,14 +96,14 @@ new MpxwebpackPlugin({
 
 对于一些无法进行模拟的跨平台差异，会在运行时进行检测并报错指出，例如微信转支付宝时使用moved生命周期等。
 
-#### json配置差异抹平
+#### json配置差异抹平 {#json-config-diff}
 
 类似于模板语法，会在编译阶段进行转换抹平，无法转换的部分会在编译阶段报错指出。
 
-#### api调用差异抹平
+#### api调用差异抹平 {#api-diff-flatten}
 
 对于api调用，mpx提供了一个api调用代理插件来抹平跨平台api调用的差异，使用时需要在项目中安装使用`@mpxjs/api-proxy`，可以通过两种方式使用
-#### 方式一：在调用小程序api时统一使用mpx对象进行调用，示例如下：
+#### 方式一：在调用小程序api时统一使用mpx对象进行调用，示例如下： {#method-1-use-mpx-object}
 安装插件支持options传入，options说明如下：
 
 | 参数名称         | 类型                | 含义                       | 是否必填  | 默认值                    | 备注                    |
@@ -115,7 +115,7 @@ new MpxwebpackPlugin({
 | blackList    | Array(String)     | 不转换 promise 格式的 api      | 否     | []                     | 需要 usePromise 设为 true |
 | custom       | Object            | 提供用户在各渠道下自定义api开放能力      | 否     | []                     | -                     |
 
-#### 普通形式
+#### 普通形式 {#normal-form}
 
 ```js
 import mpx from '@mpxjs/core'
@@ -134,7 +134,7 @@ mpx.showModal({
 })
 ```
 
-#### 使用promise形式
+#### 使用promise形式 {#use-promise}
 
 ```js
 import mpx from '@mpxjs/core'
@@ -155,7 +155,7 @@ mpx.showActionSheet({
 })
 ```
 
-#### 用户自定义
+#### 用户自定义 {#user-custom}
 
 ```js
 import mpx from '@mpxjs/core'
@@ -180,7 +180,7 @@ mpx.scanCode({
   }
 })
 ```
-#### 方式二：直接在`@mpxjs/api-proxy`导出想使用的方法
+#### 方式二：直接在`@mpxjs/api-proxy`导出想使用的方法 {#method-2-import-from-api-proxy}
 ```js
 // 独立使用 支持treesharking能力
 import { showModal } from '@mpxjs/api-proxy'
@@ -196,7 +196,7 @@ showModal({
 
 对于无法转换抹平的api调用会在运行时阶段报错指出。
 
-#### webview bridge差异抹平
+#### webview bridge差异抹平 {#webview-bridge-diff-flatten}
 
 Mpx支持小程序跨平台后，多个平台的小程序里都有webview组件，webview打开的页面和小程序可以通过API来通信以及调用一些小程序能力，但是各方webview提供的API是不一样的。
 
@@ -212,15 +212,17 @@ Mpx支持小程序跨平台后，多个平台的小程序里都有webview组件�
 
 提供的API如下：`navigateTo, navigateBack, switchTab, reLaunch, redirectTo, getEnv, postMessage, getLoadError`
 
-## 跨平台条件编译
+## 跨平台条件编译 {#cross-platform-conditional-compile}
 
 Mpx跨平台编译的原则在于，`能转则转，转不了则报错提示`，对于无法抹平差异的部分，我们提供了完善的跨平台条件编译机制便于用户处理因平台差异而无法相互转换的部分，也能够用于实现具有平台差异性的业务逻辑。
 
 mpx中我们支持了三种维度的条件编译，分别是文件维度，区块维度和代码维度，其中，文件维度和区块维度主要用于处理一些大块的平台差异性逻辑，而代码维度主要用于处理一些局部简单的平台差异。
 
-### 文件维度条件编译
+> 文件和区块维度的 `mode` 只负责选择目标平台内容，不会改变源码方言。命中的文件或区块默认继承资源 `srcMode` 并继续参与跨平台转换；完整目标平台原生文件使用 `srcModeRules` 声明源码方言，完整目标平台原生 SFC 区块使用 `src-mode` 声明源码方言。
 
-文件维度条件编译简单的来说就是文件为维度进行跨平台差异代码的编写，例如在微信->支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，这时你可以在相同的位置新建一个map.ali.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的mode来加载对应模块，当mode为ali时，会优先加载map.ali.mpx，反之则会加载map.mpx。
+### 文件维度条件编译 {#file-conditional-compile}
+
+文件维度条件编译简单的来说就是以文件为维度编写跨平台差异代码。例如在微信 -> 支付宝项目中存在一个业务地图组件 `map.mpx`，可以在相同位置新建 `map.ali.mpx`；编译系统在 `mode` 为 `ali` 时优先加载 `map.ali.mpx`，其他 `mode` 加载 `map.mpx`。`map.ali.mpx` 默认仍按照资源 `srcMode` 编写并参与转换；若文件完整使用支付宝原生语法，需通过 `srcModeRules.ali` 显式声明源码方言。
 
 文件维度条件编译能够与webpack alias结合使用，对于npm包的文件我们并不方便在原本的文件位置创建.ali的条件编译文件，但我们可以通过webpack alias在相同位置创建一个`虚拟的`.ali文件，并将其指向项目中的其他文件位置。
 
@@ -243,15 +245,18 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
   })
 ```
 
-### 区块维度条件编译
+### 区块维度条件编译 {#block-conditional-compile}
 
-在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`属性定义该区块的目标平台即可，示例如下：
+在.mpx单文件中一般存在template、js、style、json四个区块。`mode` 只负责区块筛选，命中后仍继承资源 `srcMode` 并执行平台转换；完整目标平台原生 SFC 区块使用 `src-mode` 显式声明源码方言。仅当 `src-mode` 等于当前输出 `mode` 时生效，否则忽略并继续继承资源 `srcMode`：
 
 ```html
 <!--编译mode为ali时使用如下区块-->
 <template mode="ali">
-<!--该区块中的所有代码需采用支付宝的技术标准进行编写-->
-  <view>支付宝环境</view>
+  <view bindtap="handleTap">支付宝环境</view>
+</template>
+
+<template mode="ali" src-mode="ali">
+  <view onTap="handleTap">完整支付宝原生区块</view>
 </template>
 
 <!--其他编译mode时使用如下区块-->
@@ -260,7 +265,19 @@ mpx中我们支持了三种维度的条件编译，分别是文件维度，区�
 </template>
 ```
 
-### 代码维度条件编译
+当 RN 区块声明 `src-mode="ios"` 时，区块会按照 RN 原生源码处理，模板应使用已注册的 `View`、`Text` 等 RN 原生组件，而不是依赖 `view`、`text` 的 Mpx2RN 转换。RN 原生组件的注册方式参见 [Mpx 与 RN 混合开发](../rn/hybrid-with-react-native.md)。
+
+```html
+<template mode="ios" src-mode="ios">
+  <View>
+    <Text>RN 原生区块</Text>
+  </View>
+</template>
+```
+
+`.mpx` 文件的 `<template src="..." src-mode="...">` 仍属于 SFC 模板区块：默认继承当前资源的 `srcMode`，并读取区块显式声明的 `src-mode`。模板区块内部的 `<template name>` 定义同样继承当前区块 `srcMode`；`<import>` / `<include>` 引用的是独立模板资源，不继承引用方 `srcMode`，若其使用目标平台原生语法，应通过 `srcModeRules` 对被引用资源本身进行声明。
+
+### 代码维度条件编译 {#code-conditional-compile}
 
 如果只有局部的代码存在跨平台差异，mpx同样支持在代码内使用if/else进行局部条件编译，用户可以在js代码和template插值中访问`__mpx_mode__`获取当前编译mode，进行平台差异逻辑编写，js代码中使用示例如下。
 
@@ -338,7 +355,7 @@ module.exports = {
 */
 ```
 
-### 属性维度条件编译
+### 属性维度条件编译 {#attr-conditional-compile}
 
 属性维度条件编译允许用户在组件上使用 `@` 和 `|` 符号来指定某个节点或属性只在某些平台下有效。
 
@@ -381,36 +398,26 @@ module.exports = {
 ```html
 <view @ali>this is view</view>
 ```
-需要注意使用上述用法时，节点自身在构建时框架不会对节点属性进行平台语法转换，但对于其子节点，框架并不会继承父级节点 mode，会进行正常跨平台语法转换。
-```html
-<!--错误示例-->
-<view @ali bindtap="otherClick">
-    <view bindtap="someClick">tap click</view>
-</view>
-// srcMode 为 wx 跨端输出 ali 结果为
-<view @ali bindtap="otherClick">
-    <view onTap="someClick">tap click</view>
-</view>
-```
-上述示例为错误写法，假如srcMode为微信小程序，用上述写法构建输出支付宝小程序时，父节点 bindtap 不会被转为 onTap，在支付宝平台执行时事件会无响应。
 
-正确写法如下：
+`@mode` 只负责筛选节点。节点命中后会继承资源 `srcMode`，节点自身及其子节点都会执行正常的平台语法转换，条件属性不会保留在输出中。例如 `srcMode` 为 `wx`、输出 `ali` 时：
+
 ```html
-<!--正确示例-->
-<view @ali onTap="otherClick">
-    <view bindtap="someClick">tap click</view>
+<!--源码-->
+<view @ali bindtap="otherClick">
+  <view bindtap="someClick">tap click</view>
 </view>
-// 输出 ali 产物
-<view @ali onTap="otherClick">
-    <view onTap="someClick">tap click</view>
+
+<!--输出 ali 产物-->
+<view onTap="otherClick">
+  <view onTap="someClick">tap click</view>
 </view>
 ```
-有时开发者期望使用 @ali 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力
+
+`@_mode` 是 `@mode` 的历史兼容别名，两者的筛选和转换行为完全一致。例如下面的写法也会将 `bindtap` 转换为 `onTap`，但新代码建议统一使用 `@mode`：
+
 ```html
-<!--srcMode为 wx，输出 ali 时，bindtap 会被正常转换为 onTap-->
 <view @_ali bindtap="someClick">test</view>
 ```
-在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
 
 有时候我们不仅需要对节点属性进行条件编译，可能还需要对节点标签进行条件编译。
 
@@ -440,33 +447,33 @@ module.exports = defineConfig({
 })
 ```
 
-#### 文件维度条件编译
+#### 文件维度条件编译 {#file-conditional-compile-1}
 
-微信转支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，而且这个地图组件在不同的目标环境中也有很大的差异，这时你可以在相同的位置新建一个 map.ali.didi.mpx 或 map.ali.qingju.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的 mode 和 env 来加载对应模块，当 mode 为 ali，env 为 didi 时，会优先加载 map.ali.didi.mpx、map.ali.mpx，如果没有定义 env，则会优先加载 map.ali.mpx，反之则会加载 map.mpx。
+微信转支付宝的项目中存在一个业务地图组件 `map.mpx`，而且这个地图组件在不同目标环境中也有较大差异时，可以在相同位置新建 `map.ali.didi.mpx` 或 `map.ali.qingju.mpx`。编译系统根据当前 `mode` 和 `env` 加载对应模块：当 `mode` 为 `ali`、`env` 为 `didi` 时，会依次尝试 `map.ali.didi.mpx`、`map.ali.mpx`，否则加载 `map.mpx`。条件文件默认仍按照资源 `srcMode` 编写并参与转换；若文件完整使用支付宝原生语法，需通过 `srcModeRules.ali` 显式声明源码方言。
 
-#### 区块维度条件编译
+#### 区块维度条件编译 {#block-conditional-compile-1}
 
-在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`或`env`属性定义该区块的目标平台即可，示例如下：
+在 `.mpx` 单文件中一般存在 template、script、style、JSON 四个区块。`mode` 和 `env` 只负责区块筛选，命中后仍继承资源 `srcMode` 并执行平台转换，示例如下：
 
 ```html
 <!--编译mode为ali且env为didi时使用如下区块，优先级最高是4-->
 <template mode="ali" env="didi">
-  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+  <view bindtap="handleTap">支付宝 didi 环境</view>
 </template>
 
 <!--编译mode为ali时使用如下区块，优先级是3-->
 <template mode="ali">
-  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+  <view bindtap="handleTap">支付宝环境</view>
 </template>
 
 <!--编译env为didi时使用如下区块，优先级是2-->
 <template env="didi">
-  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+  <view bindtap="handleTap">didi 环境</view>
 </template>
 
 <!--其他环境，优先级是1-->
 <template>
-  <view>该区块中的所有代码需采用支付宝的技术标准进行编写</view>
+  <view bindtap="handleTap">默认环境</view>
 </template>
 ```
 
@@ -482,11 +489,11 @@ module.exports = defineConfig({
 </template>
 ```
 
-#### 代码维度条件编译
+#### 代码维度条件编译 {#code-conditional-compile-1}
 
 如果在 MpxWebpackPlugin 插件初始化时自定义了 env，你可以访问`__mpx_env__`获取当前编译env，进行环境差异逻辑编写。使用方法与`__mpx_mode__`相同。
 
-#### 属性维度条件编译
+#### 属性维度条件编译 {#attr-conditional-compile-1}
 
 env 属性维度条件编译与 mode 的用法大致相同，使用 `:` 符号与 mode 和其他 env 进行串联，与 mode 组合使用格式形如 `attr@mode:env:env|mode:env`，为了不与 mode 混淆，当条件编译中仅存在 env 条件时，也需要添加 `:` 前缀，形如 `attr@:env`。
 
@@ -521,30 +528,30 @@ env 属性维度的编译同样支持对整个节点或者节点标签名进行�
 <view bindtap@:didi ="someClick">this is a  view component</view>
 ```
 
-### 其他注意事项
+### 其他注意事项 {#other-notes}
 
 * 当目标平台为支付宝时，需要启用支付宝最新的component2编译才能保障框架正常工作，关于component2[点此查看详情](https://docs.alipay.com/mini/framework/custom-component-overview)；
 * 跨平台源码中自定义组件的标签名不能使用驼峰形式`myComponent`，请使用横杠形式`my-component`来书写；
 * 生成的目标代码中文件名和文件夹名不能带有`@`符号，目前媒体文件和原生自定义组件在编译时不会修改文件名，需要重点关注。
 
-## 跨平台输出web
+## 跨平台输出web {#cross-platform-web}
 
 从2.3.0版本开始，Mpx开始支持将已有项目跨平台输出web平台中运行的能力，目前输出web能力完备，能够支持直接转换大型复杂项目，我们会持续对输出web的能力进行优化，不断的建全更全面的适用范围和开发体验。
 
-### 技术实现
+### 技术实现 {#tech-implementation}
 
 与小程序平台间的差异相比，web平台和小程序平台间的差异要大很多，小程序相当于是基于web技术的上层封装，所以不同于我们跨平台输出其他小程序平台时以编译转换为主的思路，在输出web时，我们更多地采用了封装的方式来抹平组件/Api和底层环境的差异，与当前大部分的跨平台框架相仿。但与当前大部分跨平台框架以web MVVM框架为base输出到小程序上运行的思路不同，我们是以Mpx小程序增强语法为基础输出到web中运行，前面说过小程序本身是基于web技术进行的实现，小程序->web的转换在可行性和兼容性上会好一些。
 
 在具体实现上，Mpx项目输出到web中运行时在组件化和路由层面都是基于Vue生态实现，所以可以将Mpx的跨端输出产物整合到既有的Vue项目中，或者在条件编译中直接使用Vue语法进行web端的实现。
 
-### 使用方法
+### 使用方法 {#usage-1}
 
 使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run build:web`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
 
-### 支持范围
+### 支持范围 {#support-scope}
 目前对输出web的通用能力支持已经非常完备，下列表格中显示了当前版本中已支持的能力范围
 
-#### 模板指令
+#### 模板指令 {#template-directives}
 指令名称|是否支持
 :----|----
 Mustache数据绑定|是
@@ -565,7 +572,7 @@ wx:style|是
 wx:ref|是
 wx:show|是
 
-#### 事件绑定方式
+#### 事件绑定方式 {#event-binding}
 
 绑定方式|是否支持
 :----|----
@@ -574,7 +581,7 @@ catch|是
 capture-bind|是
 capture-catch|是
 
-#### 事件名称
+#### 事件名称 {#event-name}
 
 事件名称|是否支持
 :----|----
@@ -584,7 +591,7 @@ longtap|是
 
 web同名事件默认全部支持，已支持组件的特殊事件默认为支持，不支持的情况下会在编译时抛出异常
 
-#### 基础组件
+#### 基础组件 {#basic-components}
 
 组件名称|是否支持|说明
 :----|---- |----
@@ -619,7 +626,7 @@ view|是
 web-view|是
 在项目的app.json 中配置 "style": "v2"启用新版的组件样式，涉及的组件有 button icon radio checkbox switch slider在输出web时也与小程序保持了一致
 
-#### 生命周期
+#### 生命周期 {#lifecycle}
 
 生命周期名称|是否支持
 :----|----
@@ -638,7 +645,7 @@ detached|是
 updated|是
 serverPrefetch|是
 
-#### 应用级事件
+#### 应用级事件 {#app-events}
 
 应用级事件名称|是否支持
 :----|----
@@ -649,7 +656,7 @@ onReachBottom|是
 onResize|是
 onTabItemTap|是
 
-#### 组件配置
+#### 组件配置 {#component-config}
 
 
 配置项|支持度
@@ -665,7 +672,7 @@ pageLifetimes|支持
 observers|不支持，请使用watch代替
 behaviors|不支持，请使用mixins代替
 
-#### 组件API
+#### 组件API {#component-api}
 
 api名称|支持度
 :----|----
@@ -674,7 +681,7 @@ $nextTick|支持
 createSelectorQuery/selectComponent|支持
 
 
-#### 全局API
+#### 全局API {#global-api}
 
 api名称|支持度
 :----|----
@@ -693,15 +700,15 @@ set|支持
 setNavigationBarTitle|支持
 setNavigationBarColor|支持
 setStorage|支持
-setStorageSync|支持
+setStorageSync|不支持，请使用 setStorage
 getStorage|支持
-getStorageSync|支持
+getStorageSync|不支持，请使用 getStorage
 getStorageInfo|支持
-getStorageInfoSync|支持
+getStorageInfoSync|不支持，请使用 getStorageInfo
 removeStorage|支持
-removeStorageSync|支持
+removeStorageSync|不支持，请使用 removeStorage
 clearStorage|支持
-clearStorageSync|支持
+clearStorageSync|不支持，请使用 clearStorage
 getSystemInfo|支持
 getSystemInfoSync|支持
 showModal|支持
@@ -713,7 +720,7 @@ onWindowResize|支持
 offWindowResize|支持
 createAnimation|支持
 
-#### JSON配置
+#### JSON配置 {#json-config}
 配置项|是否支持
 :----|----
 backgroundColor|是
@@ -731,15 +738,14 @@ subpackages|是
 tabBar|是
 usingComponents|是
 
-#### 拓展能力
+#### 拓展能力 {#extended-abilities}
 能力|是否支持
 :---|---
 fetch|是
 i18n|是
 
-#### 小程序其他原生能力
+#### 小程序其他原生能力 {#other-native-abilities}
 能力|支持度
 :---|---
 wxs|支持
 animation|支持组件的animation属性，支持所有animation对象方法(export、step、width、height、rotate、scale、skew、translate等等)
-

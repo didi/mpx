@@ -18,7 +18,7 @@ module.exports = ({ id, transPage = false }) => {
                 }))
                 selector.insertAfter(n, compoundSelectors)
               }
-              if (transPage && /^page$/.test(n.value)) {
+              if (transPage && n.type === 'tag' && n.value === 'page') {
                 const compoundSelectors = n.nodes || []
                 n.replaceWith(selectorParser.className({
                   value: MPX_TAG_PAGE_SELECTOR

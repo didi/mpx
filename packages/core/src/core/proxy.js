@@ -31,8 +31,10 @@ import {
   wrapMethodsWithErrorHandling,
   warn,
   error,
-  getEnvObj
+  getEnvObj,
+  def
 } from '@mpxjs/utils'
+import { renderHelperDefs } from '../platform/builtInMixins/renderHelperMixin'
 import {
   BEFORECREATE,
   CREATED,
@@ -52,6 +54,8 @@ import {
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
 import { inject, provide } from '../platform/export/inject'
+import * as perf from '@mpxjs/perf'
+import { instanceLifecycleMeasureNames } from './perf'
 
 let uid = 0
 
@@ -112,7 +116,6 @@ export default class MpxProxy {
     this.name = options.name || ''
     this.options = options
     this.shallowReactivePattern = this.options.options?.shallowReactivePattern
-    this.disconnectOnUnmounted = !!this.options.options?.disconnectOnUnmounted
     // beforeCreate -> created -> mounted -> unmounted
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
@@ -171,6 +174,8 @@ export default class MpxProxy {
     if (!isWeb) {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
+      let perfId = -1
+      if (__mpx_perf_framework__) perfId = perf.scopeStart('instance:init')
       setCurrentInstance(this)
       this.parent = this.resolveParent()
       this.provides = this.parent ? this.parent.provides : Object.create(null)
@@ -184,12 +189,14 @@ export default class MpxProxy {
       // 在 props/data 初始化之后初始化 provide
       this.initProvide()
       unsetCurrentInstance()
+      if (__mpx_perf_framework__) perf.scopeEnd(perfId)
     }
 
     this.state = CREATED
     this.callHook(CREATED)
 
     if (!isWeb && !isReact) {
+      this.initRenderHelpers()
       this.initRender()
     }
 
@@ -250,30 +257,18 @@ export default class MpxProxy {
       contextMap.remove(this.uid)
     }
     this.callHook(BEFOREUNMOUNT)
+    let perfId = -1
+    if (__mpx_perf_framework__) perfId = perf.scopeStart('instance:unmount')
     this.scope?.stop()
     if (this.update) this.update.active = false
-    this.callHook(UNMOUNTED)
-    this.state = UNMOUNTED
     if (this._intersectionObservers) {
       this._intersectionObservers.forEach((observer) => {
         observer.disconnect()
       })
     }
-    // 临时规避Reanimated worklet闭包捕获导致的内存泄漏问题
-    if (isReact && this.disconnectOnUnmounted) {
-      Object.keys(this.localKeysMap).forEach((key) => {
-        delete this.target[key]
-      })
-      Object.keys(this.props).forEach((key) => {
-        delete this.target[key]
-      })
-      this.scope = null
-      this.data = null
-      this.props = null
-      this.renderData = null
-      this.miniRenderData = null
-      this.forceUpdateData = null
-    }
+    if (__mpx_perf_framework__) perf.scopeEnd(perfId)
+    this.callHook(UNMOUNTED)
+    this.state = UNMOUNTED
   }
 
   isUnmounted () {
@@ -323,6 +318,8 @@ export default class MpxProxy {
   initSetup () {
     const setup = this.options.setup
     if (setup) {
+      let perfId = -1
+      if (__mpx_perf_framework__) perfId = perf.scopeStart('instance:init:setup')
       let setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
@@ -335,9 +332,10 @@ export default class MpxProxy {
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
           createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
           getPageId: this.target.getPageId.bind(this.target),
-          getOpenerEventChannel: this.target.getOpenerEventChannel.bind(this.target)
+          getOpenerEventChannel: this.target.getOpenerEventChannel ? this.target.getOpenerEventChannel.bind(this.target) : noop
         }
       ])
+      if (__mpx_perf_framework__) perf.scopeEnd(perfId)
       if (!isObject(setupResult)) {
         error(`Setup() should return a object, received: ${type(setupResult)}.`, this.options.mpxFileResource)
         return
@@ -500,6 +498,19 @@ export default class MpxProxy {
   callHook (hookName, params, hooksOnly) {
     const hook = this.options[hookName]
     const hooks = this.hooks[hookName] || []
+    if (__mpx_perf_framework__ && this.options.__type__ === 'page') {
+      if (hookName === ONLOAD) {
+        perf.mark('page:onLoad:start', { route: this.target.route })
+      } else if (hookName === MOUNTED) {
+        perf.mark('page:onReady:start', { route: this.target.route })
+      }
+    }
+    let perfId = -1
+    if (__mpx_perf_framework__) {
+      const measureName = instanceLifecycleMeasureNames[hookName]
+      const hasHook = (isFunction(hook) && !hooksOnly) || hooks.length
+      if (measureName && hasHook) perfId = perf.scopeStart(measureName)
+    }
     let result
     if (isFunction(hook) && !hooksOnly) {
       const setContext = hookName !== BEFORECREATE
@@ -514,7 +525,7 @@ export default class MpxProxy {
     hooks.forEach((hook) => {
       result = params ? hook(...params) : hook()
     })
-
+    if (__mpx_perf_framework__ && perfId >= 0) perf.scopeEnd(perfId)
     return result
   }
 
@@ -728,6 +739,15 @@ export default class MpxProxy {
     this.toggleRecurse(true)
   }
 
+  initRenderHelpers () {
+    if (this.options.__nativeRender__ || __mpx_mode__ !== 'ks') return
+    Object.keys(renderHelperDefs).forEach((key) => {
+      if (!hasOwn(this.target, key)) {
+        def(this.target, key, renderHelperDefs[key])
+      }
+    })
+  }
+
   initRender () {
     if (this.options.__nativeRender__) return this.doRender()
 
@@ -741,6 +761,8 @@ export default class MpxProxy {
     const dynamicTarget = this.target.__dynamic
 
     const effect = this.effect = new ReactiveEffect(() => {
+      let perfId = -1
+      if (__mpx_perf_framework__ && !dynamicTarget && !__getAst) perfId = perf.scopeStart('instance:render')
       // pre render for props update
       if (this.propsUpdatedFlag) {
         this.updatePreRender()
@@ -748,20 +770,19 @@ export default class MpxProxy {
       if (dynamicTarget || __getAst) {
         try {
           const ast = getAst(__getAst, moduleId)
-          return _r(false, _g(ast, moduleId))
+          _r(false, _g(ast, moduleId))
         } catch (e) {
           e.errType = 'mpx-dynamic-render'
           e.errmsg = e.message
           if (!__mpx_dynamic_runtime__) {
-            return error('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.', this.options.mpxFileResource, e)
+            error('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.', this.options.mpxFileResource, e)
           } else {
-            return error('Dynamic rendering error', this.options.mpxFileResource, e)
+            error('Dynamic rendering error', this.options.mpxFileResource, e)
           }
         }
-      }
-      if (this.target.__injectedRender) {
+      } else if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender(_i, _c, _r, _sc)
+          this.target.__injectedRender(_i, _c, _r, _sc)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()
@@ -769,6 +790,7 @@ export default class MpxProxy {
       } else {
         this.render()
       }
+      if (__mpx_perf_framework__ && perfId >= 0) perf.scopeEnd(perfId)
     }, () => queueJob(update), this.scope)
 
     const update = this.update = effect.run.bind(effect)

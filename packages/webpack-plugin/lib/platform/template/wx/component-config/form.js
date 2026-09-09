@@ -10,6 +10,16 @@ module.exports = function ({ print }) {
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
+  const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
+  const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
+  const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -39,12 +49,27 @@ module.exports = function ({ print }) {
         qq: qqPropLog
       },
       {
-        test: /^(report-submit|report-submit-timeout)$/,
+        test: /^(report-submit|report-submit-timeout|submitToGroup)$/,
         web: webPropLog,
         qa: qaPropLog,
         ios: iosPropLog,
         android: androidPropLog,
-        harmony: harmonyPropLog
+        harmony: harmonyPropLog,
+        ks: ksPropLog
+      }
+    ],
+    event: [
+      {
+        test: /^(submitToGroup)$/,
+        ks: ksEventLog,
+        ios: iosEventLog,
+        android: androidEventLog,
+        harmony: harmonyEventLog,
+        web: webEventLog,
+        ali: aliEventLog,
+        qa: qaEventLog,
+        qq: qqEventLog,
+        jd: jdEventLog
       }
     ]
   }

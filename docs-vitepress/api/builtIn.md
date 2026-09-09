@@ -1,4 +1,4 @@
-# 内建组件
+# 内建组件 {#built-in-components}
 
 ## component
 
@@ -14,7 +14,7 @@
   <component is="{{ComponentName}}" range="compA,compB"></component>
 ```
 
-**参考**：[动态组件](../guide/basic/component.md#动态组件)
+**参考**：[动态组件](../guide/basic/component.md#dynamic-component)
 
 ## slot
 

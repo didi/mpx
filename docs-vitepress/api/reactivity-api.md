@@ -2,9 +2,9 @@
 sidebarDepth: 2
 ---
 
-# 响应式 API
+# 响应式 API {#reactivity-api}
 
-## 响应式基础 API
+## 响应式基础 API {#reactivity-basic-api}
 
 ### reactive
 将对象处理为响应性对象。
@@ -193,7 +193,7 @@ del(person, 'age')
 ```
 
 
-## Computed 与 Watch
+## Computed 与 Watch {#computed-and-watch}
 
 ### computed
 
@@ -357,7 +357,7 @@ interface WatchOptions extends WatchEffectOptions {
 * 访问侦听状态变化前后的值。
 
 
-#### 侦听单一源
+#### 侦听单一源 {#watch-single-source}
 watch 可以侦听一个具有返回值的 getter，也可以直接是一个 ref
 ```js
 // 侦听一个 getter
@@ -376,7 +376,7 @@ watch(count, (count, prevCount) => {
 })
 ```
 
-#### 侦听多个源
+#### 侦听多个源 {#watch-multiple-sources}
 
 还可以使用数组的形式同时侦听多个数据源：
 ```js
@@ -387,7 +387,7 @@ watch([aRef, bRef], ([a, b], [prevA, prevB]) => {
 })
 ```
 
-#### 与 watchEffect 相同的行为
+#### 与 watchEffect 相同的行为 {#watcheffect-behavior}
 
 **watch** 与 **watchEffect** 在手动停止侦听、清除副作用、副作用刷新时机方面有相同的行为。
 
@@ -404,7 +404,7 @@ let unwatch = watch(() => {
 unwatch()
 ```
 
-#### watch 选项
+#### watch 选项 {#watch-options}
 - **选项**：deep
 
   为了发现对象内部值的变化，可以在选项参数中指定 deep: true。
@@ -495,7 +495,7 @@ unwatch()
     immediate: true
   })
 
-## Effect 作用域 API
+## Effect 作用域 API {#effect-scope-api}
 
 ### effectScope
 

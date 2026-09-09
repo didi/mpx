@@ -1,10 +1,10 @@
-# 网络请求
+# 网络请求 {#network-request}
 
 
 Mpx 提供了网络请求库 fetch，抹平了微信，阿里等平台请求参数及响应数据的差异；同时支持请求拦截器，请求取消等
 
 
-## 使用说明
+## 使用说明 {#usage-instruction}
 
 ```js
 import mpx from '@mpxjs/core'
@@ -25,7 +25,7 @@ mpx.createApp({
 })
 ```
 
-## 导出说明
+## 导出说明 {#export-description}
 
 mpx-fetch提供了一个实例 **xfetch** ，该实例包含以下api
 
@@ -33,7 +33,7 @@ mpx-fetch提供了一个实例 **xfetch** ，该实例包含以下api
 - CancelToken，实例属性，用于创建一个取消请求的凭证。
 - interceptors，实例属性，用于添加拦截器，包含两个属性，request & response
 
-## 请求拦截器
+## 请求拦截器 {#request-interceptor}
 
 ```js
 mpx.xfetch.interceptors.request.use(function(config) {
@@ -48,7 +48,7 @@ mpx.xfetch.interceptors.response.use(function(res) {
 })
 ```
 
-## 请求中断
+## 请求中断 {#request-abort}
 
 ```js
 const cancelToken = new mpx.xfetch.CancelToken()
@@ -62,7 +62,7 @@ mpx.xfetch.fetch({
 cancelToken.exec('手动取消请求') // 执行后请求中断，返回abort fail
 ```
 
-## 设置请求参数
+## 设置请求参数 {#set-request-params}
 ```js
 mpx.xfetch.fetch({
 	url: 'http://xxx.com',
@@ -86,7 +86,7 @@ mpx.xfetch.fetch({
 })
 ```
 
-## 设置请求 timeout
+## 设置请求 timeout {#set-request-timeout}
 
 ```js
 mpx.xfetch.fetch({
@@ -100,7 +100,7 @@ mpx.xfetch.fetch({
 ```
 
 ## 在组合式 API 中使用 {#composition-api-usage}
-在组合式 API 中我们提供了 [useFetch](/api/extend.html#usefetch) 方法来访问 `xfetch` 实例对象
+在组合式 API 中我们提供了 [useFetch](../../api/extend.md#usefetch) 方法来访问 `xfetch` 实例对象
 
 ```js
 // app.mpx
