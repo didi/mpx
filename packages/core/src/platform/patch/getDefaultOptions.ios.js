@@ -297,7 +297,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   // bind this & assign methods
   if (rawOptions.methods) {
     Object.entries(rawOptions.methods).forEach(([key, method]) => {
-      instance[key] = method.bind(instance)
+      instance[key] = method.__workletHash ? method : method.bind(instance)
     })
   }
 
