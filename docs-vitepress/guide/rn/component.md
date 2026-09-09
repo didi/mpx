@@ -147,17 +147,18 @@
 
 | 属性名                   | 类型     | 默认值              | 说明                                 |
 | ----------------------- | ------- | ------------------  | ------------------------------------|
-| indicator-dots          | boolean | `false`             | 是否显示面板指示点                     |
+| indicator-dots          | boolean | `false`             | 是否显示面板指示点，数量与 `swiper-item` 一致；多项展示时从 `current` 开始的 `display-multiple-items` 个指示点同时高亮，循环模式下跨越尾首高亮 |
 | indicator-color         | color   | `rgba(0, 0, 0, .3)` | 指示点颜色                            |
 | indicator-active-color  | color   | `#000000`           | 当前选中的指示点颜色                   |
 | autoplay                | boolean | `false`             | 是否自动切换                          |
-| current                 | number  | `0`                 | 当前所在滑块的 index                  |
+| current                 | number  | `0`                 | 当前所在滑块的 index，越界时会裁剪到合法范围 |
 | interval                | number  | `5000`              | 自动切换时间间隔                       |
 | duration                | number  | `500`               | 滑动动画时长                          |
 | circular                | boolean | `false`             | 是否采用衔接滑动                       |
 | vertical                | boolean | `false`             | 滑动方向是否为纵向                      |
 | previous-margin         | string  | `0`                 | 前边距，可用于露出前一项的一小部分，接受px |
 | next-margin             | string  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
+| display-multiple-items  | number  | `1`                 | 同时显示的滑块数量，非有限值或非正数按 `1` 处理，小数向下取整 |
 | scale                   | boolean  | `false`            | 滑动时是否开启前后元素缩小,默认是缩放0.7倍, 暂不支持自定义 |
 | easing-function         | string  | `linear`      | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic|
 | simultaneous-handlers              | array\<object>|   `[]`          | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件|
