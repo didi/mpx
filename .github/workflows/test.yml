@@ -7,13 +7,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm i && npm run build:tsc
+      - name: Cache node modules
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            packages/*/node_modules
+          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
+          restore-keys: |
+            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
+      - run: npm i
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: npm run build:tsc
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm i && npm run lint
+      - name: Cache node modules
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            packages/*/node_modules
+          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
+          restore-keys: |
+            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
+      - run: npm i
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: npm run lint
 
   unit:
     runs-on: ubuntu-latest
@@ -22,8 +48,6 @@ jobs:
       - name: Cache node modules
         id: cache
         uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
         with:
           path: |
             ~/.npm
@@ -36,11 +60,9 @@ jobs:
             packages/perf/node_modules
             packages/unocss-base/node_modules
             packages/unocss-plugin/node_modules
-          key: ${{ runner.os }}-build-v2-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+          key: unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
           restore-keys: |
-            ${{ runner.os }}-build-v2-${{ env.cache-name }}-
-            ${{ runner.os }}-build-v2-
-            ${{ runner.os }}-
+            unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
 
       - name: install deps
         if: steps.cache.outputs.cache-hit != 'true'

@@ -57,7 +57,7 @@ interface _TextProps extends TextProps {
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
   let idTotal = -1
-  if (__mpx_perf_framework__) idTotal = perf.scopeStart('text:render:total')
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('text:render')
 
   // ───── props 阶段 ─────
   let idProps = -1

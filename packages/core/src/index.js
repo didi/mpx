@@ -110,6 +110,7 @@ function use (plugin, options = {}) {
   extendProps(Mpx, proxyMpx, rawProps, options)
   extendProps(Mpx.prototype, proxyMpx.prototype, rawPrototypeProps, options)
   installedPlugins.push(plugin)
+  plugin.__installed = true
   return this
 }
 
@@ -145,12 +146,6 @@ Mpx.config = {
   forceFlushSync: false,
   webRouteConfig: {},
   webConfig: {},
-  /*
-    支持两个属性
-    hostWhitelists Array 类型 支持h5域名白名单安全校验
-    apiImplementations webview JSSDK接口 例如getlocation
-   */
-  webviewConfig: {},
   /**
   * react-native 相关配置，用于挂载事件等，如 onShareAppMessage
   */
