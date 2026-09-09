@@ -56,6 +56,7 @@ const styles = StyleSheet.create({
 
 interface DefaultFallbackProps {
   onReload: () => void
+  bindreload: () => void
 }
 
 const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
@@ -171,7 +172,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   } else if (status === 'error') {
     if (type === 'page') {
       const fallback = getFallback ? getFallback() : DefaultFallback
-      return createElement(fallback as ComponentType<DefaultFallbackProps>, { onReload: reloadPage })
+      return createElement(fallback as ComponentType<DefaultFallbackProps>, { onReload: reloadPage, bindreload: reloadPage })
     } else {
       return getFallback ? createElement(getFallback(), innerProps) : null
     }

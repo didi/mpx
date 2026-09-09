@@ -221,11 +221,14 @@ module.exports = {
 > ⚠️ **注意：** 确保 Mpx 项目和容器中的 `react-native-reanimated` 版本一致
 
 ### 跨平台 API 使用限制 {#cross-platform-api-limit}
+
+> RN Android 的 `startWifi`、`stopWifi`、`getWifiList` 与 `getConnectedWifi` 成功回调 `errMsg` 均与微信文档一致，以 `:ok` 结尾。
+
 ### selectComponent/selectAllComponents
 在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式
   * id 选择器：`#id`
   * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
-  
+
 ```javascript
 <template>
   <!-- 必须添加 wx:ref 标记 -->
@@ -277,7 +280,7 @@ Mpx 提供 `@mpxjs/webview-bridge` 来实现 H5 页面与 RN 应用的双向通�
 ## 高级特性 {#advanced-features}
 
 `rnConfig` 是 Mpx 框架专为 React Native 环境提供的配置对象，用于定制 RN 平台特有的行为和功能。通过 `mpx.config.rnConfig` 可以配置异步分包、分享、路由控制、屏幕适配等高级特性。
-  
+
 ### 异步分包 {#async-subpackage}
 
 Mpx 在 RN 环境下实现了与微信小程序同等的异步分包功能，支持按需加载分包内容。基础使用可参考 [异步分包指南](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
@@ -350,7 +353,7 @@ mpx.config.rnConfig.onLazyLoadPageError = (error) => {
 
 #### 自定义兜底页面 {#custom-fallback-page}
 
-对于异步分包页面加载失败的情况会展示默认兜底页面，用户可以点击兜底页面底部的重试按钮重新加载异步分包页面。那么对于开发者提供的自定义的 fallback 兜底页面，框架会自动给自定义页面注入一个 `onReload` 方法以供开发者做页面重试的操作，具体见下方示例：
+对于异步分包页面加载失败的情况会展示默认兜底页面，用户可以点击兜底页面底部的重试按钮重新加载异步分包页面。那么对于开发者提供的自定义的 fallback 兜底页面，框架会自动给自定义页面注入一个 `reload` 方法以供开发者做页面重试的操作，具体见下方示例：
 
 ```html
 <template>
@@ -364,12 +367,9 @@ mpx.config.rnConfig.onLazyLoadPageError = (error) => {
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
-  props: {
-    onReload: Function // 框架自动注入
-  },
   methods: {
     handleRetry() {
-      this.onReload?.() // 触发重新加载
+      this.triggerEvent('reload') // 触发重新加载，reload 事件为框架自动注入
     }
   }
 })
@@ -430,6 +430,20 @@ createComponent({
 当导航状态发生变化时触发，例如页面跳转、返回等。
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，可能需要将 RN 的路由栈同步到 NA 中以便于进行路径关系，此时可在此回调中将 RN 路径栈同步到容器中。
+
+#### mpx.config.rnConfig.disablePageTransition
+
+```ts
+boolean
+```
+
+用于禁用页面转场动画，默认为 `false`。设置为 `true` 后，框架会在内部导航配置中使用 `animation: 'none'`。
+
+如果需要关闭转场动画，可配置：
+
+```js
+mpx.config.rnConfig.disablePageTransition = true
+```
 
 #### mpx.config.rnConfig.onAppBack
 

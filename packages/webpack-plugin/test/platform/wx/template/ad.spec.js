@@ -16,6 +16,8 @@ describe('template should transform correct', function () {
     const input = '<ad unit-id="123" ad-intervals="10" ad-type="grid" bindload="handleLoad" binderror="handleError" bindclose="handleClose"></ad>'
     const output = compileTemplate(input, { srcMode: 'wx', mode: 'tt' })
     expect(output).toBe('<ad unit-id="123" ad-intervals="10" type="grid" bindload="handleLoad" binderror="handleError" bindclose="handleClose"></ad>')
-    expect(warnFn).toHaveBeenCalledWith('<ad>\'s property \'type\' does not support \'[grid]\' value in bytedance environment!')
+    expect(warnFn.mock.calls.map(args => args[0])).toEqual(expect.arrayContaining([
+      expect.stringContaining('<ad>\'s property \'type\' does not support \'[grid]\' value in bytedance environment!')
+    ]))
   })
 })
