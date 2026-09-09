@@ -221,6 +221,9 @@ module.exports = {
 > ⚠️ **注意：** 确保 Mpx 项目和容器中的 `react-native-reanimated` 版本一致
 
 ### 跨平台 API 使用限制 {#cross-platform-api-limit}
+
+> RN Android 的 `startWifi`、`stopWifi`、`getWifiList` 与 `getConnectedWifi` 成功回调 `errMsg` 均与微信文档一致，以 `:ok` 结尾。
+
 ### selectComponent/selectAllComponents
 在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式
   * id 选择器：`#id`
@@ -427,6 +430,20 @@ createComponent({
 当导航状态发生变化时触发，例如页面跳转、返回等。
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，可能需要将 RN 的路由栈同步到 NA 中以便于进行路径关系，此时可在此回调中将 RN 路径栈同步到容器中。
+
+#### mpx.config.rnConfig.disablePageTransition
+
+```ts
+boolean
+```
+
+用于禁用页面转场动画，默认为 `false`。设置为 `true` 后，框架会在内部导航配置中使用 `animation: 'none'`。
+
+如果需要关闭转场动画，可配置：
+
+```js
+mpx.config.rnConfig.disablePageTransition = true
+```
 
 #### mpx.config.rnConfig.onAppBack
 

@@ -29,6 +29,21 @@ function isPlainObject (value) {
   return false
 }
 
+// 浅比较两个对象的可枚举自有 key：
+// 长度相同且每个 key 引用相等才认为相等。适合比较 Object.assign 浅合并产物，
+// 不需要 diffAndCloneA 的递归 clone（调用方只用 boolean 决定是否替换 ref 时尤其合适）。
+function shallowEqual (a, b) {
+  if (a === b) return true
+  if (!isObject(a) || !isObject(b)) return false
+  const ak = Object.keys(a)
+  if (ak.length !== Object.keys(b).length) return false
+  for (let i = 0; i < ak.length; i++) {
+    const k = ak[i]
+    if (!hasOwn(b, k) || a[k] !== b[k]) return false
+  }
+  return true
+}
+
 function diffAndCloneA (a, b) {
   let diffData = null
   let curPath = ''
@@ -206,6 +221,7 @@ export {
   hasOwn,
   extend,
   isPlainObject,
+  shallowEqual,
   diffAndCloneA,
   proxy,
   spreadProp,

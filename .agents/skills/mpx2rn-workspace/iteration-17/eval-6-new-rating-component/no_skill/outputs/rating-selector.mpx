@@ -1,0 +1,183 @@
+<template>
+  <view class="rating-selector">
+    <view class="rating-header">
+      <text class="rating-label">{{label}}</text>
+      <text class="rating-score">{{displayValue}} / {{normalizedMax}} 分</text>
+    </view>
+
+    <view class="rating-stars">
+      <view
+        wx:for="{{starList}}"
+        wx:key="*this"
+        class="rating-star {{item <= displayValue ? 'rating-star--selected' : ''}} {{readonly ? 'rating-star--readonly' : ''}}"
+        data-value="{{item}}"
+        hover-class="{{readonly ? 'none' : 'rating-star--pressed'}}"
+        hover-start-time="0"
+        hover-stay-time="80"
+        bindtap="handleSelect"
+      >
+        <text class="rating-star-text {{item <= displayValue ? 'rating-star-text--selected' : ''}}">★</text>
+      </view>
+    </view>
+
+    <view class="rating-tip">
+      <component
+        is="{{tipComponent}}"
+        range="rating-editable-tip,rating-readonly-tip"
+      />
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    ratingKey: {
+      type: String,
+      value: ''
+    },
+    value: {
+      type: Number,
+      value: 0,
+      observer (value) {
+        this.setData({
+          innerValue: value
+        })
+      }
+    },
+    max: {
+      type: Number,
+      value: 5
+    },
+    readonly: {
+      type: Boolean,
+      value: false,
+      observer (readonly) {
+        this.setData({
+          tipComponent: readonly ? 'rating-readonly-tip' : 'rating-editable-tip'
+        })
+      }
+    },
+    label: {
+      type: String,
+      value: '请评分'
+    }
+  },
+
+  data: {
+    innerValue: null,
+    tipComponent: 'rating-editable-tip'
+  },
+
+  computed: {
+    normalizedMax () {
+      return Math.max(0, Math.floor(this.max))
+    },
+    displayValue () {
+      const value = this.innerValue === null ? this.value : this.innerValue
+      return Math.min(this.normalizedMax, Math.max(0, value))
+    },
+    starList () {
+      return Array.from({ length: this.normalizedMax }, (item, index) => index + 1)
+    }
+  },
+
+  methods: {
+    handleSelect (event) {
+      if (this.readonly) return
+
+      const value = Number(event.currentTarget.dataset.value)
+      this.setData({
+        innerValue: value
+      })
+      this.triggerEvent('change', {
+        ratingKey: this.ratingKey,
+        value
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.rating-selector {
+  padding: 16px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #e5e7eb;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.rating-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rating-label {
+  flex: 1;
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.rating-score {
+  margin-left: 12px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.rating-stars {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.rating-star {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  margin-right: 8px;
+  margin-bottom: 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: #f3f4f6;
+}
+
+.rating-star-text {
+  color: #cbd5e1;
+  font-size: 30px;
+  line-height: 36px;
+}
+
+.rating-star--selected {
+  background-color: #fff7d6;
+}
+
+.rating-star-text--selected {
+  color: #f5a623;
+}
+
+.rating-star--pressed {
+  opacity: 0.55;
+  background-color: #fde68a;
+  transform: scale(0.9);
+}
+
+.rating-star--readonly {
+  opacity: 0.8;
+}
+
+.rating-tip {
+  margin-top: 10px;
+}
+</style>

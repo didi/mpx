@@ -1,6 +1,6 @@
 const templateLoader = require('../../lib/react/template-loader')
 const compiler = require('../../lib/template-compiler/compiler')
-const { genNode: genNodeReact } = require('../../lib/template-compiler/gen-node-react')
+const { genNode: genNodeReact, genTemplate: genTemplateReact } = require('../../lib/template-compiler/gen-node-react')
 
 describe('RN template support', () => {
   const mockMpx = {
@@ -23,6 +23,56 @@ describe('RN template support', () => {
     mockContext.emitWarning.mockClear()
     mockContext.emitError.mockClear()
     mockMpx.wxsContentMap = {}
+    mockMpx.rnConfig = undefined
+  })
+
+  function compileReactTemplate (input, extraOptions) {
+    const parsed = parseReactTemplate(input, extraOptions)
+    return genNodeReact(parsed.root)
+  }
+
+  function parseReactTemplate (input, extraOptions) {
+    return compiler.parse(input, Object.assign({
+      mode: 'ios',
+      srcMode: 'wx',
+      defs: {},
+      usingComponentsInfo: {},
+      filePath: 'test.mpx',
+      warn: console.warn,
+      error: console.error,
+      isUrlRequest: () => false
+    }, extraOptions))
+  }
+
+  it('should preserve registered RN components for target-native templates', () => {
+    const output = compileReactTemplate('<View><Text>native</Text></View>', {
+      srcMode: 'ios',
+      usingComponentsInfo: {
+        View: {},
+        Text: {}
+      }
+    })
+
+    expect(output).toContain('getComponent("View")')
+    expect(output).toContain('getComponent("Text")')
+    expect(output).not.toContain('getComponent("mpx-view")')
+    expect(output).not.toContain('getComponent("mpx-text")')
+  })
+
+  it('should preserve srcMode inside local template definitions', () => {
+    const parsed = parseReactTemplate('<template name="native"><View><Text>native</Text></View></template>', {
+      srcMode: 'ios',
+      usingComponentsInfo: {
+        View: {},
+        Text: {}
+      }
+    })
+    const output = genTemplateReact(parsed.meta.templates.native)
+
+    expect(output).toContain('getComponent("View")')
+    expect(output).toContain('getComponent("Text")')
+    expect(output).not.toContain('getComponent("mpx-view")')
+    expect(output).not.toContain('getComponent("mpx-text")')
   })
 
   it('should generate correct code for template import and definition', () => {
@@ -110,6 +160,93 @@ describe('RN template support', () => {
     expect(output).toContain('"mpx-movable-view": function')
   })
 
+  it('should treat no-value attrs as true in RN render code', () => {
+    expect(compileReactTemplate('<scroll-view scroll-y></scroll-view>')).toContain('"scroll-y": (true)')
+    expect(compileReactTemplate('<scroll-view scroll-y="{{false}}"></scroll-view>')).toContain('"scroll-y": (false)')
+    expect(compileReactTemplate('<view id=""></view>')).toContain('id: ""')
+  })
+
+  it('should preserve hover-class and remove other special classes after converting them to styles', () => {
+    const output = compileReactTemplate(`
+      <view hover-class="view-hover"></view>
+      <view hover-class="none"></view>
+      <button hover-class="button-hover"></button>
+      <picker-view indicator-class="indicator" mask-class="mask"></picker-view>
+      <input placeholder-class="placeholder" />
+    `)
+
+    expect(output).toContain('"hover-class": "view-hover"')
+    expect(output).toContain('"hover-style": (this.__getStyle("view-hover", null, ""))')
+    expect(output).toContain('"hover-class": "none"')
+    expect(output).toContain('"hover-style": (this.__getStyle("none", null, ""))')
+    expect(output).toContain('"hover-class": "button-hover"')
+    expect(output).toContain('"hover-style": (this.__getStyle("button-hover", null, ""))')
+    expect(output).not.toContain('"indicator-class"')
+    expect(output).toContain('"indicator-style": (this.__getStyle("indicator", null, ""))')
+    expect(output).not.toContain('"mask-class"')
+    expect(output).toContain('"mask-style": (this.__getStyle("mask", null, ""))')
+    expect(output).not.toContain('"placeholder-class"')
+    expect(output).toContain('"placeholder-style": (this.__getStyle("placeholder", null, ""))')
+  })
+
+  it('should pass no-value attrs as boolean true to custom components', () => {
+    const output = compileReactTemplate('<custom-comp enabled></custom-comp>', {
+      usingComponentsInfo: {
+        'custom-comp': {}
+      }
+    })
+    expect(output).toContain('getComponent("custom-comp")')
+    expect(output).toContain('enabled: (true)')
+    expect(output).not.toContain('enabled: "true"')
+  })
+
+  it('should keep RN compile marker attrs consumed before no-value attr normalization', () => {
+    const output = compileReactTemplate('<view is-simple></view>')
+    expect(output).toContain('getComponent("mpx-simple-view")')
+    expect(output).not.toContain('"is-simple"')
+  })
+
+  it('should treat no-value attrs as true on custom built-in components', () => {
+    const output = compileReactTemplate('<audio controls></audio>', {
+      customBuiltInComponents: {
+        audio: '/components/mpx-audio'
+      }
+    })
+    expect(output).toContain('getComponent("mpx-audio")')
+    expect(output).toContain('controls: (true)')
+    expect(output).not.toContain('controls: "true"')
+  })
+
+  it('should inject internal host ref into RN component root', () => {
+    const parsed = parseReactTemplate('<view>content</view>', {
+      ctorType: 'component',
+      moduleId: 'm123'
+    })
+    const output = genNodeReact(parsed.root)
+
+    expect(output).toContain('__getRefVal(\'node\', [["", "__mpxHost"]')
+    expect(output).toContain('ishost: (true)')
+    expect(parsed.meta.refs).toEqual([
+      {
+        key: '__mpxHost',
+        all: false,
+        type: 'node'
+      }
+    ])
+  })
+
+  it('should not inject internal host ref into RN virtualHost component', () => {
+    const parsed = parseReactTemplate('<view>content</view>', {
+      ctorType: 'component',
+      moduleId: 'm123',
+      hasVirtualHost: true
+    })
+    const output = genNodeReact(parsed.root)
+
+    expect(output).not.toContain('__mpxHost')
+    expect(parsed.meta.refs).toBeUndefined()
+  })
+
   it('should report error for template usage without valid is value', () => {
     const input = '<template is="" data="{{...d}}" />'
     templateLoader.call(mockContext, input)
@@ -146,6 +283,21 @@ describe('RN template support', () => {
     expect(mockContext.emitError).toHaveBeenCalledTimes(0)
     expect(output).not.toContain('var templates = Object.assign({},')
     expect(output).not.toContain('function getTemplate(name)')
+  })
+
+  it('should transform static image src in imported templates to webpack require', () => {
+    const input = `
+      <template name="asset-demo">
+        <image src="./logo.png" />
+        <video src="./demo.mp4" />
+      </template>
+    `
+    const output = templateLoader.call(mockContext, input)
+    expect(mockContext.emitError).toHaveBeenCalledTimes(0)
+    expect(output).toContain('var __mpx_template_asset_0__ = require("./logo.png");')
+    expect(output).toContain('var __mpx_template_asset_1__ = require("./demo.mp4");')
+    expect(output).toContain('src: __mpx_template_asset_0__')
+    expect(output).toContain('src: __mpx_template_asset_1__')
   })
 
   it('should support using registered components from host', () => {

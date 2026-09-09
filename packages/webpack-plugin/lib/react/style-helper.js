@@ -5,23 +5,16 @@ const getRulesRunner = require('../platform/index')
 const createDiagnostic = require('../platform/create-diagnostic')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const parseValues = require('../utils/string').parseValues
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMode, ctorType, formatValueName, warn, error }) {
+function getClassMap ({ styles, filename, inputFileSystem, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
-      ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
-      : {}
+    ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
+    : {}
 
-  styles = styles && styles.length
-    ? styles
-    : [{
-        content,
-        filename
-      }]
-
-  function formatValue (value) {
+  function formatValue(value) {
     let needStringify = true
     const matched = unitRegExp.exec(value)
     if (matched) {
@@ -34,13 +27,13 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
       }
     }
     if (hairlineRegExp.test(value)) {
-      value = `${formatValueName}(${JSON.stringify(value)}, 'hairlineWidth')`
+      value = `${formatValueName}('hairlineWidth')`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
   }
 
-  function getMediaOptions (params) {
+  function getMediaOptions(params) {
     return parseValues(params).reduce((option, item) => {
       if (['all', 'print'].includes(item)) {
         if (item === 'media') {
@@ -60,7 +53,7 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
       }
       const bracketsExp = /\((.+?)\)/
       if (bracketsExp.test(item)) {
-        const range = parseValues((item.match(bracketsExp)?.[1] || ''), ':')
+        const range = parseValues(item.match(bracketsExp)?.[1] || '', ':')
         if (range.length < 2) {
           return option
         } else {
@@ -76,39 +69,37 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
     if (!styleContent.trim()) return
     const styleFilename = style.filename || filename
     const sourceMap = style.map
+    const styleSrcMode = style.srcMode || srcMode
     const diagnostic = {
       file: styleFilename,
       source: styleContent,
       sourceMap,
       inputFileSystem
     }
-    const reporter = createDiagnostic({
+    const platformOptions = {
       type: 'style',
       mode,
-      srcMode,
+      srcMode: styleSrcMode,
       warn,
       error,
       diagnostic
-    })
+    }
+    const reporter = createDiagnostic(platformOptions)
     const root = postcss.parse(styleContent, {
       from: styleFilename
     })
-    const rulesRunner = getRulesRunner({
-      mode,
-      srcMode,
-      type: 'style',
-      testKey: 'prop',
-      warn,
-      error,
-      diagnostic
-    })
+    const rulesRunner = getRulesRunner(Object.assign({
+      testKey: 'prop'
+    }, platformOptions))
 
-    // 目前所有 AtRule 只支持 @media，其他全部给出错误提示
+    // 目前所有 AtRule 只支持 @media，其他全部给出 warning
     root.walkAtRules(rule => {
       if (rule.name !== 'media') {
-        reporter.warn(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`, {
+        const message = rule.name === 'font-face'
+          ? 'React Native output does not support @font-face. To use custom fonts, install them in the React Native host environment.'
+          : `Only @media rule is supported in react native mode temporarily, but got @${rule.name}`
+        reporter.warn(message, {
           node: rule,
-          sourceMap,
           target: {
             kind: 'css-atrule',
             name: rule.name,
@@ -122,10 +113,16 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
 
     root.walkRules(rule => {
       const classMapValue = {}
+      const prev = rule.prev()
+      let layer
+      if (prev && prev.type === 'comment' && prev.text.includes('rn-layer:')) {
+        layer = JSON.stringify(prev.text.split(':')[1].trim())
+      }
       rule.walkDecls((decl) => {
-        let { prop, value } = decl
+        let { prop, value, important } = decl
         if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
-        let newData = rulesRunner && rulesRunner({ prop, value, selector: rule.selector, decl, rule, sourceMap })
+        const input = { prop, value, selector: rule.selector, decl }
+        let newData = rulesRunner ? rulesRunner(input) : input
         if (!newData) return
         if (!Array.isArray(newData)) {
           newData = [newData]
@@ -151,7 +148,13 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
           } else {
             value = formatValue(value)
           }
-          classMapValue[prop] = value
+          if (important) {
+            classMapValue._inlineLayer = classMapValue._inlineLayer || {}
+            classMapValue._inlineLayer.important = classMapValue._inlineLayer.important || {}
+            classMapValue._inlineLayer.important[prop] = value
+          } else {
+            classMapValue[prop] = value
+          }
         })
       })
 
@@ -165,7 +168,6 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
           } else {
             reporter.error('Only single class selector is supported in react native mode temporarily.', {
               node: rule,
-              sourceMap,
               target: {
                 kind: 'selector',
                 value: rule.selector
@@ -181,6 +183,10 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
             // set css defalut value
             const val = classMap[key] || {}
             classMap[key] = Object.assign(val, classMapValue)
+
+            if (layer) {
+              classMap[key]._layer = layer
+            }
 
             // set css media
             if (isMedia) {

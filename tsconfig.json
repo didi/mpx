@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "node16",
+    "module": "esnext",
     "noImplicitThis": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "lib": [
       "esnext"
     ]

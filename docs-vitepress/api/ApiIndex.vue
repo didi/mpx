@@ -635,8 +635,8 @@ const data = [
             anchor: '#srcMode'
           },
           {
-            text: 'modeRules',
-            anchor: '#modeRules'
+            text: 'srcModeRules',
+            anchor: '#srcModeRules'
           },
           {
             text: 'externalClasses',

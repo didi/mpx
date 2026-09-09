@@ -7,17 +7,25 @@
   - [子元素伪类替代方案 (:first-child / :last-child / :nth-child)](#子元素伪类替代方案-first-child--last-child--nth-child)
   - [伪元素选择器替代方案 (::before / ::after)](#伪元素选择器替代方案-before--after)
   - [点击态处理 (:active)](#点击态处理-active)
+- [按需样式能力预声明](#按需样式能力预声明)
+  - [用户写法与预声明条件](#用户写法与预声明条件)
+  - [什么时候使用 enable-* 预声明](#什么时候使用-enable--预声明)
 - [样式单位使用建议](#样式单位使用建议)
   - [优先使用 px 和 rpx 单位](#优先使用-px-和-rpx-单位)
   - [使用百分比](#使用百分比)
+  - [单边边框](#单边边框)
   - [1 像素边框（极细线）](#1-像素边框极细线)
   - [避免使用不兼容的单位 (rem/em)](#避免使用不兼容的单位-remem)
   - [谨慎使用 font-weight 数值](#谨慎使用-font-weight-数值)
 - [布局最佳实践](#布局最佳实践)
   - [使用 Flexbox 布局](#使用-flexbox-布局)
+  - [position: sticky 替代方案](#position-sticky-替代方案)
+  - [嵌套 fixed 定位](#嵌套-fixed-定位)
+  - [处理垂直 margin 折叠](#处理垂直-margin-折叠)
   - [避免使用 Grid 布局](#避免使用-grid-布局)
   - [避免使用 Float 布局](#避免使用-float-布局)
 - [文本溢出处理](#文本溢出处理)
+- [混排文本 line-height 对齐](#混排文本-line-height-对齐)
 - [隐藏元素](#隐藏元素)
 - [文本垂直居中](#文本垂直居中)
 - [渐变中避免使用 transparent](#渐变中避免使用-transparent)
@@ -28,6 +36,16 @@
 ## 选择器使用建议
 
 Mpx 输出 RN 时仅支持**单类选择器**、`page` 选择器和 `:host` 选择器，但是大部分不支持的选择器都可以使用单类选择器进行等效替代实现。
+
+> **关于"单类选择器"的口径**：用逗号分隔的并列写法（如 `.classA, .classB { ... }`）只是多条单类选择器规则共享同一个样式块的语法糖，等价于分别声明 `.classA { ... }` 与 `.classB { ... }`，仍属于**单类选择器**范畴，**可以直接使用**，不要误判为复合选择器去合并或拆分。
+>
+> ```css
+> /* ✅ 支持：逗号并列的多个单类选择器 */
+> .classA,
+> .classB {
+>   color: red;
+> }
+> ```
 
 ### 复合选择器替换为等效单类选择器
 
@@ -363,7 +381,7 @@ RN 平台不支持 `::before` 和 `::after` 伪元素选择器。对于需要在
 
 RN 平台不支持 `:active` 伪类选择器，如需实现点击态样式，可以使用 `hover-class` 组件属性进行跨端兼容实现。
 
-**支持组件：** `view`、`button`、`navigator`
+**支持组件：** `view`、`button`、`navigator`、`cover-view`
 
 **❌ 避免：**
 
@@ -399,6 +417,62 @@ RN 平台不支持 `:active` 伪类选择器，如需实现点击态样式，可
     background-color: #f5f5f5;
   }
 </style>
+```
+
+---
+
+## 按需样式能力预声明
+
+Mpx2RN 的基础组件出于性能考虑，会在首次渲染时检测 CSS 变量、文本样式透传、背景、Hover 和动画等增强能力，并只调用已启用能力所需的 React Hooks。同一组件实例后续可以更新普通样式值，但不能动态改变这些能力的启用状态或动画类型，否则会因 Hook 调用需要保持稳定而触发运行时报错。
+
+### 用户写法与预声明条件
+
+| 能力 | 涉及的基础组件 | 会启用能力的用户写法 | 动态变更预声明 |
+| --- | --- | --- | --- |
+| Hover | `view`、`cover-view`、`navigator`、`button`；声明了 `is-simple` 的组件不支持 | 存在 `hover-class` | 没有预声明属性，需保证整个生命周期内 `hover-class` 的存在状态稳定，条件分支复用场景使用独立 `key` 重新创建节点 |
+| CSS 变量 | 所有基础组件；声明了 `is-simple` 的组件不支持 | 样式中声明 `--*` 变量或使用 `var(...)` | CSS 变量声明或使用可能发生动态变更时，添加 `enable-var="{{true}}"` |
+| 文本样式与文本属性透传 | 除 `text` 外的所有基础组件，`text` 默认支持无需预声明；声明了 `is-simple` 的组件不支持 | 使用 `color`、`letter-spacing`、`line-height`、`include-font-padding`、`writing-direction`、`font-*`、`text-*` 样式，或 `ellipsizeMode`、`numberOfLines` 属性 | 上述文本样式或属性可能发生动态变更时，添加 `enable-text-pass-through="{{true}}"` |
+| 背景图像 | `view`、`cover-view`、`navigator`；声明了 `is-simple` 的组件不支持 | 使用 `background-image`、`background-size`、`background-repeat`、`background-position` 或包含这些属性的 `background` 简写；仅使用 `background-color` 不计入 | 上述背景样式可能发生动态变更时，添加 `enable-background="{{true}}"` |
+| 动画 | `view`、`cover-view`、`navigator`；声明了 `is-simple` 的组件不支持 | 使用模板 `animation` 属性或 `transition` 样式；CSS `animation` 当前不支持 | 对应写法可能发生动态变更时，API 动画添加 `enable-animation="api"`，transition 添加 `enable-animation="transition"`；同一节点不要切换类型 |
+
+仅普通属性值或样式值发生变化、能力类型始终存在时无需预声明。`enable-fast-image`、`background-color` 和普通布局样式不属于上述预声明条件。
+
+### 什么时候使用 enable-* 预声明
+
+存在以下动态变更场景时，需要预声明或避免节点复用：
+
+1. **节点自身动态定义相关样式或属性**：当相关能力可能发生动态变更时，添加对应的 `enable-*`。
+
+```html
+<!-- dynamicStyle 初始为空，后续可能加入 background-image -->
+<view enable-background@ios|android|harmony="{{true}}" wx:style="{{dynamicStyle}}"></view>
+```
+
+2. **条件分支节点复用**：相邻条件分支的根节点标签相同且没有独立 `key` 时，分支切换可能复用同一节点。此时应优先为不同分支声明不同的 `key`，确保切换时不产生复用；也可以按各分支涉及的按需能力并集，在所有分支根节点添加 `enable-*` 预声明。
+
+```html
+<view
+  wx:if="{{hasCompleted}}"
+  key@ios|android|harmony="completed"
+  hover-class="control-pressed"
+>
+  <text>Clear completed</text>
+</view>
+<view wx:else key@ios|android|harmony="placeholder"></view>
+```
+
+3. **列表节点复用**：列表渲染未声明 `wx:key`，将 `wx:key` 声明为 `index` / `_`，或 `wx:key` 无法解析为合法、唯一且稳定的值（如对应属性不存在、值为对象或存在重复）时，列表项在插入、删除或重排后可能复用已有节点。应优先为列表项声明稳定唯一的业务 key；无法提供时，需按所有列表项可能使用的能力并集，在每个列表项根节点上添加对应的 `enable-*` 预声明，确保节点复用前后的能力启用状态一致。
+
+```html
+<!-- legacyList 暂无稳定业务 key，所有列表项统一预声明可能动态出现的背景能力 -->
+<view
+  wx:for="{{legacyList}}"
+  wx:key="index"
+  enable-background@ios|android|harmony="{{true}}"
+  wx:style="{{item.style}}"
+>
+  <text>{{item.title}}</text>
+</view>
 ```
 
 ---
@@ -467,13 +541,14 @@ px 和 rpx 在 RN 与小程序平台都具备良好兼容性，建议优先使�
 
 **⚠️ 需要辅助属性的场景：**
 
-1. **`font-size` 的百分比**需要传递 `parent-font-size` 辅助属性
-2. **`calc()` 中出现的任何百分比**都需要传递相应的 `parent-width` / `parent-height` 辅助属性（`calc()` 是框架模拟支持的特性）
+1. **`calc()` 中出现的任何百分比**都需要传递相应的 `parent-width` / `parent-height` 辅助属性（`calc()` 是框架模拟支持的特性）
 
 ```html
 <template>
-  <!-- 场景1：font-size 百分比需要 parent-font-size -->
-  <view parent-font-size="{{16}}" class="text" />
+  <!-- 场景1：优先通过文本样式继承提供 font-size 百分比基准 -->
+  <view class="text-parent">
+    <text class="text">文本</text>
+  </view>
 
   <!-- 场景2：仅在无法替代时，calc() 中的百分比需要父级布局宽高辅助计算 -->
   <view id="calc-parent" class="calc-parent" wx:ref>
@@ -513,7 +588,16 @@ export default {
 
 <style>
   .text {
-    font-size: 120%; /* 需要 parent-font-size */
+    font-size: 120%; /* 优先基于继承字号；无继承字号时按默认字号 16 计算 */
+    line-height: 150%; /* 按最终 text 节点合并后的 font-size 计算 */
+  }
+
+  .text-large {
+    font-size: 160%; /* 与 .text 继承相同 line-height 时，会得到更大的最终行高 */
+  }
+
+  .text-parent {
+    font-size: 16px;
   }
 
   .calc-parent {
@@ -538,9 +622,43 @@ export default {
 
 1. **优先使用 rpx**：对于固定尺寸，rpx 是最可靠的选择
 2. **放心使用百分比**：`width`, `height`, `padding`, `margin` 等属性的百分比由 RN 原生支持，可以放心使用
-3. **谨慎使用字体百分比**：`font-size` 的百分比需要 `parent-font-size` 辅助属性，建议使用 rpx 代替
-4. **谨慎使用 calc() 中的百分比**：该写法需要 `parent-width` / `parent-height` 辅助计算，通常还要查询父级布局并延迟展示，存在性能与体验开销；优先使用原生百分比、Flex、rpx / vw / vh 或固定尺寸替代
-5. **使用 vh/vw**：对于视口相关的尺寸，vh/vw 是更好的选择
+3. **谨慎使用 calc() 中的百分比**：该写法需要 `parent-width` / `parent-height` 辅助计算，通常还要查询父级布局并延迟展示，存在性能与体验开销；优先使用原生百分比、Flex、rpx / vw / vh 或固定尺寸替代
+4. **使用 vh/vw**：对于视口相关的尺寸，vh/vw 是更好的选择
+
+### 单边边框
+
+声明单边边框时，优先使用 `border-top` / `border-right` / `border-bottom` / `border-left` 简写。单边简写会同时表达目标方向的宽度、样式和颜色，意图更清晰，也可以避免 RN 仅支持统一 `border-style` 带来的方向耦合。
+
+**✅ 推荐：使用单边简写**
+
+```css
+.divider {
+  border-bottom: 1rpx solid #e5e5e5;
+}
+```
+
+如果因动态样式拆分等原因，确实需要组合使用统一的 `border-style` 与单边 `border-*-width`，须将其余三个不需要边框的方向宽度显式归零，避免统一样式与同规则或合并样式中的其他方向宽度共同产生意外边框。
+
+**❌ 避免：只设置目标方向宽度**
+
+```css
+.divider {
+  border-style: solid;
+  border-color: #e5e5e5;
+  border-bottom-width: 1rpx;
+}
+```
+
+**✅ 拆写时显式清零其他方向**
+
+```css
+.divider {
+  border-style: solid;
+  border-color: #e5e5e5;
+  border-width: 0;
+  border-bottom-width: 1rpx;
+}
+```
 
 ### 1 像素边框（极细线）
 
@@ -662,6 +780,8 @@ RN 不支持 `rem` 和 `em` 单位。需将其转换为 `rpx` 以实现响应式
 
 Flexbox 是跨平台最可靠的布局方式。
 
+> **注意：**`view` 显式声明 `display: flex` 且未声明 `flex-direction` 时，Mpx2RN 会在内部补充 `flex-direction: row`，以对齐 W3C Flexbox 的默认行为；否则沿用 RN 默认的 `display: flex` + `flex-direction: column`，模拟 W3C 块级元素纵向流式布局的表现。
+
 **✅ 推荐：**
 
 ```html
@@ -688,6 +808,269 @@ Flexbox 是跨平台最可靠的布局方式。
 
   .item {
     flex: 1;
+  }
+</style>
+```
+
+### text 跨平台布局对齐
+
+原平台（小程序 / Web）中 `view` 默认为流式布局，`text` 等行内元素会排列在同一行；而 RN 中 `view` 默认使用纵向 Flex 布局（`flex-direction: column`），子元素会各占一行。例如：
+
+```html
+<view>
+  <text>a</text>
+  <text>b</text>
+</view>
+```
+
+在原平台中 a 和 b 渲染在同一行，但在 RN 中会渲染为两行。为拉齐跨平台表现，建议在 `view` 中显式声明布局方向，不要依赖平台默认行为：
+
+```html
+<style>
+  .container {
+    display: flex;
+    flex-direction: row;
+  }
+</style>
+
+<template>
+  <view class="container">
+    <text>a</text>
+    <text>b</text>
+  </view>
+</template>
+```
+
+如需将多段文字渲染为同一行且保持文本流式排版（如自动换行、基线对齐），可在拉齐容器布局的基础上，再进行一层 `text` 包裹，让内部的 `text` 进行行内布局：
+
+```html
+<template>
+  <view class="container">
+    <text>
+      <text>a</text>
+      <text>b</text>
+    </text>
+  </view>
+</template>
+```
+
+### position: sticky 替代方案
+
+Mpx2RN 不支持 `position: sticky`。不要直接使用 `position: fixed` 替代：`fixed` 相对页面固定且不占据原布局空间，无法实现 `sticky` 滚动到阈值后吸顶并受滚动容器边界约束的行为。
+
+需要在滚动容器内实现吸顶时，使用 [`scroll-view`](./rn-template-reference.md#scroll-view) + [`sticky-header`](./rn-template-reference.md#sticky-header) 组件替代。`sticky-header` 必须是 `scroll-view` 的直接子节点，或作为 `sticky-section` 的直接子节点；RN 环境还必须在 `scroll-view` 上显式开启 `enable-sticky`。该属性是 RN 环境特有能力，应使用属性后缀将其限定在 RN 平台。
+
+**❌ 避免：**RN 不支持通过 `position: sticky` 实现吸顶。
+
+```html
+<template>
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="summary">概览内容</view>
+    <view class="filter-bar">筛选条件</view>
+    <view class="list">列表内容</view>
+  </scroll-view>
+</template>
+
+<style>
+  .page-scroll {
+    flex: 1;
+  }
+
+  .filter-bar {
+    position: sticky;
+    top: 0;
+  }
+</style>
+```
+
+**✅ 推荐：**用 `sticky-header` 表达吸顶节点，并为 RN 侧开启 sticky 能力。
+
+```html
+<template>
+  <scroll-view
+    class="page-scroll"
+    scroll-y
+    enable-sticky@ios|android|harmony="{{true}}"
+  >
+    <view class="summary">概览内容</view>
+    <sticky-header offset-top="{{0}}">
+      <view class="filter-bar">筛选条件</view>
+    </sticky-header>
+    <view class="list">列表内容</view>
+  </scroll-view>
+</template>
+
+<style>
+  .page-scroll {
+    flex: 1;
+  }
+
+  .filter-bar {
+    background-color: #fff;
+  }
+</style>
+```
+
+存在多组吸顶区域时，可将 [`sticky-section`](./rn-template-reference.md#sticky-section) 作为 `scroll-view` 的直接子节点，再把 `sticky-header` 放在对应的 `sticky-section` 内。需要注意：
+
+1. `sticky-header` / `sticky-section` 目前仅支持 RN、Web 和微信小程序 Skyline；还需输出其他平台时，应通过条件编译保留该平台原有的吸顶实现。
+2. RN Android 下更适合内容稳定、状态不频繁更新的吸顶区域；吸顶动画过程中立即更新状态、滚动内容高度突变，或通过 `scroll-into-view` / `scroll-top` 主动改变滚动位置时，可能出现闪烁或抖动。
+
+### 嵌套 fixed 定位
+
+Mpx2RN 中 `position: fixed` 不是由 RN 原生定位直接承载，而是通过 portal 将 fixed 节点提升到 page root 下，再使用 `position: absolute` 模拟固定定位。因此模板中嵌套的 fixed 节点，在 RN 视图实现层会变成 page root 下的兄弟节点，无法继续保持原模板里的父子关系。
+
+这会影响依赖父子关系的能力，常见问题包括：
+
+1. **层级不再由父子关系兜底**：外层 fixed 声明了较高的 `z-index`，内层 fixed 未声明 `z-index` 时，RN 侧提升后的外层节点可能遮挡内层节点。
+2. **不要依赖事件冒泡穿透父级**：内层 fixed 已不再是外层 fixed 的真实子节点，依赖父子关系的事件冒泡、统一拦截或关闭逻辑可能与原平台表现不一致。
+
+**❌ 避免：**内层 fixed 依赖外层 fixed 的层级上下文与事件冒泡。
+
+```html
+<template>
+  <view class="mask" bindtap="close">
+    <view class="panel">
+      <view class="toast" bindtap="handleToastTap">提示内容</view>
+    </view>
+  </view>
+</template>
+
+<style>
+  .mask {
+    position: fixed;
+    z-index: 1000;
+  }
+
+  .toast {
+    position: fixed;
+  }
+</style>
+```
+
+**✅ 推荐：**嵌套 fixed 需要覆盖外层 fixed 时，在内层显式声明更高的 `z-index`；事件逻辑上避免依赖从内层 fixed 冒泡到外层 fixed，可分别绑定明确的处理函数，或通过共享状态 / 自定义事件完成联动。
+
+```html
+<template>
+  <view class="mask" bindtap="closeMask">
+    <view class="panel">
+      <view class="toast" catchtap="handleToastTap">提示内容</view>
+    </view>
+  </view>
+</template>
+
+<style>
+  .mask {
+    position: fixed;
+    z-index: 1000;
+  }
+
+  .toast {
+    position: fixed;
+    z-index: 1001;
+  }
+</style>
+```
+
+### 处理垂直 margin 折叠
+
+小程序 / Web 的普通块级布局中，满足 CSS margin 折叠条件的节点关系可能发生垂直 `margin` 折叠：相邻兄弟元素、父元素与首个 / 末个流内后代、空块自身的上下 margin 都可能折叠。CSS margin 折叠只发生在垂直方向，水平方向的 `margin-left` / `margin-right` 不受影响。具体条件参考 [MDN · 掌握外边距折叠](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Guides/Box_model/Margin_collapsing)。
+
+RN 基于 Yoga 布局，没有 BFC 和 margin 折叠概念。输出 RN 时，`marginTop` / `marginBottom` 会作为节点自身间距参与布局，相邻节点的垂直 margin 通常会叠加。因此适配普通块级布局中满足 margin 折叠条件的节点关系时，需要显式处理原平台发生的 margin 折叠，避免同一组 margin 在 RN 中产生更大的间距。
+
+**先确认会折叠，再改造：**不要仅因两个垂直 margin 同时存在就归到单侧。按节点关系应用下表；命中任一“不要处理”条件，或无法确认原平台会发生折叠时，保留原 margin。
+
+| 节点关系 | 确认会折叠 | 反向约束：以下情况不要处理 |
+| --- | --- | --- |
+| 相邻兄弟 | 最终渲染结果中相邻的普通块级兄弟，前项 `margin-bottom` 与后项 `margin-top` 之间没有其他内容 | 共享父容器为 Flex / Grid；任一节点浮动或使用 `position: absolute/fixed`；后一节点因 `clear` 产生 clearance；条件渲染后并不相邻 |
+| 父元素与首个流内后代 | 两者的 `margin-top` 之间没有父元素的 `border-top`、`padding-top`、行内内容或 clearance，且父元素未建立新 BFC | 存在任一左述分隔条件；父元素通过 `overflow: hidden/auto/scroll`、`display: flow-root` 等建立 BFC；父元素为 Flex / Grid 容器 |
+| 父元素与末个流内后代 | 两者的 `margin-bottom` 之间没有父元素的 `border-bottom`、`padding-bottom`，父元素没有明确 `height` / `min-height`，且未建立新 BFC | 存在任一左述分隔条件；父元素通过 `overflow: hidden/auto/scroll`、`display: flow-root` 等建立 BFC；父元素为 Flex / Grid 容器 |
+| 空块自身 | `margin-top` 与 `margin-bottom` 之间没有 `border`、`padding`、行内内容、`height` 或 `min-height` | 存在任一左述分隔条件 |
+
+`overflow: hidden/auto/scroll` 建立 BFC 后，会阻止父元素自身 margin 与其后代 margin 跨父子边界折叠；但该父元素的外边距是否与相邻兄弟折叠，仍须按“相邻兄弟”一行独立判断，不能仅凭 `overflow` 排除。
+
+折叠后的值也不能一律用 `max()` 计算：两侧均为非负值时取较大值；同时存在正负 margin 时，取最大正值与最小负值之和；全部为负值时取最小值（绝对值最大的负值）。
+
+**推荐处理原则：**
+
+1. **容器边界间距由父容器单侧表达**：外部间距使用父容器 margin，内部留白使用父容器 padding，不要依赖首个 / 末个子节点的 margin 与父容器折叠。
+2. **兄弟节点间距只交给一侧负责**：按模板顺序逐对检查普通块级布局中满足 margin 折叠条件的相邻兄弟节点，同时识别 `margin` 简写隐含的 `margin-top` / `margin-bottom`。将原平台折叠后的有效间距完整放在任意一侧，另一侧删除或置 `0`；常见的两侧非负 margin 场景取两者较大值，例如 `24rpx` 与 `12rpx` 归为单侧 `24rpx`，两侧均为 `20rpx` 时归为单侧 `20rpx`。不要因为 `margin` 属性本身受 RN 支持就跳过这项布局语义检查。
+3. **用模板状态标记首尾项**：需要去掉首项或末项间距时，用 `wx:class` + `index` 显式绑定单类。
+4. **必要时可显式声明纵向 Flex**：如果容器内仍存在难以拆解的垂直 margin 关系，可在确认不影响原布局的前提下，同时声明 `display: flex` 与 `flex-direction: column`，使原平台子节点也作为 flex item 参与布局，避免垂直 margin 折叠；若已通过 `padding` 和单侧 margin 明确处理间距，则不必额外添加 flex 声明。
+
+注意，Mpx 输出 RN 时，如果显式声明了 `display: flex` 但未声明 `flex-direction`，会自动补充 `flex-direction: row` 与小程序 / Web 对齐。为了保持原本块级纵向布局，选择添加 flex 声明时必须同步声明 `flex-direction: column`。
+
+**❌ 避免：**下例使用普通块级布局，其中“父元素与首个子元素”和“两个相邻兄弟元素”这两组节点关系均满足 margin 折叠条件。原平台中 `.card` 与标题的顶部 margin 折叠为 `24rpx`，标题和说明的相邻垂直 margin 也会折叠；RN 中这些 margin 会分别参与布局，父子顶部间距会叠加为 `44rpx`。
+
+```html
+<template>
+  <view class="card">
+    <view class="card-title">标题</view>
+    <view class="card-desc">说明</view>
+  </view>
+</template>
+
+<style>
+  .card {
+    margin-top: 20rpx;
+  }
+
+  .card-title {
+    margin-top: 24rpx;
+    margin-bottom: 16rpx;
+  }
+
+  .card-desc {
+    margin-top: 12rpx;
+  }
+</style>
+```
+
+**✅ 推荐：**把父子顶部折叠后的 `24rpx` 外部间距归给 `.card` 的 `margin-top`，把标题和说明之间的间距交给单侧节点，跨端都会得到明确且稳定的布局结果。
+
+```html
+<template>
+  <view class="card">
+    <view class="card-title">标题</view>
+    <view class="card-desc">说明</view>
+  </view>
+</template>
+
+<style>
+  .card {
+    margin-top: 24rpx;
+  }
+
+  .card-desc {
+    margin-top: 16rpx;
+  }
+</style>
+```
+
+**列表场景：**
+
+```html
+<template>
+  <view class="list">
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="list-item"
+      wx:class="{{ { 'list-item-gap': index > 0 } }}"
+    >
+      {{item.text}}
+    </view>
+  </view>
+</template>
+
+<style>
+  .list {
+    padding-top: 24rpx;
+    padding-bottom: 24rpx;
+  }
+
+  .list-item-gap {
+    margin-top: 16rpx;
   }
 </style>
 ```
@@ -790,15 +1173,19 @@ Grid 布局在 RN 平台不支持。
 
 ## 文本溢出处理
 
+### 溢出打点（text-overflow: ellipsis）
+
 **原平台：**
 
 ```html
 <template>
   <text class="text">{{text}}</text>
+  <view class="text">{{text}}</view>
 </template>
 
 <style>
   .text {
+    overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -811,21 +1198,117 @@ Grid 布局在 RN 平台不支持。
 <template>
   <!-- RN 平台内使用模板属性条件编译添加 numberOfLines 属性进行等效实现-->
   <text class="text" numberOfLines@ios|android|harmony="{{1}}"> {{text}} </text>
-
   <!-- numberOfLines 也可用于 view -->
   <view class="text" numberOfLines@ios|android|harmony="{{1}}"> {{text}} </view>
 </template>
 
 <style>
-  /* 原平台内使用样式条件编译保留原有样式定义 */
-  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
   .text {
+    overflow: hidden;
+    /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
     white-space: nowrap;
     text-overflow: ellipsis;
+    /* @mpx-endif */
   }
-  /* @mpx-endif */
 </style>
 ```
+
+### 溢出截断（text-overflow: clip）
+
+**原平台：**
+
+```html
+<template>
+  <text class="text">{{text}}</text>
+  <view class="text">{{text}}</view>
+</template>
+
+<style>
+  .text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+</style>
+```
+
+**跨平台兼容方案：**
+
+```html
+<template>
+  <!-- RN 平台内使用 numberOfLines + ellipsizeMode="clip" 实现等效裁剪效果 -->
+  <text class="text" numberOfLines@ios|android|harmony="{{1}}" ellipsizeMode@ios|android|harmony="clip">{{text}}</text>
+  <!-- numberOfLines + ellipsizeMode 也可用于 view -->
+  <view class="text" numberOfLines@ios|android|harmony="{{1}}" ellipsizeMode@ios|android|harmony="clip">{{text}}</view>
+</template>
+
+<style>
+  .text {
+    overflow: hidden;
+    /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+    white-space: nowrap;
+    text-overflow: clip;
+    /* @mpx-endif */
+  }
+</style>
+```
+
+---
+
+## 混排文本 line-height 对齐
+
+W3C 行内排版中，同一行内混排不同字号文字时，整行高度会按该行中最大的 `line-height` 计算；RN 原生文本排版会以首个子 `Text` 元素的 `lineHeight` 作为整行行高基准。典型问题是价格、单位、标签等混排场景里，小字号文字排在大字号前面时，首个子 `text` 继承父级的小字号行高，RN 会按该行高计算整行高度，导致后面的大字号片段被较小行高约束。
+
+Mpx2RN 在文本样式继承与 `line-height` 计算口径上对齐 W3C，但 RN 在嵌套 `Text` 混排场景中的实际行盒渲染行为与 W3C 不一致，不会按同一行内最大的 `line-height` 撑开整行。因此处理同一行多字号混排时，不要让内外层分别维护多套行高；应取消内层片段的所有 `line-height` 设置，只在承载整行文本流的外层 `text` 上显式声明整行期望行高，取该行各片段中的最大行高。
+
+**❌ 避免：**在内层不同字号片段上分别声明 `line-height`。这种写法把整行行高拆散到多个片段上，首个子 `text` 会继承父级小字号行高，RN 会以首个子 `Text` 的行高排版整行，也会让后续维护者误以为内层最大行高会自动影响外层。
+
+```html
+<template>
+  <text class="price-line">
+    <text>到手价 </text>
+    <text class="price-amount">99</text>
+    <text> 元</text>
+  </text>
+</template>
+
+<style>
+  .price-line {
+    font-size: 24rpx;
+    line-height: 32rpx; /* 首个子 text 继承父行高，RN 整行以 32rpx 为准 */
+  }
+
+  .price-amount {
+    font-size: 48rpx;
+    line-height: 56rpx; /* 该大行高不会撑开整行，RN 仍以首个子 text 继承到的 32rpx 为准 */
+  }
+</style>
+```
+
+**✅ 推荐：**外层 `text` 承载同一行文本流，并显式声明整行期望行高；内层 `text` 只声明自身字号等片段样式，不再设置 `line-height`。下例中整行最大行高按大字号片段取 `56rpx`，因此只在外层 `.price-line` 声明 `line-height: 56rpx`。
+
+```html
+<template>
+  <text class="price-line">
+    <text>到手价 </text>
+    <text class="price-amount">99</text>
+    <text> 元</text>
+  </text>
+</template>
+
+<style>
+  .price-line {
+    font-size: 24rpx;
+    line-height: 56rpx;
+  }
+
+  .price-amount {
+    font-size: 48rpx;
+  }
+</style>
+```
+
+如果原样式中内层使用百分比或 unit-less 倍率表达相对行高，迁移到混排场景时先换算出整行需要的最大行高，再统一写到外层。不要在内层继续保留相对 `line-height`，避免 RN 按片段各自字号计算出多套行高。
 
 ---
 

@@ -261,20 +261,22 @@ describe('strip-conditional unit tests', () => {
         expect(getAfterLine(result)).toBe(getAfterLine(input))
       })
 
-      it('should use removable comment placeholders without blank lines', () => {
+      it('should use a stable branch indentation for stripped content', () => {
         const input = [
           '.before',
           '  color gray',
           '  /* @mpx-if (platform === \'ali\') */',
-          '  color blue',
+          '  .ali',
+          '    color blue',
           '  /* @mpx-endif */',
           '  color black'
         ].join('\n')
         const result = stripCondition(input, defs)
         expect(result.split('\n').length).toBe(input.split('\n').length)
         expect(result).not.toContain('color blue')
-        expect(result).toContain(`  /* ${STYLE_PAD_PLACEHOLDER} */`)
-        expect(result.split('\n').some(line => line === '')).toBe(false)
+        expect(result.match(new RegExp(`^  /\\* ${STYLE_PAD_PLACEHOLDER} \\*/$`, 'gm'))).toHaveLength(2)
+        // 分支内占位注释统一保留基准缩进，避免嵌套缩进影响 stylus / sass 的结构判断。
+        expect(result.split('\n').some(line => line.startsWith(`/* ${STYLE_PAD_PLACEHOLDER}`))).toBe(false)
       })
 
       it('should remove placeholder comments in postcss output', async () => {
@@ -312,6 +314,30 @@ describe('strip-conditional unit tests', () => {
     })
 
     describe('end-to-end pipeline (strip-conditional → stylus → postcss → sourcemap)', () => {
+      it('should not leave an invalid indentation block after stripping nested stylus rules', async () => {
+        // 回归真实业务中的嵌套选择器场景：占位注释不能改变后续同级选择器的缩进语义。
+        const src = [
+          '.more-operate-content_column',
+          '  display flex',
+          '  /* @mpx-if (platform === \'web\') */',
+          '',
+          '    .mpx-button:after',
+          '      display none',
+          '',
+          '  /* @mpx-endif */',
+          '  overflow hidden',
+          '',
+          '.more-operate-content_row',
+          '  border 0 solid transparent'
+        ].join('\n')
+
+        const stripped = stripCondition(src, defs)
+        expect(stripped.split('\n').length).toBe(src.split('\n').length)
+        await expect(new Promise((resolve, reject) => {
+          stylus(stripped).render((err, css) => err ? reject(err) : resolve(css))
+        })).resolves.toContain('.more-operate-content_row')
+      })
+
       it('preserves source line positions through the full style pipeline', async () => {
         const filename = '/abs/source.styl'
         const src = [

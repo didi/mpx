@@ -312,6 +312,76 @@ created () {
 
 *   本文为 **技术方案**；落地后应在 **template-loader / processScript** 产物中 **以 `render` 为主** 验证 **仅 `vue.runtime`** 场景，并补充 **构建期** 单测或快照（生成代码片段含 `render`、不含裸 `template: \"<...\"` 依赖运行时编译）。
 
+#### 2.10 `<block>` → `<template>` 平台转换冲突处理
+
+##### 2.10.1 问题
+
+当前 Web 输出管线中，**前置平台转换**（`rulesRunner`，[compiler.js:3117](packages/webpack-plugin/lib/template-compiler/compiler.js#L3117)）会将小程序的 **`<block>`** 标签转换为 Vue 的 **`<template>`**（见 [block.js](packages/webpack-plugin/lib/platform/template/wx/component-config/block.js)），利用 Vue 的 `<template>` 作为**不渲染 DOM 的分组容器**（等同于小程序 `<block>` 的语义）。
+
+**冲突**：`processElement` 中的执行顺序为：
+
+1. **`rulesRunner(el)`**（line 3117）：`<block>` → `<template>`（`el.tag` 被改写）
+2. **`processTemplateTranspile(el, meta)`**（line 3132）：检查 `el.tag === 'template'`，若既无 `is` 也无 `name` 属性 → **`error + shouldRemove = true`**（[compiler.js:2665](packages/webpack-plugin/lib/template-compiler/compiler.js#L2665)）
+
+由 `<block>` 转换而来的 `<template>` 不具备 `is` / `name` 属性，会被 `processTemplateTranspile` **误判为无效 template 标签**并移除，导致业务中的 `<block wx:if>` / `<block wx:for>` 在 Web 输出中丢失。
+
+##### 2.10.2 解决方案
+
+**在平台转换阶段标记元素来源，在 `processTemplateTranspile` 中跳过被标记的节点。**
+
+| 步骤 | 文件 | 改动 |
+|------|------|------|
+| **1. 标记** | `packages/webpack-plugin/lib/platform/template/wx/component-config/block.js` | `web` 函数在返回 `'template'` 前，对元素设置 **`el.isBlock = true`** 标志 |
+| **2. 跳过** | `packages/webpack-plugin/lib/template-compiler/compiler.js` — `processTemplateTranspile` | 在 `if (el.tag !== 'template') return` 之后加入 **`if (el.isBlock) return`**，直接放行来自 `<block>` 的 `<template>` 节点 |
+
+**改动代码示意**：
+
+```javascript
+// block.js
+const TAG_NAME = 'block'
+module.exports = function () {
+  return {
+    test: TAG_NAME,
+    web (tag, data) {
+      data.el.isBlock = true
+      return 'template'
+    }
+  }
+}
+```
+
+```javascript
+// compiler.js — processTemplateTranspile
+function processTemplateTranspile (el, meta) {
+  if (processTemplateImport(el, meta)) return
+
+  if (el.tag !== 'template') return
+  // 由 <block> 平台转换而来的 <template> 仅作为 Vue 分组容器，不参与 wx template 特性处理
+  if (el.isBlock) return
+
+  const is = getAndRemoveAttr(el, 'is').val
+  // ... 原有逻辑不变
+}
+```
+
+##### 2.10.3 方案评估
+
+| 维度 | 说明 |
+|------|------|
+| **侵入性** | 极低：仅 2 处改动（`block.js` + `compiler.js`），不影响其他平台或 RN 路径 |
+| **正确性** | 精确区分两类 `<template>`：来自 `<block>` 的分组容器 vs. 真正的 wx template 特性节点 |
+| **兼容性** | 不改变 `<block>` 在 Web 输出中的原有语义（仍输出 Vue `<template>` 作为 Fragment 容器）；不影响 `serialize` 和既有的 `wx:for` / `wx:if` 在 `<block>` 上的行为 |
+| **`postProcessTemplateWeb` 安全性** | 该函数第一行 `if (el.tag !== 'template' \|\| !el.templateInfo) return` 已保证无 `templateInfo` 时跳过，被标记的 `isBlock` 元素由于在 `processTemplateTranspile` 中提前 return（未设置 `templateInfo`），不会进入后处理 |
+
+##### 2.10.4 排除的替代方案
+
+| 方案 | 不采纳原因 |
+|------|-----------|
+| 将 `<block>` 转换为其他标签（如 `<div>`） | 破坏语义——`<block>` 应不产生 DOM 节点，Vue 中只有 `<template>` 有此能力 |
+| 调整 `rulesRunner` 与 `processTemplateTranspile` 的执行顺序 | 涉及 `processElement` 整体时序重构，影响面大、风险高 |
+| 在 `processTemplateTranspile` 中仅按「无 `is` 且无 `name`」放行 | 无法区分「用户误写的 `<template>`」与「合法转换的 `<block>`」，丧失错误检测能力 |
+| 不做平台转换、在 serialize 时特殊处理 `<block>` | 需要在 serialize 与所有下游逻辑中添加对 `block` 标签的白名单，改动分散且易遗漏 |
+
 ### 3. 代码示例
 
 **输入**（与 RN 文档相同）：
@@ -376,6 +446,7 @@ var imported = require('!!.../web/template-loader!./item.wxml')
 | 测试 | 断言主模版 **serialize** 含 `<mpx-tpl-*>` / `<component :is>`；loader / 主文件产物为 **子组件选项映射**（与 RN 的 `createElement` 风格区分）；**`test/runtime/create-template-component.spec.js`** 覆盖 slot 代理 |
 | **宿主 slot** | **§2.8**：`createTemplateComponent` 已安装 **`$slots` getter**；**不**扩展 `<template is>` 子节点；可选补充 E2E |
 | **仅 runtime Vue（§2.9）** | **template-loader / processScript** 产物由 **`template` 字符串** 升级为 **构建期 `render`**；与 **`vue.runtime`** 对齐 |
+| **`<block>` 冲突（§2.10）** | `block.js` 标记 `el.isBlock = true`；`compiler.js` `processTemplateTranspile` 跳过带标记节点 |
 
 ### 5. 与前一版方案的关系
 
@@ -401,10 +472,11 @@ var imported = require('!!.../web/template-loader!./item.wxml')
 | 10 | **低** | **测试覆盖建议**缺少针对 serialize 产物的负面断言样本。 | 原建议：补充负面断言（不出现 `global.currentInject.render`、`h(`、`createElement(` 等）。 | 不太需要 | ⏹ 不采纳（保留通用功能用例即可，负面断言本期不强制） |
 | 11 | **中** | **Web 具名模版与宿主 slot**：需在子模版内消费**宿主在被外层调用时**传入的插槽；**不**通过 `<template is>` 传 slot。 | **§2.8**：`createTemplateComponent` 内 **`installMpxWxTemplateHostSlotsProxy`**；仅默认 / 具名，**无** scoped slot。 | 运行时已落地 | ✅ 已实现（编译侧仅保证 `<slot>` 可 serialize，见 §2.8.3） |
 | 12 | **高** | **仅 `vue.runtime` 与子模版 `template` 字符串**：`createTemplateComponent` 使用 **字符串 `template`** 时依赖运行时编译，与历史 **runtime-only** 部署不兼容。 | **§2.9**：构建期 **`vue-template-compiler@2.7.x`** 将 fragment 编成 **`render`** 再注入选项；与主 SFC、**Vue 2.7** 一致。 | 方案已定 | ⏳ 待按 §2.9 改 template-loader / processScript |
+| 13 | **高** | **`<block>` → `<template>` 平台转换与 template 特性冲突**：前置 `rulesRunner` 将 `<block>` 转为 `<template>` 后，`processTemplateTranspile` 误判其为无效 template 标签并移除，导致 `<block wx:if>` / `<block wx:for>` 在 Web 输出中丢失。 | **§2.10**：在 `block.js` 平台转换时标记 `el.isBlock = true`；`processTemplateTranspile` 对带此标记的节点直接放行。 | 方案已定 | ⏳ 待实施（§2.10） |
 
 ---
 
-**评审结论**：设计方向（坚持 serialize + Vue 静态模版）是正确的，与 RN 区分产物形态的决策合理。#1/#2/#4/#5 已在 §2.5/§2.1/§2.6/§2.7 落地为明确实现路径，数据层最终选定策略 C（`mpxData` prop + `created` 钩子 `defineReactive` 运行时挂载）；剩余 #6 属于实现期按规则落地项。**#12（§2.9）** 为与 **`vue.runtime`** 历史部署对齐的 **构建期 `render` 注入**，待 template-loader / processScript 按 §2.9 实施后闭环。建议 POC 优先级：先用最小用例集验证策略 C 在 Vue 2.7 当前构建下 `_vm.x` 能正常命中 `created` 中定义的响应式属性 getter（含 `v-for` 局部、wxs、嵌套、import 跨文件），通过后即可进入实施阶段。
+**评审结论**：设计方向（坚持 serialize + Vue 静态模版）是正确的，与 RN 区分产物形态的决策合理。#1/#2/#4/#5 已在 §2.5/§2.1/§2.6/§2.7 落地为明确实现路径，数据层最终选定策略 C（`mpxData` prop + `created` 钩子 `defineReactive` 运行时挂载）；剩余 #6 属于实现期按规则落地项。**#12（§2.9）** 为与 **`vue.runtime`** 历史部署对齐的 **构建期 `render` 注入**，待 template-loader / processScript 按 §2.9 实施后闭环。**#13（§2.10）** 为 **`<block>` → `<template>` 平台转换与新增 template 特性的冲突**，通过在转换时标记 `el.isBlock` 并在 `processTemplateTranspile` 中跳过来解决，改动极小且精确。建议 POC 优先级：先用最小用例集验证策略 C 在 Vue 2.7 当前构建下 `_vm.x` 能正常命中 `created` 中定义的响应式属性 getter（含 `v-for` 局部、wxs、嵌套、import 跨文件），通过后即可进入实施阶段。
 
 ---
 

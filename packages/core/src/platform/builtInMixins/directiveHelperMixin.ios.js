@@ -1,11 +1,13 @@
+import { isObject } from '@mpxjs/utils'
 export default function directiveHelperMixin () {
   return {
     methods: {
       __getWxKey (item, key, index) {
-        if (key === 'index') {
+        if (key === 'index' || key === '_') {
           return index
         }
-        return key === '*this' ? item : item[key]
+        const resolved = key === '*this' ? item : item[key]
+        return isObject(resolved) ? index : resolved
       }
     }
   }
