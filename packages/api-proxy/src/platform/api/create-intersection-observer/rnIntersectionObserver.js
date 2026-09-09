@@ -1,4 +1,4 @@
-import { isArray, isObject, isString, noop, warn } from '@mpxjs/utils'
+import { isArray, isObject, isString, noop, remove, warn } from '@mpxjs/utils'
 import throttle from 'lodash/throttle'
 import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
@@ -22,10 +22,7 @@ class RNIntersectionObserver {
     this.initialRatio = this.options.initialRatio
     this.observeAll = this.options.observeAll
 
-    // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
-    this.component._intersectionObservers = this.component._intersectionObservers || []
-    this.component._intersectionObservers.push(this)
-
+    this._disconnected = false
     this.observerRefs = null
     this.relativeRef = null
     this.margins = DefaultMargin
@@ -41,11 +38,15 @@ class RNIntersectionObserver {
       this.intersectionCtx = intersectionCtx
       this.intersectionCtx[this.id] = this
     }
+    // 注册成功后再挂载到组件，供组件销毁时批量disconnect
+    this.component._intersectionObservers = this.component._intersectionObservers || []
+    this.component._intersectionObservers.push(this)
     return this
   }
 
     // 支持传递ref 或者 selector
   relativeTo (selector, margins = {}) {
+    if (this._disconnected) return this
     let relativeRef
     if (isString(selector)) {
       relativeRef = this.component.__selectRef(selector, 'node')
@@ -63,12 +64,14 @@ class RNIntersectionObserver {
   }
 
   relativeToViewport (margins = {}) {
+    if (this._disconnected) return this
     this.relativeRef = WindowRefStr
     this.margins = Object.assign({}, DefaultMargin, margins)
     return this
   }
 
   observe (selector, callback) {
+    if (this._disconnected) return
     if (this.observerRefs) {
       warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
       return
@@ -207,16 +210,16 @@ class RNIntersectionObserver {
 
   // 计算节点的rect信息
   _measureTarget (isInit = false) {
-    if (!this.observerRefs || !this.relativeRef) {
+    if (this._disconnected || !this.observerRefs || !this.relativeRef) {
       return
     }
     Promise.all([
       this._getReferenceRect(this.observerRefs),
       this._getReferenceRect(this.relativeRef)
     ]).then(([observeRects, relativeRect]) => {
-      if (relativeRect === IgnoreTarget) return
+      if (this._disconnected || relativeRect === IgnoreTarget) return
       observeRects.forEach((observeRect, index) => {
-        if (observeRect === IgnoreTarget) return
+        if (this._disconnected || observeRect === IgnoreTarget) return
         const { intersectionRatio, intersectionRect, isInsected } = this._measureIntersection({
           observeRect,
           observeIndex: index,
@@ -242,7 +245,17 @@ class RNIntersectionObserver {
   }
 
   disconnect () {
+    if (this._disconnected) return
+    this._disconnected = true
+    this.throttleMeasure.cancel()
     if (this.intersectionCtx) delete this.intersectionCtx[this.id]
+    remove(this.component._intersectionObservers, this)
+    this.component = null
+    this.intersectionCtx = null
+    this.observerRefs = null
+    this.relativeRef = null
+    this.callback = noop
+    this.previousIntersectionRatio = []
   }
 }
 
