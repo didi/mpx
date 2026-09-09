@@ -3,7 +3,13 @@ import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { getFocusedNavigation } from '../../../common/js'
 
 const getWindowInfo = function () {
-  const dimensionsScreen = Dimensions.get('screen')
+  const nativeDimensions = {
+    window: Dimensions.get('window'),
+    screen: Dimensions.get('screen')
+  }
+  const hasCustomDimensions = typeof mpxGlobal.__mpx?.config?.rnConfig?.customDimensions === 'function'
+  const dimensions = hasCustomDimensions ? global.__getMpxAppDimensionsInfo() : nativeDimensions
+  const dimensionsScreen = nativeDimensions.screen
   const navigation = getFocusedNavigation() || {}
   const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
   const navigationInsets = navigation.insets || {}
@@ -16,20 +22,6 @@ const getWindowInfo = function () {
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
   const windowHeight = layoutHeight || screenHeight
-  const localDimensions = {
-    screen: {
-      width: screenWidth,
-      height: screenHeight
-    },
-    window: {
-      width: layoutWidth || screenWidth,
-      height: windowHeight
-    }
-  }
-  let customDimensions = localDimensions
-  if (typeof mpxGlobal.__mpx?.config?.rnConfig?.customDimensions === 'function') {
-    customDimensions = mpxGlobal.__mpx.config.rnConfig.customDimensions(localDimensions) || localDimensions
-  }
   try {
     safeArea = {
       left,
@@ -43,10 +35,10 @@ const getWindowInfo = function () {
   }
   const result = {
     pixelRatio: PixelRatio.get(),
-    windowWidth: customDimensions.window.width,
-    windowHeight: customDimensions.window.height, // 取不到layout的时候有个兜底
-    screenWidth: customDimensions.screen.width,
-    screenHeight: customDimensions.screen.height,
+    windowWidth: hasCustomDimensions ? dimensions.window.width : layoutWidth || screenWidth,
+    windowHeight: hasCustomDimensions ? dimensions.window.height : windowHeight, // 取不到layout的时候有个兜底
+    screenWidth: hasCustomDimensions ? dimensions.screen.width : screenWidth,
+    screenHeight: hasCustomDimensions ? dimensions.screen.height : screenHeight,
     screenTop: screenHeight - windowHeight,
     statusBarHeight: safeArea.top,
     safeArea
