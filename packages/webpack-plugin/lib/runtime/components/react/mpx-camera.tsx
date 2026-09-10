@@ -83,6 +83,8 @@ function getCameraPermissionCache (pageId: number | undefined) {
 const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const cameraRef = useRef<any>(null)
+  const propsRef = useRef(props)
+  propsRef.current = props
   const {
     mode = 'normal',
     resolution = 'medium',
@@ -163,7 +165,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
             type,
             scanArea: [parseInt(frame.x) || 0, parseInt(frame.y) || 0, parseInt(frame.width) || 0, parseInt(frame.height) || 0]
           }
-        }))
+        }, propsRef.current))
       })
     }
   })
@@ -173,11 +175,11 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       detail: {
         maxZoom
       }
-    }))
+    }, propsRef.current))
   }, [bindinitdone, maxZoom])
 
   const onStopped = useCallback(() => {
-    bindstop && bindstop(getCustomEvent('stop', {}, { layoutRef }))
+    bindstop && bindstop(getCustomEvent('stop', {}, { layoutRef }, propsRef.current))
   }, [bindstop])
 
   const camera: CameraRef = useMemo(() => ({
