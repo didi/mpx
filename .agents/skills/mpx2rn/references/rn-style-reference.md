@@ -204,6 +204,8 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
 
 配置生效后，`rpx`、`vw`、`vh` 与媒体查询会按自定义后的 `styleDimensionsBase` 对应尺寸进行计算。
 
+宿主容器尺寸变化但 React Native 未派发 Dimensions change 事件，或需要基于外部状态重新执行 `customDimensions` 时，可调用全局方法 `notifyDimensionsChange(dimensions?)` 主动通知框架。省略参数时会通过 `Dimensions.get` 重新读取当前原始尺寸。
+
 #### 百分比计算规则
 
 跨端输出 RN 时， 部分百分比单位原生支持，而部分百分比单位则由框架进行计算抹平实现，详情如下：

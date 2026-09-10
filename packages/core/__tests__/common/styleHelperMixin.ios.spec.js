@@ -65,6 +65,25 @@ describe('RN styleHelperMixin dimensions', () => {
     }
   })
 
+  it('does not apply customDimensions twice when notified before the first style calculation', () => {
+    const customDimensions = jest.fn((dimensions) => {
+      dimensions.window.width /= 2
+      return dimensions
+    })
+    Mpx.config.rnConfig.customDimensions = customDimensions
+    const dimensions = {
+      window: { width: 800, height: 640 },
+      screen: mockDimensions.screen
+    }
+
+    global.notifyDimensionsChange(dimensions)
+
+    expect(dimensions.window.width).toBe(800)
+    expect(global.__mpxAppDimensionsInfo.window.width).toBe(400)
+    expect(global.__formatValue('750rpx')).toBe(400)
+    expect(customDimensions).toHaveBeenCalledTimes(1)
+  })
+
   it('converts responsive units with window dimensions', () => {
     Mpx.config.rnConfig = {}
 
@@ -123,7 +142,7 @@ describe('RN styleHelperMixin dimensions', () => {
     const cache = { clear: jest.fn() }
     global.__classCaches.add(cache)
 
-    mockDimensionsChangeHandler({
+    global.notifyDimensionsChange({
       window: { width: 400, height: 700 },
       screen: mockDimensions.screen
     })
@@ -131,7 +150,7 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(cache.clear).not.toHaveBeenCalled()
     expect(global.__mpxSizeCount).toBe(0)
 
-    mockDimensionsChangeHandler({
+    global.notifyDimensionsChange({
       window: { width: 400, height: 700 },
       screen: { width: 800, height: 1400 }
     })
@@ -139,6 +158,25 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(cache.clear).toHaveBeenCalledTimes(1)
     expect(global.__mpxSizeCount).toBe(1)
     expect(global.__formatValue('750rpx')).toBe(800)
+  })
+
+  it('reads current Dimensions and reapplies customDimensions when notified without arguments', () => {
+    let widthOffset = 10
+    const customDimensions = jest.fn((dimensions) => {
+      dimensions.window.width -= widthOffset
+      return dimensions
+    })
+    Mpx.config.rnConfig.customDimensions = customDimensions
+
+    global.notifyDimensionsChange()
+
+    expect(global.__mpxAppDimensionsInfo.window.width).toBe(350)
+
+    widthOffset = 20
+    global.notifyDimensionsChange()
+
+    expect(global.__mpxAppDimensionsInfo.window.width).toBe(340)
+    expect(customDimensions).toHaveBeenCalledTimes(2)
   })
 
   it('matches media queries with window width', () => {

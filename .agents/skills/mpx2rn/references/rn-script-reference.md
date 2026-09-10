@@ -753,6 +753,9 @@ console.log(stack.length)
 // 宿主或测试场景下可手动触发应用前后台逻辑
 setAppShow()
 setAppHide()
+
+// 宿主容器尺寸变化后，手动通知响应式样式重新计算
+notifyDimensionsChange()
 ```
 
 | API | 说明 |
@@ -761,11 +764,13 @@ setAppHide()
 | `getCurrentPages()` | 返回当前导航栈中已映射的页面实例列表（顺序与路由 state 相关）。 |
 | `setAppShow()` | 手动触发应用「进入前台」逻辑，驱动已注册的 `onShow`。 |
 | `setAppHide()` | 手动触发应用「进入后台」逻辑，驱动已注册的 `onHide`。 |
+| `notifyDimensionsChange(dimensions?)` | 主动通知框架 Dimensions 发生变化，触发 `rpx`、`vw`、`vh`、媒体查询和 `onResize` 等能力重新计算。不传参数时通过 `Dimensions.get` 读取当前原始尺寸；两种调用方式都会重新执行 `customDimensions`，并按 `styleDimensionsBase` 指定的尺寸判断是否刷新。 |
 
 #### 注意事项
 
 - 勿在 App 构造函数执行完成前依赖 `getApp()` 内业务字段已赋值完毕；与路由相关的初始化宜放在 `onLaunch` / `onShow`。
 - `getCurrentPages()` 依赖 React Navigation 焦点与 `__mpxPagesMap`，与原生小程序栈细节不完全相同。
+- `notifyDimensionsChange` 在 RN 样式运行时模块加载后注入，应在应用开始渲染后调用。
 
 ---
 
