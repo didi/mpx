@@ -2,6 +2,7 @@ import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocused
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
+import { getDimensionsBase } from '../dimensionsHelper'
 
 global.__mpxAppDimensionsInfo = {
   window: Object.assign({}, Dimensions.get('window')),
@@ -48,16 +49,15 @@ function applyDimensionsInfo (dimensions) {
 }
 
 function getStyleDimensions () {
-  const dimensionsType = Mpx.config.rnConfig?.styleDimensionsBase === 'screen' ? 'screen' : 'window'
-  return global.__mpxAppDimensionsInfo[dimensionsType]
+  return global.__mpxAppDimensionsInfo[getDimensionsBase()]
 }
 
-function getStyleDimensionsSize (dimensions = getStyleDimensions()) {
+function getDimensionsBaseSize (dimensions = getStyleDimensions()) {
   return dimensions.width + 'x' + dimensions.height
 }
 
 function onDimensionsChange (dimensions) {
-  const oldStyleDimensionsSize = getStyleDimensionsSize()
+  const oldDimensionsBaseSize = getDimensionsBaseSize()
   if (!dimensions) {
     dimensions = {
       window: Dimensions.get('window'),
@@ -69,8 +69,8 @@ function onDimensionsChange (dimensions) {
     screen: Object.assign({}, dimensions.screen)
   })
 
-  // 对比自定义处理后的样式计算尺寸高宽是否存在变化
-  if (getStyleDimensionsSize() === oldStyleDimensionsSize) return
+  // 对比自定义处理后的基准尺寸高宽是否存在变化
+  if (getDimensionsBaseSize() === oldDimensionsBaseSize) return
 
   global.__classCaches?.forEach(cache => cache?.clear())
 
@@ -267,6 +267,7 @@ function isNativeStyle (style) {
 
 function getMediaStyle (media) {
   if (!media || !media.length) return {}
+  if (!dimensionsInfoInitialized) applyDimensionsInfo(global.__mpxAppDimensionsInfo)
   dependentWindowSize = true
   const { width } = getStyleDimensions()
   return media.reduce((styleObj, item) => {

@@ -89,7 +89,7 @@ Mpx 转 RN 支持以下单位，部分单位在特定情况下存在使用限制
 
 > [!tip] 尺寸基准说明
 >
-> `rpx` / `vw` / `vh` 和媒体查询默认使用 React Native `Dimensions.get('window')` 的尺寸。可将 `mpx.config.rnConfig.styleDimensionsBase` 设置为 `'screen'`，恢复基于 Screen 尺寸计算的旧版本效果。所选尺寸变化时，依赖这些能力的组件会重新计算样式。
+> `rpx` / `vw` / `vh` 和媒体查询默认使用 React Native `Dimensions.get('window')` 的尺寸。可将 `mpx.config.rnConfig.dimensionsBase` 设置为 `'screen'`，恢复基于 Screen 尺寸计算的旧版本效果。所选尺寸变化时，依赖这些能力的组件会重新计算样式。
 ### 百分比单位说明 {#percentage-unit-explanation}
 
 RN 原生较多属性不支持百分比，或对百分比的支持存在 bug（如 `font-size`、`translate` 等），但这些属性在编写 Web/小程序代码时使用较多，所以框架进行了抹平支持。

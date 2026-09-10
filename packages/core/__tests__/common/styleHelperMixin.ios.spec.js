@@ -31,7 +31,11 @@ jest.mock('../../src/observer/reactive', () => ({
 jest.mock('../../src/index', () => ({
   __esModule: true,
   default: {
-    config: {}
+    config: {
+      rnConfig: {
+        dimensionsBase: 'window'
+      }
+    }
   }
 }))
 
@@ -47,7 +51,7 @@ describe('RN styleHelperMixin window dimensions', () => {
     global.__mpxSizeCount = 0
     global.__classCaches = []
     Mpx.config.rnConfig = {
-      styleDimensionsBase: 'window'
+      dimensionsBase: 'window'
     }
   })
 
@@ -77,7 +81,7 @@ describe('RN styleHelperMixin window dimensions', () => {
   })
 
   it('converts responsive units with screen dimensions when configured', () => {
-    Mpx.config.rnConfig.styleDimensionsBase = 'screen'
+    Mpx.config.rnConfig.dimensionsBase = 'screen'
 
     expect(global.__formatValue('750rpx')).toBe(720)
     expect(global.__formatValue('100vw')).toBe(720)
@@ -137,7 +141,7 @@ describe('RN styleHelperMixin window dimensions', () => {
   })
 
   it('updates responsive styles only when screen dimensions change in screen mode', () => {
-    Mpx.config.rnConfig.styleDimensionsBase = 'screen'
+    Mpx.config.rnConfig.dimensionsBase = 'screen'
     const cache = { clear: jest.fn() }
     global.__classCaches.push(cache)
 
@@ -200,7 +204,7 @@ describe('RN styleHelperMixin window dimensions', () => {
   })
 
   it('matches media queries with screen width when configured', () => {
-    Mpx.config.rnConfig.styleDimensionsBase = 'screen'
+    Mpx.config.rnConfig.dimensionsBase = 'screen'
     const style = {
       _default: { color: 'red' },
       _media: [{
@@ -245,5 +249,62 @@ describe('RN styleHelperMixin window dimensions', () => {
     expect(getColorAtWidth(750)).toBe('green')
     expect(getColorAtWidth(900)).toBe('green')
     expect(getColorAtWidth(901)).toBe('red')
+  })
+
+  it('applies customDimensions before the first media-only style calculation', () => {
+    const originalGlobals = {
+      notifyDimensionsChange: global.notifyDimensionsChange,
+      GCC: global.__GCC,
+      formatValue: global.__formatValue,
+      dimensionsInfo: global.__mpxAppDimensionsInfo,
+      sizeCount: global.__mpxSizeCount,
+      pageSizeCountMap: global.__mpxPageSizeCountMap,
+      classCaches: global.__classCaches,
+      dimensionsChangeHandler
+    }
+
+    try {
+      jest.isolateModules(() => {
+        const FreshMpx = require('../../src/index').default
+        const freshStyleHelperMixin = require('../../src/platform/builtInMixins/styleHelperMixin.ios').default
+        const customDimensions = jest.fn((dimensions) => {
+          dimensions.window.width /= 2
+          return dimensions
+        })
+        FreshMpx.config.rnConfig = {
+          dimensionsBase: 'window',
+          customDimensions
+        }
+        const style = {
+          _default: { color: 'red' },
+          _media: [{
+            options: { minWidth: 300 },
+            value: { color: 'green' }
+          }]
+        }
+        const context = {
+          __pageId: 'page',
+          __mpxProxy: { props: {} },
+          __getClassStyle: jest.fn(() => style),
+          __getSizeCount: jest.fn()
+        }
+
+        const result = freshStyleHelperMixin().methods.__getStyle.call(context, 'responsive')
+
+        expect(result.color).toBe('red')
+        expect(global.__mpxAppDimensionsInfo.window.width).toBe(180)
+        expect(customDimensions).toHaveBeenCalledTimes(1)
+        expect(context.__getSizeCount).toHaveBeenCalledTimes(1)
+      })
+    } finally {
+      global.notifyDimensionsChange = originalGlobals.notifyDimensionsChange
+      global.__GCC = originalGlobals.GCC
+      global.__formatValue = originalGlobals.formatValue
+      global.__mpxAppDimensionsInfo = originalGlobals.dimensionsInfo
+      global.__mpxSizeCount = originalGlobals.sizeCount
+      global.__mpxPageSizeCountMap = originalGlobals.pageSizeCountMap
+      global.__classCaches = originalGlobals.classCaches
+      dimensionsChangeHandler = originalGlobals.dimensionsChangeHandler
+    }
   })
 })
