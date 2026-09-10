@@ -168,8 +168,12 @@ export default function createApp (options) {
       if (initialRouteName && !hasOwn(pagesMap, initialRouteName)) {
         error(`The initial page [${initialRouteName}] is not registered in the application. Mpx will ignore this initial route configuration.`)
       } else {
-        if (initialRouteName) initialRouteRef.current.initialRouteName = initialRouteName
-        if (initialParams) initialRouteRef.current.initialParams = initialParams
+        if (initialRouteName) {
+          initialRouteRef.current.initialRouteName = initialRouteName
+        }
+        if (initialParams) {
+          initialRouteRef.current.initialParams = initialParams
+        }
       }
 
       global.__mpxAppOnLaunch = (navigation) => {
