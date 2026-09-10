@@ -47,16 +47,21 @@ function useDimensionsInfo (dimensions) {
   global.__mpxAppDimensionsInfo.screen = dimensions.screen
 }
 
-function getWindowSize (window = global.__mpxAppDimensionsInfo.window) {
-  return window.width + 'x' + window.height
+function getStyleDimensions () {
+  const dimensionsType = Mpx.config.rnConfig?.styleDimensionsBase === 'screen' ? 'screen' : 'window'
+  return global.__mpxAppDimensionsInfo[dimensionsType]
+}
+
+function getStyleDimensionsSize (dimensions = getStyleDimensions()) {
+  return dimensions.width + 'x' + dimensions.height
 }
 
 Dimensions.addEventListener('change', ({ window, screen }) => {
-  const oldWindowSize = getWindowSize()
+  const oldStyleDimensionsSize = getStyleDimensionsSize()
   useDimensionsInfo({ window, screen })
 
-  // 对比自定义处理后的 window 高宽是否存在变化
-  if (getWindowSize() === oldWindowSize) return
+  // 对比自定义处理后的样式计算尺寸高宽是否存在变化
+  if (getStyleDimensionsSize() === oldStyleDimensionsSize) return
 
   global.__classCaches?.forEach(cache => cache?.clear())
 
@@ -75,18 +80,16 @@ Dimensions.addEventListener('change', ({ window, screen }) => {
 
 // TODO: 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions 监听到的 width/height 尺寸错误，并触发多次问题
 function rpx (value) {
-  const windowInfo = global.__mpxAppDimensionsInfo.window
+  const dimensionsInfo = getStyleDimensions()
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
-  // px = rpx * (窗口宽度 / 750)
-  return value * windowInfo.width / 750
+  // px = rpx * (样式计算宽度 / 750)
+  return value * dimensionsInfo.width / 750
 }
 function vw (value) {
-  const windowInfo = global.__mpxAppDimensionsInfo.window
-  return value * windowInfo.width / 100
+  return value * getStyleDimensions().width / 100
 }
 function vh (value) {
-  const windowInfo = global.__mpxAppDimensionsInfo.window
-  return value * windowInfo.height / 100
+  return value * getStyleDimensions().height / 100
 }
 
 const unit = {
@@ -252,7 +255,7 @@ function isNativeStyle (style) {
 function getMediaStyle (media) {
   if (!media || !media.length) return {}
   dependentWindowSize = true
-  const { width } = global.__mpxAppDimensionsInfo.window
+  const { width } = getStyleDimensions()
   return media.reduce((styleObj, item) => {
     const { options = {}, value = {} } = item
     const { minWidth, maxWidth } = options

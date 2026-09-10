@@ -36,6 +36,8 @@ jest.mock('../../src/index', () => ({
 }))
 
 // eslint-disable-next-line import/first
+import Mpx from '../../src/index'
+// eslint-disable-next-line import/first
 import styleHelperMixin from '../../src/platform/builtInMixins/styleHelperMixin.ios'
 
 describe('RN styleHelperMixin window dimensions', () => {
@@ -44,12 +46,23 @@ describe('RN styleHelperMixin window dimensions', () => {
     global.__mpxAppDimensionsInfo.screen = initialScreen
     global.__mpxSizeCount = 0
     global.__classCaches = []
+    Mpx.config.rnConfig = {
+      styleDimensionsBase: 'window'
+    }
   })
 
   it('converts responsive units with window dimensions', () => {
     expect(global.__formatValue('750rpx')).toBe(360)
     expect(global.__formatValue('100vw')).toBe(360)
     expect(global.__formatValue('100vh')).toBe(640)
+  })
+
+  it('converts responsive units with screen dimensions when configured', () => {
+    Mpx.config.rnConfig.styleDimensionsBase = 'screen'
+
+    expect(global.__formatValue('750rpx')).toBe(720)
+    expect(global.__formatValue('100vw')).toBe(720)
+    expect(global.__formatValue('100vh')).toBe(1280)
   })
 
   it('tracks window dependency for dynamic responsive unit styles', () => {
@@ -104,6 +117,29 @@ describe('RN styleHelperMixin window dimensions', () => {
     expect(global.__mpxSizeCount).toBe(1)
   })
 
+  it('updates responsive styles only when screen dimensions change in screen mode', () => {
+    Mpx.config.rnConfig.styleDimensionsBase = 'screen'
+    const cache = { clear: jest.fn() }
+    global.__classCaches.push(cache)
+
+    dimensionsChangeHandler({
+      window: { width: 400, height: 700 },
+      screen: initialScreen
+    })
+
+    expect(cache.clear).not.toHaveBeenCalled()
+    expect(global.__mpxSizeCount).toBe(0)
+
+    dimensionsChangeHandler({
+      window: { width: 400, height: 700 },
+      screen: { width: 800, height: 1400 }
+    })
+
+    expect(cache.clear).toHaveBeenCalledTimes(1)
+    expect(global.__mpxSizeCount).toBe(1)
+    expect(global.__formatValue('750rpx')).toBe(800)
+  })
+
   it('tracks media queries as a window dependency', () => {
     const style = {
       _default: { color: 'red' },
@@ -122,6 +158,28 @@ describe('RN styleHelperMixin window dimensions', () => {
     const result = styleHelperMixin().methods.__getStyle.call(context, 'responsive')
 
     expect(result.color).toBe('red')
+    expect(context.__getSizeCount).toHaveBeenCalledTimes(1)
+  })
+
+  it('matches media queries with screen width when configured', () => {
+    Mpx.config.rnConfig.styleDimensionsBase = 'screen'
+    const style = {
+      _default: { color: 'red' },
+      _media: [{
+        options: { minWidth: 600 },
+        value: { color: 'green' }
+      }]
+    }
+    const context = {
+      __pageId: 'page',
+      __mpxProxy: { props: {} },
+      __getClassStyle: jest.fn(() => style),
+      __getSizeCount: jest.fn()
+    }
+
+    const result = styleHelperMixin().methods.__getStyle.call(context, 'responsive')
+
+    expect(result.color).toBe('green')
     expect(context.__getSizeCount).toHaveBeenCalledTimes(1)
   })
 
