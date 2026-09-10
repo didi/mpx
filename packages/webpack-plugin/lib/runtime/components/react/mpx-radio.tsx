@@ -109,8 +109,8 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       markLabelControlHandled(evt)
+      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
 

@@ -120,8 +120,8 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       markLabelControlHandled(evt)
+      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
 
