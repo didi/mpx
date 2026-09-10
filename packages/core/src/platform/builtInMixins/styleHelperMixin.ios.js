@@ -4,8 +4,8 @@ import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
 
 global.__mpxAppDimensionsInfo = {
-  window: Dimensions.get('window'),
-  screen: Dimensions.get('screen')
+  window: Object.assign({}, Dimensions.get('window')),
+  screen: Object.assign({}, Dimensions.get('screen'))
 }
 global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
@@ -38,7 +38,7 @@ global.__GCC = function (className, classMap, classMapValueCache) {
 }
 
 let dimensionsInfoInitialized = false
-function useDimensionsInfo (dimensions) {
+function applyDimensionsInfo (dimensions) {
   dimensionsInfoInitialized = true
   if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
     dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
@@ -56,9 +56,18 @@ function getStyleDimensionsSize (dimensions = getStyleDimensions()) {
   return dimensions.width + 'x' + dimensions.height
 }
 
-Dimensions.addEventListener('change', ({ window, screen }) => {
+function onDimensionsChange (dimensions) {
   const oldStyleDimensionsSize = getStyleDimensionsSize()
-  useDimensionsInfo({ window, screen })
+  if (!dimensions) {
+    dimensions = {
+      window: Dimensions.get('window'),
+      screen: Dimensions.get('screen')
+    }
+  }
+  applyDimensionsInfo({
+    window: Object.assign({}, dimensions.window),
+    screen: Object.assign({}, dimensions.screen)
+  })
 
   // 对比自定义处理后的样式计算尺寸高宽是否存在变化
   if (getStyleDimensionsSize() === oldStyleDimensionsSize) return
@@ -76,7 +85,11 @@ Dimensions.addEventListener('change', ({ window, screen }) => {
       global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
     }
   }
-})
+}
+
+global.notifyDimensionsChange = onDimensionsChange
+
+Dimensions.addEventListener('change', onDimensionsChange)
 
 // TODO: 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions 监听到的 width/height 尺寸错误，并触发多次问题
 function rpx (value) {
@@ -103,7 +116,7 @@ const empty = {}
 // 记录 style 是否依赖窗口尺寸
 let dependentWindowSize = false
 function formatValue (value, unitType) {
-  if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
+  if (!dimensionsInfoInitialized) applyDimensionsInfo(global.__mpxAppDimensionsInfo)
   if (unitType === 'hairlineWidth') {
     return StyleSheet.hairlineWidth
   }

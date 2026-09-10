@@ -480,6 +480,27 @@ mpx.config.rnConfig.styleDimensionsBase = 'screen'
 
 例如，使用默认的 `styleDimensionsBase: 'window'` 时，折叠屏展开后如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
 
+#### notifyDimensionsChange
+
+```ts
+(dimensions?: { window: ScaledSize; screen: ScaledSize }) => void
+```
+
+主动通知框架 Dimensions 发生变化，使 `rpx` / `vw` / `vh`、媒体查询和 `onResize` 等依赖尺寸的能力重新计算。传入 `dimensions` 时使用传入值；不传参数时通过 `Dimensions.get('window')` 与 `Dimensions.get('screen')` 获取当前原始尺寸。两种方式都会重新执行 `rnConfig.customDimensions`，并根据 `styleDimensionsBase` 指定的尺寸判断是否触发刷新。
+
+```js
+// 宿主容器尺寸发生变化后，重新读取当前 Dimensions
+notifyDimensionsChange()
+
+// 也可以显式传入尺寸
+notifyDimensionsChange({
+  window: nextWindow,
+  screen: nextScreen
+})
+```
+
+该全局方法在 RN 样式运行时模块加载后注入，应在应用开始渲染后调用。框架会复制原始 Dimensions 后再交给 `customDimensions`，避免自定义逻辑直接修改 React Native 返回的原对象。
+
 
 ### 前后台切换 {#app-state-change}
 
