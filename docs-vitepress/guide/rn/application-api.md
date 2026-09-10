@@ -515,7 +515,7 @@ notifyDimensionsChange({
 })
 ```
 
-该全局方法在 RN 样式运行时模块加载后注入，应在应用开始渲染后调用。框架会复制原始 Dimensions 后再交给 `customDimensions`，避免自定义逻辑直接修改 React Native 返回的原对象。
+该全局方法在 RN 样式运行时模块加载时注入。只要 `@mpxjs/core` 的 RN 运行时已完成加载即可调用，不需要等待 `createApp`、页面挂载或首次样式计算。框架会复制原始 Dimensions 后再交给 `customDimensions`，避免自定义逻辑直接修改 React Native 返回的原对象。
 
 
 ### 前后台切换 {#app-state-change}
