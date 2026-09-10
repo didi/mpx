@@ -165,15 +165,15 @@ export default function createApp (options) {
     }
     if (!global.__mpxAppHotLaunched) {
       const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
-      if (initialRouteName && !hasOwn(pagesMap, initialRouteName)) {
-        error(`The initial page [${initialRouteName}] is not registered in the application. Mpx will ignore this initial route configuration.`)
-      } else {
+      if (!initialRouteName || hasOwn(pagesMap, initialRouteName)) {
         if (initialRouteName) {
           initialRouteRef.current.initialRouteName = initialRouteName
         }
         if (initialParams) {
           initialRouteRef.current.initialParams = initialParams
         }
+      } else {
+        error(`The initial page [${initialRouteName}] is not registered in the application. Mpx will ignore this initial route configuration.`)
       }
 
       global.__mpxAppOnLaunch = (navigation) => {
