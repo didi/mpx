@@ -19,6 +19,13 @@
     }
   }
 
+  function getSwiperIndicatorSpacingStyle (index, spacing, vertical) {
+    if (!index) return
+    return {
+      [vertical ? 'marginTop' : 'marginLeft']: `${spacing}px`
+    }
+  }
+
   BScroll.use(Slide)
   BScroll.use(ObserveDOM)
 
@@ -341,13 +348,12 @@
           dotsItems.push(
             createElement('span', {
               class: 'mpx-swiper-dots-item',
-              style: {
+              style: Object.assign({
                 backgroundColor: i === this.currentIndex ? this.indicatorActiveColor : this.indicatorColor,
-                margin: `${this.indicatorSpacing}px`,
                 width: `${this.indicatorWidth}px`,
                 height: `${this.indicatorHeight}px`,
                 borderRadius: `${this.indicatorRadius}px`
-              }
+              }, getSwiperIndicatorSpacingStyle(i, this.indicatorSpacing, this.vertical))
             })
           )
         }

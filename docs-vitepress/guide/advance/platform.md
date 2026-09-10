@@ -608,7 +608,7 @@ radio|是
 radio-group|是
 rich-text|是
 scroll-view|是|scroll-view 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>若出现无法滚动，可尝试手动传入 `{ observeDOM: true }` <br/><br/> `update-refresh`: boolean <br/>Vue updated 钩子函数触发时，可用于重新计算 BetterScroll<br/><br/>tips: 当使用下拉刷新相关属性时，由于 Vue 数据响应机制的限制，在 web 侧可能出现下拉组件状态无法复原的问题，可尝试在 `refresherrefresh` 事件中，手动将 refresher-triggered 属性值设置为 true
-swiper|是|swiper 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现，支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>当滑动方向为横向滚动，希望在另一方向保留原生的滚动时，scroll-options 可尝试传入 `{ eventPassthrough: vertical }`，反之可将 eventPassthrough 设置为 `horizontal`
+swiper|是|swiper 输出 web 底层滚动依赖 [BetterScroll](https://better-scroll.github.io/docs/zh-CN/guide/base-scroll-options.html) 实现。Web 端支持以下指示点属性：<br/><br/>`indicator-margin`: number，指示点与 swiper 边缘的距离，默认值为 `10`。<br/>`indicator-spacing`: number，相邻指示点的间距，默认值为 `4`。<br/>`indicator-radius`: number，指示点圆角半径，默认值为 `4`。<br/>`indicator-width`: number，指示点宽度，默认值为 `8`。<br/>`indicator-height`: number，指示点高度，默认值为 `8`。<br/>`indicator-alignment`: `auto \| [number, number]`，默认值为 `auto`。数组表示 `[x, y]` 方向的对齐位置，两项的取值范围均为 `[-1, 1]`；`-1` 表示左侧/顶部，`0` 表示居中，`1` 表示右侧/底部。`auto` 在横向 swiper 中等同于 `[0, 1]`，在纵向 swiper 中等同于 `[1, 0]`。<br/>`indicator-offset`: `[number, number]`，表示 `[x, y]` 方向的像素偏移量，默认值为 `[0, 0]`。<br/><br/>支持额外传入以下属性： <br/><br/>`scroll-options`: object <br/>可重写 BetterScroll 初始化基本配置<br/>当滑动方向为横向滚动，希望在另一方向保留原生的滚动时，scroll-options 可尝试传入 `{ eventPassthrough: vertical }`，反之可将 eventPassthrough 设置为 `horizontal`
 swiper-item|是
 switch|是
 slider|是
