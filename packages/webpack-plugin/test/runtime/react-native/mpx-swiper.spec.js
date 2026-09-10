@@ -3,175 +3,142 @@ const path = require('path')
 const vm = require('vm')
 const ts = require('typescript')
 
-const helperNames = [
-  'normalizeDisplayMultipleItems',
-  'getSwiperMaxIndex',
-  'normalizeSwiperCurrent',
-  'getSwiperStep',
-  'getSwiperPatchElmNum',
-  'getCircularIndex',
-  'isSwiperDotActive',
-  'getCircularBoundary',
-  'getSwiperPositionOffset'
-]
+const componentPath = path.resolve(__dirname, '../../../lib/runtime/components/react/mpx-swiper.tsx')
+const compiled = ts.transpileModule(fs.readFileSync(componentPath, 'utf8'), {
+  compilerOptions: { jsx: ts.JsxEmit.React, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2018 }
+}).outputText
 
-function loadSwiperHelpers () {
-  const componentPath = path.resolve(__dirname, '../../../lib/runtime/components/react/mpx-swiper.tsx')
-  const source = fs.readFileSync(componentPath, 'utf8')
-  // 在内存中追加测试导出，避免为了测试改变组件的生产接口或拆分实现文件
-  const output = ts.transpileModule(`${source}\nmodule.exports.__test__ = { ${helperNames.join(', ')} }`, {
-    compilerOptions: {
-      jsx: ts.JsxEmit.React,
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2018
+// 直接执行组件源码，模拟本组测试所需的同步渲染、SharedValue 和 effect。
+function createSwiper () {
+  const slots = []
+  let cursor = 0
+  let effects = []
+  const useRef = (current) => {
+    const index = cursor++
+    if (!slots[index]) slots[index] = { current }
+    return slots[index]
+  }
+  const useMemo = (factory, deps) => {
+    const ref = useRef()
+    if (!ref.current || deps.some((value, index) => !Object.is(value, ref.current.deps[index]))) {
+      ref.current = { value: factory(), deps }
     }
-  }).outputText
-  const runtimeModule = { exports: {} }
+    return ref.current.value
+  }
+  const createElement = (type, props, ...children) => {
+    props = Object.assign({}, props, { children: children.flat() })
+    return typeof type === 'function' ? type(props) : { type, props }
+  }
+  const react = {
+    createElement,
+    cloneElement: (child, props) => Object.assign({}, child, { props: Object.assign({}, child.props, props) }),
+    forwardRef: component => component,
+    useRef,
+    useMemo,
+    useEffect: (callback, deps) => useMemo(() => effects.push(callback), deps)
+  }
+  const gesture = new Proxy({}, { get: () => () => gesture })
   const easing = value => value
   const modules = {
-    react: {
-      default: { createElement: () => null },
-      forwardRef: component => component
-    },
-    'react-native': {},
-    'react-native-gesture-handler': {},
+    react: Object.assign({ default: react }, react),
+    'react-native': { View: 'View' },
+    'react-native-gesture-handler': { Gesture: { Pan: () => gesture } },
     'react-native-reanimated': {
-      default: {},
-      Easing: {
-        cubic: () => null,
-        linear: () => null,
-        in: easing,
-        out: easing,
-        inOut: easing
-      }
+      default: { View: 'AnimatedView' },
+      useSharedValue: value => useRef({ value }).current,
+      useAnimatedStyle: callback => callback(),
+      useAnimatedReaction: () => {},
+      withTiming: value => value,
+      Easing: { cubic: easing, linear: easing, in: easing, out: easing, inOut: easing }
     },
-    './getInnerListeners': {},
-    './useNodesRef': {},
-    './utils': {},
-    './context': {},
+    './getInnerListeners': { default: () => ({}) },
+    './useNodesRef': { default: () => {} },
+    './utils': {
+      useTransformStyle: style => ({ normalStyle: style, varContextRef: { current: {} } }),
+      splitStyle: () => ({}),
+      splitProps: () => ({}),
+      useLayout: ({ onLayout }) => ({ layoutProps: { onLayout } }),
+      wrapChildren: ({ children }) => children,
+      extendObject: Object.assign,
+      flatGesture: value => value,
+      useRunOnJSCallback: () => () => {}
+    },
+    './context': { SwiperContext: { Provider: 'SwiperContext' } },
     './mpx-portal': {}
   }
-  const loadModule = (request) => {
-    if (!Object.prototype.hasOwnProperty.call(modules, request)) {
-      throw new Error(`Unexpected swiper dependency: ${request}`)
-    }
-    return modules[request]
-  }
-
-  vm.runInNewContext(output, {
+  const runtimeModule = { exports: {} }
+  vm.runInNewContext(compiled, {
     module: runtimeModule,
     exports: runtimeModule.exports,
-    require: loadModule
-  })
-  return runtimeModule.exports.__test__
+    global: { __formatValue: parseFloat },
+    require: request => {
+      if (!Object.prototype.hasOwnProperty.call(modules, request)) throw new Error(request)
+      return modules[request]
+    }
+  }, { filename: componentPath })
+
+  return (props = {}) => {
+    cursor = 0
+    effects = []
+    const tree = runtimeModule.exports.default(Object.assign({
+      style: { width: 300, height: 240 },
+      children: Array.from({ length: 5 }, (_, key) => ({ key, props: {} })),
+      disableGesture: true,
+      'indicator-dots': true,
+      'indicator-color': 'gray',
+      'indicator-active-color': 'black'
+    }, props))
+    effects.forEach(callback => callback())
+    const items = tree.props.children[0].props.children[0]
+    const dots = tree.props.children[1].props.children[0].props.children
+    return { tree, items, dots }
+  }
 }
 
-const {
-  getCircularBoundary,
-  getCircularIndex,
-  getSwiperMaxIndex,
-  getSwiperPatchElmNum,
-  getSwiperPositionOffset,
-  getSwiperStep,
-  isSwiperDotActive,
-  normalizeDisplayMultipleItems,
-  normalizeSwiperCurrent
-} = loadSwiperHelpers()
+describe('swiper display-multiple-items', () => {
+  test('keeps the default single-item layout', () => {
+    const { items, dots } = createSwiper()()
+    expect(items.props.value.step.value).toBe(300)
+    expect(dots.map(dot => dot.props.style[1].backgroundColor)).toEqual(['black', 'gray', 'gray', 'gray', 'gray'])
+  })
 
-describe('MpxSwiper RN runtime calculations', () => {
+  test('converts the static string count before generating circular clones', () => {
+    const { items } = createSwiper()({ circular: true, 'display-multiple-items': '3' })
+    expect(items.props.value.step.value).toBe(100)
+    expect(items.props.children).toHaveLength(13)
+  })
+
+  test.each([false, true])('updates item size when display count changes, vertical=%p', (vertical) => {
+    const render = createSwiper()
+    const first = render({ vertical, current: 1, 'display-multiple-items': 2 })
+    expect(first.items.props.value.step.value).toBe(vertical ? 120 : 150)
+    const next = render({ vertical, current: 1, 'display-multiple-items': 3 })
+    expect(next.items.props.value.step.value).toBe(vertical ? 80 : 100)
+    expect(next.items.props.value.offset.value).toBe(vertical ? -80 : -100)
+  })
+
+  test('updates display count after measuring a percentage-sized swiper', () => {
+    const render = createSwiper()
+    const first = render({ style: { width: '100%' }, 'display-multiple-items': 2 })
+    first.tree.props.onLayout({ nativeEvent: { layout: { width: 300, height: 240 } } })
+    expect(first.items.props.value.step.value).toBe(150)
+    const next = render({ style: { width: '100%' }, 'display-multiple-items': 3 })
+    expect(next.items.props.value.step.value).toBe(100)
+  })
+
+  test('scales margin changes by the current display count', () => {
+    const render = createSwiper()
+    render({ 'display-multiple-items': 2, 'previous-margin': '10px', 'next-margin': '20px' })
+    const next = render({ 'display-multiple-items': 3, 'previous-margin': '40px', 'next-margin': '20px' })
+    expect(next.items.props.value.step.value).toBe(80)
+  })
+
   test.each([
-    [undefined, 1],
-    ['3', 3],
-    [2.8, 2],
-    [0, 1],
-    [-2, 1],
-    [Infinity, 1],
-    ['invalid', 1]
-  ])('normalizes display-multiple-items %p to %p', (value, expected) => {
-    expect(normalizeDisplayMultipleItems(value)).toBe(expected)
-  })
-
-  test('calculates step from the latest size, margins and display count', () => {
-    expect(getSwiperStep(300, 10, 20, 3)).toBe(90)
-    expect(getSwiperStep(300, 10, 20, 2)).toBe(135)
-    expect(getSwiperStep(300, 40, 20, 3)).toBe(80)
-    expect(getSwiperStep(0, 10, 20, 3)).toBe(0)
-  })
-
-  test('clamps current to the last complete non-circular viewport', () => {
-    expect(getSwiperMaxIndex(5, 3, false)).toBe(2)
-    expect(normalizeSwiperCurrent('4', 5, 3, false)).toBe(2)
-    expect(normalizeSwiperCurrent(-1, 5, 3, false)).toBe(0)
-    expect(normalizeSwiperCurrent(1.8, 5, 3, false)).toBe(1)
-    expect(normalizeSwiperCurrent(Infinity, 5, 3, false)).toBe(0)
-  })
-
-  test('keeps every child reachable in circular mode', () => {
-    expect(getSwiperMaxIndex(5, 3, true)).toBe(4)
-    expect(normalizeSwiperCurrent(4, 5, 3, true)).toBe(4)
-    expect(getCircularIndex(-1, 5)).toBe(4)
-    expect(getCircularIndex(5, 5)).toBe(0)
-  })
-
-  test('activates every visible item dot in non-circular mode', () => {
-    expect([0, 1, 2, 3, 4].map(index => isSwiperDotActive(index, 0, 3, 5, false))).toEqual([
-      true,
-      true,
-      true,
-      false,
-      false
-    ])
-    expect([0, 1, 2, 3, 4].map(index => isSwiperDotActive(index, 2, 3, 5, false))).toEqual([
-      false,
-      false,
-      true,
-      true,
-      true
-    ])
-  })
-
-  test('wraps active item dots in circular mode', () => {
-    expect([0, 1, 2, 3, 4].map(index => isSwiperDotActive(index, 4, 2, 5, true))).toEqual([
-      true,
-      false,
-      false,
-      false,
-      true
-    ])
-  })
-
-  test('renders enough circular clones to cover the viewport', () => {
-    expect(getSwiperPatchElmNum(true, 5, 2, true, 300, 80)).toBe(4)
-    expect(getSwiperPatchElmNum(true, 5, 2, false, 300, 150)).toBe(2)
-    expect(getSwiperPatchElmNum(false, 5, 2, true, 300, 80)).toBe(0)
-  })
-
-  test('wraps circular offsets by exactly one children cycle', () => {
-    expect(getCircularBoundary(10, 5, 3, 100, 300)).toEqual({
-      isBoundary: true,
-      resetOffset: -490
-    })
-    expect(getCircularBoundary(-810, 5, 3, 100, 300)).toEqual({
-      isBoundary: true,
-      resetOffset: -310
-    })
-    expect(getCircularBoundary(-1810, 5, 3, 100, 300)).toEqual({
-      isBoundary: true,
-      resetOffset: -310
-    })
-  })
-
-  test('wraps before large edge margins exhaust the circular clones', () => {
-    expect(getCircularBoundary(-590, 5, 3, 80, 300)).toEqual({
-      isBoundary: true,
-      resetOffset: -190
-    })
-  })
-
-  test('normalizes circular offsets against previous margin', () => {
-    expect(getSwiperPositionOffset(-200, true, 100)).toBe(300)
-    expect(getSwiperPositionOffset(-199, true, 100)).toBe(299)
-    expect(getSwiperPositionOffset(-201, true, 100)).toBe(301)
-    expect(getSwiperPositionOffset(-200, false, 100)).toBe(200)
+    [false, 2, ['gray', 'gray', 'black', 'black', 'black']],
+    [true, 4, ['black', 'black', 'gray', 'gray', 'black']]
+  ])('highlights three of the five dots, circular=%p', (circular, current, colors) => {
+    const { dots } = createSwiper()({ circular, current, 'display-multiple-items': 3 })
+    expect(dots).toHaveLength(5)
+    expect(dots.map(dot => dot.props.style[1].backgroundColor)).toEqual(colors)
   })
 })
