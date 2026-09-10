@@ -85,6 +85,11 @@ declare global {
     hasUnoCSS?: boolean
 
     /**
+     * 当前资源是否命中 UnoCSS scan 规则
+     */
+    isUnoCSSScanFile?: (file: string) => boolean
+
+    /**
      * 记录 entryModule 与 entryNode 的对应关系，用于体积分析
      */
     entryNodeModulesMap: Map<any, any>

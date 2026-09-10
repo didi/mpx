@@ -38,7 +38,7 @@ describe('dynamic class object keys', () => {
       defs: {},
       usingComponentsInfo: {},
       externalClasses: [],
-      hasUnoCSS: true,
+      isUnoCSSScanFile: true,
       warn: jest.fn(),
       error: error => templateErrors.push(error)
     })
@@ -48,10 +48,25 @@ describe('dynamic class object keys', () => {
     expect(templateErrors).toEqual([])
     expect(pluginErrors).toEqual([])
     expect(plugin.options).not.toHaveProperty('escapeMap')
-    expect(compiledTemplate).toMatch(/"hover:bg_da_red_da_100MpxEscape":\s*flag/)
+    expect(compiledTemplate).toContain('"hover:bg-red-100": flag')
     expect(classes).toEqual(expect.arrayContaining(['text-24rpx', 'hover:bg-blue-100', 'hover:bg-red-100']))
     expect(output).toContain('"text-24rpx hover_c_bg-blue-100"')
     expect(output).toMatch(/hover_c_bg_da_red_da_100MpxEscape:\s*flag/)
+  })
+
+  test('matches template resource paths against scan rules', () => {
+    const scanPlugin = new MpxUnocssPlugin({
+      root: '/project',
+      config: {},
+      scan: {
+        include: ['src/**/*'],
+        exclude: ['src/excluded/**/*']
+      }
+    })
+
+    expect(scanPlugin.isUnoCSSScanFile('/project/src/pages/index.mpx')).toBe(true)
+    expect(scanPlugin.isUnoCSSScanFile('/project/src/excluded/index.mpx')).toBe(false)
+    expect(scanPlugin.isUnoCSSScanFile('/project/packages/component.mpx')).toBe(false)
   })
 
   test('allows configured classes containing special characters', async () => {

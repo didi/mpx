@@ -322,9 +322,9 @@ const classEscapeMap = {
 
 该转义规则同时用于编译产物与运行时处理，为保证两端结果一致，不支持自定义。对于映射表以外的特殊字符，能够被 UnoCSS 规则正常处理的类名会使用内建兜底规则转义；未被 UnoCSS 处理的类名会输出编译错误。
 
-使用 `@mpxjs/unocss-plugin` 时，`wx:class` 对象字面量中的 key 会和静态 `class` 使用相同的转义规则。插件会在扫描模板时将转义后的 key 转换为小程序可用的标识符，无法转换为合法标识符时会输出编译错误。
+模板命中 `@mpxjs/unocss-plugin` 的 `scan` 规则时，`wx:class` 对象字面量中的 key 会和静态 `class` 使用相同的转义规则。插件会在扫描模板时将转义后的 key 转换为小程序可用的标识符，无法转换为合法标识符时会输出编译错误。
 
-未使用 `@mpxjs/unocss-plugin` 时，`wx:class` 对象字面量的 key 仅支持合法标识符以及包含空格或 `-` 的类名，其他特殊字符会输出编译错误。
+未使用 `@mpxjs/unocss-plugin` 或模板未命中 `scan` 规则时，`wx:class` 对象字面量的 key 仅支持合法标识符以及包含空格或 `-` 的类名，其他无法转换为合法标识符的特殊字符会输出编译错误。如需在这类模板中使用 UnoCSS 特殊类名，需要通过 `scan.include` 将对应文件加入扫描范围。
 
 ### 原子类分包输出 {#subpackage}
 
@@ -358,7 +358,6 @@ const classEscapeMap = {
     <!-- ... -->
 </template>
 ```
-
 
 
 

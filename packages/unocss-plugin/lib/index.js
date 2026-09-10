@@ -39,7 +39,6 @@ import { UnoCSSWebpackPlugin } from './web-plugin/index.js'
 
 const { isWeb, isReact } = env
 const { has } = set
-const { unescapeWxsObjectKey } = escapeWxsObjectKey
 
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
@@ -168,6 +167,7 @@ function getPlugin (compiler, curPlugin) {
 class MpxUnocssPlugin {
   constructor (options = {}) {
     this.options = normalizeOptions(options)
+    this.isUnoCSSScanFile = file => filterFile(toPosix(file), this.options.scan)
   }
 
   async generateStyle (uno, classes = [], options = {}) {
@@ -247,7 +247,6 @@ class MpxUnocssPlugin {
             expSource.replace(start, end, result)
           })
           objectKeys.forEach(({ result, start, end }) => {
-            if (typeof result === 'string') result = unescapeWxsObjectKey(result)
             if (typeof result !== 'string') {
               error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`)
               return
@@ -325,6 +324,7 @@ class MpxUnocssPlugin {
     }, (compilation) => {
       const { __mpx__: mpx } = compilation
       mpx.hasUnoCSS = true
+      mpx.isUnoCSSScanFile = this.isUnoCSSScanFile
       if (isWeb(mode) || isReact(mode)) return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
@@ -416,7 +416,7 @@ class MpxUnocssPlugin {
             if (assetModules && has(assetModules, (module) => {
               if (module.resource) {
                 const resourcePath = toPosix(parseRequest(module.resource).resourcePath)
-                return filterFile(resourcePath, this.options.scan)
+                return this.isUnoCSSScanFile(resourcePath)
               }
               return false
             })) {
@@ -462,7 +462,7 @@ class MpxUnocssPlugin {
             dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename, resource }) => {
               if (entryType === 'page' || entryType === 'component') {
                 const resourcePath = toPosix(parseRequest(resource).resourcePath)
-                if (filterFile(resourcePath, this.options.scan)) {
+                if (this.isUnoCSSScanFile(resourcePath)) {
                   const entryStyleFile = filename + styleExt
                   const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), mainUnoFile)), mode)
                   const entryStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
@@ -516,7 +516,7 @@ class MpxUnocssPlugin {
               // isolated模式下无需全局样式注入
               if (entryType === 'page' || entryType === 'component') {
                 const resourcePath = toPosix(parseRequest(resource).resourcePath)
-                if (filterFile(resourcePath, this.options.scan)) {
+                if (this.isUnoCSSScanFile(resourcePath)) {
                   const entryStyleFile = filename + styleExt
                   const entryStyleSource = getConcatSource('')
                   // 独立分包中的页面和组件无需引入mainUnoFile

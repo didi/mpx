@@ -1662,6 +1662,8 @@ module.exports = defineConfig({
 
 配置需要扫描的文件目录
 
+只有命中 `scan` 规则的模板会由 UnoCSS 扫描和转换。未命中规则的模板不会处理 UnoCSS 特殊类名；其中 `wx:class` 对象字面量的 key 仍需满足小程序 WXS 的标识符限制。
+
 ```js
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
