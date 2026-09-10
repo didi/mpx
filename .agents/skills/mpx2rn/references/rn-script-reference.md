@@ -770,7 +770,7 @@ notifyDimensionsChange()
 
 - 勿在 App 构造函数执行完成前依赖 `getApp()` 内业务字段已赋值完毕；与路由相关的初始化宜放在 `onLaunch` / `onShow`。
 - `getCurrentPages()` 依赖 React Navigation 焦点与 `__mpxPagesMap`，与原生小程序栈细节不完全相同。
-- `notifyDimensionsChange` 在 RN 样式运行时模块加载时注入；`@mpxjs/core` 的 RN 运行时完成加载后即可调用，不需要等待 `createApp`、页面挂载或首次样式计算。
+- RN 的 JS Bundle 启动后，执行到 `app.mpx` 业务脚本时 `notifyDimensionsChange` 已经可用，不需要等待页面或组件渲染；如果由原生宿主触发，应等待 RN JS Bundle 加载完成。
 
 ---
 
