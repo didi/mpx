@@ -151,7 +151,7 @@
 | indicator-color         | color   | `rgba(0, 0, 0, .3)` | 指示点颜色                            |
 | indicator-active-color  | color   | `#000000`           | 当前选中的指示点颜色                   |
 | autoplay                | boolean | `false`             | 是否自动切换                          |
-| current                 | number  | `0`                 | 当前所在滑块的 index                  |
+| current                 | number  | `0`                 | 当前所在滑块的 index，非循环模式下限制在 `0` 到 `max(0, swiper-item 数量 - display-multiple-items)` 之间，展示数量变化时同步校正 |
 | interval                | number  | `5000`              | 自动切换时间间隔                       |
 | duration                | number  | `500`               | 滑动动画时长                          |
 | circular                | boolean | `false`             | 是否采用衔接滑动                       |
