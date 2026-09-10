@@ -66,7 +66,7 @@ function WebpackPlugin (configOrPath, defaults) {
 
           const getLayersClassMap = (layers) => {
             return getClassMap({
-              content: result.getLayers(layers),
+              styles: [{ content: result.getLayers(layers) }],
               filename: 'mpx2rn-unocss',
               mode,
               srcMode,

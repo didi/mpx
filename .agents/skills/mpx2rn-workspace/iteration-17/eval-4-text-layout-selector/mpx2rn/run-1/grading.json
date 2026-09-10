@@ -1,0 +1,96 @@
+{
+  "eval_id": 4,
+  "run_kind": "mpx2rn",
+  "expectations": [
+    {
+      "id": "l1",
+      "text": "样式：position:sticky 替换为 sticky-header 方案",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l2",
+      "text": "样式：保留 /*use rpx*/ 和 /*use px*/ 单位转换注释",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l3",
+      "text": "样式：background-image 不应用于 text 元素类",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l5",
+      "text": "模板：scroll-into-view 目标添加 wx:ref",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l6",
+      "text": "模板：createSelectorQuery 目标添加空 wx:ref",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l7",
+      "text": "脚本：选择器 API 仅使用 #id 或 .class 简单选择器",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l8",
+      "text": "脚本：非触摸事件不使用 catch 前缀",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l9",
+      "text": "样式：radial-gradient 使用条件编译隔离或替换",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l10",
+      "text": "样式：相邻普通块级兄弟 .chart-title-wrapper（margin-bottom:24rpx）与 .chart-container（margin-top:12rpx）的折叠间距归到单侧，保持 24rpx",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l11",
+      "text": "样式：父子同向 margin 折叠的 .detail-section（margin-top:20rpx）与首子元素 .detail-header（margin-top:12rpx）归到父元素侧，保持 20rpx 并清除子元素顶部 margin",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l12",
+      "text": "样式：.stats-section 的 flex item 通过 .stat-card margin 或包装层 margin/padding 保留上下 16rpx 间距，不按 margin 折叠场景归零",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 11,
+    "failed": 0,
+    "total": 11,
+    "total_tokens": 895256,
+    "tool_calls": 18,
+    "duration_ms": 322524,
+    "duration_seconds": 322.524
+  },
+  "metrics": {
+    "total_tokens": 895256,
+    "tool_calls": 18,
+    "duration_ms": 322524,
+    "duration_seconds": 322.524
+  },
+  "timing": {
+    "total_duration_seconds": 322.524,
+    "total_tokens": 895256
+  },
+  "execution_metrics": {
+    "total_tool_calls": 18,
+    "output_chars": 895256
+  }
+}

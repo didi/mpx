@@ -6,7 +6,23 @@
 // 整个模块的存在意义就是「空函数」——给 eslint 关掉 no-empty-function 比逐行
 // disable 更直观。
 /* eslint-disable @typescript-eslint/no-empty-function */
-import type { Reporter } from './types'
+import type { PerfStartOptions, Reporter } from './types'
+
+export function aggrStart (_name: string, _useName?: false): number
+export function aggrStart (_name: string, _useName: true): void
+export function aggrStart (_name: string, _useName: boolean): number | void
+export function aggrStart (_name: string, useName = false): number | void {
+  if (!useName) return -1
+}
+export const aggrEnd = (_target: number | string) => {}
+
+export function traceStart (_name: string, _useName?: false): number
+export function traceStart (_name: string, _useName: true): void
+export function traceStart (_name: string, _useName: boolean): number | void
+export function traceStart (_name: string, useName = false): number | void {
+  if (!useName) return -1
+}
+export const traceEnd = (_target: number | string, _info?: unknown) => {}
 
 // scopeStart 关闭态恒返回 -1，与开启态未录制时的语义一致；
 // 调用方 `let id = -1; ...; perf.scopeEnd(id)` 在关闭态下被 inline 后等价于
@@ -14,11 +30,11 @@ import type { Reporter } from './types'
 export const scopeStart = (_name: string): number => -1
 export const scopeEnd = (_id: number) => {}
 
-export const mark = (_name: string) => {}
+export const mark = (_name: string, _info?: unknown) => {}
 export const measureStart = (_name: string) => {}
 export const measureEnd = (_name: string) => {}
 
-export const start = () => {}
+export const start = (_options?: PerfStartOptions) => {}
 export const end = (_reporter?: Reporter) => {}
 
 export const setReporter = (_r: Reporter) => {}
@@ -31,5 +47,5 @@ export const clearReporter = () => {}
 // 业务侧典型用法：
 //   import { consoleReporter, setReporter } from '@mpxjs/perf'
 //   setReporter(consoleReporter)   // 关闭态下 consoleReporter 是 noop reporter
-export const consoleReporter: Reporter = (_agg) => {}
-export const createConsoleReporter = (_options?: object): Reporter => (_agg) => {}
+export const consoleReporter: Reporter = (_aggregates) => {}
+export const createConsoleReporter = (_options?: object): Reporter => (_aggregates) => {}

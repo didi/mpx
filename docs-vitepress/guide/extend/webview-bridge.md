@@ -112,6 +112,8 @@ webviewBridge.navigateTo({
 
 针对这类需求，Mpx 框架内部已提供「宿主环境能力挂载」机制，同时在 webview-bridge 中支持 invoke 通信方法，可实现 H5 与宿主环境的双向调用。
 
+`webviewConfig` 需要按宿主环境配置在 `mpx.config.webConfig` 或 `mpx.config.rnConfig` 下。
+
 **宿主环境中挂载getLocation**
 ```javascript
 import mpx from '@mpxjs/core'
