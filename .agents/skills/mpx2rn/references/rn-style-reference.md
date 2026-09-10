@@ -168,15 +168,21 @@ Mpx 在 RN 平台支持多种 CSS 单位，并在运行时进行转换。
 | 单位 | 说明 | 转换规则 |
 | --- | --- | --- |
 | `px` | 绝对像素 | 直接转换为 RN 的无单位数值 |
-| `rpx` | 响应式像素 | `rpx值 × window.width / 750` |
+| `rpx` | 响应式像素 | 默认按 `rpx值 × window.width / 750` 转换 |
 | `%` | 百分比 | 转换为字符串形式（如 `'50%'`），由 RN 原生支持或框架处理 |
-| `vw` | 视口宽度百分比 | `vw值 × window.width / 100` |
-| `vh` | 视口高度百分比 | `vh值 × window.height / 100` |
+| `vw` | 视口宽度百分比 | 默认按 `vw值 × window.width / 100` 转换 |
+| `vh` | 视口高度百分比 | 默认按 `vh值 × window.height / 100` 转换 |
 | `hairlineWidth` | RN 特有极细线 | `StyleSheet.hairlineWidth` |
 
 #### 样式计算基准与自定义
 
-`rpx`、`vw`、`vh` 与媒体查询的计算默认基于运行时的 `window.width` 和 `window.height`。
+`rpx`、`vw`、`vh` 与媒体查询的计算默认基于运行时的 `window.width` 和 `window.height`。如需保持旧版本基于 Screen 尺寸计算的效果，可将 `Mpx.config.rnConfig.styleDimensionsBase` 设置为 `"screen"`：
+
+```javascript
+Mpx.config.rnConfig.styleDimensionsBase = "screen"
+```
+
+该配置支持 `"window"` 和 `"screen"`，默认值为 `"window"`。所选尺寸发生变化时，依赖响应式单位或媒体查询的组件会重新计算样式。
 
 同时支持通过运行时配置 `Mpx.config.rnConfig.customDimensions` 自定义样式计算基准：
 
@@ -196,7 +202,7 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
 })
 ```
 
-配置生效后，`rpx`、`vw`、`vh` 与媒体查询会按自定义后的 `window` 宽高进行计算。
+配置生效后，`rpx`、`vw`、`vh` 与媒体查询会按自定义后的 `styleDimensionsBase` 对应尺寸进行计算。
 
 #### 百分比计算规则
 

@@ -486,6 +486,12 @@ export interface RnConfig {
   ) => T | void
 
   /**
+   * rpx、vw、vh 与媒体查询使用的尺寸基准。
+   * @default 'window'
+   */
+  styleDimensionsBase?: 'window' | 'screen'
+
+  /**
    * 加载并执行异步分包的方法。
    *
    * @param params 分包下载参数

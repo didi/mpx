@@ -693,6 +693,7 @@ import Mpx from "@mpxjs/core"
 
 // 须在 createApp 与页面脚本执行前完成赋值
 Mpx.config.rnConfig = {
+  styleDimensionsBase: "window",
   parseAppProps(props) {
     return {
       initialRouteName: "pages/index",
@@ -721,6 +722,7 @@ Mpx.config.rnConfig = {
 | `onStateChange` | 导航 state 变化时回调。 |
 | `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
 | `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |
+| `styleDimensionsBase` | `rpx` / `vw` / `vh` 与媒体查询使用的尺寸基准，可选 `"window"` 或 `"screen"`，默认为 `"window"`。 |
 | `openTypeHandler` | 对象，注册 `button` 组件在 RN 上 `open-type` 的容器侧实现，未注册对应键时点击会告警。 |
 | `openTypeHandler.onShareAppMessage` | 对应模板中 `open-type="share"`：框架会先取当前页 `onShareAppMessage` 的返回（含与默认 `title` / `path` 的合并及可选 `promise` 异步结果），再调用本回调，入参为 `{ title, path, imageUrl? }`，由宿主调起系统分享等能力。 |
 | `openTypeHandler.onUserInfo` | 对应模板中 `open-type="getUserInfo"`：由宿主实现获取用户信息的逻辑，结果需满足按钮侧对 `bindgetuserinfo` 的约定（以 `@mpxjs/webpack-plugin` 中 `mpx-button` 运行时为准）。 |

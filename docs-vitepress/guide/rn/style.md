@@ -103,13 +103,13 @@ Mpx 转 RN 支持以下单位，部分单位在特定情况下存在使用限制
 |------|---------|----------|
 | `%` | ✅ 支持 | 百分比单位参考 [百分比单位说明](#percentage-unit-explanation) |
 | `px` | ✅ 支持 | 绝对像素单位 |
-| `rpx` | ✅ 支持 | 响应式像素，根据 Window 宽度动态计算 |
-| `vh` | ✅ 支持 | Window 高度的百分比 |
-| `vw` | ✅ 支持 | Window 宽度的百分比 |
+| `rpx` | ✅ 支持 | 响应式像素，默认根据 Window 宽度动态计算 |
+| `vh` | ✅ 支持 | 默认使用 Window 高度计算 |
+| `vw` | ✅ 支持 | 默认使用 Window 宽度计算 |
 
-> [!tip] Window 尺寸说明
+> [!tip] 尺寸基准说明
 >
-> `rpx` / `vw` / `vh` 和媒体查询均使用 React Native `Dimensions.get('window')` 的尺寸。Window 尺寸变化时，依赖这些能力的组件会重新计算样式。
+> `rpx` / `vw` / `vh` 和媒体查询默认使用 React Native `Dimensions.get('window')` 的尺寸。可将 `mpx.config.rnConfig.styleDimensionsBase` 设置为 `'screen'`，恢复基于 Screen 尺寸计算的旧版本效果。所选尺寸变化时，依赖这些能力的组件会重新计算样式。
 
 ### 百分比单位说明 {#percentage-unit-explanation}
 
