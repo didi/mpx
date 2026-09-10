@@ -77,26 +77,31 @@ describe('RN createApp initial params', () => {
     return global.__mpxOptionsMap.app({}).props.children[0]
   }
 
-  it('uses initialState for a non-first Screen instead of Navigator and Screen defaults', () => {
+  it.each([
+    ['pages/index', 'pages/index'],
+    [undefined, 'pages/home']
+  ])('uses initialState when initialRouteName is %s', (initialRouteName, expectedRouteName) => {
     const initialParams = { a: 1 }
-    const navigationContainer = renderApp('pages/index', initialParams)
+    const navigationContainer = renderApp(initialRouteName, initialParams)
     const stackNavigator = navigationContainer.props.children[0]
-    const indexScreen = stackNavigator.props.children[1]
 
+    expect(error).not.toHaveBeenCalled()
     expect(navigationContainer.props.initialState).toEqual({
       routes: [{
-        name: 'pages/index',
+        name: expectedRouteName,
         params: initialParams
       }]
     })
     expect(stackNavigator.props).not.toHaveProperty('initialRouteName')
-    expect(indexScreen.props).not.toHaveProperty('initialParams')
+    stackNavigator.props.children.forEach(screen => {
+      expect(screen.props).not.toHaveProperty('initialParams')
+    })
 
     global.__mpxAppOnLaunch({
       getState: () => Object.assign({ index: 0 }, navigationContainer.props.initialState)
     })
     expect(onLaunch).toHaveBeenCalledWith(expect.objectContaining({
-      path: 'pages/index',
+      path: expectedRouteName,
       query: initialParams,
       isLaunch: true
     }))
