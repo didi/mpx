@@ -168,6 +168,13 @@ export default function createApp (options) {
       initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
       initialRouteRef.current.initialParams = initialParams || initialRouteRef.current.initialParams
 
+      const initialRoute = initialRouteRef.current
+      if (!hasOwn(pagesMap, initialRoute.initialRouteName)) {
+        error(`The initial page [${initialRoute.initialRouteName}] is not registered in the application. Mpx will fall back to the first page [${firstPage}].`)
+        initialRoute.initialRouteName = firstPage
+        initialRoute.initialParams = {}
+      }
+
       global.__mpxAppOnLaunch = (navigation) => {
         const state = navigation.getState()
         Mpx.config.rnConfig.onStateChange?.(state)
@@ -204,13 +211,7 @@ export default function createApp (options) {
       }
     }, [])
 
-    const initialRoute = initialRouteRef.current
-    if (!hasOwn(pagesMap, initialRoute.initialRouteName)) {
-      error(`The initial page [${initialRoute.initialRouteName}] is not registered in the application. Mpx will fall back to the first page [${firstPage}].`)
-      initialRoute.initialRouteName = firstPage
-      initialRoute.initialParams = {}
-    }
-    const { initialRouteName, initialParams } = initialRoute
+    const { initialRouteName, initialParams } = initialRouteRef.current
     const initialState = {
       routes: [{
         name: initialRouteName,
