@@ -36,10 +36,10 @@ function handleChangeStart(event) {
 
 ### display-multiple-items
 
-运行时接收并转换属性：
+运行时接收并将属性归一化为有限正整数：
 
 ```ts
-const displayMultipleItems = Number(props['display-multiple-items']) || 1
+const displayMultipleItems = normalizeDisplayMultipleItems(props['display-multiple-items'])
 ```
 
 模板组件配置同时放开 iOS、Android 和 Harmony 对该属性的校验，避免继续提示 unsupported warning。
@@ -71,10 +71,15 @@ const maxIndex = Math.max(
 例如 5 个 item 同时展示 3 个时，`maxIndex = 2`，最后一屏为 `[2, 3, 4]`。
 
 `maxIndex` 统一用于手势目标、autoplay 终点和边界阻力，避免最后一屏继续滑出空白。
+外部 `current` 和动态配置变更也使用同一上限归一化，避免产生越界 offset。
 
-#### 3. 调整循环补位
+#### 3. 统一重算动态布局
 
-循环模式需要在真实 children 前后克隆足够的 item：
+缓存 swiper 主轴尺寸，`display-multiple-items`、`previous-margin` 或 `next-margin` 变化时均通过完整公式重算 `step`，并在同一次状态对齐中更新索引、offset 与 autoplay。
+
+#### 4. 调整循环补位
+
+循环模式需要在真实 children 前后克隆足够的 item。基础数量为：
 
 ```ts
 const hasEdgeMargin = !!previousMargin || !!nextMargin
@@ -88,6 +93,8 @@ const patchElmNum = circular && childrenLength > 1
 | 无 margin | `displayMultipleItems` |
 | 有 previous-margin 或 next-margin | `displayMultipleItems + 1` |
 
+实际补位数还会与 `ceil(viewportSize / step)` 取较大值，保证自动播放和手势动画的任意一帧都有足够 clone 覆盖视口。
+
 补位区通过取模映射回真实索引：
 
 ```ts
@@ -96,6 +103,11 @@ if (index < 0) index += childrenLength
 ```
 
 这样可以统一处理前置 clone、真实 children 和后置 clone，避免补位数量增加后跳错索引。
+滑动越过补位边界时，offset 始终按 `childrenLength * step` 的完整周期平移。回绕阈值同时考虑视口尺寸，在剩余 clone 不足以覆盖视口前提前回绕，避免大边距场景露白。
+
+#### 5. 对齐多项展示指示点
+
+指示点总数仍与真实 `swiper-item` 数量一致，不包含循环补位 clone。`display-multiple-items` 大于 `1` 时，从 `current` 开始的多个主展示项对应指示点同时高亮；循环末尾使用真实索引取模，例如 5 项、`current=4`、同时展示 2 项时高亮第 5、1 个指示点。
 
 ### changestart
 
@@ -139,12 +151,9 @@ function handleSwiperChangeStart(current) {
 
 ## 已知风险
 
-1. **动态修改配置**：只修改 `display-multiple-items` 时，容器可能不会重新触发 `onLayout`，`step` 不一定立即重算；动态修改 margin 也仍沿用原有增量算法。
-2. **外部 current 越界**：手势和 autoplay 已使用新边界，但外部传入的 `current` 没有新增统一裁剪。
-3. **非法属性值**：当前只做 `Number(value) || 1`，负数、小数和 `Infinity` 不会额外归一化，调用方应传正整数。
-4. **循环渲染开销**：展示数量较大时 clone 数量同步增加；当展示数量大于 children 数量时会重复克隆。
-5. **事件触发次数**：快速往返拖动时目标索引可能多次变化，因此一次手势可能触发多次 `changestart`。
-6. **运行时测试不足**：当前模板测试只覆盖属性告警，循环补位和事件时序仍需 RN runtime 测试或真机验证。
+1. **循环渲染开销**：展示数量较大时 clone 数量同步增加；当展示数量大于 children 数量时会重复克隆。
+2. **事件触发次数**：快速往返拖动时目标索引可能多次变化，因此一次手势可能触发多次 `changestart`。
+3. **真机覆盖**：核心数值与边界逻辑已有 RN runtime 单测，手势动画的平台实现仍需真机回归。
 
 ## 验证重点
 
@@ -154,6 +163,7 @@ function handleSwiperChangeStart(current) {
 4. 验证 children 数量小于、等于和大于展示数量。
 5. 验证 autoplay、外部 `current`、快速反向滑动。
 6. 验证 `changestart` 先于对应的 `change`。
+7. 验证指示点总数与真实 children 一致，且多项展示和循环跨尾部时高亮范围正确。
 
 ## Review 重点
 
@@ -169,5 +179,5 @@ displayMultipleItems
 Review 时主要确认：
 
 1. 循环补位公式是否覆盖业务使用的 margin 组合。
-2. 是否接受动态配置和外部越界 `current` 暂不完整处理。
+2. 动态配置、children 变化与外部 `current` 是否始终同步到同一组 step、索引和 offset。
 3. 快速往返拖动可能多次触发 `changestart` 是否符合业务预期。

@@ -19,6 +19,16 @@ describe('swiper template transform', function () {
     expect(errorFn).not.toHaveBeenCalled()
   })
 
+  it('should preserve changestart handlers in react native modes', function () {
+    const input = '<swiper bindchangestart="handleStart"></swiper>'
+
+    ;['ios', 'android', 'harmony'].forEach((mode) => {
+      expect(compileTemplate(input, { srcMode: 'wx', mode })).toContain('bindchangestart: (this.handleStart)')
+    })
+
+    expect(errorFn).not.toHaveBeenCalled()
+  })
+
   it('should continue warning unsupported properties in react native modes', function () {
     const input = '<swiper snap-to-edge="true"></swiper>'
 
