@@ -468,21 +468,21 @@ mpx.config.rnConfig.disablePageTransition = true
 
 ### 折叠屏适配 {#foldable-screen-adaption}
 
-#### mpx.config.rnConfig.styleDimensionsBase
+#### mpx.config.rnConfig.dimensionsBase
 
 ```ts
 'window' | 'screen'
 ```
 
-控制 `rpx` / `vw` / `vh` 与媒体查询使用的尺寸基准，默认值为 `'window'`。
+控制 `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，默认值为 `'window'`。
 
 如果需要保持旧版本基于屏幕尺寸计算的效果，可配置为 `'screen'`：
 
 ```js
-mpx.config.rnConfig.styleDimensionsBase = 'screen'
+mpx.config.rnConfig.dimensionsBase = 'screen'
 ```
 
-配置后，响应式单位和媒体查询将使用 `Dimensions.get('screen')` 的宽高，并在 Screen 尺寸变化时重新计算相关样式。
+配置后，响应式单位和媒体查询将使用 `Dimensions.get('screen')` 的宽高，并在 Screen 尺寸变化时重新计算相关样式及触发 `onResize`。
 
 #### mpx.config.rnConfig.customDimensions
 
@@ -490,11 +490,11 @@ mpx.config.rnConfig.styleDimensionsBase = 'screen'
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
-在某些情况下，我们可能不希望当前应用全屏展示。此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 window 或 screen 尺寸信息，`rpx` / `vh` / `vw` 与媒体查询会使用 `styleDimensionsBase` 指定的尺寸进行计算，并在该尺寸变化时触发相关的响应式更新与 `onResize`。
+在某些情况下，我们可能不希望当前应用全屏展示。此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 window 或 screen 尺寸信息，`rpx` / `vh` / `vw`、媒体查询与 `onResize` 会使用 `dimensionsBase` 指定的尺寸，并在该尺寸变化时触发相关更新。
 
 可在此方法中返回修改后的 dimensions，如果无返回或返回 `undefined`，则使用原始入参。
 
-例如，使用默认的 `styleDimensionsBase: 'window'` 时，折叠屏展开后如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
+例如，使用默认的 `dimensionsBase: 'window'` 时，折叠屏展开后如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
 
 #### notifyDimensionsChange
 
@@ -502,7 +502,7 @@ mpx.config.rnConfig.styleDimensionsBase = 'screen'
 (dimensions?: { window: ScaledSize; screen: ScaledSize }) => void
 ```
 
-主动通知框架 Dimensions 发生变化，使 `rpx` / `vw` / `vh`、媒体查询和 `onResize` 等依赖尺寸的能力重新计算。传入 `dimensions` 时使用传入值；不传参数时通过 `Dimensions.get('window')` 与 `Dimensions.get('screen')` 获取当前原始尺寸。两种方式都会重新执行 `rnConfig.customDimensions`，并根据 `styleDimensionsBase` 指定的尺寸判断是否触发刷新。
+主动通知框架 Dimensions 发生变化，使 `rpx` / `vw` / `vh`、媒体查询和 `onResize` 等依赖尺寸的能力重新计算。传入 `dimensions` 时使用传入值；不传参数时通过 `Dimensions.get('window')` 与 `Dimensions.get('screen')` 获取当前原始尺寸。两种方式都会重新执行 `rnConfig.customDimensions`，并根据 `dimensionsBase` 指定的尺寸判断是否触发刷新。
 
 ```js
 // 宿主容器尺寸发生变化后，重新读取当前 Dimensions

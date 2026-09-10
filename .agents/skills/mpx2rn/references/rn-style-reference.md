@@ -176,10 +176,10 @@ Mpx 在 RN 平台支持多种 CSS 单位，并在运行时进行转换。
 
 #### 样式计算基准与自定义
 
-`rpx`、`vw`、`vh` 与媒体查询的计算默认基于运行时的 `window.width` 和 `window.height`。如需保持旧版本基于 Screen 尺寸计算的效果，可将 `Mpx.config.rnConfig.styleDimensionsBase` 设置为 `"screen"`：
+`rpx`、`vw`、`vh` 与媒体查询的计算默认基于运行时的 `window.width` 和 `window.height`。如需保持旧版本基于 Screen 尺寸计算的效果，可将 `Mpx.config.rnConfig.dimensionsBase` 设置为 `"screen"`：
 
 ```javascript
-Mpx.config.rnConfig.styleDimensionsBase = "screen"
+Mpx.config.rnConfig.dimensionsBase = "screen"
 ```
 
 该配置支持 `"window"` 和 `"screen"`，默认值为 `"window"`。所选尺寸发生变化时，依赖响应式单位或媒体查询的组件会重新计算样式。
@@ -202,7 +202,7 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
 })
 ```
 
-配置生效后，`rpx`、`vw`、`vh` 与媒体查询会按自定义后的 `styleDimensionsBase` 对应尺寸进行计算。
+配置生效后，`rpx`、`vw`、`vh` 与媒体查询会按自定义后的 `dimensionsBase` 对应尺寸进行计算。
 
 宿主容器尺寸变化但 React Native 未派发 Dimensions change 事件，或需要基于外部状态重新执行 `customDimensions` 时，可调用全局方法 `notifyDimensionsChange(dimensions?)` 主动通知框架。省略参数时会通过 `Dimensions.get` 重新读取当前原始尺寸。
 
@@ -413,7 +413,7 @@ Mpx 在 RN 平台支持 `@media` 规则，但能力受限。
 
 **限制：**
 
-- 媒体查询中的宽度条件仅支持 `px` 单位，并基于运行时 `window.width` 判断。
+- 媒体查询中的宽度条件仅支持 `px` 单位，并基于 `dimensionsBase` 选中尺寸的运行时 `width` 判断，默认使用 `window.width`。
 - 不支持 `width` 精确匹配、`height`、`orientation`、`all` 等其他特性。
 
 ### 动画支持

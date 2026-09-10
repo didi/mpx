@@ -486,10 +486,10 @@ export interface RnConfig {
   ) => { window: ScaledSize; screen: ScaledSize } | void
 
   /**
-   * rpx、vw、vh 与媒体查询使用的尺寸基准。
+   * rpx、vw、vh、媒体查询与 onResize 使用的尺寸基准。
    * @default 'window'
    */
-  styleDimensionsBase?: 'window' | 'screen'
+  dimensionsBase?: 'window' | 'screen'
 
   /**
    * 加载并执行异步分包的方法。

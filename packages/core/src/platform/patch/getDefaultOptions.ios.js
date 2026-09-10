@@ -19,20 +19,7 @@ import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navi
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
 import * as perf from '@mpxjs/perf'
-
-function getSystemInfo () {
-  const windowDimensions = global.__mpxAppDimensionsInfo.window
-  const screenDimensions = global.__mpxAppDimensionsInfo.screen
-  return {
-    deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
-    size: {
-      screenWidth: screenDimensions.width,
-      screenHeight: screenDimensions.height,
-      windowWidth: windowDimensions.width,
-      windowHeight: windowDimensions.height
-    }
-  }
-}
+import { getSystemInfo, triggerResizeEvent } from '../dimensionsHelper'
 
 function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
@@ -382,28 +369,6 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   if (pageLifetimes) {
     const instance = mpxProxy.target
     isFunction(pageLifetimes[event]) && pageLifetimes[event].call(instance)
-  }
-}
-
-const triggerResizeEvent = (mpxProxy, sizeRef) => {
-  const oldSize = sizeRef.current.size
-  const systemInfo = getSystemInfo()
-  const newSize = systemInfo.size
-
-  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
-    return
-  }
-
-  Object.assign(sizeRef.current, systemInfo)
-
-  const type = mpxProxy.options.__type__
-  const target = mpxProxy.target
-  mpxProxy.callHook(ONRESIZE, [systemInfo])
-  if (type === 'page') {
-    target.onResize && target.onResize(systemInfo)
-  } else {
-    const pageLifetimes = mpxProxy.options.pageLifetimes
-    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
   }
 }
 
