@@ -436,9 +436,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
+        }, (finished) => {
+          if (!finished) return
           currentIndex.value = nextIndex
-          runOnJS(runOnJSCallback)('loop')
+          runOnJS(runOnJSCallback)('resumeLoop')
         })
       } else {
         // 默认向右, 向下
@@ -449,12 +450,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           runOnJSCallback('handleSwiperChangeStart', nextIndex)
           offset.value = withTiming(targetOffset, {
             duration: easeDuration
-          }, () => {
+          }, (finished) => {
+            if (!finished) return
             const initOffset = -step.value * patchElmNumShared.value + preMarginShared.value
             // 将开始位置设置为真正的位置
             offset.value = initOffset
             currentIndex.value = nextIndex
-            runOnJS(runOnJSCallback)('loop')
+            runOnJS(runOnJSCallback)('resumeLoop')
           })
         } else {
           nextIndex = currentIndex.value + 1
@@ -464,9 +466,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           offset.value = withTiming(targetOffset, {
             duration: easeDuration,
             easing: easeMap[easeingFunc]
-          }, () => {
+          }, (finished) => {
+            if (!finished) return
             currentIndex.value = nextIndex
-            runOnJS(runOnJSCallback)('loop')
+            runOnJS(runOnJSCallback)('resumeLoop')
           })
         }
       }
@@ -534,7 +537,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
+        }, (finished) => {
+          if (!finished) return
           currentIndex.value = propCurrent
         })
       } else {
@@ -578,7 +582,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   useEffect(() => {
     childrenLength.value = children.length
-    if (maxIndex < currentIndex.value) {
+    if (children.length <= 1 || maxIndex < currentIndex.value) {
       pauseLoop()
       currentIndex.value = circular ? 0 : maxIndex
       offset.value = getOffset(currentIndex.value, step.value)
@@ -681,8 +685,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
-          if (touchfinish.value !== false) {
+        }, (finished) => {
+          if (finished && touchfinish.value !== false) {
             currentIndex.value = selectedIndex
             offset.value = resetOffset
             runOnJS(runOnJSCallback)('resumeLoop')
@@ -692,8 +696,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
-          if (touchfinish.value !== false) {
+        }, (finished) => {
+          if (finished && touchfinish.value !== false) {
             currentIndex.value = selectedIndex
             runOnJS(runOnJSCallback)('resumeLoop')
           }
@@ -714,8 +718,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]
-      }, () => {
-        if (touchfinish.value !== false) {
+      }, (finished) => {
+        if (finished && touchfinish.value !== false) {
           currentIndex.value = moveToIndex
           runOnJS(runOnJSCallback)('resumeLoop')
         }

@@ -9,10 +9,34 @@ const compiled = ts.transpileModule(fs.readFileSync(componentPath, 'utf8'), {
 }).outputText
 
 // 直接执行组件源码，模拟本组测试所需的同步渲染、SharedValue 和 effect。
-function createSwiper () {
+function createSwiper (deferAnimations = false) {
   const slots = []
+  const animations = []
   let cursor = 0
   let effects = []
+  let getCurrent
+  const createSharedValue = (value) => {
+    let animation
+    return {
+      get value () { return value },
+      set value (next) {
+        animation = undefined
+        if (deferAnimations && typeof next === 'object') {
+          animation = next
+          animations.push(() => {
+            const finished = animation === next
+            if (finished) {
+              animation = undefined
+              value = next.value
+            }
+            next.callback(finished)
+          })
+        } else {
+          value = next
+        }
+      }
+    }
+  }
   const useRef = (current) => {
     const index = cursor++
     if (!slots[index]) slots[index] = { current }
@@ -45,16 +69,18 @@ function createSwiper () {
     'react-native-gesture-handler': { Gesture: { Pan: () => gesture } },
     'react-native-reanimated': {
       default: { View: 'AnimatedView' },
-      useSharedValue: value => useRef({ value }).current,
+      useSharedValue: value => useRef(createSharedValue(value)).current,
       useAnimatedStyle: callback => callback(),
-      useAnimatedReaction: () => {},
+      useAnimatedReaction: prepare => { getCurrent = prepare },
+      runOnJS: callback => callback,
       withTiming: (value, options, callback) => {
+        if (deferAnimations) return { value, callback }
         if (callback) callback(true)
         return value
       },
       Easing: { cubic: easing, linear: easing, in: easing, out: easing, inOut: easing }
     },
-    './getInnerListeners': { default: () => ({}) },
+    './getInnerListeners': { default: () => ({}), getCustomEvent: (type, event, data) => data },
     './useNodesRef': { default: () => {} },
     './utils': {
       useTransformStyle: style => ({ normalStyle: style, varContextRef: { current: {} } }),
@@ -64,7 +90,7 @@ function createSwiper () {
       wrapChildren: ({ children }) => children,
       extendObject: Object.assign,
       flatGesture: value => value,
-      useRunOnJSCallback: () => () => {}
+      useRunOnJSCallback: ref => (name, ...args) => ref.current[name](...args)
     },
     './context': { SwiperContext: { Provider: 'SwiperContext' } },
     './mpx-portal': {}
@@ -74,13 +100,15 @@ function createSwiper () {
     module: runtimeModule,
     exports: runtimeModule.exports,
     global: { __formatValue: parseFloat },
+    setTimeout,
+    clearTimeout,
     require: request => {
       if (!Object.prototype.hasOwnProperty.call(modules, request)) throw new Error(request)
       return modules[request]
     }
   }, { filename: componentPath })
 
-  return (props = {}) => {
+  const render = (props = {}) => {
     cursor = 0
     effects = []
     const tree = runtimeModule.exports.default(Object.assign({
@@ -94,8 +122,10 @@ function createSwiper () {
     effects.forEach(callback => callback())
     const items = tree.props.children[0].props.children[0]
     const dots = tree.props.children[1].props.children[0].props.children
-    return { tree, items, dots }
+    return { tree, items, dots, current: getCurrent() }
   }
+  render.finishAnimations = () => animations.splice(0).forEach(finish => finish())
+  return render
 }
 
 describe('swiper display-multiple-items', () => {
@@ -162,5 +192,42 @@ describe('swiper display-multiple-items', () => {
     const { dots } = createSwiper()({ circular, current, 'display-multiple-items': 3 })
     expect(dots).toHaveLength(5)
     expect(dots.map(dot => dot.props.style[1].backgroundColor)).toEqual(colors)
+  })
+})
+
+describe('swiper autoplay interruption', () => {
+  beforeEach(() => jest.useFakeTimers())
+  afterEach(() => {
+    jest.clearAllTimers()
+    jest.useRealTimers()
+  })
+
+  test.each([false, true])('resets to the only item during autoplay and ignores the cancelled callback, circular=%p', (circular) => {
+    const render = createSwiper(true)
+    const children = [{ key: 0, props: {} }, { key: 1, props: {} }]
+    render({ circular, autoplay: true, children })
+    jest.advanceTimersByTime(500)
+
+    const props = { circular, autoplay: false, children: children.slice(0, 1) }
+    const next = render(props)
+    expect(Math.abs(next.items.props.value.offset.value)).toBe(0)
+    render.finishAnimations()
+    expect(Math.abs(next.items.props.value.offset.value)).toBe(0)
+    expect(render(props).current).toBe(0)
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
+  test.each([false, true])('finishes the active transition without restarting disabled autoplay, circular=%p', (circular) => {
+    const render = createSwiper(true)
+    const children = [{ key: 0, props: {} }, { key: 1, props: {} }]
+    render({ circular, autoplay: true, children })
+    jest.advanceTimersByTime(500)
+
+    const props = { circular, autoplay: false, children }
+    const next = render(props)
+    render.finishAnimations()
+    expect(next.items.props.value.offset.value).toBe(circular ? -900 : -300)
+    expect(render(props).current).toBe(1)
+    expect(jest.getTimerCount()).toBe(0)
   })
 })
