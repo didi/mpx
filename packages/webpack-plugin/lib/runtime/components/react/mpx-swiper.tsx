@@ -1,6 +1,6 @@
 import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture, PanGesture, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation, SharedValue } from 'react-native-reanimated'
 
 import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -26,7 +26,7 @@ import Portal from './mpx-portal'
  * ✔ previous-margin
  * ✔ next-margin
  * ✔ easing-function  ="easeOutCubic"
- * ✘ display-multiple-items
+ * ✔ display-multiple-items
  * ✘ snap-to-edge
  */
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
@@ -77,7 +77,7 @@ interface SwiperProps {
   'wait-for'?: Array<GestureHandler>
   'simultaneous-handlers'?: Array<GestureHandler>
   disableGesture?: boolean
-  'display-multiple-items'?: number
+  'display-multiple-items'?: number | string
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindchangestart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -125,8 +125,23 @@ const styles: { [key: string]: Object } = {
   }
 }
 
-const activeDotStyle = {
-  zIndex: 99
+interface SwiperDotProps {
+  index: number
+  currentIndex: SharedValue<number>
+  displayMultipleItems: number
+  childrenLength: number
+  activeColor: string
+  inactiveColor: string
+  style: Object
+}
+
+function SwiperDot ({ index, currentIndex, displayMultipleItems, childrenLength, activeColor, inactiveColor, style }: SwiperDotProps) {
+  const dotAnimatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: (index - currentIndex.value + childrenLength) % childrenLength < displayMultipleItems
+      ? activeColor
+      : inactiveColor
+  }))
+  return <Animated.View style={[style, dotAnimatedStyle]} />
 }
 const longPressRatio = 100
 
@@ -159,7 +174,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     autoplay = false,
     circular = false,
     disableGesture = false,
-    current: propCurrent = 0,
+    current: rawCurrent = 0,
     bindchange,
     bindchangestart
   } = props
@@ -174,7 +189,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     marginBottom: dotSpacing,
     zIndex: 98
   }
-  const displayMultipleItems = props['display-multiple-items'] || 1
+  const displayMultipleItems = Number(props['display-multiple-items'] || 1)
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
@@ -209,6 +224,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const nextMarginShared = useSharedValue(nextMargin)
   const autoplayShared = useSharedValue(autoplay)
   const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
+  const maxIndex = Math.max(0, children.length - (circular ? 1 : displayMultipleItems))
+  const propCurrent = circular ? rawCurrent : Math.min(Math.max(rawCurrent, 0), maxIndex)
   // 默认前后补位的元素个数
   const patchElmNum = (circular && children.length > 1) ? displayMultipleItems + 1 : 0
   const patchElmNumShared = useSharedValue(patchElmNum)
@@ -291,7 +308,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'autoplay',
       'circular',
       'interval',
-      'easing-function'
+      'easing-function',
+      'display-multiple-items'
     ], { layoutRef: layoutRef })
 
   function onWrapperLayout (e: LayoutChangeEvent) {
@@ -306,23 +324,22 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }
 
-  const dotAnimatedStyle = useAnimatedStyle(() => {
-    if (!step.value) return {}
-    const dotStep = dotCommonStyle.width + dotCommonStyle.marginRight + dotCommonStyle.marginLeft
-    if (dir === 'x') {
-      return { transform: [{ translateX: currentIndex.value * dotStep }] }
-    } else {
-      return { transform: [{ translateY: currentIndex.value * dotStep }] }
-    }
-  })
-
   function renderPagination () {
     const activeColor = activeDotColor || '#007aff'
     const unActionColor = dotColor || 'rgba(0,0,0,.2)'
     // 正常渲染所有dots
     const dots: Array<ReactNode> = []
     for (let i = 0; i < children.length; i++) {
-      dots.push(<View style={[dotCommonStyle, { backgroundColor: unActionColor }]} key={i}></View>)
+      dots.push(<SwiperDot
+        index={i}
+        currentIndex={currentIndex}
+        displayMultipleItems={displayMultipleItems}
+        childrenLength={children.length}
+        activeColor={activeColor}
+        inactiveColor={unActionColor}
+        style={dotCommonStyle}
+        key={i}
+      />)
     }
     let paginationStyle = styles['pagination_' + dir]
     if (paginationMargin) {
@@ -337,18 +354,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     return (
       <View pointerEvents="none" style={paginationStyle} key="pagination">
         <View style={[styles['pagerWrapper' + dir]]}>
-          <Animated.View style={[
-            dotCommonStyle,
-            activeDotStyle,
-            {
-              backgroundColor: activeColor,
-              position: 'absolute',
-              left: 0,
-              top: 0
-            },
-            dotAnimatedStyle
-          ]}
-          />
           {dots}
         </View>
       </View>)
@@ -420,7 +425,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       let nextIndex = currentIndex.value
       if (!circularShared.value) {
         // 获取下一个位置的坐标, 循环到最后一个元素,直接停止, 取消定时器
-        if (currentIndex.value === childrenLength.value - displayMultipleItemsShared.value) {
+        if (currentIndex.value >= childrenLength.value - displayMultipleItemsShared.value) {
           pauseLoop()
           return
         }
@@ -431,9 +436,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
+        }, (finished) => {
+          if (!finished) return
           currentIndex.value = nextIndex
-          runOnJS(runOnJSCallback)('loop')
+          runOnJS(runOnJSCallback)('resumeLoop')
         })
       } else {
         // 默认向右, 向下
@@ -444,12 +450,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           runOnJSCallback('handleSwiperChangeStart', nextIndex)
           offset.value = withTiming(targetOffset, {
             duration: easeDuration
-          }, () => {
+          }, (finished) => {
+            if (!finished) return
             const initOffset = -step.value * patchElmNumShared.value + preMarginShared.value
             // 将开始位置设置为真正的位置
             offset.value = initOffset
             currentIndex.value = nextIndex
-            runOnJS(runOnJSCallback)('loop')
+            runOnJS(runOnJSCallback)('resumeLoop')
           })
         } else {
           nextIndex = currentIndex.value + 1
@@ -459,9 +466,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           offset.value = withTiming(targetOffset, {
             duration: easeDuration,
             easing: easeMap[easeingFunc]
-          }, () => {
+          }, (finished) => {
+            if (!finished) return
             currentIndex.value = nextIndex
-            runOnJS(runOnJSCallback)('loop')
+            runOnJS(runOnJSCallback)('resumeLoop')
           })
         }
       }
@@ -529,7 +537,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
+        }, (finished) => {
+          if (!finished) return
           currentIndex.value = propCurrent
         })
       } else {
@@ -563,24 +572,25 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     preMarginShared.value = preMargin
     nextMarginShared.value = nextMargin
-    const newStep = step.value - patchStep
+    const newStep = (step.value * displayMultipleItemsShared.value - patchStep) / displayMultipleItems
+    displayMultipleItemsShared.value = displayMultipleItems
     if (step.value !== newStep) {
       step.value = newStep
       offset.value = getOffset(currentIndex.value, newStep)
     }
-  }, [preMargin, nextMargin])
+  }, [preMargin, nextMargin, displayMultipleItems])
 
   useEffect(() => {
     childrenLength.value = children.length
-    if (children.length - 1 < currentIndex.value) {
+    if (children.length <= 1 || maxIndex < currentIndex.value) {
       pauseLoop()
-      currentIndex.value = 0
-      offset.value = getOffset(0, step.value)
+      currentIndex.value = circular ? 0 : maxIndex
+      offset.value = getOffset(currentIndex.value, step.value)
       if (autoplay && children.length > 1) {
         loop()
       }
     }
-  }, [children.length])
+  }, [children.length, maxIndex])
 
   useEffect(() => {
     // 1. 如果用户在touch的过程中, 外部更新了current以外部为准（小程序表现）
@@ -600,13 +610,12 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [autoplay])
   useEffect(() => {
-    if (circular !== circularShared.value || patchElmNum !== patchElmNumShared.value || displayMultipleItems !== displayMultipleItemsShared.value) {
+    if (circular !== circularShared.value || patchElmNum !== patchElmNumShared.value) {
       circularShared.value = circular
       patchElmNumShared.value = patchElmNum
-      displayMultipleItemsShared.value = displayMultipleItems
       offset.value = getOffset(currentIndex.value, step.value)
     }
-  }, [circular, patchElmNum, displayMultipleItems])
+  }, [circular, patchElmNum])
   const { gestureHandler } = useMemo(() => {
     // 基于transdir + 当前offset计算索引
     function getTargetPosition (eventData: EventEndType) {
@@ -676,8 +685,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
-          if (touchfinish.value !== false) {
+        }, (finished) => {
+          if (finished && touchfinish.value !== false) {
             currentIndex.value = selectedIndex
             offset.value = resetOffset
             runOnJS(runOnJSCallback)('resumeLoop')
@@ -687,8 +696,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
-          if (touchfinish.value !== false) {
+        }, (finished) => {
+          if (finished && touchfinish.value !== false) {
             currentIndex.value = selectedIndex
             runOnJS(runOnJSCallback)('resumeLoop')
           }
@@ -709,8 +718,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]
-      }, () => {
-        if (touchfinish.value !== false) {
+      }, (finished) => {
+        if (finished && touchfinish.value !== false) {
           currentIndex.value = moveToIndex
           runOnJS(runOnJSCallback)('resumeLoop')
         }
