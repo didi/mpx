@@ -164,14 +164,13 @@ export default function createApp (options) {
       firstRef.current = false
     }
     if (!global.__mpxAppHotLaunched) {
-      let { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
+      const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
       if (initialRouteName && !hasOwn(pagesMap, initialRouteName)) {
-        error(`The initial page [${initialRouteName}] is not registered in the application. Mpx will fall back to the first page [${firstPage}].`)
-        initialRouteName = firstPage
-        initialParams = {}
+        error(`The initial page [${initialRouteName}] is not registered in the application. Mpx will ignore this initial route configuration.`)
+      } else {
+        if (initialRouteName) initialRouteRef.current.initialRouteName = initialRouteName
+        if (initialParams) initialRouteRef.current.initialParams = initialParams
       }
-      initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
-      initialRouteRef.current.initialParams = initialParams || initialRouteRef.current.initialParams
 
       global.__mpxAppOnLaunch = (navigation) => {
         const state = navigation.getState()

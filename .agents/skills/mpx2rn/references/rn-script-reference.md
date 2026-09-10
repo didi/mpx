@@ -717,7 +717,7 @@ Mpx.config.rnConfig = {
 | 配置项 | 说明 |
 | --- | --- |
 | `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
-| `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由；`initialParams` 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准。`initialRouteName` 未注册时，Mpx 会通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），回退至应用首页，并丢弃该错误路由的 `initialParams`。 |
+| `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由；`initialParams` 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准。传入的 `initialRouteName` 未注册时，Mpx 会通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），丢弃本次返回的 `initialRouteName` 和 `initialParams`，保留已有初始配置（默认是应用首页和空参数）。 |
 | `onStateChange` | 导航 state 变化时回调。 |
 | `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
 | `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |

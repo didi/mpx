@@ -107,11 +107,11 @@ describe('RN createApp initial params', () => {
     }))
   })
 
-  it('reports and falls back when the initial route is not registered', () => {
+  it('reports and ignores an unregistered initial route and its params', () => {
     const navigationContainer = renderApp('pages/missing', { fromMissing: true })
 
     expect(error).toHaveBeenCalledTimes(1)
-    expect(error).toHaveBeenCalledWith('The initial page [pages/missing] is not registered in the application. Mpx will fall back to the first page [pages/home].')
+    expect(error).toHaveBeenCalledWith('The initial page [pages/missing] is not registered in the application. Mpx will ignore this initial route configuration.')
     expect(navigationContainer.props.initialState).toEqual({
       routes: [{
         name: 'pages/home',
