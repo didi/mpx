@@ -1,0 +1,74 @@
+{
+  "grader": "parent semantic review of frozen files, executor test evidence and uniform evaluator syntax check",
+  "expectations": [
+    {
+      "id": "e5_00",
+      "text": "父外沿20px由父 padding 表达，清理重复子 margin，不将 overflow:hidden 当作 BFC。",
+      "passed": true,
+      "evidence": ".outer padding-top:20px，删除 child margin；report 明确 overflow:hidden 仅用于裁剪。"
+    },
+    {
+      "id": "e5_01",
+      "text": "child 保持100px内容宽加两侧10px padding 的120px外宽。",
+      "passed": true,
+      "evidence": ".child content-box/width100px/padding10px，总外宽120px。"
+    },
+    {
+      "id": "e5_02",
+      "text": "兄弟间距归到单侧16px，不能保留导致28px或删除成0px。",
+      "passed": true,
+      "evidence": "只保留 .first margin-bottom:16px，second 无重复 margin。"
+    },
+    {
+      "id": "e5_03",
+      "text": "保留单个 rgba 阴影，不把函数内逗号误判为多阴影。",
+      "passed": true,
+      "evidence": ".one 保留原 rgba 单阴影，未错误拆分函数内逗号。"
+    },
+    {
+      "id": "e5_04",
+      "text": "双阴影拆节点或其他等效方案保留两层效果，不直接删去其中一层。",
+      "passed": true,
+      "evidence": ".many-outer 与 .many 嵌套，各保留原两层阴影，报告说明黑色前层/灰色后层。"
+    },
+    {
+      "id": "e5_05",
+      "text": "保留单 blur，复合 filter 分层实现且保留两种效果。",
+      "passed": true,
+      "evidence": ".blur 保留 blur(2px)，复合 filter 内层 blur 外层 brightness(.8)，两效果与顺序保留。"
+    },
+    {
+      "id": "e5_06",
+      "text": "City-Semibold 独立 @font-face 例外被正确识别，不仅凭名称报错。",
+      "passed": true,
+      "evidence": "保留 City-Semibold 独立 @font-face；report 识别独立字体族例外，不作 PostScript 名替换。"
+    },
+    {
+      "id": "e5_07",
+      "text": "保留两个字体与500/600字重，报告 Trip-Medium 待核实及机型风险，不擅改bold。",
+      "passed": true,
+      "evidence": "两个字体族和600/500均保留；report 指出 Trip-Medium 定义/PostScript 映射待核实及机型风险。"
+    },
+    {
+      "id": "e5_08",
+      "text": "合法 text 子节点 navigator 保留功能，含view的复杂导航改为支持结构或点击跳转。",
+      "passed": true,
+      "evidence": "原合法 navigator>text 保留，复杂 navigator>view 改为 navigator>text，两处 /pages/detail 不变。"
+    },
+    {
+      "id": "e5_09",
+      "text": "所有新结构和点击方法定义完整，双端导航仍到/pages/detail，字体资源保持宿主路径约定。",
+      "passed": true,
+      "evidence": "新模板节点对应样式定义完整，导航由原生 navigator 完成，无未定义方法；./city.woff2 继续依赖宿主原字体资源。"
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  },
+  "limitations": [
+    "Business tests may use mocks; not a real renderer or complete application build."
+  ]
+}

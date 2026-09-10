@@ -1,0 +1,441 @@
+{
+  "scope": [
+    "promo-card.mpx",
+    "logo.svg"
+  ],
+  "rules": [
+    {
+      "id": "CONFIG_APP_SKYLINE_OPTIONS",
+      "level": "error",
+      "pattern": "lazyCodeLoading` / `rendererOptions` / `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation",
+      "candidates": [],
+      "review": "单组件任务例外；宿主 app.json 未提供，keyframes 在组件内定义；集成时核对 keyframeStyleIsolation。"
+    },
+    {
+      "id": "CONFIG_PAGE_SKYLINE",
+      "level": "error",
+      "pattern": "renderer` / `componentFramework` / `disableScroll` / `navigationStyle",
+      "candidates": [],
+      "review": "单组件任务，无页面配置。"
+    },
+    {
+      "id": "CONFIG_WORKLET_BABEL",
+      "level": "warn",
+      "pattern": "worklet:` / `'worklet'` / `wx.worklet",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "GLASS_INCLUDE_IN_FOR",
+      "level": "error",
+      "pattern": "<include|wx:for",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_ESCAPE",
+      "level": "error",
+      "pattern": "\\\\\\\"|\\\\'",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_UNSUPPORTED",
+      "level": "error",
+      "pattern": "web-view|editor|movable-area|movable-view|progress|navigation-bar|xr-frame",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_PENDING_SUPPORT",
+      "level": "warn",
+      "pattern": "match-media|keyboard-accessory",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_WEBVIEW_ONLY_ATTR",
+      "level": "warn",
+      "pattern": "mode=\"(top|bottom|center|left|right|top left|top right|bottom left|bottom right)\"|lazy-load|forceHttps|space=|decode=|placeholder-class|safe-password-|snap-to-edge",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_IMAGE_SVG",
+      "level": "warn",
+      "pattern": "<image[\\s\\S]*(\\.svg|image/svg|mode=\"scaleToFill\")|<svg[\\s\\S]*(<style|%|rgba\\()",
+      "candidates": [
+        {
+          "line": 4,
+          "text": "<image src=\"./logo.svg"
+        }
+      ],
+      "review": "已逐项检查 SVG：固定 24×24 与 viewBox；无 style、百分比、rgba。展示尺寸同为 24×24，无拉伸比例差异。"
+    },
+    {
+      "id": "COMP_SCROLL_TYPE",
+      "level": "error",
+      "pattern": "<scroll-view",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_SCROLL_LIST_DIRECT_CHILD",
+      "level": "warn",
+      "pattern": "<scroll-view[^>]*type=\"list\"",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_SCROLL_NESTED",
+      "level": "error",
+      "pattern": "<scroll-view[^>]*type=\"nested\"|associative-container=\"nested-scroll-view\"",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL",
+      "level": "warn",
+      "pattern": "scroll-x|enable-flex|flex-direction\\s*:?\\s*row",
+      "candidates": [
+        {
+          "line": 42,
+          "text": "flex-direction: row"
+        }
+      ],
+      "review": "row 为普通 flex 容器，无 scroll-view。"
+    },
+    {
+      "id": "COMP_SCROLL_REFRESHER_SLOT",
+      "level": "warn",
+      "pattern": "refresher-enabled|slot=\"refresher\"",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_NAVIGATOR_CHILDREN",
+      "level": "error",
+      "pattern": "<navigator[\\s\\S]*<(view|image|swiper|rich-text|[^/!][^\\s>]*)",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_TEXT_CHILDREN",
+      "level": "warn",
+      "pattern": "<text[\\s\\S]*<(view|image|rich-text|special-text|span|[^/!][^\\s>]*)",
+      "candidates": [
+        {
+          "line": 4,
+          "text": "<text>{{title}}</text></view>\n    </view>\n    <view class=\"pulse\"/>\n    <view class=\"button {{pressed ? 'button-pressed'"
+        }
+      ],
+      "review": "text 仅含紧贴标签的插值或领取文本，无非 text 子节点。"
+    },
+    {
+      "id": "COMP_INLINE_MIXED_CONTENT",
+      "level": "warn",
+      "pattern": "mpxTagName@wx=\"span\"|<image|<rich-text|<special-text|<mpx-icon|line-clamp|truncate",
+      "candidates": [
+        {
+          "line": 4,
+          "text": "mpxTagName@wx=\"span\""
+        },
+        {
+          "line": 4,
+          "text": "truncate"
+        },
+        {
+          "line": 4,
+          "text": "<image"
+        },
+        {
+          "line": 50,
+          "text": "truncate"
+        }
+      ],
+      "review": "同一 wx span 包含 image 与 text；运行时 Skyline 只用 nowrap、image inline-block；span 承载 max-lines/overflow。"
+    },
+    {
+      "id": "COMP_STICKY_STRUCTURE",
+      "level": "warn",
+      "pattern": "position\\s*:?\\s*sticky|sticky-section|sticky-header",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_PICKER_VIEW_INDICATOR",
+      "level": "warn",
+      "pattern": "picker-view[\\s\\S]*(indicator-class|mask-style|indicator-style)",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "COMP_SWIPER_LIMIT",
+      "level": "warn",
+      "pattern": "layout-type=\"(stackLeft|stackRight|tinder)\"|indicator-type=\"(scrollFixedCenter|swap|swapYRotation)\"|snap-to-edge|previous-margin|display-multiple-items|vertical",
+      "candidates": [
+        {
+          "line": 57,
+          "text": "vertical"
+        }
+      ],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_MEDIA_SCREEN",
+      "level": "error",
+      "pattern": "@media screen",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_SELECTOR_UNSUPPORTED",
+      "level": "warn",
+      "pattern": "(^|[\\s,{])\\*\\s*[,{]|\\[[^\\]]+\\]|::[a-zA-Z-]+",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_TEXT_OVERFLOW",
+      "level": "warn",
+      "pattern": "text-overflow\\s*:?\\s*ellipsis|-webkit-line-clamp|truncate|line-clamp",
+      "candidates": [
+        {
+          "line": 4,
+          "text": "truncate"
+        },
+        {
+          "line": 50,
+          "text": "truncate"
+        },
+        {
+          "line": 52,
+          "text": "text-overflow: ellipsis"
+        }
+      ],
+      "review": "WebView 保留 truncate；Skyline span 属性负责截断。"
+    },
+    {
+      "id": "STYLE_FLEX_MIN_WIDTH_PERCENT",
+      "level": "warn",
+      "pattern": "min-width\\s*:?\\s*[0-9.]+%|flex\\s*:?\\s*1\\s+0\\s+auto",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_FLEX_TEXT_WRAP",
+      "level": "warn",
+      "pattern": "display\\s*:?\\s*flex|flex-direction\\s*:?\\s*column|align-items\\s*:?\\s*center",
+      "candidates": [
+        {
+          "line": 41,
+          "text": "display: flex"
+        }
+      ],
+      "review": "单行标题 flex:1、width:0、min-width:0；不要求换行。"
+    },
+    {
+      "id": "STYLE_OVERFLOW_AXIS",
+      "level": "error",
+      "pattern": "overflow-x|overflow-y|overflow\\s*:?\\s*(auto|scroll)",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_LAYOUT_UNSUPPORTED",
+      "level": "warn",
+      "pattern": "display\\s*:?\\s*(grid|flow-root)|float\\s|contain\\s*:|resize\\s*:|visibility\\s*:?\\s*collapse|outline\\s*:|cursor\\s*:|justify-items|column-[a-z-]+",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_TEXT_UNSUPPORTED",
+      "level": "warn",
+      "pattern": "direction\\s*:|text-indent|overflow-wrap|writing-mode|text-decoration-thickness|list-style-|white-space\\s*:?\\s*(pre|pre-wrap|pre-line)|word-break\\s*:?\\s*(keep-all|break-word)|text-align\\s*:?\\s*(justify-all|match-parent)|vertical-align\\s*:?\\s*(text-top|text-bottom)",
+      "candidates": [
+        {
+          "line": 42,
+          "text": "direction:"
+        }
+      ],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_FONT_POSTSCRIPT_NAME",
+      "level": "error",
+      "pattern": "font-family\\s*:?\\s*[^;]+-(Medium|Semibold|Bold)",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_FONT",
+      "level": "warn",
+      "pattern": "font-weight\\s*:?\\s*(500|600|bolder|lighter)|font-style\\s*:?\\s*oblique",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_TEXT_DECORATION",
+      "level": "warn",
+      "pattern": "text-decoration(-line)?\\s*:[^;]*(underline|line-through)[^;]*(underline|line-through)",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_BORDER_RADIUS_BORDER",
+      "level": "warn",
+      "pattern": "border-radius|border-(top|right|bottom|left)-(color|style)",
+      "candidates": [
+        {
+          "line": 67,
+          "text": "border-radius"
+        }
+      ],
+      "review": "圆点无 border，四边无差异。"
+    },
+    {
+      "id": "STYLE_BACKGROUND_MASK_LIMIT",
+      "level": "warn",
+      "pattern": "background-(image|position|repeat|size|attachment|origin|clip)|mask-(image|repeat|origin|clip|mode)|mask\\s*:",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_FILTER_LIMIT",
+      "level": "warn",
+      "pattern": "(backdrop-)?filter\\s*:",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_BOX_SHADOW_MULTI",
+      "level": "warn",
+      "pattern": "box-shadow\\s*:",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_CALC_ANGLE",
+      "level": "warn",
+      "pattern": "calc\\([^)]*(deg|rad|turn)",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_PSEUDO_ANIMATION",
+      "level": "warn",
+      "pattern": "::(before|after)[\\s\\S]*animation",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_ANIMATION_FILL_MODE",
+      "level": "warn",
+      "pattern": "animation-fill-mode\\s*:?\\s*(none|backwards)",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "STYLE_ANIMATION_PROPERTY",
+      "level": "warn",
+      "pattern": "transition-property|animation",
+      "candidates": [
+        {
+          "line": 68,
+          "text": "animation"
+        },
+        {
+          "line": 69,
+          "text": "animation"
+        }
+      ],
+      "review": "仅 transform 与 opacity；fill-mode both，真实节点关键帧。"
+    },
+    {
+      "id": "STYLE_Z_INDEX_CONTEXT",
+      "level": "warn",
+      "pattern": "z-index|transform\\s*:|opacity\\s*:",
+      "candidates": [
+        {
+          "line": 72,
+          "text": "opacity:"
+        },
+        {
+          "line": 73,
+          "text": "opacity:"
+        },
+        {
+          "line": 80,
+          "text": "transform:"
+        },
+        {
+          "line": 81,
+          "text": "opacity:"
+        },
+        {
+          "line": 85,
+          "text": "transform:"
+        },
+        {
+          "line": 86,
+          "text": "opacity:"
+        }
+      ],
+      "review": "无定位重叠或 z-index 依赖；transform/opacity 仅按钮反馈和圆点动画。"
+    },
+    {
+      "id": "GLASS_SELECTOR_NUMERIC_ID",
+      "level": "error",
+      "pattern": "id=[\"']?[0-9]|select\\(['\"]#[0-9]",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "ANIMATION_WEBVIEW_API",
+      "level": "error",
+      "pattern": "\\.animate\\(|\\.applyAnimation\\(|\\.clearAnimation\\(|\\.setInitialRenderingCache\\(|wx\\.createAnimation",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "SCROLL_CONTEXT_ENHANCED",
+      "level": "error",
+      "pattern": "\\.node\\(\\)|ScrollViewContext|<scroll-view",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "SELECTOR_QUERY_SCOPE",
+      "level": "warn",
+      "pattern": "wx\\.createSelectorQuery",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "PROPS_DEFAULT_FIELD",
+      "level": "error",
+      "pattern": "properties[\\s\\S]*default\\s*:",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "WX_FOR_DATA_TYPE",
+      "level": "warn",
+      "pattern": "wx:for=.*\\{\\{[^}]+\\}\\}",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    },
+    {
+      "id": "PROPS_UNION_TYPE",
+      "level": "error",
+      "pattern": "type\\s*:\\s*\\[[^\\]]+\\]",
+      "candidates": [],
+      "review": "完整组件结构人工复核：未使用该规则限制能力，无适用问题。"
+    }
+  ],
+  "unresolved_errors": [],
+  "limitations": [
+    "无微信开发者工具/真机渲染验证",
+    "无宿主 app.json；集成时核对全局配置"
+  ]
+}

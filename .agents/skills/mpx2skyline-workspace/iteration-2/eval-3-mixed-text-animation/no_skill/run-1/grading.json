@@ -1,0 +1,71 @@
+{
+  "grader": "parent semantic review of frozen output",
+  "expectations": [
+    {
+      "id": "e3_00",
+      "text": "同段图文采用 reference 的 span 容器方案，不只是为外层加省略属性。",
+      "passed": true,
+      "evidence": "Skyline分支使用span包住image/text，是混排容器方案。"
+    },
+    {
+      "id": "e3_01",
+      "text": "Skyline 单行容器设置 max-lines/overflow，并有可收缩宽度约束。",
+      "passed": false,
+      "evidence": "将max-lines:1写在.skyline-title CSS中，模板span缺少max-lines和overflow属性。"
+    },
+    {
+      "id": "e3_02",
+      "text": "图片在 Skyline 内联布局为 inline-block，renderer 状态实际定义并驱动模板。",
+      "passed": false,
+      "evidence": "logo类未设置display:inline-block；仅宽高/vertical-align。"
+    },
+    {
+      "id": "e3_03",
+      "text": "WebView 保留图文单行截断，未让 text 包含 image。",
+      "passed": true,
+      "evidence": "WebView分支view保留white-space和truncate，无text嵌image。"
+    },
+    {
+      "id": "e3_04",
+      "text": "伪元素动画改为真实圆点节点，保留尺寸颜色与循环闪烁语义。",
+      "passed": true,
+      "evidence": "pulse是真实view，尺寸颜色及1s无限闪烁保留。"
+    },
+    {
+      "id": "e3_05",
+      "text": "动画 fill mode 采用支持值或等效逻辑，不依赖 backwards。",
+      "passed": true,
+      "evidence": "移除backwards；无限动画无延迟，opacity初值.3，未依赖不支持的填充行为。"
+    },
+    {
+      "id": "e3_06",
+      "text": "Skyline 可执行路径不调用 wx.createAnimation，简单按钮改为通用状态动画。",
+      "passed": true,
+      "evidence": "动画API改为pressed状态CSS transition。"
+    },
+    {
+      "id": "e3_07",
+      "text": "按钮150ms驱动 transform/opacity，按下目标数值与松开恢复正确。",
+      "passed": true,
+      "evidence": "150ms transform/opacity，按下.96/.7松开1/1。"
+    },
+    {
+      "id": "e3_08",
+      "text": "触摸取消也能恢复，未引入 Worklet 或按帧 JS 定时器。",
+      "passed": true,
+      "evidence": "touchcancel绑定release，无Worklet或JS帧定时器。"
+    },
+    {
+      "id": "e3_09",
+      "text": "logo 资源路径有效，未删除图片或用无意义占位替代。",
+      "passed": true,
+      "evidence": "logo.svg保留且路径有效。"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 2,
+    "total": 10,
+    "pass_rate": 0.8
+  }
+}

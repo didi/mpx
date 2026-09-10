@@ -1,0 +1,24 @@
+<template>
+<view class="page"><view wx:for="{{orders}}" wx:key="id" class="item"><text>{{item.name}}</text></view><text>{{scrollTop}}</text></view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+import { fetchOrders } from './service'
+createPage({
+ data:{orders:[],scrollTop:0,pageNo:1},
+ onLoad(){this.reload()},
+ onPullDownRefresh(){this.reload()},
+ onReachBottom(){this.loadMore()},
+ onPageScroll(e){this.scrollTop=e.scrollTop},
+ methods:{
+  reload(){return fetchOrders(1).then(rows=>{this.orders=rows;this.pageNo=1}).finally(()=>wx.stopPullDownRefresh())},
+  loadMore(){return fetchOrders(this.pageNo+1).then(rows=>{this.orders=this.orders.concat(rows);this.pageNo+=1})}
+ }
+})
+</script>
+<style>
+.page{padding:16px}.item{height:80px;border-bottom:1px solid #ddd}
+</style>
+<script type="application/json">
+{"enablePullDownRefresh":true,"navigationBarTitleText":"订单"}
+</script>

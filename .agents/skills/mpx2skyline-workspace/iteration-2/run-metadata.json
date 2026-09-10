@@ -1,0 +1,125 @@
+{
+  "status": "completed",
+  "execution_id": "skyline-unified-baseline-20260910",
+  "purpose": "independent mpx2skyline uniform baseline before merging Skills",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "runs_per_case": 1,
+  "new_runs": 9,
+  "configuration": "mpx2skyline",
+  "historical_configuration": "no_skill",
+  "started_at": "2026-09-10T06:42:03.209877+00:00",
+  "finished_at": "2026-09-10T07:29:06.010285+00:00",
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 0,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 1,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    },
+    {
+      "eval_id": 3,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    },
+    {
+      "eval_id": 4,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    },
+    {
+      "eval_id": 5,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    },
+    {
+      "eval_id": 6,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 6,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    },
+    {
+      "eval_id": 7,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 7,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    },
+    {
+      "eval_id": 8,
+      "configuration": "mpx2skyline",
+      "execution_id": "skyline-unified-baseline-20260910",
+      "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3"
+    },
+    {
+      "eval_id": 8,
+      "configuration": "no_skill",
+      "source_iteration": "iteration-1",
+      "historical_reference_only": true
+    }
+  ],
+  "isolation": "fresh native sessions, no history; file access constrained by prompt, not OS isolation",
+  "total_tokens": 4183405
+}

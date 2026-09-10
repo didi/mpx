@@ -1,0 +1,18 @@
+{
+  "source_session": "rollout-2026-09-08T18-55-32-01a080a8-abe9-73b3-95fd-d481fb874296.jsonl",
+  "executor": "native subagent",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "usage": {
+    "input_tokens": 202792,
+    "cached_input_tokens": 198400,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 4214,
+    "reasoning_output_tokens": 516,
+    "total_tokens": 207006
+  },
+  "total_tokens": 207006,
+  "input_tokens_include_cached": true,
+  "tool_event_records": 22,
+  "completed_notification_in_log": true
+}

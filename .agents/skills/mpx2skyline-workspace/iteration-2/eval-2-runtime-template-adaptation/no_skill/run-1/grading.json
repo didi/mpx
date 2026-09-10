@@ -1,0 +1,72 @@
+{
+  "grader": "parent semantic review of frozen output",
+  "expectations": [
+    {
+      "id": "e2_00",
+      "text": "label 属性默认值使用 value，保留原用户文案。",
+      "passed": true,
+      "evidence": "label.value='用户'。"
+    },
+    {
+      "id": "e2_01",
+      "text": "payload 使用主 type 和 optionalTypes 保留 String/Object，不以 type:null 逃避类型声明。",
+      "passed": true,
+      "evidence": "payload声明String与optionalTypes Object。"
+    },
+    {
+      "id": "e2_02",
+      "text": "data.config.default 保持 keep，不将 properties 之外的 default 改名。",
+      "passed": true,
+      "evidence": "config.default保持keep。"
+    },
+    {
+      "id": "e2_03",
+      "text": "items 初始化与 setRows null 路径保证循环数据类型合法。",
+      "passed": true,
+      "evidence": "items初始[]，setRows将null转[]。"
+    },
+    {
+      "id": "e2_04",
+      "text": "visibleItems 的所有返回路径为 Array/Object，过滤 visible 语义保留。",
+      "passed": true,
+      "evidence": "visibleItems只返回数组filter结果。"
+    },
+    {
+      "id": "e2_05",
+      "text": "数字 id 及查询字符串同步修改，查询仍命中原 users 容器。",
+      "passed": false,
+      "evidence": "已改合法users ID，但删除查询字符串与context调用；冻结断言要求查询仍命中users。scroll-top功能可等价，不能满足该实现约束。"
+    },
+    {
+      "id": "e2_06",
+      "text": "实际 users 查询目标开启 enhanced，不能用 other 的 enhanced 充数。",
+      "passed": true,
+      "evidence": "目标users enhanced=true。"
+    },
+    {
+      "id": "e2_07",
+      "text": "组件内使用 this.createSelectorQuery，保留滚到顶部的 context 调用。",
+      "passed": false,
+      "evidence": "删除SelectorQuery/context，以scroll-top替代；未满足明确要求this.createSelectorQuery和保留context的冻结断言。"
+    },
+    {
+      "id": "e2_08",
+      "text": "所有 scroll-view 显式选择 type，users 容器有可滚动尺寸。",
+      "passed": true,
+      "evidence": "所有scroll-view显式type=list，user-scroll height:300px。"
+    },
+    {
+      "id": "e2_09",
+      "text": "循环祖先子树的 include 改为 import/template，row 定义具名模板且显式传入 item/index。",
+      "passed": true,
+      "evidence": "import+user-row具名模板，显式传item/index。"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 2,
+    "total": 10,
+    "pass_rate": 0.8
+  },
+  "review_note": "独立评分复核后按冻结断言调整，未修改执行器产物。"
+}

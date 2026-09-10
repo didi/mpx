@@ -1,0 +1,14 @@
+{
+  "evaluator": "parent",
+  "results": [
+    {
+      "file": "orders.mpx",
+      "status": "passed",
+      "scope": "SFC parsing, JS parsing, JSON parsing and script setup compilation when applicable",
+      "script_setup": false,
+      "unresolved_setup_identifiers": []
+    }
+  ],
+  "full_application_build": "not_run",
+  "device_validation": "not_run"
+}

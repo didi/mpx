@@ -1,0 +1,74 @@
+{
+  "grader": "parent semantic review of frozen files, executor test evidence and uniform evaluator syntax check",
+  "expectations": [
+    {
+      "id": "e2_00",
+      "text": "label 属性默认值使用 value，保留原用户文案。",
+      "passed": true,
+      "evidence": "user-list.mpx properties.label 使用 type:String/value:用户。"
+    },
+    {
+      "id": "e2_01",
+      "text": "payload 使用主 type 和 optionalTypes 保留 String/Object，不以 type:null 逃避类型声明。",
+      "passed": true,
+      "evidence": "payload 使用 type:String/optionalTypes:[Object]/value:\"\"。"
+    },
+    {
+      "id": "e2_02",
+      "text": "data.config.default 保持 keep，不将 properties 之外的 default 改名。",
+      "passed": true,
+      "evidence": "data.config.default 保留 keep。"
+    },
+    {
+      "id": "e2_03",
+      "text": "items 初始化与 setRows null 路径保证循环数据类型合法。",
+      "passed": true,
+      "evidence": "initData.visibleItems=[]；items undefined 与 setRows({items:null}) 路径由 computed 返回 []，实际循环值始终合法；Jest 验证。"
+    },
+    {
+      "id": "e2_04",
+      "text": "visibleItems 的所有返回路径为 Array/Object，过滤 visible 语义保留。",
+      "passed": true,
+      "evidence": "visibleItems 无 items 返回 []，有数组返回 filter(item.visible) 数组；初始化/空/null/数组路径测试通过。"
+    },
+    {
+      "id": "e2_05",
+      "text": "数字 id 及查询字符串同步修改，查询仍命中原 users 容器。",
+      "passed": true,
+      "evidence": "id=users 与 select(#users) 同步替换，指向原 users 滚动容器。"
+    },
+    {
+      "id": "e2_06",
+      "text": "实际 users 查询目标开启 enhanced，不能用 other 的 enhanced 充数。",
+      "passed": true,
+      "evidence": "实际 id=users 的 scroll-view 开启 enhanced=true。"
+    },
+    {
+      "id": "e2_07",
+      "text": "组件内使用 this.createSelectorQuery，保留滚到顶部的 context 调用。",
+      "passed": true,
+      "evidence": "组件调用 this.createSelectorQuery().select(...).node().exec，并保留 node.scrollTo({top:0})。"
+    },
+    {
+      "id": "e2_08",
+      "text": "所有 scroll-view 显式选择 type，users 容器有可滚动尺寸。",
+      "passed": true,
+      "evidence": "other/users 均 type=list；users scroll-y 且 scroll-view style height:300px。"
+    },
+    {
+      "id": "e2_09",
+      "text": "循环祖先子树的 include 改为 import/template，row 定义具名模板且显式传入 item/index。",
+      "passed": true,
+      "evidence": "import ./row.wxml，循环子树 template is=user-row/data={{item,index}}；row.wxml 定义同名具名模板。"
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  },
+  "limitations": [
+    "Business tests may use mocks; not a real renderer or complete application build."
+  ]
+}

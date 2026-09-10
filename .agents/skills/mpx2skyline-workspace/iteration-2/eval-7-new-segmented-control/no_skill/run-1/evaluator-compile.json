@@ -1,0 +1,7 @@
+{
+  "evaluator": "parent",
+  "check": "repository script-setup compiler only",
+  "file": "segmented-control.mpx",
+  "status": "failed",
+  "error": "[Mpx script error]: Mpx script setup must define the variables for return using defineExpose, see details: https://mpxjs.cn/guide/composition-api/composition-api.html#defineexpose\n\n/private/tmp/mpx2skyline-benchmark-run-20260908/eval-7-new-segmented-control/no_skill/run-1/outputs/segmented-control.mpx\n"
+}

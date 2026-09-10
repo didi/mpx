@@ -1,0 +1,13 @@
+<template>
+<view><view class="row"><view class="truncate"><image src="./logo.svg" class="logo"/><text>{{title}}</text></view></view><view class="pulse"/><view class="button" animation="{{animationData}}" bindtouchstart="press" bindtouchend="release" bindtouchcancel="release"><text>领取</text></view></view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({properties:{title:{type:String,value:'欢迎领取本周优惠'}},data:{animationData:{}},methods:{press(){const a=wx.createAnimation({duration:150});a.scale(0.96).opacity(0.7).step();this.animationData=a.export()},release(){const a=wx.createAnimation({duration:150});a.scale(1).opacity(1).step();this.animationData=a.export()}}})
+</script>
+<style>
+.row{display:flex}.truncate{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.logo{width:24px;height:24px;vertical-align:middle}.pulse::before{content:'';display:block;width:8px;height:8px;background:#f50;animation:pulse 1s infinite;animation-fill-mode:backwards}@keyframes pulse{from{opacity:.3}to{opacity:1}}.button{padding:12px;background:#eee}
+</style>
+<script type="application/json">
+{"component":true}
+</script>

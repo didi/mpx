@@ -1,0 +1,74 @@
+{
+  "grader": "parent semantic review of frozen files, executor test evidence and uniform evaluator syntax check",
+  "expectations": [
+    {
+      "id": "e7_00",
+      "text": "输出完整script setup组件，使用Mpx组合式API，模板绑定正确暴露。",
+      "passed": true,
+      "evidence": "segmented-control.mpx 完整 script setup，defineExpose 暴露 displayOptions/selectedLabel/selectOption，label 为 property；真实 setup 编译通过。"
+    },
+    {
+      "id": "e7_01",
+      "text": "五项props与默认值正确，options始终为数组。",
+      "passed": true,
+      "evidence": "controlKey/options/value/disabled/label 类型正确，默认 Array[]、空值、false、分类使用 value。"
+    },
+    {
+      "id": "e7_02",
+      "text": "使用ref保存本地选择，watch同步父value，未因直接解构丢失响应性。",
+      "passed": true,
+      "evidence": "selectedValue=ref(props.value)，watch(()=>props.value) 同步，无丢失响应性的 props 解构；测试通过。"
+    },
+    {
+      "id": "e7_03",
+      "text": "computed派生候选状态与选中项名称，循环使用稳定key。",
+      "passed": true,
+      "evidence": "displayOptions 和 selectedLabel 为 computed，循环 wx:key=value；候选选中/禁用状态及名称动态派生。"
+    },
+    {
+      "id": "e7_04",
+      "text": "整体disabled和单项disabled在事件处理器中都阻止选择。",
+      "passed": true,
+      "evidence": "selectOption 同时检查 props.disabled 与 option.disabled，阻止本地更新及发事件；两级禁用测试通过。"
+    },
+    {
+      "id": "e7_05",
+      "text": "change事件detail包含controlKey与选中的value，更新本地显示。",
+      "passed": true,
+      "evidence": "useContext 提供 triggerEvent，更新 selectedValue 后发 change {controlKey,value}；无 defineEmits 残留。"
+    },
+    {
+      "id": "e7_06",
+      "text": "横向scroll-view显式type、enable-flex与横向布局，list时条目为直接子节点。",
+      "passed": true,
+      "evidence": "横向 scroll-view type=list/scroll-x/enable-flex，.options flex row；候选 view 是直接子节点。"
+    },
+    {
+      "id": "e7_07",
+      "text": "候选宽度至少100px且不会被flex压缩为内容窄条。",
+      "passed": true,
+      "evidence": ".option width:120px/min-width:100px/flex-shrink:0。"
+    },
+    {
+      "id": "e7_08",
+      "text": "长标签两端单行截断，Skyline属性作用于文本承载节点，WebView样式保留。",
+      "passed": true,
+      "evidence": "option-label text max-lines=1/overflow=ellipsis，width:96px 与 nowrap/hidden/text-overflow 确保有界单行截断。"
+    },
+    {
+      "id": "e7_09",
+      "text": "普通语义class有定义，无新依赖、页面专属JSON或未定义方法。",
+      "passed": true,
+      "evidence": "所有语义/动态 class 定义，JSON 仅 component:true；事件方法和模板状态存在，ESLint 通过，无新依赖。"
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  },
+  "limitations": [
+    "Business tests may use mocks; not a real renderer or complete application build."
+  ]
+}

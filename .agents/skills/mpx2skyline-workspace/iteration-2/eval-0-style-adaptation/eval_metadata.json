@@ -1,0 +1,51 @@
+{
+  "eval_id": 0,
+  "eval_name": "style-adaptation",
+  "prompt": "请对输入文件进行 Skyline 适配改造，确保 Mpx 输出微信小程序时 WebView 与 Skyline 双渲染兼容。任务要求见 input/task.md，范围与交互已确认；请交付完整文件并保留现有业务语义。",
+  "files": [
+    "input/product-card.mpx",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "e0_00",
+      "text": "输出完整 product-card.mpx，保留 title String 属性、默认文案与所有业务内容。"
+    },
+    {
+      "id": "e0_01",
+      "text": "标题在实际承载节点设置 max-lines=1 与 overflow=ellipsis。"
+    },
+    {
+      "id": "e0_02",
+      "text": "保留 WebView 的 white-space/overflow/text-overflow 省略行为，插值紧贴文本标签。"
+    },
+    {
+      "id": "e0_03",
+      "text": "两列等宽标签使用 Skyline 支持的布局，不依赖 display:grid。"
+    },
+    {
+      "id": "e0_04",
+      "text": "活动颜色由受支持的选择器驱动，不依赖属性选择器。"
+    },
+    {
+      "id": "e0_05",
+      "text": "保留活动圆点视觉；合法静态 ::before 不得被当作必须删除的能力。"
+    },
+    {
+      "id": "e0_06",
+      "text": "WebView 原媒体查询及 320px 阈值保留。"
+    },
+    {
+      "id": "e0_07",
+      "text": "Skyline 使用 renderer 状态和相同屏宽阈值控制小屏样式。"
+    },
+    {
+      "id": "e0_08",
+      "text": "Skyline 默认兜底位于媒体查询之后且仅作用于 Skyline，大屏24rpx、小屏12rpx。"
+    },
+    {
+      "id": "e0_09",
+      "text": "所有新增动态状态有定义与模板绑定，未向组件 JSON 写页面专属 renderer/navigationStyle。"
+    }
+  ]
+}

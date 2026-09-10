@@ -1,0 +1,71 @@
+{
+  "grader": "parent semantic review of frozen output",
+  "expectations": [
+    {
+      "id": "e6_00",
+      "text": "完整 rating-selector.mpx 含 template/script/style/组件JSON，使用 createComponent 选项式API。",
+      "passed": true,
+      "evidence": "完整rating-selector含template/script/style/JSON，createComponent选项式。"
+    },
+    {
+      "id": "e6_01",
+      "text": "五项属性类型、默认值正确，默认值使用 value。",
+      "passed": true,
+      "evidence": "ratingKey String，value0/max5/readonly false/label评分，均用合法value默认值。"
+    },
+    {
+      "id": "e6_02",
+      "text": "根据 max 渲染稳定 key 的星级列表，选中状态区分正确。",
+      "passed": true,
+      "evidence": "computed stars从max生成，key=value，currentValue控制星号和active。"
+    },
+    {
+      "id": "e6_03",
+      "text": "点击第n颗更新本地评分并触发 detail={ratingKey,value:n} 的change。",
+      "passed": true,
+      "evidence": "selectRating取第n颗dataset.value更新currentValue，triggerEvent detail含ratingKey/value。"
+    },
+    {
+      "id": "e6_04",
+      "text": "readonly 在处理器中阻止更新与发事件，而非仅改样式。",
+      "passed": true,
+      "evidence": "selectRating与pressStar在readonly时return。"
+    },
+    {
+      "id": "e6_05",
+      "text": "父value变化同步本地评分，未直接修改只读传入属性。",
+      "passed": true,
+      "evidence": "value observer与attached同步currentValue，无写入value属性。"
+    },
+    {
+      "id": "e6_06",
+      "text": "标签在两端单行省略，Skyline max-lines/overflow 与 WebView 样式均完整。",
+      "passed": false,
+      "evidence": "rating-label只有max-lines=1，缺overflow=ellipsis组件属性。"
+    },
+    {
+      "id": "e6_07",
+      "text": "星级行使用支持的显式布局与语义class，没有未声明的原子类依赖。",
+      "passed": true,
+      "evidence": "stars横向flex，space-around与子项flex1等距，语义类全部定义。"
+    },
+    {
+      "id": "e6_08",
+      "text": "按下缩放.96，松开/取消恢复，150ms通用transition，无Worklet。",
+      "passed": true,
+      "evidence": "pressedValue状态驱动scale(.96)，end/cancel归零，transition150ms。"
+    },
+    {
+      "id": "e6_09",
+      "text": "组件无页面专属配置、未定义绑定或不支持的模板子节点关系。",
+      "passed": true,
+      "evidence": "仅component:true，无未定义绑定或非法嵌套。"
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 1,
+    "total": 10,
+    "pass_rate": 0.9
+  }
+}

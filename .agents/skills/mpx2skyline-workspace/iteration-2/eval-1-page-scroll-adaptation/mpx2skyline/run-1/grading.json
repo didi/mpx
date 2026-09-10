@@ -1,0 +1,74 @@
+{
+  "grader": "parent semantic review of frozen files, executor test evidence and uniform evaluator syntax check",
+  "expectations": [
+    {
+      "id": "e1_00",
+      "text": "orders.mpx 完整且 service 导入能解析，初次加载仍调用 reload。",
+      "passed": true,
+      "evidence": "orders.mpx 保留 fetchOrders ./service 导入和 onLoad return this.reload()；service.js 已交付，Jest 核对依赖与初载。"
+    },
+    {
+      "id": "e1_01",
+      "text": "页面使用有明确可滚动高度的 scroll-view，显式 type，列表项为直接子节点。",
+      "passed": true,
+      "evidence": "orders-scroll type=list/scroll-y，直接 item 子节点；updateLayout 根据窗口、状态栏与胶囊计算 scrollHeight 并绑定像素高度。"
+    },
+    {
+      "id": "e1_02",
+      "text": "刷新事件绑定 bindrefresherrefresh，状态在请求成功与失败后均结束。",
+      "passed": true,
+      "evidence": "bindrefresherrefresh=onRefresh；refreshing=true 后调用 reload，finally 关闭状态；Jest 成功/失败路径通过。"
+    },
+    {
+      "id": "e1_03",
+      "text": "触底 bindscrolltolower 仍调用分页逻辑，保留追加而非覆盖及页号推进。",
+      "passed": true,
+      "evidence": "bindscrolltolower=loadMore；fetchOrders(pageNo+1) 成功后 concat 并 pageNo+=1，分页测试通过。"
+    },
+    {
+      "id": "e1_04",
+      "text": "bindscroll 使用对应事件数据更新 scrollTop，WebView 与 Skyline 使用同一滚动链路。",
+      "passed": true,
+      "evidence": "bindscroll=onScroll，从 e.detail.scrollTop 更新同一 state，两端共用容器事件。"
+    },
+    {
+      "id": "e1_05",
+      "text": "不再依赖页面滚动生命周期或 wx.stopPullDownRefresh 结束容器刷新。",
+      "passed": true,
+      "evidence": "不再存在 onPullDownRefresh/onReachBottom/onPageScroll 或 wx.stopPullDownRefresh。"
+    },
+    {
+      "id": "e1_06",
+      "text": "页面 JSON 包含 skyline、glass-easel、custom 导航和 disableScroll:true。",
+      "passed": true,
+      "evidence": "页面 JSON 为 skyline/glass-easel/custom/disableScroll:true。"
+    },
+    {
+      "id": "e1_07",
+      "text": "模板实际包含标题为订单的自定义导航，非只配置 navigationStyle。",
+      "passed": true,
+      "evidence": "模板实际 navigation 节点 text 为订单。"
+    },
+    {
+      "id": "e1_08",
+      "text": "app 顶层 lazyCodeLoading=requiredComponents，原 pages/window/webview 配置保留。",
+      "passed": true,
+      "evidence": "app.json 顶层 requiredComponents，原 pages/home/pages/orders、window 演示及 webview:{} 保留。"
+    },
+    {
+      "id": "e1_09",
+      "text": "rendererOptions.skyline 内五项推荐配置完整且值正确，未误放到 app 顶层。",
+      "passed": true,
+      "evidence": "app.rendererOptions.skyline 五项默认布局、样式隔离与 AutoSize 配置值正确，未置于顶层。"
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  },
+  "limitations": [
+    "Business tests may use mocks; not a real renderer or complete application build."
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "finished_at": "2026-09-10T06:59:02.127308+00:00",
+  "started_at": null,
+  "started_at_note": "首次操作时未记录精确开始时间，不补造。",
+  "scope": "category-panel.mpx only",
+  "validation": [
+    {
+      "command": "node /Users/hjw/project/mpx/node_modules/jest/bin/jest.js --config /private/tmp/skyline-unified-baseline-20260910/eval-4-nested-sticky-layer/mpx2skyline/run-1/jest.config.json --runInBand --no-cache",
+      "exit_code": 0,
+      "result": "1 suite, 2 tests passed; 0.293s Jest reported"
+    },
+    {
+      "command": "node /Users/hjw/project/mpx/node_modules/eslint/bin/eslint.js --no-eslintrc --config /Users/hjw/project/mpx/.eslintrc.js --parser-options '{\"requireConfigFile\":false}' /private/tmp/skyline-unified-baseline-20260910/eval-4-nested-sticky-layer/mpx2skyline/run-1/component-script.js",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": "rg -n -U \"lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|tagNameStyleIsolation|enableScrollViewAutoSize|keyframeStyleIsolation|renderer|componentFramework|disableScroll|navigationStyle|@media screen|font-family\\\\s*:?\\\\s*[^;]+-(Medium|Semibold|Bold)|font-weight\\\\s*:?\\\\s*(500|600|bolder|lighter)|font-style\\\\s*:?\\\\s*oblique|@font-face|text-overflow|-webkit-line-clamp|truncate|line-clamp|<image|<rich-text|<special-text|<mpx-icon|min-width\\\\s*:?\\\\s*[0-9.]+%|flex\\\\s*:?\\\\s*1\\\\s+0\\\\s+auto|overflow-x|overflow-y|overflow\\\\s*:?\\\\s*(auto|scroll)|display\\\\s*:?\\\\s*(grid|flow-root)|position\\\\s*:?\\\\s*sticky|float\\\\s|contain\\\\s*:?|resize\\\\s*:?|writing-mode|text-indent|overflow-wrap|justify-items|direction\\\\s*:?|text-decoration|box-shadow\\\\s*:?|background-(image|position|size|repeat|attachment|origin|clip)|mask-(image|repeat|origin|clip|mode)|filter\\\\s*:?|backdrop-filter|calc\\\\([^)]*(deg|rad|turn)|<scroll-view|<navigator|<text|movable-area|movable-view|web-view|editor|progress|navigation-bar|xr-frame|match-media|keyboard-accessory|lazy-load|forceHttps|placeholder-class|safe-password-|snap-to-edge|indicator-class|mask-style|wx-if|wx-for|<include|\\\\.animate\\\\(|\\\\.applyAnimation\\\\(|\\\\.clearAnimation\\\\(|\\\\.setInitialRenderingCache\\\\(|wx\\\\.createAnimation|wx\\\\.createSelectorQuery|\\\\.node\\\\(\\\\)|default\\\\s*:\" /private/tmp/skyline-unified-baseline-20260910/eval-4-nested-sticky-layer/mpx2skyline/outputs/category-panel.mpx -g '*.mpx' -g '*.json' -g '*.js' -g '*.ts'",
+      "exit_code": 0,
+      "result": "candidate scan + full matrix manual review; audit.md"
+    }
+  ],
+  "network_attempts": [
+    {
+      "url": "https://raw.githubusercontent.com/wechat-miniprogram/skyline-skills/master/skills/skyline-components/references/scroll/scroll-view.md",
+      "results": [
+        "curl exit 28 timeout 20 seconds",
+        "escalated curl exit 28 timeout 15 seconds"
+      ]
+    }
+  ],
+  "unit_test_repair_attempts": 0,
+  "unverified": [
+    "full application build",
+    "WeChat WebView/Skyline runtime",
+    "nested/custom coordination and per-section stickiness",
+    "horizontal and vertical touch negotiation",
+    "modal coverage and scroll restoration"
+  ],
+  "outputs": {
+    "report.md": "f053d78374c0ad67023025250bfb09dfa5a2c3073e68ec4f26999d13473c9410",
+    "category-panel.mpx": "96f819a37604546e50b51798d5d2ef45dcad583eb5e1ec6acccaa098c83732b5"
+  }
+}

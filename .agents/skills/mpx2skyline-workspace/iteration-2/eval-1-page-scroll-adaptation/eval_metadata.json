@@ -1,0 +1,53 @@
+{
+  "eval_id": 1,
+  "eval_name": "page-scroll-adaptation",
+  "prompt": "请对输入文件进行 Skyline 适配改造，确保 Mpx 输出微信小程序时 WebView 与 Skyline 双渲染兼容。任务要求见 input/task.md，范围与交互已确认；请交付完整文件并保留现有业务语义。",
+  "files": [
+    "input/orders.mpx",
+    "input/service.js",
+    "input/app.json",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "e1_00",
+      "text": "orders.mpx 完整且 service 导入能解析，初次加载仍调用 reload。"
+    },
+    {
+      "id": "e1_01",
+      "text": "页面使用有明确可滚动高度的 scroll-view，显式 type，列表项为直接子节点。"
+    },
+    {
+      "id": "e1_02",
+      "text": "刷新事件绑定 bindrefresherrefresh，状态在请求成功与失败后均结束。"
+    },
+    {
+      "id": "e1_03",
+      "text": "触底 bindscrolltolower 仍调用分页逻辑，保留追加而非覆盖及页号推进。"
+    },
+    {
+      "id": "e1_04",
+      "text": "bindscroll 使用对应事件数据更新 scrollTop，WebView 与 Skyline 使用同一滚动链路。"
+    },
+    {
+      "id": "e1_05",
+      "text": "不再依赖页面滚动生命周期或 wx.stopPullDownRefresh 结束容器刷新。"
+    },
+    {
+      "id": "e1_06",
+      "text": "页面 JSON 包含 skyline、glass-easel、custom 导航和 disableScroll:true。"
+    },
+    {
+      "id": "e1_07",
+      "text": "模板实际包含标题为订单的自定义导航，非只配置 navigationStyle。"
+    },
+    {
+      "id": "e1_08",
+      "text": "app 顶层 lazyCodeLoading=requiredComponents，原 pages/window/webview 配置保留。"
+    },
+    {
+      "id": "e1_09",
+      "text": "rendererOptions.skyline 内五项推荐配置完整且值正确，未误放到 app 顶层。"
+    }
+  ]
+}

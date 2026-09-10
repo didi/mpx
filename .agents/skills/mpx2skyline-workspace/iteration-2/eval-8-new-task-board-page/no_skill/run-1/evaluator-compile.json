@@ -1,0 +1,7 @@
+{
+  "evaluator": "parent",
+  "check": "repository script-setup compiler only",
+  "file": "pages/task-board.mpx",
+  "status": "failed",
+  "error": "[Mpx script error]: Mpx script setup must define the variables for return using defineExpose, see details: https://mpxjs.cn/guide/composition-api/composition-api.html#defineexpose\n\n/private/tmp/mpx2skyline-benchmark-run-20260908/eval-8-new-task-board-page/no_skill/run-1/outputs/pages/task-board.mpx\n"
+}

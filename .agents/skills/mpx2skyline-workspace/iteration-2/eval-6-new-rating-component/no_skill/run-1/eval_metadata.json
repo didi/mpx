@@ -1,0 +1,47 @@
+{
+  "eval_id": 6,
+  "eval_name": "new-rating-component",
+  "prompt": "请根据需求说明从零创建，确保 Mpx 输出微信小程序时 WebView 与 Skyline 双渲染兼容。任务要求见 input/task.md，范围与交互已确认；请交付完整文件并保留现有业务语义。",
+  "assertions": [
+    {
+      "id": "e6_00",
+      "text": "完整 rating-selector.mpx 含 template/script/style/组件JSON，使用 createComponent 选项式API。"
+    },
+    {
+      "id": "e6_01",
+      "text": "五项属性类型、默认值正确，默认值使用 value。"
+    },
+    {
+      "id": "e6_02",
+      "text": "根据 max 渲染稳定 key 的星级列表，选中状态区分正确。"
+    },
+    {
+      "id": "e6_03",
+      "text": "点击第n颗更新本地评分并触发 detail={ratingKey,value:n} 的change。"
+    },
+    {
+      "id": "e6_04",
+      "text": "readonly 在处理器中阻止更新与发事件，而非仅改样式。"
+    },
+    {
+      "id": "e6_05",
+      "text": "父value变化同步本地评分，未直接修改只读传入属性。"
+    },
+    {
+      "id": "e6_06",
+      "text": "标签在两端单行省略，Skyline max-lines/overflow 与 WebView 样式均完整。"
+    },
+    {
+      "id": "e6_07",
+      "text": "星级行使用支持的显式布局与语义class，没有未声明的原子类依赖。"
+    },
+    {
+      "id": "e6_08",
+      "text": "按下缩放.96，松开/取消恢复，150ms通用transition，无Worklet。"
+    },
+    {
+      "id": "e6_09",
+      "text": "组件无页面专属配置、未定义绑定或不支持的模板子节点关系。"
+    }
+  ]
+}

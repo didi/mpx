@@ -1,0 +1,29 @@
+{
+  "description": "两组只改变 Skill 是否可用，任务/输入/输出/工具预算一致。",
+  "variables": {
+    "TASK_PROMPT": "eval.prompt",
+    "WORKDIR": "配置下 run-1 的绝对路径",
+    "INPUT_PATHS": "eval-*/input/ 下文件的绝对路径；不复制到 run-1",
+    "OUTPUT_DIR": "eval-*/<configuration>/outputs/ 绝对路径",
+    "SKILL_PATH": "仓库 .agents/skills/mpx2skyline/SKILL.md 绝对路径，不创建副本"
+  },
+  "agent_config": {
+    "model": "must_match_parent",
+    "reasoning_effort": "must_match_parent",
+    "fork_turns": "none"
+  },
+  "templates": {
+    "mpx2skyline": {
+      "label": "使用 Skill",
+      "prompt": "你是 Mpx 开发工程师。任务：{{TASK_PROMPT}}\n目标：微信 WebView/Skyline 双渲染，非 RN。\n工作目录：{{WORKDIR}}。\n输入：{{INPUT_PATHS}}，先读 task.md。\n交付：在 {{OUTPUT_DIR}} 保留输入相对路径写完整产物，依赖文件保留；不要修改 input。最后写 report.md 说明改动和验证。\n隔离：不要读取 evals.json、eval_metadata.json、grading-standard.md、其他配置或历史运行输出。\n先完整读取 {{SKILL_PATH}}，按其中流程和知识路由读取相关参考文档。"
+    },
+    "no_skill": {
+      "label": "不使用 Skill",
+      "prompt": "你是 Mpx 开发工程师。任务：{{TASK_PROMPT}}\n目标：微信 WebView/Skyline 双渲染，非 RN。\n工作目录：{{WORKDIR}}。\n输入：{{INPUT_PATHS}}，先读 task.md。\n交付：在 {{OUTPUT_DIR}} 保留输入相对路径写完整产物，依赖文件保留；不要修改 input。最后写 report.md 说明改动和验证。\n隔离：不要读取 evals.json、eval_metadata.json、grading-standard.md、其他配置或历史运行输出。\n本任务是用户要求的 no_skill 对照组，不读取或使用任何 Skill，凭现有知识完成任务。"
+    }
+  },
+  "archive_rules": [
+    "每次执行前记录中央 Skill 的 version 和逐文件 SHA256；结束时复核未变化。",
+    "只读取该 case 外层 input；outputs 放配置目录，测试/审计脚本和执行证据放 run-1。"
+  ]
+}

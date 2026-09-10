@@ -1,0 +1,19 @@
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:9:    <view class="filters"><view class="filters-blur">复合滤镜</view></view>
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:10:    <text class="font-a">品牌A</text>
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:11:    <text class="font-b">品牌B</text>
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:12:    <navigator url="/pages/detail"><text>详情</text></navigator>
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:13:    <navigator url="/pages/detail"><text>卡片详情</text></navigator>
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:34:  box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:37:  box-shadow: 0 4px 8px #333;
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:40:  box-shadow: 0 2px 4px #000;
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:43:  filter: blur(2px);
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:45:.filters {
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:46:  filter: brightness(.8);
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:48:.filters-blur {
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:49:  filter: blur(2px);
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:51:@font-face {
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:52:  font-family: 'City-Semibold';
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:56:  font-family: 'City-Semibold';
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:57:  font-weight: 600;
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:60:  font-family: 'Trip-Medium';
+/private/tmp/skyline-unified-baseline-20260910/eval-5-style-boundary-layout/mpx2skyline/outputs/data-panel.mpx:61:  font-weight: 500;

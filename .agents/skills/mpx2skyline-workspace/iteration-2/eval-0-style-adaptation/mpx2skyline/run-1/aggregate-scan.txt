@@ -1,0 +1,9 @@
+3:    <text class="title" max-lines="{{1}}" overflow="ellipsis">{{title}}</text>
+5:      <text class="tag">包邮</text>
+6:      <text class="tag">次日达</text>
+8:    <view class="badge badge-sale" data-kind="sale"><text class="badge-dot">•</text><text>活动</text></view>
+24:    this.isSkyline = this.renderer === 'skyline'
+42:  text-overflow: ellipsis;
+46:  flex-direction: row;
+55:  flex-direction: row;
+64:@media screen and (max-width: 320px) {

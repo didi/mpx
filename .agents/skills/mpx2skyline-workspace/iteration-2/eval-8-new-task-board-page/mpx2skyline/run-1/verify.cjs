@@ -1,0 +1,28 @@
+const fs = require('fs')
+const path = require('path')
+const assert = require('assert')
+const { ESLint } = require('/Users/hjw/project/mpx/node_modules/eslint')
+const root = path.join(__dirname, '../outputs')
+const source = fs.readFileSync(path.join(root, 'pages/task-board.mpx'), 'utf8')
+const script = source.match(/<script setup>([\s\S]*?)<\/script>/)[1]
+const page = JSON.parse(source.match(/<script type="application\/json">([\s\S]*?)<\/script>/)[1])
+const app = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'))
+assert.deepStrictEqual(app.pages, ['pages/home', 'pages/task-board'])
+assert.strictEqual(page.disableScroll, true)
+assert.strictEqual(page.navigationStyle, 'custom')
+assert.strictEqual(app.rendererOptions.skyline.defaultContentBox, true)
+const css = source.match(/<style>([\s\S]*?)<\/style>/)[1] + fs.readFileSync(path.join(root, 'utilities.css'), 'utf8')
+const classes = new Set(Array.from(css.matchAll(/\.([a-zA-Z][\w-]*)\s*\{/g), m => m[1]))
+for (const attr of source.matchAll(/class="([^"]+)"/g)) {
+ const staticClasses = attr[1].replace(/\{\{[\s\S]*?\}\}/g, '').trim().split(/\s+/).filter(Boolean)
+ staticClasses.forEach(name => assert(classes.has(name), 'undefined class ' + name))
+}
+assert(classes.has('filter-active'))
+assert(classes.has('text-gray'))
+;(async () => {
+ const eslint = new ESLint({ cwd: '/Users/hjw/project/mpx', useEslintrc: false, overrideConfig: { extends: ['standard'], parserOptions: { ecmaVersion: 2020, sourceType: 'module' }, globals: { wx: 'readonly', defineExpose: 'readonly' } } })
+ const results = await eslint.lintText(script, { filePath: 'task-board.js' })
+ const formatted = await (await eslint.loadFormatter('stylish')).format(results)
+ fs.writeFileSync(path.join(__dirname, 'eslint.log'), formatted || 'ESLint: passed\n')
+ if (results.some(result => result.errorCount || result.warningCount)) { console.error(formatted); process.exitCode = 1 } else console.log('ESLint, configuration JSON and class coverage: passed')
+})().catch(error => { console.error(error); process.exitCode = 1 })

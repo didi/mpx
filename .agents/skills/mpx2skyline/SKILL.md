@@ -135,6 +135,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 5. **遵守组件子节点结构**：`navigator` 只能嵌套 `text` 或纯文本，`text` 只能嵌套 `text`；复杂卡片改为外层点击事件。图标、图片与文本处于同一行时使用 `span` 方案，并补齐 Skyline 的内联布局与截断属性；详见 [图文混排](./references/skyline-layout-practice.md#图文混排)。
 6. **模板结构按 glass-easel 规则改造**：数据绑定外的引号使用 XML 实体，数据绑定内不使用反斜杠转义；`wx:for` 子树中的 `<include>` 改为 `<import>` + `<template>` 并显式传入 `item` / `index`。详见 [模板结构适配](./references/skyline-layout-practice.md#模板结构适配)。
 7. **节点查询使用合法选择器**：id 不以数字开头；glass-easel 组件实例内优先使用 `this.createSelectorQuery()`。详见 [SelectorQuery 约束](./references/skyline-runtime-practice.md#必须-selectorquery-选择器不再支持以数字开头) 与 [SelectorQuery 推荐](./references/skyline-runtime-practice.md#推荐-用-thiscreateselectorquery-替代-wxcreateselectorquery)。
+8. **`<script setup>` 显式暴露**：Mpx 不会将 setup 顶层绑定自动暴露给模板。模板引用的局部状态、计算结果及事件方法须通过 `defineExpose()` 显式声明；仅暴露模板实际使用的绑定，不将内部辅助数据或方法全部导出。这是 Mpx 基础语法要求，WebView 与 Skyline 均须遵守。
 
 ### 动画策略约束
 
@@ -217,7 +218,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 - **JSON 配置**：页面按 [配置参考 · 适配参考](./references/skyline-configuration.md#适配参考) 补齐页面 JSON 和全局 app.json 配置，组件无需配置。
 - **`<template>`**：按[组件约束](#组件component约束)设计组件语义与结构，仅针对实际使用的组件点读 [组件不支持与差异参考](./references/skyline-component-reference.md)；未收录能力需回源确认。
 - **`<style>`**：按[布局约束](#布局layout约束)与[样式约束](#样式style约束)实现；能力或改造方式存疑时，再读取样式 reference 或布局实践的对应小节。
-- **`<script>`**：按[跨渲染模式兼容约束](#跨渲染模式兼容约束)组织通用实现、Skyline 隔离与 WebView 保留逻辑；需要高级能力时按[高级能力](#skyline-高级能力)读取官方 Skill，并补齐 Mpx 构建接入。
+- **`<script>`**：先遵循[组件约束](#组件component约束)中的脚本显式暴露要求，再按[跨渲染模式兼容约束](#跨渲染模式兼容约束)组织通用实现、Skyline 隔离与 WebView 保留逻辑；需要高级能力时按[高级能力](#skyline-高级能力)读取官方 Skill，并补齐 Mpx 构建接入。
 
 #### 3. 检查与确认
 

@@ -1,0 +1,46 @@
+{
+  "first_timestamp_recorded_at": "2026-09-10T06:44:49Z",
+  "time_note": "首个显式 UTC 时间记录于参考资料读取阶段；未精确记录任务开始时间。",
+  "completed_at": "2026-09-10T06:48:42.200459+00:00",
+  "scope": [
+    "outputs/user-list.mpx",
+    "outputs/row.wxml"
+  ],
+  "validations": [
+    {
+      "command": "node /Users/hjw/project/mpx/node_modules/jest/bin/jest.js --config /private/tmp/skyline-unified-baseline-20260910/eval-2-runtime-template-adaptation/mpx2skyline/run-1/jest.config.json --runInBand --watchman=false",
+      "exit_code": 0,
+      "result": "1 suite, 4 tests passed; 0 test repair attempts"
+    },
+    {
+      "command": "node /Users/hjw/project/mpx/node_modules/eslint/bin/eslint.js --no-eslintrc --env es6 --parser-options '{\"ecmaVersion\":2020,\"sourceType\":\"module\"}' --extends /Users/hjw/project/mpx/node_modules/eslint-config-standard/index.js --resolve-plugins-relative-to /Users/hjw/project/mpx /private/tmp/skyline-unified-baseline-20260910/eval-2-runtime-template-adaptation/mpx2skyline/run-1/component-script.js",
+      "exit_code": 2,
+      "result": "Invalid option --extends"
+    },
+    {
+      "command": "node /Users/hjw/project/mpx/node_modules/eslint/bin/eslint.js --no-eslintrc --env es6 --parser-options '{\"ecmaVersion\":2020,\"sourceType\":\"module\"}' --extend /Users/hjw/project/mpx/node_modules/eslint-config-standard/index.js --resolve-plugins-relative-to /Users/hjw/project/mpx /private/tmp/skyline-unified-baseline-20260910/eval-2-runtime-template-adaptation/mpx2skyline/run-1/component-script.js",
+      "exit_code": 2,
+      "result": "Invalid option --extend"
+    },
+    {
+      "command": "node /Users/hjw/project/mpx/node_modules/eslint/bin/eslint.js --no-eslintrc --config /private/tmp/skyline-unified-baseline-20260910/eval-2-runtime-template-adaptation/mpx2skyline/run-1/eslint.config.json --resolve-plugins-relative-to /Users/hjw/project/mpx /private/tmp/skyline-unified-baseline-20260910/eval-2-runtime-template-adaptation/mpx2skyline/run-1/component-script.js",
+      "exit_code": 0,
+      "result": "Standard ESLint passed on extracted final component script"
+    },
+    {
+      "command_file": "audit-scan.txt",
+      "exit_code": 0,
+      "result": "Aggregate rg candidates reviewed; all 47 matrix rules manually reviewed in audit.json"
+    }
+  ],
+  "unverified": [
+    "Complete Mpx build",
+    "WeChat DevTools and physical-device WebView/Skyline rendering",
+    "Host app/page renderer configuration (outside component-only scope)"
+  ],
+  "artifacts": {
+    "row.wxml": "317abc733e9508aa7d7b9b802e1095132c96862e861199fa6308970bfdb40f4c",
+    "report.md": "3fc316f7a49ee7102a9de1e43bac6e064f19608bfa8b8687ee9870fc5f8d6163",
+    "user-list.mpx": "16a2a4b9ac1f909c06ab1fa982be492f6795890ebd985ee8dccdb630ea1e033a"
+  }
+}

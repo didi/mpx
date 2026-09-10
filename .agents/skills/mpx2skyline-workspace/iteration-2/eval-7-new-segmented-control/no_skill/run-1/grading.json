@@ -1,0 +1,72 @@
+{
+  "grader": "parent semantic review of frozen output",
+  "expectations": [
+    {
+      "id": "e7_00",
+      "text": "输出完整script setup组件，使用Mpx组合式API，模板绑定正确暴露。",
+      "passed": false,
+      "evidence": "缺defineExpose，真实Mpx script-setup编译器报错，模板绑定未暴露。"
+    },
+    {
+      "id": "e7_01",
+      "text": "五项props与默认值正确，options始终为数组。",
+      "passed": true,
+      "evidence": "五项defineProps类型与默认值正确。"
+    },
+    {
+      "id": "e7_02",
+      "text": "使用ref保存本地选择，watch同步父value，未因直接解构丢失响应性。",
+      "passed": true,
+      "evidence": "selectedValue ref与watch(()=>props.value)同步，未直接解构props。"
+    },
+    {
+      "id": "e7_03",
+      "text": "computed派生候选状态与选中项名称，循环使用稳定key。",
+      "passed": true,
+      "evidence": "computed生成displayOptions/selectedLabel，模板key=value。"
+    },
+    {
+      "id": "e7_04",
+      "text": "整体disabled和单项disabled在事件处理器中都阻止选择。",
+      "passed": true,
+      "evidence": "computed合并整体和单项disabled，selectOption校验合并后的禁用值。"
+    },
+    {
+      "id": "e7_05",
+      "text": "change事件detail包含controlKey与选中的value，更新本地显示。",
+      "passed": true,
+      "evidence": "selectOption更新本地值，useContext.triggerEvent detail含controlKey/value。"
+    },
+    {
+      "id": "e7_06",
+      "text": "横向scroll-view显式type、enable-flex与横向布局，list时条目为直接子节点。",
+      "passed": false,
+      "evidence": "scroll-view未声明type或enable-flex；内部wrapper承载所有条目。"
+    },
+    {
+      "id": "e7_07",
+      "text": "候选宽度至少100px且不会被flex压缩为内容窄条。",
+      "passed": true,
+      "evidence": "option width160px/min-width100px/flex-shrink0。"
+    },
+    {
+      "id": "e7_08",
+      "text": "长标签两端单行截断，Skyline属性作用于文本承载节点，WebView样式保留。",
+      "passed": false,
+      "evidence": "option-label只有CSS省略，缺Skyline max-lines/overflow组件属性。"
+    },
+    {
+      "id": "e7_09",
+      "text": "普通语义class有定义，无新依赖、页面专属JSON或未定义方法。",
+      "passed": true,
+      "evidence": "语义class均有定义，函数selectOption在脚本定义，无未知宏或依赖；defineExpose遗漏已由e7_00扣分，不扩大为函数未定义。"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 3,
+    "total": 10,
+    "pass_rate": 0.7
+  },
+  "review_note": "独立评分复核后按冻结断言调整，未修改执行器产物。"
+}

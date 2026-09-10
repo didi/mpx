@@ -1,0 +1,12 @@
+{
+  "execution_id": "skyline-unified-baseline-20260910",
+  "source_iteration": "iteration-2",
+  "input_path": "../../input",
+  "outputs_path": "../outputs",
+  "skill_path": ".agents/skills/mpx2skyline/",
+  "skill_snapshot": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3",
+  "skill_version": "1.0.1",
+  "historical_execution_path": "/private/tmp/skyline-unified-baseline-20260910/eval-1-page-scroll-adaptation/mpx2skyline",
+  "replay_scripts_relocated": [],
+  "note": "统一独立 Skill 基线；prompt 和工具日志保留执行时原路径。"
+}

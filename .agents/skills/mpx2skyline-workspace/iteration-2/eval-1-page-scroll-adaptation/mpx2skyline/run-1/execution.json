@@ -1,0 +1,32 @@
+{
+  "started_at": "2026-09-10T06:43:00Z",
+  "started_at_precision": "Approximate turn start; first recorded clock was 2026-09-10T06:44:01Z",
+  "finished_at": "2026-09-10T06:47:24.352192+00:00",
+  "verification": [
+    {
+      "command": "node /Users/hjw/project/mpx/node_modules/jest/bin/jest.js --config {rootDir:run-1,testMatch:[**/orders.test.js],testEnvironment:node,transform:{}} --runInBand --watchman=false",
+      "result": "exit 0; 1 suite, 3 tests passed",
+      "log": "jest.log"
+    },
+    {
+      "command": "node /Users/hjw/project/mpx/node_modules/eslint/bin/eslint.js --no-eslintrc --no-ignore --env es6 --env browser --global wx --parser-options {ecmaVersion:2020,sourceType:module} --rule no-unused-vars:error --rule no-undef:error run-1/orders-script.js outputs/service.js",
+      "result": "exit 0",
+      "log": "eslint.log"
+    },
+    {
+      "command": "python3 run-1/audit.py",
+      "result": "exit 0; all 47 matrix rows reviewed, JSON and preserved service checked",
+      "evidence": [
+        "audit.json",
+        "audit-scan.log"
+      ]
+    }
+  ],
+  "repair_attempts": 0,
+  "dependencies_installed": false,
+  "unverified": [
+    "Full Mpx compilation",
+    "Real WebView/Skyline rendering, gesture events and device layout",
+    "Older WebView base-library getWindowInfo availability"
+  ]
+}

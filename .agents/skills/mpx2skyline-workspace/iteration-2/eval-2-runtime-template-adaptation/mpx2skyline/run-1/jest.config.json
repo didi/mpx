@@ -1,0 +1,8 @@
+{
+  "rootDir": "/Users/hjw/project/mpx/.agents/skills/mpx2skyline-workspace/iteration-2/eval-2-runtime-template-adaptation/mpx2skyline/run-1",
+  "testEnvironment": "node",
+  "testMatch": [
+    "**/verify.test.js"
+  ],
+  "transform": {}
+}

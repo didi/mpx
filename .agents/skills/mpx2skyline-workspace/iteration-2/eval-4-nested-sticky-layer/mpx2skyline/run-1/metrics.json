@@ -1,0 +1,16 @@
+{
+  "source_session": "rollout-2026-09-10T14-48-52-01a08a13-8df7-7a41-b3af-50fbb677548f.jsonl",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "usage": {
+    "input_tokens": 568400,
+    "cached_input_tokens": 533120,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 5426,
+    "reasoning_output_tokens": 402,
+    "total_tokens": 573826
+  },
+  "total_tokens": 573826,
+  "input_tokens_include_cached": true,
+  "tool_event_records": 24
+}

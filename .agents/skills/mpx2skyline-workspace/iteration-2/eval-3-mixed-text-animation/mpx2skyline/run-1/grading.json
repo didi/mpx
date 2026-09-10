@@ -1,0 +1,74 @@
+{
+  "grader": "parent semantic review of frozen files, executor test evidence and uniform evaluator syntax check",
+  "expectations": [
+    {
+      "id": "e3_00",
+      "text": "同段图文采用 reference 的 span 容器方案，不只是为外层加省略属性。",
+      "passed": true,
+      "evidence": "promo-card.mpx 使用 view mpxTagName@wx=span 承载同段 image+text，符合 reference 的 span 方案。"
+    },
+    {
+      "id": "e3_01",
+      "text": "Skyline 单行容器设置 max-lines/overflow，并有可收缩宽度约束。",
+      "passed": true,
+      "evidence": "实际 span 容器有 max-lines=1/overflow=ellipsis，flex:1/width:0/min-width:0 可收缩。"
+    },
+    {
+      "id": "e3_02",
+      "text": "图片在 Skyline 内联布局为 inline-block，renderer 状态实际定义并驱动模板。",
+      "passed": true,
+      "evidence": "data.isSkyline 在 attached 由 renderer 设置；模板驱动 logo-inline，display:inline-block。"
+    },
+    {
+      "id": "e3_03",
+      "text": "WebView 保留图文单行截断，未让 text 包含 image。",
+      "passed": true,
+      "evidence": "WebView span 绑定 truncate，保留 nowrap/hidden/text-overflow；没有 text 内嵌 image。"
+    },
+    {
+      "id": "e3_04",
+      "text": "伪元素动画改为真实圆点节点，保留尺寸颜色与循环闪烁语义。",
+      "passed": true,
+      "evidence": "pulse 为真实 view，8px/#f50/圆角4px，pulse 1s infinite 保留闪烁。"
+    },
+    {
+      "id": "e3_05",
+      "text": "动画 fill mode 采用支持值或等效逻辑，不依赖 backwards。",
+      "passed": true,
+      "evidence": "animation-fill-mode:both，为支持值，无 backwards。"
+    },
+    {
+      "id": "e3_06",
+      "text": "Skyline 可执行路径不调用 wx.createAnimation，简单按钮改为通用状态动画。",
+      "passed": true,
+      "evidence": "按下/松开采用 pressed 布尔状态和 CSS transition，无 wx.createAnimation。"
+    },
+    {
+      "id": "e3_07",
+      "text": "按钮150ms驱动 transform/opacity，按下目标数值与松开恢复正确。",
+      "passed": true,
+      "evidence": ".button transition transform/opacity 150ms，按下 scale(.96)/opacity .7，松开恢复 1；Jest 事件测试通过。"
+    },
+    {
+      "id": "e3_08",
+      "text": "触摸取消也能恢复，未引入 Worklet 或按帧 JS 定时器。",
+      "passed": true,
+      "evidence": "bindtouchcancel=release，未引入 Worklet 或逐帧定时器。"
+    },
+    {
+      "id": "e3_09",
+      "text": "logo 资源路径有效，未删除图片或用无意义占位替代。",
+      "passed": true,
+      "evidence": "logo.svg 已按原字节复制，image src=./logo.svg 路径有效。"
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  },
+  "limitations": [
+    "Business tests may use mocks; not a real renderer or complete application build."
+  ]
+}

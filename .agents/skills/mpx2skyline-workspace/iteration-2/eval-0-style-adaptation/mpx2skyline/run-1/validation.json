@@ -1,0 +1,46 @@
+{
+  "executor": {
+    "started_at": "2026-09-10T06:43:57Z",
+    "start_time_note": "首次产物准备时记录，前置阅读早于此时间且未记录精确开始时间",
+    "completed_at": "2026-09-10T06:47:58.089507+00:00",
+    "validation": [
+      {
+        "command": "node /Users/hjw/project/mpx/node_modules/jest/bin/jest.js --config '{\"rootDir\":\"/private/tmp/skyline-unified-baseline-20260910/eval-0-style-adaptation/mpx2skyline/run-1\",\"testMatch\":[\"**/verify.test.js\"],\"testEnvironment\":\"node\"}' --runInBand --watchman=false",
+        "exit_code": 0,
+        "result": "1 suite, 10 tests passed; includes ESLint Linter no-undef/no-unused-vars, PostCSS parse"
+      },
+      {
+        "command": "python3 /private/tmp/skyline-unified-baseline-20260910/eval-0-style-adaptation/mpx2skyline/run-1/audit.py",
+        "exit_code": 0,
+        "result": "47 rules reviewed; aggregate rg exit 0"
+      }
+    ],
+    "test_repair_attempts": 0,
+    "unverified": [
+      "full app build",
+      "WeChat developer tools",
+      "physical-device WebView/Skyline visuals"
+    ],
+    "output_sha256": {
+      "report.md": "fb9c91935b6eb2f6f755337dc8385ed5f49d5b4eb0bf2c48b0bbe03dd141b0c3",
+      "product-card.mpx": "cd1217fb75f3bf3b238874a8aa5f6010f3005ca492eb93591e2d0ca46a21dc31"
+    }
+  },
+  "evaluator": {
+    "evaluator": "parent",
+    "results": [
+      {
+        "file": "product-card.mpx",
+        "status": "passed",
+        "scope": "SFC parsing, JS parsing, JSON parsing and script setup compilation when applicable",
+        "script_setup": false,
+        "unresolved_setup_identifiers": []
+      }
+    ],
+    "full_application_build": "not_run",
+    "device_validation": "not_run"
+  },
+  "real_reactivity_integration": "not_run",
+  "full_application_build": "not_run",
+  "device_validation": "not_run"
+}

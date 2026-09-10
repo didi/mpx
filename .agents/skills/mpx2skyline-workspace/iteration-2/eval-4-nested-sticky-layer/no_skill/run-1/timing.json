@@ -1,0 +1,23 @@
+{
+  "source": "raw session task timestamps",
+  "started_at": "2026-09-08T09:29:14.309Z",
+  "ended_at": "2026-09-08T10:57:38.989Z",
+  "end_type": "task_complete",
+  "duration_seconds": 5231.442,
+  "turn_intervals": [
+    {
+      "start": "2026-09-08T09:29:14.309Z",
+      "end": "2026-09-08T10:52:41.471Z",
+      "end_type": "task_complete",
+      "duration_seconds": 5007.162
+    },
+    {
+      "start": "2026-09-08T10:53:54.709Z",
+      "end": "2026-09-08T10:57:38.989Z",
+      "end_type": "task_complete",
+      "duration_seconds": 224.28
+    }
+  ],
+  "total_duration_seconds": 5231.442,
+  "total_tokens": 129456
+}

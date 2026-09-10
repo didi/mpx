@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/home",
+    "pages/task-board"
+  ],
+  "window": {
+    "navigationBarTitleText": "工作台"
+  },
+  "rendererOptions": {
+    "webview": {},
+    "skyline": {
+      "defaultDisplayBlock": true,
+      "defaultContentBox": true,
+      "disableABTest": true,
+      "sdkVersionBegin": "3.0.1",
+      "sdkVersionEnd": "15.255.255"
+    }
+  },
+  "lazyCodeLoading": "requiredComponents"
+}

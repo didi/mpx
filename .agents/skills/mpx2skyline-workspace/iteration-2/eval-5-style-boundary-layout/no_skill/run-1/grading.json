@@ -1,0 +1,71 @@
+{
+  "grader": "parent semantic review of frozen output",
+  "expectations": [
+    {
+      "id": "e5_00",
+      "text": "父外沿20px由父 padding 表达，清理重复子 margin，不将 overflow:hidden 当作 BFC。",
+      "passed": true,
+      "evidence": "outer padding-top20px并去除child margin/BFC依赖。"
+    },
+    {
+      "id": "e5_01",
+      "text": "child 保持100px内容宽加两侧10px padding 的120px外宽。",
+      "passed": true,
+      "evidence": "采用等价border-box width120px padding10px，内容宽100px。"
+    },
+    {
+      "id": "e5_02",
+      "text": "兄弟间距归到单侧16px，不能保留导致28px或删除成0px。",
+      "passed": true,
+      "evidence": "first下16px、second上0，间距16px。"
+    },
+    {
+      "id": "e5_03",
+      "text": "保留单个 rgba 阴影，不把函数内逗号误判为多阴影。",
+      "passed": true,
+      "evidence": "one保留rgba单阴影。"
+    },
+    {
+      "id": "e5_04",
+      "text": "双阴影拆节点或其他等效方案保留两层效果，不直接删去其中一层。",
+      "passed": true,
+      "evidence": "嵌套many及many-inner分别保留两种阴影及绘制顺序。"
+    },
+    {
+      "id": "e5_05",
+      "text": "保留单 blur，复合 filter 分层实现且保留两种效果。",
+      "passed": true,
+      "evidence": "保留单blur，复合改内blur外brightness。"
+    },
+    {
+      "id": "e5_06",
+      "text": "City-Semibold 独立 @font-face 例外被正确识别，不仅凭名称报错。",
+      "passed": true,
+      "evidence": "保留City独立font-face与字体使用，未按Semibold后缀误报或强制改名；接受产物证据。"
+    },
+    {
+      "id": "e5_07",
+      "text": "保留两个字体与500/600字重，报告 Trip-Medium 待核实及机型风险，不擅改bold。",
+      "passed": true,
+      "evidence": "两个字体、字重、路径保持，报告Trip宿主注入及字体匹配/机型映射待验。"
+    },
+    {
+      "id": "e5_08",
+      "text": "合法 text 子节点 navigator 保留功能，含view的复杂导航改为支持结构或点击跳转。",
+      "passed": true,
+      "evidence": "两处改goDetail点击，文本和复杂卡片导航功能保留，接受等价替代。"
+    },
+    {
+      "id": "e5_09",
+      "text": "所有新结构和点击方法定义完整，双端导航仍到/pages/detail，字体资源保持宿主路径约定。",
+      "passed": true,
+      "evidence": "goDetail定义且navigateTo /pages/detail；资源路径保持。"
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  }
+}

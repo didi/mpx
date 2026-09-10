@@ -1,0 +1,7 @@
+{
+  "started_at": "2026-09-08T09:12:02Z",
+  "finished_at": "2026-09-08T09:14:29Z",
+  "status": "completed",
+  "validation": "node verify.cjs",
+  "validation_exit_code": 0
+}

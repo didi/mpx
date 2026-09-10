@@ -1,0 +1,29 @@
+{
+  "first_recorded_time_utc": "2026-09-10T07:04:37Z",
+  "start_time_note": "开始读取任务时未采集时钟，此时间是实施前首次显式采集，非完整执行起点。",
+  "finished_at_utc": "2026-09-10T07:13:17.711750+00:00",
+  "commands": [
+    {
+      "command": "node node_modules/jest/bin/jest.js --config <run-1 rootDir, verify.spec.js, node environment> --runInBand --watchman=false",
+      "result": "PASS: 1 suite, 3 tests; exit 0"
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js --no-eslintrc --env es6 --parser-options {ecmaVersion:2020,sourceType:module} --global defineProps --global useContext --global defineExpose --rule no-unused-vars:error --rule no-undef:error <run-1/component-script.js>",
+      "result": "exit 0"
+    },
+    {
+      "command": "sh run-1/audit-scan.sh",
+      "result": "exit 0; audit-candidates.txt generated; full manual matrix review in audit.json"
+    }
+  ],
+  "test_fix_attempts": 0,
+  "unverified": [
+    "Mpx full compilation",
+    "real Mpx reactivity scheduling",
+    "WeChat WebView/Skyline rendering and device interaction"
+  ],
+  "outputs": {
+    "report.md": "edb3dbc570cd21cb300a5405c8bd1c8113b48cb8cdbc1f210580af4b6cacd909",
+    "segmented-control.mpx": "24137b2b51b87dd44d79bd313a5da0af28b2b6aebd6b2a127aa574084d7c9cac"
+  }
+}

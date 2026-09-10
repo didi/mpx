@@ -1,0 +1,51 @@
+{
+  "eval_id": 5,
+  "eval_name": "style-boundary-layout",
+  "prompt": "请对输入文件进行 Skyline 适配改造，确保 Mpx 输出微信小程序时 WebView 与 Skyline 双渲染兼容。任务要求见 input/task.md，范围与交互已确认；请交付完整文件并保留现有业务语义。",
+  "files": [
+    "input/data-panel.mpx",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "e5_00",
+      "text": "父外沿20px由父 padding 表达，清理重复子 margin，不将 overflow:hidden 当作 BFC。"
+    },
+    {
+      "id": "e5_01",
+      "text": "child 保持100px内容宽加两侧10px padding 的120px外宽。"
+    },
+    {
+      "id": "e5_02",
+      "text": "兄弟间距归到单侧16px，不能保留导致28px或删除成0px。"
+    },
+    {
+      "id": "e5_03",
+      "text": "保留单个 rgba 阴影，不把函数内逗号误判为多阴影。"
+    },
+    {
+      "id": "e5_04",
+      "text": "双阴影拆节点或其他等效方案保留两层效果，不直接删去其中一层。"
+    },
+    {
+      "id": "e5_05",
+      "text": "保留单 blur，复合 filter 分层实现且保留两种效果。"
+    },
+    {
+      "id": "e5_06",
+      "text": "City-Semibold 独立 @font-face 例外被正确识别，不仅凭名称报错。"
+    },
+    {
+      "id": "e5_07",
+      "text": "保留两个字体与500/600字重，报告 Trip-Medium 待核实及机型风险，不擅改bold。"
+    },
+    {
+      "id": "e5_08",
+      "text": "合法 text 子节点 navigator 保留功能，含view的复杂导航改为支持结构或点击跳转。"
+    },
+    {
+      "id": "e5_09",
+      "text": "所有新结构和点击方法定义完整，双端导航仍到/pages/detail，字体资源保持宿主路径约定。"
+    }
+  ]
+}

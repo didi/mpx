@@ -1,0 +1,21 @@
+{
+  "started_at": "2026-09-08T09:09:19Z",
+  "ended_at": "2026-09-08T09:11:04.214Z",
+  "status": "completed",
+  "outputs": [
+    "outputs/product-card.mpx",
+    "outputs/report.md"
+  ],
+  "trace": "trace.md",
+  "checks": {
+    "script_syntax": "passed (Node vm.Script after removing import)",
+    "component_json": "passed",
+    "mock_viewport_api_cases": 10,
+    "title_default": "passed",
+    "eslint": "not run: isolated input has no lint environment",
+    "jest": "not run: isolated input has no test environment",
+    "mpx_build": "not run: no project configuration or dependencies",
+    "renderer_visual": "not run: no WeChat developer tools"
+  },
+  "token_usage": null
+}

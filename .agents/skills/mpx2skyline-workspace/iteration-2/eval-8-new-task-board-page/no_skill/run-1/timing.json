@@ -1,0 +1,17 @@
+{
+  "source": "raw session task timestamps",
+  "started_at": "2026-09-08T11:02:57.092Z",
+  "ended_at": "2026-09-08T11:11:16.867Z",
+  "end_type": "task_complete",
+  "duration_seconds": 499.775,
+  "turn_intervals": [
+    {
+      "start": "2026-09-08T11:02:57.092Z",
+      "end": "2026-09-08T11:11:16.867Z",
+      "end_type": "task_complete",
+      "duration_seconds": 499.775
+    }
+  ],
+  "total_duration_seconds": 499.775,
+  "total_tokens": 153805
+}

@@ -1,0 +1,18 @@
+{
+  "execution_id": "skyline-unified-baseline-20260910",
+  "cases": 9,
+  "assertions_passed": 90,
+  "assertions_total": 90,
+  "single_skill_version": true,
+  "skill_and_inputs_unchanged": true,
+  "archive_business_outputs_byte_identical": true,
+  "jest": {
+    "suites_passed": 9,
+    "tests_passed": 36,
+    "tests_failed": 0,
+    "command": "node node_modules/jest/bin/jest.js --config <all mpx2skyline run-1 test files; node; transform:{}> --runInBand --watchman=false"
+  },
+  "evaluator_eslint": "passed (ecmaVersion 2020, no-undef)",
+  "full_application_build": "not_run",
+  "device_validation": "not_run"
+}

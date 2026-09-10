@@ -1,0 +1,9 @@
+{
+  "source_iteration": "iteration-1",
+  "source_run": "iteration-1/eval-4-nested-sticky-layer/no_skill/run-1",
+  "input_path": "../../input",
+  "outputs_path": "../outputs",
+  "skill_snapshot": null,
+  "skill_path": null,
+  "note": "跨轮汇总；历史日志与执行报告保留原文。Skill 哈希描述执行当时的文件，不代表当前 Skill。"
+}

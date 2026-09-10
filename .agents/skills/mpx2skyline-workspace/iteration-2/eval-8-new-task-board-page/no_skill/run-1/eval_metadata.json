@@ -1,0 +1,47 @@
+{
+  "eval_id": 8,
+  "eval_name": "new-task-board-page",
+  "prompt": "请根据需求说明从零创建，确保 Mpx 输出微信小程序时 WebView 与 Skyline 双渲染兼容。任务要求见 input/task.md，范围与交互已确认；请交付完整文件并保留现有业务语义。",
+  "assertions": [
+    {
+      "id": "e8_00",
+      "text": "完整pages/task-board.mpx使用script setup与ref/computed，模板绑定可访问。"
+    },
+    {
+      "id": "e8_01",
+      "text": "全部/待办/完成筛选正确，列表稳定key，点击切换完成状态。"
+    },
+    {
+      "id": "e8_02",
+      "text": "初始任务数据正确且空列表有暂无任务提示。"
+    },
+    {
+      "id": "e8_03",
+      "text": "下拉刷新恢复初始数据并结束refresher状态，触底追加不重复id的待办。"
+    },
+    {
+      "id": "e8_04",
+      "text": "主体scroll-view显式type且列表项直接参与列表结构，flex高度约束可形成滚动区域。"
+    },
+    {
+      "id": "e8_05",
+      "text": "长标题保留原子truncate在WebView的行为，Skyline有max-lines/overflow。"
+    },
+    {
+      "id": "e8_06",
+      "text": "页面配置renderer=skyline、glass-easel、custom导航与disableScroll:true。"
+    },
+    {
+      "id": "e8_07",
+      "text": "模板实际实现任务看板导航，app注册新页面且保留首页/window/webview。"
+    },
+    {
+      "id": "e8_08",
+      "text": "app包含lazyCodeLoading及五项rendererOptions.skyline推荐配置，层级和值正确。"
+    },
+    {
+      "id": "e8_09",
+      "text": "原子类来自utilities或有补充定义，不引入未提供依赖；未强制配置disableABTest等选配项。"
+    }
+  ]
+}

@@ -1,0 +1,244 @@
+{
+  "scope": "outputs/product-card.mpx",
+  "method": "完整阅读 SFC + 全矩阵逐项结构复核 + 官方矩阵聚合 rg 扫描（仅候选召回）",
+  "aggregate_command": "rg -n -U \"lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|tagNameStyleIsolation|enableScrollViewAutoSize|keyframeStyleIsolation|renderer|componentFramework|disableScroll|navigationStyle|@media screen|font-family\\\\s*:?\\\\s*[^;]+-(Medium|Semibold|Bold)|font-weight\\\\s*:?\\\\s*(500|600|bolder|lighter)|font-style\\\\s*:?\\\\s*oblique|@font-face|text-overflow|-webkit-line-clamp|truncate|line-clamp|<image|<rich-text|<special-text|<mpx-icon|min-width\\\\s*:?\\\\s*[0-9.]+%|flex\\\\s*:?\\\\s*1\\\\s+0\\\\s+auto|overflow-x|overflow-y|overflow\\\\s*:?\\\\s*(auto|scroll)|display\\\\s*:?\\\\s*(grid|flow-root)|position\\\\s*:?\\\\s*sticky|float\\\\s|contain\\\\s*:?|resize\\\\s*:?|writing-mode|text-indent|overflow-wrap|justify-items|direction\\\\s*:?|text-decoration|box-shadow\\\\s*:?|background-(image|position|size|repeat|attachment|origin|clip)|mask-(image|repeat|origin|clip|mode)|filter\\\\s*:?|backdrop-filter|calc\\\\([^)]*(deg|rad|turn)|<scroll-view|<navigator|<text|movable-area|movable-view|web-view|editor|progress|navigation-bar|xr-frame|match-media|keyboard-accessory|lazy-load|forceHttps|placeholder-class|safe-password-|snap-to-edge|indicator-class|mask-style|wx-if|wx-for|<include|\\\\.animate\\\\(|\\\\.applyAnimation\\\\(|\\\\.clearAnimation\\\\(|\\\\.setInitialRenderingCache\\\\(|wx\\\\.createAnimation|wx\\\\.createSelectorQuery|\\\\.node\\\\(\\\\)|default\\\\s*:\" /private/tmp/skyline-unified-baseline-20260910/eval-0-style-adaptation/mpx2skyline/outputs/product-card.mpx -g '*.mpx' -g '*.json' -g '*.js' -g '*.ts'",
+  "aggregate_exit": 0,
+  "rules": [
+    {
+      "id": "CONFIG_APP_SKYLINE_OPTIONS",
+      "level": "error",
+      "result": "不适用：仅单组件；本地显式 block/content-box 与 row，无页面配置改动。"
+    },
+    {
+      "id": "CONFIG_PAGE_SKYLINE",
+      "level": "error",
+      "result": "不适用：component true，无页面任务。"
+    },
+    {
+      "id": "CONFIG_WORKLET_BABEL",
+      "level": "warn",
+      "result": "不适用：没有 Worklet。"
+    },
+    {
+      "id": "GLASS_INCLUDE_IN_FOR",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_ESCAPE",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_UNSUPPORTED",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_PENDING_SUPPORT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_WEBVIEW_ONLY_ATTR",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_IMAGE_SVG",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_SCROLL_TYPE",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_SCROLL_LIST_DIRECT_CHILD",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_SCROLL_NESTED",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL",
+      "level": "warn",
+      "result": "不适用：row 属普通 view，不是滚动容器。"
+    },
+    {
+      "id": "COMP_SCROLL_REFRESHER_SLOT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_NAVIGATOR_CHILDREN",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_TEXT_CHILDREN",
+      "level": "warn",
+      "result": "已复核：所有 text 仅含纯文本或 title 插值。"
+    },
+    {
+      "id": "COMP_INLINE_MIXED_CONTENT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_STICKY_STRUCTURE",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_PICKER_VIEW_INDICATOR",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "COMP_SWIPER_LIMIT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_MEDIA_SCREEN",
+      "level": "error",
+      "result": "已处理：WebView 保留媒体查询；Skyline 类在查询后提供 24rpx 默认值与 12rpx 小屏值，窗口阈值 320px。"
+    },
+    {
+      "id": "STYLE_SELECTOR_UNSUPPORTED",
+      "level": "warn",
+      "result": "已处理：属性选择器改 badge-sale，圆点改真实 text。"
+    },
+    {
+      "id": "STYLE_TEXT_OVERFLOW",
+      "level": "warn",
+      "result": "已处理：唯一 title 节点保留 CSS，并补 max-lines/overflow，插值紧贴标签。"
+    },
+    {
+      "id": "STYLE_FLEX_MIN_WIDTH_PERCENT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_FLEX_TEXT_WRAP",
+      "level": "warn",
+      "result": "已复核：标签由 flex:1 明确等分可用宽度；活动固定短文本无需长文换行。"
+    },
+    {
+      "id": "STYLE_OVERFLOW_AXIS",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_LAYOUT_UNSUPPORTED",
+      "level": "warn",
+      "result": "已处理：grid 改 flex row，tag flex:1/min-width:0。"
+    },
+    {
+      "id": "STYLE_TEXT_UNSUPPORTED",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_FONT_POSTSCRIPT_NAME",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_FONT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_TEXT_DECORATION",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_BORDER_RADIUS_BORDER",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_BACKGROUND_MASK_LIMIT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_FILTER_LIMIT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_BOX_SHADOW_MULTI",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_CALC_ANGLE",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_PSEUDO_ANIMATION",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_ANIMATION_FILL_MODE",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_ANIMATION_PROPERTY",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "STYLE_Z_INDEX_CONTEXT",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "GLASS_SELECTOR_NUMERIC_ID",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "ANIMATION_WEBVIEW_API",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "SCROLL_CONTEXT_ENHANCED",
+      "level": "error",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "SELECTOR_QUERY_SCOPE",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "PROPS_DEFAULT_FIELD",
+      "level": "error",
+      "result": "已复核：title 使用 value 默认值。"
+    },
+    {
+      "id": "WX_FOR_DATA_TYPE",
+      "level": "warn",
+      "result": "已逐项复核完整组件：无该能力、语法或风险场景。"
+    },
+    {
+      "id": "PROPS_UNION_TYPE",
+      "level": "error",
+      "result": "已复核：title String 与默认值一致，无调用侧文件。"
+    }
+  ],
+  "unresolved": []
+}

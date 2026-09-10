@@ -1,0 +1,134 @@
+<template>
+  <view class="rating-selector">
+    <view class="rating-heading">
+      <text class="rating-label" max-lines="{{1}}" overflow="ellipsis">{{label}}</text>
+      <text class="rating-score">{{localRating}}分</text>
+    </view>
+    <view class="rating-stars">
+      <view
+        wx:for="{{stars}}"
+        wx:key="*this"
+        class="rating-star {{item <= localRating ? 'rating-star-selected' : ''}} {{pressedValue === item ? 'rating-star-pressed' : ''}}"
+        data-value="{{item}}"
+        bindtap="selectRating"
+        bindtouchstart="pressStar"
+        bindtouchend="releaseStar"
+        bindtouchcancel="releaseStar"
+      >
+        <text class="rating-symbol">★</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    ratingKey: String,
+    value: { type: Number, value: 0 },
+    max: { type: Number, value: 5 },
+    readonly: { type: Boolean, value: false },
+    label: { type: String, value: '评分' }
+  },
+  data: {
+    localRating: 0,
+    pressedValue: 0
+  },
+  computed: {
+    stars () {
+      return Array.from({ length: this.max }, (_, index) => index + 1)
+    }
+  },
+  watch: {
+    value: {
+      immediate: true,
+      handler (value) {
+        this.localRating = value
+      }
+    }
+  },
+  methods: {
+    selectRating (event) {
+      if (this.readonly) return
+      const value = Number(event.currentTarget.dataset.value)
+      this.localRating = value
+      this.triggerEvent('change', { ratingKey: this.ratingKey, value })
+    },
+    pressStar (event) {
+      if (this.readonly) return
+      this.pressedValue = Number(event.currentTarget.dataset.value)
+    },
+    releaseStar () {
+      this.pressedValue = 0
+    }
+  }
+})
+</script>
+
+<style>
+.rating-selector {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 24rpx;
+}
+.rating-heading {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.rating-label {
+  display: block;
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rating-score {
+  display: block;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: 28rpx;
+  line-height: 40rpx;
+}
+.rating-stars {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  margin-top: 16rpx;
+}
+.rating-star {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 72rpx;
+  color: #c8c8c8;
+  transform: scale(1);
+  transition: transform 150ms ease;
+}
+.rating-star-selected {
+  color: #ff9900;
+}
+.rating-star-pressed {
+  transform: scale(0.96);
+}
+.rating-symbol {
+  font-size: 48rpx;
+  line-height: 64rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

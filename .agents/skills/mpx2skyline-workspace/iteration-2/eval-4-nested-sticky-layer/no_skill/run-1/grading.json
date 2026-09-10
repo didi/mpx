@@ -1,0 +1,71 @@
+{
+  "grader": "parent semantic review of frozen output",
+  "expectations": [
+    {
+      "id": "e4_00",
+      "text": "Skyline 外层嵌套滚动显式 type=nested，内层显式 list/custom。",
+      "passed": false,
+      "evidence": "Skyline外层type=list而非nested，内层scroll-view缺type。"
+    },
+    {
+      "id": "e4_01",
+      "text": "内层具有 associative-container=nested-scroll-view，嵌套关系正确。",
+      "passed": false,
+      "evidence": "所有内层都没有associative-container=nested-scroll-view。"
+    },
+    {
+      "id": "e4_02",
+      "text": "横向容器开启 enable-flex 并设置横向布局，保留横向滚动。",
+      "passed": true,
+      "evidence": "横条enable-flex，内部tiles flex-direction:row且tile不收缩；接受包裹层横向布局等价实现。"
+    },
+    {
+      "id": "e4_03",
+      "text": "Skyline 用 sticky-section/sticky-header 实现组标题吸顶。",
+      "passed": true,
+      "evidence": "Skyline使用sticky-section/sticky-header循环。"
+    },
+    {
+      "id": "e4_04",
+      "text": "sticky-header 是 section 第一个子节点且有显式背景。",
+      "passed": false,
+      "evidence": "sticky-header虽为首子节点，自身未显式背景，只有其内部view.header设背景。"
+    },
+    {
+      "id": "e4_05",
+      "text": "WebView 保留 CSS sticky 路径，Skyline 专属结构按 renderer 隔离。",
+      "passed": true,
+      "evidence": "isSkyline分支隔离，WebView web-header CSS sticky保留。"
+    },
+    {
+      "id": "e4_06",
+      "text": "弹层调整到可比较的层级，使用高于按钮的 fixed 层而非增大 absolute z-index。",
+      "passed": true,
+      "evidence": "modal与fab同级fixed，3高于2。"
+    },
+    {
+      "id": "e4_07",
+      "text": "未依赖 transform/opacity 创建 Skyline 层叠上下文或 scroll-view 直接子节点 z-index。",
+      "passed": true,
+      "evidence": "未依赖transform/opacity层叠上下文或滚动子节点z-index。"
+    },
+    {
+      "id": "e4_08",
+      "text": "保留 sections/entry 循环数据绑定与稳定 key，没有混淆内外层 item。",
+      "passed": true,
+      "evidence": "section/entry for-item与key=id保留正确循环。"
+    },
+    {
+      "id": "e4_09",
+      "text": "opened 状态、打开与关闭事件仍有效，无负 z-index，无新增依赖。",
+      "passed": true,
+      "evidence": "open/close控制opened，未用负z-index或新依赖。"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 3,
+    "total": 10,
+    "pass_rate": 0.7
+  }
+}

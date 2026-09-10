@@ -1,0 +1,94 @@
+<template>
+  <view class="page">
+    <view class="navigation" style="padding-top: {{statusBarHeight}}px; height: {{navigationHeight}}px">
+      <text>订单</text>
+    </view>
+    <scroll-view
+      class="orders-scroll"
+      style="height: {{scrollHeight}}px"
+      type="list"
+      scroll-y="{{true}}"
+      enhanced="{{true}}"
+      refresher-enabled="{{true}}"
+      refresher-triggered="{{refreshing}}"
+      bindrefresherrefresh="onRefresh"
+      bindscrolltolower="loadMore"
+      bindscroll="onScroll"
+    >
+      <view class="top-space"></view>
+      <view wx:for="{{orders}}" wx:key="id" class="item"><text>{{item.name}}</text></view>
+      <view class="scroll-position"><text>{{scrollTop}}</text></view>
+    </scroll-view>
+  </view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+import { fetchOrders } from './service'
+
+createPage({
+  data: {
+    orders: [],
+    scrollTop: 0,
+    pageNo: 1,
+    refreshing: false,
+    statusBarHeight: 0,
+    navigationHeight: 44,
+    scrollHeight: 0
+  },
+  onLoad () {
+    this.updateLayout()
+    return this.reload()
+  },
+  onResize () {
+    this.updateLayout()
+  },
+  methods: {
+    updateLayout () {
+      const { windowHeight, statusBarHeight } = wx.getWindowInfo()
+      const menu = wx.getMenuButtonBoundingClientRect()
+      this.statusBarHeight = statusBarHeight
+      this.navigationHeight = (menu.top - statusBarHeight) * 2 + menu.height
+      this.scrollHeight = windowHeight - statusBarHeight - this.navigationHeight
+    },
+    onRefresh () {
+      this.refreshing = true
+      return this.reload()
+    },
+    onScroll (e) {
+      this.scrollTop = e.detail.scrollTop
+    },
+    reload () {
+      return fetchOrders(1).then(rows => {
+        this.orders = rows
+        this.pageNo = 1
+      }).finally(() => {
+        this.refreshing = false
+      })
+    },
+    loadMore () {
+      return fetchOrders(this.pageNo + 1).then(rows => {
+        this.orders = this.orders.concat(rows)
+        this.pageNo += 1
+      })
+    }
+  }
+})
+</script>
+<style>
+.page { background-color: #fff; }
+.navigation { display: flex; align-items: center; justify-content: center; }
+.orders-scroll { width: 100%; }
+.top-space { height: 16px; }
+.item { height: 80px; margin: 0 16px; border-bottom: 1px solid #ddd; }
+.scroll-position { padding: 0 16px 16px; }
+</style>
+<script type="application/json">
+{
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "enablePullDownRefresh": false,
+  "navigationBarTitleText": "订单"
+}
+</script>

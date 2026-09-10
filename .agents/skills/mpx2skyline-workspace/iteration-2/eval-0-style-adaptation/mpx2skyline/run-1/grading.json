@@ -1,0 +1,74 @@
+{
+  "grader": "parent semantic review of frozen files, executor test evidence and uniform evaluator syntax check",
+  "expectations": [
+    {
+      "id": "e0_00",
+      "text": "输出完整 product-card.mpx，保留 title String 属性、默认文案与所有业务内容。",
+      "passed": true,
+      "evidence": "outputs/product-card.mpx:1–85 完整四区块，title 仍为 String/value:本周精选商品；SFC/JS/JSON 解析通过。"
+    },
+    {
+      "id": "e0_01",
+      "text": "标题在实际承载节点设置 max-lines=1 与 overflow=ellipsis。",
+      "passed": true,
+      "evidence": "product-card.mpx:3 标题 text 有 max-lines=1/overflow=ellipsis。"
+    },
+    {
+      "id": "e0_02",
+      "text": "保留 WebView 的 white-space/overflow/text-overflow 省略行为，插值紧贴文本标签。",
+      "passed": true,
+      "evidence": "product-card.mpx:3 插值紧贴 text，style 保留 display:block/nowrap/hidden/text-overflow。"
+    },
+    {
+      "id": "e0_03",
+      "text": "两列等宽标签使用 Skyline 支持的布局，不依赖 display:grid。",
+      "passed": true,
+      "evidence": "product-card.mpx 的 .grid 使用 flex row，两项 .tag flex:1/min-width:0 等宽。"
+    },
+    {
+      "id": "e0_04",
+      "text": "活动颜色由受支持的选择器驱动，不依赖属性选择器。",
+      "passed": true,
+      "evidence": ".badge-sale 提供 #d00，未使用属性选择器。"
+    },
+    {
+      "id": "e0_05",
+      "text": "保留活动圆点视觉；合法静态 ::before 不得被当作必须删除的能力。",
+      "passed": true,
+      "evidence": "真实 badge-dot text 保留圆点与 4px 间距；报告没有将合法静态 ::before 宣称为不支持或必须删除。等效视觉节点允许。"
+    },
+    {
+      "id": "e0_06",
+      "text": "WebView 原媒体查询及 320px 阈值保留。",
+      "passed": true,
+      "evidence": "原 @media screen and (max-width:320px) 保留；Jest 覆盖 renderer 与 319/320/321/375px。"
+    },
+    {
+      "id": "e0_07",
+      "text": "Skyline 使用 renderer 状态和相同屏宽阈值控制小屏样式。",
+      "passed": true,
+      "evidence": "attached 检查 renderer===skyline 后用 windowWidth<=320；模板只在 Skyline 绑定 card-small。"
+    },
+    {
+      "id": "e0_08",
+      "text": "Skyline 默认兜底位于媒体查询之后且仅作用于 Skyline，大屏24rpx、小屏12rpx。",
+      "passed": true,
+      "evidence": ".card-skyline 与 .card-skyline.card-small 位于媒体查询后，分别 24rpx/12rpx，WebView 不绑定这些类。"
+    },
+    {
+      "id": "e0_09",
+      "text": "所有新增动态状态有定义与模板绑定，未向组件 JSON 写页面专属 renderer/navigationStyle。",
+      "passed": true,
+      "evidence": "isSkyline/isSmall 在 data 定义并绑定；组件 JSON 只有 component:true。"
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  },
+  "limitations": [
+    "Business tests may use mocks; not a real renderer or complete application build."
+  ]
+}

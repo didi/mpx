@@ -1,0 +1,16 @@
+{
+  "execution_id": "skyline-unified-baseline-20260910",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "fork_turns": "none",
+  "concurrent_executors": 3,
+  "runs_per_case": 1,
+  "prompt_template": "prompt_templates.json:templates.mpx2skyline.prompt",
+  "common_instruction_suffix": "输入和需求范围已确认，直接完成任务，不等待再次确认。不安装依赖。允许点读框架源码或官方资料解决实际疑问，但不要访问其他 Skill 或历史产物。验证脚本、审计证据和 execution.json 放工作目录 run-1，业务产物和 report.md 放同级 outputs。execution.json 如实记录时间、验证命令/结果、未验证项；不要自评分或读取断言。单测失败最多修复 3 次，仍失败就如实记录并停止修复。你不是独自在代码库工作，仅拥有本次配置目录，不修改输入、中央 Skill、仓库其他文件或其他执行目录。",
+  "input_source": "eval-*/input",
+  "skill_source": "central Skill path; replace only this path for merged Skill comparison",
+  "uniform_evaluator": "evaluate-syntax.cjs <configuration-directory>",
+  "evaluator_sha256": "595241f466443a0dc5922e212eef067931af8196ff966115a3afc4762f921936",
+  "semantic_grading": "evals.json assertions and grading-standard.md, binary per assertion; do not fix candidate outputs during grading",
+  "test_scope": "executor-selected core tests plus uniform evaluator; do not interpret mocked tests as device validation"
+}

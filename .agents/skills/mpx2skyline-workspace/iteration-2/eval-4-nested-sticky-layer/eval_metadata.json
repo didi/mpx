@@ -1,0 +1,51 @@
+{
+  "eval_id": 4,
+  "eval_name": "nested-sticky-layer",
+  "prompt": "请对输入文件进行 Skyline 适配改造，确保 Mpx 输出微信小程序时 WebView 与 Skyline 双渲染兼容。任务要求见 input/task.md，范围与交互已确认；请交付完整文件并保留现有业务语义。",
+  "files": [
+    "input/category-panel.mpx",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "e4_00",
+      "text": "Skyline 外层嵌套滚动显式 type=nested，内层显式 list/custom。"
+    },
+    {
+      "id": "e4_01",
+      "text": "内层具有 associative-container=nested-scroll-view，嵌套关系正确。"
+    },
+    {
+      "id": "e4_02",
+      "text": "横向容器开启 enable-flex 并设置横向布局，保留横向滚动。"
+    },
+    {
+      "id": "e4_03",
+      "text": "Skyline 用 sticky-section/sticky-header 实现组标题吸顶。"
+    },
+    {
+      "id": "e4_04",
+      "text": "sticky-header 是 section 第一个子节点且有显式背景。"
+    },
+    {
+      "id": "e4_05",
+      "text": "WebView 保留 CSS sticky 路径，Skyline 专属结构按 renderer 隔离。"
+    },
+    {
+      "id": "e4_06",
+      "text": "弹层调整到可比较的层级，使用高于按钮的 fixed 层而非增大 absolute z-index。"
+    },
+    {
+      "id": "e4_07",
+      "text": "未依赖 transform/opacity 创建 Skyline 层叠上下文或 scroll-view 直接子节点 z-index。"
+    },
+    {
+      "id": "e4_08",
+      "text": "保留 sections/entry 循环数据绑定与稳定 key，没有混淆内外层 item。"
+    },
+    {
+      "id": "e4_09",
+      "text": "opened 状态、打开与关闭事件仍有效，无负 z-index，无新增依赖。"
+    }
+  ]
+}
