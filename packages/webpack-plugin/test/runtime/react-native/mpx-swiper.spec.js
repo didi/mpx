@@ -48,7 +48,10 @@ function createSwiper () {
       useSharedValue: value => useRef({ value }).current,
       useAnimatedStyle: callback => callback(),
       useAnimatedReaction: () => {},
-      withTiming: value => value,
+      withTiming: (value, options, callback) => {
+        if (callback) callback(true)
+        return value
+      },
       Easing: { cubic: easing, linear: easing, in: easing, out: easing, inOut: easing }
     },
     './getInnerListeners': { default: () => ({}) },
@@ -115,6 +118,25 @@ describe('swiper display-multiple-items', () => {
     const next = render({ vertical, current: 1, 'display-multiple-items': 3 })
     expect(next.items.props.value.step.value).toBe(vertical ? 80 : 100)
     expect(next.items.props.value.offset.value).toBe(vertical ? -80 : -100)
+  })
+
+  test('clamps the initial and updated current to the last complete viewport', () => {
+    const render = createSwiper()
+    const props = { current: 4, 'display-multiple-items': 3 }
+    expect(render(props).items.props.value.offset.value).toBe(-200)
+    render({ current: 0, 'display-multiple-items': 3 })
+    expect(render(props).items.props.value.offset.value).toBe(-200)
+    expect(render(props).dots.map(dot => dot.props.style[1].backgroundColor)).toEqual(['gray', 'gray', 'black', 'black', 'black'])
+  })
+
+  test.each([false, true])('clamps the current when the display count increases, vertical=%p', (vertical) => {
+    const render = createSwiper()
+    render({ vertical, current: 4, 'display-multiple-items': 1 })
+    const props = { vertical, current: 4, 'display-multiple-items': 3 }
+    const next = render(props)
+    expect(next.items.props.value.step.value).toBe(vertical ? 80 : 100)
+    expect(next.items.props.value.offset.value).toBe(vertical ? -160 : -200)
+    expect(render(props).dots.map(dot => dot.props.style[1].backgroundColor)).toEqual(['gray', 'gray', 'black', 'black', 'black'])
   })
 
   test('updates display count after measuring a percentage-sized swiper', () => {

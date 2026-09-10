@@ -174,7 +174,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     autoplay = false,
     circular = false,
     disableGesture = false,
-    current: propCurrent = 0,
+    current: rawCurrent = 0,
     bindchange,
     bindchangestart
   } = props
@@ -224,6 +224,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const nextMarginShared = useSharedValue(nextMargin)
   const autoplayShared = useSharedValue(autoplay)
   const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
+  const maxIndex = Math.max(0, children.length - (circular ? 1 : displayMultipleItems))
+  const propCurrent = circular ? rawCurrent : Math.min(Math.max(rawCurrent, 0), maxIndex)
   // 默认前后补位的元素个数
   const patchElmNum = (circular && children.length > 1) ? displayMultipleItems + 1 : 0
   const patchElmNumShared = useSharedValue(patchElmNum)
@@ -423,7 +425,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       let nextIndex = currentIndex.value
       if (!circularShared.value) {
         // 获取下一个位置的坐标, 循环到最后一个元素,直接停止, 取消定时器
-        if (currentIndex.value === childrenLength.value - displayMultipleItemsShared.value) {
+        if (currentIndex.value >= childrenLength.value - displayMultipleItemsShared.value) {
           pauseLoop()
           return
         }
@@ -576,15 +578,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   useEffect(() => {
     childrenLength.value = children.length
-    if (children.length - 1 < currentIndex.value) {
+    if (maxIndex < currentIndex.value) {
       pauseLoop()
-      currentIndex.value = 0
-      offset.value = getOffset(0, step.value)
+      currentIndex.value = circular ? 0 : maxIndex
+      offset.value = getOffset(currentIndex.value, step.value)
       if (autoplay && children.length > 1) {
         loop()
       }
     }
-  }, [children.length])
+  }, [children.length, maxIndex])
 
   useEffect(() => {
     // 1. 如果用户在touch的过程中, 外部更新了current以外部为准（小程序表现）
