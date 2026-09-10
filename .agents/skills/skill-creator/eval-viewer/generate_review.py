@@ -34,7 +34,7 @@ METADATA_FILES = {"transcript.md", "user_notes.md", "metrics.json"}
 TEXT_EXTENSIONS = {
     ".txt", ".md", ".json", ".csv", ".py", ".js", ".ts", ".tsx", ".jsx",
     ".yaml", ".yml", ".xml", ".html", ".css", ".sh", ".rb", ".go", ".rs",
-    ".java", ".c", ".cpp", ".h", ".hpp", ".sql", ".r", ".toml",
+    ".java", ".c", ".cpp", ".h", ".hpp", ".sql", ".r", ".toml", ".mpx",
 }
 
 # Extensions we render as inline images
@@ -128,7 +128,11 @@ def build_run(root: Path, run_dir: Path) -> dict | None:
 
     # Load grading if present
     grading = None
-    for candidate in [run_dir / "grading.json", run_dir.parent / "grading.json"]:
+    for candidate in [
+        run_dir / "grading.json",
+        run_dir / "run-1" / "grading.json",
+        run_dir.parent / "grading.json",
+    ]:
         if candidate.exists():
             try:
                 grading = json.loads(candidate.read_text())
@@ -276,7 +280,7 @@ def generate_html(
     if benchmark:
         embedded["benchmark"] = benchmark
 
-    data_json = json.dumps(embedded)
+    data_json = json.dumps(embedded).replace("<", "\\u003c")
 
     return template.replace("/*__EMBEDDED_DATA__*/", f"const EMBEDDED_DATA = {data_json};")
 

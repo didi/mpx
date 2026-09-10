@@ -13,6 +13,11 @@ import * as reporters from './reporters/console'
 //
 // @mpxjs/perf 包内部不感知分组（framework / user / ...）——分组开关只由调用方
 // 的字面量条件 `if (__mpx_perf_framework__)` / `if (__mpx_perf_user__)` 决定。
+export const aggrStart: typeof impl.aggrStart = __mpx_perf__ ? impl.aggrStart : noop.aggrStart
+export const aggrEnd = __mpx_perf__ ? impl.aggrEnd : noop.aggrEnd
+export const traceStart: typeof impl.traceStart = __mpx_perf__ ? impl.traceStart : noop.traceStart
+export const traceEnd = __mpx_perf__ ? impl.traceEnd : noop.traceEnd
+
 export const scopeStart = __mpx_perf__ ? impl.scopeStart : noop.scopeStart
 export const scopeEnd = __mpx_perf__ ? impl.scopeEnd : noop.scopeEnd
 export const mark = __mpx_perf__ ? impl.mark : noop.mark
@@ -30,4 +35,12 @@ export const clearReporter = __mpx_perf__ ? impl.clearReporter : noop.clearRepor
 export const createConsoleReporter = __mpx_perf__ ? reporters.createConsoleReporter : noop.createConsoleReporter
 export const consoleReporter = __mpx_perf__ ? reporters.consoleReporter : noop.consoleReporter
 
-export type { Reporter, AggResult, MarkEvent, MarkTimeline } from './types'
+export type {
+  AggrResult,
+  MarkEvent,
+  MarkTimeline,
+  PerfStartOptions,
+  Reporter,
+  TraceEvent,
+  TraceTimeline
+} from './types'

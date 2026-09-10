@@ -2,7 +2,7 @@ const TAG_NAME = 'view'
 
 module.exports = function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-  const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
@@ -76,7 +76,7 @@ module.exports = function ({ print }) {
     event: [
       {
         test: /^(transitionend|animationstart|animationiteration|animationend)$/,
-        qa: qaEventLogError
+        qa: qaEventLog
       }
     ]
   }

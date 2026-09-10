@@ -1,0 +1,165 @@
+<template>
+  <view class="segmented-control">
+    <view class="segmented-control-header">
+      <text class="segmented-control-label">{{ label }}</text>
+      <text class="segmented-control-current">{{ selectedLabel }}</text>
+    </view>
+    <view class="segmented-control-options">
+      <view
+        wx:for="{{ options }}"
+        wx:key="value"
+        class="segmented-control-option"
+        wx:class="{{ {
+          'segmented-control-option-selected': item.value === currentValue,
+          'segmented-control-option-disabled': disabled || item.disabled
+        } }}"
+        hover-class="{{ disabled || item.disabled ? 'none' : 'segmented-control-option-pressed' }}"
+        hover-start-time="{{ 0 }}"
+        hover-stay-time="{{ 80 }}"
+        bindtap="handleOptionTap(item)"
+      >
+        <text
+          class="segmented-control-option-text"
+          wx:class="{{ {
+            'segmented-control-option-text-selected': item.value === currentValue
+          } }}"
+        >{{ item.label }}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { computed, ref, toRefs, watch } from '@mpxjs/core'
+
+const props = defineProps({
+  controlKey: {
+    type: String,
+    value: ''
+  },
+  options: {
+    type: Array,
+    value: () => []
+  },
+  value: {
+    type: String,
+    value: ''
+  },
+  disabled: {
+    type: Boolean,
+    value: false
+  },
+  label: {
+    type: String,
+    value: '请选择'
+  }
+})
+
+const { controlKey, options, value: propValue, disabled, label } = toRefs(props)
+const { triggerEvent } = useContext()
+const currentValue = ref(propValue.value)
+const selectedLabel = computed(() => {
+  const selectedOption = options.value.find(option => option.value === currentValue.value)
+  return selectedOption ? selectedOption.label : ''
+})
+
+watch(propValue, (nextValue) => {
+  currentValue.value = nextValue
+})
+
+function handleOptionTap (option) {
+  if (disabled.value || option.disabled) return
+
+  currentValue.value = option.value
+  triggerEvent('change', {
+    controlKey: controlKey.value,
+    value: option.value
+  })
+}
+
+defineExpose({
+  options,
+  disabled,
+  label,
+  currentValue,
+  selectedLabel,
+  handleOptionTap
+})
+</script>
+
+<style>
+.segmented-control {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 24rpx;
+  box-sizing: border-box;
+  background-color: #ffffff;
+}
+
+.segmented-control-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.segmented-control-label {
+  color: #1f2329;
+  font-size: 28rpx;
+  font-weight: bold;
+  line-height: 40rpx;
+}
+
+.segmented-control-current {
+  color: #1677ff;
+  font-size: 26rpx;
+  line-height: 40rpx;
+}
+
+.segmented-control-options {
+  display: flex;
+  flex-direction: row;
+  padding: 4rpx;
+  border-radius: 12rpx;
+  background-color: #f2f3f5;
+}
+
+.segmented-control-option {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 64rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  box-sizing: border-box;
+  background-color: transparent;
+}
+
+.segmented-control-option-selected {
+  background-color: #1677ff;
+}
+
+.segmented-control-option-disabled {
+  opacity: 0.4;
+}
+
+.segmented-control-option-pressed {
+  opacity: 0.65;
+  background-color: #91caff;
+}
+
+.segmented-control-option-text {
+  color: #4e5969;
+  font-size: 26rpx;
+  line-height: 36rpx;
+  text-align: center;
+}
+
+.segmented-control-option-text-selected {
+  color: #ffffff;
+  font-weight: bold;
+}
+</style>
