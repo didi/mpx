@@ -184,9 +184,11 @@ class RNIntersectionObserver {
       right: this._restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.right),
       bottom: this._restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.bottom)
     }
+    visibleRect.width = visibleRect.right - visibleRect.left
+    visibleRect.height = visibleRect.bottom - visibleRect.top
 
     const targetArea = (observeRect.bottom - observeRect.top) * (observeRect.right - observeRect.left)
-    const visibleArea = (visibleRect.bottom - visibleRect.top) * (visibleRect.right - visibleRect.left)
+    const visibleArea = visibleRect.width * visibleRect.height
     const intersectionRatio = targetArea ? visibleArea / targetArea : 0
     const isInsected = isInit ? intersectionRatio > this.initialRatio : !(this._getRatioIndex(intersectionRatio, this.thresholds) === this._getRatioIndex(this.previousIntersectionRatio[observeIndex], this.thresholds))
     this.previousIntersectionRatio[observeIndex] = intersectionRatio

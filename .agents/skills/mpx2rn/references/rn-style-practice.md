@@ -7,16 +7,21 @@
   - [子元素伪类替代方案 (:first-child / :last-child / :nth-child)](#子元素伪类替代方案-first-child--last-child--nth-child)
   - [伪元素选择器替代方案 (::before / ::after)](#伪元素选择器替代方案-before--after)
   - [点击态处理 (:active)](#点击态处理-active)
+- [按需样式能力预声明](#按需样式能力预声明)
+  - [用户写法与预声明条件](#用户写法与预声明条件)
+  - [什么时候使用 enable-* 预声明](#什么时候使用-enable--预声明)
 - [样式单位使用建议](#样式单位使用建议)
   - [优先使用 px 和 rpx 单位](#优先使用-px-和-rpx-单位)
   - [使用百分比](#使用百分比)
+  - [单边边框](#单边边框)
   - [1 像素边框（极细线）](#1-像素边框极细线)
   - [避免使用不兼容的单位 (rem/em)](#避免使用不兼容的单位-remem)
   - [谨慎使用 font-weight 数值](#谨慎使用-font-weight-数值)
 - [布局最佳实践](#布局最佳实践)
   - [使用 Flexbox 布局](#使用-flexbox-布局)
+  - [position: sticky 替代方案](#position-sticky-替代方案)
   - [嵌套 fixed 定位](#嵌套-fixed-定位)
-  - [不要依赖 BFC 和 margin 合并](#不要依赖-bfc-和-margin-合并)
+  - [处理垂直 margin 折叠](#处理垂直-margin-折叠)
   - [避免使用 Grid 布局](#避免使用-grid-布局)
   - [避免使用 Float 布局](#避免使用-float-布局)
 - [文本溢出处理](#文本溢出处理)
@@ -376,7 +381,7 @@ RN 平台不支持 `::before` 和 `::after` 伪元素选择器。对于需要在
 
 RN 平台不支持 `:active` 伪类选择器，如需实现点击态样式，可以使用 `hover-class` 组件属性进行跨端兼容实现。
 
-**支持组件：** `view`、`button`、`navigator`
+**支持组件：** `view`、`button`、`navigator`、`cover-view`
 
 **❌ 避免：**
 
@@ -412,6 +417,62 @@ RN 平台不支持 `:active` 伪类选择器，如需实现点击态样式，可
     background-color: #f5f5f5;
   }
 </style>
+```
+
+---
+
+## 按需样式能力预声明
+
+Mpx2RN 的基础组件出于性能考虑，会在首次渲染时检测 CSS 变量、文本样式透传、背景、Hover 和动画等增强能力，并只调用已启用能力所需的 React Hooks。同一组件实例后续可以更新普通样式值，但不能动态改变这些能力的启用状态或动画类型，否则会因 Hook 调用需要保持稳定而触发运行时报错。
+
+### 用户写法与预声明条件
+
+| 能力 | 涉及的基础组件 | 会启用能力的用户写法 | 动态变更预声明 |
+| --- | --- | --- | --- |
+| Hover | `view`、`cover-view`、`navigator`、`button`；声明了 `is-simple` 的组件不支持 | 存在 `hover-class` | 没有预声明属性，需保证整个生命周期内 `hover-class` 的存在状态稳定，条件分支复用场景使用独立 `key` 重新创建节点 |
+| CSS 变量 | 所有基础组件；声明了 `is-simple` 的组件不支持 | 样式中声明 `--*` 变量或使用 `var(...)` | CSS 变量声明或使用可能发生动态变更时，添加 `enable-var="{{true}}"` |
+| 文本样式与文本属性透传 | 除 `text` 外的所有基础组件，`text` 默认支持无需预声明；声明了 `is-simple` 的组件不支持 | 使用 `color`、`letter-spacing`、`line-height`、`include-font-padding`、`writing-direction`、`font-*`、`text-*` 样式，或 `ellipsizeMode`、`numberOfLines` 属性 | 上述文本样式或属性可能发生动态变更时，添加 `enable-text-pass-through="{{true}}"` |
+| 背景图像 | `view`、`cover-view`、`navigator`；声明了 `is-simple` 的组件不支持 | 使用 `background-image`、`background-size`、`background-repeat`、`background-position` 或包含这些属性的 `background` 简写；仅使用 `background-color` 不计入 | 上述背景样式可能发生动态变更时，添加 `enable-background="{{true}}"` |
+| 动画 | `view`、`cover-view`、`navigator`；声明了 `is-simple` 的组件不支持 | 使用模板 `animation` 属性或 `transition` 样式；CSS `animation` 当前不支持 | 对应写法可能发生动态变更时，API 动画添加 `enable-animation="api"`，transition 添加 `enable-animation="transition"`；同一节点不要切换类型 |
+
+仅普通属性值或样式值发生变化、能力类型始终存在时无需预声明。`enable-fast-image`、`background-color` 和普通布局样式不属于上述预声明条件。
+
+### 什么时候使用 enable-* 预声明
+
+存在以下动态变更场景时，需要预声明或避免节点复用：
+
+1. **节点自身动态定义相关样式或属性**：当相关能力可能发生动态变更时，添加对应的 `enable-*`。
+
+```html
+<!-- dynamicStyle 初始为空，后续可能加入 background-image -->
+<view enable-background@ios|android|harmony="{{true}}" wx:style="{{dynamicStyle}}"></view>
+```
+
+2. **条件分支节点复用**：相邻条件分支的根节点标签相同且没有独立 `key` 时，分支切换可能复用同一节点。此时应优先为不同分支声明不同的 `key`，确保切换时不产生复用；也可以按各分支涉及的按需能力并集，在所有分支根节点添加 `enable-*` 预声明。
+
+```html
+<view
+  wx:if="{{hasCompleted}}"
+  key@ios|android|harmony="completed"
+  hover-class="control-pressed"
+>
+  <text>Clear completed</text>
+</view>
+<view wx:else key@ios|android|harmony="placeholder"></view>
+```
+
+3. **列表节点复用**：列表渲染未声明 `wx:key`，将 `wx:key` 声明为 `index` / `_`，或 `wx:key` 无法解析为合法、唯一且稳定的值（如对应属性不存在、值为对象或存在重复）时，列表项在插入、删除或重排后可能复用已有节点。应优先为列表项声明稳定唯一的业务 key；无法提供时，需按所有列表项可能使用的能力并集，在每个列表项根节点上添加对应的 `enable-*` 预声明，确保节点复用前后的能力启用状态一致。
+
+```html
+<!-- legacyList 暂无稳定业务 key，所有列表项统一预声明可能动态出现的背景能力 -->
+<view
+  wx:for="{{legacyList}}"
+  wx:key="index"
+  enable-background@ios|android|harmony="{{true}}"
+  wx:style="{{item.style}}"
+>
+  <text>{{item.title}}</text>
+</view>
 ```
 
 ---
@@ -564,6 +625,41 @@ export default {
 3. **谨慎使用 calc() 中的百分比**：该写法需要 `parent-width` / `parent-height` 辅助计算，通常还要查询父级布局并延迟展示，存在性能与体验开销；优先使用原生百分比、Flex、rpx / vw / vh 或固定尺寸替代
 4. **使用 vh/vw**：对于视口相关的尺寸，vh/vw 是更好的选择
 
+### 单边边框
+
+声明单边边框时，优先使用 `border-top` / `border-right` / `border-bottom` / `border-left` 简写。单边简写会同时表达目标方向的宽度、样式和颜色，意图更清晰，也可以避免 RN 仅支持统一 `border-style` 带来的方向耦合。
+
+**✅ 推荐：使用单边简写**
+
+```css
+.divider {
+  border-bottom: 1rpx solid #e5e5e5;
+}
+```
+
+如果因动态样式拆分等原因，确实需要组合使用统一的 `border-style` 与单边 `border-*-width`，须将其余三个不需要边框的方向宽度显式归零，避免统一样式与同规则或合并样式中的其他方向宽度共同产生意外边框。
+
+**❌ 避免：只设置目标方向宽度**
+
+```css
+.divider {
+  border-style: solid;
+  border-color: #e5e5e5;
+  border-bottom-width: 1rpx;
+}
+```
+
+**✅ 拆写时显式清零其他方向**
+
+```css
+.divider {
+  border-style: solid;
+  border-color: #e5e5e5;
+  border-width: 0;
+  border-bottom-width: 1rpx;
+}
+```
+
 ### 1 像素边框（极细线）
 
 在移动端开发中，常需要实现物理像素为 1px 的极细边框。
@@ -684,6 +780,8 @@ RN 不支持 `rem` 和 `em` 单位。需将其转换为 `rpx` 以实现响应式
 
 Flexbox 是跨平台最可靠的布局方式。
 
+> **注意：**`view` 显式声明 `display: flex` 且未声明 `flex-direction` 时，Mpx2RN 会在内部补充 `flex-direction: row`，以对齐 W3C Flexbox 的默认行为；否则沿用 RN 默认的 `display: flex` + `flex-direction: column`，模拟 W3C 块级元素纵向流式布局的表现。
+
 **✅ 推荐：**
 
 ```html
@@ -756,6 +854,68 @@ Flexbox 是跨平台最可靠的布局方式。
 </template>
 ```
 
+### position: sticky 替代方案
+
+Mpx2RN 不支持 `position: sticky`。不要直接使用 `position: fixed` 替代：`fixed` 相对页面固定且不占据原布局空间，无法实现 `sticky` 滚动到阈值后吸顶并受滚动容器边界约束的行为。
+
+需要在滚动容器内实现吸顶时，使用 [`scroll-view`](./rn-template-reference.md#scroll-view) + [`sticky-header`](./rn-template-reference.md#sticky-header) 组件替代。`sticky-header` 必须是 `scroll-view` 的直接子节点，或作为 `sticky-section` 的直接子节点；RN 环境还必须在 `scroll-view` 上显式开启 `enable-sticky`。该属性是 RN 环境特有能力，应使用属性后缀将其限定在 RN 平台。
+
+**❌ 避免：**RN 不支持通过 `position: sticky` 实现吸顶。
+
+```html
+<template>
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="summary">概览内容</view>
+    <view class="filter-bar">筛选条件</view>
+    <view class="list">列表内容</view>
+  </scroll-view>
+</template>
+
+<style>
+  .page-scroll {
+    flex: 1;
+  }
+
+  .filter-bar {
+    position: sticky;
+    top: 0;
+  }
+</style>
+```
+
+**✅ 推荐：**用 `sticky-header` 表达吸顶节点，并为 RN 侧开启 sticky 能力。
+
+```html
+<template>
+  <scroll-view
+    class="page-scroll"
+    scroll-y
+    enable-sticky@ios|android|harmony="{{true}}"
+  >
+    <view class="summary">概览内容</view>
+    <sticky-header offset-top="{{0}}">
+      <view class="filter-bar">筛选条件</view>
+    </sticky-header>
+    <view class="list">列表内容</view>
+  </scroll-view>
+</template>
+
+<style>
+  .page-scroll {
+    flex: 1;
+  }
+
+  .filter-bar {
+    background-color: #fff;
+  }
+</style>
+```
+
+存在多组吸顶区域时，可将 [`sticky-section`](./rn-template-reference.md#sticky-section) 作为 `scroll-view` 的直接子节点，再把 `sticky-header` 放在对应的 `sticky-section` 内。需要注意：
+
+1. `sticky-header` / `sticky-section` 目前仅支持 RN、Web 和微信小程序 Skyline；还需输出其他平台时，应通过条件编译保留该平台原有的吸顶实现。
+2. RN Android 下更适合内容稳定、状态不频繁更新的吸顶区域；吸顶动画过程中立即更新状态、滚动内容高度突变，或通过 `scroll-into-view` / `scroll-top` 主动改变滚动位置时，可能出现闪烁或抖动。
+
 ### 嵌套 fixed 定位
 
 Mpx2RN 中 `position: fixed` 不是由 RN 原生定位直接承载，而是通过 portal 将 fixed 节点提升到 page root 下，再使用 `position: absolute` 模拟固定定位。因此模板中嵌套的 fixed 节点，在 RN 视图实现层会变成 page root 下的兄弟节点，无法继续保持原模板里的父子关系。
@@ -812,23 +972,35 @@ Mpx2RN 中 `position: fixed` 不是由 RN 原生定位直接承载，而是通�
 </style>
 ```
 
-### 不要依赖 BFC 和 margin 合并
+### 处理垂直 margin 折叠
 
-小程序 / Web 的普通块级布局中存在相邻块级元素垂直 `margin` 合并行为，常见现象包括：父子元素的垂直外边距可能合并、相邻兄弟元素的上下外边距可能取较大值而不是相加。BFC（块级格式化上下文）是常见的隔离手段；例如 `overflow: hidden` 可通过创建 BFC 隔离部分父子 margin 合并。CSS margin 合并只发生在块级布局的垂直方向，水平方向的 `margin-left` / `margin-right` 不会发生 margin 合并。
+小程序 / Web 的普通块级布局中，满足 CSS margin 折叠条件的节点关系可能发生垂直 `margin` 折叠：相邻兄弟元素、父元素与首个 / 末个流内后代、空块自身的上下 margin 都可能折叠。CSS margin 折叠只发生在垂直方向，水平方向的 `margin-left` / `margin-right` 不受影响。具体条件参考 [MDN · 掌握外边距折叠](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Guides/Box_model/Margin_collapsing)。
 
-RN 基于 Yoga 布局，没有 BFC 和 margin 合并概念。输出 RN 时，`marginTop` / `marginBottom` 会作为节点自身间距参与布局，相邻节点的垂直 margin 通常会叠加，`overflow: hidden` 也不具备创建 BFC 的布局语义。因此跨端适配时不要依赖 BFC 或 margin 合并来“自动修正”间距，应改为显式、单向地定义间距归属。
+RN 基于 Yoga 布局，没有 BFC 和 margin 折叠概念。输出 RN 时，`marginTop` / `marginBottom` 会作为节点自身间距参与布局，相邻节点的垂直 margin 通常会叠加。因此适配普通块级布局中满足 margin 折叠条件的节点关系时，需要显式处理原平台发生的 margin 折叠，避免同一组 margin 在 RN 中产生更大的间距。
+
+**先确认会折叠，再改造：**不要仅因两个垂直 margin 同时存在就归到单侧。按节点关系应用下表；命中任一“不要处理”条件，或无法确认原平台会发生折叠时，保留原 margin。
+
+| 节点关系 | 确认会折叠 | 反向约束：以下情况不要处理 |
+| --- | --- | --- |
+| 相邻兄弟 | 最终渲染结果中相邻的普通块级兄弟，前项 `margin-bottom` 与后项 `margin-top` 之间没有其他内容 | 共享父容器为 Flex / Grid；任一节点浮动或使用 `position: absolute/fixed`；后一节点因 `clear` 产生 clearance；条件渲染后并不相邻 |
+| 父元素与首个流内后代 | 两者的 `margin-top` 之间没有父元素的 `border-top`、`padding-top`、行内内容或 clearance，且父元素未建立新 BFC | 存在任一左述分隔条件；父元素通过 `overflow: hidden/auto/scroll`、`display: flow-root` 等建立 BFC；父元素为 Flex / Grid 容器 |
+| 父元素与末个流内后代 | 两者的 `margin-bottom` 之间没有父元素的 `border-bottom`、`padding-bottom`，父元素没有明确 `height` / `min-height`，且未建立新 BFC | 存在任一左述分隔条件；父元素通过 `overflow: hidden/auto/scroll`、`display: flow-root` 等建立 BFC；父元素为 Flex / Grid 容器 |
+| 空块自身 | `margin-top` 与 `margin-bottom` 之间没有 `border`、`padding`、行内内容、`height` 或 `min-height` | 存在任一左述分隔条件 |
+
+`overflow: hidden/auto/scroll` 建立 BFC 后，会阻止父元素自身 margin 与其后代 margin 跨父子边界折叠；但该父元素的外边距是否与相邻兄弟折叠，仍须按“相邻兄弟”一行独立判断，不能仅凭 `overflow` 排除。
+
+折叠后的值也不能一律用 `max()` 计算：两侧均为非负值时取较大值；同时存在正负 margin 时，取最大正值与最小负值之和；全部为负值时取最小值（绝对值最大的负值）。
 
 **推荐处理原则：**
 
-1. **容器外沿空间用父容器 `padding` 表达**：不要依赖首个 / 末个子节点的 margin 与父容器合并。
-2. **兄弟节点间距只交给一侧负责**：列表项之间统一使用后一项的 `margin-top` 或前一项的 `margin-bottom`，不要同时给上下两个节点都写垂直 margin。
+1. **容器边界间距由父容器单侧表达**：外部间距使用父容器 margin，内部留白使用父容器 padding，不要依赖首个 / 末个子节点的 margin 与父容器折叠。
+2. **兄弟节点间距只交给一侧负责**：按模板顺序逐对检查普通块级布局中满足 margin 折叠条件的相邻兄弟节点，同时识别 `margin` 简写隐含的 `margin-top` / `margin-bottom`。将原平台折叠后的有效间距完整放在任意一侧，另一侧删除或置 `0`；常见的两侧非负 margin 场景取两者较大值，例如 `24rpx` 与 `12rpx` 归为单侧 `24rpx`，两侧均为 `20rpx` 时归为单侧 `20rpx`。不要因为 `margin` 属性本身受 RN 支持就跳过这项布局语义检查。
 3. **用模板状态标记首尾项**：需要去掉首项或末项间距时，用 `wx:class` + `index` 显式绑定单类。
-4. **不要把 BFC hack 当作跨端布局手段**：`overflow: hidden` 在 RN 中主要用于裁剪，不应用来隔离 margin 合并。
-5. **必要时可显式声明纵向 Flex**：如果容器内仍存在难以拆解的垂直 margin 关系，可在确认不影响原布局的前提下，同时声明 `display: flex` 与 `flex-direction: column`，使原平台子节点也作为 flex item 参与布局，进一步避免垂直 margin 合并；若已通过 `padding` 和单侧 margin 明确处理间距，则不必额外添加 flex 声明。
+4. **必要时可显式声明纵向 Flex**：如果容器内仍存在难以拆解的垂直 margin 关系，可在确认不影响原布局的前提下，同时声明 `display: flex` 与 `flex-direction: column`，使原平台子节点也作为 flex item 参与布局，避免垂直 margin 折叠；若已通过 `padding` 和单侧 margin 明确处理间距，则不必额外添加 flex 声明。
 
 注意，Mpx 输出 RN 时，如果显式声明了 `display: flex` 但未声明 `flex-direction`，会自动补充 `flex-direction: row` 与小程序 / Web 对齐。为了保持原本块级纵向布局，选择添加 flex 声明时必须同步声明 `flex-direction: column`。
 
-**❌ 避免：**依赖 Web / 小程序中的 margin 合并或 BFC 隔离来得到最终间距。下例在原平台中 `.card` 通过 `overflow: hidden` 创建 BFC 隔离父子 margin，但普通流里的相邻兄弟垂直 margin 仍可能按 CSS 规则合并；RN 中没有这套行为，间距可能明显不同。
+**❌ 避免：**下例使用普通块级布局，其中“父元素与首个子元素”和“两个相邻兄弟元素”这两组节点关系均满足 margin 折叠条件。原平台中 `.card` 与标题的顶部 margin 折叠为 `24rpx`，标题和说明的相邻垂直 margin 也会折叠；RN 中这些 margin 会分别参与布局，父子顶部间距会叠加为 `44rpx`。
 
 ```html
 <template>
@@ -840,7 +1012,7 @@ RN 基于 Yoga 布局，没有 BFC 和 margin 合并概念。输出 RN 时，`ma
 
 <style>
   .card {
-    overflow: hidden;
+    margin-top: 20rpx;
   }
 
   .card-title {
@@ -854,7 +1026,7 @@ RN 基于 Yoga 布局，没有 BFC 和 margin 合并概念。输出 RN 时，`ma
 </style>
 ```
 
-**✅ 推荐：**把容器内边距交给父容器，把标题和说明之间的间距交给单侧节点，跨端都会得到明确且稳定的布局结果。
+**✅ 推荐：**把父子顶部折叠后的 `24rpx` 外部间距归给 `.card` 的 `margin-top`，把标题和说明之间的间距交给单侧节点，跨端都会得到明确且稳定的布局结果。
 
 ```html
 <template>
@@ -866,7 +1038,7 @@ RN 基于 Yoga 布局，没有 BFC 和 margin 合并概念。输出 RN 时，`ma
 
 <style>
   .card {
-    padding-top: 24rpx;
+    margin-top: 24rpx;
   }
 
   .card-desc {
