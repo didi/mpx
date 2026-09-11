@@ -1535,7 +1535,7 @@ module.exports = defineConfig({
 
 Mpx 编译 unocss 原子类的 webpack 主插件
 
-如果在使用 `@mpxjs/cli@3.x` 创建项目时选择了 unocss，会自动安装 MpxUnocssPlugin ，直接在 mpx.unocss 配置项中传入相关配置即可
+如果在使用 `@mpxjs/cli@3.x` 创建项目时选择了 unocss，脚手架会自动安装并注册 `MpxUnocssPlugin`，直接在 `mpx.unocss` 配置项中传入相关配置即可
 ```js
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
@@ -1562,7 +1562,8 @@ yarn add -D @mpxjs/unocss-plugin
 
 ```js
   // vue.config.js
-  const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+  const MpxUnocssPluginModule = require('@mpxjs/unocss-plugin')
+  const MpxUnocssPlugin = MpxUnocssPluginModule.default || MpxUnocssPluginModule
   const { defineConfig } = require('@vue/cli-service')
 
   module.exports = defineConfig({
@@ -1575,6 +1576,8 @@ yarn add -D @mpxjs/unocss-plugin
     },
   })
 ```
+
+> `@mpxjs/unocss-plugin@2.11.1` 起以 ESM 形式发布。在 CommonJS 配置文件中通过 `require()` 加载时，需要兼容读取默认导出；以上写法同时兼容旧版 CommonJS 导出。在不额外启用实验参数的情况下，上述 CommonJS 兼容写法要求 Node.js 版本满足 `^20.19.0 || >=22.12.0`。
 
 插件支持配置如下：
 
