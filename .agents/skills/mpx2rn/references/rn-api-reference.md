@@ -1800,7 +1800,11 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `relativeTo(selectorOrNodesRef, margins?)` | 指定参照节点；支持 selector 字符串或 `NodesRef`。`margins` 支持 `top/right/bottom/left`。 |
 | `relativeToViewport(margins?)` | 以当前可视窗口为参照区域。 |
 | `observe(selectorOrNodesRef, callback)` | 开始观察；同一实例只能调用一次。支持 selector、`NodesRef` 或 `NodesRef[]`。 |
-| `disconnect()` | 从当前 IntersectionObserver 上下文移除实例。 |
+| `disconnect()` | 停止观察，移除页面和组件中的注册引用，断开实例对组件的直接引用，阻止后续测量并忽略在途结果。可重复调用；断开后需新建实例才能重新观察。业务不再使用时也应释放对实例的引用，便于垃圾回收。 |
+
+同一实例重复调用 `observe()`，或对已断开的实例再次调用 `observe()`、`relativeTo()`、`relativeToViewport()`，RN 使用 `error + return`：通过 Mpx 的 `error` 报告错误并忽略调用，交由 `mpx.config.errorHandler` 或框架默认错误日志处理。`error` 本身不主动抛出异常，不等同于微信直接抛出异常的反馈方式。
+
+RN 组件卸载时会自动断开该组件创建的所有 observer；页面隐藏不等同于卸载，需要暂停时由业务主动断开，并在重新显示后按需创建。同一组节点应复用 observer，避免每次滚动都创建；Mpx `scroll-view` 可通过 `enable-trigger-intersection-observer` 触发现有 observer 测量。目标节点变化后，应先断开旧实例，再在节点渲染完成后重新创建。
 
 `observe` 回调收到 **Object**：
 
