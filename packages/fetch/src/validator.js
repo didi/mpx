@@ -94,13 +94,13 @@ export function doValidator (rules, config, greedy, env) {
   // 添加了校验规则但是参数里没有的属性且require为true的情况
   // 默认require是true
   Object.keys(ruleBackUp).forEach(key => {
-    let require = ruleBackUp[key]?.require
+    let required = ruleBackUp[key]?.require
     // 支持require传入方法
-    if (isFunction(require)) {
-      const requireRet = require(config, env)
-      if (typeof requireRet === 'boolean') require = requireRet
+    if (isFunction(required)) {
+      const requireRet = required(config, env)
+      if (typeof requireRet === 'boolean') required = requireRet
     }
-    if (require || require === undefined) {
+    if (required || required === undefined) {
       errorResult.push(`请添加必传的${key}属性`)
     }
   })
