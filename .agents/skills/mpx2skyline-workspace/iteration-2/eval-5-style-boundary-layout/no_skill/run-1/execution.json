@@ -1,8 +1,0 @@
-{
-  "started_at": "2026-09-08T09:28:49+00:00",
-  "ended_at": "2026-09-08T09:35:48.180674+00:00",
-  "duration_seconds": 419.180674,
-  "status": "completed",
-  "validation": "static assertions passed; build and device rendering not run",
-  "token_usage": null
-}

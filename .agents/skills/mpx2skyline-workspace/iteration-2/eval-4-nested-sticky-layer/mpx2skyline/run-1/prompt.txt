@@ -1,8 +1,0 @@
-你是 Mpx 开发工程师。任务：请对输入文件进行 Skyline 适配改造，确保 Mpx 输出微信小程序时 WebView 与 Skyline 双渲染兼容。任务要求见 input/task.md，范围与交互已确认；请交付完整文件并保留现有业务语义。
-目标：微信 WebView/Skyline 双渲染，非 RN。
-工作目录：/private/tmp/skyline-unified-baseline-20260910/eval-4-nested-sticky-layer/mpx2skyline/run-1。
-输入：/Users/hjw/project/mpx/.agents/skills/mpx2skyline-workspace/iteration-2/eval-4-nested-sticky-layer/input/category-panel.mpx, /Users/hjw/project/mpx/.agents/skills/mpx2skyline-workspace/iteration-2/eval-4-nested-sticky-layer/input/task.md，先读 task.md。
-交付：在 /private/tmp/skyline-unified-baseline-20260910/eval-4-nested-sticky-layer/mpx2skyline/outputs 保留输入相对路径写完整产物，依赖文件保留；不要修改 input。最后写 report.md 说明改动和验证。
-隔离：不要读取 evals.json、eval_metadata.json、grading-standard.md、其他配置或历史运行输出。
-先完整读取 /Users/hjw/project/mpx/.agents/skills/mpx2skyline/SKILL.md，按其中流程和知识路由读取相关参考文档。
-输入和需求范围已确认，直接完成任务，不等待再次确认。不安装依赖。允许点读框架源码或官方资料解决实际疑问，但不要访问其他 Skill 或历史产物。验证脚本、审计证据和 execution.json 放工作目录 run-1，业务产物和 report.md 放同级 outputs。execution.json 如实记录时间、验证命令/结果、未验证项；不要自评分或读取断言。单测失败最多修复 3 次，仍失败就如实记录并停止修复。你不是独自在代码库工作，仅拥有本次配置目录，不修改输入、中央 Skill、仓库其他文件或其他执行目录。

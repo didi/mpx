@@ -1,0 +1,23 @@
+{
+  "status": "definition-only",
+  "files": {
+    "grading-standard.md": "6e9588b05c480ccb38c9ec89839141f4f56b4cb3898aeae342909be2d5e5122d",
+    "evals.json": "af2c61ccd85e7ce46df5a1226c19417b68aaf1f2c655f972075899dc1f676bbf",
+    "prompt_templates.json": "fda8b1ff360c2a2d004519e4ee8acc37b1e47d03d4a7ca06198254e9b4fd25f0",
+    "eval-2-template-runtime/input/row.wxml": "80f43cf55dbaf032920128f167d8b324b588e4dc01cbaa66e5f4063c394c876d",
+    "eval-2-template-runtime/input/user-list.mpx": "76215176e149f4184f71f32c0c8791f2b56461944cbe370d6c5d1585dfb2812c",
+    "eval-2-template-runtime/input/task.md": "5f38be5bc2e2b93bd3825b019afb8ae798217c14c37e69f436d8e3da8c016b02",
+    "eval-3-inline-animation/input/promo-card.mpx": "7c9fc96d15da6ed9b358e209afaf372e7af2c20e77fb0a1706981ab072bbac2c",
+    "eval-3-inline-animation/input/task.md": "595c42535a2935347ebec5b877984380a72e3b198c00b29c099f61adb24999e3",
+    "eval-3-inline-animation/input/logo.svg": "c71a85400c9d1bc64393103364611c9370076caec60d65bc20fdcfdd97f6d29d",
+    "eval-0-style-layout/input/style-card.mpx": "02971adbcf26eea73fdb3b249f04307a3cd9dc86e35d0db4a3890fc700c50370",
+    "eval-0-style-layout/input/task.md": "55eb0e760d1d4b151c7a3b5e2f41f7e3d6595fa997f3db1e3dda22cbc63e4345",
+    "eval-1-page-scroll-config/input/orders.mpx": "351c7bbb2859ab16b134901f755f2020533451dba042d26afc746affd3b6f5be",
+    "eval-1-page-scroll-config/input/app.json": "08b6c0c8a67d9602540f6eba281fd3649e75b8aee175ce2640a7dd3a714cf1ac",
+    "eval-1-page-scroll-config/input/service.js": "ad8903f25741fc70ba469c96bfeb74e6eb8e619415575c9ca50c6117ed464808",
+    "eval-1-page-scroll-config/input/task.md": "149e1e8678c345bda7f0dfe237eac680ab68895d55522612dd06add7f766314e",
+    "eval-4-nested-sticky-layer/input/category-panel.mpx": "33b25dedadd835936006b727386f6c1de7dcb93682393272cabe74919745cac4",
+    "eval-4-nested-sticky-layer/input/task.md": "4f067fec8f25e5b21ba32f23af9fd1ef62bbf47d6972e6e4db560b2ad5be0813"
+  },
+  "note": "记录新测试定义及输入；执行时另记录实际Skill版本和哈希。"
+}

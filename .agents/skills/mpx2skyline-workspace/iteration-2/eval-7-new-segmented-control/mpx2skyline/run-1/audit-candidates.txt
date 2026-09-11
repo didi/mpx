@@ -1,8 +1,0 @@
-3:    <text class="control-label">{{label}}</text>
-4:    <scroll-view class="options" type="list" scroll-x="{{true}}" enable-flex="{{true}}">
-11:        <text class="option-label" max-lines="{{1}}" overflow="ellipsis">{{item.label}}</text>
-14:    <text class="current-label" max-lines="{{1}}" overflow="ellipsis">当前选中：{{selectedLabel}}</text>
-70:  flex-direction: row;
-76:  flex-direction: row;
-104:  text-overflow: ellipsis;
-113:  text-overflow: ellipsis;

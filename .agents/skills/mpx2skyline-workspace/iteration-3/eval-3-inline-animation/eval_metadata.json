@@ -1,0 +1,61 @@
+{
+  "eval_id": 3,
+  "eval_name": "inline-animation",
+  "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+  "files": [
+    "input/logo.svg",
+    "input/promo-card.mpx",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "s3_00",
+      "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+      "rule_id": "skyline.inline-flow",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "图文混排"
+      },
+      "verification": "检查微信输出实际 span 容器的省略属性、图片 display、renderer 分支及父级宽度和收缩约束；使用超长标题核对图标与文字共同截断的实现路径。普通 text 的省略属性不能替代此混排容器检查。",
+      "source_assertions": [
+        "e3_00",
+        "e3_01",
+        "e3_02",
+        "e3_03"
+      ]
+    },
+    {
+      "id": "s3_01",
+      "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+      "rule_id": "skyline.node-animation",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-style-reference.md",
+        "section": "动画与过渡差异"
+      },
+      "verification": "追踪真实圆点节点的关键帧、fill-mode与周期，确认尺寸颜色及opacity变化对应原效果。",
+      "source_assertions": [
+        "e3_04",
+        "e3_05"
+      ]
+    },
+    {
+      "id": "s3_02",
+      "text": "Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
+      "rule_id": "skyline.state-transition",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "animation API 不支持 → 使用 CSS transition"
+      },
+      "verification": "追踪按下/松开/取消绑定到Skyline状态及CSS，核对scale(.96)、opacity(.7)与恢复值。",
+      "source_assertions": [
+        "e3_06",
+        "e3_07",
+        "e3_08",
+        "e6_08"
+      ]
+    }
+  ]
+}

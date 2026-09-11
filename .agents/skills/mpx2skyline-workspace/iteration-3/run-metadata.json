@@ -1,0 +1,8 @@
+{
+  "status": "not_run",
+  "suite_version": 3,
+  "cases": 5,
+  "assertions": 31,
+  "historical_baseline": "../iteration-2",
+  "baseline_reuse": "旧90/90属于不同输入/断言；新集需要重新建立独立Skill基线后比较合并Skill。"
+}

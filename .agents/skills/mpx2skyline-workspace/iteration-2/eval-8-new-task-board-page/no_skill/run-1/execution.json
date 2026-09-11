@@ -1,7 +1,0 @@
-{
-  "started_at": "2026-09-08T11:03:08Z",
-  "finished_at": "2026-09-08T11:11:07Z",
-  "status": "completed",
-  "validation": "Node VM behavior assertions and JSON/CSS checks passed; no actual Mpx build or device rendering",
-  "token_usage": null
-}

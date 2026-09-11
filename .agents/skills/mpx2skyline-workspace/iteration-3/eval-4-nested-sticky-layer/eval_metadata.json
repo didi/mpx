@@ -1,0 +1,73 @@
+{
+  "eval_id": 4,
+  "eval_name": "nested-sticky-layer",
+  "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+  "files": [
+    "input/category-panel.mpx",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "s4_00",
+      "text": "Skyline 外层纵向滚动采用type=nested，内层滚动显式选择list/custom，并通过associative-container=nested-scroll-view建立关联。",
+      "rule_id": "skyline.nested-association",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-component-reference.md",
+        "section": "Skyline 必填属性与结构约束"
+      },
+      "verification": "沿模板父子关系检查nested祖先、内层类型和关联值。",
+      "source_assertions": [
+        "e4_00",
+        "e4_01"
+      ]
+    },
+    {
+      "id": "s4_01",
+      "text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
+      "rule_id": "skyline.horizontal-list",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-component-reference.md",
+        "section": "Skyline 相对 WebView 的高频差异补充"
+      },
+      "verification": "检查横向容器的type、scroll-x、enable-flex、flex-direction及条目宽度/收缩；采用list时检查直接子节点，多项目排列后形成横向内容。",
+      "source_assertions": [
+        "e4_02",
+        "e7_06",
+        "e7_07"
+      ]
+    },
+    {
+      "id": "s4_02",
+      "text": "Skyline 分支使用sticky-section/sticky-header实现组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应的CSS sticky实现。",
+      "rule_id": "skyline.sticky-structure",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "sticky 吸顶替代方案"
+      },
+      "verification": "分别选择renderer分支，检查sticky节点关系、背景与WebView样式；真机吸顶另记验证状态。",
+      "source_assertions": [
+        "e4_03",
+        "e4_04",
+        "e4_05"
+      ]
+    },
+    {
+      "id": "s4_03",
+      "text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
+      "rule_id": "skyline.fixed-layer",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "z-index 与层叠适配"
+      },
+      "verification": "追踪实际fixed兄弟或等效可比较层级，比较最终覆盖关系及z-index。",
+      "source_assertions": [
+        "e4_06",
+        "e4_07"
+      ]
+    }
+  ]
+}

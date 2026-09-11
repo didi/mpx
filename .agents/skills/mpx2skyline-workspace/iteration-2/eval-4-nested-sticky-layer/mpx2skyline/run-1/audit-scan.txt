@@ -1,8 +1,0 @@
-3:    <scroll-view wx:if="{{isSkyline}}" type="nested" scroll-y="{{true}}" class="outer">
-4:      <scroll-view type="custom" associative-container="nested-scroll-view" scroll-y="{{true}}" class="sections">
-7:          <scroll-view type="list" associative-container="nested-scroll-view" scroll-x="{{true}}" enable-flex="{{true}}" class="strip">
-13:    <scroll-view wx:else type="custom" scroll-y="{{true}}" class="outer">
-16:        <scroll-view type="list" scroll-x="{{true}}" enable-flex="{{true}}" class="strip">
-41:    this.isSkyline = this.renderer === 'skyline'
-68:  position: sticky;
-73:  flex-direction: row;

@@ -1,0 +1,15 @@
+{
+  "variables": {
+    "TASK_PROMPT": "eval.prompt",
+    "INPUT_PATHS": "当前eval外层input文件绝对路径；共享读取",
+    "OUTPUT_DIR": "eval-*/<configuration>/outputs绝对路径",
+    "WORKDIR": "eval-*/<configuration>/run-1绝对路径",
+    "SKILL_PATH": "当前配置中央Skill路径；执行前指定"
+  },
+  "template": "任务：{{TASK_PROMPT}}\n输入：{{INPUT_PATHS}}，先读task.md。\n先完整读取{{SKILL_PATH}}，按需阅读关联参考。当前目标是微信Skyline/glass-easel，其他平台分支可采用各自合法实现。\n工作目录：{{WORKDIR}}；业务产物与report.md写入{{OUTPUT_DIR}}，测试和审计证据放工作目录。输入和Skill共享只读，不复制到run目录。\n仅读取任务输入及当前配置允许的Skill，保持评分文件和历史产物隔离。范围已确认，直接实施。记录真实验证与未验证项，单测失败最多尝试3次修复。",
+  "archive_rules": [
+    "执行前后记录输入、Skill逐文件哈希和模型参数。",
+    "产物完整性、语法编译、业务回归另记validation.json；Skyline得分仅来自evals.json。",
+    "独立Skill与合并Skill采用同一模板、输入、模型参数和验证方法。"
+  ]
+}

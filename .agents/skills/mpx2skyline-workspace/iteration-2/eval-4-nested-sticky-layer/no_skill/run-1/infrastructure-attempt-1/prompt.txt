@@ -1,1 +1,0 @@
-你是Mpx开发工程师。仅在当前工作目录工作。读取input/task.md和input全部文件，完成微信WebView/Skyline双渲染任务，用户已确认实施。完整文件交付outputs并保留依赖相对路径，写outputs/report.md说明真实验证。不修改input。不读取evals、评分标准、其他运行或其他Skill。不自评分，完成即结束。这是用户指定no_skill基线，不读取或使用任何Skill或AGENTS，仅凭已有知识完成。
