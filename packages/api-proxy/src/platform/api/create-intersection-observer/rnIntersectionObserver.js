@@ -46,7 +46,10 @@ class RNIntersectionObserver {
 
     // 支持传递ref 或者 selector
   relativeTo (selector, margins = {}) {
-    if (this._disconnected) return this
+    if (this._disconnected) {
+      warn('"relativeTo" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      return this
+    }
     let relativeRef
     if (isString(selector)) {
       relativeRef = this.component.__selectRef(selector, 'node')
@@ -64,14 +67,20 @@ class RNIntersectionObserver {
   }
 
   relativeToViewport (margins = {}) {
-    if (this._disconnected) return this
+    if (this._disconnected) {
+      warn('"relativeToViewport" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      return this
+    }
     this.relativeRef = WindowRefStr
     this.margins = Object.assign({}, DefaultMargin, margins)
     return this
   }
 
   observe (selector, callback) {
-    if (this._disconnected) return
+    if (this._disconnected) {
+      warn('"observe" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      return
+    }
     if (this.observerRefs) {
       warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
       return

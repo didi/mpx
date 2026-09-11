@@ -30,6 +30,8 @@
 
 不再需要观察时调用 `observer.disconnect()`。该方法会释放实例持有的组件、节点和回调引用，取消待执行的测量任务，并忽略已发起测量的后续结果。重复调用是安全的；断开后的实例不能恢复观察，需要重新创建。
 
+对已断开的实例调用 `observe()`、`relativeTo()` 或 `relativeToViewport()`，RN 会通过 Mpx 的 `warn` 提示并忽略调用，沿用现有 RN 错误处理方式，不主动抛出异常。这与微信在已观察实例上重新调用 `observe()` 或 `relativeTo()` 时抛出异常的反馈方式不同。
+
 组件卸载时，框架会自动断开该组件创建的所有 observer。页面隐藏不等同于组件卸载；需要在隐藏期间停止观察时，应主动断开，并在页面重新显示后按需创建。
 
 同一组节点应复用 observer，避免在每次滚动时重复创建。使用 Mpx `scroll-view` 时，开启 `enable-trigger-intersection-observer` 可在滚动时触发现有 observer 的测量；目标节点变化后，按需断开旧实例并在节点渲染完成后重新创建。

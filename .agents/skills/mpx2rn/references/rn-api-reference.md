@@ -1790,6 +1790,8 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `observe(selectorOrNodesRef, callback)` | 开始观察；同一实例只能调用一次。支持 selector、`NodesRef` 或 `NodesRef[]`。 |
 | `disconnect()` | 停止观察，移除页面和组件中的注册引用，释放节点及回调引用，取消待执行的测量并忽略在途结果。可重复调用；断开后需新建实例才能重新观察。 |
 
+对已断开的实例再次调用 `observe()`、`relativeTo()` 或 `relativeToViewport()`，RN 沿用 `warn + return`：通过 Mpx 的警告机制提示并忽略调用，不主动抛出异常。不要将此错误反馈方式视为与微信完全一致；微信在已观察实例上重新调用 `observe()` 或 `relativeTo()` 会抛出异常。
+
 RN 组件卸载时会自动断开该组件创建的所有 observer；页面隐藏不等同于卸载，需要暂停时由业务主动断开，并在重新显示后按需创建。同一组节点应复用 observer，避免每次滚动都创建；Mpx `scroll-view` 可通过 `enable-trigger-intersection-observer` 触发现有 observer 测量。目标节点变化后，应先断开旧实例，再在节点渲染完成后重新创建。
 
 `observe` 回调收到 **Object**：
