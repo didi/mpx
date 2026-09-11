@@ -501,6 +501,19 @@ notifyDimensionsChange({
 
 框架会复制原始 Dimensions 后再交给 `customDimensions`，避免自定义逻辑直接修改 React Native 返回的原对象。
 
+#### getStyleDimensions
+
+```ts
+() => ScaledSize
+```
+
+返回经过 `rnConfig.customDimensions` 处理后、由 `rnConfig.dimensionsBase` 选中的当前尺寸副本。修改返回值不会影响框架内部缓存。首次调用会确保完成尺寸初始化；如果后续更换 `customDimensions`，再次调用时会基于最近一次原始 Dimensions 重新处理。
+
+```js
+const dimensions = getStyleDimensions()
+console.log(dimensions.width, dimensions.height)
+```
+
 
 ### 前后台切换 {#app-state-change}
 

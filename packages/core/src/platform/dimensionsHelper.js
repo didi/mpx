@@ -1,14 +1,52 @@
 import { ONRESIZE } from '../core/innerLifecycle'
 import Mpx from '../index'
 
+let dimensionsInfoInitialized = false
+let rawDimensionsInfo
+let appliedCustomDimensions
+
+function cloneDimensionsInfo (dimensions) {
+  return {
+    window: Object.assign({}, dimensions.window),
+    screen: Object.assign({}, dimensions.screen)
+  }
+}
+
 export function getDimensionsBase () {
   return Mpx.config.rnConfig?.dimensionsBase === 'screen' ? 'screen' : 'window'
 }
 
+export function initDimensionsInfo (dimensions) {
+  dimensionsInfoInitialized = false
+  appliedCustomDimensions = undefined
+  rawDimensionsInfo = cloneDimensionsInfo(dimensions)
+  global.__mpxAppDimensionsInfo = cloneDimensionsInfo(rawDimensionsInfo)
+}
+
+export function applyDimensionsInfo (dimensions) {
+  rawDimensionsInfo = cloneDimensionsInfo(dimensions)
+  const customDimensions = Mpx.config.rnConfig?.customDimensions
+  dimensionsInfoInitialized = true
+  appliedCustomDimensions = customDimensions
+  dimensions = cloneDimensionsInfo(rawDimensionsInfo)
+  if (typeof customDimensions === 'function') {
+    dimensions = customDimensions(dimensions) || dimensions
+  }
+  global.__mpxAppDimensionsInfo.window = dimensions.window
+  global.__mpxAppDimensionsInfo.screen = dimensions.screen
+}
+
+export function getStyleDimensions () {
+  if (!dimensionsInfoInitialized || appliedCustomDimensions !== Mpx.config.rnConfig?.customDimensions) {
+    applyDimensionsInfo(rawDimensionsInfo)
+  }
+  return global.__mpxAppDimensionsInfo[getDimensionsBase()]
+}
+
 export function getSystemInfo () {
+  const baseDimensions = getStyleDimensions()
   const windowDimensions = global.__mpxAppDimensionsInfo.window
   const screenDimensions = global.__mpxAppDimensionsInfo.screen
-  const baseDimensions = global.__mpxAppDimensionsInfo[getDimensionsBase()]
   return {
     deviceOrientation: baseDimensions.width > baseDimensions.height ? 'landscape' : 'portrait',
     size: {

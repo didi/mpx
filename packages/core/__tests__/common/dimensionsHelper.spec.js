@@ -14,17 +14,41 @@ import Mpx from '../../src/index'
 // eslint-disable-next-line import/first
 import { ONRESIZE } from '../../src/core/innerLifecycle'
 // eslint-disable-next-line import/first
-import { getSystemInfo, triggerResizeEvent } from '../../src/platform/dimensionsHelper'
+import { getSystemInfo, initDimensionsInfo, triggerResizeEvent } from '../../src/platform/dimensionsHelper'
 
 describe('RN dimensions helper', () => {
   beforeEach(() => {
     Mpx.config.rnConfig = {
       dimensionsBase: 'window'
     }
-    global.__mpxAppDimensionsInfo = {
+    initDimensionsInfo({
       window: { width: 360, height: 640 },
       screen: { width: 720, height: 1280 }
-    }
+    })
+  })
+
+  it('uses customDimensions for the initial onResize size snapshot', () => {
+    const customDimensions = jest.fn((dimensions) => {
+      dimensions.window.width /= 2
+      return dimensions
+    })
+    Mpx.config.rnConfig.customDimensions = customDimensions
+
+    expect(getSystemInfo().size.windowWidth).toBe(180)
+    expect(customDimensions).toHaveBeenCalledTimes(1)
+  })
+
+  it('applies customDimensions configured after an earlier dimensions read', () => {
+    expect(getSystemInfo().size.windowWidth).toBe(360)
+    const customDimensions = jest.fn((dimensions) => {
+      dimensions.window.width /= 2
+      return dimensions
+    })
+
+    Mpx.config.rnConfig.customDimensions = customDimensions
+
+    expect(getSystemInfo().size.windowWidth).toBe(180)
+    expect(customDimensions).toHaveBeenCalledTimes(1)
   })
 
   function createPageResizeContext () {
