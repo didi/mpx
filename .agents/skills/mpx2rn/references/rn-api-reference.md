@@ -191,7 +191,9 @@ mpx.use(apiProxy, {
 
 返回 **`boolean`**。
 
-> 注意：该接口只查询 `rnCanIUseConfig` 静态表，不会加载原生模块，也不会探测可选原生依赖是否安装或运行时权限是否授予；通过 `custom` 注入的业务 API 也不在静态表中。静态表只收录 RN 抹平层已有实际能力的内置 API、对象与方法。
+#### 注意事项
+
+- 该接口只查询 `rnCanIUseConfig` 静态表，不会加载原生模块，也不会探测可选原生依赖是否安装或运行时权限是否授予；通过 `custom` 注入的业务 API 也不在静态表中。静态表只收录 RN 抹平层已有实际能力的内置 API、对象与方法。
 
 ---
 
@@ -677,7 +679,9 @@ mpx.use(apiProxy, {
 | --- | --- | --- |
 | `errMsg` | `string` | 成功时为 **`navigateBack:ok`**。 |
 
-> `switchTab` 当前未在 RN 实现。调用时会通过 `envError` 报告环境不支持，`canIUse('switchTab')` 返回 **`false`**。
+#### 注意事项
+
+- `switchTab` 当前未在 RN 实现。调用时会通过 `envError` 报告环境不支持，`canIUse('switchTab')` 返回 **`false`**。
 
 ---
 
@@ -1074,8 +1078,6 @@ mpx.use(apiProxy, {
 
 同步返回 **`RequestTask`**（如取消请求等），与小程序一致。**未开启 Promise 化**时，即为 **`mpx.request(...)` 的返回值**。**开启 `usePromise: true`** 时，表达式为 **`Promise`**，**`RequestTask`** 在该 **`Promise`** 的 **`__returned`** 上；**`await` / `.then()` 的 resolve 值**仍为 **`success`** 的成功载荷（含 **`data`**、**`statusCode`** 等），与句柄分离。
 
-> 当前 RN `RequestTask` **仅实现 `abort()`**，用于取消请求。微信 `RequestTask` 的 `onHeadersReceived` / `offHeadersReceived`、分块响应、上传/下载进度等方法当前未实现，`canIUse('RequestTask.onHeadersReceived')` 与 `canIUse('RequestTask.offHeadersReceived')` 均返回 **`false`**。
-
 #### 成功回调参数
 
 | 字段名 | 类型 | 说明 |
@@ -1092,6 +1094,10 @@ mpx.use(apiProxy, {
 
 当前实现使用 Axios 默认状态校验：HTTP `4xx` / `5xx` 通常进入 `fail`，与微信 `wx.request` 只要收到服务器响应通常就进入 `success` 的行为不同。
 
+#### 注意事项
+
+- 当前 RN `RequestTask` **仅实现 `abort()`**，用于取消请求。微信 `RequestTask` 的 `onHeadersReceived` / `offHeadersReceived`、分块响应、上传/下载进度等方法当前未实现，`canIUse('RequestTask.onHeadersReceived')` 与 `canIUse('RequestTask.offHeadersReceived')` 均返回 **`false`**。
+
 ---
 ### connectSocket
 
@@ -1107,8 +1113,6 @@ mpx.use(apiProxy, {
 | --- | --- | --- | --- |
 | `url` | `string` | 是 | `wss://` 或 `ws://` 地址。 |
 | `protocols` | `string[]` | 否 | 子协议列表。 |
-
-> 微信同名 API 的 `header`、`timeout`、`tcpNoDelay`、`perMessageDeflate` 等扩展参数**当前 RN 中暂不支持**。
 
 #### 返回值
 
@@ -1130,6 +1134,10 @@ mpx.use(apiProxy, {
 | `onMessage(callback)` | 监听消息。 | `{ data }`。 |
 | `onError(callback)` | 监听错误。 | 透传底层 WebSocket `error` 事件对象。 |
 | `onClose(callback)` | 监听关闭。 | `{ code, reason }` 或底层 WebSocket `close` 事件对象。 |
+
+#### 注意事项
+
+- 微信同名 API 的 `header`、`timeout`、`tcpNoDelay`、`perMessageDeflate` 等扩展参数**当前 RN 中暂不支持**。
 
 ---
 ### sendSocketMessage
@@ -1434,8 +1442,6 @@ mpx.use(apiProxy, {
 | `type` | `string` | 否 | 坐标类型，支持 `wgs84` / `gcj02`；当前 RN 实现不会读取。 |
 | `highAccuracyExpireTime` | `number` | 否 | 高精度定位超时时间，单位 ms；当前 RN 实现不会读取。 |
 
-> 由于 `type` 未被读取，RN 实现不会按微信参数约定执行 `wgs84` / `gcj02` 坐标类型转换。
-
 #### 返回值
 
 无同步返回值。
@@ -1457,6 +1463,10 @@ mpx.use(apiProxy, {
 | `time` | `number` | 定位时间戳，单位 ms；由底层定位库透传。 |
 | `bearing` / `provider` | 平台相关 | Android 底层可能提供。 |
 | `course` | `number` | iOS 底层可能提供的航向。 |
+
+#### 注意事项
+
+- 由于 `type` 未被读取，RN 实现不会按微信参数约定执行 `wgs84` / `gcj02` 坐标类型转换。
 
 ---
 ## 设备
@@ -1739,8 +1749,6 @@ Wi-Fi API 的成功 `errMsg` 与微信文档保持一致，均以 `:ok` 结尾�
 
 调用 **`startWifi`** 时，在检查 Wi‑Fi 是否已打开之前会先执行「扫描热点所需权限」的检查。当前实现下，**RN 输出为 iOS** 时，**`startWifi` / `stopWifi` / `getWifiList`** 会直接 **`fail`**（系统级扫网等能力受限），**不涉及**下述配置。**RN 输出为 Android** 且使用内置 **`react-native-wifi-reborn`** 路径时，未配置 **`wifiPermission`** 则使用内置的 **`ACCESS_FINE_LOCATION`** 等申请逻辑；若需自定义（统一权限组件、补充说明文案等），可在 **`mpx.config.rnConfig`** 上提供 **`wifiPermission`**，**完全替代**内置函数。
 
-> 当前代码只等待权限函数返回的 Promise，**不会检查 resolve 值**：resolve 为 `false` 仍会继续检查 Wi-Fi 开关并尝试后续流程，只有 Promise `reject` 才会直接进入 `startWifi` 的失败回调。自定义函数应在拒绝授权时 `reject`，不要仅 `resolve(false)`。
-
 | 配置项 | 类型 | 生效时机 | 说明 |
 | --- | --- | --- | --- |
 | `wifiPermission` | `() => Promise<boolean>` | 每次 **`startWifi`**，在校验 Wi‑Fi 开关之前 | Promise resolve 后继续（当前实现不区分 `true` / `false`）；Promise reject 时 `startWifi` 走 `fail`。 |
@@ -1755,6 +1763,10 @@ mpx.config.rnConfig.wifiPermission = () => {
 ```
 
 类型与更多 **`rnConfig`** 字段见 **`@mpxjs/core`** 中的 **`RnConfig`** 声明。
+
+#### 注意事项
+
+- 当前代码只等待权限函数返回的 Promise，**不会检查 resolve 值**：resolve 为 `false` 仍会继续检查 Wi-Fi 开关并尝试后续流程，只有 Promise `reject` 才会直接进入 `startWifi` 的失败回调。自定义函数应在拒绝授权时 `reject`，不要仅 `resolve(false)`。
 
 ---
 
@@ -1806,6 +1818,12 @@ RN 组件卸载时会自动断开该组件创建的所有 observer；页面隐�
 | `relativeRect` | `Object` | 参照区域布局。 |
 | `time` | `number` | 测量时间戳 ms。 |
 
+#### 注意事项
+
+- RN 中需在会影响目标节点位置的 `scroll-view` 上设置 `enable-trigger-intersection-observer="{{true}}"`，才能在滚动时更新相交检测；该属性默认关闭，不影响 `observe()` 的首次检测。详见 [scroll-view 注意事项](./rn-template-reference.md#scroll-view)。
+- 通过 selector 指定目标节点或参照节点时，使用 `#id` / `.class`，对应模板节点须添加空 `wx:ref`，并在节点渲染完成后调用。需先通过 `relativeTo()` 或 `relativeToViewport()` 设置参照区域，再调用 `observe()`；当前仅支持一个参照区域，多次设置会覆盖前一次。
+- 同一观察器实例只能调用一次 `observe()`；观察多个节点需设置 `observeAll: true`。目标节点在调用时确定，不会自动匹配后续新增节点；需更新观察目标时，先 `disconnect()`，再创建新观察器。
+
 ---
 
 ### createSelectorQuery
@@ -1829,11 +1847,13 @@ RN 组件卸载时会自动断开该组件创建的所有 observer；页面隐�
 | `query.in(component)` | 当前 `SelectorQuery` | 必须先设置组件作用域；未设置时选择操作会警告。 |
 | `query.select(selector)` | `NodesRef` | 选择首个节点。支持 `#id` 与单个或连续 class（如 `.a.b`）；不支持组合器、逗号、空格等复杂选择器。 |
 | `query.selectAll(selector)` | `NodesRef` | 选择全部匹配节点，selector 约束同上。 |
-| `query.selectViewport()` | `NodesRef` | 当前 RN 实现未提供真正的 viewport 节点，仅走空 selector 占位，不应依赖；`canIUse('SelectorQuery.selectViewport')` 返回 **`false`**。 |
 | `nodesRef.boundingClientRect(callback)` | 当前 `SelectorQuery` | 回调含 `id`、`dataset`、`left`、`right`、`top`、`bottom`、`width`、`height`；`selectAll` 时为数组。 |
 | `nodesRef.scrollOffset(callback)` | 当前 `SelectorQuery` | 回调含 `id`、`dataset`、`scrollLeft`、`scrollTop`、`scrollWidth`、`scrollHeight`。 |
 | `nodesRef.fields(config, callback)` | 当前 `SelectorQuery` | 支持 `id`、`dataset`、`rect`、`size`、`scrollOffset`、`properties`、`computedStyle`、`context`、`node`、`ref` 等当前实现分支。 |
 | `nodesRef.context(callback)` / `node(callback)` / `ref(callback)` | 当前 `SelectorQuery` | 分别返回 `{ context }`、`{ node }`、`{ ref }`。 |
 | `query.exec(callback)` | `undefined` | 按入队顺序聚合前述回调结果，最终参数为结果数组。 |
 
----
+#### 注意事项
+
+- selector 仅支持 `#id`、`.class` 和连续 class（如 `.a.b`），不支持后代、子节点、跨组件等复杂选择器。对应模板节点须添加空 `wx:ref`，并在节点渲染完成后查询；数据更新后需等待 `this.$nextTick()` 再查询。
+- `selectViewport()` 当前不支持，不能用它查询视口尺寸或页面滚动位置；视口尺寸可通过 `getWindowInfo()` 获取，滚动位置应查询对应的 `scroll-view` 节点。
