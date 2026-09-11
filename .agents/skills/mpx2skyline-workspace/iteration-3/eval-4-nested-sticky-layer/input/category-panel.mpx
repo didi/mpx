@@ -1,0 +1,13 @@
+<template>
+<view class="root"><scroll-view scroll-y="{{true}}" class="outer"><view wx:for="{{sections}}" wx:key="id"><view class="header">{{item.title}}</view><scroll-view scroll-x="{{true}}" class="strip"><view wx:for="{{item.items}}" wx:for-item="entry" wx:key="id" class="tile">{{entry.name}}</view></scroll-view></view><view class="modal" wx:if="{{opened}}" bindtap="close">关闭弹层</view></scroll-view><view class="fab" bindtap="open">打开弹层</view></view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({properties:{sections:{type:Array,value:[]}},data:{opened:false},methods:{open(){this.opened=true},close(){this.opened=false}}})
+</script>
+<style>
+.outer{height:400px;transform:translateZ(0);z-index:1}.header{position:sticky;top:0;background:#fff}.strip{white-space:nowrap}.tile{display:inline-block;width:120px;height:80px}.modal{position:absolute;top:0;left:0;right:0;bottom:0;z-index:9999;background:#eee}.fab{position:fixed;right:12px;bottom:12px;z-index:2}
+</style>
+<script type="application/json">
+{"component":true}
+</script>

@@ -1,0 +1,33 @@
+{
+  "expectations": [
+    {
+      "id": "s3_00",
+      "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+      "passed": false,
+      "evidence": "promo-card.mpx: Skyline span缺少max-lines/overflow属性，图片未设inline-block，仅CSS -webkit-line-clamp和text-overflow不足以满足混排容器要求。"
+    },
+    {
+      "id": "s3_01",
+      "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+      "passed": false,
+      "evidence": "promo-card.mpx: Skyline真实pulse-dot使用Worklet shared/repeat/timing驱动，未实现本断言要求的真实节点CSS animation及支持的fill-mode；CSS动画仅存在WebView伪元素分支。"
+    },
+    {
+      "id": "s3_02",
+      "text": "Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
+      "passed": false,
+      "evidence": "promo-card.mpx: Skyline按钮用Worklet timing驱动，未采用本断言要求的状态类及150ms CSS transition。虽声明目标数值和恢复路径，本项评价的是指定的简单状态动画适配方案。"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 3,
+    "total": 3,
+    "pass_rate": 0.0
+  },
+  "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately",
+  "limitations": [
+    "No application build or device rendering validation",
+    "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"
+  ]
+}

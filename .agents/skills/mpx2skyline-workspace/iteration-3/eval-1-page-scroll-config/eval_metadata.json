@@ -1,0 +1,121 @@
+{
+  "eval_id": 1,
+  "eval_name": "page-scroll-config",
+  "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+  "files": [
+    "input/app.json",
+    "input/orders.mpx",
+    "input/service.js",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "s1_00",
+      "text": "Skyline 页面主体使用具有明确可滚动高度的 scroll-view，显式选择type=list，订单项作为列表的直接子节点。",
+      "rule_id": "skyline.list-scroll",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "检查列表直接子节点与高度约束链；使用超出容器高度的订单数据核对滚动结构。",
+      "source_assertions": [
+        "e1_01",
+        "e2_08",
+        "e8_04"
+      ]
+    },
+    {
+      "id": "s1_01",
+      "text": "Skyline 通过 bindrefresherrefresh 启动刷新，refresher-triggered 关联刷新状态，并在请求成功和失败后结束容器刷新态。",
+      "rule_id": "skyline.container-refresh",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "触发容器刷新事件，分别模拟请求resolve/reject，检查触发态最终为false。",
+      "source_assertions": [
+        "e1_02",
+        "e1_05",
+        "e8_03"
+      ]
+    },
+    {
+      "id": "s1_02",
+      "text": "Skyline 通过 scroll-view 的 bindscrolltolower 连接原分页加载方法，容器触底后显示追加的订单。",
+      "rule_id": "skyline.container-bottom",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "从实际模板事件绑定调用分页方法，核对下一页结果进入同一滚动列表。",
+      "source_assertions": [
+        "e1_03",
+        "e8_03"
+      ]
+    },
+    {
+      "id": "s1_03",
+      "text": "Skyline 通过 scroll-view 的 bindscroll 读取 event.detail.scrollTop 并更新滚动位置展示。",
+      "rule_id": "skyline.container-scroll",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "向实际滚动处理器传入detail.scrollTop，核对展示状态对应更新。",
+      "source_assertions": [
+        "e1_04"
+      ]
+    },
+    {
+      "id": "s1_04",
+      "text": "Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。",
+      "rule_id": "skyline.page-renderer-navigation",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-configuration.md",
+        "section": "适配参考"
+      },
+      "verification": "解析页面JSON并检查真实导航节点和主体布局关系。",
+      "source_assertions": [
+        "e1_06",
+        "e1_07",
+        "e8_06",
+        "e8_07"
+      ]
+    },
+    {
+      "id": "s1_05",
+      "text": "Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。",
+      "rule_id": "skyline.lazy-components",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-configuration.md",
+        "section": "app.json 顶层配置"
+      },
+      "verification": "解析 app.json 并检查顶层属性值。",
+      "source_assertions": [
+        "e1_08",
+        "e8_08"
+      ]
+    },
+    {
+      "id": "s1_06",
+      "text": "Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。",
+      "rule_id": "skyline.renderer-baseline",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-configuration.md",
+        "section": "rendererOptions.skyline 配置项"
+      },
+      "verification": "逐项解析五个字段的层级、类型和值。",
+      "source_assertions": [
+        "e1_09",
+        "e8_08"
+      ]
+    }
+  ]
+}

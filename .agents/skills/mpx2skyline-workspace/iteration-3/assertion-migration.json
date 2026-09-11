@@ -1,0 +1,765 @@
+{
+  "from_suite": 2,
+  "to_suite": 3,
+  "old_total": 90,
+  "new_total": 31,
+  "items": [
+    {
+      "old_id": "e0_00",
+      "old_text": "输出完整 product-card.mpx，保留 title String 属性、默认文案与所有业务内容。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用交付完整性与业务保留，转为交付验证。"
+    },
+    {
+      "old_id": "e0_01",
+      "old_text": "标题在实际承载节点设置 max-lines=1 与 overflow=ellipsis。",
+      "new_ids": [
+        "s0_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e0_02",
+      "old_text": "保留 WebView 的 white-space/overflow/text-overflow 省略行为，插值紧贴文本标签。",
+      "new_ids": [
+        "s0_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e0_03",
+      "old_text": "两列等宽标签使用 Skyline 支持的布局，不依赖 display:grid。",
+      "new_ids": [
+        "s0_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e0_04",
+      "old_text": "活动颜色由受支持的选择器驱动，不依赖属性选择器。",
+      "new_ids": [
+        "s0_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e0_05",
+      "old_text": "保留活动圆点视觉；合法静态 ::before 不得被当作必须删除的能力。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "合法静态圆点保留属于反向误改检查，退出专项计分。"
+    },
+    {
+      "old_id": "e0_06",
+      "old_text": "WebView 原媒体查询及 320px 阈值保留。",
+      "new_ids": [
+        "s0_03"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e0_07",
+      "old_text": "Skyline 使用 renderer 状态和相同屏宽阈值控制小屏样式。",
+      "new_ids": [
+        "s0_03"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e0_08",
+      "old_text": "Skyline 默认兜底位于媒体查询之后且仅作用于 Skyline，大屏24rpx、小屏12rpx。",
+      "new_ids": [
+        "s0_03"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e0_09",
+      "old_text": "所有新增动态状态有定义与模板绑定，未向组件 JSON 写页面专属 renderer/navigationStyle。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "状态完整性/组件配置边界属通用交付验证。"
+    },
+    {
+      "old_id": "e1_00",
+      "old_text": "orders.mpx 完整且 service 导入能解析，初次加载仍调用 reload。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "初载与相对依赖是业务/交付完整性，转为验证。"
+    },
+    {
+      "old_id": "e1_01",
+      "old_text": "页面使用有明确可滚动高度的 scroll-view，显式 type，列表项为直接子节点。",
+      "new_ids": [
+        "s1_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e1_02",
+      "old_text": "刷新事件绑定 bindrefresherrefresh，状态在请求成功与失败后均结束。",
+      "new_ids": [
+        "s1_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e1_03",
+      "old_text": "触底 bindscrolltolower 仍调用分页逻辑，保留追加而非覆盖及页号推进。",
+      "new_ids": [
+        "s1_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e1_04",
+      "old_text": "bindscroll 使用对应事件数据更新 scrollTop，WebView 与 Skyline 使用同一滚动链路。",
+      "new_ids": [
+        "s1_03"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e1_05",
+      "old_text": "不再依赖页面滚动生命周期或 wx.stopPullDownRefresh 结束容器刷新。",
+      "new_ids": [
+        "s1_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e1_06",
+      "old_text": "页面 JSON 包含 skyline、glass-easel、custom 导航和 disableScroll:true。",
+      "new_ids": [
+        "s1_04"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e1_07",
+      "old_text": "模板实际包含标题为订单的自定义导航，非只配置 navigationStyle。",
+      "new_ids": [
+        "s1_04"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e1_08",
+      "old_text": "app 顶层 lazyCodeLoading=requiredComponents，原 pages/window/webview 配置保留。",
+      "new_ids": [
+        "s1_05"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e1_09",
+      "old_text": "rendererOptions.skyline 内五项推荐配置完整且值正确，未误放到 app 顶层。",
+      "new_ids": [
+        "s1_06"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e2_00",
+      "old_text": "label 属性默认值使用 value，保留原用户文案。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "Mpx属性默认值语法，输入预先规范。"
+    },
+    {
+      "old_id": "e2_01",
+      "old_text": "payload 使用主 type 和 optionalTypes 保留 String/Object，不以 type:null 逃避类型声明。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "Mpx属性联合类型声明，输入预先规范。"
+    },
+    {
+      "old_id": "e2_02",
+      "old_text": "data.config.default 保持 keep，不将 properties 之外的 default 改名。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "普通对象字段保留，转为业务验证。"
+    },
+    {
+      "old_id": "e2_03",
+      "old_text": "items 初始化与 setRows null 路径保证循环数据类型合法。",
+      "new_ids": [
+        "s2_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e2_04",
+      "old_text": "visibleItems 的所有返回路径为 Array/Object，过滤 visible 语义保留。",
+      "new_ids": [
+        "s2_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e2_05",
+      "old_text": "数字 id 及查询字符串同步修改，查询仍命中原 users 容器。",
+      "new_ids": [
+        "s2_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e2_06",
+      "old_text": "实际 users 查询目标开启 enhanced，不能用 other 的 enhanced 充数。",
+      "new_ids": [
+        "s2_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e2_07",
+      "old_text": "组件内使用 this.createSelectorQuery，保留滚到顶部的 context 调用。",
+      "new_ids": [
+        "s2_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e2_08",
+      "old_text": "所有 scroll-view 显式选择 type，users 容器有可滚动尺寸。",
+      "new_ids": [
+        "s1_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e2_09",
+      "old_text": "循环祖先子树的 include 改为 import/template，row 定义具名模板且显式传入 item/index。",
+      "new_ids": [
+        "s2_03"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_00",
+      "old_text": "同段图文采用 reference 的 span 容器方案，不只是为外层加省略属性。",
+      "new_ids": [
+        "s3_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_01",
+      "old_text": "Skyline 单行容器设置 max-lines/overflow，并有可收缩宽度约束。",
+      "new_ids": [
+        "s3_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_02",
+      "old_text": "图片在 Skyline 内联布局为 inline-block，renderer 状态实际定义并驱动模板。",
+      "new_ids": [
+        "s3_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_03",
+      "old_text": "WebView 保留图文单行截断，未让 text 包含 image。",
+      "new_ids": [
+        "s3_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_04",
+      "old_text": "伪元素动画改为真实圆点节点，保留尺寸颜色与循环闪烁语义。",
+      "new_ids": [
+        "s3_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_05",
+      "old_text": "动画 fill mode 采用支持值或等效逻辑，不依赖 backwards。",
+      "new_ids": [
+        "s3_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_06",
+      "old_text": "Skyline 可执行路径不调用 wx.createAnimation，简单按钮改为通用状态动画。",
+      "new_ids": [
+        "s3_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_07",
+      "old_text": "按钮150ms驱动 transform/opacity，按下目标数值与松开恢复正确。",
+      "new_ids": [
+        "s3_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_08",
+      "old_text": "触摸取消也能恢复，未引入 Worklet 或按帧 JS 定时器。",
+      "new_ids": [
+        "s3_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e3_09",
+      "old_text": "logo 资源路径有效，未删除图片或用无意义占位替代。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "资源完整性交付检查，转为验证。"
+    },
+    {
+      "old_id": "e4_00",
+      "old_text": "Skyline 外层嵌套滚动显式 type=nested，内层显式 list/custom。",
+      "new_ids": [
+        "s4_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e4_01",
+      "old_text": "内层具有 associative-container=nested-scroll-view，嵌套关系正确。",
+      "new_ids": [
+        "s4_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e4_02",
+      "old_text": "横向容器开启 enable-flex 并设置横向布局，保留横向滚动。",
+      "new_ids": [
+        "s4_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e4_03",
+      "old_text": "Skyline 用 sticky-section/sticky-header 实现组标题吸顶。",
+      "new_ids": [
+        "s4_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e4_04",
+      "old_text": "sticky-header 是 section 第一个子节点且有显式背景。",
+      "new_ids": [
+        "s4_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e4_05",
+      "old_text": "WebView 保留 CSS sticky 路径，Skyline 专属结构按 renderer 隔离。",
+      "new_ids": [
+        "s4_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e4_06",
+      "old_text": "弹层调整到可比较的层级，使用高于按钮的 fixed 层而非增大 absolute z-index。",
+      "new_ids": [
+        "s4_03"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e4_07",
+      "old_text": "未依赖 transform/opacity 创建 Skyline 层叠上下文或 scroll-view 直接子节点 z-index。",
+      "new_ids": [
+        "s4_03"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e4_08",
+      "old_text": "保留 sections/entry 循环数据绑定与稳定 key，没有混淆内外层 item。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用循环绑定与key业务检查，转为验证。"
+    },
+    {
+      "old_id": "e4_09",
+      "old_text": "opened 状态、打开与关闭事件仍有效，无负 z-index，无新增依赖。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "普通开关交互及负向约束，转为验证。"
+    },
+    {
+      "old_id": "e5_00",
+      "old_text": "父外沿20px由父 padding 表达，清理重复子 margin，不将 overflow:hidden 当作 BFC。",
+      "new_ids": [
+        "s0_04"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_01",
+      "old_text": "child 保持100px内容宽加两侧10px padding 的120px外宽。",
+      "new_ids": [
+        "s0_11"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_02",
+      "old_text": "兄弟间距归到单侧16px，不能保留导致28px或删除成0px。",
+      "new_ids": [
+        "s0_05"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_03",
+      "old_text": "保留单个 rgba 阴影，不把函数内逗号误判为多阴影。",
+      "new_ids": [
+        "s0_09"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_04",
+      "old_text": "双阴影拆节点或其他等效方案保留两层效果，不直接删去其中一层。",
+      "new_ids": [
+        "s0_06"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_05",
+      "old_text": "保留单 blur，复合 filter 分层实现且保留两种效果。",
+      "new_ids": [
+        "s0_07",
+        "s0_10"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_06",
+      "old_text": "City-Semibold 独立 @font-face 例外被正确识别，不仅凭名称报错。",
+      "new_ids": [
+        "s0_08"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_07",
+      "old_text": "保留两个字体与500/600字重，报告 Trip-Medium 待核实及机型风险，不擅改bold。",
+      "new_ids": [
+        "s0_08"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_08",
+      "old_text": "合法 text 子节点 navigator 保留功能，含view的复杂导航改为支持结构或点击跳转。",
+      "new_ids": [
+        "s2_04"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e5_09",
+      "old_text": "所有新结构和点击方法定义完整，双端导航仍到/pages/detail，字体资源保持宿主路径约定。",
+      "new_ids": [
+        "s2_04"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e6_00",
+      "old_text": "完整 rating-selector.mpx 含 template/script/style/组件JSON，使用 createComponent 选项式API。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e6_01",
+      "old_text": "五项属性类型、默认值正确，默认值使用 value。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e6_02",
+      "old_text": "根据 max 渲染稳定 key 的星级列表，选中状态区分正确。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e6_03",
+      "old_text": "点击第n颗更新本地评分并触发 detail={ratingKey,value:n} 的change。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e6_04",
+      "old_text": "readonly 在处理器中阻止更新与发事件，而非仅改样式。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e6_05",
+      "old_text": "父value变化同步本地评分，未直接修改只读传入属性。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e6_06",
+      "old_text": "标签在两端单行省略，Skyline max-lines/overflow 与 WebView 样式均完整。",
+      "new_ids": [
+        "s0_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e6_07",
+      "old_text": "星级行使用支持的显式布局与语义class，没有未声明的原子类依赖。",
+      "new_ids": [
+        "s0_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e6_08",
+      "old_text": "按下缩放.96，松开/取消恢复，150ms通用transition，无Worklet。",
+      "new_ids": [
+        "s3_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e6_09",
+      "old_text": "组件无页面专属配置、未定义绑定或不支持的模板子节点关系。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e7_00",
+      "old_text": "输出完整script setup组件，使用Mpx组合式API，模板绑定正确暴露。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e7_01",
+      "old_text": "五项props与默认值正确，options始终为数组。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e7_02",
+      "old_text": "使用ref保存本地选择，watch同步父value，未因直接解构丢失响应性。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e7_03",
+      "old_text": "computed派生候选状态与选中项名称，循环使用稳定key。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e7_04",
+      "old_text": "整体disabled和单项disabled在事件处理器中都阻止选择。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e7_05",
+      "old_text": "change事件detail包含controlKey与选中的value，更新本地显示。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e7_06",
+      "old_text": "横向scroll-view显式type、enable-flex与横向布局，list时条目为直接子节点。",
+      "new_ids": [
+        "s4_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e7_07",
+      "old_text": "候选宽度至少100px且不会被flex压缩为内容窄条。",
+      "new_ids": [
+        "s4_01"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e7_08",
+      "old_text": "长标签两端单行截断，Skyline属性作用于文本承载节点，WebView样式保留。",
+      "new_ids": [
+        "s0_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e7_09",
+      "old_text": "普通语义class有定义，无新依赖、页面专属JSON或未定义方法。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e8_00",
+      "old_text": "完整pages/task-board.mpx使用script setup与ref/computed，模板绑定可访问。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e8_01",
+      "old_text": "全部/待办/完成筛选正确，列表稳定key，点击切换完成状态。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e8_02",
+      "old_text": "初始任务数据正确且空列表有暂无任务提示。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    },
+    {
+      "old_id": "e8_03",
+      "old_text": "下拉刷新恢复初始数据并结束refresher状态，触底追加不重复id的待办。",
+      "new_ids": [
+        "s1_01",
+        "s1_02"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e8_04",
+      "old_text": "主体scroll-view显式type且列表项直接参与列表结构，flex高度约束可形成滚动区域。",
+      "new_ids": [
+        "s1_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e8_05",
+      "old_text": "长标题保留原子truncate在WebView的行为，Skyline有max-lines/overflow。",
+      "new_ids": [
+        "s0_00"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e8_06",
+      "old_text": "页面配置renderer=skyline、glass-easel、custom导航与disableScroll:true。",
+      "new_ids": [
+        "s1_04"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e8_07",
+      "old_text": "模板实际实现任务看板导航，app注册新页面且保留首页/window/webview。",
+      "new_ids": [
+        "s1_04"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e8_08",
+      "old_text": "app包含lazyCodeLoading及五项rendererOptions.skyline推荐配置，层级和值正确。",
+      "new_ids": [
+        "s1_05",
+        "s1_06"
+      ],
+      "disposition": "consolidated",
+      "reason": "按Skyline能力映射到正向断言；复合旧断言分别关联各实际评分项。"
+    },
+    {
+      "old_id": "e8_09",
+      "old_text": "原子类来自utilities或有补充定义，不引入未提供依赖；未强制配置disableABTest等选配项。",
+      "new_ids": [],
+      "disposition": "excluded-from-skyline-score",
+      "reason": "通用Mpx语法、业务状态/事件或交付约束，转为非计分验证。"
+    }
+  ]
+}

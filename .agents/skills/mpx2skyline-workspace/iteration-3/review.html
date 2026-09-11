@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "mpx2skyline", "runs": [{"id": "eval-0-style-layout-mpx2skyline", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 0, "outputs": [{"name": "report.md", "type": "text", "content": "# style-card Skyline \u9002\u914d\n\n\u5df2\u4ea4\u4ed8\u5b8c\u6574\u7ec4\u4ef6 `style-card.mpx`\uff0c\u8303\u56f4\u4ec5\u8be5\u7ec4\u4ef6\uff1b\u8f93\u5165\u4fdd\u6301\u53ea\u8bfb\u3002\u5bbf\u4e3b\u5df2\u5f00\u542f defaultDisplayBlock/defaultContentBox\uff1b\u672a\u4fee\u6539\u9875\u9762\u3001\u5168\u5c40\u914d\u7f6e\u6216\u5bbf\u4e3b\u5b57\u4f53\u8d44\u6e90\u3002\n\n- \u957f\u6807\u9898\u4fdd\u7559 WebView \u5355\u884c\u7701\u7565 CSS\uff0c\u540c\u65f6\u589e\u52a0 Skyline `max-lines=\"{{1}}\" overflow=\"ellipsis\"`\u3002\n- \u4e24\u6807\u7b7e\u6539\u4e3a Flex \u7b49\u5bbd\u4e24\u5217\uff1b\u6d3b\u52a8\u6587\u6848\u901a\u8fc7 `.badge.sale` \u4fdd\u6301 `#d00`\u3002\n- WebView \u4fdd\u7559 max-width:320px \u5a92\u4f53\u67e5\u8be2\u3002Skyline \u4f7f\u7528 attached \u4e2d\u7684 renderer \u5224\u65ad\u53ca\u5f53\u524d screenWidth \u5feb\u7167\uff0c\u5c0f\u5c4f\u7c7b\u4ec5\u5728 \u2264320px \u751f\u6548\uff0cmedia \u540e\u7684 Skyline \u9ed8\u8ba4\u7c7b\u6062\u590d\u5927\u5c4f 24rpx\uff0c\u5c0f\u5c4f\u4e3a 12rpx\u3002\u65e0\u9700\u76d1\u542c resize\u3002\n- \u6309\u201c\u5185\u5bb9\u8ddd outer \u4e0a\u5916\u6cbf20px\u201d\u7684\u6587\u5b57\u8981\u6c42\uff0couter \u9876\u90e8 padding 10px\uff0c\u52a0 child \u5185\u90e8\u9876\u90e8 padding 10px\uff0c\u5185\u5bb9\u9876\u90e8\u603b\u504f\u79fb20px\u3002child \u663e\u5f0f content-box\uff1a100px \u5185\u5bb9\u5bbd\u52a0\u5de6\u53f3\u540410px padding\uff0c\u5916\u5bbd120px\u3002\u4e24\u5757\u5782\u76f4\u95f4\u8ddd\u53ea\u7531 first \u768416px margin-bottom\u627f\u62c5\u3002\n- \u5355\u4e2a rgba \u9634\u5f71\u53ca\u72ec\u7acb blur \u539f\u6837\u4fdd\u7559\uff1b\u53cc\u9634\u5f71\u62c6\u4e3a\u5c3a\u5bf8\u76f8\u540c\u7684\u5d4c\u5957\u8282\u70b9\uff0c\u5185\u5c42\u627f\u8f7d\u9996\u5c42 #000\uff0c\u5916\u5c42\u627f\u8f7d\u540e\u5c42 #333\u3002\u6ca1\u6709\u589e\u6dfb\u80cc\u666f\u3001\u95f4\u8ddd\u6216\u88c1\u526a\u3002\n- \u590d\u5408\u6ee4\u955c\u62c6\u6210\u5185\u5c42 blur(2px)\u3001\u5916\u5c42 brightness(.8)\uff0c\u4fdd\u7559\u5148 blur \u540e brightness \u7684\u5904\u7406\u987a\u5e8f\uff0cWebView \u548c Skyline \u4f7f\u7528\u76f8\u540c\u7ed3\u6784\u3002\n\n## \u5b57\u4f53\u6838\u9a8c\u4e0e\u673a\u578b\u98ce\u9669\n\n| \u5b57\u4f53 | \u5df2\u6838\u9a8c\u4fe1\u606f | \u672a\u9a8c\u8bc1\u4e0e\u5904\u7406 |\n| --- | --- | --- |\n| City-Semibold | \u8f93\u5165\u5b58\u5728\u540c\u540d\u72ec\u7acb @font-face\uff0c\u5f15\u7528 ./city.woff2\uff1bwoff2 \u5c5e\u4e8e Skill \u8bb0\u5f55\u7684\u652f\u6301\u683c\u5f0f | \u5b57\u4f53\u4e8c\u8fdb\u5236\u7531\u5bbf\u4e3b\u63d0\u4f9b\uff0c\u8f93\u5165\u4e0d\u542b\u8d44\u6e90\uff1b\u4e0d\u80fd\u6838\u9a8c\u5185\u90e8 PostScript name\u3001name \u8868\u548c\u5b9e\u9645\u52a0\u8f7d\u3002\u4fdd\u7559\u72ec\u7acb\u5b57\u4f53\u65cf\u53ca600\u5b57\u91cd\uff0c\u4e0d\u6539\u6210 City/bold\u3002 |\n| Trip-Medium | \u539f\u5b57\u4f53\u65cf Trip-Medium\u3001\u5b57\u91cd500\uff1b\u4efb\u52a1\u786e\u8ba4\u6765\u6e90\u4e3a\u5bbf\u4e3b | \u8f93\u5165\u6ca1\u6709\u5bbf\u4e3b\u5b57\u4f53\u58f0\u660e\u53ca\u4e8c\u8fdb\u5236\uff0c\u65e0\u6cd5\u786e\u8ba4\u5176\u662f\u72ec\u7acb\u6ce8\u518c\u5b57\u4f53\u65cf\u8fd8\u662f\u4ec5 PostScript name\u3002\u6309\u65e2\u6709\u8bbe\u8ba1\u4fdd\u7559\uff0c\u672a\u64c5\u6539 Trip/bold\u3002 |\n\n500/600\u5728\u90e8\u5206 Skyline \u673a\u578b\u53ef\u80fd\u4e0d\u751f\u6548\uff0c\u5b57\u4f53\u5339\u914d\u5931\u8d25\u65f6\u53ef\u80fd\u56de\u9000\u7cfb\u7edf\u5b57\u4f53\uff0c\u5bfc\u81f4\u5b57\u5f62\u3001\u5b57\u5bbd\u3001\u6807\u9898\u622a\u65ad\u70b9\u6216\u5b57\u91cd\u53d8\u5316\u3002\u5bbf\u4e3b\u96c6\u6210\u65f6\u9700\u6838\u5bf9\u4e24\u4efd\u5b57\u4f53\u7684\u5185\u90e8 PostScript name\u3001\u6ce8\u518c family \u4e0e\u52a0\u8f7d\u6210\u529f\u72b6\u6001\uff0c\u5e76\u5728 iOS/Android \u7684 Skyline/WebView \u5bf9\u7167\u54c1\u724c\u6587\u672c\u3002\u6ca1\u6709\u6388\u6743\u6539\u53d8\u5df2\u786e\u8ba4\u89c6\u89c9\uff0c\u4e0d\u5c06\u7c97\u4f53700\u4f5c\u4e3a\u9ed8\u8ba4\u66ff\u6362\u3002\n\n## \u9a8c\u8bc1\n\n- passed\uff1aMpx SFC \u89e3\u6790\u3001\u5fae\u4fe1\u6a21\u677f\u7f16\u8bd1\u65e0\u9519\u8bef\uff1bJest 7/7\uff0c\u8986\u76d6319/320/321/375px\u7684\u6e32\u67d3\u5206\u652f\u548c\u9608\u503c\u3001\u51e0\u4f55\u5c3a\u5bf8\u4e0e\u5355\u5c42\u9634\u5f71/\u6ee4\u955c\u58f0\u660e\u3002\n- passed\uff1a\u62bd\u53d6\u5b8c\u6574\u4e1a\u52a1 script\uff0c\u4f7f\u7528\u4ed3\u5e93 ESLint Standard \u89c4\u5219\u6821\u9a8c\uff0c\u6700\u7ec8\u9000\u51fa\u78010\u3002\n- completed\uff1a\u5b8c\u6574\u5ba1\u8ba1\u77e9\u963547\u6761\uff0c\u8bc1\u636e\u5728 `../run-1/audit.md` \u4e0e `audit-scan.log`\u3002media\u5019\u9009\u5df2\u5904\u7406\uff1bCity\u5b57\u4f53\u89c4\u5219\u6709\u72ec\u7acb\u5b57\u4f53\u65cf\u4f8b\u5916\uff1bTrip\u6620\u5c04\u4e0e500/600\u98ce\u9669\u5df2\u8bb0\u5f55\uff0c\u65e0\u672a\u89e3\u91caerror\u3002\n- not_run\uff1a\u5fae\u4fe1\u5f00\u53d1\u8005\u5de5\u5177\u3001glass-easel\u5b9e\u9645\u6302\u8f7d\u3001Skyline/WebView\u771f\u673a\u622a\u56fe\u3001\u50cf\u7d20\u7ea7\u9634\u5f71\u53e0\u52a0\u548c\u6ee4\u955c\u5bf9\u7167\u3001\u5b57\u4f53\u52a0\u8f7d\u53ca\u673a\u578b\u5b57\u91cd\u6838\u9a8c\u3002\u6a21\u677f\u89e3\u6790\u548c\u6837\u5f0f\u7b97\u672f\u68c0\u67e5\u4e0d\u4ee3\u8868\u771f\u673a\u89c6\u89c9\u901a\u8fc7\u3002\n- not_run\uff1a\u5b8c\u6574\u5bbf\u4e3b\u6784\u5efa\uff08\u8f93\u5165\u672a\u63d0\u4f9b\u5b57\u4f53\u4e8c\u8fdb\u5236\u3001app\u914d\u7f6e\u548c\u5165\u53e3\uff09\u3002\u5916\u90e8 title \u8c03\u7528\u503c\u672a\u63d0\u4f9b\uff1b\u7ec4\u4ef6\u81ea\u8eab\u9ed8\u8ba4\u503c\u4e3a String\uff0c\u4f7f\u7528\u5408\u6cd5 value \u5b57\u6bb5\u3002\n\n\u4e1a\u52a1\u4ea7\u7269\u53ea\u6709\u672c\u62a5\u544a\u548c\u5b8c\u6574 style-card.mpx\uff1b\u6240\u6709\u9a8c\u8bc1\u811a\u672c\u548c\u65e5\u5fd7\u653e\u7f6e\u4e8e\u6307\u5b9a run-1 \u76ee\u5f55\u3002\n"}, {"name": "style-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"card\" wx:class=\"{{ { 'card-skyline': isSkyline, small: isSkyline && isSmall } }}\">\n    \u003ctext class=\"title\" max-lines=\"{{1}}\" overflow=\"ellipsis\">{{title}}\u003c/text>\n    \u003cview class=\"labels\">\u003ctext class=\"label\">\u5305\u90ae\u003c/text>\u003ctext class=\"label\">\u6b21\u65e5\u8fbe\u003c/text>\u003c/view>\n    \u003cview class=\"badge sale\" data-kind=\"sale\">\u6d3b\u52a8\u003c/view>\n    \u003cview class=\"outer\">\u003cview class=\"child\">\u5185\u5bb9\u003c/view>\u003c/view>\n    \u003cview class=\"first\">\u7b2c\u4e00\u5757\u003c/view>\u003cview class=\"second\">\u7b2c\u4e8c\u5757\u003c/view>\n    \u003cview class=\"single-shadow\">\u5355\u9634\u5f71\u003c/view>\u003cview class=\"single-filter\">\u5355\u6ee4\u955c\u003c/view>\n    \u003cview class=\"many-back\">\u003cview class=\"many\">\u53cc\u9634\u5f71\u003c/view>\u003c/view>\n    \u003cview class=\"filters\">\u003cview class=\"filters-blur\">\u590d\u5408\u6ee4\u955c\u003c/view>\u003c/view>\n    \u003ctext class=\"font-a\">\u54c1\u724cA\u003c/text>\u003ctext class=\"font-b\">\u54c1\u724cB\u003c/text>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\ncreateComponent({\n  properties: { title: { type: String, value: '\u672c\u5468\u7cbe\u9009\u5546\u54c1' } },\n  data: { isSkyline: false, isSmall: false },\n  attached () {\n    this.isSkyline = this.renderer === 'skyline'\n    if (this.isSkyline) this.isSmall = wx.getWindowInfo().screenWidth \u003c= 320\n  }\n})\n\u003c/script>\n\u003cstyle>\n.card { padding: 24rpx; }\n.title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.labels { display: flex; }\n.label { flex: 1; min-width: 0; }\n.badge.sale { color: #d00; }\n.outer { padding-top: 10px; }\n.child { box-sizing: content-box; width: 100px; padding: 10px; }\n.first { margin-bottom: 16px; }\n.single-shadow { box-shadow: 0 2px 4px rgba(0,0,0,.2); }\n.single-filter { filter: blur(2px); }\n.many-back { box-shadow: 0 4px 8px #333; }\n.many { box-shadow: 0 2px 4px #000; }\n.filters { filter: brightness(.8); }\n.filters-blur { filter: blur(2px); }\n@font-face { font-family: 'City-Semibold'; src: url('./city.woff2'); }\n.font-a { font-family: 'City-Semibold'; font-weight: 600; }\n.font-b { font-family: 'Trip-Medium'; font-weight: 500; }\n@media screen and (max-width: 320px) { .card { padding: 12rpx; } }\n.card-skyline { padding: 24rpx; }\n.card-skyline.small { padding: 12rpx; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\"component\":true}\n\u003c/script>\n"}], "grading": {"expectations": [{"id": "s0_00", "text": "Skyline \u6807\u9898\u7684\u5b9e\u9645 text \u627f\u8f7d\u8282\u70b9\u8bbe\u7f6e max-lines=1\u3001overflow=ellipsis\uff0c\u5e76\u4e0e WebView \u5355\u884c\u7701\u7565\u6837\u5f0f\u5171\u540c\u5b9e\u73b0\u957f\u6807\u9898\u622a\u65ad\u3002", "passed": true, "evidence": "style-card.mpx: \u6807\u9898\u5b9e\u9645text\u5177max-lines={{1}}\u3001overflow=ellipsis\uff0c\u4fdd\u7559WebView nowrap/overflow/text-overflow\u3002"}, {"id": "s0_01", "text": "Skyline \u4e24\u5217\u6807\u7b7e\u4f7f\u7528\u663e\u5f0f\u6a2a\u5411 Flex \u548c\u7b49\u5206\u5b50\u9879\u5e03\u5c40\uff0c\u5b9e\u73b0\u4e24\u5217\u7b49\u5bbd\u3002", "passed": true, "evidence": "style-card.mpx: labels\u663e\u5f0fdisplay:flex\uff0c\u5bbf\u4e3bdefaultDisplayBlock\u4f7f\u65b9\u5411\u9ed8\u8ba4row\uff1b\u4e24\u4e2alabel flex:1/min-width:0\uff0c\u7b49\u5bbd\u6a2a\u5411\u5e03\u5c40\u3002"}, {"id": "s0_02", "text": "Skyline \u6d3b\u52a8\u72b6\u6001\u901a\u8fc7\u53d7\u652f\u6301\u7684 class \u9009\u62e9\u5668\u6620\u5c04\u5230\u7ea2\u8272\u6d3b\u52a8\u6587\u6848\u3002", "passed": true, "evidence": "style-card.mpx: badge\u5b9e\u9645\u542bsale\u7c7b\uff0c.badge.sale\u989c\u8272#d00\u3002"}, {"id": "s0_03", "text": "Skyline \u901a\u8fc7 renderer \u4e0e\u5c4f\u5bbd\u72b6\u6001\u9009\u62e9\u5bb9\u5668 padding\uff0c\u5bbd\u5ea6\u2264320px \u4e3a12rpx\u3001>320px \u4e3a24rpx\uff1bSkyline \u9ed8\u8ba4\u8986\u76d6\u4f4d\u4e8e\u5a92\u4f53\u67e5\u8be2\u4e4b\u540e\uff0cWebView \u7ee7\u7eed\u4f7f\u7528\u539f\u5a92\u4f53\u67e5\u8be2\u3002", "passed": true, "evidence": "style-card.mpx: attached\u8bfb\u53d6renderer\u5e76\u6309screenWidth\u2264320\u8ba1\u7b97small\uff1bWebView\u5a92\u4f53\u67e5\u8be2\u4fdd\u7559\uff0cmedia\u540ecard-skyline\u9ed8\u8ba424rpx\uff0c\u5c0f\u5c4f12rpx\u3002"}, {"id": "s0_04", "text": "Skyline \u5185\u5bb9\u4e0e\u7236\u5bb9\u5668\u4e0a\u5916\u6cbf\u768420px\u8ddd\u79bb\u7531\u7236 padding \u8868\u8fbe\uff0c\u5b50\u8282\u70b9\u4ece\u7236\u5185\u5bb9\u533a\u8d77\u59cb\u4f4d\u7f6e\u5e03\u5c40\u3002", "passed": false, "evidence": "style-card.mpx: .outer\u5b9e\u9645padding-top:10px\uff0cchild\u4ece10px\u5904\u8d77\u59cb\uff0c\u4e0everification\u8981\u6c42\u7236\u5916\u6cbf\u81f3\u9996\u4e2a\u5b50\u76d220px\u4e0d\u7b26\u3002report\u6309\u8f93\u5165\u201c\u5185\u5bb9\u201d\u89e3\u91ca\u4e3a10px\u7236padding+10px\u5b50padding\uff1b\u8fd9\u662f\u8f93\u5165\u63aa\u8f9e\u4e0e\u8bc4\u5206\u89c2\u5bdf\u70b9\u7684\u6b67\u4e49\uff0c\u4e0d\u80fd\u76f4\u63a5\u5f52\u56e0\u4e3aSkill\u89c4\u5219\u7f3a\u5931\u3002"}, {"id": "s0_05", "text": "Skyline \u76f8\u90bb\u5757\u7684\u5782\u76f4\u95f4\u8ddd\u96c6\u4e2d\u7531\u4e00\u4fa7\u768416px margin\u627f\u62c5\uff0c\u6700\u7ec8\u76f8\u90bb\u76d2\u95f4\u8ddd\u4e3a16px\u3002", "passed": true, "evidence": "style-card.mpx: first\u4e0bmargin16px\uff0csecond\u4e0amargin\u5df2\u79fb\u9664\uff0c\u95f4\u8ddd16px\u3002"}, {"id": "s0_06", "text": "Skyline \u5c06\u53cc\u9634\u5f71\u5206\u914d\u5230\u540c\u5c3a\u5bf8\u7684\u5d4c\u5957\u8282\u70b9\u6216\u7b49\u6548\u5206\u5c42\u7ed3\u6784\uff0c\u5448\u73b0\u539f\u6709\u4e24\u5c42\u9634\u5f71\u7684\u53c2\u6570\u548c\u524d\u540e\u5173\u7cfb\u3002", "passed": true, "evidence": "style-card.mpx: many-back/many\u540c\u5c3a\u5bf8\u65e0\u989d\u5916padding\u5d4c\u5957\uff0c\u5916\u5c42#333\u540e\u9634\u5f71\u3001\u5185\u5c42#000\u524d\u9634\u5f71\u3002"}, {"id": "s0_07", "text": "Skyline \u5c06\u590d\u5408\u6ee4\u955c\u5206\u5c42\u4e3a\u5185\u5c42blur(2px)\u548c\u5916\u5c42brightness(.8)\uff0c\u7ec4\u5408\u5448\u73b0\u539f\u6709\u4e24\u79cd\u6548\u679c\u3002", "passed": true, "evidence": "style-card.mpx: filters\u5916\u5c42brightness(.8)\uff0cfilters-blur\u5185\u5c42blur(2px)\u3002"}, {"id": "s0_08", "text": "Skyline \u5b57\u4f53\u5904\u7406\u8bc6\u522b City-Semibold \u7684\u540c\u540d\u72ec\u7acb\u5b57\u4f53\u65cf\uff0c\u660e\u786e Trip-Medium \u7684\u5bbf\u4e3b\u5b57\u4f53\u4e0e PostScript \u6620\u5c04\u6838\u9a8c\u70b9\uff0c\u5e76\u8bb0\u5f55500/600\u5b57\u91cd\u7684\u673a\u578b\u9a8c\u8bc1\u8981\u6c42\u3002", "passed": true, "evidence": "report.md\u660e\u786eCity\u72ec\u7acb\u5b57\u4f53\u65cf\u3001Trip\u5bbf\u4e3b\u4e0ePostScript\u5f85\u6838\u9a8c\u4fe1\u606f\u3001500/600\u673a\u578b\u98ce\u9669\uff1b\u5b9e\u9645\u5b57\u4f53\u58f0\u660e\u4fdd\u6301600/500\u3002"}, {"id": "s0_09", "text": "Skyline \u5355\u9634\u5f71\u8282\u70b9\u4ee5\u5355\u4e2a box-shadow \u5448\u73b0\u539f\u6709 0 2px 4px rgba(0,0,0,.2) \u6548\u679c\uff0c\u989c\u8272\u51fd\u6570\u4f5c\u4e3a\u5b8c\u6574\u989c\u8272\u503c\u89e3\u6790\u3002", "passed": true, "evidence": "style-card.mpx: single-shadow\u4fdd\u7559\u5355\u4e2a0 2px 4px rgba(0,0,0,.2)\u3002"}, {"id": "s0_10", "text": "Skyline \u5355\u6ee4\u955c\u8282\u70b9\u91c7\u7528\u53d7\u652f\u6301\u7684 blur(2px)\uff0c\u5448\u73b0\u539f\u6709\u72ec\u7acb\u6a21\u7cca\u6548\u679c\u3002", "passed": true, "evidence": "style-card.mpx: single-filter\u4fdd\u7559blur(2px)\u3002"}, {"id": "s0_11", "text": "Skyline \u5728\u5bbf\u4e3b defaultContentBox=true \u6761\u4ef6\u4e0b\uff0cchild \u4fdd\u6301100px\u5185\u5bb9\u5bbd\u5ea6\u53ca\u5de6\u53f3\u540410px padding\uff0c\u5b9e\u9645\u5916\u5bbd\u4e3a120px\u3002", "passed": true, "evidence": "style-card.mpx: child\u663e\u5f0fcontent-box width100px\u3001padding10px\uff0c\u5185\u5bb9100px\u5916\u5bbd120px\u3002"}], "summary": {"passed": 11, "failed": 1, "total": 12, "pass_rate": 0.9166666666666666}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-0-style-layout-no_skill", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 0, "outputs": [{"name": "report.md", "type": "text", "content": "# \u9002\u914d\u7ed3\u679c\n\n\u5b8c\u6574\u4e1a\u52a1\u6587\u4ef6\uff1a`style-card.mpx`\u3002\n\n- \u6807\u9898\u4fdd\u7559\u5355\u884c\u7701\u7565\uff0c\u589e\u52a0 text \u6700\u5927\u884c\u6570\u7ea6\u675f\u3002\n- \u6807\u7b7e\u6539\u4e3a\u6a2a\u5411 flex\uff0c\u6bcf\u5217 50%\uff1b\u6d3b\u52a8\u6587\u6848\u6539\u7528\u663e\u5f0f sale \u7c7b\uff0c\u4fdd\u7559 data-kind\u3002\n- attached \u4e2d\u8bfb\u53d6\u5f53\u524d windowWidth\uff0c\u2264320px \u4f7f\u7528 12rpx\uff0c\u5426\u5219 24rpx\u3002\u4e24\u4e2a renderer \u5171\u7528\u903b\u8f91\uff1b\u672a\u589e\u52a0\u65cb\u8f6c\u76d1\u542c\uff0c\u7b26\u5408\u6309\u5f53\u524d\u5c4f\u5bbd\u8981\u6c42\u3002\n- outer \u663e\u5f0f padding-top 20px\uff0cchild \u663e\u5f0f border-box \u5916\u5bbd 120px\uff1b\u7b2c\u4e8c\u5757\u53d6\u6d88\u4e0a margin\uff0c\u4e24\u5757\u95f4\u8ddd\u4e3a 16px\u3002\n- \u5355\u4e2a rgba \u9634\u5f71\u4e0e\u72ec\u7acb blur \u4fdd\u7559\uff1b\u53cc\u9634\u5f71\u62c6\u6210\u4e24\u4e2a\u540c\u5c3a\u5bf8\u7edd\u5bf9\u5b9a\u4f4d\u5c42\uff0c\u8f83\u8fd1\u9ed1\u8272\u9634\u5f71\u5728\u4e0a\u5c42\u3002\n- \u590d\u5408\u6ee4\u955c\u62c6\u4e3a\u5185\u5c42 blur \u4e0e\u5916\u5c42 brightness\uff0c\u4fdd\u7559\u539f\u6709\u6570\u503c\uff0c\u6ca1\u6709\u66ff\u6362\u989c\u8272\u6216\u6dfb\u52a0\u4e0d\u900f\u660e\u80cc\u666f\u3002\n\n## \u5b57\u4f53\u4e0e\u98ce\u9669\n\nCity-Semibold \u4e3a\u72ec\u7acb\u5b57\u4f53\u65cf\uff0c\u4f7f\u7528 normal \u907f\u514d\u518d\u6b21\u5408\u6210\u7c97\u4f53\uff0c\u4fdd\u7559\u5bbf\u4e3b\u63d0\u4f9b\u7684 city.woff2 \u5f15\u7528\u3002Trip-Medium \u6309\u5bbf\u4e3b\u6ce8\u518c\u7684\u72ec\u7acb\u5b57\u4f53\u65cf\u4f7f\u7528 normal\u3002\u8f93\u5165\u4e2d\u6ca1\u6709\u5b57\u4f53\u4e8c\u8fdb\u5236\uff0c\u65e0\u6cd5\u68c0\u67e5\u6587\u4ef6\u5185\u90e8 family\u3001PostScript \u540d\u3001weight \u5143\u6570\u636e\u4e0e\u5b57\u5f62\u8986\u76d6\uff0c\u4e5f\u6ca1\u6709\u5b9e\u9645\u8c03\u7528\u5b57\u4f53\u52a0\u8f7d\u63a5\u53e3\uff1b\u5bbf\u4e3b\u9700\u786e\u4fdd Skyline \u53ef\u8bbf\u95ee\u5e76\u5b8c\u6210\u5bf9\u5e94\u5b57\u4f53\u65cf\u6ce8\u518c\u3002CSS @font-face \u672c\u8eab\u4e0d\u80fd\u4f5c\u4e3a Skyline \u5b57\u4f53\u52a0\u8f7d\u6210\u529f\u7684\u8bc1\u636e\u3002\n\niOS/Android \u4e0d\u540c\u57fa\u7840\u5e93\u3001\u8bbe\u5907 GPU \u5bf9\u6ee4\u955c\u5408\u6210\u53ca\u9634\u5f71\u53e0\u52a0\u7684\u8868\u73b0\u9700\u8981\u6838\u9a8c\u3002\u5c24\u5176 brightness \u5728\u76ee\u6807 Skyline \u7248\u672c\u662f\u5426\u652f\u6301\u5c1a\u672a\u786e\u8ba4\uff1b\u62c6\u5206\u6ee4\u955c\u4e0d\u7b49\u4e8e\u8bc1\u660e\u6bcf\u79cd\u6ee4\u955c\u53d7\u652f\u6301\u3002\u5982\u679c\u5bbf\u4e3b\u7248\u672c\u4e0d\u652f\u6301 brightness\uff0c\u5f53\u524d\u590d\u5408\u6ee4\u955c\u6548\u679c\u4ecd\u4e0d\u6ee1\u8db3\u5b8c\u6574\u89c6\u89c9\u8981\u6c42\uff0c\u5e94\u4f9d\u636e\u5df2\u786e\u8ba4\u8bbe\u8ba1\u53e6\u884c\u63d0\u4f9b\u7b49\u6548\u5b9e\u73b0\uff0c\u4e0d\u80fd\u76f4\u63a5\u5220\u9664\u4eae\u5ea6\u6548\u679c\u3002\u54c1\u724c\u5b57\u4f53\u672a\u6ce8\u518c\u65f6\u4f1a\u56de\u9000\u7cfb\u7edf\u5b57\u4f53\uff0c\u53ef\u80fd\u5f71\u54cd\u5b57\u5bbd\u3001\u6807\u9898\u622a\u65ad\u548c\u89c6\u89c9\u5b57\u91cd\u3002\n\n## \u9a8c\u8bc1\n\n- Mpx SFC \u89e3\u6790\u3001JSON \u7ec4\u4ef6\u58f0\u660e\u53ca 319/320/321/375px \u7684 padding \u903b\u8f91\uff1aJest 5/5 \u901a\u8fc7\u3002\n- \u63d0\u53d6\u7ec4\u4ef6\u811a\u672c\u540e\u4f7f\u7528\u4ed3\u5e93 ESLint \u914d\u7f6e\uff1a\u901a\u8fc7\u3002\n- \u771f\u673a Skyline/glass-easel\uff1anot_run\u3002\n- WebView \u771f\u673a\u56de\u5f52\uff1anot_run\u3002\n- \u5b57\u4f53\u5b9e\u9645\u52a0\u8f7d\u3001\u5b57\u4f53\u4e8c\u8fdb\u5236\u5143\u6570\u636e\u3001\u9634\u5f71\u548c\u6ee4\u955c\u89c6\u89c9\u5bf9\u7167\uff1anot_run\u3002\n\n\u9759\u6001\u901a\u8fc7\u4e0d\u4ee3\u8868\u5b8c\u6574 Skyline \u89c6\u89c9\u9a8c\u6536\u5b8c\u6210\u3002\n"}, {"name": "style-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"card\" style=\"padding: {{cardPadding}}rpx;\">\n    \u003ctext class=\"title\" max-lines=\"1\">{{title}}\u003c/text>\n    \u003cview class=\"labels\">\u003ctext class=\"label\">\u5305\u90ae\u003c/text>\u003ctext class=\"label\">\u6b21\u65e5\u8fbe\u003c/text>\u003c/view>\n    \u003cview class=\"badge sale\" data-kind=\"sale\">\u6d3b\u52a8\u003c/view>\n    \u003cview class=\"outer\">\u003cview class=\"child\">\u5185\u5bb9\u003c/view>\u003c/view>\n    \u003cview class=\"first\">\u7b2c\u4e00\u5757\u003c/view>\u003cview class=\"second\">\u7b2c\u4e8c\u5757\u003c/view>\n    \u003cview class=\"single-shadow\">\u5355\u9634\u5f71\u003c/view>\u003cview class=\"single-filter\">\u5355\u6ee4\u955c\u003c/view>\n    \u003cview class=\"many\">\n      \u003cview class=\"shadow-back\">\u003c/view>\n      \u003cview class=\"shadow-front\">\u003c/view>\n      \u003cview class=\"shadow-content\">\u53cc\u9634\u5f71\u003c/view>\n    \u003c/view>\n    \u003cview class=\"filter-brightness\">\u003cview class=\"filters\">\u590d\u5408\u6ee4\u955c\u003c/view>\u003c/view>\n    \u003ctext class=\"font-a\">\u54c1\u724cA\u003c/text>\u003ctext class=\"font-b\">\u54c1\u724cB\u003c/text>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: { title: { type: String, value: '\u672c\u5468\u7cbe\u9009\u5546\u54c1' } },\n  data: { cardPadding: 24 },\n  attached () {\n    const { windowWidth } = wx.getWindowInfo()\n    this.cardPadding = windowWidth \u003c= 320 ? 12 : 24\n  }\n})\n\u003c/script>\n\u003cstyle>\n.card { padding: 24rpx; }\n.title { display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.labels { display: flex; flex-direction: row; }\n.label { width: 50%; min-width: 0; }\n.sale { color: #d00; }\n.outer { padding-top: 20px; overflow: hidden; }\n.child { box-sizing: border-box; width: 120px; padding: 10px; }\n.first { margin-bottom: 16px; }\n.second { margin-top: 0; }\n.single-shadow { box-shadow: 0 2px 4px rgba(0,0,0,0.2); }\n.single-filter { filter: blur(2px); }\n.many { position: relative; }\n.shadow-back { position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-shadow: 0 4px 8px #333; }\n.shadow-front { position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-shadow: 0 2px 4px #000; }\n.shadow-content { position: relative; }\n.filter-brightness { filter: brightness(0.8); }\n.filters { filter: blur(2px); }\n@font-face { font-family: 'City-Semibold'; src: url('./city.woff2'); }\n.font-a { font-family: 'City-Semibold'; font-weight: normal; }\n.font-b { font-family: 'Trip-Medium'; font-weight: normal; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\"component\":true}\n\u003c/script>\n"}], "grading": {"expectations": [{"id": "s0_00", "text": "Skyline \u6807\u9898\u7684\u5b9e\u9645 text \u627f\u8f7d\u8282\u70b9\u8bbe\u7f6e max-lines=1\u3001overflow=ellipsis\uff0c\u5e76\u4e0e WebView \u5355\u884c\u7701\u7565\u6837\u5f0f\u5171\u540c\u5b9e\u73b0\u957f\u6807\u9898\u622a\u65ad\u3002", "passed": false, "evidence": "style-card.mpx: title text\u4ec5\u6709max-lines=1\uff0c\u7f3a\u5c11overflow=ellipsis\u8282\u70b9\u5c5e\u6027\uff1bCSS overflow:hidden\u4e0d\u80fd\u66ff\u4ee3\u8be5\u5c5e\u6027\u3002"}, {"id": "s0_01", "text": "Skyline \u4e24\u5217\u6807\u7b7e\u4f7f\u7528\u663e\u5f0f\u6a2a\u5411 Flex \u548c\u7b49\u5206\u5b50\u9879\u5e03\u5c40\uff0c\u5b9e\u73b0\u4e24\u5217\u7b49\u5bbd\u3002", "passed": true, "evidence": "style-card.mpx: .labels\u6a2a\u5411flex\uff0c\u4e24\u4e2a.label\u5747width:50%\u3001min-width:0\uff0c\u5b9e\u73b0\u7b49\u5bbd\u5217\u3002"}, {"id": "s0_02", "text": "Skyline \u6d3b\u52a8\u72b6\u6001\u901a\u8fc7\u53d7\u652f\u6301\u7684 class \u9009\u62e9\u5668\u6620\u5c04\u5230\u7ea2\u8272\u6d3b\u52a8\u6587\u6848\u3002", "passed": true, "evidence": "style-card.mpx: badge\u5b9e\u9645\u7ed1\u5b9asale\u7c7b\uff0c.sale\u58f0\u660ecolor:#d00\u3002"}, {"id": "s0_03", "text": "Skyline \u901a\u8fc7 renderer \u4e0e\u5c4f\u5bbd\u72b6\u6001\u9009\u62e9\u5bb9\u5668 padding\uff0c\u5bbd\u5ea6\u2264320px \u4e3a12rpx\u3001>320px \u4e3a24rpx\uff1bSkyline \u9ed8\u8ba4\u8986\u76d6\u4f4d\u4e8e\u5a92\u4f53\u67e5\u8be2\u4e4b\u540e\uff0cWebView \u7ee7\u7eed\u4f7f\u7528\u539f\u5a92\u4f53\u67e5\u8be2\u3002", "passed": false, "evidence": "style-card.mpx: \u4e24\u7aef\u5171\u7528attached\u5c4f\u5bbd\u8ba1\u7b97\u53cainline padding\uff1b\u5220\u9664\u4e86\u539f\u5a92\u4f53\u67e5\u8be2\uff0c\u672a\u5b9e\u73b0\u65ad\u8a00\u8981\u6c42\u7684renderer\u9694\u79bb\u53caWebView\u5a92\u4f53\u67e5\u8be2\u8def\u5f84\u3002"}, {"id": "s0_04", "text": "Skyline \u5185\u5bb9\u4e0e\u7236\u5bb9\u5668\u4e0a\u5916\u6cbf\u768420px\u8ddd\u79bb\u7531\u7236 padding \u8868\u8fbe\uff0c\u5b50\u8282\u70b9\u4ece\u7236\u5185\u5bb9\u533a\u8d77\u59cb\u4f4d\u7f6e\u5e03\u5c40\u3002", "passed": true, "evidence": "style-card.mpx: .outer padding-top:20px\uff0cchild\u4e0amargin\u5df2\u79fb\u9664\uff0c\u7236\u5916\u6cbf\u81f3child\u4e3a20px\u3002"}, {"id": "s0_05", "text": "Skyline \u76f8\u90bb\u5757\u7684\u5782\u76f4\u95f4\u8ddd\u96c6\u4e2d\u7531\u4e00\u4fa7\u768416px margin\u627f\u62c5\uff0c\u6700\u7ec8\u76f8\u90bb\u76d2\u95f4\u8ddd\u4e3a16px\u3002", "passed": true, "evidence": "style-card.mpx: first margin-bottom:16px\u3001second margin-top:0\uff0c\u76f8\u90bb\u95f4\u8ddd16px\u3002"}, {"id": "s0_06", "text": "Skyline \u5c06\u53cc\u9634\u5f71\u5206\u914d\u5230\u540c\u5c3a\u5bf8\u7684\u5d4c\u5957\u8282\u70b9\u6216\u7b49\u6548\u5206\u5c42\u7ed3\u6784\uff0c\u5448\u73b0\u539f\u6709\u4e24\u5c42\u9634\u5f71\u7684\u53c2\u6570\u548c\u524d\u540e\u5173\u7cfb\u3002", "passed": true, "evidence": "style-card.mpx: shadow-back/front\u5747absolute\u56db\u8fb90\u8986\u76d6\u540c\u5c3a\u5bf8many\u5bb9\u5668\uff0c\u5206\u522b\u627f\u8f7d\u4e24\u7ec4\u539f\u59cb\u9634\u5f71\uff0cfront\u540e\u7ed8\u5236\u3002"}, {"id": "s0_07", "text": "Skyline \u5c06\u590d\u5408\u6ee4\u955c\u5206\u5c42\u4e3a\u5185\u5c42blur(2px)\u548c\u5916\u5c42brightness(.8)\uff0c\u7ec4\u5408\u5448\u73b0\u539f\u6709\u4e24\u79cd\u6548\u679c\u3002", "passed": true, "evidence": "style-card.mpx: filter-brightness\u5916\u5c42brightness(.8)\uff0cfilters\u5185\u5c42blur(2px)\uff0c\u4e24\u5c42\u53c2\u6570\u53ca\u987a\u5e8f\u6b63\u786e\u3002\u62a5\u544a\u5173\u4e8e\u652f\u6301\u60c5\u51b5\u7684\u672a\u6838\u5b9e\u58f0\u660e\u4e0d\u6539\u53d8\u5b9e\u9645\u9759\u6001\u5b9e\u73b0\u3002"}, {"id": "s0_08", "text": "Skyline \u5b57\u4f53\u5904\u7406\u8bc6\u522b City-Semibold \u7684\u540c\u540d\u72ec\u7acb\u5b57\u4f53\u65cf\uff0c\u660e\u786e Trip-Medium \u7684\u5bbf\u4e3b\u5b57\u4f53\u4e0e PostScript \u6620\u5c04\u6838\u9a8c\u70b9\uff0c\u5e76\u8bb0\u5f55500/600\u5b57\u91cd\u7684\u673a\u578b\u9a8c\u8bc1\u8981\u6c42\u3002", "passed": false, "evidence": "style-card.mpx\u53careport.md: \u867d\u8bc6\u522b\u72ec\u7acb\u5b57\u4f53\u65cf\u5e76\u5217\u51faPostScript\u6838\u9a8c\u70b9\uff0c\u5374\u5c06500/600\u5747\u6539normal\uff0c\u672a\u8bb0\u5f55500/600\u5b57\u91cd\u7684\u673a\u578b\u9a8c\u8bc1\u8981\u6c42\u3002"}, {"id": "s0_09", "text": "Skyline \u5355\u9634\u5f71\u8282\u70b9\u4ee5\u5355\u4e2a box-shadow \u5448\u73b0\u539f\u6709 0 2px 4px rgba(0,0,0,.2) \u6548\u679c\uff0c\u989c\u8272\u51fd\u6570\u4f5c\u4e3a\u5b8c\u6574\u989c\u8272\u503c\u89e3\u6790\u3002", "passed": true, "evidence": "style-card.mpx: single-shadow\u4fdd\u7559\u5355\u4e2a0 2px 4px rgba(0,0,0,0.2)\uff0c\u51fd\u6570\u9017\u53f7\u5b8c\u6574\u4fdd\u7559\u3002"}, {"id": "s0_10", "text": "Skyline \u5355\u6ee4\u955c\u8282\u70b9\u91c7\u7528\u53d7\u652f\u6301\u7684 blur(2px)\uff0c\u5448\u73b0\u539f\u6709\u72ec\u7acb\u6a21\u7cca\u6548\u679c\u3002", "passed": true, "evidence": "style-card.mpx: single-filter\u76f4\u63a5\u7ed1\u5b9afilter:blur(2px)\u3002"}, {"id": "s0_11", "text": "Skyline \u5728\u5bbf\u4e3b defaultContentBox=true \u6761\u4ef6\u4e0b\uff0cchild \u4fdd\u6301100px\u5185\u5bb9\u5bbd\u5ea6\u53ca\u5de6\u53f3\u540410px padding\uff0c\u5b9e\u9645\u5916\u5bbd\u4e3a120px\u3002", "passed": true, "evidence": "style-card.mpx: child\u6539\u4e3aborder-box width120px\u3001padding10px\uff0c\u65e0border\uff0c\u5b9e\u9645\u5185\u5bb9100px\u3001\u5916\u5bbd120px\uff0c\u4e0e\u76ee\u6807\u8bed\u4e49\u7b49\u4ef7\u3002"}], "summary": {"passed": 9, "failed": 3, "total": 12, "pass_rate": 0.75}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-1-page-scroll-config-mpx2skyline", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 1, "outputs": [{"name": "app.json", "type": "text", "content": "{\n  \"pages\": [\"pages/home\", \"pages/orders\"],\n  \"window\": { \"navigationBarTitleText\": \"\u6f14\u793a\" },\n  \"lazyCodeLoading\": \"requiredComponents\",\n  \"rendererOptions\": {\n    \"webview\": {},\n    \"skyline\": {\n      \"defaultDisplayBlock\": true,\n      \"defaultContentBox\": true,\n      \"tagNameStyleIsolation\": \"legacy\",\n      \"enableScrollViewAutoSize\": true,\n      \"keyframeStyleIsolation\": \"legacy\"\n    }\n  }\n}\n"}, {"name": "orders.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"page\" style=\"height:{{windowHeight}}px\">\n    \u003cview class=\"navigation\" style=\"padding-top:{{statusBarHeight}}px;height:{{navigationHeight}}px\">\u003ctext>\u8ba2\u5355\u003c/text>\u003c/view>\n    \u003cview class=\"position\">\u003ctext>\u6eda\u52a8\u4f4d\u7f6e\uff1a{{scrollTop}}\u003c/text>\u003c/view>\n    \u003cscroll-view class=\"orders\" style=\"height:{{scrollHeight}}px\" type=\"list\" scroll-y=\"{{true}}\" enhanced=\"{{true}}\" refresher-enabled=\"{{true}}\" refresher-triggered=\"{{refreshing}}\" bindrefresherrefresh=\"onRefresh\" bindscrolltolower=\"loadMore\" bindscroll=\"onScroll\">\n      \u003cview wx:for=\"{{orders}}\" wx:key=\"id\" class=\"item\">\u003ctext>{{item.name}}\u003c/text>\u003c/view>\n    \u003c/scroll-view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\nimport { fetchOrders } from './service'\n\ncreatePage({\n  data: {\n    orders: [],\n    scrollTop: 0,\n    pageNo: 1,\n    refreshing: false,\n    loading: false,\n    windowHeight: 0,\n    statusBarHeight: 0,\n    navigationHeight: 44,\n    scrollHeight: 0\n  },\n  onLoad () {\n    const { windowHeight, statusBarHeight } = wx.getWindowInfo()\n    const menu = wx.getMenuButtonBoundingClientRect()\n    this.windowHeight = windowHeight\n    this.statusBarHeight = statusBarHeight\n    this.navigationHeight = menu.height + (menu.top - statusBarHeight) * 2\n    this.scrollHeight = windowHeight - statusBarHeight - this.navigationHeight - 32\n    this.reload()\n  },\n  methods: {\n    onScroll (e) {\n      this.scrollTop = e.detail.scrollTop\n    },\n    onRefresh () {\n      this.refreshing = true\n      return this.reload()\n    },\n    reload () {\n      if (this.loading) {\n        this.refreshing = false\n        return\n      }\n      this.loading = true\n      return fetchOrders(1).then(rows => {\n        this.orders = rows\n        this.pageNo = 1\n      }).catch(() => {\n        wx.showToast({ title: '\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5', icon: 'none' })\n      }).finally(() => {\n        this.loading = false\n        this.refreshing = false\n      })\n    },\n    loadMore () {\n      if (this.loading) return\n      this.loading = true\n      return fetchOrders(this.pageNo + 1).then(rows => {\n        this.orders = this.orders.concat(rows)\n        this.pageNo += 1\n      }).catch(() => {\n        wx.showToast({ title: '\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5', icon: 'none' })\n      }).finally(() => {\n        this.loading = false\n      })\n    }\n  }\n})\n\u003c/script>\n\u003cstyle>\n.page { overflow: hidden; }\n.navigation { display: flex; align-items: center; justify-content: center; box-sizing: content-box; background-color: #fff; }\n.position { height: 32px; line-height: 32px; padding-left: 16px; }\n.orders { width: 100%; }\n.item { height: 80px; margin-left: 16px; margin-right: 16px; border-bottom: 1px solid #ddd; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\n  \"renderer\": \"skyline\",\n  \"componentFramework\": \"glass-easel\",\n  \"navigationStyle\": \"custom\",\n  \"disableScroll\": true,\n  \"enablePullDownRefresh\": false,\n  \"navigationBarTitleText\": \"\u8ba2\u5355\"\n}\n\u003c/script>\n"}, {"name": "report.md", "type": "text", "content": "# \u8ba2\u5355\u9875\u9762 Skyline \u9002\u914d\n\n\u5df2\u4ea4\u4ed8 orders.mpx\u3001app.json\u3001service.js \u5b8c\u6574\u4e1a\u52a1\u6587\u4ef6\u3002\u8303\u56f4\u4ec5\u8ba2\u5355\u9875\u9762\u4e0e\u5168\u5c40\u63a5\u5165\u914d\u7f6e\uff0c\u65e0\u81ea\u5b9a\u4e49\u5b50\u7ec4\u4ef6\uff1b\u9996\u9875\u6e90\u7801\u4e0d\u5728\u8f93\u5165\u8303\u56f4\uff0c\u672a\u6539\u9020\u3002service.js \u4e0e\u8f93\u5165\u9010\u5b57\u8282\u4e00\u81f4\u3002\n\n\u9875\u9762\u4f7f\u7528\u81ea\u5b9a\u4e49\u201c\u8ba2\u5355\u201d\u5bfc\u822a\uff0c\u6309\u7a97\u53e3\u3001\u72b6\u6001\u680f\u53ca\u80f6\u56ca\u5c3a\u5bf8\u8ba1\u7b97\u5bfc\u822a\u548c\u6eda\u52a8\u533a\u9ad8\u5ea6\u3002\u5217\u8868\u91c7\u7528 type=\"list\" \u7684 scroll-view\uff0c\u8ba2\u5355\u9879\u4e3a\u76f4\u63a5\u5b50\u8282\u70b9\uff1b\u521d\u6b21\u52a0\u8f7d\u4fdd\u7559\uff0c\u4e0b\u62c9\u5237\u65b0\u3001\u5206\u9875\u548c\u6eda\u52a8\u4f4d\u7f6e\u66f4\u65b0\u7edf\u4e00\u7ed1\u5b9a\u6eda\u52a8\u7ec4\u4ef6\u4e8b\u4ef6\uff0c\u5fae\u4fe1 WebView \u4f7f\u7528\u540c\u4e00\u4e1a\u52a1\u94fe\u8def\u3002\u5237\u65b0\u4e0e\u5206\u9875\u5931\u8d25\u4fdd\u7559\u5df2\u6709\u6570\u636e\uff0cfinally \u590d\u4f4d\u52a0\u8f7d/\u5237\u65b0\u72b6\u6001\uff1b\u52a0\u8f7d\u4e2d\u5ffd\u7565\u91cd\u590d\u8bf7\u6c42\u3002\n\n\u9875\u9762\u58f0\u660e renderer=skyline\u3001componentFramework=glass-easel\u3001navigationStyle=custom\u3001disableScroll=true\uff0c\u5173\u95ed\u539f\u9875\u9762\u4e0b\u62c9\u5237\u65b0\u3002app.json \u4fdd\u7559\u539f\u9996\u9875\u987a\u5e8f\u3001window \u4e0e rendererOptions.webview\uff0c\u589e\u52a0 lazyCodeLoading \u548c skyline \u4e94\u9879\u5bf9\u9f50\u914d\u7f6e\u3002\n\n\u9a8c\u8bc1\uff1aJest 4/4 \u901a\u8fc7\uff0c\u8986\u76d6\u521d\u59cb\u5316\u3001\u5237\u65b0\u6210\u529f\u4e0e\u5931\u8d25\u3001\u5206\u9875\u6210\u529f\u4e0e\u5931\u8d25\u3001\u91cd\u590d\u89e6\u5e95\u3001\u6eda\u52a8\u4f4d\u7f6e\u3001\u914d\u7f6e\u4e0e\u670d\u52a1\u6587\u4ef6\u4fdd\u7559\u3002\u63d0\u53d6\u5b9e\u9645\u9875\u9762\u811a\u672c\u6267\u884c Standard ESLint \u901a\u8fc7\u3002\u5b8c\u6574 Skill \u5ba1\u8ba1\u77e9\u9635 47 \u9879\u5df2\u9010\u9879\u6e90\u7801\u590d\u6838\uff0cerror \u6b8b\u7559 0\uff1b\u9ed8\u8ba4 refresher \u4e0d\u9700 slot\uff0c\u56fa\u5b9a\u4e24\u5b57\u5bfc\u822a\u6807\u9898\u65e0\u591a\u884c\u6362\u884c\u9700\u6c42\uff0c\u76f8\u5173 warn \u5019\u9009\u6309\u4f8b\u5916\u8bb0\u5f55\u3002\n\n\u8bc1\u636e\u4f4d\u4e8e ../run-1/\uff1aorders.test.js\u3001jest.log\u3001eslint.log\u3001audit.py\u3001audit-scan.log\u3001audit.md\u3001execution.md\u3002\n\n\u672a\u9a8c\u8bc1\u9879\uff1a\u5fae\u4fe1\u5f00\u53d1\u8005\u5de5\u5177\u7f16\u8bd1\u3001iOS/Android Skyline \u771f\u673a\u3001\u5fae\u4fe1 WebView \u771f\u673a\u5747\u4e3a not_run\u3002\u7a97\u53e3\u5c3a\u5bf8\u53d8\u5316\uff08\u65cb\u8f6c/\u5206\u5c4f\uff09\u672a\u589e\u52a0\u52a8\u6001\u91cd\u7b97\uff1b\u5f53\u524d\u4ec5\u5728 onLoad \u8ba1\u7b97\u5c3a\u5bf8\u3002\u4e1a\u52a1\u76ee\u6807\u4e3a\u5fae\u4fe1\uff0c\u672a\u9a8c\u8bc1\u5176\u4ed6\u5e73\u53f0\u3002\u96c6\u6210\u65f6\u5c06\u9875\u9762/\u670d\u52a1\u653e\u5165\u539f\u8ba2\u5355\u9875\u9762\u76f8\u5bf9\u8def\u5f84\u5e76\u5408\u5e76 app.json\uff0c\u6309\u5b9e\u9645 Skyline \u5f00\u91cf\u7b56\u7565\u6821\u9a8c\u57fa\u7840\u5e93\u6761\u4ef6\u3002\n"}, {"name": "service.js", "type": "text", "content": "export function fetchOrders(page) { return Promise.resolve(Array.from({ length: 20 }, (_, index) => ({ id: page * 100 + index, name: '\u8ba2\u5355 ' + page + '-' + index }))) }\n"}], "grading": {"expectations": [{"id": "s1_00", "text": "Skyline \u9875\u9762\u4e3b\u4f53\u4f7f\u7528\u5177\u6709\u660e\u786e\u53ef\u6eda\u52a8\u9ad8\u5ea6\u7684 scroll-view\uff0c\u663e\u5f0f\u9009\u62e9type=list\uff0c\u8ba2\u5355\u9879\u4f5c\u4e3a\u5217\u8868\u7684\u76f4\u63a5\u5b50\u8282\u70b9\u3002", "passed": true, "evidence": "orders.mpx: type=list\u3001scroll-y\u3001\u663e\u5f0fscrollHeight\u50cf\u7d20\u9ad8\u5ea6\uff1b\u8ba2\u5355view\u76f4\u63a5\u4e3ascroll-view\u5b50\u8282\u70b9\u3002"}, {"id": "s1_01", "text": "Skyline \u901a\u8fc7 bindrefresherrefresh \u542f\u52a8\u5237\u65b0\uff0crefresher-triggered \u5173\u8054\u5237\u65b0\u72b6\u6001\uff0c\u5e76\u5728\u8bf7\u6c42\u6210\u529f\u548c\u5931\u8d25\u540e\u7ed3\u675f\u5bb9\u5668\u5237\u65b0\u6001\u3002", "passed": true, "evidence": "orders.mpx: bindrefresherrefresh=onRefresh\uff0crefresher-triggered=refreshing\uff1breload finally\u53caloading\u65e9\u9000\u5747\u590d\u4f4dfalse\uff0c\u8986\u76d6\u8bf7\u6c42\u6210\u529f\u4e0e\u5931\u8d25\u3002"}, {"id": "s1_02", "text": "Skyline \u901a\u8fc7 scroll-view \u7684 bindscrolltolower \u8fde\u63a5\u539f\u5206\u9875\u52a0\u8f7d\u65b9\u6cd5\uff0c\u5bb9\u5668\u89e6\u5e95\u540e\u663e\u793a\u8ffd\u52a0\u7684\u8ba2\u5355\u3002", "passed": true, "evidence": "orders.mpx: bindscrolltolower=loadMore\uff0cfetchOrders(pageNo+1)\u540econcat\u8ffd\u52a0\u5e76\u63a8\u8fdb\u9875\u53f7\u3002"}, {"id": "s1_03", "text": "Skyline \u901a\u8fc7 scroll-view \u7684 bindscroll \u8bfb\u53d6 event.detail.scrollTop \u5e76\u66f4\u65b0\u6eda\u52a8\u4f4d\u7f6e\u5c55\u793a\u3002", "passed": true, "evidence": "orders.mpx: bindscroll=onScroll\uff0ce.detail.scrollTop\u8d4b\u7ed9\u5c55\u793a\u72b6\u6001scrollTop\u3002"}, {"id": "s1_04", "text": "Skyline \u9875\u9762\u914d\u7f6e renderer=skyline\u3001componentFramework=glass-easel\u3001navigationStyle=custom\u3001disableScroll=true\uff0c\u5e76\u5728\u6a21\u677f\u5b9e\u73b0\u8ba2\u5355\u81ea\u5b9a\u4e49\u5bfc\u822a\u3002", "passed": true, "evidence": "orders.mpx: \u9875\u9762JSON\u56db\u9879skyline/glass-easel/custom/disableScroll:true\uff1b\u771f\u5b9enavigation\u5305\u542b\u8ba2\u5355\u6587\u672c\u4e0e\u72b6\u6001\u680f\u9ad8\u5ea6\u3002"}, {"id": "s1_05", "text": "Skyline \u63a5\u5165\u6240\u9700\u7684 lazyCodeLoading=requiredComponents \u914d\u7f6e\u4e8e app.json \u9876\u5c42\u3002", "passed": true, "evidence": "app.json: \u9876\u5c42lazyCodeLoading=requiredComponents\u3002"}, {"id": "s1_06", "text": "Skyline \u5728 app.rendererOptions.skyline \u4e2d\u914d\u7f6e defaultDisplayBlock=true\u3001defaultContentBox=true\u3001tagNameStyleIsolation=legacy\u3001enableScrollViewAutoSize=true\u3001keyframeStyleIsolation=legacy\u3002", "passed": true, "evidence": "app.json: rendererOptions.skyline\u4e94\u9879\u63a8\u8350\u914d\u7f6e\u5c42\u7ea7\u548c\u503c\u5b8c\u6574\u6b63\u786e\u3002"}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-1-page-scroll-config-no_skill", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 1, "outputs": [{"name": "app.json", "type": "text", "content": "{\n  \"pages\": [\"pages/home\", \"pages/orders\"],\n  \"window\": { \"navigationBarTitleText\": \"\u6f14\u793a\" },\n  \"lazyCodeLoading\": \"requiredComponents\",\n  \"rendererOptions\": {\n    \"webview\": {},\n    \"skyline\": {\n      \"defaultDisplayBlock\": true,\n      \"defaultContentBox\": true,\n      \"disableABTest\": true\n    }\n  }\n}\n"}, {"name": "orders.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"page\">\n    \u003cview wx:for=\"{{orders}}\" wx:key=\"id\" class=\"item\">\u003ctext>{{item.name}}\u003c/text>\u003c/view>\n    \u003ctext>{{scrollTop}}\u003c/text>\n    \u003ctext wx:if=\"{{errorMessage}}\">{{errorMessage}}\u003c/text>\n  \u003c/view>\n\u003c/template>\n\n\u003ctemplate mode=\"wx\" env=\"skyline\">\n  \u003cview class=\"skyline-page\">\n    \u003cview class=\"navigation\" style=\"padding-top: {{statusBarHeight}}px; height: {{navigationHeight}}px;\">\n      \u003ctext>\u8ba2\u5355\u003c/text>\n    \u003c/view>\n    \u003cscroll-view class=\"orders-scroll\" type=\"list\" scroll-y enhanced\n      refresher-enabled refresher-triggered=\"{{refreshing}}\"\n      bindrefresherrefresh=\"onRefresh\" bindscrolltolower=\"loadMore\" bindscroll=\"onScroll\">\n      \u003cview class=\"page\">\n        \u003cview wx:for=\"{{orders}}\" wx:key=\"id\" class=\"item\">\u003ctext>{{item.name}}\u003c/text>\u003c/view>\n        \u003ctext>\u6eda\u52a8\u4f4d\u7f6e\uff1a{{scrollTop}}\u003c/text>\n        \u003ctext wx:if=\"{{errorMessage}}\">{{errorMessage}}\u003c/text>\n      \u003c/view>\n    \u003c/scroll-view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\nimport { fetchOrders } from './service'\n\nconst isSkyline = __mpx_mode__ === 'wx' && __mpx_env__ === 'skyline'\n\ncreatePage({\n  data: {\n    orders: [],\n    scrollTop: 0,\n    pageNo: 1,\n    refreshing: false,\n    loading: false,\n    errorMessage: '',\n    statusBarHeight: 0,\n    navigationHeight: 44\n  },\n  onLoad () {\n    if (isSkyline) {\n      const { statusBarHeight } = wx.getWindowInfo()\n      const menu = wx.getMenuButtonBoundingClientRect()\n      this.statusBarHeight = statusBarHeight\n      this.navigationHeight = (menu.top - statusBarHeight) * 2 + menu.height\n    }\n    return this.reload()\n  },\n  onPullDownRefresh () {\n    return this.reload()\n  },\n  onReachBottom () {\n    return this.loadMore()\n  },\n  onPageScroll (e) {\n    this.scrollTop = e.scrollTop\n  },\n  methods: {\n    onRefresh () {\n      this.refreshing = true\n      return this.reload()\n    },\n    onScroll (e) {\n      this.scrollTop = e.detail.scrollTop\n    },\n    reload () {\n      if (this.loading) {\n        this.refreshing = false\n        if (!isSkyline) wx.stopPullDownRefresh()\n        return Promise.resolve()\n      }\n      this.loading = true\n      this.errorMessage = ''\n      return fetchOrders(1).then(rows => {\n        this.orders = rows\n        this.pageNo = 1\n      }).catch(() => {\n        this.errorMessage = '\u8ba2\u5355\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u4e0b\u62c9\u91cd\u8bd5'\n      }).finally(() => {\n        this.loading = false\n        this.refreshing = false\n        if (!isSkyline) wx.stopPullDownRefresh()\n      })\n    },\n    loadMore () {\n      if (this.loading) return Promise.resolve()\n      this.loading = true\n      this.errorMessage = ''\n      return fetchOrders(this.pageNo + 1).then(rows => {\n        this.orders = this.orders.concat(rows)\n        this.pageNo += 1\n      }).catch(() => {\n        this.errorMessage = '\u52a0\u8f7d\u66f4\u591a\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5'\n      }).finally(() => {\n        this.loading = false\n      })\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.page { padding: 16px; }\n.item { height: 80px; border-bottom: 1px solid #ddd; }\n\u003c/style>\n\u003cstyle mode=\"wx\" env=\"skyline\">\npage { height: 100%; }\n.skyline-page { height: 100%; display: flex; flex-direction: column; }\n.navigation { flex-shrink: 0; display: flex; align-items: center; justify-content: center; box-sizing: content-box; }\n.orders-scroll { flex: 1; height: 0; min-height: 0; }\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\"enablePullDownRefresh\":true,\"navigationBarTitleText\":\"\u8ba2\u5355\"}\n\u003c/script>\n\u003cscript type=\"application/json\" mode=\"wx\" env=\"skyline\">\n{\n  \"renderer\": \"skyline\",\n  \"componentFramework\": \"glass-easel\",\n  \"navigationStyle\": \"custom\",\n  \"navigationBarTitleText\": \"\u8ba2\u5355\",\n  \"disableScroll\": true,\n  \"enablePullDownRefresh\": false,\n  \"usingComponents\": {}\n}\n\u003c/script>\n"}, {"name": "report.md", "type": "text", "content": "# \u8ba2\u5355\u9875 Skyline \u9002\u914d\n\n\u5df2\u4ea4\u4ed8\u5b8c\u6574 `orders.mpx`\u3001`app.json`\u3001\u4fdd\u6301\u539f\u5185\u5bb9\u7684 `service.js`\u3002\n\n- `mode=\"wx\" env=\"skyline\"` \u6761\u4ef6\u533a\u5757\u63d0\u4f9b Skyline \u6a21\u677f\u3001\u6837\u5f0f\u4e0e\u9875\u9762 JSON\uff1b\u5fae\u4fe1\u6784\u5efa\u987b\u8bbe\u7f6e Mpx `mode: 'wx', env: 'skyline'`\u3002\u9ed8\u8ba4\u73af\u5883\u4fdd\u7559 WebView \u9875\u9762\u7ed3\u6784\u53ca\u9875\u9762\u6eda\u52a8/\u4e0b\u62c9/\u89e6\u5e95\u4e8b\u4ef6\u3002\n- Skyline \u9875\u9762\u4f7f\u7528 `renderer: skyline`\u3001`componentFramework: glass-easel`\u3001\u81ea\u5b9a\u4e49\u5bfc\u822a\u3001\u7981\u7528\u9875\u9762\u6eda\u52a8\uff1b\u5bfc\u822a\u680f\u663e\u793a\u201c\u8ba2\u5355\u201d\uff0c\u72b6\u6001\u680f\u548c\u80f6\u56ca\u5c3a\u5bf8\u7531\u5fae\u4fe1 API \u83b7\u53d6\u3002\n- \u9875\u9762\u9ad8\u5ea6\u6491\u6ee1\u89c6\u53e3\uff0c\u5bfc\u822a\u56fa\u5b9a\u5360\u4f4d\uff0c\u5269\u4f59\u7a7a\u95f4\u7531 `scroll-view` \u6eda\u52a8\u3002\u7ed1\u5b9a `refresherrefresh`\u3001`scrolltolower`\u3001`scroll`\uff0c\u4f7f\u7528 `e.detail.scrollTop` \u5c55\u793a\u6eda\u52a8\u4f4d\u7f6e\u3002\n- \u9996\u6b21\u52a0\u8f7d\u8bf7\u6c42\u7b2c 1 \u9875\uff0c\u5206\u9875\u8ffd\u52a0\u6210\u529f\u540e\u66f4\u65b0\u9875\u7801\uff0c\u5237\u65b0\u8986\u76d6\u5217\u8868\u5e76\u91cd\u7f6e\u9875\u7801\u3002\u8bf7\u6c42\u5931\u8d25\u5c55\u793a\u9519\u8bef\uff0c\u5237\u65b0\u72b6\u6001\u5728 `finally` \u4e2d\u6062\u590d\uff1b\u8bf7\u6c42\u9501\u963b\u6b62\u91cd\u53e0\u8bf7\u6c42\u8986\u76d6\u7ed3\u679c\uff0c\u5fd9\u788c\u671f\u95f4\u89e6\u53d1\u5237\u65b0\u4f1a\u7ed3\u675f\u672c\u6b21\u5237\u65b0\u6001\uff0c\u53ef\u5728\u5f53\u524d\u8bf7\u6c42\u7ed3\u675f\u540e\u518d\u6b21\u5237\u65b0\u3002\n- \u4fdd\u7559\u539f\u9996\u9875\u3001\u8ba2\u5355\u8def\u7531\u3001window \u6807\u9898\u548c rendererOptions.webview\uff0c\u589e\u52a0 Skyline \u5e03\u5c40\u9ed8\u8ba4\u503c\u53ca requiredComponents \u61d2\u52a0\u8f7d\u3002\u672a\u628a\u5168\u5c40 renderer \u5207\u6362\u4e3a Skyline\uff0c\u9996\u9875\u4ecd\u4f7f\u7528\u539f\u6e32\u67d3\u914d\u7f6e\u3002\n\n\u9a8c\u8bc1\u7ed3\u679c\uff1aJest 4/4 \u901a\u8fc7\uff1b\u63d0\u53d6\u540e\u7684\u4e1a\u52a1\u811a\u672c\u4e0e service.js \u901a\u8fc7 ESLint recommended \u68c0\u67e5\u3002\u4ed3\u5e93 SFC \u89e3\u6790\u5668\u786e\u8ba4\u4e24\u79cd\u73af\u5883\u6b63\u786e\u9009\u62e9\u6a21\u677f\u548c\u9875\u9762 JSON\uff0cservice \u5185\u5bb9\u9010\u5b57\u4e00\u81f4\u3002\u9a8c\u8bc1\u6587\u4ef6\u548c\u65e5\u5fd7\u5728\u76f8\u90bb `run-1/`\u3002\n\n\u5f00\u53d1\u8005\u5de5\u5177\u7f16\u8bd1\u9884\u89c8\u3001Skyline \u771f\u673a\u5e03\u5c40/\u89e6\u6478\u6eda\u52a8/\u4e0b\u62c9\u5237\u65b0\u3001\u5bfc\u822a\u680f\u5b89\u5168\u533a\u3001WebView \u771f\u673a\u56de\u5f52\uff1a`not_run`\u3002\u6ca1\u6709\u5b8c\u6574\u5de5\u7a0b\u5165\u53e3\u548c\u5fae\u4fe1\u8bbe\u5907\u73af\u5883\uff0c\u81ea\u52a8\u5316\u9a8c\u8bc1\u4e0d\u4ee3\u8868\u5b8c\u6574\u5fae\u4fe1\u6784\u5efa\u6216\u771f\u673a\u9a8c\u6536\u3002\u9700\u5728\u652f\u6301 Skyline \u4e0e glass-easel \u7684\u57fa\u7840\u5e93\u7248\u672c\u4e0b\u9a8c\u8bc1\uff0c\u5c24\u5176\u662f\u81ea\u5b9a\u4e49\u5bfc\u822a\u4e0e\u5217\u8868\u5269\u4f59\u9ad8\u5ea6\u3002\n"}, {"name": "service.js", "type": "text", "content": "export function fetchOrders(page) { return Promise.resolve(Array.from({ length: 20 }, (_, index) => ({ id: page * 100 + index, name: '\u8ba2\u5355 ' + page + '-' + index }))) }\n"}], "grading": {"expectations": [{"id": "s1_00", "text": "Skyline \u9875\u9762\u4e3b\u4f53\u4f7f\u7528\u5177\u6709\u660e\u786e\u53ef\u6eda\u52a8\u9ad8\u5ea6\u7684 scroll-view\uff0c\u663e\u5f0f\u9009\u62e9type=list\uff0c\u8ba2\u5355\u9879\u4f5c\u4e3a\u5217\u8868\u7684\u76f4\u63a5\u5b50\u8282\u70b9\u3002", "passed": false, "evidence": "orders.mpx: Skyline\u6761\u4ef6\u5206\u652f\u867d\u7136type=list\u4e14\u6709flex\u9ad8\u5ea6\u7ea6\u675f\uff0c\u4f46\u8ba2\u5355\u5faa\u73af\u6574\u4f53\u5305\u5728\u5355\u4e2aview.page\u5185\uff0c\u8ba2\u5355\u9879\u4e0d\u662f\u5217\u8868\u76f4\u63a5\u5b50\u8282\u70b9\u3002"}, {"id": "s1_01", "text": "Skyline \u901a\u8fc7 bindrefresherrefresh \u542f\u52a8\u5237\u65b0\uff0crefresher-triggered \u5173\u8054\u5237\u65b0\u72b6\u6001\uff0c\u5e76\u5728\u8bf7\u6c42\u6210\u529f\u548c\u5931\u8d25\u540e\u7ed3\u675f\u5bb9\u5668\u5237\u65b0\u6001\u3002", "passed": true, "evidence": "orders.mpx: Skyline env\u5206\u652frefresherrefresh\u4e0erefreshing\u7ed1\u5b9a\u5b8c\u6574\uff0creload\u6210\u529f/\u5931\u8d25finally\u53caloading\u65e9\u9000\u6062\u590d\u5237\u65b0\u6001\uff1breport\u660e\u786e\u9700\u8981env=skyline\u6784\u5efa\u3002"}, {"id": "s1_02", "text": "Skyline \u901a\u8fc7 scroll-view \u7684 bindscrolltolower \u8fde\u63a5\u539f\u5206\u9875\u52a0\u8f7d\u65b9\u6cd5\uff0c\u5bb9\u5668\u89e6\u5e95\u540e\u663e\u793a\u8ffd\u52a0\u7684\u8ba2\u5355\u3002", "passed": true, "evidence": "orders.mpx: Skyline\u5206\u652fbindscrolltolower=loadMore\uff0cfetchOrders\u4e0b\u4e00\u9875\u540econcat\u8ffd\u52a0\u5e76\u63a8\u8fdbpageNo\u3002"}, {"id": "s1_03", "text": "Skyline \u901a\u8fc7 scroll-view \u7684 bindscroll \u8bfb\u53d6 event.detail.scrollTop \u5e76\u66f4\u65b0\u6eda\u52a8\u4f4d\u7f6e\u5c55\u793a\u3002", "passed": true, "evidence": "orders.mpx: Skyline\u5206\u652fbindscroll=onScroll\uff0c\u8bfb\u53d6e.detail.scrollTop\u4f9b\u6a21\u677f\u5c55\u793a\u3002"}, {"id": "s1_04", "text": "Skyline \u9875\u9762\u914d\u7f6e renderer=skyline\u3001componentFramework=glass-easel\u3001navigationStyle=custom\u3001disableScroll=true\uff0c\u5e76\u5728\u6a21\u677f\u5b9e\u73b0\u8ba2\u5355\u81ea\u5b9a\u4e49\u5bfc\u822a\u3002", "passed": true, "evidence": "orders.mpx: env=skyline\u5206\u652f\u9875\u9762JSON\u5305\u542b\u56db\u9879\u5fc5\u9700\u914d\u7f6e\uff0c\u6a21\u677f\u6709\u5b9e\u9645\u8ba2\u5355\u5bfc\u822a\uff1breport\u660e\u786e\u6761\u4ef6\u6784\u5efa\u65b9\u5f0f\u3002"}, {"id": "s1_05", "text": "Skyline \u63a5\u5165\u6240\u9700\u7684 lazyCodeLoading=requiredComponents \u914d\u7f6e\u4e8e app.json \u9876\u5c42\u3002", "passed": true, "evidence": "app.json: \u9876\u5c42lazyCodeLoading=requiredComponents\u3002"}, {"id": "s1_06", "text": "Skyline \u5728 app.rendererOptions.skyline \u4e2d\u914d\u7f6e defaultDisplayBlock=true\u3001defaultContentBox=true\u3001tagNameStyleIsolation=legacy\u3001enableScrollViewAutoSize=true\u3001keyframeStyleIsolation=legacy\u3002", "passed": false, "evidence": "app.json: skyline\u4ec5defaultDisplayBlock/defaultContentBox/disableABTest\uff1b\u7f3a\u5c11tagNameStyleIsolation\u3001enableScrollViewAutoSize\u548ckeyframeStyleIsolation\u4e09\u9879\u3002"}], "summary": {"passed": 5, "failed": 2, "total": 7, "pass_rate": 0.7142857142857143}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-2-template-runtime-mpx2skyline", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 2, "outputs": [{"name": "report.md", "type": "text", "content": "# \u9002\u914d\u62a5\u544a\n\n\u4ea4\u4ed8\u5b8c\u6574 user-list.mpx\u3001row.wxml\uff1b\u8f93\u5165\u672a\u4fee\u6539\u3002\u8303\u56f4\u4ec5\u7ec4\u4ef6\u53ca\u5176\u5916\u90e8\u7247\u6bb5\uff0c\u5bbf\u4e3b\u9875\u9762\u5df2\u63a5\u5165 Skyline/glass-easel\uff0c\u672a\u6269\u5c55\u9875\u9762\u6216\u5168\u5c40\u914d\u7f6e\u3002\n\n- items \u521d\u503c\u4e3a\u7a7a\u6570\u7ec4\uff0cinitData.visibleItems \u63d0\u4f9b computed \u521d\u59cb\u5316\u524d\u7a7a\u503c\uff0csetRows \u5c06 null \u5f52\u4e00\u4e3a\u7a7a\u6570\u7ec4\uff1b\u6b63\u5e38\u6570\u7ec4\u6309 visible \u7b5b\u9009\uff0c\u884c\u53f7\u4fdd\u7559\u7b5b\u9009\u540e\u7684\u96f6\u57fa index\u3002\n- \u5faa\u73af\u5b50\u6811 include \u6539 import + \u5177\u540d template\uff0c\u663e\u5f0f\u4f20\u5165 item/index\u3002\n- \u5b9e\u9645\u5217\u8868 id \u6539\u4e3a users\uff0c\u5e76\u5f00\u542f enhanced\uff1b\u56de\u5230\u9876\u90e8\u901a\u8fc7 this.createSelectorQuery() \u83b7\u53d6\u8be5\u5217\u8868\u4e0a\u4e0b\u6587\u3002\n- \u4e24\u4e2a\u8be6\u60c5\u5165\u53e3\u4fdd\u6301 /pages/detail\uff0c\u5361\u7247\u5165\u53e3\u5b50\u8282\u70b9\u6539 text\uff0c\u6ee1\u8db3 navigator \u7ed3\u6784\u9650\u5236\u3002\n- \u4fdd\u7559 payload \u5408\u6cd5\u8054\u5408\u7c7b\u578b\u3001data.config.default \u4e1a\u52a1\u5b57\u6bb5\u3001other \u5bb9\u5668\u548c\u539f\u6709 300px \u9ad8\u5ea6\u3002\n\n\u91c7\u7528 WebView/Skyline \u901a\u7528\u65b9\u6848\uff0c\u65e0\u65b0\u589e Skyline-only API\u3002\u884c\u53f7\u3001\u7b5b\u9009\u53ca\u5bfc\u822a\u5730\u5740\u4fdd\u6301\u539f\u610f\u3002\u5176\u4ed6\u76ee\u6807\u5e73\u53f0\u672a\u9a8c\u8bc1\u3002\n\n\u9a8c\u8bc1\uff1aJest 3/3 \u901a\u8fc7\uff1bMpx \u5fae\u4fe1\u6a21\u677f\u89e3\u6790\u8986\u76d6\u4e3b\u6a21\u677f\u548c\u5916\u90e8\u7247\u6bb5\uff0c\u65e0\u9519\u8bef\uff1bESLint 0 errors / 0 warnings\u3002\u5b8c\u6574\u77e9\u9635\u5df2\u9010\u6761\u590d\u6838\uff0c\u8bb0\u5f55\u5728 ../run-1/audit.md\uff0c\u65e0\u672a\u8bf4\u660e error/warn \u6b8b\u7559\u3002\n\n\u8bbe\u5907\u4e0e\u8fd0\u884c\u73af\u5883\u9a8c\u8bc1\uff1aSkyline \u771f\u673a\u6e32\u67d3\u3001WebView \u771f\u673a\u56de\u5f52\u3001\u5b9e\u9645\u6eda\u52a8\u53ca\u8be6\u60c5\u8df3\u8f6c\u5747 not_run\uff1b\u5f53\u524d\u7ed3\u679c\u5305\u542b\u811a\u672c\u6267\u884c\u3001\u6a21\u62df ScrollViewContext \u4e0e\u6a21\u677f\u89e3\u6790\uff0c\u4e0d\u66ff\u4ee3\u8bbe\u5907\u9a8c\u6536\u3002\n"}, {"name": "row.wxml", "type": "binary", "mime": "application/octet-stream", "data_uri": "data:application/octet-stream;base64,PHRlbXBsYXRlIG5hbWU9InVzZXItcm93Ij4KPHRleHQ+e3tpbmRleH19Ont7aXRlbS5uYW1lfX08L3RleHQ+CjwvdGVtcGxhdGU+Cg=="}, {"name": "user-list.mpx", "type": "text", "content": "\u003ctemplate>\n\u003cimport src=\"./row.wxml\"/>\n\u003cview>\u003ctext>{{label}}\u003c/text>\u003cscroll-view id=\"other\" type=\"list\" enhanced=\"{{true}}\"/>\u003cscroll-view\n id=\"users\" type=\"list\"\n scroll-y=\"{{true}}\" enhanced=\"{{true}}\">\n\u003cview wx:for=\"{{visibleItems}}\" wx:key=\"id\">\u003cview>\u003ctemplate is=\"user-row\" data=\"{{item,index}}\"/>\u003c/view>\u003c/view>\n\u003c/scroll-view>\u003cview bindtap=\"scrollTop\">\u56de\u5230\u9876\u90e8\u003c/view>\u003cnavigator url=\"/pages/detail\">\u003ctext>\u8be6\u60c5\u003c/text>\u003c/navigator>\u003cnavigator url=\"/pages/detail\">\u003ctext>\u5361\u7247\u8be6\u60c5\u003c/text>\u003c/navigator>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\ncreateComponent({\n  properties: { label: { type: String, value: '\u7528\u6237' }, payload: { type: String, optionalTypes: [Object], value: '' } },\n  data: { items: [], config: { default: 'keep' } },\n  initData: { visibleItems: [] },\n  computed: { visibleItems () { return this.items.filter(item => item.visible) } },\n  methods: {\n    setRows (res) { this.items = res.items || [] },\n    scrollTop () { this.createSelectorQuery().select('#users').node().exec(res => { res[0].node.scrollTo({ top: 0 }) }) }\n  }\n})\n\u003c/script>\n\u003cstyle>\nscroll-view{height:300px}\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\"component\":true}\n\u003c/script>\n"}], "grading": {"expectations": [{"id": "s2_00", "text": "Skyline/glass-easel \u7684 wx:for \u5728\u521d\u59cb\u5316\u3001\u6570\u636e\u8fd4\u56de\u524d\u3001null\u8fd4\u56de\u53ca\u6b63\u5e38\u6570\u7ec4\u66f4\u65b0\u9636\u6bb5\u5747\u63a5\u6536 Array/Object \u7c7b\u578b\u7684\u6570\u636e\u3002", "passed": true, "evidence": "user-list.mpx: items\u521d\u59cb\u5316[]\u3001initData.visibleItems=[]\uff0csetRows\u5bf9res.items null/undefined\u56de\u9000[]\uff0ccomputed.filter\u59cb\u7ec8\u8fd4\u56de\u6570\u7ec4\uff1brun-1\u6d4b\u8bd5\u8986\u76d6\u76f8\u5e94\u8def\u5f84\u3002"}, {"id": "s2_01", "text": "Skyline/glass-easel \u7684\u7528\u6237\u5bb9\u5668\u4f7f\u7528\u5408\u6cd5\u7684\u975e\u6570\u5b57\u5f00\u5934id\uff0c\u7ec4\u4ef6\u5185\u901a\u8fc7 this.createSelectorQuery \u5b9a\u4f4d\u540c\u4e00\u5bb9\u5668\u3002", "passed": true, "evidence": "user-list.mpx: id=users\u4e0ethis.createSelectorQuery().select(#users)\u4e00\u81f4\uff0c\u5408\u6cd5\u975e\u6570\u5b57\u5f00\u5934\u4e14\u4f7f\u7528\u7ec4\u4ef6\u4f5c\u7528\u57df\u3002"}, {"id": "s2_02", "text": "Skyline \u7684\u5b9e\u9645\u7528\u6237\u6eda\u52a8\u76ee\u6807\u5f00\u542f enhanced\uff0c\u8282\u70b9\u67e5\u8be2\u8fd4\u56de\u7684 ScrollViewContext \u7528\u4e8e\u6267\u884c\u56de\u5230\u9876\u90e8\u64cd\u4f5c\u3002", "passed": true, "evidence": "user-list.mpx: \u5b9e\u9645users\u6eda\u52a8\u76ee\u6807enhanced=true\uff0cnode().exec\u8bfb\u53d6ScrollViewContext\u5e76scrollTo({top:0})\u3002"}, {"id": "s2_03", "text": "Skyline/glass-easel \u5faa\u73af\u4e2d\u7684\u5916\u90e8\u7247\u6bb5\u91c7\u7528 import \u52a0\u5177\u540d template \u8c03\u7528\uff0c\u5e76\u663e\u5f0f\u4f20\u9012\u5f53\u524d item/index\u3002", "passed": true, "evidence": "user-list.mpx\u53carow.wxml: import\u5916\u90e8\u5177\u540duser-row\u6a21\u677f\uff0c\u5faa\u73af\u5185template\u8c03\u7528\u663e\u5f0f\u4f20item/index\u3002"}, {"id": "s2_04", "text": "Skyline \u7684\u7b80\u5355 navigator \u4f7f\u7528 text \u6216\u7eaf\u6587\u672c\u5b50\u8282\u70b9\uff1b\u5361\u7247\u5bfc\u822a\u91c7\u7528\u7b26\u5408\u8be5\u5b50\u8282\u70b9\u7ed3\u6784\u7684\u5185\u5bb9\uff0c\u6216\u7531\u5916\u5c42\u70b9\u51fb\u4e8b\u4ef6\u5b9e\u73b0\u540c\u4e00\u8be6\u60c5\u8df3\u8f6c\u3002", "passed": true, "evidence": "user-list.mpx: \u4e24\u4e2anavigator\u5747\u4f7f\u7528text\u5b50\u8282\u70b9\uff0curl=/pages/detail\u3002"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-2-template-runtime-no_skill", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 2, "outputs": [{"name": "report.md", "type": "text", "content": "# \u9002\u914d\u7ed3\u679c\n\n\u4ea4\u4ed8 `user-list.mpx` \u4e0e\u5176\u5f15\u7528\u7684\u5b8c\u6574\u5916\u90e8\u7247\u6bb5 `row.wxml`\u3002\u5bbf\u4e3b\u9875\u5df2\u63a5\u5165 Skyline/glass-easel\uff0c\u672c\u6b21\u4e0d\u4fee\u6539\u5bbf\u4e3b\u914d\u7f6e\u3002\n\n- \u5217\u8868\u521d\u59cb\u503c\u4e3a `[]`\uff1b`setRows({ items: null })` \u5f52\u4e00\u4e3a\u7a7a\u6570\u7ec4\uff0c\u8ba1\u7b97\u5c5e\u6027\u59cb\u7ec8\u8fd4\u56de\u6570\u7ec4\uff0c\u4ec5\u4fdd\u7559 `visible` \u7528\u6237\u3002\n- \u5faa\u73af\u663e\u5f0f\u58f0\u660e `user`\u3001`rowIndex`\uff0c\u5916\u90e8\u7247\u6bb5\u4f7f\u7528\u540c\u540d\u53d8\u91cf\u5c55\u793a\u8fc7\u6ee4\u540e\u4ece 0 \u5f00\u59cb\u7684\u884c\u53f7\u4e0e\u59d3\u540d\uff0c\u4fdd\u7559\u539f\u6709\u96f6\u57fa\u884c\u53f7\u8bed\u4e49\u3002\n- \u5b9e\u9645\u7528\u6237\u5217\u8868 ID \u6539\u4e3a `users`\uff0c\u5f00\u542f `enhanced`\uff0c\u56de\u9876\u4ecd\u901a\u8fc7\u7ec4\u4ef6\u4f5c\u7528\u57df\u4e0b\u7684\u7cbe\u786e ID \u83b7\u53d6\u8be5\u5217\u8868\u8282\u70b9\u5e76\u8c03\u7528 `scrollTo({ top: 0 })`\uff1b\u4fdd\u7559\u65c1\u8fb9\u7684 `other` \u5217\u8868\u3002\n- \u4e24\u4e2a\u8be6\u60c5\u5165\u53e3\u6539\u4e3a `view` \u70b9\u51fb\u4e8b\u4ef6\uff0c\u5171\u7528 `wx.navigateTo({ url: '/pages/detail' })`\uff1b\u6240\u6709\u5c55\u793a\u6587\u5b57\u653e\u5728 `text` \u5185\u3002\n- `payload` \u6539\u4e3a `type: null`\uff0c\u4fdd\u7559\u7a7a\u5b57\u7b26\u4e32\u9ed8\u8ba4\u503c\u5e76\u5141\u8bb8\u539f\u6709\u5b57\u7b26\u4e32\u4e0e\u5bf9\u8c61\u8f93\u5165\u3002\u8be5\u58f0\u660e\u4e5f\u4f1a\u63a5\u53d7\u5176\u4ed6\u7c7b\u578b\uff1b\u8f93\u5165\u7ea6\u5b9a\u4ecd\u4e3a\u5b57\u7b26\u4e32\u6216\u5bf9\u8c61\u3002\n- \u4fdd\u7559\u7ec4\u4ef6 JSON\u3001\u914d\u7f6e\u6570\u636e\u548c\u5217\u8868\u9ad8\u5ea6\uff1b\u76f8\u5173\u8282\u70b9\u3001\u5bfc\u822a\u4e0e\u6570\u636e\u5904\u7406\u4e5f\u9002\u7528\u4e8e\u5fae\u4fe1 WebView\u3002\n\n# \u9a8c\u8bc1\n\n- PASS\uff1aJest 1 \u4e2a\u5957\u4ef6\u30014 \u4e2a\u6d4b\u8bd5\uff0c\u8986\u76d6\u521d\u59cb/null/\u8fc7\u6ee4\u6570\u636e\u3001\u7cbe\u786e\u5217\u8868\u56de\u9876\u8c03\u7528\u3001\u4e24\u4e2a\u8be6\u60c5\u4e8b\u4ef6\u5165\u53e3\u548c\u5bfc\u822a\u76ee\u6807\u3001\u5faa\u73af\u7247\u6bb5\u53d8\u91cf\u53ca JSON \u89e3\u6790\u3002\n- PASS\uff1a\u62bd\u53d6\u7ec4\u4ef6\u4e1a\u52a1\u811a\u672c\u6267\u884c ESLint\uff08`no-unused-vars`\u3001`no-undef`\uff09\uff0c\u9000\u51fa\u7801 0\u3002\n- not_run\uff1a\u5b8c\u6574 Mpx \u7f16\u8bd1\u3001\u5fae\u4fe1\u5f00\u53d1\u8005\u5de5\u5177\u3001Skyline/glass-easel \u771f\u673a\u4e0e WebView \u771f\u673a\u3002\u5f53\u524d\u8bc1\u636e\u4e3a\u811a\u672c\u9694\u79bb\u6d4b\u8bd5\u53ca\u9759\u6001\u68c0\u67e5\uff0c\u4e0d\u8bc1\u660e\u539f\u751f\u7247\u6bb5\u5c55\u5f00\u3001\u70b9\u51fb\u548c\u6eda\u52a8\u5df2\u7ecf\u5728\u5b9e\u9645\u6e32\u67d3\u5668\u6267\u884c\u6210\u529f\u3002\u9700\u5bbf\u4e3b\u9879\u76ee\u9a8c\u8bc1\u5916\u90e8 include \u7684\u5faa\u73af\u53d8\u91cf\u6e32\u67d3\u3001\u4e24\u4e2a\u8be6\u60c5\u8df3\u8f6c\u53ca\u7528\u6237\u5217\u8868\u56de\u9876\uff0c\u5c24\u5176\u68c0\u67e5 other \u5217\u8868\u4e0d\u53d7\u5f71\u54cd\u3002\n\n\u6d4b\u8bd5\u4e0e\u539f\u59cb\u65e5\u5fd7\u4fdd\u5b58\u5728\u76f8\u90bb `run-1/`\uff0c\u672a\u8bfb\u53d6 Skill\u3001\u53c2\u8003\u8d44\u6599\u6216\u8bc4\u5206\u5b9a\u4e49\u3002\n"}, {"name": "row.wxml", "type": "binary", "mime": "application/octet-stream", "data_uri": "data:application/octet-stream;base64,PHRleHQ+e3tyb3dJbmRleH19Ont7dXNlci5uYW1lfX08L3RleHQ+Cg=="}, {"name": "user-list.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\n    \u003ctext>{{label}}\u003c/text>\n    \u003cscroll-view id=\"other\" type=\"list\" enhanced=\"{{true}}\" />\n    \u003cscroll-view id=\"users\" type=\"list\" enhanced=\"{{true}}\" scroll-y=\"{{true}}\">\n      \u003cview wx:for=\"{{visibleItems}}\" wx:for-item=\"user\" wx:for-index=\"rowIndex\" wx:key=\"id\">\n        \u003cview>\u003cinclude src=\"./row.wxml\" />\u003c/view>\n      \u003c/view>\n    \u003c/scroll-view>\n    \u003cview bindtap=\"scrollTop\">\u003ctext>\u56de\u5230\u9876\u90e8\u003c/text>\u003c/view>\n    \u003cview bindtap=\"openDetail\">\u003ctext>\u8be6\u60c5\u003c/text>\u003c/view>\n    \u003cview bindtap=\"openDetail\">\u003ctext>\u5361\u7247\u8be6\u60c5\u003c/text>\u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: {\n    label: { type: String, value: '\u7528\u6237' },\n    payload: { type: null, value: '' }\n  },\n  data: {\n    items: [],\n    config: { default: 'keep' }\n  },\n  computed: {\n    visibleItems () {\n      return this.items.filter(item => item.visible)\n    }\n  },\n  methods: {\n    setRows (res) {\n      this.items = res.items || []\n    },\n    scrollTop () {\n      wx.createSelectorQuery().in(this).select('#users').node().exec(res => {\n        if (res[0] && res[0].node) {\n          res[0].node.scrollTo({ top: 0 })\n        }\n      })\n    },\n    openDetail () {\n      wx.navigateTo({ url: '/pages/detail' })\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\nscroll-view { height: 300px; }\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"component\": true\n}\n\u003c/script>\n"}], "grading": {"expectations": [{"id": "s2_00", "text": "Skyline/glass-easel \u7684 wx:for \u5728\u521d\u59cb\u5316\u3001\u6570\u636e\u8fd4\u56de\u524d\u3001null\u8fd4\u56de\u53ca\u6b63\u5e38\u6570\u7ec4\u66f4\u65b0\u9636\u6bb5\u5747\u63a5\u6536 Array/Object \u7c7b\u578b\u7684\u6570\u636e\u3002", "passed": false, "evidence": "user-list.mpx: items=[]\u53cacomputed\u8fc7\u6ee4\u8986\u76d6\u6570\u636e\u66f4\u65b0\uff0c\u4f46wx:for\u76f4\u63a5\u6d88\u8d39visibleItems\uff0c\u7f3a\u5c11initData\u6216\u6a21\u677f\u56de\u9000\u4fdd\u62a4computed\u521d\u59cb\u5316\u524d\u9636\u6bb5\u3002"}, {"id": "s2_01", "text": "Skyline/glass-easel \u7684\u7528\u6237\u5bb9\u5668\u4f7f\u7528\u5408\u6cd5\u7684\u975e\u6570\u5b57\u5f00\u5934id\uff0c\u7ec4\u4ef6\u5185\u901a\u8fc7 this.createSelectorQuery \u5b9a\u4f4d\u540c\u4e00\u5bb9\u5668\u3002", "passed": false, "evidence": "user-list.mpx: \u5408\u6cd5id\u53ca\u7ec4\u4ef6\u4f5c\u7528\u57df\u5df2\u4fee\u6b63\uff0c\u4f46\u5b9e\u9645\u8c03\u7528wx.createSelectorQuery().in(this)\uff0c\u672a\u91c7\u7528\u8bc4\u5206\u8981\u6c42\u7684this.createSelectorQuery\u3002\u6b64\u9879\u662fSkill\u63a8\u8350\u8def\u5f84\uff0c\u975e\u5ba3\u79f0\u539fAPI\u5b8c\u5168\u4e0d\u53ef\u7528\u3002"}, {"id": "s2_02", "text": "Skyline \u7684\u5b9e\u9645\u7528\u6237\u6eda\u52a8\u76ee\u6807\u5f00\u542f enhanced\uff0c\u8282\u70b9\u67e5\u8be2\u8fd4\u56de\u7684 ScrollViewContext \u7528\u4e8e\u6267\u884c\u56de\u5230\u9876\u90e8\u64cd\u4f5c\u3002", "passed": true, "evidence": "user-list.mpx: users\u76ee\u6807enhanced=true\uff0cnode().exec\u8fd4\u56de\u8282\u70b9\u540e\u8c03\u7528scrollTo({top:0})\uff0c\u67e5\u8be2\u76ee\u6807\u4e00\u81f4\u3002"}, {"id": "s2_03", "text": "Skyline/glass-easel \u5faa\u73af\u4e2d\u7684\u5916\u90e8\u7247\u6bb5\u91c7\u7528 import \u52a0\u5177\u540d template \u8c03\u7528\uff0c\u5e76\u663e\u5f0f\u4f20\u9012\u5f53\u524d item/index\u3002", "passed": false, "evidence": "user-list.mpx/row.wxml: \u5faa\u73af\u5b50\u6811\u4ecd\u7528include\uff0c\u672a\u6539\u4e3aimport\u52a0\u5177\u540dtemplate\u53ca\u663e\u5f0f\u53c2\u6570\u3002"}, {"id": "s2_04", "text": "Skyline \u7684\u7b80\u5355 navigator \u4f7f\u7528 text \u6216\u7eaf\u6587\u672c\u5b50\u8282\u70b9\uff1b\u5361\u7247\u5bfc\u822a\u91c7\u7528\u7b26\u5408\u8be5\u5b50\u8282\u70b9\u7ed3\u6784\u7684\u5185\u5bb9\uff0c\u6216\u7531\u5916\u5c42\u70b9\u51fb\u4e8b\u4ef6\u5b9e\u73b0\u540c\u4e00\u8be6\u60c5\u8df3\u8f6c\u3002", "passed": true, "evidence": "user-list.mpx: \u4e24\u5165\u53e3\u5747\u6539view\u7ed1\u5b9aopenDetail\uff0cwx.navigateTo\u76ee\u6807/pages/detail\uff0c\u5b9e\u73b0\u7b49\u4ef7\u8be6\u60c5\u5bfc\u822a\u3002"}], "summary": {"passed": 2, "failed": 3, "total": 5, "pass_rate": 0.4}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-3-inline-animation-mpx2skyline", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 3, "outputs": [{"name": "logo.svg", "type": "image", "mime": "image/svg+xml", "data_uri": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI2Y1MCIvPjwvc3ZnPgo="}, {"name": "promo-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\n    \u003cview class=\"row\">\n      \u003cview mpxTagName@wx=\"span\" max-lines=\"{{1}}\" overflow=\"ellipsis\" class=\"title-line {{isSkyline ? 'whitespace-nowrap' : 'truncate'}}\">\u003cimage src=\"./logo.svg\" mode=\"aspectFit\" class=\"logo {{isSkyline ? 'inline-block' : ''}}\"/>\u003ctext>{{title}}\u003c/text>\u003c/view>\n    \u003c/view>\n    \u003cview class=\"pulse\">\u003cview class=\"pulse-dot\"/>\u003c/view>\n    \u003cview class=\"button {{pressed ? 'button-pressed' : ''}}\" bindtouchstart=\"press\" bindtouchend=\"release\" bindtouchcancel=\"release\">\u003ctext>\u9886\u53d6\u003c/text>\u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: {\n    title: { type: String, value: '\u6b22\u8fce\u9886\u53d6\u672c\u5468\u4f18\u60e0' }\n  },\n  data: {\n    isSkyline: false,\n    pressed: false\n  },\n  attached () {\n    this.isSkyline = this.renderer === 'skyline'\n  },\n  methods: {\n    press () {\n      this.pressed = true\n    },\n    release () {\n      this.pressed = false\n    }\n  }\n})\n\u003c/script>\n\u003cstyle>\n.row { display: flex; }\n.title-line { flex: 1; width: 0; min-width: 0; }\n.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.whitespace-nowrap { white-space: nowrap; }\n.logo { width: 24px; height: 24px; vertical-align: middle; }\n.inline-block { display: inline-block; }\n.pulse-dot {\n  display: block;\n  width: 8px;\n  height: 8px;\n  background: #f50;\n  animation: promo-card-pulse 1s infinite;\n  animation-fill-mode: both;\n}\n@keyframes promo-card-pulse {\n  from { opacity: .3; }\n  to { opacity: 1; }\n}\n.button {\n  padding: 12px;\n  background: #eee;\n  transform: scale(1);\n  opacity: 1;\n  transition: transform 150ms linear, opacity 150ms linear;\n}\n.button-pressed { transform: scale(0.96); opacity: 0.7; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\"component\":true}\n\u003c/script>\n"}, {"name": "report.md", "type": "text", "content": "# \u9002\u914d\u7ed3\u679c\n\n\u4ea4\u4ed8\u5b8c\u6574 `promo-card.mpx` \u4e0e\u539f\u6837 `logo.svg`\uff0c\u4ec5\u8986\u76d6\u8be5\u7ec4\u4ef6\u53ca\u5176\u56fe\u7247\u8d44\u6e90\u3002\u8f93\u5165\u53ea\u8bfb\uff0c\u5bbf\u4e3b\u9875\u5df2\u63a5\u5165 Skyline/glass-easel\uff0c\u672a\u66f4\u6539\u5168\u5c40\u6216\u9875\u9762\u914d\u7f6e\u3002\n\n- \u56fe\u6807\u548c\u6807\u9898\u5171\u7528\u5fae\u4fe1 span\uff0c\u7edf\u4e00 `max-lines=1` / `overflow=ellipsis`\uff1bSkyline \u901a\u8fc7\u5b9e\u4f8b renderer \u542f\u7528 nowrap \u4e0e\u56fe\u7247 inline-block\uff0cWebView \u4fdd\u7559\u539f\u7701\u7565\u6837\u5f0f\u3002\u5bbd\u5ea6\u7ea6\u675f\u7531 flex:1\u3001width:0\u3001min-width:0 \u63d0\u4f9b\u3002\n- \u95ea\u70c1\u4ece\u4f2a\u5143\u7d20\u8fc1\u81f3\u771f\u5b9e\u5b50\u8282\u70b9\uff0c\u4fdd\u7559 8px\u3001#f50\u3001opacity .3\u21921\u30011s infinite \u548c\u9ed8\u8ba4 ease\uff1bfill-mode \u6539\u4e3a both\uff0c\u5c40\u90e8\u5173\u952e\u5e27\u6539\u540d\u4ee5\u51cf\u5c11\u51b2\u7a81\u3002\n- \u6309\u94ae\u4f7f\u7528 pressed \u72b6\u6001\u9a71\u52a8 transform/opacity\uff0c\u6309\u4e0b 0.96/0.7\uff0c\u677e\u5f00\u6216\u53d6\u6d88 1/1\uff0c\u53cc\u7aef\u7edf\u4e00 150ms linear transition\uff0c\u5bf9\u9f50\u539f createAnimation \u9ed8\u8ba4 linear\u3002\n- SVG \u4fdd\u6301\u5b57\u8282\u4e00\u81f4\uff0c\u5c3a\u5bf8\u4e0e\u586b\u5145\u4f7f\u7528\u5177\u4f53\u503c\uff1b\u56fe\u7247\u663e\u5f0f aspectFit\uff0c\u5728\u73b0\u6709\u6b63\u65b9\u5f62\u8d44\u6e90\u4e0e\u5c3a\u5bf8\u4e0b\u4fdd\u7559\u5c55\u793a\u6548\u679c\u3002\n\n\u9a8c\u8bc1\uff1aJest 4/4 \u901a\u8fc7\uff1b\u5fae\u4fe1\u6a21\u677f\u7f16\u8bd1\u65e0 error/warn\uff1bCSS \u548c JSON \u89e3\u6790\u901a\u8fc7\uff1b\u63d0\u53d6\u4e1a\u52a1\u811a\u672c\u7684 ESLint Standard \u901a\u8fc7\u3002\u5b8c\u6574 47 \u6761 Skill \u5ba1\u8ba1\u8bb0\u5f55\u89c1 `../run-1/audit.md`\uff0c\u672a\u5904\u7406 error \u4e3a 0\u3002\n\n\u672a\u9a8c\u8bc1\uff1a\u5fae\u4fe1\u5f00\u53d1\u8005\u5de5\u5177\u3001iOS/Android \u771f\u673a\u3001WebView \u5b9e\u9645\u6e32\u67d3\u4e0e Skyline \u56fe\u6587\u622a\u65ad\u53ca\u52a8\u753b\u65f6\u5e8f\u5747\u4e3a **not_run**\u3002\u5bbf\u4e3b `keyframeStyleIsolation` \u914d\u7f6e\u672a\u63d0\u4f9b\uff0c\u9700\u96c6\u6210\u9a8c\u6536\u786e\u8ba4\uff1b\u672c\u6b21\u672a\u5ba3\u79f0\u5b8c\u6574\u5c0f\u7a0b\u5e8f webpack \u6784\u5efa\u901a\u8fc7\u3002\u5176\u4ed6\u5e73\u53f0\u4e0d\u5728\u5f53\u524d\u9a8c\u8bc1\u8303\u56f4\u3002\n"}], "grading": {"expectations": [{"id": "s3_00", "text": "Skyline \u56fe\u6807\u4e0e\u6807\u9898\u7f6e\u4e8e\u540c\u4e00\u4e2a\u53ef\u6536\u7f29\u7684 span \u5185\u8054\u5bb9\u5668\uff0c\u5bb9\u5668\u8bbe\u7f6e max-lines=1\u3001overflow=ellipsis\uff0c\u56fe\u7247\u91c7\u7528 inline-block\uff0c\u4f7f\u540c\u6bb5\u56fe\u6587\u5728\u6709\u9650\u5bbd\u5ea6\u5185\u5171\u540c\u5355\u884c\u622a\u65ad\uff1bWebView \u5bf9\u5e94\u5206\u652f\u4fdd\u7559\u540c\u6bb5\u56fe\u6587\u5355\u884c\u622a\u65ad\u3002", "passed": true, "evidence": "promo-card.mpx: mpxTagName@wx=span\u5b9e\u9645\u5fae\u4fe1\u8f93\u51faspan\uff0cmax-lines=1/overflow=ellipsis\u843d\u5728\u5171\u540c\u5bb9\u5668\uff1bflex:1,width:0,min-width:0\u7ea6\u675f\u5bbd\u5ea6\uff0cSkyline\u56fe\u7247inline-block\uff0cWebView truncate\u8def\u5f84\u4fdd\u7559\uff1brun-1\u542b\u5fae\u4fe1\u6a21\u677f\u7f16\u8bd1\u8bc1\u636e\u3002"}, {"id": "s3_01", "text": "Skyline \u95ea\u70c1\u5706\u70b9\u7531\u771f\u5b9e\u8282\u70b9\u627f\u8f7d CSS animation\uff0c\u91c7\u7528\u652f\u6301\u7684fill-mode\uff08\u5982both\u6216forwards\uff09\uff0c\u5b9e\u73b0\u539f\u67091\u79d2\u5faa\u73af\u548c\u900f\u660e\u5ea6\u53d8\u5316\u3002", "passed": true, "evidence": "promo-card.mpx: \u771f\u5b9epulse-dot\u8282\u70b98px/#f50\u627f\u8f7d1s infinite CSS animation\uff0cfill-mode:both\uff0c\u5173\u952e\u5e27opacity .3\u21921\u3002"}, {"id": "s3_02", "text": "Skyline \u6309\u94ae\u901a\u8fc7\u72b6\u6001\u7c7b\u9a71\u52a8 transform/opacity \u7684150ms CSS transition\uff0c\u5b8c\u6210\u6309\u4e0b\u53ca\u6062\u590d\u7684\u89c6\u89c9\u8fc7\u6e21\uff1b\u5176\u4ed6\u6e32\u67d3\u76ee\u6807\u53ef\u4f7f\u7528\u5404\u81ea\u9002\u914d\u5b9e\u73b0\u3002", "passed": true, "evidence": "promo-card.mpx: pressed\u72b6\u6001\u7c7b\u9a71\u52a8transform/opacity 150ms linear transition\uff0c\u6309\u4e0b.96/.7\uff0c\u677e\u5f00\u548c\u53d6\u6d88\u5747release\u6062\u590d1/1\u3002"}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-3-inline-animation-no_skill", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 3, "outputs": [{"name": "logo.svg", "type": "image", "mime": "image/svg+xml", "data_uri": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI2Y1MCIvPjwvc3ZnPgo="}, {"name": "promo-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\n    \u003cview class=\"row\">\n      \u003cspan wx:if=\"{{isSkyline}}\" class=\"truncate skyline-title\">\u003cimage src=\"./logo.svg\" class=\"logo\"/>\u003ctext>{{title}}\u003c/text>\u003c/span>\n      \u003cview wx:else class=\"truncate\">\u003cimage src=\"./logo.svg\" class=\"logo\"/>\u003ctext>{{title}}\u003c/text>\u003c/view>\n    \u003c/view>\n    \u003cview wx:if=\"{{isSkyline}}\" class=\"pulse-dot\"/>\n    \u003cview wx:else class=\"pulse\"/>\n    \u003cview wx:if=\"{{isSkyline}}\" class=\"button skyline-button\" bindtouchstart=\"press\" bindtouchend=\"release\" bindtouchcancel=\"release\">\u003ctext>\u9886\u53d6\u003c/text>\u003c/view>\n    \u003cview wx:else class=\"button\" animation=\"{{animationData}}\" bindtouchstart=\"press\" bindtouchend=\"release\" bindtouchcancel=\"release\">\u003ctext>\u9886\u53d6\u003c/text>\u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: {\n    title: { type: String, value: '\u6b22\u8fce\u9886\u53d6\u672c\u5468\u4f18\u60e0' }\n  },\n  data: {\n    isSkyline: false,\n    animationData: {}\n  },\n  attached () {\n    this.isSkyline = this.renderer === 'skyline'\n  },\n  ready () {\n    if (!this.isSkyline) return\n    const { shared, timing, repeat, Easing } = wx.worklet\n    const pulse = shared(0.3)\n    const scale = shared(1)\n    const opacity = shared(1)\n    this._promoMotion = { pulse, scale, opacity }\n    this.applyAnimatedStyle('.pulse-dot', () => {\n      'worklet'\n      return { opacity: pulse.value }\n    })\n    this.applyAnimatedStyle('.skyline-button', () => {\n      'worklet'\n      return { transform: `scale(${scale.value})`, opacity: opacity.value }\n    })\n    pulse.value = repeat(timing(1, { duration: 1000, easing: Easing.ease }), -1, false)\n  },\n  detached () {\n    if (!this._promoMotion) return\n    Object.keys(this._promoMotion).forEach((key) => {\n      wx.worklet.cancelAnimation(this._promoMotion[key])\n    })\n    this._promoMotion = null\n  },\n  methods: {\n    press () {\n      this.setPressed(true)\n    },\n    release () {\n      this.setPressed(false)\n    },\n    setPressed (pressed) {\n      if (this.isSkyline) {\n        if (!this._promoMotion) return\n        const { timing, Easing } = wx.worklet\n        this._promoMotion.scale.value = timing(pressed ? 0.96 : 1, { duration: 150, easing: Easing.linear })\n        this._promoMotion.opacity.value = timing(pressed ? 0.7 : 1, { duration: 150, easing: Easing.linear })\n        return\n      }\n      const animation = wx.createAnimation({ duration: 150 })\n      animation.scale(pressed ? 0.96 : 1).opacity(pressed ? 0.7 : 1).step()\n      this.animationData = animation.export()\n    }\n  }\n})\n\u003c/script>\n\u003cstyle>\n.row { display: flex; }\n.truncate { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.skyline-title { -webkit-line-clamp: 1; }\n.logo { width: 24px; height: 24px; vertical-align: middle; }\n.pulse-dot { width: 8px; height: 8px; background: #f50; opacity: 0.3; }\n.pulse::before { content: ''; display: block; width: 8px; height: 8px; background: #f50; animation: pulse 1s infinite; animation-fill-mode: backwards; }\n@keyframes pulse { from { opacity: .3; } to { opacity: 1; } }\n.button { padding: 12px; background: #eee; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\"component\":true}\n\u003c/script>\n"}, {"name": "report.md", "type": "text", "content": "# \u9002\u914d\u7ed3\u679c\n\n\u5b8c\u6574\u4e1a\u52a1\u6587\u4ef6\uff1a`promo-card.mpx`\u3001`logo.svg`\u3002\u7ec4\u4ef6\u7ee7\u7eed\u4f9d\u8d56\u5bbf\u4e3b\u9875\u5df2\u6709\u7684 Skyline/glass-easel \u914d\u7f6e\u3002\n\n- \u8fd0\u884c\u65f6\u901a\u8fc7\u7ec4\u4ef6 `renderer` \u9009\u62e9 Skyline \u5206\u652f\uff1b\u56fe\u6807\u548c\u6807\u9898\u5171\u540c\u7f6e\u4e8e span \u622a\u65ad\u5bb9\u5668\uff0c\u9650\u5236\u4e00\u884c\uff0c\u4fdd\u7559\u5916\u90e8 SVG\u3002\n- Skyline \u7528\u771f\u5b9e 8px \u5706\u70b9\u66ff\u4ee3\u4f2a\u5143\u7d20\uff0cworklet \u5c06\u900f\u660e\u5ea6\u4ece 0.3 \u52a8\u753b\u81f3 1\uff0c\u5468\u671f 1000ms\u3001\u65e0\u9650\u91cd\u590d\u3001\u4e0d\u5f80\u8fd4\u3002\n- Skyline \u6309\u4e0b\u7f29\u653e\u81f3 0.96\u3001\u900f\u660e\u5ea6\u81f3 0.7\uff1b\u7ed3\u675f\u548c\u53d6\u6d88\u5747\u6062\u590d\u81f3 1\uff0c\u65f6\u957f 150ms\u3002\u79fb\u9664\u8be5\u5206\u652f\u7684 animation \u5c5e\u6027\uff0c\u7ec4\u4ef6\u9500\u6bc1\u65f6\u53d6\u6d88\u52a8\u753b\u3002\n- WebView \u4fdd\u7559\u539f\u56fe\u6587\u5bb9\u5668\u3001CSS \u5173\u952e\u5e27\u53ca createAnimation \u884c\u4e3a\u3002\n\n\u9a8c\u8bc1\uff1aJest 5/5 \u901a\u8fc7\uff0c\u8986\u76d6\u52a8\u753b\u53c2\u6570\u3001\u6062\u590d\u3001\u9500\u6bc1\u53d6\u6d88\u3001WebView \u5206\u652f\u3001SVG \u5b57\u8282\u4e00\u81f4\u6027\u4e0e JSON\uff1bBabel \u811a\u672c\u89e3\u6790\u53ca ESLint \u68c0\u67e5\u901a\u8fc7\u3002\u8bc1\u636e\u4f4d\u4e8e\u76f8\u90bb `run-1` \u76ee\u5f55\u3002\n\n\u672a\u9a8c\u8bc1\uff1a\u5fae\u4fe1\u5f00\u53d1\u8005\u5de5\u5177\u4e0e\u771f\u673a\u5747\u4e3a **not_run**\u3002\u6a21\u62df\u6d4b\u8bd5\u4e0d\u80fd\u8bc1\u660e\u5bbf\u4e3b API \u53ef\u7528\u6027\u3001Mpx \u5b9e\u4f8b\u7684 renderer/applyAnimatedStyle \u4ee3\u7406\u3001worklet \u7f16\u8bd1\u914d\u7f6e\u6216 span \u5b9e\u9645\u6392\u7248\u3002\u9700\u5728\u5df2\u542f\u7528 worklet \u7f16\u8bd1\u7684\u76ee\u6807\u5de5\u7a0b\u9a8c\u8bc1\u957f\u6807\u9898\u548c\u6781\u7a84\u5bb9\u5668\u7684\u5171\u540c\u622a\u65ad\u3001SVG \u5c55\u793a\u3001\u8fde\u7eed\u5feb\u901f\u6309\u538b/\u53d6\u6d88\u4ee5\u53ca\u5706\u70b9\u91cd\u590d\u5468\u671f\u3002\u5176\u4ed6\u76ee\u6807\u5e73\u53f0\u6ca1\u6709\u6784\u5efa\u9a8c\u8bc1\u3002\n"}], "grading": {"expectations": [{"id": "s3_00", "text": "Skyline \u56fe\u6807\u4e0e\u6807\u9898\u7f6e\u4e8e\u540c\u4e00\u4e2a\u53ef\u6536\u7f29\u7684 span \u5185\u8054\u5bb9\u5668\uff0c\u5bb9\u5668\u8bbe\u7f6e max-lines=1\u3001overflow=ellipsis\uff0c\u56fe\u7247\u91c7\u7528 inline-block\uff0c\u4f7f\u540c\u6bb5\u56fe\u6587\u5728\u6709\u9650\u5bbd\u5ea6\u5185\u5171\u540c\u5355\u884c\u622a\u65ad\uff1bWebView \u5bf9\u5e94\u5206\u652f\u4fdd\u7559\u540c\u6bb5\u56fe\u6587\u5355\u884c\u622a\u65ad\u3002", "passed": false, "evidence": "promo-card.mpx: Skyline span\u7f3a\u5c11max-lines/overflow\u5c5e\u6027\uff0c\u56fe\u7247\u672a\u8bbeinline-block\uff0c\u4ec5CSS -webkit-line-clamp\u548ctext-overflow\u4e0d\u8db3\u4ee5\u6ee1\u8db3\u6df7\u6392\u5bb9\u5668\u8981\u6c42\u3002"}, {"id": "s3_01", "text": "Skyline \u95ea\u70c1\u5706\u70b9\u7531\u771f\u5b9e\u8282\u70b9\u627f\u8f7d CSS animation\uff0c\u91c7\u7528\u652f\u6301\u7684fill-mode\uff08\u5982both\u6216forwards\uff09\uff0c\u5b9e\u73b0\u539f\u67091\u79d2\u5faa\u73af\u548c\u900f\u660e\u5ea6\u53d8\u5316\u3002", "passed": false, "evidence": "promo-card.mpx: Skyline\u771f\u5b9epulse-dot\u4f7f\u7528Worklet shared/repeat/timing\u9a71\u52a8\uff0c\u672a\u5b9e\u73b0\u672c\u65ad\u8a00\u8981\u6c42\u7684\u771f\u5b9e\u8282\u70b9CSS animation\u53ca\u652f\u6301\u7684fill-mode\uff1bCSS\u52a8\u753b\u4ec5\u5b58\u5728WebView\u4f2a\u5143\u7d20\u5206\u652f\u3002"}, {"id": "s3_02", "text": "Skyline \u6309\u94ae\u901a\u8fc7\u72b6\u6001\u7c7b\u9a71\u52a8 transform/opacity \u7684150ms CSS transition\uff0c\u5b8c\u6210\u6309\u4e0b\u53ca\u6062\u590d\u7684\u89c6\u89c9\u8fc7\u6e21\uff1b\u5176\u4ed6\u6e32\u67d3\u76ee\u6807\u53ef\u4f7f\u7528\u5404\u81ea\u9002\u914d\u5b9e\u73b0\u3002", "passed": false, "evidence": "promo-card.mpx: Skyline\u6309\u94ae\u7528Worklet timing\u9a71\u52a8\uff0c\u672a\u91c7\u7528\u672c\u65ad\u8a00\u8981\u6c42\u7684\u72b6\u6001\u7c7b\u53ca150ms CSS transition\u3002\u867d\u58f0\u660e\u76ee\u6807\u6570\u503c\u548c\u6062\u590d\u8def\u5f84\uff0c\u672c\u9879\u8bc4\u4ef7\u7684\u662f\u6307\u5b9a\u7684\u7b80\u5355\u72b6\u6001\u52a8\u753b\u9002\u914d\u65b9\u6848\u3002"}], "summary": {"passed": 0, "failed": 3, "total": 3, "pass_rate": 0.0}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-4-nested-sticky-layer-mpx2skyline", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 4, "outputs": [{"name": "category-panel.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"root\">\n    \u003cscroll-view wx:if=\"{{isSkyline}}\" type=\"nested\" scroll-y=\"{{true}}\" class=\"outer\">\n      \u003cscroll-view type=\"custom\" associative-container=\"nested-scroll-view\" scroll-y=\"{{true}}\" class=\"outer\">\n        \u003csticky-section wx:for=\"{{sections}}\" wx:key=\"id\">\n          \u003csticky-header class=\"header\">{{item.title}}\u003c/sticky-header>\n          \u003cscroll-view type=\"list\" associative-container=\"nested-scroll-view\" scroll-x=\"{{true}}\" enable-flex=\"{{true}}\" class=\"strip\">\n            \u003cview wx:for=\"{{item.items}}\" wx:for-item=\"entry\" wx:key=\"id\" class=\"tile\">{{entry.name}}\u003c/view>\n          \u003c/scroll-view>\n        \u003c/sticky-section>\n      \u003c/scroll-view>\n    \u003c/scroll-view>\n    \u003cscroll-view wx:else type=\"nested\" scroll-y=\"{{true}}\" class=\"outer\">\n      \u003cview wx:for=\"{{sections}}\" wx:key=\"id\">\n        \u003cview class=\"header webview-sticky\">{{item.title}}\u003c/view>\n        \u003cscroll-view type=\"list\" associative-container=\"nested-scroll-view\" scroll-x=\"{{true}}\" enable-flex=\"{{true}}\" class=\"strip\">\n          \u003cview wx:for=\"{{item.items}}\" wx:for-item=\"entry\" wx:key=\"id\" class=\"tile\">{{entry.name}}\u003c/view>\n        \u003c/scroll-view>\n      \u003c/view>\n    \u003c/scroll-view>\n    \u003cview class=\"fab\" bindtap=\"open\">\u6253\u5f00\u5f39\u5c42\u003c/view>\n    \u003cview class=\"modal\" wx:if=\"{{opened}}\" bindtap=\"close\">\u5173\u95ed\u5f39\u5c42\u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: {\n    sections: { type: Array, value: [] }\n  },\n  data: {\n    opened: false,\n    isSkyline: false\n  },\n  attached () {\n    this.isSkyline = this.renderer === 'skyline'\n  },\n  methods: {\n    open () {\n      this.opened = true\n    },\n    close () {\n      this.opened = false\n    }\n  }\n})\n\u003c/script>\n\u003cstyle>\n.root { display: block; }\n.outer { display: block; height: 400px; }\n.header { display: block; background: #fff; }\n.webview-sticky { position: sticky; top: 0; }\n.strip { display: flex; flex-direction: row; height: 80px; }\n.tile { display: block; flex-shrink: 0; width: 120px; height: 80px; box-sizing: border-box; }\n.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3; background: #eee; }\n.fab { position: fixed; right: 12px; bottom: 12px; z-index: 2; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\"component\":true}\n\u003c/script>\n"}, {"name": "report.md", "type": "text", "content": "# category-panel \u9002\u914d\u62a5\u544a\n\n\u4ea4\u4ed8\u5b8c\u6574 `category-panel.mpx`\uff0c\u4fdd\u7559 sections \u5c5e\u6027\u53ca open/close \u4ea4\u4e92\u3002\n\n- Skyline\uff1a\u7528 nested \u5916\u5c42\u534f\u8c03\u5d4c\u5957\u6eda\u52a8\uff1b\u589e\u52a0\u56fa\u5b9a 400px \u9ad8\u7684 custom \u7eb5\u5411\u5bb9\u5668\u627f\u8f7d\u6bcf\u7ec4 sticky-section\uff0csticky-header \u4e3a\u9996\u5b50\u8282\u70b9\u4e14\u80cc\u666f\u4e0d\u900f\u660e\u3002\u8fd9\u6837\u540c\u65f6\u6ee1\u8db3 Skill \u7684 nested \u5916\u5c42\u7ea6\u675f\u548c sticky \u7684 custom \u5bb9\u5668\u7ea6\u675f\u3002\u5b9e\u9645\u7eb5\u5411\u5185\u5bb9\u6eda\u52a8\u7531 custom \u5185\u5c42\u627f\u62c5\uff0cnested \u5916\u5c42\u540c\u9ad8\u3001\u65e0\u989d\u5916\u5185\u5bb9\u6eda\u52a8\u8ddd\u79bb\u3002\n- WebView\uff1a\u4fdd\u7559\u7ec4\u5185 CSS sticky \u6807\u9898\uff0c\u7528\u72ec\u7acb renderer \u5206\u652f\u907f\u514d\u5b9e\u4f8b\u5316 Skyline \u4e13\u5c5e\u7ec4\u4ef6\u3002\n- \u6a2a\u5411\u5217\u8868\uff1a\u663e\u5f0f list\u3001\u5173\u8054 nested\u3001enable-flex \u4e0e row\uff1b\u9879\u76ee\u4e3a\u76f4\u63a5\u5b50\u8282\u70b9\uff0c\u5bbd 120px\u3001\u9ad8 80px\uff0c\u7981\u6b62 flex \u6536\u7f29\u3002\n- \u5f39\u5c42\uff1a\u79fb\u51fa\u6eda\u52a8\u5bb9\u5668\uff0c\u4e0e\u60ac\u6d6e\u6309\u94ae\u6210\u4e3a\u540c\u7ea7 fixed \u8282\u70b9\uff1bz-index 3 \u9ad8\u4e8e\u6309\u94ae\u7684 2\uff0c\u70b9\u51fb\u5173\u95ed\u3002\u5220\u9664\u539f outer \u7684 transform \u548c\u65e0\u6548\u5c42\u7ea7\u4f9d\u8d56\u3002\n- \u7ec4\u4ef6\u8303\u56f4\u4e0d\u53d8\uff0c\u5bbf\u4e3b\u5df2\u63a5\u5165 Skyline/glass-easel\uff1b\u672a\u6539\u9875\u9762\u3001app \u6216\u4ed3\u5e93\u6587\u6863\u914d\u7f6e\u3002\n\n\u9a8c\u8bc1\uff1aMpx SFC/template \u5fae\u4fe1\u7f16\u8bd1\u65e0\u8bca\u65ad\uff1bJest 2 \u9879\u901a\u8fc7\uff08\u7f16\u8bd1\u3001\u53cc renderer \u521d\u59cb\u5316\u53ca\u5f39\u5c42\u5f00\u5173\uff09\uff1b\u811a\u672c\u533a\u5757\u6309\u4ed3\u5e93 ESLint \u914d\u7f6e\u68c0\u67e5 0 error / 0 warning\u3002\u5b8c\u6574 47 \u6761 Skill \u68c0\u67e5\u77e9\u9635\u5df2\u626b\u63cf\u5e76\u4eba\u5de5\u590d\u6838\uff0c\u8bb0\u5f55\u5728 run-1/audit.md\u3002\u9759\u6001\u68c0\u67e5\u65e0\u672a\u8bf4\u660e error\uff1bsticky \u4e3a WebView \u5206\u652f\u4fdd\u7559\uff0c\u5c42\u7ea7\u4e0e\u5d4c\u5957\u6eda\u52a8\u5019\u9009\u5df2\u5904\u7406\u3002\n\n\u771f\u673a/\u5f00\u53d1\u8005\u5de5\u5177\uff1anot_run\u3002\u5c1a\u672a\u786e\u8ba4\u4e09\u5c42\u6eda\u52a8\u7ec4\u5408\u7684\u624b\u52bf\u5206\u53d1\u3001\u7eb5\u5411\u6eda\u52a8\u65f6\u9010\u7ec4\u5438\u9876\u4e0e\u63a8\u79bb\u3001\u6a2a\u5411\u957f\u5217\u8868\u7684\u5c3a\u5bf8\u548c\u5f39\u5c42\u89e6\u6478\u8986\u76d6\u3002\u5e94\u5728 Skyline/glass-easel \u548c WebView \u4e0b\u5206\u522b\u4f7f\u7528\u8d85\u8fc7 400px \u7684\u5206\u7ec4\u5185\u5bb9\u3001\u6bcf\u7ec4\u591a\u4e8e\u4e00\u5c4f\u7684\u6a2a\u5411\u9879\u76ee\u9a8c\u8bc1\u8fd9\u4e9b\u884c\u4e3a\uff1b\u68c0\u67e5\u5f39\u5c42\u8986\u76d6\u6309\u94ae\u3001\u70b9\u51fb\u5173\u95ed\u540e\u6309\u94ae\u91cd\u65b0\u53ef\u7528\u3002\u7f16\u8bd1\u901a\u8fc7\u4e0d\u4ee3\u8868\u5b9e\u9645\u6e32\u67d3\u901a\u8fc7\u3002\u5176\u4ed6\u5e73\u53f0\u672a\u9a8c\u8bc1\u3002\n"}], "grading": {"expectations": [{"id": "s4_00", "text": "Skyline \u5916\u5c42\u7eb5\u5411\u6eda\u52a8\u91c7\u7528type=nested\uff0c\u5185\u5c42\u6eda\u52a8\u663e\u5f0f\u9009\u62e9list/custom\uff0c\u5e76\u901a\u8fc7associative-container=nested-scroll-view\u5efa\u7acb\u5173\u8054\u3002", "passed": true, "evidence": "category-panel.mpx: Skyline\u5916\u5c42type=nested\uff0c\u5185\u90e8custom\u7eb5\u5411\u5bb9\u5668\u548clist\u6a2a\u5411\u5bb9\u5668\u5747\u58f0\u660eassociative-container=nested-scroll-view\uff0c\u7c7b\u578b\u53ca\u5173\u8054\u7ed3\u6784\u5b8c\u6574\u3002"}, {"id": "s4_01", "text": "Skyline \u6a2a\u5411\u5217\u8868\u663e\u5f0f\u9009\u62e9type=list/custom\uff0c\u5f00\u542fenable-flex\u5e76\u8bbe\u7f6e\u6a2a\u5411Flex\u5e03\u5c40\uff1b\u91c7\u7528list\u65f6\u6761\u76ee\u4e3a\u76f4\u63a5\u5b50\u8282\u70b9\uff0c\u9879\u76ee\u4fdd\u6301120px\u5bbd\u5ea6\u548c\u76f8\u5e94\u7684\u6536\u7f29\u7ea6\u675f\u3002", "passed": true, "evidence": "category-panel.mpx: \u6a2a\u5411strip type=list\u3001scroll-x\u3001enable-flex\uff0cdisplay:flex/flex-direction:row\uff1btile\u76f4\u63a5\u5b50\u9879width120px/flex-shrink:0\u3002"}, {"id": "s4_02", "text": "Skyline \u5206\u652f\u4f7f\u7528sticky-section/sticky-header\u5b9e\u73b0\u7ec4\u6807\u9898\u5438\u9876\uff0cheader\u4e3asection\u9996\u5b50\u8282\u70b9\u4e14\u5177\u6709\u80cc\u666f\uff1bWebView\u5206\u652f\u91c7\u7528\u5bf9\u5e94\u7684CSS sticky\u5b9e\u73b0\u3002", "passed": true, "evidence": "category-panel.mpx: Skyline custom\u5185\u90e8sticky-section\u542b\u9996\u5b50\u8282\u70b9sticky-header\u4e14\u767d\u8272\u80cc\u666f\uff1bWebView\u72ec\u7acb\u5206\u652f\u4f7f\u7528position:sticky/top:0\u3002\u53cc\u5c42\u6eda\u52a8\u771f\u5b9e\u5438\u9876\u884c\u4e3a\u4ecdnot_run\u3002"}, {"id": "s4_03", "text": "Skyline \u5f39\u5c42\u4e0e\u60ac\u6d6e\u6309\u94ae\u7ec4\u7ec7\u4e3a\u53ef\u6bd4\u8f83\u7684fixed\u5c42\uff0c\u901a\u8fc7\u5c42\u7ea7\u503c\u4f7f\u5f39\u5c42\u8986\u76d6\u6309\u94ae\u3002", "passed": true, "evidence": "category-panel.mpx: modal\u4e0efab\u5728root\u4e0b\u540c\u7ea7\uff0c\u5747fixed\uff1bmodal z-index3\u9ad8\u4e8efab2\u3002"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}, {"id": "eval-4-nested-sticky-layer-no_skill", "prompt": "\u8bf7\u6309input/task.md\u5c06\u7ed9\u5b9aMpx\u6587\u4ef6\u9002\u914d\u5230\u5fae\u4fe1Skyline\uff0c\u4fdd\u6301\u8981\u6c42\u4e2d\u7684WebView\u4f53\u9a8c\uff0c\u8f93\u51fa\u5b8c\u6574\u6587\u4ef6\u548c\u9a8c\u8bc1\u62a5\u544a\u3002\u8303\u56f4\u548c\u4ea4\u4e92\u5df2\u786e\u8ba4\u3002", "eval_id": 4, "outputs": [{"name": "category-panel.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"root\">\n    \u003cscroll-view wx:if=\"{{isSkyline}}\" scroll-y=\"{{true}}\" type=\"list\" class=\"outer\">\n      \u003csticky-section wx:for=\"{{sections}}\" wx:for-item=\"section\" wx:key=\"id\">\n        \u003csticky-header>\u003cview class=\"header\">{{section.title}}\u003c/view>\u003c/sticky-header>\n        \u003cscroll-view scroll-x=\"{{true}}\" type=\"list\" class=\"strip skyline-strip\">\n          \u003cview wx:for=\"{{section.items}}\" wx:for-item=\"entry\" wx:key=\"id\" class=\"tile\">{{entry.name}}\u003c/view>\n        \u003c/scroll-view>\n      \u003c/sticky-section>\n    \u003c/scroll-view>\n    \u003cscroll-view wx:else scroll-y=\"{{true}}\" class=\"outer\">\n      \u003cview wx:for=\"{{sections}}\" wx:for-item=\"section\" wx:key=\"id\">\n        \u003cview class=\"header webview-header\">{{section.title}}\u003c/view>\n        \u003cscroll-view scroll-x=\"{{true}}\" class=\"strip webview-strip\">\n          \u003cview wx:for=\"{{section.items}}\" wx:for-item=\"entry\" wx:key=\"id\" class=\"tile webview-tile\">{{entry.name}}\u003c/view>\n        \u003c/scroll-view>\n      \u003c/view>\n    \u003c/scroll-view>\n    \u003cview class=\"fab\" bindtap=\"open\">\u6253\u5f00\u5f39\u5c42\u003c/view>\n    \u003cview wx:if=\"{{opened}}\" class=\"modal\" catchtap=\"close\" catchtouchmove=\"preventMove\">\u5173\u95ed\u5f39\u5c42\u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: {\n    sections: { type: Array, value: [] }\n  },\n  data: {\n    isSkyline: false,\n    opened: false\n  },\n  attached () {\n    this.isSkyline = this.renderer === 'skyline'\n  },\n  methods: {\n    open () {\n      this.opened = true\n    },\n    close () {\n      this.opened = false\n    },\n    preventMove () {}\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.outer {\n  height: 400px;\n}\n.header {\n  background: #fff;\n  min-height: 32px;\n}\n.webview-header {\n  position: sticky;\n  top: 0;\n  z-index: 1;\n}\n.strip {\n  width: 100%;\n  height: 80px;\n}\n.skyline-strip {\n  display: flex;\n  flex-direction: row;\n}\n.tile {\n  width: 120px;\n  height: 80px;\n  flex-shrink: 0;\n}\n.webview-strip {\n  white-space: nowrap;\n}\n.webview-tile {\n  display: inline-block;\n}\n.fab {\n  position: fixed;\n  right: 12px;\n  bottom: 12px;\n  z-index: 2;\n}\n.modal {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  z-index: 3;\n  background: #eee;\n}\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"component\": true\n}\n\u003c/script>\n"}, {"name": "report.md", "type": "text", "content": "# category-panel \u9002\u914d\u62a5\u544a\n\n\u4ea4\u4ed8 `category-panel.mpx`\uff0c\u4fdd\u7559 sections \u8f93\u5165\u7ed3\u6784\u3001400px \u5916\u5c42\u7eb5\u5411\u6eda\u52a8\u3001120px \u9879\u76ee\u5bbd\u5ea6\u548c\u6253\u5f00/\u5173\u95ed\u5f39\u5c42\u4ea4\u4e92\u3002\n\n- \u5728 attached \u4e2d\u8bfb\u53d6\u7ec4\u4ef6\u5b9e\u4f8b `renderer`\uff0cSkyline \u5206\u652f\u4f7f\u7528 sticky-section / sticky-header\uff0c\u6bcf\u4e2a\u6807\u9898\u7684\u5438\u9876\u8303\u56f4\u7531\u6240\u5c5e\u5206\u7ec4\u9650\u5236\uff1bWebView \u5206\u652f\u4fdd\u7559\u5206\u7ec4\u5185 CSS sticky\u3002\n- Skyline \u6a2a\u5411 scroll-view \u4f7f\u7528\u6a2a\u5411 flex \u5e03\u5c40\uff0c\u9879\u76ee\u7981\u6b62\u6536\u7f29\uff1bWebView \u4fdd\u7559 nowrap / inline-block\uff0c\u6a2a\u5411\u533a\u57df\u9ad8\u5ea6\u5747\u4e3a 80px\u3002\n- \u79fb\u9664\u6eda\u52a8\u5bb9\u5668\u7684 transform \u548c z-index\uff0c\u5f39\u5c42\u79fb\u4e3a\u6eda\u52a8\u533a\u57df\u5916\u7684\u6839\u7ea7\u5144\u5f1f\u8282\u70b9\uff0c\u901a\u8fc7 fixed \u56db\u8fb9\u5b9a\u4f4d\u548c\u9ad8\u4e8e\u60ac\u6d6e\u6309\u94ae\u7684 z-index \u8986\u76d6\u6309\u94ae\u3002catchtap \u5173\u95ed\u3001catchtouchmove \u963b\u6b62\u89e6\u6478\u5192\u6ce1\u3002\n- \u7ec4\u4ef6 JSON \u4fdd\u7559 component:true\uff1b\u5bbf\u4e3b\u9875\u5df2\u6709 Skyline / glass-easel \u914d\u7f6e\uff0c\u4e0d\u4fee\u6539\u9875\u9762\u6216\u5e94\u7528\u914d\u7f6e\u3002\n\n\u9a8c\u8bc1\uff1aMpx \u5fae\u4fe1\u6a21\u677f\u89e3\u6790\u65e0\u9519\u8bef\u3001\u65e0\u8b66\u544a\uff1bJSON \u89e3\u6790\u901a\u8fc7\uff1b\u811a\u672c ESLint \u901a\u8fc7\uff1bJest 3 \u9879\u6d4b\u8bd5\u901a\u8fc7\uff0c\u8986\u76d6 renderer \u5206\u652f\u9009\u62e9\u548c\u6253\u5f00/\u5173\u95ed\u72b6\u6001\u53d8\u5316\u3002\n\n## \u672a\u9a8c\u8bc1\u9879\n\n\u5fae\u4fe1\u5f00\u53d1\u8005\u5de5\u5177 / iOS / Android \u771f\u673a\uff1anot_run\u3002\u9759\u6001\u89e3\u6790\u548c\u811a\u672c\u6d4b\u8bd5\u4e0d\u80fd\u8bc1\u660e\u5b9e\u9645\u6e32\u67d3\u4e0e\u539f\u751f\u624b\u52bf\u884c\u4e3a\u3002\u5f85\u5728\u4e24\u79cd renderer \u4e0b\u4ee5\u591a\u7ec4\u3001\u6bcf\u7ec4\u591a\u4e8e\u4e00\u5c4f\u7684\u6761\u76ee\u9a8c\u8bc1\uff1a\u7eb5\u5411\u6eda\u52a8\u65f6\u6807\u9898\u5438\u9876\u548c\u5206\u7ec4\u4ea4\u63a5\u3001\u6a2a\u5411\u6eda\u52a8\u4e14\u6761\u76ee\u4fdd\u6301 120px\u3001\u659c\u5411\u624b\u52bf\u7ade\u4e89\u3001\u5f39\u5c42\u8986\u76d6\u6309\u94ae\u4e14\u80cc\u666f\u4e0d\u54cd\u5e94\u89e6\u6478\u3001\u70b9\u51fb\u5173\u95ed\u540e\u6062\u590d\u64cd\u4f5c\u3002\u7ec4\u4ef6\u5b9e\u4f8b renderer \u5728\u76ee\u6807\u57fa\u7840\u5e93\u7684\u53ef\u7528\u6027\u4e5f\u9700\u771f\u673a\u6838\u5bf9\u3002\n\n\u5176\u4ed6\u76ee\u6807\u5e73\u53f0\u672a\u7f16\u8bd1\u9a8c\u8bc1\uff1b\u672c\u4ea4\u4ed8\u9a8c\u8bc1\u8303\u56f4\u4ec5\u4e3a\u5fae\u4fe1\u4e24\u79cd renderer\u3002\n"}], "grading": {"expectations": [{"id": "s4_00", "text": "Skyline \u5916\u5c42\u7eb5\u5411\u6eda\u52a8\u91c7\u7528type=nested\uff0c\u5185\u5c42\u6eda\u52a8\u663e\u5f0f\u9009\u62e9list/custom\uff0c\u5e76\u901a\u8fc7associative-container=nested-scroll-view\u5efa\u7acb\u5173\u8054\u3002", "passed": false, "evidence": "category-panel.mpx: Skyline\u5916\u5c42type=list\u800c\u975enested\uff0c\u5185\u5c42\u6a2a\u5411\u5bb9\u5668\u4e5f\u7f3a\u5c11associative-container=nested-scroll-view\u3002"}, {"id": "s4_01", "text": "Skyline \u6a2a\u5411\u5217\u8868\u663e\u5f0f\u9009\u62e9type=list/custom\uff0c\u5f00\u542fenable-flex\u5e76\u8bbe\u7f6e\u6a2a\u5411Flex\u5e03\u5c40\uff1b\u91c7\u7528list\u65f6\u6761\u76ee\u4e3a\u76f4\u63a5\u5b50\u8282\u70b9\uff0c\u9879\u76ee\u4fdd\u6301120px\u5bbd\u5ea6\u548c\u76f8\u5e94\u7684\u6536\u7f29\u7ea6\u675f\u3002", "passed": false, "evidence": "category-panel.mpx: strip\u867d\u6709type=list\u3001\u6a2a\u5411flex\u53ca120px\u4e0d\u6536\u7f29\u76f4\u63a5\u5b50\u9879\uff0c\u4f46\u7f3a\u5c11enable-flex\u3002"}, {"id": "s4_02", "text": "Skyline \u5206\u652f\u4f7f\u7528sticky-section/sticky-header\u5b9e\u73b0\u7ec4\u6807\u9898\u5438\u9876\uff0cheader\u4e3asection\u9996\u5b50\u8282\u70b9\u4e14\u5177\u6709\u80cc\u666f\uff1bWebView\u5206\u652f\u91c7\u7528\u5bf9\u5e94\u7684CSS sticky\u5b9e\u73b0\u3002", "passed": false, "evidence": "category-panel.mpx: \u5b58\u5728sticky-section/\u9996\u5b50sticky-header\u53caWebView CSS\u5206\u652f\uff0c\u4f46Skyline sticky\u7ed3\u6784\u7f6e\u4e8etype=list\u5bb9\u5668\uff1b\u6765\u6e90\u89c4\u5219\u8981\u6c42custom\u627f\u8f7d\uff0c\u65e0\u6cd5\u636e\u6b64\u8bc1\u660e\u6709\u6548\u5438\u9876\u5b9e\u73b0\u3002"}, {"id": "s4_03", "text": "Skyline \u5f39\u5c42\u4e0e\u60ac\u6d6e\u6309\u94ae\u7ec4\u7ec7\u4e3a\u53ef\u6bd4\u8f83\u7684fixed\u5c42\uff0c\u901a\u8fc7\u5c42\u7ea7\u503c\u4f7f\u5f39\u5c42\u8986\u76d6\u6309\u94ae\u3002", "passed": true, "evidence": "category-panel.mpx: modal\u4e0efab\u4e3a\u6839\u7ea7fixed\u5144\u5f1f\uff0cmodal z-index3\u9ad8\u4e8efab2\uff0c\u5f39\u5c42\u8986\u76d6\u5173\u7cfb\u660e\u786e\u3002"}], "summary": {"passed": 1, "failed": 3, "total": 4, "pass_rate": 0.25}, "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately", "limitations": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"suite_version": 3, "skill_name": "mpx2skyline", "executor_model": "inherited_parent", "analyzer_model": "inherited_parent", "timestamp": "2026-09-11T07:28:25.365683+00:00", "evals_run": [0, 1, 2, 3, 4], "runs_per_configuration": 1, "skill_version": "1.0.1"}, "runs": [{"eval_id": 0, "configuration": "mpx2skyline", "run_number": 1, "result": {"passed": 11, "failed": 1, "total": 12, "pass_rate": 0.9166666666666666, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s0_00", "text": "Skyline \u6807\u9898\u7684\u5b9e\u9645 text \u627f\u8f7d\u8282\u70b9\u8bbe\u7f6e max-lines=1\u3001overflow=ellipsis\uff0c\u5e76\u4e0e WebView \u5355\u884c\u7701\u7565\u6837\u5f0f\u5171\u540c\u5b9e\u73b0\u957f\u6807\u9898\u622a\u65ad\u3002", "passed": true, "evidence": "style-card.mpx: \u6807\u9898\u5b9e\u9645text\u5177max-lines={{1}}\u3001overflow=ellipsis\uff0c\u4fdd\u7559WebView nowrap/overflow/text-overflow\u3002"}, {"id": "s0_01", "text": "Skyline \u4e24\u5217\u6807\u7b7e\u4f7f\u7528\u663e\u5f0f\u6a2a\u5411 Flex \u548c\u7b49\u5206\u5b50\u9879\u5e03\u5c40\uff0c\u5b9e\u73b0\u4e24\u5217\u7b49\u5bbd\u3002", "passed": true, "evidence": "style-card.mpx: labels\u663e\u5f0fdisplay:flex\uff0c\u5bbf\u4e3bdefaultDisplayBlock\u4f7f\u65b9\u5411\u9ed8\u8ba4row\uff1b\u4e24\u4e2alabel flex:1/min-width:0\uff0c\u7b49\u5bbd\u6a2a\u5411\u5e03\u5c40\u3002"}, {"id": "s0_02", "text": "Skyline \u6d3b\u52a8\u72b6\u6001\u901a\u8fc7\u53d7\u652f\u6301\u7684 class \u9009\u62e9\u5668\u6620\u5c04\u5230\u7ea2\u8272\u6d3b\u52a8\u6587\u6848\u3002", "passed": true, "evidence": "style-card.mpx: badge\u5b9e\u9645\u542bsale\u7c7b\uff0c.badge.sale\u989c\u8272#d00\u3002"}, {"id": "s0_03", "text": "Skyline \u901a\u8fc7 renderer \u4e0e\u5c4f\u5bbd\u72b6\u6001\u9009\u62e9\u5bb9\u5668 padding\uff0c\u5bbd\u5ea6\u2264320px \u4e3a12rpx\u3001>320px \u4e3a24rpx\uff1bSkyline \u9ed8\u8ba4\u8986\u76d6\u4f4d\u4e8e\u5a92\u4f53\u67e5\u8be2\u4e4b\u540e\uff0cWebView \u7ee7\u7eed\u4f7f\u7528\u539f\u5a92\u4f53\u67e5\u8be2\u3002", "passed": true, "evidence": "style-card.mpx: attached\u8bfb\u53d6renderer\u5e76\u6309screenWidth\u2264320\u8ba1\u7b97small\uff1bWebView\u5a92\u4f53\u67e5\u8be2\u4fdd\u7559\uff0cmedia\u540ecard-skyline\u9ed8\u8ba424rpx\uff0c\u5c0f\u5c4f12rpx\u3002"}, {"id": "s0_04", "text": "Skyline \u5185\u5bb9\u4e0e\u7236\u5bb9\u5668\u4e0a\u5916\u6cbf\u768420px\u8ddd\u79bb\u7531\u7236 padding \u8868\u8fbe\uff0c\u5b50\u8282\u70b9\u4ece\u7236\u5185\u5bb9\u533a\u8d77\u59cb\u4f4d\u7f6e\u5e03\u5c40\u3002", "passed": false, "evidence": "style-card.mpx: .outer\u5b9e\u9645padding-top:10px\uff0cchild\u4ece10px\u5904\u8d77\u59cb\uff0c\u4e0everification\u8981\u6c42\u7236\u5916\u6cbf\u81f3\u9996\u4e2a\u5b50\u76d220px\u4e0d\u7b26\u3002report\u6309\u8f93\u5165\u201c\u5185\u5bb9\u201d\u89e3\u91ca\u4e3a10px\u7236padding+10px\u5b50padding\uff1b\u8fd9\u662f\u8f93\u5165\u63aa\u8f9e\u4e0e\u8bc4\u5206\u89c2\u5bdf\u70b9\u7684\u6b67\u4e49\uff0c\u4e0d\u80fd\u76f4\u63a5\u5f52\u56e0\u4e3aSkill\u89c4\u5219\u7f3a\u5931\u3002"}, {"id": "s0_05", "text": "Skyline \u76f8\u90bb\u5757\u7684\u5782\u76f4\u95f4\u8ddd\u96c6\u4e2d\u7531\u4e00\u4fa7\u768416px margin\u627f\u62c5\uff0c\u6700\u7ec8\u76f8\u90bb\u76d2\u95f4\u8ddd\u4e3a16px\u3002", "passed": true, "evidence": "style-card.mpx: first\u4e0bmargin16px\uff0csecond\u4e0amargin\u5df2\u79fb\u9664\uff0c\u95f4\u8ddd16px\u3002"}, {"id": "s0_06", "text": "Skyline \u5c06\u53cc\u9634\u5f71\u5206\u914d\u5230\u540c\u5c3a\u5bf8\u7684\u5d4c\u5957\u8282\u70b9\u6216\u7b49\u6548\u5206\u5c42\u7ed3\u6784\uff0c\u5448\u73b0\u539f\u6709\u4e24\u5c42\u9634\u5f71\u7684\u53c2\u6570\u548c\u524d\u540e\u5173\u7cfb\u3002", "passed": true, "evidence": "style-card.mpx: many-back/many\u540c\u5c3a\u5bf8\u65e0\u989d\u5916padding\u5d4c\u5957\uff0c\u5916\u5c42#333\u540e\u9634\u5f71\u3001\u5185\u5c42#000\u524d\u9634\u5f71\u3002"}, {"id": "s0_07", "text": "Skyline \u5c06\u590d\u5408\u6ee4\u955c\u5206\u5c42\u4e3a\u5185\u5c42blur(2px)\u548c\u5916\u5c42brightness(.8)\uff0c\u7ec4\u5408\u5448\u73b0\u539f\u6709\u4e24\u79cd\u6548\u679c\u3002", "passed": true, "evidence": "style-card.mpx: filters\u5916\u5c42brightness(.8)\uff0cfilters-blur\u5185\u5c42blur(2px)\u3002"}, {"id": "s0_08", "text": "Skyline \u5b57\u4f53\u5904\u7406\u8bc6\u522b City-Semibold \u7684\u540c\u540d\u72ec\u7acb\u5b57\u4f53\u65cf\uff0c\u660e\u786e Trip-Medium \u7684\u5bbf\u4e3b\u5b57\u4f53\u4e0e PostScript \u6620\u5c04\u6838\u9a8c\u70b9\uff0c\u5e76\u8bb0\u5f55500/600\u5b57\u91cd\u7684\u673a\u578b\u9a8c\u8bc1\u8981\u6c42\u3002", "passed": true, "evidence": "report.md\u660e\u786eCity\u72ec\u7acb\u5b57\u4f53\u65cf\u3001Trip\u5bbf\u4e3b\u4e0ePostScript\u5f85\u6838\u9a8c\u4fe1\u606f\u3001500/600\u673a\u578b\u98ce\u9669\uff1b\u5b9e\u9645\u5b57\u4f53\u58f0\u660e\u4fdd\u6301600/500\u3002"}, {"id": "s0_09", "text": "Skyline \u5355\u9634\u5f71\u8282\u70b9\u4ee5\u5355\u4e2a box-shadow \u5448\u73b0\u539f\u6709 0 2px 4px rgba(0,0,0,.2) \u6548\u679c\uff0c\u989c\u8272\u51fd\u6570\u4f5c\u4e3a\u5b8c\u6574\u989c\u8272\u503c\u89e3\u6790\u3002", "passed": true, "evidence": "style-card.mpx: single-shadow\u4fdd\u7559\u5355\u4e2a0 2px 4px rgba(0,0,0,.2)\u3002"}, {"id": "s0_10", "text": "Skyline \u5355\u6ee4\u955c\u8282\u70b9\u91c7\u7528\u53d7\u652f\u6301\u7684 blur(2px)\uff0c\u5448\u73b0\u539f\u6709\u72ec\u7acb\u6a21\u7cca\u6548\u679c\u3002", "passed": true, "evidence": "style-card.mpx: single-filter\u4fdd\u7559blur(2px)\u3002"}, {"id": "s0_11", "text": "Skyline \u5728\u5bbf\u4e3b defaultContentBox=true \u6761\u4ef6\u4e0b\uff0cchild \u4fdd\u6301100px\u5185\u5bb9\u5bbd\u5ea6\u53ca\u5de6\u53f3\u540410px padding\uff0c\u5b9e\u9645\u5916\u5bbd\u4e3a120px\u3002", "passed": true, "evidence": "style-card.mpx: child\u663e\u5f0fcontent-box width100px\u3001padding10px\uff0c\u5185\u5bb9100px\u5916\u5bbd120px\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 1, "configuration": "mpx2skyline", "run_number": 1, "result": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s1_00", "text": "Skyline \u9875\u9762\u4e3b\u4f53\u4f7f\u7528\u5177\u6709\u660e\u786e\u53ef\u6eda\u52a8\u9ad8\u5ea6\u7684 scroll-view\uff0c\u663e\u5f0f\u9009\u62e9type=list\uff0c\u8ba2\u5355\u9879\u4f5c\u4e3a\u5217\u8868\u7684\u76f4\u63a5\u5b50\u8282\u70b9\u3002", "passed": true, "evidence": "orders.mpx: type=list\u3001scroll-y\u3001\u663e\u5f0fscrollHeight\u50cf\u7d20\u9ad8\u5ea6\uff1b\u8ba2\u5355view\u76f4\u63a5\u4e3ascroll-view\u5b50\u8282\u70b9\u3002"}, {"id": "s1_01", "text": "Skyline \u901a\u8fc7 bindrefresherrefresh \u542f\u52a8\u5237\u65b0\uff0crefresher-triggered \u5173\u8054\u5237\u65b0\u72b6\u6001\uff0c\u5e76\u5728\u8bf7\u6c42\u6210\u529f\u548c\u5931\u8d25\u540e\u7ed3\u675f\u5bb9\u5668\u5237\u65b0\u6001\u3002", "passed": true, "evidence": "orders.mpx: bindrefresherrefresh=onRefresh\uff0crefresher-triggered=refreshing\uff1breload finally\u53caloading\u65e9\u9000\u5747\u590d\u4f4dfalse\uff0c\u8986\u76d6\u8bf7\u6c42\u6210\u529f\u4e0e\u5931\u8d25\u3002"}, {"id": "s1_02", "text": "Skyline \u901a\u8fc7 scroll-view \u7684 bindscrolltolower \u8fde\u63a5\u539f\u5206\u9875\u52a0\u8f7d\u65b9\u6cd5\uff0c\u5bb9\u5668\u89e6\u5e95\u540e\u663e\u793a\u8ffd\u52a0\u7684\u8ba2\u5355\u3002", "passed": true, "evidence": "orders.mpx: bindscrolltolower=loadMore\uff0cfetchOrders(pageNo+1)\u540econcat\u8ffd\u52a0\u5e76\u63a8\u8fdb\u9875\u53f7\u3002"}, {"id": "s1_03", "text": "Skyline \u901a\u8fc7 scroll-view \u7684 bindscroll \u8bfb\u53d6 event.detail.scrollTop \u5e76\u66f4\u65b0\u6eda\u52a8\u4f4d\u7f6e\u5c55\u793a\u3002", "passed": true, "evidence": "orders.mpx: bindscroll=onScroll\uff0ce.detail.scrollTop\u8d4b\u7ed9\u5c55\u793a\u72b6\u6001scrollTop\u3002"}, {"id": "s1_04", "text": "Skyline \u9875\u9762\u914d\u7f6e renderer=skyline\u3001componentFramework=glass-easel\u3001navigationStyle=custom\u3001disableScroll=true\uff0c\u5e76\u5728\u6a21\u677f\u5b9e\u73b0\u8ba2\u5355\u81ea\u5b9a\u4e49\u5bfc\u822a\u3002", "passed": true, "evidence": "orders.mpx: \u9875\u9762JSON\u56db\u9879skyline/glass-easel/custom/disableScroll:true\uff1b\u771f\u5b9enavigation\u5305\u542b\u8ba2\u5355\u6587\u672c\u4e0e\u72b6\u6001\u680f\u9ad8\u5ea6\u3002"}, {"id": "s1_05", "text": "Skyline \u63a5\u5165\u6240\u9700\u7684 lazyCodeLoading=requiredComponents \u914d\u7f6e\u4e8e app.json \u9876\u5c42\u3002", "passed": true, "evidence": "app.json: \u9876\u5c42lazyCodeLoading=requiredComponents\u3002"}, {"id": "s1_06", "text": "Skyline \u5728 app.rendererOptions.skyline \u4e2d\u914d\u7f6e defaultDisplayBlock=true\u3001defaultContentBox=true\u3001tagNameStyleIsolation=legacy\u3001enableScrollViewAutoSize=true\u3001keyframeStyleIsolation=legacy\u3002", "passed": true, "evidence": "app.json: rendererOptions.skyline\u4e94\u9879\u63a8\u8350\u914d\u7f6e\u5c42\u7ea7\u548c\u503c\u5b8c\u6574\u6b63\u786e\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 2, "configuration": "mpx2skyline", "run_number": 1, "result": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s2_00", "text": "Skyline/glass-easel \u7684 wx:for \u5728\u521d\u59cb\u5316\u3001\u6570\u636e\u8fd4\u56de\u524d\u3001null\u8fd4\u56de\u53ca\u6b63\u5e38\u6570\u7ec4\u66f4\u65b0\u9636\u6bb5\u5747\u63a5\u6536 Array/Object \u7c7b\u578b\u7684\u6570\u636e\u3002", "passed": true, "evidence": "user-list.mpx: items\u521d\u59cb\u5316[]\u3001initData.visibleItems=[]\uff0csetRows\u5bf9res.items null/undefined\u56de\u9000[]\uff0ccomputed.filter\u59cb\u7ec8\u8fd4\u56de\u6570\u7ec4\uff1brun-1\u6d4b\u8bd5\u8986\u76d6\u76f8\u5e94\u8def\u5f84\u3002"}, {"id": "s2_01", "text": "Skyline/glass-easel \u7684\u7528\u6237\u5bb9\u5668\u4f7f\u7528\u5408\u6cd5\u7684\u975e\u6570\u5b57\u5f00\u5934id\uff0c\u7ec4\u4ef6\u5185\u901a\u8fc7 this.createSelectorQuery \u5b9a\u4f4d\u540c\u4e00\u5bb9\u5668\u3002", "passed": true, "evidence": "user-list.mpx: id=users\u4e0ethis.createSelectorQuery().select(#users)\u4e00\u81f4\uff0c\u5408\u6cd5\u975e\u6570\u5b57\u5f00\u5934\u4e14\u4f7f\u7528\u7ec4\u4ef6\u4f5c\u7528\u57df\u3002"}, {"id": "s2_02", "text": "Skyline \u7684\u5b9e\u9645\u7528\u6237\u6eda\u52a8\u76ee\u6807\u5f00\u542f enhanced\uff0c\u8282\u70b9\u67e5\u8be2\u8fd4\u56de\u7684 ScrollViewContext \u7528\u4e8e\u6267\u884c\u56de\u5230\u9876\u90e8\u64cd\u4f5c\u3002", "passed": true, "evidence": "user-list.mpx: \u5b9e\u9645users\u6eda\u52a8\u76ee\u6807enhanced=true\uff0cnode().exec\u8bfb\u53d6ScrollViewContext\u5e76scrollTo({top:0})\u3002"}, {"id": "s2_03", "text": "Skyline/glass-easel \u5faa\u73af\u4e2d\u7684\u5916\u90e8\u7247\u6bb5\u91c7\u7528 import \u52a0\u5177\u540d template \u8c03\u7528\uff0c\u5e76\u663e\u5f0f\u4f20\u9012\u5f53\u524d item/index\u3002", "passed": true, "evidence": "user-list.mpx\u53carow.wxml: import\u5916\u90e8\u5177\u540duser-row\u6a21\u677f\uff0c\u5faa\u73af\u5185template\u8c03\u7528\u663e\u5f0f\u4f20item/index\u3002"}, {"id": "s2_04", "text": "Skyline \u7684\u7b80\u5355 navigator \u4f7f\u7528 text \u6216\u7eaf\u6587\u672c\u5b50\u8282\u70b9\uff1b\u5361\u7247\u5bfc\u822a\u91c7\u7528\u7b26\u5408\u8be5\u5b50\u8282\u70b9\u7ed3\u6784\u7684\u5185\u5bb9\uff0c\u6216\u7531\u5916\u5c42\u70b9\u51fb\u4e8b\u4ef6\u5b9e\u73b0\u540c\u4e00\u8be6\u60c5\u8df3\u8f6c\u3002", "passed": true, "evidence": "user-list.mpx: \u4e24\u4e2anavigator\u5747\u4f7f\u7528text\u5b50\u8282\u70b9\uff0curl=/pages/detail\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 3, "configuration": "mpx2skyline", "run_number": 1, "result": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s3_00", "text": "Skyline \u56fe\u6807\u4e0e\u6807\u9898\u7f6e\u4e8e\u540c\u4e00\u4e2a\u53ef\u6536\u7f29\u7684 span \u5185\u8054\u5bb9\u5668\uff0c\u5bb9\u5668\u8bbe\u7f6e max-lines=1\u3001overflow=ellipsis\uff0c\u56fe\u7247\u91c7\u7528 inline-block\uff0c\u4f7f\u540c\u6bb5\u56fe\u6587\u5728\u6709\u9650\u5bbd\u5ea6\u5185\u5171\u540c\u5355\u884c\u622a\u65ad\uff1bWebView \u5bf9\u5e94\u5206\u652f\u4fdd\u7559\u540c\u6bb5\u56fe\u6587\u5355\u884c\u622a\u65ad\u3002", "passed": true, "evidence": "promo-card.mpx: mpxTagName@wx=span\u5b9e\u9645\u5fae\u4fe1\u8f93\u51faspan\uff0cmax-lines=1/overflow=ellipsis\u843d\u5728\u5171\u540c\u5bb9\u5668\uff1bflex:1,width:0,min-width:0\u7ea6\u675f\u5bbd\u5ea6\uff0cSkyline\u56fe\u7247inline-block\uff0cWebView truncate\u8def\u5f84\u4fdd\u7559\uff1brun-1\u542b\u5fae\u4fe1\u6a21\u677f\u7f16\u8bd1\u8bc1\u636e\u3002"}, {"id": "s3_01", "text": "Skyline \u95ea\u70c1\u5706\u70b9\u7531\u771f\u5b9e\u8282\u70b9\u627f\u8f7d CSS animation\uff0c\u91c7\u7528\u652f\u6301\u7684fill-mode\uff08\u5982both\u6216forwards\uff09\uff0c\u5b9e\u73b0\u539f\u67091\u79d2\u5faa\u73af\u548c\u900f\u660e\u5ea6\u53d8\u5316\u3002", "passed": true, "evidence": "promo-card.mpx: \u771f\u5b9epulse-dot\u8282\u70b98px/#f50\u627f\u8f7d1s infinite CSS animation\uff0cfill-mode:both\uff0c\u5173\u952e\u5e27opacity .3\u21921\u3002"}, {"id": "s3_02", "text": "Skyline \u6309\u94ae\u901a\u8fc7\u72b6\u6001\u7c7b\u9a71\u52a8 transform/opacity \u7684150ms CSS transition\uff0c\u5b8c\u6210\u6309\u4e0b\u53ca\u6062\u590d\u7684\u89c6\u89c9\u8fc7\u6e21\uff1b\u5176\u4ed6\u6e32\u67d3\u76ee\u6807\u53ef\u4f7f\u7528\u5404\u81ea\u9002\u914d\u5b9e\u73b0\u3002", "passed": true, "evidence": "promo-card.mpx: pressed\u72b6\u6001\u7c7b\u9a71\u52a8transform/opacity 150ms linear transition\uff0c\u6309\u4e0b.96/.7\uff0c\u677e\u5f00\u548c\u53d6\u6d88\u5747release\u6062\u590d1/1\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 4, "configuration": "mpx2skyline", "run_number": 1, "result": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s4_00", "text": "Skyline \u5916\u5c42\u7eb5\u5411\u6eda\u52a8\u91c7\u7528type=nested\uff0c\u5185\u5c42\u6eda\u52a8\u663e\u5f0f\u9009\u62e9list/custom\uff0c\u5e76\u901a\u8fc7associative-container=nested-scroll-view\u5efa\u7acb\u5173\u8054\u3002", "passed": true, "evidence": "category-panel.mpx: Skyline\u5916\u5c42type=nested\uff0c\u5185\u90e8custom\u7eb5\u5411\u5bb9\u5668\u548clist\u6a2a\u5411\u5bb9\u5668\u5747\u58f0\u660eassociative-container=nested-scroll-view\uff0c\u7c7b\u578b\u53ca\u5173\u8054\u7ed3\u6784\u5b8c\u6574\u3002"}, {"id": "s4_01", "text": "Skyline \u6a2a\u5411\u5217\u8868\u663e\u5f0f\u9009\u62e9type=list/custom\uff0c\u5f00\u542fenable-flex\u5e76\u8bbe\u7f6e\u6a2a\u5411Flex\u5e03\u5c40\uff1b\u91c7\u7528list\u65f6\u6761\u76ee\u4e3a\u76f4\u63a5\u5b50\u8282\u70b9\uff0c\u9879\u76ee\u4fdd\u6301120px\u5bbd\u5ea6\u548c\u76f8\u5e94\u7684\u6536\u7f29\u7ea6\u675f\u3002", "passed": true, "evidence": "category-panel.mpx: \u6a2a\u5411strip type=list\u3001scroll-x\u3001enable-flex\uff0cdisplay:flex/flex-direction:row\uff1btile\u76f4\u63a5\u5b50\u9879width120px/flex-shrink:0\u3002"}, {"id": "s4_02", "text": "Skyline \u5206\u652f\u4f7f\u7528sticky-section/sticky-header\u5b9e\u73b0\u7ec4\u6807\u9898\u5438\u9876\uff0cheader\u4e3asection\u9996\u5b50\u8282\u70b9\u4e14\u5177\u6709\u80cc\u666f\uff1bWebView\u5206\u652f\u91c7\u7528\u5bf9\u5e94\u7684CSS sticky\u5b9e\u73b0\u3002", "passed": true, "evidence": "category-panel.mpx: Skyline custom\u5185\u90e8sticky-section\u542b\u9996\u5b50\u8282\u70b9sticky-header\u4e14\u767d\u8272\u80cc\u666f\uff1bWebView\u72ec\u7acb\u5206\u652f\u4f7f\u7528position:sticky/top:0\u3002\u53cc\u5c42\u6eda\u52a8\u771f\u5b9e\u5438\u9876\u884c\u4e3a\u4ecdnot_run\u3002"}, {"id": "s4_03", "text": "Skyline \u5f39\u5c42\u4e0e\u60ac\u6d6e\u6309\u94ae\u7ec4\u7ec7\u4e3a\u53ef\u6bd4\u8f83\u7684fixed\u5c42\uff0c\u901a\u8fc7\u5c42\u7ea7\u503c\u4f7f\u5f39\u5c42\u8986\u76d6\u6309\u94ae\u3002", "passed": true, "evidence": "category-panel.mpx: modal\u4e0efab\u5728root\u4e0b\u540c\u7ea7\uff0c\u5747fixed\uff1bmodal z-index3\u9ad8\u4e8efab2\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 0, "configuration": "no_skill", "run_number": 1, "result": {"passed": 9, "failed": 3, "total": 12, "pass_rate": 0.75, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s0_00", "text": "Skyline \u6807\u9898\u7684\u5b9e\u9645 text \u627f\u8f7d\u8282\u70b9\u8bbe\u7f6e max-lines=1\u3001overflow=ellipsis\uff0c\u5e76\u4e0e WebView \u5355\u884c\u7701\u7565\u6837\u5f0f\u5171\u540c\u5b9e\u73b0\u957f\u6807\u9898\u622a\u65ad\u3002", "passed": false, "evidence": "style-card.mpx: title text\u4ec5\u6709max-lines=1\uff0c\u7f3a\u5c11overflow=ellipsis\u8282\u70b9\u5c5e\u6027\uff1bCSS overflow:hidden\u4e0d\u80fd\u66ff\u4ee3\u8be5\u5c5e\u6027\u3002"}, {"id": "s0_01", "text": "Skyline \u4e24\u5217\u6807\u7b7e\u4f7f\u7528\u663e\u5f0f\u6a2a\u5411 Flex \u548c\u7b49\u5206\u5b50\u9879\u5e03\u5c40\uff0c\u5b9e\u73b0\u4e24\u5217\u7b49\u5bbd\u3002", "passed": true, "evidence": "style-card.mpx: .labels\u6a2a\u5411flex\uff0c\u4e24\u4e2a.label\u5747width:50%\u3001min-width:0\uff0c\u5b9e\u73b0\u7b49\u5bbd\u5217\u3002"}, {"id": "s0_02", "text": "Skyline \u6d3b\u52a8\u72b6\u6001\u901a\u8fc7\u53d7\u652f\u6301\u7684 class \u9009\u62e9\u5668\u6620\u5c04\u5230\u7ea2\u8272\u6d3b\u52a8\u6587\u6848\u3002", "passed": true, "evidence": "style-card.mpx: badge\u5b9e\u9645\u7ed1\u5b9asale\u7c7b\uff0c.sale\u58f0\u660ecolor:#d00\u3002"}, {"id": "s0_03", "text": "Skyline \u901a\u8fc7 renderer \u4e0e\u5c4f\u5bbd\u72b6\u6001\u9009\u62e9\u5bb9\u5668 padding\uff0c\u5bbd\u5ea6\u2264320px \u4e3a12rpx\u3001>320px \u4e3a24rpx\uff1bSkyline \u9ed8\u8ba4\u8986\u76d6\u4f4d\u4e8e\u5a92\u4f53\u67e5\u8be2\u4e4b\u540e\uff0cWebView \u7ee7\u7eed\u4f7f\u7528\u539f\u5a92\u4f53\u67e5\u8be2\u3002", "passed": false, "evidence": "style-card.mpx: \u4e24\u7aef\u5171\u7528attached\u5c4f\u5bbd\u8ba1\u7b97\u53cainline padding\uff1b\u5220\u9664\u4e86\u539f\u5a92\u4f53\u67e5\u8be2\uff0c\u672a\u5b9e\u73b0\u65ad\u8a00\u8981\u6c42\u7684renderer\u9694\u79bb\u53caWebView\u5a92\u4f53\u67e5\u8be2\u8def\u5f84\u3002"}, {"id": "s0_04", "text": "Skyline \u5185\u5bb9\u4e0e\u7236\u5bb9\u5668\u4e0a\u5916\u6cbf\u768420px\u8ddd\u79bb\u7531\u7236 padding \u8868\u8fbe\uff0c\u5b50\u8282\u70b9\u4ece\u7236\u5185\u5bb9\u533a\u8d77\u59cb\u4f4d\u7f6e\u5e03\u5c40\u3002", "passed": true, "evidence": "style-card.mpx: .outer padding-top:20px\uff0cchild\u4e0amargin\u5df2\u79fb\u9664\uff0c\u7236\u5916\u6cbf\u81f3child\u4e3a20px\u3002"}, {"id": "s0_05", "text": "Skyline \u76f8\u90bb\u5757\u7684\u5782\u76f4\u95f4\u8ddd\u96c6\u4e2d\u7531\u4e00\u4fa7\u768416px margin\u627f\u62c5\uff0c\u6700\u7ec8\u76f8\u90bb\u76d2\u95f4\u8ddd\u4e3a16px\u3002", "passed": true, "evidence": "style-card.mpx: first margin-bottom:16px\u3001second margin-top:0\uff0c\u76f8\u90bb\u95f4\u8ddd16px\u3002"}, {"id": "s0_06", "text": "Skyline \u5c06\u53cc\u9634\u5f71\u5206\u914d\u5230\u540c\u5c3a\u5bf8\u7684\u5d4c\u5957\u8282\u70b9\u6216\u7b49\u6548\u5206\u5c42\u7ed3\u6784\uff0c\u5448\u73b0\u539f\u6709\u4e24\u5c42\u9634\u5f71\u7684\u53c2\u6570\u548c\u524d\u540e\u5173\u7cfb\u3002", "passed": true, "evidence": "style-card.mpx: shadow-back/front\u5747absolute\u56db\u8fb90\u8986\u76d6\u540c\u5c3a\u5bf8many\u5bb9\u5668\uff0c\u5206\u522b\u627f\u8f7d\u4e24\u7ec4\u539f\u59cb\u9634\u5f71\uff0cfront\u540e\u7ed8\u5236\u3002"}, {"id": "s0_07", "text": "Skyline \u5c06\u590d\u5408\u6ee4\u955c\u5206\u5c42\u4e3a\u5185\u5c42blur(2px)\u548c\u5916\u5c42brightness(.8)\uff0c\u7ec4\u5408\u5448\u73b0\u539f\u6709\u4e24\u79cd\u6548\u679c\u3002", "passed": true, "evidence": "style-card.mpx: filter-brightness\u5916\u5c42brightness(.8)\uff0cfilters\u5185\u5c42blur(2px)\uff0c\u4e24\u5c42\u53c2\u6570\u53ca\u987a\u5e8f\u6b63\u786e\u3002\u62a5\u544a\u5173\u4e8e\u652f\u6301\u60c5\u51b5\u7684\u672a\u6838\u5b9e\u58f0\u660e\u4e0d\u6539\u53d8\u5b9e\u9645\u9759\u6001\u5b9e\u73b0\u3002"}, {"id": "s0_08", "text": "Skyline \u5b57\u4f53\u5904\u7406\u8bc6\u522b City-Semibold \u7684\u540c\u540d\u72ec\u7acb\u5b57\u4f53\u65cf\uff0c\u660e\u786e Trip-Medium \u7684\u5bbf\u4e3b\u5b57\u4f53\u4e0e PostScript \u6620\u5c04\u6838\u9a8c\u70b9\uff0c\u5e76\u8bb0\u5f55500/600\u5b57\u91cd\u7684\u673a\u578b\u9a8c\u8bc1\u8981\u6c42\u3002", "passed": false, "evidence": "style-card.mpx\u53careport.md: \u867d\u8bc6\u522b\u72ec\u7acb\u5b57\u4f53\u65cf\u5e76\u5217\u51faPostScript\u6838\u9a8c\u70b9\uff0c\u5374\u5c06500/600\u5747\u6539normal\uff0c\u672a\u8bb0\u5f55500/600\u5b57\u91cd\u7684\u673a\u578b\u9a8c\u8bc1\u8981\u6c42\u3002"}, {"id": "s0_09", "text": "Skyline \u5355\u9634\u5f71\u8282\u70b9\u4ee5\u5355\u4e2a box-shadow \u5448\u73b0\u539f\u6709 0 2px 4px rgba(0,0,0,.2) \u6548\u679c\uff0c\u989c\u8272\u51fd\u6570\u4f5c\u4e3a\u5b8c\u6574\u989c\u8272\u503c\u89e3\u6790\u3002", "passed": true, "evidence": "style-card.mpx: single-shadow\u4fdd\u7559\u5355\u4e2a0 2px 4px rgba(0,0,0,0.2)\uff0c\u51fd\u6570\u9017\u53f7\u5b8c\u6574\u4fdd\u7559\u3002"}, {"id": "s0_10", "text": "Skyline \u5355\u6ee4\u955c\u8282\u70b9\u91c7\u7528\u53d7\u652f\u6301\u7684 blur(2px)\uff0c\u5448\u73b0\u539f\u6709\u72ec\u7acb\u6a21\u7cca\u6548\u679c\u3002", "passed": true, "evidence": "style-card.mpx: single-filter\u76f4\u63a5\u7ed1\u5b9afilter:blur(2px)\u3002"}, {"id": "s0_11", "text": "Skyline \u5728\u5bbf\u4e3b defaultContentBox=true \u6761\u4ef6\u4e0b\uff0cchild \u4fdd\u6301100px\u5185\u5bb9\u5bbd\u5ea6\u53ca\u5de6\u53f3\u540410px padding\uff0c\u5b9e\u9645\u5916\u5bbd\u4e3a120px\u3002", "passed": true, "evidence": "style-card.mpx: child\u6539\u4e3aborder-box width120px\u3001padding10px\uff0c\u65e0border\uff0c\u5b9e\u9645\u5185\u5bb9100px\u3001\u5916\u5bbd120px\uff0c\u4e0e\u76ee\u6807\u8bed\u4e49\u7b49\u4ef7\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 1, "configuration": "no_skill", "run_number": 1, "result": {"passed": 5, "failed": 2, "total": 7, "pass_rate": 0.7142857142857143, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s1_00", "text": "Skyline \u9875\u9762\u4e3b\u4f53\u4f7f\u7528\u5177\u6709\u660e\u786e\u53ef\u6eda\u52a8\u9ad8\u5ea6\u7684 scroll-view\uff0c\u663e\u5f0f\u9009\u62e9type=list\uff0c\u8ba2\u5355\u9879\u4f5c\u4e3a\u5217\u8868\u7684\u76f4\u63a5\u5b50\u8282\u70b9\u3002", "passed": false, "evidence": "orders.mpx: Skyline\u6761\u4ef6\u5206\u652f\u867d\u7136type=list\u4e14\u6709flex\u9ad8\u5ea6\u7ea6\u675f\uff0c\u4f46\u8ba2\u5355\u5faa\u73af\u6574\u4f53\u5305\u5728\u5355\u4e2aview.page\u5185\uff0c\u8ba2\u5355\u9879\u4e0d\u662f\u5217\u8868\u76f4\u63a5\u5b50\u8282\u70b9\u3002"}, {"id": "s1_01", "text": "Skyline \u901a\u8fc7 bindrefresherrefresh \u542f\u52a8\u5237\u65b0\uff0crefresher-triggered \u5173\u8054\u5237\u65b0\u72b6\u6001\uff0c\u5e76\u5728\u8bf7\u6c42\u6210\u529f\u548c\u5931\u8d25\u540e\u7ed3\u675f\u5bb9\u5668\u5237\u65b0\u6001\u3002", "passed": true, "evidence": "orders.mpx: Skyline env\u5206\u652frefresherrefresh\u4e0erefreshing\u7ed1\u5b9a\u5b8c\u6574\uff0creload\u6210\u529f/\u5931\u8d25finally\u53caloading\u65e9\u9000\u6062\u590d\u5237\u65b0\u6001\uff1breport\u660e\u786e\u9700\u8981env=skyline\u6784\u5efa\u3002"}, {"id": "s1_02", "text": "Skyline \u901a\u8fc7 scroll-view \u7684 bindscrolltolower \u8fde\u63a5\u539f\u5206\u9875\u52a0\u8f7d\u65b9\u6cd5\uff0c\u5bb9\u5668\u89e6\u5e95\u540e\u663e\u793a\u8ffd\u52a0\u7684\u8ba2\u5355\u3002", "passed": true, "evidence": "orders.mpx: Skyline\u5206\u652fbindscrolltolower=loadMore\uff0cfetchOrders\u4e0b\u4e00\u9875\u540econcat\u8ffd\u52a0\u5e76\u63a8\u8fdbpageNo\u3002"}, {"id": "s1_03", "text": "Skyline \u901a\u8fc7 scroll-view \u7684 bindscroll \u8bfb\u53d6 event.detail.scrollTop \u5e76\u66f4\u65b0\u6eda\u52a8\u4f4d\u7f6e\u5c55\u793a\u3002", "passed": true, "evidence": "orders.mpx: Skyline\u5206\u652fbindscroll=onScroll\uff0c\u8bfb\u53d6e.detail.scrollTop\u4f9b\u6a21\u677f\u5c55\u793a\u3002"}, {"id": "s1_04", "text": "Skyline \u9875\u9762\u914d\u7f6e renderer=skyline\u3001componentFramework=glass-easel\u3001navigationStyle=custom\u3001disableScroll=true\uff0c\u5e76\u5728\u6a21\u677f\u5b9e\u73b0\u8ba2\u5355\u81ea\u5b9a\u4e49\u5bfc\u822a\u3002", "passed": true, "evidence": "orders.mpx: env=skyline\u5206\u652f\u9875\u9762JSON\u5305\u542b\u56db\u9879\u5fc5\u9700\u914d\u7f6e\uff0c\u6a21\u677f\u6709\u5b9e\u9645\u8ba2\u5355\u5bfc\u822a\uff1breport\u660e\u786e\u6761\u4ef6\u6784\u5efa\u65b9\u5f0f\u3002"}, {"id": "s1_05", "text": "Skyline \u63a5\u5165\u6240\u9700\u7684 lazyCodeLoading=requiredComponents \u914d\u7f6e\u4e8e app.json \u9876\u5c42\u3002", "passed": true, "evidence": "app.json: \u9876\u5c42lazyCodeLoading=requiredComponents\u3002"}, {"id": "s1_06", "text": "Skyline \u5728 app.rendererOptions.skyline \u4e2d\u914d\u7f6e defaultDisplayBlock=true\u3001defaultContentBox=true\u3001tagNameStyleIsolation=legacy\u3001enableScrollViewAutoSize=true\u3001keyframeStyleIsolation=legacy\u3002", "passed": false, "evidence": "app.json: skyline\u4ec5defaultDisplayBlock/defaultContentBox/disableABTest\uff1b\u7f3a\u5c11tagNameStyleIsolation\u3001enableScrollViewAutoSize\u548ckeyframeStyleIsolation\u4e09\u9879\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 2, "configuration": "no_skill", "run_number": 1, "result": {"passed": 2, "failed": 3, "total": 5, "pass_rate": 0.4, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s2_00", "text": "Skyline/glass-easel \u7684 wx:for \u5728\u521d\u59cb\u5316\u3001\u6570\u636e\u8fd4\u56de\u524d\u3001null\u8fd4\u56de\u53ca\u6b63\u5e38\u6570\u7ec4\u66f4\u65b0\u9636\u6bb5\u5747\u63a5\u6536 Array/Object \u7c7b\u578b\u7684\u6570\u636e\u3002", "passed": false, "evidence": "user-list.mpx: items=[]\u53cacomputed\u8fc7\u6ee4\u8986\u76d6\u6570\u636e\u66f4\u65b0\uff0c\u4f46wx:for\u76f4\u63a5\u6d88\u8d39visibleItems\uff0c\u7f3a\u5c11initData\u6216\u6a21\u677f\u56de\u9000\u4fdd\u62a4computed\u521d\u59cb\u5316\u524d\u9636\u6bb5\u3002"}, {"id": "s2_01", "text": "Skyline/glass-easel \u7684\u7528\u6237\u5bb9\u5668\u4f7f\u7528\u5408\u6cd5\u7684\u975e\u6570\u5b57\u5f00\u5934id\uff0c\u7ec4\u4ef6\u5185\u901a\u8fc7 this.createSelectorQuery \u5b9a\u4f4d\u540c\u4e00\u5bb9\u5668\u3002", "passed": false, "evidence": "user-list.mpx: \u5408\u6cd5id\u53ca\u7ec4\u4ef6\u4f5c\u7528\u57df\u5df2\u4fee\u6b63\uff0c\u4f46\u5b9e\u9645\u8c03\u7528wx.createSelectorQuery().in(this)\uff0c\u672a\u91c7\u7528\u8bc4\u5206\u8981\u6c42\u7684this.createSelectorQuery\u3002\u6b64\u9879\u662fSkill\u63a8\u8350\u8def\u5f84\uff0c\u975e\u5ba3\u79f0\u539fAPI\u5b8c\u5168\u4e0d\u53ef\u7528\u3002"}, {"id": "s2_02", "text": "Skyline \u7684\u5b9e\u9645\u7528\u6237\u6eda\u52a8\u76ee\u6807\u5f00\u542f enhanced\uff0c\u8282\u70b9\u67e5\u8be2\u8fd4\u56de\u7684 ScrollViewContext \u7528\u4e8e\u6267\u884c\u56de\u5230\u9876\u90e8\u64cd\u4f5c\u3002", "passed": true, "evidence": "user-list.mpx: users\u76ee\u6807enhanced=true\uff0cnode().exec\u8fd4\u56de\u8282\u70b9\u540e\u8c03\u7528scrollTo({top:0})\uff0c\u67e5\u8be2\u76ee\u6807\u4e00\u81f4\u3002"}, {"id": "s2_03", "text": "Skyline/glass-easel \u5faa\u73af\u4e2d\u7684\u5916\u90e8\u7247\u6bb5\u91c7\u7528 import \u52a0\u5177\u540d template \u8c03\u7528\uff0c\u5e76\u663e\u5f0f\u4f20\u9012\u5f53\u524d item/index\u3002", "passed": false, "evidence": "user-list.mpx/row.wxml: \u5faa\u73af\u5b50\u6811\u4ecd\u7528include\uff0c\u672a\u6539\u4e3aimport\u52a0\u5177\u540dtemplate\u53ca\u663e\u5f0f\u53c2\u6570\u3002"}, {"id": "s2_04", "text": "Skyline \u7684\u7b80\u5355 navigator \u4f7f\u7528 text \u6216\u7eaf\u6587\u672c\u5b50\u8282\u70b9\uff1b\u5361\u7247\u5bfc\u822a\u91c7\u7528\u7b26\u5408\u8be5\u5b50\u8282\u70b9\u7ed3\u6784\u7684\u5185\u5bb9\uff0c\u6216\u7531\u5916\u5c42\u70b9\u51fb\u4e8b\u4ef6\u5b9e\u73b0\u540c\u4e00\u8be6\u60c5\u8df3\u8f6c\u3002", "passed": true, "evidence": "user-list.mpx: \u4e24\u5165\u53e3\u5747\u6539view\u7ed1\u5b9aopenDetail\uff0cwx.navigateTo\u76ee\u6807/pages/detail\uff0c\u5b9e\u73b0\u7b49\u4ef7\u8be6\u60c5\u5bfc\u822a\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 3, "configuration": "no_skill", "run_number": 1, "result": {"passed": 0, "failed": 3, "total": 3, "pass_rate": 0.0, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s3_00", "text": "Skyline \u56fe\u6807\u4e0e\u6807\u9898\u7f6e\u4e8e\u540c\u4e00\u4e2a\u53ef\u6536\u7f29\u7684 span \u5185\u8054\u5bb9\u5668\uff0c\u5bb9\u5668\u8bbe\u7f6e max-lines=1\u3001overflow=ellipsis\uff0c\u56fe\u7247\u91c7\u7528 inline-block\uff0c\u4f7f\u540c\u6bb5\u56fe\u6587\u5728\u6709\u9650\u5bbd\u5ea6\u5185\u5171\u540c\u5355\u884c\u622a\u65ad\uff1bWebView \u5bf9\u5e94\u5206\u652f\u4fdd\u7559\u540c\u6bb5\u56fe\u6587\u5355\u884c\u622a\u65ad\u3002", "passed": false, "evidence": "promo-card.mpx: Skyline span\u7f3a\u5c11max-lines/overflow\u5c5e\u6027\uff0c\u56fe\u7247\u672a\u8bbeinline-block\uff0c\u4ec5CSS -webkit-line-clamp\u548ctext-overflow\u4e0d\u8db3\u4ee5\u6ee1\u8db3\u6df7\u6392\u5bb9\u5668\u8981\u6c42\u3002"}, {"id": "s3_01", "text": "Skyline \u95ea\u70c1\u5706\u70b9\u7531\u771f\u5b9e\u8282\u70b9\u627f\u8f7d CSS animation\uff0c\u91c7\u7528\u652f\u6301\u7684fill-mode\uff08\u5982both\u6216forwards\uff09\uff0c\u5b9e\u73b0\u539f\u67091\u79d2\u5faa\u73af\u548c\u900f\u660e\u5ea6\u53d8\u5316\u3002", "passed": false, "evidence": "promo-card.mpx: Skyline\u771f\u5b9epulse-dot\u4f7f\u7528Worklet shared/repeat/timing\u9a71\u52a8\uff0c\u672a\u5b9e\u73b0\u672c\u65ad\u8a00\u8981\u6c42\u7684\u771f\u5b9e\u8282\u70b9CSS animation\u53ca\u652f\u6301\u7684fill-mode\uff1bCSS\u52a8\u753b\u4ec5\u5b58\u5728WebView\u4f2a\u5143\u7d20\u5206\u652f\u3002"}, {"id": "s3_02", "text": "Skyline \u6309\u94ae\u901a\u8fc7\u72b6\u6001\u7c7b\u9a71\u52a8 transform/opacity \u7684150ms CSS transition\uff0c\u5b8c\u6210\u6309\u4e0b\u53ca\u6062\u590d\u7684\u89c6\u89c9\u8fc7\u6e21\uff1b\u5176\u4ed6\u6e32\u67d3\u76ee\u6807\u53ef\u4f7f\u7528\u5404\u81ea\u9002\u914d\u5b9e\u73b0\u3002", "passed": false, "evidence": "promo-card.mpx: Skyline\u6309\u94ae\u7528Worklet timing\u9a71\u52a8\uff0c\u672a\u91c7\u7528\u672c\u65ad\u8a00\u8981\u6c42\u7684\u72b6\u6001\u7c7b\u53ca150ms CSS transition\u3002\u867d\u58f0\u660e\u76ee\u6807\u6570\u503c\u548c\u6062\u590d\u8def\u5f84\uff0c\u672c\u9879\u8bc4\u4ef7\u7684\u662f\u6307\u5b9a\u7684\u7b80\u5355\u72b6\u6001\u52a8\u753b\u9002\u914d\u65b9\u6848\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}, {"eval_id": 4, "configuration": "no_skill", "run_number": 1, "result": {"passed": 1, "failed": 3, "total": 4, "pass_rate": 0.25, "time_seconds": null, "tokens": null}, "expectations": [{"id": "s4_00", "text": "Skyline \u5916\u5c42\u7eb5\u5411\u6eda\u52a8\u91c7\u7528type=nested\uff0c\u5185\u5c42\u6eda\u52a8\u663e\u5f0f\u9009\u62e9list/custom\uff0c\u5e76\u901a\u8fc7associative-container=nested-scroll-view\u5efa\u7acb\u5173\u8054\u3002", "passed": false, "evidence": "category-panel.mpx: Skyline\u5916\u5c42type=list\u800c\u975enested\uff0c\u5185\u5c42\u6a2a\u5411\u5bb9\u5668\u4e5f\u7f3a\u5c11associative-container=nested-scroll-view\u3002"}, {"id": "s4_01", "text": "Skyline \u6a2a\u5411\u5217\u8868\u663e\u5f0f\u9009\u62e9type=list/custom\uff0c\u5f00\u542fenable-flex\u5e76\u8bbe\u7f6e\u6a2a\u5411Flex\u5e03\u5c40\uff1b\u91c7\u7528list\u65f6\u6761\u76ee\u4e3a\u76f4\u63a5\u5b50\u8282\u70b9\uff0c\u9879\u76ee\u4fdd\u6301120px\u5bbd\u5ea6\u548c\u76f8\u5e94\u7684\u6536\u7f29\u7ea6\u675f\u3002", "passed": false, "evidence": "category-panel.mpx: strip\u867d\u6709type=list\u3001\u6a2a\u5411flex\u53ca120px\u4e0d\u6536\u7f29\u76f4\u63a5\u5b50\u9879\uff0c\u4f46\u7f3a\u5c11enable-flex\u3002"}, {"id": "s4_02", "text": "Skyline \u5206\u652f\u4f7f\u7528sticky-section/sticky-header\u5b9e\u73b0\u7ec4\u6807\u9898\u5438\u9876\uff0cheader\u4e3asection\u9996\u5b50\u8282\u70b9\u4e14\u5177\u6709\u80cc\u666f\uff1bWebView\u5206\u652f\u91c7\u7528\u5bf9\u5e94\u7684CSS sticky\u5b9e\u73b0\u3002", "passed": false, "evidence": "category-panel.mpx: \u5b58\u5728sticky-section/\u9996\u5b50sticky-header\u53caWebView CSS\u5206\u652f\uff0c\u4f46Skyline sticky\u7ed3\u6784\u7f6e\u4e8etype=list\u5bb9\u5668\uff1b\u6765\u6e90\u89c4\u5219\u8981\u6c42custom\u627f\u8f7d\uff0c\u65e0\u6cd5\u636e\u6b64\u8bc1\u660e\u6709\u6548\u5438\u9876\u5b9e\u73b0\u3002"}, {"id": "s4_03", "text": "Skyline \u5f39\u5c42\u4e0e\u60ac\u6d6e\u6309\u94ae\u7ec4\u7ec7\u4e3a\u53ef\u6bd4\u8f83\u7684fixed\u5c42\uff0c\u901a\u8fc7\u5c42\u7ea7\u503c\u4f7f\u5f39\u5c42\u8986\u76d6\u6309\u94ae\u3002", "passed": true, "evidence": "category-panel.mpx: modal\u4e0efab\u4e3a\u6839\u7ea7fixed\u5144\u5f1f\uff0cmodal z-index3\u9ad8\u4e8efab2\uff0c\u5f39\u5c42\u8986\u76d6\u5173\u7cfb\u660e\u786e\u3002"}], "notes": ["No application build or device rendering validation", "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"]}], "totals": {"mpx2skyline": {"passed": 30, "total": 31, "pass_rate": 0.967741935483871, "complete_cases": 4}, "no_skill": {"passed": 17, "total": 31, "pass_rate": 0.5483870967741935, "complete_cases": 0}}, "run_summary": {"mpx2skyline": {"pass_rate": {"mean": 0.967741935483871, "stddev": null, "aggregation": "assertion-weighted"}, "tokens": null, "time_seconds": null}, "no_skill": {"pass_rate": {"mean": 0.5483870967741935, "stddev": null, "aggregation": "assertion-weighted"}, "tokens": null, "time_seconds": null}}, "notes": ["\u6bcf\u4e2acase\u6bcf\u7ec4\u4ec5\u4e00\u6b21\u6267\u884c\uff0c\u4e0d\u80fd\u4f30\u8ba1\u91cd\u590d\u8fd0\u884c\u65b9\u5dee\u3002", "s0_04\u5b58\u5728\u8f93\u5165\u201c\u5185\u5bb9\u8ddd\u5916\u6cbf\u201d\u4e0e\u65ad\u8a00\u201c\u9996\u4e2a\u5b50\u76d2\u8ddd\u5916\u6cbf\u201d\u7684\u89c2\u5bdf\u70b9\u6b67\u4e49\uff1b\u4fdd\u6301\u539f\u65ad\u8a00\u8bc4\u5206\uff0c\u4e0d\u5c06\u8be5\u5931\u8d25\u76f4\u63a5\u5f52\u56e0\u4e3aSkill\u80fd\u529b\u7f3a\u5931\u3002", "\u8bed\u6cd5\u4e0e\u9694\u79bb\u884c\u4e3a\u9a8c\u8bc1\u901a\u8fc7\u4e0d\u4ee3\u8868\u5bbf\u4e3b\u5b8c\u6574\u6784\u5efa\u6216\u771f\u673a\u6e32\u67d3\u901a\u8fc7\uff1b\u8fd9\u4e24\u9879not_run\u3002", "Token\u548c\u7cbe\u786e\u6267\u884c\u8017\u65f6\u4e0d\u53ef\u7528\uff1b\u4e0d\u8fdb\u884c\u6d88\u8017\u5bf9\u6bd4\u3002", "\u672c\u8f6e\u6bd4\u8f83\u72ec\u7acbSkill\u4e0eno_skill\uff0c\u672a\u6267\u884c\u5408\u5e76Skill\uff0c\u4e0d\u4ee3\u8868\u5df2\u8bc1\u660e\u5408\u5e76\u4e0d\u52a3\u5316\u3002"]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat || stat.mean == null) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        if (stat.stddev == null) return m + suffix + " (单轮；方差不可用)";
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<template>
+  <view>
+    <text>{{label}}</text>
+    <scroll-view id="other" type="list" enhanced="{{true}}" />
+    <scroll-view id="users" type="list" enhanced="{{true}}" scroll-y="{{true}}">
+      <view wx:for="{{visibleItems}}" wx:for-item="user" wx:for-index="rowIndex" wx:key="id">
+        <view><include src="./row.wxml" /></view>
+      </view>
+    </scroll-view>
+    <view bindtap="scrollTop"><text>回到顶部</text></view>
+    <view bindtap="openDetail"><text>详情</text></view>
+    <view bindtap="openDetail"><text>卡片详情</text></view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    label: { type: String, value: '用户' },
+    payload: { type: null, value: '' }
+  },
+  data: {
+    items: [],
+    config: { default: 'keep' }
+  },
+  computed: {
+    visibleItems () {
+      return this.items.filter(item => item.visible)
+    }
+  },
+  methods: {
+    setRows (res) {
+      this.items = res.items || []
+    },
+    scrollTop () {
+      wx.createSelectorQuery().in(this).select('#users').node().exec(res => {
+        if (res[0] && res[0].node) {
+          res[0].node.scrollTo({ top: 0 })
+        }
+      })
+    },
+    openDetail () {
+      wx.navigateTo({ url: '/pages/detail' })
+    }
+  }
+})
+</script>
+
+<style>
+scroll-view { height: 300px; }
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

@@ -1,0 +1,570 @@
+{
+  "skill_name": "mpx2skyline",
+  "suite_version": 3,
+  "iteration": 3,
+  "status": "completed",
+  "description": "5个Skyline专项场景，31条正向适配断言；已完成mpx2skyline与no_skill各一轮。合并Skill尚未执行。",
+  "scoring_scope": "仅评价微信Skyline/glass-easel实际生效实现，WebView仅用于对应兼容要求；RN分支按自身规则实现。",
+  "comparison": {
+    "purpose": "独立Skill与合并Skill在同一新版测试集上的不劣化比较",
+    "groups": [
+      {
+        "id": "mpx2skyline",
+        "skill": ".agents/skills/mpx2skyline/SKILL.md"
+      },
+      {
+        "id": "no_skill",
+        "skill": null,
+        "status": "completed"
+      },
+      {
+        "id": "merged_skill",
+        "skill": null,
+        "status": "path-to-be-specified-before-execution"
+      }
+    ]
+  },
+  "runner": {
+    "prompt_templates": "prompt_templates.json",
+    "grading_standard": "grading-standard.md",
+    "subagent_config": {
+      "model": "must_match_parent",
+      "reasoning_effort": "must_match_parent",
+      "fork_turns": "none"
+    }
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "style-layout",
+      "title": "样式与布局",
+      "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+      "files": [
+        "input/style-card.mpx",
+        "input/task.md"
+      ],
+      "assertions": [
+        {
+          "id": "s0_00",
+          "text": "Skyline 标题的实际 text 承载节点设置 max-lines=1、overflow=ellipsis，并与 WebView 单行省略样式共同实现长标题截断。",
+          "rule_id": "skyline.text-ellipsis",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "文本溢出省略适配"
+          },
+          "verification": "检查标题节点属性和有界宽度；分别审查两种 renderer 的单行省略路径。",
+          "source_assertions": [
+            "e0_01",
+            "e0_02",
+            "e6_06",
+            "e7_08",
+            "e8_05"
+          ]
+        },
+        {
+          "id": "s0_01",
+          "text": "Skyline 两列标签使用显式横向 Flex 和等分子项布局，实现两列等宽。",
+          "rule_id": "skyline.equal-columns",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-style-reference.md",
+            "section": "布局、盒模型与层叠差异"
+          },
+          "verification": "检查父子布局关系及 flex basis/width，计算两列可用宽度。",
+          "source_assertions": [
+            "e0_03",
+            "e6_07"
+          ]
+        },
+        {
+          "id": "s0_02",
+          "text": "Skyline 活动状态通过受支持的 class 选择器映射到红色活动文案。",
+          "rule_id": "skyline.class-selector",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-style-reference.md",
+            "section": "选择器支持"
+          },
+          "verification": "追踪实际活动节点 class 与颜色声明的匹配关系。",
+          "source_assertions": [
+            "e0_04"
+          ]
+        },
+        {
+          "id": "s0_03",
+          "text": "Skyline 通过 renderer 与屏宽状态选择容器 padding，宽度≤320px 为12rpx、>320px 为24rpx；Skyline 默认覆盖位于媒体查询之后，WebView 继续使用原媒体查询。",
+          "rule_id": "skyline.responsive-padding",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "@media screen 替换方案"
+          },
+          "verification": "分别代入 renderer 两值和320/321px，按选择器优先级与源码顺序计算最终 padding。",
+          "source_assertions": [
+            "e0_06",
+            "e0_07",
+            "e0_08"
+          ]
+        },
+        {
+          "id": "s0_04",
+          "text": "Skyline 内容与父容器上外沿的20px距离由父 padding 表达，子节点从父内容区起始位置布局。",
+          "rule_id": "skyline.parent-spacing",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "不要依赖 BFC 和 margin 合并"
+          },
+          "verification": "检查 .outer/.child 的盒模型，计算父外沿到首个子盒的20px距离。",
+          "source_assertions": [
+            "e5_00"
+          ]
+        },
+        {
+          "id": "s0_05",
+          "text": "Skyline 相邻块的垂直间距集中由一侧的16px margin承担，最终相邻盒间距为16px。",
+          "rule_id": "skyline.sibling-spacing",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "不要依赖 BFC 和 margin 合并"
+          },
+          "verification": "计算第一块下边界到第二块上边界的间距，核对两侧 margin 的实际贡献。",
+          "source_assertions": [
+            "e5_02"
+          ]
+        },
+        {
+          "id": "s0_06",
+          "text": "Skyline 将双阴影分配到同尺寸的嵌套节点或等效分层结构，呈现原有两层阴影的参数和前后关系。",
+          "rule_id": "skyline.layered-shadows",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-style-reference.md",
+            "section": "背景、边框与遮罩差异"
+          },
+          "verification": "追踪0 2px 4px #000与0 4px 8px #333分别作用的节点、尺寸和绘制层次。",
+          "source_assertions": [
+            "e5_04"
+          ]
+        },
+        {
+          "id": "s0_07",
+          "text": "Skyline 将复合滤镜分层为内层blur(2px)和外层brightness(.8)，组合呈现原有两种效果。",
+          "rule_id": "skyline.layered-filters",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-style-reference.md",
+            "section": "滤镜差异"
+          },
+          "verification": "检查滤镜节点嵌套与作用顺序，逐层核对单函数参数。",
+          "source_assertions": [
+            "e5_05"
+          ]
+        },
+        {
+          "id": "s0_08",
+          "text": "Skyline 字体处理识别 City-Semibold 的同名独立字体族，明确 Trip-Medium 的宿主字体与 PostScript 映射核验点，并记录500/600字重的机型验证要求。",
+          "rule_id": "skyline.font-resolution",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "字体 PostScript name 兼容"
+          },
+          "verification": "结合 @font-face 与报告核对两个字体来源；宿主二进制缺失时，记录待核验信息及保持现有视觉的集成方案。",
+          "source_assertions": [
+            "e5_06",
+            "e5_07"
+          ]
+        },
+        {
+          "id": "s0_09",
+          "text": "Skyline 单阴影节点以单个 box-shadow 呈现原有 0 2px 4px rgba(0,0,0,.2) 效果，颜色函数作为完整颜色值解析。",
+          "rule_id": "skyline.single-shadow",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-style-reference.md",
+            "section": "背景、边框与遮罩差异"
+          },
+          "verification": "核对 .single-shadow 的实际阴影层数为1，偏移、模糊半径和颜色透明度均与输入一致。",
+          "source_assertions": [
+            "e5_03"
+          ]
+        },
+        {
+          "id": "s0_10",
+          "text": "Skyline 单滤镜节点采用受支持的 blur(2px)，呈现原有独立模糊效果。",
+          "rule_id": "skyline.single-filter",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-style-reference.md",
+            "section": "滤镜差异"
+          },
+          "verification": "追踪 .single-filter 的实际滤镜节点和参数，确认独立内容仍具有2px模糊效果。",
+          "source_assertions": [
+            "e5_05"
+          ]
+        },
+        {
+          "id": "s0_11",
+          "text": "Skyline 在宿主 defaultContentBox=true 条件下，child 保持100px内容宽度及左右各10px padding，实际外宽为120px。",
+          "rule_id": "skyline.content-box-width",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-style-reference.md",
+            "section": "非标准默认值"
+          },
+          "verification": "结合宿主默认盒模型和实际节点 box-sizing、width、padding、border 计算内容宽与外宽，分别核对100px和120px。",
+          "source_assertions": [
+            "e5_01"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "page-scroll-config",
+      "title": "页面滚动与配置",
+      "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+      "files": [
+        "input/app.json",
+        "input/orders.mpx",
+        "input/service.js",
+        "input/task.md"
+      ],
+      "assertions": [
+        {
+          "id": "s1_00",
+          "text": "Skyline 页面主体使用具有明确可滚动高度的 scroll-view，显式选择type=list，订单项作为列表的直接子节点。",
+          "rule_id": "skyline.list-scroll",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "页面滚动替代方案"
+          },
+          "verification": "检查列表直接子节点与高度约束链；使用超出容器高度的订单数据核对滚动结构。",
+          "source_assertions": [
+            "e1_01",
+            "e2_08",
+            "e8_04"
+          ]
+        },
+        {
+          "id": "s1_01",
+          "text": "Skyline 通过 bindrefresherrefresh 启动刷新，refresher-triggered 关联刷新状态，并在请求成功和失败后结束容器刷新态。",
+          "rule_id": "skyline.container-refresh",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "页面滚动替代方案"
+          },
+          "verification": "触发容器刷新事件，分别模拟请求resolve/reject，检查触发态最终为false。",
+          "source_assertions": [
+            "e1_02",
+            "e1_05",
+            "e8_03"
+          ]
+        },
+        {
+          "id": "s1_02",
+          "text": "Skyline 通过 scroll-view 的 bindscrolltolower 连接原分页加载方法，容器触底后显示追加的订单。",
+          "rule_id": "skyline.container-bottom",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "页面滚动替代方案"
+          },
+          "verification": "从实际模板事件绑定调用分页方法，核对下一页结果进入同一滚动列表。",
+          "source_assertions": [
+            "e1_03",
+            "e8_03"
+          ]
+        },
+        {
+          "id": "s1_03",
+          "text": "Skyline 通过 scroll-view 的 bindscroll 读取 event.detail.scrollTop 并更新滚动位置展示。",
+          "rule_id": "skyline.container-scroll",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "页面滚动替代方案"
+          },
+          "verification": "向实际滚动处理器传入detail.scrollTop，核对展示状态对应更新。",
+          "source_assertions": [
+            "e1_04"
+          ]
+        },
+        {
+          "id": "s1_04",
+          "text": "Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。",
+          "rule_id": "skyline.page-renderer-navigation",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-configuration.md",
+            "section": "适配参考"
+          },
+          "verification": "解析页面JSON并检查真实导航节点和主体布局关系。",
+          "source_assertions": [
+            "e1_06",
+            "e1_07",
+            "e8_06",
+            "e8_07"
+          ]
+        },
+        {
+          "id": "s1_05",
+          "text": "Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。",
+          "rule_id": "skyline.lazy-components",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-configuration.md",
+            "section": "app.json 顶层配置"
+          },
+          "verification": "解析 app.json 并检查顶层属性值。",
+          "source_assertions": [
+            "e1_08",
+            "e8_08"
+          ]
+        },
+        {
+          "id": "s1_06",
+          "text": "Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。",
+          "rule_id": "skyline.renderer-baseline",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-configuration.md",
+            "section": "rendererOptions.skyline 配置项"
+          },
+          "verification": "逐项解析五个字段的层级、类型和值。",
+          "source_assertions": [
+            "e1_09",
+            "e8_08"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "template-runtime",
+      "title": "模板与运行时",
+      "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+      "files": [
+        "input/row.wxml",
+        "input/task.md",
+        "input/user-list.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "s2_00",
+          "text": "Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。",
+          "rule_id": "skyline.loop-data",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-runtime-practice.md",
+            "section": "[必须] 确保 wx:for 数据始终为 Array 或 Object"
+          },
+          "verification": "检查初始渲染数据及computed所有消费路径，分别模拟undefined/null/空数组/有效数组。",
+          "source_assertions": [
+            "e2_03",
+            "e2_04"
+          ]
+        },
+        {
+          "id": "s2_01",
+          "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，组件内通过 this.createSelectorQuery 定位同一容器。",
+          "rule_id": "skyline.scoped-selector",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-runtime-practice.md",
+            "section": "[推荐] 用 this.createSelectorQuery 替代 wx.createSelectorQuery"
+          },
+          "verification": "关联模板id、组件查询作用域和select字符串，核对查询目标一致。",
+          "source_assertions": [
+            "e2_05",
+            "e2_07"
+          ]
+        },
+        {
+          "id": "s2_02",
+          "text": "Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。",
+          "rule_id": "skyline.scroll-context",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-runtime-practice.md",
+            "section": "[必须] ScrollViewContext：开启 enhanced 属性"
+          },
+          "verification": "从查询目标追踪其enhanced属性及node().exec后的scrollTo({top:0})调用。",
+          "source_assertions": [
+            "e2_06"
+          ]
+        },
+        {
+          "id": "s2_03",
+          "text": "Skyline/glass-easel 循环中的外部片段采用 import 加具名 template 调用，并显式传递当前 item/index。",
+          "rule_id": "skyline.loop-template",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "[必须] wx:for 内嵌 &lt;include&gt; 时改为 &lt;template&gt;"
+          },
+          "verification": "检查导入路径、模板名称和循环数据参数，代入两行不同数据确认作用域。",
+          "source_assertions": [
+            "e2_09"
+          ]
+        },
+        {
+          "id": "s2_04",
+          "text": "Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。",
+          "rule_id": "skyline.navigator-children",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "navigator 嵌套限制"
+          },
+          "verification": "检查两个导航入口的实际子节点和/pages/detail目标；复杂外层事件方案核对绑定与跳转调用。",
+          "source_assertions": [
+            "e5_08",
+            "e5_09"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "inline-animation",
+      "title": "图文混排与动画",
+      "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+      "files": [
+        "input/logo.svg",
+        "input/promo-card.mpx",
+        "input/task.md"
+      ],
+      "assertions": [
+        {
+          "id": "s3_00",
+          "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+          "rule_id": "skyline.inline-flow",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "图文混排"
+          },
+          "verification": "检查微信输出实际 span 容器的省略属性、图片 display、renderer 分支及父级宽度和收缩约束；使用超长标题核对图标与文字共同截断的实现路径。普通 text 的省略属性不能替代此混排容器检查。",
+          "source_assertions": [
+            "e3_00",
+            "e3_01",
+            "e3_02",
+            "e3_03"
+          ]
+        },
+        {
+          "id": "s3_01",
+          "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+          "rule_id": "skyline.node-animation",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-style-reference.md",
+            "section": "动画与过渡差异"
+          },
+          "verification": "追踪真实圆点节点的关键帧、fill-mode与周期，确认尺寸颜色及opacity变化对应原效果。",
+          "source_assertions": [
+            "e3_04",
+            "e3_05"
+          ]
+        },
+        {
+          "id": "s3_02",
+          "text": "Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
+          "rule_id": "skyline.state-transition",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "animation API 不支持 → 使用 CSS transition"
+          },
+          "verification": "追踪按下/松开/取消绑定到Skyline状态及CSS，核对scale(.96)、opacity(.7)与恢复值。",
+          "source_assertions": [
+            "e3_06",
+            "e3_07",
+            "e3_08",
+            "e6_08"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "nested-sticky-layer",
+      "title": "嵌套滚动、吸顶与层级",
+      "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+      "files": [
+        "input/category-panel.mpx",
+        "input/task.md"
+      ],
+      "assertions": [
+        {
+          "id": "s4_00",
+          "text": "Skyline 外层纵向滚动采用type=nested，内层滚动显式选择list/custom，并通过associative-container=nested-scroll-view建立关联。",
+          "rule_id": "skyline.nested-association",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-component-reference.md",
+            "section": "Skyline 必填属性与结构约束"
+          },
+          "verification": "沿模板父子关系检查nested祖先、内层类型和关联值。",
+          "source_assertions": [
+            "e4_00",
+            "e4_01"
+          ]
+        },
+        {
+          "id": "s4_01",
+          "text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
+          "rule_id": "skyline.horizontal-list",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-component-reference.md",
+            "section": "Skyline 相对 WebView 的高频差异补充"
+          },
+          "verification": "检查横向容器的type、scroll-x、enable-flex、flex-direction及条目宽度/收缩；采用list时检查直接子节点，多项目排列后形成横向内容。",
+          "source_assertions": [
+            "e4_02",
+            "e7_06",
+            "e7_07"
+          ]
+        },
+        {
+          "id": "s4_02",
+          "text": "Skyline 分支使用sticky-section/sticky-header实现组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应的CSS sticky实现。",
+          "rule_id": "skyline.sticky-structure",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "sticky 吸顶替代方案"
+          },
+          "verification": "分别选择renderer分支，检查sticky节点关系、背景与WebView样式；真机吸顶另记验证状态。",
+          "source_assertions": [
+            "e4_03",
+            "e4_04",
+            "e4_05"
+          ]
+        },
+        {
+          "id": "s4_03",
+          "text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
+          "rule_id": "skyline.fixed-layer",
+          "scope": "skyline",
+          "source": {
+            "file": "references/skyline-layout-practice.md",
+            "section": "z-index 与层叠适配"
+          },
+          "verification": "追踪实际fixed兄弟或等效可比较层级，比较最终覆盖关系及z-index。",
+          "source_assertions": [
+            "e4_06",
+            "e4_07"
+          ]
+        }
+      ]
+    }
+  ]
+}
