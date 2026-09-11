@@ -260,11 +260,6 @@ class RNIntersectionObserver {
     if (this.intersectionCtx) delete this.intersectionCtx[this.id]
     remove(this.component._intersectionObservers, this)
     this.component = null
-    this.intersectionCtx = null
-    this.observerRefs = null
-    this.relativeRef = null
-    this.callback = noop
-    this.previousIntersectionRatio = []
   }
 }
 

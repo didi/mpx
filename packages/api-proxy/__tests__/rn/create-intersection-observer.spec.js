@@ -79,12 +79,13 @@ describe('RN IntersectionObserver lifecycle', () => {
     observer.disconnect()
   })
 
-  it('should cancel trailing measurements and release node and callback references', async () => {
+  it('should cancel trailing measurements and remove observer registrations', async () => {
     const measure = jest.fn(callback => callback(10, 10, 20, 20))
     const target = createNodeRef('item', measure)
     const component = { __selectRef: jest.fn(() => target) }
     const callback = jest.fn()
-    const observer = new RNIntersectionObserver(component, {}, {})
+    const intersectionCtx = {}
+    const observer = new RNIntersectionObserver(component, {}, intersectionCtx)
 
     observer.relativeToViewport().observe('.item', callback)
     await jest.advanceTimersByTimeAsync(0)
@@ -101,10 +102,8 @@ describe('RN IntersectionObserver lifecycle', () => {
     expect(callback).toHaveBeenCalledTimes(1)
     expect(component.__selectRef).toHaveBeenCalledTimes(1)
     expect(observer.component).toBeNull()
-    expect(observer.intersectionCtx).toBeNull()
-    expect(observer.observerRefs).toBeNull()
-    expect(observer.relativeRef).toBeNull()
-    expect(observer.callback).not.toBe(callback)
+    expect(component._intersectionObservers).toEqual([])
+    expect(intersectionCtx).toEqual({})
   })
 
   it('should warn without throwing or restarting observation when a disconnected observer is reused', async () => {
@@ -137,8 +136,6 @@ describe('RN IntersectionObserver lifecycle', () => {
     expect(measure).toHaveBeenCalledTimes(1)
     expect(callback).toHaveBeenCalledTimes(1)
     expect(reuseCallback).not.toHaveBeenCalled()
-    expect(observer.observerRefs).toBeNull()
-    expect(observer.relativeRef).toBeNull()
   })
 
   it('should ignore native measurement results arriving after disconnect', async () => {

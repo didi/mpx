@@ -1788,7 +1788,7 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `relativeTo(selectorOrNodesRef, margins?)` | 指定参照节点；支持 selector 字符串或 `NodesRef`。`margins` 支持 `top/right/bottom/left`。 |
 | `relativeToViewport(margins?)` | 以当前可视窗口为参照区域。 |
 | `observe(selectorOrNodesRef, callback)` | 开始观察；同一实例只能调用一次。支持 selector、`NodesRef` 或 `NodesRef[]`。 |
-| `disconnect()` | 停止观察，移除页面和组件中的注册引用，释放节点及回调引用，取消待执行的测量并忽略在途结果。可重复调用；断开后需新建实例才能重新观察。 |
+| `disconnect()` | 停止观察，移除页面和组件中的注册引用，断开实例对组件的直接引用，取消待执行的测量并忽略在途结果。可重复调用；断开后需新建实例才能重新观察。业务不再使用时也应释放对实例的引用，便于垃圾回收。 |
 
 对已断开的实例再次调用 `observe()`、`relativeTo()` 或 `relativeToViewport()`，RN 沿用 `warn + return`：通过 Mpx 的警告机制提示并忽略调用，不主动抛出异常。不要将此错误反馈方式视为与微信完全一致；微信在已观察实例上重新调用 `observe()` 或 `relativeTo()` 会抛出异常。
 
