@@ -768,7 +768,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | refresher-triggered | boolean | `false` | 设置当前下拉刷新状态,true 表示已触发 |
 | paging-enabled | boolean | `false` | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置 |
 | show-scrollbar | boolean | `true` | 滚动条显隐控制 (同时开启 enhanced 属性后生效) |
-| enable-trigger-intersection-observer | boolean | `false` | RN 环境特有属性，是否开启 intersection-observer |
+| enable-trigger-intersection-observer | boolean | `false` | RN 环境特有属性，是否在滚动时触发 IntersectionObserver 相交检测更新 |
 | simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | wait-for | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | scroll-event-throttle | number | `0` | RN 环境特有属性，控制 scroll 事件触发频率 |
@@ -790,6 +790,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 #### 注意事项
 
 - 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。
+- `enable-trigger-intersection-observer` 用于在 RN 环境中开启 `scroll-view` 滚动时的相交检测更新，默认关闭。使用 `createIntersectionObserver` 监听节点曝光或可见性变化时，需在会影响目标节点位置的 `scroll-view` 上设置 `enable-trigger-intersection-observer="{{true}}"`；滚动时会按观察器的节流配置重新测量相交区域，并在满足阈值条件时触发回调。
 - simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 - wait-for 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 - scroll-view 组件在滚动过程中，不会触发其自身或子组件的 touchend 事件响应，这是 RN 底层实现导致的问题，手势系统识别当前是 scroll-view 的滚动，就会取消掉 touchend 事件的响应。
