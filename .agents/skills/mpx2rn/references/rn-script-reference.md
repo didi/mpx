@@ -693,6 +693,7 @@ import Mpx from "@mpxjs/core"
 
 // 须在 createApp 与页面脚本执行前完成赋值
 Mpx.config.rnConfig = {
+  dimensionsBase: "window",
   parseAppProps(props) {
     return {
       initialRouteName: "pages/index",
@@ -721,6 +722,7 @@ Mpx.config.rnConfig = {
 | `onStateChange` | 导航 state 变化时回调。 |
 | `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
 | `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |
+| `dimensionsBase` | `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，可选 `"window"` 或 `"screen"`，默认为 `"window"`。 |
 | `openTypeHandler` | 对象，注册 `button` 组件在 RN 上 `open-type` 的容器侧实现，未注册对应键时点击会告警。 |
 | `openTypeHandler.onShareAppMessage` | 对应模板中 `open-type="share"`：框架会先取当前页 `onShareAppMessage` 的返回（含与默认 `title` / `path` 的合并及可选 `promise` 异步结果），再调用本回调，入参为 `{ title, path, imageUrl? }`，由宿主调起系统分享等能力。 |
 | `openTypeHandler.onUserInfo` | 对应模板中 `open-type="getUserInfo"`：由宿主实现获取用户信息的逻辑，结果需满足按钮侧对 `bindgetuserinfo` 的约定（以 `@mpxjs/webpack-plugin` 中 `mpx-button` 运行时为准）。 |
@@ -751,6 +753,9 @@ console.log(stack.length)
 // 宿主或测试场景下可手动触发应用前后台逻辑
 setAppShow()
 setAppHide()
+
+// 宿主容器尺寸变化后，手动通知响应式样式重新计算
+notifyDimensionsChange()
 ```
 
 | API | 说明 |
@@ -759,6 +764,8 @@ setAppHide()
 | `getCurrentPages()` | 返回当前导航栈中已映射的页面实例列表（顺序与路由 state 相关）。 |
 | `setAppShow()` | 手动触发应用「进入前台」逻辑，驱动已注册的 `onShow`。 |
 | `setAppHide()` | 手动触发应用「进入后台」逻辑，驱动已注册的 `onHide`。 |
+| `notifyDimensionsChange(dimensions?)` | 主动通知框架 Dimensions 发生变化，触发 `rpx`、`vw`、`vh`、媒体查询和 `onResize` 等能力重新计算。不传参数时通过 `Dimensions.get` 读取当前原始尺寸；两种调用方式都会重新执行 `customDimensions`，并按 `dimensionsBase` 指定的尺寸判断是否刷新。 |
+| `getStyleDimensions(dimensionsBase?)` | 返回经过 `customDimensions` 处理后的当前只读 `ScaledSize` 副本；可传入 `"window"` 或 `"screen"`，不传时使用配置中的 `dimensionsBase`，传参不修改配置；首次调用及更换 `customDimensions` 后会确保重新处理原始尺寸。 |
 
 #### 注意事项
 

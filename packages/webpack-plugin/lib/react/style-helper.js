@@ -180,9 +180,13 @@ function getClassMap ({ styles, filename, inputFileSystem, mode, srcMode, ctorTy
       if (classMapKeys.length) {
         classMapKeys.forEach((key) => {
           if (Object.keys(classMapValue).length) {
-            // set css defalut value
             const val = classMap[key] || {}
-            classMap[key] = Object.assign(val, classMapValue)
+            classMap[key] = val
+
+            // Media declarations only take effect when their query matches.
+            if (!isMedia) {
+              Object.assign(val, classMapValue)
+            }
 
             if (layer) {
               classMap[key]._layer = layer
