@@ -185,6 +185,8 @@ mpx.navigateTo({
 
 跨分包使用其他分包内的自定义组件时，需在 **`usingComponents`** 的路径上声明 **`?root=对方分包名`**，并在 **`componentPlaceholder`** 中指定**已在本包 `usingComponents` 注册**的同步占位组件或基础组件（如 view / text 等）；占位组件本身不能再标记为异步。构建侧需开启 **`mpx.config.rnConfig.supportSubpackage`**，并可配置 `asyncChunk.loading` / `fallback` 等。
 
+被多个异步分包共享的公共 JS 模块默认由构建抽取为独立的 `async-common` 分包并按需懒加载；若在 `mpx.config.js` 的 `pluginOptions.mpx.plugin.rnConfig` 中设置 **`asyncCommonSubpackage: false`**，则 RN 输出不再单独生成该分包，公共模块合并进 app 主入口 bundle，可省去一次 `async-common` 异步下载。
+
 概念与写法与官方 [分包异步化 - 跨分包自定义组件](https://mpxjs.cn/guide/advance/async-subpackage.html) 一致；**微信、支付宝、Web、RN** 等环境下框架对该能力有支持（非支持端会自动降级）。
 
 **示例：**
