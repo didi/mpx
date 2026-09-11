@@ -1,3 +1,4 @@
+import { NativeSyntheticEvent } from 'react-native'
 import { useRef, useMemo } from 'react'
 import { collectDataset } from '@mpxjs/utils'
 import { extendObject, useNavigation } from './utils'
@@ -19,6 +20,18 @@ import {
 const globalEventState: GlobalEventState = {
   needPress: true,
   identifier: null
+}
+
+type LabelControlEvent = NativeSyntheticEvent<TouchEvent & {
+  _labelControlHandled?: boolean
+}>
+
+export const markLabelControlHandled = (evt: LabelControlEvent) => {
+  evt.nativeEvent._labelControlHandled = true
+}
+
+export const isLabelControlHandled = (evt: LabelControlEvent) => {
+  return !!evt.nativeEvent._labelControlHandled
 }
 
 const baseRemovePropsMap: Record<string, boolean> = {
