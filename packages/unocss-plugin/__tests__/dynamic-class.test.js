@@ -1,0 +1,108 @@
+import { jest } from '@jest/globals'
+import compiler from '@mpxjs/webpack-plugin/lib/template-compiler/compiler.js'
+import { createGenerator } from '@unocss/core'
+import MpxUnocssPlugin from '../lib/index.js'
+import { parseClassExpression } from '../lib/parser.js'
+import { getRawSource } from '../lib/source.js'
+
+describe('dynamic class object keys', () => {
+  const plugin = new MpxUnocssPlugin({ config: {} })
+
+  async function transformTemplate (content, errors, rules = []) {
+    const uno = await createGenerator({ rules })
+    const parseTemplate = plugin.getTemplateParser(uno)
+    const classes = []
+    const { newsource } = await parseTemplate(getRawSource(content), (className) => {
+      if (className) classes.push(className)
+      return className
+    }, error => errors.push(error))
+    return {
+      output: newsource.source(),
+      classes
+    }
+  }
+
+  test('parses strings and nested non-computed object keys by syntax', () => {
+    const result = parseClassExpression("({ \"foo'bar\": flag, [dynamic]: 'computed', nested: { 'hover:bg-red-100': flag }, active: flag ? 'text-red-500' : \"text-gray-500\" })")
+
+    expect(result.objectKeys.map(key => key.result)).toEqual(["foo'bar", 'nested', 'hover:bg-red-100', 'active'])
+    expect(result.strings.map(string => string.result)).toEqual(['computed', 'text-red-500', 'text-gray-500'])
+  })
+
+  test('uses the same escaping for static and dynamic class names', async () => {
+    const templateErrors = []
+    const pluginErrors = []
+    const parsed = compiler.parse('<view class="text-24rpx hover:bg-blue-100" wx:class="{{ { \'hover:bg-red-100\': flag } }}" />', {
+      mode: 'wx',
+      srcMode: 'wx',
+      defs: {},
+      usingComponentsInfo: {},
+      externalClasses: [],
+      isUnoCSSScanFile: true,
+      warn: jest.fn(),
+      error: error => templateErrors.push(error)
+    })
+    const compiledTemplate = compiler.serialize(parsed.root)
+    const { output, classes } = await transformTemplate(compiledTemplate, pluginErrors)
+
+    expect(templateErrors).toEqual([])
+    expect(pluginErrors).toEqual([])
+    expect(plugin.options).not.toHaveProperty('escapeMap')
+    expect(compiledTemplate).toContain('"hover:bg-red-100": flag')
+    expect(classes).toEqual(expect.arrayContaining(['text-24rpx', 'hover:bg-blue-100', 'hover:bg-red-100']))
+    expect(output).toContain('"text-24rpx hover_c_bg-blue-100"')
+    expect(output).toMatch(/hover_c_bg_da_red_da_100MpxEscape:\s*flag/)
+  })
+
+  test('matches template resource paths against scan rules', () => {
+    const scanPlugin = new MpxUnocssPlugin({
+      root: '/project',
+      config: {},
+      scan: {
+        include: ['src/**/*'],
+        exclude: ['src/excluded/**/*']
+      }
+    })
+
+    expect(scanPlugin.isUnoCSSScanFile('/project/src/pages/index.mpx')).toBe(true)
+    expect(scanPlugin.isUnoCSSScanFile('/project/src/excluded/index.mpx')).toBe(false)
+    expect(scanPlugin.isUnoCSSScanFile('/project/packages/component.mpx')).toBe(false)
+  })
+
+  test('allows configured classes containing special characters', async () => {
+    const errors = []
+    const { output } = await transformTemplate(
+      '<view class="custom@blue" wx:class="{{ { \'custom@red\': flag } }}" />',
+      errors,
+      [
+        [/^custom@(red|blue)$/, () => ({ color: 'red' })]
+      ]
+    )
+
+    expect(output).toContain('class="custom_u_blue"')
+    expect(output).toMatch(/custom_u_red:\s*flag/)
+    expect(errors).toEqual([])
+  })
+
+  test('reports unhandled static class names containing unsupported characters', async () => {
+    const errors = []
+    const { output } = await transformTemplate('<view class="qwe@da *asd" />', errors)
+
+    expect(output).toContain('class="qwe_u_da _u_asd"')
+    expect(errors).toEqual([
+      'Classname [qwe@da] contains unsupported character [@].',
+      'Classname [*asd] contains unsupported character [*].'
+    ])
+  })
+
+  test('reports class object keys that can not become valid identifiers', async () => {
+    const errors = []
+    const { output } = await transformTemplate('<view wx:class="{{ { \'custom😀red\': flag, 12: flag } }}" />', errors)
+
+    expect(output).toContain("'custom😀red': flag")
+    expect(errors).toEqual([
+      'Dynamic classname [custom😀red] can not be escaped as a valid identifier, which is not supported.',
+      'Dynamic classname [12] can not be escaped as a valid identifier, which is not supported.'
+    ])
+  })
+})
