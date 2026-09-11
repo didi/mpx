@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "id": "s1_00",
+      "text": "Skyline 页面主体使用具有明确可滚动高度的 scroll-view，显式选择type=list，订单项作为列表的直接子节点。",
+      "passed": false,
+      "evidence": "orders.mpx: Skyline条件分支虽然type=list且有flex高度约束，但订单循环整体包在单个view.page内，订单项不是列表直接子节点。"
+    },
+    {
+      "id": "s1_01",
+      "text": "Skyline 通过 bindrefresherrefresh 启动刷新，refresher-triggered 关联刷新状态，并在请求成功和失败后结束容器刷新态。",
+      "passed": true,
+      "evidence": "orders.mpx: Skyline env分支refresherrefresh与refreshing绑定完整，reload成功/失败finally及loading早退恢复刷新态；report明确需要env=skyline构建。"
+    },
+    {
+      "id": "s1_02",
+      "text": "Skyline 通过 scroll-view 的 bindscrolltolower 连接原分页加载方法，容器触底后显示追加的订单。",
+      "passed": true,
+      "evidence": "orders.mpx: Skyline分支bindscrolltolower=loadMore，fetchOrders下一页后concat追加并推进pageNo。"
+    },
+    {
+      "id": "s1_03",
+      "text": "Skyline 通过 scroll-view 的 bindscroll 读取 event.detail.scrollTop 并更新滚动位置展示。",
+      "passed": true,
+      "evidence": "orders.mpx: Skyline分支bindscroll=onScroll，读取e.detail.scrollTop供模板展示。"
+    },
+    {
+      "id": "s1_04",
+      "text": "Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。",
+      "passed": true,
+      "evidence": "orders.mpx: env=skyline分支页面JSON包含四项必需配置，模板有实际订单导航；report明确条件构建方式。"
+    },
+    {
+      "id": "s1_05",
+      "text": "Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。",
+      "passed": true,
+      "evidence": "app.json: 顶层lazyCodeLoading=requiredComponents。"
+    },
+    {
+      "id": "s1_06",
+      "text": "Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。",
+      "passed": false,
+      "evidence": "app.json: skyline仅defaultDisplayBlock/defaultContentBox/disableABTest；缺少tagNameStyleIsolation、enableScrollViewAutoSize和keyframeStyleIsolation三项。"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.7142857142857143
+  },
+  "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately",
+  "limitations": [
+    "No application build or device rendering validation",
+    "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"
+  ]
+}

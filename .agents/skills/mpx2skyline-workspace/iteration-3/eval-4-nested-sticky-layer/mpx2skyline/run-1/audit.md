@@ -1,0 +1,51 @@
+# Full matrix review
+
+Scope: outputs/category-panel.mpx. Source scan and full SFC structural review; not a device validation.
+
+- CONFIG_APP_SKYLINE_OPTIONS: N/A: component scope, host already configured per task.
+- CONFIG_PAGE_SKYLINE: N/A: component scope.
+- CONFIG_WORKLET_BABEL: N/A: no Worklet.
+- GLASS_INCLUDE_IN_FOR: Reviewed: no include in any loop.
+- GLASS_TEMPLATE_ESCAPE: No applicable feature / incompatible candidate after full source review.
+- COMP_UNSUPPORTED: No applicable feature / incompatible candidate after full source review.
+- COMP_PENDING_SUPPORT: No applicable feature / incompatible candidate after full source review.
+- COMP_WEBVIEW_ONLY_ATTR: No applicable feature / incompatible candidate after full source review.
+- COMP_IMAGE_SVG: No applicable feature / incompatible candidate after full source review.
+- COMP_SCROLL_TYPE: Reviewed: every scroll-view declares type.
+- COMP_SCROLL_LIST_DIRECT_CHILD: Reviewed: horizontal list tiles are direct children.
+- COMP_SCROLL_NESTED: Reviewed: Skyline nested outer with custom vertical child and list horizontal children, all children associated; runtime gesture handoff not_run.
+- COMP_SCROLL_HORIZONTAL: Reviewed: enable-flex, row, 80px height, tiles 120px with flex-shrink:0.
+- COMP_SCROLL_REFRESHER_SLOT: No applicable feature / incompatible candidate after full source review.
+- COMP_NAVIGATOR_CHILDREN: No applicable feature / incompatible candidate after full source review.
+- COMP_TEXT_CHILDREN: No applicable feature / incompatible candidate after full source review.
+- COMP_INLINE_MIXED_CONTENT: No applicable feature / incompatible candidate after full source review.
+- COMP_STICKY_STRUCTURE: Reviewed: renderer isolated; first child sticky-header with explicit background; custom parent. Runtime sticky not_run.
+- COMP_PICKER_VIEW_INDICATOR: No applicable feature / incompatible candidate after full source review.
+- COMP_SWIPER_LIMIT: No applicable feature / incompatible candidate after full source review.
+- STYLE_MEDIA_SCREEN: No applicable feature / incompatible candidate after full source review.
+- STYLE_SELECTOR_UNSUPPORTED: No applicable feature / incompatible candidate after full source review.
+- STYLE_TEXT_OVERFLOW: No applicable feature / incompatible candidate after full source review.
+- STYLE_FLEX_MIN_WIDTH_PERCENT: No applicable feature / incompatible candidate after full source review.
+- STYLE_FLEX_TEXT_WRAP: Reviewed: tile width explicitly 120px.
+- STYLE_OVERFLOW_AXIS: No applicable feature / incompatible candidate after full source review.
+- STYLE_LAYOUT_UNSUPPORTED: No applicable feature / incompatible candidate after full source review.
+- STYLE_TEXT_UNSUPPORTED: No applicable feature / incompatible candidate after full source review.
+- STYLE_FONT_POSTSCRIPT_NAME: No applicable feature / incompatible candidate after full source review.
+- STYLE_FONT: No applicable feature / incompatible candidate after full source review.
+- STYLE_TEXT_DECORATION: No applicable feature / incompatible candidate after full source review.
+- STYLE_BORDER_RADIUS_BORDER: No applicable feature / incompatible candidate after full source review.
+- STYLE_BACKGROUND_MASK_LIMIT: No applicable feature / incompatible candidate after full source review.
+- STYLE_FILTER_LIMIT: No applicable feature / incompatible candidate after full source review.
+- STYLE_BOX_SHADOW_MULTI: No applicable feature / incompatible candidate after full source review.
+- STYLE_CALC_ANGLE: No applicable feature / incompatible candidate after full source review.
+- STYLE_PSEUDO_ANIMATION: No applicable feature / incompatible candidate after full source review.
+- STYLE_ANIMATION_FILL_MODE: No applicable feature / incompatible candidate after full source review.
+- STYLE_ANIMATION_PROPERTY: No applicable feature / incompatible candidate after full source review.
+- STYLE_Z_INDEX_CONTEXT: Reviewed: modal/fab sibling fixed nodes z-index 3/2, outside scrolling; runtime layering not_run.
+- GLASS_SELECTOR_NUMERIC_ID: No applicable feature / incompatible candidate after full source review.
+- ANIMATION_WEBVIEW_API: No applicable feature / incompatible candidate after full source review.
+- SCROLL_CONTEXT_ENHANCED: N/A: no node() or ScrollViewContext use.
+- SELECTOR_QUERY_SCOPE: No applicable feature / incompatible candidate after full source review.
+- PROPS_DEFAULT_FIELD: Reviewed: properties uses value.
+- WX_FOR_DATA_TYPE: Reviewed: sections Array default []; items Array according to input contract.
+- PROPS_UNION_TYPE: Reviewed: Array constructor and [] default match supplied contract.

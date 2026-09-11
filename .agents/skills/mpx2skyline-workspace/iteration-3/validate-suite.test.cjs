@@ -47,8 +47,17 @@ test('all 90 legacy assertions are accounted for without attaching old scores', 
   expect(new Set(migration.items.map(item => item.old_id)).size).toBe(90)
   const ids = new Set(assertions.map(item => item.id))
   migration.items.forEach(item => item.new_ids.forEach(id => expect(ids.has(id)).toBe(true)))
-  expect(manifest.status).toBe('cases-ready-not-run')
-  expect(fs.existsSync(path.join(root, 'benchmark.json'))).toBe(false)
+  expect(['cases-ready-not-run', 'completed']).toContain(manifest.status)
+  if (manifest.status === 'completed') {
+    const benchmark = JSON.parse(fs.readFileSync(path.join(root, 'benchmark.json'), 'utf8'))
+    expect(benchmark.metadata.suite_version).toBe(3)
+    expect(benchmark.runs).toHaveLength(10)
+    benchmark.runs.forEach(run => {
+      const expected = manifest.evals.find(item => item.id === run.eval_id).assertions
+      expect(run.expectations.map(item => item.id)).toEqual(expected.map(item => item.id))
+      expect(run.result.total).toBe(expected.length)
+    })
+  }
   const runtime = fs.readFileSync(path.join(root, 'eval-2-template-runtime/input/user-list.mpx'), 'utf8')
   expect(runtime).toContain('optionalTypes:[Object]')
   expect(runtime).toContain('<navigator url="/pages/detail"><view>')

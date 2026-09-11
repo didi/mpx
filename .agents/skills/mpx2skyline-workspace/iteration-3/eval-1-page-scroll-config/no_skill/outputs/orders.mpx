@@ -1,0 +1,129 @@
+<template>
+  <view class="page">
+    <view wx:for="{{orders}}" wx:key="id" class="item"><text>{{item.name}}</text></view>
+    <text>{{scrollTop}}</text>
+    <text wx:if="{{errorMessage}}">{{errorMessage}}</text>
+  </view>
+</template>
+
+<template mode="wx" env="skyline">
+  <view class="skyline-page">
+    <view class="navigation" style="padding-top: {{statusBarHeight}}px; height: {{navigationHeight}}px;">
+      <text>订单</text>
+    </view>
+    <scroll-view class="orders-scroll" type="list" scroll-y enhanced
+      refresher-enabled refresher-triggered="{{refreshing}}"
+      bindrefresherrefresh="onRefresh" bindscrolltolower="loadMore" bindscroll="onScroll">
+      <view class="page">
+        <view wx:for="{{orders}}" wx:key="id" class="item"><text>{{item.name}}</text></view>
+        <text>滚动位置：{{scrollTop}}</text>
+        <text wx:if="{{errorMessage}}">{{errorMessage}}</text>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { fetchOrders } from './service'
+
+const isSkyline = __mpx_mode__ === 'wx' && __mpx_env__ === 'skyline'
+
+createPage({
+  data: {
+    orders: [],
+    scrollTop: 0,
+    pageNo: 1,
+    refreshing: false,
+    loading: false,
+    errorMessage: '',
+    statusBarHeight: 0,
+    navigationHeight: 44
+  },
+  onLoad () {
+    if (isSkyline) {
+      const { statusBarHeight } = wx.getWindowInfo()
+      const menu = wx.getMenuButtonBoundingClientRect()
+      this.statusBarHeight = statusBarHeight
+      this.navigationHeight = (menu.top - statusBarHeight) * 2 + menu.height
+    }
+    return this.reload()
+  },
+  onPullDownRefresh () {
+    return this.reload()
+  },
+  onReachBottom () {
+    return this.loadMore()
+  },
+  onPageScroll (e) {
+    this.scrollTop = e.scrollTop
+  },
+  methods: {
+    onRefresh () {
+      this.refreshing = true
+      return this.reload()
+    },
+    onScroll (e) {
+      this.scrollTop = e.detail.scrollTop
+    },
+    reload () {
+      if (this.loading) {
+        this.refreshing = false
+        if (!isSkyline) wx.stopPullDownRefresh()
+        return Promise.resolve()
+      }
+      this.loading = true
+      this.errorMessage = ''
+      return fetchOrders(1).then(rows => {
+        this.orders = rows
+        this.pageNo = 1
+      }).catch(() => {
+        this.errorMessage = '订单加载失败，请下拉重试'
+      }).finally(() => {
+        this.loading = false
+        this.refreshing = false
+        if (!isSkyline) wx.stopPullDownRefresh()
+      })
+    },
+    loadMore () {
+      if (this.loading) return Promise.resolve()
+      this.loading = true
+      this.errorMessage = ''
+      return fetchOrders(this.pageNo + 1).then(rows => {
+        this.orders = this.orders.concat(rows)
+        this.pageNo += 1
+      }).catch(() => {
+        this.errorMessage = '加载更多失败，请重试'
+      }).finally(() => {
+        this.loading = false
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.page { padding: 16px; }
+.item { height: 80px; border-bottom: 1px solid #ddd; }
+</style>
+<style mode="wx" env="skyline">
+page { height: 100%; }
+.skyline-page { height: 100%; display: flex; flex-direction: column; }
+.navigation { flex-shrink: 0; display: flex; align-items: center; justify-content: center; box-sizing: content-box; }
+.orders-scroll { flex: 1; height: 0; min-height: 0; }
+</style>
+
+<script type="application/json">
+{"enablePullDownRefresh":true,"navigationBarTitleText":"订单"}
+</script>
+<script type="application/json" mode="wx" env="skyline">
+{
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "订单",
+  "disableScroll": true,
+  "enablePullDownRefresh": false,
+  "usingComponents": {}
+}
+</script>

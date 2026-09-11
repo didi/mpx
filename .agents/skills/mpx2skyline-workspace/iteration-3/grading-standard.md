@@ -1,6 +1,6 @@
 # Skyline 专项评分标准 v3
 
-当前测试集包含5个case、31条断言，状态为待执行。evals.json是断言的唯一事实源，各case的eval_metadata.json仅为副本。
+当前测试集包含5个case、31条断言，已完成Skill/no_skill各一轮。evals.json是断言的唯一事实源，各case的eval_metadata.json仅为副本。
 
 ## 计分范围
 
@@ -24,4 +24,4 @@
 
 ## 历史基线
 
-iteration-2的9个case/90条断言保留原样，属于旧测试集。v3输入和评分粒度已改变，旧90/90既不折算成31/31，也不复制到新case。要评价合并效果，先在本集重新运行独立mpx2skyline，再运行合并Skill。本次仅定义测试集，尚无v3产物或通过率。
+iteration-2的9个case/90条断言保留原样，属于旧测试集。v3输入和评分粒度已改变，旧90/90既不折算成31/31，也不复制到新case。要评价合并效果，先在本集重新运行独立mpx2skyline，再运行合并Skill。本次已执行v3的Skill/no_skill对照，结果见benchmark.md；合并Skill尚未执行。

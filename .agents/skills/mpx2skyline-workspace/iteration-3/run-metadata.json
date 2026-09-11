@@ -1,8 +1,88 @@
 {
-  "status": "not_run",
-  "suite_version": 3,
-  "cases": 5,
-  "assertions": 31,
-  "historical_baseline": "../iteration-2",
-  "baseline_reuse": "旧90/90属于不同输入/断言；新集需要重新建立独立Skill基线后比较合并Skill。"
+  "status": "completed",
+  "suite_root": "/Users/hjw/project/mpx/.agents/skills/mpx2skyline-workspace/iteration-3",
+  "skill_path": "/Users/hjw/project/mpx/.agents/skills/mpx2skyline",
+  "skill_hashes": {
+    "SKILL.md": "827658bffcf03a01663c8fe27d2c36c3c0f48deeeb7126092229f1d370cba1c3",
+    "references/skyline-configuration.md": "6466e0738dc49484edf038daed14fe1a7f9e66b1273be753a3413f017c10d0be",
+    "references/skyline-style-reference.md": "fc2332478163d1c0c0e32d45850e58e07107f52073c696b141f91d8e854907b8",
+    "references/skyline-layout-practice.md": "fe6e3d5fd4a3b8192596bf1eb9c3c99b5bdae8b33f597afa21b5cdff1e774671",
+    "references/skyline-component-reference.md": "6d888d24a4053753ba8c510156f776a7b44af6c2f13a5b970b2c78f4d962999f",
+    "references/skyline-runtime-practice.md": "1c46d115d26962e96d801e041ec370a44b124eac353f11110f3945f003adc4df",
+    "references/skyline-audit-matrix.md": "47429a4348cad01f81b7992580685b32ac3495c70a7b2b756556c3881f484ce8"
+  },
+  "input_hashes": {
+    "eval-4-nested-sticky-layer/input/category-panel.mpx": "33b25dedadd835936006b727386f6c1de7dcb93682393272cabe74919745cac4",
+    "eval-4-nested-sticky-layer/input/task.md": "4f067fec8f25e5b21ba32f23af9fd1ef62bbf47d6972e6e4db560b2ad5be0813",
+    "eval-1-page-scroll-config/input/orders.mpx": "351c7bbb2859ab16b134901f755f2020533451dba042d26afc746affd3b6f5be",
+    "eval-1-page-scroll-config/input/app.json": "08b6c0c8a67d9602540f6eba281fd3649e75b8aee175ce2640a7dd3a714cf1ac",
+    "eval-1-page-scroll-config/input/service.js": "ad8903f25741fc70ba469c96bfeb74e6eb8e619415575c9ca50c6117ed464808",
+    "eval-1-page-scroll-config/input/task.md": "149e1e8678c345bda7f0dfe237eac680ab68895d55522612dd06add7f766314e",
+    "eval-0-style-layout/input/style-card.mpx": "02971adbcf26eea73fdb3b249f04307a3cd9dc86e35d0db4a3890fc700c50370",
+    "eval-0-style-layout/input/task.md": "55eb0e760d1d4b151c7a3b5e2f41f7e3d6595fa997f3db1e3dda22cbc63e4345",
+    "eval-3-inline-animation/input/promo-card.mpx": "7c9fc96d15da6ed9b358e209afaf372e7af2c20e77fb0a1706981ab072bbac2c",
+    "eval-3-inline-animation/input/task.md": "595c42535a2935347ebec5b877984380a72e3b198c00b29c099f61adb24999e3",
+    "eval-3-inline-animation/input/logo.svg": "c71a85400c9d1bc64393103364611c9370076caec60d65bc20fdcfdd97f6d29d",
+    "eval-2-template-runtime/input/row.wxml": "80f43cf55dbaf032920128f167d8b324b588e4dc01cbaa66e5f4063c394c876d",
+    "eval-2-template-runtime/input/user-list.mpx": "76215176e149f4184f71f32c0c8791f2b56461944cbe370d6c5d1585dfb2812c",
+    "eval-2-template-runtime/input/task.md": "5f38be5bc2e2b93bd3825b019afb8ae798217c14c37e69f436d8e3da8c016b02"
+  },
+  "groups": [
+    "mpx2skyline",
+    "no_skill"
+  ],
+  "runs_per_case": 1,
+  "model": "inherited_parent",
+  "reasoning_effort": "inherited_parent",
+  "fork_turns": "none",
+  "concurrency": 3,
+  "definitions_sha256": {
+    "evals.json": "af2c61ccd85e7ce46df5a1226c19417b68aaf1f2c655f972075899dc1f676bbf",
+    "grading-standard.md": "6e9588b05c480ccb38c9ec89839141f4f56b4cb3898aeae342909be2d5e5122d",
+    "prompt_templates.json": "fda8b1ff360c2a2d004519e4ee8acc37b1e47d03d4a7ca06198254e9b4fd25f0"
+  },
+  "recorded_at": "2026-09-11T07:07:53.518653+00:00",
+  "execution_layout": "temporary execution outputs, then verified archive to iteration-3; shared canonical input and Skill paths",
+  "comparison": "mpx2skyline vs no_skill; merged_skill not executed",
+  "completed_at": "2026-09-11T07:28:25.365683+00:00",
+  "skill_version": "1.0.1",
+  "hashes_unchanged": true,
+  "totals": {
+    "mpx2skyline": {
+      "passed": 30,
+      "total": 31,
+      "pass_rate": 0.967741935483871,
+      "complete_cases": 4
+    },
+    "no_skill": {
+      "passed": 17,
+      "total": 31,
+      "pass_rate": 0.5483870967741935,
+      "complete_cases": 0
+    }
+  },
+  "limitations": [
+    "每个case每组仅一次执行，不能估计重复运行方差。",
+    "s0_04存在输入“内容距外沿”与断言“首个子盒距外沿”的观察点歧义；保持原断言评分，不将该失败直接归因为Skill能力缺失。",
+    "语法与隔离行为验证通过不代表宿主完整构建或真机渲染通过；这两项not_run。",
+    "Token和精确执行耗时不可用；不进行消耗对比。",
+    "本轮比较独立Skill与no_skill，未执行合并Skill，不代表已证明合并不劣化。"
+  ],
+  "current_input_revision": {
+    "status": "case-0-rerun-required",
+    "case_ids": [
+      0
+    ],
+    "groups": [
+      "mpx2skyline",
+      "no_skill"
+    ],
+    "file": "eval-0-style-layout/input/task.md",
+    "previous_sha256": "55eb0e760d1d4b151c7a3b5e2f41f7e3d6595fa997f3db1e3dda22cbc63e4345",
+    "current_sha256": "2968850937a23cf61f92eebee630058e0dcfa8f6acf64be67a113b6e421cc60b",
+    "old_fragment": "内容距outer上外沿20px，child含padding外宽120px，两块垂直间距16px；",
+    "new_fragment": "child盒子的顶部距outer上外沿20px，这段距离由outer的padding-top实现；child保持四周10px padding，因此其内容顶部距outer上外沿30px。child内容宽100px、含padding外宽120px，两块垂直间距16px；",
+    "note": "case 0 输入已明确为子盒顶部距outer外沿20px、内部内容顶部距外沿30px；当前两组case 0结果仍来自修改前输入，待同时重跑。历史评分保持不变。"
+  },
+  "hashes_unchanged_scope": "仅表示原执行开始至归档时哈希未变化；后续输入修订见current_input_revision。"
 }

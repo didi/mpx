@@ -2,8 +2,8 @@
   "skill_name": "mpx2skyline",
   "suite_version": 3,
   "iteration": 3,
-  "status": "cases-ready-not-run",
-  "description": "5个Skyline专项场景，31条正向适配断言；旧9-case基线冻结在iteration-2。",
+  "status": "completed",
+  "description": "5个Skyline专项场景，31条正向适配断言；已完成mpx2skyline与no_skill各一轮。合并Skill尚未执行。",
   "scoring_scope": "仅评价微信Skyline/glass-easel实际生效实现，WebView仅用于对应兼容要求；RN分支按自身规则实现。",
   "comparison": {
     "purpose": "独立Skill与合并Skill在同一新版测试集上的不劣化比较",
@@ -11,6 +11,11 @@
       {
         "id": "mpx2skyline",
         "skill": ".agents/skills/mpx2skyline/SKILL.md"
+      },
+      {
+        "id": "no_skill",
+        "skill": null,
+        "status": "completed"
       },
       {
         "id": "merged_skill",

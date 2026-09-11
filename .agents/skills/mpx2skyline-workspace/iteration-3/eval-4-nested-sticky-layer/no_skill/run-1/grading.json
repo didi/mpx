@@ -1,0 +1,39 @@
+{
+  "expectations": [
+    {
+      "id": "s4_00",
+      "text": "Skyline 外层纵向滚动采用type=nested，内层滚动显式选择list/custom，并通过associative-container=nested-scroll-view建立关联。",
+      "passed": false,
+      "evidence": "category-panel.mpx: Skyline外层type=list而非nested，内层横向容器也缺少associative-container=nested-scroll-view。"
+    },
+    {
+      "id": "s4_01",
+      "text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
+      "passed": false,
+      "evidence": "category-panel.mpx: strip虽有type=list、横向flex及120px不收缩直接子项，但缺少enable-flex。"
+    },
+    {
+      "id": "s4_02",
+      "text": "Skyline 分支使用sticky-section/sticky-header实现组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应的CSS sticky实现。",
+      "passed": false,
+      "evidence": "category-panel.mpx: 存在sticky-section/首子sticky-header及WebView CSS分支，但Skyline sticky结构置于type=list容器；来源规则要求custom承载，无法据此证明有效吸顶实现。"
+    },
+    {
+      "id": "s4_03",
+      "text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
+      "passed": true,
+      "evidence": "category-panel.mpx: modal与fab为根级fixed兄弟，modal z-index3高于fab2，弹层覆盖关系明确。"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "pass_rate": 0.25
+  },
+  "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately",
+  "limitations": [
+    "No application build or device rendering validation",
+    "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"
+  ]
+}

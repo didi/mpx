@@ -1,6 +1,6 @@
 # Skyline 适配测试集设计 v3
 
-当前有效测试定义为 [iteration-3/evals.json](iteration-3/evals.json)，**5个case、31条正向适配断言，尚未执行**。旧 [统一基线](iteration-2/benchmark.md) 保持原样，不能作为新集得分。
+当前有效测试定义为 [iteration-3/evals.json](iteration-3/evals.json)，**5个case、31条正向适配断言，已完成Skill/no_skill各一轮**。旧版结果不参与新集计分。
 
 ## 设计原则
 
@@ -96,4 +96,8 @@
 
 ## 后续比较
 
-先以当前独立mpx2skyline在v3重新建立基线，再用同样输入、断言、模型参数和验证方式测试合并Skill。仅替换Skill路径，记录逐条通过转失败、编译与行为问题以及Token/耗时。此次没有执行模型任务，新集没有通过率。
+先以当前独立mpx2skyline在v3重新建立基线，再用同样输入、断言、模型参数和验证方式测试合并Skill。仅替换Skill路径，记录逐条通过转失败、编译与行为问题以及Token/耗时。本次Skill/no_skill单轮结果见[基线报告](iteration-3/benchmark.md)。合并Skill尚未执行。
+
+## 本轮发现
+
+s0_04的输入“内容距outer上外沿20px”与verification“首个子盒距外沿20px”存在观察点歧义。原执行中Skill按内容起点实现，因此该项按既定断言记失败，单独标记用例歧义。case 0 输入已明确为子盒顶部距outer外沿20px、内部内容顶部距外沿30px；当前两组case 0结果仍来自修改前输入，待同时重跑。历史评分保持不变。 s0_04及Skill保持不变。
