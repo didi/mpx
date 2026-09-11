@@ -36,11 +36,11 @@ export function applyDimensionsInfo (dimensions) {
   global.__mpxAppDimensionsInfo.screen = dimensions.screen
 }
 
-export function getStyleDimensions () {
+export function getStyleDimensions (dimensionsBase = getDimensionsBase()) {
   if (!dimensionsInfoInitialized || appliedCustomDimensions !== Mpx.config.rnConfig?.customDimensions) {
     applyDimensionsInfo(rawDimensionsInfo)
   }
-  return global.__mpxAppDimensionsInfo[getDimensionsBase()]
+  return global.__mpxAppDimensionsInfo[dimensionsBase]
 }
 
 export function getSystemInfo () {

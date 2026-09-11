@@ -67,7 +67,7 @@ function onDimensionsChange (dimensions) {
 }
 
 global.notifyDimensionsChange = onDimensionsChange
-global.getStyleDimensions = () => Object.assign({}, getStyleDimensions())
+global.getStyleDimensions = dimensionsBase => Object.assign({}, getStyleDimensions(dimensionsBase))
 
 Dimensions.addEventListener('change', onDimensionsChange)
 

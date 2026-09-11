@@ -3,7 +3,7 @@ import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { getFocusedNavigation } from '../../../common/js'
 
 const getWindowInfo = function () {
-  const dimensionsScreen = Dimensions.get('screen')
+  const dimensionsScreen = global.getStyleDimensions?.('screen') || Dimensions.get('screen')
   const navigation = getFocusedNavigation() || {}
   const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
   const navigationInsets = navigation.insets || {}

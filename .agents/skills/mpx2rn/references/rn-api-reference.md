@@ -263,6 +263,8 @@ mpx.use(apiProxy, {
 
 同步获取窗口、屏幕与安全区信息，常用于布局与刘海区域避让。
 
+可通过 `Mpx.config.rnConfig.customDimensions` 自定义尺寸，`getWindowInfo`、`getSystemInfo` 和 `getSystemInfoSync` 会基于处理后的尺寸计算相关字段。
+
 #### 入参
 
 无。
