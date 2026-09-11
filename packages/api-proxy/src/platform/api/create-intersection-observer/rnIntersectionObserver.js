@@ -256,7 +256,6 @@ class RNIntersectionObserver {
   disconnect () {
     if (this._disconnected) return
     this._disconnected = true
-    this.throttleMeasure.cancel()
     if (this.intersectionCtx) delete this.intersectionCtx[this.id]
     remove(this.component._intersectionObservers, this)
     this.component = null
