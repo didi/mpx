@@ -1,4 +1,4 @@
-import { isArray, isObject, isString, noop, remove, warn } from '@mpxjs/utils'
+import { error, isArray, isObject, isString, noop, remove, warn } from '@mpxjs/utils'
 import throttle from 'lodash/throttle'
 import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
@@ -47,7 +47,7 @@ class RNIntersectionObserver {
     // 支持传递ref 或者 selector
   relativeTo (selector, margins = {}) {
     if (this._disconnected) {
-      warn('"relativeTo" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      error('"relativeTo" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
       return this
     }
     let relativeRef
@@ -68,7 +68,7 @@ class RNIntersectionObserver {
 
   relativeToViewport (margins = {}) {
     if (this._disconnected) {
-      warn('"relativeToViewport" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      error('"relativeToViewport" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
       return this
     }
     this.relativeRef = WindowRefStr
@@ -78,11 +78,11 @@ class RNIntersectionObserver {
 
   observe (selector, callback) {
     if (this._disconnected) {
-      warn('"observe" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      error('"observe" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
       return
     }
     if (this.observerRefs) {
-      warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
+      error('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
       return
     }
     let targetRef = null

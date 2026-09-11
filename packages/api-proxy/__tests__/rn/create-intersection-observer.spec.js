@@ -18,7 +18,7 @@ function createNodeRef (id, measureInWindow = jest.fn(callback => callback(10, 1
 describe('RN IntersectionObserver lifecycle', () => {
   beforeEach(() => {
     jest.useFakeTimers()
-    global.mpxGlobal = { __mpx: { config: { warnHandler: jest.fn() } } }
+    global.mpxGlobal = { __mpx: { config: { warnHandler: jest.fn(), errorHandler: jest.fn() } } }
     setFocusedNavigation({
       isFocused: () => true,
       layout: { top: 0, width: 100, height: 100, statusBarHeight: 0 }
@@ -49,6 +49,7 @@ describe('RN IntersectionObserver lifecycle', () => {
     expect(intersectionCtx).toEqual({})
     expect(component._intersectionObservers).toEqual([])
     expect(mpxGlobal.__mpx.config.warnHandler).not.toHaveBeenCalled()
+    expect(mpxGlobal.__mpx.config.errorHandler).not.toHaveBeenCalled()
   })
 
   it('should not retain an observer when context registration fails', () => {
@@ -79,7 +80,7 @@ describe('RN IntersectionObserver lifecycle', () => {
     observer.disconnect()
   })
 
-  it('should cancel trailing measurements and remove observer registrations', async () => {
+  it('should prevent trailing measurements and remove observer registrations', async () => {
     const measure = jest.fn(callback => callback(10, 10, 20, 20))
     const target = createNodeRef('item', measure)
     const component = { __selectRef: jest.fn(() => target) }
@@ -95,9 +96,9 @@ describe('RN IntersectionObserver lifecycle', () => {
     const measurements = measure.mock.calls.length
 
     observer.disconnect()
-    expect(jest.getTimerCount()).toBe(0)
     await jest.advanceTimersByTimeAsync(100)
 
+    expect(jest.getTimerCount()).toBe(0)
     expect(measure).toHaveBeenCalledTimes(measurements)
     expect(callback).toHaveBeenCalledTimes(1)
     expect(component.__selectRef).toHaveBeenCalledTimes(1)
@@ -106,7 +107,7 @@ describe('RN IntersectionObserver lifecycle', () => {
     expect(intersectionCtx).toEqual({})
   })
 
-  it('should warn without throwing or restarting observation when a disconnected observer is reused', async () => {
+  it('should report errors without throwing or restarting observation when a disconnected observer is reused', async () => {
     const measure = jest.fn(callback => callback(10, 10, 20, 20))
     const component = {
       __mpxProxy: { options: { mpxFileResource: 'observer-test.mpx' } },
@@ -125,10 +126,11 @@ describe('RN IntersectionObserver lifecycle', () => {
     expect(observer.observe('.item', reuseCallback)).toBeUndefined()
     await jest.advanceTimersByTimeAsync(100)
 
-    const warnHandler = mpxGlobal.__mpx.config.warnHandler
-    expect(warnHandler).toHaveBeenCalledTimes(3)
+    const errorHandler = mpxGlobal.__mpx.config.errorHandler
+    expect(errorHandler).toHaveBeenCalledTimes(3)
+    expect(mpxGlobal.__mpx.config.warnHandler).not.toHaveBeenCalled()
     ;['relativeTo', 'relativeToViewport', 'observe'].forEach((method, index) => {
-      expect(warnHandler).toHaveBeenNthCalledWith(index + 1,
+      expect(errorHandler).toHaveBeenNthCalledWith(index + 1,
         `"${method}" cannot be called after disconnect in IntersectionObserver. Please create a new observer.`,
         'observer-test.mpx', expect.any(Error))
     })
@@ -136,6 +138,27 @@ describe('RN IntersectionObserver lifecycle', () => {
     expect(measure).toHaveBeenCalledTimes(1)
     expect(callback).toHaveBeenCalledTimes(1)
     expect(reuseCallback).not.toHaveBeenCalled()
+  })
+
+  it('should report repeated observe calls without replacing the original callback', async () => {
+    const target = createNodeRef('item')
+    const component = { __selectRef: jest.fn(() => target) }
+    const callback = jest.fn()
+    const repeatedCallback = jest.fn()
+    const observer = new RNIntersectionObserver(component, {}, {})
+
+    observer.relativeToViewport().observe('.item', callback)
+    observer.observe('.item', repeatedCallback)
+    await jest.advanceTimersByTimeAsync(0)
+
+    expect(mpxGlobal.__mpx.config.errorHandler).toHaveBeenCalledTimes(1)
+    expect(mpxGlobal.__mpx.config.errorHandler).toHaveBeenCalledWith(
+      '"observe" call can be only called once in IntersectionObserver', '', expect.any(Error))
+    expect(mpxGlobal.__mpx.config.warnHandler).not.toHaveBeenCalled()
+    expect(component.__selectRef).toHaveBeenCalledTimes(1)
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(repeatedCallback).not.toHaveBeenCalled()
+    observer.disconnect()
   })
 
   it('should ignore native measurement results arriving after disconnect', async () => {
