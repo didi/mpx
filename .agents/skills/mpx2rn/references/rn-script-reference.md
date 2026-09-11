@@ -765,6 +765,7 @@ notifyDimensionsChange()
 | `setAppShow()` | 手动触发应用「进入前台」逻辑，驱动已注册的 `onShow`。 |
 | `setAppHide()` | 手动触发应用「进入后台」逻辑，驱动已注册的 `onHide`。 |
 | `notifyDimensionsChange(dimensions?)` | 主动通知框架 Dimensions 发生变化，触发 `rpx`、`vw`、`vh`、媒体查询和 `onResize` 等能力重新计算。不传参数时通过 `Dimensions.get` 读取当前原始尺寸；两种调用方式都会重新执行 `customDimensions`，并按 `dimensionsBase` 指定的尺寸判断是否刷新。 |
+| `getStyleDimensions()` | 返回经过 `customDimensions` 处理后、由 `dimensionsBase` 选中的当前只读 `ScaledSize` 副本；首次调用及更换 `customDimensions` 后会确保重新处理原始尺寸。 |
 
 #### 注意事项
 

@@ -52,12 +52,13 @@ jest.mock('../../src/index', () => ({
 import Mpx from '../../src/index'
 // eslint-disable-next-line import/first
 import styleHelperMixin from '../../src/platform/builtInMixins/styleHelperMixin.ios'
+// eslint-disable-next-line import/first
+import { initDimensionsInfo } from '../../src/platform/dimensionsHelper'
 
 describe('RN styleHelperMixin dimensions', () => {
   beforeEach(() => {
     global.__mpx_perf_framework__ = false
-    global.__mpxAppDimensionsInfo.window = mockDimensions.window
-    global.__mpxAppDimensionsInfo.screen = mockDimensions.screen
+    initDimensionsInfo(mockDimensions)
     global.__mpxSizeCount = 0
     global.__classCaches = new Set()
     Mpx.config.rnConfig = {
@@ -90,6 +91,14 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(global.__formatValue('750rpx')).toBe(360)
     expect(global.__formatValue('100vw')).toBe(360)
     expect(global.__formatValue('100vh')).toBe(640)
+  })
+
+  it('does not expose the mutable dimensions cache through the global getter', () => {
+    const dimensions = global.getStyleDimensions()
+
+    dimensions.width = 1
+
+    expect(global.__formatValue('750rpx')).toBe(360)
   })
 
   it('converts responsive units with screen dimensions when configured', () => {
@@ -252,6 +261,7 @@ describe('RN styleHelperMixin dimensions', () => {
   it('applies customDimensions before the first media-only style calculation', () => {
     const originalGlobals = {
       notifyDimensionsChange: global.notifyDimensionsChange,
+      getStyleDimensions: global.getStyleDimensions,
       GCC: global.__GCC,
       formatValue: global.__formatValue,
       dimensionsInfo: global.__mpxAppDimensionsInfo,
@@ -296,6 +306,7 @@ describe('RN styleHelperMixin dimensions', () => {
       })
     } finally {
       global.notifyDimensionsChange = originalGlobals.notifyDimensionsChange
+      global.getStyleDimensions = originalGlobals.getStyleDimensions
       global.__GCC = originalGlobals.GCC
       global.__formatValue = originalGlobals.formatValue
       global.__mpxAppDimensionsInfo = originalGlobals.dimensionsInfo

@@ -2,13 +2,12 @@ import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocused
 import * as perf from '@mpxjs/perf'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
-import Mpx from '../../index'
-import { getDimensionsBase } from '../dimensionsHelper'
+import { applyDimensionsInfo, getDimensionsBase, getStyleDimensions, initDimensionsInfo } from '../dimensionsHelper'
 
-global.__mpxAppDimensionsInfo = {
-  window: Object.assign({}, Dimensions.get('window')),
-  screen: Object.assign({}, Dimensions.get('screen'))
-}
+initDimensionsInfo({
+  window: Dimensions.get('window'),
+  screen: Dimensions.get('screen')
+})
 global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
 
@@ -34,39 +33,23 @@ global.__GCC = function (className, classMap, classMapValueCache) {
   return classMapValueCache.get(className)
 }
 
-let dimensionsInfoInitialized = false
-function applyDimensionsInfo (dimensions) {
-  dimensionsInfoInitialized = true
-  if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
-    dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
-  }
-  global.__mpxAppDimensionsInfo.window = dimensions.window
-  global.__mpxAppDimensionsInfo.screen = dimensions.screen
-}
-
-function getStyleDimensions () {
-  return global.__mpxAppDimensionsInfo[getDimensionsBase()]
-}
-
-function getDimensionsBaseSize (dimensions = getStyleDimensions()) {
+function getDimensionsBaseSize (dimensions) {
   return dimensions.width + 'x' + dimensions.height
 }
 
 function onDimensionsChange (dimensions) {
-  const oldDimensionsBaseSize = getDimensionsBaseSize()
+  // 读取旧缓存时不触发初始化，避免首次通知重复执行 customDimensions。
+  const oldDimensionsBaseSize = getDimensionsBaseSize(global.__mpxAppDimensionsInfo[getDimensionsBase()])
   if (!dimensions) {
     dimensions = {
       window: Dimensions.get('window'),
       screen: Dimensions.get('screen')
     }
   }
-  applyDimensionsInfo({
-    window: Object.assign({}, dimensions.window),
-    screen: Object.assign({}, dimensions.screen)
-  })
+  applyDimensionsInfo(dimensions)
 
   // 对比自定义处理后的基准尺寸高宽是否存在变化
-  if (getDimensionsBaseSize() === oldDimensionsBaseSize) return
+  if (getDimensionsBaseSize(getStyleDimensions()) === oldDimensionsBaseSize) return
 
   global.__classCaches?.forEach(cache => cache?.clear())
 
@@ -84,6 +67,7 @@ function onDimensionsChange (dimensions) {
 }
 
 global.notifyDimensionsChange = onDimensionsChange
+global.getStyleDimensions = () => Object.assign({}, getStyleDimensions())
 
 Dimensions.addEventListener('change', onDimensionsChange)
 
@@ -113,7 +97,6 @@ const empty = {}
 let dependentWindowSize = false
 const isNum = (v) => !isNaN(+v)
 function formatValue (value, unitType) {
-  if (!dimensionsInfoInitialized) applyDimensionsInfo(global.__mpxAppDimensionsInfo)
   if (unitType && typeof unit[unitType] === 'function') {
     dependentWindowSize = true
     return unit[unitType](+value)
@@ -260,7 +243,6 @@ function isNativeStyle (style) {
 
 function getMediaStyle (media) {
   if (!media || !media.length) return {}
-  if (!dimensionsInfoInitialized) applyDimensionsInfo(global.__mpxAppDimensionsInfo)
   dependentWindowSize = true
   const { width } = getStyleDimensions()
   return media.reduce((styleObj, item) => {

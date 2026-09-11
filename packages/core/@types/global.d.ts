@@ -19,3 +19,5 @@ declare let notifyDimensionsChange: (dimensions?: {
   window: import('react-native').ScaledSize
   screen: import('react-native').ScaledSize
 }) => void
+
+declare let getStyleDimensions: () => Readonly<import('react-native').ScaledSize>
