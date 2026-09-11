@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling, error } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -54,7 +54,7 @@ export default function createApp (options) {
   const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const getPageScreens = (initialRouteName, initialParams) => {
+  const getPageScreens = () => {
     return Object.entries(pagesMap).map(([key, item]) => {
       const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
       const headerLayout = ({ navigation, children }) => {
@@ -73,14 +73,6 @@ export default function createApp (options) {
       }
       const getComponent = () => {
         return item.displayName ? item : callWithErrorHandling(item, null, 'require page script')
-      }
-      if (key === initialRouteName) {
-        return createElement(Stack.Screen, {
-          name: key,
-          getComponent,
-          initialParams,
-          layout: headerLayout
-        })
       }
       return createElement(Stack.Screen, {
         name: key,
@@ -173,8 +165,16 @@ export default function createApp (options) {
     }
     if (!global.__mpxAppHotLaunched) {
       const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
-      initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
-      initialRouteRef.current.initialParams = initialParams || initialRouteRef.current.initialParams
+      if (initialRouteName && !hasOwn(pagesMap, initialRouteName)) {
+        error(`The initial page [${initialRouteName}] is not registered in the application. Mpx will ignore this initial route configuration.`)
+      } else {
+        if (initialRouteName) {
+          initialRouteRef.current.initialRouteName = initialRouteName
+        }
+        if (initialParams) {
+          initialRouteRef.current.initialParams = initialParams
+        }
+      }
 
       global.__mpxAppOnLaunch = (navigation) => {
         const state = navigation.getState()
@@ -213,6 +213,12 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
+    const initialState = {
+      routes: [{
+        name: initialRouteName,
+        params: initialParams
+      }]
+    }
     const navScreenOpts = {
       headerShown: false
     }
@@ -224,15 +230,15 @@ export default function createApp (options) {
       null,
       createElement(NavigationContainer,
         {
+          initialState,
           onStateChange,
           onUnhandledAction
         },
         createElement(Stack.Navigator,
           {
-            initialRouteName,
             screenOptions: navScreenOpts
           },
-          ...getPageScreens(initialRouteName, initialParams)
+          ...getPageScreens()
         )
       )
     )
