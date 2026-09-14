@@ -1,0 +1,11 @@
+{
+  "slug": "terra-medium",
+  "label": "5.6 Terra / medium",
+  "model": "gpt-5.6-terra",
+  "reasoning_effort": "medium",
+  "run_number": 1,
+  "functional_rate": 0.7692,
+  "strict_rate": 0.7692,
+  "selection": "median functional score across three models and three samples",
+  "source": "model-runs/terra-medium/eval-9-vue2-web-file-isolation/no_skill/run-1"
+}

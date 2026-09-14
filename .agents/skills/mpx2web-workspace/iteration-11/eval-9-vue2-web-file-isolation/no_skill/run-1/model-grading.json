@@ -1,0 +1,152 @@
+{
+  "eval_id": 9,
+  "eval_name": "vue2-web-file-isolation",
+  "configuration": "no_skill",
+  "run_number": 1,
+  "model_grading_fingerprint": "b08e84e1d7620d6f0ababb96fa22522b7fb77ee4b62e16c01a251c8aaabaf2fb",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 167391
+  },
+  "expectations": [
+    {
+      "id": "v0",
+      "text": "通用 analytics-panel.mpx 保留可执行的小程序摘要卡与指标点击，不导入 Vue、图表 SDK 或浏览器对象",
+      "category": "cross-platform-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/analytics-panel.mpx:1-7 保留 metrics 摘要卡渲染与 bindtap；17-20 通过 triggerEvent('select',{key}) 回传；10-12 仅导入 @mpxjs/core，没有 Vue、chart-sdk、document/window。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v1",
+      "text": "差异较大的浏览器图表落在 analytics-panel.web.mpx 与 Web-only Vue 文件，Web-only 依赖不进入通用模块顶层",
+      "category": "conditional-compile",
+      "passed": true,
+      "evidence": "outputs/src/components/analytics-panel.mpx:10-12 未引入 Web 依赖；outputs/src/components/analytics-panel.web.mpx:51-55 仅 Web 分支声明 analytics-chart；outputs/src/web/AnalyticsChart.vue:6 和 outputs/src/web/chart-sdk.js 承载 Web 图表逻辑。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v2",
+      "text": "AnalyticsChart.vue 使用 Vue 2.7 兼容的 SFC/组件 API，不使用 createApp、Vue 3 script setup、Teleport 或组合式生命周期挂载",
+      "category": "web-vue",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsChart.vue:5-105 使用普通 <script> Options API，包含 props/data/watch/mounted/beforeDestroy；未出现 createApp、<script setup>、Teleport 或组合式生命周期。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v3",
+      "text": "DOM 容器只在 Web 客户端 mounted/ready 后访问，SSR 或模块初始化阶段不读取 document/window",
+      "category": "web-sdk",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsChart.vue:33-35 在 mounted 后调用 observeSize/renderChart，45 读取 $refs.chart；outputs/src/web/chart-sdk.js:9-12 的 document.createElement 位于函数内，模块顶层未读取 document/window。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v4",
+      "text": "图表 SDK 只进入 Web 依赖图；每个实际异步 import/create 边界都检查当前代际或卸载状态，晚到实例立即销毁。纯 Web 且模块顶层 DOM-safe 时允许静态 import",
+      "category": "web-concurrency",
+      "passed": true,
+      "evidence": "outputs/src/components/analytics-panel.mpx 不导入 chart-sdk；outputs/src/web/AnalyticsChart.vue:6 仅 Web Vue 文件导入 chart-sdk。createChart 异步边界在 outputs/src/web/chart-sdk.js:25-26 检查 isCurrent；outputs/src/web/AnalyticsChart.vue:44-60 使用 requestId，并在晚到时 chart.destroy()。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v5",
+      "text": "卸载时销毁图表实例、disconnect ResizeObserver 并移除拥有的事件监听；数据变化可安全复用单一实例更新，但不得增加实例、Observer 或监听数量",
+      "category": "web-cleanup",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsChart.vue:37-41 卸载时递增 requestId、disconnectSizeObserver、destroyChart；86-99 disconnect ResizeObserver、移除 window resize、取消 animation frame；43-60 数据变化先 destroyChart 再 createChart，晚到实例销毁。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v6",
+      "text": "customBuiltInComponents 使用原始 key scroll-view，不使用 mpx-scroll-view；自定义 Vue 组件保留 $attrs、$listeners 和默认 slot 的结构透传",
+      "category": "web-template",
+      "passed": false,
+      "evidence": "outputs/vue.config.js:8-10 使用 customBuiltInComponents key 'mpx-scroll-view'，不是原始 key 'scroll-view'；outputs/src/web/AnalyticsScroll.vue:2-10 仅渲染 div 和默认 slot，没有 v-bind=\"$attrs\" 或 v-on=\"$listeners\" 透传。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v7",
+      "text": "自定义滚动组件同时实现 scrollX/scrollY 横纵 overflow，并在挂载和 prop 更新时真正同步 scrollTop、scrollLeft；scrollIntoView 更新后只滚动当前容器内目标节点",
+      "category": "web-scroll",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsScroll.vue:31-37 同时按 scrollX/scrollY 设置 overflowX/overflowY；39-55 在 prop 更新和 mounted 后同步 scrollTop、scrollLeft、scrollIntoView；63-74 仅在当前 scroller 内 querySelectorAll('[id]') 查找目标。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v8a",
+      "text": "自定义滚动组件发出的 scroll 事件包含 scrollTop、scrollLeft、scrollHeight、scrollWidth、deltaX 和 deltaY",
+      "category": "web-scroll",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsScroll.vue:76-87 构造 scroll 详情，包含 scrollTop、scrollLeft、scrollHeight、scrollWidth、deltaX、deltaY；89-92 通过 $emit('scroll', detail) 发出。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v8b",
+      "text": "自定义滚动组件按 upper/lower threshold 与实际滚动轴发出方向为 top/left、bottom/right 的 scrolltoupper/scrolltolower",
+      "category": "web-scroll",
+      "passed": false,
+      "evidence": "outputs/src/web/AnalyticsScroll.vue:94-97 只根据 scrollTop 计算 vertical upper/lower；detail 中没有 direction 字段，未按横向轴发出 left/right，也未区分 top/bottom 方向。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v8c",
+      "text": "上、左、下、右边界分别维护跨界状态，只在进入阈值时触发，离开后复位，避免阈值内重复泛滥",
+      "category": "web-scroll",
+      "passed": false,
+      "evidence": "outputs/src/web/AnalyticsScroll.vue:25-29 只有 atUpper 和 atLower 两个状态；94-99 仅维护纵向上/下边界，未分别维护 top、left、bottom、right 四个跨界状态。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v9a",
+      "text": "通用小程序指标摘要保留展示、点击和 select 业务回传，且不依赖 Web 图表模块",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/analytics-panel.mpx:1-7 展示指标摘要并绑定点击；17-20 selectMetric 触发 select；全文件未导入 Web 图表模块。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "v9b",
+      "text": "Web 图表在指标变化时安全 update 或销毁后重建，指标点击经 Vue select、Mpx bindselect 和 triggerEvent 逐层回传",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/web/AnalyticsChart.vue:25-31 监听 metrics 并 renderChart；43-60 通过 requestId 安全销毁后重建；outputs/src/web/chart-sdk.js:18 点击指标调用 onSelect；outputs/src/web/AnalyticsChart.vue:62-64 $emit('select')；outputs/src/components/analytics-panel.web.mpx:16 bindselect，35-37 triggerEvent('select')。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "v8a 只要求包含 deltaX/deltaY，未要求它们必须由上一次滚动位置计算；当前实现用 event.deltaX/event.deltaY || 0 也能通过，可能掩盖始终为 0 的实现。"
+    ],
+    "overall": "核心 Web 图表拆分、生命周期清理和小程序通用摘要基本满足；主要缺口集中在自定义 scroll-view 注册 key、attrs/listeners 透传，以及横向和四方向阈值事件语义。"
+  }
+}

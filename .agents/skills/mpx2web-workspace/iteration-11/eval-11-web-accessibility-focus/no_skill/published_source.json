@@ -1,0 +1,11 @@
+{
+  "slug": "terra-medium",
+  "label": "5.6 Terra / medium",
+  "model": "gpt-5.6-terra",
+  "reasoning_effort": "medium",
+  "run_number": 2,
+  "functional_rate": 0.5,
+  "strict_rate": 0.5,
+  "selection": "median functional score across three models and three samples",
+  "source": "model-runs/terra-medium/eval-11-web-accessibility-focus/no_skill/run-2"
+}

@@ -1,0 +1,393 @@
+<template>
+  <view
+    class="swipe-order"
+    data-disabled="{{disabled}}"
+    data-offset="{{offsetX}}"
+    catchtouchstart="{{gesture.onTouchStart}}"
+    catchtouchmove="{{gesture.onTouchMove}}"
+    catchtouchend="{{gesture.onTouchEnd}}"
+    catchtouchcancel="{{gesture.onTouchCancel}}"
+  >
+    <view class="remove-action">
+      <button class="remove-button" catchtap="removeOrder" disabled="{{disabled}}">删除</button>
+    </view>
+
+    <view
+      class="order-card"
+      wx:class="{{ {dragging: dragging, disabled: disabled} }}"
+      style="transform: translateX({{offsetX}}px)"
+      bindtap="selectOrder"
+    >
+      <view class="order-head">
+        <text class="order-no">订单 {{order.orderNo}}</text>
+        <text class="order-status">{{order.statusText}}</text>
+      </view>
+
+      <view class="goods-row">
+        <image class="goods-cover" src="{{order.cover}}" mode="aspectFill" />
+        <view class="goods-copy">
+          <text class="goods-title">{{order.title}}</text>
+          <text class="goods-sku">{{order.skuText}}</text>
+          <view class="goods-price-row">
+            <text class="goods-price">¥{{order.amount}}</text>
+            <text class="goods-count">×{{order.count}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="logistics-row">
+        <view class="logistics-copy">
+          <text class="logistics-text">{{order.logisticsText}}</text>
+          <text class="logistics-time">{{order.updatedAt}}</text>
+        </view>
+        <text class="logistics-arrow">›</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script module="gesture" lang="wxs">
+var MAX_OFFSET = 96
+var OPEN_THRESHOLD = 48
+var DIRECTION_THRESHOLD = 4
+var TAP_THRESHOLD = 6
+
+function point(event) {
+  var touches = event.touches && event.touches.length ? event.touches : event.changedTouches
+  var touch = touches && touches.length ? touches[0] : null
+  return {
+    x: touch ? touch.clientX : 0,
+    y: touch ? touch.clientY : 0
+  }
+}
+
+function disabled(event) {
+  var value = event.currentTarget.dataset.disabled
+  return value === true || value === 'true'
+}
+
+function number(value) {
+  var result = Number(value)
+  return isNaN(result) ? 0 : result
+}
+
+function clamp(value) {
+  if (value > 0) return 0
+  if (value < -MAX_OFFSET) return -MAX_OFFSET
+  return value
+}
+
+function render(instance, offset, animate) {
+  var card = instance.selectComponent('.order-card')
+  if (!card) return
+  card.setStyle({
+    transform: 'translateX(' + offset + 'px)',
+    transition: animate ? 'transform 180ms ease-out' : 'none'
+  })
+}
+
+function resetState(state) {
+  state.tracking = false
+  state.axis = ''
+  state.moved = false
+  state.currentOffset = 0
+}
+
+module.exports = {
+  onTouchStart: function (event) {
+    if (disabled(event)) return
+    var state = event.instance.getState()
+    var current = point(event)
+    var baseOffset = clamp(number(event.currentTarget.dataset.offset))
+    state.tracking = true
+    state.axis = ''
+    state.moved = false
+    state.startX = current.x
+    state.startY = current.y
+    state.baseOffset = baseOffset
+    state.currentOffset = baseOffset
+    render(event.instance, baseOffset, false)
+    event.instance.callMethod('beginSwipe')
+  },
+  onTouchMove: function (event) {
+    if (disabled(event)) return
+    var state = event.instance.getState()
+    if (!state.tracking) return
+    var current = point(event)
+    var deltaX = current.x - state.startX
+    var deltaY = current.y - state.startY
+
+    if (!state.axis && (Math.abs(deltaX) > DIRECTION_THRESHOLD || Math.abs(deltaY) > DIRECTION_THRESHOLD)) {
+      state.axis = Math.abs(deltaX) >= Math.abs(deltaY) ? 'x' : 'y'
+    }
+    if (state.axis !== 'x') return
+
+    state.currentOffset = clamp(state.baseOffset + deltaX)
+    state.moved = state.moved || Math.abs(deltaX) > TAP_THRESHOLD
+    render(event.instance, state.currentOffset, false)
+  },
+  onTouchEnd: function (event) {
+    var state = event.instance.getState()
+    if (!state.tracking) return
+    if (disabled(event)) {
+      render(event.instance, 0, true)
+      resetState(state)
+      event.instance.callMethod('cancelSwipe', { suppressTap: true })
+      return
+    }
+
+    var horizontal = state.axis === 'x'
+    var finalOffset = horizontal
+      ? (state.currentOffset < -OPEN_THRESHOLD ? -MAX_OFFSET : 0)
+      : state.baseOffset
+    var suppressTap = horizontal && state.moved
+    render(event.instance, finalOffset, true)
+    resetState(state)
+    event.instance.callMethod('finishSwipe', {
+      open: finalOffset === -MAX_OFFSET,
+      suppressTap: suppressTap
+    })
+  },
+  onTouchCancel: function (event) {
+    var state = event.instance.getState()
+    if (!state.tracking) return
+    var suppressTap = state.moved
+    render(event.instance, 0, true)
+    resetState(state)
+    event.instance.callMethod('cancelSwipe', { suppressTap: suppressTap })
+  }
+}
+</script>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+const MAX_OFFSET = 96
+const TAP_GUARD_MS = 350
+
+createComponent({
+  properties: {
+    order: {
+      type: Object,
+      value: () => ({})
+    },
+    disabled: {
+      type: Boolean,
+      value: false,
+      observer (value) {
+        if (value) this.resetSwipe()
+      }
+    }
+  },
+  data: {
+    offsetX: 0,
+    dragging: false
+  },
+  methods: {
+    beginSwipe () {
+      if (this.disabled) return
+      this.dragging = true
+      this.triggerEvent('swipestart', { orderId: this.order.id })
+    },
+    syncSwipeOffset (offsetX) {
+      if (this.disabled) return
+      this.offsetX = Math.max(-MAX_OFFSET, Math.min(0, Number(offsetX) || 0))
+    },
+    finishSwipe (result) {
+      const detail = result || {}
+      const open = !this.disabled && detail.open === true
+      this.dragging = false
+      this.offsetX = open ? -MAX_OFFSET : 0
+      if (detail.suppressTap) this._tapGuardUntil = Date.now() + TAP_GUARD_MS
+      this.triggerEvent('swipeend', { orderId: this.order.id, open })
+    },
+    cancelSwipe (result) {
+      this.dragging = false
+      this.offsetX = 0
+      if (result && result.suppressTap) this._tapGuardUntil = Date.now() + TAP_GUARD_MS
+      this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
+    },
+    resetSwipe () {
+      this.dragging = false
+      this.offsetX = 0
+    },
+    selectOrder () {
+      if (this.disabled) return
+      if (this._tapGuardUntil && Date.now() < this._tapGuardUntil) {
+        this._tapGuardUntil = 0
+        return
+      }
+      if (this.offsetX !== 0) {
+        this.offsetX = 0
+        this.triggerEvent('swipeend', { orderId: this.order.id, open: false })
+        return
+      }
+      this.triggerEvent('select', { orderId: this.order.id })
+    },
+    removeOrder () {
+      if (this.disabled) return
+      this._tapGuardUntil = 0
+      this.triggerEvent('remove', { orderId: this.order.id })
+    }
+  }
+})
+</script>
+
+<style scoped>
+.swipe-order {
+  position: relative;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+  border-radius: 20rpx;
+  touch-action: pan-y;
+}
+
+.remove-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 96px;
+  background: #ff4d4f;
+}
+
+.remove-button {
+  width: 96px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  font-size: 28rpx;
+  background: #ff4d4f;
+  border-radius: 0;
+}
+
+.order-card {
+  position: relative;
+  z-index: 1;
+  padding: 24rpx;
+  background: #ffffff;
+  transition: transform 180ms ease-out;
+  will-change: transform;
+}
+
+.order-card.dragging {
+  transition: none;
+}
+
+.order-card.disabled {
+  opacity: 0.62;
+}
+
+.order-head,
+.goods-price-row,
+.logistics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-no {
+  color: #8b919c;
+  font-size: 22rpx;
+}
+
+.order-status {
+  color: #1677ff;
+  font-size: 25rpx;
+  font-weight: bold;
+}
+
+.goods-row {
+  display: flex;
+  margin-top: 18rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #eef0f3;
+}
+
+.goods-cover {
+  width: 144rpx;
+  height: 144rpx;
+  border-radius: 14rpx;
+}
+
+.goods-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.goods-title,
+.goods-sku,
+.logistics-text,
+.logistics-time {
+  display: block;
+}
+
+.goods-title {
+  overflow: hidden;
+  color: #292d35;
+  font-size: 28rpx;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goods-sku {
+  margin-top: 8rpx;
+  color: #999fa8;
+  font-size: 22rpx;
+}
+
+.goods-price-row {
+  margin-top: auto;
+}
+
+.goods-price {
+  color: #e64340;
+  font-size: 28rpx;
+}
+
+.goods-count {
+  color: #999fa8;
+  font-size: 22rpx;
+}
+
+.logistics-row {
+  padding-top: 18rpx;
+}
+
+.logistics-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.logistics-text {
+  overflow: hidden;
+  color: #3d424b;
+  font-size: 24rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logistics-time {
+  margin-top: 5rpx;
+  color: #a2a7b0;
+  font-size: 20rpx;
+}
+
+.logistics-arrow {
+  margin-left: 16rpx;
+  color: #b7bbc3;
+  font-size: 38rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "styleIsolation": "isolated"
+}
+</script>

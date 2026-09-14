@@ -1,0 +1,28 @@
+{
+  "description": "Mpx2Web iteration-11 Has Skill / No Skill 对比评测提示语契约",
+  "variables": {
+    "TASK_PROMPT": "evals.json 中的 prompt 字段",
+    "INPUT_FILES": "输入文件绝对路径列表",
+    "OUTPUT_FILES": "输出文件相对 outputs/ 的路径列表",
+    "MPX2WEB_SKILL_PATH": ".agents/skills/mpx2web/SKILL.md 的绝对路径",
+    "MODEL": "生成模型",
+    "REASONING_EFFORT": "生成模型思考强度"
+  },
+  "agent_config": {
+    "model": "{{MODEL}}",
+    "reasoning_effort": "{{REASONING_EFFORT}}",
+    "fork_turns": "none"
+  },
+  "templates": {
+    "mpx2web": {
+      "storage_configuration": "has_skill",
+      "label": "使用当前 Mpx2Web Skill",
+      "instruction": "开始前读取并严格使用 {{MPX2WEB_SKILL_PATH}}；按其路由只读取本题必要小节。"
+    },
+    "no_skill": {
+      "storage_configuration": "no_skill",
+      "label": "不使用 Skill 的基线",
+      "instruction": "不要读取或使用任何 Mpx2Web Skill、references、旧输出、评分或 benchmark 结果。"
+    }
+  }
+}

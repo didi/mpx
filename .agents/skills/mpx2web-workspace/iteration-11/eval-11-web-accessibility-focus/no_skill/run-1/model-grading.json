@@ -1,0 +1,82 @@
+{
+  "eval_id": 11,
+  "eval_name": "web-accessibility-focus",
+  "configuration": "no_skill",
+  "run_number": 2,
+  "model_grading_fingerprint": "1c56da2db808889f75e1cf5544adc6343ef1fe17f597118b79371473fc291126",
+  "grader": {
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "blind_configuration": true,
+    "duration_ms": 63572
+  },
+  "expectations": [
+    {
+      "id": "c0",
+      "text": "通用筛选触发器、选项与确认入口具有可访问的控件语义和名称，并保留 tap/遮罩触摸链路；带可见文本的原生 button 不要求重复添加 aria-role/aria-label，非原生可点击节点使用 aria-role",
+      "category": "accessibility",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.mpx:3-10 和 21-27 的非原生可点击 view 使用 role=\"button\"，不是断言要求的 aria-role；tap 链路仍在 bindtap open/toggle/confirm 与遮罩 close 中保留。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c1",
+      "text": "完整浏览器 role=dialog、aria-modal、tabindex 与键盘事件只存在于 Web 文件或 Web-only 模板逻辑",
+      "category": "web-template",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.mpx:14-19 在通用文件中加入了 role=\"dialog\"、aria-modal、tabindex 和 bindkeydown/onKeydown；断言要求完整浏览器 dialog 与键盘事件只存在于 Web 文件或 Web-only 模板逻辑。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c2",
+      "text": "Web 打开前记录真实触发元素，渲染完成后把焦点移入弹层；关闭后仅在元素仍连接文档时恢复焦点",
+      "category": "web-focus",
+      "passed": false,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx:59-65 记录 event.currentTarget 并 nextTick 聚焦 dialog；但 101-107 恢复焦点只检查 trigger 和 focus 函数，没有检查 trigger.isConnected 或 document.contains(trigger)。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c3",
+      "text": "Escape 关闭弹层；Tab 与 Shift+Tab 在当前弹层的可聚焦元素首尾循环，遮罩点击不误触内容区",
+      "category": "web-focus",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx:10 使用 @click.self 避免内容区误触遮罩关闭；118-121 Escape preventDefault 后 close；124-140 对 Tab/Shift+Tab 在 dialog 内首尾循环。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c4",
+      "text": "document/window 键盘或焦点监听在每次关闭和 detached/unmounted 时成对移除，快速开关不会重复注册",
+      "category": "web-cleanup",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.web.mpx:84-88 用 _isListening 防重复注册 document keydown；67-72 close 时移除；54-57 detached 时移除；未见额外 document/window 焦点监听。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    },
+    {
+      "id": "c5",
+      "text": "选项选择、清空、确认、取消、焦点恢复和微信小程序触摸业务链路保持完整",
+      "category": "business-regression",
+      "passed": true,
+      "evidence": "outputs/src/components/filter-dialog.mpx:9、11、18、26、28-29、45-53 保留微信小程序触摸打开、遮罩关闭、内容 stop、选项切换、清空、确认并 triggerEvent；outputs/src/components/filter-dialog.web.mpx:74-82 保留选择、清空、确认，67-73 关闭并执行焦点恢复。",
+      "verification_methods": [
+        "independent_code_review"
+      ]
+    }
+  ],
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [
+      "断言缺口：c5 将“取消”和“焦点恢复”合并进业务链路，但没有定义取消入口是遮罩关闭、Escape 还是独立按钮；这可能影响对无显式取消按钮实现的判定。"
+    ],
+    "overall": "候选实现了 Web 焦点陷阱、Escape、遮罩 self 点击和监听清理，但通用文件混入 Web dialog/键盘语义，且恢复焦点缺少元素仍连接文档的检查。"
+  }
+}
