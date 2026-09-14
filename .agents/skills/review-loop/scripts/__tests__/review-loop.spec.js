@@ -4,30 +4,15 @@ const childProcess = require('child_process')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
+const snapshot = require('../git-snapshot')
 const reviewManager = require('../review-manager')
+const reviewDocument = require('../review-markdown')
 const u = require('../review-loop-utils')
 
-function evidence (round) {
-  round = round || 1
+function evidence () {
   return {
     reviewedPaths: ['AGENTS.md', 'src/example.js'],
-    tracedSymbols: [{ symbol: 'example', path: 'src/example.js', related: ['caller'] }],
-    checks: [
-      {
-        command: 'context-isolation-preflight',
-        result: 'passed: no parent planner/coder/orchestrator conversation visible'
-      },
-      { command: 'npm test -- example', result: 'passed' }
-    ],
-    counterexamples: [{ scenario: 'empty input', result: 'handled' }],
-    diffScope: {
-      cumulativeDiff: 'diffs/code-diff-' + round + '.patch',
-      roundDiff: 'diffs/code-round-' + round + '.patch',
-      unexpectedPaths: [],
-      unexpectedDispositions: []
-    },
-    residualRisks: [],
-    reviewerConfig: { model: 'gpt-5.6-sol', reasoningEffort: 'high', sandboxMode: 'read-only', source: 'role' }
+    residualRisks: []
   }
 }
 
@@ -53,6 +38,10 @@ function review (status, round) {
   return value
 }
 
+function reviewMarkdown (value) {
+  return reviewDocument.render(value || review())
+}
+
 function writeTask (repo, taskId, state) {
   const taskDir = path.join(repo, '.agent-workflows', 'review-loop', taskId)
   ;['reviews', 'diffs', 'logs', path.join('runtime', 'roles')].forEach(function (dir) {
@@ -67,17 +56,12 @@ function writeTask (repo, taskId, state) {
 function writeReviewerInputs (repo) {
   const skillDir = path.join(repo, '.agents', 'skills', 'review-loop')
   fs.mkdirSync(path.join(skillDir, 'templates', 'roles'), { recursive: true })
-  fs.mkdirSync(path.join(skillDir, 'schemas'), { recursive: true })
   ;['plan-reviewer.md', 'code-reviewer.md'].forEach(function (file) {
     fs.copyFileSync(
       path.resolve(__dirname, '..', '..', 'templates', 'roles', file),
       path.join(skillDir, 'templates', 'roles', file)
     )
   })
-  fs.copyFileSync(
-    path.resolve(__dirname, '..', '..', 'schemas', 'review.schema.json'),
-    path.join(skillDir, 'schemas', 'review.schema.json')
-  )
 }
 
 function fakeCodexEnv (repo, output, summaryBytes) {
@@ -184,7 +168,7 @@ function writeCodeReviewRound (taskDir, round, value, scope) {
     fs.writeFileSync(path.join(taskDir, 'diffs', prefix + round + '.patch'), '')
   })
   fs.writeFileSync(path.join(taskDir, 'diffs', 'code-scope-' + round + '.json'), JSON.stringify(scope))
-  fs.writeFileSync(path.join(taskDir, 'reviews', 'code-review-' + round + '.json'), JSON.stringify(value))
+  fs.writeFileSync(path.join(taskDir, 'reviews', 'code-review-' + round + '.md'), reviewMarkdown(value))
 }
 
 function writeMigratableCodeTask (repo) {
@@ -198,29 +182,63 @@ function writeMigratableCodeTask (repo) {
   })
   writeCleanBaseline(repo, taskDir)
   const baseline = JSON.parse(fs.readFileSync(path.join(taskDir, 'runtime', 'baseline', 'manifest.json')))
-  fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
+  fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review()))
   const scope = codeScope(taskDir, 1, baseline.tree, baseline.tree)
   writeCodeReviewRound(taskDir, 1, review(), scope)
   return { taskDir: taskDir, scope: scope }
 }
 
-function writeSnapshotRound (repo, taskDir, round, paths) {
-  const stateFile = path.join(taskDir, 'state.json')
-  const state = JSON.parse(fs.readFileSync(stateFile))
-  state.protocolVersion = u.protocolVersion
-  state.phase = 'code_drafting'
-  state.codeRound = round - 1
-  fs.writeFileSync(stateFile, JSON.stringify(state))
-  fs.writeFileSync(path.join(taskDir, 'runtime', 'code-round-' + round + '-paths.json'), JSON.stringify({
-    round: round,
-    paths: paths
-  }))
-  const script = path.resolve(__dirname, '..', 'snapshot-diff.js')
-  childProcess.execFileSync('node', [script, '--task-id', 'test-task', '--round', String(round)], {
-    cwd: repo,
-    encoding: 'utf8'
-  })
-  return JSON.parse(fs.readFileSync(path.join(taskDir, 'diffs', 'code-scope-' + round + '.json')))
+function writeLegacySnapshotRound (repo, taskDir, round) {
+  const originalCwd = process.cwd()
+  process.chdir(repo)
+  try {
+    const trees = snapshot.reviewTrees('test-task')
+    const previousTree = round === 1
+      ? trees.baselineTree
+      : JSON.parse(fs.readFileSync(path.join(taskDir, 'diffs', 'code-scope-' + (round - 1) + '.json'))).currentTree
+    const roundPaths = snapshot.diffPaths('test-task', previousTree, trees.currentTree)
+    const scope = {
+      round: round,
+      baselineHead: JSON.parse(fs.readFileSync(path.join(taskDir, 'runtime', 'baseline', 'manifest.json'))).head,
+      baselineTree: trees.baselineTree,
+      previousTree: previousTree,
+      currentTree: trees.currentTree,
+      cumulativePaths: trees.changedPaths,
+      roundPaths: roundPaths,
+      claimedPaths: roundPaths,
+      unexpectedPaths: []
+    }
+    fs.writeFileSync(path.join(taskDir, 'diffs', 'code-diff-' + round + '.patch'),
+      snapshot.diffTrees('test-task', trees.baselineTree, trees.currentTree))
+    fs.writeFileSync(path.join(taskDir, 'diffs', 'code-round-' + round + '.patch'),
+      snapshot.diffTrees('test-task', previousTree, trees.currentTree))
+    fs.writeFileSync(path.join(taskDir, 'diffs', 'code-scope-' + round + '.json'), JSON.stringify(scope))
+    return scope
+  } finally {
+    process.chdir(originalCwd)
+  }
+}
+
+function writeCumulativeSnapshotRound (repo, taskDir, round) {
+  const originalCwd = process.cwd()
+  process.chdir(repo)
+  try {
+    const trees = snapshot.reviewTrees('test-task')
+    const baseline = JSON.parse(fs.readFileSync(path.join(taskDir, 'runtime', 'baseline', 'manifest.json')))
+    const scope = {
+      round: round,
+      baselineHead: baseline.head,
+      baselineTree: trees.baselineTree,
+      currentTree: trees.currentTree,
+      cumulativePaths: trees.changedPaths
+    }
+    fs.writeFileSync(path.join(taskDir, 'diffs', 'code-diff-' + round + '.patch'),
+      snapshot.diffTrees('test-task', trees.baselineTree, trees.currentTree))
+    fs.writeFileSync(path.join(taskDir, 'diffs', 'code-scope-' + round + '.json'), JSON.stringify(scope))
+    return scope
+  } finally {
+    process.chdir(originalCwd)
+  }
 }
 
 function writeMigratableChangedCodeTask (repo) {
@@ -233,10 +251,10 @@ function writeMigratableChangedCodeTask (repo) {
     maxRounds: 3
   })
   writeCleanBaseline(repo, taskDir)
-  fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
+  fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review()))
   fs.writeFileSync(path.join(repo, 'tracked.txt'), 'changed\n')
-  const scope = writeSnapshotRound(repo, taskDir, 1, ['tracked.txt'])
-  fs.writeFileSync(path.join(taskDir, 'reviews', 'code-review-1.json'), JSON.stringify(review()))
+  const scope = writeCumulativeSnapshotRound(repo, taskDir, 1)
+  fs.writeFileSync(path.join(taskDir, 'reviews', 'code-review-1.md'), reviewMarkdown(review()))
   const stateFile = path.join(taskDir, 'state.json')
   const state = JSON.parse(fs.readFileSync(stateFile))
   state.protocolVersion = '1.0.0'
@@ -249,7 +267,7 @@ function writeMigratableChangedCodeTask (repo) {
 function writeMigratableCurrentCodeTask (repo) {
   const fixture = writeMigratableCodeTask(repo)
   fs.writeFileSync(path.join(repo, 'tracked.txt'), 'round two\n')
-  const scope = writeSnapshotRound(repo, fixture.taskDir, 2, [])
+  const scope = writeCumulativeSnapshotRound(repo, fixture.taskDir, 2)
   const stateFile = path.join(fixture.taskDir, 'state.json')
   const state = JSON.parse(fs.readFileSync(stateFile))
   state.protocolVersion = '1.0.0'
@@ -359,7 +377,6 @@ describe.skip('legacy CLI review runner isolation', function () {
       '--config', 'model_reasoning_effort="high"',
       'exec', 'review',
       '--ephemeral',
-      '--output-schema', '.agents/skills/review-loop/schemas/review.schema.json',
       '-'
     ])
     expect(call.input).toContain('.agents/skills/review-loop/templates/roles/plan-reviewer.md')
@@ -376,7 +393,6 @@ describe.skip('legacy CLI review runner isolation', function () {
     }))
     expect(artifact.request.inputs).toEqual([
       '.agents/skills/review-loop/templates/roles/plan-reviewer.md',
-      '.agents/skills/review-loop/schemas/review.schema.json',
       '.agent-workflows/review-loop/test-task/goal.md',
       '.agent-workflows/review-loop/test-task/plan.md'
     ])
@@ -538,7 +554,7 @@ describe.skip('legacy CLI review runner isolation', function () {
     writeReviewerInputs(repo)
     writeCleanBaseline(repo, taskDir)
     fs.writeFileSync(path.join(repo, 'tracked.txt'), 'reviewed change\n')
-    const scope = writeSnapshotRound(repo, taskDir, 1, ['tracked.txt'])
+    const scope = writeLegacySnapshotRound(repo, taskDir, 1)
     const stateFile = path.join(taskDir, 'state.json')
     const state = JSON.parse(fs.readFileSync(stateFile))
     state.phase = 'code_reviewing'
@@ -559,7 +575,8 @@ describe.skip('legacy CLI review runner isolation', function () {
     )
     const systemPrompt = call.args[call.args.indexOf('--append-system-prompt') + 1]
     expect(systemPrompt).toContain('.agents/skills/review-loop/templates/roles/code-reviewer.md')
-    expect(systemPrompt).toContain('.agent-workflows/review-loop/test-task/diffs/code-scope-1.json')
+    expect(systemPrompt).toContain('.agent-workflows/review-loop/test-task/diffs/code-diff-1.patch')
+    expect(systemPrompt).not.toContain('code-scope-1.json')
     expect(systemPrompt).not.toContain('# Validation')
     const artifact = JSON.parse(fs.readFileSync(path.join(
       taskDir, 'runtime', 'reviewer-runs', 'code-review-1.json'
@@ -625,12 +642,12 @@ describe.skip('legacy CLI review runner isolation', function () {
         codeRound: 0,
         platform: platform
       })
-      const persist = path.resolve(__dirname, '..', 'persist-review-json.js')
+      const persist = path.resolve(__dirname, '..', 'persist-review-markdown.js')
       const args = [persist, '--task-id', 'test-task', '--kind', 'plan', '--round', '1']
       expect(function () {
         childProcess.execFileSync('node', args, {
           cwd: repo,
-          input: JSON.stringify(review()),
+          input: reviewMarkdown(review()),
           encoding: 'utf8'
         })
       }).toThrow(/must be finalized and persisted by review-manager.js/)
@@ -669,12 +686,14 @@ describe.skip('legacy CLI review runner isolation', function () {
 
   test('derives code-review inputs from the current round', function () {
     expect(reviewManager.inputs('test-task', 'code', 2)).toEqual(expect.arrayContaining([
+      '.agent-workflows/review-loop/test-task/runtime/baseline/manifest.json',
       '.agent-workflows/review-loop/test-task/diffs/code-diff-2.patch',
-      '.agent-workflows/review-loop/test-task/diffs/code-round-2.patch',
-      '.agent-workflows/review-loop/test-task/diffs/code-scope-2.json',
       '.agent-workflows/review-loop/test-task/logs/coder-2.md',
-      '.agent-workflows/review-loop/test-task/reviews/code-review-1.json'
+      '.agent-workflows/review-loop/test-task/reviews/code-review-1.md'
     ]))
+    expect(reviewManager.inputs('test-task', 'code', 2).some(function (item) {
+      return item.includes('code-scope-') || item.includes('code-round-')
+    })).toBe(false)
   })
 })
 
@@ -687,7 +706,7 @@ describe('native subagent reviewer isolation', function () {
       encoding: 'utf8'
     }))
     const resultFile = path.join(os.tmpdir(), 'review-loop-native-result-' + process.pid + '-' + Date.now() + '.json')
-    fs.writeFileSync(resultFile, JSON.stringify(output))
+    fs.writeFileSync(resultFile, reviewMarkdown(output))
     const finalized = JSON.parse(childProcess.execFileSync('node', baseArgs.concat([
       '--finalize', '--input', resultFile, '--agent-id', agentId
     ]), { cwd: repo, encoding: 'utf8' }))
@@ -715,9 +734,18 @@ describe('native subagent reviewer isolation', function () {
         requestDigest: expect.stringMatching(/^[a-f0-9]{64}$/)
       }))
       expect(completed.prepared.prompt).toContain('.agent-workflows/review-loop/test-task/plan.md')
+      expect(completed.prepared.prompt).toContain('每一轮都要创建新实例')
+      expect(completed.prepared.prompt).toContain('不得恢复或复用任何之前创建的 reviewer')
+      expect(completed.prepared.prompt).toContain('不得继承父级会话')
+      expect(completed.prepared.prompt).toContain('所有自然语言评审内容必须使用中文')
       expect(completed.prepared.prompt).not.toContain('# Plan')
       expect(completed.finalized).toEqual(expect.objectContaining({
         runner: 'native-subagent',
+        status: 'approved',
+        review: expect.stringMatching(/plan-review-1\.md$/)
+      }))
+      expect(reviewDocument.parse(fs.readFileSync(completed.finalized.review, 'utf8'))).toEqual(expect.objectContaining({
+        round: 1,
         status: 'approved'
       }))
       const artifact = JSON.parse(fs.readFileSync(path.join(
@@ -732,9 +760,95 @@ describe('native subagent reviewer isolation', function () {
         agentId: platform + '-agent-1',
         contextInheritance: 'none'
       }))
-      expect(artifact.review.evidence.reviewerConfig).toEqual(reviewManager.reviewerConfig(platform))
+      expect(artifact.execution.reviewerConfig).toEqual(reviewManager.reviewerConfig(platform))
+      expect(artifact.reviewDocument).toBe(fs.readFileSync(completed.finalized.review, 'utf8'))
       fs.rmSync(repo, { recursive: true, force: true })
     })
+  })
+
+  test('binds the baseline-to-worktree patch as a code reviewer input', function () {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-native-code-'))
+    const taskDir = writeTask(repo, 'test-task', {
+      protocolVersion: u.protocolVersion,
+      taskId: 'test-task',
+      phase: 'code_reviewing',
+      planRound: 1,
+      codeRound: 0,
+      platform: 'codex'
+    })
+    writeReviewerInputs(repo)
+    writeCleanBaseline(repo, taskDir)
+    fs.writeFileSync(path.join(taskDir, 'logs', 'coder-1.md'), '# 验证结果\n\n已通过。\n')
+    fs.writeFileSync(path.join(repo, 'tracked.txt'), 'reviewed change\n')
+    fs.rmSync(path.join(taskDir, 'diffs'), { recursive: true })
+
+    const completed = prepareAndFinalize(repo, taskDir, 'codex', 'code', review(), 'code-agent-1')
+    const request = JSON.parse(fs.readFileSync(path.join(
+      taskDir, 'runtime', 'reviewer-runs', 'code-review-1.request.json'
+    ), 'utf8'))
+    expect(request.inputs).toEqual(expect.arrayContaining([
+      '.agent-workflows/review-loop/test-task/runtime/baseline/manifest.json',
+      '.agent-workflows/review-loop/test-task/diffs/code-diff-1.patch',
+      '.agent-workflows/review-loop/test-task/logs/coder-1.md'
+    ]))
+    const diffInput = request.inputDigests.find(function (item) {
+      return item.path === '.agent-workflows/review-loop/test-task/diffs/code-diff-1.patch'
+    })
+    expect(diffInput.sha256).toMatch(/^[a-f0-9]{64}$/)
+    expect(request.baselineTree).toMatch(/^[a-f0-9]{40}$/)
+    expect(request.snapshotTree).toMatch(/^[a-f0-9]{40}$/)
+    expect(request.snapshotTree).not.toBe(request.baselineTree)
+    expect(completed.prepared.prompt).toContain('.agent-workflows/review-loop/test-task/diffs/code-diff-1.patch')
+    const originalCwd = process.cwd()
+    process.chdir(repo)
+    let generatedDiff
+    try {
+      generatedDiff = snapshot.diffTrees('test-task', request.baselineTree, request.snapshotTree)
+    } finally {
+      process.chdir(originalCwd)
+    }
+    expect(generatedDiff).toContain('reviewed change')
+    expect(completed.prepared.diff.endsWith(path.join('diffs', 'code-diff-1.patch'))).toBe(true)
+    expect(fs.readFileSync(completed.prepared.diff, 'utf8')).toBe(generatedDiff)
+    fs.appendFileSync(completed.prepared.diff, '\ntampered\n')
+    process.chdir(repo)
+    try {
+      expect(function () {
+        reviewManager.requireValid('test-task', 'code', 1, 'codex')
+      }).toThrow(/request must exactly match|Code review diff must exactly match/)
+    } finally {
+      process.chdir(originalCwd)
+    }
+    fs.rmSync(repo, { recursive: true, force: true })
+  })
+
+  test('rejects a reviewer agent reused from any previous round', function () {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-native-reused-agent-'))
+    const taskDir = writeTask(repo, 'test-task', {
+      protocolVersion: u.protocolVersion,
+      taskId: 'test-task',
+      phase: 'plan_reviewing',
+      planRound: 0,
+      codeRound: 0,
+      platform: 'codex'
+    })
+    writeReviewerInputs(repo)
+    writeCleanBaseline(repo, taskDir)
+    const run = path.resolve(__dirname, '..', 'review-manager.js')
+    const args = [run, '--task-id', 'test-task', '--kind', 'plan', '--round', '1']
+    childProcess.execFileSync('node', args.concat('--prepare'), { cwd: repo, encoding: 'utf8' })
+    fs.writeFileSync(path.join(taskDir, 'runtime', 'reviewer-runs', 'code-review-1.json'), JSON.stringify({
+      execution: { agentId: 'reused-reviewer' }
+    }))
+    const resultFile = path.join(os.tmpdir(), 'review-loop-native-reused-agent-' + process.pid + '.json')
+    fs.writeFileSync(resultFile, reviewMarkdown(review()))
+    expect(function () {
+      childProcess.execFileSync('node', args.concat([
+        '--finalize', '--input', resultFile, '--agent-id', 'reused-reviewer'
+      ]), { cwd: repo, encoding: 'utf8' })
+    }).toThrow(/--agent-id 不得与历史 reviewer-run 重复/)
+    fs.rmSync(resultFile)
+    fs.rmSync(repo, { recursive: true, force: true })
   })
 
   test('rejects input or worktree drift between prepare and finalize', function () {
@@ -754,40 +868,12 @@ describe('native subagent reviewer isolation', function () {
     childProcess.execFileSync('node', args.concat('--prepare'), { cwd: repo, encoding: 'utf8' })
     fs.writeFileSync(path.join(repo, 'tracked.txt'), 'reviewer mutation\n')
     const resultFile = path.join(os.tmpdir(), 'review-loop-native-drift-' + process.pid + '.json')
-    fs.writeFileSync(resultFile, JSON.stringify(review()))
+    fs.writeFileSync(resultFile, reviewMarkdown(review()))
     expect(function () {
       childProcess.execFileSync('node', args.concat([
         '--finalize', '--input', resultFile, '--agent-id', 'codex-agent-1'
       ]), { cwd: repo, encoding: 'utf8' })
     }).toThrow(/inputs or workspace tree changed after prepare/)
-    fs.rmSync(resultFile)
-    fs.rmSync(repo, { recursive: true, force: true })
-  })
-
-  test('rejects reviewer output without passed context-isolation evidence', function () {
-    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-native-context-'))
-    const taskDir = writeTask(repo, 'test-task', {
-      protocolVersion: u.protocolVersion,
-      taskId: 'test-task',
-      phase: 'plan_reviewing',
-      planRound: 0,
-      codeRound: 0,
-      platform: 'codex'
-    })
-    writeReviewerInputs(repo)
-    writeCleanBaseline(repo, taskDir)
-    const run = path.resolve(__dirname, '..', 'review-manager.js')
-    const args = [run, '--task-id', 'test-task', '--kind', 'plan', '--round', '1']
-    childProcess.execFileSync('node', args.concat('--prepare'), { cwd: repo, encoding: 'utf8' })
-    const output = review()
-    output.evidence.checks.shift()
-    const resultFile = path.join(os.tmpdir(), 'review-loop-native-context-' + process.pid + '.json')
-    fs.writeFileSync(resultFile, JSON.stringify(output))
-    expect(function () {
-      childProcess.execFileSync('node', args.concat([
-        '--finalize', '--input', resultFile, '--agent-id', 'codex-agent-1'
-      ]), { cwd: repo, encoding: 'utf8' })
-    }).toThrow(/passed context-isolation-preflight evidence/)
     fs.rmSync(resultFile)
     fs.rmSync(repo, { recursive: true, force: true })
   })
@@ -803,11 +889,11 @@ describe('native subagent reviewer isolation', function () {
         codeRound: 0,
         platform: platform
       })
-      const script = path.resolve(__dirname, '..', 'persist-review-json.js')
+      const script = path.resolve(__dirname, '..', 'persist-review-markdown.js')
       expect(function () {
         childProcess.execFileSync('node', [
           script, '--task-id', 'test-task', '--kind', 'plan', '--round', '1'
-        ], { cwd: repo, input: JSON.stringify(review()), encoding: 'utf8' })
+        ], { cwd: repo, input: reviewMarkdown(review()), encoding: 'utf8' })
       }).toThrow(/must be finalized and persisted by review-manager.js/)
       fs.rmSync(repo, { recursive: true, force: true })
     })
@@ -815,6 +901,33 @@ describe('native subagent reviewer isolation', function () {
 })
 
 describe('review evidence validation', function () {
+  test('round-trips the structured Markdown review format', function () {
+    expect(reviewDocument.parse(reviewMarkdown(review()))).toEqual(review())
+  })
+
+  test('omits process evidence sections from reviewer output', function () {
+    const markdown = reviewMarkdown(review())
+    ;['符号追踪', '验证记录', '反例检查', '差异范围'].forEach(function (heading) {
+      expect(markdown).not.toContain('## ' + heading)
+    })
+  })
+
+  test('round-trips residual risks as list items', function () {
+    const value = review()
+    value.evidence.residualRisks.push('真实设备行为仍需验证。')
+    expect(reviewDocument.parse(reviewMarkdown(value))).toEqual(value)
+  })
+
+  test('rejects a bare JSON reviewer response', function () {
+    expect(function () { reviewDocument.parse(JSON.stringify(review())) }).toThrow(/不符合固定格式/)
+  })
+
+  test('allows JSON code blocks inside a valid Markdown review section', function () {
+    const value = review()
+    value.summary = '示例：\n\n```json\n{"ok":true}\n```'
+    expect(reviewDocument.parse(reviewMarkdown(value))).toEqual(value)
+  })
+
   test('accepts an evidenced approval', function () {
     expect(u.validateReviewObject(review())).toEqual([])
   })
@@ -825,46 +938,18 @@ describe('review evidence validation', function () {
     expect(u.validateReviewObject(value)).toContain('evidence must be an object')
   })
 
-  test('requires dispositions for unexpected paths', function () {
+  test('rejects removed process evidence fields', function () {
     const value = review()
-    value.evidence.diffScope.unexpectedPaths.push('src/unexpected.js')
-    expect(u.validateReviewObject(value)).toContain('unexpected path requires disposition: src/unexpected.js')
+    value.evidence.diffScope = {}
+    expect(u.validateReviewObject(value)).toContain('evidence must not contain additional property diffScope')
   })
 
-  test('rejects hidden unexpected paths from scope metadata', function () {
-    const value = review()
-    expect(u.validateReviewScope(value, { round: 1, unexpectedPaths: ['src/unexpected.js'] }, 1)).toContain(
-      'evidence.diffScope.unexpectedPaths must match scope metadata'
-    )
+  test('keeps reviewer runtime configuration out of the Markdown document', function () {
+    expect(reviewMarkdown(review())).not.toContain('reviewerConfig')
+    expect(reviewMarkdown(review())).not.toContain('```json')
   })
 
-  test('binds review and scope artifacts to the expected round', function () {
-    const value = review()
-    expect(u.validateReviewScope(value, { round: 2, unexpectedPaths: [] }, 2)).toEqual(expect.arrayContaining([
-      'review round must equal expected round 2',
-      'evidence.diffScope.cumulativeDiff must reference expected round 2',
-      'evidence.diffScope.roundDiff must reference expected round 2'
-    ]))
-  })
-
-  test('does not approve a blocking unexpected path', function () {
-    const value = review()
-    value.evidence.diffScope.unexpectedPaths.push('src/unexpected.js')
-    value.evidence.diffScope.unexpectedDispositions.push({
-      path: 'src/unexpected.js',
-      disposition: 'blocking',
-      reason: 'The path is outside the confirmed task.'
-    })
-    expect(u.validateReviewObject(value)).toContain('approved review must not have blocking unexpected path dispositions')
-  })
-
-  test('requires a confirmed read-only reviewer sandbox', function () {
-    const value = review()
-    value.evidence.reviewerConfig.sandboxMode = 'workspace-write'
-    expect(u.validateReviewObject(value)).toContain('evidence.reviewerConfig.sandboxMode must be read-only')
-  })
-
-  test('does not enter code reviewing before the snapshot is complete', function () {
+  test('enters code reviewing after validating baseline and current worktree without diff artifacts', function () {
     const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-coder-complete-'))
     const taskDir = writeTask(repo, 'test-task', {
       protocolVersion: u.protocolVersion,
@@ -878,45 +963,28 @@ describe('review evidence validation', function () {
     const args = [script, '--task-id', 'test-task', '--event', 'coder-complete']
     expect(function () {
       childProcess.execFileSync('node', args, { cwd: repo, encoding: 'utf8' })
-    }).toThrow(/requires snapshot-diff artifacts for round 1/)
+    }).toThrow(/manifest\.json/)
     expect(JSON.parse(fs.readFileSync(path.join(taskDir, 'state.json'))).phase).toBe('code_drafting')
 
     writeCleanBaseline(repo, taskDir)
     fs.writeFileSync(path.join(repo, 'tracked.txt'), 'changed\n')
-    writeSnapshotRound(repo, taskDir, 1, ['tracked.txt'])
-    const diffFile = path.join(taskDir, 'diffs', 'code-diff-1.patch')
-    const diff = fs.readFileSync(diffFile)
-    fs.appendFileSync(diffFile, '\ntampered\n')
-    expect(function () {
-      childProcess.execFileSync('node', args, { cwd: repo, encoding: 'utf8' })
-    }).toThrow(/code-diff-1\.patch must exactly match the reconstructed Git diff/)
-    fs.writeFileSync(diffFile, diff)
-    fs.writeFileSync(path.join(repo, 'tracked.txt'), 'changed after snapshot\n')
-    expect(function () {
-      childProcess.execFileSync('node', args, { cwd: repo, encoding: 'utf8' })
-    }).toThrow(/Code snapshot is stale for round 1/)
-    fs.writeFileSync(path.join(repo, 'tracked.txt'), 'changed\n')
+    fs.rmSync(path.join(taskDir, 'diffs'), { recursive: true })
     childProcess.execFileSync('node', args, { cwd: repo, encoding: 'utf8' })
     expect(JSON.parse(fs.readFileSync(path.join(taskDir, 'state.json'))).phase).toBe('code_reviewing')
+    expect(fs.existsSync(path.join(taskDir, 'diffs'))).toBe(false)
     fs.rmSync(repo, { recursive: true, force: true })
   })
 
-  test('validator cross-checks unexpected paths from code scope metadata', function () {
+  test('validator checks the compact review without scope metadata', function () {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-validator-'))
     const reviewsDir = path.join(dir, 'reviews')
-    const diffsDir = path.join(dir, 'diffs')
     fs.mkdirSync(reviewsDir)
-    fs.mkdirSync(diffsDir)
-    const reviewFile = path.join(reviewsDir, 'code-review-1.json')
-    fs.writeFileSync(reviewFile, JSON.stringify(review()))
-    fs.writeFileSync(path.join(diffsDir, 'code-scope-1.json'), JSON.stringify({
-      round: 1,
-      unexpectedPaths: ['src/unexpected.js']
-    }))
-    const validator = path.resolve(__dirname, '..', 'validate-review-json.js')
-    expect(function () {
-      childProcess.execFileSync('node', [validator, '--review', reviewFile], { encoding: 'utf8' })
-    }).toThrow(/evidence\.diffScope\.unexpectedPaths must match scope metadata/)
+    const reviewFile = path.join(reviewsDir, 'code-review-1.md')
+    fs.writeFileSync(reviewFile, reviewMarkdown(review()))
+    const validator = path.resolve(__dirname, '..', 'validate-review-markdown.js')
+    expect(JSON.parse(childProcess.execFileSync('node', [validator, '--review', reviewFile], {
+      encoding: 'utf8'
+    })).ok).toBe(true)
     fs.rmSync(dir, { recursive: true, force: true })
   })
 
@@ -939,8 +1007,8 @@ describe('review evidence validation', function () {
       round: 2,
       unexpectedPaths: []
     }))
-    const reviewFile = path.join(taskDir, 'reviews', 'code-review-2.json')
-    fs.writeFileSync(reviewFile, JSON.stringify(review()))
+    const reviewFile = path.join(taskDir, 'reviews', 'code-review-2.md')
+    fs.writeFileSync(reviewFile, reviewMarkdown(review()))
     const script = path.resolve(__dirname, '..', 'advance-state.js')
     expect(function () {
       childProcess.execFileSync('node', [
@@ -966,8 +1034,8 @@ describe('review evidence validation', function () {
       round: 1,
       unexpectedPaths: []
     }))
-    const reviewFile = path.join(otherTaskDir, 'reviews', 'code-review-1.json')
-    fs.writeFileSync(reviewFile, JSON.stringify(review()))
+    const reviewFile = path.join(otherTaskDir, 'reviews', 'code-review-1.md')
+    fs.writeFileSync(reviewFile, reviewMarkdown(review()))
     const script = path.resolve(__dirname, '..', 'advance-state.js')
     expect(function () {
       childProcess.execFileSync('node', [
@@ -990,10 +1058,10 @@ describe('review evidence validation', function () {
       planStatus: 'approved',
       codeStatus: 'changes_requested',
       awaitingUserConfirmation: false,
-      lastReviewFile: 'reviews/code-review-2.json',
+      lastReviewFile: 'reviews/code-review-2.md',
       terminationReason: ''
     })
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'code-review-2.json'), JSON.stringify(review('changes_requested', 2)))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'code-review-2.md'), reviewMarkdown(review('changes_requested', 2)))
     const script = path.resolve(__dirname, '..', 'advance-state.js')
     expect(function () {
       childProcess.execFileSync('node', [
@@ -1017,10 +1085,10 @@ describe('review evidence validation', function () {
       planStatus: 'approved',
       codeStatus: 'max_rounds_reached',
       awaitingUserConfirmation: true,
-      lastReviewFile: 'reviews/code-review-3.json',
+      lastReviewFile: 'reviews/code-review-3.md',
       terminationReason: 'max_rounds_reached'
     })
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'code-review-3.json'), JSON.stringify(review('changes_requested', 3)))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'code-review-3.md'), reviewMarkdown(review('changes_requested', 3)))
     const script = path.resolve(__dirname, '..', 'advance-state.js')
     expect(function () {
       childProcess.execFileSync('node', [
@@ -1061,10 +1129,10 @@ describe('review evidence validation', function () {
       planStatus: 'max_rounds_reached',
       codeStatus: 'pending',
       awaitingUserConfirmation: true,
-      lastReviewFile: 'reviews/plan-review-3.json',
+      lastReviewFile: 'reviews/plan-review-3.md',
       terminationReason: 'max_rounds_reached'
     })
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-3.json'), JSON.stringify(review('changes_requested', 3)))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-3.md'), reviewMarkdown(review('changes_requested', 3)))
     const script = path.resolve(__dirname, '..', 'advance-state.js')
     childProcess.execFileSync('node', [
       script, '--task-id', 'test-task', '--event', 'set-max-rounds',
@@ -1133,16 +1201,16 @@ describe('review evidence validation', function () {
       round: 1,
       unexpectedPaths: []
     }))
-    const otherReviewFile = path.join(otherTaskDir, 'reviews', 'code-review-1.json')
-    const reviewFile = path.join(taskDir, 'reviews', 'code-review-1.json')
-    const content = JSON.stringify(review(), null, 2) + '\n'
+    const otherReviewFile = path.join(otherTaskDir, 'reviews', 'code-review-1.md')
+    const reviewFile = path.join(taskDir, 'reviews', 'code-review-1.md')
+    const content = reviewMarkdown(review())
     fs.writeFileSync(otherReviewFile, content)
     fs.symlinkSync(otherReviewFile, reviewFile)
-    const persist = path.resolve(__dirname, '..', 'persist-review-json.js')
+    const persist = path.resolve(__dirname, '..', 'persist-review-markdown.js')
     expect(function () {
       childProcess.execFileSync('node', [
         persist, '--task-id', 'current-task', '--kind', 'code', '--round', '1'
-      ], { cwd: repo, input: JSON.stringify(review()), encoding: 'utf8' })
+      ], { cwd: repo, input: reviewMarkdown(review()), encoding: 'utf8' })
     }).toThrow(/regular non-symlink file/)
     const advance = path.resolve(__dirname, '..', 'advance-state.js')
     expect(function () {
@@ -1170,16 +1238,16 @@ describe('review evidence validation', function () {
       round: 1,
       unexpectedPaths: []
     }))
-    const otherReviewFile = path.join(otherTaskDir, 'reviews', 'code-review-1.json')
-    fs.writeFileSync(otherReviewFile, JSON.stringify(review(), null, 2) + '\n')
+    const otherReviewFile = path.join(otherTaskDir, 'reviews', 'code-review-1.md')
+    fs.writeFileSync(otherReviewFile, reviewMarkdown(review()))
     fs.rmSync(path.join(taskDir, 'reviews'), { recursive: true })
     fs.symlinkSync(path.join(otherTaskDir, 'reviews'), path.join(taskDir, 'reviews'))
-    const reviewFile = path.join(taskDir, 'reviews', 'code-review-1.json')
-    const persist = path.resolve(__dirname, '..', 'persist-review-json.js')
+    const reviewFile = path.join(taskDir, 'reviews', 'code-review-1.md')
+    const persist = path.resolve(__dirname, '..', 'persist-review-markdown.js')
     expect(function () {
       childProcess.execFileSync('node', [
         persist, '--task-id', 'current-task', '--kind', 'code', '--round', '1'
-      ], { cwd: repo, input: JSON.stringify(review()), encoding: 'utf8' })
+      ], { cwd: repo, input: reviewMarkdown(review()), encoding: 'utf8' })
     }).toThrow(/Reviews directory must be a canonical non-symlink directory/)
     const advance = path.resolve(__dirname, '..', 'advance-state.js')
     expect(function () {
@@ -1187,7 +1255,7 @@ describe('review evidence validation', function () {
         advance, '--task-id', 'current-task', '--event', 'code-review-complete', '--review', reviewFile
       ], { cwd: repo, encoding: 'utf8' })
     }).toThrow(/Reviews directory must be a canonical non-symlink directory/)
-    const validate = path.resolve(__dirname, '..', 'validate-review-json.js')
+    const validate = path.resolve(__dirname, '..', 'validate-review-markdown.js')
     expect(function () {
       childProcess.execFileSync('node', [validate, '--review', reviewFile], { cwd: repo, encoding: 'utf8' })
     }).toThrow(/Reviews directory must be a canonical non-symlink directory/)
@@ -1200,7 +1268,7 @@ describe('review evidence validation', function () {
       codeRound: 0,
       maxRounds: 3
     }))
-    fs.writeFileSync(path.join(otherTaskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
+    fs.writeFileSync(path.join(otherTaskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review()))
     writeCleanBaseline(repo, taskDir)
     const migrate = path.resolve(__dirname, '..', 'migrate-workspace.js')
     expect(function () {
@@ -1210,21 +1278,10 @@ describe('review evidence validation', function () {
     fs.rmSync(repo, { recursive: true, force: true })
   })
 
-  test('rejects additional properties at every schema object level', function () {
+  test('rejects additional properties in parsed review data', function () {
     const mutations = [
       function (value) { value.extra = true },
       function (value) { value.evidence.extra = true },
-      function (value) { value.evidence.tracedSymbols[0].extra = true },
-      function (value) { value.evidence.checks[0].extra = true },
-      function (value) { value.evidence.counterexamples[0].extra = true },
-      function (value) { value.evidence.diffScope.extra = true },
-      function (value) {
-        value.evidence.diffScope.unexpectedPaths.push('src/unexpected.js')
-        value.evidence.diffScope.unexpectedDispositions.push({
-          path: 'src/unexpected.js', disposition: 'included', reason: 'in scope', extra: true
-        })
-      },
-      function (value) { value.evidence.reviewerConfig.extra = true },
       function (value) {
         value.status = 'changes_requested'
         value.findings.push({
@@ -1259,7 +1316,7 @@ describe('review persistence and protocol migration', function () {
     fs.rmSync(repo, { recursive: true, force: true })
   })
 
-  test('orchestrator persists validated JSON returned by a read-only reviewer', function () {
+  test('orchestrator persists validated Markdown returned by a read-only reviewer', function () {
     const taskDir = writeTask(repo, 'test-task', {
       protocolVersion: u.protocolVersion,
       taskId: 'test-task',
@@ -1271,12 +1328,12 @@ describe('review persistence and protocol migration', function () {
       round: 1,
       unexpectedPaths: []
     }))
-    const script = path.resolve(__dirname, '..', 'persist-review-json.js')
+    const script = path.resolve(__dirname, '..', 'persist-review-markdown.js')
     const output = JSON.parse(childProcess.execFileSync('node', [
       script, '--task-id', 'test-task', '--kind', 'code', '--round', '1'
-    ], { cwd: repo, input: JSON.stringify(review()), encoding: 'utf8' }))
+    ], { cwd: repo, input: reviewMarkdown(review()), encoding: 'utf8' }))
     expect(output.status).toBe('approved')
-    expect(JSON.parse(fs.readFileSync(path.join(taskDir, 'reviews', 'code-review-1.json')))).toEqual(review())
+    expect(reviewDocument.parse(fs.readFileSync(path.join(taskDir, 'reviews', 'code-review-1.md'), 'utf8'))).toEqual(review())
   })
 
   test('allows only identical retries for the current review artifact', function () {
@@ -1291,18 +1348,18 @@ describe('review persistence and protocol migration', function () {
       round: 1,
       unexpectedPaths: []
     }))
-    const script = path.resolve(__dirname, '..', 'persist-review-json.js')
+    const script = path.resolve(__dirname, '..', 'persist-review-markdown.js')
     const args = [script, '--task-id', 'test-task', '--kind', 'code', '--round', '1']
-    const reviewFile = path.join(taskDir, 'reviews', 'code-review-1.json')
+    const reviewFile = path.join(taskDir, 'reviews', 'code-review-1.md')
     const first = childProcess.execFileSync('node', args, {
       cwd: repo,
-      input: JSON.stringify(review()),
+      input: reviewMarkdown(review()),
       encoding: 'utf8'
     })
     const persisted = fs.readFileSync(reviewFile, 'utf8')
     expect(childProcess.execFileSync('node', args, {
       cwd: repo,
-      input: JSON.stringify(review()),
+      input: reviewMarkdown(review()),
       encoding: 'utf8'
     })).toBe(first)
     const changed = review()
@@ -1310,7 +1367,7 @@ describe('review persistence and protocol migration', function () {
     expect(function () {
       childProcess.execFileSync('node', args, {
         cwd: repo,
-        input: JSON.stringify(changed),
+        input: reviewMarkdown(changed),
         encoding: 'utf8'
       })
     }).toThrow(/already exists with different content/)
@@ -1325,16 +1382,16 @@ describe('review persistence and protocol migration', function () {
       planRound: 1,
       codeRound: 1
     })
-    const reviewFile = path.join(taskDir, 'reviews', 'code-review-1.json')
-    fs.writeFileSync(reviewFile, JSON.stringify(review(), null, 2) + '\n')
+    const reviewFile = path.join(taskDir, 'reviews', 'code-review-1.md')
+    fs.writeFileSync(reviewFile, reviewMarkdown(review()))
     const persisted = fs.readFileSync(reviewFile, 'utf8')
     const changed = review()
     changed.summary = 'Replacement review content.'
-    const script = path.resolve(__dirname, '..', 'persist-review-json.js')
+    const script = path.resolve(__dirname, '..', 'persist-review-markdown.js')
     expect(function () {
       childProcess.execFileSync('node', [
         script, '--task-id', 'test-task', '--kind', 'code', '--round', '1'
-      ], { cwd: repo, input: JSON.stringify(changed), encoding: 'utf8' })
+      ], { cwd: repo, input: reviewMarkdown(changed), encoding: 'utf8' })
     }).toThrow(/requires phase code_reviewing/)
     expect(fs.readFileSync(reviewFile, 'utf8')).toBe(persisted)
   })
@@ -1347,13 +1404,13 @@ describe('review persistence and protocol migration', function () {
       planRound: 0,
       codeRound: 0
     })
-    const script = path.resolve(__dirname, '..', 'persist-review-json.js')
+    const script = path.resolve(__dirname, '..', 'persist-review-markdown.js')
     expect(function () {
       childProcess.execFileSync('node', [
         script, '--task-id', 'test-task', '--kind', 'plan', '--round', '1'
       ], { cwd: repo, input: '```json\n{}\n```', encoding: 'utf8' })
-    }).toThrow(/one strict JSON object/)
-    expect(fs.existsSync(path.join(taskDir, 'reviews', 'plan-review-1.json'))).toBe(false)
+    }).toThrow(/pure Markdown document/)
+    expect(fs.existsSync(path.join(taskDir, 'reviews', 'plan-review-1.md'))).toBe(false)
   })
 
   test('does not force-reinitialize a workspace with immutable review history', function () {
@@ -1365,7 +1422,7 @@ describe('review persistence and protocol migration', function () {
       codeRound: 0
     })
     writeCleanBaseline(repo, taskDir)
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review()))
     fs.mkdirSync(path.join(taskDir, 'runtime', 'reviewer-runs'))
     fs.writeFileSync(path.join(taskDir, 'runtime', 'reviewer-runs', 'plan-review-1.json'), '{}')
     const state = fs.readFileSync(path.join(taskDir, 'state.json'))
@@ -1380,7 +1437,7 @@ describe('review persistence and protocol migration', function () {
     expect(fs.readFileSync(path.join(taskDir, 'state.json'))).toEqual(state)
   })
 
-  test('migrates safe legacy state while preserving legacy reviews as read-only', function () {
+  test('rejects legacy JSON review artifacts without rewriting state', function () {
     const taskDir = writeTask(repo, 'test-task', {
       protocolVersion: '1.0.0',
       taskId: 'test-task',
@@ -1389,21 +1446,13 @@ describe('review persistence and protocol migration', function () {
       codeRound: 0,
       maxRounds: 3
     })
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify({
-      round: 1,
-      status: 'approved',
-      summary: 'Legacy approval.',
-      findings: []
-    }))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
     writeCleanBaseline(repo, taskDir)
     const script = path.resolve(__dirname, '..', 'migrate-workspace.js')
-    const output = JSON.parse(childProcess.execFileSync('node', [script, '--task-id', 'test-task'], {
-      cwd: repo,
-      encoding: 'utf8'
-    }))
-    expect(output.protocolVersion).toBe(u.protocolVersion)
-    expect(output.legacyReadOnlyArtifacts).toEqual(['reviews/plan-review-1.json'])
-    expect(JSON.parse(fs.readFileSync(path.join(taskDir, 'state.json'))).protocolVersion).toBe(u.protocolVersion)
+    expect(function () {
+      childProcess.execFileSync('node', [script, '--task-id', 'test-task'], { cwd: repo, encoding: 'utf8' })
+    }).toThrow(/JSON review artifacts are unsupported/)
+    expect(JSON.parse(fs.readFileSync(path.join(taskDir, 'state.json'))).protocolVersion).toBe('1.0.0')
   })
 
   test('keeps legacy state unchanged when its clean baseline tree does not match HEAD', function () {
@@ -1491,38 +1540,46 @@ describe('review persistence and protocol migration', function () {
     })
   })
 
-  test('migrated code drafting workspace can snapshot its next round', function () {
+  test('migrated code drafting workspace can reconstruct its next-round diff without scope metadata', function () {
     const fixture = writeMigratableCodeTask(repo)
     const migrate = path.resolve(__dirname, '..', 'migrate-workspace.js')
     childProcess.execFileSync('node', [migrate, '--task-id', 'test-task'], { cwd: repo, encoding: 'utf8' })
     fs.writeFileSync(path.join(repo, 'tracked.txt'), 'round two\n')
-    fs.writeFileSync(path.join(fixture.taskDir, 'runtime', 'code-round-2-paths.json'), JSON.stringify({
-      round: 2,
-      paths: ['tracked.txt']
-    }))
-    const snapshotScript = path.resolve(__dirname, '..', 'snapshot-diff.js')
-    childProcess.execFileSync('node', [snapshotScript, '--task-id', 'test-task', '--round', '2'], {
+    const advance = path.resolve(__dirname, '..', 'advance-state.js')
+    childProcess.execFileSync('node', [advance, '--task-id', 'test-task', '--event', 'coder-complete'], {
       cwd: repo,
       encoding: 'utf8'
     })
-    const scope = JSON.parse(fs.readFileSync(path.join(fixture.taskDir, 'diffs', 'code-scope-2.json')))
-    expect(scope.previousTree).toBe(fixture.scope.currentTree)
-    expect(scope.roundPaths).toEqual(['tracked.txt'])
+    const originalCwd = process.cwd()
+    process.chdir(repo)
+    let diff
+    try {
+      const trees = snapshot.reviewTrees('test-task')
+      diff = snapshot.diffTrees('test-task', trees.baselineTree, trees.currentTree)
+      fs.writeFileSync(path.join(fixture.taskDir, 'diffs', 'code-diff-2.patch'), diff)
+    } finally {
+      process.chdir(originalCwd)
+    }
+    expect(diff).toContain('round two')
+    expect(fs.existsSync(path.join(fixture.taskDir, 'diffs', 'code-scope-2.json'))).toBe(false)
     expect(JSON.parse(fs.readFileSync(path.join(fixture.taskDir, 'state.json'))).protocolVersion).toBe(u.protocolVersion)
   })
 
   ;[
     {
-      name: 'empty current unexpected path',
-      mutate: function (scope) { scope.unexpectedPaths = [''] }
+      name: 'removed current unexpected paths',
+      mutate: function (scope) { scope.unexpectedPaths = ['tracked.txt'] },
+      error: /must not contain unexpectedPaths/
     },
     {
       name: 'escaping current cumulative path',
-      mutate: function (scope) { scope.cumulativePaths = ['../outside.js'] }
+      mutate: function (scope) { scope.cumulativePaths = ['../outside.js'] },
+      error: /must be an array of non-empty repo-relative paths/
     },
     {
-      name: 'absolute current claimed path',
-      mutate: function (scope) { scope.claimedPaths = ['/tmp/outside.js'] }
+      name: 'removed current claimed paths',
+      mutate: function (scope) { scope.claimedPaths = ['tracked.txt'] },
+      error: /must not contain claimedPaths/
     }
   ].forEach(function (testCase) {
     test('blocks legacy migration with ' + testCase.name, function () {
@@ -1532,25 +1589,18 @@ describe('review persistence and protocol migration', function () {
       const script = path.resolve(__dirname, '..', 'migrate-workspace.js')
       expect(function () {
         childProcess.execFileSync('node', [script, '--task-id', 'test-task'], { cwd: repo, encoding: 'utf8' })
-      }).toThrow(/must be an array of non-empty repo-relative paths/)
+      }).toThrow(testCase.error)
       expect(JSON.parse(fs.readFileSync(path.join(fixture.taskDir, 'state.json'))).protocolVersion).toBe('1.0.0')
       expect(fs.existsSync(path.join(fixture.taskDir, 'runtime', 'protocol-migration.json'))).toBe(false)
     })
   })
 
-  test('migrates a current code scope whose paths can produce valid evidence', function () {
+  test('migrates a current code scope without exposing scope evidence', function () {
     const fixture = writeMigratableCurrentCodeTask(repo)
     const script = path.resolve(__dirname, '..', 'migrate-workspace.js')
     childProcess.execFileSync('node', [script, '--task-id', 'test-task'], { cwd: repo, encoding: 'utf8' })
     const value = review('approved', 2)
-    value.evidence.diffScope.unexpectedPaths.push('tracked.txt')
-    value.evidence.diffScope.unexpectedDispositions.push({
-      path: 'tracked.txt',
-      disposition: 'included',
-      reason: 'The path is part of the reviewed round.'
-    })
     expect(u.validateReviewObject(value)).toEqual([])
-    expect(u.validateReviewScope(value, fixture.scope, 2)).toEqual([])
     expect(JSON.parse(fs.readFileSync(path.join(fixture.taskDir, 'state.json'))).protocolVersion).toBe(u.protocolVersion)
   })
 
@@ -1579,13 +1629,13 @@ describe('review persistence and protocol migration', function () {
       name: 'overlapping claimed and unexpected paths',
       fixture: writeMigratableChangedCodeTask,
       mutate: function (fixture) { fixture.scope.unexpectedPaths = ['tracked.txt'] },
-      error: /must be an ordered, unique, disjoint partition of roundPaths/
+      error: /must not contain unexpectedPaths/
     },
     {
       name: 'duplicate claimed paths',
       fixture: writeMigratableChangedCodeTask,
       mutate: function (fixture) { fixture.scope.claimedPaths = ['tracked.txt', 'tracked.txt'] },
-      error: /must use unique canonical Git paths in stored order/
+      error: /must not contain claimedPaths/
     }
   ].forEach(function (testCase) {
     test('blocks legacy migration with ' + testCase.name, function () {
@@ -1601,7 +1651,7 @@ describe('review persistence and protocol migration', function () {
     })
   })
 
-  ;['code-diff-1.patch', 'code-round-1.patch'].forEach(function (patchFile) {
+  ;['code-diff-1.patch'].forEach(function (patchFile) {
     test('blocks legacy migration with stale empty ' + patchFile, function () {
       const fixture = writeMigratableChangedCodeTask(repo)
       fs.writeFileSync(path.join(fixture.taskDir, 'diffs', patchFile), '')
@@ -1614,16 +1664,14 @@ describe('review persistence and protocol migration', function () {
     })
   })
 
-  test('migrates code scope with reconstructed paths, partition, and patches', function () {
+  test('migrates code scope with reconstructed cumulative paths and patch', function () {
     const fixture = writeMigratableChangedCodeTask(repo)
     const script = path.resolve(__dirname, '..', 'migrate-workspace.js')
     childProcess.execFileSync('node', [script, '--task-id', 'test-task'], { cwd: repo, encoding: 'utf8' })
     expect(fixture.scope).toEqual(expect.objectContaining({
-      cumulativePaths: ['tracked.txt'],
-      roundPaths: ['tracked.txt'],
-      claimedPaths: ['tracked.txt'],
-      unexpectedPaths: []
+      cumulativePaths: ['tracked.txt']
     }))
+    expect(fixture.scope).not.toHaveProperty('roundPaths')
     expect(JSON.parse(fs.readFileSync(path.join(fixture.taskDir, 'state.json'))).protocolVersion).toBe(u.protocolVersion)
     expect(fs.existsSync(path.join(fixture.taskDir, 'runtime', 'protocol-migration.json'))).toBe(true)
   })
@@ -1637,17 +1685,12 @@ describe('review persistence and protocol migration', function () {
       codeRound: 0,
       maxRounds: 3
     })
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify({
-      round: 1,
-      status: 'approved',
-      summary: 'Legacy approval.',
-      findings: []
-    }))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), '# Review Loop 评审\n')
     writeCleanBaseline(repo, taskDir)
     const script = path.resolve(__dirname, '..', 'migrate-workspace.js')
     expect(function () {
       childProcess.execFileSync('node', [script, '--task-id', 'test-task'], { cwd: repo, encoding: 'utf8' })
-    }).toThrow(/evidence must be an object/)
+    }).toThrow(/评审 Markdown 不符合固定格式/)
     expect(JSON.parse(fs.readFileSync(path.join(taskDir, 'state.json'))).protocolVersion).toBe('1.0.0')
     expect(fs.existsSync(path.join(taskDir, 'runtime', 'protocol-migration.json'))).toBe(false)
   })
@@ -1661,7 +1704,7 @@ describe('review persistence and protocol migration', function () {
       codeRound: 0,
       maxRounds: 3
     })
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review('changes_requested')))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review('changes_requested')))
     writeCleanBaseline(repo, taskDir)
     const script = path.resolve(__dirname, '..', 'migrate-workspace.js')
     expect(function () {
@@ -1680,7 +1723,7 @@ describe('review persistence and protocol migration', function () {
       codeRound: 0,
       maxRounds: 1
     })
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review('changes_requested')))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review('changes_requested')))
     writeCleanBaseline(repo, taskDir)
     const script = path.resolve(__dirname, '..', 'migrate-workspace.js')
     const output = JSON.parse(childProcess.execFileSync('node', [script, '--task-id', 'test-task'], {
@@ -1701,7 +1744,7 @@ describe('review persistence and protocol migration', function () {
         codeRound: 1,
         maxRounds: 3
       })
-      fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
+      fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review()))
       writeCleanBaseline(repo, taskDir)
       const baseline = JSON.parse(fs.readFileSync(path.join(taskDir, 'runtime', 'baseline', 'manifest.json')))
       writeCodeReviewRound(taskDir, 1, review('changes_requested'), codeScope(
@@ -1725,7 +1768,7 @@ describe('review persistence and protocol migration', function () {
       codeRound: 1,
       maxRounds: 1
     })
-    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
+    fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review()))
     writeCleanBaseline(repo, taskDir)
     const baseline = JSON.parse(fs.readFileSync(path.join(taskDir, 'runtime', 'baseline', 'manifest.json')))
     writeCodeReviewRound(taskDir, 1, review('changes_requested'), codeScope(
@@ -1745,14 +1788,14 @@ describe('review persistence and protocol migration', function () {
       phase: 'awaiting_plan_confirm',
       codeRound: 0,
       prepare: function (taskDir) {
-        fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
+        fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review()))
       }
     },
     {
       phase: 'awaiting_final_confirm',
       codeRound: 1,
       prepare: function (taskDir) {
-        fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.json'), JSON.stringify(review()))
+        fs.writeFileSync(path.join(taskDir, 'reviews', 'plan-review-1.md'), reviewMarkdown(review()))
         const baseline = JSON.parse(fs.readFileSync(path.join(taskDir, 'runtime', 'baseline', 'manifest.json')))
         writeCodeReviewRound(taskDir, 1, review(), codeScope(taskDir, 1, baseline.tree, baseline.tree))
       }
@@ -1783,7 +1826,7 @@ describe('review persistence and protocol migration', function () {
     })
   })
 
-  test('legacy review validation is explicitly read-only', function () {
+  test('rejects legacy JSON review validation', function () {
     const taskDir = writeTask(repo, 'test-task', {
       protocolVersion: '1.0.0',
       taskId: 'test-task',
@@ -1798,11 +1841,10 @@ describe('review persistence and protocol migration', function () {
       summary: 'Legacy approval.',
       findings: []
     }))
-    const script = path.resolve(__dirname, '..', 'validate-review-json.js')
-    const output = JSON.parse(childProcess.execFileSync('node', [
-      script, '--review', reviewFile, '--legacy-read-only'
-    ], { cwd: repo, encoding: 'utf8' }))
-    expect(output).toEqual(expect.objectContaining({ contract: 'legacy-read-only', resumable: false }))
+    const script = path.resolve(__dirname, '..', 'validate-review-markdown.js')
+    expect(function () {
+      childProcess.execFileSync('node', [script, '--review', reviewFile], { cwd: repo, encoding: 'utf8' })
+    }).toThrow(/must be a Markdown file/)
   })
 
   test('blocks unsafe legacy code-review recovery without rewriting state', function () {
@@ -1861,6 +1903,7 @@ describe('role preparation', function () {
       'code-reviewer.toml', 'coder.toml', 'plan-reviewer.toml', 'planner.toml'
     ])
     expect(fs.readFileSync(path.join(projectRoles, 'planner.toml'), 'utf8')).toContain('name = "planner"')
+    expect(fs.readFileSync(path.join(projectRoles, 'planner.toml'), 'utf8')).toContain('负责 review-loop 工作流技术方案编写与修订。')
     expect(fs.readFileSync(path.join(projectRoles, 'coder.toml'), 'utf8')).toContain('name = "coder"')
 
     expect(prepare('codex', ['--mode', 'auto']).status).toBe('ready')
@@ -1881,6 +1924,7 @@ describe('role preparation', function () {
 
     const planner = fs.readFileSync(path.join(runtimeRoles, 'planner.md'), 'utf8')
     expect(planner).toContain('name: planner')
+    expect(planner).toContain('description: 负责 review-loop 工作流技术方案编写与修订。')
     expect(planner).not.toContain('permissionMode: plan')
 
     const projectRoles = path.join(repo, '.claude', 'agents')

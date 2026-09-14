@@ -12,7 +12,7 @@ function requireFile (file, errors) {
 
 function readReview (file, errors) {
   try {
-    return JSON.parse(u.readReviewArtifact(file))
+    return u.parseReviewArtifact(file)
   } catch (err) {
     errors.push('invalid review artifact ' + file + ': ' + err.message)
   }
@@ -40,7 +40,7 @@ function validateCodeReview (taskId, round, scope, errors) {
   const review = readReview(reviewFile, errors)
   if (!review) return
   errors.push.apply(errors, u.validateReviewObject(review))
-  errors.push.apply(errors, u.validateReviewScope(review, scope, round))
+  if (review.round !== round) errors.push('code review round must equal completed round ' + round)
   return review
 }
 
@@ -59,8 +59,7 @@ function validateCodeScope (taskId, round, baseline, baselineTree, previousTree,
   const dir = path.join(u.taskDir(taskId), 'diffs')
   const scopeFile = path.join(dir, 'code-scope-' + round + '.json')
   const cumulativePatchFile = path.join(dir, 'code-diff-' + round + '.patch')
-  const roundPatchFile = path.join(dir, 'code-round-' + round + '.patch')
-  ;[scopeFile, cumulativePatchFile, roundPatchFile].forEach(function (file) { requireFile(file, errors) })
+  ;[scopeFile, cumulativePatchFile].forEach(function (file) { requireFile(file, errors) })
   if (!fs.existsSync(scopeFile)) return
   let scope
   try {
@@ -73,14 +72,28 @@ function validateCodeScope (taskId, round, baseline, baselineTree, previousTree,
     errors.push('code scope ' + round + ' must be an object')
     return
   }
+  const cumulativeOnly = !Object.prototype.hasOwnProperty.call(scope, 'previousTree')
+  const roundPatchFile = path.join(dir, 'code-round-' + round + '.patch')
+  if (!cumulativeOnly) requireFile(roundPatchFile, errors)
+  const allowedFields = cumulativeOnly
+    ? ['round', 'baselineHead', 'baselineTree', 'currentTree', 'cumulativePaths']
+    : ['round', 'baselineHead', 'baselineTree', 'previousTree', 'currentTree', 'cumulativePaths', 'roundPaths', 'claimedPaths', 'unexpectedPaths']
+  Object.keys(scope).forEach(function (field) {
+    if (!allowedFields.includes(field)) errors.push('code scope ' + round + ' must not contain ' + field)
+  })
   if (scope.round !== round) errors.push('scope metadata round must equal expected round ' + round)
-  ;['baselineHead', 'baselineTree', 'previousTree', 'currentTree'].forEach(function (field) {
+  const treeFields = ['baselineHead', 'baselineTree', 'currentTree']
+  if (!cumulativeOnly) treeFields.push('previousTree')
+  treeFields.forEach(function (field) {
     if (typeof scope[field] !== 'string' || !scope[field]) {
       errors.push('code scope ' + round + ' ' + field + ' must be a non-empty string')
     }
   })
   const normalizedPaths = {}
-  ;['cumulativePaths', 'roundPaths', 'claimedPaths', 'unexpectedPaths'].forEach(function (field) {
+  const pathFields = cumulativeOnly
+    ? ['cumulativePaths']
+    : ['cumulativePaths', 'roundPaths', 'claimedPaths', 'unexpectedPaths']
+  pathFields.forEach(function (field) {
     try {
       normalizedPaths[field] = Array.from(snapshot.validateRepoRelativePaths(
         scope[field],
@@ -99,7 +112,7 @@ function validateCodeScope (taskId, round, baseline, baselineTree, previousTree,
   if (baselineTree && typeof scope.baselineTree === 'string' && scope.baselineTree !== baselineTree) {
     errors.push('code scope ' + round + ' baselineTree must match reconstructed baseline tree')
   }
-  if (previousTree && typeof scope.previousTree === 'string' && scope.previousTree !== previousTree) {
+  if (!cumulativeOnly && previousTree && typeof scope.previousTree === 'string' && scope.previousTree !== previousTree) {
     errors.push('code scope ' + round + ' previousTree must match the previous scope tree')
   }
   let currentTreeValid = false
@@ -111,27 +124,29 @@ function validateCodeScope (taskId, round, baseline, baselineTree, previousTree,
       errors.push('code scope ' + round + ' currentTree must reference an existing tree object: ' + err.message)
     }
   }
-  if (baselineTree && previousTree && currentTreeValid &&
-    scope.baselineTree === baselineTree && scope.previousTree === previousTree) {
+  if (baselineTree && currentTreeValid && scope.baselineTree === baselineTree &&
+    (cumulativeOnly || scope.previousTree === previousTree)) {
     try {
       const cumulativePaths = snapshot.diffPaths(taskId, baselineTree, scope.currentTree)
-      const roundPaths = snapshot.diffPaths(taskId, previousTree, scope.currentTree)
       if (normalizedPaths.cumulativePaths && !arraysEqual(normalizedPaths.cumulativePaths, cumulativePaths)) {
         errors.push('code scope ' + round + ' cumulativePaths must exactly match the reconstructed Git paths')
       }
-      if (normalizedPaths.roundPaths && !arraysEqual(normalizedPaths.roundPaths, roundPaths)) {
-        errors.push('code scope ' + round + ' roundPaths must exactly match the reconstructed Git paths')
-      }
-      if (normalizedPaths.claimedPaths && normalizedPaths.unexpectedPaths) {
-        const claimed = new Set(normalizedPaths.claimedPaths)
-        const unexpected = new Set(normalizedPaths.unexpectedPaths)
-        const expectedClaimed = roundPaths.filter(function (item) { return claimed.has(item) })
-        const expectedUnexpected = roundPaths.filter(function (item) { return !claimed.has(item) })
-        if (Array.from(claimed).some(function (item) { return unexpected.has(item) }) ||
-          !arraysEqual(normalizedPaths.claimedPaths, expectedClaimed) ||
-          !arraysEqual(normalizedPaths.unexpectedPaths, expectedUnexpected)) {
-          errors.push('code scope ' + round +
-            ' claimedPaths and unexpectedPaths must be an ordered, unique, disjoint partition of roundPaths')
+      if (!cumulativeOnly) {
+        const roundPaths = snapshot.diffPaths(taskId, previousTree, scope.currentTree)
+        if (normalizedPaths.roundPaths && !arraysEqual(normalizedPaths.roundPaths, roundPaths)) {
+          errors.push('code scope ' + round + ' roundPaths must exactly match the reconstructed Git paths')
+        }
+        if (normalizedPaths.claimedPaths && normalizedPaths.unexpectedPaths) {
+          const claimed = new Set(normalizedPaths.claimedPaths)
+          const unexpected = new Set(normalizedPaths.unexpectedPaths)
+          const expectedClaimed = roundPaths.filter(function (item) { return claimed.has(item) })
+          const expectedUnexpected = roundPaths.filter(function (item) { return !claimed.has(item) })
+          if (Array.from(claimed).some(function (item) { return unexpected.has(item) }) ||
+            !arraysEqual(normalizedPaths.claimedPaths, expectedClaimed) ||
+            !arraysEqual(normalizedPaths.unexpectedPaths, expectedUnexpected)) {
+            errors.push('code scope ' + round +
+              ' claimedPaths and unexpectedPaths must be an ordered, unique, disjoint partition of roundPaths')
+          }
         }
       }
       validatePatch(
@@ -140,12 +155,14 @@ function validateCodeScope (taskId, round, baseline, baselineTree, previousTree,
         'code-diff-' + round + '.patch',
         errors
       )
-      validatePatch(
-        roundPatchFile,
-        snapshot.diffTrees(taskId, previousTree, scope.currentTree),
-        'code-round-' + round + '.patch',
-        errors
-      )
+      if (!cumulativeOnly) {
+        validatePatch(
+          roundPatchFile,
+          snapshot.diffTrees(taskId, previousTree, scope.currentTree),
+          'code-round-' + round + '.patch',
+          errors
+        )
+      }
     } catch (err) {
       errors.push('unable to reconstruct code scope ' + round + ': ' + err.message)
     }
@@ -158,16 +175,6 @@ function validateTerminalReview (review, round, maxRounds, kind, errors) {
   if (review && review.status !== 'approved' && round < maxRounds) {
     errors.push('latest ' + kind + ' review must be approved or reach maxRounds before entering the current phase')
   }
-}
-
-function legacyReviewFiles (taskId) {
-  const reviewsDir = path.dirname(u.reviewArtifactPath(taskId, 'plan', 1))
-  return fs.readdirSync(reviewsDir).filter(function (file) {
-    if (!/^(plan|code)-review-\d+\.json$/.test(file)) return false
-    return u.validateReviewObject(JSON.parse(u.readReviewArtifact(path.join(reviewsDir, file)))).length > 0
-  }).map(function (file) {
-    return path.posix.join('reviews', file)
-  }).sort()
 }
 
 function main () {
@@ -188,6 +195,14 @@ function main () {
   ;['goal.md', 'plan.md', 'reviews', 'diffs', 'logs', 'runtime'].forEach(function (item) {
     requireFile(path.join(u.taskDir(taskId), item), errors)
   })
+  const reviewsDir = path.join(u.taskDir(taskId), 'reviews')
+  if (fs.existsSync(reviewsDir)) {
+    fs.readdirSync(reviewsDir).filter(function (file) {
+      return /^(plan|code)-review-\d+\.json$/.test(file)
+    }).forEach(function (file) {
+      errors.push('JSON review artifacts are unsupported by protocol ' + u.protocolVersion + ': reviews/' + file)
+    })
+  }
   const baselineFile = path.join(u.taskDir(taskId), 'runtime', 'baseline', 'manifest.json')
   requireFile(baselineFile, errors)
   let baseline
@@ -239,12 +254,11 @@ function main () {
       '\nStart a new task or reconstruct the missing current-protocol artifacts without rewriting legacy reviews.')
   }
   const migratedAt = new Date().toISOString()
-  const legacyArtifacts = legacyReviewFiles(taskId)
   const record = {
     from: state.protocolVersion,
     to: u.protocolVersion,
     migratedAt: migratedAt,
-    legacyReadOnlyArtifacts: legacyArtifacts
+    reviewFormat: 'pure-markdown'
   }
   state.protocolVersion = u.protocolVersion
   state.migratedFrom = record.from
@@ -254,8 +268,7 @@ function main () {
   process.stdout.write(JSON.stringify({
     ok: true,
     taskId: taskId,
-    protocolVersion: state.protocolVersion,
-    legacyReadOnlyArtifacts: legacyArtifacts
+    protocolVersion: state.protocolVersion
   }, null, 2) + '\n')
 }
 

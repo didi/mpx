@@ -1158,6 +1158,7 @@ background-color: rgba(255, 0, 0, 0.5);
 
 > [!tip] 注意
 > - 背景图和背景色仅 `<view>` 组件支持，且需要通过 `enable-background` 属性开启支持
+> - `url()` 仅支持位图；SVG 图片会输出错误并丢弃，不影响 `linear-gradient()` 渐变背景
 > - 渐变不支持 `turn`、`px` 单位，仅支持百分比
 
 ```css

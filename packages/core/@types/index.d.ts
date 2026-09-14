@@ -538,6 +538,15 @@ export interface RnConfig {
    * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
    */
   cameraPermission?: () => Promise<boolean>
+
+  /**
+   * 自定义获取 Android 底部虚拟区域高度的方法，用于修正页面可视高度。
+   *
+   * 如果未配置，则使用框架默认的 bottom 区域高度计算逻辑。
+   *
+   * @returns number 底部虚拟区域高度
+   */
+  getBottomVirtualHeight?: () => number
 }
 
 interface MpxConfig {
@@ -568,8 +577,10 @@ export function toPureObject<T extends object> (obj: T): T
 
 declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any
 
-export type Plugin = PluginInstallFunction | {
+export type Plugin = (PluginInstallFunction | {
   install: PluginInstallFunction
+}) & {
+  __installed?: boolean
 }
 
 export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never

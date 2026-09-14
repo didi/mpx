@@ -23,6 +23,19 @@ export const isAndroid = __mpx_mode__ === 'android'
 export const isHarmony = __mpx_mode__ === 'harmony'
 export const extendObject = Object.assign
 
+type ImageLoadEvent = {
+  nativeEvent: {
+    source?: { width: number, height: number }
+    width?: number
+    height?: number
+  }
+}
+
+export function getImageLoadSize (event: ImageLoadEvent) {
+  const { source, width, height } = event.nativeEvent
+  return source || { width: width as number, height: height as number }
+}
+
 const textStyleMap: Record<string, boolean> = {
   color: true,
   letterSpacing: true,
@@ -482,15 +495,6 @@ export function splitProps<T extends Record<string, any>> (props: T = {} as T): 
     }
   }
   return { textProps, innerProps }
-}
-
-export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
-  return pickedKeys.reduce<Record<string, any>>((acc, key) => {
-    if (key in styleObj) {
-      acc[key] = callback ? callback(key, styleObj[key]) : styleObj[key]
-    }
-    return acc
-  }, {})
 }
 
 // ============================================================
