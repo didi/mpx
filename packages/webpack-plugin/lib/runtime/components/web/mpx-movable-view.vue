@@ -44,7 +44,8 @@ export default {
       cachedWrapperHeight: 0,
       // 缓存宽度，用于检测变化
       cachedContentWidth: 0,
-      cachedWrapperWidth: 0
+      cachedWrapperWidth: 0,
+      positionSyncPending: false
     }
   },
   props: {
@@ -112,61 +113,19 @@ export default {
     },
   },
   watch: {
-    x (newVal) {
+    x () {
       if (this.direction === 'vertical' || this.direction === 'none') {
         return
       }
       this.source = ''
-      // 检查宽度是否发生变化，只有在变化时才调用 refresh
-      const widthChanged = this.checkWidthChange()
-      let currentX = this.bs.x
-      
-      if (widthChanged) {
-        // 兼容容器尺寸变化且同时改变x的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollX, maxScrollX 拿到的都是上一次的值
-        this.refresh()
-        // bs refresh 方法内会触发 resetPosition()，如果容器宽度从 100 - 50，y 从 100 - 50，这会导致位置立即跳转到边界内，没有动画效果，造成视觉突兀
-        // 如果 refresh 导致了位置变化，先恢复到原位置再动画滚动
-        if (this.bs.x !== currentX) {
-          this.bs.scrollTo(currentX, this.bs.y, 0)
-        }
-      }
-      
-      if (newVal > this.bs.minScrollX) {
-        newVal = this.bs.minScrollX
-      }
-      if (newVal < this.bs.maxScrollX) {
-        newVal = this.bs.maxScrollX
-      }
-      this.currentX = newVal
-      this.bs.scrollTo(newVal, this.bs.y, this.speed)
+      this.scheduleSyncPosition()
     },
-    y (newVal) {
+    y () {
       if (this.direction === 'horizontal' || this.direction === 'none') {
         return
       }
       this.source = ''
-      // 检查高度是否发生变化，只有在变化时才调用 refresh
-      const heightChanged = this.checkHeightChange()
-      let currentY = this.bs.y
-      
-      if (heightChanged) {
-        // 兼容容器尺寸变化且同时改变y的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollY, maxScrollY 拿到的都是上一次的值
-        this.refresh()
-        // bs refresh 方法内会触发 resetPosition()，如果容器高度从 100 - 50，y 从 100 - 50，这会导致位置立即跳转到边界内，没有动画效果，造成视觉突兀
-        // 如果 refresh 导致了位置变化，先恢复到原位置再动画滚动
-        if (this.bs.y !== currentY) {
-          this.bs.scrollTo(this.bs.x, currentY, 0)
-        }
-      }
-      
-      if (newVal > this.bs.minScrollY) {
-        newVal = this.bs.minScrollY
-      }
-      if (newVal < this.bs.maxScrollY) {
-        newVal = this.bs.maxScrollY
-      }
-      this.currentY = newVal
-      this.bs.scrollTo(this.bs.x, newVal, this.speed)
+      this.scheduleSyncPosition()
     },
     scaleValue (newVal) {
       this.isZooming = true
@@ -227,6 +186,55 @@ export default {
     },
     refresh () {
       this.bs && this.bs.refresh()
+    },
+    scheduleSyncPosition () {
+      if (!this.bs) return
+      if (this.positionSyncPending) return
+      this.positionSyncPending = true
+      this.$nextTick(() => {
+        this.positionSyncPending = false
+        this.syncPositionFromProps()
+      })
+    },
+    syncPositionFromProps () {
+      if (!this.bs) return
+
+      const widthChanged = this.checkWidthChange()
+      const heightChanged = this.checkHeightChange()
+      const currentX = this.bs.x
+      const currentY = this.bs.y
+
+      if (widthChanged || heightChanged) {
+        // 兼容容器尺寸变化且同时改变x/y的场景，ResizeObserver回调是异步的，
+        // 如果不直接refresh，minScrollX/maxScrollX/minScrollY/maxScrollY 拿到的都是上一次的值
+        this.refresh()
+        // bs refresh 方法内会触发 resetPosition()，如果容器宽高收缩从100 - 50，会导致位置立即跳转到边界内，
+        // 没有动画效果，造成视觉突兀；如果 refresh 导致了位置变化，先恢复到原位置再执行目标滚动
+        // 刷新边界后保持当前视觉位置，再执行目标滚动，避免突然跳变
+        if (this.bs.x !== currentX || this.bs.y !== currentY) {
+          this.bs.scrollTo(currentX, currentY, 0)
+        }
+      }
+
+      let targetX = this.x
+      let targetY = this.y
+
+      if (targetX > this.bs.minScrollX) {
+        targetX = this.bs.minScrollX
+      }
+      if (targetX < this.bs.maxScrollX) {
+        targetX = this.bs.maxScrollX
+      }
+      if (targetY > this.bs.minScrollY) {
+        targetY = this.bs.minScrollY
+      }
+      if (targetY < this.bs.maxScrollY) {
+        targetY = this.bs.maxScrollY
+      }
+
+      this.currentX = targetX
+      this.currentY = targetY
+      this.bs.scrollTo(targetX, targetY, this.speed)
     },
     // 检查高度是否发生变化
     checkHeightChange () {
@@ -328,6 +336,20 @@ export default {
       scrollerHooks.on('scrollEnd', (position) => {
         this.currentX = this.bs.x
         this.currentY = this.bs.y
+        if (this.direction !== 'none' && (this.directions.indexOf(this.direction) >= 0)) {
+          const endX = this.roundFun(position && typeof position.x === 'number' ? position.x : this.bs.x)
+          const endY = this.roundFun(position && typeof position.y === 'number' ? position.y : this.bs.y)
+          // 只在最终位置与最近一次 change 不一致时补发，避免重复事件
+          if (!this.isZooming && (endX !== this.lastestX || endY !== this.lastestY)) {
+            this.$emit('change', getCustomEvent('change', {
+              x: endX ? endX : 0,
+              y: endY ? endY : 0,
+              source: this.source
+            }, this))
+            this.lastestX = endX
+            this.lastestY = endY
+          }
+        }
       })
       scrollerHooks.on('touchEnd', (position) => {
         this.isFirstTouch = true
