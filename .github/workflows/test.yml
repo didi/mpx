@@ -1,6 +1,11 @@
 name: test
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
   tsc:
