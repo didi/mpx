@@ -172,21 +172,14 @@ const isPercent = (val: string | number | undefined): val is string => typeof va
 
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
-const isFullSizeGradient = ({ type, sizeList, backgroundPosition, linearInfo }: PreImageInfo): boolean => {
-  // 四边撑满仅适用于无偏移、无需计算对角方向的全尺寸渐变。
-  return __mpx_mode__ !== 'ios' && type === 'linear' && sizeList[0] === '100%' && sizeList[1] === '100%' &&
-    !(linearInfo?.direction && diagonalAngleMap[linearInfo.direction]) &&
-    (!backgroundPosition.length || (backgroundPosition[1] === 0 && backgroundPosition[3] === 0))
-}
-
 const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
-  const { sizeList, backgroundPosition, type } = preImageInfo
+  const { sizeList, backgroundPosition, type, linearInfo } = preImageInfo
   const [width, height] = sizeList
   const bp = backgroundPosition
 
   if (type === 'linear') {
-    return !isFullSizeGradient(preImageInfo) &&
-      (!(Number.isFinite(width) && Number.isFinite(height)) || isPercent(bp[1]) || isPercent(bp[3]))
+    return ((__mpx_mode__ === 'ios' || (linearInfo?.direction && diagonalAngleMap[linearInfo.direction])) &&
+      !(Number.isFinite(width) && Number.isFinite(height))) || isPercent(bp[1]) || isPercent(bp[3])
   }
 
   // 含有百分号，center 需计算布局
@@ -322,20 +315,9 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       dimensions = calculateSize(width as number, imageSizeHeight / imageSizeWidth, layoutInfo?.width, true)
       if (!dimensions) return
     } else { // 数值类型      ImageStyle
-      if (isFullSizeGradient(preImageInfo)) {
-        dimensions = StyleSheet.absoluteFillObject
-      } else if (__mpx_mode__ === 'ios' && type === 'linear') {
-        dimensions = {
-          width: calcPercent(width as NumberVal, layoutWidth || 0),
-          height: calcPercent(height as NumberVal, layoutHeight || 0)
-        }
-      } else if (type === 'linear' && (!layoutWidth || !layoutHeight) && (isPercent(width) || isPercent(height))) {
-        // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，通过设置 % 的方式会渲染不出来，即使后面再更新为正常宽高也渲染不出来
-        // 所以 hack 手动先将 linear 宽高也设置为 0，后面再更新为正确的数值或 %。
-        dimensions = {
-          width: 0,
-          height: 0
-        } as { width: NumberVal, height: NumberVal }
+      if (__mpx_mode__ === 'ios' && type === 'linear' && (!layoutWidth || !layoutHeight) && (isPercent(width) || isPercent(height))) {
+        // iOS 百分比渐变在零尺寸布局下先归零，布局恢复后再使用百分比。
+        dimensions = { width: 0, height: 0 }
       } else {
         dimensions = {
           width: isPercent(width) ? width : +width,
@@ -768,8 +750,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
   }
 
-  // iOS DRN 的渐变在零尺寸下挂载后，即使尺寸恢复也可能不再绘制。
-  if (type === 'linear' && (pending || (__mpx_mode__ === 'ios' && needLayout && !(layoutInfo && layoutInfo.width > 0 && layoutInfo.height > 0)))) return createElement(View, backgroundProps)
+  if (type === 'linear' && pending) return createElement(View, backgroundProps)
   return createElement(View, backgroundProps,
     type === 'linear'
       ? createElement(LinearGradient, extendObject({ useAngle: true }, imageProps as LinearImageProps))
