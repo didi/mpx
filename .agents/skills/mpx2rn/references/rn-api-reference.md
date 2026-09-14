@@ -143,6 +143,8 @@ mpx.use(apiProxy, {
 
 **依赖（系统信息相关）**：`getSystemInfo`、`getSystemInfoSync`、`getWindowInfo`、`getDeviceInfo` 在 RN 上依赖设备信息、屏幕与安全区、当前页面导航上下文等能力；请按 **`@mpxjs/api-proxy`** 包说明安装所需的可选原生依赖，否则可能出现取值异常或运行时报错。
 
+**自定义尺寸**：配置 `Mpx.config.rnConfig.customDimensions` 后，`getSystemInfo`、`getSystemInfoSync`、`getWindowInfo` 返回的 `screenWidth`、`screenHeight`、`windowWidth`、`windowHeight` 使用回调返回的自定义尺寸。`getSystemInfo` 与 `getSystemInfoSync` 的 `deviceOrientation` 根据自定义后的屏幕宽高计算；`safeArea`、`statusBarHeight` 和 `screenTop` 仍使用 RN 原生窗口与安全区信息。
+
 ---
 
 ### base64ToArrayBuffer
