@@ -584,8 +584,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     childrenLength.value = children.length
     if (children.length <= 1 || maxIndex < currentIndex.value) {
       pauseLoop()
-      currentIndex.value = circular ? 0 : maxIndex
-      offset.value = getOffset(currentIndex.value, step.value)
+      const nextIndex = circular ? 0 : maxIndex
+      currentIndex.value = nextIndex
+      offset.value = getOffset(nextIndex, step.value)
       if (autoplay && children.length > 1) {
         loop()
       }
@@ -613,7 +614,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     if (circular !== circularShared.value || patchElmNum !== patchElmNumShared.value) {
       circularShared.value = circular
       patchElmNumShared.value = patchElmNum
-      offset.value = getOffset(currentIndex.value, step.value)
+      if (children.length > 1 && currentIndex.value <= maxIndex) {
+        offset.value = getOffset(currentIndex.value, step.value)
+      }
     }
   }, [circular, patchElmNum])
   const { gestureHandler } = useMemo(() => {
