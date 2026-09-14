@@ -1,0 +1,1 @@
+{"root":true,"parserOptions":{"ecmaVersion":2020,"sourceType":"module"},"env":{"browser":true},"globals":{"wx":"readonly"},"extends":"/Users/hjw/project/mpx/node_modules/eslint-config-standard/index.js"}

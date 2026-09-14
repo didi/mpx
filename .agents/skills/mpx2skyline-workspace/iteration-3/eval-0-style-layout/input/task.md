@@ -1,0 +1,5 @@
+# 样式与布局
+
+适配 style-card.mpx。保持长标题单行省略、两列等宽标签和红色活动文案。两种renderer在屏宽≤320px时卡片padding为12rpx，否则24rpx，按当前屏宽即可。child盒子的顶部距outer上外沿20px，这段距离由outer的padding-top实现；child保持四周10px padding，因此其内容顶部距outer上外沿30px。child内容宽100px、含padding外宽120px，两块垂直间距16px；呈现原有单个rgba阴影、双阴影、独立blur滤镜、复合滤镜及品牌字体效果。宿主已配置defaultDisplayBlock/defaultContentBox。字体二进制由宿主提供，City-Semibold有当前独立字体族，Trip-Medium来自宿主；字体核验信息和机型风险写入report.md，视觉调整需沿用已确认设计。
+
+交付完整业务文件与report.md。当前评分目标为微信Skyline/glass-easel适配；WebView行为按需求保留，其他目标平台可采用各自合法的条件分支。验证脚本及证据放配置的run-1目录。

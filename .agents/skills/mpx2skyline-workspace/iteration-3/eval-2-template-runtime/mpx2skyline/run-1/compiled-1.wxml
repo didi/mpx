@@ -1,0 +1,1 @@
+<template name="user-row"><text>{{index}}:{{item.name}}</text></template>

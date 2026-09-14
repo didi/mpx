@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "id": "s1_00",
+      "text": "Skyline 页面主体使用具有明确可滚动高度的 scroll-view，显式选择type=list，订单项作为列表的直接子节点。",
+      "passed": true,
+      "evidence": "orders.mpx: type=list、scroll-y、显式scrollHeight像素高度；订单view直接为scroll-view子节点。"
+    },
+    {
+      "id": "s1_01",
+      "text": "Skyline 通过 bindrefresherrefresh 启动刷新，refresher-triggered 关联刷新状态，并在请求成功和失败后结束容器刷新态。",
+      "passed": true,
+      "evidence": "orders.mpx: bindrefresherrefresh=onRefresh，refresher-triggered=refreshing；reload finally及loading早退均复位false，覆盖请求成功与失败。"
+    },
+    {
+      "id": "s1_02",
+      "text": "Skyline 通过 scroll-view 的 bindscrolltolower 连接原分页加载方法，容器触底后显示追加的订单。",
+      "passed": true,
+      "evidence": "orders.mpx: bindscrolltolower=loadMore，fetchOrders(pageNo+1)后concat追加并推进页号。"
+    },
+    {
+      "id": "s1_03",
+      "text": "Skyline 通过 scroll-view 的 bindscroll 读取 event.detail.scrollTop 并更新滚动位置展示。",
+      "passed": true,
+      "evidence": "orders.mpx: bindscroll=onScroll，e.detail.scrollTop赋给展示状态scrollTop。"
+    },
+    {
+      "id": "s1_04",
+      "text": "Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。",
+      "passed": true,
+      "evidence": "orders.mpx: 页面JSON四项skyline/glass-easel/custom/disableScroll:true；真实navigation包含订单文本与状态栏高度。"
+    },
+    {
+      "id": "s1_05",
+      "text": "Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。",
+      "passed": true,
+      "evidence": "app.json: 顶层lazyCodeLoading=requiredComponents。"
+    },
+    {
+      "id": "s1_06",
+      "text": "Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。",
+      "passed": true,
+      "evidence": "app.json: rendererOptions.skyline五项推荐配置层级和值完整正确。"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately",
+  "limitations": [
+    "No application build or device rendering validation",
+    "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"
+  ]
+}

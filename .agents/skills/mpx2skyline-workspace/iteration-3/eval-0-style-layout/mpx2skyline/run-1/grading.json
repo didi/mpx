@@ -1,0 +1,87 @@
+{
+  "expectations": [
+    {
+      "id": "s0_00",
+      "text": "Skyline 标题的实际 text 承载节点设置 max-lines=1、overflow=ellipsis，并与 WebView 单行省略样式共同实现长标题截断。",
+      "passed": true,
+      "evidence": "style-card.mpx: 标题实际text具max-lines={{1}}、overflow=ellipsis，保留WebView nowrap/overflow/text-overflow。"
+    },
+    {
+      "id": "s0_01",
+      "text": "Skyline 两列标签使用显式横向 Flex 和等分子项布局，实现两列等宽。",
+      "passed": true,
+      "evidence": "style-card.mpx: labels显式display:flex，宿主defaultDisplayBlock使方向默认row；两个label flex:1/min-width:0，等宽横向布局。"
+    },
+    {
+      "id": "s0_02",
+      "text": "Skyline 活动状态通过受支持的 class 选择器映射到红色活动文案。",
+      "passed": true,
+      "evidence": "style-card.mpx: badge实际含sale类，.badge.sale颜色#d00。"
+    },
+    {
+      "id": "s0_03",
+      "text": "Skyline 通过 renderer 与屏宽状态选择容器 padding，宽度≤320px 为12rpx、>320px 为24rpx；Skyline 默认覆盖位于媒体查询之后，WebView 继续使用原媒体查询。",
+      "passed": true,
+      "evidence": "style-card.mpx: attached读取renderer并按screenWidth≤320计算small；WebView媒体查询保留，media后card-skyline默认24rpx，小屏12rpx。"
+    },
+    {
+      "id": "s0_04",
+      "text": "Skyline 内容与父容器上外沿的20px距离由父 padding 表达，子节点从父内容区起始位置布局。",
+      "passed": false,
+      "evidence": "style-card.mpx: .outer实际padding-top:10px，child从10px处起始，与verification要求父外沿至首个子盒20px不符。report按输入“内容”解释为10px父padding+10px子padding；这是输入措辞与评分观察点的歧义，不能直接归因为Skill规则缺失。"
+    },
+    {
+      "id": "s0_05",
+      "text": "Skyline 相邻块的垂直间距集中由一侧的16px margin承担，最终相邻盒间距为16px。",
+      "passed": true,
+      "evidence": "style-card.mpx: first下margin16px，second上margin已移除，间距16px。"
+    },
+    {
+      "id": "s0_06",
+      "text": "Skyline 将双阴影分配到同尺寸的嵌套节点或等效分层结构，呈现原有两层阴影的参数和前后关系。",
+      "passed": true,
+      "evidence": "style-card.mpx: many-back/many同尺寸无额外padding嵌套，外层#333后阴影、内层#000前阴影。"
+    },
+    {
+      "id": "s0_07",
+      "text": "Skyline 将复合滤镜分层为内层blur(2px)和外层brightness(.8)，组合呈现原有两种效果。",
+      "passed": true,
+      "evidence": "style-card.mpx: filters外层brightness(.8)，filters-blur内层blur(2px)。"
+    },
+    {
+      "id": "s0_08",
+      "text": "Skyline 字体处理识别 City-Semibold 的同名独立字体族，明确 Trip-Medium 的宿主字体与 PostScript 映射核验点，并记录500/600字重的机型验证要求。",
+      "passed": true,
+      "evidence": "report.md明确City独立字体族、Trip宿主与PostScript待核验信息、500/600机型风险；实际字体声明保持600/500。"
+    },
+    {
+      "id": "s0_09",
+      "text": "Skyline 单阴影节点以单个 box-shadow 呈现原有 0 2px 4px rgba(0,0,0,.2) 效果，颜色函数作为完整颜色值解析。",
+      "passed": true,
+      "evidence": "style-card.mpx: single-shadow保留单个0 2px 4px rgba(0,0,0,.2)。"
+    },
+    {
+      "id": "s0_10",
+      "text": "Skyline 单滤镜节点采用受支持的 blur(2px)，呈现原有独立模糊效果。",
+      "passed": true,
+      "evidence": "style-card.mpx: single-filter保留blur(2px)。"
+    },
+    {
+      "id": "s0_11",
+      "text": "Skyline 在宿主 defaultContentBox=true 条件下，child 保持100px内容宽度及左右各10px padding，实际外宽为120px。",
+      "passed": true,
+      "evidence": "style-card.mpx: child显式content-box width100px、padding10px，内容100px外宽120px。"
+    }
+  ],
+  "summary": {
+    "passed": 11,
+    "failed": 1,
+    "total": 12,
+    "pass_rate": 0.9166666666666666
+  },
+  "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately",
+  "limitations": [
+    "No application build or device rendering validation",
+    "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"
+  ]
+}

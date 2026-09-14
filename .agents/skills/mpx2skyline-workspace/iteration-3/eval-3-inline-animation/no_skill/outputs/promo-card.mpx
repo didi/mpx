@@ -1,0 +1,85 @@
+<template>
+  <view>
+    <view class="row">
+      <span wx:if="{{isSkyline}}" class="truncate skyline-title"><image src="./logo.svg" class="logo"/><text>{{title}}</text></span>
+      <view wx:else class="truncate"><image src="./logo.svg" class="logo"/><text>{{title}}</text></view>
+    </view>
+    <view wx:if="{{isSkyline}}" class="pulse-dot"/>
+    <view wx:else class="pulse"/>
+    <view wx:if="{{isSkyline}}" class="button skyline-button" bindtouchstart="press" bindtouchend="release" bindtouchcancel="release"><text>领取</text></view>
+    <view wx:else class="button" animation="{{animationData}}" bindtouchstart="press" bindtouchend="release" bindtouchcancel="release"><text>领取</text></view>
+  </view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    title: { type: String, value: '欢迎领取本周优惠' }
+  },
+  data: {
+    isSkyline: false,
+    animationData: {}
+  },
+  attached () {
+    this.isSkyline = this.renderer === 'skyline'
+  },
+  ready () {
+    if (!this.isSkyline) return
+    const { shared, timing, repeat, Easing } = wx.worklet
+    const pulse = shared(0.3)
+    const scale = shared(1)
+    const opacity = shared(1)
+    this._promoMotion = { pulse, scale, opacity }
+    this.applyAnimatedStyle('.pulse-dot', () => {
+      'worklet'
+      return { opacity: pulse.value }
+    })
+    this.applyAnimatedStyle('.skyline-button', () => {
+      'worklet'
+      return { transform: `scale(${scale.value})`, opacity: opacity.value }
+    })
+    pulse.value = repeat(timing(1, { duration: 1000, easing: Easing.ease }), -1, false)
+  },
+  detached () {
+    if (!this._promoMotion) return
+    Object.keys(this._promoMotion).forEach((key) => {
+      wx.worklet.cancelAnimation(this._promoMotion[key])
+    })
+    this._promoMotion = null
+  },
+  methods: {
+    press () {
+      this.setPressed(true)
+    },
+    release () {
+      this.setPressed(false)
+    },
+    setPressed (pressed) {
+      if (this.isSkyline) {
+        if (!this._promoMotion) return
+        const { timing, Easing } = wx.worklet
+        this._promoMotion.scale.value = timing(pressed ? 0.96 : 1, { duration: 150, easing: Easing.linear })
+        this._promoMotion.opacity.value = timing(pressed ? 0.7 : 1, { duration: 150, easing: Easing.linear })
+        return
+      }
+      const animation = wx.createAnimation({ duration: 150 })
+      animation.scale(pressed ? 0.96 : 1).opacity(pressed ? 0.7 : 1).step()
+      this.animationData = animation.export()
+    }
+  }
+})
+</script>
+<style>
+.row { display: flex; }
+.truncate { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skyline-title { -webkit-line-clamp: 1; }
+.logo { width: 24px; height: 24px; vertical-align: middle; }
+.pulse-dot { width: 8px; height: 8px; background: #f50; opacity: 0.3; }
+.pulse::before { content: ''; display: block; width: 8px; height: 8px; background: #f50; animation: pulse 1s infinite; animation-fill-mode: backwards; }
+@keyframes pulse { from { opacity: .3; } to { opacity: 1; } }
+.button { padding: 12px; background: #eee; }
+</style>
+<script type="application/json">
+{"component":true}
+</script>

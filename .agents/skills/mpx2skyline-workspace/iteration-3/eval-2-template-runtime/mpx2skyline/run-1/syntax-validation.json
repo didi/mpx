@@ -1,0 +1,12 @@
+{
+  "method": "repository SFC parser, Babel script parsing, JSON parsing",
+  "checks": [
+    {
+      "file": "user-list.mpx",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "application_build": "not_run",
+  "device_validation": "not_run"
+}

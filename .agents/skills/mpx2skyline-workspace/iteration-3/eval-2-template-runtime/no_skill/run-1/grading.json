@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "id": "s2_00",
+      "text": "Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。",
+      "passed": false,
+      "evidence": "user-list.mpx: items=[]及computed过滤覆盖数据更新，但wx:for直接消费visibleItems，缺少initData或模板回退保护computed初始化前阶段。"
+    },
+    {
+      "id": "s2_01",
+      "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，组件内通过 this.createSelectorQuery 定位同一容器。",
+      "passed": false,
+      "evidence": "user-list.mpx: 合法id及组件作用域已修正，但实际调用wx.createSelectorQuery().in(this)，未采用评分要求的this.createSelectorQuery。此项是Skill推荐路径，非宣称原API完全不可用。"
+    },
+    {
+      "id": "s2_02",
+      "text": "Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。",
+      "passed": true,
+      "evidence": "user-list.mpx: users目标enhanced=true，node().exec返回节点后调用scrollTo({top:0})，查询目标一致。"
+    },
+    {
+      "id": "s2_03",
+      "text": "Skyline/glass-easel 循环中的外部片段采用 import 加具名 template 调用，并显式传递当前 item/index。",
+      "passed": false,
+      "evidence": "user-list.mpx/row.wxml: 循环子树仍用include，未改为import加具名template及显式参数。"
+    },
+    {
+      "id": "s2_04",
+      "text": "Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。",
+      "passed": true,
+      "evidence": "user-list.mpx: 两入口均改view绑定openDetail，wx.navigateTo目标/pages/detail，实现等价详情导航。"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  },
+  "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately",
+  "limitations": [
+    "No application build or device rendering validation",
+    "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"
+  ]
+}

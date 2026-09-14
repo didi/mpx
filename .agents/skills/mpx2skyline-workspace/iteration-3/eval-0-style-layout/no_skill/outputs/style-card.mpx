@@ -1,0 +1,54 @@
+<template>
+  <view class="card" style="padding: {{cardPadding}}rpx;">
+    <text class="title" max-lines="1">{{title}}</text>
+    <view class="labels"><text class="label">包邮</text><text class="label">次日达</text></view>
+    <view class="badge sale" data-kind="sale">活动</view>
+    <view class="outer"><view class="child">内容</view></view>
+    <view class="first">第一块</view><view class="second">第二块</view>
+    <view class="single-shadow">单阴影</view><view class="single-filter">单滤镜</view>
+    <view class="many">
+      <view class="shadow-back"></view>
+      <view class="shadow-front"></view>
+      <view class="shadow-content">双阴影</view>
+    </view>
+    <view class="filter-brightness"><view class="filters">复合滤镜</view></view>
+    <text class="font-a">品牌A</text><text class="font-b">品牌B</text>
+  </view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: { title: { type: String, value: '本周精选商品' } },
+  data: { cardPadding: 24 },
+  attached () {
+    const { windowWidth } = wx.getWindowInfo()
+    this.cardPadding = windowWidth <= 320 ? 12 : 24
+  }
+})
+</script>
+<style>
+.card { padding: 24rpx; }
+.title { display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.labels { display: flex; flex-direction: row; }
+.label { width: 50%; min-width: 0; }
+.sale { color: #d00; }
+.outer { padding-top: 20px; overflow: hidden; }
+.child { box-sizing: border-box; width: 120px; padding: 10px; }
+.first { margin-bottom: 16px; }
+.second { margin-top: 0; }
+.single-shadow { box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.single-filter { filter: blur(2px); }
+.many { position: relative; }
+.shadow-back { position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-shadow: 0 4px 8px #333; }
+.shadow-front { position: absolute; top: 0; right: 0; bottom: 0; left: 0; box-shadow: 0 2px 4px #000; }
+.shadow-content { position: relative; }
+.filter-brightness { filter: brightness(0.8); }
+.filters { filter: blur(2px); }
+@font-face { font-family: 'City-Semibold'; src: url('./city.woff2'); }
+.font-a { font-family: 'City-Semibold'; font-weight: normal; }
+.font-b { font-family: 'Trip-Medium'; font-weight: normal; }
+</style>
+<script type="application/json">
+{"component":true}
+</script>

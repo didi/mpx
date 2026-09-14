@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "configuration": "no_skill",
+  "case_id": 2,
+  "run_number": 1,
+  "model": "inherited_parent",
+  "reasoning_effort": "inherited_parent",
+  "fork_turns": "none",
+  "agent_task": "/root/eval2_no_skill",
+  "prompt_sha256": "6cb56cdd9b5217c64bc6c4e7900de1cba7fdb8d584dee7c7a24ffc420dd8d4a2",
+  "skill_version": null,
+  "skill_hashes": {},
+  "transcript": "execution.md (agent-reported narrative; raw tool transcript unavailable)",
+  "source_iteration": 3
+}

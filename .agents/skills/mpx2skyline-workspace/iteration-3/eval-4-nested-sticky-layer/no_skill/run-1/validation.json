@@ -1,0 +1,27 @@
+{
+  "syntax": {
+    "method": "repository SFC parser, Babel script parsing, JSON parsing",
+    "checks": [
+      {
+        "file": "category-panel.mpx",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "application_build": "not_run",
+    "device_validation": "not_run"
+  },
+  "behavior": {
+    "status": "passed",
+    "passed": 3,
+    "total": 3,
+    "evidence": "jest.log",
+    "scope": "executor-authored isolated tests; does not substitute frozen assertion grading"
+  },
+  "eslint": {
+    "status": "passed",
+    "evidence": "execution.md and eslint log/json"
+  },
+  "application_build": "not_run",
+  "device_validation": "not_run"
+}

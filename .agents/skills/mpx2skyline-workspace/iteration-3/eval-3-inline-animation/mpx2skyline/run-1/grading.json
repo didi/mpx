@@ -1,0 +1,33 @@
+{
+  "expectations": [
+    {
+      "id": "s3_00",
+      "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+      "passed": true,
+      "evidence": "promo-card.mpx: mpxTagName@wx=span实际微信输出span，max-lines=1/overflow=ellipsis落在共同容器；flex:1,width:0,min-width:0约束宽度，Skyline图片inline-block，WebView truncate路径保留；run-1含微信模板编译证据。"
+    },
+    {
+      "id": "s3_01",
+      "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+      "passed": true,
+      "evidence": "promo-card.mpx: 真实pulse-dot节点8px/#f50承载1s infinite CSS animation，fill-mode:both，关键帧opacity .3→1。"
+    },
+    {
+      "id": "s3_02",
+      "text": "Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
+      "passed": true,
+      "evidence": "promo-card.mpx: pressed状态类驱动transform/opacity 150ms linear transition，按下.96/.7，松开和取消均release恢复1/1。"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Independent parent review of actual outputs against frozen assertions; syntax and available behavior evidence checked separately",
+  "limitations": [
+    "No application build or device rendering validation",
+    "Execution narrative is agent-reported; full tool transcript not exported by collaboration API"
+  ]
+}

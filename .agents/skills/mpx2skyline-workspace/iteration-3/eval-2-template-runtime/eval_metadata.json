@@ -1,0 +1,85 @@
+{
+  "eval_id": 2,
+  "eval_name": "template-runtime",
+  "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+  "files": [
+    "input/row.wxml",
+    "input/task.md",
+    "input/user-list.mpx"
+  ],
+  "assertions": [
+    {
+      "id": "s2_00",
+      "text": "Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。",
+      "rule_id": "skyline.loop-data",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-runtime-practice.md",
+        "section": "[必须] 确保 wx:for 数据始终为 Array 或 Object"
+      },
+      "verification": "检查初始渲染数据及computed所有消费路径，分别模拟undefined/null/空数组/有效数组。",
+      "source_assertions": [
+        "e2_03",
+        "e2_04"
+      ]
+    },
+    {
+      "id": "s2_01",
+      "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，组件内通过 this.createSelectorQuery 定位同一容器。",
+      "rule_id": "skyline.scoped-selector",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-runtime-practice.md",
+        "section": "[推荐] 用 this.createSelectorQuery 替代 wx.createSelectorQuery"
+      },
+      "verification": "关联模板id、组件查询作用域和select字符串，核对查询目标一致。",
+      "source_assertions": [
+        "e2_05",
+        "e2_07"
+      ]
+    },
+    {
+      "id": "s2_02",
+      "text": "Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。",
+      "rule_id": "skyline.scroll-context",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-runtime-practice.md",
+        "section": "[必须] ScrollViewContext：开启 enhanced 属性"
+      },
+      "verification": "从查询目标追踪其enhanced属性及node().exec后的scrollTo({top:0})调用。",
+      "source_assertions": [
+        "e2_06"
+      ]
+    },
+    {
+      "id": "s2_03",
+      "text": "Skyline/glass-easel 循环中的外部片段采用 import 加具名 template 调用，并显式传递当前 item/index。",
+      "rule_id": "skyline.loop-template",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "[必须] wx:for 内嵌 &lt;include&gt; 时改为 &lt;template&gt;"
+      },
+      "verification": "检查导入路径、模板名称和循环数据参数，代入两行不同数据确认作用域。",
+      "source_assertions": [
+        "e2_09"
+      ]
+    },
+    {
+      "id": "s2_04",
+      "text": "Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。",
+      "rule_id": "skyline.navigator-children",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "navigator 嵌套限制"
+      },
+      "verification": "检查两个导航入口的实际子节点和/pages/detail目标；复杂外层事件方案核对绑定与跳转调用。",
+      "source_assertions": [
+        "e5_08",
+        "e5_09"
+      ]
+    }
+  ]
+}
