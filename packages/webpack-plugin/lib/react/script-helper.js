@@ -150,7 +150,8 @@ function buildGlobalParams ({
   firstPage,
   outputPath,
   genericsInfo,
-  hasApp
+  hasApp,
+  externalClasses
 }) {
   let content = ''
   if (ctorType === 'app') {
@@ -165,6 +166,7 @@ global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
 global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__appComponentsMap = ${shallowStringify(componentsMap)}
 global.__preloadRule = ${JSON.stringify(jsonConfig.preloadRule)}
+global.__externalClasses = ${JSON.stringify(externalClasses || [])}
 global.currentInject.pagesMap = ${shallowStringify(pagesMap)}
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
