@@ -475,6 +475,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       nodeRef.current.measureLayout(
         targetScrollView,
         (left: number, top: number) => {
+          const { scrollX, scrollY } = scrollViewStateRef.current
           const adjustedLeft = scrollX ? left + offset : left
           const adjustedTop = scrollY ? top + offset : top
 
