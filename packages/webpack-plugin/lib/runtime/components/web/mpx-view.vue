@@ -1,5 +1,6 @@
 <script>
   import getInnerListeners from './getInnerListeners'
+  import * as perf from '@mpxjs/perf'
 
   export default {
     name: 'mpx-view',
@@ -27,6 +28,8 @@
       }
     },
     render (createElement) {
+      let id = -1
+      if (__mpx_perf_framework__) id = perf.scopeStart('view:render')
       let mergeAfter
       if (this.hoverClass && this.hoverClass !== 'none') {
         mergeAfter = {
@@ -41,7 +44,9 @@
         class: ['mpx-view', this.className],
         on: getInnerListeners(this, { mergeAfter })
       }
-      return createElement('div', data, this.$slots.default)
+      const result = createElement('div', data, this.$slots.default)
+      if (__mpx_perf_framework__) perf.scopeEnd(id)
+      return result
     },
     computed: {
       className () {

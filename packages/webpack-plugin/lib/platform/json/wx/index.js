@@ -6,9 +6,11 @@ const { isOriginTag, isBuildInWebTag, isBuildInReactTag } = require('../../../ut
 const getBuildInTagComponent = require('../../../utils/get-build-tag-component')
 
 module.exports = function getSpec ({ warn, error }) {
-  function print (mode, path, isError) {
+  const reactModes = ['ios', 'android', 'harmony']
+
+  function print (mode, path, value, isError) {
     const msg = `Json path <${path}> is not supported in ${mode} environment!`
-    isError ? error(msg) : warn(msg)
+    isError ? error(msg, { path, value }) : warn(msg, { path, value })
   }
 
   function deletePath (opts) {
@@ -20,15 +22,24 @@ module.exports = function getSpec ({ warn, error }) {
     }
 
     return function (input, { mode, pathArr = [] }, meta) {
-      const currPath = meta.paths.join('|')
       if (shouldLog) {
-        print(mode, pathArr.concat(currPath).join('.'), isError)
+        meta.paths.forEach((path) => {
+          print(mode, pathArr.concat(path).join('.'), input[path], isError)
+        })
       }
       meta.paths.forEach((path) => {
         delete input[path]
       })
       return input
     }
+  }
+
+  function createReactRule (test, processor) {
+    const rule = { test }
+    reactModes.forEach(mode => {
+      rule[mode] = processor
+    })
+    return rule
   }
 
   /**
@@ -72,7 +83,10 @@ module.exports = function getSpec ({ warn, error }) {
     if (componentGenerics && typeof componentGenerics === 'object') {
       Object.keys(componentGenerics).forEach(key => {
         if (!componentGenerics[key].default) {
-          error(`Ali environment componentGenerics need to specify a default custom component! please check the configuration of component ${key}`)
+          error(`Ali environment componentGenerics need to specify a default custom component! please check the configuration of component ${key}`, {
+            path: ['componentGenerics', key],
+            value: componentGenerics[key]
+          })
         }
       })
     }
@@ -102,7 +116,10 @@ module.exports = function getSpec ({ warn, error }) {
           if (keyNeed) {
             newK = capitalToHyphen(k)
             if (obj[newK]) {
-              warn && warn(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`)
+              warn && warn(`Component name "${newK}" already exists, so component "${k}" can't be converted automatically and it isn't supported in ali/swan environment!`, {
+                path: [type, k],
+                value: v
+              })
             } else {
               obj[newK] = v
               delete obj[k]
@@ -213,6 +230,7 @@ module.exports = function getSpec ({ warn, error }) {
       },
       jd: deletePath()
     },
+    createReactRule('enablePullDownRefresh|onReachBottomDistance', deletePath()),
     {
       test: 'navigationBarBackgroundColor',
       ali (input) {
@@ -240,8 +258,13 @@ module.exports = function getSpec ({ warn, error }) {
     {
       test: 'backgroundColorTop|backgroundColorBottom',
       ali: deletePath(),
-      swan: deletePath()
+      swan: deletePath(),
+      ios: deletePath(),
+      android: deletePath(),
+      harmony: deletePath()
     },
+    createReactRule('backgroundColor|backgroundTextStyle', deletePath()),
+    createReactRule('pageOrientation', deletePath()),
     {
       test: 'navigationBarTextStyle|navigationStyle|backgroundTextStyle',
       ali: deletePath()
@@ -255,11 +278,12 @@ module.exports = function getSpec ({ warn, error }) {
     }
   ]
 
-  const getTabBarRule = () => (input, { mode }) => {
+  const getTabBarRule = () => (input, { mode, diagnostic }) => {
     input.tabBar = runRules(spec.tabBar, input.tabBar, {
       mode,
       normalizeTest,
       waterfall: true,
+      diagnostic,
       data: {
         pathArr: ['tabBar']
       }
@@ -267,11 +291,12 @@ module.exports = function getSpec ({ warn, error }) {
     return input
   }
 
-  const getWindowRule = () => (input, { mode }) => {
+  const getWindowRule = () => (input, { mode, diagnostic }) => {
     input.window = runRules(spec.window, input.window, {
       mode,
       normalizeTest,
       waterfall: true,
+      diagnostic,
       data: {
         pathArr: ['window']
       }
@@ -329,7 +354,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         {
           test: 'list',
-          ali (input) {
+          ali (input, { diagnostic }) {
             const value = input.list
             delete input.list
             input.items = value.map((item) => {
@@ -337,6 +362,7 @@ module.exports = function getSpec ({ warn, error }) {
                 mode: 'ali',
                 normalizeTest,
                 waterfall: true,
+                diagnostic,
                 data: {
                   pathArr: ['tabBar', 'list']
                 }
@@ -372,7 +398,10 @@ module.exports = function getSpec ({ warn, error }) {
         qq: deletePath(),
         swan: deletePath(),
         tt: deletePath(),
-        jd: deletePath()
+        jd: deletePath(),
+        ios: deletePath(),
+        android: deletePath(),
+        harmony: deletePath()
       },
       {
         test: 'preloadRule',
@@ -384,14 +413,20 @@ module.exports = function getSpec ({ warn, error }) {
         qq: deletePath(true),
         swan: deletePath(true),
         tt: deletePath(),
-        jd: deletePath(true)
+        jd: deletePath(true),
+        ios: deletePath(true),
+        android: deletePath(true),
+        harmony: deletePath(true)
       },
       {
         test: 'plugins',
         qq: deletePath(true),
         swan: deletePath(true),
         tt: deletePath(),
-        jd: deletePath(true)
+        jd: deletePath(true),
+        ios: deletePath(true),
+        android: deletePath(true),
+        harmony: deletePath(true)
       },
       {
         test: 'usingComponents',
@@ -417,19 +452,28 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'debug',
         ali: deletePath(),
-        swan: deletePath()
+        swan: deletePath(),
+        ios: deletePath(),
+        android: deletePath(),
+        harmony: deletePath()
       },
       {
         test: 'requiredBackgroundModes',
         ali: deletePath(),
-        tt: deletePath()
+        tt: deletePath(),
+        ios: deletePath(),
+        android: deletePath(),
+        harmony: deletePath()
       },
       {
         test: 'workers',
         jd: deletePath(),
         ali: deletePath(),
         swan: deletePath(),
-        tt: deletePath()
+        tt: deletePath(),
+        ios: deletePath(),
+        android: deletePath(),
+        harmony: deletePath()
       },
       {
         test: 'subpackages|subPackages',
@@ -444,6 +488,8 @@ module.exports = function getSpec ({ warn, error }) {
         ali: deletePath(),
         jd: deletePath()
       },
+      createReactRule('navigateToMiniProgramAppIdList', deletePath()),
+      createReactRule('tabBar', deletePath(true)),
       {
         test: 'tabBar',
         ali: getTabBarRule(),
@@ -460,7 +506,10 @@ module.exports = function getSpec ({ warn, error }) {
         swan: getWindowRule(),
         tt: getWindowRule(),
         ks: getWindowRule(),
-        jd: getWindowRule()
+        jd: getWindowRule(),
+        ios: getWindowRule(),
+        android: getWindowRule(),
+        harmony: getWindowRule()
       }
     ]
   }

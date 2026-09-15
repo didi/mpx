@@ -31,7 +31,7 @@ module.exports = function (content) {
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const mode = mpx.mode
   const globalSrcMode = mpx.srcMode
-  const localSrcMode = queryObj.mode
+  const localSrcMode = queryObj.srcMode
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const pagesMap = mpx.pagesMap
   const componentsMap = mpx.componentsMap[packageName]
@@ -105,15 +105,15 @@ module.exports = function (content) {
     })
   }
 
-  const emitWarning = (msg) => {
+  const emitWarning = (msg, loc) => {
     this.emitWarning(
-      new Error('[Mpx json warning][native-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][native-loader][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const emitError = (msg, loc) => {
     this.emitError(
-      new Error('[Mpx json error][native-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][native-loader][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
   let ctorType = pagesMap[resourcePath]

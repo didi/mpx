@@ -1,4 +1,10 @@
-const { stripCondition } = require('../../../lib/style-compiler/strip-conditional')
+const postcss = require('postcss')
+const stylus = require('stylus')
+const { SourceMapConsumer } = require('source-map')
+const removeStripConditionalComments = require('../../../lib/style-compiler/plugins/remove-strip-conditional-comments')
+const { parseComponent } = require('../../../lib/template-compiler/compiler')
+const { STYLE_PAD_PLACEHOLDER } = require('../../../lib/utils/const')
+const { stripCondition, registerStripCompilation } = require('../../../lib/style-compiler/strip-conditional')
 
 describe('strip-conditional unit tests', () => {
   describe('stripCondition logic', () => {
@@ -26,7 +32,8 @@ describe('strip-conditional unit tests', () => {
           /* @mpx-endif */
         `
         const result = stripCondition(input, defs)
-        expect(result.trim()).toBe('')
+        expect(result).not.toContain('.ali-style { color: blue; }')
+        expect(result).toContain(STYLE_PAD_PLACEHOLDER)
       })
 
       it('should support elif and else', () => {
@@ -64,7 +71,8 @@ describe('strip-conditional unit tests', () => {
           // @mpx-endif
         `
         const result = stripCondition(input, defs)
-        expect(result.trim()).toBe('')
+        expect(result).not.toContain('.light-mode { background: #fff; }')
+        expect(result).toContain(STYLE_PAD_PLACEHOLDER)
       })
     })
 
@@ -218,8 +226,302 @@ describe('strip-conditional unit tests', () => {
         `
         // We expect it to not throw, but exclude the content
         const result = stripCondition(input, defs)
-        expect(result.trim()).toBe('')
+        expect(result).not.toContain('.should-not-exist {}')
+        expect(result).toContain(STYLE_PAD_PLACEHOLDER)
       })
+
+      it('should preserve original line count after stripping', () => {
+        const input = [
+          '.before { color: gray; }',
+          '/* @mpx-if (platform === \'ali\') */',
+          '.ali { color: blue; }',
+          '/* @mpx-else */',
+          '.wx { color: red; }',
+          '/* @mpx-endif */',
+          '.after { color: black; }'
+        ].join('\n')
+        const result = stripCondition(input, defs)
+        expect(result.split('\n').length).toBe(input.split('\n').length)
+        expect(result).not.toContain('.ali { color: blue; }')
+        expect(result).toContain('.wx { color: red; }')
+      })
+
+      it('should preserve line positions for content after stripped branches', () => {
+        const input = [
+          '.before { color: gray; }',
+          '/* @mpx-if (platform === \'ali\') */',
+          '.ali { color: blue; }',
+          '/* @mpx-endif */',
+          '.after { color: black; }'
+        ].join('\n')
+        const result = stripCondition(input, defs)
+        const getAfterLine = content => content.split('\n').findIndex(line => {
+          return line.indexOf('.after') > -1
+        })
+        expect(getAfterLine(result)).toBe(getAfterLine(input))
+      })
+
+      it('should use a stable branch indentation for stripped content', () => {
+        const input = [
+          '.before',
+          '  color gray',
+          '  /* @mpx-if (platform === \'ali\') */',
+          '  .ali',
+          '    color blue',
+          '  /* @mpx-endif */',
+          '  color black'
+        ].join('\n')
+        const result = stripCondition(input, defs)
+        expect(result.split('\n').length).toBe(input.split('\n').length)
+        expect(result).not.toContain('color blue')
+        expect(result.match(new RegExp(`^  /\\* ${STYLE_PAD_PLACEHOLDER} \\*/$`, 'gm'))).toHaveLength(2)
+        // 分支内占位注释统一保留基准缩进，避免嵌套缩进影响 stylus / sass 的结构判断。
+        expect(result.split('\n').some(line => line.startsWith(`/* ${STYLE_PAD_PLACEHOLDER}`))).toBe(false)
+      })
+
+      it('should remove placeholder comments in postcss output', async () => {
+        const input = [
+          `/* ${STYLE_PAD_PLACEHOLDER} */`,
+          '.before { color: gray; }',
+          `  /* ${STYLE_PAD_PLACEHOLDER} */`,
+          '.after { color: black; }'
+        ].join('\n')
+        const result = await postcss([removeStripConditionalComments()]).process(input, { from: undefined })
+        expect(result.css).not.toContain(STYLE_PAD_PLACEHOLDER)
+        expect(result.css).toContain('.before { color: gray; }')
+        expect(result.css).toContain('.after { color: black; }')
+      })
+
+      it('should pad style blocks with removable comments', () => {
+        const input = [
+          '<template>',
+          '  <view />',
+          '</template>',
+          '<script>',
+          'export default {}',
+          '</script>',
+          '<style lang="stylus">',
+          '.after',
+          '  color black',
+          '</style>'
+        ].join('\n')
+        const result = parseComponent(input, { pad: 'line' })
+        const lines = result.styles[0].content.split('\n')
+        expect(lines[0]).toBe(`/* ${STYLE_PAD_PLACEHOLDER} */`)
+        expect(lines[5]).toBe(`/* ${STYLE_PAD_PLACEHOLDER} */`)
+        expect(lines[7]).toBe('.after')
+      })
+    })
+
+    describe('end-to-end pipeline (strip-conditional → stylus → postcss → sourcemap)', () => {
+      it('should not leave an invalid indentation block after stripping nested stylus rules', async () => {
+        // 回归真实业务中的嵌套选择器场景：占位注释不能改变后续同级选择器的缩进语义。
+        const src = [
+          '.more-operate-content_column',
+          '  display flex',
+          '  /* @mpx-if (platform === \'web\') */',
+          '',
+          '    .mpx-button:after',
+          '      display none',
+          '',
+          '  /* @mpx-endif */',
+          '  overflow hidden',
+          '',
+          '.more-operate-content_row',
+          '  border 0 solid transparent'
+        ].join('\n')
+
+        const stripped = stripCondition(src, defs)
+        expect(stripped.split('\n').length).toBe(src.split('\n').length)
+        await expect(new Promise((resolve, reject) => {
+          stylus(stripped).render((err, css) => err ? reject(err) : resolve(css))
+        })).resolves.toContain('.more-operate-content_row')
+      })
+
+      it('preserves source line positions through the full style pipeline', async () => {
+        const filename = '/abs/source.styl'
+        const src = [
+          '.before',
+          '  color gray',
+          '/* @mpx-if (platform === \'ali\') */',
+          '.ali',
+          '  color blue',
+          '/* @mpx-endif */',
+          '.after',
+          '  color black'
+        ].join('\n')
+
+        const stripped = stripCondition(src, defs)
+        expect(stripped.split('\n').length).toBe(src.split('\n').length)
+
+        const renderer = stylus(stripped)
+          .set('filename', filename)
+          .set('sourcemap', { inline: false, comment: false })
+        const stylusCss = await new Promise((resolve, reject) => {
+          renderer.render((err, css) => err ? reject(err) : resolve(css))
+        })
+        expect(stylusCss).toContain('.before')
+        expect(stylusCss).toContain('.after')
+        expect(stylusCss).not.toContain('.ali')
+        expect(stylusCss).toContain(STYLE_PAD_PLACEHOLDER)
+
+        const postResult = await postcss([removeStripConditionalComments()]).process(stylusCss, {
+          from: filename,
+          to: '/abs/source.css',
+          map: { prev: renderer.sourcemap, inline: false, annotation: false }
+        })
+        expect(postResult.css).not.toContain(STYLE_PAD_PLACEHOLDER)
+        expect(postResult.css).toContain('.before')
+        expect(postResult.css).toContain('.after')
+
+        const consumer = await new SourceMapConsumer(postResult.map.toJSON())
+        const finalLines = postResult.css.split('\n')
+        const findOutputLine = needle => finalLines.findIndex(l => l.indexOf(needle) > -1) + 1
+
+        const beforeOrig = consumer.originalPositionFor({ line: findOutputLine('.before'), column: 0 })
+        const afterOrig = consumer.originalPositionFor({ line: findOutputLine('.after'), column: 0 })
+        expect(beforeOrig.line).toBe(1)
+        expect(afterOrig.line).toBe(7)
+      })
+    })
+  })
+
+  describe('stripCondition for .mpx', () => {
+    const defs = {
+      __mpx_mode__: 'wx',
+      platform: 'wx',
+      theme: 'dark'
+    }
+
+    it('should only strip conditions inside <style> blocks', () => {
+      const input = `<template>
+  <view class="container">Hello</view>
+</template>
+<style>
+/* @mpx-if (platform === 'wx') */
+.wx-only { color: red; }
+/* @mpx-endif */
+/* @mpx-if (platform === 'ali') */
+.ali-only { color: blue; }
+/* @mpx-endif */
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toContain('<view class="container">Hello</view>')
+      expect(result).toContain('.wx-only { color: red; }')
+      expect(result).not.toContain('.ali-only { color: blue; }')
+    })
+
+    it('should handle multiple <style> blocks', () => {
+      const input = `<template>
+  <view>Test</view>
+</template>
+<style>
+/* @mpx-if (platform === 'wx') */
+.block1 { color: red; }
+/* @mpx-endif */
+</style>
+<style lang="less">
+/* @mpx-if (theme === 'dark') */
+.block2 { background: #000; }
+/* @mpx-endif */
+/* @mpx-if (theme === 'light') */
+.block3 { background: #fff; }
+/* @mpx-endif */
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toContain('.block1 { color: red; }')
+      expect(result).toContain('.block2 { background: #000; }')
+      expect(result).not.toContain('.block3 { background: #fff; }')
+    })
+
+    it('should return original content and log error when conditional directive appears in <template> section', () => {
+      const compilation = { errors: [] }
+      registerStripCompilation(compilation)
+      const input = `<template>
+  <!-- @mpx-if (platform === 'wx') -->
+  <view>Wx Only</view>
+  <!-- @mpx-endif -->
+</template>
+<style>
+.container { color: red; }
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toBe(input)
+      expect(compilation.errors).toHaveLength(1)
+      expect(compilation.errors[0].file).toBe('/test/app.mpx')
+      expect(compilation.errors[0].message).toContain('@mpx conditional directives are only allowed inside <style> blocks in .mpx files')
+      registerStripCompilation(null)
+    })
+
+    it('should return original content and log error when conditional directive appears in <script> section', () => {
+      const input = `<template>
+  <view>Test</view>
+</template>
+<script>
+// @mpx-if (platform === 'wx')
+console.log('wx')
+// @mpx-endif
+</script>
+<style>
+.container { color: red; }
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toBe(input)
+    })
+
+    it('should return original content and log error when conditional directive appears after last </style>', () => {
+      const input = `<style>
+.a { color: red; }
+</style>
+/* @mpx-if (platform === 'wx') */
+.orphan { color: green; }
+/* @mpx-endif */`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toBe(input)
+    })
+
+    it('should preserve non-style content unchanged', () => {
+      const input = `<template>
+  <view class="box">{{message}}</view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({ data: { message: 'hi' } })
+</script>
+<style>
+/* @mpx-if (platform === 'wx') */
+.box { padding: 10px; }
+/* @mpx-endif */
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toContain('<view class="box">{{message}}</view>')
+      expect(result).toContain("import { createComponent } from '@mpxjs/core'")
+      expect(result).toContain('.box { padding: 10px; }')
+    })
+
+    it('should work with .mpx file that has no <style> and no directives', () => {
+      const input = `<template>
+  <view>Hello</view>
+</template>
+<script>
+console.log('test')
+</script>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toBe(input)
+    })
+
+    it('should handle style block with attributes correctly', () => {
+      const input = `<template>
+  <view>Test</view>
+</template>
+<style lang="stylus" scoped>
+/* @mpx-if (platform === 'wx') */
+.styled { font-size: 14px; }
+/* @mpx-endif */
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toContain('.styled { font-size: 14px; }')
+      expect(result).toContain('<style lang="stylus" scoped>')
     })
   })
 })

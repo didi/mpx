@@ -132,7 +132,7 @@ module.exports = defineConfig({
 
 > 备注:  
 > 图像默认编译后会输出到 img 目录下, 当设置 outputPathCDN 后，输出的本地图像地址为 outputPathCDN + img/图像.png  
-> CND 文件地址为 publicPath + img/图像.png，所以当使用脚本上传到 CDN 时，路径要带上 img  
+> CDN 文件地址为 publicPath + img/图像.png，所以当使用脚本上传到 CDN 时，路径要带上 img  
 
 ## 用户自定义图像处理方式 {#custom-image-processing}
 ```js

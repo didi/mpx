@@ -6,6 +6,8 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/interaction/wx.showToast.html)
 
+> RN 环境会校验 `title`：缺失或类型不是 `string` 时进入 `fail`，并同时执行 `complete`。
+
 ### 参数 {#parameters}
 **Object object**
 

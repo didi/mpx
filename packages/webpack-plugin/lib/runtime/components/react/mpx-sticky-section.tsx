@@ -2,7 +2,7 @@
 import { useRef, forwardRef, createElement, ReactNode, useCallback, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
+import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThrough } from './utils'
 import { StickyContext } from './context'
 import useInnerProps from './getInnerListeners'
 
@@ -11,8 +11,7 @@ interface StickySectionProps {
   style?: ViewStyle;
   'offset-top'?: number;
   'enable-var'?: boolean;
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
+  'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
   'parent-height'?: number;
 }
@@ -22,8 +21,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   const {
     style,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -36,11 +34,12 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const { layoutRef, layoutProps, layoutStyle } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: sectionRef, onLayout })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const stickyHeaders = useRef<Map<string, any>>(new Map())
 
@@ -68,9 +67,11 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   }
 
   const innerProps = useInnerProps(extendObject({}, props, {
-    style: extendObject(innerStyle, layoutStyle),
+    style: extendObject({}, innerStyle, layoutStyle),
     ref: sectionRef
-  }, layoutProps), [], { layoutRef })
+  }, layoutProps), [
+    'offset-top'
+  ], { layoutRef })
 
   return (
     createElement(
@@ -80,12 +81,11 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
         StickyContext.Provider,
         { value: contextValue },
         wrapChildren(
-          props,
+          props.children,
           {
             hasVarDec,
             varContext: varContextRef.current,
-            textStyle,
-            textProps
+            textPassThrough
           }
         )
       ))

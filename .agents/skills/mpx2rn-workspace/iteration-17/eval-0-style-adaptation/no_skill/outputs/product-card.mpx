@@ -1,0 +1,192 @@
+<template>
+  <view class="product-card">
+    <view class="card-inner">
+      <view class="card-accent">
+        <view class="card-accent-start"></view>
+        <view class="card-accent-end"></view>
+      </view>
+      <view class="card-header">
+        <image class="card-avatar" src="{{info.avatar}}" mode="aspectFill"></image>
+        <view class="card-title-wrap">
+          <text class="card-title" numberOfLines="1" ellipsizeMode="tail">{{info.title}}</text>
+          <text class="card-subtitle">{{info.subtitle}}</text>
+        </view>
+      </view>
+      <view class="card-body">
+        <text class="card-desc" numberOfLines="1" ellipsizeMode="tail">{{info.description}}</text>
+        <view class="card-tags">
+          <text class="tag" wx:for="{{info.tags}}" wx:key="*this" wx:class="{{{'tag-highlight': item === info.tags[0]}}}">{{item}}</text>
+        </view>
+      </view>
+      <view class="card-footer">
+        <text class="price">{{info.price}}</text>
+        <view class="btn-buy" hover-class="btn-buy-active" bindtap="onBuy">
+          <text class="btn-text">立即购买</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    info: { type: Object, value: {} }
+  },
+  methods: {
+    onBuy () {
+      this.triggerEvent('buy', { id: this.info.id })
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.product-card {
+  margin: 16rpx;
+}
+
+.card-inner {
+  background-color: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.card-accent {
+  display: flex;
+  flex-direction: row;
+  height: 4rpx;
+}
+
+.card-accent-start {
+  flex: 1;
+  background-color: #1677ff;
+}
+
+.card-accent-end {
+  flex: 1;
+  background-color: #69c0ff;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 24rpx;
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #f0f0f0;
+}
+
+.card-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  margin-right: 16rpx;
+  border-radius: 40rpx;
+}
+
+.card-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.card-subtitle {
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.card-body {
+  padding: 24rpx;
+}
+
+.card-desc {
+  font-size: 28rpx;
+  line-height: 45rpx;
+  color: #666;
+}
+
+.card-tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 16rpx;
+}
+
+.tag {
+  margin-right: 8rpx;
+  margin-bottom: 8rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+  background-color: rgba(22, 119, 255, 0.08);
+  font-size: 22rpx;
+  color: #1677ff;
+}
+
+.tag-highlight {
+  background-color: rgba(255, 77, 79, 0.08);
+  color: #ff4d4f;
+}
+
+.card-footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  border-top-width: 1rpx;
+  border-top-style: solid;
+  border-top-color: #f0f0f0;
+}
+
+.price {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #ff4d4f;
+}
+
+.btn-buy {
+  padding: 12rpx 32rpx;
+  border-radius: 8rpx;
+  background-color: #1677ff;
+}
+
+.btn-buy-active {
+  opacity: 0.7;
+}
+
+.btn-text {
+  font-size: 26rpx;
+  color: #fff;
+}
+</style>
+
+<style mode="wx">
+.product-card {
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+</style>
+
+<style mode="ios">
+.product-card {
+  shadow-color: #000;
+  shadow-offset: 0 2rpx;
+  shadow-opacity: 0.08;
+  shadow-radius: 6rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {}
+}
+</script>

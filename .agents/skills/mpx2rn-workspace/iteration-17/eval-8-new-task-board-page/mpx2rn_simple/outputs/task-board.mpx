@@ -1,0 +1,164 @@
+<template>
+  <scroll-view class="h-full bg-slate-50" scroll-y>
+    <view class="box-border min-h-full px-5 py-6">
+      <view class="flex items-end justify-between gap-4">
+        <view class="flex flex-col gap-1">
+          <text class="text-2xl font-bold text-slate-900">任务看板</text>
+          <text class="text-sm text-slate-500">专注当下，逐项完成</text>
+        </view>
+        <view class="rounded-full bg-blue-500/10 px-3 py-1.5">
+          <text class="text-sm font-medium text-blue-700">{{ resultCount }} 项</text>
+        </view>
+      </view>
+
+      <view class="mt-6 flex gap-3">
+        <view
+          wx:for="{{ filters }}"
+          wx:key="value"
+          class="flex-1 items-center rounded-xl border px-3 py-2.5"
+          wx:class="{{ activeCategory === item.value ? ['border-blue-500', 'bg-blue-500/20'] : ['border-slate-200', 'bg-white'] }}"
+          hover-class="opacity-70"
+          hover-stay-time="100"
+          bindtap="changeCategory(item.value)"
+        >
+          <text
+            class="text-sm font-semibold"
+            wx:class="{{ activeCategory === item.value ? 'text-blue-700' : 'text-slate-600' }}"
+          >{{ item.label }}</text>
+        </view>
+      </view>
+
+      <view class="mt-6 flex flex-col gap-3" wx:if="{{ resultCount }}">
+        <view
+          wx:for="{{ filteredTasks }}"
+          wx:key="taskKey"
+          class="flex flex-row items-center gap-3 rounded-2xl border p-4"
+          wx:class="{{ item.completed ? ['border-slate-200', 'bg-slate-100'] : ['border-blue-100', 'bg-white'] }}"
+          hover-class="opacity-70"
+          hover-stay-time="100"
+          bindtap="toggleTask(item.taskKey)"
+        >
+          <view
+            class="h-6 w-6 shrink-0 items-center justify-center rounded-full border-2"
+            wx:class="{{ item.completed ? ['border-blue-500', 'bg-blue-500'] : ['border-slate-300', 'bg-white'] }}"
+          >
+            <text class="text-sm font-bold text-white" wx:if="{{ item.completed }}">✓</text>
+          </view>
+
+          <view class="min-w-0 flex-1 flex-col gap-1">
+            <text
+              class="text-base font-semibold"
+              wx:class="{{ item.completed ? ['text-slate-400', 'line-through'] : 'text-slate-800' }}"
+            >{{ item.title }}</text>
+            <text class="text-xs text-slate-400">{{ item.category === 'work' ? '工作' : '生活' }}</text>
+          </view>
+
+          <view
+            class="rounded-full px-2.5 py-1"
+            wx:class="{{ item.completed ? 'bg-slate-200' : 'bg-blue-500/10' }}"
+          >
+            <text
+              class="text-xs font-medium"
+              wx:class="{{ item.completed ? 'text-slate-500' : 'text-blue-700' }}"
+            >{{ item.completed ? '已完成' : '待完成' }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="mt-20 items-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12" wx:else>
+        <text class="text-lg font-semibold text-slate-600">当前分类暂无任务</text>
+        <text class="mt-2 text-sm text-slate-400">切换其他分类看看吧</text>
+      </view>
+    </view>
+  </scroll-view>
+</template>
+
+<script setup>
+import { computed, onLoad, ref } from '@mpxjs/core'
+
+const filters = [
+  { label: '全部', value: 'all' },
+  { label: '工作', value: 'work' },
+  { label: '生活', value: 'life' }
+]
+const categories = filters.map(item => item.value)
+const activeCategory = ref('all')
+const tasks = ref([
+  {
+    taskKey: 'weekly-report',
+    title: '整理本周项目周报',
+    category: 'work',
+    completed: true
+  },
+  {
+    taskKey: 'review-plan',
+    title: '评审下阶段迭代计划',
+    category: 'work',
+    completed: false
+  },
+  {
+    taskKey: 'reply-email',
+    title: '回复合作方确认邮件',
+    category: 'work',
+    completed: false
+  },
+  {
+    taskKey: 'buy-groceries',
+    title: '购买本周生活用品',
+    category: 'life',
+    completed: false
+  },
+  {
+    taskKey: 'evening-run',
+    title: '完成五公里晚间慢跑',
+    category: 'life',
+    completed: true
+  },
+  {
+    taskKey: 'call-family',
+    title: '给家人打电话',
+    category: 'life',
+    completed: false
+  }
+])
+
+const filteredTasks = computed(() => {
+  if (activeCategory.value === 'all') return tasks.value
+  return tasks.value.filter(task => task.category === activeCategory.value)
+})
+const resultCount = computed(() => filteredTasks.value.length)
+
+function changeCategory (category) {
+  activeCategory.value = category
+}
+
+function toggleTask (taskKey) {
+  tasks.value.forEach(task => {
+    if (task.taskKey === taskKey) task.completed = !task.completed
+  })
+}
+
+onLoad((rawQuery, decodedQuery) => {
+  const category = decodedQuery.category
+  activeCategory.value = categories.includes(category) ? category : 'all'
+})
+
+defineExpose({
+  activeCategory,
+  filters,
+  filteredTasks,
+  resultCount,
+  changeCategory,
+  toggleTask
+})
+</script>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "任务看板",
+  "navigationBarTextStyle": "black",
+  "navigationBarBackgroundColor": "#ffffff",
+  "backgroundColorContent": "#f8fafc",
+  "disableScroll": true
+}
+</script>

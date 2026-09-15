@@ -13,5 +13,7 @@ sidebarDepth: 0
 * [Mpx中基于 Typescript Template Literal Types 实现链式key的类型推导](ts-derivation.md)
 * [Mpx2.7 版本正式发布，大幅提升编译构建速度](2.7-release.md)
 * [Mpx2.8 版本正式发布，使用组合式 API 开发小程序](2.8-release.md)
+* [Mpx2.9 版本正式发布，支持原子类、SSR 和包体积优化](2.9-release.md)
+* [Mpx 2.11.0 版本正式发布，Mpx2RN 样式一致性与运行时性能系统升级](2.11-release.md)
 * [Mpx-cli 插件化改造](mpx-cli-next.md)
 * [Mpx 小程序单元测试能力建设与实践](unit-test.md)

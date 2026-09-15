@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
 })
 
 const formatRangeFun = (range: RangeItem[], rangeKey = '') =>
-  rangeKey ? range.map((item: Obj) => item[rangeKey]) : range
+  rangeKey ? range.map((item) => (item as Obj)[rangeKey]) : range
 
 const formatValueFn = (value: number | number[] = 0) => {
   const _value = Array.isArray(value) ? value[0] : value

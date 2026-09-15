@@ -15,17 +15,12 @@ type AddParam<O, V extends (...args: any) => any> =
 
 type PickApiValue<T extends keyof WechatMiniprogram.Wx> = Pick<WechatMiniprogram.Wx, T>[T]
 
-interface GetLocationInterface extends WechatMiniprogram.GetLocationOption {
-  aliType?: number
-}
-
 interface RequestPaymentInterface extends WechatMiniprogram.RequestPaymentOption {
   tradeNO?: string
 }
 
 declare module '@mpxjs/core' {
   interface Mpx extends AddPromise<WechatMiniprogram.Wx> {
-    getLocation: AddParam<GetLocationInterface, PickApiValue<'getLocation'>>
     requestPayment: AddParam<RequestPaymentInterface, PickApiValue<'requestPayment'>>
   }
 }
@@ -34,6 +29,7 @@ export const getProxy: (...args: any) => void
 
 export const promisify: (listObj: object, whiteList?: string[], customBlackList?: string[]) => Record<string, any>
 
+export const getLocation: WechatMiniprogram.Wx['getLocation']
 export const showActionSheet: WechatMiniprogram.Wx['showActionSheet']
 export const addPhoneContact: WechatMiniprogram.Wx['addPhoneContact']
 export const onAppShow: WechatMiniprogram.Wx['onAppShow']
@@ -128,6 +124,8 @@ export const clearStorage: WechatMiniprogram.Wx['clearStorage']
 export const clearStorageSync: WechatMiniprogram.Wx['clearStorageSync']
 export const getSystemInfo: WechatMiniprogram.Wx['getSystemInfo']
 export const getSystemInfoSync: WechatMiniprogram.Wx['getSystemInfoSync']
+export const getDeviceInfo: WechatMiniprogram.Wx['getDeviceInfo']
+export const getLaunchOptionsSync: WechatMiniprogram.Wx['getLaunchOptionsSync']
 export const getWindowInfo: WechatMiniprogram.Wx['getWindowInfo']
 export const setTabBarItem: WechatMiniprogram.Wx['setTabBarItem']
 export const setTabBarStyle: WechatMiniprogram.Wx['setTabBarStyle']
@@ -159,6 +157,10 @@ export const onLocationChange: WechatMiniprogram.Wx['onLocationChange']
 export const offLocationChange: WechatMiniprogram.Wx['offLocationChange']
 export const startLocationUpdate: WechatMiniprogram.Wx['startLocationUpdate']
 export const stopLocationUpdate: WechatMiniprogram.Wx['stopLocationUpdate']
+export const onKeyboardHeightChange: WechatMiniprogram.Wx['onKeyboardHeightChange']
+export const offKeyboardHeightChange: WechatMiniprogram.Wx['offKeyboardHeightChange']
+export const hideKeyboard: WechatMiniprogram.Wx['hideKeyboard']
+export const createCameraContext: WechatMiniprogram.Wx['createCameraContext']
 
 declare const install: (...args: any) => any
 

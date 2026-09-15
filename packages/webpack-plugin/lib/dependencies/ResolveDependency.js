@@ -1,7 +1,7 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const parseRequest = require('../utils/parse-request')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
-const { matchCondition } = require('../utils/match-condition')
+const { isPartialCompileExcluded } = require('../utils/partial-compile-rules')
 
 class ResolveDependency extends NullDependency {
   constructor (resource, packageName, issuerResource, range) {
@@ -35,7 +35,7 @@ class ResolveDependency extends NullDependency {
     const mainStaticResourcesMap = staticResourcesMap.main
     const resolveResult = pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
     if (!resolveResult) {
-      if (!partialCompileRules || matchCondition(resourcePath, partialCompileRules)) {
+      if (!isPartialCompileExcluded(resourcePath, partialCompileRules, 'page') && !isPartialCompileExcluded(resourcePath, partialCompileRules, 'component')) {
         compilation.errors.push(new Error(`[Mpx json error]:Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
       }
     }

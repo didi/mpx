@@ -1,4 +1,4 @@
-import { isArray, isObject, isString, noop, warn } from '@mpxjs/utils'
+import { error, isArray, isObject, isString, noop, remove, warn } from '@mpxjs/utils'
 import throttle from 'lodash/throttle'
 import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
@@ -22,10 +22,7 @@ class RNIntersectionObserver {
     this.initialRatio = this.options.initialRatio
     this.observeAll = this.options.observeAll
 
-    // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
-    this.component._intersectionObservers = this.component._intersectionObservers || []
-    this.component._intersectionObservers.push(this)
-
+    this._disconnected = false
     this.observerRefs = null
     this.relativeRef = null
     this.margins = DefaultMargin
@@ -41,11 +38,18 @@ class RNIntersectionObserver {
       this.intersectionCtx = intersectionCtx
       this.intersectionCtx[this.id] = this
     }
+    // 注册成功后再挂载到组件，供组件销毁时批量disconnect
+    this.component._intersectionObservers = this.component._intersectionObservers || []
+    this.component._intersectionObservers.push(this)
     return this
   }
 
     // 支持传递ref 或者 selector
   relativeTo (selector, margins = {}) {
+    if (this._disconnected) {
+      error('"relativeTo" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      return this
+    }
     let relativeRef
     if (isString(selector)) {
       relativeRef = this.component.__selectRef(selector, 'node')
@@ -63,21 +67,38 @@ class RNIntersectionObserver {
   }
 
   relativeToViewport (margins = {}) {
+    if (this._disconnected) {
+      error('"relativeToViewport" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      return this
+    }
     this.relativeRef = WindowRefStr
     this.margins = Object.assign({}, DefaultMargin, margins)
     return this
   }
 
   observe (selector, callback) {
+    if (this._disconnected) {
+      error('"observe" cannot be called after disconnect in IntersectionObserver. Please create a new observer.', this.mpxFileResource)
+      return
+    }
     if (this.observerRefs) {
-      warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
+      error('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
       return
     }
     let targetRef = null
-    if (this.observeAll) {
-      targetRef = this.component.__selectRef(selector, 'node', true)
-    } else {
-      targetRef = this.component.__selectRef(selector, 'node')
+    // 支持传递 ref 对象或数组
+    if (isArray(selector)) {
+      const refs = [].concat(...selector.map(item => (item && item.nodeRefs) || []))
+      targetRef = this.observeAll ? refs : refs[0]
+    } else if (isObject(selector)) {
+      const refs = selector.nodeRefs || []
+      targetRef = this.observeAll ? refs : refs[0]
+    } else if (isString(selector)) {
+      if (this.observeAll) {
+        targetRef = this.component.__selectRef(selector, 'node', true)
+      } else {
+        targetRef = this.component.__selectRef(selector, 'node')
+      }
     }
     if (!targetRef || targetRef.length === 0) {
       warn('intersection observer target not found', this.mpxFileResource)
@@ -175,20 +196,17 @@ class RNIntersectionObserver {
       right: this._restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.right),
       bottom: this._restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.bottom)
     }
+    visibleRect.width = visibleRect.right - visibleRect.left
+    visibleRect.height = visibleRect.bottom - visibleRect.top
 
     const targetArea = (observeRect.bottom - observeRect.top) * (observeRect.right - observeRect.left)
-    const visibleArea = (visibleRect.bottom - visibleRect.top) * (visibleRect.right - visibleRect.left)
+    const visibleArea = visibleRect.width * visibleRect.height
     const intersectionRatio = targetArea ? visibleArea / targetArea : 0
     const isInsected = isInit ? intersectionRatio > this.initialRatio : !(this._getRatioIndex(intersectionRatio, this.thresholds) === this._getRatioIndex(this.previousIntersectionRatio[observeIndex], this.thresholds))
     this.previousIntersectionRatio[observeIndex] = intersectionRatio
     return {
       intersectionRatio,
-      intersectionRect: {
-        top: visibleRect.top,
-        bottom: relativeRect.bottom,
-        left: visibleRect.left,
-        right: relativeRect.right
-      },
+      intersectionRect: visibleRect,
       isInsected
     }
   }
@@ -201,16 +219,16 @@ class RNIntersectionObserver {
 
   // 计算节点的rect信息
   _measureTarget (isInit = false) {
-    if (!this.observerRefs || !this.relativeRef) {
+    if (this._disconnected || !this.observerRefs || !this.relativeRef) {
       return
     }
     Promise.all([
       this._getReferenceRect(this.observerRefs),
       this._getReferenceRect(this.relativeRef)
     ]).then(([observeRects, relativeRect]) => {
-      if (relativeRect === IgnoreTarget) return
+      if (this._disconnected || relativeRect === IgnoreTarget) return
       observeRects.forEach((observeRect, index) => {
-        if (observeRect === IgnoreTarget) return
+        if (this._disconnected || observeRect === IgnoreTarget) return
         const { intersectionRatio, intersectionRect, isInsected } = this._measureIntersection({
           observeRect,
           observeIndex: index,
@@ -236,7 +254,11 @@ class RNIntersectionObserver {
   }
 
   disconnect () {
+    if (this._disconnected) return
+    this._disconnected = true
     if (this.intersectionCtx) delete this.intersectionCtx[this.id]
+    remove(this.component._intersectionObservers, this)
+    this.component = null
   }
 }
 

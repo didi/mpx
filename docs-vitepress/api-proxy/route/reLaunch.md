@@ -17,6 +17,8 @@
 | fail      | function |        | 否   | 接口调用失败的回调函数 |
 | complete  | function |        | 否   | 接口调用结束的回调函数（调用成功、失败都会执行） |
 
+> RN 平台成功回调参数的 `errMsg` 为 `reLaunch:ok`，失败回调参数的 `errMsg` 以 `reLaunch:fail` 开头。
+
 ### 示例代码 {#example-code}
 ```js
 mpx.reLaunch({

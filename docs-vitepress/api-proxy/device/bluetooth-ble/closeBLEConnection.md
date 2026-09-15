@@ -16,6 +16,8 @@ mpx.closeBLEConnection(Object object)
 | fail | function |  | 否 | 接口调用失败的回调函数 |
 | complete | function |  | 否 | 接口调用结束的回调函数（调用成功、失败都会执行） |
 
+> RN 平台未传 `deviceId` 时进入 `fail` 回调，`errMsg` 为 `closeBLEConnection:fail parameter error`，随后以同一结果调用 `complete`。
+
 ### 错误 {#error}
 
 | 错误码 | 错误信息 | 说明 | 支付宝 |

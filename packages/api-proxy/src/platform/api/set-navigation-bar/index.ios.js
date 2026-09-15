@@ -17,6 +17,10 @@ function setNavigationBarTitle (options = {}) {
 
 function setNavigationBarColor (options = {}) {
   const { frontColor = '', backgroundColor = '', success, fail, complete } = options
+  if (!['#ffffff', '#000000'].includes(frontColor) || !/^#[\da-fA-F]{3}([\da-fA-F]{3})?$/.test(backgroundColor)) {
+    failHandle({ errMsg: 'setNavigationBarColor:fail invalid color' }, fail, complete)
+    return
+  }
   const navigation = getFocusedNavigation()
   if (!(navigation && navigation.setOptions)) {
     failHandle({ errMsg: 'setNavigationBarColor:fail' }, fail, complete)

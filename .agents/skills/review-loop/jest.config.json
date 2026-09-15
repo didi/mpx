@@ -1,0 +1,8 @@
+{
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testMatch": ["<rootDir>/scripts/__tests__/**/*.spec.js"],
+  "passWithNoTests": false,
+  "watchman": false,
+  "testTimeout": 10000
+}

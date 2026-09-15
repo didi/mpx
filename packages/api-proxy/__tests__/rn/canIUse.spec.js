@@ -20,6 +20,38 @@ describe('canIUse for RN', () => {
     expect(canIUse('undefinedMethod')).toBe(false)
   })
 
+  test('should return false for RN compatibility placeholders', () => {
+    [
+      'previewImage',
+      'compressImage',
+      'chooseMedia',
+      'openLocation',
+      'chooseLocation',
+      'onLocationChange',
+      'offLocationChange',
+      'startLocationUpdate',
+      'stopLocationUpdate',
+      'setStorageSync',
+      'getStorageSync',
+      'getStorageInfoSync',
+      'removeStorageSync',
+      'clearStorageSync',
+      'switchTab',
+      'SelectorQuery.selectViewport',
+      'Animation.rotate3d',
+      'Animation.scaleZ',
+      'Animation.scale3d',
+      'Animation.translateZ',
+      'Animation.translate3d',
+      'Animation.matrix',
+      'Animation.matrix3d',
+      'RequestTask.onHeadersReceived',
+      'RequestTask.offHeadersReceived'
+    ].forEach((schema) => {
+      expect(canIUse(schema)).toBe(false)
+    })
+  })
+
   test('should support API with methods', () => {
     expect(canIUse('request.success')).toBe(true)
     expect(canIUse('showModal.success.confirm')).toBe(true)
@@ -28,6 +60,7 @@ describe('canIUse for RN', () => {
   test('should support object methods', () => {
     expect(canIUse('SelectorQuery')).toBe(true)
     expect(canIUse('SelectorQuery.select')).toBe(true)
+    expect(canIUse('NodesRef.ref')).toBe(true)
     expect(canIUse('Animation.rotate')).toBe(true)
 
     // 测试 Task 类的方法
@@ -53,11 +86,19 @@ describe('canIUse for RN', () => {
     // 测试一些从 platform 导出的 API
     expect(canIUse('base64ToArrayBuffer')).toBe(true)
     expect(canIUse('arrayBufferToBase64')).toBe(true)
+    expect(canIUse('canIUse')).toBe(true)
+
+    // 测试事件监听 API
+    expect(canIUse('onUnhandledRejection')).toBe(true)
+    expect(canIUse('offUnhandledRejection')).toBe(true)
+    expect(canIUse('onLazyLoadError')).toBe(true)
+    expect(canIUse('offLazyLoadError')).toBe(true)
 
     // 测试 create* 函数
     expect(canIUse('createAnimation')).toBe(true)
     expect(canIUse('createSelectorQuery')).toBe(true)
     expect(canIUse('createIntersectionObserver')).toBe(true)
+    expect(canIUse('createCameraContext')).toBe(true)
   })
 
   test('canIUse should be lightweight and fast', () => {
