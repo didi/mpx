@@ -1,6 +1,6 @@
 # 当前测试集 v4
 
-4个case／37条断言，未执行。原case 4合并到1，原case 3合并到2；新case 3为仅提供需求的任务看板页面创建。
+4个case／37条断言，未执行。原case 4合并到1并统一为orders.mpx页面输入，原case 3合并到2并统一为user-list.mpx组件输入（保留外部row.wxml和logo.svg）；新case 3为仅提供需求的任务看板页面创建。
 
 原始产物与评分保留在iteration-3。新版外层input只保留一份，不复制Skill，不预建执行目录。定义详见evals.json，迁移关系见assertion-migration.json。
 

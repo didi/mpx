@@ -2,12 +2,11 @@
   "eval_id": 2,
   "eval_name": "template-runtime-inline-animation",
   "title": "模板运行时、图文混排与动画",
-  "description": "一次适配用户列表及推广卡片，覆盖数据与查询、外部模板、导航、同段图文和状态动画。",
+  "description": "适配单个用户列表组件，将标题图文截断、提示圆点动画和回顶按钮反馈与列表数据、查询及外部模板组合为完整交互。",
   "task_type": "adaptation",
   "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
   "files": [
     "input/logo.svg",
-    "input/promo-card.mpx",
     "input/row.wxml",
     "input/task.md",
     "input/user-list.mpx"
@@ -52,7 +51,7 @@
         "file": "references/skyline-runtime-practice.md",
         "section": "[必须] ScrollViewContext：开启 enhanced 属性"
       },
-      "verification": "从查询目标追踪其enhanced属性及node().exec后的scrollTo({top:0})调用。",
+      "verification": "从user-list.mpx实际回顶按钮的点击绑定追踪查询目标、enhanced属性及node().exec后的scrollTo({top:0})调用，确认不是other容器。",
       "source_assertions": [
         "e2_06"
       ]
@@ -95,7 +94,7 @@
         "file": "references/skyline-layout-practice.md",
         "section": "图文混排"
       },
-      "verification": "检查微信输出实际 span 容器的省略属性、图片 display、renderer 分支及父级宽度和收缩约束；使用超长标题核对图标与文字共同截断的实现路径。普通 text 的省略属性不能替代此混排容器检查。",
+      "verification": "检查user-list.mpx标题中logo与label共同承载的实际span、省略属性、图片display及renderer路径和宽度约束；使用长label核对两者共同截断。",
       "source_assertions": [
         "e3_00",
         "e3_01",
@@ -112,7 +111,7 @@
         "file": "references/skyline-style-reference.md",
         "section": "动画与过渡差异"
       },
-      "verification": "追踪真实圆点节点的关键帧、fill-mode与周期，确认尺寸颜色及opacity变化对应原效果。",
+      "verification": "追踪user-list.mpx提示圆点的真实节点、关键帧、fill-mode与1秒周期，核对8px、#f50及opacity .3到1。",
       "source_assertions": [
         "e3_04",
         "e3_05"
@@ -127,7 +126,7 @@
         "file": "references/skyline-layout-practice.md",
         "section": "animation API 不支持 → 使用 CSS transition"
       },
-      "verification": "追踪按下/松开/取消绑定到Skyline状态及CSS，核对scale(.96)、opacity(.7)与恢复值。",
+      "verification": "追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定到状态类和CSS，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。",
       "source_assertions": [
         "e3_06",
         "e3_07",

@@ -1,24 +1,56 @@
 <template>
-<view><text>{{label}}</text><scroll-view id="other" type="list" enhanced="{{true}}"/><scroll-view
- id="1users" type="list"
- scroll-y="{{true}}">
-<view wx:for="{{visibleItems}}" wx:key="id"><view><include src="./row.wxml"/></view></view>
-</scroll-view><view bindtap="scrollTop">回到顶部</view><navigator url="/pages/detail"><text>详情</text></navigator><navigator url="/pages/detail"><view>卡片详情</view></navigator></view>
+  <view class="user-panel">
+    <view class="heading"><view class="truncate"><image src="./logo.svg" class="logo"/><text>{{label}}</text></view></view>
+    <view class="pulse"/>
+    <scroll-view id="other" type="list" enhanced="{{true}}"/>
+    <scroll-view id="1users" type="list" scroll-y="{{true}}">
+      <view wx:for="{{visibleItems}}" wx:key="id"><view><include src="./row.wxml"/></view></view>
+    </scroll-view>
+    <view class="button" animation="{{animationData}}" bindtap="scrollTop" bindtouchstart="press" bindtouchend="release" bindtouchcancel="release"><text>回到顶部</text></view>
+    <navigator url="/pages/detail"><text>详情</text></navigator>
+    <navigator url="/pages/detail"><view>卡片详情</view></navigator>
+  </view>
 </template>
 <script>
 import { createComponent } from '@mpxjs/core'
+
 createComponent({
- properties:{label:{type:String,value:'用户'},payload:{type:String,optionalTypes:[Object],value:''}},
- data:{items:undefined,config:{default:'keep'}},
- computed:{visibleItems(){return this.items && this.items.filter(item=>item.visible)}},
- methods:{
-  setRows(res){this.items=res.items},
-  scrollTop(){wx.createSelectorQuery().in(this).select('#1users').node().exec(res=>{res[0].node.scrollTo({top:0})})}
- }
+  properties: {
+    label: { type: String, value: '用户' },
+    payload: { type: String, optionalTypes: [Object], value: '' }
+  },
+  data: { items: undefined, config: { default: 'keep' }, animationData: {} },
+  computed: {
+    visibleItems () { return this.items && this.items.filter(item => item.visible) }
+  },
+  methods: {
+    setRows (res) { this.items = res.items },
+    scrollTop () {
+      wx.createSelectorQuery().in(this).select('#1users').node().exec(res => {
+        res[0].node.scrollTo({ top: 0 })
+      })
+    },
+    press () {
+      const animation = wx.createAnimation({ duration: 150 })
+      animation.scale(0.96).opacity(0.7).step()
+      this.animationData = animation.export()
+    },
+    release () {
+      const animation = wx.createAnimation({ duration: 150 })
+      animation.scale(1).opacity(1).step()
+      this.animationData = animation.export()
+    }
+  }
 })
 </script>
 <style>
-scroll-view{height:300px}
+scroll-view { height: 300px; }
+.heading { display: flex; }
+.truncate { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logo { width: 24px; height: 24px; vertical-align: middle; }
+.pulse::before { content: ''; display: block; width: 8px; height: 8px; background: #f50; animation: pulse 1s infinite; animation-fill-mode: backwards; }
+@keyframes pulse { from { opacity: .3; } to { opacity: 1; } }
+.button { padding: 12px; background: #eee; }
 </style>
 <script type="application/json">
 {"component":true}

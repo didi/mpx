@@ -235,7 +235,6 @@
       "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
       "files": [
         "input/app.json",
-        "input/category-panel.mpx",
         "input/orders.mpx",
         "input/service.js",
         "input/task.md"
@@ -243,14 +242,14 @@
       "assertions": [
         {
           "id": "s1_00",
-          "text": "Skyline 页面主体使用具有明确可滚动高度的 scroll-view，显式选择type=list，订单项作为列表的直接子节点。",
+          "text": "Skyline 订单页面的外层与主订单纵向scroll-view均具有明确可滚动高度，概览与分组主体按嵌套层次布局，分组实际参与主滚动区域。",
           "rule_id": "skyline.list-scroll",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "页面滚动替代方案"
           },
-          "verification": "检查列表直接子节点与高度约束链；使用超出容器高度的订单数据核对滚动结构。",
+          "verification": "检查导航下方的外层高度、概览占位和主订单容器高度链，以多组数据核对主区域可滚动；具体类型及吸顶结构分别按s4_00/s4_02验证。",
           "source_assertions": [
             "e1_01",
             "e2_08",
@@ -259,14 +258,14 @@
         },
         {
           "id": "s1_01",
-          "text": "Skyline 通过 bindrefresherrefresh 启动刷新，refresher-triggered 关联刷新状态，并在请求成功和失败后结束容器刷新态。",
+          "text": "Skyline 主订单纵向scroll-view通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
           "rule_id": "skyline.container-refresh",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "页面滚动替代方案"
           },
-          "verification": "触发容器刷新事件，分别模拟请求resolve/reject，检查触发态最终为false。",
+          "verification": "定位承载sections的主纵向容器及刷新绑定，分别注入fetchOrders(1)成功和失败，核对刷新态复位；外层或横向容器的绑定不能替代主区域链路。",
           "source_assertions": [
             "e1_02",
             "e1_05",
@@ -275,14 +274,14 @@
         },
         {
           "id": "s1_02",
-          "text": "Skyline 通过 scroll-view 的 bindscrolltolower 连接原分页加载方法，容器触底后显示追加的订单。",
+          "text": "Skyline 主订单纵向scroll-view通过bindscrolltolower连接分页加载，触底后下一页分组追加到同一sections列表并继续展示。",
           "rule_id": "skyline.container-bottom",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "页面滚动替代方案"
           },
-          "verification": "从实际模板事件绑定调用分页方法，核对下一页结果进入同一滚动列表。",
+          "verification": "从主订单容器实际触底绑定连续调用两次，核对页号推进、新分组追加和原分组保留；确认横向触底不触发纵向分页。",
           "source_assertions": [
             "e1_03",
             "e8_03"
@@ -290,14 +289,14 @@
         },
         {
           "id": "s1_03",
-          "text": "Skyline 通过 scroll-view 的 bindscroll 读取 event.detail.scrollTop 并更新滚动位置展示。",
+          "text": "Skyline 主订单纵向scroll-view通过bindscroll读取event.detail.scrollTop并更新概览中的滚动位置。",
           "rule_id": "skyline.container-scroll",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "页面滚动替代方案"
           },
-          "verification": "向实际滚动处理器传入detail.scrollTop，核对展示状态对应更新。",
+          "verification": "给主区域滚动处理器传入detail.scrollTop并核对展示；检查外层及横向滚动事件不会被误当作主订单区域位置。",
           "source_assertions": [
             "e1_04"
           ]
@@ -351,14 +350,14 @@
         },
         {
           "id": "s4_00",
-          "text": "Skyline 外层纵向滚动采用type=nested，内层滚动显式选择list/custom，并通过associative-container=nested-scroll-view建立关联。",
+          "text": "Skyline 外层纵向scroll-view采用type=nested，主订单纵向容器显式选择type=custom，内层横向容器显式选择list/custom，并通过associative-container=nested-scroll-view建立嵌套关联。",
           "rule_id": "skyline.nested-association",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-component-reference.md",
             "section": "Skyline 必填属性与结构约束"
           },
-          "verification": "沿模板父子关系检查nested祖先、内层类型和关联值。",
+          "verification": "沿外层、主区域及横向列表的父子关系核对类型和关联；主区域的custom用于承载吸顶分组，横向列表承担订单排列。",
           "source_assertions": [
             "e4_00",
             "e4_01"
@@ -382,14 +381,14 @@
         },
         {
           "id": "s4_02",
-          "text": "Skyline 分支使用sticky-section/sticky-header实现组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应的CSS sticky实现。",
+          "text": "Skyline 主订单custom容器内使用sticky-section/sticky-header实现分组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应CSS sticky实现。",
           "rule_id": "skyline.sticky-structure",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "sticky 吸顶替代方案"
           },
-          "verification": "分别选择renderer分支，检查sticky节点关系、背景与WebView样式；真机吸顶另记验证状态。",
+          "verification": "核对主区域type=custom、每组sticky节点关系、标题背景和renderer分支；真实吸顶与嵌套手势另外记录真机验证状态。",
           "source_assertions": [
             "e4_03",
             "e4_04",
@@ -412,7 +411,7 @@
           ]
         }
       ],
-      "description": "一次适配订单页及分类面板，覆盖页面接入、滚动事件、嵌套与横向滚动、吸顶及弹层层级。",
+      "description": "适配单个分组订单页面，统一嵌套纵向主区域的刷新、分页、滚动监听，组内横向列表、吸顶及弹层层级。",
       "task_type": "adaptation",
       "source_cases": [
         1,
@@ -426,7 +425,6 @@
       "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
       "files": [
         "input/logo.svg",
-        "input/promo-card.mpx",
         "input/row.wxml",
         "input/task.md",
         "input/user-list.mpx"
@@ -471,7 +469,7 @@
             "file": "references/skyline-runtime-practice.md",
             "section": "[必须] ScrollViewContext：开启 enhanced 属性"
           },
-          "verification": "从查询目标追踪其enhanced属性及node().exec后的scrollTo({top:0})调用。",
+          "verification": "从user-list.mpx实际回顶按钮的点击绑定追踪查询目标、enhanced属性及node().exec后的scrollTo({top:0})调用，确认不是other容器。",
           "source_assertions": [
             "e2_06"
           ]
@@ -514,7 +512,7 @@
             "file": "references/skyline-layout-practice.md",
             "section": "图文混排"
           },
-          "verification": "检查微信输出实际 span 容器的省略属性、图片 display、renderer 分支及父级宽度和收缩约束；使用超长标题核对图标与文字共同截断的实现路径。普通 text 的省略属性不能替代此混排容器检查。",
+          "verification": "检查user-list.mpx标题中logo与label共同承载的实际span、省略属性、图片display及renderer路径和宽度约束；使用长label核对两者共同截断。",
           "source_assertions": [
             "e3_00",
             "e3_01",
@@ -531,7 +529,7 @@
             "file": "references/skyline-style-reference.md",
             "section": "动画与过渡差异"
           },
-          "verification": "追踪真实圆点节点的关键帧、fill-mode与周期，确认尺寸颜色及opacity变化对应原效果。",
+          "verification": "追踪user-list.mpx提示圆点的真实节点、关键帧、fill-mode与1秒周期，核对8px、#f50及opacity .3到1。",
           "source_assertions": [
             "e3_04",
             "e3_05"
@@ -546,7 +544,7 @@
             "file": "references/skyline-layout-practice.md",
             "section": "animation API 不支持 → 使用 CSS transition"
           },
-          "verification": "追踪按下/松开/取消绑定到Skyline状态及CSS，核对scale(.96)、opacity(.7)与恢复值。",
+          "verification": "追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定到状态类和CSS，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。",
           "source_assertions": [
             "e3_06",
             "e3_07",
@@ -555,7 +553,7 @@
           ]
         }
       ],
-      "description": "一次适配用户列表及推广卡片，覆盖数据与查询、外部模板、导航、同段图文和状态动画。",
+      "description": "适配单个用户列表组件，将标题图文截断、提示圆点动画和回顶按钮反馈与列表数据、查询及外部模板组合为完整交互。",
       "task_type": "adaptation",
       "source_cases": [
         2,
