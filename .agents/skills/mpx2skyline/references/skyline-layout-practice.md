@@ -5,7 +5,7 @@
 ## 目录
 
 - [布局适配](#布局适配)
-  - [不要依赖 BFC 和 margin 合并](#不要依赖-bfc-和-margin-合并)
+  - [垂直 margin 折叠处理](#垂直-margin-折叠处理)
   - [使用正常流实现卡片与装饰条重叠](#使用正常流实现卡片与装饰条重叠)
   - [图文混排](#图文混排)
   - [页面滚动替代方案](#页面滚动替代方案)
@@ -31,61 +31,123 @@
 
 ## 布局适配
 
-### 不要依赖 BFC 和 margin 合并
+### 垂直 margin 折叠处理
 
-Skyline 没有 BFC（块级格式化上下文），也没有 margin 合并机制：相邻节点的垂直 `margin` 总是相加，`overflow: hidden` 不会创建 BFC 隔离子节点的 margin。WebView 上依赖 margin 合并或 BFC hack 得到的最终间距，在 Skyline 下会出现叠加，需改为显式、单向地定义间距归属。
+微信 WebView 的普通块级布局中，满足 CSS margin 折叠条件的节点关系可能发生垂直 `margin` 折叠：相邻兄弟元素、父元素与首个 / 末个流内后代、空块自身的上下 margin 都可能折叠。CSS margin 折叠只发生在垂直方向，水平方向的 `margin-left` / `margin-right` 不受影响。具体条件参考 [MDN · 掌握外边距折叠](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Guides/Box_model/Margin_collapsing)。
 
-**适配原则**：
+Skyline 没有 BFC 和 margin 折叠机制，`margin-top` / `margin-bottom` 会作为节点自身间距参与布局，相邻节点的垂直 margin 通常会叠加。因此适配普通块级布局中满足 margin 折叠条件的节点关系时，需要显式处理原平台发生的 margin 折叠，避免同一组 margin 在 Skyline 中产生更大的间距。
 
-1. **容器外沿空间用父容器 `padding` 表达**：不要依赖首项 / 末项 margin 与父容器合并。
-2. **兄弟节点间距只交给一侧负责**：列表项之间统一使用后一项的 `margin-top` 或前一项的 `margin-bottom`，避免双向 margin 叠加。
-3. **首尾项差异化用模板状态标记**：需要去掉首项或末项间距时，用 `wx:class` + `index` 显式绑定单类。
-4. **不要把 BFC hack 当作 Skyline 布局手段**：`overflow: hidden` 在 Skyline 中仅用于裁剪，不再具备隔离 margin 的副作用。
-5. **必要时显式声明纵向 Flex**：容器内仍存在难以拆解的垂直 margin 关系时，可同时声明 `display: flex` 与 `flex-direction: column`，使子节点作为 flex item 参与布局，进一步避免垂直 margin 合并。
+**先确认 WebView 会折叠，再改造：**不要仅因两个垂直 margin 同时存在就归到单侧。下表用于判断原 WebView 的最终渲染结构，不是 Skyline 的能力支持清单；例如 Flex / Grid、BFC 等条件描述的是原布局是否折叠。按节点关系逐项判断；命中任一“不要处理”条件，或无法确认原平台会发生折叠时，保留原 margin。
 
-```html
-<!-- ❌ Bad — 依赖 overflow: hidden 创建 BFC 隔离父子 margin 合并 -->
-<view class="card">
-  <view class="card-title">标题</view>
-  <view class="card-desc">说明</view>
-</view>
+| 节点关系 | 确认会折叠 | 反向约束：以下情况不要处理 |
+| --- | --- | --- |
+| 相邻兄弟 | 最终渲染结果中相邻的普通块级兄弟，前项 `margin-bottom` 与后项 `margin-top` 之间没有其他内容 | 共享父容器为 Flex / Grid；任一节点浮动或使用 `position: absolute/fixed`；后一节点因 `clear` 产生 clearance；条件渲染后并不相邻 |
+| 父元素与首个流内后代 | 两者的 `margin-top` 之间没有父元素的 `border-top`、`padding-top`、行内内容或 clearance，且父元素未建立新 BFC | 存在任一左述分隔条件；父元素通过 `overflow: hidden/auto/scroll`、`display: flow-root` 等建立 BFC；父元素为 Flex / Grid 容器 |
+| 父元素与末个流内后代 | 两者的 `margin-bottom` 之间没有父元素的 `border-bottom`、`padding-bottom`，父元素没有明确 `height` / `min-height`，且未建立新 BFC | 存在任一左述分隔条件；父元素通过 `overflow: hidden/auto/scroll`、`display: flow-root` 等建立 BFC；父元素为 Flex / Grid 容器 |
+| 空块自身 | `margin-top` 与 `margin-bottom` 之间没有 `border`、`padding`、行内内容、`height` 或 `min-height` | 存在任一左述分隔条件 |
 
-<!-- ✅ Good — 父容器 padding 表达外沿空间，兄弟间距交给单侧节点 -->
-<view class="card">
-  <view class="card-title">标题</view>
-  <view class="card-desc">说明</view>
-</view>
-```
+在 WebView 中，`overflow: hidden/auto/scroll` 建立 BFC 后，会阻止父元素自身 margin 与其后代 margin 跨父子边界折叠；但该父元素的外边距是否与相邻兄弟折叠，仍须按“相邻兄弟”一行独立判断，不能仅凭 `overflow` 排除。
 
-```css
-/* ❌ Bad */
-.card { overflow: hidden; }
-.card-title { margin-top: 24rpx; margin-bottom: 16rpx; }
-.card-desc { margin-top: 12rpx; }
+折叠后的值也不能一律用 `max()` 计算：两侧均为非负值时取较大值；同时存在正负 margin 时，取最大正值与最小负值之和；全部为负值时取最小值（绝对值最大的负值）。
 
-/* ✅ Good */
-.card { padding-top: 24rpx; }
-.card-desc { margin-top: 16rpx; }
-```
+**推荐处理原则：**
 
-**列表场景**：用 `index > 0` 标记非首项，只对非首项加 `margin-top`：
+1. **容器边界间距由父容器单侧表达**：外部间距使用父容器 margin，内部留白使用父容器 padding，不要依赖首个 / 末个子节点的 margin 与父容器折叠。
+2. **兄弟节点间距只交给一侧负责**：按模板顺序逐对检查普通块级布局中满足 margin 折叠条件的相邻兄弟节点，同时识别 `margin` 简写隐含的 `margin-top` / `margin-bottom`。将原平台折叠后的有效间距完整放在任意一侧，另一侧删除或置 `0`；常见的两侧非负 margin 场景取两者较大值，例如 `24rpx` 与 `12rpx` 归为单侧 `24rpx`，两侧均为 `20rpx` 时归为单侧 `20rpx`。不要因为 `margin` 属性本身受 Skyline 支持就跳过这项布局语义检查。
+3. **用模板状态标记首尾项**：需要去掉首项或末项间距时，用 `wx:class` + `index` 显式绑定单类。
+4. **必要时可显式声明纵向 Flex**：如果容器内仍存在难以拆解的垂直 margin 关系，可在确认不影响原布局的前提下，同时声明 `display: flex` 与 `flex-direction: column`，使原平台子节点也作为 flex item 参与布局，避免垂直 margin 折叠；若已通过 `padding` 和单侧 margin 明确处理间距，则不必额外添加 flex 声明。
+
+Skyline 中的 `overflow: hidden` 用于裁剪，不会像 WebView 一样建立 BFC。原 WebView 已通过它阻止父子 margin 折叠的场景，不属于父子折叠差异；有裁剪需求时仍需保留。添加纵向 Flex 是为了使 WebView 也采用不折叠的布局，并非在 Skyline 中创建 BFC；应同时声明 `display: flex` 和 `flex-direction: column`，核对原本折叠的间距及默认拉伸行为。
+
+**❌ 避免：**下例使用普通块级布局，其中“父元素与首个子元素”和“两个相邻兄弟元素”这两组节点关系均满足 margin 折叠条件。原平台中 `.card` 与标题的顶部 margin 折叠为 `24rpx`，标题和说明的相邻垂直 margin 折叠为 `16rpx`；Skyline 中兄弟间距为 `16 + 12 = 28rpx`，父子 margin 也分别参与布局，父容器外部 margin 为 `20rpx`，标题相对父容器顶部再偏移 `24rpx`，标题顶部的总偏移为 `44rpx`。下例父容器外部没有其他可折叠 margin，并显式使用普通块级布局。
 
 ```html
-<view class="list">
-  <view
-    wx:for="{{items}}"
-    wx:key="id"
-    class="list-item"
-    wx:class="{{ { 'list-item-gap': index > 0 } }}"
-  >
-    {{item.text}}
+<!-- ❌ Bad — 依赖普通块级布局中的父子及兄弟垂直 margin 折叠 -->
+<template>
+  <view class="card">
+    <view class="card-title">标题</view>
+    <view class="card-desc">说明</view>
   </view>
-</view>
+</template>
+
+<style>
+  .card, .card-title, .card-desc {
+    display: block;
+  }
+
+  .card {
+    margin-top: 20rpx;
+  }
+
+  .card-title {
+    margin-top: 24rpx;
+    margin-bottom: 16rpx;
+  }
+
+  .card-desc {
+    margin-top: 12rpx;
+  }
+</style>
 ```
 
-```css
-.list { padding-top: 24rpx; padding-bottom: 24rpx; }
-.list-item-gap { margin-top: 16rpx; }
+**✅ 推荐：**把父子顶部折叠后的 `24rpx` 外部间距归给 `.card` 的 `margin-top`，把标题和说明之间的 `16rpx` 间距交给单侧节点。两端的外部间距与项间距分别保持一致，不把外部 margin 改成内部 padding。
+
+```html
+<!-- ✅ Good — 父容器承接 24rpx 外部间距，说明节点承接 16rpx 兄弟间距 -->
+<template>
+  <view class="card">
+    <view class="card-title">标题</view>
+    <view class="card-desc">说明</view>
+  </view>
+</template>
+
+<style>
+  .card, .card-title, .card-desc {
+    display: block;
+  }
+
+  .card {
+    margin-top: 24rpx;
+  }
+
+  .card-desc {
+    margin-top: 16rpx;
+  }
+</style>
+```
+
+**内部留白与外部间距分开验收**：父容器的外部间距由父 `margin` 表达，不能直接替换为内部 `padding`。若需求明确为子盒顶部距父容器上外沿 `20px`（父容器无边框），使用父 `padding-top: 20px`，并清理重复的子 `margin-top`；子盒自身还有 `padding-top: 10px` 时，其内容顶部距父外沿为 `30px`。先确认测量的是子盒边界还是内容起点。
+
+**列表场景：**外沿到首尾子盒的内部留白由父 `padding` 表达，项间距按模板顺序只交给非首项的 `margin-top`。
+
+```html
+<template>
+  <view class="list">
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="list-item"
+      wx:class="{{ { 'list-item-gap': index > 0 } }}"
+    >
+      {{item.text}}
+    </view>
+  </view>
+</template>
+
+<style>
+  .list, .list-item {
+    display: block;
+  }
+
+  .list {
+    padding-top: 24rpx;
+    padding-bottom: 24rpx;
+  }
+
+  .list-item-gap {
+    margin-top: 16rpx;
+  }
+</style>
 ```
 
 ### 使用正常流实现卡片与装饰条重叠

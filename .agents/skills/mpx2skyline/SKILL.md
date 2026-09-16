@@ -45,7 +45,7 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 | 知识库 | 说明                                                                                     |
 | --- |----------------------------------------------------------------------------------------|
 | [Skyline 组件不支持与差异参考](./references/skyline-component-reference.md) | 查询 WebView 迁移 Skyline 时的组件差异，覆盖不支持组件、WebView-only 属性/取值、必填属性、结构约束与高频行为差异；不是完整组件手册，未收录能力需回源确认 |
-| [Skyline 与 Web/W3C CSS 标准差异参考](./references/skyline-style-reference.md) | 查询 Skyline 样式与 Web/W3C CSS 标准不一致的部分，覆盖默认值、选择器、值类型、布局层叠、文本、背景遮罩、滤镜、动画等差异                |
+| [Skyline 样式支持程度与兼容方案](./references/skyline-style-reference.md) | 查询 Skyline 样式与 Web/W3C CSS 标准不一致的部分，覆盖默认值、选择器、值类型、布局层叠、文本、背景遮罩、滤镜、动画等差异                |
 | [Skyline 布局与样式适配实践](./references/skyline-layout-practice.md) | 进行视图层适配改造时读取，覆盖布局/层叠、页面滚动、图文混排、sticky、文本省略、flex、媒体查询与 SVG 展示限制等改造方案                    |
 | [Skyline 运行时适配实践](./references/skyline-runtime-practice.md) | 进行运行时常见问题或者性能相关问题时读取，覆盖渲染模式判断、SelectorQuery、组件实例方法、Scroll API、常见报错与性能优化等               |
 | [Skyline 配置项与接入规范参考](./references/skyline-configuration.md) | 接入项目级与页面级配置时读取；按需点查 app.json 顶层配置、rendererOptions.skyline、页面配置示例与 Worklet Babel 插件配置   |
@@ -122,7 +122,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 5. **字体与文本能力先核对再替换**：`font-weight: 500/600` 在部分机型不生效，命中时先检查字体资源与 PostScript name，再确认是否改为 `bold` / `700`，未确认时保留并说明风险。`white-space`、`word-break`、`text-decoration` 等能力按 [文本与字体差异](./references/skyline-style-reference.md#文本与字体差异) 处理；`text-decoration-line` 多值按 [多值适配](./references/skyline-layout-practice.md#text-decoration-line-多值适配) 拆分节点。
 6. **背景、边框、遮罩与滤镜遵循层数和值域限制**：圆角非 0 时四边边框颜色和样式保持一致；多层背景、遮罩或阴影超出支持范围时拆节点；`mask-image` 不使用渐变；`filter` / `backdrop-filter` 不使用 `url()`、`drop-shadow()` 或多函数组合。具体值域见 [背景、边框与遮罩差异](./references/skyline-style-reference.md#背景边框与遮罩差异) 与 [滤镜差异](./references/skyline-style-reference.md#滤镜差异)。
 7. **媒体查询保留 WebView、补 Skyline 动态类**：Skyline 会忽略 `@media screen` 条件但可能保留内部规则，不能直接删除或全局覆盖。WebView 继续使用原媒体查询，Skyline 通过运行时状态类表达条件，并在媒体查询后补 Skyline 默认类兜底；详见 [@media screen 替换方案](./references/skyline-layout-practice.md#media-screen-替换方案)。
-8. **未支持属性按跨渲染原则处理**：命中未支持或静默失效的 CSS 时，先在 [其他 Skyline 不支持能力及兼容方案](./references/skyline-style-reference.md#其他-skyline-不支持能力及兼容方案) 查询替代方案；确认原 WebView 样式在 Skyline 下无副作用后可保留，仅新增 Skyline 实现。没有等效方案或副作用不明确时，说明风险并请求确认。
+8. **未支持属性按跨渲染原则处理**：命中未支持或静默失效的 CSS 时，先在 [Skyline 不支持能力及兼容方案](./references/skyline-style-reference.md#skyline-不支持能力及兼容方案) 查询替代方案；确认原 WebView 样式在 Skyline 下无副作用后可保留，仅新增 Skyline 实现。没有等效方案或副作用不明确时，说明风险并请求确认。
 
 ### 组件（component）约束
 
