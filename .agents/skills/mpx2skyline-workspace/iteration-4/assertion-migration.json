@@ -1,0 +1,235 @@
+{
+  "from_suite": 3,
+  "to_suite": 4,
+  "old_total": 31,
+  "preserved": 31,
+  "added": 6,
+  "new_total": 37,
+  "items": [
+    {
+      "assertion_id": "s0_00",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_01",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_02",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_03",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_04",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_05",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_06",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_07",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_08",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_09",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_10",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s0_11",
+      "from_case": 0,
+      "to_case": 0,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s1_00",
+      "from_case": 1,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s1_01",
+      "from_case": 1,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s1_02",
+      "from_case": 1,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s1_03",
+      "from_case": 1,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s1_04",
+      "from_case": 1,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s1_05",
+      "from_case": 1,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s1_06",
+      "from_case": 1,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s4_00",
+      "from_case": 4,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s4_01",
+      "from_case": 4,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s4_02",
+      "from_case": 4,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s4_03",
+      "from_case": 4,
+      "to_case": 1,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s2_00",
+      "from_case": 2,
+      "to_case": 2,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s2_01",
+      "from_case": 2,
+      "to_case": 2,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s2_02",
+      "from_case": 2,
+      "to_case": 2,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s2_03",
+      "from_case": 2,
+      "to_case": 2,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s2_04",
+      "from_case": 2,
+      "to_case": 2,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s3_00",
+      "from_case": 3,
+      "to_case": 2,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s3_01",
+      "from_case": 3,
+      "to_case": 2,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    },
+    {
+      "assertion_id": "s3_02",
+      "from_case": 3,
+      "to_case": 2,
+      "disposition": "preserved",
+      "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。"
+    }
+  ],
+  "new_assertions": [
+    "n3_00",
+    "n3_01",
+    "n3_02",
+    "n3_03",
+    "n3_04",
+    "n3_05"
+  ]
+}

@@ -1,5 +1,0 @@
-{
-  "total_tokens": null,
-  "status": "unavailable",
-  "reason": "Executor API did not expose usage; no character-count substitution"
-}
