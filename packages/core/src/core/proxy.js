@@ -261,8 +261,11 @@ export default class MpxProxy {
     if (__mpx_perf_framework__) perfId = perf.scopeStart('instance:unmount')
     this.scope?.stop()
     if (this.update) this.update.active = false
-    if (this._intersectionObservers) {
-      this._intersectionObservers.forEach((observer) => {
+    const intersectionObservers = this.target._intersectionObservers
+    if (intersectionObservers?.length) {
+      // 先清空组件列表，避免disconnect逐项删除时漏项或反复移动数组元素
+      this.target._intersectionObservers = []
+      intersectionObservers.forEach((observer) => {
         observer.disconnect()
       })
     }

@@ -1800,7 +1800,7 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `relativeTo(selectorOrNodesRef, margins?)` | 指定参照节点；支持 selector 字符串或 `NodesRef`。`margins` 支持 `top/right/bottom/left`。 |
 | `relativeToViewport(margins?)` | 以当前可视窗口为参照区域。 |
 | `observe(selectorOrNodesRef, callback)` | 开始观察；同一实例只能调用一次。支持 selector、`NodesRef` 或 `NodesRef[]`。 |
-| `disconnect()` | 从当前 IntersectionObserver 上下文移除实例。 |
+| `disconnect()` | 停止观察，移除页面和组件中的注册引用，断开实例对组件的直接引用，阻止后续测量并忽略在途结果。可重复调用；断开后需新建实例才能重新观察。业务不再使用时也应释放对实例的引用，便于垃圾回收。 |
 
 `observe` 回调收到 **Object**：
 
