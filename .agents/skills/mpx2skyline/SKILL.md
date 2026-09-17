@@ -143,7 +143,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 
 1. **简单状态切换优先 CSS transition**：缩放、透明度、位移等交互反馈通过 class 或动态 style 驱动，优先选择三端均支持的通用方案。Skyline 动画属性为白名单，只对 `transform`、`opacity`、尺寸、间距、定位等受支持属性使用 transition；字体、颜色、文本排版等未支持属性改为直接状态切换或其他方案，完整范围见 [动画与过渡差异](./references/skyline-style-reference.md#动画与过渡差异)。
 2. **循环或多步骤动画使用真实节点**：WebView 与 Skyline 可使用 CSS `animation` + `@keyframes`，RN 按需保留独立动画路径。伪元素 animation 在 Skyline 下不生效，改为真实节点；`animation-fill-mode` 只使用 `forwards` / `both`，迁移项目同时核对 `keyframeStyleIsolation`。
-3. **WebView 动画 API 在 Skyline 下补替代实现**：`wx.createAnimation` 以及 `animate` / `applyAnimation` / `clearAnimation` / `setInitialRenderingCache` 在 Skyline 下不支持，需改造为 CSS transition / animation；详见 [不支持的组件实例方法](./references/skyline-runtime-practice.md#必须-skyline-不支持的组件实例方法) 与 [animation API 替代方案](./references/skyline-layout-practice.md#animation-api-不支持--使用-css-transition)。
+3. **WebView 动画 API 在 Skyline 下补替代实现**：`wx.createAnimation` 以及 `animate` / `applyAnimation` / `clearAnimation` / `setInitialRenderingCache` 在 Skyline 下不支持，需改造为 CSS transition / animation；详见 [不支持的动画方法](./references/skyline-runtime-practice.md#必须-skyline-不支持的动画方法) 与 [animation API 替代方案](./references/skyline-layout-practice.md#animation-api-不支持--使用-css-transition)。
 4. **Worklet 只用于 UI 线程实时驱动**：手势跟随、滚动联动等需要 UI 线程及时反馈的场景才使用 Worklet。先按[高级能力](#skyline-高级能力)读取官方 Skill，再补 Mpx Babel 配置、renderer 隔离与 WebView 降级；简单交互不要仅为“性能最优”引入 Worklet。
 
 ## 任务一：对已有 WebView 页面或组件进行 Skyline 适配改造

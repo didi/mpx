@@ -7,7 +7,7 @@
 - [常见问题](#常见问题)
   - [判断当前渲染模式](#判断当前渲染模式)
   - [[必须] SelectorQuery 选择器不再支持以数字开头](#必须-selectorquery-选择器不再支持以数字开头)
-  - [[必须] Skyline 不支持的组件实例方法](#必须-skyline-不支持的组件实例方法)
+  - [[必须] Skyline 不支持的动画方法](#必须-skyline-不支持的动画方法)
   - [[推荐] 用 this.createSelectorQuery 替代 wx.createSelectorQuery](#推荐-用-thiscreateselectorquery-替代-wxcreateselectorquery)
   - [[必须] ScrollViewContext：开启 enhanced 属性](#必须-scrollviewcontext开启-enhanced-属性)
   - [[必须] properties 默认值使用 value 而非 default](#必须-properties-默认值使用-value-而非-default)
@@ -63,14 +63,15 @@ this.createSelectorQuery().select('#1').exec(res => {})
 this.createSelectorQuery().select('#element-1').exec(res => {})
 ```
 
-### [必须] Skyline 不支持的组件实例方法
+### [必须] Skyline 不支持的动画方法
 
-Skyline 下以下组件实例方法暂不支持，调用后静默不生效，需改用 CSS transition 或 Worklet 动画替代：
+Skyline 下暂不支持以下动画方法，调用后静默不生效，需改用 CSS transition / animation 或 Worklet 动画替代：
 
 - `animate`
 - `applyAnimation`
 - `clearAnimation`
 - `setInitialRenderingCache`
+- `wx.createAnimation`
 
 ### [推荐] 用 this.createSelectorQuery 替代 wx.createSelectorQuery
 
