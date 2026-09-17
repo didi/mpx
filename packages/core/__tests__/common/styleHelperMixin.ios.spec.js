@@ -318,6 +318,39 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(getColorAtWidth(901)).toBe('red')
   })
 
+  it('applies important declarations from all matching media queries', () => {
+    const style = {
+      width: 100,
+      height: 50,
+      _media: [{
+        options: { minWidth: 300 },
+        value: {
+          _inlineLayer: {
+            important: { width: 200 }
+          }
+        }
+      }, {
+        options: { maxWidth: 500 },
+        value: {
+          _inlineLayer: {
+            important: { height: 120 }
+          }
+        }
+      }]
+    }
+    const context = {
+      __pageId: 'page',
+      __mpxProxy: { props: {} },
+      __getClassStyle: jest.fn(() => style),
+      __getSizeCount: jest.fn()
+    }
+
+    const result = styleHelperMixin().methods.__getStyle.call(context, 'responsive')
+
+    expect(result.width).toBe(200)
+    expect(result.height).toBe(120)
+  })
+
   it('applies customDimensions before the first media-only style calculation', () => {
     const originalGlobals = {
       notifyDimensionsChange: global.notifyDimensionsChange,

@@ -232,7 +232,20 @@ function getMediaStyle (media) {
       : hasMinWidth
         ? width >= minWidth
         : hasMaxWidth && width <= maxWidth
-    if (matched) Object.assign(styleObj, value)
+    if (matched) {
+      Object.keys(value).forEach(key => {
+        if (key !== '_inlineLayer') styleObj[key] = value[key]
+      })
+      if (value._inlineLayer) {
+        styleObj._inlineLayer = styleObj._inlineLayer || {}
+        Object.keys(value._inlineLayer).forEach(layer => {
+          styleObj._inlineLayer[layer] = Object.assign(
+            styleObj._inlineLayer[layer] || {},
+            value._inlineLayer[layer]
+          )
+        })
+      }
+    }
     return styleObj
   }, {})
 }
@@ -255,8 +268,11 @@ const createLayer = (isNativeStyle) => {
   const mergeToLayer = (name, style, mediaStyle) => {
     const layer = layerMap[name] || layerMap.normal
     layer.push(style)
-    if (mediaStyle) layer.push(mediaStyle)
     if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
+    if (mediaStyle) {
+      layer.push(mediaStyle)
+      if (mediaStyle._inlineLayer) checkInlineLayer(mediaStyle, mergeToLayer)
+    }
   }
 
   const mergeToLayerWithStyles = (name, styles) => {

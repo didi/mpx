@@ -123,6 +123,37 @@ describe('React Native style validation for CSS variables', () => {
       })
       expect(config.error).not.toHaveBeenCalled()
     })
+
+    test('keeps important declarations in the media style', () => {
+      const config = createConfig()
+      const result = getClassMap({
+        content: `
+          .media-box {
+            width: 100px;
+          }
+          @media (min-width: 300px) {
+            .media-box {
+              width: 200px !important;
+            }
+          }
+        `,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result['media-box']).toEqual({
+        width: '100',
+        _media: [{
+          options: { minWidth: 300 },
+          value: {
+            _inlineLayer: {
+              important: { width: '200' }
+            }
+          }
+        }]
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
   })
 
   describe('CSS variable fallback validation', () => {
