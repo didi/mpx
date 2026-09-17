@@ -1849,6 +1849,10 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `nodesRef.context(callback)` / `node(callback)` / `ref(callback)` | 当前 `SelectorQuery` | 分别返回 `{ context }`、`{ node }`、`{ ref }`。 |
 | `query.exec(callback)` | `undefined` | 按入队顺序聚合前述回调结果，最终参数为结果数组。 |
 
+通过 `query.select(selector).scrollOffset(callback)` 查询实际的 `scroll-view` 节点时，回调结果包含当前滚动位置以及滚动内容的实际 `scrollWidth`、`scrollHeight`。
+
+RN 当前支持动态读写 `ScrollViewContext` 的 `scrollEnabled`、`bounces`、`showScrollbar` 和 `pagingEnabled` 四个属性。使用时需要为 `scroll-view` 开启 `enhanced`，并通过 `query.select(selector).node(callback)` 回调参数中的 `node` 字段获取。
+
 #### 注意事项
 
 - selector 仅支持 `#id`、`.class` 和连续 class（如 `.a.b`），不支持后代、子节点、跨组件等复杂选择器。对应模板节点须添加空 `wx:ref`，并在节点渲染完成后查询；数据更新后需等待 `this.$nextTick()` 再查询。
