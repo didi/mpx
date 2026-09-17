@@ -21,7 +21,7 @@
         "file": "references/skyline-layout-practice.md",
         "section": "页面滚动替代方案"
       },
-      "verification": "检查导航下方的外层高度、概览占位和主订单容器高度链，以多组数据核对主区域可滚动；具体类型及吸顶结构分别按s4_00/s4_02验证。",
+      "verification": "检查导航下方的外层高度、概览占位和主订单容器高度链，以多组数据核对主区域可滚动；具体类型及吸顶结构分别按s1_07/s1_09验证。",
       "source_assertions": [
         "e1_01",
         "e2_08",
@@ -121,7 +121,7 @@
       ]
     },
     {
-      "id": "s4_00",
+      "id": "s1_07",
       "text": "Skyline 外层纵向scroll-view采用type=nested，主订单纵向容器显式选择type=custom，内层横向容器显式选择list/custom，并通过associative-container=nested-scroll-view建立嵌套关联。",
       "rule_id": "skyline.nested-association",
       "scope": "skyline",
@@ -136,7 +136,7 @@
       ]
     },
     {
-      "id": "s4_01",
+      "id": "s1_08",
       "text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
       "rule_id": "skyline.horizontal-list",
       "scope": "skyline",
@@ -152,7 +152,7 @@
       ]
     },
     {
-      "id": "s4_02",
+      "id": "s1_09",
       "text": "Skyline 主订单custom容器内使用sticky-section/sticky-header实现分组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应CSS sticky实现。",
       "rule_id": "skyline.sticky-structure",
       "scope": "skyline",
@@ -168,7 +168,7 @@
       ]
     },
     {
-      "id": "s4_03",
+      "id": "s1_10",
       "text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
       "rule_id": "skyline.fixed-layer",
       "scope": "skyline",

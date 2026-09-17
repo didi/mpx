@@ -99,7 +99,7 @@
       "verification": "追踪真实触摸绑定到响应状态和CSS，分别模拟按下/松开/取消，核对数值、持续时间和恢复。",
       "source_assertions": [],
       "related_adaptation_assertions": [
-        "s3_02"
+        "s2_07"
       ]
     }
   ]

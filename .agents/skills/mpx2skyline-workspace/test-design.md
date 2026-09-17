@@ -11,7 +11,7 @@
 
 ## 合并与计分边界
 
-case 1将订单与分类面板合并为单个orders.mpx输入，数据接口统一返回分组订单；case 2将推广卡片的图文与动画并入user-list组件，保留row.wxml及logo.svg作为必要外部资源。旧31条断言保留ID与能力覆盖，其中case 1的6条按统一主滚动区域修订，case 2的4条验证方法指向同一组件；前版正文与验证方法记录在迁移表。来源章节名称与当前Skill对齐。
+case 1将订单与分类面板合并为单个orders.mpx输入，数据接口统一返回分组订单；case 2将推广卡片的图文与动画并入user-list组件，保留row.wxml及logo.svg作为必要外部资源。旧31条断言保留能力覆盖，其中case 1的6条按统一主滚动区域修订，case 2的4条验证方法指向同一组件；前版正文与验证方法记录在迁移表。来源章节名称与当前Skill对齐。
 
 新增case通过仅提供需求而不提供待修复页面，验证从零实现Skyline适配。业务与通用Mpx语法单独验证，不纳入专项断言。创建入口与迁移入口有意复用核心能力，分开报告31条迁移分数和6条创建分数。
 
@@ -44,17 +44,17 @@ case 1将订单与分类面板合并为单个orders.mpx输入，数据接口统�
 
 | 断言 | Skyline适配要求 | 验证方法 |
 | --- | --- | --- |
-| `s1_00` | Skyline 订单页面的外层与主订单纵向scroll-view均具有明确可滚动高度，概览与分组主体按嵌套层次布局，分组实际参与主滚动区域。 | 检查导航下方的外层高度、概览占位和主订单容器高度链，以多组数据核对主区域可滚动；具体类型及吸顶结构分别按s4_00/s4_02验证。 |
+| `s1_00` | Skyline 订单页面的外层与主订单纵向scroll-view均具有明确可滚动高度，概览与分组主体按嵌套层次布局，分组实际参与主滚动区域。 | 检查导航下方的外层高度、概览占位和主订单容器高度链，以多组数据核对主区域可滚动；具体类型及吸顶结构分别按s1_07/s1_09验证。 |
 | `s1_01` | Skyline 主订单纵向scroll-view通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。 | 定位承载sections的主纵向容器及刷新绑定，分别注入fetchOrders(1)成功和失败，核对刷新态复位；外层或横向容器的绑定不能替代主区域链路。 |
 | `s1_02` | Skyline 主订单纵向scroll-view通过bindscrolltolower连接分页加载，触底后下一页分组追加到同一sections列表并继续展示。 | 从主订单容器实际触底绑定连续调用两次，核对页号推进、新分组追加和原分组保留；确认横向触底不触发纵向分页。 |
 | `s1_03` | Skyline 主订单纵向scroll-view通过bindscroll读取event.detail.scrollTop并更新概览中的滚动位置。 | 给主区域滚动处理器传入detail.scrollTop并核对展示；检查外层及横向滚动事件不会被误当作主订单区域位置。 |
 | `s1_04` | Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。 | 解析页面JSON并检查真实导航节点和主体布局关系。 |
 | `s1_05` | Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。 | 解析 app.json 并检查顶层属性值。 |
 | `s1_06` | Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。 | 逐项解析五个字段的层级、类型和值。 |
-| `s4_00` | Skyline 外层纵向scroll-view采用type=nested，主订单纵向容器显式选择type=custom，内层横向容器显式选择list/custom，并通过associative-container=nested-scroll-view建立嵌套关联。 | 沿外层、主区域及横向列表的父子关系核对类型和关联；主区域的custom用于承载吸顶分组，横向列表承担订单排列。 |
-| `s4_01` | Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。 | 检查横向容器的type、scroll-x、enable-flex、flex-direction及条目宽度/收缩；采用list时检查直接子节点，多项目排列后形成横向内容。 |
-| `s4_02` | Skyline 主订单custom容器内使用sticky-section/sticky-header实现分组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应CSS sticky实现。 | 核对主区域type=custom、每组sticky节点关系、标题背景和renderer分支；真实吸顶与嵌套手势另外记录真机验证状态。 |
-| `s4_03` | Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。 | 追踪实际fixed兄弟或等效可比较层级，比较最终覆盖关系及z-index。 |
+| `s1_07` | Skyline 外层纵向scroll-view采用type=nested，主订单纵向容器显式选择type=custom，内层横向容器显式选择list/custom，并通过associative-container=nested-scroll-view建立嵌套关联。 | 沿外层、主区域及横向列表的父子关系核对类型和关联；主区域的custom用于承载吸顶分组，横向列表承担订单排列。 |
+| `s1_08` | Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。 | 检查横向容器的type、scroll-x、enable-flex、flex-direction及条目宽度/收缩；采用list时检查直接子节点，多项目排列后形成横向内容。 |
+| `s1_09` | Skyline 主订单custom容器内使用sticky-section/sticky-header实现分组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应CSS sticky实现。 | 核对主区域type=custom、每组sticky节点关系、标题背景和renderer分支；真实吸顶与嵌套手势另外记录真机验证状态。 |
+| `s1_10` | Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。 | 追踪实际fixed兄弟或等效可比较层级，比较最终覆盖关系及z-index。 |
 
 ## Case 2：模板运行时、图文混排与动画
 
@@ -69,9 +69,9 @@ case 1将订单与分类面板合并为单个orders.mpx输入，数据接口统�
 | `s2_02` | Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。 | 从user-list.mpx实际回顶按钮的点击绑定追踪查询目标、enhanced属性及node().exec后的scrollTo({top:0})调用，确认不是other容器。 |
 | `s2_03` | Skyline/glass-easel 循环中的外部片段采用 import 加具名 template 调用，并显式传递当前 item/index。 | 检查导入路径、模板名称和循环数据参数，代入两行不同数据确认作用域。 |
 | `s2_04` | Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。 | 检查两个导航入口的实际子节点和/pages/detail目标；复杂外层事件方案核对绑定与跳转调用。 |
-| `s3_00` | Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。 | 检查user-list.mpx标题中logo与label共同承载的实际span、省略属性、图片display及renderer路径和宽度约束；使用长label核对两者共同截断。 |
-| `s3_01` | Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。 | 追踪user-list.mpx提示圆点的真实节点、关键帧、fill-mode与1秒周期，核对8px、#f50及opacity .3到1。 |
-| `s3_02` | Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。 | 追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定到状态类和CSS，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。 |
+| `s2_05` | Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。 | 检查user-list.mpx标题中logo与label共同承载的实际span、省略属性、图片display及renderer路径和宽度约束；使用长label核对两者共同截断。 |
+| `s2_06` | Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。 | 追踪user-list.mpx提示圆点的真实节点、关键帧、fill-mode与1秒周期，核对8px、#f50及opacity .3到1。 |
+| `s2_07` | Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。 | 追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定到状态类和CSS，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。 |
 
 ## Case 3：从零创建任务看板页面
 
@@ -93,3 +93,7 @@ case 1将订单与分类面板合并为单个orders.mpx输入，数据接口统�
 使用同一模型/参数先建立独立Skill与no_skill基线，再比较合并Skill。保存输入、Skill哈希和实际执行证据。本次只更新测试定义，未执行模型评测。
 
 [完整定义](iteration-4/evals.json) · [评分标准](iteration-4/grading-standard.md) · [迁移表](iteration-4/assertion-migration.json)
+
+Case 2断言统一编号为s2_00–s2_07；原s3_00/s3_01/s3_02依次迁移为s2_05/s2_06/s2_07，旧ID保存在迁移表source_assertion_id中。断言正文及验证方法不变。
+
+Case 1断言统一编号为s1_00–s1_10；原s4_00/s4_01/s4_02/s4_03依次迁移为s1_07/s1_08/s1_09/s1_10，旧ID保存在迁移表source_assertion_id中。评分要求不变。

@@ -119,7 +119,7 @@
       "from_case": 1,
       "to_case": 1,
       "disposition": "adapted-to-unified-page",
-      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s4_01横向列表及n3_01新建页面覆盖。",
+      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s1_08横向列表及n3_01新建页面覆盖。",
       "previous_text": "Skyline 页面主体使用具有明确可滚动高度的 scroll-view，显式选择type=list，订单项作为列表的直接子节点。",
       "previous_verification": "检查列表直接子节点与高度约束链；使用超出容器高度的订单数据核对滚动结构。"
     },
@@ -128,7 +128,7 @@
       "from_case": 1,
       "to_case": 1,
       "disposition": "adapted-to-unified-page",
-      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s4_01横向列表及n3_01新建页面覆盖。",
+      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s1_08横向列表及n3_01新建页面覆盖。",
       "previous_text": "Skyline 通过 bindrefresherrefresh 启动刷新，refresher-triggered 关联刷新状态，并在请求成功和失败后结束容器刷新态。",
       "previous_verification": "触发容器刷新事件，分别模拟请求resolve/reject，检查触发态最终为false。"
     },
@@ -137,7 +137,7 @@
       "from_case": 1,
       "to_case": 1,
       "disposition": "adapted-to-unified-page",
-      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s4_01横向列表及n3_01新建页面覆盖。",
+      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s1_08横向列表及n3_01新建页面覆盖。",
       "previous_text": "Skyline 通过 scroll-view 的 bindscrolltolower 连接原分页加载方法，容器触底后显示追加的订单。",
       "previous_verification": "从实际模板事件绑定调用分页方法，核对下一页结果进入同一滚动列表。"
     },
@@ -146,7 +146,7 @@
       "from_case": 1,
       "to_case": 1,
       "disposition": "adapted-to-unified-page",
-      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s4_01横向列表及n3_01新建页面覆盖。",
+      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s1_08横向列表及n3_01新建页面覆盖。",
       "previous_text": "Skyline 通过 scroll-view 的 bindscroll 读取 event.detail.scrollTop 并更新滚动位置展示。",
       "previous_verification": "向实际滚动处理器传入detail.scrollTop，核对展示状态对应更新。"
     },
@@ -178,40 +178,44 @@
       "previous_verification": "逐项解析五个字段的层级、类型和值。"
     },
     {
-      "assertion_id": "s4_00",
+      "assertion_id": "s1_07",
       "from_case": 4,
       "to_case": 1,
       "disposition": "adapted-to-unified-page",
-      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s4_01横向列表及n3_01新建页面覆盖。",
+      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s1_08横向列表及n3_01新建页面覆盖。",
       "previous_text": "Skyline 外层纵向滚动采用type=nested，内层滚动显式选择list/custom，并通过associative-container=nested-scroll-view建立关联。",
-      "previous_verification": "沿模板父子关系检查nested祖先、内层类型和关联值。"
+      "previous_verification": "沿模板父子关系检查nested祖先、内层类型和关联值。",
+      "source_assertion_id": "s4_00"
     },
     {
-      "assertion_id": "s4_01",
+      "assertion_id": "s1_08",
       "from_case": 4,
       "to_case": 1,
       "disposition": "preserved",
       "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。",
       "previous_text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
-      "previous_verification": "检查横向容器的type、scroll-x、enable-flex、flex-direction及条目宽度/收缩；采用list时检查直接子节点，多项目排列后形成横向内容。"
+      "previous_verification": "检查横向容器的type、scroll-x、enable-flex、flex-direction及条目宽度/收缩；采用list时检查直接子节点，多项目排列后形成横向内容。",
+      "source_assertion_id": "s4_01"
     },
     {
-      "assertion_id": "s4_02",
+      "assertion_id": "s1_09",
       "from_case": 4,
       "to_case": 1,
       "disposition": "adapted-to-unified-page",
-      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s4_01横向列表及n3_01新建页面覆盖。",
+      "note": "适配同一订单页面的嵌套主区域；list类型/直接子项能力继续由s1_08横向列表及n3_01新建页面覆盖。",
       "previous_text": "Skyline 分支使用sticky-section/sticky-header实现组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应的CSS sticky实现。",
-      "previous_verification": "分别选择renderer分支，检查sticky节点关系、背景与WebView样式；真机吸顶另记验证状态。"
+      "previous_verification": "分别选择renderer分支，检查sticky节点关系、背景与WebView样式；真机吸顶另记验证状态。",
+      "source_assertion_id": "s4_02"
     },
     {
-      "assertion_id": "s4_03",
+      "assertion_id": "s1_10",
       "from_case": 4,
       "to_case": 1,
       "disposition": "preserved",
       "note": "断言ID、正文及验证方法保留；规则来源标题跟随当前Skill更新。",
       "previous_text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
-      "previous_verification": "追踪实际fixed兄弟或等效可比较层级，比较最终覆盖关系及z-index。"
+      "previous_verification": "追踪实际fixed兄弟或等效可比较层级，比较最终覆盖关系及z-index。",
+      "source_assertion_id": "s4_03"
     },
     {
       "assertion_id": "s2_00",
@@ -259,31 +263,34 @@
       "previous_verification": "检查两个导航入口的实际子节点和/pages/detail目标；复杂外层事件方案核对绑定与跳转调用。"
     },
     {
-      "assertion_id": "s3_00",
+      "assertion_id": "s2_05",
       "from_case": 3,
       "to_case": 2,
       "disposition": "adapted-to-unified-component",
       "note": "评分正文与能力保持，验证目标统一到user-list标题、提示圆点及同一个回顶按钮。",
       "previous_text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
-      "previous_verification": "检查微信输出实际 span 容器的省略属性、图片 display、renderer 分支及父级宽度和收缩约束；使用超长标题核对图标与文字共同截断的实现路径。普通 text 的省略属性不能替代此混排容器检查。"
+      "previous_verification": "检查微信输出实际 span 容器的省略属性、图片 display、renderer 分支及父级宽度和收缩约束；使用超长标题核对图标与文字共同截断的实现路径。普通 text 的省略属性不能替代此混排容器检查。",
+      "source_assertion_id": "s3_00"
     },
     {
-      "assertion_id": "s3_01",
+      "assertion_id": "s2_06",
       "from_case": 3,
       "to_case": 2,
       "disposition": "adapted-to-unified-component",
       "note": "评分正文与能力保持，验证目标统一到user-list标题、提示圆点及同一个回顶按钮。",
       "previous_text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
-      "previous_verification": "追踪真实圆点节点的关键帧、fill-mode与周期，确认尺寸颜色及opacity变化对应原效果。"
+      "previous_verification": "追踪真实圆点节点的关键帧、fill-mode与周期，确认尺寸颜色及opacity变化对应原效果。",
+      "source_assertion_id": "s3_01"
     },
     {
-      "assertion_id": "s3_02",
+      "assertion_id": "s2_07",
       "from_case": 3,
       "to_case": 2,
       "disposition": "adapted-to-unified-component",
       "note": "评分正文与能力保持，验证目标统一到user-list标题、提示圆点及同一个回顶按钮。",
       "previous_text": "Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
-      "previous_verification": "追踪按下/松开/取消绑定到Skyline状态及CSS，核对scale(.96)、opacity(.7)与恢复值。"
+      "previous_verification": "追踪按下/松开/取消绑定到Skyline状态及CSS，核对scale(.96)、opacity(.7)与恢复值。",
+      "source_assertion_id": "s3_02"
     }
   ],
   "new_assertions": [
@@ -295,5 +302,14 @@
     "n3_05"
   ],
   "adapted": 10,
-  "retained_ids": 31
+  "retained_ids": 31,
+  "id_renames": {
+    "s3_00": "s2_05",
+    "s3_01": "s2_06",
+    "s3_02": "s2_07",
+    "s4_00": "s1_07",
+    "s4_01": "s1_08",
+    "s4_02": "s1_09",
+    "s4_03": "s1_10"
+  }
 }

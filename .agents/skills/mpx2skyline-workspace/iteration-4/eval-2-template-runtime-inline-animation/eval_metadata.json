@@ -86,7 +86,7 @@
       ]
     },
     {
-      "id": "s3_00",
+      "id": "s2_05",
       "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
       "rule_id": "skyline.inline-flow",
       "scope": "skyline",
@@ -103,7 +103,7 @@
       ]
     },
     {
-      "id": "s3_01",
+      "id": "s2_06",
       "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
       "rule_id": "skyline.node-animation",
       "scope": "skyline",
@@ -118,7 +118,7 @@
       ]
     },
     {
-      "id": "s3_02",
+      "id": "s2_07",
       "text": "Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
       "rule_id": "skyline.state-transition",
       "scope": "skyline",

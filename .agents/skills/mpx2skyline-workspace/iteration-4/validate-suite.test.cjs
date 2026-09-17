@@ -110,7 +110,7 @@ test('unified orders fixture appends grouped pages and retains data on refresh f
   state.close()
   expect(state.opened).toBe(false)
   const byId = Object.fromEntries(manifest.evals[1].assertions.map(item => [item.id, item]))
-  expect(byId.s4_00.text).toContain('type=custom')
+  expect(byId.s1_07.text).toContain('type=custom')
   expect(byId.s1_00.text).not.toContain('type=list')
   ;['s1_01', 's1_02', 's1_03'].forEach(id => expect(byId[id].text).toContain('主订单纵向scroll-view'))
 })
