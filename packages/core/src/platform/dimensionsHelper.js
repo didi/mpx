@@ -4,7 +4,6 @@ import Mpx from '../index'
 
 let dimensionsInfoInitialized = false
 let rawDimensionsInfo
-let appliedCustomDimensions
 let appliedDimensionsBase
 let styleDimensionsSnapshot
 
@@ -15,13 +14,16 @@ function cloneDimensionsInfo (dimensions) {
   }
 }
 
-export function getDimensionsBase () {
+function getConfiguredDimensionsBase () {
   return Mpx.config.rnConfig?.dimensionsBase === 'screen' ? 'screen' : 'window'
+}
+
+export function getDimensionsBase () {
+  return dimensionsInfoInitialized ? appliedDimensionsBase : getConfiguredDimensionsBase()
 }
 
 export function initDimensionsInfo (dimensions) {
   dimensionsInfoInitialized = false
-  appliedCustomDimensions = undefined
   appliedDimensionsBase = undefined
   styleDimensionsSnapshot = undefined
   rawDimensionsInfo = cloneDimensionsInfo(dimensions)
@@ -59,35 +61,34 @@ function triggerStyleDimensionsChange () {
 
 export function syncDimensions (dimensions, options = {}) {
   const oldStyleDimensionsSnapshot = styleDimensionsSnapshot
-  rawDimensionsInfo = cloneDimensionsInfo(dimensions)
+  const nextRawDimensionsInfo = cloneDimensionsInfo(dimensions)
   const customDimensions = Mpx.config.rnConfig?.customDimensions
-  const dimensionsBase = getDimensionsBase()
-  dimensionsInfoInitialized = true
-  appliedCustomDimensions = customDimensions
-  appliedDimensionsBase = dimensionsBase
-  dimensions = cloneDimensionsInfo(rawDimensionsInfo)
+  const dimensionsBase = getConfiguredDimensionsBase()
+  dimensions = cloneDimensionsInfo(nextRawDimensionsInfo)
   if (typeof customDimensions === 'function') {
     dimensions = customDimensions(dimensions) || dimensions
   }
+  dimensions = cloneDimensionsInfo(dimensions)
+  const nextStyleDimensionsSnapshot = getStyleDimensionsSnapshot(dimensionsBase, dimensions)
+
+  // 自定义尺寸计算成功后再统一提交，避免中途异常留下部分更新状态。
+  rawDimensionsInfo = nextRawDimensionsInfo
+  dimensionsInfoInitialized = true
+  appliedDimensionsBase = dimensionsBase
   global.__mpxAppDimensionsInfo.window = dimensions.window
   global.__mpxAppDimensionsInfo.screen = dimensions.screen
-  styleDimensionsSnapshot = getStyleDimensionsSnapshot(dimensionsBase, dimensions)
+  styleDimensionsSnapshot = nextStyleDimensionsSnapshot
 
   if (!options.silent && oldStyleDimensionsSnapshot && !isSameStyleDimensions(oldStyleDimensionsSnapshot, styleDimensionsSnapshot)) {
     triggerStyleDimensionsChange()
   }
 }
 
-export function getStyleDimensions (dimensionsBase = getDimensionsBase()) {
+export function getStyleDimensions (dimensionsBase) {
   if (!dimensionsInfoInitialized) {
     syncDimensions(rawDimensionsInfo, { silent: true })
-  } else if (
-    appliedDimensionsBase !== getDimensionsBase() ||
-    appliedCustomDimensions !== Mpx.config.rnConfig?.customDimensions
-  ) {
-    syncDimensions(rawDimensionsInfo)
   }
-  return global.__mpxAppDimensionsInfo[dimensionsBase]
+  return global.__mpxAppDimensionsInfo[dimensionsBase || appliedDimensionsBase]
 }
 
 export function getSystemInfo () {
@@ -110,14 +111,15 @@ export function triggerResizeEvent (mpxProxy, sizeRef) {
   const systemInfo = getSystemInfo()
   const newSize = systemInfo.size
   const dimensionsBase = getDimensionsBase()
+  const oldDimensionsBase = sizeRef.current.dimensionsBase || dimensionsBase
   const widthKey = `${dimensionsBase}Width`
   const heightKey = `${dimensionsBase}Height`
 
-  if (oldSize && oldSize[widthKey] === newSize[widthKey] && oldSize[heightKey] === newSize[heightKey]) {
+  if (oldDimensionsBase === dimensionsBase && oldSize && oldSize[widthKey] === newSize[widthKey] && oldSize[heightKey] === newSize[heightKey]) {
     return
   }
 
-  Object.assign(sizeRef.current, systemInfo)
+  Object.assign(sizeRef.current, systemInfo, { dimensionsBase })
 
   const type = mpxProxy.options.__type__
   const target = mpxProxy.target

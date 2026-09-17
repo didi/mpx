@@ -477,6 +477,7 @@ export interface RnConfig {
 
   /**
    * 自定义窗口和屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
+   * 运行期间修改后需调用 notifyDimensionsChange() 使配置生效。
    *
    * @param dimensions 包含 window 和 screen 的尺寸信息
    * @returns 返回修改后的尺寸对象，或 void 表示不修改
@@ -487,6 +488,7 @@ export interface RnConfig {
 
   /**
    * rpx、vw、vh、媒体查询与 onResize 使用的尺寸基准。
+   * 运行期间修改后需调用 notifyDimensionsChange() 使配置生效。
    * @default 'window'
    */
   dimensionsBase?: 'window' | 'screen'

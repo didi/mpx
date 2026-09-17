@@ -9,22 +9,33 @@ jest.mock('../../src/index', () => ({
   }
 }))
 
+jest.mock('@mpxjs/utils', () => ({
+  getFocusedNavigation: jest.fn(),
+  hasOwn: (value, key) => Object.prototype.hasOwnProperty.call(value, key)
+}))
+
 // eslint-disable-next-line import/first
 import Mpx from '../../src/index'
 // eslint-disable-next-line import/first
 import { ONRESIZE } from '../../src/core/innerLifecycle'
 // eslint-disable-next-line import/first
-import { getSystemInfo, initDimensionsInfo, triggerResizeEvent } from '../../src/platform/dimensionsHelper'
+import { getDimensionsBase, getSystemInfo, initDimensionsInfo, syncDimensions, triggerResizeEvent } from '../../src/platform/dimensionsHelper'
+
+const dimensions = {
+  window: { width: 360, height: 640 },
+  screen: { width: 720, height: 1280 }
+}
 
 describe('RN dimensions helper', () => {
   beforeEach(() => {
     Mpx.config.rnConfig = {
       dimensionsBase: 'window'
     }
-    initDimensionsInfo({
-      window: { width: 360, height: 640 },
-      screen: { width: 720, height: 1280 }
-    })
+    global.__classCaches = new Set()
+    global.__mpxSizeCount = 0
+    global.__mpxPageSizeCountMap = {}
+    global.__mpxPageStatusMap = {}
+    initDimensionsInfo(dimensions)
   })
 
   it('uses customDimensions for the initial onResize size snapshot', () => {
@@ -38,7 +49,7 @@ describe('RN dimensions helper', () => {
     expect(customDimensions).toHaveBeenCalledTimes(1)
   })
 
-  it('applies customDimensions configured after an earlier dimensions read', () => {
+  it('applies runtime dimension config only after dimensions are synchronized', () => {
     expect(getSystemInfo().size.windowWidth).toBe(360)
     const customDimensions = jest.fn((dimensions) => {
       dimensions.window.width /= 2
@@ -47,8 +58,37 @@ describe('RN dimensions helper', () => {
 
     Mpx.config.rnConfig.customDimensions = customDimensions
 
+    expect(getSystemInfo().size.windowWidth).toBe(360)
+    expect(customDimensions).not.toHaveBeenCalled()
+
+    syncDimensions(dimensions)
+
     expect(getSystemInfo().size.windowWidth).toBe(180)
     expect(customDimensions).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not expose the dimensions object retained by customDimensions', () => {
+    let retainedDimensions
+    Mpx.config.rnConfig.customDimensions = (dimensions) => {
+      retainedDimensions = dimensions
+      return dimensions
+    }
+
+    expect(getSystemInfo().size.windowWidth).toBe(360)
+
+    retainedDimensions.window.width = 180
+
+    expect(getSystemInfo().size.windowWidth).toBe(360)
+  })
+
+  it('keeps the last effective dimensions when customDimensions throws', () => {
+    expect(getSystemInfo().size.windowWidth).toBe(360)
+    Mpx.config.rnConfig.customDimensions = () => {
+      throw new Error('custom dimensions failed')
+    }
+
+    expect(() => syncDimensions(dimensions)).toThrow('custom dimensions failed')
+    expect(getSystemInfo().size.windowWidth).toBe(360)
   })
 
   function createPageResizeContext () {
@@ -63,7 +103,7 @@ describe('RN dimensions helper', () => {
         callHook: jest.fn()
       },
       sizeRef: {
-        current: getSystemInfo()
+        current: Object.assign(getSystemInfo(), { dimensionsBase: getDimensionsBase() })
       }
     }
   }
@@ -101,6 +141,18 @@ describe('RN dimensions helper', () => {
 
     const systemInfo = getSystemInfo()
     expect(systemInfo.deviceOrientation).toBe('landscape')
+    expect(mpxProxy.callHook).toHaveBeenCalledWith(ONRESIZE, [systemInfo])
+    expect(target.onResize).toHaveBeenCalledWith(systemInfo)
+  })
+
+  it('triggers onResize when the effective dimensions base changes', () => {
+    const { target, mpxProxy, sizeRef } = createPageResizeContext()
+
+    Mpx.config.rnConfig.dimensionsBase = 'screen'
+    syncDimensions(dimensions)
+    triggerResizeEvent(mpxProxy, sizeRef)
+
+    const systemInfo = getSystemInfo()
     expect(mpxProxy.callHook).toHaveBeenCalledWith(ONRESIZE, [systemInfo])
     expect(target.onResize).toHaveBeenCalledWith(systemInfo)
   })

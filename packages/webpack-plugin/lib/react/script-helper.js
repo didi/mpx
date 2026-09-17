@@ -150,11 +150,11 @@ function buildGlobalParams ({
   firstPage,
   outputPath,
   genericsInfo,
-  hasApp,
-  externalClasses
+  hasApp
 }) {
   let content = ''
   if (ctorType === 'app') {
+    const externalClasses = loaderContext.getMpx().externalClasses || []
     content += `
 global.getApp = function () {}
 global.getCurrentPages = function () { return [] }

@@ -38,7 +38,6 @@ module.exports = function (content) {
     return content
   }
   const { resourcePath, queryObj } = parseRequest(this.resource)
-  const externalClasses = mpx.externalClasses || []
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const packageName = packageRoot || 'main'
   const independent = queryObj.independent
@@ -179,7 +178,6 @@ module.exports = function (content) {
           componentGenerics,
           componentPlaceholder,
           autoScope,
-          externalClasses,
           callback
         })
       }

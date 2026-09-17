@@ -19,7 +19,7 @@ import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navi
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
 import * as perf from '@mpxjs/perf'
-import { getSystemInfo, triggerResizeEvent } from '../dimensionsHelper'
+import { getDimensionsBase, getSystemInfo, triggerResizeEvent } from '../dimensionsHelper'
 
 function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
@@ -373,7 +373,7 @@ const triggerPageStatusHook = (mpxProxy, event) => {
 }
 
 function usePageEffect (mpxProxy, pageId, type) {
-  const sizeRef = useRef(getSystemInfo())
+  const sizeRef = useRef(Object.assign(getSystemInfo(), { dimensionsBase: getDimensionsBase() }))
 
   useEffect(() => {
     let unWatch

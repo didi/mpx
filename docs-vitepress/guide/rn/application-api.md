@@ -496,6 +496,8 @@ mpx.config.rnConfig.dimensionsBase = 'screen'
 
 例如，使用默认的 `dimensionsBase: 'window'` 时，折叠屏展开后如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
 
+运行期间修改 `dimensionsBase` 或 `customDimensions` 后，需要调用 `notifyDimensionsChange()` 使配置生效。可以同时修改两项配置，再统一通知一次。
+
 #### notifyDimensionsChange
 
 ```ts
@@ -523,7 +525,7 @@ notifyDimensionsChange({
 (dimensionsBase?: 'window' | 'screen') => ScaledSize
 ```
 
-返回经过 `rnConfig.customDimensions` 处理后的当前尺寸副本。可传入 `'window'` 或 `'screen'` 指定本次获取的尺寸；不传时使用 `rnConfig.dimensionsBase`，传参不会修改该配置。修改返回值不会影响框架内部缓存。首次调用会确保完成尺寸初始化；如果后续更换 `customDimensions`，再次调用时会基于最近一次原始 Dimensions 重新处理。
+返回最近一次初始化或 `notifyDimensionsChange()` 后生效的尺寸副本。可传入 `'window'` 或 `'screen'` 指定本次获取的尺寸；不传时使用最近一次生效的 `rnConfig.dimensionsBase`，传参不会修改该配置。修改返回值不会影响框架内部缓存。该方法只读取尺寸，不会使运行期间修改的 `dimensionsBase` 或 `customDimensions` 生效。
 
 ```js
 const dimensions = getStyleDimensions()

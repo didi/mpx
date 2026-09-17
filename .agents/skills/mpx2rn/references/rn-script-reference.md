@@ -764,8 +764,7 @@ notifyDimensionsChange()
 | `getCurrentPages()` | 返回当前导航栈中已映射的页面实例列表（顺序与路由 state 相关）。 |
 | `setAppShow()` | 手动触发应用「进入前台」逻辑，驱动已注册的 `onShow`。 |
 | `setAppHide()` | 手动触发应用「进入后台」逻辑，驱动已注册的 `onHide`。 |
-| `notifyDimensionsChange(dimensions?)` | 主动通知框架 Dimensions 发生变化，触发 `rpx`、`vw`、`vh`、媒体查询和 `onResize` 等能力重新计算。不传参数时通过 `Dimensions.get` 读取当前原始尺寸；两种调用方式都会重新执行 `customDimensions`，并按 `dimensionsBase` 指定的尺寸判断是否刷新。 |
-| `getStyleDimensions(dimensionsBase?)` | 返回经过 `customDimensions` 处理后的当前只读 `ScaledSize` 副本；可传入 `"window"` 或 `"screen"`，不传时使用配置中的 `dimensionsBase`，传参不修改配置；首次调用及更换 `customDimensions` 后会确保重新处理原始尺寸。 |
+| `notifyDimensionsChange(dimensions?)` | 主动通知框架 Dimensions 发生变化，触发 `rpx`、`vw`、`vh`、媒体查询和 `onResize` 等能力重新计算。不传参数时通过 `Dimensions.get` 读取当前原始尺寸；两种调用方式都会重新执行 `customDimensions`，并按 `dimensionsBase` 指定的尺寸判断是否刷新。运行期间修改 `dimensionsBase` 或 `customDimensions` 后需要调用此方法使配置生效。 |
 
 #### 注意事项
 

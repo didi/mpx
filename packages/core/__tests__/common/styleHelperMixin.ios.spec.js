@@ -209,7 +209,7 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(customDimensions).toHaveBeenCalledTimes(2)
   })
 
-  it('invalidates cached responsive class styles when customDimensions changes', () => {
+  it('invalidates cached responsive class styles after customDimensions changes are notified', () => {
     const classMap = {
       box: formatValue => ({ width: formatValue('750rpx') })
     }
@@ -223,16 +223,18 @@ describe('RN styleHelperMixin dimensions', () => {
       return dimensions
     }
 
-    expect(global.getStyleDimensions().width).toBe(180)
-    expect(global.__mpxSizeCount).toBe(1)
+    expect(global.getStyleDimensions().width).toBe(360)
+    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
+    expect(global.__mpxSizeCount).toBe(0)
 
     global.notifyDimensionsChange()
 
+    expect(global.getStyleDimensions().width).toBe(180)
     expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(180)
     expect(global.__mpxSizeCount).toBe(1)
   })
 
-  it('invalidates cached responsive class styles when dimensionsBase changes', () => {
+  it('invalidates cached responsive class styles after dimensionsBase changes are notified', () => {
     const classMap = {
       box: formatValue => ({ width: formatValue('750rpx') })
     }
@@ -242,6 +244,12 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
 
     Mpx.config.rnConfig.dimensionsBase = 'screen'
+
+    expect(global.getStyleDimensions().width).toBe(360)
+    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
+    expect(global.__mpxSizeCount).toBe(0)
+
+    global.notifyDimensionsChange()
 
     expect(global.getStyleDimensions().width).toBe(720)
     expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(720)

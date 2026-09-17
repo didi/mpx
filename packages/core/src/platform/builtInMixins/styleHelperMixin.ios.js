@@ -50,10 +50,9 @@ Dimensions.addEventListener('change', onDimensionsChange)
 
 // TODO: 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions 监听到的 width/height 尺寸错误，并触发多次问题
 function rpx (value) {
-  const dimensionsInfo = getStyleDimensions()
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (样式计算宽度 / 750)
-  return value * dimensionsInfo.width / 750
+  return value * getStyleDimensions().width / 750
 }
 function vw (value) {
   return value * getStyleDimensions().width / 100
