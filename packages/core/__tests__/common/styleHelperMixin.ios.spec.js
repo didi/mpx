@@ -124,9 +124,30 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(context.__getSizeCount).toHaveBeenCalledTimes(1)
   })
 
+  it('stops tracking dimensions after responsive styles switch to fixed values', () => {
+    const context = {
+      __pageId: 'page',
+      __mpxProxy: { props: {} },
+      __getSizeCount: jest.fn()
+    }
+
+    styleHelperMixin().methods.__getStyle.call(context, '', '', '', {
+      width: '750rpx'
+    })
+    context.__getSizeCount.mockClear()
+
+    const result = styleHelperMixin().methods.__getStyle.call(context, '', '', '', {
+      width: '240px'
+    })
+
+    expect(result.width).toBe(240)
+    expect(context.__getSizeCount).not.toHaveBeenCalled()
+  })
+
   it('updates responsive styles when window dimensions change', () => {
     const cache = { clear: jest.fn() }
     global.__classCaches.add(cache)
+    global.getStyleDimensions()
 
     mockDimensionsChangeHandler({
       window: { width: 400, height: 700 },
@@ -186,6 +207,45 @@ describe('RN styleHelperMixin dimensions', () => {
 
     expect(global.__mpxAppDimensionsInfo.window.width).toBe(340)
     expect(customDimensions).toHaveBeenCalledTimes(2)
+  })
+
+  it('invalidates cached responsive class styles when customDimensions changes', () => {
+    const classMap = {
+      box: formatValue => ({ width: formatValue('750rpx') })
+    }
+    const classMapValueCache = new Map()
+    global.__classCaches.add(classMapValueCache)
+
+    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
+
+    Mpx.config.rnConfig.customDimensions = (dimensions) => {
+      dimensions.window.width /= 2
+      return dimensions
+    }
+
+    expect(global.getStyleDimensions().width).toBe(180)
+    expect(global.__mpxSizeCount).toBe(1)
+
+    global.notifyDimensionsChange()
+
+    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(180)
+    expect(global.__mpxSizeCount).toBe(1)
+  })
+
+  it('invalidates cached responsive class styles when dimensionsBase changes', () => {
+    const classMap = {
+      box: formatValue => ({ width: formatValue('750rpx') })
+    }
+    const classMapValueCache = new Map()
+    global.__classCaches.add(classMapValueCache)
+
+    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
+
+    Mpx.config.rnConfig.dimensionsBase = 'screen'
+
+    expect(global.getStyleDimensions().width).toBe(720)
+    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(720)
+    expect(global.__mpxSizeCount).toBe(1)
   })
 
   it('matches media queries with window width', () => {

@@ -1,8 +1,8 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
-import { applyDimensionsInfo, getDimensionsBase, getStyleDimensions, initDimensionsInfo } from '../dimensionsHelper'
+import { getStyleDimensions, initDimensionsInfo, syncDimensions } from '../dimensionsHelper'
 
 initDimensionsInfo({
   window: Dimensions.get('window'),
@@ -33,37 +33,14 @@ global.__GCC = function (className, classMap, classMapValueCache) {
   return classMapValueCache.get(className)
 }
 
-function getDimensionsBaseSize (dimensions) {
-  return dimensions.width + 'x' + dimensions.height
-}
-
 function onDimensionsChange (dimensions) {
-  // 读取旧缓存时不触发初始化，避免首次通知重复执行 customDimensions。
-  const oldDimensionsBaseSize = getDimensionsBaseSize(global.__mpxAppDimensionsInfo[getDimensionsBase()])
   if (!dimensions) {
     dimensions = {
       window: Dimensions.get('window'),
       screen: Dimensions.get('screen')
     }
   }
-  applyDimensionsInfo(dimensions)
-
-  // 对比自定义处理后的基准尺寸高宽是否存在变化
-  if (getDimensionsBaseSize(getStyleDimensions()) === oldDimensionsBaseSize) return
-
-  global.__classCaches?.forEach(cache => cache?.clear())
-
-  // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
-  global.__mpxSizeCount++
-
-  const navigation = getFocusedNavigation()
-
-  if (navigation) {
-    global.__mpxPageSizeCountMap[navigation.pageId] = global.__mpxSizeCount
-    if (hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-      global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
-    }
-  }
+  syncDimensions(dimensions)
 }
 
 global.notifyDimensionsChange = onDimensionsChange
@@ -363,18 +340,17 @@ export default function styleHelperMixin () {
             let localStyle, appStyle, unoStyle, unoVarStyle
             if (localStyle = this.__getClassStyle?.(className)) {
               mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
-              // class style 计算可能触发缓存，需要单独在结果中记录是否依赖窗口尺寸，不能直接使用全局变量。
-              this.__dependentWindowSize = this.__dependentWindowSize || localStyle._dependentWindowSize
+              dependentWindowSize = dependentWindowSize || localStyle._dependentWindowSize
             } else if (unoStyle = global.__getUnoStyle?.(className)) {
               mergeToLayer(unoStyle._layer || 'uno', unoStyle, getMediaStyle(unoStyle._media))
-              this.__dependentWindowSize = this.__dependentWindowSize || unoStyle._dependentWindowSize
+              dependentWindowSize = dependentWindowSize || unoStyle._dependentWindowSize
               if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
             } else if (unoVarStyle = global.__getUnoVarStyle?.(className)) {
               mergeToLayer('important', unoVarStyle)
-              this.__dependentWindowSize = this.__dependentWindowSize || unoVarStyle._dependentWindowSize
+              dependentWindowSize = dependentWindowSize || unoVarStyle._dependentWindowSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
-              this.__dependentWindowSize = this.__dependentWindowSize || appStyle._dependentWindowSize
+              dependentWindowSize = dependentWindowSize || appStyle._dependentWindowSize
             } else if (isObject(this.__mpxProxy.props[className])) {
               // externalClasses必定以对象形式传递下来
               mergeToLayer('normal', this.__mpxProxy.props[className])
@@ -384,7 +360,7 @@ export default function styleHelperMixin () {
           if (needAddUnoPreflight) {
             const unoPreflightStyle = global.__getAppClassStyle?.('__uno_preflight')
             mergeToLayer('preflight', unoPreflightStyle)
-            this.__dependentWindowSize = this.__dependentWindowSize || unoPreflightStyle._dependentWindowSize
+            dependentWindowSize = dependentWindowSize || unoPreflightStyle._dependentWindowSize
           }
 
           if (__mpx_perf_framework__) perf.scopeEnd(idClass)
@@ -418,8 +394,7 @@ export default function styleHelperMixin () {
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
 
         // 仅在依赖窗口尺寸时才触发 __getSizeCount 进行响应式关联，避免窗口尺寸变化时不必要的性能损耗
-        this.__dependentWindowSize = this.__dependentWindowSize || dependentWindowSize
-        if (this.__dependentWindowSize) {
+        if (dependentWindowSize) {
           this.__getSizeCount()
         }
         if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
