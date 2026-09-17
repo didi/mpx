@@ -538,6 +538,11 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
       error('Using pageWrapper requires passing navigation and route')
       return null
     }
+    navigation.setWebViewShowNav = (showNav) => {
+      navigation.setPageConfig({
+        navigationStyle: showNav === undefined ? currentPageConfig.navigationStyle : (showNav ? undefined : 'custom')
+      })
+    }
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
 
