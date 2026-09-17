@@ -252,6 +252,10 @@ module.exports = {
 
 使用 `createSelectorQuery` 来获取基础组件需要在基础节点上标记 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致。
 
+查询实际的 `scroll-view` 节点时，可通过 `select(selector).scrollOffset(callback)` 获取包含实际内容宽高的回调结果。
+
+RN 当前支持动态读写 `ScrollViewContext` 的 `scrollEnabled`、`bounces`、`showScrollbar` 和 `pagingEnabled` 四个属性。使用时需要为 `scroll-view` 开启 `enhanced`，并通过 `select(selector).node(callback)` 回调参数中的 `node` 字段获取。
+
 ```javascript
 <template>
   <view wx:ref class="title">this is view</view>
