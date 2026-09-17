@@ -326,7 +326,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     gestureRef: scrollViewRef
   })
 
-  useUpdateEffect(() => { setScrollBounces(!!bounces) }, [bounces])
+  useUpdateEffect(() => { setBouncesState(!!bounces) }, [bounces])
   useUpdateEffect(() => { setShowScrollbarState(!!showScrollbar) }, [showScrollbar])
   useUpdateEffect(() => { setPagingEnabledState(!!pagingEnabled) }, [pagingEnabled])
 
@@ -857,7 +857,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   if (enhanced) {
     Object.assign(scrollAdditionalProps, {
-      bounces: hasRefresher ? scrollBounces : bouncesState,
+      bounces: hasRefresher ? bouncesState && scrollBounces : bouncesState,
       pagingEnabled: pagingEnabledState
     })
   }
@@ -916,7 +916,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       .failOffsetX([-5, 5])
       .onUpdate((event) => {
         'worklet'
-        if (enhanced && !!bounces) {
+        if (enhanced && bouncesState) {
           if (event.translationY > 0 && bouncesValue.value) {
             updateBouncesState(false)
           } else if ((event.translationY < 0) && !bouncesValue.value) {
@@ -973,7 +973,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }
       })
       .simultaneousWithExternalGesture(scrollViewRef)
-  }, [enhanced, bounces, refreshing, refresherThreshold])
+  }, [enhanced, bouncesState, refreshing, refresherThreshold])
 
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
 
