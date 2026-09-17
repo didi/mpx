@@ -201,7 +201,6 @@ Skyline 支持 transition / animation 的主要属性如下；每项仍受其静
 | `visibility: collapse` | 按需求使用hidden；布局占位变化需单独确认。 |
 | `box-sizing: padding-box` | 使用content-box / border-box。 |
 | `contain` | 使用Skyline私有 -wx-contain，并核验实际约束。 |
-| `resize` | 无直接等效替代；需要交互时单独实现尺寸状态。 |
 | 多列布局 `column-*` | Flex 或 grid-view；此处指多列布局属性，不含支持的column-gap。 |
 | `outline` | border / box-shadow模拟，检查盒尺寸及外观差异。 |
 | `justify-items` | 无直接等效替代；按实际Flex布局选择对齐方式。 |
