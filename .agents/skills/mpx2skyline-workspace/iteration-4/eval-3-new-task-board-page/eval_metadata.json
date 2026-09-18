@@ -1,0 +1,106 @@
+{
+  "eval_id": 3,
+  "eval_name": "new-task-board-page",
+  "title": "从零创建任务看板页面",
+  "description": "仅给定产品需求和宿主配置，验证从零选择Skyline页面、滚动、文本及状态动画方案。通用语法和业务功能单独验证。",
+  "task_type": "creation",
+  "prompt": "请读取input/task.md，根据产品需求从零创建Mpx任务看板页面并更新宿主配置，兼容微信Skyline与WebView。范围已确认，交付完整文件和验证报告。",
+  "files": [
+    "input/app.json",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "n3_00",
+      "text": "Skyline 新页面配置renderer=skyline、componentFramework=glass-easel、navigationStyle=custom和disableScroll=true，实际呈现任务看板导航；app顶层lazyCodeLoading及rendererOptions.skyline五项推荐配置完整。",
+      "rule_id": "skyline.creation-page-config",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-configuration.md",
+        "section": "适配参考"
+      },
+      "verification": "解析页面与app配置，逐项核对requiredComponents及defaultDisplayBlock/defaultContentBox/enableScrollViewAutoSize=true、tagNameStyleIsolation/keyframeStyleIsolation=legacy，检查实际导航节点。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s1_04",
+        "s1_05",
+        "s1_06"
+      ]
+    },
+    {
+      "id": "n3_01",
+      "text": "Skyline 新页面通过有明确高度约束的type=list纵向scroll-view承载任务，任务项为直接子节点，标题及筛选区位于滚动主体之外。",
+      "rule_id": "skyline.creation-scroll-layout",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "检查父子高度与Flex收缩链、scroll-y及列表直接子节点；以超出一屏的任务验证有界滚动布局。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s1_00"
+      ]
+    },
+    {
+      "id": "n3_02",
+      "text": "Skyline 新页面在scroll-view上启用refresher-enabled=true，将下拉刷新接到bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。",
+      "rule_id": "skyline.creation-refresh",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "检查实际滚动容器的refresher-enabled求值为true、bindrefresherrefresh事件及refresher-triggered状态绑定；沿该绑定触发刷新，分别注入resolve/reject，核对刷新态最终false且容器可继续操作。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s1_01"
+      ]
+    },
+    {
+      "id": "n3_03",
+      "text": "Skyline 新页面将scroll-view的bindscrolltolower接入分页追加，每次容器触底后新任务进入同一滚动列表。",
+      "rule_id": "skyline.creation-pagination",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "从实际模板触底绑定调用处理器两次，核对每次新增2条且原列表保留；分类和唯一键另作业务验证。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s1_02"
+      ]
+    },
+    {
+      "id": "n3_04",
+      "text": "Skyline 新页面长任务标题在实际text承载节点设置max-lines=1、overflow=ellipsis，并在有界可收缩宽度内与WebView单行省略路径共同生效。",
+      "rule_id": "skyline.creation-title-ellipsis",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "文本溢出省略适配"
+      },
+      "verification": "检查text属性、父级宽度/收缩约束和WebView样式，并确认标题插值紧贴text开闭标签，避免模板换行及缩进成为字面空白；代入长标题审查两种renderer的实际截断路径。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s0_00"
+      ]
+    },
+    {
+      "id": "n3_05",
+      "text": "Skyline 新页面分类按钮通过响应式状态，以class或动态style驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。",
+      "rule_id": "skyline.creation-press-feedback",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-layout-practice.md",
+        "section": "animation API 不支持 → 使用 CSS transition"
+      },
+      "verification": "追踪真实触摸绑定、响应式状态及class或动态style到CSS transition的完整链路，分别模拟按下/松开/取消，核对数值、持续时间和恢复。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s2_07"
+      ]
+    }
+  ]
+}

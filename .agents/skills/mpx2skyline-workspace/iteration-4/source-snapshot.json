@@ -1,0 +1,30 @@
+{
+  "status": "executed-definition",
+  "files": {
+    "run-metadata.json": "b57b2dbace97563fc0776d8602bcae94ad9741d4fb4950c214c693255a78489b",
+    "fixture-provenance.json": "765bc5058b6e0703b68094c00a1dd00b508b899b1d4c32f75b36d381091adf32",
+    "grading-standard.md": "37979de9f7d60ed51766065231210e3fd3e3c3371622dc94eae7817f80f2a3e9",
+    "evals.json": "9181da7a7589ac92903b8af44dc95ab17ebb86ba4a56aaacf356798ad22ef7c2",
+    "prompt_templates.json": "34504f40ce661883354785a1091cba0c7dc3e793898d1c8a99f36bf1f631051a",
+    "README.md": "e5151357d0d9d911a30d6c0632257c62edc85ec0ae12140cb9808d993fc365e3",
+    "assertion-migration.json": "3d5b3a024bd1ab05bd03528726dfd3dcfc247792e746af8ca4905048df7caccd",
+    "validate-suite.test.cjs": "c4a3c8ce5bea99b1cc22d1ecbe12a12e08fb02c2512d3b17a66b944d0db75846",
+    "eval-3-new-task-board-page/eval_metadata.json": "4b243f422f8994cb66b53b349a30ca60c35b6bf09ae71257486f7fc6ac173f05",
+    "eval-1-page-scroll-sticky-layer-config/eval_metadata.json": "d4ec37e6ca27c5d13de2fd3f69cbc9f9f0ad1fbe03a294273f6e21b6047fa8f7",
+    "eval-0-style-layout/eval_metadata.json": "d83839636bcc95b3c81cc0c4cfbeb64608e3802b6da945bd9024841927655962",
+    "eval-2-template-runtime-inline-animation/eval_metadata.json": "e4044a88daf010ec8c64b55405d3c1af37f5a85908aac6f85b154effc24f618d",
+    "eval-2-template-runtime-inline-animation/input/row.wxml": "80f43cf55dbaf032920128f167d8b324b588e4dc01cbaa66e5f4063c394c876d",
+    "eval-2-template-runtime-inline-animation/input/user-list.mpx": "508fe0ecaa078cb526de50a5d8a0be13209401ee36feed974fea1c450f422e11",
+    "eval-2-template-runtime-inline-animation/input/task.md": "820cd9daddb3bdb88cb7ef386f42ab63385953ac528be86b15e768875bf17c38",
+    "eval-2-template-runtime-inline-animation/input/logo.svg": "c71a85400c9d1bc64393103364611c9370076caec60d65bc20fdcfdd97f6d29d",
+    "eval-0-style-layout/input/style-card.mpx": "02971adbcf26eea73fdb3b249f04307a3cd9dc86e35d0db4a3890fc700c50370",
+    "eval-0-style-layout/input/task.md": "2d3e10c639fd4715bdcd80fe4a221519a80f4cd9c5d7ed49a709ee335c01ca5f",
+    "eval-1-page-scroll-sticky-layer-config/input/orders.mpx": "6e0df185e713f033af82368b5acf069c43812259509b2a381d3ce946de0b60ad",
+    "eval-1-page-scroll-sticky-layer-config/input/app.json": "08b6c0c8a67d9602540f6eba281fd3649e75b8aee175ce2640a7dd3a714cf1ac",
+    "eval-1-page-scroll-sticky-layer-config/input/service.js": "977d51816125ab91147f6e3b4bf9b764046fefc7ad958495285cd4489e3bf164",
+    "eval-1-page-scroll-sticky-layer-config/input/task.md": "f91ca5b0a218c2c50ce008a605568a762f4a62ab96bb1f08c37309d0de6aba34",
+    "eval-3-new-task-board-page/input/app.json": "29beeb70b987df710a8381437d21a137ff68b9cab73eddace62ca26c1fa54dca",
+    "eval-3-new-task-board-page/input/task.md": "97a423449478347cb8068eb755544a9fcf1cb12d06a0459ac8725120e7899286"
+  },
+  "note": "记录新版定义和输入；执行时另记录实际Skill版本/哈希。"
+}

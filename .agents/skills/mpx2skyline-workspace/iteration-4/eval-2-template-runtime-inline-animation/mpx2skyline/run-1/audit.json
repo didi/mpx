@@ -1,0 +1,296 @@
+{
+  "scope": [
+    "user-list.mpx",
+    "row.wxml",
+    "logo.svg"
+  ],
+  "method": "完整矩阵逐项源码与结构人工审计；候选不直接视为错误",
+  "rules": [
+    {
+      "id": "CONFIG_APP_SKYLINE_OPTIONS",
+      "level": "error",
+      "status": "not_applicable",
+      "evidence": "组件范围，宿主页已接入；不修改全局配置，keyframeStyleIsolation 宿主值未提供。"
+    },
+    {
+      "id": "CONFIG_PAGE_SKYLINE",
+      "level": "error",
+      "status": "not_applicable",
+      "evidence": "仅组件及外部片段，无页面配置。"
+    },
+    {
+      "id": "CONFIG_WORKLET_BABEL",
+      "level": "warn",
+      "status": "not_applicable",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "GLASS_INCLUDE_IN_FOR",
+      "level": "error",
+      "status": "reviewed",
+      "evidence": "外部 import + template，循环内显式传 item/index。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_ESCAPE",
+      "level": "error",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_UNSUPPORTED",
+      "level": "error",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_PENDING_SUPPORT",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_WEBVIEW_ONLY_ATTR",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_IMAGE_SVG",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "SVG 内联 fill，无 style/百分比/rgba，image 使用 aspectFit。"
+    },
+    {
+      "id": "COMP_SCROLL_TYPE",
+      "level": "error",
+      "status": "reviewed",
+      "evidence": "两处 scroll-view 显式 list。"
+    },
+    {
+      "id": "COMP_SCROLL_LIST_DIRECT_CHILD",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "users 的循环行是直接子节点；other 为题设空对照容器，不依赖按需渲染。"
+    },
+    {
+      "id": "COMP_SCROLL_NESTED",
+      "level": "error",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_SCROLL_REFRESHER_SLOT",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_NAVIGATOR_CHILDREN",
+      "level": "error",
+      "status": "reviewed",
+      "evidence": "简单入口仅 text，复杂卡片通过 view bindtap 跳转。"
+    },
+    {
+      "id": "COMP_TEXT_CHILDREN",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "text 节点均只含文本。"
+    },
+    {
+      "id": "COMP_INLINE_MIXED_CONTENT",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "wx span 包裹同段 image/text，共同 max-lines/overflow；Skyline 图片 inline-block，WebView 保留 truncate。"
+    },
+    {
+      "id": "COMP_STICKY_STRUCTURE",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_PICKER_VIEW_INDICATOR",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "COMP_SWIPER_LIMIT",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_MEDIA_SCREEN",
+      "level": "error",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_SELECTOR_UNSUPPORTED",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_TEXT_OVERFLOW",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "唯一省略容器 title 具备双模式实现，插值紧贴标签。"
+    },
+    {
+      "id": "STYLE_FLEX_MIN_WIDTH_PERCENT",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_FLEX_TEXT_WRAP",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "标题 width:0/flex:1/min-width:0，要求单行而非换行。"
+    },
+    {
+      "id": "STYLE_OVERFLOW_AXIS",
+      "level": "error",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_LAYOUT_UNSUPPORTED",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_TEXT_UNSUPPORTED",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_FONT_POSTSCRIPT_NAME",
+      "level": "error",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_FONT",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_TEXT_DECORATION",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_BORDER_RADIUS_BORDER",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "圆点 radius 4px，无边框冲突。"
+    },
+    {
+      "id": "STYLE_BACKGROUND_MASK_LIMIT",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_FILTER_LIMIT",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_BOX_SHADOW_MULTI",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_CALC_ANGLE",
+      "level": "warn",
+      "status": "no_hit",
+      "evidence": "完整源码复核：未使用该能力或未发现对应不兼容模式。"
+    },
+    {
+      "id": "STYLE_PSEUDO_ANIMATION",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "伪元素改真实圆点节点。"
+    },
+    {
+      "id": "STYLE_ANIMATION_FILL_MODE",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "改为 both，1 秒周期 .3 到 1。"
+    },
+    {
+      "id": "STYLE_ANIMATION_PROPERTY",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "真实 pulse 节点仅动画 opacity，按钮仅 transition transform/opacity。"
+    },
+    {
+      "id": "STYLE_Z_INDEX_CONTEXT",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "无叠层需求；transform/opacity 仅用于交互反馈。"
+    },
+    {
+      "id": "GLASS_SELECTOR_NUMERIC_ID",
+      "level": "error",
+      "status": "reviewed",
+      "evidence": "users 合法字母前缀，模板与 selector 同步。"
+    },
+    {
+      "id": "ANIMATION_WEBVIEW_API",
+      "level": "error",
+      "status": "reviewed",
+      "evidence": "已移除 createAnimation，改 class 与 CSS。"
+    },
+    {
+      "id": "SCROLL_CONTEXT_ENHANCED",
+      "level": "error",
+      "status": "reviewed",
+      "evidence": "#users 对应的实际列表开启 enhanced，other 并非查询目标。"
+    },
+    {
+      "id": "SELECTOR_QUERY_SCOPE",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "使用 this.createSelectorQuery。"
+    },
+    {
+      "id": "PROPS_DEFAULT_FIELD",
+      "level": "error",
+      "status": "reviewed",
+      "evidence": "properties 均使用 value；config.default 位于 data 业务对象，保留。"
+    },
+    {
+      "id": "WX_FOR_DATA_TYPE",
+      "level": "warn",
+      "status": "reviewed",
+      "evidence": "initData.visibleItems=[]；data.items=[]；setRows null 归一化；computed 始终返回过滤数组。"
+    },
+    {
+      "id": "PROPS_UNION_TYPE",
+      "level": "error",
+      "status": "reviewed",
+      "evidence": "payload String + optionalTypes Object 保留，label String；未更改接口。"
+    }
+  ],
+  "unresolved_errors": 0,
+  "warnings": [
+    "宿主 keyframeStyleIsolation 未提供，需集成真机验证动画作用域。"
+  ]
+}

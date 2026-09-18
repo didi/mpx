@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "id": "n3_00",
+      "text": "Skyline 新页面配置renderer=skyline、componentFramework=glass-easel、navigationStyle=custom和disableScroll=true，实际呈现任务看板导航；app顶层lazyCodeLoading及rendererOptions.skyline五项推荐配置完整。",
+      "passed": true,
+      "evidence": "outputs/pages/task-board.mpx:3-6、133-142 提供真实导航及四项页面配置；outputs/app.json:6-14 包含 requiredComponents 与五项完整 Skyline 配置。grader-compiled.js:1-5、末尾 return 确認 Mpx setup 可编译和暴露。"
+    },
+    {
+      "id": "n3_01",
+      "text": "Skyline 新页面通过有明确高度约束的type=list纵向scroll-view承载任务，任务项为直接子节点，标题及筛选区位于滚动主体之外。",
+      "passed": true,
+      "evidence": "outputs/pages/task-board.mpx:2、7-21、111-125：动态 windowHeight 明确根高度，header/navigation 不收缩，task-list flex:1/height:0/min-height:0，scroll-y=true/type=list，任务行为直接子节点；标题及分类在滚动区外。"
+    },
+    {
+      "id": "n3_02",
+      "text": "Skyline 新页面在scroll-view上启用refresher-enabled=true，将下拉刷新接到bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。",
+      "passed": true,
+      "evidence": "outputs/pages/task-board.mpx:14 启用 refresher-enabled=true、绑定 refreshing/onRefresh；83-94 的 try/catch/finally 在成功失败均复位。grader-check.cjs:17-24 与 grader-check.log:1 从模板事件名调用已编译 setup 的暴露处理器，resolve/reject/retry 均通过。"
+    },
+    {
+      "id": "n3_03",
+      "text": "Skyline 新页面将scroll-view的bindscrolltolower接入分页追加，每次容器触底后新任务进入同一滚动列表。",
+      "passed": true,
+      "evidence": "outputs/pages/task-board.mpx:14、95-102 触底 onLoadMore 向 tasks 追加两项；grader-check.cjs:18、25-27 与 grader-check.log:1 沿模板绑定运行两次，3→5→7 且保留原 keys。"
+    },
+    {
+      "id": "n3_04",
+      "text": "Skyline 新页面长任务标题在实际text承载节点设置max-lines=1、overflow=ellipsis，并在有界可收缩宽度内与WebView单行省略路径共同生效。",
+      "passed": true,
+      "evidence": "outputs/pages/task-board.mpx:17 标题插值紧贴 text，max-lines=1、overflow=ellipsis；124-128 有有界行、固定两侧及 flex:1/min-width:0 标题，white-space/overflow/text-overflow 提供 WebView 路径。"
+    },
+    {
+      "id": "n3_05",
+      "text": "Skyline 新页面分类按钮通过响应式状态，以class或动态style驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。",
+      "passed": true,
+      "evidence": "outputs/pages/task-board.mpx:10、63-68、107、120-122 从真实触摸事件到暴露的 pressedCategory，再到 category-pressed，150ms transition 及 .96/.7/恢复1齐全；grader-check.cjs:28-29、grader-check.log:1 独立模拟 start/end/cancel 通过。"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "limitations": [
+    "未执行完整应用构建、微信模板编译、Skyline/WebView 真机；通过项仅表示静态及模拟证据支持，不宣称真机验证。",
+    "独立检查使用仓库真实 script-setup-compiler；mpx2skyline 进一步执行编译所得 setup，但 ref/computed/wx 为 mock。"
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "创建场景需将真实 Mpx SFC/script setup 解析作为统一非计分验证；VM 手动注入内部变量可掩盖缺少 defineExpose 的编译错误，不能以 mock 成功替代模板暴露验证。"
+      }
+    ],
+    "overall": "按现有标准不单设语法扣分项；实际编译错误影响所有依赖该页面可执行性的对应断言。"
+  }
+}

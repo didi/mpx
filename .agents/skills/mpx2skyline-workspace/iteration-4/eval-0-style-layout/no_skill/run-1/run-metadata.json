@@ -1,0 +1,24 @@
+{
+  "eval_id": 0,
+  "configuration": "no_skill",
+  "run_number": 1,
+  "source_iteration": 4,
+  "cross_iteration_summary": false,
+  "agent": "/root/v4_c0_no",
+  "model": "inherited_parent",
+  "reasoning_effort": "inherited_parent",
+  "fork_turns": "none",
+  "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+  "task_source": "../../input/task.md",
+  "assertion_definition_sha256": "c5b30cc10b09671e3f1b657ad1b43d49f4f452d12bd9d2f767db7105d1547659",
+  "execution_staging": "/private/tmp/skyline-v4-baseline/eval-0/no_skill",
+  "input_hashes": {
+    "eval-0-style-layout/input/style-card.mpx": "02971adbcf26eea73fdb3b249f04307a3cd9dc86e35d0db4a3890fc700c50370",
+    "eval-0-style-layout/input/task.md": "2d3e10c639fd4715bdcd80fe4a221519a80f4cd9c5d7ed49a709ee335c01ca5f"
+  },
+  "skill": null,
+  "input_and_skill_unchanged": true,
+  "isolation": "fork_turns=none; instruction-restricted reads; no OS filesystem isolation",
+  "transcript_type": "executor-authored execution.md; raw tool transcript unavailable",
+  "recorded_at": "2026-09-18T02:43:15.334515+00:00"
+}

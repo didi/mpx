@@ -1,0 +1,13 @@
+{
+  "scope": "SFC extraction, script/JSON/CSS parsing only; not WeChat compilation",
+  "results": [
+    {
+      "file": "app.json",
+      "passed": true
+    },
+    {
+      "file": "pages/task-board.mpx",
+      "passed": true
+    }
+  ]
+}

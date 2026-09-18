@@ -1,0 +1,37 @@
+{
+  "eval_id": 0,
+  "configuration": "mpx2skyline",
+  "run_number": 1,
+  "source_iteration": 4,
+  "cross_iteration_summary": false,
+  "agent": "/root/v4_c0_skill",
+  "model": "inherited_parent",
+  "reasoning_effort": "inherited_parent",
+  "fork_turns": "none",
+  "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+  "task_source": "../../input/task.md",
+  "assertion_definition_sha256": "c5b30cc10b09671e3f1b657ad1b43d49f4f452d12bd9d2f767db7105d1547659",
+  "execution_staging": "/private/tmp/skyline-v4-baseline/eval-0/mpx2skyline",
+  "input_hashes": {
+    "eval-0-style-layout/input/style-card.mpx": "02971adbcf26eea73fdb3b249f04307a3cd9dc86e35d0db4a3890fc700c50370",
+    "eval-0-style-layout/input/task.md": "2d3e10c639fd4715bdcd80fe4a221519a80f4cd9c5d7ed49a709ee335c01ca5f"
+  },
+  "skill": {
+    "path": "/Users/hjw/project/mpx/.agents/skills/mpx2skyline",
+    "version_source": "SKILL.md metadata.version",
+    "version": "1.0.1",
+    "files": {
+      "SKILL.md": "e9f52569a2588d2717f247710a691fb01cd86f4da4d9b6a6d15b2a945f2ba057",
+      "references/skyline-audit-matrix.md": "0ad733a5a06947124e7917e801affdc1a3b58e845b8bbb3a33eb3b8356ed72a9",
+      "references/skyline-component-reference.md": "6d888d24a4053753ba8c510156f776a7b44af6c2f13a5b970b2c78f4d962999f",
+      "references/skyline-configuration.md": "6466e0738dc49484edf038daed14fe1a7f9e66b1273be753a3413f017c10d0be",
+      "references/skyline-layout-practice.md": "d94c2b733c28fd83fe2e3d30d62ab2973ccb2ed95928fea44e85e2a436c1712f",
+      "references/skyline-runtime-practice.md": "aa6f6180defb7c7a5efed70359306674d500001aea741fb1a58bc885fd76f24b",
+      "references/skyline-style-reference.md": "019b936e21c77e00a650bc77fb6fa9800398feb0cca9cd8893fd4350b082fa7e"
+    }
+  },
+  "input_and_skill_unchanged": true,
+  "isolation": "fork_turns=none; instruction-restricted reads; no OS filesystem isolation",
+  "transcript_type": "executor-authored execution.md; raw tool transcript unavailable",
+  "recorded_at": "2026-09-18T02:43:15.326923+00:00"
+}

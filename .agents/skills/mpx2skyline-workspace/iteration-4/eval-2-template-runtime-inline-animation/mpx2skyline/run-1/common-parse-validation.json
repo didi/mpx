@@ -1,0 +1,9 @@
+{
+  "scope": "SFC extraction, script/JSON/CSS parsing only; not WeChat compilation",
+  "results": [
+    {
+      "file": "user-list.mpx",
+      "passed": true
+    }
+  ]
+}

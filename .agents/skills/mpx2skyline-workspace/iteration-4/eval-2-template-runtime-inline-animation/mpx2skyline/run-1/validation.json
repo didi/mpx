@@ -1,0 +1,24 @@
+{
+  "static": {
+    "status": "passed",
+    "evidence": [
+      "audit.json",
+      "component.test.js",
+      "eslint.log"
+    ],
+    "limitations": "ESLint 为提取脚本的 no-undef/no-unused-vars 检查；布局断言不能证明渲染效果"
+  },
+  "mock": {
+    "status": "passed",
+    "tests": 6,
+    "evidence": "jest.log"
+  },
+  "compile": {
+    "status": "not_run",
+    "reason": "未构造完整宿主工程，不宣称 Mpx/glass-easel 编译验证"
+  },
+  "device": {
+    "status": "not_run",
+    "reason": "无真机；长 label 共同截断、圆点动画、触摸事件时序、导航和实际滚动均未真机验证"
+  }
+}

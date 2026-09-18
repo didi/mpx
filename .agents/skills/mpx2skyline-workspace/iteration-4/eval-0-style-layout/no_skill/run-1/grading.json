@@ -1,0 +1,96 @@
+{
+  "expectations": [
+    {
+      "id": "s0_00",
+      "text": "Skyline 标题的实际 text 承载节点设置 max-lines=1、overflow=ellipsis，并与 WebView 单行省略样式共同实现长标题截断。",
+      "passed": false,
+      "evidence": "outputs/style-card.mpx:3 实际 text 无 max-lines/overflow 属性；:29 将 max-lines:1 写成 CSS，不能替代 Skyline 节点属性。WebView CSS 存在但 Skyline 路径不成立。"
+    },
+    {
+      "id": "s0_01",
+      "text": "Skyline 两列标签使用显式横向 Flex 和等分子项布局，实现两列等宽。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:4 两个直接 text 标签；:30-31 父 display:flex/flex-direction:row，子 flex:1（零 basis）、min-width:0。无额外 padding/border，两列各分可用宽度一半。"
+    },
+    {
+      "id": "s0_02",
+      "text": "Skyline 活动状态通过受支持的 class 选择器映射到红色活动文案。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:5 活动节点带 badge-sale；:32 .badge-sale 设置原 #d00，受支持的 class 选择器匹配实际节点。"
+    },
+    {
+      "id": "s0_03",
+      "text": "Skyline 通过 renderer 与屏宽状态选择容器 padding，宽度≤320px 为12rpx、>320px 为24rpx；Skyline 默认覆盖位于媒体查询之后，WebView 继续使用原媒体查询。",
+      "passed": false,
+      "evidence": "outputs/style-card.mpx:20-22 对所有 renderer 只计算屏宽快照，:27-29 仅 card/card-compact；已删除媒体查询，无 renderer 隔离和媒体查询后的 Skyline 默认覆盖。当前屏宽值虽正确，未满足本断言全部条件。"
+    },
+    {
+      "id": "s0_04",
+      "text": "Skyline 内容与父容器上外沿的20px距离由父 padding 表达，子节点从父内容区起始位置布局。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:6 是 outer > child；:33-34 outer padding-top:20px，child 无 margin，首个子盒从父内容区开始，盒顶距父上外沿20px（内部文字另加10px）。"
+    },
+    {
+      "id": "s0_05",
+      "text": "Skyline 相邻块的垂直间距集中由一侧的16px margin承担，最终相邻盒间距为16px。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:7 first/second 相邻；:35-36 margin-bottom:16px + margin-top:0，Skyline 非折叠间距合计16px。"
+    },
+    {
+      "id": "s0_06",
+      "text": "Skyline 将双阴影分配到同尺寸的嵌套节点或等效分层结构，呈现原有两层阴影的参数和前后关系。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:9 嵌套两块；:39-40 外层0 4px 8px #333、内层0 2px 4px #000。宿主默认block，双方无padding/border/margin，auto宽一致且外层高度由唯一内层撑开，近阴影位于远阴影之前。"
+    },
+    {
+      "id": "s0_07",
+      "text": "Skyline 将复合滤镜分层为内层blur(2px)和外层brightness(.8)，组合呈现原有两种效果。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:10 外 brightness 节点包内 blur 节点；:41-42 分别 brightness(.8)/blur(2px)，按先内blur后外brightness组合。"
+    },
+    {
+      "id": "s0_08",
+      "text": "Skyline 字体处理识别 City-Semibold 的同名独立字体族，明确 Trip-Medium 的宿主字体与 PostScript 映射核验点，并记录500/600字重的机型验证要求。",
+      "passed": false,
+      "evidence": "outputs/style-card.mpx:43-45 识别 City 独立family，却将原600/500均改normal；outputs/report.md:12 以避免合成字重解释调整，但未提供字体二进制或视觉等价证据，也未记录500/600在部分机型不生效的验证要求。虽有宿主/PostScript待核验，全部条件未满足。"
+    },
+    {
+      "id": "s0_09",
+      "text": "Skyline 单阴影节点以单个 box-shadow 呈现原有 0 2px 4px rgba(0,0,0,.2) 效果，颜色函数作为完整颜色值解析。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:8 单阴影实际节点；:37 单个 box-shadow 为0 2px 4px rgba(0,0,0,.2)，rgba 内逗号属于完整颜色函数，非多层分隔。"
+    },
+    {
+      "id": "s0_10",
+      "text": "Skyline 单滤镜节点采用受支持的 blur(2px)，呈现原有独立模糊效果。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:8 独立 single-filter 内容；:38 仅 filter:blur(2px)，未与复合滤镜节点合并。"
+    },
+    {
+      "id": "s0_11",
+      "text": "Skyline 在宿主 defaultContentBox=true 条件下，child 保持100px内容宽度及左右各10px padding，实际外宽为120px。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:6 child 实际节点；:34 width:100px/padding:10px/box-sizing:content-box，无border；内容100px，外宽100+10+10=120px，与宿主defaultContentBox=true一致。"
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 3,
+    "total": 12,
+    "pass_rate": 0.75
+  },
+  "validation_limitations": [
+    "按实际源码、测试文件、jest.log、execution.md与validation.json独立交叉审查；执行者测试为脚本mock和CSS源码断言，不能证明平台渲染。",
+    "应用构建、微信模板编译、Skyline/WebView真机视觉均not_run；字体二进制缺失，实际字体加载/映射未验证。以上不将已能静态证明的断言一概判失败。",
+    "未独立重新运行测试；已有7项/2项测试日志与测试源码相符。未发现可由当前证据确定的模板/脚本编译错误。"
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "s0_03",
+        "reason": "input/task.md只要求两renderer按当前屏宽输出12/24rpx；断言额外要求保留原媒体查询与renderer隔离。no_skill快照实现满足题面当前屏宽行为仍因此失败，建议题面明确WebView原媒体查询保留要求或放宽断言到行为等价。"
+      }
+    ],
+    "overall": "其余断言能区分节点属性与错误CSS、保留字体视觉与未核验改字重；缺真机需单列，不能据此否定全部静态实现。"
+  }
+}

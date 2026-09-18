@@ -1,0 +1,6 @@
+{
+  "static": { "status": "passed", "evidence": ["mock.log", "jest.log", "eslint-final.log"], "scope": "event ownership strings, retained configuration, page script eslint", "initial_lint_failure": "eslint.log; corrected property formatting" },
+  "mock": { "status": "passed", "evidence": ["interaction.test.cjs", "mock.log", "jest.log"], "cases": ["initial 4 groups x 8 orders", "two consecutive pagination requests", "stable unique IDs and retained groups", "refresh failure retains data and ends feedback", "refresh recovery replaces data", "main scrollTop update", "modal open and close"] },
+  "compile": { "status": "not_run", "reason": "No complete build fixture created or compiled" },
+  "device": { "status": "not_run", "cases": ["Skyline nested scroll association", "sticky headers", "horizontal gestures", "WebView nested scrolling and sticky", "fullscreen overlay", "renderer fallback"], "reason": "No WeChat developer tools or physical-device execution" }
+}

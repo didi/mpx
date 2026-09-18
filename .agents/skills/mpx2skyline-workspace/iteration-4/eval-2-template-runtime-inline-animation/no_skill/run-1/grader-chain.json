@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "query": [
+    "component scope",
+    "#users",
+    0
+  ],
+  "rowsAfterUpdates": [
+    [],
+    [],
+    [],
+    [
+      "A",
+      "C"
+    ]
+  ],
+  "pressReleaseCancel": true,
+  "initialTemplateVisibleItemsIsArray": false,
+  "limitation": "VM/mock update chains; initial template data checked separately before computed, no renderer execution"
+}

@@ -1,0 +1,27 @@
+{
+  "status": "completed",
+  "suite_version": 4,
+  "cases": 4,
+  "assertions": 37,
+  "historical_baseline": null,
+  "baseline_reuse": "合并任务改变上下文，新建任务增加创建入口；新版需重新执行两组，旧评分不迁移。",
+  "cross_iteration_summary": false,
+  "configurations_completed": [
+    "mpx2skyline",
+    "no_skill"
+  ],
+  "merged_skill_status": "path-to-be-specified-before-execution",
+  "runs_per_case_configuration": 1,
+  "benchmark": "benchmark.json",
+  "limitations": [
+    "单轮生成、每case每配置一次；未测重复运行方差，不能据此作统计不劣化结论。",
+    "run_summary为4个case通过率的均值及case间标准差；主指标使用assertion_summary的37条断言加权总分。",
+    "证据层级以各run-1/validation.json为准；SFC或Mpx模板局部编译不等于完整应用构建或微信真机验证。真机渲染与嵌套手势未执行。",
+    "模型与推理参数继承同一父会话，工具未提供精确模型版本/Token/耗时；后续对比需保持配置并记录可获取的版本。",
+    "执行者独立fork且按指令隔离评分/其他Skill；不是操作系统级访问隔离。",
+    "原始工具对话记录不可用，execution.md为执行者编写的执行记录；保留测试脚本及原始命令日志。",
+    "s1_07的横向关联适用边界待官方/真机核验；本轮按冻结断言评分，不能将此失败直接等同于已证明的运行错误。",
+    "s0_03的媒体查询实现要求比题面更具体，按冻结断言评分并保留评测反馈。",
+    "merged_skill尚未指定，当前只有独立Skill与no_skill基线。"
+  ]
+}

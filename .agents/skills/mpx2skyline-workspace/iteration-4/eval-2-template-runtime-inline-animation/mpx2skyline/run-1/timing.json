@@ -1,0 +1,6 @@
+{
+  "total_tokens": null,
+  "total_duration_seconds": null,
+  "status": "unavailable",
+  "reason": "Subagent completion did not expose reliable token or duration metrics."
+}

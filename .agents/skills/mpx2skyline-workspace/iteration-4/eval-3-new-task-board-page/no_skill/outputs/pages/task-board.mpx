@@ -1,0 +1,122 @@
+<template>
+  <view class="board">
+    <view class="header" style="padding-top: {{safeTop}}px">
+      <view class="heading"><text class="title">任务看板</text><text class="count">{{filteredTasks.length}} 项</text></view>
+      <view class="filters">
+        <view wx:for="{{categories}}" wx:key="*this" class="filter {{category === item ? 'filter-selected' : ''}} {{pressedCategory === item ? 'filter-pressed' : ''}}" data-category="{{item}}" bindtap="selectCategory" bindtouchstart="pressCategory" bindtouchend="releaseCategory" bindtouchcancel="releaseCategory"><text>{{item}}</text></view>
+      </view>
+    </view>
+    <scroll-view class="task-scroll" scroll-y enhanced type="list" show-scrollbar="{{false}}" refresher-enabled refresher-triggered="{{refreshing}}" refresher-background="#f3f5f8" bindrefresherrefresh="refreshTasks" bindscrolltolower="appendTasks" lower-threshold="80">
+      <view wx:for="{{filteredTasks}}" wx:key="taskKey" class="task-row" data-key="{{item.taskKey}}" bindtap="toggleTask">
+        <view class="check {{item.completed ? 'check-completed' : ''}}"><text>{{item.completed ? '✓' : ''}}</text></view>
+        <view class="task-content"><text class="task-title {{item.completed ? 'task-completed' : ''}}" max-lines="1">{{item.title}}</text><text class="task-category">{{item.category}}</text></view>
+      </view>
+      <view wx:if="{{!filteredTasks.length}}" class="empty"><text>暂无任务</text></view>
+      <view class="scroll-footer"><text>{{refreshing ? '正在刷新' : '上拉加载更多'}}</text></view>
+    </scroll-view>
+  </view>
+</template>
+
+<script setup>
+import { ref, computed, onLoad } from '@mpxjs/core'
+
+const categories = ['全部', '工作', '生活']
+const initialTasks = () => [
+  { taskKey: 't1', title: '整理本周跨团队协作事项与上线验收清单', category: '工作', completed: false },
+  { taskKey: 't2', title: '购买周末出行用品', category: '生活', completed: false },
+  { taskKey: 't3', title: '完成每日阅读', category: '生活', completed: true }
+]
+const tasks = ref(initialTasks())
+const category = ref('全部')
+const pressedCategory = ref('')
+const refreshing = ref(false)
+const safeTop = ref(0)
+const filteredTasks = computed(() => tasks.value.filter(task => category.value === '全部' || task.category === category.value))
+let nextTaskId = 4
+let failNextRefresh = false
+
+onLoad((query) => {
+  category.value = categories.includes(query.category) ? query.category : '全部'
+  // 测试入口：页面 URL 的 refreshFail=1 使下一次刷新失败，仅消费一次。
+  failNextRefresh = query.refreshFail === '1'
+  const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+  safeTop.value = info.statusBarHeight || 0
+})
+
+function selectCategory (event) {
+  category.value = event.currentTarget.dataset.category
+  releaseCategory()
+}
+function pressCategory (event) {
+  pressedCategory.value = event.currentTarget.dataset.category
+}
+function releaseCategory () {
+  pressedCategory.value = ''
+}
+function toggleTask (event) {
+  const task = tasks.value.find(task => task.taskKey === event.currentTarget.dataset.key)
+  if (task) task.completed = !task.completed
+}
+function requestTasks () {
+  const shouldFail = failNextRefresh
+  failNextRefresh = false
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (shouldFail) reject(new Error('模拟刷新失败'))
+      else resolve(initialTasks())
+    }, 400)
+  })
+}
+async function refreshTasks () {
+  if (refreshing.value) return
+  refreshing.value = true
+  try {
+    tasks.value = await requestTasks()
+  } catch (error) {
+    wx.showToast({ title: '刷新失败，请重试', icon: 'none' })
+  } finally {
+    refreshing.value = false
+  }
+}
+function appendTasks () {
+  const appendCategory = category.value === '全部' ? '工作' : category.value
+  const additions = [0, 1].map(() => {
+    const id = nextTaskId++
+    return { taskKey: `t${id}`, title: `新增${appendCategory}任务 ${id}`, category: appendCategory, completed: false }
+  })
+  tasks.value = tasks.value.concat(additions)
+}
+</script>
+
+<style>
+.board { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #f3f5f8; }
+.header { flex-shrink: 0; background-color: #ffffff; }
+.heading { display: flex; align-items: center; height: 52px; padding-left: 20px; padding-right: 100px; }
+.title { font-size: 22px; font-weight: 600; color: #18243b; }
+.count { margin-left: 12px; font-size: 13px; color: #64748b; }
+.filters { display: flex; padding: 12px 20px 16px; }
+.filter { display: flex; align-items: center; justify-content: center; padding: 9px 20px; margin-right: 10px; border-radius: 20px; background-color: #edf1f6; color: #526078; font-size: 14px; transform: scale(1); opacity: 1; transition: transform 150ms, opacity 150ms; }
+.filter-selected { background-color: #2563eb; color: #ffffff; }
+.filter-pressed { transform: scale(0.96); opacity: 0.7; }
+.task-scroll { flex: 1; height: 0; min-height: 0; width: 100%; }
+.task-row { display: flex; align-items: center; margin: 12px 16px 0; padding: 16px; border-radius: 12px; background-color: #ffffff; }
+.check { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 22px; height: 22px; margin-right: 12px; border: 1px solid #a5b1c3; border-radius: 12px; color: #ffffff; font-size: 14px; }
+.check-completed { background-color: #2563eb; border-color: #2563eb; }
+.task-content { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
+.task-title { display: block; width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 16px; line-height: 24px; color: #18243b; }
+.task-completed { color: #8893a5; text-decoration: line-through; }
+.task-category { margin-top: 4px; font-size: 12px; color: #64748b; }
+.empty { display: flex; justify-content: center; padding: 48px 16px; font-size: 15px; color: #64748b; }
+.scroll-footer { display: flex; justify-content: center; padding: 24px 16px 40px; font-size: 12px; color: #64748b; }
+</style>
+
+<script name="json">
+{
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "任务看板",
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "disableScroll": true,
+  "usingComponents": {}
+}
+</script>
