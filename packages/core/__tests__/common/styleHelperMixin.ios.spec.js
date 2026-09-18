@@ -61,6 +61,7 @@ describe('RN styleHelperMixin dimensions', () => {
     initDimensionsInfo(mockDimensions)
     global.__mpxSizeCount = 0
     global.__classCaches = new Set()
+    global.__externalClasses = ['custom-class', 'i-class']
     Mpx.config.rnConfig = {
       dimensionsBase: 'window'
     }
@@ -113,7 +114,7 @@ describe('RN styleHelperMixin dimensions', () => {
     const context = {
       __pageId: 'page',
       __mpxProxy: { props: {} },
-      __getSizeCount: jest.fn()
+      __trackPageSizeCount: jest.fn()
     }
 
     const result = styleHelperMixin().methods.__getStyle.call(context, '', '', '', {
@@ -121,27 +122,75 @@ describe('RN styleHelperMixin dimensions', () => {
     })
 
     expect(result.width).toBe(360)
-    expect(context.__getSizeCount).toHaveBeenCalledTimes(1)
+    expect(context.__trackPageSizeCount).toHaveBeenCalledTimes(1)
+  })
+
+  it('reads external class styles from raw props and tracks the internal version', () => {
+    let versionReads = 0
+    const externalClassesState = {}
+    Object.defineProperty(externalClassesState, 'version', {
+      get () {
+        versionReads++
+        return 0
+      }
+    })
+    const context = {
+      __props: {
+        'custom-class': { color: 'red' }
+      },
+      __mpxProxy: {
+        externalClassesState
+      },
+      __trackPageSizeCount: jest.fn()
+    }
+
+    const result = styleHelperMixin().methods.__getStyle.call(context, 'custom-class')
+
+    expect(result.color).toBe('red')
+    expect(versionReads).toBe(1)
+  })
+
+  it('tracks the internal version before an external class style is provided', () => {
+    let versionReads = 0
+    const externalClassesState = {}
+    Object.defineProperty(externalClassesState, 'version', {
+      get () {
+        versionReads++
+        return 0
+      }
+    })
+    const context = {
+      __props: {},
+      __mpxProxy: {
+        externalClassesState
+      },
+      __trackPageSizeCount: jest.fn()
+    }
+
+    const result = styleHelperMixin().methods.__getStyle.call(context, 'custom-class')
+
+    expect(result).toEqual({})
+    expect(versionReads).toBe(1)
   })
 
   it('stops tracking dimensions after responsive styles switch to fixed values', () => {
     const context = {
       __pageId: 'page',
       __mpxProxy: { props: {} },
-      __getSizeCount: jest.fn()
+      __trackPageSizeCount: jest.fn()
     }
 
     styleHelperMixin().methods.__getStyle.call(context, '', '', '', {
       width: '750rpx'
     })
-    context.__getSizeCount.mockClear()
+    context.__trackPageSizeCount.mockClear()
 
     const result = styleHelperMixin().methods.__getStyle.call(context, '', '', '', {
       width: '240px'
     })
 
     expect(result.width).toBe(240)
-    expect(context.__getSizeCount).not.toHaveBeenCalled()
+    expect(context.__trackPageSizeCount).not.toHaveBeenCalled()
   })
 
   it('updates responsive styles when window dimensions change', () => {
@@ -268,14 +317,14 @@ describe('RN styleHelperMixin dimensions', () => {
       __pageId: 'page',
       __mpxProxy: { props: {} },
       __getClassStyle: jest.fn(() => style),
-      __getSizeCount: jest.fn()
+      __trackPageSizeCount: jest.fn()
     }
 
     const result = styleHelperMixin().methods.__getStyle.call(context, 'responsive')
 
     expect(result.color).toBe('red')
     expect(result.opacity).toBeUndefined()
-    expect(context.__getSizeCount).toHaveBeenCalledTimes(1)
+    expect(context.__trackPageSizeCount).toHaveBeenCalledTimes(1)
   })
 
   it('matches media queries with screen width when configured', () => {
@@ -291,13 +340,13 @@ describe('RN styleHelperMixin dimensions', () => {
       __pageId: 'page',
       __mpxProxy: { props: {} },
       __getClassStyle: jest.fn(() => style),
-      __getSizeCount: jest.fn()
+      __trackPageSizeCount: jest.fn()
     }
 
     const result = styleHelperMixin().methods.__getStyle.call(context, 'responsive')
 
     expect(result.color).toBe('green')
-    expect(context.__getSizeCount).toHaveBeenCalledTimes(1)
+    expect(context.__trackPageSizeCount).toHaveBeenCalledTimes(1)
   })
 
   it('matches min/max media queries only within the inclusive range', () => {
@@ -312,7 +361,7 @@ describe('RN styleHelperMixin dimensions', () => {
       __pageId: 'page',
       __mpxProxy: { props: {} },
       __getClassStyle: jest.fn(() => style),
-      __getSizeCount: jest.fn()
+      __trackPageSizeCount: jest.fn()
     }
     const getColorAtWidth = width => {
       global.__mpxAppDimensionsInfo.window = { width, height: 640 }
@@ -350,7 +399,7 @@ describe('RN styleHelperMixin dimensions', () => {
       __pageId: 'page',
       __mpxProxy: { props: {} },
       __getClassStyle: jest.fn(() => style),
-      __getSizeCount: jest.fn()
+      __trackPageSizeCount: jest.fn()
     }
 
     const result = styleHelperMixin().methods.__getStyle.call(context, 'responsive')
@@ -395,7 +444,7 @@ describe('RN styleHelperMixin dimensions', () => {
           __pageId: 'page',
           __mpxProxy: { props: {} },
           __getClassStyle: jest.fn(() => style),
-          __getSizeCount: jest.fn()
+          __trackPageSizeCount: jest.fn()
         }
 
         const result = freshStyleHelperMixin().methods.__getStyle.call(context, 'responsive')
@@ -403,7 +452,7 @@ describe('RN styleHelperMixin dimensions', () => {
         expect(result.color).toBe('red')
         expect(global.__mpxAppDimensionsInfo.window.width).toBe(180)
         expect(customDimensions).toHaveBeenCalledTimes(1)
-        expect(context.__getSizeCount).toHaveBeenCalledTimes(1)
+        expect(context.__trackPageSizeCount).toHaveBeenCalledTimes(1)
       })
     } finally {
       global.notifyDimensionsChange = originalGlobals.notifyDimensionsChange

@@ -66,7 +66,7 @@ function getRootProps (props, validProps) {
   const rootProps = {}
   for (const key in props) {
     const altKey = dash2hump(key)
-    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && key !== 'children') {
+    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && !global.__externalClasses?.includes(key) && key !== 'children') {
       rootProps[key] = props[key]
     }
   }
@@ -302,6 +302,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  proxy.externalClassesState = reactive({ version: 0 })
   proxy.created()
 
   if (type === 'page') {
@@ -623,6 +624,10 @@ function updateProps (instance, props, validProps) {
   })
 }
 
+function isExternalClassesChanged (oldProps, newProps) {
+  return global.__externalClasses?.some(name => !Object.is(oldProps[name], newProps[name]))
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const componentsMap = currentInject.componentsMap
@@ -632,11 +637,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
   }
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  if (global.__externalClasses && global.__externalClasses.length > 0) {
-    global.__externalClasses.forEach((name) => {
-      validProps[name] = null
-    })
-  }
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
@@ -649,6 +649,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
     }
+    const oldProps = propsRef.current
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
@@ -679,14 +680,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
 
     if (!isFirst) {
+      const externalClassesChanged = isExternalClassesChanged(oldProps, props)
+      const update = () => {
+        updateProps(instance, props, validProps)
+        if (externalClassesChanged) {
+          proxy.externalClassesState.version++
+        }
+      }
       // 处理props更新
       if (Mpx.config.forceFlushSync) {
         // 避免开启forceFlushSync时react报错：Cannot update a component while rendering a different component
-        Promise.resolve().then(() => {
-          updateProps(instance, props, validProps)
-        })
+        Promise.resolve().then(update)
       } else {
-        updateProps(instance, props, validProps)
+        update()
       }
     }
 

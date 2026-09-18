@@ -69,6 +69,10 @@ const unit = {
 
 const empty = {}
 
+function trackExternalClassesVersion (externalClassesState) {
+  return externalClassesState.version
+}
+
 // 记录 style 是否依赖窗口尺寸
 let dependentWindowSize = false
 const isNum = (v) => !isNaN(+v)
@@ -328,7 +332,7 @@ const HIDE_STYLE = {
 export default function styleHelperMixin () {
   return {
     methods: {
-      __getSizeCount () {
+      __trackPageSizeCount () {
         return global.__mpxPageSizeCountMap[this.__pageId]
       },
       __getClass (staticClass, dynamicClass) {
@@ -366,9 +370,13 @@ export default function styleHelperMixin () {
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
               dependentWindowSize = dependentWindowSize || appStyle._dependentWindowSize
-            } else if (isObject(this.__mpxProxy.props[className])) {
-              // externalClasses必定以对象形式传递下来
-              mergeToLayer('normal', this.__mpxProxy.props[className])
+            } else if (global.__externalClasses?.includes(className)) {
+              // 始终读取版本号，确保 externalClasses 从无到有时也能触发样式重算。
+              trackExternalClassesVersion(this.__mpxProxy.externalClassesState)
+              const externalClassStyle = this.__props[className]
+              if (isObject(externalClassStyle)) {
+                mergeToLayer('normal', externalClassStyle)
+              }
             }
           })
 
@@ -408,9 +416,9 @@ export default function styleHelperMixin () {
 
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
 
-        // 仅在依赖窗口尺寸时才触发 __getSizeCount 进行响应式关联，避免窗口尺寸变化时不必要的性能损耗
+        // 仅在依赖窗口尺寸时才建立响应式关联，避免窗口尺寸变化时不必要的性能损耗
         if (dependentWindowSize) {
-          this.__getSizeCount()
+          this.__trackPageSizeCount()
         }
         if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
         return isEmpty ? empty : result
