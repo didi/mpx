@@ -38,7 +38,6 @@ module.exports = function (content) {
     return content
   }
   const { resourcePath, queryObj } = parseRequest(this.resource)
-
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const packageName = packageRoot || 'main'
   const independent = queryObj.independent

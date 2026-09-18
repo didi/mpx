@@ -14,3 +14,10 @@ declare module '*?resolve' {
 
 declare let setAppShow: () => void
 declare let setAppHide: () => void
+
+declare let notifyDimensionsChange: (dimensions?: {
+  window: import('react-native').ScaledSize
+  screen: import('react-native').ScaledSize
+}) => void
+
+declare let getStyleDimensions: (dimensionsBase?: 'window' | 'screen') => Readonly<import('react-native').ScaledSize>

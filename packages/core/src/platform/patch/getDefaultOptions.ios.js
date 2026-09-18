@@ -19,20 +19,7 @@ import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navi
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
 import * as perf from '@mpxjs/perf'
-
-function getSystemInfo () {
-  const windowDimensions = global.__mpxAppDimensionsInfo.window
-  const screenDimensions = global.__mpxAppDimensionsInfo.screen
-  return {
-    deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
-    size: {
-      screenWidth: screenDimensions.width,
-      screenHeight: screenDimensions.height,
-      windowWidth: windowDimensions.width,
-      windowHeight: windowDimensions.height
-    }
-  }
-}
+import { getDimensionsBase, getSystemInfo, triggerResizeEvent } from '../dimensionsHelper'
 
 function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
@@ -79,7 +66,7 @@ function getRootProps (props, validProps) {
   const rootProps = {}
   for (const key in props) {
     const altKey = dash2hump(key)
-    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && key !== 'children') {
+    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && !global.__externalClasses?.includes(key) && key !== 'children') {
       rootProps[key] = props[key]
     }
   }
@@ -315,6 +302,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  proxy.externalClassesState = reactive({ version: 0 })
   proxy.created()
 
   if (type === 'page') {
@@ -385,49 +373,28 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   }
 }
 
-const triggerResizeEvent = (mpxProxy, sizeRef) => {
-  const oldSize = sizeRef.current.size
-  const systemInfo = getSystemInfo()
-  const newSize = systemInfo.size
-
-  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
-    return
-  }
-
-  Object.assign(sizeRef.current, systemInfo)
-
-  const type = mpxProxy.options.__type__
-  const target = mpxProxy.target
-  mpxProxy.callHook(ONRESIZE, [systemInfo])
-  if (type === 'page') {
-    target.onResize && target.onResize(systemInfo)
-  } else {
-    const pageLifetimes = mpxProxy.options.pageLifetimes
-    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
-  }
-}
-
-function usePageEffect (mpxProxy, pageId) {
-  const sizeRef = useRef(getSystemInfo())
+function usePageEffect (mpxProxy, pageId, type) {
+  const sizeRef = useRef(Object.assign(getSystemInfo(), { dimensionsBase: getDimensionsBase() }))
 
   useEffect(() => {
     let unWatch
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
-    if (hasShowHook || hasHideHook || hasResizeHook) {
+    // Page 即使没有注册页面生命周期，也需要监听 show 来追平后台期间错过的尺寸版本。
+    // Component 仍仅在声明了对应生命周期时监听，避免无意义的 watcher。
+    if (type === 'page' || hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
+            // 后台页面重新显示时先追平尺寸版本，驱动依赖 rpx/vw/vh 和媒体查询的组件刷新。
+            if (type === 'page' && newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
+            }
+
             triggerPageStatusHook(mpxProxy, newVal)
             // 仅在尺寸确实变化时才触发resize事件
             triggerResizeEvent(mpxProxy, sizeRef)
-
-            // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
-            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
-              // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
-              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
-            }
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy, sizeRef)
           }
@@ -436,7 +403,9 @@ function usePageEffect (mpxProxy, pageId) {
     }
     return () => {
       unWatch && unWatch()
-      del(global.__mpxPageSizeCountMap, pageId)
+      if (type === 'page') {
+        del(global.__mpxPageSizeCountMap, pageId)
+      }
     }
   }, [])
 }
@@ -655,6 +624,10 @@ function updateProps (instance, props, validProps) {
   })
 }
 
+function isExternalClassesChanged (oldProps, newProps) {
+  return global.__externalClasses?.some(name => !Object.is(oldProps[name], newProps[name]))
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const componentsMap = currentInject.componentsMap
@@ -676,6 +649,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
     }
+    const oldProps = propsRef.current
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
@@ -706,14 +680,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
 
     if (!isFirst) {
+      const externalClassesChanged = isExternalClassesChanged(oldProps, props)
+      const update = () => {
+        updateProps(instance, props, validProps)
+        if (externalClassesChanged) {
+          proxy.externalClassesState.version++
+        }
+      }
       // 处理props更新
       if (Mpx.config.forceFlushSync) {
         // 避免开启forceFlushSync时react报错：Cannot update a component while rendering a different component
-        Promise.resolve().then(() => {
-          updateProps(instance, props, validProps)
-        })
+        Promise.resolve().then(update)
       } else {
-        updateProps(instance, props, validProps)
+        update()
       }
     }
 
@@ -724,7 +703,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     })
 
-    usePageEffect(proxy, pageId)
+    usePageEffect(proxy, pageId, type)
     useEffect(() => {
       proxy.mounted()
       return () => {

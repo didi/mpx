@@ -1,75 +1,64 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
-import Mpx from '../../index'
+import { getStyleDimensions, initDimensionsInfo, syncDimensions } from '../dimensionsHelper'
 
-global.__mpxAppDimensionsInfo = {
+initDimensionsInfo({
   window: Dimensions.get('window'),
   screen: Dimensions.get('screen')
-}
+})
 global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
 
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
-    const styleObj = classMap[className]?.(global.__formatValue)
-    styleObj && classMapValueCache.set(className, styleObj)
+    const originalDependentWindowSize = dependentWindowSize
+    dependentWindowSize = false
+
+    const styleObj = classMap[className]?.(formatValue)
+    if (!styleObj) {
+      dependentWindowSize = originalDependentWindowSize
+      return
+    }
+
+    // 使用不可枚举属性记录窗口尺寸依赖，避免该内部标记被合并到 RN 样式中
+    Object.defineProperty(styleObj, '_dependentWindowSize', {
+      value: dependentWindowSize
+    })
+    dependentWindowSize = dependentWindowSize || originalDependentWindowSize
+
+    classMapValueCache.set(className, styleObj)
   }
   return classMapValueCache.get(className)
 }
 
-let dimensionsInfoInitialized = false
-function useDimensionsInfo (dimensions) {
-  dimensionsInfoInitialized = true
-  if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
-    dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
-  }
-  global.__mpxAppDimensionsInfo.window = dimensions.window
-  global.__mpxAppDimensionsInfo.screen = dimensions.screen
-}
-
-function getPageSize (window = global.__mpxAppDimensionsInfo.screen) {
-  return window.width + 'x' + window.height
-}
-
-Dimensions.addEventListener('change', ({ window, screen }) => {
-  const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
-  useDimensionsInfo({ window, screen })
-
-  // 对比 screen 高宽是否存在变化
-  if (getPageSize(screen) === oldScreen) return
-
-  global.__classCaches?.forEach(cache => cache?.clear())
-
-  // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
-  global.__mpxSizeCount++
-
-  const navigation = getFocusedNavigation()
-
-  if (navigation) {
-    global.__mpxPageSizeCountMap[navigation.pageId] = global.__mpxSizeCount
-    if (hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-      global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
+function onDimensionsChange (dimensions) {
+  if (!dimensions) {
+    dimensions = {
+      window: Dimensions.get('window'),
+      screen: Dimensions.get('screen')
     }
   }
-})
+  syncDimensions(dimensions)
+}
 
-// TODO: 1 目前测试鸿蒙下折叠屏screen固定为展开状态下屏幕尺寸，仅window会变化，且window包含状态栏高度
-// TODO: 2 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions监听到的width/height尺寸错误，并触发多次问题
+global.notifyDimensionsChange = onDimensionsChange
+global.getStyleDimensions = dimensionsBase => Object.assign({}, getStyleDimensions(dimensionsBase))
+
+Dimensions.addEventListener('change', onDimensionsChange)
+
+// TODO: 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions 监听到的 width/height 尺寸错误，并触发多次问题
 function rpx (value) {
-  const screenInfo = global.__mpxAppDimensionsInfo.screen
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
-  // px = rpx * (750 / 屏幕宽度)
-  return value * screenInfo.width / 750
+  // px = rpx * (样式计算宽度 / 750)
+  return value * getStyleDimensions().width / 750
 }
 function vw (value) {
-  const screenInfo = global.__mpxAppDimensionsInfo.screen
-  return value * screenInfo.width / 100
+  return value * getStyleDimensions().width / 100
 }
 function vh (value) {
-  const screenInfo = global.__mpxAppDimensionsInfo.screen
-  return value * screenInfo.height / 100
+  return value * getStyleDimensions().height / 100
 }
 
 const unit = {
@@ -80,11 +69,16 @@ const unit = {
 
 const empty = {}
 
-const isNum = (v) => !isNaN(+v)
+function trackExternalClassesVersion (externalClassesState) {
+  return externalClassesState.version
+}
 
+// 记录 style 是否依赖窗口尺寸
+let dependentWindowSize = false
+const isNum = (v) => !isNaN(+v)
 function formatValue (value, unitType) {
-  if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
   if (unitType && typeof unit[unitType] === 'function') {
+    dependentWindowSize = true
     return unit[unitType](+value)
   }
   if (value === 'hairlineWidth') {
@@ -95,6 +89,7 @@ function formatValue (value, unitType) {
     if (!matched[2] || matched[2] === 'px') {
       return +matched[1]
     } else {
+      dependentWindowSize = true
       return unit[matched[2]](+matched[1])
     }
   }
@@ -228,16 +223,31 @@ function isNativeStyle (style) {
 
 function getMediaStyle (media) {
   if (!media || !media.length) return {}
-  const { width } = global.__mpxAppDimensionsInfo.screen
+  dependentWindowSize = true
+  const { width } = getStyleDimensions()
   return media.reduce((styleObj, item) => {
     const { options = {}, value = {} } = item
     const { minWidth, maxWidth } = options
-    if (!isNaN(minWidth) && !isNaN(maxWidth) && width >= minWidth && width <= maxWidth) {
-      Object.assign(styleObj, value)
-    } else if (!isNaN(minWidth) && width >= minWidth) {
-      Object.assign(styleObj, value)
-    } else if (!isNaN(maxWidth) && width <= maxWidth) {
-      Object.assign(styleObj, value)
+    const hasMinWidth = !isNaN(minWidth)
+    const hasMaxWidth = !isNaN(maxWidth)
+    const matched = hasMinWidth && hasMaxWidth
+      ? width >= minWidth && width <= maxWidth
+      : hasMinWidth
+        ? width >= minWidth
+        : hasMaxWidth && width <= maxWidth
+    if (matched) {
+      Object.keys(value).forEach(key => {
+        if (key !== '_inlineLayer') styleObj[key] = value[key]
+      })
+      if (value._inlineLayer) {
+        styleObj._inlineLayer = styleObj._inlineLayer || {}
+        Object.keys(value._inlineLayer).forEach(layer => {
+          styleObj._inlineLayer[layer] = Object.assign(
+            styleObj._inlineLayer[layer] || {},
+            value._inlineLayer[layer]
+          )
+        })
+      }
     }
     return styleObj
   }, {})
@@ -261,8 +271,11 @@ const createLayer = (isNativeStyle) => {
   const mergeToLayer = (name, style, mediaStyle) => {
     const layer = layerMap[name] || layerMap.normal
     layer.push(style)
-    if (mediaStyle) layer.push(mediaStyle)
     if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
+    if (mediaStyle) {
+      layer.push(mediaStyle)
+      if (mediaStyle._inlineLayer) checkInlineLayer(mediaStyle, mergeToLayer)
+    }
   }
 
   const mergeToLayerWithStyles = (name, styles) => {
@@ -319,7 +332,7 @@ const HIDE_STYLE = {
 export default function styleHelperMixin () {
   return {
     methods: {
-      __getSizeCount () {
+      __trackPageSizeCount () {
         return global.__mpxPageSizeCountMap[this.__pageId]
       },
       __getClass (staticClass, dynamicClass) {
@@ -329,11 +342,11 @@ export default function styleHelperMixin () {
         let idTotal = -1
         if (__mpx_perf_framework__) idTotal = perf.scopeStart('instance:render:getStyle')
 
+        // 重置依赖标记
+        dependentWindowSize = false
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
         const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
-
-        this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
           let idClass = -1
@@ -346,21 +359,31 @@ export default function styleHelperMixin () {
             let localStyle, appStyle, unoStyle, unoVarStyle
             if (localStyle = this.__getClassStyle?.(className)) {
               mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
+              dependentWindowSize = dependentWindowSize || localStyle._dependentWindowSize
             } else if (unoStyle = global.__getUnoStyle?.(className)) {
               mergeToLayer(unoStyle._layer || 'uno', unoStyle, getMediaStyle(unoStyle._media))
+              dependentWindowSize = dependentWindowSize || unoStyle._dependentWindowSize
               if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
             } else if (unoVarStyle = global.__getUnoVarStyle?.(className)) {
               mergeToLayer('important', unoVarStyle)
+              dependentWindowSize = dependentWindowSize || unoVarStyle._dependentWindowSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
-            } else if (isObject(this.__props[className])) {
-              // externalClasses必定以对象形式传递下来
-              mergeToLayer('normal', this.__props[className])
+              dependentWindowSize = dependentWindowSize || appStyle._dependentWindowSize
+            } else if (global.__externalClasses?.includes(className)) {
+              // 始终读取版本号，确保 externalClasses 从无到有时也能触发样式重算。
+              trackExternalClassesVersion(this.__mpxProxy.externalClassesState)
+              const externalClassStyle = this.__props[className]
+              if (isObject(externalClassStyle)) {
+                mergeToLayer('normal', externalClassStyle)
+              }
             }
           })
 
           if (needAddUnoPreflight) {
-            mergeToLayer('preflight', global.__getAppClassStyle?.('__uno_preflight'))
+            const unoPreflightStyle = global.__getAppClassStyle?.('__uno_preflight')
+            mergeToLayer('preflight', unoPreflightStyle)
+            dependentWindowSize = dependentWindowSize || unoPreflightStyle._dependentWindowSize
           }
 
           if (__mpx_perf_framework__) perf.scopeEnd(idClass)
@@ -392,6 +415,11 @@ export default function styleHelperMixin () {
         const result = genResult()
 
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+
+        // 仅在依赖窗口尺寸时才建立响应式关联，避免窗口尺寸变化时不必要的性能损耗
+        if (dependentWindowSize) {
+          this.__trackPageSizeCount()
+        }
         if (__mpx_perf_framework__) perf.scopeEnd(idTotal)
         return isEmpty ? empty : result
       }
