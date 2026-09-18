@@ -68,9 +68,8 @@ test('merged fixtures are intact and creation starts from requirements', () => {
   creation.assertions.forEach(item => item.related_adaptation_assertions.forEach(id => {
     expect(assertions.some(assertion => assertion.id === id)).toBe(true)
   }))
-  expect(manifest.status).toBe('cases-ready-not-run')
-  expect(read(path.join(__dirname, 'run-metadata.json')).status).toBe('not_run')
-  expect(fs.existsSync(path.join(__dirname, 'benchmark.json'))).toBe(false)
+  expect(['cases-ready-not-run', 'running', 'completed']).toContain(manifest.status)
+  expect(['not_run', 'running', 'completed']).toContain(read(path.join(__dirname, 'run-metadata.json')).status)
 })
 
 
@@ -148,4 +147,46 @@ test('unified user-list connects heading, external rows and feedback to the same
   expect(sfc.template.content).toMatch(/<image[^>]*logo.svg[^>]*\/><text>{{label}}<\/text>/)
   expect(sfc.template.content).toContain('<include src="./row.wxml"/>')
   expect(sfc.template.content).toMatch(/<view[^>]*bindtap="scrollTop"[^>]*bindtouchstart="press"[^>]*bindtouchend="release"[^>]*bindtouchcancel="release"/)
+})
+
+
+test('completed baseline scores and archived outputs match the current definition', () => {
+  const crypto = require('crypto')
+  const snapshot = read(path.join(__dirname, 'source-snapshot.json'))
+  Object.entries(snapshot.files).forEach(([file, digest]) => {
+    expect(crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname, file))).digest('hex')).toBe(digest)
+  })
+  if (manifest.status !== 'completed') return
+  const benchmark = read(path.join(__dirname, 'benchmark.json'))
+  expect(benchmark.runs).toHaveLength(8)
+  const pairs = new Set()
+  benchmark.runs.forEach(run => {
+    pairs.add(`${run.eval_id}/${run.configuration}`)
+    const definition = manifest.evals.find(item => item.id === run.eval_id)
+    const gradingPath = path.join(__dirname, run.grading_path)
+    const grading = read(gradingPath)
+    expect(grading.expectations.map(item => item.id)).toEqual(definition.assertions.map(item => item.id))
+    expect(grading.expectations.map(item => item.text)).toEqual(definition.assertions.map(item => item.text))
+    expect(grading.summary.passed).toBe(grading.expectations.filter(item => item.passed).length)
+    expect(grading.summary.total).toBe(definition.assertions.length)
+    expect(grading.summary.failed).toBe(grading.summary.total - grading.summary.passed)
+    expect(grading.summary.pass_rate).toBeCloseTo(grading.summary.passed / grading.summary.total)
+    expect(run.result).toEqual(grading.summary)
+    const evidenceDir = path.dirname(gradingPath)
+    const hashes = read(path.join(evidenceDir, 'output-snapshot.json'))
+    expect(Object.keys(hashes).length).toBeGreaterThan(0)
+    Object.entries(hashes).forEach(([file, digest]) => {
+      expect(crypto.createHash('sha256').update(fs.readFileSync(path.join(evidenceDir, '../outputs', file))).digest('hex')).toBe(digest)
+    })
+    expect(fs.existsSync(path.join(evidenceDir, 'validation.json'))).toBe(true)
+    expect(fs.existsSync(path.join(evidenceDir, 'execution.md'))).toBe(true)
+  })
+  expect(pairs.size).toBe(8)
+  Object.entries(benchmark.assertion_summary).forEach(([configuration, summary]) => {
+    const runs = benchmark.runs.filter(run => run.configuration === configuration)
+    expect(summary.passed).toBe(runs.reduce((sum, run) => sum + run.result.passed, 0))
+    expect(summary.total).toBe(assertions.length)
+    expect(summary.adaptation.total).toBe(31)
+    expect(summary.creation.total).toBe(6)
+  })
 })

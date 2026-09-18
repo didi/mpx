@@ -1,6 +1,6 @@
 # Skyline 适配测试集设计 v4
 
-当前为4个case、37条Skyline正向断言，尚未执行。旧[iteration-3结果](iteration-3/benchmark.md)保持历史归属。
+当前为4个case、37条Skyline正向断言，已完成独立Skill/no_skill各一轮，详见[基线结果](iteration-4/benchmark.md)。本轮按当前定义独立执行，未复用历史分数。
 
 | Case | 名称 | 断言数 | 来源 |
 | --- | --- | ---: | --- |
@@ -45,7 +45,7 @@ case 1将订单与分类面板合并为单个orders.mpx输入，数据接口统�
 | 断言 | Skyline适配要求 | 验证方法 |
 | --- | --- | --- |
 | `s1_00` | Skyline 订单页面的外层与主订单纵向scroll-view均具有明确可滚动高度，概览与分组主体按嵌套层次布局，分组实际参与主滚动区域。 | 检查导航下方的外层高度、概览占位和主订单容器高度链，以多组数据核对主区域可滚动；具体类型及吸顶结构分别按s1_07/s1_09验证。 |
-| `s1_01` | Skyline 主订单纵向scroll-view通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。 | 定位承载sections的主纵向容器及刷新绑定，分别注入fetchOrders(1)成功和失败，核对刷新态复位；外层或横向容器的绑定不能替代主区域链路。 |
+| `s1_01` | Skyline 主订单纵向scroll-view启用refresher-enabled=true，通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。 | 定位承载sections的主纵向容器，检查refresher-enabled求值为true以及刷新事件和状态绑定，分别注入fetchOrders(1)成功和失败，核对刷新态复位；刷新开关、事件和状态应共同作用于主区域。 |
 | `s1_02` | Skyline 主订单纵向scroll-view通过bindscrolltolower连接分页加载，触底后下一页分组追加到同一sections列表并继续展示。 | 从主订单容器实际触底绑定连续调用两次，核对页号推进、新分组追加和原分组保留；确认横向触底不触发纵向分页。 |
 | `s1_03` | Skyline 主订单纵向scroll-view通过bindscroll读取event.detail.scrollTop并更新概览中的滚动位置。 | 给主区域滚动处理器传入detail.scrollTop并核对展示；检查外层及横向滚动事件不会被误当作主订单区域位置。 |
 | `s1_04` | Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。 | 解析页面JSON并检查真实导航节点和主体布局关系。 |
@@ -65,13 +65,13 @@ case 1将订单与分类面板合并为单个orders.mpx输入，数据接口统�
 | 断言 | Skyline适配要求 | 验证方法 |
 | --- | --- | --- |
 | `s2_00` | Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。 | 检查初始渲染数据及computed所有消费路径，分别模拟undefined/null/空数组/有效数组。 |
-| `s2_01` | Skyline/glass-easel 的用户容器使用合法的非数字开头id，组件内通过 this.createSelectorQuery 定位同一容器。 | 关联模板id、组件查询作用域和select字符串，核对查询目标一致。 |
+| `s2_01` | Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。 | 关联模板id、组件查询作用域和select字符串，核对查询目标一致；接受this.createSelectorQuery()或wx.createSelectorQuery().in(this)等具有正确组件作用域的等价实现。this.createSelectorQuery的性能推荐另记观察项。 |
 | `s2_02` | Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。 | 从user-list.mpx实际回顶按钮的点击绑定追踪查询目标、enhanced属性及node().exec后的scrollTo({top:0})调用，确认不是other容器。 |
 | `s2_03` | Skyline/glass-easel 循环中的外部片段采用 import 加具名 template 调用，并显式传递当前 item/index。 | 检查导入路径、模板名称和循环数据参数，代入两行不同数据确认作用域。 |
 | `s2_04` | Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。 | 检查两个导航入口的实际子节点和/pages/detail目标；复杂外层事件方案核对绑定与跳转调用。 |
 | `s2_05` | Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。 | 检查user-list.mpx标题中logo与label共同承载的实际span、省略属性、图片display及renderer路径和宽度约束；使用长label核对两者共同截断。 |
 | `s2_06` | Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。 | 追踪user-list.mpx提示圆点的真实节点、关键帧、fill-mode与1秒周期，核对8px、#f50及opacity .3到1。 |
-| `s2_07` | Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。 | 追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定到状态类和CSS，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。 |
+| `s2_07` | Skyline 按钮通过响应式状态，以class或动态style驱动transform/opacity的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。 | 追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定、响应式状态及class或动态style到CSS transition的完整链路，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。 |
 
 ## Case 3：从零创建任务看板页面
 
@@ -83,14 +83,14 @@ case 1将订单与分类面板合并为单个orders.mpx输入，数据接口统�
 | --- | --- | --- |
 | `n3_00` | Skyline 新页面配置renderer=skyline、componentFramework=glass-easel、navigationStyle=custom和disableScroll=true，实际呈现任务看板导航；app顶层lazyCodeLoading及rendererOptions.skyline五项推荐配置完整。 | 解析页面与app配置，逐项核对requiredComponents及defaultDisplayBlock/defaultContentBox/enableScrollViewAutoSize=true、tagNameStyleIsolation/keyframeStyleIsolation=legacy，检查实际导航节点。 |
 | `n3_01` | Skyline 新页面通过有明确高度约束的type=list纵向scroll-view承载任务，任务项为直接子节点，标题及筛选区位于滚动主体之外。 | 检查父子高度与Flex收缩链、scroll-y及列表直接子节点；以超出一屏的任务验证有界滚动布局。 |
-| `n3_02` | Skyline 新页面将下拉刷新接到scroll-view的bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。 | 沿实际事件绑定触发刷新，注入resolve/reject，核对刷新态最终false且容器可继续操作。 |
+| `n3_02` | Skyline 新页面在scroll-view上启用refresher-enabled=true，将下拉刷新接到bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。 | 检查实际滚动容器的refresher-enabled求值为true、bindrefresherrefresh事件及refresher-triggered状态绑定；沿该绑定触发刷新，分别注入resolve/reject，核对刷新态最终false且容器可继续操作。 |
 | `n3_03` | Skyline 新页面将scroll-view的bindscrolltolower接入分页追加，每次容器触底后新任务进入同一滚动列表。 | 从实际模板触底绑定调用处理器两次，核对每次新增2条且原列表保留；分类和唯一键另作业务验证。 |
-| `n3_04` | Skyline 新页面长任务标题在实际text承载节点设置max-lines=1、overflow=ellipsis，并在有界可收缩宽度内与WebView单行省略路径共同生效。 | 检查text属性、父级宽度/收缩约束和WebView样式；代入长标题审查两种renderer的实际截断路径。 |
-| `n3_05` | Skyline 新页面分类按钮通过状态类驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。 | 追踪真实触摸绑定到响应状态和CSS，分别模拟按下/松开/取消，核对数值、持续时间和恢复。 |
+| `n3_04` | Skyline 新页面长任务标题在实际text承载节点设置max-lines=1、overflow=ellipsis，并在有界可收缩宽度内与WebView单行省略路径共同生效。 | 检查text属性、父级宽度/收缩约束和WebView样式，并确认标题插值紧贴text开闭标签，避免模板换行及缩进成为字面空白；代入长标题审查两种renderer的实际截断路径。 |
+| `n3_05` | Skyline 新页面分类按钮通过响应式状态，以class或动态style驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。 | 追踪真实触摸绑定、响应式状态及class或动态style到CSS transition的完整链路，分别模拟按下/松开/取消，核对数值、持续时间和恢复。 |
 
 ## 后续执行
 
-使用同一模型/参数先建立独立Skill与no_skill基线，再比较合并Skill。保存输入、Skill哈希和实际执行证据。本次只更新测试定义，未执行模型评测。
+使用同一模型/参数先建立独立Skill与no_skill基线，再比较合并Skill。保存输入、Skill哈希和实际执行证据。本版已执行独立Skill/no_skill基线；合并Skill尚未执行。
 
 [完整定义](iteration-4/evals.json) · [评分标准](iteration-4/grading-standard.md) · [迁移表](iteration-4/assertion-migration.json)
 

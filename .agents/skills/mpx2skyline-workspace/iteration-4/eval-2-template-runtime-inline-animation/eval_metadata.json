@@ -29,14 +29,14 @@
     },
     {
       "id": "s2_01",
-      "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，组件内通过 this.createSelectorQuery 定位同一容器。",
+      "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。",
       "rule_id": "skyline.scoped-selector",
       "scope": "skyline",
       "source": {
         "file": "references/skyline-runtime-practice.md",
         "section": "[推荐] 用 this.createSelectorQuery 替代 wx.createSelectorQuery"
       },
-      "verification": "关联模板id、组件查询作用域和select字符串，核对查询目标一致。",
+      "verification": "关联模板id、组件查询作用域和select字符串，核对查询目标一致；接受this.createSelectorQuery()或wx.createSelectorQuery().in(this)等具有正确组件作用域的等价实现。this.createSelectorQuery的性能推荐另记观察项。",
       "source_assertions": [
         "e2_05",
         "e2_07"
@@ -119,14 +119,14 @@
     },
     {
       "id": "s2_07",
-      "text": "Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
+      "text": "Skyline 按钮通过响应式状态，以class或动态style驱动transform/opacity的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
       "rule_id": "skyline.state-transition",
       "scope": "skyline",
       "source": {
         "file": "references/skyline-layout-practice.md",
         "section": "animation API 不支持 → 使用 CSS transition"
       },
-      "verification": "追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定到状态类和CSS，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。",
+      "verification": "追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定、响应式状态及class或动态style到CSS transition的完整链路，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。",
       "source_assertions": [
         "e3_06",
         "e3_07",

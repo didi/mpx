@@ -1,0 +1,39 @@
+{
+  "eval_id": 1,
+  "configuration": "mpx2skyline",
+  "run_number": 1,
+  "source_iteration": 4,
+  "cross_iteration_summary": false,
+  "agent": "/root/v4_c1_skill",
+  "model": "inherited_parent",
+  "reasoning_effort": "inherited_parent",
+  "fork_turns": "none",
+  "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
+  "task_source": "../../input/task.md",
+  "assertion_definition_sha256": "2975186856a33716f7825a1b0f2937dde145ad59d6b10ace2826ca2c7abddf14",
+  "execution_staging": "/private/tmp/skyline-v4-baseline/eval-1/mpx2skyline",
+  "input_hashes": {
+    "eval-1-page-scroll-sticky-layer-config/input/app.json": "08b6c0c8a67d9602540f6eba281fd3649e75b8aee175ce2640a7dd3a714cf1ac",
+    "eval-1-page-scroll-sticky-layer-config/input/orders.mpx": "6e0df185e713f033af82368b5acf069c43812259509b2a381d3ce946de0b60ad",
+    "eval-1-page-scroll-sticky-layer-config/input/service.js": "977d51816125ab91147f6e3b4bf9b764046fefc7ad958495285cd4489e3bf164",
+    "eval-1-page-scroll-sticky-layer-config/input/task.md": "f91ca5b0a218c2c50ce008a605568a762f4a62ab96bb1f08c37309d0de6aba34"
+  },
+  "skill": {
+    "path": "/Users/hjw/project/mpx/.agents/skills/mpx2skyline",
+    "version_source": "SKILL.md metadata.version",
+    "version": "1.0.1",
+    "files": {
+      "SKILL.md": "e9f52569a2588d2717f247710a691fb01cd86f4da4d9b6a6d15b2a945f2ba057",
+      "references/skyline-audit-matrix.md": "0ad733a5a06947124e7917e801affdc1a3b58e845b8bbb3a33eb3b8356ed72a9",
+      "references/skyline-component-reference.md": "6d888d24a4053753ba8c510156f776a7b44af6c2f13a5b970b2c78f4d962999f",
+      "references/skyline-configuration.md": "6466e0738dc49484edf038daed14fe1a7f9e66b1273be753a3413f017c10d0be",
+      "references/skyline-layout-practice.md": "d94c2b733c28fd83fe2e3d30d62ab2973ccb2ed95928fea44e85e2a436c1712f",
+      "references/skyline-runtime-practice.md": "aa6f6180defb7c7a5efed70359306674d500001aea741fb1a58bc885fd76f24b",
+      "references/skyline-style-reference.md": "019b936e21c77e00a650bc77fb6fa9800398feb0cca9cd8893fd4350b082fa7e"
+    }
+  },
+  "input_and_skill_unchanged": true,
+  "isolation": "fork_turns=none; instruction-restricted reads; no OS filesystem isolation",
+  "transcript_type": "executor-authored execution.md; raw tool transcript unavailable",
+  "recorded_at": "2026-09-18T02:43:15.351407+00:00"
+}

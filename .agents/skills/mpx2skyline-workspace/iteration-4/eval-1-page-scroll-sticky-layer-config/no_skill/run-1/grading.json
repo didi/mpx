@@ -1,0 +1,101 @@
+{
+  "expectations": [
+    {
+      "id": "s1_00",
+      "text": "Skyline 订单页面的外层与主订单纵向scroll-view均具有明确可滚动高度，概览与分组主体按嵌套层次布局，分组实际参与主滚动区域。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:3-9 导航后外层与主区明确绑定bodyHeight，概览位于nested-scroll-header、主区位于nested-scroll-body；:58-61 计算windowHeight-statusBarHeight-44；:10-15 sections实际处于主区，分页增加组数可超出高度。类型缺陷另由s1_07/s1_09评分。"
+    },
+    {
+      "id": "s1_01",
+      "text": "Skyline 主订单纵向scroll-view启用refresher-enabled=true，通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:9 实际主区 refresher-enabled=true、refresher-triggered=refreshing、bindrefresherrefresh=onRefresh；:63-81 onRefresh调用reload，finally清除刷新状态。run-1/grader-interactions.json:3-22 独立按真实绑定调用并注入fetchOrders(1) resolve/reject，均复位且失败保留原列表。"
+    },
+    {
+      "id": "s1_02",
+      "text": "Skyline 主订单纵向scroll-view通过bindscrolltolower连接分页加载，触底后下一页分组追加到同一sections列表并继续展示。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:9 主区bindscrolltolower=loadMore；:83-98 下一页请求、concat追加、成功推进页号；横向节点:12 无分页绑定。run-1/grader-interactions.json:3-22 独立沿绑定连续触发两次，请求页1/2/3，保留原4组并追加至12组/page3。"
+    },
+    {
+      "id": "s1_03",
+      "text": "Skyline 主订单纵向scroll-view通过bindscroll读取event.detail.scrollTop并更新概览中的滚动位置。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:9 主区bindscroll=onMainScroll，:99 读取detail.scrollTop，:6 概览显示；外层:4与横向:12均未绑定该处理器，原生scroll事件非冒泡绑定不会将其他容器当主位置。run-1/grader-interactions.json:3-22 独立沿绑定更新137；真机事件派发未验证。"
+    },
+    {
+      "id": "s1_04",
+      "text": "Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。",
+      "passed": true,
+      "evidence": "outputs/app.json:18-19 全局renderer=skyline/componentFramework=glass-easel由订单页继承，等价满足页面有效配置；outputs/orders.mpx:122 navigationStyle=custom/disableScroll=true，:3,109 实际订单导航位于主体上方。未强求继承配置重复写页面。"
+    },
+    {
+      "id": "s1_05",
+      "text": "Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。",
+      "passed": false,
+      "evidence": "outputs/app.json:1-20 完整配置无lazyCodeLoading字段，缺requiredComponents。"
+    },
+    {
+      "id": "s1_06",
+      "text": "Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。",
+      "passed": false,
+      "evidence": "outputs/app.json:11-16 仅defaultDisplayBlock=true；缺defaultContentBox、tagNameStyleIsolation、enableScrollViewAutoSize、keyframeStyleIsolation。disableABTest/sdkVersionBegin/End不替代这些配置。"
+    },
+    {
+      "id": "s1_07",
+      "text": "Skyline 外层纵向scroll-view采用type=nested，主订单纵向容器显式选择type=custom，内层横向容器显式选择list/custom，并通过associative-container=nested-scroll-view建立嵌套关联。",
+      "passed": false,
+      "evidence": "outputs/orders.mpx:4 外层nested，但:9 主容器type=list非要求custom；:12 横向scroll-view未显式type且无关联属性。主区associative-container已设置仍不足以满足全部结构条件。"
+    },
+    {
+      "id": "s1_08",
+      "text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
+      "passed": false,
+      "evidence": "outputs/orders.mpx:12 横向虽scroll-x/enable-flex=true，但缺type=list/custom；:114 strip无横向Flex，:115布局只在额外tiles wrapper，:13条目非容器直接子节点。:116 120px与不收缩正确仍不满足全部条件。"
+    },
+    {
+      "id": "s1_09",
+      "text": "Skyline 主订单custom容器内使用sticky-section/sticky-header实现分组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应CSS sticky实现。",
+      "passed": false,
+      "evidence": "outputs/orders.mpx:9 主区type=list，:10-11 将sticky-section/header放入list，违反必须custom的结构；背景在header内子view(:112)；WebView :23-25/:113已有CSS sticky，不弥补Skyline错误。"
+    },
+    {
+      "id": "s1_10",
+      "text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:30-31 fab与modal同为page直接子节点；:118-119 均fixed，modal z-index 20 > fab 10，可比较层级实现覆盖。"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 5,
+    "total": 11,
+    "pass_rate": 0.5454545454545454
+  },
+  "validation_limitations": [
+    "独立执行grader-interactions.cjs，沿实际主容器事件名进行刷新resolve/reject、两次分页、滚动状态验证；仅VM/mock，不代表原生手势与派发。",
+    "两组common-parse-validation.json仅SFC提取、script/JSON/CSS解析，不能称为微信编译。",
+    "Skill组compile.cjs/compile.log/orders.wxml证明局部Mpx wx模板parse/serialize；no_skill未执行局部模板编译。两组完整应用构建、微信glass-easel编译和真机均not_run。",
+    "s1_07按冻结断言与source对内层关联要求判分；横向关联的规则适用边界仍待官方资料/真机复核。断言未满足不直接等于已证明运行必错。"
+  ],
+  "claims": [
+    {
+      "claim": "刷新和连续分页能由真实绑定对应处理器完成",
+      "verified": true,
+      "evidence": "run-1/grader-interactions.json，独立检查通过；请求页1/2/3/1/1。"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "s1_07",
+        "reason": "建议明确横向容器关联的适用边界并补官方或真机依据；本次严格按冻结断言及引用规则核验全部内层关联，不将断言失败宣称为已证实运行错误。"
+      }
+    ],
+    "overall": "局部模板编译不能验证Skyline组件语义；s1_04按app继承的语义等价实现评分。"
+  },
+  "observations": [
+    "app顶层renderer/框架使所有页面继承，超出仅订单页切换的最小范围；未额外扣专项分。"
+  ]
+}

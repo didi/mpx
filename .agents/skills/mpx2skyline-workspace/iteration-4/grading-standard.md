@@ -12,10 +12,14 @@
 
 产物位于eval-*/<configuration>/outputs/；评分、验证、执行、耗时和Token证据位于run-1/。输入统一读取eval-*/input/，Skill读取中央路径，记录执行前后输入和Skill版本/哈希，缺失Token/精确耗时用unavailable。
 
-独立Skill、no_skill及未来合并Skill采用相同输入、模型参数和验证方式，只有Skill读取权限不同。比较逐条通过转失败及分入口分数；本版尚未执行，不复用iteration-3分数。
+独立Skill、no_skill及未来合并Skill采用相同输入、模型参数和验证方式，只有Skill读取权限不同。比较逐条通过转失败及分入口分数；本版已完成独立Skill/no_skill各一轮，评分与历史轮次独立。
 
 case 2的外部row.wxml与logo.svg继续保留，以验证外部模板作用域与真实图文混排；回顶按钮的查询结果和CSS反馈分别计分，所有证据应来自同一个user-list组件。
 
 Case 2断言统一编号为s2_00–s2_07；原s3_00/s3_01/s3_02依次迁移为s2_05/s2_06/s2_07，旧ID保存在迁移表source_assertion_id中。断言正文及验证方法不变。
 
 Case 1断言统一编号为s1_00–s1_10；原s4_00/s4_01/s4_02/s4_03依次迁移为s1_07/s1_08/s1_09/s1_10，旧ID保存在迁移表source_assertion_id中。评分要求不变。
+
+Case 3保持6条创建断言：刷新同时核对容器refresher-enabled启用、事件及状态绑定；文本省略验证标题插值紧贴text标签；按压反馈接受class或动态style驱动CSS transition的等价实现。
+
+基线前统一评分：s1_01核对主容器刷新开关；s2_01按合法id、组件作用域和查询目标评分，this.createSelectorQuery仅作性能观察；s2_07接受class或动态style驱动CSS transition。缺少真机证据时仅报告静态/模拟结论。

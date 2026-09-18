@@ -1,0 +1,72 @@
+{
+  "expectations": [
+    {
+      "id": "s2_00",
+      "text": "Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。",
+      "passed": false,
+      "evidence": "outputs/user-list.mpx:11 wx:for消费visibleItems；:28-38只有items初值，visibleItems仅computed，没有initData或模板兜底保护computed前undefined。run-1/grader-chain.json:20 initialTemplateVisibleItemsIsArray=false；后续更新正常不代替首帧。引用skyline-runtime-practice.md:142-185明确该风险。"
+    },
+    {
+      "id": "s2_01",
+      "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:10 合法id=users；:59 wx.createSelectorQuery().in(this).select(#users)具有正确组件作用域。独立grader确认in参数为同一实例，按等价实现通过。"
+    },
+    {
+      "id": "s2_02",
+      "text": "Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:15 回顶按钮bindtap=scrollTop；:10 users开启enhanced/scroll-y；:58-61 node().exec后返回node.scrollTo({top:0})。独立grader沿绑定确认实际目标#users而非other。"
+    },
+    {
+      "id": "s2_03",
+      "text": "Skyline/glass-easel 循环中的外部片段采用 import 加具名 template 调用，并显式传递当前 item/index。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:2 import ./row.wxml；:11-13循环调用user-row并传当前item/index；outputs/row.wxml:1-3具名模板消费index/item.name。独立过滤A/C两项，当前索引展开0:A、1:C，作用域正确。"
+    },
+    {
+      "id": "s2_04",
+      "text": "Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:16-17两个入口为合法text/view点击，无违规navigator子节点；:63-64 openDetail调用navigateTo(/pages/detail)。同一路径点击导航按语义等价接受；独立grader确认。"
+    },
+    {
+      "id": "s2_05",
+      "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+      "passed": false,
+      "evidence": "outputs/user-list.mpx:5 Skyline span缺max-lines/overflow节点属性；:88错误使用CSS max-lines:1。:87/90虽有收缩及inline-block，WebView:6同段图文路径存在，仍不能满足Skyline共同截断要求。"
+    },
+    {
+      "id": "s2_06",
+      "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+      "passed": false,
+      "evidence": "outputs/user-list.mpx:7实体pulse由动态opacity驱动；:68-75用16ms setInterval采样1秒周期；:91没有CSS animation、keyframes及fill-mode。不满足冻结断言明确的CSS animation方案，且模运算不直接达到1端点。"
+    },
+    {
+      "id": "s2_07",
+      "text": "Skyline 按钮通过响应式状态，以class或动态style驱动transform/opacity的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:15同一按钮pressed动态style选择scale(.96)/opacity(.7)或1，绑定press/release；:33/:66-67响应式更新，:92 transition-property=transform,opacity及duration150ms。独立grader验证按下/松开/取消恢复；动态style按等价接受。"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 3,
+    "total": 8,
+    "pass_rate": 0.625
+  },
+  "validation_limitations": [
+    "逐文件审查实际SFC、row.wxml、logo.svg、报告、execution、validation、测试源码及Jest日志，未直接采用自报成功。",
+    "独立grader-chain.cjs验证null/undefined/数组更新、查询作用域、按钮回顶、按压/松开/取消与导航；属于VM/mock。初始模板数据单列，不用手动computed调用冒充首帧。",
+    "完整微信/glass-easel编译、真机渲染、真实滚动和长label像素截断均not_run；基础parse不等于微信编译。"
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "s2_00",
+        "reason": "执行者测试手动调用computed容易掩盖初始化前undefined；统一验证应检查实际初始data/initData及模板兜底，或走真实Mpx注册初始化路径。"
+      }
+    ],
+    "overall": "等价组件查询与动态style均接受；CSS max-lines不替代组件属性；CSS animation为冻结断言明确要求。"
+  }
+}

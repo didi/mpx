@@ -2,7 +2,7 @@
   "skill_name": "mpx2skyline",
   "suite_version": 4,
   "iteration": 4,
-  "status": "cases-ready-not-run",
+  "status": "completed",
   "description": "4个case：三个存量适配综合场景和一个从零创建页面场景，共37条Skyline正向断言。",
   "scoring_scope": "仅评价微信Skyline/glass-easel实际生效实现，WebView仅用于对应兼容要求；RN分支按自身规则实现。",
   "comparison": {
@@ -11,12 +11,12 @@
       {
         "id": "mpx2skyline",
         "skill": ".agents/skills/mpx2skyline/SKILL.md",
-        "status": "not_run"
+        "status": "completed"
       },
       {
         "id": "no_skill",
         "skill": null,
-        "status": "not_run"
+        "status": "completed"
       },
       {
         "id": "merged_skill",
@@ -258,14 +258,14 @@
         },
         {
           "id": "s1_01",
-          "text": "Skyline 主订单纵向scroll-view通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
+          "text": "Skyline 主订单纵向scroll-view启用refresher-enabled=true，通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
           "rule_id": "skyline.container-refresh",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "页面滚动替代方案"
           },
-          "verification": "定位承载sections的主纵向容器及刷新绑定，分别注入fetchOrders(1)成功和失败，核对刷新态复位；外层或横向容器的绑定不能替代主区域链路。",
+          "verification": "定位承载sections的主纵向容器，检查refresher-enabled求值为true以及刷新事件和状态绑定，分别注入fetchOrders(1)成功和失败，核对刷新态复位；刷新开关、事件和状态应共同作用于主区域。",
           "source_assertions": [
             "e1_02",
             "e1_05",
@@ -447,14 +447,14 @@
         },
         {
           "id": "s2_01",
-          "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，组件内通过 this.createSelectorQuery 定位同一容器。",
+          "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。",
           "rule_id": "skyline.scoped-selector",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-runtime-practice.md",
             "section": "[推荐] 用 this.createSelectorQuery 替代 wx.createSelectorQuery"
           },
-          "verification": "关联模板id、组件查询作用域和select字符串，核对查询目标一致。",
+          "verification": "关联模板id、组件查询作用域和select字符串，核对查询目标一致；接受this.createSelectorQuery()或wx.createSelectorQuery().in(this)等具有正确组件作用域的等价实现。this.createSelectorQuery的性能推荐另记观察项。",
           "source_assertions": [
             "e2_05",
             "e2_07"
@@ -537,14 +537,14 @@
         },
         {
           "id": "s2_07",
-          "text": "Skyline 按钮通过状态类驱动 transform/opacity 的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
+          "text": "Skyline 按钮通过响应式状态，以class或动态style驱动transform/opacity的150ms CSS transition，完成按下及恢复的视觉过渡；其他渲染目标可使用各自适配实现。",
           "rule_id": "skyline.state-transition",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "animation API 不支持 → 使用 CSS transition"
           },
-          "verification": "追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定到状态类和CSS，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。",
+          "verification": "追踪user-list.mpx同一个回顶按钮的按下/松开/取消绑定、响应式状态及class或动态style到CSS transition的完整链路，核对150ms、scale(.96)/opacity(.7)及恢复值；点击回顶链路另由s2_02验证。",
           "source_assertions": [
             "e3_06",
             "e3_07",
@@ -606,14 +606,14 @@
         },
         {
           "id": "n3_02",
-          "text": "Skyline 新页面将下拉刷新接到scroll-view的bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。",
+          "text": "Skyline 新页面在scroll-view上启用refresher-enabled=true，将下拉刷新接到bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。",
           "rule_id": "skyline.creation-refresh",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "页面滚动替代方案"
           },
-          "verification": "沿实际事件绑定触发刷新，注入resolve/reject，核对刷新态最终false且容器可继续操作。",
+          "verification": "检查实际滚动容器的refresher-enabled求值为true、bindrefresherrefresh事件及refresher-triggered状态绑定；沿该绑定触发刷新，分别注入resolve/reject，核对刷新态最终false且容器可继续操作。",
           "source_assertions": [],
           "related_adaptation_assertions": [
             "s1_01"
@@ -643,7 +643,7 @@
             "file": "references/skyline-layout-practice.md",
             "section": "文本溢出省略适配"
           },
-          "verification": "检查text属性、父级宽度/收缩约束和WebView样式；代入长标题审查两种renderer的实际截断路径。",
+          "verification": "检查text属性、父级宽度/收缩约束和WebView样式，并确认标题插值紧贴text开闭标签，避免模板换行及缩进成为字面空白；代入长标题审查两种renderer的实际截断路径。",
           "source_assertions": [],
           "related_adaptation_assertions": [
             "s0_00"
@@ -651,14 +651,14 @@
         },
         {
           "id": "n3_05",
-          "text": "Skyline 新页面分类按钮通过状态类驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。",
+          "text": "Skyline 新页面分类按钮通过响应式状态，以class或动态style驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。",
           "rule_id": "skyline.creation-press-feedback",
           "scope": "skyline",
           "source": {
             "file": "references/skyline-layout-practice.md",
             "section": "animation API 不支持 → 使用 CSS transition"
           },
-          "verification": "追踪真实触摸绑定到响应状态和CSS，分别模拟按下/松开/取消，核对数值、持续时间和恢复。",
+          "verification": "追踪真实触摸绑定、响应式状态及class或动态style到CSS transition的完整链路，分别模拟按下/松开/取消，核对数值、持续时间和恢复。",
           "source_assertions": [],
           "related_adaptation_assertions": [
             "s2_07"

@@ -30,14 +30,14 @@
     },
     {
       "id": "s1_01",
-      "text": "Skyline 主订单纵向scroll-view通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
+      "text": "Skyline 主订单纵向scroll-view启用refresher-enabled=true，通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
       "rule_id": "skyline.container-refresh",
       "scope": "skyline",
       "source": {
         "file": "references/skyline-layout-practice.md",
         "section": "页面滚动替代方案"
       },
-      "verification": "定位承载sections的主纵向容器及刷新绑定，分别注入fetchOrders(1)成功和失败，核对刷新态复位；外层或横向容器的绑定不能替代主区域链路。",
+      "verification": "定位承载sections的主纵向容器，检查refresher-enabled求值为true以及刷新事件和状态绑定，分别注入fetchOrders(1)成功和失败，核对刷新态复位；刷新开关、事件和状态应共同作用于主区域。",
       "source_assertions": [
         "e1_02",
         "e1_05",
