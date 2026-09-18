@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "style-layout",
+  "prompt": "请对 input 中的页面及组件进行 Web 跨端适配，并根据 input/requirements.md 从零创建 help-card.mpx 帮助面板及其 help-item.mpx 子组件。两部分均使用同一套源码兼容 Web 和微信小程序，保留已有外观与功能。请输出完整交付文件。",
+  "source_metadata": "evals.json"
+}

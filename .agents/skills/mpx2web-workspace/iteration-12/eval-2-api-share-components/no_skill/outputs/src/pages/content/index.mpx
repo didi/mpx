@@ -1,0 +1,163 @@
+<template mode="wx">
+  <view class="content-page">
+    <text>{{title}}</text>
+    <button open-type="share">分享内容</button>
+    <button bindtap="choosePlace">选择位置</button>
+    <text>{{placeName}}</text>
+    <button bindtap="rename">编辑名称</button>
+    <text>名称：{{displayName}}</text>
+    <scan-entry bindresult="onScanResult" />
+    <text>扫码结果：{{scanResult}}</text>
+    <video-info src="{{videoSrc}}" />
+    <foo-card />
+  </view>
+</template>
+<template mode="web">
+  <div class="content-page">
+    <span>{{title}}</span>
+    <button @click="showShareUnavailable">分享内容</button>
+    <span>{{shareStatus}}</span>
+    <button @click="choosePlace">选择位置</button>
+    <span>{{placeName}}</span>
+    <button @click="rename">编辑名称</button>
+    <div v-if="editingName" class="name-editor">
+      <input class="name-input" :value="draftName" placeholder="请输入名称" @input="onNameInput" />
+      <div class="name-actions">
+        <button @click="confirmRename">确定</button>
+        <button @click="cancelRename">取消</button>
+      </div>
+    </div>
+    <span>名称：{{displayName}}</span>
+    <scan-entry @result="onScanResult" />
+    <span>扫码结果：{{scanResult}}</span>
+    <video-info :src="videoSrc" />
+    <div class="service-card-unavailable">
+      <span>服务卡片仅微信小程序可用，Web 端未接入</span>
+    </div>
+  </div>
+</template>
+<script mode="wx">
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    title: '内容操作示例',
+    placeName: '尚未选择',
+    displayName: '默认名称',
+    scanResult: '',
+    videoSrc: ''
+  },
+  onLoad (query = {}) {
+    this.videoSrc = decodeURIComponent(query.videoUrl || '')
+  },
+  onShareAppMessage () {
+    return { title: this.title, path: '/pages/content/index' }
+  },
+  methods: {
+    choosePlace () {
+      wx.chooseLocation({
+        success: result => {
+          this.placeName = result.name
+        },
+        fail: () => {
+          this.placeName = '位置环境未就绪，请检查授权'
+        }
+      })
+    },
+    rename () {
+      wx.showModal({
+        title: '编辑名称',
+        editable: true,
+        placeholderText: '请输入名称',
+        content: this.displayName,
+        success: result => {
+          if (result.confirm) this.displayName = result.content
+        }
+      })
+    },
+    onScanResult (event) {
+      this.scanResult = event.detail.result
+    }
+  }
+})
+</script>
+<script mode="web">
+import { createPage } from '@mpxjs/core'
+
+function decodeVideoUrl (value) {
+  if (!value) return ''
+  try {
+    return decodeURIComponent(value)
+  } catch (e) {
+    return ''
+  }
+}
+
+createPage({
+  data: {
+    title: '内容操作示例',
+    placeName: 'Web 位置服务未接入',
+    displayName: '默认名称',
+    draftName: '',
+    editingName: false,
+    shareStatus: 'Web 分享服务未接入',
+    scanResult: '',
+    videoSrc: ''
+  },
+  onLoad (query = {}) {
+    this.videoSrc = decodeVideoUrl(query.videoUrl || '')
+  },
+  methods: {
+    showShareUnavailable () {
+      this.shareStatus = 'Web 分享服务未接入，暂时无法分享'
+    },
+    choosePlace () {
+      this.placeName = 'Web 位置服务未接入，暂时无法选择位置'
+    },
+    rename () {
+      this.draftName = this.displayName
+      this.editingName = true
+    },
+    onNameInput (event) {
+      const detail = (event && event.detail) || {}
+      const target = (event && event.target) || {}
+      this.draftName = detail.value != null ? detail.value : (target.value || '')
+    },
+    confirmRename () {
+      this.displayName = this.draftName
+      this.editingName = false
+    },
+    cancelRename () {
+      this.editingName = false
+    },
+    onScanResult (event) {
+      this.scanResult = event.detail.result
+    }
+  }
+})
+</script>
+<style>
+.content-page { padding: 16px; }
+.name-editor { margin: 8px 0; }
+.name-input { box-sizing: border-box; width: 100%; min-height: 40px; padding: 8px; border: 1px solid #d9d9d9; }
+.name-actions { display: flex; margin-top: 8px; }
+.name-actions button { flex: 1; }
+.service-card-unavailable { margin-top: 12px; color: #666; }
+</style>
+<script type="application/json" mode="wx">
+{
+  "usingComponents": {
+    "scan-entry": "../../components/scan-entry.mpx",
+    "video-info": "../../components/video-info.mpx",
+    "foo-card": "plugin://foo/component"
+  }
+}
+</script>
+<script type="application/json" mode="web">
+{
+  "usingComponents": {
+    "scan-entry": "../../components/scan-entry.mpx",
+    "video-info": "../../components/video-info.mpx"
+  }
+}
+</script>

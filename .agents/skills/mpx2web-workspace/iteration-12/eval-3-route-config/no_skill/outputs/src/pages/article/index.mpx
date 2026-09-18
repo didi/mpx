@@ -1,0 +1,43 @@
+<template>
+  <view class="article">
+    <text wx:if="{{loading}}">加载中</text>
+    <text wx:if="{{errorText}}">{{errorText}}</text>
+    <view wx:if="{{article}}">
+      <text class="title">{{article.title}}</text>
+      <text class="body">{{article.body}}</text>
+      <button bindtap="toggleExtra">{{expanded ? '收起' : '展开'}}补充说明</button>
+      <text wx:if="{{expanded}}">{{article.extra}}</text>
+    </view>
+  </view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+import articleStore from '../../store/article'
+
+createPage({
+  data: {
+    expanded: false,
+    articleRequest: null
+  },
+  computed: articleStore.mapState(['article', 'loading', 'errorText']),
+  onLoad (query) {
+    // onLoad receives the mini-program query on wx and Vue Router's query on
+    // Web. Keeping the Promise lets serverPrefetch wait for this exact load.
+    this.articleRequest = this.loadArticle(query.id || 'a')
+    return this.articleRequest
+  },
+  serverPrefetch () {
+    return this.articleRequest || Promise.resolve()
+  },
+  methods: Object.assign({}, articleStore.mapActions(['loadArticle']), {
+    toggleExtra () {
+      this.expanded = !this.expanded
+    }
+  })
+})
+</script>
+<style>
+.article { padding: 16px; }
+.title { display: block; font-size: 20px; font-weight: bold; }
+.body { display: block; margin: 16px 0; }
+</style>

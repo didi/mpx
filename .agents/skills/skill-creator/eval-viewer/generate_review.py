@@ -74,6 +74,10 @@ def _find_runs_recursive(root: Path, current: Path, runs: list[dict]) -> None:
         run = build_run(root, current)
         if run:
             runs.append(run)
+        # RN single-run outputs may coexist with additional run-N/outputs.
+        for child in sorted(current.glob("run-*")):
+            if (child / "outputs").is_dir():
+                _find_runs_recursive(root, child, runs)
         return
 
     skip = {"node_modules", ".git", "__pycache__", "skill", "inputs"}
@@ -88,7 +92,7 @@ def build_run(root: Path, run_dir: Path) -> dict | None:
     eval_id = None
 
     # Try eval_metadata.json
-    for candidate in [run_dir / "eval_metadata.json", run_dir.parent / "eval_metadata.json"]:
+    for candidate in [run_dir / "eval_metadata.json", run_dir.parent / "eval_metadata.json", run_dir.parent.parent / "eval_metadata.json"]:
         if candidate.exists():
             try:
                 metadata = json.loads(candidate.read_text())
@@ -122,9 +126,11 @@ def build_run(root: Path, run_dir: Path) -> dict | None:
     outputs_dir = run_dir / "outputs"
     output_files: list[dict] = []
     if outputs_dir.is_dir():
-        for f in sorted(outputs_dir.iterdir()):
+        for f in sorted(outputs_dir.rglob("*")):
             if f.is_file() and f.name not in METADATA_FILES:
-                output_files.append(embed_file(f))
+                output = embed_file(f)
+                output["name"] = str(f.relative_to(outputs_dir))
+                output_files.append(output)
 
     # Load grading if present
     grading = None

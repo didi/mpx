@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "compile-validate": "node ../mpx2web/scripts/compile-validate.js",
-    "lint": "eslint --ext .js,.ts,.mpx"
+    "lint": "eslint --ext .js,.ts,.mpx",
+    "check-base": "node check_base.cjs"
   },
   "dependencies": {
     "@mpxjs/api-proxy": "^2.11.0",
@@ -12,7 +13,8 @@
     "vue-demi": "^0.14.10",
     "vue-i18n": "^8.28.2",
     "vue-i18n-bridge": "^9.14.1",
-    "vue-router": "^3.6.5"
+    "vue-router": "^3.6.5",
+    "vue-server-renderer": "2.7.16"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",

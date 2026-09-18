@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "events-instance",
+  "prompt": "请对 input 中的页面及组件进行 Web 跨端适配，确保同一套源码在 Web 和微信小程序中正常使用，保留原有外观与功能。项目补充约定见 input/requirements.md。请输出完整改造文件。",
+  "source_metadata": "evals.json"
+}

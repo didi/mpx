@@ -1,0 +1,68 @@
+<template>
+  <view class="content-page">
+    <text>{{title}}</text>
+    <button open-type="share">分享内容</button>
+    <button bindtap="choosePlace">选择位置</button>
+    <text>{{placeName}}</text>
+    <button bindtap="rename">编辑名称</button>
+    <text>名称：{{displayName}}</text>
+    <scan-entry bindresult="onScanResult" />
+    <text>扫码结果：{{scanResult}}</text>
+    <video-info src="{{videoSrc}}" />
+    <foo-card />
+  </view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    title: '内容操作示例',
+    placeName: '尚未选择',
+    displayName: '默认名称',
+    scanResult: '',
+    videoSrc: ''
+  },
+  onLoad (query) {
+    this.videoSrc = decodeURIComponent(query.videoUrl || '')
+  },
+  onShareAppMessage () {
+    return { title: this.title, path: '/pages/content/index' }
+  },
+  methods: {
+    choosePlace () {
+      wx.chooseLocation({
+        success: result => {
+          this.placeName = result.name
+        }
+      })
+    },
+    rename () {
+      wx.showModal({
+        title: '编辑名称',
+        editable: true,
+        placeholderText: '请输入名称',
+        content: this.displayName,
+        success: result => {
+          if (result.confirm) this.displayName = result.content
+        }
+      })
+    },
+    onScanResult (event) {
+      this.scanResult = event.detail.result
+    }
+  }
+})
+</script>
+<style>
+.content-page { padding: 16px; }
+</style>
+<script type="application/json">
+{
+  "usingComponents": {
+    "scan-entry": "../../components/scan-entry.mpx",
+    "video-info": "../../components/video-info.mpx",
+    "foo-card": "plugin://foo/component"
+  }
+}
+</script>

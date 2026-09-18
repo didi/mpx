@@ -1,0 +1,13 @@
+<template>
+  <view><notice-leaf /></view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({})
+</script>
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": { "notice-leaf": "./notice-leaf.mpx" }
+}
+</script>

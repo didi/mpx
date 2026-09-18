@@ -1,0 +1,61 @@
+<template mode="wx">
+  <view class="scan-entry">
+    <button bindtap="start">开始扫码</button>
+    <native-scanner wx:if="{{scanning}}" bindresult="onCode" bindfailure="onCameraError" />
+    <text>{{status}}</text>
+  </view>
+</template>
+<template mode="web">
+  <div class="scan-entry">
+    <button @click="start">开始扫码</button>
+    <span>{{status}}</span>
+  </div>
+</template>
+<script mode="wx">
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data: { scanning: false, status: '' },
+  methods: {
+    start () {
+      this.scanning = true
+    },
+    onCode (event) {
+      this.scanning = false
+      this.triggerEvent('result', { result: event.detail.result })
+    },
+    onCameraError () {
+      this.scanning = false
+      this.status = '相机不可用，请检查授权'
+    }
+  }
+})
+</script>
+<script mode="web">
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data: {
+    status: 'Web 扫码服务未接入'
+  },
+  methods: {
+    start () {
+      this.status = 'Web 扫码服务未接入，暂时无法扫码'
+    }
+  }
+})
+</script>
+<style>
+.scan-entry { padding: 0; }
+</style>
+<script type="application/json" mode="wx">
+{
+  "component": true,
+  "usingComponents": { "native-scanner": "../vendor/native-scanner/index.mpx" }
+}
+</script>
+<script type="application/json" mode="web">
+{
+  "component": true
+}
+</script>

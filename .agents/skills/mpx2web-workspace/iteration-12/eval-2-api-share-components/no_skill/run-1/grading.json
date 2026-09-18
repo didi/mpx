@@ -1,0 +1,106 @@
+{
+  "expectations": [
+    {
+      "id": "C3.1",
+      "text": "只检查分享声明、平台条件、模板入口和可达处理代码。微信有效分支必须保留分享入口与原分享配置；Web 有效分支必须完成真实登记或明确隔离。题目未提供 Web 分享协议时，源码或交付说明应标出未接入边界，不能返回伪造的成功结果；说明不要求出现字面量 TODO。",
+      "category": "share",
+      "passed": true,
+      "evidence": "outputs/src/pages/content/index.mpx:1-14 的微信模板保留 open-type=\"share\"，39-83 的微信脚本保留 onShareAppMessage 及原 title/path 配置。Web 模板 15-38 使用 showShareUnavailable，Web 脚本 96-137 明确显示“Web 分享服务未接入”，且微信分享钩子被 mode=\"wx\" 隔离，没有伪造分享成功。"
+    },
+    {
+      "id": "C3.2",
+      "text": "只检查名称编辑相关的模板入口、状态字段、确认与取消回调、赋值语句和平台条件。Web 有效源码中必须存在可输入名称、确认后赋值、取消时不赋值的完整链路；可以使用目标端其他原生交互，不要求弹窗外观一致。不能因局部选项不支持而停用整个功能，也不能写入伪造结果。JS 中的 @mpx 条件注释不是有效平台分支，如果两端实际会执行同一段不兼容代码，则不满足要求。",
+      "category": "api",
+      "passed": true,
+      "evidence": "outputs/src/pages/content/index.mpx:23-29 提供 Web 名称输入框及确认、取消入口；101-102 定义 draftName/editingName；117-125 打开编辑并接收真实输入；126-132 仅在确认时将 draftName 赋给 displayName，取消只关闭编辑状态。微信端 67-76 保留原 editable showModal 链路。"
+    },
+    {
+      "id": "C3.3",
+      "text": "只检查业务模板、usingComponents、模块顶层引用、平台条件和可达调用。微信有效源码必须保留只读扫码组件及结果通知；题目未提供 Web 扫码协议时，Web 有效源码必须移除对该组件的解析链，并提供不可用提示和待接入说明。只隐藏模板节点不够：Web JSON 若仍通过 usingComponents 解析包含 camera 的原生组件，则不满足要求；JSON 中的 @mpx 注释也不能移除引用。直接保留不可用调用、使用空组件、伪造扫码结果或修改只读依赖均不满足要求。不强制采用平台文件。",
+      "category": "components",
+      "passed": true,
+      "evidence": "outputs/src/components/scan-entry.mpx:1-32 的微信分支保留 native-scanner、扫码结果转发和相机失败提示，51-55 的微信 JSON 保留只读扫码组件声明；57-60 的 Web JSON 已彻底移除 native-scanner 引用，Web 模板也不解析该组件，34-46 仅给出“Web 扫码服务未接入”的真实边界。outputs/src/vendor/native-scanner/index.mpx 与输入只读依赖一致。"
+    },
+    {
+      "id": "C3.4",
+      "text": "只检查 video 的组件引用、src 与播放属性绑定、事件绑定和事件字段读取代码。微信有效源码应优先读取 event.detail；当前 Web video 通过 inheritEvent 透传原生 target，因此 detail 缺字段时可以从真实 target 数值属性做安全回退，也可以隔离无法可靠提供的辅助字段，不能构造伪造值。",
+      "category": "media",
+      "passed": true,
+      "evidence": "outputs/src/pages/content/index.mpx:11、33 及两端 usingComponents 均保留 video-info 和 src 绑定。outputs/src/components/video-info.mpx:3 保留 video 的 src、controls、timeupdate、loadedmetadata 绑定；微信处理 16-23 继续读取 event.detail。Web 处理 30-51 优先读取 detail，缺字段时回退到 inheritEvent 透传的真实 target/currentTarget 数值属性，并通过 Number 转换及零值降级避免直接使用无效字段。"
+    },
+    {
+      "id": "C3.5",
+      "text": "只检查位置功能的平台条件、API 调用和提示代码。微信有效源码必须保留原位置调用；题目未提供 Web 位置协议时，Web 有效源码必须使 wx.chooseLocation 不可达，并提供未接入说明或 TODO，不能写入伪造位置。JS 中的 @mpx 条件注释不是有效平台分支；若 Web 仍可达微信 API，或微信会执行 Web 兜底代码，则不满足要求。",
+      "category": "api",
+      "passed": true,
+      "evidence": "outputs/src/pages/content/index.mpx:39-83 的 mode=\"wx\" 脚本保留 wx.chooseLocation 及成功赋值；84-138 的 mode=\"web\" 脚本中 choosePlace 只显示“Web 位置服务未接入”，不存在可达的 wx.chooseLocation，也没有写入伪造位置。两端模板分别绑定各自平台脚本中的同名方法。"
+    },
+    {
+      "id": "C3.6",
+      "text": "只检查 app plugins、plugin:// 组件声明、usingComponents、平台条件和模板引用。微信有效源码必须保留插件卡片；Web 有效源码不能解析或渲染该插件。题目未提供 Web 插件协议时，可以隔离并提供不可用提示和待接入说明，但不能使用空组件或伪造插件内容。JSON 中的 @mpx 注释不能隔离 plugins 或 usingComponents，只隐藏模板节点也不能证明构建依赖已移除；保留未被 Web 消费的微信元数据本身不判错。",
+      "category": "components",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx:8-19 的微信 JSON 保留 foo 插件声明，outputs/src/pages/content/index.mpx:147-155 保留 plugin://foo/component，微信模板 1-14 保留 foo-card。Web app JSON 20-24 不含 plugins，Web 页面 JSON 156-163 不含 foo-card，Web 模板不渲染插件，仅明确提示服务卡片未接入。"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 1793911,
+    "input_tokens": 1777498,
+    "output_tokens": 16413,
+    "tool_calls": 34,
+    "duration_ms": 475012
+  },
+  "timing": {
+    "total_duration_seconds": 475.012,
+    "total_tokens": 1793911
+  },
+  "execution_metrics": {
+    "total_tool_calls": 34
+  },
+  "grading_scope": "source_review_only",
+  "validation": {
+    "compile": "out_of_scope",
+    "runtime": "out_of_scope"
+  },
+  "scope_review": [],
+  "delivery_review": [
+    {
+      "id": "D3.1",
+      "text": "检查交付说明是否明确：permission 和 requiredPrivateInfos 是微信权限用途及隐私接口声明，不表示 Web 已获得授权或完成隐私合规；当前 Web 没有对应转换时，应保留微信声明并如实说明目标端边界。题目未提供 Web 接入协议时可以标记待接入，不要求虚构浏览器授权流程。该说明缺失或待确认只记静态告警，不扣 API 功能分。",
+      "status": "failed",
+      "evidence": "评审范围内不存在 delivery-notes.txt。虽然 outputs/src/app.mpx 已用 mode=\"wx\" 将 permission 和 requiredPrivateInfos 限定在微信 JSON，并从 Web JSON 移除，但没有交付说明明确这些声明仅用于微信权限/隐私接口声明、不代表 Web 已授权或完成隐私合规。此项仅为交付静态告警，不影响功能断言得分。"
+    }
+  ],
+  "user_notes_summary": {
+    "needs_review": [
+      "微信分享、chooseLocation、camera 扫码及 foo 插件的实际可用性依赖测试环境、授权和插件环境，超出本次静态源码评审范围。",
+      "Web 名称编辑交互以及 video 在真实浏览器中透传的媒体事件数值、播放与布局效果仍需目标环境验证；本次未运行浏览器或构建。"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      "补充 delivery-notes.txt，明确 permission/requiredPrivateInfos 仅是微信声明，Web 尚未接入对应授权及隐私合规流程。"
+    ],
+    "overall": "六项功能断言均有明确的平台隔离和可达源码链路，静态验收通过；仅缺少 D3.1 要求的交付边界说明。"
+  },
+  "eval_id": 2,
+  "run_kind": "no_skill",
+  "grading_fingerprint": "6482d4a102f6b80704daccbd214a70dc398228c2da6531a50a1b846bac5c509f",
+  "grader": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "high",
+    "metrics": {
+      "total_tokens": 92261,
+      "input_tokens": 89505,
+      "output_tokens": 2756,
+      "tool_calls": 2,
+      "duration_ms": 69160
+    }
+  }
+}

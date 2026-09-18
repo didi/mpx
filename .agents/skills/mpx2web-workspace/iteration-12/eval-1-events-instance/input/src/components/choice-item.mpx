@@ -1,0 +1,22 @@
+<template>
+  <view class="choice-label">{{label}}：{{selected ? '已选' : '未选'}}</view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: { label: String },
+  data: { selected: false },
+  methods: {
+    setSelected (value) {
+      this.selected = value
+    }
+  }
+})
+</script>
+<style>
+.choice-label { padding: 8px; }
+</style>
+<script type="application/json">
+{ "component": true }
+</script>

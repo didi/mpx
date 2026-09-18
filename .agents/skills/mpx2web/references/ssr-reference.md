@@ -31,159 +31,112 @@
 
 ## 构建与路由配置
 
-SSR 由 Web 输出链路消费 `webConfig` 与路由配置。`webConfig.useSSR` 为真时，客户端等待路由 `onReady` 后再挂载，避免异步组件 hydrate 时机不一致。
+通用配置见 [Web JSON 配置参考](./web-json-reference.md#web-运行配置)。以下按 Mpx CLI Service 项目说明，其他构建方式沿用项目实际的插件配置入口：
 
-配置键、默认值和通用部署含义统一见 [Web JSON 配置参考](./web-json-reference.md#web-运行配置)。SSR 在此基础上额外要求：路由使用 `history`；`routeConfig.base` 与服务端访问路径一致；静态资源 `publicPath` 与 SSR HTML 发布路径一致；存在异步页面、分包或组件时启用 `webConfig.useSSR`。
+- 应用脚本：`mpx.config.webConfig.routeConfig` 使用 `history`，`base` 匹配页面访问路径。
+- `mpx.config.js`：顶层 `publicPath` 指向静态资源发布地址，可使用独立 CDN；不要混入运行时路由配置或无效的顶层 `webConfig` / `output`。
+- SSR 异步路由：在 `pluginOptions.mpx.plugin.webConfig` 中启用 `useSSR`，等待范围见[异步分包与 hydrate](#异步分包与-hydrate)。
 
 ---
 
 ## SSR 生命周期
 
-Web 侧与 SSR 相关的生命周期集中在以下几个：
-
 | 生命周期 | 适用 | 用途 |
 | --- | --- | --- |
-| `onAppInit` | App | 应用创建前扩展选项，常用于为每次请求创建并返回新的 Pinia 实例。 |
-| `serverPrefetch` | App / 页面 / 组件 | 服务端数据预取，返回 Promise 时 SSR 会等待完成。 |
-| `onSSRAppCreated` | App | 服务端应用创建后回调，可接管 router push、ready、状态写入等逻辑。 |
+| `onAppInit` | App | Web 服务端和客户端创建应用前调用，同步合并返回的选项，不等待 Promise；采用 Pinia 时返回 `{ pinia }`。 |
+| `serverPrefetch` | App / 页面 / 组件 | 服务端数据预取；异步操作需返回 Promise，或使用 async 并等待完成。同步数据无需包装异步。 |
+| `onSSRAppCreated` | App | 服务端应用创建后调用；自定义时接管默认的路由就绪与状态写入流程。 |
 
-服务端会先执行 `App.onAppInit()` 扩展应用选项；存在 `App.onSSRAppCreated` 时由业务接管，否则默认匹配当前路由并在渲染完成后写入 Pinia state。
+采用 `@mpxjs/pinia` 的应用可按以下方式创建请求级实例；这不是所有 SSR 项目必须使用 Pinia 的要求：
+
+```js
+import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
+
+createApp({
+  onAppInit () {
+    return { pinia: createPinia() }
+  }
+})
+```
+
+`@mpxjs/pinia` 的 Web 实现在服务端要求每次在此钩子中创建实例，浏览器可复用 active Pinia；请求级数据不能放入模块顶层单例。
 
 ---
 
 ## 数据预取与状态注水
 
-推荐流程：
+按上述方式配置 Pinia 后，默认流程为：
 
-1. 在 `onAppInit` 中创建每次请求独立的 Pinia 实例并返回，避免服务端请求间状态污染。
-2. 在页面或组件 `serverPrefetch` 中拉取首屏数据并写入 store 或组件状态。
-3. 使用默认 `onSSRAppCreated` 流程时，运行时会在 `context.rendered` 中把 `pinia.state.value` 写入 `context.state`。
-4. 客户端启动时若存在 `window.__INITIAL_STATE__`，运行时会同步回 Pinia state。
-5. 客户端复用注水状态前，按[注水缓存与请求竞态](#注水缓存与请求竞态)校验数据身份。
+1. 默认流程先匹配路由，渲染期间等待页面或组件的 `serverPrefetch` 加载首屏数据并写入 store。
+2. 渲染完成后通过 `context.rendered` 将 `pinia.state.value` 写入 `context.state`，未配置 Pinia 时写入空对象。
+3. SSR 宿主将状态安全序列化到 HTML；仅赋值 `context.state` 不代表完成注水。
+4. 客户端存在 `window.__INITIAL_STATE__` 且配置了 Pinia 时，运行时在挂载前恢复状态；复用规则见[注水缓存与请求竞态](#注水缓存与请求竞态)。
 
-注意：
+组件局部 `data` 可用于服务端渲染，但不自动注水；不采用默认 Pinia 方案时，自行建立所需状态的序列化与客户端恢复链路。
 
-- `serverPrefetch` 应返回 Promise 或 async 函数，确保服务端等待数据完成。
-- 不要把请求级数据写到模块顶层单例对象中。
-- 数据请求来源、运行环境与平台保留规则统一见[同构请求层边界](#同构请求层边界)。
-- 若自定义 `onSSRAppCreated`，需要自行处理 `router.push(context.url)`、`router.onReady()`、错误回调、状态写入与返回 app。
+Web 页面在 `created` 中触发 `onLoad`，服务端也会执行，但 SSR 不会自动等待其异步结果。与 `serverPrefetch` 重叠的加载按下一节去重，或按实际平台划分入口；保留小程序原有加载链。数据请求适配见[同构请求层边界](#同构请求层边界)。
+
+自定义 `onSSRAppCreated` 时，自行处理 `router.push(context.url)`、`router.onReady()`、错误回调、状态写入与返回 app。
 
 ---
 
 ## 注水缓存与请求竞态
 
-SSR 注水数据只能作为“当前业务主键已经完成加载”的缓存，不能只根据数据对象是否非空来复用。需要切换商品、文章等业务实体时，store 应维护语义等价的三类状态：
+沿用项目已有 store、查询缓存或数据层，按实际场景处理，不强制新增固定字段或状态库：
 
-- 当前数据对应的业务主键。
-- 该主键是否已经完成加载。
-- 单调递增的请求代际或等价请求身份。
+- 缓存复用：确认资源和加载状态匹配；依赖登录态、租户或其他参数时，一并纳入缓存身份。
+- 重叠加载：同一资源可复用请求级或实例级的进行中 Promise；`loaded` 只表示已完成，不能用于合并进行中的请求。Promise 和任务不作为注水数据序列化。
+- 乱序写入：在实际写入位置核对代际、任务身份或等价标识，拒绝过期结果；存在共享 store 时，不能只保护页面局部状态。
+- A → B → A：命中 A 缓存时仍要使未结束的 B 失效，避免其晚到结果覆盖 A。
 
-仅当“已完成加载”且业务主键相同时复用注水数据。发起新请求时，在 `await` 前立即更新当前主键、把加载状态设为未完成并推进请求代际；异步结果返回后同时校验主键与请求代际，只允许当前请求写入数据。这样快速发生 A → B → A 切换时，第三次 A 不会误复用第一次 A 而跳过代际推进，B 的晚到结果也不能覆盖当前 A。
-
-下面是状态转换示意，字段名可以按业务调整，但不要省略对应语义：
-
-```js
-state: () => ({
-  resourceId: '',
-  resource: null,
-  loaded: false,
-  requestVersion: 0
-}),
-actions: {
-  async loadResource (resourceId, requestContext) {
-    if (this.loaded && this.resourceId === resourceId) return
-
-    const requestVersion = ++this.requestVersion
-    this.resourceId = resourceId
-    this.loaded = false
-    const resource = await fetchResource(resourceId, requestContext)
-
-    if (requestVersion !== this.requestVersion || this.resourceId !== resourceId) return
-    this.resource = resource
-    this.loaded = true
-  }
-}
-```
-
-页面自身还可以用页面请求代际阻止旧请求更新选中规格等局部 UI，但不能用页面校验替代 store 的写入保护；否则旧请求仍可能先污染共享状态。
+静态数据或没有请求竞争的页面不需要照搬竞态控制；异常、取消和重试沿用项目既有约定。
 
 ---
 
 ## 同构请求层边界
 
-由 `serverPrefetch` 调用的共享数据 service 应返回 Promise，并显式接收当前 SSR 请求上下文或项目注入的同构请求客户端。服务端 origin、鉴权和请求级信息从该上下文或客户端取得；浏览器侧没有 SSR context 时可以使用相对地址。不要在共享数据 service 内读取 `window`、`document`、`navigator` 或 `location` 来判断请求地址，也不要写死 `localhost` 等部署地址。
+SSR 数据 service 应能在 Node 中执行。需要 origin、鉴权或租户信息时，从宿主已声明的上下文或请求客户端取得；Mpx 不自动提供 `requestContext.req`、`requestClient` 等业务字段。静态数据或不依赖请求身份的 service 无需额外上下文。
 
-`typeof window !== 'undefined'` 适合保护 DOM、Observer、存储或 H5 SDK 等纯客户端副作用，不应用来包住页面的通用数据加载，也不应用来决定 SSR 数据 service 的请求来源。页面需要兼容小程序时，`onLoad` 中的商品加载、规格初始化等通用业务链路不能被 `window` 是否存在所限制。
-
-数据调用链应保持请求上下文连续传递：
+已采用 Pinia 且需要传递上下文时，可参考以下调用链；`resourceId` 由业务初始化：
 
 ```js
-serverPrefetch () {
-  return this.loadResource(this.resourceId, this.$ssrContext)
-}
-
-async loadResource (resourceId, requestContext) {
-  await useResourceStore(this.$pinia).loadResource(resourceId, requestContext)
-}
+createPage({
+  serverPrefetch () {
+    return this.loadResource(this.resourceId, this.$ssrContext)
+  },
+  methods: {
+    async loadResource (resourceId, requestContext) {
+      await useResourceStore(this.$pinia).loadResource(resourceId, requestContext)
+    }
+  }
+})
 ```
 
-具体请求实现由业务项目的同构请求层决定。
+请求实现沿用项目的平台适配：
 
-若项目没有注入请求客户端，而是明确把 Node 请求对象放在 `requestContext.req`，可从当前请求解析 origin。浏览器调用没有 `requestContext` 时仍使用相对 URL：
-
-```js
-function requestOrigin (requestContext) {
-  const req = requestContext && requestContext.req
-  if (!req) return ''
-  const headers = req.headers || {}
-  const forwardedProtocol = String(headers['x-forwarded-proto'] || '').split(',')[0].trim()
-  const forwardedHost = String(headers['x-forwarded-host'] || '').split(',')[0].trim()
-  const protocol = forwardedProtocol || (req.socket && req.socket.encrypted ? 'https' : 'http')
-  const host = forwardedHost || headers.host
-  if (!host) throw new Error('SSR request host is missing')
-  return `${protocol}://${host}`
-}
-
-export function fetchResource (resourceId, requestContext) {
-  const path = `/api/resources/${encodeURIComponent(resourceId)}`
-  const origin = requestOrigin(requestContext)
-  return fetch(origin ? `${origin}${path}` : path).then(response => response.json())
-}
-```
-
-只有位于可信反向代理之后时才接受 `x-forwarded-proto` / `x-forwarded-host`；否则使用部署层已经校验并注入的 origin。不要自行假定 `requestContext.request`、`requestClient` 等题目或项目未声明的字段。
+- 微信保留小程序请求链；原生 `fetch` 不是三端公共 API。Web/Node 使用它时需确认环境支持，并处理 HTTP 错误、超时及业务错误。
+- 浏览器可使用相对地址，Node 按部署配置或已校验的请求客户端解析地址；不读取浏览器对象推导地址，也不写死 `localhost`。
+- 服务端不自动继承浏览器 Cookie 或入站认证；按业务协议向可信后端传递最小必要鉴权信息，不无差别转发请求头。
+- 不直接用 `Host` 或转发头拼接 origin。多租户确需从请求推导时，由部署层确认代理信任边界，并校验协议、主机与端口。
 
 ---
 
 ## 浏览器对象限制
 
-SSR 服务端阶段没有真实浏览器环境。以下对象或能力不能在模块顶层、`setup` 同步阶段、`serverPrefetch` 或 `onSSRAppCreated` 服务端流程里直接访问：
+SSR 没有真实浏览器环境：模块顶层、`setup` 同步阶段和服务端钩子中，不直接访问 `window`、`document`、`navigator`、`location`、浏览器存储、DOM、Canvas 或 Observer。
 
-- `window`、`document`、`navigator`、`location`
-- `localStorage`、`sessionStorage`
-- DOM 节点、Canvas 上下文、IntersectionObserver
-- 依赖浏览器全局对象的第三方 H5 SDK
-
-处理方式：
-
-- 放到客户端生命周期中执行，如 `ready` / `mounted` 后。
-- 浏览器环境判断只保护上述客户端能力；数据加载边界见[同构请求层边界](#同构请求层边界)。
-- 第三方 H5 SDK 用动态 `import()` 延迟到客户端分支加载。
+这些操作放到客户端 `ready` / `mounted` 后；依赖浏览器全局的 H5 SDK 用动态 `import()` 延迟加载。`typeof window !== 'undefined'` 只保护客户端副作用，不包住通用数据加载，也不用于决定 SSR 请求来源，否则会阻断小程序 `onLoad` 等原有逻辑。
 
 ---
 
 ## 异步分包与 hydrate
 
-SSR 页面如果使用异步页面、异步组件或 Web 分包，客户端 hydrate 前必须等路由异步组件解析完成。将 `webConfig.useSSR` 设为 `true` 后，Web 运行时会在客户端使用 `router.onReady(() => app.$mount(el))`，避免过早挂载导致 hydrate 内容不一致。
+`useSSR` 使客户端通过 `router.onReady(() => app.$mount(el))` 等待路由异步组件就绪；不保证页面内部所有异步子组件已加载，也不代替 SSR 构建与渲染宿主。
 
-排查 hydrate mismatch 时重点检查：
+两端首屏结构与数据应一致，不能靠忽略 hydration 警告掩盖差异。首屏模板、computed 和初始化 data 不独立生成时间、随机数或按视口决定结构：稳定 ID 从路由、业务数据或注水状态派生；当前时间由服务端注水，或挂载后显示。
 
-- 服务端与客户端首屏数据是否一致。
-- 是否在渲染过程中使用了时间、随机数、浏览器尺寸等非确定性值。
-- 是否有只在客户端可见的 Web-only 节点没有用条件或 mounted 状态隔离。
-- `publicPath`、`routeConfig.base` 与服务端 HTML 资源路径是否一致。
-
-首屏模板、同步 computed 和初始化 data 不要直接调用 `Math.random()`、`Date.now()`、`new Date()`，也不要读取视口尺寸来决定节点数量或结构。需要稳定 ID 时从路由、业务数据或服务端注水状态派生；需要当前时间时由服务端生成并随状态注水，或等客户端挂载后再显示。浏览器专属节点可使用初始为 `false` 的状态，在客户端生命周期中开启：
+浏览器专属节点可初始隐藏，在客户端生命周期中开启：
 
 ```html
 <view @web wx:if="{{clientMounted}}" class="browser-share">浏览器分享</view>
@@ -200,20 +153,13 @@ createPage({
 })
 ```
 
-不要用忽略 hydration 警告或在服务端/客户端各算一次随机值来掩盖结构不一致；两端首次渲染必须来自同一份确定状态。
-
 ---
 
 ## 排查清单
 
-- [ ] SSR 页面使用 `history` 路由模式，服务端可按 URL 匹配到同一页面。
-- [ ] `routeConfig.base` 与部署路径一致，静态资源 `publicPath` 正确。
-- [ ] `onAppInit` 中没有复用跨请求的状态实例。
-- [ ] `serverPrefetch` 返回 Promise，数据写入可被服务端序列化。
-- [ ] 注水缓存同时记录业务主键与对应加载状态；新请求在 `await` 前使旧缓存失效并推进请求身份，返回后拒绝旧主键或旧代际结果。
-- [ ] 同构数据 service 可被 Node 执行并通过 SSR 请求上下文或注入请求层取得服务端信息，没有沿用小程序宿主 API、读取浏览器全局或写死部署地址。
-- [ ] `window` 环境判断只包围浏览器专属副作用，没有阻断小程序 `onLoad` 等通用业务加载。
-- [ ] 自定义 `onSSRAppCreated` 时保留 router ready、错误处理与状态写入逻辑。
-- [ ] 服务端阶段没有访问浏览器对象或 DOM。
-- [ ] 使用异步分包 / 异步组件时已配置 `webConfig.useSSR: true`。
-- [ ] 客户端 hydrate 前后的首屏结构和状态一致。
+- [ ] 构建与路由：配置入口、页面路径、资源地址及异步路由挂载时机正确。
+- [ ] 预取：异步加载被等待、重叠请求已去重，小程序加载链保留。
+- [ ] 注水：所需状态已序列化和恢复，自定义应用钩子的路由与状态流程完整。
+- [ ] 隔离：请求级状态不串用，缓存身份正确，过期结果不写入。
+- [ ] 请求与环境：Node 请求适配、鉴权和 origin 可信，浏览器副作用仅在客户端执行。
+- [ ] 接管：首屏结构与数据一致，异步子组件及客户端交互经实际验证。

@@ -1,0 +1,28 @@
+<template>
+  <view>
+    <text>就绪：{{readyText}}</text>
+  </view>
+</template>
+<script>
+import { createComponent, ref, onMounted } from '@mpxjs/core'
+import { useReadyNotice } from '../composables/use-ready-notice'
+
+createComponent({
+  setup () {
+    const readyText = ref('')
+    const recordReady = () => {
+      readyText.value = '已就绪'
+    }
+
+    onMounted(useReadyNotice(recordReady))
+
+    return {
+      readyText,
+      recordReady
+    }
+  }
+})
+</script>
+<script type="application/json">
+{ "component": true }
+</script>

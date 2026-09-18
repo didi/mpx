@@ -1,0 +1,14 @@
+<template>
+  <view class="layout-cell">{{label}}</view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  options: { virtualHost: true },
+  properties: { label: String }
+})
+</script>
+<style scoped>
+.layout-cell { flex: 1; min-width: 0; height: 40px; background: #dbeafe; text-align: center; }
+</style>

@@ -121,6 +121,18 @@ function hasComponentPartialCompile (projectRoot) {
 }
 
 async function compileValidate (input, options = {}) {
+  const originalEnv = { ...process.env }
+  try {
+    return await compileValidateInEnvironment(input, options)
+  } finally {
+    for (const key of Object.keys(process.env)) {
+      if (!Object.prototype.hasOwnProperty.call(originalEnv, key)) delete process.env[key]
+    }
+    Object.assign(process.env, originalEnv)
+  }
+}
+
+async function compileValidateInEnvironment (input, options = {}) {
   const mpxPaths = (Array.isArray(input) ? input : [input]).map(p => path.resolve(p))
   for (const p of mpxPaths) {
     if (!fs.existsSync(p) || !fs.statSync(p).isFile()) {
@@ -539,18 +551,49 @@ async function runCli () {
   if (!files.length) { printHelp(); process.exit(2) }
 
   const target = targetArg.includes(',') ? targetArg.split(',') : targetArg
-  let restoreOutput
+  const startedAt = Date.now()
+  const outputCapture = jsonOut ? captureOutput() : null
+  const originalExit = process.exit
+  let exitIntercepted = false
   if (jsonOut) {
-    restoreOutput = silenceOutput()
+    process.exit = function (code) {
+      const error = new Error(`Compile dependency requested process exit ${code}`)
+      error.name = 'InterceptedProcessExit'
+      error.exitCode = code
+      throw error
+    }
+    exitIntercepted = true
   }
-
   let result
   try {
     result = await compileValidate(files, {
       target, type: typeArg, ignoreSubComponents, projectRoot
     })
+  } catch (err) {
+    const captured = outputCapture ? outputCapture.restore() : { stdout: '', stderr: '' }
+    if (exitIntercepted) process.exit = originalExit
+    const details = [
+      captured.stderr.trim(),
+      captured.stdout.trim(),
+      err && err.stack ? err.stack : String(err)
+    ].filter(Boolean).join('\n')
+    if (!jsonOut) throw err
+    result = {
+      success: false,
+      target: targetArg,
+      projectRoot: projectRoot ? path.resolve(projectRoot) : null,
+      errors: [{
+        category: 'configuration',
+        message: truncate(details || 'Mpx compile initialization failed', 20),
+        raw: details || 'Mpx compile initialization failed'
+      }],
+      warnings: [],
+      summary: { total: 1, byCategory: { configuration: 1 } },
+      durationMs: Date.now() - startedAt
+    }
   } finally {
-    if (restoreOutput) restoreOutput()
+    if (outputCapture) outputCapture.restore()
+    if (exitIntercepted) process.exit = originalExit
   }
 
   if (jsonOut) {
@@ -561,22 +604,33 @@ async function runCli () {
   process.exit(isSuccess(result) ? 0 : 1)
 }
 
-function silenceOutput () {
+function captureOutput () {
   const stdoutWrite = process.stdout.write
   const stderrWrite = process.stderr.write
+  const stdout = []
+  const stderr = []
+  let active = true
   process.stdout.write = function (chunk, encoding, callback) {
+    stdout.push(String(chunk))
     if (typeof encoding === 'function') encoding()
     if (typeof callback === 'function') callback()
     return true
   }
   process.stderr.write = function (chunk, encoding, callback) {
+    stderr.push(String(chunk))
     if (typeof encoding === 'function') encoding()
     if (typeof callback === 'function') callback()
     return true
   }
-  return function restoreOutput () {
-    process.stdout.write = stdoutWrite
-    process.stderr.write = stderrWrite
+  return {
+    restore () {
+      if (active) {
+        process.stdout.write = stdoutWrite
+        process.stderr.write = stderrWrite
+        active = false
+      }
+      return { stdout: stdout.join(''), stderr: stderr.join('') }
+    }
   }
 }
 

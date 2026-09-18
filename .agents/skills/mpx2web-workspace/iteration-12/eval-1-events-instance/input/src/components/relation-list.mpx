@@ -1,0 +1,29 @@
+<template>
+  <view>
+    <slot />
+    <text>当前顺序：{{orderText}}</text>
+  </view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+import orderedItem from '../behaviors/ordered-item'
+
+createComponent({
+  data: { orderText: '' },
+  relations: {
+    items: {
+      type: 'child',
+      target: orderedItem,
+      linked () { this.syncOrder() },
+      linkChanged () { this.syncOrder() },
+      unlinked () { this.syncOrder() }
+    }
+  },
+  methods: {
+    syncOrder () {
+      const nodes = this.getRelationNodes('items')
+      this.orderText = nodes.map(node => node.getLabel()).join('、')
+    }
+  }
+})
+</script>

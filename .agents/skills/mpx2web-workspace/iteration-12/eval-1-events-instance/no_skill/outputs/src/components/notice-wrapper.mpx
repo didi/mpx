@@ -1,0 +1,20 @@
+<template>
+  <view><notice-leaf bindnotice="forwardNotice" /></view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  methods: {
+    forwardNotice (event) {
+      this.triggerEvent('notice', event.detail)
+    }
+  }
+})
+</script>
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": { "notice-leaf": "./notice-leaf.mpx" }
+}
+</script>

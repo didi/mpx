@@ -3,97 +3,100 @@
 
 const fs = require('fs')
 const path = require('path')
-
-const codeExtensions = new Set([
-  '.mpx', '.vue', '.js', '.jsx', '.ts', '.tsx', '.json', '.html', '.htm'
-])
+const { blocks, dependency } = require('./source-parser')
+const codeExtensions = new Set(['.mpx', '.vue', '.js', '.jsx', '.ts', '.tsx', '.json', '.html', '.htm'])
 const styleExtensions = new Set(['.css', '.less', '.scss', '.sass', '.styl', '.stylus'])
 const directivePattern = /@mpx-(?:if|elif|else|endif)\b/i
-const commentPattern = /<!--[\s\S]*?-->|\/\*[\s\S]*?\*\/|^[\t ]*\/\/[^\r\n]*/gm
 
-function lineNumber (source, index) {
-  return source.slice(0, index).split(/\r?\n/).length
-}
-
-function styleRanges (source, extension) {
-  if (styleExtensions.has(extension)) return [[0, source.length]]
-  if (extension !== '.mpx' && extension !== '.vue') return []
-  return Array.from(source.matchAll(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi))
-    .map(match => [match.index, match.index + match[0].length])
-}
-
-function validateSource (source, file = '<source>') {
-  const extension = path.extname(file).toLowerCase()
-  const ranges = styleRanges(source, extension)
+function validateSource (source, file = 'input.js') {
   const errors = []
-  const styleStacks = ranges.map(() => [])
-  for (const match of source.matchAll(commentPattern)) {
-    if (!directivePattern.test(match[0])) continue
-    const rangeIndex = ranges.findIndex(
-      range => match.index >= range[0] && match.index < range[1]
-    )
-    if (rangeIndex < 0) {
-      errors.push({
-        line: lineNumber(source, match.index),
-        directive: match[0].split(/\r?\n/, 1)[0].trim(),
-        message: (
-          '@mpx 条件注释只允许出现在 style 中；模板请使用 @mode、wx:if 或属性@mode，' +
-          '脚本请使用真实的 if (__mpx_mode__ ...)'
-        )
-      })
-      continue
-    }
-
-    const stack = styleStacks[rangeIndex]
-    for (const directive of match[0].matchAll(/@mpx-(if|elif|else|endif)\b/gi)) {
-      const kind = directive[1].toLowerCase()
-      const index = match.index + directive.index
-      const line = lineNumber(source, index)
-      if (kind === 'if') {
-        stack.push({ line, elseSeen: false })
-      } else if (kind === 'endif') {
-        if (stack.length) {
-          stack.pop()
-        } else {
-          errors.push({
-            line,
-            directive: '@mpx-endif',
-            message: 'style 中的 @mpx-endif 没有对应的 @mpx-if'
-          })
-        }
-      } else if (!stack.length) {
-        errors.push({
-          line,
-          directive: `@mpx-${kind}`,
-          message: `style 中的 @mpx-${kind} 没有对应的 @mpx-if`
-        })
-      } else if (kind === 'else') {
-        if (stack[stack.length - 1].elseSeen) {
-          errors.push({
-            line,
-            directive: '@mpx-else',
-            message: '同一个 style 条件块中出现了重复的 @mpx-else'
-          })
-        }
-        stack[stack.length - 1].elseSeen = true
-      } else if (stack[stack.length - 1].elseSeen) {
-        errors.push({
-          line,
-          directive: '@mpx-elif',
-          message: 'style 中的 @mpx-elif 不能出现在 @mpx-else 之后'
-        })
+  const report = (offset, message, directive = '') => errors.push({
+    line: source.slice(0, offset).split(/\r?\n/).length, message, directive
+  })
+  function script (content, offset, lang, json) {
+    const parser = dependency('@babel/parser', file)
+    const options = { sourceType: 'unambiguous', plugins: ['jsx', ...(lang === 'ts' || lang === 'tsx' ? ['typescript'] : [])] }
+    const ast = json ? parser.parseExpression(content, options) : parser.parse(content, options)
+    for (const comment of ast.comments || []) {
+      if (directivePattern.test(comment.value)) {
+        report(offset + comment.start, '@mpx 条件注释只允许出现在 style 中', comment.value.trim())
       }
     }
   }
-  styleStacks.forEach(stack => {
-    stack.forEach(entry => {
-      errors.push({
-        line: entry.line,
-        directive: '@mpx-if',
-        message: 'style 中的 @mpx-if 缺少对应的 @mpx-endif'
-      })
+  function template (content, offset) {
+    const compiler = dependency('vue/compiler-sfc', file)
+    const { ast } = compiler.compileTemplate({
+      source: '<div>' + content + '</div>',
+      filename: file,
+      compilerOptions: { comments: true, outputSourceRange: true }
     })
-  })
+    const visited = new Set()
+    function visit (node) {
+      if (!node || visited.has(node)) return
+      visited.add(node)
+      if (node.isComment && directivePattern.test(node.text)) {
+        report(Math.max(offset, offset + node.start - 5), '@mpx 条件注释只允许出现在 style 中', node.text.trim())
+      }
+      ;(node.children || []).forEach(visit)
+      ;(node.ifConditions || []).forEach(condition => visit(condition.block))
+    }
+    visit(ast)
+  }
+  function style (content, offset) {
+    if (!directivePattern.test(content)) return
+    const root = dependency('postcss', file).parse(content, { from: file })
+    const parser = dependency('@babel/parser', file)
+    const stack = []
+    root.walkComments(comment => {
+      if (!directivePattern.test(comment.text)) return
+      const pos = offset + comment.source.start.offset
+      const match = comment.text.trim().match(/^@mpx-(if|elif|else|endif)\b([\s\S]*)$/)
+      if (!match) { report(pos, '无法识别的条件注释', comment.text); return }
+      const [, kind, rest] = match
+      if (kind === 'if' || kind === 'elif') {
+        try {
+          if (!/^\([\s\S]*\)$/.test(rest.trim())) throw new Error('条件需放在括号中')
+          parser.parseExpression(rest.trim())
+        } catch (error) {
+          report(pos, '无效的条件表达式：' + error.message, comment.text)
+        }
+      } else if (rest.trim()) {
+        report(pos, '条件结束或 else 注释包含多余内容', comment.text)
+      }
+      if (kind === 'if') stack.push({ pos, elseSeen: false })
+      else if (!stack.length) report(pos, '@mpx-' + kind + ' 没有对应的 @mpx-if')
+      else if (kind === 'endif') stack.pop()
+      else if (stack[stack.length - 1].elseSeen) report(pos, 'else 之后不能再有 elif 或 else')
+      else if (kind === 'else') stack[stack.length - 1].elseSeen = true
+    })
+    stack.forEach(item => report(item.pos, '@mpx-if 缺少对应的 @mpx-endif'))
+  }
+  function inspect (content, offset, type, attrs = {}) {
+    try {
+      if (type === 'style') style(content, offset)
+      else if (type === 'template') template(content, offset)
+      else if (type === 'script') {
+        if (attrs.src) return
+        script(content, offset, attrs.lang, attrs.type === 'application/json' && attrs.name !== 'json')
+      } else if (directivePattern.test(content)) {
+        report(offset, '待验证：不支持的区块类型 ' + type)
+      }
+    } catch (error) {
+      report(offset, '待验证：解析失败：' + error.message)
+    }
+  }
+  const ext = path.extname(file).toLowerCase()
+  try {
+    if (ext === '.mpx' || ext === '.vue') {
+      const parsed = blocks(source, file)
+      parsed.blocks.forEach(block => inspect(block.content, block.start, block.type, block.attrs))
+      template(parsed.remaining, 0)
+    } else if (styleExtensions.has(ext)) inspect(source, 0, 'style')
+    else if (ext === '.html' || ext === '.htm') inspect(source, 0, 'template')
+    else script(source, 0, ext.slice(1), ext === '.json')
+  } catch (error) {
+    report(0, '待验证：解析失败：' + error.message)
+  }
   return errors
 }
 

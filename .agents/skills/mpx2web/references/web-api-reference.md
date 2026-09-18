@@ -86,7 +86,7 @@ mpx.use(apiProxy, {
 | --- | --- | --- | --- |
 | `usePromise` | `boolean` | `false` | 为符合 Promise 化规则的异步 API 增加 Promise 返回值。 |
 | `whiteList` | `string[]` | `[]` | 强制指定 API 参与 Promise 化，可覆盖内置排除规则。 |
-| `blackList` | `string[]` | `[]` | 强制指定 API 保持原始回调风格。 |
+| `blackList` | `string[]` | `[]` | 指定 API 保持原始回调风格；与 `whiteList` 重复时白名单优先，应避免重复配置。 |
 | `custom` | `Object` | `{}` | 按编译目标扩展或覆盖 API；Web 对应键为 `web`。 |
 
 ### Promise 化
@@ -97,7 +97,7 @@ mpx.use(apiProxy, {
 
 ### 支持范围
 
-本文展开说明的 API 可在 Web 使用。未在本文列出的 Mpx/API Proxy API，默认按 Web 不支持处理；业务未指定 Web 实现时预留 TODO。
+本文是常用 API 及其 Web 差异说明，不是完整支持清单。未列出的 API 应核对当前 `packages/api-proxy/src/platform` 下的导出、Web 实现及所需参数、返回值，不能仅因文档遗漏就判为不支持；例如 `createSelectorQuery`、`createIntersectionObserver` 均有 `index.web.js` 实现。确认能力整体或局部缺失后，再按业务协议处理受影响部分；没有替代协议时明确 TODO 接入边界，不自行停用已支持的能力。
 
 ### 浏览器与 SSR
 
@@ -474,7 +474,7 @@ mpx.navigateTo({
 })
 ```
 
-被打开页从页面实例获取同一通道；Web 的 setup context 不提供 `getOpenerEventChannel`，不要用 `getCurrentPages` 或浏览器 history 模拟回传：
+被打开页可从页面实例或 setup context 获取同一通道。已有任一正确入口都可保留，不要用 `getCurrentPages` 或浏览器 history 模拟回传：
 
 ```js
 const channel = this.getOpenerEventChannel()
@@ -483,6 +483,17 @@ channel.on('checkoutReady', ({ address }) => {
 })
 channel.emit('addressSelected', this.address)
 mpx.navigateBack({ delta: 1 })
+```
+
+组合式页面也可直接使用 setup context：
+
+```js
+createPage({
+  setup (props, { getOpenerEventChannel }) {
+    const channel = getOpenerEventChannel()
+    return { channel }
+  }
+})
 ```
 
 #### 返回值
@@ -963,34 +974,34 @@ Web 不支持。
 
 Web 下不提供 `cookies`、`profile`、`exception` 字段。
 
-连续联想搜索要同时管理“可取消任务”和“晚到响应身份”。应用全局启用 `usePromise: true` 时，可从 Promise 的 `__returned` 取得原始任务；取消时先清空当前身份并推进代际，再 abort：
+可取消且参数会变化的请求要同时管理“任务实例”和“晚到响应身份”。应用全局启用 `usePromise: true` 时，可从 Promise 的 `__returned` 取得原始任务；取消时先清空当前身份并推进代际，再 abort：
 
 ```js
-searchSuggestions (keyword) {
-  this.cancelSuggestionRequest()
-  const generation = this.suggestionGeneration
+loadResource (resourceKey) {
+  this.cancelResourceRequest()
+  const generation = this.requestGeneration
   const promise = mpx.request({
-    url: '/api/suggestions',
-    data: { keyword }
+    url: '/api/resource',
+    data: { resourceKey }
   })
   const task = promise.__returned
-  this.suggestionTask = task
+  this.requestTask = task
   return promise.then((result) => {
-    if (this.suggestionTask !== task || this.suggestionGeneration !== generation) return
-    if (this.keyword !== keyword) return
-    this.suggestions = result.data
+    if (this.requestTask !== task || this.requestGeneration !== generation) return
+    if (this.resourceKey !== resourceKey) return
+    this.resource = result.data
   })
 }
 
-cancelSuggestionRequest () {
-  const task = this.suggestionTask
-  this.suggestionTask = null
-  this.suggestionGeneration = (this.suggestionGeneration || 0) + 1
+cancelResourceRequest () {
+  const task = this.requestTask
+  this.requestTask = null
+  this.requestGeneration = (this.requestGeneration || 0) + 1
   if (task && task.abort) task.abort()
 }
 
 onUnload () {
-  this.cancelSuggestionRequest()
+  this.cancelResourceRequest()
 }
 ```
 
@@ -1045,10 +1056,10 @@ connectChannel () {
   })
 }
 
-sendHeartbeat () {
+sendCurrentMessage (data) {
   const task = this.socketTask
   if (!task || this.socketTask !== task || task.readyState !== task.OPEN) return
-  task.send({ data: 'ping' })
+  task.send({ data })
 }
 
 disconnectChannel () {

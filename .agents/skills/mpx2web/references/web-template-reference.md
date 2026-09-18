@@ -28,7 +28,7 @@ Web 输出支持使用 Mustache 语法 `{{}}` 绑定 `data`、`computed` 和 `se
 - 文本与属性均可插值，例如 `<text>{{ message }}</text>`、`value="{{ inputValue }}"`。
 - 表达式支持算术、三元、逻辑运算、属性访问和可选链 `?.`。
 - 模板中可访问 `__mpx_mode__`、`__mpx_env__` 以及编译配置 `defs` 注入的变量。
-- 不支持在 Mustache 中一般性调用组件 `methods` 或任意函数；需要加工展示数据时使用 `computed` 或 `wxs`。i18n 翻译函数属于编译器支持的例外。
+- Web 模板可以调用实例暴露的方法或函数，例如 `{{ getLabel() }}`。通用模板仍需核对小程序侧的表达式限制；展示数据加工优先使用 `computed` 等项目已有方式，这不是 Web 编译器禁止函数调用。
 
 ```html
 <template>
@@ -56,8 +56,10 @@ Web 输出支持以下通用模板指令：
 | `wx:model` | 双向数据绑定 |
 | `wx:model-prop` / `wx:model-event` | 自定义双向绑定属性与事件 |
 | `wx:model-value-path` | 从事件参数中提取更新值，默认路径为 `value` |
-| `wx:model-filter` | 使用内建过滤器或组件方法处理双向绑定值 |
+| `wx:model-filter` | 当前 Web 内建 `trim` 可用于字符串去空格；自定义组件方法存在实现缺陷，见下方说明 |
 | `wx:ref` | 获取基础节点或自定义组件实例 |
+
+当前 `packages/core/src/platform/builtInMixins/proxyEventMixin.web.js` 的 `__model` 在自定义过滤器分支中取得方法却未调用，会把函数本身写入绑定字段，不能按“已支持自定义过滤方法”使用。需要自定义转换时，可在普通事件处理器中读取 `event.detail`、完成转换并更新字段；不要因此禁用正常的 `wx:model` 或内建 `trim`。
 
 动态样式与类名优先使用 `wx:style`、`wx:class`，避免在 `style`、`class` 字符串中混合多段插值。对象字面量的 key 使用无引号 camelCase 写法，以保持小程序模板兼容。
 
@@ -73,69 +75,14 @@ Web 输出支持以下通用模板指令：
 
 ## 事件处理
 
-Web 输出支持 `bind`、`catch`、`capture-bind`、`capture-catch` 事件语法，由编译器转换为 Web 运行时监听。常见通用事件包括 `tap`、`longpress`、`touchstart`、`touchmove`、`touchend` 和 `touchcancel`；具体基础组件还会提供各自的组件事件。
+事件绑定与传参沿用 Mpx 通用语法。Web 适配只需关注以下差异：
 
-```html
-<view bindtap="handleTap">普通绑定</view>
-<view catchtap="handleTap">阻止冒泡</view>
-<view capture-bind:touchstart="handleCapture">捕获阶段</view>
-<view bindtap="handleTap('card', index)">内联传参</view>
-```
+- 绑定的处理器必须是已声明的组件实例方法，并保留原业务逻辑；动态绑定值应为方法名字符串，不能是 `{{true}}` 或函数对象。条件判断放在处理方法中，原有 `catch` 拦截行为应保留。
+- Web 不支持直接绑定 WXS 响应事件。需要保留小程序 WXS 路径时，使用平台隔离，为 Web 提供等效实例方法；不要将小程序 WXS 当作脚本中的 `this.tool` 调用。
+- 自定义事件的 `bubbles`、`composed`、`capturePhase` 在 Web 不生效，跨层通知见[脚本参考](./web-script-reference.md#triggerevent-的传播选项)。
+- 不假定 `mut-bind`、`mark:*` 的微信语义在 Web 生效；实际用到时，按原需求补充等效事件或传参方案。
 
-事件处理器需要动态选择时，可在事件属性中使用插值，例如 `bindtap="handleTap_{{index}}"`，也可以使用 `bindtap="{{handlerName}}"`。Web 事件代理会把表达式结果作为组件实例方法名，再通过 `this[handlerName]` 查找并调用，因此动态值必须是类似 `"handleTap"` 的方法名字符串，不能是布尔值、函数对象或其它非方法名值。
-
-```html
-<!-- Web 下不支持：true 不会被解释为“启用 tap 事件” -->
-<view bindtap="{{true}}" />
-```
-
-该写法会让 Web 事件代理尝试查找 `this[true]`，无法得到可调用的实例方法。需要按条件启用事件时，使用固定实例方法并在方法内部判断，或者通过条件渲染分别输出有、无事件绑定的节点。
-
-WXS 模块虽然会在 Web 运行时挂载到组件实例，但不能把 WXS 函数引用直接绑定为事件处理器：
-
-```html
-<!-- Web 下不支持：tool.onSliderClick 的求值结果是函数对象，不是实例方法名 -->
-<view bindtap="{{tool.onSliderClick}}" />
-```
-
-该写法能够通过模板编译，但 Web 事件代理会尝试按 `this[tool.onSliderClick]` 查找实例方法，无法直接调用这个 WXS 函数。普通业务事件应改为固定的组件实例方法，全平台统一绑定：
-
-```html
-<view bindtap="onSliderClick" />
-```
-
-```js
-createComponent({
-  methods: {
-    onSliderClick (event) {
-      // 跨平台事件逻辑
-    }
-  }
-})
-```
-
-如果小程序端为了高频触摸、拖动等交互必须使用 WXS 响应事件，保留小程序侧 WXS 绑定，并为 Web 提供普通实例方法的等效实现；每个 `@wx` 事件都必须在同一节点提供同事件类型的 `@web` 绑定，不能只增加 `@wx` 后结束改造。属性模式后缀会先于跨平台事件转换处理，因此 Web 分支直接使用转换后的 Vue 事件名 `@tap@web`，不要写 `bindtap@web`。不要在 Web 实例方法中调用 `this.tool` 作为通用跨端方案，因为 WXS 模块不是小程序脚本实例上的普通成员。
-
-迁移连续手势时，将起点、位移、是否发生滑动等状态保存在组件实例上，避免多个组件实例共享普通脚本模块变量。为 `touchcancel` 提供与中断语义一致的收尾。若滑动节点内部还有点击行为，有效移动后的 `touchend` 只清理起点和位移，并设置与本次手势绑定的一次性误触标记；紧随其后的合成 `tap` 消费该标记并立即清除。下一次真实 `touchstart` 应先清除未被消费的旧标记，再建立新手势状态，这样浏览器没有派发合成 `tap` 时也不会吞掉后续合法点击。不要使用 `setTimeout`、时间戳或固定毫秒窗口抑制点击，因为窗口内的首个事件不一定来自刚结束的滑动。`touchcancel` 不会形成有效选择，应回弹并清理全部状态；禁用态同时阻止选择和删除。
-
-```js
-handleTouchStart (event) {
-  this.suppressNextTap = false
-  // 记录本次手势起点
-},
-finishSwipe ({ moved }) {
-  // 先清理位移等手势状态
-  this.suppressNextTap = moved
-},
-handleTap () {
-  if (this.suppressNextTap) {
-    this.suppressNextTap = false
-    return
-  }
-  if (this.disabled) return
-  this.selectItem()
-}
-```
+例如，保留微信 WXS 绑定，仅为 Web 切换处理器；`onSliderClick` 需实现原有交互：
 
 ```html
 <view
@@ -144,39 +91,13 @@ handleTap () {
 />
 ```
 
-传递业务参数时优先使用内联传参，不要依赖 `data-*` 再从 dataset 中取值。
-
-Web 的鼠标、触摸、PointerEvent 和浏览器默认行为并不完全等同于小程序触摸系统；涉及滚动、拖拽、文本选择、表单提交或原生 DOM 事件时，应同时验证冒泡路径、默认行为及移动端浏览器兼容性。
-
-微信后续增加的 `mut-bind` 和 `mark:*` 不在当前 Web 模板转换链路明确支持范围内；需要这类能力时使用普通 `bind` / `catch`、内联参数或 Web-only 事件实现，不要仅凭模板能够解析就认定语义已对齐。Web 事件对象会基于浏览器事件补充 Mpx 字段，但 `target`、`currentTarget`、`dataset`、`touches`、`changedTouches` 和默认行为仍需按真实浏览器交互验证。
+涉及拖动时，保持手势状态按实例隔离、取消时正确收尾，并避免拖动触发误点击或吞掉后续正常点击；在目标浏览器验证原有交互，不限定某套手势实现。
 
 ---
 
 ## Slot
 
-Web 输出支持默认插槽和具名插槽。默认插槽直接使用 `<slot />`；使用多个具名插槽时，在组件的 `options.multipleSlots` 中启用 `multipleSlots`，并通过 `name` 与引用方的 `slot` 属性对应。
-
-```html
-<!-- 子组件 -->
-<view class="panel">
-  <slot name="header" />
-  <slot />
-</view>
-
-<!-- 引用方 -->
-<my-panel>
-  <text slot="header">标题</text>
-  <text>正文</text>
-</my-panel>
-```
-
-```js
-createComponent({
-  options: {
-    multipleSlots: true
-  }
-})
-```
+默认插槽和具名插槽沿用 Mpx 通用语法，Web 无需额外启用 `multipleSlots`。同一份源码兼容微信或 QQ 时，保留多插槽所需的 `options.multipleSlots: true`。
 
 ---
 
@@ -224,8 +145,8 @@ Web 输出支持 Mpx i18n。使用前需要在 `MpxWebpackPlugin` 中配置 `i18
 
 | 场景 | 可用函数 | 使用约束 |
 | --- | --- | --- |
-| 选项式 API | `$t`、`$tc`、`$te`、`$tm` | 模板中直接使用；脚本中通过组件实例调用 |
-| 组合式 API | `t`、`tc`、`te`、`tm` | 在 `setup` 顶层调用 `useI18n()`，并以原名暴露给模板 |
+| 选项式 API | `$t`、`$tc`、`$te`、`$tm`、`$d`、`$n` | 模板中直接使用；脚本中通过组件实例调用，具体方法以项目安装的 Vue i18n 版本为准 |
+| 组合式 API | `t`、`te`、`tm`、`d`、`n` | 在 `setup` 顶层调用 `useI18n()`，将所需方法暴露给模板；复数翻译使用 `t` 的复数参数，不使用 `tc` |
 
 ```js
 import { createComponent, useI18n } from '@mpxjs/core'
@@ -242,17 +163,18 @@ createComponent({
 <text>{{ t('message.hello') }}</text>
 ```
 
-组合式翻译函数不可重命名后再交给模板。列表文案建议先在脚本的 `computed` 中完成翻译，以保持 Web、小程序与 RN 行为一致。当前能力边界为上述文本、复数、存在性和消息对象函数，不包含 `$d`、`$n`。
+Web 的 `useI18n` 直接来自 `vue-i18n-bridge`。当前验证版本 9.14.1 的组合式接口没有 `tc`，但支持 `d` / `n`；日期与数字格式需配置对应格式选项。Web 模板允许将 `t` 改名后暴露，例如 `return { translate: t }`。通用模板另需核对其他目标端的编译限制，不将跨端命名建议当作 Web 禁令。
 
 ---
 
 ## 无障碍访问
 
-跨端模板优先使用 `aria-role`、`aria-label` 表达基础语义；Web 编译链路会将可映射属性交给浏览器节点或内建组件。图标按钮等无可见文本的可点击区域应补充 `aria-label`。
+小程序模板可使用 `aria-role`、`aria-label` 表达基础语义，但当前 Web 编译器不会把 `aria-role` 转为浏览器标准 `role`。需要 Web 角色语义时，通过 `role@web` 补充，并检查最终 DOM；图标按钮等无可见文本的可点击区域应补充 `aria-label`。
 
 ```html
 <view
   aria-role="button"
+  role@web="button"
   aria-label="{{ submitText }}"
   bindtap="onSubmit"
 >
@@ -260,9 +182,9 @@ createComponent({
 </view>
 ```
 
-需要完整的浏览器 ARIA、键盘和焦点能力时，按下方 [Web 标准属性](#web-标准属性) 使用 Web-only 模板，并在桌面键盘、移动端和主流读屏软件中验证。
+`role` 只声明语义，不会自动增加键盘响应和可聚焦行为。需要完整的浏览器 ARIA、键盘和焦点能力时，按下方 [Web 标准属性](#web-标准属性) 使用 Web-only 模板，并在桌面键盘、移动端和主流读屏软件中验证。
 
-带可见文本的原生 `button` 已有控件语义和可访问名称，不需要重复添加 `aria-role="button"` / `aria-label`；非原生可点击节点才补对应语义。若项目已经提供 `.web.mpx` 弹层实现，浏览器专属的 `role="dialog"`、`aria-modal`、`tabindex`、keydown 与焦点陷阱应只放在 Web 文件，通用 `.mpx` 继续保留小程序的 `aria-role`、`aria-label` 和触摸事件，避免把浏览器属性复制回小程序模板。
+带可见文本的原生 `button` 已有控件语义和可访问名称，不需要重复添加 `aria-role="button"` / `aria-label`；非原生可点击节点才补对应语义。浏览器专属的 `role="dialog"`、`aria-modal`、`tabindex`、keydown 与焦点陷阱优先通过通用 `.mpx` 中的 `属性@web`、Web-only 节点和真实客户端脚本分支做最小隔离，通用小程序节点继续保留 `aria-role`、`aria-label` 和触摸事件。只有弹层结构或依赖图明显分叉时才新增 `.web.mpx`，不要仅为这些局部属性复制整份组件。
 
 ---
 
@@ -297,18 +219,19 @@ Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<can
 
 以下限制由 Web 模板编译链路决定：
 
-- Web 当前基于 Vue 2.7，页面和组件的 `<template>` 保持单个根节点；存在多个并列节点时，用 `view` 或其它合适节点包裹。
+- Web 当前基于 Vue 2.7，单根要求针对最终 Vue 模板，不等于所有 `.mpx` 源模板必须单根。微信源码输出 Web 时，普通页面和未启用虚拟宿主的组件会由编译器注入根容器，可容纳多个并列节点；不要默认再添加包裹节点，以免改变布局或滚动结构。
 - `.mpx` 文件中的 `<template>` 内容必须内联，暂不支持通过 `<template src="...">` 引入外部模板内容。
 - Web 输出暂不支持 `<template lang="...">` 模板预处理语言。
 - 具名模板 `<template name="...">` 的定义体必须只有一个元素根节点；多根时使用 `view` 或其它合适节点包裹。
-- Web 子组件启用 `virtualHost` 后，模板也必须只有一个真实根节点，否则编译期会报错。
+- Web 子组件命中 `autoVirtualHostRules`、实际按虚拟宿主编译时，不再注入普通组件根容器，模板必须只有一个真实根节点；多个根元素会在编译期报错。
+- `autoVirtualHostRules` 会改变组件的 Web 节点层级，不把它作为组件链的通用优化。仅在确认某个宿主节点导致实际布局、滚动或样式问题后精确匹配该组件，并分别验证类名、样式、事件和原目标端行为。
 
 组件内可以声明具名模板。Web 编译器会把本地 `<template name="...">` 编译为内部模板组件；“不支持组件内声明模板”不是当前能力限制，但定义体仍受上述单根约束。
 
 其它微信模板能力的 Web 边界：
 
 - `<block>` 是虚拟组织节点，不应依赖它生成真实 DOM。
-- `componentGenerics` / `generic:*` 和 `externalClasses` 有 Web 编译处理；前者仍要求候选组件进入 Web 组件映射，后者会转换为样式类 props，不能直接等同于浏览器全局 class 透传。
+- `componentGenerics` / `generic:*` 和 `externalClasses` 有 Web 编译处理；不要仅因输出 Web 就替换。前者仍要求候选组件进入 Web 组件映射；使用 `externalClasses` 时，组件声明、调用方传值和目标节点应用需保持完整，不能只保留其中一处，也不能把它误当成浏览器全局 class 自动透传。
 - `wx:key` 使用当前模板编译器支持的稳定字段；微信特有写法（如 `*this`）在用于 Web 前应通过真实编译与列表重排验证。
 - 动态 slot 名、微信新增事件标记或未在本文明确列出的模板扩展，不默认视为 Web 已支持。
 
@@ -326,7 +249,7 @@ Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<can
 2. 组件 `props`、事件绑定和方法中存在对应逻辑，才能说明具体属性、事件或实例行为已实现。
 3. 有内建实现不代表与微信小程序当前版本的全部能力和边界行为完全一致。
 
-`mpx-keep-alive`、`mpx-tab-bar`、`mpx-tab-bar-container` 等是框架内部组件，不是业务模板中的同名公共基础标签。使用 `webConfig.customBuiltInComponents` 覆盖实现后，应以自定义组件的属性、事件和子节点语义为准。
+`mpx-keep-alive`、`mpx-tab-bar`、`mpx-tab-bar-container` 等是框架内部组件，不是业务模板中的同名公共基础标签。使用构建配置中的 `pluginOptions.mpx.plugin.webConfig.customBuiltInComponents` 覆盖实现后，应以自定义组件的属性、事件和子节点语义为准。
 
 ### 通用属性
 
@@ -339,25 +262,25 @@ Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<can
 | style | string | 内联样式 |
 | hidden | boolean | 隐藏节点 |
 | data-* | any | 业务自定义数据；事件传参优先使用内联传参 |
-| aria-role | string | 跨端无障碍角色 |
+| aria-role | string | 小程序无障碍角色；Web 不自动转为标准 `role`，需按上述无障碍说明补充 |
 | aria-label | string | 跨端无障碍文案 |
 
 Web-only 原生节点还可使用浏览器标准属性；包装型内建组件不保证透传任意原生属性，只使用本参考明确列出的属性。
 
 ### view
 
-Web 内建基础组件。Web 容器与事件透传；支持 `hover-class`、触发延迟、保持时间和阻止 hover 传播。它是 Vue 包装组件，不应默认当作无包装的原生 `div` 操作。
+普通 `view` 默认编译为原生 `div`；涉及 hover 属性、双向绑定或 `use-built-in` 等条件时使用 Vue 内建包装组件 `mpx-view`，提供点击态和事件处理。需要访问原生 DOM 时以实际编译产物为准。
 
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| hover-class | string |  | 指定按下去的样式类。 |
+| hover-class | string | `'none'` | 指定按下去的样式类。 |
 | hover-stop-propagation | boolean | `false` | 是否阻止祖先节点出现点击态 |
 | hover-start-time | number | `50` | 按住后多久出现点击态，单位毫秒 |
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 
-`transitionend`、`animationstart`、`animationiteration`、`animationend` 等浏览器事件可按通用事件链路监听，但 Web `mpx-view` 没有 RN 的 `animation`、`enable-background`、`enable-animation`、`enable-fast-image` 等增强属性。
+`transitionend`、`animationstart`、`animationiteration`、`animationend` 等浏览器事件可按通用事件链路监听。普通动画绑定 `animation="{{ animationData }}"` 在 Web 会编译为 `v-animation` 指令，由运行时消费 `createAnimation().export()` 产生的动作数据；它不是依赖 `mpx-view` 同名 prop 实现的，不能因 props 中没有 `animation` 就判为不支持。RN 的 `enable-background`、`enable-animation`、`enable-fast-image` 等增强属性不属于这条 Web 动画链路。
 
 ### text
 
@@ -694,16 +617,14 @@ Web 内建基础组件。基于 BetterScroll，支持横纵滚动、`scroll-top`
 | bindrefresherrestore | 自定义下拉刷新被复位时触发                 |
 | bindrefresherabort   | 自定义下拉刷新被中止时触发                 |
 
-上表是 `.mpx` 调用点的事件语法，因此业务页面使用 `bindscroll`、`bindscrolltoupper`、`bindscrolltolower`。自定义实现若是 Vue 2 `.vue` 文件，内部监听原生 DOM 才使用 `@scroll` / `v-on:scroll`，并通过 `$emit('scroll' | 'scrolltoupper' | 'scrolltolower', ...)` 还原对外契约；不要把 Vue 的 `@scroll` 写回 `.mpx` 调用点。
-
-自定义组件需要继续使用 `$listeners` 透传未接管的业务事件，但根 DOM 已有 `@scroll` 且组件会 `$emit('scroll', detail)` 时，不要再把 `$listeners.scroll` 原样绑定到根 DOM，否则父组件会先收到原生 Event、再收到兼容 detail。可从 `$listeners` 派生 `passthroughListeners`，删除 `scroll`、`scrolltoupper`、`scrolltolower` 后再用 `v-on="passthroughListeners"`，其余点击等监听保持透传。
+上表使用 `bindscroll` 等事件名示例；当前 Mpx 编译器也支持 `.mpx` 中的 `@scroll`，沿用项目有效写法即可。事件名写法不改变对外事件契约。自定义 Vue 组件内部的原生 DOM 事件与对外 `$emit` 需区分，避免将已重发的事件再次透传；替换流程见 [H5 混合开发](./web-hybrid-dev.md#替换-scroll-view-时的契约核对)。
 
 #### 注意事项
 
 - Web 实现基于 BetterScroll；内容或容器尺寸动态变化后由 MutationObserver、ResizeObserver 刷新，复杂异步布局仍应验证滚动范围是否及时更新。
 - `binddragstart`、`binddragging`、`binddragend` 仅在 `enhanced` 开启时触发。
 - 下拉刷新和鼠标滚轮行为受 BetterScroll 配置及浏览器输入设备影响。
-- 使用 `webConfig.customBuiltInComponents` 替换 `scroll-view` 后，上述行为不会由框架内建实现继续提供。`$attrs` / `$listeners` / slot 只能透传结构；调用点使用到的受控位置、`scroll-into-view`、滚动详情和上下/左右边界事件必须由自定义组件显式实现。
+- 使用构建配置中的 `pluginOptions.mpx.plugin.webConfig.customBuiltInComponents` 替换 `scroll-view` 后，上述行为不会由框架内建实现继续提供。`$attrs` / `$listeners` / slot 只能透传结构；调用点使用到的受控位置、`scroll-into-view`、滚动详情和上下/左右边界事件必须由自定义组件显式实现。
 
 ### sticky-header
 
@@ -919,14 +840,14 @@ Web 内建基础组件。按 `open-type` 接入 navigate、redirect、navigateBa
 
 ### video
 
-Web 内建基础组件。包装 HTML video 并接入内置播放器控件，支持 src、poster、controls、autoplay、loop、muted、初始位置和下表列出的播放器配置，转换播放、暂停、结束、时间、全屏、错误、控件显隐事件。浏览器自动播放、全屏和媒体格式受浏览器策略限制。
+Web 内建基础组件。包装 HTML video 并接入内置播放器控件，支持 src、poster、controls、autoplay、loop、muted、初始位置和下表列出的播放器配置，转换播放、暂停、结束、时间、全屏、错误等事件。控件显隐事件存在下述实现缺陷；浏览器自动播放、全屏和媒体格式受浏览器策略限制。
 
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | src | string |  | 要播放视频的资源地址或本地静态资源相对路径 |
-| controls | boolean | `true` | 是否显示默认播放控件 |
+| controls | boolean | `true` | 初始化时是否显示默认播放控件；动态切换存在下述实现缺陷 |
 | autoplay | boolean | `false` | 是否自动播放 |
 | loop | boolean | `false` | 是否循环播放 |
 | muted | boolean | `false` | 是否静音播放 |
@@ -950,12 +871,12 @@ Web 内建基础组件。包装 HTML video 并接入内置播放器控件，支�
 | bindplay | 当开始/继续播放时触发 play 事件 |
 | bindpause | 当暂停播放时触发 pause 事件 |
 | bindended | 当播放到末尾时触发 ended 事件 |
-| bindtimeupdate | 播放进度变化时触发；当前 Web 实现转发播放器事件，不合成微信的 `{currentTime, duration}` detail |
+| bindtimeupdate | 播放进度变化时触发；当前 Web 内建实现不保证小程序的 `event.detail.currentTime` / `event.detail.duration` 字段 |
 | bindfullscreenchange | 视频进入和退出全屏时触发，`event.detail = {fullScreen}` |
 | bindwaiting | 视频出现缓冲时触发 |
 | binderror | 视频播放出错时触发 |
-| bindloadedmetadata | 视频元数据加载完成时触发；当前 Web 实现转发播放器事件，不合成微信的 `{width, height, duration}` detail |
-| bindcontrolstoggle | 切换 controls 显示隐藏时触发。`event.detail = {show}` |
+| bindloadedmetadata | 视频元数据加载完成时触发；当前 Web 内建实现不保证小程序的 `event.detail.width` / `event.detail.height` / `event.detail.duration` 字段 |
+| bindcontrolstoggle | 当前 Web 实现存在缺陷：动态修改 `controls` 时构造事件会抛错，不能视为已可靠支持 `{show}` 通知 |
 | bindseekcomplete | seek 完成时触发，`event.detail = {position}` |
 | bindprogress | 缓冲进度变化时触发，`event.detail = {buffered}` |
 
@@ -963,6 +884,8 @@ Web 内建基础组件。包装 HTML video 并接入内置播放器控件，支�
 
 - 自动播放、行内播放和全屏能力受浏览器策略限制；部分移动浏览器要求静音或用户手势后才能开始播放。
 - `controls="{{ false }}"` 时 Web 实现不会使用 `poster` 初始化播放器封面。
+- 当前 `mpx-video.vue` 的 `controls` watcher 向 `inheritEvent` 传入空对象，而 `getInnerListeners.js` 会访问该对象上不存在的事件方法并调用 `.bind()`，导致派发前抛错；该 watcher 也未同步更新控件显隐样式。初始 `controls` 配置与动态切换应分开判断。确需动态切换时，核实 Web-only 兼容方案或明确待解决限制，不能只绑定 `bindcontrolstoggle` 就宣称功能完成，也不要因此替换全部播放能力。
+- `.mpx` 小程序业务方法应保持 Mpx 事件形态并读取 `event.detail`，不要增加 `event.target` / `event.currentTarget` 的浏览器分支。只有需求或用户明确允许 Web 降级时，才使用 `bindtimeupdate@wx`、`bindloadedmetadata@wx` 和节点 `@wx` 等真实条件编译隔离对应监听与展示，Web 继续使用内建 video 已支持的播放能力，不应修改框架或直接中止适配。未明确允许降级时，默认保留原有进度或尺寸功能，并核实 Web-only 兼容方案；无法实现的部分明确说明限制并提出待确认项，不自行删除。
 
 ### web-view
 
@@ -979,8 +902,8 @@ Web 内建基础组件。使用 iframe 加载页面，追加实例标识并通�
 | 事件名      | 说明                                |
 | ----------- | ----------------------------------- |
 | bindmessage | iframe 页面通过 postMessage 向容器传递数据 |
-| bindload    | 网页加载成功时候触发此事件          |
-| binderror   | 网页加载失败的时候触发此事件        |
+| bindload    | 转发 iframe 的 `load` 事件，不保证业务页面内容成功可用 |
+| binderror   | 当前实现中 `currentUrl` 为空时触发，例如空地址或白名单拒绝；不是通用的网络、HTTP 或嵌入策略错误兜底 |
 
 #### 注意事项
 

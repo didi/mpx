@@ -1,0 +1,6 @@
+{
+  "eval_id": 3,
+  "eval_name": "route-config",
+  "prompt": "请对 input 中的小程序工程进行 Web 跨端适配，并将其中的文章详情页扩展为支持 Web SSR，保留微信小程序原有外观与功能。部署目标、详情页要求和宿主约定见 input/requirements.md。请输出完整改造文件。",
+  "source_metadata": "evals.json"
+}

@@ -1,0 +1,17 @@
+<template>
+  <button bindtap="sendNotice">通知外层</button>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  methods: {
+    sendNotice () {
+      this.triggerEvent('notice', { message: '来自内层组件' })
+    }
+  }
+})
+</script>
+<script type="application/json">
+{ "component": true }
+</script>

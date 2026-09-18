@@ -1,0 +1,155 @@
+{
+  "expectations": [
+    {
+      "id": "C4.2",
+      "text": "只检查平台条件、页面 JSON、导航模板和布局赋值代码。Web 有效源码不能调用微信胶囊相关 API，且配置与模板组合不能同时保留系统导航和自定义导航；微信有效源码必须保留原导航链。导航高度等尺寸依据属于 D4.1，缺少说明不影响本项功能判定。",
+      "category": "layout",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx:25-30 保留主包、分包页面且 window.navigationStyle 仍为 custom，未形成系统导航与自定义导航并存。outputs/src/pages/home/index.mpx:21-25 在 Web 路径先返回，胶囊 API 仅在非 Web 有效路径调用；微信路径仍保留胶囊尺寸读取及原自定义导航模板。"
+    },
+    {
+      "id": "C4.3",
+      "text": "只检查构建过程实际读取的配置和生成代码。Web 的资源前缀、运行时 history/base、服务端路由和客户端路由必须统一为 /help-demo/；服务端与客户端的文章路由代码必须从同一路径读取同一个 query id，主包和两个分包页面也必须保留。未被构建代码消费的同名字段或另一套 # 地址不能作为证据。服务器 rewrite、部署配置和真实刷新归 D4.2。",
+      "category": "config",
+      "passed": true,
+      "evidence": "outputs/mpx.config.js:2 将构建资源前缀设为 /help-demo/；outputs/src/app.mpx:8-14 设置实际运行时 history 路由及 base=/help-demo/。文章页服务端 serverPrefetch 与客户端 onLoad 分别在 outputs/src/pages/article/index.mpx:24-31 从同一路由的 query.id 读取参数。outputs/src/app.mpx:25-30 同时保留三个主包页面以及 packageA、packageB 两个分包页面；fixtures/runtime-contract.md:6 约定宿主仅在交给 renderer 前移除部署前缀，与该内部路由一致。"
+    },
+    {
+      "id": "C4.4",
+      "text": "静态检查 Web 构建实际使用的尺寸配置和换算公式。根据公式计算后，在 375px 和 750px Web 视口下，200rpx 都应等于 100 CSS px，28rpx 都应等于 14 CSS px；微信原有换算规则必须保留，配置必须能够正确序列化。",
+      "category": "config",
+      "passed": true,
+      "evidence": "outputs/mpx.config.js:7-13 的构建实际使用 webConfig.transRpxFn，公式为 Number(value)/2 px，因此 200rpx=100px、28rpx=14px，且不依赖 375px 或 750px 视口。该配置是可序列化的普通函数；它位于 Web 专用配置中，没有改变微信换算规则。"
+    },
+    {
+      "id": "C4.5",
+      "text": "只检查服务端预取入口、路由 id 读取、文章加载 action 或等价异步函数、Promise 返回或 await 关系以及模板状态引用。源码链必须表明：预取函数把文章 id 传入加载逻辑，并将其 Promise 返回或等待完成，模板随后读取该状态。只调用异步函数但丢失等待链不满足要求。",
+      "category": "ssr",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/index.mpx:28-31 的 serverPrefetch 从 this.$route.query.id 取 id，传给并返回 this.loadArticle(...) 的 Promise。该 action 映射到 outputs/src/store/article.js:15-52，内部等待 fetchArticle；页面模板第3-9行通过 mapState 第23行读取同一 store 的 loading、errorText 和 article。"
+    },
+    {
+      "id": "C4.6",
+      "text": "只检查旧 createStore 到 @mpxjs/pinia 的迁移代码，以及 Mpx 官方 SSR 状态链中的应用注册、服务端状态写入、序列化入口、客户端恢复时机和页面 store 引用；这些位置必须指向同一份 Pinia 状态。不要求自行实现框架已有的注水逻辑。请求隔离由 C4.7 检查，客户端异步竞态由 C4.8 检查；重复请求和展开/收起效果只进入待运行验证，不在本项扣分。",
+      "category": "ssr",
+      "passed": true,
+      "evidence": "旧 createStore 已在 outputs/src/store/article.js:1-57 迁移为 @mpxjs/pinia defineStore。outputs/src/app.mpx:17-20 在 onAppInit 创建并返回 pinia，页面第15-16、23、33行通过同一 useArticleStore 映射状态和 action。结合题面给出的 Mpx 官方运行时链，每次服务端应用把该 pinia 注入 Vue，rendered 时写入 pinia.state.value，客户端在挂载前把 window.__INITIAL_STATE__ 恢复到同一 pinia，状态传输链完整。"
+    },
+    {
+      "id": "C4.7",
+      "text": "只检查应用初始化、SSR context、store 创建位置和页面获取 store 的引用关系。源码必须表明每次 SSR 请求创建独立状态实例，并且页面实际使用该请求实例；文章 a 与文章 b 的状态引用不能指向同一个模块级活动 store。只新增未被页面使用的工厂、继续导入模块级单例，或在请求开始前清空共享状态，都不满足要求。Pinia 迁移与恢复由 C4.6 判断，客户端竞态由 C4.8 判断。",
+      "category": "ssr",
+      "passed": true,
+      "evidence": "outputs/src/app.mpx:17-20 把 createPinia() 放在每次应用实例执行的 onAppInit 中；题面框架源码表明 SSR 每个 context 都重新 createApp 并将该返回值注入当前 Vue。outputs/src/pages/article/index.mpx 使用 mapState/mapActions 从当前组件注入的 pinia 获取 store，没有导入模块级 store 单例。outputs/src/store/article.js 的模块级 WeakMap 仅以请求内 store 实例为键，不共享 article 状态。"
+    },
+    {
+      "id": "C4.8",
+      "text": "只检查文章加载方法中的过期请求保护。源码应在发起请求时记录请求标识，并在成功、失败和 finally 分支修改 article、errorText、loading 前判断返回结果是否仍属于最新请求。结合输入中 a=40ms、b=10ms 的固定条件，从这些判断表达式静态推导晚返回的 a 是否会被忽略。缺少保护、只保护 article，或无条件提交异步结果，都不满足要求。",
+      "category": "ssr",
+      "passed": true,
+      "evidence": "outputs/src/store/article.js:31-51 为每次请求建立 record，并把最新 record 存入按 store 隔离的 WeakMap，同时记录 activeId。成功分支第34行、失败分支第40行、finally 第45行均在修改 article/resolvedId、errorText 或 loading 前校验 record 和 activeId。a 后于 b 返回时，WeakMap 已指向 b 或已被 b 删除，所以 a 无法覆盖 b。"
+    },
+    {
+      "id": "C4.9",
+      "text": "只检查实际生效的配置、应用初始化、服务端预取函数和平台条件中对 window、document、navigator 等浏览器对象的引用。所有服务端可达路径都必须避开这些对象；仅客户端可达的分支可以使用。微信 onLoad 源码链由 C4.10 判断。",
+      "category": "ssr",
+      "passed": true,
+      "evidence": "实际配置、outputs/src/app.mpx 和文章 serverPrefetch 均不读取 window、document 或 navigator。outputs/src/pages/home/index.mpx:21-23 在 Web/SSR 路径到达 wx.getMenuButtonBoundingClientRect 前返回；其余 wx 导航调用只位于客户端交互方法。文章服务端路径只使用 SSR 可用的 this.$route 和 store/service。"
+    },
+    {
+      "id": "C4.10",
+      "text": "只检查微信端有效的源码分支。页面源码中必须保留 onLoad，从 query.id 取得文章 id，并将该 id 传给文章加载方法；模板使用的 article、loading 和 errorText 必须来自该加载方法更新的同一状态。Web/SSR 改造不能删除、覆盖或切断这条引用链。本项不重复检查 Pinia 状态传输、请求隔离或服务端浏览器 API 安全。",
+      "category": "compatibility",
+      "passed": true,
+      "evidence": "outputs/src/pages/article/index.mpx:24-26 保留 onLoad，从 query.id（缺省 a）取得文章 id并传给 loadArticle。第23、33行把模板使用的 article、loading、errorText 与 loadArticle 映射到同一个 useArticleStore；outputs/src/store/article.js:26-47 由该 action 更新这些状态，微信加载链未被切断。"
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "total_tokens": 2201881,
+    "input_tokens": 2183419,
+    "output_tokens": 18462,
+    "tool_calls": 36,
+    "duration_ms": 600899
+  },
+  "timing": {
+    "total_duration_seconds": 600.899,
+    "total_tokens": 2201881
+  },
+  "execution_metrics": {
+    "total_tool_calls": 36
+  },
+  "grading_scope": "source_review_only",
+  "validation": {
+    "compile": "out_of_scope",
+    "runtime": "out_of_scope"
+  },
+  "scope_review": [],
+  "delivery_review": [
+    {
+      "id": "D4.1",
+      "text": "只检查交付说明文本。如果输出代码为 Web 自定义了导航高度或临时布局值，说明中必须写明该数值的来源、假设和待确认事项，不能称其为实际测量结果；代码没有自定义尺寸时，本项记为不适用。",
+      "status": "failed",
+      "evidence": "Web 在 outputs/src/pages/home/index.mpx:20-25 跳过胶囊测量后，导航布局实际沿用 topInset=0、headerHeight=null。delivery-notes.txt 只说明 API 已隔离，没有交代这些临时布局值的来源、假设及待确认事项。"
+    },
+    {
+      "id": "D4.2",
+      "text": "只检查交付说明文本。说明中必须指出：部署到 /help-demo/ 时，未命中静态文件的页面请求需要由部署服务器转交 Web/SSR 入口。只要求说明该部署边界；没有运行证据时不能写成“已经验证刷新成功”。",
+      "status": "passed",
+      "evidence": "delivery-notes.txt:18 明确说明 /help-demo/ 下先匹配静态资源，其余页面请求转交 SSR renderer，并保留 query、移除挂载前缀后设置 context.url；没有声称真实刷新已经验证成功。"
+    },
+    {
+      "id": "D4.3",
+      "text": "只检查输入 app JSON、workers 目录、输出代码和交付说明。说明中必须指出：当前 Web JSON 转换不会根据小程序 workers 声明自动复制或打包该目录，单独保留声明不能生成浏览器 Web Worker。微信资源应保留；本题没有 Worker 调用需求，因此不要求新增浏览器 Worker。",
+      "status": "failed",
+      "evidence": "outputs/src/app.mpx:27 和 outputs/src/workers/add.js 保留微信 Worker 声明及资源，但 delivery-notes.txt:20 仅称未增加 Worker 通信，没有指出 Web JSON 转换不会自动复制或打包 workers 目录，也没有明确说明单独保留声明不能生成浏览器 Web Worker。"
+    },
+    {
+      "id": "D4.4",
+      "text": "只检查 app JSON、Web 页面注册代码和交付说明。说明中必须区分：Web 可以把分包页面注册为异步页面，但这不等于微信 independent:true 的脱离主包启动、独立环境和独立初始化。题目允许 Web 页面共用应用，不要求创建独立站点，也不应把普通分包或异步页面整体判为不支持。页面是否保留由 C4.3 判断。",
+      "status": "failed",
+      "evidence": "outputs/src/app.mpx:28-30 保留两个分包，框架提供的 processJSON 证据会把 tarRoot 页面注册为异步页面。delivery-notes.txt:20 只说 Web 共享页面且不模拟独立分包环境，未明确区分“异步页面注册”与 independent:true 所代表的脱离主包启动、独立环境及独立初始化。"
+    },
+    {
+      "id": "D4.5",
+      "text": "只检查 app JSON、实际配置消费者和交付说明。说明中必须识别 preloadRule 的源页面、network 条件和目标包，并指出当前 Web 转换不会自动生成浏览器预下载逻辑。题目不要求补充 Web 预取；如果说明声称已经实现，源码中必须存在实际读取该配置或执行预取的链路，不能用普通异步页面加载代替。本项不扣基本运行或路由功能分。",
+      "status": "failed",
+      "evidence": "outputs/src/app.mpx:32-34 的 preloadRule 明确为源页面 pages/home/index、network=all、目标 packageA/packageB。delivery-notes.txt:20 虽说明未增加浏览器预加载策略，但没有识别并列出该源页面、网络条件和目标包。"
+    }
+  ],
+  "user_notes_summary": {
+    "needs_review": [
+      "需在安装候选说明中的 Pinia 依赖后实际执行 Web client/server 构建，确认产物与宿主 renderer 集成。",
+      "需在部署服务器验证 /help-demo/ 静态资源处理、页面请求转交及详情页直接访问和刷新。",
+      "需运行 SSR 与浏览器接管验证首屏 HTML、注水后同文章去重、并发请求隔离及 a 慢 b 快竞态行为。",
+      "需在 Web 和微信环境实测自定义导航布局、页面交互及最终视觉效果。"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      "补充 Web 导航默认布局值的来源、假设和待确认事项。",
+      "补充 workers 不会由 Web JSON 自动复制或转成浏览器 Worker 的边界说明。",
+      "明确说明 Web 异步页面与微信 independent 分包语义的差异，并逐项记录 preloadRule 的源页面、network 条件和目标包。"
+    ],
+    "overall": "静态源码中 C4.2 至 C4.10 的功能链均可成立；主要缺口集中在交付说明对导航临时值、Worker 转换边界、independent 语义和 preloadRule 细节的记录。"
+  },
+  "eval_id": 3,
+  "run_kind": "mpx2web",
+  "grading_fingerprint": "00fa8947affca54e0f267ffc16be645c31bd0fd76e407b9eb91c6116ea07d878",
+  "grader": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "high",
+    "metrics": {
+      "total_tokens": 236840,
+      "input_tokens": 229355,
+      "output_tokens": 7485,
+      "tool_calls": 29,
+      "duration_ms": 165193
+    }
+  }
+}

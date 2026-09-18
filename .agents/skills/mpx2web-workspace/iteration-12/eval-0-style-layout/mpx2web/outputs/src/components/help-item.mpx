@@ -1,0 +1,80 @@
+<template>
+  <view class="help-item__content item-class">
+    <view
+      class="help-item__toggle"
+      aria-role="button"
+      role@web="button"
+      bindtap="toggleDescription"
+    >{{expanded ? '收起说明' : '展开说明'}}</view>
+    <text wx:if="{{expanded}}" class="help-item__description">{{description}}</text>
+    <button class="help-item__button" bindtap="openFullHelp">查看完整帮助</button>
+  </view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+import { navigateTo } from '@mpxjs/api-proxy'
+
+createComponent({
+  properties: {
+    description: {
+      type: String,
+      value: ''
+    },
+    helpUrl: {
+      type: String,
+      value: ''
+    }
+  },
+  externalClasses: ['item-class'],
+  data: {
+    expanded: false
+  },
+  methods: {
+    toggleDescription () {
+      this.expanded = !this.expanded
+    },
+    openFullHelp () {
+      if (!this.helpUrl) return
+      navigateTo({
+        url: `/pages/common/webview?url=${encodeURIComponent(this.helpUrl)}`
+      })
+    }
+  }
+})
+</script>
+<style scoped>
+.help-item__content {
+  box-sizing: border-box;
+}
+
+.help-item__toggle {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.help-item__description {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.help-item__button {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 14px;
+  line-height: 20px;
+  background: var(--btn_wrapper_bg, #2A2F3F);
+  border-radius: 4px;
+}
+
+.help-item__button::after {
+  border: 0;
+}
+</style>
+<script type="application/json">
+{ "component": true }
+</script>

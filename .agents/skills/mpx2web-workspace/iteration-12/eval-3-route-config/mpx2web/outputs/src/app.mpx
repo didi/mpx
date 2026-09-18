@@ -1,0 +1,36 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+import { createPinia } from '@mpxjs/pinia'
+
+mpx.use(apiProxy)
+
+if (__mpx_mode__ === 'web') {
+  mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
+    routeConfig: {
+      mode: 'history',
+      base: '/help-demo/'
+    }
+  })
+}
+
+createApp({
+  onAppInit () {
+    return { pinia: createPinia() }
+  }
+})
+</script>
+<script type="application/json">
+{
+  "pages": ["./pages/home/index.mpx", "./pages/choice/index.mpx", "./pages/article/index.mpx"],
+  "window": { "navigationStyle": "custom" },
+  "workers": "workers",
+  "subpackages": [
+    { "root": "packageA", "pages": ["./index.mpx"], "independent": true },
+    { "root": "packageB", "pages": ["./index.mpx"] }
+  ],
+  "preloadRule": {
+    "pages/home/index": { "network": "all", "packages": ["packageA", "packageB"] }
+  }
+}
+</script>
