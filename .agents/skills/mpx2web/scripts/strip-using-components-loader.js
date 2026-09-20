@@ -10,7 +10,7 @@ function removeUsingComponents (source, file = 'input.mpx') {
     if (block.type !== 'script') continue
     const attrs = block.attrs
     const dynamic = attrs.name === 'json'
-    const json = dynamic || attrs.type === 'application/json'
+    const json = dynamic || /^application\/json/.test(attrs.type || '')
     if (!json) continue
     if (attrs.src || dynamic) {
       throw new Error('待验证：旧版局部编译不能可靠剥离动态或外联 JSON，请使用完整项目构建')

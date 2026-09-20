@@ -3,13 +3,13 @@
     <event-actions bindchange="onActionChange" />
     <text>最近操作：{{actionText}}</text>
     <view class="choices">
-      <choice-item class="choice" label="选项一" />
-      <choice-item class="choice" label="选项二" />
+      <choice-item wx:ref="firstChoice" class="choice" label="选项一" />
+      <choice-item wx:ref="secondChoice" class="choice" label="选项二" />
     </view>
     <button bindtap="selectFirst">选中第一个</button>
     <button bindtap="resetChoices">清空选中</button>
     <view bindnotice@wx="onNotice">
-      <notice-wrapper bindnotice@web="onNotice" />
+      <notice-wrapper @notice@web="onNotice" />
     </view>
     <text>通知：{{notice}}</text>
     <text>通知次数：{{noticeCount}}</text>
@@ -42,10 +42,14 @@ createPage({
       this.actionText = event.detail.action
     },
     selectFirst () {
-      this.selectComponent('.choice').setSelected(true)
+      const firstChoice = this.$refs.firstChoice
+      if (firstChoice) firstChoice.setSelected(true)
     },
     resetChoices () {
-      this.selectAllComponents('.choice').forEach(item => item.setSelected(false))
+      const choices = [this.$refs.firstChoice, this.$refs.secondChoice]
+      choices.forEach((item) => {
+        if (item) item.setSelected(false)
+      })
     },
     onNotice (event) {
       this.notice = event.detail.message

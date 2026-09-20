@@ -1,13 +1,20 @@
 <template>
-  <view><notice-leaf bindnotice="forwardNotice" /></view>
+  <view><notice-leaf bindnotice="relayNotice" /></view>
 </template>
 <script>
 import { createComponent } from '@mpxjs/core'
 
+const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined'
+
 createComponent({
   methods: {
-    forwardNotice (event) {
-      this.triggerEvent('notice', event.detail)
+    relayNotice (event) {
+      // Web component events do not bubble through component boundaries.
+      // Mini-programs receive the original composed event, so relaying there
+      // would dispatch it twice.
+      if (isWeb) {
+        this.triggerEvent('notice', event.detail)
+      }
     }
   }
 })

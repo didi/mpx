@@ -1,6 +1,6 @@
 <template>
-  <view class="theme-shell">
-    <view class="theme-label tone-class custom-class">{{label}}</view>
+  <view class="theme-card">
+    <view class="theme-card__label tone-class custom-class">{{label}}</view>
   </view>
 </template>
 
@@ -14,8 +14,8 @@ createComponent({
 </script>
 
 <style scoped>
-.theme-shell { margin-top: 8px; }
-.theme-label { font-size: 14px; }
+.theme-card { margin-top: 8px; }
+.theme-card__label { font-size: 14px; }
 </style>
 
 <script type="application/json">

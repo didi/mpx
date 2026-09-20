@@ -1,13 +1,17 @@
 <template>
-  <view class="help-item__content item-class">
-    <view
-      class="help-item__toggle"
-      aria-role="button"
-      role@web="button"
-      bindtap="toggleDescription"
-    >{{expanded ? '收起说明' : '展开说明'}}</view>
-    <text wx:if="{{expanded}}" class="help-item__description">{{description}}</text>
-    <button class="help-item__button" bindtap="openFullHelp">查看完整帮助</button>
+  <view class="help-item item-class">
+    <view class="help-heading">
+      <text class="help-title">{{title}}</text>
+      <button class="help-button help-toggle" bindtap="toggleDescription">
+        {{expanded ? '收起说明' : '展开说明'}}
+      </button>
+    </view>
+    <text wx:if="{{expanded}}" class="help-description">{{description}}</text>
+    <button
+      class="help-button help-link"
+      disabled="{{!helpUrl}}"
+      bindtap="openFullHelp"
+    >查看完整帮助</button>
   </view>
 </template>
 <script>
@@ -16,14 +20,9 @@ import { navigateTo } from '@mpxjs/api-proxy'
 
 createComponent({
   properties: {
-    description: {
-      type: String,
-      value: ''
-    },
-    helpUrl: {
-      type: String,
-      value: ''
-    }
+    title: { type: String, value: '' },
+    description: { type: String, value: '' },
+    helpUrl: { type: String, value: '' }
   },
   externalClasses: ['item-class'],
   data: {
@@ -43,37 +42,31 @@ createComponent({
 })
 </script>
 <style scoped>
-.help-item__content {
+.help-item {
   box-sizing: border-box;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  background: #fff;
 }
-
-.help-item__toggle {
+.help-heading { display: flex; align-items: center; justify-content: space-between; }
+.help-title { color: inherit; font-size: 16px; font-weight: 600; }
+.help-description { display: block; margin-top: 8px; color: inherit; font-size: 14px; }
+.help-button {
   display: inline-block;
-  margin-top: 10px;
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.help-item__description {
-  display: block;
-  margin-top: 8px;
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.help-item__button {
-  margin: 12px 0 0;
-  padding: 8px 12px;
+  box-sizing: border-box;
+  min-height: 36px;
+  margin: 8px 0 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--btn_wrapper_bg, #2A2F3F);
   color: #fff;
   font-size: 14px;
-  line-height: 20px;
-  background: var(--btn_wrapper_bg, #2A2F3F);
-  border-radius: 4px;
+  line-height: 36px;
 }
-
-.help-item__button::after {
-  border: 0;
-}
+.help-button::after { border: 0; }
+.help-toggle { flex: none; margin: 0 0 0 12px; }
+.help-link { margin-top: 10px; }
 </style>
 <script type="application/json">
 { "component": true }

@@ -16,6 +16,7 @@
 - [Web 标准属性](#web-标准属性)
 - [Web 模板编译限制](#web-模板编译限制)
 - [Web 内建组件](#web-内建组件)
+- [组件支持分级与适配原则](#组件支持分级与适配原则)
 - [Web 组件降级](#web-组件降级)
 - [专项入口](#专项入口)
 
@@ -128,7 +129,7 @@ Web 输出支持 `<template name>`、`<template is>` 与 `<import>` 复用 WXML 
   <view>{{ index }}: {{ msg }}</view>
 </template>
 
-<template is="msgItem" data="{{ ...item }}" />
+<template is="msgItem" data="{{ index: item.index, msg: item.msg }}" />
 ```
 
 - 模板片段只能访问 `data` 显式传入的字段。
@@ -251,6 +252,53 @@ Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<can
 
 `mpx-keep-alive`、`mpx-tab-bar`、`mpx-tab-bar-container` 等是框架内部组件，不是业务模板中的同名公共基础标签。使用构建配置中的 `pluginOptions.mpx.plugin.webConfig.customBuiltInComponents` 覆盖实现后，应以自定义组件的属性、事件和子节点语义为准。
 
+### 组件支持分级与适配原则
+
+按业务实际使用的属性、事件和状态链判断组件能力，不能只看标签名、编译告警或 props 声明：
+
+| 类型 | 判断依据 | 处理方式 |
+| --- | --- | --- |
+| 组件及所用能力均已实现 | 编译映射、运行时 props、事件和方法形成完整消费链 | 保留通用组件，不增加平台分支 |
+| 组件可用，但个别属性、事件或模式缺失 | 组件有 Web 实现，但目标能力没有运行时读取、事件派发或业务效果 | 保留组件结构和已支持能力，只隔离缺失项 |
+| 组件整体没有 Web 实现 | 没有 Web 内建映射或运行时组件，同名标签只会成为普通 DOM 或未知节点 | 隔离原目标端组件及其依赖入口 |
+
+现成方案选择、平台隔离、TODO 与允许的降级统一执行 Skill 的[待接入规则](../SKILL.md#统一待接入规则)。本节只补充模板取证要求：
+
+- 按页面实际使用的数据、属性、事件载荷、选中状态和稳定 ID 确定范围，不补做未使用能力。
+- 整体缺失时同时隔离节点与依赖图；只用运行时 `wx:if` 隐藏节点不能证明 Web-only `.vue`、SDK、`usingComponents` 或模块导入已被移出其它目标产物。
+- 局部缺失时沿运行时消费链确认缺口，保留组件结构和其它已生效能力，不因编译告警或单个 prop 缺失重写整个组件。
+
+以下示例只展示平台隔离位置。整体缺失时直接按节点筛选，不使用 `wx:if@wx="{{true}}"` / `wx:if@web="{{false}}"` 这类恒定运行时条件：
+
+```html
+<map
+  @wx
+  latitude="{{mapCenter.latitude}}"
+  longitude="{{mapCenter.longitude}}"
+  markers="{{storeMarkers}}"
+  bindmarkertap="onMarkerTap"
+/>
+
+<view @web class="map-boundary">
+  <text>Web 地图能力待业务接入</text>
+</view>
+```
+
+只缺单个属性时保留公共组件，不复制整棵结构：
+
+```html
+<swiper
+  previous-margin="24rpx"
+  next-margin="24rpx"
+  display-multiple-items@wx="2"
+  bindchange="onBannerChange"
+>
+  <swiper-item wx:for="{{banners}}" wx:key="id">
+    <view>{{item.title}}</view>
+  </swiper-item>
+</swiper>
+```
+
 ### 通用属性
 
 除[模板指令](#模板指令)与[事件处理](#事件处理)外，Web 基础节点和内建组件通常可使用以下通用属性：
@@ -324,8 +372,8 @@ Web 内建基础组件。把 `scaleToFill`、`aspectFit`、`aspectFill`、宽高
 | --- | --- | --- | --- |
 | src | string |  | 图片资源地址、base64 格式数据或本地静态资源相对路径 |
 | mode | string | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right` |
-| lazy-load | boolean | `false` | Web 不支持图片懒加载 |
-| show-menu-by-longpress | boolean | `false` | Web 不支持微信图片长按菜单 |
+| lazy-load | boolean | `false` | 当前 Web 组件声明了 `lazyLoad`，但 render、watch 和加载逻辑没有消费它，因此不产生懒加载行为 |
+| show-menu-by-longpress | boolean | `false` | 当前 Web 组件声明了 `showMenuByLongpress`，但没有实现微信图片长按菜单 |
 
 #### 事件
 
@@ -336,6 +384,7 @@ Web 内建基础组件。把 `scaleToFill`、`aspectFit`、`aspectFill`、宽高
 
 #### 注意事项
 
+- `image` 整体可用，`src`、`mode`、`bindload` 和 `binderror` 不应因 `lazy-load` 缺失而被替换或删除。将 `lazy-load` 限制到已支持的平台；Web 的原生 `loading="lazy"`、IntersectionObserver 或业务懒加载组件属于另行接入的方案，不是该属性的自动转换结果。
 - image 组件默认宽度 300px、高度 225px
 - image 组件进行缩放时，计算出来的宽高可能带有小数，在不同 webview 内核下渲染可能会被抹去小数部分
 
@@ -674,6 +723,8 @@ Web 内建基础组件。基于 BetterScroll Slide，支持 current、指示点�
 | circular | boolean | `false` | 是否采用衔接滑动 |
 | vertical | boolean | `false` | 滑动方向是否为纵向 |
 | easing-function | string | `default` | 支持 `linear`、`easeInCubic`、`easeOutCubic`、`easeInOutCubic`；`default` 使用 BetterScroll 默认缓动 |
+| previous-margin | string |  | 当前运行时通过 `previousMargin` 计算前边距 |
+| next-margin | string |  | 当前运行时通过 `nextMargin` 计算后边距 |
 
 #### 事件
 
@@ -683,7 +734,7 @@ Web 内建基础组件。基于 BetterScroll Slide，支持 current、指示点�
 | bindtransition | swiper-item 位置变化时触发，`event.detail = {dx, dy}` |
 | bindanimationfinish | 动画结束时触发，`event.detail = {current, currentItemId, source}` |
 
-Web 不支持 `previous-margin`、`next-margin`、`display-multiple-items`、`skip-hidden-item-layout`。
+这是组件可用但部分属性缺失的情况：当前 Web 运行时会读取 `previous-margin` 和 `next-margin`，不能因转换阶段出现 Web 告警就删除它们或判定整个 swiper 不可用。当前运行时没有 `displayMultipleItems` 和 `skipHiddenItemLayout` 的 props 或布局消费链，因此不支持 `display-multiple-items`、`skip-hidden-item-layout`。保留同一个 swiper 的 current、change、前后边距和全部子项，只把缺失属性限制到支持平台。多项同时展示需要实际轮播组件和交互方案；静态 Grid、截断数据不具备等价轮播能力。
 
 ### swiper-item
 
@@ -697,7 +748,7 @@ Web 内建基础组件。提供 swiper 所需子项结构，应作为 swiper 直
 
 ### picker
 
-Web 内建基础组件。基于 BetterScroll Wheel 的弹层滚轮，支持 `selector`、`multiSelector`、`time`、`date`，处理确认、取消、change 和 columnchange。Web 不支持微信 `region` 模式。
+Web 内建基础组件。基于 BetterScroll Wheel 的弹层滚轮，支持 `selector`、`multiSelector`、`time`、`date`，处理确认、取消、change 和 columnchange。这是模式局部支持：当前 Web 运行时的 picker 数据和确认逻辑没有 `region` 分支，因此不支持微信 `region` 模式，但不能据此否定其它四种模式。Web 地区选择方案需把名称和地区代码归一到原页面状态；有限按钮选项不具备完整地区选择能力。
 
 #### 属性
 
@@ -755,7 +806,13 @@ Web 内建基础组件。基于 BetterScroll Wheel 的弹层滚轮，支持 `sel
 | end    | string | `2100-01-01` | 表示有效日期范围的结束，字符串格式为"YYYY-MM-DD" |
 | fields | string | `day`   | 有效值 year,month,day，表示选择器的粒度          |
 
-fields 有效值： | 属性名 | 说明 | | -----------------------| ------------------------ | | year | 选择器粒度为年 | | month | 选择器粒度为月份 | | day | 选择器粒度为天 |
+fields 有效值：
+
+| 属性名 | 说明 |
+| --- | --- |
+| year | 选择器粒度为年 |
+| month | 选择器粒度为月份 |
+| day | 选择器粒度为天 |
 
 ### picker-view
 
@@ -884,8 +941,8 @@ Web 内建基础组件。包装 HTML video 并接入内置播放器控件，支�
 
 - 自动播放、行内播放和全屏能力受浏览器策略限制；部分移动浏览器要求静音或用户手势后才能开始播放。
 - `controls="{{ false }}"` 时 Web 实现不会使用 `poster` 初始化播放器封面。
-- 当前 `mpx-video.vue` 的 `controls` watcher 向 `inheritEvent` 传入空对象，而 `getInnerListeners.js` 会访问该对象上不存在的事件方法并调用 `.bind()`，导致派发前抛错；该 watcher 也未同步更新控件显隐样式。初始 `controls` 配置与动态切换应分开判断。确需动态切换时，核实 Web-only 兼容方案或明确待解决限制，不能只绑定 `bindcontrolstoggle` 就宣称功能完成，也不要因此替换全部播放能力。
-- `.mpx` 小程序业务方法应保持 Mpx 事件形态并读取 `event.detail`，不要增加 `event.target` / `event.currentTarget` 的浏览器分支。只有需求或用户明确允许 Web 降级时，才使用 `bindtimeupdate@wx`、`bindloadedmetadata@wx` 和节点 `@wx` 等真实条件编译隔离对应监听与展示，Web 继续使用内建 video 已支持的播放能力，不应修改框架或直接中止适配。未明确允许降级时，默认保留原有进度或尺寸功能，并核实 Web-only 兼容方案；无法实现的部分明确说明限制并提出待确认项，不自行删除。
+- 当前 `mpx-video.vue` 的 `controls` watcher 向 `inheritEvent` 传入空对象，而 `getInnerListeners.js` 会访问该对象上不存在的事件方法并调用 `.bind()`，导致派发前抛错；该 watcher 也未同步更新控件显隐样式。初始 `controls` 配置与动态切换应分开判断，不能只绑定 `bindcontrolstoggle` 就认定动态切换可用。
+- `.mpx` 小程序业务方法应保持 Mpx 事件形态并读取 `event.detail`，不要增加 `event.target` / `event.currentTarget` 的浏览器分支。需要隔离缺失事件时，只隔离对应监听与展示，Web 继续使用内建 video 已支持的播放能力。
 
 ### web-view
 
@@ -909,16 +966,11 @@ Web 内建基础组件。使用 iframe 加载页面，追加实例标识并通�
 
 - 被打开的 H5 页面需要按 [WebView Bridge 参考](./webview-bridge-reference.md) 接入通信 SDK；同时配置 Web 侧 host 白名单并遵守浏览器来源校验、跨域和 iframe 嵌入策略。
 
-### 缺失与替代
-
-以下宿主组件没有 Web 内建实现，不应因为同名标签被保留就认定可用：`camera`、直播/推流、`open-data`、广告、公众号、宿主地图、富文本编辑器、频道/实时音视频、键盘附件，以及微信新增的布局、滚动、门户和页面容器类组件。按 [Web 组件降级](#web-组件降级) 采用浏览器 API、H5 SDK 或 Web-only 业务组件替代。
-
-
 ---
 
 ## Web 组件降级
 
-以下能力在 Web 下没有浏览器等价组件，需要 Web 方案替代：
+下表集中记录整体缺少 Web 内建实现的组件及可用的 Web 方案方向；是否接入具体方案仍按[组件支持分级与适配原则](#组件支持分级与适配原则)处理。
 
 | 组件 | Web 侧处理 |
 | --- | --- |
@@ -929,22 +981,20 @@ Web 内建基础组件。使用 iframe 加载页面，追加实例标识并通�
 | `ad` / `ad-custom` | 使用 Web 广告 SDK。 |
 | `functional-page-navigator` | 使用 Web 页面或业务流程替代。 |
 | `editor` | 使用 Web 富文本编辑器。 |
-| `map` | 使用 Web 地图 SDK 或业务地图组件；浏览器原生 `<map>` 是图片热区标签，不具备地图能力。 |
+| `map` | Web 地图 SDK 或业务地图组件，并继续传入中心点、markers 和真实 ID；浏览器原生 `<map>` 是图片热区标签，不具备地图能力。 |
 | `channel-live` / `channel-video` / `voip-room` | 使用 Web 实时音视频 SDK 或业务组件。 |
 | `keyboard-accessory` | 使用浏览器输入区布局或业务键盘组件替代。 |
 | `page-meta` | 改用 Web 路由、Head 管理或 `document` 能力处理页面元信息。 |
 | `native-component` / `aria-component` | 使用 Web 组件、Vue 组件或标准 HTML/ARIA 语义替代。 |
 | `match-media` | 使用 CSS media query 或 Web `matchMedia`，并隔离浏览器监听与销毁逻辑。 |
-| `root-portal` / `page-container` | 当前 Web 没有对应内建实现；使用 Vue portal/dialog 方案或 Web-only 业务组件。 |
+| `root-portal` / `page-container` | portal/dialog 或业务组件，并接入原状态和事件。 |
 | `share-element` / `snapshot` | 使用 Web View Transition、Canvas 或业务截图方案；不具备微信同名宿主语义。 |
-| `grid-view` / `grid-item` / `list-view` / `list-item` | 使用 CSS Grid、普通列表或 Web 虚拟列表组件。 |
+| `grid-view` / `grid-item` / `list-view` / `list-item` | 业务列表或网格组件，并接入原数据、稳定 key 和真实 ID；CSS Grid、Flex 或普通列表只提供简单布局，不具备原组件语义。 |
 | `nested-scroll-header` / `nested-scroll-body` / `draggable-sheet` | 使用 Web-only 滚动协调或抽屉组件，并验证触摸和页面滚动冲突。 |
 | `navigation-bar` | 使用 Mpx Web 路由、页面配置或 Web-only 导航组件。 |
 | `custom-wrapper` | Web 没有微信原生自定义组件更新边界语义；使用普通容器并按 Web 渲染性能优化。 |
 
 `canvas` 在 Web 下可作为原生 `<canvas>` 使用；复杂场景应结合 Web Canvas API 或业务封装处理。
-
-未提供 Web 内建实现的宿主组件即使被保留为同名标签，也不代表对应宿主能力可用。不要只以“能够编译”为支持依据，应验证渲染、属性、事件和实例 API；无法对齐时使用 Web-only 组件替代。
 
 ---
 

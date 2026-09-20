@@ -16,28 +16,30 @@ function validateFile (file, options = {}) {
     const compiler = require(require.resolve('@mpxjs/webpack-plugin/lib/template-compiler/compiler', {
       paths: [options.projectRoot || path.dirname(selected)]
     }))
-    const blocks = compiler.parseComponent(source, { mode: 'web' })
+    const blocks = compiler.parseComponent(source, { mode: 'web', env: options.env || '' })
     if (!blocks.template || blocks.template.src) {
       return ['待验证：缺少内联模板，请检查实际模板入口。']
     }
-    const modules = []
-    source.replace(/<script\b([^>]*)>/gi, (tag, attrs) => {
-      if (!/\blang\s*=\s*['"]wxs['"]/i.test(attrs)) return tag
-      const match = attrs.match(/\bmodule\s*=\s*['"]([^'"]+)['"]/i)
-      if (match) modules.push(match[1])
-      return tag
-    })
-    const errors = []
     const parsed = compiler.parse(blocks.template.content, {
       mode: 'web',
-      srcMode: blocks.template.mode || 'wx',
+      srcMode: options.srcMode || blocks.template.srcMode || 'wx',
       env: options.env || '',
       defs: Object.assign({}, options.defs, { __mpx_mode__: 'web' }),
       usingComponentsInfo: {},
       externalClasses: [],
+      filePath: selected,
       warn: () => {},
-      error: message => errors.push(String(message))
+      error: () => {}
     })
+    const modules = new Set(
+      Object.keys(parsed.meta.wxsContentMap || {}).concat(Object.keys(parsed.meta.wxsModuleMap || {}))
+    )
+    const errors = []
+    if (parsed.meta.imports && parsed.meta.imports.length) {
+      errors.push('待验证：模板包含外部 <import>，请同时检查实际导入模板：' + parsed.meta.imports.join(', '))
+    }
+    if (!modules.size) return errors
+
     // Inspect compiler-normalized events, including colon syntax and platform branches.
     function visit (node) {
       if (!node) return
@@ -68,10 +70,12 @@ function main () {
   process.argv.slice(2).forEach(arg => {
     if (arg.startsWith('--web-file=')) options.webFile = arg.slice(11)
     else if (arg.startsWith('--project-root=')) options.projectRoot = arg.slice(15)
+    else if (arg.startsWith('--src-mode=')) options.srcMode = arg.slice(11)
+    else if (arg.startsWith('--env=')) options.env = arg.slice(6)
     else files.push(arg)
   })
   if (!files.length || (options.webFile && files.length !== 1)) {
-    console.error('usage: validate-wxs-web-events <file.mpx>... [--project-root=<project>] [--web-file=<confirmed-web-entry>]')
+    console.error('usage: validate-wxs-web-events <file.mpx>... [--project-root=<project>] [--web-file=<confirmed-web-entry>] [--src-mode=<mode>] [--env=<env>]')
     process.exit(2)
   }
   let failed = false
@@ -80,7 +84,7 @@ function main () {
     errors.forEach(error => console.error(error))
     failed = failed || errors.length > 0
   })
-  console.error('检查范围：Web 模板直接 WXS 绑定；不证明方法可执行、两端行为等价或实际运行通过。自定义 env/defs 请结合项目构建核验。')
+  console.error('检查范围：Web 模板直接 WXS 绑定；不证明方法可执行、两端行为等价或实际运行通过。未传入实际 src-mode/env 或使用自定义 defs 时，请结合项目构建核验。')
   process.exit(failed ? 1 : 0)
 }
 

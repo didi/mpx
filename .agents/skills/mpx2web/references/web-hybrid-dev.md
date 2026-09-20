@@ -14,7 +14,7 @@
 
 ## Web 原生 DOM 能力
 
-Mpx 的 Web 输出在浏览器中可访问 DOM，也可能在 SSR 服务端执行。只有确认处于浏览器环境且需要对应能力时，才访问 `window`、`document` 或 DOM 节点；`.web.mpx` 仅隔离平台，不保证代码只在浏览器执行。
+Web-only 依赖图、浏览器执行环境与 DOM 就绪时机统一按 [Web 条件隔离](./conditional-compile.md#web-边界)判断，SSR 禁用的浏览器对象见 [SSR 专项参考](./ssr-reference.md#浏览器对象限制)。本文件只说明边界成立后的接入方式。
 
 典型 Web-only 场景：
 
@@ -22,13 +22,11 @@ Mpx 的 Web 输出在浏览器中可访问 DOM，也可能在 SSR 服务端执�
 - 使用 HTML / SVG 原生标签承载浏览器能力。
 - 调用 Canvas、Web Audio、IntersectionObserver、ResizeObserver 等浏览器 API。
 
-节点访问优先沿用输入项目已有的 ref 或 selector 写法；Web 侧额外注意 DOM 操作必须发生在客户端挂载后，SSR 场景见 [SSR 专项参考](./ssr-reference.md)。
+节点访问优先沿用输入项目已有的 ref 或 selector 写法，并在客户端挂载后操作 DOM。
 
 ---
 
 ## 第三方 H5 SDK
-
-第三方 H5 SDK 通常依赖浏览器全局对象。按[Web 条件隔离](./conditional-compile.md#web-边界)区分依赖图、浏览器执行环境和 DOM 就绪时机；纯客户端入口可保留静态 import，共享 SSR 入口中的浏览器依赖需在客户端加载。
 
 SDK 配置、密钥、回调域名、跨域和 CSP 按项目安全要求处理。
 
@@ -72,7 +70,7 @@ createComponent({
 - **曝光或尺寸观察**：有实际需求才创建 Observer，释放时断开；资源会切换时，还要防止排队的旧回调作用于新资源，身份检查不能代替 `disconnect()`。
 - **创建过程本身有副作用**：创建失败前的内部资源由 SDK 或其取消接口清理。若异步创建会提前操作 DOM，需按 SDK 能力取消或隔离容器，返回后销毁实例不能撤销此前副作用。内部监听交给 SDK 释放接口处理，不重复移除私有监听。
 
-示例将动态导入留在普通方法的 Web 分支中，异步创建放在回调内；仍需按 [Web 条件隔离](./conditional-compile.md#web-边界) 核验实际构建，不能仅凭运行时浏览器判断认定依赖已从其他目标产物中移除。
+示例使用动态导入演示共享 SSR 入口中的客户端加载；是否可以静态导入由本文件开头引用的执行边界决定。
 
 ---
 

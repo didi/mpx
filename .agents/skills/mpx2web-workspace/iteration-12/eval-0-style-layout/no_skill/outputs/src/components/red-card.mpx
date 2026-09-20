@@ -1,5 +1,7 @@
 <template>
-  <view class="card"><text class="title">红色卡片</text></view>
+  <view class="red-card">
+    <text class="red-card__title">红色卡片</text>
+  </view>
 </template>
 
 <script>
@@ -9,8 +11,8 @@ createComponent({})
 </script>
 
 <style scoped>
-.card { padding: 12px; background: #fff0f0; }
-.title { color: #c62828; font-size: 18px; }
+.red-card { padding: 12px; background: #fff0f0; }
+.red-card__title { color: #c62828; font-size: 18px; }
 </style>
 
 <script type="application/json">

@@ -6,19 +6,31 @@
   </view>
 </template>
 <script>
-import { createPage, onLoad } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
 
 createPage({
-  setup (props, { getOpenerEventChannel }) {
-    onLoad(query => {
-      // 普通链接入口没有注册 ready 监听。
-      if (query.source !== 'link') getOpenerEventChannel().emit('ready')
-    })
-    return {
-      confirm (label) {
-        const pages = getCurrentPages()
-        pages[pages.length - 2].receiveChoice(label)
+  onLoad (query) {
+    // 普通链接入口没有注册 ready 监听。
+    if (!query || query.source !== 'link') {
+      this.getOpenerEventChannel().emit('ready')
+    }
+  },
+  methods: {
+    confirm (label) {
+      const channel = this.getOpenerEventChannel()
+      channel.emit('confirm', label)
+
+      const pages = getCurrentPages()
+      const previousPage = pages[pages.length - 2]
+      if (previousPage && typeof previousPage.receiveChoice === 'function') {
+        previousPage.receiveChoice(label)
+      }
+
+      if (pages.length > 1) {
         wx.navigateBack({ delta: 1 })
+      } else {
+        // 直接打开或刷新选择页时没有上一页，返回应用首页。
+        wx.reLaunch({ url: '/pages/home/index' })
       }
     }
   }

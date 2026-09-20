@@ -3,8 +3,8 @@
     <event-actions bindchange="onActionChange" />
     <text>最近操作：{{actionText}}</text>
     <view class="choices">
-      <choice-item class="choice choice-first" label="选项一" />
-      <choice-item class="choice" label="选项二" />
+      <choice-item ref="firstChoice" class="choice choice-first" label="选项一" />
+      <choice-item ref="secondChoice" class="choice" label="选项二" />
     </view>
     <button bindtap="selectFirst">选中第一个</button>
     <button bindtap="resetChoices">清空选中</button>
@@ -39,11 +39,38 @@ createPage({
     onActionChange (event) {
       this.actionText = event.detail.action
     },
+    getChoiceRef (name) {
+      const value = this.$refs && this.$refs[name]
+      return Array.isArray(value) ? value[0] : value
+    },
     selectFirst () {
-      this.selectComponent('.choice-first').setSelected(true)
+      const selected = typeof this.selectComponent === 'function'
+        ? this.selectComponent('.choice-first')
+        : null
+      const first = selected && typeof selected.setSelected === 'function'
+        ? selected
+        : this.getChoiceRef('firstChoice')
+
+      if (first && typeof first.setSelected === 'function') {
+        first.setSelected(true)
+      }
     },
     resetChoices () {
-      this.selectAllComponents('.choice').forEach(item => item.setSelected(false))
+      const selected = typeof this.selectAllComponents === 'function'
+        ? this.selectAllComponents('.choices .choice')
+        : []
+      const selectedComponents = (selected || []).filter(item => (
+        item && typeof item.setSelected === 'function'
+      ))
+      const components = selectedComponents.length
+        ? selectedComponents
+        : [this.getChoiceRef('firstChoice'), this.getChoiceRef('secondChoice')]
+
+      components.forEach((item) => {
+        if (item && typeof item.setSelected === 'function') {
+          item.setSelected(false)
+        }
+      })
     },
     onNotice (event) {
       this.notice = event.detail.message

@@ -7,6 +7,7 @@
 - [适用场景](#适用场景)
 - [构建与路由配置](#构建与路由配置)
 - [SSR 生命周期](#ssr-生命周期)
+- [旧 Store 的 SSR 迁移](#旧-store-的-ssr-迁移)
 - [数据预取与状态注水](#数据预取与状态注水)
 - [注水缓存与请求竞态](#注水缓存与请求竞态)
 - [同构请求层边界](#同构请求层边界)
@@ -61,6 +62,22 @@ createApp({
 ```
 
 `@mpxjs/pinia` 的 Web 实现在服务端要求每次在此钩子中创建实例，浏览器可复用 active Pinia；请求级数据不能放入模块顶层单例。
+
+---
+
+## 旧 Store 的 SSR 迁移
+
+旧 `@mpxjs/store` 的 `createStore`、模块级共享状态或页面临时状态需要参与 SSR 首屏注水时，Mpx 内建状态链使用 `@mpxjs/pinia`，`@mpxjs/store` 不在该链路的支持范围内。采用内建链路时迁移到 Pinia，不同时保留 `$ssrContext.state`、DOM 属性或自定义 `window` 字段组成的第二套注水协议。项目已有明确的自定义 SSR 宿主协议时可以沿用，但需核对完整的序列化与恢复链。
+
+迁移时逐项核对：
+
+1. 应用在 `onAppInit` 中调用 `createPinia()` 并返回 `{ pinia }`，使服务端每个请求取得独立实例；该 Web SSR 入口不需要 `mpx.use(pinia)`。
+2. 业务状态和 action 由 `@mpxjs/pinia` 的 `defineStore` 管理，不在模块顶层提前调用 `useXxxStore()`。Options API 的 `serverPrefetch` 使用 `useXxxStore(this.$pinia)` 绑定当前请求实例；setup 内在 setup 上下文中调用 `useXxxStore()`，页面预取、模板和客户端交互复用该应用实例下的 store。
+3. `serverPrefetch` 返回或等待写入该 store 的异步 action，模板读取同一 store 状态。
+4. 未自定义 `onSSRAppCreated` 时，使用框架默认的服务端状态写入和客户端挂载前恢复，不重复实现 `context.state` 与 `window.__INITIAL_STATE__` 搬运。自定义该钩子时，再完整接管路由就绪、状态序列化和应用返回。
+5. 所有消费方迁移完成后，删除旧 `@mpxjs/store` 实例和手工恢复入口，避免保留两套状态源。进行中请求去重和过期响应保护只在实际存在重叠加载或资源切换时处理，具体见下一节。
+
+Pinia 不是所有 SSR 页面的强制依赖；仅有组件局部渲染状态且不需要跨服务端与客户端复用时，无需为了形式引入 store。
 
 ---
 

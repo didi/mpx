@@ -1,7 +1,7 @@
 <template>
   <view class="event-actions">
-    <view class="action" bindtap="onTap">点击</view>
-    <view class="action" bindtouchend="onTouchEnd">触摸后松开</view>
+    <view class="action" bindtap="handleTap">点击</view>
+    <view class="action" bindtouchend="handleTouchEnd">触摸后松开</view>
   </view>
 </template>
 <script>
@@ -9,10 +9,10 @@ import { createComponent } from '@mpxjs/core'
 
 createComponent({
   methods: {
-    onTap () {
+    handleTap () {
       this.recordAction('点击')
     },
-    onTouchEnd () {
+    handleTouchEnd () {
       this.recordAction('触摸结束')
     },
     recordAction (action) {

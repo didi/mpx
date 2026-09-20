@@ -1,7 +1,7 @@
 <template>
   <view class="help-card">
-    <text class="help-card__title">{{title}}</text>
     <help-item
+      title="{{title}}"
       description="{{description}}"
       help-url="{{helpUrl}}"
       item-class="item-class"
@@ -13,44 +13,19 @@ import { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
-    title: {
-      type: String,
-      value: ''
-    },
-    description: {
-      type: String,
-      value: ''
-    },
-    helpUrl: {
-      type: String,
-      value: ''
-    }
+    title: { type: String, value: '' },
+    description: { type: String, value: '' },
+    helpUrl: { type: String, value: '' }
   },
   externalClasses: ['item-class']
 })
 </script>
 <style scoped>
-.help-card {
-  margin-top: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  overflow: hidden;
-}
-
-.help-card__title {
-  display: block;
-  padding: 12px 12px 0;
-  color: #303133;
-  font-size: 16px;
-  font-weight: 600;
-}
+.help-card { display: block; margin-top: 12px; }
 </style>
 <script type="application/json">
 {
   "component": true,
-  "usingComponents": {
-    "help-item": "./help-item.mpx"
-  }
+  "usingComponents": { "help-item": "./help-item.mpx" }
 }
 </script>

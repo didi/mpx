@@ -7,25 +7,27 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 import orderedItem from '../behaviors/ordered-item'
+import relationItemPath from './relation-item.mpx?resolve'
+
+const relationPath = relationItemPath
 
 createComponent({
   properties: {
     items: {
       type: Array,
-      value: []
+      value: null
     }
   },
-  data: { relationOrderText: '' },
-  computed: {
-    orderText () {
-      if (this.items.length) {
-        return this.items.map(item => item.label).join('、')
-      }
-      return this.relationOrderText
+  data: { orderText: '' },
+  watch: {
+    items: {
+      handler: 'syncOrder',
+      deep: true,
+      immediate: true
     }
   },
   relations: {
-    items: {
+    [relationPath]: {
       type: 'child',
       target: orderedItem,
       linked () { this.syncOrder() },
@@ -34,9 +36,13 @@ createComponent({
     }
   },
   methods: {
-    syncOrder () {
-      const nodes = this.getRelationNodes('items') || []
-      this.relationOrderText = nodes.map(node => node.getLabel()).join('、')
+    syncOrder (items = this.items) {
+      if (Array.isArray(items)) {
+        this.orderText = items.map(item => item.label).join('、')
+        return
+      }
+      const nodes = this.getRelationNodes(relationPath) || []
+      this.orderText = nodes.map(node => node.getLabel()).join('、')
     }
   }
 })

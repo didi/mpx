@@ -4,32 +4,66 @@
 const fs = require('fs')
 const path = require('path')
 const { blocks, dependency } = require('./source-parser')
-const codeExtensions = new Set(['.mpx', '.vue', '.js', '.jsx', '.ts', '.tsx', '.json', '.html', '.htm'])
+const codeExtensions = new Set(['.mpx', '.vue', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts', '.json', '.html', '.htm'])
 const styleExtensions = new Set(['.css', '.less', '.scss', '.sass', '.styl', '.stylus'])
+const ignoredDirectories = new Set([
+  '.git', '.hg', '.svn', '.cache', '.next', '.nuxt', '.output', '.turbo',
+  'node_modules', 'dist', 'build', 'coverage'
+])
 const directivePattern = /@mpx-(?:if|elif|else|endif)\b/i
+const todoTokenPattern = /TODO\s*\(\s*web\s*\)/i
+const canonicalTodoPattern = /^TODO\(web\):\s*\S[\s\S]*$/
 
 function validateSource (source, file = 'input.js') {
   const errors = []
   const report = (offset, message, directive = '') => errors.push({
     line: source.slice(0, offset).split(/\r?\n/).length, message, directive
   })
+  function validateTodos (content, offset, comments, format, validComment = () => true) {
+    const pattern = new RegExp(todoTokenPattern.source, 'ig')
+    let match
+    while ((match = pattern.exec(content))) {
+      const comment = comments.find(item => match.index >= item.start && match.index < item.end)
+      if (!comment || !validComment(comment) || !canonicalTodoPattern.test(comment.value.trim())) {
+        report(offset + match.index, `Web TODO 必须使用 ${format}`, 'TODO(web)')
+      }
+    }
+  }
+  function delimitedTodos (content, offset, pattern, format) {
+    const comments = []
+    let match
+    while ((match = pattern.exec(content))) {
+      comments.push({ start: match.index, end: pattern.lastIndex, value: match[1] })
+    }
+    validateTodos(content, offset, comments, format)
+  }
   function script (content, offset, lang, json) {
     const parser = dependency('@babel/parser', file)
-    const options = { sourceType: 'unambiguous', plugins: ['jsx', ...(lang === 'ts' || lang === 'tsx' ? ['typescript'] : [])] }
+    const typescript = ['ts', 'tsx', 'mts', 'cts'].includes(lang)
+    const options = {
+      sourceType: 'unambiguous',
+      plugins: ['jsx'].concat(typescript ? ['typescript'] : [])
+    }
     const ast = json ? parser.parseExpression(content, options) : parser.parse(content, options)
-    for (const comment of ast.comments || []) {
+    const comments = ast.comments || []
+    for (const comment of comments) {
       if (directivePattern.test(comment.value)) {
         report(offset + comment.start, '@mpx 条件注释只允许出现在 style 中', comment.value.trim())
       }
     }
+    validateTodos(content, offset, comments,
+      '// TODO(web): 具体业务接入说明', comment => comment.type === 'CommentLine')
   }
   function template (content, offset) {
+    delimitedTodos(content, offset, /<!--([\s\S]*?)-->/g,
+      '<!-- TODO(web): 具体业务接入说明 -->')
     const compiler = dependency('vue/compiler-sfc', file)
-    const { ast } = compiler.compileTemplate({
+    const compiled = compiler.compileTemplate({
       source: '<div>' + content + '</div>',
       filename: file,
       compilerOptions: { comments: true, outputSourceRange: true }
     })
+    const { ast } = compiled
     const visited = new Set()
     function visit (node) {
       if (!node || visited.has(node)) return
@@ -43,6 +77,8 @@ function validateSource (source, file = 'input.js') {
     visit(ast)
   }
   function style (content, offset) {
+    delimitedTodos(content, offset, /\/\*([\s\S]*?)\*\//g,
+      '/* TODO(web): 具体业务接入说明 */')
     if (!directivePattern.test(content)) return
     const root = dependency('postcss', file).parse(content, { from: file })
     const parser = dependency('@babel/parser', file)
@@ -77,8 +113,9 @@ function validateSource (source, file = 'input.js') {
       else if (type === 'template') template(content, offset)
       else if (type === 'script') {
         if (attrs.src) return
-        script(content, offset, attrs.lang, attrs.type === 'application/json' && attrs.name !== 'json')
-      } else if (directivePattern.test(content)) {
+        const json = /^application\/json/.test(attrs.type || '') && attrs.name !== 'json'
+        script(content, offset, attrs.lang, json)
+      } else if (directivePattern.test(content) || todoTokenPattern.test(content)) {
         report(offset, '待验证：不支持的区块类型 ' + type)
       }
     } catch (error) {
@@ -124,14 +161,16 @@ function collectFiles (inputs) {
     fs.readdirSync(resolved, { withFileTypes: true }).forEach(entry => {
       const target = path.join(resolved, entry.name)
       if (entry.isDirectory()) {
-        files.push(...collectFiles([target]))
+        if (!ignoredDirectories.has(entry.name)) {
+          collectFiles([target]).forEach(file => files.push(file))
+        }
       } else if (codeExtensions.has(path.extname(entry.name).toLowerCase()) ||
         styleExtensions.has(path.extname(entry.name).toLowerCase())) {
         files.push(target)
       }
     })
   })
-  return files
+  return Array.from(new Set(files)).sort()
 }
 
 function main () {
@@ -143,7 +182,17 @@ function main () {
     process.exit(2)
   }
 
-  const results = collectFiles(inputs).map(validateFile)
+  const files = collectFiles(inputs)
+  if (!files.length) {
+    const message = '未找到可检查的源码文件'
+    if (json) {
+      console.log(JSON.stringify({ success: false, checkedFiles: 0, files: [], errors: [message] }, null, 2))
+    } else {
+      console.error(message)
+    }
+    process.exit(1)
+  }
+  const results = files.map(validateFile)
   const payload = {
     success: results.every(result => result.errors.length === 0),
     checkedFiles: results.length,
@@ -165,5 +214,6 @@ function main () {
 module.exports = validateFile
 module.exports.validateFile = validateFile
 module.exports.validateSource = validateSource
+module.exports.collectFiles = collectFiles
 
 if (require.main === module) main()

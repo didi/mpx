@@ -4,11 +4,12 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 import orderedItem from '../behaviors/ordered-item'
+import relationListPath from './relation-list.mpx?resolve'
 
 createComponent({
   behaviors: [orderedItem],
   relations: {
-    './relation-list': { type: 'parent' }
+    [relationListPath]: { type: 'parent' }
   }
 })
 </script>

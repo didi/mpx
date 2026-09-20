@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <view class="header" style="padding-top: {{topInset}}px; {{headerHeight === null ? '' : 'height: ' + headerHeight + 'px;'}}">
+    <view class="header {{webHeader ? 'header-web' : ''}}" style="{{webHeader ? '' : 'padding-top: ' + topInset + 'px; ' + (headerHeight === null ? '' : 'height: ' + headerHeight + 'px;')}}">
       <text>我的选项</text>
     </view>
     <view class="content">
@@ -17,10 +17,13 @@
 import { createPage } from '@mpxjs/core'
 
 createPage({
-  data: { topInset: 0, headerHeight: null, selectedLabel: '未选择' },
+  data: {
+    webHeader: __mpx_mode__ === 'web',
+    topInset: 0,
+    headerHeight: null,
+    selectedLabel: '未选择'
+  },
   onLoad () {
-    // Web (including SSR) has no mini-program menu capsule. The initial data
-    // is already the desired browser layout and is hydration-stable.
     if (__mpx_mode__ === 'web') return
     const capsule = wx.getMenuButtonBoundingClientRect()
     this.topInset = capsule.top
@@ -31,7 +34,8 @@ createPage({
       wx.navigateTo({
         url: '/pages/choice/index',
         events: {
-          ready: () => { this.selectedLabel = '正在选择' }
+          ready: () => { this.selectedLabel = '正在选择' },
+          confirm: (label) => { this.selectedLabel = label }
         }
       })
     },
@@ -44,6 +48,8 @@ createPage({
 <style>
 .page { min-height: 100%; background: #f6f7f9; }
 .header { padding-left: 16px; background: #fff; }
+/* Web 使用 44 CSS px 内容高度并叠加浏览器安全区；微信继续使用胶囊 top/height。 */
+.header-web { box-sizing: content-box; height: 44px; padding-top: env(safe-area-inset-top); }
 .content { padding: 24rpx; }
 .size-sample { width: 200rpx; font-size: 28rpx; background: #dde8ff; }
 </style>

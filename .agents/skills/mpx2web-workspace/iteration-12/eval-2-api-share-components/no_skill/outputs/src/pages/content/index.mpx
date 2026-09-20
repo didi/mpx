@@ -1,71 +1,111 @@
-<template mode="wx">
+<template>
   <view class="content-page">
-    <text>{{title}}</text>
+    <text class="title">{{title}}</text>
+
+    <!-- @mpx-if (mode === 'wx') -->
     <button open-type="share">分享内容</button>
+    <!-- @mpx-else -->
+    <button bindtap="shareContent">分享内容</button>
+    <text wx:if="{{shareStatus}}" class="hint">{{shareStatus}}</text>
+    <!-- @mpx-endif -->
+
+    <!-- @mpx-if (mode === 'wx') -->
     <button bindtap="choosePlace">选择位置</button>
-    <text>{{placeName}}</text>
+    <!-- @mpx-else -->
+    <button bindtap="choosePlace">获取当前位置</button>
+    <!-- @mpx-endif -->
+    <text class="field-value">{{placeName}}</text>
+    <!-- @mpx-if (mode === 'web') -->
+    <text class="hint">Web 端未接入地点选择及名称解析服务，仅可使用浏览器返回的真实定位坐标。</text>
+    <!-- @mpx-endif -->
+    <text wx:if="{{placeStatus}}" class="hint">{{placeStatus}}</text>
+
     <button bindtap="rename">编辑名称</button>
-    <text>名称：{{displayName}}</text>
+    <!-- @mpx-if (mode === 'web') -->
+    <view wx:if="{{editingName}}" class="name-editor">
+      <input class="name-input" value="{{nameDraft}}" bindinput="onNameInput" placeholder="请输入名称" />
+      <button size="mini" bindtap="confirmRename">保存</button>
+      <button size="mini" bindtap="cancelRename">取消</button>
+    </view>
+    <!-- @mpx-endif -->
+    <text class="field-value">名称：{{displayName}}</text>
+
     <scan-entry bindresult="onScanResult" />
-    <text>扫码结果：{{scanResult}}</text>
+    <text class="field-value">扫码结果：{{scanResult}}</text>
     <video-info src="{{videoSrc}}" />
+
+    <!-- @mpx-if (mode === 'wx') -->
     <foo-card />
+    <!-- @mpx-else -->
+    <text class="hint">插件服务卡片仅由微信小程序插件提供，Web 端未接入对应业务服务。</text>
+    <!-- @mpx-endif -->
   </view>
 </template>
-<template mode="web">
-  <div class="content-page">
-    <span>{{title}}</span>
-    <button @click="showShareUnavailable">分享内容</button>
-    <span>{{shareStatus}}</span>
-    <button @click="choosePlace">选择位置</button>
-    <span>{{placeName}}</span>
-    <button @click="rename">编辑名称</button>
-    <div v-if="editingName" class="name-editor">
-      <input class="name-input" :value="draftName" placeholder="请输入名称" @input="onNameInput" />
-      <div class="name-actions">
-        <button @click="confirmRename">确定</button>
-        <button @click="cancelRename">取消</button>
-      </div>
-    </div>
-    <span>名称：{{displayName}}</span>
-    <scan-entry @result="onScanResult" />
-    <span>扫码结果：{{scanResult}}</span>
-    <video-info :src="videoSrc" />
-    <div class="service-card-unavailable">
-      <span>服务卡片仅微信小程序可用，Web 端未接入</span>
-    </div>
-  </div>
-</template>
-<script mode="wx">
-import { createPage } from '@mpxjs/core'
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+function decodeVideoUrl (value) {
+  if (typeof value !== 'string' || !value) return ''
+  try {
+    return decodeURIComponent(value)
+  } catch (error) {
+    return value
+  }
+}
 
 createPage({
   data: {
     title: '内容操作示例',
     placeName: '尚未选择',
+    placeStatus: '',
     displayName: '默认名称',
+    editingName: false,
+    nameDraft: '',
     scanResult: '',
-    videoSrc: ''
+    videoSrc: '',
+    shareStatus: ''
   },
-  onLoad (query = {}) {
-    this.videoSrc = decodeURIComponent(query.videoUrl || '')
+  onLoad (query) {
+    const videoUrl = query && query.videoUrl
+    this.videoSrc = decodeVideoUrl(videoUrl)
   },
   onShareAppMessage () {
     return { title: this.title, path: '/pages/content/index' }
   },
   methods: {
     choosePlace () {
-      wx.chooseLocation({
+      // @mpx-if (mode === 'wx')
+      this.placeStatus = ''
+      mpx.chooseLocation({
         success: result => {
-          this.placeName = result.name
+          this.placeName = result.name || result.address || `${result.latitude}, ${result.longitude}`
         },
         fail: () => {
-          this.placeName = '位置环境未就绪，请检查授权'
+          this.placeStatus = '未能选择位置，请检查定位授权后重试'
         }
       })
+      // @mpx-else
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        this.placeStatus = '当前浏览器不支持定位，且 Web 端未接入地点选择服务'
+        return
+      }
+      this.placeStatus = '正在获取浏览器定位…'
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const latitude = position.coords.latitude
+          const longitude = position.coords.longitude
+          this.placeName = `纬度 ${latitude}，经度 ${longitude}`
+          this.placeStatus = '已获取浏览器定位；地点名称解析服务尚未接入'
+        },
+        () => {
+          this.placeStatus = '浏览器定位失败或未获授权；Web 端未接入其他地点服务'
+        }
+      )
+      // @mpx-endif
     },
     rename () {
-      wx.showModal({
+      // @mpx-if (mode === 'wx')
+      mpx.showModal({
         title: '编辑名称',
         editable: true,
         placeholderText: '请输入名称',
@@ -74,57 +114,16 @@ createPage({
           if (result.confirm) this.displayName = result.content
         }
       })
-    },
-    onScanResult (event) {
-      this.scanResult = event.detail.result
-    }
-  }
-})
-</script>
-<script mode="web">
-import { createPage } from '@mpxjs/core'
-
-function decodeVideoUrl (value) {
-  if (!value) return ''
-  try {
-    return decodeURIComponent(value)
-  } catch (e) {
-    return ''
-  }
-}
-
-createPage({
-  data: {
-    title: '内容操作示例',
-    placeName: 'Web 位置服务未接入',
-    displayName: '默认名称',
-    draftName: '',
-    editingName: false,
-    shareStatus: 'Web 分享服务未接入',
-    scanResult: '',
-    videoSrc: ''
-  },
-  onLoad (query = {}) {
-    this.videoSrc = decodeVideoUrl(query.videoUrl || '')
-  },
-  methods: {
-    showShareUnavailable () {
-      this.shareStatus = 'Web 分享服务未接入，暂时无法分享'
-    },
-    choosePlace () {
-      this.placeName = 'Web 位置服务未接入，暂时无法选择位置'
-    },
-    rename () {
-      this.draftName = this.displayName
+      // @mpx-else
+      this.nameDraft = this.displayName
       this.editingName = true
+      // @mpx-endif
     },
     onNameInput (event) {
-      const detail = (event && event.detail) || {}
-      const target = (event && event.target) || {}
-      this.draftName = detail.value != null ? detail.value : (target.value || '')
+      this.nameDraft = event.detail.value
     },
     confirmRename () {
-      this.displayName = this.draftName
+      this.displayName = this.nameDraft
       this.editingName = false
     },
     cancelRename () {
@@ -132,32 +131,53 @@ createPage({
     },
     onScanResult (event) {
       this.scanResult = event.detail.result
+    },
+    shareContent () {
+      // @mpx-if (mode === 'web')
+      if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+        this.shareStatus = '当前环境无法调用浏览器分享能力'
+        return
+      }
+      const shareData = { title: this.title, url: window.location.href }
+      if (typeof navigator.share === 'function') {
+        navigator.share(shareData).then(() => {
+          this.shareStatus = '分享已完成'
+        }).catch(() => {
+          this.shareStatus = '分享未完成'
+        })
+        return
+      }
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(shareData.url).then(() => {
+          this.shareStatus = '当前浏览器不支持系统分享，页面地址已复制'
+        }).catch(() => {
+          this.shareStatus = '当前浏览器不支持系统分享，且页面地址复制失败'
+        })
+        return
+      }
+      this.shareStatus = '当前浏览器不支持系统分享或剪贴板能力'
+      // @mpx-endif
     }
   }
 })
 </script>
 <style>
 .content-page { padding: 16px; }
-.name-editor { margin: 8px 0; }
-.name-input { box-sizing: border-box; width: 100%; min-height: 40px; padding: 8px; border: 1px solid #d9d9d9; }
-.name-actions { display: flex; margin-top: 8px; }
-.name-actions button { flex: 1; }
-.service-card-unavailable { margin-top: 12px; color: #666; }
+.title, .field-value, .hint { display: block; margin: 8px 0; }
+.title { font-size: 20px; font-weight: 600; }
+.hint { color: #666; font-size: 13px; }
+.name-editor { display: flex; align-items: center; margin: 8px 0; }
+.name-input { flex: 1; min-height: 32px; padding: 0 8px; border: 1px solid #ccc; }
 </style>
-<script type="application/json" mode="wx">
-{
-  "usingComponents": {
-    "scan-entry": "../../components/scan-entry.mpx",
-    "video-info": "../../components/video-info.mpx",
-    "foo-card": "plugin://foo/component"
-  }
-}
-</script>
-<script type="application/json" mode="web">
+<script type="application/json">
 {
   "usingComponents": {
     "scan-entry": "../../components/scan-entry.mpx",
     "video-info": "../../components/video-info.mpx"
+    // @mpx-if (mode === 'wx')
+    ,
+    "foo-card": "plugin://foo/component"
+    // @mpx-endif
   }
 }
 </script>

@@ -5,7 +5,7 @@ module.exports = {
         srcMode: 'wx',
         externalClasses: ['custom-class', 'i-class', 'tone-class', 'item-class'],
         autoVirtualHostRules: {
-          include: /src[\\/]components[\\/]layout-cell\.mpx$/
+          include: /[\\/]src[\\/]components[\\/]layout-cell\.mpx$/
         }
       }
     }

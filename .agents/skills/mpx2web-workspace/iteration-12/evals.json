@@ -1,9 +1,9 @@
 {
   "skill_name": "mpx2web",
   "iteration": 12,
-  "suite_revision": "four-evals-static-20260918-global-runtime-scope",
+  "suite_revision": "five-evals-case-equal-quality-split-20260919",
   "status": "ready_for_source_evaluation",
-  "description": "四个静态 eval：样式布局与组件生成、事件实例、API 分享引用、路由配置与 SSR。30 项验收目标（25 项适配、5 项从零生成），Has/No 共用输入和评分规则。",
+  "description": "五个静态 eval：样式布局与组件生成、事件实例、API 分享引用、路由配置与 SSR、门店与商品业务组件。40 项验收目标（35 项适配、5 项从零生成），Has/No 共用输入和评分规则。",
   "runner": {
     "enabled": true,
     "base": "../../mpx2rn-workspace/iteration-17/run_evals.py",
@@ -21,21 +21,19 @@
     "validation": "本 Benchmark 仅检查源码、配置、编译规则、引用关系和交付说明，不执行构建、E2E、浏览器、SSR 渲染或真机验收。规则中的点击、加载、跳转、并发、刷新和展示只用于描述需要静态推导的代码场景，不表示执行对应操作。评分模型是否与生成模型不同由报告单独标记。"
   },
   "common_constraints": [
-    "所有功能断言都根据源码、配置或编译产物证据判断；缺少运行实测不作为扣分或阻塞条件。",
-    "wx.xxx 改 mpx.xxx 可接受但不强制，保留 event.detail 与有效 Mpx 事件写法。",
-    "不要求 ref@web、.web.mpx 或每题修改 app.mpx/mpx.config.js；非必要不新增。",
-    "不得用 JS/HTML 伪条件注释充当编译隔离，不修改框架，不靠空方法或伪造数据通过。"
+    "只根据交付源码、配置和可静态推导的结果评分。",
+    "交付结果必须来自输入数据和真实代码链路，不得修改框架或伪造业务结果。"
   ],
   "evals": [
     {
       "id": 0,
       "name": "style-layout",
       "case_number": 1,
-      "title": "组件样式布局与帮助卡片生成",
+      "title": "样式与帮助卡片",
       "task_type": "adapt_and_generate",
       "complexity": "normal",
       "focus": "style/layout/generation",
-      "prompt": "请对 input 中的页面及组件进行 Web 跨端适配，并根据 input/requirements.md 从零创建 help-card.mpx 帮助面板及其 help-item.mpx 子组件。两部分均使用同一套源码兼容 Web 和微信小程序，保留已有外观与功能。请输出完整交付文件。",
+      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
       "expected_output": "适配原始小程序页面与组件，并从零生成帮助面板及其引用的帮助项子组件；只提供需求和宿主约定，不预置两个新组件实现。",
       "files": [
         "eval-0-style-layout/input/mpx.config.js",
@@ -134,11 +132,11 @@
       "id": 1,
       "name": "events-instance",
       "case_number": 2,
-      "title": "事件绑定与实例方法",
+      "title": "事件与组件交互",
       "task_type": "adapt",
       "complexity": "normal",
       "focus": "events/instance",
-      "prompt": "请对 input 中的页面及组件进行 Web 跨端适配，确保同一套源码在 Web 和微信小程序中正常使用，保留原有外观与功能。项目补充约定见 input/requirements.md。请输出完整改造文件。",
+      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
       "expected_output": "基于 input 中原始小程序源码做必要 Web 适配，保留小程序行为。",
       "files": [
         "eval-1-events-instance/input/requirements.md",
@@ -198,14 +196,14 @@
       "id": 2,
       "name": "api-share-components",
       "case_number": 3,
-      "title": "平台 API、分享与组件引用",
+      "title": "内容页业务能力",
       "readonly_files": [
         "src/vendor/native-scanner/index.mpx"
       ],
       "task_type": "adapt",
       "complexity": "normal",
       "focus": "api/share/components",
-      "prompt": "请对 input 中的页面及组件进行 Web 跨端适配，确保同一套源码在 Web 和微信小程序中正常使用，保留原有业务功能；目标端原生交互允许等价实现。项目补充约定见 input/requirements.md。请输出完整改造文件。",
+      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
       "expected_output": "基于 input 中原始小程序源码做必要 Web 适配，保留小程序行为。",
       "files": [
         "eval-2-api-share-components/input/requirements.md",
@@ -259,17 +257,22 @@
           "id": "D3.1",
           "text": "检查交付说明是否明确：permission 和 requiredPrivateInfos 是微信权限用途及隐私接口声明，不表示 Web 已获得授权或完成隐私合规；当前 Web 没有对应转换时，应保留微信声明并如实说明目标端边界。题目未提供 Web 接入协议时可以标记待接入，不要求虚构浏览器授权流程。该说明缺失或待确认只记静态告警，不扣 API 功能分。"
         }
-      ]
+      ],
+      "readonly_assertions": {
+        "src/vendor/native-scanner/index.mpx": [
+          "C3.3"
+        ]
+      }
     },
     {
       "id": 3,
       "name": "route-config",
       "case_number": 4,
-      "title": "路由配置与旧版 Store 详情页 SSR",
+      "title": "帮助中心详情页",
       "task_type": "adapt",
       "complexity": "normal",
       "focus": "route/config/ssr",
-      "prompt": "请对 input 中的小程序工程进行 Web 跨端适配，并将其中的文章详情页扩展为支持 Web SSR，保留微信小程序原有外观与功能。部署目标、详情页要求和宿主约定见 input/requirements.md。请输出完整改造文件。",
+      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
       "expected_output": "基于 input 中原始小程序源码做必要 Web 适配，保留小程序行为。",
       "files": [
         "eval-3-route-config/input/mpx.config.js",
@@ -319,7 +322,7 @@
         },
         {
           "id": "C4.6",
-          "text": "只检查旧 createStore 到 @mpxjs/pinia 的迁移代码，以及 Mpx 官方 SSR 状态链中的应用注册、服务端状态写入、序列化入口、客户端恢复时机和页面 store 引用；这些位置必须指向同一份 Pinia 状态。不要求自行实现框架已有的注水逻辑。请求隔离由 C4.7 检查，客户端异步竞态由 C4.8 检查；重复请求和展开/收起效果只进入待运行验证，不在本项扣分。",
+          "text": "只检查旧 createStore 到 @mpxjs/pinia 的迁移代码，以及 Mpx 官方 SSR 状态链：应用在 onAppInit 中为当前应用或 SSR 请求创建 Pinia 实例并返回 { pinia }，文章状态写入、服务端序列化、客户端挂载前恢复和页面 store 引用必须指向该 Pinia 状态。不要求调用 mpx.use(pinia)，也不要求自行实现框架默认提供的注水逻辑；如果应用自定义 onSSRAppCreated，则检查该自定义链是否完成等价的状态序列化。请求隔离由 C4.7 检查，客户端异步竞态由 C4.8 检查；重复请求和展开/收起效果只进入待运行验证，不在本项扣分。",
           "category": "ssr"
         },
         {
@@ -369,6 +372,92 @@
       "context_files": [
         "eval-3-route-config/fixtures/runtime-contract.md"
       ]
+    },
+    {
+      "id": 4,
+      "name": "business-components",
+      "case_number": 5,
+      "title": "门店选择与商品目录",
+      "task_type": "adapt",
+      "complexity": "complex",
+      "focus": "components/platform-isolation/support-boundaries/state",
+      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
+      "expected_output": "基于两个微信小程序 .mpx 页面保留已支持的公共能力和微信原行为；对没有现成 Web 实现的组件或局部能力做真实平台隔离并留下具体 TODO，由业务按实际方案接入，不临时补造替代 UI。",
+      "files": [
+        "eval-4-business-components/input/requirements.md",
+        "eval-4-business-components/input/src/pages/store-picker/index.mpx",
+        "eval-4-business-components/input/src/pages/catalog/index.mpx"
+      ],
+      "outputs": [
+        "src/pages/store-picker/index.mpx",
+        "src/pages/catalog/index.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "C5.1",
+          "category": "components",
+          "text": "检查 region picker 的支持边界。微信端必须保留 picker mode=\"region\"、regionCodes 和原 change 入口，并通过真实节点或属性平台条件避免把该模式当作 Web 已支持能力。题目没有提供 Web 地区组件，Web 边界应保留具体 TODO，说明业务需按实际行政区数据源和选择组件实现；不能用 regionOptions 的有限按钮、固定地区或手写简化选择器冒充完整 region picker。"
+        },
+        {
+          "id": "C5.2",
+          "category": "events",
+          "text": "静态追踪原微信地区选择状态链：event.detail.value/code 必须继续更新 regionNames、regionCodes，并由实际名称数组更新 regionText。不得为臆造的 Web 选择器复制另一套固定状态；TODO 应指出未来业务适配需复用同一组名称、编码和展示状态，但不要求当前交付实现 Web 选择事件。"
+        },
+        {
+          "id": "C5.3",
+          "category": "components",
+          "text": "检查 map 的支持边界。微信端必须保留原 map、latitude、longitude、storeMarkers 与 markertap，并与 Web 产物真实隔离。题目没有提供 Web 地图服务、组件或凭据，Web 边界应保留具体 TODO，提示业务按实际地图 SDK、凭据和交互实现；可以展示当前状态或未接入说明，但不能把门店按钮列表、浏览器原生同名 map 或伪地图 API 声称为等价地图。"
+        },
+        {
+          "id": "C5.4",
+          "category": "events",
+          "text": "静态追踪原微信门店选择链：event.detail.markerId 必须进入 selectStore 或等价公共逻辑，按真实 id 从 storeMarkers 查询并同时更新 selectedStoreId 与 selectedStoreName。不得为了伪造 Web 地图改成数组位置、硬编码门店或删除原标记事件；不要求当前交付新增 Web 门店选择入口。"
+        },
+        {
+          "id": "C5.5",
+          "category": "state",
+          "text": "检查页面现有状态和确认方法。当前地区、当前门店及已确认结果必须继续读取同一份 regionText 和 selectedStoreName，confirmSelection 在调用时组合最新值；TODO 或平台隔离不能切断微信原按钮、另建未消费状态或改成固定确认文案。"
+        },
+        {
+          "id": "C5.6",
+          "category": "components",
+          "text": "检查 swiper 的局部能力边界。当前 Web mpx-swiper 支持轮播、previous-margin、next-margin 和 change，但不消费 display-multiple-items。候选应保留同一个 swiper 的全部 banners、稳定 key、前后边距与 change 链，只将 display-multiple-items=\"2\" 限制到微信或其他真实支持平台，并留下具体 TODO，说明业务若要求 Web 同时展示两项需按实际轮播组件和交互方案实现。把 Web 改成静态 Grid、slice(0, 2)、删除第三项或重写整套轮播均不满足要求。"
+        },
+        {
+          "id": "C5.7",
+          "category": "components",
+          "text": "检查 grid-view/grid-item 的支持边界和原商品链。微信端必须保留 grid-view/grid-item、filteredProducts、稳定 id 及 selectProduct；题目没有提供 Web 列表或网格组件，Web 边界应保留具体 TODO，提示业务按实际列表规模、虚拟化和交互实现。不能自行用 CSS Grid、Flex、普通按钮列表或新增组件声称已经完成 Web 商品网格。"
+        },
+        {
+          "id": "C5.8",
+          "category": "components",
+          "text": "检查 image 的局部能力边界。微信端必须保留当前商品 cover、mode=\"aspectFill\" 与 lazy-load；当前 Web mpx-image 支持图片和 mode，但不消费 lazy-load。候选应保留组件已支持能力，只把 lazy-load 限制到支持平台，并留下具体 TODO，说明业务需按实际图片组件和加载策略实现 Web 懒加载；没有现成方案时不能改写成原生 img、IntersectionObserver 或自造加载器。"
+        },
+        {
+          "id": "C5.9",
+          "category": "components",
+          "text": "检查 page-container 的支持边界。微信端必须保留 page-container、filterVisible、分类选择、取消和确认事件，并与 Web 产物真实隔离。题目没有提供 Web dialog、drawer 或 portal，Web 边界应保留具体 TODO，提示业务按实际弹层、遮罩、滚动锁定和关闭交互实现；不能用页面内手写 fixed 遮罩声称等价完成 page-container。"
+        },
+        {
+          "id": "C5.10",
+          "category": "state",
+          "text": "只检查原筛选状态及 filteredProducts 计算链。打开时 draftCategory 从 appliedCategory 复制；选择分类只修改 draftCategory；取消不能改变 appliedCategory；确认才写入 appliedCategory 并关闭；filteredProducts 按最新 appliedCategory 从 products 计算。平台隔离和 TODO 不能删除、绕过或改坏这条状态链。"
+        }
+      ],
+      "scope_checks": [
+        {
+          "id": "S5.1",
+          "scored": false,
+          "text": "检查交付范围：只提交两个要求的 .mpx 页面；不新增组件、平台副本、第三方依赖或环境 API，不改框架，也不生成无关业务文件。没有现成 Web 实现时，不得用临时按钮选择器、门店列表、静态双卡 Grid、原生图片加载器或手写遮罩冒充组件等价实现。"
+        }
+      ],
+      "delivery_checks": [
+        {
+          "id": "D5.1",
+          "scored": false,
+          "text": "检查 TODO 质量与注释格式：每个未实现的 Web 边界应具体说明缺少的组件或属性能力，并提示业务按实际组件、数据源、SDK 和交互方案实现。模板、script、style 中必须分别使用 `<!-- TODO(web): 具体业务接入说明 -->`、`// TODO(web): 具体业务接入说明`、`/* TODO(web): 具体业务接入说明 */`；TODO 不能写成页面文字、字符串、错误类型注释或空说明。泛化的“待处理”或声称 TODO 已完成功能时记录静态告警。本项不进入功能分母。"
+        }
+      ]
     }
   ],
   "comparison": {
@@ -385,13 +474,13 @@
     ]
   },
   "scoring": {
-    "method": "binary_assertions_micro_primary_with_case_macro_diagnostic",
+    "method": "binary_assertions_case_equal_primary_with_micro_diagnostics",
     "scope": "static_source_review_only",
-    "assertion_count": 30,
+    "assertion_count": 40,
     "grader_method": "blind_separate_pass_source_review_with_deterministic_integrity_checks",
     "runtime_policy": "不执行 E2E 或运行验收，不设运行门禁，不计入功能分；待运行验证在主报告中单列。",
-    "delivery_policy": "说明检查不计功能分；缺失或待确认单独记录。",
-    "comparison_note": "主分按断言/采样等权计算，并单列 Case 宏平均用于观察题目难度差异；源码分与运行验收分离，不与旧口径直接横比。",
+    "delivery_policy": "交付说明与质量提示不计功能分；缺失或待确认单独记录。",
+    "comparison_note": "主分先计算每个 Case 内全部功能断言的通过率，再对五个 Case 等权平均，每个 Case 占 20%；Web、SSR、生成及全部断言微平均仅作诊断。源码分与运行验收分离，不与旧口径直接横比。",
     "buckets": {
       "web": [
         "C1.1",
@@ -413,7 +502,17 @@
         "C4.2",
         "C4.3",
         "C4.4",
-        "C4.10"
+        "C4.10",
+        "C5.1",
+        "C5.2",
+        "C5.3",
+        "C5.4",
+        "C5.5",
+        "C5.6",
+        "C5.7",
+        "C5.8",
+        "C5.9",
+        "C5.10"
       ],
       "ssr": [
         "C4.5",
@@ -430,7 +529,7 @@
         "C1.11"
       ]
     },
-    "primary": "adaptation assertion micro score: web + ssr; generation separate",
-    "secondary": "case macro average for difficulty diagnostics only"
+    "primary": "all functional assertions case-equal score: each case 20%",
+    "secondary": "assertion micro scores by all/web/ssr/generation for diagnostics only"
   }
 }

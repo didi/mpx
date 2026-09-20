@@ -46,7 +46,7 @@ class RunnerTests(unittest.TestCase):
     def dispatch(self, **kwargs):
         return runner.build_prompts(model="test-model", reasoning_effort="high", **kwargs)
 
-    def execute(self, dispatch, missing_last=False):
+    def execute(self, dispatch, missing_last=False, fresh=False):
         def fake(command, **kwargs):
             neutral = Path(kwargs['cwd'])
             self.assertNotEqual(neutral, runner.EVAL_WORKDIR)
@@ -70,12 +70,12 @@ class RunnerTests(unittest.TestCase):
             return CompletedProcess(command, 0, '{"type":"turn.completed","usage":{"input_tokens":10,"output_tokens":5}}\n', "")
         (runner.EVAL_WORKDIR / 'package.json').write_text('{"scripts":{"compile-validate":"node ../mpx2web/scripts/compile-validate.js"}}')
         with patch.object(runner.isolated_execution.subprocess, "run", side_effect=fake):
-            return runner.run_dispatch(dispatch)
+            return runner.run_dispatch(dispatch, fresh=fresh)
 
-    def test_plan_is_read_only_and_has_eight_dispatches(self):
+    def test_plan_is_read_only_and_has_ten_dispatches(self):
         before = runner.tree_hash(self.root)
         dispatches = self.dispatch()
-        self.assertEqual(len(dispatches), 8)
+        self.assertEqual(len(dispatches), 10)
         self.assertEqual(before, runner.tree_hash(self.root))
         self.assertTrue(all(d["fork_turns"] == "none" for d in dispatches))
         self.assertEqual({d["group"] for d in dispatches}, {"mpx2web", "no_skill"})
@@ -206,12 +206,33 @@ class RunnerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "已有结果"):
             runner.run_dispatch(d, resume=True)
 
+    def test_fresh_replaces_only_the_selected_generated_artifacts(self):
+        selected, untouched = self.dispatch(eval_ids=[0])
+        self.execute(selected)
+        self.execute(untouched)
+        untouched_output_hash = runner.tree_hash(Path(untouched["output_root"]))
+        untouched_run_hash = runner.tree_hash(Path(untouched["metrics_path"]).parent)
+        stale_output = Path(selected["output_root"]) / "stale.txt"
+        stale_run = Path(selected["metrics_path"]).parent / "stale.json"
+        stale_output.write_text("old candidate artifact")
+        stale_run.write_text("old run artifact")
+
+        with self.assertRaisesRegex(ValueError, "cannot be used together"):
+            runner.run_dispatch(selected, resume=True, fresh=True)
+        self.execute(selected, fresh=True)
+
+        self.assertTrue(runner.generation_complete(selected))
+        self.assertFalse(stale_output.exists())
+        self.assertFalse(stale_run.exists())
+        self.assertEqual(runner.tree_hash(Path(untouched["output_root"])), untouched_output_hash)
+        self.assertEqual(runner.tree_hash(Path(untouched["metrics_path"]).parent), untouched_run_hash)
+
     def test_samples_are_separate_and_never_publish_medians(self):
         rows = self.dispatch(samples=3)
-        self.assertEqual(len(rows), 24)
-        self.assertEqual(len({d["output_root"] for d in rows}), 24)
+        self.assertEqual(len(rows), 30)
+        self.assertEqual(len({d["output_root"] for d in rows}), 30)
         self.assertNotIn("run-1/outputs", rows[0]["output_root"])
-        self.assertIn("run-2/outputs", rows[8]["output_root"])
+        self.assertIn("run-2/outputs", rows[10]["output_root"])
 
     def test_invalid_group_and_traversal_rejected(self):
         with self.assertRaises(ValueError):
@@ -246,7 +267,7 @@ class RunnerTests(unittest.TestCase):
             self.assertIn(text, prompt)
         self.assertEqual([a["id"] for a in item["assertions"]], ["C1.1", "C1.2", "C1.4", "C1.5", "C1.6", "C1.7", "C1.8", "C1.9", "C1.10", "C1.11"])
         c15 = next(row["text"] for row in item["assertions"] if row["id"] == "C1.5")
-        self.assertIn("不得仅因位于同一页面、scroll-view 或组件链中", c15)
+        self.assertIn("不能把同一页面或组件链中的 row-group、row-list 等无关组件一并加入", c15)
         metadata = json.loads((self.root / "eval-0-style-layout/eval_metadata.json").read_text())
         self.assertEqual(set(metadata), {"eval_id", "eval_name", "prompt", "source_metadata"})
         self.assertEqual(metadata["prompt"], item["prompt"])
@@ -364,8 +385,8 @@ function recordReady () {}
 
     def test_split_criteria_and_delivery_checks_do_not_change_generation(self):
         config, _ = runner.load_configs()
-        self.assertEqual([len(item["assertions"]) for item in config["evals"]], [10, 5, 6, 9])
-        self.assertEqual(sum(len(item["assertions"]) for item in config["evals"]), 30)
+        self.assertEqual([len(item["assertions"]) for item in config["evals"]], [10, 5, 6, 9, 10])
+        self.assertEqual(sum(len(item["assertions"]) for item in config["evals"]), 40)
         self.assertNotIn("common_gates", config)
         self.assertEqual(config["evals"][0]["scope_checks"][0]["id"], "S1.1")
         c19 = next(row for row in config["evals"][0]["assertions"] if row["id"] == "C1.9")
@@ -433,10 +454,86 @@ function recordReady () {}
                 self.assertNotIn("notice 发送到页面接收", grade.build_grader_prompt(other, config))
         requirements = (self.root / "eval-1-events-instance/input/requirements.md").read_text()
         self.assertNotIn("连续点击两次后次数为 2", requirements)
-        self.assertIn("每次只递增一次", item["assertions"][1]["text"])
+        self.assertIn("通知计数只包含一次增量", item["assertions"][1]["text"])
         for dispatch in self.dispatch(eval_ids=[1]):
             for hint in ("notice 发送到页面接收", "$emit", "逐层转发", "第三个传播参数"):
                 self.assertNotIn(hint, dispatch["prompt"] + requirements)
+
+    def test_case_titles_are_neutral_business_descriptions(self):
+        config, _ = runner.load_configs()
+
+        self.assertEqual(
+            [item["title"] for item in config["evals"]],
+            ["样式与帮助卡片", "事件与组件交互", "内容页业务能力", "帮助中心详情页", "门店选择与商品目录"]
+        )
+        for item in config["evals"]:
+            for hint in ("支持边界", "旧版 Store", "Pinia", "TODO", "不支持", "强制"):
+                self.assertNotIn(hint, item["title"])
+
+    def test_component_business_case_is_static_api_free_and_source_backed(self):
+        config, _ = runner.load_configs()
+        item = config["evals"][4]
+        self.assertEqual(item["name"], "business-components")
+        self.assertEqual([row["id"] for row in item["assertions"]],
+                         ["C5.1", "C5.2", "C5.3", "C5.4", "C5.5",
+                          "C5.6", "C5.7", "C5.8", "C5.9", "C5.10"])
+        case = self.root / "eval-4-business-components"
+        visible = (case / "input/requirements.md").read_text()
+        for output in item["outputs"]:
+            visible += (case / output.replace("src/", "input/src/", 1)).read_text()
+        self.assertEqual(item["files"], [
+            "eval-4-business-components/input/requirements.md",
+            "eval-4-business-components/input/src/pages/store-picker/index.mpx",
+            "eval-4-business-components/input/src/pages/catalog/index.mpx"
+        ])
+        self.assertFalse(item.get("readonly_files"))
+        self.assertFalse(item.get("readonly_assertions"))
+        self.assertFalse(any(Path(path).suffix == ".vue" for path in item["files"]))
+        c58 = next(row["text"] for row in item["assertions"] if row["id"] == "C5.8")
+        self.assertIn("只把 lazy-load 限制到支持平台", c58)
+        self.assertIn("不能改写成原生 img", c58)
+        self.assertEqual([row["id"] for row in item["delivery_checks"]], ["D5.1"])
+        self.assertIn("TODO 质量与注释格式", item["delivery_checks"][0]["text"])
+        for marker in ("<!-- TODO(web):", "// TODO(web):", "/* TODO(web):"):
+            self.assertIn(marker, item["delivery_checks"][0]["text"])
+        for api in ("chooseLocation(", "getLocation(", "chooseMedia(", "uploadFile(", "requestPayment("):
+            self.assertNotIn(api, visible)
+        prompt = grade.build_grader_prompt(item, config)
+        self.assertIn("case 'multiSelector':", prompt)
+        self.assertIn("const TAG_NAME = 'map'", prompt)
+        self.assertIn("display-multiple-items", prompt)
+        self.assertIn("lazyLoad", prompt)
+        self.assertIn("不要求候选补造 Web 功能", prompt)
+        self.assertIn("TODO 是本题要求的诚实边界", prompt)
+        self.assertIn("错误类型注释或空说明均不合格", prompt)
+        dispatches = self.dispatch(eval_ids=[4])
+        self.assertEqual(len(dispatches), 2)
+        for dispatch in dispatches:
+            self.assertEqual(dispatch["required_outputs"], [
+                "src/pages/store-picker/index.mpx", "src/pages/catalog/index.mpx"
+            ])
+            self.assertNotIn("C5.1", dispatch["prompt"])
+            self.assertNotIn("C5.6", dispatch["prompt"])
+            self.assertIn("输出全部要求文件", dispatch["prompt"])
+            self.assertNotIn("Web 端接入题目提供的只读组件", dispatch["prompt"])
+        self.assertIn("# 输出要求", visible)
+        self.assertIn("TODO(web)", visible)
+        self.assertIn("不在页面内临时补造", visible)
+        self.assertNotIn("web-region-picker 接收", visible)
+        self.assertNotIn("允许使用动态 JSON、平台文件", visible)
+        self.assertNotIn("Grid、Flex、普通列表", visible)
+        self.assertNotIn("src/vendor", visible)
+
+    def test_business_component_case_has_no_readonly_web_components(self):
+        config, _ = runner.load_configs()
+        item = config["evals"][4]
+        case = self.root / "eval-4-business-components"
+        self.assertEqual(item.get("readonly_files", []), [])
+        self.assertEqual(item.get("readonly_assertions", {}), {})
+        self.assertFalse((case / "input/src/vendor").exists())
+        dispatches = self.dispatch(eval_ids=[4])
+        self.assertEqual(len(dispatches), 2)
+        self.assertTrue(all(".vue" not in dispatch["prompt"] for dispatch in dispatches))
 
     def test_incomplete_generation_cannot_be_graded(self):
         d = self.dispatch(eval_ids=[0], groups=["no_skill"])[0]
@@ -457,7 +554,7 @@ function recordReady () {}
         self.assertIn("名称编辑只验收确认、取消和状态更新", prompts[2])
         self.assertIn("implemented[key].remove", prompts[2])
         self.assertIn("global.__mpx.config.webConfig.routeConfig", prompts[3])
-        self.assertIn("不以同名但未被消费的字段或另一组 # 地址", prompts[3])
+        self.assertIn("未被构建代码消费的同名字段或另一套 # 地址不能作为证据", prompts[3])
         self.assertIn("return createElement('div'", prompts[0])
         self.assertIn("this[callbackName].apply(this, params)", prompts[1])
         self.assertIn("return currentInstance && { proxy: currentInstance }", prompts[1])
@@ -506,12 +603,12 @@ function recordReady () {}
         self.assertIn("Web inheritEvent 会透传原生事件 target", prompt)
         self.assertIn("不能仅因出现 event.target 判失败", prompt)
         assertions = {row["id"]: row["text"] for row in config["evals"][2]["assertions"]}
-        self.assertIn("不要求必须出现字面量 TODO", assertions["C3.1"])
-        self.assertIn("JS 中的 @mpx 条件注释不是有效分支", assertions["C3.2"])
-        self.assertIn("仅在模板隐藏 native-scanner 不足以证明隔离", assertions["C3.3"])
-        self.assertIn("Web JSON 仍通过 usingComponents 解析", assertions["C3.3"])
-        self.assertIn("JS 中的 @mpx 条件注释不是有效分支", assertions["C3.5"])
-        self.assertIn("JSON 中的 @mpx 条件注释会被当作普通注释", assertions["C3.6"])
+        self.assertIn("说明不要求出现字面量 TODO", assertions["C3.1"])
+        self.assertIn("JS 中的 @mpx 条件注释不是有效平台分支", assertions["C3.2"])
+        self.assertIn("只隐藏模板节点不够", assertions["C3.3"])
+        self.assertIn("Web JSON 若仍通过 usingComponents 解析", assertions["C3.3"])
+        self.assertIn("JS 中的 @mpx 条件注释不是有效平台分支", assertions["C3.5"])
+        self.assertIn("JSON 中的 @mpx 注释不能隔离 plugins 或 usingComponents", assertions["C3.6"])
         self.assertIn("inheritEvent 透传原生 target", assertions["C3.4"])
         for index in (0, 1, 3):
             other = grade.build_grader_prompt(config["evals"][index], config)
@@ -540,16 +637,16 @@ function recordReady () {}
         self.assertIn("C4.9 只评 SSR 服务端的浏览器 API 安全", prompts[3])
         self.assertIn("C4.10 只评微信 onLoad 加载链保留", prompts[3])
         assertions = {row["id"]: row["text"] for row in config["evals"][3]["assertions"]}
-        self.assertIn("旧 createStore 迁移到 @mpxjs/pinia", assertions["C4.6"])
-        self.assertIn("客户端是否重复请求及展开/收起交互属于运行验证", assertions["C4.6"])
-        self.assertIn("不得只因未使用 Pinia 在本项再次扣分", assertions["C4.7"])
-        self.assertIn("Pinia 迁移与 hydration 统一归 C4.6", assertions["C4.7"])
+        self.assertIn("旧 createStore 到 @mpxjs/pinia 的迁移代码", assertions["C4.6"])
+        self.assertIn("重复请求和展开/收起效果只进入待运行验证", assertions["C4.6"])
+        self.assertIn("每次 SSR 请求创建独立状态实例", assertions["C4.7"])
+        self.assertIn("Pinia 迁移与恢复由 C4.6 判断", assertions["C4.7"])
         self.assertNotIn("a=40ms", assertions["C4.7"])
         self.assertIn("a=40ms、b=10ms", assertions["C4.8"])
-        self.assertIn("无条件提交晚到结果时不通过", assertions["C4.8"])
-        self.assertIn("浏览器专属逻辑", assertions["C4.9"])
+        self.assertIn("无条件提交异步结果，都不满足要求", assertions["C4.8"])
+        self.assertIn("仅客户端可达的分支可以使用", assertions["C4.9"])
         self.assertNotIn("微信 onLoad 加载链保留", assertions["C4.9"])
-        self.assertIn("微信端页面 onLoad", assertions["C4.10"])
+        self.assertIn("页面源码中必须保留 onLoad", assertions["C4.10"])
         for index in (0, 1, 2):
             self.assertNotIn("C4.5～C4.10 沿服务端预取 Promise", prompts[index])
             self.assertNotIn("options.mode || 'hash'", prompts[index])
@@ -624,29 +721,37 @@ function recordReady () {}
             runner.write_json(Path(d["metrics_path"]).parent / "grading.json", result)
         with patch("subprocess.Popen", side_effect=AssertionError("static report must not launch tools")):
             report = aggregate_benchmark.aggregate("test-model", "high")
-        self.assertEqual(len(report["runs"]), 8)
+        self.assertEqual(len(report["runs"]), 10)
         self.assertEqual(report["metadata"]["runs_per_configuration"], 1)
         self.assertEqual(list(report["run_summary"]), ["mpx2web", "no_skill", "delta"])
         self.assertTrue(all(row["result"]["tokens"] == 15 for row in report["runs"]))
         self.assertEqual(report["metadata"]["grading_scope"], "source_review_only")
         for group in ("mpx2web", "no_skill"):
-            self.assertEqual(report["run_summary"][group]["tokens"]["mean"], 60)
-            self.assertEqual(report["classification"]["adaptation"]["counts"][group], {"passed": 25, "total": 25})
+            self.assertEqual(report["run_summary"][group]["tokens"]["mean"], 75)
+            self.assertEqual(report["classification"]["adaptation"]["counts"][group], {"passed": 35, "total": 35})
+            self.assertEqual(report["classification"]["all"]["counts"][group], {"passed": 40, "total": 40})
             self.assertEqual(report["review_status"]["adaptation"][group]["confirmed_pass_rate"], 1)
             self.assertEqual(report["review_status"]["all_assertions"][group]["confirmed_pass_rate"], 1)
             self.assertEqual(report["scope_status"][group]["invalid"], 0)
-        self.assertEqual(report["review_status"]["primary_scope"], "adaptation")
-        self.assertEqual(len(report["runtime_followups"]), 8)
+        self.assertEqual(report["review_status"]["primary_scope"], "all_cases")
+        self.assertEqual(len(report["runtime_followups"]), 10)
         self.assertTrue(all(row["runtime_followups"] for row in report["runs"]))
         self.assertTrue(report["metadata"]["scope_comparison_eligible"])
         self.assertFalse(report["metadata"]["formal_publishable"])
         self.assertEqual(report["metadata"]["benchmark_tier"], "development")
-        self.assertIn("只检查源码", (self.root / "benchmark.md").read_text())
-        self.assertIn("开发级源码结果", (self.root / "benchmark.md").read_text())
-        self.assertIn("待运行验证（不计分）", (self.root / "benchmark.md").read_text())
-        self.assertNotIn(" ± ", (self.root / "benchmark.md").read_text())
+        markdown = (self.root / "benchmark.md").read_text()
+        self.assertIn("# Skill Benchmark: mpx2web eval comparison", markdown)
+        self.assertIn("## Summary", markdown)
+        self.assertIn("## 平均执行耗时", markdown)
+        self.assertIn("## 平均 Token 消耗", markdown)
+        self.assertIn("开发级源码结果", markdown)
+        self.assertIn("Case 等权主分", markdown)
+        self.assertIn("待运行验证（不计分）", markdown)
+        self.assertIn(" ± ", markdown)
+        for group in ("mpx2web", "no_skill"):
+            self.assertEqual(report["case_run_summary"][group]["tokens"]["mean"], 15)
         self.assertEqual(report["metadata"]["score_weighting"],
-                         "assertion_micro_per_sample_primary_case_macro_diagnostic")
+                         "case_equal_per_sample_primary_assertion_micro_diagnostic")
         self.assertIn("不能据此", " ".join(report["notes"]))
         Path(dispatches[0]["output_path"]).write_text("changed after grading")
         with self.assertRaisesRegex(ValueError, "stale generation"):
@@ -727,23 +832,25 @@ class SharedReportTests(unittest.TestCase):
         self.assertEqual(rows[0]["runtime_followups"], ["SSR 首屏", "微信 onLoad"])
         self.assertEqual(rows[0]["notes"], ["SSR 首屏", "微信 onLoad"])
 
-    def test_assertion_micro_is_primary_and_case_macro_is_diagnostic(self):
+    def test_case_equal_is_primary_and_assertion_micro_is_diagnostic(self):
         import static_review
         common = runner.load_module("aggregate_micro_test", runner.SKILL_CREATOR / "scripts/aggregate_benchmark.py")
         runs = [
-            {"configuration": "mpx2web", "run_number": 1,
+            {"eval_id": 0, "configuration": "mpx2web", "run_number": 1,
              "result": {"passed": 1, "total": 1, "pass_rate": 1,
                         "time_seconds": 1, "tokens": 10}},
-            {"configuration": "mpx2web", "run_number": 1,
+            {"eval_id": 1, "configuration": "mpx2web", "run_number": 1,
              "result": {"passed": 0, "total": 9, "pass_rate": 0,
                         "time_seconds": 2, "tokens": 20}},
         ]
         micro = static_review.aggregate_assertion_micro({"mpx2web": runs, "no_skill": []}, common)
-        macro = common.aggregate_results({"mpx2web": [row["result"] for row in runs], "no_skill": []})
+        primary = static_review.aggregate_case_equal(runs, [0, 1], common)
         self.assertEqual(micro["mpx2web"]["pass_rate"]["mean"], 0.1)
         self.assertEqual(micro["mpx2web"]["time_seconds"]["mean"], 3)
         self.assertEqual(micro["mpx2web"]["tokens"]["mean"], 30)
-        self.assertEqual(macro["mpx2web"]["pass_rate"]["mean"], 0.5)
+        self.assertEqual(primary["mpx2web"]["pass_rate"]["mean"], 0.5)
+        self.assertEqual(primary["mpx2web"]["time_seconds"]["mean"], 3)
+        self.assertEqual(primary["mpx2web"]["tokens"]["mean"], 30)
 
     def test_nested_outputs_and_real_sample_count(self):
         common = runner.load_module("aggregate_under_test", runner.SKILL_CREATOR / "scripts/aggregate_benchmark.py")

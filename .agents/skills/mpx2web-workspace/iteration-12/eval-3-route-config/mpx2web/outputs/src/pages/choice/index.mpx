@@ -10,27 +10,21 @@ import { createPage, onLoad } from '@mpxjs/core'
 
 createPage({
   setup (props, { getOpenerEventChannel }) {
-    const eventChannel = getOpenerEventChannel()
-    let openedFromLink = false
+    let openerEventChannel
 
     onLoad(query => {
-      openedFromLink = query.source === 'link'
-      if (!openedFromLink) eventChannel.emit('ready')
+      openerEventChannel = getOpenerEventChannel()
+      // “通过链接选择”不触发原有的 ready 状态变化。
+      if (query.source !== 'link' && openerEventChannel) {
+        openerEventChannel.emit('ready')
+      }
     })
 
     return {
       confirm (label) {
-        eventChannel.emit('choice', label)
-
-        // navigator 打开的页面没有注册 EventChannel 监听，沿用原页面栈回传。
-        if (openedFromLink) {
-          const pages = getCurrentPages()
-          const opener = pages[pages.length - 2]
-          if (opener && typeof opener.receiveChoice === 'function') {
-            opener.receiveChoice(label)
-          }
+        if (openerEventChannel) {
+          openerEventChannel.emit('choiceSelected', label)
         }
-
         wx.navigateBack({ delta: 1 })
       }
     }

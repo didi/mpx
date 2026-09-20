@@ -70,6 +70,37 @@ def aggregate_assertion_micro(runs_by_group, base):
     return base.aggregate_results(samples_by_group)
 
 
+def aggregate_case_equal(runs, case_ids, base):
+    """Average each complete Case equally inside a sample, then aggregate samples."""
+    expected = set(case_ids)
+    samples_by_group = {group: {} for group in GROUPS}
+    for run in runs:
+        group = run["configuration"]
+        number = run.get("run_number", 1)
+        cases = samples_by_group[group].setdefault(number, {})
+        case_id = run["eval_id"]
+        if case_id in cases:
+            raise ValueError(f"duplicate Case {case_id} in {group} sample {number}")
+        result = run.get("result", run)
+        cases[case_id] = {
+            "pass_rate": result["pass_rate"],
+            "time_seconds": result.get("time_seconds", 0.0),
+            "tokens": result.get("tokens", 0),
+        }
+    groups = {group: [] for group in GROUPS}
+    for group, samples in samples_by_group.items():
+        for number, cases in sorted(samples.items()):
+            if set(cases) != expected:
+                raise ValueError(f"missing/unexpected Cases in {group} sample {number}")
+            groups[group].append({
+                "run_number": number,
+                "pass_rate": sum(row["pass_rate"] for row in cases.values()) / len(expected),
+                "time_seconds": sum(row["time_seconds"] for row in cases.values()),
+                "tokens": sum(row["tokens"] for row in cases.values()),
+            })
+    return base.aggregate_results(groups)
+
+
 def subset(runs, ids, base):
     groups = {group: [] for group in GROUPS}
     totals = {group: {"passed": 0, "total": 0} for group in GROUPS}
@@ -97,4 +128,5 @@ def classify(runs, config, base):
         raise ValueError("every assertion must belong to exactly one score bucket")
     sections = {name: subset(runs, set(ids), base) for name, ids in buckets.items()}
     sections["adaptation"] = subset(runs, set(buckets["web"] + buckets["ssr"]), base)
+    sections["all"] = subset(runs, set(all_ids), base)
     return sections

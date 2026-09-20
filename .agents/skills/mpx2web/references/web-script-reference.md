@@ -7,6 +7,7 @@
 - [Web 路由与页面状态](#web-路由与页面状态)
 - [`getCurrentInstance()` 返回结构](#getcurrentinstance-返回结构)
 - [与微信小程序的实例方法差异](#与微信小程序的实例方法差异)
+  - [组件实例查询](#组件实例查询)
   - [`triggerEvent` 的传播选项](#triggerevent-的传播选项)
   - [`$forceUpdate` 与 setup `forceUpdate`](#forceupdate-与-setup-forceupdate)
   - [关系能力](#关系能力)
@@ -55,17 +56,29 @@ const component = instance && instance.proxy
 
 同名实例能力在 Web 与小程序上的使用边界如下：
 
-- `selectComponent` / `selectAllComponents`：只使用简单 selector，不使用包含空格或 `>` 的关系选择器。
-- `createSelectorQuery` / `createIntersectionObserver`：仅在客户端挂载后调用，SSR 阶段不可用；观察结果受 Web 页面布局和滚动容器影响。
+- `selectComponent` / `selectAllComponents`：只使用简单 selector，不使用包含空格或 `>` 的关系选择器；匹配限制见下一节。
+- `createSelectorQuery` / `createIntersectionObserver`：调用时机、SSR 边界和 Web 返回结构统一见 [Web 环境 API 参考](./web-api-reference.md#createselectorquery)；观察结果受页面布局和滚动容器影响。
 - `getOpenerEventChannel`：Web 同时提供页面实例方法和 setup context 入口，已有任一正确写法都可保留。
+
+### 组件实例查询
+
+选择器语法有效不代表 Web 运行时一定能找到组件。当前 Web `selectComponent` matcher 从组件 VNode 的 `data.attrs.id` 和 `data.staticClass` 匹配简单 id/class；模板中的静态 `class` 经过 Mpx Web 编译后也可能变成动态 `:class`，此时不能仅凭源模板中的 `.foo` 推断 matcher 仍能读取该 class。
+
+适配组件查询时按完整调用链检查：
+
+1. 列出每个 `selectComponent` 和 `selectAllComponents` 调用、目标组件及预期数量，单项查询和批量查询分别核对。
+2. 查看目标版本编译后的组件标识和运行时 matcher；源模板里存在 class、项目能编译通过，都不能单独证明查询可用。
+3. 单项查询优先使用能被 matcher 读取的稳定 `id`；直接引用组件可使用 `wx:ref`，`wx:for` 中的同名 `wx:ref` 会得到实例数组。若查询只是为了批量修改列表项，优先改为由父级状态驱动，避免依赖运行时遍历组件。
+4. 保留选择器方案时，确保每个目标都具有 matcher 实际读取的标识；不要只修复首项查询而遗留同类批量 class 查询。
+
+`createSelectorQuery` 查询节点布局走另一套节点查询链，不能用它的 CSS 选择器能力反推 `selectComponent` 的组件实例 matcher。
 
 ### `triggerEvent` 的传播选项
 
 使用 `this.triggerEvent('notice', detail)` 发送自定义事件，父组件在子组件标签上通过 `bindnotice` 监听，从 `event.detail` 读取数据。
 
 - Web 不支持 `bubbles`、`composed`、`capturePhase` 传播选项，不依赖它们实现跨层通知。
-- 需要跨层通知时，在 Web 侧显式监听并转发，或使用项目已有通信方案；保留原有数据，避免与微信传播链重复通知。
-- 接收关系明确时补全通知；缺少接收方或接入协议时才标注 TODO，不能只删除参数或用空回调代替。
+- 需要跨层通知时，在 Web 侧显式监听并转发，或使用项目已有通信方案；保留原有数据，避免与微信传播链重复通知。接收关系不明确时不能只删除传播参数或用空回调代替。
 
 ### `$forceUpdate` 与 setup `forceUpdate`
 
@@ -151,7 +164,7 @@ const pageOptions = {
   },
   methods: {
     shareOnWeb () {
-      // TODO: 接入业务指定的 Web 分享 SDK
+      // TODO(web): 接入业务指定的 Web 分享 SDK。
     }
   }
 }
@@ -165,7 +178,7 @@ if (__mpx_mode__ === 'wx') {
 createPage(pageOptions)
 ```
 
-上述示例保留微信分享声明，并在 Web 中通过有效的登记或条件选项排除它们；已有有效的平台条件 options 无需机械改写。Web 分享优先沿用项目已有方案；尚未确定方案时标明待接入，不把复制链接等行为自行当作等价分享。
+上述示例保留微信分享声明，并在 Web 中通过有效的登记或条件选项排除它们；已有有效的平台条件 options 无需机械改写。复制链接只有在业务协议明确采用该行为时才属于 Web 分享方案。
 
 ---
 

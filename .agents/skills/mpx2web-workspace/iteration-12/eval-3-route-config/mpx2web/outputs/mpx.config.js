@@ -8,7 +8,7 @@ module.exports = {
           useSSR: true,
           transRpxFn: function (match, value) {
             if (value === '0') return value
-            return `${Number(value) / 2}px`
+            return `${value * 0.5}px`
           }
         }
       }

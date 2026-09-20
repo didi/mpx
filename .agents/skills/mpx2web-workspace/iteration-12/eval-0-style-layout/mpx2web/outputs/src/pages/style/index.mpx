@@ -15,12 +15,12 @@
     <scroll-view class="feed" scroll-y="{{true}}">
       <row-group />
     </scroll-view>
-    <view class="scroll-action" bindtap="recordTap">列表悬浮入口</view>
     <movable-area class="move-area">
       <movable-view class="move-item" direction="all">
         <text>拖动此块</text>
       </movable-view>
     </movable-area>
+    <view class="scroll-action" bindtap="recordTap">列表悬浮入口</view>
     <view class="move-action" bindtap="recordTap">移动区悬浮入口</view>
     <text>入口点击：{{tapCount}}</text>
   </view>

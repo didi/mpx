@@ -1,5 +1,5 @@
 {
-  "description": "基于 RN prompt 模板：两组共享题面、目标、环境和输出要求，仅 Skill 授权不同",
+  "description": "两组共享任务输入、只读环境和交付文件列表，仅 Skill 授权不同",
   "variables": {
     "TASK_PROMPT": "evals.json 的 prompt",
     "WORKDIR": "评测工程根目录",
@@ -19,11 +19,11 @@
   "templates": {
     "mpx2web": {
       "label": "Has Skill",
-      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n任务：{{TASK_PROMPT}}\n\n目标：同一套源码兼容 wx 和 web；SSR 只在题面要求时处理。\n工作目录：将 {{WORKDIR}} 作为所有 shell 命令的固定工作目录。\n输入：完整读取 {{INPUT_PATH}} 中的需求、源码和依赖。\n已有环境文件（不是参考答案，保持不变）：\n{{CONTEXT_FILES}}\n\nSkill 参考：首先完整读取 {{MPX2WEB_SKILL_PATH}}，按其路由读取 {{MPX2WEB_REFS_PATH}} 中必要内容并完成任务。不要读取其他 Skill。\n\n评测隔离：不要读取 evals.json、eval_metadata.json、grade.py、benchmark、其他候选产物或历史结果。不得修改输入、框架或既有环境文件。\n输出：把下列完整文件写入 {{OUTPUT_PATH}}，保持相对目录结构；必要依赖可补充，但不要新增无关文件。app.mpx/mpx.config.js 仅按任务实际需要改动，不要求每题修改。\n{{OUTPUT_FILES}}\n"
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n任务：{{TASK_PROMPT}}\n\n工作目录：将 {{WORKDIR}} 作为所有 shell 命令的固定工作目录。\n输入：完整读取 {{INPUT_PATH}} 中的需求和源码。\n只读环境文件：\n{{CONTEXT_FILES}}\n\nSkill 参考：首先完整读取 {{MPX2WEB_SKILL_PATH}}，按其路由读取 {{MPX2WEB_REFS_PATH}} 中必要内容并完成任务。不要读取其他 Skill。\n\n评测隔离：不要读取 evals.json、eval_metadata.json、grade.py、benchmark、其他候选产物或历史结果。不得修改输入、框架或只读环境文件。\n输出：把下列完整文件写入 {{OUTPUT_PATH}}，保持相对目录结构，不要新增无关文件。\n{{OUTPUT_FILES}}\n"
     },
     "no_skill": {
       "label": "No Skill",
-      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n任务：{{TASK_PROMPT}}\n\n目标：同一套源码兼容 wx 和 web；SSR 只在题面要求时处理。\n工作目录：将 {{WORKDIR}} 作为所有 shell 命令的固定工作目录。\n输入：完整读取 {{INPUT_PATH}} 中的需求、源码和依赖。\n已有环境文件（不是参考答案，保持不变）：\n{{CONTEXT_FILES}}\n\n这是用户明确要求的 No Skill 基线：不得读取或使用任何 Skill、Skill references 或历史评测答案，仅凭自身知识和本题输入完成任务。\n\n评测隔离：不要读取 evals.json、eval_metadata.json、grade.py、benchmark、其他候选产物或历史结果。不得修改输入、框架或既有环境文件。\n输出：把下列完整文件写入 {{OUTPUT_PATH}}，保持相对目录结构；必要依赖可补充，但不要新增无关文件。app.mpx/mpx.config.js 仅按任务实际需要改动，不要求每题修改。\n{{OUTPUT_FILES}}\n"
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n任务：{{TASK_PROMPT}}\n\n工作目录：将 {{WORKDIR}} 作为所有 shell 命令的固定工作目录。\n输入：完整读取 {{INPUT_PATH}} 中的需求和源码。\n只读环境文件：\n{{CONTEXT_FILES}}\n\n这是用户明确要求的 No Skill 基线：不得读取或使用任何 Skill、Skill references 或历史评测答案，仅凭自身知识和本题输入完成任务。\n\n评测隔离：不要读取 evals.json、eval_metadata.json、grade.py、benchmark、其他候选产物或历史结果。不得修改输入、框架或只读环境文件。\n输出：把下列完整文件写入 {{OUTPUT_PATH}}，保持相对目录结构，不要新增无关文件。\n{{OUTPUT_FILES}}\n"
     }
   }
 }

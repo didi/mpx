@@ -1,10 +1,18 @@
 <template>
-  <view class="help-item__content item-class">
-    <text wx:if="{{expanded}}" class="help-item__description">{{description}}</text>
-    <view class="help-item__toggle" bindtap="toggleDescription">
-      {{expanded ? '收起说明' : '展开说明'}}
+  <view class="help-item item-class">
+    <view class="help-item__header">
+      <text class="help-item__title">{{title}}</text>
+      <button class="help-item__toggle" size="mini" bindtap="toggleDescription">
+        {{expanded ? '收起' : '展开'}}
+      </button>
     </view>
-    <button class="help-item__button" bindtap="openFullHelp">查看完整帮助</button>
+    <view wx:if="{{expanded}}" class="help-item__description">{{description}}</view>
+    <button
+      wx:if="{{helpUrl}}"
+      class="help-item__link"
+      size="mini"
+      bindtap="openFullHelp"
+    >查看完整帮助</button>
   </view>
 </template>
 
@@ -14,8 +22,9 @@ import { navigateTo } from '@mpxjs/api-proxy'
 
 createComponent({
   properties: {
-    description: String,
-    helpUrl: String
+    title: { type: String, value: '' },
+    description: { type: String, value: '' },
+    helpUrl: { type: String, value: '' }
   },
   externalClasses: ['item-class'],
   data: {
@@ -27,6 +36,7 @@ createComponent({
     },
     openFullHelp () {
       if (!this.helpUrl) return
+
       navigateTo({
         url: `/pages/common/webview?url=${encodeURIComponent(this.helpUrl)}`
       })
@@ -36,40 +46,17 @@ createComponent({
 </script>
 
 <style scoped>
-.help-item__content {
-  box-sizing: border-box;
-  color: inherit;
-}
-
-.help-item__description {
-  display: block;
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
-
-.help-item__toggle {
-  display: inline-block;
-  margin-bottom: 10px;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.help-item__button {
-  box-sizing: border-box;
-  width: 100%;
+.help-item { box-sizing: border-box; }
+.help-item__header { display: flex; align-items: center; justify-content: space-between; }
+.help-item__title { font-size: 16px; font-weight: 600; }
+.help-item__description { margin-top: 8px; line-height: 1.6; }
+.help-item__toggle,
+.help-item__link {
   margin: 0;
-  padding: 8px 12px;
-  color: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-  background-color: var(--btn_wrapper_bg, #2A2F3F);
-  border: 0;
-  border-radius: 4px;
+  color: #fff;
+  background: var(--btn_wrapper_bg, #2A2F3F);
 }
-
-.help-item__button::after {
-  border: 0;
-}
+.help-item__link { margin-top: 10px; }
 </style>
 
 <script type="application/json">

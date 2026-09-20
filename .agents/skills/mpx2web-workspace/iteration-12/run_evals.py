@@ -76,6 +76,13 @@ def load_configs():
                 raise ValueError(f"missing input/context: {name}")
         for name in item["outputs"]:
             inside(case, name)
+        readonly = set(item.get("readonly_files", []))
+        readonly_assertions = item.get("readonly_assertions", {})
+        if set(readonly_assertions) != readonly:
+            raise ValueError(f"readonly assertion mapping drift: {case}")
+        assertion_ids = {row["id"] for row in item["assertions"]}
+        if any(not ids or set(ids) - assertion_ids for ids in readonly_assertions.values()):
+            raise ValueError(f"invalid readonly assertion mapping: {case}")
         metadata = json.loads((case / "eval_metadata.json").read_text())
         expected_metadata = {
             "eval_id": item["id"],
@@ -192,10 +199,32 @@ def collection_retry_allowed(dispatch, result):
             and record.get('transcript_digest') == hashlib.sha256((run / 'agent.jsonl').read_bytes()).hexdigest())
 
 
-def run_dispatch(dispatch, codex_bin="codex", resume=False):
+def remove_dispatch_artifacts(dispatch):
+    """Delete only this dispatch's generated run metadata and candidate output."""
+    run = Path(dispatch["metrics_path"]).parent
+    output = Path(dispatch["output_root"])
+    workspace = WORKSPACE.resolve()
+    targets = {run, output}
+    for target in targets:
+        resolved = target.resolve()
+        resolved.relative_to(workspace)
+        if resolved == workspace:
+            raise ValueError("refusing to remove the iteration workspace")
+    for target in sorted(targets, key=lambda path: len(path.parts), reverse=True):
+        if target.is_symlink() or target.is_file():
+            target.unlink()
+        elif target.exists():
+            shutil.rmtree(target)
+
+
+def run_dispatch(dispatch, codex_bin="codex", resume=False, fresh=False):
+    if resume and fresh:
+        raise ValueError("--resume and --fresh cannot be used together")
     run = Path(dispatch["metrics_path"]).parent
     run.resolve().relative_to(WORKSPACE.resolve())
     Path(dispatch["output_root"]).resolve().relative_to(WORKSPACE.resolve())
+    if fresh:
+        remove_dispatch_artifacts(dispatch)
     run.mkdir(parents=True, exist_ok=True)
     with (run / ".run.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -205,9 +234,9 @@ def run_dispatch(dispatch, codex_bin="codex", resume=False):
         if (run / "run.json").exists():
             previous = json.loads((run / "run.json").read_text())
             if previous.get("fingerprint") != dispatch["fingerprint"] and not collection_retry_allowed(dispatch, previous):
-                raise ValueError(f"{run}: 配置已变，不能混用旧结果；请使用新的 iteration")
+                raise ValueError(f"{run}: 配置已变，不能混用旧结果；请使用新的 iteration，或确认丢弃旧结果后使用 --fresh")
             if previous.get("returncode") == 0 and previous.get("output_exists"):
-                raise ValueError(f"{run}: 已有结果或产物被改动；不覆盖，请核对后使用 --resume")
+                raise ValueError(f"{run}: 已有结果的产物已改动；不覆盖。要重新生成请显式使用 --fresh")
         output = Path(dispatch["output_root"])
         if output.exists():
             output.resolve().relative_to(WORKSPACE.resolve())
@@ -243,12 +272,12 @@ def run_dispatch(dispatch, codex_bin="codex", resume=False):
         return result
 
 
-def run_dispatches(dispatches, max_workers=3, codex_bin="codex", resume=False):
+def run_dispatches(dispatches, max_workers=3, codex_bin="codex", resume=False, fresh=False):
     if max_workers < 1:
         raise ValueError("max-workers must be positive")
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
-        pending = {pool.submit(run_dispatch, d, codex_bin, resume): d for d in dispatches}
+        pending = {pool.submit(run_dispatch, d, codex_bin, resume, fresh): d for d in dispatches}
         started = time.monotonic()
         while pending:
             done, _ = concurrent.futures.wait(pending, timeout=30, return_when=concurrent.futures.FIRST_COMPLETED)
@@ -268,14 +297,18 @@ def main():
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-workers", "--jobs", type=int, default=3)
     parser.add_argument("--samples", type=int, default=1)
-    parser.add_argument("--resume", action="store_true")
+    reuse = parser.add_mutually_exclusive_group()
+    reuse.add_argument("--resume", action="store_true",
+                       help="skip only completed runs whose configuration and outputs are unchanged")
+    reuse.add_argument("--fresh", action="store_true",
+                       help="delete the selected generated runs and outputs, then run them again")
     parser.add_argument("--codex-bin", default="codex")
     args = parser.parse_args()
     dispatches = build_prompts(args.evals, args.groups, args.model, args.reasoning_effort, args.samples)
     if not args.execute:
         print(json.dumps(dispatches, ensure_ascii=False, indent=2))
         return
-    results = run_dispatches(dispatches, args.max_workers, args.codex_bin, args.resume)
+    results = run_dispatches(dispatches, args.max_workers, args.codex_bin, args.resume, args.fresh)
     if any(r["returncode"] != 0 or not r["output_exists"] for r in results):
         raise SystemExit(1)
 

@@ -3,7 +3,6 @@
 </template>
 <script>
 import { createComponent } from '@mpxjs/core'
-
 createComponent({})
 </script>
 <style scoped>

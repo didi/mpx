@@ -27,6 +27,8 @@
   - [页面滚动与下拉刷新](#页面滚动与下拉刷新)
   - [TabBar](#tabbar)
   - [createAnimation](#createanimation)
+  - [createSelectorQuery](#createselectorquery)
+  - [createIntersectionObserver](#createintersectionobserver)
   - [nextTick](#nexttick)
   - [窗口尺寸监听](#窗口尺寸监听)
 - [网络](#网络)
@@ -76,7 +78,7 @@ mpx.use(apiProxy, {
 ### 跨平台 API 改造决策
 
 - 先查本文支持范围。API Proxy 已支持的能力继续走项目已有的官方调用路径：可保留会被跨端编译转换的 `wx.xxx`，可沿用应用入口配置后的 `mpx.xxx`，也可在不依赖应用级配置时使用 `@mpxjs/api-proxy` 命名导入。不要因为输出 Web 而增加平台分支或机械改名。
-- 只有 Web 不支持的宿主能力才做最小范围条件编译；业务未提供 Bridge 或 SDK 协议时只保留 TODO，不虚构接口。
+- 本文标为不可用、不支持或未列出的宿主能力统一执行 Skill 的[待接入规则](../SKILL.md#统一待接入规则)。各 API 章节只说明支持状态和具体差异。
 - 命名导入是官方用法，但它不继承应用入口的 `options`、`custom` 与 Promise 化配置。只有调用不依赖这些配置时才沿用或采用命名导入；依赖统一配置时使用应用级 `mpx.xxx`，或保留会被编译转换的宿主调用。
 - 不为已支持 API 再增加 `fetch`、浏览器跳转、弹窗或无业务协议的通用包装层；保持原业务调用链，只隔离真正缺失的能力。
 
@@ -97,11 +99,13 @@ mpx.use(apiProxy, {
 
 ### 支持范围
 
-本文是常用 API 及其 Web 差异说明，不是完整支持清单。未列出的 API 应核对当前 `packages/api-proxy/src/platform` 下的导出、Web 实现及所需参数、返回值，不能仅因文档遗漏就判为不支持；例如 `createSelectorQuery`、`createIntersectionObserver` 均有 `index.web.js` 实现。确认能力整体或局部缺失后，再按业务协议处理受影响部分；没有替代协议时明确 TODO 接入边界，不自行停用已支持的能力。
+本文按当前 `packages/api-proxy/src/platform/api/**/index.web.js` 的公开业务 API 维护完整 Web 支持清单。本文列为支持的 API 才可按 Web 已支持能力处理；列为不可用的导出按不支持处理；本文未列出的 API 也视为 Web 不支持。
+
+`next-tick/index.web.js` 额外导出的 `isNative` 是 `nextTick` 的内部调度辅助函数，不属于业务 API，不应在业务代码中调用。
 
 ### 浏览器与 SSR
 
-依赖界面、媒体、位置、网络状态或浏览器存储的 API 应在客户端生命周期内调用；需要操作页面节点的 API 应在组件挂载后调用。SSR 渲染阶段不要调用此类 API。`base64ToArrayBuffer`、`arrayBufferToBase64` 等纯 JavaScript 能力不受此限制。
+依赖界面、媒体、位置、网络状态或浏览器存储的 API 应在客户端生命周期内调用；需要操作页面节点的 API 应在组件挂载后调用。SSR 渲染阶段不要调用此类 API；`createSelectorQuery`、`createIntersectionObserver` 当前会输出警告并返回 `undefined`。`base64ToArrayBuffer`、`arrayBufferToBase64` 等纯 JavaScript 能力不受此限制。各 API 小节只记录额外的环境差异。
 
 **自定义覆盖与扩展**：Web 默认能力不满足业务需求时，可通过 `custom.web` 提供自定义 API。同名 API 会覆盖默认能力，新名称会作为 Web 专属扩展挂到 `mpx` 上。
 
@@ -691,8 +695,6 @@ createPage({
 
 无同步返回值。
 
-上述交互 API 只能在客户端调用，SSR 渲染阶段不可用。
-
 ---
 
 ### 导航栏
@@ -892,6 +894,97 @@ Web 不支持。
 
 ---
 
+### createSelectorQuery
+
+#### 说明
+
+同步创建 Web 节点查询对象。
+
+#### 查询范围与方法
+
+- `in(component)`：把后续查询限制在组件根节点内。Web 接受带 `$el` 的组件实例或 DOM Element；不调用时从整个 `document` 查询。
+- `select(selector)`：选择第一个匹配节点，结果为一个对象；未找到时结果为 `null`。
+- `selectAll(selector)`：选择全部匹配节点，结果为数组。
+- `selectViewport()`：查询文档视口，对应 Web 的 `html` 节点。
+- `exec(callback)`：按加入队列的顺序执行查询，并把结果数组传给回调。每个查询方法自身传入的回调也会收到对应结果。
+
+字符串选择器中的 `>>>` 会在 Web 下转换为 `>`。不要依赖小程序选择器的其他宿主扩展语法。
+
+#### NodesRef 能力
+
+| 方法 | Web 返回内容 |
+| --- | --- |
+| `boundingClientRect(callback)` | `id`、`dataset`、`left`、`right`、`top`、`bottom`、`width`、`height`。 |
+| `scrollOffset(callback)` | `id`、`dataset`、`scrollLeft`、`scrollTop`、`scrollWidth`、`scrollHeight`。 |
+| `fields(fields, callback)` | 按 `id`、`dataset`、`rect`、`size`、`scrollOffset`、`properties`、`computedStyle`、`node` 读取字段。 |
+| `node(callback)` | 返回真实 DOM 节点；Canvas 节点会补充 `createImage`、`createPath2D`、`requestAnimationFrame`、`cancelAnimationFrame`。 |
+
+Web 实现没有 `context()` 方法。`properties` 读取 DOM attribute，空字符串 attribute 当前不会写入结果；`computedStyle` 通过 `window.getComputedStyle` 读取。
+
+```js
+const query = mpx.createSelectorQuery().in(this)
+
+query.select('.article-card').fields({
+  id: true,
+  dataset: true,
+  rect: true,
+  size: true,
+  computedStyle: ['display']
+}, (result) => {
+  this.cardMetrics = result
+})
+
+query.exec()
+```
+
+---
+
+### createIntersectionObserver
+
+#### 说明
+
+同步创建基于浏览器原生 `IntersectionObserver` 的可见性观察对象。
+
+#### 入参
+
+调用形式为 `createIntersectionObserver(component, options)`。
+
+| 参数或选项 | 类型 | 默认值 | Web 行为 |
+| --- | --- | --- | --- |
+| `component` | `Object` | 无 | 当前 Web 实现会接收该参数，但节点查询仍使用全局 `document.querySelector`，不能依赖它限定组件范围。 |
+| `options.thresholds` | `number[]` | `[0]` | 传给浏览器观察器的阈值列表。 |
+| `options.initialRatio` | `number` | `0` | 用于过滤初始相交比例回调。 |
+| `options.observeAll` | `boolean` | `false` | 为 `true` 时观察选择器匹配的全部节点，否则只观察第一个节点。 |
+
+#### 实例方法
+
+- `relativeTo(selector, margins)`：设置相对参照节点，`margins` 支持 `left`、`right`、`top`、`bottom`，单位为 CSS px。
+- `relativeToViewport(margins)`：以浏览器视口为参照，并设置同样的四向 margin。
+- `observe(targetSelector, callback)`：在下一次更新后查询并观察目标。目标不存在时输出警告，不触发回调。
+- `disconnect()`：停止当前观察器。应在 `observe()` 已创建观察器后调用。
+
+回调参数保留浏览器 `IntersectionObserverEntry` 字段，并补充 `id`、解析后的 `dataset`、`relativeRect` 和毫秒时间戳 `time`。
+
+```js
+const observer = mpx.createIntersectionObserver(this, {
+  thresholds: [0, 0.5, 1],
+  observeAll: true
+})
+
+observer
+  .relativeToViewport({ bottom: 120 })
+  .observe('.lazy-card', (entry) => {
+    if (entry.intersectionRatio > 0) {
+      this.handleCardVisible(entry.id)
+    }
+  })
+
+// 页面或组件卸载时执行
+observer.disconnect()
+```
+
+---
+
 ### nextTick
 
 #### 说明
@@ -1079,7 +1172,7 @@ detached () {
 
 Web 缓存受浏览器配额、隐私模式和站点存储策略限制，写入可能失败。缓存数据应当可序列化。
 
-所有缓存 API 只能在客户端使用。`clearStorage` 会清除当前站点下的其他同源缓存数据，调用前需确认影响范围。
+`clearStorage` 会清除当前站点下的其他同源缓存数据，调用前需确认影响范围。
 
 ### setStorage
 
@@ -1286,8 +1379,6 @@ Web 下仅支持 `urls` 和 `current` 字段。
 
 基于浏览器 `Image` 加载图片，`src` 必填且不能为空。Web 下不提供 `path`、`orientation`、`type` 字段。
 
-只能在客户端调用。
-
 ---
 
 ### createInnerAudioContext
@@ -1304,7 +1395,7 @@ Web 下仅支持 `urls` 和 `current` 字段。
 
 `requestBackgroundPlayback`、`exitBackgroundPlayback`、`exitPictureInPicture`、`sendDanmu` 在 Web 下不生效。全屏效果受浏览器支持与用户手势策略限制。
 
-`compressImage`、`chooseMedia` 和 `chooseImage` 在 Web 下不可用；未指定替代方案时预留 TODO。
+`compressImage`、`chooseMedia` 和 `chooseImage` 在 Web 下不可用。
 
 ---
 
@@ -1320,7 +1411,7 @@ Web 下仅支持 `urls` 和 `current` 字段。
 
 Web 下不提供 `horizontalAccuracy`、`verticalAccuracy`；`speed` 来自浏览器定位结果，浏览器无法提供时可能为 `null`。
 
-`openLocation`、`chooseLocation`、`onLocationChange`、`offLocationChange`、`startLocationUpdate`、`stopLocationUpdate` 在 Web 下不支持；未指定替代方案时预留 TODO。
+`openLocation`、`chooseLocation`、`onLocationChange`、`offLocationChange`、`startLocationUpdate`、`stopLocationUpdate` 在 Web 下不支持。
 
 ---
 

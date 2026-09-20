@@ -14,8 +14,7 @@ createComponent({
 <style scoped>
 .layout-cell {
   box-sizing: border-box;
-  flex: 0 0 120px;
-  width: 120px;
+  flex: 1 1 0;
   min-width: 0;
   height: 40px;
   background: #dbeafe;

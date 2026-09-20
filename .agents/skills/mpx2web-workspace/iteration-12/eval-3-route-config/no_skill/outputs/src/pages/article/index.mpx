@@ -12,28 +12,36 @@
 </template>
 <script>
 import { createPage } from '@mpxjs/core'
-import articleStore from '../../store/article'
+
+function normalizeId (id) {
+  return typeof id === 'string' && id ? id : 'a'
+}
 
 createPage({
-  data: {
-    expanded: false,
-    articleRequest: null
+  inject: ['articleStore'],
+  data: { expanded: false },
+  computed: {
+    article () { return this.articleStore.state.article },
+    loading () { return this.articleStore.state.loading },
+    errorText () { return this.articleStore.state.errorText }
   },
-  computed: articleStore.mapState(['article', 'loading', 'errorText']),
   onLoad (query) {
-    // onLoad receives the mini-program query on wx and Vue Router's query on
-    // Web. Keeping the Promise lets serverPrefetch wait for this exact load.
-    this.articleRequest = this.loadArticle(query.id || 'a')
-    return this.articleRequest
+    // SSR 由 serverPrefetch 发起请求；客户端水合时 loadArticle 会复用已有文章。
+    if (this.$isServer) return
+    return this.loadArticle(normalizeId(query && query.id))
   },
   serverPrefetch () {
-    return this.articleRequest || Promise.resolve()
+    const query = this.$route && this.$route.query
+    return this.loadArticle(normalizeId(query && query.id))
   },
-  methods: Object.assign({}, articleStore.mapActions(['loadArticle']), {
+  methods: {
+    loadArticle (id) {
+      return this.articleStore.dispatch('loadArticle', normalizeId(id))
+    },
     toggleExtra () {
       this.expanded = !this.expanded
     }
-  })
+  }
 })
 </script>
 <style>

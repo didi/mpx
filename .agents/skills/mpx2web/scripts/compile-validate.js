@@ -121,7 +121,7 @@ function hasComponentPartialCompile (projectRoot) {
 }
 
 async function compileValidate (input, options = {}) {
-  const originalEnv = { ...process.env }
+  const originalEnv = Object.assign({}, process.env)
   try {
     return await compileValidateInEnvironment(input, options)
   } finally {
@@ -145,7 +145,7 @@ async function compileValidateInEnvironment (input, options = {}) {
   })
   if (invalidConditions.length) {
     throw new InvalidInputError(
-      `检测到无效的条件编译注释：\n- ${invalidConditions.join('\n- ')}`
+      `检测到无效的条件编译或 TODO 注释：\n- ${invalidConditions.join('\n- ')}`
     )
   }
 

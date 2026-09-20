@@ -6,9 +6,15 @@ import { createComponent } from '@mpxjs/core'
 import orderedItem from '../behaviors/ordered-item'
 
 createComponent({
-  mixins: [orderedItem],
+  behaviors: [orderedItem],
+  // Keep the public shape explicit for Web while retaining behavior identity
+  // for relation target matching in mini-programs.
+  properties: { label: String },
   relations: {
     './relation-list': { type: 'parent' }
+  },
+  methods: {
+    getLabel () { return this.label }
   }
 })
 </script>

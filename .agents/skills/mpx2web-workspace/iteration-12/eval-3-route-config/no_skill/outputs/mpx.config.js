@@ -1,26 +1,27 @@
-// Production must mount both the SSR renderer and its client assets at
-// /help-demo/. Requests below that prefix which are not static assets should
-// be forwarded to the renderer (the host passes the prefix-stripped URL).
-// The existing createStore import also requires the matching optional peer:
-// install @mpxjs/store@^2.11.0 alongside @mpxjs/core.
+const isWeb = process.env.MPX_CURRENT_TARGET_MODE === 'web'
+
 module.exports = {
-  publicPath: '/help-demo/',
+  publicPath: isWeb ? '/help-demo/' : '/',
   pluginOptions: {
     mpx: {
       plugin: {
         srcMode: 'wx',
         webConfig: {
-          useSSR: true,
-          routeConfig: {
-            mode: 'history',
-            base: '/help-demo/'
-          },
-          // The Web design grid is fixed at 750 logical units: 2rpx = 1px.
-          // Unlike the default vw conversion, this remains stable at both
-          // 375px and 750px viewport widths. Mini-program rpx is unaffected.
-          transRpxFn: value => `${Number(value) / 2}px`
+          // Web 设计稿仍按 750rpx 计，但不随视口伸缩：1rpx 恒等于 0.5 CSS px。
+          transRpxFn (match, value) {
+            if (value === '0') return value
+            return `${Number(value) / 2}px`
+          }
         }
       }
     }
   }
 }
+
+/*
+ * Web 部署约定：静态资源发布在 /help-demo/；history 路由要求生产服务器把
+ * /help-demo/ 下无法命中静态文件的请求回退到 /help-demo/index.html。
+ * app.json 的 workers 只由小程序产物复制/注册；Web 不会自动生成浏览器 Worker。
+ * Web 会把两个小程序分包页注册成异步路由，但 independent 隔离和 preloadRule
+ * 都是小程序运行时语义，不会成为 Web 的独立运行时或预下载策略。
+ */

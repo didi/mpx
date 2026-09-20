@@ -6,6 +6,7 @@
 </template>
 <script>
 import { createComponent } from '@mpxjs/core'
+import orderedItem from '../behaviors/ordered-item'
 
 createComponent({
   properties: {
@@ -14,13 +15,26 @@ createComponent({
       value: []
     }
   },
+  data: { relationOrderText: '' },
   computed: {
     orderText () {
       return this.items.map(item => item.label).join('、')
     }
   },
   relations: {
-    './relation-item': { type: 'child' }
+    items: {
+      type: 'child',
+      target: orderedItem,
+      linked () { this.syncOrder() },
+      linkChanged () { this.syncOrder() },
+      unlinked () { this.syncOrder() }
+    }
+  },
+  methods: {
+    syncOrder () {
+      const nodes = this.getRelationNodes('items')
+      this.relationOrderText = nodes.map(node => node.getLabel()).join('、')
+    }
   }
 })
 </script>

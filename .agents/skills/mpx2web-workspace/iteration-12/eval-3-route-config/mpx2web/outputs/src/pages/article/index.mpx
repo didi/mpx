@@ -12,29 +12,44 @@
 </template>
 <script>
 import { createPage } from '@mpxjs/core'
-import { mapActions, mapState } from '@mpxjs/pinia'
-import useArticleStore from '../../store/article'
+import { useArticleStore } from '../../store/article'
+
+function getArticleStore (page) {
+  const rootOptions = page.$root && page.$root.$options
+  return useArticleStore(rootOptions && rootOptions.pinia)
+}
 
 createPage({
   data: {
-    expanded: false,
-    articleId: 'a'
+    articleId: 'a',
+    expanded: false
   },
-  computed: mapState(useArticleStore, ['article', 'loading', 'errorText']),
+  computed: {
+    article () {
+      return getArticleStore(this).article
+    },
+    loading () {
+      return getArticleStore(this).loading
+    },
+    errorText () {
+      return getArticleStore(this).errorText
+    }
+  },
   onLoad (query) {
     this.articleId = query.id || 'a'
     return this.loadArticle(this.articleId)
   },
   serverPrefetch () {
-    const routeId = this.$route && this.$route.query && this.$route.query.id
-    this.articleId = routeId || this.articleId || 'a'
     return this.loadArticle(this.articleId)
   },
-  methods: Object.assign({}, mapActions(useArticleStore, ['loadArticle']), {
+  methods: {
+    loadArticle (id) {
+      return getArticleStore(this).loadArticle(id)
+    },
     toggleExtra () {
       this.expanded = !this.expanded
     }
-  })
+  }
 })
 </script>
 <style>

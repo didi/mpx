@@ -22,8 +22,9 @@ function blocks (source, file) {
   // blocks to retain every Mpx platform variant without changing offsets.
   while (true) {
     const parsed = compiler.parse({ source: remaining, filename: file })
-    const selected = [parsed.template, parsed.script, parsed.scriptSetup,
-      ...parsed.styles, ...parsed.customBlocks].filter(Boolean)
+    const selected = [parsed.template, parsed.script, parsed.scriptSetup]
+      .concat(parsed.styles, parsed.customBlocks)
+      .filter(Boolean)
     if (!selected.length) break
     for (const block of selected) {
       const start = remaining.lastIndexOf('<', block.start - 1)
@@ -31,7 +32,7 @@ function blocks (source, file) {
       if (start < 0 || end <= block.end || !/^<[\w-]+\b/.test(remaining.slice(start))) {
         throw new Error('待验证：无法确定区块边界')
       }
-      result.push({ ...block, content: source.slice(block.start, block.end) })
+      result.push(Object.assign({}, block, { content: source.slice(block.start, block.end) }))
       remaining = remaining.slice(0, start) + remaining.slice(start, end).replace(/[^\r\n]/g, ' ') + remaining.slice(end)
     }
   }

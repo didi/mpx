@@ -1,9 +1,11 @@
 <script>
 import mpx, { createApp } from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
-import { createPinia } from '@mpxjs/pinia'
+import { createArticleStateContainer } from './store/article'
 
 mpx.use(apiProxy)
+
+const appOptions = {}
 
 if (__mpx_mode__ === 'web') {
   mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
@@ -12,13 +14,14 @@ if (__mpx_mode__ === 'web') {
       base: '/help-demo/'
     }
   })
+
+  appOptions.onAppInit = function () {
+    // Mpx 的默认 SSR 流程会序列化并恢复该 state.value。
+    return { pinia: createArticleStateContainer() }
+  }
 }
 
-createApp({
-  onAppInit () {
-    return { pinia: createPinia() }
-  }
-})
+createApp(appOptions)
 </script>
 <script type="application/json">
 {

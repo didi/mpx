@@ -7,7 +7,10 @@ import { createComponent } from '@mpxjs/core'
 createComponent({
   methods: {
     sendNotice () {
-      this.triggerEvent('notice', { message: '来自内层组件' })
+      this.triggerEvent('notice', { message: '来自内层组件' }, {
+        bubbles: true,
+        composed: true
+      })
     }
   }
 })

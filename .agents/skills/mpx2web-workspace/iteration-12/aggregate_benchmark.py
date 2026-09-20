@@ -117,88 +117,113 @@ def runtime_followups(runs):
 
 
 def render_markdown(payload, config, base):
-    counts = {name: len(ids) for name, ids in config["scoring"]["buckets"].items()}
-    counts["adaptation"] = counts["web"] + counts["ssr"]
-    total = config["scoring"]["assertion_count"]
-    samples = payload["metadata"]["runs_per_configuration"]
     metadata = payload["metadata"]
-    tier_text = "正式级" if metadata["benchmark_tier"] == "formal" else "开发级"
-    judge_text = "不同模型复核" if metadata["judge_model_distinct"] else "同模型盲审独立会话"
-    validation_text = config.get("runner", {}).get(
-        "validation",
-        "本 Benchmark 仅检查源码、配置、编译规则、引用关系和交付说明，不执行构建、E2E、浏览器、SSR 渲染或真机验收。",
-    )
-    lines = ["# Mpx2Web 静态源码评测", "", validation_text, "",
-             f"当前为**{tier_text}源码结果**：{samples}/{metadata['recommended_samples']} 次采样，{judge_text}。", "",
-             f"主分每次采样 {counts['adaptation']} 项（Web {counts['web']} + SSR {counts['ssr']}），按断言等权；先汇总每次采样的四个 Case，再统计跨采样均值。当前共 {len(config['evals'])} 个 eval；从零生成单列。", "",
-             "| 范围 | Has Skill | No Skill |", "| --- | --- | --- |"]
-    for key, name in (("adaptation", "适配主分"), ("web", "Web"), ("ssr", "SSR 源码"),
-                      ("generation", "从零生成")):
-        label = f"{name} {counts[key]} 项"
-        section = payload["classification"][key]
-        cells = []
-        for group in static_review.GROUPS:
-            group_counts = section["counts"][group]
-            rate = format_stat(section["run_summary"][group]["pass_rate"], samples,
-                               percent=True, decimals=2)
-            cells.append(f"{rate}（{group_counts['passed']}/{group_counts['total']}）")
-        lines.append(f"| {label} | {' | '.join(cells)} |")
-    lines += ["", "Case 宏平均只用于观察不同题目的难度差异，不作为主分：", "",
-              "| 范围 | Has Skill Case 宏平均 | No Skill Case 宏平均 |",
-              "| --- | --- | --- |"]
-    for key, name in (("adaptation", "适配主分"), ("web", "Web"),
-                      ("ssr", "SSR 源码链路"), ("generation", "从零生成")):
-        section = payload["classification"][key]["case_macro_summary"]
-        cells = []
-        for group in static_review.GROUPS:
-            stats = section[group]["pass_rate"]
-            cells.append(f"{stats['mean']:.2%}（Case 范围 {stats['min']:.2%}–{stats['max']:.2%}）")
-        lines.append(f"| {name} | {' | '.join(cells)} |")
+    samples = metadata["runs_per_configuration"]
+    case_count = len(config["evals"])
+    case_runs = payload["case_run_summary"]
+    labels = {"mpx2web": "Mpx2Web", "no_skill": "No Skill"}
+    run_count = case_count * samples
 
-    lines += ["", f"全部 {total} 项的每次采样汇总与生成成本：", "",
-              "| 指标 | Has Skill | No Skill |", "| --- | --- | --- |"]
-    overall = payload["all_assertions_run_summary"]
-    for metric, label, kwargs in (
-        ("pass_rate", "全部断言通过率", {"percent": True, "decimals": 2}),
-        ("time_seconds", "整套生成耗时（秒）", {"decimals": 1}),
-        ("tokens", "整套生成 Tokens", {"decimals": 0}),
-    ):
-        cells = [format_stat(overall[group][metric], samples, **kwargs)
-                 for group in static_review.GROUPS]
-        lines.append(f"| {label} | {' | '.join(cells)} |")
+    def spread(group, metric, *, percent=False, decimals=1):
+        stats = case_runs[group][metric]
+        factor = 100 if percent else 1
+        suffix = "%" if percent else ""
+        return (f"{stats['mean'] * factor:.{decimals}f}{suffix} ± "
+                f"{stats['stddev'] * factor:.{decimals}f}{suffix}")
 
-    scope = payload["scope_status"]
-    lines += ["", "范围有效性（不计分；失败会使比较不可发布）：", "",
-              "| 配置 | 已检查有效 | 待确认 | 无效 | 无需检查 |", "| --- | ---: | ---: | ---: | ---: |"]
+    def duration(value):
+        minutes, seconds = divmod(value, 60)
+        return f"{int(minutes)}m {seconds:.1f}s" if minutes else f"{seconds:.1f}s"
+
+    has = case_runs["mpx2web"]
+    baseline = case_runs["no_skill"]
+    pass_delta = has["pass_rate"]["mean"] - baseline["pass_rate"]["mean"]
+    time_delta = has["time_seconds"]["mean"] - baseline["time_seconds"]["mean"]
+    token_delta = has["tokens"]["mean"] - baseline["tokens"]["mean"]
+    evals = ", ".join(str(item["id"]) for item in config["evals"])
+    lines = [
+        "# Skill Benchmark: mpx2web eval comparison",
+        "",
+        f"**Model**: {metadata['executor_model']}",
+        f"**Date**: {metadata['timestamp']}",
+        f"**Evals**: {evals} ({samples} run each per configuration)",
+        "",
+        "## Summary",
+        "",
+        "| Metric | Mpx2Web | No Skill | Delta |",
+        "| --- | ---: | ---: | ---: |",
+        (f"| Pass Rate | {spread('mpx2web', 'pass_rate', percent=True, decimals=0)} | "
+         f"{spread('no_skill', 'pass_rate', percent=True, decimals=0)} | {pass_delta:+.2f} |"),
+        (f"| Time | {spread('mpx2web', 'time_seconds')} | "
+         f"{spread('no_skill', 'time_seconds')} | {time_delta:+.1f}s |"),
+        (f"| Tokens | {spread('mpx2web', 'tokens', decimals=0)} | "
+         f"{spread('no_skill', 'tokens', decimals=0)} | {token_delta:+.0f} |"),
+        "",
+        "## 平均执行耗时",
+        "",
+        "| 配置 | 样本数 | 平均执行耗时 | 最短 | 最长 |",
+        "| --- | ---: | ---: | ---: | ---: |",
+    ]
     for group in static_review.GROUPS:
-        values = scope[group]
-        lines.append(f"| {group} | {values['valid']} | {values['needs_review']} | {values['invalid']} | {values['not_applicable']} |")
-
+        stats = case_runs[group]["time_seconds"]
+        lines.append(
+            f"| {group} | {run_count} | {stats['mean']:.1f}s（{duration(stats['mean'])}） | "
+            f"{stats['min']:.1f}s | {stats['max']:.1f}s |"
+        )
+    time_percent = time_delta / baseline["time_seconds"]["mean"] if baseline["time_seconds"]["mean"] else 0
+    lines += [
+        "",
+        f"Has Skill 比 No Skill 平均多用 {time_delta:.1f}s（{time_percent:.1%}）。",
+        "",
+        "## 平均 Token 消耗",
+        "",
+        f"| 配置 | 样本数 | 平均 Total | 最少 | 最多 | {run_count} 次合计 |",
+        "| --- | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for group in static_review.GROUPS:
+        stats = case_runs[group]["tokens"]
+        total_tokens = sum(row["result"].get("tokens", 0) for row in payload["runs"]
+                           if row["configuration"] == group)
+        lines.append(
+            f"| {group} | {run_count} | {stats['mean']:,.0f} | {stats['min']:,.0f} | "
+            f"{stats['max']:,.0f} | {total_tokens:,.0f} |"
+        )
+    token_percent = token_delta / baseline["tokens"]["mean"] if baseline["tokens"]["mean"] else 0
+    counts = {name: len(ids) for name, ids in config["scoring"]["buckets"].items()}
+    diagnostics = []
+    for key, name in (("web", "Web"), ("ssr", "SSR"), ("generation", "生成")):
+        section = payload["classification"][key]
+        rates = [section["run_summary"][group]["pass_rate"]["mean"] for group in static_review.GROUPS]
+        diagnostics.append(f"{name} {counts[key]} 项 {rates[0]:.2%}/{rates[1]:.2%}")
+    scope = payload["scope_status"]
+    scope_note = "；".join(
+        f"{group} 有效 {values['valid']}、待确认 {values['needs_review']}、无效 {values['invalid']}、无需检查 {values['not_applicable']}"
+        for group, values in scope.items()
+    )
     delivery = payload["delivery_status"]
-    if any(sum(values.values()) for values in delivery.values()):
-        lines += ["", "交付说明检查（不计分）：", "",
-                  "| 配置 | 已说明 | 缺少说明 | 待确认 | 不适用 |", "| --- | ---: | ---: | ---: | ---: |"]
-        for group in static_review.GROUPS:
-            values = delivery[group]
-            lines.append(f"| {group} | {values['passed']} | {values['failed']} | {values['not_verified']} | {values['not_applicable']} |")
-    if payload["runtime_followups"]:
-        lines += ["", "待运行验证（不计分）：", ""]
-        for followup in payload["runtime_followups"]:
-            label = f"Case {followup['eval_id'] + 1} / {followup['configuration']} / run-{followup['run_number']}"
-            lines.append(f"- **{label}**：" + "；".join(followup["items"]))
-    titles = {item["id"]: item["title"] for item in config["evals"]}
-    for run in payload["runs"]:
-        lines += ["", f"## Case {run['eval_id'] + 1}：{titles[run['eval_id']]} / {run['configuration']} / run-{run['run_number']}", ""]
-        lines += [f"范围状态：**{run['scope_state']}**", ""]
-        for check in run.get("scope_review", []):
-            lines += [f"- {check['id']} / {check['status']}：{check['evidence']}"]
-        if run.get("scope_review"):
-            lines.append("")
-        if run.get("runtime_followups"):
-            lines += ["待运行验证：", ""] + [f"- {item}" for item in run["runtime_followups"]] + [""]
-        for row in run["expectations"]:
-            status = "待复核" if row.get("review_status") == "pending" else "通过" if row["passed"] else "不通过"
-            lines += [f"### {row['id']}：{status}", "", row["text"], "", row["evidence"], ""]
+    delivery_note = "；".join(
+        f"{group} 满足 {values['passed']}、未满足 {values['failed']}、待确认 {values['not_verified']}、不适用 {values['not_applicable']}"
+        for group, values in delivery.items()
+    )
+    followup_count = sum(len(row["items"]) for row in payload["runtime_followups"])
+    tier = "正式级" if metadata["benchmark_tier"] == "formal" else "开发级"
+    judge = "不同模型复核" if metadata["judge_model_distinct"] else "同模型盲审独立会话"
+    lines += [
+        "",
+        (f"Has Skill 比 No Skill 平均多消耗 {token_delta:,.0f} Token（{token_percent:.1%}）。"
+         "`Total` 为各子 agent session 的累计 Token，不代表单次 Context 大小。"),
+        "",
+        "## Notes",
+        "",
+        f"- All {len(payload['runs'])} child agents ran in isolated workspaces with the configured Codex model.",
+        f"- Case 等权主分：{case_count} 个 Case 各占 {1 / case_count:.0%}；Summary 的 ± 表示 Case 之间的离散程度。",
+        f"- 当前为{tier}源码结果：{samples}/{metadata['recommended_samples']} 次完整采样，{judge}。",
+        "- 本 Benchmark 只做静态源码评审，不执行构建、E2E、浏览器、SSR renderer 或真机验收。",
+        f"- 断言微平均仅作诊断：{'；'.join(diagnostics)}（Has Skill/No Skill）。",
+        f"- 范围有效性（不计分）：{scope_note}。",
+        f"- 交付与质量检查（不计分）：{delivery_note}。",
+        f"- 待运行验证（不计分）共 {followup_count} 项，逐项内容见 review.html 和 benchmark.json。",
+    ]
     return "\n".join(lines)
 
 
@@ -248,7 +273,7 @@ def aggregate(model, effort, samples=1):
     all_review_status = review_bounds(payload["runs"])
     adaptation_review_status = review_bounds(payload["runs"], adaptation_ids)
     payload["review_status"] = {
-        "primary_scope": "adaptation",
+        "primary_scope": "all_cases",
         "adaptation": adaptation_review_status,
         "all_assertions": all_review_status,
     }
@@ -256,8 +281,14 @@ def aggregate(model, effort, samples=1):
     payload["source_review"]["classification"] = static_review.classify(
         payload["source_review"]["runs"], config, base
     )
-    payload["run_summary"] = payload["classification"]["adaptation"]["run_summary"]
-    payload["case_macro_run_summary"] = payload["classification"]["adaptation"]["case_macro_summary"]
+    payload["run_summary"] = static_review.aggregate_case_equal(
+        payload["runs"], [item["id"] for item in config["evals"]], base
+    )
+    payload["case_macro_run_summary"] = payload["run_summary"]
+    payload["case_run_summary"] = base.aggregate_results({
+        group: [row["result"] for row in payload["runs"] if row["configuration"] == group]
+        for group in static_review.GROUPS
+    })
     payload["delivery_status"] = delivery_status(payload["runs"])
     payload["scope_status"] = scope_status(payload["runs"])
     payload["runtime_followups"] = runtime_followups(payload["runs"])
@@ -283,7 +314,7 @@ def aggregate(model, effort, samples=1):
         executor_model=f"{model} ({effort})", analyzer_model=f"{grader_model} / {grader_effort}",
         runs_per_configuration=samples, grading_scope="source_review_only", suite_revision=config["suite_revision"],
         grader_method=config["scoring"]["grader_method"],
-        score_weighting="assertion_micro_per_sample_primary_case_macro_diagnostic",
+        score_weighting="case_equal_per_sample_primary_assertion_micro_diagnostic",
         result_status=result_status,
         benchmark_tier="formal" if formal_publishable else "development",
         recommended_samples=recommended_samples,
@@ -298,8 +329,8 @@ def aggregate(model, effort, samples=1):
         "静态源码评审不等于纯确定性扫描：评分在生成之外的盲审会话中逐项阅读源码；只读文件完整性使用确定性检查。",
         "不执行 E2E、浏览器、SSR 渲染/接管或真机验收；源码符合要求不能据此宣称全部 Mpx2Web 能力已运行验证。",
         "C2.3/C2.5 等行为项不再用关键词正则强制改分；模型必须结合框架证据追踪可达调用链，不足时标为 pending。",
-        f"主分范围由 evals.json 的 web/ssr 分桶决定；共 {config['scoring']['assertion_count']} 项，生成项单列。",
-        f"主分按断言/采样等权；Case 宏平均仅诊断题目差异。单次采样不显示 ±；正式级结果要求至少 {recommended_samples} 次独立采样且评分模型不同于生成模型，届时 ± 表示跨采样标准差，不是置信区间。",
+        f"主分覆盖 evals.json 的全部 {config['scoring']['assertion_count']} 项功能断言；先算 Case 内通过率，再将 {len(config['evals'])} 个 Case 等权平均。",
+        f"Web、SSR、生成及全部断言微平均仅作诊断。单次采样不显示 ±；正式级结果要求至少 {recommended_samples} 次独立采样且评分模型不同于生成模型，届时 ± 表示跨采样标准差，不是置信区间。",
         "Token/耗时来自生成指标，不是计费金额；评分开销保留在原 grading.json/grader.metrics。"]
     runner.write_json(runner.WORKSPACE / "benchmark.json", payload)
     (runner.WORKSPACE / "benchmark.md").write_text(render_markdown(payload, config, base) + "\n")
@@ -333,7 +364,7 @@ def main():
                               runtime_followups=row.get("runtime_followups", []))
     viewer_benchmark = deepcopy(payload)
     config, _ = runner.load_configs()
-    ids = set(config["scoring"]["buckets"]["web"] + config["scoring"]["buckets"]["ssr"])
+    ids = {assertion["id"] for item in config["evals"] for assertion in item["assertions"]}
     viewer_benchmark["runs"] = []
     for row in payload["runs"]:
         expectations = [item for item in row["expectations"] if item["id"] in ids]
@@ -342,8 +373,8 @@ def main():
             current["expectations"] = expectations
             current["result"].update(static_review.summary(expectations))
             viewer_benchmark["runs"].append(current)
-    viewer_benchmark["run_summary"] = payload["classification"]["adaptation"]["run_summary"]
-    viewer_benchmark["notes"].insert(0, f"此表为 {len(ids)} 项适配静态主分；Outputs 保留全部 {config['scoring']['assertion_count']} 项逐条证据，生成单列于 benchmark.md。")
+    viewer_benchmark["run_summary"] = payload["run_summary"]
+    viewer_benchmark["notes"].insert(0, f"此表主分覆盖全部 {len(ids)} 项功能断言，先计算每个 Case 的通过率，再将 {len(config['evals'])} 个 Case 等权平均；断言微平均在 benchmark.md 中作为诊断数据。")
     scope_cells = []
     for group in static_review.GROUPS:
         values = payload["scope_status"][group]

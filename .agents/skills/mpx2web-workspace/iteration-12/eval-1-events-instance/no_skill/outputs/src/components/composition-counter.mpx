@@ -10,15 +10,13 @@ import { useReadyNotice } from '../composables/use-ready-notice'
 createComponent({
   setup () {
     const readyText = ref('')
-    const recordReady = () => {
-      readyText.value = '已就绪'
-    }
-
-    onMounted(useReadyNotice(recordReady))
-
+    const notifyReady = useReadyNotice()
+    onMounted(notifyReady)
     return {
       readyText,
-      recordReady
+      recordReady () {
+        readyText.value = '已就绪'
+      }
     }
   }
 })

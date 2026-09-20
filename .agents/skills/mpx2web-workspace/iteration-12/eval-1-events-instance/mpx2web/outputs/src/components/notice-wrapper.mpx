@@ -1,12 +1,12 @@
 <template>
-  <view><notice-leaf bindnotice@web="forwardNotice" /></view>
+  <view><notice-leaf @notice@web="relayNotice" /></view>
 </template>
 <script>
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
   methods: {
-    forwardNotice (event) {
+    relayNotice (event) {
       this.triggerEvent('notice', event.detail)
     }
   }
