@@ -101,7 +101,7 @@ const _WebView = forwardRef<HandlerRef<WebViewInstance, WebViewProps>, WebViewPr
   }
   const { pageId } = useContext(RouteContext) || {}
   const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
-  const [showNav, setShowNav] = useState<boolean | undefined>(showNavigationBar)
+  const showNavRef = useRef<boolean>()
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
   const webViewRef = useRef<WebViewInstance>(null)
   const fristLoaded = useRef<boolean>(false)
@@ -152,19 +152,17 @@ const _WebView = forwardRef<HandlerRef<WebViewInstance, WebViewProps>, WebViewPr
     }
   }
 
-  useLayoutEffect(() => {
-    setShowNav(showNavigationBar)
-  }, [showNavigationBar])
-
-  useLayoutEffect(() => {
-    // 属性和 H5 均未指定显隐时，沿用页面导航配置。
-    if (showNav === undefined) return
+  const setShowNav = (showNav: boolean | undefined) => {
+    if (showNav === undefined || showNavRef.current === showNav) return
     const applyShowNav = navigation?.setWebViewShowNav
     if (!applyShowNav) return
     applyShowNav(showNav)
-    // 卸载或显隐变化时清除旧覆盖，恢复页面配置。
-    return () => applyShowNav(undefined)
-  }, [navigation, showNav])
+    showNavRef.current = showNav
+  }
+
+  useLayoutEffect(() => {
+    setShowNav(showNavigationBar)
+  }, [showNavigationBar])
 
   if (!src) {
     return null

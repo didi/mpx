@@ -539,9 +539,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
       return null
     }
     navigation.setWebViewShowNav = (showNav) => {
-      navigation.setPageConfig({
-        navigationStyle: showNav === undefined ? currentPageConfig.navigationStyle : (showNav ? undefined : 'custom')
-      })
+      navigation.setPageConfig({ navigationStyle: showNav ? undefined : 'custom' })
     }
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
