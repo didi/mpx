@@ -77,7 +77,8 @@
 
 ```js
 const { defineConfig } = require('unocss')
-const presetMpx = require('@mpxjs/unocss-base')
+const presetMpxModule = require('@mpxjs/unocss-base')
+const presetMpx = presetMpxModule.default || presetMpxModule
 
 module.exports = defineConfig({
   presets: [
@@ -89,10 +90,13 @@ module.exports = defineConfig({
 3. 注册`MpxUnocssPlugin`，在`build/getPlugins`中添加如下代码：
 
 ```js
-const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+const MpxUnocssPluginModule = require('@mpxjs/unocss-plugin')
+const MpxUnocssPlugin = MpxUnocssPluginModule.default || MpxUnocssPluginModule
 // ...
 plugins.push(new MpxUnocssPlugin())
 ```
+
+> `@mpxjs/unocss-plugin@2.11.1` 与 `@mpxjs/unocss-base@2.11.1` 起以 ESM 形式发布。在 CommonJS 配置文件中通过 `require()` 加载时，需要兼容读取默认导出；以上写法同时兼容旧版 CommonJS 导出。在不额外启用实验参数的情况下，上述 CommonJS 兼容写法要求 Node.js 版本满足 `^20.19.0 || >=22.12.0`。
 
 即可在项目模版中使用基于`unocss`的原子类功能，`unocss`默认的preset兼容`tailwindcss`/`windicss`
 ，可以通过查阅[tailwindcss文档](https://tailwindcss.com/docs/installation)、[windicss文档](https://windicss.org/utilities/general/colors.html)或[unocss可交互文档](https://unocss.dev/interactive/)进行探索使用。
@@ -120,10 +124,8 @@ plugins.push(new MpxUnocssPlugin())
   ```js
   // uno.config.js
   const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
-
-  const { defineConfig } = require("unocss")
-  const presetMpx = require("@mpxjs/unocss-base")
+  const presetMpxModule = require('@mpxjs/unocss-base')
+  const presetMpx = presetMpxModule.default || presetMpxModule
 
   module.exports = defineConfig({
     content: {
@@ -356,9 +358,6 @@ const escapeMap = {
     <!-- ... -->
 </template>
 ```
-
-
-
 
 
 
