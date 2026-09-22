@@ -27,7 +27,7 @@
     "jest.config.json": "9b5895b4e1a886738d57a565acf6fa4676d1113a98e7eadba0fb79aa2756ba95",
     "prompt_templates.json": "03d91fc61f2424249a983579bb52dac76c188801cdb109db7bfc08b15b13f916",
     "run-metadata.json": "a4ace162c9bab6168f46f8aef821e2a4eb4397c5a13eae4e3247e5026ce7880e",
-    "skill-source.json": "194432efd54720a641c75f68562bd46c84097ee4e20f06ee9bf63855c8391bc7",
+    "skill-source.json": "00888782aa1d66ce5df1c785b54b78dc93cf46ce12f0ee3fc16ba157fadeb5eb",
     "validate-suite.test.cjs": "a40e562d5bfaeb7a09c2741cd8a2efb9f87c0a49ce9d299f609f05e6f50e4849"
   }
 }

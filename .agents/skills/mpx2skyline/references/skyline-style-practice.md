@@ -375,11 +375,7 @@ defineExpose({ renderer })
 
 ### scroll-view 高度自适应
 
-Skyline 下 `scroll-view` 默认不会按内容高度自动撑开。迁移时优先使用全局配置方案；只有在业务明确需要把内容实际高度写入 `scroll-view` 内联样式时，才使用动态测量方案。
-
-**推荐方案：全局配置 + max-height**
-
-在 `app.json` 的 `rendererOptions.skyline` 下开启 `enableScrollViewAutoSize`，让 `scroll-view` 按内容撑开；组件上继续保留 `max-height` 作为滚动区域上限。内容未超过上限时容器随内容高度变化，超过上限后由 `scroll-view` 承载滚动。
+Skyline 下 `scroll-view` 默认不会按内容高度自动撑开。优先在 `app.json` 中开启 `enableScrollViewAutoSize`，并用 `max-height` 限制滚动区域：内容未达到上限时自动撑开，超过上限后滚动。
 
 ```json
 {
@@ -392,85 +388,12 @@ Skyline 下 `scroll-view` 默认不会按内容高度自动撑开。迁移时优
 ```
 
 ```html
-<!-- 常规写法：由 enableScrollViewAutoSize 负责按内容撑开，max-height 只限制最大高度 -->
 <scroll-view
   type="list"
   scroll-y="{{true}}"
   style="max-height: 375px;"
 >
   <view>
-    <!-- 动态内容 -->
-  </view>
-</scroll-view>
-```
-
-**兜底方案：动态测量内容高度**
-
-仅在要求明确动态计算 `scroll-view` 的实际高度时，再在内容渲染后通过 `createSelectorQuery` 查询内容节点高度，并将结果绑定到 `scroll-view` 的 `wx:style`。
-
-```ts
-// 工具函数
-import { nextTick, ref } from '@mpxjs/core'
-
-export function getScrollViewHeight(context, query, defaultHeight = 0) {
-  // height 初始为空（或传入兜底高度），格式为内联 style 字符串
-  const height = ref(defaultHeight ? `height:${defaultHeight}px;` : '')
-
-  const updateHeight = () => {
-    // 必须在 nextTick 后查询，确保内容已渲染到 DOM
-    nextTick(() => {
-      context.createSelectorQuery()
-        .select(query)
-        .boundingClientRect(rect => {
-          height.value = `height:${Math.ceil(rect?.height || 0)}px;`
-        })
-        .exec()
-    })
-  }
-
-  return { height, updateHeight }
-}
-```
-
-```ts
-// 组件 setup 中使用（仅 Skyline 模式下启用）
-import { getCurrentInstance, nextTick, watch, ref } from '@mpxjs/core'
-import { getScrollViewHeight } from 'useSkyline'
-
-const context = useContext()
-
-const { renderer } = getCurrentInstance().proxy
-
-// 非 Skyline 时退化为空实现，不影响 WebView 逻辑
-const { height, updateHeight } = renderer === 'skyline'
-        ? getScrollViewHeight(context, '#scrollContent')
-        : {
-          height: ref(''),
-          updateHeight: () => {}
-        }
-
-// 在内容加载完成后调用 updateHeight，确保可正常获取到内容高度
-// isShow 为控制弹窗展示的变量
-watch(isShow, (val) => {
-  if (val) {
-    nextTick(() => {
-      updateHeight()
-    })
-  }
-})
-```
-
-```html
-<!-- 动态测量写法：max-height 是上限，height 是测量后的内容实际高度 -->
-<scroll-view
-  type="list"
-  scroll-y="{{true}}"
-  enhanced="{{true}}"
-  show-scrollbar="{{false}}"
-  style="max-height: 375px;"
-  wx:style="{{ height }}"
->
-  <view id="scrollContent">
     <!-- 动态内容 -->
   </view>
 </scroll-view>
