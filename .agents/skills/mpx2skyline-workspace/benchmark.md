@@ -1,7 +1,11 @@
 # Mpx2Skyline 测试集
 
-当前有效定义：v4，4个case、37条断言，已完成独立Skill/no_skill各一轮统一基线。
+当前有效定义为v7：4个case、38条断言（适配31、创建7），尚未执行模型评测。没有当前版通过率。
 
-[基线结果](iteration-4/benchmark.md) · [逐项审阅](iteration-4/review.html) · [设计](test-design.md) · [定义](iteration-4/evals.json)
+[测试设计](test-design.md) · [定义](iteration-7/evals.json) · [评分标准](iteration-7/grading-standard.md) · [执行说明](iteration-7/README.md)
 
-当前结果未包含合并Skill，静态/mock验证不等于真机通过。
+| 记录 | 状态与适用范围 |
+| --- | --- |
+| [v7](iteration-7/README.md) | 最新定义，未执行 |
+
+历史结果仅在对应版本和输入下有效，不合并为v7成绩。

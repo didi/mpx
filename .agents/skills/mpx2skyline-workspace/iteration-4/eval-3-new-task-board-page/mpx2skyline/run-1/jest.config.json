@@ -1,1 +1,0 @@
-{"testEnvironment":"node","testMatch":["**/board.test.js"],"rootDir":".","cacheDirectory":"./jest-cache"}

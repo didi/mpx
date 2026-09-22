@@ -1,0 +1,131 @@
+{
+  "id": 3,
+  "name": "new-task-board-page",
+  "title": "从零创建任务看板页面与组件",
+  "description": "仅给产品需求和宿主配置，创建组合式页面、独立选项式评分组件及组合式分类组件，并验证页面集成和Skyline适配。",
+  "task_type": "creation",
+  "prompt": "请读取input/task.md，从零创建Mpx任务看板页面、选项式rating-selector组件和组合式segmented-control组件并更新宿主配置，兼容微信Skyline与WebView。范围已确认，交付完整文件和验证报告。",
+  "files": [
+    "input/app.json",
+    "input/task.md"
+  ],
+  "assertions": [
+    {
+      "id": "n3_00",
+      "text": "Skyline 新页面配置renderer=skyline、componentFramework=glass-easel、navigationStyle=custom和disableScroll=true，实际呈现任务看板导航；app顶层lazyCodeLoading及rendererOptions.skyline五项推荐配置完整。",
+      "rule_id": "skyline.creation-page-config",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-configuration.md",
+        "section": "适配参考"
+      },
+      "verification": "解析页面与app配置，逐项核对requiredComponents及defaultDisplayBlock/defaultContentBox/enableScrollViewAutoSize=true、tagNameStyleIsolation/keyframeStyleIsolation=legacy，检查实际导航节点。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s1_04",
+        "s1_05",
+        "s1_06"
+      ]
+    },
+    {
+      "id": "n3_01",
+      "text": "Skyline 新页面通过有明确高度约束的type=list纵向scroll-view承载任务，任务项为直接子节点，标题及筛选区位于滚动主体之外。",
+      "rule_id": "skyline.creation-scroll-layout",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-runtime-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "检查页面父子高度与Flex收缩链、scroll-y及任务列表直接子节点；顶部两个组件位于滚动主体之外，以超出一屏的任务验证有界滚动布局。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s1_00"
+      ]
+    },
+    {
+      "id": "n3_02",
+      "text": "Skyline 新页面在scroll-view上启用refresher-enabled=true，将下拉刷新接到bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。",
+      "rule_id": "skyline.creation-refresh",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-runtime-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "检查实际滚动容器的refresher-enabled求值为true、bindrefresherrefresh事件及refresher-triggered状态绑定；沿该绑定触发刷新，分别注入resolve/reject，核对刷新态最终false且容器可继续操作。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s1_01"
+      ]
+    },
+    {
+      "id": "n3_03",
+      "text": "Skyline 新页面将scroll-view的bindscrolltolower接入分页追加，每次容器触底后新任务进入同一滚动列表。",
+      "rule_id": "skyline.creation-pagination",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-runtime-practice.md",
+        "section": "页面滚动替代方案"
+      },
+      "verification": "从实际模板触底绑定调用处理器两次，核对每次新增2条且原列表保留；分类和唯一键另作业务验证。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s1_02"
+      ]
+    },
+    {
+      "id": "n3_04",
+      "text": "Skyline 页面任务标题、选项式评分组件标题和组合式分类组件候选文案，在实际text承载节点设置max-lines=1、overflow=ellipsis，并在有界可收缩宽度内与WebView单行省略路径共同生效。",
+      "rule_id": "skyline.creation-title-ellipsis",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-style-practice.md",
+        "section": "文本溢出省略适配"
+      },
+      "verification": "分别检查三个SFC的实际文本节点、组件内部宽度与收缩、父级分配宽度及WebView样式；插值紧贴text标签，代入长任务标题、长评分标题及长候选label，核对各自截断且相邻星级/分数保持可见。逐目标记录子检查结果。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s0_00"
+      ]
+    },
+    {
+      "id": "n3_05",
+      "text": "Skyline 选项式评分组件的星级与组合式分类组件的候选项，通过各实例响应式状态，以wx:class或wx:style驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。",
+      "rule_id": "skyline.creation-press-feedback",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-style-practice.md",
+        "section": "animation API 不支持 → 使用 CSS transition"
+      },
+      "verification": "从页面真实注册找到两个组件，分别追踪触摸绑定、局部状态和CSS transition；模拟start/end/cancel，核对数值、时长和恢复，并挂载同类两个实例核对反馈隔离。逐组件记录子检查结果。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s2_07"
+      ]
+    },
+    {
+      "id": "n3_06",
+      "text": "Skyline/glass-easel 新建组合式分类组件的候选列表在初始化、异步返回前、null输入和数组更新阶段均向wx:for提供Array/Object类型的数据。",
+      "rule_id": "skyline.creation-component-loop-data",
+      "scope": "skyline",
+      "source": {
+        "file": "references/skyline-runtime-practice.md",
+        "section": "[必须] 确保 wx:for 数据始终为 Array 或 Object"
+      },
+      "verification": "结合真实setup编译产物、初始渲染数据及模板保护检查首帧，再通过props更新options为null、空数组和有效数组，验证循环实际消费值；手动调用computed不能替代首帧检查。",
+      "source_assertions": [],
+      "related_adaptation_assertions": [
+        "s2_00"
+      ]
+    }
+  ],
+  "design_references": [
+    "mpx2rn-workspace/iteration-17/eval-6-new-rating-component",
+    "mpx2rn-workspace/iteration-17/eval-7-new-segmented-control",
+    "mpx2rn-workspace/iteration-17/eval-8-new-task-board-page"
+  ],
+  "validation_contract": "creation-validation.json",
+  "scoring_group": "creation",
+  "prompt_template": "implementation",
+  "eval_id": 3,
+  "eval_name": "new-task-board-page"
+}

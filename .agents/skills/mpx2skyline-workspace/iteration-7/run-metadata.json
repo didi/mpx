@@ -1,0 +1,13 @@
+{
+  "status": "not_run",
+  "suite_version": 7,
+  "cases": 4,
+  "assertions": 38,
+  "scoring_groups": {
+    "adaptation": 31,
+    "creation": 7
+  },
+  "historical_definitions": [],
+  "baseline_reuse": false,
+  "cross_iteration_summary": false
+}

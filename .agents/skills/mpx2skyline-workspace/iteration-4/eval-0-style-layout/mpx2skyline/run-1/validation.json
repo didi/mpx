@@ -1,7 +1,0 @@
-{
-  "static": { "status": "passed", "checks": ["ESLint extracted component script", "PostCSS parse and structural assertions", "complete Skyline audit matrix"], "evidence": ["eslint.log", "audit.md", "audit-scan.log", "verify.test.js"] },
-  "mock": { "status": "passed", "tests": 7, "description": "Jest includes 4 mocked renderer/window-width lifecycle cases and 3 source/CSS assertions", "evidence": ["jest.log", "verify.test.js"] },
-  "compile": { "status": "not_run", "reason": "Standalone component input without host application or font binary" },
-  "device": { "status": "not_run", "reason": "No developer-tools/device execution performed" },
-  "font_binary": { "status": "not_run", "reason": "Font binaries and host registration are not provided" }
-}

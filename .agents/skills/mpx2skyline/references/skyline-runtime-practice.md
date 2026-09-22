@@ -1,19 +1,18 @@
 # Skyline 运行时与性能适配实践
 
-本文记录 WebView 迁移 Skyline 时偏运行时的改造方案，包括常见问题与性能优化等改造方案。
+本文记录 WebView 迁移 Skyline 时偏运行时的改造方案，包括页面滚动与事件迁移、常见问题与性能优化等改造方案。
 
 ## 目录
 
 - [常见问题](#常见问题)
   - [判断当前渲染模式](#判断当前渲染模式)
-  - [[必须] SelectorQuery 选择器不再支持以数字开头](#必须-selectorquery-选择器不再支持以数字开头)
+  - [页面滚动替代方案](#页面滚动替代方案)
   - [[必须] Skyline 不支持的动画方法](#必须-skyline-不支持的动画方法)
   - [[推荐] 用 this.createSelectorQuery 替代 wx.createSelectorQuery](#推荐-用-thiscreateselectorquery-替代-wxcreateselectorquery)
   - [[必须] ScrollViewContext：开启 enhanced 属性](#必须-scrollviewcontext开启-enhanced-属性)
-  - [[必须] properties 默认值使用 value 而非 default](#必须-properties-默认值使用-value-而非-default)
   - [[必须] 确保 wx:for 数据始终为 Array 或 Object](#必须-确保-wxfor-数据始终为-array-或-object)
   - [[必须] properties 声明类型与实际值保持一致](#必须-properties-声明类型与实际值保持一致)
-  - [wxs 跨包引用错误](#wxs-跨包引用错误typeerror-rwxsstringify4ccc0480-is-not-a-function)
+  - [WXS 跨包引用错误](#wxs-跨包引用错误typeerror-rwxsstringify4ccc0480-is-not-a-function)
 - [性能优化](#性能优化)
   - [列表用 list / custom 模式按需渲染](#列表用-list--custom-模式按需渲染)
   - [cache-extent 预渲染（按需启用）](#cache-extent-预渲染按需启用)
@@ -25,18 +24,17 @@
 
 ### 判断当前渲染模式
 
-在页面或组件实例上可读取 `renderer` 成员，取值为 `webview` 或 `skyline`。如果在模板中要判断，可以拿到值后设置到 data 上。
-
-在生命周期（如 `onLoad`/`attached`）中赋值到 data，供模板使用：
+在页面或组件实例上可读取 `renderer` 成员，取值为 `webview` 或 `skyline`。Mpx 模板中可直接使用 `renderer === 'skyline'` 判断，无需额外声明布尔变量。选项式脚本使用 `this.renderer`；`<script setup>` 从 `getCurrentInstance().proxy` 读取 `renderer`，供模板使用时通过 `defineExpose` 暴露。
 
 ```js
 // 选项式 API
+import { createComponent } from '@mpxjs/core'
+
 createComponent({
-  data: {
-    isSkyline: false
-  },
   attached() {
-    this.isSkyline = this.renderer === 'skyline'
+    if (this.renderer === 'skyline') {
+      // 执行 Skyline 专属逻辑
+    }
   }
 })
 ```
@@ -45,22 +43,66 @@ createComponent({
 // <script setup>
 import { getCurrentInstance } from '@mpxjs/core'
 
-const instance = getCurrentInstance()
-const isSkyline = instance.proxy.renderer === 'skyline'
+const { renderer } = getCurrentInstance().proxy
+
+defineExpose({ renderer })
 ```
 
-> 注意事项：Skyline 与 WebView 只能通过运行时变量区分；编译时仅能区分微信平台，无法区分是否为 Skyline 渲染。
+> 注意事项：
+>
+> 1. Skyline 与 WebView 只能通过运行时变量区分，编译时仅能区分微信平台，无法区分是否为 Skyline 渲染；
+> 2. 组合式语法需要供模板使用时通过 `defineExpose` 暴露。
 
-### [必须] SelectorQuery 选择器不再支持以数字开头
+### 页面滚动替代方案
 
-`#1` 等以数字开头的 id 选择器在 glass-easel 下不合法（与 CSS 选择器规范保持一致），需重命名。
+Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发。需要滚动的页面必须使用 `scroll-view` 替代页面滚动，页面 JSON 同时声明 `disableScroll: true`。
+
+```html
+<!-- 普通长列表 type="list" -->
+<scroll-view type="list" style="height:100%" show-scrollbar="{{false}}" scroll-y="true">
+  <!-- 页面内容 -->
+</scroll-view>
+```
+
+**原页面生命周期需迁移到 scroll-view 对应事件**（不要只删不补，否则下拉刷新/触底加载/滚动监听等业务逻辑会静默失效）：
+
+| 原页面生命周期 | scroll-view 事件 | 备注 |
+| --- | --- | --- |
+| `onPullDownRefresh` | `bindrefresherrefresh` | 需同时开 `refresher-enabled` |
+| `onReachBottom` | `bindscrolltolower` | 可配合 `lower-threshold` 调阈值 |
+| `onPageScroll(e.scrollTop)` | `bindscroll(e.detail.scrollTop)` | 高频事件，按需节流 |
+
+WebView 直接对齐 Skyline 写法（统一走 scroll-view 事件），避免双份实现带来的维护成本与行为漂移。
+
+```html
+<!-- 普通长列表 type="list" -->
+<scroll-view
+  type="list"
+  scroll-y="true"
+  enhanced="true"
+  refresher-enabled="{{true}}"
+  bindrefresherrefresh="onRefresh"
+  bindscrolltolower="onLoadMore"
+  bindscroll="onScroll"
+>
+  <view>11</view>
+  <view>22</view>
+  <!-- 页面内容 -->
+</scroll-view>
+```
 
 ```js
-// ❌ Bad
-this.createSelectorQuery().select('#1').exec(res => {})
-
-// ✅ Good
-this.createSelectorQuery().select('#element-1').exec(res => {})
+createPage({
+  onRefresh() {
+    // 原 onPullDownRefresh 的逻辑
+  },
+  onLoadMore() {
+    // 原 onReachBottom 的逻辑
+  },
+  onScroll(e) {
+    const scrollTop = e.detail.scrollTop  // 原 onPageScroll 的 e.scrollTop
+  }
+})
 ```
 
 ### [必须] Skyline 不支持的动画方法
@@ -113,32 +155,6 @@ createPage({
 })
 ```
 
-### [必须] properties 默认值使用 `value` 而非 `default`
-
-glass-easel 要求组件 properties 的默认值通过 `value` 字段声明，使用 `default` 字段会被忽略，导致属性值为 `undefined`。
-
-```js
-// ❌ Bad — glass-easel 下 default 字段无效，属性值为 undefined
-createComponent({
-  properties: {
-    title: {
-      type: String,
-      default: ''
-    }
-  }
-})
-
-// ✅ Good — 使用 value 字段声明默认值
-createComponent({
-  properties: {
-    title: {
-      type: String,
-      value: ''
-    }
-  }
-})
-```
-
 ### [必须] 确保 wx:for 数据始终为 Array 或 Object
 
 `wx:for` 在任意渲染阶段收到非 Array/Object 值时，都会触发 `"The for-list data is neither Array nor Object"` 错误。常见来源包括 properties 默认值缺失、异步数据未返回、computed 分支未返回值或上游传入 `null` 等；computed 初始化未完成只是其中一种情况。
@@ -149,9 +165,9 @@ createComponent({
   properties: {
     compData: {
       type: Object,
-      value: () => ({
+      value: {
         data: {}
-      })
+      }
     }
   },
   computed: {
@@ -166,9 +182,9 @@ createComponent({
   properties: {
     compData: {
       type: Object,
-      value: () => ({
+      value: {
         data: {}
-      })
+      }
     }
   },
   initData: {
@@ -228,7 +244,7 @@ createComponent({
 
 > properties 中 value 可选；type 必写，基础库 2.17.2 及以上允许设置为 null 跳过校验（低于 2.17.2 的基础库不支持，这里暂不考虑低版本）。
 
-### wxs 跨包引用错误：TypeError: R.wxs/stringify4ccc0480 is not a function
+### WXS 跨包引用错误：TypeError: R.wxs/stringify4ccc0480 is not a function
 
 触发条件：分包中启用 `componentFramework: "glass-easel"` 的页面或组件引用了主包 WXS，但主包内没有任何启用 glass-easel 的页面或组件引用该 WXS。
 

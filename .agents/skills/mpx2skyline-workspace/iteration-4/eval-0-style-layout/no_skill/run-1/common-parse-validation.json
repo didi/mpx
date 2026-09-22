@@ -1,9 +1,0 @@
-{
-  "scope": "SFC extraction, script/JSON/CSS parsing only; not WeChat compilation",
-  "results": [
-    {
-      "file": "style-card.mpx",
-      "passed": true
-    }
-  ]
-}
