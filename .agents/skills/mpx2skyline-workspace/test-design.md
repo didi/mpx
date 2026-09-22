@@ -48,7 +48,7 @@
 | s2_00 | Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。 | 检查初始渲染数据及computed所有消费路径，分别模拟undefined/null/空数组/有效数组。 |
 | s2_01 | Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。 | 关联模板id、组件查询作用域和select字符串，核对查询目标一致；接受this.createSelectorQuery()或wx.createSelectorQuery().in(this)等具有正确组件作用域的等价实现。this.createSelectorQuery的性能推荐另记观察项。 |
 | s2_02 | Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。 | 从user-list.mpx实际回顶按钮的点击绑定追踪查询目标、enhanced属性及node().exec后的scrollTo({top:0})调用，确认不是other容器。 |
-| s2_03 | Skyline/glass-easel 循环中的外部片段采用 import 加具名 template 调用，并显式传递当前 item/index。 | 检查导入路径、模板名称和循环数据参数，代入两行不同数据确认作用域。 |
+| s2_03 | Skyline/glass-easel 模板片段使用 import 引入具名 template，并通过 template 调用；不使用 include。 | 检查导入路径、模板名称和循环数据参数，代入两行不同数据确认作用域。 |
 | s2_04 | Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。 | 检查两个导航入口的实际子节点和/pages/detail目标；复杂外层事件方案核对绑定与跳转调用。 |
 | s2_05 | Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。 | 检查user-list.mpx标题中logo与label共同承载的实际span、省略属性、图片display及renderer路径和宽度约束；使用长label核对两者共同截断。 Mpx 内联容器使用 view 的 mpxTagName@wx="span" 写法，结合实际编译结果核对标签。 |
 | s2_06 | Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。 | 追踪user-list.mpx提示圆点的真实节点、关键帧、fill-mode与1秒周期，核对8px、#f50及opacity .3到1。 |

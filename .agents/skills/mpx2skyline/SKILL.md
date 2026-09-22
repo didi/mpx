@@ -118,7 +118,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 3. **不支持组件采用替代或降级**：命中 `web-view`、富文本编辑、可移动视图等不支持能力时，按 [不支持或不建议使用的组件](references/skyline-template-reference.md#skyline-不支持或不建议使用的组件) 选择替代组件、独立 WebView 页面或 renderer 降级；复杂交互无明确等效方案时说明风险并请求确认。
 4. **WebView-only 属性与取值不得作为 Skyline 方案**：例如 `image` 的 WebView-only 裁剪模式、`text` 的 `space` / `decode`、输入组件的 `placeholder-class` 等，确认在 Skyline 下无副作用后可保留给 WebView，并补充 Skyline 实现；存在副作用时替换为双端支持写法或按 renderer 隔离，不明确时说明风险并请求确认。完整范围见 [WebView-only 属性、取值与行为](references/skyline-template-reference.md#webview-only-属性取值与行为)。
 5. **遵守组件子节点结构**：`navigator` 只能嵌套 `text` 或纯文本，`text` 只能嵌套 `text`；复杂卡片改为外层点击事件。文本、图片或链接需要组成同一段内联内容时使用 `span` 方案，按需补齐 Skyline 的内联布局与截断属性；详见 [内联混排](references/skyline-style-practice.md#内联混排)。
-6. **模板结构按 glass-easel 规则改造**：数据绑定外与属性定界冲突的引号使用 XML 实体，数据绑定内移除为外层属性添加的多余转义；`wx:for` 子树中的 `<include>` 改为 `<import>` + `<template>` 并显式传入 `item` / `index`。详见 [模板结构适配](references/skyline-template-reference.md#模板结构适配)。
+6. **模板结构按 glass-easel 规则改造**：数据绑定外与属性定界冲突的引号使用 XML 实体，数据绑定内移除为外层属性添加的多余转义；模板片段统一使用 `<import>` + `<template>` 引入和调用。详见 [模板结构适配](references/skyline-template-reference.md#模板结构适配)。
 7. **节点查询使用合法选择器**：id 不以数字开头；glass-easel 组件实例内优先使用 `this.createSelectorQuery()`。详见 [SelectorQuery 推荐](./references/skyline-runtime-practice.md#推荐-用-thiscreateselectorquery-替代-wxcreateselectorquery)。
 8. **Mpx 模板与脚本绑定**：动态类与动态样式使用 `wx:class` / `wx:style`；普通 `class` / `style` 仅放静态内容。Mpx 不会将 setup 顶层绑定自动暴露给模板。模板引用的局部状态、计算结果及事件方法须通过 `defineExpose()` 显式声明；仅暴露模板实际使用的绑定，不将内部辅助数据或方法全部导出。这是 Mpx 基础语法要求，WebView 与 Skyline 均须遵守。
 

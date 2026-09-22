@@ -56,12 +56,12 @@
     },
     {
       "id": "s2_03",
-      "text": "Skyline/glass-easel 循环中的外部片段采用 import 加具名 template 调用，并显式传递当前 item/index。",
+      "text": "Skyline/glass-easel 模板片段使用 import 引入具名 template，并通过 template 调用；不使用 include。",
       "rule_id": "skyline.loop-template",
       "scope": "skyline",
       "source": {
         "file": "references/skyline-template-reference.md",
-        "section": "[必须] wx:for 内嵌 &lt;include&gt; 时改为 &lt;template&gt;"
+        "section": "[必须] 模板片段使用 import template"
       },
       "verification": "检查导入路径、模板名称和循环数据参数，代入两行不同数据确认作用域。",
       "source_assertions": [

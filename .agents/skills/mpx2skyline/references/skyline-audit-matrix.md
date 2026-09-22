@@ -54,7 +54,7 @@ rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|
 
 | id | level | scope | pattern | 判定                                                                                                   | 标准修复                                                                                                                                       | 允许例外 | 参考 |
 | --- | --- | --- | --- |------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------| --- | --- |
-| `GLASS_INCLUDE_IN_FOR` | error | template | `<include\|wx:for` | 候选召回；必须读取模板结构，判断 `<include>` 是否位于 `wx:for` 子树中                                                       | 改 `<import>` + `<template>`，显式传 `data` | include 不在循环子树中 | [include 适配](skyline-template-reference.md#必须-wxfor-内嵌-include-时改为-template) |
+| `GLASS_TEMPLATE_FRAGMENT` | error | template | `<include` | 模板片段使用 `<include>` | 改为 `<import>` 引入具名 `<template>`，通过 `<template is="..." data="..." />` 调用并显式传递数据 | 非模板标签或注释中的文本 | [模板片段适配](skyline-template-reference.md#必须-模板片段使用-import-template) |
 | `GLASS_TEMPLATE_ESCAPE` | error | template | `\\\\\\"\|\\\\'` | 候选召回；必须结合完整模板属性判断转义位于数据绑定内还是绑定外                                                                      | 外层属性值用 `&quot;`；绑定表达式内去掉多余转义 | 不是模板属性转义 | [模板转义](skyline-template-reference.md#必须-模板中数据绑定外的转义改为标准-xml-转义) |
 | `COMP_UNSUPPORTED` | error | template | `web-view\|editor\|movable-area\|movable-view\|progress\|navigation-bar\|xr-frame` | Skyline 不支持或不建议使用这些组件                                                                                | 替代组件、独立 WebView 页面或 renderer 降级                                                                                                            | 明确 WebView-only 页面 | [不支持组件](skyline-template-reference.md#skyline-不支持或不建议使用的组件) |
 | `COMP_PENDING_SUPPORT` | warn | template | `match-media\|keyboard-accessory` | 不支持，不能默认按 Skyline 稳定能力处理                                                                             | 改为已记录替代方案，或回源确认后说明                                                                                                                         | 已回源确认支持并记录依据 | [不支持组件](skyline-template-reference.md#skyline-不支持或不建议使用的组件) |
@@ -114,7 +114,7 @@ rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|
 1. `rg` 命中只是候选项，必须结合 SFC 区块、平台条件、运行时 renderer 分支判断。
 2. 多行 `<scroll-view>`、`<navigator>`、`<text>`、`sticky-section` 不能只靠单行 pattern 判定，需读取完整标签和直接子节点。
 3. `SCROLL_CONTEXT_ENHANCED` 必须把 `select('#id').node()` 关联到对应 `scroll-view`；不能因文件内存在其他已开启 `enhanced` 的滚动容器而放行。
-4. `GLASS_INCLUDE_IN_FOR` 必须检查祖先关系；`GLASS_TEMPLATE_ESCAPE` 必须按完整属性区分数据绑定内外，聚合扫描结果不能直接作为最终结论。
+4. `GLASS_TEMPLATE_FRAGMENT` 必须读取命中位置，排除非模板标签或注释中的文本；`GLASS_TEMPLATE_ESCAPE` 必须按完整属性区分数据绑定内外，聚合扫描结果不能直接作为最终结论。
 5. 保留 `@media screen` 时，内部每个选择器（含逗号分组）必须限定到非 Skyline 专用类；Skyline 用运行时窗口宽度与动态类实现业务断点逻辑，两端阈值和样式保持一致。
 6. 最终结果中 `error` 不允许无说明残留；`warn` 必须处理或说明为什么不影响当前 scope。
 7. `COMP_INLINE_MIXED_CONTENT` 不能只按 `STYLE_TEXT_OVERFLOW` 处理；命中 `truncate` 且同一行附近存在 `image` / icon / `rich-text` / `special-text` 时，必须进一步套用图文混排规则或说明为什么不是同段混排。

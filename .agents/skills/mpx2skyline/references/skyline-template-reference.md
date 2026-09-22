@@ -10,7 +10,7 @@
 - [Skyline 相对 WebView 的高频差异补充](#skyline-相对-webview-的高频差异补充)
 - [模板结构适配](#模板结构适配)
   - [模板中数据绑定外的转义改为标准 XML 转义](#必须-模板中数据绑定外的转义改为标准-xml-转义)
-  - [wx:for 内嵌 include 时改为 template](#必须-wxfor-内嵌-include-时改为-template)
+  - [模板片段使用 import template](#必须-模板片段使用-import-template)
   - [navigator 嵌套限制](#navigator-嵌套限制)
   - [SVG 在 Skyline 下的限制与适配](#svg-在-skyline-下的限制与适配)
 
@@ -90,19 +90,9 @@
 <view prop-a="&quot;test&quot;" prop-b="{{ test === 'test' }}" />
 ```
 
-### [必须] wx:for 内嵌 &lt;include&gt; 时改为 &lt;template&gt;
+### [必须] 模板片段使用 import template
 
-在 `wx:for` 中使用 `<include>` 时，被引入的模板中的 `item` / `index` 变量不再有效，需改为 `<template>` + `<import>` 方案。
-
-```html
-<!-- ❌ Bad -->
-<block wx:for="{{ arr }}">
-  <include src="inc.wxml" />
-</block>
-
-<!-- inc.wxml -->
-<view>{{ index }}. {{ item }}</view>
-```
+模板片段统一通过 `<import>` 引入具名 `<template>`，使用 `<template is="..." data="..." />` 调用并传入所需数据；不使用 `<include>`。
 
 ```html
 <!-- ✅ Good -->

@@ -9,7 +9,7 @@
 - setRows接收{items:Array|null}；初次渲染、数据返回前及null时显示空列表，正常数据仅展示visible用户。每行通过外部row.wxml展示过滤后行号与姓名。
 - “回到顶部”是同一个可按压按钮：按下缩放0.96且透明度0.7，松开或取消恢复1，过渡150ms；点击后操作实际用户列表滚回顶部。旁边other滚动容器用于区分查询目标。
 - 两个详情入口均到/pages/detail：一个是简单文本入口，一个是卡片内容入口，均保持可用。
-- 保留label/payload接口及config.default数据。现有数字开头id、include循环片段、未保护的循环数据、伪元素动画和动画API是待适配内容。
+- 保留label/payload接口及config.default数据。现有数字开头id、使用include的模板片段、未保护的循环数据、伪元素动画和动画API是待适配内容。
 
 ## 交付与验证
 
