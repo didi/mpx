@@ -91,6 +91,27 @@ describe('RN dimensions helper', () => {
     expect(getSystemInfo().size.windowWidth).toBe(360)
   })
 
+  it('rejects dimensions-dependent APIs called while applying customDimensions', () => {
+    Mpx.config.rnConfig.customDimensions = () => getSystemInfo()
+
+    expect(() => getSystemInfo()).toThrow(
+      'Do not call getWindowInfo, getSystemInfo, or other APIs that depend on customDimensions results inside rnConfig.customDimensions.'
+    )
+
+    delete Mpx.config.rnConfig.customDimensions
+    expect(getSystemInfo().size.windowWidth).toBe(360)
+  })
+
+  it('rejects dimensions-dependent APIs during later customDimensions synchronization', () => {
+    expect(getSystemInfo().size.windowWidth).toBe(360)
+    Mpx.config.rnConfig.customDimensions = () => getSystemInfo()
+
+    expect(() => syncDimensions(dimensions)).toThrow(
+      'Do not call getWindowInfo, getSystemInfo, or other APIs that depend on customDimensions results inside rnConfig.customDimensions.'
+    )
+    expect(getSystemInfo().size.windowWidth).toBe(360)
+  })
+
   function createPageResizeContext () {
     const target = {
       onResize: jest.fn()

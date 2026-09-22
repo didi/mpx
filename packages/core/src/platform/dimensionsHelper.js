@@ -6,6 +6,13 @@ let dimensionsInfoInitialized = false
 let rawDimensionsInfo
 let appliedDimensionsBase
 let styleDimensionsSnapshot
+let applyingCustomDimensions = false
+
+function assertNotApplyingCustomDimensions () {
+  if (applyingCustomDimensions) {
+    throw new Error('Do not call getWindowInfo, getSystemInfo, or other APIs that depend on customDimensions results inside rnConfig.customDimensions.')
+  }
+}
 
 function cloneDimensionsInfo (dimensions) {
   return {
@@ -60,13 +67,19 @@ function triggerStyleDimensionsChange () {
 }
 
 export function syncDimensions (dimensions, options = {}) {
+  assertNotApplyingCustomDimensions()
   const oldStyleDimensionsSnapshot = styleDimensionsSnapshot
   const nextRawDimensionsInfo = cloneDimensionsInfo(dimensions)
   const customDimensions = Mpx.config.rnConfig?.customDimensions
   const dimensionsBase = getConfiguredDimensionsBase()
   dimensions = cloneDimensionsInfo(nextRawDimensionsInfo)
   if (typeof customDimensions === 'function') {
-    dimensions = customDimensions(dimensions) || dimensions
+    applyingCustomDimensions = true
+    try {
+      dimensions = customDimensions(dimensions) || dimensions
+    } finally {
+      applyingCustomDimensions = false
+    }
   }
   dimensions = cloneDimensionsInfo(dimensions)
   const nextStyleDimensionsSnapshot = getStyleDimensionsSnapshot(dimensionsBase, dimensions)
@@ -85,6 +98,7 @@ export function syncDimensions (dimensions, options = {}) {
 }
 
 export function getStyleDimensions (dimensionsBase) {
+  assertNotApplyingCustomDimensions()
   if (!dimensionsInfoInitialized) {
     syncDimensions(rawDimensionsInfo, { silent: true })
   }
