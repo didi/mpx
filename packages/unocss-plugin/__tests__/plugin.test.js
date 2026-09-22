@@ -2,6 +2,8 @@ import MpxUnocssPlugin from '../lib/index.js'
 import { getRawSource } from '../lib/source.js'
 import { createGenerator } from '@unocss/core'
 import presetMpx from '@mpxjs/unocss-base/lib/index.js'
+import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js'
+import { jest } from '@jest/globals'
 
 // const { presetLegacyCompat } = require('@unocss/preset-legacy-compat')
 
@@ -95,6 +97,39 @@ describe('test plugin', () => {
       expect(result.css).toContain('transition-property:opacity,transform;')
       expect([...uno.blocked]).toEqual(expect.arrayContaining(['transition', 'transition-1', 'transition-all', 'transition-all-1']))
       expect([...uno.blocked]).toEqual(expect.not.arrayContaining(['transition-all-foo', 'transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition-colors', 'transition-[opacity,transform]']))
+    } finally {
+      if (targetMode === undefined) {
+        delete process.env.MPX_CURRENT_TARGET_MODE
+      } else {
+        process.env.MPX_CURRENT_TARGET_MODE = targetMode
+      }
+    }
+  })
+
+  test('reports generated hover selectors as unsupported in react native mode', async () => {
+    const targetMode = process.env.MPX_CURRENT_TARGET_MODE
+    process.env.MPX_CURRENT_TARGET_MODE = 'ios'
+
+    try {
+      const uno = await createReactGenerator()
+      const result = await uno.generate(['hover:bg-red-500'], { preflights: false })
+      const error = jest.fn()
+      const classMap = getClassMap({
+        styles: [{
+          content: result.css,
+          filename: 'mpx2rn-unocss'
+        }],
+        filename: 'mpx2rn-unocss',
+        mode: 'ios',
+        srcMode: 'wx',
+        warn: jest.fn(),
+        error
+      })
+
+      expect(result.css).toContain(':hover')
+      expect(classMap).toEqual({})
+      expect(error).toHaveBeenCalledTimes(1)
+      expect(error.mock.calls[0][0]).toContain('Only single class selector is supported')
     } finally {
       if (targetMode === undefined) {
         delete process.env.MPX_CURRENT_TARGET_MODE

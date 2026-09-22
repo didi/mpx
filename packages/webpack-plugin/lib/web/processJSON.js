@@ -17,7 +17,8 @@ module.exports = function (jsonContent, {
   loaderContext,
   ctorType,
   pagesMap,
-  componentsMap
+  componentsMap,
+  srcMode
 }, rawCallback) {
   const localPagesMap = {}
   const localComponentsMap = {}
@@ -28,7 +29,6 @@ module.exports = function (jsonContent, {
   const mpx = loaderContext.getMpx()
   const {
     mode,
-    srcMode,
     env,
     projectRoot
   } = mpx

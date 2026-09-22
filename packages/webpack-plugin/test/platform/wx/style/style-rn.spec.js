@@ -1,4 +1,17 @@
-const { getClassMap } = require('../../../../lib/react/style-helper')
+const { getClassMap: buildClassMap } = require('../../../../lib/react/style-helper')
+
+function getClassMap (options) {
+  if (!options.styles) {
+    options = Object.assign({}, options, {
+      styles: [{
+        content: options.content,
+        filename: options.filename
+      }]
+    })
+    delete options.content
+  }
+  return buildClassMap(options)
+}
 
 describe('React Native style validation for CSS variables', () => {
   const createConfig = (mode = 'ios') => ({
@@ -7,6 +20,74 @@ describe('React Native style validation for CSS variables', () => {
     ctorType: 'component',
     warn: jest.fn(),
     error: jest.fn()
+  })
+
+  test('should preserve target-native style declarations', () => {
+    const config = createConfig()
+    const result = getClassMap({
+      styles: [{
+        content: '.text { color: red; }',
+        filename: 'native.css',
+        srcMode: 'ios'
+      }],
+      filename: 'test.css',
+      ...config
+    })
+
+    expect(result.text).toEqual({
+      color: '"red"'
+    })
+    expect(config.error).not.toHaveBeenCalled()
+  })
+
+  describe('Selector validation', () => {
+    test.each([
+      ['pseudo class', '.button:hover { color: red; }', 'button:hover'],
+      ['pseudo element', '.text::before { color: red; }', 'text::before'],
+      ['functional pseudo class', '.item:not(.disabled) { color: red; }', 'item:not(.disabled)'],
+      ['escaped UnoCSS class with pseudo', '.hover\\:bg-red-500:hover { color: red; }', 'hover:bg-red-500:hover']
+    ])('should reject %s selectors', (name, css, key) => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result).not.toHaveProperty(key)
+      expect(config.error).toHaveBeenCalledTimes(1)
+      expect(config.error.mock.calls[0][0]).toContain('Only single class selector is supported')
+    })
+
+    test('should support single class selectors and comma-separated single classes', () => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: '.single { color: red; } .first, .second { color: blue; }',
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.single).toEqual({ color: '"red"' })
+      expect(result.first).toEqual({ color: '"blue"' })
+      expect(result.second).toEqual({ color: '"blue"' })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should keep valid selectors while reporting invalid selectors in a comma-separated rule', () => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: '.valid, .invalid:hover { color: red; }',
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.valid).toEqual({ color: '"red"' })
+      expect(result).not.toHaveProperty('invalid:hover')
+      expect(config.error).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('CSS variable fallback validation', () => {

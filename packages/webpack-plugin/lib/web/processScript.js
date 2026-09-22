@@ -34,10 +34,7 @@ module.exports = function (script, {
 
   let output = '/* script */\n'
 
-  let scriptSrcMode = srcMode
-  if (script) {
-    scriptSrcMode = script.mode || scriptSrcMode
-  } else {
+  if (!script) {
     script = { tag: 'script' }
   }
   output += genComponentTag(script, {
@@ -102,7 +99,7 @@ module.exports = function (script, {
         delete pageConfig.usingComponents
       }
 
-      content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, webConfig, hasApp })
+      content += buildGlobalParams({ moduleId, srcMode, loaderContext, isProduction, webConfig, hasApp })
       if (!hasApp && i18n) {
         content += buildI18n({ i18n, loaderContext })
       }

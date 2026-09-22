@@ -51,7 +51,7 @@ module.exports = function ({
             hasScoped,
             hasComment,
             isNative,
-            srcMode,
+            srcMode: (parts.template && parts.template.srcMode) || srcMode,
             moduleId,
             ctorType,
             usingComponentsInfo,
@@ -73,7 +73,8 @@ module.exports = function ({
             loaderContext,
             ctorType,
             pagesMap,
-            componentsMap
+            componentsMap,
+            srcMode: (parts.json && parts.json.srcMode) || srcMode
           }, callback)
         }
       ], (err, res) => {
@@ -87,7 +88,7 @@ module.exports = function ({
       processScript(parts.script, {
         loaderContext,
         ctorType,
-        srcMode,
+        srcMode: (parts.script && parts.script.srcMode) || srcMode,
         moduleId,
         isProduction,
         jsonConfig: jsonRes.jsonObj,

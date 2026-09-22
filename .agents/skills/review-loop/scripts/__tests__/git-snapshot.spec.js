@@ -6,7 +6,6 @@ const os = require('os')
 const path = require('path')
 const snapshot = require('../git-snapshot')
 
-const snapshotScript = path.resolve(__dirname, '..', 'snapshot-diff.js')
 const originalCwd = process.cwd()
 let repo
 let mainObjectDirs
@@ -19,10 +18,6 @@ function write (relativePath, content) {
   const file = path.join(repo, relativePath)
   fs.mkdirSync(path.dirname(file), { recursive: true })
   fs.writeFileSync(file, content)
-}
-
-function readJson (relativePath) {
-  return JSON.parse(fs.readFileSync(path.join(repo, relativePath), 'utf8'))
 }
 
 function objectFile (dir, oid) {
@@ -60,25 +55,6 @@ function initRepo () {
   git(['commit', '-qm', 'initial'])
 }
 
-function writeStateAndPaths (round, paths) {
-  write('.agent-workflows/review-loop/task/state.json', JSON.stringify({
-    protocolVersion: '2.0.0',
-    phase: 'code_drafting',
-    codeRound: round - 1
-  }))
-  write('.agent-workflows/review-loop/task/runtime/code-round-' + round + '-paths.json', JSON.stringify({
-    round: round,
-    paths: paths
-  }))
-}
-
-function runSnapshot (round) {
-  return childProcess.execFileSync(process.execPath, [snapshotScript, '--task-id', 'task', '--round', String(round)], {
-    cwd: repo,
-    encoding: 'utf8'
-  })
-}
-
 beforeEach(function () {
   initRepo()
   mainObjectDirs = null
@@ -91,7 +67,7 @@ afterEach(function () {
   fs.rmSync(repo, { recursive: true, force: true })
 })
 
-test('captures dirty baseline and snapshots cumulative and round diffs', function () {
+test('captures a dirty baseline and computes its diff to the current worktree on demand', function () {
   write('staged.txt', 'baseline staged\n')
   git(['add', 'staged.txt'])
   write('unstaged.txt', 'baseline unstaged\n')
@@ -134,11 +110,8 @@ test('captures dirty baseline and snapshots cumulative and round diffs', functio
   write('binary.bin', Buffer.from([0, 9, 8, 7]))
   fs.unlinkSync(path.join(repo, 'link'))
   fs.symlinkSync('task-target', path.join(repo, 'link'))
-  writeStateAndPaths(1, ['staged-current.txt', 'unstaged.txt', 'untracked.txt', 'delete.txt', 'mode.txt', 'binary.bin'])
-  runSnapshot(1)
-
-  const scope1 = readJson('.agent-workflows/review-loop/task/diffs/code-scope-1.json')
-  expect(scope1.cumulativePaths).toEqual([
+  const trees1 = snapshot.reviewTrees('task')
+  expect(trees1.changedPaths).toEqual([
     'binary.bin',
     'delete.txt',
     'link',
@@ -147,39 +120,30 @@ test('captures dirty baseline and snapshots cumulative and round diffs', functio
     'unstaged.txt',
     'untracked.txt'
   ])
-  expect(scope1.claimedPaths).toEqual([
-    'binary.bin',
-    'delete.txt',
-    'mode.txt',
-    'staged-current.txt',
-    'unstaged.txt',
-    'untracked.txt'
-  ])
-  expect(scope1.unexpectedPaths).toEqual(['link'])
-  expect(fs.existsSync(objectFile(snapshotObjects, scope1.currentTree))).toBe(true)
-  expect(fs.existsSync(objectFile(path.join(repo, '.git', 'objects'), scope1.currentTree))).toBe(false)
-  const cumulativePatch = fs.readFileSync(path.join(repo, '.agent-workflows/review-loop/task/diffs/code-diff-1.patch'), 'utf8')
-  expect(cumulativePatch).toContain('GIT binary patch')
-  expect(cumulativePatch).toContain('deleted file mode 100644')
-  expect(cumulativePatch).toContain('old mode 100755')
-  expect(cumulativePatch).toContain('baseline-target')
-  expect(cumulativePatch).toContain('task-target')
-  expect(cumulativePatch).not.toContain('baseline-untracked.txt')
-  expect(cumulativePatch).not.toContain('baseline-delete.txt')
-  expect(cumulativePatch).not.toContain('baseline staged')
+  expect(fs.existsSync(objectFile(snapshotObjects, trees1.currentTree))).toBe(true)
+  expect(fs.existsSync(objectFile(path.join(repo, '.git', 'objects'), trees1.currentTree))).toBe(false)
+  const diff1 = snapshot.diffTrees('task', trees1.baselineTree, trees1.currentTree)
+  expect(diff1).toContain('GIT binary patch')
+  expect(diff1).toContain('deleted file mode 100644')
+  expect(diff1).toContain('old mode 100755')
+  expect(diff1).toContain('baseline-target')
+  expect(diff1).toContain('task-target')
+  expect(diff1).not.toContain('baseline-untracked.txt')
+  expect(diff1).not.toContain('baseline-delete.txt')
+  expect(diff1).not.toContain('baseline staged')
+  expect(fs.existsSync(path.join(repo, '.agent-workflows/review-loop/task/diffs'))).toBe(false)
 
   write('untracked.txt', 'round two\n')
   write('unexpected.txt', 'unexpected\n')
-  writeStateAndPaths(2, ['./untracked.txt'])
-  runSnapshot(2)
-  const scope2 = readJson('.agent-workflows/review-loop/task/diffs/code-scope-2.json')
-  expect(scope2.roundPaths).toEqual(['unexpected.txt', 'untracked.txt'])
-  expect(scope2.claimedPaths).toEqual(['untracked.txt'])
-  expect(scope2.unexpectedPaths).toEqual(['unexpected.txt'])
-  expect(fs.existsSync(objectFile(snapshotObjects, scope2.currentTree))).toBe(true)
-  expect(fs.existsSync(objectFile(path.join(repo, '.git', 'objects'), scope2.currentTree))).toBe(false)
-  expect(fs.readFileSync(path.join(repo, '.agent-workflows/review-loop/task/diffs/code-round-2.patch'), 'utf8')).toContain('round two')
-  expect(fs.readFileSync(path.join(repo, '.agent-workflows/review-loop/task/diffs/code-diff-2.patch'), 'utf8')).toContain('staged current')
+  const trees2 = snapshot.reviewTrees('task')
+  expect(trees2.changedPaths).toContain('unexpected.txt')
+  expect(trees2.changedPaths).toContain('untracked.txt')
+  expect(fs.existsSync(objectFile(snapshotObjects, trees2.currentTree))).toBe(true)
+  expect(fs.existsSync(objectFile(path.join(repo, '.git', 'objects'), trees2.currentTree))).toBe(false)
+  const diff2 = snapshot.diffTrees('task', trees2.baselineTree, trees2.currentTree)
+  expect(diff2).toContain('staged current')
+  expect(diff2).toContain('unexpected')
+  expect(fs.existsSync(path.join(repo, '.agent-workflows/review-loop/task/diffs'))).toBe(false)
 })
 
 test('fails explicitly when baseline content exceeds its limit', function () {
@@ -193,22 +157,20 @@ test('fails explicitly when baseline content exceeds its limit', function () {
   }).toThrow('Snapshot content exceeds maxTotalBytes')
 })
 
-test('rejects oversized worktree content before writing Git objects', function () {
+test('rejects oversized worktree content before preparing a review tree', function () {
   snapshot.captureBaseline('task', { maxFileBytes: 64, maxTotalBytes: 1024 })
   write('large-current.txt', 'x'.repeat(65))
-  writeStateAndPaths(1, ['large-current.txt'])
   const oid = git(['hash-object', 'large-current.txt']).trim()
   const objects = path.join(repo, '.agent-workflows/review-loop/task/runtime/snapshot-objects')
 
-  expect(function () { runSnapshot(1) }).toThrow('Snapshot file exceeds maxFileBytes: large-current.txt')
+  expect(function () { snapshot.reviewTrees('task') }).toThrow('Snapshot file exceeds maxFileBytes: large-current.txt')
   expect(fs.existsSync(objectFile(objects, oid))).toBe(false)
 })
 
 test('applies snapshot limits to deleted baseline content', function () {
   snapshot.captureBaseline('task', { maxFileBytes: 3, maxTotalBytes: 10 })
   fs.rmSync(path.join(repo, 'delete.txt'))
-  writeStateAndPaths(1, ['delete.txt'])
-  expect(function () { runSnapshot(1) }).toThrow('Snapshot file exceeds maxFileBytes: delete.txt')
+  expect(function () { snapshot.reviewTrees('task') }).toThrow('Snapshot file exceeds maxFileBytes: delete.txt')
 })
 
 test('validates Git paths with platform-independent slash semantics', function () {
@@ -237,12 +199,6 @@ test('validates Git paths with platform-independent slash semantics', function (
       snapshot.validateRepoRelativePaths([invalidPath])
     }).toThrow('must be an array of non-empty repo-relative paths')
   })
-})
-
-test('normalizes backslash claims to match Git slash paths', function () {
-  const claimed = snapshot.validateClaimedPaths(['src\\example.js'])
-  expect(Array.from(claimed)).toEqual(['src/example.js'])
-  expect(['src/example.js'].filter(function (item) { return claimed.has(item) })).toEqual(['src/example.js'])
 })
 
 test('supports legacy clean baseline manifests only', function () {
@@ -305,41 +261,16 @@ test('validates legacy clean baseline Git objects and tree identity', function (
   expect(function () { snapshot.readBaseline('mismatched') }).toThrow('does not match baseline HEAD tree')
 })
 
-test('reruns only the current unreviewed code round', function () {
+test('always compares the original baseline with the current worktree without round metadata', function () {
   snapshot.captureBaseline('task')
   write('unstaged.txt', 'first draft\n')
-  writeStateAndPaths(1, ['unstaged.txt'])
-  runSnapshot(1)
-  const diffFile = path.join(repo, '.agent-workflows/review-loop/task/diffs/code-diff-1.patch')
+  const first = snapshot.reviewTrees('task')
+  expect(snapshot.diffTrees('task', first.baselineTree, first.currentTree)).toContain('first draft')
 
   write('unstaged.txt', 'revised draft\n')
-  runSnapshot(1)
-  const revised = fs.readFileSync(diffFile, 'utf8')
+  const second = snapshot.reviewTrees('task')
+  const revised = snapshot.diffTrees('task', second.baselineTree, second.currentTree)
   expect(revised).toContain('revised draft')
-
-  write('.agent-workflows/review-loop/task/state.json', JSON.stringify({
-    protocolVersion: '2.0.0',
-    phase: 'code_reviewing',
-    codeRound: 0
-  }))
-  write('unstaged.txt', 'recovered review draft\n')
-  runSnapshot(1)
-  const recovered = fs.readFileSync(diffFile, 'utf8')
-  expect(recovered).toContain('recovered review draft')
-
-  const runFile = path.join(repo, '.agent-workflows/review-loop/task/runtime/reviewer-runs/code-review-1.json')
-  write('.agent-workflows/review-loop/task/runtime/reviewer-runs/code-review-1.json', '{}')
-  write('unstaged.txt', 'must not replace reviewer-run draft\n')
-  expect(function () { runSnapshot(1) }).toThrow(/cannot replace artifacts after the current reviewer run starts/)
-  expect(fs.readFileSync(diffFile, 'utf8')).toBe(recovered)
-  fs.rmSync(runFile)
-
-  write('.agent-workflows/review-loop/task/reviews/code-review-1.json', '{}')
-  write('unstaged.txt', 'must not replace reviewed draft\n')
-  expect(function () { runSnapshot(1) }).toThrow(/cannot replace artifacts after the current reviewer run starts/)
-  expect(fs.readFileSync(diffFile, 'utf8')).toBe(recovered)
-
-  writeStateAndPaths(2, [])
-  expect(function () { runSnapshot(1) }).toThrow(/state-derived next round 2/)
-  expect(fs.readFileSync(diffFile, 'utf8')).toBe(recovered)
+  expect(revised).toContain('initial unstaged.txt')
+  expect(fs.existsSync(path.join(repo, '.agent-workflows/review-loop/task/diffs'))).toBe(false)
 })

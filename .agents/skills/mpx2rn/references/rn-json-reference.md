@@ -101,7 +101,7 @@
 | `onReachBottomDistance` | 输出 RN 时无效，应在模板中结合 `scroll-view` 相关能力进行跨端兼容实现。 |
 | `disableKeyboardAvoiding` | 仅输出 RN 时有效，为 `true` 时关闭框架自带的键盘避让包裹，开发者自行处理键盘遮挡。 |
 
-**注意**：跨端输出时 **`disableScroll` 宜为 `true`**，在 `<template>` 里用 **`scroll-y` 的 `scroll-view`** 包裹需要滚动的内容，与 RN 侧行为对齐。下拉刷新、触底等请结合 `scroll-view` 事件与业务逻辑实现。
+**注意**：跨端输出 RN 时 **`disableScroll` 设为 `true`**，同时在 `<style>` 中声明 **`page { height: 100%; }`**，并在 `<template>` 里用开启 **`scroll-y`** 的 `scroll-view` 包裹需要滚动的内容，与 RN 侧行为对齐。下拉刷新、触底等请结合 `scroll-view` 事件与业务逻辑实现。
 
 ---
 
@@ -184,6 +184,8 @@ mpx.navigateTo({
 ### 异步分包组件
 
 跨分包使用其他分包内的自定义组件时，需在 **`usingComponents`** 的路径上声明 **`?root=对方分包名`**，并在 **`componentPlaceholder`** 中指定**已在本包 `usingComponents` 注册**的同步占位组件或基础组件（如 view / text 等）；占位组件本身不能再标记为异步。构建侧需开启 **`mpx.config.rnConfig.supportSubpackage`**，并可配置 `asyncChunk.loading` / `fallback` 等。
+
+被多个异步分包共享的公共 JS 模块默认由构建抽取为独立的 `async-common` 分包并按需懒加载；若在 `mpx.config.js` 的 `pluginOptions.mpx.plugin.rnConfig` 中设置 **`asyncCommonSubpackage: false`**，则 RN 输出不再单独生成该分包，公共模块合并进 app 主入口 bundle，可省去一次 `async-common` 异步下载。
 
 概念与写法与官方 [分包异步化 - 跨分包自定义组件](https://mpxjs.cn/guide/advance/async-subpackage.html) 一致；**微信、支付宝、Web、RN** 等环境下框架对该能力有支持（非支持端会自动降级）。
 

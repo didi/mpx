@@ -1,0 +1,175 @@
+<template>
+  <view class="segmented-control {{disabled ? 'segmented-control--disabled' : ''}}">
+    <view class="segmented-control__header">
+      <text class="segmented-control__title">{{label}}</text>
+      <text class="segmented-control__current">当前选择：{{selectedLabel}}</text>
+    </view>
+
+    <view class="segmented-control__options">
+      <view
+        wx:for="{{options}}"
+        wx:key="value"
+        class="segmented-control__option {{index ? 'segmented-control__option--spaced' : ''}} {{item.value === currentValue ? 'segmented-control__option--selected' : ''}} {{disabled || item.disabled ? 'segmented-control__option--disabled' : ''}}"
+        data-index="{{index}}"
+        hover-class="{{disabled || item.disabled ? 'none' : item.value === currentValue ? 'segmented-control__option--selected-pressed' : 'segmented-control__option--pressed'}}"
+        bindtap="handleSelect"
+      >
+        <text class="segmented-control__option-text {{item.value === currentValue ? 'segmented-control__option-text--selected' : ''}} {{disabled || item.disabled ? 'segmented-control__option-text--disabled' : ''}}">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { computed, createComponent, ref, watch } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    controlKey: {
+      type: String,
+      value: ''
+    },
+    options: {
+      type: Array,
+      value: []
+    },
+    value: {
+      type: String,
+      value: ''
+    },
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    label: {
+      type: String,
+      value: '请选择'
+    }
+  },
+  setup (props, { triggerEvent }) {
+    const currentValue = ref(props.value)
+    const selectedLabel = computed(() => {
+      const selectedOption = props.options.find((option) => option.value === currentValue.value)
+      return selectedOption ? selectedOption.label : '未选择'
+    })
+
+    watch(() => props.value, (value) => {
+      currentValue.value = value
+    })
+
+    const handleSelect = (event) => {
+      const option = props.options[event.currentTarget.dataset.index]
+      if (props.disabled || option.disabled) return
+
+      currentValue.value = option.value
+      triggerEvent('change', {
+        controlKey: props.controlKey,
+        value: option.value
+      })
+    }
+
+    return {
+      currentValue,
+      selectedLabel,
+      handleSelect
+    }
+  }
+})
+</script>
+
+<style>
+.segmented-control {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.segmented-control--disabled {
+  opacity: 0.72;
+}
+
+.segmented-control__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.segmented-control__title {
+  color: #1f2329;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.segmented-control__current {
+  color: #646a73;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.segmented-control__options {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  padding: 4px;
+  border-radius: 10px;
+  background-color: #f2f3f5;
+  box-sizing: border-box;
+}
+
+.segmented-control__option {
+  display: flex;
+  flex: 1;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background-color: transparent;
+  box-sizing: border-box;
+}
+
+.segmented-control__option--spaced {
+  margin-left: 4px;
+}
+
+.segmented-control__option--selected {
+  background-color: #1677ff;
+}
+
+.segmented-control__option--disabled {
+  background-color: #e5e6eb;
+  opacity: 0.55;
+}
+
+.segmented-control__option--pressed {
+  background-color: #d9e8ff;
+  opacity: 0.72;
+}
+
+.segmented-control__option--selected-pressed {
+  background-color: #0f5dcc;
+  opacity: 0.78;
+}
+
+.segmented-control__option-text {
+  color: #4e5969;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.segmented-control__option-text--selected {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.segmented-control__option-text--disabled {
+  color: #8f959e;
+}
+</style>

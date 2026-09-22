@@ -66,6 +66,63 @@ describe('RN process template', () => {
     })
   })
 
+  it('should preserve srcMode for local template definitions', (done) => {
+    const template = {
+      content: `
+        <template name="native">
+          <View><Text>Native</Text></View>
+        </template>
+      `
+    }
+    const options = {
+      loaderContext: mockContext,
+      hasComment: false,
+      isNative: false,
+      srcMode: 'ios',
+      moduleId: 'm123',
+      ctorType: 'component',
+      usingComponentsInfo: {
+        View: {},
+        Text: {}
+      },
+      originalUsingComponents: {},
+      componentGenerics: {}
+    }
+
+    processTemplate(template, options, (err, result) => {
+      expect(err).toBeNull()
+      expect(result.output).toContain('getComponent("View")')
+      expect(result.output).toContain('getComponent("Text")')
+      expect(result.output).not.toContain('getComponent("mpx-view")')
+      done()
+    })
+  })
+
+  it('should preserve srcMode for mode block', (done) => {
+    const template = {
+      mode: 'ios',
+      content: '<view aria-role="button" is-simple>Main</view>'
+    }
+    const options = {
+      loaderContext: mockContext,
+      hasComment: false,
+      isNative: false,
+      srcMode: 'wx',
+      moduleId: 'm123',
+      ctorType: 'component',
+      usingComponentsInfo: {},
+      originalUsingComponents: {},
+      componentGenerics: {}
+    }
+
+    processTemplate(template, options, (err, result) => {
+      expect(err).toBeNull()
+      expect(result.output).toContain('getComponent("mpx-simple-view")')
+      expect(result.output).toContain('accessibilityRole: "button"')
+      done()
+    })
+  })
+
   it('sets injectOptions.disableMemo when template has <import> (conservative RN slot memo)', (done) => {
     const template = {
       content: `
@@ -89,6 +146,7 @@ describe('RN process template', () => {
       const output = result.output
       expect(output).toContain('global.currentInject.injectOptions')
       expect(output).toMatch(/"disableMemo"\s*:\s*true/)
+      expect(output).not.toContain('srcMode=wx')
       done()
     })
   })

@@ -1,6 +1,7 @@
 <script>
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import { isBrowser } from '../../env'
+  import * as perf from '@mpxjs/perf'
 
   export default {
     name: 'mpx-image',
@@ -44,6 +45,9 @@
       }
     },
     render (createElement) {
+      let id = -1
+      if (__mpx_perf_framework__) id = perf.scopeStart('image:render')
+      let result
       if (this.mode === 'widthFix' || this.mode === 'heightFix') {
         let style
         if (this.mode === 'widthFix') {
@@ -57,48 +61,50 @@
         }
         const domProps = {}
         if (this.src) domProps.src = this.src
-        return createElement('img', {
+        result = createElement('img', {
           domProps,
           style,
           class: ['mpx-image'],
           on: getInnerListeners(this, { ignoredListeners: ['load', 'error'] })
         })
-      }
-
-      const style = {}
-      if (this.src) {
-        style.backgroundImage = `url(${this.src})`
-        switch (this.mode) {
-          case 'scaleToFill':
-            style.backgroundSize = '100% 100%'
-            break
-          case 'aspectFit':
-            style.backgroundSize = 'contain'
-            style.backgroundPosition = 'center'
-            style.backgroundRepeat = 'no-repeat'
-            break
-          case 'aspectFill':
-            style.backgroundSize = 'cover'
-            style.backgroundPosition = 'center'
-            break
-          case 'top':
-          case 'bottom':
-          case 'center':
-          case 'left':
-          case 'right':
-          case 'top left':
-          case 'top right':
-          case 'bottom left':
-          case 'bottom right':
-            style.backgroundPosition = this.mode
-            break
+      } else {
+        const style = {}
+        if (this.src) {
+          style.backgroundImage = `url(${this.src})`
+          switch (this.mode) {
+            case 'scaleToFill':
+              style.backgroundSize = '100% 100%'
+              break
+            case 'aspectFit':
+              style.backgroundSize = 'contain'
+              style.backgroundPosition = 'center'
+              style.backgroundRepeat = 'no-repeat'
+              break
+            case 'aspectFill':
+              style.backgroundSize = 'cover'
+              style.backgroundPosition = 'center'
+              break
+            case 'top':
+            case 'bottom':
+            case 'center':
+            case 'left':
+            case 'right':
+            case 'top left':
+            case 'top right':
+            case 'bottom left':
+            case 'bottom right':
+              style.backgroundPosition = this.mode
+              break
+          }
         }
+        result = createElement('div', {
+          style,
+          class: ['mpx-image'],
+          on: getInnerListeners(this, { ignoredListeners: ['load', 'error'] })
+        })
       }
-      return createElement('div', {
-        style,
-        class: ['mpx-image'],
-        on: getInnerListeners(this, { ignoredListeners: ['load', 'error'] })
-      })
+      if (__mpx_perf_framework__) perf.scopeEnd(id)
+      return result
     }
   }
 </script>
@@ -109,4 +115,3 @@
     height 225px
     display inline-block
 </style>
-

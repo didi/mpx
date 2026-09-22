@@ -21,7 +21,6 @@
 - [Mpx 运行时导出](#mpx-运行时导出)
   - [默认导出](#默认导出)
   - [命名导出](#命名导出)
-- [运行时性能探针](#运行时性能探针)
 - [Mpx.config.rnConfig](#mpxconfigrnconfig)
 - [全局 API](#全局-api)
 - [环境 API](#环境-api)
@@ -150,7 +149,7 @@
 | `pageLifetimes.show` | 组件 | 所在页面展示或重新获得焦点时触发，与页面 `onShow` 时机对齐。 |
 | `pageLifetimes.hide` | 组件 | 所在页面隐藏或失焦时触发，与页面 `onHide` 时机对齐。 |
 | `pageLifetimes.resize` | 组件 | 所在页面可视区域尺寸变化时触发，与页面 `onResize` 时机对齐。 |
-| `onLoad` | 页面 | 页面创建后调用，**两个参数** `(rawQuery, decodedQuery)`。 |
+| `onLoad` | 页面 | 页面创建后调用，**两个参数** `(rawQuery, decodedQuery)`；RN 根组件初始化时，首个页面实例会收到 `parseAppProps` 返回的 `initialParams`，后续创建的同路径页面实例不会自动继承。 |
 | `created` | 组件 | 组件实例刚创建，RN 由 `MpxProxy` 在实例建立阶段调度，此时不宜依赖完整视图。 |
 | `attached` | 组件 | 组件进入节点树，RN 对齐为挂载流程中的对应阶段，详见 `docs-vitepress/guide/basic/lifecycle.md` 映射表。 |
 | `ready` | 组件 | 组件布局完成、可与视图交互，RN 对应 React 挂载后的就绪时机，与页面 `onReady` 同属一套内置映射。 |
@@ -685,41 +684,6 @@ createComponent({
 
 ---
 
-## 运行时性能探针
-
-`@mpxjs/perf` 为 Mpx2RN 提供编译期按需开启的耗时聚合和 mark 时间线。使用前在 `mpx.config.js` 的 `pluginOptions.mpx.plugin.perf` 中设置 `enable` 与 `probes: ['framework', 'user']`；关闭态会通过 DefinePlugin、tree-shaking 与 Terser 消除探针实现和名称字符串。
-
-| API | RN 语义 |
-| --- | --- |
-| `start()` / `end(reporter?)` | 打开/结束录制窗口，并自动生成名为 start/end 的时间线边界。空窗口也会触发 reporter。 |
-| `scopeStart(name)` / `scopeEnd(id)` | 用数字句柄记录高频同步耗时；未录制时 start 返回 `-1`。 |
-| `measureStart(name)` / `measureEnd(name)` | 用同一个 name 配对跨作用域耗时，并聚合到同名桶。 |
-| `mark(name)` | 记录独立、有序的时间线里程碑，同名 mark 不合并。 |
-
-Reporter 签名为 `(measures: Map<string, AggResult>, timeline?: MarkTimeline) => void`。`MarkTimeline.events` 中的 `at` 是相对当前 `start()` 的毫秒偏移；包含边界在内最多保留 256 条（start + 最多 254 个显式 mark + end），超出数量记录在 `dropped`，end 始终保留。
-
-```ts
-import {
-  start, end, mark,
-  measureStart, measureEnd
-} from '@mpxjs/perf'
-
-if (__mpx_perf__) start()
-if (__mpx_perf_user__) measureStart('goods:request')
-
-loadPageData().finally(() => {
-  if (__mpx_perf_user__) {
-    measureEnd('goods:request')
-    mark('goods:data-ready')
-  }
-  if (__mpx_perf__) end()
-})
-```
-
-所有调用必须直接置于 `if (__mpx_perf__)`、`if (__mpx_perf_framework__)` 或 `if (__mpx_perf_user__)` 字面量门禁中，确保关闭分组时零残留。`mark` 仅用于时间线，不是 measure 起点；旧 `mark/measure` 耗时写法需直接迁移为 `measureStart/measureEnd`，旧 `measure` 不再导出。
-
----
-
 ## Mpx.config.rnConfig
 
 运行时对象 **`Mpx.config.rnConfig`**（`Mpx` 为 `@mpxjs/core` 默认导出）用于扩展 RN 导航、分包、状态栏等行为。下列为常见配置项（以源码为准，未列项可能随版本增加）。
@@ -753,7 +717,7 @@ Mpx.config.rnConfig = {
 | 配置项 | 说明 |
 | --- | --- |
 | `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
-| `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由。 |
+| `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由；`initialParams` 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准。`initialRouteName` 未注册时，Mpx 会通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），回退至应用首页，并丢弃该错误路由的 `initialParams`。 |
 | `onStateChange` | 导航 state 变化时回调。 |
 | `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
 | `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |

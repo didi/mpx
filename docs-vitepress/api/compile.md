@@ -127,11 +127,11 @@ module.exports = defineConfig({
 暂时只支持微信为源 mode 做跨平台，为其他时，mode 必须和 srcMode 保持一致。
 :::
 
-### modeRules
+### srcModeRules
 
 `{ [key: string]: Rules }`
 
-批量指定文件mode，用于条件编译场景下使用某些单小程序平台的库时批量标记这些文件的mode为对应平台，而不再走转换规则。
+按输出平台批量标记使用该平台源码方言的资源。构建时只读取当前输出 `mode` 对应的规则，通过 `include`/`exclude` 匹配资源；命中后将资源 `srcMode` 标记为当前 `mode`，其他平台规则在本次构建中不会生效。
 
 ```js
 // vue.config.js
@@ -139,7 +139,7 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        modeRules: {
+        srcModeRules: {
           ali: {
             include: [resolve('node_modules/vant-aliapp')]
           }
@@ -149,6 +149,8 @@ module.exports = defineConfig({
   }
 })
 ```
+
+旧 `modeRules` 仍作为兼容别名，但不能与 `srcModeRules` 同时配置。依赖 `.ali.mpx`、`mode="ali"` 或 `@ali` 跳过转换的项目，需要对完整支付宝原生资源配置 `srcModeRules.ali`，或在 SFC 区块上声明 `src-mode="ali"`。区块 `src-mode` 仅在等于当前输出 `mode` 时生效；`<template src>` 会读取该属性，而模板内容中的 `<import>` / `<include>` 不继承引用方 `srcMode`，需通过 `srcModeRules` 对被引用资源本身进行声明。
 
 ### externalClasses
 
@@ -840,6 +842,16 @@ module.exports = defineConfig({
 
 为 `true` 时 **禁用** 页面切换动画；设为 **`false`** 可 **开启** 切换过渡效果。
 
+#### webConfig.asyncCommonSubpackage
+
+`boolean = true`
+
+控制 Web 输出中被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
+
+
 #### webConfig.customBuiltInComponents {#webconfig-custombuiltincomponents}
 
 `Record<string, string> | undefined`
@@ -869,6 +881,7 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         webConfig: {
+          asyncCommonSubpackage: false,
           transRpxFn: function (match, $1) {
             if ($1 === '0') return $1
             return `${$1 * +(100 / 750).toFixed(8)}vw`
@@ -902,6 +915,15 @@ module.exports = defineConfig({
 `boolean = true`
 
 为 `true` 时，RN 输出下页面与组件可走异步分包与 `import()` 等逻辑；为 `false` 时关闭相关能力。插件初始化时若未传入则默认为 `true`。
+
+#### rnConfig.asyncCommonSubpackage
+
+`boolean = true`
+
+控制 RN 输出中被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
 
 #### rnConfig.asyncChunk
 
@@ -939,6 +961,7 @@ module.exports = defineConfig({
         rnConfig: {
           projectName: 'MyMpxApp',
           supportSubpackage: true,
+          asyncCommonSubpackage: false,
           asyncChunk: {
             timeout: 10000,
             fallback: path.resolve(__dirname, 'src/rn/PageFallback.mpx'),

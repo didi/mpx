@@ -18,6 +18,7 @@ const map = require('./map')
 const movableArea = require('./movable-area')
 const movableView = require('./movable-view')
 const navigator = require('./navigator')
+const pageContainer = require('./page-container')
 const pickerViewColumn = require('./picker-view-column')
 const pickerView = require('./picker-view')
 const picker = require('./picker')
@@ -127,6 +128,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     switchComponent({ print }),
     textarea({ print }),
     navigator({ print }),
+    pageContainer(),
     image({ print }),
     map({ print }),
     canvas({ print }),

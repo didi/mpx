@@ -9,17 +9,10 @@ const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMode, ctorType, formatValueName, warn, error }) {
+function getClassMap ({ styles, filename, inputFileSystem, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
     ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
     : {}
-
-  styles = styles && styles.length
-    ? styles
-    : [{
-      content,
-      filename
-    }]
 
   function formatValue(value) {
     let needStringify = true
@@ -76,39 +69,37 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
     if (!styleContent.trim()) return
     const styleFilename = style.filename || filename
     const sourceMap = style.map
+    const styleSrcMode = style.srcMode || srcMode
     const diagnostic = {
       file: styleFilename,
       source: styleContent,
       sourceMap,
       inputFileSystem
     }
-    const reporter = createDiagnostic({
+    const platformOptions = {
       type: 'style',
       mode,
-      srcMode,
+      srcMode: styleSrcMode,
       warn,
       error,
       diagnostic
-    })
+    }
+    const reporter = createDiagnostic(platformOptions)
     const root = postcss.parse(styleContent, {
       from: styleFilename
     })
-    const rulesRunner = getRulesRunner({
-      mode,
-      srcMode,
-      type: 'style',
-      testKey: 'prop',
-      warn,
-      error,
-      diagnostic
-    })
+    const rulesRunner = getRulesRunner(Object.assign({
+      testKey: 'prop'
+    }, platformOptions))
 
-    // 目前所有 AtRule 只支持 @media，其他全部给出错误提示
+    // 目前所有 AtRule 只支持 @media，其他全部给出 warning
     root.walkAtRules(rule => {
       if (rule.name !== 'media') {
-        reporter.warn(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`, {
+        const message = rule.name === 'font-face'
+          ? 'React Native output does not support @font-face. To use custom fonts, install them in the React Native host environment.'
+          : `Only @media rule is supported in react native mode temporarily, but got @${rule.name}`
+        reporter.warn(message, {
           node: rule,
-          sourceMap,
           target: {
             kind: 'css-atrule',
             name: rule.name,
@@ -130,7 +121,8 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
       rule.walkDecls((decl) => {
         let { prop, value, important } = decl
         if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
-        let newData = rulesRunner && rulesRunner({ prop, value, selector: rule.selector, decl, rule, sourceMap })
+        const input = { prop, value, selector: rule.selector, decl }
+        let newData = rulesRunner ? rulesRunner(input) : input
         if (!newData) return
         if (!Array.isArray(newData)) {
           newData = [newData]
@@ -173,16 +165,9 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
         selectors.each(selector => {
           if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
             classMapKeys.push(selector.nodes[0].value)
-          } else if (
-            selector.nodes.length === 2 &&
-            selector.nodes[0].type === 'class' &&
-            selector.nodes[1].type === 'pseudo'
-          ) {
-            classMapKeys.push(selector.nodes[0].value + selector.nodes[1].value)
           } else {
             reporter.error('Only single class selector is supported in react native mode temporarily.', {
               node: rule,
-              sourceMap,
               target: {
                 kind: 'selector',
                 value: rule.selector

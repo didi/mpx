@@ -41,10 +41,11 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     isShow.current = false
 
     if (keyboardAvoid?.current) {
-      const inputRef = keyboardAvoid.current.ref?.current
-      if (inputRef && inputRef.isFocused() && !keyboardAvoid.current.readyToShow) {
+      const { ref, preventBlurUntil } = keyboardAvoid.current
+      const inputRef = ref?.current
+      if (inputRef && inputRef.isFocused() && (!preventBlurUntil || Date.now() >= preventBlurUntil)) {
         // 修复 Android 点击键盘收起按钮时当前 input 没触发失焦的问题
-        // keyboardAvoid.current.readyToShow = true 表示聚焦到了新的输入框，不需要手动触发失焦
+        // 切换 input 后的短时间内不主动失焦，避免旧 input 的 keyboardDidHide 导致新 input 误失焦
         inputRef.blur()
       }
       if (!keyboardAvoid.current.onKeyboardShow) {
@@ -76,10 +77,6 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     let subscriptions: EmitterSubscription[] = []
 
     function keybaordAvoding(evt: any) {
-      if (keyboardAvoid?.current?.readyToShow) {
-        // 重置标记位
-        keyboardAvoid.current.readyToShow = false
-      }
       if (!keyboardAvoid?.current) {
         return
       }
