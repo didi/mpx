@@ -319,52 +319,16 @@ defineExpose({ renderer })
 
 ### z-index 与层叠适配
 
-Skyline 没有层叠上下文（stacking-context）的概念。`z-index` 默认值为 `0`，**只在兄弟节点间生效**，节点的最终层级由两套机制决定：**normal-context**（非 fixed 节点）和 **fixed-context**（fixed 节点）。
+Skyline 不使用 WebView 的层叠上下文模型，未设置的 `z-index` 按 `0` 处理。节点分为两套层级：
 
-**核心差异**：
+- **normal-context**：非 `fixed` 节点按共同父级下的兄弟分支比较 `z-index`；跨分支时，向上找到共同父级下对应的祖先兄弟，比较这两个分支。值相同时，DOM 靠后的分支层级更高。
+- **fixed-context**：所有 `fixed` 节点全局提升，按自身 `z-index` 排序，整体位于非 `fixed` 内容之上。
 
-| 维度 | WebView | Skyline |
-| --- | --- | --- |
-| 层叠上下文 | 有，子节点 z-index 在不同层叠上下文间不可比较 | 无，z-index 只在兄弟节点间直接比较 |
-| 跨父级层级 | 由各自所属层叠上下文的层级决定 | 向上回溯到「共同父级下的那对兄弟节点」，比较这对兄弟的 z-index |
-| fixed 节点 | 参与正常层叠上下文 | 全局提升到 fixed-context，整体层级永远高于 normal-context |
-| 相同 z-index | 层叠水平 + 文档顺序决定 | DOM 靠后的层级更高 |
-| `transform` / `opacity` | 会创建新层叠上下文，影响 z-index 比较 | 不创建层叠上下文，对层级无影响 |
+适配时遵循以下约束：
 
-**normal-context 机制**（非 fixed 节点）：
-
-```
-      a
-   b      c
-   ↓      ↓
-   d      e
-   ↓      ↓
-   f      g
-```
-
-比较 f 和 g 的层级时，并不直接比较 f、g 自身的 z-index，而是向上回溯到它们在同一父级下的祖先分支 b 和 c，比较 b 与 c 的 z-index——谁更大，其整条子树的层级就更高。若 b、c 的 z-index 相同，则 DOM 靠后的层级更高。
-
-**fixed-context 机制**（fixed 节点）：
-
-不关心 fixed 节点在 DOM 中的父子层级，所有 fixed 节点在全局范围内统一提升到 fixed-context 上渲染：DOM 结构保持不变，但渲染时全部「拍平」为兄弟节点，再仅依据各自的 z-index 排序。
-
-```
-fixed-a (z-index: 2)
-  fixed-b (z-index: 3)
-    fixed-c (z-index: 1)
-  fixed-d (未设置 → 0)
-fixed-e (z-index: 4)
-
-渲染层级排序：fixed-d(0) < fixed-c(1) < fixed-a(2) < fixed-b(3) < fixed-e(4)
-```
-
-注意 fixed-c 虽然 DOM 上嵌套最深，但因 z-index 最小（1），渲染层级反而靠下；fixed-b 的 z-index(3) 高于其父 fixed-a(2)，但因整体拍平比较，仍能盖住 fixed-a。
-
-**适配方案**：
-
-1. **把需要层级控制的节点重构为兄弟节点结构**：页面内非全屏元素用 `relative` + `absolute`，按 normal-context 规则确定层级；全屏元素（弹窗、弹层、toast）按需用 `fixed`，按 fixed-context 规则确定层级，且层级天然高于所有非 fixed 内容。
-2. **不要依赖层叠上下文机制做层级控制**：WebView 上用 `transform` / `opacity` / `will-change` 隐式开启层叠上下文来抬升层级的技巧，在 Skyline 下完全失效。
-3. **`z-index` 不能用在 `scroll-view` 的直接子节点上**：该位置设置 `z-index` 不生效；如需对滚动项做层级控制，应在其内部再包一层节点，或借助 fixed 元素提升到 fixed-context。
+1. 将需要直接比较层级的节点调整到同一父级下；局部重叠使用 `relative` + `absolute`，全屏弹层按需使用 `fixed`。
+2. `transform` / `opacity` / `will-change` 不会建立层叠上下文或提升层级，不要依赖这些属性修复 `z-index`。
+3. `scroll-view` 直接子节点的 `z-index` 不生效；需要控制滚动项层级时，在内部增加一层节点承载 `z-index`。
 
 ### sticky 吸顶替代方案
 
