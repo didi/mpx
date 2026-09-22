@@ -22,10 +22,7 @@ global.__GCC = function (className, classMap, classMapValueCache) {
       return
     }
 
-    // 使用不可枚举属性记录窗口尺寸依赖，避免该内部标记被合并到 RN 样式中
-    Object.defineProperty(styleObj, '_dependentWindowSize', {
-      value: dependentWindowSize
-    })
+    styleObj._dependentWindowSize = dependentWindowSize
     dependentWindowSize = dependentWindowSize || originalDependentWindowSize
 
     classMapValueCache.set(className, styleObj)
@@ -68,10 +65,6 @@ const unit = {
 }
 
 const empty = {}
-
-function trackExternalClassesVersion (externalClassesState) {
-  return externalClassesState.version
-}
 
 // 记录 style 是否依赖窗口尺寸
 let dependentWindowSize = false
@@ -282,6 +275,14 @@ const createLayer = (isNativeStyle) => {
     styles.forEach(v => mergeToLayer(name, v))
   }
 
+  const removeInternalProps = style => {
+    if (!isObject(style) || (!hasOwn(style, '_inlineLayer') && !hasOwn(style, '_dependentWindowSize'))) return style
+    const result = Object.assign({}, style)
+    delete result._inlineLayer
+    delete result._dependentWindowSize
+    return result
+  }
+
   const genResult = isNativeStyle
     ? () => {
         return [
@@ -290,7 +291,7 @@ const createLayer = (isNativeStyle) => {
           ...layerMap.uno,
           ...layerMap.normal,
           ...layerMap.important
-        ]
+        ].map(removeInternalProps)
       }
     : () => {
         const res = Object.assign(
@@ -302,6 +303,7 @@ const createLayer = (isNativeStyle) => {
           ...layerMap.important
         )
         delete res._inlineLayer
+        delete res._dependentWindowSize
         return res
       }
 
@@ -334,6 +336,9 @@ export default function styleHelperMixin () {
     methods: {
       __trackPageSizeCount () {
         return global.__mpxPageSizeCountMap[this.__pageId]
+      },
+      __trackExternalClassesVersion () {
+        return this.__mpxProxy.externalClassesVersion.value
       },
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -372,7 +377,7 @@ export default function styleHelperMixin () {
               dependentWindowSize = dependentWindowSize || appStyle._dependentWindowSize
             } else if (global.__externalClasses?.includes(className)) {
               // 始终读取版本号，确保 externalClasses 从无到有时也能触发样式重算。
-              trackExternalClassesVersion(this.__mpxProxy.externalClassesState)
+              this.__trackExternalClassesVersion()
               const externalClassStyle = this.__props[className]
               if (isObject(externalClassStyle)) {
                 mergeToLayer('normal', externalClassStyle)

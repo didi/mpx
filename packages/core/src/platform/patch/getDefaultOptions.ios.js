@@ -3,6 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
+import { ref } from '../../observer/ref'
 import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
@@ -302,7 +303,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
-  proxy.externalClassesState = reactive({ version: 0 })
+  proxy.externalClassesVersion = ref(0)
   proxy.created()
 
   if (type === 'page') {
@@ -684,7 +685,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const update = () => {
         updateProps(instance, props, validProps)
         if (externalClassesChanged) {
-          proxy.externalClassesState.version++
+          proxy.externalClassesVersion.value++
         }
       }
       // 处理props更新
