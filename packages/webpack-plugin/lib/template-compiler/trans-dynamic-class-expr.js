@@ -3,7 +3,7 @@ const t = require('@babel/types')
 const traverse = require('@babel/traverse').default
 const generate = require('@babel/generator').default
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
-const escapeWxsObjectKey = require('../utils/escape-class-object-key')
+const escapeObjectKey = require('../utils/escape-class-object-key')
 
 module.exports = function transDynamicClassExpr (expr, { error } = {}) {
   try {
@@ -17,7 +17,7 @@ module.exports = function transDynamicClassExpr (expr, { error } = {}) {
         path.node.properties.forEach((property) => {
           if (t.isObjectProperty(property) && !property.computed) {
             const rawPropertyName = property.key.name || property.key.value
-            const propertyName = typeof rawPropertyName === 'string' ? escapeWxsObjectKey(rawPropertyName) : ''
+            const propertyName = typeof rawPropertyName === 'string' ? escapeObjectKey(rawPropertyName) : ''
             if (!isValidIdentifierStr(propertyName)) {
               error && error(`Dynamic classname [${rawPropertyName}] can not be escaped as a valid identifier, which is not supported.`)
             } else {

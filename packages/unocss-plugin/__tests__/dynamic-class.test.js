@@ -29,6 +29,15 @@ describe('dynamic class object keys', () => {
     expect(result.strings.map(string => string.result)).toEqual(['computed', 'text-red-500', 'text-gray-500'])
   })
 
+  test('preserves the original condition variable for escaped shorthand properties', async () => {
+    const errors = []
+    const { output } = await transformTemplate('<view wx:class="{{ { $active, normal } }}" />', errors)
+
+    expect(output).toMatch(/_si_active:\s*\$active/)
+    expect(output).not.toMatch(/\{\s*_si_active\s*[,}]/)
+    expect(errors).toEqual([])
+  })
+
   test('uses the same escaping for static and dynamic class names', async () => {
     const templateErrors = []
     const pluginErrors = []

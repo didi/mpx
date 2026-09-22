@@ -10,7 +10,7 @@ const traverse = traverseModule.default
  * @param {string} expr
  * @returns {{
  *   strings: Array<{result: string, start: number, end: number}>,
- *   objectKeys: Array<{result: unknown, start: number, end: number}>
+ *   objectKeys: Array<{result: unknown, start: number, end: number, shorthand: boolean}>
  * }}
  */
 export default function parseClassExpression (expr) {
@@ -33,7 +33,8 @@ export default function parseClassExpression (expr) {
           result.objectKeys.push({
             result: types.isIdentifier(property.key) ? property.key.name : property.key.value,
             start: property.key.start,
-            end: property.key.end - 1
+            end: property.key.end - 1,
+            shorthand: property.shorthand
           })
         }
       },

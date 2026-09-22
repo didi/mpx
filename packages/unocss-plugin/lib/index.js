@@ -1,7 +1,7 @@
 import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
 import mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
 import env from '@mpxjs/webpack-plugin/lib/utils/env.js'
-import escapeWxsObjectKey from '@mpxjs/webpack-plugin/lib/utils/escape-class-object-key.js'
+import escapeObjectKey from '@mpxjs/webpack-plugin/lib/utils/escape-class-object-key.js'
 import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js'
 import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js'
 import set from '@mpxjs/webpack-plugin/lib/utils/set.js'
@@ -246,17 +246,20 @@ class MpxUnocssPlugin {
             result = transformClasses(result, classNameHandler, unknownClassChars)
             expSource.replace(start, end, result)
           })
-          objectKeys.forEach(({ result, start, end }) => {
+          objectKeys.forEach(({ result, start, end, shorthand }) => {
             if (typeof result !== 'string') {
               error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`)
               return
             }
             const className = transformClasses(result, classNameHandler, unknownClassChars)
-            const propertyName = escapeWxsObjectKey(className)
+            const propertyName = escapeObjectKey(className)
             if (!isValidIdentifierStr(propertyName)) {
               error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`)
             } else {
-              expSource.replace(start, end, propertyName)
+              const replacement = shorthand && propertyName !== result
+                ? `${propertyName}: ${result}`
+                : propertyName
+              expSource.replace(start, end, replacement)
             }
           })
           return expSource.source()
@@ -415,7 +418,7 @@ class MpxUnocssPlugin {
             const assetModules = assetsModulesMap.get(file)
             if (assetModules && has(assetModules, (module) => {
               if (module.resource) {
-                const resourcePath = toPosix(parseRequest(module.resource).resourcePath)
+                const resourcePath = parseRequest(module.resource).resourcePath
                 return this.isUnoCSSScanFile(resourcePath)
               }
               return false
@@ -461,7 +464,7 @@ class MpxUnocssPlugin {
             // isolated模式下无需全局样式注入
             dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename, resource }) => {
               if (entryType === 'page' || entryType === 'component') {
-                const resourcePath = toPosix(parseRequest(resource).resourcePath)
+                const resourcePath = parseRequest(resource).resourcePath
                 if (this.isUnoCSSScanFile(resourcePath)) {
                   const entryStyleFile = filename + styleExt
                   const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), mainUnoFile)), mode)
@@ -515,7 +518,7 @@ class MpxUnocssPlugin {
             if (this.options.styleIsolation === 'isolated') {
               // isolated模式下无需全局样式注入
               if (entryType === 'page' || entryType === 'component') {
-                const resourcePath = toPosix(parseRequest(resource).resourcePath)
+                const resourcePath = parseRequest(resource).resourcePath
                 if (this.isUnoCSSScanFile(resourcePath)) {
                   const entryStyleFile = filename + styleExt
                   const entryStyleSource = getConcatSource('')

@@ -19,8 +19,7 @@ describe('template compiler UnoCSS scan matching', () => {
     jest.restoreAllMocks()
   })
 
-  function compileTemplate (resource) {
-    const isUnoCSSScanFile = jest.fn(file => file.startsWith('/project/src/') && !file.startsWith('/project/src/excluded/'))
+  function compileTemplate (resource, isUnoCSSScanFile = jest.fn(file => file.startsWith('/project/src/') && !file.startsWith('/project/src/excluded/'))) {
     const mpx = {
       projectRoot: '/project',
       mode: 'wx',
@@ -28,7 +27,6 @@ describe('template compiler UnoCSS scan matching', () => {
       defs: {},
       externalClasses: [],
       hasUnoCSS: true,
-      isUnoCSSScanFile,
       wxsContentMap: {},
       optimizeRenderRules: [],
       forceProxyEventRules: [],
@@ -36,6 +34,7 @@ describe('template compiler UnoCSS scan matching', () => {
       checkUsingComponentsRules: [],
       getModuleId: jest.fn(() => 'module-id')
     }
+    if (isUnoCSSScanFile) mpx.isUnoCSSScanFile = isUnoCSSScanFile
     const loaderContext = {
       resource,
       cacheable: jest.fn(),
@@ -62,5 +61,11 @@ describe('template compiler UnoCSS scan matching', () => {
 
     expect(isUnoCSSScanFile).toHaveBeenCalledWith(resource.split('?')[0])
     expect(options.isUnoCSSScanFile).toBe(expected)
+  })
+
+  test('defaults to false when UnoCSS does not expose a scan matcher', () => {
+    const { options } = compileTemplate('/project/src/pages/index.mpx?type=template', null)
+
+    expect(options.isUnoCSSScanFile).toBe(false)
   })
 })
