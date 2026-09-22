@@ -197,34 +197,6 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(context.__trackPageSizeCount).toHaveBeenCalledTimes(1)
   })
 
-  it('removes internal markers from native style arrays without changing the cached style', () => {
-    const classMap = {
-      responsive: formatValue => ({
-        width: formatValue('750rpx'),
-        _inlineLayer: {
-          important: { color: 'red' }
-        }
-      })
-    }
-    const classMapValueCache = new Map()
-    const cachedStyle = global.__GCC('responsive', classMap, classMapValueCache)
-    const context = {
-      __getClassStyle: className => global.__GCC(className, classMap, classMapValueCache),
-      __trackPageSizeCount: jest.fn()
-    }
-
-    const result = styleHelperMixin().methods.__getStyle.call(context, 'responsive', '', [{}])
-
-    expect(result).toContainEqual({ width: 360 })
-    expect(result).toContainEqual({ color: 'red' })
-    result.forEach(style => {
-      expect(style).not.toHaveProperty('_dependentWindowSize')
-      expect(style).not.toHaveProperty('_inlineLayer')
-    })
-    expect(cachedStyle._dependentWindowSize).toBe(true)
-    expect(cachedStyle._inlineLayer).toEqual({ important: { color: 'red' } })
-  })
-
   it('stops tracking dimensions after responsive styles switch to fixed values', () => {
     const context = {
       __pageId: 'page',

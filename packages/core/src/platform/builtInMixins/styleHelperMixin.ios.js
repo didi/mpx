@@ -275,14 +275,6 @@ const createLayer = (isNativeStyle) => {
     styles.forEach(v => mergeToLayer(name, v))
   }
 
-  const removeInternalProps = style => {
-    if (!isObject(style) || (!hasOwn(style, '_inlineLayer') && !hasOwn(style, '_dependentWindowSize'))) return style
-    const result = Object.assign({}, style)
-    delete result._inlineLayer
-    delete result._dependentWindowSize
-    return result
-  }
-
   const genResult = isNativeStyle
     ? () => {
         return [
@@ -291,7 +283,7 @@ const createLayer = (isNativeStyle) => {
           ...layerMap.uno,
           ...layerMap.normal,
           ...layerMap.important
-        ].map(removeInternalProps)
+        ]
       }
     : () => {
         const res = Object.assign(

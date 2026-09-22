@@ -625,8 +625,8 @@ function updateProps (instance, props, validProps) {
   })
 }
 
-function isExternalClassesChanged (oldProps, newProps) {
-  return global.__externalClasses?.some(name => !Object.is(oldProps[name], newProps[name]))
+function isExternalClassesChanged (props, oldProps) {
+  return global.__externalClasses?.some(externalClass => hasOwn(props, externalClass) && !Object.is(props[externalClass], oldProps[externalClass]))
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -642,7 +642,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
-    const propsRef = useRef(null)
+    const propsRef = useRef({})
     const intersectionCtx = useContext(IntersectionObserverContext)
     const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
@@ -681,7 +681,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
 
     if (!isFirst) {
-      const externalClassesChanged = isExternalClassesChanged(oldProps, props)
+      const externalClassesChanged = isExternalClassesChanged(props, oldProps)
       const update = () => {
         updateProps(instance, props, validProps)
         if (externalClassesChanged) {
