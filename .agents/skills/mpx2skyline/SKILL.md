@@ -101,7 +101,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 ### 样式（style）约束
 
 1. **只使用受支持的选择器**：不使用通配选择器和属性选择器；伪元素只使用 `::before` / `::after`，其他伪类按 [选择器差异](./references/skyline-style-reference.md#选择器差异) 核对版本与替代方案，不能用时改为模板动态类或真实节点。
-2. **值类型按稳定范围使用**：长度优先使用 `rpx` / `px`；百分比按 [百分比支持情况](./references/skyline-style-reference.md#百分比支持情况) 核对属性支持范围与计算基准；待核验项不能视为稳定支持。Flex 子节点不能依赖百分比 `min-width` 撑开或等分。`calc()` 只用于非嵌套的长度计算，不用于角度等类型；详见 [长度、函数与单位](./references/skyline-style-reference.md#长度函数与单位)。
+2. **值类型按稳定范围使用**：长度优先使用 `rpx` / `px`；百分比按 [百分比支持情况](./references/skyline-style-reference.md#百分比支持情况) 核对属性支持范围与计算基准；待核验项不能视为稳定支持。`calc()` 只用于非嵌套的长度计算，不用于角度等类型；详见 [长度、函数与单位](./references/skyline-style-reference.md#长度函数与单位)。
 3. **滚动与特殊布局改用组件或显式布局**：不使用 `overflow: auto` / `scroll`、`overflow-x` / `overflow-y`、`display: grid` / `flow-root` 或 `position: sticky`；分别改用 `scroll-view`、Flex / `grid-view`、sticky 组件。其他布局差异按 [布局、盒模型与层叠差异](./references/skyline-style-reference.md#布局盒模型与层叠差异) 处理。
 4. **文本省略同时保留两端实现**：保留 WebView 的 `text-overflow` / `-webkit-line-clamp` 等样式，并在承载文本的组件上新增 `max-lines` 与 `overflow` 供 Skyline 使用；新增或替换为 `text` 时将插值紧贴标签，避免字面空白影响截断。完整规则见 [文本溢出省略适配](references/skyline-style-practice.md#文本溢出省略适配)。
 5. **字体与文本能力先核对再替换**：`font-weight: 500/600` 在部分机型不生效，命中时先检查字体资源与 PostScript name，再确认是否改为 `bold` / `700`，未确认时保留并说明风险。`white-space`、`word-break`、`text-decoration` 等能力按 [文本与字体差异](./references/skyline-style-reference.md#文本与字体差异) 处理；`text-decoration-line` 多值按 [多值适配](references/skyline-style-practice.md#text-decoration-line-多值适配) 拆分节点。

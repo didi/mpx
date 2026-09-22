@@ -2,12 +2,12 @@
   "root": ".agents/skills/mpx2skyline",
   "status": "definition-source-not-execution",
   "files": {
-    "SKILL.md": "a7424eaa0ef4f4824f0deccb59c82372f856c184575771243ace29f2d7bc0a13",
-    "references/skyline-audit-matrix.md": "ec12b660e3e2c7be8eaa20b481147cb7337d562afb56bfd64c69ce0aeb77373f",
+    "SKILL.md": "e02c8f0127b203e6fdb01f8be2ddd02de3ef77ca60b23cb70b3c6c8eff1ead5e",
+    "references/skyline-audit-matrix.md": "a7846f38fea0867675acca19fc2a4631d13c8d9ab3e8eb47690675e709aa3bda",
     "references/skyline-configuration.md": "266be38a6d4cd12bd15e9d8e5a05c2e06b3e2f29eda7b128b675f1c0e3787bd1",
     "references/skyline-runtime-practice.md": "6324a8bea996c297e2f95127f96466a6ea34ebadabf150a3d47e95ac270f6bd1",
-    "references/skyline-style-practice.md": "b7bdb32a64ffb47806bea787597f8db36592d7ebb6dd10fc3ba05f72755da648",
-    "references/skyline-style-reference.md": "48b89b3bb0f929572622ef386194ae12cb657de06840f9ed7153827eca18fb94",
+    "references/skyline-style-practice.md": "784804a3b27465d5cebd54c0da036d8e75b2800da9990e4b1ed2d122f5fea11c",
+    "references/skyline-style-reference.md": "b873897229a30ea282a1fe97ad8ed2b9b9f403dbaaaa562db36441ba86ce0fa3",
     "references/skyline-template-reference.md": "0812faaf0d2573f78b4e101f15c0821023df029b79e2a4329a51518dc2d9a623"
   }
 }
