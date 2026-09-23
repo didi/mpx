@@ -3,36 +3,18 @@
     "skill_name": "mpx2web",
     "skill_path": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web",
     "executor_model": "gpt-5.6-sol (xhigh)",
-    "analyzer_model": "gpt-5.6-sol / xhigh",
-    "timestamp": "2026-09-20T03:14:25Z",
+    "analyzer_model": "deterministic Python checks",
+    "timestamp": "2026-09-23T12:04:14Z",
     "evals_run": [
       0,
       1,
       2,
-      3,
-      4
+      3
     ],
     "runs_per_configuration": 1,
-    "grading_scope": "source_review_only",
-    "suite_revision": "five-evals-case-equal-quality-split-20260919",
-    "grader_method": "blind_separate_pass_source_review_with_deterministic_integrity_checks",
-    "score_weighting": "case_equal_per_sample_primary_assertion_micro_diagnostic",
-    "result_status": "complete_source_review",
-    "benchmark_tier": "development",
-    "recommended_samples": 3,
-    "sample_sufficient": false,
-    "judge_model_distinct": false,
-    "judge_relationship": "same_model_blind_pass",
-    "scope_comparison_eligible": true,
-    "formal_publishable": false,
-    "comparison_isolation": "all_isolated",
-    "validation_scope": {
-      "static_source_review": true,
-      "e2e": false,
-      "browser": false,
-      "ssr_runtime": false,
-      "device": false
-    }
+    "suite_revision": "rn17-deterministic-grading-20260923",
+    "grader_method": "deterministic_python_static_checks",
+    "score_weighting": "case mean, matching Mpx2RN iteration-17"
   },
   "runs": [
     {
@@ -41,116 +23,182 @@
       "run_number": 1,
       "result": {
         "pass_rate": 1.0,
-        "passed": 10,
+        "passed": 7,
         "failed": 0,
-        "total": 10,
-        "time_seconds": 595.92,
-        "tokens": 2239821,
+        "total": 7,
+        "time_seconds": 1183.788,
+        "tokens": 5005497,
+        "tool_calls": 56,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "C1.4",
+          "text": "样式：red-card 与 blue-card 的同名类使用独立作用域，不互相覆盖",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C1.5",
+          "text": "布局：layout-cell 的虚拟宿主在 Web 生效，两个实例在 240px Flex 容器中等宽",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C1.6",
+          "text": "样式：theme-card 的 externalClasses 从调用方贯通到内容节点，并保留默认外部类配置",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C4.1",
+          "text": "导航：保留微信 navigator、普通入口 ready 状态和选择结果回传链路",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C4.2",
+          "text": "导航栏：微信胶囊 API 不在 Web 执行，Web 不重复显示系统导航与自定义导航",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C4.3",
+          "text": "路由：Web publicPath、history base 均为 /help-demo/，主包与两个分包页面保持注册",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C4.4",
+          "text": "尺寸：Web 使用固定二分之一 rpx 换算，微信换算配置保持不变",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx2web",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 670.932,
+        "tokens": 2173389,
         "tool_calls": 36,
         "errors": 0
       },
       "expectations": [
         {
-          "id": "C1.1",
-          "text": "静态检查 .image-row 中图片的模板、选择器和样式，确认 Web 端仍保留输入源码规定的 80px 宽高和 12px 圆角。实现方式不限。本项只检查图片；红蓝卡片隔离、两格等分和 externalClasses 分别由 C1.4、C1.5、C1.6 判断。",
-          "category": "style",
+          "id": "C2.1",
+          "text": "结构：生成完整 Mpx 配置、App、页面和组件，页面注册并渲染两个 profile-card",
           "passed": true,
-          "evidence": "outputs/src/pages/style/index.mpx:3-4 为 .image-row 内的 image 增加 preview-image 类，42-49 的 scoped 样式直接为该节点声明 width:80px、height:80px、border-radius:12px；给定 mpx-image Web 实现会将组件类合并到真实根节点，未再依赖失效的 image 标签选择器。"
+          "evidence": "PASS"
         },
         {
-          "id": "C1.2",
-          "text": "只检查源码中的节点位置、祖先布局、定位声明和事件绑定。两个悬浮入口在 Web 有效代码中必须保留 position: fixed，祖先结构不能把它们变成相对局部内容的 absolute 定位；若移动节点，原样式、bindtap 处理函数和纵向列表节点仍须可达。已支持的 scroll-view 不要求替换。",
-          "category": "layout",
+          "id": "C2.2",
+          "text": "路由：Web publicPath、history base 均为 /profile-demo/，微信页面注册保持有效",
           "passed": true,
-          "evidence": "outputs/src/pages/style/index.mpx:15-24 将两个入口移至 scroll-view、movable-area/movable-view 之外，成为无定位或 transform 声明的 .style-page 直接子节点；51、54 仍为 position:fixed，两个 bindtap=\"recordTap\"、35-38 的处理函数及 scroll-view 内 row-group 均保留。"
+          "evidence": "PASS"
         },
         {
-          "id": "C1.4",
-          "text": "静态检查红色卡片和蓝色卡片的样式作用域与选择器，确认两个组件即使使用同名类也不会互相覆盖。可以使用 scoped、项目配置或其他有效隔离方式。",
-          "category": "style",
-          "passed": true,
-          "evidence": "outputs/src/components/red-card.mpx:8 与 blue-card.mpx:8 均使用 scoped 样式；各自同名 .card、.title 选择器因此具有独立作用域，红蓝背景、颜色和字号不会互相覆盖。"
+          "id": "C2.3",
+          "text": "样式：accent-class 从页面调用方贯通到组件标题，并保留默认 externalClasses",
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
-          "id": "C1.5",
-          "text": "静态检查 layout-cell 的虚拟节点声明、实际生效的编译配置和 Web 最终节点层级，确认“甲”和“较长的乙”平分 240px，flex 作用在真实布局子项上。只声明 options.virtualHost 不能直接证明 Web 布局正确；可以使用精确配置或等价布局方案。若使用 autoVirtualHostRules，只能加入有源码或编译产物证据表明宿主节点会破坏该布局的组件，不能把同一页面或组件链中的 row-group、row-list 等无关组件一并加入。",
-          "category": "layout",
+          "id": "C2.4",
+          "text": "交互：两个 profile-card 实例各自保存折叠状态，点击只切换当前实例",
           "passed": true,
-          "evidence": "outputs/src/pages/style/index.mpx:11-14、47 定义 240px flex 容器及两个 layout-cell；outputs/mpx.config.js:7-9 的 autoVirtualHostRules 只精确命中 layout-cell.mpx，结合给定 Web 编译器证据会移除其 Web 宿主包装。layout-cell.mpx:2 的单一真实根节点在 13 行声明 flex:1、min-width:0，因此两个真实 flex 子项各占 120px；row-group、row-list 未被无依据加入规则。"
+          "evidence": "PASS"
         },
         {
-          "id": "C1.6",
-          "text": "静态追踪调用方样式类、theme-card 的 externalClasses 声明、组件内部节点和 Web 编译配置，确认外部样式真正作用到内容节点：两处文字颜色来自各自的调用方，custom-class 提供的 12px 内边距也必须保留。只保留 externalClasses 声明，或只配置新增的 tone-class，不能证明适配完成；允许采用其他能保留两端调用契约的实现，不要求保留未使用的默认类。本项不重复判断 C1.1 和 C1.4。",
-          "category": "style",
+          "id": "C2.5",
+          "text": "分享：微信保留正确分享标题和路径，Web 隔离该钩子并呈现未接入边界",
           "passed": true,
-          "evidence": "outputs/src/pages/style/index.mpx:9-10 传入 warm-tone/cool-tone 与 spaced-label，44-46 分别定义两种颜色和 12px padding；theme-card.mpx:11 声明 tone-class、custom-class，模板第3行把两类绑定到实际文字节点。outputs/mpx.config.js:6 同时配置 tone-class、custom-class，并保留默认 custom-class/i-class；依据给定 externalClasses 编译链，调用方 scoped 模块标识及类名会被传到该内容节点。"
-        },
-        {
-          "id": "C1.7",
-          "text": "只检查 help-card、help-item 的 SFC 文件、usingComponents、模板引用、属性传递和状态处理代码。父组件必须真实引用子组件；源码中应有标题绑定、初始收起状态、展开与收起的状态更新函数及对应条件渲染，两端共用同一套源码。只创建未引用的子组件，或仍把全部帮助项写在父组件中，不满足要求。选项式和组合式 API 均可，状态可由任一组件管理。",
-          "category": "generation",
-          "passed": true,
-          "evidence": "outputs/src/components/help-card.mpx:3-8 真实引用 help-item，并在 27-30 的 usingComponents 注册；title、description 均传给子组件。help-item.mpx:23-29 声明属性及初始 expanded:false，32-34 可双向切换状态，5-9 同时提供展开/收起按钮文本和 wx:if 条件说明渲染；未见平台副本。"
-        },
-        {
-          "id": "C1.8",
-          "text": "只检查源码中的 helpUrl 传递和路由调用链：面板属性传给帮助项，帮助入口的事件处理函数调用已有 WebView 路由，并按现有 url 参数约定完成一次正确编码。原地址中的查询参数和百分号转义必须能从表达式中静态推导为完整保留，不能重复解码，也不能只打印链接。子组件直接调用路由或通知父组件调用均可；不要求新建 WebView 或通信桥。",
-          "category": "generation",
-          "passed": true,
-          "evidence": "fixtures/src/pages/review/index.mpx:6-7 将各实例 help-url 传给 help-card；help-card.mpx:6 再传给 help-item；help-item.mpx:35-39 调用 navigateTo，并以 encodeURIComponent(this.helpUrl) 一次编码后拼入既有 /pages/common/webview?url= 路由。fixtures/src/pages/common/webview.mpx:9-11 在 Web 使用路由已解码值、微信仅 decodeURIComponent 一次，因此原 URL 的查询分隔符和已有百分号转义可完整恢复，没有重复解码或仅打印链接。"
-        },
-        {
-          "id": "C1.9",
-          "text": "只检查 CSS 声明、变量作用域和回退表达式。帮助项按钮背景必须引用 --btn_wrapper_bg，并在未定义时回退到 #2A2F3F；从宿主到 help-card、help-item 的样式链中不能出现会遮蔽宿主变量的固定定义。允许使用 var 回退或等价的可靠默认值。",
-          "category": "generation",
-          "capability": "style",
-          "passed": true,
-          "evidence": "outputs/src/components/help-item.mpx:54-66 的帮助按钮背景为 var(--btn_wrapper_bg, #2A2F3F)。只读宿主 fixtures/src/pages/review/index.mpx:5、24-26 在祖先节点设置或清除该变量；help-card/help-item 样式中没有固定声明同名变量，变量可继承至按钮，未设置时使用指定回退色。"
-        },
-        {
-          "id": "C1.10",
-          "text": "静态检查 help-card 和 help-item 的样式作用域与选择器，确认它们不会污染宿主已有的 .title 和 .action，宿主原有字号、颜色和间距保持不变。可以使用 scoped、局部命名或其他有效隔离方式，不能通过修改宿主样式规避污染。",
-          "category": "generation",
-          "passed": true,
-          "evidence": "outputs/src/components/help-card.mpx:23 与 help-item.mpx:44 均启用 scoped；新增选择器使用 help-card、help-item、help-title、help-button 等局部命名，没有定义宿主的 .title 或 .action。fixtures/src/pages/review/index.mpx:30-34 的宿主样式未被改写。"
-        },
-        {
-          "id": "C1.11",
-          "text": "只检查宿主 item-class、help-card 属性或外部类传递、help-item 声明以及内部内容节点的类绑定，必要时同时检查 Web 编译配置。源码链必须能分别把两处调用方指定的文字颜色和内边距传到各自帮助项内容。样式只绑定在面板外壳、只声明但未用于内部节点，或按实例位置写死样式，都不满足要求。按钮变量、样式污染和已有 theme-card 分别由 C1.9、C1.10、C1.6 判断。",
-          "category": "generation",
-          "passed": true,
-          "evidence": "fixtures/src/pages/review/index.mpx:6-7 分别传入 help-red/help-blue，33-34 定义各自颜色及 12px/20px padding；help-card.mpx:20 声明 item-class，并在第7行转发给 help-item；help-item.mpx:27 再声明该外部类，第2行将 item-class 绑定到实际帮助项根内容节点。outputs/mpx.config.js:6 配置 item-class；标题和说明在 52-53 使用 color:inherit，因而分别继承调用方颜色，padding 也落在各自内容容器而非面板外壳。"
+          "evidence": "PASS"
         }
       ],
-      "notes": [
-        "按要求未运行构建或渲染器；Web/微信实际环境中的图片尺寸、fixed 视口定位、flex 等分及 scoped/externalClasses 最终渲染效果仍需运行时确认。",
-        "帮助项展开/收起、主题变量切换以及 navigateTo 到既有 WebView 的实际交互需在 Web 和微信运行环境确认。"
-      ],
-      "static_review": null,
-      "scope_review": [
-        {
-          "id": "S1.1",
-          "text": "检查交付文件范围：help-card 和 help-item 必须从零生成；不能改写已有 WebView 容器或只读宿主页，不能生成无关业务文件或不必要的平台副本。必要配置可以合入本题已有的 mpx.config.js，但必须保留原有适配目标。",
-          "scored": false,
-          "status": "passed",
-          "evidence": "help-card.mpx、help-item.mpx 在 input 中不存在而在 outputs 中新增；fixtures 下两个只读宿主页没有对应输出覆盖。outputs 仅包含适配后的既有页面、组件、原有 sample.png 资源、必要配置和两个新增组件，没有平台副本或无关业务文件；mpx.config.js 保留原 srcMode:'wx'。"
-        }
-      ],
-      "delivery_review": [],
-      "user_notes_summary": {
-        "needs_review": [
-          "按要求未运行构建或渲染器；Web/微信实际环境中的图片尺寸、fixed 视口定位、flex 等分及 scoped/externalClasses 最终渲染效果仍需运行时确认。",
-          "帮助项展开/收起、主题变量切换以及 navigateTo 到既有 WebView 的实际交互需在 Web 和微信运行环境确认。"
-        ]
-      },
-      "scope_state": "valid",
-      "runtime_followups": [
-        "按要求未运行构建或渲染器；Web/微信实际环境中的图片尺寸、fixed 视口定位、flex 等分及 scoped/externalClasses 最终渲染效果仍需运行时确认。",
-        "帮助项展开/收起、主题变量切换以及 navigateTo 到既有 WebView 的实际交互需在 Web 和微信运行环境确认。"
-      ]
+      "notes": []
     },
     {
-      "eval_id": 1,
+      "eval_id": 2,
+      "configuration": "mpx2web",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7778,
+        "passed": 7,
+        "failed": 2,
+        "total": 9,
+        "time_seconds": 1012.154,
+        "tokens": 2556403,
+        "tool_calls": 62,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "C3.2",
+          "text": "名称编辑：Web 具备输入、确认赋值和取消不赋值链路，微信原交互保持有效",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C3.3",
+          "text": "扫码：微信保留原生扫码组件，Web 构建不解析该组件且只读依赖未修改",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C3.4",
+          "text": "视频：保留 src 与播放事件，Web 在 detail 缺字段时从真实 target 安全回退",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C3.5",
+          "text": "位置：微信保留 chooseLocation，Web 不执行微信 API 且说明真实服务接入边界",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C3.6",
+          "text": "插件：公共 pages 只维护一份，微信保留插件卡片，Web 不解析 plugin 组件",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C5.1",
+          "text": "地区与地图：微信原 picker/map 数据链保留，Web 隔离缺失能力并标明接入点",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C5.2",
+          "text": "Swiper 与图片：保留公共能力，只隔离 Web 未实现的局部属性并标明接入点",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C5.3",
+          "text": "结构组件：微信保留 grid-view 与 page-container，Web 隔离缺失组件并标明接入点",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C5.4",
+          "text": "状态：门店确认和商品筛选的草稿、取消、确认状态链保持不变",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
       "configuration": "mpx2web",
       "run_number": 1,
       "result": {
@@ -158,3148 +206,324 @@
         "passed": 5,
         "failed": 0,
         "total": 5,
-        "time_seconds": 1073.977,
-        "tokens": 7377670,
-        "tool_calls": 127,
+        "time_seconds": 725.88,
+        "tokens": 1594590,
+        "tool_calls": 48,
         "errors": 0
       },
       "expectations": [
         {
-          "id": "C2.1",
-          "text": "只检查模板事件绑定、WXS 或组件处理函数、change 事件参数、页面处理函数和模板状态引用。点击与 touchend 两条源码链都必须可达，并分别把对应操作值写入页面展示所引用的状态；空处理函数不能代替原行为。方法名和适配方式不限。",
-          "category": "events",
+          "id": "C6.1",
+          "text": "SSR：history 路由匹配 /help-demo/，首屏渲染前按当前 query.id 等待文章数据",
           "passed": true,
-          "evidence": "outputs/src/components/event-actions.mpx:3-12 分别绑定点击与 touchend：微信端进入 WXS 的 tool.onTap/tool.onTouchEnd，Web 端进入组件 onTap/onTouchEnd；两端最终调用 recordAction，并以 change.detail.action 发送“点击”或“触摸结束”。outputs/src/pages/panel/index.mpx:3-4,41-43 的 onActionChange 将该值写入模板展示的 actionText，两个处理函数均非空。"
+          "evidence": "PASS"
         },
         {
-          "id": "C2.2",
-          "text": "只检查 notice 的源码传递链：叶子组件发送的 event.detail.message 经过包装组件到达页面监听函数，监听函数对通知计数只包含一次增量，其他事件处理函数不能复用该增量逻辑。只删除 bubbles/composed、添加 TODO 或硬编码消息，不能证明链路成立。",
-          "category": "events",
+          "id": "C6.2",
+          "text": "状态：文章状态完整迁移到共享 @mpxjs/pinia，并通过 onAppInit 注入应用",
           "passed": true,
-          "evidence": "outputs/src/components/notice-leaf.mpx:2,9-13 从点击处理函数发送 notice，detail.message 为“来自内层组件”。Web 链路由 outputs/src/components/notice-wrapper.mpx:2,9-11 接收并原样转发 event.detail，再由 outputs/src/pages/panel/index.mpx:12,54-57 接收；微信链路由页面第 11 行的祖先 bindnotice@wx 接收叶子冒泡事件。onNotice 从 event.detail.message 更新 notice 且 noticeCount 仅递增一次，其他事件处理函数没有复用该增量逻辑。"
+          "evidence": "PASS"
         },
         {
-          "id": "C2.3",
-          "text": "静态检查 composition-counter 使用的实例 API、返回结构和调用链，确认挂载就绪通知指向当前正确的组件实例。不强制采用某一种 proxy 解构方式。",
-          "category": "instance",
+          "id": "C6.3",
+          "text": "隔离：每次 SSR 请求在 onAppInit 中创建独立 Pinia，文章页使用当前请求实例",
           "passed": true,
-          "evidence": "outputs/src/components/composition-counter.mpx:11-19 在 setup 中调用 useReadyNotice，将返回函数注册到 onMounted，并暴露 recordReady 更新 readyText。outputs/src/composables/use-ready-notice.js:3-8 在 setup 调用期取得 getCurrentInstance().proxy，挂载回调对该当前组件实例调用 recordReady。结合题给框架证据，MpxProxy 在各平台均令 proxy 指向 target，Web 的 Vue getCurrentInstance 也返回 proxy，因此调用链指向正确实例。"
+          "evidence": "PASS"
         },
         {
-          "id": "C2.5",
-          "text": "只检查组件查询表达式、目标组件标识、Web 编译后的标识形态和当前 matcher 源码。静态推导结果必须表明“选中首项”的查询可匹配第一项，“清空两项”的查询可匹配全部两项。不能只修复首项，同时保留 matcher 无法读取的批量 class 查询。可以使用 id、ref、有效选择器、数据驱动或其他等价方案。",
-          "category": "instance",
+          "id": "C6.4",
+          "text": "环境：服务端可达的初始化与预取代码不访问 window、document 或 navigator",
           "passed": true,
-          "evidence": "outputs/src/pages/panel/index.mpx:6-7 为两个 choice-item 分别设置 wx:ref=\"firstChoice\" 和 wx:ref=\"secondChoice\"，避开了 Web matchSelector 只能读取 vnode attrs.id/staticClass 的 class 查询限制。第 9-10 行按钮分别可达 selectFirst/resetChoices；第 44-52 行首项操作只调用 firstChoice.setSelected(true)，批量清空则明确遍历两个 ref 并调用 setSelected(false)。outputs/src/components/choice-item.mpx:11-13 提供实际状态修改方法。"
+          "evidence": "PASS"
         },
         {
-          "id": "C2.6",
-          "text": "只检查 orderedItems、倒序方法、稳定 key、摘要计算代码以及 relation-list 的数据引用。源码应表明摘要直接取自当前数组顺序，因此初始数据推导为“甲、乙、丙”，倒序表达式推导为“丙、乙、甲”。实现不能依赖 Web 未消费的 relations.target 或 linkChanged 才能更新；保留未使用的关系元数据本身不判错。允许数据驱动等价实现，不要求完整 relations 引擎；普通 Behavior 已受支持，不强制改成 mixins。",
-          "category": "instance",
+          "id": "C6.5",
+          "text": "兼容：微信 onLoad 继续按 query.id 调用共享 action，并保留文章页面状态与交互",
           "passed": true,
-          "evidence": "outputs/src/pages/panel/index.mpx:31-35 的 orderedItems 初始顺序为甲、乙、丙，元素具有稳定 id，模板第 19 行以 id 为 key；第 38-40 行通过 slice().reverse() 生成当前倒序数组，可反复恢复。第 18 行把 orderedItems 传给 relation-list；outputs/src/components/relation-list.mpx:15-27 监听 items，39-42 直接按当前 items 数组顺序映射 label 并生成 orderText。因此静态推导初始为“甲、乙、丙”，倒序后为“丙、乙、甲”，且更新不依赖 relations.target 或 linkChanged。"
+          "evidence": "PASS"
         }
       ],
-      "notes": [],
-      "static_review": null,
-      "scope_review": [],
-      "delivery_review": [],
-      "user_notes_summary": {
-        "needs_review": []
-      },
-      "scope_state": "not_applicable",
-      "runtime_followups": []
-    },
-    {
-      "eval_id": 2,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "result": {
-        "pass_rate": 1.0,
-        "passed": 6,
-        "failed": 0,
-        "total": 6,
-        "time_seconds": 489.284,
-        "tokens": 2838686,
-        "tool_calls": 43,
-        "errors": 0
-      },
-      "expectations": [
-        {
-          "id": "C3.1",
-          "text": "只检查分享声明、平台条件、模板入口和可达处理代码。微信有效分支必须保留分享入口与原分享配置；Web 有效分支必须完成真实登记或明确隔离。题目未提供 Web 分享协议时，源码或交付说明应标出未接入边界，不能返回伪造的成功结果；说明不要求出现字面量 TODO。",
-          "category": "share",
-          "passed": true,
-          "evidence": "outputs/src/pages/content/index.mpx:4 保留仅微信可见的 open-type=\"share\" 入口，60-62 保留原 onShareAppMessage 标题与路径；39-44 在 Web 模式登记 remove:true，使该微信钩子由框架转换器移除。5-6 明确展示 Web 分享尚未接入，未伪造成功结果。"
-        },
-        {
-          "id": "C3.2",
-          "text": "只检查名称编辑相关的模板入口、状态字段、确认与取消回调、赋值语句和平台条件。Web 有效源码中必须存在可输入名称、确认后赋值、取消时不赋值的完整链路；可以使用目标端其他原生交互，不要求弹窗外观一致。不能因局部选项不支持而停用整个功能，也不能写入伪造结果。JS 中的 @mpx 条件注释不是有效平台分支，如果两端实际会执行同一段不兼容代码，则不满足要求。",
-          "category": "api",
-          "passed": true,
-          "evidence": "outputs/src/pages/content/index.mpx:14-24 提供 Web 名称编辑入口、输入框、保存及取消按钮；84-89 初始化草稿并接收真实输入，91-93 仅确认保存时赋值 displayName，95-97 取消时只关闭编辑状态。微信 rename 在72-82由真实 __mpx_mode__ 控制流隔离并保留原可编辑弹窗链路。"
-        },
-        {
-          "id": "C3.3",
-          "text": "只检查业务模板、usingComponents、模块顶层引用、平台条件和可达调用。微信有效源码必须保留只读扫码组件及结果通知；题目未提供 Web 扫码协议时，Web 有效源码必须移除对该组件的解析链，并提供不可用提示和待接入说明。只隐藏模板节点不够：Web JSON 若仍通过 usingComponents 解析包含 camera 的原生组件，则不满足要求；JSON 中的 @mpx 注释也不能移除引用。直接保留不可用调用、使用空组件、伪造扫码结果或修改只读依赖均不满足要求。不强制采用平台文件。",
-          "category": "components",
-          "passed": true,
-          "evidence": "outputs/src/components/scan-entry.mpx:3-10 保留微信扫码入口、native-scanner、结果及失败事件链；42-46 仅在微信动态 JSON 中登记 native-scanner，Web usingComponents 不再解析该含 camera 的依赖，11-12 明确提示 Web 扫码待接入。outputs/src/vendor/native-scanner/index.mpx 与 input 对应只读依赖经逐字比较一致。"
-        },
-        {
-          "id": "C3.4",
-          "text": "只检查 video 的组件引用、src 与播放属性绑定、事件绑定和事件字段读取代码。微信有效源码应优先读取 event.detail；当前 Web video 通过 inheritEvent 透传原生 target，因此 detail 缺字段时可以从真实 target 数值属性做安全回退，也可以隔离无法可靠提供的辅助字段，不能构造伪造值。",
-          "category": "media",
-          "passed": true,
-          "evidence": "outputs/src/components/video-info.mpx:3-10 在两端保留 video、完整 src 和 controls，播放事件仅绑定微信处理器；27-33 的微信事件字段优先读取 event.detail。Web 未展示无法可靠取得的进度和尺寸，而在16-17明确隔离这些辅助字段；outputs/src/pages/content/index.mpx:56-58 将字符串 videoUrl 原样交给组件，未二次解码或截断。"
-        },
-        {
-          "id": "C3.5",
-          "text": "只检查位置功能的平台条件、API 调用和提示代码。微信有效源码必须保留原位置调用；题目未提供 Web 位置协议时，Web 有效源码必须使 wx.chooseLocation 不可达，并提供未接入说明或 TODO，不能写入伪造位置。JS 中的 @mpx 条件注释不是有效平台分支；若 Web 仍可达微信 API，或微信会执行 Web 兜底代码，则不满足要求。",
-          "category": "api",
-          "passed": true,
-          "evidence": "outputs/src/pages/content/index.mpx:8 的位置入口仅供微信，64-70 又以 __mpx_mode__ !== 'wx' 提前返回保证 Web 无法到达 wx.chooseLocation；微信仍使用原 API 并写入真实 result.name。9-10 明确说明 Web 地图服务待接入，未写入伪造位置。"
-        },
-        {
-          "id": "C3.6",
-          "text": "只检查 app plugins、plugin:// 组件声明、usingComponents、平台条件和模板引用。微信有效源码必须保留插件卡片；Web 有效源码不能解析或渲染该插件。题目未提供 Web 插件协议时，可以隔离并提供不可用提示和待接入说明，但不能使用空组件或伪造插件内容。JSON 中的 @mpx 注释不能隔离 plugins 或 usingComponents，只隐藏模板节点也不能证明构建依赖已移除；保留未被 Web 消费的微信元数据本身不判错。",
-          "category": "components",
-          "passed": true,
-          "evidence": "outputs/src/app.mpx:13-16 仅在微信动态 JSON 中登记 foo 插件；outputs/src/pages/content/index.mpx:118-120 仅在微信 usingComponents 中加入 plugin://foo/component，31 的卡片模板也仅微信渲染。Web 不解析或渲染插件，并由32-33明确提示真实组件和数据源待接入。"
-        }
-      ],
-      "notes": [
-        "本次按要求未运行构建或交互测试；delivery-notes.txt 中的微信/Web 编译通过声明以及动态条件产物仍需在对应构建环境核验。",
-        "视频地址的实际可播放性、格式、CORS 与浏览器播放策略，以及微信位置/相机权限、分享宿主能力和 foo 插件服务可用性，均依赖真实运行环境。"
-      ],
-      "static_review": null,
-      "scope_review": [],
-      "delivery_review": [
-        {
-          "id": "D3.1",
-          "text": "检查交付说明是否明确：permission 和 requiredPrivateInfos 是微信权限用途及隐私接口声明，不表示 Web 已获得授权或完成隐私合规；当前 Web 没有对应转换时，应保留微信声明并如实说明目标端边界。题目未提供 Web 接入协议时可以标记待接入，不要求虚构浏览器授权流程。该说明缺失或待确认只记静态告警，不扣 API 功能分。",
-          "status": "failed",
-          "evidence": "outputs/src/app.mpx:17-20 正确保留了微信 permission 和 requiredPrivateInfos 声明，delivery-notes.txt:25-26 也区分微信权限与待接入的 Web 地图服务；但交付说明没有明确解释这两个字段仅是微信权限用途/隐私接口声明，也没有明确声明它们不代表 Web 已获授权或已完成隐私合规，因此形成静态文档告警，不影响功能断言得分。"
-        }
-      ],
-      "user_notes_summary": {
-        "needs_review": [
-          "本次按要求未运行构建或交互测试；delivery-notes.txt 中的微信/Web 编译通过声明以及动态条件产物仍需在对应构建环境核验。",
-          "视频地址的实际可播放性、格式、CORS 与浏览器播放策略，以及微信位置/相机权限、分享宿主能力和 foo 插件服务可用性，均依赖真实运行环境。"
-        ]
-      },
-      "scope_state": "not_applicable",
-      "runtime_followups": [
-        "本次按要求未运行构建或交互测试；delivery-notes.txt 中的微信/Web 编译通过声明以及动态条件产物仍需在对应构建环境核验。",
-        "视频地址的实际可播放性、格式、CORS 与浏览器播放策略，以及微信位置/相机权限、分享宿主能力和 foo 插件服务可用性，均依赖真实运行环境。"
-      ]
-    },
-    {
-      "eval_id": 3,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "result": {
-        "pass_rate": 0.8888888888888888,
-        "passed": 8,
-        "failed": 1,
-        "total": 9,
-        "time_seconds": 722.291,
-        "tokens": 3298456,
-        "tool_calls": 52,
-        "errors": 0
-      },
-      "expectations": [
-        {
-          "id": "C4.2",
-          "text": "只检查平台条件、页面 JSON、导航模板和布局赋值代码。Web 有效源码不能调用微信胶囊相关 API，且配置与模板组合不能同时保留系统导航和自定义导航；微信有效源码必须保留原导航链。导航高度等尺寸依据属于 D4.1，缺少说明不影响本项功能判定。",
-          "category": "layout",
-          "passed": true,
-          "evidence": "outputs/src/app.mpx:29 将 navigationStyle 设为 custom，模板提供自定义导航，不会同时保留系统导航。outputs/src/pages/home/index.mpx:22-30 通过真实 __mpx_mode__ 条件隔离平台：Web 分支只赋值 0/44，不调用胶囊 API；微信有效的非 Web 分支仍调用 wx.getMenuButtonBoundingClientRect() 并保留原导航尺寸链。"
-        },
-        {
-          "id": "C4.3",
-          "text": "只检查构建过程实际读取的配置和生成代码。Web 的资源前缀、运行时 history/base、服务端路由和客户端路由必须统一为 /help-demo/；服务端与客户端的文章路由代码必须从同一路径读取同一个 query id，主包和两个分包页面也必须保留。未被构建代码消费的同名字段或另一套 # 地址不能作为证据。服务器 rewrite、部署配置和真实刷新归 D4.2。",
-          "category": "config",
-          "passed": true,
-          "evidence": "outputs/mpx.config.js:2 的实际构建 publicPath 为 /help-demo/；outputs/src/app.mpx:10-16 设置框架实际消费的 webConfig.routeConfig 为 history 且 base=/help-demo/。app.mpx:28-34 注册三个主包页面和 packageA、packageB 两个分包页面。文章服务端和客户端共用 outputs/src/pages/article/index.mpx:38-47：均由 onLoad 的 query.id 写入 articleId，再传给同一 loadArticle；fixtures/runtime-contract.md:5 说明服务端 context.url 使用同一路由及 query。"
-        },
-        {
-          "id": "C4.4",
-          "text": "静态检查 Web 构建实际使用的尺寸配置和换算公式。根据公式计算后，在 375px 和 750px Web 视口下，200rpx 都应等于 100 CSS px，28rpx 都应等于 14 CSS px；微信原有换算规则必须保留，配置必须能够正确序列化。",
-          "category": "config",
-          "passed": true,
-          "evidence": "outputs/mpx.config.js:7-13 在实际 Web 配置 webConfig.transRpxFn 中固定返回 value*0.5px；因此任意 Web 视口下 200rpx=100px、28rpx=14px。该函数是可注入生成代码的普通函数表达式，返回 CSS 字符串；配置仅位于 webConfig，未改变微信端原有 rpx 换算。"
-        },
-        {
-          "id": "C4.5",
-          "text": "只检查服务端预取入口、路由 id 读取、文章加载 action 或等价异步函数、Promise 返回或 await 关系以及模板状态引用。源码链必须表明：预取函数把文章 id 传入加载逻辑，并将其 Promise 返回或等待完成，模板随后读取该状态。只调用异步函数但丢失等待链不满足要求。",
-          "category": "ssr",
-          "passed": true,
-          "evidence": "outputs/src/pages/article/index.mpx:38-47 构成完整等待链：onLoad 从 query.id 得到 articleId，serverPrefetch 将 articleId 传给 loadArticle 并 return，其包装方法继续 return store.loadArticle。outputs/src/store/article.js:81-105 返回 fetchArticle 派生的 pendingPromise；模板第3-9行随后读取同一 store 暴露的 loading、errorText、article。"
-        },
-        {
-          "id": "C4.6",
-          "text": "只检查旧 createStore 到 @mpxjs/pinia 的迁移代码，以及 Mpx 官方 SSR 状态链：应用在 onAppInit 中为当前应用或 SSR 请求创建 Pinia 实例并返回 { pinia }，文章状态写入、服务端序列化、客户端挂载前恢复和页面 store 引用必须指向该 Pinia 状态。不要求调用 mpx.use(pinia)，也不要求自行实现框架默认提供的注水逻辑；如果应用自定义 onSSRAppCreated，则检查该自定义链是否完成等价的状态序列化。请求隔离由 C4.7 检查，客户端异步竞态由 C4.8 检查；重复请求和展开/收起效果只进入待运行验证，不在本项扣分。",
-          "category": "ssr",
-          "passed": false,
-          "evidence": "旧 createStore 虽已移除，但 outputs/src/store/article.js 没有使用 @mpxjs/pinia 的 createPinia/defineStore，而是自行构造仅模拟 state.value 形状的 createArticleStateContainer；outputs/src/app.mpx:18-20 又把该自定义容器命名为 pinia 返回。它可被默认序列化代码按形状读取，但不构成要求的旧 createStore 到 @mpxjs/pinia 迁移及官方 Pinia 状态链。"
-        },
-        {
-          "id": "C4.7",
-          "text": "只检查应用初始化、SSR context、store 创建位置和页面获取 store 的引用关系。源码必须表明每次 SSR 请求创建独立状态实例，并且页面实际使用该请求实例；文章 a 与文章 b 的状态引用不能指向同一个模块级活动 store。只新增未被页面使用的工厂、继续导入模块级单例，或在请求开始前清空共享状态，都不满足要求。Pinia 迁移与恢复由 C4.6 判断，客户端竞态由 C4.8 判断。",
-          "category": "ssr",
-          "passed": true,
-          "evidence": "outputs/src/app.mpx:18-20 在 onAppInit 每次调用时新建 createArticleStateContainer。outputs/src/pages/article/index.mpx:17-20 从当前页面 $root.$options.pinia 取得该请求容器；outputs/src/store/article.js:125-132 的模块级 WeakMap 以容器为键创建 store，而 Web 缺少请求容器时会在第38-40行直接报错，不会回退到模块级活动 store。因此不同 SSR 应用使用不同状态引用。"
-        },
-        {
-          "id": "C4.8",
-          "text": "只检查文章加载方法中的过期请求保护。源码应在发起请求时记录请求标识，并在成功、失败和 finally 分支修改 article、errorText、loading 前判断返回结果是否仍属于最新请求。结合输入中 a=40ms、b=10ms 的固定条件，从这些判断表达式静态推导晚返回的 a 是否会被忽略。缺少保护、只保护 article，或无条件提交异步结果，都不满足要求。",
-          "category": "ssr",
-          "passed": true,
-          "evidence": "outputs/src/store/article.js:76 为每次新请求递增 generation。成功分支第82-85行、失败分支第88-91行和 finally 的 loading 修改第93-96行均先比较 generation===control.generation；pending 清理也在第97-100行核对 Promise。a=40ms、b=10ms 时 b 将 generation 推进到2，晚到的 a 持有 generation 1，不能覆盖 article、errorText 或 loading。"
-        },
-        {
-          "id": "C4.9",
-          "text": "只检查实际生效的配置、应用初始化、服务端预取函数和平台条件中对 window、document、navigator 等浏览器对象的引用。所有服务端可达路径都必须避开这些对象；仅客户端可达的分支可以使用。微信 onLoad 源码链由 C4.10 判断。",
-          "category": "ssr",
-          "passed": true,
-          "evidence": "实际 Web 配置、outputs/src/app.mpx 的 onAppInit、文章页 serverPrefetch、store 和 service 均未引用 window、document 或 navigator。home 页的胶囊 API 位于 __mpx_mode__ 非 Web 分支；文章 SSR 可达链仅访问路由 query、请求级容器、Promise 和 setTimeout。"
-        },
-        {
-          "id": "C4.10",
-          "text": "只检查微信端有效的源码分支。页面源码中必须保留 onLoad，从 query.id 取得文章 id，并将该 id 传给文章加载方法；模板使用的 article、loading 和 errorText 必须来自该加载方法更新的同一状态。Web/SSR 改造不能删除、覆盖或切断这条引用链。本项不重复检查 Pinia 状态传输、请求隔离或服务端浏览器 API 安全。",
-          "category": "compatibility",
-          "passed": true,
-          "evidence": "outputs/src/pages/article/index.mpx:38-40 保留 onLoad，从 query.id 取得文章 id 并 return this.loadArticle(id)；第46-47行把 id 传给文章 store。模板第3-9行使用的 article、loading、errorText 由第27-36行从同一 getArticleStore(this) 取得，而该 store 的 loadArticle 在 outputs/src/store/article.js:76-101 更新这三个状态，微信加载链未被 Web/SSR 分支切断。"
-        }
-      ],
-      "notes": [
-        "需在真实部署环境确认 /help-demo/ 静态资源处理、未命中页面转交 SSR renderer以及 history 地址直接刷新行为。",
-        "44px Web 导航高度和顶部 inset=0 目前只是源码中的临时移动端假设，需结合设计规范、安全区和目标设备确认实际布局。",
-        "需运行 SSR renderer 与浏览器验证首屏 HTML、客户端 hydration、注水后免重复请求以及并发 SSR 请求的实际隔离效果。",
-        "需在客户端运行条件下验证 a/b 乱序请求、加载/错误状态和微信端导航、文章展开及 EventChannel 交互效果；delivery-notes.txt 中已有的测试通过陈述不能由本次静态评审确认。"
-      ],
-      "static_review": null,
-      "scope_review": [],
-      "delivery_review": [
-        {
-          "id": "D4.1",
-          "text": "只检查交付说明文本。如果输出代码为 Web 自定义了导航高度或临时布局值，说明中必须写明该数值的来源、假设和待确认事项，不能称其为实际测量结果；代码没有自定义尺寸时，本项记为不适用。",
-          "status": "failed",
-          "evidence": "delivery-notes.txt:7 说明 44px 来自常见移动端导航内容高度并声明顶部 inset=0，但没有明确把它标为待确认假设，也没有写明需要由设计、产品或实际设备确认。"
-        },
-        {
-          "id": "D4.2",
-          "text": "只检查交付说明文本。说明中必须指出：部署到 /help-demo/ 时，未命中静态文件的页面请求需要由部署服务器转交 Web/SSR 入口。只要求说明该部署边界；没有运行证据时不能写成“已经验证刷新成功”。",
-          "status": "passed",
-          "evidence": "delivery-notes.txt:11 明确指出部署时应先提供 /help-demo/ 静态资源，并将未命中的 /help-demo/* 页面请求交给 SSR renderer，否则 history 地址刷新会产生 404；没有声称真实刷新已验证成功，且第19行明确没有完整 Web 构建结论。"
-        },
-        {
-          "id": "D4.3",
-          "text": "只检查输入 app JSON、workers 目录、输出代码和交付说明。说明中必须指出：当前 Web JSON 转换不会根据小程序 workers 声明自动复制或打包该目录，单独保留声明不能生成浏览器 Web Worker。微信资源应保留；本题没有 Worker 调用需求，因此不要求新增浏览器 Worker。",
-          "status": "failed",
-          "evidence": "outputs/src/app.mpx:30 和 outputs/src/workers/add.js 保留微信 workers 资源，delivery-notes.txt:15 也说明不会自动成为 Web Worker；但说明没有明确指出 Web JSON 转换不会依据 workers 声明自动复制或打包该目录这一具体边界。"
-        },
-        {
-          "id": "D4.4",
-          "text": "只检查 app JSON、Web 页面注册代码和交付说明。说明中必须区分：Web 可以把分包页面注册为异步页面，但这不等于微信 independent:true 的脱离主包启动、独立环境和独立初始化。题目允许 Web 页面共用应用，不要求创建独立站点，也不应把普通分包或异步页面整体判为不支持。页面是否保留由 C4.3 判断。",
-          "status": "failed",
-          "evidence": "delivery-notes.txt:16 区分了 Web 异步 chunk 与微信独立分包运行环境，但没有完整说明 independent:true 在 Web 不提供脱离主包启动和独立初始化，也未明确说明 Web 页面共用同一应用是本题允许的实现。"
-        },
-        {
-          "id": "D4.5",
-          "text": "只检查 app JSON、实际配置消费者和交付说明。说明中必须识别 preloadRule 的源页面、network 条件和目标包，并指出当前 Web 转换不会自动生成浏览器预下载逻辑。题目不要求补充 Web 预取；如果说明声称已经实现，源码中必须存在实际读取该配置或执行预取的链路，不能用普通异步页面加载代替。本项不扣基本运行或路由功能分。",
-          "status": "failed",
-          "evidence": "delivery-notes.txt:17 正确说明 preloadRule 不会自动产生 Web 预取，但未按要求列明 outputs/src/app.mpx:35-37 中的源页面 pages/home/index、network=all 以及目标包 packageA、packageB。"
-        }
-      ],
-      "user_notes_summary": {
-        "needs_review": [
-          "需在真实部署环境确认 /help-demo/ 静态资源处理、未命中页面转交 SSR renderer以及 history 地址直接刷新行为。",
-          "44px Web 导航高度和顶部 inset=0 目前只是源码中的临时移动端假设，需结合设计规范、安全区和目标设备确认实际布局。",
-          "需运行 SSR renderer 与浏览器验证首屏 HTML、客户端 hydration、注水后免重复请求以及并发 SSR 请求的实际隔离效果。",
-          "需在客户端运行条件下验证 a/b 乱序请求、加载/错误状态和微信端导航、文章展开及 EventChannel 交互效果；delivery-notes.txt 中已有的测试通过陈述不能由本次静态评审确认。"
-        ]
-      },
-      "scope_state": "not_applicable",
-      "runtime_followups": [
-        "需在真实部署环境确认 /help-demo/ 静态资源处理、未命中页面转交 SSR renderer以及 history 地址直接刷新行为。",
-        "44px Web 导航高度和顶部 inset=0 目前只是源码中的临时移动端假设，需结合设计规范、安全区和目标设备确认实际布局。",
-        "需运行 SSR renderer 与浏览器验证首屏 HTML、客户端 hydration、注水后免重复请求以及并发 SSR 请求的实际隔离效果。",
-        "需在客户端运行条件下验证 a/b 乱序请求、加载/错误状态和微信端导航、文章展开及 EventChannel 交互效果；delivery-notes.txt 中已有的测试通过陈述不能由本次静态评审确认。"
-      ]
-    },
-    {
-      "eval_id": 4,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "result": {
-        "pass_rate": 0.7,
-        "passed": 7,
-        "failed": 3,
-        "total": 10,
-        "time_seconds": 396.35,
-        "tokens": 2243448,
-        "tool_calls": 31,
-        "errors": 0
-      },
-      "expectations": [
-        {
-          "id": "C5.1",
-          "category": "components",
-          "text": "检查 region picker 的支持边界。微信端必须保留 picker mode=\"region\"、regionCodes 和原 change 入口，并通过真实节点或属性平台条件避免把该模式当作 Web 已支持能力。题目没有提供 Web 地区组件，Web 边界应保留具体 TODO，说明业务需按实际行政区数据源和选择组件实现；不能用 regionOptions 的有限按钮、固定地区或手写简化选择器冒充完整 region picker。",
-          "passed": true,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:5-17 使用真实 @wx 节点条件保留 mode=\"region\"、regionCodes 和 onWxRegionChange；Web 仅展示未接入说明，TODO 明确要求接入真实地区组件和数据源，没有使用 regionOptions 伪造选择器。"
-        },
-        {
-          "id": "C5.2",
-          "category": "events",
-          "text": "静态追踪原微信地区选择状态链：event.detail.value/code 必须继续更新 regionNames、regionCodes，并由实际名称数组更新 regionText。不得为臆造的 Web 选择器复制另一套固定状态；TODO 应指出未来业务适配需复用同一组名称、编码和展示状态，但不要求当前交付实现 Web 选择事件。",
-          "passed": true,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:81-84 保留 event.detail.value/code 分别更新 regionNames、regionCodes，再由 regionNames.join 更新 regionText；第 13 行 TODO 要求未来 Web 适配复用同一展示与确认链路。"
-        },
-        {
-          "id": "C5.3",
-          "category": "components",
-          "text": "检查 map 的支持边界。微信端必须保留原 map、latitude、longitude、storeMarkers 与 markertap，并与 Web 产物真实隔离。题目没有提供 Web 地图服务、组件或凭据，Web 边界应保留具体 TODO，提示业务按实际地图 SDK、凭据和交互实现；可以展示当前状态或未接入说明，但不能把门店按钮列表、浏览器原生同名 map 或伪地图 API 声称为等价地图。",
-          "passed": false,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:19-30 已用 @wx 隔离并完整保留 map、经纬度、storeMarkers 和 markertap，Web 也没有伪地图；但第 27 行 TODO 只说明地图组件/SDK和点击交互，没有交代实际地图服务所需的凭据接入，未完整覆盖规定的 Web 地图边界。"
-        },
-        {
-          "id": "C5.4",
-          "category": "events",
-          "text": "静态追踪原微信门店选择链：event.detail.markerId 必须进入 selectStore 或等价公共逻辑，按真实 id 从 storeMarkers 查询并同时更新 selectedStoreId 与 selectedStoreName。不得为了伪造 Web 地图改成数组位置、硬编码门店或删除原标记事件；不要求当前交付新增 Web 门店选择入口。",
-          "passed": true,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:86-93 保留 markerId → selectStore → 按真实 id 查询 storeMarkers → 同时更新 selectedStoreId、selectedStoreName 的完整链路，没有改成数组位置或硬编码选择。"
-        },
-        {
-          "id": "C5.5",
-          "category": "state",
-          "text": "检查页面现有状态和确认方法。当前地区、当前门店及已确认结果必须继续读取同一份 regionText 和 selectedStoreName，confirmSelection 在调用时组合最新值；TODO 或平台隔离不能切断微信原按钮、另建未消费状态或改成固定确认文案。",
-          "passed": true,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:32-35 继续从 selectedStoreName 和 confirmedText 展示状态；第 95-96 行 confirmSelection 调用时使用最新 regionText 与 selectedStoreName 组合结果，微信确认按钮未被隔离或替换。"
-        },
-        {
-          "id": "C5.6",
-          "category": "components",
-          "text": "检查 swiper 的局部能力边界。当前 Web mpx-swiper 支持轮播、previous-margin、next-margin 和 change，但不消费 display-multiple-items。候选应保留同一个 swiper 的全部 banners、稳定 key、前后边距与 change 链，只将 display-multiple-items=\"2\" 限制到微信或其他真实支持平台，并留下具体 TODO，说明业务若要求 Web 同时展示两项需按实际轮播组件和交互方案实现。把 Web 改成静态 Grid、slice(0, 2)、删除第三项或重写整套轮播均不满足要求。",
-          "passed": true,
-          "evidence": "outputs/src/pages/catalog/index.mpx:3-14 保留同一个 swiper、全部 banners、wx:key=\"id\"、前后边距和 onBannerChange，仅以 display-multiple-items@wx 隔离 Web 未支持属性；TODO 明确要求 Web 双项展示时接入真实轮播并延续状态契约。"
-        },
-        {
-          "id": "C5.7",
-          "category": "components",
-          "text": "检查 grid-view/grid-item 的支持边界和原商品链。微信端必须保留 grid-view/grid-item、filteredProducts、稳定 id 及 selectProduct；题目没有提供 Web 列表或网格组件，Web 边界应保留具体 TODO，提示业务按实际列表规模、虚拟化和交互实现。不能自行用 CSS Grid、Flex、普通按钮列表或新增组件声称已经完成 Web 商品网格。",
-          "passed": false,
-          "evidence": "outputs/src/pages/catalog/index.mpx:24-49 以 @wx 保留 grid-view/grid-item、filteredProducts、稳定 id 和 selectProduct，Web 没有伪造列表；但第 46 行 TODO 未提示根据实际列表规模评估虚拟化方案，未完整满足该边界要求。"
-        },
-        {
-          "id": "C5.8",
-          "category": "components",
-          "text": "检查 image 的局部能力边界。微信端必须保留当前商品 cover、mode=\"aspectFill\" 与 lazy-load；当前 Web mpx-image 支持图片和 mode，但不消费 lazy-load。候选应保留组件已支持能力，只把 lazy-load 限制到支持平台，并留下具体 TODO，说明业务需按实际图片组件和加载策略实现 Web 懒加载；没有现成方案时不能改写成原生 img、IntersectionObserver 或自造加载器。",
-          "passed": true,
-          "evidence": "outputs/src/pages/catalog/index.mpx:37-42 保留 image、真实 cover、mode=\"aspectFill\"，仅将 lazy-load 限制为 lazy-load@wx；第 46 行 TODO 明确要求由实际图片组件提供 Web 懒加载方案，未引入原生 img 或自造加载器。"
-        },
-        {
-          "id": "C5.9",
-          "category": "components",
-          "text": "检查 page-container 的支持边界。微信端必须保留 page-container、filterVisible、分类选择、取消和确认事件，并与 Web 产物真实隔离。题目没有提供 Web dialog、drawer 或 portal，Web 边界应保留具体 TODO，提示业务按实际弹层、遮罩、滚动锁定和关闭交互实现；不能用页面内手写 fixed 遮罩声称等价完成 page-container。",
-          "passed": false,
-          "evidence": "outputs/src/pages/catalog/index.mpx:17-21、52-67 用 @wx 保留筛选入口、page-container、filterVisible、分类选择及取消/确认事件，Web 未手写 fixed 遮罩；但 TODO 只提及弹层/dialog 与事件链，没有具体提示实现遮罩和滚动锁定，边界说明不完整。"
-        },
-        {
-          "id": "C5.10",
-          "category": "state",
-          "text": "只检查原筛选状态及 filteredProducts 计算链。打开时 draftCategory 从 appliedCategory 复制；选择分类只修改 draftCategory；取消不能改变 appliedCategory；确认才写入 appliedCategory 并关闭；filteredProducts 按最新 appliedCategory 从 products 计算。平台隔离和 TODO 不能删除、绕过或改坏这条状态链。",
-          "passed": true,
-          "evidence": "outputs/src/pages/catalog/index.mpx:107-140 完整保留筛选状态链：openFilter 从 appliedCategory 复制草稿，选择仅改 draftCategory，取消不写 appliedCategory，确认才应用并关闭；filteredProducts 始终按最新 appliedCategory 从 products 计算。"
-        }
-      ],
-      "notes": [
-        "本次按要求未运行构建、浏览器、真机或 E2E；delivery-notes.txt 中的编译通过声明未被独立验证，实际平台编译、条件输出、布局与交互效果仍需在目标环境确认。"
-      ],
-      "static_review": null,
-      "scope_review": [
-        {
-          "id": "S5.1",
-          "scored": false,
-          "text": "检查交付范围：只提交两个要求的 .mpx 页面；不新增组件、平台副本、第三方依赖或环境 API，不改框架，也不生成无关业务文件。没有现成 Web 实现时，不得用临时按钮选择器、门店列表、静态双卡 Grid、原生图片加载器或手写遮罩冒充组件等价实现。",
-          "status": "passed",
-          "evidence": "静态枚举 outputs 后仅有要求的两个 .mpx 页面；源码未新增组件、平台副本、依赖或环境 API，也未用临时选择器、门店列表、静态双卡、原生图片加载器或手写遮罩冒充能力。"
-        }
-      ],
-      "delivery_review": [
-        {
-          "id": "D5.1",
-          "scored": false,
-          "text": "检查 TODO 质量与注释格式：每个未实现的 Web 边界应具体说明缺少的组件或属性能力，并提示业务按实际组件、数据源、SDK 和交互方案实现。模板、script、style 中必须分别使用 `<!-- TODO(web): 具体业务接入说明 -->`、`// TODO(web): 具体业务接入说明`、`/* TODO(web): 具体业务接入说明 */`；TODO 不能写成页面文字、字符串、错误类型注释或空说明。泛化的“待处理”或声称 TODO 已完成功能时记录静态告警。本项不进入功能分母。",
-          "status": "passed",
-          "evidence": "所有 TODO 均位于 template 并使用合法的 <!-- TODO(web): ... --> 格式，内容分别指出地区组件/数据源、地图组件或 SDK、双项轮播、筛选弹层、商品网格及图片懒加载等实际接入点；未发现页面文字、字符串或错误注释格式的 TODO。组件专项所要求但遗漏的凭据、虚拟化、遮罩及滚动锁定细节已分别计入对应功能断言。"
-        }
-      ],
-      "user_notes_summary": {
-        "needs_review": [
-          "本次按要求未运行构建、浏览器、真机或 E2E；delivery-notes.txt 中的编译通过声明未被独立验证，实际平台编译、条件输出、布局与交互效果仍需在目标环境确认。"
-        ]
-      },
-      "scope_state": "valid",
-      "runtime_followups": [
-        "本次按要求未运行构建、浏览器、真机或 E2E；delivery-notes.txt 中的编译通过声明未被独立验证，实际平台编译、条件输出、布局与交互效果仍需在目标环境确认。"
-      ]
+      "notes": []
     },
     {
       "eval_id": 0,
       "configuration": "no_skill",
       "run_number": 1,
       "result": {
-        "pass_rate": 0.7,
+        "pass_rate": 1.0,
         "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 1086.65,
+        "tokens": 4875635,
+        "tool_calls": 93,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "C1.4",
+          "text": "样式：red-card 与 blue-card 的同名类使用独立作用域，不互相覆盖",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C1.5",
+          "text": "布局：layout-cell 的虚拟宿主在 Web 生效，两个实例在 240px Flex 容器中等宽",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C1.6",
+          "text": "样式：theme-card 的 externalClasses 从调用方贯通到内容节点，并保留默认外部类配置",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C4.1",
+          "text": "导航：保留微信 navigator、普通入口 ready 状态和选择结果回传链路",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C4.2",
+          "text": "导航栏：微信胶囊 API 不在 Web 执行，Web 不重复显示系统导航与自定义导航",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C4.3",
+          "text": "路由：Web publicPath、history base 均为 /help-demo/，主包与两个分包页面保持注册",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C4.4",
+          "text": "尺寸：Web 使用固定二分之一 rpx 换算，微信换算配置保持不变",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.4,
+        "passed": 2,
         "failed": 3,
-        "total": 10,
-        "time_seconds": 456.281,
-        "tokens": 398843,
+        "total": 5,
+        "time_seconds": 616.366,
+        "tokens": 610178,
+        "tool_calls": 18,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "C2.1",
+          "text": "结构：生成完整 Mpx 配置、App、页面和组件，页面注册并渲染两个 profile-card",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C2.2",
+          "text": "路由：Web publicPath、history base 均为 /profile-demo/，微信页面注册保持有效",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C2.3",
+          "text": "样式：accent-class 从页面调用方贯通到组件标题，并保留默认 externalClasses",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C2.4",
+          "text": "交互：两个 profile-card 实例各自保存折叠状态，点击只切换当前实例",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "id": "C2.5",
+          "text": "分享：微信保留正确分享标题和路径，Web 隔离该钩子并呈现未接入边界",
+          "passed": false,
+          "evidence": "FAIL"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.1111,
+        "passed": 1,
+        "failed": 8,
+        "total": 9,
+        "time_seconds": 643.526,
+        "tokens": 436613,
+        "tool_calls": 20,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "C3.2",
+          "text": "名称编辑：Web 具备输入、确认赋值和取消不赋值链路，微信原交互保持有效",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C3.3",
+          "text": "扫码：微信保留原生扫码组件，Web 构建不解析该组件且只读依赖未修改",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C3.4",
+          "text": "视频：保留 src 与播放事件，Web 在 detail 缺字段时从真实 target 安全回退",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C3.5",
+          "text": "位置：微信保留 chooseLocation，Web 不执行微信 API 且说明真实服务接入边界",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C3.6",
+          "text": "插件：公共 pages 只维护一份，微信保留插件卡片，Web 不解析 plugin 组件",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C5.1",
+          "text": "地区与地图：微信原 picker/map 数据链保留，Web 隔离缺失能力并标明接入点",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C5.2",
+          "text": "Swiper 与图片：保留公共能力，只隔离 Web 未实现的局部属性并标明接入点",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C5.3",
+          "text": "结构组件：微信保留 grid-view 与 page-container，Web 隔离缺失组件并标明接入点",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "id": "C5.4",
+          "text": "状态：门店确认和商品筛选的草稿、取消、确认状态链保持不变",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "no_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 708.881,
+        "tokens": 1810345,
         "tool_calls": 24,
         "errors": 0
       },
       "expectations": [
         {
-          "id": "C1.1",
-          "text": "静态检查 .image-row 中图片的模板、选择器和样式，确认 Web 端仍保留输入源码规定的 80px 宽高和 12px 圆角。实现方式不限。本项只检查图片；红蓝卡片隔离、两格等分和 externalClasses 分别由 C1.4、C1.5、C1.6 判断。",
-          "category": "style",
+          "id": "C6.1",
+          "text": "SSR：history 路由匹配 /help-demo/，首屏渲染前按当前 query.id 等待文章数据",
           "passed": true,
-          "evidence": "outputs/src/pages/style/index.mpx:4 为图片增加 preview-image 类，51-57 行明确设置 width: 80px、height: 80px、border-radius: 12px。Web 的 mpx-image 最终根节点虽为 div，但组件节点类会合并到其根节点，因此尺寸和圆角选择器有效。"
+          "evidence": "PASS"
         },
         {
-          "id": "C1.2",
-          "text": "只检查源码中的节点位置、祖先布局、定位声明和事件绑定。两个悬浮入口在 Web 有效代码中必须保留 position: fixed，祖先结构不能把它们变成相对局部内容的 absolute 定位；若移动节点，原样式、bindtap 处理函数和纵向列表节点仍须可达。已支持的 scroll-view 不要求替换。",
-          "category": "layout",
+          "id": "C6.2",
+          "text": "状态：文章状态完整迁移到共享 @mpxjs/pinia，并通过 onAppInit 注入应用",
           "passed": true,
-          "evidence": "outputs/src/pages/style/index.mpx:23-24 将两个入口移到页面普通祖先下，59-78 行仍分别声明 position: fixed，且都保留 bindtap=\"recordTap\"；页面祖先未声明会改变 fixed 定位语义的 transform 或 absolute。15-17 行保留 scroll-view 与 row-group，row-group.mpx 又实际引用 row-list.mpx，纵向列表链路完整。"
+          "evidence": "PASS"
         },
         {
-          "id": "C1.4",
-          "text": "静态检查红色卡片和蓝色卡片的样式作用域与选择器，确认两个组件即使使用同名类也不会互相覆盖。可以使用 scoped、项目配置或其他有效隔离方式。",
-          "category": "style",
+          "id": "C6.3",
+          "text": "隔离：每次 SSR 请求在 onAppInit 中创建独立 Pinia，文章页使用当前请求实例",
           "passed": true,
-          "evidence": "outputs/src/components/red-card.mpx:2-15 与 blue-card.mpx:2-15 使用互不相同的 red-card__/blue-card__ 局部类名，且两者样式均为 scoped；同名类互相覆盖的问题已消除。"
+          "evidence": "PASS"
         },
         {
-          "id": "C1.5",
-          "text": "静态检查 layout-cell 的虚拟节点声明、实际生效的编译配置和 Web 最终节点层级，确认“甲”和“较长的乙”平分 240px，flex 作用在真实布局子项上。只声明 options.virtualHost 不能直接证明 Web 布局正确；可以使用精确配置或等价布局方案。若使用 autoVirtualHostRules，只能加入有源码或编译产物证据表明宿主节点会破坏该布局的组件，不能把同一页面或组件链中的 row-group、row-list 等无关组件一并加入。",
-          "category": "layout",
-          "passed": false,
-          "evidence": "outputs/src/components/layout-cell.mpx:9 只有运行时 options.virtualHost: true；outputs/mpx.config.js 未配置 autoVirtualHostRules。根据给定 Web 编译器源码，Web 是否移除组件宿主由 matchCondition(resourcePath, autoVirtualHostRules) 决定，因此 layout-cell 在 Web 仍会生成实体宿主。17 行的 flex 作用于宿主内部 view，而非 outputs/src/pages/style/index.mpx:49 的 .equal-row 真实直接子项，无法静态证明两项各占 120px。"
-        },
-        {
-          "id": "C1.6",
-          "text": "静态追踪调用方样式类、theme-card 的 externalClasses 声明、组件内部节点和 Web 编译配置，确认外部样式真正作用到内容节点：两处文字颜色来自各自的调用方，custom-class 提供的 12px 内边距也必须保留。只保留 externalClasses 声明，或只配置新增的 tone-class，不能证明适配完成；允许采用其他能保留两端调用契约的实现，不要求保留未使用的默认类。本项不重复判断 C1.1 和 C1.4。",
-          "category": "style",
-          "passed": false,
-          "evidence": "调用方在 outputs/src/pages/style/index.mpx:9-10 传入 tone-class 和 custom-class，theme-card.mpx:3 也在内容节点消费两者。然而 Web 编译读取的是插件级 externalClasses，outputs/mpx.config.js 未加入 tone-class；给定框架默认名单仅含 custom-class 和 i-class。因而 custom-class 可把 spaced-label 的 12px padding 传入，但 tone-class 不会被转换为调用方的 warm-tone/cool-tone，两个文字颜色契约未完整保留。"
-        },
-        {
-          "id": "C1.7",
-          "text": "只检查 help-card、help-item 的 SFC 文件、usingComponents、模板引用、属性传递和状态处理代码。父组件必须真实引用子组件；源码中应有标题绑定、初始收起状态、展开与收起的状态更新函数及对应条件渲染，两端共用同一套源码。只创建未引用的子组件，或仍把全部帮助项写在父组件中，不满足要求。选项式和组合式 API 均可，状态可由任一组件管理。",
-          "category": "generation",
+          "id": "C6.4",
+          "text": "环境：服务端可达的初始化与预取代码不访问 window、document 或 navigator",
           "passed": true,
-          "evidence": "outputs/src/components/help-card.mpx:3-8 真实引用 help-item 并传入 title、description、helpUrl，29-35 行注册该子组件。help-item.mpx:30-35 将 expanded 初始化为 false 并提供双向切换函数，5-9 行绑定标题、切换文案及说明条件渲染；两端共用同一套源码。"
+          "evidence": "PASS"
         },
         {
-          "id": "C1.8",
-          "text": "只检查源码中的 helpUrl 传递和路由调用链：面板属性传给帮助项，帮助入口的事件处理函数调用已有 WebView 路由，并按现有 url 参数约定完成一次正确编码。原地址中的查询参数和百分号转义必须能从表达式中静态推导为完整保留，不能重复解码，也不能只打印链接。子组件直接调用路由或通知父组件调用均可；不要求新建 WebView 或通信桥。",
-          "category": "generation",
+          "id": "C6.5",
+          "text": "兼容：微信 onLoad 继续按 query.id 调用共享 action，并保留文章页面状态与交互",
           "passed": true,
-          "evidence": "fixtures/src/pages/review/index.mpx:6-7 将 helpUrl 传给 help-card，help-card.mpx:6 再传给 help-item。help-item.mpx:37-42 调用 navigateTo 进入已有 /pages/common/webview，并对 this.helpUrl 恰好执行一次 encodeURIComponent。结合两个宿主页按平台进行的一次路由解码，原 URL 的查询参数及已有百分号转义可完整保留。"
-        },
-        {
-          "id": "C1.9",
-          "text": "只检查 CSS 声明、变量作用域和回退表达式。帮助项按钮背景必须引用 --btn_wrapper_bg，并在未定义时回退到 #2A2F3F；从宿主到 help-card、help-item 的样式链中不能出现会遮蔽宿主变量的固定定义。允许使用 var 回退或等价的可靠默认值。",
-          "category": "generation",
-          "capability": "style",
-          "passed": true,
-          "evidence": "outputs/src/components/help-item.mpx:53-58 的两个帮助按钮均使用 background: var(--btn_wrapper_bg, #2A2F3F)。fixtures/src/pages/review/index.mpx:5、24-26 在祖先上设置或清除该变量；help-card 和 help-item 中不存在固定的 --btn_wrapper_bg 定义来遮蔽宿主变量。"
-        },
-        {
-          "id": "C1.10",
-          "text": "静态检查 help-card 和 help-item 的样式作用域与选择器，确认它们不会污染宿主已有的 .title 和 .action，宿主原有字号、颜色和间距保持不变。可以使用 scoped、局部命名或其他有效隔离方式，不能通过修改宿主样式规避污染。",
-          "category": "generation",
-          "passed": true,
-          "evidence": "help-card.mpx 和 help-item.mpx 均使用 scoped 样式及 help-card/help-item BEM 类名，没有定义宿主的 .title 或 .action。fixtures/src/pages/review/index.mpx:31-34 的既有宿主样式未被修改。"
-        },
-        {
-          "id": "C1.11",
-          "text": "只检查宿主 item-class、help-card 属性或外部类传递、help-item 声明以及内部内容节点的类绑定，必要时同时检查 Web 编译配置。源码链必须能分别把两处调用方指定的文字颜色和内边距传到各自帮助项内容。样式只绑定在面板外壳、只声明但未用于内部节点，或按实例位置写死样式，都不满足要求。按钮变量、样式污染和已有 theme-card 分别由 C1.9、C1.10、C1.6 判断。",
-          "category": "generation",
-          "passed": false,
-          "evidence": "宿主在 fixtures/src/pages/review/index.mpx:6-7 传入 item-class=\"help-red/help-blue\"，help-card.mpx:7、21 和 help-item.mpx:2、29 也声明了传递及内容节点绑定。但 outputs/mpx.config.js 未把 item-class 加入 Web 编译器实际使用的 externalClasses 名单。组件脚本中的声明不能替代给定 processTemplate 所读取的插件级配置，因此 Web 上 item-class 会停留为普通属性或字面类名，调用方的两组颜色和 padding 无法传到帮助项内容。"
+          "evidence": "PASS"
         }
       ],
-      "notes": [
-        "未运行 Web 或小程序构建与真实渲染；图片尺寸、fixed 视口定位、CSS 变量继承及 scoped 隔离的最终运行表现仍需环境确认。",
-        "未执行真实点击和路由跳转；展开/收起、悬浮入口事件以及 helpUrl 在两端路由和 WebView 中的最终往返仍需运行环境确认。"
-      ],
-      "static_review": null,
-      "scope_review": [
-        {
-          "id": "S1.1",
-          "text": "检查交付文件范围：help-card 和 help-item 必须从零生成；不能改写已有 WebView 容器或只读宿主页，不能生成无关业务文件或不必要的平台副本。必要配置可以合入本题已有的 mpx.config.js，但必须保留原有适配目标。",
-          "scored": false,
-          "status": "passed",
-          "evidence": "outputs 包含适配后的页面、mpx.config.js、原有六个组件及资源，并从零新增 help-card.mpx 和 help-item.mpx；未输出或改写 fixtures 中的只读 review/webview 页面，也没有无关业务文件或额外平台副本。mpx.config.js 仍保留 srcMode: 'wx'。"
-        }
-      ],
-      "delivery_review": [],
-      "user_notes_summary": {
-        "needs_review": [
-          "未运行 Web 或小程序构建与真实渲染；图片尺寸、fixed 视口定位、CSS 变量继承及 scoped 隔离的最终运行表现仍需环境确认。",
-          "未执行真实点击和路由跳转；展开/收起、悬浮入口事件以及 helpUrl 在两端路由和 WebView 中的最终往返仍需运行环境确认。"
-        ]
-      },
-      "scope_state": "valid",
-      "runtime_followups": [
-        "未运行 Web 或小程序构建与真实渲染；图片尺寸、fixed 视口定位、CSS 变量继承及 scoped 隔离的最终运行表现仍需环境确认。",
-        "未执行真实点击和路由跳转；展开/收起、悬浮入口事件以及 helpUrl 在两端路由和 WebView 中的最终往返仍需运行环境确认。"
-      ]
-    },
-    {
-      "eval_id": 1,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "result": {
-        "pass_rate": 1.0,
-        "passed": 5,
-        "failed": 0,
-        "total": 5,
-        "time_seconds": 392.375,
-        "tokens": 284545,
-        "tool_calls": 7,
-        "errors": 0
-      },
-      "expectations": [
-        {
-          "id": "C2.1",
-          "text": "只检查模板事件绑定、WXS 或组件处理函数、change 事件参数、页面处理函数和模板状态引用。点击与 touchend 两条源码链都必须可达，并分别把对应操作值写入页面展示所引用的状态；空处理函数不能代替原行为。方法名和适配方式不限。",
-          "category": "events",
-          "passed": true,
-          "evidence": "outputs/src/components/event-actions.mpx:3-19 中 tap 与 touchend 分别绑定 handleTap、handleTouchEnd，传入“点击”和“触摸结束”后由 recordAction 发送 change.detail.action；outputs/src/pages/panel/index.mpx:3-4、39-40 监听 change，将该值写入模板展示的 actionText。两条链路均可达且没有空处理函数。"
-        },
-        {
-          "id": "C2.2",
-          "text": "只检查 notice 的源码传递链：叶子组件发送的 event.detail.message 经过包装组件到达页面监听函数，监听函数对通知计数只包含一次增量，其他事件处理函数不能复用该增量逻辑。只删除 bubbles/composed、添加 TODO 或硬编码消息，不能证明链路成立。",
-          "category": "events",
-          "passed": true,
-          "evidence": "outputs/src/components/notice-leaf.mpx:2、9-13 发送 notice.detail.message；outputs/src/components/notice-wrapper.mpx:2、11-17 在 Web 上显式透传 event.detail，小程序端则保留原 bubbles/composed 传播而不重复转发；outputs/src/pages/panel/index.mpx:11-13、75-77 接收 message，并且 noticeCount 仅在 onNotice 中增加一次，其他处理函数未复用该增量。"
-        },
-        {
-          "id": "C2.3",
-          "text": "静态检查 composition-counter 使用的实例 API、返回结构和调用链，确认挂载就绪通知指向当前正确的组件实例。不强制采用某一种 proxy 解构方式。",
-          "category": "instance",
-          "passed": true,
-          "evidence": "outputs/src/components/composition-counter.mpx:11-19 在 setup 中取得 useReadyNotice 返回函数，注册到 onMounted，并返回 recordReady；outputs/src/composables/use-ready-notice.js:3-15 在 setup 期间取得当前实例，挂载时优先使用 MpxProxy.target，否则使用 proxy，并调用该实例的 recordReady。结合给定框架源码中 MpxProxy 的 target/proxy 以及 Web getCurrentInstance().proxy 结构，该调用指向当前 composition-counter 实例并更新 readyText。"
-        },
-        {
-          "id": "C2.5",
-          "text": "只检查组件查询表达式、目标组件标识、Web 编译后的标识形态和当前 matcher 源码。静态推导结果必须表明“选中首项”的查询可匹配第一项，“清空两项”的查询可匹配全部两项。不能只修复首项，同时保留 matcher 无法读取的批量 class 查询。可以使用 id、ref、有效选择器、数据驱动或其他等价方案。",
-          "category": "instance",
-          "passed": true,
-          "evidence": "outputs/src/pages/panel/index.mpx:6-7 为两项设置 firstChoice、secondChoice ref。selectFirst（46-56）虽然先尝试 Web matcher 无法读取的动态 class，但匹配失败后沿同一可达路径回退到 firstChoice ref；resetChoices（58-73）的关系选择器在给定 Web selectComponent 实现中返回空结果，随后明确回退到两个 ref 并逐项调用 setSelected(false)。outputs/src/components/choice-item.mpx:9-13 提供实际状态修改方法，因此首项选择和两项清空都可静态推导成立。"
-        },
-        {
-          "id": "C2.6",
-          "text": "只检查 orderedItems、倒序方法、稳定 key、摘要计算代码以及 relation-list 的数据引用。源码应表明摘要直接取自当前数组顺序，因此初始数据推导为“甲、乙、丙”，倒序表达式推导为“丙、乙、甲”。实现不能依赖 Web 未消费的 relations.target 或 linkChanged 才能更新；保留未使用的关系元数据本身不判错。允许数据驱动等价实现，不要求完整 relations 引擎；普通 Behavior 已受支持，不强制改成 mixins。",
-          "category": "instance",
-          "passed": true,
-          "evidence": "outputs/src/pages/panel/index.mpx:29-37 定义顺序为甲、乙、丙的 orderedItems，并以 slice().reverse() 倒序；16-17 将当前数组传给 relation-list，并用稳定 id 作为 key。outputs/src/components/relation-list.mpx:12-22 的 orderText 直接从当前 items 顺序映射 label 并以顿号连接，模板第4行直接展示它，故初始为“甲、乙、丙”，倒序后为“丙、乙、甲”，再次倒序恢复；展示结果不依赖 relations.target、linkChanged 或未使用的 relationOrderText。"
-        }
-      ],
-      "notes": [],
-      "static_review": null,
-      "scope_review": [],
-      "delivery_review": [],
-      "user_notes_summary": {
-        "needs_review": []
-      },
-      "scope_state": "not_applicable",
-      "runtime_followups": []
-    },
-    {
-      "eval_id": 2,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "result": {
-        "pass_rate": 0.3333333333333333,
-        "passed": 2,
-        "failed": 4,
-        "total": 6,
-        "time_seconds": 344.505,
-        "tokens": 438293,
-        "tool_calls": 15,
-        "errors": 0
-      },
-      "expectations": [
-        {
-          "id": "C3.1",
-          "text": "只检查分享声明、平台条件、模板入口和可达处理代码。微信有效分支必须保留分享入口与原分享配置；Web 有效分支必须完成真实登记或明确隔离。题目未提供 Web 分享协议时，源码或交付说明应标出未接入边界，不能返回伪造的成功结果；说明不要求出现字面量 TODO。",
-          "category": "share",
-          "passed": true,
-          "evidence": "outputs/src/pages/content/index.mpx:6、72-74 保留微信 open-type=\"share\" 入口及原 title/path 分享配置。Web 的 shareContent（135-159）由按钮真实触发，调用 navigator.share；不可用时仅在剪贴板写入成功后报告复制成功，否则明确报告能力不可用，没有伪造成功结果。虽然模板中的 @mpx 注释不构成隔离，两套按钮实际共存，但 Web 仍存在可达的真实分享链路，微信原入口也仍可达。"
-        },
-        {
-          "id": "C3.2",
-          "text": "只检查名称编辑相关的模板入口、状态字段、确认与取消回调、赋值语句和平台条件。Web 有效源码中必须存在可输入名称、确认后赋值、取消时不赋值的完整链路；可以使用目标端其他原生交互，不要求弹窗外观一致。不能因局部选项不支持而停用整个功能，也不能写入伪造结果。JS 中的 @mpx 条件注释不是有效平台分支，如果两端实际会执行同一段不兼容代码，则不满足要求。",
-          "category": "api",
-          "passed": false,
-          "evidence": "outputs/src/pages/content/index.mpx:25-29、118-130 具备输入、确认赋值和取消不赋值的内联编辑链路；但 rename 中 107、117、120 的 JS @mpx 标记只是注释，Web 会先执行 mpx.showModal（108-116）再打开内联编辑器。已给框架证据表明 Web showModal 不支持 editable，也不会返回 content；用户确认该额外弹窗时 114 会把 displayName 赋为 undefined。微信端也会继续执行本应仅供 Web 的编辑状态代码，因此平台控制流无效且存在实际不兼容执行。"
-        },
-        {
-          "id": "C3.3",
-          "text": "只检查业务模板、usingComponents、模块顶层引用、平台条件和可达调用。微信有效源码必须保留只读扫码组件及结果通知；题目未提供 Web 扫码协议时，Web 有效源码必须移除对该组件的解析链，并提供不可用提示和待接入说明。只隐藏模板节点不够：Web JSON 若仍通过 usingComponents 解析包含 camera 的原生组件，则不满足要求；JSON 中的 @mpx 注释也不能移除引用。直接保留不可用调用、使用空组件、伪造扫码结果或修改只读依赖均不满足要求。不强制采用平台文件。",
-          "category": "components",
-          "passed": false,
-          "evidence": "outputs/src/vendor/native-scanner/index.mpx 与输入一致，微信 camera 扫码和 result 通知链仍保留；但 outputs/src/components/scan-entry.mpx:48-53 的 JSON @mpx 标记只是普通注释，Web usingComponents 仍解析 native-scanner，而该只读组件含 camera。模板 3-8 的注释同样不能隔离 native-scanner；start 中 22-27 两段也会连续执行，使 Web 将 scanning 设为 true。Web 提示存在，但没有移除原生扫码组件的解析和可达链。"
-        },
-        {
-          "id": "C3.4",
-          "text": "只检查 video 的组件引用、src 与播放属性绑定、事件绑定和事件字段读取代码。微信有效源码应优先读取 event.detail；当前 Web video 通过 inheritEvent 透传原生 target，因此 detail 缺字段时可以从真实 target 数值属性做安全回退，也可以隔离无法可靠提供的辅助字段，不能构造伪造值。",
-          "category": "media",
-          "passed": true,
-          "evidence": "outputs/src/pages/content/index.mpx:35 将完整 videoSrc 传给 video-info；outputs/src/components/video-info.mpx:3-10 保留 src、controls、timeupdate 和 loadedmetadata 绑定。处理代码 33-46 均优先读取 event.detail，缺字段时才从 inheritEvent 透传的真实 event.target 读取 currentTime、duration、videoWidth、videoHeight，并经 Number 转换、无效值回退为初始展示值 0，没有构造业务结果或替换视频地址。"
-        },
-        {
-          "id": "C3.5",
-          "text": "只检查位置功能的平台条件、API 调用和提示代码。微信有效源码必须保留原位置调用；题目未提供 Web 位置协议时，Web 有效源码必须使 wx.chooseLocation 不可达，并提供未接入说明或 TODO，不能写入伪造位置。JS 中的 @mpx 条件注释不是有效平台分支；若 Web 仍可达微信 API，或微信会执行 Web 兜底代码，则不满足要求。",
-          "category": "api",
-          "passed": false,
-          "evidence": "outputs/src/pages/content/index.mpx:77、87、104 的 JS @mpx 标记不形成控制流。Web 点击 choosePlace 会先到达 mpx.chooseLocation（79-86）；根据给定框架证据，Web chooseLocation 是不支持的 envError。微信执行原位置调用后也会继续执行 navigator.geolocation 分支（88-103）。虽然页面明确说明 Web 未接入地点选择/名称解析且浏览器坐标来自真实定位，但两端调用链未被有效隔离。"
-        },
-        {
-          "id": "C3.6",
-          "text": "只检查 app plugins、plugin:// 组件声明、usingComponents、平台条件和模板引用。微信有效源码必须保留插件卡片；Web 有效源码不能解析或渲染该插件。题目未提供 Web 插件协议时，可以隔离并提供不可用提示和待接入说明，但不能使用空组件或伪造插件内容。JSON 中的 @mpx 注释不能隔离 plugins 或 usingComponents，只隐藏模板节点也不能证明构建依赖已移除；保留未被 Web 消费的微信元数据本身不判错。",
-          "category": "components",
-          "passed": false,
-          "evidence": "微信插件声明和 foo-card 均仍在 outputs/src/app.mpx:13-15、outputs/src/pages/content/index.mpx:179 及模板 38。可是 app/page JSON 中的 @mpx 注释是普通注释，Web 配置仍含 plugins 和 plugin://foo/component；模板 37-41 的 HTML 注释也不能阻止 Web 渲染 foo-card。单独保留未消费的微信 plugins 元数据不判错，但这里同时保留了 Web usingComponents 声明和模板引用，未完成插件解析/渲染隔离。"
-        }
-      ],
-      "notes": [
-        "浏览器 Web Share、剪贴板和 geolocation 在安全上下文、用户授权及不同浏览器中的实际交互仍需运行环境确认。",
-        "实际视频地址、微信合法域名、Web CORS、播放事件及媒体元数据表现仍需目标环境确认。",
-        "微信账号对 wx123 插件的可用性以及相机、位置权限下的真机行为仍需确认。"
-      ],
-      "static_review": null,
-      "scope_review": [],
-      "delivery_review": [
-        {
-          "id": "D3.1",
-          "text": "检查交付说明是否明确：permission 和 requiredPrivateInfos 是微信权限用途及隐私接口声明，不表示 Web 已获得授权或完成隐私合规；当前 Web 没有对应转换时，应保留微信声明并如实说明目标端边界。题目未提供 Web 接入协议时可以标记待接入，不要求虚构浏览器授权流程。该说明缺失或待确认只记静态告警，不扣 API 功能分。",
-          "status": "failed",
-          "evidence": "delivery-notes.txt:10、18-19 分别提到微信权限配置和 Web 浏览器授权依赖，但没有明确说明 permission 是微信权限用途声明、requiredPrivateInfos 是微信隐私接口声明，也没有说明它们不代表 Web 已获授权或已完成隐私合规。此项仅为交付说明静态告警，不影响功能分。"
-        }
-      ],
-      "user_notes_summary": {
-        "needs_review": [
-          "浏览器 Web Share、剪贴板和 geolocation 在安全上下文、用户授权及不同浏览器中的实际交互仍需运行环境确认。",
-          "实际视频地址、微信合法域名、Web CORS、播放事件及媒体元数据表现仍需目标环境确认。",
-          "微信账号对 wx123 插件的可用性以及相机、位置权限下的真机行为仍需确认。"
-        ]
-      },
-      "scope_state": "not_applicable",
-      "runtime_followups": [
-        "浏览器 Web Share、剪贴板和 geolocation 在安全上下文、用户授权及不同浏览器中的实际交互仍需运行环境确认。",
-        "实际视频地址、微信合法域名、Web CORS、播放事件及媒体元数据表现仍需目标环境确认。",
-        "微信账号对 wx123 插件的可用性以及相机、位置权限下的真机行为仍需确认。"
-      ]
-    },
-    {
-      "eval_id": 3,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "result": {
-        "pass_rate": 0.7777777777777778,
-        "passed": 7,
-        "failed": 2,
-        "total": 9,
-        "time_seconds": 521.953,
-        "tokens": 1417466,
-        "tool_calls": 46,
-        "errors": 0
-      },
-      "expectations": [
-        {
-          "id": "C4.2",
-          "text": "只检查平台条件、页面 JSON、导航模板和布局赋值代码。Web 有效源码不能调用微信胶囊相关 API，且配置与模板组合不能同时保留系统导航和自定义导航；微信有效源码必须保留原导航链。导航高度等尺寸依据属于 D4.1，缺少说明不影响本项功能判定。",
-          "category": "layout",
-          "passed": true,
-          "evidence": "outputs/src/app.mpx:49-50 保留全局 navigationStyle:\"custom\"；outputs/src/pages/home/index.mpx:3、21、27-30、52 在 Web 使用自定义 header，并在调用 wx.getMenuButtonBoundingClientRect() 前由真实运行时条件直接返回。微信分支仍执行胶囊尺寸读取并赋给 topInset/headerHeight，因此未形成系统导航与自定义导航并存，原微信导航链也得到保留。"
-        },
-        {
-          "id": "C4.3",
-          "text": "只检查构建过程实际读取的配置和生成代码。Web 的资源前缀、运行时 history/base、服务端路由和客户端路由必须统一为 /help-demo/；服务端与客户端的文章路由代码必须从同一路径读取同一个 query id，主包和两个分包页面也必须保留。未被构建代码消费的同名字段或另一套 # 地址不能作为证据。服务器 rewrite、部署配置和真实刷新归 D4.2。",
-          "category": "config",
-          "passed": true,
-          "evidence": "outputs/mpx.config.js:1-4 将 Web publicPath 设为 /help-demo/；outputs/src/app.mpx:8-14 设置实际运行时 routeConfig.mode=history、base=/help-demo/。服务端在 outputs/src/pages/article/index.mpx:33-35 从 this.$route.query.id 读取，客户端在 28-31 从 onLoad query.id 读取；fixtures/runtime-contract.md:5 表明两端对应同一 URL 参数。outputs/src/app.mpx:49-58 仍注册三个主包页面和 packageA、packageB 两个分包页面。"
-        },
-        {
-          "id": "C4.4",
-          "text": "静态检查 Web 构建实际使用的尺寸配置和换算公式。根据公式计算后，在 375px 和 750px Web 视口下，200rpx 都应等于 100 CSS px，28rpx 都应等于 14 CSS px；微信原有换算规则必须保留，配置必须能够正确序列化。",
-          "category": "config",
-          "passed": false,
-          "evidence": "outputs/mpx.config.js:11-14 的公式本身可算出 200rpx=100px、28rpx=14px且与视口无关，微信配置也未被改写；但 transRpxFn 使用对象方法简写。题目给出的实际消费者 script-helper.js 通过模板插值直接生成 `global.__mpxTransRpxFn = ${webConfig.transRpxFn}`，方法简写转成源码字符串后形如 `transRpxFn (match, value) { ... }`，不能作为赋值右值解析。因此尺寸配置不能正确序列化到 Web 生成代码，本项不通过。"
-        },
-        {
-          "id": "C4.5",
-          "text": "只检查服务端预取入口、路由 id 读取、文章加载 action 或等价异步函数、Promise 返回或 await 关系以及模板状态引用。源码链必须表明：预取函数把文章 id 传入加载逻辑，并将其 Promise 返回或等待完成，模板随后读取该状态。只调用异步函数但丢失等待链不满足要求。",
-          "category": "ssr",
-          "passed": true,
-          "evidence": "outputs/src/pages/article/index.mpx:33-35 的 serverPrefetch 从路由 query.id 取值并 return this.loadArticle；38-40 又 return articleStore.dispatch。outputs/src/store/article.js:43-69 的 action 返回 fetchArticle Promise 链，且模板在页面 3-9 行读取由同一注入 store 暴露的 article、loading、errorText（23-26 行）。结合给出的 Mpx/Vue SSR serverPrefetch 等待机制，预取等待链完整。"
-        },
-        {
-          "id": "C4.6",
-          "text": "只检查旧 createStore 到 @mpxjs/pinia 的迁移代码，以及 Mpx 官方 SSR 状态链：应用在 onAppInit 中为当前应用或 SSR 请求创建 Pinia 实例并返回 { pinia }，文章状态写入、服务端序列化、客户端挂载前恢复和页面 store 引用必须指向该 Pinia 状态。不要求调用 mpx.use(pinia)，也不要求自行实现框架默认提供的注水逻辑；如果应用自定义 onSSRAppCreated，则检查该自定义链是否完成等价的状态序列化。请求隔离由 C4.7 检查，客户端异步竞态由 C4.8 检查；重复请求和展开/收起效果只进入待运行验证，不在本项扣分。",
-          "category": "ssr",
-          "passed": false,
-          "evidence": "outputs/src/store/article.js:1、22 仍使用旧的 @mpxjs/core createStore，整个交付没有 @mpxjs/pinia 的 createPinia/defineStore；outputs/src/app.mpx:23-45 也没有在 onAppInit 中创建并返回 { pinia }，而是通过 provide、自定义 context.state 序列化和 window.__INITIAL_STATE__ 读取实现另一套状态链。因此未完成要求的 Pinia 迁移及 Mpx 官方 SSR 注水恢复链。"
-        },
-        {
-          "id": "C4.7",
-          "text": "只检查应用初始化、SSR context、store 创建位置和页面获取 store 的引用关系。源码必须表明每次 SSR 请求创建独立状态实例，并且页面实际使用该请求实例；文章 a 与文章 b 的状态引用不能指向同一个模块级活动 store。只新增未被页面使用的工厂、继续导入模块级单例，或在请求开始前清空共享状态，都不满足要求。Pinia 迁移与恢复由 C4.6 判断，客户端竞态由 C4.8 判断。",
-          "category": "ssr",
-          "passed": true,
-          "evidence": "outputs/src/app.mpx:23-29 在每个应用实例的 provide 中调用 createArticleStore，并把该实例提供为 articleStore；outputs/src/store/article.js:17-23 将 state、requestVersion 和 pendingRequest 都创建在工厂调用内部。文章页通过 outputs/src/pages/article/index.mpx:21 注入并实际读取/dispatch 该实例，服务端序列化也从当前 app.$articleStore 读取（app.mpx:36-39），没有导入或消费模块级活动 store。"
-        },
-        {
-          "id": "C4.8",
-          "text": "只检查文章加载方法中的过期请求保护。源码应在发起请求时记录请求标识，并在成功、失败和 finally 分支修改 article、errorText、loading 前判断返回结果是否仍属于最新请求。结合输入中 a=40ms、b=10ms 的固定条件，从这些判断表达式静态推导晚返回的 a 是否会被忽略。缺少保护、只保护 article，或无条件提交异步结果，都不满足要求。",
-          "category": "ssr",
-          "passed": true,
-          "evidence": "outputs/src/store/article.js:51 为每次新请求递增 version；成功写 article 前在 55 行检查 version===requestVersion，失败写 errorText 前在 58-60 行检查，完成阶段写 loading 前在 63 行检查，pendingRequest 清理也按 version 判断。按 service 中 a=40ms、b=10ms 推导：b 使用较新的版本并先提交，随后返回的 a 版本不匹配，不能覆盖 b 的 article、errorText 或 loading。"
-        },
-        {
-          "id": "C4.9",
-          "text": "只检查实际生效的配置、应用初始化、服务端预取函数和平台条件中对 window、document、navigator 等浏览器对象的引用。所有服务端可达路径都必须避开这些对象；仅客户端可达的分支可以使用。微信 onLoad 源码链由 C4.10 判断。",
-          "category": "ssr",
-          "passed": true,
-          "evidence": "outputs/src/app.mpx:17-20 对 window 使用 typeof window 安全守卫；31-43 的 SSR 初始化路径本身不访问浏览器对象。outputs/src/pages/home/index.mpx:26-30 在 Web/SSR 分支调用胶囊 API前返回，文章页 onLoad 在服务端返回（article/index.mpx:28-31），serverPrefetch 只访问路由和 store。其余服务端可达初始化及预取代码未发现 window、document、navigator 的无保护引用。"
-        },
-        {
-          "id": "C4.10",
-          "text": "只检查微信端有效的源码分支。页面源码中必须保留 onLoad，从 query.id 取得文章 id，并将该 id 传给文章加载方法；模板使用的 article、loading 和 errorText 必须来自该加载方法更新的同一状态。Web/SSR 改造不能删除、覆盖或切断这条引用链。本项不重复检查 Pinia 状态传输、请求隔离或服务端浏览器 API 安全。",
-          "category": "compatibility",
-          "passed": true,
-          "evidence": "outputs/src/pages/article/index.mpx:28-31 保留 onLoad；this.$isServer 守卫只跳过 SSR，微信分支继续从 query.id 取值并调用 loadArticle。38-40 将 id 传给同一 articleStore 的 loadArticle action，23-26 暴露该 store 的 article、loading、errorText，模板 3-9 行直接消费这三项状态，微信加载与模板引用链未被切断。"
-        }
-      ],
-      "notes": [
-        "需要在真实部署环境确认 /help-demo/ 未命中静态文件的页面请求已正确转交 Web/SSR 入口，并验证直接打开和刷新。",
-        "修正 transRpxFn 的可序列化写法后，需要在实际 Web 构建和浏览器中确认 375px、750px 视口尺寸及 44px 导航布局。",
-        "需要运行 SSR renderer 确认文章 a、b 的首屏 HTML、客户端 hydration、已取得文章不重复加载以及并发请求隔离效果。",
-        "需要在客户端运行验证重复请求、展开/收起、选择页返回链和 a/b 乱序请求的实际交互表现。",
-        "需要在微信端验证胶囊导航、文章加载及分包页面的真机行为。"
-      ],
-      "static_review": null,
-      "scope_review": [],
-      "delivery_review": [
-        {
-          "id": "D4.1",
-          "text": "只检查交付说明文本。如果输出代码为 Web 自定义了导航高度或临时布局值，说明中必须写明该数值的来源、假设和待确认事项，不能称其为实际测量结果；代码没有自定义尺寸时，本项记为不适用。",
-          "status": "failed",
-          "evidence": "outputs/src/pages/home/index.mpx:52 为 Web 自定义了 44px 导航内容高度；代码注释和 delivery-notes.txt 仅陈述该数值及“安全区导航栏”，没有说明 44px 的来源、采用它的假设和待确认事项。"
-        },
-        {
-          "id": "D4.2",
-          "text": "只检查交付说明文本。说明中必须指出：部署到 /help-demo/ 时，未命中静态文件的页面请求需要由部署服务器转交 Web/SSR 入口。只要求说明该部署边界；没有运行证据时不能写成“已经验证刷新成功”。",
-          "status": "passed",
-          "evidence": "outputs/mpx.config.js:21-23 的交付说明明确指出静态资源部署在 /help-demo/，并要求生产服务器将该路径下未命中静态文件的 history 页面请求回退到 /help-demo/index.html；没有声称已经实测刷新成功。"
-        },
-        {
-          "id": "D4.3",
-          "text": "只检查输入 app JSON、workers 目录、输出代码和交付说明。说明中必须指出：当前 Web JSON 转换不会根据小程序 workers 声明自动复制或打包该目录，单独保留声明不能生成浏览器 Web Worker。微信资源应保留；本题没有 Worker 调用需求，因此不要求新增浏览器 Worker。",
-          "status": "failed",
-          "evidence": "input/src/app.mpx:12 声明 workers，outputs/src/workers/add.js 保留了微信资源；outputs/mpx.config.js:24 也说明 Web 不会自动生成浏览器 Worker。但说明没有完整指出当前 Web JSON 转换不会依据 workers 声明自动复制或打包该目录，也没有说明本题没有 Worker 调用需求、无需新增浏览器 Worker。"
-        },
-        {
-          "id": "D4.4",
-          "text": "只检查 app JSON、Web 页面注册代码和交付说明。说明中必须区分：Web 可以把分包页面注册为异步页面，但这不等于微信 independent:true 的脱离主包启动、独立环境和独立初始化。题目允许 Web 页面共用应用，不要求创建独立站点，也不应把普通分包或异步页面整体判为不支持。页面是否保留由 C4.3 判断。",
-          "status": "passed",
-          "evidence": "outputs/src/app.mpx:52-55 保留两个分包及 packageA 的 independent:true；outputs/mpx.config.js:25-26 明确区分 Web 的异步路由注册与微信 independent 隔离，指出它们不会成为 Web 独立运行时，没有把普通分包或异步页面判为不支持。"
-        },
-        {
-          "id": "D4.5",
-          "text": "只检查 app JSON、实际配置消费者和交付说明。说明中必须识别 preloadRule 的源页面、network 条件和目标包，并指出当前 Web 转换不会自动生成浏览器预下载逻辑。题目不要求补充 Web 预取；如果说明声称已经实现，源码中必须存在实际读取该配置或执行预取的链路，不能用普通异步页面加载代替。本项不扣基本运行或路由功能分。",
-          "status": "failed",
-          "evidence": "outputs/src/app.mpx:56-58 可看到 preloadRule 的源页面 pages/home/index、network=all 和目标 packageA/packageB，outputs/mpx.config.js:25-26 说明 Web 不会自动形成预下载策略；但交付说明本身没有明确列出该源页面、network 条件和目标包，不满足说明完整性要求。"
-        }
-      ],
-      "user_notes_summary": {
-        "needs_review": [
-          "需要在真实部署环境确认 /help-demo/ 未命中静态文件的页面请求已正确转交 Web/SSR 入口，并验证直接打开和刷新。",
-          "修正 transRpxFn 的可序列化写法后，需要在实际 Web 构建和浏览器中确认 375px、750px 视口尺寸及 44px 导航布局。",
-          "需要运行 SSR renderer 确认文章 a、b 的首屏 HTML、客户端 hydration、已取得文章不重复加载以及并发请求隔离效果。",
-          "需要在客户端运行验证重复请求、展开/收起、选择页返回链和 a/b 乱序请求的实际交互表现。",
-          "需要在微信端验证胶囊导航、文章加载及分包页面的真机行为。"
-        ]
-      },
-      "scope_state": "not_applicable",
-      "runtime_followups": [
-        "需要在真实部署环境确认 /help-demo/ 未命中静态文件的页面请求已正确转交 Web/SSR 入口，并验证直接打开和刷新。",
-        "修正 transRpxFn 的可序列化写法后，需要在实际 Web 构建和浏览器中确认 375px、750px 视口尺寸及 44px 导航布局。",
-        "需要运行 SSR renderer 确认文章 a、b 的首屏 HTML、客户端 hydration、已取得文章不重复加载以及并发请求隔离效果。",
-        "需要在客户端运行验证重复请求、展开/收起、选择页返回链和 a/b 乱序请求的实际交互表现。",
-        "需要在微信端验证胶囊导航、文章加载及分包页面的真机行为。"
-      ]
-    },
-    {
-      "eval_id": 4,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "result": {
-        "pass_rate": 0.6,
-        "passed": 6,
-        "failed": 4,
-        "total": 10,
-        "time_seconds": 292.504,
-        "tokens": 276072,
-        "tool_calls": 8,
-        "errors": 0
-      },
-      "expectations": [
-        {
-          "id": "C5.1",
-          "category": "components",
-          "text": "检查 region picker 的支持边界。微信端必须保留 picker mode=\"region\"、regionCodes 和原 change 入口，并通过真实节点或属性平台条件避免把该模式当作 Web 已支持能力。题目没有提供 Web 地区组件，Web 边界应保留具体 TODO，说明业务需按实际行政区数据源和选择组件实现；不能用 regionOptions 的有限按钮、固定地区或手写简化选择器冒充完整 region picker。",
-          "passed": true,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:5-15 使用真实 @mpx 条件隔离；微信分支保留 picker mode=\"region\"、regionCodes 和 onWxRegionChange。Web 分支仅展示当前 regionText，并以 TODO 指明需接入实际地区组件、行政区数据源及复用名称/编码状态，未使用 regionOptions 冒充地区选择器。"
-        },
-        {
-          "id": "C5.2",
-          "category": "events",
-          "text": "静态追踪原微信地区选择状态链：event.detail.value/code 必须继续更新 regionNames、regionCodes，并由实际名称数组更新 regionText。不得为臆造的 Web 选择器复制另一套固定状态；TODO 应指出未来业务适配需复用同一组名称、编码和展示状态，但不要求当前交付实现 Web 选择事件。",
-          "passed": true,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:82-85 保留 event.detail.value→regionNames、event.detail.code→regionCodes、regionNames.join→regionText 的原链路；:91 的 Web TODO 明确要求未来适配写回同一组状态，没有复制固定 Web 状态。"
-        },
-        {
-          "id": "C5.3",
-          "category": "components",
-          "text": "检查 map 的支持边界。微信端必须保留原 map、latitude、longitude、storeMarkers 与 markertap，并与 Web 产物真实隔离。题目没有提供 Web 地图服务、组件或凭据，Web 边界应保留具体 TODO，提示业务按实际地图 SDK、凭据和交互实现；可以展示当前状态或未接入说明，但不能把门店按钮列表、浏览器原生同名 map 或伪地图 API 声称为等价地图。",
-          "passed": false,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:17-30 已真实隔离微信 map，并保留 latitude、longitude、storeMarkers 和 markertap；但 :26 的 Web TODO 只说明地图 SDK、标记数据和点击交互，没有说明实际地图凭据/密钥的接入要求，未完整覆盖规定的 Web 地图边界。"
-        },
-        {
-          "id": "C5.4",
-          "category": "events",
-          "text": "静态追踪原微信门店选择链：event.detail.markerId 必须进入 selectStore 或等价公共逻辑，按真实 id 从 storeMarkers 查询并同时更新 selectedStoreId 与 selectedStoreName。不得为了伪造 Web 地图改成数组位置、硬编码门店或删除原标记事件；不要求当前交付新增 Web 门店选择入口。",
-          "passed": true,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:87-97 保留 markerId→selectStore，按 storeMarkers 中的真实 id 查询，并同时更新 selectedStoreId 与 selectedStoreName；未改成数组下标或硬编码门店。"
-        },
-        {
-          "id": "C5.5",
-          "category": "state",
-          "text": "检查页面现有状态和确认方法。当前地区、当前门店及已确认结果必须继续读取同一份 regionText 和 selectedStoreName，confirmSelection 在调用时组合最新值；TODO 或平台隔离不能切断微信原按钮、另建未消费状态或改成固定确认文案。",
-          "passed": true,
-          "evidence": "outputs/src/pages/store-picker/index.mpx:32-35 的当前门店、确认按钮和已确认结果仍消费原状态；:99-100 的 confirmSelection 在调用时由最新 regionText 与 selectedStoreName 组合 confirmedText。"
-        },
-        {
-          "id": "C5.6",
-          "category": "components",
-          "text": "检查 swiper 的局部能力边界。当前 Web mpx-swiper 支持轮播、previous-margin、next-margin 和 change，但不消费 display-multiple-items。候选应保留同一个 swiper 的全部 banners、稳定 key、前后边距与 change 链，只将 display-multiple-items=\"2\" 限制到微信或其他真实支持平台，并留下具体 TODO，说明业务若要求 Web 同时展示两项需按实际轮播组件和交互方案实现。把 Web 改成静态 Grid、slice(0, 2)、删除第三项或重写整套轮播均不满足要求。",
-          "passed": false,
-          "evidence": "outputs/src/pages/catalog/index.mpx:3-13 保留了同一 swiper、全部 banners、稳定 key、前后边距和 change 链，但 :7 的 display-multiple-items=\"2\" 仍无条件进入 Web，且相邻处没有说明 Web 双项展示需另接实际轮播组件和交互方案的 TODO。"
-        },
-        {
-          "id": "C5.7",
-          "category": "components",
-          "text": "检查 grid-view/grid-item 的支持边界和原商品链。微信端必须保留 grid-view/grid-item、filteredProducts、稳定 id 及 selectProduct；题目没有提供 Web 列表或网格组件，Web 边界应保留具体 TODO，提示业务按实际列表规模、虚拟化和交互实现。不能自行用 CSS Grid、Flex、普通按钮列表或新增组件声称已经完成 Web 商品网格。",
-          "passed": true,
-          "evidence": "outputs/src/pages/catalog/index.mpx:19-46 将 grid-view/grid-item 限定到微信，保留 filteredProducts、wx:key=\"id\"、data-id 和 selectProduct；Web 仅保留待接入说明，TODO 指向实际网格或虚拟列表、同一数据源及稳定 id 交互，没有补造 CSS Grid、按钮列表或新组件。"
-        },
-        {
-          "id": "C5.8",
-          "category": "components",
-          "text": "检查 image 的局部能力边界。微信端必须保留当前商品 cover、mode=\"aspectFill\" 与 lazy-load；当前 Web mpx-image 支持图片和 mode，但不消费 lazy-load。候选应保留组件已支持能力，只把 lazy-load 限制到支持平台，并留下具体 TODO，说明业务需按实际图片组件和加载策略实现 Web 懒加载；没有现成方案时不能改写成原生 img、IntersectionObserver 或自造加载器。",
-          "passed": false,
-          "evidence": "outputs/src/pages/catalog/index.mpx:32-37 在微信分支保留 cover、mode=\"aspectFill\" 和 lazy-load，但 Web TODO（:42）只笼统要求按组件既有图片加载方案展示 cover，没有指出 Web mpx-image 可继续使用图片与 mode、lazy-load 无加载行为，以及需按实际图片组件和加载策略实现 Web 懒加载。"
-        },
-        {
-          "id": "C5.9",
-          "category": "components",
-          "text": "检查 page-container 的支持边界。微信端必须保留 page-container、filterVisible、分类选择、取消和确认事件，并与 Web 产物真实隔离。题目没有提供 Web dialog、drawer 或 portal，Web 边界应保留具体 TODO，提示业务按实际弹层、遮罩、滚动锁定和关闭交互实现；不能用页面内手写 fixed 遮罩声称等价完成 page-container。",
-          "passed": false,
-          "evidence": "outputs/src/pages/catalog/index.mpx:49-72 已隔离微信 page-container，并保留 filterVisible、分类选择、取消和确认事件；但 :67 的 Web TODO 虽提到弹层/抽屉和关闭方法，未说明遮罩及滚动锁定的实际实现要求，边界说明不完整。待接入 view 没有伪装成等价弹层。"
-        },
-        {
-          "id": "C5.10",
-          "category": "state",
-          "text": "只检查原筛选状态及 filteredProducts 计算链。打开时 draftCategory 从 appliedCategory 复制；选择分类只修改 draftCategory；取消不能改变 appliedCategory；确认才写入 appliedCategory 并关闭；filteredProducts 按最新 appliedCategory 从 products 计算。平台隔离和 TODO 不能删除、绕过或改坏这条状态链。",
-          "passed": true,
-          "evidence": "outputs/src/pages/catalog/index.mpx:118-145 完整保留筛选链：filteredProducts 从最新 appliedCategory 和 products 计算；openFilter 复制 appliedCategory 到 draftCategory；选择仅改 draftCategory；cancel 不改 appliedCategory；confirm 才写入 appliedCategory，且取消、确认都会关闭。"
-        }
-      ],
-      "notes": [],
-      "static_review": null,
-      "scope_review": [
-        {
-          "id": "S5.1",
-          "scored": false,
-          "text": "检查交付范围：只提交两个要求的 .mpx 页面；不新增组件、平台副本、第三方依赖或环境 API，不改框架，也不生成无关业务文件。没有现成 Web 实现时，不得用临时按钮选择器、门店列表、静态双卡 Grid、原生图片加载器或手写遮罩冒充组件等价实现。",
-          "status": "passed",
-          "evidence": "outputs/ 中仅有要求的两个 .mpx 页面；未新增组件、平台副本、依赖或环境 API。Web 分支仅展示明确的待接入状态，没有按钮地区选择器、门店列表、静态双卡 Grid、原生图片加载器或 fixed 遮罩等伪实现。"
-        }
-      ],
-      "delivery_review": [
-        {
-          "id": "D5.1",
-          "scored": false,
-          "text": "检查 TODO 质量与注释格式：每个未实现的 Web 边界应具体说明缺少的组件或属性能力，并提示业务按实际组件、数据源、SDK 和交互方案实现。模板、script、style 中必须分别使用 `<!-- TODO(web): 具体业务接入说明 -->`、`// TODO(web): 具体业务接入说明`、`/* TODO(web): 具体业务接入说明 */`；TODO 不能写成页面文字、字符串、错误类型注释或空说明。泛化的“待处理”或声称 TODO 已完成功能时记录静态告警。本项不进入功能分母。",
-          "status": "failed",
-          "evidence": "现有 TODO 均使用了所在区块允许的 HTML、JS 行注释或 CSS 块注释格式，也没有把 TODO 文本直接渲染；但 swiper 缺失属性没有 TODO，图片 TODO 未明确 Web 懒加载缺口，地图 TODO 遗漏凭据接入，筛选弹层 TODO 遗漏遮罩和滚动锁定，因此未覆盖全部未实现 Web 边界。"
-        }
-      ],
-      "user_notes_summary": {
-        "needs_review": []
-      },
-      "scope_state": "valid",
-      "runtime_followups": []
+      "notes": []
     }
   ],
   "run_summary": {
     "mpx2web": {
       "pass_rate": {
-        "mean": 0.9178,
-        "stddev": 0.0,
-        "min": 0.9178,
-        "max": 0.9178
+        "mean": 0.8944,
+        "stddev": 0.1222,
+        "min": 0.7778,
+        "max": 1.0
       },
       "time_seconds": {
-        "mean": 3277.822,
-        "stddev": 0.0,
-        "min": 3277.822,
-        "max": 3277.822
+        "mean": 898.1885,
+        "stddev": 242.137,
+        "min": 670.932,
+        "max": 1183.788
       },
       "tokens": {
-        "mean": 17998081.0,
-        "stddev": 0.0,
-        "min": 17998081,
-        "max": 17998081
+        "mean": 2832469.75,
+        "stddev": 1501665.0748,
+        "min": 1594590,
+        "max": 5005497
       }
     },
     "no_skill": {
       "pass_rate": {
-        "mean": 0.6822,
-        "stddev": 0.0,
-        "min": 0.6822,
-        "max": 0.6822
+        "mean": 0.6278,
+        "stddev": 0.4457,
+        "min": 0.1111,
+        "max": 1.0
       },
       "time_seconds": {
-        "mean": 2007.618,
-        "stddev": 0.0,
-        "min": 2007.618,
-        "max": 2007.618
+        "mean": 763.8557,
+        "stddev": 218.6709,
+        "min": 616.366,
+        "max": 1086.65
       },
       "tokens": {
-        "mean": 2815219.0,
-        "stddev": 0.0,
-        "min": 2815219,
-        "max": 2815219
+        "mean": 1933192.75,
+        "stddev": 2054521.594,
+        "min": 436613,
+        "max": 4875635
       }
     },
     "delta": {
-      "pass_rate": "+0.24",
-      "time_seconds": "+1270.2",
-      "tokens": "+15182862"
+      "pass_rate": "+0.27",
+      "time_seconds": "+134.3",
+      "tokens": "+899277"
     }
   },
   "notes": [
-    "静态源码评审不等于纯确定性扫描：评分在生成之外的盲审会话中逐项阅读源码；只读文件完整性使用确定性检查。",
-    "不执行 E2E、浏览器、SSR 渲染/接管或真机验收；源码符合要求不能据此宣称全部 Mpx2Web 能力已运行验证。",
-    "C2.3/C2.5 等行为项不再用关键词正则强制改分；模型必须结合框架证据追踪可达调用链，不足时标为 pending。",
-    "主分覆盖 evals.json 的全部 40 项功能断言；先算 Case 内通过率，再将 5 个 Case 等权平均。",
-    "Web、SSR、生成及全部断言微平均仅作诊断。单次采样不显示 ±；正式级结果要求至少 3 次独立采样且评分模型不同于生成模型，届时 ± 表示跨采样标准差，不是置信区间。",
-    "Token/耗时来自生成指标，不是计费金额；评分开销保留在原 grading.json/grader.metrics。"
-  ],
-  "source_review": {
-    "runs": [
-      {
-        "eval_id": 0,
-        "configuration": "mpx2web",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 1.0,
-          "passed": 10,
-          "failed": 0,
-          "total": 10,
-          "time_seconds": 595.92,
-          "tokens": 2239821,
-          "tool_calls": 36,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C1.1",
-            "text": "静态检查 .image-row 中图片的模板、选择器和样式，确认 Web 端仍保留输入源码规定的 80px 宽高和 12px 圆角。实现方式不限。本项只检查图片；红蓝卡片隔离、两格等分和 externalClasses 分别由 C1.4、C1.5、C1.6 判断。",
-            "category": "style",
-            "passed": true,
-            "evidence": "outputs/src/pages/style/index.mpx:3-4 为 .image-row 内的 image 增加 preview-image 类，42-49 的 scoped 样式直接为该节点声明 width:80px、height:80px、border-radius:12px；给定 mpx-image Web 实现会将组件类合并到真实根节点，未再依赖失效的 image 标签选择器。"
-          },
-          {
-            "id": "C1.2",
-            "text": "只检查源码中的节点位置、祖先布局、定位声明和事件绑定。两个悬浮入口在 Web 有效代码中必须保留 position: fixed，祖先结构不能把它们变成相对局部内容的 absolute 定位；若移动节点，原样式、bindtap 处理函数和纵向列表节点仍须可达。已支持的 scroll-view 不要求替换。",
-            "category": "layout",
-            "passed": true,
-            "evidence": "outputs/src/pages/style/index.mpx:15-24 将两个入口移至 scroll-view、movable-area/movable-view 之外，成为无定位或 transform 声明的 .style-page 直接子节点；51、54 仍为 position:fixed，两个 bindtap=\"recordTap\"、35-38 的处理函数及 scroll-view 内 row-group 均保留。"
-          },
-          {
-            "id": "C1.4",
-            "text": "静态检查红色卡片和蓝色卡片的样式作用域与选择器，确认两个组件即使使用同名类也不会互相覆盖。可以使用 scoped、项目配置或其他有效隔离方式。",
-            "category": "style",
-            "passed": true,
-            "evidence": "outputs/src/components/red-card.mpx:8 与 blue-card.mpx:8 均使用 scoped 样式；各自同名 .card、.title 选择器因此具有独立作用域，红蓝背景、颜色和字号不会互相覆盖。"
-          },
-          {
-            "id": "C1.5",
-            "text": "静态检查 layout-cell 的虚拟节点声明、实际生效的编译配置和 Web 最终节点层级，确认“甲”和“较长的乙”平分 240px，flex 作用在真实布局子项上。只声明 options.virtualHost 不能直接证明 Web 布局正确；可以使用精确配置或等价布局方案。若使用 autoVirtualHostRules，只能加入有源码或编译产物证据表明宿主节点会破坏该布局的组件，不能把同一页面或组件链中的 row-group、row-list 等无关组件一并加入。",
-            "category": "layout",
-            "passed": true,
-            "evidence": "outputs/src/pages/style/index.mpx:11-14、47 定义 240px flex 容器及两个 layout-cell；outputs/mpx.config.js:7-9 的 autoVirtualHostRules 只精确命中 layout-cell.mpx，结合给定 Web 编译器证据会移除其 Web 宿主包装。layout-cell.mpx:2 的单一真实根节点在 13 行声明 flex:1、min-width:0，因此两个真实 flex 子项各占 120px；row-group、row-list 未被无依据加入规则。"
-          },
-          {
-            "id": "C1.6",
-            "text": "静态追踪调用方样式类、theme-card 的 externalClasses 声明、组件内部节点和 Web 编译配置，确认外部样式真正作用到内容节点：两处文字颜色来自各自的调用方，custom-class 提供的 12px 内边距也必须保留。只保留 externalClasses 声明，或只配置新增的 tone-class，不能证明适配完成；允许采用其他能保留两端调用契约的实现，不要求保留未使用的默认类。本项不重复判断 C1.1 和 C1.4。",
-            "category": "style",
-            "passed": true,
-            "evidence": "outputs/src/pages/style/index.mpx:9-10 传入 warm-tone/cool-tone 与 spaced-label，44-46 分别定义两种颜色和 12px padding；theme-card.mpx:11 声明 tone-class、custom-class，模板第3行把两类绑定到实际文字节点。outputs/mpx.config.js:6 同时配置 tone-class、custom-class，并保留默认 custom-class/i-class；依据给定 externalClasses 编译链，调用方 scoped 模块标识及类名会被传到该内容节点。"
-          },
-          {
-            "id": "C1.7",
-            "text": "只检查 help-card、help-item 的 SFC 文件、usingComponents、模板引用、属性传递和状态处理代码。父组件必须真实引用子组件；源码中应有标题绑定、初始收起状态、展开与收起的状态更新函数及对应条件渲染，两端共用同一套源码。只创建未引用的子组件，或仍把全部帮助项写在父组件中，不满足要求。选项式和组合式 API 均可，状态可由任一组件管理。",
-            "category": "generation",
-            "passed": true,
-            "evidence": "outputs/src/components/help-card.mpx:3-8 真实引用 help-item，并在 27-30 的 usingComponents 注册；title、description 均传给子组件。help-item.mpx:23-29 声明属性及初始 expanded:false，32-34 可双向切换状态，5-9 同时提供展开/收起按钮文本和 wx:if 条件说明渲染；未见平台副本。"
-          },
-          {
-            "id": "C1.8",
-            "text": "只检查源码中的 helpUrl 传递和路由调用链：面板属性传给帮助项，帮助入口的事件处理函数调用已有 WebView 路由，并按现有 url 参数约定完成一次正确编码。原地址中的查询参数和百分号转义必须能从表达式中静态推导为完整保留，不能重复解码，也不能只打印链接。子组件直接调用路由或通知父组件调用均可；不要求新建 WebView 或通信桥。",
-            "category": "generation",
-            "passed": true,
-            "evidence": "fixtures/src/pages/review/index.mpx:6-7 将各实例 help-url 传给 help-card；help-card.mpx:6 再传给 help-item；help-item.mpx:35-39 调用 navigateTo，并以 encodeURIComponent(this.helpUrl) 一次编码后拼入既有 /pages/common/webview?url= 路由。fixtures/src/pages/common/webview.mpx:9-11 在 Web 使用路由已解码值、微信仅 decodeURIComponent 一次，因此原 URL 的查询分隔符和已有百分号转义可完整恢复，没有重复解码或仅打印链接。"
-          },
-          {
-            "id": "C1.9",
-            "text": "只检查 CSS 声明、变量作用域和回退表达式。帮助项按钮背景必须引用 --btn_wrapper_bg，并在未定义时回退到 #2A2F3F；从宿主到 help-card、help-item 的样式链中不能出现会遮蔽宿主变量的固定定义。允许使用 var 回退或等价的可靠默认值。",
-            "category": "generation",
-            "capability": "style",
-            "passed": true,
-            "evidence": "outputs/src/components/help-item.mpx:54-66 的帮助按钮背景为 var(--btn_wrapper_bg, #2A2F3F)。只读宿主 fixtures/src/pages/review/index.mpx:5、24-26 在祖先节点设置或清除该变量；help-card/help-item 样式中没有固定声明同名变量，变量可继承至按钮，未设置时使用指定回退色。"
-          },
-          {
-            "id": "C1.10",
-            "text": "静态检查 help-card 和 help-item 的样式作用域与选择器，确认它们不会污染宿主已有的 .title 和 .action，宿主原有字号、颜色和间距保持不变。可以使用 scoped、局部命名或其他有效隔离方式，不能通过修改宿主样式规避污染。",
-            "category": "generation",
-            "passed": true,
-            "evidence": "outputs/src/components/help-card.mpx:23 与 help-item.mpx:44 均启用 scoped；新增选择器使用 help-card、help-item、help-title、help-button 等局部命名，没有定义宿主的 .title 或 .action。fixtures/src/pages/review/index.mpx:30-34 的宿主样式未被改写。"
-          },
-          {
-            "id": "C1.11",
-            "text": "只检查宿主 item-class、help-card 属性或外部类传递、help-item 声明以及内部内容节点的类绑定，必要时同时检查 Web 编译配置。源码链必须能分别把两处调用方指定的文字颜色和内边距传到各自帮助项内容。样式只绑定在面板外壳、只声明但未用于内部节点，或按实例位置写死样式，都不满足要求。按钮变量、样式污染和已有 theme-card 分别由 C1.9、C1.10、C1.6 判断。",
-            "category": "generation",
-            "passed": true,
-            "evidence": "fixtures/src/pages/review/index.mpx:6-7 分别传入 help-red/help-blue，33-34 定义各自颜色及 12px/20px padding；help-card.mpx:20 声明 item-class，并在第7行转发给 help-item；help-item.mpx:27 再声明该外部类，第2行将 item-class 绑定到实际帮助项根内容节点。outputs/mpx.config.js:6 配置 item-class；标题和说明在 52-53 使用 color:inherit，因而分别继承调用方颜色，padding 也落在各自内容容器而非面板外壳。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 1,
-        "configuration": "mpx2web",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 1.0,
-          "passed": 5,
-          "failed": 0,
-          "total": 5,
-          "time_seconds": 1073.977,
-          "tokens": 7377670,
-          "tool_calls": 127,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C2.1",
-            "text": "只检查模板事件绑定、WXS 或组件处理函数、change 事件参数、页面处理函数和模板状态引用。点击与 touchend 两条源码链都必须可达，并分别把对应操作值写入页面展示所引用的状态；空处理函数不能代替原行为。方法名和适配方式不限。",
-            "category": "events",
-            "passed": true,
-            "evidence": "outputs/src/components/event-actions.mpx:3-12 分别绑定点击与 touchend：微信端进入 WXS 的 tool.onTap/tool.onTouchEnd，Web 端进入组件 onTap/onTouchEnd；两端最终调用 recordAction，并以 change.detail.action 发送“点击”或“触摸结束”。outputs/src/pages/panel/index.mpx:3-4,41-43 的 onActionChange 将该值写入模板展示的 actionText，两个处理函数均非空。"
-          },
-          {
-            "id": "C2.2",
-            "text": "只检查 notice 的源码传递链：叶子组件发送的 event.detail.message 经过包装组件到达页面监听函数，监听函数对通知计数只包含一次增量，其他事件处理函数不能复用该增量逻辑。只删除 bubbles/composed、添加 TODO 或硬编码消息，不能证明链路成立。",
-            "category": "events",
-            "passed": true,
-            "evidence": "outputs/src/components/notice-leaf.mpx:2,9-13 从点击处理函数发送 notice，detail.message 为“来自内层组件”。Web 链路由 outputs/src/components/notice-wrapper.mpx:2,9-11 接收并原样转发 event.detail，再由 outputs/src/pages/panel/index.mpx:12,54-57 接收；微信链路由页面第 11 行的祖先 bindnotice@wx 接收叶子冒泡事件。onNotice 从 event.detail.message 更新 notice 且 noticeCount 仅递增一次，其他事件处理函数没有复用该增量逻辑。"
-          },
-          {
-            "id": "C2.3",
-            "text": "静态检查 composition-counter 使用的实例 API、返回结构和调用链，确认挂载就绪通知指向当前正确的组件实例。不强制采用某一种 proxy 解构方式。",
-            "category": "instance",
-            "passed": true,
-            "evidence": "outputs/src/components/composition-counter.mpx:11-19 在 setup 中调用 useReadyNotice，将返回函数注册到 onMounted，并暴露 recordReady 更新 readyText。outputs/src/composables/use-ready-notice.js:3-8 在 setup 调用期取得 getCurrentInstance().proxy，挂载回调对该当前组件实例调用 recordReady。结合题给框架证据，MpxProxy 在各平台均令 proxy 指向 target，Web 的 Vue getCurrentInstance 也返回 proxy，因此调用链指向正确实例。"
-          },
-          {
-            "id": "C2.5",
-            "text": "只检查组件查询表达式、目标组件标识、Web 编译后的标识形态和当前 matcher 源码。静态推导结果必须表明“选中首项”的查询可匹配第一项，“清空两项”的查询可匹配全部两项。不能只修复首项，同时保留 matcher 无法读取的批量 class 查询。可以使用 id、ref、有效选择器、数据驱动或其他等价方案。",
-            "category": "instance",
-            "passed": true,
-            "evidence": "outputs/src/pages/panel/index.mpx:6-7 为两个 choice-item 分别设置 wx:ref=\"firstChoice\" 和 wx:ref=\"secondChoice\"，避开了 Web matchSelector 只能读取 vnode attrs.id/staticClass 的 class 查询限制。第 9-10 行按钮分别可达 selectFirst/resetChoices；第 44-52 行首项操作只调用 firstChoice.setSelected(true)，批量清空则明确遍历两个 ref 并调用 setSelected(false)。outputs/src/components/choice-item.mpx:11-13 提供实际状态修改方法。"
-          },
-          {
-            "id": "C2.6",
-            "text": "只检查 orderedItems、倒序方法、稳定 key、摘要计算代码以及 relation-list 的数据引用。源码应表明摘要直接取自当前数组顺序，因此初始数据推导为“甲、乙、丙”，倒序表达式推导为“丙、乙、甲”。实现不能依赖 Web 未消费的 relations.target 或 linkChanged 才能更新；保留未使用的关系元数据本身不判错。允许数据驱动等价实现，不要求完整 relations 引擎；普通 Behavior 已受支持，不强制改成 mixins。",
-            "category": "instance",
-            "passed": true,
-            "evidence": "outputs/src/pages/panel/index.mpx:31-35 的 orderedItems 初始顺序为甲、乙、丙，元素具有稳定 id，模板第 19 行以 id 为 key；第 38-40 行通过 slice().reverse() 生成当前倒序数组，可反复恢复。第 18 行把 orderedItems 传给 relation-list；outputs/src/components/relation-list.mpx:15-27 监听 items，39-42 直接按当前 items 数组顺序映射 label 并生成 orderText。因此静态推导初始为“甲、乙、丙”，倒序后为“丙、乙、甲”，且更新不依赖 relations.target 或 linkChanged。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 2,
-        "configuration": "mpx2web",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 1.0,
-          "passed": 6,
-          "failed": 0,
-          "total": 6,
-          "time_seconds": 489.284,
-          "tokens": 2838686,
-          "tool_calls": 43,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C3.1",
-            "text": "只检查分享声明、平台条件、模板入口和可达处理代码。微信有效分支必须保留分享入口与原分享配置；Web 有效分支必须完成真实登记或明确隔离。题目未提供 Web 分享协议时，源码或交付说明应标出未接入边界，不能返回伪造的成功结果；说明不要求出现字面量 TODO。",
-            "category": "share",
-            "passed": true,
-            "evidence": "outputs/src/pages/content/index.mpx:4 保留仅微信可见的 open-type=\"share\" 入口，60-62 保留原 onShareAppMessage 标题与路径；39-44 在 Web 模式登记 remove:true，使该微信钩子由框架转换器移除。5-6 明确展示 Web 分享尚未接入，未伪造成功结果。"
-          },
-          {
-            "id": "C3.2",
-            "text": "只检查名称编辑相关的模板入口、状态字段、确认与取消回调、赋值语句和平台条件。Web 有效源码中必须存在可输入名称、确认后赋值、取消时不赋值的完整链路；可以使用目标端其他原生交互，不要求弹窗外观一致。不能因局部选项不支持而停用整个功能，也不能写入伪造结果。JS 中的 @mpx 条件注释不是有效平台分支，如果两端实际会执行同一段不兼容代码，则不满足要求。",
-            "category": "api",
-            "passed": true,
-            "evidence": "outputs/src/pages/content/index.mpx:14-24 提供 Web 名称编辑入口、输入框、保存及取消按钮；84-89 初始化草稿并接收真实输入，91-93 仅确认保存时赋值 displayName，95-97 取消时只关闭编辑状态。微信 rename 在72-82由真实 __mpx_mode__ 控制流隔离并保留原可编辑弹窗链路。"
-          },
-          {
-            "id": "C3.3",
-            "text": "只检查业务模板、usingComponents、模块顶层引用、平台条件和可达调用。微信有效源码必须保留只读扫码组件及结果通知；题目未提供 Web 扫码协议时，Web 有效源码必须移除对该组件的解析链，并提供不可用提示和待接入说明。只隐藏模板节点不够：Web JSON 若仍通过 usingComponents 解析包含 camera 的原生组件，则不满足要求；JSON 中的 @mpx 注释也不能移除引用。直接保留不可用调用、使用空组件、伪造扫码结果或修改只读依赖均不满足要求。不强制采用平台文件。",
-            "category": "components",
-            "passed": true,
-            "evidence": "outputs/src/components/scan-entry.mpx:3-10 保留微信扫码入口、native-scanner、结果及失败事件链；42-46 仅在微信动态 JSON 中登记 native-scanner，Web usingComponents 不再解析该含 camera 的依赖，11-12 明确提示 Web 扫码待接入。outputs/src/vendor/native-scanner/index.mpx 与 input 对应只读依赖经逐字比较一致。"
-          },
-          {
-            "id": "C3.4",
-            "text": "只检查 video 的组件引用、src 与播放属性绑定、事件绑定和事件字段读取代码。微信有效源码应优先读取 event.detail；当前 Web video 通过 inheritEvent 透传原生 target，因此 detail 缺字段时可以从真实 target 数值属性做安全回退，也可以隔离无法可靠提供的辅助字段，不能构造伪造值。",
-            "category": "media",
-            "passed": true,
-            "evidence": "outputs/src/components/video-info.mpx:3-10 在两端保留 video、完整 src 和 controls，播放事件仅绑定微信处理器；27-33 的微信事件字段优先读取 event.detail。Web 未展示无法可靠取得的进度和尺寸，而在16-17明确隔离这些辅助字段；outputs/src/pages/content/index.mpx:56-58 将字符串 videoUrl 原样交给组件，未二次解码或截断。"
-          },
-          {
-            "id": "C3.5",
-            "text": "只检查位置功能的平台条件、API 调用和提示代码。微信有效源码必须保留原位置调用；题目未提供 Web 位置协议时，Web 有效源码必须使 wx.chooseLocation 不可达，并提供未接入说明或 TODO，不能写入伪造位置。JS 中的 @mpx 条件注释不是有效平台分支；若 Web 仍可达微信 API，或微信会执行 Web 兜底代码，则不满足要求。",
-            "category": "api",
-            "passed": true,
-            "evidence": "outputs/src/pages/content/index.mpx:8 的位置入口仅供微信，64-70 又以 __mpx_mode__ !== 'wx' 提前返回保证 Web 无法到达 wx.chooseLocation；微信仍使用原 API 并写入真实 result.name。9-10 明确说明 Web 地图服务待接入，未写入伪造位置。"
-          },
-          {
-            "id": "C3.6",
-            "text": "只检查 app plugins、plugin:// 组件声明、usingComponents、平台条件和模板引用。微信有效源码必须保留插件卡片；Web 有效源码不能解析或渲染该插件。题目未提供 Web 插件协议时，可以隔离并提供不可用提示和待接入说明，但不能使用空组件或伪造插件内容。JSON 中的 @mpx 注释不能隔离 plugins 或 usingComponents，只隐藏模板节点也不能证明构建依赖已移除；保留未被 Web 消费的微信元数据本身不判错。",
-            "category": "components",
-            "passed": true,
-            "evidence": "outputs/src/app.mpx:13-16 仅在微信动态 JSON 中登记 foo 插件；outputs/src/pages/content/index.mpx:118-120 仅在微信 usingComponents 中加入 plugin://foo/component，31 的卡片模板也仅微信渲染。Web 不解析或渲染插件，并由32-33明确提示真实组件和数据源待接入。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 3,
-        "configuration": "mpx2web",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 0.8889,
-          "passed": 8,
-          "failed": 1,
-          "total": 9,
-          "time_seconds": 722.291,
-          "tokens": 3298456,
-          "tool_calls": 52,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C4.2",
-            "text": "只检查平台条件、页面 JSON、导航模板和布局赋值代码。Web 有效源码不能调用微信胶囊相关 API，且配置与模板组合不能同时保留系统导航和自定义导航；微信有效源码必须保留原导航链。导航高度等尺寸依据属于 D4.1，缺少说明不影响本项功能判定。",
-            "category": "layout",
-            "passed": true,
-            "evidence": "outputs/src/app.mpx:29 将 navigationStyle 设为 custom，模板提供自定义导航，不会同时保留系统导航。outputs/src/pages/home/index.mpx:22-30 通过真实 __mpx_mode__ 条件隔离平台：Web 分支只赋值 0/44，不调用胶囊 API；微信有效的非 Web 分支仍调用 wx.getMenuButtonBoundingClientRect() 并保留原导航尺寸链。"
-          },
-          {
-            "id": "C4.3",
-            "text": "只检查构建过程实际读取的配置和生成代码。Web 的资源前缀、运行时 history/base、服务端路由和客户端路由必须统一为 /help-demo/；服务端与客户端的文章路由代码必须从同一路径读取同一个 query id，主包和两个分包页面也必须保留。未被构建代码消费的同名字段或另一套 # 地址不能作为证据。服务器 rewrite、部署配置和真实刷新归 D4.2。",
-            "category": "config",
-            "passed": true,
-            "evidence": "outputs/mpx.config.js:2 的实际构建 publicPath 为 /help-demo/；outputs/src/app.mpx:10-16 设置框架实际消费的 webConfig.routeConfig 为 history 且 base=/help-demo/。app.mpx:28-34 注册三个主包页面和 packageA、packageB 两个分包页面。文章服务端和客户端共用 outputs/src/pages/article/index.mpx:38-47：均由 onLoad 的 query.id 写入 articleId，再传给同一 loadArticle；fixtures/runtime-contract.md:5 说明服务端 context.url 使用同一路由及 query。"
-          },
-          {
-            "id": "C4.4",
-            "text": "静态检查 Web 构建实际使用的尺寸配置和换算公式。根据公式计算后，在 375px 和 750px Web 视口下，200rpx 都应等于 100 CSS px，28rpx 都应等于 14 CSS px；微信原有换算规则必须保留，配置必须能够正确序列化。",
-            "category": "config",
-            "passed": true,
-            "evidence": "outputs/mpx.config.js:7-13 在实际 Web 配置 webConfig.transRpxFn 中固定返回 value*0.5px；因此任意 Web 视口下 200rpx=100px、28rpx=14px。该函数是可注入生成代码的普通函数表达式，返回 CSS 字符串；配置仅位于 webConfig，未改变微信端原有 rpx 换算。"
-          },
-          {
-            "id": "C4.5",
-            "text": "只检查服务端预取入口、路由 id 读取、文章加载 action 或等价异步函数、Promise 返回或 await 关系以及模板状态引用。源码链必须表明：预取函数把文章 id 传入加载逻辑，并将其 Promise 返回或等待完成，模板随后读取该状态。只调用异步函数但丢失等待链不满足要求。",
-            "category": "ssr",
-            "passed": true,
-            "evidence": "outputs/src/pages/article/index.mpx:38-47 构成完整等待链：onLoad 从 query.id 得到 articleId，serverPrefetch 将 articleId 传给 loadArticle 并 return，其包装方法继续 return store.loadArticle。outputs/src/store/article.js:81-105 返回 fetchArticle 派生的 pendingPromise；模板第3-9行随后读取同一 store 暴露的 loading、errorText、article。"
-          },
-          {
-            "id": "C4.6",
-            "text": "只检查旧 createStore 到 @mpxjs/pinia 的迁移代码，以及 Mpx 官方 SSR 状态链：应用在 onAppInit 中为当前应用或 SSR 请求创建 Pinia 实例并返回 { pinia }，文章状态写入、服务端序列化、客户端挂载前恢复和页面 store 引用必须指向该 Pinia 状态。不要求调用 mpx.use(pinia)，也不要求自行实现框架默认提供的注水逻辑；如果应用自定义 onSSRAppCreated，则检查该自定义链是否完成等价的状态序列化。请求隔离由 C4.7 检查，客户端异步竞态由 C4.8 检查；重复请求和展开/收起效果只进入待运行验证，不在本项扣分。",
-            "category": "ssr",
-            "passed": false,
-            "evidence": "旧 createStore 虽已移除，但 outputs/src/store/article.js 没有使用 @mpxjs/pinia 的 createPinia/defineStore，而是自行构造仅模拟 state.value 形状的 createArticleStateContainer；outputs/src/app.mpx:18-20 又把该自定义容器命名为 pinia 返回。它可被默认序列化代码按形状读取，但不构成要求的旧 createStore 到 @mpxjs/pinia 迁移及官方 Pinia 状态链。"
-          },
-          {
-            "id": "C4.7",
-            "text": "只检查应用初始化、SSR context、store 创建位置和页面获取 store 的引用关系。源码必须表明每次 SSR 请求创建独立状态实例，并且页面实际使用该请求实例；文章 a 与文章 b 的状态引用不能指向同一个模块级活动 store。只新增未被页面使用的工厂、继续导入模块级单例，或在请求开始前清空共享状态，都不满足要求。Pinia 迁移与恢复由 C4.6 判断，客户端竞态由 C4.8 判断。",
-            "category": "ssr",
-            "passed": true,
-            "evidence": "outputs/src/app.mpx:18-20 在 onAppInit 每次调用时新建 createArticleStateContainer。outputs/src/pages/article/index.mpx:17-20 从当前页面 $root.$options.pinia 取得该请求容器；outputs/src/store/article.js:125-132 的模块级 WeakMap 以容器为键创建 store，而 Web 缺少请求容器时会在第38-40行直接报错，不会回退到模块级活动 store。因此不同 SSR 应用使用不同状态引用。"
-          },
-          {
-            "id": "C4.8",
-            "text": "只检查文章加载方法中的过期请求保护。源码应在发起请求时记录请求标识，并在成功、失败和 finally 分支修改 article、errorText、loading 前判断返回结果是否仍属于最新请求。结合输入中 a=40ms、b=10ms 的固定条件，从这些判断表达式静态推导晚返回的 a 是否会被忽略。缺少保护、只保护 article，或无条件提交异步结果，都不满足要求。",
-            "category": "ssr",
-            "passed": true,
-            "evidence": "outputs/src/store/article.js:76 为每次新请求递增 generation。成功分支第82-85行、失败分支第88-91行和 finally 的 loading 修改第93-96行均先比较 generation===control.generation；pending 清理也在第97-100行核对 Promise。a=40ms、b=10ms 时 b 将 generation 推进到2，晚到的 a 持有 generation 1，不能覆盖 article、errorText 或 loading。"
-          },
-          {
-            "id": "C4.9",
-            "text": "只检查实际生效的配置、应用初始化、服务端预取函数和平台条件中对 window、document、navigator 等浏览器对象的引用。所有服务端可达路径都必须避开这些对象；仅客户端可达的分支可以使用。微信 onLoad 源码链由 C4.10 判断。",
-            "category": "ssr",
-            "passed": true,
-            "evidence": "实际 Web 配置、outputs/src/app.mpx 的 onAppInit、文章页 serverPrefetch、store 和 service 均未引用 window、document 或 navigator。home 页的胶囊 API 位于 __mpx_mode__ 非 Web 分支；文章 SSR 可达链仅访问路由 query、请求级容器、Promise 和 setTimeout。"
-          },
-          {
-            "id": "C4.10",
-            "text": "只检查微信端有效的源码分支。页面源码中必须保留 onLoad，从 query.id 取得文章 id，并将该 id 传给文章加载方法；模板使用的 article、loading 和 errorText 必须来自该加载方法更新的同一状态。Web/SSR 改造不能删除、覆盖或切断这条引用链。本项不重复检查 Pinia 状态传输、请求隔离或服务端浏览器 API 安全。",
-            "category": "compatibility",
-            "passed": true,
-            "evidence": "outputs/src/pages/article/index.mpx:38-40 保留 onLoad，从 query.id 取得文章 id 并 return this.loadArticle(id)；第46-47行把 id 传给文章 store。模板第3-9行使用的 article、loading、errorText 由第27-36行从同一 getArticleStore(this) 取得，而该 store 的 loadArticle 在 outputs/src/store/article.js:76-101 更新这三个状态，微信加载链未被 Web/SSR 分支切断。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 4,
-        "configuration": "mpx2web",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 0.7,
-          "passed": 7,
-          "failed": 3,
-          "total": 10,
-          "time_seconds": 396.35,
-          "tokens": 2243448,
-          "tool_calls": 31,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C5.1",
-            "category": "components",
-            "text": "检查 region picker 的支持边界。微信端必须保留 picker mode=\"region\"、regionCodes 和原 change 入口，并通过真实节点或属性平台条件避免把该模式当作 Web 已支持能力。题目没有提供 Web 地区组件，Web 边界应保留具体 TODO，说明业务需按实际行政区数据源和选择组件实现；不能用 regionOptions 的有限按钮、固定地区或手写简化选择器冒充完整 region picker。",
-            "passed": true,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:5-17 使用真实 @wx 节点条件保留 mode=\"region\"、regionCodes 和 onWxRegionChange；Web 仅展示未接入说明，TODO 明确要求接入真实地区组件和数据源，没有使用 regionOptions 伪造选择器。"
-          },
-          {
-            "id": "C5.2",
-            "category": "events",
-            "text": "静态追踪原微信地区选择状态链：event.detail.value/code 必须继续更新 regionNames、regionCodes，并由实际名称数组更新 regionText。不得为臆造的 Web 选择器复制另一套固定状态；TODO 应指出未来业务适配需复用同一组名称、编码和展示状态，但不要求当前交付实现 Web 选择事件。",
-            "passed": true,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:81-84 保留 event.detail.value/code 分别更新 regionNames、regionCodes，再由 regionNames.join 更新 regionText；第 13 行 TODO 要求未来 Web 适配复用同一展示与确认链路。"
-          },
-          {
-            "id": "C5.3",
-            "category": "components",
-            "text": "检查 map 的支持边界。微信端必须保留原 map、latitude、longitude、storeMarkers 与 markertap，并与 Web 产物真实隔离。题目没有提供 Web 地图服务、组件或凭据，Web 边界应保留具体 TODO，提示业务按实际地图 SDK、凭据和交互实现；可以展示当前状态或未接入说明，但不能把门店按钮列表、浏览器原生同名 map 或伪地图 API 声称为等价地图。",
-            "passed": false,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:19-30 已用 @wx 隔离并完整保留 map、经纬度、storeMarkers 和 markertap，Web 也没有伪地图；但第 27 行 TODO 只说明地图组件/SDK和点击交互，没有交代实际地图服务所需的凭据接入，未完整覆盖规定的 Web 地图边界。"
-          },
-          {
-            "id": "C5.4",
-            "category": "events",
-            "text": "静态追踪原微信门店选择链：event.detail.markerId 必须进入 selectStore 或等价公共逻辑，按真实 id 从 storeMarkers 查询并同时更新 selectedStoreId 与 selectedStoreName。不得为了伪造 Web 地图改成数组位置、硬编码门店或删除原标记事件；不要求当前交付新增 Web 门店选择入口。",
-            "passed": true,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:86-93 保留 markerId → selectStore → 按真实 id 查询 storeMarkers → 同时更新 selectedStoreId、selectedStoreName 的完整链路，没有改成数组位置或硬编码选择。"
-          },
-          {
-            "id": "C5.5",
-            "category": "state",
-            "text": "检查页面现有状态和确认方法。当前地区、当前门店及已确认结果必须继续读取同一份 regionText 和 selectedStoreName，confirmSelection 在调用时组合最新值；TODO 或平台隔离不能切断微信原按钮、另建未消费状态或改成固定确认文案。",
-            "passed": true,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:32-35 继续从 selectedStoreName 和 confirmedText 展示状态；第 95-96 行 confirmSelection 调用时使用最新 regionText 与 selectedStoreName 组合结果，微信确认按钮未被隔离或替换。"
-          },
-          {
-            "id": "C5.6",
-            "category": "components",
-            "text": "检查 swiper 的局部能力边界。当前 Web mpx-swiper 支持轮播、previous-margin、next-margin 和 change，但不消费 display-multiple-items。候选应保留同一个 swiper 的全部 banners、稳定 key、前后边距与 change 链，只将 display-multiple-items=\"2\" 限制到微信或其他真实支持平台，并留下具体 TODO，说明业务若要求 Web 同时展示两项需按实际轮播组件和交互方案实现。把 Web 改成静态 Grid、slice(0, 2)、删除第三项或重写整套轮播均不满足要求。",
-            "passed": true,
-            "evidence": "outputs/src/pages/catalog/index.mpx:3-14 保留同一个 swiper、全部 banners、wx:key=\"id\"、前后边距和 onBannerChange，仅以 display-multiple-items@wx 隔离 Web 未支持属性；TODO 明确要求 Web 双项展示时接入真实轮播并延续状态契约。"
-          },
-          {
-            "id": "C5.7",
-            "category": "components",
-            "text": "检查 grid-view/grid-item 的支持边界和原商品链。微信端必须保留 grid-view/grid-item、filteredProducts、稳定 id 及 selectProduct；题目没有提供 Web 列表或网格组件，Web 边界应保留具体 TODO，提示业务按实际列表规模、虚拟化和交互实现。不能自行用 CSS Grid、Flex、普通按钮列表或新增组件声称已经完成 Web 商品网格。",
-            "passed": false,
-            "evidence": "outputs/src/pages/catalog/index.mpx:24-49 以 @wx 保留 grid-view/grid-item、filteredProducts、稳定 id 和 selectProduct，Web 没有伪造列表；但第 46 行 TODO 未提示根据实际列表规模评估虚拟化方案，未完整满足该边界要求。"
-          },
-          {
-            "id": "C5.8",
-            "category": "components",
-            "text": "检查 image 的局部能力边界。微信端必须保留当前商品 cover、mode=\"aspectFill\" 与 lazy-load；当前 Web mpx-image 支持图片和 mode，但不消费 lazy-load。候选应保留组件已支持能力，只把 lazy-load 限制到支持平台，并留下具体 TODO，说明业务需按实际图片组件和加载策略实现 Web 懒加载；没有现成方案时不能改写成原生 img、IntersectionObserver 或自造加载器。",
-            "passed": true,
-            "evidence": "outputs/src/pages/catalog/index.mpx:37-42 保留 image、真实 cover、mode=\"aspectFill\"，仅将 lazy-load 限制为 lazy-load@wx；第 46 行 TODO 明确要求由实际图片组件提供 Web 懒加载方案，未引入原生 img 或自造加载器。"
-          },
-          {
-            "id": "C5.9",
-            "category": "components",
-            "text": "检查 page-container 的支持边界。微信端必须保留 page-container、filterVisible、分类选择、取消和确认事件，并与 Web 产物真实隔离。题目没有提供 Web dialog、drawer 或 portal，Web 边界应保留具体 TODO，提示业务按实际弹层、遮罩、滚动锁定和关闭交互实现；不能用页面内手写 fixed 遮罩声称等价完成 page-container。",
-            "passed": false,
-            "evidence": "outputs/src/pages/catalog/index.mpx:17-21、52-67 用 @wx 保留筛选入口、page-container、filterVisible、分类选择及取消/确认事件，Web 未手写 fixed 遮罩；但 TODO 只提及弹层/dialog 与事件链，没有具体提示实现遮罩和滚动锁定，边界说明不完整。"
-          },
-          {
-            "id": "C5.10",
-            "category": "state",
-            "text": "只检查原筛选状态及 filteredProducts 计算链。打开时 draftCategory 从 appliedCategory 复制；选择分类只修改 draftCategory；取消不能改变 appliedCategory；确认才写入 appliedCategory 并关闭；filteredProducts 按最新 appliedCategory 从 products 计算。平台隔离和 TODO 不能删除、绕过或改坏这条状态链。",
-            "passed": true,
-            "evidence": "outputs/src/pages/catalog/index.mpx:107-140 完整保留筛选状态链：openFilter 从 appliedCategory 复制草稿，选择仅改 draftCategory，取消不写 appliedCategory，确认才应用并关闭；filteredProducts 始终按最新 appliedCategory 从 products 计算。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 0,
-        "configuration": "no_skill",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 0.7,
-          "passed": 7,
-          "failed": 3,
-          "total": 10,
-          "time_seconds": 456.281,
-          "tokens": 398843,
-          "tool_calls": 24,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C1.1",
-            "text": "静态检查 .image-row 中图片的模板、选择器和样式，确认 Web 端仍保留输入源码规定的 80px 宽高和 12px 圆角。实现方式不限。本项只检查图片；红蓝卡片隔离、两格等分和 externalClasses 分别由 C1.4、C1.5、C1.6 判断。",
-            "category": "style",
-            "passed": true,
-            "evidence": "outputs/src/pages/style/index.mpx:4 为图片增加 preview-image 类，51-57 行明确设置 width: 80px、height: 80px、border-radius: 12px。Web 的 mpx-image 最终根节点虽为 div，但组件节点类会合并到其根节点，因此尺寸和圆角选择器有效。"
-          },
-          {
-            "id": "C1.2",
-            "text": "只检查源码中的节点位置、祖先布局、定位声明和事件绑定。两个悬浮入口在 Web 有效代码中必须保留 position: fixed，祖先结构不能把它们变成相对局部内容的 absolute 定位；若移动节点，原样式、bindtap 处理函数和纵向列表节点仍须可达。已支持的 scroll-view 不要求替换。",
-            "category": "layout",
-            "passed": true,
-            "evidence": "outputs/src/pages/style/index.mpx:23-24 将两个入口移到页面普通祖先下，59-78 行仍分别声明 position: fixed，且都保留 bindtap=\"recordTap\"；页面祖先未声明会改变 fixed 定位语义的 transform 或 absolute。15-17 行保留 scroll-view 与 row-group，row-group.mpx 又实际引用 row-list.mpx，纵向列表链路完整。"
-          },
-          {
-            "id": "C1.4",
-            "text": "静态检查红色卡片和蓝色卡片的样式作用域与选择器，确认两个组件即使使用同名类也不会互相覆盖。可以使用 scoped、项目配置或其他有效隔离方式。",
-            "category": "style",
-            "passed": true,
-            "evidence": "outputs/src/components/red-card.mpx:2-15 与 blue-card.mpx:2-15 使用互不相同的 red-card__/blue-card__ 局部类名，且两者样式均为 scoped；同名类互相覆盖的问题已消除。"
-          },
-          {
-            "id": "C1.5",
-            "text": "静态检查 layout-cell 的虚拟节点声明、实际生效的编译配置和 Web 最终节点层级，确认“甲”和“较长的乙”平分 240px，flex 作用在真实布局子项上。只声明 options.virtualHost 不能直接证明 Web 布局正确；可以使用精确配置或等价布局方案。若使用 autoVirtualHostRules，只能加入有源码或编译产物证据表明宿主节点会破坏该布局的组件，不能把同一页面或组件链中的 row-group、row-list 等无关组件一并加入。",
-            "category": "layout",
-            "passed": false,
-            "evidence": "outputs/src/components/layout-cell.mpx:9 只有运行时 options.virtualHost: true；outputs/mpx.config.js 未配置 autoVirtualHostRules。根据给定 Web 编译器源码，Web 是否移除组件宿主由 matchCondition(resourcePath, autoVirtualHostRules) 决定，因此 layout-cell 在 Web 仍会生成实体宿主。17 行的 flex 作用于宿主内部 view，而非 outputs/src/pages/style/index.mpx:49 的 .equal-row 真实直接子项，无法静态证明两项各占 120px。"
-          },
-          {
-            "id": "C1.6",
-            "text": "静态追踪调用方样式类、theme-card 的 externalClasses 声明、组件内部节点和 Web 编译配置，确认外部样式真正作用到内容节点：两处文字颜色来自各自的调用方，custom-class 提供的 12px 内边距也必须保留。只保留 externalClasses 声明，或只配置新增的 tone-class，不能证明适配完成；允许采用其他能保留两端调用契约的实现，不要求保留未使用的默认类。本项不重复判断 C1.1 和 C1.4。",
-            "category": "style",
-            "passed": false,
-            "evidence": "调用方在 outputs/src/pages/style/index.mpx:9-10 传入 tone-class 和 custom-class，theme-card.mpx:3 也在内容节点消费两者。然而 Web 编译读取的是插件级 externalClasses，outputs/mpx.config.js 未加入 tone-class；给定框架默认名单仅含 custom-class 和 i-class。因而 custom-class 可把 spaced-label 的 12px padding 传入，但 tone-class 不会被转换为调用方的 warm-tone/cool-tone，两个文字颜色契约未完整保留。"
-          },
-          {
-            "id": "C1.7",
-            "text": "只检查 help-card、help-item 的 SFC 文件、usingComponents、模板引用、属性传递和状态处理代码。父组件必须真实引用子组件；源码中应有标题绑定、初始收起状态、展开与收起的状态更新函数及对应条件渲染，两端共用同一套源码。只创建未引用的子组件，或仍把全部帮助项写在父组件中，不满足要求。选项式和组合式 API 均可，状态可由任一组件管理。",
-            "category": "generation",
-            "passed": true,
-            "evidence": "outputs/src/components/help-card.mpx:3-8 真实引用 help-item 并传入 title、description、helpUrl，29-35 行注册该子组件。help-item.mpx:30-35 将 expanded 初始化为 false 并提供双向切换函数，5-9 行绑定标题、切换文案及说明条件渲染；两端共用同一套源码。"
-          },
-          {
-            "id": "C1.8",
-            "text": "只检查源码中的 helpUrl 传递和路由调用链：面板属性传给帮助项，帮助入口的事件处理函数调用已有 WebView 路由，并按现有 url 参数约定完成一次正确编码。原地址中的查询参数和百分号转义必须能从表达式中静态推导为完整保留，不能重复解码，也不能只打印链接。子组件直接调用路由或通知父组件调用均可；不要求新建 WebView 或通信桥。",
-            "category": "generation",
-            "passed": true,
-            "evidence": "fixtures/src/pages/review/index.mpx:6-7 将 helpUrl 传给 help-card，help-card.mpx:6 再传给 help-item。help-item.mpx:37-42 调用 navigateTo 进入已有 /pages/common/webview，并对 this.helpUrl 恰好执行一次 encodeURIComponent。结合两个宿主页按平台进行的一次路由解码，原 URL 的查询参数及已有百分号转义可完整保留。"
-          },
-          {
-            "id": "C1.9",
-            "text": "只检查 CSS 声明、变量作用域和回退表达式。帮助项按钮背景必须引用 --btn_wrapper_bg，并在未定义时回退到 #2A2F3F；从宿主到 help-card、help-item 的样式链中不能出现会遮蔽宿主变量的固定定义。允许使用 var 回退或等价的可靠默认值。",
-            "category": "generation",
-            "capability": "style",
-            "passed": true,
-            "evidence": "outputs/src/components/help-item.mpx:53-58 的两个帮助按钮均使用 background: var(--btn_wrapper_bg, #2A2F3F)。fixtures/src/pages/review/index.mpx:5、24-26 在祖先上设置或清除该变量；help-card 和 help-item 中不存在固定的 --btn_wrapper_bg 定义来遮蔽宿主变量。"
-          },
-          {
-            "id": "C1.10",
-            "text": "静态检查 help-card 和 help-item 的样式作用域与选择器，确认它们不会污染宿主已有的 .title 和 .action，宿主原有字号、颜色和间距保持不变。可以使用 scoped、局部命名或其他有效隔离方式，不能通过修改宿主样式规避污染。",
-            "category": "generation",
-            "passed": true,
-            "evidence": "help-card.mpx 和 help-item.mpx 均使用 scoped 样式及 help-card/help-item BEM 类名，没有定义宿主的 .title 或 .action。fixtures/src/pages/review/index.mpx:31-34 的既有宿主样式未被修改。"
-          },
-          {
-            "id": "C1.11",
-            "text": "只检查宿主 item-class、help-card 属性或外部类传递、help-item 声明以及内部内容节点的类绑定，必要时同时检查 Web 编译配置。源码链必须能分别把两处调用方指定的文字颜色和内边距传到各自帮助项内容。样式只绑定在面板外壳、只声明但未用于内部节点，或按实例位置写死样式，都不满足要求。按钮变量、样式污染和已有 theme-card 分别由 C1.9、C1.10、C1.6 判断。",
-            "category": "generation",
-            "passed": false,
-            "evidence": "宿主在 fixtures/src/pages/review/index.mpx:6-7 传入 item-class=\"help-red/help-blue\"，help-card.mpx:7、21 和 help-item.mpx:2、29 也声明了传递及内容节点绑定。但 outputs/mpx.config.js 未把 item-class 加入 Web 编译器实际使用的 externalClasses 名单。组件脚本中的声明不能替代给定 processTemplate 所读取的插件级配置，因此 Web 上 item-class 会停留为普通属性或字面类名，调用方的两组颜色和 padding 无法传到帮助项内容。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 1,
-        "configuration": "no_skill",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 1.0,
-          "passed": 5,
-          "failed": 0,
-          "total": 5,
-          "time_seconds": 392.375,
-          "tokens": 284545,
-          "tool_calls": 7,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C2.1",
-            "text": "只检查模板事件绑定、WXS 或组件处理函数、change 事件参数、页面处理函数和模板状态引用。点击与 touchend 两条源码链都必须可达，并分别把对应操作值写入页面展示所引用的状态；空处理函数不能代替原行为。方法名和适配方式不限。",
-            "category": "events",
-            "passed": true,
-            "evidence": "outputs/src/components/event-actions.mpx:3-19 中 tap 与 touchend 分别绑定 handleTap、handleTouchEnd，传入“点击”和“触摸结束”后由 recordAction 发送 change.detail.action；outputs/src/pages/panel/index.mpx:3-4、39-40 监听 change，将该值写入模板展示的 actionText。两条链路均可达且没有空处理函数。"
-          },
-          {
-            "id": "C2.2",
-            "text": "只检查 notice 的源码传递链：叶子组件发送的 event.detail.message 经过包装组件到达页面监听函数，监听函数对通知计数只包含一次增量，其他事件处理函数不能复用该增量逻辑。只删除 bubbles/composed、添加 TODO 或硬编码消息，不能证明链路成立。",
-            "category": "events",
-            "passed": true,
-            "evidence": "outputs/src/components/notice-leaf.mpx:2、9-13 发送 notice.detail.message；outputs/src/components/notice-wrapper.mpx:2、11-17 在 Web 上显式透传 event.detail，小程序端则保留原 bubbles/composed 传播而不重复转发；outputs/src/pages/panel/index.mpx:11-13、75-77 接收 message，并且 noticeCount 仅在 onNotice 中增加一次，其他处理函数未复用该增量。"
-          },
-          {
-            "id": "C2.3",
-            "text": "静态检查 composition-counter 使用的实例 API、返回结构和调用链，确认挂载就绪通知指向当前正确的组件实例。不强制采用某一种 proxy 解构方式。",
-            "category": "instance",
-            "passed": true,
-            "evidence": "outputs/src/components/composition-counter.mpx:11-19 在 setup 中取得 useReadyNotice 返回函数，注册到 onMounted，并返回 recordReady；outputs/src/composables/use-ready-notice.js:3-15 在 setup 期间取得当前实例，挂载时优先使用 MpxProxy.target，否则使用 proxy，并调用该实例的 recordReady。结合给定框架源码中 MpxProxy 的 target/proxy 以及 Web getCurrentInstance().proxy 结构，该调用指向当前 composition-counter 实例并更新 readyText。"
-          },
-          {
-            "id": "C2.5",
-            "text": "只检查组件查询表达式、目标组件标识、Web 编译后的标识形态和当前 matcher 源码。静态推导结果必须表明“选中首项”的查询可匹配第一项，“清空两项”的查询可匹配全部两项。不能只修复首项，同时保留 matcher 无法读取的批量 class 查询。可以使用 id、ref、有效选择器、数据驱动或其他等价方案。",
-            "category": "instance",
-            "passed": true,
-            "evidence": "outputs/src/pages/panel/index.mpx:6-7 为两项设置 firstChoice、secondChoice ref。selectFirst（46-56）虽然先尝试 Web matcher 无法读取的动态 class，但匹配失败后沿同一可达路径回退到 firstChoice ref；resetChoices（58-73）的关系选择器在给定 Web selectComponent 实现中返回空结果，随后明确回退到两个 ref 并逐项调用 setSelected(false)。outputs/src/components/choice-item.mpx:9-13 提供实际状态修改方法，因此首项选择和两项清空都可静态推导成立。"
-          },
-          {
-            "id": "C2.6",
-            "text": "只检查 orderedItems、倒序方法、稳定 key、摘要计算代码以及 relation-list 的数据引用。源码应表明摘要直接取自当前数组顺序，因此初始数据推导为“甲、乙、丙”，倒序表达式推导为“丙、乙、甲”。实现不能依赖 Web 未消费的 relations.target 或 linkChanged 才能更新；保留未使用的关系元数据本身不判错。允许数据驱动等价实现，不要求完整 relations 引擎；普通 Behavior 已受支持，不强制改成 mixins。",
-            "category": "instance",
-            "passed": true,
-            "evidence": "outputs/src/pages/panel/index.mpx:29-37 定义顺序为甲、乙、丙的 orderedItems，并以 slice().reverse() 倒序；16-17 将当前数组传给 relation-list，并用稳定 id 作为 key。outputs/src/components/relation-list.mpx:12-22 的 orderText 直接从当前 items 顺序映射 label 并以顿号连接，模板第4行直接展示它，故初始为“甲、乙、丙”，倒序后为“丙、乙、甲”，再次倒序恢复；展示结果不依赖 relations.target、linkChanged 或未使用的 relationOrderText。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 2,
-        "configuration": "no_skill",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 0.3333,
-          "passed": 2,
-          "failed": 4,
-          "total": 6,
-          "time_seconds": 344.505,
-          "tokens": 438293,
-          "tool_calls": 15,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C3.1",
-            "text": "只检查分享声明、平台条件、模板入口和可达处理代码。微信有效分支必须保留分享入口与原分享配置；Web 有效分支必须完成真实登记或明确隔离。题目未提供 Web 分享协议时，源码或交付说明应标出未接入边界，不能返回伪造的成功结果；说明不要求出现字面量 TODO。",
-            "category": "share",
-            "passed": true,
-            "evidence": "outputs/src/pages/content/index.mpx:6、72-74 保留微信 open-type=\"share\" 入口及原 title/path 分享配置。Web 的 shareContent（135-159）由按钮真实触发，调用 navigator.share；不可用时仅在剪贴板写入成功后报告复制成功，否则明确报告能力不可用，没有伪造成功结果。虽然模板中的 @mpx 注释不构成隔离，两套按钮实际共存，但 Web 仍存在可达的真实分享链路，微信原入口也仍可达。"
-          },
-          {
-            "id": "C3.2",
-            "text": "只检查名称编辑相关的模板入口、状态字段、确认与取消回调、赋值语句和平台条件。Web 有效源码中必须存在可输入名称、确认后赋值、取消时不赋值的完整链路；可以使用目标端其他原生交互，不要求弹窗外观一致。不能因局部选项不支持而停用整个功能，也不能写入伪造结果。JS 中的 @mpx 条件注释不是有效平台分支，如果两端实际会执行同一段不兼容代码，则不满足要求。",
-            "category": "api",
-            "passed": false,
-            "evidence": "outputs/src/pages/content/index.mpx:25-29、118-130 具备输入、确认赋值和取消不赋值的内联编辑链路；但 rename 中 107、117、120 的 JS @mpx 标记只是注释，Web 会先执行 mpx.showModal（108-116）再打开内联编辑器。已给框架证据表明 Web showModal 不支持 editable，也不会返回 content；用户确认该额外弹窗时 114 会把 displayName 赋为 undefined。微信端也会继续执行本应仅供 Web 的编辑状态代码，因此平台控制流无效且存在实际不兼容执行。"
-          },
-          {
-            "id": "C3.3",
-            "text": "只检查业务模板、usingComponents、模块顶层引用、平台条件和可达调用。微信有效源码必须保留只读扫码组件及结果通知；题目未提供 Web 扫码协议时，Web 有效源码必须移除对该组件的解析链，并提供不可用提示和待接入说明。只隐藏模板节点不够：Web JSON 若仍通过 usingComponents 解析包含 camera 的原生组件，则不满足要求；JSON 中的 @mpx 注释也不能移除引用。直接保留不可用调用、使用空组件、伪造扫码结果或修改只读依赖均不满足要求。不强制采用平台文件。",
-            "category": "components",
-            "passed": false,
-            "evidence": "outputs/src/vendor/native-scanner/index.mpx 与输入一致，微信 camera 扫码和 result 通知链仍保留；但 outputs/src/components/scan-entry.mpx:48-53 的 JSON @mpx 标记只是普通注释，Web usingComponents 仍解析 native-scanner，而该只读组件含 camera。模板 3-8 的注释同样不能隔离 native-scanner；start 中 22-27 两段也会连续执行，使 Web 将 scanning 设为 true。Web 提示存在，但没有移除原生扫码组件的解析和可达链。"
-          },
-          {
-            "id": "C3.4",
-            "text": "只检查 video 的组件引用、src 与播放属性绑定、事件绑定和事件字段读取代码。微信有效源码应优先读取 event.detail；当前 Web video 通过 inheritEvent 透传原生 target，因此 detail 缺字段时可以从真实 target 数值属性做安全回退，也可以隔离无法可靠提供的辅助字段，不能构造伪造值。",
-            "category": "media",
-            "passed": true,
-            "evidence": "outputs/src/pages/content/index.mpx:35 将完整 videoSrc 传给 video-info；outputs/src/components/video-info.mpx:3-10 保留 src、controls、timeupdate 和 loadedmetadata 绑定。处理代码 33-46 均优先读取 event.detail，缺字段时才从 inheritEvent 透传的真实 event.target 读取 currentTime、duration、videoWidth、videoHeight，并经 Number 转换、无效值回退为初始展示值 0，没有构造业务结果或替换视频地址。"
-          },
-          {
-            "id": "C3.5",
-            "text": "只检查位置功能的平台条件、API 调用和提示代码。微信有效源码必须保留原位置调用；题目未提供 Web 位置协议时，Web 有效源码必须使 wx.chooseLocation 不可达，并提供未接入说明或 TODO，不能写入伪造位置。JS 中的 @mpx 条件注释不是有效平台分支；若 Web 仍可达微信 API，或微信会执行 Web 兜底代码，则不满足要求。",
-            "category": "api",
-            "passed": false,
-            "evidence": "outputs/src/pages/content/index.mpx:77、87、104 的 JS @mpx 标记不形成控制流。Web 点击 choosePlace 会先到达 mpx.chooseLocation（79-86）；根据给定框架证据，Web chooseLocation 是不支持的 envError。微信执行原位置调用后也会继续执行 navigator.geolocation 分支（88-103）。虽然页面明确说明 Web 未接入地点选择/名称解析且浏览器坐标来自真实定位，但两端调用链未被有效隔离。"
-          },
-          {
-            "id": "C3.6",
-            "text": "只检查 app plugins、plugin:// 组件声明、usingComponents、平台条件和模板引用。微信有效源码必须保留插件卡片；Web 有效源码不能解析或渲染该插件。题目未提供 Web 插件协议时，可以隔离并提供不可用提示和待接入说明，但不能使用空组件或伪造插件内容。JSON 中的 @mpx 注释不能隔离 plugins 或 usingComponents，只隐藏模板节点也不能证明构建依赖已移除；保留未被 Web 消费的微信元数据本身不判错。",
-            "category": "components",
-            "passed": false,
-            "evidence": "微信插件声明和 foo-card 均仍在 outputs/src/app.mpx:13-15、outputs/src/pages/content/index.mpx:179 及模板 38。可是 app/page JSON 中的 @mpx 注释是普通注释，Web 配置仍含 plugins 和 plugin://foo/component；模板 37-41 的 HTML 注释也不能阻止 Web 渲染 foo-card。单独保留未消费的微信 plugins 元数据不判错，但这里同时保留了 Web usingComponents 声明和模板引用，未完成插件解析/渲染隔离。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 3,
-        "configuration": "no_skill",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 0.7778,
-          "passed": 7,
-          "failed": 2,
-          "total": 9,
-          "time_seconds": 521.953,
-          "tokens": 1417466,
-          "tool_calls": 46,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C4.2",
-            "text": "只检查平台条件、页面 JSON、导航模板和布局赋值代码。Web 有效源码不能调用微信胶囊相关 API，且配置与模板组合不能同时保留系统导航和自定义导航；微信有效源码必须保留原导航链。导航高度等尺寸依据属于 D4.1，缺少说明不影响本项功能判定。",
-            "category": "layout",
-            "passed": true,
-            "evidence": "outputs/src/app.mpx:49-50 保留全局 navigationStyle:\"custom\"；outputs/src/pages/home/index.mpx:3、21、27-30、52 在 Web 使用自定义 header，并在调用 wx.getMenuButtonBoundingClientRect() 前由真实运行时条件直接返回。微信分支仍执行胶囊尺寸读取并赋给 topInset/headerHeight，因此未形成系统导航与自定义导航并存，原微信导航链也得到保留。"
-          },
-          {
-            "id": "C4.3",
-            "text": "只检查构建过程实际读取的配置和生成代码。Web 的资源前缀、运行时 history/base、服务端路由和客户端路由必须统一为 /help-demo/；服务端与客户端的文章路由代码必须从同一路径读取同一个 query id，主包和两个分包页面也必须保留。未被构建代码消费的同名字段或另一套 # 地址不能作为证据。服务器 rewrite、部署配置和真实刷新归 D4.2。",
-            "category": "config",
-            "passed": true,
-            "evidence": "outputs/mpx.config.js:1-4 将 Web publicPath 设为 /help-demo/；outputs/src/app.mpx:8-14 设置实际运行时 routeConfig.mode=history、base=/help-demo/。服务端在 outputs/src/pages/article/index.mpx:33-35 从 this.$route.query.id 读取，客户端在 28-31 从 onLoad query.id 读取；fixtures/runtime-contract.md:5 表明两端对应同一 URL 参数。outputs/src/app.mpx:49-58 仍注册三个主包页面和 packageA、packageB 两个分包页面。"
-          },
-          {
-            "id": "C4.4",
-            "text": "静态检查 Web 构建实际使用的尺寸配置和换算公式。根据公式计算后，在 375px 和 750px Web 视口下，200rpx 都应等于 100 CSS px，28rpx 都应等于 14 CSS px；微信原有换算规则必须保留，配置必须能够正确序列化。",
-            "category": "config",
-            "passed": false,
-            "evidence": "outputs/mpx.config.js:11-14 的公式本身可算出 200rpx=100px、28rpx=14px且与视口无关，微信配置也未被改写；但 transRpxFn 使用对象方法简写。题目给出的实际消费者 script-helper.js 通过模板插值直接生成 `global.__mpxTransRpxFn = ${webConfig.transRpxFn}`，方法简写转成源码字符串后形如 `transRpxFn (match, value) { ... }`，不能作为赋值右值解析。因此尺寸配置不能正确序列化到 Web 生成代码，本项不通过。"
-          },
-          {
-            "id": "C4.5",
-            "text": "只检查服务端预取入口、路由 id 读取、文章加载 action 或等价异步函数、Promise 返回或 await 关系以及模板状态引用。源码链必须表明：预取函数把文章 id 传入加载逻辑，并将其 Promise 返回或等待完成，模板随后读取该状态。只调用异步函数但丢失等待链不满足要求。",
-            "category": "ssr",
-            "passed": true,
-            "evidence": "outputs/src/pages/article/index.mpx:33-35 的 serverPrefetch 从路由 query.id 取值并 return this.loadArticle；38-40 又 return articleStore.dispatch。outputs/src/store/article.js:43-69 的 action 返回 fetchArticle Promise 链，且模板在页面 3-9 行读取由同一注入 store 暴露的 article、loading、errorText（23-26 行）。结合给出的 Mpx/Vue SSR serverPrefetch 等待机制，预取等待链完整。"
-          },
-          {
-            "id": "C4.6",
-            "text": "只检查旧 createStore 到 @mpxjs/pinia 的迁移代码，以及 Mpx 官方 SSR 状态链：应用在 onAppInit 中为当前应用或 SSR 请求创建 Pinia 实例并返回 { pinia }，文章状态写入、服务端序列化、客户端挂载前恢复和页面 store 引用必须指向该 Pinia 状态。不要求调用 mpx.use(pinia)，也不要求自行实现框架默认提供的注水逻辑；如果应用自定义 onSSRAppCreated，则检查该自定义链是否完成等价的状态序列化。请求隔离由 C4.7 检查，客户端异步竞态由 C4.8 检查；重复请求和展开/收起效果只进入待运行验证，不在本项扣分。",
-            "category": "ssr",
-            "passed": false,
-            "evidence": "outputs/src/store/article.js:1、22 仍使用旧的 @mpxjs/core createStore，整个交付没有 @mpxjs/pinia 的 createPinia/defineStore；outputs/src/app.mpx:23-45 也没有在 onAppInit 中创建并返回 { pinia }，而是通过 provide、自定义 context.state 序列化和 window.__INITIAL_STATE__ 读取实现另一套状态链。因此未完成要求的 Pinia 迁移及 Mpx 官方 SSR 注水恢复链。"
-          },
-          {
-            "id": "C4.7",
-            "text": "只检查应用初始化、SSR context、store 创建位置和页面获取 store 的引用关系。源码必须表明每次 SSR 请求创建独立状态实例，并且页面实际使用该请求实例；文章 a 与文章 b 的状态引用不能指向同一个模块级活动 store。只新增未被页面使用的工厂、继续导入模块级单例，或在请求开始前清空共享状态，都不满足要求。Pinia 迁移与恢复由 C4.6 判断，客户端竞态由 C4.8 判断。",
-            "category": "ssr",
-            "passed": true,
-            "evidence": "outputs/src/app.mpx:23-29 在每个应用实例的 provide 中调用 createArticleStore，并把该实例提供为 articleStore；outputs/src/store/article.js:17-23 将 state、requestVersion 和 pendingRequest 都创建在工厂调用内部。文章页通过 outputs/src/pages/article/index.mpx:21 注入并实际读取/dispatch 该实例，服务端序列化也从当前 app.$articleStore 读取（app.mpx:36-39），没有导入或消费模块级活动 store。"
-          },
-          {
-            "id": "C4.8",
-            "text": "只检查文章加载方法中的过期请求保护。源码应在发起请求时记录请求标识，并在成功、失败和 finally 分支修改 article、errorText、loading 前判断返回结果是否仍属于最新请求。结合输入中 a=40ms、b=10ms 的固定条件，从这些判断表达式静态推导晚返回的 a 是否会被忽略。缺少保护、只保护 article，或无条件提交异步结果，都不满足要求。",
-            "category": "ssr",
-            "passed": true,
-            "evidence": "outputs/src/store/article.js:51 为每次新请求递增 version；成功写 article 前在 55 行检查 version===requestVersion，失败写 errorText 前在 58-60 行检查，完成阶段写 loading 前在 63 行检查，pendingRequest 清理也按 version 判断。按 service 中 a=40ms、b=10ms 推导：b 使用较新的版本并先提交，随后返回的 a 版本不匹配，不能覆盖 b 的 article、errorText 或 loading。"
-          },
-          {
-            "id": "C4.9",
-            "text": "只检查实际生效的配置、应用初始化、服务端预取函数和平台条件中对 window、document、navigator 等浏览器对象的引用。所有服务端可达路径都必须避开这些对象；仅客户端可达的分支可以使用。微信 onLoad 源码链由 C4.10 判断。",
-            "category": "ssr",
-            "passed": true,
-            "evidence": "outputs/src/app.mpx:17-20 对 window 使用 typeof window 安全守卫；31-43 的 SSR 初始化路径本身不访问浏览器对象。outputs/src/pages/home/index.mpx:26-30 在 Web/SSR 分支调用胶囊 API前返回，文章页 onLoad 在服务端返回（article/index.mpx:28-31），serverPrefetch 只访问路由和 store。其余服务端可达初始化及预取代码未发现 window、document、navigator 的无保护引用。"
-          },
-          {
-            "id": "C4.10",
-            "text": "只检查微信端有效的源码分支。页面源码中必须保留 onLoad，从 query.id 取得文章 id，并将该 id 传给文章加载方法；模板使用的 article、loading 和 errorText 必须来自该加载方法更新的同一状态。Web/SSR 改造不能删除、覆盖或切断这条引用链。本项不重复检查 Pinia 状态传输、请求隔离或服务端浏览器 API 安全。",
-            "category": "compatibility",
-            "passed": true,
-            "evidence": "outputs/src/pages/article/index.mpx:28-31 保留 onLoad；this.$isServer 守卫只跳过 SSR，微信分支继续从 query.id 取值并调用 loadArticle。38-40 将 id 传给同一 articleStore 的 loadArticle action，23-26 暴露该 store 的 article、loading、errorText，模板 3-9 行直接消费这三项状态，微信加载与模板引用链未被切断。"
-          }
-        ],
-        "notes": []
-      },
-      {
-        "eval_id": 4,
-        "configuration": "no_skill",
-        "run_number": 1,
-        "result": {
-          "pass_rate": 0.6,
-          "passed": 6,
-          "failed": 4,
-          "total": 10,
-          "time_seconds": 292.504,
-          "tokens": 276072,
-          "tool_calls": 8,
-          "errors": 0
-        },
-        "expectations": [
-          {
-            "id": "C5.1",
-            "category": "components",
-            "text": "检查 region picker 的支持边界。微信端必须保留 picker mode=\"region\"、regionCodes 和原 change 入口，并通过真实节点或属性平台条件避免把该模式当作 Web 已支持能力。题目没有提供 Web 地区组件，Web 边界应保留具体 TODO，说明业务需按实际行政区数据源和选择组件实现；不能用 regionOptions 的有限按钮、固定地区或手写简化选择器冒充完整 region picker。",
-            "passed": true,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:5-15 使用真实 @mpx 条件隔离；微信分支保留 picker mode=\"region\"、regionCodes 和 onWxRegionChange。Web 分支仅展示当前 regionText，并以 TODO 指明需接入实际地区组件、行政区数据源及复用名称/编码状态，未使用 regionOptions 冒充地区选择器。"
-          },
-          {
-            "id": "C5.2",
-            "category": "events",
-            "text": "静态追踪原微信地区选择状态链：event.detail.value/code 必须继续更新 regionNames、regionCodes，并由实际名称数组更新 regionText。不得为臆造的 Web 选择器复制另一套固定状态；TODO 应指出未来业务适配需复用同一组名称、编码和展示状态，但不要求当前交付实现 Web 选择事件。",
-            "passed": true,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:82-85 保留 event.detail.value→regionNames、event.detail.code→regionCodes、regionNames.join→regionText 的原链路；:91 的 Web TODO 明确要求未来适配写回同一组状态，没有复制固定 Web 状态。"
-          },
-          {
-            "id": "C5.3",
-            "category": "components",
-            "text": "检查 map 的支持边界。微信端必须保留原 map、latitude、longitude、storeMarkers 与 markertap，并与 Web 产物真实隔离。题目没有提供 Web 地图服务、组件或凭据，Web 边界应保留具体 TODO，提示业务按实际地图 SDK、凭据和交互实现；可以展示当前状态或未接入说明，但不能把门店按钮列表、浏览器原生同名 map 或伪地图 API 声称为等价地图。",
-            "passed": false,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:17-30 已真实隔离微信 map，并保留 latitude、longitude、storeMarkers 和 markertap；但 :26 的 Web TODO 只说明地图 SDK、标记数据和点击交互，没有说明实际地图凭据/密钥的接入要求，未完整覆盖规定的 Web 地图边界。"
-          },
-          {
-            "id": "C5.4",
-            "category": "events",
-            "text": "静态追踪原微信门店选择链：event.detail.markerId 必须进入 selectStore 或等价公共逻辑，按真实 id 从 storeMarkers 查询并同时更新 selectedStoreId 与 selectedStoreName。不得为了伪造 Web 地图改成数组位置、硬编码门店或删除原标记事件；不要求当前交付新增 Web 门店选择入口。",
-            "passed": true,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:87-97 保留 markerId→selectStore，按 storeMarkers 中的真实 id 查询，并同时更新 selectedStoreId 与 selectedStoreName；未改成数组下标或硬编码门店。"
-          },
-          {
-            "id": "C5.5",
-            "category": "state",
-            "text": "检查页面现有状态和确认方法。当前地区、当前门店及已确认结果必须继续读取同一份 regionText 和 selectedStoreName，confirmSelection 在调用时组合最新值；TODO 或平台隔离不能切断微信原按钮、另建未消费状态或改成固定确认文案。",
-            "passed": true,
-            "evidence": "outputs/src/pages/store-picker/index.mpx:32-35 的当前门店、确认按钮和已确认结果仍消费原状态；:99-100 的 confirmSelection 在调用时由最新 regionText 与 selectedStoreName 组合 confirmedText。"
-          },
-          {
-            "id": "C5.6",
-            "category": "components",
-            "text": "检查 swiper 的局部能力边界。当前 Web mpx-swiper 支持轮播、previous-margin、next-margin 和 change，但不消费 display-multiple-items。候选应保留同一个 swiper 的全部 banners、稳定 key、前后边距与 change 链，只将 display-multiple-items=\"2\" 限制到微信或其他真实支持平台，并留下具体 TODO，说明业务若要求 Web 同时展示两项需按实际轮播组件和交互方案实现。把 Web 改成静态 Grid、slice(0, 2)、删除第三项或重写整套轮播均不满足要求。",
-            "passed": false,
-            "evidence": "outputs/src/pages/catalog/index.mpx:3-13 保留了同一 swiper、全部 banners、稳定 key、前后边距和 change 链，但 :7 的 display-multiple-items=\"2\" 仍无条件进入 Web，且相邻处没有说明 Web 双项展示需另接实际轮播组件和交互方案的 TODO。"
-          },
-          {
-            "id": "C5.7",
-            "category": "components",
-            "text": "检查 grid-view/grid-item 的支持边界和原商品链。微信端必须保留 grid-view/grid-item、filteredProducts、稳定 id 及 selectProduct；题目没有提供 Web 列表或网格组件，Web 边界应保留具体 TODO，提示业务按实际列表规模、虚拟化和交互实现。不能自行用 CSS Grid、Flex、普通按钮列表或新增组件声称已经完成 Web 商品网格。",
-            "passed": true,
-            "evidence": "outputs/src/pages/catalog/index.mpx:19-46 将 grid-view/grid-item 限定到微信，保留 filteredProducts、wx:key=\"id\"、data-id 和 selectProduct；Web 仅保留待接入说明，TODO 指向实际网格或虚拟列表、同一数据源及稳定 id 交互，没有补造 CSS Grid、按钮列表或新组件。"
-          },
-          {
-            "id": "C5.8",
-            "category": "components",
-            "text": "检查 image 的局部能力边界。微信端必须保留当前商品 cover、mode=\"aspectFill\" 与 lazy-load；当前 Web mpx-image 支持图片和 mode，但不消费 lazy-load。候选应保留组件已支持能力，只把 lazy-load 限制到支持平台，并留下具体 TODO，说明业务需按实际图片组件和加载策略实现 Web 懒加载；没有现成方案时不能改写成原生 img、IntersectionObserver 或自造加载器。",
-            "passed": false,
-            "evidence": "outputs/src/pages/catalog/index.mpx:32-37 在微信分支保留 cover、mode=\"aspectFill\" 和 lazy-load，但 Web TODO（:42）只笼统要求按组件既有图片加载方案展示 cover，没有指出 Web mpx-image 可继续使用图片与 mode、lazy-load 无加载行为，以及需按实际图片组件和加载策略实现 Web 懒加载。"
-          },
-          {
-            "id": "C5.9",
-            "category": "components",
-            "text": "检查 page-container 的支持边界。微信端必须保留 page-container、filterVisible、分类选择、取消和确认事件，并与 Web 产物真实隔离。题目没有提供 Web dialog、drawer 或 portal，Web 边界应保留具体 TODO，提示业务按实际弹层、遮罩、滚动锁定和关闭交互实现；不能用页面内手写 fixed 遮罩声称等价完成 page-container。",
-            "passed": false,
-            "evidence": "outputs/src/pages/catalog/index.mpx:49-72 已隔离微信 page-container，并保留 filterVisible、分类选择、取消和确认事件；但 :67 的 Web TODO 虽提到弹层/抽屉和关闭方法，未说明遮罩及滚动锁定的实际实现要求，边界说明不完整。待接入 view 没有伪装成等价弹层。"
-          },
-          {
-            "id": "C5.10",
-            "category": "state",
-            "text": "只检查原筛选状态及 filteredProducts 计算链。打开时 draftCategory 从 appliedCategory 复制；选择分类只修改 draftCategory；取消不能改变 appliedCategory；确认才写入 appliedCategory 并关闭；filteredProducts 按最新 appliedCategory 从 products 计算。平台隔离和 TODO 不能删除、绕过或改坏这条状态链。",
-            "passed": true,
-            "evidence": "outputs/src/pages/catalog/index.mpx:118-145 完整保留筛选链：filteredProducts 从最新 appliedCategory 和 products 计算；openFilter 复制 appliedCategory 到 draftCategory；选择仅改 draftCategory；cancel 不改 appliedCategory；confirm 才写入 appliedCategory，且取消、确认都会关闭。"
-          }
-        ],
-        "notes": []
-      }
-    ],
-    "run_summary": {
-      "mpx2web": {
-        "pass_rate": {
-          "mean": 0.9,
-          "stddev": 0.0,
-          "min": 0.9,
-          "max": 0.9
-        },
-        "time_seconds": {
-          "mean": 3277.822,
-          "stddev": 0.0,
-          "min": 3277.822,
-          "max": 3277.822
-        },
-        "tokens": {
-          "mean": 17998081.0,
-          "stddev": 0.0,
-          "min": 17998081,
-          "max": 17998081
-        }
-      },
-      "no_skill": {
-        "pass_rate": {
-          "mean": 0.675,
-          "stddev": 0.0,
-          "min": 0.675,
-          "max": 0.675
-        },
-        "time_seconds": {
-          "mean": 2007.618,
-          "stddev": 0.0,
-          "min": 2007.618,
-          "max": 2007.618
-        },
-        "tokens": {
-          "mean": 2815219.0,
-          "stddev": 0.0,
-          "min": 2815219,
-          "max": 2815219
-        }
-      },
-      "delta": {
-        "pass_rate": "+0.22",
-        "time_seconds": "+1270.2",
-        "tokens": "+15182862"
-      }
-    },
-    "classification": {
-      "web": {
-        "run_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 0.9,
-              "stddev": 0.0,
-              "min": 0.9,
-              "max": 0.9
-            },
-            "time_seconds": {
-              "mean": 3277.822,
-              "stddev": 0.0,
-              "min": 3277.822,
-              "max": 3277.822
-            },
-            "tokens": {
-              "mean": 17998081.0,
-              "stddev": 0.0,
-              "min": 17998081,
-              "max": 17998081
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.6333,
-              "stddev": 0.0,
-              "min": 0.6333,
-              "max": 0.6333
-            },
-            "time_seconds": {
-              "mean": 2007.618,
-              "stddev": 0.0,
-              "min": 2007.618,
-              "max": 2007.618
-            },
-            "tokens": {
-              "mean": 2815219.0,
-              "stddev": 0.0,
-              "min": 2815219,
-              "max": 2815219
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.27",
-            "time_seconds": "+1270.2",
-            "tokens": "+15182862"
-          }
-        },
-        "case_macro_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 0.94,
-              "stddev": 0.1342,
-              "min": 0.7,
-              "max": 1.0
-            },
-            "time_seconds": {
-              "mean": 655.5644,
-              "stddev": 263.5907,
-              "min": 396.35,
-              "max": 1073.977
-            },
-            "tokens": {
-              "mean": 3599616.2,
-              "stddev": 2158219.053,
-              "min": 2239821,
-              "max": 7377670
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.6567,
-              "stddev": 0.2437,
-              "min": 0.3333,
-              "max": 1.0
-            },
-            "time_seconds": {
-              "mean": 401.5236,
-              "stddev": 90.4457,
-              "min": 292.504,
-              "max": 521.953
-            },
-            "tokens": {
-              "mean": 563043.8,
-              "stddev": 482824.0767,
-              "min": 276072,
-              "max": 1417466
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.28",
-            "time_seconds": "+254.0",
-            "tokens": "+3036572"
-          }
-        },
-        "counts": {
-          "mpx2web": {
-            "passed": 27,
-            "total": 30
-          },
-          "no_skill": {
-            "passed": 19,
-            "total": 30
-          }
-        }
-      },
-      "ssr": {
-        "run_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 0.8,
-              "stddev": 0.0,
-              "min": 0.8,
-              "max": 0.8
-            },
-            "time_seconds": {
-              "mean": 722.291,
-              "stddev": 0.0,
-              "min": 722.291,
-              "max": 722.291
-            },
-            "tokens": {
-              "mean": 3298456.0,
-              "stddev": 0.0,
-              "min": 3298456,
-              "max": 3298456
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.8,
-              "stddev": 0.0,
-              "min": 0.8,
-              "max": 0.8
-            },
-            "time_seconds": {
-              "mean": 521.953,
-              "stddev": 0.0,
-              "min": 521.953,
-              "max": 521.953
-            },
-            "tokens": {
-              "mean": 1417466.0,
-              "stddev": 0.0,
-              "min": 1417466,
-              "max": 1417466
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.00",
-            "time_seconds": "+200.3",
-            "tokens": "+1880990"
-          }
-        },
-        "case_macro_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 0.8,
-              "stddev": 0.0,
-              "min": 0.8,
-              "max": 0.8
-            },
-            "time_seconds": {
-              "mean": 722.291,
-              "stddev": 0.0,
-              "min": 722.291,
-              "max": 722.291
-            },
-            "tokens": {
-              "mean": 3298456.0,
-              "stddev": 0.0,
-              "min": 3298456,
-              "max": 3298456
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.8,
-              "stddev": 0.0,
-              "min": 0.8,
-              "max": 0.8
-            },
-            "time_seconds": {
-              "mean": 521.953,
-              "stddev": 0.0,
-              "min": 521.953,
-              "max": 521.953
-            },
-            "tokens": {
-              "mean": 1417466.0,
-              "stddev": 0.0,
-              "min": 1417466,
-              "max": 1417466
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.00",
-            "time_seconds": "+200.3",
-            "tokens": "+1880990"
-          }
-        },
-        "counts": {
-          "mpx2web": {
-            "passed": 4,
-            "total": 5
-          },
-          "no_skill": {
-            "passed": 4,
-            "total": 5
-          }
-        }
-      },
-      "generation": {
-        "run_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 1.0,
-              "stddev": 0.0,
-              "min": 1.0,
-              "max": 1.0
-            },
-            "time_seconds": {
-              "mean": 595.92,
-              "stddev": 0.0,
-              "min": 595.92,
-              "max": 595.92
-            },
-            "tokens": {
-              "mean": 2239821.0,
-              "stddev": 0.0,
-              "min": 2239821,
-              "max": 2239821
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.8,
-              "stddev": 0.0,
-              "min": 0.8,
-              "max": 0.8
-            },
-            "time_seconds": {
-              "mean": 456.281,
-              "stddev": 0.0,
-              "min": 456.281,
-              "max": 456.281
-            },
-            "tokens": {
-              "mean": 398843.0,
-              "stddev": 0.0,
-              "min": 398843,
-              "max": 398843
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.20",
-            "time_seconds": "+139.6",
-            "tokens": "+1840978"
-          }
-        },
-        "case_macro_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 1.0,
-              "stddev": 0.0,
-              "min": 1.0,
-              "max": 1.0
-            },
-            "time_seconds": {
-              "mean": 595.92,
-              "stddev": 0.0,
-              "min": 595.92,
-              "max": 595.92
-            },
-            "tokens": {
-              "mean": 2239821.0,
-              "stddev": 0.0,
-              "min": 2239821,
-              "max": 2239821
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.8,
-              "stddev": 0.0,
-              "min": 0.8,
-              "max": 0.8
-            },
-            "time_seconds": {
-              "mean": 456.281,
-              "stddev": 0.0,
-              "min": 456.281,
-              "max": 456.281
-            },
-            "tokens": {
-              "mean": 398843.0,
-              "stddev": 0.0,
-              "min": 398843,
-              "max": 398843
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.20",
-            "time_seconds": "+139.6",
-            "tokens": "+1840978"
-          }
-        },
-        "counts": {
-          "mpx2web": {
-            "passed": 5,
-            "total": 5
-          },
-          "no_skill": {
-            "passed": 4,
-            "total": 5
-          }
-        }
-      },
-      "adaptation": {
-        "run_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 0.8857,
-              "stddev": 0.0,
-              "min": 0.8857,
-              "max": 0.8857
-            },
-            "time_seconds": {
-              "mean": 3277.822,
-              "stddev": 0.0,
-              "min": 3277.822,
-              "max": 3277.822
-            },
-            "tokens": {
-              "mean": 17998081.0,
-              "stddev": 0.0,
-              "min": 17998081,
-              "max": 17998081
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.6571,
-              "stddev": 0.0,
-              "min": 0.6571,
-              "max": 0.6571
-            },
-            "time_seconds": {
-              "mean": 2007.618,
-              "stddev": 0.0,
-              "min": 2007.618,
-              "max": 2007.618
-            },
-            "tokens": {
-              "mean": 2815219.0,
-              "stddev": 0.0,
-              "min": 2815219,
-              "max": 2815219
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.23",
-            "time_seconds": "+1270.2",
-            "tokens": "+15182862"
-          }
-        },
-        "case_macro_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 0.9178,
-              "stddev": 0.1309,
-              "min": 0.7,
-              "max": 1.0
-            },
-            "time_seconds": {
-              "mean": 655.5644,
-              "stddev": 263.5907,
-              "min": 396.35,
-              "max": 1073.977
-            },
-            "tokens": {
-              "mean": 3599616.2,
-              "stddev": 2158219.053,
-              "min": 2239821,
-              "max": 7377670
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.6622,
-              "stddev": 0.2467,
-              "min": 0.3333,
-              "max": 1.0
-            },
-            "time_seconds": {
-              "mean": 401.5236,
-              "stddev": 90.4457,
-              "min": 292.504,
-              "max": 521.953
-            },
-            "tokens": {
-              "mean": 563043.8,
-              "stddev": 482824.0767,
-              "min": 276072,
-              "max": 1417466
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.26",
-            "time_seconds": "+254.0",
-            "tokens": "+3036572"
-          }
-        },
-        "counts": {
-          "mpx2web": {
-            "passed": 31,
-            "total": 35
-          },
-          "no_skill": {
-            "passed": 23,
-            "total": 35
-          }
-        }
-      },
-      "all": {
-        "run_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 0.9,
-              "stddev": 0.0,
-              "min": 0.9,
-              "max": 0.9
-            },
-            "time_seconds": {
-              "mean": 3277.822,
-              "stddev": 0.0,
-              "min": 3277.822,
-              "max": 3277.822
-            },
-            "tokens": {
-              "mean": 17998081.0,
-              "stddev": 0.0,
-              "min": 17998081,
-              "max": 17998081
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.675,
-              "stddev": 0.0,
-              "min": 0.675,
-              "max": 0.675
-            },
-            "time_seconds": {
-              "mean": 2007.618,
-              "stddev": 0.0,
-              "min": 2007.618,
-              "max": 2007.618
-            },
-            "tokens": {
-              "mean": 2815219.0,
-              "stddev": 0.0,
-              "min": 2815219,
-              "max": 2815219
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.22",
-            "time_seconds": "+1270.2",
-            "tokens": "+15182862"
-          }
-        },
-        "case_macro_summary": {
-          "mpx2web": {
-            "pass_rate": {
-              "mean": 0.9178,
-              "stddev": 0.1309,
-              "min": 0.7,
-              "max": 1.0
-            },
-            "time_seconds": {
-              "mean": 655.5644,
-              "stddev": 263.5907,
-              "min": 396.35,
-              "max": 1073.977
-            },
-            "tokens": {
-              "mean": 3599616.2,
-              "stddev": 2158219.053,
-              "min": 2239821,
-              "max": 7377670
-            }
-          },
-          "no_skill": {
-            "pass_rate": {
-              "mean": 0.6822,
-              "stddev": 0.2444,
-              "min": 0.3333,
-              "max": 1.0
-            },
-            "time_seconds": {
-              "mean": 401.5236,
-              "stddev": 90.4457,
-              "min": 292.504,
-              "max": 521.953
-            },
-            "tokens": {
-              "mean": 563043.8,
-              "stddev": 482824.0767,
-              "min": 276072,
-              "max": 1417466
-            }
-          },
-          "delta": {
-            "pass_rate": "+0.24",
-            "time_seconds": "+254.0",
-            "tokens": "+3036572"
-          }
-        },
-        "counts": {
-          "mpx2web": {
-            "passed": 36,
-            "total": 40
-          },
-          "no_skill": {
-            "passed": 27,
-            "total": 40
-          }
-        }
-      }
-    }
-  },
-  "all_assertions_run_summary": {
-    "mpx2web": {
-      "pass_rate": {
-        "mean": 0.9,
-        "stddev": 0.0,
-        "min": 0.9,
-        "max": 0.9
-      },
-      "time_seconds": {
-        "mean": 3277.822,
-        "stddev": 0.0,
-        "min": 3277.822,
-        "max": 3277.822
-      },
-      "tokens": {
-        "mean": 17998081.0,
-        "stddev": 0.0,
-        "min": 17998081,
-        "max": 17998081
-      }
-    },
-    "no_skill": {
-      "pass_rate": {
-        "mean": 0.675,
-        "stddev": 0.0,
-        "min": 0.675,
-        "max": 0.675
-      },
-      "time_seconds": {
-        "mean": 2007.618,
-        "stddev": 0.0,
-        "min": 2007.618,
-        "max": 2007.618
-      },
-      "tokens": {
-        "mean": 2815219.0,
-        "stddev": 0.0,
-        "min": 2815219,
-        "max": 2815219
-      }
-    },
-    "delta": {
-      "pass_rate": "+0.22",
-      "time_seconds": "+1270.2",
-      "tokens": "+15182862"
-    }
-  },
-  "review_status": {
-    "primary_scope": "all_cases",
-    "adaptation": {
-      "mpx2web": {
-        "pending_assertions": 0,
-        "confirmed_pass_rate": 0.8857,
-        "upper_pass_rate": 0.8857
-      },
-      "no_skill": {
-        "pending_assertions": 0,
-        "confirmed_pass_rate": 0.6571,
-        "upper_pass_rate": 0.6571
-      }
-    },
-    "all_assertions": {
-      "mpx2web": {
-        "pending_assertions": 0,
-        "confirmed_pass_rate": 0.9,
-        "upper_pass_rate": 0.9
-      },
-      "no_skill": {
-        "pending_assertions": 0,
-        "confirmed_pass_rate": 0.675,
-        "upper_pass_rate": 0.675
-      }
-    }
-  },
-  "classification": {
-    "web": {
-      "run_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 0.9,
-            "stddev": 0.0,
-            "min": 0.9,
-            "max": 0.9
-          },
-          "time_seconds": {
-            "mean": 3277.822,
-            "stddev": 0.0,
-            "min": 3277.822,
-            "max": 3277.822
-          },
-          "tokens": {
-            "mean": 17998081.0,
-            "stddev": 0.0,
-            "min": 17998081,
-            "max": 17998081
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.6333,
-            "stddev": 0.0,
-            "min": 0.6333,
-            "max": 0.6333
-          },
-          "time_seconds": {
-            "mean": 2007.618,
-            "stddev": 0.0,
-            "min": 2007.618,
-            "max": 2007.618
-          },
-          "tokens": {
-            "mean": 2815219.0,
-            "stddev": 0.0,
-            "min": 2815219,
-            "max": 2815219
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.27",
-          "time_seconds": "+1270.2",
-          "tokens": "+15182862"
-        }
-      },
-      "case_macro_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 0.94,
-            "stddev": 0.1342,
-            "min": 0.7,
-            "max": 1.0
-          },
-          "time_seconds": {
-            "mean": 655.5644,
-            "stddev": 263.5907,
-            "min": 396.35,
-            "max": 1073.977
-          },
-          "tokens": {
-            "mean": 3599616.2,
-            "stddev": 2158219.053,
-            "min": 2239821,
-            "max": 7377670
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.6567,
-            "stddev": 0.2437,
-            "min": 0.3333,
-            "max": 1.0
-          },
-          "time_seconds": {
-            "mean": 401.5236,
-            "stddev": 90.4457,
-            "min": 292.504,
-            "max": 521.953
-          },
-          "tokens": {
-            "mean": 563043.8,
-            "stddev": 482824.0767,
-            "min": 276072,
-            "max": 1417466
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.28",
-          "time_seconds": "+254.0",
-          "tokens": "+3036572"
-        }
-      },
-      "counts": {
-        "mpx2web": {
-          "passed": 27,
-          "total": 30
-        },
-        "no_skill": {
-          "passed": 19,
-          "total": 30
-        }
-      }
-    },
-    "ssr": {
-      "run_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 0.8,
-            "stddev": 0.0,
-            "min": 0.8,
-            "max": 0.8
-          },
-          "time_seconds": {
-            "mean": 722.291,
-            "stddev": 0.0,
-            "min": 722.291,
-            "max": 722.291
-          },
-          "tokens": {
-            "mean": 3298456.0,
-            "stddev": 0.0,
-            "min": 3298456,
-            "max": 3298456
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.8,
-            "stddev": 0.0,
-            "min": 0.8,
-            "max": 0.8
-          },
-          "time_seconds": {
-            "mean": 521.953,
-            "stddev": 0.0,
-            "min": 521.953,
-            "max": 521.953
-          },
-          "tokens": {
-            "mean": 1417466.0,
-            "stddev": 0.0,
-            "min": 1417466,
-            "max": 1417466
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.00",
-          "time_seconds": "+200.3",
-          "tokens": "+1880990"
-        }
-      },
-      "case_macro_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 0.8,
-            "stddev": 0.0,
-            "min": 0.8,
-            "max": 0.8
-          },
-          "time_seconds": {
-            "mean": 722.291,
-            "stddev": 0.0,
-            "min": 722.291,
-            "max": 722.291
-          },
-          "tokens": {
-            "mean": 3298456.0,
-            "stddev": 0.0,
-            "min": 3298456,
-            "max": 3298456
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.8,
-            "stddev": 0.0,
-            "min": 0.8,
-            "max": 0.8
-          },
-          "time_seconds": {
-            "mean": 521.953,
-            "stddev": 0.0,
-            "min": 521.953,
-            "max": 521.953
-          },
-          "tokens": {
-            "mean": 1417466.0,
-            "stddev": 0.0,
-            "min": 1417466,
-            "max": 1417466
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.00",
-          "time_seconds": "+200.3",
-          "tokens": "+1880990"
-        }
-      },
-      "counts": {
-        "mpx2web": {
-          "passed": 4,
-          "total": 5
-        },
-        "no_skill": {
-          "passed": 4,
-          "total": 5
-        }
-      }
-    },
-    "generation": {
-      "run_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 1.0,
-            "stddev": 0.0,
-            "min": 1.0,
-            "max": 1.0
-          },
-          "time_seconds": {
-            "mean": 595.92,
-            "stddev": 0.0,
-            "min": 595.92,
-            "max": 595.92
-          },
-          "tokens": {
-            "mean": 2239821.0,
-            "stddev": 0.0,
-            "min": 2239821,
-            "max": 2239821
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.8,
-            "stddev": 0.0,
-            "min": 0.8,
-            "max": 0.8
-          },
-          "time_seconds": {
-            "mean": 456.281,
-            "stddev": 0.0,
-            "min": 456.281,
-            "max": 456.281
-          },
-          "tokens": {
-            "mean": 398843.0,
-            "stddev": 0.0,
-            "min": 398843,
-            "max": 398843
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.20",
-          "time_seconds": "+139.6",
-          "tokens": "+1840978"
-        }
-      },
-      "case_macro_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 1.0,
-            "stddev": 0.0,
-            "min": 1.0,
-            "max": 1.0
-          },
-          "time_seconds": {
-            "mean": 595.92,
-            "stddev": 0.0,
-            "min": 595.92,
-            "max": 595.92
-          },
-          "tokens": {
-            "mean": 2239821.0,
-            "stddev": 0.0,
-            "min": 2239821,
-            "max": 2239821
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.8,
-            "stddev": 0.0,
-            "min": 0.8,
-            "max": 0.8
-          },
-          "time_seconds": {
-            "mean": 456.281,
-            "stddev": 0.0,
-            "min": 456.281,
-            "max": 456.281
-          },
-          "tokens": {
-            "mean": 398843.0,
-            "stddev": 0.0,
-            "min": 398843,
-            "max": 398843
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.20",
-          "time_seconds": "+139.6",
-          "tokens": "+1840978"
-        }
-      },
-      "counts": {
-        "mpx2web": {
-          "passed": 5,
-          "total": 5
-        },
-        "no_skill": {
-          "passed": 4,
-          "total": 5
-        }
-      }
-    },
-    "adaptation": {
-      "run_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 0.8857,
-            "stddev": 0.0,
-            "min": 0.8857,
-            "max": 0.8857
-          },
-          "time_seconds": {
-            "mean": 3277.822,
-            "stddev": 0.0,
-            "min": 3277.822,
-            "max": 3277.822
-          },
-          "tokens": {
-            "mean": 17998081.0,
-            "stddev": 0.0,
-            "min": 17998081,
-            "max": 17998081
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.6571,
-            "stddev": 0.0,
-            "min": 0.6571,
-            "max": 0.6571
-          },
-          "time_seconds": {
-            "mean": 2007.618,
-            "stddev": 0.0,
-            "min": 2007.618,
-            "max": 2007.618
-          },
-          "tokens": {
-            "mean": 2815219.0,
-            "stddev": 0.0,
-            "min": 2815219,
-            "max": 2815219
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.23",
-          "time_seconds": "+1270.2",
-          "tokens": "+15182862"
-        }
-      },
-      "case_macro_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 0.9178,
-            "stddev": 0.1309,
-            "min": 0.7,
-            "max": 1.0
-          },
-          "time_seconds": {
-            "mean": 655.5644,
-            "stddev": 263.5907,
-            "min": 396.35,
-            "max": 1073.977
-          },
-          "tokens": {
-            "mean": 3599616.2,
-            "stddev": 2158219.053,
-            "min": 2239821,
-            "max": 7377670
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.6622,
-            "stddev": 0.2467,
-            "min": 0.3333,
-            "max": 1.0
-          },
-          "time_seconds": {
-            "mean": 401.5236,
-            "stddev": 90.4457,
-            "min": 292.504,
-            "max": 521.953
-          },
-          "tokens": {
-            "mean": 563043.8,
-            "stddev": 482824.0767,
-            "min": 276072,
-            "max": 1417466
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.26",
-          "time_seconds": "+254.0",
-          "tokens": "+3036572"
-        }
-      },
-      "counts": {
-        "mpx2web": {
-          "passed": 31,
-          "total": 35
-        },
-        "no_skill": {
-          "passed": 23,
-          "total": 35
-        }
-      }
-    },
-    "all": {
-      "run_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 0.9,
-            "stddev": 0.0,
-            "min": 0.9,
-            "max": 0.9
-          },
-          "time_seconds": {
-            "mean": 3277.822,
-            "stddev": 0.0,
-            "min": 3277.822,
-            "max": 3277.822
-          },
-          "tokens": {
-            "mean": 17998081.0,
-            "stddev": 0.0,
-            "min": 17998081,
-            "max": 17998081
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.675,
-            "stddev": 0.0,
-            "min": 0.675,
-            "max": 0.675
-          },
-          "time_seconds": {
-            "mean": 2007.618,
-            "stddev": 0.0,
-            "min": 2007.618,
-            "max": 2007.618
-          },
-          "tokens": {
-            "mean": 2815219.0,
-            "stddev": 0.0,
-            "min": 2815219,
-            "max": 2815219
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.22",
-          "time_seconds": "+1270.2",
-          "tokens": "+15182862"
-        }
-      },
-      "case_macro_summary": {
-        "mpx2web": {
-          "pass_rate": {
-            "mean": 0.9178,
-            "stddev": 0.1309,
-            "min": 0.7,
-            "max": 1.0
-          },
-          "time_seconds": {
-            "mean": 655.5644,
-            "stddev": 263.5907,
-            "min": 396.35,
-            "max": 1073.977
-          },
-          "tokens": {
-            "mean": 3599616.2,
-            "stddev": 2158219.053,
-            "min": 2239821,
-            "max": 7377670
-          }
-        },
-        "no_skill": {
-          "pass_rate": {
-            "mean": 0.6822,
-            "stddev": 0.2444,
-            "min": 0.3333,
-            "max": 1.0
-          },
-          "time_seconds": {
-            "mean": 401.5236,
-            "stddev": 90.4457,
-            "min": 292.504,
-            "max": 521.953
-          },
-          "tokens": {
-            "mean": 563043.8,
-            "stddev": 482824.0767,
-            "min": 276072,
-            "max": 1417466
-          }
-        },
-        "delta": {
-          "pass_rate": "+0.24",
-          "time_seconds": "+254.0",
-          "tokens": "+3036572"
-        }
-      },
-      "counts": {
-        "mpx2web": {
-          "passed": 36,
-          "total": 40
-        },
-        "no_skill": {
-          "passed": 27,
-          "total": 40
-        }
-      }
-    }
-  },
-  "case_macro_run_summary": {
-    "mpx2web": {
-      "pass_rate": {
-        "mean": 0.9178,
-        "stddev": 0.0,
-        "min": 0.9178,
-        "max": 0.9178
-      },
-      "time_seconds": {
-        "mean": 3277.822,
-        "stddev": 0.0,
-        "min": 3277.822,
-        "max": 3277.822
-      },
-      "tokens": {
-        "mean": 17998081.0,
-        "stddev": 0.0,
-        "min": 17998081,
-        "max": 17998081
-      }
-    },
-    "no_skill": {
-      "pass_rate": {
-        "mean": 0.6822,
-        "stddev": 0.0,
-        "min": 0.6822,
-        "max": 0.6822
-      },
-      "time_seconds": {
-        "mean": 2007.618,
-        "stddev": 0.0,
-        "min": 2007.618,
-        "max": 2007.618
-      },
-      "tokens": {
-        "mean": 2815219.0,
-        "stddev": 0.0,
-        "min": 2815219,
-        "max": 2815219
-      }
-    },
-    "delta": {
-      "pass_rate": "+0.24",
-      "time_seconds": "+1270.2",
-      "tokens": "+15182862"
-    }
-  },
-  "case_run_summary": {
-    "mpx2web": {
-      "pass_rate": {
-        "mean": 0.9178,
-        "stddev": 0.1309,
-        "min": 0.7,
-        "max": 1.0
-      },
-      "time_seconds": {
-        "mean": 655.5644,
-        "stddev": 263.5907,
-        "min": 396.35,
-        "max": 1073.977
-      },
-      "tokens": {
-        "mean": 3599616.2,
-        "stddev": 2158219.053,
-        "min": 2239821,
-        "max": 7377670
-      }
-    },
-    "no_skill": {
-      "pass_rate": {
-        "mean": 0.6822,
-        "stddev": 0.2444,
-        "min": 0.3333,
-        "max": 1.0
-      },
-      "time_seconds": {
-        "mean": 401.5236,
-        "stddev": 90.4457,
-        "min": 292.504,
-        "max": 521.953
-      },
-      "tokens": {
-        "mean": 563043.8,
-        "stddev": 482824.0767,
-        "min": 276072,
-        "max": 1417466
-      }
-    },
-    "delta": {
-      "pass_rate": "+0.24",
-      "time_seconds": "+254.0",
-      "tokens": "+3036572"
-    }
-  },
-  "delivery_status": {
-    "mpx2web": {
-      "passed": 2,
-      "failed": 5,
-      "not_verified": 0,
-      "not_applicable": 0
-    },
-    "no_skill": {
-      "passed": 2,
-      "failed": 5,
-      "not_verified": 0,
-      "not_applicable": 0
-    }
-  },
-  "scope_status": {
-    "mpx2web": {
-      "valid": 2,
-      "needs_review": 0,
-      "invalid": 0,
-      "not_applicable": 3,
-      "total": 5
-    },
-    "no_skill": {
-      "valid": 2,
-      "needs_review": 0,
-      "invalid": 0,
-      "not_applicable": 3,
-      "total": 5
-    }
-  },
-  "runtime_followups": [
-    {
-      "eval_id": 0,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "items": [
-        "按要求未运行构建或渲染器；Web/微信实际环境中的图片尺寸、fixed 视口定位、flex 等分及 scoped/externalClasses 最终渲染效果仍需运行时确认。",
-        "帮助项展开/收起、主题变量切换以及 navigateTo 到既有 WebView 的实际交互需在 Web 和微信运行环境确认。"
-      ]
-    },
-    {
-      "eval_id": 2,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "items": [
-        "本次按要求未运行构建或交互测试；delivery-notes.txt 中的微信/Web 编译通过声明以及动态条件产物仍需在对应构建环境核验。",
-        "视频地址的实际可播放性、格式、CORS 与浏览器播放策略，以及微信位置/相机权限、分享宿主能力和 foo 插件服务可用性，均依赖真实运行环境。"
-      ]
-    },
-    {
-      "eval_id": 3,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "items": [
-        "需在真实部署环境确认 /help-demo/ 静态资源处理、未命中页面转交 SSR renderer以及 history 地址直接刷新行为。",
-        "44px Web 导航高度和顶部 inset=0 目前只是源码中的临时移动端假设，需结合设计规范、安全区和目标设备确认实际布局。",
-        "需运行 SSR renderer 与浏览器验证首屏 HTML、客户端 hydration、注水后免重复请求以及并发 SSR 请求的实际隔离效果。",
-        "需在客户端运行条件下验证 a/b 乱序请求、加载/错误状态和微信端导航、文章展开及 EventChannel 交互效果；delivery-notes.txt 中已有的测试通过陈述不能由本次静态评审确认。"
-      ]
-    },
-    {
-      "eval_id": 4,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "items": [
-        "本次按要求未运行构建、浏览器、真机或 E2E；delivery-notes.txt 中的编译通过声明未被独立验证，实际平台编译、条件输出、布局与交互效果仍需在目标环境确认。"
-      ]
-    },
-    {
-      "eval_id": 0,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "items": [
-        "未运行 Web 或小程序构建与真实渲染；图片尺寸、fixed 视口定位、CSS 变量继承及 scoped 隔离的最终运行表现仍需环境确认。",
-        "未执行真实点击和路由跳转；展开/收起、悬浮入口事件以及 helpUrl 在两端路由和 WebView 中的最终往返仍需运行环境确认。"
-      ]
-    },
-    {
-      "eval_id": 2,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "items": [
-        "浏览器 Web Share、剪贴板和 geolocation 在安全上下文、用户授权及不同浏览器中的实际交互仍需运行环境确认。",
-        "实际视频地址、微信合法域名、Web CORS、播放事件及媒体元数据表现仍需目标环境确认。",
-        "微信账号对 wx123 插件的可用性以及相机、位置权限下的真机行为仍需确认。"
-      ]
-    },
-    {
-      "eval_id": 3,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "items": [
-        "需要在真实部署环境确认 /help-demo/ 未命中静态文件的页面请求已正确转交 Web/SSR 入口，并验证直接打开和刷新。",
-        "修正 transRpxFn 的可序列化写法后，需要在实际 Web 构建和浏览器中确认 375px、750px 视口尺寸及 44px 导航布局。",
-        "需要运行 SSR renderer 确认文章 a、b 的首屏 HTML、客户端 hydration、已取得文章不重复加载以及并发请求隔离效果。",
-        "需要在客户端运行验证重复请求、展开/收起、选择页返回链和 a/b 乱序请求的实际交互表现。",
-        "需要在微信端验证胶囊导航、文章加载及分包页面的真机行为。"
-      ]
-    }
-  ],
-  "generation_provenance": [
-    {
-      "eval_id": 0,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 0,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 1,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 1,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 2,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 2,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 3,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 3,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 4,
-      "configuration": "mpx2web",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    },
-    {
-      "eval_id": 4,
-      "configuration": "no_skill",
-      "run_number": 1,
-      "policy": "codex-filesystem-deny-v1"
-    }
+    "评分方式与 Mpx2RN iteration-17 对齐：每条断言由 Python 确定性静态检查返回 PASS/FAIL。",
+    "汇总分对各 Case 的通过率取平均；不使用额外评分模型。",
+    "本 Benchmark 不执行构建、浏览器、SSR renderer、E2E 或真机验收。"
   ]
 }

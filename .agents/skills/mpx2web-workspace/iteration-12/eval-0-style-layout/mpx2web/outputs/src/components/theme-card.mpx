@@ -11,7 +11,7 @@ createComponent({
   externalClasses: ['tone-class', 'custom-class']
 })
 </script>
-<style scoped>
+<style>
 .theme-shell { margin-top: 8px; }
 .theme-label { font-size: 14px; }
 </style>

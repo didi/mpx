@@ -1,9 +1,9 @@
 {
   "skill_name": "mpx2web",
   "iteration": 12,
-  "suite_revision": "five-evals-case-equal-quality-split-20260919",
-  "status": "ready_for_source_evaluation",
-  "description": "五个静态 eval：样式布局与组件生成、事件实例、API 分享引用、路由配置与 SSR、门店与商品业务组件。40 项验收目标（35 项适配、5 项从零生成），Has/No 共用输入和评分规则。",
+  "suite_revision": "rn17-deterministic-grading-20260923",
+  "status": "ready_for_deterministic_evaluation",
+  "description": "四个静态 eval：Web 基础适配、从零生成资料页、业务能力兼容、Mpx Web SSR。26 项使用与 Mpx2RN iteration-17 一致的二元断言和 Python 确定性检查，Has/No 共用输入与规则。",
   "runner": {
     "enabled": true,
     "base": "../../mpx2rn-workspace/iteration-17/run_evals.py",
@@ -18,244 +18,187 @@
       "reasoning_effort": "explicit",
       "fork_turns": "none"
     },
-    "validation": "本 Benchmark 仅检查源码、配置、编译规则、引用关系和交付说明，不执行构建、E2E、浏览器、SSR 渲染或真机验收。规则中的点击、加载、跳转、并发、刷新和展示只用于描述需要静态推导的代码场景，不表示执行对应操作。评分模型是否与生成模型不同由报告单独标记。"
+    "validation": "与 Mpx2RN iteration-17 一致：grade.py 使用 Python 确定性静态检查，不启动评分模型，不执行构建、浏览器、SSR renderer、E2E 或真机验收。"
   },
-  "common_constraints": [
-    "只根据交付源码、配置和可静态推导的结果评分。",
-    "交付结果必须来自输入数据和真实代码链路，不得修改框架或伪造业务结果。"
-  ],
   "evals": [
     {
       "id": 0,
       "name": "style-layout",
       "case_number": 1,
-      "title": "样式与帮助卡片",
-      "task_type": "adapt_and_generate",
-      "complexity": "normal",
-      "focus": "style/layout/generation",
+      "title": "Web 基础适配",
+      "task_type": "adapt",
+      "complexity": "complex",
+      "focus": "style/layout/route/config",
       "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
-      "expected_output": "适配原始小程序页面与组件，并从零生成帮助面板及其引用的帮助项子组件；只提供需求和宿主约定，不预置两个新组件实现。",
+      "expected_output": "在同一 Mpx 工程中完成样式隔离、Web 虚拟宿主布局、externalClasses、导航、路由基础路径、静态资源路径和 rpx 换算适配，并保留微信行为。",
       "files": [
         "eval-0-style-layout/input/mpx.config.js",
         "eval-0-style-layout/input/requirements.md",
-        "eval-0-style-layout/input/src/assets/sample.png",
+        "eval-0-style-layout/input/src/app.mpx",
         "eval-0-style-layout/input/src/components/blue-card.mpx",
         "eval-0-style-layout/input/src/components/layout-cell.mpx",
         "eval-0-style-layout/input/src/components/red-card.mpx",
-        "eval-0-style-layout/input/src/components/row-group.mpx",
-        "eval-0-style-layout/input/src/components/row-list.mpx",
         "eval-0-style-layout/input/src/components/theme-card.mpx",
-        "eval-0-style-layout/input/src/pages/style/index.mpx"
+        "eval-0-style-layout/input/src/packageA/index.mpx",
+        "eval-0-style-layout/input/src/packageB/index.mpx",
+        "eval-0-style-layout/input/src/pages/choice/index.mpx",
+        "eval-0-style-layout/input/src/pages/home/index.mpx",
+        "eval-0-style-layout/input/src/pages/style/index.mpx",
+        "eval-0-style-layout/input/src/workers/add.js"
       ],
       "outputs": [
         "mpx.config.js",
+        "src/app.mpx",
         "src/components/blue-card.mpx",
-        "src/components/help-card.mpx",
-        "src/components/help-item.mpx",
         "src/components/layout-cell.mpx",
         "src/components/red-card.mpx",
-        "src/components/row-group.mpx",
-        "src/components/row-list.mpx",
         "src/components/theme-card.mpx",
+        "src/packageA/index.mpx",
+        "src/packageB/index.mpx",
+        "src/pages/choice/index.mpx",
+        "src/pages/home/index.mpx",
         "src/pages/style/index.mpx"
       ],
       "assertions": [
         {
-          "id": "C1.1",
-          "text": "静态检查 .image-row 中图片的模板、选择器和样式，确认 Web 端仍保留输入源码规定的 80px 宽高和 12px 圆角。实现方式不限。本项只检查图片；红蓝卡片隔离、两格等分和 externalClasses 分别由 C1.4、C1.5、C1.6 判断。",
-          "category": "style"
-        },
-        {
-          "id": "C1.2",
-          "text": "只检查源码中的节点位置、祖先布局、定位声明和事件绑定。两个悬浮入口在 Web 有效代码中必须保留 position: fixed，祖先结构不能把它们变成相对局部内容的 absolute 定位；若移动节点，原样式、bindtap 处理函数和纵向列表节点仍须可达。已支持的 scroll-view 不要求替换。",
-          "category": "layout"
-        },
-        {
           "id": "C1.4",
-          "text": "静态检查红色卡片和蓝色卡片的样式作用域与选择器，确认两个组件即使使用同名类也不会互相覆盖。可以使用 scoped、项目配置或其他有效隔离方式。",
-          "category": "style"
+          "text": "样式：red-card 与 blue-card 的同名类使用独立作用域，不互相覆盖"
         },
         {
           "id": "C1.5",
-          "text": "静态检查 layout-cell 的虚拟节点声明、实际生效的编译配置和 Web 最终节点层级，确认“甲”和“较长的乙”平分 240px，flex 作用在真实布局子项上。只声明 options.virtualHost 不能直接证明 Web 布局正确；可以使用精确配置或等价布局方案。若使用 autoVirtualHostRules，只能加入有源码或编译产物证据表明宿主节点会破坏该布局的组件，不能把同一页面或组件链中的 row-group、row-list 等无关组件一并加入。",
-          "category": "layout"
+          "text": "布局：layout-cell 的虚拟宿主在 Web 生效，两个实例在 240px Flex 容器中等宽"
         },
         {
           "id": "C1.6",
-          "text": "静态追踪调用方样式类、theme-card 的 externalClasses 声明、组件内部节点和 Web 编译配置，确认外部样式真正作用到内容节点：两处文字颜色来自各自的调用方，custom-class 提供的 12px 内边距也必须保留。只保留 externalClasses 声明，或只配置新增的 tone-class，不能证明适配完成；允许采用其他能保留两端调用契约的实现，不要求保留未使用的默认类。本项不重复判断 C1.1 和 C1.4。",
-          "category": "style"
+          "text": "样式：theme-card 的 externalClasses 从调用方贯通到内容节点，并保留默认外部类配置"
         },
         {
-          "id": "C1.7",
-          "text": "只检查 help-card、help-item 的 SFC 文件、usingComponents、模板引用、属性传递和状态处理代码。父组件必须真实引用子组件；源码中应有标题绑定、初始收起状态、展开与收起的状态更新函数及对应条件渲染，两端共用同一套源码。只创建未引用的子组件，或仍把全部帮助项写在父组件中，不满足要求。选项式和组合式 API 均可，状态可由任一组件管理。",
-          "category": "generation"
+          "id": "C4.1",
+          "text": "导航：保留微信 navigator、普通入口 ready 状态和选择结果回传链路"
         },
         {
-          "id": "C1.8",
-          "text": "只检查源码中的 helpUrl 传递和路由调用链：面板属性传给帮助项，帮助入口的事件处理函数调用已有 WebView 路由，并按现有 url 参数约定完成一次正确编码。原地址中的查询参数和百分号转义必须能从表达式中静态推导为完整保留，不能重复解码，也不能只打印链接。子组件直接调用路由或通知父组件调用均可；不要求新建 WebView 或通信桥。",
-          "category": "generation"
+          "id": "C4.2",
+          "text": "导航栏：微信胶囊 API 不在 Web 执行，Web 不重复显示系统导航与自定义导航"
         },
         {
-          "id": "C1.9",
-          "text": "只检查 CSS 声明、变量作用域和回退表达式。帮助项按钮背景必须引用 --btn_wrapper_bg，并在未定义时回退到 #2A2F3F；从宿主到 help-card、help-item 的样式链中不能出现会遮蔽宿主变量的固定定义。允许使用 var 回退或等价的可靠默认值。",
-          "category": "generation",
-          "capability": "style"
+          "id": "C4.3",
+          "text": "路由：Web publicPath、history base 均为 /help-demo/，主包与两个分包页面保持注册"
         },
         {
-          "id": "C1.10",
-          "text": "静态检查 help-card 和 help-item 的样式作用域与选择器，确认它们不会污染宿主已有的 .title 和 .action，宿主原有字号、颜色和间距保持不变。可以使用 scoped、局部命名或其他有效隔离方式，不能通过修改宿主样式规避污染。",
-          "category": "generation"
-        },
-        {
-          "id": "C1.11",
-          "text": "只检查宿主 item-class、help-card 属性或外部类传递、help-item 声明以及内部内容节点的类绑定，必要时同时检查 Web 编译配置。源码链必须能分别把两处调用方指定的文字颜色和内边距传到各自帮助项内容。样式只绑定在面板外壳、只声明但未用于内部节点，或按实例位置写死样式，都不满足要求。按钮变量、样式污染和已有 theme-card 分别由 C1.9、C1.10、C1.6 判断。",
-          "category": "generation"
+          "id": "C4.4",
+          "text": "尺寸：Web 使用固定二分之一 rpx 换算，微信换算配置保持不变"
         }
-      ],
-      "scope_checks": [
-        {
-          "id": "S1.1",
-          "text": "检查交付文件范围：help-card 和 help-item 必须从零生成；不能改写已有 WebView 容器或只读宿主页，不能生成无关业务文件或不必要的平台副本。必要配置可以合入本题已有的 mpx.config.js，但必须保留原有适配目标。",
-          "scored": false
-        }
-      ],
-      "generated_outputs": [
-        "src/components/help-card.mpx",
-        "src/components/help-item.mpx"
-      ],
-      "context_files": [
-        "eval-0-style-layout/fixtures/src/pages/common/webview.mpx",
-        "eval-0-style-layout/fixtures/src/pages/review/index.mpx"
       ]
     },
     {
       "id": 1,
-      "name": "events-instance",
+      "name": "generate-web",
       "case_number": 2,
-      "title": "事件与组件交互",
-      "task_type": "adapt",
+      "title": "从零生成资料页",
+      "task_type": "generate",
       "complexity": "normal",
-      "focus": "events/instance",
-      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
-      "expected_output": "基于 input 中原始小程序源码做必要 Web 适配，保留小程序行为。",
+      "focus": "generation/mpx2web",
+      "prompt": "请根据 input 中的 requirements.md 从零创建完整交付，并输出全部要求文件。",
+      "expected_output": "从空输入创建一套可同时输出微信小程序与 Web 的 Mpx 应用、页面和组件，并正确处理 Web 路由、外部样式类、组件交互与分享边界。",
       "files": [
-        "eval-1-events-instance/input/requirements.md",
-        "eval-1-events-instance/input/src/behaviors/ordered-item.js",
-        "eval-1-events-instance/input/src/components/choice-item.mpx",
-        "eval-1-events-instance/input/src/components/composition-counter.mpx",
-        "eval-1-events-instance/input/src/components/event-actions.mpx",
-        "eval-1-events-instance/input/src/components/notice-leaf.mpx",
-        "eval-1-events-instance/input/src/components/notice-wrapper.mpx",
-        "eval-1-events-instance/input/src/components/relation-item.mpx",
-        "eval-1-events-instance/input/src/components/relation-list.mpx",
-        "eval-1-events-instance/input/src/composables/use-ready-notice.js",
-        "eval-1-events-instance/input/src/pages/panel/index.mpx"
+        "eval-1-generate-web/input/requirements.md"
       ],
       "outputs": [
-        "src/behaviors/ordered-item.js",
-        "src/components/choice-item.mpx",
-        "src/components/composition-counter.mpx",
-        "src/components/event-actions.mpx",
-        "src/components/notice-leaf.mpx",
-        "src/components/notice-wrapper.mpx",
-        "src/components/relation-item.mpx",
-        "src/components/relation-list.mpx",
-        "src/composables/use-ready-notice.js",
-        "src/pages/panel/index.mpx"
+        "mpx.config.js",
+        "src/app.mpx",
+        "src/components/profile-card.mpx",
+        "src/pages/profile/index.mpx"
       ],
       "assertions": [
         {
           "id": "C2.1",
-          "text": "只检查模板事件绑定、WXS 或组件处理函数、change 事件参数、页面处理函数和模板状态引用。点击与 touchend 两条源码链都必须可达，并分别把对应操作值写入页面展示所引用的状态；空处理函数不能代替原行为。方法名和适配方式不限。",
-          "category": "events"
+          "text": "结构：生成完整 Mpx 配置、App、页面和组件，页面注册并渲染两个 profile-card"
         },
         {
           "id": "C2.2",
-          "text": "只检查 notice 的源码传递链：叶子组件发送的 event.detail.message 经过包装组件到达页面监听函数，监听函数对通知计数只包含一次增量，其他事件处理函数不能复用该增量逻辑。只删除 bubbles/composed、添加 TODO 或硬编码消息，不能证明链路成立。",
-          "category": "events"
+          "text": "路由：Web publicPath、history base 均为 /profile-demo/，微信页面注册保持有效"
         },
         {
           "id": "C2.3",
-          "text": "静态检查 composition-counter 使用的实例 API、返回结构和调用链，确认挂载就绪通知指向当前正确的组件实例。不强制采用某一种 proxy 解构方式。",
-          "category": "instance"
+          "text": "样式：accent-class 从页面调用方贯通到组件标题，并保留默认 externalClasses"
+        },
+        {
+          "id": "C2.4",
+          "text": "交互：两个 profile-card 实例各自保存折叠状态，点击只切换当前实例"
         },
         {
           "id": "C2.5",
-          "text": "只检查组件查询表达式、目标组件标识、Web 编译后的标识形态和当前 matcher 源码。静态推导结果必须表明“选中首项”的查询可匹配第一项，“清空两项”的查询可匹配全部两项。不能只修复首项，同时保留 matcher 无法读取的批量 class 查询。可以使用 id、ref、有效选择器、数据驱动或其他等价方案。",
-          "category": "instance"
-        },
-        {
-          "id": "C2.6",
-          "text": "只检查 orderedItems、倒序方法、稳定 key、摘要计算代码以及 relation-list 的数据引用。源码应表明摘要直接取自当前数组顺序，因此初始数据推导为“甲、乙、丙”，倒序表达式推导为“丙、乙、甲”。实现不能依赖 Web 未消费的 relations.target 或 linkChanged 才能更新；保留未使用的关系元数据本身不判错。允许数据驱动等价实现，不要求完整 relations 引擎；普通 Behavior 已受支持，不强制改成 mixins。",
-          "category": "instance"
+          "text": "分享：微信保留正确分享标题和路径，Web 隔离该钩子并呈现未接入边界"
         }
-      ],
-      "scope_checks": []
+      ]
     },
     {
       "id": 2,
       "name": "api-share-components",
       "case_number": 3,
-      "title": "内容页业务能力",
+      "title": "业务能力兼容",
       "readonly_files": [
         "src/vendor/native-scanner/index.mpx"
       ],
       "task_type": "adapt",
-      "complexity": "normal",
-      "focus": "api/share/components",
+      "complexity": "complex",
+      "focus": "api/components/platform-isolation/support-boundaries/state",
       "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
-      "expected_output": "基于 input 中原始小程序源码做必要 Web 适配，保留小程序行为。",
+      "expected_output": "在同一 Mpx 应用中保留可用的公共业务能力和微信原行为，对没有现成 Web 实现的 API、组件或局部属性做真实平台隔离并留下具体业务接入边界。",
       "files": [
         "eval-2-api-share-components/input/requirements.md",
         "eval-2-api-share-components/input/src/app.mpx",
         "eval-2-api-share-components/input/src/components/scan-entry.mpx",
         "eval-2-api-share-components/input/src/components/video-info.mpx",
         "eval-2-api-share-components/input/src/pages/content/index.mpx",
-        "eval-2-api-share-components/input/src/vendor/native-scanner/index.mpx"
+        "eval-2-api-share-components/input/src/vendor/native-scanner/index.mpx",
+        "eval-2-api-share-components/input/src/pages/store-picker/index.mpx",
+        "eval-2-api-share-components/input/src/pages/catalog/index.mpx"
       ],
       "outputs": [
         "src/app.mpx",
         "src/components/scan-entry.mpx",
         "src/components/video-info.mpx",
-        "src/pages/content/index.mpx"
+        "src/pages/content/index.mpx",
+        "src/pages/store-picker/index.mpx",
+        "src/pages/catalog/index.mpx"
       ],
       "assertions": [
         {
-          "id": "C3.1",
-          "text": "只检查分享声明、平台条件、模板入口和可达处理代码。微信有效分支必须保留分享入口与原分享配置；Web 有效分支必须完成真实登记或明确隔离。题目未提供 Web 分享协议时，源码或交付说明应标出未接入边界，不能返回伪造的成功结果；说明不要求出现字面量 TODO。",
-          "category": "share"
-        },
-        {
           "id": "C3.2",
-          "text": "只检查名称编辑相关的模板入口、状态字段、确认与取消回调、赋值语句和平台条件。Web 有效源码中必须存在可输入名称、确认后赋值、取消时不赋值的完整链路；可以使用目标端其他原生交互，不要求弹窗外观一致。不能因局部选项不支持而停用整个功能，也不能写入伪造结果。JS 中的 @mpx 条件注释不是有效平台分支，如果两端实际会执行同一段不兼容代码，则不满足要求。",
-          "category": "api"
+          "text": "名称编辑：Web 具备输入、确认赋值和取消不赋值链路，微信原交互保持有效"
         },
         {
           "id": "C3.3",
-          "text": "只检查业务模板、usingComponents、模块顶层引用、平台条件和可达调用。微信有效源码必须保留只读扫码组件及结果通知；题目未提供 Web 扫码协议时，Web 有效源码必须移除对该组件的解析链，并提供不可用提示和待接入说明。只隐藏模板节点不够：Web JSON 若仍通过 usingComponents 解析包含 camera 的原生组件，则不满足要求；JSON 中的 @mpx 注释也不能移除引用。直接保留不可用调用、使用空组件、伪造扫码结果或修改只读依赖均不满足要求。不强制采用平台文件。",
-          "category": "components"
+          "text": "扫码：微信保留原生扫码组件，Web 构建不解析该组件且只读依赖未修改"
         },
         {
           "id": "C3.4",
-          "text": "只检查 video 的组件引用、src 与播放属性绑定、事件绑定和事件字段读取代码。微信有效源码应优先读取 event.detail；当前 Web video 通过 inheritEvent 透传原生 target，因此 detail 缺字段时可以从真实 target 数值属性做安全回退，也可以隔离无法可靠提供的辅助字段，不能构造伪造值。",
-          "category": "media"
+          "text": "视频：保留 src 与播放事件，Web 在 detail 缺字段时从真实 target 安全回退"
         },
         {
           "id": "C3.5",
-          "text": "只检查位置功能的平台条件、API 调用和提示代码。微信有效源码必须保留原位置调用；题目未提供 Web 位置协议时，Web 有效源码必须使 wx.chooseLocation 不可达，并提供未接入说明或 TODO，不能写入伪造位置。JS 中的 @mpx 条件注释不是有效平台分支；若 Web 仍可达微信 API，或微信会执行 Web 兜底代码，则不满足要求。",
-          "category": "api"
+          "text": "位置：微信保留 chooseLocation，Web 不执行微信 API 且说明真实服务接入边界"
         },
         {
           "id": "C3.6",
-          "text": "只检查 app plugins、plugin:// 组件声明、usingComponents、平台条件和模板引用。微信有效源码必须保留插件卡片；Web 有效源码不能解析或渲染该插件。题目未提供 Web 插件协议时，可以隔离并提供不可用提示和待接入说明，但不能使用空组件或伪造插件内容。JSON 中的 @mpx 注释不能隔离 plugins 或 usingComponents，只隐藏模板节点也不能证明构建依赖已移除；保留未被 Web 消费的微信元数据本身不判错。",
-          "category": "components"
-        }
-      ],
-      "scope_checks": [],
-      "delivery_checks": [
+          "text": "插件：公共 pages 只维护一份，微信保留插件卡片，Web 不解析 plugin 组件"
+        },
         {
-          "id": "D3.1",
-          "text": "检查交付说明是否明确：permission 和 requiredPrivateInfos 是微信权限用途及隐私接口声明，不表示 Web 已获得授权或完成隐私合规；当前 Web 没有对应转换时，应保留微信声明并如实说明目标端边界。题目未提供 Web 接入协议时可以标记待接入，不要求虚构浏览器授权流程。该说明缺失或待确认只记静态告警，不扣 API 功能分。"
+          "id": "C5.1",
+          "text": "地区与地图：微信原 picker/map 数据链保留，Web 隔离缺失能力并标明接入点"
+        },
+        {
+          "id": "C5.2",
+          "text": "Swiper 与图片：保留公共能力，只隔离 Web 未实现的局部属性并标明接入点"
+        },
+        {
+          "id": "C5.3",
+          "text": "结构组件：微信保留 grid-view 与 page-container，Web 隔离缺失组件并标明接入点"
+        },
+        {
+          "id": "C5.4",
+          "text": "状态：门店确认和商品筛选的草稿、取消、确认状态链保持不变"
         }
       ],
       "readonly_assertions": {
@@ -266,197 +209,53 @@
     },
     {
       "id": 3,
-      "name": "route-config",
+      "name": "ssr",
       "case_number": 4,
-      "title": "帮助中心详情页",
+      "title": "文章页 Web SSR",
       "task_type": "adapt",
-      "complexity": "normal",
-      "focus": "route/config/ssr",
+      "complexity": "complex",
+      "focus": "mpx2web/ssr/route/state",
       "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
-      "expected_output": "基于 input 中原始小程序源码做必要 Web 适配，保留小程序行为。",
+      "expected_output": "将现有 Mpx 微信文章页的文章状态整体迁移为微信与 Web 共用的 Pinia，并支持服务端首屏渲染、浏览器客户端接管及原微信行为。",
       "files": [
-        "eval-3-route-config/input/mpx.config.js",
-        "eval-3-route-config/input/requirements.md",
-        "eval-3-route-config/input/src/app.mpx",
-        "eval-3-route-config/input/src/packageA/index.mpx",
-        "eval-3-route-config/input/src/packageB/index.mpx",
-        "eval-3-route-config/input/src/pages/article/index.mpx",
-        "eval-3-route-config/input/src/pages/choice/index.mpx",
-        "eval-3-route-config/input/src/pages/home/index.mpx",
-        "eval-3-route-config/input/src/services/article.js",
-        "eval-3-route-config/input/src/store/article.js",
-        "eval-3-route-config/input/src/workers/add.js"
+        "eval-3-ssr/input/mpx.config.js",
+        "eval-3-ssr/input/requirements.md",
+        "eval-3-ssr/input/src/app.mpx",
+        "eval-3-ssr/input/src/pages/article/index.mpx",
+        "eval-3-ssr/input/src/services/article.js",
+        "eval-3-ssr/input/src/store/article.js"
       ],
       "outputs": [
         "mpx.config.js",
         "src/app.mpx",
-        "src/packageA/index.mpx",
-        "src/packageB/index.mpx",
         "src/pages/article/index.mpx",
-        "src/pages/choice/index.mpx",
-        "src/pages/home/index.mpx",
         "src/services/article.js",
-        "src/store/article.js",
-        "src/workers/add.js"
+        "src/store/article.js"
       ],
       "assertions": [
         {
-          "id": "C4.2",
-          "text": "只检查平台条件、页面 JSON、导航模板和布局赋值代码。Web 有效源码不能调用微信胶囊相关 API，且配置与模板组合不能同时保留系统导航和自定义导航；微信有效源码必须保留原导航链。导航高度等尺寸依据属于 D4.1，缺少说明不影响本项功能判定。",
-          "category": "layout"
+          "id": "C6.1",
+          "text": "SSR：history 路由匹配 /help-demo/，首屏渲染前按当前 query.id 等待文章数据"
         },
         {
-          "id": "C4.3",
-          "text": "只检查构建过程实际读取的配置和生成代码。Web 的资源前缀、运行时 history/base、服务端路由和客户端路由必须统一为 /help-demo/；服务端与客户端的文章路由代码必须从同一路径读取同一个 query id，主包和两个分包页面也必须保留。未被构建代码消费的同名字段或另一套 # 地址不能作为证据。服务器 rewrite、部署配置和真实刷新归 D4.2。",
-          "category": "config"
+          "id": "C6.2",
+          "text": "状态：文章状态完整迁移到共享 @mpxjs/pinia，并通过 onAppInit 注入应用"
         },
         {
-          "id": "C4.4",
-          "text": "静态检查 Web 构建实际使用的尺寸配置和换算公式。根据公式计算后，在 375px 和 750px Web 视口下，200rpx 都应等于 100 CSS px，28rpx 都应等于 14 CSS px；微信原有换算规则必须保留，配置必须能够正确序列化。",
-          "category": "config"
+          "id": "C6.3",
+          "text": "隔离：每次 SSR 请求在 onAppInit 中创建独立 Pinia，文章页使用当前请求实例"
         },
         {
-          "id": "C4.5",
-          "text": "只检查服务端预取入口、路由 id 读取、文章加载 action 或等价异步函数、Promise 返回或 await 关系以及模板状态引用。源码链必须表明：预取函数把文章 id 传入加载逻辑，并将其 Promise 返回或等待完成，模板随后读取该状态。只调用异步函数但丢失等待链不满足要求。",
-          "category": "ssr"
+          "id": "C6.4",
+          "text": "环境：服务端可达的初始化与预取代码不访问 window、document 或 navigator"
         },
         {
-          "id": "C4.6",
-          "text": "只检查旧 createStore 到 @mpxjs/pinia 的迁移代码，以及 Mpx 官方 SSR 状态链：应用在 onAppInit 中为当前应用或 SSR 请求创建 Pinia 实例并返回 { pinia }，文章状态写入、服务端序列化、客户端挂载前恢复和页面 store 引用必须指向该 Pinia 状态。不要求调用 mpx.use(pinia)，也不要求自行实现框架默认提供的注水逻辑；如果应用自定义 onSSRAppCreated，则检查该自定义链是否完成等价的状态序列化。请求隔离由 C4.7 检查，客户端异步竞态由 C4.8 检查；重复请求和展开/收起效果只进入待运行验证，不在本项扣分。",
-          "category": "ssr"
-        },
-        {
-          "id": "C4.7",
-          "text": "只检查应用初始化、SSR context、store 创建位置和页面获取 store 的引用关系。源码必须表明每次 SSR 请求创建独立状态实例，并且页面实际使用该请求实例；文章 a 与文章 b 的状态引用不能指向同一个模块级活动 store。只新增未被页面使用的工厂、继续导入模块级单例，或在请求开始前清空共享状态，都不满足要求。Pinia 迁移与恢复由 C4.6 判断，客户端竞态由 C4.8 判断。",
-          "category": "ssr"
-        },
-        {
-          "id": "C4.8",
-          "text": "只检查文章加载方法中的过期请求保护。源码应在发起请求时记录请求标识，并在成功、失败和 finally 分支修改 article、errorText、loading 前判断返回结果是否仍属于最新请求。结合输入中 a=40ms、b=10ms 的固定条件，从这些判断表达式静态推导晚返回的 a 是否会被忽略。缺少保护、只保护 article，或无条件提交异步结果，都不满足要求。",
-          "category": "ssr"
-        },
-        {
-          "id": "C4.9",
-          "text": "只检查实际生效的配置、应用初始化、服务端预取函数和平台条件中对 window、document、navigator 等浏览器对象的引用。所有服务端可达路径都必须避开这些对象；仅客户端可达的分支可以使用。微信 onLoad 源码链由 C4.10 判断。",
-          "category": "ssr"
-        },
-        {
-          "id": "C4.10",
-          "text": "只检查微信端有效的源码分支。页面源码中必须保留 onLoad，从 query.id 取得文章 id，并将该 id 传给文章加载方法；模板使用的 article、loading 和 errorText 必须来自该加载方法更新的同一状态。Web/SSR 改造不能删除、覆盖或切断这条引用链。本项不重复检查 Pinia 状态传输、请求隔离或服务端浏览器 API 安全。",
-          "category": "compatibility"
-        }
-      ],
-      "scope_checks": [],
-      "delivery_checks": [
-        {
-          "id": "D4.1",
-          "text": "只检查交付说明文本。如果输出代码为 Web 自定义了导航高度或临时布局值，说明中必须写明该数值的来源、假设和待确认事项，不能称其为实际测量结果；代码没有自定义尺寸时，本项记为不适用。"
-        },
-        {
-          "id": "D4.2",
-          "text": "只检查交付说明文本。说明中必须指出：部署到 /help-demo/ 时，未命中静态文件的页面请求需要由部署服务器转交 Web/SSR 入口。只要求说明该部署边界；没有运行证据时不能写成“已经验证刷新成功”。"
-        },
-        {
-          "id": "D4.3",
-          "text": "只检查输入 app JSON、workers 目录、输出代码和交付说明。说明中必须指出：当前 Web JSON 转换不会根据小程序 workers 声明自动复制或打包该目录，单独保留声明不能生成浏览器 Web Worker。微信资源应保留；本题没有 Worker 调用需求，因此不要求新增浏览器 Worker。"
-        },
-        {
-          "id": "D4.4",
-          "text": "只检查 app JSON、Web 页面注册代码和交付说明。说明中必须区分：Web 可以把分包页面注册为异步页面，但这不等于微信 independent:true 的脱离主包启动、独立环境和独立初始化。题目允许 Web 页面共用应用，不要求创建独立站点，也不应把普通分包或异步页面整体判为不支持。页面是否保留由 C4.3 判断。"
-        },
-        {
-          "id": "D4.5",
-          "text": "只检查 app JSON、实际配置消费者和交付说明。说明中必须识别 preloadRule 的源页面、network 条件和目标包，并指出当前 Web 转换不会自动生成浏览器预下载逻辑。题目不要求补充 Web 预取；如果说明声称已经实现，源码中必须存在实际读取该配置或执行预取的链路，不能用普通异步页面加载代替。本项不扣基本运行或路由功能分。"
+          "id": "C6.5",
+          "text": "兼容：微信 onLoad 继续按 query.id 调用共享 action，并保留文章页面状态与交互"
         }
       ],
       "context_files": [
-        "eval-3-route-config/fixtures/runtime-contract.md"
-      ]
-    },
-    {
-      "id": 4,
-      "name": "business-components",
-      "case_number": 5,
-      "title": "门店选择与商品目录",
-      "task_type": "adapt",
-      "complexity": "complex",
-      "focus": "components/platform-isolation/support-boundaries/state",
-      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
-      "expected_output": "基于两个微信小程序 .mpx 页面保留已支持的公共能力和微信原行为；对没有现成 Web 实现的组件或局部能力做真实平台隔离并留下具体 TODO，由业务按实际方案接入，不临时补造替代 UI。",
-      "files": [
-        "eval-4-business-components/input/requirements.md",
-        "eval-4-business-components/input/src/pages/store-picker/index.mpx",
-        "eval-4-business-components/input/src/pages/catalog/index.mpx"
-      ],
-      "outputs": [
-        "src/pages/store-picker/index.mpx",
-        "src/pages/catalog/index.mpx"
-      ],
-      "assertions": [
-        {
-          "id": "C5.1",
-          "category": "components",
-          "text": "检查 region picker 的支持边界。微信端必须保留 picker mode=\"region\"、regionCodes 和原 change 入口，并通过真实节点或属性平台条件避免把该模式当作 Web 已支持能力。题目没有提供 Web 地区组件，Web 边界应保留具体 TODO，说明业务需按实际行政区数据源和选择组件实现；不能用 regionOptions 的有限按钮、固定地区或手写简化选择器冒充完整 region picker。"
-        },
-        {
-          "id": "C5.2",
-          "category": "events",
-          "text": "静态追踪原微信地区选择状态链：event.detail.value/code 必须继续更新 regionNames、regionCodes，并由实际名称数组更新 regionText。不得为臆造的 Web 选择器复制另一套固定状态；TODO 应指出未来业务适配需复用同一组名称、编码和展示状态，但不要求当前交付实现 Web 选择事件。"
-        },
-        {
-          "id": "C5.3",
-          "category": "components",
-          "text": "检查 map 的支持边界。微信端必须保留原 map、latitude、longitude、storeMarkers 与 markertap，并与 Web 产物真实隔离。题目没有提供 Web 地图服务、组件或凭据，Web 边界应保留具体 TODO，提示业务按实际地图 SDK、凭据和交互实现；可以展示当前状态或未接入说明，但不能把门店按钮列表、浏览器原生同名 map 或伪地图 API 声称为等价地图。"
-        },
-        {
-          "id": "C5.4",
-          "category": "events",
-          "text": "静态追踪原微信门店选择链：event.detail.markerId 必须进入 selectStore 或等价公共逻辑，按真实 id 从 storeMarkers 查询并同时更新 selectedStoreId 与 selectedStoreName。不得为了伪造 Web 地图改成数组位置、硬编码门店或删除原标记事件；不要求当前交付新增 Web 门店选择入口。"
-        },
-        {
-          "id": "C5.5",
-          "category": "state",
-          "text": "检查页面现有状态和确认方法。当前地区、当前门店及已确认结果必须继续读取同一份 regionText 和 selectedStoreName，confirmSelection 在调用时组合最新值；TODO 或平台隔离不能切断微信原按钮、另建未消费状态或改成固定确认文案。"
-        },
-        {
-          "id": "C5.6",
-          "category": "components",
-          "text": "检查 swiper 的局部能力边界。当前 Web mpx-swiper 支持轮播、previous-margin、next-margin 和 change，但不消费 display-multiple-items。候选应保留同一个 swiper 的全部 banners、稳定 key、前后边距与 change 链，只将 display-multiple-items=\"2\" 限制到微信或其他真实支持平台，并留下具体 TODO，说明业务若要求 Web 同时展示两项需按实际轮播组件和交互方案实现。把 Web 改成静态 Grid、slice(0, 2)、删除第三项或重写整套轮播均不满足要求。"
-        },
-        {
-          "id": "C5.7",
-          "category": "components",
-          "text": "检查 grid-view/grid-item 的支持边界和原商品链。微信端必须保留 grid-view/grid-item、filteredProducts、稳定 id 及 selectProduct；题目没有提供 Web 列表或网格组件，Web 边界应保留具体 TODO，提示业务按实际列表规模、虚拟化和交互实现。不能自行用 CSS Grid、Flex、普通按钮列表或新增组件声称已经完成 Web 商品网格。"
-        },
-        {
-          "id": "C5.8",
-          "category": "components",
-          "text": "检查 image 的局部能力边界。微信端必须保留当前商品 cover、mode=\"aspectFill\" 与 lazy-load；当前 Web mpx-image 支持图片和 mode，但不消费 lazy-load。候选应保留组件已支持能力，只把 lazy-load 限制到支持平台，并留下具体 TODO，说明业务需按实际图片组件和加载策略实现 Web 懒加载；没有现成方案时不能改写成原生 img、IntersectionObserver 或自造加载器。"
-        },
-        {
-          "id": "C5.9",
-          "category": "components",
-          "text": "检查 page-container 的支持边界。微信端必须保留 page-container、filterVisible、分类选择、取消和确认事件，并与 Web 产物真实隔离。题目没有提供 Web dialog、drawer 或 portal，Web 边界应保留具体 TODO，提示业务按实际弹层、遮罩、滚动锁定和关闭交互实现；不能用页面内手写 fixed 遮罩声称等价完成 page-container。"
-        },
-        {
-          "id": "C5.10",
-          "category": "state",
-          "text": "只检查原筛选状态及 filteredProducts 计算链。打开时 draftCategory 从 appliedCategory 复制；选择分类只修改 draftCategory；取消不能改变 appliedCategory；确认才写入 appliedCategory 并关闭；filteredProducts 按最新 appliedCategory 从 products 计算。平台隔离和 TODO 不能删除、绕过或改坏这条状态链。"
-        }
-      ],
-      "scope_checks": [
-        {
-          "id": "S5.1",
-          "scored": false,
-          "text": "检查交付范围：只提交两个要求的 .mpx 页面；不新增组件、平台副本、第三方依赖或环境 API，不改框架，也不生成无关业务文件。没有现成 Web 实现时，不得用临时按钮选择器、门店列表、静态双卡 Grid、原生图片加载器或手写遮罩冒充组件等价实现。"
-        }
-      ],
-      "delivery_checks": [
-        {
-          "id": "D5.1",
-          "scored": false,
-          "text": "检查 TODO 质量与注释格式：每个未实现的 Web 边界应具体说明缺少的组件或属性能力，并提示业务按实际组件、数据源、SDK 和交互方案实现。模板、script、style 中必须分别使用 `<!-- TODO(web): 具体业务接入说明 -->`、`// TODO(web): 具体业务接入说明`、`/* TODO(web): 具体业务接入说明 */`；TODO 不能写成页面文字、字符串、错误类型注释或空说明。泛化的“待处理”或声称 TODO 已完成功能时记录静态告警。本项不进入功能分母。"
-        }
+        "eval-3-ssr/fixtures/runtime-contract.md"
       ]
     }
   ],
@@ -474,62 +273,10 @@
     ]
   },
   "scoring": {
-    "method": "binary_assertions_case_equal_primary_with_micro_diagnostics",
-    "scope": "static_source_review_only",
-    "assertion_count": 40,
-    "grader_method": "blind_separate_pass_source_review_with_deterministic_integrity_checks",
-    "runtime_policy": "不执行 E2E 或运行验收，不设运行门禁，不计入功能分；待运行验证在主报告中单列。",
-    "delivery_policy": "交付说明与质量提示不计功能分；缺失或待确认单独记录。",
-    "comparison_note": "主分先计算每个 Case 内全部功能断言的通过率，再对五个 Case 等权平均，每个 Case 占 20%；Web、SSR、生成及全部断言微平均仅作诊断。源码分与运行验收分离，不与旧口径直接横比。",
-    "buckets": {
-      "web": [
-        "C1.1",
-        "C1.2",
-        "C1.4",
-        "C1.5",
-        "C1.6",
-        "C2.1",
-        "C2.2",
-        "C2.3",
-        "C2.5",
-        "C2.6",
-        "C3.1",
-        "C3.2",
-        "C3.3",
-        "C3.4",
-        "C3.5",
-        "C3.6",
-        "C4.2",
-        "C4.3",
-        "C4.4",
-        "C4.10",
-        "C5.1",
-        "C5.2",
-        "C5.3",
-        "C5.4",
-        "C5.5",
-        "C5.6",
-        "C5.7",
-        "C5.8",
-        "C5.9",
-        "C5.10"
-      ],
-      "ssr": [
-        "C4.5",
-        "C4.6",
-        "C4.7",
-        "C4.8",
-        "C4.9"
-      ],
-      "generation": [
-        "C1.7",
-        "C1.8",
-        "C1.9",
-        "C1.10",
-        "C1.11"
-      ]
-    },
-    "primary": "all functional assertions case-equal score: each case 20%",
-    "secondary": "assertion micro scores by all/web/ssr/generation for diagnostics only"
+    "method": "binary_assertions_case_mean",
+    "assertion_count": 26,
+    "grader_method": "deterministic_python_static_checks",
+    "primary": "与 Mpx2RN iteration-17 一致：先计算每个 Case 的断言通过率，再对 Case 取平均",
+    "runtime_policy": "仅做确定性静态检查；构建、浏览器、SSR renderer、E2E 与真机结果不计入本分数。"
   }
 }

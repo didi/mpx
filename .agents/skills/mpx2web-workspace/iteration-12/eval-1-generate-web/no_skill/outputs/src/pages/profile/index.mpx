@@ -1,0 +1,132 @@
+<template>
+  <view class="profile-page">
+    <view class="profile-page__header">
+      <text class="profile-page__title">个人资料</text>
+      <text class="profile-page__subtitle">点击资料卡可展开或收起摘要</text>
+    </view>
+
+    <profile-card
+      title="温暖生活家"
+      summary="喜欢记录日常里的微小善意，也愿意把温暖分享给身边的人。"
+      accent-class="warm-title"
+    />
+    <profile-card
+      title="冷静思考者"
+      summary="关注清晰的信息与可靠的判断，习惯用理性的方式解决问题。"
+      accent-class="cool-title"
+    />
+
+    <view class="share-area">
+      <button
+        wx:if="{{!isWeb}}"
+        class="share-button"
+        open-type="share"
+      >
+        分享资料页
+      </button>
+      <view wx:else class="share-area__web">
+        <button class="share-button" disabled>分享资料页</button>
+        <text class="share-area__status">
+          Web 分享服务尚未接入（TODO：接入业务分享协议后启用）。
+        </text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    isWeb: __mpx_mode__ === 'web'
+  },
+  onShareAppMessage () {
+    return {
+      title: '个人资料',
+      path: '/pages/profile/index'
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "个人资料",
+  "usingComponents": {
+    "profile-card": "../../components/profile-card"
+  }
+}
+</script>
+
+<style>
+.profile-page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 24px 16px 32px;
+}
+
+.profile-page__header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.profile-page__title {
+  color: #111827;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.profile-page__subtitle {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.warm-title {
+  padding: 12px;
+  color: #d97706;
+}
+
+.cool-title {
+  padding: 12px;
+  color: #2563eb;
+}
+
+.share-area {
+  margin-top: 8px;
+}
+
+.share-button {
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 15px;
+}
+
+.share-button::after {
+  border: 0;
+}
+
+.share-area__web {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.share-area__web .share-button {
+  color: #9ca3af;
+  background: #e5e7eb;
+}
+
+.share-area__status {
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+</style>

@@ -1,7 +1,6 @@
 <template>
   <view class="layout-cell">{{label}}</view>
 </template>
-
 <script>
 import { createComponent } from '@mpxjs/core'
 
@@ -10,18 +9,6 @@ createComponent({
   properties: { label: String }
 })
 </script>
-
 <style scoped>
-.layout-cell {
-  box-sizing: border-box;
-  flex: 1 1 0;
-  min-width: 0;
-  height: 40px;
-  background: #dbeafe;
-  text-align: center;
-}
+.layout-cell { flex: 1 1 0; min-width: 0; height: 40px; background: #dbeafe; text-align: center; }
 </style>
-
-<script type="application/json">
-{ "component": true }
-</script>

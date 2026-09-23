@@ -1,9 +1,5 @@
 <template>
   <view class="style-page">
-    <view class="image-row">
-      <image class="preview-image" src="../../assets/sample.png" mode="aspectFill" />
-      <text>商品预览</text>
-    </view>
     <red-card />
     <blue-card />
     <theme-card label="暖色标签" tone-class="warm-tone" custom-class="spaced-label" />
@@ -12,53 +8,25 @@
       <layout-cell label="甲" />
       <layout-cell label="较长的乙" />
     </view>
-    <scroll-view class="feed" scroll-y="{{true}}">
-      <row-group />
-    </scroll-view>
-    <movable-area class="move-area">
-      <movable-view class="move-item" direction="all">
-        <text>拖动此块</text>
-      </movable-view>
-    </movable-area>
-    <view class="scroll-action" bindtap="recordTap">列表悬浮入口</view>
-    <view class="move-action" bindtap="recordTap">移动区悬浮入口</view>
-    <text>入口点击：{{tapCount}}</text>
   </view>
 </template>
 <script>
 import { createPage } from '@mpxjs/core'
 
-createPage({
-  data: {
-    tapCount: 0
-  },
-  methods: {
-    recordTap () {
-      this.tapCount += 1
-    }
-  }
-})
+createPage({})
 </script>
-<style scoped>
+<style>
 .style-page { padding: 16px; }
 .warm-tone { color: #bb3311; }
 .cool-tone { color: #2255cc; }
 .spaced-label { padding: 12px; }
 .equal-row { display: flex; width: 240px; }
-.image-row { display: flex; align-items: center; margin-bottom: 12px; }
-.preview-image { width: 80px; height: 80px; border-radius: 12px; }
-.feed { height: 220px; margin-top: 16px; background: #f3f5f7; }
-.scroll-action { position: fixed; right: 16px; bottom: 24px; z-index: 10; padding: 8px; background: #2255cc; color: #fff; }
-.move-area { width: 260px; height: 160px; margin-top: 16px; background: #eee; }
-.move-item { width: 100px; height: 60px; background: #cfe8ff; }
-.move-action { position: fixed; left: 16px; bottom: 24px; z-index: 10; padding: 8px; background: #8946bc; color: #fff; }
 </style>
 <script type="application/json">
 {
   "usingComponents": {
     "red-card": "../../components/red-card.mpx",
     "blue-card": "../../components/blue-card.mpx",
-    "row-group": "../../components/row-group.mpx",
     "layout-cell": "../../components/layout-cell.mpx",
     "theme-card": "../../components/theme-card.mpx"
   }

@@ -14,13 +14,26 @@ DISABLED_FEATURES = ('plugins', 'remote_plugin', 'hooks', 'apps', 'skill_search'
 TRANSIENT_OUTPUT_PARTS = {'.cache', '.verify-dist', 'dist', 'node_modules', 'tmp'}
 
 
+def skill_files(root):
+    """Find Skill manifests and follow directory symlinks on every supported Python."""
+    seen = set()
+    for directory, children, files in os.walk(root, followlinks=True):
+        resolved = Path(directory).resolve()
+        if resolved in seen:
+            children[:] = []
+            continue
+        seen.add(resolved)
+        if 'SKILL.md' in files:
+            yield Path(directory) / 'SKILL.md'
+
+
 def overrides(neutral, base, project, readonly=False):
     home = Path.home().resolve()
     # Disable discovery, not merely access after a Skill was already injected.
     skills = []
     for root in (home / '.agents/skills', home / '.codex/skills'):
         if root.exists():
-            for path in root.rglob('SKILL.md', recurse_symlinks=True):
+            for path in skill_files(root):
                 skills.append('{path=' + json.dumps(str(path.resolve())) + ',enabled=false}')
                 skills.append('{path=' + json.dumps(str(path.parent.resolve())) + ',enabled=false}')
     # Do not deny dependency ancestors: Node realpath must lstat those paths.

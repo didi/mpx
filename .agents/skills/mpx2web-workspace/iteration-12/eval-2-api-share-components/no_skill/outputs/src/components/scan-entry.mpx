@@ -2,13 +2,19 @@
   <view class="scan-entry">
     <!-- @mpx-if (mode === 'wx') -->
     <button bindtap="start">开始扫码</button>
-    <native-scanner wx:if="{{scanning}}" bindresult="onCode" bindfailure="onCameraError" />
+    <native-scanner
+      wx:if="{{scanning}}"
+      bindresult="onCode"
+      bindfailure="onCameraError"
+    />
+    <text>{{status}}</text>
     <!-- @mpx-else -->
-    <button bindtap="start">开始扫码</button>
+    <!-- TODO(web): 接入业务认可的 Web 扫码 SDK/服务，并将真实结果通过 result 事件透传。 -->
+    <text>Web 端扫码服务尚未接入</text>
     <!-- @mpx-endif -->
-    <text class="status">{{status}}</text>
   </view>
 </template>
+
 <script>
 import { createComponent } from '@mpxjs/core'
 
@@ -19,16 +25,10 @@ createComponent({
   },
   methods: {
     start () {
-      // @mpx-if (mode === 'wx')
-      this.status = ''
       this.scanning = true
-      // @mpx-else
-      this.status = 'Web 端尚未接入扫码服务，无法返回扫码结果'
-      // @mpx-endif
     },
     onCode (event) {
       this.scanning = false
-      this.status = ''
       this.triggerEvent('result', { result: event.detail.result })
     },
     onCameraError () {
@@ -38,18 +38,20 @@ createComponent({
   }
 })
 </script>
+
 <style>
-.scan-entry { padding: 0; }
-.status { display: block; margin-top: 8px; color: #666; }
+.scan-entry {
+  padding: 0;
+}
 </style>
+
 <script type="application/json">
 {
-  "component": true
-  // @mpx-if (mode === 'wx')
-  ,
+  /* @mpx-if (mode === 'wx') */
   "usingComponents": {
     "native-scanner": "../vendor/native-scanner/index.mpx"
-  }
-  // @mpx-endif
+  },
+  /* @mpx-endif */
+  "component": true
 }
 </script>

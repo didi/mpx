@@ -9,6 +9,6 @@ createComponent({
   properties: { label: String }
 })
 </script>
-<style scoped>
+<style>
 .layout-cell { flex: 1; min-width: 0; height: 40px; background: #dbeafe; text-align: center; }
 </style>

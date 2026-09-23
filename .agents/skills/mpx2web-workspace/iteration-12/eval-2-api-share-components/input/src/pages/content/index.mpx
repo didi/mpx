@@ -1,7 +1,6 @@
 <template>
   <view class="content-page">
     <text>{{title}}</text>
-    <button open-type="share">分享内容</button>
     <button bindtap="choosePlace">选择位置</button>
     <text>{{placeName}}</text>
     <button bindtap="rename">编辑名称</button>
@@ -25,9 +24,6 @@ createPage({
   },
   onLoad (query) {
     this.videoSrc = decodeURIComponent(query.videoUrl || '')
-  },
-  onShareAppMessage () {
-    return { title: this.title, path: '/pages/content/index' }
   },
   methods: {
     choosePlace () {

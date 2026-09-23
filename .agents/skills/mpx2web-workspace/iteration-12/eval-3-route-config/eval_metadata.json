@@ -1,6 +1,0 @@
-{
-  "eval_id": 3,
-  "eval_name": "route-config",
-  "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
-  "source_metadata": "evals.json"
-}

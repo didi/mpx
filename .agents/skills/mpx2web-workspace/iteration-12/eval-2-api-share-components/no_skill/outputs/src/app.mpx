@@ -5,18 +5,18 @@ import apiProxy from '@mpxjs/api-proxy'
 mpx.use(apiProxy)
 createApp({})
 </script>
+
 <script type="application/json">
 {
-  "pages": ["./pages/content/index.mpx"]
-  // @mpx-if (mode === 'wx')
-  ,
+  /* @mpx-if (mode === 'wx') */
   "plugins": {
     "foo": { "version": "1.0.0", "provider": "wx123" }
   },
-  "permission": {
-    "scope.userLocation": { "desc": "用于选择附近位置" }
-  },
-  "requiredPrivateInfos": ["chooseLocation"]
-  // @mpx-endif
+  /* @mpx-endif */
+  "pages": [
+    "./pages/content/index.mpx",
+    "./pages/store-picker/index.mpx",
+    "./pages/catalog/index.mpx"
+  ]
 }
 </script>

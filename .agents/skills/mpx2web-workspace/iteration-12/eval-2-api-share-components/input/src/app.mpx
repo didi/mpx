@@ -7,13 +7,9 @@ createApp({})
 </script>
 <script type="application/json">
 {
-  "pages": ["./pages/content/index.mpx"],
+  "pages": ["./pages/content/index.mpx", "./pages/store-picker/index.mpx", "./pages/catalog/index.mpx"],
   "plugins": {
     "foo": { "version": "1.0.0", "provider": "wx123" }
-  },
-  "permission": {
-    "scope.userLocation": { "desc": "用于选择附近位置" }
-  },
-  "requiredPrivateInfos": ["chooseLocation"]
+  }
 }
 </script>

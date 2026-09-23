@@ -1,9 +1,8 @@
 <template>
-  <view class="theme-card">
-    <view class="theme-card__label tone-class custom-class">{{label}}</view>
+  <view class="theme-shell">
+    <view class="theme-label tone-class custom-class">{{label}}</view>
   </view>
 </template>
-
 <script>
 import { createComponent } from '@mpxjs/core'
 
@@ -12,12 +11,10 @@ createComponent({
   externalClasses: ['tone-class', 'custom-class']
 })
 </script>
-
 <style scoped>
-.theme-card { margin-top: 8px; }
-.theme-card__label { font-size: 14px; }
+.theme-shell { margin-top: 8px; }
+.theme-label { font-size: 14px; }
 </style>
-
 <script type="application/json">
 { "component": true }
 </script>

@@ -1,0 +1,27 @@
+<script>
+import { createApp } from '@mpxjs/core'
+
+createApp({})
+</script>
+
+<script type="application/json">
+{
+  "pages": [
+    "pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "个人资料",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f4f6f8"
+  }
+}
+</script>
+
+<style>
+page {
+  min-height: 100%;
+  background: #f4f6f8;
+  color: #1f2937;
+}
+</style>
