@@ -1,6 +1,6 @@
 # Skyline 与 WebView WXSS 差异参考
 
-本文记录微信小程序从 WebView 迁移到 Skyline 时，WXSS 默认值、选择器、属性取值和渲染行为的差异，重点解释容易误判或静默失效的部分，不是属性全量支持表。
+本文记录微信小程序从 WebView 迁移到 Skyline 时，WXSS 默认值、选择器、属性取值和渲染行为的差异，重点说明容易误判或静默失效的部分，不是属性全量支持表。
 
 ## 目录
 
@@ -65,7 +65,7 @@
 
 | 值 / 写法 | WebView 表现 | Skyline 差异                                                           | 迁移处理                                           |
 | --- | --- |----------------------------------------------------------------------|------------------------------------------------|
-| `calc()` | 可用于长度、角度等计算，具体取决于消费属性 | **取值受限**：仅支持长度计算，不支持角度类型                                             | 角度直接写确定值，动态计算放脚本；Mpx 适配推荐采用非嵌套写法   |
+| `calc()` | 可用于长度、角度等计算，具体取决于使用该值的属性 | **取值受限**：仅支持长度计算，不支持角度类型                                             | 角度直接写确定值，动态计算放脚本；Mpx 适配推荐采用非嵌套写法   |
 | `env()` | 可访问宿主提供的环境变量 | **取值受限**：仅支持 `safe-area-inset-top/right/bottom/left`；语法允许长度 fallback | 只依赖安全区变量，其他信息通过宿主 API 获取                       |
 | `<length>` 中的 `%` / `auto` | 是否接受取决于具体属性 | **条件限制**：通用长度语法包含这些值，不代表每个属性均实现其语义                                   | 按属性核对；例如 `overflow` 的 `auto` 是关键字限制，不能由长度语法推断支持 |
 
@@ -126,11 +126,11 @@
 | `z-index` / `position: fixed` | 参与 Web 层叠上下文 | **行为不同**：非 fixed 节点按共同父级下的兄弟分支比较；fixed 节点全局提升并按自身 z-index 排序，整体高于非 fixed | 不跨分支猜测层级，见 [层叠实践](skyline-style-practice.md#z-index-与层叠适配) |
 | `transform` / `opacity` 对层级的影响 | 可建立层叠上下文 | **行为不同**：不会按 WebView 方式建立该层叠上下文 | 不用变换或透明度抬升层级；属性本身可用不等于层叠语义相同 |
 | `visibility: collapse` | 在特定布局中影响占位 | **取值受限**：仅 `visible` / `hidden` | 使用 hidden 前确认占位要求，不认为两者等价 |
-| `box-sizing: padding-box` | 历史非标准写法，不是稳定 WebView 基线 | **取值受限**：仅 `content-box` / `border-box` | 存量命中时改为支持值并核对尺寸 |
+| `box-sizing: padding-box` | 历史非标准写法，不是稳定 WebView 基线 | **取值受限**：仅 `content-box` / `border-box` | 已有代码使用该值时，改为支持值并核对尺寸 |
 | `float` / 清除浮动布局 | 可形成浮动排版 | **不支持**浮动布局 | 使用 Flex，不用 BFC 或清除浮动技巧补救 |
 | `contain` | 提供 CSS containment | **不支持**标准属性 | `-wx-contain` 替代 |
 | 多列布局 `column-*` | 可生成多列文本布局 | **不支持**该类多列布局 | 改 Flex / `grid-view` |
-| `justify-items` | 在 Grid 等布局中有意义，不能泛称为 Flex 对齐能力 | **不支持** | 按现有布局选择 `align-items` / `justify-content` 等，不机械替换方向 |
+| `justify-items` | 在 Grid 等布局中有意义，不能泛称为 Flex 对齐能力 | **不支持** | 根据现有布局选择 `align-items` / `justify-content` 等，不能直接按名称替换 |
 | `outline` | 绘制轮廓，不按 border 方式占位 | **不支持** | 以 border / box-shadow 模拟前核对尺寸和外观 |
 | `resize` / `cursor` | 按宿主支持提供调整尺寸 / 指针反馈 | **不支持**（cursor 为既有适配记录） | 无等效属性；按交互需求另行设计 |
 | `content: url()` | 可生成图片内容 | **取值受限**：不支持 | 真实图片节点或背景图 |
@@ -139,7 +139,7 @@
 
 > 其他注意事项：
 > Flex 布局属性均支持，但不能覆盖默认方向、百分比尺寸和文本换行的行为差异；分别查 [默认值](#默认值差异与配置影响)、[百分比](#百分比支持情况) 与 [Flex 文本换行实践](skyline-style-practice.md#flex-布局的子节点文本超出未自动换行)。
-> 页面滚动及生命周期迁移见 [运行时参考](skyline-runtime-practice.md#页面滚动替代方案)，不作为 CSS overflow 的额外取值。
+> 页面滚动及生命周期迁移见 [运行时参考](skyline-runtime-practice.md#页面滚动替代方案)，使用 `scroll-view` 替代页面滚动。
 
 ## 文本与字体差异
 
@@ -208,7 +208,7 @@
 
 | 属性 / 写法 / 行为 | WebView 表现 | Skyline 差异 | 迁移处理 |
 | --- | --- | --- | --- |
-| `animation-fill-mode: none/backwards` | 有独立的动画前后填充语义 | **行为不同**：可写但实际表现为 forwards；稳定值为 forwards / both | 显式处理初始与恢复状态，不机械替换后忽略视觉差异 |
+| `animation-fill-mode: none/backwards` | 有独立的动画前后填充语义 | **行为不同**：可写但实际表现为 forwards；稳定值为 forwards / both | 显式处理初始与恢复状态，替换后仍需核对视觉效果 |
 | `will-change` | 可声明 scroll-position 或具体属性名 | **取值受限**：仅 auto / contents | 不使用 scroll-position 或自定义标识符；可省略该优化提示 |
 | `transition-property` / keyframes 中的属性 | 依属性动画类型进行插值或离散变化 | **取值受限**：仅支持下列属性范围；all 也不会突破该范围 | 将不支持的属性改为状态切换或其他实现 |
 

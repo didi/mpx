@@ -1,6 +1,6 @@
 # Skyline 运行时与性能适配实践
 
-本文记录 WebView 迁移 Skyline 时偏运行时的改造方案，包括页面滚动与事件迁移、常见问题与性能优化等改造方案。
+本文汇总 WebView 迁移 Skyline 时的运行时改造，包括渲染模式判断、页面滚动、常见报错和性能优化。
 
 ## 目录
 
@@ -50,7 +50,7 @@ defineExpose({ renderer })
 
 > 注意事项：
 >
-> 1. Skyline 与 WebView 只能通过运行时变量区分，编译时仅能区分微信平台，无法区分是否为 Skyline 渲染；
+> 1. Skyline 与 WebView 只能通过运行时变量区分。编译时只能判断微信平台，无法判断具体渲染模式。
 > 2. 组合式语法需要供模板使用时通过 `defineExpose` 暴露。
 
 ### 页面滚动替代方案
@@ -64,7 +64,7 @@ Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageS
 </scroll-view>
 ```
 
-**原页面生命周期需迁移到 scroll-view 对应事件**（不要只删不补，否则下拉刷新/触底加载/滚动监听等业务逻辑会静默失效）：
+原页面生命周期要改为 `scroll-view` 对应事件。不能只删除生命周期，否则下拉刷新、触底加载和滚动监听会静默失效。
 
 | 原页面生命周期 | scroll-view 事件 | 备注 |
 | --- | --- | --- |
@@ -72,7 +72,7 @@ Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageS
 | `onReachBottom` | `bindscrolltolower` | 可配合 `lower-threshold` 调阈值 |
 | `onPageScroll(e.scrollTop)` | `bindscroll(e.detail.scrollTop)` | 高频事件，按需节流 |
 
-WebView 直接对齐 Skyline 写法（统一走 scroll-view 事件），避免双份实现带来的维护成本与行为漂移。
+WebView 也改用同一组 `scroll-view` 事件，避免维护两套逻辑。
 
 ```html
 <!-- 普通长列表 type="list" -->
@@ -230,8 +230,7 @@ createComponent({
   }
 })
 
-// ✅ Good — 将 type 设为 null 跳过校验
-// 在无法获知 properties 全部类型场景的兜底方案
+// ✅ Good — 仅在无法确定类型时，将 type 设为 null 跳过校验
 createComponent({
   properties: {
     config: {
@@ -246,15 +245,15 @@ createComponent({
 
 ### WXS 跨包引用错误：TypeError: R.wxs/stringify4ccc0480 is not a function
 
-触发条件：分包中启用 `componentFramework: "glass-easel"` 的页面或组件引用了主包 WXS，但主包内没有任何启用 glass-easel 的页面或组件引用该 WXS。
+当分包中的 glass-easel 页面或组件引用主包 WXS，而主包内没有任何 glass-easel 页面或组件引用同一 WXS 时，会出现该错误。
 
-规避方案：在主包任意一个启用 `componentFramework: "glass-easel"` 的页面或组件模板中引用该 WXS；若主包没有此类页面或组件，可创建一个空组件完成引用。
+处理方式：在主包任意一个 glass-easel 页面或组件模板中引用该 WXS；如果主包没有此类页面或组件，可创建一个空组件完成引用。
 
 ## 性能优化
 
 ### 列表用 list / custom 模式按需渲染
 
-`scroll-view` 不指定 `type` 会退化为 WebView 渲染路径，整个列表一次性全量渲染。Skyline 下务必声明 `type`，让滚动容器只渲染在屏节点：
+`scroll-view` 不指定 `type` 时会退化为 WebView 渲染路径，并一次性渲染整个列表。Skyline 下需要明确声明 `type`：
 
 - `type="list"`：列表模式，根据**直接子节点**是否在屏按需渲染。
 - `type="custom"`：自定义模式，子节点可用 `sticky-section` / `list-view` / `grid-view` 等。
@@ -273,11 +272,11 @@ createComponent({
 
 > 注意：`list` 模式下列表项必须是 `scroll-view` 的**直接子节点**；若只有一个直接子节点（例如外面又包了一层 `view`），按需渲染会退化为全量渲染。
 
-适用前提：列表项结构、样式一致（差异仅由数据驱动）。结构差异较大的卡片混排不要无脑标注 `list-item`，否则共享失败反而增加判定成本。
+`list-item` 适合结构和样式一致、差异仅来自数据的列表项。卡片结构差异较大时不要统一添加，否则样式共享失败，反而会增加运行时判断开销。
 
 ### cache-extent 预渲染（按需启用）
 
-`cache-extent` 指定预渲染范围，默认视口外节点不渲染。设置后可减少快速滚动 / 切换时的白屏、提升流畅度，但**会提高内存占用并拖慢首屏**——属于用内存换流畅的权衡，不要无脑全开。
+`cache-extent` 用于指定预渲染范围。增大该值可以减少快速滚动或切换时的白屏，但也会增加内存占用并拖慢首屏，因此只在确有需要时开启。
 
 `scroll-view`（单位 px）：
 

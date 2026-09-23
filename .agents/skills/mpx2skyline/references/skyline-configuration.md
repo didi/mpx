@@ -42,7 +42,7 @@
 | `keyframeStyleIsolation` | string | - | "legacy" | `@keyframes` 全局共享，避免迁移项目中动画关键帧作用域变化 |
 | `disableABTest` | boolean | false | 按需 | 关闭 Skyline AB 实验，确保稳定性（非必要配置）         |
 
-> 说明：前 5 项（`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`）是对齐 WebView 行为的**推荐补齐项**，适配时务必逐项核对。`disableABTest` 为**非必填**：仅在需要关闭 Skyline 灰度 AB 实验、强制全量走 Skyline 以排除实验态干扰时按需开启，常规适配可不配，不作为校验项。
+> 前 5 项用于减少 WebView 与 Skyline 的默认行为差异，迁移项目应逐项检查。`disableABTest` 不是必填项，仅在需要排除灰度实验干扰、让页面全部使用 Skyline 时开启。
 
 ### app.json 顶层配置
 
@@ -77,7 +77,7 @@
 }
 ```
 
-> 注意：`defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation` 均为 `rendererOptions.skyline` 的子项，须写在该对象内，**不要**放到 app.json 顶层；`lazyCodeLoading` 与 `convertRpxToVw` 是 app.json 顶层配置。补齐 app.json 时务必逐项核对上述推荐项都不遗漏；`convertRpxToVw` 和 `disableABTest` 除外，可按需选配。
+> `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation` 要写在 `rendererOptions.skyline` 内，不能放到 app.json 顶层。`lazyCodeLoading` 与 `convertRpxToVw` 属于顶层配置，其中 `convertRpxToVw` 和 `disableABTest` 根据项目需要选配。
 
 **适配 Skyline 页面的 page.json 新增以下配置**
 
@@ -127,7 +127,7 @@ Mpx 项目中通过 `overrides` 配置：
 
 **注意**：
 
-- 配置 Worklet Babel 插件后，**不需要勾选**「将 JS 编译成 ES5」（会导致包体积增加）
-- 若未配置以上插件，则需要开启开发者工具的「编译 Worklet 函数」选项；「将 JS 编译成 ES5」也可以，但更推荐集成 Babel 插件按需编译
+- 配置 Worklet Babel 插件后，**不需要勾选**「将 JS 编译成 ES5」，否则会增加包体积。
+- 未配置插件时，需要开启开发者工具的「编译 Worklet 函数」选项。「将 JS 编译成 ES5」也能完成编译，但会处理更多无关代码。更推荐集成 Babel 插件按需编译。
 
 ---

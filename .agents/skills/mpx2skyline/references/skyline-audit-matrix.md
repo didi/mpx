@@ -64,6 +64,7 @@ rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|
 | `COMP_SCROLL_LIST_DIRECT_CHILD` | warn | template | `<scroll-view[^>]*type="list"` | `type="list"` 的列表项必须是直接子节点；只有一个直接 wrapper 会导致按需渲染退化                                                  | 展平列表项，或确认该 scroll-view 不依赖按需渲染                                                                                                             | 非列表场景说明 | [列表按需渲染](./skyline-runtime-practice.md#列表用-list--custom-模式按需渲染) |
 | `COMP_SCROLL_NESTED` | error | template | `<scroll-view[^>]*type="nested"\|associative-container="nested-scroll-view"` | 嵌套滚动需外层 `type="nested"`，内层显式 `type` 并设置 `associative-container`                                      | 外层补 `type="nested"`；内层补显式 `type` 和 `associative-container="nested-scroll-view"`                                                   | 无 | [结构约束](skyline-template-reference.md#skyline-必填属性与结构约束) |
 | `COMP_SCROLL_HORIZONTAL` | warn | template/style | `scroll-x\|enable-flex\|flex-direction\\s*:?\\s*row` | 横向滚动需同时开启 `enable-flex` 并设置横向布局样式以兼容 WebView                                                         | 补 `enable-flex` 与横向布局样式                                                                                                                    | 非横向滚动容器 | [高频差异](skyline-template-reference.md#skyline-相对-webview-的高频差异补充) |
+| `COMP_SCROLL_HORIZONTAL_CHILD_WIDTH` | warn | template/style | `scroll-x\|flex\\s*:?\\s*1\\s+0\\s+auto` | 候选召回；逐个定位横向 `scroll-view` 的直接内容子节点。若该节点预期铺满滚动视口但未声明明确的横向主轴 `width`，Skyline 下会按内容宽度收缩 | 铺满视口时给直接内容子节点设置 `width: 100%`；内容需宽于视口时按实际基准设置明确的 `rpx` / `px` 宽度 | 直接子节点已有明确 width；业务本就需要按内容收缩 | [横向 scroll-view 内 Flex 子节点无法自动撑满](skyline-style-practice.md#横向-scroll-view-内-flex-子节点无法自动撑满) |
 | `COMP_SCROLL_REFRESHER_SLOT` | warn | template | `refresher-enabled\|slot="refresher"` | 自定义下拉刷新节点必须声明 `slot="refresher"`                                                                     | 自定义 refresher 节点补 slot                                                                                                                     | 使用默认 refresher | [高频差异](skyline-template-reference.md#skyline-相对-webview-的高频差异补充) |
 | `COMP_NAVIGATOR_CHILDREN` | error | template | `<navigator[\s\S]*<(view\|image\|swiper\|rich-text\|[^/!][^\\s>]*)` | Skyline 下 `navigator` 只能嵌套 `text` 或纯文本                                                               | 改为只包 `text`；复杂卡片用外层点击事件替代                                                                                                                  | 人工确认子节点只有 `text` | [navigator 限制](skyline-template-reference.md#navigator-嵌套限制) |
 | `COMP_TEXT_CHILDREN` | warn | template | `<text[\s\S]*<(view\|image\|rich-text\|special-text\|span\|[^/!][^\\s>]*)` | Skyline 下 `text` 只能嵌套 `text`；图文混排使用 `span`                                                           | 拆结构或改用 `span` 内联混排方案                                                                                                                       | 人工确认只嵌套 `text` | [结构约束](skyline-template-reference.md#skyline-必填属性与结构约束) |
@@ -113,10 +114,11 @@ rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|
 1. `rg` 命中只是候选项，必须结合 SFC 区块、平台条件、运行时 renderer 分支判断。
 2. 多行 `<scroll-view>`、`<navigator>`、`<text>`、`sticky-section` 不能只靠单行 pattern 判定，需读取完整标签和直接子节点。
 3. `SCROLL_CONTEXT_ENHANCED` 必须把 `select('#id').node()` 关联到对应 `scroll-view`；不能因文件内存在其他已开启 `enhanced` 的滚动容器而放行。
-4. `GLASS_TEMPLATE_FRAGMENT` 必须读取命中位置，排除非模板标签或注释中的文本；`GLASS_TEMPLATE_ESCAPE` 必须按完整属性区分数据绑定内外，聚合扫描结果不能直接作为最终结论。
-5. 保留 `@media screen` 时，内部每个选择器（含逗号分组）必须限定到非 Skyline 专用类；Skyline 用运行时窗口宽度与动态类实现业务断点逻辑，两端阈值和样式保持一致。
-6. 最终结果中 `error` 不允许无说明残留；`warn` 必须处理或说明为什么不影响当前 scope。
-7. `COMP_INLINE_MIXED_CONTENT` 不能只按 `STYLE_TEXT_OVERFLOW` 处理；命中 `truncate` 且同一行附近存在 `image` / icon / `rich-text` / `special-text` 时，必须进一步套用图文混排规则或说明为什么不是同段混排。
-8. 页面任务执行 `CONFIG_*` 规则时必须同时检查 app.json、page.json 和涉及的构建配置；缺少 app.json 或 page.json 视为门禁未完成，不能仅声明未覆盖。明确只审单个组件且不涉及页面任务时，可说明页面与全局配置不适用。
-9. 矩阵未收录的组件、属性、事件不能反推为支持；需回到对应 reference 或官方来源确认。
-10. properties 类型一致性属于人工复核项：逐项核对声明 `type`、默认值与调用侧实际传值；正常的 `Object` / `Array` / `String` / `Number` / `Boolean` 声明不作为扫描命中，只有 `type: [...]` 由 `PROPS_UNION_TYPE` 直接报错。
+4. `COMP_SCROLL_HORIZONTAL_CHILD_WIDTH` 必须读取横向 `scroll-view` 的直接子节点，并将该节点的 class 映射到实际样式声明；不能因文件中其他节点存在 `width` 就判定通过。
+5. `GLASS_TEMPLATE_FRAGMENT` 必须读取命中位置，排除非模板标签或注释中的文本；`GLASS_TEMPLATE_ESCAPE` 必须按完整属性区分数据绑定内外，聚合扫描结果不能直接作为最终结论。
+6. 保留 `@media screen` 时，内部每个选择器（含逗号分组）必须限定到非 Skyline 专用类；Skyline 用运行时窗口宽度与动态类实现业务断点逻辑，两端阈值和样式保持一致。
+7. 最终结果中 `error` 不允许无说明残留；`warn` 必须处理或说明为什么不影响当前 scope。
+8. `COMP_INLINE_MIXED_CONTENT` 不能只按 `STYLE_TEXT_OVERFLOW` 处理；命中 `truncate` 且同一行附近存在 `image` / icon / `rich-text` / `special-text` 时，必须进一步套用图文混排规则或说明为什么不是同段混排。
+9. 页面任务执行 `CONFIG_*` 规则时必须同时检查 app.json、page.json 和涉及的构建配置；缺少 app.json 或 page.json 视为门禁未完成，不能仅声明未覆盖。明确只审单个组件且不涉及页面任务时，可说明页面与全局配置不适用。
+10. 矩阵未收录的组件、属性、事件不能反推为支持；需回到对应 reference 或官方来源确认。
+11. properties 类型一致性属于人工复核项：逐项核对声明 `type`、默认值与调用侧实际传值；正常的 `Object` / `Array` / `String` / `Number` / `Boolean` 声明不作为扫描命中，只有 `type: [...]` 由 `PROPS_UNION_TYPE` 直接报错。

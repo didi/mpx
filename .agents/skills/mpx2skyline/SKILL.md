@@ -94,9 +94,10 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 1. **先对齐默认布局基线**：在 `rendererOptions.skyline` 中开启 `defaultDisplayBlock` 与 `defaultContentBox`，分别对齐 WebView 的 `display: block` 和 `box-sizing: content-box`；需要静态定位时仍须显式声明 `position: static`。配置位置见 [rendererOptions.skyline 配置项](./references/skyline-configuration.md#rendereroptionsskyline-配置项)，其余默认值差异见 [默认值差异与配置影响](./references/skyline-style-reference.md#默认值差异与配置影响)。
 2. **不依赖 BFC 与 margin 合并**：Skyline 没有 BFC 和 margin 合并机制，`overflow: hidden` 仅用于裁剪。容器外沿空间用父容器 `padding` 表达，兄弟间距只由一侧承担；复杂存量布局按 [垂直 margin 折叠处理](references/skyline-style-practice.md#垂直-margin-折叠处理) 改造。
 3. **页面滚动统一迁移到 scroll-view**：Skyline 不支持页面滚动，`onPullDownRefresh` / `onReachBottom` / `onPageScroll` 不会触发。页面声明 `disableScroll: true`，使用 `scroll-view` 承载滚动，并根据直接子节点结构选择 `list` / `custom` / `nested`，常见为列表模式 `type="list"`。原生命周期同步迁移到 `bindrefresherrefresh` / `bindscrolltolower` / `bindscroll`，WebView 对齐同一事件链路；详见 [页面滚动替代方案](references/skyline-runtime-practice.md#页面滚动替代方案)。
-4. **按 normal-context / fixed-context 设计层级**：Skyline 没有 WebView 层叠上下文，非 fixed 节点最终比较共同父级下的兄弟分支；fixed 节点会全局提升并按自身 `z-index` 排序，整体高于非 fixed 内容。`transform` / `opacity` 不会抬升层级，`scroll-view` 直接子节点的 `z-index` 不生效。需要比较层级的节点应调整为可比较的兄弟结构，避免依赖负 `z-index`；详见 [z-index 与层叠适配](references/skyline-style-practice.md#z-index-与层叠适配)。
-5. **吸顶逻辑双分支保留**：Skyline 不支持 `position: sticky`，Skyline 分支使用 `sticky-section` / `sticky-header`，WebView 分支保留 CSS sticky。`sticky-header` 必须是 section 的第一个子节点且显式设置背景色，完整结构见 [sticky 吸顶替代方案](references/skyline-style-practice.md#sticky-吸顶替代方案)。
-6. **使用自定义导航**：Skyline 页面声明 `navigationStyle: 'custom'` 并实现自定义导航栏，不依赖默认导航；页面配置见 [适配参考](./references/skyline-configuration.md#适配参考)。
+4. **横向 scroll-view 的直接内容子节点显式声明主轴宽度**：Skyline 不会默认把横向 `scroll-view` 的直接内容子节点撑满滚动视口。若内容预期铺满视口，直接子节点声明 `width: 100%`；若内容预期宽于视口，按实际基准声明明确的 `rpx` / `px` 宽度。不要依赖内部 Flex 子节点、`min-width` 或 `max-width` 反向撑开内容容器；详见 [横向 scroll-view 内 Flex 子节点无法自动撑满](references/skyline-style-practice.md#横向-scroll-view-内-flex-子节点无法自动撑满)。
+5. **按 normal-context / fixed-context 设计层级**：Skyline 没有 WebView 层叠上下文，非 fixed 节点最终比较共同父级下的兄弟分支；fixed 节点会全局提升并按自身 `z-index` 排序，整体高于非 fixed 内容。`transform` / `opacity` 不会抬升层级，`scroll-view` 直接子节点的 `z-index` 不生效。需要比较层级的节点应调整为可比较的兄弟结构，避免依赖负 `z-index`；详见 [z-index 与层叠适配](references/skyline-style-practice.md#z-index-与层叠适配)。
+6. **吸顶逻辑双分支保留**：Skyline 不支持 `position: sticky`，Skyline 分支使用 `sticky-section` / `sticky-header`，WebView 分支保留 CSS sticky。`sticky-header` 必须是 section 的第一个子节点且显式设置背景色，完整结构见 [sticky 吸顶替代方案](references/skyline-style-practice.md#sticky-吸顶替代方案)。
+7. **使用自定义导航**：Skyline 页面声明 `navigationStyle: 'custom'` 并实现自定义导航栏，不依赖默认导航；页面配置见 [适配参考](./references/skyline-configuration.md#适配参考)。
 
 ### 样式（style）约束
 
@@ -178,6 +179,7 @@ Worklet 动画、手势系统、自定义路由、共享元素均属于 Skyline 
 - 跨渲染模式：Skyline-only 逻辑已通过 `renderer === 'skyline'` 或项目封装隔离，WebView 原有逻辑保留。
 - 页面配置：页面 JSON 与 app.json Skyline 配置齐全；涉及 Worklet 时 Babel 插件已配置。
 - 页面滚动：页面滚动、下拉刷新、触底、滚动监听已迁移到 `scroll-view` 对应事件。
+- 横向滚动：逐个检查 `scroll-x` 的直接内容子节点；预期铺满视口的节点已声明 `width: 100%`，预期宽于视口的节点已声明明确的 `rpx` / `px` 主轴宽度。
 - 层级结构：z-index 仅依赖兄弟层级，未引入负 z-index 或跨层叠上下文假设。
 - 覆盖范围：页面适配时已说明覆盖到的组件树和未覆盖子树。
 

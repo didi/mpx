@@ -10,6 +10,7 @@
   - [z-index 与层叠适配](#z-index-与层叠适配)
   - [sticky 吸顶替代方案](#sticky-吸顶替代方案)
   - [scroll-view 高度自适应](#scroll-view-高度自适应)
+  - [横向 scroll-view 内 Flex 子节点无法自动撑满](#横向-scroll-view-内-flex-子节点无法自动撑满)
 - [样式适配](#样式适配)
   - [文本溢出省略适配](#文本溢出省略适配)
   - [字体 PostScript name 兼容](#字体-postscript-name-兼容)
@@ -26,11 +27,11 @@
 
 ### 垂直 margin 折叠处理
 
-微信 WebView 的普通块级布局中，满足 CSS margin 折叠条件的节点关系可能发生垂直 `margin` 折叠：相邻兄弟元素、父元素与首个 / 末个流内后代、空块自身的上下 margin 都可能折叠。CSS margin 折叠只发生在垂直方向，水平方向的 `margin-left` / `margin-right` 不受影响。具体条件参考 [MDN · 掌握外边距折叠](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Guides/Box_model/Margin_collapsing)。
+微信 WebView 的普通块级布局会遵循 CSS margin 折叠规则。相邻兄弟、父元素与首个或末个流内后代，以及空块自身的上下 margin 都可能折叠。折叠只发生在垂直方向，`margin-left` / `margin-right` 不受影响。具体条件参考 [MDN · 掌握外边距折叠](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Guides/Box_model/Margin_collapsing)。
 
 Skyline 没有 BFC 和 margin 折叠机制，`margin-top` / `margin-bottom` 会作为节点自身间距参与布局，相邻节点的垂直 margin 通常会叠加。因此适配普通块级布局中满足 margin 折叠条件的节点关系时，需要显式处理原平台发生的 margin 折叠，避免同一组 margin 在 Skyline 中产生更大的间距。
 
-**先确认 WebView 会折叠，再改造：**不要仅因两个垂直 margin 同时存在就归到单侧。下表用于判断原 WebView 的最终渲染结构，不是 Skyline 的能力支持清单；例如 Flex / Grid、BFC 等条件描述的是原布局是否折叠。按节点关系逐项判断；命中任一“不要处理”条件，或无法确认原平台会发生折叠时，保留原 margin。
+**先确认 WebView 确实发生折叠，再改造。** 两个垂直 margin 同时存在，不代表一定要合并到一侧。下表判断的是原 WebView 布局是否会折叠，并非 Skyline 能力清单。如果符合“不处理条件”，或无法确认是否折叠，就保留原 margin。
 
 | 节点关系 | 确认会折叠 | 反向约束：以下情况不要处理 |
 | --- | --- | --- |
@@ -46,13 +47,13 @@ Skyline 没有 BFC 和 margin 折叠机制，`margin-top` / `margin-bottom` 会�
 **推荐处理原则：**
 
 1. **容器边界间距由父容器单侧表达**：外部间距使用父容器 margin，内部留白使用父容器 padding，不要依赖首个 / 末个子节点的 margin 与父容器折叠。
-2. **兄弟节点间距只交给一侧负责**：按模板顺序逐对检查普通块级布局中满足 margin 折叠条件的相邻兄弟节点，同时识别 `margin` 简写隐含的 `margin-top` / `margin-bottom`。将原平台折叠后的有效间距完整放在任意一侧，另一侧删除或置 `0`；常见的两侧非负 margin 场景取两者较大值，例如 `24rpx` 与 `12rpx` 归为单侧 `24rpx`，两侧均为 `20rpx` 时归为单侧 `20rpx`。不要因为 `margin` 属性本身受 Skyline 支持就跳过这项布局语义检查。
+2. **兄弟间距只由一侧设置**：按模板顺序检查相邻的普通块级兄弟，并留意 `margin` 简写中的 `margin-top` / `margin-bottom`。把 WebView 折叠后的实际间距放到其中一侧，另一侧删除或置 `0`。两侧都是非负值时取较大值，例如 `24rpx` 与 `12rpx` 合并为单侧 `24rpx`。
 3. **用模板状态标记首尾项**：需要去掉首项或末项间距时，用 `wx:class` + `index` 显式绑定单类。
 4. **必要时可显式声明纵向 Flex**：如果容器内仍存在难以拆解的垂直 margin 关系，可在确认不影响原布局的前提下，同时声明 `display: flex` 与 `flex-direction: column`，使原平台子节点也作为 flex item 参与布局，避免垂直 margin 折叠；若已通过 `padding` 和单侧 margin 明确处理间距，则不必额外添加 flex 声明。
 
-Skyline 中的 `overflow: hidden` 用于裁剪，不会像 WebView 一样建立 BFC。原 WebView 已通过它阻止父子 margin 折叠的场景，不属于父子折叠差异；有裁剪需求时仍需保留。添加纵向 Flex 是为了使 WebView 也采用不折叠的布局，并非在 Skyline 中创建 BFC；应同时声明 `display: flex` 和 `flex-direction: column`，核对原本折叠的间距及默认拉伸行为。
+Skyline 中的 `overflow: hidden` 只负责裁剪，不会像 WebView 一样建立 BFC。如果原 WebView 已靠它阻止父子 margin 折叠，就无需按折叠差异处理；仍有裁剪需求时继续保留。改用纵向 Flex 是为了让 WebView 也采用不折叠的布局，需要同时声明 `display: flex` 和 `flex-direction: column`，并检查间距和默认拉伸是否符合预期。
 
-**❌ 避免：**下例使用普通块级布局，其中“父元素与首个子元素”和“两个相邻兄弟元素”这两组节点关系均满足 margin 折叠条件。原平台中 `.card` 与标题的顶部 margin 折叠为 `24rpx`，标题和说明的相邻垂直 margin 折叠为 `16rpx`；Skyline 中兄弟间距为 `16 + 12 = 28rpx`，父子 margin 也分别参与布局，父容器外部 margin 为 `20rpx`，标题相对父容器顶部再偏移 `24rpx`，标题顶部的总偏移为 `44rpx`。下例父容器外部没有其他可折叠 margin，并显式使用普通块级布局。
+**❌ 避免：**下例同时依赖父子和相邻兄弟的 margin 折叠。WebView 中，`.card` 与标题的顶部 margin 折叠为 `24rpx`，标题和说明之间折叠为 `16rpx`。Skyline 不会折叠这些值：兄弟间距变为 `16 + 12 = 28rpx`，标题顶部相对父容器外部的总偏移变为 `20 + 24 = 44rpx`。
 
 ```html
 <!-- ❌ Bad — 依赖普通块级布局中的父子及兄弟垂直 margin 折叠 -->
@@ -178,7 +179,7 @@ Skyline 中的 `overflow: hidden` 用于裁剪，不会像 WebView 一样建立 
 
 1. 在 Skyline 下切换 `whitespace-nowrap`、`inline-block`、`inline-flex` 等兼容样式，非 Skyline 保持不变。
 2. 图标、文本同属一段内联内容时，放在同一个 `mpxTagName@wx="span"` 容器内。
-3. Skyline 下图片改为 `inline-block` 布局，组件 rich-text virtual-host 节点改为 `inline-flex`，此条规则仅用于现有业务结构的适配；基础 `span` + `text` / `image` / `navigator` 组合不能机械照搬样式，在有类似场景下再考虑应用这条规则。
+3. 当前业务结构在 Skyline 下需要将图片设为 `inline-block`，并将 rich-text 的 virtual-host 节点设为 `inline-flex`。基础的 `span` + `text` / `image` / `navigator` 组合不要直接套用这组样式，先确认是否存在相同问题。
 
 ```html
 <!-- truncate 为原子类中超长打点类，包含样式 `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`
@@ -299,18 +300,90 @@ Skyline 下 `scroll-view` 默认不会按内容高度自动撑开。优先在 `a
 </scroll-view>
 ```
 
+### 横向 scroll-view 内 Flex 子节点无法自动撑满
+
+Skyline 横向 `scroll-view` 默认不会将直接内容子节点沿横向主轴撑满整个滚动视口。直接子节点未声明主轴宽度时，会按自身内容确定宽度；即使该节点内部使用 Flex 布局，其子节点也无法仅靠 `flex: 1 0 auto` 撑满 `scroll-view`。
+
+**❌ Bad：scroll-view 的直接内容子节点未声明主轴宽度**
+
+```html
+<scroll-view
+  scroll-x="{{true}}"
+  enhanced="{{true}}"
+  enable-flex="{{true}}"
+  type="list"
+  show-scrollbar="{{false}}"
+>
+  <view class="estimate-form">
+    <view
+      class="form-item"
+      wx:for="{{operationList}}"
+      wx:key="key"
+    >{{item.title}}</view>
+  </view>
+</scroll-view>
+```
+
+```css
+.estimate-form {
+  display: flex;
+  height: 38px;
+  color: #444444;
+  background-color: #eef2f8;
+}
+
+.form-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 10px;
+  flex: 1 0 auto;
+  min-width: 25%;
+}
+```
+
+**Skyline 下的表现**：作为 `scroll-view` 直接子节点的 `.estimate-form` 不会默认撑满滚动视口，而是按内容宽度收缩；其内部多个 `.form-item` 也无法均分并撑满视口。
+
+**原因**：根本原因是横向 `scroll-view` 的直接内容子节点 `.estimate-form` 没有定义主轴宽度。`flex: 1 0 auto` 只在 `.estimate-form` 已确定的主轴空间内分配剩余空间，不能反向把 `.estimate-form` 撑到 `scroll-view` 的视口宽度。只设置子节点的 `min-width`、`flex-grow`，或者只给内容容器设置 `min-width` / `max-width`，都不能替代内容容器自身明确的 `width`。
+
+**✅ Good：为 scroll-view 的直接内容子节点声明主轴宽度**
+
+模板结构保持不变；如果内容容器预期至少铺满当前滚动视口，直接为它声明 `width: 100%`：
+
+```css
+.estimate-form {
+  display: flex;
+  width: 100%;
+  height: 38px;
+  color: #444444;
+  background-color: #eef2f8;
+}
+
+.form-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1 0 auto;
+  min-width: 25%;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+```
+
+`width: 100%` 适用于内容容器需要铺满当前滚动视口的场景。若内容容器本身需要宽于视口以承载固定数量或固定宽度的滚动项，应按实际布局基准设置明确的 `rpx` / `px` 宽度；关键是为 `scroll-view` 的直接内容子节点定义横向主轴宽度，不依赖默认拉伸或内部 Flex 子节点反向撑开。
+
 ## 样式适配
 
 ### 文本溢出省略适配
 
-文本溢出省略，或者文本超长打点，在 Skyline 下需要在对应的 `view`/`text`/`rich-text`/`special-text` 组件上增加 `max-lines`/`overflow` 属性。
+Skyline 的文本省略由组件属性控制，需要在实际显示文本的 `view` / `text` / `rich-text` / `special-text` 上设置 `max-lines` 和 `overflow`。
 
-> **完整扫描要求**：适配时须扫描组件/页面内**所有**包含文本省略样式（`text-overflow: ellipsis` / `-webkit-line-clamp` / `overflow: hidden` + `white-space: nowrap` 组合）的节点，逐一为其补齐 `max-lines`/`overflow`。
+> 适配时要检查组件或页面内所有使用省略样式的节点，包括 `text-overflow: ellipsis`、`-webkit-line-clamp`，以及 `overflow: hidden` 与 `white-space: nowrap` 的组合，并逐一补上 `max-lines` / `overflow`。
 
 > 注意事项
 >
 > **新增/替换 `text` 节点时务必把插值压回单行**：`<view>` 会折叠首尾空白，`<text>` 则字面保留。开闭标签之间留下换行 + 缩进会被当作前导/尾随空格渲染出来，影响 `max-lines`/`overflow` 的截断点与视觉对齐。属性多到必须折行时，只折属性、把插值紧贴 `>`。
-> **WebView 样式与 Skyline 属性共存**：原 WebView 的 WebKit 省略样式（`-webkit-line-clamp`/`-webkit-box-orient`/`display:-webkit-box`/`text-overflow:ellipsis`/`white-space: nowrap`/`overflow: hidden;`）**保留不删**（WebView 仍需要），同时在承载文本的 `view` / `text` / `rich-text` / `special-text` 节点**新增** `max-lines`/`overflow` 属性给 Skyline 使用。两者共存互不冲突。
+> **同时保留两端写法**：WebView 仍需要 `-webkit-line-clamp`、`-webkit-box-orient`、`display: -webkit-box`、`text-overflow: ellipsis`、`white-space: nowrap` 和 `overflow: hidden`。这些样式不要删除；在显示文本的节点上另加 `max-lines` / `overflow`，供 Skyline 使用。
 
 **单行省略**：
 
@@ -363,7 +436,7 @@ defineExpose({ renderer })
 
 ### 字体 PostScript name 兼容
 
-部分机型可能不支持 `font-weight: 500` / `600` 等数值加粗，但直接改为 `bold` / `700` 可能改变 WebView 视觉表现。命中时先澄清确认是否调整字重；确认后再统一修改，未确认时保留原值并说明 Skyline 兼容风险。涉及自定义字体时，先检查字体资源与 PostScript name 映射，再确定替代写法。
+部分机型可能无法正确显示 `font-weight: 500` / `600`，但直接改为 `bold` / `700` 也可能改变 WebView 的视觉效果。发现这类字重时，先确认是否允许调整；未确认前保留原值并说明风险。使用自定义字体时，还要检查字体资源与 PostScript name 的映射关系。
 
 确认需要调整后，可参考以下自定义字体 PostScript name 映射：
 
@@ -430,7 +503,7 @@ const animationData = ref(animation.opacity(0).step().export())
 
 Skyline 下 `text-decoration-line` 只取单值，`underline line-through` 这类双值组合会被截断为单值（实际只渲染其中一条线），WebView 则正常叠加两条线。删除线 + 下划线常见于「划线价 + 强调」类价格文案，直接迁移会丢失一条装饰线。
 
-由于 Skyline 下装饰线只能由 `text` 节点单值承载，**双值需拆成嵌套 `text` 节点，每层承担一条装饰线**。用 [运行时 renderer 判断](./skyline-runtime-practice.md#判断当前渲染模式) 区分：Skyline 下增加一层 `text` 节点，WebView 维持单节点双值，避免给 WebView 引入无谓的嵌套。
+Skyline 的 `text` 节点一次只能显示一种装饰线，因此双值要拆成嵌套的 `text`，每层设置一条。通过 [renderer](./skyline-runtime-practice.md#判断当前渲染模式) 区分结构：Skyline 增加一层 `text`，WebView 继续使用单节点双值。
 
 ```html
 <!-- ❌ Bad — Skyline 下双值被截断，只剩一条装饰线 -->
