@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "checks": {
+    "jest": {
+      "suites": 1,
+      "passed": 6,
+      "failed": 0
+    },
+    "eslint": "passed",
+    "model_evaluation": "not_run"
+  },
+  "scope": "仅定义一致性；没有执行38条模型行为断言。"
+}

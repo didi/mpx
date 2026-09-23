@@ -1,0 +1,17 @@
+{
+  "from_suite": 5,
+  "files": {
+    "eval-0-style-layout/input/style-card.mpx": "02971adbcf26eea73fdb3b249f04307a3cd9dc86e35d0db4a3890fc700c50370",
+    "eval-0-style-layout/input/task.md": "a44efa821bdf880284616ee996f6756e642097c7207ca8445dd8daa085e41f28",
+    "eval-1-page-scroll-sticky-layer-config/input/app.json": "08b6c0c8a67d9602540f6eba281fd3649e75b8aee175ce2640a7dd3a714cf1ac",
+    "eval-1-page-scroll-sticky-layer-config/input/orders.mpx": "6e0df185e713f033af82368b5acf069c43812259509b2a381d3ce946de0b60ad",
+    "eval-1-page-scroll-sticky-layer-config/input/service.js": "977d51816125ab91147f6e3b4bf9b764046fefc7ad958495285cd4489e3bf164",
+    "eval-1-page-scroll-sticky-layer-config/input/task.md": "60c885c444ec736083f501104497154b8bf59f5678259db536263bfb8ea95db0",
+    "eval-2-template-runtime-inline-animation/input/logo.svg": "c71a85400c9d1bc64393103364611c9370076caec60d65bc20fdcfdd97f6d29d",
+    "eval-2-template-runtime-inline-animation/input/row.wxml": "80f43cf55dbaf032920128f167d8b324b588e4dc01cbaa66e5f4063c394c876d",
+    "eval-2-template-runtime-inline-animation/input/task.md": "06aa06590d4181383b3947364d0f2a2d5fd51f06e597a415fecbe25503151b65",
+    "eval-2-template-runtime-inline-animation/input/user-list.mpx": "508fe0ecaa078cb526de50a5d8a0be13209401ee36feed974fea1c450f422e11",
+    "eval-3-new-task-board-page/input/app.json": "29beeb70b987df710a8381437d21a137ff68b9cab73eddace62ca26c1fa54dca",
+    "eval-3-new-task-board-page/input/task.md": "189132829ccbcdffb30464363ff1e0bfdc1e0482d594336237dacb4cfafd8582"
+  }
+}
