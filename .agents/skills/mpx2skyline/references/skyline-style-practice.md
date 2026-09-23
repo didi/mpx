@@ -6,6 +6,7 @@
 
 - [布局适配](#布局适配)
   - [垂直 margin 折叠处理](#垂直-margin-折叠处理)
+  - [Block 与 Inline 布局下子节点的垂直负 margin 失效问题](#block-与-inline-布局下子节点的垂直负-margin-失效问题)
   - [内联混排](#内联混排)
   - [z-index 与层叠适配](#z-index-与层叠适配)
   - [sticky 吸顶替代方案](#sticky-吸顶替代方案)
@@ -143,6 +144,84 @@ Skyline 中的 `overflow: hidden` 只负责裁剪，不会像 WebView 一样建�
   }
 </style>
 ```
+
+### Block 与 Inline 布局下子节点的垂直负 margin 失效问题
+
+Skyline 支持负 margin，但在以下结构中，由于父节点为 block/inline 布局会导致子节点的垂直负 `margin-bottom` 不会按 WebView 的结果参与后续节点占位计算：
+
+- 父容器为 block/inline 布局，这里需关注到两种隐式 block/inline 布局的情况：
+  - 使用自定义组件时且未开启 virtualHost 时，组件节点也未显式声明布局，默认为隐式 inline 布局
+  - `view` 组件未显式声明 `display`，在开启 `defaultDisplayBlock` 后为隐式 block 布局
+- 前一分支依赖子节点的 `height`、`padding-bottom` 与负 `margin-bottom` 推算占位；
+- 后一兄弟节点再通过负 `margin-top` 回拉并形成重叠；
+
+相同负 margin 在显式 Flex 布局下可以生效；差异来自 Skyline 对 Block / Inline 布局中负 margin 占位链的处理与 WebView 不一致。
+
+以下两种写法都可能触发差异。第一种直接使用原生节点，第二种把同类结构封装到自定义组件中：
+
+```html
+<!-- view 默认为隐式 Block -->
+<view class="card-container">
+  <view class="tips-wrapper">
+    <view class="inline-tips-bar"></view>
+  </view>
+  <view class="content-card"></view>
+</view>
+
+<view>
+  <view class="tips-wrapper">
+    <!-- 自定义组件：tips-bar-host 默认为隐式 Inline -->
+    <tips-bar class="tips-bar-host" />
+  </view>
+  <view class="content-card"></view>
+</view>
+
+<!-- 子组件 tips-bar -->
+<view class="tips-bar-container">
+  <view class="tips-bar-body"></view>
+</view>
+```
+
+```css
+.inline-tips-bar {
+  height: 92rpx;
+  padding-bottom: 92rpx;
+  margin-bottom: -28rpx;
+}
+
+.content-card {
+  margin-top: -92rpx;
+}
+```
+
+自定义组件内部即使把 `padding-bottom` 与负 margin 分别放在父子节点上，也会出现同类现象：
+
+```css
+.tips-bar-container {
+  padding-bottom: 92rpx;
+}
+
+.tips-bar-body {
+  height: 92rpx;
+  margin-bottom: -28rpx;
+}
+```
+
+**推荐：显式统一为纵向 Flex：** `view` 组件显式设置 Flex 布局；自定义组件场景显式设置组件节点为 flex 布局，不能只改组件内部节点：
+
+```css
+.card-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.tips-bar-host {
+  display: flex;
+  flex-direction: column;
+}
+```
+
+该方案让 WebView 与 Skyline 使用一致的 Flex 尺寸计算路径，组件内部原有负 margin 可继续保留。适配时只处理确实依赖负 margin 推算后续占位的节点链；普通单侧间距、直接作用于明确兄弟节点的负 margin，不要仅因数值为负而统一改成 Flex。
 
 ### 内联混排
 
