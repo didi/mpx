@@ -389,13 +389,10 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   const oldSize = sizeRef.current.size
   const systemInfo = getSystemInfo()
   const newSize = systemInfo.size
-
   if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
     return
   }
-
-  Object.assign(sizeRef.current, systemInfo)
-
+  sizeRef.current = systemInfo
   const type = mpxProxy.options.__type__
   const target = mpxProxy.target
   mpxProxy.callHook(ONRESIZE, [systemInfo])

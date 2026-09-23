@@ -274,10 +274,6 @@ module.exports = function (content) {
         })
       }
 
-      if (parts.styles.filter(style => !style.src).length === 0 && ctorType === 'app' && mode === 'ali') {
-        output += getRequire('styles', {}, {}, parts.styles.length) + '\n'
-      }
-
       // json
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json

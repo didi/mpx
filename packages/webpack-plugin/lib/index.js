@@ -83,6 +83,7 @@ const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
 const { startFSStripForCss, registerStripCompilation } = require('./style-compiler/strip-conditional')
+const injectAliCompatStyle = require('./utils/ali-compat-style')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
@@ -1742,6 +1743,10 @@ class MpxWebpackPlugin {
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
         if (isWeb(mpx.mode)) return
+
+        if (mpx.mode === 'ali' && mpx.appInfo.name) {
+          injectAliCompatStyle(compilation, mpx.appInfo.name + typeExtMap.styles)
+        }
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap

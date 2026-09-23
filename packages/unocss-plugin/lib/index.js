@@ -317,7 +317,8 @@ class MpxUnocssPlugin {
       if (isWeb(mode) || isReact(mode)) return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
-        stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
+        // 在 Mpx 主插件的资产处理前完成 UnoCSS 样式生成与注入。
+        stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS - 1
       }, async (assets) => {
         const error = (msg) => {
           compilation.errors.push(new Error(msg))
