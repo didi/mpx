@@ -1,76 +1,17 @@
 # Mpx2Web 模板差异参考
 
-本文档记录 Mpx 输出 Web 时的模板能力与平台差异，包括通用模板语法、Web 内建组件、浏览器原生能力和降级方案。通用部分与小程序、RN 保持同一套 `.mpx` 模板写法；涉及浏览器 DOM、Web 运行时组件或安全策略时，以本文的 Web 说明为准。
+本文只记录 Mpx 输出 Web 时需要核对的模板差异、内建组件边界和降级方案；通用语法沿用输入项目与 Mpx 文档。
 
 ## 目录
 
-- [数据绑定](#数据绑定)
-- [模板指令](#模板指令)
 - [事件处理](#事件处理)
-- [Slot](#slot)
-- [动态组件](#动态组件)
-- [WXML 模板](#wxml-模板)
 - [i18n 国际化](#i18n-国际化)
-- [无障碍访问](#无障碍访问)
 - [Web 原生标签](#web-原生标签)
-- [Web 标准属性](#web-标准属性)
+- [Web 样式差异](#web-样式差异)
+- [Vue 组件接入](#vue-组件接入)
 - [Web 模板编译限制](#web-模板编译限制)
 - [Web 内建组件](#web-内建组件)
-- [组件支持分级与适配原则](#组件支持分级与适配原则)
 - [Web 组件降级](#web-组件降级)
-- [专项入口](#专项入口)
-
----
-
-## 数据绑定
-
-Web 输出支持使用 Mustache 语法 `{{}}` 绑定 `data`、`computed` 和 `setup` 暴露的数据。
-
-- 文本与属性均可插值，例如 `<text>{{ message }}</text>`、`value="{{ inputValue }}"`。
-- 表达式支持算术、三元、逻辑运算、属性访问和可选链 `?.`。
-- 模板中可访问 `__mpx_mode__`、`__mpx_env__` 以及编译配置 `defs` 注入的变量。
-- Web 模板可以调用实例暴露的方法或函数，例如 `{{ getLabel() }}`。通用模板仍需核对小程序侧的表达式限制；展示数据加工优先使用 `computed` 等项目已有方式，这不是 Web 编译器禁止函数调用。
-
-```html
-<template>
-  <view>
-    <text>{{ user?.name || '游客' }}</text>
-    <text>{{ displayTitle }}</text>
-  </view>
-</template>
-```
-
----
-
-## 模板指令
-
-Web 输出支持以下通用模板指令：
-
-| 指令 | 说明 |
-| --- | --- |
-| `wx:if` / `wx:elif` / `wx:else` | 条件渲染 |
-| `wx:show` | 显示或隐藏节点 |
-| `wx:for` / `wx:for-item` / `wx:for-index` | 列表渲染与循环变量命名 |
-| `wx:key` | 列表节点标识 |
-| `wx:class` | 动态类名绑定 |
-| `wx:style` | 动态内联样式绑定 |
-| `wx:model` | 双向数据绑定 |
-| `wx:model-prop` / `wx:model-event` | 自定义双向绑定属性与事件 |
-| `wx:model-value-path` | 从事件参数中提取更新值，默认路径为 `value` |
-| `wx:model-filter` | 当前 Web 内建 `trim` 可用于字符串去空格；自定义组件方法存在实现缺陷，见下方说明 |
-| `wx:ref` | 获取基础节点或自定义组件实例 |
-
-当前 `packages/core/src/platform/builtInMixins/proxyEventMixin.web.js` 的 `__model` 在自定义过滤器分支中取得方法却未调用，会把函数本身写入绑定字段，不能按“已支持自定义过滤方法”使用。需要自定义转换时，可在普通事件处理器中读取 `event.detail`、完成转换并更新字段；不要因此禁用正常的 `wx:model` 或内建 `trim`。
-
-动态样式与类名优先使用 `wx:style`、`wx:class`，避免在 `style`、`class` 字符串中混合多段插值。对象字面量的 key 使用无引号 camelCase 写法，以保持小程序模板兼容。
-
-```html
-<view
-  class="card"
-  wx:class="{{ {active: isActive} }}"
-  wx:style="{{ {backgroundColor: cardColor} }}"
-/>
-```
 
 ---
 
@@ -81,7 +22,8 @@ Web 输出支持以下通用模板指令：
 - 绑定的处理器必须是已声明的组件实例方法，并保留原业务逻辑；动态绑定值应为方法名字符串，不能是 `{{true}}` 或函数对象。条件判断放在处理方法中，原有 `catch` 拦截行为应保留。
 - Web 不支持直接绑定 WXS 响应事件。需要保留小程序 WXS 路径时，使用平台隔离，为 Web 提供等效实例方法；不要将小程序 WXS 当作脚本中的 `this.tool` 调用。
 - 自定义事件的 `bubbles`、`composed`、`capturePhase` 在 Web 不生效，跨层通知见[脚本参考](./web-script-reference.md#triggerevent-的传播选项)。
-- 不假定 `mut-bind`、`mark:*` 的微信语义在 Web 生效；实际用到时，按原需求补充等效事件或传参方案。
+- Web 不支持 `mut-bind` 的互斥事件绑定，也不会将 `mark:*` 的值放入 `event.mark`。用到时保留小程序写法，在 Web 分支分别实现需要的事件处理和数据传递。
+- 只在使用自定义 `wx:model-filter` 时核对：当前 Web 不会执行自定义过滤方法，可能把方法本身写入绑定值；Web 侧改为从输入事件取值、调用原过滤方法再更新字段。普通 `wx:model` 和内建 `trim` 保持不变。
 
 例如，保留微信 WXS 绑定，仅为 Web 切换处理器；`onSliderClick` 需实现原有交互：
 
@@ -93,50 +35,6 @@ Web 输出支持以下通用模板指令：
 ```
 
 涉及拖动时，保持手势状态按实例隔离、取消时正确收尾，并避免拖动触发误点击或吞掉后续正常点击；在目标浏览器验证原有交互，不限定某套手势实现。
-
----
-
-## Slot
-
-默认插槽和具名插槽沿用 Mpx 通用语法，Web 无需额外启用 `multipleSlots`。同一份源码兼容微信或 QQ 时，保留多插槽所需的 `options.multipleSlots: true`。
-
----
-
-## 动态组件
-
-Web 输出支持通过 `<component is="...">` 动态切换自定义组件。`is` 的值应为当前文件 `usingComponents` 中注册或全局可见的组件名；节点属性会作为 props 传入目标组件，子节点作为插槽内容。
-
-建议使用 `range` 显式列出候选组件，避免其它平台构建时把 `usingComponents` 中所有组件都纳入候选集合。
-
-```html
-<component
-  is="{{ current }}"
-  range="card-a,card-b"
-  title="{{ title }}"
-/>
-```
-
-切换 `is` 会销毁旧组件并创建新组件，内部本地状态不会自动保留。`is` 用于自定义组件，不要传入 `view`、`text` 等基础组件名。
-
----
-
-## WXML 模板
-
-Web 输出支持 `<template name>`、`<template is>` 与 `<import>` 复用 WXML 具名模板。
-
-```html
-<template name="msgItem">
-  <view>{{ index }}: {{ msg }}</view>
-</template>
-
-<template is="msgItem" data="{{ index: item.index, msg: item.msg }}" />
-```
-
-- 模板片段只能访问 `data` 显式传入的字段。
-- `is` 可以使用表达式，但目标 `name` 必须在当前可见范围内定义。
-- `<import>` 只引入目标文件直接定义的模板，不递归透传目标文件再次引入的模板。
-- 跨端输出不支持使用 `include` 引用外联模板，应使用 `import`。
-- Web 侧定义体的单根限制与外部模板限制见[Web 模板编译限制](#web-模板编译限制)。
 
 ---
 
@@ -168,51 +66,26 @@ Web 的 `useI18n` 直接来自 `vue-i18n-bridge`。当前验证版本 9.14.1 的
 
 ---
 
-## 无障碍访问
-
-小程序模板可使用 `aria-role`、`aria-label` 表达基础语义，但当前 Web 编译器不会把 `aria-role` 转为浏览器标准 `role`。需要 Web 角色语义时，通过 `role@web` 补充，并检查最终 DOM；图标按钮等无可见文本的可点击区域应补充 `aria-label`。
-
-```html
-<view
-  aria-role="button"
-  role@web="button"
-  aria-label="{{ submitText }}"
-  bindtap="onSubmit"
->
-  <text>{{ submitText }}</text>
-</view>
-```
-
-`role` 只声明语义，不会自动增加键盘响应和可聚焦行为。需要完整的浏览器 ARIA、键盘和焦点能力时，按下方 [Web 标准属性](#web-标准属性) 使用 Web-only 模板，并在桌面键盘、移动端和主流读屏软件中验证。
-
-带可见文本的原生 `button` 已有控件语义和可访问名称，不需要重复添加 `aria-role="button"` / `aria-label`；非原生可点击节点才补对应语义。浏览器专属的 `role="dialog"`、`aria-modal`、`tabindex`、keydown 与焦点陷阱优先通过通用 `.mpx` 中的 `属性@web`、Web-only 节点和真实客户端脚本分支做最小隔离，通用小程序节点继续保留 `aria-role`、`aria-label` 和触摸事件。只有弹层结构或依赖图明显分叉时才新增 `.web.mpx`，不要仅为这些局部属性复制整份组件。
-
----
-
 ## Web 原生标签
 
 Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<canvas>`、`<svg>`、`<audio>`、`<iframe>` 或业务 H5 容器节点。原生标签属于 Web-only 内容时，应与通用模板隔离，避免通用构建解析到浏览器专属节点。
 
-```html
-<template>
-  <view class="chart-card">
-    <canvas class="chart-canvas"></canvas>
-    <svg class="chart-icon" viewBox="0 0 16 16">
-      <circle cx="8" cy="8" r="6"></circle>
-    </svg>
-  </view>
-</template>
-```
-
 不要仅凭标签名判断最终产物是否为原生 DOM。部分 HTML 同名标签会按 Mpx 基础组件语义编译，例如 `<video>`、`<button>`、`<input>`、`<form>` 会使用对应的 Web 内建组件；需要直接操作原生 DOM 或接入 H5 SDK 时，先核对编译产物，必要时使用无冲突的容器标签或 Web-only Vue 组件封装。
-
-节点访问优先使用 `wx:ref` 获取基础节点或组件实例；需要直接使用 `querySelector`、DOM API 或第三方 H5 SDK 时，应限制在 Web-only 逻辑中，并确认目标标签最终编译为原生 DOM 而非 Web 内建包装组件。
 
 ---
 
-## Web 标准属性
+## Web 样式差异
 
-小程序已支持的无障碍属性属于通用模板能力，不在本文重复记录。需要完整浏览器 ARIA 语义、焦点顺序或键盘导航时，可在 Web-only 模板中使用 `role`、`tabindex` 及浏览器支持的 `aria-*` 属性，并按 Web 可访问性标准设计交互。
+- Web 的 `rpx` 默认按 `750rpx = 100vw` 换算，可通过 `webConfig.transRpxFn`（自包含的普通函数表达式）自定义，移动端需在 HTML 中配置 viewport。
+- `view`、`image` 等基础标签在 Web 编译后可能变化，样式应使用稳定的类选择器。
+- 微信组件默认的样式隔离不会自动带到 Web。只有实际出现组件样式互相影响时，单个组件可用 `<style scoped>`；需要按文件范围统一隔离时，再用构建期 `autoScopeRules` 的 `include` / `exclude` 选取文件。
+- `externalClasses`：默认转换 `custom-class`、`i-class`。使用其它外部类名时，在实际构建配置的 Mpx 插件 `externalClasses` 数组中加入该名称（Mpx CLI 项目为 `mpx.config.js` 的 `pluginOptions.mpx.plugin.externalClasses`），同时保留已有名称；组件声明、调用方属性和模板占位类也须同名。
+
+---
+
+## Vue 组件接入
+
+Vue 组件的兼容版本与 Web 专属依赖隔离见[主 Skill](../SKILL.md#vue-组件接入)。
 
 ---
 
@@ -220,88 +93,23 @@ Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<can
 
 以下限制由 Web 模板编译链路决定：
 
-- Web 当前基于 Vue 2.7，单根要求针对最终 Vue 模板，不等于所有 `.mpx` 源模板必须单根。微信源码输出 Web 时，普通页面和未启用虚拟宿主的组件会由编译器注入根容器，可容纳多个并列节点；不要默认再添加包裹节点，以免改变布局或滚动结构。
+- 单根要求针对最终 Vue 模板，不等于所有 `.mpx` 源模板必须单根。微信源码输出 Web 时，普通页面和未启用虚拟宿主的组件会由编译器注入根容器，可容纳多个并列节点；不要默认再添加包裹节点，以免改变布局或滚动结构。
 - `.mpx` 文件中的 `<template>` 内容必须内联，暂不支持通过 `<template src="...">` 引入外部模板内容。
 - Web 输出暂不支持 `<template lang="...">` 模板预处理语言。
 - 具名模板 `<template name="...">` 的定义体必须只有一个元素根节点；多根时使用 `view` 或其它合适节点包裹。
 - Web 子组件命中 `autoVirtualHostRules`、实际按虚拟宿主编译时，不再注入普通组件根容器，模板必须只有一个真实根节点；多个根元素会在编译期报错。
-- `autoVirtualHostRules` 会改变组件的 Web 节点层级，不把它作为组件链的通用优化。仅在确认某个宿主节点导致实际布局、滚动或样式问题后精确匹配该组件，并分别验证类名、样式、事件和原目标端行为。
 
 组件内可以声明具名模板。Web 编译器会把本地 `<template name="...">` 编译为内部模板组件；“不支持组件内声明模板”不是当前能力限制，但定义体仍受上述单根约束。
-
-其它微信模板能力的 Web 边界：
-
-- `<block>` 是虚拟组织节点，不应依赖它生成真实 DOM。
-- `componentGenerics` / `generic:*` 和 `externalClasses` 有 Web 编译处理；不要仅因输出 Web 就替换。前者仍要求候选组件进入 Web 组件映射；使用 `externalClasses` 时，组件声明、调用方传值和目标节点应用需保持完整，不能只保留其中一处，也不能把它误当成浏览器全局 class 自动透传。
-- `wx:key` 使用当前模板编译器支持的稳定字段；微信特有写法（如 `*this`）在用于 Web 前应通过真实编译与列表重排验证。
-- 动态 slot 名、微信新增事件标记或未在本文明确列出的模板扩展，不默认视为 Web 已支持。
-
-这些限制只描述 Web 输出差异；`wx:if`、`wx:for`、`template is`、`import` 等通用模板语法仍参考 Mpx 公共基础。
 
 ---
 
 ## Web 内建组件
 
-部分小程序基础标签在 Web 输出时不会直接变成同名原生 DOM，而是由 `packages/webpack-plugin/lib/runtime/components/web` 下的 Vue 运行时组件承载。例如 `scroll-view`、`picker`、`swiper`、`movable-view`、`video`、表单控件和 `web-view`。
-
-判断支持情况时分三层：
-
-1. 目录或编译映射中存在对应实现，只能说明有 Web 内建承载。
-2. 组件 `props`、事件绑定和方法中存在对应逻辑，才能说明具体属性、事件或实例行为已实现。
-3. 有内建实现不代表与微信小程序当前版本的全部能力和边界行为完全一致。
-
-`mpx-keep-alive`、`mpx-tab-bar`、`mpx-tab-bar-container` 等是框架内部组件，不是业务模板中的同名公共基础标签。使用构建配置中的 `pluginOptions.mpx.plugin.webConfig.customBuiltInComponents` 覆盖实现后，应以自定义组件的属性、事件和子节点语义为准。
-
-### 组件支持分级与适配原则
-
-按业务实际使用的属性、事件和状态链判断组件能力，不能只看标签名、编译告警或 props 声明：
-
-| 类型 | 判断依据 | 处理方式 |
-| --- | --- | --- |
-| 组件及所用能力均已实现 | 编译映射、运行时 props、事件和方法形成完整消费链 | 保留通用组件，不增加平台分支 |
-| 组件可用，但个别属性、事件或模式缺失 | 组件有 Web 实现，但目标能力没有运行时读取、事件派发或业务效果 | 保留组件结构和已支持能力，只隔离缺失项 |
-| 组件整体没有 Web 实现 | 没有 Web 内建映射或运行时组件，同名标签只会成为普通 DOM 或未知节点 | 隔离原目标端组件及其依赖入口 |
-
-现成方案选择、平台隔离、TODO 与允许的降级统一执行 Skill 的[待接入规则](../SKILL.md#统一待接入规则)。本节只补充模板取证要求：
-
-- 按页面实际使用的数据、属性、事件载荷、选中状态和稳定 ID 确定范围，不补做未使用能力。
-- 整体缺失时同时隔离节点与依赖图；只用运行时 `wx:if` 隐藏节点不能证明 Web-only `.vue`、SDK、`usingComponents` 或模块导入已被移出其它目标产物。
-- 局部缺失时沿运行时消费链确认缺口，保留组件结构和其它已生效能力，不因编译告警或单个 prop 缺失重写整个组件。
-
-以下示例只展示平台隔离位置。整体缺失时直接按节点筛选，不使用 `wx:if@wx="{{true}}"` / `wx:if@web="{{false}}"` 这类恒定运行时条件：
-
-```html
-<map
-  @wx
-  latitude="{{mapCenter.latitude}}"
-  longitude="{{mapCenter.longitude}}"
-  markers="{{storeMarkers}}"
-  bindmarkertap="onMarkerTap"
-/>
-
-<view @web class="map-boundary">
-  <text>Web 地图能力待业务接入</text>
-</view>
-```
-
-只缺单个属性时保留公共组件，不复制整棵结构：
-
-```html
-<swiper
-  previous-margin="24rpx"
-  next-margin="24rpx"
-  display-multiple-items@wx="2"
-  bindchange="onBannerChange"
->
-  <swiper-item wx:for="{{banners}}" wx:key="id">
-    <view>{{item.title}}</view>
-  </swiper-item>
-</swiper>
-```
+以下属性、事件表列出已确认可用的能力；不支持或有限制的能力在对应组件下单列。
 
 ### 通用属性
 
-除[模板指令](#模板指令)与[事件处理](#事件处理)外，Web 基础节点和内建组件通常可使用以下通用属性：
+Web 基础节点和内建组件通常可使用以下通用属性：
 
 | 属性名 | 类型 | 说明 |
 | --- | --- | --- |
@@ -310,14 +118,14 @@ Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<can
 | style | string | 内联样式 |
 | hidden | boolean | 隐藏节点 |
 | data-* | any | 业务自定义数据；事件传参优先使用内联传参 |
-| aria-role | string | 小程序无障碍角色；Web 不自动转为标准 `role`，需按上述无障碍说明补充 |
+| aria-role | string | 小程序角色语义；Web 不会自动转成标准 `role`。业务需要该语义时补 `role@web` |
 | aria-label | string | 跨端无障碍文案 |
 
 Web-only 原生节点还可使用浏览器标准属性；包装型内建组件不保证透传任意原生属性，只使用本参考明确列出的属性。
 
 ### view
 
-普通 `view` 默认编译为原生 `div`；涉及 hover 属性、双向绑定或 `use-built-in` 等条件时使用 Vue 内建包装组件 `mpx-view`，提供点击态和事件处理。需要访问原生 DOM 时以实际编译产物为准。
+`view` 支持下列点击态属性。
 
 #### 属性
 
@@ -328,32 +136,29 @@ Web-only 原生节点还可使用浏览器标准属性；包装型内建组件�
 | hover-start-time | number | `50` | 按住后多久出现点击态，单位毫秒 |
 | hover-stay-time | number | `400` | 手指松开后点击态保留时间，单位毫秒 |
 
-`transitionend`、`animationstart`、`animationiteration`、`animationend` 等浏览器事件可按通用事件链路监听。普通动画绑定 `animation="{{ animationData }}"` 在 Web 会编译为 `v-animation` 指令，由运行时消费 `createAnimation().export()` 产生的动作数据；它不是依赖 `mpx-view` 同名 prop 实现的，不能因 props 中没有 `animation` 就判为不支持。RN 的 `enable-background`、`enable-animation`、`enable-fast-image` 等增强属性不属于这条 Web 动画链路。
+另支持 `animation="{{ animationData }}"`（由 `createAnimation().export()` 生成）及 `transitionend`、`animationstart`、`animationiteration`、`animationend` 事件。
 
 ### text
 
-Web 内建基础组件。内联文本渲染，处理 `selectable`、`space`、`decode` 及插槽文本。复杂富文本应使用 `rich-text`。
+复杂富文本使用 `rich-text`。
 
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| selectable | boolean | `false` | 文本是否可选；这是当前 Web 内建实现实际消费的属性 |
+| selectable | boolean | `false` | 文本是否可选 |
 | space | string |  | 连续空格显示方式，支持 `ensp`、`emsp`、`nbsp` |
 | decode | boolean | `false` | 是否解码 |
 
-#### 注意事项
-
-- `selectable`、`space`、`decode` 或显式 `use-built-in` 会让 `text` 使用 Web 内建实现；普通 `text` 默认输出为 `span`。
-- 当前 Web 内建实现没有独立的 `user-select` prop；需要文本可选时使用 `selectable`，不要把微信侧 `user-select` 属性直接视为 Web 已对齐。
+不支持微信的 `user-select` 属性；需要文本可选时使用 `selectable`。
 
 ### label
 
-Web 下 `label` 使用浏览器原生标签语义。`for` 应指向目标表单控件的 `id`；实际点击聚焦、键盘和读屏行为受最终 DOM 结构与浏览器实现影响。跨端表单标签场景应验证 `label` 包裹控件与 `for` 关联两种写法。
+`for` 应指向目标表单控件的 `id`；使用标签包裹控件或 `for` 关联控件时，点击聚焦行为按目标浏览器验证。
 
 ### rich-text
 
-Web 内建基础组件。使用 HTML 内容渲染 `nodes`；应关注内容可信度和 Web XSS 风险，不能等同于宿主侧富文本安全策略。
+`nodes` 中的 HTML 需确保来源可信；小程序的富文本安全策略不能直接等同于 Web。
 
 #### 属性
 
@@ -364,41 +169,35 @@ Web 内建基础组件。使用 HTML 内容渲染 `nodes`；应关注内容可�
 
 ### image
 
-Web 内建基础组件。把 `scaleToFill`、`aspectFit`、`aspectFill`、宽高自适应和裁剪定位类 `mode` 映射为 Web 尺寸、定位或 `object-fit` 行为，并转发加载/失败事件。宿主图片菜单等能力不能仅凭属性存在推断。
-
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | src | string |  | 图片资源地址、base64 格式数据或本地静态资源相对路径 |
 | mode | string | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right` |
-| lazy-load | boolean | `false` | 当前 Web 组件声明了 `lazyLoad`，但 render、watch 和加载逻辑没有消费它，因此不产生懒加载行为 |
-| show-menu-by-longpress | boolean | `false` | 当前 Web 组件声明了 `showMenuByLongpress`，但没有实现微信图片长按菜单 |
 
 #### 事件
 
 | 事件名    | 说明                                                     |
 | --------- | -------------------------------------------------------- |
-| binderror | 当错误发生时触发；当前 Web 内建实现的 `event.detail` 为空对象，不提供微信侧的 `errMsg` |
+| binderror | 加载失败时触发；`event.detail` 为空对象，不含微信的 `errMsg` |
 | bindload  | 当图片载入完毕时触发，`event.detail = { height, width }` |
 
 #### 注意事项
 
-- `image` 整体可用，`src`、`mode`、`bindload` 和 `binderror` 不应因 `lazy-load` 缺失而被替换或删除。将 `lazy-load` 限制到已支持的平台；Web 的原生 `loading="lazy"`、IntersectionObserver 或业务懒加载组件属于另行接入的方案，不是该属性的自动转换结果。
+- 不支持 `lazy-load`、`show-menu-by-longpress`；使用懒加载或图片长按菜单时，分别接入 Web 方案，保留其余图片能力。
 - image 组件默认宽度 300px、高度 225px
 - image 组件进行缩放时，计算出来的宽高可能带有小数，在不同 webview 内核下渲染可能会被抹去小数部分
 
 ### cover-view
 
-Web 输出会将 `cover-view` 降级为普通 `div`；当节点使用双向绑定等需要内建组件承载的能力，或显式设置 `use-built-in` 时，转换为 `mpx-view`。Web 没有小程序原生组件层级覆盖问题，因此不要依赖 `cover-view` 获得额外层级能力。
+`cover-view` 在 Web 可作为普通容器使用，但不提供小程序覆盖原生组件的层级能力。
 
 ### cover-image
 
-Web 输出将 `cover-image` 转换为 `mpx-image`，图片能力与 [image](#image) 的 Web 内建实现一致。它不提供小程序原生组件覆盖层级语义。
+`cover-image` 的 Web 图片能力见 [image](#image)；不提供小程序覆盖原生组件的层级能力。
 
 ### icon
-
-Web 内建基础组件。提供内置状态图标，支持 `type`、`size`、`color`；只支持下表列出的图标类型。
 
 #### 属性
 
@@ -409,8 +208,6 @@ Web 内建基础组件。提供内置状态图标，支持 `type`、`size`、`co
 | color | string |  | icon 的颜色，同 css 的 color |
 
 ### progress
-
-Web 内建基础组件。支持百分比、线宽、前景/背景颜色、文字和 active 动画；动画由 CSS transform/transition 模拟。
 
 #### 属性
 
@@ -436,7 +233,7 @@ Web 内建基础组件。支持百分比、线宽、前景/背景颜色、文字
 
 ### form
 
-Web 内建基础组件。注册后代表单项，按 `name` 汇总 `submit.detail.value`；`reset` 恢复挂载时保存的初始值。只有接入该注册协议的内建或兼容自定义控件才会自动进入表单值。
+仅收集已接入表单的控件，并按 `name` 汇总；`reset` 恢复控件初始值。自定义控件不会自动进入提交数据。
 
 #### 事件
 
@@ -447,20 +244,18 @@ Web 内建基础组件。注册后代表单项，按 `name` 汇总 `submit.detai
 
 ### input
 
-Web 内建基础组件。单行输入、value 同步、密码/输入类型、placeholder、disabled、maxlength 和焦点；底层受浏览器 input 类型、键盘和焦点策略约束。
-
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | value | string |  | 输入框的初始内容 |
-| type | string | `text` | input 的类型；`digit` 映射为浏览器 `number`，`text`、`number` 直接透传；`idcard` 会透传为非标准 HTML type 并由浏览器回退，不提供微信身份证键盘；不支持 `safe-password`、`nickname` |
+| type | string | `text` | 支持 `text`、`number`；`digit` 按浏览器数字输入处理 |
 | password | boolean | `false` | 是否是密码类型 |
 | placeholder | string |  | 输入框为空时占位符 |
 | disabled | boolean | `false` | 是否禁用 |
 | maxlength | number | `140` | 最大输入长度，设置为 -1 的时候不限制最大长度 |
-| auto-focus | boolean | `false` | 自动聚焦；受浏览器自动聚焦策略限制 |
-| focus | boolean | `false` | 获取焦点 |
+| auto-focus | boolean | `false` | 仅初始自动聚焦；受浏览器策略限制 |
+| focus | boolean | `false` | 仅初始聚焦，后续变更不会主动聚焦或失焦 |
 | cursor | number | `-1` | 指定光标位置；浏览器不支持选区的 input 类型可能受限 |
 | selection-start | number | `-1` | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用 |
 | selection-end | number | `-1` | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用 |
@@ -473,13 +268,9 @@ Web 内建基础组件。单行输入、value 同步、密码/输入类型、pla
 | bindfocus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
 | bindblur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
 
-当前 Web 内建实现没有微信软键盘的 `confirm-type`、`confirm-hold`、`cursor-spacing`、`adjust-position`、`hold-keyboard` 等宿主语义，也没有转换 `confirm` / `selectionchange` 为微信事件详情；需要时使用 Web-only 原生键盘事件实现。
-
-`auto-focus` 和 `focus` 只在渲染时写入原生 `autofocus` 属性，运行时没有监听它们的后续变化；不要依赖动态切换 `focus` 主动聚焦或失焦。
+不支持微信 `idcard` 键盘、`safe-password`、`nickname`、`confirm-type`、`confirm-hold`、`cursor-spacing`、`adjust-position`、`hold-keyboard`，也不提供 `confirm` / `selectionchange` 的微信事件详情。需要时在 Web 接入浏览器输入能力。
 
 ### textarea
-
-Web 内建基础组件。多行输入、value 同步、placeholder、disabled、maxlength、焦点及输入事件；浏览器自动高度、键盘避让与宿主行为不能默认等同。
 
 #### 属性
 
@@ -489,8 +280,8 @@ Web 内建基础组件。多行输入、value 同步、placeholder、disabled、
 | placeholder | string |  | 输入框为空时占位符 |
 | disabled | boolean | `false` | 是否禁用 |
 | maxlength | number | `140` | 最大输入长度，设置为 -1 的时候不限制最大长度 |
-| auto-focus | boolean | `false` | 自动聚焦；受浏览器自动聚焦策略限制 |
-| focus | boolean | `false` | 获取焦点 |
+| auto-focus | boolean | `false` | 仅初始自动聚焦；受浏览器策略限制 |
+| focus | boolean | `false` | 仅初始聚焦，后续变更不会主动聚焦或失焦 |
 | cursor | number | `-1` | 指定光标位置 |
 | selection-start | number | `-1` | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用 |
 | selection-end | number | `-1` | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用 |
@@ -503,15 +294,11 @@ Web 内建基础组件。多行输入、value 同步、placeholder、disabled、
 | bindfocus | 输入框聚焦时触发，`event.detail = { value }`，不支持 `height` |
 | bindblur | 输入框失去焦点时触发，`event.detail = { value }`，不支持 `encryptedValue`、`encryptError` |
 
-`auto-focus` 和 `focus` 只在渲染时写入原生 `autofocus` 属性，运行时没有监听它们的后续变化；动态聚焦需使用 Web DOM 能力并做好条件编译。
-
-#### 注意事项
-
-- 当前 Web 内建实现不支持 `auto-height`、placeholder 样式、微信软键盘配置以及 `confirm`、`linechange`、`selectionchange` 的微信事件语义；需要时使用 CSS 或 Web-only 原生事件实现。
+不支持 `auto-height`、placeholder 样式、微信软键盘配置以及 `confirm`、`linechange`、`selectionchange` 的微信事件语义；需要时按 Web 交互接入。
 
 ### button
 
-Web 内建基础组件。支持小程序风格的尺寸、类型、plain、loading、disabled 和 hover；`form-type` 可触发表单 submit/reset。小程序宿主 `open-type` 能力在 Web 编译时会被提示为不支持，应使用浏览器 API 或业务组件替代。
+不支持小程序宿主 `open-type` 能力；使用时按业务需求接入 Web 方案。
 
 #### 属性
 
@@ -530,8 +317,6 @@ Web 内建基础组件。支持小程序风格的尺寸、类型、plain、loadi
 
 ### switch
 
-Web 内建基础组件。switch/checkbox 两种展示，支持 checked、disabled、color、change，并参与 form。
-
 #### 属性
 
 | 属性名   | 类型    | 默认值    | 说明                           |
@@ -548,8 +333,6 @@ Web 内建基础组件。switch/checkbox 两种展示，支持 checked、disable
 | bindchange | 点击导致 checked 改变时会触发 change 事件，`event.detail = { value }` |
 
 ### slider
-
-Web 内建基础组件。min/max/step/value、轨道和滑块样式、显示值；由触摸位置计算数值，触发 `changing` 和 `change`，并参与 form。鼠标、触控和无障碍键盘体验需单独验证。
 
 #### 属性
 
@@ -577,7 +360,7 @@ Web 内建基础组件。min/max/step/value、轨道和滑块样式、显示值�
 
 ### radio-group
 
-Web 内建基础组件。管理组内单选值并触发 `change`，通过 `name` 参与 form。
+通过 `name` 参与 form。
 
 #### 事件
 
@@ -587,7 +370,7 @@ Web 内建基础组件。管理组内单选值并触发 `change`，通过 `name`
 
 ### radio
 
-Web 内建基础组件。支持 value、checked、disabled 和 color，必须放在兼容的 `radio-group` 关系中使用。
+与 `radio-group` 配合使用。
 
 #### 属性
 
@@ -595,14 +378,13 @@ Web 内建基础组件。支持 value、checked、disabled 和 color，必须放
 | --- | --- | --- | --- |
 | value | string |  | radio 标识，当该 radio 选中时，radio-group 的 change 事件会携带 radio 的 value |
 | disabled | boolean | false | 是否禁用 |
-| checked | boolean | false | 当前是否选中，可用来设置默认选中 |
-| color | string | `#09BB07` | Web 不支持通过该属性修改选中颜色 |
+| checked | boolean | false | 初始是否选中 |
 
-`checked` 只用于组件创建时初始化内部状态，当前 Web 实现没有监听后续 prop 变化；需要受控单选时应通过 group 交互更新并实测状态同步。
+不支持通过 `color` 修改选中颜色；`checked` 只用于初始选中，后续动态变更不会同步。
 
 ### checkbox-group
 
-Web 内建基础组件。汇总组内选中值数组并触发 `change`，通过 `name` 参与 form。
+通过 `name` 参与 form。
 
 #### 事件
 
@@ -612,7 +394,7 @@ Web 内建基础组件。汇总组内选中值数组并触发 `change`，通过 
 
 ### checkbox
 
-Web 内建基础组件。支持 value、checked、disabled 和 color，必须放在兼容的 `checkbox-group` 关系中使用。
+与 `checkbox-group` 配合使用。
 
 #### 属性
 
@@ -620,16 +402,13 @@ Web 内建基础组件。支持 value、checked、disabled 和 color，必须放
 | --- | --- | --- | --- |
 | value | string |  | checkbox 标识，选中时触发 checkbox-group 的 change 事件，并携带 checkbox 的 value |
 | disabled | boolean | `false` | 是否禁用 |
-| checked | boolean | `false` | 当前是否选中，可用来设置默认选中 |
-| color | string | `#09BB07` | checkbox 的颜色，同 css 的 color |
+| checked | boolean | `false` | 初始是否选中 |
 
-当前 Web 选中样式使用内置主题色，没有消费 `color` 的传入值；不要依赖该属性自定义颜色。
-
-`checked` 只用于组件创建时初始化内部状态，当前 Web 实现没有监听后续 prop 变化；不要把它当作可动态更新的受控属性。
+不支持通过 `color` 修改选中颜色；`checked` 只用于初始选中，后续动态变更不会同步。
 
 ### scroll-view
 
-Web 内建基础组件。基于 BetterScroll，支持横纵滚动、`scroll-top` / `scroll-left`、`scroll-into-view`、动画滚动、上下边界事件、滚动详情、鼠标滚轮、增强模式和自定义下拉刷新。使用 MutationObserver / ResizeObserver 刷新内容尺寸。行为、性能和原生页面滚动不同。
+Web 滚动基于 BetterScroll，与原生页面滚动行为不同。
 
 #### 属性
 
@@ -641,6 +420,7 @@ Web 内建基础组件。基于 BetterScroll，支持横纵滚动、`scroll-top`
 | lower-threshold | number | `50` | 距底部/右边多远时(单位 px),触发 scrolltolower 事件 |
 | scroll-top | number | `0` | 设置纵向滚动条位置 |
 | scroll-left | number | `0` | 设置横向滚动条位置 |
+| scroll-options | object | `{}` | Web 专属滚动配置；不能通过 `observeDOM` 开启自动 DOM 监听 |
 | scroll-with-animation | boolean | `false` | 在设置滚动条位置时使用动画过渡 |
 | enhanced | boolean | `false` | scroll-view 组件功能增强 |
 | refresher-enabled | boolean | `false` | 开启自定义下拉刷新 |
@@ -649,7 +429,6 @@ Web 内建基础组件。基于 BetterScroll，支持横纵滚动、`scroll-top`
 | refresher-default-style | string | `'black'` | 设置下拉刷新默认样式，支持 `black`、`white` |
 | refresher-background | string | `''` | 设置自定义下拉刷新背景颜色 |
 | refresher-triggered | boolean | `false` | 设置当前下拉刷新状态,true 表示已触发 |
-| enable-flex | boolean | `false` | Web 不支持该属性；需要 flex 布局时直接使用 Web CSS |
 
 #### 事件
 
@@ -666,18 +445,11 @@ Web 内建基础组件。基于 BetterScroll，支持横纵滚动、`scroll-top`
 | bindrefresherrestore | 自定义下拉刷新被复位时触发                 |
 | bindrefresherabort   | 自定义下拉刷新被中止时触发                 |
 
-上表使用 `bindscroll` 等事件名示例；当前 Mpx 编译器也支持 `.mpx` 中的 `@scroll`，沿用项目有效写法即可。事件名写法不改变对外事件契约。自定义 Vue 组件内部的原生 DOM 事件与对外 `$emit` 需区分，避免将已重发的事件再次透传；替换流程见 [H5 混合开发](./web-hybrid-dev.md#替换-scroll-view-时的契约核对)。
-
-#### 注意事项
-
-- Web 实现基于 BetterScroll；内容或容器尺寸动态变化后由 MutationObserver、ResizeObserver 刷新，复杂异步布局仍应验证滚动范围是否及时更新。
-- `binddragstart`、`binddragging`、`binddragend` 仅在 `enhanced` 开启时触发。
-- 下拉刷新和鼠标滚轮行为受 BetterScroll 配置及浏览器输入设备影响。
-- 使用构建配置中的 `pluginOptions.mpx.plugin.webConfig.customBuiltInComponents` 替换 `scroll-view` 后，上述行为不会由框架内建实现继续提供。`$attrs` / `$listeners` / slot 只能透传结构；调用点使用到的受控位置、`scroll-into-view`、滚动详情和上下/左右边界事件必须由自定义组件显式实现。
+不支持 `enable-flex`，需要 Flex 布局时使用 Web CSS。复杂异步布局完成后，检查滚动范围是否更新；下拉刷新与鼠标滚轮受浏览器输入设备影响。
 
 ### sticky-header
 
-Web 内建基础组件。消费 scroll-view 提供的滚动偏移，通过 transform 模拟吸顶并支持顶部偏移；只支持作为 `scroll-view` 或 `sticky-section` 的直接子节点。
+只支持作为 `scroll-view` 或 `sticky-section` 的直接子节点。
 
 #### 属性
 
@@ -692,22 +464,11 @@ Web 内建基础组件。消费 scroll-view 提供的滚动偏移，通过 trans
 | --- | --- |
 | bindstickontopchange | 吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false |
 
-#### 注意事项
-
-- Web 运行时提供 sticky-header 内建实现；同一模板输出其它平台时需另行核对目标平台支持情况。
-- Web 下只支持作为 `scroll-view` 或 `sticky-section` 的直接子节点；吸顶位置依赖父级提供的滚动偏移和自身布局测量。
-
 ### sticky-section
 
-Web 内建基础组件。提供吸顶分组结构，自身逻辑较轻，需要与 sticky-header、scroll-view 组合。
-
-#### 注意事项
-
-- Web 运行时提供 sticky-section 内建实现；同一模板输出其它平台时需另行核对目标平台支持情况。
+与 `scroll-view`、`sticky-header` 配合使用。
 
 ### swiper
-
-Web 内建基础组件。基于 BetterScroll Slide，支持 current、指示点、自动播放、间隔、动画时长、循环和纵向切换，触发 change/transition/animationfinish；ResizeObserver 用于尺寸变化刷新。
 
 #### 属性
 
@@ -723,8 +484,9 @@ Web 内建基础组件。基于 BetterScroll Slide，支持 current、指示点�
 | circular | boolean | `false` | 是否采用衔接滑动 |
 | vertical | boolean | `false` | 滑动方向是否为纵向 |
 | easing-function | string | `default` | 支持 `linear`、`easeInCubic`、`easeOutCubic`、`easeInOutCubic`；`default` 使用 BetterScroll 默认缓动 |
-| previous-margin | string |  | 当前运行时通过 `previousMargin` 计算前边距 |
-| next-margin | string |  | 当前运行时通过 `nextMargin` 计算后边距 |
+| previous-margin | string |  | 前边距 |
+| next-margin | string |  | 后边距 |
+| scroll-options | object | `{}` | Web 专属 BetterScroll 初始化选项；仅需调整默认滑动行为时传入 |
 
 #### 事件
 
@@ -734,11 +496,11 @@ Web 内建基础组件。基于 BetterScroll Slide，支持 current、指示点�
 | bindtransition | swiper-item 位置变化时触发，`event.detail = {dx, dy}` |
 | bindanimationfinish | 动画结束时触发，`event.detail = {current, currentItemId, source}` |
 
-这是组件可用但部分属性缺失的情况：当前 Web 运行时会读取 `previous-margin` 和 `next-margin`，不能因转换阶段出现 Web 告警就删除它们或判定整个 swiper 不可用。当前运行时没有 `displayMultipleItems` 和 `skipHiddenItemLayout` 的 props 或布局消费链，因此不支持 `display-multiple-items`、`skip-hidden-item-layout`。保留同一个 swiper 的 current、change、前后边距和全部子项，只把缺失属性限制到支持平台。多项同时展示需要实际轮播组件和交互方案；静态 Grid、截断数据不具备等价轮播能力。
+不支持 `display-multiple-items`、`skip-hidden-item-layout`；只隔离这两个属性，保留其他轮播能力。需要多项同屏时接入实际 Web 轮播方案。
 
 ### swiper-item
 
-Web 内建基础组件。提供 swiper 所需子项结构，应作为 swiper 直接子项使用，不是独立轮播容器。
+作为 `swiper` 的直接子项使用。
 
 #### 属性
 
@@ -748,7 +510,7 @@ Web 内建基础组件。提供 swiper 所需子项结构，应作为 swiper 直
 
 ### picker
 
-Web 内建基础组件。基于 BetterScroll Wheel 的弹层滚轮，支持 `selector`、`multiSelector`、`time`、`date`，处理确认、取消、change 和 columnchange。这是模式局部支持：当前 Web 运行时的 picker 数据和确认逻辑没有 `region` 分支，因此不支持微信 `region` 模式，但不能据此否定其它四种模式。Web 地区选择方案需把名称和地区代码归一到原页面状态；有限按钮选项不具备完整地区选择能力。
+不支持 `region`；需要地区选择时单独接入 Web 方案，并保留原页面使用的地区名称与代码。
 
 #### 属性
 
@@ -792,8 +554,10 @@ Web 内建基础组件。基于 BetterScroll Wheel 的弹层滚轮，支持 `sel
 | 属性名 | 类型   | 默认值  | 说明                                        |
 | ------ | ------ | ------- | ------------------------------------------- |
 | value  | string | `''` | 表示选中的时间，格式为"hh:mm"               |
-| start  | string | `1970-01-01` | 时间模式使用时应显式传入合法的 "hh:mm" |
-| end    | string | `2100-01-01` | 时间模式使用时应显式传入合法的 "hh:mm" |
+| start  | string | `1970-01-01` | 时间模式传入时使用 "hh:mm" |
+| end    | string | `2100-01-01` | 时间模式传入时使用 "hh:mm" |
+
+`time` 模式省略 `start` / `end` 时，默认值格式不符，可能使滚轮异常；遇到问题时，仅在 Web 提供符合业务的 `hh:mm` 范围，已有有效范围的调用无需修改。
 
 #### 多列选择器：时间选择器：mode = date
 
@@ -816,8 +580,6 @@ fields 有效值：
 
 ### picker-view
 
-Web 内建基础组件。管理内嵌多列选择值、选中区域和 change 汇总。
-
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
@@ -836,15 +598,15 @@ Web 内建基础组件。管理内嵌多列选择值、选中区域和 change �
 
 ### picker-view-column
 
-Web 内建基础组件。单列 Wheel 实现，向直接父级 picker-view 汇报滚动开始、结束和索引变化；不要脱离 picker-view 独立使用。
+作为 `picker-view` 的直接子节点使用。
 
 ### movable-area
 
-Web 内建基础组件。提供移动边界和尺寸引用，使用 ResizeObserver 通知子项刷新。
+与 `movable-view` 配合使用。
 
 ### movable-view
 
-Web 内建基础组件。基于 BetterScroll Movable/Zoom，支持 none、horizontal、vertical、all 方向，x/y 外部控制、惯性、越界回弹、阻尼、摩擦、禁用、动画和双指缩放；触发 change、scale 及触摸方向事件。必须与 movable-area 组合。
+与 `movable-area` 配合使用。
 
 #### 属性
 
@@ -873,11 +635,11 @@ Web 内建基础组件。基于 BetterScroll Movable/Zoom，支持 none、horizo
 | htouchmove | 初次手指触摸后移动为横向的移动时触发                  |
 | vtouchmove | 初次手指触摸后移动为纵向的移动时触发                  |
 
-当前 Web 实现虽然通过 `bindscale` 派发缩放事件，但构造出的事件对象 `type` 为 `change`；业务应以绑定入口和 `detail` 为准，不要依赖 `event.type === 'scale'`。
+`bindscale` 的 `event.type` 在 Web 为 `change`；识别缩放请根据绑定入口与 `event.detail`，不要判断 `event.type === 'scale'`。
 
 ### navigator
 
-Web 内建基础组件。按 `open-type` 接入 navigate、redirect、navigateBack、reLaunch 等 Web 路由能力，并支持 hover 反馈。最终行为受 Mpx Web router 约束，不是浏览器普通链接的完整替代。
+用于 Mpx 应用内路由，支持的 `open-type` 见下表。
 
 #### 属性
 
@@ -891,20 +653,18 @@ Web 内建基础组件。按 `open-type` 接入 navigate、redirect、navigateBa
 | url | string |  | 跳转链接 |
 | delta | number | `1` | 当 open-type 为 `navigateBack` 时有效，表示回退的层数 |
 
-运行时组件保留了 `switchTab` 分支，但当前模板转换规则会对该值给出 Web 不支持提示，因此不要把它作为稳定能力使用；`navigateTo` 是 API 名，`navigator` 的 `open-type` 对应值是 `navigate`。
+不支持 `open-type="switchTab"`；tabBar 跳转使用 `mpx.switchTab`。`navigateTo` 是 API 名，`navigator` 的对应值是 `navigate`。
 
-普通声明式跳转保留 `navigator` 时，把错误值改为 `navigate`，不要仅为了绕开 `open-type` 差异无理由替换组件。若业务需要 `navigateTo({ events, success })` 建立 EventChannel，声明式 `navigator` 无法表达这组回调，此时应使用具备交互语义的 `button` 调用脚本导航；不要为了形式上保留 `navigator` 制造重复跳转。tabBar 跳转继续使用脚本中的 `mpx.switchTab`。
+普通跳转继续使用 `navigator`；只有 Web 需要通过 `navigateTo({ events, success })` 建立 EventChannel 时，才为 Web 接入脚本导航并保留小程序原入口，不要同时显示两个可点击入口。
 
 ### video
-
-Web 内建基础组件。包装 HTML video 并接入内置播放器控件，支持 src、poster、controls、autoplay、loop、muted、初始位置和下表列出的播放器配置，转换播放、暂停、结束、时间、全屏、错误等事件。控件显隐事件存在下述实现缺陷；浏览器自动播放、全屏和媒体格式受浏览器策略限制。
 
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | src | string |  | 要播放视频的资源地址或本地静态资源相对路径 |
-| controls | boolean | `true` | 初始化时是否显示默认播放控件；动态切换存在下述实现缺陷 |
+| controls | boolean | `true` | 初始是否显示默认播放控件 |
 | autoplay | boolean | `false` | 是否自动播放 |
 | loop | boolean | `false` | 是否循环播放 |
 | muted | boolean | `false` | 是否静音播放 |
@@ -919,7 +679,7 @@ Web 内建基础组件。包装 HTML video 并接入内置播放器控件，支�
 | show-mute-btn | boolean | `false` | 是否显示静音按钮 |
 | playsinline | boolean | `true` | 是否添加浏览器行内播放相关属性 |
 
-运行时还声明了弹幕、投屏、画中画、旋转、手势等若干与微信同名的 props，但当前组件逻辑没有消费它们。仅声明 prop 不代表功能已实现，未列入上表的属性按 Web 不支持处理。
+不支持微信的弹幕、投屏、画中画、旋转和手势类属性；使用时单独接入 Web 方案。
 
 #### 事件
 
@@ -928,31 +688,25 @@ Web 内建基础组件。包装 HTML video 并接入内置播放器控件，支�
 | bindplay | 当开始/继续播放时触发 play 事件 |
 | bindpause | 当暂停播放时触发 pause 事件 |
 | bindended | 当播放到末尾时触发 ended 事件 |
-| bindtimeupdate | 播放进度变化时触发；当前 Web 内建实现不保证小程序的 `event.detail.currentTime` / `event.detail.duration` 字段 |
+| bindtimeupdate | 播放进度变化时触发；不保证微信的 `event.detail.currentTime` / `event.detail.duration` 字段 |
 | bindfullscreenchange | 视频进入和退出全屏时触发，`event.detail = {fullScreen}` |
 | bindwaiting | 视频出现缓冲时触发 |
 | binderror | 视频播放出错时触发 |
-| bindloadedmetadata | 视频元数据加载完成时触发；当前 Web 内建实现不保证小程序的 `event.detail.width` / `event.detail.height` / `event.detail.duration` 字段 |
-| bindcontrolstoggle | 当前 Web 实现存在缺陷：动态修改 `controls` 时构造事件会抛错，不能视为已可靠支持 `{show}` 通知 |
+| bindloadedmetadata | 视频元数据加载完成时触发；不保证微信的 `event.detail.width` / `event.detail.height` / `event.detail.duration` 字段 |
 | bindseekcomplete | seek 完成时触发，`event.detail = {position}` |
 | bindprogress | 缓冲进度变化时触发，`event.detail = {buffered}` |
 
-#### 注意事项
-
-- 自动播放、行内播放和全屏能力受浏览器策略限制；部分移动浏览器要求静音或用户手势后才能开始播放。
-- `controls="{{ false }}"` 时 Web 实现不会使用 `poster` 初始化播放器封面。
-- 当前 `mpx-video.vue` 的 `controls` watcher 向 `inheritEvent` 传入空对象，而 `getInnerListeners.js` 会访问该对象上不存在的事件方法并调用 `.bind()`，导致派发前抛错；该 watcher 也未同步更新控件显隐样式。初始 `controls` 配置与动态切换应分开判断，不能只绑定 `bindcontrolstoggle` 就认定动态切换可用。
-- `.mpx` 小程序业务方法应保持 Mpx 事件形态并读取 `event.detail`，不要增加 `event.target` / `event.currentTarget` 的浏览器分支。需要隔离缺失事件时，只隔离对应监听与展示，Web 继续使用内建 video 已支持的播放能力。
+不可靠：动态修改 `controls` 可能报错，`bindcontrolstoggle` 不能作为有效的 `{show}` 通知。初始 `controls=false` 时也不会显示 `poster` 封面。自动播放、行内播放和全屏受浏览器策略限制，部分设备要求静音或用户手势。
 
 ### web-view
 
-Web 内建基础组件。使用 iframe 加载页面，追加实例标识并通过 postMessage 处理消息、导航和自定义 API 调用。仍受 X-Frame-Options/CSP、跨域、来源校验和浏览器嵌入策略约束；桥接细节读取 `webview-bridge-reference.md`。
+加载 Web 页面；消息接收能力见下表。
 
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| src | string |  | webview 指向网页的链接，如果需要对跳转的 URL 设定白名单可跳转，需要在业务跳转之前处理该逻辑 |
+| src | string |  | iframe 页面地址；配置 `webviewConfig.hostWhitelists` 后按名单校验来源 |
 
 #### 事件
 
@@ -960,17 +714,13 @@ Web 内建基础组件。使用 iframe 加载页面，追加实例标识并通�
 | ----------- | ----------------------------------- |
 | bindmessage | iframe 页面通过 postMessage 向容器传递数据 |
 | bindload    | 转发 iframe 的 `load` 事件，不保证业务页面内容成功可用 |
-| binderror   | 当前实现中 `currentUrl` 为空时触发，例如空地址或白名单拒绝；不是通用的网络、HTTP 或嵌入策略错误兜底 |
-
-#### 注意事项
-
-- 被打开的 H5 页面需要按 [WebView Bridge 参考](./webview-bridge-reference.md) 接入通信 SDK；同时配置 Web 侧 host 白名单并遵守浏览器来源校验、跨域和 iframe 嵌入策略。
+| binderror   | 空地址或来源白名单拒绝时触发；不覆盖网络、HTTP 或嵌入策略错误 |
 
 ---
 
 ## Web 组件降级
 
-下表集中记录整体缺少 Web 内建实现的组件及可用的 Web 方案方向；是否接入具体方案仍按[组件支持分级与适配原则](#组件支持分级与适配原则)处理。
+下表记录当前没有 Web 实现的组件及可用方案方向。
 
 | 组件 | Web 侧处理 |
 | --- | --- |
@@ -990,15 +740,9 @@ Web 内建基础组件。使用 iframe 加载页面，追加实例标识并通�
 | `root-portal` / `page-container` | portal/dialog 或业务组件，并接入原状态和事件。 |
 | `share-element` / `snapshot` | 使用 Web View Transition、Canvas 或业务截图方案；不具备微信同名宿主语义。 |
 | `grid-view` / `grid-item` / `list-view` / `list-item` | 业务列表或网格组件，并接入原数据、稳定 key 和真实 ID；CSS Grid、Flex 或普通列表只提供简单布局，不具备原组件语义。 |
+| `section-list`（RN 扩展组件） | 当前仅支持 RN；Web 需要列表时接入 Web 组件，并隔离 RN 组件注册与依赖。 |
 | `nested-scroll-header` / `nested-scroll-body` / `draggable-sheet` | 使用 Web-only 滚动协调或抽屉组件，并验证触摸和页面滚动冲突。 |
 | `navigation-bar` | 使用 Mpx Web 路由、页面配置或 Web-only 导航组件。 |
 | `custom-wrapper` | Web 没有微信原生自定义组件更新边界语义；使用普通容器并按 Web 渲染性能优化。 |
 
 `canvas` 在 Web 下可作为原生 `<canvas>` 使用；复杂场景应结合 Web Canvas API 或业务封装处理。
-
----
-
-## 专项入口
-
-- `web-view` 的组件属性和事件保留在本文件；通信协议、宿主配置、白名单与来源安全统一见 [WebView Bridge 参考](./webview-bridge-reference.md)。
-- 自定义或替换 Web 内建组件的配置与接入约束统一见 [H5 生态混合开发](./web-hybrid-dev.md#自定义-web-内建组件)。

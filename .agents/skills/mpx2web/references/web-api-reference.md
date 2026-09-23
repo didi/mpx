@@ -47,67 +47,11 @@
 
 ## 使用说明
 
-输出 Web 时，Mpx 提供三种官方 API 调用路径：
-
-- `srcMode: 'wx'` 的业务源码可以保留 `wx.xxx`。跨平台输出时，webpack-plugin 默认会在 `transMpxRules` 命中的模块中将宿主全局调用转换到 Mpx API。
-- 已经采用 `mpx.xxx` 的项目可以在应用入口执行 `mpx.use(apiProxy, options)`，继续使用本参考中列出的 Web 环境 API。
-- 也可以从 `@mpxjs/api-proxy` 命名导入 API；这种调用不经过应用级 `mpx.use`，因此不会继承其 `options`、`custom` 和 Promise 化设置。对于 `request` 等任务 API，原始命名导入会直接返回任务实例。
-
-不要仅因为输出 Web，就机械地把 `wx.xxx` 全部改成 `mpx.xxx`，或反向改写已有的 `mpx.xxx`。先确认项目的 `srcMode`、`transMpxRules` 和现有 API 接入方式，再保持原调用链。
-
-```js
-import mpx from '@mpxjs/core'
-import apiProxy from '@mpxjs/api-proxy'
-
-mpx.use(apiProxy, {
-  usePromise: true,
-  whiteList: [],
-  blackList: [],
-  custom: {
-    web: {
-      myCustomApi () {
-        // 仅在 Web 编译目标下挂载为 mpx.myCustomApi
-      }
-    }
-  }
-})
-```
-
-若无需配置，可简写为 `mpx.use(apiProxy)`。
-
-### 跨平台 API 改造决策
-
-- 先查本文支持范围。API Proxy 已支持的能力继续走项目已有的官方调用路径：可保留会被跨端编译转换的 `wx.xxx`，可沿用应用入口配置后的 `mpx.xxx`，也可在不依赖应用级配置时使用 `@mpxjs/api-proxy` 命名导入。不要因为输出 Web 而增加平台分支或机械改名。
-- 本文标为不可用、不支持或未列出的宿主能力统一执行 Skill 的[待接入规则](../SKILL.md#统一待接入规则)。各 API 章节只说明支持状态和具体差异。
-- 命名导入是官方用法，但它不继承应用入口的 `options`、`custom` 与 Promise 化配置。只有调用不依赖这些配置时才沿用或采用命名导入；依赖统一配置时使用应用级 `mpx.xxx`，或保留会被编译转换的宿主调用。
-- 不为已支持 API 再增加 `fetch`、浏览器跳转、弹窗或无业务协议的通用包装层；保持原业务调用链，只隔离真正缺失的能力。
-
-### options
-
-| 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `usePromise` | `boolean` | `false` | 为符合 Promise 化规则的异步 API 增加 Promise 返回值。 |
-| `whiteList` | `string[]` | `[]` | 强制指定 API 参与 Promise 化，可覆盖内置排除规则。 |
-| `blackList` | `string[]` | `[]` | 指定 API 保持原始回调风格；与 `whiteList` 重复时白名单优先，应避免重复配置。 |
-| `custom` | `Object` | `{}` | 按编译目标扩展或覆盖 API；Web 对应键为 `web`。 |
-
-### Promise 化
-
-同步 API、监听 API、名称以 `create` 开头的上下文工厂、名称以 `Sync` 结尾的 API，以及内置黑名单中的 API 默认不会 Promise 化。单次调用可在第一个参数对象中传入 `usePromise: false`，临时保留回调风格。
-
-`request`、`connectSocket` 等 API 可返回任务实例。开启 `usePromise: true` 后，Promise 的 `__returned` 属性保留原始任务实例；需要取消任务时，可以通过 `promise.__returned.abort()` 操作。也可以为单次应用级调用传入 `usePromise: false`，或直接使用不经过 Promise 化的原始命名导入，取得任务实例并使用回调。这些都是框架支持的契约，应根据当前调用链选择，不要为了固定写法强制互换。
-
-### 支持范围
-
-本文按当前 `packages/api-proxy/src/platform/api/**/index.web.js` 的公开业务 API 维护完整 Web 支持清单。本文列为支持的 API 才可按 Web 已支持能力处理；列为不可用的导出按不支持处理；本文未列出的 API 也视为 Web 不支持。
-
-`next-tick/index.web.js` 额外导出的 `isNative` 是 `nextTick` 的内部调度辅助函数，不属于业务 API，不应在业务代码中调用。
-
-### 浏览器与 SSR
-
-依赖界面、媒体、位置、网络状态或浏览器存储的 API 应在客户端生命周期内调用；需要操作页面节点的 API 应在组件挂载后调用。SSR 渲染阶段不要调用此类 API；`createSelectorQuery`、`createIntersectionObserver` 当前会输出警告并返回 `undefined`。`base64ToArrayBuffer`、`arrayBufferToBase64` 等纯 JavaScript 能力不受此限制。各 API 小节只记录额外的环境差异。
-
-**自定义覆盖与扩展**：Web 默认能力不满足业务需求时，可通过 `custom.web` 提供自定义 API。同名 API 会覆盖默认能力，新名称会作为 Web 专属扩展挂到 `mpx` 上。
+- Web 实际用到、且本文确认支持的 `wx.xxx`，优先在 Web 有效代码中显式改为 `mpx.xxx`；应用入口需先用 `mpx.use(apiProxy)` 安装 `@mpxjs/api-proxy`。共享代码也供微信构建时，只有微信入口同样安装代理且调用契约一致，才直接修改共享调用；否则只改 Web 分支或平台文件，保留微信的 `wx.xxx`。
+- 已有 `srcMode: 'wx'` 且命中 `transMpxRules` 的调用可继续使用：Web 构建会把 `wx.xxx` 转到 Mpx API，无需批量修改未涉及的代码。
+- Web 需要覆盖或扩展 API 时，可在安装代理时提供 `custom.web`；同名 API 会被覆盖。
+- 本文只列 Web 可用的 API、入参和结果字段；未列出的小程序能力按 Skill 的[待接入规则](../SKILL.md#统一待接入规则)处理。返回 `null` 的兼容占位字段不作为可用字段列出；通用 `success` / `fail` / `complete` 回调不重复列。
+- SSR 服务端不调用依赖浏览器的 API；节点查询在组件挂载后执行。`createSelectorQuery`、`createIntersectionObserver` 在服务端会返回 `undefined`。
 
 ---
 
@@ -133,7 +77,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-Web 下暂不要使用该 API 处理标准 `ArrayBuffer`；跨端编码需求使用业务已验证的统一方案。
+Web 直接传标准 `ArrayBuffer` 会得到空字符串；在 Web 调用处改传 `new Uint8Array(buffer)`，例如 `mpx.arrayBufferToBase64(new Uint8Array(buffer))`。已传 `Uint8Array` 时无需修改；共享代码保留微信侧原参数。
 
 #### 返回值
 
@@ -164,15 +108,12 @@ Web 下暂不要使用该 API 处理标准 `ArrayBuffer`；跨端编码需求使
 | `pixelRatio` | `number` | 设备像素比。 |
 | `screenWidth` / `screenHeight` | `number` | 屏幕宽高。 |
 | `windowWidth` / `windowHeight` | `number` | 文档根节点的可视区域宽高。 |
-| `statusBarHeight` / `safeArea` | `null` | Web 当前无法提供。 |
-| `version` / `SDKVersion` / `fontSizeSetting` | `null` | Web 当前无法提供。 |
-| 各类 `*Authorized`、`*Enabled` | `null` | 不可用于浏览器权限或设备能力判断。 |
 
 ---
 
 ### getSystemInfoSync
 
-同步版本，返回字段与 `getSystemInfo` 成功载荷一致，但不包含 `errMsg`。仅可在浏览器环境调用。
+同步版本，可用字段与 `getSystemInfo` 成功载荷一致，但不包含 `errMsg`。仅可在浏览器环境调用。
 
 ---
 
@@ -189,9 +130,8 @@ Web 下暂不要使用该 API 处理标准 `ArrayBuffer`；跨端编码需求使
 | `pixelRatio` | `number` | 设备像素比。 |
 | `screenWidth` / `screenHeight` | `number` | 屏幕宽高。 |
 | `windowWidth` / `windowHeight` | `number` | 页面视口宽高。 |
-| `statusBarHeight` / `safeArea` / `screenTop` | `null` | Web 当前无法提供。 |
 
-安全区域应优先使用 CSS `env(safe-area-inset-*)` 处理，不要依赖本 API 的 `safeArea`。
+Web 安全区域使用 CSS `env(safe-area-inset-*)` 处理。
 
 ---
 
@@ -208,7 +148,6 @@ Web 下暂不要使用该 API 处理标准 `ArrayBuffer`；跨端编码需求使
 | `brand` / `model` | `string` | UA 推断值，`model` 当前与 `brand` 相同。 |
 | `system` | `string` | UA 推断的系统版本。 |
 | `platform` | `string` | 浏览器报告的平台标识。 |
-| `abi` / `deviceAbi` / `benchmarkLevel` / `cpuType` / `memorySize` | `null` | Web 当前无法提供。 |
 
 ---
 
@@ -265,8 +204,6 @@ Web 下暂不要使用该 API 处理标准 `ArrayBuffer`；跨端编码需求使
 #### 说明
 
 监听应用进入**前台**（展示态；监听 API，非 `success` / `fail` 模型）。应用首次创建以及页面由隐藏状态恢复可见时触发。
-
-Web 不区分宿主应用意义上的冷启动与热启动。首次触发时回调包含当前页面的启动参数；页面从隐藏状态恢复时，回调参数为空对象。
 
 #### 入参
 
@@ -437,15 +374,11 @@ Web 端回调不传参数，业务侧只应将其作为“页面进入隐藏态�
 
 ---
 
-`onLazyLoadError` / `offLazyLoadError` 在 Web 下不可用。
-
----
-
 ## 路由
 
 Web 业务代码优先使用下列 Mpx 导航 API，由 Mpx Web 运行时映射到 Web 路由。
 
-以下 API 只能在浏览器且 Mpx 路由实例已初始化后工作。路由与 SSR 相关配置见 [JSON 配置参考](./web-json-reference.md)。
+以下 API 只能在浏览器且 Mpx 路由实例已初始化后工作。路由与 SSR 相关配置见 [Web 配置参考](./web-config-reference.md)。
 
 ### navigateTo
 
@@ -478,7 +411,7 @@ mpx.navigateTo({
 })
 ```
 
-被打开页可从页面实例或 setup context 获取同一通道。已有任一正确入口都可保留，不要用 `getCurrentPages` 或浏览器 history 模拟回传：
+被打开页可从页面实例或 setup context 获取同一通道。Web 有效路径不要用 `getCurrentPages` 或浏览器 history 模拟回传；原小程序已有可用的 `getCurrentPages`、EventChannel 或其他通信协议时，保留小程序有效路径，只为 Web 隔离替代入口，不改写共享调用协议：
 
 ```js
 const channel = this.getOpenerEventChannel()
@@ -544,7 +477,7 @@ createPage({
 
 #### 说明
 
-**异步 API**。清理现有页面栈后打开目标页。Web 下可通过扩展参数 `delta` 校正宿主 webview 无法统计的额外跳转层数。
+**异步 API**。清理现有页面栈后打开目标页。
 
 #### 入参
 
@@ -721,7 +654,7 @@ createPage({
 
 ##### 说明
 
-**异步 API**。设置浏览器主题色。仅部分浏览器会呈现，`frontColor` 等字段在 Web 下不生效。
+**异步 API**。设置浏览器主题色，仅部分浏览器会呈现。
 
 ##### 入参
 
@@ -734,12 +667,6 @@ createPage({
 ##### 返回值
 
 无同步返回值。
-
-#### hideHomeButton
-
-##### 说明
-
-Web 不支持。
 
 ---
 
@@ -797,13 +724,13 @@ Web 不支持。
 
 ### TabBar
 
-没有 tabBar 配置时调用会失败。`showTabBar` / `hideTabBar` 可操作自定义 tabBar 的显示状态，但 `setTabBarItem` / `setTabBarStyle` 不会修改自定义 tabBar 内容。
+使用前需配置 tabBar。`showTabBar` / `hideTabBar` 可控制自定义 tabBar 的显示；`setTabBarItem` / `setTabBarStyle` 用于 Mpx 内置 tabBar。
 
 #### setTabBarItem
 
 ##### 说明
 
-**异步 API**。修改 Mpx 内置 tabBar 项。自定义 tabBar 不支持。
+**异步 API**。修改 Mpx 内置 tabBar 项。
 
 ##### 入参
 
@@ -824,7 +751,7 @@ Web 不支持。
 
 ##### 说明
 
-**异步 API**。修改 Mpx 内置 tabBar 样式。自定义 tabBar 不支持。
+**异步 API**。修改 Mpx 内置 tabBar 样式。
 
 ##### 入参
 
@@ -919,7 +846,7 @@ Web 不支持。
 | `fields(fields, callback)` | 按 `id`、`dataset`、`rect`、`size`、`scrollOffset`、`properties`、`computedStyle`、`node` 读取字段。 |
 | `node(callback)` | 返回真实 DOM 节点；Canvas 节点会补充 `createImage`、`createPath2D`、`requestAnimationFrame`、`cancelAnimationFrame`。 |
 
-Web 实现没有 `context()` 方法。`properties` 读取 DOM attribute，空字符串 attribute 当前不会写入结果；`computedStyle` 通过 `window.getComputedStyle` 读取。
+`properties` 读取值非空的 DOM attribute。
 
 ```js
 const query = mpx.createSelectorQuery().in(this)
@@ -947,11 +874,10 @@ query.exec()
 
 #### 入参
 
-调用形式为 `createIntersectionObserver(component, options)`。
+调用形式为 `createIntersectionObserver(component, options)`；Web 在整个页面中查找观察节点。
 
 | 参数或选项 | 类型 | 默认值 | Web 行为 |
 | --- | --- | --- | --- |
-| `component` | `Object` | 无 | 当前 Web 实现会接收该参数，但节点查询仍使用全局 `document.querySelector`，不能依赖它限定组件范围。 |
 | `options.thresholds` | `number[]` | `[0]` | 传给浏览器观察器的阈值列表。 |
 | `options.initialRatio` | `number` | `0` | 用于过滤初始相交比例回调。 |
 | `options.observeAll` | `boolean` | `false` | 为 `true` 时观察选择器匹配的全部节点，否则只观察第一个节点。 |
@@ -1065,7 +991,7 @@ observer.disconnect()
 
 返回 `RequestTask`，当前仅提供 `abort()`。
 
-Web 下不提供 `cookies`、`profile`、`exception` 字段。
+成功回调常用字段为 `data`、`statusCode`、`header`。
 
 可取消且参数会变化的请求要同时管理“任务实例”和“晚到响应身份”。应用全局启用 `usePromise: true` 时，可从 Promise 的 `__returned` 取得原始任务；取消时先清空当前身份并推进代际，再 abort：
 
@@ -1106,13 +1032,22 @@ onUnload () {
 
 #### 说明
 
-建立 WebSocket 连接。支持 `url` 和 `protocols`；`header` 在 Web 下不生效。
+建立 WebSocket 连接。
+
+#### 入参
+
+第一个参数为 **Object**。
+
+| 字段名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `url` | `string` | 是 | WebSocket 服务地址。 |
+| `protocols` | `string[]` | 否 | WebSocket 子协议。 |
 
 #### 返回值
 
 返回 `SocketTask`。
 
-Web 不支持全局 `sendSocketMessage`、`closeSocket`、`onSocketOpen`、`onSocketError`、`onSocketMessage`、`onSocketClose`，请使用 `SocketTask` 对应方法。
+WebSocket 的发送、关闭和事件监听使用返回的 `SocketTask`：`send`、`close`、`onOpen`、`onError`、`onMessage`、`onClose`。
 
 组件允许重连或切换会话时，按以下身份检查管理任务，不能只覆盖 `this.socketTask`：
 
@@ -1260,7 +1195,7 @@ Web 缓存受浏览器配额、隐私模式和站点存储策略限制，写入�
 
 #### 说明
 
-**异步 API**。获取缓存键列表。Web 下不提供 `limitSize`、`currentSize`。
+**异步 API**。获取缓存键列表；成功回调中的可用字段为 `keys`。
 
 #### 入参
 
@@ -1276,7 +1211,7 @@ Web 缓存受浏览器配额、隐私模式和站点存储策略限制，写入�
 
 #### 说明
 
-同步获取缓存键列表。Web 下不提供 `limitSize`、`currentSize`。
+同步获取缓存键列表；返回对象中的可用字段为 `keys`。
 
 #### 入参
 
@@ -1366,24 +1301,34 @@ Web 缓存受浏览器配额、隐私模式和站点存储策略限制，写入�
 
 预览图片列表，支持触摸横向切换和点击关闭。
 
+#### 入参
+
+第一个参数为 **Object**。
+
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `urls` | `string[]` | 是 | 图片地址列表。 |
 | `current` | `string` | 否 | 初始图片地址；不在列表时从第一张开始。 |
 
-Web 下仅支持 `urls` 和 `current` 字段。
-
 ---
 
 ### getImageInfo
 
-基于浏览器 `Image` 加载图片，`src` 必填且不能为空。Web 下不提供 `path`、`orientation`、`type` 字段。
+基于浏览器 `Image` 加载图片；成功回调返回图片的 `width` 和 `height`。
+
+#### 入参
+
+第一个参数为 **Object**。
+
+| 字段名 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `src` | `string` | 是 | 图片地址，不能为空。 |
 
 ---
 
 ### createInnerAudioContext
 
-同步创建基于 HTML `Audio` 的音频上下文。Web 下 `startTime`、`obeyMuteSwitch` 仅为兼容属性。
+同步创建基于 HTML `Audio` 的音频上下文。可用方法包括 `play`、`pause`、`stop`、`seek` 和 `destroy`。
 
 浏览器自动播放策略可能阻止未经过用户交互触发的 `play()`。
 
@@ -1393,9 +1338,7 @@ Web 下仅支持 `urls` 和 `current` 字段。
 
 根据元素 `id` 获取页面中的 `<video>`，可传入带 `$el` 的组件实例限定查询范围。
 
-`requestBackgroundPlayback`、`exitBackgroundPlayback`、`exitPictureInPicture`、`sendDanmu` 在 Web 下不生效。全屏效果受浏览器支持与用户手势策略限制。
-
-`compressImage`、`chooseMedia` 和 `chooseImage` 在 Web 下不可用。
+可用方法包括 `play`、`pause`、`stop`、`seek`、`playbackRate`、`requestFullScreen`、`exitFullScreen`、`showStatusBar` 和 `hideStatusBar`。全屏效果受浏览器支持与用户手势策略限制。
 
 ---
 
@@ -1405,13 +1348,15 @@ Web 下仅支持 `urls` 和 `current` 字段。
 
 获取当前地理位置。浏览器通常要求 HTTPS 安全上下文和用户授权。
 
+#### 入参
+
+第一个参数为 **Object**。
+
 | 字段名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `isHighAccuracy` | `boolean` | `false` | 是否使用高精度定位。 |
 
-Web 下不提供 `horizontalAccuracy`、`verticalAccuracy`；`speed` 来自浏览器定位结果，浏览器无法提供时可能为 `null`。
-
-`openLocation`、`chooseLocation`、`onLocationChange`、`offLocationChange`、`startLocationUpdate`、`stopLocationUpdate` 在 Web 下不支持。
+成功回调中的可用字段包括 `latitude`、`longitude`、`accuracy` 和 `speed`；`speed` 取浏览器定位结果，浏览器无法提供时可能为 `null`。
 
 ---
 
