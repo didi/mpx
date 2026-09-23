@@ -4,6 +4,8 @@
 
 支持情况： 微信、支付宝、web、RN
 
+> RN 下可通过 `Mpx.config.rnConfig.customDimensions` 自定义尺寸，`getWindowInfo`、`getSystemInfo` 和 `getSystemInfoSync` 会基于处理后的尺寸计算相关字段。
+
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getWindowInfo.html)
 
 ### 参数 {#parameters}

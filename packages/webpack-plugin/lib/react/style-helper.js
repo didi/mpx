@@ -180,22 +180,22 @@ function getClassMap ({ styles, filename, inputFileSystem, mode, srcMode, ctorTy
       if (classMapKeys.length) {
         classMapKeys.forEach((key) => {
           if (Object.keys(classMapValue).length) {
-            // set css defalut value
-            const val = classMap[key] || {}
-            classMap[key] = Object.assign(val, classMapValue)
+            classMap[key] = classMap[key] || {}
 
-            if (layer) {
-              classMap[key]._layer = layer
-            }
-
-            // set css media
+            // Media declarations only take effect when their query matches.
             if (isMedia) {
-              const _media = classMap[key]?._media || []
+              const _media = classMap[key]._media || []
               _media.push({
                 options,
                 value: classMapValue
               })
               classMap[key]._media = _media
+            } else {
+              Object.assign(classMap[key], classMapValue)
+            }
+
+            if (layer) {
+              classMap[key]._layer = layer
             }
           }
         })
