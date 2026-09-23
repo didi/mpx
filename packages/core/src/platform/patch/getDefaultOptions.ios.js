@@ -20,7 +20,22 @@ import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navi
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
 import * as perf from '@mpxjs/perf'
-import { getDimensionsBase, getSystemInfo, triggerResizeEvent } from '../dimensionsHelper'
+import { getDimensionsBase, getDimensionsInfo } from '../dimensionsHelper'
+
+function getSystemInfo () {
+  const baseDimensions = getDimensionsInfo()
+  const windowDimensions = getDimensionsInfo('window')
+  const screenDimensions = getDimensionsInfo('screen')
+  return {
+    deviceOrientation: baseDimensions.width > baseDimensions.height ? 'landscape' : 'portrait',
+    size: {
+      screenWidth: screenDimensions.width,
+      screenHeight: screenDimensions.height,
+      windowWidth: windowDimensions.width,
+      windowHeight: windowDimensions.height
+    }
+  }
+}
 
 function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
@@ -374,8 +389,33 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   }
 }
 
+const triggerResizeEvent = (mpxProxy, sizeRef) => {
+  const oldSize = sizeRef.current.size
+  const systemInfo = getSystemInfo()
+  const newSize = systemInfo.size
+  const dimensionsBase = getDimensionsBase()
+  const widthKey = `${dimensionsBase}Width`
+  const heightKey = `${dimensionsBase}Height`
+
+  if (oldSize && oldSize[widthKey] === newSize[widthKey] && oldSize[heightKey] === newSize[heightKey]) {
+    return
+  }
+
+  Object.assign(sizeRef.current, systemInfo)
+
+  const type = mpxProxy.options.__type__
+  const target = mpxProxy.target
+  mpxProxy.callHook(ONRESIZE, [systemInfo])
+  if (type === 'page') {
+    target.onResize && target.onResize(systemInfo)
+  } else {
+    const pageLifetimes = mpxProxy.options.pageLifetimes
+    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
+  }
+}
+
 function usePageEffect (mpxProxy, pageId, type) {
-  const sizeRef = useRef(Object.assign(getSystemInfo(), { dimensionsBase: getDimensionsBase() }))
+  const sizeRef = useRef(getSystemInfo())
 
   useEffect(() => {
     let unWatch

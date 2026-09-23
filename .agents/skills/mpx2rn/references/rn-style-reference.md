@@ -178,7 +178,7 @@ Mpx 在 RN 平台支持多种 CSS 单位，并在运行时进行转换。
 
 `rpx`、`vw`、`vh` 与媒体查询的计算默认基于运行时的 `window.width` 和 `window.height`。如需保持旧版本基于 Screen 尺寸计算的效果，可将 `Mpx.config.rnConfig.dimensionsBase` 设置为 `"screen"`：
 
-运行期间修改 `dimensionsBase` 或 `customDimensions` 后，需要调用 `notifyDimensionsChange()` 使配置生效。
+`dimensionsBase` 应在首次尺寸计算前完成配置，首次读取后将保持不变。`customDimensions` 也建议在应用初始化阶段完成配置。
 
 ```javascript
 Mpx.config.rnConfig.dimensionsBase = "screen"
@@ -205,8 +205,6 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
 ```
 
 配置生效后，`rpx`、`vw`、`vh` 与媒体查询会按自定义后的 `dimensionsBase` 对应尺寸进行计算。
-
-宿主容器尺寸变化但 React Native 未派发 Dimensions change 事件，或需要基于外部状态重新执行 `customDimensions` 时，可调用全局方法 `notifyDimensionsChange(dimensions?)` 主动通知框架。省略参数时会通过 `Dimensions.get` 重新读取当前原始尺寸。
 
 #### 百分比计算规则
 

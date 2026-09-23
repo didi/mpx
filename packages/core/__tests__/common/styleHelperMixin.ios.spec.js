@@ -48,42 +48,21 @@ jest.mock('../../src/index', () => ({
   }
 }))
 
-// eslint-disable-next-line import/first
-import Mpx from '../../src/index'
-// eslint-disable-next-line import/first
-import styleHelperMixin from '../../src/platform/builtInMixins/styleHelperMixin.ios'
-// eslint-disable-next-line import/first
-import { initDimensionsInfo } from '../../src/platform/dimensionsHelper'
+let Mpx
+let styleHelperMixin
 
 describe('RN styleHelperMixin dimensions', () => {
   beforeEach(() => {
+    jest.resetModules()
+    Mpx = require('../../src/index').default
+    styleHelperMixin = require('../../src/platform/builtInMixins/styleHelperMixin.ios').default
     global.__mpx_perf_framework__ = false
-    initDimensionsInfo(mockDimensions)
     global.__mpxSizeCount = 0
     global.__classCaches = new Set()
     global.__externalClasses = ['custom-class', 'i-class']
     Mpx.config.rnConfig = {
       dimensionsBase: 'window'
     }
-  })
-
-  it('does not apply customDimensions twice when notified before the first style calculation', () => {
-    const customDimensions = jest.fn((dimensions) => {
-      dimensions.window.width /= 2
-      return dimensions
-    })
-    Mpx.config.rnConfig.customDimensions = customDimensions
-    const dimensions = {
-      window: { width: 800, height: 640 },
-      screen: mockDimensions.screen
-    }
-
-    global.notifyDimensionsChange(dimensions)
-
-    expect(dimensions.window.width).toBe(800)
-    expect(global.__mpxAppDimensionsInfo.window.width).toBe(400)
-    expect(global.__formatValue('750rpx')).toBe(400)
-    expect(customDimensions).toHaveBeenCalledTimes(1)
   })
 
   it('converts responsive units with window dimensions', () => {
@@ -95,7 +74,7 @@ describe('RN styleHelperMixin dimensions', () => {
   })
 
   it('does not expose the mutable dimensions cache through the global getter', () => {
-    const dimensions = global.getStyleDimensions()
+    const dimensions = global.getDimensionsInfo()
 
     dimensions.width = 1
 
@@ -220,7 +199,7 @@ describe('RN styleHelperMixin dimensions', () => {
   it('updates responsive styles when window dimensions change', () => {
     const cache = { clear: jest.fn() }
     global.__classCaches.add(cache)
-    global.getStyleDimensions()
+    global.getDimensionsInfo()
 
     mockDimensionsChangeHandler({
       window: { width: 400, height: 700 },
@@ -245,7 +224,7 @@ describe('RN styleHelperMixin dimensions', () => {
     const cache = { clear: jest.fn() }
     global.__classCaches.add(cache)
 
-    global.notifyDimensionsChange({
+    mockDimensionsChangeHandler({
       window: { width: 400, height: 700 },
       screen: mockDimensions.screen
     })
@@ -253,7 +232,7 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(cache.clear).not.toHaveBeenCalled()
     expect(global.__mpxSizeCount).toBe(0)
 
-    global.notifyDimensionsChange({
+    mockDimensionsChangeHandler({
       window: { width: 400, height: 700 },
       screen: { width: 800, height: 1400 }
     })
@@ -263,51 +242,7 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(global.__formatValue('750rpx')).toBe(800)
   })
 
-  it('reads current Dimensions and reapplies customDimensions when notified without arguments', () => {
-    let widthOffset = 10
-    const customDimensions = jest.fn((dimensions) => {
-      dimensions.window.width -= widthOffset
-      return dimensions
-    })
-    Mpx.config.rnConfig.customDimensions = customDimensions
-
-    global.notifyDimensionsChange()
-
-    expect(global.__mpxAppDimensionsInfo.window.width).toBe(350)
-
-    widthOffset = 20
-    global.notifyDimensionsChange()
-
-    expect(global.__mpxAppDimensionsInfo.window.width).toBe(340)
-    expect(customDimensions).toHaveBeenCalledTimes(2)
-  })
-
-  it('invalidates cached responsive class styles after customDimensions changes are notified', () => {
-    const classMap = {
-      box: formatValue => ({ width: formatValue('750rpx') })
-    }
-    const classMapValueCache = new Map()
-    global.__classCaches.add(classMapValueCache)
-
-    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
-
-    Mpx.config.rnConfig.customDimensions = (dimensions) => {
-      dimensions.window.width /= 2
-      return dimensions
-    }
-
-    expect(global.getStyleDimensions().width).toBe(360)
-    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
-    expect(global.__mpxSizeCount).toBe(0)
-
-    global.notifyDimensionsChange()
-
-    expect(global.getStyleDimensions().width).toBe(180)
-    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(180)
-    expect(global.__mpxSizeCount).toBe(1)
-  })
-
-  it('invalidates cached responsive class styles after dimensionsBase changes are notified', () => {
+  it('keeps the initial dimensionsBase after config and Screen dimensions change', () => {
     const classMap = {
       box: formatValue => ({ width: formatValue('750rpx') })
     }
@@ -318,15 +253,18 @@ describe('RN styleHelperMixin dimensions', () => {
 
     Mpx.config.rnConfig.dimensionsBase = 'screen'
 
-    expect(global.getStyleDimensions().width).toBe(360)
+    expect(global.getDimensionsInfo().width).toBe(360)
     expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
     expect(global.__mpxSizeCount).toBe(0)
 
-    global.notifyDimensionsChange()
+    mockDimensionsChangeHandler({
+      window: mockDimensions.window,
+      screen: { width: 800, height: 1400 }
+    })
 
-    expect(global.getStyleDimensions().width).toBe(720)
-    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(720)
-    expect(global.__mpxSizeCount).toBe(1)
+    expect(global.getDimensionsInfo().width).toBe(360)
+    expect(global.__GCC('box', classMap, classMapValueCache).width).toBe(360)
+    expect(global.__mpxSizeCount).toBe(0)
   })
 
   it('matches media queries with window width', () => {
@@ -388,7 +326,10 @@ describe('RN styleHelperMixin dimensions', () => {
       __trackPageSizeCount: jest.fn()
     }
     const getColorAtWidth = width => {
-      global.__mpxAppDimensionsInfo.window = { width, height: 640 }
+      mockDimensionsChangeHandler({
+        window: { width, height: 640 },
+        screen: mockDimensions.screen
+      })
       return styleHelperMixin().methods.__getStyle.call(context, 'responsive').color
     }
 
@@ -434,11 +375,9 @@ describe('RN styleHelperMixin dimensions', () => {
 
   it('applies customDimensions before the first media-only style calculation', () => {
     const originalGlobals = {
-      notifyDimensionsChange: global.notifyDimensionsChange,
-      getStyleDimensions: global.getStyleDimensions,
+      getDimensionsInfo: global.getDimensionsInfo,
       GCC: global.__GCC,
       formatValue: global.__formatValue,
-      dimensionsInfo: global.__mpxAppDimensionsInfo,
       sizeCount: global.__mpxSizeCount,
       pageSizeCountMap: global.__mpxPageSizeCountMap,
       classCaches: global.__classCaches,
@@ -474,16 +413,14 @@ describe('RN styleHelperMixin dimensions', () => {
         const result = freshStyleHelperMixin().methods.__getStyle.call(context, 'responsive')
 
         expect(result.color).toBe('red')
-        expect(global.__mpxAppDimensionsInfo.window.width).toBe(180)
+        expect(global.getDimensionsInfo().width).toBe(180)
         expect(customDimensions).toHaveBeenCalledTimes(1)
         expect(context.__trackPageSizeCount).toHaveBeenCalledTimes(1)
       })
     } finally {
-      global.notifyDimensionsChange = originalGlobals.notifyDimensionsChange
-      global.getStyleDimensions = originalGlobals.getStyleDimensions
+      global.getDimensionsInfo = originalGlobals.getDimensionsInfo
       global.__GCC = originalGlobals.GCC
       global.__formatValue = originalGlobals.formatValue
-      global.__mpxAppDimensionsInfo = originalGlobals.dimensionsInfo
       global.__mpxSizeCount = originalGlobals.sizeCount
       global.__mpxPageSizeCountMap = originalGlobals.pageSizeCountMap
       global.__classCaches = originalGlobals.classCaches

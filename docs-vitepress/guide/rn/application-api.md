@@ -484,6 +484,8 @@ mpx.config.rnConfig.dimensionsBase = 'screen'
 
 配置后，响应式单位和媒体查询将使用 `Dimensions.get('screen')` 的宽高，并在 Screen 尺寸变化时重新计算相关样式及触发 `onResize`。
 
+该配置应在首次尺寸计算前完成，首次读取后将保持不变。
+
 #### mpx.config.rnConfig.customDimensions
 
 ```ts
@@ -496,41 +498,18 @@ mpx.config.rnConfig.dimensionsBase = 'screen'
 
 例如，使用默认的 `dimensionsBase: 'window'` 时，折叠屏展开后如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
 
-运行期间修改 `dimensionsBase` 或 `customDimensions` 后，需要调用 `notifyDimensionsChange()` 使配置生效。可以同时修改两项配置，再统一通知一次。
-
-#### notifyDimensionsChange
-
-```ts
-(dimensions?: { window: ScaledSize; screen: ScaledSize }) => void
-```
-
-主动通知框架 Dimensions 发生变化，使 `rpx` / `vw` / `vh`、媒体查询和 `onResize` 等依赖尺寸的能力重新计算。传入 `dimensions` 时使用传入值；不传参数时通过 `Dimensions.get('window')` 与 `Dimensions.get('screen')` 获取当前原始尺寸。两种方式都会重新执行 `rnConfig.customDimensions`，并根据 `dimensionsBase` 指定的尺寸判断是否触发刷新。
-
-```js
-// 宿主容器尺寸发生变化后，重新读取当前 Dimensions
-notifyDimensionsChange()
-
-// 也可以显式传入尺寸
-notifyDimensionsChange({
-  window: nextWindow,
-  screen: nextScreen
-})
-```
-
-框架会复制原始 Dimensions 后再交给 `customDimensions`，避免自定义逻辑直接修改 React Native 返回的原对象。
-
-#### getStyleDimensions
+#### getDimensionsInfo
 
 ```ts
 (dimensionsBase?: 'window' | 'screen') => ScaledSize
 ```
 
-返回最近一次初始化或 `notifyDimensionsChange()` 后生效的尺寸副本。可传入 `'window'` 或 `'screen'` 指定本次获取的尺寸；不传时使用最近一次生效的 `rnConfig.dimensionsBase`，传参不会修改该配置。修改返回值不会影响框架内部缓存。该方法只读取尺寸，不会使运行期间修改的 `dimensionsBase` 或 `customDimensions` 生效。
+返回最近一次初始化或 React Native Dimensions 变化后生效的尺寸副本。可传入 `'window'` 或 `'screen'` 指定本次获取的尺寸；不传时使用首次读取的 `rnConfig.dimensionsBase`，传参不会修改该配置。修改返回值不会影响框架内部缓存。
 
 ```js
-const dimensions = getStyleDimensions()
+const dimensions = getDimensionsInfo()
 console.log(dimensions.width, dimensions.height)
-const screenDimensions = getStyleDimensions('screen')
+const screenDimensions = getDimensionsInfo('screen')
 ```
 
 

@@ -2,12 +2,8 @@ import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mp
 import * as perf from '@mpxjs/perf'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
-import { getStyleDimensions, initDimensionsInfo, syncDimensions } from '../dimensionsHelper'
+import { getDimensionsInfo, syncDimensions } from '../dimensionsHelper'
 
-initDimensionsInfo({
-  window: Dimensions.get('window'),
-  screen: Dimensions.get('screen')
-})
 global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
 
@@ -30,32 +26,21 @@ global.__GCC = function (className, classMap, classMapValueCache) {
   return classMapValueCache.get(className)
 }
 
-function onDimensionsChange (dimensions) {
-  if (!dimensions) {
-    dimensions = {
-      window: Dimensions.get('window'),
-      screen: Dimensions.get('screen')
-    }
-  }
-  syncDimensions(dimensions)
-}
+global.getDimensionsInfo = base => Object.assign({}, getDimensionsInfo(base))
 
-global.notifyDimensionsChange = onDimensionsChange
-global.getStyleDimensions = dimensionsBase => Object.assign({}, getStyleDimensions(dimensionsBase))
-
-Dimensions.addEventListener('change', onDimensionsChange)
+Dimensions.addEventListener('change', syncDimensions)
 
 // TODO: 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions 监听到的 width/height 尺寸错误，并触发多次问题
 function rpx (value) {
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (样式计算宽度 / 750)
-  return value * getStyleDimensions().width / 750
+  return value * getDimensionsInfo().width / 750
 }
 function vw (value) {
-  return value * getStyleDimensions().width / 100
+  return value * getDimensionsInfo().width / 100
 }
 function vh (value) {
-  return value * getStyleDimensions().height / 100
+  return value * getDimensionsInfo().height / 100
 }
 
 const unit = {
@@ -217,7 +202,7 @@ function isNativeStyle (style) {
 function getMediaStyle (media) {
   if (!media || !media.length) return {}
   dependentWindowSize = true
-  const { width } = getStyleDimensions()
+  const { width } = getDimensionsInfo()
   return media.reduce((styleObj, item) => {
     const { options = {}, value = {} } = item
     const { minWidth, maxWidth } = options
