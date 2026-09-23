@@ -5,7 +5,7 @@
 | 涉及内容 | SSR 差异 | 具体改法 |
 | --- | --- | --- |
 | 路由 | 服务端收不到 URL 中的 hash。 | 将路由模式设为 `history`，把请求地址传入渲染上下文的 `url`。 |
-| 状态管理 | 模块级状态会跨请求共享，`@mpxjs/store` 不支持内建 SSR 状态同步。 | 需要同步首屏状态时使用 `@mpxjs/pinia`，在 `onAppInit` 中为每次请求创建实例，页面使用当前实例下的 store。 |
+| 状态管理 | 模块级状态会跨请求共享，`@mpxjs/store` 不支持内建 SSR 状态同步。 | 需要同步首屏状态时将对应状态域迁移为各端共用的 `@mpxjs/pinia`，在 `onAppInit` 中创建实例，页面使用当前应用实例下的 store。 |
 | 首屏数据 | 客户端加载的数据无法直接参与服务端首屏渲染。 | 在 `serverPrefetch` 或 `onServerPrefetch` 中调用数据加载逻辑并返回 Promise，等待数据就绪。 |
 | 路由与状态同步 | 服务端需等待路由就绪并传出状态，客户端需恢复首屏状态。 | 通常沿用框架默认流程；只有需要自定义时才实现 `onSSRAppCreated`，接管路由就绪、状态写入和应用返回。 |
 
@@ -15,18 +15,18 @@
 
 每次 SSR 请求都会创建一个新的应用实例。`onAppInit` 在创建 Vue 应用前执行，它的返回值会合并到应用选项中。
 
-小程序也会调用 `onAppInit`。共享 `app.mpx` 时只在 Web 分支添加 Pinia 初始化，保留原有 App 选项；已有 `onAppInit` 时应合并其返回值。下例的静态导入仍可能进入小程序依赖图；若要求小程序包也不包含 Pinia，将初始化放入 Web 平台文件并核对构建产物。
+小程序也会调用 `onAppInit`，`@mpxjs/pinia` 可以由小程序和 Web 共用。已有 `@mpxjs/store` 状态域因 SSR 需要迁移时，默认将该状态域整体迁移到 Pinia，并在共享 `app.mpx` 中初始化一次；小程序继续通过原来的 `onLoad` 等业务入口调用同一个 Pinia action。不要为 Web 和小程序各维护一套同义状态、action 和错误处理。
+
+已有 `onAppInit` 时合并其返回值。只有任务明确要求原平台继续使用旧 Store，或迁移所需调用方不在当前范围内时，才把 Pinia 初始化与状态实现限制到 Web 分支。
 
 ```js
 import { createPinia } from '@mpxjs/pinia'
 
 // appOptions 是项目现有的 createApp 选项
-if (__mpx_mode__ === 'web') {
-  const originalOnAppInit = appOptions.onAppInit
-  appOptions.onAppInit = function () {
-    const originalOptions = originalOnAppInit ? originalOnAppInit.call(this) : {}
-    return Object.assign({}, originalOptions, { pinia: createPinia() })
-  }
+const originalOnAppInit = appOptions.onAppInit
+appOptions.onAppInit = function () {
+  const originalOptions = originalOnAppInit ? originalOnAppInit.call(this) : {}
+  return Object.assign({}, originalOptions, { pinia: createPinia() })
 }
 ```
 

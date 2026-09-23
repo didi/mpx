@@ -12,6 +12,29 @@
 | `workers` | Web 不会根据小程序的 worker 目录声明自动创建或注册 Web Worker。 | 只有业务实际调用 worker 时才增加 Web Worker 入口和通信实现。 |
 | 分包 `independent: true` | Web 可异步加载页面 chunk，但没有微信独立分包的独立启动和运行环境。 | 只依赖懒加载时无需改动；依赖独立初始化或全局隔离时，为 Web 设计独立入口或初始化边界。 |
 
+只有少数字段存在平台差异时，使用动态 JSON 保留一份公共配置，只条件赋值差异字段。例如 Web 不消费微信插件声明时：
+
+```html
+<script name="json">
+const appConfig = {
+  pages: [
+    './pages/content/index.mpx',
+    './pages/catalog/index.mpx'
+  ]
+}
+
+if (__mpx_mode__ === 'wx') {
+  appConfig.plugins = {
+    foo: { version: '1.0.0', provider: 'wx123' }
+  }
+}
+
+module.exports = appConfig
+</script>
+```
+
+`<script name="json">` 中导出的对象必须可序列化。不要为删除一个 `plugins` 字段分别复制 `mode="wx"` 和 `mode="web"` 的完整 JSON，否则公共的 `pages`、分包或窗口配置会形成两份维护入口。只有两端大部分 JSON 结构确实不同时才拆分完整区块。
+
 ## 应用运行时配置（`app.mpx`）
 
 配置归属：应用运行时的 `mpx.config.webConfig`，需要在 `createApp` 前设置。
@@ -38,6 +61,14 @@ if (__mpx_mode__ === 'web') {
 
 createApp({})
 ```
+
+## 构建期 Mpx 插件配置
+
+配置归属：项目构建配置中的 `pluginOptions.mpx.plugin`。
+
+| 配置 | 何时需要 |
+| --- | --- |
+| `autoVirtualHostRules` | 只有 Web 编译注入的组件外层节点确实阻断布局或样式时才配置，并只匹配受影响的组件，不顺带包含父组件、子组件或相邻组件。命中后模板需要单个真实根节点，详见模板参考。 |
 
 ## 构建期 Web 配置
 

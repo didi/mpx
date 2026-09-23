@@ -81,7 +81,7 @@ Web 已支持 `relations` 的父子/祖先后代匹配、`linked`、`unlinked` �
 | `onSaveExitState` | 使用 Web Storage、服务端状态或业务恢复方案。 |
 | `onThemeChange` | 使用 Web 媒体查询或业务主题系统。 |
 
-`implement` 是能力登记入口，`remove: true` 不是通用的生命周期删除开关。当前 `packages/core/src/convertor/wxToWeb.js` 只对 `moved`、`definitionFilter`、`onShareAppMessage` 读取该标记并删除选项，`onShareTimeline` 不在此列表。`onShareAppMessage` 可在页面构造前登记移除；其它需隔离的钩子使用平台条件 options，例如：
+`implement` 是能力登记入口，`remove: true` 不是通用的生命周期删除开关。当前 `packages/core/src/convertor/wxToWeb.js` 只对 `moved`、`definitionFilter`、`onShareAppMessage` 读取该标记并删除选项，`onShareTimeline` 不在此列表。`onShareAppMessage` 可在页面构造前登记移除，同时保持页面选项直接写在 `createPage` 中：
 
 ```js
 import { createPage, implement } from '@mpxjs/core'
@@ -93,7 +93,7 @@ if (__mpx_mode__ === 'web') {
   })
 }
 
-const pageOptions = {
+createPage({
   // 原有分享生命周期继续服务小程序输出
   onShareAppMessage () {
     return { title: '分享标题', path: '/pages/detail/index' }
@@ -103,15 +103,7 @@ const pageOptions = {
       // TODO(web): 接入业务指定的 Web 分享 SDK。
     }
   }
-}
-
-if (__mpx_mode__ === 'wx') {
-  pageOptions.onShareTimeline = function () {
-    return { title: '分享标题' }
-  }
-}
-
-createPage(pageOptions)
+})
 ```
 
-上述示例保留微信分享声明，并在 Web 中通过有效的登记或条件选项排除它们；已有有效的平台条件 options 无需机械改写。复制链接只有在业务协议明确采用该行为时才属于 Web 分享方案。
+上述示例保留微信分享声明，并在 Web 转换前登记移除。`onShareTimeline` 没有对应的 `implement(remove)` 转换；Web 运行时不会触发且没有其它消费者时保留原声明即可，确认会被其它代码消费时再使用最小平台条件隔离，不要为单个钩子把整个页面改写成可变 options。复制链接只有在业务协议明确采用该行为时才属于 Web 分享方案。

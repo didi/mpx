@@ -20,6 +20,7 @@ function validateFile (file, options = {}) {
     if (!blocks.template || blocks.template.src) {
       return ['待验证：缺少内联模板，请检查实际模板入口。']
     }
+    const errors = []
     const parsed = compiler.parse(blocks.template.content, {
       mode: 'web',
       srcMode: options.srcMode || blocks.template.srcMode || 'wx',
@@ -29,12 +30,11 @@ function validateFile (file, options = {}) {
       externalClasses: [],
       filePath: selected,
       warn: () => {},
-      error: () => {}
+      error: message => errors.push('待验证：Web 模板编译报错：' + message)
     })
     const modules = new Set(
       Object.keys(parsed.meta.wxsContentMap || {}).concat(Object.keys(parsed.meta.wxsModuleMap || {}))
     )
-    const errors = []
     if (parsed.meta.imports && parsed.meta.imports.length) {
       errors.push('待验证：模板包含外部 <import>，请同时检查实际导入模板：' + parsed.meta.imports.join(', '))
     }

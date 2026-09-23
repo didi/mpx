@@ -79,13 +79,26 @@ Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<can
 - Web 的 `rpx` 默认按 `750rpx = 100vw` 换算，可通过 `webConfig.transRpxFn`（自包含的普通函数表达式）自定义，移动端需在 HTML 中配置 viewport。
 - `view`、`image` 等基础标签在 Web 编译后可能变化，样式应使用稳定的类选择器。
 - 微信组件默认的样式隔离不会自动带到 Web。只有实际出现组件样式互相影响时，单个组件可用 `<style scoped>`；需要按文件范围统一隔离时，再用构建期 `autoScopeRules` 的 `include` / `exclude` 选取文件。
-- `externalClasses`：默认转换 `custom-class`、`i-class`。使用其它外部类名时，在实际构建配置的 Mpx 插件 `externalClasses` 数组中加入该名称（Mpx CLI 项目为 `mpx.config.js` 的 `pluginOptions.mpx.plugin.externalClasses`），同时保留已有名称；组件声明、调用方属性和模板占位类也须同名。
+- `externalClasses`：默认转换 `custom-class`、`i-class`。使用其它外部类名时，在实际构建配置的 Mpx 插件 `externalClasses` 数组中加入该名称（Mpx CLI 项目为 `mpx.config.js` 的 `pluginOptions.mpx.plugin.externalClasses`），同时保留已有名称。组件自身还必须在 `createComponent({ externalClasses: ['accent-class'] })` 中声明该名称；不要把它写进 `<script name="json">`。调用方属性和模板占位类也须使用同名，四处共同组成完整链路。
+
+```js
+createComponent({
+  externalClasses: ['accent-class']
+})
+```
 
 ---
 
 ## Vue 组件接入
 
-Vue 组件的兼容版本与 Web 专属依赖隔离见[主 Skill](../SKILL.md#vue-组件接入)。
+Mpx Web 基于 Vue 2.7，不能直接注册只支持 Vue 3 的 `.vue` 组件。先查找组件的 Vue 2 兼容版或项目已有的 Web 替代；找到后只在 Web 侧切换注册，小程序继续使用原组件。
+
+没有可用替代且任务要求保留该功能时，只实现当前业务实际使用的属性、事件、插槽和交互：
+
+- 默认保留原 `.mpx` 给小程序，并用同名 `.web.mpx` 实现 Web 版本，原引用路径无需修改。
+- 项目已有 Vue 2 组件体系时，也可以实现兼容 Vue 2.7 的 `.vue`，并仅在 Web 注册配置中替换路径。
+
+不要在 `.web.mpx` 中继续包装或导入原 Vue 3 组件。缺少必要的业务组件、SDK 或交互要求时，保留小程序实现并按主 Skill 的待接入规则记录真实缺口。
 
 ---
 
