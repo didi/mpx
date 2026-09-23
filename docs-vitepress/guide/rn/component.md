@@ -714,6 +714,28 @@ API
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | src	    | string  |               | webview 指向网页的链接，如果需要对跳转的URL设定白名单可跳转，需要在业务跳转之前处理该逻辑
+| show-navigation-bar | boolean | `undefined` | 仅 RN：`true` 显示导航，`false` 隐藏；初始未传入时沿用页面导航配置，`undefined` 不修改当前状态，支持动态更新 |
+
+RN 下 `web-view` 默认沿用页面导航配置，页面设置 `navigationStyle: 'custom'` 时导航保持隐藏。H5 可通过 `@mpxjs/webview-bridge` 的 `invoke('hideNavigationBar')` / `invoke('showNavigationBar')` 主动覆盖页面配置，隐藏或显示导航，无需在 `apiImplementations` 中注册。调用支持可选的 `success`、`fail`、`complete` 回调，成功返回 `{ errMsg: 'hideNavigationBar:ok' }` 或 `{ errMsg: 'showNavigationBar:ok' }`。这两个内建调用仅在 RN 容器中生效。
+
+`show-navigation-bar` 初始传入 `true` / `false` 时生效；未传入或传入 `undefined` 时不修改当前导航状态。属性变化为布尔值和 H5 bridge 调用以最近一次有效操作为准；属性值不变时，不会覆盖 H5 后续调用，属性改为 `undefined` 时保持最后的显隐状态。props 和 H5 共用同值去重，相同显隐值不重复写入导航配置，H5 调用仍正常返回成功回调。
+
+改变 `src`、H5 跳转或 H5 路由切换不会自动重置显隐状态，URL 参数不控制导航；需要随 H5 路由变化时，由业务在路由切换后主动调用。卸载 WebView 不恢复导航；在同一页面重新挂载时，布尔属性按初始值生效，未传属性或 `undefined` 保持该页面当前状态。打开新的 WebView 页面时，新页面按自己的页面配置和初始属性设置显隐；返回已有页面时保留其原有状态，无需在页面之间恢复导航。
+
+系统状态栏仍保留。WebView 随页面容器自动铺满，宿主 API 的窗口尺寸与坐标数据仍按原页面配置计算。一个页面同时使用一个 `web-view`。
+
+```html
+<!-- 在 Mpx 页面中控制 RN 导航显隐 -->
+<web-view src="{{url}}" show-navigation-bar@ios|android|harmony="{{showNavigationBar}}"></web-view>
+```
+
+```js
+// 在被打开的 H5 中调用
+import webviewBridge from '@mpxjs/webview-bridge'
+
+webviewBridge.invoke('hideNavigationBar') // 隐藏
+webviewBridge.invoke('showNavigationBar') // 显示，按需调用其中一个
+```
 
 事件
 
