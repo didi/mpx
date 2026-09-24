@@ -1,0 +1,93 @@
+<template>
+  <view class="profile-card">
+    <view
+      class="profile-card__header"
+      hover-class="profile-card__header--active"
+      bindtap="toggleExpanded"
+    >
+      <text class="profile-card__title accent-class">{{ title }}</text>
+      <text class="profile-card__action">{{ expanded ? '收起' : '展开' }}</text>
+    </view>
+    <view wx:if="{{ expanded }}" class="profile-card__summary">
+      <text>{{ summary }}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  externalClasses: ['accent-class'],
+
+  properties: {
+    title: {
+      type: String,
+      value: ''
+    },
+    summary: {
+      type: String,
+      value: ''
+    }
+  },
+
+  data: {
+    expanded: false
+  },
+
+  methods: {
+    toggleExpanded () {
+      this.expanded = !this.expanded
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>
+
+<style>
+.profile-card {
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.profile-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  cursor: pointer;
+}
+
+.profile-card__header--active {
+  background: #f8fafc;
+}
+
+.profile-card__title {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.profile-card__action {
+  flex: none;
+  margin-right: 12px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.profile-card__summary {
+  padding: 0 12px 16px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.7;
+}
+</style>

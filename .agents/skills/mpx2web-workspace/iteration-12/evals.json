@@ -1,0 +1,282 @@
+{
+  "skill_name": "mpx2web",
+  "iteration": 12,
+  "suite_revision": "rn17-deterministic-grading-20260923",
+  "status": "ready_for_deterministic_evaluation",
+  "description": "四个静态 eval：Web 基础适配、从零生成资料页、业务能力兼容、Mpx Web SSR。26 项使用与 Mpx2RN iteration-17 一致的二元断言和 Python 确定性检查，Has/No 共用输入与规则。",
+  "runner": {
+    "enabled": true,
+    "base": "../../mpx2rn-workspace/iteration-17/run_evals.py",
+    "prompt_templates": "prompt_templates.json",
+    "run_script": "run_evals.py",
+    "grade_script": "grade.py",
+    "aggregate_script": "aggregate_benchmark.py",
+    "samples": 1,
+    "recommended_samples": 3,
+    "subagent_config": {
+      "model": "explicit",
+      "reasoning_effort": "explicit",
+      "fork_turns": "none"
+    },
+    "validation": "与 Mpx2RN iteration-17 一致：grade.py 使用 Python 确定性静态检查，不启动评分模型，不执行构建、浏览器、SSR renderer、E2E 或真机验收。"
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "style-layout",
+      "case_number": 1,
+      "title": "Web 基础适配",
+      "task_type": "adapt",
+      "complexity": "complex",
+      "focus": "style/layout/route/config",
+      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
+      "expected_output": "在同一 Mpx 工程中完成样式隔离、Web 虚拟宿主布局、externalClasses、导航、路由基础路径、静态资源路径和 rpx 换算适配，并保留微信行为。",
+      "files": [
+        "eval-0-style-layout/input/mpx.config.js",
+        "eval-0-style-layout/input/requirements.md",
+        "eval-0-style-layout/input/src/app.mpx",
+        "eval-0-style-layout/input/src/components/blue-card.mpx",
+        "eval-0-style-layout/input/src/components/layout-cell.mpx",
+        "eval-0-style-layout/input/src/components/red-card.mpx",
+        "eval-0-style-layout/input/src/components/theme-card.mpx",
+        "eval-0-style-layout/input/src/packageA/index.mpx",
+        "eval-0-style-layout/input/src/packageB/index.mpx",
+        "eval-0-style-layout/input/src/pages/choice/index.mpx",
+        "eval-0-style-layout/input/src/pages/home/index.mpx",
+        "eval-0-style-layout/input/src/pages/style/index.mpx",
+        "eval-0-style-layout/input/src/workers/add.js"
+      ],
+      "outputs": [
+        "mpx.config.js",
+        "src/app.mpx",
+        "src/components/blue-card.mpx",
+        "src/components/layout-cell.mpx",
+        "src/components/red-card.mpx",
+        "src/components/theme-card.mpx",
+        "src/packageA/index.mpx",
+        "src/packageB/index.mpx",
+        "src/pages/choice/index.mpx",
+        "src/pages/home/index.mpx",
+        "src/pages/style/index.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "C1.4",
+          "text": "样式：red-card 与 blue-card 的同名类使用独立作用域，不互相覆盖"
+        },
+        {
+          "id": "C1.5",
+          "text": "布局：layout-cell 的虚拟宿主在 Web 生效，两个实例在 240px Flex 容器中等宽"
+        },
+        {
+          "id": "C1.6",
+          "text": "样式：theme-card 的 externalClasses 从调用方贯通到内容节点，并保留默认外部类配置"
+        },
+        {
+          "id": "C4.1",
+          "text": "导航：保留微信 navigator、普通入口 ready 状态和选择结果回传链路"
+        },
+        {
+          "id": "C4.2",
+          "text": "导航栏：微信胶囊 API 不在 Web 执行，Web 不重复显示系统导航与自定义导航"
+        },
+        {
+          "id": "C4.3",
+          "text": "路由：Web publicPath、history base 均为 /help-demo/，主包与两个分包页面保持注册"
+        },
+        {
+          "id": "C4.4",
+          "text": "尺寸：Web 使用固定二分之一 rpx 换算，微信换算配置保持不变"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "generate-web",
+      "case_number": 2,
+      "title": "从零生成资料页",
+      "task_type": "generate",
+      "complexity": "normal",
+      "focus": "generation/mpx2web",
+      "prompt": "请根据 input 中的 requirements.md 从零创建完整交付，并输出全部要求文件。",
+      "expected_output": "从空输入创建一套可同时输出微信小程序与 Web 的 Mpx 应用、页面和组件，并正确处理 Web 路由、外部样式类、组件交互与分享边界。",
+      "files": [
+        "eval-1-generate-web/input/requirements.md"
+      ],
+      "outputs": [
+        "mpx.config.js",
+        "src/app.mpx",
+        "src/components/profile-card.mpx",
+        "src/pages/profile/index.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "C2.1",
+          "text": "结构：生成完整 Mpx 配置、App、页面和组件，页面注册并渲染两个 profile-card"
+        },
+        {
+          "id": "C2.2",
+          "text": "路由：Web publicPath、history base 均为 /profile-demo/，微信页面注册保持有效"
+        },
+        {
+          "id": "C2.3",
+          "text": "样式：accent-class 从页面调用方贯通到组件标题，并保留默认 externalClasses"
+        },
+        {
+          "id": "C2.4",
+          "text": "交互：两个 profile-card 实例各自保存折叠状态，点击只切换当前实例"
+        },
+        {
+          "id": "C2.5",
+          "text": "分享：微信保留正确分享标题和路径，Web 隔离该钩子并呈现未接入边界"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "api-share-components",
+      "case_number": 3,
+      "title": "业务能力兼容",
+      "readonly_files": [
+        "src/vendor/native-scanner/index.mpx"
+      ],
+      "task_type": "adapt",
+      "complexity": "complex",
+      "focus": "api/components/platform-isolation/support-boundaries/state",
+      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
+      "expected_output": "在同一 Mpx 应用中保留可用的公共业务能力和微信原行为，对没有现成 Web 实现的 API、组件或局部属性做真实平台隔离并留下具体业务接入边界。",
+      "files": [
+        "eval-2-api-share-components/input/requirements.md",
+        "eval-2-api-share-components/input/src/app.mpx",
+        "eval-2-api-share-components/input/src/components/scan-entry.mpx",
+        "eval-2-api-share-components/input/src/components/video-info.mpx",
+        "eval-2-api-share-components/input/src/pages/content/index.mpx",
+        "eval-2-api-share-components/input/src/vendor/native-scanner/index.mpx",
+        "eval-2-api-share-components/input/src/pages/store-picker/index.mpx",
+        "eval-2-api-share-components/input/src/pages/catalog/index.mpx"
+      ],
+      "outputs": [
+        "src/app.mpx",
+        "src/components/scan-entry.mpx",
+        "src/components/video-info.mpx",
+        "src/pages/content/index.mpx",
+        "src/pages/store-picker/index.mpx",
+        "src/pages/catalog/index.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "C3.2",
+          "text": "名称编辑：Web 具备输入、确认赋值和取消不赋值链路，微信原交互保持有效"
+        },
+        {
+          "id": "C3.3",
+          "text": "扫码：微信保留原生扫码组件，Web 构建不解析该组件且只读依赖未修改"
+        },
+        {
+          "id": "C3.4",
+          "text": "视频：保留 src 与播放事件，Web 在 detail 缺字段时从真实 target 安全回退"
+        },
+        {
+          "id": "C3.5",
+          "text": "位置：微信保留 chooseLocation，Web 不执行微信 API 且说明真实服务接入边界"
+        },
+        {
+          "id": "C3.6",
+          "text": "插件：公共 pages 只维护一份，微信保留插件卡片，Web 不解析 plugin 组件"
+        },
+        {
+          "id": "C5.1",
+          "text": "地区与地图：微信原 picker/map 数据链保留，Web 隔离缺失能力并标明接入点"
+        },
+        {
+          "id": "C5.2",
+          "text": "Swiper 与图片：保留公共能力，只隔离 Web 未实现的局部属性并标明接入点"
+        },
+        {
+          "id": "C5.3",
+          "text": "结构组件：微信保留 grid-view 与 page-container，Web 隔离缺失组件并标明接入点"
+        },
+        {
+          "id": "C5.4",
+          "text": "状态：门店确认和商品筛选的草稿、取消、确认状态链保持不变"
+        }
+      ],
+      "readonly_assertions": {
+        "src/vendor/native-scanner/index.mpx": [
+          "C3.3"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "name": "ssr",
+      "case_number": 4,
+      "title": "文章页 Web SSR",
+      "task_type": "adapt",
+      "complexity": "complex",
+      "focus": "mpx2web/ssr/route/state",
+      "prompt": "请根据 input 中的源码和 requirements.md 完成交付，并输出全部要求文件。",
+      "expected_output": "将现有 Mpx 微信文章页的文章状态整体迁移为微信与 Web 共用的 Pinia，并支持服务端首屏渲染、浏览器客户端接管及原微信行为。",
+      "files": [
+        "eval-3-ssr/input/mpx.config.js",
+        "eval-3-ssr/input/requirements.md",
+        "eval-3-ssr/input/src/app.mpx",
+        "eval-3-ssr/input/src/pages/article/index.mpx",
+        "eval-3-ssr/input/src/services/article.js",
+        "eval-3-ssr/input/src/store/article.js"
+      ],
+      "outputs": [
+        "mpx.config.js",
+        "src/app.mpx",
+        "src/pages/article/index.mpx",
+        "src/services/article.js",
+        "src/store/article.js"
+      ],
+      "assertions": [
+        {
+          "id": "C6.1",
+          "text": "SSR：history 路由匹配 /help-demo/，首屏渲染前按当前 query.id 等待文章数据"
+        },
+        {
+          "id": "C6.2",
+          "text": "状态：文章状态完整迁移到共享 @mpxjs/pinia，并通过 onAppInit 注入应用"
+        },
+        {
+          "id": "C6.3",
+          "text": "隔离：每次 SSR 请求在 onAppInit 中创建独立 Pinia，文章页使用当前请求实例"
+        },
+        {
+          "id": "C6.4",
+          "text": "环境：服务端可达的初始化与预取代码不访问 window、document 或 navigator"
+        },
+        {
+          "id": "C6.5",
+          "text": "兼容：微信 onLoad 继续按 query.id 调用共享 action，并保留文章页面状态与交互"
+        }
+      ],
+      "context_files": [
+        "eval-3-ssr/fixtures/runtime-contract.md"
+      ]
+    }
+  ],
+  "comparison": {
+    "groups": [
+      {
+        "id": "mpx2web",
+        "label": "Has Skill",
+        "skill": ".agents/skills/mpx2web/SKILL.md"
+      },
+      {
+        "id": "no_skill",
+        "label": "No Skill"
+      }
+    ]
+  },
+  "scoring": {
+    "method": "binary_assertions_case_mean",
+    "assertion_count": 26,
+    "grader_method": "deterministic_python_static_checks",
+    "primary": "与 Mpx2RN iteration-17 一致：先计算每个 Case 的断言通过率，再对 Case 取平均",
+    "runtime_policy": "仅做确定性静态检查；构建、浏览器、SSR renderer、E2E 与真机结果不计入本分数。"
+  }
+}

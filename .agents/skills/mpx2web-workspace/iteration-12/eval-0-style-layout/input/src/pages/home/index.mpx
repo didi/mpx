@@ -1,0 +1,46 @@
+<template>
+  <view class="page">
+    <view class="header" style="padding-top: {{topInset}}px; {{headerHeight === null ? '' : 'height: ' + headerHeight + 'px;'}}">
+      <text>我的选项</text>
+    </view>
+    <view class="content">
+      <text>当前：{{selectedLabel}}</text>
+      <button bindtap="openChoice">选择</button>
+      <navigator url="/pages/choice/index?source=link" open-type="navigate">通过链接选择</navigator>
+      <navigator url="/packageA/index" open-type="navigate">独立入口</navigator>
+      <navigator url="/packageB/index" open-type="navigate">更多说明</navigator>
+      <view class="size-sample">设计宽 200rpx、字体 28rpx</view>
+    </view>
+  </view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: { topInset: 0, headerHeight: null, selectedLabel: '未选择' },
+  onLoad () {
+    const capsule = wx.getMenuButtonBoundingClientRect()
+    this.topInset = capsule.top
+    this.headerHeight = capsule.height
+  },
+  methods: {
+    openChoice () {
+      wx.navigateTo({
+        url: '/pages/choice/index',
+        events: {
+          ready: () => { this.selectedLabel = '正在选择' }
+        }
+      })
+    },
+    receiveChoice (label) {
+      this.selectedLabel = label
+    }
+  }
+})
+</script>
+<style>
+.page { min-height: 100%; background: #f6f7f9; }
+.header { padding-left: 16px; background: #fff; }
+.content { padding: 24rpx; }
+.size-sample { width: 200rpx; font-size: 28rpx; background: #dde8ff; }
+</style>

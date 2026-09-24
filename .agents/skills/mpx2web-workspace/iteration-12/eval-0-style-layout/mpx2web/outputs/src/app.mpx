@@ -1,0 +1,43 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy)
+
+if (__mpx_mode__ === 'web') {
+  mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
+    routeConfig: {
+      mode: 'history',
+      base: '/help-demo/'
+    },
+    enableTitleBar: false
+  })
+}
+
+createApp({})
+</script>
+<script name="json">
+const appConfig = {
+  pages: [
+    './pages/home/index.mpx',
+    './pages/choice/index.mpx',
+    './pages/style/index.mpx'
+  ],
+  window: {
+    navigationStyle: 'custom'
+  },
+  subpackages: [
+    { root: 'packageA', pages: ['./index.mpx'] },
+    { root: 'packageB', pages: ['./index.mpx'] }
+  ]
+}
+
+if (__mpx_mode__ === 'wx') {
+  // workers 是微信 worker 目录声明；Web 不会据此自动创建 Web Worker。
+  appConfig.workers = 'workers'
+  // Web 会继续注册该分包页面并异步加载，但不具备微信独立分包的独立运行环境。
+  appConfig.subpackages[0].independent = true
+}
+
+module.exports = appConfig
+</script>

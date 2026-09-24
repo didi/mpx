@@ -1,0 +1,45 @@
+<script>
+import Mpx, { createApp } from '@mpxjs/core'
+
+const currentWebConfig = Mpx.config.webConfig || {}
+
+Mpx.config.webConfig = {
+  ...currentWebConfig,
+  routeConfig: {
+    ...(currentWebConfig.routeConfig || {}),
+    mode: 'history',
+    base: '/profile-demo/'
+  }
+}
+
+createApp({
+  onLaunch () {}
+})
+</script>
+
+<style>
+page {
+  min-height: 100%;
+  background: #f4f7fb;
+  color: #1f2937;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button {
+  box-sizing: border-box;
+}
+</style>
+
+<json>
+{
+  "pages": [
+    "./pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "个人资料",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f4f7fb"
+  }
+}
+</json>
