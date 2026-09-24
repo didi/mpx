@@ -4,13 +4,8 @@ module.exports = {
     mpx: {
       plugin: {
         srcMode: 'wx',
-        externalClasses: [
-          'custom-class',
-          'i-class',
-          'accent-class'
-        ]
-      },
-      loader: {}
+        externalClasses: ['custom-class', 'i-class', 'accent-class']
+      }
     }
   }
 }

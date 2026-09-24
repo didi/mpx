@@ -1,6 +1,5 @@
 <template>
   <view class="catalog-page">
-    <!-- @mpx-if (mode === 'wx') -->
     <swiper
       class="campaign-swiper"
       previous-margin="24rpx"
@@ -12,22 +11,10 @@
         <view class="campaign-card">{{item.title}}</view>
       </swiper-item>
     </swiper>
-    <!-- @mpx-else -->
-    <view class="web-campaign-list">
-      <button
-        wx:for="{{banners}}"
-        wx:key="id"
-        data-id="{{item.id}}"
-        bindtap="selectBanner"
-      >
-        {{item.title}}
-      </button>
-    </view>
-    <!-- @mpx-endif -->
-    <text class="state-line">当前活动：{{activeBannerId}}</text>
+    <text class="status-line">当前活动：{{activeBannerId}}</text>
 
     <button bindtap="openFilter">筛选商品</button>
-    <text class="state-line">已应用分类：{{appliedCategory}}</text>
+    <text class="status-line">已应用分类：{{appliedCategory}}</text>
 
     <!-- @mpx-if (mode === 'wx') -->
     <grid-view
@@ -52,20 +39,25 @@
       </grid-item>
     </grid-view>
     <!-- @mpx-else -->
-    <view class="web-product-grid">
-      <button
+    <view class="product-grid">
+      <view
         wx:for="{{filteredProducts}}"
         wx:key="id"
-        class="web-product-card"
+        class="product-card {{selectedProductId === item.id ? 'selected' : ''}}"
         data-id="{{item.id}}"
         bindtap="selectProduct"
       >
-        <image class="product-cover" src="{{item.cover}}" mode="aspectFill" />
+        <image
+          class="product-cover"
+          src="{{item.cover}}"
+          mode="aspectFill"
+          lazy-load
+        />
         <text>{{item.name}}</text>
-      </button>
+      </view>
     </view>
     <!-- @mpx-endif -->
-    <text class="state-line">已选商品：{{selectedProductId}}</text>
+    <text class="status-line">已选商品：{{selectedProductId}}</text>
 
     <!-- @mpx-if (mode === 'wx') -->
     <page-container show="{{filterVisible}}" overlay>
@@ -85,20 +77,23 @@
       </view>
     </page-container>
     <!-- @mpx-else -->
-    <view wx:if="{{filterVisible}}" class="web-filter-overlay">
-      <view class="filter-panel">
+    <view wx:if="{{filterVisible}}" class="filter-overlay" bindtap="cancelFilter">
+      <view class="filter-panel" catchtap="keepFilterOpen">
         <text>选择分类</text>
         <button
           wx:for="{{categories}}"
           wx:key="id"
+          class="category-option {{draftCategory === item.id ? 'selected' : ''}}"
           data-id="{{item.id}}"
           bindtap="chooseDraftCategory"
         >
           {{item.label}}
         </button>
         <text>待应用：{{draftCategory}}</text>
-        <button bindtap="cancelFilter">取消</button>
-        <button bindtap="confirmFilter">确定</button>
+        <view class="filter-actions">
+          <button bindtap="cancelFilter">取消</button>
+          <button bindtap="confirmFilter">确定</button>
+        </view>
       </view>
     </view>
     <!-- @mpx-endif -->
@@ -158,12 +153,6 @@ createPage({
       const banner = this.banners[current]
       if (banner) this.activeBannerId = banner.id
     },
-    selectBanner (event) {
-      const bannerId = event.currentTarget.dataset.id
-      if (this.banners.some(item => item.id === bannerId)) {
-        this.activeBannerId = bannerId
-      }
-    },
     selectProduct (event) {
       this.selectedProductId = event.currentTarget.dataset.id
     },
@@ -174,6 +163,7 @@ createPage({
     chooseDraftCategory (event) {
       this.draftCategory = event.currentTarget.dataset.id
     },
+    keepFilterOpen () {},
     cancelFilter () {
       this.draftCategory = this.appliedCategory
       this.filterVisible = false
@@ -196,22 +186,15 @@ createPage({
 }
 
 .campaign-card {
+  box-sizing: border-box;
   height: 160rpx;
   margin: 0 8rpx;
   padding: 20rpx;
-  box-sizing: border-box;
   border-radius: 16rpx;
   background: #eef4ff;
 }
 
-.web-campaign-list,
-.web-product-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16rpx;
-}
-
-.state-line {
+.status-line {
   display: block;
   margin: 16rpx 0;
 }
@@ -222,29 +205,53 @@ createPage({
   border-radius: 12rpx;
 }
 
-.web-product-card {
-  min-width: 0;
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
 }
 
-.web-filter-overlay {
+.product-card {
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 8rpx;
+  border: 2rpx solid transparent;
+  border-radius: 12rpx;
+}
+
+.product-card.selected,
+.category-option.selected {
+  border-color: #1769e0;
+}
+
+.filter-overlay {
   position: fixed;
+  z-index: 1000;
   inset: 0;
-  z-index: 10;
   display: flex;
   align-items: flex-end;
   background: rgba(0, 0, 0, 0.45);
 }
 
 .filter-panel {
+  box-sizing: border-box;
   width: 100%;
   padding: 32rpx;
-  box-sizing: border-box;
   background: #ffffff;
 }
 
-.filter-panel text {
-  display: block;
-  margin-bottom: 16rpx;
+.category-option {
+  border: 2rpx solid transparent;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.filter-actions button {
+  flex: 1;
 }
 </style>
 

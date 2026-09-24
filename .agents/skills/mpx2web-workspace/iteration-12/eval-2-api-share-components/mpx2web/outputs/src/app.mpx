@@ -5,6 +5,7 @@ import apiProxy from '@mpxjs/api-proxy'
 mpx.use(apiProxy)
 createApp({})
 </script>
+
 <script name="json">
 const appConfig = {
   pages: [

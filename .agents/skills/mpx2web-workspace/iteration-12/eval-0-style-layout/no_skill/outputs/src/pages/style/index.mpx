@@ -2,8 +2,20 @@
   <view class="style-page">
     <red-card />
     <blue-card />
-    <theme-card label="暖色标签" tone-class="warm-tone" custom-class="spaced-label" />
-    <theme-card label="冷色标签" tone-class="cool-tone" custom-class="spaced-label" />
+    <theme-card
+      label="暖色标签"
+      tone-class="warm-tone"
+      custom-class="spaced-label"
+      tone-class-name="warm-tone"
+      custom-class-name="spaced-label"
+    />
+    <theme-card
+      label="冷色标签"
+      tone-class="cool-tone"
+      custom-class="spaced-label"
+      tone-class-name="cool-tone"
+      custom-class-name="spaced-label"
+    />
     <view class="equal-row">
       <layout-cell label="甲" />
       <layout-cell label="较长的乙" />
@@ -15,7 +27,7 @@ import { createPage } from '@mpxjs/core'
 
 createPage({})
 </script>
-<style scoped>
+<style>
 .style-page { padding: 16px; }
 .warm-tone { color: #bb3311; }
 .cool-tone { color: #2255cc; }

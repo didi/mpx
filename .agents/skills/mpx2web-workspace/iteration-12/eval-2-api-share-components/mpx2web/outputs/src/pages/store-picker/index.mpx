@@ -2,11 +2,20 @@
   <view class="store-picker-page">
     <text class="title">选择服务地区和门店</text>
 
-    <picker @wx mode="region" value="{{regionCodes}}" bindchange="onWxRegionChange">
+    <picker
+      @wx
+      mode="region"
+      value="{{regionCodes}}"
+      bindchange="onWxRegionChange"
+    >
       <view class="region-entry">服务地区：{{regionText}}</view>
     </picker>
-
-    <picker @_web mode="selector" range="{{regionLabels}}" bindchange="onWebRegionChange">
+    <picker
+      @_web
+      mode="selector"
+      range="{{regionOptionLabels}}"
+      bindchange="onWebRegionChange"
+    >
       <view class="region-entry">服务地区：{{regionText}}</view>
     </picker>
 
@@ -18,9 +27,18 @@
       markers="{{storeMarkers}}"
       bindmarkertap="onWxMarkerTap"
     />
-    <!-- TODO(web): 接入 Web 地图 SDK 或业务地图组件，传入 mapCenter、storeMarkers，并将真实 marker id 回传 selectStore。 -->
-    <view @_web class="store-map store-map-unavailable">
-      <text>Web 地图和门店点选能力尚未接入</text>
+
+    <!-- TODO(web): 接入业务 Web 地图 SDK 或地图组件，并传入 mapCenter、storeMarkers 及真实门店 id。 -->
+    <view @_web class="web-store-selection">
+      <text class="unavailable">Web 地图未接入，请从真实门店列表选择</text>
+      <button
+        wx:for="{{storeMarkers}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="onWebStoreTap"
+      >
+        {{item.title}}
+      </button>
     </view>
 
     <view class="selection">
@@ -72,7 +90,7 @@ createPage({
     confirmedText: ''
   },
   computed: {
-    regionLabels () {
+    regionOptionLabels () {
       return this.regionOptions.map(item => item.names.join(' / '))
     }
   },
@@ -91,6 +109,9 @@ createPage({
     },
     onWxMarkerTap (event) {
       this.selectStore(event.detail.markerId)
+    },
+    onWebStoreTap (event) {
+      this.selectStore(event.currentTarget.dataset.id)
     },
     selectStore (storeId) {
       const selected = this.storeMarkers.find(item => item.id === Number(storeId))
@@ -123,13 +144,14 @@ createPage({
   margin-bottom: 24rpx;
 }
 
-.store-map-unavailable {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
+.web-store-selection {
+  margin-bottom: 24rpx;
+}
+
+.unavailable {
+  display: block;
+  margin-bottom: 16rpx;
   color: #666666;
-  background: #f5f5f5;
 }
 </style>
 

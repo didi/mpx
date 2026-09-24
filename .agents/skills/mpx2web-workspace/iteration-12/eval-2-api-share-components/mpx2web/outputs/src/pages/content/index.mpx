@@ -1,24 +1,34 @@
 <template>
   <view class="content-page">
     <text>{{title}}</text>
+
     <button @wx bindtap="choosePlace">选择位置</button>
-    <text @_web class="unavailable">Web 位置选择尚未接入</text>
+    <!-- TODO(web): 接入能够返回真实地点名称的 Web 地点选择服务，并继续更新 placeName。 -->
+    <text @_web class="unavailable">Web 地点选择能力未接入</text>
     <text>{{placeName}}</text>
+
     <button bindtap="rename">编辑名称</button>
-    <view @_web wx:if="{{renameVisible}}" class="rename-panel">
-      <input value="{{nameDraft}}" placeholder="请输入名称" bindinput="onNameInput" />
+    <view @_web wx:if="{{renaming}}" class="rename-editor">
+      <input
+        value="{{renameDraft}}"
+        placeholder="请输入名称"
+        bindinput="onRenameInput"
+      />
       <button bindtap="cancelRename">取消</button>
       <button bindtap="confirmRename">确定</button>
     </view>
     <text>名称：{{displayName}}</text>
+
     <scan-entry bindresult="onScanResult" />
     <text>扫码结果：{{scanResult}}</text>
     <video-info src="{{videoSrc}}" />
+
     <foo-card @wx />
-    <!-- TODO(web): 接入 foo 服务卡片对应的 Web 业务组件和真实服务数据。 -->
-    <text @_web class="unavailable">Web 插件服务卡片尚未接入</text>
+    <!-- TODO(web): 接入 foo 插件服务卡片的 Web 业务组件，并复用其真实服务数据与交互。 -->
+    <text @_web class="unavailable">插件服务卡片 Web 版未接入</text>
   </view>
 </template>
+
 <script>
 import { createPage } from '@mpxjs/core'
 
@@ -27,25 +37,17 @@ createPage({
     title: '内容操作示例',
     placeName: '尚未选择',
     displayName: '默认名称',
-    nameDraft: '默认名称',
-    renameVisible: false,
     scanResult: '',
-    videoSrc: ''
+    videoSrc: '',
+    renaming: false,
+    renameDraft: ''
   },
   onLoad (query) {
-    const videoUrl = query.videoUrl || ''
-    try {
-      this.videoSrc = decodeURIComponent(videoUrl)
-    } catch (error) {
-      this.videoSrc = videoUrl
-    }
+    this.videoSrc = decodeURIComponent(query.videoUrl || '')
   },
   methods: {
     choosePlace () {
-      if (__mpx_mode__ === 'web') {
-        // TODO(web): 接入业务 Web 位置选择服务，成功后继续写入 placeName。
-        return
-      }
+      if (__mpx_mode__ === 'web') return
       wx.chooseLocation({
         success: result => {
           this.placeName = result.name
@@ -54,8 +56,8 @@ createPage({
     },
     rename () {
       if (__mpx_mode__ === 'web') {
-        this.nameDraft = this.displayName
-        this.renameVisible = true
+        this.renameDraft = this.displayName
+        this.renaming = true
         return
       }
       wx.showModal({
@@ -68,16 +70,16 @@ createPage({
         }
       })
     },
-    onNameInput (event) {
-      this.nameDraft = event.detail.value
+    onRenameInput (event) {
+      this.renameDraft = event.detail.value
     },
     cancelRename () {
-      this.nameDraft = this.displayName
-      this.renameVisible = false
+      this.renameDraft = this.displayName
+      this.renaming = false
     },
     confirmRename () {
-      this.displayName = this.nameDraft
-      this.renameVisible = false
+      this.displayName = this.renameDraft
+      this.renaming = false
     },
     onScanResult (event) {
       this.scanResult = event.detail.result
@@ -85,11 +87,24 @@ createPage({
   }
 })
 </script>
+
 <style>
-.content-page { padding: 16px; }
-.rename-panel { margin: 12px 0; }
-.unavailable { display: block; color: #666666; }
+.content-page {
+  padding: 16px;
+}
+
+.rename-editor {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #d8d8d8;
+}
+
+.unavailable {
+  display: block;
+  color: #666666;
+}
 </style>
+
 <script name="json">
 const pageConfig = {
   usingComponents: {

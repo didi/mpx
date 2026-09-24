@@ -10,17 +10,17 @@ import mpx, { createPage, onLoad } from '@mpxjs/core'
 
 createPage({
   setup (props, { getOpenerEventChannel }) {
-    const openerEventChannel = getOpenerEventChannel()
+    const eventChannel = getOpenerEventChannel()
 
     onLoad(query => {
       // 普通链接入口没有注册 ready 监听。
-      if (query.source !== 'link') openerEventChannel.emit('ready')
+      if (query.source !== 'link') eventChannel.emit('ready')
     })
 
     return {
       confirm (label) {
         if (__mpx_mode__ === 'web') {
-          openerEventChannel.emit('choiceSelected', label)
+          eventChannel.emit('choiceConfirmed', label)
           mpx.navigateBack({ delta: 1 })
           return
         }

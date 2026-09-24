@@ -10,8 +10,8 @@ module.exports = {
         },
         webConfig: {
           transRpxFn: function (match, value) {
-            const size = Number(value)
-            return size === 0 ? '0' : `${size / 2}px`
+            if (value === '0') return value
+            return (Number(value) / 2) + 'px'
           }
         }
       }

@@ -3,6 +3,7 @@ import mpx, { createApp } from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy)
+
 createApp({})
 </script>
 
@@ -16,7 +17,10 @@ createApp({})
   // @mpx-if (mode === 'wx')
   ,
   "plugins": {
-    "foo": { "version": "1.0.0", "provider": "wx123" }
+    "foo": {
+      "version": "1.0.0",
+      "provider": "wx123"
+    }
   }
   // @mpx-endif
 }

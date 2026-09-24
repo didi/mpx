@@ -1,4 +1,5 @@
 module.exports = {
+  publicPath: '/help-demo/',
   pluginOptions: {
     mpx: {
       plugin: {

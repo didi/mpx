@@ -1,10 +1,11 @@
 <template>
   <view class="catalog-page">
-    <!-- TODO(web): 接入支持两项同屏及前后边距的 Web 轮播方案，复用 banners、activeBannerId 和 onBannerChange；当前保留单项轮播。 -->
     <swiper
       class="campaign-swiper"
       previous-margin@wx="24rpx"
+      previous-margin@web="24rpx"
       next-margin@wx="24rpx"
+      next-margin@web="24rpx"
       display-multiple-items@wx="2"
       bindchange="onBannerChange"
     >
@@ -42,9 +43,9 @@
 
     <view @_web class="product-grid">
       <view
+        class="product-item"
         wx:for="{{filteredProducts}}"
         wx:key="id"
-        class="product-card"
         data-id="{{item.id}}"
         bindtap="selectProduct"
       >
@@ -76,7 +77,7 @@
     </page-container>
 
     <view @_web wx:if="{{filterVisible}}" class="filter-overlay">
-      <view class="filter-panel web-filter-panel">
+      <view class="filter-panel">
         <text>选择分类</text>
         <button
           wx:for="{{categories}}"
@@ -193,7 +194,7 @@ createPage({
   gap: 16rpx;
 }
 
-.product-card {
+.product-item {
   min-width: 0;
 }
 
@@ -216,13 +217,10 @@ createPage({
 }
 
 .filter-panel {
-  padding: 32rpx;
-  background: #ffffff;
-}
-
-.web-filter-panel {
   width: 100%;
+  padding: 32rpx;
   box-sizing: border-box;
+  background: #ffffff;
 }
 </style>
 

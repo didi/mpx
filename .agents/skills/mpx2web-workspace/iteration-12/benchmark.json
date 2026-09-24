@@ -4,7 +4,7 @@
     "skill_path": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web",
     "executor_model": "gpt-5.6-sol (xhigh)",
     "analyzer_model": "deterministic Python checks",
-    "timestamp": "2026-09-24T08:56:07Z",
+    "timestamp": "2026-09-24T09:40:31Z",
     "evals_run": [
       0,
       1,
@@ -26,9 +26,9 @@
         "passed": 7,
         "failed": 0,
         "total": 7,
-        "time_seconds": 663.612,
-        "tokens": 2508688,
-        "tool_calls": 65,
+        "time_seconds": 656.024,
+        "tokens": 3672820,
+        "tool_calls": 48,
         "errors": 0
       },
       "expectations": [
@@ -86,9 +86,9 @@
         "passed": 5,
         "failed": 0,
         "total": 5,
-        "time_seconds": 387.809,
-        "tokens": 1804795,
-        "tool_calls": 38,
+        "time_seconds": 506.242,
+        "tokens": 2550506,
+        "tool_calls": 43,
         "errors": 0
       },
       "expectations": [
@@ -130,13 +130,13 @@
       "configuration": "mpx2web",
       "run_number": 1,
       "result": {
-        "pass_rate": 0.8889,
-        "passed": 8,
-        "failed": 1,
+        "pass_rate": 0.7778,
+        "passed": 7,
+        "failed": 2,
         "total": 9,
-        "time_seconds": 803.201,
-        "tokens": 5622759,
-        "tool_calls": 59,
+        "time_seconds": 738.513,
+        "tokens": 4609517,
+        "tool_calls": 44,
         "errors": 0
       },
       "expectations": [
@@ -161,8 +161,8 @@
         {
           "id": "C3.5",
           "text": "位置：微信保留 chooseLocation，Web 不执行微信 API 且说明真实服务接入边界",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C3.6",
@@ -206,9 +206,9 @@
         "passed": 5,
         "failed": 0,
         "total": 5,
-        "time_seconds": 438.245,
-        "tokens": 1315842,
-        "tool_calls": 30,
+        "time_seconds": 302.762,
+        "tokens": 800918,
+        "tool_calls": 35,
         "errors": 0
       },
       "expectations": [
@@ -250,13 +250,13 @@
       "configuration": "no_skill",
       "run_number": 1,
       "result": {
-        "pass_rate": 0.8571,
-        "passed": 6,
-        "failed": 1,
+        "pass_rate": 0.1429,
+        "passed": 1,
+        "failed": 6,
         "total": 7,
-        "time_seconds": 610.285,
-        "tokens": 4663197,
-        "tool_calls": 41,
+        "time_seconds": 415.11,
+        "tokens": 550451,
+        "tool_calls": 7,
         "errors": 0
       },
       "expectations": [
@@ -269,26 +269,26 @@
         {
           "id": "C1.5",
           "text": "布局：layout-cell 的虚拟宿主在 Web 生效，两个实例在 240px Flex 容器中等宽",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C1.6",
           "text": "样式：theme-card 的 externalClasses 从调用方贯通到内容节点，并保留默认外部类配置",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C4.1",
           "text": "导航：保留微信 navigator、普通入口 ready 状态和选择结果回传链路",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C4.2",
           "text": "导航栏：微信胶囊 API 不在 Web 执行，Web 不重复显示系统导航与自定义导航",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C4.3",
@@ -299,8 +299,8 @@
         {
           "id": "C4.4",
           "text": "尺寸：Web 使用固定二分之一 rpx 换算，微信换算配置保持不变",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         }
       ],
       "notes": []
@@ -310,12 +310,12 @@
       "configuration": "no_skill",
       "run_number": 1,
       "result": {
-        "pass_rate": 0.8,
-        "passed": 4,
-        "failed": 1,
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
         "total": 5,
-        "time_seconds": 697.759,
-        "tokens": 5162260,
+        "time_seconds": 872.473,
+        "tokens": 3681631,
         "tool_calls": 51,
         "errors": 0
       },
@@ -323,8 +323,8 @@
         {
           "id": "C2.1",
           "text": "结构：生成完整 Mpx 配置、App、页面和组件，页面注册并渲染两个 profile-card",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C2.2",
@@ -335,14 +335,14 @@
         {
           "id": "C2.3",
           "text": "样式：accent-class 从页面调用方贯通到组件标题，并保留默认 externalClasses",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C2.4",
           "text": "交互：两个 profile-card 实例各自保存折叠状态，点击只切换当前实例",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C2.5",
@@ -362,9 +362,9 @@
         "passed": 1,
         "failed": 8,
         "total": 9,
-        "time_seconds": 384.719,
-        "tokens": 491805,
-        "tool_calls": 16,
+        "time_seconds": 421.023,
+        "tokens": 576730,
+        "tool_calls": 17,
         "errors": 0
       },
       "expectations": [
@@ -430,21 +430,21 @@
       "configuration": "no_skill",
       "run_number": 1,
       "result": {
-        "pass_rate": 0.8,
-        "passed": 4,
-        "failed": 1,
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
         "total": 5,
-        "time_seconds": 443.721,
-        "tokens": 1436769,
-        "tool_calls": 22,
+        "time_seconds": 666.478,
+        "tokens": 3349074,
+        "tool_calls": 45,
         "errors": 0
       },
       "expectations": [
         {
           "id": "C6.1",
           "text": "SSR：history 路由匹配 /help-demo/，首屏渲染前按当前 query.id 等待文章数据",
-          "passed": false,
-          "evidence": "FAIL"
+          "passed": true,
+          "evidence": "PASS"
         },
         {
           "id": "C6.2",
@@ -477,48 +477,48 @@
   "run_summary": {
     "mpx2web": {
       "pass_rate": {
-        "mean": 0.9722,
-        "stddev": 0.0555,
-        "min": 0.8889,
+        "mean": 0.9445,
+        "stddev": 0.1111,
+        "min": 0.7778,
         "max": 1.0
       },
       "time_seconds": {
-        "mean": 573.2168,
-        "stddev": 194.6428,
-        "min": 387.809,
-        "max": 803.201
+        "mean": 550.8853,
+        "stddev": 191.3256,
+        "min": 302.762,
+        "max": 738.513
       },
       "tokens": {
-        "mean": 2813021.0,
-        "stddev": 1936088.0514,
-        "min": 1315842,
-        "max": 5622759
+        "mean": 2908440.25,
+        "stddev": 1637854.8443,
+        "min": 800918,
+        "max": 4609517
       }
     },
     "no_skill": {
       "pass_rate": {
-        "mean": 0.6421,
-        "stddev": 0.355,
+        "mean": 0.3635,
+        "stddev": 0.4259,
         "min": 0.1111,
-        "max": 0.8571
+        "max": 1.0
       },
       "time_seconds": {
-        "mean": 534.121,
-        "stddev": 144.9959,
-        "min": 384.719,
-        "max": 697.759
+        "mean": 593.771,
+        "stddev": 219.6381,
+        "min": 415.11,
+        "max": 872.473
       },
       "tokens": {
-        "mean": 2938507.75,
-        "stddev": 2321005.5794,
-        "min": 491805,
-        "max": 5162260
+        "mean": 2039471.5,
+        "stddev": 1709633.6134,
+        "min": 550451,
+        "max": 3681631
       }
     },
     "delta": {
-      "pass_rate": "+0.33",
-      "time_seconds": "+39.1",
-      "tokens": "-125487"
+      "pass_rate": "+0.58",
+      "time_seconds": "-42.9",
+      "tokens": "+868969"
     }
   },
   "notes": [

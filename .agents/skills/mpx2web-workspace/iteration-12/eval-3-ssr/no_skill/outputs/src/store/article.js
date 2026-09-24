@@ -1,7 +1,7 @@
 import { defineStore } from '@mpxjs/pinia'
 import { fetchArticle } from '../services/article'
 
-const useArticleStore = defineStore('article', {
+export const useArticleStore = defineStore('article', {
   state: () => ({
     article: null,
     loading: true,
@@ -12,7 +12,6 @@ const useArticleStore = defineStore('article', {
       this.article = null
       this.loading = true
       this.errorText = ''
-
       try {
         const article = await fetchArticle(id)
         this.article = article
@@ -25,6 +24,3 @@ const useArticleStore = defineStore('article', {
     }
   }
 })
-
-export { useArticleStore }
-export default useArticleStore

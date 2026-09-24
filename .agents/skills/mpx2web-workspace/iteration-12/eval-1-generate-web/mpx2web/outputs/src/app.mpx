@@ -1,3 +1,17 @@
+<script name="json">
+module.exports = {
+  pages: [
+    './pages/profile/index'
+  ],
+  window: {
+    navigationBarTitleText: '个人资料',
+    navigationBarBackgroundColor: '#ffffff',
+    navigationBarTextStyle: 'black',
+    backgroundColor: '#f5f7fa'
+  }
+}
+</script>
+
 <script>
 import mpx, { createApp } from '@mpxjs/core'
 
@@ -21,15 +35,3 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 </style>
-
-<script type="application/json">
-{
-  "pages": [
-    "./pages/profile/index"
-  ],
-  "window": {
-    "navigationBarTitleText": "个人资料",
-    "backgroundColor": "#f5f7fa"
-  }
-}
-</script>

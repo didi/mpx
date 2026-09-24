@@ -15,26 +15,27 @@
       bindmarkertap="onWxMarkerTap"
     />
     <!-- @mpx-else -->
-    <view class="web-region">
-      <text class="region-entry">服务地区：{{regionText}}</text>
+    <view class="region-options">
+      <text class="section-title">服务地区：{{regionText}}</text>
       <button
         wx:for="{{regionOptions}}"
-        wx:key="codes"
+        wx:key="*this"
         data-index="{{index}}"
-        bindtap="selectWebRegion"
+        bindtap="onWebRegionSelect"
       >
         {{item.names[0]}} / {{item.names[1]}} / {{item.names[2]}}
       </button>
     </view>
 
-    <!-- TODO(web): 接入业务地图 SDK、门店数据服务及地图凭据后，在 Web 恢复地图点位交互。 -->
-    <text class="capability-note">Web 地图尚未接入，可通过下方门店列表选择</text>
-    <view class="store-list">
+    <!-- TODO(web): 接入业务选定的 Web 地图 SDK，用 mapCenter 和 storeMarkers 渲染地图及门店标记。 -->
+    <text class="unavailable">Web 地图服务尚未接入，可从现有门店列表选择</text>
+    <view class="store-options">
       <button
         wx:for="{{storeMarkers}}"
         wx:key="id"
+        class="store-option {{selectedStoreId === item.id ? 'selected' : ''}}"
         data-id="{{item.id}}"
-        bindtap="onWebStoreTap"
+        bindtap="onWebStoreSelect"
       >
         {{item.title}}
       </button>
@@ -98,19 +99,21 @@ createPage({
     onWxMarkerTap (event) {
       this.selectStore(event.detail.markerId)
     },
-    selectWebRegion (event) {
+    onWebRegionSelect (event) {
       const option = this.regionOptions[Number(event.currentTarget.dataset.index)]
       if (!option) return
+
       this.regionNames = option.names.slice()
       this.regionCodes = option.codes.slice()
       this.regionText = this.regionNames.join(' / ')
     },
-    onWebStoreTap (event) {
+    onWebStoreSelect (event) {
       this.selectStore(event.currentTarget.dataset.id)
     },
     selectStore (storeId) {
       const selected = this.storeMarkers.find(item => item.id === Number(storeId))
       if (!selected) return
+
       this.selectedStoreId = selected.id
       this.selectedStoreName = selected.title
     },
@@ -128,8 +131,9 @@ createPage({
 
 .title,
 .region-entry,
-.selection,
-.capability-note {
+.section-title,
+.unavailable,
+.selection {
   display: block;
   margin-bottom: 20rpx;
 }
@@ -140,9 +144,23 @@ createPage({
   margin-bottom: 24rpx;
 }
 
-.web-region,
-.store-list {
+.region-options,
+.store-options {
   margin-bottom: 24rpx;
+}
+
+.region-options button,
+.store-options button {
+  margin-bottom: 12rpx;
+}
+
+.unavailable {
+  color: #666666;
+}
+
+.store-option.selected {
+  color: #ffffff;
+  background: #1769e0;
 }
 
 .selection text {

@@ -13,29 +13,19 @@
 <script>
 import { createPage } from '@mpxjs/core'
 import { mapActions, mapState } from '@mpxjs/pinia'
-import useArticleStore from '../../store/article'
+import { useArticleStore } from '../../store/article'
 
 createPage({
   data: { expanded: false },
   computed: mapState(useArticleStore, ['article', 'loading', 'errorText']),
   onLoad (query) {
     const id = query.id || 'a'
-
-    if (__mpx_mode__ === 'web') {
-      // SSR 的数据请求由 serverPrefetch 发起并等待。
-      if (this.$isServer) return
-
-      // 客户端接管服务端状态时不重复请求；纯客户端进入仍正常加载。
-      if (this.article && this.article.id === id && !this.errorText) {
-        return this.article
-      }
-    }
-
+    if (this.$isServer || (this.article && this.article.id === id)) return
     return this.loadArticle(id)
   },
   serverPrefetch () {
-    const query = (this.$route && this.$route.query) || {}
-    return this.loadArticle(query.id || 'a')
+    const query = this.$route && this.$route.query
+    return this.loadArticle((query && query.id) || 'a')
   },
   methods: Object.assign({}, mapActions(useArticleStore, ['loadArticle']), {
     toggleExtra () {

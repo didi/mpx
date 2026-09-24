@@ -12,3 +12,6 @@ createComponent({
 <style scoped>
 .layout-cell { flex: 1; min-width: 0; height: 40px; background: #dbeafe; text-align: center; }
 </style>
+<script type="application/json">
+{ "component": true }
+</script>

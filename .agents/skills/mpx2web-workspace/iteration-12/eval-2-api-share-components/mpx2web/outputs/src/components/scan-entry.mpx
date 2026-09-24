@@ -1,10 +1,18 @@
 <template>
   <view class="scan-entry">
-    <button bindtap="start">开始扫码</button>
-    <native-scanner @wx wx:if="{{scanning}}" bindresult="onCode" bindfailure="onCameraError" />
-    <text>{{status}}</text>
+    <button @wx bindtap="start">开始扫码</button>
+    <native-scanner
+      @wx
+      wx:if="{{scanning}}"
+      bindresult="onCode"
+      bindfailure="onCameraError"
+    />
+    <text @wx>{{status}}</text>
+    <!-- TODO(web): 接入业务指定的 Web 扫码组件或扫码 SDK，并沿用 result 事件与相机失败状态。 -->
+    <text @_web>Web 扫码能力未接入</text>
   </view>
 </template>
+
 <script>
 import { createComponent } from '@mpxjs/core'
 
@@ -12,11 +20,6 @@ createComponent({
   data: { scanning: false, status: '' },
   methods: {
     start () {
-      if (__mpx_mode__ === 'web') {
-        // TODO(web): 接入业务 Web 扫码 SDK，成功和失败结果分别复用 onCode 与 onCameraError。
-        this.status = 'Web 扫码能力尚未接入'
-        return
-      }
       this.scanning = true
     },
     onCode (event) {
@@ -30,9 +33,11 @@ createComponent({
   }
 })
 </script>
+
 <style>
 .scan-entry { padding: 0; }
 </style>
+
 <script name="json">
 const componentConfig = { component: true }
 

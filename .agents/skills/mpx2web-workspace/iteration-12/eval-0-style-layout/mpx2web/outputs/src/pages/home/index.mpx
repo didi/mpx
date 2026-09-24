@@ -6,8 +6,7 @@
     <view class="content">
       <text>当前：{{selectedLabel}}</text>
       <button bindtap="openChoice">选择</button>
-      <navigator @wx url="/pages/choice/index?source=link" open-type="navigate">通过链接选择</navigator>
-      <view @web bindtap="openChoiceByLink">通过链接选择</view>
+      <navigator url="/pages/choice/index?source=link" open-type="navigate">通过链接选择</navigator>
       <navigator url="/packageA/index" open-type="navigate">独立入口</navigator>
       <navigator url="/packageB/index" open-type="navigate">更多说明</navigator>
       <view class="size-sample">设计宽 200rpx、字体 28rpx</view>
@@ -31,26 +30,19 @@ createPage({
       const options = {
         url: '/pages/choice/index',
         events: {
-          ready: () => { this.selectedLabel = '正在选择' },
-          choiceSelected: label => { this.receiveChoice(label) }
+          ready: () => { this.selectedLabel = '正在选择' }
         }
       }
 
       if (__mpx_mode__ === 'web') {
+        options.events.choiceConfirmed = (label) => {
+          this.selectedLabel = label
+        }
         mpx.navigateTo(options)
-      } else {
-        wx.navigateTo(options)
+        return
       }
-    },
-    openChoiceByLink () {
-      if (__mpx_mode__ === 'web') {
-        mpx.navigateTo({
-          url: '/pages/choice/index?source=link',
-          events: {
-            choiceSelected: label => { this.receiveChoice(label) }
-          }
-        })
-      }
+
+      wx.navigateTo(options)
     },
     receiveChoice (label) {
       this.selectedLabel = label

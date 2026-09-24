@@ -8,9 +8,8 @@
       bindfailure="onCameraError"
     />
     <!-- @mpx-else -->
-    <button bindtap="showWebUnavailable">开始扫码</button>
-    <!-- TODO(web): 接入业务认可的 Web 扫码 SDK、相机授权流程和结果校验服务后再开放扫码。 -->
-    <text class="capability-note">Web 扫码尚未接入</text>
+    <!-- TODO(web): 接入业务选定的 Web 扫码 SDK、相机授权流程和扫码结果回调。 -->
+    <text class="unavailable">Web 扫码服务尚未接入</text>
     <!-- @mpx-endif -->
     <text wx:if="{{status}}" class="status">{{status}}</text>
   </view>
@@ -36,10 +35,6 @@ createComponent({
     onCameraError () {
       this.scanning = false
       this.status = '相机不可用，请检查授权'
-    },
-    showWebUnavailable () {
-      // TODO(web): 由业务接入可用于 Web 的扫码 SDK；未接入前不能生成或返回模拟扫码结果。
-      this.status = 'Web 扫码能力尚未接入'
     }
   }
 })
@@ -50,10 +45,11 @@ createComponent({
   padding: 0;
 }
 
-.capability-note,
+.unavailable,
 .status {
   display: block;
   margin-top: 8px;
+  color: #666666;
 }
 </style>
 

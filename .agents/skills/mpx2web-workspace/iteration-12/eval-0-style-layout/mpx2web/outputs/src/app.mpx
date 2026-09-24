@@ -18,18 +18,25 @@ createApp({})
 </script>
 <script name="json">
 const appConfig = {
-  pages: ['./pages/home/index.mpx', './pages/choice/index.mpx', './pages/style/index.mpx'],
-  window: { navigationStyle: 'custom' },
+  pages: [
+    './pages/home/index.mpx',
+    './pages/choice/index.mpx',
+    './pages/style/index.mpx'
+  ],
+  window: {
+    navigationStyle: 'custom'
+  },
   subpackages: [
-    // Web 会将分包页面注册为异步路由，但 independent 的独立启动和运行环境仅由微信提供。
-    { root: 'packageA', pages: ['./index.mpx'], independent: true },
+    { root: 'packageA', pages: ['./index.mpx'] },
     { root: 'packageB', pages: ['./index.mpx'] }
   ]
 }
 
 if (__mpx_mode__ === 'wx') {
-  // workers 是微信目录声明；当前业务没有调用 worker，Web 不会据此虚构或自动注册 Web Worker。
+  // workers 是微信 worker 目录声明；Web 不会据此自动创建 Web Worker。
   appConfig.workers = 'workers'
+  // Web 会继续注册该分包页面并异步加载，但不具备微信独立分包的独立运行环境。
+  appConfig.subpackages[0].independent = true
 }
 
 module.exports = appConfig

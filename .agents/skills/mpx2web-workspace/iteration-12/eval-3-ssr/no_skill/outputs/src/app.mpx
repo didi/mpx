@@ -1,17 +1,20 @@
 <script>
 import mpx, { createApp } from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
-import { createPinia, setActivePinia } from '@mpxjs/pinia'
+import { createPinia } from '@mpxjs/pinia'
 
 mpx.use(apiProxy)
 
+mpx.config.webConfig.routeConfig = {
+  mode: 'history',
+  base: '/help-demo/'
+}
+
 createApp({
   onAppInit () {
-    // Mpx 会为每次 SSR 请求调用 onAppInit。这里创建的 Pinia 会随当前
-    // 应用实例交给默认 SSR 流程，避免不同请求之间共享文章状态。
-    const pinia = createPinia()
-    setActivePinia(pinia)
-    return { pinia }
+    return {
+      pinia: createPinia()
+    }
   }
 })
 </script>
