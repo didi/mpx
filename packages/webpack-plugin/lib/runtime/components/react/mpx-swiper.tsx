@@ -649,28 +649,20 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     function handleEnd (eventData: EventEndType) {
       'worklet'
       const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
-      if (isCriticalItem) {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, () => {
-          if (touchfinish.value !== false) {
-            currentIndex.value = selectedIndex
+
+      offset.value = withTiming(targetOffset, {
+        duration: easeDuration,
+        easing: easeMap[easeingFunc]
+      }, () => {
+        if (touchfinish.value !== false) {
+          currentIndex.value = selectedIndex
+          // 只在临界情况下设置 resetOffset
+          if (isCriticalItem) {
             offset.value = resetOffset
-            runOnJS(runOnJSCallback)('resumeLoop')
           }
-        })
-      } else {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, () => {
-          if (touchfinish.value !== false) {
-            currentIndex.value = selectedIndex
-            runOnJS(runOnJSCallback)('resumeLoop')
-          }
-        })
-      }
+          runOnJS(runOnJSCallback)('resumeLoop')
+        }
+      })
     }
     function handleBack (eventData: EventEndType) {
       'worklet'
@@ -689,6 +681,32 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }, () => {
         if (touchfinish.value !== false) {
           currentIndex.value = moveToIndex
+          runOnJS(runOnJSCallback)('resumeLoop')
+        }
+      })
+    }
+    function handleInertialSlide (eventData: EventEndType, velocity: number) {
+      'worklet'
+      const clampedVelocity = Math.min(Math.abs(velocity), 900)
+      const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
+
+      // 基于速度计算动画持续时间
+      const velocityFactor = Math.min(clampedVelocity / 1000, 1.2)
+      const baseDuration = 300
+      const minDuration = 250
+      const duration = Math.max(baseDuration / velocityFactor, minDuration)
+      // 合并重复的动画逻辑
+      offset.value = withTiming(targetOffset, {
+        duration: duration,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1)
+      }, (finished) => {
+        'worklet'
+        if (finished) {
+          currentIndex.value = selectedIndex
+          // 只在临界情况下设置 resetOffset
+          if (isCriticalItem) {
+            offset.value = resetOffset
+          }
           runOnJS(runOnJSCallback)('resumeLoop')
         }
       })
@@ -868,25 +886,30 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
         // 3. 非循环状态可移动态、循环状态, 正常逻辑处理
         const velocity = e[strVelocity]
-        // 用于判断是否超过一半，基于索引判断是否超过一半不可行(1.滑动过程中索引会变更导致计算反向, 2.边界场景会更新offset也会导致基于索引+offset判断实效)
-        const tmp = offset.value % step.value > step.value / 2
-        // 小于0手向左滑动
-        const offsetHalf = originData.transdir < 0 ? tmp : !tmp
-        if (offsetHalf) {
-          if (Math.abs(velocity) > longPressRatio) {
-            // 超过速度阈值，按照实时方向(快速来回滑动)
-            handleEnd(realtimeData)
-          } else {
-            // 超过速度阈值，按照起始方向（慢速长按）
-            handleEnd(originData)
-          }
+        if (Math.abs(velocity) > 200) {
+          // 速度较大，使用惯性滑动
+          handleInertialSlide(realtimeData, velocity)
         } else {
-          if (Math.abs(velocity) > longPressRatio) {
-            // 超过速度阈值，按照实时方向(快速来回滑动)
-            handleEnd(realtimeData)
+          // 用于判断是否超过一半，基于索引判断是否超过一半不可行(1.滑动过程中索引会变更导致计算反向, 2.边界场景会更新offset也会导致基于索引+offset判断实效)
+          const tmp = offset.value % step.value > step.value / 2
+          // 小于0手向左滑动
+          const offsetHalf = originData.transdir < 0 ? tmp : !tmp
+          if (offsetHalf) {
+            if (Math.abs(velocity) > longPressRatio) {
+              // 超过速度阈值，按照实时方向(快速来回滑动)
+              handleEnd(realtimeData)
+            } else {
+              // 超过速度阈值，按照起始方向（慢速长按）
+              handleEnd(originData)
+            }
           } else {
-            // 超过速度阈值，按照起始方向（慢速长按）
-            handleBack(originData)
+            if (Math.abs(velocity) > longPressRatio) {
+              // 超过速度阈值，按照实时方向(快速来回滑动)
+              handleEnd(realtimeData)
+            } else {
+              // 超过速度阈值，按照起始方向（慢速长按）
+              handleBack(originData)
+            }
           }
         }
       })
