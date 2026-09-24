@@ -1,5 +1,12 @@
 <script>
-import { createApp } from '@mpxjs/core'
+import mpx, { createApp } from '@mpxjs/core'
+
+mpx.config.webConfig = {
+  routeConfig: {
+    mode: 'history',
+    base: '/profile-demo/'
+  }
+}
 
 createApp({})
 </script>
@@ -7,7 +14,7 @@ createApp({})
 <script type="application/json">
 {
   "pages": [
-    "pages/profile/index"
+    "./pages/profile/index"
   ],
   "window": {
     "navigationBarTitleText": "个人资料",
@@ -23,5 +30,6 @@ page {
   min-height: 100%;
   background: #f4f6f8;
   color: #1f2937;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 </style>

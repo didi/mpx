@@ -1,16 +1,16 @@
 # Skill Benchmark: mpx2web
 
 **Model**: gpt-5.6-sol (xhigh)
-**Date**: 2026-09-23T12:04:14Z
+**Date**: 2026-09-24T08:56:07Z
 **Evals**: 0, 1, 2, 3 (1 runs each per configuration)
 
 ## Summary
 
 | Metric | Mpx2Web | No Skill | Delta |
 |--------|------------|---------------|-------|
-| Pass Rate | 89% ± 12% | 63% ± 45% | +0.27 |
-| Time | 898.2s ± 242.1s | 763.9s ± 218.7s | +134.3s |
-| Tokens | 2832470 ± 1501665 | 1933193 ± 2054522 | +899277 |
+| Pass Rate | 97% ± 6% | 64% ± 36% | +0.33 |
+| Time | 573.2s ± 194.6s | 534.1s ± 145.0s | +39.1s |
+| Tokens | 2813021 ± 1936088 | 2938508 ± 2321006 | -125487 |
 
 ## Notes
 

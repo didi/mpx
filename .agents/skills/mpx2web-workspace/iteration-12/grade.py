@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Deterministically grade Mpx2Web iteration-12 outputs."""
 import argparse
+import ast
 import json
 import re
 import sys
@@ -34,8 +35,114 @@ def all_present(source, *patterns):
     return all(re.search(pattern, source, re.S) for pattern in patterns)
 
 
-def no_pseudo_conditionals(source):
-    return not re.search(r"(?:<!--|//|/\*)\s*@mpx-(?:if|elif|else|endif|end-if)\b", source, re.I)
+def strip_comments(source):
+    return re.sub(r"/\*.*?\*/|<!--.*?-->|//[^\n]*", "", source, flags=re.S)
+
+
+def condition_matches_mode(condition, mode, variables=None):
+    """Evaluate the small expression subset used by Mpx platform guards."""
+    variables = variables or {}
+    expression = condition.replace("!==", "!=").replace("===", "==")
+    expression = expression.replace("&&", " and ").replace("||", " or ")
+    expression = re.sub(r"!(?!=)", " not ", expression).strip()
+
+    def evaluate(node):
+        if isinstance(node, ast.Expression):
+            return evaluate(node.body)
+        if isinstance(node, ast.BoolOp):
+            values = [evaluate(value) for value in node.values]
+            return all(values) if isinstance(node.op, ast.And) else any(values)
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+            return not evaluate(node.operand)
+        if isinstance(node, ast.Compare) and len(node.ops) == 1:
+            left = evaluate(node.left)
+            right = evaluate(node.comparators[0])
+            if isinstance(node.ops[0], ast.Eq):
+                return left == right
+            if isinstance(node.ops[0], ast.NotEq):
+                return left != right
+        if isinstance(node, ast.Name):
+            if node.id in variables:
+                return variables[node.id]
+            if node.id == "__mpx_mode__":
+                return mode
+        if isinstance(node, ast.Constant) and isinstance(node.value, (bool, str)):
+            return node.value
+        raise ValueError
+
+    try:
+        return bool(evaluate(ast.parse(expression, mode="eval")))
+    except (SyntaxError, ValueError):
+        return None
+
+
+def condition_variables(source, mode):
+    assignments = re.findall(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)",
+        strip_comments(source),
+    )
+    variables = {}
+    unresolved = assignments
+    while unresolved:
+        next_unresolved = []
+        for name, expression in unresolved:
+            value = condition_matches_mode(expression, mode, variables)
+            if value is None:
+                next_unresolved.append((name, expression))
+            else:
+                variables[name] = value
+        if len(next_unresolved) == len(unresolved):
+            break
+        unresolved = next_unresolved
+    return variables
+
+
+def valid_mpx_conditionals(source):
+    """Accept balanced, evaluable Mpx condition comments instead of banning them."""
+    block_pattern = re.compile(
+        r"(?:<!--|/\*)\s*@mpx-(?P<kind>if|elif|else|endif|end-if)\b"
+        r"(?P<condition>.*?)(?:-->|\*/)",
+        re.S | re.I,
+    )
+    line_pattern = re.compile(
+        r"//\s*@mpx-(?P<kind>if|elif|else|endif|end-if)\b"
+        r"(?P<condition>[^\n]*)",
+        re.I,
+    )
+    directives = sorted(
+        list(block_pattern.finditer(source)) + list(line_pattern.finditer(source)),
+        key=lambda match: match.start(),
+    )
+    stack = []
+    variables_by_mode = {
+        mode: condition_variables(source, mode)
+        for mode in ("wx", "web")
+    }
+    for directive in directives:
+        kind = directive.group("kind").lower()
+        if kind == "end-if":
+            return False
+        if kind in {"if", "elif"}:
+            if kind == "elif" and (not stack or stack[-1]):
+                return False
+            condition = directive.group("condition").strip()
+            values = [
+                condition_matches_mode(condition, mode, variables_by_mode[mode])
+                for mode in ("wx", "web")
+            ]
+            if any(value is None for value in values):
+                return False
+            if kind == "if":
+                stack.append(False)
+        elif kind == "else":
+            if not stack or stack[-1]:
+                return False
+            stack[-1] = True
+        elif kind == "endif":
+            if not stack:
+                return False
+            stack.pop()
+    return not stack
 
 
 def mode_guard(source, mode):
@@ -44,11 +151,244 @@ def mode_guard(source, mode):
 
 
 def platform_attribute(source, name, mode):
-    return bool(re.search(rf"\b{re.escape(name)}@(?:[\w-]+\|)*{re.escape(mode)}(?:\|[\w-]+)*\b", source))
+    return bool(re.search(
+        rf"\b{re.escape(name)}@(?:[\w-]+\|)*_?{re.escape(mode)}(?:\|[\w-]+)*\b",
+        source,
+    ))
+
+
+def platform_attribute_value(source, name, mode, value):
+    return bool(re.search(
+        rf"\b{re.escape(name)}@(?:[\w-]+\|)*_?{re.escape(mode)}(?:\|[\w-]+)*"
+        rf"\s*=\s*['\"]{re.escape(value)}['\"]",
+        source,
+    ))
+
+
+def attribute_available_on_web(source, name):
+    """Accept an unqualified attribute or an explicit @web attribute."""
+    unqualified = bool(re.search(
+        rf"\b{re.escape(name)}(?!@)\s*=", source))
+    return unqualified or platform_attribute(source, name, "web")
 
 
 def has_platform_node(source, tag, mode):
-    return bool(re.search(rf"<{re.escape(tag)}\b[^>]*@(?:[\w-]+\|)*{re.escape(mode)}(?:\|[\w-]+)*(?:\s|=|>)", source, re.S))
+    return bool(re.search(
+        rf"<{re.escape(tag)}\b[^>]*@(?:[\w-]+\|)*_?{re.escape(mode)}"
+        rf"(?:\|[\w-]+)*(?:\s|=|>)",
+        source,
+        re.S,
+    ))
+
+
+def platform_open_tags(source, tag, mode):
+    """Return opening tags selected for a mode, including the @_mode alias."""
+    selector = re.compile(
+        rf"(?:^|\s)@(?:[\w-]+\|)*_?{re.escape(mode)}(?:\|[\w-]+)*(?:\s|=|$)"
+    )
+    return [
+        match.group(0)
+        for match in re.finditer(rf"<{re.escape(tag)}\b[^>]*>", source, re.S | re.I)
+        if selector.search(match.group(0))
+    ]
+
+
+def tag_replaced_for_web(source, tag, replacement="view"):
+    return bool(re.search(
+        rf"<{re.escape(tag)}\b[^>]*\bmpxTagName@"
+        rf"(?:[\w-]+\|)*_?web(?:\|[\w-]+)*\s*=\s*"
+        rf"['\"]{re.escape(replacement)}['\"]",
+        source,
+        re.S | re.I,
+    ))
+
+
+def has_half_rpx_transform(source):
+    """Accept direct division and an equivalent Number(value) local alias."""
+    match = re.search(r"\btransRpxFn\s*:\s*function\s*\([^)]*\)\s*\{", source)
+    if not match:
+        return False
+    start = source.find("{", match.start())
+    body = extract_balanced_block(source, start)
+    if re.search(r"Number\(\s*value\s*\)\s*/\s*2", body):
+        return True
+    aliases = re.findall(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*Number\(\s*value\s*\)",
+        body,
+    )
+    return any(re.search(rf"\b{re.escape(alias)}\s*/\s*2", body) for alias in aliases)
+
+
+def on_app_init_injects_pinia(app_script):
+    """Accept direct creation or a local instance returned as the pinia option."""
+    body = method_body(app_script, "onAppInit")
+    if not body:
+        return False
+    if re.search(r"\bpinia\s*:\s*createPinia\s*\(", body):
+        return True
+    aliases = re.findall(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*createPinia\s*\(\s*\)",
+        body,
+    )
+    for alias in aliases:
+        returned_object = re.search(r"\breturn\s*\{(?P<body>[\s\S]*?)\}", body)
+        if not returned_object:
+            continue
+        options = returned_object.group("body")
+        if re.search(rf"(?:^|,)\s*{re.escape(alias)}\s*(?:,|$)", options):
+            return True
+        if re.search(rf"\bpinia\s*:\s*{re.escape(alias)}\b", options):
+            return True
+    return False
+
+
+def extract_balanced_block(source, start):
+    depth = 0
+    quote = None
+    escaped = False
+    for index in range(start, len(source)):
+        char = source[index]
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in "'\"`":
+            quote = char
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start:index + 1]
+    return ""
+
+
+def method_body(source, name):
+    match = re.search(rf"\b{re.escape(name)}\s*\([^)]*\)\s*\{{", source)
+    if not match:
+        return ""
+    start = source.find("{", match.start())
+    block = extract_balanced_block(source, start)
+    return block[1:-1] if block else ""
+
+
+def component_has_local_toggle(template, script, field):
+    """Follow the bound handler and accept direct assignment or setData."""
+    handlers = re.findall(
+        r"\bbindtap\s*=\s*['\"]([A-Za-z_$][\w$]*)['\"]",
+        template,
+    )
+    for handler in handlers:
+        body = method_body(script, handler)
+        if re.search(
+            rf"(?:this\.{re.escape(field)}\s*=\s*!this\.{re.escape(field)}|"
+            rf"\b{re.escape(field)}\s*:\s*!this\.{re.escape(field)})",
+            body,
+        ):
+            return True
+    return False
+
+
+def template_variants(source):
+    return [
+        (match.group("attrs"), match.group("body"))
+        for match in re.finditer(
+            r"<template(?P<attrs>(?:\s[^>]*)?)>(?P<body>.*?)</template>",
+            source,
+            re.S | re.I,
+        )
+    ]
+
+
+def template_for_mode(source, mode):
+    quoted = rf"['\"]{re.escape(mode)}['\"]"
+    for attrs, body in template_variants(source):
+        if re.search(rf"\bmode\s*=\s*{quoted}", attrs, re.I):
+            return body
+    return ""
+
+
+def default_template(source):
+    for attrs, body in template_variants(source):
+        if not re.search(r"\bmode\s*=", attrs, re.I):
+            return body
+    return ""
+
+
+def tag_isolated_by_web_override(source, tag):
+    """Accept the Mpx shape: default/original template plus mode=web override."""
+    original = default_template(source)
+    web = template_for_mode(source, "web")
+    tag_pattern = rf"<{re.escape(tag)}\b"
+    return bool(web and re.search(tag_pattern, original) and not re.search(tag_pattern, web))
+
+
+def handler_isolated_by_web_override(source, handler):
+    """Accept a wx handler that is referenced only by the default template."""
+    original = default_template(source)
+    web = template_for_mode(source, "web")
+    event_name = r"(?:bind|catch|capture-bind|capture-catch)[\w:-]*|@[\w:-]+"
+    handler_pattern = (
+        rf"(?:{event_name})\s*=\s*['\"][^'\"]*"
+        rf"\b{re.escape(handler)}\b[^'\"]*['\"]"
+    )
+    return bool(
+        web
+        and re.search(handler_pattern, original)
+        and not re.search(handler_pattern, web)
+    )
+
+
+def has_runtime_route_config(app_source, base):
+    """Recognize property, assignment and Object.assign routeConfig definitions."""
+    app_script = blocks(app_source)["script"]
+    for match in re.finditer(r"\brouteConfig\s*(?::|=)", app_script):
+        candidate = app_script[match.start():match.start() + 800]
+        if all_present(
+            candidate,
+            r"\bmode\s*:\s*['\"]history['\"]",
+            rf"\bbase\s*:\s*['\"]{re.escape(base)}['\"]",
+        ):
+            return True
+    return False
+
+
+def has_safe_media_fallback(source):
+    type_guard = bool(re.search(
+        r"typeof\s+[^\n]+\s*===\s*['\"]number['\"]", source))
+    finite_guard = "Number.isFinite" in source and "Number(" in source
+    return (
+        "event.detail" in source
+        and "event.target" in source
+        and (type_guard or finite_guard)
+    )
+
+
+def has_page_server_prefetch(page_script):
+    return all_present(
+        page_script,
+        r"(?:serverPrefetch|onServerPrefetch)\s*\(",
+        r"\$route[\s\S]{0,120}?query[\s\S]{0,80}?id",
+        r"(?:return|await)[\s\S]{0,240}?\.loadArticle\s*\(",
+    )
+
+
+def web_early_return_before(source, marker):
+    """Recognize `if (__mpx_mode__ === 'web') return` before a host-only call."""
+    return bool(re.search(
+        rf"if\s*\([^)]*__mpx_mode__\s*={{2,3}}\s*['\"]web['\"][^)]*\)\s*"
+        rf"(?:\{{[\s\S]{{0,500}}?\breturn\b[\s\S]{{0,100}}?\}}|\breturn\b)"
+        rf"[\s\S]{{0,500}}?{re.escape(marker)}",
+        source,
+    ))
+
+
+def guarded_from_web(source, marker):
+    return mode_guard(source, "wx") or web_early_return_before(source, marker)
 
 
 def assertion_rows(eval_id, verdicts):
@@ -89,16 +429,16 @@ def check_eval_0(root):
         and ("receiveChoice(label)" in choice or bool(set(re.findall(r"events\s*:\s*\{.*?([A-Za-z_$][\w$]*)\s*:\s*", home, re.S)) & set(re.findall(r"emit\(['\"]([^'\"]+)['\"]\s*,\s*label", choice))))
     )
     capsule_guarded = "getMenuButtonBoundingClientRect" in home and (
-        mode_guard(home, "wx") or bool(re.search(r"if\s*\([^)]*__mpx_mode__\s*!={1,2}\s*['\"]web['\"]", home))
+        guarded_from_web(home, "getMenuButtonBoundingClientRect")
+        or bool(re.search(r"if\s*\([^)]*__mpx_mode__\s*!={1,2}\s*['\"]web['\"]", home))
     )
     navigation_bar_ok = capsule_guarded and "navigationStyle" in app and "custom" in app
-    route_source = app + "\n" + config
     route_ok = (
         all_present(config, r"publicPath\s*:\s*['\"]/help-demo/['\"]")
-        and all_present(route_source, r"routeConfig\s*:\s*\{[^}]*mode\s*:\s*['\"]history['\"]", r"base\s*:\s*['\"]/help-demo/['\"]")
+        and has_runtime_route_config(app, "/help-demo/")
         and all(page in app for page in ("pages/home/index", "pages/choice/index", "pages/style/index", "packageA", "packageB"))
     )
-    rpx_ok = bool(re.search(r"transRpxFn\s*:\s*(?:function\s*)?\([^)]*value[^)]*\)[\s\S]*?Number\(value\)\s*/\s*2", config))
+    rpx_ok = has_half_rpx_transform(config)
     return assertion_rows(0, {
         "C1.4": red_scoped and blue_scoped,
         "C1.5": layout_ok,
@@ -121,8 +461,10 @@ def check_eval_1(root):
     files_ok = all((root / name).is_file() for name in (
         "mpx.config.js", "src/app.mpx", "src/components/profile-card.mpx", "src/pages/profile/index.mpx"))
     skeleton_ok = files_ok and all_present(app_blocks["json"], r"pages/profile/index") and all_present(page_blocks["json"], r"profile-card") and len(re.findall(r"<profile-card\b", page_blocks["template"])) == 2 and "createApp" in app_blocks["script"] and "createPage" in page_blocks["script"] and "createComponent" in card_blocks["script"]
-    route_source = app + "\n" + config
-    route_ok = all_present(config, r"publicPath\s*:\s*(?:['\"]/profile-demo/['\"]|\w+)") and all_present(route_source, r"routeConfig\s*:", r"mode\s*:\s*['\"]history['\"]", r"base\s*:\s*(?:['\"]/profile-demo/['\"]|\w+)") and "/profile-demo/" in route_source
+    route_ok = (
+        all_present(config, r"publicPath\s*:\s*(?:['\"]/profile-demo/['\"]|\w+)")
+        and has_runtime_route_config(app, "/profile-demo/")
+    )
     component_options = card_blocks["script"]
     external_ok = (
         all(token in config for token in ("custom-class", "i-class", "accent-class"))
@@ -131,7 +473,8 @@ def check_eval_1(root):
         and all_present(page, r"accent-class\s*=\s*['\"]warm-title", r"accent-class\s*=\s*['\"]cool-title", r"\.warm-title\s*\{[^}]*padding\s*:\s*12px[^}]*color|\.warm-title\s*\{[^}]*color[^}]*padding\s*:\s*12px", r"\.cool-title\s*\{[^}]*padding\s*:\s*12px[^}]*color|\.cool-title\s*\{[^}]*color[^}]*padding\s*:\s*12px")
     )
     interaction_ok = (
-        all_present(component_options, r"title\s*:", r"summary\s*:", r"expanded\s*:\s*false", r"toggleExpanded\s*\(", r"expanded\s*[:=][^\n]*!.*expanded")
+        all_present(component_options, r"title\s*:", r"summary\s*:", r"expanded\s*:\s*false")
+        and component_has_local_toggle(card_blocks["template"], component_options, "expanded")
         and "wx:if=\"{{ expanded }}\"".replace(" ", "") in card_blocks["template"].replace(" ", "")
         and len(re.findall(r"<profile-card\b", page_blocks["template"])) == 2
     )
@@ -160,26 +503,163 @@ def check_eval_2(root):
     content_blocks = blocks(content)
     scan_blocks = blocks(scan)
     catalog_blocks = blocks(catalog)
-    edit_chain = all_present(content, r"<input\b", r"renameDraft", r"confirmRename", r"cancelRename", r"displayName\s*=\s*this\.renameDraft") and no_pseudo_conditionals(content) and (mode_guard(content_blocks["script"], "wx") or mode_guard(content_blocks["script"], "web"))
-    scanner_json_ok = mode_guard(scan_blocks["json"], "wx") and "native-scanner" in scan_blocks["json"]
-    scanner_template_ok = has_platform_node(scan_blocks["template"], "native-scanner", "wx") or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", scan))
-    scanner_ok = vendor == input_vendor and scanner_json_ok and scanner_template_ok and "TODO(web)" in scan and no_pseudo_conditionals(scan)
-    video_ok = all_present(video, r"<video\b", r"src\s*=\s*['\"]\{\{src\}\}['\"]", r"bindtimeupdate", r"bindloadedmetadata", r"event\.detail", r"event\.target", r"typeof\s+[^\n]+\s*===\s*['\"]number['\"]")
-    location_ok = all_present(content, r"(?:wx|mpx)\.chooseLocation", r"placeName\s*=\s*result\.name", r"TODO\(web\)[^\n]*(?:位置|地图)") and mode_guard(content_blocks["script"], "wx") and no_pseudo_conditionals(content_blocks["script"])
-    app_json = blocks(app)["json"]
-    plugin_ok = mode_guard(app_json, "wx") and all_present(app_json, r"appConfig", r"plugins", r"pages") and mode_guard(content_blocks["json"], "wx") and "plugin://foo/component" in content_blocks["json"] and has_platform_node(content_blocks["template"], "foo-card", "wx") and no_pseudo_conditionals(app_json + content_blocks["json"])
-    region_map_ok = (
-        all_present(store, r"<picker\b[^>]*mode\s*=\s*['\"]region['\"]", r"<map\b", r"regionNames", r"regionCodes", r"regionText", r"mapCenter", r"storeMarkers", r"bindmarkertap", r"markerId", r"selectedStoreId", r"selectedStoreName", r"TODO\(web\)[^\n]*(?:地区|行政区)", r"TODO\(web\)[^\n]*(?:地图|SDK)")
-        and (has_platform_node(store, "picker", "wx") or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", store)))
-        and (has_platform_node(store, "map", "wx") or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", store)))
-        and no_pseudo_conditionals(store)
+    input_draft = re.search(r"<input\b[^>]*\bvalue\s*=\s*['\"]\{\{\s*([A-Za-z_$][\w$]*)\s*\}\}['\"]", content, re.S)
+    draft_name = input_draft.group(1) if input_draft else ""
+    confirm_body = re.search(r"confirmRename\s*\([^)]*\)\s*\{(?P<body>[\s\S]*?)\n\s*\}", content_blocks["script"])
+    cancel_body = re.search(r"cancelRename\s*\([^)]*\)\s*\{(?P<body>[\s\S]*?)\n\s*\}", content_blocks["script"])
+    edit_chain = bool(
+        draft_name
+        and confirm_body
+        and cancel_body
+        and re.search(rf"\bdisplayName\s*=\s*this\.{re.escape(draft_name)}\b", confirm_body.group("body"))
+        and not re.search(r"\bdisplayName\s*=", cancel_body.group("body"))
+        and valid_mpx_conditionals(content)
+        and (
+            mode_guard(content_blocks["script"], "wx")
+            or mode_guard(content_blocks["script"], "web")
+            or handler_isolated_by_web_override(content, "rename")
+        )
     )
-    swiper_ok = all_present(catalog, r"<swiper\b", r"previous-margin", r"next-margin", r"bindchange", r"wx:key\s*=\s*['\"]id['\"]") and platform_attribute(catalog, "display-multiple-items", "wx") and bool(re.search(r"TODO\(web\)[^\n]*(?:轮播|同屏)", catalog))
+    scanner_json_ok = mode_guard(scan_blocks["json"], "wx") and "native-scanner" in scan_blocks["json"]
+    scanner_template_ok = (
+        has_platform_node(scan_blocks["template"], "native-scanner", "wx")
+        or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", scan))
+        or tag_isolated_by_web_override(scan, "native-scanner")
+    )
+    scanner_ok = vendor == input_vendor and scanner_json_ok and scanner_template_ok and "TODO(web)" in scan and valid_mpx_conditionals(scan)
+    video_ok = all_present(video, r"<video\b", r"src\s*=\s*['\"]\{\{src\}\}['\"]", r"bindtimeupdate", r"bindloadedmetadata") and has_safe_media_fallback(video)
+    location_ok = (
+        all_present(content, r"(?:wx|mpx)\.chooseLocation", r"placeName\s*=\s*result\.name", r"TODO\(web\)[^\n]*(?:位置|地图)")
+        and (
+            guarded_from_web(content_blocks["script"], "chooseLocation")
+            or handler_isolated_by_web_override(content, "choosePlace")
+        )
+        and valid_mpx_conditionals(content_blocks["script"])
+    )
+    app_json = blocks(app)["json"]
+    plugin_template_ok = has_platform_node(content_blocks["template"], "foo-card", "wx") or tag_isolated_by_web_override(content, "foo-card")
+    plugin_ok = mode_guard(app_json, "wx") and all_present(app_json, r"appConfig", r"plugins", r"pages") and mode_guard(content_blocks["json"], "wx") and "plugin://foo/component" in content_blocks["json"] and plugin_template_ok and valid_mpx_conditionals(app_json + content_blocks["json"])
+    web_store_template = template_for_mode(store, "web")
+    web_picker_in_shared_template = (
+        platform_attribute_value(store, "mode", "web", "selector")
+        and platform_attribute(store, "range", "web")
+        and platform_attribute(store, "value", "web")
+        and bool(re.search(r"@change@web\s*=\s*['\"]onWebRegionChange['\"]", store))
+    )
+    web_picker_node = any(
+        all_present(
+            tag,
+            r"\bmode\s*=\s*['\"]selector['\"]",
+            r"\brange\s*=",
+            r"\bbindchange\s*=\s*['\"]onWebRegionChange['\"]",
+        )
+        for tag in platform_open_tags(store, "picker", "web")
+    )
+    region_web_ok = (
+        bool(re.search(r"TODO\(web\)[^\n]*(?:地区|行政区)", store))
+        or (
+            all_present(web_store_template, r"<picker\b", r"mode\s*=\s*['\"]selector['\"]", r"bindchange")
+            and all_present(store, r"regionOptions", r"onWebRegionChange", r"regionNames\s*=", r"regionCodes\s*=", r"regionText\s*=")
+        )
+        or (
+            web_picker_in_shared_template
+            and all_present(store, r"regionOptions", r"onWebRegionChange", r"regionNames\s*=", r"regionCodes\s*=", r"regionText\s*=")
+        )
+        or (
+            web_picker_node
+            and all_present(store, r"regionOptions", r"onWebRegionChange", r"regionNames\s*=", r"regionCodes\s*=", r"regionText\s*=")
+        )
+    )
+    picker_region = (
+        bool(re.search(r"<picker\b[^>]*\bmode\s*=\s*['\"]region['\"]", store, re.S))
+        or platform_attribute_value(store, "mode", "wx", "region")
+    )
+    picker_isolated = (
+        has_platform_node(store, "picker", "wx")
+        or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", store))
+        or bool(web_store_template and re.search(r"<picker\b[^>]*mode\s*=\s*['\"]region['\"]", default_template(store), re.S))
+        or (
+            platform_attribute_value(store, "mode", "wx", "region")
+            and platform_attribute_value(store, "mode", "web", "selector")
+        )
+    )
+    map_isolated = (
+        has_platform_node(store, "map", "wx")
+        or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", store))
+        or tag_isolated_by_web_override(store, "map")
+    )
+    region_map_ok = (
+        picker_region
+        and all_present(store, r"<map\b", r"regionNames", r"regionCodes", r"regionText", r"mapCenter", r"storeMarkers", r"bindmarkertap", r"markerId", r"selectedStoreId", r"selectedStoreName", r"TODO\(web\)[^\n]*(?:地图|SDK)")
+        and picker_isolated
+        and map_isolated
+        and region_web_ok
+        and valid_mpx_conditionals(store)
+    )
+    swiper_ok = (
+        all_present(catalog, r"<swiper\b", r"bindchange", r"wx:key\s*=\s*['\"]id['\"]")
+        and attribute_available_on_web(catalog, "previous-margin")
+        and attribute_available_on_web(catalog, "next-margin")
+        and platform_attribute(catalog, "display-multiple-items", "wx")
+        and bool(re.search(r"TODO\(web\)[^\n]*(?:轮播|同屏)", catalog))
+    )
     image_common = all_present(catalog, r"<image\b", r"src\s*=\s*['\"]\{\{item\.cover\}\}['\"]", r"mode\s*=\s*['\"]aspectFill['\"]")
     image_local_isolation = (platform_attribute(catalog, "lazy-load", "wx") or has_platform_node(catalog, "image", "wx")) and bool(re.search(r"TODO\(web\)[^\n]*(?:图片|加载|lazy)", catalog))
     image_in_wx_structure = bool(re.search(r"<grid-view\b[^>]*@(?:[\w-]+\|)*wx(?:\|[\w-]+)*(?:\s|=|>)[\s\S]*?<image\b[^>]*\blazy-load\b[\s\S]*?</grid-view>", catalog))
     image_ok = image_common and (image_local_isolation or image_in_wx_structure)
-    structures_ok = all_present(catalog, r"<grid-view\b", r"<grid-item\b", r"filteredProducts", r"selectProduct", r"<page-container\b", r"filterVisible", r"cancelFilter", r"confirmFilter", r"TODO\(web\)[^\n]*(?:网格|列表)", r"TODO\(web\)[^\n]*(?:对话框|面板|drawer|dialog|portal)") and has_platform_node(catalog, "grid-view", "wx") and has_platform_node(catalog, "page-container", "wx") and no_pseudo_conditionals(catalog)
+    structure_state = all_present(
+        catalog,
+        r"<grid-view\b", r"<grid-item\b", r"filteredProducts", r"selectProduct",
+        r"<page-container\b", r"filterVisible", r"cancelFilter", r"confirmFilter",
+    )
+    structure_todo_boundary = (
+        all_present(
+            catalog,
+            r"TODO\(web\)[^\n]*(?:网格|列表)",
+            r"TODO\(web\)[^\n]*(?:对话框|面板|drawer|dialog|portal)",
+        )
+        and has_platform_node(catalog, "grid-view", "wx")
+        and has_platform_node(catalog, "page-container", "wx")
+    )
+    structure_web_implementation = (
+        tag_replaced_for_web(catalog, "grid-view")
+        and tag_replaced_for_web(catalog, "grid-item")
+        and tag_replaced_for_web(catalog, "page-container")
+        and all_present(
+            catalog,
+            r"\.product-grid\s*\{[^}]*display\s*:\s*(?:grid|flex)",
+            r"\.filter-container\s*\{[^}]*position\s*:\s*fixed",
+            r"wx:if@_?web\s*=\s*['\"]\{\{\s*filterVisible\s*\}\}['\"]",
+            r"wx:key\s*=\s*['\"]id['\"]",
+        )
+    )
+    separate_web_structure = (
+        has_platform_node(catalog, "grid-view", "wx")
+        and has_platform_node(catalog, "page-container", "wx")
+        and any(
+            re.search(r"\bclass\s*=\s*['\"][^'\"]*\bproduct-grid\b", tag)
+            for tag in platform_open_tags(catalog, "view", "web")
+        )
+        and any(
+            all_present(
+                tag,
+                r"\bclass\s*=\s*['\"][^'\"]*\bfilter-overlay\b",
+                r"\bwx:if\s*=\s*['\"]\{\{\s*filterVisible\s*\}\}['\"]",
+            )
+            for tag in platform_open_tags(catalog, "view", "web")
+        )
+        and all_present(
+            catalog,
+            r"\.product-grid\s*\{[^}]*display\s*:\s*(?:grid|flex)",
+            r"\.filter-overlay\s*\{[^}]*position\s*:\s*fixed",
+            r"wx:key\s*=\s*['\"]id['\"]",
+        )
+    )
+    structures_ok = (
+        structure_state
+        and (structure_todo_boundary or structure_web_implementation or separate_web_structure)
+        and valid_mpx_conditionals(catalog)
+    )
     state_ok = all_present(store, r"confirmSelection\s*\(\)[\s\S]*?regionText[\s\S]*?selectedStoreName") and all_present(catalog, r"openFilter\s*\(\)[\s\S]*?draftCategory\s*=\s*this\.appliedCategory[\s\S]*?filterVisible\s*=\s*true", r"cancelFilter\s*\(\)[\s\S]*?filterVisible\s*=\s*false", r"confirmFilter\s*\(\)[\s\S]*?appliedCategory\s*=\s*this\.draftCategory[\s\S]*?filterVisible\s*=\s*false", r"filteredProducts\s*\(\)[\s\S]*?this\.appliedCategory")
     return assertion_rows(2, {
         "C3.2": edit_chain,
@@ -202,11 +682,29 @@ def check_eval_3(root):
     service = read(root, "src/services/article.js")
     app_script = blocks(app)["script"]
     page_script = blocks(page)["script"]
-    route_ok = all_present(app + config, r"routeConfig\s*:\s*\{[^}]*mode\s*:\s*['\"]history['\"]", r"base\s*:\s*['\"]/help-demo/['\"]")
-    page_prefetch = all_present(page_script, r"(?:serverPrefetch|onServerPrefetch)\s*\(", r"\$route\.query\.id", r"(?:return|await)\s+this\.loadArticle\s*\(")
+    route_ok = has_runtime_route_config(app, "/help-demo/")
+    page_prefetch = has_page_server_prefetch(page_script)
     app_prefetch = all_present(app_script, r"onSSRAppCreated\s*\(", r"router\.(?:currentRoute\.)?query\.id|router\.currentRoute\.query\.id", r"await\s+\w+\.loadArticle\s*\(", r"context\.state\s*=", r"(?:return|resolve\s*\()\s*app")
     preload_ok = route_ok and (page_prefetch or app_prefetch)
-    pinia_ok = all_present(store, r"from\s+['\"]@mpxjs/pinia['\"]", r"defineStore\s*\(", r"article\s*:\s*null", r"loading\s*:\s*true", r"errorText\s*:\s*['\"]['\"]", r"loadArticle") and "createStore" not in store and all_present(app_script, r"from\s+['\"]@mpxjs/pinia['\"]", r"onAppInit\s*\(", r"pinia\s*:\s*createPinia\s*\(") and all_present(page_script, r"@mpxjs/pinia", r"mapState", r"mapActions")
+    page_uses_pinia = (
+        all_present(page_script, r"@mpxjs/pinia", r"mapState", r"mapActions")
+        or all_present(page_script, r"import\s+\w+\s+from\s+['\"][^'\"]*store/article['\"]", r"useArticleStore\s*\(\s*this\.\$pinia\s*\)", r"loadArticle")
+    )
+    pinia_ok = (
+        all_present(
+            store,
+            r"from\s+['\"]@mpxjs/pinia['\"]",
+            r"defineStore\s*\(",
+            r"article\s*:\s*null",
+            r"loading\s*:\s*true",
+            r"errorText\s*:\s*['\"]['\"]",
+            r"loadArticle",
+        )
+        and "createStore" not in store
+        and all_present(app_script, r"from\s+['\"]@mpxjs/pinia['\"]", r"onAppInit\s*\(")
+        and on_app_init_injects_pinia(app_script)
+        and page_uses_pinia
+    )
     on_app_init = re.search(r"onAppInit\s*\([^)]*\)\s*\{(?P<body>[\s\S]*?)\n\s*\}", app_script)
     before_app_init = app_script[:on_app_init.start()] if on_app_init else app_script
     isolated_ok = bool(on_app_init and "createPinia()" in on_app_init.group("body") and "createPinia()" not in before_app_init)

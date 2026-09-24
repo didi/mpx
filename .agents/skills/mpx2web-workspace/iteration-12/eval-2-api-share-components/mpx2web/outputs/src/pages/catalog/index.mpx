@@ -1,36 +1,24 @@
 <template>
   <view class="catalog-page">
-    <!-- @mpx-if (mode === 'wx') -->
+    <!-- TODO(web): 接入支持两项同屏及前后边距的 Web 轮播方案，复用 banners、activeBannerId 和 onBannerChange；当前保留单项轮播。 -->
     <swiper
       class="campaign-swiper"
-      previous-margin="24rpx"
-      next-margin="24rpx"
-      display-multiple-items="2"
+      previous-margin@wx="24rpx"
+      next-margin@wx="24rpx"
+      display-multiple-items@wx="2"
       bindchange="onBannerChange"
     >
       <swiper-item wx:for="{{banners}}" wx:key="id">
         <view class="campaign-card">{{item.title}}</view>
       </swiper-item>
     </swiper>
-    <!-- @mpx-else -->
-    <view class="web-campaign-list">
-      <button
-        wx:for="{{banners}}"
-        wx:key="id"
-        data-id="{{item.id}}"
-        bindtap="selectBanner"
-      >
-        {{item.title}}
-      </button>
-    </view>
-    <!-- @mpx-endif -->
-    <text class="state-line">当前活动：{{activeBannerId}}</text>
+    <text>当前活动：{{activeBannerId}}</text>
 
     <button bindtap="openFilter">筛选商品</button>
-    <text class="state-line">已应用分类：{{appliedCategory}}</text>
+    <text>已应用分类：{{appliedCategory}}</text>
 
-    <!-- @mpx-if (mode === 'wx') -->
     <grid-view
+      @wx
       type="aligned"
       cross-axis-count="2"
       main-axis-gap="16rpx"
@@ -51,24 +39,26 @@
         <text>{{item.name}}</text>
       </grid-item>
     </grid-view>
-    <!-- @mpx-else -->
-    <view class="web-product-grid">
-      <button
+
+    <view @_web class="product-grid">
+      <view
         wx:for="{{filteredProducts}}"
         wx:key="id"
-        class="web-product-card"
+        class="product-card"
         data-id="{{item.id}}"
         bindtap="selectProduct"
       >
-        <image class="product-cover" src="{{item.cover}}" mode="aspectFill" />
+        <image
+          class="product-cover"
+          src="{{item.cover}}"
+          mode="aspectFill"
+        />
         <text>{{item.name}}</text>
-      </button>
+      </view>
     </view>
-    <!-- @mpx-endif -->
-    <text class="state-line">已选商品：{{selectedProductId}}</text>
+    <text>已选商品：{{selectedProductId}}</text>
 
-    <!-- @mpx-if (mode === 'wx') -->
-    <page-container show="{{filterVisible}}" overlay>
+    <page-container @wx show="{{filterVisible}}" overlay>
       <view class="filter-panel">
         <text>选择分类</text>
         <button
@@ -84,9 +74,9 @@
         <button bindtap="confirmFilter">确定</button>
       </view>
     </page-container>
-    <!-- @mpx-else -->
-    <view wx:if="{{filterVisible}}" class="web-filter-overlay">
-      <view class="filter-panel">
+
+    <view @_web wx:if="{{filterVisible}}" class="filter-overlay">
+      <view class="filter-panel web-filter-panel">
         <text>选择分类</text>
         <button
           wx:for="{{categories}}"
@@ -101,7 +91,6 @@
         <button bindtap="confirmFilter">确定</button>
       </view>
     </view>
-    <!-- @mpx-endif -->
   </view>
 </template>
 
@@ -158,12 +147,6 @@ createPage({
       const banner = this.banners[current]
       if (banner) this.activeBannerId = banner.id
     },
-    selectBanner (event) {
-      const bannerId = event.currentTarget.dataset.id
-      if (this.banners.some(item => item.id === bannerId)) {
-        this.activeBannerId = bannerId
-      }
-    },
     selectProduct (event) {
       this.selectedProductId = event.currentTarget.dataset.id
     },
@@ -204,16 +187,14 @@ createPage({
   background: #eef4ff;
 }
 
-.web-campaign-list,
-.web-product-grid {
+.product-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16rpx;
 }
 
-.state-line {
-  display: block;
-  margin: 16rpx 0;
+.product-card {
+  min-width: 0;
 }
 
 .product-cover {
@@ -222,29 +203,26 @@ createPage({
   border-radius: 12rpx;
 }
 
-.web-product-card {
-  min-width: 0;
-}
-
-.web-filter-overlay {
+.filter-overlay {
   position: fixed;
-  inset: 0;
-  z-index: 10;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   align-items: flex-end;
   background: rgba(0, 0, 0, 0.45);
 }
 
 .filter-panel {
-  width: 100%;
   padding: 32rpx;
-  box-sizing: border-box;
   background: #ffffff;
 }
 
-.filter-panel text {
-  display: block;
-  margin-bottom: 16rpx;
+.web-filter-panel {
+  width: 100%;
+  box-sizing: border-box;
 }
 </style>
 

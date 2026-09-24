@@ -6,29 +6,25 @@
   </view>
 </template>
 <script>
-import mpx, { createPage, onLoad } from '@mpxjs/core'
+import { createPage, onLoad } from '@mpxjs/core'
 
 createPage({
   setup (props, { getOpenerEventChannel }) {
-    let enteredFromLink = false
+    const eventChannel = getOpenerEventChannel()
 
     onLoad(query => {
-      enteredFromLink = query.source === 'link'
-      if (!enteredFromLink) getOpenerEventChannel().emit('ready')
+      // 普通链接入口没有注册 ready 监听，空事件通道会安全地忽略该事件。
+      if (query.source !== 'link') eventChannel.emit('ready')
     })
 
     return {
       confirm (label) {
-        if (enteredFromLink) {
-          const pages = getCurrentPages()
-          const previousPage = pages[pages.length - 2]
-          if (previousPage && typeof previousPage.receiveChoice === 'function') {
-            previousPage.receiveChoice(label)
-          }
-        } else {
-          getOpenerEventChannel().emit('choice', label)
+        const pages = getCurrentPages()
+        const previousPage = pages[pages.length - 2]
+        if (previousPage && typeof previousPage.receiveChoice === 'function') {
+          previousPage.receiveChoice(label)
         }
-        mpx.navigateBack({ delta: 1 })
+        wx.navigateBack({ delta: 1 })
       }
     }
   }

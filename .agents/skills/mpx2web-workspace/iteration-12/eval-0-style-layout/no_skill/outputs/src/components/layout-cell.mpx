@@ -10,5 +10,5 @@ createComponent({
 })
 </script>
 <style scoped>
-.layout-cell { flex: 1 1 0; min-width: 0; height: 40px; background: #dbeafe; text-align: center; }
+.layout-cell { flex: 1; min-width: 0; height: 40px; background: #dbeafe; text-align: center; }
 </style>

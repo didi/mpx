@@ -15,7 +15,7 @@ import { createPage } from '@mpxjs/core'
 
 createPage({})
 </script>
-<style>
+<style scoped>
 .style-page { padding: 16px; }
 .warm-tone { color: #bb3311; }
 .cool-tone { color: #2255cc; }

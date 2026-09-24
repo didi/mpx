@@ -2,44 +2,26 @@
   <view class="store-picker-page">
     <text class="title">选择服务地区和门店</text>
 
-    <!-- @mpx-if (mode === 'wx') -->
-    <picker mode="region" value="{{regionCodes}}" bindchange="onWxRegionChange">
+    <picker @wx mode="region" value="{{regionCodes}}" bindchange="onWxRegionChange">
+      <view class="region-entry">服务地区：{{regionText}}</view>
+    </picker>
+
+    <picker @_web mode="selector" range="{{regionLabels}}" bindchange="onWebRegionChange">
       <view class="region-entry">服务地区：{{regionText}}</view>
     </picker>
 
     <map
+      @wx
       class="store-map"
       latitude="{{mapCenter.latitude}}"
       longitude="{{mapCenter.longitude}}"
       markers="{{storeMarkers}}"
       bindmarkertap="onWxMarkerTap"
     />
-    <!-- @mpx-else -->
-    <view class="web-region">
-      <text class="region-entry">服务地区：{{regionText}}</text>
-      <button
-        wx:for="{{regionOptions}}"
-        wx:key="codes"
-        data-index="{{index}}"
-        bindtap="selectWebRegion"
-      >
-        {{item.names[0]}} / {{item.names[1]}} / {{item.names[2]}}
-      </button>
+    <!-- TODO(web): 接入 Web 地图 SDK 或业务地图组件，传入 mapCenter、storeMarkers，并将真实 marker id 回传 selectStore。 -->
+    <view @_web class="store-map store-map-unavailable">
+      <text>Web 地图和门店点选能力尚未接入</text>
     </view>
-
-    <!-- TODO(web): 接入业务地图 SDK、门店数据服务及地图凭据后，在 Web 恢复地图点位交互。 -->
-    <text class="capability-note">Web 地图尚未接入，可通过下方门店列表选择</text>
-    <view class="store-list">
-      <button
-        wx:for="{{storeMarkers}}"
-        wx:key="id"
-        data-id="{{item.id}}"
-        bindtap="onWebStoreTap"
-      >
-        {{item.title}}
-      </button>
-    </view>
-    <!-- @mpx-endif -->
 
     <view class="selection">
       <text>当前门店：{{selectedStoreName}}</text>
@@ -89,24 +71,26 @@ createPage({
     selectedStoreName: '朝阳门店',
     confirmedText: ''
   },
+  computed: {
+    regionLabels () {
+      return this.regionOptions.map(item => item.names.join(' / '))
+    }
+  },
   methods: {
     onWxRegionChange (event) {
       this.regionNames = event.detail.value
       this.regionCodes = event.detail.code
       this.regionText = this.regionNames.join(' / ')
     },
-    onWxMarkerTap (event) {
-      this.selectStore(event.detail.markerId)
-    },
-    selectWebRegion (event) {
-      const option = this.regionOptions[Number(event.currentTarget.dataset.index)]
-      if (!option) return
-      this.regionNames = option.names.slice()
-      this.regionCodes = option.codes.slice()
+    onWebRegionChange (event) {
+      const selected = this.regionOptions[Number(event.detail.value)]
+      if (!selected) return
+      this.regionNames = selected.names.slice()
+      this.regionCodes = selected.codes.slice()
       this.regionText = this.regionNames.join(' / ')
     },
-    onWebStoreTap (event) {
-      this.selectStore(event.currentTarget.dataset.id)
+    onWxMarkerTap (event) {
+      this.selectStore(event.detail.markerId)
     },
     selectStore (storeId) {
       const selected = this.storeMarkers.find(item => item.id === Number(storeId))
@@ -128,8 +112,7 @@ createPage({
 
 .title,
 .region-entry,
-.selection,
-.capability-note {
+.selection {
   display: block;
   margin-bottom: 20rpx;
 }
@@ -140,14 +123,13 @@ createPage({
   margin-bottom: 24rpx;
 }
 
-.web-region,
-.store-list {
-  margin-bottom: 24rpx;
-}
-
-.selection text {
-  display: block;
-  margin-bottom: 12rpx;
+.store-map-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  color: #666666;
+  background: #f5f5f5;
 }
 </style>
 

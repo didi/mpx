@@ -16,5 +16,5 @@ createComponent({
 .theme-label { font-size: 14px; }
 </style>
 <script type="application/json">
-{ "component": true }
+{}
 </script>

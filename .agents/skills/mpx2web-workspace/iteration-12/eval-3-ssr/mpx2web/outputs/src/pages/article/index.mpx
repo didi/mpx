@@ -19,18 +19,18 @@ createPage({
   data: { expanded: false },
   computed: mapState(useArticleStore, ['article', 'loading', 'errorText']),
   onLoad (query) {
-    const id = query.id || 'a'
-
     if (__mpx_mode__ === 'web') {
-      if (this.$isServer) return
-      if (!this.loading && this.article && this.article.id === id) return
+      const id = query.id || 'a'
+      const store = useArticleStore(this.$pinia)
+
+      if (this.$isServer || (store.article && store.article.id === id)) return
     }
 
-    return this.loadArticle(id)
+    return this.loadArticle(query.id || 'a')
   },
   serverPrefetch () {
-    const id = this.$route.query.id || 'a'
-    return this.loadArticle(id)
+    const id = (this.$route.query && this.$route.query.id) || 'a'
+    return useArticleStore(this.$pinia).loadArticle(id)
   },
   methods: Object.assign({}, mapActions(useArticleStore, ['loadArticle']), {
     toggleExtra () {

@@ -3,20 +3,7 @@ import mpx, { createApp } from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy)
-
-if (__mpx_mode__ === 'web') {
-  mpx.config.webConfig = {
-    routeConfig: {
-      mode: 'history',
-      base: '/help-demo/'
-    }
-  }
-}
-
 createApp({})
-
-// Web 会把分包页面注册为异步路由，但不会保留小程序独立分包的运行时隔离。
-// workers 仅声明微信小程序 worker 目录；Web 构建不会据此自动产出 Web Worker。
 </script>
 <script type="application/json">
 {

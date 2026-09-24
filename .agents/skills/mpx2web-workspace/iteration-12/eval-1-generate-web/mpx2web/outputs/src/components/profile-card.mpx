@@ -1,17 +1,10 @@
 <template>
-  <view class="profile-card">
-    <view
-      class="profile-card__header"
-      role="button"
-      aria-expanded="{{expanded}}"
-      bindtap="toggleSummary"
-    >
+  <view class="profile-card" bindtap="toggleExpanded">
+    <view class="profile-card__header">
       <text class="profile-card__title accent-class">{{title}}</text>
-      <text class="profile-card__toggle">{{expanded ? '收起' : '展开'}}</text>
+      <text class="profile-card__action">{{expanded ? '收起' : '展开'}}</text>
     </view>
-    <view wx:if="{{expanded}}" class="profile-card__summary">
-      <text>{{summary}}</text>
-    </view>
+    <text wx:if="{{expanded}}" class="profile-card__summary">{{summary}}</text>
   </view>
 </template>
 
@@ -20,7 +13,6 @@ import { createComponent } from '@mpxjs/core'
 
 createComponent({
   externalClasses: ['accent-class'],
-
   properties: {
     title: {
       type: String,
@@ -31,13 +23,11 @@ createComponent({
       value: ''
     }
   },
-
   data: {
     expanded: false
   },
-
   methods: {
-    toggleSummary() {
+    toggleExpanded () {
       this.setData({
         expanded: !this.expanded
       })
@@ -46,47 +36,44 @@ createComponent({
 })
 </script>
 
-<script type="application/json">
-{
-  "component": true
-}
-</script>
-
 <style>
 .profile-card {
-  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
   margin-bottom: 16px;
+  overflow: hidden;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.08);
 }
 
 .profile-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 48px;
-  cursor: pointer;
 }
 
 .profile-card__title {
+  box-sizing: border-box;
+  flex: 1;
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.profile-card__toggle {
+.profile-card__action {
   flex: none;
   margin-right: 12px;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .profile-card__summary {
-  padding: 0 12px 16px;
+  display: block;
+  padding: 0 12px 12px;
   color: #4b5563;
-  font-size: 15px;
-  line-height: 24px;
+  font-size: 14px;
+  line-height: 22px;
 }
 </style>

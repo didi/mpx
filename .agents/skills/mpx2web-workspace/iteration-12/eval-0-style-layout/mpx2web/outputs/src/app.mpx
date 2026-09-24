@@ -21,17 +21,16 @@ const appConfig = {
   pages: ['./pages/home/index.mpx', './pages/choice/index.mpx', './pages/style/index.mpx'],
   window: { navigationStyle: 'custom' },
   subpackages: [
-    { root: 'packageA', pages: ['./index.mpx'] },
+    // Web 会将分包页面注册为异步路由，但 independent 的独立启动和运行环境仅由微信提供。
+    { root: 'packageA', pages: ['./index.mpx'], independent: true },
     { root: 'packageB', pages: ['./index.mpx'] }
   ]
 }
 
 if (__mpx_mode__ === 'wx') {
+  // workers 是微信目录声明；当前业务没有调用 worker，Web 不会据此虚构或自动注册 Web Worker。
   appConfig.workers = 'workers'
-  appConfig.subpackages[0].independent = true
 }
 
-// Web 输出边界：workers 声明仅保留在微信产物中；当前业务没有调用 worker，Web 不会自动创建或注册 Web Worker。
-// Web 输出边界：packageA 在 Web 仅作为异步页面 chunk 注册，不具备微信独立分包的独立启动与运行环境。
 module.exports = appConfig
 </script>

@@ -6,12 +6,12 @@ module.exports = {
         srcMode: 'wx',
         externalClasses: ['custom-class', 'i-class', 'tone-class'],
         autoVirtualHostRules: {
-          include: /src[\\/]components[\\/]layout-cell\.mpx$/
+          include: /src\/components\/layout-cell\.mpx$/
         },
         webConfig: {
           transRpxFn: function (match, value) {
-            if (value === '0') return '0'
-            return `${Number(value) / 2}px`
+            const size = Number(value)
+            return size === 0 ? '0' : `${size / 2}px`
           }
         }
       }

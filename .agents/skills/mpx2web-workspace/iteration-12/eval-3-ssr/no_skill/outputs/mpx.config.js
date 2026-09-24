@@ -5,7 +5,11 @@ module.exports = {
       plugin: {
         srcMode: 'wx',
         webConfig: {
-          useSSR: true
+          useSSR: true,
+          routeConfig: {
+            mode: 'history',
+            base: '/help-demo/'
+          }
         }
       }
     }

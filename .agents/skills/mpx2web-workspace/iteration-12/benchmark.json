@@ -4,7 +4,7 @@
     "skill_path": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web",
     "executor_model": "gpt-5.6-sol (xhigh)",
     "analyzer_model": "deterministic Python checks",
-    "timestamp": "2026-09-23T12:04:14Z",
+    "timestamp": "2026-09-24T08:56:07Z",
     "evals_run": [
       0,
       1,
@@ -26,9 +26,9 @@
         "passed": 7,
         "failed": 0,
         "total": 7,
-        "time_seconds": 1183.788,
-        "tokens": 5005497,
-        "tool_calls": 56,
+        "time_seconds": 663.612,
+        "tokens": 2508688,
+        "tool_calls": 65,
         "errors": 0
       },
       "expectations": [
@@ -82,13 +82,13 @@
       "configuration": "mpx2web",
       "run_number": 1,
       "result": {
-        "pass_rate": 0.8,
-        "passed": 4,
-        "failed": 1,
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
         "total": 5,
-        "time_seconds": 670.932,
-        "tokens": 2173389,
-        "tool_calls": 36,
+        "time_seconds": 387.809,
+        "tokens": 1804795,
+        "tool_calls": 38,
         "errors": 0
       },
       "expectations": [
@@ -107,8 +107,8 @@
         {
           "id": "C2.3",
           "text": "样式：accent-class 从页面调用方贯通到组件标题，并保留默认 externalClasses",
-          "passed": false,
-          "evidence": "FAIL"
+          "passed": true,
+          "evidence": "PASS"
         },
         {
           "id": "C2.4",
@@ -130,21 +130,21 @@
       "configuration": "mpx2web",
       "run_number": 1,
       "result": {
-        "pass_rate": 0.7778,
-        "passed": 7,
-        "failed": 2,
+        "pass_rate": 0.8889,
+        "passed": 8,
+        "failed": 1,
         "total": 9,
-        "time_seconds": 1012.154,
-        "tokens": 2556403,
-        "tool_calls": 62,
+        "time_seconds": 803.201,
+        "tokens": 5622759,
+        "tool_calls": 59,
         "errors": 0
       },
       "expectations": [
         {
           "id": "C3.2",
           "text": "名称编辑：Web 具备输入、确认赋值和取消不赋值链路，微信原交互保持有效",
-          "passed": false,
-          "evidence": "FAIL"
+          "passed": true,
+          "evidence": "PASS"
         },
         {
           "id": "C3.3",
@@ -206,9 +206,9 @@
         "passed": 5,
         "failed": 0,
         "total": 5,
-        "time_seconds": 725.88,
-        "tokens": 1594590,
-        "tool_calls": 48,
+        "time_seconds": 438.245,
+        "tokens": 1315842,
+        "tool_calls": 30,
         "errors": 0
       },
       "expectations": [
@@ -250,13 +250,13 @@
       "configuration": "no_skill",
       "run_number": 1,
       "result": {
-        "pass_rate": 1.0,
-        "passed": 7,
-        "failed": 0,
+        "pass_rate": 0.8571,
+        "passed": 6,
+        "failed": 1,
         "total": 7,
-        "time_seconds": 1086.65,
-        "tokens": 4875635,
-        "tool_calls": 93,
+        "time_seconds": 610.285,
+        "tokens": 4663197,
+        "tool_calls": 41,
         "errors": 0
       },
       "expectations": [
@@ -293,8 +293,8 @@
         {
           "id": "C4.3",
           "text": "路由：Web publicPath、history base 均为 /help-demo/，主包与两个分包页面保持注册",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C4.4",
@@ -310,13 +310,13 @@
       "configuration": "no_skill",
       "run_number": 1,
       "result": {
-        "pass_rate": 0.4,
-        "passed": 2,
-        "failed": 3,
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
         "total": 5,
-        "time_seconds": 616.366,
-        "tokens": 610178,
-        "tool_calls": 18,
+        "time_seconds": 697.759,
+        "tokens": 5162260,
+        "tool_calls": 51,
         "errors": 0
       },
       "expectations": [
@@ -329,14 +329,14 @@
         {
           "id": "C2.2",
           "text": "路由：Web publicPath、history base 均为 /profile-demo/，微信页面注册保持有效",
-          "passed": false,
-          "evidence": "FAIL"
+          "passed": true,
+          "evidence": "PASS"
         },
         {
           "id": "C2.3",
           "text": "样式：accent-class 从页面调用方贯通到组件标题，并保留默认 externalClasses",
-          "passed": false,
-          "evidence": "FAIL"
+          "passed": true,
+          "evidence": "PASS"
         },
         {
           "id": "C2.4",
@@ -362,9 +362,9 @@
         "passed": 1,
         "failed": 8,
         "total": 9,
-        "time_seconds": 643.526,
-        "tokens": 436613,
-        "tool_calls": 20,
+        "time_seconds": 384.719,
+        "tokens": 491805,
+        "tool_calls": 16,
         "errors": 0
       },
       "expectations": [
@@ -430,21 +430,21 @@
       "configuration": "no_skill",
       "run_number": 1,
       "result": {
-        "pass_rate": 1.0,
-        "passed": 5,
-        "failed": 0,
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
         "total": 5,
-        "time_seconds": 708.881,
-        "tokens": 1810345,
-        "tool_calls": 24,
+        "time_seconds": 443.721,
+        "tokens": 1436769,
+        "tool_calls": 22,
         "errors": 0
       },
       "expectations": [
         {
           "id": "C6.1",
           "text": "SSR：history 路由匹配 /help-demo/，首屏渲染前按当前 query.id 等待文章数据",
-          "passed": true,
-          "evidence": "PASS"
+          "passed": false,
+          "evidence": "FAIL"
         },
         {
           "id": "C6.2",
@@ -477,48 +477,48 @@
   "run_summary": {
     "mpx2web": {
       "pass_rate": {
-        "mean": 0.8944,
-        "stddev": 0.1222,
-        "min": 0.7778,
+        "mean": 0.9722,
+        "stddev": 0.0555,
+        "min": 0.8889,
         "max": 1.0
       },
       "time_seconds": {
-        "mean": 898.1885,
-        "stddev": 242.137,
-        "min": 670.932,
-        "max": 1183.788
+        "mean": 573.2168,
+        "stddev": 194.6428,
+        "min": 387.809,
+        "max": 803.201
       },
       "tokens": {
-        "mean": 2832469.75,
-        "stddev": 1501665.0748,
-        "min": 1594590,
-        "max": 5005497
+        "mean": 2813021.0,
+        "stddev": 1936088.0514,
+        "min": 1315842,
+        "max": 5622759
       }
     },
     "no_skill": {
       "pass_rate": {
-        "mean": 0.6278,
-        "stddev": 0.4457,
+        "mean": 0.6421,
+        "stddev": 0.355,
         "min": 0.1111,
-        "max": 1.0
+        "max": 0.8571
       },
       "time_seconds": {
-        "mean": 763.8557,
-        "stddev": 218.6709,
-        "min": 616.366,
-        "max": 1086.65
+        "mean": 534.121,
+        "stddev": 144.9959,
+        "min": 384.719,
+        "max": 697.759
       },
       "tokens": {
-        "mean": 1933192.75,
-        "stddev": 2054521.594,
-        "min": 436613,
-        "max": 4875635
+        "mean": 2938507.75,
+        "stddev": 2321005.5794,
+        "min": 491805,
+        "max": 5162260
       }
     },
     "delta": {
-      "pass_rate": "+0.27",
-      "time_seconds": "+134.3",
-      "tokens": "+899277"
+      "pass_rate": "+0.33",
+      "time_seconds": "+39.1",
+      "tokens": "-125487"
     }
   },
   "notes": [

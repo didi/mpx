@@ -16,7 +16,9 @@ if (__mpx_mode__ === 'web') {
 
 createApp({
   onAppInit () {
-    return { pinia: createPinia() }
+    return {
+      pinia: createPinia()
+    }
   }
 })
 </script>

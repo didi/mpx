@@ -1,47 +1,17 @@
 <script>
 import mpx, { createApp } from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
-import { createPinia } from '@mpxjs/pinia'
-import { useArticleStore } from './store/article'
+import { createPinia, setActivePinia } from '@mpxjs/pinia'
 
 mpx.use(apiProxy)
 
-mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
-  routeConfig: {
-    mode: 'history',
-    base: '/help-demo/'
-  }
-})
-
 createApp({
   onAppInit () {
-    return {
-      // Mpx invokes onAppInit from each server app factory, so SSR requests
-      // never share a Pinia instance. The same hook initializes Pinia on wx.
-      pinia: createPinia()
-    }
-  },
-
-  onSSRAppCreated ({ app, router, pinia, context }) {
-    return new Promise((resolve, reject) => {
-      router.push(context.url)
-      router.onReady(async () => {
-        try {
-          const id = router.currentRoute.query.id || 'a'
-          const articleStore = useArticleStore(pinia)
-
-          await articleStore.loadArticle(id)
-
-          // Mpx's client runtime restores this state before hydration.
-          context.rendered = () => {
-            context.state = pinia.state.value
-          }
-          resolve(app)
-        } catch (error) {
-          reject(error)
-        }
-      }, reject)
-    })
+    // Mpx 会为每次 SSR 请求调用 onAppInit。这里创建的 Pinia 会随当前
+    // 应用实例交给默认 SSR 流程，避免不同请求之间共享文章状态。
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    return { pinia }
   }
 })
 </script>

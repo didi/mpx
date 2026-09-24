@@ -7,11 +7,12 @@
       bindresult="onCode"
       bindfailure="onCameraError"
     />
-    <text>{{status}}</text>
     <!-- @mpx-else -->
-    <!-- TODO(web): 接入业务认可的 Web 扫码 SDK/服务，并将真实结果通过 result 事件透传。 -->
-    <text>Web 端扫码服务尚未接入</text>
+    <button bindtap="showWebUnavailable">开始扫码</button>
+    <!-- TODO(web): 接入业务认可的 Web 扫码 SDK、相机授权流程和结果校验服务后再开放扫码。 -->
+    <text class="capability-note">Web 扫码尚未接入</text>
     <!-- @mpx-endif -->
+    <text wx:if="{{status}}" class="status">{{status}}</text>
   </view>
 </template>
 
@@ -25,6 +26,7 @@ createComponent({
   },
   methods: {
     start () {
+      this.status = ''
       this.scanning = true
     },
     onCode (event) {
@@ -34,6 +36,10 @@ createComponent({
     onCameraError () {
       this.scanning = false
       this.status = '相机不可用，请检查授权'
+    },
+    showWebUnavailable () {
+      // TODO(web): 由业务接入可用于 Web 的扫码 SDK；未接入前不能生成或返回模拟扫码结果。
+      this.status = 'Web 扫码能力尚未接入'
     }
   }
 })
@@ -43,15 +49,22 @@ createComponent({
 .scan-entry {
   padding: 0;
 }
+
+.capability-note,
+.status {
+  display: block;
+  margin-top: 8px;
+}
 </style>
 
 <script type="application/json">
 {
-  /* @mpx-if (mode === 'wx') */
+  "component": true
+  // @mpx-if (mode === 'wx')
+  ,
   "usingComponents": {
     "native-scanner": "../vendor/native-scanner/index.mpx"
-  },
-  /* @mpx-endif */
-  "component": true
+  }
+  // @mpx-endif
 }
 </script>

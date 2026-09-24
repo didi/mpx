@@ -1,0 +1,24 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy)
+createApp({})
+</script>
+<script name="json">
+const appConfig = {
+  pages: [
+    './pages/content/index.mpx',
+    './pages/store-picker/index.mpx',
+    './pages/catalog/index.mpx'
+  ]
+}
+
+if (__mpx_mode__ === 'wx') {
+  appConfig.plugins = {
+    foo: { version: '1.0.0', provider: 'wx123' }
+  }
+}
+
+module.exports = appConfig
+</script>

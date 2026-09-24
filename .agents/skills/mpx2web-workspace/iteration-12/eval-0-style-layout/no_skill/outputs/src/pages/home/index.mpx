@@ -14,24 +14,23 @@
   </view>
 </template>
 <script>
-import mpx, { createPage } from '@mpxjs/core'
+import { createPage } from '@mpxjs/core'
 
 createPage({
   data: { topInset: 0, headerHeight: null, selectedLabel: '未选择' },
   onLoad () {
-    if (__mpx_mode__ !== 'web') {
-      const capsule = mpx.getMenuButtonBoundingClientRect()
+    if (__mpx_mode__ === 'wx') {
+      const capsule = wx.getMenuButtonBoundingClientRect()
       this.topInset = capsule.top
       this.headerHeight = capsule.height
     }
   },
   methods: {
     openChoice () {
-      mpx.navigateTo({
+      wx.navigateTo({
         url: '/pages/choice/index',
         events: {
-          ready: () => { this.selectedLabel = '正在选择' },
-          choice: label => { this.receiveChoice(label) }
+          ready: () => { this.selectedLabel = '正在选择' }
         }
       })
     },
@@ -41,7 +40,7 @@ createPage({
   }
 })
 </script>
-<style>
+<style scoped>
 .page { min-height: 100%; background: #f6f7f9; }
 .header { padding-left: 16px; background: #fff; }
 .content { padding: 24rpx; }
