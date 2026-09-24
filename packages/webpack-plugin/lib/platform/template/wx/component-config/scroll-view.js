@@ -1,4 +1,7 @@
 const TAG_NAME = 'scroll-view'
+const { MPX_SCROLLBAR_HIDDEN } = require('../../../../utils/const')
+const { evalExp, parseMustacheWithContext } = require('../../../../template-compiler/compiler')
+const hasOwn = require('../../../../utils/has-own')
 
 module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
@@ -40,6 +43,31 @@ module.exports = function ({ print }) {
       return 'mpx-scroll-view'
     },
     props: [
+      {
+        test: 'class',
+        ali (attr, { el }) {
+          if (hasOwn(el.attrsMap, 'show-scrollbar')) return false
+        }
+      },
+      {
+        test: 'show-scrollbar',
+        ali ({ value }, { el }) {
+          const className = el.attrsMap.class
+          const parsed = parseMustacheWithContext(value)
+          const evaluated = evalExp(parsed.result)
+          if (evaluated.success && evaluated.result !== false) {
+            return className ? [{ name: 'class', value: className }] : []
+          }
+
+          const hiddenClass = evaluated.success
+            ? MPX_SCROLLBAR_HIDDEN
+            : `{{${parsed.result} === false ? '${MPX_SCROLLBAR_HIDDEN}' : ''}}`
+          return [{
+            name: 'class',
+            value: className ? `${className} ${hiddenClass}` : hiddenClass
+          }]
+        }
+      },
       {
         test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration)$/,
         ali: aliPropLog,

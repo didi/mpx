@@ -266,7 +266,25 @@ module.exports = function getSpec ({ warn, error }) {
     createReactRule('backgroundColor|backgroundTextStyle', deletePath()),
     createReactRule('pageOrientation', deletePath()),
     {
-      test: 'navigationBarTextStyle|navigationStyle|backgroundTextStyle',
+      test: 'navigationStyle',
+      ali (input, data, meta) {
+        if (input.navigationStyle === 'custom') {
+          input.defaultTitle = ''
+          input.transparentTitle = 'always'
+          input.titlePenetrate = 'YES'
+        } else if (input.navigationStyle === 'default') {
+          // 显式复位，覆盖 app.window 中继承的透明导航配置。
+          input.transparentTitle = 'none'
+          input.titlePenetrate = 'NO'
+        } else {
+          return deletePath()(input, data, meta)
+        }
+        delete input.navigationStyle
+        return input
+      }
+    },
+    {
+      test: 'navigationBarTextStyle|backgroundTextStyle',
       ali: deletePath()
     },
     {

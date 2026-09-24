@@ -83,6 +83,7 @@ const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
 const { startFSStripForCss, registerStripCompilation } = require('./style-compiler/strip-conditional')
+const injectAliCompatStyle = require('./utils/ali-compat-style')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
@@ -1303,8 +1304,8 @@ class MpxWebpackPlugin {
           let needInit = false
           if (isWeb(mpx.mode) || isReact(mpx.mode)) {
             // web独立处理splitChunk
-            if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'main')) {
-              splitChunksOptions.cacheGroups.main = {
+            if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'lib')) {
+              splitChunksOptions.cacheGroups.lib = {
                 chunks: 'initial',
                 name: 'lib/index', // web 输出 chunk 路径和 rn 输出分包格式拉齐
                 test: /[\\/]node_modules[\\/]/
@@ -1314,7 +1315,7 @@ class MpxWebpackPlugin {
             const asyncCommonSubpackage = isWeb(mpx.mode)
               ? this.options.webConfig.asyncCommonSubpackage
               : this.options.rnConfig.asyncCommonSubpackage
-            const cacheGroupName = asyncCommonSubpackage ? 'async' : 'mainCommon'
+            const cacheGroupName = asyncCommonSubpackage ? 'async' : 'main'
             if (!hasOwn(splitChunksOptions.cacheGroups, cacheGroupName)) {
               splitChunksOptions.cacheGroups[cacheGroupName] = {
                 chunks: asyncCommonSubpackage ? 'async' : 'all',
@@ -1742,6 +1743,10 @@ class MpxWebpackPlugin {
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
         if (isWeb(mpx.mode)) return
+
+        if (mpx.mode === 'ali' && mpx.appInfo.name) {
+          injectAliCompatStyle(compilation, mpx.appInfo.name + typeExtMap.styles)
+        }
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
