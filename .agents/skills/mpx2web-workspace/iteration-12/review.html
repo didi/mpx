@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "Mpx2Web \u786e\u5b9a\u6027\u9759\u6001\u8bc4\u6d4b", "runs": [{"id": "eval-0-style-layout-mpx2web", "prompt": "\u8bf7\u6839\u636e input \u4e2d\u7684\u6e90\u7801\u548c requirements.md \u5b8c\u6210\u4ea4\u4ed8\uff0c\u5e76\u8f93\u51fa\u5168\u90e8\u8981\u6c42\u6587\u4ef6\u3002", "eval_id": 0, "outputs": [{"name": "mpx.config.js", "type": "text", "content": "module.exports = {\n  publicPath: '/help-demo/',\n  pluginOptions: {\n    mpx: {\n      plugin: {\n        srcMode: 'wx',\n        externalClasses: ['custom-class', 'i-class', 'tone-class'],\n        autoVirtualHostRules: {\n          include: /src\\/components\\/layout-cell\\.mpx$/\n        },\n        webConfig: {\n          transRpxFn: function (match, value) {\n            if (value === '0') return value\n            return (Number(value) / 2) + 'px'\n          }\n        }\n      }\n    }\n  }\n}\n"}, {"name": "src/app.mpx", "type": "text", "content": "\u003cscript>\nimport mpx, { createApp } from '@mpxjs/core'\nimport apiProxy from '@mpxjs/api-proxy'\n\nmpx.use(apiProxy)\n\nif (__mpx_mode__ === 'web') {\n  mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {\n    routeConfig: {\n      mode: 'history',\n      base: '/help-demo/'\n    },\n    enableTitleBar: false\n  })\n}\n\ncreateApp({})\n\u003c/script>\n\u003cscript name=\"json\">\nconst appConfig = {\n  pages: [\n    './pages/home/index.mpx',\n    './pages/choice/index.mpx',\n    './pages/style/index.mpx'\n  ],\n  window: {\n    navigationStyle: 'custom'\n  },\n  subpackages: [\n    { root: 'packageA', pages: ['./index.mpx'] },\n    { root: 'packageB', pages: ['./index.mpx'] }\n  ]\n}\n\nif (__mpx_mode__ === 'wx') {\n  // workers \u662f\u5fae\u4fe1 worker \u76ee\u5f55\u58f0\u660e\uff1bWeb \u4e0d\u4f1a\u636e\u6b64\u81ea\u52a8\u521b\u5efa Web Worker\u3002\n  appConfig.workers = 'workers'\n  // Web \u4f1a\u7ee7\u7eed\u6ce8\u518c\u8be5\u5206\u5305\u9875\u9762\u5e76\u5f02\u6b65\u52a0\u8f7d\uff0c\u4f46\u4e0d\u5177\u5907\u5fae\u4fe1\u72ec\u7acb\u5206\u5305\u7684\u72ec\u7acb\u8fd0\u884c\u73af\u5883\u3002\n  appConfig.subpackages[0].independent = true\n}\n\nmodule.exports = appConfig\n\u003c/script>\n"}, {"name": "src/components/blue-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"card\">\u003ctext class=\"title\">\u84dd\u8272\u5361\u7247\u003c/text>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\ncreateComponent({})\n\u003c/script>\n\u003cstyle scoped>\n.card { padding: 12px; background: #eef4ff; }\n.title { color: #1565c0; font-size: 14px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}, {"name": "src/components/layout-cell.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"layout-cell\">{{label}}\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  options: { virtualHost: true },\n  properties: { label: String }\n})\n\u003c/script>\n\u003cstyle>\n.layout-cell { flex: 1; min-width: 0; height: 40px; background: #dbeafe; text-align: center; }\n\u003c/style>\n"}, {"name": "src/components/red-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"card\">\u003ctext class=\"title\">\u7ea2\u8272\u5361\u7247\u003c/text>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\ncreateComponent({})\n\u003c/script>\n\u003cstyle scoped>\n.card { padding: 12px; background: #fff0f0; }\n.title { color: #c62828; font-size: 18px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}, {"name": "src/components/theme-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"theme-shell\">\n    \u003cview class=\"theme-label tone-class custom-class\">{{label}}\u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: { label: String },\n  externalClasses: ['tone-class', 'custom-class']\n})\n\u003c/script>\n\u003cstyle>\n.theme-shell { margin-top: 8px; }\n.theme-label { font-size: 14px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{}\n\u003c/script>\n"}, {"name": "src/packageA/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\u003ctext>{{title}}\u003c/text>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: { title: '\u72ec\u7acb\u5165\u53e3\u8bf4\u660e' }\n})\n\u003c/script>\n"}, {"name": "src/packageB/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\u003ctext>\u66f4\u591a\u8bf4\u660e\u003c/text>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({})\n\u003c/script>\n"}, {"name": "src/pages/choice/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\n    \u003ctext>\u9009\u62e9\u4e00\u4e2a\u9009\u9879\u003c/text>\n    \u003cbutton bindtap=\"confirm('\u9009\u9879 A')\">\u9009\u9879 A\u003c/button>\n    \u003cbutton bindtap=\"confirm('\u9009\u9879 B')\">\u9009\u9879 B\u003c/button>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport mpx, { createPage, onLoad } from '@mpxjs/core'\n\ncreatePage({\n  setup (props, { getOpenerEventChannel }) {\n    const eventChannel = getOpenerEventChannel()\n\n    onLoad(query => {\n      // \u666e\u901a\u94fe\u63a5\u5165\u53e3\u6ca1\u6709\u6ce8\u518c ready \u76d1\u542c\u3002\n      if (query.source !== 'link') eventChannel.emit('ready')\n    })\n\n    return {\n      confirm (label) {\n        if (__mpx_mode__ === 'web') {\n          eventChannel.emit('choiceConfirmed', label)\n          mpx.navigateBack({ delta: 1 })\n          return\n        }\n\n        const pages = getCurrentPages()\n        pages[pages.length - 2].receiveChoice(label)\n        wx.navigateBack({ delta: 1 })\n      }\n    }\n  }\n})\n\u003c/script>\n"}, {"name": "src/pages/home/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"page\">\n    \u003cview class=\"header\" style=\"padding-top: {{topInset}}px; {{headerHeight === null ? '' : 'height: ' + headerHeight + 'px;'}}\">\n      \u003ctext>\u6211\u7684\u9009\u9879\u003c/text>\n    \u003c/view>\n    \u003cview class=\"content\">\n      \u003ctext>\u5f53\u524d\uff1a{{selectedLabel}}\u003c/text>\n      \u003cbutton bindtap=\"openChoice\">\u9009\u62e9\u003c/button>\n      \u003cnavigator url=\"/pages/choice/index?source=link\" open-type=\"navigate\">\u901a\u8fc7\u94fe\u63a5\u9009\u62e9\u003c/navigator>\n      \u003cnavigator url=\"/packageA/index\" open-type=\"navigate\">\u72ec\u7acb\u5165\u53e3\u003c/navigator>\n      \u003cnavigator url=\"/packageB/index\" open-type=\"navigate\">\u66f4\u591a\u8bf4\u660e\u003c/navigator>\n      \u003cview class=\"size-sample\">\u8bbe\u8ba1\u5bbd 200rpx\u3001\u5b57\u4f53 28rpx\u003c/view>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport mpx, { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: { topInset: 0, headerHeight: null, selectedLabel: '\u672a\u9009\u62e9' },\n  onLoad () {\n    if (__mpx_mode__ === 'wx') {\n      const capsule = wx.getMenuButtonBoundingClientRect()\n      this.topInset = capsule.top\n      this.headerHeight = capsule.height\n    }\n  },\n  methods: {\n    openChoice () {\n      const options = {\n        url: '/pages/choice/index',\n        events: {\n          ready: () => { this.selectedLabel = '\u6b63\u5728\u9009\u62e9' }\n        }\n      }\n\n      if (__mpx_mode__ === 'web') {\n        options.events.choiceConfirmed = (label) => {\n          this.selectedLabel = label\n        }\n        mpx.navigateTo(options)\n        return\n      }\n\n      wx.navigateTo(options)\n    },\n    receiveChoice (label) {\n      this.selectedLabel = label\n    }\n  }\n})\n\u003c/script>\n\u003cstyle>\n.page { min-height: 100%; background: #f6f7f9; }\n.header { padding-left: 16px; background: #fff; }\n.content { padding: 24rpx; }\n.size-sample { width: 200rpx; font-size: 28rpx; background: #dde8ff; }\n\u003c/style>\n"}, {"name": "src/pages/style/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"style-page\">\n    \u003cred-card />\n    \u003cblue-card />\n    \u003ctheme-card label=\"\u6696\u8272\u6807\u7b7e\" tone-class=\"warm-tone\" custom-class=\"spaced-label\" />\n    \u003ctheme-card label=\"\u51b7\u8272\u6807\u7b7e\" tone-class=\"cool-tone\" custom-class=\"spaced-label\" />\n    \u003cview class=\"equal-row\">\n      \u003clayout-cell label=\"\u7532\" />\n      \u003clayout-cell label=\"\u8f83\u957f\u7684\u4e59\" />\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({})\n\u003c/script>\n\u003cstyle>\n.style-page { padding: 16px; }\n.warm-tone { color: #bb3311; }\n.cool-tone { color: #2255cc; }\n.spaced-label { padding: 12px; }\n.equal-row { display: flex; width: 240px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\n  \"usingComponents\": {\n    \"red-card\": \"../../components/red-card.mpx\",\n    \"blue-card\": \"../../components/blue-card.mpx\",\n    \"layout-cell\": \"../../components/layout-cell.mpx\",\n    \"theme-card\": \"../../components/theme-card.mpx\"\n  }\n}\n\u003c/script>\n"}, {"name": "src/workers/add.js", "type": "text", "content": "module.exports = function add (left, right) {\n  return left + right\n}\n"}], "grading": {"eval_id": 0, "run_kind": "mpx2web", "expectations": [{"id": "C1.4", "text": "\u6837\u5f0f\uff1ared-card \u4e0e blue-card \u7684\u540c\u540d\u7c7b\u4f7f\u7528\u72ec\u7acb\u4f5c\u7528\u57df\uff0c\u4e0d\u4e92\u76f8\u8986\u76d6", "passed": true, "evidence": "PASS"}, {"id": "C1.5", "text": "\u5e03\u5c40\uff1alayout-cell \u7684\u865a\u62df\u5bbf\u4e3b\u5728 Web \u751f\u6548\uff0c\u4e24\u4e2a\u5b9e\u4f8b\u5728 240px Flex \u5bb9\u5668\u4e2d\u7b49\u5bbd", "passed": true, "evidence": "PASS"}, {"id": "C1.6", "text": "\u6837\u5f0f\uff1atheme-card \u7684 externalClasses \u4ece\u8c03\u7528\u65b9\u8d2f\u901a\u5230\u5185\u5bb9\u8282\u70b9\uff0c\u5e76\u4fdd\u7559\u9ed8\u8ba4\u5916\u90e8\u7c7b\u914d\u7f6e", "passed": true, "evidence": "PASS"}, {"id": "C4.1", "text": "\u5bfc\u822a\uff1a\u4fdd\u7559\u5fae\u4fe1 navigator\u3001\u666e\u901a\u5165\u53e3 ready \u72b6\u6001\u548c\u9009\u62e9\u7ed3\u679c\u56de\u4f20\u94fe\u8def", "passed": true, "evidence": "PASS"}, {"id": "C4.2", "text": "\u5bfc\u822a\u680f\uff1a\u5fae\u4fe1\u80f6\u56ca API \u4e0d\u5728 Web \u6267\u884c\uff0cWeb \u4e0d\u91cd\u590d\u663e\u793a\u7cfb\u7edf\u5bfc\u822a\u4e0e\u81ea\u5b9a\u4e49\u5bfc\u822a", "passed": true, "evidence": "PASS"}, {"id": "C4.3", "text": "\u8def\u7531\uff1aWeb publicPath\u3001history base \u5747\u4e3a /help-demo/\uff0c\u4e3b\u5305\u4e0e\u4e24\u4e2a\u5206\u5305\u9875\u9762\u4fdd\u6301\u6ce8\u518c", "passed": true, "evidence": "PASS"}, {"id": "C4.4", "text": "\u5c3a\u5bf8\uff1aWeb \u4f7f\u7528\u56fa\u5b9a\u4e8c\u5206\u4e4b\u4e00 rpx \u6362\u7b97\uff0c\u5fae\u4fe1\u6362\u7b97\u914d\u7f6e\u4fdd\u6301\u4e0d\u53d8", "passed": true, "evidence": "PASS"}], "summary": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "total_tokens": 3672820, "tool_calls": 48, "duration_ms": 656024, "duration_seconds": 656.024}, "metrics": {"total_tokens": 3672820, "tool_calls": 48, "duration_ms": 656024, "duration_seconds": 656.024}, "timing": {"total_duration_seconds": 656.024, "total_tokens": 3672820}, "execution_metrics": {"total_tool_calls": 48, "output_chars": 3672820}}}, {"id": "eval-0-style-layout-no_skill", "prompt": "\u8bf7\u6839\u636e input \u4e2d\u7684\u6e90\u7801\u548c requirements.md \u5b8c\u6210\u4ea4\u4ed8\uff0c\u5e76\u8f93\u51fa\u5168\u90e8\u8981\u6c42\u6587\u4ef6\u3002", "eval_id": 0, "outputs": [{"name": "mpx.config.js", "type": "text", "content": "// Web keeps all declared pages as routes, but does not preserve WeChat's\n// workers directory contract or independent-subpackage runtime isolation.\n// Those two declarations in app.mpx remain effective for the WeChat build;\n// on Web, subpackage pages are ordinary application routes and a browser\n// Worker must be built and instantiated separately when one is needed.\nmodule.exports = {\n  publicPath: '/help-demo/',\n  pluginOptions: {\n    mpx: {\n      plugin: {\n        srcMode: 'wx',\n        webConfig: {\n          router: {\n            mode: 'history',\n            base: '/help-demo/'\n          }\n        }\n      }\n    }\n  }\n}\n"}, {"name": "src/app.mpx", "type": "text", "content": "\u003cscript>\nimport mpx, { createApp } from '@mpxjs/core'\nimport apiProxy from '@mpxjs/api-proxy'\n\nmpx.use(apiProxy)\ncreateApp({})\n\u003c/script>\n\u003cscript type=\"application/json\">\n{\n  \"pages\": [\"./pages/home/index.mpx\", \"./pages/choice/index.mpx\", \"./pages/style/index.mpx\"],\n  \"window\": { \"navigationStyle\": \"custom\" },\n  \"workers\": \"workers\",\n  \"subpackages\": [\n    { \"root\": \"packageA\", \"pages\": [\"./index.mpx\"], \"independent\": true },\n    { \"root\": \"packageB\", \"pages\": [\"./index.mpx\"] }\n  ]\n}\n\u003c/script>\n"}, {"name": "src/components/blue-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"card\">\u003ctext class=\"title\">\u84dd\u8272\u5361\u7247\u003c/text>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\ncreateComponent({})\n\u003c/script>\n\u003cstyle scoped>\n.card { padding: 12px; background: #eef4ff; }\n.title { color: #1565c0; font-size: 14px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}, {"name": "src/components/layout-cell.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"layout-cell\">{{label}}\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  options: { virtualHost: true },\n  properties: { label: String }\n})\n\u003c/script>\n\u003cstyle scoped>\n.layout-cell { flex: 1; min-width: 0; height: 40px; background: #dbeafe; text-align: center; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}, {"name": "src/components/red-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"card\">\u003ctext class=\"title\">\u7ea2\u8272\u5361\u7247\u003c/text>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\ncreateComponent({})\n\u003c/script>\n\u003cstyle scoped>\n.card { padding: 12px; background: #fff0f0; }\n.title { color: #c62828; font-size: 18px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}, {"name": "src/components/theme-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"theme-shell\">\n    \u003cview class=\"theme-label tone-class custom-class {{toneClassName}} {{customClassName}}\">{{label}}\u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: {\n    label: String,\n    toneClassName: String,\n    customClassName: String\n  },\n  externalClasses: ['tone-class', 'custom-class']\n})\n\u003c/script>\n\u003cstyle scoped>\n.theme-shell { margin-top: 8px; }\n.theme-label { font-size: 14px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}, {"name": "src/packageA/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\u003ctext>{{title}}\u003c/text>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: { title: '\u72ec\u7acb\u5165\u53e3\u8bf4\u660e' }\n})\n\u003c/script>\n"}, {"name": "src/packageB/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\u003ctext>\u66f4\u591a\u8bf4\u660e\u003c/text>\u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({})\n\u003c/script>\n"}, {"name": "src/pages/choice/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\n    \u003ctext>\u9009\u62e9\u4e00\u4e2a\u9009\u9879\u003c/text>\n    \u003cbutton data-label=\"\u9009\u9879 A\" bindtap=\"confirm\">\u9009\u9879 A\u003c/button>\n    \u003cbutton data-label=\"\u9009\u9879 B\" bindtap=\"confirm\">\u9009\u9879 B\u003c/button>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage, onLoad } from '@mpxjs/core'\n\ncreatePage({\n  setup (props, { getOpenerEventChannel }) {\n    onLoad(query => {\n      // \u666e\u901a\u94fe\u63a5\u5165\u53e3\u6ca1\u6709\u6ce8\u518c ready \u76d1\u542c\u3002\n      if (query.source !== 'link') getOpenerEventChannel().emit('ready')\n    })\n    return {\n      confirm (eventOrLabel) {\n        const label = typeof eventOrLabel === 'string'\n          ? eventOrLabel\n          : eventOrLabel.currentTarget.dataset.label\n        const pages = getCurrentPages()\n        pages[pages.length - 2].receiveChoice(label)\n        wx.navigateBack({ delta: 1 })\n      }\n    }\n  }\n})\n\u003c/script>\n"}, {"name": "src/pages/home/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"page\">\n    \u003cview class=\"header\" style=\"padding-top: {{topInset}}px; {{headerHeight === null ? '' : 'height: ' + headerHeight + 'px;'}}\">\n      \u003ctext>\u6211\u7684\u9009\u9879\u003c/text>\n    \u003c/view>\n    \u003cview class=\"content\">\n      \u003ctext>\u5f53\u524d\uff1a{{selectedLabel}}\u003c/text>\n      \u003cbutton bindtap=\"openChoice\">\u9009\u62e9\u003c/button>\n      \u003cnavigator url=\"/pages/choice/index?source=link\" open-type=\"navigate\">\u901a\u8fc7\u94fe\u63a5\u9009\u62e9\u003c/navigator>\n      \u003cnavigator url=\"/packageA/index\" open-type=\"navigate\">\u72ec\u7acb\u5165\u53e3\u003c/navigator>\n      \u003cnavigator url=\"/packageB/index\" open-type=\"navigate\">\u66f4\u591a\u8bf4\u660e\u003c/navigator>\n      \u003cview class=\"size-sample\">\u8bbe\u8ba1\u5bbd 200rpx\u3001\u5b57\u4f53 28rpx\u003c/view>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: { topInset: 0, headerHeight: null, selectedLabel: '\u672a\u9009\u62e9' },\n  onLoad () {\n    // @mpx-if (wx)\n    const capsule = wx.getMenuButtonBoundingClientRect()\n    this.topInset = capsule.top\n    this.headerHeight = capsule.height\n    // @mpx-endif\n  },\n  methods: {\n    openChoice () {\n      wx.navigateTo({\n        url: '/pages/choice/index',\n        events: {\n          ready: () => { this.selectedLabel = '\u6b63\u5728\u9009\u62e9' }\n        }\n      })\n    },\n    receiveChoice (label) {\n      this.selectedLabel = label\n    }\n  }\n})\n\u003c/script>\n\u003cstyle>\n.page { min-height: 100%; background: #f6f7f9; }\n.header { padding-left: 16px; background: #fff; }\n.content { padding: 24rpx; }\n.size-sample { background: #dde8ff; }\n/* @mpx-if (web) */\n.size-sample { width: 100px; font-size: 14px; }\n/* @mpx-else */\n.size-sample { width: 200rpx; font-size: 28rpx; }\n/* @mpx-endif */\n\u003c/style>\n"}, {"name": "src/pages/style/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"style-page\">\n    \u003cred-card />\n    \u003cblue-card />\n    \u003ctheme-card\n      label=\"\u6696\u8272\u6807\u7b7e\"\n      tone-class=\"warm-tone\"\n      custom-class=\"spaced-label\"\n      tone-class-name=\"warm-tone\"\n      custom-class-name=\"spaced-label\"\n    />\n    \u003ctheme-card\n      label=\"\u51b7\u8272\u6807\u7b7e\"\n      tone-class=\"cool-tone\"\n      custom-class=\"spaced-label\"\n      tone-class-name=\"cool-tone\"\n      custom-class-name=\"spaced-label\"\n    />\n    \u003cview class=\"equal-row\">\n      \u003clayout-cell label=\"\u7532\" />\n      \u003clayout-cell label=\"\u8f83\u957f\u7684\u4e59\" />\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({})\n\u003c/script>\n\u003cstyle>\n.style-page { padding: 16px; }\n.warm-tone { color: #bb3311; }\n.cool-tone { color: #2255cc; }\n.spaced-label { padding: 12px; }\n.equal-row { display: flex; width: 240px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{\n  \"usingComponents\": {\n    \"red-card\": \"../../components/red-card.mpx\",\n    \"blue-card\": \"../../components/blue-card.mpx\",\n    \"layout-cell\": \"../../components/layout-cell.mpx\",\n    \"theme-card\": \"../../components/theme-card.mpx\"\n  }\n}\n\u003c/script>\n"}, {"name": "src/workers/add.js", "type": "text", "content": "module.exports = function add (left, right) {\n  return left + right\n}\n"}], "grading": {"eval_id": 0, "run_kind": "no_skill", "expectations": [{"id": "C1.4", "text": "\u6837\u5f0f\uff1ared-card \u4e0e blue-card \u7684\u540c\u540d\u7c7b\u4f7f\u7528\u72ec\u7acb\u4f5c\u7528\u57df\uff0c\u4e0d\u4e92\u76f8\u8986\u76d6", "passed": true, "evidence": "PASS"}, {"id": "C1.5", "text": "\u5e03\u5c40\uff1alayout-cell \u7684\u865a\u62df\u5bbf\u4e3b\u5728 Web \u751f\u6548\uff0c\u4e24\u4e2a\u5b9e\u4f8b\u5728 240px Flex \u5bb9\u5668\u4e2d\u7b49\u5bbd", "passed": false, "evidence": "FAIL"}, {"id": "C1.6", "text": "\u6837\u5f0f\uff1atheme-card \u7684 externalClasses \u4ece\u8c03\u7528\u65b9\u8d2f\u901a\u5230\u5185\u5bb9\u8282\u70b9\uff0c\u5e76\u4fdd\u7559\u9ed8\u8ba4\u5916\u90e8\u7c7b\u914d\u7f6e", "passed": false, "evidence": "FAIL"}, {"id": "C4.1", "text": "\u5bfc\u822a\uff1a\u4fdd\u7559\u5fae\u4fe1 navigator\u3001\u666e\u901a\u5165\u53e3 ready \u72b6\u6001\u548c\u9009\u62e9\u7ed3\u679c\u56de\u4f20\u94fe\u8def", "passed": false, "evidence": "FAIL"}, {"id": "C4.2", "text": "\u5bfc\u822a\u680f\uff1a\u5fae\u4fe1\u80f6\u56ca API \u4e0d\u5728 Web \u6267\u884c\uff0cWeb \u4e0d\u91cd\u590d\u663e\u793a\u7cfb\u7edf\u5bfc\u822a\u4e0e\u81ea\u5b9a\u4e49\u5bfc\u822a", "passed": false, "evidence": "FAIL"}, {"id": "C4.3", "text": "\u8def\u7531\uff1aWeb publicPath\u3001history base \u5747\u4e3a /help-demo/\uff0c\u4e3b\u5305\u4e0e\u4e24\u4e2a\u5206\u5305\u9875\u9762\u4fdd\u6301\u6ce8\u518c", "passed": false, "evidence": "FAIL"}, {"id": "C4.4", "text": "\u5c3a\u5bf8\uff1aWeb \u4f7f\u7528\u56fa\u5b9a\u4e8c\u5206\u4e4b\u4e00 rpx \u6362\u7b97\uff0c\u5fae\u4fe1\u6362\u7b97\u914d\u7f6e\u4fdd\u6301\u4e0d\u53d8", "passed": false, "evidence": "FAIL"}], "summary": {"pass_rate": 0.1429, "passed": 1, "failed": 6, "total": 7, "total_tokens": 550451, "tool_calls": 7, "duration_ms": 415110, "duration_seconds": 415.11}, "metrics": {"total_tokens": 550451, "tool_calls": 7, "duration_ms": 415110, "duration_seconds": 415.11}, "timing": {"total_duration_seconds": 415.11, "total_tokens": 550451}, "execution_metrics": {"total_tool_calls": 7, "output_chars": 550451}}}, {"id": "eval-1-generate-web-mpx2web", "prompt": "\u8bf7\u6839\u636e input \u4e2d\u7684 requirements.md \u4ece\u96f6\u521b\u5efa\u5b8c\u6574\u4ea4\u4ed8\uff0c\u5e76\u8f93\u51fa\u5168\u90e8\u8981\u6c42\u6587\u4ef6\u3002", "eval_id": 1, "outputs": [{"name": "mpx.config.js", "type": "text", "content": "module.exports = {\n  publicPath: '/profile-demo/',\n  pluginOptions: {\n    mpx: {\n      plugin: {\n        srcMode: 'wx',\n        externalClasses: ['custom-class', 'i-class', 'accent-class']\n      }\n    }\n  }\n}\n"}, {"name": "src/app.mpx", "type": "text", "content": "\u003cscript name=\"json\">\nmodule.exports = {\n  pages: [\n    './pages/profile/index'\n  ],\n  window: {\n    navigationBarTitleText: '\u4e2a\u4eba\u8d44\u6599',\n    navigationBarBackgroundColor: '#ffffff',\n    navigationBarTextStyle: 'black',\n    backgroundColor: '#f5f7fa'\n  }\n}\n\u003c/script>\n\n\u003cscript>\nimport mpx, { createApp } from '@mpxjs/core'\n\nif (__mpx_mode__ === 'web') {\n  mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {\n    routeConfig: {\n      mode: 'history',\n      base: '/profile-demo/'\n    }\n  })\n}\n\ncreateApp({})\n\u003c/script>\n\n\u003cstyle>\npage {\n  min-height: 100%;\n  background: #f5f7fa;\n  color: #1f2937;\n  font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif;\n}\n\u003c/style>\n"}, {"name": "src/components/profile-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"profile-card\">\n    \u003cview\n      class=\"profile-card__header\"\n      hover-class=\"profile-card__header--active\"\n      bindtap=\"toggleExpanded\"\n    >\n      \u003ctext class=\"profile-card__title accent-class\">{{ title }}\u003c/text>\n      \u003ctext class=\"profile-card__action\">{{ expanded ? '\u6536\u8d77' : '\u5c55\u5f00' }}\u003c/text>\n    \u003c/view>\n    \u003cview wx:if=\"{{ expanded }}\" class=\"profile-card__summary\">\n      \u003ctext>{{ summary }}\u003c/text>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  externalClasses: ['accent-class'],\n\n  properties: {\n    title: {\n      type: String,\n      value: ''\n    },\n    summary: {\n      type: String,\n      value: ''\n    }\n  },\n\n  data: {\n    expanded: false\n  },\n\n  methods: {\n    toggleExpanded () {\n      this.expanded = !this.expanded\n    }\n  }\n})\n\u003c/script>\n\n\u003cscript type=\"application/json\">\n{\n  \"component\": true\n}\n\u003c/script>\n\n\u003cstyle>\n.profile-card {\n  overflow: hidden;\n  margin-bottom: 16px;\n  border: 1px solid #e5e7eb;\n  border-radius: 12px;\n  background: #ffffff;\n  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);\n}\n\n.profile-card__header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  min-height: 48px;\n  cursor: pointer;\n}\n\n.profile-card__header--active {\n  background: #f8fafc;\n}\n\n.profile-card__title {\n  flex: 1;\n  font-size: 18px;\n  font-weight: 600;\n}\n\n.profile-card__action {\n  flex: none;\n  margin-right: 12px;\n  color: #64748b;\n  font-size: 14px;\n}\n\n.profile-card__summary {\n  padding: 0 12px 16px;\n  color: #475569;\n  font-size: 14px;\n  line-height: 1.7;\n}\n\u003c/style>\n"}, {"name": "src/pages/profile/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"profile-page\">\n    \u003cview class=\"profile-page__intro\">\n      \u003ctext class=\"profile-page__title\">\u4e2a\u4eba\u8d44\u6599\u003c/text>\n      \u003ctext class=\"profile-page__subtitle\">\u70b9\u51fb\u8d44\u6599\u5361\u67e5\u770b\u6458\u8981\u003c/text>\n    \u003c/view>\n\n    \u003cprofile-card\n      title=\"\u6e29\u6696\u6863\u6848\"\n      summary=\"\u559c\u6b22\u8bb0\u5f55\u751f\u6d3b\u4e2d\u7684\u5fae\u5c0f\u5584\u610f\uff0c\u4e5f\u613f\u610f\u628a\u6e29\u6696\u5206\u4eab\u7ed9\u8eab\u8fb9\u7684\u4eba\u3002\"\n      accent-class=\"warm-title\"\n    >\u003c/profile-card>\n\n    \u003cprofile-card\n      title=\"\u6e05\u51c9\u6863\u6848\"\n      summary=\"\u70ed\u7231\u6e05\u6668\u3001\u8fdc\u5c71\u4e0e\u6e05\u6670\u7684\u8ba1\u5212\uff0c\u5728\u5b89\u9759\u4e2d\u4fdd\u6301\u597d\u5947\u548c\u884c\u52a8\u529b\u3002\"\n      accent-class=\"cool-title\"\n    >\u003c/profile-card>\n\n    \u003cview wx:if=\"{{ showWebShareNotice }}\" class=\"profile-page__share-notice\">\n      \u003ctext>Web \u5206\u4eab\u670d\u52a1\u5c1a\u672a\u63a5\u5165\u003c/text>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage, implement } from '@mpxjs/core'\n\nif (__mpx_mode__ === 'web') {\n  implement('onShareAppMessage', {\n    modes: ['web'],\n    remove: true\n  })\n  // TODO(web): \u63a5\u5165\u4e1a\u52a1\u6307\u5b9a\u7684 Web \u5206\u4eab\u670d\u52a1\uff0c\u5e76\u590d\u7528\u5f53\u524d\u9875\u9762\u7684\u5206\u4eab\u6807\u9898\u548c\u8def\u5f84\u3002\n}\n\ncreatePage({\n  data: {\n    showWebShareNotice: __mpx_mode__ === 'web'\n  },\n\n  onShareAppMessage () {\n    return {\n      title: '\u4e2a\u4eba\u8d44\u6599',\n      path: '/pages/profile/index'\n    }\n  }\n})\n\u003c/script>\n\n\u003cscript type=\"application/json\">\n{\n  \"navigationBarTitleText\": \"\u4e2a\u4eba\u8d44\u6599\",\n  \"usingComponents\": {\n    \"profile-card\": \"../../components/profile-card\"\n  }\n}\n\u003c/script>\n\n\u003cstyle>\n.profile-page {\n  box-sizing: border-box;\n  min-height: 100vh;\n  padding: 24px 16px;\n}\n\n.profile-page__intro {\n  display: flex;\n  flex-direction: column;\n  margin-bottom: 20px;\n}\n\n.profile-page__title {\n  color: #0f172a;\n  font-size: 28px;\n  font-weight: 700;\n}\n\n.profile-page__subtitle {\n  margin-top: 6px;\n  color: #64748b;\n  font-size: 14px;\n}\n\n.warm-title {\n  box-sizing: border-box;\n  padding: 12px;\n  color: #c2410c;\n}\n\n.cool-title {\n  box-sizing: border-box;\n  padding: 12px;\n  color: #0369a1;\n}\n\n.profile-page__share-notice {\n  margin-top: 8px;\n  padding: 12px;\n  border-radius: 8px;\n  background: #e2e8f0;\n  color: #475569;\n  font-size: 13px;\n  text-align: center;\n}\n\u003c/style>\n"}], "grading": {"eval_id": 1, "run_kind": "mpx2web", "expectations": [{"id": "C2.1", "text": "\u7ed3\u6784\uff1a\u751f\u6210\u5b8c\u6574 Mpx \u914d\u7f6e\u3001App\u3001\u9875\u9762\u548c\u7ec4\u4ef6\uff0c\u9875\u9762\u6ce8\u518c\u5e76\u6e32\u67d3\u4e24\u4e2a profile-card", "passed": true, "evidence": "PASS"}, {"id": "C2.2", "text": "\u8def\u7531\uff1aWeb publicPath\u3001history base \u5747\u4e3a /profile-demo/\uff0c\u5fae\u4fe1\u9875\u9762\u6ce8\u518c\u4fdd\u6301\u6709\u6548", "passed": true, "evidence": "PASS"}, {"id": "C2.3", "text": "\u6837\u5f0f\uff1aaccent-class \u4ece\u9875\u9762\u8c03\u7528\u65b9\u8d2f\u901a\u5230\u7ec4\u4ef6\u6807\u9898\uff0c\u5e76\u4fdd\u7559\u9ed8\u8ba4 externalClasses", "passed": true, "evidence": "PASS"}, {"id": "C2.4", "text": "\u4ea4\u4e92\uff1a\u4e24\u4e2a profile-card \u5b9e\u4f8b\u5404\u81ea\u4fdd\u5b58\u6298\u53e0\u72b6\u6001\uff0c\u70b9\u51fb\u53ea\u5207\u6362\u5f53\u524d\u5b9e\u4f8b", "passed": true, "evidence": "PASS"}, {"id": "C2.5", "text": "\u5206\u4eab\uff1a\u5fae\u4fe1\u4fdd\u7559\u6b63\u786e\u5206\u4eab\u6807\u9898\u548c\u8def\u5f84\uff0cWeb \u9694\u79bb\u8be5\u94a9\u5b50\u5e76\u5448\u73b0\u672a\u63a5\u5165\u8fb9\u754c", "passed": true, "evidence": "PASS"}], "summary": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "total_tokens": 2550506, "tool_calls": 43, "duration_ms": 506242, "duration_seconds": 506.242}, "metrics": {"total_tokens": 2550506, "tool_calls": 43, "duration_ms": 506242, "duration_seconds": 506.242}, "timing": {"total_duration_seconds": 506.242, "total_tokens": 2550506}, "execution_metrics": {"total_tool_calls": 43, "output_chars": 2550506}}}, {"id": "eval-1-generate-web-no_skill", "prompt": "\u8bf7\u6839\u636e input \u4e2d\u7684 requirements.md \u4ece\u96f6\u521b\u5efa\u5b8c\u6574\u4ea4\u4ed8\uff0c\u5e76\u8f93\u51fa\u5168\u90e8\u8981\u6c42\u6587\u4ef6\u3002", "eval_id": 1, "outputs": [{"name": "mpx.config.js", "type": "text", "content": "const { defineConfig } = require('@vue/cli-service')\nconst MpxWebpackPlugin = require('@mpxjs/webpack-plugin')\n\nconst WEB_BASE = '/profile-demo/'\nconst targetMode = process.env.MPX_CURRENT_TARGET_MODE || 'wx'\nconst defaultPluginOptions = MpxWebpackPlugin.defaultOptions || {}\nconst defaultWebConfig = defaultPluginOptions.webConfig || {}\nconst defaultExternalClasses = defaultPluginOptions.externalClasses || ['custom-class']\n\nmodule.exports = defineConfig({\n  // Web \u7684\u811a\u672c\u3001\u6837\u5f0f\u7b49\u9759\u6001\u8d44\u6e90\u4e0e history \u8def\u7531\u4f7f\u7528\u540c\u4e00\u4e2a\u90e8\u7f72\u524d\u7f00\u3002\n  publicPath: targetMode === 'web' ? WEB_BASE : '/',\n\n  pluginOptions: {\n    mpx: {\n      plugin: {\n        srcMode: 'wx',\n\n        // \u8ffd\u52a0\u4e1a\u52a1\u5916\u90e8\u7c7b\uff0c\u907f\u514d\u8986\u76d6 Mpx \u5df2\u6709\u7684 custom-class \u7b49\u9ed8\u8ba4\u914d\u7f6e\u3002\n        externalClasses: Array.from(\n          new Set([...defaultExternalClasses, 'accent-class'])\n        ),\n\n        webConfig: {\n          ...defaultWebConfig,\n          routeConfig: {\n            ...(defaultWebConfig.routeConfig || {}),\n            mode: 'history',\n            base: WEB_BASE\n          }\n        }\n      },\n      loader: {}\n    }\n  }\n})\n"}, {"name": "src/app.mpx", "type": "text", "content": "\u003cscript>\nimport Mpx, { createApp } from '@mpxjs/core'\n\nconst currentWebConfig = Mpx.config.webConfig || {}\n\nMpx.config.webConfig = {\n  ...currentWebConfig,\n  routeConfig: {\n    ...(currentWebConfig.routeConfig || {}),\n    mode: 'history',\n    base: '/profile-demo/'\n  }\n}\n\ncreateApp({\n  onLaunch () {}\n})\n\u003c/script>\n\n\u003cstyle>\npage {\n  min-height: 100%;\n  background: #f4f7fb;\n  color: #1f2937;\n  font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif;\n}\n\nbutton {\n  box-sizing: border-box;\n}\n\u003c/style>\n\n\u003cjson>\n{\n  \"pages\": [\n    \"./pages/profile/index\"\n  ],\n  \"window\": {\n    \"navigationBarTitleText\": \"\u4e2a\u4eba\u8d44\u6599\",\n    \"navigationBarBackgroundColor\": \"#ffffff\",\n    \"navigationBarTextStyle\": \"black\",\n    \"backgroundColor\": \"#f4f7fb\"\n  }\n}\n\u003c/json>\n"}, {"name": "src/components/profile-card.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview\n    class=\"profile-card\"\n    role=\"button\"\n    aria-expanded=\"{{expanded}}\"\n    bindtap=\"toggleSummary\"\n  >\n    \u003cview class=\"profile-card__heading\">\n      \u003cview class=\"profile-card__title accent-class\">{{title}}\u003c/view>\n      \u003ctext class=\"profile-card__action\">{{expanded ? '\u6536\u8d77' : '\u5c55\u5f00'}}\u003c/text>\n    \u003c/view>\n\n    \u003cview wx:if=\"{{expanded}}\" class=\"profile-card__summary\">\n      {{summary}}\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  externalClasses: ['accent-class'],\n\n  properties: {\n    title: {\n      type: String,\n      value: ''\n    },\n    summary: {\n      type: String,\n      value: ''\n    }\n  },\n\n  data: {\n    expanded: false\n  },\n\n  methods: {\n    toggleSummary () {\n      this.setData({\n        expanded: !this.data.expanded\n      })\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.profile-card {\n  overflow: hidden;\n  margin-bottom: 16px;\n  border: 1px solid #dbe3ee;\n  border-radius: 12px;\n  background: #ffffff;\n  box-shadow: 0 6px 20px rgba(31, 41, 55, 0.08);\n}\n\n.profile-card__heading {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  min-height: 48px;\n}\n\n.profile-card__title {\n  flex: 1;\n  box-sizing: border-box;\n  font-size: 18px;\n  font-weight: 600;\n  line-height: 24px;\n}\n\n.profile-card__action {\n  flex: none;\n  margin-right: 12px;\n  color: #6b7280;\n  font-size: 14px;\n}\n\n.profile-card__summary {\n  padding: 0 12px 16px;\n  border-top: 1px solid #eef2f7;\n  color: #4b5563;\n  font-size: 15px;\n  line-height: 1.7;\n}\n\u003c/style>\n\n\u003cjson>\n{\n  \"component\": true\n}\n\u003c/json>\n"}, {"name": "src/pages/profile/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"profile-page\">\n    \u003cview class=\"profile-page__header\">\n      \u003cview class=\"profile-page__eyebrow\">PROFILE\u003c/view>\n      \u003cview class=\"profile-page__title\">\u4e2a\u4eba\u8d44\u6599\u003c/view>\n      \u003cview class=\"profile-page__subtitle\">\u70b9\u51fb\u8d44\u6599\u5361\u67e5\u770b\u6458\u8981\u003c/view>\n    \u003c/view>\n\n    \u003cview class=\"profile-page__cards\">\n      \u003cprofile-card\n        title=\"\u6e29\u6696\u540c\u884c\u8005\"\n        summary=\"\u559c\u6b22\u8bb0\u5f55\u65e5\u5e38\u91cc\u7684\u5c0f\u786e\u5e78\uff0c\u4e5f\u613f\u610f\u628a\u8010\u5fc3\u548c\u5584\u610f\u5206\u4eab\u7ed9\u8eab\u8fb9\u7684\u4eba\u3002\"\n        accent-class=\"warm-title\"\n      />\n      \u003cprofile-card\n        title=\"\u51b7\u9759\u63a2\u7d22\u8005\"\n        summary=\"\u5173\u6ce8\u6280\u672f\u3001\u8bbe\u8ba1\u4e0e\u6548\u7387\uff0c\u4e60\u60ef\u7528\u6e05\u6670\u7684\u601d\u8def\u628a\u590d\u6742\u95ee\u9898\u9010\u6b65\u62c6\u89e3\u3002\"\n        accent-class=\"cool-title\"\n      />\n    \u003c/view>\n\n    \u003cview class=\"profile-page__share\">\n      \u003c!-- @mpx-if (__mpx_mode__ === 'wx') -->\n      \u003cbutton class=\"share-button\" open-type=\"share\">\u5206\u4eab\u4e2a\u4eba\u8d44\u6599\u003c/button>\n      \u003c!-- @mpx-else -->\n      \u003cview class=\"share-notice\">\n        Web \u5206\u4eab\u670d\u52a1\u5c1a\u672a\u63a5\u5165\u3002TODO\uff1a\u63a5\u5165\u4e1a\u52a1\u5206\u4eab\u534f\u8bae\u540e\u63d0\u4f9b\u5206\u4eab\u5165\u53e3\u3002\n      \u003c/view>\n      \u003c!-- @mpx-endif -->\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  onShareAppMessage () {\n    return {\n      title: '\u4e2a\u4eba\u8d44\u6599',\n      path: '/pages/profile/index'\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.profile-page {\n  box-sizing: border-box;\n  width: 100%;\n  max-width: 720px;\n  min-height: 100vh;\n  margin: 0 auto;\n  padding: 36px 20px;\n}\n\n.profile-page__header {\n  margin-bottom: 24px;\n}\n\n.profile-page__eyebrow {\n  margin-bottom: 6px;\n  color: #64748b;\n  font-size: 12px;\n  font-weight: 700;\n  letter-spacing: 2px;\n}\n\n.profile-page__title {\n  color: #111827;\n  font-size: 30px;\n  font-weight: 700;\n  line-height: 1.3;\n}\n\n.profile-page__subtitle {\n  margin-top: 8px;\n  color: #64748b;\n  font-size: 15px;\n}\n\n/* \u8fd9\u4e24\u4e2a\u7c7b\u7531\u8c03\u7528\u65b9\u63d0\u4f9b\uff0c\u7ecf accent-class \u5e94\u7528\u5230\u7ec4\u4ef6\u6807\u9898\u3002 */\n.warm-title {\n  padding: 12px;\n  color: #b45309;\n}\n\n.cool-title {\n  padding: 12px;\n  color: #2563eb;\n}\n\n.profile-page__share {\n  margin-top: 24px;\n}\n\n.share-button {\n  width: 100%;\n  border: 0;\n  border-radius: 10px;\n  background: #111827;\n  color: #ffffff;\n  font-size: 16px;\n}\n\n.share-notice {\n  box-sizing: border-box;\n  padding: 12px 14px;\n  border: 1px dashed #94a3b8;\n  border-radius: 10px;\n  background: #ffffff;\n  color: #64748b;\n  font-size: 14px;\n  line-height: 1.6;\n}\n\u003c/style>\n\n\u003cjson>\n{\n  \"usingComponents\": {\n    \"profile-card\": \"../../components/profile-card\"\n  },\n  \"navigationBarTitleText\": \"\u4e2a\u4eba\u8d44\u6599\"\n}\n\u003c/json>\n"}], "grading": {"eval_id": 1, "run_kind": "no_skill", "expectations": [{"id": "C2.1", "text": "\u7ed3\u6784\uff1a\u751f\u6210\u5b8c\u6574 Mpx \u914d\u7f6e\u3001App\u3001\u9875\u9762\u548c\u7ec4\u4ef6\uff0c\u9875\u9762\u6ce8\u518c\u5e76\u6e32\u67d3\u4e24\u4e2a profile-card", "passed": false, "evidence": "FAIL"}, {"id": "C2.2", "text": "\u8def\u7531\uff1aWeb publicPath\u3001history base \u5747\u4e3a /profile-demo/\uff0c\u5fae\u4fe1\u9875\u9762\u6ce8\u518c\u4fdd\u6301\u6709\u6548", "passed": true, "evidence": "PASS"}, {"id": "C2.3", "text": "\u6837\u5f0f\uff1aaccent-class \u4ece\u9875\u9762\u8c03\u7528\u65b9\u8d2f\u901a\u5230\u7ec4\u4ef6\u6807\u9898\uff0c\u5e76\u4fdd\u7559\u9ed8\u8ba4 externalClasses", "passed": false, "evidence": "FAIL"}, {"id": "C2.4", "text": "\u4ea4\u4e92\uff1a\u4e24\u4e2a profile-card \u5b9e\u4f8b\u5404\u81ea\u4fdd\u5b58\u6298\u53e0\u72b6\u6001\uff0c\u70b9\u51fb\u53ea\u5207\u6362\u5f53\u524d\u5b9e\u4f8b", "passed": false, "evidence": "FAIL"}, {"id": "C2.5", "text": "\u5206\u4eab\uff1a\u5fae\u4fe1\u4fdd\u7559\u6b63\u786e\u5206\u4eab\u6807\u9898\u548c\u8def\u5f84\uff0cWeb \u9694\u79bb\u8be5\u94a9\u5b50\u5e76\u5448\u73b0\u672a\u63a5\u5165\u8fb9\u754c", "passed": false, "evidence": "FAIL"}], "summary": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "total_tokens": 3681631, "tool_calls": 51, "duration_ms": 872473, "duration_seconds": 872.473}, "metrics": {"total_tokens": 3681631, "tool_calls": 51, "duration_ms": 872473, "duration_seconds": 872.473}, "timing": {"total_duration_seconds": 872.473, "total_tokens": 3681631}, "execution_metrics": {"total_tool_calls": 51, "output_chars": 3681631}}}, {"id": "eval-2-api-share-components-mpx2web", "prompt": "\u8bf7\u6839\u636e input \u4e2d\u7684\u6e90\u7801\u548c requirements.md \u5b8c\u6210\u4ea4\u4ed8\uff0c\u5e76\u8f93\u51fa\u5168\u90e8\u8981\u6c42\u6587\u4ef6\u3002", "eval_id": 2, "outputs": [{"name": "src/app.mpx", "type": "text", "content": "\u003cscript>\nimport mpx, { createApp } from '@mpxjs/core'\nimport apiProxy from '@mpxjs/api-proxy'\n\nmpx.use(apiProxy)\ncreateApp({})\n\u003c/script>\n\n\u003cscript name=\"json\">\nconst appConfig = {\n  pages: [\n    './pages/content/index.mpx',\n    './pages/store-picker/index.mpx',\n    './pages/catalog/index.mpx'\n  ]\n}\n\nif (__mpx_mode__ === 'wx') {\n  appConfig.plugins = {\n    foo: { version: '1.0.0', provider: 'wx123' }\n  }\n}\n\nmodule.exports = appConfig\n\u003c/script>\n"}, {"name": "src/components/scan-entry.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"scan-entry\">\n    \u003cbutton @wx bindtap=\"start\">\u5f00\u59cb\u626b\u7801\u003c/button>\n    \u003cnative-scanner\n      @wx\n      wx:if=\"{{scanning}}\"\n      bindresult=\"onCode\"\n      bindfailure=\"onCameraError\"\n    />\n    \u003ctext @wx>{{status}}\u003c/text>\n    \u003c!-- TODO(web): \u63a5\u5165\u4e1a\u52a1\u6307\u5b9a\u7684 Web \u626b\u7801\u7ec4\u4ef6\u6216\u626b\u7801 SDK\uff0c\u5e76\u6cbf\u7528 result \u4e8b\u4ef6\u4e0e\u76f8\u673a\u5931\u8d25\u72b6\u6001\u3002 -->\n    \u003ctext @_web>Web \u626b\u7801\u80fd\u529b\u672a\u63a5\u5165\u003c/text>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  data: { scanning: false, status: '' },\n  methods: {\n    start () {\n      this.scanning = true\n    },\n    onCode (event) {\n      this.scanning = false\n      this.triggerEvent('result', { result: event.detail.result })\n    },\n    onCameraError () {\n      this.scanning = false\n      this.status = '\u76f8\u673a\u4e0d\u53ef\u7528\uff0c\u8bf7\u68c0\u67e5\u6388\u6743'\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.scan-entry { padding: 0; }\n\u003c/style>\n\n\u003cscript name=\"json\">\nconst componentConfig = { component: true }\n\nif (__mpx_mode__ === 'wx') {\n  componentConfig.usingComponents = {\n    'native-scanner': '../vendor/native-scanner/index.mpx'\n  }\n}\n\nmodule.exports = componentConfig\n\u003c/script>\n"}, {"name": "src/components/video-info.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview>\n    \u003cvideo\n      wx:if=\"{{src}}\"\n      class=\"video\"\n      src=\"{{src}}\"\n      controls=\"{{true}}\"\n      bindtimeupdate=\"onTimeUpdate\"\n      bindloadedmetadata=\"onMetadata\"\n    />\n    \u003ctext wx:if=\"{{!src}}\">\u6d4b\u8bd5\u73af\u5883\u5c1a\u672a\u63d0\u4f9b\u89c6\u9891\u5730\u5740\u003c/text>\n    \u003ctext>\u8fdb\u5ea6\uff1a{{currentTime}} / {{duration}} \u79d2\u003c/text>\n    \u003ctext>\u5c3a\u5bf8\uff1a{{videoWidth}} \u00d7 {{videoHeight}}\u003c/text>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\nfunction readNumber (detail, target, key, fallback) {\n  const detailValue = detail && detail[key]\n  if (typeof detailValue === 'number' && Number.isFinite(detailValue)) return detailValue\n  const targetValue = target && target[key]\n  if (typeof targetValue === 'number' && Number.isFinite(targetValue)) return targetValue\n  return fallback\n}\n\ncreateComponent({\n  properties: { src: String },\n  data: { currentTime: 0, duration: 0, videoWidth: 0, videoHeight: 0 },\n  methods: {\n    onTimeUpdate (event) {\n      const detail = event && event.detail\n      const target = event && (event.target || event.currentTarget)\n      this.currentTime = readNumber(detail, target, 'currentTime', this.currentTime)\n      this.duration = readNumber(detail, target, 'duration', this.duration)\n    },\n    onMetadata (event) {\n      const detail = event && event.detail\n      const target = event && (event.target || event.currentTarget)\n      this.videoWidth = readNumber(detail, target, 'width', readNumber(null, target, 'videoWidth', this.videoWidth))\n      this.videoHeight = readNumber(detail, target, 'height', readNumber(null, target, 'videoHeight', this.videoHeight))\n      this.duration = readNumber(detail, target, 'duration', this.duration)\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.video { width: 100%; height: 180px; }\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}, {"name": "src/pages/catalog/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"catalog-page\">\n    \u003cswiper\n      class=\"campaign-swiper\"\n      previous-margin@wx=\"24rpx\"\n      previous-margin@web=\"24rpx\"\n      next-margin@wx=\"24rpx\"\n      next-margin@web=\"24rpx\"\n      display-multiple-items@wx=\"2\"\n      bindchange=\"onBannerChange\"\n    >\n      \u003cswiper-item wx:for=\"{{banners}}\" wx:key=\"id\">\n        \u003cview class=\"campaign-card\">{{item.title}}\u003c/view>\n      \u003c/swiper-item>\n    \u003c/swiper>\n    \u003ctext>\u5f53\u524d\u6d3b\u52a8\uff1a{{activeBannerId}}\u003c/text>\n\n    \u003cbutton bindtap=\"openFilter\">\u7b5b\u9009\u5546\u54c1\u003c/button>\n    \u003ctext>\u5df2\u5e94\u7528\u5206\u7c7b\uff1a{{appliedCategory}}\u003c/text>\n\n    \u003cgrid-view\n      @wx\n      type=\"aligned\"\n      cross-axis-count=\"2\"\n      main-axis-gap=\"16rpx\"\n      cross-axis-gap=\"16rpx\"\n    >\n      \u003cgrid-item\n        wx:for=\"{{filteredProducts}}\"\n        wx:key=\"id\"\n        data-id=\"{{item.id}}\"\n        bindtap=\"selectProduct\"\n      >\n        \u003cimage\n          class=\"product-cover\"\n          src=\"{{item.cover}}\"\n          mode=\"aspectFill\"\n          lazy-load\n        />\n        \u003ctext>{{item.name}}\u003c/text>\n      \u003c/grid-item>\n    \u003c/grid-view>\n\n    \u003cview @_web class=\"product-grid\">\n      \u003cview\n        class=\"product-item\"\n        wx:for=\"{{filteredProducts}}\"\n        wx:key=\"id\"\n        data-id=\"{{item.id}}\"\n        bindtap=\"selectProduct\"\n      >\n        \u003cimage\n          class=\"product-cover\"\n          src=\"{{item.cover}}\"\n          mode=\"aspectFill\"\n        />\n        \u003ctext>{{item.name}}\u003c/text>\n      \u003c/view>\n    \u003c/view>\n    \u003ctext>\u5df2\u9009\u5546\u54c1\uff1a{{selectedProductId}}\u003c/text>\n\n    \u003cpage-container @wx show=\"{{filterVisible}}\" overlay>\n      \u003cview class=\"filter-panel\">\n        \u003ctext>\u9009\u62e9\u5206\u7c7b\u003c/text>\n        \u003cbutton\n          wx:for=\"{{categories}}\"\n          wx:key=\"id\"\n          data-id=\"{{item.id}}\"\n          bindtap=\"chooseDraftCategory\"\n        >\n          {{item.label}}\n        \u003c/button>\n        \u003ctext>\u5f85\u5e94\u7528\uff1a{{draftCategory}}\u003c/text>\n        \u003cbutton bindtap=\"cancelFilter\">\u53d6\u6d88\u003c/button>\n        \u003cbutton bindtap=\"confirmFilter\">\u786e\u5b9a\u003c/button>\n      \u003c/view>\n    \u003c/page-container>\n\n    \u003cview @_web wx:if=\"{{filterVisible}}\" class=\"filter-overlay\">\n      \u003cview class=\"filter-panel\">\n        \u003ctext>\u9009\u62e9\u5206\u7c7b\u003c/text>\n        \u003cbutton\n          wx:for=\"{{categories}}\"\n          wx:key=\"id\"\n          data-id=\"{{item.id}}\"\n          bindtap=\"chooseDraftCategory\"\n        >\n          {{item.label}}\n        \u003c/button>\n        \u003ctext>\u5f85\u5e94\u7528\uff1a{{draftCategory}}\u003c/text>\n        \u003cbutton bindtap=\"cancelFilter\">\u53d6\u6d88\u003c/button>\n        \u003cbutton bindtap=\"confirmFilter\">\u786e\u5b9a\u003c/button>\n      \u003c/view>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: {\n    banners: [\n      { id: 'campaign-a', title: '\u6362\u5b63\u4e0a\u65b0' },\n      { id: 'campaign-b', title: '\u4f1a\u5458\u4e13\u4eab' },\n      { id: 'campaign-c', title: '\u5468\u672b\u597d\u7269' }\n    ],\n    activeBannerId: 'campaign-a',\n    categories: [\n      { id: 'all', label: '\u5168\u90e8' },\n      { id: 'home', label: '\u5bb6\u5c45' },\n      { id: 'digital', label: '\u6570\u7801' }\n    ],\n    products: [\n      {\n        id: 'p-101',\n        name: '\u684c\u9762\u6536\u7eb3\u76d2',\n        category: 'home',\n        cover: 'https://static.example.com/products/p-101.jpg'\n      },\n      {\n        id: 'p-102',\n        name: '\u9605\u8bfb\u706f',\n        category: 'home',\n        cover: 'https://static.example.com/products/p-102.jpg'\n      },\n      {\n        id: 'p-201',\n        name: '\u65e0\u7ebf\u8033\u673a',\n        category: 'digital',\n        cover: 'https://static.example.com/products/p-201.jpg'\n      }\n    ],\n    appliedCategory: 'all',\n    draftCategory: 'all',\n    filterVisible: false,\n    selectedProductId: ''\n  },\n  computed: {\n    filteredProducts () {\n      if (this.appliedCategory === 'all') return this.products\n      return this.products.filter(item => item.category === this.appliedCategory)\n    }\n  },\n  methods: {\n    onBannerChange (event) {\n      const current = event.detail.current\n      const banner = this.banners[current]\n      if (banner) this.activeBannerId = banner.id\n    },\n    selectProduct (event) {\n      this.selectedProductId = event.currentTarget.dataset.id\n    },\n    openFilter () {\n      this.draftCategory = this.appliedCategory\n      this.filterVisible = true\n    },\n    chooseDraftCategory (event) {\n      this.draftCategory = event.currentTarget.dataset.id\n    },\n    cancelFilter () {\n      this.draftCategory = this.appliedCategory\n      this.filterVisible = false\n    },\n    confirmFilter () {\n      this.appliedCategory = this.draftCategory\n      this.filterVisible = false\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle scoped>\n.catalog-page {\n  padding: 24rpx;\n}\n\n.campaign-swiper {\n  height: 180rpx;\n}\n\n.campaign-card {\n  height: 160rpx;\n  margin: 0 8rpx;\n  padding: 20rpx;\n  box-sizing: border-box;\n  border-radius: 16rpx;\n  background: #eef4ff;\n}\n\n.product-grid {\n  display: grid;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  gap: 16rpx;\n}\n\n.product-item {\n  min-width: 0;\n}\n\n.product-cover {\n  width: 100%;\n  height: 240rpx;\n  border-radius: 12rpx;\n}\n\n.filter-overlay {\n  position: fixed;\n  z-index: 1000;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  left: 0;\n  display: flex;\n  align-items: flex-end;\n  background: rgba(0, 0, 0, 0.45);\n}\n\n.filter-panel {\n  width: 100%;\n  padding: 32rpx;\n  box-sizing: border-box;\n  background: #ffffff;\n}\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"navigationBarTitleText\": \"\u5546\u54c1\u76ee\u5f55\"\n}\n\u003c/script>\n"}, {"name": "src/pages/content/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"content-page\">\n    \u003ctext>{{title}}\u003c/text>\n\n    \u003cbutton @wx bindtap=\"choosePlace\">\u9009\u62e9\u4f4d\u7f6e\u003c/button>\n    \u003c!-- TODO(web): \u63a5\u5165\u80fd\u591f\u8fd4\u56de\u771f\u5b9e\u5730\u70b9\u540d\u79f0\u7684 Web \u5730\u70b9\u9009\u62e9\u670d\u52a1\uff0c\u5e76\u7ee7\u7eed\u66f4\u65b0 placeName\u3002 -->\n    \u003ctext @_web class=\"unavailable\">Web \u5730\u70b9\u9009\u62e9\u80fd\u529b\u672a\u63a5\u5165\u003c/text>\n    \u003ctext>{{placeName}}\u003c/text>\n\n    \u003cbutton bindtap=\"rename\">\u7f16\u8f91\u540d\u79f0\u003c/button>\n    \u003cview @_web wx:if=\"{{renaming}}\" class=\"rename-editor\">\n      \u003cinput\n        value=\"{{renameDraft}}\"\n        placeholder=\"\u8bf7\u8f93\u5165\u540d\u79f0\"\n        bindinput=\"onRenameInput\"\n      />\n      \u003cbutton bindtap=\"cancelRename\">\u53d6\u6d88\u003c/button>\n      \u003cbutton bindtap=\"confirmRename\">\u786e\u5b9a\u003c/button>\n    \u003c/view>\n    \u003ctext>\u540d\u79f0\uff1a{{displayName}}\u003c/text>\n\n    \u003cscan-entry bindresult=\"onScanResult\" />\n    \u003ctext>\u626b\u7801\u7ed3\u679c\uff1a{{scanResult}}\u003c/text>\n    \u003cvideo-info src=\"{{videoSrc}}\" />\n\n    \u003cfoo-card @wx />\n    \u003c!-- TODO(web): \u63a5\u5165 foo \u63d2\u4ef6\u670d\u52a1\u5361\u7247\u7684 Web \u4e1a\u52a1\u7ec4\u4ef6\uff0c\u5e76\u590d\u7528\u5176\u771f\u5b9e\u670d\u52a1\u6570\u636e\u4e0e\u4ea4\u4e92\u3002 -->\n    \u003ctext @_web class=\"unavailable\">\u63d2\u4ef6\u670d\u52a1\u5361\u7247 Web \u7248\u672a\u63a5\u5165\u003c/text>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: {\n    title: '\u5185\u5bb9\u64cd\u4f5c\u793a\u4f8b',\n    placeName: '\u5c1a\u672a\u9009\u62e9',\n    displayName: '\u9ed8\u8ba4\u540d\u79f0',\n    scanResult: '',\n    videoSrc: '',\n    renaming: false,\n    renameDraft: ''\n  },\n  onLoad (query) {\n    this.videoSrc = decodeURIComponent(query.videoUrl || '')\n  },\n  methods: {\n    choosePlace () {\n      if (__mpx_mode__ === 'web') return\n      wx.chooseLocation({\n        success: result => {\n          this.placeName = result.name\n        }\n      })\n    },\n    rename () {\n      if (__mpx_mode__ === 'web') {\n        this.renameDraft = this.displayName\n        this.renaming = true\n        return\n      }\n      wx.showModal({\n        title: '\u7f16\u8f91\u540d\u79f0',\n        editable: true,\n        placeholderText: '\u8bf7\u8f93\u5165\u540d\u79f0',\n        content: this.displayName,\n        success: result => {\n          if (result.confirm) this.displayName = result.content\n        }\n      })\n    },\n    onRenameInput (event) {\n      this.renameDraft = event.detail.value\n    },\n    cancelRename () {\n      this.renameDraft = this.displayName\n      this.renaming = false\n    },\n    confirmRename () {\n      this.displayName = this.renameDraft\n      this.renaming = false\n    },\n    onScanResult (event) {\n      this.scanResult = event.detail.result\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.content-page {\n  padding: 16px;\n}\n\n.rename-editor {\n  margin: 12px 0;\n  padding: 12px;\n  border: 1px solid #d8d8d8;\n}\n\n.unavailable {\n  display: block;\n  color: #666666;\n}\n\u003c/style>\n\n\u003cscript name=\"json\">\nconst pageConfig = {\n  usingComponents: {\n    'scan-entry': '../../components/scan-entry.mpx',\n    'video-info': '../../components/video-info.mpx'\n  }\n}\n\nif (__mpx_mode__ === 'wx') {\n  pageConfig.usingComponents['foo-card'] = 'plugin://foo/component'\n}\n\nmodule.exports = pageConfig\n\u003c/script>\n"}, {"name": "src/pages/store-picker/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"store-picker-page\">\n    \u003ctext class=\"title\">\u9009\u62e9\u670d\u52a1\u5730\u533a\u548c\u95e8\u5e97\u003c/text>\n\n    \u003cpicker\n      @wx\n      mode=\"region\"\n      value=\"{{regionCodes}}\"\n      bindchange=\"onWxRegionChange\"\n    >\n      \u003cview class=\"region-entry\">\u670d\u52a1\u5730\u533a\uff1a{{regionText}}\u003c/view>\n    \u003c/picker>\n    \u003cpicker\n      @_web\n      mode=\"selector\"\n      range=\"{{regionOptionLabels}}\"\n      bindchange=\"onWebRegionChange\"\n    >\n      \u003cview class=\"region-entry\">\u670d\u52a1\u5730\u533a\uff1a{{regionText}}\u003c/view>\n    \u003c/picker>\n\n    \u003cmap\n      @wx\n      class=\"store-map\"\n      latitude=\"{{mapCenter.latitude}}\"\n      longitude=\"{{mapCenter.longitude}}\"\n      markers=\"{{storeMarkers}}\"\n      bindmarkertap=\"onWxMarkerTap\"\n    />\n\n    \u003c!-- TODO(web): \u63a5\u5165\u4e1a\u52a1 Web \u5730\u56fe SDK \u6216\u5730\u56fe\u7ec4\u4ef6\uff0c\u5e76\u4f20\u5165 mapCenter\u3001storeMarkers \u53ca\u771f\u5b9e\u95e8\u5e97 id\u3002 -->\n    \u003cview @_web class=\"web-store-selection\">\n      \u003ctext class=\"unavailable\">Web \u5730\u56fe\u672a\u63a5\u5165\uff0c\u8bf7\u4ece\u771f\u5b9e\u95e8\u5e97\u5217\u8868\u9009\u62e9\u003c/text>\n      \u003cbutton\n        wx:for=\"{{storeMarkers}}\"\n        wx:key=\"id\"\n        data-id=\"{{item.id}}\"\n        bindtap=\"onWebStoreTap\"\n      >\n        {{item.title}}\n      \u003c/button>\n    \u003c/view>\n\n    \u003cview class=\"selection\">\n      \u003ctext>\u5f53\u524d\u95e8\u5e97\uff1a{{selectedStoreName}}\u003c/text>\n      \u003cbutton bindtap=\"confirmSelection\">\u786e\u8ba4\u9009\u62e9\u003c/button>\n      \u003ctext wx:if=\"{{confirmedText}}\">\u5df2\u786e\u8ba4\uff1a{{confirmedText}}\u003c/text>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: {\n    regionOptions: [\n      {\n        names: ['\u5317\u4eac\u5e02', '\u5317\u4eac\u5e02', '\u671d\u9633\u533a'],\n        codes: ['110000', '110100', '110105']\n      },\n      {\n        names: ['\u4e0a\u6d77\u5e02', '\u4e0a\u6d77\u5e02', '\u6d66\u4e1c\u65b0\u533a'],\n        codes: ['310000', '310100', '310115']\n      }\n    ],\n    regionNames: ['\u5317\u4eac\u5e02', '\u5317\u4eac\u5e02', '\u671d\u9633\u533a'],\n    regionCodes: ['110000', '110100', '110105'],\n    regionText: '\u5317\u4eac\u5e02 / \u5317\u4eac\u5e02 / \u671d\u9633\u533a',\n    mapCenter: {\n      latitude: 39.9219,\n      longitude: 116.4436\n    },\n    storeMarkers: [\n      {\n        id: 101,\n        title: '\u671d\u9633\u95e8\u5e97',\n        latitude: 39.9219,\n        longitude: 116.4436\n      },\n      {\n        id: 102,\n        title: '\u56fd\u8d38\u95e8\u5e97',\n        latitude: 39.9087,\n        longitude: 116.4601\n      }\n    ],\n    selectedStoreId: 101,\n    selectedStoreName: '\u671d\u9633\u95e8\u5e97',\n    confirmedText: ''\n  },\n  computed: {\n    regionOptionLabels () {\n      return this.regionOptions.map(item => item.names.join(' / '))\n    }\n  },\n  methods: {\n    onWxRegionChange (event) {\n      this.regionNames = event.detail.value\n      this.regionCodes = event.detail.code\n      this.regionText = this.regionNames.join(' / ')\n    },\n    onWebRegionChange (event) {\n      const selected = this.regionOptions[Number(event.detail.value)]\n      if (!selected) return\n      this.regionNames = selected.names.slice()\n      this.regionCodes = selected.codes.slice()\n      this.regionText = this.regionNames.join(' / ')\n    },\n    onWxMarkerTap (event) {\n      this.selectStore(event.detail.markerId)\n    },\n    onWebStoreTap (event) {\n      this.selectStore(event.currentTarget.dataset.id)\n    },\n    selectStore (storeId) {\n      const selected = this.storeMarkers.find(item => item.id === Number(storeId))\n      if (!selected) return\n      this.selectedStoreId = selected.id\n      this.selectedStoreName = selected.title\n    },\n    confirmSelection () {\n      this.confirmedText = this.regionText + ' \u00b7 ' + this.selectedStoreName\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle scoped>\n.store-picker-page {\n  padding: 24rpx;\n}\n\n.title,\n.region-entry,\n.selection {\n  display: block;\n  margin-bottom: 20rpx;\n}\n\n.store-map {\n  width: 100%;\n  height: 420rpx;\n  margin-bottom: 24rpx;\n}\n\n.web-store-selection {\n  margin-bottom: 24rpx;\n}\n\n.unavailable {\n  display: block;\n  margin-bottom: 16rpx;\n  color: #666666;\n}\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"navigationBarTitleText\": \"\u95e8\u5e97\u9009\u62e9\"\n}\n\u003c/script>\n"}, {"name": "src/vendor/native-scanner/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003ccamera class=\"camera\" mode=\"scanCode\" bindscancode=\"onCode\" binderror=\"onError\" />\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  methods: {\n    onCode (event) {\n      this.triggerEvent('result', { result: event.detail.result })\n    },\n    onError () {\n      this.triggerEvent('failure')\n    }\n  }\n})\n\u003c/script>\n\u003cstyle>\n.camera { width: 240px; height: 180px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}], "grading": {"eval_id": 2, "run_kind": "mpx2web", "expectations": [{"id": "C3.2", "text": "\u540d\u79f0\u7f16\u8f91\uff1aWeb \u5177\u5907\u8f93\u5165\u3001\u786e\u8ba4\u8d4b\u503c\u548c\u53d6\u6d88\u4e0d\u8d4b\u503c\u94fe\u8def\uff0c\u5fae\u4fe1\u539f\u4ea4\u4e92\u4fdd\u6301\u6709\u6548", "passed": true, "evidence": "PASS"}, {"id": "C3.3", "text": "\u626b\u7801\uff1a\u5fae\u4fe1\u4fdd\u7559\u539f\u751f\u626b\u7801\u7ec4\u4ef6\uff0cWeb \u6784\u5efa\u4e0d\u89e3\u6790\u8be5\u7ec4\u4ef6\u4e14\u53ea\u8bfb\u4f9d\u8d56\u672a\u4fee\u6539", "passed": true, "evidence": "PASS"}, {"id": "C3.4", "text": "\u89c6\u9891\uff1a\u4fdd\u7559 src \u4e0e\u64ad\u653e\u4e8b\u4ef6\uff0cWeb \u5728 detail \u7f3a\u5b57\u6bb5\u65f6\u4ece\u771f\u5b9e target \u5b89\u5168\u56de\u9000", "passed": true, "evidence": "PASS"}, {"id": "C3.5", "text": "\u4f4d\u7f6e\uff1a\u5fae\u4fe1\u4fdd\u7559 chooseLocation\uff0cWeb \u4e0d\u6267\u884c\u5fae\u4fe1 API \u4e14\u8bf4\u660e\u771f\u5b9e\u670d\u52a1\u63a5\u5165\u8fb9\u754c", "passed": false, "evidence": "FAIL"}, {"id": "C3.6", "text": "\u63d2\u4ef6\uff1a\u516c\u5171 pages \u53ea\u7ef4\u62a4\u4e00\u4efd\uff0c\u5fae\u4fe1\u4fdd\u7559\u63d2\u4ef6\u5361\u7247\uff0cWeb \u4e0d\u89e3\u6790 plugin \u7ec4\u4ef6", "passed": true, "evidence": "PASS"}, {"id": "C5.1", "text": "\u5730\u533a\u4e0e\u5730\u56fe\uff1a\u5fae\u4fe1\u539f picker/map \u6570\u636e\u94fe\u4fdd\u7559\uff0cWeb \u9694\u79bb\u7f3a\u5931\u80fd\u529b\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": true, "evidence": "PASS"}, {"id": "C5.2", "text": "Swiper \u4e0e\u56fe\u7247\uff1a\u4fdd\u7559\u516c\u5171\u80fd\u529b\uff0c\u53ea\u9694\u79bb Web \u672a\u5b9e\u73b0\u7684\u5c40\u90e8\u5c5e\u6027\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": false, "evidence": "FAIL"}, {"id": "C5.3", "text": "\u7ed3\u6784\u7ec4\u4ef6\uff1a\u5fae\u4fe1\u4fdd\u7559 grid-view \u4e0e page-container\uff0cWeb \u9694\u79bb\u7f3a\u5931\u7ec4\u4ef6\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": true, "evidence": "PASS"}, {"id": "C5.4", "text": "\u72b6\u6001\uff1a\u95e8\u5e97\u786e\u8ba4\u548c\u5546\u54c1\u7b5b\u9009\u7684\u8349\u7a3f\u3001\u53d6\u6d88\u3001\u786e\u8ba4\u72b6\u6001\u94fe\u4fdd\u6301\u4e0d\u53d8", "passed": true, "evidence": "PASS"}], "summary": {"pass_rate": 0.7778, "passed": 7, "failed": 2, "total": 9, "total_tokens": 4609517, "tool_calls": 44, "duration_ms": 738513, "duration_seconds": 738.513}, "metrics": {"total_tokens": 4609517, "tool_calls": 44, "duration_ms": 738513, "duration_seconds": 738.513}, "timing": {"total_duration_seconds": 738.513, "total_tokens": 4609517}, "execution_metrics": {"total_tool_calls": 44, "output_chars": 4609517}}}, {"id": "eval-2-api-share-components-no_skill", "prompt": "\u8bf7\u6839\u636e input \u4e2d\u7684\u6e90\u7801\u548c requirements.md \u5b8c\u6210\u4ea4\u4ed8\uff0c\u5e76\u8f93\u51fa\u5168\u90e8\u8981\u6c42\u6587\u4ef6\u3002", "eval_id": 2, "outputs": [{"name": "src/app.mpx", "type": "text", "content": "\u003cscript>\nimport mpx, { createApp } from '@mpxjs/core'\nimport apiProxy from '@mpxjs/api-proxy'\n\nmpx.use(apiProxy)\n\ncreateApp({})\n\u003c/script>\n\n\u003cscript type=\"application/json\">\n{\n  \"pages\": [\n    \"./pages/content/index.mpx\",\n    \"./pages/store-picker/index.mpx\",\n    \"./pages/catalog/index.mpx\"\n  ]\n  // @mpx-if (mode === 'wx')\n  ,\n  \"plugins\": {\n    \"foo\": {\n      \"version\": \"1.0.0\",\n      \"provider\": \"wx123\"\n    }\n  }\n  // @mpx-endif\n}\n\u003c/script>\n"}, {"name": "src/components/scan-entry.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"scan-entry\">\n    \u003c!-- @mpx-if (mode === 'wx') -->\n    \u003cbutton bindtap=\"start\">\u5f00\u59cb\u626b\u7801\u003c/button>\n    \u003cnative-scanner\n      wx:if=\"{{scanning}}\"\n      bindresult=\"onCode\"\n      bindfailure=\"onCameraError\"\n    />\n    \u003c!-- @mpx-else -->\n    \u003c!-- TODO(web): \u63a5\u5165\u4e1a\u52a1\u9009\u5b9a\u7684 Web \u626b\u7801 SDK\u3001\u76f8\u673a\u6388\u6743\u6d41\u7a0b\u548c\u626b\u7801\u7ed3\u679c\u56de\u8c03\u3002 -->\n    \u003ctext class=\"unavailable\">Web \u626b\u7801\u670d\u52a1\u5c1a\u672a\u63a5\u5165\u003c/text>\n    \u003c!-- @mpx-endif -->\n    \u003ctext wx:if=\"{{status}}\" class=\"status\">{{status}}\u003c/text>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  data: {\n    scanning: false,\n    status: ''\n  },\n  methods: {\n    start () {\n      this.status = ''\n      this.scanning = true\n    },\n    onCode (event) {\n      this.scanning = false\n      this.triggerEvent('result', { result: event.detail.result })\n    },\n    onCameraError () {\n      this.scanning = false\n      this.status = '\u76f8\u673a\u4e0d\u53ef\u7528\uff0c\u8bf7\u68c0\u67e5\u6388\u6743'\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.scan-entry {\n  padding: 0;\n}\n\n.unavailable,\n.status {\n  display: block;\n  margin-top: 8px;\n  color: #666666;\n}\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"component\": true\n  // @mpx-if (mode === 'wx')\n  ,\n  \"usingComponents\": {\n    \"native-scanner\": \"../vendor/native-scanner/index.mpx\"\n  }\n  // @mpx-endif\n}\n\u003c/script>\n"}, {"name": "src/components/video-info.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"video-info\">\n    \u003cvideo\n      wx:if=\"{{src}}\"\n      class=\"video\"\n      src=\"{{src}}\"\n      controls=\"{{true}}\"\n      bindtimeupdate=\"onTimeUpdate\"\n      bindloadedmetadata=\"onMetadata\"\n    />\n    \u003ctext wx:if=\"{{!src}}\" class=\"empty\">\u8fd0\u884c\u73af\u5883\u5c1a\u672a\u63d0\u4f9b\u89c6\u9891\u5730\u5740\u003c/text>\n    \u003ctext class=\"meta\">\u8fdb\u5ea6\uff1a{{currentTime}} / {{duration}} \u79d2\u003c/text>\n    \u003ctext class=\"meta\">\u5c3a\u5bf8\uff1a{{videoWidth}} \u00d7 {{videoHeight}}\u003c/text>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  properties: {\n    src: String\n  },\n  data: {\n    currentTime: 0,\n    duration: 0,\n    videoWidth: 0,\n    videoHeight: 0\n  },\n  methods: {\n    onTimeUpdate (event) {\n      this.currentTime = event.detail.currentTime\n      this.duration = event.detail.duration\n    },\n    onMetadata (event) {\n      this.videoWidth = event.detail.width\n      this.videoHeight = event.detail.height\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.video {\n  width: 100%;\n  height: 180px;\n}\n\n.empty,\n.meta {\n  display: block;\n  margin-top: 8px;\n}\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"component\": true\n}\n\u003c/script>\n"}, {"name": "src/pages/catalog/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"catalog-page\">\n    \u003cswiper\n      class=\"campaign-swiper\"\n      previous-margin=\"24rpx\"\n      next-margin=\"24rpx\"\n      display-multiple-items=\"2\"\n      bindchange=\"onBannerChange\"\n    >\n      \u003cswiper-item wx:for=\"{{banners}}\" wx:key=\"id\">\n        \u003cview class=\"campaign-card\">{{item.title}}\u003c/view>\n      \u003c/swiper-item>\n    \u003c/swiper>\n    \u003ctext class=\"status-line\">\u5f53\u524d\u6d3b\u52a8\uff1a{{activeBannerId}}\u003c/text>\n\n    \u003cbutton bindtap=\"openFilter\">\u7b5b\u9009\u5546\u54c1\u003c/button>\n    \u003ctext class=\"status-line\">\u5df2\u5e94\u7528\u5206\u7c7b\uff1a{{appliedCategory}}\u003c/text>\n\n    \u003c!-- @mpx-if (mode === 'wx') -->\n    \u003cgrid-view\n      type=\"aligned\"\n      cross-axis-count=\"2\"\n      main-axis-gap=\"16rpx\"\n      cross-axis-gap=\"16rpx\"\n    >\n      \u003cgrid-item\n        wx:for=\"{{filteredProducts}}\"\n        wx:key=\"id\"\n        data-id=\"{{item.id}}\"\n        bindtap=\"selectProduct\"\n      >\n        \u003cimage\n          class=\"product-cover\"\n          src=\"{{item.cover}}\"\n          mode=\"aspectFill\"\n          lazy-load\n        />\n        \u003ctext>{{item.name}}\u003c/text>\n      \u003c/grid-item>\n    \u003c/grid-view>\n    \u003c!-- @mpx-else -->\n    \u003cview class=\"product-grid\">\n      \u003cview\n        wx:for=\"{{filteredProducts}}\"\n        wx:key=\"id\"\n        class=\"product-card {{selectedProductId === item.id ? 'selected' : ''}}\"\n        data-id=\"{{item.id}}\"\n        bindtap=\"selectProduct\"\n      >\n        \u003cimage\n          class=\"product-cover\"\n          src=\"{{item.cover}}\"\n          mode=\"aspectFill\"\n          lazy-load\n        />\n        \u003ctext>{{item.name}}\u003c/text>\n      \u003c/view>\n    \u003c/view>\n    \u003c!-- @mpx-endif -->\n    \u003ctext class=\"status-line\">\u5df2\u9009\u5546\u54c1\uff1a{{selectedProductId}}\u003c/text>\n\n    \u003c!-- @mpx-if (mode === 'wx') -->\n    \u003cpage-container show=\"{{filterVisible}}\" overlay>\n      \u003cview class=\"filter-panel\">\n        \u003ctext>\u9009\u62e9\u5206\u7c7b\u003c/text>\n        \u003cbutton\n          wx:for=\"{{categories}}\"\n          wx:key=\"id\"\n          data-id=\"{{item.id}}\"\n          bindtap=\"chooseDraftCategory\"\n        >\n          {{item.label}}\n        \u003c/button>\n        \u003ctext>\u5f85\u5e94\u7528\uff1a{{draftCategory}}\u003c/text>\n        \u003cbutton bindtap=\"cancelFilter\">\u53d6\u6d88\u003c/button>\n        \u003cbutton bindtap=\"confirmFilter\">\u786e\u5b9a\u003c/button>\n      \u003c/view>\n    \u003c/page-container>\n    \u003c!-- @mpx-else -->\n    \u003cview wx:if=\"{{filterVisible}}\" class=\"filter-overlay\" bindtap=\"cancelFilter\">\n      \u003cview class=\"filter-panel\" catchtap=\"keepFilterOpen\">\n        \u003ctext>\u9009\u62e9\u5206\u7c7b\u003c/text>\n        \u003cbutton\n          wx:for=\"{{categories}}\"\n          wx:key=\"id\"\n          class=\"category-option {{draftCategory === item.id ? 'selected' : ''}}\"\n          data-id=\"{{item.id}}\"\n          bindtap=\"chooseDraftCategory\"\n        >\n          {{item.label}}\n        \u003c/button>\n        \u003ctext>\u5f85\u5e94\u7528\uff1a{{draftCategory}}\u003c/text>\n        \u003cview class=\"filter-actions\">\n          \u003cbutton bindtap=\"cancelFilter\">\u53d6\u6d88\u003c/button>\n          \u003cbutton bindtap=\"confirmFilter\">\u786e\u5b9a\u003c/button>\n        \u003c/view>\n      \u003c/view>\n    \u003c/view>\n    \u003c!-- @mpx-endif -->\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: {\n    banners: [\n      { id: 'campaign-a', title: '\u6362\u5b63\u4e0a\u65b0' },\n      { id: 'campaign-b', title: '\u4f1a\u5458\u4e13\u4eab' },\n      { id: 'campaign-c', title: '\u5468\u672b\u597d\u7269' }\n    ],\n    activeBannerId: 'campaign-a',\n    categories: [\n      { id: 'all', label: '\u5168\u90e8' },\n      { id: 'home', label: '\u5bb6\u5c45' },\n      { id: 'digital', label: '\u6570\u7801' }\n    ],\n    products: [\n      {\n        id: 'p-101',\n        name: '\u684c\u9762\u6536\u7eb3\u76d2',\n        category: 'home',\n        cover: 'https://static.example.com/products/p-101.jpg'\n      },\n      {\n        id: 'p-102',\n        name: '\u9605\u8bfb\u706f',\n        category: 'home',\n        cover: 'https://static.example.com/products/p-102.jpg'\n      },\n      {\n        id: 'p-201',\n        name: '\u65e0\u7ebf\u8033\u673a',\n        category: 'digital',\n        cover: 'https://static.example.com/products/p-201.jpg'\n      }\n    ],\n    appliedCategory: 'all',\n    draftCategory: 'all',\n    filterVisible: false,\n    selectedProductId: ''\n  },\n  computed: {\n    filteredProducts () {\n      if (this.appliedCategory === 'all') return this.products\n      return this.products.filter(item => item.category === this.appliedCategory)\n    }\n  },\n  methods: {\n    onBannerChange (event) {\n      const current = event.detail.current\n      const banner = this.banners[current]\n      if (banner) this.activeBannerId = banner.id\n    },\n    selectProduct (event) {\n      this.selectedProductId = event.currentTarget.dataset.id\n    },\n    openFilter () {\n      this.draftCategory = this.appliedCategory\n      this.filterVisible = true\n    },\n    chooseDraftCategory (event) {\n      this.draftCategory = event.currentTarget.dataset.id\n    },\n    keepFilterOpen () {},\n    cancelFilter () {\n      this.draftCategory = this.appliedCategory\n      this.filterVisible = false\n    },\n    confirmFilter () {\n      this.appliedCategory = this.draftCategory\n      this.filterVisible = false\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle scoped>\n.catalog-page {\n  padding: 24rpx;\n}\n\n.campaign-swiper {\n  height: 180rpx;\n}\n\n.campaign-card {\n  box-sizing: border-box;\n  height: 160rpx;\n  margin: 0 8rpx;\n  padding: 20rpx;\n  border-radius: 16rpx;\n  background: #eef4ff;\n}\n\n.status-line {\n  display: block;\n  margin: 16rpx 0;\n}\n\n.product-cover {\n  width: 100%;\n  height: 240rpx;\n  border-radius: 12rpx;\n}\n\n.product-grid {\n  display: grid;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  gap: 16rpx;\n}\n\n.product-card {\n  box-sizing: border-box;\n  overflow: hidden;\n  padding: 8rpx;\n  border: 2rpx solid transparent;\n  border-radius: 12rpx;\n}\n\n.product-card.selected,\n.category-option.selected {\n  border-color: #1769e0;\n}\n\n.filter-overlay {\n  position: fixed;\n  z-index: 1000;\n  inset: 0;\n  display: flex;\n  align-items: flex-end;\n  background: rgba(0, 0, 0, 0.45);\n}\n\n.filter-panel {\n  box-sizing: border-box;\n  width: 100%;\n  padding: 32rpx;\n  background: #ffffff;\n}\n\n.category-option {\n  border: 2rpx solid transparent;\n}\n\n.filter-actions {\n  display: flex;\n  gap: 16rpx;\n  margin-top: 20rpx;\n}\n\n.filter-actions button {\n  flex: 1;\n}\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"navigationBarTitleText\": \"\u5546\u54c1\u76ee\u5f55\"\n}\n\u003c/script>\n"}, {"name": "src/pages/content/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"content-page\">\n    \u003ctext class=\"title\">{{title}}\u003c/text>\n\n    \u003c!-- @mpx-if (mode === 'wx') -->\n    \u003cbutton bindtap=\"choosePlace\">\u9009\u62e9\u4f4d\u7f6e\u003c/button>\n    \u003ctext class=\"field-value\">{{placeName}}\u003c/text>\n    \u003c!-- @mpx-else -->\n    \u003c!-- TODO(web): \u63a5\u5165\u771f\u5b9e\u7684 Web \u5730\u56fe\u9009\u70b9\u670d\u52a1\uff0c\u5e76\u5c06\u5730\u70b9\u540d\u79f0\u56de\u586b\u5230 placeName\u3002 -->\n    \u003ctext class=\"unavailable\">\u4f4d\u7f6e\u9009\u62e9\uff1aWeb \u5730\u56fe\u9009\u70b9\u670d\u52a1\u5c1a\u672a\u63a5\u5165\u003c/text>\n    \u003c!-- @mpx-endif -->\n\n    \u003c!-- @mpx-if (mode === 'wx') -->\n    \u003cbutton bindtap=\"rename\">\u7f16\u8f91\u540d\u79f0\u003c/button>\n    \u003c!-- @mpx-else -->\n    \u003cinput\n      class=\"name-input\"\n      value=\"{{renameDraft}}\"\n      placeholder=\"\u8bf7\u8f93\u5165\u540d\u79f0\"\n      bindinput=\"onRenameInput\"\n    />\n    \u003cbutton bindtap=\"rename\">\u4fdd\u5b58\u540d\u79f0\u003c/button>\n    \u003c!-- @mpx-endif -->\n    \u003ctext class=\"field-value\">\u540d\u79f0\uff1a{{displayName}}\u003c/text>\n\n    \u003cscan-entry bindresult=\"onScanResult\" />\n    \u003ctext class=\"field-value\">\u626b\u7801\u7ed3\u679c\uff1a{{scanResult}}\u003c/text>\n\n    \u003cvideo-info src=\"{{videoSrc}}\" />\n\n    \u003c!-- @mpx-if (mode === 'wx') -->\n    \u003cfoo-card />\n    \u003c!-- @mpx-else -->\n    \u003c!-- TODO(web): \u63a5\u5165\u4e0e\u5fae\u4fe1 foo \u63d2\u4ef6\u5361\u7247\u5bf9\u5e94\u7684\u771f\u5b9e Web \u4e1a\u52a1\u7ec4\u4ef6\u548c\u670d\u52a1\u3002 -->\n    \u003ctext class=\"unavailable\">Web \u63d2\u4ef6\u670d\u52a1\u5361\u7247\u5c1a\u672a\u63a5\u5165\u003c/text>\n    \u003c!-- @mpx-endif -->\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: {\n    title: '\u5185\u5bb9\u64cd\u4f5c\u793a\u4f8b',\n    placeName: '\u5c1a\u672a\u9009\u62e9',\n    displayName: '\u9ed8\u8ba4\u540d\u79f0',\n    renameDraft: '\u9ed8\u8ba4\u540d\u79f0',\n    scanResult: '',\n    videoSrc: ''\n  },\n  onLoad (query) {\n    const encodedVideoUrl = query && query.videoUrl\n    if (!encodedVideoUrl) return\n\n    try {\n      this.videoSrc = decodeURIComponent(encodedVideoUrl)\n    } catch (error) {\n      this.videoSrc = encodedVideoUrl\n    }\n  },\n  methods: {\n    choosePlace () {\n      // @mpx-if (mode === 'wx')\n      wx.chooseLocation({\n        success: result => {\n          this.placeName = result.name\n        }\n      })\n      // @mpx-endif\n    },\n    rename () {\n      // @mpx-if (mode === 'wx')\n      wx.showModal({\n        title: '\u7f16\u8f91\u540d\u79f0',\n        editable: true,\n        placeholderText: '\u8bf7\u8f93\u5165\u540d\u79f0',\n        content: this.displayName,\n        success: result => {\n          if (result.confirm) {\n            this.displayName = result.content\n            this.renameDraft = result.content\n          }\n        }\n      })\n      // @mpx-else\n      this.displayName = this.renameDraft\n      // @mpx-endif\n    },\n    onRenameInput (event) {\n      this.renameDraft = event.detail.value\n    },\n    onScanResult (event) {\n      this.scanResult = event.detail.result\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle>\n.content-page {\n  padding: 16px;\n}\n\n.title,\n.field-value,\n.unavailable {\n  display: block;\n  margin-bottom: 12px;\n}\n\n.name-input {\n  box-sizing: border-box;\n  width: 100%;\n  margin-bottom: 8px;\n  padding: 8px;\n  border: 1px solid #cccccc;\n}\n\n.unavailable {\n  color: #666666;\n}\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"usingComponents\": {\n    \"scan-entry\": \"../../components/scan-entry.mpx\",\n    \"video-info\": \"../../components/video-info.mpx\"\n    // @mpx-if (mode === 'wx')\n    ,\n    \"foo-card\": \"plugin://foo/component\"\n    // @mpx-endif\n  }\n}\n\u003c/script>\n"}, {"name": "src/pages/store-picker/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"store-picker-page\">\n    \u003ctext class=\"title\">\u9009\u62e9\u670d\u52a1\u5730\u533a\u548c\u95e8\u5e97\u003c/text>\n\n    \u003c!-- @mpx-if (mode === 'wx') -->\n    \u003cpicker mode=\"region\" value=\"{{regionCodes}}\" bindchange=\"onWxRegionChange\">\n      \u003cview class=\"region-entry\">\u670d\u52a1\u5730\u533a\uff1a{{regionText}}\u003c/view>\n    \u003c/picker>\n\n    \u003cmap\n      class=\"store-map\"\n      latitude=\"{{mapCenter.latitude}}\"\n      longitude=\"{{mapCenter.longitude}}\"\n      markers=\"{{storeMarkers}}\"\n      bindmarkertap=\"onWxMarkerTap\"\n    />\n    \u003c!-- @mpx-else -->\n    \u003cview class=\"region-options\">\n      \u003ctext class=\"section-title\">\u670d\u52a1\u5730\u533a\uff1a{{regionText}}\u003c/text>\n      \u003cbutton\n        wx:for=\"{{regionOptions}}\"\n        wx:key=\"*this\"\n        data-index=\"{{index}}\"\n        bindtap=\"onWebRegionSelect\"\n      >\n        {{item.names[0]}} / {{item.names[1]}} / {{item.names[2]}}\n      \u003c/button>\n    \u003c/view>\n\n    \u003c!-- TODO(web): \u63a5\u5165\u4e1a\u52a1\u9009\u5b9a\u7684 Web \u5730\u56fe SDK\uff0c\u7528 mapCenter \u548c storeMarkers \u6e32\u67d3\u5730\u56fe\u53ca\u95e8\u5e97\u6807\u8bb0\u3002 -->\n    \u003ctext class=\"unavailable\">Web \u5730\u56fe\u670d\u52a1\u5c1a\u672a\u63a5\u5165\uff0c\u53ef\u4ece\u73b0\u6709\u95e8\u5e97\u5217\u8868\u9009\u62e9\u003c/text>\n    \u003cview class=\"store-options\">\n      \u003cbutton\n        wx:for=\"{{storeMarkers}}\"\n        wx:key=\"id\"\n        class=\"store-option {{selectedStoreId === item.id ? 'selected' : ''}}\"\n        data-id=\"{{item.id}}\"\n        bindtap=\"onWebStoreSelect\"\n      >\n        {{item.title}}\n      \u003c/button>\n    \u003c/view>\n    \u003c!-- @mpx-endif -->\n\n    \u003cview class=\"selection\">\n      \u003ctext>\u5f53\u524d\u95e8\u5e97\uff1a{{selectedStoreName}}\u003c/text>\n      \u003cbutton bindtap=\"confirmSelection\">\u786e\u8ba4\u9009\u62e9\u003c/button>\n      \u003ctext wx:if=\"{{confirmedText}}\">\u5df2\u786e\u8ba4\uff1a{{confirmedText}}\u003c/text>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\n\ncreatePage({\n  data: {\n    regionOptions: [\n      {\n        names: ['\u5317\u4eac\u5e02', '\u5317\u4eac\u5e02', '\u671d\u9633\u533a'],\n        codes: ['110000', '110100', '110105']\n      },\n      {\n        names: ['\u4e0a\u6d77\u5e02', '\u4e0a\u6d77\u5e02', '\u6d66\u4e1c\u65b0\u533a'],\n        codes: ['310000', '310100', '310115']\n      }\n    ],\n    regionNames: ['\u5317\u4eac\u5e02', '\u5317\u4eac\u5e02', '\u671d\u9633\u533a'],\n    regionCodes: ['110000', '110100', '110105'],\n    regionText: '\u5317\u4eac\u5e02 / \u5317\u4eac\u5e02 / \u671d\u9633\u533a',\n    mapCenter: {\n      latitude: 39.9219,\n      longitude: 116.4436\n    },\n    storeMarkers: [\n      {\n        id: 101,\n        title: '\u671d\u9633\u95e8\u5e97',\n        latitude: 39.9219,\n        longitude: 116.4436\n      },\n      {\n        id: 102,\n        title: '\u56fd\u8d38\u95e8\u5e97',\n        latitude: 39.9087,\n        longitude: 116.4601\n      }\n    ],\n    selectedStoreId: 101,\n    selectedStoreName: '\u671d\u9633\u95e8\u5e97',\n    confirmedText: ''\n  },\n  methods: {\n    onWxRegionChange (event) {\n      this.regionNames = event.detail.value\n      this.regionCodes = event.detail.code\n      this.regionText = this.regionNames.join(' / ')\n    },\n    onWxMarkerTap (event) {\n      this.selectStore(event.detail.markerId)\n    },\n    onWebRegionSelect (event) {\n      const option = this.regionOptions[Number(event.currentTarget.dataset.index)]\n      if (!option) return\n\n      this.regionNames = option.names.slice()\n      this.regionCodes = option.codes.slice()\n      this.regionText = this.regionNames.join(' / ')\n    },\n    onWebStoreSelect (event) {\n      this.selectStore(event.currentTarget.dataset.id)\n    },\n    selectStore (storeId) {\n      const selected = this.storeMarkers.find(item => item.id === Number(storeId))\n      if (!selected) return\n\n      this.selectedStoreId = selected.id\n      this.selectedStoreName = selected.title\n    },\n    confirmSelection () {\n      this.confirmedText = this.regionText + ' \u00b7 ' + this.selectedStoreName\n    }\n  }\n})\n\u003c/script>\n\n\u003cstyle scoped>\n.store-picker-page {\n  padding: 24rpx;\n}\n\n.title,\n.region-entry,\n.section-title,\n.unavailable,\n.selection {\n  display: block;\n  margin-bottom: 20rpx;\n}\n\n.store-map {\n  width: 100%;\n  height: 420rpx;\n  margin-bottom: 24rpx;\n}\n\n.region-options,\n.store-options {\n  margin-bottom: 24rpx;\n}\n\n.region-options button,\n.store-options button {\n  margin-bottom: 12rpx;\n}\n\n.unavailable {\n  color: #666666;\n}\n\n.store-option.selected {\n  color: #ffffff;\n  background: #1769e0;\n}\n\n.selection text {\n  display: block;\n  margin-bottom: 12rpx;\n}\n\u003c/style>\n\n\u003cscript type=\"application/json\">\n{\n  \"navigationBarTitleText\": \"\u95e8\u5e97\u9009\u62e9\"\n}\n\u003c/script>\n"}, {"name": "src/vendor/native-scanner/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003ccamera class=\"camera\" mode=\"scanCode\" bindscancode=\"onCode\" binderror=\"onError\" />\n\u003c/template>\n\u003cscript>\nimport { createComponent } from '@mpxjs/core'\n\ncreateComponent({\n  methods: {\n    onCode (event) {\n      this.triggerEvent('result', { result: event.detail.result })\n    },\n    onError () {\n      this.triggerEvent('failure')\n    }\n  }\n})\n\u003c/script>\n\u003cstyle>\n.camera { width: 240px; height: 180px; }\n\u003c/style>\n\u003cscript type=\"application/json\">\n{ \"component\": true }\n\u003c/script>\n"}], "grading": {"eval_id": 2, "run_kind": "no_skill", "expectations": [{"id": "C3.2", "text": "\u540d\u79f0\u7f16\u8f91\uff1aWeb \u5177\u5907\u8f93\u5165\u3001\u786e\u8ba4\u8d4b\u503c\u548c\u53d6\u6d88\u4e0d\u8d4b\u503c\u94fe\u8def\uff0c\u5fae\u4fe1\u539f\u4ea4\u4e92\u4fdd\u6301\u6709\u6548", "passed": false, "evidence": "FAIL"}, {"id": "C3.3", "text": "\u626b\u7801\uff1a\u5fae\u4fe1\u4fdd\u7559\u539f\u751f\u626b\u7801\u7ec4\u4ef6\uff0cWeb \u6784\u5efa\u4e0d\u89e3\u6790\u8be5\u7ec4\u4ef6\u4e14\u53ea\u8bfb\u4f9d\u8d56\u672a\u4fee\u6539", "passed": false, "evidence": "FAIL"}, {"id": "C3.4", "text": "\u89c6\u9891\uff1a\u4fdd\u7559 src \u4e0e\u64ad\u653e\u4e8b\u4ef6\uff0cWeb \u5728 detail \u7f3a\u5b57\u6bb5\u65f6\u4ece\u771f\u5b9e target \u5b89\u5168\u56de\u9000", "passed": false, "evidence": "FAIL"}, {"id": "C3.5", "text": "\u4f4d\u7f6e\uff1a\u5fae\u4fe1\u4fdd\u7559 chooseLocation\uff0cWeb \u4e0d\u6267\u884c\u5fae\u4fe1 API \u4e14\u8bf4\u660e\u771f\u5b9e\u670d\u52a1\u63a5\u5165\u8fb9\u754c", "passed": false, "evidence": "FAIL"}, {"id": "C3.6", "text": "\u63d2\u4ef6\uff1a\u516c\u5171 pages \u53ea\u7ef4\u62a4\u4e00\u4efd\uff0c\u5fae\u4fe1\u4fdd\u7559\u63d2\u4ef6\u5361\u7247\uff0cWeb \u4e0d\u89e3\u6790 plugin \u7ec4\u4ef6", "passed": false, "evidence": "FAIL"}, {"id": "C5.1", "text": "\u5730\u533a\u4e0e\u5730\u56fe\uff1a\u5fae\u4fe1\u539f picker/map \u6570\u636e\u94fe\u4fdd\u7559\uff0cWeb \u9694\u79bb\u7f3a\u5931\u80fd\u529b\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": false, "evidence": "FAIL"}, {"id": "C5.2", "text": "Swiper \u4e0e\u56fe\u7247\uff1a\u4fdd\u7559\u516c\u5171\u80fd\u529b\uff0c\u53ea\u9694\u79bb Web \u672a\u5b9e\u73b0\u7684\u5c40\u90e8\u5c5e\u6027\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": false, "evidence": "FAIL"}, {"id": "C5.3", "text": "\u7ed3\u6784\u7ec4\u4ef6\uff1a\u5fae\u4fe1\u4fdd\u7559 grid-view \u4e0e page-container\uff0cWeb \u9694\u79bb\u7f3a\u5931\u7ec4\u4ef6\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": false, "evidence": "FAIL"}, {"id": "C5.4", "text": "\u72b6\u6001\uff1a\u95e8\u5e97\u786e\u8ba4\u548c\u5546\u54c1\u7b5b\u9009\u7684\u8349\u7a3f\u3001\u53d6\u6d88\u3001\u786e\u8ba4\u72b6\u6001\u94fe\u4fdd\u6301\u4e0d\u53d8", "passed": true, "evidence": "PASS"}], "summary": {"pass_rate": 0.1111, "passed": 1, "failed": 8, "total": 9, "total_tokens": 576730, "tool_calls": 17, "duration_ms": 421023, "duration_seconds": 421.023}, "metrics": {"total_tokens": 576730, "tool_calls": 17, "duration_ms": 421023, "duration_seconds": 421.023}, "timing": {"total_duration_seconds": 421.023, "total_tokens": 576730}, "execution_metrics": {"total_tool_calls": 17, "output_chars": 576730}}}, {"id": "eval-3-ssr-mpx2web", "prompt": "\u8bf7\u6839\u636e input \u4e2d\u7684\u6e90\u7801\u548c requirements.md \u5b8c\u6210\u4ea4\u4ed8\uff0c\u5e76\u8f93\u51fa\u5168\u90e8\u8981\u6c42\u6587\u4ef6\u3002", "eval_id": 3, "outputs": [{"name": "mpx.config.js", "type": "text", "content": "module.exports = {\n  publicPath: '/help-demo/',\n  pluginOptions: {\n    mpx: {\n      plugin: {\n        srcMode: 'wx',\n        webConfig: {\n          useSSR: true\n        }\n      }\n    }\n  }\n}\n"}, {"name": "src/app.mpx", "type": "text", "content": "\u003cscript>\nimport mpx, { createApp } from '@mpxjs/core'\nimport apiProxy from '@mpxjs/api-proxy'\nimport { createPinia } from '@mpxjs/pinia'\n\nmpx.use(apiProxy)\n\nif (__mpx_mode__ === 'web') {\n  mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {\n    routeConfig: {\n      mode: 'history',\n      base: '/help-demo/'\n    }\n  })\n}\n\ncreateApp({\n  onAppInit () {\n    return {\n      pinia: createPinia()\n    }\n  }\n})\n\u003c/script>\n\u003cscript type=\"application/json\">\n{\n  \"pages\": [\"./pages/article/index.mpx\"]\n}\n\u003c/script>\n"}, {"name": "src/pages/article/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"article\">\n    \u003ctext wx:if=\"{{loading}}\">\u52a0\u8f7d\u4e2d\u003c/text>\n    \u003ctext wx:if=\"{{errorText}}\">{{errorText}}\u003c/text>\n    \u003cview wx:if=\"{{article}}\">\n      \u003ctext class=\"title\">{{article.title}}\u003c/text>\n      \u003ctext class=\"body\">{{article.body}}\u003c/text>\n      \u003cbutton bindtap=\"toggleExtra\">{{expanded ? '\u6536\u8d77' : '\u5c55\u5f00'}}\u8865\u5145\u8bf4\u660e\u003c/button>\n      \u003ctext wx:if=\"{{expanded}}\">{{article.extra}}\u003c/text>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\nimport { mapActions, mapState } from '@mpxjs/pinia'\nimport useArticleStore from '../../store/article'\n\ncreatePage({\n  data: { expanded: false },\n  computed: mapState(useArticleStore, ['article', 'loading', 'errorText']),\n  serverPrefetch () {\n    const id = this.$route.query.id || 'a'\n    const articleStore = useArticleStore(this.$pinia)\n\n    return articleStore.loadArticle(id)\n  },\n  onLoad (query) {\n    if (__mpx_mode__ === 'wx') {\n      return this.loadArticle(query.id || 'a')\n    }\n  },\n  methods: Object.assign({}, mapActions(useArticleStore, ['loadArticle']), {\n    toggleExtra () {\n      this.expanded = !this.expanded\n    }\n  })\n})\n\u003c/script>\n\u003cstyle>\n.article { padding: 16px; }\n.title { display: block; font-size: 20px; font-weight: bold; }\n.body { display: block; margin: 16px 0; }\n\u003c/style>\n"}, {"name": "src/services/article.js", "type": "text", "content": "const articles = {\n  a: { id: 'a', title: '\u6587\u7ae0 A', body: '\u8fd9\u662f\u6587\u7ae0 A \u7684\u6b63\u6587\u3002', extra: '\u6587\u7ae0 A \u7684\u8865\u5145\u8bf4\u660e\u3002' },\n  b: { id: 'b', title: '\u6587\u7ae0 B', body: '\u8fd9\u662f\u6587\u7ae0 B \u7684\u6b63\u6587\u3002', extra: '\u6587\u7ae0 B \u7684\u8865\u5145\u8bf4\u660e\u3002' }\n}\n\nexport function fetchArticle (id) {\n  return new Promise((resolve, reject) => {\n    setTimeout(() => {\n      const article = articles[id]\n      if (article) resolve(Object.assign({}, article))\n      else reject(new Error('\u6587\u7ae0\u4e0d\u5b58\u5728'))\n    }, id === 'a' ? 40 : 10)\n  })\n}\n"}, {"name": "src/store/article.js", "type": "text", "content": "import { defineStore } from '@mpxjs/pinia'\nimport { fetchArticle } from '../services/article'\n\nconst useArticleStore = defineStore('article', {\n  state: () => ({\n    article: null,\n    loading: true,\n    errorText: ''\n  }),\n  actions: {\n    async loadArticle (id) {\n      this.article = null\n      this.loading = true\n      this.errorText = ''\n\n      try {\n        const article = await fetchArticle(id)\n        this.article = article\n        return article\n      } catch (error) {\n        this.errorText = error.message\n      } finally {\n        this.loading = false\n      }\n    }\n  }\n})\n\nexport default useArticleStore\n"}], "grading": {"eval_id": 3, "run_kind": "mpx2web", "expectations": [{"id": "C6.1", "text": "SSR\uff1ahistory \u8def\u7531\u5339\u914d /help-demo/\uff0c\u9996\u5c4f\u6e32\u67d3\u524d\u6309\u5f53\u524d query.id \u7b49\u5f85\u6587\u7ae0\u6570\u636e", "passed": true, "evidence": "PASS"}, {"id": "C6.2", "text": "\u72b6\u6001\uff1a\u6587\u7ae0\u72b6\u6001\u5b8c\u6574\u8fc1\u79fb\u5230\u5171\u4eab @mpxjs/pinia\uff0c\u5e76\u901a\u8fc7 onAppInit \u6ce8\u5165\u5e94\u7528", "passed": true, "evidence": "PASS"}, {"id": "C6.3", "text": "\u9694\u79bb\uff1a\u6bcf\u6b21 SSR \u8bf7\u6c42\u5728 onAppInit \u4e2d\u521b\u5efa\u72ec\u7acb Pinia\uff0c\u6587\u7ae0\u9875\u4f7f\u7528\u5f53\u524d\u8bf7\u6c42\u5b9e\u4f8b", "passed": true, "evidence": "PASS"}, {"id": "C6.4", "text": "\u73af\u5883\uff1a\u670d\u52a1\u7aef\u53ef\u8fbe\u7684\u521d\u59cb\u5316\u4e0e\u9884\u53d6\u4ee3\u7801\u4e0d\u8bbf\u95ee window\u3001document \u6216 navigator", "passed": true, "evidence": "PASS"}, {"id": "C6.5", "text": "\u517c\u5bb9\uff1a\u5fae\u4fe1 onLoad \u7ee7\u7eed\u6309 query.id \u8c03\u7528\u5171\u4eab action\uff0c\u5e76\u4fdd\u7559\u6587\u7ae0\u9875\u9762\u72b6\u6001\u4e0e\u4ea4\u4e92", "passed": true, "evidence": "PASS"}], "summary": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "total_tokens": 800918, "tool_calls": 35, "duration_ms": 302762, "duration_seconds": 302.762}, "metrics": {"total_tokens": 800918, "tool_calls": 35, "duration_ms": 302762, "duration_seconds": 302.762}, "timing": {"total_duration_seconds": 302.762, "total_tokens": 800918}, "execution_metrics": {"total_tool_calls": 35, "output_chars": 800918}}}, {"id": "eval-3-ssr-no_skill", "prompt": "\u8bf7\u6839\u636e input \u4e2d\u7684\u6e90\u7801\u548c requirements.md \u5b8c\u6210\u4ea4\u4ed8\uff0c\u5e76\u8f93\u51fa\u5168\u90e8\u8981\u6c42\u6587\u4ef6\u3002", "eval_id": 3, "outputs": [{"name": "mpx.config.js", "type": "text", "content": "module.exports = {\n  pluginOptions: {\n    mpx: {\n      plugin: {\n        srcMode: 'wx',\n        webConfig: {\n          useSSR: true\n        }\n      }\n    }\n  }\n}\n"}, {"name": "src/app.mpx", "type": "text", "content": "\u003cscript>\nimport mpx, { createApp } from '@mpxjs/core'\nimport apiProxy from '@mpxjs/api-proxy'\nimport { createPinia } from '@mpxjs/pinia'\n\nmpx.use(apiProxy)\n\nmpx.config.webConfig.routeConfig = {\n  mode: 'history',\n  base: '/help-demo/'\n}\n\ncreateApp({\n  onAppInit () {\n    return {\n      pinia: createPinia()\n    }\n  }\n})\n\u003c/script>\n\u003cscript type=\"application/json\">\n{\n  \"pages\": [\"./pages/article/index.mpx\"]\n}\n\u003c/script>\n"}, {"name": "src/pages/article/index.mpx", "type": "text", "content": "\u003ctemplate>\n  \u003cview class=\"article\">\n    \u003ctext wx:if=\"{{loading}}\">\u52a0\u8f7d\u4e2d\u003c/text>\n    \u003ctext wx:if=\"{{errorText}}\">{{errorText}}\u003c/text>\n    \u003cview wx:if=\"{{article}}\">\n      \u003ctext class=\"title\">{{article.title}}\u003c/text>\n      \u003ctext class=\"body\">{{article.body}}\u003c/text>\n      \u003cbutton bindtap=\"toggleExtra\">{{expanded ? '\u6536\u8d77' : '\u5c55\u5f00'}}\u8865\u5145\u8bf4\u660e\u003c/button>\n      \u003ctext wx:if=\"{{expanded}}\">{{article.extra}}\u003c/text>\n    \u003c/view>\n  \u003c/view>\n\u003c/template>\n\u003cscript>\nimport { createPage } from '@mpxjs/core'\nimport { mapActions, mapState } from '@mpxjs/pinia'\nimport { useArticleStore } from '../../store/article'\n\ncreatePage({\n  data: { expanded: false },\n  computed: mapState(useArticleStore, ['article', 'loading', 'errorText']),\n  onLoad (query) {\n    const id = query.id || 'a'\n    if (this.$isServer || (this.article && this.article.id === id)) return\n    return this.loadArticle(id)\n  },\n  serverPrefetch () {\n    const query = this.$route && this.$route.query\n    return this.loadArticle((query && query.id) || 'a')\n  },\n  methods: Object.assign({}, mapActions(useArticleStore, ['loadArticle']), {\n    toggleExtra () {\n      this.expanded = !this.expanded\n    }\n  })\n})\n\u003c/script>\n\u003cstyle>\n.article { padding: 16px; }\n.title { display: block; font-size: 20px; font-weight: bold; }\n.body { display: block; margin: 16px 0; }\n\u003c/style>\n"}, {"name": "src/services/article.js", "type": "text", "content": "const articles = {\n  a: { id: 'a', title: '\u6587\u7ae0 A', body: '\u8fd9\u662f\u6587\u7ae0 A \u7684\u6b63\u6587\u3002', extra: '\u6587\u7ae0 A \u7684\u8865\u5145\u8bf4\u660e\u3002' },\n  b: { id: 'b', title: '\u6587\u7ae0 B', body: '\u8fd9\u662f\u6587\u7ae0 B \u7684\u6b63\u6587\u3002', extra: '\u6587\u7ae0 B \u7684\u8865\u5145\u8bf4\u660e\u3002' }\n}\n\nexport function fetchArticle (id) {\n  return new Promise((resolve, reject) => {\n    setTimeout(() => {\n      const article = articles[id]\n      if (article) resolve(Object.assign({}, article))\n      else reject(new Error('\u6587\u7ae0\u4e0d\u5b58\u5728'))\n    }, id === 'a' ? 40 : 10)\n  })\n}\n"}, {"name": "src/store/article.js", "type": "text", "content": "import { defineStore } from '@mpxjs/pinia'\nimport { fetchArticle } from '../services/article'\n\nexport const useArticleStore = defineStore('article', {\n  state: () => ({\n    article: null,\n    loading: true,\n    errorText: ''\n  }),\n  actions: {\n    async loadArticle (id) {\n      this.article = null\n      this.loading = true\n      this.errorText = ''\n      try {\n        const article = await fetchArticle(id)\n        this.article = article\n        return article\n      } catch (error) {\n        this.errorText = error.message\n      } finally {\n        this.loading = false\n      }\n    }\n  }\n})\n"}], "grading": {"eval_id": 3, "run_kind": "no_skill", "expectations": [{"id": "C6.1", "text": "SSR\uff1ahistory \u8def\u7531\u5339\u914d /help-demo/\uff0c\u9996\u5c4f\u6e32\u67d3\u524d\u6309\u5f53\u524d query.id \u7b49\u5f85\u6587\u7ae0\u6570\u636e", "passed": true, "evidence": "PASS"}, {"id": "C6.2", "text": "\u72b6\u6001\uff1a\u6587\u7ae0\u72b6\u6001\u5b8c\u6574\u8fc1\u79fb\u5230\u5171\u4eab @mpxjs/pinia\uff0c\u5e76\u901a\u8fc7 onAppInit \u6ce8\u5165\u5e94\u7528", "passed": true, "evidence": "PASS"}, {"id": "C6.3", "text": "\u9694\u79bb\uff1a\u6bcf\u6b21 SSR \u8bf7\u6c42\u5728 onAppInit \u4e2d\u521b\u5efa\u72ec\u7acb Pinia\uff0c\u6587\u7ae0\u9875\u4f7f\u7528\u5f53\u524d\u8bf7\u6c42\u5b9e\u4f8b", "passed": true, "evidence": "PASS"}, {"id": "C6.4", "text": "\u73af\u5883\uff1a\u670d\u52a1\u7aef\u53ef\u8fbe\u7684\u521d\u59cb\u5316\u4e0e\u9884\u53d6\u4ee3\u7801\u4e0d\u8bbf\u95ee window\u3001document \u6216 navigator", "passed": true, "evidence": "PASS"}, {"id": "C6.5", "text": "\u517c\u5bb9\uff1a\u5fae\u4fe1 onLoad \u7ee7\u7eed\u6309 query.id \u8c03\u7528\u5171\u4eab action\uff0c\u5e76\u4fdd\u7559\u6587\u7ae0\u9875\u9762\u72b6\u6001\u4e0e\u4ea4\u4e92", "passed": true, "evidence": "PASS"}], "summary": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "total_tokens": 3349074, "tool_calls": 45, "duration_ms": 666478, "duration_seconds": 666.478}, "metrics": {"total_tokens": 3349074, "tool_calls": 45, "duration_ms": 666478, "duration_seconds": 666.478}, "timing": {"total_duration_seconds": 666.478, "total_tokens": 3349074}, "execution_metrics": {"total_tool_calls": 45, "output_chars": 3349074}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "mpx2web", "skill_path": "/Users/didi/Documents/openSource1/mpx/.agents/skills/mpx2web", "executor_model": "gpt-5.6-sol (xhigh)", "analyzer_model": "deterministic Python checks", "timestamp": "2026-09-24T09:40:31Z", "evals_run": [0, 1, 2, 3], "runs_per_configuration": 1, "suite_revision": "rn17-deterministic-grading-20260923", "grader_method": "deterministic_python_static_checks", "score_weighting": "case mean, matching Mpx2RN iteration-17"}, "runs": [{"eval_id": 0, "configuration": "mpx2web", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 656.024, "tokens": 3672820, "tool_calls": 48, "errors": 0}, "expectations": [{"id": "C1.4", "text": "\u6837\u5f0f\uff1ared-card \u4e0e blue-card \u7684\u540c\u540d\u7c7b\u4f7f\u7528\u72ec\u7acb\u4f5c\u7528\u57df\uff0c\u4e0d\u4e92\u76f8\u8986\u76d6", "passed": true, "evidence": "PASS"}, {"id": "C1.5", "text": "\u5e03\u5c40\uff1alayout-cell \u7684\u865a\u62df\u5bbf\u4e3b\u5728 Web \u751f\u6548\uff0c\u4e24\u4e2a\u5b9e\u4f8b\u5728 240px Flex \u5bb9\u5668\u4e2d\u7b49\u5bbd", "passed": true, "evidence": "PASS"}, {"id": "C1.6", "text": "\u6837\u5f0f\uff1atheme-card \u7684 externalClasses \u4ece\u8c03\u7528\u65b9\u8d2f\u901a\u5230\u5185\u5bb9\u8282\u70b9\uff0c\u5e76\u4fdd\u7559\u9ed8\u8ba4\u5916\u90e8\u7c7b\u914d\u7f6e", "passed": true, "evidence": "PASS"}, {"id": "C4.1", "text": "\u5bfc\u822a\uff1a\u4fdd\u7559\u5fae\u4fe1 navigator\u3001\u666e\u901a\u5165\u53e3 ready \u72b6\u6001\u548c\u9009\u62e9\u7ed3\u679c\u56de\u4f20\u94fe\u8def", "passed": true, "evidence": "PASS"}, {"id": "C4.2", "text": "\u5bfc\u822a\u680f\uff1a\u5fae\u4fe1\u80f6\u56ca API \u4e0d\u5728 Web \u6267\u884c\uff0cWeb \u4e0d\u91cd\u590d\u663e\u793a\u7cfb\u7edf\u5bfc\u822a\u4e0e\u81ea\u5b9a\u4e49\u5bfc\u822a", "passed": true, "evidence": "PASS"}, {"id": "C4.3", "text": "\u8def\u7531\uff1aWeb publicPath\u3001history base \u5747\u4e3a /help-demo/\uff0c\u4e3b\u5305\u4e0e\u4e24\u4e2a\u5206\u5305\u9875\u9762\u4fdd\u6301\u6ce8\u518c", "passed": true, "evidence": "PASS"}, {"id": "C4.4", "text": "\u5c3a\u5bf8\uff1aWeb \u4f7f\u7528\u56fa\u5b9a\u4e8c\u5206\u4e4b\u4e00 rpx \u6362\u7b97\uff0c\u5fae\u4fe1\u6362\u7b97\u914d\u7f6e\u4fdd\u6301\u4e0d\u53d8", "passed": true, "evidence": "PASS"}], "notes": []}, {"eval_id": 1, "configuration": "mpx2web", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 506.242, "tokens": 2550506, "tool_calls": 43, "errors": 0}, "expectations": [{"id": "C2.1", "text": "\u7ed3\u6784\uff1a\u751f\u6210\u5b8c\u6574 Mpx \u914d\u7f6e\u3001App\u3001\u9875\u9762\u548c\u7ec4\u4ef6\uff0c\u9875\u9762\u6ce8\u518c\u5e76\u6e32\u67d3\u4e24\u4e2a profile-card", "passed": true, "evidence": "PASS"}, {"id": "C2.2", "text": "\u8def\u7531\uff1aWeb publicPath\u3001history base \u5747\u4e3a /profile-demo/\uff0c\u5fae\u4fe1\u9875\u9762\u6ce8\u518c\u4fdd\u6301\u6709\u6548", "passed": true, "evidence": "PASS"}, {"id": "C2.3", "text": "\u6837\u5f0f\uff1aaccent-class \u4ece\u9875\u9762\u8c03\u7528\u65b9\u8d2f\u901a\u5230\u7ec4\u4ef6\u6807\u9898\uff0c\u5e76\u4fdd\u7559\u9ed8\u8ba4 externalClasses", "passed": true, "evidence": "PASS"}, {"id": "C2.4", "text": "\u4ea4\u4e92\uff1a\u4e24\u4e2a profile-card \u5b9e\u4f8b\u5404\u81ea\u4fdd\u5b58\u6298\u53e0\u72b6\u6001\uff0c\u70b9\u51fb\u53ea\u5207\u6362\u5f53\u524d\u5b9e\u4f8b", "passed": true, "evidence": "PASS"}, {"id": "C2.5", "text": "\u5206\u4eab\uff1a\u5fae\u4fe1\u4fdd\u7559\u6b63\u786e\u5206\u4eab\u6807\u9898\u548c\u8def\u5f84\uff0cWeb \u9694\u79bb\u8be5\u94a9\u5b50\u5e76\u5448\u73b0\u672a\u63a5\u5165\u8fb9\u754c", "passed": true, "evidence": "PASS"}], "notes": []}, {"eval_id": 2, "configuration": "mpx2web", "run_number": 1, "result": {"pass_rate": 0.7778, "passed": 7, "failed": 2, "total": 9, "time_seconds": 738.513, "tokens": 4609517, "tool_calls": 44, "errors": 0}, "expectations": [{"id": "C3.2", "text": "\u540d\u79f0\u7f16\u8f91\uff1aWeb \u5177\u5907\u8f93\u5165\u3001\u786e\u8ba4\u8d4b\u503c\u548c\u53d6\u6d88\u4e0d\u8d4b\u503c\u94fe\u8def\uff0c\u5fae\u4fe1\u539f\u4ea4\u4e92\u4fdd\u6301\u6709\u6548", "passed": true, "evidence": "PASS"}, {"id": "C3.3", "text": "\u626b\u7801\uff1a\u5fae\u4fe1\u4fdd\u7559\u539f\u751f\u626b\u7801\u7ec4\u4ef6\uff0cWeb \u6784\u5efa\u4e0d\u89e3\u6790\u8be5\u7ec4\u4ef6\u4e14\u53ea\u8bfb\u4f9d\u8d56\u672a\u4fee\u6539", "passed": true, "evidence": "PASS"}, {"id": "C3.4", "text": "\u89c6\u9891\uff1a\u4fdd\u7559 src \u4e0e\u64ad\u653e\u4e8b\u4ef6\uff0cWeb \u5728 detail \u7f3a\u5b57\u6bb5\u65f6\u4ece\u771f\u5b9e target \u5b89\u5168\u56de\u9000", "passed": true, "evidence": "PASS"}, {"id": "C3.5", "text": "\u4f4d\u7f6e\uff1a\u5fae\u4fe1\u4fdd\u7559 chooseLocation\uff0cWeb \u4e0d\u6267\u884c\u5fae\u4fe1 API \u4e14\u8bf4\u660e\u771f\u5b9e\u670d\u52a1\u63a5\u5165\u8fb9\u754c", "passed": false, "evidence": "FAIL"}, {"id": "C3.6", "text": "\u63d2\u4ef6\uff1a\u516c\u5171 pages \u53ea\u7ef4\u62a4\u4e00\u4efd\uff0c\u5fae\u4fe1\u4fdd\u7559\u63d2\u4ef6\u5361\u7247\uff0cWeb \u4e0d\u89e3\u6790 plugin \u7ec4\u4ef6", "passed": true, "evidence": "PASS"}, {"id": "C5.1", "text": "\u5730\u533a\u4e0e\u5730\u56fe\uff1a\u5fae\u4fe1\u539f picker/map \u6570\u636e\u94fe\u4fdd\u7559\uff0cWeb \u9694\u79bb\u7f3a\u5931\u80fd\u529b\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": true, "evidence": "PASS"}, {"id": "C5.2", "text": "Swiper \u4e0e\u56fe\u7247\uff1a\u4fdd\u7559\u516c\u5171\u80fd\u529b\uff0c\u53ea\u9694\u79bb Web \u672a\u5b9e\u73b0\u7684\u5c40\u90e8\u5c5e\u6027\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": false, "evidence": "FAIL"}, {"id": "C5.3", "text": "\u7ed3\u6784\u7ec4\u4ef6\uff1a\u5fae\u4fe1\u4fdd\u7559 grid-view \u4e0e page-container\uff0cWeb \u9694\u79bb\u7f3a\u5931\u7ec4\u4ef6\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": true, "evidence": "PASS"}, {"id": "C5.4", "text": "\u72b6\u6001\uff1a\u95e8\u5e97\u786e\u8ba4\u548c\u5546\u54c1\u7b5b\u9009\u7684\u8349\u7a3f\u3001\u53d6\u6d88\u3001\u786e\u8ba4\u72b6\u6001\u94fe\u4fdd\u6301\u4e0d\u53d8", "passed": true, "evidence": "PASS"}], "notes": []}, {"eval_id": 3, "configuration": "mpx2web", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 302.762, "tokens": 800918, "tool_calls": 35, "errors": 0}, "expectations": [{"id": "C6.1", "text": "SSR\uff1ahistory \u8def\u7531\u5339\u914d /help-demo/\uff0c\u9996\u5c4f\u6e32\u67d3\u524d\u6309\u5f53\u524d query.id \u7b49\u5f85\u6587\u7ae0\u6570\u636e", "passed": true, "evidence": "PASS"}, {"id": "C6.2", "text": "\u72b6\u6001\uff1a\u6587\u7ae0\u72b6\u6001\u5b8c\u6574\u8fc1\u79fb\u5230\u5171\u4eab @mpxjs/pinia\uff0c\u5e76\u901a\u8fc7 onAppInit \u6ce8\u5165\u5e94\u7528", "passed": true, "evidence": "PASS"}, {"id": "C6.3", "text": "\u9694\u79bb\uff1a\u6bcf\u6b21 SSR \u8bf7\u6c42\u5728 onAppInit \u4e2d\u521b\u5efa\u72ec\u7acb Pinia\uff0c\u6587\u7ae0\u9875\u4f7f\u7528\u5f53\u524d\u8bf7\u6c42\u5b9e\u4f8b", "passed": true, "evidence": "PASS"}, {"id": "C6.4", "text": "\u73af\u5883\uff1a\u670d\u52a1\u7aef\u53ef\u8fbe\u7684\u521d\u59cb\u5316\u4e0e\u9884\u53d6\u4ee3\u7801\u4e0d\u8bbf\u95ee window\u3001document \u6216 navigator", "passed": true, "evidence": "PASS"}, {"id": "C6.5", "text": "\u517c\u5bb9\uff1a\u5fae\u4fe1 onLoad \u7ee7\u7eed\u6309 query.id \u8c03\u7528\u5171\u4eab action\uff0c\u5e76\u4fdd\u7559\u6587\u7ae0\u9875\u9762\u72b6\u6001\u4e0e\u4ea4\u4e92", "passed": true, "evidence": "PASS"}], "notes": []}, {"eval_id": 0, "configuration": "no_skill", "run_number": 1, "result": {"pass_rate": 0.1429, "passed": 1, "failed": 6, "total": 7, "time_seconds": 415.11, "tokens": 550451, "tool_calls": 7, "errors": 0}, "expectations": [{"id": "C1.4", "text": "\u6837\u5f0f\uff1ared-card \u4e0e blue-card \u7684\u540c\u540d\u7c7b\u4f7f\u7528\u72ec\u7acb\u4f5c\u7528\u57df\uff0c\u4e0d\u4e92\u76f8\u8986\u76d6", "passed": true, "evidence": "PASS"}, {"id": "C1.5", "text": "\u5e03\u5c40\uff1alayout-cell \u7684\u865a\u62df\u5bbf\u4e3b\u5728 Web \u751f\u6548\uff0c\u4e24\u4e2a\u5b9e\u4f8b\u5728 240px Flex \u5bb9\u5668\u4e2d\u7b49\u5bbd", "passed": false, "evidence": "FAIL"}, {"id": "C1.6", "text": "\u6837\u5f0f\uff1atheme-card \u7684 externalClasses \u4ece\u8c03\u7528\u65b9\u8d2f\u901a\u5230\u5185\u5bb9\u8282\u70b9\uff0c\u5e76\u4fdd\u7559\u9ed8\u8ba4\u5916\u90e8\u7c7b\u914d\u7f6e", "passed": false, "evidence": "FAIL"}, {"id": "C4.1", "text": "\u5bfc\u822a\uff1a\u4fdd\u7559\u5fae\u4fe1 navigator\u3001\u666e\u901a\u5165\u53e3 ready \u72b6\u6001\u548c\u9009\u62e9\u7ed3\u679c\u56de\u4f20\u94fe\u8def", "passed": false, "evidence": "FAIL"}, {"id": "C4.2", "text": "\u5bfc\u822a\u680f\uff1a\u5fae\u4fe1\u80f6\u56ca API \u4e0d\u5728 Web \u6267\u884c\uff0cWeb \u4e0d\u91cd\u590d\u663e\u793a\u7cfb\u7edf\u5bfc\u822a\u4e0e\u81ea\u5b9a\u4e49\u5bfc\u822a", "passed": false, "evidence": "FAIL"}, {"id": "C4.3", "text": "\u8def\u7531\uff1aWeb publicPath\u3001history base \u5747\u4e3a /help-demo/\uff0c\u4e3b\u5305\u4e0e\u4e24\u4e2a\u5206\u5305\u9875\u9762\u4fdd\u6301\u6ce8\u518c", "passed": false, "evidence": "FAIL"}, {"id": "C4.4", "text": "\u5c3a\u5bf8\uff1aWeb \u4f7f\u7528\u56fa\u5b9a\u4e8c\u5206\u4e4b\u4e00 rpx \u6362\u7b97\uff0c\u5fae\u4fe1\u6362\u7b97\u914d\u7f6e\u4fdd\u6301\u4e0d\u53d8", "passed": false, "evidence": "FAIL"}], "notes": []}, {"eval_id": 1, "configuration": "no_skill", "run_number": 1, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 872.473, "tokens": 3681631, "tool_calls": 51, "errors": 0}, "expectations": [{"id": "C2.1", "text": "\u7ed3\u6784\uff1a\u751f\u6210\u5b8c\u6574 Mpx \u914d\u7f6e\u3001App\u3001\u9875\u9762\u548c\u7ec4\u4ef6\uff0c\u9875\u9762\u6ce8\u518c\u5e76\u6e32\u67d3\u4e24\u4e2a profile-card", "passed": false, "evidence": "FAIL"}, {"id": "C2.2", "text": "\u8def\u7531\uff1aWeb publicPath\u3001history base \u5747\u4e3a /profile-demo/\uff0c\u5fae\u4fe1\u9875\u9762\u6ce8\u518c\u4fdd\u6301\u6709\u6548", "passed": true, "evidence": "PASS"}, {"id": "C2.3", "text": "\u6837\u5f0f\uff1aaccent-class \u4ece\u9875\u9762\u8c03\u7528\u65b9\u8d2f\u901a\u5230\u7ec4\u4ef6\u6807\u9898\uff0c\u5e76\u4fdd\u7559\u9ed8\u8ba4 externalClasses", "passed": false, "evidence": "FAIL"}, {"id": "C2.4", "text": "\u4ea4\u4e92\uff1a\u4e24\u4e2a profile-card \u5b9e\u4f8b\u5404\u81ea\u4fdd\u5b58\u6298\u53e0\u72b6\u6001\uff0c\u70b9\u51fb\u53ea\u5207\u6362\u5f53\u524d\u5b9e\u4f8b", "passed": false, "evidence": "FAIL"}, {"id": "C2.5", "text": "\u5206\u4eab\uff1a\u5fae\u4fe1\u4fdd\u7559\u6b63\u786e\u5206\u4eab\u6807\u9898\u548c\u8def\u5f84\uff0cWeb \u9694\u79bb\u8be5\u94a9\u5b50\u5e76\u5448\u73b0\u672a\u63a5\u5165\u8fb9\u754c", "passed": false, "evidence": "FAIL"}], "notes": []}, {"eval_id": 2, "configuration": "no_skill", "run_number": 1, "result": {"pass_rate": 0.1111, "passed": 1, "failed": 8, "total": 9, "time_seconds": 421.023, "tokens": 576730, "tool_calls": 17, "errors": 0}, "expectations": [{"id": "C3.2", "text": "\u540d\u79f0\u7f16\u8f91\uff1aWeb \u5177\u5907\u8f93\u5165\u3001\u786e\u8ba4\u8d4b\u503c\u548c\u53d6\u6d88\u4e0d\u8d4b\u503c\u94fe\u8def\uff0c\u5fae\u4fe1\u539f\u4ea4\u4e92\u4fdd\u6301\u6709\u6548", "passed": false, "evidence": "FAIL"}, {"id": "C3.3", "text": "\u626b\u7801\uff1a\u5fae\u4fe1\u4fdd\u7559\u539f\u751f\u626b\u7801\u7ec4\u4ef6\uff0cWeb \u6784\u5efa\u4e0d\u89e3\u6790\u8be5\u7ec4\u4ef6\u4e14\u53ea\u8bfb\u4f9d\u8d56\u672a\u4fee\u6539", "passed": false, "evidence": "FAIL"}, {"id": "C3.4", "text": "\u89c6\u9891\uff1a\u4fdd\u7559 src \u4e0e\u64ad\u653e\u4e8b\u4ef6\uff0cWeb \u5728 detail \u7f3a\u5b57\u6bb5\u65f6\u4ece\u771f\u5b9e target \u5b89\u5168\u56de\u9000", "passed": false, "evidence": "FAIL"}, {"id": "C3.5", "text": "\u4f4d\u7f6e\uff1a\u5fae\u4fe1\u4fdd\u7559 chooseLocation\uff0cWeb \u4e0d\u6267\u884c\u5fae\u4fe1 API \u4e14\u8bf4\u660e\u771f\u5b9e\u670d\u52a1\u63a5\u5165\u8fb9\u754c", "passed": false, "evidence": "FAIL"}, {"id": "C3.6", "text": "\u63d2\u4ef6\uff1a\u516c\u5171 pages \u53ea\u7ef4\u62a4\u4e00\u4efd\uff0c\u5fae\u4fe1\u4fdd\u7559\u63d2\u4ef6\u5361\u7247\uff0cWeb \u4e0d\u89e3\u6790 plugin \u7ec4\u4ef6", "passed": false, "evidence": "FAIL"}, {"id": "C5.1", "text": "\u5730\u533a\u4e0e\u5730\u56fe\uff1a\u5fae\u4fe1\u539f picker/map \u6570\u636e\u94fe\u4fdd\u7559\uff0cWeb \u9694\u79bb\u7f3a\u5931\u80fd\u529b\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": false, "evidence": "FAIL"}, {"id": "C5.2", "text": "Swiper \u4e0e\u56fe\u7247\uff1a\u4fdd\u7559\u516c\u5171\u80fd\u529b\uff0c\u53ea\u9694\u79bb Web \u672a\u5b9e\u73b0\u7684\u5c40\u90e8\u5c5e\u6027\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": false, "evidence": "FAIL"}, {"id": "C5.3", "text": "\u7ed3\u6784\u7ec4\u4ef6\uff1a\u5fae\u4fe1\u4fdd\u7559 grid-view \u4e0e page-container\uff0cWeb \u9694\u79bb\u7f3a\u5931\u7ec4\u4ef6\u5e76\u6807\u660e\u63a5\u5165\u70b9", "passed": false, "evidence": "FAIL"}, {"id": "C5.4", "text": "\u72b6\u6001\uff1a\u95e8\u5e97\u786e\u8ba4\u548c\u5546\u54c1\u7b5b\u9009\u7684\u8349\u7a3f\u3001\u53d6\u6d88\u3001\u786e\u8ba4\u72b6\u6001\u94fe\u4fdd\u6301\u4e0d\u53d8", "passed": true, "evidence": "PASS"}], "notes": []}, {"eval_id": 3, "configuration": "no_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 666.478, "tokens": 3349074, "tool_calls": 45, "errors": 0}, "expectations": [{"id": "C6.1", "text": "SSR\uff1ahistory \u8def\u7531\u5339\u914d /help-demo/\uff0c\u9996\u5c4f\u6e32\u67d3\u524d\u6309\u5f53\u524d query.id \u7b49\u5f85\u6587\u7ae0\u6570\u636e", "passed": true, "evidence": "PASS"}, {"id": "C6.2", "text": "\u72b6\u6001\uff1a\u6587\u7ae0\u72b6\u6001\u5b8c\u6574\u8fc1\u79fb\u5230\u5171\u4eab @mpxjs/pinia\uff0c\u5e76\u901a\u8fc7 onAppInit \u6ce8\u5165\u5e94\u7528", "passed": true, "evidence": "PASS"}, {"id": "C6.3", "text": "\u9694\u79bb\uff1a\u6bcf\u6b21 SSR \u8bf7\u6c42\u5728 onAppInit \u4e2d\u521b\u5efa\u72ec\u7acb Pinia\uff0c\u6587\u7ae0\u9875\u4f7f\u7528\u5f53\u524d\u8bf7\u6c42\u5b9e\u4f8b", "passed": true, "evidence": "PASS"}, {"id": "C6.4", "text": "\u73af\u5883\uff1a\u670d\u52a1\u7aef\u53ef\u8fbe\u7684\u521d\u59cb\u5316\u4e0e\u9884\u53d6\u4ee3\u7801\u4e0d\u8bbf\u95ee window\u3001document \u6216 navigator", "passed": true, "evidence": "PASS"}, {"id": "C6.5", "text": "\u517c\u5bb9\uff1a\u5fae\u4fe1 onLoad \u7ee7\u7eed\u6309 query.id \u8c03\u7528\u5171\u4eab action\uff0c\u5e76\u4fdd\u7559\u6587\u7ae0\u9875\u9762\u72b6\u6001\u4e0e\u4ea4\u4e92", "passed": true, "evidence": "PASS"}], "notes": []}], "run_summary": {"mpx2web": {"pass_rate": {"mean": 0.9445, "stddev": 0.1111, "min": 0.7778, "max": 1.0}, "time_seconds": {"mean": 550.8853, "stddev": 191.3256, "min": 302.762, "max": 738.513}, "tokens": {"mean": 2908440.25, "stddev": 1637854.8443, "min": 800918, "max": 4609517}}, "no_skill": {"pass_rate": {"mean": 0.3635, "stddev": 0.4259, "min": 0.1111, "max": 1.0}, "time_seconds": {"mean": 593.771, "stddev": 219.6381, "min": 415.11, "max": 872.473}, "tokens": {"mean": 2039471.5, "stddev": 1709633.6134, "min": 550451, "max": 3681631}}, "delta": {"pass_rate": "+0.58", "time_seconds": "-42.9", "tokens": "+868969"}}, "notes": ["\u8bc4\u5206\u65b9\u5f0f\u4e0e Mpx2RN iteration-17 \u5bf9\u9f50\uff1a\u6bcf\u6761\u65ad\u8a00\u7531 Python \u786e\u5b9a\u6027\u9759\u6001\u68c0\u67e5\u8fd4\u56de PASS/FAIL\u3002", "\u6c47\u603b\u5206\u5bf9\u5404 Case \u7684\u901a\u8fc7\u7387\u53d6\u5e73\u5747\uff1b\u4e0d\u4f7f\u7528\u989d\u5916\u8bc4\u5206\u6a21\u578b\u3002", "\u672c Benchmark \u4e0d\u6267\u884c\u6784\u5efa\u3001\u6d4f\u89c8\u5668\u3001SSR renderer\u3001E2E \u6216\u771f\u673a\u9a8c\u6536\u3002"]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

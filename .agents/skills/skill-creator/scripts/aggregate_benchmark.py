@@ -260,6 +260,8 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
         for r in config
     ))
 
+    counts = [len({r["run_number"] for r in rows if r["eval_id"] == eid})
+              for rows in results.values() for eid in eval_ids]
     benchmark = {
         "metadata": {
             "skill_name": skill_name or "<skill-name>",
@@ -268,7 +270,7 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
             "analyzer_model": "<model-name>",
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "evals_run": eval_ids,
-            "runs_per_configuration": 3
+            "runs_per_configuration": counts[0] if counts and len(set(counts)) == 1 else None
         },
         "runs": runs,
         "run_summary": run_summary,

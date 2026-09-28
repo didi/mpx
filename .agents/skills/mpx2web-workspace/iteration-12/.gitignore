@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.log
+*.pid
+.run.lock
+*.tmp
+.runtime-cache/

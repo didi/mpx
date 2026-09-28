@@ -1,0 +1,106 @@
+<template>
+  <view class="profile-page">
+    <view class="profile-page__intro">
+      <text class="profile-page__title">个人资料</text>
+      <text class="profile-page__subtitle">点击资料卡查看摘要</text>
+    </view>
+
+    <profile-card
+      title="温暖档案"
+      summary="喜欢记录生活中的微小善意，也愿意把温暖分享给身边的人。"
+      accent-class="warm-title"
+    ></profile-card>
+
+    <profile-card
+      title="清凉档案"
+      summary="热爱清晨、远山与清晰的计划，在安静中保持好奇和行动力。"
+      accent-class="cool-title"
+    ></profile-card>
+
+    <view wx:if="{{ showWebShareNotice }}" class="profile-page__share-notice">
+      <text>Web 分享服务尚未接入</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage, implement } from '@mpxjs/core'
+
+if (__mpx_mode__ === 'web') {
+  implement('onShareAppMessage', {
+    modes: ['web'],
+    remove: true
+  })
+  // TODO(web): 接入业务指定的 Web 分享服务，并复用当前页面的分享标题和路径。
+}
+
+createPage({
+  data: {
+    showWebShareNotice: __mpx_mode__ === 'web'
+  },
+
+  onShareAppMessage () {
+    return {
+      title: '个人资料',
+      path: '/pages/profile/index'
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "个人资料",
+  "usingComponents": {
+    "profile-card": "../../components/profile-card"
+  }
+}
+</script>
+
+<style>
+.profile-page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+.profile-page__intro {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.profile-page__title {
+  color: #0f172a;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.profile-page__subtitle {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.warm-title {
+  box-sizing: border-box;
+  padding: 12px;
+  color: #c2410c;
+}
+
+.cool-title {
+  box-sizing: border-box;
+  padding: 12px;
+  color: #0369a1;
+}
+
+.profile-page__share-notice {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 13px;
+  text-align: center;
+}
+</style>

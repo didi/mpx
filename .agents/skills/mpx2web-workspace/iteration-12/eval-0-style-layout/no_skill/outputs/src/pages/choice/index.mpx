@@ -1,0 +1,29 @@
+<template>
+  <view>
+    <text>选择一个选项</text>
+    <button data-label="选项 A" bindtap="confirm">选项 A</button>
+    <button data-label="选项 B" bindtap="confirm">选项 B</button>
+  </view>
+</template>
+<script>
+import { createPage, onLoad } from '@mpxjs/core'
+
+createPage({
+  setup (props, { getOpenerEventChannel }) {
+    onLoad(query => {
+      // 普通链接入口没有注册 ready 监听。
+      if (query.source !== 'link') getOpenerEventChannel().emit('ready')
+    })
+    return {
+      confirm (eventOrLabel) {
+        const label = typeof eventOrLabel === 'string'
+          ? eventOrLabel
+          : eventOrLabel.currentTarget.dataset.label
+        const pages = getCurrentPages()
+        pages[pages.length - 2].receiveChoice(label)
+        wx.navigateBack({ delta: 1 })
+      }
+    }
+  }
+})
+</script>

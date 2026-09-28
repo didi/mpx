@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "generate-web",
+  "prompt": "请根据 input 中的 requirements.md 从零创建完整交付，并输出全部要求文件。",
+  "source_metadata": "evals.json"
+}

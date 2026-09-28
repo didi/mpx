@@ -1,0 +1,41 @@
+<template>
+  <view class="article">
+    <text wx:if="{{loading}}">加载中</text>
+    <text wx:if="{{errorText}}">{{errorText}}</text>
+    <view wx:if="{{article}}">
+      <text class="title">{{article.title}}</text>
+      <text class="body">{{article.body}}</text>
+      <button bindtap="toggleExtra">{{expanded ? '收起' : '展开'}}补充说明</button>
+      <text wx:if="{{expanded}}">{{article.extra}}</text>
+    </view>
+  </view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+import { mapActions, mapState } from '@mpxjs/pinia'
+import { useArticleStore } from '../../store/article'
+
+createPage({
+  data: { expanded: false },
+  computed: mapState(useArticleStore, ['article', 'loading', 'errorText']),
+  onLoad (query) {
+    const id = query.id || 'a'
+    if (this.$isServer || (this.article && this.article.id === id)) return
+    return this.loadArticle(id)
+  },
+  serverPrefetch () {
+    const query = this.$route && this.$route.query
+    return this.loadArticle((query && query.id) || 'a')
+  },
+  methods: Object.assign({}, mapActions(useArticleStore, ['loadArticle']), {
+    toggleExtra () {
+      this.expanded = !this.expanded
+    }
+  })
+})
+</script>
+<style>
+.article { padding: 16px; }
+.title { display: block; font-size: 20px; font-weight: bold; }
+.body { display: block; margin: 16px 0; }
+</style>

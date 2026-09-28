@@ -1,0 +1,8 @@
+<template>
+  <view><text>更多说明</text></view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({})
+</script>

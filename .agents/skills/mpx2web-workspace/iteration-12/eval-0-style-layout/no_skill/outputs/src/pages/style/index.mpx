@@ -1,0 +1,46 @@
+<template>
+  <view class="style-page">
+    <red-card />
+    <blue-card />
+    <theme-card
+      label="暖色标签"
+      tone-class="warm-tone"
+      custom-class="spaced-label"
+      tone-class-name="warm-tone"
+      custom-class-name="spaced-label"
+    />
+    <theme-card
+      label="冷色标签"
+      tone-class="cool-tone"
+      custom-class="spaced-label"
+      tone-class-name="cool-tone"
+      custom-class-name="spaced-label"
+    />
+    <view class="equal-row">
+      <layout-cell label="甲" />
+      <layout-cell label="较长的乙" />
+    </view>
+  </view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({})
+</script>
+<style>
+.style-page { padding: 16px; }
+.warm-tone { color: #bb3311; }
+.cool-tone { color: #2255cc; }
+.spaced-label { padding: 12px; }
+.equal-row { display: flex; width: 240px; }
+</style>
+<script type="application/json">
+{
+  "usingComponents": {
+    "red-card": "../../components/red-card.mpx",
+    "blue-card": "../../components/blue-card.mpx",
+    "layout-cell": "../../components/layout-cell.mpx",
+    "theme-card": "../../components/theme-card.mpx"
+  }
+}
+</script>
