@@ -168,15 +168,15 @@ Mpx 在 RN 平台支持多种 CSS 单位，并在运行时进行转换。
 | 单位 | 说明 | 转换规则 |
 | --- | --- | --- |
 | `px` | 绝对像素 | 直接转换为 RN 的无单位数值 |
-| `rpx` | 响应式像素 | `rpx值 × 屏幕宽度 / 750` |
+| `rpx` | 响应式像素 | `rpx值 × window.width / 750` |
 | `%` | 百分比 | 转换为字符串形式（如 `'50%'`），由 RN 原生支持或框架处理 |
-| `vw` | 视口宽度百分比 | `vw值 × 屏幕宽度 / 100` |
-| `vh` | 视口高度百分比 | `vh值 × 屏幕高度 / 100` |
+| `vw` | 视口宽度百分比 | `vw值 × window.width / 100` |
+| `vh` | 视口高度百分比 | `vh值 × window.height / 100` |
 | `hairlineWidth` | RN 特有极细线 | `StyleSheet.hairlineWidth` |
 
 #### 样式计算基准与自定义
 
-`rpx`、`vw`、`vh` 的计算默认基于运行时的 `screen.width` 和 `screen.height`。
+`rpx`、`vw` 的计算默认基于运行时的 `window.width`，`vh` 基于 `window.height`，即窗口尺寸。
 
 同时支持通过运行时配置 `Mpx.config.rnConfig.customDimensions` 自定义样式计算基准：
 
@@ -188,18 +188,15 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
     const nextWindow = Object.assign({}, dimensions.window, {
       height: dimensions.window.height - 44
     })
-    const nextScreen = Object.assign({}, dimensions.screen, {
-      height: dimensions.screen.height - 44
-    })
     return {
       window: nextWindow,
-      screen: nextScreen
+      screen: dimensions.screen
     }
   }
 })
 ```
 
-配置生效后，`rpx`、`vw`、`vh` 会按自定义后的 `screen` 宽高进行计算。
+配置生效后，`rpx`、`vw` 按自定义后的 `window.width` 计算，`vh` 按 `window.height` 计算。上例仅调整窗口高度，因此只改变 `vh` 的换算基准。
 
 #### 百分比计算规则
 

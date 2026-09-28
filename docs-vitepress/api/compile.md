@@ -902,7 +902,7 @@ module.exports = defineConfig({
 
 ### rnConfig {#rn-config}
 
-**`mode` 为输出 React Native（如 `react`）时**使用的编译期配置对象，由 `MpxWebpackPlugin` 传入 loader 上下文，并会挂到运行时的 `mpx.config.rnConfig` 上供 RN 逻辑读取（与小程序 / Web 无关）。
+**`mode` 为 `ios` / `android` / `harmony` 时**使用的编译期配置对象，由 `MpxWebpackPlugin` 传入 loader 上下文。它与运行时的 `mpx.config.rnConfig` 是独立的配置入口，不会自动整体同步。
 
 #### rnConfig.projectName
 
@@ -924,6 +924,39 @@ module.exports = defineConfig({
 
 - 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
 - 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
+
+#### rnConfig.transSubpackageRules {#rnconfig-transsubpackagerules}
+
+`Array`
+
+仅在输出 RN（`ios` / `android` / `harmony`）时生效，用于将指定分包中的页面、组件或 `require.async` 引用的模块转移到其他分包或主包。
+
+- **from**：`Array<string>`，源分包名称列表。
+- **to**：`string`，目标分包名称；`''`（空字符串）表示主包。
+
+```js
+// mpx.config.js
+module.exports = {
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        rnConfig: {
+          transSubpackageRules: [
+            {
+              from: ['comp-pages'],
+              to: 'common'
+            },
+            {
+              from: ['sub1'],
+              to: ''
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+```
 
 #### rnConfig.asyncChunk
 
@@ -1269,39 +1302,6 @@ module.exports = defineConfig({
 * 若placeholder配置使用自定义组件，注意一定要配置 placeholder 中的 resource 字段
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
-
-### transSubpackageRules
-
-`Array`
-
-仅在输出 RN (ios/android/harmony) 时生效。
-
-用于配置分包资源转移规则，可将指定分包中的页面或组件资源转移到其他分包或主包中。
-
-- **from**: `Array<string>` 源分包名称列表
-- **to**: `string` 目标分包名称。当为 `''` (空字符串) 时，表示输出到主包
-
-#### 示例 {#example}
-
-```js
-// mpx.config.js
-module.exports = {
-  pluginOptions: {
-    mpx: {
-      transSubpackageRules: [
-        {
-          from: ['comp-pages'],
-          to: 'common'
-        },
-        {
-          from: ['sub1'],
-          to: ''
-        }
-      ]
-    }
-  }
-}
-```
 
 ### retryRequireAsync
 

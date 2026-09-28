@@ -162,7 +162,6 @@ declare global {
     supportRequireAsync: boolean
     partialCompileRules: any
     asyncSubpackageRules: any[]
-    transSubpackageRules: any
     optimizeRenderRules: any[]
 
     addEntryModuleIssuer: (module: string, issuer: string) => void
