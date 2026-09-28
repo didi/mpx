@@ -7,6 +7,14 @@
     <view class="first">第一块</view><view class="second">第二块</view>
     <view class="single-shadow">单阴影</view><view class="single-filter">单滤镜</view>
     <view class="many">双阴影</view><view class="filters">复合滤镜</view>
+    <view class="overlap-host">
+      <view class="tips-wrapper"><view class="tips-bar"></view></view>
+      <view class="content-card">重叠内容</view>
+    </view>
+    <view class="simple-overlap"><view class="simple-first">普通间距</view><view class="simple-next">回拉 8rpx</view></view>
+    <scroll-view class="fit-scroll" scroll-x="{{true}}" enable-flex="{{true}}" type="custom">
+      <view class="fit-content"><view class="fit-item">甲</view><view class="fit-item">乙</view></view>
+    </scroll-view>
     <text class="font-a">品牌A</text><text class="font-b">品牌B</text>
   </view>
 </template>
@@ -27,6 +35,13 @@ createComponent({ properties: { title: { type: String, value: '本周精选商�
 .single-filter { filter: blur(2px); }
 .many { box-shadow: 0 2px 4px #000, 0 4px 8px #333; }
 .filters { filter: blur(2px) brightness(.8); }
+.tips-bar { height: 92rpx; padding-bottom: 92rpx; margin-bottom: -28rpx; background: #f9b263; }
+.content-card { margin-top: -92rpx; height: 120rpx; background: #fff1dd; }
+.simple-first { height: 24rpx; }
+.simple-next { margin-top: -8rpx; }
+.fit-scroll { width: 320px; }
+.fit-content { display: flex; height: 38px; background: #eef2f8; }
+.fit-item { flex: 1 0 auto; min-width: 25%; text-align: center; }
 @font-face { font-family: 'City-Semibold'; src: url('./city.woff2'); }
 .font-a { font-family: 'City-Semibold'; font-weight: 600; }
 .font-b { font-family: 'Trip-Medium'; font-weight: 500; }

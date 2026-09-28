@@ -16,7 +16,7 @@
   "selection": "按eval.prompt_template选择模板，再按配置注入skill_instructions；merged_skill使用已指定路径，no_skill不含读取Skill指令。",
   "archive_rules": [
     "执行前后记录输入及Skill逐文件哈希、模型参数。",
-    "validation.json记录编译、通用契约与业务验证；不混入38条能力分数。",
+    "validation.json记录编译、通用契约与业务验证；不混入40条能力分数。",
     "各组同输入同模型同验证；merged_skill路径未给定前不执行该组。"
   ]
 }

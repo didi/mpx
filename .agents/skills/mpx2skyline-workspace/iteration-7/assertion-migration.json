@@ -403,6 +403,40 @@
       }
     },
     {
+      "assertion_id": "s0_12",
+      "disposition": "added",
+      "previous": null,
+      "current": {
+        "id": "s0_12",
+        "text": "Skyline 对提示条子节点负 margin-bottom 与后续卡片负 margin-top 的占位链采用显式纵向 Flex 或等效布局，保持 WebView 的重叠效果；普通单侧负 margin 对照保持原语义。",
+        "rule_id": "skyline.negative-margin-occupancy",
+        "scope": "skyline",
+        "source": {
+          "file": "references/skyline-style-practice.md",
+          "section": "Block 与 Inline 布局下子节点的垂直负 margin 失效问题"
+        },
+        "verification": "沿 .overlap-host、.tips-wrapper、.tips-bar 与 .content-card 追踪父子和兄弟布局，核对负 margin 占位链及两种 renderer 的重叠关系；检查 .simple-overlap 未因单个负值被无差别重构。区分静态核对与真实渲染验证。",
+        "source_assertions": []
+      }
+    },
+    {
+      "assertion_id": "s0_13",
+      "disposition": "added",
+      "previous": null,
+      "current": {
+        "id": "s0_13",
+        "text": "Skyline 横向 scroll-view 的直接内容子节点具有明确主轴宽度，背景铺满 320px 视口，两个短项等分；WebView 保持相同布局，不能只靠内部项目的 flex 或 min-width 反向撑宽。",
+        "rule_id": "skyline.horizontal-scroll-child-width",
+        "scope": "skyline",
+        "source": {
+          "file": "references/skyline-style-practice.md",
+          "section": "横向 scroll-view 内 Flex 子节点无法自动撑满"
+        },
+        "verification": "定位 .fit-scroll 的直接子节点 .fit-content 并映射其 width；核对 type=custom、scroll-x、enable-flex 与横向 Flex 结构，检查内容宽为 320px、两项各占一半。真实渲染未执行时记录 not_run。",
+        "source_assertions": []
+      }
+    },
+    {
       "assertion_id": "s1_00",
       "disposition": "updated",
       "previous": {

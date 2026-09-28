@@ -1,6 +1,6 @@
 # Skyline 测试设计 v7
 
-4个case、38条能力断言，定义已同步，模型评测未执行。
+4个case、40条能力断言，定义已同步，模型评测未执行。
 
 ## Case 0：样式与布局
 
@@ -20,6 +20,8 @@
 | s0_09 | Skyline 单阴影节点以单个 box-shadow 呈现原有 0 2px 4px rgba(0,0,0,.2) 效果，颜色函数作为完整颜色值解析。 | 核对 .single-shadow 的实际阴影层数为1，偏移、模糊半径和颜色透明度均与输入一致。 |
 | s0_10 | Skyline 单滤镜节点采用受支持的 blur(2px)，呈现原有独立模糊效果。 | 追踪 .single-filter 的实际滤镜节点和参数，确认独立内容仍具有2px模糊效果。 |
 | s0_11 | Skyline 在宿主 defaultContentBox=true 条件下，child 保持100px内容宽度及左右各10px padding，实际外宽为120px。 | 结合宿主默认盒模型和实际节点 box-sizing、width、padding、border 计算内容宽与外宽，分别核对100px和120px。 |
+| s0_12 | Skyline 对提示条子节点负 margin-bottom 与后续卡片负 margin-top 的占位链采用显式纵向 Flex 或等效布局，保持 WebView 的重叠效果；普通单侧负 margin 对照保持原语义。 | 沿 .overlap-host、.tips-wrapper、.tips-bar 与 .content-card 追踪父子和兄弟布局，核对负 margin 占位链及两种 renderer 的重叠关系；检查 .simple-overlap 未因单个负值被无差别重构。区分静态核对与真实渲染验证。 |
+| s0_13 | Skyline 横向 scroll-view 的直接内容子节点具有明确主轴宽度，背景铺满 320px 视口，两个短项等分；WebView 保持相同布局，不能只靠内部项目的 flex 或 min-width 反向撑宽。 | 定位 .fit-scroll 的直接子节点 .fit-content 并映射其 width；核对 type=custom、scroll-x、enable-flex 与横向 Flex 结构，检查内容宽为 320px、两项各占一半。真实渲染未执行时记录 not_run。 |
 
 ## Case 1：页面滚动、吸顶与层级配置
 

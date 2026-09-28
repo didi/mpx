@@ -39,7 +39,7 @@
 第一阶段可用以下命令兜底扫描；`-U` 仅用于允许读取多行内容，聚合表达式仍只负责召回候选。矩阵中包含 `[\s\S]*` 的 pattern 是结构关系描述，不应直接作为单条 `rg` 结论；多行标签、父子结构、平台条件仍需人工读取完整节点，或交由语法解析脚本复核。
 
 ```bash
-rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|tagNameStyleIsolation|enableScrollViewAutoSize|keyframeStyleIsolation|renderer|componentFramework|disableScroll|navigationStyle|@media screen|font-family\\s*:?\\s*[^;]+-(Medium|Semibold|Bold)|font-weight\\s*:?\\s*(500|600|bolder|lighter)|font-style\\s*:?\\s*oblique|@font-face|text-overflow|-webkit-line-clamp|truncate|line-clamp|<image|<rich-text|<special-text|<mpx-icon|min-width\\s*:?\\s*[0-9.]+%|flex\\s*:?\\s*1\\s+0\\s+auto|overflow-x|overflow-y|overflow\\s*:|display\\s*:?\\s*(grid|flow-root)|position\\s*:?\\s*sticky|float\\s|contain\\s*:?|resize\\s*:?|writing-mode|text-indent|overflow-wrap|justify-items|direction\\s*:?|text-decoration|box-shadow\\s*:?|background-(image|position|size|repeat|attachment|origin|clip)|mask-(image|repeat|origin|clip|mode)|filter\\s*:?|backdrop-filter|calc\\([^)]*(deg|rad|turn)|<scroll-view|<navigator|<text|movable-area|movable-view|web-view|editor|progress|navigation-bar|xr-frame|match-media|keyboard-accessory|lazy-load|forceHttps|placeholder-class|safe-password-|snap-to-edge|indicator-class|mask-style|wx-if|wx-for|<include|\\.animate\\(|\\.applyAnimation\\(|\\.clearAnimation\\(|\\.setInitialRenderingCache\\(|wx\\.createAnimation|wx\\.createSelectorQuery|\\.node\\(\\)|default\\s*:" <scope> -g '*.mpx' -g '*.json' -g '*.js' -g '*.ts'
+rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|tagNameStyleIsolation|enableScrollViewAutoSize|keyframeStyleIsolation|renderer|componentFramework|disableScroll|navigationStyle|@media screen|font-family\\s*:?\\s*[^;]+-(Medium|Semibold|Bold)|font-weight\\s*:?\\s*(500|600|bolder|lighter)|font-style\\s*:?\\s*oblique|@font-face|text-overflow|-webkit-line-clamp|truncate|line-clamp|<image|<rich-text|<special-text|<mpx-icon|min-width\\s*:?\\s*[0-9.]+%|flex\\s*:?\\s*1\\s+0\\s+auto|margin(-bottom)?\\s*:[^;]*-[0-9.]|overflow-x|overflow-y|overflow\\s*:|display\\s*:?\\s*(grid|flow-root)|position\\s*:?\\s*sticky|float\\s|contain\\s*:?|resize\\s*:?|writing-mode|text-indent|overflow-wrap|justify-items|direction\\s*:?|text-decoration|box-shadow\\s*:?|background-(image|position|size|repeat|attachment|origin|clip)|mask-(image|repeat|origin|clip|mode)|filter\\s*:?|backdrop-filter|calc\\([^)]*(deg|rad|turn)|<scroll-view|<navigator|<text|movable-area|movable-view|web-view|editor|progress|navigation-bar|xr-frame|match-media|keyboard-accessory|lazy-load|forceHttps|placeholder-class|safe-password-|snap-to-edge|indicator-class|mask-style|wx-if|wx-for|<include|\\.animate\\(|\\.applyAnimation\\(|\\.clearAnimation\\(|\\.setInitialRenderingCache\\(|wx\\.createAnimation|wx\\.createSelectorQuery|\\.node\\(\\)|default\\s*:" <scope> -g '*.mpx' -g '*.json' -g '*.js' -g '*.ts'
 ```
 
 ## 配置规则
@@ -96,6 +96,7 @@ rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|
 | `STYLE_ANIMATION_FILL_MODE` | warn | style | `animation-fill-mode\\s*:?\\s*(none\|backwards)` | Skyline 下 `none` / `backwards` 实际表现为 `forwards` | 改 `forwards` / `both` 或调整动画逻辑 | 已确认视觉无影响 | [动画差异](./skyline-style-reference.md#动画与过渡差异) |
 | `STYLE_ANIMATION_PROPERTY` | warn | style | `transition-property\|animation` | Skyline transition / animation 可动画属性是白名单 | 人工确认只驱动白名单属性；其他改 JS / class 切换 / Worklet | 已确认不涉及不支持属性 | [动画差异](./skyline-style-reference.md#动画与过渡差异) |
 | `STYLE_Z_INDEX_CONTEXT` | warn | style/template | `z-index\|transform\\s*:\|opacity\\s*:` | Skyline 无层叠上下文，`transform` / `opacity` 不会提升比较层级；`scroll-view` 直接子节点 `z-index` 不生效 | 将需比较层级的节点调整为兄弟节点；fixed 元素按 fixed-context 排序 | 简单同级 z-index 且已验证 | [z-index 适配](skyline-style-practice.md#z-index-与层叠适配) |
+| `STYLE_NEGATIVE_MARGIN_OCCUPANCY` | warn | template/style | `margin(-bottom)?\\s*:[^;]*-[0-9.]` | 候选召回；仅当 block/inline 父节点内的子节点以垂直负 `margin-bottom` 减少占位，且后续兄弟节点再以负 `margin-top` 回拉形成重叠时，核对 Skyline 的后续节点位置 | 对确实依赖该占位链的父节点显式设置纵向 Flex；自定义组件场景还须检查组件节点本身的布局 | 仅普通单侧间距、直接作用于兄弟节点的负 margin，或父节点已有等效 Flex 布局 | [负 margin 占位链](skyline-style-practice.md#block-与-inline-布局下子节点的垂直负-margin-失效问题) |
 
 ## 运行时规则
 
@@ -114,7 +115,7 @@ rg -n -U "lazyCodeLoading|rendererOptions|defaultDisplayBlock|defaultContentBox|
 1. `rg` 命中只是候选项，必须结合 SFC 区块、平台条件、运行时 renderer 分支判断。
 2. 多行 `<scroll-view>`、`<navigator>`、`<text>`、`sticky-section` 不能只靠单行 pattern 判定，需读取完整标签和直接子节点。
 3. `SCROLL_CONTEXT_ENHANCED` 必须把 `select('#id').node()` 关联到对应 `scroll-view`；不能因文件内存在其他已开启 `enhanced` 的滚动容器而放行。
-4. `COMP_SCROLL_HORIZONTAL_CHILD_WIDTH` 必须读取横向 `scroll-view` 的直接子节点，并将该节点的 class 映射到实际样式声明；不能因文件中其他节点存在 `width` 就判定通过。
+4. `COMP_SCROLL_HORIZONTAL_CHILD_WIDTH` 必须读取横向 `scroll-view` 的直接子节点，并将该节点的 class 映射到实际样式声明；不能因文件中其他节点存在 `width` 就判定通过。`STYLE_NEGATIVE_MARGIN_OCCUPANCY` 须沿父子与后续兄弟节点确认负 margin 占位链，不按单个负值直接判错。
 5. `GLASS_TEMPLATE_FRAGMENT` 必须读取命中位置，排除非模板标签或注释中的文本；`GLASS_TEMPLATE_ESCAPE` 必须按完整属性区分数据绑定内外，聚合扫描结果不能直接作为最终结论。
 6. 保留 `@media screen` 时，内部每个选择器（含逗号分组）必须限定到非 Skyline 专用类；Skyline 用运行时窗口宽度与动态类实现业务断点逻辑，两端阈值和样式保持一致。
 7. 最终结果中 `error` 不允许无说明残留；`warn` 必须处理或说明为什么不影响当前 scope。

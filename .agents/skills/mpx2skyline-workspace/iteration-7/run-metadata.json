@@ -2,9 +2,9 @@
   "status": "not_run",
   "suite_version": 7,
   "cases": 4,
-  "assertions": 38,
+  "assertions": 40,
   "scoring_groups": {
-    "adaptation": 31,
+    "adaptation": 33,
     "creation": 7
   },
   "historical_definitions": [],
