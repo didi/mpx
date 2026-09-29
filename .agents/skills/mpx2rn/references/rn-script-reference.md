@@ -7,6 +7,7 @@
 - [构造选项](#构造选项)
   - [App 构造选项](#app-构造选项)
   - [页面 / 组件构造选项](#页面--组件构造选项)
+  - [通过 `implement` 适配](#通过-implement-适配)
   - [页面 / 组件实例方法与属性](#页面--组件实例方法与属性)
 - [数据响应](#数据响应)
 - [组合式 API](#组合式-api)
@@ -76,8 +77,8 @@
 | `onHide` | 应用进入后台，入参 `{ reason }`，`0` 表示退出类场景，`3` 表示其他，为对小程序语义的有限模拟。 |
 | `onError` | 全局 JS 错误，RN 通过 `ErrorUtils.setGlobalHandler` 与已注册回调链式触发。 |
 | `onUnhandledRejection` | 未处理的 Promise 拒绝（Hermes / `promise` rejection tracking 等）。 |
-| `onPageNotFound` | 微信在要打开的页面不存在时回调，可写在 options 中，**RN 未接该宿主能力**，不会按微信语义触发。 |
-| `onThemeChange` | 微信在系统深浅色等主题切换时回调，可写在 options 中，**RN 未接该宿主能力**，不会按微信语义触发。 |
+| `onPageNotFound` | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入页面不存在通知。 |
+| `onThemeChange` | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入主题变化通知。 |
 | `onSSRAppCreated` | SSR 应用创建钩子，可写在 options 中，**RN 不使用 SSR**，不会触发。 |
 | 其他顶层字段 | 非生命周期、非框架保留键会合并进 **`getApp()` 返回对象**，并与 `Mpx` 原型能力合并（如 `globalData`、自定义方法需自行挂到该对象或通过 `methods` 展开规则处理——以当前编译合并结果为准）。 |
 
@@ -158,18 +159,38 @@
 | `onShow` | 页面 | 页面展示或应用切回前台，组件侧用 `pageLifetimes.show` 或组合式 `onShow`。 |
 | `onHide` | 页面 | 页面隐藏或应用切到后台，组件侧用 `pageLifetimes.hide` 或组合式 `onHide`。 |
 | `onResize` | 页面 | 页面可视区域尺寸变化，入参含 `windowWidth` / `windowHeight` 等，组件侧用 `pageLifetimes.resize` 或组合式 `onResize`。 |
-| `onPullDownRefresh` | 页面 | 输出 RN 时无效，输出 RN 时页面默认不可滚动，需自行使用 `scroll-view` 组件包裹，借助 `scroll-view` 中相关能力进行跨端兼容实现。 |
-| `onReachBottom` | 页面 | 输出 RN 时无效，输出 RN 时页面默认不可滚动，需自行使用 `scroll-view` 组件包裹，借助 `scroll-view` 中相关能力进行跨端兼容实现。 |
-| `onPageScroll` | 页面 | 输出 RN 时无效，输出 RN 时页面默认不可滚动，需自行使用 `scroll-view` 组件包裹，借助 `scroll-view` 中相关能力进行跨端兼容实现。 |
+| `onPullDownRefresh` | 页面 | RN 页面默认不可滚动，需借助 `scroll-view` 等实现；复用原声明时须通过 [`implement`](#通过-implement-适配) 登记并驱动回调。 |
+| `onReachBottom` | 页面 | RN 页面默认不可滚动，需借助 `scroll-view` 等实现；复用原声明时须通过 [`implement`](#通过-implement-适配) 登记并驱动回调。 |
+| `onPageScroll` | 页面 | RN 页面默认不可滚动，需借助 `scroll-view` 等实现；复用原声明时须通过 [`implement`](#通过-implement-适配) 登记并驱动回调。 |
 | `onShareAppMessage` | 页面 | 拉起分享时返回分享配置，输出 RN 时需注册 `Mpx.config.rnConfig.openTypeHandler.onShareAppMessage` 桥接系统分享能力进行实现。 |
-| `onShareTimeline` | 页面 | 输出 RN 时无效。 |
-| `onTabItemTap` | 页面 | 输出 RN 时无效，暂不支持。 |
-| `onAddToFavorites` | 页面 | 输出 RN 时无效。 |
-| `onSaveExitState` | 页面 | 输出 RN 时无效。 |
+| `onShareTimeline` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入业务分享实现。 |
+| `onTabItemTap` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入自定义 tab 点击通知。 |
+| `onAddToFavorites` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入业务收藏实现。 |
+| `onSaveExitState` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入状态保存、过期处理和恢复。 |
+| `onRouteDone` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入路由动画完成通知。 |
 
 #### 注意事项
 
 - **保留关键字 `id` / `dataset` / `data`**：这三个 key 是页面/组件实例的保留关键字。任何会被合并挂载到实例上的数据 key——包括 `properties` / `props`、`data`、`computed`、`methods`、`setup` 的 `return`、`inject`、`mixins` 合并进来的同类字段等——都不得使用这三个名称作为 key（其中 `data` 作为构造选项本身合法，指不能在 `data` / `props` / `computed` 等内部再声明名为 `id` / `dataset` / `data` 的字段）。命中时会触发 `The xxx key [id] is a reserved keyword of miniprogram, please check and rename it.` 报错。命名时使用语义化别名（如 `itemId` / `rowData` / `pageData`）替代。
+
+---
+
+### 通过 `implement` 适配
+
+在 App、页面或组件构造前调用 `implement`，指定目标平台 `modes: ['ios', 'android', 'harmony']`。以下声明未登记时会被移除，并在开发环境报错提示；登记后默认保留，设置 `remove: true` 则移除：
+
+| 声明位置 | 登记名 |
+| --- | --- |
+| Page / Component 页面 | `onShareTimeline`、`onAddToFavorites`、`onSaveExitState`、`onRouteDone`、`onPullDownRefresh`、`onReachBottom`、`onPageScroll`、`onTabItemTap` |
+| App | `onThemeChange`、`onPageNotFound` |
+| Component / Behavior | `moved`、`error`、`definitionFilter` |
+| Component | `export` |
+
+`processor` 可用于初始化业务适配逻辑；回调触发、参数与返回值处理均需由适配层实现。`definitionFilter` 需自行接入定义预处理；`export` 需自行适配组件查询返回值，不会自动启用 `wx://component-export`。
+
+上述检查针对构造选项声明，`setup` 中注册的组合式钩子仍需业务另行驱动。
+
+`onShareAppMessage` 沿用 `open-type="share"` 与 `rnConfig.openTypeHandler.onShareAppMessage` 的已有桥接，无需额外登记。
 
 ---
 
@@ -649,11 +670,11 @@ createComponent({
 | `onPullDownRefresh` | **组合式API：生命周期钩子**，下拉刷新；RN 无宿主自动触发，宜 `scroll-view` 等。 |
 | `onReachBottom` | **组合式API：生命周期钩子**，触底；RN 同上。 |
 | `onShareAppMessage` | **组合式API：生命周期钩子**，分享；RN 需 `rnConfig.openTypeHandler.onShareAppMessage` 与 `open-type="share"`。 |
-| `onShareTimeline` | **组合式API：生命周期钩子**，朋友圈；输出 RN 无效。 |
-| `onAddToFavorites` | **组合式API：生命周期钩子**，收藏；输出 RN 无效。 |
+| `onShareTimeline` | **组合式API：生命周期钩子**，朋友圈；RN 默认不触发，须业务适配层驱动。 |
+| `onAddToFavorites` | **组合式API：生命周期钩子**，收藏；RN 默认不触发，须业务适配层驱动。 |
 | `onPageScroll` | **组合式API：生命周期钩子**，页滚动；输出 RN 无效，使用 `scroll-view` 替代方案。 |
-| `onTabItemTap` | **组合式API：生命周期钩子**，Tab 点击；输出 RN 无效。 |
-| `onSaveExitState` | **组合式API：生命周期钩子**，退出态；输出 RN 无效。 |
+| `onTabItemTap` | **组合式API：生命周期钩子**，Tab 点击；RN 默认不触发，须业务适配层驱动。 |
+| `onSaveExitState` | **组合式API：生命周期钩子**，退出态；RN 默认不触发，须业务适配层驱动。 |
 | `onServerPrefetch` | **组合式API：生命周期钩子**，SSR 预取；输出 RN 不使用。 |
 | `onReactHooksExec` | **组合式API：生命周期钩子**，RN 混编时执行 React hooks 使用。 |
 | `implement` | **扩展API**，按 mode 注册或移除实现。 |

@@ -580,7 +580,6 @@ createComponent({
 | `proxyEventHandler` | 事件代理链路中的钩子，高级用途。 |
 | `setDataHandler` | `setData` 调用前后的钩子，高级用途。 |
 | `forceFlushSync` | 是否强制同步 flush 更新（默认 `false`）。 |
-| `webRouteConfig` | 输出 Web 时的路由相关配置对象。 |
 | `webConfig` | 输出 Web 时的通用配置对象。 |
 | `webviewConfig` | WebView 场景配置（如域名白名单、`apiImplementations` 等，见源码注释）。 |
 | `rnConfig` | 输出 React Native 时的扩展配置（导航、分包、`open-type` 容器实现、状态栏等），详见 [Mpx.config.rnConfig](#mpxconfigrnconfig)。 |

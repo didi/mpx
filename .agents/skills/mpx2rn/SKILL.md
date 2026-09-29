@@ -82,7 +82,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 
 ### 脚本开发约束
 
-1. **生命周期与构造选项**：仅使用[逻辑能力参考](./references/rn-script-reference.md)中标注 RN 支持的生命周期、构造选项和实例方法；`onShareTimeline` / `onTabItemTap` / `onAddToFavorites` / `onSaveExitState` 等不支持项不得直接用于 RN 产物。
+1. **生命周期与构造选项**：仅使用[逻辑能力参考](./references/rn-script-reference.md)中标注 RN 支持的生命周期、构造选项和实例方法；`onShareTimeline` / `onTabItemTap` / `onAddToFavorites` / `onSaveExitState` 等无默认驱动的声明须由业务提供适配并通过 [`implement` 登记](./references/rn-script-reference.md#通过-implement-适配)，或使用 `remove: true` 移除，不得仅登记便视为能力已实现。
 2. **环境 API**：统一通过 `@mpxjs/api-proxy` 提供的 `mpx.xxx` 调用环境能力，不要直接使用 `wx.xxx` / `my.xxx`；具体支持范围以[环境 API 参考](./references/rn-api-reference.md)为准。若用户通过 `custom` 配置扩展了能力，以用户说明为准。
 3. **Promise 化调用**：`@mpxjs/api-proxy` 开启 `usePromise` 时，参与 Promise 化的异步 API 必须使用 `await` 或 `.then()` / `.catch()`，不得传入 `success` / `fail` 回调。详见[环境 API 参考 · Promise 化](./references/rn-api-reference.md#使用说明)。
 4. **selector API**：`selectComponent` / `selectAllComponents` / `createSelectorQuery` / `createIntersectionObserver` 等 selector API 仅使用 `#id` / `.class`，且对应模板节点须声明空 `wx:ref`。详见[逻辑能力参考 · 页面 / 组件实例方法与属性](./references/rn-script-reference.md#页面--组件实例方法与属性)。

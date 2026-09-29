@@ -183,6 +183,7 @@ export function createTemplateComponent ({ name, render, staticRenderFns, compon
   }
   const wxsMixin = getWxsMixin(wxsModules)
   const base = {
+    __mpxTemplate: true,
     name,
     render,
     components: components || {},
