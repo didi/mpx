@@ -21,7 +21,6 @@
 - [Mpx 运行时导出](#mpx-运行时导出)
   - [默认导出](#默认导出)
   - [命名导出](#命名导出)
-- [Mpx.config.rnConfig](#mpxconfigrnconfig)
 - [全局 API](#全局-api)
 - [环境 API](#环境-api)
 - [网络请求](#网络请求)
@@ -149,7 +148,7 @@
 | `pageLifetimes.show` | 组件 | 所在页面展示或重新获得焦点时触发，与页面 `onShow` 时机对齐。 |
 | `pageLifetimes.hide` | 组件 | 所在页面隐藏或失焦时触发，与页面 `onHide` 时机对齐。 |
 | `pageLifetimes.resize` | 组件 | 所在页面可视区域尺寸变化时触发，与页面 `onResize` 时机对齐。 |
-| `onLoad` | 页面 | 页面创建后调用，**两个参数** `(rawQuery, decodedQuery)`。 |
+| `onLoad` | 页面 | 页面创建后调用，**两个参数** `(rawQuery, decodedQuery)`；RN 根组件初始化时，首个页面实例会收到 `parseAppProps` 返回的 `initialParams`，后续创建的同路径页面实例不会自动继承。 |
 | `created` | 组件 | 组件实例刚创建，RN 由 `MpxProxy` 在实例建立阶段调度，此时不宜依赖完整视图。 |
 | `attached` | 组件 | 组件进入节点树，RN 对齐为挂载流程中的对应阶段，详见 `docs-vitepress/guide/basic/lifecycle.md` 映射表。 |
 | `ready` | 组件 | 组件布局完成、可与视图交互，RN 对应 React 挂载后的就绪时机，与页面 `onReady` 同属一套内置映射。 |
@@ -565,25 +564,7 @@ createComponent({
 
 `@mpxjs/core` 的**默认导出**为构造函数 **`Mpx`**。业务中通常写作 **`import Mpx from '@mpxjs/core'`**，并把它当作**命名空间对象**使用，而不是 `new Mpx()`。框架在初始化时会把平台 API 合并到 **`Mpx` 的静态属性**以及 **`Mpx.prototype`** 上，因此选项式页面 / 组件实例上的 `$wx`、`setData` 等能力，与这里的原型挂载一一对应。
 
-全局运行时配置集中在 **`Mpx.config`**（在 **`packages/core/src/index.js`** 里创建默认值，可按需改写）。其中 **`rnConfig`** 与输出 RN 关系最大，逐项说明见下文 **[Mpx.config.rnConfig](#mpxconfigrnconfig)**。
-
-#### `Mpx.config` 各字段
-
-| 属性 | 说明 |
-| --- | --- |
-| `useStrictDiff` | 是否启用更严格的 diff 策略（默认 `false`，以源码为准）。 |
-| `ignoreWarning` | 为 `true` 时忽略框架部分警告。 |
-| `ignoreProxyWhiteList` | 字符串数组，列出的路径不做响应式代理（默认含 `id`、`dataset`、`data`）。 |
-| `observeClassInstance` | 是否尝试将 class 实例变为响应式（默认 `false`，慎用）。 |
-| `errorHandler` | 全局错误处理函数，可为 `null`。 |
-| `warnHandler` | 全局警告处理函数，可为 `null`。 |
-| `proxyEventHandler` | 事件代理链路中的钩子，高级用途。 |
-| `setDataHandler` | `setData` 调用前后的钩子，高级用途。 |
-| `forceFlushSync` | 是否强制同步 flush 更新（默认 `false`）。 |
-| `webRouteConfig` | 输出 Web 时的路由相关配置对象。 |
-| `webConfig` | 输出 Web 时的通用配置对象。 |
-| `webviewConfig` | WebView 场景配置（如域名白名单、`apiImplementations` 等，见源码注释）。 |
-| `rnConfig` | 输出 React Native 时的扩展配置（导航、分包、`open-type` 容器实现、状态栏等），详见 [Mpx.config.rnConfig](#mpxconfigrnconfig)。 |
+全局运行时配置集中在 **`Mpx.config`**。配置字段、默认值与初始化方式见 [编译与运行时配置参考 · 运行时配置](./rn-config-reference.md#运行时配置)，RN 导航、布局与宿主扩展见 [Mpx.config.rnConfig](./rn-config-reference.md#mpxconfigrnconfig)。
 
 #### `Mpx` 静态属性与方法
 
@@ -681,59 +662,6 @@ createComponent({
 #### 注意事项
 
 - **`Mpx.use`** 安装的插件会合并到 **`Mpx` 静态对象**与 **`Mpx.prototype`**，若与业务自定义全局名冲突，可为插件传入 **`prefix` / `postfix`** 选项。
-
----
-
-## Mpx.config.rnConfig
-
-运行时对象 **`Mpx.config.rnConfig`**（`Mpx` 为 `@mpxjs/core` 默认导出）用于扩展 RN 导航、分包、状态栏等行为。下列为常见配置项（以源码为准，未列项可能随版本增加）。
-
-```js
-import Mpx from "@mpxjs/core"
-
-// 须在 createApp 与页面脚本执行前完成赋值
-Mpx.config.rnConfig = {
-  parseAppProps(props) {
-    return {
-      initialRouteName: "pages/index",
-      initialParams: props || {}
-    }
-  },
-  onStateChange(state) {
-    console.log("navigation state", state)
-  },
-  disablePageTransition: true,
-  openTypeHandler: {
-    onShareAppMessage(shareInfo) {
-      console.log("share", shareInfo)
-    },
-    onUserInfo() {
-      return { userInfo: { nickName: "RN" } }
-    }
-  }
-}
-```
-
-| 配置项 | 说明 |
-| --- | --- |
-| `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
-| `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由。 |
-| `onStateChange` | 导航 state 变化时回调。 |
-| `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
-| `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |
-| `openTypeHandler` | 对象，注册 `button` 组件在 RN 上 `open-type` 的容器侧实现，未注册对应键时点击会告警。 |
-| `openTypeHandler.onShareAppMessage` | 对应模板中 `open-type="share"`：框架会先取当前页 `onShareAppMessage` 的返回（含与默认 `title` / `path` 的合并及可选 `promise` 异步结果），再调用本回调，入参为 `{ title, path, imageUrl? }`，由宿主调起系统分享等能力。 |
-| `openTypeHandler.onUserInfo` | 对应模板中 `open-type="getUserInfo"`：由宿主实现获取用户信息的逻辑，结果需满足按钮侧对 `bindgetuserinfo` 的约定（以 `@mpxjs/webpack-plugin` 中 `mpx-button` 运行时为准）。 |
-| `getBottomVirtualHeight` | Android 底部虚拟区域高度修正。 |
-| `loadChunkAsync` | 异步分包加载实现。 |
-| `downloadChunkAsync` | 分包下载实现，用于实现 preloadRule。 |
-| `supportSubpackage` | 是否启用分包相关异步加载能力，与页面 `json` 中 `async` 等配合。 |
-| `asyncChunk` | 异步页面的 `fallback`、`loading` 等组件路径配置，偏构建与运行时加载。 |
-
-#### 注意事项
-
-- `rnConfig` 为普通对象，应在 **任何页面 import 并执行 `createApp` 之前** 赋值，避免导航已初始化后配置未生效。
-- 具体键名以 `packages/core/src/index.js` 注释、`createApp.ios.js`、`LoadAsyncChunkModule.js` 等处的读取逻辑为准。
 
 ---
 
