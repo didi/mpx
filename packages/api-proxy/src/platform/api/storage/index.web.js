@@ -126,7 +126,7 @@ function removeStorage (options = { key: '' }) {
 
 function removeStorageSync (key) {
   if (!isBrowser) {
-    throwSSRWarning('getStorageInfoSync API is running in non browser environments')
+    throwSSRWarning('removeStorageSync API is running in non browser environments')
     return
   }
   window.localStorage.removeItem(key)
