@@ -7,6 +7,7 @@
 - [构造选项](#构造选项)
   - [App 构造选项](#app-构造选项)
   - [页面 / 组件构造选项](#页面--组件构造选项)
+  - [通过 `implement` 适配](#通过-implement-适配)
   - [页面 / 组件实例方法与属性](#页面--组件实例方法与属性)
 - [数据响应](#数据响应)
 - [组合式 API](#组合式-api)
@@ -21,7 +22,6 @@
 - [Mpx 运行时导出](#mpx-运行时导出)
   - [默认导出](#默认导出)
   - [命名导出](#命名导出)
-- [Mpx.config.rnConfig](#mpxconfigrnconfig)
 - [全局 API](#全局-api)
 - [环境 API](#环境-api)
 - [网络请求](#网络请求)
@@ -77,8 +77,8 @@
 | `onHide` | 应用进入后台，入参 `{ reason }`，`0` 表示退出类场景，`3` 表示其他，为对小程序语义的有限模拟。 |
 | `onError` | 全局 JS 错误，RN 通过 `ErrorUtils.setGlobalHandler` 与已注册回调链式触发。 |
 | `onUnhandledRejection` | 未处理的 Promise 拒绝（Hermes / `promise` rejection tracking 等）。 |
-| `onPageNotFound` | 微信在要打开的页面不存在时回调，可写在 options 中，**RN 未接该宿主能力**，不会按微信语义触发。 |
-| `onThemeChange` | 微信在系统深浅色等主题切换时回调，可写在 options 中，**RN 未接该宿主能力**，不会按微信语义触发。 |
+| `onPageNotFound` | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入页面不存在通知。 |
+| `onThemeChange` | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入主题变化通知。 |
 | `onSSRAppCreated` | SSR 应用创建钩子，可写在 options 中，**RN 不使用 SSR**，不会触发。 |
 | 其他顶层字段 | 非生命周期、非框架保留键会合并进 **`getApp()` 返回对象**，并与 `Mpx` 原型能力合并（如 `globalData`、自定义方法需自行挂到该对象或通过 `methods` 展开规则处理——以当前编译合并结果为准）。 |
 
@@ -159,18 +159,38 @@
 | `onShow` | 页面 | 页面展示或应用切回前台，组件侧用 `pageLifetimes.show` 或组合式 `onShow`。 |
 | `onHide` | 页面 | 页面隐藏或应用切到后台，组件侧用 `pageLifetimes.hide` 或组合式 `onHide`。 |
 | `onResize` | 页面 | 页面可视区域尺寸变化，入参含 `windowWidth` / `windowHeight` 等，组件侧用 `pageLifetimes.resize` 或组合式 `onResize`。 |
-| `onPullDownRefresh` | 页面 | 输出 RN 时无效，输出 RN 时页面默认不可滚动，需自行使用 `scroll-view` 组件包裹，借助 `scroll-view` 中相关能力进行跨端兼容实现。 |
-| `onReachBottom` | 页面 | 输出 RN 时无效，输出 RN 时页面默认不可滚动，需自行使用 `scroll-view` 组件包裹，借助 `scroll-view` 中相关能力进行跨端兼容实现。 |
-| `onPageScroll` | 页面 | 输出 RN 时无效，输出 RN 时页面默认不可滚动，需自行使用 `scroll-view` 组件包裹，借助 `scroll-view` 中相关能力进行跨端兼容实现。 |
+| `onPullDownRefresh` | 页面 | RN 页面默认不可滚动，需借助 `scroll-view` 等实现；复用原声明时须通过 [`implement`](#通过-implement-适配) 登记并驱动回调。 |
+| `onReachBottom` | 页面 | RN 页面默认不可滚动，需借助 `scroll-view` 等实现；复用原声明时须通过 [`implement`](#通过-implement-适配) 登记并驱动回调。 |
+| `onPageScroll` | 页面 | RN 页面默认不可滚动，需借助 `scroll-view` 等实现；复用原声明时须通过 [`implement`](#通过-implement-适配) 登记并驱动回调。 |
 | `onShareAppMessage` | 页面 | 拉起分享时返回分享配置，输出 RN 时需注册 `Mpx.config.rnConfig.openTypeHandler.onShareAppMessage` 桥接系统分享能力进行实现。 |
-| `onShareTimeline` | 页面 | 输出 RN 时无效。 |
-| `onTabItemTap` | 页面 | 输出 RN 时无效，暂不支持。 |
-| `onAddToFavorites` | 页面 | 输出 RN 时无效。 |
-| `onSaveExitState` | 页面 | 输出 RN 时无效。 |
+| `onShareTimeline` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入业务分享实现。 |
+| `onTabItemTap` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入自定义 tab 点击通知。 |
+| `onAddToFavorites` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入业务收藏实现。 |
+| `onSaveExitState` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入状态保存、过期处理和恢复。 |
+| `onRouteDone` | 页面 | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入路由动画完成通知。 |
 
 #### 注意事项
 
 - **保留关键字 `id` / `dataset` / `data`**：这三个 key 是页面/组件实例的保留关键字。任何会被合并挂载到实例上的数据 key——包括 `properties` / `props`、`data`、`computed`、`methods`、`setup` 的 `return`、`inject`、`mixins` 合并进来的同类字段等——都不得使用这三个名称作为 key（其中 `data` 作为构造选项本身合法，指不能在 `data` / `props` / `computed` 等内部再声明名为 `id` / `dataset` / `data` 的字段）。命中时会触发 `The xxx key [id] is a reserved keyword of miniprogram, please check and rename it.` 报错。命名时使用语义化别名（如 `itemId` / `rowData` / `pageData`）替代。
+
+---
+
+### 通过 `implement` 适配
+
+在 App、页面或组件构造前调用 `implement`，指定目标平台 `modes: ['ios', 'android', 'harmony']`。以下声明未登记时会被移除，并在开发环境报错提示；登记后默认保留，设置 `remove: true` 则移除：
+
+| 声明位置 | 登记名 |
+| --- | --- |
+| Page / Component 页面 | `onShareTimeline`、`onAddToFavorites`、`onSaveExitState`、`onRouteDone`、`onPullDownRefresh`、`onReachBottom`、`onPageScroll`、`onTabItemTap` |
+| App | `onThemeChange`、`onPageNotFound` |
+| Component / Behavior | `moved`、`error`、`definitionFilter` |
+| Component | `export` |
+
+`processor` 可用于初始化业务适配逻辑；回调触发、参数与返回值处理均需由适配层实现。`definitionFilter` 需自行接入定义预处理；`export` 需自行适配组件查询返回值，不会自动启用 `wx://component-export`。
+
+上述检查针对构造选项声明，`setup` 中注册的组合式钩子仍需业务另行驱动。
+
+`onShareAppMessage` 沿用 `open-type="share"` 与 `rnConfig.openTypeHandler.onShareAppMessage` 的已有桥接，无需额外登记。
 
 ---
 
@@ -565,25 +585,7 @@ createComponent({
 
 `@mpxjs/core` 的**默认导出**为构造函数 **`Mpx`**。业务中通常写作 **`import Mpx from '@mpxjs/core'`**，并把它当作**命名空间对象**使用，而不是 `new Mpx()`。框架在初始化时会把平台 API 合并到 **`Mpx` 的静态属性**以及 **`Mpx.prototype`** 上，因此选项式页面 / 组件实例上的 `$wx`、`setData` 等能力，与这里的原型挂载一一对应。
 
-全局运行时配置集中在 **`Mpx.config`**（在 **`packages/core/src/index.js`** 里创建默认值，可按需改写）。其中 **`rnConfig`** 与输出 RN 关系最大，逐项说明见下文 **[Mpx.config.rnConfig](#mpxconfigrnconfig)**。
-
-#### `Mpx.config` 各字段
-
-| 属性 | 说明 |
-| --- | --- |
-| `useStrictDiff` | 是否启用更严格的 diff 策略（默认 `false`，以源码为准）。 |
-| `ignoreWarning` | 为 `true` 时忽略框架部分警告。 |
-| `ignoreProxyWhiteList` | 字符串数组，列出的路径不做响应式代理（默认含 `id`、`dataset`、`data`）。 |
-| `observeClassInstance` | 是否尝试将 class 实例变为响应式（默认 `false`，慎用）。 |
-| `errorHandler` | 全局错误处理函数，可为 `null`。 |
-| `warnHandler` | 全局警告处理函数，可为 `null`。 |
-| `proxyEventHandler` | 事件代理链路中的钩子，高级用途。 |
-| `setDataHandler` | `setData` 调用前后的钩子，高级用途。 |
-| `forceFlushSync` | 是否强制同步 flush 更新（默认 `false`）。 |
-| `webRouteConfig` | 输出 Web 时的路由相关配置对象。 |
-| `webConfig` | 输出 Web 时的通用配置对象。 |
-| `webviewConfig` | WebView 场景配置（如域名白名单、`apiImplementations` 等，见源码注释）。 |
-| `rnConfig` | 输出 React Native 时的扩展配置（导航、分包、`open-type` 容器实现、状态栏等），详见 [Mpx.config.rnConfig](#mpxconfigrnconfig)。 |
+全局运行时配置集中在 **`Mpx.config`**。配置字段、默认值与初始化方式见 [编译与运行时配置参考 · 运行时配置](./rn-config-reference.md#运行时配置)，RN 导航、布局与宿主扩展见 [Mpx.config.rnConfig](./rn-config-reference.md#mpxconfigrnconfig)。
 
 #### `Mpx` 静态属性与方法
 
@@ -668,11 +670,11 @@ createComponent({
 | `onPullDownRefresh` | **组合式API：生命周期钩子**，下拉刷新；RN 无宿主自动触发，宜 `scroll-view` 等。 |
 | `onReachBottom` | **组合式API：生命周期钩子**，触底；RN 同上。 |
 | `onShareAppMessage` | **组合式API：生命周期钩子**，分享；RN 需 `rnConfig.openTypeHandler.onShareAppMessage` 与 `open-type="share"`。 |
-| `onShareTimeline` | **组合式API：生命周期钩子**，朋友圈；输出 RN 无效。 |
-| `onAddToFavorites` | **组合式API：生命周期钩子**，收藏；输出 RN 无效。 |
+| `onShareTimeline` | **组合式API：生命周期钩子**，朋友圈；RN 默认不触发，须业务适配层驱动。 |
+| `onAddToFavorites` | **组合式API：生命周期钩子**，收藏；RN 默认不触发，须业务适配层驱动。 |
 | `onPageScroll` | **组合式API：生命周期钩子**，页滚动；输出 RN 无效，使用 `scroll-view` 替代方案。 |
-| `onTabItemTap` | **组合式API：生命周期钩子**，Tab 点击；输出 RN 无效。 |
-| `onSaveExitState` | **组合式API：生命周期钩子**，退出态；输出 RN 无效。 |
+| `onTabItemTap` | **组合式API：生命周期钩子**，Tab 点击；RN 默认不触发，须业务适配层驱动。 |
+| `onSaveExitState` | **组合式API：生命周期钩子**，退出态；RN 默认不触发，须业务适配层驱动。 |
 | `onServerPrefetch` | **组合式API：生命周期钩子**，SSR 预取；输出 RN 不使用。 |
 | `onReactHooksExec` | **组合式API：生命周期钩子**，RN 混编时执行 React hooks 使用。 |
 | `implement` | **扩展API**，按 mode 注册或移除实现。 |
@@ -681,59 +683,6 @@ createComponent({
 #### 注意事项
 
 - **`Mpx.use`** 安装的插件会合并到 **`Mpx` 静态对象**与 **`Mpx.prototype`**，若与业务自定义全局名冲突，可为插件传入 **`prefix` / `postfix`** 选项。
-
----
-
-## Mpx.config.rnConfig
-
-运行时对象 **`Mpx.config.rnConfig`**（`Mpx` 为 `@mpxjs/core` 默认导出）用于扩展 RN 导航、分包、状态栏等行为。下列为常见配置项（以源码为准，未列项可能随版本增加）。
-
-```js
-import Mpx from "@mpxjs/core"
-
-// 须在 createApp 与页面脚本执行前完成赋值
-Mpx.config.rnConfig = {
-  parseAppProps(props) {
-    return {
-      initialRouteName: "pages/index",
-      initialParams: props || {}
-    }
-  },
-  onStateChange(state) {
-    console.log("navigation state", state)
-  },
-  disablePageTransition: true,
-  openTypeHandler: {
-    onShareAppMessage(shareInfo) {
-      console.log("share", shareInfo)
-    },
-    onUserInfo() {
-      return { userInfo: { nickName: "RN" } }
-    }
-  }
-}
-```
-
-| 配置项 | 说明 |
-| --- | --- |
-| `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
-| `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由；`initialParams` 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准。`initialRouteName` 未注册时，Mpx 会通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），回退至应用首页，并丢弃该错误路由的 `initialParams`。 |
-| `onStateChange` | 导航 state 变化时回调。 |
-| `disablePageTransition` | 为 `true` 时禁用 RN 页面转场动画，框架内部映射为 `animation: "none"`。 |
-| `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |
-| `openTypeHandler` | 对象，注册 `button` 组件在 RN 上 `open-type` 的容器侧实现，未注册对应键时点击会告警。 |
-| `openTypeHandler.onShareAppMessage` | 对应模板中 `open-type="share"`：框架会先取当前页 `onShareAppMessage` 的返回（含与默认 `title` / `path` 的合并及可选 `promise` 异步结果），再调用本回调，入参为 `{ title, path, imageUrl? }`，由宿主调起系统分享等能力。 |
-| `openTypeHandler.onUserInfo` | 对应模板中 `open-type="getUserInfo"`：由宿主实现获取用户信息的逻辑，结果需满足按钮侧对 `bindgetuserinfo` 的约定（以 `@mpxjs/webpack-plugin` 中 `mpx-button` 运行时为准）。 |
-| `getBottomVirtualHeight` | Android 底部虚拟区域高度修正。 |
-| `loadChunkAsync` | 异步分包加载实现。 |
-| `downloadChunkAsync` | 分包下载实现，用于实现 preloadRule。 |
-| `supportSubpackage` | 是否启用分包相关异步加载能力，与页面 `json` 中 `async` 等配合。 |
-| `asyncChunk` | 异步页面的 `fallback`、`loading` 等组件路径配置，偏构建与运行时加载。 |
-
-#### 注意事项
-
-- `rnConfig` 为普通对象，应在 **任何页面 import 并执行 `createApp` 之前** 赋值，避免导航已初始化后配置未生效。
-- 具体键名以 `packages/core/src/index.js` 注释、`createApp.ios.js`、`LoadAsyncChunkModule.js` 等处的读取逻辑为准。
 
 ---
 

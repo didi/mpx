@@ -308,6 +308,37 @@ function implement(name: string, options: object): object
 
 以微信为 base 将代码转换输出到其他平台时（如支付宝、web 平台等），会存在一些无法进行模拟的跨平台差异，会在运行时进行检测并报错指出，例如微信转支付宝时使用 moved 生命周期等。使用`implement`方法可以取消这种报错。您可以使用 mixin 自行实现跨平台差异，然后使用 implement 取消报错。
 
+Web 输出中，以下选项和生命周期支持通过 `implement` 登记适配：
+
+| 声明位置 | 登记名 | 业务需实现的适配 |
+| --- | --- | --- |
+| Page / Component 页面 | `onShareAppMessage`、`onShareTimeline` | 分享入口及分享信息处理 |
+| Page / Component 页面 | `onAddToFavorites` | 收藏入口及收藏信息处理 |
+| Page / Component 页面 | `onSaveExitState` | 状态保存、过期处理和恢复 |
+| Page / Component 页面 | `onRouteDone` | 路由过渡动画完成通知 |
+| App | `onThemeChange` | 主题变化通知 |
+| Component / Behavior | `moved`、`error` | 节点移动通知、组件方法错误处理 |
+| Component / Behavior | `definitionFilter` | 定义预处理及过滤器调用链 |
+| Component | `export` | 组件查询时的自定义返回值 |
+
+> 在 App、页面或组件构造前登记，并指定 `modes: ['web']`。未登记的上述声明会被移除，并在开发环境报错提示；登记后默认保留，设置 `remove: true` 则移除。`implement` 不会自动实现能力或触发回调，实际适配仍需由业务提供。
+
+> 登记 `export` 不会启用微信内置的 `wx://component-export` behavior。
+
+RN 输出中，以下声明同样支持登记后保留、`remove: true` 移除；未登记时会被移除，并在开发环境报错提示。登记时按目标平台指定 `modes: ['ios', 'android', 'harmony']`，实际能力与回调触发仍由业务适配层提供：
+
+| 声明位置 | 登记名 | 业务需实现的适配 |
+| --- | --- | --- |
+| Page / Component 页面 | `onShareTimeline`、`onAddToFavorites` | 分享到朋友圈、收藏入口及返回信息处理 |
+| Page / Component 页面 | `onSaveExitState`、`onRouteDone` | 退出状态保存与恢复、路由动画完成通知 |
+| Page / Component 页面 | `onPullDownRefresh`、`onReachBottom`、`onPageScroll` | 通过 `scroll-view` 等实现页面滚动事件 |
+| Page / Component 页面 | `onTabItemTap` | 自定义 tab 点击通知 |
+| App | `onThemeChange`、`onPageNotFound` | 主题变化、页面不存在通知 |
+| Component / Behavior | `moved`、`error`、`definitionFilter` | 节点移动、组件方法错误处理、定义预处理 |
+| Component | `export` | 组件查询时的自定义返回值 |
+
+> RN 的 `onShareAppMessage` 已有 `open-type="share"` 与 `rnConfig.openTypeHandler.onShareAppMessage` 桥接，无需额外通过 `implement` 登记。
+
 ```js
 import {implement} from '@mpxjs/core'
 
