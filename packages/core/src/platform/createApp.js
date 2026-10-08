@@ -7,6 +7,7 @@ import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { initAppProvides } from './export/inject'
 import { wrapAppLifecycleHooks } from '../core/perf'
+import { notSupportTip } from '../convertor/wxToWeb'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -37,6 +38,7 @@ export default function createApp (options, config = {}) {
     }
   }]
   if (__mpx_mode__ === 'web') {
+    notSupportTip(rawOptions, ['onThemeChange'])
     builtInMixins.push({
       beforeCreate () {
         // for vue provide vm access

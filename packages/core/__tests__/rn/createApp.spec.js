@@ -4,6 +4,7 @@ const createApp = require('../../src/platform/createApp.ios').default
 const transferOptions = require('../../src/core/transferOptions')
 const Mpx = require('../../src/index')
 const { error } = require('@mpxjs/utils')
+const { implement, implemented } = require('../../src/core/implement')
 
 jest.mock('../../src/core/transferOptions', () => jest.fn())
 
@@ -53,6 +54,7 @@ describe('RN createApp initial params', () => {
   const onLaunch = jest.fn()
 
   beforeEach(() => {
+    Object.keys(implemented).forEach(key => delete implemented[key])
     jest.clearAllMocks()
     global.__mpxOptionsMap = {}
     global.__mpxPageConfig = {}
@@ -76,6 +78,31 @@ describe('RN createApp initial params', () => {
     createApp({})
     return global.__mpxOptionsMap.app({}).props.children[0]
   }
+
+  it.each(['onThemeChange', 'onPageNotFound'])('handles implement for App %s', (name) => {
+    const hook = jest.fn()
+    const create = () => {
+      const rawOptions = { onLaunch, [name]: hook }
+      transferOptions.mockReturnValue({ rawOptions, currentInject: { moduleId: 'app' } })
+      createApp({})
+      return rawOptions
+    }
+
+    expect(create()).not.toHaveProperty(name)
+    expect(error).toHaveBeenCalledWith(expect.stringContaining(`Options.${name}`), undefined)
+
+    error.mockClear()
+    implement(name, { modes: ['ios'] })
+    expect(create()[name]).toBe(hook)
+    expect(hook).not.toHaveBeenCalled()
+    expect(error).not.toHaveBeenCalled()
+
+    implement(name, { modes: ['ios'], remove: true })
+    const removed = create()
+    expect(removed).not.toHaveProperty(name)
+    expect(removed.onLaunch).toBe(onLaunch)
+    expect(error).not.toHaveBeenCalled()
+  })
 
   it.each([
     ['pages/index', 'pages/index'],

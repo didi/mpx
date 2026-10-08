@@ -219,7 +219,6 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | `proxyEventHandler` | `null` | `(event, instance) => void`，事件代理处理钩子，可用于统一观察事件。 |
 | `setDataHandler` | `null` | `(data, instance) => void`，数据渲染链路调用底层 `__render` 前触发；RN 的 VNode 渲染链路不经过此钩子，不用于监听所有 RN 更新。 |
 | `forceFlushSync` | `false` | 强制同步执行更新调度，改变默认批量异步更新行为，按需启用。 |
-| `webRouteConfig` | `{}` | Web 路由配置，不用于 RN。 |
 | `webConfig` | `{}` | Web 通用配置，不用于 RN。 |
 | `rnConfig` | 见下文 | RN 运行时扩展配置，初始包含 `defaultBoxSizing: 'content-box'` 与 `disablePageTransition: false`。 |
 

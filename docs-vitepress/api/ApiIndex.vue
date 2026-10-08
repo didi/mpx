@@ -37,12 +37,12 @@ const data = [
             anchor: '#forceFlushSync'
           },
           {
-            text: 'webRouteConfig',
-            anchor: '#webRouteConfig'
-          },
-          {
             text: 'webConfig',
             anchor: '#webConfig'
+          },
+          {
+            text: 'rnConfig',
+            anchor: '#rnConfig'
           },
         ]
       }
