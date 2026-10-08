@@ -45,7 +45,9 @@ createPage({
       })
     },
     onScanResult (event) {
-      this.scanResult = event.detail.result
+      this.setData({
+        scanResult: event.detail.result
+      })
     }
   }
 })

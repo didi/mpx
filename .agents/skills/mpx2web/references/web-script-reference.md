@@ -6,6 +6,8 @@
 
 - [`getCurrentInstance()` 差异](#getcurrentinstance-差异)
 - [与微信小程序的实例方法差异](#与微信小程序的实例方法差异)
+  - [`setData`](#setdata)
+  - [微信原生实例方法](#微信原生实例方法)
   - [组件实例查询](#组件实例查询)
   - [`triggerEvent` 的传播选项](#triggerevent-的传播选项)
   - [`$forceUpdate` 与 setup `forceUpdate`](#forceupdate-与-setup-forceupdate)
@@ -23,6 +25,43 @@ Web 返回 Vue 内部实例，小程序返回 MpxProxy，顶层结构不同。�
 ---
 
 ## 与微信小程序的实例方法差异
+
+### `setData`
+
+微信小程序实例提供 `this.setData(data, callback)`；Mpx Web 实例不提供 `this.setData`，setup context 中也没有 `setData`。转换已有小程序代码时，将状态更新改为 Mpx 响应式赋值，并保留原小程序和 Web 都能执行的同一份业务逻辑：
+
+- 已声明的顶层或深层字段直接赋值，例如 `this.count = 1`、`this.user.name = name`。
+- 给对象新增响应式字段时使用 `this.$set(object, key, value)`；按索引替换数组项时使用 `this.$set(array, index, value)` 或 `splice`。
+- `setData` 的路径 key 需要改为真实的属性访问。例如 `{ "user.name": name, "list[0].checked": true }` 改为 `this.user.name = name` 和 `this.list[0].checked = true`；动态路径应根据数据结构显式更新，不能继续调用 `setData`。
+- 原 `setData` 回调依赖视图更新完成时，状态赋值后使用 `this.$nextTick(callback)`；不依赖更新后视图时直接执行后续业务逻辑。
+- 不要改用带参数的 `this.$forceUpdate(data, callback)`：Web 的 `$forceUpdate()` 不消费这些参数。
+
+```js
+// 转换前：仅小程序实例提供 setData
+this.setData({
+  count: this.count + 1,
+  "user.name": name
+}, () => {
+  this.measureLayout()
+})
+
+// 转换后：Mpx 小程序与 Web 可共用
+this.count += 1
+this.user.name = name
+this.$nextTick(() => {
+  this.measureLayout()
+})
+```
+
+### 微信原生实例方法
+
+Mpx Web 实例不提供下列方法。仅在源码直接调用时处理，不能增加同名空方法让代码表面通过：
+
+| 方法 | 转换规则 |
+| --- | --- |
+| `hasBehavior` | 分支依赖 Behavior 注入的方法时检查该方法；确实判断 Behavior 身份时由 Behavior 混入显式布尔标记。不要在 Web 固定返回 `false`。 |
+| `groupSetData` | 删除分组外壳，执行原 callback 中的业务更新，并按上一节把内部 `setData` 改为响应式赋值；更新后逻辑只保留一次 `$nextTick`。 |
+| `selectOwnerComponent` | 发送动作或数据时使用事件，读取 owner 数据时使用 prop，已有固定 `relations` 时使用 `getRelationNodes()`，跨层或插槽场景使用 provide/inject。不要替换成 `$parent`。 |
 
 ### 组件实例查询
 

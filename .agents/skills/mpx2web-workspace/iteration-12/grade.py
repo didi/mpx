@@ -503,6 +503,13 @@ def check_eval_2(root):
     content_blocks = blocks(content)
     scan_blocks = blocks(scan)
     catalog_blocks = blocks(catalog)
+    scan_result_body = method_body(content_blocks["script"], "onScanResult")
+    set_data_ok = (
+        bool(scan_result_body)
+        and "event.detail.result" in scan_result_body
+        and bool(re.search(r"\bthis\.scanResult\s*=", scan_result_body))
+        and not re.search(r"\bthis\.setData\s*\(", content_blocks["script"])
+    )
     input_draft = re.search(r"<input\b[^>]*\bvalue\s*=\s*['\"]\{\{\s*([A-Za-z_$][\w$]*)\s*\}\}['\"]", content, re.S)
     draft_name = input_draft.group(1) if input_draft else ""
     confirm_body = re.search(r"confirmRename\s*\([^)]*\)\s*\{(?P<body>[\s\S]*?)\n\s*\}", content_blocks["script"])
@@ -662,6 +669,7 @@ def check_eval_2(root):
     )
     state_ok = all_present(store, r"confirmSelection\s*\(\)[\s\S]*?regionText[\s\S]*?selectedStoreName") and all_present(catalog, r"openFilter\s*\(\)[\s\S]*?draftCategory\s*=\s*this\.appliedCategory[\s\S]*?filterVisible\s*=\s*true", r"cancelFilter\s*\(\)[\s\S]*?filterVisible\s*=\s*false", r"confirmFilter\s*\(\)[\s\S]*?appliedCategory\s*=\s*this\.draftCategory[\s\S]*?filterVisible\s*=\s*false", r"filteredProducts\s*\(\)[\s\S]*?this\.appliedCategory")
     return assertion_rows(2, {
+        "C3.1": set_data_ok,
         "C3.2": edit_chain,
         "C3.3": scanner_ok,
         "C3.4": video_ok,

@@ -238,7 +238,7 @@ class RunnerTests(unittest.TestCase):
 
     def test_eval_schema_matches_rn17_grading_shape(self):
         config, _ = runner.load_configs()
-        self.assertEqual([len(item["assertions"]) for item in config["evals"]], [7, 5, 9, 5])
+        self.assertEqual([len(item["assertions"]) for item in config["evals"]], [7, 5, 10, 5])
         self.assertEqual(config["scoring"]["grader_method"], "deterministic_python_static_checks")
         for item in config["evals"]:
             self.assertNotIn("scope_checks", item)

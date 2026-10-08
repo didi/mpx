@@ -3,7 +3,7 @@
   "iteration": 12,
   "suite_revision": "rn17-deterministic-grading-20260923",
   "status": "ready_for_deterministic_evaluation",
-  "description": "四个静态 eval：Web 基础适配、从零生成资料页、业务能力兼容、Mpx Web SSR。26 项使用与 Mpx2RN iteration-17 一致的二元断言和 Python 确定性检查，Has/No 共用输入与规则。",
+  "description": "四个静态 eval：Web 基础适配、从零生成资料页、业务能力兼容、Mpx Web SSR。27 项使用与 Mpx2RN iteration-17 一致的二元断言和 Python 确定性检查，Has/No 共用输入与规则。",
   "runner": {
     "enabled": true,
     "base": "../../mpx2rn-workspace/iteration-17/run_evals.py",
@@ -164,6 +164,10 @@
         "src/pages/catalog/index.mpx"
       ],
       "assertions": [
+        {
+          "id": "C3.1",
+          "text": "状态更新：源码中的 this.setData 已改为两端可共用的 Mpx 响应式赋值，Web 不调用不存在的实例方法且扫码结果链路保持有效"
+        },
         {
           "id": "C3.2",
           "text": "名称编辑：Web 具备输入、确认赋值和取消不赋值链路，微信原交互保持有效"

@@ -14,8 +14,8 @@ def verdicts(rows):
 class DeterministicGradeTests(unittest.TestCase):
     def test_assertion_counts_match_eval_config(self):
         config = grade.load_config()
-        self.assertEqual([len(item['assertions']) for item in config['evals']], [7, 5, 9, 5])
-        self.assertEqual(sum(len(item['assertions']) for item in config['evals']), 26)
+        self.assertEqual([len(item['assertions']) for item in config['evals']], [7, 5, 10, 5])
+        self.assertEqual(sum(len(item['assertions']) for item in config['evals']), 27)
 
     def test_same_sources_always_return_same_results(self):
         for eval_id, checker in grade.CHECKERS.items():
@@ -27,7 +27,7 @@ class DeterministicGradeTests(unittest.TestCase):
         expected = {
             0: {'mpx2web': (7, []), 'no_skill': (6, ['C4.3'])},
             1: {'mpx2web': (5, []), 'no_skill': (4, ['C2.5'])},
-            2: {'mpx2web': (8, ['C5.2']), 'no_skill': (1, ['C3.2', 'C3.3', 'C3.4', 'C3.5', 'C3.6', 'C5.1', 'C5.2', 'C5.3'])},
+            2: {'mpx2web': (9, ['C5.2']), 'no_skill': (2, ['C3.2', 'C3.3', 'C3.4', 'C3.5', 'C3.6', 'C5.1', 'C5.2', 'C5.3'])},
             3: {'mpx2web': (5, []), 'no_skill': (4, ['C6.1'])},
         }
         for eval_id, groups in expected.items():
