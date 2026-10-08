@@ -3,7 +3,7 @@
  *
  * 此文件用于 canIUse 功能，只声明支持的 API，不导入任何实现模块
  * 避免在判断 API 可用性时触发原生模块的加载
- * 对应 platform/index.js 中的所有导出，且在 RN 平台有实际实现
+ * 对应 platform/index.js 中在 RN 平台具备可用实现且符合 API 核心语义的导出
  */
 export const SUPPORTED_APIS = [
   // action-sheet
@@ -19,10 +19,18 @@ export const SUPPORTED_APIS = [
   'offAppHide',
   'onError',
   'offError',
+  'onUnhandledRejection',
+  'offUnhandledRejection',
+  'onLazyLoadError',
+  'offLazyLoadError',
 
   // base
   'base64ToArrayBuffer',
   'arrayBufferToBase64',
+  'canIUse',
+
+  // camera
+  'createCameraContext',
 
   // create-intersection-observer
   'createIntersectionObserver',
@@ -36,10 +44,7 @@ export const SUPPORTED_APIS = [
   'offNetworkStatusChange',
 
   // image
-  'previewImage',
-  'compressImage',
   'getImageInfo',
-  'chooseMedia',
 
   // keyboard
   'onKeyboardHeightChange',
@@ -48,12 +53,6 @@ export const SUPPORTED_APIS = [
 
   // location
   'getLocation',
-  'openLocation',
-  'chooseLocation',
-  'onLocationChange',
-  'offLocationChange',
-  'startLocationUpdate',
-  'stopLocationUpdate',
 
   // make-phone-call
   'makePhoneCall',
@@ -72,7 +71,6 @@ export const SUPPORTED_APIS = [
   'navigateTo',
   'navigateBack',
   'reLaunch',
-  'switchTab',
 
   // set-navigation-bar
   'setNavigationBarTitle',
@@ -83,15 +81,10 @@ export const SUPPORTED_APIS = [
 
   // storage
   'setStorage',
-  'setStorageSync',
   'getStorage',
-  'getStorageSync',
   'getStorageInfo',
-  'getStorageInfoSync',
   'removeStorage',
-  'removeStorageSync',
   'clearStorage',
-  'clearStorageSync',
 
   // page-scroll-to
   'pageScrollTo',
@@ -158,7 +151,7 @@ export const SUPPORTED_APIS = [
 
 /**
  * 支持的类及其方法
- * 对应各个类文件中定义的类和方法
+ * 对应各个类文件中有实际实现的类和方法
  */
 export const SUPPORTED_OBJECTS = {
   // SelectorQuery 相关
@@ -166,7 +159,6 @@ export const SUPPORTED_OBJECTS = {
     'in',
     'select',
     'selectAll',
-    'selectViewport',
     'exec'
   ],
 
@@ -175,7 +167,8 @@ export const SUPPORTED_OBJECTS = {
     'scrollOffset',
     'fields',
     'context',
-    'node'
+    'node',
+    'ref'
   ],
 
   // IntersectionObserver
@@ -200,22 +193,15 @@ export const SUPPORTED_OBJECTS = {
     'rotateX',
     'rotateY',
     'rotateZ',
-    'rotate3d',
     'scale',
     'scaleX',
     'scaleY',
-    'scaleZ',
-    'scale3d',
     'translate',
     'translateX',
     'translateY',
-    'translateZ',
-    'translate3d',
     'skew',
     'skewX',
     'skewY',
-    'matrix',
-    'matrix3d',
     'step',
     'export'
   ],
@@ -231,9 +217,7 @@ export const SUPPORTED_OBJECTS = {
   ],
 
   RequestTask: [
-    'abort',
-    'onHeadersReceived',
-    'offHeadersReceived'
+    'abort'
   ],
 
   // camera

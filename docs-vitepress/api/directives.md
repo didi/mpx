@@ -684,84 +684,62 @@ capture-catch中断捕获阶段和取消冒泡阶段
 
 ## @mode
 
+`@mode` 只负责按目标平台筛选节点或属性。命中后仍继承资源的 `srcMode` 并执行正常的平台转换；若内容是完整的目标平台原生语法，请使用 SFC 区块 `src-mode` 或资源级 `srcModeRules` 声明源码方言。
+
 `type mode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa' | 'ios' | 'android' | 'harmony'`
 
 ### 属性中使用 {#use-in-attribute}
 跨平台输出场景下，Mpx 框架允许用户在组件上使用 @ 和 | 符号来指定某个节点或属性只在某些平台下有效。
 
 ```html
-<button
-  open-type@wx|swan|ios="getUserInfo"
-  bindgetuserinfo@wx|swan|ios="getUserInfo"
-  open-type@ali|ios="getAuthorize"
-  scope@ali="userInfo"
-  enable-background@ios|android="{{ true }}"
-  onTap@ali="onTap">
-  获取用户信息
-</button>
+<view
+  class@wx="wechat"
+  class@ali="alipay"
+  bindtap@wx|ali="handleTap">
+  平台差异内容
+</view>
 ```
 例如在上述示例中：
-* 在支付宝小程序与微信和百度小程序等平台分别生效的 open-type 等属性
-* 在输出iOS或android平台时，enable-background 属性生效
-* 以及事件绑定或其他属性灵活的进行条件编译
+
+* 输出微信小程序时保留 `class="wechat"` 和 `bindtap="handleTap"`
+* 输出支付宝小程序时保留 `class="alipay"`，并将命中的 `bindtap` 按照资源 `srcMode` 正常转换为 `onTap`
 
 假设当前 srcMode 为 wx，目标平台为 ali，则输出产物为：
 ```html
-<button
-  open-type="getAuthorize"
-  scope="userInfo"
-  onTap="onTap">
-  获取用户信息
-</button>
-```
-假设当前 srcMode 为 wx，目标平台为 ios，则输出产物为：
-```html
-<button
-  open-type="getAuthorize"
-  bindgetuserinfo="getUserInfo"
-  open-type="getAuthorize"
-  enable-background="{{ true }}"
-  >
-  获取用户信息
-</button>
+<view class="alipay" onTap="handleTap">
+  平台差异内容
+</view>
 ```
 
 ### 节点中使用 {#use-in-node}
 同时，该指令也可以作用在单个节点上，来对节点进行跨平台条件判断。
 
-但需要注意的是，该指令作用在单个节点时，节点仅在目标平台输出，同时节点自身属性不会进行跨平台语法转换，不过其子节点不受影响。
+`@mode` 只负责筛选节点。节点命中后会继承资源 `srcMode`，节点自身及其子节点都会执行正常的平台语法转换，条件属性不会保留在输出中。
 
 ```html
-<!--当srcMode为wx，跨平台输出ali时-->
-<!--错误写法-->
-<view @ali bindtap="someClick">
-    <view wx:if="{{flag}}">text</view>
+<!-- srcMode 为 wx、输出 ali 时的源码 -->
+<view @ali bindtap="otherClick">
+  <view bindtap="someClick">tap click</view>
 </view>
-<!--正确写法-->
-<view @ali onTap="someClick">
-    <view wx:if="{{flag}}">text</view>
+
+<!-- 输出 ali 产物 -->
+<view onTap="otherClick">
+  <view onTap="someClick">tap click</view>
 </view>
 ```
-::: danger
-另外在跨端输出 React Native 和 H5 时，不要在基础组件节点上使用 @mode 指令，仅可在自定义组件节点使用 @mode 指令
-:::
-```html
-<!--错误写法-->
-<view @ios>测试数据</view>
-```
+
+跨端输出 React Native 和 Web 时，基础组件和自定义组件节点都可以使用 `@mode`。其中基础组件仍会按照资源 `srcMode` 进入正常转换；完整 RN 原生模板需通过 SFC 区块 `src-mode` 或资源级 `srcModeRules` 声明源码方言。
 
 ## @_mode
 
 `type _mode = '_wx' | '_ali' | '_qq' | '_swan' | '_tt' | '_web' | '_qa' ｜ '_ios' | '_android' | '_harmony'`
 
-有时开发者期望使用 @mode 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力。
+`@_mode` 是 `@mode` 的兼容别名，两者筛选和转换行为完全一致。新代码建议使用 `@mode`。
+
 ```html
-<!--srcMode为 wx，输出 ali 时，bindtap 会被正常转换为 onTap-->
+<!-- 与 <view @ali bindtap="someClick">test</view> 行为一致 -->
 <view @_ali bindtap="someClick">test</view>
 ```
-在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
-
-在跨端输出 React Native 和 H5 时，可以在节点上使用该属性。
 
 ## @env
 
@@ -810,4 +788,3 @@ env 也可在单个节点上进行条件编译：
 ```html
 <view mpxTagName@swan="cover-view">will be cover-view in swan</view>
 ```
-

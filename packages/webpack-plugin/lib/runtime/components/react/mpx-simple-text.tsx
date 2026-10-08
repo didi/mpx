@@ -8,7 +8,7 @@ import { TextPassThroughContext, TextPassThroughContextValue } from './context'
 
 const SimpleText = (props: TextProps): JSX.Element => {
   let idTotal = -1
-  if (__mpx_perf_framework__) idTotal = perf.scopeStart('simple-text:render:total')
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('simple-text:render')
 
   // ───── style 阶段 ─────
   let idStyle = -1

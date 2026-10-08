@@ -1,0 +1,39 @@
+{
+  "name": "mpx2rn-skill-eval-workspace",
+  "private": true,
+  "scripts": {
+    "compile-validate": "node ../mpx2rn/scripts/compile-validate.js",
+    "lint": "eslint --ext .js,.ts,.mpx"
+  },
+  "dependencies": {
+    "@mpxjs/api-proxy": "^2.11.0",
+    "@mpxjs/core": "^2.11.0",
+    "react": "^18.3.1",
+    "react-native": "^0.77.2",
+    "react-native-ble-manager": "^12.5.1",
+    "react-native-reanimated": "^3.16.7",
+    "react-native-wifi-reborn": "^4.13.6",
+    "vue": "^2.7.16",
+    "vue-demi": "^0.14.10"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-runtime": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@babel/runtime-corejs3": "^7.29.7",
+    "@mpxjs/babel-plugin-inject-page-events": "^2.10.21",
+    "@mpxjs/cli-shared-utils": "^2.0.0",
+    "@mpxjs/eslint-config": "^2.0.14",
+    "@mpxjs/mpx-cli-service": "^2.0.0",
+    "@mpxjs/vue-cli-plugin-mpx": "^2.0.0",
+    "@mpxjs/webpack-plugin": "^2.11.0",
+    "@vue/cli-service": "~5.0.0",
+    "eslint": "^9.39.5",
+    "less": "^4.9.0",
+    "less-loader": "^11.1.4",
+    "process": "^0.11.10",
+    "typescript": "^4.9.5",
+    "webpack": "^5.83.1"
+  }
+}

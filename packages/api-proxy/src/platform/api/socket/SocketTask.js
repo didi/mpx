@@ -4,13 +4,17 @@ import { type } from '@mpxjs/utils'
 const socketTasks = new Set()
 
 class SocketTask {
-  constructor (url, protocols) {
+  constructor (url, protocols, header) {
     this._openCb = null
     this._closeCb = null
     this._messageCb = null
     this._errorCb = null
 
-    if (protocols && protocols.length > 0) {
+    if (header) {
+      this._socket = new WebSocket(url, protocols, {
+        headers: header
+      })
+    } else if (protocols && protocols.length > 0) {
       this._socket = new WebSocket(url, protocols)
     } else {
       this._socket = new WebSocket(url)

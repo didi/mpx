@@ -5,12 +5,14 @@
 ## 本地开发
 
 ```sh
-# 写作时
+# 按需本地预览
 npm run docs:dev
 
 # 部署时构建静态产物（输出到 .vitepress/dist）
 npm run docs:build
 ```
+
+仅修改文档时，无需执行 `npm run docs:dev` 或 `npm run docs:build` 进行本地验证；需要检查实际渲染效果时，可按需启动本地预览。
 
 ## 编写规范
 
@@ -116,7 +118,7 @@ npm run docs:build
 3. 同步 [.vitepress/config.ts](.vitepress/config.ts) 的侧边栏与导航
 4. 如新增子目录，同步对应目录的 `index.md`
 5. 全局检查跨文档链接是否需要修正
-6. `npm run docs:dev` 本地预览，确认侧边栏、链接、图片均渲染正常
+6. 如需检查实际渲染效果，按需执行 `npm run docs:dev` 本地预览；文档修改无需进行本地构建验证
 
 ## 路径指引
 

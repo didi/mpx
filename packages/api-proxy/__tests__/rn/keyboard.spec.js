@@ -9,17 +9,20 @@ const mockAddListener = jest.fn(eventName => {
   return subscription
 })
 const mockRemoveAllListeners = jest.fn()
+const mockDismiss = jest.fn()
 
 jest.mock('react-native', () => ({
   Keyboard: {
     addListener: mockAddListener,
-    removeAllListeners: mockRemoveAllListeners
+    removeAllListeners: mockRemoveAllListeners,
+    dismiss: mockDismiss
   }
 }), { virtual: true })
 
 const {
   onKeyboardHeightChange,
-  offKeyboardHeightChange
+  offKeyboardHeightChange,
+  hideKeyboard
 } = require('../../src/platform/api/keyboard/index.ios')
 
 describe('RN keyboard', () => {
@@ -28,6 +31,7 @@ describe('RN keyboard', () => {
     mockSubscriptions.length = 0
     mockAddListener.mockClear()
     mockRemoveAllListeners.mockClear()
+    mockDismiss.mockReset()
   })
 
   it('should only remove owned subscriptions when called without callback', () => {
@@ -65,5 +69,24 @@ describe('RN keyboard', () => {
 
     // 首轮订阅释放后再次注册，需要重新创建两个底层订阅。
     expect(mockAddListener).toHaveBeenCalledTimes(4)
+  })
+
+  it('should include the API name in the hideKeyboard fail errMsg', () => {
+    const fail = jest.fn()
+    const complete = jest.fn()
+    mockDismiss.mockImplementation(() => {
+      throw new Error('dismiss failed')
+    })
+
+    hideKeyboard({
+      fail,
+      complete
+    })
+
+    const result = {
+      errMsg: 'hideKeyboard:fail dismiss failed'
+    }
+    expect(fail).toHaveBeenCalledWith(result)
+    expect(complete).toHaveBeenCalledWith(result)
   })
 })

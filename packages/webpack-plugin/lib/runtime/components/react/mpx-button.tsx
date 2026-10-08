@@ -416,7 +416,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     )
   )
 
-  const finalComponent = enableHover
+  const finalComponent = gesture
     ? createElement(GestureDetector, { gesture: gesture as PanGesture }, baseButton)
     : baseButton
 

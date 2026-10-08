@@ -52,6 +52,8 @@ Mpx 会根据当前编译的目标平台（wx/ali/web/ios/android/harmony），�
 | refresher-enabled       | Boolean     | false    | 开启自定义下拉刷新 |
 | refresher-triggered     | Boolean     | false    | 设置当前下拉刷新状态，true 表示已触发 |
 | show-scrollbar          | Boolean     | true     | 滚动条显隐控制 |
+| enable-item-exposure    | Boolean     | false    | 开启列表项曝光通知 |
+| item-exposure-threshold | Number      | 0        | 列表项露出比例达到多少后触发曝光通知，取值 0-100 |
 | simultaneous-handlers   | Array\<Object> | []    | RN 环境特有属性，允许多个手势同时识别和处理 |
 | wait-for                | Array\<Object> | []    | RN 环境特有属性，允许延迟激活处理某些手势 |
 
@@ -86,6 +88,37 @@ height: {
 | bindscroll                | 滚动时触发，`event.detail.scrollTop` 返回纵向滚动位置            |
 | bindscrolltolower         | 滚动到底部/触底通知                 |
 | bindrefresherrefresh      | 自定义下拉刷新被触发                |
+| binditemexposure          | 列表项露出比例达到阈值时触发    |
+
+#### item 曝光事件说明 {#section-list-item-exposure}
+
+开启 `enable-item-exposure` 后，section-list 会使用 RN 的 `onViewableItemsChanged` 追踪 `recycle-item`、`section-header`、`section-footer` 的可见状态；当某个 item 露出比例达到 `item-exposure-threshold` 时，通过 `binditemexposure` 批量通知业务。
+
+```js
+{
+  items: [
+    {
+      index: 12,
+      itemData: {},
+      layout: {
+        offset: 650,
+        length: 100
+      },
+      threshold: 50
+    }
+  ],
+  time: 1710000000000
+}
+```
+
+**说明：**
+- `item-exposure-threshold` 为 item 自身可见百分比阈值，0 表示露出任意像素即可触发，100 表示完全可见时触发。
+- `index` 为该项在 `list-data` 中的原始下标，`itemData` 为对应原始数据；无法获取原始数据时为 `null`。
+- `layout` 为该项在 section-list 内容区域中的布局信息，`offset` 为该项顶部相对列表内容起点的偏移量，`length` 为该项高度；如使用了 `list-header`，`offset` 会包含 `list-header-height` 的偏移；无法获取布局信息时 `offset` 和 `length` 兜底为 `0`。
+- 会统计 `recycle-item`、`section-header`、`section-footer`，不统计 `list-header`、`list-footer`。
+- `section-header` 曝光统计仅支持 `enable-sticky=false` 场景；开启 `enable-sticky` 时暂不支持统计 `section-header` 曝光。
+- 同一个 item 达到阈值后不会在停留期间重复触发；当它划出列表可视区域后会重置本轮状态，再次划入并达到阈值时可再次触发。
+- `enable-item-exposure` 与 `item-exposure-threshold` 不支持运行时动态修改， 请在组件初始化时确定。
 
 ### 方法 {#section-list-methods}
 

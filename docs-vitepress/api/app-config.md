@@ -178,3 +178,32 @@ mpx.config.webConfig.routeConfig = {
 mpx.config.webConfig.disablePageTransition = true
 ```
 此处的 `disablePageTransition` 后续将被废弃，请使用编译阶段的[disablePageTransition](compile.md#webconfig)进行配置
+
+### webConfig.enableTitleBar
+
+`boolean = false`
+
+是否在 Web 输出时启用内置标题栏（`mpx-titlebar`）组件。默认为 `false`，即不渲染标题栏。
+
+设为 `true` 后，Mpx 会在每个页面的根节点外层自动注入 `<mpx-titlebar>` 组件，读取 `app.json` 的 `window` 配置及当前页面 json 配置，渲染与小程序视觉一致的 fixed 标题栏（含安全区适配与返回按钮）。
+
+> **注意**：若页面 json 中将 `navigationStyle` 配置为 `'custom'`，则该页面的标题栏会自动隐藏，以支持自定义导航栏场景。
+
+```js
+import mpx from '@mpxjs/core'
+
+mpx.config.webConfig.enableTitleBar = true
+```
+
+### webConfig.safeAreaInsetTop
+
+`number = 24`
+
+在 **Android** 设备上，标题栏顶部安全区（状态栏）的高度（单位：px）。仅在 `enableTitleBar` 为 `true` 且非 iOS 设备时生效；iOS 设备会自动使用 `env(safe-area-inset-top)` 获取安全区高度，无需手动配置。
+
+```js
+import mpx from '@mpxjs/core'
+
+// 将 Android 状态栏高度设为 28px（默认 24px）
+mpx.config.webConfig.safeAreaInsetTop = 28
+```

@@ -127,11 +127,11 @@ module.exports = defineConfig({
 暂时只支持微信为源 mode 做跨平台，为其他时，mode 必须和 srcMode 保持一致。
 :::
 
-### modeRules
+### srcModeRules
 
 `{ [key: string]: Rules }`
 
-批量指定文件mode，用于条件编译场景下使用某些单小程序平台的库时批量标记这些文件的mode为对应平台，而不再走转换规则。
+按输出平台批量标记使用该平台源码方言的资源。构建时只读取当前输出 `mode` 对应的规则，通过 `include`/`exclude` 匹配资源；命中后将资源 `srcMode` 标记为当前 `mode`，其他平台规则在本次构建中不会生效。
 
 ```js
 // vue.config.js
@@ -139,7 +139,7 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        modeRules: {
+        srcModeRules: {
           ali: {
             include: [resolve('node_modules/vant-aliapp')]
           }
@@ -149,6 +149,8 @@ module.exports = defineConfig({
   }
 })
 ```
+
+旧 `modeRules` 仍作为兼容别名，但不能与 `srcModeRules` 同时配置。依赖 `.ali.mpx`、`mode="ali"` 或 `@ali` 跳过转换的项目，需要对完整支付宝原生资源配置 `srcModeRules.ali`，或在 SFC 区块上声明 `src-mode="ali"`。区块 `src-mode` 仅在等于当前输出 `mode` 时生效；`<template src>` 会读取该属性，而模板内容中的 `<import>` / `<include>` 不继承引用方 `srcMode`，需通过 `srcModeRules` 对被引用资源本身进行声明。
 
 ### externalClasses
 
@@ -840,6 +842,16 @@ module.exports = defineConfig({
 
 为 `true` 时 **禁用** 页面切换动画；设为 **`false`** 可 **开启** 切换过渡效果。
 
+#### webConfig.asyncCommonSubpackage
+
+`boolean = true`
+
+控制 Web 输出中被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
+
+
 #### webConfig.customBuiltInComponents {#webconfig-custombuiltincomponents}
 
 `Record<string, string> | undefined`
@@ -869,6 +881,7 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         webConfig: {
+          asyncCommonSubpackage: false,
           transRpxFn: function (match, $1) {
             if ($1 === '0') return $1
             return `${$1 * +(100 / 750).toFixed(8)}vw`
@@ -889,7 +902,7 @@ module.exports = defineConfig({
 
 ### rnConfig {#rn-config}
 
-**`mode` 为输出 React Native（如 `react`）时**使用的编译期配置对象，由 `MpxWebpackPlugin` 传入 loader 上下文，并会挂到运行时的 `mpx.config.rnConfig` 上供 RN 逻辑读取（与小程序 / Web 无关）。
+**`mode` 为 `ios` / `android` / `harmony` 时**使用的编译期配置对象，由 `MpxWebpackPlugin` 传入 loader 上下文。它与运行时的 `mpx.config.rnConfig` 是独立的配置入口，不会自动整体同步。
 
 #### rnConfig.projectName
 
@@ -902,6 +915,48 @@ module.exports = defineConfig({
 `boolean = true`
 
 为 `true` 时，RN 输出下页面与组件可走异步分包与 `import()` 等逻辑；为 `false` 时关闭相关能力。插件初始化时若未传入则默认为 `true`。
+
+#### rnConfig.asyncCommonSubpackage
+
+`boolean = true`
+
+控制 RN 输出中被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
+
+#### rnConfig.transSubpackageRules {#rnconfig-transsubpackagerules}
+
+`Array`
+
+仅在输出 RN（`ios` / `android` / `harmony`）时生效，用于将指定分包中的页面、组件或 `require.async` 引用的模块转移到其他分包或主包。
+
+- **from**：`Array<string>`，源分包名称列表。
+- **to**：`string`，目标分包名称；`''`（空字符串）表示主包。
+
+```js
+// mpx.config.js
+module.exports = {
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        rnConfig: {
+          transSubpackageRules: [
+            {
+              from: ['comp-pages'],
+              to: 'common'
+            },
+            {
+              from: ['sub1'],
+              to: ''
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+```
 
 #### rnConfig.asyncChunk
 
@@ -939,6 +994,7 @@ module.exports = defineConfig({
         rnConfig: {
           projectName: 'MyMpxApp',
           supportSubpackage: true,
+          asyncCommonSubpackage: false,
           asyncChunk: {
             timeout: 10000,
             fallback: path.resolve(__dirname, 'src/rn/PageFallback.mpx'),
@@ -1246,39 +1302,6 @@ module.exports = defineConfig({
 * 若placeholder配置使用自定义组件，注意一定要配置 placeholder 中的 resource 字段
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
-
-### transSubpackageRules
-
-`Array`
-
-仅在输出 RN (ios/android/harmony) 时生效。
-
-用于配置分包资源转移规则，可将指定分包中的页面或组件资源转移到其他分包或主包中。
-
-- **from**: `Array<string>` 源分包名称列表
-- **to**: `string` 目标分包名称。当为 `''` (空字符串) 时，表示输出到主包
-
-#### 示例 {#example}
-
-```js
-// mpx.config.js
-module.exports = {
-  pluginOptions: {
-    mpx: {
-      transSubpackageRules: [
-        {
-          from: ['comp-pages'],
-          to: 'common'
-        },
-        {
-          from: ['sub1'],
-          to: ''
-        }
-      ]
-    }
-  }
-}
-```
 
 ### retryRequireAsync
 
@@ -1662,6 +1685,8 @@ module.exports = defineConfig({
 
 配置需要扫描的文件目录
 
+只有命中 `scan` 规则的模板会由 UnoCSS 扫描和转换。未命中规则的模板不会处理 UnoCSS 特殊类名；其中 `wx:class` 对象字面量的 key 仍需满足小程序 WXS 的标识符限制。
+
 ```js
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
@@ -1676,34 +1701,6 @@ module.exports = defineConfig({
     }
   }
 })
-```
-
-### escapeMap
-
-`object`
-
-针对原子类中出现的`[` `(` `,`等特殊字符，在web中会通过转义字符`\`进行转义，由于小程序环境下不支持css选择器中出现`\`转义字符，我们内置支持了一套不带`\`的转义规则对这些特殊字符进行转义，同时替换模版和css文件中的类名，内建的默认转义规则，可自定义转译规则
-```js
-// vue.config.js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      unocss: {
-        escapeMap: {
-          ':': '_d_',
-        }
-      }
-    }
-  }
-})
-```
-```css
-  <view class="dark:text-green-400"/>
-```
-将会转化为
-```css
-  .dark .dark_d_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
 ```
 
 ### root

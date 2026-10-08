@@ -11,6 +11,7 @@ import { useCallback, forwardRef, JSX, createElement, MutableRefObject } from 'r
 import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 
 import MpxView, { _ViewProps } from './mpx-view'
+import { extendObject, omit } from './utils'
 
 interface _NavigatorProps extends _ViewProps {
   ['open-type']: 'navigate' | 'redirect' | 'switchTab' | 'reLaunch' | 'navigateBack'
@@ -46,10 +47,11 @@ const _Navigator = forwardRef<any, _NavigatorProps>((props, ref): JSX.Element =>
     }
   }, [openType, url, delta])
 
-  const innerProps = {
-    ref,
-    bindtap: handleClick
-  }
+  const innerProps = extendObject(
+    {},
+    omit(props, ['children', 'open-type', 'url', 'delta']),
+    { ref, bindtap: handleClick }
+  )
 
   return createElement(MpxView, innerProps, children)
 })

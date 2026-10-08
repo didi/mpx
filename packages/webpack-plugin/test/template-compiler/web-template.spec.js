@@ -1,4 +1,5 @@
 const compiler = require('../../lib/template-compiler/compiler')
+const processTemplate = require('../../lib/web/processTemplate')
 const templateShared = require('../../lib/web/template-shared')
 const { MPX_TEMPLATE_COMPONENT_PREFIX } = require('../../lib/utils/const')
 
@@ -21,6 +22,52 @@ function createWebParseOptions (overrides = {}) {
 }
 
 describe('Web template support (compiler + template-shared)', () => {
+  it('preserves srcMode for mode block', (done) => {
+    const wxsContentMap = {}
+    const loaderContext = {
+      resource: '/test.mpx',
+      resourcePath: '/test.mpx',
+      getMpx: () => ({
+        projectRoot: '/project',
+        mode: 'web',
+        env: '',
+        defs: {},
+        wxsContentMap,
+        externalClasses: [],
+        webConfig: {},
+        globalComponents: {}
+      }),
+      emitWarning: jest.fn(),
+      emitError: jest.fn()
+    }
+    const template = {
+      tag: 'template',
+      attrs: {
+        mode: 'web'
+      },
+      mode: 'web',
+      content: '<view wx:if="{{show}}">Main</view>'
+    }
+
+    processTemplate(template, {
+      loaderContext,
+      hasScoped: false,
+      hasComment: false,
+      isNative: false,
+      srcMode: 'wx',
+      moduleId: 'm123',
+      ctorType: 'component',
+      usingComponentsInfo: {},
+      originalUsingComponents: {},
+      componentGenerics: {},
+      componentPlaceholder: []
+    }, (err, result) => {
+      expect(err).toBeNull()
+      expect(result.output).toContain('<div v-if="(show)">Main</div>')
+      done()
+    })
+  })
+
   describe('compiler.parse / serialize', () => {
     it('collects import src into meta.imports and removes import from serialized tree', () => {
       const opts = createWebParseOptions()

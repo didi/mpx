@@ -14,8 +14,8 @@ export type KeyboardAvoidContextValue = MutableRefObject<{
   keyboardHeight?: number
   /** @internal bindfocus 异步延迟上报方法 */
   onKeyboardShow?: () => void
-  /** @internal 多个 Input 切换聚焦场景标记位 */
-  readyToShow?: boolean
+  /** @internal 切换 Input 时禁止 keyboardDidHide 主动失焦的截止时间 */
+  preventBlurUntil?: number
 } | null>
 
 export interface GroupValue {

@@ -13,6 +13,7 @@ function redirectTo (options = {}) {
     if (isTabBarPage(options.url, router)) {
       const res = { errMsg: 'redirectTo:fail can not redirectTo a tabBar page' }
       failHandle(res, options.fail, options.complete)
+      return
     }
     router.__mpxAction = { type: 'redirect' }
     if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
@@ -45,6 +46,7 @@ function navigateTo (options = {}) {
     if (isTabBarPage(options.url, router)) {
       const res = { errMsg: 'navigateTo:fail can not navigateTo a tabBar page' }
       failHandle(res, options.fail, options.complete)
+      return
     }
     const finalPath = resolvePath(options.url, router.currentRoute.path).slice(1)
     const eventChannel = new EventChannel()
@@ -138,8 +140,10 @@ function reLaunch (options = {}) {
         }
       )
     }
-    const res = { errMsg: 'reLaunch:ok' }
-    successHandle(res, options.success, options.complete)
+    if (delta > 0) {
+      const res = { errMsg: 'reLaunch:ok' }
+      successHandle(res, options.success, options.complete)
+    }
   }
 }
 
@@ -156,6 +160,7 @@ function switchTab (options = {}) {
       if (!isTabBarPage(options.url, router)) {
         const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page!' }
         failHandle(res, options.fail, options.complete)
+        return
       }
       router.__mpxAction = {
         type: 'switch',
@@ -180,6 +185,7 @@ function switchTab (options = {}) {
             failHandle(res, options.fail, options.complete)
           }
         )
+        return
       }
     }
     const res = { errMsg: 'switchTab:ok' }

@@ -25,6 +25,9 @@
 | [wx:for](/api/directives.html#wx-for) | ✅ | 列表渲染 |
 | [wx:for-item](/api/directives.html#wx-for-item) | ✅ | 指定循环项变量名 |
 | [wx:for-index](/api/directives.html#wx-for-index) | ✅ | 指定循环索引变量名 |
+| [wx:key](/api/directives.html#wx-key) | ✅ | 指定列表项的唯一标识 |
+
+> [!tip] RN 平台会将 `wx:key` 转换为 React 的 `key`。动态列表应优先使用稳定的业务唯一标识；`index`、`_`，以及对象列表中的 `*this` 或对象类型属性值，都会使用列表索引，仅适用于顺序固定的列表。
 
 #### 增强模板指令 {#enhanced-template-directives}
 
@@ -44,7 +47,7 @@
 | 指令 | 支持状态 | 说明 |
 |------|---------|------|
 | [@mode](../../api/directives.md#mode) | ✅ | 平台条件编译 |
-| [@_mode](/api/directives.html#mode-1) | ✅ | 平台条件编译（保留转换能力）|
+| [@_mode](/api/directives.html#mode-1) | ✅ | `@mode` 的兼容别名，筛选和转换行为一致 |
 | [@env](../../api/directives.md#env) | ✅ | 自定义环境条件编译 |
 | [mpxTagName](../../api/directives.md#mpxtagname) | ✅ | 动态标签名 |
 

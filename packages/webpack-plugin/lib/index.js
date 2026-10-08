@@ -83,6 +83,7 @@ const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
 const { startFSStripForCss, registerStripCompilation } = require('./style-compiler/strip-conditional')
+const injectAliCompatStyle = require('./utils/ali-compat-style')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
@@ -153,9 +154,6 @@ class MpxWebpackPlugin {
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
     }
-    if (options.transSubpackageRules && !isReact(options.mode)) {
-      warnings.push('MpxWebpackPlugin transSubpackageRules option only supports "ios", "android", or "harmony" mode')
-    }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
@@ -184,8 +182,10 @@ class MpxWebpackPlugin {
       const k = PERF_GROUPS[i]
       options.defs[`__mpx_perf_${k}__`] = perf[k]
     }
-    // 批量指定源码mode
-    options.modeRules = options.modeRules || {}
+    if (options.srcModeRules && options.modeRules) {
+      errors.push('MpxWebpackPlugin cannot use srcModeRules and modeRules at the same time!')
+    }
+    options.srcModeRules = options.srcModeRules || options.modeRules || {}
     options.generateBuildMap = options.generateBuildMap || false
     options.attributes = options.attributes || []
     options.externals = (options.externals || []).map((external) => {
@@ -218,8 +218,14 @@ class MpxWebpackPlugin {
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
+    options.webConfig.asyncCommonSubpackage = options.webConfig.asyncCommonSubpackage !== undefined ? options.webConfig.asyncCommonSubpackage : true
     options.rnConfig = options.rnConfig || {}
+    options.rnConfig.transSubpackageRules = options.rnConfig.transSubpackageRules || options.transSubpackageRules
+    if (options.rnConfig.transSubpackageRules && !isReact(options.mode)) {
+      warnings.push('MpxWebpackPlugin rnConfig.transSubpackageRules option only supports "ios", "android", or "harmony" mode')
+    }
     options.rnConfig.supportSubpackage = options.rnConfig.supportSubpackage !== undefined ? options.rnConfig.supportSubpackage : true
+    options.rnConfig.asyncCommonSubpackage = options.rnConfig.asyncCommonSubpackage !== undefined ? options.rnConfig.asyncCommonSubpackage : true
     options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
@@ -324,19 +330,15 @@ class MpxWebpackPlugin {
     })
   }
 
-  runModeRules (data) {
+  runSrcModeRules (data) {
     const { resourcePath, queryObj } = parseRequest(data.resource)
-    if (queryObj.mode) {
-      return
-    }
+    if (queryObj.srcMode) return
     const mode = this.options.mode
-    const modeRule = this.options.modeRules[mode]
-    if (!modeRule) {
-      return
-    }
-    if (matchCondition(resourcePath, modeRule)) {
-      data.resource = addQuery(data.resource, { mode })
-      data.request = addQuery(data.request, { mode })
+    const rule = this.options.srcModeRules[mode]
+    if (rule && matchCondition(resourcePath, rule)) {
+      const query = { srcMode: mode }
+      data.resource = addQuery(data.resource, query)
+      data.request = addQuery(data.request, query)
     }
   }
 
@@ -386,6 +388,7 @@ class MpxWebpackPlugin {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.filename to be ${outputFilename} only, custom options.output.filename will be ignored!`)
       }
       compiler.options.output.filename = compiler.options.output.chunkFilename = outputFilename
+      compiler.options.output.environment.globalThis = false
       if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
         compiler.options.optimization.chunkIds = 'total-size'
         compiler.options.optimization.moduleIds = 'natural'
@@ -393,6 +396,8 @@ class MpxWebpackPlugin {
         compiler.options.output.globalObject = 'g'
         // todo chunkLoadingGlobal不具备项目唯一性，在多构建产物混编时可能存在问题，尤其在支付宝使用全局对象传递的情况下
         compiler.options.output.chunkLoadingGlobal = 'c'
+      } else {
+        compiler.options.output.globalObject = '__mpx_chunk_global__'
       }
     }
 
@@ -405,10 +410,6 @@ class MpxWebpackPlugin {
       fileConditionRules: this.options.fileConditionRules
     }
     const mode = this.options.mode
-    if (mode === 'web' || mode === 'ios' || mode === 'android' || mode === 'harmony') {
-      // 'web' | 'ios' | 'android' | 'harmony' 下，使用implicitMode强制进行平台转换
-      addModeOptions.implicitMode = true
-    }
     if (mode === 'android' || mode === 'harmony') {
       // 'android' | 'harmony' 下，使用 mode = 'ios' 进行兼容兜底
       addModeOptions.defaultMode = 'ios'
@@ -685,7 +686,7 @@ class MpxWebpackPlugin {
           }, (chunk, set) => {
             compilation.addRuntimeModule(
               chunk,
-              new LoadAsyncChunkModule(this.options.rnConfig && this.options.rnConfig.asyncChunk && this.options.rnConfig.asyncChunk.timeout)
+              new LoadAsyncChunkModule()
             )
             return true
           })
@@ -853,7 +854,6 @@ class MpxWebpackPlugin {
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
-          transSubpackageRules: this.options.transSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
@@ -1304,18 +1304,22 @@ class MpxWebpackPlugin {
           let needInit = false
           if (isWeb(mpx.mode) || isReact(mpx.mode)) {
             // web独立处理splitChunk
-            if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'main')) {
-              splitChunksOptions.cacheGroups.main = {
+            if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'lib')) {
+              splitChunksOptions.cacheGroups.lib = {
                 chunks: 'initial',
                 name: 'lib/index', // web 输出 chunk 路径和 rn 输出分包格式拉齐
                 test: /[\\/]node_modules[\\/]/
               }
               needInit = true
             }
-            if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
-              splitChunksOptions.cacheGroups.async = {
-                chunks: 'async',
-                name: 'async-common/index',
+            const asyncCommonSubpackage = isWeb(mpx.mode)
+              ? this.options.webConfig.asyncCommonSubpackage
+              : this.options.rnConfig.asyncCommonSubpackage
+            const cacheGroupName = asyncCommonSubpackage ? 'async' : 'main'
+            if (!hasOwn(splitChunksOptions.cacheGroups, cacheGroupName)) {
+              splitChunksOptions.cacheGroups[cacheGroupName] = {
+                chunks: asyncCommonSubpackage ? 'async' : 'all',
+                name: asyncCommonSubpackage ? 'async-common/index' : mpx.appInfo.name,
                 minChunks: 2,
                 minSize: 1
               }
@@ -1498,26 +1502,32 @@ class MpxWebpackPlugin {
                 }
               }
             }
+            const originalRoot = tarRoot
+            // root仅用于包归属计算，不应进入最终module request
+            if (queryObj.root) request = addQuery(request, {}, false, ['root'])
             // TODO 后续考虑和 asyncSubpackageRules 配置合并
-            if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+            if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.rnConfig.transSubpackageRules, tarRoot)
 
             if (tarRoot && mpx.supportRequireAsync) {
-              // 删除root query
-              if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                // webpack 5.109.0 起不再在 AST 节点上提供 loc，需通过 parser.getLocation() 获取位置信息，
+                // 旧版本 webpack 不存在该方法，因此回退使用 expr.loc。
+                // 变更日志：https://github.com/webpack/webpack/releases/tag/v5.109.0
+                // 原始变更：https://github.com/webpack/webpack/pull/21451
+                const loc = typeof parser.getLocation === 'function' ? parser.getLocation(expr) : expr.loc
                 const depBlock = new AsyncDependenciesBlock(
                   {
                     name: tarRoot + '/index'
                   },
-                  expr.loc,
+                  loc,
                   request
                 )
                 const dep = new ImportDependency(request, expr.range, undefined, {
                   isRequireAsync: true,
                   retryRequireAsync: this.options.retryRequireAsync
                 })
-                dep.loc = expr.loc
+                dep.loc = loc
                 depBlock.addDependency(dep)
                 parser.state.current.addBlock(depBlock)
               } else {
@@ -1535,7 +1545,7 @@ class MpxWebpackPlugin {
             } else {
               const dep = new CommonJsAsyncDependency(request, expr.range)
               parser.state.current.addDependency(dep)
-              if (!tarRoot) {
+              if (!originalRoot) {
                 compilation.warnings.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
               }
             }
@@ -1667,7 +1677,7 @@ class MpxWebpackPlugin {
             const module = parser.state.module
             const current = parser.state.current
             const { queryObj, resourcePath } = parseRequest(module.resource)
-            const localSrcMode = queryObj.mode
+            const localSrcMode = queryObj.srcMode
             const globalSrcMode = mpx.srcMode
             const srcMode = localSrcMode || globalSrcMode
             const mode = mpx.mode
@@ -1733,6 +1743,10 @@ class MpxWebpackPlugin {
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
         if (isWeb(mpx.mode)) return
+
+        if (mpx.mode === 'ali' && mpx.appInfo.name) {
+          injectAliCompatStyle(compilation, mpx.appInfo.name + typeExtMap.styles)
+        }
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
@@ -2046,8 +2060,7 @@ try {
         }
 
         createData.request = stringifyLoadersAndResource(loaders, createData.resource)
-        // 根据用户传入的modeRules对特定资源添加mode query
-        this.runModeRules(createData)
+        this.runSrcModeRules(createData)
       })
     })
 

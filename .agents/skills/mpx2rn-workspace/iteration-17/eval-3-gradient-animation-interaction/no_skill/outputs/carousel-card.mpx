@@ -1,0 +1,382 @@
+<template>
+  <view class="carousel-card">
+    <view class="card-header">
+      <view class="gradient-overlay" wx:style="{{bgStyle}}">
+        <view wx:show="{{showGradient}}" class="gradient-fallback">
+          <view class="gradient-band gradient-band-1"></view>
+          <view class="gradient-band gradient-band-2"></view>
+          <view class="gradient-band gradient-band-3"></view>
+          <view class="gradient-band gradient-band-4"></view>
+        </view>
+        <view class="header-content">
+          <text class="card-title">{{title}}</text>
+          <text class="card-subtitle">{{subtitle}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card-body">
+      <view
+        wx:for="{{items}}"
+        wx:key="id"
+        class="card-item {{enableItemAnimation ? 'card-item-animated' : ''}}"
+        bindtap="handleItemTap(item.id)"
+      >
+        <image class="item-image" src="{{item.cover}}" mode="aspectFill" />
+        <view class="item-info">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-price">{{item.price}}</text>
+        </view>
+        <view wx:if="{{item.isNew}}" class="item-badge">
+          <text class="item-badge-text">NEW</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card-footer">
+      <view class="load-trigger" id="load-trigger">
+        <text wx:if="{{loading}}" class="loading-text">loading...</text>
+      </view>
+    </view>
+
+    <view
+      wx:if="{{showToast}}"
+      class="toast-mask"
+      bindtap="hideToast"
+    >
+      <view class="toast-content">
+        <text class="toast-text">{{toastMsg}}</text>
+      </view>
+    </view>
+    <view wx:else class="toast-placeholder"></view>
+  </view>
+</template>
+
+<script>
+import { createComponent, ref, onMounted, onUnmounted, computed } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    title: { type: String, value: 'Featured' },
+    subtitle: { type: String, value: '' }
+  },
+  setup (props, context) {
+    const items = ref([])
+    const loading = ref(false)
+    const showToast = ref(false)
+    const toastMsg = ref('')
+    const showGradient = ref(false)
+    const enableItemAnimation = ref(false)
+    let observer = null
+
+    const bgStyle = computed(() => {
+      if (!showGradient.value) return {}
+      // @mpx-if (mode === 'ios')
+      return { backgroundColor: '#ff6b6b' }
+      // @mpx-else
+      return { backgroundImage: 'linear-gradient(180deg, #ff6b6b, transparent)' }
+      // @mpx-endif
+    })
+
+    onMounted(() => {
+      setTimeout(() => {
+        showGradient.value = true
+      }, 0)
+
+      // @mpx-if (mode === 'wx')
+      initObserver()
+      // @mpx-else
+      loadMore()
+      // @mpx-endif
+    })
+
+    onUnmounted(() => {
+      if (observer) observer.disconnect()
+    })
+
+    function initObserver () {
+      observer = context.createIntersectionObserver()
+      observer
+        .relativeToViewport({ bottom: 100 })
+        .observe('#load-trigger', (res) => {
+          if (res.intersectionRatio > 0) loadMore()
+        })
+    }
+
+    function loadMore () {
+      if (loading.value) return
+      loading.value = true
+      mpx.request({
+        url: '/api/items',
+        data: { page: Math.floor(items.value.length / 10) + 1 },
+        success (res) {
+          // @mpx-if (mode === 'wx')
+          enableItemAnimation.value = false
+          // @mpx-endif
+          items.value = items.value.concat(res.data.list)
+          // @mpx-if (mode === 'wx')
+          context.nextTick(() => {
+            enableItemAnimation.value = true
+          })
+          // @mpx-endif
+        },
+        fail () {
+          toastMsg.value = '加载失败，请稍后重试'
+          showToast.value = true
+        },
+        complete () {
+          loading.value = false
+        }
+      })
+    }
+
+    function handleItemTap (id) {
+      mpx.navigateTo({ url: `/pages/detail/index?id=${id}` })
+    }
+
+    function hideToast () {
+      showToast.value = false
+    }
+
+    return {
+      items,
+      loading,
+      showToast,
+      toastMsg,
+      showGradient,
+      bgStyle,
+      enableItemAnimation,
+      handleItemTap,
+      hideToast
+    }
+  }
+})
+</script>
+
+<style>
+.carousel-card {
+  width: 100%;
+  min-height: 100%;
+  background-color: #fff;
+}
+
+/* @mpx-if (mode === 'wx') */
+.carousel-card {
+  min-height: 100vh;
+}
+/* @mpx-endif */
+
+.card-header {
+  position: relative;
+  height: 360rpx;
+  background-color: #ff8a8a;
+}
+
+.gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gradient-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* @mpx-if (mode === 'wx') */
+.gradient-fallback {
+  display: none;
+}
+/* @mpx-endif */
+
+.gradient-band {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 25%;
+}
+
+.gradient-band-1 {
+  top: 0;
+  background-color: rgba(255, 107, 107, 1);
+}
+
+.gradient-band-2 {
+  top: 25%;
+  background-color: rgba(255, 107, 107, 0.75);
+}
+
+.gradient-band-3 {
+  top: 50%;
+  background-color: rgba(255, 107, 107, 0.5);
+}
+
+.gradient-band-4 {
+  top: 75%;
+  background-color: rgba(255, 107, 107, 0.25);
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 30rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.card-title {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: bold;
+}
+
+.card-subtitle {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 8rpx;
+}
+
+.card-body {
+  padding: 20rpx;
+}
+
+.card-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-top: 24rpx;
+  padding-bottom: 24rpx;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #eee;
+}
+
+/* @mpx-if (mode === 'wx') */
+.card-item {
+  transition: background-color 0.3s ease;
+}
+
+.card-item:active {
+  background-color: #f5f5f5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-item-animated {
+  animation: fadeIn 0.5s ease forwards;
+}
+/* @mpx-endif */
+
+.item-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+}
+
+.item-info {
+  flex: 1;
+  margin-left: 24rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.item-name {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.item-price {
+  font-size: 32rpx;
+  color: #ff4d4f;
+  margin-top: 8rpx;
+  font-weight: bold;
+}
+
+.item-badge {
+  padding: 4rpx 12rpx;
+  background-color: #ff4d4f;
+  border-radius: 4rpx;
+}
+
+.item-badge-text {
+  color: #fff;
+  font-size: 20rpx;
+}
+
+.toast-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* @mpx-if (mode === 'wx') */
+.toast-mask {
+  position: fixed;
+}
+/* @mpx-endif */
+
+.toast-content {
+  padding: 24rpx 48rpx;
+  background-color: #fff;
+  border-radius: 16rpx;
+}
+
+.toast-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.toast-placeholder {
+  display: none;
+}
+
+.card-footer {
+  padding: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.load-trigger {
+  width: 100%;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  font-size: 24rpx;
+  color: #999;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

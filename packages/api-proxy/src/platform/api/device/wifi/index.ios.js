@@ -53,7 +53,7 @@ function startWifi (options = {}) {
     }
     startWifiReady = true
     const result = {
-      errMsg: 'startWifi:success'
+      errMsg: 'startWifi:ok'
     }
     success(result)
     complete(result)
@@ -78,9 +78,8 @@ function stopWifi (options = {}) {
     return
   }
   startWifiReady = false
-  wifiListListeners.length = 0
   const result = {
-    errMsg: 'stopWifi:success'
+    errMsg: 'stopWifi:ok'
   }
   success(result)
   complete(result)
@@ -121,7 +120,7 @@ function getWifiList (options = {}) {
       }
     })
     const result = {
-      errMsg: 'getWifiList:success',
+      errMsg: 'getWifiList:ok',
       errno: 0,
       errCode: 0
     }
@@ -137,14 +136,15 @@ function getWifiList (options = {}) {
 }
 
 function onGetWifiList (callback) {
-  if (!startWifiReady && wifiListListeners.indexOf(callback) > -1) {
+  if (wifiListListeners.indexOf(callback) > -1) {
     return
   }
   wifiListListeners.push(callback)
 }
 
 function offGetWifiList (callback) {
-  if (!startWifiReady) {
+  if (callback == null) {
+    wifiListListeners.length = 0
     return
   }
   const index = wifiListListeners.indexOf(callback)

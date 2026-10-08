@@ -8,7 +8,7 @@ if (isBrowser) {
     oldObserveList.forEach(fn => fn({ isConnected: false, networkType: 'none' }))
   })
   window.addEventListener('online', () => {
-    oldObserveList.forEach(fn => fn({ isConnected: true, networkType: 'unknow' }))
+    oldObserveList.forEach(fn => fn({ isConnected: true, networkType: 'unknown' }))
   })
 }
 

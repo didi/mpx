@@ -17,6 +17,8 @@
 | fail     | function |        | 否   | 接口调用失败的回调函数                 |
 | complete | function |        | 否   | 接口调用结束的回调函数（调用成功、失败都会执行） |
 
+> RN 环境会校验 `title`：缺失或类型不是 `string` 时进入 `fail`，并同时执行 `complete`。
+
 
 ### 示例代码 {#example-code}
 

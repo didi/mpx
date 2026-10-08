@@ -69,6 +69,31 @@ describe('platform diagnostic', () => {
     expect(errors[0].msg).toContain('> 4 |   letter-spacing normal')
   })
 
+  test('reports a specific warning when @font-face is used in React Native output', () => {
+    const warnings = []
+    getClassMap({
+      styles: [{
+        content: '@font-face { font-family: Demo; src: url("./Demo.ttf"); }\n@supports (display: flex) { .text { color: red; } }',
+        filename: 'foo.css'
+      }],
+      filename: 'foo.css',
+      mode: 'ios',
+      srcMode: 'wx',
+      ctorType: 'component',
+      formatValueName: '_f',
+      warn (msg, loc) {
+        warnings.push({ msg, loc })
+      },
+      error: jest.fn()
+    })
+
+    expect(warnings).toHaveLength(2)
+    expect(warnings[0].loc).toBe('foo.css:1:1')
+    expect(warnings[0].msg).toContain('React Native output does not support @font-face. To use custom fonts, install them in the React Native host environment.')
+    expect(warnings[0].msg).toContain('Target: @font-face')
+    expect(warnings[1].msg).toContain('Only @media rule is supported in react native mode temporarily, but got @supports')
+  })
+
   test('reports json errors with key path', () => {
     const errors = []
     const rulesRunner = getRulesRunner({

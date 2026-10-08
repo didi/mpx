@@ -51,7 +51,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   let firstPage = ''
   const pagesMap = {}
   const mpx = loaderContext.getMpx()
-  Object.keys(localPagesMap).forEach((pagePath) => {
+  Object.keys(localPagesMap).sort().forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     if (pageCfg.async && rnConfig.supportSubpackage) {
@@ -80,7 +80,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
   const componentsMap = {}
   const mpx = loaderContext.getMpx()
   if (localComponentsMap) {
-    Object.keys(localComponentsMap).forEach((componentName) => {
+    Object.keys(localComponentsMap).sort().forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
       if (componentCfg.async && rnConfig.supportSubpackage) {
@@ -114,7 +114,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
     })
   }
   if (builtInComponentsMap) {
-    Object.keys(builtInComponentsMap).forEach((componentName) => {
+    Object.keys(builtInComponentsMap).sort().forEach((componentName) => {
       const componentCfg = builtInComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
       componentsMap[componentName] = getComponentGetter(getBuiltInComponent(componentRequest))
@@ -140,7 +140,7 @@ function getRequireScript ({ script, ctorType, loaderContext }) {
 
 function buildGlobalParams ({
   moduleId,
-  scriptSrcMode,
+  srcMode,
   loaderContext,
   isProduction,
   ctorType,
@@ -190,7 +190,7 @@ global.__mpxGenericsMap[genericHash] = componentsMap\n`
     }
   }
   content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-  content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+  content += `global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
   if (!isProduction) {
     content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
   }

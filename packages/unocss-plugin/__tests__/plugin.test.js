@@ -1,8 +1,9 @@
 import MpxUnocssPlugin from '../lib/index.js'
 import { getRawSource } from '../lib/source.js'
-import { createGenerator, e as cssEscape } from '@unocss/core'
-import { mpEscape } from '../lib/transform.js'
+import { createGenerator } from '@unocss/core'
 import presetMpx from '@mpxjs/unocss-base/lib/index.js'
+import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js'
+import { jest } from '@jest/globals'
 
 // const { presetLegacyCompat } = require('@unocss/preset-legacy-compat')
 
@@ -39,12 +40,12 @@ describe('test plugin', () => {
   }) {
     const source = getRawSource(content)
     const classmap = {}
-    const { newsource } = parseTemplate(source, (className) => {
+    const { newsource } = await parseTemplate(source, (className) => {
       if (!className) {
         return className
       }
       classmap[className] = true
-      return mpEscape(cssEscape(className), plugin.options.escapeMap)
+      return className
     })
     // 测试模板是否转义
     expect(newsource.source()).toMatchSnapshot()
@@ -70,7 +71,7 @@ describe('test plugin', () => {
 
       expect(result.css).toContain('.box-border{box-sizing:border-box;}')
       expect(result.css).toContain('.box-content{box-sizing:content-box;}')
-      expect(uno.blocked).not.toContain('box-content')
+      expect(uno.isBlocked('box-content')).toBe(false)
     } finally {
       if (targetMode === undefined) {
         delete process.env.MPX_CURRENT_TARGET_MODE
@@ -85,8 +86,10 @@ describe('test plugin', () => {
     process.env.MPX_CURRENT_TARGET_MODE = 'ios'
 
     try {
+      const classList = ['transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition', 'transition-1', 'transition-all', 'transition-all-1', 'transition-all-foo', 'transition-colors', 'transition-[opacity,transform]']
       const uno = await createReactGenerator()
-      const result = await uno.generate(['transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition', 'transition-1', 'transition-all', 'transition-all-1', 'transition-all-foo', 'transition-colors', 'transition-[opacity,transform]'], { preflights: false })
+      const result = await uno.generate(classList, { preflights: false })
+      const blocked = classList.filter(className => uno.isBlocked(className))
 
       expect(result.css).toContain('transition-property:opacity;')
       expect(result.css).toContain('transition-duration:300ms;')
@@ -94,8 +97,41 @@ describe('test plugin', () => {
       expect(result.css).toContain('transition-delay:150ms;')
       expect(result.css).toContain('transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;')
       expect(result.css).toContain('transition-property:opacity,transform;')
-      expect([...uno.blocked]).toEqual(expect.arrayContaining(['transition', 'transition-1', 'transition-all', 'transition-all-1']))
-      expect([...uno.blocked]).toEqual(expect.not.arrayContaining(['transition-all-foo', 'transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition-colors', 'transition-[opacity,transform]']))
+      expect(blocked).toEqual(expect.arrayContaining(['transition', 'transition-1', 'transition-all', 'transition-all-1']))
+      expect(blocked).toEqual(expect.not.arrayContaining(['transition-all-foo', 'transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition-colors', 'transition-[opacity,transform]']))
+    } finally {
+      if (targetMode === undefined) {
+        delete process.env.MPX_CURRENT_TARGET_MODE
+      } else {
+        process.env.MPX_CURRENT_TARGET_MODE = targetMode
+      }
+    }
+  })
+
+  test('reports generated hover selectors as unsupported in react native mode', async () => {
+    const targetMode = process.env.MPX_CURRENT_TARGET_MODE
+    process.env.MPX_CURRENT_TARGET_MODE = 'ios'
+
+    try {
+      const uno = await createReactGenerator()
+      const result = await uno.generate(['hover:bg-red-500'], { preflights: false })
+      const error = jest.fn()
+      const classMap = getClassMap({
+        styles: [{
+          content: result.css,
+          filename: 'mpx2rn-unocss'
+        }],
+        filename: 'mpx2rn-unocss',
+        mode: 'ios',
+        srcMode: 'wx',
+        warn: jest.fn(),
+        error
+      })
+
+      expect(result.css).toContain(':hover')
+      expect(classMap).toEqual({})
+      expect(error).toHaveBeenCalledTimes(1)
+      expect(error.mock.calls[0][0]).toContain('Only single class selector is supported')
     } finally {
       if (targetMode === undefined) {
         delete process.env.MPX_CURRENT_TARGET_MODE

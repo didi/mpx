@@ -48,7 +48,7 @@ const hideKeyboard = function (options = {}) {
     const result = { errMsg: 'hideKeyboard:ok' }
     successHandle(result, success, complete)
   } catch (err) {
-    const result = { errMsg: err.message }
+    const result = { errMsg: `hideKeyboard:fail ${err.message}` }
     failHandle(result, fail, complete)
   }
 }

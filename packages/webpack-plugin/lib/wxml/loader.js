@@ -26,7 +26,6 @@ module.exports = function (content) {
   const isStatic = true
 
   const mode = mpx.mode
-  const localSrcMode = queryObj.mode
   const customAttributes = options.attributes || mpx.attributes || []
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const isDynamic = queryObj.isDynamic
@@ -99,7 +98,7 @@ module.exports = function (content) {
           isNative,
           isStatic
         }
-        requestString = getRequestString('template', { src, mode: localSrcMode }, extraOptions)
+        requestString = getRequestString('template', { src }, extraOptions)
         break
       case config[mode].wxs.tag:
         // 显式传递issuerResource避免模块缓存以及提供给wxs-loader计算相对路径
@@ -107,7 +106,7 @@ module.exports = function (content) {
           issuerResource: this.resource,
           isStatic
         }
-        requestString = getRequestString('wxs', { src, mode: localSrcMode }, extraOptions)
+        requestString = getRequestString('wxs', { src }, extraOptions)
         break
       default:
         requestString = JSON.stringify(src)

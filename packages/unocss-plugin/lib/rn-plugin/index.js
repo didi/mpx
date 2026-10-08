@@ -60,13 +60,14 @@ function WebpackPlugin (configOrPath, defaults) {
             }
           }
           const result = await uno.generate(tokens, { minify: true })
-          if (uno.blocked.size) {
-            compilation.errors.push(`[Mpx Unocss]: all those '${[...uno.blocked].join(', ')}' class utilities is not supported in react native mode`)
+          const blocked = [...tokens].filter(token => uno.isBlocked(token))
+          if (blocked.length) {
+            compilation.errors.push(`[Mpx Unocss]: all those '${blocked.join(', ')}' class utilities is not supported in react native mode`)
           }
 
           const getLayersClassMap = (layers) => {
             return getClassMap({
-              content: result.getLayers(layers),
+              styles: [{ content: result.getLayers(layers) }],
               filename: 'mpx2rn-unocss',
               mode,
               srcMode,
