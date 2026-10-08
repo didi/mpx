@@ -20,7 +20,7 @@ export const createInnerAudioContext = () => {
     audio.currentTime = 0
     setTimeout(() => {
       _stopping = false // pause 事件已经派发完，关掉开关
-      _stopCbs.forEach(cb => cb())
+      _stopCbs.slice().forEach(cb => cb())
     }, 0)
   }
 
@@ -69,6 +69,7 @@ export const createInnerAudioContext = () => {
     Object.defineProperty(__audio, `on${eventName}`, {
       get () {
         return (cb) => {
+          if (eventCallbacks[nativeName].some(item => item.cb === cb)) return
           const wrapper = nativeName === 'pause'
             ? (e) => { if (!_stopping) cb(e) }
             : cb
