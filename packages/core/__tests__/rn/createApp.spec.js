@@ -50,6 +50,10 @@ jest.mock('../../src/platform/env/navigationHelper', () => ({
 
 jest.mock('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav', () => 'MpxNav', { virtual: true })
 
+jest.mock('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context', () => ({
+  NavigationContainerContext: { Provider: 'NavigationContainerProvider' }
+}), { virtual: true })
+
 describe('RN createApp initial params', () => {
   const onLaunch = jest.fn()
 
@@ -76,7 +80,10 @@ describe('RN createApp initial params', () => {
   function renderApp (initialRouteName, initialParams) {
     Mpx.config.rnConfig.parseAppProps = () => ({ initialRouteName, initialParams })
     createApp({})
-    return global.__mpxOptionsMap.app({}).props.children[0]
+    const provider = global.__mpxOptionsMap.app({}).props.children[0]
+    const navigationContainer = provider.props.children[0]
+    expect(navigationContainer.props.ref).toBe(provider.props.value)
+    return navigationContainer
   }
 
   it.each(['onThemeChange', 'onPageNotFound'])('handles implement for App %s', (name) => {

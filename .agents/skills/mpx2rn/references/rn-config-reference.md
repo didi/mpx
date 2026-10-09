@@ -249,6 +249,7 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | `allowFontScaling` | 未设置，按 `false` 处理 | 文本类基础组件是否跟随系统字体缩放；组件显式传入的 `allowFontScaling` 优先。 |
 | `customDimensions` | 未设置 | `({ window, screen }) => ({ window, screen })`，自定义框架样式换算使用的尺寸信息；返回空值时沿用原始尺寸。`rpx` / `vw` 依赖其中的 `window.width`，`vh` 依赖 `window.height`。 |
 | `getBottomVirtualHeight` | 未设置 | `() => number`，修正 Android 非横屏场景下底部虚拟区域高度；未配置时采用安全区域底部 inset，横屏时使用屏幕与窗口高度差。 |
+| `setSwipeBackEnabled` | 未设置 | `(enabled) => void`，DRN 等混合容器用于设置宿主页面侧滑返回状态；`page-container` 展示时传入 `false`，关闭或销毁时传入 `true`。 |
 | `enableNativeKeyboardAvoiding` | 未设置，按 `true` 处理 | Android 默认配合原生键盘避让。宿主关闭原生避让时设为 `false`，启用 Mpx 内置补偿逻辑，仍受输入组件 `adjust-position` 控制。 |
 | `onPickerVibrate` | 未设置 | `() => void`，为 `picker-view-column` 滚动选择提供宿主振动反馈。 |
 
