@@ -220,7 +220,7 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | `setDataHandler` | `null` | `(data, instance) => void`，数据渲染链路调用底层 `__render` 前触发；RN 的 VNode 渲染链路不经过此钩子，不用于监听所有 RN 更新。 |
 | `forceFlushSync` | `false` | 强制同步执行更新调度，改变默认批量异步更新行为，按需启用。 |
 | `webConfig` | `{}` | Web 通用配置，不用于 RN。 |
-| `rnConfig` | 见下文 | RN 运行时扩展配置，初始包含 `defaultBoxSizing: 'content-box'` 与 `disablePageTransition: false`。 |
+| `rnConfig` | 见下文 | RN 运行时扩展配置，初始包含 `defaultBoxSizing: 'content-box'`、`disablePageTransition: false` 与 `dimensionsBase: 'window'`。 |
 
 ### Mpx.config.rnConfig
 
@@ -247,7 +247,8 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | --- | --- | --- |
 | `defaultBoxSizing` | `'content-box'` | 节点未显式声明 `box-sizing` 时使用的默认盒模型，可设为 `'border-box'`。 |
 | `allowFontScaling` | 未设置，按 `false` 处理 | 文本类基础组件是否跟随系统字体缩放；组件显式传入的 `allowFontScaling` 优先。 |
-| `customDimensions` | 未设置 | `({ window, screen }) => ({ window, screen })`，自定义框架样式换算使用的尺寸信息；返回空值时沿用原始尺寸。`rpx` / `vw` 依赖其中的 `window.width`，`vh` 依赖 `window.height`。 |
+| `dimensionsBase` | `'window'` | `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，可设为 `'window'` 或 `'screen'`。首次尺寸计算后该配置固定，运行期间修改不会生效。 |
+| `customDimensions` | 未设置 | `({ window, screen }) => ({ window, screen })`，自定义框架样式换算使用的尺寸信息；返回空值时沿用传入尺寸。`rpx` / `vw` / `vh` 与媒体查询使用 `dimensionsBase` 对应的自定义尺寸。 |
 | `getBottomVirtualHeight` | 未设置 | `() => number`，修正 Android 非横屏场景下底部虚拟区域高度；未配置时采用安全区域底部 inset，横屏时使用屏幕与窗口高度差。 |
 | `enableNativeKeyboardAvoiding` | 未设置，按 `true` 处理 | Android 默认配合原生键盘避让。宿主关闭原生避让时设为 `false`，启用 Mpx 内置补偿逻辑，仍受输入组件 `adjust-position` 控制。 |
 | `onPickerVibrate` | 未设置 | `() => void`，为 `picker-view-column` 滚动选择提供宿主振动反馈。 |
