@@ -138,8 +138,10 @@ function reLaunch (options = {}) {
         }
       )
     }
-    const res = { errMsg: 'reLaunch:ok' }
-    successHandle(res, options.success, options.complete)
+    if (delta > 0) {
+      const res = { errMsg: 'reLaunch:ok' }
+      successHandle(res, options.success, options.complete)
+    }
   }
 }
 
@@ -180,6 +182,7 @@ function switchTab (options = {}) {
             failHandle(res, options.fail, options.complete)
           }
         )
+        return
       }
     }
     const res = { errMsg: 'switchTab:ok' }
