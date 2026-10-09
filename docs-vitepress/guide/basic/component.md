@@ -552,6 +552,8 @@ interface ComponentInstance {
 
 使用选择器选择组件实例节点，返回匹配到的第一个组件实例对象。
 
+> Web 输出仅支持 id、class 及其组合和逗号分组，不支持后代、子代等关系选择器。匹配依据是调用方写在组件标签上的 id/class，支持静态 class 和字符串、对象、嵌套数组形式的动态 class。组件内部根 DOM 的属性及直接修改 DOM 添加的 id/class 不参与匹配；动态绑定更新后，需在 `nextTick` 后查询更新结果。
+
 ```ts
 interface ComponentInstance {
   selectComponent(selector: string): object
@@ -561,6 +563,8 @@ interface ComponentInstance {
 ### selectAllComponents
 
 使用选择器选择组件实例节点，返回匹配到的全部组件实例对象组成的数组
+
+> Web 输出的匹配规则与 `selectComponent` 相同。即使多个组件共享根 DOM，也分别按各自调用标签上的 id/class 匹配。
 
 ```ts
 interface ComponentInstance {

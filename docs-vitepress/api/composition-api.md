@@ -63,6 +63,22 @@ interface SetupContext {
 function setup(props: Record<string, any>, context: SetupContext): Record<string, any>
 ```
 
+页面的 `setup` context 还提供 `getOpenerEventChannel()`，用于获取与打开该页面的页面之间的事件通道，Web 输出同样支持。可直接解构调用：
+
+```js
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  setup(props, { getOpenerEventChannel }) {
+    const eventChannel = getOpenerEventChannel()
+    eventChannel.on('init', (data) => {
+      // 接收打开页面时传入的数据
+    })
+    return {}
+  }
+})
+```
+
 ## 生命周期钩子 {#lifecycle-hooks}
 可以通过直接导入 on* 函数来注册生命周期钩子：
 

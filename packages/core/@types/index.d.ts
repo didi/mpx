@@ -551,6 +551,15 @@ export interface RnConfig {
    * @param enabled true 表示启用侧滑返回，false 表示禁用
    */
   setSwipeBackEnabled?: (enabled: boolean) => void
+
+  /**
+   * 自定义获取 Android 底部虚拟区域高度的方法，用于修正页面可视高度。
+   *
+   * 如果未配置，则使用框架默认的 bottom 区域高度计算逻辑。
+   *
+   * @returns number 底部虚拟区域高度
+   */
+  getBottomVirtualHeight?: () => number
 }
 
 interface MpxConfig {
@@ -581,8 +590,10 @@ export function toPureObject<T extends object> (obj: T): T
 
 declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any
 
-export type Plugin = PluginInstallFunction | {
+export type Plugin = (PluginInstallFunction | {
   install: PluginInstallFunction
+}) & {
+  __installed?: boolean
 }
 
 export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never

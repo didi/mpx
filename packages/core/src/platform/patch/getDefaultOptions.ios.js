@@ -297,7 +297,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   // bind this & assign methods
   if (rawOptions.methods) {
     Object.entries(rawOptions.methods).forEach(([key, method]) => {
-      instance[key] = method.bind(instance)
+      instance[key] = method.__workletHash ? method : method.bind(instance)
     })
   }
 
@@ -389,13 +389,10 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   const oldSize = sizeRef.current.size
   const systemInfo = getSystemInfo()
   const newSize = systemInfo.size
-
   if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
     return
   }
-
-  Object.assign(sizeRef.current, systemInfo)
-
+  sizeRef.current = systemInfo
   const type = mpxProxy.options.__type__
   const target = mpxProxy.target
   mpxProxy.callHook(ONRESIZE, [systemInfo])

@@ -110,6 +110,7 @@ function use (plugin, options = {}) {
   extendProps(Mpx, proxyMpx, rawProps, options)
   extendProps(Mpx.prototype, proxyMpx.prototype, rawPrototypeProps, options)
   installedPlugins.push(plugin)
+  plugin.__installed = true
   return this
 }
 
