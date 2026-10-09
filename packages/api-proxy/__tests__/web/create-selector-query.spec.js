@@ -11,7 +11,7 @@ describe('test create-selector-query', () => {
 
     Vue.component('child', {
       template: `
-        <div>
+        <div id="child-root">
           <div class="class1">child class1</div>
           <div class="class2" data-re='"class2"' style="background-color:red">child class2</div>
           <div class="class2" data-re='"class2"' style="background-color:red">child class2</div>
@@ -48,11 +48,13 @@ describe('test create-selector-query', () => {
       size: true,
       computedStyle: ['backgroundColor']
     }, cb)
+    query.selectViewport().node()
     query.exec(res => {
       expect(res[0].length).toBe(1)
-      expect(res[1].scrollTop).toBe(0)
+      expect(res[1].scrollTop).toBe(document.documentElement.scrollTop)
       expect(res[2].length).toBe(2)
       expect(res[2][0].backgroundColor).toBe('red')
+      expect(res[3].node).toBe(document.documentElement)
     })
     expect(cb.mock.calls.length).toBe(1)
   })

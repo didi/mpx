@@ -17,7 +17,11 @@ const ruleCallback = ([match], { generator }) => {
 }
 
 const ruleFallback = (match, generator) => {
-  generator.blocked.add(match)
+  if (generator.blockTokens) {
+    generator.blockTokens([match])
+  } else {
+    generator.blocked.add(match)
+  }
   return EMPTY
 }
 

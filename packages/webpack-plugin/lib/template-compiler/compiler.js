@@ -107,6 +107,7 @@ let isNative
 let hasScoped
 let hasVirtualHost
 let isCustomText
+let isUnoCSSScanFile
 let runtimeCompile
 let rulesRunner
 let customBuiltInComponentsOpt
@@ -640,6 +641,7 @@ function parse (template, options) {
   hasScoped = options.hasScoped
   hasVirtualHost = options.hasVirtualHost
   isCustomText = options.isCustomText
+  isUnoCSSScanFile = options.isUnoCSSScanFile
   filePath = options.filePath
   i18n = options.i18n
   runtimeCompile = options.runtimeCompile
@@ -2420,9 +2422,12 @@ function processClass (el, meta) {
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
-    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
-      error: error$1
-    })
+    let dynamicClassExp = parseMustacheWithContext(dynamicClass).result
+    if (!isUnoCSSScanFile) {
+      dynamicClassExp = transDynamicClassExpr(dynamicClassExp, {
+        error: error$1
+      })
+    }
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
@@ -3499,9 +3504,12 @@ function processClassDynamic (el) {
   staticClass = staticClass.replace(/\s+/g, ' ')
   if (dynamicClass) {
     const staticClassExp = parseMustacheWithContext(staticClass).result
-    const dynamicClassExp = transDynamicClassExpr(parseMustacheWithContext(dynamicClass).result, {
-      error: error$1
-    })
+    let dynamicClassExp = parseMustacheWithContext(dynamicClass).result
+    if (!isUnoCSSScanFile) {
+      dynamicClassExp = transDynamicClassExpr(dynamicClassExp, {
+        error: error$1
+      })
+    }
     addAttrs(el, [{
       name: targetType,
       value: `{{[${staticClassExp},${dynamicClassExp}]}}`

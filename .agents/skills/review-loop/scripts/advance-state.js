@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 'use strict'
 
-const fs = require('fs')
-const path = require('path')
 const reviewManager = require('./review-manager')
 const snapshot = require('./git-snapshot')
 const u = require('./review-loop-utils')
@@ -13,25 +11,6 @@ function touch (state) {
 
 function setWaiting (state, value) {
   state.awaitingUserConfirmation = value
-}
-
-function requireCodeSnapshot (taskId, round) {
-  const dir = path.join(u.taskDir(taskId), 'diffs')
-  const missing = []
-  ;[
-    'code-diff-' + round + '.patch',
-    'code-round-' + round + '.patch',
-    'code-scope-' + round + '.json'
-  ].forEach(function (file) {
-    if (!fs.existsSync(path.join(dir, file))) missing.push(file)
-  })
-  if (missing.length) {
-    u.fail('coder-complete requires snapshot-diff artifacts for round ' + round + ': ' + missing.join(', '))
-  }
-  if (u.readJson(path.join(dir, 'code-scope-' + round + '.json')).round !== round) {
-    u.fail('coder-complete requires code scope for round ' + round)
-  }
-  snapshot.validateRoundSnapshot(taskId, round)
 }
 
 function confirmReview (state, taskId, kind, round, args) {
@@ -53,7 +32,7 @@ function confirmReview (state, taskId, kind, round, args) {
   }, drift))
 }
 
-function loadReview (taskId, args, kind, expectedRound, scopeFile) {
+function loadReview (taskId, args, kind, expectedRound) {
   if (!args.review) u.fail('Missing --review')
   const state = u.readState(taskId)
   reviewManager.requireForState(state, taskId, kind, expectedRound)
@@ -62,17 +41,10 @@ function loadReview (taskId, args, kind, expectedRound, scopeFile) {
   if (supplied.canonicalFile !== u.resolveReviewArtifact(reviewFile).canonicalFile) {
     u.fail('--review must be the canonical current-task artifact: ' + reviewFile)
   }
-  const review = JSON.parse(u.readReviewArtifact(reviewFile))
+  const review = u.parseReviewArtifact(reviewFile)
   const errors = u.validateReviewObject(review)
   if (review.round !== expectedRound) errors.push('review round must equal expected round ' + expectedRound)
-  if (scopeFile) {
-    if (!fs.existsSync(scopeFile)) {
-      errors.push('missing scope metadata: ' + scopeFile)
-    } else {
-      errors.push.apply(errors, u.validateReviewScope(review, u.readJson(scopeFile), expectedRound))
-    }
-  }
-  if (errors.length) u.fail('Invalid review JSON:\n- ' + errors.join('\n- '))
+  if (errors.length) u.fail('Invalid review Markdown:\n- ' + errors.join('\n- '))
   return {
     review: review,
     file: reviewFile,
@@ -137,14 +109,14 @@ function main () {
     setWaiting(state, false)
   } else if (event === 'coder-complete') {
     if (state.phase !== 'code_drafting') u.fail('coder-complete requires phase code_drafting')
-    requireCodeSnapshot(taskId, state.codeRound + 1)
+    snapshot.reviewTrees(taskId)
     state.phase = 'code_reviewing'
     state.codeStatus = 'reviewing'
     setWaiting(state, false)
   } else if (event === 'code-review-complete') {
     if (state.phase !== 'code_reviewing') u.fail('code-review-complete requires phase code_reviewing')
     const expectedRound = state.codeRound + 1
-    const loaded = loadReview(taskId, args, 'code', expectedRound, path.join(u.taskDir(taskId), 'diffs', 'code-scope-' + expectedRound + '.json'))
+    const loaded = loadReview(taskId, args, 'code', expectedRound)
     const review = loaded.review
     state.codeRound += 1
     state.lastReviewFile = u.relativeToTask(taskId, loaded.file)

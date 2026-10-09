@@ -14,7 +14,7 @@ export function callWithErrorHandling (fn, instance, info, args) {
   }
 }
 
-export function wrapMethodsWithErrorHandling (methods, instance) {
+export function wrapMethodsWithErrorHandling (methods, proxy) {
   // if (process.env.NODE_ENV === 'production') return methods
   const newMethods = {}
   Object.keys(methods).forEach((key) => {
@@ -22,7 +22,7 @@ export function wrapMethodsWithErrorHandling (methods, instance) {
     // 微信小程序&RN worklet都有数值类型的 __workletHash
     if (isFunction(methods[key]) && !methods[key].__workletHash) {
       newMethods[key] = function (...args) {
-        return callWithErrorHandling(methods[key].bind(this), instance || this?.__mpxProxy, `component method ${key}`, args)
+        return callWithErrorHandling(methods[key].bind(this), proxy || this?.__mpxProxy, `component method ${key}`, args)
       }
     } else {
       newMethods[key] = methods[key]

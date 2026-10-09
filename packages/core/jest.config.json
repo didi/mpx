@@ -2,5 +2,9 @@
   "transform": {
     "^.+\\.(js|jsx)?$": ["babel-jest", { "rootMode": "upward" }]
   },
-  "testEnvironment": "jsdom"
+  "testEnvironment": "jsdom",
+  "globals": {
+    "__mpx_perf__": false,
+    "__mpx_perf_framework__": false
+  }
 }

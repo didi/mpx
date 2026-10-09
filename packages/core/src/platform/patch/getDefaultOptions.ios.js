@@ -300,7 +300,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   // bind this & assign methods
   if (rawOptions.methods) {
     Object.entries(rawOptions.methods).forEach(([key, method]) => {
-      instance[key] = method.bind(instance)
+      instance[key] = method.__workletHash ? method : method.bind(instance)
     })
   }
 
@@ -400,9 +400,7 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   if (oldSize && oldSize[widthKey] === newSize[widthKey] && oldSize[heightKey] === newSize[heightKey]) {
     return
   }
-
-  Object.assign(sizeRef.current, systemInfo)
-
+  sizeRef.current = systemInfo
   const type = mpxProxy.options.__type__
   const target = mpxProxy.target
   mpxProxy.callHook(ONRESIZE, [systemInfo])

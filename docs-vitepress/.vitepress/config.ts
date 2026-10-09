@@ -91,7 +91,7 @@ const sidebar: ExtendedSidebar = {
           text: '自定义路径',
           link: '/guide/advance/custom-output-path',
         },
-        { text: '使用TypeScript', link: '/guide/tool/ts' },
+        { text: '使用TypeScript', link: '/guide/advance/ts' },
         {
           text: '使用原子类',
           link: '/guide/advance/utility-first-css',
@@ -698,6 +698,10 @@ const sidebar: ExtendedSidebar = {
               text: '蓝牙-低功耗中心设备',
               collapsed: true,
               items: [
+                {
+                  text: 'startBluetoothDevicesDiscovery',
+                  link: '/api-proxy/device/bluetooth-ble/startBluetoothDevicesDiscovery',
+                },
                 {
                   text: 'closeBLEConnection',
                   link: '/api-proxy/device/bluetooth-ble/closeBLEConnection',

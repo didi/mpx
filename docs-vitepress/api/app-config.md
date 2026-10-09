@@ -154,17 +154,6 @@ Mpx 框架运行时报错捕获感知处理函数。
 
 这样可以帮助开发者在生产环境中快速定位错误发生的具体文件位置。
 
-## webRouteConfig
-Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置。
-此配置后续将被废弃，请使用 webConfig 进行配置
-
-- **用法**:
-```js
-mpx.config.webRouteConfig = {
-  mode: 'history'
-}
-```
-
 ## webConfig
 web 环境下的一些配置，如路由模式
 
@@ -207,3 +196,9 @@ import mpx from '@mpxjs/core'
 // 将 Android 状态栏高度设为 28px（默认 24px）
 mpx.config.webConfig.safeAreaInsetTop = 28
 ```
+
+## rnConfig
+
+RN 环境下的运行时配置，通过 `mpx.config.rnConfig` 设置异步分包加载、分享、路由控制、屏幕适配等能力，详见 [RN 高级特性](../guide/rn/application-api.md#advanced-features)。
+
+此配置与构建插件的 [rnConfig](compile.md#rn-config) 独立，编译期配置需在 `MpxWebpackPlugin` 中设置。
