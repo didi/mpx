@@ -59,7 +59,7 @@
     computed: {
       blockLeft () {
         const lineSum = this.max - this.min
-        const lineRatio = (this.sliderValue - this.min) / lineSum
+        const lineRatio = this.sliderValue === '' ? 0 : (this.sliderValue - this.min) / lineSum
         return this.sliderWidth * lineRatio - this.blockSize / 2 + 'px' || 0
       }
     },
@@ -191,7 +191,9 @@
         return this.sliderValue
       },
       setValue (value) {
-        value = value < this.min ? this.min : value > this.max ? this.max : value
+        if (value !== '') {
+          value = value < this.min ? this.min : value > this.max ? this.max : value
+        }
         this.sliderValue = value
       },
       notifyChange (value) {

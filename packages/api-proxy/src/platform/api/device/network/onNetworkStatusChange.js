@@ -5,10 +5,14 @@ const oldObserveList = new Set()
 
 if (isBrowser) {
   window.addEventListener('offline', () => {
-    oldObserveList.forEach(fn => fn({ isConnected: false, networkType: 'none' }))
+    if (!oldObserveList.size) return
+    const result = { isConnected: false, networkType: 'none' }
+    oldObserveList.forEach(fn => fn(result))
   })
   window.addEventListener('online', () => {
-    oldObserveList.forEach(fn => fn({ isConnected: true, networkType: 'unknow' }))
+    if (!oldObserveList.size) return
+    const result = { isConnected: true, networkType: 'unknow' }
+    oldObserveList.forEach(fn => fn(result))
   })
 }
 

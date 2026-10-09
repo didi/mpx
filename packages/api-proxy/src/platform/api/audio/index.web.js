@@ -1,4 +1,4 @@
-import { isBrowser, throwSSRWarning } from '../../../common/js'
+import { isBrowser, throwSSRWarning, defineUnsupportedProps } from '../../../common/js'
 export const createInnerAudioContext = () => {
   if (!isBrowser) {
     throwSSRWarning('createInnerAudioContext API is running in non browser environments')
@@ -40,6 +40,7 @@ export const createInnerAudioContext = () => {
   Object.defineProperty(__audio, 'obeyMuteSwitch', {
     value: true
   })
+  defineUnsupportedProps(__audio, ['playbackRate', 'referrerPolicy'])
   const eventNames = [
     'Canplay',
     'Ended',

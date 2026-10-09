@@ -2,9 +2,11 @@
 
 创建一个 WebSocket 连接。
 
-支持情况： 微信、支付宝
+支持情况： 微信、支付宝、Web、RN
 
-[参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/upload/wx.uploadFile.html)
+[参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/websocket/wx.connectSocket.html)
+
+RN / Web 的 `SocketTask.onError` 回调返回以 `connectSocket:fail` 开头的 `errMsg`。`SocketTask.onOpen` 的返回字段 `header` 暂不支持。
 
 ### 参数 {#parameters}
 

@@ -1,4 +1,5 @@
 export {
+  nextTick,
   // watch
   watchEffect,
   watchSyncEffect,

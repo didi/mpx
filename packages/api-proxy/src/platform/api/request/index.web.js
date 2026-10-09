@@ -97,7 +97,7 @@ function request (options = { url: '' }) {
       statusCode: res.status,
       header: res.headers
     })
-    defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
+    defineUnsupportedProps(result, ['cookies', 'profile', 'exception', 'useHttpDNS'])
     successHandle(result, success, complete)
     return result
   }).catch(err => {

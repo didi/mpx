@@ -1,4 +1,4 @@
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import { type } from '@mpxjs/utils'
 
 const socketTasks = new Set()
@@ -73,7 +73,10 @@ class SocketTask {
 
   addListener (socket) {
     socket.onopen = event => {
-      typeof this._openCb === 'function' && this._openCb(event)
+      if (typeof this._openCb === 'function') {
+        defineUnsupportedProps(event, ['header'])
+        this._openCb(event)
+      }
     }
     socket.onmessage = event => {
       typeof this._messageCb === 'function' && this._messageCb({
@@ -82,7 +85,12 @@ class SocketTask {
     }
     socket.onerror = event => {
       socketTasks.delete(this._socket)
-      typeof this._errorCb === 'function' && this._errorCb(event)
+      if (typeof this._errorCb === 'function') {
+        Object.assign(event, {
+          errMsg: `connectSocket:fail${event.message ? ' ' + event.message : ''}`
+        })
+        this._errorCb(event)
+      }
     }
     socket.onclose = event => {
       socketTasks.delete(this._socket)

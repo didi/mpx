@@ -6,6 +6,8 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/network/wx.getNetworkType.html)
 
+Web 的成功回调返回 `errMsg: 'getNetworkType:ok'`；失败回调返回以 `getNetworkType:fail` 开头的 `errMsg`。RN / Web 的 `signalStrength`、`hasSystemProxy`、`weakNet` 暂不支持。
+
 ### 参数 {#parameters}
 
 **Object object**

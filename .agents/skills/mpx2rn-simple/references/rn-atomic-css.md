@@ -140,19 +140,18 @@ export default defineConfig({
 
 不要使用会生成复合选择器、父子关系或 RN 无法表达状态的 variants，例如：
 
-- `hover:`、`active:`、`focus:`、`visited:` 等交互伪类 variant
+- `hover:`、`active:`、`focus:`、`visited:` 等会生成 pseudo selector 的交互 variant
 - child / sibling / combinator variants
 - aria / data attribute variants
 - container query、supports、scope、CSS layer variants
 - placeholder、motion、contrast、space/divide 等 variants
 
-这些交互伪类 variant 当前可能会生成带伪类的选择器并进入编译产物，但模板中的原子类无法匹配带伪类的样式键，运行时不会生效，也可能不会产生编译错误。其中 `hover:` 不会自动转换为组件 `hover-style`。需要按下态时，仅可在 Mpx 内建的 `view`、`button`、`navigator` 和 `cover-view` 组件上使用 `hover-class` 指向普通原子类：
+这些交互伪类 variant 会产生编译错误，不会降级为普通工具类或进入 RN class map。其中 `hover:` 不会自动转换为组件 `hover-style`。需要按下态时，仅可在 Mpx 内建的 `view`、`button`、`navigator` 和 `cover-view` 组件上使用 `hover-class` 指向普通原子类：
 
 ```html
 <view class="bg-white" hover-class="bg-blue-500/10"></view>
 ```
 
-被 RN preset blocklist 命中的其他不支持 variant 会产生编译错误，不会降级为普通工具类。
 
 ## 颜色透明度约束
 
@@ -279,7 +278,7 @@ module.exports = defineConfig({
 - at-rule 仅使用 Mpx2RN 可转换的 `@media`。
 - 不生成依赖 DOM 层级、伪元素或 Web 布局模型的 CSS。
 
-出现 `Only single class selector is supported`、`Only @media rule is supported` 或 `[Mpx style error]` 时，按生成后的 CSS 定位，不要只检查模板 className。
+所有来源生成的最终 pseudo selector 都会触发 `Only single class selector is supported` 编译错误且不会进入 RN class map。出现该错误、`Only @media rule is supported` 或 `[Mpx style error]` 时，按生成后的 CSS 定位，不要只检查模板 className。
 
 ### 类名存在但无样式
 

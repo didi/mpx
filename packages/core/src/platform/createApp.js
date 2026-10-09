@@ -1,7 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
+import { makeMap, spreadProp, isBrowser, defineUnsupportedProps } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -59,6 +59,7 @@ export default function createApp (options, config = {}) {
           shareTicket: '',
           referrerInfo: {}
         }
+        defineUnsupportedProps(options, ['apiCategory', 'chatType', 'forwardMaterials', 'hostExtraData'])
         // web不分冷启动和热启动
         global.__mpxEnterOptions = options
         global.__mpxLaunchOptions = options

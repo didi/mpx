@@ -1,4 +1,4 @@
-import { successHandle, failHandle, isBrowser, throwSSRWarning } from '../../../common/js'
+import { successHandle, failHandle, isBrowser, throwSSRWarning, defineUnsupportedProps } from '../../../common/js'
 import { hasOwn } from '@mpxjs/utils'
 
 function setStorage (options = {}) {
@@ -86,7 +86,7 @@ function getStorageInfo (options = {}) {
   try {
     const info = getStorageInfoSync()
 
-    const res = Object.assign({}, { errMsg: 'getStorageInfo:ok' }, info)
+    const res = Object.defineProperties({ errMsg: 'getStorageInfo:ok' }, Object.getOwnPropertyDescriptors(info))
     successHandle(res, success, complete)
   } catch (err) {
     const res = { errMsg: `getStorageInfo:fail ${err}` }
@@ -99,11 +99,9 @@ function getStorageInfoSync () {
     throwSSRWarning('getStorageInfoSync API is running in non browser environments')
     return
   }
-  return {
-    keys: Object.keys(window.localStorage),
-    limitSize: null,
-    currentSize: null
-  }
+  const result = { keys: Object.keys(window.localStorage) }
+  defineUnsupportedProps(result, ['limitSize', 'currentSize'])
+  return result
 }
 
 function removeStorage (options = { key: '' }) {

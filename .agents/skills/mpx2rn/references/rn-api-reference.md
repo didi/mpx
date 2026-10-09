@@ -308,10 +308,10 @@ mpx.use(apiProxy, {
 | `system` | `string` | 操作系统名称与版本。 |
 | `platform` | `string` | 平台标识。 |
 | `memorySize` | `number` | 设备内存量级（单位以实现为准，常见为 MB）。 |
-| `deviceAbi` | `string` \| `null` \| `undefined` | 非 iOS 目标上的主 64 位 ABI；无数据为 `null`，iOS 当前不返回该字段。 |
-| `benchmarkLevel` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `abi` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `cpuType` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `deviceAbi` | `string` \| `null` | 非 iOS 目标上的主 64 位 ABI；无数据为 `null`，iOS 不支持。 |
+| `benchmarkLevel` | — | RN 当前实现不支持。 |
+| `abi` | — | RN 当前实现不支持。 |
+| `cpuType` | — | RN 当前实现不支持。 |
 
 
 ---
@@ -337,8 +337,10 @@ mpx.use(apiProxy, {
 | `query` | `Object` | 查询参数键值对。 |
 | `shareTicket` | `string` | 分享票据。 |
 | `referrerInfo` | `Object` | 来源信息。 |
-| `apiCategory` | `string` | API 类目等。 |
-| `chatType` | `number` | 聊天场景枚举。 |
+| `apiCategory` | — | RN 当前实现不支持。 |
+| `chatType` | — | RN 当前实现不支持。 |
+| `forwardMaterials` | — | RN 当前实现不支持。 |
+| `hostExtraData` | — | RN 当前实现不支持。 |
 | （其余） | — | 运行时追加字段。 |
 
 
@@ -365,8 +367,10 @@ mpx.use(apiProxy, {
 | `query` | `Object` | 查询参数键值对。 |
 | `shareTicket` | `string` | 分享票据。 |
 | `referrerInfo` | `Object` | 来源信息。 |
-| `apiCategory` | `string` | API 类目等。 |
-| `chatType` | `number` | 聊天场景枚举。 |
+| `apiCategory` | — | RN 当前实现不支持。 |
+| `chatType` | — | RN 当前实现不支持。 |
+| `forwardMaterials` | — | RN 当前实现不支持。 |
+| `hostExtraData` | — | RN 当前实现不支持。 |
 | （其余） | — | 运行时追加字段。 |
 
 
@@ -399,6 +403,10 @@ mpx.use(apiProxy, {
 | `scene` | `number` | 场景值。 |
 | `shareTicket` | `string` | 分享相关。 |
 | `referrerInfo` | `Object` | 来源信息。 |
+| `apiCategory` | — | RN 当前实现不支持。 |
+| `chatType` | — | RN 当前实现不支持。 |
+| `forwardMaterials` | — | RN 当前实现不支持。 |
+| `hostExtraData` | — | RN 当前实现不支持。 |
 | （其余） | — | 运行时按需附带。 |
 
 
@@ -1086,9 +1094,10 @@ mpx.use(apiProxy, {
 | `data` | `any` | 开发者服务器返回的数据；`dataType: 'json'` 且原值为字符串时会尝试解析 JSON，解析失败则保留原字符串。 |
 | `statusCode` | `number` | HTTP 状态码。 |
 | `header` | `Object` | HTTP 响应头。 |
-| `cookies` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `profile` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `exception` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `cookies` | — | RN 当前实现不支持。 |
+| `profile` | — | RN 当前实现不支持。 |
+| `exception` | — | RN 当前实现不支持。 |
+| `useHttpDNS` | — | RN 当前实现不支持。 |
 
 成功载荷还会保留 Axios 响应对象上的其它字段，但它们不属于稳定的小程序兼容协议，不建议业务依赖。
 
@@ -1130,9 +1139,9 @@ mpx.use(apiProxy, {
 | --- | --- | --- |
 | `send(options)` | 发送 `string` 或 `ArrayBuffer`。 | `success`：`{ errMsg: 'sendSocketMessage:ok' }`。 |
 | `close(options)` | 关闭连接，支持 `code`、`reason`。 | `success`：`{ errMsg: 'closeSocket:ok' }`。 |
-| `onOpen(callback)` | 监听连接打开。 | 透传底层 WebSocket `open` 事件对象。 |
+| `onOpen(callback)` | 监听连接打开。 | `header` 不支持。 |
 | `onMessage(callback)` | 监听消息。 | `{ data }`。 |
-| `onError(callback)` | 监听错误。 | 透传底层 WebSocket `error` 事件对象。 |
+| `onError(callback)` | 监听错误。 | 返回以 `connectSocket:fail` 开头的 `errMsg`。 |
 | `onClose(callback)` | 监听关闭。 | `{ code, reason }` 或底层 WebSocket `close` 事件对象。 |
 
 #### 注意事项
@@ -1359,8 +1368,8 @@ mpx.use(apiProxy, {
 | --- | --- | --- |
 | `errMsg` | `string` | 成功时为 **`getStorageInfo:ok`**。 |
 | `keys` | `string[]` | 当前已存键名列表。 |
-| `currentSize` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `limitSize` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `currentSize` | — | RN 当前实现不支持。 |
+| `limitSize` | — | RN 当前实现不支持。 |
 
 ---
 ## 媒体
@@ -1395,8 +1404,8 @@ mpx.use(apiProxy, {
 | `width` | `number` | 图片宽度 px。 |
 | `height` | `number` | 图片高度 px。 |
 | `path` | `string` | 与入参 **`src`** 一致。 |
-| `orientation` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `type` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `orientation` | — | RN 当前实现不支持。 |
+| `type` | — | RN 当前实现不支持。 |
 
 ---
 ### createCameraContext
@@ -1459,7 +1468,7 @@ mpx.use(apiProxy, {
 | `altitude` | `number` \| `null` | 海拔，单位 m；不可用时以底层返回为准。 |
 | `speed` | `number` \| `null` | 速度，单位 m/s；不可用时以底层返回为准。 |
 | `verticalAccuracy` | `number` \| `null` | iOS 可能提供的垂直精度；Android 通常无该字段。 |
-| `horizontalAccuracy` | `null` | RN 抹平层明确不支持该微信字段；访问会给出警告并返回 `null`。 |
+| `horizontalAccuracy` | — | RN 抹平层明确不支持该微信字段。 |
 | `time` | `number` | 定位时间戳，单位 ms；由底层定位库透传。 |
 | `bearing` / `provider` | 平台相关 | Android 底层可能提供。 |
 | `course` | `number` | iOS 底层可能提供的航向。 |
@@ -1493,8 +1502,9 @@ mpx.use(apiProxy, {
 | --- | --- | --- |
 | `errMsg` | `string` | 成功时为 **`getNetworkType:ok`**。 |
 | `networkType` | `string` | `wifi`、`none`、`2g`、`3g`、`4g`、`5g` 或 `unknown`。 |
-| `signalStrength` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `hasSystemProxy` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `signalStrength` | — | RN 当前实现不支持。 |
+| `hasSystemProxy` | — | RN 当前实现不支持。 |
+| `weakNet` | — | RN 当前实现不支持。 |
 
 ---
 ### onNetworkStatusChange
@@ -1576,6 +1586,7 @@ mpx.use(apiProxy, {
 | 字段名 | 类型 | 说明 |
 | --- | --- | --- |
 | `height` | `number` | 键盘高度；键盘弹出时为可见高度，收起时 iOS 上多为 **`0`**，Android 上可能仍带高度值。 |
+| `duration` | — | RN 当前实现不支持。 |
 
 #### 返回值
 
@@ -1703,8 +1714,8 @@ mpx.use(apiProxy, {
 | `offBLECharacteristicValueChange` | 取消特征值变化监听。 | 无参数；清除当前唯一回调与底层订阅。 |
 | `setBLEMTU` | 协商 MTU。 | `{ mtu }`，其中 `mtu` 为底层实际协商结果。 |
 | `getBLEDeviceRSSI` | 读取设备信号强度。 | `{ RSSI }`。 |
-| `getBLEDeviceServices` | 获取设备服务 UUID 列表，并缓存后续特征查询所需信息。 | `{ services: Array<{ uuid }> }`。 |
-| `getBLEDeviceCharacteristics` | 查询特征值；应先调用 `getBLEDeviceServices`。当前实现会校验 `serviceId` 存在，但成功时返回缓存中的**全部特征值**，未按该服务过滤。 | `{ characteristics }`；每项含 `uuid` 与 `properties.read/write/notify/indicate/writeNoResponse`。 |
+| `getBLEDeviceServices` | 获取设备服务 UUID 列表，并缓存后续特征查询所需信息。 | `{ services: Array<{ uuid }> }`。`services[].isPrimary` 不支持。 |
+| `getBLEDeviceCharacteristics` | 查询特征值；应先调用 `getBLEDeviceServices`。当前实现会校验 `serviceId` 存在，但成功时返回缓存中的**全部特征值**，未按该服务过滤。 | `{ characteristics }`；每项含 `uuid` 与 `properties.read/write/notify/indicate/writeNoResponse`。`characteristics[].properties.writeDefault` 不支持。 |
 
 `deviceId`、`serviceId`、`characteristicId`、`value`、`mtu` 等必填参数缺失时，接口会进入 `fail` 回调并以对应 API 的 `:fail parameter error` 作为 `errMsg`；`complete` 随后收到同一结果。
 
@@ -1739,9 +1750,9 @@ mpx.config.rnConfig.bluetoothPermission = () => {
 | `startWifi` | 校验 Wi‑Fi 与权限并进入就绪态；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'startWifi:ok' }`。 |
 | `stopWifi` | 结束 Wi‑Fi 模块并清空列表监听；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'stopWifi:ok' }`。 |
 | `getWifiList` | `startWifi` 就绪后扫描热点，通过 `onGetWifiList` 交付列表；RN iOS 目标直接走 `fail`。 | `success`：`{ errMsg: 'getWifiList:ok', errno: 0, errCode: 0 }`；热点列表不在此载荷中。 |
-| `onGetWifiList` | 注册接收热点列表的回调。 | `{ wifiList }`；每项含 `SSID`、`BSSID`、`frequency`、`signalStrength`。 |
+| `onGetWifiList` | 注册接收热点列表的回调。 | `{ wifiList }`；每项含 `SSID`、`BSSID`、`frequency`、`signalStrength`。`wifiList[].secure` 不支持。 |
 | `offGetWifiList` | 移除热点列表回调。 | 传入与注册时同一 `callback`；当前实现不支持省略参数清空全部。 |
-| `getConnectedWifi` | 读取当前已连接 Wi‑Fi；支持 `partialInfo`，且需先 `startWifi` 成功就绪。 | `{ errMsg: 'getConnectedWifi:ok', wifi }`；`wifi` 含 `SSID`、`BSSID`、`signalStrength`、`frequency`。 |
+| `getConnectedWifi` | 读取当前已连接 Wi‑Fi；支持 `partialInfo`，且需先 `startWifi` 成功就绪。 | `{ errMsg: 'getConnectedWifi:ok', wifi }`；`wifi` 含 `SSID`、`BSSID`、`signalStrength`、`frequency`。`wifi.secure` 不支持。 |
 
 Wi-Fi API 的成功 `errMsg` 与微信文档保持一致，均以 `:ok` 结尾。
 

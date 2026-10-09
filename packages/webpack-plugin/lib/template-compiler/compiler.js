@@ -1241,7 +1241,7 @@ function getModelConfig (el, match) {
 function processEventWeb (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
-    if (/^@[a-zA-Z]+$/.test(name)) {
+    if (/^@[a-zA-Z]+(?:\.[\w-]+)*$/.test(name)) {
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[name]) {

@@ -1,4 +1,4 @@
-import { successHandle, failHandle, isBrowser, throwSSRWarning } from '../../../../common/js'
+import { successHandle, failHandle, isBrowser, throwSSRWarning, defineUnsupportedProps } from '../../../../common/js'
 
 export function getNetworkType ({ success, fail = () => {}, complete = () => {} } = {}) {
   if (!isBrowser) {
@@ -6,12 +6,13 @@ export function getNetworkType ({ success, fail = () => {}, complete = () => {} 
     return
   }
   try {
-    if (navigator.connection) {
-      successHandle({ networkType: navigator.connection.effectiveType }, success, complete)
-    } else {
-      successHandle({ networkType: 'unknown' }, success, complete)
+    const result = {
+      errMsg: 'getNetworkType:ok',
+      networkType: navigator.connection ? navigator.connection.effectiveType : 'unknown'
     }
+    defineUnsupportedProps(result, ['signalStrength', 'hasSystemProxy', 'weakNet'])
+    successHandle(result, success, complete)
   } catch (err) {
-    failHandle(err, fail, complete)
+    failHandle({ errMsg: `getNetworkType:fail ${err}` }, fail, complete)
   }
 }
