@@ -1121,7 +1121,10 @@ mpx.use(apiProxy, {
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `url` | `string` | 是 | `wss://` 或 `ws://` 地址。 |
+| `header` | `Object` | 否 | 请求头，会传递给 RN 原生 **WebSocket**。 |
 | `protocols` | `string[]` | 否 | 子协议列表。 |
+
+> 微信同名 API 的 `timeout`、`tcpNoDelay`、`perMessageDeflate` 等扩展参数**当前 RN 中暂不支持**。
 
 #### 返回值
 
@@ -1585,7 +1588,7 @@ mpx.use(apiProxy, {
 
 | 字段名 | 类型 | 说明 |
 | --- | --- | --- |
-| `height` | `number` | 键盘高度；键盘弹出时为可见高度，收起时 iOS 上多为 **`0`**，Android 上可能仍带高度值。 |
+| `height` | `number` | 键盘高度；键盘弹出时为可见高度，收起时为 **`0`**。 |
 | `duration` | — | RN 当前实现不支持。 |
 
 #### 返回值
@@ -1597,13 +1600,13 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-取消键盘高度监听：仅移除与注册时**同一引用**的 **`callback`**；**不传引用不会移除其它监听**。当监听列表为空时会移除键盘显示/隐藏相关订阅。
+取消键盘高度监听：传入与注册时**同一引用**的 **`callback`** 时移除对应监听；不传回调时移除全部监听。当监听列表为空时会移除键盘显示/隐藏相关订阅。
 
 #### 入参
 
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `callback` | `function` | 是 | 与 **`onKeyboardHeightChange`** 注册时为同一函数引用。 |
+| `callback` | `function` | 否 | 与 **`onKeyboardHeightChange`** 注册时为同一函数引用；不传时移除全部监听。 |
 
 #### 返回值
 
@@ -1748,10 +1751,10 @@ mpx.config.rnConfig.bluetoothPermission = () => {
 | API | 说明 | 成功回调或监听载荷（RN 实际实现） |
 | --- | --- | --- |
 | `startWifi` | 校验 Wi‑Fi 与权限并进入就绪态；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'startWifi:ok' }`。 |
-| `stopWifi` | 结束 Wi‑Fi 模块并清空列表监听；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'stopWifi:ok' }`。 |
+| `stopWifi` | 结束 Wi‑Fi 模块并保留列表监听；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'stopWifi:ok' }`。 |
 | `getWifiList` | `startWifi` 就绪后扫描热点，通过 `onGetWifiList` 交付列表；RN iOS 目标直接走 `fail`。 | `success`：`{ errMsg: 'getWifiList:ok', errno: 0, errCode: 0 }`；热点列表不在此载荷中。 |
 | `onGetWifiList` | 注册接收热点列表的回调。 | `{ wifiList }`；每项含 `SSID`、`BSSID`、`frequency`、`signalStrength`。`wifiList[].secure` 不支持。 |
-| `offGetWifiList` | 移除热点列表回调。 | 传入与注册时同一 `callback`；当前实现不支持省略参数清空全部。 |
+| `offGetWifiList` | 移除热点列表回调。 | 传入与注册时同一 `callback`；省略参数清空全部。 |
 | `getConnectedWifi` | 读取当前已连接 Wi‑Fi；支持 `partialInfo`，且需先 `startWifi` 成功就绪。 | `{ errMsg: 'getConnectedWifi:ok', wifi }`；`wifi` 含 `SSID`、`BSSID`、`signalStrength`、`frequency`。`wifi.secure` 不支持。 |
 
 Wi-Fi API 的成功 `errMsg` 与微信文档保持一致，均以 `:ok` 结尾。

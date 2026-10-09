@@ -1,6 +1,8 @@
 import { Keyboard } from 'react-native'
 import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 let hasListener = false
+let keyboardShowSubscription
+let keyboardHideSubscription
 const callbacks = []
 
 function keyboardShowListener (e) {
@@ -10,23 +12,16 @@ function keyboardShowListener (e) {
   defineUnsupportedProps(result, ['duration'])
   callbacks.forEach(cb => cb(result))
 }
-function keyboardHideListener (e) {
+function keyboardHideListener () {
   if (!callbacks.length) return
-  const endCoordinates = e.endCoordinates || {}
-  let height
-  if (__mpx_mode__ === 'ios') {
-    height = 0
-  } else {
-    height = endCoordinates.height
-  }
-  const result = { height }
+  const result = { height: 0 }
   defineUnsupportedProps(result, ['duration'])
   callbacks.forEach(cb => cb(result))
 }
 const onKeyboardHeightChange = function (callback) {
   if (!hasListener) {
-    Keyboard.addListener('keyboardDidShow', keyboardShowListener)
-    Keyboard.addListener('keyboardDidHide', keyboardHideListener)
+    keyboardShowSubscription = Keyboard.addListener('keyboardDidShow', keyboardShowListener)
+    keyboardHideSubscription = Keyboard.addListener('keyboardDidHide', keyboardHideListener)
     hasListener = true
   }
   callbacks.push(callback)
@@ -36,10 +31,13 @@ const offKeyboardHeightChange = function (callback) {
   if (index > -1) {
     callbacks.splice(index, 1)
   }
-  if (callbacks.length === 0) {
-    Keyboard.removeAllListeners('keyboardDidShow')
-    Keyboard.removeAllListeners('keyboardDidHide')
-    hasListener = false
+  if (callbacks.length === 0 || callback == null) {
+    callbacks.length = 0
+    if (hasListener) {
+      keyboardShowSubscription.remove()
+      keyboardHideSubscription.remove()
+      hasListener = false
+    }
   }
 }
 
@@ -50,7 +48,7 @@ const hideKeyboard = function (options = {}) {
     const result = { errMsg: 'hideKeyboard:ok' }
     successHandle(result, success, complete)
   } catch (err) {
-    const result = { errMsg: err.message }
+    const result = { errMsg: `hideKeyboard:fail ${err.message}` }
     failHandle(result, fail, complete)
   }
 }

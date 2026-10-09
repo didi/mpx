@@ -10,11 +10,23 @@ export const createInnerAudioContext = () => {
 
   __audio.play = () => !/mpxFalse/.test(audio.src) ? audio.play() : ''
 
-  __audio.pause = () => audio.pause()
+  const pendingPauses = []
+  const eventCallbacks = {}
+
+  function pauseAudio (fromStop) {
+    const wasPlaying = !audio.paused
+    audio.pause()
+    if (wasPlaying) pendingPauses.push(fromStop)
+  }
+
+  __audio.pause = () => pauseAudio(false)
 
   __audio.stop = () => {
-    __audio.pause()
-    __audio.seek(0)
+    pauseAudio(true)
+    audio.currentTime = 0
+    setTimeout(() => {
+      eventCallbacks.stop.slice().forEach(cb => cb())
+    }, 0)
   }
 
   __audio.seek = value => {
@@ -31,6 +43,7 @@ export const createInnerAudioContext = () => {
       get: () => audio[item],
       set (value) {
         audio[item] = value
+        if (item === 'src') pendingPauses.length = 0
       }
     })
   })
@@ -53,24 +66,44 @@ export const createInnerAudioContext = () => {
     'Stop',
     'Error'
   ]
-  const eventListeners = [
-    ['on', audio.addEventListener],
-    ['off', audio.removeEventListener]
-  ]
+
   eventNames.forEach(eventName => {
-    eventListeners.forEach(([eventNameItem, listenerFn]) => {
-      Object.defineProperty(__audio, `${eventNameItem}${eventName}`, {
-        get () {
-          return (callback = audio.cb) => {
-            if (eventNameItem !== 'off') {
-              audio.cb = callback
+    const nativeName = eventName.toLowerCase()
+    eventCallbacks[nativeName] = []
+
+    // stop 由 stop() 模拟，其余事件在创建实例时统一监听。
+    if (nativeName !== 'stop') {
+      audio.addEventListener(nativeName, (event) => {
+        // 即使没有业务监听，也要消费暂停来源，避免影响后续 pause 事件。
+        if (nativeName === 'pause' && pendingPauses.shift() === true) return
+        eventCallbacks[nativeName].slice().forEach(cb => cb(event))
+      })
+    }
+
+    Object.defineProperty(__audio, `on${eventName}`, {
+      get () {
+        return (cb) => {
+          if (eventCallbacks[nativeName].indexOf(cb) > -1) return
+          eventCallbacks[nativeName].push(cb)
+        }
+      }
+    })
+
+    Object.defineProperty(__audio, `off${eventName}`, {
+      get () {
+        return (cb) => {
+          if (cb == null) {
+            eventCallbacks[nativeName] = []
+          } else {
+            const idx = eventCallbacks[nativeName].indexOf(cb)
+            if (idx > -1) {
+              eventCallbacks[nativeName].splice(idx, 1)
             }
-            // debugger
-            return listenerFn.call(audio, eventName.toLowerCase(), audio.cb)
           }
         }
-      })
+      }
     })
   })
+
   return __audio
 }

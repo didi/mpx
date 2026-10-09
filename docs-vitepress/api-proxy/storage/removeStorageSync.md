@@ -4,6 +4,8 @@
 
 支持情况： 微信、支付宝、web
 
+> RN 的存储实现基于异步的 AsyncStorage，不支持此同步 API，请使用 `mpx.removeStorage`。
+
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/storage/wx.removeStorageSync.html)
 
 
