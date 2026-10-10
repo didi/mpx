@@ -23,7 +23,7 @@ import {
   NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent, markLabelControlHandled } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
@@ -120,6 +120,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
+      markLabelControlHandled(evt)
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
