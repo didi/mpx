@@ -7,7 +7,7 @@ export * from './api/add-phone-contact'
 // createAnimation
 export * from './api/animation'
 
-// onAppShow, onAppHide, offAppShow, offAppHide, onError, offError
+// onAppShow, onAppHide, offAppShow, offAppHide, onError, offError, onPageNotFound, offPageNotFound
 export * from './api/app'
 
 // createInnerAudioContext

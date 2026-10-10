@@ -19,6 +19,8 @@ export const SUPPORTED_APIS = [
   'offAppHide',
   'onError',
   'offError',
+  'onPageNotFound',
+  'offPageNotFound',
   'onUnhandledRejection',
   'offUnhandledRejection',
   'onLazyLoadError',

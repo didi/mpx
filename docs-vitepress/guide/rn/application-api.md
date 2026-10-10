@@ -416,10 +416,12 @@ createComponent({
 
 用于获取初始路由配置的函数，参数为 RN 根组件接收到的参数
 
-- initialRouteName: 首页路径，例如 pages/index。若该路径未注册，Mpx 会通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），回退至应用首页，并丢弃该错误路由的 `initialParams`
+- initialRouteName: 首页路径，例如 pages/index，不包含 query。若该路径未注册，Mpx 回退至应用首页，并在导航就绪后调用 App 的 `onPageNotFound({ path, query, isEntryPage: true })`，其中 `query` 为该缺失入口的 `initialParams`（未传时为 `{}`），不会传入回退首页。未声明 App 回调且未注册 `mpx.onPageNotFound` 监听时通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调）
 - initialParams: 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`，例如 \{ a: 1 \}。后续通过路由 API 再次打开同路径页面时不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，NA 可能会向 RN 的根组件传递 props，此时可在 parseAppProps 中接受 props 并进行处理和透传到页面
+
+`onPageNotFound` 无需通过 `implement` 登记，可在回调内调用 `redirectTo / reLaunch`。通知前首页已经初始化，`onLaunch / onShow` 仍以实际首页及其参数为准。每次 RN 根组件初始化最多通知一次；根组件销毁后重建会重新检查入口，同一 JS 上下文的 `onLaunch` 仍只执行一次。普通重渲染、前后台切换及路由 API 跳转失败不会触发该通知。详见 [App 生命周期](../basic/app.md)。
 
 #### mpx.config.rnConfig.onStateChange
 

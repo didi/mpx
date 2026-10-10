@@ -333,11 +333,13 @@ RN 输出中，以下声明同样支持登记后保留、`remove: true` 移除�
 | Page / Component 页面 | `onSaveExitState`、`onRouteDone` | 退出状态保存与恢复、路由动画完成通知 |
 | Page / Component 页面 | `onPullDownRefresh`、`onReachBottom`、`onPageScroll` | 通过 `scroll-view` 等实现页面滚动事件 |
 | Page / Component 页面 | `onTabItemTap` | 自定义 tab 点击通知 |
-| App | `onThemeChange`、`onPageNotFound` | 主题变化、页面不存在通知 |
+| App | `onThemeChange` | 主题变化通知 |
 | Component / Behavior | `moved`、`error`、`definitionFilter` | 节点移动、组件方法错误处理、定义预处理 |
 | Component | `export` | 组件查询时的自定义返回值 |
 
 > RN 的 `onShareAppMessage` 已有 `open-type="share"` 与 `rnConfig.openTypeHandler.onShareAppMessage` 桥接，无需额外通过 `implement` 登记。
+
+> RN 的 `onPageNotFound` 已支持启动入口不存在通知，无需登记。已有业务应移除通过 `implement('onPageNotFound')` 安装的重复通知驱动；`remove: true` 不再用于过滤这一已支持的生命周期。
 
 ```js
 import {implement} from '@mpxjs/core'

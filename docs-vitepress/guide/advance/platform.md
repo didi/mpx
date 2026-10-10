@@ -649,7 +649,7 @@ serverPrefetch|是
 
 应用级事件名称|是否支持
 :----|----
-onPageNotFound|是
+onPageNotFound|是，仅启动入口不存在时触发；运行中路由 API 失败通过 `fail` 处理
 onPageScroll|是
 onPullDownRefresh|是
 onReachBottom|是

@@ -77,7 +77,7 @@
 | `onHide` | 应用进入后台，入参 `{ reason }`，`0` 表示退出类场景，`3` 表示其他，为对小程序语义的有限模拟。 |
 | `onError` | 全局 JS 错误，RN 通过 `ErrorUtils.setGlobalHandler` 与已注册回调链式触发。 |
 | `onUnhandledRejection` | 未处理的 Promise 拒绝（Hermes / `promise` rejection tracking 等）。 |
-| `onPageNotFound` | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入页面不存在通知。 |
+| `onPageNotFound` | 启动入口未注册时，先以首页及空参数初始化导航，再在导航就绪后通知 `{ path, query, isEntryPage: true }`；`path` 不带开头 `/`，`query` 为缺失入口的 `initialParams`（未传为 `{}`），`this` 与 App 其他生命周期一致。每次根组件初始化最多一次，回调可调用 `redirectTo / reLaunch`；普通重渲染、前后台切换、路由 API 失败或已注册页面加载错误不触发。无需 `implement` 登记。 |
 | `onThemeChange` | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入主题变化通知。 |
 | `onSSRAppCreated` | SSR 应用创建钩子，可写在 options 中，**RN 不使用 SSR**，不会触发。 |
 | 其他顶层字段 | 非生命周期、非框架保留键会合并进 **`getApp()` 返回对象**，并与 `Mpx` 原型能力合并（如 `globalData`、自定义方法需自行挂到该对象或通过 `methods` 展开规则处理——以当前编译合并结果为准）。 |
@@ -182,7 +182,7 @@
 | 声明位置 | 登记名 |
 | --- | --- |
 | Page / Component 页面 | `onShareTimeline`、`onAddToFavorites`、`onSaveExitState`、`onRouteDone`、`onPullDownRefresh`、`onReachBottom`、`onPageScroll`、`onTabItemTap` |
-| App | `onThemeChange`、`onPageNotFound` |
+| App | `onThemeChange` |
 | Component / Behavior | `moved`、`error`、`definitionFilter` |
 | Component | `export` |
 
@@ -191,6 +191,10 @@
 上述检查针对构造选项声明，`setup` 中注册的组合式钩子仍需业务另行驱动。
 
 `onShareAppMessage` 沿用 `open-type="share"` 与 `rnConfig.openTypeHandler.onShareAppMessage` 的已有桥接，无需额外登记。
+
+`mpx.onPageNotFound / mpx.offPageNotFound` 可独立注册与取消入口通知监听，需先安装 `@mpxjs/api-proxy`。在启动前或 `onLaunch` 中注册，通知结束后不补发；取消 API 监听不移除 App 生命周期回调。两种回调都未声明时由 Mpx 的 `error` 报告。
+
+`onPageNotFound` 已由框架驱动启动入口通知，业务升级时需移除旧的 `implement('onPageNotFound')` 重复驱动；`remove: true` 不再用于过滤该生命周期。回调前首页已初始化，不保证无首页闪现；回调不跳转则停留首页，运行中的跳转失败通过对应 API 的 `fail` 处理。
 
 ---
 

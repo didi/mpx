@@ -19,6 +19,8 @@
   - [offAppHide](#offapphide)
   - [onError](#onerror)
   - [offError](#offerror)
+  - [onPageNotFound](#onpagenotfound)
+  - [offPageNotFound](#offpagenotfound)
   - [onUnhandledRejection](#onunhandledrejection)
   - [offUnhandledRejection](#offunhandledrejection)
   - [onLazyLoadError](#onlazyloaderror)
@@ -461,6 +463,32 @@ mpx.use(apiProxy, {
 #### 返回值
 
 无。
+
+---
+
+### onPageNotFound
+
+监听启动入口不存在事件，需先安装 `@mpxjs/api-proxy`。`mpx.canIUse('onPageNotFound')` 返回 `true`。
+
+| 入参 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `callback` | function | 是 | 接收 `{ path, query, isEntryPage: true }`；`path` 不带开头 `/`，`query` 为原始缺失入口的 `initialParams`（未传为 `{}`）。 |
+
+无返回值，默认不参与 Promise 化。框架先初始化首页及空参数，再在导航就绪后通知，可在回调内调用 `redirectTo / reLaunch`。在启动前或 App 的 `onLaunch` 中注册；通知后注册不会补发。
+
+每次 RN 根组件初始化最多通知一次，重建根组件会重新检查入口；普通重渲染、前后台切换、运行中路由 API 失败、已注册页面加载错误不触发。与 App 的 `onPageNotFound` 共用时机和参数，均声明时均会调用；两者都未声明时通过 Mpx 的 `error` 报告缺失入口。
+
+---
+
+### offPageNotFound
+
+取消通过 `mpx.onPageNotFound` 注册的监听。`mpx.canIUse('offPageNotFound')` 返回 `true`。
+
+| 入参 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `callback` | function | 否 | 注册时同一个函数对象；不传则移除全部 API 监听。 |
+
+无返回值，默认不参与 Promise 化。不移除 App 的 `onPageNotFound` 生命周期回调。
 
 ---
 

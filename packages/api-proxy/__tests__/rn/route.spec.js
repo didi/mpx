@@ -64,4 +64,24 @@ describe('RN route APIs', () => {
     expect(fail).toHaveBeenCalledWith(res)
     expect(complete).toHaveBeenCalledWith(res)
   })
+
+  test('timeout settles once and unlocks a recovery navigation from fail', () => {
+    const calls = []
+    const success = jest.fn()
+    reLaunch({
+      url: '/pages/missing',
+      success,
+      fail: (res) => {
+        calls.push(res.errMsg)
+        reLaunch({ url: '/pages/target', success })
+      },
+      complete: () => calls.push('complete')
+    })
+    jest.advanceTimersByTime(1000)
+    expect(calls).toEqual(['reLaunch:fail timeout /pages/missing', 'complete'])
+    expect(success).not.toHaveBeenCalled()
+    expect(global.__mpxPagesMap.main[1].reset).toHaveBeenCalledTimes(2)
+    expect(global.__navigationHelper.lastSuccessCallback).toEqual(expect.any(Function))
+    expect(global.__navigationHelper.lastFailCallback).toEqual(expect.any(Function))
+  })
 })

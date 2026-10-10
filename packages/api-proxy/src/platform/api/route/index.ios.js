@@ -25,8 +25,10 @@ function isLock (navigationHelper, type, options) {
   clearTimeout(timerId)
   timerId = setTimeout(() => {
     if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-      navigationHelper.lastFailCallback(`${type}:fail timeout ${options.url || ''}`)
+      const callback = navigationHelper.lastFailCallback
+      navigationHelper.lastSuccessCallback = null
       navigationHelper.lastFailCallback = null
+      callback(`timeout ${options.url || ''}`)
     }
   }, 1000)
   return false
@@ -51,15 +53,18 @@ function navigateTo (options = {}) {
       route: finalPath,
       eventChannel
     }
-    navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateTo:ok', eventChannel }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
+      if (global.__mpxEventChannel?.eventChannel === eventChannel) {
+        delete global.__mpxEventChannel
+      }
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
+    navigation.push(finalPath, queryObj)
   }
 }
 
@@ -73,7 +78,6 @@ function redirectTo (options = {}) {
     const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
-    navigation.replace(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'redirectTo:ok' }
       successHandle(res, options.success, options.complete)
@@ -82,6 +86,7 @@ function redirectTo (options = {}) {
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
+    navigation.replace(finalPath, queryObj)
   }
 }
 
@@ -105,8 +110,10 @@ function navigateBack (options = {}) {
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
         if (navigationHelper.lastSuccessCallback) {
-          navigationHelper.lastSuccessCallback()
+          const callback = navigationHelper.lastSuccessCallback
           navigationHelper.lastSuccessCallback = null
+          navigationHelper.lastFailCallback = null
+          callback()
         }
       })
     } else {
@@ -125,6 +132,14 @@ function reLaunch (options = {}) {
     const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
+    navigationHelper.lastSuccessCallback = () => {
+      const res = { errMsg: 'reLaunch:ok' }
+      successHandle(res, options.success, options.complete)
+    }
+    navigationHelper.lastFailCallback = (msg) => {
+      const res = { errMsg: `reLaunch:fail ${msg}` }
+      failHandle(res, options.fail, options.complete)
+    }
     navigation.reset({
       index: 0,
       routes: [
@@ -134,14 +149,6 @@ function reLaunch (options = {}) {
         }
       ]
     })
-    navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'reLaunch:ok' }
-      successHandle(res, options.success, options.complete)
-    }
-    navigationHelper.lastFailCallback = (msg) => {
-      const res = { errMsg: `reLaunch:fail ${msg}` }
-      failHandle(res, options.fail, options.complete)
-    }
   }
 }
 

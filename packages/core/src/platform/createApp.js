@@ -1,7 +1,7 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
+import { makeMap, spreadProp, isBrowser, error } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -66,6 +66,25 @@ export default function createApp (options, config = {}) {
         global.__mpxAppCbs.show.forEach((cb) => {
           cb(options)
         })
+        const router = this.$root.$options.router
+        if (isBrowser && router) {
+          router.onReady(() => {
+            this.$nextTick(() => {
+              const pageNotFound = router.__mpxPageNotFound
+              if (pageNotFound) {
+                delete router.__mpxPageNotFound
+                const callbacks = global.__mpxAppCbs.pageNotFound
+                if (rawOptions.onPageNotFound || callbacks.length) {
+                  const listeners = callbacks.slice()
+                  rawOptions.onPageNotFound && rawOptions.onPageNotFound.call(this, pageNotFound)
+                  listeners.forEach(cb => cb(pageNotFound))
+                } else {
+                  error(`The /${pageNotFound.path} path does not exist in the application. Mpx has redirected to the home page path ${router.currentRoute.path}.`)
+                }
+              }
+            })
+          })
+        }
       }
     })
   } else {
