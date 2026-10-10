@@ -47,13 +47,7 @@ export const createInnerAudioContext = () => {
       }
     })
   })
-  Object.defineProperty(__audio, 'startTime', {
-    value: 0
-  })
-  Object.defineProperty(__audio, 'obeyMuteSwitch', {
-    value: true
-  })
-  defineUnsupportedProps(__audio, ['playbackRate', 'referrerPolicy'])
+  defineUnsupportedProps(__audio, ['startTime', 'obeyMuteSwitch', 'playbackRate', 'referrerPolicy'])
   const eventNames = [
     'Canplay',
     'Ended',
