@@ -13,8 +13,8 @@ export class Image {
   canvas: any;
   width: number;
   height: number;
-  private _loadListener: any;
-  private _errorListener: any;
+  private _removeLoadListener?: () => void;
+  private _removeErrorListener?: () => void;
   private _onload: ((...args: any[]) => void);
   private _onerror: ((...args: any[]) => void);
   [key: string]: any;
@@ -70,12 +70,8 @@ export class Image {
 
   set onload (callback: ((...args: any[]) => void)) {
     this._onload = callback
-    if (this._loadListener) {
-      this.canvas.removeMessageListener(this._loadListener)
-    }
-    if (callback) {
-      this._loadListener = this.addEventListener('load', callback)
-    }
+    this._removeLoadListener?.()
+    this._removeLoadListener = callback ? this.addEventListener('load', callback) : undefined
   }
 
   get onload (): ((...args: any[]) => void) {
@@ -84,12 +80,8 @@ export class Image {
 
   set onerror (callback: ((...args: any[]) => void)) {
     this._onerror = callback
-    if (this._errorListener) {
-      this.canvas.removeMessageListener(this._errorListener)
-    }
-    if (callback) {
-      this._errorListener = this.addEventListener('error', callback)
-    }
+    this._removeErrorListener?.()
+    this._removeErrorListener = callback ? this.addEventListener('error', callback) : undefined
   }
 
   get onerror () : ((...args: any[]) => void) {
