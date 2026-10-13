@@ -2,7 +2,7 @@ import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
-import { error, proxy } from '@mpxjs/utils'
+import { error, proxy, defineUnsupportedProps } from '@mpxjs/utils'
 const dash2hump = require('../utils/hump-dash').dash2hump
 
 export function processComponentOption (
@@ -395,20 +395,22 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         if (vnode && vnode.componentInstance) {
           const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
           if (document.hidden) {
-            if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
+            if (global.__mpxAppCbs && global.__mpxAppCbs.hide && global.__mpxAppCbs.hide.length) {
+              const options = {}
+              defineUnsupportedProps(options, ['reason'])
               global.__mpxAppCbs.hide.forEach((cb) => {
-                cb()
+                cb(options)
               })
             }
             if (currentPage) {
               currentPage.mpxPageStatus = 'hide'
             }
           } else {
-            if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
+            if (global.__mpxAppCbs && global.__mpxAppCbs.show && global.__mpxAppCbs.show.length) {
+              const options = {}
+              defineUnsupportedProps(options, ['apiCategory', 'chatType', 'forwardMaterials', 'hostExtraData'])
               global.__mpxAppCbs.show.forEach((cb) => {
-                // todo 实现app.onShow参数
-                /* eslint-disable node/no-callback-literal */
-                cb({})
+                cb(options)
               })
             }
             if (currentPage) {

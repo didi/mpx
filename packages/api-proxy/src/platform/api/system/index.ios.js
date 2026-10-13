@@ -62,6 +62,8 @@ const getDeviceInfo = function () {
   if (__mpx_mode__ !== 'ios') {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
     deviceInfo.deviceAbi = deviceAbi[0] || null
+  } else {
+    defineUnsupportedProps(deviceInfo, ['deviceAbi'])
   }
   defineUnsupportedProps(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])
   Object.assign(deviceInfo, {

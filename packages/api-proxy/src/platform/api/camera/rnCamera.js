@@ -10,10 +10,10 @@ export default class CameraContext {
     const { zoom, success = noop, fail = noop, complete = noop } = options
     try {
       if (this.camera.setZoom) {
+        this.camera.setZoom(zoom)
         const result = { errMsg: 'setZoom:ok' }
         success(result)
         complete(result)
-        this.camera.setZoom(zoom)
       } else {
         const result = {
           errMsg: 'setZoom:fail camera instance not found'

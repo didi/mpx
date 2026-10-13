@@ -2,7 +2,7 @@
 name: mpx2rn-simple
 description: Mpx 跨端输出 RN（简称 Mpx2RN 或 Mpx2DRN）的开发适配指南，覆盖模板、脚本、样式、JSON 配置四大维度。当用户进行 Mpx2RN 相关任务时强制调用，包括但不限于：技术方案设计、页面 / 组件的开发迭代、旧项目跨端适配改造、编译和运行时报错排查、Code Review 等。当用户问题不涉及 Mpx2RN 时不应调用，如 Mpx 小程序开发问题，RN 原生开发问题、Mpx2Web 相关问题等。
 metadata:
-  version: "2.12.3"
+  version: "2.12.7"
   author: donghongping
 ---
 
@@ -18,11 +18,12 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 
 | 知识库 | 说明 |
 | --- | --- |
-| [开发约束与检查清单](./references/rn-development-checklist.md) | 所有 Mpx2RN 适配改造、新建组件、报错排查与 Code Review 任务开始前必须完整读取，并在完成后按同一份清单复查；覆盖模板、脚本、样式、JSON 与条件编译的共用约束 |
+| [开发约束与检查清单](./references/rn-development-checklist.md) | 所有 Mpx2RN 技术方案设计、适配改造、页面 / 组件开发迭代、报错排查与 Code Review 任务开始前必须完整读取，并在完成后按同一份清单复查；覆盖模板、脚本、样式、JSON 与条件编译的共用约束 |
 | [项目结构与单文件组件](./references/project-structure-and-single-file-component.md) | 不熟悉项目目录、页面与组件注册关系、入口配置或 `.mpx` 单文件组件结构时读取；已明确文件位置与 SFC 结构时无需读取 |
 | [条件编译](./references/conditional-compile.md) | 需要按平台隔离文件、区块、模板节点或属性，或修改、排查现有条件编译时读取；覆盖文件、模板、脚本、样式和 JSON 配置的条件编译语法 |
 | [跨端输出 RN 模板能力参考](./references/rn-template-reference.md) | 任务涉及 `<template>` 修改、模板编译或运行问题、基础组件选型及其属性或事件时读取相关章节；覆盖数据绑定、指令、事件、Slot、动态组件、WXML 模板、i18n、无障碍与基础组件 |
-| [跨端输出 RN 脚本能力参考](./references/rn-script-reference.md) | 任务涉及 `<script>` 修改、脚本编译或运行问题、生命周期、实例能力、响应式、组合式 API、运行时配置、网络请求或状态管理时读取相关章节 |
+| [跨端输出 RN 脚本能力参考](./references/rn-script-reference.md) | 任务涉及 `<script>` 修改、脚本编译或运行问题、生命周期、实例能力、响应式、组合式 API、网络请求或状态管理时读取相关章节 |
+| [跨端输出 RN 编译与运行时配置参考](./references/rn-config-reference.md) | 任务涉及 `MpxWebpackPlugin` 编译选项、编译期 `rnConfig` 或运行时 `Mpx.config` / `Mpx.config.rnConfig`，以及目标平台、基础组件替换、分包、导航、布局或宿主能力配置时读取相关章节 |
 | [跨端输出 RN 样式能力参考](./references/rn-style-reference.md) | 任务涉及 `<style>` 修改、样式编译或渲染问题，或需要判断某项选择器、单位、样式特性及属性是否受支持时读取相关章节 |
 | [跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md) | 需要改造 RN 不支持或跨端表现不一致的选择器、单位、布局、文本、定位、溢出等样式写法时优先读取对应方案；仅查询支持范围时读取样式能力参考即可 |
 | [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md) | 项目启用 UnoCSS、模板使用原子类，或任务涉及工具类、variants、directives、variant groups、颜色透明度及原子类编译问题时读取 |
@@ -35,20 +36,23 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 
 ### 1. 明确任务与输出
 
+- **技术方案设计**：评估 RN 能力与跨端兼容方案，明确目标平台、配置入口，以及是否需要文件级条件编译或混合开发。
 - **已有组件适配**：默认直接修改原文件；先确认原平台行为、目标平台和涉及区块。若需要输出代码，给出可直接使用的完整组件，不只给局部片段。
 - **新建组件**：明确视图结构、props、事件、数据流、目标平台及是否需要 RN 原生能力，最终交付结构完整的 `.mpx` 单文件组件。
 - **报错排查 / Code Review**：先按报错位置或变更内容定位模板、脚本、样式或 JSON 维度，再读取对应参考；检查修改在原平台与 RN 的影响。
 
 ### 2. 读取开发约束与检查清单
 
-适配改造、新建组件、报错排查与 Code Review 均完整读取[开发约束与检查清单](./references/rn-development-checklist.md)，并作为后续实现与审查的约束；完成后在收尾检查中按同一份清单逐项确认。
+技术方案设计、适配改造、页面 / 组件开发迭代、报错排查与 Code Review 均完整读取[开发约束与检查清单](./references/rn-development-checklist.md)，并作为后续实现与审查的约束；完成后在收尾检查中按同一份清单逐项确认。
 
 ### 3. 按区块逐项实施
 
 1. **模板**：读取 [模板能力参考](./references/rn-template-reference.md) 的相关组件章节，核对基础组件、属性、事件与滚动能力；检查 Mustache 调用、事件传参、文字节点、动态 `wx:class` / `wx:style`，并给 selector API 对应节点补空 `wx:ref`。
 2. **脚本**：读取 [脚本能力参考](./references/rn-script-reference.md) 和任务涉及的 [环境 API 参考](./references/rn-api-reference.md)，核对生命周期、构造选项、实例能力、保留关键字与 selector；将直接宿主 API 调用改为受支持的 `mpx.xxx`。
-3. **样式**：先展开预处理器嵌套确认最终选择器，再读取 [样式能力参考](./references/rn-style-reference.md) 和 [样式开发最佳实践](./references/rn-style-practice.md) 的相关章节，逐项核对选择器、样式属性、垂直 margin 与平台差异；启用 UnoCSS 时额外读取 [原子 CSS 能力参考](./references/rn-atomic-css.md)。
+3. **样式**：先展开预处理器嵌套确认最终选择器，优先读取 [样式开发最佳实践](./references/rn-style-practice.md) 并直接应用命中方案；未命中时再查 [样式能力参考](./references/rn-style-reference.md)，明确查询支持范围时可直接读取后者；逐项核对选择器、样式属性、垂直 margin 与平台差异；启用 UnoCSS 时额外读取 [原子 CSS 能力参考](./references/rn-atomic-css.md)。
 4. **JSON**：读取 [JSON 配置参考](./references/rn-json-reference.md)，核对应用、页面、组件配置；需要按平台生成时使用 `<script name="json">`。
+
+涉及编译或运行时配置时，读取 [配置参考](./references/rn-config-reference.md)，区分编译期 `rnConfig` 与运行时 `Mpx.config.rnConfig`，按对应入口配置。
 
 优先选择跨端等价实现。确实无法等效时，按区块使用正确的条件编译语法最小隔离，并添加 `todo` 说明原因；修改选择器时同步更新模板、脚本和样式中的全部引用。
 

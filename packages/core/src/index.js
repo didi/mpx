@@ -16,10 +16,6 @@ export {
 } from './platform/index'
 
 export {
-  nextTick
-} from './observer/scheduler'
-
-export {
   BEFORECREATE,
   CREATED,
   BEFOREMOUNT,

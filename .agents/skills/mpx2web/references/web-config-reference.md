@@ -1,21 +1,19 @@
 # 跨端输出 Web 编译与运行时配置参考
 
-本文档按配置入口与生效阶段组织 Mpx 跨端输出 Web 的配置，包括 `MpxWebpackPlugin` 的 Web 相关选项、编译期 `webConfig`、运行时 `Mpx.config.webConfig` 与应用 JSON 的平台差异。只记录 Web 输出需要单独判断或配置的内容，通用字段沿用输入项目和同版本 Mpx 文档。
+本文档按配置入口与生效阶段组织 Mpx 跨端输出 Web 的配置，包括 `MpxWebpackPlugin` 的 Web 相关选项、编译期 `webConfig`、运行时 `Mpx.config.webConfig`。只记录 Web 输出需要单独判断或配置的内容，通用字段沿用输入项目和同版本 Mpx 文档。
 
-模板与基础组件约束见 [模板能力参考](./web-template-reference.md)；应用与页面的脚本差异见 [脚本能力参考](./web-script-reference.md)；SSR 生命周期与状态同步见 [SSR 参考](./ssr-reference.md)。
+应用、页面与组件的 JSON 字段、tabBar、分包与抽象节点见 [JSON 配置参考](./web-json-reference.md)；模板与基础组件约束见 [模板能力参考](./web-template-reference.md)；应用与页面的脚本差异见 [脚本能力参考](./web-script-reference.md)；SSR 生命周期与状态同步见 [SSR 参考](./ssr-reference.md)。
 
 ## 目录
 
 - [配置入口与生效阶段](#配置入口与生效阶段)
 - [编译配置](#编译配置)
   - [配置方式](#配置方式)
-  - [模板与组件](#模板与组件)
+  - [模板与样式](#模板与样式)
   - [编译期 webConfig](#编译期-webconfig)
 - [运行时配置](#运行时配置)
   - [初始化方式](#初始化方式)
   - [Mpx.config.webConfig](#mpxconfigwebconfig)
-  - [路由与部署路径](#路由与部署路径)
-- [应用 JSON 的小程序专属声明](#应用-json-的小程序专属声明)
 - [注意事项](#注意事项)
 
 ---
@@ -24,7 +22,7 @@
 
 | 配置入口 | 生效阶段 | 主要用途 |
 | --- | --- | --- |
-| `new MpxWebpackPlugin(options)` | 编译期 | 输出目标、模板与组件编译。使用 CLI 工程时通常对应 `pluginOptions.mpx.plugin`。 |
+| `new MpxWebpackPlugin(options)` | 编译期 | 输出目标、样式隔离与单位转换、模板与组件编译。使用 CLI 工程时通常对应 `pluginOptions.mpx.plugin`。 |
 | `options.webConfig` | 编译期 | 挂载节点、SSR 客户端挂载时机、页面切换动画、异步公共模块拆分、基础组件替换等 Web 输出配置。 |
 | `Mpx.config.webConfig` | 运行时 | Web 路由、内建标题栏、顶部安全区与 web-view 桥接配置。 |
 | `app.mpx` 的 JSON 区块 | 编译期 | 应用页面、分包及小程序专属能力声明。 |
@@ -56,15 +54,18 @@ module.exports = {
 }
 ```
 
-使用 Mpx CLI 工程时，以上插件选项通常写在 `mpx.config.js` 的 `pluginOptions.mpx.plugin` 中，Web 专属编译选项写在其 `webConfig` 下。已有多端构建配置时，沿用工程的目标选择方式。
+使用 Mpx CLI 工程时，以上插件选项通常写在 `mpx.config.js` 的 `pluginOptions.mpx.plugin` 中，Web 专属编译选项通常放在 `webConfig` 下，同时也有部分通用编译配置影响 web 输出。
 
-### 模板与组件
+### 模板与样式
 
 以下字段是 **`MpxWebpackPlugin` 顶层选项**，与 `webConfig` 同级：
 
-| 配置项 | 说明 |
-| --- | --- |
-| `autoVirtualHostRules` | 只有 Web 编译注入的组件外层节点确实阻断布局或样式时才配置，并只匹配受影响的组件，不顺带包含父组件、子组件或相邻组件。命中后模板需要单个真实根节点，详见 [Web 模板编译限制](./web-template-reference.md#web-模板编译限制)。 |
+| 配置项 | 默认值或行为 | Web 输出用途与边界 |
+| --- | --- | --- |
+| `autoScopeRules` | `{}`，不自动启用 scoped | 按 `.mpx` 文件路径批量启用样式隔离，命中后该文件的所有样式区块都启用 scoped；未命中时仍尊重单个 `<style scoped>`。不默认模拟微信组件的样式隔离，也不阻止外部全局 CSS 影响内部节点。全局样式入口不应纳入匹配范围，详见 [样式隔离](./web-style-reference.md#样式隔离)。 |
+| `externalClasses` | `['custom-class', 'i-class']` | 声明编译器需要转换的外部样式类名。自定义数组会替换默认数组，新增名称时保留仍在使用的默认名称，并与组件脚本、模板占位类和调用方属性保持一致，详见 [外部样式类](./web-style-reference.md#外部样式类)。 |
+| `transRpxRules` | `null`，不转换 `px` | 可配置单条规则或规则数组，对匹配样式资源执行 `px → rpx`，Web 随后再按 `webConfig.transRpxFn` 或默认规则转换 `rpx`。不影响模板内联样式中的 `px`，也不是启用 Web `rpx` 支持的前提；`mode`、`designWidth` 与注释控制见 [px 自动转换](./web-style-reference.md#px-自动转换)。 |
+| `autoVirtualHostRules` | `{}`，不自动虚拟化宿主 | 只有 Web 编译注入的组件外层节点确实阻断布局或样式时才配置，并只匹配受影响的组件，不顺带包含父组件、子组件或相邻组件。命中后模板需要单个真实根节点，详见 [Web 模板编译限制](./web-template-reference.md#web-模板编译限制)。 |
 
 ### 编译期 webConfig
 
@@ -81,7 +82,7 @@ module.exports = {
 
 `useSSR` 控制客户端挂载时机；SSR 生命周期、首屏数据加载和状态同步仍需按 [SSR 参考](./ssr-reference.md) 处理。
 
-`transRpxFn` 按字符串替换回调接收参数，前两个参数为完整匹配文本与数值部分字符串（如 `'10rpx'`、`'10'`），返回转换后的字符串。函数源码会直接写入运行时代码，应使用自包含的普通函数表达式，不能依赖构建配置中的闭包变量或仅构建环境可用的依赖。样式相关说明见 [Web 样式差异](./web-template-reference.md#web-样式差异)。
+`transRpxFn` 按字符串替换回调接收参数，前两个参数为完整匹配文本与数值部分字符串（如 `'10rpx'`、`'10'`），返回转换后的字符串。函数源码会直接写入运行时代码，应使用自包含的普通函数表达式，不能依赖构建配置中的闭包变量或仅构建环境可用的依赖。单位转换、样式隔离与外部样式类见 [样式能力参考](./web-style-reference.md)。
 
 ---
 
@@ -116,45 +117,6 @@ if (__mpx_mode__ === 'web') {
 | `safeAreaInsetTop` | 未设置，使用 `24` | 启用内建标题栏后，调整非 iOS 设备顶部安全区高度，单位为 `px`。 |
 | `webviewConfig.hostWhitelists` | 未设置时按空数组处理，不限制消息来源 | Web 内建 `web-view` 接收桥接消息时校验 `event.origin`；非空时，来源字符串须以名单中的某一项结尾（`endsWith`）才会处理。 |
 | `webviewConfig.apiImplementations` | 未设置，无自定义桥接方法 | 按方法名配置函数，处理内建 `postMessage` 和路由方法以外的桥接调用；未配置对应函数时返回调用失败。 |
-
-### 路由与部署路径
-
-Web 部署在子目录时，`routeConfig.base` 设置页面地址的公共前缀，例如 `/content/article/1` 的前缀是 `/content/`；CLI 构建配置顶层的 `publicPath` 设置 JS、CSS 和图片的加载地址，直接使用 webpack 时对应 `output.publicPath`。使用根路径部署时无需配置；静态资源放在 CDN 时，`publicPath` 填写 CDN 地址。
-
----
-
-## 应用 JSON 的小程序专属声明
-
-以下字段不会自动生成 Web 等价能力。只有源码实际依赖对应能力时才处理，并保留原小程序配置：
-
-| 输入能力 | Web 差异 | 处理方式 |
-| --- | --- | --- |
-| `plugins` 与 `plugin://` 组件 | 当前插件导出处理只面向微信，Web 不能把 `plugin://` 当作普通组件路径解析。 | 隔离插件组件的注册和使用，接入项目已有的 Web 组件；没有替代实现时保留真实的 `TODO(web)`。 |
-| `workers` | Web 不会根据小程序的 worker 目录声明自动创建或注册 Web Worker。 | 只有业务实际调用 worker 时才增加 Web Worker 入口和通信实现。 |
-| 分包 `independent: true` | Web 可异步加载页面 chunk，但没有微信独立分包的独立启动和运行环境。 | 只依赖懒加载时无需改动；依赖独立初始化或全局隔离时，为 Web 设计独立入口或初始化边界。 |
-
-只有少数字段存在平台差异时，使用动态 JSON 保留一份公共配置，只条件赋值差异字段。例如 Web 不消费微信插件声明时：
-
-```html
-<script name="json">
-const appConfig = {
-  pages: [
-    './pages/content/index.mpx',
-    './pages/catalog/index.mpx'
-  ]
-}
-
-if (__mpx_mode__ === 'wx') {
-  appConfig.plugins = {
-    foo: { version: '1.0.0', provider: 'wx123' }
-  }
-}
-
-module.exports = appConfig
-</script>
-```
-
-`<script name="json">` 中导出的对象必须可序列化。不要为删除一个 `plugins` 字段分别复制 `mode="wx"` 和 `mode="web"` 的完整 JSON，否则公共的 `pages`、分包或窗口配置会形成两份维护入口。只有两端大部分 JSON 结构确实不同时才拆分完整区块。
 
 ---
 

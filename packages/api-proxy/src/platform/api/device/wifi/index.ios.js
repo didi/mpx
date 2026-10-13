@@ -1,5 +1,6 @@
 import { PermissionsAndroid } from 'react-native'
 import { noop, type } from '@mpxjs/utils'
+import { defineUnsupportedProps } from '../../../../common/js'
 import mpx from '@mpxjs/core'
 let startWifiReady = false
 const wifiListListeners = []
@@ -78,7 +79,6 @@ function stopWifi (options = {}) {
     return
   }
   startWifiReady = false
-  wifiListListeners.length = 0
   const result = {
     errMsg: 'stopWifi:ok'
   }
@@ -107,19 +107,22 @@ function getWifiList (options = {}) {
   }
   const WifiManager = require('react-native-wifi-reborn').default
   WifiManager.reScanAndLoadWifiList().then((res) => {
-    const wifiList = res.map(item => {
-      return {
-        SSID: item.SSID,
-        BSSID: item.BSSID,
-        frequency: item.frequency,
-        signalStrength: 100 + (item.level || 0)
-      }
-    })
-    wifiListListeners.forEach(callback => {
-      if (type(callback) === 'Function') {
-        callback({ wifiList })
-      }
-    })
+    if (wifiListListeners.length) {
+      const wifiList = res.map(item => {
+        const wifi = {
+          SSID: item.SSID,
+          BSSID: item.BSSID,
+          frequency: item.frequency,
+          signalStrength: 100 + (item.level || 0)
+        }
+        defineUnsupportedProps(wifi, ['secure'])
+        return wifi
+      })
+      const data = { wifiList }
+      wifiListListeners.forEach(callback => {
+        if (type(callback) === 'Function') callback(data)
+      })
+    }
     const result = {
       errMsg: 'getWifiList:ok',
       errno: 0,
@@ -137,14 +140,15 @@ function getWifiList (options = {}) {
 }
 
 function onGetWifiList (callback) {
-  if (!startWifiReady && wifiListListeners.indexOf(callback) > -1) {
+  if (wifiListListeners.indexOf(callback) > -1) {
     return
   }
   wifiListListeners.push(callback)
 }
 
 function offGetWifiList (callback) {
-  if (!startWifiReady) {
+  if (callback == null) {
+    wifiListListeners.length = 0
     return
   }
   const index = wifiListListeners.indexOf(callback)
@@ -174,6 +178,7 @@ function getConnectedWifi (options = {}) {
         signalStrength: 0,
         frequency: 0
       }
+      defineUnsupportedProps(wifi, ['secure'])
       const result = {
         wifi: wifi,
         errMsg: 'getConnectedWifi:ok'
@@ -209,6 +214,7 @@ function getConnectedWifi (options = {}) {
         signalStrength: signalStrength,
         frequency: frequency
       }
+      defineUnsupportedProps(wifi, ['secure'])
 
       const result = {
         wifi: wifi,
