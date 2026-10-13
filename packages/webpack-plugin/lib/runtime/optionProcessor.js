@@ -61,7 +61,7 @@ registered in parent context!`)
   }
 
   if (ctorType === 'page') {
-    option.__mpxPageConfig = extend({}, global.__mpxPageConfig, pageConfig)
+    option.__mpxPageConfig = pageConfig
   }
 
   if (!hasApp) {
@@ -391,9 +391,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
     if (isBrowser) {
       document.addEventListener('visibilitychange', function () {
-        const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
-        if (vnode && vnode.componentInstance) {
-          const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+        const currentPage = getCurrentPages().slice(-1)[0]
+        if (currentPage && currentPage.__mpxProxy) {
           if (document.hidden) {
             if (global.__mpxAppCbs && global.__mpxAppCbs.hide && global.__mpxAppCbs.hide.length) {
               const options = {}
@@ -402,9 +401,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
                 cb(options)
               })
             }
-            if (currentPage) {
-              currentPage.mpxPageStatus = 'hide'
-            }
+            currentPage.mpxPageStatus = 'hide'
           } else {
             if (global.__mpxAppCbs && global.__mpxAppCbs.show && global.__mpxAppCbs.show.length) {
               const options = {}
@@ -413,9 +410,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
                 cb(options)
               })
             }
-            if (currentPage) {
-              currentPage.mpxPageStatus = 'show'
-            }
+            currentPage.mpxPageStatus = 'show'
           }
         }
       })
