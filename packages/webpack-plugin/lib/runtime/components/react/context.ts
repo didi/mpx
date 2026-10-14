@@ -1,4 +1,4 @@
-import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
+import { createContext, Dispatch, MutableRefObject, RefObject, SetStateAction } from 'react'
 import type { NativeSyntheticEvent, Animated, ScaledSize, TextStyle } from 'react-native'
 import { noop } from '@mpxjs/utils'
 
@@ -94,6 +94,8 @@ export const TextPassThroughContext = createContext<TextPassThroughContextValue 
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 
 export const RouteContext = createContext<RouteContextValue | null>(null)
+
+export const NavigationContainerContext = createContext<RefObject<any> | null>(null)
 
 export const SwiperContext = createContext({})
 
