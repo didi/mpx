@@ -192,10 +192,6 @@
 
 `onShareAppMessage` 沿用 `open-type="share"` 与 `rnConfig.openTypeHandler.onShareAppMessage` 的已有桥接，无需额外登记。
 
-`mpx.onPageNotFound / mpx.offPageNotFound` 可独立注册与取消入口通知监听，需先安装 `@mpxjs/api-proxy`。在启动前或 `onLaunch` 中注册，通知结束后不补发；取消 API 监听不移除 App 生命周期回调。两种回调都未声明时由 Mpx 的 `error` 报告。
-
-`onPageNotFound` 已由框架驱动启动入口通知，业务升级时需移除旧的 `implement('onPageNotFound')` 重复驱动；`remove: true` 不再用于过滤该生命周期。回调前首页已初始化，不保证无首页闪现；回调不跳转则停留首页，运行中的跳转失败通过对应 API 的 `fail` 处理。
-
 ---
 
 ### 页面 / 组件实例方法与属性
@@ -203,7 +199,7 @@
 | 名称 | 类型 | 适用 | 说明 |
 | --- | --- | --- | --- |
 | `route` | 属性 | 页面 | 当前路由名（screen name）。 |
-| `getPageId()` | 方法 | 共用 | 返回当前实例所在页的 pageId 字符串。 |
+| `getPageId()` | 方法 | 共用 | 返回当前实例所在页的 pageId（RN 为数字），通过 RouteContext 传递，不依赖实例的 id 属性。 |
 | `getOpenerEventChannel()` | 方法 | 页面 | 打开当前页的 `EventChannel`，组件侧多为空实现占位。 |
 | `triggerEvent(name, detail?)` | 方法 | 组件 | 向父节点派发自定义事件。 |
 | `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例。RN 不能像小程序一样按 selector 遍历视图树，须在模板目标节点声明 **空 wx:ref**，由编译期建立 **`#id` / `.class` 与节点**的映射后，本 API 才能按小程序写法解析。 |
@@ -619,6 +615,7 @@ createComponent({
 | `createApp` | **构造API**，创建应用实例。 |
 | `createPage` | **构造API**，创建页面。 |
 | `createComponent` | **构造API**，创建自定义组件。 |
+| `pageWrapperHOC` | 仅 RN：由使用方包裹独立页面产物，提供导航栏、布局、页面 Context 等能力；宿主需传入 navigation/route，详见 [独立页面包裹](./rn-hybrid-dev.md#standalone-page-wrapper)。 |
 | `ref` | **组合式API：数据响应**，创建 ref。 |
 | `shallowRef` | **组合式API：数据响应**，创建浅层 ref。 |
 | `unref` | **组合式API：数据响应**，解包 ref。 |

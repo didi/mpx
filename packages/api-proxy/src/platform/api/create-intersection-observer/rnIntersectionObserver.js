@@ -153,9 +153,9 @@ class RNIntersectionObserver {
             // 安卓measureInWindow的参考值在android下为statubar的左下角，因此top需要调整一下
             const boundingClientRect = {
               left: x,
-              top: y + layout.statusBarHeight || 0,
+              top: y + (layout.statusBarHeight || 0),
               right: x + width,
-              bottom: y + height + layout.statusBarHeight || 0,
+              bottom: y + height + (layout.statusBarHeight || 0),
               width: width,
               height: height
             }

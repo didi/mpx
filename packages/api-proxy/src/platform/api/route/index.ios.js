@@ -1,4 +1,4 @@
-import { envError, successHandle, failHandle, resolvePath } from '../../../common/js'
+import { envError, successHandle, failHandle, resolvePath, getFocusedNavigation } from '../../../common/js'
 import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
 import { nextTick } from '../next-tick'
 import { EventChannel } from '../event-channel'
@@ -12,7 +12,11 @@ function getBasePath (navigation) {
 }
 
 let timerId = null
-function isLock (navigationHelper, type, options) {
+function canNavigate (navigation, navigationHelper, type, options) {
+  if (!navigation || !navigationHelper) {
+    failHandle({ errMsg: `${type}:fail navigation is not available` }, options.fail, options.complete)
+    return false
+  }
   if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
     const { path } = parseUrl(options.url || '')
     const res = {
@@ -20,7 +24,7 @@ function isLock (navigationHelper, type, options) {
       path
     }
     failHandle(res, options.fail, options.complete)
-    return true
+    return false
   }
   clearTimeout(timerId)
   timerId = setTimeout(() => {
@@ -31,16 +35,13 @@ function isLock (navigationHelper, type, options) {
       callback(`timeout ${options.url || ''}`)
     }
   }, 1000)
-  return false
+  return true
 }
 
 function navigateTo (options = {}) {
   const navigationHelper = global.__navigationHelper
-  if (isLock(navigationHelper, 'navigateTo', options)) {
-    return
-  }
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
-  if (navigation && navigationHelper) {
+  const navigation = getFocusedNavigation()
+  if (canNavigate(navigation, navigationHelper, 'navigateTo', options)) {
     const eventChannel = new EventChannel()
     if (options.events) {
       eventChannel._addListeners(options.events)
@@ -69,12 +70,9 @@ function navigateTo (options = {}) {
 }
 
 function redirectTo (options = {}) {
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigation = getFocusedNavigation()
   const navigationHelper = global.__navigationHelper
-  if (isLock(navigationHelper, 'redirectTo', options)) {
-    return
-  }
-  if (navigation && navigationHelper) {
+  if (canNavigate(navigation, navigationHelper, 'redirectTo', options)) {
     const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
@@ -91,12 +89,9 @@ function redirectTo (options = {}) {
 }
 
 function navigateBack (options = {}) {
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigation = getFocusedNavigation()
   const navigationHelper = global.__navigationHelper
-  if (isLock(navigationHelper, 'navigateBack', options)) {
-    return
-  }
-  if (navigation && navigationHelper) {
+  if (canNavigate(navigation, navigationHelper, 'navigateBack', options)) {
     const delta = options.delta || 1
     const routeLength = navigation.getState().routes.length
     navigationHelper.lastSuccessCallback = () => {
@@ -123,12 +118,9 @@ function navigateBack (options = {}) {
 }
 
 function reLaunch (options = {}) {
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigation = getFocusedNavigation()
   const navigationHelper = global.__navigationHelper
-  if (isLock(navigationHelper, 'reLaunch', options)) {
-    return
-  }
-  if (navigation && navigationHelper) {
+  if (canNavigate(navigation, navigationHelper, 'reLaunch', options)) {
     const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)

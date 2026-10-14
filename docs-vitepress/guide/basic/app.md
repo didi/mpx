@@ -73,28 +73,6 @@ Mpx 应用需要在 `app.mpx` 中调用 `createApp` 方法注册App实例，绑�
     小程序要打开的页面不存在时触发。
     *   `object` (Object): 页面不存在的详细信息
 
-    RN 与 Web 支持启动入口不存在时的通知，参数为 `{ path, query, isEntryPage: true }`。`path` 是原始缺失页面路径，不含开头 `/`；`query` 是原始入口参数。运行中的 `navigateTo / redirectTo / reLaunch / switchTab` 跳转失败应通过 API 的 `fail` 处理，不触发此回调；RN 尚不支持 `switchTab`。
-
-    两端会先回退到应用首页，在路由可用后调用一次回调，`this` 与其他 App 生命周期一致。首页会正常初始化，缺失入口参数不会传给首页；回调不跳转时停留首页，也可调用 `redirectTo` 或 `reLaunch` 恢复到指定页面。Web 不再通过此回调暂停初始导航；自定义路由已匹配的兜底页面不触发通知，SSR 服务端不派发此回调。
-
-    ```js
-    createApp({
-      onPageNotFound({ path, query }) {
-        console.warn('入口页面不存在', path, query)
-        mpx.redirectTo({
-          url: '/pages/index', // 已注册的普通页面
-          fail(err) {
-            console.error('恢复页面失败', err)
-          }
-        })
-      }
-    })
-    ```
-
-    > 示例中的 `mpx` 需已安装 `@mpxjs/api-proxy`。已注册页面的异步加载或执行错误不属于页面不存在。RN 根组件重建时会重新检查宿主入口，普通重渲染和前后台切换不会重复通知。
-
-    也可通过 [mpx.onPageNotFound](../../api-proxy/base/app/app-event/onPageNotFound.md) 注册监听，并用 [mpx.offPageNotFound](../../api-proxy/base/app/app-event/offPageNotFound.md) 取消。RN 与 Web 中，两种回调共用通知时机和参数；取消 API 监听不影响 App 生命周期回调。应在启动前或 `onLaunch` 中注册，通知结束后注册不会补发。
-
 *   **onUnhandledRejection(Object object)**
     小程序有未处理的 Promise 拒绝时触发。
     *   `object` (Object): 拒绝的详细信息

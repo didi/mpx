@@ -421,8 +421,6 @@ createComponent({
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，NA 可能会向 RN 的根组件传递 props，此时可在 parseAppProps 中接受 props 并进行处理和透传到页面
 
-`onPageNotFound` 无需通过 `implement` 登记，可在回调内调用 `redirectTo / reLaunch`。通知前首页已经初始化，`onLaunch / onShow` 仍以实际首页及其参数为准。每次 RN 根组件初始化最多通知一次；根组件销毁后重建会重新检查入口，同一 JS 上下文的 `onLaunch` 仍只执行一次。普通重渲染、前后台切换及路由 API 跳转失败不会触发该通知。详见 [App 生命周期](../basic/app.md)。
-
 #### mpx.config.rnConfig.onStateChange
 
 ```ts

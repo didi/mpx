@@ -9,8 +9,8 @@ import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
-import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
-import MpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
+import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider } from './env/navigationHelper'
+import { pageWrapperHOC } from './patch/pageWrapperHOC'
 import { wrapAppLifecycleHooks } from '../core/perf'
 import { notSupportTip } from '../convertor/wxToReact'
 
@@ -56,33 +56,20 @@ export default function createApp (options) {
   const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const getPageScreens = () => {
-    return Object.entries(pagesMap).map(([key, item]) => {
-      const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
-      const headerLayout = ({ navigation, children }) => {
-        return createElement(GestureHandlerRootView,
-          {
-            style: {
-              flex: 1
-            }
-          },
-          createElement(MpxNav, {
-            pageConfig,
-            navigation
-          }),
-          children
-        )
+  const pageScreens = Object.entries(pagesMap).map(([key, item]) => {
+    const pageConfig = global.__mpxPageConfigsMap[key]
+    let WrappedPage
+    const getComponent = () => {
+      if (!WrappedPage) {
+        WrappedPage = pageWrapperHOC(item.displayName ? item : callWithErrorHandling(item, null, 'require page script'), pageConfig)
       }
-      const getComponent = () => {
-        return item.displayName ? item : callWithErrorHandling(item, null, 'require page script')
-      }
-      return createElement(Stack.Screen, {
-        name: key,
-        getComponent,
-        layout: headerLayout
-      })
+      return WrappedPage
+    }
+    return createElement(Stack.Screen, {
+      name: key,
+      getComponent
     })
-  }
+  })
   global.__mpxOptionsMap = global.__mpxOptionsMap || {}
   const onStateChange = (state) => {
     Mpx.config.rnConfig.onStateChange?.(state)
@@ -261,7 +248,7 @@ export default function createApp (options) {
           {
             screenOptions: navScreenOpts
           },
-          ...getPageScreens()
+          ...pageScreens
         )
       )
     )

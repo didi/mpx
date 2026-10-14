@@ -12,7 +12,8 @@ export { implement } from './core/implement'
 export {
   createApp,
   createPage,
-  createComponent
+  createComponent,
+  pageWrapperHOC
 } from './platform/index'
 
 export {

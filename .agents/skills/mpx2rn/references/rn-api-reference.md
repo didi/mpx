@@ -474,10 +474,6 @@ mpx.use(apiProxy, {
 | --- | --- | --- | --- |
 | `callback` | function | 是 | 接收 `{ path, query, isEntryPage: true }`；`path` 不带开头 `/`，`query` 为原始缺失入口的 `initialParams`（未传为 `{}`）。 |
 
-无返回值，默认不参与 Promise 化。框架先初始化首页及空参数，再在导航就绪后通知，可在回调内调用 `redirectTo / reLaunch`。在启动前或 App 的 `onLaunch` 中注册；通知后注册不会补发。
-
-每次 RN 根组件初始化最多通知一次，重建根组件会重新检查入口；普通重渲染、前后台切换、运行中路由 API 失败、已注册页面加载错误不触发。与 App 的 `onPageNotFound` 共用时机和参数，均声明时均会调用；两者都未声明时通过 Mpx 的 `error` 报告缺失入口。
-
 ---
 
 ### offPageNotFound
