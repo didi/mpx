@@ -760,7 +760,7 @@ mpx.xfetch.fetch({ url: "https://api.example.com/list" }).then((res) => {
 | `params` | 对象，序列化后作为 **URL 查询参数**。 |
 | `data` | **`GET` / `DELETE` / `HEAD`**：会与 **`params` 合并**，整体按查询参数处理（不再单独携带 body 形式的 `data`）。**`POST` / `PUT`**：按 `Content-Type` 序列化——常见为 **`application/json`**（对象会序列化为 JSON 字符串）或 **`application/x-www-form-urlencoded`**（对象会序列化为表单字符串）。 |
 | `header` | 请求头。未显式指定 `Content-Type` 时，对带 JSON 体的 **`POST`/`PUT`** 一般按 **`application/json`** 发送。`Referer` 等限制以各端 `request` 为准。`header` 与 `headers` 会合并为一套请求头（后者先合并、前者覆盖同名键）。 |
-| `timeout` | 毫秒。RN（当前请求走 Web 适配）**未传**时一般为 **`global.__networkTimeout`，若仍无则默认 60s**；小程序等端是否同步 `app.json` 网络超时以工程注入为准。 |
+| `timeout` | 毫秒。RN 的单次请求 `timeout` 优先；未传时读取应用 JSON 的 `networkTimeout.request`，兼容历史数值形式的 `networkTimeout`；未配置时默认 `60000`。 |
 | `emulateJSON` | 仅 **`POST` / `PUT`**：在**尚未**设置 `content-type` / `Content-Type` 时，将类型设为 **`application/x-www-form-urlencoded`**（便于表单提交）。 |
 | `usePre` | **预请求 / 结果复用**。传 **`true`** 等价于 `{ enable: true }`；需要自定义时传**对象**，常用字段：`enable`、`cacheInvalidationTime`（默认 **3000** ms）、`ignorePreParamKeys`（**字符串数组**，或**英文逗号分隔**的单个字符串）、`equals`（自定义是否命中缓存）、`onUpdate`（命中缓存时仍会发真实请求，并在最新响应到达时回调；`then` 得到的结果可能带 **`isCache`**）、`mode`（**`auto`（默认）** / **`consumer`** 仅消费缓存 / **`producer`** 仅写入缓存等）。 |
 | `cancelToken` | 传入 **`CancelToken` 实例的 `.token`**（`Promise`）；`exec(msg)` 后请求失败回调里可带 **`__CANCEL__`**，可用实例方法 **`mpx.xfetch.isCancel(err)`** 判断。 |

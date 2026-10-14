@@ -892,7 +892,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-**异步 API**。设置当前页导航栏标题。
+**异步 API**。更新当前页面内建标题栏的标题；标题栏更新接口不可用时触发 `fail` 与 `complete`，返回 `setNavigationBarTitle:fail`。
 
 #### 入参
 
@@ -916,7 +916,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-**异步 API**。设置导航栏前景色、背景色等。
+**异步 API**。更新当前页面内建标题栏的前景色、背景色及状态栏文字样式；标题栏更新接口不可用时触发 `fail` 与 `complete`，返回 `setNavigationBarColor:fail`。连续调用标题和颜色 API 时，各字段更新会合并保留。
 
 #### 入参
 
