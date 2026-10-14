@@ -1,4 +1,4 @@
-import { isBrowser, throwSSRWarning } from '../../../common/js'
+import { isBrowser, throwSSRWarning, defineUnsupportedProps } from '../../../common/js'
 export const createInnerAudioContext = () => {
   if (!isBrowser) {
     throwSSRWarning('createInnerAudioContext API is running in non browser environments')
@@ -10,17 +10,22 @@ export const createInnerAudioContext = () => {
 
   __audio.play = () => !/mpxFalse/.test(audio.src) ? audio.play() : ''
 
-  __audio.pause = () => audio.pause()
+  const pendingPauses = []
+  const eventCallbacks = {}
 
-  const _stopCbs = []
+  function pauseAudio (fromStop) {
+    const wasPlaying = !audio.paused
+    audio.pause()
+    if (wasPlaying) pendingPauses.push(fromStop)
+  }
+
+  __audio.pause = () => pauseAudio(false)
 
   __audio.stop = () => {
-    _stopping = true // 打开屏蔽开关，后续 pause 事件的 wrapper 会看到这个标志
-    audio.pause()
+    pauseAudio(true)
     audio.currentTime = 0
     setTimeout(() => {
-      _stopping = false // pause 事件已经派发完，关掉开关
-      _stopCbs.slice().forEach(cb => cb())
+      eventCallbacks.stop.slice().forEach(cb => cb())
     }, 0)
   }
 
@@ -38,15 +43,11 @@ export const createInnerAudioContext = () => {
       get: () => audio[item],
       set (value) {
         audio[item] = value
+        if (item === 'src') pendingPauses.length = 0
       }
     })
   })
-  Object.defineProperty(__audio, 'startTime', {
-    value: 0
-  })
-  Object.defineProperty(__audio, 'obeyMuteSwitch', {
-    value: true
-  })
+  defineUnsupportedProps(__audio, ['startTime', 'obeyMuteSwitch', 'playbackRate', 'referrerPolicy'])
   const eventNames = [
     'Canplay',
     'Ended',
@@ -56,25 +57,28 @@ export const createInnerAudioContext = () => {
     'Seeking',
     'TimeUpdate',
     'Waiting',
+    'Stop',
     'Error'
   ]
 
-  let _stopping = false
-
-  const eventCallbacks = {}
   eventNames.forEach(eventName => {
     const nativeName = eventName.toLowerCase()
     eventCallbacks[nativeName] = []
 
+    // stop 由 stop() 模拟，其余事件在创建实例时统一监听。
+    if (nativeName !== 'stop') {
+      audio.addEventListener(nativeName, (event) => {
+        // 即使没有业务监听，也要消费暂停来源，避免影响后续 pause 事件。
+        if (nativeName === 'pause' && pendingPauses.shift() === true) return
+        eventCallbacks[nativeName].slice().forEach(cb => cb(event))
+      })
+    }
+
     Object.defineProperty(__audio, `on${eventName}`, {
       get () {
         return (cb) => {
-          if (eventCallbacks[nativeName].some(item => item.cb === cb)) return
-          const wrapper = nativeName === 'pause'
-            ? (e) => { if (!_stopping) cb(e) }
-            : cb
-          eventCallbacks[nativeName].push({ cb, wrapper })
-          audio.addEventListener(nativeName, wrapper)
+          if (eventCallbacks[nativeName].indexOf(cb) > -1) return
+          eventCallbacks[nativeName].push(cb)
         }
       }
     })
@@ -83,36 +87,16 @@ export const createInnerAudioContext = () => {
       get () {
         return (cb) => {
           if (cb == null) {
-            eventCallbacks[nativeName].forEach(({ wrapper }) => audio.removeEventListener(nativeName, wrapper))
             eventCallbacks[nativeName] = []
           } else {
-            const idx = eventCallbacks[nativeName].findIndex(item => item.cb === cb)
+            const idx = eventCallbacks[nativeName].indexOf(cb)
             if (idx > -1) {
-              audio.removeEventListener(nativeName, eventCallbacks[nativeName][idx].wrapper)
               eventCallbacks[nativeName].splice(idx, 1)
             }
           }
         }
       }
     })
-  })
-
-  Object.defineProperty(__audio, 'onStop', {
-    get () {
-      return (cb) => { _stopCbs.push(cb) }
-    }
-  })
-  Object.defineProperty(__audio, 'offStop', {
-    get () {
-      return (cb) => {
-        if (cb == null) {
-          _stopCbs.length = 0
-        } else {
-          const idx = _stopCbs.indexOf(cb)
-          if (idx > -1) _stopCbs.splice(idx, 1)
-        }
-      }
-    }
   })
 
   return __audio

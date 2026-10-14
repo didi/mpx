@@ -1,22 +1,22 @@
 import { Keyboard } from 'react-native'
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 let hasListener = false
 let keyboardShowSubscription
 let keyboardHideSubscription
 const callbacks = []
 
 function keyboardShowListener (e) {
+  if (!callbacks.length) return
   const endCoordinates = e.endCoordinates || {}
-  // eslint-disable-next-line node/no-callback-literal
-  callbacks.forEach(cb => cb({
-    height: endCoordinates.height
-  }))
+  const result = { height: endCoordinates.height }
+  defineUnsupportedProps(result, ['duration'])
+  callbacks.forEach(cb => cb(result))
 }
-function keyboardHideListener (e) {
-  // eslint-disable-next-line node/no-callback-literal
-  callbacks.forEach(cb => cb({
-    height: 0
-  }))
+function keyboardHideListener () {
+  if (!callbacks.length) return
+  const result = { height: 0 }
+  defineUnsupportedProps(result, ['duration'])
+  callbacks.forEach(cb => cb(result))
 }
 const onKeyboardHeightChange = function (callback) {
   if (!hasListener) {

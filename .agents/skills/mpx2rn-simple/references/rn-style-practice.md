@@ -13,6 +13,7 @@
 - [样式单位使用建议](#样式单位使用建议)
   - [优先使用 px 和 rpx 单位](#优先使用-px-和-rpx-单位)
   - [使用百分比](#使用百分比)
+  - [单边边框](#单边边框)
   - [1 像素边框（极细线）](#1-像素边框极细线)
   - [避免使用不兼容的单位 (rem/em)](#避免使用不兼容的单位-remem)
   - [谨慎使用 font-weight 数值](#谨慎使用-font-weight-数值)
@@ -624,6 +625,41 @@ export default {
 3. **谨慎使用 calc() 中的百分比**：该写法需要 `parent-width` / `parent-height` 辅助计算，通常还要查询父级布局并延迟展示，存在性能与体验开销；优先使用原生百分比、Flex、rpx / vw / vh 或固定尺寸替代
 4. **使用 vh/vw**：对于视口相关的尺寸，vh/vw 是更好的选择
 
+### 单边边框
+
+声明单边边框时，优先使用 `border-top` / `border-right` / `border-bottom` / `border-left` 简写。单边简写会同时表达目标方向的宽度、样式和颜色，意图更清晰，也可以避免 RN 仅支持统一 `border-style` 带来的方向耦合。
+
+**✅ 推荐：使用单边简写**
+
+```css
+.divider {
+  border-bottom: 1rpx solid #e5e5e5;
+}
+```
+
+如果因动态样式拆分等原因，确实需要组合使用统一的 `border-style` 与单边 `border-*-width`，须将其余三个不需要边框的方向宽度显式归零，避免统一样式与同规则或合并样式中的其他方向宽度共同产生意外边框。
+
+**❌ 避免：只设置目标方向宽度**
+
+```css
+.divider {
+  border-style: solid;
+  border-color: #e5e5e5;
+  border-bottom-width: 1rpx;
+}
+```
+
+**✅ 拆写时显式清零其他方向**
+
+```css
+.divider {
+  border-style: solid;
+  border-color: #e5e5e5;
+  border-width: 0;
+  border-bottom-width: 1rpx;
+}
+```
+
 ### 1 像素边框（极细线）
 
 在移动端开发中，常需要实现物理像素为 1px 的极细边框。
@@ -656,7 +692,7 @@ export default {
 
 RN 不支持 `rem` 和 `em` 单位。需将其转换为 `rpx` 以实现响应式布局。
 
-**转换说明：** `rpx` 是小程序和 Mpx RN 的响应式单位（规定屏幕宽为 750rpx）。若原项目使用 `rem` 进行响应式适配，通常存在固定的换算比例。例如：
+**转换说明：** `rpx` 是小程序和 Mpx RN 的响应式单位；Mpx RN 以窗口宽度（`window.width`）为 750rpx 的换算基准。若原项目使用 `rem` 进行响应式适配，通常存在固定的换算比例。例如：
 
 - 若设定 `1rem = 100px` (基于 750px 设计稿)，则 `1rem = 100rpx`。
 - 若基于浏览器默认字号 (`16px`)，则 `1rem = 32rpx` (1px = 2rpx)。

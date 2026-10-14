@@ -214,6 +214,8 @@ function nextTick(callback: Function): void
 
 `nextTick()` 可以在状态改变后立即调用，可以传递一个函数作为参数，在等待页面/组件更新完成后，函数参数会触发执行。
 
+> 输出 Web 时，从 `@mpxjs/core` 导入的 `nextTick` 映射为 Vue 的 `nextTick`，等待 Vue 的视图更新完成。可在修改响应式数据或调用无参 `forceUpdate()` 后，通过 `nextTick(callback)` 执行视图更新回调。
+
  ``` js
       import {createComponent, nextTick, ref} from '@mpxjs/core'
       createComponent({

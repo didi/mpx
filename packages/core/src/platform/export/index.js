@@ -1,4 +1,8 @@
 export {
+  nextTick
+} from '../../observer/scheduler'
+
+export {
   watchEffect,
   watchSyncEffect,
   watchPostEffect,

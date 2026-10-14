@@ -27,11 +27,6 @@ jest.mock('@mpxjs/core', () => ({
   }
 }))
 
-jest.mock('@mpxjs/utils', () => ({
-  noop: jest.fn(),
-  type: value => Object.prototype.toString.call(value).slice(8, -1)
-}))
-
 jest.mock('react-native-wifi-reborn', () => ({
   __esModule: true,
   default: {

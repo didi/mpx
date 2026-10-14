@@ -20,7 +20,7 @@ const getNetworkType = function (options = {}) {
       networkType: getConnectionType(connectionInfo),
       errMsg: 'getNetworkType:ok'
     }
-    defineUnsupportedProps(result, ['signalStrength', 'hasSystemProxy'])
+    defineUnsupportedProps(result, ['signalStrength', 'hasSystemProxy', 'weakNet'])
     successHandle(result, success, complete)
   }).catch((err) => {
     const result = {
@@ -34,11 +34,9 @@ const onNetworkStatusChange = function (callback) {
   _callbacks.add(callback)
   if (!_unsubscribe) {
     _unsubscribe = NetInfo.addEventListener((connectionInfo) => {
-      _callbacks.forEach(cb => {
-        const { isConnected } = connectionInfo
-        // eslint-disable-next-line node/no-callback-literal
-        cb && cb({ isConnected, networkType: getConnectionType(connectionInfo) })
-      })
+      if (!_callbacks.size) return
+      const result = { isConnected: connectionInfo.isConnected, networkType: getConnectionType(connectionInfo) }
+      _callbacks.forEach(cb => cb && cb(result))
     })
   }
 }
