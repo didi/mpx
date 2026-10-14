@@ -18,6 +18,8 @@ const { onPageNotFound, offPageNotFound } = require('../../../api-proxy/src/plat
 
 jest.mock('../../src/core/transferOptions', () => jest.fn())
 
+jest.mock('../../src/platform/patch/pageWrapperHOC', () => jest.requireActual('../../src/platform/patch/pageWrapperHOC.ios'))
+
 jest.mock('@mpxjs/utils', () => Object.assign({}, jest.requireActual('@mpxjs/utils'), {
   error: jest.fn()
 }))

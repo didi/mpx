@@ -12,9 +12,10 @@ export { implement } from './core/implement'
 export {
   createApp,
   createPage,
-  createComponent,
-  pageWrapperHOC
+  createComponent
 } from './platform/index'
+
+export { pageWrapperHOC } from './platform/patch/pageWrapperHOC'
 
 export {
   BEFORECREATE,

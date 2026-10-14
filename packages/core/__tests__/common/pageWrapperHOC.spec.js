@@ -6,19 +6,19 @@ jest.mock('@mpxjs/utils', () => Object.assign({}, jest.requireActual('@mpxjs/uti
   error: jest.fn()
 }))
 
-jest.mock('../../src/platform/patch/pageWrapperHOC', () => {
+jest.mock('../../src/platform/patch/pageWrapperHOC.ios', () => {
   throw new Error('RN implementation must not load on other platforms')
 })
 
-const { pageWrapperHOC } = require('../../src')
-const { error } = require('@mpxjs/utils')
-
 describe('pageWrapperHOC public export', () => {
-  it.each(['wx', 'web'])('does not load RN dependencies on %s', (mode) => {
+  it.each(['wx', 'web'])('reports unsupported usage without loading RN dependencies on %s', (mode) => {
     global.__mpx_mode__ = mode
-    error.mockClear()
-    expect(typeof pageWrapperHOC).toBe('function')
-    expect(pageWrapperHOC(() => null)).toBeUndefined()
-    expect(error).toHaveBeenCalledWith('pageWrapperHOC is only supported in React Native.')
+    jest.isolateModules(() => {
+      const { pageWrapperHOC } = require('../../src')
+      const { error } = require('@mpxjs/utils')
+      error.mockClear()
+      expect(pageWrapperHOC(() => null)).toBeUndefined()
+      expect(error).toHaveBeenCalledWith('pageWrapperHOC is only supported in React Native.')
+    })
   })
 })

@@ -615,7 +615,7 @@ createComponent({
 | `createApp` | **构造API**，创建应用实例。 |
 | `createPage` | **构造API**，创建页面。 |
 | `createComponent` | **构造API**，创建自定义组件。 |
-| `pageWrapperHOC` | 仅 RN：由使用方包裹独立页面产物，提供导航栏、布局、页面 Context 等能力；宿主需传入 navigation/route，详见 [独立页面包裹](./rn-hybrid-dev.md#standalone-page-wrapper)。 |
+| `pageWrapperHOC` | 仅 RN 支持：由使用方包裹独立页面产物，提供导航栏、布局、页面 Context 等能力；非 RN 平台导出同名兜底函数，跨端代码应限定在 RN 平台调用；宿主需传入 navigation/route，详见 [独立页面包裹](./rn-hybrid-dev.md#standalone-page-wrapper)。 |
 | `ref` | **组合式API：数据响应**，创建 ref。 |
 | `shallowRef` | **组合式API：数据响应**，创建浅层 ref。 |
 | `unref` | **组合式API：数据响应**，解包 ref。 |

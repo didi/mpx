@@ -194,7 +194,7 @@ defineOptions({
 
 ## 独立页面包裹 {#standalone-page-wrapper}
 
-在已有 Mpx RN 运行环境中独立接入页面时，可通过 `pageWrapperHOC` 包裹页面组件，整合导航栏、手势根容器、页面布局与安全区信息、键盘避让、页面上下文和 Portal 能力。宿主需要提供 React Navigation 的 `navigation`、`route`，并在外层提供 `SafeAreaProvider`。
+在已有 Mpx RN 运行环境中独立接入页面时，可通过 `pageWrapperHOC` 包裹页面组件，整合导航栏、手势根容器、页面布局与安全区信息、键盘避让、页面上下文和 Portal 能力。宿主需要提供 React Navigation 的 `navigation`、`route`，并在外层提供 `SafeAreaProvider`。`pageWrapperHOC` 仅支持 RN 平台，非 RN 平台导出同名兜底函数，调用时输出仅支持 React Native 的错误提示；跨端代码应限定在 RN 平台调用。
 
 ```js
 import { pageWrapperHOC } from '@mpxjs/core'
