@@ -40,9 +40,11 @@ function createEffect (proxy, componentsMap) {
     // if (proxy.propsUpdatedFlag) {
     //   proxy.updatePreRender()
     // }
+    // React 可能合并多次更新，共用任务直到对应版本提交完成。
+    if (!proxy.pendingUpdatedFlag) proxy.createRenderTask()
     if (proxy.isMounted()) {
-      proxy.callHook(BEFOREUPDATE)
       proxy.pendingUpdatedFlag = true
+      proxy.callHook(BEFOREUPDATE)
     }
     proxy.stateVersion = Symbol()
     proxy.onStoreChange && proxy.onStoreChange()
@@ -315,6 +317,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  proxy.createRenderTask()
   proxy.created()
 
   if (type === 'page') {
@@ -714,8 +717,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     }
 
+    const stateVersion = proxy.stateVersion
     useEffect(() => {
-      if (proxy.pendingUpdatedFlag) {
+      if (proxy.pendingUpdatedFlag && proxy.stateVersion === stateVersion) {
+        proxy.currentRenderTask && proxy.currentRenderTask.resolve()
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
       }

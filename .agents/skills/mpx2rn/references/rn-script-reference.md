@@ -208,7 +208,7 @@
 | `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。输出 RN 时应优先使用此实例方法，框架会自动将最近的滚动容器上下文填充为底层工厂方法的第三个参数。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **空 wx:ref** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
 | `$refs` | 属性 | 共用 | 模板 **`wx:ref="refName"`** 对应的懒解析访问器（如 `this.$refs.refName`）；**空 wx:ref 不会注册具名 ref**，但与 selector 映射可并存——需按名取子实例时再写 **`wx:ref="refName"`**。 |
 | `$watch` | 方法 | 共用 | 动态创建对数据路径或表达式的侦听，返回用于停止侦听的函数，行为与选项式 `watch` 对齐。 |
-| `$forceUpdate` | 方法 | 共用 | 强制触发视图更新，可传入数据对象参与本次刷新，RN 侧由 `MpxProxy` 与 React 更新调度配合完成。 |
+| `$forceUpdate` | 方法 | 共用 | 强制触发视图更新，支持数据对象、`sync` 选项与更新完成回调；`sync` 只控制发起更新的时机。 |
 | `$nextTick` | 方法 | 共用 | 在下一轮视图更新完成之后执行回调，用于在数据变更后读取更新后的视图状态。 |
 | `$set` | 方法 | 共用 | 向响应式对象添加新属性并保证其为响应式且触发视图更新，等价于对「无法被自动侦测的新增属性」的补充。 |
 | `$delete` | 方法 | 共用 | 删除响应式对象的属性并触发视图更新，用于需移除键且保持响应式一致性的场景。 |
@@ -216,7 +216,7 @@
 | `$tc` | 方法 | 共用 | 复数/数量相关翻译（`$tc(key, choice, ...)`）。 |
 | `$te` | 方法 | 共用 | 判断文案 key 在当前语言下是否存在。 |
 | `$tm` | 方法 | 共用 | 返回 key 在当前语言下的消息对象。 |
-| `setData` | 方法 | 共用 | 小程序原生兼容 API，内部通过 `$forceUpdate` 进行实现。 |
+| `setData` | 方法 | 共用 | 小程序原生兼容 API，内部通过 `$forceUpdate(data, { sync: true }, callback)` 实现，回调在视图更新后执行。 |
 
 #### 注意事项
 
@@ -339,7 +339,7 @@ createComponent({
 | `refs` | 与选项式 `$refs` 对应 | 仅 **`wx:ref="refName"`** 会出现在 `refs` 上；**空 wx:ref** 只服务 selector 映射。详见「页面 / 组件实例方法与属性」注意事项。 |
 | `asyncRefs` | Promise 形式 refs | 字节等场景为主，RN 侧以实际导出与类型为准。 |
 | `nextTick` | `(fn) => void` | 同全局 `nextTick`，在视图更新后执行回调。 |
-| `forceUpdate` | 可带参数与回调 | 同实例强制更新路径，RN 由 `MpxProxy` 调度。 |
+| `forceUpdate` | 可带数据、`sync` 选项与回调 | 与实例 `$forceUpdate` 的数据写入和回调时机相同。 |
 | `selectComponent` | `(selector) => instance` | 同实例 `selectComponent`，RN 上 **selector 须由模板 `wx:ref` 参与编译映射**。 |
 | `selectAllComponents` | `(selector) => instance[]` | 同实例 `selectAllComponents`，规则同上。 |
 | `createSelectorQuery` | `() => SelectorQuery` | 同实例 `createSelectorQuery`，**`select` 等链式 selector** 在 RN 上同样依赖 **`wx:ref`** 映射。 |
