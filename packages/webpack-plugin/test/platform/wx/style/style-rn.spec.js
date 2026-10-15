@@ -9,6 +9,30 @@ describe('React Native style validation for CSS variables', () => {
     error: jest.fn()
   })
 
+  test('preserves ordinary important declarations across repeated class rules', () => {
+    const config = createConfig()
+    const result = getClassMap({
+      content: '.box { width: 100px !important; } .box { height: 50px !important; }',
+      filename: 'test.css',
+      ...config
+    })
+
+    expect(result.box).toEqual({ width: '100', height: '50' })
+    expect(config.error).not.toHaveBeenCalled()
+  })
+
+  test('preserves the existing ordinary declaration override order', () => {
+    const config = createConfig()
+    const result = getClassMap({
+      content: '.box { width: 100px !important; } .box { width: 200px; }',
+      filename: 'test.css',
+      ...config
+    })
+
+    expect(result.box).toEqual({ width: '200' })
+    expect(config.error).not.toHaveBeenCalled()
+  })
+
   describe('Media queries', () => {
     test('keeps media declarations out of the default class style', () => {
       const config = createConfig()
