@@ -14,7 +14,7 @@ jest.mock('react-native', () => ({
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 20 })
-}), { virtual: true })
+}))
 
 describe('RN built-in navigation bar', () => {
   test('merges consecutive title and color updates in the same batch', () => {

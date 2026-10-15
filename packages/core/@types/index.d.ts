@@ -254,6 +254,26 @@ export function createPage<D extends Data = {}, P extends Properties = {}, C = {
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
 
+/** RN 独立页面的外层配置，与页面 JSON 配置一致。 */
+export interface PageWrapperConfig {
+  navigationStyle?: 'default' | 'custom'
+  navigationBarTitleText?: string
+  navigationBarTextStyle?: 'white' | 'black' | '#ffffff' | '#000000'
+  navigationBarBackgroundColor?: string
+  backgroundColorContent?: string
+  disableKeyboardAvoiding?: boolean
+  [key: string]: any
+}
+
+/** 仅支持 RN；返回的组件需要宿主传入 navigation 和 route。 */
+export function pageWrapperHOC<P extends object> (
+  WrappedComponent: ComponentType<P>,
+  pageConfig?: PageWrapperConfig
+): ComponentType<P & {
+  navigation: any
+  route: { key: string; name: string; params?: Record<string, any> }
+}>
+
 type MixinType = 'app' | 'page' | 'component'
 
 export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | {

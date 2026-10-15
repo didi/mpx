@@ -7,23 +7,23 @@ jest.mock('react-native', () => ({
   StyleSheet: { hairlineWidth: 1 / 3, absoluteFillObject: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } },
   Image: Object.assign((props: any) => jest.requireActual('react').createElement('Image', props), { getSize: jest.fn(), resolveAssetSource: jest.fn() }),
   View: 'View'
-}), { virtual: false })
+}))
 
 jest.mock('react-native-reanimated', () => ({
   __esModule: true,
   default: { View: 'AnimatedView' }
-}), { virtual: false })
+}))
 
-jest.mock('react-native-linear-gradient', () => 'LinearGradient', { virtual: false })
+jest.mock('react-native-linear-gradient', () => 'LinearGradient')
 
 jest.mock('react-native-gesture-handler', () => ({
   Gesture: { Tap: () => ({}), Pan: () => ({}), LongPress: () => ({}) },
   GestureDetector: 'GestureDetector'
-}), { virtual: false })
+}))
 
 jest.mock('react-native-safe-area-context', () => ({
   initialWindowMetrics: { insets: { top: 0, right: 0, bottom: 0, left: 0 } }
-}), { virtual: false })
+}))
 
 jest.mock('../../../lib/runtime/components/react/animationHooks/index', () => ({
   __esModule: true,

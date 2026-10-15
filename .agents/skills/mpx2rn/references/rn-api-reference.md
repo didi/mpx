@@ -19,6 +19,8 @@
   - [offAppHide](#offapphide)
   - [onError](#onerror)
   - [offError](#offerror)
+  - [onPageNotFound](#onpagenotfound)
+  - [offPageNotFound](#offpagenotfound)
   - [onUnhandledRejection](#onunhandledrejection)
   - [offUnhandledRejection](#offunhandledrejection)
   - [onLazyLoadError](#onlazyloaderror)
@@ -469,6 +471,28 @@ mpx.use(apiProxy, {
 #### 返回值
 
 无。
+
+---
+
+### onPageNotFound
+
+监听启动入口不存在事件，需先安装 `@mpxjs/api-proxy`。`mpx.canIUse('onPageNotFound')` 返回 `true`。
+
+| 入参 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `callback` | function | 是 | 接收 `{ path, query, isEntryPage: true }`；`path` 不带开头 `/`，`query` 为原始缺失入口的 `initialParams`（未传为 `{}`）。 |
+
+---
+
+### offPageNotFound
+
+取消通过 `mpx.onPageNotFound` 注册的监听。`mpx.canIUse('offPageNotFound')` 返回 `true`。
+
+| 入参 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `callback` | function | 否 | 注册时同一个函数对象；不传则移除全部 API 监听。 |
+
+无返回值，默认不参与 Promise 化。不移除 App 的 `onPageNotFound` 生命周期回调。
 
 ---
 

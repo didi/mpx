@@ -25,6 +25,7 @@
 
 ### 编码约束
 
+- 普通变量名使用小驼峰命名；React 组件、Class 及保存这些值的变量使用大写开头的帕斯卡命名。HOC 工厂函数使用小驼峰命名（如 `pageWrapperHOC`），返回的组件应命名为 `WrappedPage`，即使通过 `createElement` 而非 JSX 使用，也遵循此规则。
 - 所有运行时代码中禁止使用Object spread特性进行对象合并，应当使用Object.assign或者内部等效工具方法进行合并
 
 ### 代码检查约束

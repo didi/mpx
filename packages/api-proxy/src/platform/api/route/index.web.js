@@ -3,6 +3,15 @@ import { EventChannel } from '../event-channel'
 
 let routeCount = 0
 
+function isPageNotFound (router, type, options) {
+  const { route } = router.resolve(options.url)
+  if (!route.matched.length) {
+    failHandle({ errMsg: `${type}:fail page "${route.path}" is not found` }, options.fail, options.complete)
+    return true
+  }
+  return false
+}
+
 function redirectTo (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('redirectTo API is running in non browser environments')
@@ -10,6 +19,7 @@ function redirectTo (options = {}) {
   }
   const router = global.__mpxRouter
   if (router) {
+    if (isPageNotFound(router, 'redirectTo', options)) return
     if (isTabBarPage(options.url, router)) {
       const res = { errMsg: 'redirectTo:fail can not redirectTo a tabBar page' }
       return failHandle(res, options.fail, options.complete)
@@ -42,6 +52,7 @@ function navigateTo (options = {}) {
   }
   const router = global.__mpxRouter
   if (router) {
+    if (isPageNotFound(router, 'navigateTo', options)) return
     if (isTabBarPage(options.url, router)) {
       const res = { errMsg: 'navigateTo:fail can not navigateTo a tabBar page' }
       return failHandle(res, options.fail, options.complete)
@@ -107,6 +118,7 @@ function reLaunch (options = {}) {
   }
   const router = global.__mpxRouter
   if (router) {
+    if (isPageNotFound(router, 'reLaunch', options)) return
     if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
     router.__mpxAction = {
       type: 'reLaunch',
@@ -152,6 +164,7 @@ function switchTab (options = {}) {
   }
   const router = global.__mpxRouter
   if (router) {
+    if (isPageNotFound(router, 'switchTab', options)) return
     if (!isTabBarPage(options.url, router)) {
       const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page!' }
       return failHandle(res, options.fail, options.complete)
