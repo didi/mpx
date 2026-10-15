@@ -151,7 +151,13 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
           } else {
             value = formatValue(value)
           }
-          classMapValue[prop] = value
+          if (decl.important) {
+            classMapValue._inlineLayer = classMapValue._inlineLayer || {}
+            classMapValue._inlineLayer.important = classMapValue._inlineLayer.important || {}
+            classMapValue._inlineLayer.important[prop] = value
+          } else {
+            classMapValue[prop] = value
+          }
         })
       })
 
@@ -178,18 +184,18 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
       if (classMapKeys.length) {
         classMapKeys.forEach((key) => {
           if (Object.keys(classMapValue).length) {
-            // set css defalut value
-            const val = classMap[key] || {}
-            classMap[key] = Object.assign(val, classMapValue)
+            classMap[key] = classMap[key] || {}
 
-            // set css media
+            // Media declarations only take effect when their query matches.
             if (isMedia) {
-              const _media = classMap[key]?._media || []
+              const _media = classMap[key]._media || []
               _media.push({
                 options,
                 value: classMapValue
               })
               classMap[key]._media = _media
+            } else {
+              Object.assign(classMap[key], classMapValue)
             }
           }
         })

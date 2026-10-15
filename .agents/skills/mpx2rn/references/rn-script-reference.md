@@ -716,6 +716,8 @@ Mpx.config.rnConfig = {
 
 | 配置项 | 说明 |
 | --- | --- |
+| `dimensionsBase` | 响应式单位、媒体查询、`onResize` 和 `deviceOrientation` 的尺寸基准，支持 `"window"` 和 `"screen"`，默认 `"window"`。须在首次尺寸读取前配置，首次读取后保持不变。 |
+| `customDimensions` | 自定义 Window / Screen 尺寸，响应式样式与窗口信息 API 使用处理后的尺寸；建议在应用初始化阶段配置。通过全局 `getDimensionsInfo(base?)` 获取有效尺寸的副本。 |
 | `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
 | `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由。 |
 | `onStateChange` | 导航 state 变化时回调。 |
