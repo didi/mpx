@@ -118,7 +118,7 @@ const radioGroup = forwardRef<
       bindchange &&
         bindchange(
           getCustomEvent(
-            'tap',
+            'change',
             evt,
             {
               layoutRef,
