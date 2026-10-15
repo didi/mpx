@@ -6,6 +6,10 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/navigation-bar/wx.setNavigationBarColor.html)
 
+Web 的 `frontColor`、`backgroundColor` 会更新当前页面的内建标题栏，背景色同时写入浏览器 `theme-color`。内建标题栏需预先启用 `Mpx.config.webConfig.enableTitleBar`，API 不会自动显示已关闭或通过 `navigationStyle: 'custom'` 隐藏的标题栏；`frontColor` 不控制 WebView 宿主状态栏。RN 会更新内建标题栏的前景色、背景色及状态栏文字样式，更新接口不可用时触发 `fail` 和 `complete`。
+
+> Web 获取不到当前页面实例时触发 `fail` 和 `complete`，不会修改导航栏配置或浏览器主题色。请在页面 `onMounted`（选项式为 `[MOUNTED]`）或之后调用。
+
 ### 参数 {#parameters}
 **Object object**
 
@@ -121,7 +125,7 @@
 	</tbody>
 </table>
 
-> RN 会校验颜色参数：`frontColor` 仅接受 `#ffffff` / `#000000`，`backgroundColor` 接受 `#RGB` / `#RRGGBB` 格式。参数无效时触发 `fail` 与 `complete`，且不会修改导航栏配置。
+> Web 和 RN 会校验颜色参数：`frontColor` 仅接受 `#ffffff` / `#000000`，`backgroundColor` 接受 `#RGB` / `#RRGGBB` 格式。参数无效时触发 `fail` 与 `complete`，且不会修改导航栏配置或浏览器主题色。
 
 ### 示例代码 {#example-code}
 
