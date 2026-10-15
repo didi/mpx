@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling, error } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling, error, defineUnsupportedProps } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -15,6 +15,7 @@ import { wrapAppLifecycleHooks } from '../core/perf'
 import { notSupportTip } from '../convertor/wxToReact'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
+const unsupportedAppOptions = ['apiCategory', 'chatType', 'forwardMaterials', 'hostExtraData']
 
 function filterOptions (options, appData) {
   const newOptions = {}
@@ -109,6 +110,7 @@ export default function createApp (options) {
     if (value === 'show') {
       let options = appState.showOptions
       delete appState.showOptions
+      if (!global.__mpxAppCbs.show.length) return
       if (!options) {
         const navigation = getFocusedNavigation()
         if (navigation) {
@@ -124,15 +126,16 @@ export default function createApp (options) {
         } else {
           options = {}
         }
+        defineUnsupportedProps(options, unsupportedAppOptions)
       }
       global.__mpxAppCbs.show.forEach((cb) => {
         cb(options)
       })
     } else if (value === 'hide' || value === 'exit') {
+      if (!global.__mpxAppCbs.hide.length) return
+      const options = { reason: value === 'exit' ? 0 : 3 }
       global.__mpxAppCbs.hide.forEach((cb) => {
-        cb({
-          reason: value === 'exit' ? 0 : 3
-        })
+        cb(options)
       })
     }
   }, { sync: true })
@@ -190,6 +193,7 @@ export default function createApp (options) {
           referrerInfo: {},
           isLaunch: true
         }
+        defineUnsupportedProps(options, unsupportedAppOptions)
         global.__mpxEnterOptions = options
         if (!global.__mpxAppLaunched) {
           global.__mpxLaunchOptions = options

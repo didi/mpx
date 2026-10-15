@@ -115,7 +115,7 @@ Mpx 在 RN 平台完整支持静态和动态的类名及样式绑定，与小程
 
 ### 选择器支持
 
-RN 环境下支持的选择器范围有限，主要是**单类选择器**、`page` 选择器和 `:host` 选择器。
+RN 环境下支持的选择器范围有限，主要是编译器转换后的**单类选择器**。`page` 和 `:host` 会在进入 RN class map 前转换为内部单类，因此也受支持。
 
 ✅ **支持的选择器：**
 
@@ -157,6 +157,8 @@ text {
 } /* 组合选择器 */
 ```
 
+任意来源最终生成的伪类、伪元素、组合器及其他非支持选择器都会触发编译错误，且不会进入 RN class map。手写 CSS、UnoCSS、其他预处理器和自定义 rule 使用完全相同的校验，不存在 UnoCSS `hover:` 等来源例外。点击态使用组件 `hover-class` 配合独立单类样式。
+
 ### 样式单位与转换
 
 Mpx 在 RN 平台支持多种 CSS 单位，并在运行时进行转换。
@@ -166,15 +168,15 @@ Mpx 在 RN 平台支持多种 CSS 单位，并在运行时进行转换。
 | 单位 | 说明 | 转换规则 |
 | --- | --- | --- |
 | `px` | 绝对像素 | 直接转换为 RN 的无单位数值 |
-| `rpx` | 响应式像素 | `rpx值 × 屏幕宽度 / 750` |
+| `rpx` | 响应式像素 | `rpx值 × window.width / 750` |
 | `%` | 百分比 | 转换为字符串形式（如 `'50%'`），由 RN 原生支持或框架处理 |
-| `vw` | 视口宽度百分比 | `vw值 × 屏幕宽度 / 100` |
-| `vh` | 视口高度百分比 | `vh值 × 屏幕高度 / 100` |
+| `vw` | 视口宽度百分比 | `vw值 × window.width / 100` |
+| `vh` | 视口高度百分比 | `vh值 × window.height / 100` |
 | `hairlineWidth` | RN 特有极细线 | `StyleSheet.hairlineWidth` |
 
 #### 样式计算基准与自定义
 
-`rpx`、`vw`、`vh` 的计算默认基于运行时的 `screen.width` 和 `screen.height`。
+`rpx`、`vw` 的计算默认基于运行时的 `window.width`，`vh` 基于 `window.height`，即窗口尺寸。
 
 同时支持通过运行时配置 `Mpx.config.rnConfig.customDimensions` 自定义样式计算基准：
 
@@ -186,18 +188,15 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
     const nextWindow = Object.assign({}, dimensions.window, {
       height: dimensions.window.height - 44
     })
-    const nextScreen = Object.assign({}, dimensions.screen, {
-      height: dimensions.screen.height - 44
-    })
     return {
       window: nextWindow,
-      screen: nextScreen
+      screen: dimensions.screen
     }
   }
 })
 ```
 
-配置生效后，`rpx`、`vw`、`vh` 会按自定义后的 `screen` 宽高进行计算。
+配置生效后，`rpx`、`vw` 按自定义后的 `window.width` 计算，`vh` 按 `window.height` 计算。上例仅调整窗口高度，因此只改变 `vh` 的换算基准。
 
 #### 百分比计算规则
 
@@ -310,6 +309,7 @@ RN 仅原生支持部分 CSS 简写属性，Mpx 分别在**编译时**和**运�
 - **边框简写**：`border`、`border-top`、`border-right`、`border-bottom`、`border-left`
   - 如 `border: 1px solid red` → `borderWidth: 1, borderStyle: 'solid', borderColor: 'red'`
   - 单边 `border-*` 中的 `<border-style>` 槽位会展开为 `borderStyle`（RN 不支持单边 `border-*-style`，统一作用于四边）
+  - 声明单边边框时优先使用单边 `border-*` 简写；确需组合使用 `border-style` 与 `border-*-width` 时，将其余三个不设置边框的方向宽度显式归零
   - `border: none` / `border: 1px none red` 会先保留 `borderStyle: 'none'`，最终在运行时统一转换为 `borderWidth: 0`
 - **外轮廓简写**：`outline`
   - 按值类型无序展开为 `outline-width` / `outline-style` / `outline-color`，合法值不强制书写顺序
@@ -444,7 +444,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 **支持特性：**
 
 - **背景颜色**：RN 原生支持 `background-color`。
-- **背景图**：支持 `background-image: url()` 引用图片，也支持 `background-image: none` 清空背景图。
+- **背景图**：支持 `background-image: url()` 引用位图，也支持 `background-image: none` 清空背景图；SVG 图片会输出错误并丢弃。
 - **渐变背景**：支持 `background-image: linear-gradient()` 线性渐变。
 - **相关属性**：完整支持 `background-size` 和 `background-position`。
 
@@ -533,6 +533,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 | 属性 | 值类型 | 说明 | 示例 |
 | --- | --- | --- | --- |
 | `border` | `width \|\| style \|\| color` | 边框简写 | `border: 1px solid #e5e5e5` |
+| `border-*` | `width \|\| style \|\| color` | 单边边框简写，优先用于声明单边边框 | `border-bottom: 1px solid #e5e5e5` |
 | `border-width` | `length` | 边框宽度（支持多值） | `border-width: 1px`；`border-width: 1px 2px` |
 | `border-color` | `color` | 边框颜色（支持多值） | `border-color: #ccc`；`border-color: red blue` |
 | `border-style` | `solid` \| `dotted` \| `dashed` \| `none` | 边框样式（不支持单边设置）；`none` 会在运行时转换为 `border-width: 0` | `border-style: dashed`；`border-style: none` |
@@ -549,7 +550,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 | --- | --- | --- | --- |
 | `background` | `<background-color>` \| `<background-image>` \| `<background-repeat>` \| `<background-position>` / `<background-size>` | 背景简写，支持用 `/` 分隔的背景位置和尺寸 | `background: #f5f5f5`；`background: url(https://example.com/bg.png) no-repeat center/cover` |
 | `background-color` | `color` | 背景色 | `background-color: #fff`；`background-color: rgba(0, 0, 0, 0.5)` 半透明黑色 |
-| `background-image` | `url()` \| `linear-gradient()` \| `none` | 背景图/渐变 | `background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none` |
+| `background-image` | `url()` \| `linear-gradient()` \| `none` | `url()` 仅支持位图，SVG 会输出错误并丢弃；渐变不受影响 | `background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none` |
 | `background-size` | `cover` \| `contain` \| `auto` \| `length` \| `%` | 背景尺寸 | `background-size: cover` 覆盖填充；`background-size: 200rpx 100rpx` |
 | `background-repeat` | `no-repeat` | 仅支持不重复 | `background-repeat: no-repeat` |
 | `background-position` | `center` \| `left` \| `right` \| `top` \| `bottom` \| `number` \| `%` | 背景位置 | `background-position: center`；`background-position: 50% 50%` |

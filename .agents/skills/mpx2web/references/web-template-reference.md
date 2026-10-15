@@ -6,35 +6,60 @@
 
 - [事件处理](#事件处理)
 - [i18n 国际化](#i18n-国际化)
-- [Web 原生标签](#web-原生标签)
-- [Web 样式差异](#web-样式差异)
-- [Vue 组件接入](#vue-组件接入)
-- [Web 模板编译限制](#web-模板编译限制)
-- [Web 内建组件](#web-内建组件)
-- [Web 组件降级](#web-组件降级)
+- [使用 Vue 组件](#使用-vue-组件)
+  - [注册与使用](#注册与使用)
+  - [通过脚本注册](#通过脚本注册)
+- [模板定义与使用](#模板定义与使用)
+  - [同文件定义与使用](#同文件定义与使用)
+  - [模板复用](#模板复用)
+- [基础组件](#基础组件)
+  - [通用属性](#通用属性)
+  - [view](#view)
+  - [text](#text)
+  - [label](#label)
+  - [rich-text](#rich-text)
+  - [image](#image)
+  - [cover-view](#cover-view)
+  - [cover-image](#cover-image)
+  - [icon](#icon)
+  - [progress](#progress)
+  - [form](#form)
+  - [input](#input)
+  - [textarea](#textarea)
+  - [button](#button)
+  - [switch](#switch)
+  - [slider](#slider)
+  - [radio-group](#radio-group)
+  - [radio](#radio)
+  - [checkbox-group](#checkbox-group)
+  - [checkbox](#checkbox)
+  - [scroll-view](#scroll-view)
+  - [sticky-header](#sticky-header)
+  - [sticky-section](#sticky-section)
+  - [swiper](#swiper)
+  - [swiper-item](#swiper-item)
+  - [picker](#picker)
+  - [picker-view](#picker-view)
+  - [picker-view-column](#picker-view-column)
+  - [movable-area](#movable-area)
+  - [movable-view](#movable-view)
+  - [navigator](#navigator)
+  - [video](#video)
+  - [canvas](#canvas)
+  - [web-view](#web-view)
+- [不支持组件与降级处理](#不支持组件与降级处理)
 
 ---
 
 ## 事件处理
 
-事件绑定与传参沿用 Mpx 通用语法。Web 适配只需关注以下差异：
+Web 支持绑定组件实例方法和内联传参，例如 `bindtap="handleTap"`、`bindtap="handleTap(item, $event)"`。主要限制如下：
 
-- 绑定的处理器必须是已声明的组件实例方法，并保留原业务逻辑；动态绑定值应为方法名字符串，不能是 `{{true}}` 或函数对象。条件判断放在处理方法中，原有 `catch` 拦截行为应保留。
-- Web 不支持直接绑定 WXS 响应事件。需要保留小程序 WXS 路径时，使用平台隔离，为 Web 提供等效实例方法；不要将小程序 WXS 当作脚本中的 `this.tool` 调用。
-- 自定义事件的 `bubbles`、`composed`、`capturePhase` 在 Web 不生效，跨层通知见[脚本参考](./web-script-reference.md#triggerevent-的传播选项)。
-- Web 不支持 `mut-bind` 的互斥事件绑定，也不会将 `mark:*` 的值放入 `event.mark`。用到时保留小程序写法，在 Web 分支分别实现需要的事件处理和数据传递。
-- 只在使用自定义 `wx:model-filter` 时核对：当前 Web 不会执行自定义过滤方法，可能把方法本身写入绑定值；Web 侧改为从输入事件取值、调用原过滤方法再更新字段。普通 `wx:model` 和内建 `trim` 保持不变。
-
-例如，保留微信 WXS 绑定，仅为 Web 切换处理器；`onSliderClick` 需实现原有交互：
-
-```html
-<view
-  bindtap@wx="{{tool.onSliderClick}}"
-  @tap@web="onSliderClick"
-/>
-```
-
-涉及拖动时，保持手势状态按实例隔离、取消时正确收尾，并避免拖动触发误点击或吞掉后续正常点击；在目标浏览器验证原有交互，不限定某套手势实现。
+- **不支持事件表达式**：不能直接在事件绑定中执行 `count++`、`active && handleTap()` 等表达式，应将逻辑放入实例方法。动态选择方法名（如 `bindtap="{{active ? 'onActive' : 'onIdle'}}"`）仍可使用，表达式结果须为已声明的实例方法名字符串。
+- **不支持 WXS 响应事件**：不能直接绑定 `bindtap="{{tool.onTap}}"` 这类 WXS 处理器。通过条件编译保留小程序实现，在 Web 侧提供等效的实例方法。
+- **组件自定义事件不支持冒泡和捕获**：`triggerEvent` 不支持 `bubbles`、`composed`、`capturePhase` 选项；组件跨层通信使用 `provide/inject` 传递回调，或使用全局状态管理。
+- **不支持 `mut-bind`**：Web 未实现互斥事件绑定语义，需通过事件处理方法协调响应，不能直接用 `catch` 代替其互斥行为。
+- 事件数据方面，Web 不会将 `mark:*` 收集到 `event.mark`；需要传递的数据可通过内联参数传入。
 
 ---
 
@@ -44,8 +69,8 @@ Web 输出支持 Mpx i18n。使用前需要在 `MpxWebpackPlugin` 中配置 `i18
 
 | 场景 | 可用函数 | 使用约束 |
 | --- | --- | --- |
-| 选项式 API | `$t`、`$tc`、`$te`、`$tm`、`$d`、`$n` | 模板中直接使用；脚本中通过组件实例调用，具体方法以项目安装的 Vue i18n 版本为准 |
-| 组合式 API | `t`、`te`、`tm`、`d`、`n` | 在 `setup` 顶层调用 `useI18n()`，将所需方法暴露给模板；复数翻译使用 `t` 的复数参数，不使用 `tc` |
+| 选项式 API | `$t`、`$te`、`$tm`、`$d`、`$n` | 模板中直接使用，脚本中通过组件实例调用 |
+| 组合式 API | `t`、`te`、`tm`、`d`、`n` | 在 `setup` 顶层调用 `useI18n()`，将所需方法暴露给模板 |
 
 ```js
 import { createComponent, useI18n } from '@mpxjs/core'
@@ -62,63 +87,97 @@ createComponent({
 <text>{{ t('message.hello') }}</text>
 ```
 
-Web 的 `useI18n` 直接来自 `vue-i18n-bridge`。当前验证版本 9.14.1 的组合式接口没有 `tc`，但支持 `d` / `n`；日期与数字格式需配置对应格式选项。Web 模板允许将 `t` 改名后暴露，例如 `return { translate: t }`。通用模板另需核对其他目标端的编译限制，不将跨端命名建议当作 Web 禁令。
-
 ---
 
-## Web 原生标签
+## 使用 Vue 组件
 
-Web 输出可使用 HTML / SVG 原生标签承载 Web-only 能力，例如 `<canvas>`、`<svg>`、`<audio>`、`<iframe>` 或业务 H5 容器节点。原生标签属于 Web-only 内容时，应与通用模板隔离，避免通用构建解析到浏览器专属节点。
+Mpx Web 基于 Vue 2.7，可在页面或组件的 JSON 配置中通过 `usingComponents` 注册兼容 Vue 2.7 的 `.vue` 组件，再在模板中使用注册的标签名。只支持 Vue 3 的组件不能直接使用，需选择 Vue 2 兼容版本。
 
-不要仅凭标签名判断最终产物是否为原生 DOM。部分 HTML 同名标签会按 Mpx 基础组件语义编译，例如 `<video>`、`<button>`、`<input>`、`<form>` 会使用对应的 Web 内建组件；需要直接操作原生 DOM 或接入 H5 SDK 时，先核对编译产物，必要时使用无冲突的容器标签或 Web-only Vue 组件封装。
+### 注册与使用
 
----
+例如，在 `.mpx` 文件中通过动态 JSON 为同一标签选择不同平台的实现，并通过 `title` 属性和默认插槽传入内容：
 
-## Web 样式差异
+```html
+<template>
+  <info-card title="{{title}}">
+    <text>卡片内容</text>
+  </info-card>
+</template>
 
-- Web 的 `rpx` 默认按 `750rpx = 100vw` 换算，可通过 `webConfig.transRpxFn`（自包含的普通函数表达式）自定义，移动端需在 HTML 中配置 viewport。
-- `view`、`image` 等基础标签在 Web 编译后可能变化，样式应使用稳定的类选择器。
-- 微信组件默认的样式隔离不会自动带到 Web。只有实际出现组件样式互相影响时，单个组件可用 `<style scoped>`；需要按文件范围统一隔离时，再用构建期 `autoScopeRules` 的 `include` / `exclude` 选取文件。
-- `externalClasses`：默认转换 `custom-class`、`i-class`。使用其它外部类名时，在实际构建配置的 Mpx 插件 `externalClasses` 数组中加入该名称（Mpx CLI 项目为 `mpx.config.js` 的 `pluginOptions.mpx.plugin.externalClasses`），同时保留已有名称。组件自身还必须在 `createComponent({ externalClasses: ['accent-class'] })` 中声明该名称；不要把它写进 `<script name="json">`。调用方属性和模板占位类也须使用同名，四处共同组成完整链路。
-
-```js
-createComponent({
-  externalClasses: ['accent-class']
-})
+<script name="json">
+module.exports = {
+  usingComponents: {
+    // Web 使用 Vue 组件，其他平台使用 Mpx 组件
+    // 两侧组件需提供相同的属性、事件和插槽接口
+    // 若接口无法完全对齐，模板使用时也应进行条件编译隔离
+    'info-card': __mpx_mode__ === 'web'
+      ? './InfoCard.vue'
+      : './info-card.mpx'
+  }
+}
+</script>
 ```
 
----
+调用方需在脚本中提供 `title` 数据；`InfoCard.vue` 按 Vue 2.7 的写法声明 `title` prop，并使用 `<slot />` 渲染插槽内容。`.mpx` 调用方沿用 Mpx 的模板绑定语法，`.vue` 组件内部使用 Vue 语法。
 
-## Vue 组件接入
+### 通过脚本注册
 
-Mpx Web 基于 Vue 2.7，不能直接注册只支持 Vue 3 的 `.vue` 组件。先查找组件的 Vue 2 兼容版或项目已有的 Web 替代；找到后只在 Web 侧切换注册，小程序继续使用原组件。
+Web 还支持在 `createPage` / `createComponent` 中的 `components` 配置进行 Vue 组件注册，当 Vue 组件模块还提供其他导出（如工具函数、常量）时，推荐采用这种方式，因为在 `usingComponents` 中无法获取其他导出。
 
-没有可用替代且任务要求保留该功能时，只实现当前业务实际使用的属性、事件、插槽和交互：
-
-- 默认保留原 `.mpx` 给小程序，并用同名 `.web.mpx` 实现 Web 版本，原引用路径无需修改。
-- 项目已有 Vue 2 组件体系时，也可以实现兼容 Vue 2.7 的 `.vue`，并仅在 Web 注册配置中替换路径。
-
-不要在 `.web.mpx` 中继续包装或导入原 Vue 3 组件。缺少必要的业务组件、SDK 或交互要求时，保留小程序实现并按主 Skill 的待接入规则记录真实缺口。
+在跨端共用的 `.mpx` 文件中，必须通过条件编译隔离 Vue 组件引用与注册，避免影响原平台产物。
 
 ---
 
-## Web 模板编译限制
+## 模板定义与使用
 
-以下限制由 Web 模板编译链路决定：
+Web 支持通过 `<template name="...">` 定义可复用的具名模板，再通过 `<template is="..." data="{{...}}" />` 使用。页面和组件内均可声明，模板所需数据通过 `data` 传入。
 
-- 单根要求针对最终 Vue 模板，不等于所有 `.mpx` 源模板必须单根。微信源码输出 Web 时，普通页面和未启用虚拟宿主的组件会由编译器注入根容器，可容纳多个并列节点；不要默认再添加包裹节点，以免改变布局或滚动结构。
-- `.mpx` 文件中的 `<template>` 内容必须内联，暂不支持通过 `<template src="...">` 引入外部模板内容。
-- Web 输出暂不支持 `<template lang="...">` 模板预处理语言。
-- 具名模板 `<template name="...">` 的定义体必须只有一个元素根节点；多根时使用 `view` 或其它合适节点包裹。
-- Web 子组件命中 `autoVirtualHostRules`、实际按虚拟宿主编译时，不再注入普通组件根容器，模板必须只有一个真实根节点；多个根元素会在编译期报错。
+### 同文件定义与使用
 
-组件内可以声明具名模板。Web 编译器会把本地 `<template name="...">` 编译为内部模板组件；“不支持组件内声明模板”不是当前能力限制，但定义体仍受上述单根约束。
+在 `.mpx` 文件的 `<template>` 区块内定义片段，并在需要的位置引用：
+
+```html
+<template>
+  <template name="message">
+    <view class="message">
+      <text>{{title}}</text>
+      <text>{{content}}</text>
+    </view>
+  </template>
+
+  <template is="message" data="{{ title: '提示', content: '欢迎使用' }}" />
+</template>
+```
+
+`data` 可逐个传入字段，也可用 `data="{{ ...item }}"` 展开对象。`is` 支持动态表达式，例如 `is="{{ compact ? 'compactMessage' : 'message' }}"`，对应名称的模板需提前定义或引入。同一文件内的模板名称不能重复。
+
+### 模板复用
+
+将具名模板定义放入独立的 `.wxml` 文件，在使用方通过 `<import src="..." />` 引入后按名称引用。例如，`message.wxml`：
+
+```html
+<template name="message">
+  <view class="message">{{content}}</view>
+</template>
+```
+
+使用方的 `.mpx` 模板区块：
+
+```html
+<template>
+  <import src="./message.wxml" />
+  <template is="message" data="{{ content: '欢迎使用' }}" />
+</template>
+```
+
+- Web 不支持通过 `<include src="..." />` 引用外部模板文件。
+- 模板必须满足单根节点要求。
 
 ---
 
-## Web 内建组件
+## 基础组件
 
-以下属性、事件表列出已确认可用的能力；不支持或有限制的能力在对应组件下单列。
+以下属性、事件表列出已确认可用的能力；不支持或有限制的能力在对应组件下单独说明。
 
 ### 通用属性
 
@@ -231,12 +290,13 @@ Web-only 原生节点还可使用浏览器标准属性；包装型内建组件�
 | border-radius | number\|string | `0` | 进度条圆角大小 |
 | font-size | number\|string | `16` | 右侧百分比文字大小 |
 | stroke-width | number\|string | `6` | 进度条线的宽度，单位 px |
-| color | string | `#09BB07` | 进度条颜色（已废弃，请使用 `active-color`） |
 | active-color | string | `#09BB07` | 已选择的进度条颜色 |
 | background-color | string | `#EBEBEB` | 未选择的进度条颜色 |
 | active | boolean | `false` | 进度条从左往右的动画 |
 | active-mode | string | `backwards` | 动画播放模式，`backwards`: 从头开始播放；`forwards`: 从上次结束点接着播放 |
 | duration | number | `30` | 进度增加 1%所需毫秒数 |
+
+设置进度条颜色请使用 `active-color`。仅设置旧属性 `color` 会被 `active-color` 的默认值 `#09BB07` 覆盖，无法改变进度条颜色。
 
 #### 事件
 
@@ -355,14 +415,14 @@ Web-only 原生节点还可使用浏览器标准属性；包装型内建组件�
 | max | number | `100` | 最大值 |
 | step | number | `1` | 步长 |
 | disabled | boolean | `false` | 是否禁用 |
-| value | number | `min` | 当前取值 |
-| color | string |  | 背景条颜色（已废弃，请使用 backgroundColor） |
-| selected-color | string |  | 已选择颜色（已废弃，请使用 activeColor） |
+| value | number | `0` | 初始取值，初始化时限制到 `[min, max]` 范围内；后续动态修改不会同步内部滑块值 |
 | activeColor | string | `#1aad19` | 已选择颜色 |
 | backgroundColor | string | `#e9e9e9` | 背景条颜色 |
 | block-size | number | `28` | 滑块大小 |
 | block-color | string | `#ffffff` | 滑块颜色 |
 | show-value | boolean | `false` | 是否在右侧显示当前值 |
+
+不支持 `color`、`selected-color`，分别使用 `backgroundColor`、`activeColor` 设置背景条和已选择部分的颜色。
 
 #### 事件
 
@@ -439,9 +499,11 @@ Web 滚动基于 BetterScroll，与原生页面滚动行为不同。
 | refresher-enabled | boolean | `false` | 开启自定义下拉刷新 |
 | refresher-threshold | number | `45` | 设置自定义下拉刷新阈值 |
 | scroll-into-view | string |  | 值应为某子元素 id（id 不能以数字开头） |
-| refresher-default-style | string | `'black'` | 设置下拉刷新默认样式，支持 `black`、`white` |
+| refresher-default-style | string | `'black'` | 设置下拉刷新默认样式，支持 `black`、`white`、`none`；`none` 不显示默认刷新样式 |
 | refresher-background | string | `''` | 设置自定义下拉刷新背景颜色 |
 | refresher-triggered | boolean | `false` | 设置当前下拉刷新状态,true 表示已触发 |
+
+开启 `refresher-enabled` 并设置 `refresher-default-style="none"` 时，可通过 `refresher` 具名插槽（`slot="refresher"`）提供自定义刷新内容；未提供该插槽时不渲染刷新内容。
 
 #### 事件
 
@@ -631,13 +693,14 @@ fields 有效值：
 | x | number | `0` | 定义 x 轴方向的偏移 |
 | y | number | `0` | 定义 y 轴方向的偏移 |
 | disabled | boolean | `false` | 是否禁用 |
-| animation | boolean | `true` | 是否使用动画 |
-| damping | number | `20` | 阻尼系数，用于控制 x 或 y 改变时的动画和过界回弹的动画，值越大移动越快 |
+| damping | number | `20` | 阻尼系数，仅控制过界回弹时间，正值越大回弹越快；不影响 x 或 y 更新时的位移动画 |
 | friction | number | `2` | 摩擦系数，用于控制惯性滑动的动画，值越大摩擦力越大，滑动越快停止 |
 | scale | boolean | `false` | 是否支持双指缩放 |
 | scale-min | number | `0.5` | 缩放最小值 |
 | scale-max | number | `10` | 缩放最大值 |
 | scale-value | number | `1` | 缩放倍数 |
+
+`animation` 在 Web 下不生效，不能通过它开关动画。
 
 #### 事件
 
@@ -677,7 +740,7 @@ fields 有效值：
 | 属性名 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | src | string |  | 要播放视频的资源地址或本地静态资源相对路径 |
-| controls | boolean | `true` | 初始是否显示默认播放控件 |
+| controls | boolean | `true` | 是否显示默认播放控件 |
 | autoplay | boolean | `false` | 是否自动播放 |
 | loop | boolean | `false` | 是否循环播放 |
 | muted | boolean | `false` | 是否静音播放 |
@@ -691,6 +754,8 @@ fields 有效值：
 | show-center-play-btn | boolean | `true` | 是否显示中心播放按钮 |
 | show-mute-btn | boolean | `false` | 是否显示静音按钮 |
 | playsinline | boolean | `true` | 是否添加浏览器行内播放相关属性 |
+
+`src`、`controls`、`autoplay`、`loop`、`poster`、`initial-time`、`playsinline` 及表中的 `show-*` 属性仅在播放器初始化时生效，后续更新不会同步；不能通过动态修改 `src` 切换视频地址，也不能通过动态修改 `controls` 切换播放控件显隐。播放器初始化后，`muted` 和 `object-fit` 支持动态更新。
 
 不支持微信的弹幕、投屏、画中画、旋转和手势类属性；使用时单独接入 Web 方案。
 
@@ -709,7 +774,13 @@ fields 有效值：
 | bindseekcomplete | seek 完成时触发，`event.detail = {position}` |
 | bindprogress | 缓冲进度变化时触发，`event.detail = {buffered}` |
 
-不可靠：动态修改 `controls` 可能报错，`bindcontrolstoggle` 不能作为有效的 `{show}` 通知。初始 `controls=false` 时也不会显示 `poster` 封面。自动播放、行内播放和全屏受浏览器策略限制，部分设备要求静音或用户手势。
+### canvas
+
+可按微信新版 Canvas 方式正常使用：节点渲染完成后，通过 SelectorQuery 的 `fields({ node: true, size: true })` 获取节点与尺寸，再调用 `getContext('2d')` 绘制。图片绘制和帧动画可沿用文档写法，`wx.getWindowInfo()` 改用 `@mpxjs/api-proxy` 导出的 `getWindowInfo()`。
+
+- 导出图片：不支持 `canvasToTempFilePath`，Web 侧使用 `canvas.toBlob()` / `canvas.toDataURL()`。
+- 创建路径：不支持 `canvas.createPath2D()`，Web 侧通过条件编译使用 `new Path2D(...)`。
+- 不支持旧版 `wx.createCanvasContext`方式。
 
 ### web-view
 
@@ -725,17 +796,21 @@ fields 有效值：
 
 | 事件名      | 说明                                |
 | ----------- | ----------------------------------- |
-| bindmessage | iframe 页面通过 postMessage 向容器传递数据 |
+| bindmessage | 接收 iframe 按桥接协议发送的消息，业务数据位于 `event.detail.data` |
 | bindload    | 转发 iframe 的 `load` 事件，不保证业务页面内容成功可用 |
 | binderror   | 空地址或来源白名单拒绝时触发；不覆盖网络、HTTP 或嵌入策略错误 |
 
+iframe 页面需向父窗口发送符合桥接协议的消息对象或其 JSON 字符串，例如 `{ type: 'postMessage', args: [{ data: { value: 1 } }] }`；也可使用 `{ type: 'postMessage', payload: { data: { value: 1 } } }`。仅发送普通业务数据不会触发 `bindmessage`。
+
+`args` 为数组时优先使用 `args[0]`，否则使用 `payload`；`event.detail.data` 取该参数的 `data`（为真值时），否则取参数本身，不会自动包装成数组。消息需通过来源白名单校验；若提供 `clientUid`，其数值还必须匹配当前 web-view 实例。
+
 ---
 
-## Web 组件降级
+## 不支持组件与降级处理
 
-下表记录当前没有 Web 实现的组件及可用方案方向。
+下表记录当前 Web 中不支持的基础组件及降级处理方向。
 
-| 组件 | Web 侧处理 |
+| 组件 | Web 降级处理 |
 | --- | --- |
 | `camera` | 使用浏览器媒体能力或业务 H5 SDK。 |
 | `live-player` / `live-pusher` | 使用 H5 播放 / 推流方案。 |
@@ -757,5 +832,3 @@ fields 有效值：
 | `nested-scroll-header` / `nested-scroll-body` / `draggable-sheet` | 使用 Web-only 滚动协调或抽屉组件，并验证触摸和页面滚动冲突。 |
 | `navigation-bar` | 使用 Mpx Web 路由、页面配置或 Web-only 导航组件。 |
 | `custom-wrapper` | Web 没有微信原生自定义组件更新边界语义；使用普通容器并按 Web 渲染性能优化。 |
-
-`canvas` 在 Web 下可作为原生 `<canvas>` 使用；复杂场景应结合 Web Canvas API 或业务封装处理。

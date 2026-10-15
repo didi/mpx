@@ -96,7 +96,7 @@ describe('test storage', () => {
     expect(success.mock.calls.length).toBe(1)
     expect(fail.mock.calls.length).toBe(0)
     expect(complete.mock.calls.length).toBe(1)
-    expect(getStorageInfoSync()).toEqual({ keys: [storageSyncKey], limitSize: null, currentSize: null })
+    expect(getStorageInfoSync().keys).toEqual([storageSyncKey])
   })
 
   test('clearStorage', () => {
