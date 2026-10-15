@@ -4,15 +4,10 @@ import { setFocusedNavigation } from '@mpxjs/utils'
 import Portal from '../../../lib/runtime/components/react/mpx-portal'
 import { PortalContext, RouteContext } from '../../../lib/runtime/components/react/context'
 
-function mockReactNative () {
-  return {
-    View: 'View',
-    StyleSheet: { create: (styles: any) => styles }
-  }
-}
-
-jest.mock(require.resolve('react-native'), () => mockReactNative())
-jest.mock('react-native', () => mockReactNative(), { virtual: true })
+jest.mock('react-native', () => ({
+  View: 'View',
+  StyleSheet: { create: (styles: any) => styles }
+}))
 
 describe('RN Portal pending content', () => {
   const renderers: ReactTestRenderer[] = []
