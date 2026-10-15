@@ -3,7 +3,13 @@ import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { getFocusedNavigation } from '../../../common/js'
 
 const getWindowInfo = function () {
-  const dimensionsScreen = Dimensions.get('screen')
+  const nativeDimensions = {
+    window: Dimensions.get('window'),
+    screen: Dimensions.get('screen')
+  }
+  const hasCustomDimensions = typeof mpxGlobal.__mpx?.config?.rnConfig?.customDimensions === 'function'
+  const dimensions = hasCustomDimensions ? global.__getMpxAppDimensionsInfo() : nativeDimensions
+  const dimensionsScreen = dimensions.screen
   const navigation = getFocusedNavigation() || {}
   const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
   const navigationInsets = navigation.insets || {}

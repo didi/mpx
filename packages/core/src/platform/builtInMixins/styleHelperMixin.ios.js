@@ -29,6 +29,11 @@ function useDimensionsInfo (dimensions) {
   global.__mpxAppDimensionsInfo.screen = dimensions.screen
 }
 
+global.__getMpxAppDimensionsInfo = function () {
+  if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
+  return global.__mpxAppDimensionsInfo
+}
+
 function getPageSize (window = global.__mpxAppDimensionsInfo.screen) {
   return window.width + 'x' + window.height
 }
@@ -83,7 +88,7 @@ const empty = {}
 const isNum = (v) => !isNaN(+v)
 
 function formatValue (value, unitType) {
-  if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
+  global.__getMpxAppDimensionsInfo()
   if (unitType && typeof unit[unitType] === 'function') {
     return unit[unitType](+value)
   }

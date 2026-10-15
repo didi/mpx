@@ -6,6 +6,8 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getWindowInfo.html)
 
+> RN 环境下配置 [`mpx.config.rnConfig.customDimensions`](/guide/rn/application-api.html#foldable-screen-adaption) 后，返回值中的 `screenWidth`、`screenHeight`、`windowWidth`、`windowHeight` 使用自定义尺寸；`safeArea`、`statusBarHeight` 和 `screenTop` 仍基于原生窗口与安全区信息计算。
+
 ### 参数 {#parameters}
 
 **Object**
@@ -52,12 +54,11 @@
 
 ### 示例代码 {#example-code}
 ```js
-const deviceInfo = mpx.getDeviceInfo()
+const windowInfo = mpx.getWindowInfo()
 
-console.log(deviceInfo.abi)
-console.log(deviceInfo.benchmarkLevel)
-console.log(deviceInfo.brand)
-console.log(deviceInfo.model)
-console.log(deviceInfo.platform)
-console.log(deviceInfo.system)
+console.log(windowInfo.screenWidth)
+console.log(windowInfo.screenHeight)
+console.log(windowInfo.windowWidth)
+console.log(windowInfo.windowHeight)
+console.log(windowInfo.safeArea)
 ```

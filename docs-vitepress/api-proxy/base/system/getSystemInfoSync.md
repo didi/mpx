@@ -7,6 +7,8 @@ mpx.getSystemInfo 的同步版本。
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getSystemInfoSync.html)
 
+> RN 环境下配置 [`mpx.config.rnConfig.customDimensions`](/guide/rn/application-api.html#foldable-screen-adaption) 后，返回值中的 `screenWidth`、`screenHeight`、`windowWidth`、`windowHeight` 使用自定义尺寸，`deviceOrientation` 根据自定义后的屏幕宽高计算；`safeArea`、`statusBarHeight` 和 `screenTop` 仍基于原生窗口与安全区信息计算。
+
 ### 示例代码 {#example-code}
 ```js
 try {
