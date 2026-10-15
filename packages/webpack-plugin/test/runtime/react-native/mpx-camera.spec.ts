@@ -9,7 +9,7 @@ jest.mock('react-native-vision-camera', () => ({
   useCameraDevice: () => ({ maxZoom: 1 }),
   useCameraFormat: () => ({}),
   useCodeScanner: () => ({})
-}), { virtual: true })
+}))
 
 jest.mock('@mpxjs/core', () => ({
   watch: jest.requireActual('../../../../core/src/observer/watch').watch
