@@ -481,6 +481,30 @@ mpx.config.rnConfig.disablePageTransition = true
 例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
 
 
+#### mpx.config.rnConfig.customLayout {#custom-layout}
+
+```ts
+() => { width?: number; height?: number } | void
+```
+
+由业务提供自定义 layout，每次调用 `getWindowInfo()` 时同步执行。可以仅返回 `width` 或 `height`；未返回、无返回值或尺寸为 `0` 时，沿用该尺寸的平台默认值。回调不支持返回 Promise。
+
+`windowWidth`、`windowHeight` 优先使用页面 `navigation.layout` 对应的尺寸，取不到时使用这里的自定义尺寸。`safeArea` 使用自定义尺寸或平台默认尺寸作为基准，再扣除安全区域 inset，因此配置的宽高应与 inset 使用同一坐标系。
+
+在 RN 分支中配置，例如每次读取宿主窗口尺寸：
+
+```js
+if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
+  const { Dimensions } = require('react-native')
+  mpx.config.rnConfig.customLayout = () => {
+    const { width, height } = Dimensions.get('window')
+    return { width, height }
+  }
+}
+```
+
+请在首次调用 `getWindowInfo()` 前注册此配置。该配置不修改 RN `Dimensions` 或样式换算使用的尺寸。
+
 ### 前后台切换 {#app-state-change}
 
 #### mpx.config.rnConfig.disableAppStateListener
