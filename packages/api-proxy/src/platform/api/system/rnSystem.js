@@ -13,13 +13,13 @@ const getWindowInfo = function () {
   let safeArea = {}
   const { top = 0, left = 0, bottom = 0, right = 0 } = insets
   const layout = navigation.layout || {}
-  const layoutData = mpx.config.rnConfig.customLayout?.() || {}
+  const customLayout = mpx.config.rnConfig.customLayout?.() || {}
   const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - (layout.bottomVirtualHeight || 0) // 解决安卓开启屏幕内导航安卓把安全区计算进去后产生的影响
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
-  const fallbackWindowWidth = layoutData.width || (__mpx_mode__ === 'ios' ? dimensionsWindow.width : screenWidth)
-  const fallbackWindowHeight = layoutData.height || (__mpx_mode__ === 'ios' ? dimensionsWindow.height : screenHeight)
+  const fallbackWindowWidth = customLayout.width || (__mpx_mode__ === 'ios' ? dimensionsWindow.width : screenWidth)
+  const fallbackWindowHeight = customLayout.height || (__mpx_mode__ === 'ios' ? dimensionsWindow.height : screenHeight)
   const windowHeight = layoutHeight || fallbackWindowHeight
   try {
     safeArea = {
