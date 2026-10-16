@@ -12,18 +12,18 @@
 jest.mock('react-native', () => ({
   StyleSheet: { hairlineWidth: 1 / 3 },
   Image: class Image {}
-}), { virtual: false })
+}))
 
 // react-native-gesture-handler is touched by utils.tsx's Gesture import;
 // stub to a minimal object so module evaluation does not hit native code.
 jest.mock('react-native-gesture-handler', () => ({
   Gesture: { Tap: () => ({}), Pan: () => ({}), LongPress: () => ({}) }
-}), { virtual: false })
+}))
 
 // react-native-safe-area-context only contributes initialWindowMetrics here.
 jest.mock('react-native-safe-area-context', () => ({
   initialWindowMetrics: { insets: { top: 0, right: 0, bottom: 0, left: 0 } }
-}), { virtual: false })
+}))
 
 // eslint-disable-next-line import/first
 import { transformShorthand } from '../../../lib/runtime/components/react/utils'

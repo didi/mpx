@@ -77,7 +77,7 @@
 | `onHide` | 应用进入后台，入参 `{ reason }`，`0` 表示退出类场景，`3` 表示其他，为对小程序语义的有限模拟。 |
 | `onError` | 全局 JS 错误，RN 通过 `ErrorUtils.setGlobalHandler` 与已注册回调链式触发。 |
 | `onUnhandledRejection` | 未处理的 Promise 拒绝（Hermes / `promise` rejection tracking 等）。 |
-| `onPageNotFound` | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入页面不存在通知。 |
+| `onPageNotFound` | 启动入口未注册时，先以首页及空参数初始化导航，再在导航就绪后通知 `{ path, query, isEntryPage: true }`；`path` 不带开头 `/`，`query` 为缺失入口的 `initialParams`（未传为 `{}`），`this` 与 App 其他生命周期一致。每次根组件初始化最多一次，回调可调用 `redirectTo / reLaunch`；普通重渲染、前后台切换、路由 API 失败或已注册页面加载错误不触发。无需 `implement` 登记。 |
 | `onThemeChange` | RN 无默认驱动，需通过 [`implement`](#通过-implement-适配) 登记并接入主题变化通知。 |
 | `onSSRAppCreated` | SSR 应用创建钩子，可写在 options 中，**RN 不使用 SSR**，不会触发。 |
 | 其他顶层字段 | 非生命周期、非框架保留键会合并进 **`getApp()` 返回对象**，并与 `Mpx` 原型能力合并（如 `globalData`、自定义方法需自行挂到该对象或通过 `methods` 展开规则处理——以当前编译合并结果为准）。 |
@@ -182,7 +182,7 @@
 | 声明位置 | 登记名 |
 | --- | --- |
 | Page / Component 页面 | `onShareTimeline`、`onAddToFavorites`、`onSaveExitState`、`onRouteDone`、`onPullDownRefresh`、`onReachBottom`、`onPageScroll`、`onTabItemTap` |
-| App | `onThemeChange`、`onPageNotFound` |
+| App | `onThemeChange` |
 | Component / Behavior | `moved`、`error`、`definitionFilter` |
 | Component | `export` |
 
@@ -199,7 +199,7 @@
 | 名称 | 类型 | 适用 | 说明 |
 | --- | --- | --- | --- |
 | `route` | 属性 | 页面 | 当前路由名（screen name）。 |
-| `getPageId()` | 方法 | 共用 | 返回当前实例所在页的 pageId 字符串。 |
+| `getPageId()` | 方法 | 共用 | 返回当前实例所在页的 pageId（RN 为数字），通过 RouteContext 传递，不依赖实例的 id 属性。 |
 | `getOpenerEventChannel()` | 方法 | 页面 | 打开当前页的 `EventChannel`，组件侧多为空实现占位。 |
 | `triggerEvent(name, detail?)` | 方法 | 组件 | 向父节点派发自定义事件。 |
 | `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例。RN 不能像小程序一样按 selector 遍历视图树，须在模板目标节点声明 **空 wx:ref**，由编译期建立 **`#id` / `.class` 与节点**的映射后，本 API 才能按小程序写法解析。 |
@@ -615,6 +615,7 @@ createComponent({
 | `createApp` | **构造API**，创建应用实例。 |
 | `createPage` | **构造API**，创建页面。 |
 | `createComponent` | **构造API**，创建自定义组件。 |
+| `pageWrapperHOC` | 仅 RN 支持：由使用方包裹独立页面产物，提供导航栏、布局、页面 Context 等能力；非 RN 平台导出同名兜底函数，跨端代码应限定在 RN 平台调用；宿主需传入 navigation/route，详见 [独立页面包裹](./rn-hybrid-dev.md#standalone-page-wrapper)。 |
 | `ref` | **组合式API：数据响应**，创建 ref。 |
 | `shallowRef` | **组合式API：数据响应**，创建浅层 ref。 |
 | `unref` | **组合式API：数据响应**，解包 ref。 |

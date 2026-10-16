@@ -239,7 +239,9 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 
 **初始参数的作用范围：** `parseAppProps` 返回的 `initialParams` 仅作为 RN 根组件初始化时首个路由实例的参数，传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 的 `query` 以当前路由实例参数为准。
 
-若 `initialRouteName` 未注册，框架通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），回退至应用首页，并丢弃该错误路由的 `initialParams`。
+若 `initialRouteName` 未注册，框架以应用首页及空参数初始化导航，在导航就绪后调用 App 的 `onPageNotFound({ path, query, isEntryPage: true })` 及 `mpx.onPageNotFound` 注册的监听。`path` 为原始缺失路径（不带开头 `/`），`query` 为该入口的 `initialParams`（未传为 `{}`），这些参数不会传给首页；`onLaunch / onShow` 仍使用实际首页和其参数。未声明 App 回调且未注册 API 监听时保留统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调）。
+
+每次 RN 根组件初始化最多通知一次；根组件销毁后重建会重新解析宿主入口，同一 JS 上下文的 `onLaunch` 仍只执行一次。普通重渲染、前后台切换不重新派发。`initialRouteName` 仍是页面路径，query 通过 `initialParams` 提供，不支持将两者拼成 URL。
 
 #### 布局与基础组件
 
