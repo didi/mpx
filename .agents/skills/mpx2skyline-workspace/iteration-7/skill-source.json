@@ -1,0 +1,13 @@
+{
+  "root": ".agents/skills/mpx2skyline",
+  "status": "definition-source-not-execution",
+  "files": {
+    "SKILL.md": "7d98606710196862999122f9ed2f1058e2706106fb31893d117560aaf60469f8",
+    "references/skyline-audit-matrix.md": "873a6a2959a93946f337e39603d669c7bef663db015fb29fbe1ddc9694cc84e1",
+    "references/skyline-configuration.md": "a811010c548ca25b30b102915b310ee83362d1d9e8043da3d99fb3a9d3528f00",
+    "references/skyline-runtime-practice.md": "5edaeb061a93aff332224e44a554d95b78093bc49136f825c01e67c254b3c666",
+    "references/skyline-style-practice.md": "3a467a995a95188ebc0fd62aa1f4ec469d035bcefd95655cf786862b14a6ffaa",
+    "references/skyline-style-reference.md": "ffa24c7ade7a97d4f3fdf02e73b1d7ab9729d2560fbbd61fbd92523136bd1a7e",
+    "references/skyline-template-reference.md": "0812faaf0d2573f78b4e101f15c0821023df029b79e2a4329a51518dc2d9a623"
+  }
+}
