@@ -366,6 +366,13 @@ export interface RnConfig {
   ) => { window: ScaledSize; screen: ScaledSize } | void
 
   /**
+   * 业务自定义 layout，每次调用 getWindowInfo 时同步获取。
+   * 返回的宽高用于窗口尺寸兜底与安全区域计算，页面 layout 的宽高仍优先。
+   * 未返回的尺寸或值为 0 的尺寸使用平台默认值。
+   */
+  customLayout?: () => { width?: number; height?: number } | void
+
+  /**
    * rpx、vw、vh、媒体查询与 onResize 使用的尺寸基准。
    * @default 'window'
    */
