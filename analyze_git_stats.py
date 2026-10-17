@@ -1,8 +1,25 @@
 import subprocess
 import sys
+import re
 import argparse
 from collections import defaultdict
 from datetime import datetime
+
+# Only allow characters that are valid in git date expressions
+# (e.g. "2023-01-01", "1 year ago", "now"). Reject anything that could
+# be mistaken for an additional command-line option (leading "-") or
+# that contains shell/metacharacters.
+_SAFE_DATE_RE = re.compile(r'^[A-Za-z0-9][A-Za-z0-9 :.,_/+-]*$')
+
+
+def _validate_date_arg(value, arg_name):
+    if value is None:
+        return value
+    if not _SAFE_DATE_RE.match(value):
+        print(f"Error: invalid value for {arg_name}: {value!r}")
+        sys.exit(1)
+    return value
+
 
 def analyze_git_stats():
     # Parse command line arguments
@@ -14,8 +31,8 @@ def analyze_git_stats():
     args = parser.parse_args()
 
     # Configuration
-    since_date = args.since
-    until_date = args.until
+    since_date = _validate_date_arg(args.since, "--since")
+    until_date = _validate_date_arg(args.until, "--until")
 
     # Author Alias Mapping
     # Format: 'Alias Name': 'Canonical Name'
