@@ -278,6 +278,50 @@ SSR渲染定制钩子，在服务端渲染期间被调用，可以实现在服�
 **注意：** 仅 web 环境支持
 
 
+## 组件渲染调试 Hook {#render-debug-hooks}
+
+`onRenderTracked` 和 `onRenderTriggered` 仅在开发环境生效，支持小程序与 Mpx2RN，Web 输出使用 Vue 2.7 的原生接口。与其他组合式 Hook 一样，须在 `setup()` 或 `<script setup>` 中同步注册。
+
+### onRenderTracked {#on-render-tracked}
+
+在当前组件的 Mpx 渲染 Effect 收集依赖时调用。
+
+```ts
+function onRenderTracked(callback: (event: DebuggerEvent) => void): void
+```
+
+首次渲染和后续重新执行渲染函数时都可能产生事件，重复访问同一依赖也可能重复调用。事件次数不代表依赖数量或屏幕提交次数。
+
+### onRenderTriggered {#on-render-triggered}
+
+响应式依赖通知当前组件的渲染 Effect 时同步调用，位置在原 update/scheduler 之前。
+
+```ts
+function onRenderTriggered(callback: (event: DebuggerEvent) => void): void
+```
+
+```js
+import { createComponent, ref, onRenderTriggered } from '@mpxjs/core'
+
+createComponent({
+  setup() {
+    const count = ref(0)
+    onRenderTriggered((event) => {
+      if (event.target === count && event.key === 'value') {
+        debugger // 在调用栈中查看原始业务赋值
+      }
+    })
+    return { count, increase: () => count.value++ }
+  }
+})
+```
+
+多次通知可能合并成一次渲染。该 Hook 不等待小程序 setData 回调，也不表示 RN 已完成 React 提交。RN 因父组件或 React Hooks 引起的渲染可能只有 track 事件，没有 Mpx 响应式 trigger 事件。未创建 Mpx 渲染 Effect 的原生渲染路径不承诺这些组件事件。
+
+回调执行时会暂停其依赖收集并恢复组件上下文；业务应只筛选、观察和暂停，不在回调中修改状态。生产环境调用这两个接口不会注册或触发回调；框架不会替业务删除其他位置的普通日志或 debugger。
+
+事件字段见 [DebuggerEvent](reactivity-api.md#debugger-event)，完整示例与 source map 配置见[响应式调试指南](../guide/composition-api/reactivity-debugging.md)。
+
 ## getCurrentInstance
 
 getCurrentInstance 支持访问内部组件实例。

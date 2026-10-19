@@ -200,7 +200,8 @@ del(person, 'age')
 ```ts
 // 只读形式
 function computed<T>(
-    getter: () => T
+    getter: () => T,
+    debugOptions?: DebuggerOptions
 ): Readonly<Ref<Readonly<T>>>
 
 // 可写形式
@@ -208,7 +209,8 @@ function computed<T>(
     options: {
         get: () => T
         set: (value: T) => void
-    }
+    },
+    debugOptions?: DebuggerOptions
 ): Ref<T>
 ```
 
@@ -236,6 +238,27 @@ plusOne.value = 1
 console.log(count.value) // 0
 ```
 
+#### computed 调试选项 {#computed-debug-options}
+
+`computed` 的第二参数可传入 `onTrack` / `onTrigger` 调试回调，仅在开发环境生效。`onTrack` 观察 getter 读取的依赖，`onTrigger` 在底层依赖通知该 computed 时同步调用，此时 getter 未必已经重新计算，缓存值也可能仍是旧值。
+
+```js
+const count = ref(0)
+const doubled = computed(() => count.value * 2, {
+  onTrack(event) {
+    console.log(event.type, event.key)
+  },
+  onTrigger(event) {
+    if (event.target === count) debugger
+  }
+})
+
+console.log(doubled.value) // 首次读取才计算并收集依赖
+count.value++ // 同步进入 onTrigger
+```
+
+事件结构见 [DebuggerEvent](#debugger-event)，完整双端示例见[响应式调试指南](../guide/composition-api/reactivity-debugging.md)。
+
 ### watchEffect
 
 ```ts
@@ -244,7 +267,7 @@ function watchEffect(
   options?: WatchEffectOptions
 ): StopHandle
 
-interface WatchEffectOptions {
+interface WatchEffectOptions extends DebuggerOptions {
     flush?: 'pre' | 'post' | 'sync' // 默认：'pre'
 }
 
@@ -404,6 +427,31 @@ let unwatch = watch(() => {
 unwatch()
 ```
 
+#### watch 系列调试选项 {#watch-debug-options}
+
+`watch`、`watchEffect`、`watchSyncEffect`、`watchPostEffect` 都支持 `onTrack` / `onTrigger`，仅在开发环境生效。调试事件同步发生，`flush` 仍控制原来的侦听回调执行时机。触发了 `onTrigger` 不代表侦听回调一定执行，例如 getter 重新运行后结果未变化，回调仍可能被跳过。
+
+`computed` 同样支持这两个回调，通过第二参数 `debugOptions` 传入，详见 [computed 调试选项](#computed-debug-options)。
+
+```js
+const count = ref(0)
+const stop = watch(count, (value, oldValue) => {
+  console.log(oldValue, value)
+}, {
+  onTrack(event) {
+    console.log('watch tracked', event.type, event.key)
+  },
+  onTrigger(event) {
+    if (event.target === count) debugger
+  }
+})
+
+count.value++
+stop()
+```
+
+停止侦听后，该 watcher 取消订阅，其调试事件也随之停止。调试回调中的读取不会成为该 watcher 的额外依赖；回调应只读取信息，不修改响应式状态。
+
 #### watch 选项 {#watch-options}
 - **选项**：deep
 
@@ -494,6 +542,7 @@ unwatch()
   }), {
     immediate: true
   })
+  ```
 
 ## Effect 作用域 API {#effect-scope-api}
 
@@ -792,3 +841,51 @@ shallow.value.greet = 'Hello, universe'
 triggerRef(shallow)
 
 ```
+
+
+## 响应式调试事件 {#reactivity-debugging}
+
+这些接口支持小程序和 Mpx2RN；Web 输出复用 Vue 2.7 的原生调试接口。生产环境会忽略调试选项和组件调试 Hook，响应式行为与调度规则保持现有语义。
+
+### DebuggerEvent {#debugger-event}
+
+```ts
+type TrackOpTypes = 'get' | 'touch'
+type TriggerOpTypes = 'set' | 'add' | 'delete' | 'array mutation'
+
+interface DebuggerEvent {
+  /** 内部 ReactiveEffect 实例，供调试检查。 */
+  effect: any
+  target: object
+  type: TrackOpTypes | TriggerOpTypes
+  key?: string | number | symbol
+  oldValue?: any
+  newValue?: any
+}
+
+interface DebuggerOptions {
+  onTrack?: (event: DebuggerEvent) => void
+  onTrigger?: (event: DebuggerEvent) => void
+}
+```
+
+| 操作 | type | target 与 key |
+| --- | --- | --- |
+| 已有响应式属性读取 | `get` | 源对象与属性名 |
+| 已有响应式属性赋值 | `set` | 源对象与属性名，提供 oldValue/newValue |
+| `set` 新增属性 | `add` | 源对象与新属性名，提供 newValue |
+| `del` 删除属性 | `delete` | 源对象与删除的属性名 |
+| 数组变更方法 | `array mutation` | 数组自身与方法名，例如 `splice` |
+| 普通 `ref/shallowRef` 的 value 访问 | `get/set` | 业务持有的 ref 与 `value` |
+| computed.value 读取 | `get` | computedRef 与 `value` |
+| customRef 的 track/trigger | `get/set` | customRef 与 `value`，不暴露内部版本值 |
+
+`touch` 保留 Vue 2.7 的类型兼容性，Mpx 不为无明确信息的结构依赖新增调试事件。数组变更事件不提供数组快照。`triggerRef(shallowRef)` 的显式通知也不声明 oldValue/newValue。
+
+`target` 表示依赖来源，通常不是组件实例。`toRef(state, 'count')` 转发到源属性时，事件仍反映 state 和 count；访问 `ref.value.name` 时，name 的事件属于内部响应式对象。oldValue/newValue 中的对象是引用，稍后在控制台展开时可能已经被后续业务修改。
+
+重复读取可以产生多个 track 事件，但依赖订阅仍然去重。相同值赋值、直接新增属性和直接数组索引赋值遵循现有[响应式使用限制](../guide/basic/reactive.md)，调试接口不会增加新的观察能力。
+
+Mpx 的 computed 沿用 Vue 2.7 式底层依赖转交。组件读取 computed 时可以看到 computedRef 的 get 事件；底层 ref 变化通知组件时，trigger 的 target 则是这个底层 ref。onTrigger 不能用来判断 computed 的结果是否已经改变。
+
+组件级接口见 [onRenderTracked / onRenderTriggered](composition-api.md#render-debug-hooks)，断点与 sourcemap 排查步骤见[响应式调试指南](../guide/composition-api/reactivity-debugging.md)。

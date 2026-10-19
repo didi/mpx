@@ -12,6 +12,8 @@ export const ONHIDE = '__onHide__'
 export const ONRESIZE = '__onResize__'
 export const SERVERPREFETCH = '__serverPrefetch__'
 export const REACTHOOKSEXEC = '__reactHooksExec__'
+export const RENDERTRACKED = '__renderTracked__'
+export const RENDERTRIGGERED = '__renderTriggered__'
 
 export const INNER_LIFECYCLES = [
   BEFORECREATE,
@@ -23,6 +25,8 @@ export const INNER_LIFECYCLES = [
   BEFOREUNMOUNT,
   SERVERPREFETCH,
   REACTHOOKSEXEC,
+  RENDERTRACKED,
+  RENDERTRIGGERED,
   UNMOUNTED,
   ONLOAD,
   ONSHOW,

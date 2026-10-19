@@ -741,7 +741,27 @@ type WatchSource<T> =
 
 type MultiWatchSources = (WatchSource<unknown> | object)[]
 
-interface WatchEffectOptions {
+export type TrackOpTypes = 'get' | 'touch'
+export type TriggerOpTypes = 'set' | 'add' | 'delete' | 'array mutation'
+
+export interface DebuggerEvent {
+  /** @internal Internal ReactiveEffect instance; its methods are not public APIs. */
+  effect: any
+  target: object
+  type: TrackOpTypes | TriggerOpTypes
+  key?: string | number | symbol
+  oldValue?: any
+  newValue?: any
+}
+
+export type DebuggerHook = (event: DebuggerEvent) => void
+
+export interface DebuggerOptions {
+  onTrack?: DebuggerHook
+  onTrigger?: DebuggerHook
+}
+
+interface WatchEffectOptions extends DebuggerOptions {
   flush?: 'pre' | 'post' | 'sync' // default: 'pre'
 }
 
@@ -819,10 +839,12 @@ export function markRaw<T extends object> (value: T): T
 export function shallowReactive<T extends object> (target: T): ShallowReactive<T>
 
 export function computed<T> (
-  getter: (...args: any[]) => T
+  getter: (...args: any[]) => T,
+  debugOptions?: DebuggerOptions
 ): ComputedRef<T>
 export function computed<T> (
-  options: WritableComputedOptions<T>
+  options: WritableComputedOptions<T>,
+  debugOptions?: DebuggerOptions
 ): WritableComputedRef<T>
 
 export function watchEffect (
@@ -882,6 +904,8 @@ export declare interface InjectionKey<T> extends Symbol { }
 export function nextTick (fn: () => any): void
 
 // lifecycle
+export function onRenderTracked (callback: DebuggerHook): void
+export function onRenderTriggered (callback: DebuggerHook): void
 export function onBeforeMount (callback: () => void): void
 export function onMounted (callback: () => void): void
 export function onBeforeUpdate (callback: () => void): void

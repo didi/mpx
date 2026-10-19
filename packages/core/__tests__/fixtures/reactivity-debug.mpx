@@ -1,0 +1,50 @@
+<template>
+  <view bindtap="increase">
+    <text>点击加一：{{ count }}，两倍：{{ doubled }}</text>
+  </view>
+</template>
+
+<script>
+import {
+  createComponent,
+  ref,
+  computed,
+  onRenderTracked,
+  onRenderTriggered
+} from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    const count = ref(0)
+    const doubled = computed(() => count.value * 2)
+
+    if (process.env.NODE_ENV !== 'production') {
+      onRenderTracked((event) => {
+        if (event.target === count || event.target === doubled) {
+          console.log('render tracked', event.type, event.key)
+        }
+      })
+      onRenderTriggered((event) => {
+        if (event.target === count && event.key === 'value') {
+          // eslint-disable-next-line no-debugger
+          debugger
+        }
+      })
+    }
+
+    return {
+      count,
+      doubled,
+      increase () {
+        count.value++
+      }
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

@@ -49,7 +49,9 @@ import {
   ONSHOW,
   ONHIDE,
   ONRESIZE,
-  REACTHOOKSEXEC
+  REACTHOOKSEXEC,
+  RENDERTRACKED,
+  RENDERTRIGGERED
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
@@ -795,6 +797,7 @@ export default class MpxProxy {
       }
       if (__mpx_perf_framework__ && perfId >= 0) perf.scopeEnd(perfId)
     }, () => queueJob(update), this.scope)
+    if (process.env.NODE_ENV !== 'production') bindRenderDebugHooks(effect, this)
 
     const update = this.update = effect.run.bind(effect)
     update.id = this.uid
@@ -898,6 +901,36 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
 }
 
 export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
+
+const createRenderDebugHook = (hookName) => process.env.NODE_ENV !== 'production'
+  ? (hook, instance = currentInstance) => {
+    if (instance && isFunction(hook)) {
+      const wrappedHook = (event) => {
+        if (instance.isUnmounted()) return
+        const previousInstance = currentInstance
+        currentInstance = instance
+        try {
+          return instance.scope.run(() => callWithErrorHandling(hook, instance, `${hookName} hook`, [event]))
+        } finally {
+          currentInstance = previousInstance
+        }
+      }
+      ;(instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(wrappedHook)
+    }
+  }
+  : noop
+
+export const onRenderTracked = createRenderDebugHook(RENDERTRACKED)
+export const onRenderTriggered = createRenderDebugHook(RENDERTRIGGERED)
+
+export function bindRenderDebugHooks (effect, instance) {
+  if (process.env.NODE_ENV === 'production') return
+  const tracked = instance.hooks[RENDERTRACKED]
+  const triggered = instance.hooks[RENDERTRIGGERED]
+  if (tracked) effect.onTrack = (event) => tracked.forEach(hook => hook(event))
+  if (triggered) effect.onTrigger = (event) => triggered.forEach(hook => hook(event))
+}
+
 // 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上
 export const onBeforeMount = createHook(BEFOREMOUNT)
 export const onMounted = createHook(MOUNTED)

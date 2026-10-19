@@ -1,5 +1,6 @@
 import { reactive, shallowReactive, set, isReactive, setForceTrigger } from './reactive'
 import { RefKey } from '../helper/const'
+import { registerRefDebugTarget } from './debug'
 import {
   warn,
   isPlainObject,
@@ -33,12 +34,14 @@ export function unref (ref) {
 export function ref (raw) {
   if (isRef(raw)) return raw
   const wrapper = reactive({ [RefKey]: raw })
-  return createRef({
+  const ref = createRef({
     get: () => wrapper[RefKey],
     set: (val) => {
       wrapper[RefKey] = val
     }
   })
+  if (process.env.NODE_ENV !== 'production') registerRefDebugTarget(wrapper, ref)
+  return ref
 }
 
 export function toRef (obj, key) {
@@ -66,7 +69,7 @@ export function toRefs (obj) {
 
 export function customRef (factory) {
   const version = ref(0)
-  return createRef(
+  const custom = createRef(
     factory(
       // track
       () => version.value,
@@ -76,17 +79,21 @@ export function customRef (factory) {
       }
     )
   )
+  if (process.env.NODE_ENV !== 'production') registerRefDebugTarget(version, custom, true)
+  return custom
 }
 
 export function shallowRef (raw) {
   if (isRef(raw)) return raw
   const wrapper = shallowReactive({ [RefKey]: raw })
-  return createRef({
+  const ref = createRef({
     get: () => wrapper[RefKey],
     set: (val) => {
       wrapper[RefKey] = val
     }
   })
+  if (process.env.NODE_ENV !== 'production') registerRefDebugTarget(wrapper, ref)
+  return ref
 }
 
 export function triggerRef (ref) {
