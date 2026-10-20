@@ -4,7 +4,7 @@ import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
 import { ref } from '../../observer/ref'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -12,12 +12,9 @@ import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import {
   IntersectionObserverContext,
-  KeyboardAvoidContext,
   ProviderContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
 import * as perf from '@mpxjs/perf'
 import { getDimensionsBase, getDimensionsInfo } from '../dimensionsHelper'
@@ -43,9 +40,11 @@ function createEffect (proxy, componentsMap) {
     // if (proxy.propsUpdatedFlag) {
     //   proxy.updatePreRender()
     // }
+    // React 可能合并多次更新，共用任务直到对应版本提交完成。
+    if (!proxy.pendingUpdatedFlag) proxy.createRenderTask()
     if (proxy.isMounted()) {
-      proxy.callHook(BEFOREUPDATE)
       proxy.pendingUpdatedFlag = true
+      proxy.callHook(BEFOREUPDATE)
     }
     proxy.stateVersion = Symbol()
     proxy.onStoreChange && proxy.onStoreChange()
@@ -309,16 +308,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
-    setFocusedNavigation(props.navigation)
     set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
-    // App onLaunch 在 Page created 之前执行
-    if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
-      global.__mpxAppOnLaunch(props.navigation)
-    }
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.externalClassesVersion = ref(0)
+  proxy.createRenderTask()
   proxy.created()
 
   if (type === 'page') {
@@ -449,10 +444,8 @@ function usePageEffect (mpxProxy, pageId, type) {
   }, [])
 }
 
-let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 function usePageStatus (navigation, pageId) {
-  navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
   }
@@ -463,6 +456,7 @@ function usePageStatus (navigation, pageId) {
       })
     }
     const focusSubscription = navigation.addListener('focus', () => {
+      setFocusedNavigation(navigation)
       pageStatusMap[pageId] = 'show'
     })
     const blurSubscription = navigation.addListener('blur', () => {
@@ -517,139 +511,6 @@ const checkRelation = (options) => {
     hasAncestorRelation
   }
 }
-function getLayoutData (headerHeight) {
-  const screenDimensions = ReactNative.Dimensions.get('screen')
-  const windowDimensions = ReactNative.Dimensions.get('window')
-  // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
-  // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
-  const isLandscape = screenDimensions.height < screenDimensions.width
-  let bottomVirtualHeight = 0
-  if (ReactNative.Platform.OS === 'android') {
-    if (isLandscape) {
-      bottomVirtualHeight = screenDimensions.height - windowDimensions.height
-    } else {
-      bottomVirtualHeight = initialWindowMetrics?.insets?.bottom || 0
-      if (typeof mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight === 'function') {
-        bottomVirtualHeight = mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight() || 0
-      }
-    }
-  }
-  return {
-    left: 0,
-    top: headerHeight,
-    // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
-    width: windowDimensions.width,
-    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
-    // ios为0 android为实际statusbar高度
-    statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
-    bottomVirtualHeight: bottomVirtualHeight,
-    isLandscape: isLandscape
-  }
-}
-
-let hasResolvedSafeAreaTop = false
-
-function getSafeAreaInsetsWithInitialTop (safeAreaInsets) {
-  if (ReactNative.Platform.OS !== 'android' || hasResolvedSafeAreaTop) {
-    return safeAreaInsets
-  }
-  const initialTop = initialWindowMetrics?.insets?.top || 0
-  if (safeAreaInsets?.top === 0 && initialTop) {
-    // Android 初始化时 top 可能连续为 0（如红米 10 的 bottom 已更新但 top 仍为 0），此时持续兜底并保留其他 insets 的最新值。
-    // 返回新对象，避免修改 useSafeAreaInsets/context 返回的引用。
-    return Object.assign({}, safeAreaInsets, { top: initialTop })
-  } else {
-    // 拿到真实 top 或没有可用初始值后，后续完全使用 useSafeAreaInsets 的更新。
-    hasResolvedSafeAreaTop = true
-  }
-  return safeAreaInsets
-}
-
-export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
-  return function PageWrapperCom ({ navigation, route, ...props }) {
-    const keyboardAvoidRef = useRef(null)
-    const intersectionObservers = useRef({})
-    const currentPageId = useMemo(() => ++pageId, [])
-    const routeContextValRef = useRef({
-      navigation,
-      pageId: currentPageId
-    })
-    const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
-    if (!navigation || !route) {
-      // 独立组件使用时要求传递navigation
-      error('Using pageWrapper requires passing navigation and route')
-      return null
-    }
-    const headerHeight = useInnerHeaderHeight(currentPageConfig)
-    navigation.layout = getLayoutData(headerHeight)
-
-    useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
-        navigation.layout = getLayoutData(headerHeight)
-      })
-      return () => dimensionListener?.remove()
-    }, [])
-
-    usePagePreload(route)
-    usePageStatus(navigation, currentPageId)
-
-    const withKeyboardAvoidingView = (element) => {
-      if (currentPageConfig.disableKeyboardAvoiding) return element
-      const MpxKeyboardAvoidingView = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view').default
-      return createElement(KeyboardAvoidContext.Provider,
-        {
-          value: keyboardAvoidRef
-        },
-        createElement(MpxKeyboardAvoidingView,
-          {
-            style: {
-              flex: 1
-            },
-            contentContainerStyle: {
-              flex: 1
-            }
-          },
-          element
-        )
-      )
-    }
-    // Android 初始化期间持续兜底 safe area top，直到 useSafeAreaInsets 返回真实值。
-    navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
-    return withKeyboardAvoidingView(
-      createElement(ReactNative.View,
-        {
-          style: {
-            flex: 1,
-            // 页面容器背景色
-            backgroundColor: currentPageConfig?.backgroundColorContent || '#fff',
-            // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
-            overflow: 'hidden'
-          }
-        },
-        createElement(RouteContext.Provider,
-          {
-            value: routeContextValRef.current
-          },
-          createElement(IntersectionObserverContext.Provider,
-            {
-              value: intersectionObservers.current
-            },
-            createElement(PortalHost,
-              null,
-              createElement(WrappedComponent, {
-                ...props,
-                navigation,
-                route,
-                id: currentPageId
-              })
-            )
-          )
-        )
-      )
-    )
-  }
-}
-
 function updateProps (instance, props, validProps) {
   Object.keys(validProps).forEach((key) => {
     if (hasOwn(props, key)) {
@@ -735,13 +596,20 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     }
 
+    const stateVersion = proxy.stateVersion
     useEffect(() => {
-      if (proxy.pendingUpdatedFlag) {
+      if (proxy.pendingUpdatedFlag && proxy.stateVersion === stateVersion) {
+        proxy.currentRenderTask && proxy.currentRenderTask.resolve()
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
       }
     })
 
+    // type 在创建 defaultOptions 时确定，同一组件的 Hook 调用顺序保持不变。
+    if (type === 'page') {
+      usePagePreload(props.route)
+      usePageStatus(props.navigation, pageId)
+    }
     usePageEffect(proxy, pageId, type)
     useEffect(() => {
       proxy.mounted()
@@ -814,8 +682,5 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     defaultOptions.isCustomText = true
   }
 
-  if (type === 'page') {
-    return PageWrapperHOC(defaultOptions, currentInject.pageConfig)
-  }
   return defaultOptions
 }

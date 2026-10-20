@@ -15,6 +15,8 @@ export {
   createComponent
 } from './platform/index'
 
+export { pageWrapperHOC } from './platform/patch/pageWrapperHOC'
+
 export {
   BEFORECREATE,
   CREATED,

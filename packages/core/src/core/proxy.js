@@ -230,11 +230,11 @@ export default class MpxProxy {
 
   mounted () {
     if (this.state === CREATED) {
+      this.currentRenderTask && this.currentRenderTask.resolve()
       // 用于处理refs等前置工作
       this.callHook(BEFOREMOUNT)
       this.state = MOUNTED
       this.callHook(MOUNTED)
-      this.currentRenderTask && this.currentRenderTask.resolve()
     }
   }
 
@@ -836,14 +836,7 @@ export default class MpxProxy {
       if (this.update) {
         options.sync ? this.update() : queueJob(this.update)
       }
-      if (callback) {
-        callback = callback.bind(this.target)
-        options.sync ? callback() : nextTick(callback)
-      }
-      return
-    }
-
-    if (this.effect) {
+    } else if (this.effect) {
       options.sync ? this.effect.run() : this.effect.update()
     } else {
       if (this.forceUpdateAll) {
