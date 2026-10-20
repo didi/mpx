@@ -14,7 +14,6 @@
   - [`setup` 的第一个参数 `props`](#setup-的第一个参数-props)
   - [`setup` 的第二个参数 `context`](#setup-的第二个参数-context)
   - [`<script setup>`](#script-setup)
-  - [响应式调试](#reactivity-debugging)
 - [生命周期](#生命周期)
   - [生命周期对应关系](#生命周期对应关系)
   - [三类写法说明](#三类写法说明)
@@ -412,27 +411,6 @@ createComponent({
 
 ---
 
-### 响应式调试 {#reactivity-debugging}
-
-Mpx2RN 支持命名导出 `onRenderTracked` / `onRenderTriggered`，以及 `computed(getterOrOptions, debugOptions)` 和 watch 系列 options 的 `onTrack` / `onTrigger`。这些能力仅在开发环境生效；组件 Hook 须在 setup 或 script setup 中同步注册。
-
-```js
-const count = ref(0)
-const doubled = computed(() => count.value * 2)
-
-onRenderTriggered((event) => {
-  if (event.target === count && event.key === 'value') {
-    debugger
-  }
-})
-```
-
-普通 ref/shallowRef 的事件 target 是业务持有的 ref，key 为 value；toRef 属性转发保留源对象和属性名。computed 读取可产生 computedRef 的 get 事件，底层依赖通知时 trigger 的 target 仍是底层状态，符合 Vue 2.7 式依赖转交。数组变更事件 type 为 `array mutation`，key 为 `push/splice` 等方法名。
-
-onRenderTriggered 在 Mpx 的原 scheduler 之前同步发生，适合保留业务赋值调用栈。随后队列 job 通知 React，再由 React 渲染阶段执行 Mpx Effect 并产生 track；多次通知可能合并，父组件或 React Hooks 驱动的渲染也可能没有 Mpx 响应式 trigger。调试事件不代表 React 提交或原生画面完成。
-
-回调只用于筛选、观察和 debugger，避免写入响应式状态。断点中使用运行平台和构建版本匹配的 sourcemap 选择业务源码帧；Hermes 字节码需要对应产物的最终映射。需要下探框架源码时还要保留 core 的映射，并检查调试器是否忽略 node_modules。完整 `.mpx` 示例、watch/computed 调试及故障判断见[官方响应式调试指南](../../../../docs-vitepress/guide/composition-api/reactivity-debugging.md)。
-
 ## 生命周期
 
 Mpx 生命周期体系包含三类写法，在组合式 API 中统一使用 Vue 风格钩子；选项式 API 中可使用小程序原生生命周期或框架内置生命周期常量。三者对应关系如下：
@@ -651,7 +629,7 @@ createComponent({
 | `set` | **组合式API：数据响应**，响应式设键。 |
 | `del` | **组合式API：数据响应**，响应式删键；`Mpx` 静态为 `delete`。 |
 | `markRaw` | **组合式API：数据响应**，标记非响应式。 |
-| `computed` | **组合式API：数据响应**，计算属性，第二参数支持开发态 onTrack/onTrigger。 |
+| `computed` | **组合式API：数据响应**，计算属性。 |
 | `watch` | **组合式API：数据响应**，侦听数据源。 |
 | `watchEffect` | **组合式API：数据响应**，自动追踪依赖的副作用。 |
 | `watchSyncEffect` | **组合式API：数据响应**，同步 flush 的 `watchEffect`。 |
@@ -680,8 +658,6 @@ createComponent({
 | `SERVERPREFETCH` | **选项式API：内建生命周期常量**，SSR 预取钩子名，对应组合式 API `onServerPrefetch`。 |
 | `REACTHOOKSEXEC` | **选项式API：内建生命周期常量**，RN 混编时执行 React hooks 使用，对应组合式 API `onReactHooksExec`。 |
 | `onBeforeMount` | **组合式API：生命周期钩子**，挂载前。 |
-| `onRenderTracked` | **组合式API：开发态调试**，组件渲染 Effect 收集依赖时调用，setup 同步注册。 |
-| `onRenderTriggered` | **组合式API：开发态调试**，响应式依赖同步通知组件 Effect 时调用，不代表 React 提交完成。 |
 | `onMounted` | **组合式API：生命周期钩子**，挂载后（页面等价 `onReady`）。 |
 | `onBeforeUpdate` | **组合式API：生命周期钩子**，更新前。 |
 | `onUpdated` | **组合式API：生命周期钩子**，更新后。 |
