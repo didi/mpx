@@ -2,18 +2,24 @@ import {
   offAppHide,
   offAppShow,
   offError,
+  offPageNotFound,
   offUnhandledRejection,
   onAppHide,
   onAppShow,
   onError,
+  onPageNotFound,
   onUnhandledRejection
 } from '../../src/platform/api/app/index.web'
+import install from '../../src/install'
+
+jest.mock('../../src/platform', () => require('../../src/platform/api/app/index.web'))
 
 describe('Web app events', () => {
   const eventApis = [
     ['show', onAppShow, offAppShow],
     ['hide', onAppHide, offAppHide],
     ['error', onError, offError],
+    ['pageNotFound', onPageNotFound, offPageNotFound],
     ['rejection', onUnhandledRejection, offUnhandledRejection]
   ]
 
@@ -42,5 +48,15 @@ describe('Web app events', () => {
     offEvent()
 
     expect(global.__mpxAppCbs[eventName]).toHaveLength(0)
+  })
+
+  test.each([false, true])('installs synchronous page-not-found APIs with usePromise=%s', (usePromise) => {
+    const mpx = {}
+    install(mpx, { usePromise })
+    const listener = jest.fn()
+    expect(mpx.onPageNotFound(listener)).toBeUndefined()
+    expect(global.__mpxAppCbs.pageNotFound).toEqual([listener])
+    expect(mpx.offPageNotFound(listener)).toBeUndefined()
+    expect(global.__mpxAppCbs.pageNotFound).toEqual([])
   })
 })

@@ -1,4 +1,4 @@
-import { setNavigationBarColor } from '../../src/platform/api/set-navigation-bar/index.ios'
+import { setNavigationBarTitle, setNavigationBarColor } from '../../src/platform/api/set-navigation-bar/index.ios'
 import { setFocusedNavigation } from '@mpxjs/utils'
 
 jest.mock('../../src/platform/api/next-tick', () => ({
@@ -12,7 +12,6 @@ describe('RN navigation bar APIs', () => {
     setFocusedNavigation(null)
     navigation = {
       isFocused: () => true,
-      setOptions: jest.fn(),
       setPageConfig: jest.fn()
     }
     global.mpxGlobal = global
@@ -24,6 +23,28 @@ describe('RN navigation bar APIs', () => {
   afterEach(() => {
     delete global.mpxGlobal
     delete global.__mpxPagesMap
+  })
+
+  test('updates the built-in titlebar without requiring setOptions', () => {
+    const success = jest.fn()
+    setNavigationBarTitle({ title: 'Updated title', success })
+
+    expect(navigation.setPageConfig).toHaveBeenCalledWith({ navigationBarTitleText: 'Updated title' })
+    expect(success).toHaveBeenCalledWith({ errMsg: 'setNavigationBarTitle:ok' })
+  })
+
+  test.each([
+    ['setNavigationBarTitle', setNavigationBarTitle, { title: 'Updated' }],
+    ['setNavigationBarColor', setNavigationBarColor, { frontColor: '#ffffff', backgroundColor: '#123456' }]
+  ])('%s reports failure when the built-in titlebar updater is unavailable', (name, api, options) => {
+    delete navigation.setPageConfig
+    navigation.setOptions = jest.fn()
+    const fail = jest.fn()
+    const complete = jest.fn()
+    expect(() => api(Object.assign({}, options, { fail, complete }))).not.toThrow()
+    expect(fail).toHaveBeenCalledWith({ errMsg: name + ':fail' })
+    expect(complete).toHaveBeenCalledWith({ errMsg: name + ':fail' })
+    expect(navigation.setOptions).not.toHaveBeenCalled()
   })
 
   test.each(['#fff', '#ff0000'])('setNavigationBarColor should accept the hex background color %s', async (backgroundColor) => {

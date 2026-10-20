@@ -168,12 +168,6 @@ global.__preloadRule = ${JSON.stringify(jsonConfig.preloadRule)}
 global.currentInject.pagesMap = ${shallowStringify(pagesMap)}
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
-    if (ctorType === 'page') {
-      const pageConfig = Object.assign({}, jsonConfig)
-      delete pageConfig.usingComponents
-      content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
-    }
-
     content += `
 var componentsMap = ${shallowStringify(componentsMap)}
 global.currentInject.componentsMap = componentsMap\n`

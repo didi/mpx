@@ -286,6 +286,14 @@ const sidebar: ExtendedSidebar = {
                       link: '/api-proxy/base/app/app-event/offError',
                     },
                     {
+                      text: 'onPageNotFound',
+                      link: '/api-proxy/base/app/app-event/onPageNotFound',
+                    },
+                    {
+                      text: 'offPageNotFound',
+                      link: '/api-proxy/base/app/app-event/offPageNotFound',
+                    },
+                    {
                       text: 'onUnhandledRejection',
                       link: '/api-proxy/base/app/app-event/onUnhandledRejection',
                     },

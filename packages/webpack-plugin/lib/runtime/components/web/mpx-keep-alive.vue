@@ -84,7 +84,6 @@
         vnode.data.keepAlive = true
       }
 
-      router.__mpxActiveVnode = vnode
       return vnode || (slot && slot[0])
     }
   }
