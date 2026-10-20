@@ -525,7 +525,7 @@ function updateProps (instance, props, validProps) {
 }
 
 function isExternalClassesChanged (props, oldProps) {
-  return global.__externalClasses?.some(externalClass => hasOwn(props, externalClass) && !Object.is(props[externalClass], oldProps[externalClass]))
+  return global.__externalClasses?.some(externalClass => (hasOwn(props, externalClass) || hasOwn(oldProps, externalClass)) && !Object.is(props[externalClass], oldProps[externalClass]))
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
