@@ -60,7 +60,7 @@ interface Methods {
   [key: string]: (...args: any[]) => any
 }
 
-interface WatchOpt {
+interface WatchOpt extends DebuggerOptions {
   immediate?: boolean
   immediateAsync?: boolean
   deep?: boolean

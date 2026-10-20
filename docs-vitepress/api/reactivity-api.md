@@ -431,6 +431,8 @@ unwatch()
 
 `watch`、`watchEffect`、`watchSyncEffect`、`watchPostEffect` 都支持 `onTrack` / `onTrigger`，仅在开发环境生效。调试事件同步发生，`flush` 仍控制原来的侦听回调执行时机。触发了 `onTrigger` 不代表侦听回调一定执行，例如 getter 重新运行后结果未变化，回调仍可能被跳过。
 
+页面和组件的[选项式 `watch`](optional-api.md#watch-debug-options) 的 `handler` 对象，以及 [`this.$watch`](instance-api.md#watch) 的选项参数，也支持这两个回调。支持小程序和 Mpx2RN，Web 使用 Vue 2.7 的原生实现。
+
 `computed` 同样支持这两个回调，通过第二参数 `debugOptions` 传入，详见 [computed 调试选项](#computed-debug-options)。
 
 ```js

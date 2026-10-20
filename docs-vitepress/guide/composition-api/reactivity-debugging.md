@@ -4,6 +4,8 @@
 
 本页示例同时适用于小程序和 Mpx2RN。Web 输出使用 Vue 2.7 的原生调试接口。所有调试 Hook 和 `onTrack/onTrigger` 仅在开发环境生效，生产环境保持原响应式与调度行为。
 
+调试选项也支持选项式用法：页面和组件的 [`watch`](../../api/optional-api.md#watch-debug-options) 可在 `handler` 对象中配置 `onTrack/onTrigger`，[`this.$watch`](../../api/instance-api.md#watch) 可通过第三参数或第二参数的 `handler` 对象传入。选项式 `computed` 没有独立的调试配置入口，需要使用组合式 `computed` 的第二参数。
+
 ## 观察读取与通知 {#track-and-trigger}
 
 - `onRenderTracked` 回答“本次组件渲染读取了哪个响应式依赖”。

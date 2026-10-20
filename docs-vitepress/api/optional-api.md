@@ -1,5 +1,34 @@
 # 选项式 API {#optional-api}
 
+### watch 调试选项 {#watch-debug-options}
+
+页面和组件的选项式 `watch` 支持在 `handler` 对象中配置 `onTrack` / `onTrigger`。`onTrack` 在侦听器收集依赖时调用，`onTrigger` 在依赖变化通知侦听器时同步调用。
+
+```js
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data: { count: 0 },
+  watch: {
+    count: {
+      handler(value, oldValue) {
+        console.log(oldValue, value)
+      },
+      onTrack(event) {
+        console.log('watch tracked', event.type, event.key)
+      },
+      onTrigger(event) {
+        debugger
+      }
+    }
+  }
+})
+```
+
+支持小程序和 Mpx2RN，Web 使用 Vue 2.7 的原生实现；仅在开发环境生效，生产环境忽略调试回调。`onTrigger` 不代表 `handler` 一定执行，也不改变原有侦听回调的调度时机。回调中只观察事件或设置断点，避免修改响应式状态；Web 的 `onTrack` 中额外读取响应式状态还可能增加依赖或递归触发自身。
+
+[`this.$watch`](instance-api.md#watch) 同样支持这两个选项。选项式 `computed` 不支持在属性配置中传入调试回调，独立排查计算属性需使用组合式 [`computed(getter, debugOptions)`](reactivity-api.md#computed-debug-options)。事件结构及更多示例见[响应式调试指南](../guide/composition-api/reactivity-debugging.md)。
+
 ### options.shallowReactivePattern
 - **类型：** `RegExp`
 - **详细：**
