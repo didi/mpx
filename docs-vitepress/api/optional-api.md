@@ -1,5 +1,37 @@
 # 选项式 API {#optional-api}
 
+### renderTracked / renderTriggered {#render-debug-hooks}
+
+页面和组件可以直接通过选项声明渲染调试钩子，无需编写 `setup`。支持小程序和 Mpx2RN，Web 由 Vue 2.7 的原生渲染调试钩子驱动；仅在开发环境生效。
+
+| 选项 | 类型 | 调用时机 |
+| --- | --- | --- |
+| `renderTracked` | `(event: DebuggerEvent) => void` | 渲染 Effect 收集依赖时，包含首次渲染 |
+| `renderTriggered` | `(event: DebuggerEvent) => void` | 响应式依赖通知渲染 Effect 时，同步调用，早于后续更新调度 |
+
+```js
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data: { count: 0 },
+  renderTracked(event) {
+    console.log('render tracked', event.type, event.key)
+  },
+  renderTriggered(event) {
+    if (event.key === 'count') debugger
+  },
+  methods: {
+    increase() {
+      this.count++
+    }
+  }
+})
+```
+
+普通函数形式的钩子中，`this` 指向当前页面或组件实例。支持在 `mixins` 中声明，先执行 Mixin 钩子，再执行当前组件钩子；也可与组合式 `onRenderTracked` / `onRenderTriggered` 同时使用，各平台均先执行选项式钩子，再执行组合式钩子。单个渲染调试钩子抛错会由框架处理，不会中断后续调试钩子。
+
+事件内容与[组合式渲染调试 Hook](composition-api.md#render-debug-hooks) 相同。多次通知可能合并为一次渲染，事件不表示小程序 setData 回调或 RN 的 React 提交已完成；未创建 Mpx 渲染 Effect 的原生渲染路径不承诺这些事件。销毁后停止触发，生产环境忽略这两个选项。回调中只观察事件或设置断点，避免修改响应式状态。事件字段见 [DebuggerEvent](reactivity-api.md#debugger-event)。
+
 ### watch 调试选项 {#watch-debug-options}
 
 页面和组件的选项式 `watch` 支持在 `handler` 对象中配置 `onTrack` / `onTrigger`。`onTrack` 在侦听器收集依赖时调用，`onTrigger` 在依赖变化通知侦听器时同步调用。

@@ -1,6 +1,7 @@
 import { getConvertRule } from '../convertor/convertor'
 import builtInKeysMap from '../platform/patch/builtInKeysMap'
 import { implemented } from './implement'
+import { RENDERTRACKED, RENDERTRIGGERED } from './innerLifecycle'
 import {
   isArray,
   isFunction,
@@ -8,6 +9,7 @@ import {
   aliasReplace,
   makeMap,
   findItem,
+  callWithErrorHandling,
   error,
   warn
 } from '@mpxjs/utils'
@@ -350,11 +352,15 @@ function composeHooks (target, includes) {
     if (!includes || includes[key]) {
       const hooks = target[key]
       if (Array.isArray(hooks)) {
+        const isRenderDebugHook = process.env.NODE_ENV !== 'production' &&
+          (key === RENDERTRACKED || key === RENDERTRIGGERED || key === 'renderTracked' || key === 'renderTriggered')
         target[key] = function (...args) {
           let result
           for (let i = 0; i < hooks.length; i++) {
             if (typeof hooks[i] === 'function') {
-              const data = hooks[i].apply(this, args)
+              const data = isRenderDebugHook
+                ? callWithErrorHandling(hooks[i].bind(this), this?.__mpxProxy, `${key} hook`, args)
+                : hooks[i].apply(this, args)
               data !== undefined && (result = data)
             }
           }

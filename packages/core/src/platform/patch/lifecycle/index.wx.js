@@ -7,7 +7,9 @@ import {
   ONLOAD,
   ONRESIZE,
   SERVERPREFETCH,
-  REACTHOOKSEXEC
+  REACTHOOKSEXEC,
+  RENDERTRACKED,
+  RENDERTRIGGERED
 } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
@@ -37,7 +39,9 @@ const PAGE_HOOKS = [
   'onShareTimeline',
   'onResize',
   'onTabItemTap',
-  'onSaveExitState'
+  'onSaveExitState',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 const COMPONENT_HOOKS = [
@@ -50,7 +54,9 @@ const COMPONENT_HOOKS = [
   'pageShow',
   'pageHide',
   'serverPrefetch',
-  'reactHooksExec'
+  'reactHooksExec',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 export const lifecycleProxyMap = {
@@ -63,7 +69,9 @@ export const lifecycleProxyMap = {
   [ONLOAD]: ['onLoad'],
   [ONRESIZE]: ['onResize'],
   [SERVERPREFETCH]: ['serverPrefetch'],
-  [REACTHOOKSEXEC]: ['reactHooksExec']
+  [REACTHOOKSEXEC]: ['reactHooksExec'],
+  [RENDERTRACKED]: ['renderTracked'],
+  [RENDERTRIGGERED]: ['renderTriggered']
 }
 
 export const LIFECYCLE = {

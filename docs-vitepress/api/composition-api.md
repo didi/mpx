@@ -282,6 +282,8 @@ SSR渲染定制钩子，在服务端渲染期间被调用，可以实现在服�
 
 `onRenderTracked` 和 `onRenderTriggered` 仅在开发环境生效，支持小程序与 Mpx2RN，Web 输出使用 Vue 2.7 的原生接口。与其他组合式 Hook 一样，须在 `setup()` 或 `<script setup>` 中同步注册。
 
+使用选项式 API 时，可以直接声明 [`renderTracked` / `renderTriggered`](optional-api.md#render-debug-hooks)，也可以与这里的组合式 Hook 同时使用。
+
 ### onRenderTracked {#on-render-tracked}
 
 在当前组件的 Mpx 渲染 Effect 收集依赖时调用。

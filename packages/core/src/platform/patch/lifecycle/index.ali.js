@@ -5,7 +5,9 @@ import {
   ONHIDE,
   ONSHOW,
   ONLOAD,
-  UPDATED
+  UPDATED,
+  RENDERTRACKED,
+  RENDERTRIGGERED
 } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
@@ -30,7 +32,9 @@ const PAGE_HOOKS = [
   'onPullDownRefresh',
   'onTabItemTap',
   'onPageScroll',
-  'onReachBottom'
+  'onReachBottom',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 const COMPONENT_HOOKS = [
@@ -41,7 +45,9 @@ const COMPONENT_HOOKS = [
   'didUnmount',
   'onError',
   'pageShow',
-  'pageHide'
+  'pageHide',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 export const lifecycleProxyMap = {
@@ -51,7 +57,9 @@ export const lifecycleProxyMap = {
   [UNMOUNTED]: ['didUnmount', 'onUnload'],
   [ONSHOW]: ['pageShow', 'onShow'],
   [ONHIDE]: ['pageHide', 'onHide'],
-  [ONLOAD]: ['onLoad']
+  [ONLOAD]: ['onLoad'],
+  [RENDERTRACKED]: ['renderTracked'],
+  [RENDERTRIGGERED]: ['renderTriggered']
 }
 
 export const LIFECYCLE = {

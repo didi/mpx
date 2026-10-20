@@ -6,6 +6,8 @@
 
 调试选项也支持选项式用法：页面和组件的 [`watch`](../../api/optional-api.md#watch-debug-options) 可在 `handler` 对象中配置 `onTrack/onTrigger`，[`this.$watch`](../../api/instance-api.md#watch) 可通过第三参数或第二参数的 `handler` 对象传入。选项式 `computed` 没有独立的调试配置入口，需要使用组合式 `computed` 的第二参数。
 
+组件级渲染调试同样支持选项式 [`renderTracked` / `renderTriggered`](../../api/optional-api.md#render-debug-hooks)，可直接声明在页面或组件选项中，无需 `setup`；支持 Mixin 合并，钩子中的 `this` 指向当前实例。
+
 ## 观察读取与通知 {#track-and-trigger}
 
 - `onRenderTracked` 回答“本次组件渲染读取了哪个响应式依赖”。
@@ -16,7 +18,7 @@ trigger 回调同步执行，位于原 update/scheduler 之前。这时业务赋
 
 ## 在业务组件中设置断点 {#component-example}
 
-将下面的组件放进目标页面，并使用开发构建运行。组件 Hook 必须在 setup 同步注册；使用 `<script setup>` 时也须在顶层同步调用，并按平台要求暴露模板使用的状态。
+将下面的组件放进目标页面，并使用开发构建运行。组合式组件 Hook 必须在 setup 同步注册；使用 `<script setup>` 时也须在顶层同步调用，并按平台要求暴露模板使用的状态。
 
 ```html
 <template>

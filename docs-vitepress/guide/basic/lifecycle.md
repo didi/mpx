@@ -142,6 +142,12 @@ createComponent({
 })
 ```
 
+### 渲染调试钩子 {#render-debug-hooks}
+
+页面和组件均可声明 `renderTracked(event)` / `renderTriggered(event)`，分别观察渲染依赖的收集与变化通知。仅在开发环境生效，支持小程序、Web 和 Mpx2RN；普通函数中的 `this` 指向当前实例，支持 Mixin 合并和与组合式 `onRenderTracked` / `onRenderTriggered` 同时使用。
+
+用法和事件范围见[选项式渲染调试钩子](../../api/optional-api.md#render-debug-hooks)。
+
 ### 页面生命周期 {#page-lifecycle}
 
 - `onLoad` - 页面加载时触发，只会调用一次

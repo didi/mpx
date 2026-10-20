@@ -150,6 +150,10 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
 
   pageHide?: () => void
 
+  renderTracked?: DebuggerHook
+
+  renderTriggered?: DebuggerHook
+
   initData?: Record<string, any>
 
   provide?: Record<string, any> | (() => Record<string, any>)

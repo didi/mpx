@@ -184,6 +184,10 @@ export default class MpxProxy {
       // 在 props/data 初始化之前初始化 inject
       this.initInject()
       this.initProps()
+      if (process.env.NODE_ENV !== 'production') {
+        if (isFunction(this.options[RENDERTRACKED])) onRenderTracked(this.options[RENDERTRACKED].bind(this.target), this)
+        if (isFunction(this.options[RENDERTRIGGERED])) onRenderTriggered(this.options[RENDERTRIGGERED].bind(this.target), this)
+      }
       this.initSetup()
       this.initData()
       this.initComputed()
