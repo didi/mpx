@@ -629,11 +629,11 @@ createComponent({
 | `set` | **组合式API：数据响应**，响应式设键。 |
 | `del` | **组合式API：数据响应**，响应式删键；`Mpx` 静态为 `delete`。 |
 | `markRaw` | **组合式API：数据响应**，标记非响应式。 |
-| `computed` | **组合式API：数据响应**，计算属性。 |
-| `watch` | **组合式API：数据响应**，侦听数据源。 |
-| `watchEffect` | **组合式API：数据响应**，自动追踪依赖的副作用。 |
-| `watchSyncEffect` | **组合式API：数据响应**，同步 flush 的 `watchEffect`。 |
-| `watchPostEffect` | **组合式API：数据响应**，视图更新后的 `watchEffect`。 |
+| `computed` | **组合式API：数据响应**，计算属性；第二参数 `debugOptions` 支持 `onTrack` / `onTrigger`。 |
+| `watch` | **组合式API：数据响应**，侦听数据源；`options` 支持 `onTrack` / `onTrigger`。 |
+| `watchEffect` | **组合式API：数据响应**，自动追踪依赖的副作用；调试选项同 `watch`。 |
+| `watchSyncEffect` | **组合式API：数据响应**，同步 flush 的 `watchEffect`；调试选项同 `watch`。 |
+| `watchPostEffect` | **组合式API：数据响应**，后置 flush 的 `watchEffect`；调试选项同 `watch`。 |
 | `effectScope` | **组合式API：数据响应**，创建 effect 作用域。 |
 | `getCurrentScope` | **组合式API：数据响应**，获取当前作用域。 |
 | `onScopeDispose` | **组合式API：数据响应**，作用域销毁回调。 |
@@ -657,6 +657,8 @@ createComponent({
 | `ONRESIZE` | **选项式API：内建生命周期常量**，页面 onResize，对应组合式 API `onResize`。 |
 | `SERVERPREFETCH` | **选项式API：内建生命周期常量**，SSR 预取钩子名，对应组合式 API `onServerPrefetch`。 |
 | `REACTHOOKSEXEC` | **选项式API：内建生命周期常量**，RN 混编时执行 React hooks 使用，对应组合式 API `onReactHooksExec`。 |
+| `onRenderTracked` | **组合式API：渲染调试钩子**，渲染 Effect 收集依赖时调用；须在 `setup` 中同步注册。 |
+| `onRenderTriggered` | **组合式API：渲染调试钩子**，依赖通知渲染 Effect 时同步调用；须在 `setup` 中同步注册。 |
 | `onBeforeMount` | **组合式API：生命周期钩子**，挂载前。 |
 | `onMounted` | **组合式API：生命周期钩子**，挂载后（页面等价 `onReady`）。 |
 | `onBeforeUpdate` | **组合式API：生命周期钩子**，更新前。 |
@@ -683,6 +685,8 @@ createComponent({
 #### 注意事项
 
 - **`Mpx.use`** 安装的插件会合并到 **`Mpx` 静态对象**与 **`Mpx.prototype`**，若与业务自定义全局名冲突，可为插件传入 **`prefix` / `postfix`** 选项。
+- **调试事件**：`onTrack(event)` 观察依赖收集，`onTrigger(event)` 在依赖通知时同步执行，早于原 update/scheduler；`flush` 仍控制侦听回调时机。事件含 `effect` / `target` / `type` / `key`，赋值事件可含 `oldValue` / `newValue`。
+- **开发环境限制**：`onRenderTracked` / `onRenderTriggered` 及 watch/computed 调试选项仅在 `process.env.NODE_ENV !== 'production'` 时生效，生产环境忽略。回调中仅观察或设置断点，避免修改响应式状态。
 
 ---
 
