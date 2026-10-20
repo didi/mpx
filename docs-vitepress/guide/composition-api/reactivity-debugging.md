@@ -73,7 +73,7 @@ createComponent({
 
 Mpx 普通 ref 的调试 target 是业务持有的 ref，所以可以直接按身份筛选。`toRef(state, 'count')` 转发到源属性时，target/key 则通常是 state/count；不要把所有事件都按 ref 身份过滤。
 
-> 调试回调应只筛选、查看和暂停。回调中的普通响应式读取不会成为当前 Effect 的额外依赖，但主动写状态、运行其他副作用或调用有副作用的 getter 仍可能改变业务行为。
+> 调试回调应只筛选、查看和暂停。小程序和 Mpx2RN 会隔离调试回调的依赖收集，普通响应式读取不会成为当前 Effect 的额外依赖。Web 的 watch/computed 使用 Vue 2.7 原生实现，不提供同样的读取隔离；尤其不要在 onTrack 中读取 ref.value 或其他响应式属性，否则可能递归触发 onTrack。动态过滤条件和断点开关应使用普通变量或普通对象，像上例一样检查 event 字段和对象身份即可。各平台均应避免在回调中写状态、运行副作用或调用有副作用的 getter。
 
 ## 使用 sourcemap 找到业务源码 {#source-map}
 
