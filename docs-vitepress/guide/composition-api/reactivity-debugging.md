@@ -191,11 +191,3 @@ Mpx2RN 的组件还可以由父组件、React Hooks 或其他 React 输入驱动
 | RN 有 track 没有 trigger | 检查父级、React Hooks 等 React 输入 |
 
 生产环境忽略框架调试接口；业务主动写入的普通日志或其他位置的 debugger 不会由框架自动删除。建议像完整示例一样用开发态条件包裹临时调试代码。
-
-## 参考阅读 {#references}
-
-- [Vue 官方响应式调试](https://cn.vuejs.org/guide/extras/reactivity-in-depth#reactivity-debugging)：组件、computed、watch 的调试接口与断点用法。
-- [Vue 2.7 发布说明](https://blog.vuejs.org/posts/vue-2-7-naruto)：getter/setter 响应式与 Vue 3 Proxy 的差异、变化检测限制。
-- [Anthony Fu 的 Watch with Reactivity](https://antfu.me/posts/watch-with-reactivity)：通过 effect、scheduler 和 computed 缓存理解 watch 的组成。这是一篇较早的概念文章，旧版 API 示例不直接作为当前 Mpx 用法。
-
-事件结构见 [DebuggerEvent](../../api/reactivity-api.md#debugger-event)，组件接口见 [onRenderTracked / onRenderTriggered](../../api/composition-api.md#render-debug-hooks)。
