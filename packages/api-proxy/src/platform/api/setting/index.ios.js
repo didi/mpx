@@ -7,7 +7,7 @@ import { getWindowInfo } from '../system/rnSystem'
  */
 const getMenuButtonBoundingClientRect = function () {
   const windowInfo = getWindowInfo()
-  const { screenWidth, statusBarHeight } = windowInfo
+  const { screenWidth, windowWidth, statusBarHeight } = windowInfo
 
   // 微信小程序胶囊按钮的典型尺寸
   const CAPSULE_WIDTH = 87 // 胶囊宽度
@@ -17,7 +17,7 @@ const getMenuButtonBoundingClientRect = function () {
 
   // 计算胶囊按钮的位置
   const top = statusBarHeight + MARGIN_TOP
-  const right = screenWidth - MARGIN_RIGHT
+  const right = (__mpx_mode__ === 'ios' ? windowWidth : screenWidth) - MARGIN_RIGHT
   const left = right - CAPSULE_WIDTH
   const bottom = top + CAPSULE_HEIGHT
 

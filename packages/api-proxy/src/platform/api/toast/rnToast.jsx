@@ -5,7 +5,8 @@ import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-
 
 let isLoadingShow
 const dimensionsScreen = Dimensions.get('screen')
-const screenHeight = dimensionsScreen.height
+const dimensionsWindow = Dimensions.get('window')
+const screenHeight = __mpx_mode__ === 'ios' ? dimensionsWindow.height : dimensionsScreen.height
 const contentTop = parseInt(screenHeight * 0.4)
 const styles = StyleSheet.create({
   toastContent: {
