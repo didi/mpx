@@ -18,12 +18,15 @@ import {
 import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
+import { ref } from '../../observer/ref'
+import { getDimensionsBase, getDimensionsInfo } from '../dimensionsHelper'
 
 function getSystemInfo () {
-  const windowDimensions = global.__mpxAppDimensionsInfo.window
-  const screenDimensions = global.__mpxAppDimensionsInfo.screen
+  const baseDimensions = getDimensionsInfo()
+  const windowDimensions = getDimensionsInfo('window')
+  const screenDimensions = getDimensionsInfo('screen')
   return {
-    deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
+    deviceOrientation: baseDimensions.width > baseDimensions.height ? 'landscape' : 'portrait',
     size: {
       screenWidth: screenDimensions.width,
       screenHeight: screenDimensions.height,
@@ -74,7 +77,7 @@ function getRootProps (props, validProps) {
   const rootProps = {}
   for (const key in props) {
     const altKey = dash2hump(key)
-    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && key !== 'children') {
+    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && !global.__externalClasses?.includes(key) && key !== 'children') {
       rootProps[key] = props[key]
     }
   }
@@ -310,6 +313,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  proxy.externalClassesVersion = ref(0)
   proxy.created()
 
   if (type === 'page') {
@@ -384,8 +388,11 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   const oldSize = sizeRef.current.size
   const systemInfo = getSystemInfo()
   const newSize = systemInfo.size
+  const dimensionsBase = getDimensionsBase()
+  const widthKey = `${dimensionsBase}Width`
+  const heightKey = `${dimensionsBase}Height`
 
-  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
+  if (oldSize && oldSize[widthKey] === newSize[widthKey] && oldSize[heightKey] === newSize[heightKey]) {
     return
   }
 
@@ -402,7 +409,7 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   }
 }
 
-function usePageEffect (mpxProxy, pageId) {
+function usePageEffect (mpxProxy, pageId, type) {
   const sizeRef = useRef(getSystemInfo())
 
   useEffect(() => {
@@ -410,19 +417,20 @@ function usePageEffect (mpxProxy, pageId) {
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
-    if (hasShowHook || hasHideHook || hasResizeHook) {
+    // Page 即使没有注册页面生命周期，也需要监听 show 来追平后台期间错过的尺寸版本。
+    // Component 仍仅在声明了对应生命周期时监听，避免无意义的 watcher。
+    if (type === 'page' || hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
+            // 后台页面重新显示时先追平尺寸版本，驱动依赖 rpx/vw/vh 和媒体查询的组件刷新。
+            if (type === 'page' && newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
+            }
+
             triggerPageStatusHook(mpxProxy, newVal)
             // 仅在尺寸确实变化时才触发resize事件
             triggerResizeEvent(mpxProxy, sizeRef)
-
-            // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
-            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
-              // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
-              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
-            }
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy, sizeRef)
           }
@@ -431,7 +439,9 @@ function usePageEffect (mpxProxy, pageId) {
     }
     return () => {
       unWatch && unWatch()
-      del(global.__mpxPageSizeCountMap, pageId)
+      if (type === 'page') {
+        del(global.__mpxPageSizeCountMap, pageId)
+      }
     }
   }, [])
 }
@@ -507,11 +517,13 @@ const checkRelation = (options) => {
 function getLayoutData (headerHeight) {
   const screenDimensions = ReactNative.Dimensions.get('screen')
   const windowDimensions = ReactNative.Dimensions.get('window')
-  // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
-  // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
+  // iOS 使用当前窗口尺寸，适配窗口与屏幕尺寸不一致的场景；Android 保留 screen 兼容逻辑。
+  const layoutDimensions = ReactNative.Platform.OS === 'ios' ? windowDimensions : screenDimensions
   const isLandscape = screenDimensions.height < screenDimensions.width
   let bottomVirtualHeight = 0
   if (ReactNative.Platform.OS === 'android') {
+    // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
+    // 在正常状态   screen.height = window.height + bottomVirtualHeight + statusBarHeight
     if (isLandscape) {
       bottomVirtualHeight = screenDimensions.height - windowDimensions.height
     } else {
@@ -526,7 +538,7 @@ function getLayoutData (headerHeight) {
     top: headerHeight,
     // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
     width: windowDimensions.width,
-    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
+    height: layoutDimensions.height - headerHeight - bottomVirtualHeight,
     // ios为0 android为实际statusbar高度
     statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
     bottomVirtualHeight: bottomVirtualHeight,
@@ -632,6 +644,10 @@ function updateProps (instance, props, validProps) {
   })
 }
 
+function isExternalClassesChanged (props, oldProps) {
+  return global.__externalClasses?.some(externalClass => (hasOwn(props, externalClass) || hasOwn(oldProps, externalClass)) && !Object.is(props[externalClass], oldProps[externalClass]))
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const componentsMap = currentInject.componentsMap
@@ -645,7 +661,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
-    const propsRef = useRef(null)
+    const propsRef = useRef({})
     const intersectionCtx = useContext(IntersectionObserverContext)
     const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
@@ -653,6 +669,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
     }
+    const oldProps = propsRef.current
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
@@ -683,14 +700,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
 
     if (!isFirst) {
+      const externalClassesChanged = isExternalClassesChanged(props, oldProps)
+      const update = () => {
+        updateProps(instance, props, validProps)
+        if (externalClassesChanged) {
+          proxy.externalClassesVersion.value++
+        }
+      }
       // 处理props更新
       if (Mpx.config.forceFlushSync) {
         // 避免开启forceFlushSync时react报错：Cannot update a component while rendering a different component
-        Promise.resolve().then(() => {
-          updateProps(instance, props, validProps)
-        })
+        Promise.resolve().then(update)
       } else {
-        updateProps(instance, props, validProps)
+        update()
       }
     }
 
@@ -701,7 +723,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     })
 
-    usePageEffect(proxy, pageId)
+    usePageEffect(proxy, pageId, type)
     useEffect(() => {
       proxy.mounted()
       return () => {

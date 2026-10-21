@@ -123,7 +123,7 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
     root.walkRules(rule => {
       const classMapValue = {}
       rule.walkDecls((decl) => {
-        let { prop, value } = decl
+        let { prop, value, important } = decl
         if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
         let newData = rulesRunner && rulesRunner({ prop, value, selector: rule.selector, decl, rule, sourceMap })
         if (!newData) return
@@ -151,7 +151,13 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
           } else {
             value = formatValue(value)
           }
-          classMapValue[prop] = value
+          if (important) {
+            classMapValue._inlineLayer = classMapValue._inlineLayer || {}
+            classMapValue._inlineLayer.important = classMapValue._inlineLayer.important || {}
+            classMapValue._inlineLayer.important[prop] = value
+          } else {
+            classMapValue[prop] = value
+          }
         })
       })
 
@@ -178,11 +184,9 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
       if (classMapKeys.length) {
         classMapKeys.forEach((key) => {
           if (Object.keys(classMapValue).length) {
-            // set css defalut value
-            const val = classMap[key] || {}
-            classMap[key] = Object.assign(val, classMapValue)
+            classMap[key] = classMap[key] || {}
 
-            // set css media
+            // Media declarations only take effect when their query matches.
             if (isMedia) {
               const _media = classMap[key]?._media || []
               _media.push({
@@ -190,6 +194,8 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
                 value: classMapValue
               })
               classMap[key]._media = _media
+            } else {
+              Object.assign(classMap[key], classMapValue)
             }
           }
         })

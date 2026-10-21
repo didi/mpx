@@ -356,7 +356,7 @@ export interface RnConfig {
   }) => void
 
   /**
-   * 自定义屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
+   * 自定义窗口和屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
    *
    * @param dimensions 包含 window 和 screen 的尺寸信息
    * @returns 返回修改后的尺寸对象，或 void 表示不修改
@@ -364,6 +364,20 @@ export interface RnConfig {
   customDimensions?: <T extends { window: ScaledSize; screen: ScaledSize }>(
     dimensions: T
   ) => T | void
+
+  /**
+   * rpx、vw、vh、媒体查询与 onResize 使用的尺寸基准。
+   * 首次尺寸计算后该配置固定，运行期间修改不会生效。
+   * @default 'window'
+   */
+  dimensionsBase?: 'window' | 'screen'
+
+  /**
+   * 业务自定义 layout，每次调用 getWindowInfo 时同步获取。
+   * 返回的宽高用于窗口尺寸兜底与安全区域计算，页面 layout 的宽高仍优先。
+   * 未返回的尺寸或值为 0 的尺寸使用平台默认值。
+   */
+  customLayout?: () => { width?: number; height?: number } | void
 
   /**
    * 加载并执行异步分包的方法。
