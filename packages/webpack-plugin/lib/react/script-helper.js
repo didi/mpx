@@ -153,6 +153,9 @@ function buildGlobalParams ({
   hasApp
 }) {
   let content = ''
+  if (ctorType === 'app' || !hasApp) {
+    content += `global.__externalClasses = ${JSON.stringify(loaderContext.getMpx().externalClasses)}\n`
+  }
   if (ctorType === 'app') {
     content += `
 global.getApp = function () {}
