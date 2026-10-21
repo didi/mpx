@@ -104,6 +104,40 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(context.__trackPageSizeCount).toHaveBeenCalledTimes(1)
   })
 
+  it.each(['custom-class', 'theme-class'])('uses standalone initialization for %s styles', className => {
+    const { buildGlobalParams } = require('../../../webpack-plugin/lib/react/script-helper')
+    delete global.__externalClasses
+    const runtime = { currentInject: {} }
+    const content = buildGlobalParams({
+      moduleId: 'standalone',
+      srcMode: 'wx',
+      loaderContext: {
+        getMpx: () => ({ externalClasses: [className] }),
+        resourcePath: '/standalone.mpx'
+      },
+      isProduction: true,
+      ctorType: 'component',
+      jsonConfig: {},
+      componentsMap: {},
+      hasApp: false
+    })
+    require('vm').runInNewContext(content, { global: runtime })
+    global.__externalClasses = runtime.__externalClasses
+    const methods = styleHelperMixin().methods
+    const context = {
+      __props: { [className]: { color: 'red' } },
+      __mpxProxy: { externalClassesVersion: { value: 0 } },
+      __trackExternalClassesVersion: jest.fn(methods.__trackExternalClassesVersion)
+    }
+
+    expect(methods.__getStyle.call(context, className)).toEqual({ color: 'red' })
+    context.__props = { [className]: { color: 'blue' } }
+    expect(methods.__getStyle.call(context, className)).toEqual({ color: 'blue' })
+    context.__props = {}
+    expect(methods.__getStyle.call(context, className)).toEqual({})
+    expect(context.__trackExternalClassesVersion).toHaveBeenCalledTimes(3)
+  })
+
   it('reads external class styles from raw props and tracks the internal version', () => {
     let versionReads = 0
     const externalClassesVersion = {}

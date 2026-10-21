@@ -153,8 +153,10 @@ function buildGlobalParams ({
   hasApp
 }) {
   let content = ''
+  if (ctorType === 'app' || !hasApp) {
+    content += `global.__externalClasses = ${JSON.stringify(loaderContext.getMpx().externalClasses)}\n`
+  }
   if (ctorType === 'app') {
-    const externalClasses = loaderContext.getMpx().externalClasses || []
     content += `
 global.getApp = function () {}
 global.getCurrentPages = function () { return [] }
@@ -166,7 +168,6 @@ global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
 global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__appComponentsMap = ${shallowStringify(componentsMap)}
 global.__preloadRule = ${JSON.stringify(jsonConfig.preloadRule)}
-global.__externalClasses = ${JSON.stringify(externalClasses || [])}
 global.currentInject.pagesMap = ${shallowStringify(pagesMap)}
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
