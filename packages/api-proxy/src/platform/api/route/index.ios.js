@@ -3,10 +3,16 @@ import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
 import { nextTick } from '../next-tick'
 import { EventChannel } from '../event-channel'
 
-function getBasePath (navigation) {
+function getBasePath (navigation, url) {
   if (navigation) {
-    const state = navigation.getState()
-    return '/' + state.routes[state.index].name
+    let state
+    try {
+      state = navigation.getState()
+      return '/' + state.routes[state.index].name
+    } catch (error) {
+      error.message = `[getBasePath] URL: ${url}\nstate.index: ${state?.index}\n${error.message}`
+      throw error
+    }
   }
   return '/'
 }
@@ -44,7 +50,7 @@ function navigateTo (options = {}) {
       eventChannel._addListeners(options.events)
     }
     const { path, queryObj } = parseUrl(options.url, true)
-    const basePath = getBasePath(navigation)
+    const basePath = getBasePath(navigation, options.url)
     const finalPath = resolvePath(path, basePath).slice(1)
 
     global.__mpxEventChannel = {
@@ -71,7 +77,7 @@ function redirectTo (options = {}) {
   }
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url, true)
-    const basePath = getBasePath(navigation)
+    const basePath = getBasePath(navigation, options.url)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.replace(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
@@ -123,7 +129,7 @@ function reLaunch (options = {}) {
   }
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url, true)
-    const basePath = getBasePath(navigation)
+    const basePath = getBasePath(navigation, options.url)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.reset({
       index: 0,
