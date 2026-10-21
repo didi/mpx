@@ -75,6 +75,61 @@ it.each([['page', false], ['component', false], ['component', true]])('drives op
   errors.mockRestore()
 })
 
+it.each([false, true])('restores the enclosing setup context after Web debug hooks (throwing: %s)', (throwInHook) => {
+  const errors = jest.spyOn(console, 'error').mockImplementation(() => {})
+  const Vue = require('vue')
+  const mergeOptions = require('../../src/core/mergeOptions').default
+  const { getDefaultOptions } = require('../../src/platform/patch/getDefaultOptions.web')
+  const { getCurrentInstance } = require('../../src/core/proxy')
+  const { onMounted } = require('../../src')
+  const debugInstances = []
+  const debugHook = jest.fn(() => {
+    debugInstances.push(getCurrentInstance())
+    if (throwInHook) throw new Error('render debug hook error')
+  })
+  const source = new Vue(Object.assign(getDefaultOptions({
+    type: 'component',
+    rawOptions: mergeOptions({
+      mpxConvertMode: 'wxToWeb',
+      data: { count: 0 },
+      renderTracked: debugHook,
+      renderTriggered: debugHook
+    }, 'component', true)
+  }), { render (h) { return h('div', String(this.count)) } })).$mount()
+  const mounted = jest.fn()
+  let afterTracked
+  let afterTriggered
+  const owner = new Vue(Object.assign(getDefaultOptions({
+    type: 'component',
+    rawOptions: mergeOptions({
+      mpxConvertMode: 'wxToWeb',
+      setup () {
+        source._watcher.get()
+        afterTracked = getCurrentInstance()
+        source.count++
+        afterTriggered = getCurrentInstance()
+        onMounted(mounted)
+        return {}
+      }
+    }, 'component', true)
+  }), { render (h) { return h('div') } })).$mount()
+
+  try {
+    expect(afterTracked).toBe(owner.__mpxProxy)
+    expect(afterTriggered).toBe(owner.__mpxProxy)
+    expect(mounted).toHaveBeenCalledTimes(1)
+    expect(debugHook).toHaveBeenCalled()
+    expect(debugInstances.every(instance => instance === source.__mpxProxy)).toBe(true)
+    expect(getCurrentInstance()).toBeNull()
+    if (throwInHook) expect(errors).toHaveBeenCalled()
+    else expect(errors).not.toHaveBeenCalled()
+  } finally {
+    owner.$destroy()
+    source.$destroy()
+    errors.mockRestore()
+  }
+})
+
 it('does not add the Web debug bridge in production', () => {
   const { getDefaultOptions } = require('../../src/platform/patch/getDefaultOptions.web')
   const mergeOptions = require('../../src/core/mergeOptions').default

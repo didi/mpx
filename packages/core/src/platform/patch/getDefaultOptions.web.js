@@ -2,7 +2,7 @@ import builtInKeysMap from './builtInKeysMap'
 import mergeOptions from '../../core/mergeOptions'
 import { diffAndCloneA, hasOwn, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import { getCurrentInstance as getCurrentVueInstance } from '../export/index'
-import MpxProxy, { setCurrentInstance, unsetCurrentInstance } from '../../core/proxy'
+import MpxProxy, { getCurrentInstance, setCurrentInstance, unsetCurrentInstance } from '../../core/proxy'
 import {
   BEFORECREATE,
   BEFOREUPDATE,
@@ -46,6 +46,18 @@ function initProxy (context, rawOptions) {
   } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
     context.__mpxProxy.callHook(BEFORECREATE)
+  }
+}
+
+function createRenderDebugHook (hookName) {
+  return function (event) {
+    if (!this.__mpxProxy) return
+    const previousInstance = getCurrentInstance()
+    try {
+      this.__mpxProxy.callHook(hookName, [event])
+    } finally {
+      setCurrentInstance(previousInstance)
+    }
   }
 }
 
@@ -120,12 +132,8 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
     }
   }]
   if (process.env.NODE_ENV !== 'production') {
-    rootMixins[0].renderTracked = function (event) {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(RENDERTRACKED, [event])
-    }
-    rootMixins[0].renderTriggered = function (event) {
-      if (this.__mpxProxy) this.__mpxProxy.callHook(RENDERTRIGGERED, [event])
-    }
+    rootMixins[0].renderTracked = createRenderDebugHook(RENDERTRACKED)
+    rootMixins[0].renderTriggered = createRenderDebugHook(RENDERTRIGGERED)
   }
   // 为了在builtMixin中可以使用某些rootMixin实现的特性（如数据响应等），此处builtInMixin在rootMixin之后执行，但是当builtInMixin使用存在对应内建生命周期的目标平台声明周期写法时，可能会出现用户生命周期比builtInMixin中的生命周期先执行的情况，为了避免这种情况发生，builtInMixin应该尽可能使用内建生命周期来编写
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
