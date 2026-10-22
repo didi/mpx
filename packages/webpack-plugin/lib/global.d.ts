@@ -143,7 +143,6 @@ declare global {
      */
     i18n: any | null
     checkUsingComponentsRules: any
-    forceDisableBuiltInLoader: boolean
 
     /**
      * 默认的应用标题

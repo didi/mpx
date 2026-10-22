@@ -9,8 +9,8 @@ import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
-import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
-import MpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
+import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider } from './env/navigationHelper'
+import { pageWrapperHOC } from './patch/pageWrapperHOC'
 import { wrapAppLifecycleHooks } from '../core/perf'
 import { notSupportTip } from '../convertor/wxToReact'
 
@@ -36,7 +36,7 @@ export default function createApp (options) {
   const appData = {}
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(options, 'app', false)
-  notSupportTip(rawOptions, ['onThemeChange', 'onPageNotFound'])
+  notSupportTip(rawOptions, ['onThemeChange'])
   if (__mpx_perf_framework__) wrapAppLifecycleHooks(rawOptions)
   initAppProvides(rawOptions.provide, rawOptions)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
@@ -57,47 +57,38 @@ export default function createApp (options) {
   const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const getPageScreens = () => {
-    return Object.entries(pagesMap).map(([key, item]) => {
-      const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
-      const headerLayout = ({ navigation, children }) => {
-        return createElement(GestureHandlerRootView,
-          {
-            style: {
-              flex: 1
-            }
-          },
-          createElement(MpxNav, {
-            pageConfig,
-            navigation
-          }),
-          children
-        )
+  const pageScreens = Object.entries(pagesMap).map(([key, item]) => {
+    const pageConfig = global.__mpxPageConfigsMap[key]
+    let WrappedPage
+    const getComponent = () => {
+      if (!WrappedPage) {
+        WrappedPage = pageWrapperHOC(item.displayName ? item : callWithErrorHandling(item, null, 'require page script'), pageConfig)
       }
-      const getComponent = () => {
-        return item.displayName ? item : callWithErrorHandling(item, null, 'require page script')
-      }
-      return createElement(Stack.Screen, {
-        name: key,
-        getComponent,
-        layout: headerLayout
-      })
+      return WrappedPage
+    }
+    return createElement(Stack.Screen, {
+      name: key,
+      getComponent
     })
-  }
+  })
   global.__mpxOptionsMap = global.__mpxOptionsMap || {}
   const onStateChange = (state) => {
     Mpx.config.rnConfig.onStateChange?.(state)
     if (global.__navigationHelper.lastSuccessCallback) {
-      global.__navigationHelper.lastSuccessCallback()
+      const callback = global.__navigationHelper.lastSuccessCallback
       global.__navigationHelper.lastSuccessCallback = null
+      global.__navigationHelper.lastFailCallback = null
+      callback()
     }
   }
   const onUnhandledAction = (action) => {
     const payload = action.payload
     const message = `The action '${action.type}'${payload ? ` with payload ${JSON.stringify(action.payload)}` : ''} was not handled by any navigator.`
     if (global.__navigationHelper.lastFailCallback) {
-      global.__navigationHelper.lastFailCallback(message)
+      const callback = global.__navigationHelper.lastFailCallback
+      global.__navigationHelper.lastSuccessCallback = null
       global.__navigationHelper.lastFailCallback = null
+      callback(message)
     }
   }
   const appState = reactive({ state: '' })
@@ -157,6 +148,7 @@ export default function createApp (options) {
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
+    const pageNotFoundRef = useRef(null)
     const initialRouteRef = useRef({
       initialRouteName: firstPage,
       initialParams: {}
@@ -167,11 +159,13 @@ export default function createApp (options) {
       // 热启动情况下重置__mpxPagesMap避免页面销毁函数未及时执行时错误地引用到之前的navigation
       global.__mpxPagesMap = {}
       firstRef.current = false
-    }
-    if (!global.__mpxAppHotLaunched) {
       const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
       if (initialRouteName && !hasOwn(pagesMap, initialRouteName)) {
-        error(`The initial page [${initialRouteName}] is not registered in the application. Mpx will ignore this initial route configuration.`)
+        pageNotFoundRef.current = {
+          path: initialRouteName.replace(/^\//, ''),
+          query: initialParams || {},
+          isEntryPage: true
+        }
       } else {
         if (initialRouteName) {
           initialRouteRef.current.initialRouteName = initialRouteName
@@ -237,6 +231,20 @@ export default function createApp (options) {
       createElement(NavigationContainer,
         {
           initialState,
+          onReady () {
+            const pageNotFound = pageNotFoundRef.current
+            if (pageNotFound) {
+              pageNotFoundRef.current = null
+              const callbacks = global.__mpxAppCbs.pageNotFound
+              if (defaultOptions.onPageNotFound || callbacks.length) {
+                const listeners = callbacks.slice()
+                defaultOptions.onPageNotFound && defaultOptions.onPageNotFound.call(appInstance, pageNotFound)
+                listeners.forEach(cb => cb(pageNotFound))
+              } else {
+                error(`The initial page [${pageNotFound.path}] is not registered in the application. Mpx will ignore this initial route configuration.`)
+              }
+            }
+          },
           onStateChange,
           onUnhandledAction
         },
@@ -244,7 +252,7 @@ export default function createApp (options) {
           {
             screenOptions: navScreenOpts
           },
-          ...getPageScreens()
+          ...pageScreens
         )
       )
     )

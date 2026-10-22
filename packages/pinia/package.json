@@ -39,5 +39,16 @@
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6"
   },
+  "peerDependenciesMeta": {
+    "pinia": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "vue-demi": {
+      "optional": true
+    }
+  },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

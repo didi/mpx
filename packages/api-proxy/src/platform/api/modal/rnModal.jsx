@@ -1,10 +1,10 @@
 import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
-const modalMap = new Map()
+
 const showModal = function (options = {}) {
   const { width, height } = Dimensions.get('window')
-  const id = getCurrentPageId()
+  let modalKey
   const {
     title,
     content,
@@ -19,23 +19,6 @@ const showModal = function (options = {}) {
     fail,
     complete
   } = options
-  if (id === null) {
-    const result = {
-      errMsg: 'showModal:fail cannot be invoked outside the mpx life cycle in React Native environments'
-    }
-    failHandle(result, fail, complete)
-    return
-  }
-  const setCurrentModalKey = function (modalKey) {
-    const currentArr = modalMap.get(id) || []
-    currentArr.push(modalKey)
-    modalMap.set(id, currentArr)
-  }
-  const getCurrentModalKey = function () {
-    const currentArr = modalMap.get(id) || []
-    return currentArr.pop()
-  }
-
   const modalWidth = width * 0.8
   const styles = StyleSheet.create({
     modalTask: {
@@ -115,10 +98,7 @@ const showModal = function (options = {}) {
     contentText = text
   }
   const closeModal = function (buttonInfo) {
-    const modalKey = getCurrentModalKey()
-    if (modalKey) {
-      Portal.remove(modalKey)
-    }
+    Portal.remove(modalKey)
     const result = {
       errMsg: 'showModal:ok'
     }
@@ -176,8 +156,7 @@ const showModal = function (options = {}) {
     </View>
   </View>
   try {
-    const modalKey = Portal.add(ModalView, id)
-    setCurrentModalKey(modalKey)
+    modalKey = Portal.add(ModalView)
   } catch (e) {
     const result = {
       errMsg: `showModal:fail invalid ${e}`
