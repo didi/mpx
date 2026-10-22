@@ -469,6 +469,20 @@ mpx.config.rnConfig.dimensionsBase = 'screen'
 
 该配置应在首次尺寸计算前完成，首次读取后将保持不变。
 
+#### mpx.config.rnConfig.customLayout {#rn-custom-layout}
+
+```ts
+() => { width?: number; height?: number } | void
+```
+
+每次调用 RN `getWindowInfo` 时同步读取，用于自定义窗口兜底尺寸及安全区域计算。窗口宽高优先使用页面的 `navigation.layout`，其次使用 `customLayout` 对应字段，最后使用平台默认尺寸；iOS 默认使用 Window，Android 保留 Screen 兼容逻辑。未返回或值为 `0` 的字段使用平台默认值。
+
+```js
+mpx.config.rnConfig.customLayout = () => ({ width: hostWidth, height: hostHeight })
+```
+
+该配置不改变 `rpx` / `vw` / `vh` 的换算基准；响应式样式尺寸应通过 `dimensionsBase` 和 `customDimensions` 配置。
+
 #### mpx.config.rnConfig.customDimensions
 
 ```ts

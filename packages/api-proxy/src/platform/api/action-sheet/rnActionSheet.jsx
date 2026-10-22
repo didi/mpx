@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
-import { getWindowInfo } from '../system/rnSystem'
+import { initialWindowMetrics } from 'react-native-safe-area-context'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,8 +18,11 @@ const remove = function (id) {
   }
 }
 
-const windowInfo = getWindowInfo()
-const bottom = windowInfo.screenHeight - windowInfo.safeArea.bottom
+const navigation = getFocusedNavigation() || {}
+const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
+const navigationInsets = navigation.insets || {}
+const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
+const bottom = insets.bottom
 
 const styles = StyleSheet.create({
   actionAction: {

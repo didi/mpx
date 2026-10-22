@@ -6,6 +6,8 @@
 
 > RN 下可通过 `Mpx.config.rnConfig.customDimensions` 自定义尺寸，`getWindowInfo`、`getSystemInfo` 和 `getSystemInfoSync` 会基于处理后的尺寸计算相关字段。
 
+> RN 下窗口尺寸优先使用页面 layout，其次使用 `Mpx.config.rnConfig.customLayout()`；iOS 默认兜底为当前 Window 尺寸，Android 保留 Screen 兼容逻辑。`customLayout` 每次调用时读取，返回的尺寸也用于安全区域计算；该配置不改变响应式样式单位的换算基准。
+
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getWindowInfo.html)
 
 ### 参数 {#parameters}
