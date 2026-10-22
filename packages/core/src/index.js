@@ -149,7 +149,8 @@ Mpx.config = {
   */
   rnConfig: {
     defaultBoxSizing: 'content-box',
-    disablePageTransition: false
+    disablePageTransition: false,
+    dimensionsBase: 'window'
   }
 }
 

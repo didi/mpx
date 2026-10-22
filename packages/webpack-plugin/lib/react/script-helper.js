@@ -152,13 +152,17 @@ function buildGlobalParams ({
   genericsInfo,
   hasApp
 }) {
+  const { externalClasses } = loaderContext.getMpx()
   let content = ''
+  if (ctorType === 'app' || !hasApp) {
+    content += 'global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+    content += `global.__externalClasses = ${JSON.stringify(externalClasses || [])}\n`
+  }
   if (ctorType === 'app') {
     content += `
 global.getApp = function () {}
 global.getCurrentPages = function () { return [] }
 global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-global.__mpxGenericsMap = {}
 global.__mpxOptionsMap = {}
 global.__mpxPagesMap = {}
 global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
@@ -172,9 +176,6 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
 var componentsMap = ${shallowStringify(componentsMap)}
 global.currentInject.componentsMap = componentsMap\n`
     if (genericsInfo) {
-      if (!hasApp) {
-        content += 'global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
-      }
       content += `
 const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
 global.__mpxGenericsMap[genericHash] = componentsMap\n`
