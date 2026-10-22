@@ -3,6 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
+import { ref } from '../../observer/ref'
 import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
@@ -18,7 +19,22 @@ import {
 import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
-import { getSystemInfo, triggerResizeEvent } from '../dimensionsHelper'
+import { getDimensionsBase, getDimensionsInfo } from '../dimensionsHelper'
+
+function getSystemInfo () {
+  const baseDimensions = getDimensionsInfo()
+  const windowDimensions = getDimensionsInfo('window')
+  const screenDimensions = getDimensionsInfo('screen')
+  return {
+    deviceOrientation: baseDimensions.width > baseDimensions.height ? 'landscape' : 'portrait',
+    size: {
+      screenWidth: screenDimensions.width,
+      screenHeight: screenDimensions.height,
+      windowWidth: windowDimensions.width,
+      windowHeight: windowDimensions.height
+    }
+  }
+}
 
 function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
@@ -61,7 +77,7 @@ function getRootProps (props, validProps) {
   const rootProps = {}
   for (const key in props) {
     const altKey = dash2hump(key)
-    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && key !== 'children') {
+    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && !global.__externalClasses?.includes(key) && key !== 'children') {
       rootProps[key] = props[key]
     }
   }
@@ -301,6 +317,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  proxy.externalClassesVersion = ref(0)
   proxy.created()
   if (type === 'page') {
     const props = propsRef.current
@@ -363,6 +380,29 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   if (pageLifetimes) {
     const instance = mpxProxy.target
     isFunction(pageLifetimes[event]) && pageLifetimes[event].call(instance)
+  }
+}
+
+const triggerResizeEvent = (mpxProxy, sizeRef) => {
+  const oldSize = sizeRef.current.size
+  const systemInfo = getSystemInfo()
+  const newSize = systemInfo.size
+  const dimensionsBase = getDimensionsBase()
+  const widthKey = `${dimensionsBase}Width`
+  const heightKey = `${dimensionsBase}Height`
+
+  if (oldSize && oldSize[widthKey] === newSize[widthKey] && oldSize[heightKey] === newSize[heightKey]) {
+    return
+  }
+  Object.assign(sizeRef.current, systemInfo)
+  const type = mpxProxy.options.__type__
+  const target = mpxProxy.target
+  mpxProxy.callHook(ONRESIZE, [systemInfo])
+  if (type === 'page') {
+    target.onResize && target.onResize(systemInfo)
+  } else {
+    const pageLifetimes = mpxProxy.options.pageLifetimes
+    pageLifetimes && isFunction(pageLifetimes.resize) && pageLifetimes.resize.call(target, systemInfo)
   }
 }
 
@@ -623,6 +663,10 @@ function updateProps (instance, props, validProps) {
   })
 }
 
+function isExternalClassesChanged (props, oldProps) {
+  return global.__externalClasses?.some(externalClass => (hasOwn(props, externalClass) || hasOwn(oldProps, externalClass)) && !Object.is(props[externalClass], oldProps[externalClass]))
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const componentsMap = currentInject.componentsMap
@@ -632,16 +676,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
   }
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  if (global.__externalClasses && global.__externalClasses.length > 0) {
-    global.__externalClasses.forEach((name) => {
-      validProps[name] = null
-    })
-  }
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
-    const propsRef = useRef(null)
+    const propsRef = useRef({})
     const intersectionCtx = useContext(IntersectionObserverContext)
     const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
@@ -649,6 +688,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
     }
+    const oldProps = propsRef.current
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
@@ -679,14 +719,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
 
     if (!isFirst) {
+      const externalClassesChanged = isExternalClassesChanged(props, oldProps)
+      const update = () => {
+        updateProps(instance, props, validProps)
+        if (externalClassesChanged) {
+          proxy.externalClassesVersion.value++
+        }
+      }
       // 处理props更新
       if (Mpx.config.forceFlushSync) {
         // 避免开启forceFlushSync时react报错：Cannot update a component while rendering a different component
-        Promise.resolve().then(() => {
-          updateProps(instance, props, validProps)
-        })
+        Promise.resolve().then(update)
       } else {
-        updateProps(instance, props, validProps)
+        update()
       }
     }
 

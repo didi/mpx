@@ -86,8 +86,11 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
   })
 
   root.walkRules(rule => {
+    const options = getMediaOptions(rule.parent.params || '')
+    const isMedia = options.maxWidth || options.minWidth
     const classMapValue = {}
-    rule.walkDecls(({ prop, value }) => {
+    rule.walkDecls((decl) => {
+      let { prop, value } = decl
       if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value, selector: rule.selector })
       if (!newData) return
@@ -115,13 +118,17 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
         } else {
           value = formatValue(value)
         }
-        classMapValue[prop] = value
+        if (isMedia && decl.important) {
+          classMapValue._inlineLayer = classMapValue._inlineLayer || {}
+          classMapValue._inlineLayer.important = classMapValue._inlineLayer.important || {}
+          classMapValue._inlineLayer.important[prop] = value
+        } else {
+          classMapValue[prop] = value
+        }
       })
     })
 
     const classMapKeys = []
-    const options = getMediaOptions(rule.parent.params || '')
-    const isMedia = options.maxWidth || options.minWidth
     selectorParser(selectors => {
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
@@ -135,24 +142,13 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          let defaultStyle = classMap[key]?._default
-          let mediaStyle = classMap[key]?._media
+          classMap[key] = classMap[key] || {}
           if (isMedia) {
-            defaultStyle = defaultStyle || classMap[key] || {}
-            mediaStyle = mediaStyle || []
-            mediaStyle.push({
-              options,
-              value: classMapValue
-            })
-            classMap[key] = {
-              _default: defaultStyle,
-              _media: mediaStyle
-            }
-          } else if (defaultStyle) {
-            Object.assign(defaultStyle, classMapValue)
+            const mediaStyle = classMap[key]._media || []
+            mediaStyle.push({ options, value: classMapValue })
+            classMap[key]._media = mediaStyle
           } else {
-            const val = classMap[key] || {}
-            classMap[key] = Object.assign(val, classMapValue)
+            Object.assign(classMap[key], classMapValue)
           }
         }
       })

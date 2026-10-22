@@ -468,6 +468,22 @@ mpx.config.rnConfig.dimensionsBase = 'screen'
 
 配置后，响应式单位和媒体查询将使用 `Dimensions.get('screen')` 的宽高，并在 Screen 尺寸变化时重新计算相关样式及触发 `onResize`。
 
+该配置应在首次尺寸计算前完成，首次读取后将保持不变。
+
+#### mpx.config.rnConfig.customLayout {#rn-custom-layout}
+
+```ts
+() => { width?: number; height?: number } | void
+```
+
+每次调用 RN `getWindowInfo` 时同步读取，用于自定义窗口兜底尺寸及安全区域计算。窗口宽高优先使用页面的 `navigation.layout`，其次使用 `customLayout` 对应字段，最后使用平台默认尺寸；iOS 默认使用 Window，Android 保留 Screen 兼容逻辑。未返回或值为 `0` 的字段使用平台默认值。
+
+```js
+mpx.config.rnConfig.customLayout = () => ({ width: hostWidth, height: hostHeight })
+```
+
+该配置不改变 `rpx` / `vw` / `vh` 的换算基准；响应式样式尺寸应通过 `dimensionsBase` 和 `customDimensions` 配置。
+
 #### mpx.config.rnConfig.customDimensions
 
 ```ts
@@ -480,38 +496,18 @@ mpx.config.rnConfig.dimensionsBase = 'screen'
 
 例如，使用默认的 `dimensionsBase: 'window'` 时，折叠屏展开后如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
 
-#### notifyDimensionsChange
+#### getDimensionsInfo
 
 ```ts
-(dimensions?: { window: ScaledSize; screen: ScaledSize }) => void
+(dimensionsBase?: 'window' | 'screen') => ScaledSize
 ```
 
-主动通知框架 Dimensions 发生变化，使 `rpx` / `vw` / `vh`、媒体查询和 `onResize` 等依赖尺寸的能力重新计算。传入 `dimensions` 时使用传入值；不传参数时通过 `Dimensions.get('window')` 与 `Dimensions.get('screen')` 获取当前原始尺寸。两种方式都会重新执行 `rnConfig.customDimensions`，并根据 `dimensionsBase` 指定的尺寸判断是否触发刷新。
+返回最近一次初始化或 React Native Dimensions 变化后生效的尺寸副本。可传入 `'window'` 或 `'screen'` 指定本次获取的尺寸；不传时使用首次读取的 `rnConfig.dimensionsBase`，传参不会修改该配置。修改返回值不会影响框架内部缓存。
 
 ```js
-// 宿主容器尺寸发生变化后，重新读取当前 Dimensions
-notifyDimensionsChange()
-
-// 也可以显式传入尺寸
-notifyDimensionsChange({
-  window: nextWindow,
-  screen: nextScreen
-})
-```
-
-框架会复制原始 Dimensions 后再交给 `customDimensions`，避免自定义逻辑直接修改 React Native 返回的原对象。
-
-#### getStyleDimensions
-
-```ts
-() => ScaledSize
-```
-
-返回经过 `rnConfig.customDimensions` 处理后、由 `rnConfig.dimensionsBase` 选中的当前尺寸副本。修改返回值不会影响框架内部缓存。首次调用会确保完成尺寸初始化；如果后续更换 `customDimensions`，再次调用时会基于最近一次原始 Dimensions 重新处理。
-
-```js
-const dimensions = getStyleDimensions()
+const dimensions = getDimensionsInfo()
 console.log(dimensions.width, dimensions.height)
+const screenDimensions = getDimensionsInfo('screen')
 ```
 
 

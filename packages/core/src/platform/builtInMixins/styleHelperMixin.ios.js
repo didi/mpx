@@ -1,35 +1,23 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mpxjs/utils'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
-import { applyDimensionsInfo, getDimensionsBase, getStyleDimensions, initDimensionsInfo } from '../dimensionsHelper'
+import { getDimensionsInfo, syncDimensions } from '../dimensionsHelper'
 
-initDimensionsInfo({
-  window: Dimensions.get('window'),
-  screen: Dimensions.get('screen')
-})
 global.__mpxSizeCount = 0
-global.__mpxPageSizeCountMap = reactive({})
+global.__mpxPageSizeCountMap = reactive({ __standalone: 0 })
 
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
     const originalDependentWindowSize = dependentWindowSize
     dependentWindowSize = false
 
-    let styleObj = classMap[className]?.(formatValue)
+    const styleObj = classMap[className]?.(formatValue)
     if (!styleObj) {
       dependentWindowSize = originalDependentWindowSize
       return
     }
-    if (!styleObj._media?.length) {
-      styleObj = {
-        _default: styleObj
-      }
-    }
 
-    // 使用不可枚举属性记录窗口尺寸依赖，避免该内部标记被合并到 RN 样式中
-    Object.defineProperty(styleObj, '_dependentWindowSize', {
-      value: dependentWindowSize
-    })
+    styleObj._dependentWindowSize = dependentWindowSize
     dependentWindowSize = dependentWindowSize || originalDependentWindowSize
 
     classMapValueCache.set(className, styleObj)
@@ -37,56 +25,21 @@ global.__GCC = function (className, classMap, classMapValueCache) {
   return classMapValueCache.get(className)
 }
 
-function getDimensionsBaseSize (dimensions) {
-  return dimensions.width + 'x' + dimensions.height
-}
+global.getDimensionsInfo = base => Object.assign({}, getDimensionsInfo(base))
 
-function onDimensionsChange (dimensions) {
-  // 读取旧缓存时不触发初始化，避免首次通知重复执行 customDimensions。
-  const oldDimensionsBaseSize = getDimensionsBaseSize(global.__mpxAppDimensionsInfo[getDimensionsBase()])
-  if (!dimensions) {
-    dimensions = {
-      window: Dimensions.get('window'),
-      screen: Dimensions.get('screen')
-    }
-  }
-  applyDimensionsInfo(dimensions)
-
-  // 对比自定义处理后的基准尺寸高宽是否存在变化
-  if (getDimensionsBaseSize(getStyleDimensions()) === oldDimensionsBaseSize) return
-
-  global.__classCaches?.forEach(cache => cache?.clear())
-
-  // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
-  global.__mpxSizeCount++
-
-  const navigation = getFocusedNavigation()
-
-  if (navigation) {
-    global.__mpxPageSizeCountMap[navigation.pageId] = global.__mpxSizeCount
-    if (hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-      global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
-    }
-  }
-}
-
-global.notifyDimensionsChange = onDimensionsChange
-global.getStyleDimensions = () => Object.assign({}, getStyleDimensions())
-
-Dimensions.addEventListener('change', onDimensionsChange)
+Dimensions.addEventListener('change', syncDimensions)
 
 // TODO: 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions 监听到的 width/height 尺寸错误，并触发多次问题
 function rpx (value) {
-  const dimensionsInfo = getStyleDimensions()
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (样式计算宽度 / 750)
-  return value * dimensionsInfo.width / 750
+  return value * getDimensionsInfo().width / 750
 }
 function vw (value) {
-  return value * getStyleDimensions().width / 100
+  return value * getDimensionsInfo().width / 100
 }
 function vh (value) {
-  return value * getStyleDimensions().height / 100
+  return value * getDimensionsInfo().height / 100
 }
 
 const unit = {
@@ -251,7 +204,7 @@ function isNativeStyle (style) {
 function getMediaStyle (media) {
   if (!media || !media.length) return {}
   dependentWindowSize = true
-  const { width } = getStyleDimensions()
+  const { width } = getDimensionsInfo()
   return media.reduce((styleObj, item) => {
     const { options = {}, value = {} } = item
     const { minWidth, maxWidth } = options
@@ -262,16 +215,100 @@ function getMediaStyle (media) {
       : hasMinWidth
         ? width >= minWidth
         : hasMaxWidth && width <= maxWidth
-    if (matched) Object.assign(styleObj, value)
+    if (matched) {
+      Object.keys(value).forEach(key => {
+        if (key !== '_inlineLayer') styleObj[key] = value[key]
+      })
+      if (value._inlineLayer) {
+        styleObj._inlineLayer = styleObj._inlineLayer || {}
+        Object.keys(value._inlineLayer).forEach(layer => {
+          styleObj._inlineLayer[layer] = Object.assign(
+            styleObj._inlineLayer[layer] || {},
+            value._inlineLayer[layer]
+          )
+        })
+      }
+    }
     return styleObj
   }, {})
+}
+
+const createLayer = (isNativeStyle) => {
+  const layerMap = {
+    normal: [],
+    important: []
+  }
+
+  const checkInlineLayer = style => {
+    Object.keys(style._inlineLayer).forEach(l => {
+      mergeToLayer(l, style._inlineLayer[l])
+    })
+  }
+
+  const mergeToLayer = (name, style, mediaStyle) => {
+    const layer = layerMap[name] || layerMap.normal
+    layer.push(style)
+    if (style?._inlineLayer) checkInlineLayer(style, mergeToLayer)
+    if (mediaStyle) {
+      layer.push(mediaStyle)
+      if (mediaStyle._inlineLayer) checkInlineLayer(mediaStyle, mergeToLayer)
+    }
+  }
+
+  const mergeToLayerWithStyles = (name, styles) => {
+    styles.forEach(v => mergeToLayer(name, v))
+  }
+
+  const genResult = isNativeStyle
+    ? () => {
+        return [
+          ...layerMap.normal,
+          ...layerMap.important
+        ]
+      }
+    : () => {
+        const res = Object.assign(
+          {},
+          ...layerMap.normal,
+          ...layerMap.important
+        )
+        delete res._inlineLayer
+        delete res._dependentWindowSize
+        return res
+      }
+
+  return {
+    mergeToLayer,
+    mergeToLayerWithStyles,
+    genResult
+  }
+}
+
+const HIDE_STYLE = {
+  // display: 'none'
+  // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
+  flex: 0,
+  height: 0,
+  width: 0,
+  paddingTop: 0,
+  paddingRight: 0,
+  paddingBottom: 0,
+  paddingLeft: 0,
+  marginTop: 0,
+  marginRight: 0,
+  marginBottom: 0,
+  marginLeft: 0,
+  overflow: 'hidden'
 }
 
 export default function styleHelperMixin () {
   return {
     methods: {
-      __getSizeCount () {
-        return global.__mpxPageSizeCountMap[this.__pageId]
+      __trackPageSizeCount () {
+        return global.__mpxPageSizeCountMap[this.__pageId == null ? '__standalone' : this.__pageId]
+      },
+      __trackExternalClassesVersion () {
+        return this.__mpxProxy.externalClassesVersion.value
       },
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -280,8 +317,8 @@ export default function styleHelperMixin () {
         // 重置依赖标记
         dependentWindowSize = false
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
-        let result = isNativeStaticStyle ? [] : {}
-        const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
+
+        const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
@@ -290,15 +327,18 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              mergeResult(localStyle._default, getMediaStyle(localStyle._media))
-              // class style 计算可能触发缓存，需要单独在结果中记录是否依赖窗口尺寸，不能直接使用全局变量。
-              this.__dependentWindowSize = this.__dependentWindowSize || localStyle._dependentWindowSize
+              mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
+              dependentWindowSize = dependentWindowSize || localStyle._dependentWindowSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              mergeResult(appStyle._default, getMediaStyle(appStyle._media))
-              this.__dependentWindowSize = this.__dependentWindowSize || appStyle._dependentWindowSize
-            } else if (isObject(this.__mpxProxy.props[className])) {
-              // externalClasses必定以对象形式传递下来
-              mergeResult(this.__mpxProxy.props[className])
+              mergeToLayer(appStyle._layer || 'normal', appStyle, getMediaStyle(appStyle._media))
+              dependentWindowSize = dependentWindowSize || appStyle._dependentWindowSize
+            } else if (global.__externalClasses?.includes(className)) {
+              // 始终读取版本号，确保 externalClasses 从无到有时也能触发样式重算。
+              this.__trackExternalClassesVersion()
+              const externalClassStyle = this.__props[className]
+              if (isObject(externalClassStyle)) {
+                mergeToLayer('normal', externalClassStyle)
+              }
             }
           })
         }
@@ -307,41 +347,26 @@ export default function styleHelperMixin () {
           const styleObj = {}
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
-              result = result.concat(staticStyle)
+              mergeToLayerWithStyles('normal', staticStyle)
             } else {
-              mergeResult(staticStyle)
+              mergeToLayer('normal', staticStyle)
             }
           } else {
             Object.assign(styleObj, parseStyleText(staticStyle))
           }
           Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
-          mergeResult(transformStyleObj(styleObj))
+          mergeToLayer('normal', transformStyleObj(styleObj))
         }
 
         if (hide) {
-          mergeResult({
-            // display: 'none'
-            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
-            flex: 0,
-            height: 0,
-            width: 0,
-            paddingTop: 0,
-            paddingRight: 0,
-            paddingBottom: 0,
-            paddingLeft: 0,
-            marginTop: 0,
-            marginRight: 0,
-            marginBottom: 0,
-            marginLeft: 0,
-            overflow: 'hidden'
-          })
+          mergeToLayer('important', HIDE_STYLE)
         }
+        const result = genResult()
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
 
-        // 仅在依赖窗口尺寸时才触发 __getSizeCount 进行响应式关联，避免窗口尺寸变化时不必要的性能损耗
-        this.__dependentWindowSize = this.__dependentWindowSize || dependentWindowSize
-        if (this.__dependentWindowSize) {
-          this.__getSizeCount()
+        // 仅在依赖窗口尺寸时才建立响应式关联，避免窗口尺寸变化时不必要的性能损耗
+        if (dependentWindowSize) {
+          this.__trackPageSizeCount()
         }
         return isEmpty ? empty : result
       }

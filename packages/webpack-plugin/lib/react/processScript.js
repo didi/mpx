@@ -64,7 +64,7 @@ import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext,
       rnConfig
     })
 
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics, hasApp })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics, hasApp, externalClasses })
     if (!hasApp && i18n) {
       output += buildI18n({ loaderContext })
     }

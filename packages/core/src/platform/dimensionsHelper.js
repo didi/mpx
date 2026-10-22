@@ -1,9 +1,17 @@
-import { ONRESIZE } from '../core/innerLifecycle'
+import { getFocusedNavigation, hasOwn } from '@mpxjs/utils'
+import { Dimensions } from 'react-native'
 import Mpx from '../index'
 
-let dimensionsInfoInitialized = false
-let rawDimensionsInfo
-let appliedCustomDimensions
+let dimensionsBase
+let dimensionsInfo
+let styleDimensionsSnapshot
+let applyingCustomDimensions = false
+
+function assertNotApplyingCustomDimensions () {
+  if (applyingCustomDimensions) {
+    throw new Error('Do not call getDimensionsInfo, getWindowInfo, getSystemInfo, or other APIs that depend on customDimensions results inside rnConfig.customDimensions.')
+  }
+}
 
 function cloneDimensionsInfo (dimensions) {
   return {
@@ -13,72 +21,63 @@ function cloneDimensionsInfo (dimensions) {
 }
 
 export function getDimensionsBase () {
-  return Mpx.config.rnConfig?.dimensionsBase === 'screen' ? 'screen' : 'window'
-}
-
-export function initDimensionsInfo (dimensions) {
-  dimensionsInfoInitialized = false
-  appliedCustomDimensions = undefined
-  rawDimensionsInfo = cloneDimensionsInfo(dimensions)
-  global.__mpxAppDimensionsInfo = cloneDimensionsInfo(rawDimensionsInfo)
-}
-
-export function applyDimensionsInfo (dimensions) {
-  rawDimensionsInfo = cloneDimensionsInfo(dimensions)
-  const customDimensions = Mpx.config.rnConfig?.customDimensions
-  dimensionsInfoInitialized = true
-  appliedCustomDimensions = customDimensions
-  dimensions = cloneDimensionsInfo(rawDimensionsInfo)
-  if (typeof customDimensions === 'function') {
-    dimensions = customDimensions(dimensions) || dimensions
+  if (!dimensionsBase) {
+    dimensionsBase = Mpx.config.rnConfig?.dimensionsBase === 'screen' ? 'screen' : 'window'
   }
-  global.__mpxAppDimensionsInfo.window = dimensions.window
-  global.__mpxAppDimensionsInfo.screen = dimensions.screen
+  return dimensionsBase
 }
 
-export function getStyleDimensions () {
-  if (!dimensionsInfoInitialized || appliedCustomDimensions !== Mpx.config.rnConfig?.customDimensions) {
-    applyDimensionsInfo(rawDimensionsInfo)
-  }
-  return global.__mpxAppDimensionsInfo[getDimensionsBase()]
+function getStyleDimensionsSnapshot (dimensionsBase, dimensions) {
+  const baseDimensions = dimensions[dimensionsBase]
+  return `${baseDimensions.width}x${baseDimensions.height}`
 }
 
-export function getSystemInfo () {
-  const baseDimensions = getStyleDimensions()
-  const windowDimensions = global.__mpxAppDimensionsInfo.window
-  const screenDimensions = global.__mpxAppDimensionsInfo.screen
-  return {
-    deviceOrientation: baseDimensions.width > baseDimensions.height ? 'landscape' : 'portrait',
-    size: {
-      screenWidth: screenDimensions.width,
-      screenHeight: screenDimensions.height,
-      windowWidth: windowDimensions.width,
-      windowHeight: windowDimensions.height
+function triggerStyleDimensionsChange () {
+  global.__classCaches?.forEach(cache => cache?.clear())
+  global.__mpxSizeCount++
+  global.__mpxPageSizeCountMap.__standalone = global.__mpxSizeCount
+
+  const navigation = getFocusedNavigation()
+
+  if (navigation) {
+    global.__mpxPageSizeCountMap[navigation.pageId] = global.__mpxSizeCount
+    if (hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+      global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
     }
   }
 }
 
-export function triggerResizeEvent (mpxProxy, sizeRef) {
-  const oldSize = sizeRef.current.size
-  const systemInfo = getSystemInfo()
-  const newSize = systemInfo.size
-  const dimensionsBase = getDimensionsBase()
-  const widthKey = `${dimensionsBase}Width`
-  const heightKey = `${dimensionsBase}Height`
-
-  if (oldSize && oldSize[widthKey] === newSize[widthKey] && oldSize[heightKey] === newSize[heightKey]) {
-    return
+export function syncDimensions (dimensions) {
+  const customDimensions = Mpx.config.rnConfig?.customDimensions
+  const currentDimensionsBase = getDimensionsBase()
+  dimensions = cloneDimensionsInfo(dimensions)
+  if (typeof customDimensions === 'function') {
+    applyingCustomDimensions = true
+    try {
+      dimensions = cloneDimensionsInfo(customDimensions(dimensions) || dimensions)
+    } finally {
+      applyingCustomDimensions = false
+    }
   }
+  const nextStyleDimensionsSnapshot = getStyleDimensionsSnapshot(currentDimensionsBase, dimensions)
+  const styleDimensionsChanged = styleDimensionsSnapshot !== undefined && styleDimensionsSnapshot !== nextStyleDimensionsSnapshot
 
-  Object.assign(sizeRef.current, systemInfo)
+  // 自定义尺寸计算成功后再统一提交，避免中途异常留下部分更新状态。
+  dimensionsInfo = dimensions
+  styleDimensionsSnapshot = nextStyleDimensionsSnapshot
 
-  const type = mpxProxy.options.__type__
-  const target = mpxProxy.target
-  mpxProxy.callHook(ONRESIZE, [systemInfo])
-  if (type === 'page') {
-    target.onResize && target.onResize(systemInfo)
-  } else {
-    const pageLifetimes = mpxProxy.options.pageLifetimes
-    pageLifetimes && typeof pageLifetimes.resize === 'function' && pageLifetimes.resize.call(target, systemInfo)
+  if (styleDimensionsChanged) {
+    triggerStyleDimensionsChange()
   }
+}
+
+export function getDimensionsInfo (base) {
+  assertNotApplyingCustomDimensions()
+  if (styleDimensionsSnapshot === undefined) {
+    syncDimensions({
+      window: Dimensions.get('window'),
+      screen: Dimensions.get('screen')
+    })
+  }
+  return dimensionsInfo[base || getDimensionsBase()]
 }

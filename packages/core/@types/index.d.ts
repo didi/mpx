@@ -374,6 +374,7 @@ export interface RnConfig {
 
   /**
    * rpx、vw、vh、媒体查询与 onResize 使用的尺寸基准。
+   * 首次尺寸计算后该配置固定，运行期间修改不会生效。
    * @default 'window'
    */
   dimensionsBase?: 'window' | 'screen'
