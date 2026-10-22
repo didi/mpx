@@ -5,7 +5,7 @@ import { reactive } from '../../observer/reactive'
 import { getDimensionsInfo, syncDimensions } from '../dimensionsHelper'
 
 global.__mpxSizeCount = 0
-global.__mpxPageSizeCountMap = reactive({})
+global.__mpxPageSizeCountMap = reactive({ __standalone: 0 })
 
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
@@ -312,7 +312,7 @@ export default function styleHelperMixin () {
   return {
     methods: {
       __trackPageSizeCount () {
-        return global.__mpxPageSizeCountMap[this.__pageId]
+        return global.__mpxPageSizeCountMap[this.__pageId == null ? '__standalone' : this.__pageId]
       },
       __trackExternalClassesVersion () {
         return this.__mpxProxy.externalClassesVersion.value
