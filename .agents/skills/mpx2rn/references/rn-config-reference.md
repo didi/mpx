@@ -249,6 +249,7 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | --- | --- | --- |
 | `defaultBoxSizing` | `'content-box'` | 节点未显式声明 `box-sizing` 时使用的默认盒模型，可设为 `'border-box'`。 |
 | `allowFontScaling` | 未设置，按 `false` 处理 | 文本类基础组件是否跟随系统字体缩放；组件显式传入的 `allowFontScaling` 优先。 |
+| `customLayout` | 未设置 | `() => { width?: number; height?: number }` 或无返回值，每次 `getWindowInfo()` 同步读取；窗口宽高优先页面 layout，再使用自定义尺寸，缺失或为 `0` 时使用平台默认尺寸。安全区域始终基于自定义尺寸或平台默认尺寸扣除 inset；回调不支持 Promise，不修改 RN Dimensions 或样式换算尺寸。 |
 | `dimensionsBase` | `'window'` | `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，可设为 `'window'` 或 `'screen'`。首次尺寸计算后该配置固定，运行期间修改不会生效。 |
 | `customDimensions` | 未设置 | `({ window, screen }) => ({ window, screen })`，自定义框架样式换算使用的尺寸信息；返回空值时沿用传入尺寸。`rpx` / `vw` / `vh` 与媒体查询使用 `dimensionsBase` 对应的自定义尺寸。 |
 | `getBottomVirtualHeight` | 未设置 | `() => number`，修正 Android 非横屏场景下底部虚拟区域高度；未配置时采用安全区域底部 inset，横屏时使用屏幕与窗口高度差。 |
