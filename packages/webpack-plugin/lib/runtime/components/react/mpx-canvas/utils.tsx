@@ -42,7 +42,7 @@ export interface WebviewMessage {
 }
 
 export interface CanvasInstance {
-  webview: WebView | null;
+  webview: WebView<any> | null;
   bus: Bus | null;
   context2D: CanvasRenderingContext2D;
   getContext: (contextType: string) => CanvasRenderingContext2D | null;

@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.20-beta.1",
+  "version": "2.10.20-beta.2",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -94,6 +94,7 @@
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/glob": "^8.1.0",
+    "@types/node": "18.19.70",
     "@types/react": "^18.2.79",
     "glob": "^11.0.2",
     "react-native": "^0.74.5",
