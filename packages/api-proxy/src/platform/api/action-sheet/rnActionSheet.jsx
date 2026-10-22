@@ -14,7 +14,7 @@ const navigation = getFocusedNavigation() || {}
 const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
 const navigationInsets = navigation.insets || {}
 const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
-const bottom = insets.bottom
+const bottom = insets.bottom || 0
 
 const styles = StyleSheet.create({
   actionAction: {

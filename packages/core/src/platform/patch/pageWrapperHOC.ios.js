@@ -10,6 +10,7 @@ let pageId = 0
 function getLayoutData (headerHeight) {
   const screenDimensions = ReactNative.Dimensions.get('screen')
   const windowDimensions = ReactNative.Dimensions.get('window')
+  const layoutDimensions = ReactNative.Platform.OS === 'ios' ? windowDimensions : screenDimensions
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
@@ -29,7 +30,7 @@ function getLayoutData (headerHeight) {
     top: headerHeight,
     // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
     width: windowDimensions.width,
-    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
+    height: layoutDimensions.height - headerHeight - bottomVirtualHeight,
     // ios为0 android为实际statusbar高度
     statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
     bottomVirtualHeight: bottomVirtualHeight,
