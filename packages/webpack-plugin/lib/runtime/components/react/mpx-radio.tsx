@@ -8,7 +8,7 @@ import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Di
 import { View, StyleSheet, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { LabelContext, RadioGroupContext } from './context'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent, markLabelControlHandled } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
 import Icon from './mpx-icon'
@@ -109,6 +109,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
+      markLabelControlHandled(evt)
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
