@@ -99,6 +99,27 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(context.__trackExternalClassesVersion).toHaveBeenCalledTimes(3)
   })
 
+  it('preserves the native style array structure for classes without media queries', () => {
+    const classStyle = { width: 100 }
+    const animatedStyle = { viewDescriptors: {}, opacity: 0.5 }
+    const context = { __getClassStyle: () => classStyle }
+    const result = styleHelperMixin().methods.__getStyle.call(context, 'box', '', [animatedStyle])
+
+    expect(result).toEqual([classStyle, animatedStyle, {}])
+    expect(result[0]).toBe(classStyle)
+    expect(result[1]).toBe(animatedStyle)
+  })
+
+  it('keeps hidden native style objects independent between renders', () => {
+    const getStyle = styleHelperMixin().methods.__getStyle
+    const first = getStyle.call({}, '', '', [], {}, true)
+    const second = getStyle.call({}, '', '', [], {}, true)
+
+    expect(first[first.length - 1]).not.toBe(second[second.length - 1])
+    first[first.length - 1].height = 100
+    expect(second[second.length - 1].height).toBe(0)
+  })
+
   it('converts responsive units with window dimensions', () => {
     Mpx.config.rnConfig = {}
 

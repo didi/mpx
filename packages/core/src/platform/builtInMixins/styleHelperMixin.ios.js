@@ -212,7 +212,7 @@ function isNativeStyle (style) {
 }
 
 function getMediaStyle (media) {
-  if (!media || !media.length) return {}
+  if (!media || !media.length) return
   dependentWindowSize = true
   const { width } = getDimensionsInfo()
   return media.reduce((styleObj, item) => {
@@ -294,23 +294,6 @@ const createLayer = (isNativeStyle) => {
   }
 }
 
-const HIDE_STYLE = {
-  // display: 'none'
-  // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
-  flex: 0,
-  height: 0,
-  width: 0,
-  paddingTop: 0,
-  paddingRight: 0,
-  paddingBottom: 0,
-  paddingLeft: 0,
-  marginTop: 0,
-  marginRight: 0,
-  marginBottom: 0,
-  marginLeft: 0,
-  overflow: 'hidden'
-}
-
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -342,10 +325,10 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
+              mergeToLayer('normal', localStyle, getMediaStyle(localStyle._media))
               dependentWindowSize = dependentWindowSize || localStyle._dependentWindowSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              mergeToLayer(appStyle._layer || 'normal', appStyle, getMediaStyle(appStyle._media))
+              mergeToLayer('normal', appStyle, getMediaStyle(appStyle._media))
               dependentWindowSize = dependentWindowSize || appStyle._dependentWindowSize
             } else if (global.__externalClasses?.includes(className)) {
               // 始终读取版本号，确保 externalClasses 从无到有时也能触发样式重算。
@@ -379,7 +362,22 @@ export default function styleHelperMixin () {
         }
 
         if (hide) {
-          mergeToLayer('important', HIDE_STYLE)
+          mergeToLayer('important', {
+            // display: 'none'
+            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
+            flex: 0,
+            height: 0,
+            width: 0,
+            paddingTop: 0,
+            paddingRight: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            marginTop: 0,
+            marginRight: 0,
+            marginBottom: 0,
+            marginLeft: 0,
+            overflow: 'hidden'
+          })
         }
         const result = genResult()
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
