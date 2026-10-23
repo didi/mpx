@@ -91,7 +91,7 @@ const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
   const safeAreaTop = useSafeAreaInsets()?.top || 0
 
   navigation.setPageConfig = (config: PageConfig) => {
-    setPageConfig(Object.assign({}, innerPageConfig, config))
+    setPageConfig((prevPageConfig) => Object.assign({}, prevPageConfig, config))
   }
   const isCustom = innerPageConfig.navigationStyle === 'custom'
   const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
