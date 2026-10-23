@@ -93,12 +93,92 @@ describe('RN styleHelperMixin dimensions', () => {
     expect(context.__trackExternalClassesVersion).toHaveBeenCalledTimes(3)
   })
 
+  it('preserves the native style array structure for classes without media queries', () => {
+    const classStyle = { width: 100 }
+    const animatedStyle = { viewDescriptors: {}, opacity: 0.5 }
+    const context = { __getClassStyle: () => classStyle }
+    const result = styleHelperMixin().methods.__getStyle.call(context, 'box', '', [animatedStyle])
+
+    expect(result).toEqual([classStyle, animatedStyle, {}])
+    expect(result[0]).toBe(classStyle)
+    expect(result[1]).toBe(animatedStyle)
+  })
+
+  it('keeps hidden native style objects independent between renders', () => {
+    const getStyle = styleHelperMixin().methods.__getStyle
+    const first = getStyle.call({}, '', '', [], {}, true)
+    const second = getStyle.call({}, '', '', [], {}, true)
+
+    expect(first[first.length - 1]).not.toBe(second[second.length - 1])
+    first[first.length - 1].height = 100
+    expect(second[second.length - 1].height).toBe(0)
+  })
+
   it('converts responsive units with window dimensions', () => {
     Mpx.config.rnConfig = {}
 
     expect(global.__formatValue('750rpx')).toBe(360)
     expect(global.__formatValue('100vw')).toBe(360)
     expect(global.__formatValue('100vh')).toBe(640)
+  })
+
+  it('preserves 2.10.20 numeric flex and line-height conversion for inline styles', () => {
+    const getStyle = styleHelperMixin().methods.__getStyle
+
+    expect(getStyle.call({}, '', '', 'flex: 1; line-height: 20')).toEqual({ flex: 1, lineHeight: 20 })
+    expect(getStyle.call({}, '', '', '', { flex: '1', lineHeight: 20 })).toEqual({ flex: 1, lineHeight: 20 })
+    expect(getStyle.call({}, '', '', '', { flex: 1, lineHeight: '20' })).toEqual({ flex: 1, lineHeight: 20 })
+  })
+
+  it('preserves the original fixed-value parsing rules', () => {
+    expect(global.__formatValue(' hairlineWidth ')).toBe(0.5)
+    expect(global.__formatValue(1, 'hairlineWidth')).toBe(0.5)
+    expect(global.__formatValue('.5px')).toBe('.5px')
+    expect(global.__formatValue('0.5px')).toBe(0.5)
+  })
+
+  it('preserves the original inline important handling', () => {
+    const getStyle = styleHelperMixin().methods.__getStyle
+
+    expect(getStyle.call({}, '', '', 'width: 100px !important', { height: '20px !important' })).toEqual({
+      width: '100px !important',
+      height: '20px !important'
+    })
+  })
+
+  it('preserves class order between local and app styles without adding UnoCSS lookups', () => {
+    const context = { __getClassStyle: name => name === 'local' ? { color: 'red' } : undefined }
+    const getStyle = styleHelperMixin().methods.__getStyle
+    global.__getAppClassStyle = name => name === 'app' ? { color: 'blue' } : undefined
+    global.__getUnoStyle = jest.fn(() => ({ color: 'green' }))
+    global.__getUnoVarStyle = jest.fn(() => ({ color: 'yellow' }))
+    try {
+      expect(getStyle.call(context, 'local app')).toEqual({ color: 'blue' })
+      expect(getStyle.call(context, 'app local')).toEqual({ color: 'red' })
+      expect(global.__getUnoStyle).not.toHaveBeenCalled()
+      expect(global.__getUnoVarStyle).not.toHaveBeenCalled()
+    } finally {
+      delete global.__getAppClassStyle
+      delete global.__getUnoStyle
+      delete global.__getUnoVarStyle
+    }
+  })
+
+  it('merges static and dynamic styles before collecting dimensions dependencies', () => {
+    const context = { __trackPageSizeCount: jest.fn() }
+    const result = styleHelperMixin().methods.__getStyle.call(context, '', '', 'width: 750rpx', { width: '100px' })
+
+    expect(result).toEqual({ width: 100 })
+    expect(context.__trackPageSizeCount).not.toHaveBeenCalled()
+  })
+
+  it('preserves native style references and falsy array entries', () => {
+    const animatedStyle = { viewDescriptors: {}, width: 100 }
+    const nativeStyle = [null, false, 0, animatedStyle]
+    const result = styleHelperMixin().methods.__getStyle.call({}, '', '', nativeStyle, { height: '20px' })
+
+    expect(result).toEqual([null, false, 0, animatedStyle, { height: 20 }])
+    expect(result[3]).toBe(animatedStyle)
   })
 
   it('does not expose the mutable dimensions cache through the global getter', () => {
@@ -455,7 +535,7 @@ describe('RN styleHelperMixin dimensions', () => {
       mockDimensionsChangeHandler = originalGlobals.dimensionsChangeHandler
     }
   })
-  it('keeps inline important precedence over media important declarations', () => {
+  it('applies media important without enabling inline important parsing', () => {
     const context = {
       __getClassStyle: () => ({
         _media: [{ options: { minWidth: 300 }, value: { _inlineLayer: { important: { width: 100 } } } }]
@@ -463,11 +543,11 @@ describe('RN styleHelperMixin dimensions', () => {
       __trackPageSizeCount: jest.fn()
     }
     const result = styleHelperMixin().methods.__getStyle.call(context, 'box', '', '', { width: '200px !important' })
-    expect(result.width).toBe(200)
+    expect(result.width).toBe(100)
   })
 
-  it('preserves static inline important declarations over ordinary dynamic styles', () => {
+  it('preserves dynamic styles overriding static inline important text', () => {
     const result = styleHelperMixin().methods.__getStyle.call({}, '', '', 'width:100px !important', { width: '200px' })
-    expect(result.width).toBe(100)
+    expect(result.width).toBe(200)
   })
 })

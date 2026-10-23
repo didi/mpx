@@ -52,14 +52,13 @@ const empty = {}
 
 // 记录 style 是否依赖窗口尺寸
 let dependentWindowSize = false
-const isNum = (v) => !isNaN(+v)
 function formatValue (value, unitType) {
+  if (unitType === 'hairlineWidth') {
+    return StyleSheet.hairlineWidth
+  }
   if (unitType && typeof unit[unitType] === 'function') {
     dependentWindowSize = true
     return unit[unitType](+value)
-  }
-  if (unitType === 'hairlineWidth' || value === 'hairlineWidth') {
-    return StyleSheet.hairlineWidth
   }
   const matched = unitRegExp.exec(value)
   if (matched) {
@@ -70,6 +69,7 @@ function formatValue (value, unitType) {
       return unit[matched[2]](+matched[1])
     }
   }
+  if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
   return value
 }
 
@@ -144,7 +144,8 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 
 const parseStyleText = cached((cssText) => {
@@ -187,35 +188,8 @@ function mergeObjectArray (arr) {
 function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    let value = styleObj[prop]
-
-    // check important
-    const importantValue = typeof value === 'string' && value.endsWith('!important')
-    if (importantValue) {
-      transformed._inlineLayer = transformed._inlineLayer || {}
-      transformed._inlineLayer.important = transformed._inlineLayer.important || {}
-      value = value.split('!')[0]
-    }
-
-    // format value
-    if (prop === 'lineHeight' && isNum(value)) {
-      if (+value === 0) {
-        value = 0
-      } else {
-        value = `${Math.round(value * 100)}%`
-      }
-    } else if (prop !== 'flex') {
-      value = formatValue(value)
-    }
-
-    // set value
-    if (importantValue) {
-      transformed._inlineLayer.important[prop] = value
-    } else {
-      transformed[prop] = value
-    }
+    transformed[prop] = formatValue(styleObj[prop])
   })
-
   return transformed
 }
 
@@ -228,7 +202,7 @@ function isNativeStyle (style) {
 }
 
 function getMediaStyle (media) {
-  if (!media || !media.length) return {}
+  if (!media || !media.length) return
   dependentWindowSize = true
   const { width } = getDimensionsInfo()
   return media.reduce((styleObj, item) => {
@@ -261,9 +235,6 @@ function getMediaStyle (media) {
 
 const createLayer = (isNativeStyle) => {
   const layerMap = {
-    preflight: [],
-    app: [],
-    uno: [],
     normal: [],
     important: []
   }
@@ -277,7 +248,7 @@ const createLayer = (isNativeStyle) => {
   const mergeToLayer = (name, style, mediaStyle) => {
     const layer = layerMap[name] || layerMap.normal
     layer.push(style)
-    if (style._inlineLayer) checkInlineLayer(style, mergeToLayer)
+    if (style?._inlineLayer) checkInlineLayer(style, mergeToLayer)
     if (mediaStyle) {
       layer.push(mediaStyle)
       if (mediaStyle._inlineLayer) checkInlineLayer(mediaStyle, mergeToLayer)
@@ -291,9 +262,6 @@ const createLayer = (isNativeStyle) => {
   const genResult = isNativeStyle
     ? () => {
         return [
-          ...layerMap.preflight,
-          ...layerMap.app,
-          ...layerMap.uno,
           ...layerMap.normal,
           ...layerMap.important
         ]
@@ -301,9 +269,6 @@ const createLayer = (isNativeStyle) => {
     : () => {
         const res = Object.assign(
           {},
-          ...layerMap.preflight,
-          ...layerMap.app,
-          ...layerMap.uno,
           ...layerMap.normal,
           ...layerMap.important
         )
@@ -317,23 +282,6 @@ const createLayer = (isNativeStyle) => {
     mergeToLayerWithStyles,
     genResult
   }
-}
-
-const HIDE_STYLE = {
-  // display: 'none'
-  // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
-  flex: 0,
-  height: 0,
-  width: 0,
-  paddingTop: 0,
-  paddingRight: 0,
-  paddingBottom: 0,
-  paddingLeft: 0,
-  marginTop: 0,
-  marginRight: 0,
-  marginBottom: 0,
-  marginLeft: 0,
-  overflow: 'hidden'
 }
 
 export default function styleHelperMixin () {
@@ -356,24 +304,16 @@ export default function styleHelperMixin () {
         const { mergeToLayer, mergeToLayerWithStyles, genResult } = createLayer(isNativeStaticStyle)
 
         if (staticClass || dynamicClass) {
-          let needAddUnoPreflight = false
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
 
           classString.split(/\s+/).forEach((className) => {
-            let localStyle, appStyle, unoStyle, unoVarStyle
+            let localStyle, appStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
+              mergeToLayer('normal', localStyle, getMediaStyle(localStyle._media))
               dependentWindowSize = dependentWindowSize || localStyle._dependentWindowSize
-            } else if (unoStyle = global.__getUnoStyle?.(className)) {
-              mergeToLayer(unoStyle._layer || 'uno', unoStyle, getMediaStyle(unoStyle._media))
-              dependentWindowSize = dependentWindowSize || unoStyle._dependentWindowSize
-              if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
-            } else if (unoVarStyle = global.__getUnoVarStyle?.(className)) {
-              mergeToLayer('important', unoVarStyle)
-              dependentWindowSize = dependentWindowSize || unoVarStyle._dependentWindowSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
+              mergeToLayer('normal', appStyle, getMediaStyle(appStyle._media))
               dependentWindowSize = dependentWindowSize || appStyle._dependentWindowSize
             } else if (global.__externalClasses?.includes(className)) {
               // 始终读取版本号，确保 externalClasses 从无到有时也能触发样式重算。
@@ -384,15 +324,10 @@ export default function styleHelperMixin () {
               }
             }
           })
-
-          if (needAddUnoPreflight) {
-            const unoPreflightStyle = global.__getAppClassStyle?.('__uno_preflight')
-            mergeToLayer('preflight', unoPreflightStyle)
-            dependentWindowSize = dependentWindowSize || unoPreflightStyle._dependentWindowSize
-          }
         }
 
         if (staticStyle || dynamicStyle) {
+          const styleObj = {}
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
               mergeToLayerWithStyles('normal', staticStyle)
@@ -400,14 +335,29 @@ export default function styleHelperMixin () {
               mergeToLayer('normal', staticStyle)
             }
           } else {
-            mergeToLayer('normal', transformStyleObj(parseStyleText(staticStyle)))
+            Object.assign(styleObj, parseStyleText(staticStyle))
           }
-
-          mergeToLayer('normal', transformStyleObj(normalizeDynamicStyle(dynamicStyle)))
+          Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
+          mergeToLayer('normal', transformStyleObj(styleObj))
         }
 
         if (hide) {
-          mergeToLayer('important', HIDE_STYLE)
+          mergeToLayer('important', {
+            // display: 'none'
+            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
+            flex: 0,
+            height: 0,
+            width: 0,
+            paddingTop: 0,
+            paddingRight: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            marginTop: 0,
+            marginRight: 0,
+            marginBottom: 0,
+            marginLeft: 0,
+            overflow: 'hidden'
+          })
         }
 
         const result = genResult()

@@ -2,6 +2,18 @@ const { getClassMap } = require('../../../../lib/react/style-helper')
 
 describe('RN responsive media styles', () => {
   const createConfig = () => ({ mode: 'ios', srcMode: 'wx', ctorType: 'component', warn: jest.fn(), error: jest.fn() })
+  test('preserves ordinary rule merging and important handling outside media queries', () => {
+    const config = createConfig()
+    const result = getClassMap({
+      content: '.box { width: 100px !important; height: 30px !important } .box { color: red !important }',
+      filename: 'test.css',
+      ...config
+    })
+
+    expect(result.box).toEqual({ width: '100', height: '30', color: '"red"' })
+    expect(config.error).not.toHaveBeenCalled()
+  })
+
   describe('Media queries', () => {
     test('keeps media declarations out of the default class style', () => {
       const config = createConfig()

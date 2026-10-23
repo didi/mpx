@@ -122,8 +122,10 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
 
     root.walkRules(rule => {
       const classMapValue = {}
+      const options = getMediaOptions(rule.parent.params || '')
+      const isMedia = options.maxWidth || options.minWidth
       rule.walkDecls((decl) => {
-        let { prop, value, important } = decl
+        let { prop, value } = decl
         if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
         let newData = rulesRunner && rulesRunner({ prop, value, selector: rule.selector, decl, rule, sourceMap })
         if (!newData) return
@@ -151,7 +153,7 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
           } else {
             value = formatValue(value)
           }
-          if (important) {
+          if (isMedia && decl.important) {
             classMapValue._inlineLayer = classMapValue._inlineLayer || {}
             classMapValue._inlineLayer.important = classMapValue._inlineLayer.important || {}
             classMapValue._inlineLayer.important[prop] = value
@@ -162,8 +164,6 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
       })
 
       const classMapKeys = []
-      const options = getMediaOptions(rule.parent.params || '')
-      const isMedia = options.maxWidth || options.minWidth
       selectorParser(selectors => {
         selectors.each(selector => {
           if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
