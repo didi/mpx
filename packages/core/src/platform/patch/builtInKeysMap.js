@@ -24,6 +24,8 @@ if (__mpx_mode__ === 'web') {
     'initData',
     'watch',
     'computed',
+    'renderTracked',
+    'renderTriggered',
     'provide',
     'inject',
     'mpxCustomKeysForBlend',
