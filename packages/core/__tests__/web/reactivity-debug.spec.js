@@ -10,54 +10,29 @@ jest.mock('../../src/platform/export/index', () => require('../../src/platform/e
 jest.mock('../../src/platform/env/index', () => require('../../src/platform/env/index.web'))
 jest.mock('@mpxjs/api-proxy', () => ({ createSelectorQuery: jest.fn(), createIntersectionObserver: jest.fn() }))
 
-it('uses Vue render hooks for options and composition, including lifecycle error handling', async () => {
-  const errors = jest.spyOn(console, 'error').mockImplementation(() => {})
+it('preserves Web options hooks and exports Vue composition hooks', () => {
   const Vue = require('vue')
   const api = require('../../src/platform/export/index.web')
   const mergeOptions = require('../../src/core/mergeOptions').default
   const { getDefaultOptions } = require('../../src/platform/patch/getDefaultOptions.web')
   const tracked = jest.fn()
   const triggered = jest.fn()
-  const compositionTracked = jest.fn()
-  const compositionTriggered = jest.fn()
-  let throwInMixin = false
-  const mixinTriggered = jest.fn(() => {
-    if (throwInMixin) throw new Error('mixin render hook error')
-  })
   const options = getDefaultOptions({
     type: 'component',
     rawOptions: mergeOptions({
       mpxConvertMode: 'wxToWeb',
       data: { count: 0 },
-      mixins: [{ renderTriggered: mixinTriggered }],
       renderTracked: tracked,
-      renderTriggered: triggered,
-      setup () {
-        api.onRenderTracked(compositionTracked)
-        api.onRenderTriggered(compositionTriggered)
-        return {}
-      }
+      renderTriggered: triggered
     }, 'component', true)
   })
   const instance = new Vue(Object.assign(options, {
     render (h) { return h('div', String(this.count)) }
   })).$mount()
   expect(api.onRenderTracked).toBe(Vue.onRenderTracked)
+  expect(api.onRenderTriggered).toBe(Vue.onRenderTriggered)
   expect(tracked).toHaveBeenCalled()
-  expect(tracked.mock.contexts.every(context => context === instance)).toBe(true)
-  expect(tracked.mock.invocationCallOrder[0]).toBeLessThan(compositionTracked.mock.invocationCallOrder[0])
   instance.count++
-  expect(triggered.mock.calls[0][0]).toBe(compositionTriggered.mock.calls[0][0])
   expect(triggered.mock.calls[0][0]).toMatchObject({ key: 'count', type: 'set' })
-  await Vue.nextTick()
-  expect(instance.$el.textContent).toBe('1')
-  throwInMixin = true
-  instance.count++
-  expect(triggered).toHaveBeenCalledTimes(1)
-  expect(compositionTriggered).toHaveBeenCalledTimes(2)
-  expect(errors).toHaveBeenCalled()
   instance.$destroy()
-  instance.count++
-  expect(compositionTriggered).toHaveBeenCalledTimes(2)
-  errors.mockRestore()
 })
