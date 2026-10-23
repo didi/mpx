@@ -5,9 +5,7 @@ import {
   ONHIDE,
   ONSHOW,
   ONLOAD,
-  UPDATED,
-  RENDERTRACKED,
-  RENDERTRIGGERED
+  UPDATED
 } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
@@ -57,9 +55,7 @@ export const lifecycleProxyMap = {
   [UNMOUNTED]: ['didUnmount', 'onUnload'],
   [ONSHOW]: ['pageShow', 'onShow'],
   [ONHIDE]: ['pageHide', 'onHide'],
-  [ONLOAD]: ['onLoad'],
-  [RENDERTRACKED]: ['renderTracked'],
-  [RENDERTRIGGERED]: ['renderTriggered']
+  [ONLOAD]: ['onLoad']
 }
 
 export const LIFECYCLE = {

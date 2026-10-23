@@ -1,6 +1,6 @@
 import { reactive, shallowReactive, set, isReactive, setForceTrigger } from './reactive'
 import { RefKey } from '../helper/const'
-import { registerRefDebugTarget } from './debug'
+import { getRefDebugTarget, registerRefDebugTarget } from './debug'
 import {
   warn,
   isPlainObject,
@@ -79,7 +79,7 @@ export function customRef (factory) {
       }
     )
   )
-  if (process.env.NODE_ENV !== 'production') registerRefDebugTarget(version, custom, true)
+  if (process.env.NODE_ENV !== 'production') registerRefDebugTarget(getRefDebugTarget(version), custom, true)
   return custom
 }
 

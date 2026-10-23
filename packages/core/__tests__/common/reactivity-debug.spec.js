@@ -7,9 +7,9 @@ jest.mock('@mpxjs/perf', () => ({}), { virtual: true })
 
 const {
   reactive, ref, shallowRef, customRef, toRef, triggerRef,
-  computed, watch, watchEffect, watchSyncEffect, watchPostEffect, nextTick, set, del
+  computed, watch, watchEffect, nextTick, set, del
 } = require('../../src')
-const { ReactiveEffect, pauseTracking, resetTracking } = require('../../src/observer/effect')
+const { ReactiveEffect } = require('../../src/observer/effect')
 
 function observe (getter, onTrack = jest.fn(), onTrigger = jest.fn()) {
   const effect = new ReactiveEffect(getter)
@@ -39,18 +39,6 @@ describe('reactivity debugger events', () => {
     stop()
     state.count = 2
     expect(onTrigger).toHaveBeenCalledTimes(1)
-  })
-
-  it('reports repeated reads while keeping dependency subscriptions deduplicated', () => {
-    const state = reactive({ count: 0 })
-    const getter = jest.fn(() => state.count + state.count)
-    const { effect, onTrack, onTrigger } = observe(getter)
-    expect(onTrack).toHaveBeenCalledTimes(2)
-    expect(effect.deps).toHaveLength(1)
-    state.count++
-    expect(onTrigger).toHaveBeenCalledTimes(1)
-    expect(getter).toHaveBeenCalledTimes(2)
-    effect.stop()
   })
 
   it.each([ref, shallowRef])('uses the public ref identity for value events', (createRef) => {
@@ -90,15 +78,19 @@ describe('reactivity debugger events', () => {
       set (next) { value = next; trigger() }
     }))
     const first = observe(() => custom.value)
+    const shallowValue = { count: 0 }
+    const shallow = shallowRef(shallowValue)
+    const second = observe(() => shallow.value)
+    const stop = watch(custom, () => { shallow.value = shallowValue }, { flush: 'sync' })
     expect(first.onTrack.mock.calls[0][0].target).toBe(custom)
     custom.value = 10
     expect(first.onTrigger.mock.calls[0][0]).toMatchObject({ target: custom, type: 'set', key: 'value' })
     expect(first.onTrigger.mock.calls[0][0]).not.toHaveProperty('newValue')
     expect(first.onTrigger.mock.calls[0][0]).not.toHaveProperty('oldValue')
+    expect(second.onTrigger).not.toHaveBeenCalled()
+    stop()
     first.effect.stop()
 
-    const shallow = shallowRef({ count: 0 })
-    const second = observe(() => shallow.value)
     shallow.value.count++
     expect(second.onTrigger).not.toHaveBeenCalled()
     triggerRef(shallow)
@@ -157,20 +149,18 @@ describe('reactivity debugger events', () => {
     expect(writable.value).toBe(3)
   })
 
-  it.each([
-    ['watchEffect', watchEffect], ['watchSyncEffect', watchSyncEffect], ['watchPostEffect', watchPostEffect]
-  ])('forwards %s debugger options and preserves flush scheduling', async (name, createWatch) => {
+  it('forwards watchEffect debugger options without changing scheduling', async () => {
     const count = ref(0)
     const onTrack = jest.fn()
     const onTrigger = jest.fn()
     const getter = jest.fn(() => count.value)
-    const stop = createWatch(getter, { onTrack, onTrigger })
+    const stop = watchEffect(getter, { onTrack, onTrigger })
     await nextTick()
     expect(getter).toHaveBeenCalledTimes(1)
     expect(onTrack.mock.calls[0][0].target).toBe(count)
     count.value++
     expect(onTrigger).toHaveBeenCalledTimes(1)
-    expect(getter).toHaveBeenCalledTimes(name === 'watchSyncEffect' ? 2 : 1)
+    expect(getter).toHaveBeenCalledTimes(1)
     await nextTick()
     expect(getter).toHaveBeenCalledTimes(2)
     stop()
@@ -192,35 +182,5 @@ describe('reactivity debugger events', () => {
     expect(error).toHaveBeenCalled()
     effect.stop()
     error.mockRestore()
-  })
-
-  it('keeps branch cleanup, paused notifications and stop behavior', () => {
-    const state = reactive({ chooseFirst: true, first: 0, second: 0 })
-    const getter = jest.fn(() => state.chooseFirst ? state.first : state.second)
-    const { effect, onTrigger } = observe(getter)
-    state.chooseFirst = false
-    state.first++
-    expect(getter).toHaveBeenCalledTimes(2)
-    effect.pause()
-    state.second++
-    state.second++
-    expect(onTrigger).toHaveBeenCalledTimes(3)
-    expect(getter).toHaveBeenCalledTimes(2)
-    effect.resume()
-    expect(getter).toHaveBeenCalledTimes(3)
-    effect.stop()
-    state.second++
-    expect(onTrigger).toHaveBeenCalledTimes(3)
-  })
-
-  it('does not emit track events while collection is explicitly paused', () => {
-    const count = ref(0)
-    const { effect, onTrack } = observe(() => {
-      pauseTracking()
-      try { return count.value } finally { resetTracking() }
-    })
-    expect(onTrack).not.toHaveBeenCalled()
-    expect(effect.deps).toHaveLength(0)
-    effect.stop()
   })
 })

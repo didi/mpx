@@ -689,7 +689,7 @@ createComponent({
 
 - **`Mpx.use`** 安装的插件会合并到 **`Mpx` 静态对象**与 **`Mpx.prototype`**，若与业务自定义全局名冲突，可为插件传入 **`prefix` / `postfix`** 选项。
 - **调试事件**：`onTrack(event)` 观察依赖收集，`onTrigger(event)` 在依赖通知时同步执行，早于原 update/scheduler；`flush` 仍控制侦听回调时机。事件含 `effect` / `target` / `type` / `key`，赋值事件可含 `oldValue` / `newValue`。
-- **选项式调试支持**：页面/组件的 `watch` 可在含 `handler` 的对象中配置 `onTrack` / `onTrigger`；`this.$watch` 支持通过第三参数或第二参数的 `handler` 对象配置，调试回调的事件类型为 `DebuggerEvent`。选项式 `computed` 不提供独立的调试配置入口，需使用组合式 `computed` 的第二参数。组件级渲染调试可直接声明 `renderTracked` / `renderTriggered`，无需 `setup`；支持 Mixin 合并、实例 `this` 绑定和与组合式钩子并存，先选项式后组合式，单个调试钩子异常不阻断后续钩子，销毁后停止触发。
+- **选项式调试支持**：页面/组件的 `watch` 可在含 `handler` 的对象中配置 `onTrack` / `onTrigger`；`this.$watch` 支持通过第三参数或第二参数的 `handler` 对象配置，调试回调的事件类型为 `DebuggerEvent`。选项式 `computed` 不提供独立的调试配置入口，需使用组合式 `computed` 的第二参数。组件级渲染调试可直接声明 `renderTracked` / `renderTriggered`，无需 `setup`；支持 Mixin 合并、实例 `this` 绑定和与组合式钩子并存，先选项式后组合式；异常处理与普通生命周期一致，选项式钩子抛错会中断同组合并钩子的剩余调用，后续组合式钩子仍会执行；销毁后停止触发。
 - **开发环境限制**：`renderTracked` / `renderTriggered`、`onRenderTracked` / `onRenderTriggered` 及 watch/computed 调试选项仅在 `process.env.NODE_ENV !== 'production'` 时生效，生产环境忽略。回调中仅观察或设置断点，避免修改响应式状态。
 
 ---

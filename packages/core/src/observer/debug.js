@@ -1,11 +1,12 @@
 const refTargets = process.env.NODE_ENV !== 'production' ? new WeakMap() : null
 
 export function registerRefDebugTarget (source, target, custom = false) {
-  const info = refTargets.get(source) || {}
-  info.target = target
-  info.custom = custom
-  refTargets.set(source, info)
-  refTargets.set(target, info)
+  refTargets.set(source, { target, custom })
+  refTargets.set(target, source)
+}
+
+export function getRefDebugTarget (ref) {
+  return refTargets.get(ref)
 }
 
 export function createDebuggerInfo (target, type, key, values) {

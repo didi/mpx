@@ -1,6 +1,6 @@
 import { reactive, defineReactive } from '../observer/reactive'
 import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
-import { effectScope } from '../platform/export/index'
+import { effectScope, getCurrentScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
@@ -49,9 +49,7 @@ import {
   ONSHOW,
   ONHIDE,
   ONRESIZE,
-  REACTHOOKSEXEC,
-  RENDERTRACKED,
-  RENDERTRIGGERED
+  REACTHOOKSEXEC
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
@@ -184,10 +182,6 @@ export default class MpxProxy {
       // 在 props/data 初始化之前初始化 inject
       this.initInject()
       this.initProps()
-      if (process.env.NODE_ENV !== 'production') {
-        if (isFunction(this.options[RENDERTRACKED])) onRenderTracked(this.options[RENDERTRACKED].bind(this.target), this)
-        if (isFunction(this.options[RENDERTRIGGERED])) onRenderTriggered(this.options[RENDERTRIGGERED].bind(this.target), this)
-      }
       this.initSetup()
       this.initData()
       this.initComputed()
@@ -522,13 +516,11 @@ export default class MpxProxy {
     }
     let result
     if (isFunction(hook) && !hooksOnly) {
-      const setContext = hookName !== BEFORECREATE
-      if (setContext) {
-        setCurrentInstance(this)
-      }
-      result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
-      if (setContext) {
-        unsetCurrentInstance()
+      const resetInstance = hookName !== BEFORECREATE && setCurrentInstance(this)
+      try {
+        result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
+      } finally {
+        if (resetInstance) resetInstance()
       }
     }
     hooks.forEach((hook) => {
@@ -875,8 +867,15 @@ export const getCurrentInstance = () => {
 }
 
 export const setCurrentInstance = (instance) => {
+  const previousInstance = currentInstance
+  const previousScope = getCurrentScope()
   currentInstance = instance
   instance?.scope?.on()
+  return () => {
+    instance?.scope?.off()
+    currentInstance = previousInstance
+    previousScope?.on()
+  }
 }
 
 export const unsetCurrentInstance = () => {
@@ -888,10 +887,12 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
   if (instance) {
     const wrappedHook = (...args) => {
       if (instance.isUnmounted()) return
-      setCurrentInstance(instance)
-      const res = callWithErrorHandling(hook, instance, `${hookName} hook`, args)
-      unsetCurrentInstance()
-      return res
+      const resetInstance = setCurrentInstance(instance)
+      try {
+        return callWithErrorHandling(hook, instance, `${hookName} hook`, args)
+      } finally {
+        resetInstance()
+      }
     }
     if (isFunction(hook)) (instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(wrappedHook)
   }
@@ -899,33 +900,13 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
 
 export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
 
-const createRenderDebugHook = (hookName) => process.env.NODE_ENV !== 'production'
-  ? (hook, instance = currentInstance) => {
-    if (instance && isFunction(hook)) {
-      const wrappedHook = (event) => {
-        if (instance.isUnmounted()) return
-        const previousInstance = currentInstance
-        currentInstance = instance
-        try {
-          return instance.scope.run(() => callWithErrorHandling(hook, instance, `${hookName} hook`, [event]))
-        } finally {
-          currentInstance = previousInstance
-        }
-      }
-      ;(instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(wrappedHook)
-    }
-  }
-  : noop
-
-export const onRenderTracked = createRenderDebugHook(RENDERTRACKED)
-export const onRenderTriggered = createRenderDebugHook(RENDERTRIGGERED)
+export const onRenderTracked = process.env.NODE_ENV !== 'production' ? createHook('renderTracked') : noop
+export const onRenderTriggered = process.env.NODE_ENV !== 'production' ? createHook('renderTriggered') : noop
 
 export function bindRenderDebugHooks (effect, instance) {
   if (process.env.NODE_ENV === 'production') return
-  const tracked = instance.hooks[RENDERTRACKED]
-  const triggered = instance.hooks[RENDERTRIGGERED]
-  if (tracked) effect.onTrack = (event) => tracked.forEach(hook => hook(event))
-  if (triggered) effect.onTrigger = (event) => triggered.forEach(hook => hook(event))
+  if (instance.hasHook('renderTracked')) effect.onTrack = (event) => instance.callHook('renderTracked', [event])
+  if (instance.hasHook('renderTriggered')) effect.onTrigger = (event) => instance.callHook('renderTriggered', [event])
 }
 
 // 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上

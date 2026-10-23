@@ -7,9 +7,7 @@ import {
   ONLOAD,
   ONRESIZE,
   SERVERPREFETCH,
-  REACTHOOKSEXEC,
-  RENDERTRACKED,
-  RENDERTRIGGERED
+  REACTHOOKSEXEC
 } from '../../../core/innerLifecycle'
 
 const APP_HOOKS = [
@@ -69,9 +67,7 @@ export const lifecycleProxyMap = {
   [ONLOAD]: ['onLoad'],
   [ONRESIZE]: ['onResize'],
   [SERVERPREFETCH]: ['serverPrefetch'],
-  [REACTHOOKSEXEC]: ['reactHooksExec'],
-  [RENDERTRACKED]: ['renderTracked'],
-  [RENDERTRIGGERED]: ['renderTriggered']
+  [REACTHOOKSEXEC]: ['reactHooksExec']
 }
 
 export const LIFECYCLE = {

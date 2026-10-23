@@ -28,7 +28,7 @@ createComponent({
 })
 ```
 
-普通函数形式的钩子中，`this` 指向当前页面或组件实例。支持在 `mixins` 中声明，先执行 Mixin 钩子，再执行当前组件钩子；也可与组合式 `onRenderTracked` / `onRenderTriggered` 同时使用，各平台均先执行选项式钩子，再执行组合式钩子。单个渲染调试钩子抛错会由框架处理，不会中断后续调试钩子。
+普通函数形式的钩子中，`this` 指向当前页面或组件实例。支持在 `mixins` 中声明，先执行 Mixin 钩子，再执行当前组件钩子；也可与组合式 `onRenderTracked` / `onRenderTriggered` 同时使用，各平台均先执行选项式钩子，再执行组合式钩子。异常处理与普通生命周期一致：选项式钩子抛错会中断同组合并钩子的剩余调用，异常由框架处理，后续组合式钩子仍会执行。
 
 事件内容与[组合式渲染调试 Hook](composition-api.md#render-debug-hooks) 相同。多次通知可能合并为一次渲染，事件不表示小程序 setData 回调或 RN 的 React 提交已完成；未创建 Mpx 渲染 Effect 的原生渲染路径不承诺这些事件。销毁后停止触发，生产环境忽略这两个选项。回调中只观察事件或设置断点，避免修改响应式状态。事件字段见 [DebuggerEvent](reactivity-api.md#debugger-event)。
 
