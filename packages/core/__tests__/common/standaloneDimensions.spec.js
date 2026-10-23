@@ -9,7 +9,7 @@ jest.mock('react-native', () => ({
 jest.mock('@mpxjs/utils', () => Object.assign({}, jest.requireActual('@mpxjs/utils'), {
   getFocusedNavigation: jest.fn()
 }))
-jest.mock('@mpxjs/perf', () => ({ scopeStart: jest.fn(), scopeEnd: jest.fn() }))
+jest.mock('@mpxjs/perf', () => ({ scopeStart: jest.fn(), scopeEnd: jest.fn() }), { virtual: true })
 jest.mock('../../src/index', () => ({
   __esModule: true,
   default: { config: { rnConfig: { dimensionsBase: 'window' } } }
