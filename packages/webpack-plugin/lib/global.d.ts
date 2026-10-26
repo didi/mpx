@@ -80,6 +80,16 @@ declare global {
     dynamicEntryInfo: Record<string, any>
 
     /**
+     * 是否使用 UnoCSS
+     */
+    hasUnoCSS?: boolean
+
+    /**
+     * 当前资源是否命中 UnoCSS scan 规则
+     */
+    isUnoCSSScanFile?: (file: string) => boolean
+
+    /**
      * 记录 entryModule 与 entryNode 的对应关系，用于体积分析
      */
     entryNodeModulesMap: Map<any, any>
@@ -133,7 +143,6 @@ declare global {
      */
     i18n: any | null
     checkUsingComponentsRules: any
-    forceDisableBuiltInLoader: boolean
 
     /**
      * 默认的应用标题
@@ -152,7 +161,6 @@ declare global {
     supportRequireAsync: boolean
     partialCompileRules: any
     asyncSubpackageRules: any[]
-    transSubpackageRules: any
     optimizeRenderRules: any[]
 
     addEntryModuleIssuer: (module: string, issuer: string) => void

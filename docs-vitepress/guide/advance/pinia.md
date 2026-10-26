@@ -14,6 +14,12 @@ Mpx 参考 [Pinia](https://pinia.vuejs.org/) 设计实现了一套外部状态�
 
 ### 创建 pinia {#create-pinia}
 
+`@mpxjs/pinia` 将 `pinia`、`vue` 和 `vue-demi` 声明为可选的 peer dependencies，仅输出 Web 时需要安装：
+
+```sh
+npm install pinia@^2.0.14 vue@^2.7.10 vue-demi@^0.14.6
+```
+
 首先在应用中调用`createPinia`方法来创建全局 pinia 实例。
 
 ``` js

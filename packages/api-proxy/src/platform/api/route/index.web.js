@@ -3,6 +3,15 @@ import { EventChannel } from '../event-channel'
 
 let routeCount = 0
 
+function isPageNotFound (router, type, options) {
+  const { route } = router.resolve(options.url)
+  if (!route.matched.length) {
+    failHandle({ errMsg: `${type}:fail page "${route.path}" is not found` }, options.fail, options.complete)
+    return true
+  }
+  return false
+}
+
 function redirectTo (options = {}) {
   if (!isBrowser) {
     throwSSRWarning('redirectTo API is running in non browser environments')
@@ -10,9 +19,10 @@ function redirectTo (options = {}) {
   }
   const router = global.__mpxRouter
   if (router) {
+    if (isPageNotFound(router, 'redirectTo', options)) return
     if (isTabBarPage(options.url, router)) {
       const res = { errMsg: 'redirectTo:fail can not redirectTo a tabBar page' }
-      failHandle(res, options.fail, options.complete)
+      return failHandle(res, options.fail, options.complete)
     }
     router.__mpxAction = { type: 'redirect' }
     if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
@@ -42,9 +52,10 @@ function navigateTo (options = {}) {
   }
   const router = global.__mpxRouter
   if (router) {
+    if (isPageNotFound(router, 'navigateTo', options)) return
     if (isTabBarPage(options.url, router)) {
       const res = { errMsg: 'navigateTo:fail can not navigateTo a tabBar page' }
-      failHandle(res, options.fail, options.complete)
+      return failHandle(res, options.fail, options.complete)
     }
     const finalPath = resolvePath(options.url, router.currentRoute.path).slice(1)
     const eventChannel = new EventChannel()
@@ -107,6 +118,7 @@ function reLaunch (options = {}) {
   }
   const router = global.__mpxRouter
   if (router) {
+    if (isPageNotFound(router, 'reLaunch', options)) return
     if (routeCount === 0 && router.currentRoute.query.routeCount) routeCount = router.currentRoute.query.routeCount
     router.__mpxAction = {
       type: 'reLaunch',
@@ -138,8 +150,10 @@ function reLaunch (options = {}) {
         }
       )
     }
-    const res = { errMsg: 'reLaunch:ok' }
-    successHandle(res, options.success, options.complete)
+    if (delta > 0) {
+      const res = { errMsg: 'reLaunch:ok' }
+      successHandle(res, options.success, options.complete)
+    }
   }
 }
 
@@ -150,13 +164,14 @@ function switchTab (options = {}) {
   }
   const router = global.__mpxRouter
   if (router) {
+    if (isPageNotFound(router, 'switchTab', options)) return
+    if (!isTabBarPage(options.url, router)) {
+      const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page!' }
+      return failHandle(res, options.fail, options.complete)
+    }
     const toRoute = router.match(options.url, router.history.current)
     const currentRoute = router.currentRoute
     if (toRoute.path !== currentRoute.path) {
-      if (!isTabBarPage(options.url, router)) {
-        const res = { errMsg: 'switchTab:fail can not switch to no-tabBar page!' }
-        failHandle(res, options.fail, options.complete)
-      }
       router.__mpxAction = {
         type: 'switch',
         path: options.url,
@@ -180,6 +195,7 @@ function switchTab (options = {}) {
             failHandle(res, options.fail, options.complete)
           }
         )
+        return
       }
     }
     const res = { errMsg: 'switchTab:ok' }

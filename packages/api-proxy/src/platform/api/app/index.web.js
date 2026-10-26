@@ -4,6 +4,7 @@ global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: [],
   error: [],
+  pageNotFound: [],
   rejection: [],
   lazyLoad: []
 }
@@ -24,6 +25,10 @@ function onUnhandledRejection (callback) {
 }
 
 function offUnhandledRejection (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.rejection.length = 0
+    return
+  }
   off(global.__mpxAppCbs.rejection, callback)
 }
 
@@ -33,7 +38,21 @@ function onError (callback) {
   }
 }
 
+function onPageNotFound (callback) {
+  if (isBrowser || isReact) {
+    global.__mpxAppCbs.pageNotFound.push(callback)
+  }
+}
+
+function offPageNotFound (callback) {
+  off(global.__mpxAppCbs.pageNotFound, callback)
+}
+
 function offError (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.error.length = 0
+    return
+  }
   off(global.__mpxAppCbs.error, callback)
 }
 
@@ -44,6 +63,10 @@ function onAppShow (callback) {
 }
 
 function offAppShow (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.show.length = 0
+    return
+  }
   off(global.__mpxAppCbs.show, callback)
 }
 
@@ -54,6 +77,10 @@ function onAppHide (callback) {
 }
 
 function offAppHide (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.hide.length = 0
+    return
+  }
   off(global.__mpxAppCbs.hide, callback)
 }
 
@@ -65,6 +92,10 @@ function onLazyLoadError (callback) {
 
 function offLazyLoadError (callback) {
   if (isReact) {
+    if (callback == null) {
+      global.__mpxAppCbs.lazyLoad.length = 0
+      return
+    }
     off(global.__mpxAppCbs.lazyLoad, callback)
   }
 }
@@ -76,6 +107,8 @@ export {
   offAppHide,
   onError,
   offError,
+  onPageNotFound,
+  offPageNotFound,
   onUnhandledRejection,
   offUnhandledRejection,
   onLazyLoadError,

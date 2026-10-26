@@ -2,7 +2,7 @@
 
 修改或新建 `.mpx` 文件后，必须使用 skill 随附的 `scripts/compile-validate.js` 进行真实编译校验。调用时使用指向 skill 目录的实际路径 `<skill-root>/scripts/compile-validate.js`，不要在宿主项目根目录或 `node_modules` 中查找该脚本。
 
-脚本基于宿主项目安装的 `@mpxjs/mpx-cli-service` 进行真实编译：从输入 `.mpx` 文件向上探测项目根目录，加载工程编译配置，按指定 target 编译，并按 `style / template / script / json / dependency / other` 聚合错误与警告。
+脚本基于宿主项目安装的 `@mpxjs/mpx-cli-service` 进行真实编译：从输入 `.mpx` 文件向上探测项目根目录，加载工程编译配置，按指定 target 编译，并按 `style / template / script / json / dependency / other` 聚合错误与警告。默认通过前置 loader 从目标文件中剥离 `usingComponents`，不解析或编译子组件，仅验证目标 `.mpx` 文件本身，因此默认不会校验子组件路径与配置。
 
 ## 校验要求
 
@@ -18,7 +18,7 @@
 | `--target=<mode>` | `ios` | 编译目标，多个用逗号分隔，如 `wx,ios,web` |
 | `--type=<page\|component>` | `component` | 入口类型，决定使用 `getPageEntry` 还是 `getComponentEntry`，并影响 `partialCompileRules` 形态 |
 | `--project-root=<path>` | 自动探测 | 显式指定宿主项目根目录 |
-| `--no-ignore-sub-components` | 关闭 | 关闭默认子组件占位策略，递归编译所有子组件 |
+| `--no-ignore-sub-components` | 关闭 | 保留 `usingComponents`，解析并递归编译所有子组件 |
 | `--json` | 关闭 | 输出结构化 JSON 结果 |
 | `-h, --help` | - | 查看命令帮助 |
 

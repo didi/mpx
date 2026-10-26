@@ -50,5 +50,4 @@ export function getFocusedNavigation () {
       }
     }
   }
-  return focusedNavigation
 }

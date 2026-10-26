@@ -132,15 +132,9 @@ module.exports = function (jsonContent, {
   }
 
   if (ctorType === 'page') {
-    const keysToExtract = ['navigationStyle', 'navigationBarTitleText', 'navigationBarTextStyle', 'navigationBarBackgroundColor']
-    const configObj = {}
-    // 暂时先不注入数据，后续如需要使用再用
-    keysToExtract.forEach(key => {
-      if (jsonObj[key]) {
-        configObj[key] = jsonObj[key]
-      }
-    })
-    loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource).resourcePath, configObj))
+    const pageConfig = Object.assign({}, jsonObj)
+    delete pageConfig.usingComponents
+    loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource).resourcePath, pageConfig))
   }
 
   const fs = loaderContext._compiler.inputFileSystem
@@ -279,7 +273,7 @@ module.exports = function (jsonContent, {
           pagesMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
           // 通过asyncSubPackagesNameRules对tarRoot进行修改，仅修改tarRoot，不修改outputPath页面路径
-          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+          tarRoot = transSubpackage(mpx.rnConfig.transSubpackageRules, tarRoot)
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
             async: tarRoot,
@@ -328,7 +322,7 @@ module.exports = function (jsonContent, {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { relativePath } = entry
 
-          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+          tarRoot = transSubpackage(mpx.rnConfig.transSubpackageRules, tarRoot)
 
           resolveResourcePathMap.set(name, resourcePath)
           if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })

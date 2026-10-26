@@ -64,7 +64,8 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
         selectAllComponents: instance.selectAllComponents.bind(instance),
         createSelectorQuery: instance.createSelectorQuery.bind(instance),
         createIntersectionObserver: instance.createIntersectionObserver.bind(instance),
-        getPageId: instance.getPageId.bind(instance)
+        getPageId: instance.getPageId.bind(instance),
+        getOpenerEventChannel: instance.getOpenerEventChannel.bind(instance)
       })
       if (__mpx_perf_framework__) perf.scopeEnd(perfId)
       unsetCurrentInstance(instance.__mpxProxy)

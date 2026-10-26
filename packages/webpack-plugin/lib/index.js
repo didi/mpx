@@ -83,6 +83,7 @@ const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
 const { startFSStripForCss, registerStripCompilation } = require('./style-compiler/strip-conditional')
+const injectAliCompatStyle = require('./utils/ali-compat-style')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
@@ -153,9 +154,6 @@ class MpxWebpackPlugin {
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
     }
-    if (options.transSubpackageRules && !isReact(options.mode)) {
-      warnings.push('MpxWebpackPlugin transSubpackageRules option only supports "ios", "android", or "harmony" mode')
-    }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
@@ -203,7 +201,6 @@ class MpxWebpackPlugin {
     options.checkUsingComponentsRules = options.checkUsingComponentsRules || (options.checkUsingComponents ? { include: () => true } : { exclude: () => true })
     options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
-    options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceMainPackageRules = options.forceMainPackageRules || {}
@@ -222,6 +219,10 @@ class MpxWebpackPlugin {
     options.webConfig = options.webConfig || {}
     options.webConfig.asyncCommonSubpackage = options.webConfig.asyncCommonSubpackage !== undefined ? options.webConfig.asyncCommonSubpackage : true
     options.rnConfig = options.rnConfig || {}
+    options.rnConfig.transSubpackageRules = options.rnConfig.transSubpackageRules || options.transSubpackageRules
+    if (options.rnConfig.transSubpackageRules && !isReact(options.mode)) {
+      warnings.push('MpxWebpackPlugin rnConfig.transSubpackageRules option only supports "ios", "android", or "harmony" mode')
+    }
     options.rnConfig.supportSubpackage = options.rnConfig.supportSubpackage !== undefined ? options.rnConfig.supportSubpackage : true
     options.rnConfig.asyncCommonSubpackage = options.rnConfig.asyncCommonSubpackage !== undefined ? options.rnConfig.asyncCommonSubpackage : true
     options.partialCompileRules = options.partialCompileRules || null
@@ -828,7 +829,6 @@ class MpxWebpackPlugin {
           defs: processDefs(this.options.defs),
           i18n: this.options.i18n,
           checkUsingComponentsRules: this.options.checkUsingComponentsRules,
-          forceDisableBuiltInLoader: this.options.forceDisableBuiltInLoader,
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,
@@ -852,7 +852,6 @@ class MpxWebpackPlugin {
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
-          transSubpackageRules: this.options.transSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
@@ -1505,7 +1504,7 @@ class MpxWebpackPlugin {
             // root仅用于包归属计算，不应进入最终module request
             if (queryObj.root) request = addQuery(request, {}, false, ['root'])
             // TODO 后续考虑和 asyncSubpackageRules 配置合并
-            if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+            if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.rnConfig.transSubpackageRules, tarRoot)
 
             if (tarRoot && mpx.supportRequireAsync) {
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
@@ -1742,6 +1741,10 @@ class MpxWebpackPlugin {
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
         if (isWeb(mpx.mode)) return
+
+        if (mpx.mode === 'ali' && mpx.appInfo.name) {
+          injectAliCompatStyle(compilation, mpx.appInfo.name + typeExtMap.styles)
+        }
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap

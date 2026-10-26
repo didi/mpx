@@ -25,6 +25,7 @@ describe('createTemplateComponent', () => {
       render,
       staticRenderFns
     })
+    expect(opt.__mpxTemplate).toBe(true)
     const hostSlots = { default: [1], header: [2] }
     const vm = {
       __mpxHost: {

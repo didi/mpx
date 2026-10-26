@@ -815,7 +815,7 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 | 功能 | 支持状态 | 说明 |
 |------|---------|------|
 | id, dataset | ✅ 完全支持 | 节点基础属性 |
-| setData | ✅ 完全支持 | 数据更新方法 |
+| setData | ✅ 完全支持 | 数据更新方法，回调在视图更新后执行 |
 | triggerEvent | ✅ 完全支持 | 事件触发 |
 | createSelectorQuery | ✅ 有限制 | 返回一个 SelectorQuery 对象实例，用以查询基础节点或非 virtualHost 自定义组件 host 节点的位置等属性，需配合 `wx:ref` 使用 |
 | selectComponent | ✅ 有限制 | 在父组件当中获取子组件的实例对象，返回匹配到的第一个组件实例，需配合 `wx:ref` 使用 |

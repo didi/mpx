@@ -44,6 +44,32 @@ new MpxwebpackPlugin({
 - Android应用 (android)
 - 鸿蒙应用 (harmony)
 
+## 支付宝文本与滚动条兼容 {#ali-text-scrollbar-compat}
+
+当 `mode` 为 `ali` 时，Mpx 会在 App 全局样式之前加载支付宝兼容样式，其中包含 `text { white-space: inherit }`。因此，`text` 默认会继承父节点的换行方式；业务在 App 样式、页面样式、组件样式或行内样式中显式声明 `white-space` 时，后加载的业务规则仍可覆盖该默认值。
+
+该默认值只处理换行继承。省略号布局仍需由业务设置宽度、`overflow`、`text-overflow` 等必要样式。
+
+使用微信语法开发并输出支付宝小程序时，`scroll-view` 的 `show-scrollbar` 支持以下布尔契约：
+
+```html
+<scroll-view
+  scroll-y="{{true}}"
+  show-scrollbar="{{showScrollbar}}"
+>
+  <view>列表内容</view>
+</scroll-view>
+```
+
+- `show-scrollbar="{{false}}"` 会为当前节点添加滚动条隐藏样式。
+- 动态值仅在结果严格等于布尔值 `false` 时隐藏；`undefined`、`null`、`0` 和字符串 `"false"` 均不会触发隐藏。
+- `true` 只移除 Mpx 添加的隐藏样式，恢复宿主默认行为，不会强制宿主显示滚动条。
+- 支付宝原生语法源码（`srcMode: 'ali'`）不会转换该属性。
+
+滚动条最终是否可见仍受支付宝客户端、基础库、系统和设备影响，建议在目标真机上验证横向、纵向及嵌套滚动场景。该兼容样式由完整 App 构建的全局样式入口提供；独立分包、插件产物及单独编译的页面或组件不在自动覆盖范围内。
+
+支付宝与 Web 的 `.mpx-root-view { display: initial }`、`page { line-height: normal }` 也作为框架默认样式先于用户 App 样式加载。业务同优先级声明可以覆盖这些默认值。
+
 ## 构建命令 {#build-command}
 
 ### 单平台构建 {#single-platform-build}

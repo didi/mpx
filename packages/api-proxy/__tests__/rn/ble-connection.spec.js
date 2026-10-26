@@ -109,4 +109,18 @@ describe('RN BLE connection APIs', () => {
     }))
     expect(BleManager.requestMTU).not.toHaveBeenCalled()
   })
+
+  test.each([false, 0, ''])('generic parameter check should reject invalid value %p', (value) => {
+    const fail = jest.fn()
+    const complete = jest.fn()
+
+    getBLEDeviceRSSI({ deviceId: value, fail, complete })
+
+    expect(fail).toHaveBeenCalledWith({
+      errMsg: 'getBLEDeviceRSSI:fail parameter error',
+      errno: 1509000
+    })
+    expect(complete).toHaveBeenCalled()
+    expect(BleManager.readRSSI).not.toHaveBeenCalled()
+  })
 })

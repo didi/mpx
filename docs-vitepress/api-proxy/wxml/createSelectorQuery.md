@@ -6,6 +6,8 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/wxml/wx.createSelectorQuery.html)
 
+Web 端使用 `.in(component)` 或 `.in(element)` 限定查询范围后，未匹配到节点时，`select` 对应的查询结果为 `null`，`selectAll` 对应的查询结果为空数组。
+
 ### 特别说明RN中 {#rn-note}
 1. 调用 createSelectorQuery 组件时，需要通过 wx:ref 进行绑定。
 2. 调用 createSelectorQuery 方法创建的 SelectorQuery 实例, 在使用过程中需要手动调用实例上的 in 方法来指定组件上下文。

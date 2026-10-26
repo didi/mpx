@@ -416,7 +416,7 @@ createComponent({
 
 用于获取初始路由配置的函数，参数为 RN 根组件接收到的参数
 
-- initialRouteName: 首页路径，例如 pages/index。若该路径未注册，Mpx 会通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），回退至应用首页，并丢弃该错误路由的 `initialParams`
+- initialRouteName: 首页路径，例如 pages/index，不包含 query。若该路径未注册，Mpx 回退至应用首页，并在导航就绪后调用 App 的 `onPageNotFound({ path, query, isEntryPage: true })`，其中 `query` 为该缺失入口的 `initialParams`（未传时为 `{}`），不会传入回退首页。未声明 App 回调且未注册 `mpx.onPageNotFound` 监听时通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调）
 - initialParams: 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`，例如 \{ a: 1 \}。后续通过路由 API 再次打开同路径页面时不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，NA 可能会向 RN 的根组件传递 props，此时可在 parseAppProps 中接受 props 并进行处理和透传到页面
@@ -468,17 +468,49 @@ mpx.config.rnConfig.disablePageTransition = true
 
 ### 折叠屏适配 {#foldable-screen-adaption}
 
+#### mpx.config.rnConfig.dimensionsBase
+
+```ts
+'window' | 'screen'
+```
+
+控制 `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，默认值为 `'window'`。
+
+如果需要保持旧版本基于屏幕尺寸计算的效果，可配置为 `'screen'`：
+
+```js
+mpx.config.rnConfig.dimensionsBase = 'screen'
+```
+
+配置后，响应式单位和媒体查询将使用 `Dimensions.get('screen')` 的宽高，并在 Screen 尺寸变化时重新计算相关样式及触发 `onResize`。
+
+该配置应在首次尺寸计算前完成，首次读取后将保持不变。
+
 #### mpx.config.rnConfig.customDimensions
 
 ```ts
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
-在某些情况下，我们可能不希望当前应用全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 尺寸信息来得到想要的渲染效果。
+在某些情况下，我们可能不希望当前应用全屏展示。此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 window 或 screen 尺寸信息，`rpx` / `vh` / `vw`、媒体查询与 `onResize` 会使用 `dimensionsBase` 指定的尺寸，并在该尺寸变化时触发相关更新。
 
-可在此方法中返回修改后的 dimensions，如果无返回或返回 undefined，则以入参作为返回值
+可在此方法中返回修改后的 dimensions，如果无返回或返回 `undefined`，则使用原始入参。
 
-例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
+例如，使用默认的 `dimensionsBase: 'window'` 时，折叠屏展开后如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
+
+#### getDimensionsInfo
+
+```ts
+(dimensionsBase?: 'window' | 'screen') => ScaledSize
+```
+
+返回最近一次初始化或 React Native Dimensions 变化后生效的尺寸副本。可传入 `'window'` 或 `'screen'` 指定本次获取的尺寸；不传时使用首次读取的 `rnConfig.dimensionsBase`，传参不会修改该配置。修改返回值不会影响框架内部缓存。
+
+```js
+const dimensions = getDimensionsInfo()
+console.log(dimensions.width, dimensions.height)
+const screenDimensions = getDimensionsInfo('screen')
+```
 
 
 ### 前后台切换 {#app-state-change}
