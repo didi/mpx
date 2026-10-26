@@ -1,0 +1,30 @@
+{
+  "scope": "non-scoring Mpx and task-scope acceptance",
+  "applies_to": [
+    "adaptation",
+    "creation"
+  ],
+  "checks": [
+    {
+      "id": "mpx-bindings",
+      "requirement": "动态类/样式使用wx:class/wx:style；普通class/style仅含静态内容。从完整模板节点检查，不以关键词命中代替。"
+    },
+    {
+      "id": "renderer-exposure",
+      "requirement": "模板直接使用renderer === 'skyline'或对应非Skyline比较，不额外声明isSkyline。setup模板用到renderer时，从getCurrentInstance().proxy读取并defineExpose；无脚本时补setup。同时检查模板使用的局部状态和方法暴露。"
+    },
+    {
+      "id": "component-config",
+      "requirement": "单组件任务仅保留/补齐自身component声明和依赖注册，不因跳过页面配置而遗漏组件JSON；不额外创建页面/app配置。页面任务核对页面JSON、app及约定组件树。"
+    },
+    {
+      "id": "delivery-scope",
+      "requirement": "仅输出或修改任务允许的文件；在隔离输出目录交付完整文件和简要report，用户未要求时不在报告重复粘贴整份代码。原始input始终只读。"
+    },
+    {
+      "id": "evidence",
+      "requirement": "验证状态区分静态、mock、真实编译与真机；未执行标not_run。记录实际读取范围、检查命中及未覆盖范围；不复用历史分数。"
+    }
+  ],
+  "reporting": "写入validation.json，与Skyline能力分数分开；编译/绑定阻断实际能力时，对应能力断言也失败，并记录因果。"
+}

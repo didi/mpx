@@ -1,0 +1,33 @@
+{
+  "status": "definition-only",
+  "files": {
+    "README.md": "4802f75cb312195429a04c24e03a8ac842dab029083086b6dbecbee2d57632a2",
+    "assertion-migration.json": "e5ef8d6d8e3f527953124aea4c03fe35ade2a99b37e30fd5f4698134d1e8ebca",
+    "common-validation.json": "dc41a8c822c740ca920394b9e71a475e80ce9f9774716956fe0c7845d8c198ab",
+    "creation-validation.json": "760dd12197705c4ae57a00ac982fd3cf16a4f0e6173c9c9dbdfb8e3d2ebff899",
+    "eval-0-style-layout/eval_metadata.json": "9d39bd2e5072be3c56e992191a49f45012d5f92f1fb8423f0677e1b4f3a18cdb",
+    "eval-0-style-layout/input/style-card.mpx": "56561e96359a84a73e4a7e51d9e20533cc9d107948d0bdd3b7a8467d57e6645e",
+    "eval-0-style-layout/input/task.md": "517b1f97a6cab44239988c3133bb7e694245f9c6af5b9ade54e113d92ea4225e",
+    "eval-1-page-scroll-sticky-layer-config/eval_metadata.json": "d912e4f081c27c05dfb90740ac0153019e04052f5ce8b5eb30d52d877bd2243c",
+    "eval-1-page-scroll-sticky-layer-config/input/app.json": "08b6c0c8a67d9602540f6eba281fd3649e75b8aee175ce2640a7dd3a714cf1ac",
+    "eval-1-page-scroll-sticky-layer-config/input/orders.mpx": "6e0df185e713f033af82368b5acf069c43812259509b2a381d3ce946de0b60ad",
+    "eval-1-page-scroll-sticky-layer-config/input/service.js": "977d51816125ab91147f6e3b4bf9b764046fefc7ad958495285cd4489e3bf164",
+    "eval-1-page-scroll-sticky-layer-config/input/task.md": "60c885c444ec736083f501104497154b8bf59f5678259db536263bfb8ea95db0",
+    "eval-2-template-runtime-inline-animation/eval_metadata.json": "2e8dfdf9181b3f10890b1e378c3007f5de1f3287d31f4216273541add1214d9d",
+    "eval-2-template-runtime-inline-animation/input/logo.svg": "c71a85400c9d1bc64393103364611c9370076caec60d65bc20fdcfdd97f6d29d",
+    "eval-2-template-runtime-inline-animation/input/row.wxml": "80f43cf55dbaf032920128f167d8b324b588e4dc01cbaa66e5f4063c394c876d",
+    "eval-2-template-runtime-inline-animation/input/task.md": "06aa06590d4181383b3947364d0f2a2d5fd51f06e597a415fecbe25503151b65",
+    "eval-2-template-runtime-inline-animation/input/user-list.mpx": "508fe0ecaa078cb526de50a5d8a0be13209401ee36feed974fea1c450f422e11",
+    "eval-3-new-task-board-page/eval_metadata.json": "853ce2b241161dda7a4d2cd181575d9d2771658868b55815a1df97f81e41859f",
+    "eval-3-new-task-board-page/input/app.json": "29beeb70b987df710a8381437d21a137ff68b9cab73eddace62ca26c1fa54dca",
+    "eval-3-new-task-board-page/input/task.md": "189132829ccbcdffb30464363ff1e0bfdc1e0482d594336237dacb4cfafd8582",
+    "evals.json": "9e17db0d52cc812a23626b4238f458d49cf7b175b09bc115c393ee34649ebe77",
+    "fixture-provenance.json": "5e5e5822f3abd568f464877e832a66797ae106f93263247d3f367f82d98a9597",
+    "grading-standard.md": "5e49e12c487f32fa24091b603d2100c5cf31354171bed477ac47155d8f552c8b",
+    "jest.config.json": "9b5895b4e1a886738d57a565acf6fa4676d1113a98e7eadba0fb79aa2756ba95",
+    "prompt_templates.json": "cf81c3132580def0b72d8309ee9119bd89e96ff039021ae1e4b0c9a8cf626c8a",
+    "run-metadata.json": "993266fb770fba85e666e697c7bb86852c2249322fa27d5b0094d7550836a9aa",
+    "skill-source.json": "eff63e324b2f4c7e6d889944ba6eb307fdd0c7c6c3bb9bebc6a92da37b5f2095",
+    "validate-suite.test.cjs": "6160f0e57f0ca9864862a1dc5d847434e0445182f2969ced306163095c6646f3"
+  }
+}
