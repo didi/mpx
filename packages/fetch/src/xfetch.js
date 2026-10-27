@@ -259,12 +259,12 @@ export default class XFetch {
         const returnPromise = Promise.any([responsePromise, promise])
         returnPromise.then(response => {
           if (response.isCache) { // 如果预请求先返回，则等待实际请求返回后回调 usePre.onUpdate
-            promise.then(response => {
+            return promise.then(response => {
               // 回调 usePre.onUpdate
               config.usePre.onUpdate(response)
             })
           }
-        })
+        }).catch(() => {})
         return returnPromise
       }
 
