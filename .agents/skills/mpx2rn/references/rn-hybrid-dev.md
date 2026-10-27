@@ -10,6 +10,7 @@
 - [React Hooks 使用](#react-hooks-使用)
 - [Hooks 返回值更新模板](#hooks-返回值更新模板)
 - [跨端兼容隔离](#跨端兼容隔离)
+- [独立页面包裹](#standalone-page-wrapper)
 
 ---
 
@@ -244,3 +245,13 @@ components/
 ```
 
 如果需要在模板中直接使用 RN 组件，通常更建议放在 RN 条件文件中实现，避免原平台构建解析 `react-native` 依赖；局部条件编译更适合隔离 RN 专属属性、少量模板节点或已经处在 RN 条件文件内部的局部差异。
+
+
+## 独立页面包裹 {#standalone-page-wrapper}
+
+已有 Mpx RN 运行环境中，可从 `@mpxjs/core` 命名导入 `pageWrapperHOC`，通过 `pageWrapperHOC(PageComponent, pageConfig)` 整合页面能力。宿主需提供 React Navigation 的 `navigation/route` 及外层 `SafeAreaProvider`；应用内页面由框架自动包裹，无需重复调用。独立页面产物直接导出原页面，由使用方显式调用 `pageWrapperHOC` 并传入页面配置后，再接入宿主导航。
+
+- 外层统一提供 Nav、GestureHandlerRootView、布局与安全区、内容容器、键盘避让及 IntersectionObserver 上下文；支持 `navigationStyle: 'custom'` 和 `disableKeyboardAvoiding`。
+- 外层生成稳定的 pageId，并提供 RouteContext 和 PortalHost；真实页面内部从 Context 获取 pageId，页面聚焦状态与预加载随真实页面挂载，异步加载占位期间不会提前启动。
+- 使用实例 `getPageId()` 获取页面身份；框架不再将内部 pageId 注入页面 id props，节点 id 与页面身份分离。
+- 应用内 Screen 提前挂载外层容器，先初始化窗口信息再触发 App 启动回调；页面内部仅保留实例和生命周期，不调用外层 HOC，也不通过 Context 判断是否重复包裹。

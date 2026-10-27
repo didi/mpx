@@ -27,15 +27,15 @@ jest.mock('react-native', () => ({
   View: 'View',
   DeviceEventEmitter: mockEmitter,
   NativeEventEmitter: jest.fn(() => mockEmitter)
-}), { virtual: false })
+}))
 
 jest.mock('react-native-gesture-handler', () => ({
   Gesture: { Tap: () => ({}), Pan: () => ({}), LongPress: () => ({}) }
-}), { virtual: false })
+}))
 
 jest.mock('react-native-safe-area-context', () => ({
   initialWindowMetrics: { insets: { top: 0, right: 0, bottom: 0, left: 0 } }
-}), { virtual: false })
+}))
 
 jest.mock('react', () => {
   const actual = jest.requireActual('react')
