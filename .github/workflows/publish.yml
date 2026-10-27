@@ -6,6 +6,9 @@ on:
     tags:
       - v*
 
+env:
+  NPM_CONFIG_LEGACY_PEER_DEPS: 'true'
+
 jobs:
 #  发布任务不检查代码风格
 #  lint:
