@@ -693,6 +693,8 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 与微信小程序一致，RN 输出支持只传递属性名不传递属性值的布尔写法，例如 `<scroll-view scroll-y />` 等价于 `<scroll-view scroll-y="{{ true }}" />`。
 
+关闭 `enable-fast-image` 时需传递布尔值，例如 <span v-pre>`enable-fast-image="{{false}}"`</span>；`enable-fast-image="false"` 会传入字符串，无法关闭 fast-image。
+
 ### view
 
 视图容器。
@@ -707,7 +709,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | animation | object |  | 传递动画的实例， 可配合 mpx.createAnimation 方法一起使用 |
 | enable-background | boolean | `false ` | RN 环境特有属性，是否要开启 background-image、background-size 和 background-position 的相关计算或渲染，请根据实际情况开启 |
 | enable-animation | boolean | `false` | RN 环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
-| enable-fast-image | boolean | `false` | RN 环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| enable-fast-image | boolean | `true` | RN 环境特有属性，渲染背景图片时默认使用 `@d11/react-native-fast-image`，设为 `false` 时使用 React Native 原生 `Image` |
 | is-simple | - | - | RN 环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 #### 事件
@@ -719,7 +721,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 #### 注意事项
 
 - **view 内可直接插入文字**：Mpx2RN 支持在 `view` 等非 `text` 组件中直接插入文字内容，无需严格遵循 RN 中文字必须由 `text` 组件包裹的限制，框架会在编译时自动为裸文字插入一个 `text` 包裹节点。但该行为存在性能开销——会额外多引入一个 `view` 层级，因此如果可以直接使用 `text` 组件包裹文字，仍应优先使用 `text`，以获得更优的渲染性能。`view` 内多个 `text` 的跨平台布局对齐方案见 [样式开发最佳实践 · text 跨平台布局对齐](./rn-style-practice.md#text-跨平台布局对齐)。
-- 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
+- 如果从未使用背景图或动画，请不要开启 `enable-background` 或 `enable-animation` 属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
 - 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
@@ -893,7 +895,7 @@ movable-view 的可移动区域。
 | --- | --- | --- | --- |
 | src | string | `false` | 图片资源地址、base64 格式数据或本地静态资源相对路径 |
 | mode | string | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right` |
-| enable-fast-image | boolean | `false` | RN 环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| enable-fast-image | boolean | `true` | RN 环境特有属性，默认使用 `@d11/react-native-fast-image` 渲染非 SVG 图片，设为 `false` 时使用 React Native 原生 `Image` |
 | is-svg | boolean | `false` | RN 环境特有属性，传递为 `true` 时强制使用 SVG 方式渲染图片 |
 
 #### 事件
