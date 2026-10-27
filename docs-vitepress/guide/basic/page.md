@@ -18,6 +18,23 @@
 
 页面模板的写法与组件模板相同，具体可参考[模版语法](template.md)。页面模板与页面数据结合后生成的节点树，将被渲染到页面上。
 
+## 页面样式 {#page-style}
+
+使用 `page` 选择器设置页面根节点的背景、字体和尺寸等样式：
+
+```html
+<style scoped>
+  page {
+    background-color: #f5f5f5;
+    color: #333;
+  }
+</style>
+```
+
+输出 Web 时，`page` 选择器与普通类选择器一样，需要通过 `<style scoped>` 或 `autoScopeRules` 限定到当前页面。`page > .title` 等组合选择器以及 `@media`、`@supports` 内的 `page` 规则同样遵循 scoped 隔离。
+
+未启用 scoped 的 `page` 规则仍为全局样式，可能影响其他页面。公共规则建议放在 `app.mpx` 的普通样式区块中。外部引入样式沿用现有的样式处理链路，与组件的 scoped 处理方式一致。
+
 ## 页面构造 {#page-constructor}
 
 `createPage` 是 Mpx 提供的用于构造页面的方法，它接受一个 Object 类型的参数，指定页面的初始数据、生命周期回调、事件处理函数等。

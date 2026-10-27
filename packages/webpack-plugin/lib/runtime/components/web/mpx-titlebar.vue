@@ -59,7 +59,7 @@ export default {
       return {
         '--titlebar-height': this.innerHeight,
         '--safe-area-inset-top': `${this.isIOS ? 'env(safe-area-inset-top, constant(safe-area-inset-top), 0px)' : this.safeAreaInsetTop + 'px'}`,
-        paddingTop: 'calc(var(--safe-area-inset-top) + var(--titlebar-height))',
+        paddingTop: 'calc(var(--safe-area-inset-top) + var(--titlebar-height))'
       }
     },
     rootStyle() {
@@ -125,7 +125,9 @@ export default {
 
     // top-level wrapper: contains fixed titlebar and page content wrapper
     return h('div', { class: 'mpx-page-warp', style: this.hidden ? {} : this.warpStyle }, [
-      this.hidden ? null : h('div', {
+      this.hidden
+        ? null
+        : h('div', {
         class: ['mpx-titlebar'],
         style: this.rootStyle
       }, [
@@ -137,7 +139,7 @@ export default {
           ])
         ])
       ]),
-      h('page', { style: { position: 'relative'} }, [this.$slots.default])
+      this.$slots.default
     ])
   }
 }

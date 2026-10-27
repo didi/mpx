@@ -2840,10 +2840,7 @@ function getVirtualHostRoot (options, meta) {
       }
     }
     if (ctorType === 'page') {
-      if (isWeb(mode)) {
-        return createASTElement('page')
-      }
-      if (isReact(mode)) {
+      if (isWeb(mode) || isReact(mode)) {
         const rootView = createASTElement('view', [
           {
             name: 'class',
