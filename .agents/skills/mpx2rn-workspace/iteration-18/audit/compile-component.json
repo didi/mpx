@@ -1,0 +1,68 @@
+{
+  "files": [
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-0-style-layout-adaptation/mpx/outputs/data-panel.mpx",
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-0-style-layout-adaptation/mpx2rn/outputs/data-panel.mpx",
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-2-dynamic-capability-adaptation/mpx/outputs/carousel-card.mpx",
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-2-dynamic-capability-adaptation/mpx2rn/outputs/carousel-card.mpx",
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx/outputs/rating-selector.mpx",
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx2rn/outputs/rating-selector.mpx",
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-4-new-segmented-control/mpx/outputs/segmented-control.mpx",
+    "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-4-new-segmented-control/mpx2rn/outputs/segmented-control.mpx"
+  ],
+  "results": {
+    "wx": {
+      "success": false,
+      "target": "wx",
+      "projectRoot": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace",
+      "errors": [],
+      "warnings": [
+        {
+          "category": "template",
+          "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/template-compiler/index.js):\n[Mpx template warning][/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx/outputs/rating-selector.mpx]: Component in which <component> tag is used must have a non blank usingComponents field",
+          "file": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx/outputs/rating-selector.mpx",
+          "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/template-compiler/index.js):\n[Mpx template warning][/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx/outputs/rating-selector.mpx]: Component in which <component> tag is used must have a non blank usingComponents field"
+        },
+        {
+          "category": "template",
+          "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/template-compiler/index.js):\n[Mpx template warning][/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx2rn/outputs/rating-selector.mpx]: Component in which <component> tag is used must have a non blank usingComponents field",
+          "file": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx2rn/outputs/rating-selector.mpx",
+          "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/template-compiler/index.js):\n[Mpx template warning][/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx2rn/outputs/rating-selector.mpx]: Component in which <component> tag is used must have a non blank usingComponents field"
+        }
+      ],
+      "summary": {
+        "total": 2,
+        "byCategory": {
+          "template": 2
+        }
+      },
+      "durationMs": 2733
+    },
+    "ios": {
+      "success": false,
+      "target": "ios",
+      "projectRoot": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace",
+      "errors": [],
+      "warnings": [
+        {
+          "category": "template",
+          "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template warning][/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx/outputs/rating-selector.mpx]: Component in which <component> tag is used must have a non blank usingComponents field",
+          "file": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx/outputs/rating-selector.mpx",
+          "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template warning][/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx/outputs/rating-selector.mpx]: Component in which <component> tag is used must have a non blank usingComponents field"
+        },
+        {
+          "category": "template",
+          "message": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template warning][/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx2rn/outputs/rating-selector.mpx]: Component in which <component> tag is used must have a non blank usingComponents field",
+          "file": "/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx2rn/outputs/rating-selector.mpx",
+          "raw": "Module Warning (from ./node_modules/@mpxjs/webpack-plugin/lib/loader.js):\n[Mpx template warning][/Users/didi/work/mpx/.agents/skills/mpx2rn-workspace/iteration-18/eval-3-new-rating-component/mpx2rn/outputs/rating-selector.mpx]: Component in which <component> tag is used must have a non blank usingComponents field"
+        }
+      ],
+      "summary": {
+        "total": 2,
+        "byCategory": {
+          "template": 2
+        }
+      },
+      "durationMs": 2459
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "eval_id": 2,
+  "run_kind": "mpx",
+  "scoring_group": "adaptation",
+  "expectations": [
+    {
+      "id": "s2_00",
+      "text": "Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。",
+      "passed": true,
+      "evidence": "../outputs/user-list.mpx:10循环唯一消费visibleItems；:26 items初值[]，:27 initData.visibleItems=[]保护computed完成前首帧，:29始终(this.items||[]).filter(...)；:32 setRows更新后仍经过此computed。user-list.test.cjs:28-58覆盖首帧/null/正常数组/替换/空数组，独立重跑通过。评分者另以实际computed模拟undefined/null/[]/含隐藏行有效数组，输出[]/[]/[]/[甲,乙]。wx真实编译通过；原生响应式not_run。"
+    },
+    {
+      "id": "s2_01",
+      "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。",
+      "passed": true,
+      "evidence": "../outputs/user-list.mpx:9容器id=users合法；:34 this.createSelectorQuery().select('#users')限定本组件作用域，精确匹配同一节点，:8 other不是目标。user-list.test.cjs:61-80验证组件方法、两次#users查询及other未操作。grader-compiled/__validate_0.wxml:1保留同一id；性能推荐也满足，但未测性能。"
+    },
+    {
+      "id": "s2_02",
+      "text": "Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。",
+      "passed": true,
+      "evidence": "../outputs/user-list.mpx:12实际回顶按钮bindtap=scrollTop；:33-36执行组件查询#users.node().exec，然后res[0].node.scrollTo({top:0})；:9同一users节点scroll-y/enhanced=true。user-list.test.cjs:61-82验证上下文链和回顶参数，:84-98从同一按钮绑定分发tap。独立编译保留该目标和属性，实际宿主滚动not_run。"
+    },
+    {
+      "id": "s2_03",
+      "text": "Skyline/glass-easel 模板片段使用 import 引入具名 template，并通过 template 调用；不使用 include。",
+      "passed": true,
+      "evidence": "../outputs/user-list.mpx:2 import ./row.wxml；:10过滤后visibleItems循环内template is=user-row/data={{index,item}}；../outputs/row.wxml:1-3同名模板使用{{index}}:{{item.name}}，无include。user-list.test.cjs:41-52以隐藏行后甲、乙得到0:甲/1:乙。真实编译grader-compiled/__validate_0.wxml:1生成/template/row231111b0.wxml导入，该外部编译文件:1存在user-row和相同字段；字段替换mock非真实模板渲染，静态作用域及编译可证。"
+    },
+    {
+      "id": "s2_04",
+      "text": "Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。",
+      "passed": true,
+      "evidence": "../outputs/user-list.mpx:13简单navigator到/pages/detail且唯一子节点text；:14卡片外层view bindtap=openDetail；:19导入api-proxy.navigateTo，:38方法调用navigateTo({url:'/pages/detail'})。user-list.test.cjs:101-105验证结构和实际方法参数；编译WXML:1保留两入口。真实路由not_run。"
+    },
+    {
+      "id": "s2_05",
+      "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+      "passed": false,
+      "evidence": "../outputs/user-list.mpx:5正确用view mpxTagName@wx=span共同承载image/label，具有max-lines=1/overflow=ellipsis；:46-47存在横向Flex、flex:1/width:0/min-width:0及WebView单行省略CSS。独立真实编译grader-compiled/__validate_0.wxml:1确认实际span。但:48图片.logo仅24px宽高与vertical-align；最终grader-compiled/__validate_0.wxss:1亦无display:inline-block，完整模板无对应动态样式，且缺可信默认display等价证据。故既定断言的inline-block子条件证据不足，整条false。这不证明真实图文混排必然故障；本组Skill提示基础span+text/image组合不应机械套用rich-text业务示例样式，口径局限见audit。长label视觉not_run。"
+    },
+    {
+      "id": "s2_06",
+      "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+      "passed": true,
+      "evidence": "../outputs/user-list.mpx:6真实view.pulse承载；:49宽高8px、#f50、初始opacity.3、userListPulse 1s infinite及fill-mode:both，:50关键帧from.3/to1；无伪元素动画。user-list.test.cjs:130-135核验，编译WXML:1存在pulse，WXSS:1保留所有参数。真实动画插值not_run。"
+    },
+    {
+      "id": "s2_07",
+      "text": "Skyline 按钮通过响应式状态，以wx:class或wx:style驱动transform/opacity的150ms CSS transition，完成按下及恢复的视觉过渡；WebView 保持对应体验。",
+      "passed": true,
+      "evidence": "../outputs/user-list.mpx:12同一回顶按钮touchstart=press、touchend/touchcancel=release，wx:class由pressed控制；:26响应式data初始false，:39-40设true/false；:51基础scale(1)/opacity1与transform/opacity双向150ms linear transition，:52活动类scale(.96)/opacity.7。user-list.test.cjs:84-98按同一节点绑定分发按下/松开/取消/tap，:133-135核对CSS；编译WXML:1生成_s_.c动态class，WXSS:1保留.15s过渡。两renderer共用实现，wx.createAnimation已移除，真实触摸/插值not_run。"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "pass_rate": 0.875
+  },
+  "metrics": {
+    "total_tokens": 1462942,
+    "tool_calls": 27,
+    "duration_ms": 339079,
+    "duration_seconds": 339.079
+  },
+  "timing": {
+    "total_duration_seconds": 339.079,
+    "total_tokens": 1462942
+  },
+  "execution_metrics": {
+    "total_tool_calls": 27,
+    "output_chars": 1462942
+  }
+}

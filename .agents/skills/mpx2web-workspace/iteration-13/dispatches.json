@@ -1,0 +1,128 @@
+[
+  {
+    "description": "Eval-0 mpx",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "fork_turns": "none",
+    "workdir": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+    "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：请对附件中的选项应用进行 Web 跨端适配改造，确保 Web 平台编译运行正确，同时保留微信小程序的布局、导航和页面通信行为。部署环境与业务要求见 input 中的需求说明。请输出完整的修改后工程文件，保持 Mpx SFC 和目录结构，不要省略任何内容。\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/input 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 /Users/didi/work/mpx/.agents/skills/mpx/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 /Users/didi/work/mpx/.agents/skills/mpx/references 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\nmpx.config.js\nsrc/app.mpx\nsrc/components/blue-card.mpx\nsrc/components/layout-cell.mpx\nsrc/components/red-card.mpx\nsrc/components/theme-card.mpx\nsrc/pages/choice/index.mpx\nsrc/pages/home/index.mpx",
+    "output_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs",
+    "output_files": [
+      "mpx.config.js",
+      "src/app.mpx",
+      "src/components/blue-card.mpx",
+      "src/components/layout-cell.mpx",
+      "src/components/red-card.mpx",
+      "src/components/theme-card.mpx",
+      "src/pages/choice/index.mpx",
+      "src/pages/home/index.mpx"
+    ],
+    "metrics_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/run-1/metrics.json"
+  },
+  {
+    "description": "Eval-0 mpx2web",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "fork_turns": "none",
+    "workdir": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+    "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：请对附件中的选项应用进行 Web 跨端适配改造，确保 Web 平台编译运行正确，同时保留微信小程序的布局、导航和页面通信行为。部署环境与业务要求见 input 中的需求说明。请输出完整的修改后工程文件，保持 Mpx SFC 和目录结构，不要省略任何内容。\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/input 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 /Users/didi/work/mpx/.agents/skills/mpx2web/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 /Users/didi/work/mpx/.agents/skills/mpx2web/references 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\nmpx.config.js\nsrc/app.mpx\nsrc/components/blue-card.mpx\nsrc/components/layout-cell.mpx\nsrc/components/red-card.mpx\nsrc/components/theme-card.mpx\nsrc/pages/choice/index.mpx\nsrc/pages/home/index.mpx",
+    "output_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs",
+    "output_files": [
+      "mpx.config.js",
+      "src/app.mpx",
+      "src/components/blue-card.mpx",
+      "src/components/layout-cell.mpx",
+      "src/components/red-card.mpx",
+      "src/components/theme-card.mpx",
+      "src/pages/choice/index.mpx",
+      "src/pages/home/index.mpx"
+    ],
+    "metrics_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/run-1/metrics.json"
+  },
+  {
+    "description": "Eval-1 mpx",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "fork_turns": "none",
+    "workdir": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+    "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：请根据附件需求，从零创建一个可复用的 profile-card.mpx 组件，确保微信小程序与 Web 的功能和外部样式表现一致。仅输出完整组件 SFC，不要创建应用、页面或构建配置。\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/input 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 /Users/didi/work/mpx/.agents/skills/mpx/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 /Users/didi/work/mpx/.agents/skills/mpx/references 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\nprofile-card.mpx",
+    "output_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs",
+    "output_files": [
+      "profile-card.mpx"
+    ],
+    "metrics_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/run-1/metrics.json"
+  },
+  {
+    "description": "Eval-1 mpx2web",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "fork_turns": "none",
+    "workdir": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+    "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：请根据附件需求，从零创建一个可复用的 profile-card.mpx 组件，确保微信小程序与 Web 的功能和外部样式表现一致。仅输出完整组件 SFC，不要创建应用、页面或构建配置。\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/input 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 /Users/didi/work/mpx/.agents/skills/mpx2web/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 /Users/didi/work/mpx/.agents/skills/mpx2web/references 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\nprofile-card.mpx",
+    "output_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs",
+    "output_files": [
+      "profile-card.mpx"
+    ],
+    "metrics_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/run-1/metrics.json"
+  },
+  {
+    "description": "Eval-2 mpx",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "fork_turns": "none",
+    "workdir": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+    "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：请对附件 business-page.mpx 页面进行 Web 跨端适配，保留微信原行为、公共能力和业务状态链。仅输出完整页面 SFC；native-scanner.mpx 为只读依赖，不要创建应用或额外业务文件。\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-2-api-component-adaptation/input 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 /Users/didi/work/mpx/.agents/skills/mpx/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 /Users/didi/work/mpx/.agents/skills/mpx/references 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-2-api-component-adaptation/mpx/outputs，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\nbusiness-page.mpx",
+    "output_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-2-api-component-adaptation/mpx/outputs",
+    "output_files": [
+      "business-page.mpx"
+    ],
+    "metrics_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-2-api-component-adaptation/mpx/run-1/metrics.json"
+  },
+  {
+    "description": "Eval-2 mpx2web",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "fork_turns": "none",
+    "workdir": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+    "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：请对附件 business-page.mpx 页面进行 Web 跨端适配，保留微信原行为、公共能力和业务状态链。仅输出完整页面 SFC；native-scanner.mpx 为只读依赖，不要创建应用或额外业务文件。\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-2-api-component-adaptation/input 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 /Users/didi/work/mpx/.agents/skills/mpx2web/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 /Users/didi/work/mpx/.agents/skills/mpx2web/references 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-2-api-component-adaptation/mpx2web/outputs，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\nbusiness-page.mpx",
+    "output_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-2-api-component-adaptation/mpx2web/outputs",
+    "output_files": [
+      "business-page.mpx"
+    ],
+    "metrics_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-2-api-component-adaptation/mpx2web/run-1/metrics.json"
+  },
+  {
+    "description": "Eval-3 mpx",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "fork_turns": "none",
+    "workdir": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+    "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：请对附件中的文章应用进行 Web SSR 跨端适配改造，支持服务端首屏渲染与浏览器客户端接管，同时保留微信小程序原有行为。状态迁移要求和宿主环境见 input 中的需求说明。请输出完整的修改后应用、页面、服务、状态和构建配置，不要省略任何内容。\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-3-ssr-state-adaptation/input 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 /Users/didi/work/mpx/.agents/skills/mpx/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 /Users/didi/work/mpx/.agents/skills/mpx/references 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-3-ssr-state-adaptation/mpx/outputs，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\nmpx.config.js\nsrc/app.mpx\nsrc/pages/article/index.mpx\nsrc/services/article.js\nsrc/store/article.js",
+    "output_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-3-ssr-state-adaptation/mpx/outputs",
+    "output_files": [
+      "mpx.config.js",
+      "src/app.mpx",
+      "src/pages/article/index.mpx",
+      "src/services/article.js",
+      "src/store/article.js"
+    ],
+    "metrics_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-3-ssr-state-adaptation/mpx/run-1/metrics.json"
+  },
+  {
+    "description": "Eval-3 mpx2web",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "fork_turns": "none",
+    "workdir": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+    "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：请对附件中的文章应用进行 Web SSR 跨端适配改造，支持服务端首屏渲染与浏览器客户端接管，同时保留微信小程序原有行为。状态迁移要求和宿主环境见 input 中的需求说明。请输出完整的修改后应用、页面、服务、状态和构建配置，不要省略任何内容。\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-3-ssr-state-adaptation/input 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 /Users/didi/work/mpx/.agents/skills/mpx2web/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 /Users/didi/work/mpx/.agents/skills/mpx2web/references 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 /Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-3-ssr-state-adaptation/mpx2web/outputs，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\nmpx.config.js\nsrc/app.mpx\nsrc/pages/article/index.mpx\nsrc/services/article.js\nsrc/store/article.js",
+    "output_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-3-ssr-state-adaptation/mpx2web/outputs",
+    "output_files": [
+      "mpx.config.js",
+      "src/app.mpx",
+      "src/pages/article/index.mpx",
+      "src/services/article.js",
+      "src/store/article.js"
+    ],
+    "metrics_path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-3-ssr-state-adaptation/mpx2web/run-1/metrics.json"
+  }
+]

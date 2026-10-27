@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "target": "wx",
+  "projectRoot": "/Users/didi/work/mpx/.agents/skills/mpx2skyline-workspace",
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "total": 0,
+    "byCategory": {}
+  },
+  "durationMs": 3184
+}

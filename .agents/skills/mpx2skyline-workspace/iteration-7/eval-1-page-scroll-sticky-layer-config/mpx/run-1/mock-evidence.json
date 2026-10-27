@@ -1,0 +1,160 @@
+{
+  "kind": "mock",
+  "runtime": "Node vm; extracted actual SFC options and unchanged service; no WeChat rendering",
+  "evidence": [
+    {
+      "renderer": "webview",
+      "calls": [
+        {
+          "page": 1,
+          "fail": false
+        },
+        {
+          "page": 2,
+          "fail": false
+        },
+        {
+          "page": 3,
+          "fail": false
+        },
+        {
+          "page": 1,
+          "fail": true
+        },
+        {
+          "page": 4,
+          "fail": false
+        },
+        {
+          "page": 1,
+          "fail": false
+        }
+      ],
+      "initialGroups": 4,
+      "initialOrdersPerGroup": 8,
+      "afterTwoPages": {
+        "pageNo": 3,
+        "groups": 12,
+        "orders": 96
+      },
+      "failedRefresh": {
+        "listUnchanged": true,
+        "pageNo": 3,
+        "refreshing": false
+      },
+      "recoveryPage": 4,
+      "successfulRefresh": {
+        "pageNo": 1,
+        "groups": 4,
+        "refreshing": false
+      },
+      "mainScrollTop": 237,
+      "childEventsIgnored": true,
+      "modalOpenClose": true,
+      "layout": {
+        "windowHeight": 844,
+        "statusBarHeight": 47,
+        "navigationHeight": 44,
+        "contentHeight": 753
+      }
+    },
+    {
+      "renderer": "webview",
+      "concurrency": {
+        "requests": [
+          {
+            "page": 1,
+            "fail": false
+          },
+          {
+            "page": 2,
+            "fail": false
+          },
+          {
+            "page": 2,
+            "fail": false
+          }
+        ],
+        "failureKeepsPage": 1,
+        "retryRequestsPage": 2
+      }
+    },
+    {
+      "renderer": "skyline",
+      "calls": [
+        {
+          "page": 1,
+          "fail": false
+        },
+        {
+          "page": 2,
+          "fail": false
+        },
+        {
+          "page": 3,
+          "fail": false
+        },
+        {
+          "page": 1,
+          "fail": true
+        },
+        {
+          "page": 4,
+          "fail": false
+        },
+        {
+          "page": 1,
+          "fail": false
+        }
+      ],
+      "initialGroups": 4,
+      "initialOrdersPerGroup": 8,
+      "afterTwoPages": {
+        "pageNo": 3,
+        "groups": 12,
+        "orders": 96
+      },
+      "failedRefresh": {
+        "listUnchanged": true,
+        "pageNo": 3,
+        "refreshing": false
+      },
+      "recoveryPage": 4,
+      "successfulRefresh": {
+        "pageNo": 1,
+        "groups": 4,
+        "refreshing": false
+      },
+      "mainScrollTop": 237,
+      "childEventsIgnored": true,
+      "modalOpenClose": true,
+      "layout": {
+        "windowHeight": 844,
+        "statusBarHeight": 47,
+        "navigationHeight": 44,
+        "contentHeight": 753
+      }
+    },
+    {
+      "renderer": "skyline",
+      "concurrency": {
+        "requests": [
+          {
+            "page": 1,
+            "fail": false
+          },
+          {
+            "page": 2,
+            "fail": false
+          },
+          {
+            "page": 2,
+            "fail": false
+          }
+        ],
+        "failureKeepsPage": 1,
+        "retryRequestsPage": 2
+      }
+    }
+  ]
+}

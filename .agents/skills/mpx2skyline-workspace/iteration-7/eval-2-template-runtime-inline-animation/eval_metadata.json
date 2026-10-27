@@ -4,10 +4,10 @@
   "title": "模板运行时、图文混排与动画",
   "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
   "files": [
+    "input/user-list.mpx",
     "input/logo.svg",
     "input/row.wxml",
-    "input/task.md",
-    "input/user-list.mpx"
+    "input/task.md"
   ],
   "assertions": [
     {
@@ -141,7 +141,15 @@
   ],
   "validation_contract": "common-validation.json",
   "scoring_group": "adaptation",
-  "prompt_template": "implementation",
+  "outputs": [
+    "user-list.mpx",
+    "row.wxml",
+    "logo.svg",
+    "report.md"
+  ],
+  "staged_files": [
+    "logo.svg"
+  ],
   "eval_id": 2,
   "eval_name": "template-runtime-inline-animation"
 }

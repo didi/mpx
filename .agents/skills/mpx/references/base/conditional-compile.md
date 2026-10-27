@@ -96,7 +96,9 @@ stylus / 缩进式 sass 中条件注释与所在块同级缩进，避免注释�
 ```html
 <style>
 /* @mpx-if (__mpx_mode__ === 'web') */
-.web-only { display: grid; }
+.web-only {
+  display: grid;
+}
 /* @mpx-endif */
 </style>
 ```

@@ -28,8 +28,9 @@
 - **页面滚动**：RN 页面默认不可滚动；页面滚动/触底/下拉刷新钩子没有自动驱动。跨 RN 的页面 JSON 设 `disableScroll: true`、样式设 `page { height: 100%; }`，用开启 `scroll-y` 的 `scroll-view` 承载内容并接入事件。这是含 RN 目标的方案，不向 Web 单端推广。
 - **脚本**：按 RN 构造选项、生命周期与实例方法表实现；实例字段命名遵循[基准保留字段约束](../base/script-reference.md#页面与组件实例属性与方法)。不支持声明需要实际宿主适配及 `implement` 登记，或明确移除。`onShareAppMessage` 有独立的 `openTypeHandler` 桥接流程，见 RN 脚本/配置。Promise 化调用使用 await/then，环境 API 不直连 wx/my。
 - **选择器与布局**：展开预处理嵌套，采用单类选择器；逗号分隔的并列单类可用。替换复合/伪类/伪元素时同步模板与脚本引用，grid/float 等按样式实践选择等效布局。RN 专属 `numberOfLines` / `hairlineWidth` 等通过条件编译保留原端样式，不能只保留 RN 写法。
-- **按需样式能力**：首次渲染后可能引入 CSS 变量、文本透传、背景或动画时，按需预声明 `enable-var/enable-text-pass-through/enable-background/enable-animation`。`hover-class` 存在状态和动画类型在实例生命周期内稳定；仅值变化无需冗余声明。条件分支/列表可能复用且能力不同，优先稳定独立 key，无法保证时声明能力并集，避免切换时出现渲染错误。
-- **垂直 margin**：按实际节点关系审计折叠，先排除 Flex/Grid、浮动、absolute/fixed、clearance、BFC、父子分隔与空块阻断条件。只有确认原平台发生折叠且两侧表达同一间距时才将有效间距归到单侧，无法确认不改。
+- **按需样式能力**：首次渲染后可能引入 CSS 变量、文本透传、背景或动画时，按需预声明 `enable-var/enable-text-pass-through/enable-background/enable-animation`。`hover-class` 的有效启用状态和动画类型在实例生命周期内稳定；`disabled/readonly` 切换也不能让同一节点在有效 `hover-class` 与 `none` / 空值之间切换。仅值变化无需冗余声明。条件分支/列表可能复用且能力不同，优先稳定独立 key，无法保证时声明能力并集，避免切换时出现渲染错误。
+- **点击响应**：iOS 中目标或祖先的 `opacity: 0` 会使目标无法响应点击，恢复为 `1` 后可正常响应；极低的非零 opacity 也可能影响点击，仅背景透明不影响点击响应。
+- **垂直 margin**：RN 不发生 margin 折叠。原端需区分相邻兄弟、父子与空块关系，并核对简写覆盖及实际布局边界；确认折叠后将有效间距归到单侧，不折叠或无法确认时保留原样。具体条件与示例见[垂直 margin 折叠](./rn-style-practice.md#处理垂直-margin-折叠)。
 - **原子类**：仅使用 RN 支持的工具类/variants；接入与动态类提取沿用基准。颜色透明度用 `bg-red-500/50`，不用独立 `*-opacity-*` 组合。
 - **JSON 与分包**：仅使用 RN 支持字段，`tabBar` 等不支持能力隔离。需要按平台或环境生成配置时，按[动态 JSON](../base/json-reference.md#动态-json)使用 `<script name="json">`。分包构建与运行时下载执行分开配置，预下载需宿主钩子；不支持仅靠声明即完成加载。页面 loading/fallback 与组件占位分别配置。
 

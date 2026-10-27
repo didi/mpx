@@ -1,0 +1,67 @@
+{
+  "scope": "wx WebView / Skyline; single component; no supplied business dependencies",
+  "artifact": "../outputs/style-card.mpx",
+  "sha256": "152a77ea7ca6bed699a2fd71b191fa90a5b32280d13ff88bee3ac9ad4b4db4f9",
+  "static": {
+    "status": "pass_with_risks",
+    "eslint": {
+      "status": "pass",
+      "evidence": "eslint.log"
+    },
+    "matrix": {
+      "status": "reviewed",
+      "rule_count": 48,
+      "evidence": [
+        "static-scan.log",
+        "static-scan-command.txt",
+        "audit-matrix.json"
+      ],
+      "retained_risks": [
+        "City-Semibold600和Trip-Medium500保留设计，二进制及机型字重映射未核验。"
+      ]
+    },
+    "structural_jest_tests": 6
+  },
+  "mock": {
+    "status": "pass",
+    "test_count": 10,
+    "renderers": [
+      "webview",
+      "skyline"
+    ],
+    "total_jest_tests": 16,
+    "passed_jest_tests": 16,
+    "evidence": [
+      "style-card.test.cjs",
+      "jest.log",
+      "jest-results.json"
+    ],
+    "boundary": "VM执行实际脚本，mock createComponent与窗口API；不模拟Mpx响应式或渲染引擎。",
+    "repair_attempts": 1,
+    "initial_failure": "Watchman沙箱状态目录权限失败；关闭watchman后通过。原日志jest-attempt-1.log。"
+  },
+  "real_compile": {
+    "status": "failed",
+    "target": "wx",
+    "attempts": 1,
+    "evidence": [
+      "compile-wx.log",
+      "compile-wx.json"
+    ],
+    "reason": "宿主提供的city.woff2未包含于输入；原始字体引用无法解析，dependency错误2条（同一原因）。不伪造字体或删除字体规则以使校验通过。"
+  },
+  "wechat_devtools": {
+    "webview": "not_run",
+    "skyline": "not_run",
+    "reason": "未提供可运行微信宿主、开发者工具会话或页面。"
+  },
+  "device": {
+    "webview": "not_run",
+    "skyline": "not_run",
+    "reason": "无连接真机；字体、阴影、滤镜、负margin链、滚动宽度和截断的视觉一致性待验。"
+  },
+  "font_binary_inspection": {
+    "status": "not_run",
+    "reason": "输入没有字体二进制；City-Semibold独立字体族已静态确认，Trip-Medium仅有宿主提供的约定。"
+  }
+}

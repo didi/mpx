@@ -1,0 +1,71 @@
+{
+  "eval_id": 1,
+  "expectations": [
+    {
+      "id": "s1_00",
+      "text": "Skyline 订单页面的外层与主订单纵向scroll-view均具有明确可滚动高度，概览与分组主体按嵌套层次布局，分组实际参与主滚动区域。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:2-6,7-36,92-99,137-142：根高windowHeight，自定义导航占statusBarHeight+navigationHeight，外层及主纵向容器均以wx:style显式绑定剩余scrollHeight；不是继续硬编码400px。summary以border-box总高120px位于nested-scroll-header，主custom位于nested-scroll-body并直接渲染sections。以实际脚本mock H800/status24/capsule28,32得nav44、外/主高732；外内容120+732=852，可移出120px概览。每组header40+strip80=120；4组480短内容，8/12组960/1440超过主高732，分组确实参与主滚动而非旁路内容。窗口600时重算为532。grader-check.cjs及grader-check.json从实际节点/样式和布局脚本核验；真实几何not_run。"
+    },
+    {
+      "id": "s1_01",
+      "text": "Skyline 主订单纵向scroll-view启用refresher-enabled=true，通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:14-28,100-113：承载sections的主容器refresher-enabled={{!loading || refreshing}}，空闲true、刷新中true、分页中门控false（可接受的并发控制）；refresher-triggered绑定refreshing，bindrefresherrefresh实际连接onRefresh→reload。reload设refreshing/loading为true；fetchOrders(1)成功替换并归页1，失败catch保留列表/页号；finally两态均false。原Jest六项及mock-evidence记录成功/真实service失败；grader-check从主节点实际刷新绑定派发，并把fetchOrders(1,true)拒绝注入该路径，确认失败保留原数组/页2、状态复位且后续分页可继续。"
+    },
+    {
+      "id": "s1_02",
+      "text": "Skyline 主订单纵向scroll-view通过bindscrolltolower连接分页加载，触底后下一页分组追加到同一sections列表并继续展示。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:25,115-124：主custom用catchscrolltolower=loadMore连接实际触底事件，catch具备bind相同的处理器调用并额外阻止冒泡。loadMore计算nextPage，仅成功后sections.concat追加并推进页号，finally释放锁；原Jest:53-64、mock-evidence和独立grader-check均沿主节点绑定连续请求2/3页，得到12组96项并保留原分组与订单数组对象。31和59横向触底catch到ignoreScroll，不能冒泡触发主分页。"
+    },
+    {
+      "id": "s1_03",
+      "text": "Skyline 主订单纵向scroll-view通过bindscroll读取event.detail.scrollTop并更新概览中的滚动位置。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:10,26,41,54,126-127：主节点catchscroll=onScroll，onScroll读取e.detail.scrollTop赋给data.scrollTop，两个renderer概览真实text均插值该值。横向节点catchscroll=ignoreScroll，外层无主位置业务处理器。原测试:93-117及独立grader-check从实际主绑定传入detail.scrollTop=186，随后横向scrollTop=999仍保留186，外层未绑定误用逻辑。"
+    },
+    {
+      "id": "s1_04",
+      "text": "Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:146-154：页面JSON精确为renderer:skyline、componentFramework:glass-easel、navigationStyle:custom、disableScroll:true，并关闭页面级下拉。模板:3-5是真实navigation/title节点，显示订单；2和92-99按其状态栏+导航高度安排下方外层区，未只修改navigationBarTitleText而漏实际导航。真实wx page编译compile.log成功且无errors/warnings。"
+    },
+    {
+      "id": "s1_05",
+      "text": "Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。",
+      "passed": true,
+      "evidence": "outputs/app.json:4：JSON顶层lazyCodeLoading为字符串requiredComponents，未误放rendererOptions或页面JSON；原pages/home路由和window字段保持。run-1/audit.cjs:43-49有结构化解析断言。"
+    },
+    {
+      "id": "s1_06",
+      "text": "Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。",
+      "passed": true,
+      "evidence": "outputs/app.json:5-13：五字段全在rendererOptions.skyline内，defaultDisplayBlock/defaultContentBox/enableScrollViewAutoSize均为布尔true，tagNameStyleIsolation/keyframeStyleIsolation均为字符串legacy。rendererOptions.webview原值{}保留；audit.cjs:48逐值深比较。"
+    },
+    {
+      "id": "s1_07",
+      "text": "Skyline 外层纵向scroll-view采用type=nested，主订单纵向容器显式选择type=custom，内层横向容器显式选择list/custom，并通过associative-container=nested-scroll-view建立嵌套关联。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:6-36：真实纵向链是外层scroll-view(type=nested)→nested-scroll-body→主scroll-view(type=custom,associative-container=nested-scroll-view)；概览经nested-scroll-header属于外层。每组内横向scroll-view显式type=list。父子类型与纵向关联已建立；横向浏览不承担纵向嵌套衔接，不额外要求横向也配置同向关联。WebView经38的wx:else走普通滚动分支，Skyline专属包装未泄漏。"
+    },
+    {
+      "id": "s1_08",
+      "text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:31-33,59-61,141-142：两个renderer横向strip均显式type=list、scroll-x=true、enable-flex=true，strip实际CSS为display:flex/flex-direction:row，高80px；list的直接子节点即wx:for生成的tile，width:120px/flex-shrink:0，无会撑高改成纵向排列的wrapper。每组8项主轴内容960px，超过常规页面宽可横向浏览；事件仅由本层ignoreScroll承接。"
+    },
+    {
+      "id": "s1_09",
+      "text": "Skyline 主订单custom容器内使用sticky-section/sticky-header实现分组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应CSS sticky实现。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:14-35,38-64,139-140：Skyline主区域为type=custom，sections直接生成sticky-section，首子为唯一sticky-header(class=header)，header明确background:#fff；两者嵌套关系正确。外层renderer===skyline隔离该整树；WebView对应group/header带webview-sticky，使用position:sticky/top:0，并共用40px高白背景。原生吸顶/嵌套手势not_run单独记录，结构与双分支静态证据充分。"
+    },
+    {
+      "id": "s1_10",
+      "text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
+      "passed": true,
+      "evidence": "outputs/orders.mpx:65-66,128-129,143-144：真实fab和modal是page下同级节点，均position:fixed，z-index分别2和3，modal四边0形成全屏覆盖；均位于scroll-view外，未依赖transform/opacity提升或负z-index。fab bindtap=open令opened=true，modal条件渲染并bindtap=close清状态。独立grader-check按真实tap绑定验证开关及固定层CSS比较；实际设备像素覆盖not_run。"
+    }
+  ]
+}

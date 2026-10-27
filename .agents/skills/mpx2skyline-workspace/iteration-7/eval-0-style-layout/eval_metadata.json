@@ -216,7 +216,11 @@
   ],
   "validation_contract": "common-validation.json",
   "scoring_group": "adaptation",
-  "prompt_template": "implementation",
+  "outputs": [
+    "style-card.mpx",
+    "report.md"
+  ],
+  "staged_files": [],
   "eval_id": 0,
   "eval_name": "style-layout"
 }

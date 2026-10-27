@@ -1,0 +1,84 @@
+<template>
+  <view class="segmented-control">
+    <text class="segmented-label" max-lines="{{1}}" overflow="ellipsis">{{label}}</text>
+    <view class="segmented-options">
+      <view class="segmented-option" wx:for="{{safeOptions}}" wx:key="value" wx:class="{{ {'segmented-option-selected': selectedValue === item.value, 'segmented-option-disabled': disabled || item.disabled, 'segmented-option-pressed': pressedIndex === index} }}" bindtap="selectOption(item)" bindtouchstart="pressOption(index, item)" bindtouchend="releaseOption" bindtouchcancel="releaseOption" aria-role="button" aria-label="{{item.label + ((disabled || item.disabled) ? '，不可选' : '')}}">
+        <text class="segmented-option-label" max-lines="{{1}}" overflow="ellipsis">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { ref, computed, watch, toRefs } from '@mpxjs/core'
+
+defineOptions({ initData: { safeOptions: [] } })
+const props = defineProps({
+  controlKey: { type: String, value: '' },
+  options: { type: Array, value: [] },
+  value: { type: String, value: '' },
+  disabled: { type: Boolean, value: false },
+  label: { type: String, value: '请选择' }
+})
+const { triggerEvent } = useContext()
+const { disabled, label } = toRefs(props)
+const safeOptions = computed(() => Array.isArray(props.options) ? props.options : [])
+const selectedValue = ref(props.value)
+const pressedIndex = ref(-1)
+watch(() => props.value, value => { selectedValue.value = value }, { flush: 'sync' })
+watch(() => props.disabled, () => { pressedIndex.value = -1 })
+function selectOption (option) {
+  if (props.disabled || option.disabled) return
+  selectedValue.value = option.value
+  triggerEvent('change', { controlKey: props.controlKey, value: option.value })
+}
+function pressOption (index, option) {
+  if (!props.disabled && !option.disabled) pressedIndex.value = index
+}
+function releaseOption () { pressedIndex.value = -1 }
+
+defineExpose({ label, disabled, safeOptions, selectedValue, pressedIndex, selectOption, pressOption, releaseOption })
+</script>
+
+<style>
+.segmented-control { width: 100%; }
+.segmented-label {
+  display: block;
+  width: 100%;
+  padding-bottom: 12rpx;
+  font-size: 24rpx;
+  color: #4b5870;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.segmented-options { display: flex; padding: 6rpx; border-radius: 14rpx; background-color: #edf1f7; }
+.segmented-option {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  padding: 16rpx 8rpx;
+  border-radius: 10rpx;
+  color: #4b5870;
+  background-color: #edf1f7;
+  transform: scale(1);
+  opacity: 1;
+  transition: transform 150ms ease, opacity 150ms ease;
+}
+.segmented-option-label {
+  display: block;
+  width: 100%;
+  font-size: 26rpx;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.segmented-option-selected { color: #ffffff; background-color: #315bd6; }
+.segmented-option-disabled { color: #9aa3b3; background-color: #e1e5ed; }
+.segmented-option-pressed { transform: scale(0.96); opacity: 0.7; }
+</style>
+
+<script type="application/json">
+{ "component": true }
+</script>

@@ -1,0 +1,728 @@
+{
+  "metadata": {
+    "skill_name": "mpx / mpx2skyline",
+    "skill_path": ".agents/skills/mpx2skyline",
+    "executor_model": "gpt-6.1-sol",
+    "analyzer_model": "unavailable",
+    "timestamp": "2026-10-27T11:49:17Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1,
+    "reasoning_effort": "model_reasoning_effort=\"high\"",
+    "scoring_method": "independent_agent_semantic_review",
+    "scorer_model": "gpt-6.1-sol",
+    "scorer_reasoning_effort": "high"
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.9286,
+        "passed": 13,
+        "failed": 1,
+        "total": 14,
+        "time_seconds": 257.078,
+        "tokens": 1173155,
+        "tool_calls": 20,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s0_00",
+          "text": "Skyline 标题的实际 text 承载节点设置 max-lines=1、overflow=ellipsis，并与 WebView 单行省略样式共同实现长标题截断。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:3 的实际 text.title 承载 {{title}}，具有 max-lines={{1}} / overflow=ellipsis；:45 保留 block、nowrap、hidden、text-overflow:ellipsis。card/title 块级 auto 宽度受宿主可用宽约束，无横向固有宽撑开；两 renderer 分别走原 CSS 与 text 属性路径。style-card.test.cjs:67、jest.log:2 已检查节点和 CSS；真机截断 not_run。"
+        },
+        {
+          "id": "s0_01",
+          "text": "Skyline 两列标签使用显式横向 Flex 和等分子项布局，实现两列等宽。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:4 的 labels 直接包含两个 text.label；:46 父 display:flex/flex-direction:row，:47 两子项 width:50%，无额外水平 margin/padding/border，父可用宽W各占W/2。style-card.test.cjs:88 的既有检查重跑通过。"
+        },
+        {
+          "id": "s0_02",
+          "text": "Skyline 活动状态通过受支持的 class 选择器映射到红色活动文案。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:5 的实际活动 view 同时持有 badge sale，:48 单类选择器 .sale 匹配该节点，color:#d00；未再依赖不受支持的属性选择器。style-card.test.cjs:91 检查实际 class 映射。"
+        },
+        {
+          "id": "s0_03",
+          "text": "WebView 仅在 renderer !== skyline 时添加媒体查询专用类；Skyline 按运行时窗口宽度通过 wx:class 切换 padding，窗口宽度≤320px 为12rpx、>320px 为24rpx，并响应窗口变化。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:2 仅 renderer!==skyline 添加 card-webview，Skyline且isSmall才添加card-small；:69 媒体规则唯一选择器.card-webview，不匹配Skyline。:28-38 attached读取getWindowInfo().windowWidth<=320、resize按size.windowWidth更新，detached按同一实例方法offWindowResize。:44/:70 对应24/12rpx。style-card.test.cjs:42-64 覆盖两renderer319/320/321/375、跨断点、多实例与清理；独立重跑16/16。评分者另执行实际wx:class表达式和CSS选择器，媒体条件在Skyline被忽略时319/320/321仍为12/12/24rpx（grader-verification.json）。"
+        },
+        {
+          "id": "s0_04",
+          "text": "Skyline 内容与父容器上外沿的20px距离由父 padding 表达，子节点从父内容区起始位置布局。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:6 为outer直接包含child；:49 outer padding-top:20px，:50 child无margin-top且padding:10px。父外沿至child border-box顶部20px，至内容顶部30px；并无边框额外贡献。style-card.test.cjs:93-94 核对声明；几何为静态推导。"
+        },
+        {
+          "id": "s0_05",
+          "text": "Skyline 相邻块的垂直间距集中由一侧的16px margin承担，最终相邻盒间距为16px。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:7 first和second为相邻兄弟；:51 仅first margin-bottom:16px，所有样式中无second margin-top。Skyline不折叠时16+0=16px，WebView折叠时max(16,0)=16px。style-card.test.cjs:95-96通过。"
+        },
+        {
+          "id": "s0_06",
+          "text": "Skyline 将双阴影分配到同尺寸的嵌套节点或等效分层结构，呈现原有两层阴影的参数和前后关系。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:9 为many>many-front同尺寸嵌套块，:54 外层0 4px 8px #333，:55 内层0 2px 4px #000；无两层的padding/border/margin/独立定高，两层自动宽高相同。内层近处黑阴影绘制在外层远处灰阴影之上，保留原列表前层优先关系。style-card.test.cjs:120-122核对父子及参数；真实绘制not_run。"
+        },
+        {
+          "id": "s0_07",
+          "text": "Skyline 将复合滤镜分层为内层blur(2px)和外层brightness(.8)，组合呈现原有两种效果。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:10 filters>filters-blur 嵌套，:56 外层brightness(.8)，:57 内层blur(2px)，各声明恰好单函数。先对子树blur再由父层brightness处理，与原blur(2px) brightness(.8)顺序一致。style-card.test.cjs:123-125通过。"
+        },
+        {
+          "id": "s0_08",
+          "text": "Skyline 字体处理识别 City-Semibold 的同名独立字体族，明确 Trip-Medium 的宿主字体与 PostScript 映射核验点，并记录500/600字重的机型验证要求。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:66-68 保留City-Semibold独立同名@font-face及600、宿主Trip-Medium及500；../outputs/report.md:16-18明确City无需去后缀改族名，Trip源于宿主；二进制缺失下待核验family/PostScript name、真实weight、覆盖及Trip注册映射，记录iOS/Android500/600、回退、行高/截断风险，保留已确认设计并要求真实字体集成核验（:36）。符合断言允许的缺二进制分支；不当作字体真机通过。"
+        },
+        {
+          "id": "s0_09",
+          "text": "Skyline 单阴影节点以单个 box-shadow 呈现原有 0 2px 4px rgba(0,0,0,.2) 效果，颜色函数作为完整颜色值解析。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:8 的single-shadow实际节点由:52唯一box-shadow:0 2px 4px rgba(0,0,0,.2)控制。rgba括号内逗号属于颜色参数，无顶层多阴影分隔；偏移0/2px、blur4px、alpha.2全部保留。style-card.test.cjs:118核对完整颜色值。"
+        },
+        {
+          "id": "s0_10",
+          "text": "Skyline 单滤镜节点采用受支持的 blur(2px)，呈现原有独立模糊效果。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:8 保留独立single-filter内容；:53唯一filter:blur(2px)，没有将独立节点误并入复合滤镜。style-card.test.cjs:119核对实际选择器参数；真机模糊绘制not_run。"
+        },
+        {
+          "id": "s0_11",
+          "text": "Skyline 在宿主 defaultContentBox=true 条件下，child 保持100px内容宽度及左右各10px padding，实际外宽为120px。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:50 child显式box-sizing:content-box，width:100px、padding:10px，零border；结合任务宿主defaultContentBox=true，内容100px，外宽100+10+10=120px。:6 实际child节点匹配。style-card.test.cjs:94通过，真实尺寸测量not_run。"
+        },
+        {
+          "id": "s0_12",
+          "text": "Skyline 对提示条子节点负 margin-bottom 与后续卡片负 margin-top 的占位链采用显式纵向 Flex 或等效布局，保持 WebView 的重叠效果；普通单侧负 margin 对照保持原语义。",
+          "passed": false,
+          "evidence": "../../input/style-card.mpx:10-13为默认block的overlap-host>tips-wrapper>tips-bar及后续content-card；:38-39的tips-bar content-box外高92+92=184rpx、margin-bottom:-28rpx，wrapper无border/padding/overflow/固定height阻止末子margin折叠，-28折叠到wrapper，并与后卡margin-top:-92rpx合并；全负margin取最小值-92，原WebView卡顶=184-92=92rpx。../outputs/style-card.mpx:58将overlap-host与tips-wrapper都改为column Flex，阻止上述折叠；:59-60给出分支占位184-28=156rpx、后卡顶156-92=64rpx，两renderer均向上多28rpx。因此有重叠且两模式一致，但未保持原有WebView几何，s0_12失败。:15/:61-62普通单侧-8rpx保留只能满足对照子条件，不能弥补主条件。style-card.test.cjs:99-104只核对声明而未对比原始盒模型，不能证明业务保持。差异由静态节点/盒模型足以确认；真机not_run另记，不因缺真机而扣分。"
+        },
+        {
+          "id": "s0_13",
+          "text": "Skyline 横向 scroll-view 的直接内容子节点具有明确主轴宽度，背景铺满 320px 视口，两个短项等分；WebView 保持相同布局，不能只靠内部项目的 flex 或 min-width 反向撑宽。",
+          "passed": true,
+          "evidence": "../outputs/style-card.mpx:16-17 fit-scroll(type=custom、scroll-x=true、enable-flex=true)直接子节点正是fit-content。:63外层宽320px、height38px、row；:64直接内容节点width:100%、display:flex/row、背景#eef2f8，其宽度独立确定为320px；:65两个短项flex:1 1 0且min-width:0，零间隙/额外盒尺寸，各160px。style-card.test.cjs:107-114核对实际父子与width路径；真实320px渲染not_run。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 11,
+        "failed": 0,
+        "total": 11,
+        "time_seconds": 372.061,
+        "tokens": 1350698,
+        "tool_calls": 28,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s1_00",
+          "text": "Skyline 订单页面的外层与主订单纵向scroll-view均具有明确可滚动高度，概览与分组主体按嵌套层次布局，分组实际参与主滚动区域。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:3-18,76-82,133-140：导航在外层之前，外层和主容器wx:style均绑定contentHeight；窗口844、状态栏47、导航44得到两层753px，概览120px使外层内容873px；sections位于主容器的renderer分支内。run-1/grader-check.cjs:52-64及grader-evidence.json实际得到12组96项；每组header40+strip80，12组至少1440px>753px，主区域有纵向溢出。初始4组可能不足一屏，orders.mpx:42提供继续加载入口；真实滚动not_run。"
+        },
+        {
+          "id": "s1_01",
+          "text": "Skyline 主订单纵向scroll-view启用refresher-enabled=true，通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:11-24在承载sections的主容器绑定refresher-enabled=!loading||refreshing、refresher-triggered=refreshing、bindrefresherrefresh=onRefresh；83-85→95-108执行fetchOrders(1)，then替换，catch保留列表，finally清除refreshing/loading。run-1/grader-check.cjs:51,58,65-83从实际模板绑定派发刷新并通过fetchOrders(1,true)注入失败：空闲及刷新中enabled=true，成功和失败triggered最终false，失败后可分页和再刷新。分页期间禁用刷新为并发门控等价实现。"
+        },
+        {
+          "id": "s1_02",
+          "text": "Skyline 主订单纵向scroll-view通过bindscrolltolower连接分页加载，触底后下一页分组追加到同一sections列表并继续展示。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:23→87-89→110-120：主容器触底连接onLoadMore，再loadMore请求pageNo+1，成功concat到同一sections后推进pageNo；27/35循环消费sections。run-1/orders.test.cjs:44-52及grader-check.cjs:51,59-64确认连续两次事件请求2、3页，12组96项且前4组逐字保留；grader-check.cjs:84-90确认横向来源不分页。"
+        },
+        {
+          "id": "s1_03",
+          "text": "Skyline 主订单纵向scroll-view通过bindscroll读取event.detail.scrollTop并更新概览中的滚动位置。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:9显示scrollTop，24绑定onMainScroll，91-94过滤非主节点并从e.detail.scrollTop赋值；外层6及横向29/37无业务scroll绑定。run-1/grader-check.cjs:84-91实际模板事件派发后主区域237可展示，外层及横向来源不改237；真实宿主事件not_run。"
+        },
+        {
+          "id": "s1_04",
+          "text": "Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:146-154页面JSON可解析：renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true。3-5有实际“订单”自定义导航且位于外层6之前；76-82计算导航与主体高度；run-1/orders.test.cjs:155-156核对JSON，compile-wx.json及agent.jsonl:41,43,49证明wx页面真实编译成功。"
+        },
+        {
+          "id": "s1_05",
+          "text": "Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。",
+          "passed": true,
+          "evidence": "outputs/app.json:4顶层lazyCodeLoading为字符串requiredComponents；run-1/orders.test.cjs:157-164解析核对。原pages、window、rendererOptions.webview均保留。"
+        },
+        {
+          "id": "s1_06",
+          "text": "Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。",
+          "passed": true,
+          "evidence": "outputs/app.json:5-13在rendererOptions.skyline内精确提供defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy；三个布尔字段实际为JSON布尔值，两个隔离字段为字符串。run-1/orders.test.cjs:164整体对象相等校验通过。"
+        },
+        {
+          "id": "s1_07",
+          "text": "Skyline 外层纵向scroll-view采用type=nested，主订单纵向容器显式选择type=custom，内层横向容器显式选择list/custom，并通过associative-container=nested-scroll-view建立嵌套关联。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:6外层纵向type=nested；11-18主订单为直接子scroll-view、type=custom且associative-container=nested-scroll-view；27-31组内横向type=list。run-1/grader-check.cjs:20-28解析父子关系与类型通过。关联验证对象为外纵向→主纵向，不额外要求横向也参与同向嵌套；依据mpx/references/skyline/skyline-template-reference.md“Skyline 必填属性与结构约束”。"
+        },
+        {
+          "id": "s1_08",
+          "text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:29-31与37-39横向scroll-view显式type=list、scroll-x=true、enable-flex=true，循环tile是直接子节点；138为display:flex;flex-direction:row，139为flex:0 0 120px;width:120px;height:80px。service.js:6每组8项构成960px总宽，在常见窄窗口形成横向溢出；run-1/grader-check.cjs:24-28检查直接子节点，orders.test.cjs:39-40检查8项数据。"
+        },
+        {
+          "id": "s1_09",
+          "text": "Skyline 主订单custom容器内使用sticky-section/sticky-header实现分组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应CSS sticky实现。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:14主容器custom；26直接renderer===skyline分支，27循环sticky-section且28首子sticky-header；136显式白色背景。34-40为WebView分支，36使用webview-sticky，137定义position:sticky;top:0。block是逻辑透明节点，不改变custom内sticky结构；选项式createPage直接使用实例renderer，无setup暴露遗漏。run-1/orders.test.cjs:142-146结构断言通过；真实吸顶和手势not_run。"
+        },
+        {
+          "id": "s1_10",
+          "text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:48-49中fab和modal是.page下兄弟节点；142-143二者均fixed，弹层四边0且z-index=3，高于按钮2，主滚动区不再有transform/z-index隔离。122-123提供open/close，orders.test.cjs:81-84验证状态切换，147-153核对同级fixed及数值。符合Skyline fixed-context可比较层级；实际视觉覆盖not_run。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.875,
+        "passed": 7,
+        "failed": 1,
+        "total": 8,
+        "time_seconds": 339.079,
+        "tokens": 1462942,
+        "tool_calls": 27,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s2_00",
+          "text": "Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。",
+          "passed": true,
+          "evidence": "../outputs/user-list.mpx:10循环唯一消费visibleItems；:26 items初值[]，:27 initData.visibleItems=[]保护computed完成前首帧，:29始终(this.items||[]).filter(...)；:32 setRows更新后仍经过此computed。user-list.test.cjs:28-58覆盖首帧/null/正常数组/替换/空数组，独立重跑通过。评分者另以实际computed模拟undefined/null/[]/含隐藏行有效数组，输出[]/[]/[]/[甲,乙]。wx真实编译通过；原生响应式not_run。"
+        },
+        {
+          "id": "s2_01",
+          "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。",
+          "passed": true,
+          "evidence": "../outputs/user-list.mpx:9容器id=users合法；:34 this.createSelectorQuery().select('#users')限定本组件作用域，精确匹配同一节点，:8 other不是目标。user-list.test.cjs:61-80验证组件方法、两次#users查询及other未操作。grader-compiled/__validate_0.wxml:1保留同一id；性能推荐也满足，但未测性能。"
+        },
+        {
+          "id": "s2_02",
+          "text": "Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。",
+          "passed": true,
+          "evidence": "../outputs/user-list.mpx:12实际回顶按钮bindtap=scrollTop；:33-36执行组件查询#users.node().exec，然后res[0].node.scrollTo({top:0})；:9同一users节点scroll-y/enhanced=true。user-list.test.cjs:61-82验证上下文链和回顶参数，:84-98从同一按钮绑定分发tap。独立编译保留该目标和属性，实际宿主滚动not_run。"
+        },
+        {
+          "id": "s2_03",
+          "text": "Skyline/glass-easel 模板片段使用 import 引入具名 template，并通过 template 调用；不使用 include。",
+          "passed": true,
+          "evidence": "../outputs/user-list.mpx:2 import ./row.wxml；:10过滤后visibleItems循环内template is=user-row/data={{index,item}}；../outputs/row.wxml:1-3同名模板使用{{index}}:{{item.name}}，无include。user-list.test.cjs:41-52以隐藏行后甲、乙得到0:甲/1:乙。真实编译grader-compiled/__validate_0.wxml:1生成/template/row231111b0.wxml导入，该外部编译文件:1存在user-row和相同字段；字段替换mock非真实模板渲染，静态作用域及编译可证。"
+        },
+        {
+          "id": "s2_04",
+          "text": "Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。",
+          "passed": true,
+          "evidence": "../outputs/user-list.mpx:13简单navigator到/pages/detail且唯一子节点text；:14卡片外层view bindtap=openDetail；:19导入api-proxy.navigateTo，:38方法调用navigateTo({url:'/pages/detail'})。user-list.test.cjs:101-105验证结构和实际方法参数；编译WXML:1保留两入口。真实路由not_run。"
+        },
+        {
+          "id": "s2_05",
+          "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+          "passed": false,
+          "evidence": "../outputs/user-list.mpx:5正确用view mpxTagName@wx=span共同承载image/label，具有max-lines=1/overflow=ellipsis；:46-47存在横向Flex、flex:1/width:0/min-width:0及WebView单行省略CSS。独立真实编译grader-compiled/__validate_0.wxml:1确认实际span。但:48图片.logo仅24px宽高与vertical-align；最终grader-compiled/__validate_0.wxss:1亦无display:inline-block，完整模板无对应动态样式，且缺可信默认display等价证据。故既定断言的inline-block子条件证据不足，整条false。这不证明真实图文混排必然故障；本组Skill提示基础span+text/image组合不应机械套用rich-text业务示例样式，口径局限见audit。长label视觉not_run。"
+        },
+        {
+          "id": "s2_06",
+          "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+          "passed": true,
+          "evidence": "../outputs/user-list.mpx:6真实view.pulse承载；:49宽高8px、#f50、初始opacity.3、userListPulse 1s infinite及fill-mode:both，:50关键帧from.3/to1；无伪元素动画。user-list.test.cjs:130-135核验，编译WXML:1存在pulse，WXSS:1保留所有参数。真实动画插值not_run。"
+        },
+        {
+          "id": "s2_07",
+          "text": "Skyline 按钮通过响应式状态，以wx:class或wx:style驱动transform/opacity的150ms CSS transition，完成按下及恢复的视觉过渡；WebView 保持对应体验。",
+          "passed": true,
+          "evidence": "../outputs/user-list.mpx:12同一回顶按钮touchstart=press、touchend/touchcancel=release，wx:class由pressed控制；:26响应式data初始false，:39-40设true/false；:51基础scale(1)/opacity1与transform/opacity双向150ms linear transition，:52活动类scale(.96)/opacity.7。user-list.test.cjs:84-98按同一节点绑定分发按下/松开/取消/tap，:133-135核对CSS；编译WXML:1生成_s_.c动态class，WXSS:1保留.15s过渡。两renderer共用实现，wx.createAnimation已移除，真实触摸/插值not_run。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8571,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 628.235,
+        "tokens": 2534589,
+        "tool_calls": 43,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "n3_00",
+          "text": "Skyline 新页面配置renderer=skyline、componentFramework=glass-easel、navigationStyle=custom和disableScroll=true，实际呈现任务看板导航；app顶层lazyCodeLoading及rendererOptions.skyline五项推荐配置完整。",
+          "passed": true,
+          "evidence": "../outputs/pages/task-board.mpx:212-224页面JSON含renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true；:4-7真实导航有任务看板及首页入口。../outputs/app.json保留pages/home/window/webview并新增task-board，顶层lazyCodeLoading=requiredComponents，skyline五项分别defaultDisplayBlock/defaultContentBox/enableScrollViewAutoSize=true、tagNameStyleIsolation/keyframeStyleIsolation=legacy。compiled-wx/page-and-components/__validate_0.json:1确认真实编译页配置和两组件注册，WXML:1确认导航节点。grader复制原Jest10/10通过；完整宿主构建未运行。"
+        },
+        {
+          "id": "n3_01",
+          "text": "Skyline 新页面通过有明确高度约束的type=list纵向scroll-view承载任务，任务项为直接子节点，标题及筛选区位于滚动主体之外。",
+          "passed": true,
+          "evidence": "../outputs/pages/task-board.mpx:2-38 header与scroll-view为兄弟，顶部分类/评分在header内且滚动主体外。:18-30实际scroll-view type=list、scroll-y=true；task-row的wx:for直接位于该scroll-view下，无wrapper。:128-138页面height100vh/flex column、header flex-shrink:0，:173列表flex:1/height:0/min-height:0/width100%形成明确剩余高度和收缩链。编译WXML:1保留直接列表项，WXSS:1保留高度链；连续追加增加内容不会撑破100vh父约束。窄屏/超屏任务的实际几何与滚动not_run；静态可证明有界结构。"
+        },
+        {
+          "id": "n3_02",
+          "text": "Skyline 新页面在scroll-view上启用refresher-enabled=true，将下拉刷新接到bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。",
+          "passed": true,
+          "evidence": "../outputs/pages/task-board.mpx:23-28同一实际board-list设置refresher-enabled=true、refresher-triggered={{refreshing}}、bindrefresherrefresh=onRefresh；:89-110处理器先置true，通过300ms Promise请求resolve/createInitialTasks或注入reject，finally统一置false。成功替换任务并评分归零，失败不改tasks/rating，重入被保护。grader-task-board.test.cjs:250-300从实际模板绑定注入成功/失败，检查最终triggered=false、失败保留且可继续切换/分页、下一次刷新成功，独立10/10通过。真实容器反馈not_run。"
+        },
+        {
+          "id": "n3_03",
+          "text": "Skyline 新页面将scroll-view的bindscrolltolower接入分页追加，每次容器触底后新任务进入同一滚动列表。",
+          "passed": true,
+          "evidence": "../outputs/pages/task-board.mpx:28实际board-list.bindscrolltolower=onLoadMore；:111-119每次生成[0,1]两个addition，当前分类或全部→工作，nextTaskNumber递增，tasks.value.concat(additions)保留旧项；filteredTasks(:63)仍是同一scroll-view循环数据(:30)。grader-task-board.test.cjs:302-323从真实触底绑定连续调用，核对旧key前缀、每次两条、分类/未完成及唯一键，成功/失败后亦可追加。真实触底事件not_run。"
+        },
+        {
+          "id": "n3_04",
+          "text": "Skyline 页面任务标题、选项式评分组件标题和组合式分类组件候选文案，在实际text承载节点设置max-lines=1、overflow=ellipsis，并在有界可收缩宽度内与WebView单行省略路径共同生效。",
+          "passed": true,
+          "evidence": "三个目标均静态通过：页面:32 text.task-title实际承载item.title，max-lines=1/overflow=ellipsis；:190-201 flex1/width0/min-width0与nowrap/hidden/text-overflow，左右标记/分类flex-shrink0。rating-selector:3 text.rating-label及:51-77同样受100%根宽和flex1/width0/min-width0约束，星级/分数flex-shrink0保留可见。segmented-control:6 text.segmented-option-label有省略属性；:55-75父横向Flex、各option flex1/width0/min-width0、label block/width100%与WebView省略CSS，各候选在有限等分宽度截断。文本插值紧贴标签，编译WXML/WXSS保留各路径。实际长标题/长label视觉测量not_run，不将静态声明称为真机截断通过。"
+        },
+        {
+          "id": "n3_05",
+          "text": "Skyline 选项式评分组件的星级与组合式分类组件的候选项，通过各实例响应式状态，以wx:class或wx:style驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。",
+          "passed": true,
+          "evidence": "页面JSON:220-222真实注册到交付两个组件，模板:12/14确实使用。rating-selector:5绑定start=pressStar(item)、end/cancel=releaseStar，:23每实例data.pressedStar，:41-44更新/清零；:63-76基础scale1/opacity1、150ms transform/opacity过渡，pressed类scale.96/opacity.7。segmented-control:5同样绑定start=pressOption(index,item)、end/cancel=releaseOption，:27每次setup独立ref(-1)、:35-38更新/清零，:56-79对应同值150ms过渡。grader-task-board.test.cjs:171-248从实际绑定验证start/end/cancel、禁用保护及各自两个实例状态隔离，独立10/10通过；编译class经_s_.c/事件经__invoke保留。真实触摸插值not_run。"
+        },
+        {
+          "id": "n3_06",
+          "text": "Skyline/glass-easel 新建组合式分类组件的候选列表在初始化、异步返回前、null输入和数组更新阶段均向wx:for提供Array/Object类型的数据。",
+          "passed": false,
+          "evidence": "setup后更新路径通过，但首帧安全证据不足：../outputs/components/segmented-control.mpx:5 wx:for直接safeOptions无模板||[]；:15 defineOptions.initData.safeOptions=[]、:18 options默认[]、:25 Array.isArray守护。真实compiled-wx/standalone-components/__validate_1.js:7120-7136确有initData及setup computed，然而:4279将initData列为builtInKeys，:5561-5570的filterOptions先跳过该键，仅遇data时合并initData；该setup组件没有data。grader-native-registration.cjs执行实际webpack入口及bundle后捕获原生Component注册，grader-native-registration.json显示segmented.hasData=false、无created hook，仅attached。编译:5607-5624把initProxy放在attached，:675-705显示其后同步initSetup→initRender；无法仅凭Node证明微信首轮模板消费必晚于此链，故没有可信首帧Array保护证明，按该断言全条件证据不足判false。null/[]/数组更新由实际宏编译后的Vue mock通过（grader测试:203-218），不能替代首帧。未在真机复现for-list错误，亦不声称必然崩溃。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "mpx2skyline",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 14,
+        "failed": 0,
+        "total": 14,
+        "time_seconds": 385.05,
+        "tokens": 1248159,
+        "tool_calls": 47,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s0_00",
+          "text": "Skyline 标题的实际 text 承载节点设置 max-lines=1、overflow=ellipsis，并与 WebView 单行省略样式共同实现长标题截断。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:2-3,49-50：真实标题承载 text 具 max-lines={{1}}/overflow=ellipsis，内容紧贴标签；title 为 display:block、nowrap/hidden/text-overflow:ellipsis。card 与 title 均为正常块布局，title 的 auto 宽度受宿主可用宽度减 card padding 约束，无横向 Flex 的 min-content 撑宽链。Skyline 走组件属性，WebView 保留完整单行 CSS；run-1/style-card.test.cjs:103-111 实测该源码契约通过。"
+        },
+        {
+          "id": "s0_01",
+          "text": "Skyline 两列标签使用显式横向 Flex 和等分子项布局，实现两列等宽。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:4,51-52：两个实际 text 均带 label，直接父 labels 为 display:flex/flex-direction:row；两项 width:50%，均无自身 padding/border/margin/gap，故在父可用宽度 W 下各 W/2（总 W），不依赖 Skyline 不支持的 Grid。"
+        },
+        {
+          "id": "s0_02",
+          "text": "Skyline 活动状态通过受支持的 class 选择器映射到红色活动文案。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:5,53：实际活动节点 class=\"badge badge-sale\"，纯类选择器 .badge-sale 匹配该节点并声明 color:#d00；原 data-kind 保留但不再依赖属性选择器。"
+        },
+        {
+          "id": "s0_03",
+          "text": "WebView 仅在 renderer !== skyline 时添加媒体查询专用类；Skyline 按运行时窗口宽度通过 wx:class 切换 padding，窗口宽度≤320px 为12rpx、>320px 为24rpx，并响应窗口变化。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:2,27-44,49,77-78：仅 renderer!==skyline 附 card-webview，唯一 @media 内唯一选择器 .card-webview；Skyline 以 getWindowInfo().windowWidth<=320 初始化 isSmall，并在 onWindowResize(size.windowWidth) 更新，detached 以同一 handler 调 offWindowResize 后清引用。代入319/320/321：两 renderer 均得到12/12/24rpx；即使忽略媒体条件，Skyline 不带 card-webview，321 时仍24rpx，未靠 CSS 后置覆盖。既有 Jest 47-101 行覆盖初始化、跨断点、实例隔离和清理并独立重跑14/14；grader 另以源码 VM+PostCSS 核算两 renderer 三宽度及媒体条件忽略结果。"
+        },
+        {
+          "id": "s0_04",
+          "text": "Skyline 内容与父容器上外沿的20px距离由父 padding 表达，子节点从父内容区起始位置布局。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:6,54-55：child 是 outer 直接首子，outer padding-top:20px 且无 border，child 已无 margin-top；在宿主 content-box/block 基线下子盒顶恰为20px，child 自身 padding-top:10px 使内容顶30px，满足父 padding 表达间距的指定契约。"
+        },
+        {
+          "id": "s0_05",
+          "text": "Skyline 相邻块的垂直间距集中由一侧的16px margin承担，最终相邻盒间距为16px。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:7,56-57：first 与 second 是相邻普通块，前者 margin-bottom:16px、后者 margin-top:0，无中间内容；Skyline 相加16+0=16px，WebView 折叠 max(16,0)=16px，间距仅由前一侧承担。"
+        },
+        {
+          "id": "s0_06",
+          "text": "Skyline 将双阴影分配到同尺寸的嵌套节点或等效分层结构，呈现原有两层阴影的参数和前后关系。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:9,60-61：many 直接嵌套 many-front，仅内层持原文字，两层均为宿主 block、auto 横向铺满且无 padding/border/margin/显式高度，外层 auto 高度由唯一流内子盒决定，盒尺寸相同。外层0 4px 8px #333 在后，内层0 2px 4px #000 在前，与输入首层阴影位于前方的顺序一致；每个节点只有单层阴影。"
+        },
+        {
+          "id": "s0_07",
+          "text": "Skyline 将复合滤镜分层为内层blur(2px)和外层brightness(.8)，组合呈现原有两种效果。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:10,62-63：实际 filters > filters-blur > 原文字结构；内层单函数 blur(2px)，外层单函数 brightness(.8)，内容先模糊再经外层亮度合成，原两种效果及参数均保留；无多函数写在同一声明。"
+        },
+        {
+          "id": "s0_08",
+          "text": "Skyline 字体处理识别 City-Semibold 的同名独立字体族，明确 Trip-Medium 的宿主字体与 PostScript 映射核验点，并记录500/600字重的机型验证要求。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:19,74-76；outputs/report.md:24-27：City-Semibold 由当前独立 @font-face 映射 ./city.woff2，保留同名 family/600；Trip-Medium 明确为宿主 family，报告说明实际 family/PostScript name、二进制字重表及加载结果待核验，保留已确认设计500字重并要求目标 iOS/Android 对500/600做真机验证。input/task.md 明确字体二进制由宿主提供；原路径缺文件的真实编译失败也如实记录于 report:38、compile-result.json，未伪造字体或擅改 bold。"
+        },
+        {
+          "id": "s0_09",
+          "text": "Skyline 单阴影节点以单个 box-shadow 呈现原有 0 2px 4px rgba(0,0,0,.2) 效果，颜色函数作为完整颜色值解析。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:8,58：实际 single-shadow 节点唯一 box-shadow 为0 2px 4px rgba(0,0,0,.2)，与输入原值一致；rgba 内部逗号属于单个颜色函数，PostCSS 顶层 shadow 列表仅1项。run-1/style-card.test.cjs:155-157 已执行此核验。"
+        },
+        {
+          "id": "s0_10",
+          "text": "Skyline 单滤镜节点采用受支持的 blur(2px)，呈现原有独立模糊效果。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:8,59：独立 single-filter 原文字仍位于该节点，filter:blur(2px) 单函数且未被覆盖、移除；不与复合 filters 节点混用。run-1/style-card.test.cjs:161 核验通过。"
+        },
+        {
+          "id": "s0_11",
+          "text": "Skyline 在宿主 defaultContentBox=true 条件下，child 保持100px内容宽度及左右各10px padding，实际外宽为120px。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:6,55：child 明确 box-sizing:content-box，width:100px，四侧 padding:10px，无 border；内容宽100px，外宽100+10+10=120px，独立于宿主已开启 defaultContentBox 的默认值仍正确。run-1/style-card.test.cjs:114-122 几何模型检查通过。"
+        },
+        {
+          "id": "s0_12",
+          "text": "Skyline 对提示条子节点负 margin-bottom 与后续卡片负 margin-top 的占位链采用显式纵向 Flex 或等效布局，保持 WebView 的重叠效果；普通单侧负 margin 对照保持原语义。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:11-15,64-70：overlap-host 和 tips-wrapper 均为显式 column Flex；bar 盒高92+92=184rpx，负底 margin -28 使 wrapper 内容高度156，wrapper 底 margin +28 后占位184，再经 content-card 顶 margin -92 得卡片顶92、底212rpx。输入 WebView 中 bar 末子 margin 与下一卡片负顶 margin 折叠 min(-28,-92)=-92，同样卡片顶184-92=92、底212；输出两 renderer 采用同一不折叠 Flex 算法保持原重叠。simple-overlap 未加 Flex，simple-first 高24、next margin-top:-8，普通回拉仍8rpx。report:16-20 与测试:126-139 区分代数与实测；原生/真机几何验证 not_run，不因未跑真机扣静态充分可证分。"
+        },
+        {
+          "id": "s0_13",
+          "text": "Skyline 横向 scroll-view 的直接内容子节点具有明确主轴宽度，背景铺满 320px 视口，两个短项等分；WebView 保持相同布局，不能只靠内部项目的 flex 或 min-width 反向撑宽。",
+          "passed": true,
+          "evidence": "outputs/style-card.mpx:16-18,71-73：fit-scroll 的直接内容子节点确为 fit-content，width:100% 作用于该节点本身；父 viewport 为320px、显式横向 Flex，scroll-x/enable-flex=true 且 type=custom。fit-content 无水平 padding/border/margin，背景#eef2f8 因此铺满320px；两个直接 fit-item 均 flex:1 0 0/min-width:0 且无额外盒边，零基准平分各160px，未靠内部项反向撑宽。两 renderer 共享结构；原生320px视口真实渲染 not_run，静态结构/盒模型充分可证。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx2skyline",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 11,
+        "failed": 0,
+        "total": 11,
+        "time_seconds": 736.499,
+        "tokens": 4569492,
+        "tool_calls": 63,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s1_00",
+          "text": "Skyline 订单页面的外层与主订单纵向scroll-view均具有明确可滚动高度，概览与分组主体按嵌套层次布局，分组实际参与主滚动区域。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:2-6,7-36,92-99,137-142：根高windowHeight，自定义导航占statusBarHeight+navigationHeight，外层及主纵向容器均以wx:style显式绑定剩余scrollHeight；不是继续硬编码400px。summary以border-box总高120px位于nested-scroll-header，主custom位于nested-scroll-body并直接渲染sections。以实际脚本mock H800/status24/capsule28,32得nav44、外/主高732；外内容120+732=852，可移出120px概览。每组header40+strip80=120；4组480短内容，8/12组960/1440超过主高732，分组确实参与主滚动而非旁路内容。窗口600时重算为532。grader-check.cjs及grader-check.json从实际节点/样式和布局脚本核验；真实几何not_run。"
+        },
+        {
+          "id": "s1_01",
+          "text": "Skyline 主订单纵向scroll-view启用refresher-enabled=true，通过bindrefresherrefresh启动刷新，refresher-triggered绑定刷新状态，请求成功和失败均结束该容器刷新态。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:14-28,100-113：承载sections的主容器refresher-enabled={{!loading || refreshing}}，空闲true、刷新中true、分页中门控false（可接受的并发控制）；refresher-triggered绑定refreshing，bindrefresherrefresh实际连接onRefresh→reload。reload设refreshing/loading为true；fetchOrders(1)成功替换并归页1，失败catch保留列表/页号；finally两态均false。原Jest六项及mock-evidence记录成功/真实service失败；grader-check从主节点实际刷新绑定派发，并把fetchOrders(1,true)拒绝注入该路径，确认失败保留原数组/页2、状态复位且后续分页可继续。"
+        },
+        {
+          "id": "s1_02",
+          "text": "Skyline 主订单纵向scroll-view通过bindscrolltolower连接分页加载，触底后下一页分组追加到同一sections列表并继续展示。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:25,115-124：主custom用catchscrolltolower=loadMore连接实际触底事件，catch具备bind相同的处理器调用并额外阻止冒泡。loadMore计算nextPage，仅成功后sections.concat追加并推进页号，finally释放锁；原Jest:53-64、mock-evidence和独立grader-check均沿主节点绑定连续请求2/3页，得到12组96项并保留原分组与订单数组对象。31和59横向触底catch到ignoreScroll，不能冒泡触发主分页。"
+        },
+        {
+          "id": "s1_03",
+          "text": "Skyline 主订单纵向scroll-view通过bindscroll读取event.detail.scrollTop并更新概览中的滚动位置。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:10,26,41,54,126-127：主节点catchscroll=onScroll，onScroll读取e.detail.scrollTop赋给data.scrollTop，两个renderer概览真实text均插值该值。横向节点catchscroll=ignoreScroll，外层无主位置业务处理器。原测试:93-117及独立grader-check从实际主绑定传入detail.scrollTop=186，随后横向scrollTop=999仍保留186，外层未绑定误用逻辑。"
+        },
+        {
+          "id": "s1_04",
+          "text": "Skyline 页面配置 renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true，并在模板实现订单自定义导航。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:146-154：页面JSON精确为renderer:skyline、componentFramework:glass-easel、navigationStyle:custom、disableScroll:true，并关闭页面级下拉。模板:3-5是真实navigation/title节点，显示订单；2和92-99按其状态栏+导航高度安排下方外层区，未只修改navigationBarTitleText而漏实际导航。真实wx page编译compile.log成功且无errors/warnings。"
+        },
+        {
+          "id": "s1_05",
+          "text": "Skyline 接入所需的 lazyCodeLoading=requiredComponents 配置于 app.json 顶层。",
+          "passed": true,
+          "evidence": "outputs/app.json:4：JSON顶层lazyCodeLoading为字符串requiredComponents，未误放rendererOptions或页面JSON；原pages/home路由和window字段保持。run-1/audit.cjs:43-49有结构化解析断言。"
+        },
+        {
+          "id": "s1_06",
+          "text": "Skyline 在 app.rendererOptions.skyline 中配置 defaultDisplayBlock=true、defaultContentBox=true、tagNameStyleIsolation=legacy、enableScrollViewAutoSize=true、keyframeStyleIsolation=legacy。",
+          "passed": true,
+          "evidence": "outputs/app.json:5-13：五字段全在rendererOptions.skyline内，defaultDisplayBlock/defaultContentBox/enableScrollViewAutoSize均为布尔true，tagNameStyleIsolation/keyframeStyleIsolation均为字符串legacy。rendererOptions.webview原值{}保留；audit.cjs:48逐值深比较。"
+        },
+        {
+          "id": "s1_07",
+          "text": "Skyline 外层纵向scroll-view采用type=nested，主订单纵向容器显式选择type=custom，内层横向容器显式选择list/custom，并通过associative-container=nested-scroll-view建立嵌套关联。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:6-36：真实纵向链是外层scroll-view(type=nested)→nested-scroll-body→主scroll-view(type=custom,associative-container=nested-scroll-view)；概览经nested-scroll-header属于外层。每组内横向scroll-view显式type=list。父子类型与纵向关联已建立；横向浏览不承担纵向嵌套衔接，不额外要求横向也配置同向关联。WebView经38的wx:else走普通滚动分支，Skyline专属包装未泄漏。"
+        },
+        {
+          "id": "s1_08",
+          "text": "Skyline 横向列表显式选择type=list/custom，开启enable-flex并设置横向Flex布局；采用list时条目为直接子节点，项目保持120px宽度和相应的收缩约束。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:31-33,59-61,141-142：两个renderer横向strip均显式type=list、scroll-x=true、enable-flex=true，strip实际CSS为display:flex/flex-direction:row，高80px；list的直接子节点即wx:for生成的tile，width:120px/flex-shrink:0，无会撑高改成纵向排列的wrapper。每组8项主轴内容960px，超过常规页面宽可横向浏览；事件仅由本层ignoreScroll承接。"
+        },
+        {
+          "id": "s1_09",
+          "text": "Skyline 主订单custom容器内使用sticky-section/sticky-header实现分组标题吸顶，header为section首子节点且具有背景；WebView分支采用对应CSS sticky实现。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:14-35,38-64,139-140：Skyline主区域为type=custom，sections直接生成sticky-section，首子为唯一sticky-header(class=header)，header明确background:#fff；两者嵌套关系正确。外层renderer===skyline隔离该整树；WebView对应group/header带webview-sticky，使用position:sticky/top:0，并共用40px高白背景。原生吸顶/嵌套手势not_run单独记录，结构与双分支静态证据充分。"
+        },
+        {
+          "id": "s1_10",
+          "text": "Skyline 弹层与悬浮按钮组织为可比较的fixed层，通过层级值使弹层覆盖按钮。",
+          "passed": true,
+          "evidence": "outputs/orders.mpx:65-66,128-129,143-144：真实fab和modal是page下同级节点，均position:fixed，z-index分别2和3，modal四边0形成全屏覆盖；均位于scroll-view外，未依赖transform/opacity提升或负z-index。fab bindtap=open令opened=true，modal条件渲染并bindtap=close清状态。独立grader-check按真实tap绑定验证开关及固定层CSS比较；实际设备像素覆盖not_run。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx2skyline",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.875,
+        "passed": 7,
+        "failed": 1,
+        "total": 8,
+        "time_seconds": 292.029,
+        "tokens": 977140,
+        "tool_calls": 23,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "s2_00",
+          "text": "Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。",
+          "passed": true,
+          "evidence": "outputs/user-list.mpx:25提供initData.visibleItems=[]保护computed前首帧，26将items初始化为[]；唯一业务写入口31以res.items||[]归一undefined/null，28的filter对所有可达路径返回数组。run-1/user-list.test.cjs:39-65验证初始、null、有效数组及替换；独立grader-check.cjs:40-50补测setRows({items:undefined})、null、[]、有效数组，过滤隐藏项并得到0:甲、1:乙。编译产物grader-compiled/__validate_0.wxml:1仍绑定visibleItems。"
+        },
+        {
+          "id": "s2_01",
+          "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。",
+          "passed": true,
+          "evidence": "outputs/user-list.mpx:9实际用户scroll-view的id=users，33使用this.createSelectorQuery().select('#users')，是组件实例作用域且selector与合法id一致。grader-check.cjs:53-59断言查询this为当前实例并把selector关联到实际编译节点users；其他容器id=other未被选中。this.createSelectorQuery同时满足Skill性能推荐。"
+        },
+        {
+          "id": "s2_02",
+          "text": "Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。",
+          "passed": true,
+          "evidence": "outputs/user-list.mpx:12同一回顶按钮bindtap=scrollTop，9实际users节点enhanced=true且scroll-y=true；32-35执行组件作用域select(#users).node().exec后res[0].node.scrollTo({top:0})。grader-compiled/__validate_0.wxml:1保留实际绑定与enhanced；grader-check.cjs:15-22,53-72从编译按钮点击属性派发并记录users context的top=0，other未调用；真实滚动not_run。"
+        },
+        {
+          "id": "s2_03",
+          "text": "Skyline/glass-easel 模板片段使用 import 引入具名 template，并通过 template 调用；不使用 include。",
+          "passed": true,
+          "evidence": "outputs/user-list.mpx:2导入./row.wxml，10在visibleItems循环内调用is=user-row并传data={{index,item}}；outputs/row.wxml:1-3具名template使用index与item.name，无include。真实wx编译grader-compiled/__validate_0.wxml:1将import改写为/template/row366d1826.wxml，保留is/data，实际编译外部模板同名；grader-check.cjs:24-26,45-50用两个不同过滤后用户代入得到0:甲、1:乙，隐藏用户不渲染。"
+        },
+        {
+          "id": "s2_04",
+          "text": "Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。",
+          "passed": true,
+          "evidence": "outputs/user-list.mpx:13简单navigator仅text子节点且url=/pages/detail；14卡片外层view绑定openDetail，39调用wx.navigateTo({url:'/pages/detail'})，允许复杂卡片外层事件等价实现。grader-check.cjs:73-77从编译节点核对navigator及卡片事件，mock实际调用参数为同一详情目标。未声称真实跳转已执行。"
+        },
+        {
+          "id": "s2_05",
+          "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+          "passed": false,
+          "evidence": "未满足既定断言的全部条件：outputs/user-list.mpx:5及真实编译grader-compiled/__validate_0.wxml:1确认logo与label同属span，max-lines=1/overflow=ellipsis；47有flex:1,width:0,min-width:0与WebView单行省略。但48的.logo仅width/height/vertical-align，实际编译grader-compiled/__validate_0.wxss:1同样没有display:inline-block或等价动态样式；grader-evidence.json显示logoDisplayDeclaration=null、inlineBlockEvidence=false，宿主默认display与实际长label几何未验证，无可信默认等价证据。按断言明确图片inline-block条件及证据不足计0；不把缺少显式样式等同于已证实真机混排故障。指定Skill对基础span+image+text允许更简组合的适用口径差异另见audit。"
+        },
+        {
+          "id": "s2_06",
+          "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+          "passed": true,
+          "evidence": "outputs/user-list.mpx:6为heading内真实pulse节点；49指定8px×8px、#f50、opacity:.3、animation:pulse 1s infinite、fill-mode:both；50关键帧from .3到to 1。实际编译grader-compiled/__validate_0.wxml:1存在pulse，__validate_0.wxss:1保留1s infinite/both以及0% .3→to 1；没有伪元素animation和旧animation API。user-list.test.cjs:139-146核对尺寸、颜色、周期和关键帧。播放真机not_run。"
+        },
+        {
+          "id": "s2_07",
+          "text": "Skyline 按钮通过响应式状态，以wx:class或wx:style驱动transform/opacity的150ms CSS transition，完成按下及恢复的视觉过渡；WebView 保持对应体验。",
+          "passed": true,
+          "evidence": "outputs/user-list.mpx:12同一个按钮以wx:class={pressed:pressed}绑定pressed并承接touchstart/ end/ cancel；26初始false，37按下true、38松开及取消false；51-52的普通态scale(1)/opacity1与按压态scale(.96)/opacity.7均由150ms transition衔接。真实编译grader-compiled/__validate_0.wxml:1生成_s_.c(\"button\",{pressed:pressed})，wxss:1保留transform .15s,opacity .15s。grader-check.cjs:62-69从编译绑定派发按下/松开/取消并核对恢复，通用CSS路径服务两renderer参数。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "mpx2skyline",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8571,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 710.63,
+        "tokens": 2642683,
+        "tool_calls": 74,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "n3_00",
+          "text": "Skyline 新页面配置renderer=skyline、componentFramework=glass-easel、navigationStyle=custom和disableScroll=true，实际呈现任务看板导航；app顶层lazyCodeLoading及rendererOptions.skyline五项推荐配置完整。",
+          "passed": true,
+          "evidence": "outputs/pages/task-board.mpx:167-177与真实compiled/__validate_0.json:1含renderer=skyline、componentFramework=glass-easel、navigationStyle=custom、disableScroll=true；页面3-8为真实导航并展示“任务看板”，72-83计算状态栏/胶囊并更新窗口。outputs/app.json:9-17顶层requiredComponents及rendererOptions.skyline五项类型、值、层级全部正确，保留首页/window/webview。audit.cjs:80-95逐项解析核对通过。"
+        },
+        {
+          "id": "n3_01",
+          "text": "Skyline 新页面通过有明确高度约束的type=list纵向scroll-view承载任务，任务项为直接子节点，标题及筛选区位于滚动主体之外。",
+          "passed": true,
+          "evidence": "outputs/pages/task-board.mpx:2将根高度绑定windowHeight，145为box-sizing:border-box列Flex；146 header不收缩且包含标题、两个组件，20-33的滚动主体是根的另一个子节点，155为flex:1;height:0;min-height:0，故剩余高度有界；20为type=list、scroll-y=true，23循环task-card是直接子项。真实compiled/__validate_0.wxml:1及wxss:1保留结构和高度链。business.test.cjs:115-139产生11项仍消费同一列表，141-151给320×568/280×480窗口验证状态。静态高度链与任务数量足以证明可增长有界布局，实际几何/滚动not_run。"
+        },
+        {
+          "id": "n3_02",
+          "text": "Skyline 新页面在scroll-view上启用refresher-enabled=true，将下拉刷新接到bindrefresherrefresh，refresher-triggered绑定状态，成功及失败路径均结束容器刷新态。",
+          "passed": true,
+          "evidence": "outputs/pages/task-board.mpx:20-22在实际任务scroll-view启用refresher-enabled={{true}}，状态refresher-triggered={{refreshing}}，事件onRefresh；107-124请求前true，异步resolve恢复初始任务并重置评分，reject保留原任务与评分，finally复位false。business.test.cjs:67-113从实际编译scroll-view事件绑定触发成功/失败、检查分页互斥及失败后继续切换/分页/成功重试；compile产物保留同一容器事件。"
+        },
+        {
+          "id": "n3_03",
+          "text": "Skyline 新页面将scroll-view的bindscrolltolower接入分页追加，每次容器触底后新任务进入同一滚动列表。",
+          "passed": true,
+          "evidence": "outputs/pages/task-board.mpx:22绑定bindscrolltolower=onLoadMore，127-135每次构造2条当前分类未完成任务（全部取工作）并concat到tasks，62的visibleTasks与23的实际循环消费同一数据；nextTaskId递增。business.test.cjs:115-139沿编译事件连续触底，逐次+2、原3项保留、唯一taskKey、分类切换与刷新后键不复用，最终11项；实际原生触底not_run。"
+        },
+        {
+          "id": "n3_04",
+          "text": "Skyline 页面任务标题、选项式评分组件标题和组合式分类组件候选文案，在实际text承载节点设置max-lines=1、overflow=ellipsis，并在有界可收缩宽度内与WebView单行省略路径共同生效。",
+          "passed": true,
+          "evidence": "三个目标均通过静态与真实编译核对：任务标题pages/task-board.mpx:27是text且max-lines=1/overflow=ellipsis，159-160以可收缩task-content(flex:1,width:0,min-width:0)给title宽100%；评分标题rating-selector.mpx:3,67-74是text，剩余宽度flex:1,width:0,min-width:0，stars及score均flex-shrink:0，父页面153给满宽；候选文案segmented-control.mpx:9,62-66是text宽100%，父候选项flex:1,width:0,min-width:0水平等分。三者均保留overflow:hidden/white-space:nowrap/text-overflow:ellipsis，插值紧贴text。compiled三份wxml/wxss:1保留相同约束；长文案实际截断位置not_run，静态可缩宽度及相邻固定项链完整。"
+        },
+        {
+          "id": "n3_05",
+          "text": "Skyline 选项式评分组件的星级与组合式分类组件的候选项，通过各实例响应式状态，以wx:class或wx:style驱动transform/opacity的150ms CSS transition，按下达到scale(.96)/opacity(.7)，松开和取消均恢复1。",
+          "passed": true,
+          "evidence": "页面usingComponents注册到两个真实交付组件，模板11-16实际使用；rating-selector.mpx:5-8,30,55-60以实例pressedValue与wx:class连接touchstart/end/cancel，70/73为150ms transform/opacity、按压scale(.96)/opacity(.7)、普通态1；segmented-control.mpx:5-8,30,47-55以局部ref pressedIndex同样闭环，65/69为相同样式值。真实编译两个组件WXML生成_s_.c及各自状态比较，wxss保留.15s和scale(.96)。business.test.cjs:187-202、250-267分别挂载同类两个实例，验证按下、松开、取消和实例隔离；页面集成270-295从真实注册传参。"
+        },
+        {
+          "id": "n3_06",
+          "text": "Skyline/glass-easel 新建组合式分类组件的候选列表在初始化、异步返回前、null输入和数组更新阶段均向wx:for提供Array/Object类型的数据。",
+          "passed": false,
+          "evidence": "首帧安全证据不足。segmented-control.mpx:20默认options=[]、25声明initData.safeOptions=[]、28计算归一null/非数组，58暴露；但模板5及实际compiled/components/segmented-control6530f36f/index.wxml:1直接wx:for={{safeOptions}}，无guard/fallback。独立grader-native-loop.cjs/json加载本组真实compiled/bundle.js与组件index.js捕获Component注册参数，注册时无data，safeOptions为undefined；编译runtime index.js:4293-4302,5582-5593可追踪initData过滤。手动执行真实attached后会setData({safeOptions:[]})，原生properties observer模拟null/[]/有效数组再null均向data.safeOptions提供数组；但宿主首次模板消费与attached/setData先后未验证，不能仅用原harness手动setup/computed结果证明首帧。因此按verification首帧证据不足false；未复现真机报错，不宣称必然崩溃。"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "mpx": {
+      "pass_rate": {
+        "mean": 0.9152,
+        "stddev": 0.0642,
+        "min": 0.8571,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 399.1132,
+        "stddev": 160.2152,
+        "min": 257.078,
+        "max": 628.235
+      },
+      "tokens": {
+        "mean": 1630346.0,
+        "stddev": 614520.4408,
+        "min": 1173155,
+        "max": 2534589
+      }
+    },
+    "mpx2skyline": {
+      "pass_rate": {
+        "mean": 0.933,
+        "stddev": 0.0777,
+        "min": 0.8571,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 531.052,
+        "stddev": 225.7619,
+        "min": 292.029,
+        "max": 736.499
+      },
+      "tokens": {
+        "mean": 2359368.5,
+        "stddev": 1644207.5265,
+        "min": 977140,
+        "max": 4569492
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.02",
+      "time_seconds": "-131.9",
+      "tokens": "-729022"
+    }
+  },
+  "notes": [
+    "每 case 每组运行一次；Pass Rate 是 case 均值，专项总分见适配/创建分项。",
+    "40 条能力断言由实际产物与 verification 语义核验；通用契约另存 validation.json。",
+    "Delta 为 mpx 减 mpx2skyline；编译和静态证据不等于真机验证。",
+    "8/8 个正式任务通过同一 RN 执行器的独立 codex exec 完成，gpt-6.1-sol / high，最多并发3；命令、依赖和版本一致性见 execution-protocol-audit.json。",
+    "按原40条断言：mpx 37/40，mpx2skyline 38/40。评分为Agent语义核验，grade.py只校验和汇总，不能称为纯脚本自动评分。",
+    "case0 s0_12：mpx 双层Flex后卡片顶为64rpx，原WebView block折叠基线为92rpx，多回拉28rpx；mpx2skyline增加28rpx补偿。此项是可由原始及产物盒模型推导的业务差异。",
+    "case2 两组 s2_05 均未满足固定断言的图片inline-block条件，也未提供默认等价证据；两组实际编译span及事件链通过。Skill对基础span/image组合并不要求机械套用复杂混排样式，因此该扣分不能直接解读为已证实的视觉故障。",
+    "case3 两组 n3_06：源码initData.safeOptions虽编译保留，但真实bundle的原生Component注册初始data缺失，WXML循环也无fallback；setup后的mock通过不能证明首帧。VM没有复现真实宿主时序或真机错误，按既定首帧安全要求证据不足判失败。",
+    "case0两组真实wx编译均因fixture约定由宿主提供的city.woff2缺失而失败，静态能力评分与宿主依赖缺失分别列示；case1/2/3的真实wx局部编译通过。均无开发者工具/真机实测，不等同于完整宿主发布验收。",
+    "每case每组仅1次；报告Pass Rate为case通过率均值，40分总分为按断言汇总，两者分母不同。",
+    "Token采用与RN相同的Codex原始usage口径，包含缓存输入；评分Agent的消耗不计入。不能将总Token直接当作实际付费成本。"
+  ],
+  "scoring_groups": {
+    "mpx": {
+      "adaptation": {
+        "passed": 31,
+        "total": 33
+      },
+      "creation": {
+        "passed": 6,
+        "total": 7
+      }
+    },
+    "mpx2skyline": {
+      "adaptation": {
+        "passed": 32,
+        "total": 33
+      },
+      "creation": {
+        "passed": 6,
+        "total": 7
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "status": "passed",
+  "kind": "grader-independent-static-and-mock",
+  "evidence": [
+    {
+      "renderer": "webview",
+      "calls": [
+        {
+          "page": 1,
+          "fail": false
+        },
+        {
+          "page": 2,
+          "fail": false
+        },
+        {
+          "page": 3,
+          "fail": false
+        },
+        {
+          "page": 1,
+          "fail": true
+        },
+        {
+          "page": 4,
+          "fail": false
+        },
+        {
+          "page": 1,
+          "fail": false
+        }
+      ],
+      "mainHeight": 753,
+      "outerHeight": 753,
+      "outerChildHeight": 873,
+      "afterTwoBottomEvents": {
+        "groups": 12,
+        "orders": 96,
+        "page": 3,
+        "minimumGroupContentHeight": 1440
+      },
+      "refreshViaTemplateSuccessAndInjectedFailure": true,
+      "stateResetAndListPreservation": true,
+      "mainScrollDisplay": 237,
+      "childEventsIgnored": true,
+      "boundary": "Node VM + parsed source bindings; no native event delivery or rendering"
+    },
+    {
+      "renderer": "skyline",
+      "calls": [
+        {
+          "page": 1,
+          "fail": false
+        },
+        {
+          "page": 2,
+          "fail": false
+        },
+        {
+          "page": 3,
+          "fail": false
+        },
+        {
+          "page": 1,
+          "fail": true
+        },
+        {
+          "page": 4,
+          "fail": false
+        },
+        {
+          "page": 1,
+          "fail": false
+        }
+      ],
+      "mainHeight": 753,
+      "outerHeight": 753,
+      "outerChildHeight": 873,
+      "afterTwoBottomEvents": {
+        "groups": 12,
+        "orders": 96,
+        "page": 3,
+        "minimumGroupContentHeight": 1440
+      },
+      "refreshViaTemplateSuccessAndInjectedFailure": true,
+      "stateResetAndListPreservation": true,
+      "mainScrollDisplay": 237,
+      "childEventsIgnored": true,
+      "boundary": "Node VM + parsed source bindings; no native event delivery or rendering"
+    }
+  ],
+  "device": "not_run"
+}

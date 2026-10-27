@@ -26,7 +26,10 @@ test('metadata, inputs and exact source headings resolve', () => {
     const metadata = read(`${dir}/eval_metadata.json`)
     expect(metadata.assertions).toEqual(item.assertions)
     expect(metadata.files).toEqual(item.files)
-    expect(metadata.prompt_template).toBe(item.prompt_template)
+    expect(metadata.prompt).toBe(item.prompt)
+    expect(metadata.outputs).toEqual(item.outputs)
+    expect(metadata.eval_id).toBe(item.id)
+    expect(metadata.eval_name).toBe(item.name)
     item.files.forEach(file => expect(fs.existsSync(path.join(__dirname, dir, file))).toBe(true))
     item.assertions.forEach(a => {
       const source = fs.readFileSync(path.join(skill, a.source.file), 'utf8')
@@ -37,13 +40,33 @@ test('metadata, inputs and exact source headings resolve', () => {
   })
 })
 
-test('all cases use the implementation template', () => {
+test('two isolated groups use the RN execution protocol', () => {
   const templates = read('prompt_templates.json')
-  expect(Object.keys(templates.templates)).toEqual(['implementation'])
-  expect(templates.templates.implementation).toContain('按task.md实施')
-  expect(manifest.evals.every(item => item.prompt_template === 'implementation')).toBe(true)
-  expect(templates.skill_instructions.no_skill).toContain('不读取任何Skill')
-  expect(templates.templates.implementation).toContain('{{SKILL_INSTRUCTION}}')
+  expect(manifest.comparison.groups.map(group => group.id)).toEqual(['mpx', 'mpx2skyline'])
+  expect(Object.keys(templates.templates)).toEqual(['mpx', 'mpx2skyline'])
+  expect(templates.agent_config.fork_turns).toBe('none')
+  expect(manifest.runner.subagent_config).toEqual({ model: 'gpt-6.1-sol', reasoning_effort: 'high', fork_turns: 'none' })
+  Object.entries(templates.templates).forEach(([group, template]) => {
+    expect(template.prompt).toContain(`/${group}/SKILL.md`)
+    expect(template.prompt).toContain('{{WORKDIR}}')
+    expect(template.prompt).toContain('{{INPUT_DIR}}/task.md')
+    expect(template.prompt).toContain('{{REQUIRED_OUTPUTS}}')
+    expect(template.prompt).toContain('不得自动加载其他 Skill')
+    expect(template.prompt).toContain('WebView / Skyline')
+  })
+})
+
+test('environment dependency declarations match RN and target wx explicitly', () => {
+  const skyline = read('../package.json')
+  const rn = read('../../mpx2rn-workspace/package.json')
+  expect(skyline.dependencies).toEqual(rn.dependencies)
+  expect(skyline.devDependencies).toEqual(rn.devDependencies)
+  expect(skyline.scripts['compile-validate']).toContain('--target=wx')
+  ;['babel.config.json', 'eslint.config.mjs'].forEach(file => {
+    expect(fs.readFileSync(path.join(__dirname, '..', file), 'utf8')).toBe(
+      fs.readFileSync(path.join(__dirname, '../../mpx2rn-workspace', file), 'utf8'))
+  })
+  expect(require('../mpx.config.js').pluginOptions.mpx.plugin).toEqual({ srcMode: 'wx' })
 })
 
 test('new semantics and common contracts cover the changed requirements', () => {
@@ -68,13 +91,17 @@ test('new semantics and common contracts cover the changed requirements', () => 
   expect(read('creation-validation.json').extends).toBe('common-validation.json')
 })
 
-test('fixture and definition fingerprints match, including the latest skill', () => {
+test('fixture and definition fingerprints match their recorded sources', () => {
   Object.entries(read('fixture-provenance.json').files).forEach(([file, digest]) => expect(hash(path.join(__dirname, file))).toBe(digest))
   Object.entries(read('source-snapshot.json').files).forEach(([file, digest]) => expect(hash(path.join(__dirname, file))).toBe(digest))
   Object.entries(read('skill-source.json').files).forEach(([file, digest]) => expect(hash(path.join(skill, file))).toBe(digest))
-  expect(manifest.status).toBe('cases-ready-not-run')
-  expect(read('run-metadata.json').status).toBe('not_run')
-  expect(fs.existsSync(path.join(__dirname, 'benchmark.json'))).toBe(false)
+  expect(['cases-ready-not-run', 'completed']).toContain(manifest.status)
+  expect(read('run-metadata.json').status).toBe(manifest.status === 'completed' ? 'completed' : 'not_run')
+  if (manifest.status === 'completed') {
+    const results = read('execution-results.json')
+    expect(results).toHaveLength(manifest.evals.length * manifest.comparison.groups.length)
+    expect(results.every(result => result.returncode === 0 && result.output_exists && result.sources_unchanged)).toBe(true)
+  }
 })
 
 test('case directories and input fingerprints cover exactly the retained cases', () => {

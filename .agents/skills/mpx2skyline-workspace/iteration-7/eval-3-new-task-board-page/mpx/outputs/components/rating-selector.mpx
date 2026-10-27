@@ -1,0 +1,83 @@
+<template>
+  <view class="rating-selector" wx:class="{{ {'rating-selector-readonly': readonly} }}">
+    <text class="rating-label" max-lines="{{1}}" overflow="ellipsis">{{label}}</text>
+    <view class="rating-stars">
+      <view class="rating-star" wx:for="{{stars}}" wx:key="*this" wx:class="{{ {'rating-star-selected': item <= currentValue, 'rating-star-pressed': pressedStar === item} }}" bindtap="selectStar(item)" bindtouchstart="pressStar(item)" bindtouchend="releaseStar" bindtouchcancel="releaseStar" aria-role="button" aria-label="{{item + '分' + (readonly ? '，只读' : '')}}"><text>{{item <= currentValue ? '★' : '☆'}}</text></view>
+    </view>
+    <text class="rating-score">{{currentValue}} / {{max}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    ratingKey: { type: String, value: '' },
+    value: { type: Number, value: 0 },
+    max: { type: Number, value: 5 },
+    readonly: { type: Boolean, value: false },
+    label: { type: String, value: '请评分' }
+  },
+  initData: { stars: [] },
+  data: { currentValue: 0, pressedStar: 0 },
+  computed: {
+    stars () { return Array.from({ length: this.max }, (_, index) => index + 1) }
+  },
+  watch: {
+    value: {
+      handler (value) { this.currentValue = value },
+      immediate: true,
+      flush: 'sync'
+    },
+    readonly () { this.pressedStar = 0 }
+  },
+  methods: {
+    selectStar (value) {
+      if (this.readonly) return
+      this.currentValue = value
+      this.triggerEvent('change', { ratingKey: this.ratingKey, value })
+    },
+    pressStar (value) {
+      if (!this.readonly) this.pressedStar = value
+    },
+    releaseStar () { this.pressedStar = 0 }
+  }
+})
+</script>
+
+<style>
+.rating-selector { display: flex; align-items: center; width: 100%; }
+.rating-label {
+  display: block;
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #4b5870;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rating-stars { display: flex; align-items: center; flex-shrink: 0; }
+.rating-star {
+  width: 44rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38rpx;
+  color: #8c98ad;
+  transform: scale(1);
+  opacity: 1;
+  transition: transform 150ms ease, opacity 150ms ease;
+}
+.rating-star-selected { color: #c68108; }
+.rating-star-pressed { transform: scale(0.96); opacity: 0.7; }
+.rating-score { flex-shrink: 0; padding-left: 12rpx; font-size: 24rpx; color: #4b5870; }
+.rating-selector-readonly { opacity: 0.6; }
+</style>
+
+<script type="application/json">
+{ "component": true }
+</script>

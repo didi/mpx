@@ -1,0 +1,125 @@
+<template>
+  <view class="absolute inset-0 flex flex-col overflow-hidden bg-slate-50">
+    <view class="flex flex-col shrink-0 px-32rpx pt-40rpx pb-24rpx">
+      <view class="flex flex-row items-center justify-between">
+        <text class="text-44rpx leading-60rpx font-bold text-slate-900">任务看板</text>
+        <text class="text-26rpx leading-40rpx text-indigo-600">{{filteredTasks.length}} 项任务</text>
+      </view>
+      <text class="mt-12rpx text-26rpx leading-40rpx text-slate-500">安排好每一件小事，让今天更有条理。</text>
+      <view class="mt-28rpx flex flex-row rounded-24rpx bg-white p-8rpx">
+        <view
+          wx:for="{{categories}}"
+          wx:key="value"
+          class="flex flex-1 flex-row items-center justify-center rounded-18rpx py-20rpx"
+          wx:class="{{currentCategory === item.value ? 'bg-indigo-500/15' : 'bg-transparent'}}"
+          hover-class="opacity-60"
+          hover-start-time="{{0}}"
+          hover-stay-time="{{100}}"
+          bindtap="selectCategory(item.value)"
+          aria-role="button"
+          aria-label="{{item.label + (currentCategory === item.value ? '，已选中' : '，点击筛选')}}"
+        >
+          <text
+            class="text-28rpx leading-40rpx font-medium"
+            wx:class="{{currentCategory === item.value ? 'text-indigo-600' : 'text-slate-500'}}"
+          >{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <scroll-view class="h-0 min-h-0 flex-1 w-full" scroll-y="{{true}}">
+      <view class="flex flex-col px-32rpx pt-8rpx pb-64rpx">
+        <view wx:if="{{filteredTasks.length}}" class="flex flex-col">
+          <text class="mb-20rpx text-24rpx leading-36rpx text-slate-500">点击卡片，切换完成状态</text>
+          <view
+            wx:for="{{filteredTasks}}"
+            wx:key="taskKey"
+            class="mb-20rpx flex flex-row items-center rounded-24rpx border-2rpx border-solid p-28rpx"
+            wx:class="{{item.completed ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-slate-200'}}"
+            hover-class="opacity-60"
+            hover-start-time="{{0}}"
+            hover-stay-time="{{100}}"
+            bindtap="toggleTask(item.taskKey)"
+            aria-role="button"
+            aria-label="{{item.title + (item.completed ? '，已完成，点击恢复未完成' : '，未完成，点击完成')}}"
+          >
+            <view
+              class="mr-24rpx flex h-44rpx w-44rpx shrink-0 flex-row items-center justify-center rounded-full border-2rpx border-solid"
+              wx:class="{{item.completed ? 'bg-indigo-500 border-indigo-500' : 'bg-white border-slate-300'}}"
+            >
+              <text wx:if="{{item.completed}}" class="text-28rpx leading-40rpx text-white">✓</text>
+            </view>
+            <view class="flex min-w-0 flex-1 flex-col">
+              <text
+                class="text-30rpx leading-46rpx font-medium"
+                wx:class="{{item.completed ? 'text-slate-400 line-through' : 'text-slate-800'}}"
+              >{{item.title}}</text>
+              <view class="mt-12rpx flex flex-row items-center justify-between">
+                <text class="text-24rpx leading-36rpx text-slate-500">{{item.category === 'work' ? '工作' : '生活'}}</text>
+                <text
+                  class="text-24rpx leading-36rpx"
+                  wx:class="{{item.completed ? 'text-indigo-600' : 'text-slate-400'}}"
+                >{{item.completed ? '已完成' : '未完成'}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view wx:else class="flex flex-col items-center rounded-24rpx bg-white px-32rpx py-80rpx">
+          <text class="text-32rpx leading-48rpx font-medium text-slate-700">当前分类暂无任务</text>
+          <text class="mt-16rpx text-26rpx leading-40rpx text-slate-500">切换其他分类，查看你的任务安排。</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script setup>
+import { ref, computed, onLoad } from '@mpxjs/core'
+
+const categories = [
+  { value: 'all', label: '全部' },
+  { value: 'work', label: '工作' },
+  { value: 'life', label: '生活' }
+]
+const currentCategory = ref('all')
+const tasks = ref([
+  { taskKey: 'work-plan', title: '整理本周工作计划', category: 'work', completed: false },
+  { taskKey: 'life-breakfast', title: '准备一份健康早餐', category: 'life', completed: true },
+  { taskKey: 'work-review', title: '完成项目需求评审', category: 'work', completed: false },
+  { taskKey: 'life-shopping', title: '购买本周生活用品', category: 'life', completed: false },
+  { taskKey: 'work-notes', title: '整理会议纪要', category: 'work', completed: true },
+  { taskKey: 'life-exercise', title: '运动三十分钟', category: 'life', completed: false },
+  { taskKey: 'work-report', title: '提交项目进度报告', category: 'work', completed: false },
+  { taskKey: 'life-reading', title: '阅读二十页喜欢的书', category: 'life', completed: false }
+])
+const filteredTasks = computed(() => tasks.value.filter(task =>
+  currentCategory.value === 'all' || task.category === currentCategory.value
+))
+
+onLoad((rawQuery, decodedQuery) => {
+  // 接受 all / work / life，以及对应的中文分类名称；使用框架已解码的参数。
+  const category = categories.find(item => item.value === decodedQuery.category || item.label === decodedQuery.category)
+  currentCategory.value = category ? category.value : 'all'
+})
+
+function selectCategory (category) {
+  currentCategory.value = category
+}
+
+function toggleTask (taskKey) {
+  const task = tasks.value.find(item => item.taskKey === taskKey)
+  if (task) task.completed = !task.completed
+}
+
+defineExpose({ categories, currentCategory, filteredTasks, selectCategory, toggleTask })
+</script>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "任务看板",
+  "navigationBarTextStyle": "black",
+  "navigationBarBackgroundColor": "#ffffff",
+  "disableScroll": true,
+  "usingComponents": {}
+}
+</script>

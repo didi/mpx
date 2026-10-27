@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/home",
+    "pages/task-board"
+  ],
+  "window": {
+    "navigationBarTitleText": "演示"
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "rendererOptions": {
+    "webview": {},
+    "skyline": {
+      "defaultDisplayBlock": true,
+      "defaultContentBox": true,
+      "tagNameStyleIsolation": "legacy",
+      "enableScrollViewAutoSize": true,
+      "keyframeStyleIsolation": "legacy"
+    }
+  }
+}

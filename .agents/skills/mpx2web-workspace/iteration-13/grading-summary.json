@@ -1,0 +1,42 @@
+[
+  {
+    "eval": 0,
+    "kind": "mpx",
+    "score": "7/7"
+  },
+  {
+    "eval": 0,
+    "kind": "mpx2web",
+    "score": "7/7"
+  },
+  {
+    "eval": 1,
+    "kind": "mpx",
+    "score": "3/3"
+  },
+  {
+    "eval": 1,
+    "kind": "mpx2web",
+    "score": "3/3"
+  },
+  {
+    "eval": 2,
+    "kind": "mpx",
+    "score": "10/11"
+  },
+  {
+    "eval": 2,
+    "kind": "mpx2web",
+    "score": "9/11"
+  },
+  {
+    "eval": 3,
+    "kind": "mpx",
+    "score": "5/5"
+  },
+  {
+    "eval": 3,
+    "kind": "mpx2web",
+    "score": "5/5"
+  }
+]

@@ -1,0 +1,88 @@
+{
+  "mpx": {
+    "identicalSources": [
+      "mpx.config.js",
+      "src/app.mpx",
+      "src/services/article.js",
+      "src/store/article.js",
+      "src/pages/article/index.mpx"
+    ],
+    "serverConcurrentAndErrorAndDefault": true,
+    "freshRequestAfterMutation": true,
+    "hydration": {
+      "a": {
+        "sameRoot": true,
+        "samePage": true,
+        "firstText": "文章 A这是文章 A 的正文。展开补充说明",
+        "finalText": "文章 A这是文章 A 的正文。展开补充说明",
+        "fetchTimers": [],
+        "errors": [],
+        "toggle": true
+      },
+      "b": {
+        "sameRoot": true,
+        "samePage": true,
+        "firstText": "文章 B这是文章 B 的正文。展开补充说明",
+        "finalText": "文章 B这是文章 B 的正文。展开补充说明",
+        "fetchTimers": [],
+        "errors": [],
+        "toggle": true
+      },
+      "missing": {
+        "exception": "HierarchyRequestError: Node can't be inserted in a #comment parent.",
+        "fetchTimers": [
+          10
+        ],
+        "errors": []
+      }
+    },
+    "wxSharedActionLoadingErrorDefaultToggle": true
+  },
+  "mpx2web": {
+    "identicalSources": [
+      "mpx.config.js",
+      "src/app.mpx",
+      "src/services/article.js",
+      "src/store/article.js",
+      "src/pages/article/index.mpx"
+    ],
+    "serverConcurrentAndErrorAndDefault": true,
+    "freshRequestAfterMutation": true,
+    "hydration": {
+      "a": {
+        "sameRoot": true,
+        "samePage": true,
+        "firstText": "文章 A这是文章 A 的正文。展开补充说明",
+        "finalText": "文章 A这是文章 A 的正文。展开补充说明",
+        "fetchTimers": [],
+        "errors": [],
+        "toggle": true
+      },
+      "b": {
+        "sameRoot": true,
+        "samePage": true,
+        "firstText": "文章 B这是文章 B 的正文。展开补充说明",
+        "finalText": "文章 B这是文章 B 的正文。展开补充说明",
+        "fetchTimers": [],
+        "errors": [],
+        "toggle": true
+      },
+      "missing": {
+        "sameRoot": true,
+        "samePage": true,
+        "firstText": "文章不存在",
+        "finalText": "文章不存在",
+        "fetchTimers": [],
+        "errors": [],
+        "toggle": null
+      }
+    },
+    "clientEntryAfterError": {
+      "text": "文章不存在",
+      "url": "https://example.test/help-demo/pages/article/index?id=a",
+      "fetchTimers": []
+    },
+    "wxSharedActionLoadingErrorDefaultToggle": true,
+    "clientEntryAfterPreviousErrorActionCalls": 0
+  }
+}

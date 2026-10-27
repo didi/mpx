@@ -34,9 +34,7 @@ def check_case(eval_id, output_path):
     if eval_id == 1:
         # Old t4 also accepted a bare scroll-view, duplicating t3. Require the
         # actual loading event so the merged assertion retains that coverage.
-        results["t4"] = bool(re.search(
-            r"<scroll-view\b[^>]*\bbindscrolltolower\s*=",
-            blocks["template"], re.DOTALL))
+        results["t4"] = LEGACY.has_scroll_loading_handler(blocks["template"])
         results["t1"] = results["t1"] and bool(re.search(
             r'bindtap\s*=\s*["\'][^"\']+\([^"\']+\)',
             blocks["template"]))
@@ -47,6 +45,7 @@ def check_case(eval_id, output_path):
     } for assertion in assertions]
 
 
+LEGACY.RUN_KINDS = tuple(group["id"] for group in CONFIG["comparison"]["groups"])
 LEGACY.WORKSPACE = WORKSPACE
 LEGACY.EVAL_DIRS = {
     eid: f"eval-{eid}-{case['name']}" for eid, case in CASES.items()

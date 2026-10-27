@@ -2,26 +2,21 @@
   "skill_name": "mpx2skyline",
   "suite_version": 7,
   "iteration": 7,
-  "status": "cases-ready-not-run",
-  "description": "4个case、40条Skyline能力断言：适配33、创建7，尚未执行。",
+  "status": "completed",
+  "description": "4个case、40条Skyline能力断言：适配33、创建7；8/8模型任务已完成，Agent语义评分已归档。",
   "scoring_scope": "仅微信WebView/Skyline；通用Mpx契约单独验证，适配33条与创建7条分开统计。",
   "comparison": {
-    "purpose": "同一v7定义下比较Skill配置，历史v5和入口专项结果均不复用。",
+    "purpose": "与 mpx2rn-workspace/iteration-18 对齐：统一 Skill 与专项 Skill 使用相同输入、模型和环境，仅比较 mpx / mpx2skyline，不复用历史结果。",
     "groups": [
+      {
+        "id": "mpx",
+        "skill": ".agents/skills/mpx/SKILL.md",
+        "status": "completed"
+      },
       {
         "id": "mpx2skyline",
         "skill": ".agents/skills/mpx2skyline/SKILL.md",
-        "status": "not_run"
-      },
-      {
-        "id": "no_skill",
-        "skill": null,
-        "status": "not_run"
-      },
-      {
-        "id": "merged_skill",
-        "skill": null,
-        "status": "path-to-be-specified-before-execution"
+        "status": "completed"
       }
     ]
   },
@@ -29,11 +24,23 @@
     "prompt_templates": "prompt_templates.json",
     "grading_standard": "grading-standard.md",
     "subagent_config": {
-      "model": "must_match_parent",
-      "reasoning_effort": "must_match_parent",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
       "fork_turns": "none"
     },
-    "validation_contract": "common-validation.json"
+    "validation_contract": "common-validation.json",
+    "entry": "run_evals.py",
+    "shared_runner": "../../mpx2rn-workspace/iteration-17/run_evals.py",
+    "workdir": ".agents/skills/mpx2skyline-workspace",
+    "targets": [
+      "wx"
+    ],
+    "renderers": [
+      "webview",
+      "skyline"
+    ],
+    "max_workers": 3,
+    "grading_entry": "grade.py"
   },
   "evals": [
     {
@@ -254,7 +261,11 @@
       ],
       "validation_contract": "common-validation.json",
       "scoring_group": "adaptation",
-      "prompt_template": "implementation"
+      "outputs": [
+        "style-card.mpx",
+        "report.md"
+      ],
+      "staged_files": []
     },
     {
       "id": 1,
@@ -262,8 +273,8 @@
       "title": "页面滚动、吸顶与层级配置",
       "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
       "files": [
-        "input/app.json",
         "input/orders.mpx",
+        "input/app.json",
         "input/service.js",
         "input/task.md"
       ],
@@ -447,7 +458,15 @@
       ],
       "validation_contract": "common-validation.json",
       "scoring_group": "adaptation",
-      "prompt_template": "implementation"
+      "outputs": [
+        "orders.mpx",
+        "app.json",
+        "service.js",
+        "report.md"
+      ],
+      "staged_files": [
+        "service.js"
+      ]
     },
     {
       "id": 2,
@@ -455,10 +474,10 @@
       "title": "模板运行时、图文混排与动画",
       "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
       "files": [
+        "input/user-list.mpx",
         "input/logo.svg",
         "input/row.wxml",
-        "input/task.md",
-        "input/user-list.mpx"
+        "input/task.md"
       ],
       "assertions": [
         {
@@ -592,7 +611,15 @@
       ],
       "validation_contract": "common-validation.json",
       "scoring_group": "adaptation",
-      "prompt_template": "implementation"
+      "outputs": [
+        "user-list.mpx",
+        "row.wxml",
+        "logo.svg",
+        "report.md"
+      ],
+      "staged_files": [
+        "logo.svg"
+      ]
     },
     {
       "id": 3,
@@ -602,8 +629,8 @@
       "task_type": "creation",
       "prompt": "请读取input/task.md，从零创建Mpx任务看板页面、选项式rating-selector组件和组合式segmented-control组件并更新宿主配置，兼容微信Skyline与WebView。范围已确认，交付完整文件和验证报告。",
       "files": [
-        "input/app.json",
-        "input/task.md"
+        "input/task.md",
+        "input/app.json"
       ],
       "assertions": [
         {
@@ -721,7 +748,14 @@
       ],
       "validation_contract": "creation-validation.json",
       "scoring_group": "creation",
-      "prompt_template": "implementation"
+      "outputs": [
+        "pages/task-board.mpx",
+        "components/rating-selector.mpx",
+        "components/segmented-control.mpx",
+        "app.json",
+        "report.md"
+      ],
+      "staged_files": []
     }
   ]
 }

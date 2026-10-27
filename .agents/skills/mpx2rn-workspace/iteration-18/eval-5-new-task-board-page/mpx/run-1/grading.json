@@ -1,0 +1,78 @@
+{
+  "eval_id": 5,
+  "run_kind": "mpx",
+  "expectations": [
+    {
+      "id": "a0",
+      "text": "原子 CSS 页面：完整 template/script setup/JSON，仅用模板原子类实现 Flex、间距、颜色和圆角，无非空 style",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "a2",
+      "text": "脚本：onLoad 在 setup 执行期同步注册，接收并优先使用 decodedQuery.category",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "a4",
+      "text": "任务状态：带 key 的分类与任务列表通过 computed 筛选，支持切换分类、完成状态和空态",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "a7",
+      "text": "模板：动态原子类使用 wx:class 完整 token，不在 class 属性或脚本中拼接类名",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "a10",
+      "text": "原子 CSS：半透明颜色使用斜杠 alpha，不使用独立 *-opacity-* 工具类",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "a11",
+      "text": "原子 CSS 交互：仅用 RN 支持的工具类，点击态使用 hover-class，不使用交互 variants",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "a13",
+      "text": "页面 JSON：导航标题为任务看板，disableScroll:true 配合纵向 scroll-view，不含 RN 不支持配置",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "a14",
+      "text": "跨端：不直接调用 wx/my API，也不包含不必要的平台条件分支或 uno.css 手动导入",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "total_tokens": 608687,
+    "tool_calls": 10,
+    "duration_ms": 135634,
+    "duration_seconds": 135.634
+  },
+  "metrics": {
+    "total_tokens": 608687,
+    "tool_calls": 10,
+    "duration_ms": 135634,
+    "duration_seconds": 135.634
+  },
+  "timing": {
+    "total_duration_seconds": 135.634,
+    "total_tokens": 608687
+  },
+  "execution_metrics": {
+    "total_tool_calls": 10,
+    "output_chars": 608687
+  }
+}

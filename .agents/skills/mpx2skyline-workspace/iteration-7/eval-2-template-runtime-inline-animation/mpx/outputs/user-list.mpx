@@ -1,0 +1,56 @@
+<template>
+  <import src="./row.wxml"/>
+  <view class="user-panel">
+    <view class="heading">
+      <view mpxTagName@wx="span" class="truncate" max-lines="{{1}}" overflow="ellipsis"><image src="./logo.svg" mode="aspectFit" class="logo"/><text>{{label}}</text></view>
+      <view class="pulse"/>
+    </view>
+    <scroll-view id="other" class="list" type="list" enhanced="{{true}}"/>
+    <scroll-view id="users" class="list" type="list" scroll-y="{{true}}" enhanced="{{true}}">
+      <view wx:for="{{visibleItems}}" wx:key="id"><template is="user-row" data="{{index, item}}"/></view>
+    </scroll-view>
+    <view class="button" wx:class="{{ { pressed: pressed } }}" bindtap="scrollTop" bindtouchstart="press" bindtouchend="release" bindtouchcancel="release"><text>回到顶部</text></view>
+    <navigator url="/pages/detail"><text>详情</text></navigator>
+    <view bindtap="openDetail"><view>卡片详情</view></view>
+  </view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+import { navigateTo } from '@mpxjs/api-proxy'
+
+createComponent({
+  properties: {
+    label: { type: String, value: '用户' },
+    payload: { type: String, optionalTypes: [Object], value: '' }
+  },
+  data: { items: [], config: { default: 'keep' }, pressed: false },
+  initData: { visibleItems: [] },
+  computed: {
+    visibleItems () { return (this.items || []).filter(item => item.visible) }
+  },
+  methods: {
+    setRows (res) { this.items = res.items },
+    scrollTop () {
+      this.createSelectorQuery().select('#users').node().exec(res => {
+        res[0].node.scrollTo({ top: 0 })
+      })
+    },
+    openDetail () { navigateTo({ url: '/pages/detail' }) },
+    press () { this.pressed = true },
+    release () { this.pressed = false }
+  }
+})
+</script>
+<style>
+.list { height: 300px; }
+.heading { display: flex; flex-direction: row; align-items: center; }
+.truncate { flex: 1; width: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logo { width: 24px; height: 24px; vertical-align: middle; }
+.pulse { flex-shrink: 0; width: 8px; height: 8px; border-radius: 4px; background: #f50; opacity: .3; animation: userListPulse 1s infinite; animation-fill-mode: both; }
+@keyframes userListPulse { from { opacity: .3; } to { opacity: 1; } }
+.button { padding: 12px; background: #eee; transform: scale(1); opacity: 1; transition: transform 150ms linear, opacity 150ms linear; }
+.button.pressed { transform: scale(.96); opacity: .7; }
+</style>
+<script type="application/json">
+{"component":true}
+</script>

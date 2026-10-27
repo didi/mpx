@@ -1,0 +1,71 @@
+{
+  "kind": "actual-compiled-runtime-native-constructor-capture-in-VM",
+  "runtimeFiles": [
+    "compiled/bundle.js",
+    "compiled/components/segmented-control6530f36f/index.js"
+  ],
+  "atRegistration": {
+    "nativeKeys": [
+      "attached",
+      "ready",
+      "detached",
+      "methods",
+      "pageLifetimes",
+      "properties"
+    ],
+    "hasNativeData": false,
+    "nativeData": null,
+    "defaultOptions": [],
+    "loopBinding": "{{safeOptions}}",
+    "safeOptionsBeforeLifecycleType": "undefined",
+    "loopFallbackOrGuard": false
+  },
+  "afterManualAttached": {
+    "safeOptions": [],
+    "renders": [
+      {
+        "safeOptions": []
+      }
+    ]
+  },
+  "updates": [
+    {
+      "input": null,
+      "nativeLoopData": []
+    },
+    {
+      "input": [],
+      "nativeLoopData": []
+    },
+    {
+      "input": [
+        {
+          "label": "甲",
+          "value": "a"
+        },
+        {
+          "label": "乙",
+          "value": "b"
+        }
+      ],
+      "nativeLoopData": [
+        {
+          "label": "甲",
+          "value": "a"
+        },
+        {
+          "label": "乙",
+          "value": "b"
+        }
+      ]
+    },
+    {
+      "input": null,
+      "nativeLoopData": []
+    }
+  ],
+  "runtimeConsoleMessages": [],
+  "conclusion": "Registration provides no safeOptions data or WXML fallback; attached initializes it and subsequent native-property observer updates supply arrays. Relative timing of host first WXML consumption versus attached/setData is not established.",
+  "hostLifecycleTiming": "not_run",
+  "device": "not_run"
+}

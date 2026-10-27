@@ -1,5 +1,5 @@
 {
-  "skill_name": "mpx2web eval comparison",
+  "skill_name": "mpx vs mpx2web",
   "iteration": 13,
   "based_on": "../iteration-12",
   "description": "4 个 case：最小应用配置适配、单组件生成、单页面业务适配、最小 SSR 应用。仅应用级断言保留 src 工程；去除重复路由断言，分享测试移至单页面，总计 26 条断言。",
@@ -9,22 +9,23 @@
     "grade_script": "grade.py",
     "aggregate_script": "aggregate_benchmark.py",
     "subagent_config": {
-      "model": "must_match_parent",
-      "reasoning_effort": "must_match_parent",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
       "fork_turns": "none"
     },
-    "usage": "1) python3 run_evals.py --execute --model <父会话模型> --reasoning-effort <父会话思考强度> [--evals 0 1] [--groups mpx2web no_skill] 将 input 中非交付依赖复制到 outputs 并通过 codex exec -C 启动子 agent；2) 子 agent 的 -C 与 subprocess cwd 均固定为 mpx2web-workspace，模型与思考强度显式匹配父会话；3) 编译验证由 prompt 与 Skill 决定，runner 不添加也不执行校验；4) JSONL、stderr、运行状态和真实 usage 写入 run-1；5) python3 grade.py 评分后，python3 aggregate_benchmark.py --model <父会话模型> --reasoning-effort <父会话思考强度> 汇总结果。"
+    "usage": "准备：python3 run_evals.py --model gpt-6.1-sol --reasoning-effort high --groups mpx mpx2web > dispatches.json，仅复制依赖并生成调度；用户要求开始后再添加 --execute --max-workers 3。子进程 cwd 与 -C 固定为 mpx2web-workspace，不继承父会话。执行完成后运行 python3 grade.py，再运行 python3 aggregate_benchmark.py --model gpt-6.1-sol --reasoning-effort high。编译验证由各组 Skill 决定。"
   },
   "comparison": {
     "groups": [
       {
+        "id": "mpx",
+        "label": "使用 mpx skill",
+        "skill": ".agents/skills/mpx/SKILL.md"
+      },
+      {
         "id": "mpx2web",
         "label": "使用 mpx2web skill",
         "skill": ".agents/skills/mpx2web/SKILL.md"
-      },
-      {
-        "id": "no_skill",
-        "label": "不使用 skill (baseline)"
       }
     ]
   },

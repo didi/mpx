@@ -1,0 +1,62 @@
+{
+  "status": "passed",
+  "kind": "grader-static-compiled-and-mock",
+  "evidence": [
+    {
+      "renderer": "skyline",
+      "initialArray": true,
+      "undefinedNullEmptyNormalized": true,
+      "filteredRows": [
+        "0:甲",
+        "1:乙"
+      ],
+      "scopedQueryCalls": [
+        {
+          "selector": "#users"
+        },
+        {
+          "scrollTo": {
+            "top": 0
+          }
+        }
+      ],
+      "otherContextCalled": false,
+      "buttonTouchAndTapFromCompiledBindings": true,
+      "detailTarget": "/pages/detail"
+    },
+    {
+      "renderer": "webview",
+      "initialArray": true,
+      "undefinedNullEmptyNormalized": true,
+      "filteredRows": [
+        "0:甲",
+        "1:乙"
+      ],
+      "scopedQueryCalls": [
+        {
+          "selector": "#users"
+        },
+        {
+          "scrollTo": {
+            "top": 0
+          }
+        }
+      ],
+      "otherContextCalled": false,
+      "buttonTouchAndTapFromCompiledBindings": true,
+      "detailTarget": "/pages/detail"
+    }
+  ],
+  "compiledTemplate": {
+    "actualInlineTag": "span",
+    "maxLines": "{{1}}",
+    "overflow": "ellipsis",
+    "logoDisplayDeclaration": null,
+    "inlineBlockEvidence": false,
+    "titleWidth": "0",
+    "titleFlex": "1",
+    "dynamicButtonClass": "{{_s_.c(\"button\", {pressed:pressed})}}"
+  },
+  "boundary": "VM options and parsed actual wx compilation; no WeChat rendering, default image display or geometric measurement",
+  "device": "not_run"
+}

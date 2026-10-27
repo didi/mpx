@@ -6,8 +6,8 @@
   "task_type": "creation",
   "prompt": "请读取input/task.md，从零创建Mpx任务看板页面、选项式rating-selector组件和组合式segmented-control组件并更新宿主配置，兼容微信Skyline与WebView。范围已确认，交付完整文件和验证报告。",
   "files": [
-    "input/app.json",
-    "input/task.md"
+    "input/task.md",
+    "input/app.json"
   ],
   "assertions": [
     {
@@ -125,7 +125,14 @@
   ],
   "validation_contract": "creation-validation.json",
   "scoring_group": "creation",
-  "prompt_template": "implementation",
+  "outputs": [
+    "pages/task-board.mpx",
+    "components/rating-selector.mpx",
+    "components/segmented-control.mpx",
+    "app.json",
+    "report.md"
+  ],
+  "staged_files": [],
   "eval_id": 3,
   "eval_name": "new-task-board-page"
 }

@@ -1,0 +1,112 @@
+{
+  "target": "wx",
+  "renderers": [
+    "webview",
+    "skyline"
+  ],
+  "scope": [
+    "user-list.mpx",
+    "row.wxml",
+    "logo.svg"
+  ],
+  "static": {
+    "status": "passed",
+    "evidence": [
+      "static-audit.json",
+      "static-audit.md",
+      "static-audit.py"
+    ],
+    "rules_reviewed": 48
+  },
+  "eslint": {
+    "status": "passed",
+    "exit_code": 0,
+    "evidence": "eslint.log",
+    "scope": "outputs/user-list.mpx"
+  },
+  "mock": {
+    "status": "passed",
+    "runner": "Jest",
+    "tests_passed": 14,
+    "evidence": [
+      "user-list.test.cjs",
+      "jest.config.cjs",
+      "jest-results.json",
+      "jest.log"
+    ],
+    "covers": [
+      "初始化及数据返回前空列表",
+      "null/数组替换/空数组更新",
+      "visible 过滤后 index/item",
+      "组件作用域 #users 查询与重复回顶调用，other 未调用",
+      "按下/松开/取消/tap",
+      "卡片 API 跳转和简单 navigator URL 静态契约"
+    ],
+    "limits": "VM 截获 createComponent；computed 手动求值，WXML 仅字段替换；不运行 Mpx 响应式或微信模板/路由/滚动引擎。两组 renderer 参数运行相同共用逻辑，不是两种真实 renderer。",
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "failed",
+        "cause": "Watchman 无权修改宿主状态目录，测试未开始。",
+        "fix": "仅 run-1 Jest 配置关闭 Watchman。",
+        "evidence": "jest-attempt-1.log"
+      },
+      {
+        "attempt": 2,
+        "status": "failed",
+        "cause": "测试正则把 {{1}} 中的 {1} 解释为量词，13通过/1失败。",
+        "fix": "转义测试正则花括号，业务文件未改。",
+        "evidence": [
+          "jest-attempt-2.log",
+          "jest-attempt-2.json"
+        ]
+      },
+      {
+        "attempt": 3,
+        "status": "passed",
+        "fixes_so_far": 2,
+        "evidence": [
+          "jest.log",
+          "jest-results.json"
+        ]
+      }
+    ]
+  },
+  "real_compile": {
+    "status": "passed",
+    "target": "wx",
+    "tool": "../mpx/scripts/compile-validate.js",
+    "errors": 0,
+    "warnings": 0,
+    "evidence": [
+      "compile.log",
+      "compile-result.json"
+    ],
+    "limits": "单组件真实 Mpx/webpack 编译；不验证微信 renderer、页面注册或真机。"
+  },
+  "wechat_devtools": {
+    "webview": "not_run",
+    "skyline": "not_run",
+    "reason": "没有接入业务宿主或微信开发者工具。"
+  },
+  "real_device": {
+    "webview": "not_run",
+    "skyline": "not_run",
+    "reason": "没有真机运行环境。"
+  },
+  "visual_and_actual_scroll": {
+    "status": "not_run",
+    "pending": [
+      "两种 renderer 窄宽度和长 label 同段单行省略",
+      "8px #f50 圆点1秒循环效果",
+      "按钮150ms缩放/透明度与取消恢复",
+      "用户列表实际滚动/重复回顶且 other 不动",
+      "两个详情入口在真实页面路由到 /pages/detail"
+    ]
+  },
+  "artifacts_sha256": {
+    "logo.svg": "c71a85400c9d1bc64393103364611c9370076caec60d65bc20fdcfdd97f6d29d",
+    "row.wxml": "317abc733e9508aa7d7b9b802e1095132c96862e861199fa6308970bfdb40f4c",
+    "user-list.mpx": "f10d827ba587bbc037096fd636e89b914f37bbf35715bc6e3179508392d65606"
+  }
+}

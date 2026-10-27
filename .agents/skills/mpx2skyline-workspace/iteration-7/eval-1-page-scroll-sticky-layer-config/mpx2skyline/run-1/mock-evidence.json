@@ -1,0 +1,121 @@
+{
+  "status": "passed",
+  "evidence": [
+    {
+      "renderer": "skyline",
+      "operation": "initial_and_two_pages",
+      "requests": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ]
+      ],
+      "sections": 12,
+      "orders": 96,
+      "pageNo": 3,
+      "preservedOriginalObjects": true
+    },
+    {
+      "renderer": "skyline",
+      "operation": "refresh_success",
+      "sections": 4,
+      "pageNo": 1,
+      "refreshing": false
+    },
+    {
+      "renderer": "skyline",
+      "operation": "refresh_failure",
+      "injected": "fetchOrders(1, true)",
+      "sections": 8,
+      "pageNo": 2,
+      "sameList": true,
+      "refreshing": false
+    },
+    {
+      "renderer": "skyline",
+      "operation": "continued_after_failure",
+      "nextPage": 3,
+      "recoveredRefreshPage": 1
+    },
+    {
+      "renderer": "skyline",
+      "operation": "main_scroll_and_resize",
+      "scrollTop": 186,
+      "horizontalIgnored": true,
+      "outerNoBusinessBindings": true,
+      "resizedScrollHeight": 532,
+      "modalOpenedAndClosed": true
+    },
+    {
+      "renderer": "skyline",
+      "operation": "serialization_and_pagination_failure",
+      "duplicateRequestSuppressed": true,
+      "pageAfterFailure": 2,
+      "pageAfterRetry": 3
+    },
+    {
+      "renderer": "webview",
+      "operation": "initial_and_two_pages",
+      "requests": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ]
+      ],
+      "sections": 12,
+      "orders": 96,
+      "pageNo": 3,
+      "preservedOriginalObjects": true
+    },
+    {
+      "renderer": "webview",
+      "operation": "refresh_success",
+      "sections": 4,
+      "pageNo": 1,
+      "refreshing": false
+    },
+    {
+      "renderer": "webview",
+      "operation": "refresh_failure",
+      "injected": "fetchOrders(1, true)",
+      "sections": 8,
+      "pageNo": 2,
+      "sameList": true,
+      "refreshing": false
+    },
+    {
+      "renderer": "webview",
+      "operation": "continued_after_failure",
+      "nextPage": 3,
+      "recoveredRefreshPage": 1
+    },
+    {
+      "renderer": "webview",
+      "operation": "main_scroll_and_resize",
+      "scrollTop": 186,
+      "horizontalIgnored": true,
+      "outerNoBusinessBindings": true,
+      "resizedScrollHeight": 532,
+      "modalOpenedAndClosed": true
+    },
+    {
+      "renderer": "webview",
+      "operation": "serialization_and_pagination_failure",
+      "duplicateRequestSuppressed": true,
+      "pageAfterFailure": 2,
+      "pageAfterRetry": 3
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Mpx2RN 精简评测集（iteration-18）
 
-基于 iteration-17 整合 case 设计：**9 → 6 个 case，110 → 61 条计分断言**。三组对比每轮由 27 次降为 18 次运行。当前仅完成设计与本地校验，尚未执行模型评测，没有新的通过率、耗时或 Token 结果。
+基于 iteration-17 整合 case 设计：**9 → 6 个 case，110 → 61 条计分断言**。本次仅比较 **mpx / mpx2rn** 两组，共 **12 次运行**，不包含无 Skill 或精简版。模型固定使用 `gpt-6.1-sol`，思考强度 `high`。本轮 12/12 个任务已执行完成并正常退出。评分器已按实际输出校准，按用户实测修正动态透明度判定后，重新评分为 **mpx 60/61（98.36%）、mpx2rn 59/61（96.72%）**，122 个判定与复核记录一致。详见 [当前对比报告](benchmark.md)、[结果查看页面](review.html) 和 [评分复核证据](score-audit.md)。修复前评分与报告保存在 [scoring-before-fix/](scoring-before-fix/)。
 
 ## Case 分工
 
@@ -44,20 +44,33 @@
 在本目录执行：
 
 ```bash
-python3 run_evals.py --execute --model <父会话模型> --reasoning-effort <父会话思考强度>
+# 准备调度与依赖，不启动模型
+python3 run_evals.py --model gpt-6.1-sol --reasoning-effort high --groups mpx mpx2rn > dispatches.json
+
+# 用户要求开始执行后再运行
+python3 run_evals.py --execute --model gpt-6.1-sol --reasoning-effort high --groups mpx mpx2rn --max-workers 3
 python3 grade.py
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s . -p 'test_*.py' -v
 ```
 
-可用 `--evals 0 1`、`--groups mpx2rn mpx2rn_simple no_skill` 筛选。省略 `--execute` 只生成调度信息并复制依赖，不启动模型。模型、思考强度、工作目录与三组隔离方式沿用 iteration-17。
+可用 `--evals 0 1`、`--groups mpx mpx2rn` 筛选。省略 `--execute` 只生成调度信息并复制依赖，不启动模型。沿用 iteration-17 的独立 Codex 进程与固定工作目录 `.agents/skills/mpx2rn-workspace`，不继承父会话上下文。模型与思考强度按本次用户指定值显式传入（覆盖旧运行器帮助中必须与父会话一致的约定）。两组使用相同输入与 wx/ios 目标，仅允许按需读取各自 Skill，禁止读取另一组 Skill、评分规则与输出；这是提示词隔离，不是文件系统读权限隔离。评分组从本轮配置读取。
 
 运行和评分入口直接复用 `../iteration-17/run_evals.py` 与 `../iteration-17/grade.py`，避免复制一套调度器和 1600 多行检查逻辑。因此需要保留 iteration-17，修改旧检查也应运行两个版本的测试。case 名称、输出文件、断言与子检查映射以本轮 `evals.json` 为准；修改 prompt/断言时同步对应的 `eval_metadata.json`。
 
-本轮评分额外要求非空模板和脚本，避免空文件靠“不包含坏写法”得分。滚动断言不再将单纯出现 scroll-view 当作触底事件已实现；事件传参同时检查内联调用。其余评分仍沿用静态检查，不等同于真机功能验证。
+本轮要求非空模板和脚本，并检查触底处理器确实绑定在目标端的 scroll-view 上。共享评分器已修正本轮发现的等价写法误判、RN 生命周期可达性和透明度样式覆盖判定；允许暂时隐藏后恢复显示，不因动态分支为 0 就扣分；它仍是静态检查，不是完整 JS/CSS 语义执行器，也不等同于真机功能验证。
 
 ## 本地验证
 
-- 本轮 6 项一致性/调度/评分测试通过；原评分器 51 项回归测试通过。
+- 评分器修复后：iteration-17 的 61 项评分测试及 iteration-18 的 7 项测试通过；包含 122 项真实输出判定与独立复核结果的对照。
 - 5 个输入 SFC 的脚本通过 ESLint（使用 html 插件并声明 `.mpx` 扩展）。
-- RN 模板与样式相关 Jest：2 个套件、96 项测试通过。
-- 未运行模型生成或比较评测；输入保留待适配问题，不以输入在 RN 上编译通过作为验收条件。
+- RN 模板与样式相关 Jest：关闭 Watchman 后，2 个套件、98 项测试通过；现有配置有 `testTimeout` 未识别警告。
+- Codex CLI 0.162.0 已安装且已登录；本地 CLI service 2.2.30、webpack-plugin/core/api-proxy 2.11.1 可解析，两组编译校验脚本存在，无需安装依赖。
+- 12 个模型任务已完成；原始输出、模型日志、指标和评分均已保存。执行状态见 `execution-results.json`，逐用例评分见 `grading-summary.json`。
+- 本轮每用例每组仅运行 1 次；已修复脚本判定逻辑并自动重评分，61 条断言的功能要求与原始输出未修改。构建与 UnoCSS 验证限制详见 [对比报告](benchmark.md)。
+
+评分器回归测试（不启动模型）：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ../iteration-17 -p 'test*grade.py'
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s . -p 'test_*.py'
+```

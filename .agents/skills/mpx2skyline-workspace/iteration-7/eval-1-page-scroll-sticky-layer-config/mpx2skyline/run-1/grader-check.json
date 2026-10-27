@@ -1,0 +1,104 @@
+{
+  "status": "passed",
+  "evidenceType": "independent template-bound VM and static geometry",
+  "checks": [
+    {
+      "renderer": "skyline",
+      "status": "passed",
+      "requests": [
+        [
+          1,
+          false
+        ],
+        [
+          2,
+          false
+        ],
+        [
+          3,
+          false
+        ],
+        [
+          1,
+          false
+        ],
+        [
+          2,
+          false
+        ],
+        [
+          1,
+          true
+        ],
+        [
+          3,
+          false
+        ]
+      ],
+      "refreshFailureViaActualBinding": true,
+      "retainedOriginalObjects": true,
+      "paginationGate": "false only during pagination; true idle/refresh",
+      "mainScrollTop": 186,
+      "dimensions": {
+        "outerAndMainAtWindow800": 732,
+        "summary": 120,
+        "contentAt4Groups": 480,
+        "contentAt8Groups": 960,
+        "contentAt12Groups": 1440,
+        "outerContentHeight": 852,
+        "outerScrollRange": 120,
+        "resizedMainAtWindow600": 532
+      },
+      "nativeRendering": "not_run"
+    },
+    {
+      "renderer": "webview",
+      "status": "passed",
+      "requests": [
+        [
+          1,
+          false
+        ],
+        [
+          2,
+          false
+        ],
+        [
+          3,
+          false
+        ],
+        [
+          1,
+          false
+        ],
+        [
+          2,
+          false
+        ],
+        [
+          1,
+          true
+        ],
+        [
+          3,
+          false
+        ]
+      ],
+      "refreshFailureViaActualBinding": true,
+      "retainedOriginalObjects": true,
+      "paginationGate": "false only during pagination; true idle/refresh",
+      "mainScrollTop": 186,
+      "dimensions": {
+        "outerAndMainAtWindow800": 732,
+        "summary": 120,
+        "contentAt4Groups": 480,
+        "contentAt8Groups": 960,
+        "contentAt12Groups": 1440,
+        "outerContentHeight": 852,
+        "outerScrollRange": 120,
+        "resizedMainAtWindow600": 532
+      },
+      "nativeRendering": "not_run"
+    }
+  ]
+}

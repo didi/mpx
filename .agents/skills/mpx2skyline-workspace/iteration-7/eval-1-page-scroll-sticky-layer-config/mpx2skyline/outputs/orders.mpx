@@ -1,0 +1,155 @@
+<template>
+  <view class="page" wx:style="{{ { height: windowHeight + 'px' } }}">
+    <view class="navigation" wx:style="{{ { paddingTop: statusBarHeight + 'px' } }}">
+      <view class="navigation-title" wx:style="{{ { height: navigationHeight + 'px' } }}"><text>订单</text></view>
+    </view>
+    <scroll-view wx:if="{{renderer === 'skyline'}}" class="outer" type="nested" scroll-y="{{true}}" enhanced="{{true}}" wx:style="{{ { height: scrollHeight + 'px' } }}">
+      <nested-scroll-header>
+        <view class="summary">
+          <text>订单概览</text>
+          <text>滚动位置：{{scrollTop}}</text>
+        </view>
+      </nested-scroll-header>
+      <nested-scroll-body>
+        <scroll-view
+          id="orders-scroll"
+          class="groups"
+          type="custom"
+          associative-container="nested-scroll-view"
+          scroll-y="{{true}}"
+          enhanced="{{true}}"
+          wx:style="{{ { height: scrollHeight + 'px' } }}"
+          refresher-enabled="{{!loading || refreshing}}"
+          refresher-triggered="{{refreshing}}"
+          bindrefresherrefresh="onRefresh"
+          catchscrolltolower="loadMore"
+          catchscroll="onScroll"
+          lower-threshold="80"
+        >
+          <sticky-section wx:for="{{sections}}" wx:key="id">
+            <sticky-header class="header"><text>{{item.title}}</text></sticky-header>
+            <scroll-view class="strip" type="list" scroll-x="{{true}}" enable-flex="{{true}}" enhanced="{{true}}" catchscroll="ignoreScroll" catchscrolltolower="ignoreScroll">
+              <view wx:for="{{item.items}}" wx:for-item="entry" wx:key="id" class="tile"><text>{{entry.name}}</text></view>
+            </scroll-view>
+          </sticky-section>
+        </scroll-view>
+      </nested-scroll-body>
+    </scroll-view>
+    <scroll-view wx:else class="outer" type="list" scroll-y="{{true}}" enhanced="{{true}}" wx:style="{{ { height: scrollHeight + 'px' } }}">
+      <view class="summary">
+        <text>订单概览</text>
+        <text>滚动位置：{{scrollTop}}</text>
+      </view>
+      <scroll-view
+        id="orders-scroll"
+        class="groups"
+        type="custom"
+        scroll-y="{{true}}"
+        enhanced="{{true}}"
+        wx:style="{{ { height: scrollHeight + 'px' } }}"
+        refresher-enabled="{{!loading || refreshing}}"
+        refresher-triggered="{{refreshing}}"
+        bindrefresherrefresh="onRefresh"
+        catchscrolltolower="loadMore"
+        catchscroll="onScroll"
+        lower-threshold="80"
+      >
+        <view wx:for="{{sections}}" wx:key="id" class="group">
+          <view class="header webview-sticky"><text>{{item.title}}</text></view>
+          <scroll-view class="strip" type="list" scroll-x="{{true}}" enable-flex="{{true}}" enhanced="{{true}}" catchscroll="ignoreScroll" catchscrolltolower="ignoreScroll">
+            <view wx:for="{{item.items}}" wx:for-item="entry" wx:key="id" class="tile"><text>{{entry.name}}</text></view>
+          </scroll-view>
+        </view>
+      </scroll-view>
+    </scroll-view>
+    <view class="fab" bindtap="open"><text>订单说明</text></view>
+    <view wx:if="{{opened}}" class="modal" bindtap="close" catchtouchmove="ignoreScroll"><text>关闭订单说明</text></view>
+  </view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+import { fetchOrders } from './service'
+
+createPage({
+  data: {
+    sections: [],
+    scrollTop: 0,
+    pageNo: 1,
+    opened: false,
+    loading: false,
+    refreshing: false,
+    windowHeight: 0,
+    statusBarHeight: 0,
+    navigationHeight: 44,
+    scrollHeight: 0
+  },
+  onLoad () {
+    this.updateLayout()
+    return this.reload()
+  },
+  onResize () { this.updateLayout() },
+  methods: {
+    updateLayout () {
+      const windowInfo = wx.getWindowInfo()
+      const capsule = wx.getMenuButtonBoundingClientRect()
+      this.windowHeight = windowInfo.windowHeight
+      this.statusBarHeight = windowInfo.statusBarHeight
+      this.navigationHeight = Math.max(44, (capsule.top - windowInfo.statusBarHeight) * 2 + capsule.height)
+      this.scrollHeight = Math.max(0, windowInfo.windowHeight - this.statusBarHeight - this.navigationHeight)
+    },
+    onRefresh () { return this.reload() },
+    reload (shouldFail = false) {
+      if (this.loading) return Promise.resolve()
+      this.loading = true
+      this.refreshing = true
+      return fetchOrders(1, shouldFail).then(sections => {
+        this.sections = sections
+        this.pageNo = 1
+      }).catch(error => {
+        wx.showToast({ title: error.message, icon: 'none' })
+      }).finally(() => {
+        this.refreshing = false
+        this.loading = false
+      })
+    },
+    loadMore () {
+      if (this.loading) return Promise.resolve()
+      this.loading = true
+      const nextPage = this.pageNo + 1
+      return fetchOrders(nextPage).then(sections => {
+        this.sections = this.sections.concat(sections)
+        this.pageNo = nextPage
+      }).catch(error => {
+        wx.showToast({ title: error.message, icon: 'none' })
+      }).finally(() => { this.loading = false })
+    },
+    onScroll (e) { this.scrollTop = e.detail.scrollTop },
+    ignoreScroll () {},
+    open () { this.opened = true },
+    close () { this.opened = false }
+  }
+})
+</script>
+<style>
+.page { overflow: hidden; background: #fff; }
+.navigation { background: #fff; }
+.navigation-title { display: flex; flex-direction: row; align-items: center; justify-content: center; }
+.summary { height: 120px; padding: 16px; box-sizing: border-box; }
+.summary text { display: block; }
+.header { height: 40px; line-height: 40px; background: #fff; }
+.webview-sticky { position: sticky; top: 0; z-index: 1; }
+.strip { display: flex; flex-direction: row; height: 80px; }
+.tile { flex-shrink: 0; width: 120px; height: 80px; }
+.fab { position: fixed; right: 12px; bottom: 12px; z-index: 2; background: #fff; }
+.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3; background: #eee; }
+</style>
+<script type="application/json">
+{
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "enablePullDownRefresh": false,
+  "navigationBarTitleText": "订单"
+}
+</script>

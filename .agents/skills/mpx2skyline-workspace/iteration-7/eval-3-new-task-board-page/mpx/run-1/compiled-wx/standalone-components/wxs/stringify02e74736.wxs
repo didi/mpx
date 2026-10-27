@@ -1,0 +1,278 @@
+module.exports = 
+/******/ (function() { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ([
+/* 0 */
+/***/ (function(module) {
+
+function objectKeys (obj) {
+  if (false) // removed by dead control flow
+{} else {
+    var keys = []
+    var stackMap = {
+      '{': '}',
+      '[': ']',
+      '(': ')'
+    }
+    if (typeof obj === 'object') {
+      var objStr = JSON.stringify(obj)
+      if (objStr[0] === '{' && objStr[objStr.length - 1] === '}') {
+        var inKey = true
+        var stack = []
+        var keyStart = 0
+        var keyEnd = 0
+        for (var i = 1; i < objStr.length - 1; i++) {
+          var item = objStr[i]
+          var lastItem = objStr[i - 1]
+          if (inKey) {
+            if (item === ':' && keyEnd === i - 1) {
+              keys.push(objStr.slice(keyStart + 1, keyEnd))
+              inKey = false
+            } else {
+              if (item === '"' && lastItem !== '\\') {
+                keyStart = keyEnd
+                keyEnd = i
+              }
+            }
+          } else {
+            if (stackMap[item]) {
+              stack.push(item)
+            } else if (stackMap[stack[stack.length - 1]] === item) {
+              stack.pop()
+            } else if (stack.length === 0 && item === ',') {
+              inKey = true
+            }
+          }
+        }
+      }
+    }
+    return keys
+  }
+}
+
+function genRegExp (str, flags) {
+  if (false) // removed by dead control flow
+{} else {
+    return getRegExp(str, flags)
+  }
+}
+
+function extend (target, from) {
+  var fromKeys = objectKeys(from)
+  for (var i = 0; i < fromKeys.length; i++) {
+    var key = fromKeys[i]
+    target[key] = from[key]
+  }
+  return target
+}
+
+function concat (a, b) {
+  return a ? b ? (a + ' ' + b) : a : (b || '')
+}
+
+function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
+
+function isArray (arr) {
+  if (false) // removed by dead control flow
+{} else {
+    return arr && arr.constructor === 'Array'
+  }
+}
+
+var escapeMap = {
+  '(': '_pl_',
+  ')': '_pr_',
+  '[': '_bl_',
+  ']': '_br_',
+  '{': '_cl_',
+  '#': '_h_',
+  '!': '_i_',
+  '/': '_s_',
+  '.': '_d_',
+  ':': '_c_',
+  ',': '_2c_',
+  '%': '_p_',
+  // wxs can not use '\'' as key
+  // wxs环境中'\''!=="'"，此文件不能格式化，否则会导致程序错误
+  "'": '_q_',
+  // wxs can not use '"' as key
+  '"': '_dq_',
+  '+': '_a_',
+  '$': '_si_'
+}
+
+var escapeReg = genRegExp('[()[\]{}#!/.:,%\'"+$]', 'g')
+
+function mpEscape (str) {
+  return str.replace(escapeReg, function (match) {
+    if (escapeMap[match]) return escapeMap[match]
+    // fix wxs can not use '}' as key
+    if (match === '}') return '_cr_'
+    // unknown escaped
+    return '_u_'
+  })
+}
+
+function stringifyDynamicClass (value) {
+  if (isArray(value)) {
+    value = stringifyArray(value)
+  } else if (isObject(value)) {
+    value = stringifyObject(value)
+  }
+
+  if (typeof value === 'string') {
+    return value
+  } else {
+    return ''
+  }
+}
+
+function stringifyArray (value) {
+  var res = ''
+  var classString
+  for (var i = 0; i < value.length; i++) {
+    if ((classString = stringifyDynamicClass(value[i]))) {
+      if (res) res += ' '
+      res += classString
+    }
+  }
+  return res
+}
+
+var mpxEscapeReg = genRegExp('(.+)MpxEscape$')
+var dashEscapeReg = genRegExp('_da_', 'g')
+var spaceEscapeReg = genRegExp('_sp_', 'g')
+
+function stringifyObject (value) {
+  var res = ''
+  var objKeys = objectKeys(value)
+  for (var i = 0; i < objKeys.length; i++) {
+    var key = objKeys[i]
+    if (value[key]) {
+      if (res) res += ' '
+      if (mpxEscapeReg.test(key)) {
+        key = mpxEscapeReg.exec(key)[1].replace(dashEscapeReg, '-').replace(spaceEscapeReg, ' ')
+      }
+      res += key
+    }
+  }
+  return res
+}
+
+function hump2dash (value) {
+  var reg = genRegExp('[A-Z]', 'g')
+  return value.replace(reg, function (match) {
+    return '-' + match.toLowerCase()
+  })
+}
+
+function dash2hump (value) {
+  var reg = genRegExp('-([a-z])', 'g')
+  return value.replace(reg, function (match, p1) {
+    return p1.toUpperCase()
+  })
+}
+
+function parseStyleText (cssText) {
+  var res = {}
+  var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
+  var propertyDelimiter = genRegExp(':(.+)')
+  var arr = cssText.split(listDelimiter)
+  for (var i = 0; i < arr.length; i++) {
+    var item = arr[i]
+    if (item) {
+      var tmp = item.split(propertyDelimiter)
+      if (tmp.length > 1) {
+        var k = dash2hump(tmp[0].trim())
+        res[k] = tmp[1].trim()
+      }
+    }
+  }
+  return res
+}
+
+function genStyleText (styleObj) {
+  var res = ''
+  var objKeys = objectKeys(styleObj)
+
+  for (var i = 0; i < objKeys.length; i++) {
+    var key = objKeys[i]
+    var item = styleObj[key]
+    res += hump2dash(key) + ':' + item + ';'
+  }
+  return res
+}
+
+function mergeObjectArray (arr) {
+  var res = {}
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i]) {
+      extend(res, arr[i])
+    }
+  }
+  return res
+}
+
+function normalizeDynamicStyle (value) {
+  if (!value) return {}
+  if (isArray(value)) {
+    return mergeObjectArray(value)
+  }
+  if (typeof value === 'string') {
+    return parseStyleText(value)
+  }
+  return value
+}
+
+module.exports = {
+  c: function (staticClass, dynamicClass) {
+    if (typeof staticClass !== 'string') {
+      return console.log('Template attr class must be a string!')
+    }
+    return concat(staticClass, mpEscape(stringifyDynamicClass(dynamicClass)))
+  },
+  s: function (staticStyle, dynamicStyle) {
+    var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
+    var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}
+    return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))
+  }
+}
+
+/***/ })
+/******/ 	]);
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__(0);
+/******/ 	return __webpack_exports__ && __webpack_exports__.__esModule? __webpack_exports__["default"] : __webpack_exports__;
+/******/ 	
+/******/ })()
+;

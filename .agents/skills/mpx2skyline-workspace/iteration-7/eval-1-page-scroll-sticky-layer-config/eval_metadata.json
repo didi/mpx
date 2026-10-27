@@ -4,8 +4,8 @@
   "title": "页面滚动、吸顶与层级配置",
   "prompt": "请按input/task.md将给定Mpx文件适配到微信Skyline，保持要求中的WebView体验，输出完整文件和验证报告。范围和交互已确认。",
   "files": [
-    "input/app.json",
     "input/orders.mpx",
+    "input/app.json",
     "input/service.js",
     "input/task.md"
   ],
@@ -189,7 +189,15 @@
   ],
   "validation_contract": "common-validation.json",
   "scoring_group": "adaptation",
-  "prompt_template": "implementation",
+  "outputs": [
+    "orders.mpx",
+    "app.json",
+    "service.js",
+    "report.md"
+  ],
+  "staged_files": [
+    "service.js"
+  ],
   "eval_id": 1,
   "eval_name": "page-scroll-sticky-layer-config"
 }

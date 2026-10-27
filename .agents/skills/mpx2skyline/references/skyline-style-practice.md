@@ -207,7 +207,9 @@ Skyline 支持负 margin，但在以下结构中，由于父节点为 block/inli
 }
 ```
 
-**推荐：显式统一为纵向 Flex：** `view` 组件显式设置 Flex 布局；自定义组件场景显式设置组件节点为 flex 布局，不能只改组件内部节点：
+**先建立原布局基线**：沿父子与后续兄弟节点确认 WebView 中实际发生的 margin 折叠，计算或测量前一分支占位、后项起点和重叠距离；不能直接将所有负 margin 相加。
+
+**推荐：核对原基线后显式统一为纵向 Flex：** `view` 组件显式设置 Flex 布局；自定义组件场景显式设置组件节点为 flex 布局，不能只改组件内部节点。以下仅展示布局设置，具体间距仍须按原基线核算：
 
 ```css
 .card-container {
@@ -221,16 +223,22 @@ Skyline 支持负 margin，但在以下结构中，由于父节点为 block/inli
 }
 ```
 
-该方案让 WebView 与 Skyline 使用一致的 Flex 尺寸计算路径，组件内部原有负 margin 可继续保留。适配时只处理确实依赖负 margin 推算后续占位的节点链；普通单侧间距、直接作用于明确兄弟节点的负 margin，不要仅因数值为负而统一改成 Flex。
+该方案让 WebView 与 Skyline 使用一致的 Flex 尺寸计算路径，但 Flex 会取消相关 margin 折叠。原负 margin 仅在重新核算后仍保持原布局基线时保留，否则按差值调整间距或结构。适配时只处理确实依赖负 margin 推算后续占位的节点链；普通单侧间距、直接作用于明确兄弟节点的负 margin，不要仅因数值为负而统一改成 Flex。
+
+例如，已确认前一分支末子节点的负 `margin-bottom` 经父节点与后续兄弟的负 `margin-top` 折叠时，设前项盒子外高为 `H`，两侧负 margin 为 `mb`、`mt`：原后项起点为 `H + min(mb, mt)`；改为不折叠的纵向 Flex 后为 `H + mb + mt`。应按两者差值调整一处间距或等效结构，并复核父容器占位；补偿值由实际结构计算，不固定套用示例数值。
+
+**验收条件**：改造后的 WebView 与 Skyline 都应保持改造前 WebView 的节点位置和重叠效果；仅有两端改造后结果一致不足以通过。静态盒模型推导与实际渲染验证分别记录，无法确认原基线时明确待验证。
 
 ### 内联混排
 
 `span` 是 Skyline 的内联容器，用于将文本、图片、链接等组织为同一段内联内容。适用场景包括图标与文字、文字与 `navigator` 链接、不同字号或样式的价格文本，以及包含自定义文本组件（如 `rich-text` / `special-text`）的混排。
 
+**同一行图文混排时，Skyline 下的图片须显式设置 `display: inline-block`**：图片与文字需要在同一个 `span` 中按同一行排版时即适用，包括基础 `span + image + text` 和带自定义文本组件的组合，不以是否使用 `rich-text` 为条件。需要图文共同单行截断时，还须同时配置容器的可收缩宽度、`max-lines="{{1}}"`、`overflow="ellipsis"` 及对应单行样式。普通 Flex 行中作为独立布局项的图片与文字不属于这一内联混排规则；Skyline 专用样式通过 `renderer` 隔离，保留 WebView 原有表现。
+
 尤其内联混排场景下还带 `truncate` / `line-clamp` / `whitespace-nowrap` 等超长省略逻辑，不要只补 `max-lines` / `overflow`，需在容器上加上 `mpxTagName@wx="span"` 实现内联混排，否则 Skyline 下内联混排场景下文本无法按 WebView 预期实现超长省略。
 
 
-**仅文本样式嵌套可使用 `text` 嵌套 `text`，包含图片或链接时使用 `span` 组织，Mpx 中沿用 `<view mpxTagName@wx="span">` 写法**
+**仅文本样式嵌套可使用 `text` 嵌套 `text`，包含图片或链接时使用 `span` 组织，Mpx 中沿用 `<view mpxTagName@wx="span">` 写法**。以下仅展示允许自然换行的基础内联结构；要求同一行图文混排时，还须按上文补齐图片的 `inline-block`：
 
 ```html
 <view mpxTagName@wx="span">
@@ -258,7 +266,7 @@ Skyline 支持负 margin，但在以下结构中，由于父节点为 block/inli
 
 1. 在 Skyline 下切换 `whitespace-nowrap`、`inline-block`、`inline-flex` 等兼容样式，非 Skyline 保持不变。
 2. 图标、文本同属一段内联内容时，放在同一个 `mpxTagName@wx="span"` 容器内。
-3. 当前业务结构在 Skyline 下需要将图片设为 `inline-block`，并将 rich-text 的 virtual-host 节点设为 `inline-flex`。基础的 `span` + `text` / `image` / `navigator` 组合不要直接套用这组样式，先确认是否存在相同问题。
+3. 图片按上述同一行图文混排规则设置 `inline-block`，基础 `span + image + text` 组合也适用。本示例另外将 rich-text 的 virtual-host 节点设为 `inline-flex`；这项自定义组件适配不推广到普通 `text` / `navigator` 节点。
 
 ```html
 <!-- truncate 为原子类中超长打点类，包含样式 `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`

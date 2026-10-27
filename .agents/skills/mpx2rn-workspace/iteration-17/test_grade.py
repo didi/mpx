@@ -129,7 +129,7 @@ class ConditionalIsolationTest(unittest.TestCase):
 """
         self.assertFalse(check(GRADE.check_eval_3, "g10", source))
 
-    def test_unconditional_capability_and_keys_fail_rn_attribute_checks(self):
+    def test_plain_keys_pass_but_capabilities_still_need_rn_attributes(self):
         source = """<template>
 <view class="gradient-overlay" enable-background="{{true}}"></view>
 <view class="card-item" enable-animation="transition"></view>
@@ -140,10 +140,11 @@ class ConditionalIsolationTest(unittest.TestCase):
 .toast-mask { --toast-color: red; background-color: var(--toast-color); }
 </style>
 """
-        for assertion_id in ("g3", "g4", "g10"):
+        for assertion_id in ("g3", "g4"):
             with self.subTest(assertion_id=assertion_id):
                 self.assertFalse(check(
                     GRADE.check_eval_3, assertion_id, source))
+        self.assertTrue(check(GRADE.check_eval_3, "g10", source))
 
     def test_empty_rule_on_ios_fails(self):
         source = """<style>

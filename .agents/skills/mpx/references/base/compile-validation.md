@@ -17,17 +17,22 @@
 | `<file.mpx>...` | - | 一个或多个待校验的 `.mpx` 绝对/相对路径 |
 | `--target=<mode>` | `ios` | 编译目标，多个用逗号分隔（如 `wx,ios,web`）|
 | `--type=<page\|component>` | `component` | 入口类型，按页面或组件进行校验 |
-| `--project-root=<path>` | 自动探测 | 显式指定宿主项目根目录 |
+| `--project-root=<path>` | 自动探测 | 显式指定业务构建工程根目录，用于依赖解析与构建配置加载 |
 | `--no-ignore-sub-components` | 关闭 | 保留 `usingComponents`，解析并递归编译所有子组件 |
 | `--json` | 关闭 | 输出结构化 JSON 结果 |
 
 退出码：`0` 校验通过（无错误、无警告）；`1` 存在编译错误或警告；`2` 运行期异常（如未找到 `@mpxjs/mpx-cli-service`）。
+
+宿主工程是输入文件所属的业务构建工程，不一定是 Git 仓库根目录或 Skill 所在目录。默认从输入文件向上探测；显式指定的 `--project-root` 应能解析 `@mpxjs/mpx-cli-service` 并加载对应构建配置。依赖解析失败也可能由工程路径错误引起。
 
 ## 使用示例
 
 > 下方示例中的 `<skill-root>` 表示本 skill 在宿主环境中的实际安装路径（例如 `.agents/skills/mpx`、`.claude/skills/mpx` 或 `~/.claude/skills/mpx` 等，以实际安装位置为准）；调用时使用该绝对路径，不要在宿主项目根目录下查找 `scripts/compile-validate.js`。
 
 ```bash
+# 检查候选业务工程能否解析编译依赖
+node -e "console.log(require.resolve('@mpxjs/mpx-cli-service', { paths: [process.argv[1]] }))" /absolute/path/to/app
+
 # 单组件、显式 target=ios
 node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios
 
@@ -48,6 +53,6 @@ node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=io
 
 ## 校验边界
 
-脚本随本 skill 分发，使用本 skill 的 scripts 路径，不依赖旧 mpx2rn skill。需宿主安装兼容的 `@mpxjs/mpx-cli-service`；找不到依赖时报告未完成真实编译，不把静态检查当成成功。
+编译依赖宿主工程中兼容的 `@mpxjs/mpx-cli-service`；依赖不可用时无法完成真实编译，静态检查不能替代构建结果。
 
 默认排除子组件，只校验目标文件；若变更涉及组件注册路径、抽象节点或子组件接口，使用 `--no-ignore-sub-components` 或宿主完整构建。真实运行、原生依赖、浏览器权限、SSR 双端构建不由单文件校验覆盖。

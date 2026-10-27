@@ -1,0 +1,27 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+// 适配验证：Web 全量构建、wx/Web 页面及组件编译、26 项既有 Jest 均通过。
+// Web 产物已在 jsdom 检查样式、ready/确认回传、直达与分包加载。
+// 尚未进行真实浏览器 flex 几何测量或微信开发者工具/真机验证。
+mpx.use(apiProxy)
+if (__mpx_mode__ === 'web') {
+  // history 部署需将 /help-demo/ 下的页面请求回退到 /help-demo/index.html。
+  mpx.config.webConfig = Object.assign({}, mpx.config.webConfig, {
+    routeConfig: { mode: 'history', base: '/help-demo/' },
+    // 页面已有自定义导航，避免再显示 Web 内建标题栏。
+    enableTitleBar: false
+  })
+}
+createApp({})
+</script>
+<script type="application/json">
+{
+  "pages": ["./pages/home/index.mpx", "./pages/choice/index.mpx"],
+  "window": { "navigationStyle": "custom" },
+  "subpackages": [
+    { "root": "packageA", "pages": ["./index.mpx"], "independent": true }
+  ]
+}
+</script>

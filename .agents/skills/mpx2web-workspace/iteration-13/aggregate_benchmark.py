@@ -42,7 +42,8 @@ def aggregate(model, effort):
         raise ValueError('unexpected or mixed grading runs')
     payload['metadata'].update(
         executor_model=f'{model} ({effort})',
-        analyzer_model='deterministic Python checks',
+        runs_per_configuration=1,
+        analyzer_model='calibrated Python/Node checks; independent semantic review',
         score_weighting='case mean, matching Mpx2RN iteration-17',
     )
     payload['notes'] = [
@@ -51,6 +52,9 @@ def aggregate(model, effort):
         '编译验证由各组 prompt 与 Skill 决定；静态断言分数不代表编译、浏览器或 SSR 运行通过。',
         'Token 和耗时来自本轮真实 agent JSONL usage 与执行时间，未复用历史测量。',
     ]
+    notes_path = runner.WORKSPACE / 'analysis-notes.json'
+    if notes_path.is_file():
+        payload['notes'].extend(json.loads(notes_path.read_text()))
     (runner.WORKSPACE / 'benchmark.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n')
     (runner.WORKSPACE / 'benchmark.md').write_text(base.generate_markdown(payload) + '\n')
     viewer = load_module('common_viewer', skill_creator / 'eval-viewer/generate_review.py')

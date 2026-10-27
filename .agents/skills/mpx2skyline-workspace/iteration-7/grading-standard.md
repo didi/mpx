@@ -10,8 +10,10 @@
 - s0_12/s0_13 可由实际节点、样式路径与盒模型推导结果评分；真机几何验证另记状态。若静态证据不足以判断双模式布局是否等价，仍按证据不足计 0 分。
 - Mpx：common-validation.json适用于所有改造/创建；动态类/样式、renderer来源与setup暴露、组件JSON、交付范围单独验证。创建额外执行creation-validation.json；绑定或编译错误阻断能力时，对应断言仍失败。
 - 页面与组件范围：页面核对app/页面JSON及约定组件树；单组件保留自身声明和依赖注册，不要求额外页面配置。
-- 所有组（包括no_skill）都遵循同一业务要求；Skill阅读/矩阵执行的过程检查仅对允许读取Skill的组要求读取对应文件，no_skill按同等维度与结果核对，不因没有读取Skill本身扣分。
+- mpx / mpx2skyline 两组遵循同一业务要求，仅读取本组指定 Skill；按相同能力维度与结果核对，不因入口文档名称不同扣分。
 
 报告分开列出适配33、创建7及通用验证。编译、mock、真实渲染分别记录，未执行为not_run；不将静态通过称为真机通过。耗时/Token不可得时标unavailable。
 
 业务产物位于eval-*/<configuration>/outputs；评分、validation.json、执行记录位于run-1。执行前后记录输入及Skill哈希；定义源哈希不代替实际运行版本。基线前对两组执行同一判定，不读对方输出和评分。
+
+执行入口与环境见 [README](README.md)。模型执行后用 `python3 grade.py --prepare` 创建未评分 assessment.json，评分者逐条填写 passed 与 evidence，再运行 `python3 grade.py` 生成兼容 RN 的 grading.json；`python3 report.py` 聚合适配/创建分项并生成静态查看页面。未审核、未执行或缺失指标不会被当作零成本通过结果。

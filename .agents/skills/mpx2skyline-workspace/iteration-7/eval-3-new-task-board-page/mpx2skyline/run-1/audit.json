@@ -1,0 +1,307 @@
+{
+  "status": "passed",
+  "method": "Skill aggregate rg scan + source/compiled structure review + targeted assertions",
+  "scope": [
+    "pages/task-board.mpx",
+    "components/rating-selector.mpx",
+    "components/segmented-control.mpx",
+    "app.json"
+  ],
+  "rulesReviewed": 48,
+  "unresolvedErrors": [],
+  "unresolvedWarnings": [],
+  "rules": [
+    {
+      "id": "CONFIG_APP_SKYLINE_OPTIONS",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "顶层 lazyCodeLoading 与 skyline 五项基线齐全；保留原 window、首页顺序和 webview 对象；未将宿主全局改成 Skyline。"
+    },
+    {
+      "id": "CONFIG_PAGE_SKYLINE",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "页面声明 skyline/glass-easel/custom/disableScroll；自定义导航由状态栏、胶囊区域测量与首页事件组成。"
+    },
+    {
+      "id": "CONFIG_WORKLET_BABEL",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 Worklet，仅 transform/opacity transition。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_FRAGMENT",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 include 或模板片段依赖。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_ESCAPE",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "模板属性均使用合法双引号边界；绑定内字符串使用单引号，无反斜杠转义。"
+    },
+    {
+      "id": "COMP_UNSUPPORTED",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "未使用不支持组件；使用 view/text/scroll-view 与本次两个自定义组件。"
+    },
+    {
+      "id": "COMP_PENDING_SUPPORT",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：未使用 match-media、keyboard-accessory。"
+    },
+    {
+      "id": "COMP_WEBVIEW_ONLY_ATTR",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "无 WebView-only 组件属性/取值。max-lines/overflow 在 text 上供 Skyline 省略，WXSS 同时保留 WebView 省略。"
+    },
+    {
+      "id": "COMP_IMAGE_SVG",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无图像或 SVG 资源。"
+    },
+    {
+      "id": "COMP_SCROLL_TYPE",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "唯一 scroll-view 显式 type=list。"
+    },
+    {
+      "id": "COMP_SCROLL_LIST_DIRECT_CHILD",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "循环 task-card 是 scroll-view 直接子节点，无单一列表 wrapper。"
+    },
+    {
+      "id": "COMP_SCROLL_NESTED",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "不适用：无嵌套滚动。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无横向滚动容器；普通 Flex 行由 defaultDisplayBlock 的 row 基线对齐。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL_CHILD_WIDTH",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 scroll-x。"
+    },
+    {
+      "id": "COMP_SCROLL_REFRESHER_SLOT",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "例外：使用原生默认 refresher，不存在需声明 slot 的自定义刷新节点。"
+    },
+    {
+      "id": "COMP_NAVIGATOR_CHILDREN",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 navigator；首页入口通过 view 点击事件跳转。"
+    },
+    {
+      "id": "COMP_TEXT_CHILDREN",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "全部 text 仅承载文本，无非 text 子组件。"
+    },
+    {
+      "id": "COMP_INLINE_MIXED_CONTENT",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：各文本/图标为独立 Flex 节点，无同段图文混排。"
+    },
+    {
+      "id": "COMP_STICKY_STRUCTURE",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：固定顶部区域位于 scroll-view 外，非滚动内容吸顶，不依赖 sticky。"
+    },
+    {
+      "id": "COMP_PICKER_VIEW_INDICATOR",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 picker-view。"
+    },
+    {
+      "id": "COMP_SWIPER_LIMIT",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 swiper。"
+    },
+    {
+      "id": "STYLE_MEDIA_SCREEN",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "不适用：无媒体查询；窄屏采用弹性剩余宽度与显式窗口高度。"
+    },
+    {
+      "id": "STYLE_SELECTOR_UNSUPPORTED",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "样式只用语义 class；没有通配、属性、伪类或伪元素选择器。"
+    },
+    {
+      "id": "STYLE_TEXT_OVERFLOW",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "board-title/task-title/rating-label/segmented-label/segmented-option-text 均有 max-lines=1、overflow=ellipsis 与 WebView 三项单行省略样式；插值贴合标签。"
+    },
+    {
+      "id": "STYLE_FLEX_TEXT_WRAP",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "需要截断的 Flex 子项显式 width:0+flex:1 或 width:100%；星级/分数 flex-shrink:0。任务标题宽度参照 task-content 剩余宽度。"
+    },
+    {
+      "id": "STYLE_OVERFLOW_AXIS",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "唯一 overflow 值为 hidden，服务文本裁剪；滚动使用 scroll-view，无单轴 overflow。"
+    },
+    {
+      "id": "STYLE_LAYOUT_UNSUPPORTED",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "无 grid/flow-root/float 等；根节点列 Flex，scroll-view height:0+flex:1+min-height:0，有确定窗口高度。"
+    },
+    {
+      "id": "STYLE_TEXT_UNSUPPORTED",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "只用单行 nowrap 与常规文字样式，无不支持文本声明。"
+    },
+    {
+      "id": "STYLE_FONT_POSTSCRIPT_NAME",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "不适用：未引入自定义字体或 PostScript name。"
+    },
+    {
+      "id": "STYLE_FONT",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "仅明确 bold 字重，无 500/600/bolder/lighter/oblique。"
+    },
+    {
+      "id": "STYLE_TEXT_DECORATION",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "仅 task-title-completed 的 text 节点使用单值 line-through。"
+    },
+    {
+      "id": "STYLE_BORDER_RADIUS_BORDER",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "圆角边框四边统一 solid、同色；完成态通过 border-color 同时修改四边。"
+    },
+    {
+      "id": "STYLE_BACKGROUND_MASK_LIMIT",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "仅纯背景色，无背景图、多层背景或 mask。"
+    },
+    {
+      "id": "STYLE_FILTER_LIMIT",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 filter/backdrop-filter。"
+    },
+    {
+      "id": "STYLE_BOX_SHADOW_MULTI",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 box-shadow。"
+    },
+    {
+      "id": "STYLE_CALC_ANGLE",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 calc。"
+    },
+    {
+      "id": "STYLE_PSEUDO_ANIMATION",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无伪元素动画。"
+    },
+    {
+      "id": "STYLE_ANIMATION_FILL_MODE",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 keyframes 动画。"
+    },
+    {
+      "id": "STYLE_ANIMATION_PROPERTY",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "真实可点击 view 仅过渡 transform 与 opacity，均在白名单，持续 150ms；按压为 scale(0.96)/0.7，结束与取消恢复 1。"
+    },
+    {
+      "id": "STYLE_Z_INDEX_CONTEXT",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "无 z-index、fixed 或重叠层级假设；transform/opacity 仅作按压反馈。"
+    },
+    {
+      "id": "STYLE_NEGATIVE_MARGIN_OCCUPANCY",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "无负 margin；父容器 padding 与单侧兄弟间距。"
+    },
+    {
+      "id": "GLASS_SELECTOR_NUMERIC_ID",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 id 或节点查询选择器。"
+    },
+    {
+      "id": "ANIMATION_WEBVIEW_API",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "未使用 wx.createAnimation 或实例动画 API。"
+    },
+    {
+      "id": "SCROLL_CONTEXT_ENHANCED",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "scroll-view 开启 enhanced；未调用 node() 或 ScrollViewContext。"
+    },
+    {
+      "id": "SELECTOR_QUERY_SCOPE",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "不适用：无 SelectorQuery。"
+    },
+    {
+      "id": "PROPS_DEFAULT_FIELD",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "两个组件 props descriptor 均使用 type/value；setup defineProps 编译结果是 properties。"
+    },
+    {
+      "id": "WX_FOR_DATA_TYPE",
+      "level": "warn",
+      "status": "reviewed_clear",
+      "reason": "visibleTasks、stars、safeOptions 有 initData=[]；计算结果始终 Array，options=null 统一归一化。"
+    },
+    {
+      "id": "PROPS_UNION_TYPE",
+      "level": "error",
+      "status": "reviewed_clear",
+      "reason": "props 使用 String/Number/Boolean/Array 单一 type，默认值与页面传值一致；无 type 数组声明。"
+    }
+  ],
+  "limits": [
+    "静态与 mock 不证明真实渲染、窄屏实际排版或原生手势表现",
+    "首页源码未提供，仅保留宿主配置与跳转入口"
+  ]
+}

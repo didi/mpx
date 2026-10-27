@@ -5,14 +5,19 @@ import ast
 import json
 import re
 import sys
+import subprocess
+from functools import lru_cache
+from html.parser import HTMLParser
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parent
-GROUPS = ("mpx2web", "no_skill")
 
 
 def load_config():
     return json.loads((WORKSPACE / "evals.json").read_text())
+
+
+GROUPS = tuple(group["id"] for group in load_config()["comparison"]["groups"])
 
 
 def read(root, relative):
@@ -29,6 +34,78 @@ def blocks(source):
         key = "json" if 'name="json"' in attrs or "name='json'" in attrs or 'type="application/json"' in attrs or "type='application/json'" in attrs else "script"
         result[key] += "\n" + match.group("body")
     return result
+
+
+@lru_cache(maxsize=256)
+def javascript_probe(kind, source, mode="web", components=()):
+    """Inspect effective code with the same dependencies as the model runs."""
+    result = subprocess.run(
+        ["node", str(Path(__file__).with_name("semantic_probe.cjs"))],
+        input=json.dumps({"kind": kind, "source": source, "mode": mode,
+                          "components": list(components)}),
+        capture_output=True, text=True, timeout=15, check=False,
+    )
+    if result.returncode:
+        raise RuntimeError(result.stderr)
+    return json.loads(result.stdout)
+
+
+def effective_json(source, mode):
+    return javascript_probe("json", blocks(source)["json"], mode).get("value", {})
+
+
+class TemplateNodes(HTMLParser):
+    def __init__(self, source):
+        super().__init__(convert_charrefs=True)
+        self.nodes = []
+        self.stack = []
+        self.feed(source)
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        attributes["__parent_index"] = self.stack[-1] if self.stack else None
+        self.nodes.append((tag, attributes))
+        self.stack.append(len(self.nodes) - 1)
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        self.stack.pop()
+
+    def handle_endtag(self, tag):
+        while self.stack:
+            if self.nodes[self.stack.pop()][0] == tag:
+                break
+
+
+def compiled_nodes(source, mode="web"):
+    template = template_for_mode(source, mode) or default_template(source)
+    configuration = javascript_probe("json", blocks(source)["json"], mode)
+    if configuration.get("error"):
+        return None
+    components = tuple(configuration.get("value", {}).get("usingComponents", {}))
+    result = javascript_probe("template", template, mode, components)
+    if result.get("error") or result.get("errors"):
+        return None
+    return TemplateNodes(result["template"]).nodes
+
+
+def platform_node_isolated(source, tag):
+    wx_nodes = compiled_nodes(source, "wx")
+    web_nodes = compiled_nodes(source, "web")
+    return (wx_nodes is not None and web_nodes is not None
+            and any(name == tag for name, _ in wx_nodes)
+            and not any(name == tag for name, _ in web_nodes))
+
+
+def node_has_css(attrs, style, property_name, value):
+    """Match CSS to a node's actual class, including comma-separated selectors."""
+    classes = attrs.get("class", "") + " " + attrs.get(":class", "")
+    for selectors, declarations in re.findall(r"([^{}]+)\{([^{}]*)\}", style):
+        if re.search(rf"\b{re.escape(property_name)}\s*:\s*(?:{value})(?:\s*[;}}]|\s*$)", declarations):
+            for name in re.findall(r"\.([\w-]+)", selectors):
+                if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", classes):
+                    return True
+    return False
 
 
 def all_present(source, *patterns):
@@ -157,14 +234,6 @@ def platform_attribute(source, name, mode):
     ))
 
 
-def platform_attribute_value(source, name, mode, value):
-    return bool(re.search(
-        rf"\b{re.escape(name)}@(?:[\w-]+\|)*_?{re.escape(mode)}(?:\|[\w-]+)*"
-        rf"\s*=\s*['\"]{re.escape(value)}['\"]",
-        source,
-    ))
-
-
 def attribute_available_on_web(source, name):
     """Accept an unqualified attribute or an explicit @web attribute."""
     unqualified = bool(re.search(
@@ -191,16 +260,6 @@ def platform_open_tags(source, tag, mode):
         for match in re.finditer(rf"<{re.escape(tag)}\b[^>]*>", source, re.S | re.I)
         if selector.search(match.group(0))
     ]
-
-
-def tag_replaced_for_web(source, tag, replacement="view"):
-    return bool(re.search(
-        rf"<{re.escape(tag)}\b[^>]*\bmpxTagName@"
-        rf"(?:[\w-]+\|)*_?web(?:\|[\w-]+)*\s*=\s*"
-        rf"['\"]{re.escape(replacement)}['\"]",
-        source,
-        re.S | re.I,
-    ))
 
 
 def has_half_rpx_transform(source):
@@ -369,9 +428,9 @@ def has_safe_media_fallback(source):
 
 
 def has_page_server_prefetch(page_script):
+    body = method_body(page_script, "serverPrefetch") or method_body(page_script, "onServerPrefetch")
     return all_present(
-        page_script,
-        r"(?:serverPrefetch|onServerPrefetch)\s*\(",
+        body,
         r"\$route[\s\S]{0,120}?query[\s\S]{0,80}?id",
         r"(?:return|await)[\s\S]{0,240}?\.loadArticle\s*\(",
     )
@@ -405,6 +464,7 @@ def check_eval_0(root):
     app = read(root, "src/app.mpx")
     home = read(root, "src/pages/home/index.mpx")
     choice = read(root, "src/pages/choice/index.mpx")
+    web_config = javascript_probe("config", config)
     style_page = home
     layout = read(root, "src/components/layout-cell.mpx")
     red = read(root, "src/components/red-card.mpx")
@@ -415,7 +475,7 @@ def check_eval_0(root):
     layout_ok = (
         all_present(layout, r"virtualHost\s*:\s*true", r"flex\s*:\s*(?:1\b|1\s+1\s+0)")
         and all_present(style_page, r"\.equal-row\s*\{[^}]*display\s*:\s*flex", r"\.equal-row\s*\{[^}]*width\s*:\s*240px")
-        and all_present(config, r"autoVirtualHostRules", r"layout-cell")
+        and web_config.get("virtualHost") == [True, False]
         and not re.search(r"row-(?:group|list)\.mpx|row-(?:group|list)\\\.mpx", config)
     )
     external_ok = (
@@ -423,22 +483,28 @@ def check_eval_0(root):
         and all_present(style_page, r"tone-class\s*=\s*['\"]warm-tone", r"tone-class\s*=\s*['\"]cool-tone", r"\.warm-tone\s*\{[^}]*color", r"\.cool-tone\s*\{[^}]*color", r"\.spaced-label\s*\{[^}]*padding\s*:\s*12px")
         and all(token in config for token in ("custom-class", "i-class", "tone-class"))
     )
+    navigation = javascript_probe("navigation", blocks(home)["script"])
     navigation_ok = (
-        all_present(home, r"<navigator\b[^>]*url\s*=\s*['\"]/pages/choice/index\?source=link['\"][^>]*open-type\s*=\s*['\"]navigate", r"openChoice", r"ready\s*:\s*\(\)\s*=>[^}]*selectedLabel\s*=\s*['\"]正在选择")
+        all_present(home, r"<navigator\b[^>]*url\s*=\s*['\"]/pages/choice/index\?source=link['\"][^>]*open-type\s*=\s*['\"]navigate")
+        and navigation.get("ready", False)
         and all_present(choice, r"query\.source", r"['\"]link['\"]", r"emit\(['\"]ready['\"]", r"confirm\s*\(\s*label\s*\)")
-        and ("receiveChoice(label)" in choice or bool(set(re.findall(r"events\s*:\s*\{.*?([A-Za-z_$][\w$]*)\s*:\s*", home, re.S)) & set(re.findall(r"emit\(['\"]([^'\"]+)['\"]\s*,\s*label", choice))))
+        and any(re.search(rf"emit\(['\"]{re.escape(event)}['\"]\s*,\s*label", choice)
+                for event in navigation.get("confirmed", []))
     )
     capsule_guarded = "getMenuButtonBoundingClientRect" in home and (
         guarded_from_web(home, "getMenuButtonBoundingClientRect")
         or bool(re.search(r"if\s*\([^)]*__mpx_mode__\s*!={1,2}\s*['\"]web['\"]", home))
     )
-    navigation_bar_ok = capsule_guarded and "navigationStyle" in app and "custom" in app
+    app_runtime = javascript_probe("script", blocks(app)["script"])
+    navigation_bar_ok = (capsule_guarded and "navigationStyle" in app and "custom" in app
+                         and app_runtime.get("webConfig", {}).get("enableTitleBar") is not True)
     route_ok = (
-        all_present(config, r"publicPath\s*:\s*['\"]/help-demo/['\"]")
-        and has_runtime_route_config(app, "/help-demo/")
-        and all(page in app for page in ("pages/home/index", "pages/choice/index", "packageA"))
+        web_config.get("value", {}).get("publicPath") == "/help-demo/"
+        and app_runtime.get("webConfig", {}).get("routeConfig", {}).get("mode") == "history"
+        and app_runtime.get("webConfig", {}).get("routeConfig", {}).get("base") == "/help-demo/"
+        and all(page in json.dumps(effective_json(app, "web")) for page in ("pages/home/index", "pages/choice/index", "packageA"))
     )
-    rpx_ok = has_half_rpx_transform(config)
+    rpx_ok = web_config.get("samples") in (["0px", "14px", "100px", "-4px"], ["0", "14px", "100px", "-4px"])
     return assertion_rows(0, {
         "s0": red_scoped and blue_scoped,
         "s1": layout_ok,
@@ -454,10 +520,11 @@ def check_eval_1(root):
     card = read(root, "profile-card.mpx")
     parts = blocks(card)
     script = parts["script"]
+    component = javascript_probe("script", script)
     skeleton_ok = (
         all(parts.values())
-        and "createComponent" in script
-        and bool(re.search(r"data\s*:\s*\{", script))
+        and component.get("constructor") == "component"
+        and effective_json(card, "web").get("component") is True
         and not re.search(r"<script\b[^>]*\bsetup\b|\bsetup\s*\(", card)
     )
     external_ok = (
@@ -466,7 +533,8 @@ def check_eval_1(root):
         and all_present(parts["template"], r"class\s*=\s*['\"][^'\"]*accent-class", r"\{\{\s*title\s*\}\}")
     )
     interaction_ok = (
-        all_present(script, r"title\s*:", r"summary\s*:", r"data\s*:\s*\{[^}]*expanded\s*:\s*false")
+        all_present(script, r"title\s*:", r"summary\s*:")
+        and (component.get("data") or {}).get("expanded") is False
         and component_has_local_toggle(parts["template"], script, "expanded")
         and bool(re.search(r"wx:if\s*=\s*['\"]\{\{\s*expanded\s*\}\}['\"]", parts["template"]))
         and not re.search(r"\bthis\.setData\s*\(", script)
@@ -501,8 +569,6 @@ def check_eval_2(root):
     vendor = read(root, "native-scanner.mpx")
     input_vendor = read(WORKSPACE / "eval-2-api-component-adaptation/input", "native-scanner.mpx")
     content_blocks = blocks(content)
-    scan_blocks = blocks(scan)
-    catalog_blocks = blocks(catalog)
     scan_result_body = method_body(content_blocks["script"], "onScanResult")
     set_data_ok = (
         bool(scan_result_body)
@@ -527,78 +593,46 @@ def check_eval_2(root):
             or handler_isolated_by_web_override(content, "rename")
         )
     )
-    scanner_json_ok = wx_only_reference(scan_blocks["json"], "native-scanner")
-    scanner_template_ok = (
-        has_platform_node(scan_blocks["template"], "native-scanner", "wx")
-        or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", scan))
-        or tag_isolated_by_web_override(scan, "native-scanner")
-    )
+    wx_components = effective_json(content, "wx").get("usingComponents", {})
+    web_components = effective_json(content, "web").get("usingComponents", {})
+    scanner_json_ok = (wx_components.get("native-scanner") == "./native-scanner.mpx"
+                       and "native-scanner" not in web_components)
+    scanner_template_ok = platform_node_isolated(scan, "native-scanner")
     scanner_ok = vendor == input_vendor and scanner_json_ok and scanner_template_ok and "TODO(web)" in scan and valid_mpx_conditionals(scan)
-    video_ok = all_present(video, r"<video\b", r"src\s*=\s*['\"]\{\{src\}\}['\"]", r"bindtimeupdate", r"bindloadedmetadata") and all(has_safe_media_fallback(method_body(content_blocks["script"], handler)) for handler in ("onTimeUpdate", "onMetadata"))
+    video_probe = javascript_probe("video", content_blocks["script"])
+    video_ok = all(video_probe.get(key, False) for key in ("srcMatches", "fallback", "detail")) and all_present(video, r"<video\b", r"src\s*=\s*['\"]\{\{src\}\}['\"]", r"bindtimeupdate", r"bindloadedmetadata") and all(has_safe_media_fallback(method_body(content_blocks["script"], handler)) for handler in ("onTimeUpdate", "onMetadata"))
+    wx_location = javascript_probe("location", content_blocks["script"], "wx")
+    web_location = javascript_probe("location", content_blocks["script"], "web")
     location_ok = (
-        all_present(content, r"(?:wx|mpx)\.chooseLocation", r"placeName\s*=\s*result\.name", r"TODO\(web\)[^\n]*(?:位置|地图)")
-        and (
-            guarded_from_web(method_body(content_blocks["script"], "choosePlace"), "chooseLocation")
-            or handler_isolated_by_web_override(content, "choosePlace")
-        )
+        wx_location.get("calls") == ["chooseLocation"]
+        and wx_location.get("placeName") == "probe-location"
+        and web_location.get("calls") == []
+        and bool(re.search(r"TODO\(web\)[^\n]*(?:位置|地图|选址)", content))
         and valid_mpx_conditionals(content_blocks["script"])
     )
-    plugin_template_ok = has_platform_node(content_blocks["template"], "foo-card", "wx") or tag_isolated_by_web_override(content, "foo-card")
-    plugin_ok = wx_only_reference(content_blocks["json"], "plugin://foo/component") and plugin_template_ok and valid_mpx_conditionals(content_blocks["json"])
-    web_store_template = template_for_mode(store, "web")
-    web_picker_in_shared_template = (
-        platform_attribute_value(store, "mode", "web", "selector")
-        and platform_attribute(store, "range", "web")
-        and platform_attribute(store, "value", "web")
-        and bool(re.search(r"@change@web\s*=\s*['\"]onWebRegionChange['\"]", store))
+    plugin_ok = (
+        wx_components.get("foo-card") == "plugin://foo/component"
+        and "foo-card" not in web_components
+        and platform_node_isolated(content, "foo-card")
+        and valid_mpx_conditionals(content_blocks["json"])
     )
-    web_picker_node = any(
-        all_present(
-            tag,
-            r"\bmode\s*=\s*['\"]selector['\"]",
-            r"\brange\s*=",
-            r"\bbindchange\s*=\s*['\"]onWebRegionChange['\"]",
-        )
-        for tag in platform_open_tags(store, "picker", "web")
-    )
+    web_nodes = compiled_nodes(content) or []
+    wx_nodes = compiled_nodes(content, "wx") or []
+    web_picker = next((attrs for tag, attrs in web_nodes
+                       if tag == "mpx-picker" and attrs.get("mode") == "selector"), {})
+    picker_range = web_picker.get(":range", "")
+    picker_value = web_picker.get(":value", "")
     region_web_ok = (
-        bool(re.search(r"TODO\(web\)[^\n]*(?:地区|行政区)", store))
-        or (
-            all_present(web_store_template, r"<picker\b", r"mode\s*=\s*['\"]selector['\"]", r"bindchange")
-            and all_present(store, r"regionOptions", r"onWebRegionChange", r"regionNames\s*=", r"regionCodes\s*=", r"regionText\s*=")
-        )
-        or (
-            web_picker_in_shared_template
-            and all_present(store, r"regionOptions", r"onWebRegionChange", r"regionNames\s*=", r"regionCodes\s*=", r"regionText\s*=")
-        )
-        or (
-            web_picker_node
-            and all_present(store, r"regionOptions", r"onWebRegionChange", r"regionNames\s*=", r"regionCodes\s*=", r"regionText\s*=")
-        )
-    )
-    picker_region = (
-        bool(re.search(r"<picker\b[^>]*\bmode\s*=\s*['\"]region['\"]", store, re.S))
-        or platform_attribute_value(store, "mode", "wx", "region")
-    )
-    picker_isolated = (
-        has_platform_node(store, "picker", "wx")
-        or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", store))
-        or bool(web_store_template and re.search(r"<picker\b[^>]*mode\s*=\s*['\"]region['\"]", default_template(store), re.S))
-        or (
-            platform_attribute_value(store, "mode", "wx", "region")
-            and platform_attribute_value(store, "mode", "web", "selector")
-        )
-    )
-    map_isolated = (
-        has_platform_node(store, "map", "wx")
-        or bool(re.search(r"<template\b[^>]*mode\s*=\s*['\"]wx['\"]", store))
-        or tag_isolated_by_web_override(store, "map")
+        (not web_picker and bool(re.search(r"TODO\(web\)[^\n]*(?:地区|行政区)", store)))
+        or (bool(picker_range and picker_value)
+            and "{{" not in str(web_picker)
+            and "onWebRegionChange" in web_picker.get("@change", "")
+            and all_present(store, r"regionOptions", r"onWebRegionChange", r"regionNames\s*=", r"regionCodes\s*=", r"regionText\s*="))
     )
     region_map_ok = (
-        picker_region
-        and all_present(store, r"<map\b", r"regionNames", r"regionCodes", r"regionText", r"mapCenter", r"storeMarkers", r"bindmarkertap", r"markerId", r"selectedStoreId", r"selectedStoreName", r"TODO\(web\)[^\n]*(?:地图|SDK)")
-        and picker_isolated
-        and map_isolated
+        any(tag == "picker" and attrs.get("mode") == "region" for tag, attrs in wx_nodes)
+        and platform_node_isolated(store, "map")
+        and all_present(store, r"regionNames", r"regionCodes", r"regionText", r"mapCenter", r"storeMarkers", r"bindmarkertap", r"markerId", r"selectedStoreId", r"selectedStoreName", r"TODO\(web\)[^\n]*(?:地图|SDK)")
         and region_web_ok
         and valid_mpx_conditionals(store)
     )
@@ -628,46 +662,21 @@ def check_eval_2(root):
         and has_platform_node(catalog, "page-container", "wx")
     )
     structure_web_implementation = (
-        tag_replaced_for_web(catalog, "grid-view")
-        and tag_replaced_for_web(catalog, "grid-item")
-        and tag_replaced_for_web(catalog, "page-container")
-        and all_present(
-            catalog,
-            r"\.product-grid\s*\{[^}]*display\s*:\s*(?:grid|flex)",
-            r"\.filter-container\s*\{[^}]*position\s*:\s*fixed",
-            r"wx:if@_?web\s*=\s*['\"]\{\{\s*filterVisible\s*\}\}['\"]",
-            r"wx:key\s*=\s*['\"]id['\"]",
-        )
+        not any(tag in {"grid-view", "grid-item", "page-container"} for tag, _ in web_nodes)
+        and any("filteredProducts" in attrs.get("v-for", "")
+                and attrs.get("__parent_index") is not None
+                and node_has_css(web_nodes[attrs["__parent_index"]][1], content_blocks["style"], "display", "grid|flex")
+                for tag, attrs in web_nodes)
+        and any("filterVisible" in attrs.get("v-if", "")
+                and node_has_css(attrs, content_blocks["style"], "position", "fixed")
+                for tag, attrs in web_nodes)
+        and all_present(str(web_nodes), r"filteredProducts", r"selectProduct", r"cancelFilter", r"confirmFilter")
     )
-    separate_web_structure = (
-        has_platform_node(catalog, "grid-view", "wx")
-        and has_platform_node(catalog, "page-container", "wx")
-        and any(
-            re.search(r"\bclass\s*=\s*['\"][^'\"]*\bproduct-grid\b", tag)
-            for tag in platform_open_tags(catalog, "view", "web")
-        )
-        and any(
-            all_present(
-                tag,
-                r"\bclass\s*=\s*['\"][^'\"]*\bfilter-overlay\b",
-                r"\bwx:if\s*=\s*['\"]\{\{\s*filterVisible\s*\}\}['\"]",
-            )
-            for tag in platform_open_tags(catalog, "view", "web")
-        )
-        and all_present(
-            catalog,
-            r"\.product-grid\s*\{[^}]*display\s*:\s*(?:grid|flex)",
-            r"\.filter-overlay\s*\{[^}]*position\s*:\s*fixed",
-            r"wx:key\s*=\s*['\"]id['\"]",
-        )
-    )
-    structures_ok = (
-        structure_state
-        and (structure_todo_boundary or structure_web_implementation or separate_web_structure)
-        and valid_mpx_conditionals(catalog)
-    )
-    state_ok = all_present(store, r"confirmSelection\s*\(\)[\s\S]*?regionText[\s\S]*?selectedStoreName") and all_present(catalog, r"openFilter\s*\(\)[\s\S]*?draftCategory\s*=\s*this\.appliedCategory[\s\S]*?filterVisible\s*=\s*true", r"cancelFilter\s*\(\)[\s\S]*?filterVisible\s*=\s*false", r"confirmFilter\s*\(\)[\s\S]*?appliedCategory\s*=\s*this\.draftCategory[\s\S]*?filterVisible\s*=\s*false", r"filteredProducts\s*\(\)[\s\S]*?this\.appliedCategory")
-    return assertion_rows(2, {
+    structures_ok = (compiled_nodes(content) is not None and compiled_nodes(content, "wx") is not None
+                     and structure_state and (structure_todo_boundary or structure_web_implementation)
+                     and valid_mpx_conditionals(catalog))
+    state_ok = javascript_probe("state", content_blocks["script"]).get("passed", False)
+    rows = assertion_rows(2, {
         "c0": set_data_ok,
         "c1": edit_chain,
         "c2": scanner_ok,
@@ -680,6 +689,12 @@ def check_eval_2(root):
         "c9": state_ok,
         "c10": share_isolated_for_web(content),
     })
+    for row in rows:
+        if row["id"] == "c3":
+            row["evidence"] = "Actual Web router query and single-argument onLoad/media probes: " + json.dumps(video_probe, ensure_ascii=False)
+        elif row["id"] == "c6":
+            row["evidence"] = "Installed compiler's effective Web picker attributes: " + json.dumps(web_picker, ensure_ascii=False)
+    return rows
 
 
 def check_eval_3(root):
@@ -696,7 +711,7 @@ def check_eval_3(root):
     preload_ok = route_ok and (page_prefetch or app_prefetch)
     page_uses_pinia = (
         all_present(page_script, r"@mpxjs/pinia", r"mapState", r"mapActions")
-        or all_present(page_script, r"import\s+\w+\s+from\s+['\"][^'\"]*store/article['\"]", r"useArticleStore\s*\(\s*this\.\$pinia\s*\)", r"loadArticle")
+        or all_present(page_script, r"import\s+(?:\w+|\{[^}]*useArticleStore[^}]*\})\s+from\s+['\"][^'\"]*store/article['\"]", r"useArticleStore\s*\(\s*this\.\$pinia\s*\)", r"loadArticle")
     )
     pinia_ok = (
         all_present(
@@ -718,9 +733,9 @@ def check_eval_3(root):
     isolated_ok = bool(on_app_init and "createPinia()" in on_app_init.group("body") and "createPinia()" not in before_app_init)
     if "onSSRAppCreated" in app_script:
         isolated_ok = isolated_ok and bool(re.search(r"useArticleStore\s*\(\s*pinia\s*\)", app_script))
-    server_sources = "\n".join((app_script, page_script, store, service))
-    browser_safe = not re.search(r"\b(?:window|document|navigator)\b", server_sources)
-    wx_ok = all_present(page_script, r"onLoad\s*\(\s*query\s*\)", r"query(?:\s*&&\s*query)?\.id|query\.id", r"loadArticle\s*\(") and all_present(page, r"article\.title", r"article\.body", r"errorText", r"loading", r"expanded", r"toggleExtra") and all_present(store, r"this\.article\s*=", r"this\.loading\s*=", r"this\.errorText\s*=") and "createStore" not in page_script + store
+    browser_safe = all(javascript_probe("browser", source).get("unsafe") == []
+                       for source in (app_script, page_script, store, service))
+    wx_ok = javascript_probe("wxload", page_script, "wx").get("loaded", False) and all_present(page_script, r"onLoad\s*\(\s*query\s*\)", r"query(?:\s*&&\s*query)?\.id|query\.id", r"loadArticle\s*\(") and all_present(page, r"article\.title", r"article\.body", r"errorText", r"loading", r"expanded", r"toggleExtra") and all_present(store, r"this\.article\s*=", r"this\.loading\s*=", r"this\.errorText\s*=") and "createStore" not in page_script + store
     return assertion_rows(3, {
         "r0": preload_ok,
         "r1": pinia_ok,
@@ -772,7 +787,7 @@ def grade_run(eval_id, group):
         print(f"missing: {output}: {', '.join(missing)}", file=sys.stderr)
         return None
     results = CHECKERS[eval_id](output)
-    enriched = [{**row, "evidence": "PASS" if row["passed"] else "FAIL"} for row in results]
+    enriched = [{**row, "evidence": row.get("evidence", "Calibrated source/compiled-template checks passed" if row["passed"] else "Calibrated source/compiled-template check failed; see semantic review for this assertion")} for row in results]
     passed = sum(row["passed"] for row in enriched)
     metrics, metric_errors = load_metrics(run)
     if metric_errors:
@@ -783,6 +798,7 @@ def grade_run(eval_id, group):
     grading = {
         "eval_id": eval_id,
         "run_kind": group,
+        "grading_method": "calibrated-source-compiler-behavior-v1",
         "expectations": enriched,
         "summary": summary,
         "metrics": metrics,

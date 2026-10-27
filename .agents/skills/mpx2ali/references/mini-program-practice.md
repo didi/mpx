@@ -1,6 +1,6 @@
 # 微信与支付宝小程序跨端开发最佳实践
 
-本文基于 [Cooper · 小程序Skill-小程序差异梳理](https://cooper.didichuxing.com/knowledge/2204542687022/2209726031013) 整理，面向使用微信语法开发、同时输出微信与支付宝小程序的 Mpx 项目，另保留原文涉及 iOS RN 文本裁切的补充案例。
+本文是 [Mpx2Ali Skill](../SKILL.md) 的场景参考，基于 [Cooper · 小程序Skill-小程序差异梳理](https://cooper.didichuxing.com/knowledge/2204542687022/2209726031013) 整理，面向使用微信语法开发、同时输出微信与支付宝小程序的 Mpx 项目。原文涉及 iOS RN 文本裁切的补充案例仅供追溯，不属于支付宝适配规则。
 
 原文“微信与支付宝差异梳理”部分的版本基准为：微信基础库 `2.20.3+`、支付宝基础库 `2.9.81+`、`@mpxjs/core` / `@mpxjs/api-proxy` `2.10.18-beta.12`、`@mpxjs/webpack-plugin` `2.10.18-beta.17`。人工踩坑记录未全部标注机型、宿主及基础库版本，不应视为所有版本的固定行为。本文保留原文的验证状态；代码示例是按场景整理的写法，未进行真机验证。
 
@@ -36,7 +36,7 @@
 
 支付宝 `text` 的默认换行行为可能覆盖外层容器的 `white-space: nowrap`。新版 `@mpxjs/webpack-plugin` 在支付宝完整 App 构建中会先于业务全局样式加载 `text { white-space: inherit }`，因此内部 `text` 默认可以继承父节点的换行方式，业务显式样式仍可覆盖该默认值。
 
-**❌ 避免：**只给外层设置溢出样式，依赖内部 `text` 继承。
+**❌ 避免：**未确认项目已有兼容样式时，只给外层设置溢出样式并依赖内部 `text` 继承。
 
 ```html
 <template>
@@ -372,7 +372,7 @@ autoScopeRules: {
 
 通过 `include` / `exclude` 控制作用范围，按实际配置文件位置解析目录，避免影响依赖全局样式的代码。原文也建议使用 UnoCSS 开发，但使用原子类并不意味着业务中的其他自定义样式自动获得隔离。
 
-配置详情见 [autoScopeRules](../../../docs-vitepress/api/compile.md#autoscoperules)。
+配置详情见 [autoScopeRules](../../../../docs-vitepress/api/compile.md#autoscoperules)。
 
 ---
 
@@ -380,7 +380,7 @@ autoScopeRules: {
 
 ### 按编译器能力配置自定义导航栏
 
-微信与支付宝的导航栏配置字段不同。原文基于其版本基准提供了动态 JSON 方案；当前仓库的[页面导航栏文档](../../../docs-vitepress/guide/basic/page.md#ali-custom-navigation)已说明微信 `navigationStyle` 到支付宝的自动转换。选用方案前，应确认项目所用编译器及编译产物是否具备该能力。
+微信与支付宝的导航栏配置字段不同。原文基于其版本基准提供了动态 JSON 方案；微信 `navigationStyle` 的声明方式见[页面配置文档](../../../../docs-vitepress/guide/basic/page.md#page-config)。采用下述自动转换方案前，应确认项目所用编译器及编译产物是否具备该能力。
 
 **❌ 避免：**将原文“字段可能删除、忽略或报错”的历史结论当作所有版本的现状，或在已有自动转换时重复维护一套等价分支。
 
@@ -394,7 +394,7 @@ autoScopeRules: {
 </script>
 ```
 
-当前仓库文档规定，支付宝产物会移除 `navigationStyle`，生成以下字段：
+支持上述转换时，应核对支付宝产物是否移除了 `navigationStyle` 并生成以下字段：
 
 ```json
 {
@@ -507,7 +507,7 @@ autoScopeRules: {
 }
 ```
 
-`32rpx` 是原文案例的修复值，不是所有字体的统一最小行高。此处 `__mpx_mode__ === 'ios'` 仅作用于 RN iOS 产物，不会作用于运行在 iPhone 上的微信或支付宝小程序。混排文本的行高分配见 [RN 样式开发最佳实践](../mpx2rn/references/rn-style-practice.md#混排文本-line-height-对齐)。
+`32rpx` 是原文案例的修复值，不是所有字体的统一最小行高。此处 `__mpx_mode__ === 'ios'` 仅作用于 RN iOS 产物，不会作用于运行在 iPhone 上的微信或支付宝小程序。混排文本的行高分配见 [RN 样式开发最佳实践](../../mpx2rn/references/rn-style-practice.md#混排文本-line-height-对齐)。
 
 ---
 

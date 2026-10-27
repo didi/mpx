@@ -1,0 +1,416 @@
+{
+  "expectations": [
+    {
+      "case": 0,
+      "group": "mpx",
+      "id": "s0",
+      "text": "样式：red-card 与 blue-card 的同名类使用独立作用域，不互相覆盖",
+      "passed": true,
+      "evidence": "两份卡片均 style scoped；重跑实际 Web bundle 后 red/blue 标题计算颜色分别为 rgb(198,40,40)/rgb(21,101,192)，无相互覆盖。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/components/red-card.mpx:9",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/components/blue-card.mpx:9"
+      ],
+      "validation_boundary": "编译产物在 jsdom 的 CSS 计算；未做浏览器截图。"
+    },
+    {
+      "case": 0,
+      "group": "mpx",
+      "id": "s1",
+      "text": "布局：layout-cell 的虚拟宿主在 Web 生效，两个实例在 240px Flex 容器中等宽",
+      "passed": true,
+      "evidence": "autoVirtualHostRules.include 实际匹配当前 layout-cell 路径；Web 挂载后 equal-row 直接拥有两个 layout-cell 子节点，容器 width=240px，每个 flex:1、min-width:0。按 CSS flex 规则各120px；微信 virtualHost:true 保留。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/mpx.config.js:11",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/components/layout-cell.mpx:8",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/components/layout-cell.mpx:14",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/pages/home/index.mpx:75"
+      ],
+      "validation_boundary": "jsdom 不做真实布局；120px 是经实际 DOM 及有效 CSS 验证后的规则推导，未做真实浏览器几何量测。"
+    },
+    {
+      "case": 0,
+      "group": "mpx",
+      "id": "s2",
+      "text": "样式：theme-card 的 externalClasses 从调用方贯通到内容节点，并保留默认外部类配置",
+      "passed": true,
+      "evidence": "编译器 externalClasses=[custom-class,i-class,tone-class] 保留默认项，组件声明 tone-class/custom-class 并应用到 theme-label。实际两实例 label 分别获 warm/cool 颜色且 padding=12px，mpx 的父级 scoped 样式亦通过。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/mpx.config.js:9",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/components/theme-card.mpx:3",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/components/theme-card.mpx:11",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/pages/home/index.mpx:9"
+      ],
+      "validation_boundary": "验证 actual Web 编译和计算样式；微信声明和调用链静态保留。"
+    },
+    {
+      "case": 0,
+      "group": "mpx",
+      "id": "s3",
+      "text": "导航：保留微信 navigator、普通入口 ready 状态和选择结果回传链路",
+      "passed": true,
+      "evidence": "实际 Web bundle：普通按钮进入后 home selectedLabel=正在选择，确认A回传；链接入口进入不重置原有选项A，确认B回传；直接 choice?source=link 无 opener 不报错。两个入口 Web navigateTo 都用无 query 路径以匹配当前 EventChannel 路由限制。独立 VM 执行微信分支验证普通 ready、A确认及原 navigator source=link 的B确认。wx产物中原 navigator 保留。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/pages/home/index.mpx:20",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/pages/home/index.mpx:41",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/pages/choice/index.mpx:13"
+      ],
+      "validation_boundary": "Web真实产物在jsdom路由/事件环境；微信使用宿主API替身与wx模板产物，未微信真机。"
+    },
+    {
+      "case": 0,
+      "group": "mpx",
+      "id": "s4",
+      "text": "导航栏：微信胶囊 API 不在 Web 执行，Web 不重复显示系统导航与自定义导航",
+      "passed": true,
+      "evidence": "onLoad 的胶囊调用仅在 wx 分支。wx VM 得topInset=24/headerHeight=32；Web 注入会抛错的 wx.getMenuButtonBoundingClientRect 后两入口仍运行无错误，实际 DOM 没有系统导航栏。app webConfig.enableTitleBar=false，自定义header保留。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/pages/home/index.mpx:34",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/app.mpx:12"
+      ],
+      "validation_boundary": "微信宿主尺寸以替身数据验证；Web系统栏DOM在jsdom验证。"
+    },
+    {
+      "case": 0,
+      "group": "mpx",
+      "id": "s5",
+      "text": "路由：Web publicPath、history base 均为 /help-demo/，主包与分包页面保持注册",
+      "passed": true,
+      "evidence": "Web publicPath=/help-demo/，实际页面资源加载器拒绝非该前缀仍加载成功；router.mode=history、router.options.base=/help-demo/，home/choice与packageA路由实际可达。wx app.json 注册两主包页面及 packageA/index 且 independent:true。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/mpx.config.js:3",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/app.mpx:7",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/app.mpx:20"
+      ],
+      "validation_boundary": "本地资源加载验证；实际生产服务器history fallback配置不在交付范围，注释已说明。"
+    },
+    {
+      "case": 0,
+      "group": "mpx",
+      "id": "s6",
+      "text": "尺寸：Web 使用固定二分之一 rpx 换算，微信换算配置保持不变",
+      "passed": true,
+      "evidence": "transRpxFn 实际执行200→100px、28→14px；Web bundle在375和750宽环境计算样式均width=100px/font-size=14px；wx CSS产物仍width:200rpx/font-size:28rpx。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/mpx.config.js:16",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/outputs/src/pages/home/index.mpx:70"
+      ],
+      "validation_boundary": "计算样式来自jsdom；不覆盖其他未要求的rpx输入形式。"
+    },
+    {
+      "case": 1,
+      "group": "mpx",
+      "id": "n0",
+      "text": "结构：生成包含 template/script/style/json 的完整 Mpx 组件，使用选项式 createComponent",
+      "passed": true,
+      "evidence": "完整template、script、style、application/json；createComponent选项式结构，component:true。title/summary为String且value空串。wx/web模板编译成功，新增临时宿主全量Web构建成功且正确挂载。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:1",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:11",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:58"
+      ],
+      "validation_boundary": "新宿主只用于复核；未修改原模型输出。"
+    },
+    {
+      "case": 1,
+      "group": "mpx",
+      "id": "n2",
+      "text": "样式：组件声明 accent-class 外部类并应用于标题，保留默认外部类约定",
+      "passed": true,
+      "evidence": "组件声明custom-class/accent-class，标题静态accent-class占位符编译为$attrs外部类引用。新建scoped调用方两实例实测warm/cool标题颜色分别rgb(187,51,17)/rgb(34,85,204)，均padding=12px；custom-class根节点margin分别3px/7px。无组件硬编码调用方颜色。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:2",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:3",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:13",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:38"
+      ],
+      "validation_boundary": "实际Web bundle计算样式；微信编译映射与声明检查，未真机CSS。"
+    },
+    {
+      "case": 1,
+      "group": "mpx",
+      "id": "n3",
+      "text": "交互：expanded 保存在组件实例内，点击只切换当前实例且不调用 Web 不支持的 setData",
+      "passed": true,
+      "evidence": "mpx使用data()，mpx2web使用data对象；当前core支持dataFn并按实例clone数据。新宿主实际挂载两个组件：初始只显示A/B，点A只显示summary-a，点B显示summary-b，再点A仅收起A；标题始终可见。toggleExpanded仅this.expanded=!this.expanded，无setData。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:25",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:31",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/outputs/profile-card.mpx:4"
+      ],
+      "validation_boundary": "Web真实响应式组件运行；微信实例初始化规则核对当前依赖core/src/core/proxy.js:362及mergeOptions.js:263。"
+    },
+    {
+      "case": 0,
+      "group": "mpx2web",
+      "id": "s0",
+      "text": "样式：red-card 与 blue-card 的同名类使用独立作用域，不互相覆盖",
+      "passed": true,
+      "evidence": "两份卡片均 style scoped；重跑实际 Web bundle 后 red/blue 标题计算颜色分别为 rgb(198,40,40)/rgb(21,101,192)，无相互覆盖。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/components/red-card.mpx:9",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/components/blue-card.mpx:9"
+      ],
+      "validation_boundary": "编译产物在 jsdom 的 CSS 计算；未做浏览器截图。"
+    },
+    {
+      "case": 0,
+      "group": "mpx2web",
+      "id": "s1",
+      "text": "布局：layout-cell 的虚拟宿主在 Web 生效，两个实例在 240px Flex 容器中等宽",
+      "passed": true,
+      "evidence": "autoVirtualHostRules.include 实际匹配当前 layout-cell 路径；Web 挂载后 equal-row 直接拥有两个 layout-cell 子节点，容器 width=240px，每个 flex:1、min-width:0。按 CSS flex 规则各120px；微信 virtualHost:true 保留。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/mpx.config.js:11",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/components/layout-cell.mpx:8",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/components/layout-cell.mpx:13",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/pages/home/index.mpx:71"
+      ],
+      "validation_boundary": "jsdom 不做真实布局；120px 是经实际 DOM 及有效 CSS 验证后的规则推导，未做真实浏览器几何量测。"
+    },
+    {
+      "case": 0,
+      "group": "mpx2web",
+      "id": "s2",
+      "text": "样式：theme-card 的 externalClasses 从调用方贯通到内容节点，并保留默认外部类配置",
+      "passed": true,
+      "evidence": "编译器 externalClasses=[custom-class,i-class,tone-class] 保留默认项，组件声明 tone-class/custom-class 并应用到 theme-label。实际两实例 label 分别获 warm/cool 颜色且 padding=12px，mpx 的父级 scoped 样式亦通过。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/mpx.config.js:9",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/components/theme-card.mpx:3",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/components/theme-card.mpx:11",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/pages/home/index.mpx:9"
+      ],
+      "validation_boundary": "验证 actual Web 编译和计算样式；微信声明和调用链静态保留。"
+    },
+    {
+      "case": 0,
+      "group": "mpx2web",
+      "id": "s3",
+      "text": "导航：保留微信 navigator、普通入口 ready 状态和选择结果回传链路",
+      "passed": true,
+      "evidence": "实际 Web bundle：普通按钮进入后 home selectedLabel=正在选择，确认A回传；链接入口进入不重置原有选项A，确认B回传；直接 choice?source=link 无 opener 不报错。两个入口 Web navigateTo 都用无 query 路径以匹配当前 EventChannel 路由限制。独立 VM 执行微信分支验证普通 ready、A确认及原 navigator source=link 的B确认。wx产物中原 navigator 保留。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/pages/home/index.mpx:20",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/pages/home/index.mpx:41",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/pages/choice/index.mpx:12"
+      ],
+      "validation_boundary": "Web真实产物在jsdom路由/事件环境；微信使用宿主API替身与wx模板产物，未微信真机。"
+    },
+    {
+      "case": 0,
+      "group": "mpx2web",
+      "id": "s4",
+      "text": "导航栏：微信胶囊 API 不在 Web 执行，Web 不重复显示系统导航与自定义导航",
+      "passed": true,
+      "evidence": "onLoad 的胶囊调用仅在 wx 分支。wx VM 得topInset=24/headerHeight=32；Web 注入会抛错的 wx.getMenuButtonBoundingClientRect 后两入口仍运行无错误，实际 DOM 没有系统导航栏。app webConfig.enableTitleBar=false，自定义header保留。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/pages/home/index.mpx:34",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/app.mpx:14"
+      ],
+      "validation_boundary": "微信宿主尺寸以替身数据验证；Web系统栏DOM在jsdom验证。"
+    },
+    {
+      "case": 0,
+      "group": "mpx2web",
+      "id": "s5",
+      "text": "路由：Web publicPath、history base 均为 /help-demo/，主包与分包页面保持注册",
+      "passed": true,
+      "evidence": "Web publicPath=/help-demo/，实际页面资源加载器拒绝非该前缀仍加载成功；router.mode=history、router.options.base=/help-demo/，home/choice与packageA路由实际可达。wx app.json 注册两主包页面及 packageA/index 且 independent:true。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/mpx.config.js:3",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/app.mpx:11",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/app.mpx:21"
+      ],
+      "validation_boundary": "本地资源加载验证；实际生产服务器history fallback配置不在交付范围，注释已说明。"
+    },
+    {
+      "case": 0,
+      "group": "mpx2web",
+      "id": "s6",
+      "text": "尺寸：Web 使用固定二分之一 rpx 换算，微信换算配置保持不变",
+      "passed": true,
+      "evidence": "transRpxFn 实际执行200→100px、28→14px；Web bundle在375和750宽环境计算样式均width=100px/font-size=14px；wx CSS产物仍width:200rpx/font-size:28rpx。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/mpx.config.js:16",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/outputs/src/pages/home/index.mpx:66"
+      ],
+      "validation_boundary": "计算样式来自jsdom；不覆盖其他未要求的rpx输入形式。"
+    },
+    {
+      "case": 1,
+      "group": "mpx2web",
+      "id": "n0",
+      "text": "结构：生成包含 template/script/style/json 的完整 Mpx 组件，使用选项式 createComponent",
+      "passed": true,
+      "evidence": "完整template、script、style、application/json；createComponent选项式结构，component:true。title/summary为String且value空串。wx/web模板编译成功，新增临时宿主全量Web构建成功且正确挂载。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:1",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:11",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:47"
+      ],
+      "validation_boundary": "新宿主只用于复核；未修改原模型输出。"
+    },
+    {
+      "case": 1,
+      "group": "mpx2web",
+      "id": "n2",
+      "text": "样式：组件声明 accent-class 外部类并应用于标题，保留默认外部类约定",
+      "passed": true,
+      "evidence": "组件声明custom-class/accent-class，标题静态accent-class占位符编译为$attrs外部类引用。新建scoped调用方两实例实测warm/cool标题颜色分别rgb(187,51,17)/rgb(34,85,204)，均padding=12px；custom-class根节点margin分别3px/7px。无组件硬编码调用方颜色。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:2",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:3",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:13",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:36"
+      ],
+      "validation_boundary": "实际Web bundle计算样式；微信编译映射与声明检查，未真机CSS。"
+    },
+    {
+      "case": 1,
+      "group": "mpx2web",
+      "id": "n3",
+      "text": "交互：expanded 保存在组件实例内，点击只切换当前实例且不调用 Web 不支持的 setData",
+      "passed": true,
+      "evidence": "mpx使用data()，mpx2web使用data对象；当前core支持dataFn并按实例clone数据。新宿主实际挂载两个组件：初始只显示A/B，点A只显示summary-a，点B显示summary-b，再点A仅收起A；标题始终可见。toggleExpanded仅this.expanded=!this.expanded，无setData。",
+      "files": [
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:24",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:28",
+        "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/outputs/profile-card.mpx:4"
+      ],
+      "validation_boundary": "Web真实响应式组件运行；微信实例初始化规则核对当前依赖core/src/core/proxy.js:362及mergeOptions.js:263。"
+    }
+  ],
+  "summary": {
+    "passed": 20,
+    "failed": 0,
+    "total": 20,
+    "per_group": {
+      "mpx": "10/10",
+      "mpx2web": "10/10"
+    }
+  },
+  "commands": [
+    {
+      "command": "node /tmp/mpx-semantic-options-mpx.cjs",
+      "exit_code": 0,
+      "result": "375/750 CSS、虚拟宿主、普通ready、两确认链路、link不重置ready、history/base、分包与直达无opener通过"
+    },
+    {
+      "command": "node /tmp/mpx-semantic-options-mpx2web.cjs",
+      "exit_code": 0,
+      "result": "同上，外加会抛错的wx胶囊替身从未被调用"
+    },
+    {
+      "command": "VUE_CLI_CONTEXT=/tmp/mpx-semantic-profile-mpx node node_modules/@mpxjs/mpx-cli-service/bin/mpx-cli-service.js build --targets=web --dest=/tmp/mpx-semantic-profile-mpx/dist/web",
+      "cwd": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+      "exit_code": 0
+    },
+    {
+      "command": "VUE_CLI_CONTEXT=/tmp/mpx-semantic-profile-mpx2web node node_modules/@mpxjs/mpx-cli-service/bin/mpx-cli-service.js build --targets=web --dest=/tmp/mpx-semantic-profile-mpx2web/dist/web",
+      "cwd": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace",
+      "exit_code": 0
+    },
+    {
+      "command": "node /tmp/mpx-semantic-profile-check.cjs",
+      "exit_code": 0,
+      "result": "两组独立两实例、完整Web挂载、scoped外部类颜色和padding、custom-class根样式、实例折叠通过"
+    },
+    {
+      "command": "node /tmp/mpx-semantic-source-check.cjs",
+      "exit_code": 0,
+      "result": "两组wx胶囊/ready/普通和navigator确认、独立分包JSON、rpx产物、profile默认属性/JSON/双端模板编译通过"
+    }
+  ],
+  "transcripts": [
+    {
+      "path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx/run-1/agent.jsonl",
+      "records": 117,
+      "completed_commands": 52,
+      "sha256": "4849202df7a23d3d92fbcd967d4aa58bd008b00e35ca4a7ea0a98d8090658038",
+      "review": "全量解析记录并检查命令/返回状态，结合完整输入输出、最终验证脚本与当前依赖复核；执行期早期失败不视作最终产物失败。"
+    },
+    {
+      "path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-0-style-config-adaptation/mpx2web/run-1/agent.jsonl",
+      "records": 95,
+      "completed_commands": 42,
+      "sha256": "4c522055cb6f5c84bedcb271bad55d117b8e89a44c573ac9f1153f83de136e7e",
+      "review": "全量解析记录并检查命令/返回状态，结合完整输入输出、最终验证脚本与当前依赖复核；执行期早期失败不视作最终产物失败。"
+    },
+    {
+      "path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx/run-1/agent.jsonl",
+      "records": 47,
+      "completed_commands": 19,
+      "sha256": "d4cb1cb67a2a5a8b0d77aaeb392d9f88cfc466a674343b65da822f6b15b62e61",
+      "review": "全量解析记录并检查命令/返回状态，结合完整输入输出、最终验证脚本与当前依赖复核；执行期早期失败不视作最终产物失败。"
+    },
+    {
+      "path": "/Users/didi/work/mpx/.agents/skills/mpx2web-workspace/iteration-13/eval-1-new-profile-component/mpx2web/run-1/agent.jsonl",
+      "records": 45,
+      "completed_commands": 18,
+      "sha256": "3a3c85f963d09ccd24487af709420a517a904d9f22b93290d1db569ec0b7bc55",
+      "review": "全量解析记录并检查命令/返回状态，结合完整输入输出、最终验证脚本与当前依赖复核；执行期早期失败不视作最终产物失败。"
+    }
+  ],
+  "dependencies": {
+    "@mpxjs/core": "2.11.1",
+    "@mpxjs/api-proxy": "2.11.1",
+    "@mpxjs/webpack-plugin": "2.11.1",
+    "vue": "2.7.16"
+  },
+  "artifact_integrity": "case0 mpx 9份源文件与临时构建源完全一致；mpx2web除app.mpx额外3行验证注释外完全一致，所有运行代码一致。profile临时宿主直接复制原输出组件，不改动组件。",
+  "unscored_real_issues": [],
+  "claims": [
+    {
+      "claim": "两组case0真实浏览器量测每cell120px",
+      "verified": false,
+      "evidence": "仅jsdom真实DOM/CSS+flex规则推导；原产物也明确此边界，不计作功能缺陷。"
+    },
+    {
+      "claim": "两组case1外部类与实例折叠正常",
+      "verified": true,
+      "evidence": "本次新建宿主全量编译并挂载验证，不仅VM手工拷贝data。"
+    }
+  ],
+  "grader_recommendations": [
+    {
+      "ids": [
+        "s3"
+      ],
+      "reason": "不要锁死事件名或const声明形式；跟踪实际navigateTo events注册和choice emit一致性。必须拒绝监听名不匹配、ready监听没写状态、仅文档宣称链路通过；覆盖微信navigator直接source=link分支。"
+    },
+    {
+      "ids": [
+        "s5"
+      ],
+      "reason": "运行配置而非正则要求静态literal；支持mpx.config.webConfig.routeConfig直接赋值和合并webConfig。校验mode和base及页面、分包注册，不能仅出现字符串。"
+    },
+    {
+      "ids": [
+        "s6"
+      ],
+      "reason": "配置实际调用transRpxFn需200=>100px且28=>14px；接受Number(value)/2，拒绝恒定返回100px或web配置误放到其他位置。"
+    },
+    {
+      "ids": [
+        "n3"
+      ],
+      "reason": "同时接受data函数和合法data对象，不能仅匹配data:{；toggle需改变当前this.expanded且模板消费同一状态。拒绝module共享状态或只含toggle标识无赋值。"
+    },
+    {
+      "ids": [
+        "s0",
+        "s1",
+        "s2",
+        "n2"
+      ],
+      "reason": "CSS正则token不等于行为；至少scoped/autoScope真实生效、virtualHost规则匹配目标路径、caller类到内容节点连通、编译配置保留默认类。负例需移除内容节点占位类、注释中仅写externalClasses、错误regex不匹配路径、内部强制color覆盖外部类。"
+    },
+    {
+      "ids": [
+        "n0"
+      ],
+      "reason": "不要只检查四种标签存在，需JSON component:true和createComponent选项式，以及要求的properties默认。"
+    }
+  ]
+}

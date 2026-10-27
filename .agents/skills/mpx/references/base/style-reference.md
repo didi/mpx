@@ -24,8 +24,12 @@
 </template>
 
 <style>
-.card { padding: 16px; }
-.muted { color: #666; }
+.card {
+  padding: 16px;
+}
+.muted {
+  color: #666;
+}
 </style>
 ```
 

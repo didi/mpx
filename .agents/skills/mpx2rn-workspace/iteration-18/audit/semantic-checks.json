@@ -1,0 +1,263 @@
+{
+  "compiler": "2.11.1",
+  "note": "script probes execute output script with minimal lifecycle/reactivity/host stubs; not a native-device test",
+  "results": [
+    {
+      "group": "mpx",
+      "eval_id": 0,
+      "pseudo_node": true,
+      "styles": {
+        "summary-accent": {
+          "position": "\"absolute\"",
+          "top": "0",
+          "left": "0",
+          "right": "0",
+          "height": "unit(4, 'rpx')",
+          "backgroundColor": "\"#1677ff\""
+        },
+        "stat-cell": {
+          "width": "\"50%\"",
+          "boxSizing": "\"border-box\"",
+          "paddingTop": "unit(16, 'rpx')",
+          "paddingRight": "unit(24, 'rpx')",
+          "paddingBottom": "unit(16, 'rpx')",
+          "paddingLeft": "unit(24, 'rpx')"
+        },
+        "stat-card": {
+          "paddingTop": "unit(20, 'rpx')",
+          "paddingRight": "unit(30, 'rpx')",
+          "paddingBottom": "unit(20, 'rpx')",
+          "paddingLeft": "unit(30, 'rpx')",
+          "backgroundColor": "\"#fff\"",
+          "borderRadius": "unit(16, 'rpx')",
+          "display": "\"flex\"",
+          "alignItems": "\"center\""
+        },
+        "detail-section": {
+          "margin": "unit(20, 'rpx')"
+        },
+        "detail-header": {
+          "marginTop": "unit(12, 'rpx')",
+          "marginBottom": "unit(16, 'rpx')"
+        }
+      }
+    },
+    {
+      "group": "mpx",
+      "eval_id": 1,
+      "rn_lifecycles": [
+        "onShareAppMessage"
+      ],
+      "wx_lifecycles": [
+        "onShareAppMessage",
+        "onShareTimeline",
+        "onTabItemTap"
+      ],
+      "rn_scroll_view": true,
+      "rn_scroll_to_lower": true
+    },
+    {
+      "group": "mpx",
+      "eval_id": 2,
+      "distinct_keys": true,
+      "css": {
+        "toast-mask": {
+          "position": "\"fixed\"",
+          "top": "0",
+          "left": "0",
+          "width": "\"100%\"",
+          "height": "\"100%\"",
+          "backgroundColor": "\"var(--toast-mask-color)\"",
+          "display": "\"flex\"",
+          "alignItems": "\"center\"",
+          "justifyContent": "\"center\"",
+          "opacity": "0"
+        },
+        "toast-mask-visible": {
+          "opacity": "1"
+        },
+        "method-selector": {
+          "borderStyle": "\"solid\"",
+          "borderWidth": "1",
+          "borderColor": "\"#ddd\""
+        }
+      },
+      "firstOpacity": 0,
+      "itemsBeforeNextTick": 1,
+      "opacityBeforeNextTick": 0,
+      "opacityAfterNextTick": 1,
+      "props_reactive": true
+    },
+    {
+      "group": "mpx",
+      "eval_id": 3,
+      "dynamic_components_compile": true,
+      "rating_change_and_readonly_and_prop_watch": true
+    },
+    {
+      "group": "mpx",
+      "eval_id": 4,
+      "disabled_guards_change_event_prop_watch_and_computed_label": true
+    },
+    {
+      "group": "mpx",
+      "eval_id": 5,
+      "decoded_query_precedence_and_invalid_fallback_filter_and_toggle": true
+    },
+    {
+      "group": "mpx2rn",
+      "eval_id": 0,
+      "pseudo_node": true,
+      "styles": {
+        "summary-accent": {
+          "position": "\"absolute\"",
+          "top": "0",
+          "left": "0",
+          "right": "0",
+          "height": "unit(4, 'rpx')",
+          "backgroundColor": "\"#1677ff\""
+        },
+        "stat-cell": {
+          "width": "\"50%\"",
+          "paddingTop": "unit(16, 'rpx')",
+          "paddingRight": "unit(24, 'rpx')",
+          "paddingBottom": "unit(16, 'rpx')",
+          "paddingLeft": "unit(24, 'rpx')",
+          "boxSizing": "\"border-box\""
+        },
+        "stat-card": {
+          "paddingTop": "unit(20, 'rpx')",
+          "paddingRight": "unit(30, 'rpx')",
+          "paddingBottom": "unit(20, 'rpx')",
+          "paddingLeft": "unit(30, 'rpx')",
+          "backgroundColor": "\"#fff\"",
+          "borderRadius": "unit(16, 'rpx')",
+          "display": "\"flex\"",
+          "alignItems": "\"center\""
+        },
+        "detail-section": {
+          "margin": "unit(20, 'rpx')"
+        },
+        "detail-header": {
+          "marginTop": "unit(12, 'rpx')",
+          "marginBottom": "unit(16, 'rpx')"
+        }
+      }
+    },
+    {
+      "group": "mpx2rn",
+      "eval_id": 1,
+      "rn_lifecycles": [],
+      "wx_lifecycles": [
+        "onShareAppMessage",
+        "onShareTimeline",
+        "onTabItemTap"
+      ],
+      "rn_scroll_view": true,
+      "rn_scroll_to_lower": true
+    },
+    {
+      "group": "mpx2rn",
+      "eval_id": 2,
+      "distinct_keys": true,
+      "css": {
+        "toast-mask": {
+          "position": "\"fixed\"",
+          "top": "0",
+          "left": "0",
+          "width": "\"100%\"",
+          "height": "\"100%\"",
+          "backgroundColor": "\"var(--toast-mask-color)\"",
+          "display": "\"flex\"",
+          "alignItems": "\"center\"",
+          "justifyContent": "\"center\"",
+          "opacity": "1"
+        },
+        "method-selector": {
+          "position": "\"relative\"",
+          "borderStyle": "\"solid\"",
+          "borderWidth": "1",
+          "borderColor": "\"#ddd\"",
+          "borderTopWidth": "0"
+        },
+        "method-top-border": {
+          "position": "\"absolute\"",
+          "top": "0",
+          "left": "0",
+          "right": "0",
+          "borderTopWidth": "1",
+          "borderStyle": "\"dashed\"",
+          "borderColor": "\"#ddd\""
+        }
+      },
+      "itemsBeforeNextTick": 0,
+      "props_reactive": true
+    },
+    {
+      "group": "mpx2rn",
+      "eval_id": 3,
+      "dynamic_components_compile": true,
+      "rating_change_and_readonly_and_prop_watch": true
+    },
+    {
+      "group": "mpx2rn",
+      "eval_id": 4,
+      "disabled_guards_change_event_prop_watch_and_computed_label": true
+    },
+    {
+      "group": "mpx2rn",
+      "eval_id": 5,
+      "decoded_query_precedence_and_invalid_fallback_filter_and_toggle": true
+    }
+  ],
+  "hashes": [
+    {
+      "file": "eval-0-style-layout-adaptation/mpx/outputs/data-panel.mpx",
+      "sha256": "045e8901780d5356009235f665da70d353b3bea298bf236e41d69b72950766e0"
+    },
+    {
+      "file": "eval-0-style-layout-adaptation/mpx2rn/outputs/data-panel.mpx",
+      "sha256": "16f3473c6da903e84cc438f9eeeaa9c27c172de6308690953495d5b2e30a3963"
+    },
+    {
+      "file": "eval-1-template-api-adaptation/mpx/outputs/order-list.mpx",
+      "sha256": "fe290316eee0d20a7a67c489efaf53a69626e31015fa3a7a59ba8cfcb451824f"
+    },
+    {
+      "file": "eval-1-template-api-adaptation/mpx2rn/outputs/order-list.mpx",
+      "sha256": "db86b77462c1e1db8493657d579b739672a80b9124f9756fbec7705c0d9b61c7"
+    },
+    {
+      "file": "eval-2-dynamic-capability-adaptation/mpx/outputs/carousel-card.mpx",
+      "sha256": "b121b64a0a8f6dc300ae73ed674039275933b5429e19882fa53e2ac2a05647a4"
+    },
+    {
+      "file": "eval-2-dynamic-capability-adaptation/mpx2rn/outputs/carousel-card.mpx",
+      "sha256": "a9135e1db53bb85de9b62548efdf3e94afe178faab321fc777ad0486ef3c5a4f"
+    },
+    {
+      "file": "eval-3-new-rating-component/mpx/outputs/rating-selector.mpx",
+      "sha256": "41f552a677c47e118fe24adc6749a4df0c7d6d5ac5a47d52590f0d1e772f1f67"
+    },
+    {
+      "file": "eval-3-new-rating-component/mpx2rn/outputs/rating-selector.mpx",
+      "sha256": "a959256c70c7609f8ca4ebed64978a55055c26fa5791089a542c7703ff90434a"
+    },
+    {
+      "file": "eval-4-new-segmented-control/mpx/outputs/segmented-control.mpx",
+      "sha256": "1ff485da4db2528616b0f0f24855b8f995b5d764bdadc2bb161c0fe699eef5a4"
+    },
+    {
+      "file": "eval-4-new-segmented-control/mpx2rn/outputs/segmented-control.mpx",
+      "sha256": "aa94e19bd467f8170ac6283d85170845ce54d1d8aa2b050034aad30afbbb194b"
+    },
+    {
+      "file": "eval-5-new-task-board-page/mpx/outputs/task-board.mpx",
+      "sha256": "6c1371b5de618060d8b0f44a1c5e817fc424245363eb42ee83606b0a663cb946"
+    },
+    {
+      "file": "eval-5-new-task-board-page/mpx2rn/outputs/task-board.mpx",
+      "sha256": "1844fe3c4c21a73d06f18a205d97e00561ea421c9db78b42205f951b6594e233"
+    }
+  ]
+}

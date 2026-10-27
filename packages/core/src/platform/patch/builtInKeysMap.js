@@ -21,7 +21,6 @@ if (__mpx_mode__ === 'web') {
     'dataFn',
     'proto',
     'mixins',
-    'initData',
     'watch',
     'computed',
     'provide',

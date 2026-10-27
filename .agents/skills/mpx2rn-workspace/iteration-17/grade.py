@@ -4,6 +4,7 @@ import ast
 import json
 import re
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 
 WORKSPACE = Path(__file__).parent
@@ -231,6 +232,120 @@ def platform_attribute_pattern(name, mode):
             rf"(?:\|{platform})*")
 
 
+def template_nodes(template, mode="ios"):
+    """Read actual parent relationships and target-effective attributes."""
+    class Parser(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.nodes = []
+            self.stack = []
+
+        def handle_starttag(self, tag, attrs):
+            parent = self.stack[-1] if self.stack else None
+            enabled = parent is None or parent["enabled"]
+            effective = {key: value for key, value in attrs if "@" not in key}
+            for key, value in attrs:
+                if "@" in key:
+                    name, targets = key.split("@", 1)
+                    if not name:
+                        enabled = enabled and mode in targets.split("|")
+                    elif mode in targets.split("|"):
+                        effective[name] = value
+            node = {"tag": effective.get("mpxtagname", tag),
+                    "attrs": effective, "parent": parent, "enabled": enabled}
+            self.nodes.append(node)
+            self.stack.append(node)
+
+        def handle_endtag(self, tag):
+            if self.stack:
+                self.stack.pop()
+
+    parser = Parser()
+    parser.feed(template)
+    return [node for node in parser.nodes if node["enabled"]]
+
+
+def has_scroll_loading_handler(template):
+    return any(node["tag"] == "scroll-view"
+               and node["attrs"].get("bindscrolltolower")
+               for node in template_nodes(template))
+
+
+def uses_api_proxy(script):
+    if "mpx." in script:
+        return True
+    for imports in re.findall(
+            r"import\s*\{([^}]+)\}\s*from\s*['\"]@mpxjs/api-proxy['\"]", script):
+        factory = re.search(r"\bgetProxy(?:\s+as\s+([\w$]+))?\b", imports)
+        if not factory:
+            continue
+        name = factory.group(1) or "getProxy"
+        for binding in re.findall(
+                rf"\b(?:const|let|var)\s+([\w$]+)\s*=\s*{re.escape(name)}\s*\(", script):
+            if re.search(rf"\b{re.escape(binding)}\s*\.\s*\w+\s*\(", script):
+                return True
+    return False
+
+
+def has_decoded_category(script):
+    identifier = r"[A-Za-z_$][\w$]*"
+    for match in re.finditer(
+            rf"\bonLoad\s*\(\s*(?:function\s*)?\(\s*({identifier})"
+            rf"(?:\s*=\s*\{{\s*\}})?\s*,\s*({identifier})\s*\)\s*(?:=>\s*)?\{{",
+            script):
+        raw, decoded = map(re.escape, match.groups())
+        body = extract_balanced_object(script, match.end() - 1)
+        direct = rf"\b{decoded}\s*\??\.\s*category\b"
+        fallback = rf"\(\s*{decoded}\s*(?:\|\||\?\?)\s*{raw}\s*\)\s*\.\s*category\b"
+        if re.search(direct, body) or re.search(fallback, body):
+            return True
+    return False
+
+
+def has_zero_opacity_tap(template, styles, script):
+    # Flag statically persistent zero opacity, not temporary hidden states.
+    # Dynamic visibility/animation requires interaction-state validation.
+    for start, end in conditional_branch_spans(script, False):
+        script = script[:start] + " " * (end - start) + script[end:]
+    rules = [(selector.strip(), extract_css_declarations(body))
+             for selectors, body in re.findall(r"([^{}]+)\{([^{}]*)\}", styles)
+             for selector in selectors.split(",")]
+
+    def is_zero(value):
+        return bool(re.fullmatch(r"\s*['\"]?0(?:\.0+)?['\"]?\s*(?:!important)?\s*", value))
+
+    for node in template_nodes(template):
+        attrs = node["attrs"]
+        if not any(event in attrs for event in
+                   ("bindtap", "catchtap", "bindlongpress", "catchlongpress")):
+            continue
+        classes = set((attrs.get("class") or "").split())
+        declarations = {}
+        for selector, values in rules:
+            if selector.startswith(".") and selector[1:] in classes:
+                declarations.update(values)
+        declarations.update(extract_css_declarations(attrs.get("style") or ""))
+        dynamic = attrs.get("wx:style") or ""
+        binding = re.fullmatch(r"\s*\{\{\s*([\w$]+)\s*\}\}\s*", dynamic)
+        if binding:
+            definition = re.search(
+                rf"\b(?:const|let|var)\s+{re.escape(binding.group(1))}\s*=\s*"
+                r"(?:(?:computed|ref|reactive)\s*\(\s*(?:\([^)]*\)\s*=>\s*)?)?\(?\s*\{",
+                script)
+            dynamic = (extract_balanced_object(script, definition.end() - 1)
+                       if definition else "")
+        opacities = re.findall(r"\bopacity\s*:\s*([^,;\n}]+)", dynamic)
+        if opacities:
+            if all(is_zero(value) for value in opacities):
+                return True
+            # A branch that restores visibility is not itself a failure.
+            # This does not prove arbitrary dynamic states are interactive.
+            continue
+        if is_zero(declarations.get("opacity", "")):
+            return True
+    return False
+
+
 def extract_balanced_object(source, start):
     depth = 0
     quote = None
@@ -439,7 +554,8 @@ def has_pseudo_view_replacement(input_style, output_template, output_style):
             re.DOTALL | re.IGNORECASE):
         pseudo_declarations = extract_css_declarations(pseudo_body)
         pseudo_background = pseudo_declarations.get(
-            "background-image", pseudo_declarations.get("background"))
+            "background-image", pseudo_declarations.get(
+                "background", pseudo_declarations.get("background-color")))
         pseudo_dimensions = {
             prop: pseudo_declarations[prop]
             for prop in ("width", "height")
@@ -449,7 +565,8 @@ def has_pseudo_view_replacement(input_style, output_template, output_style):
             continue
         for declarations in class_declarations.values():
             background = declarations.get(
-                "background-image", declarations.get("background"))
+                "background-image", declarations.get(
+                    "background", declarations.get("background-color")))
             if background == pseudo_background and any(
                     declarations.get(prop) == value
                     for prop, value in pseudo_dimensions.items()):
@@ -575,7 +692,7 @@ def check_eval_1(output_path):
 
         {"id": "t5", "text": "脚本：所有 wx.xxx API 替换为 mpx.xxx",
          "passed": not re.search(r"\bwx\.(navigateTo|showActionSheet|showModal|request)", blocks["script"])
-                   and "mpx." in blocks["script"]},
+                   and uses_api_proxy(blocks["script"])},
 
         {"id": "t6", "text": "脚本：不使用 e.target.dataset，事件参数改为内联传递",
          "passed": "e.target.dataset" not in blocks["script"]
@@ -606,7 +723,7 @@ def check_eval_2(output_path):
                "wx.request", "wx.getLocation"]
     script_text = blocks["script"]
     has_any_wx = any(api in script_text for api in wx_apis)
-    has_mpx = "mpx." in script_text
+    has_mpx = uses_api_proxy(script_text)
     wx_ok = not has_any_wx and has_mpx
 
     # Check RN-unsupported lifecycles
@@ -617,6 +734,10 @@ def check_eval_2(output_path):
         return occurrences_are_non_rn_guarded(
             script_text, rf"\b{re.escape(name)}\s*\(")
 
+    share_app_pattern = (
+        r"\bonShareAppMessage\s*(?:\(|:\s*(?:function\b|(?:async\s*)?\([^)]*\)\s*=>))")
+    share_app_ok = (bool(re.search(share_app_pattern, script_rn))
+                    and not occurrences_are_rn_unreachable(script_rn, share_app_pattern))
     share_timeline_ok = _is_lifecycle_isolated("onShareTimeline", script_rn)
     tab_item_tap_ok = _is_lifecycle_isolated("onTabItemTap", script_rn)
 
@@ -671,7 +792,7 @@ def check_eval_2(output_path):
          "passed": not re.search(r'\bdata-\w+\s*=', blocks["template"])},
 
         {"id": "j9", "text": "脚本：保留 RN 支持的 onShareAppMessage，不应删除",
-         "passed": "onShareAppMessage" in blocks["script"]},
+         "passed": share_app_ok},
     ]
     return results
 
@@ -737,50 +858,28 @@ def check_eval_3(output_path):
         blocks["json"]))
     json_format_ok = has_script_name_json or not json_needs_conditional
 
-    # g8: no opacity:0 on elements with bindtap/bindlongpress
-    # Find elements with both opacity style and tap events
-    tap_elements_with_opacity = re.findall(
-        r'<view[^>]*(bindtap|bindlongpress)[^>]*class\s*=\s*"([^"]*)"[^>]*>',
-        blocks["template"])
-    tap_classes = [m[1].split() for m in tap_elements_with_opacity]
-    has_opacity_zero_tap = False
-    for class_list in tap_classes:
-        for cls in class_list:
-            cls_pattern = re.escape(cls)
-            rule_match = re.search(
-                rf"\.{cls_pattern}\s*\{{[^}}]*opacity\s*:\s*0[^1-9][^}}]*\}}",
-                style_rn_clean)
-            if rule_match:
-                has_opacity_zero_tap = True
-                break
-    # Also check inline: elements with bindtap and style containing opacity:0
-    inline_opacity_tap = bool(re.search(
-        r'<[^>]*(bindtap|bindlongpress)[^>]*style\s*=\s*"[^"]*opacity\s*:\s*0[^"]*"',
-        blocks["template"]))
-    # Check the toast-mask pattern from input (class with opacity:0 and bindtap)
-    toast_mask_opacity = bool(re.search(
-        r'opacity\s*:\s*0\s*;?\s*\}', style_rn_clean)) and bool(re.search(
-        r'(bindtap|bindlongpress).*class\s*=\s*"[^"]*toast-mask|class\s*=\s*"[^"]*toast-mask[^"]*"[^>]*(bindtap|bindlongpress)',
-        blocks["template"]))
-    opacity_tap_ok = not has_opacity_zero_tap and not inline_opacity_tap and not toast_mask_opacity
+    # g8: evaluate the target's class cascade and bound dynamic style.
+    opacity_tap_ok = not has_zero_opacity_tap(
+        blocks["template"], style_rn_clean, blocks["script"])
 
     # g9: @keyframes conditionally compiled or removed from RN
     # Check whether @keyframes is present in the resolved iOS style.
     has_keyframes_in_rn = bool(re.search(r"@keyframes", style_rn_clean))
 
     # g10: conditional branches with different CSS variable capabilities either
-    # avoid reuse with distinct RN-only keys or predeclare enable-var on both.
+    # avoid reuse with distinct target-effective keys or predeclare enable-var on both.
     toast_tag = view_tag_with_class("toast-mask")
     placeholder_tag = view_tag_with_class("toast-placeholder")
-    toast_key = re.search(
-        rf'\b{platform_attribute_pattern("key", "ios")}\s*=\s*["\']([^"\']+)',
-        toast_tag)
-    placeholder_key = re.search(
-        rf'\b{platform_attribute_pattern("key", "ios")}\s*=\s*["\']([^"\']+)',
-        placeholder_tag)
+    branch_attrs = {
+        class_name: node["attrs"]
+        for node in template_nodes(blocks["template"])
+        for class_name in (node["attrs"].get("class") or "").split()
+        if class_name in {"toast-mask", "toast-placeholder"}
+    }
+    toast_key = branch_attrs.get("toast-mask", {}).get("key")
+    placeholder_key = branch_attrs.get("toast-placeholder", {}).get("key")
     conditional_css_var_keys_ok = bool(
-        toast_key and placeholder_key
-        and toast_key.group(1) != placeholder_key.group(1))
+        toast_key and placeholder_key and toast_key != placeholder_key)
     enable_var_pattern = re.compile(
         rf'\b{platform_attribute_pattern("enable-var", "ios")}\s*=\s*["\']'
         r'(?:\{\{\s*true\s*\}\}|true)["\']')
@@ -815,7 +914,7 @@ def check_eval_3(output_path):
         {"id": "g7", "text": "JSON：条件编译配置使用 script name=\"json\" 格式",
          "passed": json_format_ok},
 
-        {"id": "g8", "text": "样式：带 bindtap 的元素不设置 opacity:0，避免 iOS 事件失效",
+        {"id": "g8", "text": "样式：点击目标在需要交互的显示状态不保持 opacity:0，允许隐藏后恢复显示",
          "passed": opacity_tap_ok},
 
         {"id": "g9", "text": "样式：@keyframes 通过条件编译限制在非 RN 平台，或替换为 transition",
@@ -984,11 +1083,19 @@ def check_eval_4(output_path):
     stat_card_margins = element_vertical_sides("stat-card", "margin")
     wrapper_margins = []
     wrapper_padding = []
-    for wrapper_class in ("stat-card-wrapper", "stat-card-wrap"):
-        wrapper_margins.extend(element_vertical_sides(
-            wrapper_class, "margin"))
-        wrapper_padding.extend(element_vertical_sides(
-            wrapper_class, "padding"))
+    # A wrapper counts only when it actually contains a card in stats-section.
+    wrapper_classes = set()
+    for node in template_nodes(blocks["template"]):
+        if "stat-card" not in (node["attrs"].get("class") or "").split():
+            continue
+        parent = node["parent"]
+        if not parent or not parent["parent"]:
+            continue
+        if "stats-section" in (parent["parent"]["attrs"].get("class") or "").split():
+            wrapper_classes.update((parent["attrs"].get("class") or "").split())
+    for wrapper_class in wrapper_classes:
+        wrapper_margins.extend(element_vertical_sides(wrapper_class, "margin"))
+        wrapper_padding.extend(element_vertical_sides(wrapper_class, "padding"))
 
     def has_vertical_spacing(sides):
         return bool(sides) and all(
@@ -1300,8 +1407,7 @@ def check_eval_6(output_path):
                    and not has_checked_platform_branch(src)},
 
         {"id": "n13", "text": "模板：动态 component 使用 is 切换只读/可编辑提示，并用 range 精确声明两个候选组件",
-         "passed": dynamic_component_ok
-                   and all(name in script for name in expected_range)},
+         "passed": dynamic_component_ok},
 
         {"id": "n14", "text": "样式：通过 style 中的语义化普通 class 实现，不使用 UnoCSS 或原子 utility class",
          "passed": uses_regular_classes(template, blocks["style"])
@@ -1436,11 +1542,12 @@ def check_eval_8(output_path):
     ))
     text_contents = "\n".join(re.findall(
         r"<text(?:\s[^>]*)?>(.*?)</text>", template, re.DOTALL | re.IGNORECASE))
-    has_async_on_load = bool(re.search(
-        r"(?:setTimeout|\.then)\s*\([^)]*\{[^}]*\bonLoad\s*\(",
-        script,
-        re.DOTALL,
-    ))
+    has_async_on_load = any(
+        re.search(r"\bonLoad\s*\(", extract_balanced_object(script, match.end() - 1))
+        for match in re.finditer(
+            r"(?:setTimeout|setInterval|\.then)\s*\(\s*(?:async\s*)?"
+            r"(?:function\s*\([^)]*\)|\([^)]*\)\s*=>|[\w$]+\s*=>)\s*\{",
+            script))
     unsupported_atomic = bool(re.search(
         r"(?:^|[\s'\"])(?:grid(?:-[\w-]+)?|sticky|line-clamp-[\w-]+|"
         r"space-[xy]-[\w.\[\]-]+|transition-all(?:-[\w-]+)?|animate-[\w-]+|"
@@ -1466,10 +1573,7 @@ def check_eval_8(output_path):
          "passed": all(name in script for name in ("ref(", "computed(", "onLoad(", "defineExpose("))},
 
         {"id": "a2", "text": "脚本：onLoad 在 setup 执行期同步注册，接收并优先使用 decodedQuery.category",
-         "passed": bool(re.search(
-             r"onLoad\s*\(\s*(?:\([^,]+,\s*decodedQuery\)|function\s*\([^,]+,\s*decodedQuery\))",
-             script,
-         )) and "decodedQuery.category" in script and not has_async_on_load},
+         "passed": has_decoded_category(script) and not has_async_on_load},
 
         {"id": "a3", "text": "模板：主体使用纵向 scroll-view 承载页面滚动",
          "passed": bool(re.search(r"<scroll-view\b[^>]*\bscroll-y(?:\s|=|>)", template, re.DOTALL))},

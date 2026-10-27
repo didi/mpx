@@ -1,0 +1,51 @@
+<template>
+  <view class="article">
+    <text wx:if="{{loading}}">加载中</text>
+    <text wx:if="{{errorText}}">{{errorText}}</text>
+    <view wx:if="{{article}}">
+      <text class="title">{{article.title}}</text>
+      <text class="body">{{article.body}}</text>
+      <button bindtap="toggleExtra">{{expanded ? '收起' : '展开'}}补充说明</button>
+      <text wx:if="{{expanded}}">{{article.extra}}</text>
+    </view>
+  </view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+import { mapState, mapActions } from '@mpxjs/pinia'
+import useArticleStore from '../../store/article'
+
+createPage({
+  data: { expanded: false },
+  computed: mapState(useArticleStore, ['article', 'loading', 'errorText']),
+  onLoad (query) {
+    // Web 的 onLoad 在 SSR 中也会执行，预取统一交给 serverPrefetch 等待。
+    if (__mpx_mode__ === 'wx') {
+      return this.loadArticle(query.id || 'a')
+    }
+  },
+  serverPrefetch () {
+    // context.url 已移除部署前缀；直接使用当前请求路由，不读取浏览器地址或全局 store。
+    return useArticleStore(this.$pinia).loadArticle(this.$route.query.id || 'a')
+  },
+  mounted () {
+    if (__mpx_mode__ === 'web') {
+      const id = this.$route.query.id || 'a'
+      // 保留恢复的正文或错误首屏；无 SSR 数据或客户端进入另一篇文章时才加载。
+      if (this.loading || (this.article && this.article.id !== id)) {
+        return this.loadArticle(id)
+      }
+    }
+  },
+  methods: Object.assign({}, mapActions(useArticleStore, ['loadArticle']), {
+    toggleExtra () {
+      this.expanded = !this.expanded
+    }
+  })
+})
+</script>
+<style>
+.article { padding: 16px; }
+.title { display: block; font-size: 20px; font-weight: bold; }
+.body { display: block; margin: 16px 0; }
+</style>

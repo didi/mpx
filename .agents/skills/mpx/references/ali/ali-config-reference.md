@@ -16,33 +16,27 @@
 
 ### 目标与源码
 
-直接使用编译插件时，`srcMode` 默认跟随 `mode`；只设 `mode: 'ali'` 不会自动按微信语法转换。使用微信语法输出支付宝时，设置 `mode: 'ali'`、`srcMode: 'wx'`。条件文件、区块 `mode` 和属性 `@ali` 只筛选输出目标，不切换源码方言；源码方言按 `srcMode` / `src-mode` 及工程规则核对，见 [条件编译基准](../base/conditional-compile.md)。
+微信语法输出支付宝须显式设置 `mode: 'ali'`、`srcMode: 'wx'`；直接使用插件时 `srcMode` 默认跟随 `mode`。条件文件、区块 `mode`、属性 `@ali` 只筛选输出目标，源码方言由 `srcMode` / `src-mode` 及工程规则确定，见[条件编译](../base/conditional-compile.md)。
 
 ### 模板与样式配置
 
-以下均为 `MpxWebpackPlugin` 顶层选项，匹配方式沿用 [规则匹配](../base/config-reference.md#规则匹配)。
+以下为 `MpxWebpackPlugin` 顶层选项，匹配方式见[规则匹配](../base/config-reference.md#规则匹配)，用法见[样式差异](./ali-style-reference.md)。
 
-| 配置项 | 默认值 | 作用与约束 |
+| 配置项 | 默认值 | 约束 |
 | --- | --- | --- |
-| `autoScopeRules` | `{}` | 按资源路径批量启用 scoped；命中文件的所有样式区块均启用，未命中仍尊重单个 `<style scoped>`。使用 include/exclude 限定范围。 |
-| `externalClasses` | `['custom-class', 'i-class']` | 声明支付宝编译需要处理的外部样式类名称；自定义数组替换默认值，保留仍在使用的名称，并与组件声明一致。 |
+| `autoScopeRules` | `{}` | 用 include/exclude 按资源路径限定范围；命中文件的所有样式区块启用 scoped，未命中仍尊重 `<style scoped>` |
+| `externalClasses` | `['custom-class', 'i-class']` | 与组件声明一致；自定义数组替换默认值，保留仍在使用的名称 |
 
-样式隔离、外部类的使用方式与示例见 [支付宝样式差异](./ali-style-reference.md)。
-
-构建提示业务资源与保留文件名 `mpx-ali-compat.acss` 冲突时，重命名业务资源；不要修改或重复引入框架生成的样式文件。
+业务资源与保留文件名 `mpx-ali-compat.acss` 冲突时重命名业务资源，不修改或重复引入框架生成文件。
 
 ## 开发者工具配置
 
 ### 启用 component2
 
-支付宝组件运行依赖 `component2`。在开发者工具详情设置中启用，或确保工程输出根目录的 `mini.project.json` 包含：
+支付宝组件依赖 `component2`，在开发者工具详情中启用，或将以下 `mini.project.json` 放入工程输出根目录：
 
 ```json
-{
-  "component2": true
-}
+{ "component2": true }
 ```
 
-它属于支付宝开发者工具的工程配置，不是 `app.json`、页面 JSON 或 `MpxWebpackPlugin` 的字段。使用静态资源目录维护时，确认构建已将文件复制到支付宝工程输出根目录。
-
-启用 component2 的基础库要求为 `>= 1.14.0`；这只是 component2 的前提，不是本目录所有组件/API 的统一最低版本。遇到提示启用 component2 或组件初始化异常时，先核对该开关及实际基础库。
+这是开发者工具工程配置，不属于 `app.json`、页面 JSON 或插件选项；通过静态目录维护时确认已复制到输出根目录。component2 要求基础库 `>= 1.14.0`，不代表所有组件 / API 的统一最低版本。初始化异常或收到启用提示时先核对开关与实际基础库。

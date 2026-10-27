@@ -1,0 +1,87 @@
+<template>
+  <view class="page">
+    <view class="header" style="padding-top: {{topInset}}px; {{headerHeight === null ? '' : 'height: ' + headerHeight + 'px;'}}">
+      <text>我的选项</text>
+    </view>
+
+    <red-card />
+    <blue-card />
+    <theme-card label="暖色标签" tone-class="warm-tone" custom-class="spaced-label" />
+    <theme-card label="冷色标签" tone-class="cool-tone" custom-class="spaced-label" />
+    <view class="equal-row">
+      <layout-cell label="甲" />
+      <layout-cell label="较长的乙" />
+    </view>
+
+    <view class="content">
+      <text>当前：{{selectedLabel}}</text>
+      <button bindtap="openChoice">选择</button>
+      <!-- Web 链接入口通过脚本导航建立事件通道；微信继续使用原生 navigator。 -->
+      <navigator wx:if="{{__mpx_mode__ === 'wx'}}" url="/pages/choice/index?source=link" open-type="navigate">通过链接选择</navigator>
+      <view wx:if="{{__mpx_mode__ === 'web'}}" bindtap="openLinkedChoice">通过链接选择</view>
+      <navigator url="/packageA/index" open-type="navigate">独立入口</navigator>
+      <view class="size-sample">设计宽 200rpx、字体 28rpx</view>
+    </view>
+  </view>
+</template>
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: { topInset: 0, headerHeight: null, selectedLabel: '未选择' },
+  onLoad () {
+    // Web 没有微信胶囊，保留默认自适应高度；微信继续按胶囊位置布局。
+    if (__mpx_mode__ === 'wx') {
+      const capsule = mpx.getMenuButtonBoundingClientRect()
+      this.topInset = capsule.top
+      this.headerHeight = capsule.height
+    }
+  },
+  methods: {
+    openChoice () {
+      this.navigateToChoice(true)
+    },
+    openLinkedChoice () {
+      this.navigateToChoice(false)
+    },
+    navigateToChoice (showReady) {
+      // 当前 Web 版本用完整 URL 关联通道，带 query 时无法匹配页面 route。
+      // Web 用无 query 的路由建立通道，在调用入口决定是否显示 ready 状态；微信原生链接保留 source=link。
+      mpx.navigateTo({
+        url: '/pages/choice/index',
+        events: {
+          ready: () => {
+            if (showReady) this.selectedLabel = '正在选择'
+          },
+          choice: label => { this.receiveChoice(label) }
+        }
+      })
+    },
+    receiveChoice (label) {
+      this.selectedLabel = label
+    }
+  }
+})
+</script>
+<style scoped>
+.page { min-height: 100%; background: #f6f7f9; }
+.header { padding-left: 16px; background: #fff; }
+.content { padding: 24rpx; }
+.size-sample { width: 200rpx; font-size: 28rpx; background: #dde8ff; }
+
+.warm-tone { color: #bb3311; }
+.cool-tone { color: #2255cc; }
+.spaced-label { padding: 12px; }
+.equal-row { display: flex; width: 240px; }
+</style>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "red-card": "../../components/red-card.mpx",
+    "blue-card": "../../components/blue-card.mpx",
+    "layout-cell": "../../components/layout-cell.mpx",
+    "theme-card": "../../components/theme-card.mpx"
+  }
+}
+</script>

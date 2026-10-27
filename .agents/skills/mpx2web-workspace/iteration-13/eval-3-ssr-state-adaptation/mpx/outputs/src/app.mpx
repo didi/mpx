@@ -1,0 +1,28 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+import { createPinia } from '@mpxjs/pinia'
+
+mpx.use(apiProxy)
+
+if (__mpx_mode__ === 'web') {
+  mpx.config.webConfig.routeConfig = Object.assign({}, mpx.config.webConfig.routeConfig, {
+    mode: 'history',
+    base: '/help-demo/'
+  })
+}
+
+createApp({
+  onAppInit () {
+    // 同步创建每个 SSR 请求的 Pinia；wx 也在此初始化，共用文章状态域。
+    // 沿用框架默认 SSR 流程：按宿主 context.url 匹配路由，渲染后输出 Pinia state，
+    // 浏览器从 renderer 注入的 __INITIAL_STATE__ 恢复，随后进行 hydration。
+    return { pinia: createPinia() }
+  }
+})
+</script>
+<script type="application/json">
+{
+  "pages": ["./pages/article/index.mpx"]
+}
+</script>

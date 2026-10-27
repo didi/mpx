@@ -1,6 +1,6 @@
 # Skyline 模板与基础组件差异
 
-本文只记录 WebView 迁移 Skyline 时需要关注的组件模板差异：不支持组件、不支持属性/取值、结构约束、方法差异，以及 glass-easel 模板语法与 SVG 资源限制。Skyline 新增能力不在本文展开，除非它是替代方案。通用绑定、事件、Slot 与基础组件契约见 [模板基准](../base/template-reference.md)；双模式选型与高级能力路由见 [Skyline 入口](./index.md)。
+本页记录 WebView 迁移 Skyline 的组件支持、属性取值、结构与方法差异，以及 glass-easel 模板语法和 SVG 限制；新增能力仅在作为替代方案时列出。通用契约见[模板基准](../base/template-reference.md)，双模式与高级能力见 [Skyline 入口](./index.md)。
 
 ## 目录
 
@@ -9,152 +9,112 @@
 - [Skyline 必填属性与结构约束](#skyline-必填属性与结构约束)
 - [Skyline 相对 WebView 的高频差异补充](#skyline-相对-webview-的高频差异补充)
 - [模板结构适配](#模板结构适配)
-  - [模板中数据绑定外的转义改为标准 XML 转义](#必须-模板中数据绑定外的转义改为标准-xml-转义)
-  - [模板片段使用 import template](#必须-模板片段使用-import-template)
+  - [模板中数据绑定外的转义改为标准 XML 转义](#模板中数据绑定外的转义改为标准-xml-转义)
+  - [模板片段使用 import template](#模板片段使用-import-template)
   - [navigator 嵌套限制](#navigator-嵌套限制)
   - [SVG 在 Skyline 下的限制与适配](#svg-在-skyline-下的限制与适配)
 
 ## Skyline 不支持或不建议使用的组件
 
 | 组件 | Skyline 支持情况 | 替代/处理 |
-| --- |--------------| --- |
-| `web-view` | 不支持          | 承载 `web-view` 的页面单独配置 `"renderer": "webview"` |
-| `editor` | 不支持         | 纯文本编辑用 `textarea`；富文本编辑页降级 WebView；只读展示用 `rich-text` |
-| `movable-area` / `movable-view` | 不支持         | 使用手势组件 + Worklet 动画替代 |
-| `progress` | 不支持         | 用 `view` 嵌套实现进度条，动画进度可配合 Worklet 驱动 |
-| `navigation-bar` | 不支持          | Skyline 只能使用自定义导航 |
-| `xr-frame` | 不支持         | 3D/XR 页面降级 WebView，或用 `canvas` / WebGL 自行渲染 |
-| `match-media` | 不支持          | 用 `wx.createMediaQueryObserver()` 监听媒体条件，或用 `getWindowInfo()` 获取屏幕尺寸后条件渲染 |
-| `keyboard-accessory` | 不支持          | 用 `input` 的 `worklet:onkeyboardheightchange` 回调实现键盘跟随 |
-| `page-meta` | 基本支持         | 全局页面滚动属性 `scroll-top` / `scroll-duration` 不支持；页面滚动需改用 `scroll-view` |
+| --- | --- | --- |
+| `web-view` | 不支持 | 承载 `web-view` 的页面单独配置 `"renderer": "webview"` |
+| `editor` | 不支持 | 纯文本编辑用 `textarea`；富文本编辑页降级 WebView；只读展示用 `rich-text` |
+| `movable-area` / `movable-view` | 不支持 | 使用手势组件 + Worklet 动画替代 |
+| `progress` | 不支持 | 用 `view` 嵌套实现进度条，动画进度可配合 Worklet 驱动 |
+| `navigation-bar` | 不支持 | Skyline 只能使用自定义导航 |
+| `xr-frame` | 不支持 | 3D/XR 页面降级 WebView，或用 `canvas` / WebGL 自行渲染 |
+| `match-media` | 不支持 | 用 `wx.createMediaQueryObserver()` 监听媒体条件，或用 `getWindowInfo()` 获取屏幕尺寸后条件渲染 |
+| `keyboard-accessory` | 不支持 | 用 `input` 的 `worklet:onkeyboardheightchange` 回调实现键盘跟随 |
+| `page-meta` | 基本支持 | 全局页面滚动属性 `scroll-top` / `scroll-duration` 不支持；页面滚动需改用 `scroll-view` |
 
 ## WebView-only 属性、取值与行为
 
-| 组件 | 不支持项 | 差异/替代                                                                                                                                                                                      |
-| --- | --- |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `image` | `mode="top"` / `bottom` / `center` / `left` / `right` / `top left` / `top right` / `bottom left` / `bottom right` | 这些裁剪模式仅 WebView 支持；Skyline 稳定使用 `scaleToFill` / `aspectFit` / `aspectFill` / `widthFix` / `heightFix`                                                                                      |
-| `image` | `lazy-load` / `forceHttps` | WebView 特有；Skyline 默认懒加载，无需设置 `lazy-load`                                                                                                                                                   |
-| `image` | SVG 百分比单位、`<style>` 选择器匹配 | Skyline 下不支持；尺寸/坐标改为具体数值，样式改为内联属性                                                                                                                                                          |
-| `image` | SVG + `mode="scaleToFill"` | 两端表现不一致：WebView 受 SVG 默认 `preserveAspectRatio` 影响居中留白（除非 SVG 根节点设置 `preserveAspectRatio="none"`），Skyline 会按 `image` 容器拉伸铺满；要求一致时显式设置 `preserveAspectRatio="none"`，或避免 SVG 使用 `scaleToFill` |
-| `text` | `space` | Skyline 不支持；连续空格不要依赖该属性                                                                                                                                                                    |
-| `text` | `decode` | Skyline 不支持；不要依赖 HTML 实体解码行为                                                                                                                                                               |
-| `input` / `textarea` | `placeholder-class` | 仅 WebView 生效；Skyline 使用 `placeholder-style`                                                                                                                                                |
-| `input` / `textarea` | `safe-password-cert-path` / `safe-password-length` / `safe-password-time-stamp` / `safe-password-nonce` / `safe-password-salt` / `safe-password-custom-hash` | 安全键盘属性仅 WebView 生效                                                                                                                                                                         |
-| `swiper` | `snap-to-edge` | WebView 特性，Skyline 不支持                                                                                                                                                                     |
+| 组件 | 属性 / 取值 / 场景 | 差异/替代 |
+| --- | --- | --- |
+| `image` | `mode="top"` / `bottom` / `center` / `left` / `right` / `top left` / `top right` / `bottom left` / `bottom right` | 这些裁剪模式仅 WebView 支持；Skyline 稳定使用 `scaleToFill` / `aspectFit` / `aspectFill` / `widthFix` / `heightFix` |
+| `image` | `lazy-load` / `forceHttps` | WebView 特有；Skyline 默认懒加载，无需设置 `lazy-load` |
+| `image` | SVG 百分比、`<style>`、`rgba()` 及 `scaleToFill` 表现 | 限制与处理见 [SVG 适配](#svg-在-skyline-下的限制与适配) |
+| `text` | `space` | Skyline 不支持；连续空格不要依赖该属性 |
+| `text` | `decode` | Skyline 不支持；不要依赖 HTML 实体解码行为 |
+| `input` / `textarea` | `placeholder-class` | 仅 WebView 生效；Skyline 使用 `placeholder-style` |
+| `input` / `textarea` | `safe-password-cert-path` / `safe-password-length` / `safe-password-time-stamp` / `safe-password-nonce` / `safe-password-salt` / `safe-password-custom-hash` | 安全键盘属性仅 WebView 生效 |
+| `swiper` | `snap-to-edge` | WebView 特性，Skyline 不支持 |
 
 ## Skyline 必填属性与结构约束
 
-| 组件 | 约束 | 说明                                                                 |
-| --- | --- |--------------------------------------------------------------------|
-| `scroll-view` | 必须显式声明 `type` | 可选 `list` / `custom` / `nested`；遗漏会退化为 WebView 渲染路径或无法正常工作         |
-| `scroll-view type="list"` | 列表项必须是 `scroll-view` 的直接子节点 | 只有一个直接子节点时，按需渲染会退化                                                 |
+| 组件 | 约束 | 说明 |
+| --- | --- | --- |
+| `scroll-view` | 必须显式声明 `type` | 可选 `list` / `custom` / `nested`；遗漏会退化为 WebView 渲染路径或无法正常工作 |
+| `scroll-view type="list"` | 列表项必须是 `scroll-view` 的直接子节点 | 只有一个直接子节点时，按需渲染会退化 |
 | `scroll-view type="nested"` | 外层必须使用 `type="nested"` | 内层 `scroll-view` 必须设置 `associative-container="nested-scroll-view"` |
-| `navigator` | 只能嵌套 `text` 或纯文本 | 不能嵌套 `view` / `image` / 自定义组件；处理方式见 [navigator 嵌套限制](#navigator-嵌套限制)                                      |
-| `text` | 只能嵌套 `text` | 图文混排使用 `span`，仅微信支持，跨平台建议按 `<view mpxTagName@wx="span"></view>`    |
+| `navigator` | 仅可包含 `text` / 纯文本 | 详见 [navigator 嵌套限制](#navigator-嵌套限制) |
+| `text` | 只能嵌套 `text` | 图文混排改用 `span`，写法见下表 |
 
 ## Skyline 相对 WebView 的高频差异补充
 
-| 组件 | 差异                                                                                                                                                                       |
-| --- |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 组件 | 差异 |
+| --- | --- |
 | `picker-view` | `indicator-style` 仅支持 `height` / `border` / `background-color`；`indicator-class` / `mask-style` 暂未支持；Skyline 默认存在上下边框，无自定义边框需设置 `indicator-style="border: none;"` 去除默认边框 |
-| `swiper` | `layout-type="stackLeft"` / `stackRight` / `tinder` 时仅支持 `indicator-type="normal"`                                                                                       |
-| `swiper` | `indicator-type="scrollFixedCenter"` / `swap` / `swapYRotation` 时不支持 `circular`                                                                                          |
-| `swiper` | `previous-margin` / `display-multiple-items` / `vertical` 的布局计算与 WebView 不一致；设置 `next-margin > 0` 时对齐 WebView 实现                                                         |
-| `input` / `textarea` | 原生组件字体固定为系统字体，`font-family` 不生效；聚焦期间避免 CSS 动画                                                                                                                            |
-| `video` | 全屏已支持，投屏暂未支持；开发者工具暂未支持调试，需真机预览                                                                                                                                           |
-| `map` / `canvas` / `camera` | 开发者工具暂未支持调试，需真机预览                                                                                                                                                        |
-| `rich-text` | 默认渲染模式不保证与 WebView 完全一致；`mode="web"` 时对齐 WebView                                                                                                                         |
-| `scroll-view` | 滚动 `scroll-view` 会阻止页面回弹，无法触发页面级 `onPullDownRefresh`                                                                                                                     |
-| `scroll-view` | `scroll-into-view` 优先级高于 `scroll-top`；目标 id 不能以数字开头                                                                                                                      |
-| `scroll-view` | 自定义下拉刷新节点必须声明 `slot="refresher"`                                                                                                                                         |
-| `scroll-view` | 滚动条长度为预估值；直接子节点高度差异较大时，滚动条长度不保证精确                                                                                                                                        |
-| `scroll-view` | 横向滚动需同时开启 `enable-flex`，并设置横向布局样式（如 `flex-direction: row`）以兼容 WebView                                                                                                    |
-| `scroll-view` | `type="list"` 下列表项可加 `list-item` 启用样式共享优化；列表项仍必须是直接子节点                                                                                                                   |
-| `scroll-view` | 基础库 2.4.0 以下不支持嵌套 `textarea` / `map` / `canvas` / `video`                                                                                                                |
-| `text` | `user-select` 会使节点变为 `inline-block`；除文本节点外，其他节点无法长按选中                                                                                                                    |
-| `span` | 用于图文内联混排，仅微信支持，跨平台建议按 `<view mpxTagName@wx="span"></view>`                                                                                                               |
-| `input` / `textarea` | `bindkeyboardheightchange` 存在多次触发场景，应忽略相同高度值避免重复布局                                                                                                                       |
-| `sticky-section` / `sticky-header` | WebView 常用的 CSS `position: sticky` 在 Skyline 下应替换为 `scroll-view type="custom"` + `sticky-section` / `sticky-header`                                                      |
+| `swiper` | `layout-type="stackLeft"` / `stackRight` / `tinder` 时仅支持 `indicator-type="normal"` |
+| `swiper` | `indicator-type="scrollFixedCenter"` / `swap` / `swapYRotation` 时不支持 `circular` |
+| `swiper` | `previous-margin` / `display-multiple-items` / `vertical` 的布局计算与 WebView 不一致；设置 `next-margin > 0` 时对齐 WebView 实现 |
+| `input` / `textarea` | 固定使用系统字体，`font-family` 无效；聚焦期间避免 CSS 动画；`bindkeyboardheightchange` 可能重复触发，相同高度应忽略 |
+| `video` | 全屏已支持，投屏暂未支持；开发者工具暂未支持调试，需真机预览 |
+| `map` / `canvas` / `camera` | 开发者工具暂未支持调试，需真机预览 |
+| `rich-text` | 默认渲染模式不保证与 WebView 完全一致；`mode="web"` 时对齐 WebView |
+| `scroll-view` | 滚动 `scroll-view` 会阻止页面回弹，无法触发页面级 `onPullDownRefresh` |
+| `scroll-view` | `scroll-into-view` 优先级高于 `scroll-top`；目标 id 不能以数字开头 |
+| `scroll-view` | 自定义下拉刷新节点必须声明 `slot="refresher"` |
+| `scroll-view` | 滚动条长度为预估值；直接子节点高度差异较大时，滚动条长度不保证精确 |
+| `scroll-view` | 横向滚动需同时开启 `enable-flex`，并设置横向布局样式（如 `flex-direction: row`）以兼容 WebView |
+| `scroll-view` | `type="list"` 下列表项可加 `list-item` 启用样式共享优化；列表项仍必须是直接子节点 |
+| `scroll-view` | 基础库 2.4.0 以下不支持嵌套 `textarea` / `map` / `canvas` / `video` |
+| `text` | `user-select` 会使节点变为 `inline-block`；除文本节点外，其他节点无法长按选中 |
+| `span` | 用于图文内联混排，仅微信支持，跨平台建议按 `<view mpxTagName@wx="span"></view>` |
+| `sticky-section` / `sticky-header` | WebView 常用的 CSS `position: sticky` 在 Skyline 下应替换为 `scroll-view type="custom"` + `sticky-section` / `sticky-header` |
 
 ## 模板结构适配
 
-### [必须] 模板中数据绑定外的转义改为标准 XML 转义
+### 模板中数据绑定外的转义改为标准 XML 转义
 
-数据绑定**外**的引号须改用 XML 实体转义；数据绑定**内**无需再转义。
+数据绑定外的引号用 XML 实体，不用反斜杠转义；绑定内无需额外转义。
 
 ```html
-<!-- ❌ Bad — 旧写法：反斜杠转义 -->
-<view prop-a="\"test\"" prop-b="{{ test === \"test\" }}" />
-
-<!-- ✅ Good — 新写法：XML 实体转义（外）、不转义（内） -->
 <view prop-a="&quot;test&quot;" prop-b="{{ test === 'test' }}" />
 ```
 
-### [必须] 模板片段使用 import template
+### 模板片段使用 import template
 
-模板片段统一通过 `<import>` 引入具名 `<template>`，使用 `<template is="..." data="..." />` 调用并传入所需数据；不使用 `<include>`。
+用 `<import>` 引入具名 `<template>`，通过 `is` 调用、`data` 传参，不使用 `<include>`。
 
 ```html
-<!-- ✅ Good -->
 <import src="inc.wxml" />
-<block wx:for="{{ arr }}">
-  <template is="wx-for-content" data="{{ index, item }}" />
-</block>
+<template is="item-content" data="{{ item }}" />
 
 <!-- inc.wxml -->
-<template name="wx-for-content">
-  <view>{{ index }}. {{ item }}</view>
-</template>
+<template name="item-content"><view>{{ item }}</view></template>
 ```
 
 ### navigator 嵌套限制
 
-Skyline 下 `<navigator>` 内**只能嵌套 `<text>` 组件或纯文本节点**，**不能嵌套** `<view>` / `<image>` / `<swiper>` 等任意其他组件。WebView 下常见的“navigator 内放图标 + 文字”业务结构会让 Skyline 静默渲染异常（图标不显示，或点击区域错位）。
+`navigator` 仅可包含 `text` 或纯文本；嵌套 `view`、`image`、`swiper`、自定义组件等可能静默渲染异常、图标缺失或点击区域错位。
 
 ```html
-<!-- ❌ Bad — navigator 内嵌 view + image 在 Skyline 下渲染异常 -->
-<navigator url="/pages/chat/index">
-  <view class="row">
-    <image src="/static/chat.png" />
-    <text>联系客服</text>
-  </view>
-</navigator>
-
-<!-- ✅ Good — 仅嵌套 text -->
-<navigator url="/pages/chat/index">
-  <text>联系客服</text>
-</navigator>
+<navigator url="/pages/chat/index"><text>联系客服</text></navigator>
 ```
 
 ### SVG 在 Skyline 下的限制与适配
 
-**1. 不支持 `<style>` 选择器匹配**
-
-SVG 内嵌的 `<style>` 标签中的 CSS 选择器在 Skyline 下不生效，需将样式转为内联属性。
+- **尺寸与坐标**：不支持百分比，改为具体数值。
+- **样式与颜色**：`<style>` 选择器不生效，改用内联属性；`rgba()` 拆为颜色值与 `fill-opacity` / `stroke-opacity`。
+- **拉伸一致性**：SVG 配合 `image mode="scaleToFill"` 时，WebView 默认按 `preserveAspectRatio` 居中留白，Skyline 会拉伸铺满。需要一致时在 SVG 根节点设置 `preserveAspectRatio="none"`，或避免使用该模式。
 
 ```xml
-<!-- ❌ Bad — <style> 选择器在 Skyline 下不匹配 -->
-<svg>
-  <style>.icon { fill: #FF6400; }</style>
-  <path class="icon" d="..." />
-</svg>
-
-<!-- ✅ Good — 改为内联样式属性 -->
-<svg>
-  <path fill="#FF6400" d="..." />
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+  viewBox="0 0 24 24" preserveAspectRatio="none">
+  <path fill="#FF6400" fill-opacity="0.5" d="M0 0H24V24Z" />
 </svg>
 ```
 
-**2. 不支持 `rgba()` 颜色格式**
-
-SVG 属性中的 `rgba()` 颜色值在 Skyline 下不生效，需拆分为颜色值 + `fill-opacity` / `stroke-opacity`。
-
-```xml
-<!-- ❌ Bad — rgba() 在 Skyline 下不生效 -->
-<path fill="rgba(255, 100, 0, 0.5)" d="..." />
-
-<!-- ✅ Good — 用 fill-opacity 替代透明度 -->
-<path fill="#FF6400" fill-opacity="0.5" d="..." />
-```
-
-> 建议用 [SVGO 在线工具](https://jakearchibald.github.io/svgomg/) 优化 SVG，可自动清理冗余属性、合并路径，减小体积并降低兼容性风险。
+可用 [SVGOMG](https://jakearchibald.github.io/svgomg/) 清理冗余属性、合并路径以减小体积；优化后仍按上述限制检查兼容性。

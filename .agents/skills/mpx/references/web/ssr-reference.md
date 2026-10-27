@@ -21,54 +21,45 @@
 
 ## 接入决策与执行顺序
 
-先检查项目已有的 SSR 构建、Node 服务、`app.mpx` 初始化、路由配置与首屏状态域。已有脚手架配置时在原流程上补齐，避免重复创建 renderer、应用或状态实例。
+先检查已有构建、Node 服务、`app.mpx`、路由与首屏状态，沿原流程补齐。接入顺序：
 
-| 涉及内容 | 必须明确的行为 | 实施方式 |
-| --- | --- | --- |
-| 双端入口 | server/client 都以同一个 `app.mpx` 为入口。 | 无需另写 Vue 风格的两份 entry。 |
-| SSR 构建 | `mode: 'web'` 仍然用于两端构建，`useSSR` 不是服务端构建开关。 | 生成 server bundle 和 client manifest，由 Node renderer 消费。 |
-| 路由 | 服务端收不到 URL hash。 | 使用 `history`，每次渲染传入包含路径与 query 的 `context.url`。 |
-| 全局首屏状态 | SSR 支持 `@mpxjs/pinia`，不支持 `@mpxjs/store` 的 SSR 状态管理。 | 在 `onAppInit` 中为每次服务端请求创建并返回 Pinia。 |
-| 异步数据 | `onLoad` 的 Promise 不会被 SSR 等待。 | 用 `serverPrefetch` / `onServerPrefetch` 返回预取 Promise，保留客户端加载入口。 |
-| 路由就绪与状态输出 | 框架默认已处理。 | 通常不写 `onSSRAppCreated`；自定义时须承接完整职责。 |
-
-接入后的表现：每次请求使用独立的应用状态，页面按 `context.url` 渲染并等待首屏预取。响应包含首屏 HTML、初始状态与客户端资源；浏览器恢复状态后完成 hydration。配置 `useSSR: true` 时，客户端会等待异步路由就绪后挂载。
+1. 同一 `app.mpx` 分别构建 server bundle 与 client manifest，无需两份 Vue 风格 entry。
+2. 使用 history 路由，每次以独立 `context.url`（路径 + query）渲染，服务端收不到 hash。
+3. 在 `onAppInit` 同步创建请求级 Pinia，用 `serverPrefetch` / `onServerPrefetch` 等待首屏数据；SSR 不支持 `@mpxjs/store` 状态管理，也不等待 `onLoad` 返回的 Promise。
+4. 默认入口负责路由就绪与状态输出，renderer 注入 HTML、状态和资源，客户端恢复后 hydration。异步首屏路由配置 `useSSR: true`；通常无需自定义 `onSSRAppCreated`。
 
 ## 构建与服务接入
 
 ### 双端构建
 
-基于项目现有 Mpx2Web loader、样式与资源处理链配置，下面是需要核对的差异，不是可独立运行的完整 webpack 配置。普通 Web 配置入口见 [Web 配置参考](./web-config-reference.md)。
+沿用项目现有 loader、样式与资源链；下表仅列双端差异，基础配置见 [Web 配置](./web-config-reference.md)。
 
 | 配置 | server | client |
 | --- | --- | --- |
-| `entry` | 项目的 `app.mpx` | 同一个 `app.mpx` |
-| `MpxWebpackPlugin` | `mode: 'web'`，保留项目实际 `srcMode` | 同左 |
+| `entry` | 同一 `app.mpx` | 同一 `app.mpx` |
+| `MpxWebpackPlugin` | `mode: 'web'`，保留实际 `srcMode` | 同左 |
 | webpack `target` | `'node'` | `'web'` |
-| 输出格式 | `output.libraryTarget: 'commonjs2'` | 沿用浏览器输出 |
-| 拆包 | `optimization.splitChunks: false`，关闭独立 `runtimeChunk`，保证服务端入口可由 renderer 加载 | 沿用客户端资源拆包 |
+| 输出格式 | `output.libraryTarget: 'commonjs2'` | 浏览器输出 |
+| 拆包 | `optimization.splitChunks: false`，关闭独立 `runtimeChunk`，保证 renderer 可加载入口 | 保留客户端拆包 |
 | SSR 插件 | `new (require('vue-server-renderer/server-plugin'))()` | `new (require('vue-server-renderer/client-plugin'))()` |
-| 产物 | `vue-ssr-server-bundle.json` | `vue-ssr-client-manifest.json` 及 JS/CSS 等资源 |
+| 产物 | `vue-ssr-server-bundle.json` | `vue-ssr-client-manifest.json` 与 JS/CSS |
 
-- 两端输出目录分开，例如 `dist/server`、`dist/client`，避免相互覆盖；bundle 与 manifest 必须来自同一版应用。
-- `vue-server-renderer` 与 `vue` 使用相同版本；沿用项目兼容的 Vue 2 构建依赖，不直接安装最新 Vue/Pinia 大版本。
-- server 不能直接复用依赖 DOM 的样式注入流程。检查项目的服务端样式 loader 与客户端 CSS 产物配置。
-- 配置 `externals` 时，让需要编译的 `@mpxjs/*` 模块、`.mpx`/`.vue` 和样式资源参与构建；不要无差别排除整个 `node_modules`。
-- 通用构建细节可查 [Vue 2 SSR 构建指南](https://v2.ssr.vuejs.org/guide/build-config.html)，其中旧 webpack API 应按项目版本调整。
+- 拆包配置位于 `optimization`。输出目录分开（如 `dist/server`、`dist/client`），bundle / manifest 必须同版。
+- `vue-server-renderer` 与 `vue` 版本一致，沿用兼容的 Vue 2 依赖，不直接升级至最新 Vue / Pinia 大版本。
+- server 不复用依赖 DOM 的样式注入；核对服务端 loader 与客户端 CSS 产物。配置 `externals` 时保留需编译的 `@mpxjs/*`、`.mpx` / `.vue` 和样式，不一律排除 `node_modules`。
+- [Vue 2 SSR 构建指南](https://v2.ssr.vuejs.org/guide/build-config.html)中的旧 webpack API 按工程版本调整。
 
 ### HTML 模板与 Node 服务
 
-SSR 模板使用占位注释，Mpx 编译出的 App 自带挂载根节点，默认是 `id="app"`。不要再用 `<div id="app">` 包住占位符，造成同名根节点嵌套。
+模板使用 `<!--vue-ssr-outlet-->`，App 已自带默认 `id="app"` 的根节点，不再额外包同名容器。
 
 ```html
 <!DOCTYPE html>
-<html lang="zh-CN">
-  <head><meta charset="UTF-8"><title>Mpx SSR</title></head>
-  <body><!--vue-ssr-outlet--></body>
-</html>
+<html><head><meta charset="UTF-8"><title>Mpx SSR</title></head>
+<body><!--vue-ssr-outlet--></body></html>
 ```
 
-下面假设 `server.js` 位于项目根目录，客户端 `output.publicPath` 为 `/`，模板存于 `src/index.template.html`。已有服务时将渲染处理合并到其页面路由中：
+以下假设服务位于项目根目录、客户端 `publicPath` 为 `/`。已有服务时合入其页面路由，API / 静态资源先处理，history 深层 URL 进入 SSR：
 
 ```js
 const express = require('express')
@@ -77,38 +68,29 @@ const path = require('path')
 const { createBundleRenderer } = require('vue-server-renderer')
 
 const app = express()
-const renderer = createBundleRenderer(
-  require('./dist/server/vue-ssr-server-bundle.json'),
-  {
-    runInNewContext: false,
-    template: fs.readFileSync(path.join(__dirname, 'src/index.template.html'), 'utf8'),
-    clientManifest: require('./dist/client/vue-ssr-client-manifest.json')
-  }
-)
-
-// API 路由、静态资源先处理；实际部署也可由 CDN 托管客户端资源。
+const renderer = createBundleRenderer(require('./dist/server/vue-ssr-server-bundle.json'), {
+  runInNewContext: false,
+  template: fs.readFileSync(path.join(__dirname, 'src/index.template.html'), 'utf8'),
+  clientManifest: require('./dist/client/vue-ssr-client-manifest.json')
+})
 app.use(express.static(path.join(__dirname, 'dist/client'), { index: false }))
 app.use((req, res, next) => {
   if (req.method !== 'GET') return next()
-  const context = { url: req.originalUrl }
-  renderer.renderToString(context, (err, html) => {
-    if (err) {
-      res.status(err.code === 404 ? 404 : 500).end('Render failed')
-      return
-    }
+  renderer.renderToString({ url: req.originalUrl }, (err, html) => {
+    if (err) return res.status(err.code === 404 ? 404 : 500).end('Render failed')
     res.type('html').end(html)
   })
 })
 app.listen(8080)
 ```
 
-renderer 可复用，`context` 必须每次新建。静态资源的访问路径要与 manifest 的 `publicPath` 一致；history 深层页面 URL 必须进入 SSR 处理。默认入口不主动判定 404，上例仅处理业务显式产生的 404 错误。
-
-默认由 renderer 自动注入资源与 `context.state`，无需手写状态脚本。若项目选择 `inject: false` 或不使用模板，则要自行补齐状态及资源注入；Mpx 客户端固定读取 `window.__INITIAL_STATE__`，不能只改服务端状态变量名。
+- renderer 可复用，`context` 每请求新建。资源可由 CDN 托管，访问路径须与 manifest 的 `publicPath` 一致。
+- 默认入口不主动判断 404；示例仅处理业务显式产生的 404。
+- 默认自动注入资源与 `context.state`；`inject: false` 或不用模板时自行补齐。客户端固定读取 `window.__INITIAL_STATE__`，不能单改服务端变量名。
 
 ## 路由与客户端挂载
 
-在调用 `createApp` 前，将 Web 路由模式设置为 `history`：
+在 `createApp` 前配置 history：
 
 ```js
 import Mpx from '@mpxjs/core'
@@ -118,18 +100,18 @@ if (__mpx_mode__ === 'web') {
 }
 ```
 
-SSR 首屏可能命中异步页面或异步分包时，在构建插件的 `webConfig` 中设置 `useSSR: true`，让客户端等待 `router.onReady` 再挂载。同步路由无需依赖此选项；它不负责生成 server bundle、开启预取或恢复状态。
-
-`webConfig.el` 默认是 `'#app'`；如需定制，使用一致的 ID 选择器（例如 `'#root'`），让两端编译出的 App 根节点与客户端挂载目标一致。子路径部署还需对齐路由 `base`、反向代理传入的 URL 和静态资源 `publicPath`，它们不是同一个配置项。
+- 首屏可能命中异步页面 / 分包时，插件 `webConfig.useSSR: true` 使客户端等待 `router.onReady` 后挂载；同步路由不依赖它。它不生成 server bundle，也不负责预取或状态恢复。
+- `webConfig.el` 默认 `'#app'`；定制时使用一致的 ID 选择器（如 `'#root'`），对齐两端 App 根节点与挂载目标。
+- 子路径部署需分别对齐路由 `base`、代理传入 URL、资源 `publicPath`，三者不是同一配置。
 
 ## 请求隔离与状态管理
 
 ### onAppInit：同步创建请求级 Pinia
 
-`onAppInit` 仅在 App 中声明，在 Web 服务端每次创建应用时执行，浏览器启动也会执行。返回值同步合并到 Vue 根实例选项，不能写成异步函数，也不能在这里访问尚未创建的 Vue 实例；此钩子没有 SSR `context` 参数。
+- `onAppInit` 仅声明于 App，每次服务端创建应用及浏览器启动时执行；同步返回值合入 Vue 根选项，不能异步、不能访问尚未创建的 Vue 实例，也不接收 SSR `context`。
+- 已有钩子时合并 `pinia` 并保留其他选项，不重复声明覆盖。小程序也执行该钩子，但不要依赖其消费返回的 Vue 选项。
 
 ```js
-// app.mpx 的 script
 import { createApp } from '@mpxjs/core'
 import { createPinia } from '@mpxjs/pinia'
 
@@ -140,20 +122,17 @@ createApp({
 })
 ```
 
-已有 `onAppInit` 时，在其返回对象中合并 `pinia` 并保留原有选项，不要再声明一个同名钩子覆盖它。小程序也执行 `onAppInit`；共享 `app.mpx` 中可以共用这个初始化位置，但不要依赖小程序消费其返回的 Vue 选项。
-
-- 不要在模块顶层执行 `createPinia()`。`@mpxjs/pinia` 的 Web 实现在非浏览器环境检查初始化阶段，阶段错误时会打印 `Pinia must be created in the onAppInit lifecycle!` 并返回空值。
-- 模块顶层可以 `defineStore()` 导出 store 定义，不能在模块顶层 `useStore()` 缓存请求级 store；`state` 使用工厂函数返回新对象。
-- `setup` 同步阶段可 `useStore()`；选项式钩子、路由守卫或实例外业务函数应显式传入当前请求的 `pinia`，例如 `useStore(this.$pinia)` 或 `useStore(pinia)`。在 `await` 前取得 store 并保留局部引用，避免异步恢复后依赖全局 active Pinia。
-- SSR 所需的旧 Store 状态域应迁移到 `@mpxjs/pinia`，优先让小程序与 Web 共用 store/action；保留原平台的调用入口，不为两端复制同义状态逻辑。仅迁移任务涉及的状态域；若原平台必须保留旧 Store，则按项目边界隔离。
+- **创建与定义分开**：不能在模块顶层 `createPinia()`，非浏览器环境初始化阶段错误会打印 `Pinia must be created in the onAppInit lifecycle!` 并返回空值。顶层可 `defineStore()`，不可 `useStore()` 缓存请求级 store；`state` 用工厂函数返回新对象。
+- **显式绑定当前请求**：`setup` 同步阶段可 `useStore()`；选项式钩子、路由守卫、实例外函数传当前 `pinia`（如 `useStore(this.$pinia)`）。在 `await` 前获取并保留局部 store，异步恢复后不依赖全局 active Pinia。
+- **迁移范围最小化**：SSR 涉及的旧 Store 状态域迁到 `@mpxjs/pinia`，优先跨端共用 store/action 并保留原调用入口；必须保留旧 Store 时按项目边界隔离，不复制同义逻辑。
 
 ## 首屏预取与客户端加载
 
 ### serverPrefetch：返回真正的异步任务
 
-`serverPrefetch` 可声明在 App/Page/Component，`onServerPrefetch` 用于组合式 API；二者仅在服务端渲染时执行。预取函数及其调用的 action 必须返回 Promise，直到请求完成且状态更新后才 resolve。多个预取任务可在一个钩子中 `return Promise.all(...)`。
+`serverPrefetch` 可声明于 App / Page / Component，组合式用 `onServerPrefetch`，均只在服务端执行。钩子及调用的 action 须返回 Promise，等请求完成且状态更新后再 resolve；多任务用 `return Promise.all(...)`。
 
-选项式页面示例，假设 `useDetailStore` 已实现下面约定的 `fetchData(query)`：
+**`onLoad` 在服务端也执行，但其 Promise 不被等待**（Web 中由 `created` 驱动）。仅把预取加载分支交给服务端钩子，保留客户端 / 小程序加载入口和其他必要同步初始化，避免漏取或重复请求。
 
 ```js
 import { createPage } from '@mpxjs/core'
@@ -164,19 +143,15 @@ createPage({
     return useDetailStore(this.$pinia).fetchData(this.$route.query)
   },
   onLoad (query) {
-    // Web 的服务端首屏请求交给 serverPrefetch。
+    // 其他必要的同步初始化放在此判断之前
     if (__mpx_mode__ === 'web' && typeof window === 'undefined') return
-    const store = __mpx_mode__ === 'web'
-      ? useDetailStore(this.$pinia)
-      : useDetailStore()
+    const store = __mpx_mode__ === 'web' ? useDetailStore(this.$pinia) : useDetailStore()
     return store.fetchData(query)
   }
 })
 ```
 
-这里的关键是：**Mpx Web 页面的 `onLoad` 由 `created` 驱动，服务端也会执行，但 renderer 不会等待它的异步返回值。** 只在 `onLoad` 加请求无法保证 SSR 首屏数据；同时在两个入口无条件请求又会重复加载。仅将需要预取的加载分支移交给服务端钩子，不要把 `onLoad` 中其他必要的同步初始化一起删掉。
-
-store 中统一实现首屏复用判断；以下示例针对按 `id` 查询的详情页，`fetchDetail` 为项目已有的请求函数，须返回解析后的业务数据并支持服务端运行：
+首屏复用判断统一放在 store；`fetchDetail` 为支持服务端、返回业务数据的项目请求函数：
 
 ```js
 import { defineStore } from '@mpxjs/pinia'
@@ -195,33 +170,24 @@ export const useDetailStore = defineStore('detail', {
 })
 ```
 
-`loadedId` 随 Pinia state 一起传到客户端，hydrate 时的 `onLoad` 可复用首屏结果；客户端后续进入不同 `id` 时仍会请求。实际业务应按完整请求条件设计缓存键和失效规则，失败时不要标记已加载，需要刷新时允许主动失效。不能用一个全局 `loaded` 标记跳过所有后续路由的数据请求。
-
-组合式 API 可用下面的服务端钩子替换选项式预取，并按同样原则保留客户端/小程序加载入口。此片段用于 Web 页面脚本，其他平台访问 `$route` 前需通过条件编译隔离：
+- `loadedId` 随 state 恢复，hydration 的 `onLoad` 复用首屏，后续不同 id 仍请求。实际缓存键覆盖完整请求条件，失败不标记已加载，刷新可主动失效；不用全局 `loaded` 跳过所有路由。
+- 组合式在 `setup` 同步阶段获取实例 / store，回调复用局部引用，不在异步回调中再调用 `getCurrentInstance()`。Web 的 `$route` 在其他目标端须隔离。
 
 ```js
-import { createPage, getCurrentInstance, onServerPrefetch } from '@mpxjs/core'
-import { useDetailStore } from '../stores/detail'
-
-createPage({
-  setup () {
-    const instance = getCurrentInstance()
-    const store = useDetailStore(instance.proxy.$pinia)
-    onServerPrefetch(() => store.fetchData(instance.proxy.$route.query))
-    return { store }
-  }
-})
+// Web 页面的 setup 内；getCurrentInstance / onServerPrefetch 从 @mpxjs/core 导入
+const instance = getCurrentInstance()
+const store = useDetailStore(instance.proxy.$pinia)
+onServerPrefetch(() => store.fetchData(instance.proxy.$route.query))
+return { store }
 ```
 
-在 `setup` 同步阶段取得实例/store，回调中复用；不要等异步回调执行时再调用 `getCurrentInstance()`。页面模板通过 store、计算属性或 `storeToRefs` 消费状态，避免把服务端数据写入模块变量。
-
-预取也可更新组件自身数据，但框架自动传给客户端的只有 **Pinia state**。组件局部数据不会因此自动恢复；需要 hydration 复用的数据应进入 Pinia，或由业务明确实现另一套一致的恢复流程。
+模板通过 store、计算属性或 `storeToRefs` 消费状态，不写模块变量。预取可修改组件局部数据，但框架只自动传递 **Pinia state**；需 hydration 复用的数据放入 Pinia，或自行实现一致的恢复流程。
 
 ## 自定义服务端入口逻辑
 
-`onSSRAppCreated` 仅在 App 声明，只在服务端执行，参数是 `{ pinia, router, app, context }`。它的返回值会直接替代框架默认入口结果，必须返回最终 resolve 为 `app` 的 Promise。只有需要额外路由检查、请求上下文处理等逻辑时才配置。
+通常沿用默认入口；需要额外路由检查或请求上下文处理时才在 App 声明 `onSSRAppCreated({ pinia, router, app, context })`。它仅服务端执行，返回值替代默认入口，必须是最终 resolve 为 `app` 的 Promise。
 
-下面在默认流程基础上增加“无匹配路由返回 404”；前提是 `onAppInit` 已创建并返回 Pinia。将此方法加入现有 `createApp` 选项：
+以下接管路由就绪、最终状态输出，并对未匹配路由返回 404；前提是 `onAppInit` 已返回 Pinia：
 
 ```js
 onSSRAppCreated ({ pinia, router, app, context }) {
@@ -243,29 +209,24 @@ onSSRAppCreated ({ pinia, router, app, context }) {
 }
 ```
 
-实现该钩子后，框架不会再帮你执行默认路由匹配和状态写入。必须保留 `router.onReady` 的失败处理，并在渲染结束的 `context.rendered` 中读取最终 state；在预取前提前输出状态不能保证包含页面数据。项目已有 `context.rendered` 逻辑时合并执行，避免覆盖。
-
-Node 传给 `renderToString` 的自定义 context 字段可在此钩子读取，组件也可通过 Vue 的 `this.$ssrContext` 访问服务端上下文。需要鉴权头等请求信息时显式传给请求函数，不把它们写入共享的 HTTP client 默认配置或会注入 HTML 的 Pinia state。
+- 声明后默认路由匹配与状态写入不再执行。保留 `router.onReady` 失败处理，在 `context.rendered` 读取预取后的最终 state；已有 rendered 逻辑需合并，不能覆盖。
+- Node 自定义 context 可在此读取，组件也可用 `this.$ssrContext`。鉴权等请求信息显式传给请求函数，不写共享 HTTP client 默认配置或会注入 HTML 的 Pinia state。
 
 ## 注意事项
 
 ### 浏览器对象与副作用
 
-`.web.mpx`、`mode="web"` 和 `__mpx_mode__ === 'web'` 同时包含浏览器与 SSR 服务端，不能用来区分两者。服务端与浏览器分支可用 `typeof window !== 'undefined'` 等环境判断。
-
-- 依赖只在调用时访问浏览器对象：保护调用位置，DOM 操作放到客户端挂载后。
-- 依赖在导入时访问 `window` / `document`：顶层静态 import 外面增加判断无效，应在客户端挂载后动态加载该依赖。
-- 不要通过伪造全局 `window` 绕过问题；Mpx 用它判断运行环境，会因此走错启动分支。
-- `mounted`/挂载后的钩子不参与服务端首屏数据准备。浏览器监听器和定时器在客户端挂载后创建；SSR 不执行常规销毁流程，不要依赖销毁钩子清理服务端创建的长期副作用。
+- `.web.mpx`、`mode="web"`、`__mpx_mode__ === 'web'` 均包含 SSR；用 `typeof window !== 'undefined'` 等环境判断区分浏览器。
+- 仅调用时访问浏览器对象的依赖，保护调用位置；导入时就访问 `window` / `document` 的依赖，须在客户端挂载后动态加载，静态 import 外加判断无效。不要伪造全局 `window`，会使 Mpx 误判启动环境。
+- DOM 操作、监听器和定时器放在客户端挂载后，mounted 不用于服务端首屏取数。SSR 不执行常规销毁流程，不能依赖销毁钩子清理服务端长期副作用。
 
 ### 请求能力与错误处理
 
-Web API 可用不等于在 Node 中可直接调用。检查实际请求实现、Node adapter、服务端接口基地址和本次请求所需的鉴权信息；浏览器相对 URL、Cookie 与本地存储不会自动变成服务器的请求上下文。`@mpxjs/api-proxy` 的 Web request 使用 Axios，也需要核对实际打包后的 adapter。
-
-未启用 Promise 化的 `mpx.request` 返回 `RequestTask`，直接从 `serverPrefetch` 返回它不会等待网络完成。使用项目已有的 Promise 请求封装或正确配置 Promise 化。预取失败后返回错误状态还是中止渲染由业务明确处理，不要假定任何 action 异常都会自动映射成预期 HTTP 状态。
+- Web API 可用不代表 Node 可调用：核对请求实现、Node adapter、基地址和本次鉴权；相对 URL、浏览器 Cookie / 本地存储不自动成为服务端上下文。api-proxy 的 Web request 使用 Axios，仍须检查打包后的 adapter。
+- 未 Promise 化的 `mpx.request` 返回 `RequestTask`，直接从预取钩子返回不会等待请求；使用 Promise 封装或正确开启 Promise 化。
+- 预取失败时由业务决定返回错误状态还是中止渲染，不假设 action 异常自动对应预期 HTTP 状态。
 
 ### 共享状态与 i18n
 
-服务端使用明确传入的请求上下文与 Pinia 实例存取状态；`getApp()` / `getCurrentPages()` 在非浏览器环境会打印危险调用错误，不能用作请求级状态入口。App 的 `globalData`、模块级对象和单例也不会因为每次创建 Vue 实例就自动隔离。
-
-SSR 可以使用 i18n，但当前构建通过 `Mpx.i18n` 复用实例，不会每次请求重新创建。不要直接为每个请求修改共享实例的 locale/messages；依赖请求级语言切换的项目必须明确这一限制，不能宣称框架已提供语言状态隔离。
+- 服务端通过显式请求上下文与 Pinia 存取状态；`getApp()` / `getCurrentPages()` 会在非浏览器环境打印危险调用错误，不能充当请求级入口。`globalData`、模块对象和单例不会随 Vue 实例创建而自动隔离。
+- SSR 支持 i18n，但当前构建复用 `Mpx.i18n`，不按请求重建。不能逐请求修改共享 locale/messages；请求级语言切换须另行处理，不视为框架已提供隔离。

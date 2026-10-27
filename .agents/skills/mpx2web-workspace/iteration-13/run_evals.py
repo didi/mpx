@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate or execute Web eval prompts using the RN iteration-17 workflow.
 
-Pass --model and --reasoning-effort matching the parent session. Without
+Pass --model and --reasoning-effort selected for this comparison. Without
 --execute, stage non-deliverable input dependencies and print dispatch JSON.
 With --execute, run independent codex exec processes with cwd and -C fixed to
 mpx2web-workspace. Save agent JSONL, stderr, status, usage and timing in run-1.
@@ -41,7 +41,7 @@ def copy_input_dependencies(eval_dir, output_files, output_dir):
 def build_prompts(eval_ids=None, groups=None, model=None, reasoning_effort=None):
     if not model or not reasoning_effort:
         raise ValueError(
-            "model and reasoning_effort must be explicitly set to the parent session values"
+            "model and reasoning_effort must be explicitly set for the comparison"
         )
 
     evals_cfg, templates_cfg = load_configs()
@@ -56,6 +56,8 @@ def build_prompts(eval_ids=None, groups=None, model=None, reasoning_effort=None)
         evals = [item for item in evals if item["id"] in eval_ids]
 
     skill_paths = {
+        "MPX_SKILL_PATH": str(PROJECT_ROOT / ".agents/skills/mpx/SKILL.md"),
+        "MPX_REFS_PATH": str(PROJECT_ROOT / ".agents/skills/mpx/references/"),
         "MPX2WEB_SKILL_PATH": str(PROJECT_ROOT / ".agents/skills/mpx2web/SKILL.md"),
         "MPX2WEB_REFS_PATH": str(PROJECT_ROOT / ".agents/skills/mpx2web/references/"),
     }
@@ -239,12 +241,12 @@ def main():
     parser.add_argument(
         "--model",
         required=True,
-        help="Model of the parent session; the eval sub-agent must use the same model",
+        help="Model explicitly selected for both comparison groups",
     )
     parser.add_argument(
         "--reasoning-effort",
         required=True,
-        help="Reasoning effort of the parent session; the eval sub-agent must use the same value",
+        help="Reasoning effort explicitly selected for both comparison groups",
     )
     parser.add_argument(
         "--execute",

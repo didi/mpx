@@ -21,6 +21,20 @@ RUNNER = load("run_evals").RUNNER
 
 
 class ConsolidatedCasesTest(unittest.TestCase):
+    def test_scores_match_independently_audited_outputs(self):
+        audit_path = WORKSPACE / "audit/audited-grading.json"
+        if not audit_path.exists():
+            self.skipTest("本轮实际输出复核快照不存在")
+        audit = json.loads(audit_path.read_text())
+        for run in audit["runs"]:
+            output = WORKSPACE / run["expectations"][0]["source"]
+            if not output.exists():
+                self.skipTest("本轮实际输出不存在")
+            with self.subTest(eid=run["eval_id"], group=run["group"]):
+                actual = {r["id"]: r["passed"] for r in GRADE.check_case(run["eval_id"], output)}
+                expected = {r["id"]: r["passed"] for r in run["expectations"]}
+                self.assertEqual(actual, expected)
+
     def test_metadata_inputs_and_checker_coverage_match(self):
         scored = []
         for case in GRADE.CASES.values():
@@ -42,16 +56,21 @@ class ConsolidatedCasesTest(unittest.TestCase):
     def test_all_dispatches_use_new_paths_and_copy_dependencies(self):
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory) / "iteration-18"
-            shutil.copytree(WORKSPACE, workspace, ignore=shutil.ignore_patterns("__pycache__"))
+            shutil.copytree(WORKSPACE, workspace, ignore=shutil.ignore_patterns("__pycache__", "outputs"))
             with patch.object(RUNNER, "WORKSPACE", workspace):
                 dispatches = RUNNER.build_prompts(model="test-parent", reasoning_effort="high")
-            self.assertEqual(len(dispatches), 18)
+            self.assertEqual(len(dispatches), 12)
+            self.assertEqual(GRADE.LEGACY.RUN_KINDS, ("mpx", "mpx2rn"))
             for dispatch in dispatches:
                 self.assertEqual(dispatch["model"], "test-parent")
                 self.assertEqual(dispatch["fork_turns"], "none")
                 self.assertTrue(Path(dispatch["output_path"]).is_relative_to(workspace))
                 self.assertNotIn("iteration-17/", dispatch["prompt"])
-            outputs = workspace / RUNNER.EVAL_DIRS[2] / "no_skill/outputs"
+                self.assertNotIn("{{", dispatch["prompt"])
+                group = Path(dispatch["output_path"]).parent.parent.name
+                self.assertIn(group, ("mpx", "mpx2rn"))
+                self.assertIn(f"/{group}/SKILL.md", dispatch["prompt"])
+            outputs = workspace / RUNNER.EVAL_DIRS[2] / "mpx/outputs"
             for filename in ("components/pay-form/index.mpx", "components/lottie-view/index.mpx", "shield.png", "security-pattern.png"):
                 self.assertTrue((outputs / filename).is_file())
             self.assertFalse((outputs / "carousel-card.mpx").exists())
@@ -65,7 +84,7 @@ class ConsolidatedCasesTest(unittest.TestCase):
             input_dir.mkdir()
             if eid < 3:
                 shutil.copy2(WORKSPACE / RUNNER.EVAL_DIRS[eid] / "input" / filename, input_dir / filename)
-            output = root / "no_skill/outputs" / filename
+            output = root / "mpx/outputs" / filename
             output.parent.mkdir(parents=True)
             output.write_text(source)
             return {r["id"]: r["passed"] for r in GRADE.check_case(eid, output)}

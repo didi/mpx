@@ -1,0 +1,150 @@
+{
+  "cwd": "/Users/didi/work/mpx/.agents/skills/mpx2skyline-workspace",
+  "scope": {
+    "platform": "wx",
+    "renderers": [
+      "skyline",
+      "webview"
+    ],
+    "files": [
+      "iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/orders.mpx",
+      "iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/app.json",
+      "iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/service.js",
+      "iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/report.md"
+    ],
+    "businessChildComponents": [],
+    "excluded": [
+      "home source (not supplied)",
+      "other platforms"
+    ]
+  },
+  "artifacts": [
+    {
+      "file": "iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/orders.mpx",
+      "sha256": "92e85687e5ab9dd185e7c00ccc330e8501c1eaf7ab9477c4b78a4f3dcedebe93"
+    },
+    {
+      "file": "iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/app.json",
+      "sha256": "17f2e059645669385815ed13b49dc9535232bd43cef453c598dbbbdcea6c4d92"
+    },
+    {
+      "file": "iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/service.js",
+      "sha256": "977d51816125ab91147f6e3b4bf9b764046fefc7ad958495285cd4489e3bf164"
+    },
+    {
+      "file": "iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/report.md",
+      "sha256": "5d6bcdd1f40d36a11b87ab6a45b56576f30c30a1b007d04fa59fa17ac8acd65e"
+    }
+  ],
+  "static": {
+    "status": "passed",
+    "matrixRules": 48,
+    "unresolvedErrors": [],
+    "unresolvedWarnings": [],
+    "evidence": [
+      "audit-results.json",
+      "audit.log"
+    ],
+    "command": "node iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/run-1/audit.cjs"
+  },
+  "eslint": {
+    "status": "passed",
+    "errors": 0,
+    "warnings": 0,
+    "evidence": [
+      "eslint-results.json",
+      "eslint.log"
+    ],
+    "command": "node node_modules/eslint/bin/eslint.js --config iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/run-1/eslint.config.cjs --format json --output-file iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/run-1/eslint-results.json iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/orders.mpx iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/service.js"
+  },
+  "mock": {
+    "status": "passed",
+    "runner": "Jest",
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "cases": [
+      "initial fetchOrders(1): 4 groups, 8 items each, unique IDs",
+      "two consecutive pages: page 2 and page 3, original objects retained",
+      "refresh replaces page 1",
+      "fetchOrders(1, true) rejection preserves list/page and clears refresher",
+      "continue pagination and refresh after rejection",
+      "main scrollTop from detail; horizontal/outer bindings isolated",
+      "window resize and modal state",
+      "single-flight requests and failed pagination retry"
+    ],
+    "evidence": [
+      "jest.log",
+      "jest-results.json",
+      "mock-evidence.json",
+      "orders.test.cjs"
+    ],
+    "command": "node /Users/didi/work/mpx/node_modules/jest/bin/jest.js --config iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/run-1/jest.config.cjs --watchman=false --runInBand --json --outputFile=iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/run-1/jest-results.json",
+    "limitations": "Mock createPage registration and wx APIs; no Mpx reactive runtime or native rendering/event delivery."
+  },
+  "real_compile": {
+    "status": "passed",
+    "target": "wx",
+    "type": "page",
+    "errors": [],
+    "warnings": [],
+    "evidence": [
+      "compile.log"
+    ],
+    "command": "npm run compile-validate -- iteration-7/eval-1-page-scroll-sticky-layer-config/mpx2skyline/outputs/orders.mpx --type=page --no-ignore-sub-components --json",
+    "limitations": "Page/dependency build only. app.json checked statically; no full host app or native renderer launch."
+  },
+  "full_app_build": {
+    "status": "not_run",
+    "reason": "Home and complete host app source not supplied."
+  },
+  "developer_tools_rendering": {
+    "status": "not_run",
+    "reason": "No running WeChat Mini Program preview session."
+  },
+  "device": {
+    "status": "not_run",
+    "renderers": [
+      "skyline",
+      "webview"
+    ],
+    "cases": {
+      "nested_scrolling": "not_run",
+      "sticky_headers": "not_run",
+      "gestures_and_horizontal_scrolling": "not_run",
+      "native_refresher_success_and_failure": "not_run",
+      "native_pagination_including_short_content": "not_run",
+      "scroll_position_ui": "not_run",
+      "fullscreen_modal_layering": "not_run"
+    }
+  },
+  "repairs": [
+    {
+      "tool": "Jest startup",
+      "fixes": 1,
+      "reason": "Sandbox Watchman fchmod access denied; rerun with --watchman=false.",
+      "evidence": [
+        "jest-attempt-1.log",
+        "jest.log"
+      ]
+    },
+    {
+      "tool": "Static audit helper",
+      "fixes": 2,
+      "reason": "Fixed unmatched parenthesis, then constrained direction pattern so flex-direction is not treated as unsupported direction.",
+      "evidence": [
+        "audit-attempt-1.log",
+        "audit-attempt-2.log",
+        "audit.log"
+      ]
+    }
+  ],
+  "inputIntegrity": {
+    "serviceUnchanged": true,
+    "originalAppFieldsPreserved": [
+      "pages",
+      "window",
+      "rendererOptions.webview"
+    ]
+  }
+}

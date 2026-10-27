@@ -77,7 +77,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 | --- | --- |
 | 支持范围 | RN 仅 `tap`、`longpress`、`touchstart`、`touchmove`、`touchend`、`touchcancel` 支持阻止冒泡和捕获；其他事件使用 `catch`、`capture-bind` 或 `capture-catch` 时，会警告并降级为普通 `bind`。 |
 | 事件差异 | 子组件绑定 `catchtouchend` 后，父组件的 `tap` 不会响应。 |
-| 使用约束 | iOS 中 `opacity: 0` 会导致元素无法响应事件。 |
+| 使用约束 | iOS 中目标或祖先的 `opacity: 0` 会使目标无法响应事件，点击可能穿透到底层；恢复为 `1` 后可正常响应。极低的非零 opacity 也可能影响点击，仅背景透明不影响点击响应。 |
 | 使用约束 | 事件内联传参优先于 dataset；基准写法见 [模板基础](../base/template-reference.md)。 |
 
 ## Slot 与动态组件

@@ -23,7 +23,7 @@
 - Web 由 Vue 2.7 承载；共用 `.mpx` 使用 Mpx 语法，混用 `.vue` 组件需兼容 Vue 2.7，通过 usingComponents 或 components 注册并隔离其他端依赖，不能直接使用 Vue 3 专用组件。
 - 保持响应式赋值，Web 不提供 `this.setData`；`$forceUpdate` / context.forceUpdate 只支持无参刷新，传入数据、选项和回调会忽略，更新后使用 nextTick。
 - 组件查询支持 id/class 组合与无空格逗号分组，不支持关系选择器；不要套用 RN selector 一律添加空 wx:ref 的规则。
-- 自定义组件事件不支持 `bubbles/composed/capturePhase`；跨层通知使用回调注入或状态。不支持 WXS 事件处理器、mut-bind 和事件内直接执行表达式；详见模板参考。
+- 自定义组件事件不支持 `bubbles/composed/capturePhase`；跨层通知使用回调注入或状态。不支持 WXS 事件处理器、mut-bind 和事件内直接执行表达式。
 - 样式隔离、外部类和虚拟宿主按 Web 实际问题配置；不将所有组件全局虚拟化，也不为 Web 强制改单类选择器。页面滚动无需统一设 disableScroll:true；只有实际使用内部 scroll-view 时才采用对应方案。
 - 编译期 webConfig 与运行时 Mpx.config.webConfig 分开配置。routeConfig 控制路由模式与 base；JSON entryPagePath 不负责部署前缀。
 - 需要按平台或环境生成配置时，按[动态 JSON](../base/json-reference.md#动态-json)使用 `<script name="json">`，并核对 Web 支持字段。

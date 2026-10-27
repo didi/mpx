@@ -16,7 +16,7 @@ class RunnerTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name).resolve() / 'iteration-13'
         shutil.copytree(SOURCE, self.root, ignore=shutil.ignore_patterns(
-            '__pycache__', 'mpx2web', 'no_skill'))
+            '__pycache__', 'mpx', 'mpx2web', 'benchmark.json'))
         self.saved = runner.WORKSPACE, runner.EVAL_WORKDIR
         runner.WORKSPACE, runner.EVAL_WORKDIR = self.root, self.root.parent
 
@@ -42,7 +42,7 @@ class RunnerTests(unittest.TestCase):
         with patch.object(runner.subprocess, 'run', side_effect=fake):
             return runner.run_dispatch(dispatch)
 
-    def test_four_cases_eight_dispatches_match_parent_without_forking(self):
+    def test_four_cases_eight_dispatches_use_selected_model_without_forking(self):
         rows = self.dispatches()
         self.assertEqual(len(rows), 8)
         for row in rows:
@@ -53,7 +53,7 @@ class RunnerTests(unittest.TestCase):
             self.assertNotIn('{{', row['prompt'])
         self.assertEqual(len(list(self.root.glob('eval-*'))), 4)
 
-    def test_requires_parent_model_and_effort(self):
+    def test_requires_explicit_model_and_effort(self):
         for model, effort in ((None, 'high'), ('test-model', None)):
             with self.assertRaisesRegex(ValueError, 'must be explicitly set'):
                 runner.build_prompts(model=model, reasoning_effort=effort)
@@ -78,12 +78,14 @@ class RunnerTests(unittest.TestCase):
         after = self.dispatches()
         self.assertEqual([r['prompt'] for r in before], [r['prompt'] for r in after])
         for index in range(0, len(before), 2):
-            skill, baseline = before[index:index + 2]
-            self.assertEqual(skill['output_files'], baseline['output_files'])
-            self.assertNotIn('compile-validate', baseline['prompt'])
-            self.assertIn('不得读取或使用 mpx2web 或任何其他 Skill', baseline['prompt'])
-            self.assertNotIn(str(runner.PROJECT_ROOT / '.agents/skills/mpx2web/SKILL.md'), baseline['prompt'])
-        self.assertEqual(set(templates['templates']), {'mpx2web', 'no_skill'})
+            mpx, web = before[index:index + 2]
+            self.assertEqual(mpx['output_files'], web['output_files'])
+            for row, group, other in ((mpx, 'mpx', 'mpx2web'), (web, 'mpx2web', 'mpx')):
+                self.assertNotIn('compile-validate', row['prompt'])
+                self.assertIn('只能使用本组指定的 Skill', row['prompt'])
+                self.assertIn(str(runner.PROJECT_ROOT / f'.agents/skills/{group}/SKILL.md'), row['prompt'])
+                self.assertNotIn(str(runner.PROJECT_ROOT / f'.agents/skills/{other}/SKILL.md'), row['prompt'])
+        self.assertEqual(set(templates['templates']), {'mpx', 'mpx2web'})
 
     def test_stages_dependencies_without_staging_answers_or_requirements(self):
         for row in self.dispatches(eval_ids=[0, 2]):
@@ -99,7 +101,7 @@ class RunnerTests(unittest.TestCase):
             self.assertFalse(any((output / name).exists() for name in row['output_files']))
 
     def test_command_matches_rn_cwd_model_and_sandbox_contract(self):
-        dispatch = self.dispatches(eval_ids=[0], groups=['no_skill'])[0]
+        dispatch = self.dispatches(eval_ids=[0], groups=['mpx'])[0]
         command = runner.build_codex_command(dispatch)
         self.assertEqual(command[command.index('-m') + 1], 'test-model')
         self.assertIn('model_reasoning_effort="high"', command)
@@ -119,11 +121,11 @@ class RunnerTests(unittest.TestCase):
             self.assertTrue((run / 'stderr.log').is_file())
 
     def test_missing_non_primary_output_is_failure(self):
-        dispatch = self.dispatches(eval_ids=[3], groups=['no_skill'])[0]
+        dispatch = self.dispatches(eval_ids=[3], groups=['mpx'])[0]
         self.assertFalse(self.execute(dispatch, missing_last=True)['output_exists'])
 
     def test_refuses_execution_outside_workspace(self):
-        dispatch = self.dispatches(eval_ids=[1], groups=['no_skill'])[0]
+        dispatch = self.dispatches(eval_ids=[1], groups=['mpx'])[0]
         dispatch['output_path'] = '/outside/outputs'
         with self.assertRaisesRegex(ValueError, 'output path must stay under'):
             runner.run_dispatch(dispatch)

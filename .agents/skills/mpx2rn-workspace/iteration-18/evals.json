@@ -1,5 +1,5 @@
 {
-  "skill_name": "mpx2rn eval comparison",
+  "skill_name": "mpx vs mpx2rn",
   "iteration": 18,
   "based_on": "../iteration-17",
   "description": "6 个 case：3 个合并适配任务 + 3 个 API/样式范式不同的新建任务；共 61 条独立计分断言。checks 引用 iteration-17 的检查项，同组全部通过才计 1 分。",
@@ -8,27 +8,23 @@
     "run_script": "run_evals.py",
     "grade_script": "grade.py",
     "subagent_config": {
-      "model": "must_match_parent",
-      "reasoning_effort": "must_match_parent",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
       "fork_turns": "none"
     },
-    "usage": "python3 run_evals.py --execute --model <父会话模型> --reasoning-effort <父会话思考强度> [--evals 0 1] [--groups mpx2rn mpx2rn_simple no_skill]；完成后 python3 grade.py。运行器和基础检查复用 ../iteration-17，历史产物不复用，新分母不与旧版 110 条直接比较。"
+    "usage": "python3 run_evals.py --model gpt-6.1-sol --reasoning-effort high --groups mpx mpx2rn；默认仅准备调度与依赖，添加 --execute 才启动模型。完成后 python3 grade.py。运行器和基础检查复用 ../iteration-17，历史产物不复用，新分母不与旧版 110 条直接比较。"
   },
   "comparison": {
     "groups": [
       {
+        "id": "mpx",
+        "label": "使用 mpx 统一 skill",
+        "skill": ".agents/skills/mpx/SKILL.md"
+      },
+      {
         "id": "mpx2rn",
         "label": "使用 mpx2rn 完整版 skill",
         "skill": ".agents/skills/mpx2rn/SKILL.md"
-      },
-      {
-        "id": "mpx2rn_simple",
-        "label": "使用 mpx2rn-simple 精简版 skill",
-        "skill": ".agents/skills/mpx2rn-simple/SKILL.md"
-      },
-      {
-        "id": "no_skill",
-        "label": "不使用 skill (baseline)"
       }
     ]
   },
@@ -328,7 +324,7 @@
         },
         {
           "id": "g8",
-          "text": "样式：带 bindtap 的元素不设置 opacity:0，避免 iOS 事件失效",
+          "text": "样式：点击目标在需要交互的显示状态不保持 opacity:0，允许隐藏后恢复显示",
           "checks": [
             "g8"
           ]
