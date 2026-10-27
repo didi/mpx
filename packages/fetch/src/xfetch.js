@@ -262,9 +262,9 @@ export default class XFetch {
             return promise.then(response => {
               // 回调 usePre.onUpdate
               config.usePre.onUpdate(response)
-            })
+            }, () => {})
           }
-        }).catch(() => {})
+        }, () => {})
         return returnPromise
       }
 
