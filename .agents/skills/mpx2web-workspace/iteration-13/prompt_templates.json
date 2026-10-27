@@ -1,0 +1,31 @@
+{
+  "description": "子 agent 提示语模板，用于 mpx2web eval 评测的两组对比运行",
+  "variables": {
+    "TASK_PROMPT": "evals.json 中的 prompt 字段",
+    "INPUT_PATH": "输入目录的绝对路径；按 case 提供单组件、单页面或最小应用",
+    "OUTPUT_PATH": "输出目录的绝对路径，仅写入本题交付文件",
+    "OUTPUT_FILES": "本题完整交付文件的相对路径列表",
+    "MPX2WEB_SKILL_PATH": ".agents/skills/mpx2web/SKILL.md 的绝对路径",
+    "MPX2WEB_REFS_PATH": ".agents/skills/mpx2web/references/ 的绝对路径",
+    "MODEL": "与父会话相同的子 agent 模型，由调度时显式传入",
+    "REASONING_EFFORT": "与父会话相同的思考强度，由调度时显式传入",
+    "WORKDIR": "子 agent 的固定工作目录，即 .agents/skills/mpx2web-workspace 的绝对路径",
+    "METRICS_PATH": "本次 run 的指标文件路径，由执行器从真实 agent JSONL usage 提取后写入"
+  },
+  "agent_config": {
+    "model": "{{MODEL}}",
+    "reasoning_effort": "{{REASONING_EFFORT}}",
+    "fork_turns": "none",
+    "run_in_background": true
+  },
+  "templates": {
+    "no_skill": {
+      "label": "不使用 skill (baseline)",
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 {{WORKDIR}} 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 {{INPUT_PATH}} 中的需求说明与源码。\n\n**评测基线**：这是用户明确要求的 no_skill 对照组。不得读取或使用 mpx2web 或任何其他 Skill，也不要读取 mpx2web-workspace 中的 evals/grade/其他配置输出和其他被测组文件。仅凭你自身对 Mpx 和 Web 的理解完成任务。\n\n**输出**：仅将以下完整交付文件写入 {{OUTPUT_PATH}}，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\n{{OUTPUT_FILES}}"
+    },
+    "mpx2web": {
+      "label": "使用 mpx2web skill",
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**适配目标平台**：本次评测仅需考虑 wx 和 web 平台。\n\n**工作目录**：将 {{WORKDIR}} 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 {{INPUT_PATH}} 中的需求说明与源码。\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 {{MPX2WEB_SKILL_PATH}}，按照其中的任务流程和知识库索引，仅在需要时读取 {{MPX2WEB_REFS_PATH}} 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：不要读取其他 Skill、mpx2web-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将以下完整交付文件写入 {{OUTPUT_PATH}}，保持相对目录结构与 Mpx SFC，不要修改其他文件；已复制的只读依赖保持不变。交付说明写在相关源码注释中，不另建说明文件。\n{{OUTPUT_FILES}}"
+    }
+  }
+}

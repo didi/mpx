@@ -1,0 +1,53 @@
+# 编译校验
+
+> **脚本位置**：编译校验脚本随本 skill 一同分发，位于 **skill 目录下** 的 `scripts/compile-validate.js`（即 `<skill-root>/scripts/compile-validate.js`），下文所有命令示例均使用 **指向 skill 目录的路径**调用该脚本，不要尝试在宿主项目根目录或 `node_modules` 中查找它。
+
+该脚本基于宿主项目内安装的 `@mpxjs/mpx-cli-service` 进行真实编译校验：会自动从输入 `.mpx` 文件向上探测宿主项目根目录、加载工程编译配置、按指定 `target` 进行编译，并按 `style / template / script / json / dependency / other` 分类聚合错误与警告。默认只验证目标 `.mpx` 文件：默认不检查子组件，因此结果不代表子组件路径、行为及完整依赖均已验证。SFC 改造或新建后在宿主支持时运行；必须显式传入本次实际目标，不能让 Web/微信任务误用默认 ios。
+
+## 目录
+
+- [命令行参数](#命令行参数)
+- [使用示例](#使用示例)
+- [校验边界](#校验边界)
+
+## 命令行参数
+
+| 参数 | 默认 | 说明 |
+| --- | --- | --- |
+| `<file.mpx>...` | - | 一个或多个待校验的 `.mpx` 绝对/相对路径 |
+| `--target=<mode>` | `ios` | 编译目标，多个用逗号分隔（如 `wx,ios,web`）|
+| `--type=<page\|component>` | `component` | 入口类型，按页面或组件进行校验 |
+| `--project-root=<path>` | 自动探测 | 显式指定宿主项目根目录 |
+| `--no-ignore-sub-components` | 关闭 | 保留 `usingComponents`，解析并递归编译所有子组件 |
+| `--json` | 关闭 | 输出结构化 JSON 结果 |
+
+退出码：`0` 校验通过（无错误、无警告）；`1` 存在编译错误或警告；`2` 运行期异常（如未找到 `@mpxjs/mpx-cli-service`）。
+
+## 使用示例
+
+> 下方示例中的 `<skill-root>` 表示本 skill 在宿主环境中的实际安装路径（例如 `.agents/skills/mpx`、`.claude/skills/mpx` 或 `~/.claude/skills/mpx` 等，以实际安装位置为准）；调用时使用该绝对路径，不要在宿主项目根目录下查找 `scripts/compile-validate.js`。
+
+```bash
+# 单组件、显式 target=ios
+node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios
+
+# 显式指定为页面
+node <skill-root>/scripts/compile-validate.js src/pages/index.mpx --type=page --target=ios
+
+# 跨端多目标校验
+node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=wx,ios,web
+
+# 输出结构化 JSON 便于二次处理
+node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios --json
+
+# 同时递归校验子组件（默认行为是仅校验目标自身）
+node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios --no-ignore-sub-components
+```
+
+校验失败时按错误或警告的 `category` 字段回到对应任务步骤定位与修正问题，修复本次变更相关问题后重跑。遵守宿主仓库的测试失败重试上限；本仓库单元测试最多尝试 3 次修复，仍失败时保留错误与分析。
+
+## 校验边界
+
+脚本随本 skill 分发，使用本 skill 的 scripts 路径，不依赖旧 mpx2rn skill。需宿主安装兼容的 `@mpxjs/mpx-cli-service`；找不到依赖时报告未完成真实编译，不把静态检查当成成功。
+
+默认排除子组件，只校验目标文件；若变更涉及组件注册路径、抽象节点或子组件接口，使用 `--no-ignore-sub-components` 或宿主完整构建。真实运行、原生依赖、浏览器权限、SSR 双端构建不由单文件校验覆盖。

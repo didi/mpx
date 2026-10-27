@@ -1,0 +1,6 @@
+{
+  "eval_id": 3,
+  "eval_name": "ssr-state-adaptation",
+  "prompt": "请对附件中的文章应用进行 Web SSR 跨端适配改造，支持服务端首屏渲染与浏览器客户端接管，同时保留微信小程序原有行为。状态迁移要求和宿主环境见 input 中的需求说明。请输出完整的修改后应用、页面、服务、状态和构建配置，不要省略任何内容。",
+  "source_metadata": "evals.json"
+}

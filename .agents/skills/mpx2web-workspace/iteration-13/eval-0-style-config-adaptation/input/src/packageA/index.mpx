@@ -1,0 +1,10 @@
+<template>
+  <view><text>{{title}}</text></view>
+</template>
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: { title: '独立入口说明' }
+})
+</script>

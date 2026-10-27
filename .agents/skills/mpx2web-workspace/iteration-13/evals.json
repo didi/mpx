@@ -1,0 +1,224 @@
+{
+  "skill_name": "mpx2web eval comparison",
+  "iteration": 13,
+  "based_on": "../iteration-12",
+  "description": "4 个 case：最小应用配置适配、单组件生成、单页面业务适配、最小 SSR 应用。仅应用级断言保留 src 工程；去除重复路由断言，分享测试移至单页面，总计 26 条断言。",
+  "runner": {
+    "prompt_templates": "prompt_templates.json",
+    "run_script": "run_evals.py",
+    "grade_script": "grade.py",
+    "aggregate_script": "aggregate_benchmark.py",
+    "subagent_config": {
+      "model": "must_match_parent",
+      "reasoning_effort": "must_match_parent",
+      "fork_turns": "none"
+    },
+    "usage": "1) python3 run_evals.py --execute --model <父会话模型> --reasoning-effort <父会话思考强度> [--evals 0 1] [--groups mpx2web no_skill] 将 input 中非交付依赖复制到 outputs 并通过 codex exec -C 启动子 agent；2) 子 agent 的 -C 与 subprocess cwd 均固定为 mpx2web-workspace，模型与思考强度显式匹配父会话；3) 编译验证由 prompt 与 Skill 决定，runner 不添加也不执行校验；4) JSONL、stderr、运行状态和真实 usage 写入 run-1；5) python3 grade.py 评分后，python3 aggregate_benchmark.py --model <父会话模型> --reasoning-effort <父会话思考强度> 汇总结果。"
+  },
+  "comparison": {
+    "groups": [
+      {
+        "id": "mpx2web",
+        "label": "使用 mpx2web skill",
+        "skill": ".agents/skills/mpx2web/SKILL.md"
+      },
+      {
+        "id": "no_skill",
+        "label": "不使用 skill (baseline)"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "style-config-adaptation",
+      "focus": "style/template/script/json/config",
+      "complexity": "normal",
+      "prompt": "请对附件中的选项应用进行 Web 跨端适配改造，确保 Web 平台编译运行正确，同时保留微信小程序的布局、导航和页面通信行为。部署环境与业务要求见 input 中的需求说明。请输出完整的修改后工程文件，保持 Mpx SFC 和目录结构，不要省略任何内容。",
+      "files": [
+        "input/mpx.config.js",
+        "input/options-app-requirements.md",
+        "input/src/app.mpx",
+        "input/src/components/blue-card.mpx",
+        "input/src/components/layout-cell.mpx",
+        "input/src/components/red-card.mpx",
+        "input/src/components/theme-card.mpx",
+        "input/src/packageA/index.mpx",
+        "input/src/pages/choice/index.mpx",
+        "input/src/pages/home/index.mpx"
+      ],
+      "outputs": [
+        "mpx.config.js",
+        "src/app.mpx",
+        "src/components/blue-card.mpx",
+        "src/components/layout-cell.mpx",
+        "src/components/red-card.mpx",
+        "src/components/theme-card.mpx",
+        "src/pages/choice/index.mpx",
+        "src/pages/home/index.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "s0",
+          "text": "样式：red-card 与 blue-card 的同名类使用独立作用域，不互相覆盖"
+        },
+        {
+          "id": "s1",
+          "text": "布局：layout-cell 的虚拟宿主在 Web 生效，两个实例在 240px Flex 容器中等宽"
+        },
+        {
+          "id": "s2",
+          "text": "样式：theme-card 的 externalClasses 从调用方贯通到内容节点，并保留默认外部类配置"
+        },
+        {
+          "id": "s3",
+          "text": "导航：保留微信 navigator、普通入口 ready 状态和选择结果回传链路"
+        },
+        {
+          "id": "s4",
+          "text": "导航栏：微信胶囊 API 不在 Web 执行，Web 不重复显示系统导航与自定义导航"
+        },
+        {
+          "id": "s5",
+          "text": "路由：Web publicPath、history base 均为 /help-demo/，主包与分包页面保持注册"
+        },
+        {
+          "id": "s6",
+          "text": "尺寸：Web 使用固定二分之一 rpx 换算，微信换算配置保持不变"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "new-profile-component",
+      "focus": "new-component/options-api/regular-class",
+      "complexity": "normal",
+      "prompt": "请根据附件需求，从零创建一个可复用的 profile-card.mpx 组件，确保微信小程序与 Web 的功能和外部样式表现一致。仅输出完整组件 SFC，不要创建应用、页面或构建配置。",
+      "files": [
+        "input/profile-card-requirements.md"
+      ],
+      "outputs": [
+        "profile-card.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "n0",
+          "text": "结构：生成包含 template/script/style/json 的完整 Mpx 组件，使用选项式 createComponent"
+        },
+        {
+          "id": "n2",
+          "text": "样式：组件声明 accent-class 外部类并应用于标题，保留默认外部类约定"
+        },
+        {
+          "id": "n3",
+          "text": "交互：expanded 保存在组件实例内，点击只切换当前实例且不调用 Web 不支持的 setData"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "api-component-adaptation",
+      "focus": "template/script/json/state",
+      "complexity": "tricky",
+      "prompt": "请对附件 business-page.mpx 页面进行 Web 跨端适配，保留微信原行为、公共能力和业务状态链。仅输出完整页面 SFC；native-scanner.mpx 为只读依赖，不要创建应用或额外业务文件。",
+      "files": [
+        "input/business-page-requirements.md",
+        "input/native-scanner.mpx",
+        "input/business-page.mpx"
+      ],
+      "outputs": [
+        "business-page.mpx"
+      ],
+      "assertions": [
+        {
+          "id": "c0",
+          "text": "状态更新：源码中的 this.setData 已改为两端可共用的 Mpx 响应式赋值，Web 不调用不存在的实例方法且扫码结果链路保持有效"
+        },
+        {
+          "id": "c1",
+          "text": "名称编辑：Web 具备输入、确认赋值和取消不赋值链路，微信原交互保持有效"
+        },
+        {
+          "id": "c2",
+          "text": "扫码：微信保留原生扫码组件，Web 构建不解析该组件且只读依赖未修改"
+        },
+        {
+          "id": "c3",
+          "text": "视频：保留 src 与播放事件，Web 在 detail 缺字段时从真实 target 安全回退"
+        },
+        {
+          "id": "c4",
+          "text": "位置：微信保留 chooseLocation，Web 不执行微信 API 且说明真实服务接入边界"
+        },
+        {
+          "id": "c5",
+          "text": "插件：微信保留插件卡片，Web 隔离页面模板与 usingComponents 中的插件引用"
+        },
+        {
+          "id": "c6",
+          "text": "地区与地图：微信原 picker/map 数据链保留，Web 隔离缺失能力并标明接入点"
+        },
+        {
+          "id": "c7",
+          "text": "Swiper 与图片：保留公共能力，只隔离 Web 未实现的局部属性并标明接入点"
+        },
+        {
+          "id": "c8",
+          "text": "结构组件：微信保留 grid-view 与 page-container，Web 隔离缺失组件并标明接入点"
+        },
+        {
+          "id": "c9",
+          "text": "状态：门店确认与商品筛选的草稿、取消、确认状态链保持不变"
+        },
+        {
+          "id": "c10",
+          "text": "分享：微信保留正确标题和路径，Web 隔离分享钩子并呈现未接入边界"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "ssr-state-adaptation",
+      "focus": "script/json/ssr/state",
+      "complexity": "tricky",
+      "prompt": "请对附件中的文章应用进行 Web SSR 跨端适配改造，支持服务端首屏渲染与浏览器客户端接管，同时保留微信小程序原有行为。状态迁移要求和宿主环境见 input 中的需求说明。请输出完整的修改后应用、页面、服务、状态和构建配置，不要省略任何内容。",
+      "files": [
+        "input/article-ssr-requirements.md",
+        "input/mpx.config.js",
+        "input/src/app.mpx",
+        "input/src/pages/article/index.mpx",
+        "input/src/services/article.js",
+        "input/src/store/article.js"
+      ],
+      "outputs": [
+        "mpx.config.js",
+        "src/app.mpx",
+        "src/pages/article/index.mpx",
+        "src/services/article.js",
+        "src/store/article.js"
+      ],
+      "assertions": [
+        {
+          "id": "r0",
+          "text": "SSR：history 路由匹配 /help-demo/，首屏渲染前按当前 query.id 等待文章数据"
+        },
+        {
+          "id": "r1",
+          "text": "状态：文章状态完整迁移到共享 @mpxjs/pinia，并通过 onAppInit 注入应用"
+        },
+        {
+          "id": "r2",
+          "text": "隔离：每次 SSR 请求在 onAppInit 中创建独立 Pinia，文章页使用当前请求实例"
+        },
+        {
+          "id": "r3",
+          "text": "环境：服务端可达的初始化与预取代码不访问 window、document 或 navigator"
+        },
+        {
+          "id": "r4",
+          "text": "兼容：微信 onLoad 继续按 query.id 调用共享 action，并保留文章页面状态与交互"
+        }
+      ]
+    }
+  ]
+}

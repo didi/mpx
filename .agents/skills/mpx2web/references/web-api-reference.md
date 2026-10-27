@@ -2,6 +2,7 @@
 
 ## 目录
 
+- [使用说明](#使用说明)
 - [基础](#基础)
   - [base64ToArrayBuffer](#base64toarraybuffer)
   - [arrayBufferToBase64](#arraybuffertobase64)
@@ -41,6 +42,16 @@
   - [createVideoContext](#createvideocontext)
 - [位置](#位置)
 - [设备](#设备)
+
+---
+
+## 使用说明
+
+- Web 实际用到、且本文确认支持的 `wx.xxx`，优先在 Web 有效代码中显式改为 `mpx.xxx`；应用入口需先用 `mpx.use(apiProxy)` 安装 `@mpxjs/api-proxy`。共享代码也供微信构建时，只有微信入口同样安装代理且调用契约一致，才直接修改共享调用；否则只改 Web 分支或平台文件，保留微信的 `wx.xxx`。
+- 已有 `srcMode: 'wx'` 且命中 `transMpxRules` 的调用可继续使用：Web 构建会把 `wx.xxx` 转到 Mpx API，无需批量修改未涉及的代码。
+- Web 需要覆盖或扩展 API 时，可在安装代理时提供 `custom.web`；同名 API 会被覆盖。
+- 本文只列 Web 可用的 API、入参和结果字段；未列出的小程序能力按 Skill 的[待接入规则](../SKILL.md#统一待接入规则)处理。返回 `null` 的兼容占位字段不作为可用字段列出；通用 `success` / `fail` / `complete` 回调不重复列。
+- SSR 服务端不调用依赖浏览器的 API；节点查询在组件挂载后执行。`createSelectorQuery`、`createIntersectionObserver` 在服务端会返回 `undefined`。
 
 ---
 
@@ -1035,7 +1046,7 @@ onUnload () {
 
 #### 返回值
 
-未启用 Promise 化时返回 `SocketTask`；全局开启 `usePromise: true` 时返回 Promise，可通过其 `__returned` 获取原始 `SocketTask`，或在本次调用中传入 `usePromise: false` 直接返回任务。
+返回 `SocketTask`。
 
 WebSocket 的发送、关闭和事件监听使用返回的 `SocketTask`：`send`、`close`、`onOpen`、`onError`、`onMessage`、`onClose`。
 
@@ -1052,8 +1063,6 @@ WebSocket 的发送、关闭和事件监听使用返回的 `SocketTask`：`send`
 ```js
 connectChannel () {
   this.disconnectChannel()
-  // 此示例按未启用 Promise 化编写；全局开启 usePromise: true 时，
-  // 需在本次调用中传入 usePromise: false，或从返回的 Promise.__returned 获取任务。
   const task = mpx.connectSocket({ url: this.channelUrl })
   this.socketTask = task
   task.onOpen(() => {
@@ -1099,7 +1108,7 @@ detached () {
 
 Web 缓存受浏览器配额、隐私模式和站点存储策略限制，写入可能失败。缓存数据应当可序列化。
 
-`clearStorage` / `clearStorageSync` 会清空当前源下的全部 `localStorage` 数据，包括非 Mpx 写入的数据。
+`clearStorage` 会清除当前站点下的其他同源缓存数据，调用前需确认影响范围。
 
 ### setStorage
 
@@ -1259,7 +1268,7 @@ Web 缓存受浏览器配额、隐私模式和站点存储策略限制，写入�
 
 #### 说明
 
-**异步 API**。清空当前源下的全部 `localStorage` 数据。
+**异步 API**。清空当前站点的全部缓存。
 
 #### 入参
 
@@ -1275,7 +1284,7 @@ Web 缓存受浏览器配额、隐私模式和站点存储策略限制，写入�
 
 #### 说明
 
-同步清空当前源下的全部 `localStorage` 数据。
+同步清空当前站点的全部缓存。
 
 #### 入参
 
