@@ -35,6 +35,7 @@ function getStyleDimensionsSnapshot (dimensionsBase, dimensions) {
 function triggerStyleDimensionsChange () {
   global.__classCaches?.forEach(cache => cache?.clear())
   global.__mpxSizeCount++
+  global.__mpxPageSizeCountMap.__standalone = global.__mpxSizeCount
 
   const navigation = getFocusedNavigation()
 
