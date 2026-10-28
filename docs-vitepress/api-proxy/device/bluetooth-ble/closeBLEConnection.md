@@ -1,8 +1,8 @@
-mpx.closeBLEConnection(Object object)
+## mpx.closeBLEConnection(Object object)
 
 断开与蓝牙低功耗设备的连接。
 
-支持情况： 微信、支付宝
+支持情况： 微信、支付宝、RN
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/bluetooth-ble/wx.closeBLEConnection.html)
 
