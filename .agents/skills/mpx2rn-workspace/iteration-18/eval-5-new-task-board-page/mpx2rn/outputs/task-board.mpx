@@ -1,102 +1,104 @@
 <template>
-  <view class="absolute inset-0 flex flex-col bg-slate-50">
-    <view class="flex flex-col shrink-0 px-[32rpx] pt-[40rpx] pb-[24rpx]">
+  <!-- 用视口边界约束页面，避免依赖 page 的百分比高度或样式块。 -->
+  <view class="fixed top-0 right-0 bottom-0 left-0 z-0 flex flex-col overflow-hidden bg-slate-50">
+    <view class="flex shrink-0 flex-col px-32rpx pt-40rpx pb-24rpx">
       <view class="flex flex-row items-center justify-between">
-        <text class="text-[44rpx] leading-[60rpx] font-bold text-slate-900">任务看板</text>
-        <view class="flex flex-row items-center rounded-full bg-blue-600/10 px-[20rpx] py-[8rpx]">
-          <text class="text-[26rpx] leading-[36rpx] text-blue-600">{{ filteredTasks.length }} 项任务</text>
-        </view>
+        <text class="text-44rpx leading-60rpx font-bold text-slate-900">任务看板</text>
+        <text class="text-26rpx leading-40rpx text-slate-500">{{filteredTasks.length}} 项任务</text>
       </view>
-      <text class="mt-[12rpx] text-[26rpx] leading-[38rpx] text-slate-500">专注当下，一件件完成。</text>
-      <view class="mt-[32rpx] flex flex-row gap-[16rpx]">
+      <text class="mt-12rpx text-26rpx leading-40rpx text-slate-500">整理工作与生活，点击任务切换完成状态</text>
+      <view class="mt-32rpx flex flex-row">
         <view
-          wx:for="{{ categories }}"
+          wx:for="{{filters}}"
+          wx:for-item="filter"
           wx:key="value"
-          class="flex flex-1 flex-row items-center justify-center rounded-[20rpx] py-[20rpx]"
-          wx:class="{{ currentCategory === item.value ? 'bg-blue-600/15' : 'bg-white' }}"
-          hover-class="opacity-70"
-          hover-start-time="{{ 20 }}"
-          hover-stay-time="{{ 100 }}"
-          bindtap="selectCategory(item.value)"
+          class="mr-16rpx flex flex-row items-center justify-center rounded-20rpx px-32rpx py-20rpx"
+          wx:class="{{selectedCategory === filter.value ? 'bg-indigo-600/12' : 'bg-white'}}"
+          hover-class="opacity-60"
+          hover-start-time="{{0}}"
+          hover-stay-time="{{100}}"
+          bindtap="selectCategory(filter.value)"
         >
           <text
-            class="text-[28rpx] leading-[40rpx] font-bold"
-            wx:class="{{ currentCategory === item.value ? 'text-blue-600' : 'text-slate-500' }}"
-          >{{ item.label }}</text>
+            class="text-28rpx leading-40rpx font-bold"
+            wx:class="{{selectedCategory === filter.value ? 'text-indigo-600' : 'text-slate-500'}}"
+          >{{filter.label}}</text>
         </view>
       </view>
     </view>
 
-    <scroll-view class="h-0 min-h-0 w-full flex-1" scroll-y="{{ true }}">
-      <view class="flex flex-col px-[32rpx] pt-[8rpx] pb-[64rpx]">
-        <view wx:if="{{ filteredTasks.length }}" class="flex flex-col gap-[20rpx]">
+    <scroll-view class="h-0 min-h-0 w-full flex-1" scroll-y>
+      <view class="flex flex-col px-32rpx pt-8rpx pb-64rpx">
+        <view
+          wx:for="{{filteredTasks}}"
+          wx:for-item="task"
+          wx:key="taskKey"
+          class="mb-20rpx flex flex-row items-center rounded-24rpx border-2rpx border-solid p-28rpx"
+          wx:class="{{task.completed ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200'}}"
+          hover-class="opacity-60"
+          hover-start-time="{{0}}"
+          hover-stay-time="{{100}}"
+          bindtap="toggleTask(task.taskKey)"
+        >
           <view
-            wx:for="{{ filteredTasks }}"
-            wx:key="taskKey"
-            class="flex flex-row items-center rounded-[24rpx] border-[2rpx] border-solid p-[28rpx]"
-            wx:class="{{ item.completed ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200' }}"
-            hover-class="opacity-70"
-            hover-start-time="{{ 20 }}"
-            hover-stay-time="{{ 100 }}"
-            bindtap="toggleTask(item.taskKey)"
+            class="mr-24rpx flex h-44rpx w-44rpx shrink-0 flex-row items-center justify-center rounded-full border-2rpx border-solid"
+            wx:class="{{task.completed ? 'bg-green-600 border-green-600' : 'bg-white border-slate-300'}}"
           >
-            <view
-              class="mr-[24rpx] flex h-[44rpx] w-[44rpx] shrink-0 flex-row items-center justify-center rounded-full border-[2rpx] border-solid"
-              wx:class="{{ item.completed ? 'bg-green-600 border-green-600' : 'bg-white border-slate-300' }}"
-            >
-              <text class="text-[28rpx] leading-[36rpx] font-bold text-white">{{ item.completed ? '✓' : '' }}</text>
-            </view>
-            <view class="flex min-w-0 flex-1 flex-col">
+            <text class="text-28rpx leading-40rpx font-bold text-white">{{task.completed ? '✓' : ''}}</text>
+          </view>
+          <view class="flex min-w-0 flex-1 flex-col">
+            <text
+              class="text-30rpx leading-44rpx"
+              wx:class="{{task.completed ? 'text-slate-400 line-through' : 'text-slate-900'}}"
+            >{{task.title}}</text>
+            <view class="mt-12rpx flex flex-row items-center justify-between">
+              <text class="text-24rpx leading-36rpx text-slate-500">{{task.category === 'work' ? '工作' : '生活'}}</text>
               <text
-                class="text-[30rpx] leading-[44rpx]"
-                wx:class="{{ item.completed ? 'text-slate-500 line-through' : 'text-slate-900' }}"
-              >{{ item.title }}</text>
-              <view class="mt-[12rpx] flex flex-row items-center justify-between">
-                <text class="text-[24rpx] leading-[36rpx] text-slate-500">{{ item.category === 'work' ? '工作' : '生活' }}</text>
-                <text
-                  class="text-[24rpx] leading-[36rpx]"
-                  wx:class="{{ item.completed ? 'text-green-700' : 'text-blue-600' }}"
-                >{{ item.completed ? '已完成' : '待完成' }}</text>
-              </view>
+                class="text-24rpx leading-36rpx"
+                wx:class="{{task.completed ? 'text-green-700' : 'text-indigo-600'}}"
+              >{{task.completed ? '已完成' : '待完成'}}</text>
             </view>
           </view>
         </view>
-        <view wx:else class="flex flex-col items-center rounded-[24rpx] bg-white px-[32rpx] py-[96rpx]">
-          <text class="text-[32rpx] leading-[46rpx] font-bold text-slate-700">暂无任务</text>
-          <text class="mt-[16rpx] text-[26rpx] leading-[40rpx] text-slate-500">当前分类下没有任务，切换分类看看吧。</text>
+        <view wx:if="{{filteredTasks.length === 0}}" class="flex flex-col items-center px-24rpx py-100rpx">
+          <text class="text-32rpx leading-48rpx font-bold text-slate-700">当前分类暂无任务</text>
+          <text class="mt-16rpx text-26rpx leading-40rpx text-slate-500">试试切换到其他分类</text>
         </view>
-        <text class="mt-[28rpx] text-center text-[24rpx] leading-[36rpx] text-slate-500">点击任务卡片可切换完成状态</text>
       </view>
     </scroll-view>
   </view>
 </template>
 
 <script setup>
-import { computed, onLoad, ref } from '@mpxjs/core'
+import { ref, computed, onLoad } from '@mpxjs/core'
 
-const categories = [
+const filters = [
   { value: 'all', label: '全部' },
   { value: 'work', label: '工作' },
   { value: 'life', label: '生活' }
 ]
-const currentCategory = ref('all')
+const selectedCategory = ref('all')
 const tasks = ref([
   { taskKey: 'work-1', title: '整理本周项目计划', category: 'work', completed: false },
-  { taskKey: 'life-1', title: '散步三十分钟', category: 'life', completed: true },
-  { taskKey: 'work-2', title: '完成任务看板页面设计', category: 'work', completed: false },
-  { taskKey: 'life-2', title: '采购本周食材', category: 'life', completed: false },
-  { taskKey: 'work-3', title: '检查跨端布局与交互', category: 'work', completed: false },
-  { taskKey: 'life-3', title: '阅读二十页书', category: 'life', completed: false },
-  { taskKey: 'work-4', title: '整理团队会议记录', category: 'work', completed: true },
-  { taskKey: 'life-4', title: '收拾书桌与房间', category: 'life', completed: false }
+  { taskKey: 'work-2', title: '完成任务看板设计评审', category: 'work', completed: true },
+  { taskKey: 'life-1', title: '散步三十分钟', category: 'life', completed: false },
+  { taskKey: 'work-3', title: '跟进跨端页面联调', category: 'work', completed: false },
+  { taskKey: 'life-2', title: '购买水果和蔬菜', category: 'life', completed: true },
+  { taskKey: 'work-4', title: '整理会议记录与后续事项', category: 'work', completed: false },
+  { taskKey: 'life-3', title: '阅读二十页喜欢的书', category: 'life', completed: false },
+  { taskKey: 'life-4', title: '收拾书桌，准备明天的物品', category: 'life', completed: false }
 ])
 const filteredTasks = computed(() => tasks.value.filter(task => (
-  currentCategory.value === 'all' || task.category === currentCategory.value
+  selectedCategory.value === 'all' || task.category === selectedCategory.value
 )))
 
+onLoad((rawQuery, decodedQuery = rawQuery) => {
+  const filter = filters.find(item => item.value === decodedQuery.category || item.label === decodedQuery.category)
+  selectedCategory.value = filter ? filter.value : 'all'
+})
+
 function selectCategory (category) {
-  const selected = categories.find(item => item.value === category || item.label === category)
-  currentCategory.value = selected ? selected.value : 'all'
+  selectedCategory.value = category
 }
 
 function toggleTask (taskKey) {
@@ -104,13 +106,9 @@ function toggleTask (taskKey) {
   if (task) task.completed = !task.completed
 }
 
-onLoad((rawQuery = {}, decodedQuery) => {
-  selectCategory((decodedQuery || rawQuery).category)
-})
-
 defineExpose({
-  categories,
-  currentCategory,
+  filters,
+  selectedCategory,
   filteredTasks,
   selectCategory,
   toggleTask

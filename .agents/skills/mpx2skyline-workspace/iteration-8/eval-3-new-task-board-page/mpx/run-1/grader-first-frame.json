@@ -1,0 +1,35 @@
+{
+  "status": "pass",
+  "method": "Execute unmodified real wx compiled component entry and intercept native Component registration before invoking any lifecycle or setup.",
+  "firstFrame": {
+    "data": {
+      "safeOptions": []
+    },
+    "loopExpression": "safeOptions",
+    "consumedValueIsArray": true,
+    "consumedLength": 0
+  },
+  "properties": [
+    "mpxShow",
+    "controlKey",
+    "options",
+    "value",
+    "disabled",
+    "label"
+  ],
+  "setupOrComputedManuallyInvoked": false,
+  "hostMocks": [
+    "wx.getSystemInfoSync",
+    "wx.canIUse",
+    "Component registration callback",
+    "Page/App no-op"
+  ],
+  "runtimeAlias": {
+    "sourceMapMatch": true,
+    "sourceCount": 56,
+    "entry": "webpack://mpx2skyline-skill-eval-workspace/./iteration-8/runtime-core/src/index.js"
+  },
+  "artifact": "build-wx/components/segmented-control5f952533/index.js",
+  "artifactSha256": "ba11b77a61a7888f9caa805419c2ed32251b0318c1e1043cd62d2d7e1047f20a",
+  "boundary": "Native registration-data boundary in Node; no real glass-easel mounting, layout or prop coercion."
+}

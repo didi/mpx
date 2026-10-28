@@ -1,0 +1,404 @@
+{
+  "status": "pass",
+  "scope": [
+    "user-list.mpx",
+    "row.wxml",
+    "logo.svg"
+  ],
+  "source": "iteration-8/skill-snapshots/mpx2skyline/references/skyline-audit-matrix.md",
+  "rules_reviewed": 48,
+  "unresolved_errors": [],
+  "unresolved_warnings": [],
+  "rules": [
+    {
+      "id": "CONFIG_APP_SKYLINE_OPTIONS",
+      "level": "error",
+      "scope": "app.json",
+      "candidate_count": 0,
+      "status": "not_applicable",
+      "reason": "仅组件范围；宿主已接入 Skyline/glass-easel，无 app 输入，不声明已核验宿主配置。"
+    },
+    {
+      "id": "CONFIG_PAGE_SKYLINE",
+      "level": "error",
+      "scope": "page.json",
+      "candidate_count": 3,
+      "status": "not_applicable",
+      "reason": "仅组件范围，保留 component:true，不添加页面导航/renderer 配置。"
+    },
+    {
+      "id": "CONFIG_WORKLET_BABEL",
+      "level": "warn",
+      "scope": "script/config",
+      "candidate_count": 0,
+      "status": "not_applicable",
+      "reason": "无 Worklet，统一 CSS transition/animation。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_FRAGMENT",
+      "level": "error",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_ESCAPE",
+      "level": "error",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_UNSUPPORTED",
+      "level": "error",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_PENDING_SUPPORT",
+      "level": "warn",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_WEBVIEW_ONLY_ATTR",
+      "level": "warn",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_IMAGE_SVG",
+      "level": "warn",
+      "scope": "template/assets",
+      "candidate_count": 1,
+      "status": "pass",
+      "reason": "logo.svg 数值尺寸/坐标及内联 fill；image 显式 aspectFit，无 scaleToFill 差异。"
+    },
+    {
+      "id": "COMP_SCROLL_TYPE",
+      "level": "error",
+      "scope": "template",
+      "candidate_count": 2,
+      "status": "pass",
+      "reason": "users 和 other 都显式 type=list。"
+    },
+    {
+      "id": "COMP_SCROLL_LIST_DIRECT_CHILD",
+      "level": "warn",
+      "scope": "template",
+      "candidate_count": 2,
+      "status": "pass",
+      "reason": "users 直接子 view 上 wx:for；other 为空的对照容器，无列表项虚拟化要求。"
+    },
+    {
+      "id": "COMP_SCROLL_NESTED",
+      "level": "error",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL",
+      "level": "warn",
+      "scope": "template/style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL_CHILD_WIDTH",
+      "level": "warn",
+      "scope": "template/style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_SCROLL_REFRESHER_SLOT",
+      "level": "warn",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_NAVIGATOR_CHILDREN",
+      "level": "error",
+      "scope": "template",
+      "candidate_count": 1,
+      "status": "pass",
+      "reason": "唯一 navigator 只含 text；卡片外层 view 绑定 openDetail。"
+    },
+    {
+      "id": "COMP_TEXT_CHILDREN",
+      "level": "warn",
+      "scope": "template",
+      "candidate_count": 1,
+      "status": "pass",
+      "reason": "各 text 仅含文字或插值，无非法子组件。"
+    },
+    {
+      "id": "COMP_INLINE_MIXED_CONTENT",
+      "level": "warn",
+      "scope": "template",
+      "candidate_count": 3,
+      "status": "pass",
+      "reason": "同一 span 包含 image+text；title flex:1/width:0/min-width:0；max-lines=1/overflow=ellipsis；实际 image 的 skyline-inline 类仅 Skyline 设置 inline-block。"
+    },
+    {
+      "id": "COMP_STICKY_STRUCTURE",
+      "level": "warn",
+      "scope": "template/style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_PICKER_VIEW_INDICATOR",
+      "level": "warn",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "COMP_SWIPER_LIMIT",
+      "level": "warn",
+      "scope": "template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_MEDIA_SCREEN",
+      "level": "error",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_SELECTOR_UNSUPPORTED",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_TEXT_OVERFLOW",
+      "level": "warn",
+      "scope": "template/style",
+      "candidate_count": 3,
+      "status": "pass",
+      "reason": "标题共同截断；WebView truncate 保留 nowrap/hidden/ellipsis；Skyline span 属性+nowrap，文案插值无额外空白。"
+    },
+    {
+      "id": "STYLE_FLEX_TEXT_WRAP",
+      "level": "warn",
+      "scope": "style/template",
+      "candidate_count": 2,
+      "status": "pass",
+      "reason": "标题为 flex 子项且显式 width:0/flex:1/min-width:0；业务为单行省略，无换行需求。"
+    },
+    {
+      "id": "STYLE_OVERFLOW_AXIS",
+      "level": "error",
+      "scope": "style",
+      "candidate_count": 2,
+      "status": "pass",
+      "reason": "唯一 CSS overflow:hidden 是 WebView truncate 类；无 overflow-x/y、auto、scroll 或双值。"
+    },
+    {
+      "id": "STYLE_LAYOUT_UNSUPPORTED",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_TEXT_UNSUPPORTED",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_FONT_POSTSCRIPT_NAME",
+      "level": "error",
+      "scope": "style/template/script",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_FONT",
+      "level": "warn",
+      "scope": "style/template/script",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_TEXT_DECORATION",
+      "level": "warn",
+      "scope": "style/template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_BORDER_RADIUS_BORDER",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 1,
+      "status": "pass",
+      "reason": "8px 圆点 border-radius:4px，无边框，不存在四边颜色/样式差异。"
+    },
+    {
+      "id": "STYLE_BACKGROUND_MASK_LIMIT",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_FILTER_LIMIT",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_BOX_SHADOW_MULTI",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_CALC_ANGLE",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_PSEUDO_ANIMATION",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_ANIMATION_FILL_MODE",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "STYLE_ANIMATION_PROPERTY",
+      "level": "warn",
+      "scope": "style",
+      "candidate_count": 2,
+      "status": "pass",
+      "reason": "真实节点 keyframes 仅 opacity；按钮 transition 仅 transform/opacity，均在白名单内。"
+    },
+    {
+      "id": "STYLE_Z_INDEX_CONTEXT",
+      "level": "warn",
+      "scope": "style/template",
+      "candidate_count": 7,
+      "status": "pass",
+      "reason": "opacity/transform 仅视觉反馈；无 z-index、fixed 或跨分支叠层依赖。"
+    },
+    {
+      "id": "STYLE_NEGATIVE_MARGIN_OCCUPANCY",
+      "level": "warn",
+      "scope": "template/style",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "GLASS_SELECTOR_NUMERIC_ID",
+      "level": "error",
+      "scope": "template/script",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "ANIMATION_WEBVIEW_API",
+      "level": "error",
+      "scope": "script/template",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "SCROLL_CONTEXT_ENHANCED",
+      "level": "error",
+      "scope": "template/script",
+      "candidate_count": 3,
+      "status": "pass",
+      "reason": "this.createSelectorQuery().select('#users').node() 精确对应 users 的 enhanced=true；不因 other 已开启 enhanced 而代替检查。"
+    },
+    {
+      "id": "SELECTOR_QUERY_SCOPE",
+      "level": "warn",
+      "scope": "script",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    },
+    {
+      "id": "PROPS_DEFAULT_FIELD",
+      "level": "error",
+      "scope": "script",
+      "candidate_count": 1,
+      "status": "pass",
+      "reason": "逐项 properties 使用 value；default 只属于 data.config.default，按业务要求保留。"
+    },
+    {
+      "id": "WX_FOR_DATA_TYPE",
+      "level": "warn",
+      "scope": "template/script",
+      "candidate_count": 1,
+      "status": "pass",
+      "reason": "initData.visibleItems=[]；data.items=[]；setRows 将 null 归一为 []；computed.filter 始终返回数组，已测试多次更新。"
+    },
+    {
+      "id": "PROPS_UNION_TYPE",
+      "level": "error",
+      "scope": "script",
+      "candidate_count": 0,
+      "status": "no_match",
+      "reason": "全范围候选扫描无命中，结合完整 SFC/片段/资源复核无此能力或差异。"
+    }
+  ],
+  "manual_review": {
+    "property_types": "label:String/value=用户；payload:String/optionalTypes=[Object]/value=空字符串，接口声明一致；调用方未提供，不声称核验所有宿主传值。",
+    "host_configuration": "not_run：宿主配置不属于组件输入；已有 Skyline/glass-easel 接入按任务前提复用。",
+    "keyframes": "动画与关键帧同处组件；已核对快照推荐 rendererOptions.skyline.keyframeStyleIsolation=legacy，但宿主文件未提供，该项实际取值未验证。",
+    "rendering": "not_run：双 renderer 真机长标题截断、图片对齐、圆点动画、按压观感与实际滚动/跳转需真机验证。"
+  }
+}

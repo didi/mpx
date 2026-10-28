@@ -1,0 +1,22 @@
+{
+  "result": {
+    "success": true,
+    "target": "wx",
+    "projectRoot": "/Users/didi/work/mpx/.agents/skills/mpx2skyline-workspace",
+    "errors": [],
+    "warnings": [],
+    "summary": {
+      "total": 0,
+      "byCategory": {}
+    },
+    "durationMs": 796737
+  },
+  "outDir": "/var/folders/4m/d6j3gt394b3cclk951nyh1400000ks/T/mpx-compile-validate/99f829f9e0ef102c2cbfea2b31b734bd",
+  "source_sha256": "a21642d97bee617478b021bf1e78c5c63f5fff21d2b2c253aaa3186e8be809f9",
+  "workspace_config": {
+    "path": "/Users/didi/work/mpx/.agents/skills/mpx2skyline-workspace/mpx.config.js",
+    "sha256": "3088093d016ed9faaf42106d39faf39887992976dfb925690b3ab135bc093227",
+    "content": "'use strict'\n\nconst path = require('path')\n\nmodule.exports = {\n  configureWebpack: {\n    resolve: {\n      alias: {\n        '@mpxjs/core': path.resolve(__dirname, 'iteration-8/runtime-core')\n      }\n    }\n  },\n  pluginOptions: {\n    mpx: {\n      plugin: {\n        srcMode: 'wx'\n      },\n      loader: {}\n    }\n  }\n}\n"
+  },
+  "validation_scope": "actual wx webpack output only; retained selected WXML/WXSS/JSON artifacts; not native rendering"
+}

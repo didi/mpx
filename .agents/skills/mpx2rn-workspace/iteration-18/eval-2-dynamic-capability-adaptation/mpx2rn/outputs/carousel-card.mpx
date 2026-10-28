@@ -7,8 +7,8 @@
         enable-background@ios="{{true}}"
         wx:style="{{bgStyle}}"
       >
-        <text class="card-title">{{cardTitle}}</text>
-        <text class="card-subtitle">{{cardSubtitle}}</text>
+        <text class="card-title">{{title}}</text>
+        <text class="card-subtitle">{{subtitle}}</text>
       </view>
     </view>
 
@@ -17,9 +17,9 @@
         wx:for="{{items}}"
         wx:key="id"
         class="card-item"
-        hover-class="card-item-active"
+        wx:style="{{[animStyle, item.entryStyle]}}"
         enable-animation@ios="transition"
-        wx:style="{{animStyle}}"
+        hover-class="card-item-active"
         bindtap="handleItemTap(item.id)"
       >
         <image class="item-image" src="{{item.cover}}" mode="aspectFill" />
@@ -27,16 +27,18 @@
           <text class="item-name">{{item.name}}</text>
           <text class="item-price">{{item.price}}</text>
         </view>
-        <view class="item-badge" wx:if="{{item.isNew}}"><text>NEW</text></view>
+        <view class="item-badge" wx:show="{{item.isNew}}"><text>NEW</text></view>
       </view>
     </view>
 
-    <view class="method-selector" enable-var@ios="{{true}}" wx:style="{{methodStyle}}">
-      <!-- RN 的 border-style 仅支持统一设置，用独立节点保留顶部虚线。 -->
-      <view @ios class="method-top-border" enable-var@ios="{{true}}" wx:style="{{methodStyle}}"></view>
+    <view
+      class="method-selector"
+      enable-var@ios="{{true}}"
+      wx:style="{{methodStyle}}"
+    >
       <pay-form id="pay-form" wx:ref />
       <image class="security-icon" src="../../input/shield.png" />
-      <view class="security-bg"></view>
+      <view class="security-bg" key@ios="security-bg"></view>
     </view>
     <view class="card-footer">
       <view
@@ -51,6 +53,7 @@
     <view
       wx:if="{{showToast}}"
       class="toast-mask"
+      wx:class="{{ {'toast-mask-visible': showToast} }}"
       key@ios="toast-mask"
       bindtap="hideToast"
     >
@@ -72,7 +75,7 @@ createComponent({
     subtitle: { type: String, value: '' }
   },
   setup (props, context) {
-    const { title: cardTitle, subtitle: cardSubtitle } = toRefs(props)
+    const { title, subtitle } = toRefs(props)
     const items = ref([])
     const loading = ref(false)
     const showToast = ref(false)
@@ -103,8 +106,8 @@ createComponent({
 
     onMounted(() => {
       showGradient.value = true
-      context.selectComponent('#pay-form')
       initObserver()
+      context.selectComponent('#pay-form')
     })
 
     onUnmounted(() => {
@@ -113,8 +116,6 @@ createComponent({
 
     function initObserver () {
       observer = context.createIntersectionObserver()
-      // 使用视口观察底部哨兵，避免首屏空列表中不存在的参照项。
-      // todo: RN 宿主的 scroll-view 需开启 enable-trigger-intersection-observer。
       observer.relativeToViewport().observe('#load-trigger', (res) => {
         if (res.intersectionRatio > 0) {
           loadMore()
@@ -122,34 +123,47 @@ createComponent({
       })
     }
 
-    async function loadMore () {
+    function loadMore () {
       if (loading.value) return
       loading.value = true
-      try {
-        const res = await mpx.request({
-          usePromise: true,
-          url: '/api/items',
-          data: { page: items.value.length / 10 + 1 }
-        })
-        items.value = items.value.concat(res.data.list)
-        context.nextTick(() => {
-          enableItemAnimation.value = true
-        })
-      } catch (err) {
-        toastMsg.value = err.errMsg || err.message || '加载失败'
-        showToast.value = true
-      } finally {
-        loading.value = false
-      }
+      mpx.request({
+        // RN 宿主需将此业务地址解析到实际 HTTPS 服务。
+        url: '/api/items',
+        usePromise: false,
+        data: { page: items.value.length / 10 + 1 },
+        success (res) {
+          const newItems = res.data.list
+          if (__mpx_mode__ === 'ios') {
+            // RN 不支持 CSS keyframes，以 transition 实现每批新增卡片的入场动画。
+            newItems.forEach((item) => {
+              item.entryStyle = {
+                opacity: 0,
+                transform: 'translateY(20rpx)',
+                transition: 'opacity 0.5s ease, transform 0.5s ease'
+              }
+            })
+          }
+          items.value = items.value.concat(newItems)
+          context.nextTick(() => {
+            enableItemAnimation.value = true
+            if (__mpx_mode__ === 'ios') {
+              newItems.forEach((item) => {
+                item.entryStyle = Object.assign({}, item.entryStyle, {
+                  opacity: 1,
+                  transform: 'translateY(0)'
+                })
+              })
+            }
+          })
+        },
+        complete () {
+          loading.value = false
+        }
+      })
     }
 
-    async function handleItemTap (id) {
-      try {
-        await mpx.navigateTo({ usePromise: true, url: `/pages/detail/index?id=${id}` })
-      } catch (err) {
-        toastMsg.value = err.errMsg || err.message || '跳转失败'
-        showToast.value = true
-      }
+    function handleItemTap (id) {
+      mpx.navigateTo({ url: `/pages/detail/index?id=${id}` })
     }
 
     function hideToast () {
@@ -157,8 +171,8 @@ createComponent({
     }
 
     return {
-      cardTitle,
-      cardSubtitle,
+      title,
+      subtitle,
       methodStyle,
       items,
       loading,
@@ -219,11 +233,7 @@ createComponent({
   align-items: center;
   padding: 24rpx 0;
   border-bottom: 1px solid #eee;
-  /* @mpx-if (__mpx_mode__ === 'ios') */
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  /* @mpx-else */
-  transition: all 0.3s ease;
-  /* @mpx-endif */
+  transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
 }
 
 .card-item-active {
@@ -262,7 +272,8 @@ createComponent({
   border-radius: 4rpx;
 }
 
-/* todo: RN 不支持 CSS 关键帧动画，保留 transition 交互过渡。 */
+
+/* todo: RN 不支持 CSS keyframes，脚本通过 transition 执行入场动画。 */
 /* @mpx-if (__mpx_mode__ !== 'ios') */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20rpx); }
@@ -284,6 +295,10 @@ createComponent({
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0;
+}
+
+.toast-mask-visible {
   opacity: 1;
 }
 
@@ -307,7 +322,7 @@ createComponent({
   justify-content: center;
 }
 .method-selector {
-  position: relative;
+  /* todo: RN 不支持分边框样式，降级为统一实线边框。 */
   /* @mpx-if (__mpx_mode__ === 'ios') */
   border-style: solid;
   /* @mpx-else */
@@ -318,28 +333,15 @@ createComponent({
   /* @mpx-endif */
   border-width: 1px;
   border-color: #ddd;
-  /* @mpx-if (__mpx_mode__ === 'ios') */
-  border-top-width: 0;
-  /* @mpx-endif */
 }
-/* @mpx-if (__mpx_mode__ === 'ios') */
-.method-top-border {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  border-top: 1px dashed #ddd;
-}
-/* @mpx-endif */
 .security-icon { width: 32rpx; height: 32rpx; }
 .security-bg {
   width: 100%;
   height: 32rpx;
   background-image: url('../../input/security-pattern.png');
-  /* todo: RN 仅支持 no-repeat，使用拉伸背景替代横向平铺。 */
+  /* todo: RN 仅支持 no-repeat，保留背景图并降级为单张显示。 */
   /* @mpx-if (__mpx_mode__ === 'ios') */
   background-repeat: no-repeat;
-  background-size: 100% 100%;
   /* @mpx-else */
   background-repeat: repeat-x;
   /* @mpx-endif */
@@ -352,19 +354,16 @@ createComponent({
 
 <script name="json">
 const config = {
-  usingComponents: {
-    'lottie-view': '../../input/components/lottie-view/index',
-    'pay-form': '../../input/components/pay-form/index'
+  "usingComponents": {
+    "lottie-view": "../../input/components/lottie-view/index",
+    "pay-form": "../../input/components/pay-form/index"
   }
 }
 
 if (__mpx_mode__ !== 'ios') {
   config.component = true
-  config.componentPlaceholder = {
-    'lottie-view': 'view'
-  }
+  config.componentPlaceholder = { 'lottie-view': 'view' }
 }
 
-// RN 中这些组件为同步组件，无需异步占位配置。
 module.exports = config
 </script>

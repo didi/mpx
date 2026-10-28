@@ -24,9 +24,15 @@
 | `progress` | 不支持 | 用 `view` 嵌套实现进度条，动画进度可配合 Worklet 驱动 |
 | `navigation-bar` | 不支持 | Skyline 只能使用自定义导航 |
 | `xr-frame` | 不支持 | 3D/XR 页面降级 WebView，或用 `canvas` / WebGL 自行渲染 |
-| `match-media` | 不支持 | 用 `wx.createMediaQueryObserver()` 监听媒体条件，或用 `getWindowInfo()` 获取屏幕尺寸后条件渲染 |
+| `match-media` | 不支持 | 用实例 `this.createMediaQueryObserver()` 监听媒体条件，或用 `getWindowInfo()` 获取窗口尺寸后条件渲染 |
 | `keyboard-accessory` | 不支持 | 用 `input` 的 `worklet:onkeyboardheightchange` 回调实现键盘跟随 |
 | `page-meta` | 基本支持 | 全局页面滚动属性 `scroll-top` / `scroll-duration` 不支持；页面滚动需改用 `scroll-view` |
+
+上述替代方案的调用约定：
+
+- `this.createMediaQueryObserver(): MediaQueryObserver` 无参数，在组件实例中调用；`observer.observe(descriptor, callback): void` 的两个参数必填。`descriptor` 可选 `width/height/minWidth/maxWidth/minHeight/maxHeight: number`（px）及 `orientation: 'landscape' | 'portrait'`；回调 `(res: { matches: boolean }) => void` 接收是否匹配的结果，无需返回值。销毁时调用无参数的 `observer.disconnect(): void` 停止监听。见[官方实例方法](https://github.com/wechat-miniprogram/api-typings/blob/master/types/wx/lib.wx.component.d.ts)与[观察器类型](https://github.com/wechat-miniprogram/api-typings/blob/master/types/wx/lib.wx.api.d.ts)。
+- `getWindowInfo()` 无参数、同步返回窗口信息；尺寸字段见[环境 API 基准](../base/api-reference.md#getwindowinfo)。
+- `worklet:onkeyboardheightchange` 绑定 Worklet 函数 `(e) => void`，从 `e.detail.height: number` 读取键盘高度、`e.detail.pageBottomPadding: number` 读取页面上推高度，无需返回值。函数在 UI 线程执行，完整接入见[高级能力](./index.md#高级能力)与[官方键盘回调](https://github.com/wechat-miniprogram/skyline-skills/blob/master/skills/skyline-components/references/form/input.md#worklet-键盘回调)。
 
 ## WebView-only 属性、取值与行为
 
@@ -90,7 +96,7 @@
 
 ```html
 <import src="inc.wxml" />
-<template is="item-content" data="{{ item }}" />
+<template is="item-content" data="{{ item: item }}" />
 
 <!-- inc.wxml -->
 <template name="item-content"><view>{{ item }}</view></template>
@@ -109,6 +115,8 @@
 - **尺寸与坐标**：不支持百分比，改为具体数值。
 - **样式与颜色**：`<style>` 选择器不生效，改用内联属性；`rgba()` 拆为颜色值与 `fill-opacity` / `stroke-opacity`。
 - **拉伸一致性**：SVG 配合 `image mode="scaleToFill"` 时，WebView 默认按 `preserveAspectRatio` 居中留白，Skyline 会拉伸铺满。需要一致时在 SVG 根节点设置 `preserveAspectRatio="none"`，或避免使用该模式。
+
+本例目标尺寸为 24 × 24，且需要随 image 的 scaleToFill 拉伸铺满。
 
 ```xml
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"

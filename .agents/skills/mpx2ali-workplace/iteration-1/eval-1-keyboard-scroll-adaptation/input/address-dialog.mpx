@@ -1,0 +1,59 @@
+<template>
+  <view>
+    <button bindtap="open">填写地址</button>
+    <scroll-view scroll-y="{{true}}" class="audit"><view>保持宿主默认滚动条</view></scroll-view>
+    <view wx:if="{{visible}}" class="root" catchtouchmove@wx="stopMove">
+      <view class="mask" disable-scroll@ali="{{true}}" bindtap="close">
+        <view class="dialog" catchtap="stopMove">
+          <input value="{{name}}" focus="{{nameFocus}}" enableNative@ali="{{true}}" bindinput="setName" bindblur="blur" />
+          <input value="{{phone}}" type="number" enableNative@ali="{{true}}" bindinput="setPhone" bindblur="blur" />
+          <scroll-view scroll-x="{{true}}" enhanced@wx="{{true}}" show-scrollbar@wx="{{false}}">
+            <view class="options"><button wx:for="{{options}}" wx:key="id" bindtap="select(item.id)">{{item.label}}</button></view>
+          </scroll-view>
+          <scroll-view class="list" scroll-y="{{true}}"><view wx:for="{{rows}}" wx:key="*this">{{item}}</view></scroll-view>
+          <button bindtap="confirm">确认</button>
+          <button bindtap="close">关闭</button>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({
+  data: {
+    visible: false,
+    nameFocus: false,
+    name: '',
+    phone: '',
+    selected: 'all',
+    options: [{ id: 'all', label: '全部' }, { id: 'near', label: '附近' }],
+    rows: Array.from({ length: 30 }, (_, i) => i)
+  },
+  methods: {
+    open () { this.visible = true; this.nameFocus = true },
+    close () { this.visible = false; this.nameFocus = false },
+    blur () { this.nameFocus = false },
+    stopMove () {},
+    setName (e) { this.name = e.detail.value },
+    setPhone (e) { this.phone = e.detail.value },
+    select (id) { this.selected = id },
+    confirm () {
+      this.triggerEvent('confirm', { name: this.name, phone: this.phone, selected: this.selected })
+      this.close()
+    }
+  }
+})
+</script>
+<style>
+.audit { height: 100rpx; }
+.root, .mask { position: fixed; top: 0; right: 0; bottom: 0; left: 0; }
+.root { z-index: 100; }
+.mask { background: rgba(0, 0, 0, 0.5); }
+.dialog { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; padding: 24rpx; }
+.options { width: 1200rpx; display: flex; }
+.list { height: 300rpx; }
+</style>
+<script type="application/json">
+{ "component": true }
+</script>

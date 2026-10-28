@@ -1,0 +1,230 @@
+{
+  "skill_name": "mpx vs mpx2ali",
+  "iteration": 1,
+  "description": "3 个合并 case：2 个适配 + 1 个新建页面；15 条独立能力断言。通用交付与业务保留要求不重复计分，尚未执行模型评测。",
+  "runner": {
+    "prompt_templates": "prompt_templates.json",
+    "run_script": "run_evals.py",
+    "grade_script": "grade.py",
+    "usage": "显式指定模型和思考强度；默认准备调度，--execute 才运行。"
+  },
+  "comparison": {
+    "targets": [
+      "wx",
+      "ali"
+    ],
+    "srcMode": "wx",
+    "groups": [
+      {
+        "id": "mpx",
+        "label": "Mpx 统一 Skill",
+        "skill": ".agents/skills/mpx/SKILL.md"
+      },
+      {
+        "id": "mpx2ali",
+        "label": "Mpx2Ali 专项 Skill",
+        "skill": ".agents/skills/mpx2ali/SKILL.md"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "text-image-adaptation",
+      "focus": "template/style/isolation",
+      "complexity": "tricky",
+      "prompt": "修复 product-card.mpx 在支付宝中的长标题打点、图片留白和同名类污染，保留微信的属性、禁用状态与点击事件。宿主页面及兄弟组件也有 .title/.price，已复现样式互相影响；只交付单个组件，不修改全局配置。根节点 summary-root 供既有组件内查询测量，尚未复现测量异常。工程使用微信源码方言，按实际安装编译器决定文本兼容策略。输出完整 product-card.mpx 和 validation.md，记录实际检查与未验证范围。",
+      "files": [
+        "input/product-card.mpx"
+      ],
+      "outputs": [
+        "product-card.mpx",
+        "validation.md"
+      ],
+      "assertions": [
+        {
+          "id": "a00",
+          "covers": [
+            "a00",
+            "a03"
+          ],
+          "text": "标题在实际截断节点上具有宽度、溢出和换行约束，正确处理 text 继承。",
+          "verification": "核对节点和样式；直接约束 text 或经安装版本/产物证明的默认兼容方案均可，不重复注入全局 text 补丁。"
+        },
+        {
+          "id": "a01",
+          "covers": [
+            "a01"
+          ],
+          "text": "图片留白由外层承担，保留 240rpx × 80rpx 图片内容及 24rpx 留白。",
+          "verification": "追踪 image 和包装节点的尺寸、padding，不能只删除留白。"
+        },
+        {
+          "id": "a32",
+          "covers": [
+            "a32",
+            "a33"
+          ],
+          "text": "通过单文件 scoped 隔离普通 CSS，避免父页面和兄弟组件的同名类互相污染。",
+          "verification": "核对 style scoped、模板 class 与生成样式作用域；微信 styleIsolation 或原子类不能代替这些自定义样式的隔离。"
+        },
+        {
+          "id": "a34",
+          "covers": [
+            "a34"
+          ],
+          "text": "保留 summary-root 测量入口，不因历史支付宝限制机械增加测量包装节点。",
+          "verification": "检查根节点与查询用途；图片留白所需包装属于 a01，不作为多余测量包装扣分。"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "keyboard-scroll-adaptation",
+      "focus": "template/script/keyboard/scroll",
+      "complexity": "tricky",
+      "prompt": "修复 address-dialog.mpx：支付宝 Android 原生输入留白、iOS 非原生输入光标偏移、首次弹层聚焦上推失败均已真机复现；弹层无动画，微信自动上推正常。支付宝面板内列表无法滚动且背景偶尔穿透。横向选项需隐藏滚动条，外部审计列表保持宿主默认。保持两个输入框切换、关闭再打开、输入值、数字键盘、选项选择、蒙层关闭及 confirm 负载。不要使用固定延时或固定键盘高度；依据安装版本核实滚动条转换和 App 样式入口。输出完整 address-dialog.mpx 和 validation.md，记录实际检查与未验证范围。",
+      "files": [
+        "input/address-dialog.mpx"
+      ],
+      "outputs": [
+        "address-dialog.mpx",
+        "validation.md"
+      ],
+      "assertions": [
+        {
+          "id": "a10",
+          "covers": [
+            "a10",
+            "a11",
+            "a15"
+          ],
+          "text": "支付宝按运行时设备系统选择 enableNative，宿主属性分端且微信保持自动上推。",
+          "verification": "两个 input 均以实际 iOS/Android 系统生成布尔值；不以 RN ios 编译目标判断支付宝设备，不把 adjust-position 当支付宝等价能力，不叠加无依据的手动位移。"
+        },
+        {
+          "id": "a12",
+          "covers": [
+            "a12"
+          ],
+          "text": "首次聚焦等待弹层实际渲染，关闭后的旧回调不会重新聚焦。",
+          "verification": "检查渲染完成回调与有效性判断；固定 setTimeout 不能代替渲染时机。"
+        },
+        {
+          "id": "a13",
+          "covers": [
+            "a13"
+          ],
+          "text": "输入框切换不被旧 blur 错误复位或重新抢焦点。",
+          "verification": "追踪两个输入框的 focus/blur 状态链；无需手动位移时允许简化状态，不强制添加状态机。"
+        },
+        {
+          "id": "a20",
+          "covers": [
+            "a20",
+            "a21"
+          ],
+          "text": "禁止滚动的蒙层与可滚动面板为兄弟节点，背景拦截不阻断面板操作。",
+          "verification": "检查 disable-scroll 祖先链、触摸拦截和节点层级；蒙层可关闭，面板可操作。只评分弹层的局部拦截结构，固定页面布局归 a52。"
+        },
+        {
+          "id": "a23",
+          "covers": [
+            "a23",
+            "a24",
+            "a25"
+          ],
+          "text": "滚动条按节点采用严格布尔 false 隐藏，保留审计列表的宿主默认行为。",
+          "verification": "enhanced 仅限微信；核实安装编译器及 App 样式入口，旧版本接受有证据的节点级兼容。不得全局隐藏；true 只恢复默认；单文件编译不证明独立分包/插件的样式集成。"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "new-fixed-navigation-page",
+      "focus": "script/api/json/layout",
+      "complexity": "tricky",
+      "prompt": "按 fixed-page-requirements.md 新建 fixed-page.mpx，统一处理窗口尺寸、安全区、窗口变化、自定义导航和固定页面布局。使用提供的公共尺寸入口，依据安装版本核实导航转换，并说明没有该转换的旧版本替代配置。输出完整 fixed-page.mpx 和 validation.md，保留辅助组件依赖，记录实际检查与未验证范围。",
+      "files": [
+        "input/fixed-page-requirements.md",
+        "input/utils/window-info.js",
+        "input/components/info-badge.mpx"
+      ],
+      "outputs": [
+        "fixed-page.mpx",
+        "validation.md"
+      ],
+      "assertions": [
+        {
+          "id": "a40",
+          "covers": [
+            "a40"
+          ],
+          "text": "页面统一使用提供的公共 getWindowInfo，不在页面重复获取或归一原生系统信息。",
+          "verification": "追踪导入与取值入口；不把 api-proxy 等同含全部业务尺寸归一、校验和缓存的公共封装。"
+        },
+        {
+          "id": "a41",
+          "covers": [
+            "a41"
+          ],
+          "text": "根布局高度取 windowHeight 并使用逻辑 px，不误用屏幕高度或重复缩放。",
+          "verification": "给定 windowHeight=640 时根容器为 640px；不能使用 screenHeight 或无依据除以 pixelRatio。此项只评分尺寸字段和单位。"
+        },
+        {
+          "id": "a42",
+          "covers": [
+            "a42",
+            "a44"
+          ],
+          "text": "安全区按同坐标 screenHeight-bottom 计算，缺失或负值取 0，并包含在窗口总高度内。",
+          "verification": "核对 24/0/0/20px 四组数据及内部 padding/box-sizing；不能混用 windowHeight 与屏幕 bottom，也不能把安全区额外加到根高度之外。"
+        },
+        {
+          "id": "a43",
+          "covers": [
+            "a43"
+          ],
+          "text": "页面显示及 onResize 都重新读取公共尺寸并刷新布局。",
+          "verification": "检查生命周期到取值和响应式更新的调用链，不只复用首次缓存。"
+        },
+        {
+          "id": "a50",
+          "covers": [
+            "a50",
+            "a51",
+            "a55"
+          ],
+          "text": "自定义导航配置适配当前编译器，旧版替代配置显式区分 wx/ali。",
+          "verification": "当前产物 wx 为 navigationStyle=custom；ali 移除该字段并生成空 defaultTitle、transparentTitle=always、titlePenetrate=YES。已有转换时复用；旧版动态 JSON 保留注册且其他平台不落入支付宝兜底。不把透明导航称为移除宿主返回按钮。"
+        },
+        {
+          "id": "a52",
+          "covers": [
+            "a52",
+            "a53"
+          ],
+          "text": "微信禁用页面滚动，支付宝关闭回弹并采用固定根布局，局部列表在导航和操作区之间独立滚动。",
+          "verification": "核对 disableScroll、allowsBounceVertical=NO、根定位和列表高度约束。关闭回弹不等于锁页或关闭刷新。此项只评分滚动职责和布局结构；尺寸字段、安全区数值分别归 a41/a42。"
+        }
+      ]
+    }
+  ],
+  "consolidation": {
+    "previous_case_count": 6,
+    "previous_assertion_count": 36,
+    "common_requirement_sources": [
+      "a02",
+      "a04",
+      "a05",
+      "a14",
+      "a22",
+      "a30",
+      "a31",
+      "a35",
+      "a45",
+      "a54"
+    ],
+    "note": "covers 记录旧断言的归属，每个旧 ID 只出现一次。混合断言中的业务完整性与验证诚实性归共同交付要求，只有对应能力部分计分。"
+  }
+}

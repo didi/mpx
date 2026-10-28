@@ -124,7 +124,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `enable-offset` | boolean | `false` | 获取布局偏移；触摸事件的 `currentTarget`、组件自定义事件的 `target` 提供 `offsetLeft`、`offsetTop` |
 | `enable-var` | boolean | `true` | 启用 CSS variable 计算 |
@@ -143,7 +143,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `enable-background` | boolean | `false` | 启用 background-image、background-size、background-position 计算与渲染 |
 | `enable-animation` | boolean | `false` | 启用动画渲染 |
@@ -159,7 +159,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `is-simple` | 标记 | — | 使用精简文本实现，不提供 CSS variable、calc、ref 等扩展。 |
 
@@ -186,7 +186,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `enable-trigger-intersection-observer` | boolean | `false` | 滚动时按观察器节流配置重新测量相交区域 |
 | `simultaneous-handlers` | array\<object> | `[]` | 允许多个手势同时识别；可传入通过 `this.$refs.xxx` 获取的组件实例 |
@@ -205,7 +205,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `indicator-width` / `indicator-height` | number | `8` | 指示点宽、高 |
 | `indicator-spacing` | number | `4` | 指示点间距 |
@@ -229,9 +229,9 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `workletChange` | function | — | 在 UI 线程即时接收 `{ x, y, source }`，不受 `changeThrottleTime` 影响；函数体须含 `'worklet'`，参数不是完整 Mpx 事件 |
+| `workletChange` | function | — | `(detail) => void`；detail 为 `{ x: number, y: number, source: string }`，x/y 为位置，source 为 `''`、`touch`、`touch-out-of-bounds`、`out-of-bounds` 或 `friction`。在 UI 线程即时执行，不受 `changeThrottleTime` 影响；函数体须含 `'worklet'`，参数不是完整 Mpx 事件，返回值不被消费 |
 | `simultaneous-handlers` / `wait-for` | array\<object> | `[]` | 见 scroll-view 手势协同 |
 | `disable-event-passthrough` | boolean | `false` | 消费非移动方向上的手势，例如横向移动时也阻止竖向手势传递给其他组件 |
 
@@ -243,7 +243,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `enable-fast-image` | boolean | `true` | 默认使用 `@d11/react-native-fast-image` 渲染非 SVG 图片，设为 `false` 时使用 React Native 原生 `Image` |
 | `is-svg` | boolean | `false` | 强制使用 SVG 方式渲染 |
@@ -291,7 +291,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `keyboard-type` | string | — | 指定 RN 键盘类型。 |
 
@@ -329,7 +329,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `enable-wheel-animation` | boolean | `true` | 控制滚轮动画，2.10.17+。 |
 
@@ -353,7 +353,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `enable-auto-rotation` | boolean | `false` | 仅 iOS，系统开启自动旋转时生效 |
 | `preferred-peak-bit-rate` | number | `0` | 码率上界，单位比特/秒 |
@@ -433,7 +433,7 @@ Mpx 扩展虚拟列表组件，可自定义分组头、列表头、列表项；�
 
 #### 属性
 
-| 属性名 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | height | string \| number | `100%` | 组件高度 |
 | width | string \| number | `100%` | 组件宽度 |
@@ -474,11 +474,15 @@ Mpx 扩展虚拟列表组件，可自定义分组头、列表头、列表项；�
 | refresherrefresh | 自定义下拉刷新被触发 |
 | itemexposure | 列表项露出比例达到阈值时触发 |
 
+事件处理器均为 `(event) => void`，返回值不被消费；`scrolltolower`、`refresherrefresh` 不提供额外业务 detail。`itemexposure` 的 `event.detail` 为 `{ items, time }`：time 为毫秒时间戳，items 是本次曝光项数组，每项含 `index: number`（原始 list-data 索引）、`itemData`（原始项）、`layout: { offset: number, length: number }` 与 `threshold: number`（配置的百分比阈值）。
+
 #### 方法
 
 | 方法名 | 说明 |
 | --- | --- |
-| scrollToIndex | 通过 ref 获取实例后可调用，`scrollToIndex({ index, animated, viewOffset, viewPosition })`，用于滚动到指定索引 |
+| `scrollToIndex(options): void` | 通过 ref 获取实例后调用；`options.index: number` 必填，为原始 list-data 的索引。`animated?: boolean` 透传 RN 列表动画选项；`viewOffset?: number` 默认 `0`，为额外位置偏移；`viewPosition?: number` 默认 `0`，`0/0.5/1` 分别对齐可视区顶部/中部/底部。列表未就绪或索引不存在时不执行滚动；不返回 Promise 或完成结果 |
+
+`item-height`、`section-header-height`、`section-footer-height` 接收 `{ value?: number, getter?: (item, index: number) => number }`。getter 优先，入参为对应的原始数据项和它在 list-data 中的索引，返回该项的数值高度；未提供 getter 时使用 value，缺失时按 `0`。列表头高度仅接受 number，不使用 getter。
 
 #### 注意事项
 

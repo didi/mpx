@@ -16,23 +16,23 @@
 
 ### app.json 顶层配置
 
-| 配置项 | 位置 | 类型 | 推荐值 / 示例 | 说明 |
-| --- | --- | --- | --- | --- |
-| `lazyCodeLoading` | `app.json` 顶层 | string | `"requiredComponents"` | 开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量，Skyline 必需，WebView 可按需 |
-| `convertRpxToVw` | `app.json` 顶层 | boolean | 按需 | 基础库 3.3.0+；开启后会将 WebView rpx 计算逻辑对齐 Skyline（`rpx` 单位转换为 `vw` 单位），用于修复部分 `rpx` 精度问题 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `lazyCodeLoading` | string | — | 位置：`app.json` 顶层。开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量，Skyline 必需，WebView 可按需。推荐值 / 示例：`"requiredComponents"`。 |
+| `convertRpxToVw` | boolean | — | 位置：`app.json` 顶层。基础库 3.3.0+；开启后会将 WebView rpx 计算逻辑对齐 Skyline（`rpx` 单位转换为 `vw` 单位），用于修复部分 `rpx` 精度问题。推荐值 / 示例：按需。 |
 
 ### rendererOptions.skyline 配置项
 
 以下字段配置在 **应用 JSON 的 `rendererOptions.skyline`** 中：
 
-| 配置项 | 类型 | 默认值 | 推荐值 | 说明 |
-| --- | --- | --- | --- | --- |
-| `defaultDisplayBlock` | boolean | false | true | 默认 `display: block`（对齐 WebView） |
-| `defaultContentBox` | boolean | false | true | 默认 `box-sizing: content-box`（对齐 WebView） |
-| `tagNameStyleIsolation` | string | "isolated" | "legacy" | 标签选择器全局匹配（对齐 WebView） |
-| `enableScrollViewAutoSize` | boolean | false | true | scroll-view 自动撑开高度 |
-| `keyframeStyleIsolation` | string | - | "legacy" | `@keyframes` 全局共享，避免迁移项目中动画关键帧作用域变化 |
-| `disableABTest` | boolean | false | 按需 | 关闭 Skyline AB 实验，确保稳定性（非必要配置） |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `defaultDisplayBlock` | boolean | false | 默认 `display: block`（对齐 WebView）。推荐值：true。 |
+| `defaultContentBox` | boolean | false | 默认 `box-sizing: content-box`（对齐 WebView）。推荐值：true。 |
+| `tagNameStyleIsolation` | string | "isolated" | 标签选择器全局匹配（对齐 WebView）。推荐值："legacy"。 |
+| `enableScrollViewAutoSize` | boolean | false | scroll-view 自动撑开高度。推荐值：true。 |
+| `keyframeStyleIsolation` | string | - | `@keyframes` 全局共享，避免迁移项目中动画关键帧作用域变化。推荐值："legacy"。 |
+| `disableABTest` | boolean | false | 关闭 Skyline AB 实验，确保稳定性（非必要配置）。推荐值：按需。 |
 
 > 前 5 项用于减少 WebView 与 Skyline 的默认行为差异，迁移项目应逐项检查。`disableABTest` 不是必填项，仅在需要排除灰度实验干扰、让页面全部使用 Skyline 时开启。
 
@@ -62,18 +62,18 @@
 
 页面配置区块的写法见 [页面配置基准](../base/json-reference.md#页面配置)。Skyline 页面的渲染、导航与滚动配置如下：
 
-| 配置项 | Skyline 配置 | 说明 |
-| --- | --- | --- |
-| `renderer` | `'skyline'` | 选择 Skyline 渲染；需要 WebView 的页面使用 `'webview'`。 |
-| `componentFramework` | `'glass-easel'` | 使用 glass-easel 组件框架。 |
-| `navigationStyle` | `'custom'` | 使用自定义导航栏，并在页面中实现导航。 |
-| `disableScroll` | `true` | 禁用页面滚动，通过 scroll-view 承载滚动并迁移业务事件。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `renderer` | `string` | — | 选择 Skyline 渲染；需要 WebView 的页面使用 `'webview'`。Skyline 配置：`'skyline'`。 |
+| `componentFramework` | `string` | — | 使用 glass-easel 组件框架。Skyline 配置：`'glass-easel'`。 |
+| `navigationStyle` | `string` | — | 使用自定义导航栏，并在页面中实现导航。Skyline 配置：`'custom'`。 |
+| `disableScroll` | `boolean` | — | 禁用页面滚动，通过 scroll-view 承载滚动并迁移业务事件。Skyline 配置：`true`。 |
 
 滚动、下拉刷新、触底与滚动监听的事件迁移见 [页面滚动实践](./skyline-runtime-practice.md#页面滚动替代方案)。需要透明页面容器时按需配置：
 
-| 配置项 | 位置 | 类型 | 推荐值 / 示例 | 说明 |
-| --- | --- | --- | --- | --- |
-| `backgroundColorContent` | 页面 JSON | HexColor | `"#00000000"` | Skyline 特有页面配置；设置页面容器背景色，支持 `#RRGGBBAA` 透明度格式，常用于自定义路由透明背景 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `backgroundColorContent` | HexColor | — | 位置：页面 JSON。Skyline 特有页面配置；设置页面容器背景色，支持 `#RRGGBBAA` 透明度格式，常用于自定义路由透明背景。推荐值 / 示例：`"#00000000"`。 |
 
 页面 JSON 示例：
 

@@ -1,0 +1,19 @@
+{
+  "eval_id": 2,
+  "group": "mpx2rn",
+  "assertion_id": "g8",
+  "static_passed": false,
+  "reviewed_passed": true,
+  "source": "eval-2-dynamic-capability-adaptation/mpx2rn/outputs/carousel-card.mpx",
+  "sha256": "8bd1b250acd6fedad07adce326e7f011f1643926d7628b0038fc9e94ce44db3a",
+  "checks": {
+    "rn_template_keeps_dynamic_class": true,
+    "mask_display_condition_matches_visible_class": true,
+    "visible_class_overrides_base_opacity_to_one": true,
+    "entry_opacity_before_next_tick": 0,
+    "entry_opacity_after_next_tick": 1
+  },
+  "explanation": "静态检查仅合并 class，未考虑 wx:class。遮罩仅在 showToast 为 true 时渲染，此时 toast-mask-visible 将 opacity 覆盖为 1；卡片入场 opacity 在 nextTick 从 0 恢复为 1。符合 g8 的显示状态要求。",
+  "limitation": "RN 模板编译与最小脚本桩验证，未进行真机点击测试；原始自动分数保留。",
+  "diagnostics": []
+}

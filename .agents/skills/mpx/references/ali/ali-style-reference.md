@@ -54,7 +54,7 @@ externalClasses: ['custom-class', 'i-class', 'accent-class']
 单行省略的宽度、裁剪与省略样式直接作用于目标 `text`；继承父级 `white-space` 不代表继承完整截断规则。图文混排只约束需要截断的文本，不给整段混排套用。
 
 ```html
-<text class="title">{{title}}</text>
+<view><text class="title">{{title}}</text></view>
 ```
 
 ```css

@@ -1,11 +1,7 @@
-# Mpx2Skyline 测试集
+# Mpx2Skyline 对比评测
 
-当前有效定义为v7：4个case、40条断言（适配33、创建7），8/8模型任务已完成。Agent语义评分：mpx 37/40，mpx2skyline 38/40；[本轮对比报告](iteration-7/benchmark.md)。
+最新 [iteration-8](iteration-8/benchmark.md) 已完成：mpx 39/40，mpx2skyline 39/40。模型gpt-6.1-sol high，8/8独立codex exec，Agent语义评分。
 
-[测试设计](test-design.md) · [定义](iteration-7/evals.json) · [评分标准](iteration-7/grading-standard.md) · [执行说明](iteration-7/README.md)
+[产物查看](iteration-8/review.html) · [执行审计](iteration-8/execution-protocol-audit.json) · [历史 iteration-7](iteration-7/benchmark.md)
 
-| 记录 | 状态与适用范围 |
-| --- | --- |
-| [v7](iteration-7/README.md) | 已执行，原40条断言语义核验完成 |
-
-历史结果仅在对应版本和输入下有效，不合并为v7成绩。
+本轮使用最新Skill快照及修复initData的共同编译依赖，历史分差不能全部归因于Skill；具体限制见本轮报告。

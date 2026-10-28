@@ -1,10 +1,33 @@
-// Deterministic probes use the eval workspace's installed compiler and router.
+// The c3 lifecycle comes from repository source; compiler and router use eval dependencies.
 const fs = require('fs')
 const vm = require('vm')
+const path = require('path')
+const crypto = require('crypto')
 const parser = require('@babel/parser')
 
 function astOf (source) {
   return parser.parse(source, { sourceType: 'unambiguous' })
+}
+
+function localWebLifecycle () {
+  const relativePath = 'packages/core/src/platform/builtInMixins/pageStatusMixin.web.js'
+  const source = fs.readFileSync(path.resolve(__dirname, '../../../..', relativePath), 'utf8')
+  const handlers = []
+  function visit (node) {
+    if (!node || typeof node !== 'object') return
+    if (node.type === 'ObjectMethod' && node.key.name === 'created') handlers.push(node)
+    Object.values(node).forEach(value => {
+      if (Array.isArray(value)) value.forEach(visit)
+      else if (value && typeof value === 'object') visit(value)
+    })
+  }
+  visit(astOf(source))
+  if (handlers.length !== 1) throw new Error('Expected one created hook in local Web pageStatusMixin')
+  return {
+    body: source.slice(handlers[0].body.start, handlers[0].body.end),
+    path: relativePath,
+    sha256: crypto.createHash('sha256').update(source).digest('hex')
+  }
 }
 
 function capture (source, mode) {
@@ -166,9 +189,19 @@ function probe ({ kind, source, mode = 'web', components = [] }) {
     const router = new VueRouter({ mode: 'abstract', routes: [{ path: '/pages/business/index' }] })
     const expected = 'https://media.example/video%2Fpart.mp4?signature=a%2Fb%25&next=%3Fv%3D1'
     context.__query = router.resolve('/pages/business/index?videoUrl=' + encodeURIComponent(expected)).route.query
+    const lifecycle = localWebLifecycle()
+    context.ONLOAD = 'onLoad'
     vm.runInContext(`
       __page = Object.assign({}, typeof __options.value.data === 'function' ? __options.value.data() : __options.value.data, __options.value.methods)
-      __options.value.onLoad.call(__page, __query)
+      __created = function () ${lifecycle.body}
+      __created.call({
+        $root: { $options: { router: { currentRoute: { query: __query } } } },
+        __mpxProxy: { callHook (hook, args) {
+          if (hook !== ONLOAD) throw new Error('Unexpected hook: ' + hook)
+          __loadArgs = args
+          __options.value.onLoad.apply(__page, args)
+        } }
+      })
     `, context, { timeout: 500 })
     const srcMatches = context.__page.src === expected
     const values = { currentTime: 0, duration: 81, videoWidth: 640, videoHeight: 360 }
@@ -178,7 +211,14 @@ function probe ({ kind, source, mode = 'web', components = [] }) {
     context.__event = { detail: { currentTime: 4, duration: 90, width: 1280, height: 720 }, target: {} }
     vm.runInContext('__page.onTimeUpdate(__event); __page.onMetadata(__event)', context, { timeout: 500 })
     const detail = context.__page.currentTime === 4 && context.__page.duration === 90 && context.__page.videoWidth === 1280 && context.__page.videoHeight === 720
-    return { srcMatches, fallback, detail, expected, actual: context.__page.src }
+    return {
+      srcMatches,
+      fallback,
+      detail,
+      expected,
+      actual: context.__page.src,
+      lifecycle: { path: lifecycle.path, sha256: lifecycle.sha256, argumentCount: context.__loadArgs.length, sameQuery: context.__loadArgs[0] === context.__loadArgs[1] }
+    }
   }
   throw new Error(`Unknown probe: ${kind}`)
 }

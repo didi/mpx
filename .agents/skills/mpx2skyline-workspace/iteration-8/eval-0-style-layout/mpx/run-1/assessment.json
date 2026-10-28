@@ -1,0 +1,89 @@
+{
+  "eval_id": 0,
+  "expectations": [
+    {
+      "id": "s0_00",
+      "text": "Skyline 标题的实际 text 承载节点设置 max-lines=1、overflow=ellipsis，并与 WebView 单行省略样式共同实现长标题截断。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:3,42,44：实际 title text 设置 max-lines={{1}} / overflow=ellipsis，插值紧贴标签；title 为 block 自动占满有限 card 内容宽，card 受宿主组件容器宽度约束，非横向无界容器。WebView 保留 nowrap/hidden/text-overflow，Skyline 使用文本节点属性。"
+    },
+    {
+      "id": "s0_01",
+      "text": "Skyline 两列标签使用显式横向 Flex 和等分子项布局，实现两列等宽。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:4,45-46：labels 为显式 row Flex；两个实际 text 均为 label，flex:1（basis 0）、min-width:0，无差异 padding/border，故各占可用宽度 W/2。"
+    },
+    {
+      "id": "s0_02",
+      "text": "Skyline 活动状态通过受支持的 class 选择器映射到红色活动文案。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:5,47：活动节点实际 class=\"badge sale\"，受支持 .sale 选择器直接命中 color:#d00。"
+    },
+    {
+      "id": "s0_03",
+      "text": "WebView 仅在 renderer !== skyline 时添加媒体查询专用类；Skyline 按运行时窗口宽度通过 wx:class 切换 padding，窗口宽度≤320px 为12rpx、>320px 为24rpx，并响应窗口变化。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:2,24,28-37,42-43,70：card-webview 仅 renderer!==skyline，媒体查询唯一选择器为该专用类；Skyline card-small 仅 isSmall 命中。attached 读取 windowWidth<=320，resize 更新同一状态，detached 注销同一回调。run-1/style-card.test.js:43-85 与 jest-result.json 覆盖双模式边界更新和实例清理；评分者另直接执行正式脚本 VM，WebView/Skyline 各初始319/320/321得12/12/24rpx，逐一resize及清理通过。忽略媒体条件后 Skyline 仍不具专用类，12/12/24不受媒体源码顺序影响。"
+    },
+    {
+      "id": "s0_04",
+      "text": "Skyline 内容与父容器上外沿的20px距离由父 padding 表达，子节点从父内容区起始位置布局。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:6,48-49：outer padding-top:20px，child 无 margin-top/定位，子盒从父内容区起点开始，故子盒上外沿20px，子内容顶为20+10=30px。"
+    },
+    {
+      "id": "s0_05",
+      "text": "Skyline 相邻块的垂直间距集中由一侧的16px margin承担，最终相邻盒间距为16px。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:7,50-51：第一块 margin-bottom:16px、第二块 margin-top:0；Skyline 不折叠后的实际贡献16+0=16px，WebView 折叠亦为16px。"
+    },
+    {
+      "id": "s0_06",
+      "text": "Skyline 将双阴影分配到同尺寸的嵌套节点或等效分层结构，呈现原有两层阴影的参数和前后关系。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:9,54-55：many-shadow 外层0 4px 8px #333，many 内层0 2px 4px #000；同为默认 block、无 padding/border/额外间距，内层自动宽且撑外层高度，几何同尺寸。外层大阴影先绘制、内层小阴影后绘制，对应输入第一小阴影在前、第二大阴影在后；report.md:10 明确静态方案，未冒称视觉实测。"
+    },
+    {
+      "id": "s0_07",
+      "text": "Skyline 将复合滤镜分层为内层blur(2px)和外层brightness(.8)，组合呈现原有两种效果。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:10,56-57：实际 filters 包裹 filter-blur；内层 blur(2px)，外层 brightness(.8)，每层单函数，依输入先模糊后亮度组合。"
+    },
+    {
+      "id": "s0_08",
+      "text": "Skyline 字体处理识别 City-Semibold 的同名独立字体族，明确 Trip-Medium 的宿主字体与 PostScript 映射核验点，并记录500/600字重的机型验证要求。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:19,67-69；outputs/report.md:29-31：City-Semibold 独立同名 @font-face + city.woff2 保留600；Trip-Medium 来自宿主并保留500，报告明确 family/PostScript映射、宿主注册及组件可见范围、iOS/Android 500/600风险、补齐二进制后沿已确认设计对比。缺字体不是未识别字体来源；二进制/真机明确not_run。"
+    },
+    {
+      "id": "s0_09",
+      "text": "Skyline 单阴影节点以单个 box-shadow 呈现原有 0 2px 4px rgba(0,0,0,.2) 效果，颜色函数作为完整颜色值解析。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:8,52：single-shadow 实际节点仅一个 box-shadow 声明，0 2px 4px rgba(0,0,0,.2) 与输入完全一致；rgba内逗号属于同一颜色函数，非多层分隔。"
+    },
+    {
+      "id": "s0_10",
+      "text": "Skyline 单滤镜节点采用受支持的 blur(2px)，呈现原有独立模糊效果。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:8,53：single-filter 独立业务节点仍为 filter:blur(2px)，未删除或和复合滤镜混淆；指定参考 skyline-style-reference.md 的受支持单函数含blur。"
+    },
+    {
+      "id": "s0_11",
+      "text": "Skyline 在宿主 defaultContentBox=true 条件下，child 保持100px内容宽度及左右各10px padding，实际外宽为120px。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:49；input/task.md:3 的 defaultContentBox 前提：child 无 box-sizing 覆盖、无 border，width100px即内容宽，左右padding各10px，外宽100+10+10=120px；四边padding均保留。"
+    },
+    {
+      "id": "s0_12",
+      "text": "Skyline 对提示条子节点负 margin-bottom 与后续卡片负 margin-top 的占位链采用显式纵向 Flex 或等效布局，保持 WebView 的重叠效果；普通单侧负 margin 对照保持原语义。",
+      "passed": true,
+      "evidence": "input/style-card.mpx:10-13,39-40；outputs/style-card.mpx:11-15,58-63；outputs/report.md:13-25：原 WebView 块流 tips-bar 92高+92底padding=184rpx，末子负底margin经无border/padding且auto高的tips-wrapper向外折叠，与content-card -92取min(-28,-92)，卡片顶部184-92=92、底部212、与提示条重叠92。改后host与wrapper均column Flex，wrapper占位184-28=156，卡片margin-top调整-64，顶部156-64=92，底部212、重叠92，两端共用实现保持原基线。普通simple-overlap父未改Flex，24-8=16，仍只回拉8。style-card.test.js相应原/新推导通过；真实渲染not_run，不把仅有Flex或两端改后相同当作证据。"
+    },
+    {
+      "id": "s0_13",
+      "text": "Skyline 横向 scroll-view 的直接内容子节点具有明确主轴宽度，背景铺满 320px 视口，两个短项等分；WebView 保持相同布局，不能只靠内部项目的 flex 或 min-width 反向撑宽。",
+      "passed": true,
+      "evidence": "outputs/style-card.mpx:16-18,64-66：fit-scroll width320px、scroll-x/enable-flex=true、type=custom；其直接内容fit-content明确width100%、row Flex、背景#eef2f8，所以内容宽320px。两个fit-item flex:1、min-width:0，无padding/border，各160px；两端共用该布局。尺寸来自直接子width，不依赖内部项目反向撑开。outputs/report.md:11,44-45 明确静态推导与真实渲染not_run。"
+    }
+  ]
+}

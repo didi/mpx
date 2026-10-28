@@ -1,0 +1,103 @@
+{
+  "target": "wx",
+  "renderers": [
+    "skyline",
+    "webview"
+  ],
+  "delivery": [
+    "pages/task-board.mpx",
+    "components/rating-selector.mpx",
+    "components/segmented-control.mpx",
+    "app.json",
+    "report.md"
+  ],
+  "static": {
+    "status": "passed",
+    "matrix_rules_reviewed": 48,
+    "evidence": [
+      "skyline-audit.json",
+      "static-validation.log"
+    ],
+    "unresolved_errors": []
+  },
+  "eslint": {
+    "status": "passed",
+    "errors": 0,
+    "warnings": 0,
+    "evidence": "eslint-final.log"
+  },
+  "real_compile": {
+    "status": "passed",
+    "target": "wx",
+    "page_recursive": true,
+    "independent_components": true,
+    "errors": 0,
+    "warnings": 0,
+    "evidence": [
+      "compile-final-page.json",
+      "compile-final-components.json",
+      "build-wx/"
+    ]
+  },
+  "setup_template_bindings": {
+    "status": "passed",
+    "method": "Actual Mpx script-setup compiler, retained generated scripts; evaluate template expressions and call actual bound handlers in mock mounts.",
+    "evidence": [
+      "compiled-scripts/",
+      "harness.cjs",
+      "business.test.cjs",
+      "jest-results.json"
+    ]
+  },
+  "mock": {
+    "status": "passed",
+    "framework": "Jest; Vue 2.7 reactivity; mocked host APIs, mounting and timers",
+    "passed": 12,
+    "failed": 0,
+    "evidence": [
+      "jest-results.json",
+      "jest.log"
+    ],
+    "does_not_validate": [
+      "native glass-easel prop coercion",
+      "native gesture dispatch",
+      "rendered geometry",
+      "scroll physics",
+      "visual transition timing"
+    ]
+  },
+  "full_host_app_compile": {
+    "status": "not_run",
+    "reason": "Input does not contain home page source or app.mpx; app configuration checked statically."
+  },
+  "developer_tools": {
+    "webview": {
+      "status": "not_run"
+    },
+    "skyline": {
+      "status": "not_run"
+    },
+    "reason": "No connected WeChat Developer Tools runtime."
+  },
+  "real_device": {
+    "webview": {
+      "status": "not_run"
+    },
+    "skyline": {
+      "status": "not_run"
+    },
+    "reason": "No connected WeChat device runtime."
+  },
+  "failure_injection": {
+    "entry": "getCurrentPages()[getCurrentPages().length - 1].failNextRefresh()",
+    "behavior": "Reject next 450ms refresh once; preserves tasks and rating; finally resets refresher state."
+  },
+  "retry_history": [
+    "Jest attempt 1: Watchman sandbox startup failure; disabled Watchman in run-1 config.",
+    "Jest attempt 2: 9 passed, 3 failed; corrected test harness computed enumeration and simulated parent prop propagation.",
+    "Jest final: 12 passed, 0 failed.",
+    "Static attempt 1: text nesting scan false positive across closing text tags; narrowed scan to node content.",
+    "Static final: passed."
+  ],
+  "coverage_boundary": "Only supplied task-board component tree, app.json and existing compile configuration. Home source, complete host app and native renderer behavior excluded."
+}

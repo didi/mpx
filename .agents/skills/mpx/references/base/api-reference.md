@@ -173,17 +173,27 @@ import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
 mpx.use(apiProxy, { usePromise: true })
-const result = await mpx.request({ url: '/api/list' })
+mpx.request({ url: 'https://api.example.com/list' }).then((res) => {
+  console.log(res.data)
+})
 ```
 
-也可使用 `getProxy(options)` 获取独立 API 对象，或 `install(target, options)` 安装到指定对象。直接按名称导入 API 时，不应用安装选项中的 usePromise/custom。
+也可使用 `getProxy(options?)` 获取独立 API 对象，或 `install(target, options?)` 安装到指定对象。`install` 是默认导出的本地命名，如 `import install, { getProxy, promisify } from '@mpxjs/api-proxy'`，不是名为 install 的具名导出。直接按名称导入 API 时，不应用安装选项中的 usePromise/custom。
 
-| 选项 | 默认值 | 使用效果 |
+| 调用 | 参数 | 返回值 |
 | --- | --- | --- |
-| usePromise | false | 对符合规则的异步 API 返回 Promise。 |
-| whiteList | [] | 开启 usePromise 后强制指定名称参与包装；同名项优先于 blackList。 |
-| blackList | [] | 开启 usePromise 后保留指定 API 的原调用形式。 |
-| custom | {} | 按实际输出目标覆盖或新增 API，详见[自定义 API 扩展](#自定义-api-扩展)。 |
+| `getProxy(options?)` | 安装配置对象，默认 `{}`，字段见下表。 | 新的 API 对象，如 `const api = getProxy({ usePromise: true })` 后调用 `api.request(...)`。 |
+| `install(target, options?)` | `target: object` 为要挂载 API 的对象，options 同上。 | `void`；直接修改 target，不返回 API 对象。 |
+| `promisify(apiMap, whiteList?, blackList?)` | API 名到函数的对象；两个可选名单均为 API 名称的 `string[]`，白名单优先。 | 新的 API 函数对象，按规则包装异步方法，未包装的方法保留原调用形式；不修改输入对象，也不自动安装到 Mpx。 |
+
+以下为 `mpx.use(apiProxy, options)`、`install(target, options)` 与 `getProxy(options)` 共用的安装配置 `options` 字段：
+
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| usePromise | `boolean` | false | 对符合规则的异步 API 返回 Promise。 |
+| whiteList | `string[]` | [] | 开启 usePromise 后强制指定名称参与包装；同名项优先于 blackList。 |
+| blackList | `string[]` | [] | 开启 usePromise 后保留指定 API 的原调用形式。 |
+| custom | `object` | {} | 目标端名称到 API 函数对象的映射；按实际输出目标覆盖或新增 API，详见[自定义 API 扩展](#自定义-api-扩展)。 |
 
 ### 自定义 API 扩展
 
@@ -228,7 +238,9 @@ mpx.use(apiProxy, {
 | fail | 通常含 errMsg，可含 errCode/errno | 处理调用失败。 |
 | complete | 本次成功或失败结果 | 调用结束后的处理。 |
 
-异步成功结果通常含 errMsg；仅有协议结果、无额外业务字段时直接说明。取消监听应使用原函数引用；只有接口明确允许时才省略回调清空全部。
+以上回调均为可选函数 `(res) => void`，返回值不被消费；不能通过在 success 中 return 数据取得外层 API 的返回值。监听 API 的 callback 也不返回取消函数，事件载荷见各节；无业务载荷的通知可使用无参回调。异步成功结果通常含 `errMsg: string`；仅有协议结果、无额外业务字段时直接说明。取消监听应使用原函数引用；只有接口明确允许时才省略回调清空全部。
+
+工厂返回的上下文、任务对象的方法不会因安装 `usePromise: true` 自动 Promise 化。下文的 `void` 表示没有业务同步返回值，异步结果仍从该方法自己的回调取得。
 
 ## 基础
 
@@ -240,7 +252,7 @@ mpx.use(apiProxy, {
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `base64` | `string` | 是 | — | 要转化成 ArrayBuffer 对象的 Base64 字符串。 |
 
@@ -256,7 +268,7 @@ mpx.use(apiProxy, {
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `arrayBuffer` | `Uint8Array`（跨端基准用法） | 是 | — | 待编码的字节数组；已有 ArrayBuffer 时使用 `new Uint8Array(buffer)`，已有 Uint8Array 时直接传入。 |
 
@@ -279,7 +291,7 @@ const base64 = mpx.arrayBufferToBase64(bytes)
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `schema` | `string` | 是 | — | 使用 `${API}.${method}.${param}.${option}` 或者 `${component}.${attribute}.${option}` 方式来调用。 |
 
@@ -307,58 +319,58 @@ schema 可使用 API、参数、返回值或组件属性名称。结果只反映
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `SDKVersion` | `string` | 客户端基础库版本。 |
-| `albumAuthorized` | `boolean` | 允许微信使用相册的开关（仅 iOS 有效）。 |
-| `benchmarkLevel` | `number` | 设备性能等级。 |
-| `bluetoothEnabled` | `boolean` | 蓝牙的系统开关。 |
-| `brand` | `string` | 设备品牌。 |
-| `cameraAuthorized` | `boolean` | 允许微信使用摄像头的开关。 |
-| `deviceOrientation` | `'portrait' \| 'landscape'` | 设备方向（注意：IOS客户端横屏游戏获取deviceOrientation可能不准，建议以屏幕宽高为准）。 |
-| `enableDebug` | `boolean` | 是否已打开调试。 |
-| `fontSizeSetting` | `number` | 用户字体大小（单位px）。 |
-| `host` | `Object` | 当前小程序运行的宿主环境。 |
-| `language` | `string` | 微信设置的语言。 |
-| `locationAuthorized` | `boolean` | 允许微信使用定位的开关。 |
-| `locationEnabled` | `boolean` | 地理位置的系统开关。 |
-| `locationReducedAccuracy` | `boolean` | `true` 表示模糊定位，`false` 表示精确定位，仅 iOS 支持。 |
-| `microphoneAuthorized` | `boolean` | 允许微信使用麦克风的开关。 |
-| `model` | `string` | 设备型号。 |
-| `notificationAlertAuthorized` | `boolean` | 允许微信通知带有提醒的开关（仅 iOS 有效）。 |
-| `notificationAuthorized` | `boolean` | 允许微信通知的开关。 |
-| `notificationBadgeAuthorized` | `boolean` | 允许微信通知带有标记的开关（仅 iOS 有效）。 |
-| `notificationSoundAuthorized` | `boolean` | 允许微信通知带有声音的开关（仅 iOS 有效）。 |
-| `phoneCalendarAuthorized` | `boolean` | 允许微信使用日历的开关。 |
-| `pixelRatio` | `number` | 设备像素比。 |
-| `platform` | `'ios' \| 'android' \| 'ohos' \| 'ohos_pc' \| 'windows' \| 'mac' \| 'devtools'` | 运行平台标识。 |
-| `safeArea` | `Object` | 安全区矩形，含 top/right/bottom/left/width/height。 |
-| `screenHeight` | `number` | 屏幕高度，逻辑 px。 |
-| `screenWidth` | `number` | 屏幕宽度，逻辑 px。 |
-| `statusBarHeight` | `number` | 状态栏高度，逻辑 px。 |
-| `system` | `string` | 操作系统与版本。 |
-| `version` | `string` | 微信版本号。 |
-| `wifiEnabled` | `boolean` | Wi-Fi 的系统开关。 |
-| `windowHeight` | `number` | 可用窗口高度，逻辑 px。 |
-| `windowWidth` | `number` | 可用窗口宽度，逻辑 px。 |
-| `theme` | `'dark' \| 'light'` | 系统当前主题，取值为`light`或`dark`，全局配置`"darkmode":true`时才能获取，否则为 undefined （不支持小游戏）。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `SDKVersion` | `string` | — | 客户端基础库版本。 |
+| `albumAuthorized` | `boolean` | — | 允许微信使用相册的开关（仅 iOS 有效）。 |
+| `benchmarkLevel` | `number` | — | 设备性能等级。 |
+| `bluetoothEnabled` | `boolean` | — | 蓝牙的系统开关。 |
+| `brand` | `string` | — | 设备品牌。 |
+| `cameraAuthorized` | `boolean` | — | 允许微信使用摄像头的开关。 |
+| `deviceOrientation` | `'portrait' \| 'landscape'` | — | 设备方向（注意：IOS客户端横屏游戏获取deviceOrientation可能不准，建议以屏幕宽高为准）。 |
+| `enableDebug` | `boolean` | — | 是否已打开调试。 |
+| `fontSizeSetting` | `number` | — | 用户字体大小（单位px）。 |
+| `host` | `Object` | — | 当前小程序运行的宿主环境。 |
+| `language` | `string` | — | 微信设置的语言。 |
+| `locationAuthorized` | `boolean` | — | 允许微信使用定位的开关。 |
+| `locationEnabled` | `boolean` | — | 地理位置的系统开关。 |
+| `locationReducedAccuracy` | `boolean` | — | `true` 表示模糊定位，`false` 表示精确定位，仅 iOS 支持。 |
+| `microphoneAuthorized` | `boolean` | — | 允许微信使用麦克风的开关。 |
+| `model` | `string` | — | 设备型号。 |
+| `notificationAlertAuthorized` | `boolean` | — | 允许微信通知带有提醒的开关（仅 iOS 有效）。 |
+| `notificationAuthorized` | `boolean` | — | 允许微信通知的开关。 |
+| `notificationBadgeAuthorized` | `boolean` | — | 允许微信通知带有标记的开关（仅 iOS 有效）。 |
+| `notificationSoundAuthorized` | `boolean` | — | 允许微信通知带有声音的开关（仅 iOS 有效）。 |
+| `phoneCalendarAuthorized` | `boolean` | — | 允许微信使用日历的开关。 |
+| `pixelRatio` | `number` | — | 设备像素比。 |
+| `platform` | `'ios' \| 'android' \| 'ohos' \| 'ohos_pc' \| 'windows' \| 'mac' \| 'devtools'` | — | 运行平台标识。 |
+| `safeArea` | `Object` | — | 安全区矩形，含 top/right/bottom/left/width/height。 |
+| `screenHeight` | `number` | — | 屏幕高度，逻辑 px。 |
+| `screenWidth` | `number` | — | 屏幕宽度，逻辑 px。 |
+| `statusBarHeight` | `number` | — | 状态栏高度，逻辑 px。 |
+| `system` | `string` | — | 操作系统与版本。 |
+| `version` | `string` | — | 微信版本号。 |
+| `wifiEnabled` | `boolean` | — | Wi-Fi 的系统开关。 |
+| `windowHeight` | `number` | — | 可用窗口高度，逻辑 px。 |
+| `windowWidth` | `number` | — | 可用窗口宽度，逻辑 px。 |
+| `theme` | `'dark' \| 'light'` | — | 系统当前主题，取值为`light`或`dark`，全局配置`"darkmode":true`时才能获取，否则为 undefined （不支持小游戏）。 |
 
 `host` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `appId` | `string` | 宿主 app 对应的 appId。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `appId` | `string` | — | 宿主 app 对应的 appId。 |
 
 `safeArea` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `bottom` | `number` | 安全区域右下角纵坐标。 |
-| `height` | `number` | 高度；布局使用 px。 |
-| `left` | `number` | 安全区域左上角横坐标。 |
-| `right` | `number` | 安全区域右下角横坐标。 |
-| `top` | `number` | 安全区域左上角纵坐标。 |
-| `width` | `number` | 宽度；布局使用 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `bottom` | `number` | — | 安全区域右下角纵坐标。 |
+| `height` | `number` | — | 高度；布局使用 px。 |
+| `left` | `number` | — | 安全区域左上角横坐标。 |
+| `right` | `number` | — | 安全区域右下角横坐标。 |
+| `top` | `number` | — | 安全区域左上角纵坐标。 |
+| `width` | `number` | — | 宽度；布局使用 px。 |
 
 #### 使用注意
 
@@ -378,58 +390,58 @@ schema 可使用 API、参数、返回值或组件属性名称。结果只反映
 
 返回对象：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `SDKVersion` | `string` | 客户端基础库版本。 |
-| `albumAuthorized` | `boolean` | 允许微信使用相册的开关（仅 iOS 有效）。 |
-| `benchmarkLevel` | `number` | 设备性能等级。 |
-| `bluetoothEnabled` | `boolean` | 蓝牙的系统开关。 |
-| `brand` | `string` | 设备品牌。 |
-| `cameraAuthorized` | `boolean` | 允许微信使用摄像头的开关。 |
-| `deviceOrientation` | `'portrait' \| 'landscape'` | 设备方向（注意：IOS客户端横屏游戏获取deviceOrientation可能不准，建议以屏幕宽高为准）。 |
-| `enableDebug` | `boolean` | 是否已打开调试。 |
-| `fontSizeSetting` | `number` | 用户字体大小（单位px）。 |
-| `host` | `Object` | 当前小程序运行的宿主环境。 |
-| `language` | `string` | 微信设置的语言。 |
-| `locationAuthorized` | `boolean` | 允许微信使用定位的开关。 |
-| `locationEnabled` | `boolean` | 地理位置的系统开关。 |
-| `locationReducedAccuracy` | `boolean` | `true` 表示模糊定位，`false` 表示精确定位，仅 iOS 支持。 |
-| `microphoneAuthorized` | `boolean` | 允许微信使用麦克风的开关。 |
-| `model` | `string` | 设备型号。 |
-| `notificationAlertAuthorized` | `boolean` | 允许微信通知带有提醒的开关（仅 iOS 有效）。 |
-| `notificationAuthorized` | `boolean` | 允许微信通知的开关。 |
-| `notificationBadgeAuthorized` | `boolean` | 允许微信通知带有标记的开关（仅 iOS 有效）。 |
-| `notificationSoundAuthorized` | `boolean` | 允许微信通知带有声音的开关（仅 iOS 有效）。 |
-| `phoneCalendarAuthorized` | `boolean` | 允许微信使用日历的开关。 |
-| `pixelRatio` | `number` | 设备像素比。 |
-| `platform` | `'ios' \| 'android' \| 'ohos' \| 'ohos_pc' \| 'windows' \| 'mac' \| 'devtools'` | 运行平台标识。 |
-| `safeArea` | `Object` | 安全区矩形，含 top/right/bottom/left/width/height。 |
-| `screenHeight` | `number` | 屏幕高度，逻辑 px。 |
-| `screenWidth` | `number` | 屏幕宽度，逻辑 px。 |
-| `statusBarHeight` | `number` | 状态栏高度，逻辑 px。 |
-| `system` | `string` | 操作系统与版本。 |
-| `version` | `string` | 微信版本号。 |
-| `wifiEnabled` | `boolean` | Wi-Fi 的系统开关。 |
-| `windowHeight` | `number` | 可用窗口高度，逻辑 px。 |
-| `windowWidth` | `number` | 可用窗口宽度，逻辑 px。 |
-| `theme` | `'dark' \| 'light'` | 系统当前主题，取值为`light`或`dark`，全局配置`"darkmode":true`时才能获取，否则为 undefined （不支持小游戏）。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `SDKVersion` | `string` | — | 客户端基础库版本。 |
+| `albumAuthorized` | `boolean` | — | 允许微信使用相册的开关（仅 iOS 有效）。 |
+| `benchmarkLevel` | `number` | — | 设备性能等级。 |
+| `bluetoothEnabled` | `boolean` | — | 蓝牙的系统开关。 |
+| `brand` | `string` | — | 设备品牌。 |
+| `cameraAuthorized` | `boolean` | — | 允许微信使用摄像头的开关。 |
+| `deviceOrientation` | `'portrait' \| 'landscape'` | — | 设备方向（注意：IOS客户端横屏游戏获取deviceOrientation可能不准，建议以屏幕宽高为准）。 |
+| `enableDebug` | `boolean` | — | 是否已打开调试。 |
+| `fontSizeSetting` | `number` | — | 用户字体大小（单位px）。 |
+| `host` | `Object` | — | 当前小程序运行的宿主环境。 |
+| `language` | `string` | — | 微信设置的语言。 |
+| `locationAuthorized` | `boolean` | — | 允许微信使用定位的开关。 |
+| `locationEnabled` | `boolean` | — | 地理位置的系统开关。 |
+| `locationReducedAccuracy` | `boolean` | — | `true` 表示模糊定位，`false` 表示精确定位，仅 iOS 支持。 |
+| `microphoneAuthorized` | `boolean` | — | 允许微信使用麦克风的开关。 |
+| `model` | `string` | — | 设备型号。 |
+| `notificationAlertAuthorized` | `boolean` | — | 允许微信通知带有提醒的开关（仅 iOS 有效）。 |
+| `notificationAuthorized` | `boolean` | — | 允许微信通知的开关。 |
+| `notificationBadgeAuthorized` | `boolean` | — | 允许微信通知带有标记的开关（仅 iOS 有效）。 |
+| `notificationSoundAuthorized` | `boolean` | — | 允许微信通知带有声音的开关（仅 iOS 有效）。 |
+| `phoneCalendarAuthorized` | `boolean` | — | 允许微信使用日历的开关。 |
+| `pixelRatio` | `number` | — | 设备像素比。 |
+| `platform` | `'ios' \| 'android' \| 'ohos' \| 'ohos_pc' \| 'windows' \| 'mac' \| 'devtools'` | — | 运行平台标识。 |
+| `safeArea` | `Object` | — | 安全区矩形，含 top/right/bottom/left/width/height。 |
+| `screenHeight` | `number` | — | 屏幕高度，逻辑 px。 |
+| `screenWidth` | `number` | — | 屏幕宽度，逻辑 px。 |
+| `statusBarHeight` | `number` | — | 状态栏高度，逻辑 px。 |
+| `system` | `string` | — | 操作系统与版本。 |
+| `version` | `string` | — | 微信版本号。 |
+| `wifiEnabled` | `boolean` | — | Wi-Fi 的系统开关。 |
+| `windowHeight` | `number` | — | 可用窗口高度，逻辑 px。 |
+| `windowWidth` | `number` | — | 可用窗口宽度，逻辑 px。 |
+| `theme` | `'dark' \| 'light'` | — | 系统当前主题，取值为`light`或`dark`，全局配置`"darkmode":true`时才能获取，否则为 undefined （不支持小游戏）。 |
 
 `host` 字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `appId` | `string` | 宿主 app 对应的 appId。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `appId` | `string` | — | 宿主 app 对应的 appId。 |
 
 `safeArea` 字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `bottom` | `number` | 安全区域右下角纵坐标。 |
-| `height` | `number` | 高度；布局使用 px。 |
-| `left` | `number` | 安全区域左上角横坐标。 |
-| `right` | `number` | 安全区域右下角横坐标。 |
-| `top` | `number` | 安全区域左上角纵坐标。 |
-| `width` | `number` | 宽度；布局使用 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `bottom` | `number` | — | 安全区域右下角纵坐标。 |
+| `height` | `number` | — | 高度；布局使用 px。 |
+| `left` | `number` | — | 安全区域左上角横坐标。 |
+| `right` | `number` | — | 安全区域右下角横坐标。 |
+| `top` | `number` | — | 安全区域左上角纵坐标。 |
+| `width` | `number` | — | 宽度；布局使用 px。 |
 
 #### 使用注意
 
@@ -449,27 +461,27 @@ schema 可使用 API、参数、返回值或组件属性名称。结果只反映
 
 返回对象：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `pixelRatio` | `number` | 设备像素比。 |
-| `safeArea` | `Object` | 安全区矩形，含 top/right/bottom/left/width/height。 |
-| `screenHeight` | `number` | 屏幕高度，逻辑 px。 |
-| `screenTop` | `number` | 窗口上边缘相对屏幕的位置，逻辑 px。 |
-| `screenWidth` | `number` | 屏幕宽度，逻辑 px。 |
-| `statusBarHeight` | `number` | 状态栏高度，逻辑 px。 |
-| `windowHeight` | `number` | 可用窗口高度，逻辑 px。 |
-| `windowWidth` | `number` | 可用窗口宽度，逻辑 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `pixelRatio` | `number` | — | 设备像素比。 |
+| `safeArea` | `Object` | — | 安全区矩形，含 top/right/bottom/left/width/height。 |
+| `screenHeight` | `number` | — | 屏幕高度，逻辑 px。 |
+| `screenTop` | `number` | — | 窗口上边缘相对屏幕的位置，逻辑 px。 |
+| `screenWidth` | `number` | — | 屏幕宽度，逻辑 px。 |
+| `statusBarHeight` | `number` | — | 状态栏高度，逻辑 px。 |
+| `windowHeight` | `number` | — | 可用窗口高度，逻辑 px。 |
+| `windowWidth` | `number` | — | 可用窗口宽度，逻辑 px。 |
 
 `safeArea` 字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `bottom` | `number` | 安全区域右下角纵坐标。 |
-| `height` | `number` | 高度；布局使用 px。 |
-| `left` | `number` | 安全区域左上角横坐标。 |
-| `right` | `number` | 安全区域右下角横坐标。 |
-| `top` | `number` | 安全区域左上角纵坐标。 |
-| `width` | `number` | 宽度；布局使用 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `bottom` | `number` | — | 安全区域右下角纵坐标。 |
+| `height` | `number` | — | 高度；布局使用 px。 |
+| `left` | `number` | — | 安全区域左上角横坐标。 |
+| `right` | `number` | — | 安全区域右下角横坐标。 |
+| `top` | `number` | — | 安全区域左上角纵坐标。 |
+| `width` | `number` | — | 宽度；布局使用 px。 |
 
 ### getDeviceInfo
 
@@ -485,17 +497,17 @@ schema 可使用 API、参数、返回值或组件属性名称。结果只反映
 
 返回对象：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `abi` | `string` | 应用二进制接口类型。 |
-| `benchmarkLevel` | `number` | 设备性能等级。 |
-| `brand` | `string` | 设备品牌。 |
-| `cpuType` | `string` | 设备 CPU 型号。 |
-| `deviceAbi` | `string` | 设备二进制接口类型。 |
-| `memorySize` | `string` | 设备内存，单位 MB。 |
-| `model` | `string` | 设备型号。 |
-| `platform` | `'ios' \| 'android' \| 'ohos' \| 'ohos_pc' \| 'windows' \| 'mac' \| 'devtools'` | 运行平台标识。 |
-| `system` | `string` | 操作系统与版本。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `abi` | `string` | — | 应用二进制接口类型。 |
+| `benchmarkLevel` | `number` | — | 设备性能等级。 |
+| `brand` | `string` | — | 设备品牌。 |
+| `cpuType` | `string` | — | 设备 CPU 型号。 |
+| `deviceAbi` | `string` | — | 设备二进制接口类型。 |
+| `memorySize` | `string` | — | 设备内存，单位 MB。 |
+| `model` | `string` | — | 设备型号。 |
+| `platform` | `'ios' \| 'android' \| 'ohos' \| 'ohos_pc' \| 'windows' \| 'mac' \| 'devtools'` | — | 运行平台标识。 |
+| `system` | `string` | — | 操作系统与版本。 |
 
 #### 使用注意
 
@@ -515,24 +527,24 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 返回对象：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `apiCategory` | `'default' \| 'nativeFunctionalized' \| 'browseOnly' \| 'embedded' \| 'chatTool'` | API 类别。 |
-| `forwardMaterials` | `Object[]` | 打开的文件信息数组，只有从聊天素材场景打开（scene为1173）才会携带该参数。 |
-| `hostExtraData` | `Object` | 宿主传递的数据，第三方 app 中运行小程序时返回。 |
-| `path` | `string` | 页面路径。 |
-| `query` | `Record<string, string>` | 页面查询参数。 |
-| `referrerInfo` | `Object` | 来源信息。 |
-| `scene` | `number` | 进入应用的场景值。 |
-| `chatType` | `1 \| 2 \| 3 \| 4` | 从微信群聊/单聊打开小程序时，chatType 表示具体微信群聊/单聊类型。 |
-| `shareTicket` | `string` | 转发票据。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `apiCategory` | `'default' \| 'nativeFunctionalized' \| 'browseOnly' \| 'embedded' \| 'chatTool'` | — | API 类别。 |
+| `forwardMaterials` | `Object[]` | — | 打开的文件信息数组，只有从聊天素材场景打开（scene为1173）才会携带该参数。 |
+| `hostExtraData` | `Object` | — | 宿主传递的数据，第三方 app 中运行小程序时返回。 |
+| `path` | `string` | — | 页面路径。 |
+| `query` | `Record<string, string>` | — | 页面查询参数。 |
+| `referrerInfo` | `Object` | — | 来源信息。 |
+| `scene` | `number` | — | 进入应用的场景值。 |
+| `chatType` | `1 \| 2 \| 3 \| 4` | — | 从微信群聊/单聊打开小程序时，chatType 表示具体微信群聊/单聊类型。 |
+| `shareTicket` | `string` | — | 转发票据。 |
 
 `referrerInfo` 字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `appId` | `string` | 来源小程序、公众号或 App 的 appId。 |
-| `extraData` | `Object` | 来源小程序传过来的数据，scene=1037或1038时支持。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `appId` | `string` | — | 来源小程序、公众号或 App 的 appId。 |
+| `extraData` | `Object` | — | 来源小程序传过来的数据，scene=1037或1038时支持。 |
 
 ### getLaunchOptionsSync
 
@@ -548,24 +560,24 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 返回对象：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `apiCategory` | `'default' \| 'nativeFunctionalized' \| 'browseOnly' \| 'embedded' \| 'chatTool'` | API 类别。 |
-| `forwardMaterials` | `Object[]` | 打开的文件信息数组，只有从聊天素材场景打开（scene为1173）才会携带该参数。 |
-| `hostExtraData` | `Object` | 宿主传递的数据，第三方 app 中运行小程序时返回。 |
-| `path` | `string` | 页面路径。 |
-| `query` | `Record<string, string>` | 页面查询参数。 |
-| `referrerInfo` | `Object` | 来源信息。 |
-| `scene` | `number` | 进入应用的场景值。 |
-| `chatType` | `1 \| 2 \| 3 \| 4` | 从微信群聊/单聊打开小程序时，chatType 表示具体微信群聊/单聊类型。 |
-| `shareTicket` | `string` | 转发票据。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `apiCategory` | `'default' \| 'nativeFunctionalized' \| 'browseOnly' \| 'embedded' \| 'chatTool'` | — | API 类别。 |
+| `forwardMaterials` | `Object[]` | — | 打开的文件信息数组，只有从聊天素材场景打开（scene为1173）才会携带该参数。 |
+| `hostExtraData` | `Object` | — | 宿主传递的数据，第三方 app 中运行小程序时返回。 |
+| `path` | `string` | — | 页面路径。 |
+| `query` | `Record<string, string>` | — | 页面查询参数。 |
+| `referrerInfo` | `Object` | — | 来源信息。 |
+| `scene` | `number` | — | 进入应用的场景值。 |
+| `chatType` | `1 \| 2 \| 3 \| 4` | — | 从微信群聊/单聊打开小程序时，chatType 表示具体微信群聊/单聊类型。 |
+| `shareTicket` | `string` | — | 转发票据。 |
 
 `referrerInfo` 字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `appId` | `string` | 来源小程序、公众号或 App 的 appId。 |
-| `extraData` | `Object` | 来源小程序传过来的数据，scene=1037或1038时支持。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `appId` | `string` | — | 来源小程序、公众号或 App 的 appId。 |
+| `extraData` | `Object` | — | 来源小程序传过来的数据，scene=1037或1038时支持。 |
 
 #### 使用注意
 
@@ -579,7 +591,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -589,24 +601,24 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `apiCategory` | `'default' \| 'nativeFunctionalized' \| 'browseOnly' \| 'embedded' \| 'chatTool'` | API 类别。 |
-| `forwardMaterials` | `Object[]` | 打开的文件信息数组，只有从聊天素材场景打开（scene为1173）才会携带该参数。 |
-| `hostExtraData` | `Object` | 宿主传递的数据，第三方 app 中运行小程序时返回。 |
-| `path` | `string` | 页面路径。 |
-| `query` | `Record<string, string>` | 页面查询参数。 |
-| `referrerInfo` | `Object` | 来源信息。 |
-| `scene` | `number` | 进入应用的场景值。 |
-| `chatType` | `1 \| 2 \| 3 \| 4` | 从微信群聊/单聊打开小程序时，chatType 表示具体微信群聊/单聊类型。 |
-| `shareTicket` | `string` | 转发票据。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `apiCategory` | `'default' \| 'nativeFunctionalized' \| 'browseOnly' \| 'embedded' \| 'chatTool'` | — | API 类别。 |
+| `forwardMaterials` | `Object[]` | — | 打开的文件信息数组，只有从聊天素材场景打开（scene为1173）才会携带该参数。 |
+| `hostExtraData` | `Object` | — | 宿主传递的数据，第三方 app 中运行小程序时返回。 |
+| `path` | `string` | — | 页面路径。 |
+| `query` | `Record<string, string>` | — | 页面查询参数。 |
+| `referrerInfo` | `Object` | — | 来源信息。 |
+| `scene` | `number` | — | 进入应用的场景值。 |
+| `chatType` | `1 \| 2 \| 3 \| 4` | — | 从微信群聊/单聊打开小程序时，chatType 表示具体微信群聊/单聊类型。 |
+| `shareTicket` | `string` | — | 转发票据。 |
 
 `referrerInfo` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `appId` | `string` | 来源小程序、公众号或 App 的 appId。 |
-| `extraData` | `Object` | 来源小程序传过来的数据，scene=1037或1038时支持。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `appId` | `string` | — | 来源小程序、公众号或 App 的 appId。 |
+| `extraData` | `Object` | — | 来源小程序传过来的数据，scene=1037或1038时支持。 |
 
 ### onAppHide
 
@@ -616,7 +628,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -626,9 +638,9 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `reason` | `0 \| 1 \| 2 \| 3` | 后台原因：0 退出、1 进入其他小程序、2 原生功能页、3 其他。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `reason` | `0 \| 1 \| 2 \| 3` | — | 后台原因：0 退出、1 进入其他小程序、2 原生功能页、3 其他。 |
 
 ### offAppShow
 
@@ -638,7 +650,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -654,7 +666,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -670,7 +682,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -680,9 +692,11 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `message` | `string` | 错误信息，包含堆栈。 |
+回调签名为 `(message: string) => void`，直接接收错误字符串，不是 `{ message }` 对象。
+
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `message` | `string` | — | 错误信息，包含堆栈。 |
 
 ### offError
 
@@ -692,7 +706,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -708,7 +722,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -718,10 +732,10 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `promise` | `Promise<any>` | 被拒绝的 Promise 对象。 |
-| `reason` | `string` | Promise 的拒绝原因，通常为 Error 对象；RN/Web 的实际类型见端差异。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `promise` | `Promise<any>` | — | 被拒绝的 Promise 对象。 |
+| `reason` | `string` | — | Promise 的拒绝原因，通常为 Error 对象；RN/Web 的实际类型见端差异。 |
 
 ### offUnhandledRejection
 
@@ -731,7 +745,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -747,7 +761,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -757,11 +771,11 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `errMsg` | `string` | 调用结果信息。 |
-| `subpackage` | `any[]` | 异步组件所属的分包。 |
-| `type` | `string` | 失败类型，通常为 subpackage。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `errMsg` | `string` | — | 调用结果信息。 |
+| `subpackage` | `any[]` | — | 异步组件所属的分包。 |
+| `type` | `string` | — | 失败类型，通常为 subpackage。 |
 
 ### offLazyLoadError
 
@@ -771,7 +785,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -791,7 +805,7 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `url` | `string` | 是 | — | 目标地址或应用内页面路径。 |
 | `events` | `Object` | 否 | — | 页面间通信接口，用于监听被打开页面发送到当前页面的数据。 |
@@ -802,13 +816,13 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `eventChannel` | `Object` | EventChannel 和被打开页面进行通信。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `eventChannel` | `Object` | — | EventChannel 和被打开页面进行通信。 |
 
 #### 使用注意
 
-events 接收目标页回传，成功结果中的 eventChannel 向目标页发送消息；目标页通过 getOpenerEventChannel() 获取通道。支持 emit/on/once/off。
+events 是 `{ [eventName]: (...args) => void }` 监听函数映射，接收目标页回传。成功结果中的 eventChannel 向目标页发送消息；目标页通过 `getOpenerEventChannel()` 获取通道。`emit/on/once/off` 的参数和返回值见 [页面事件通道](./script-reference.md#页面与组件实例属性与方法)。
 
 ### redirectTo
 
@@ -820,7 +834,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `url` | `string` | 是 | — | 目标地址或应用内页面路径。 |
 
@@ -840,7 +854,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `url` | `string` | 是 | — | 目标地址或应用内页面路径。 |
 
@@ -860,7 +874,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `delta` | `number` | 否 | 1 | 返回的页面数，如果 delta 大于现有页面数，则返回到页面栈中只剩一个页面为止。 |
 
@@ -880,7 +894,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `url` | `string` | 是 | — | 目标地址或应用内页面路径。 |
 
@@ -902,7 +916,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `itemList` | `string[]` | 是 | — | 按钮的文字数组，数组长度最大为 6。 |
 | `alertText` | `string` | 否 | — | 警示文案。 |
@@ -914,9 +928,9 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `tapIndex` | `number` | 用户点击的按钮序号，从上到下的顺序，从0开始。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `tapIndex` | `number` | — | 用户点击的按钮序号，从上到下的顺序，从0开始。 |
 
 ### showModal
 
@@ -928,7 +942,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `cancelColor` | `string` | 否 | #000000 | 取消按钮的文字颜色，必须是 16 进制格式的颜色字符串。 |
 | `cancelText` | `string` | 否 | 取消 | 取消按钮的文字，最多 4 个字符。 |
@@ -946,11 +960,11 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `cancel` | `boolean` | 为 true 时，表示用户点击了取消（用于 Android 系统区分点击蒙层关闭还是点击取消按钮关闭）。 |
-| `confirm` | `boolean` | 为 true 时，表示用户点击了确定按钮。 |
-| `content` | `string` | editable 为 true 时，用户输入的文本。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `cancel` | `boolean` | — | 为 true 时，表示用户点击了取消（用于 Android 系统区分点击蒙层关闭还是点击取消按钮关闭）。 |
+| `confirm` | `boolean` | — | 为 true 时，表示用户点击了确定按钮。 |
+| `content` | `string` | — | editable 为 true 时，用户输入的文本。 |
 
 ### showToast
 
@@ -962,7 +976,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `title` | `string` | 是 | — | 提示的内容。 |
 | `duration` | `number` | 否 | 1500 | 提示的延迟时间。 |
@@ -986,7 +1000,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `noConflict` | `boolean` | 否 | false | 目前 toast 和 loading 相关接口可以相互混用，此参数可用于取消混用特性。 |
 
@@ -1006,7 +1020,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `title` | `string` | 是 | — | 提示的内容。 |
 | `mask` | `boolean` | 否 | false | 是否显示透明蒙层，防止触摸穿透。 |
@@ -1027,7 +1041,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `noConflict` | `boolean` | 否 | false | 目前 toast 和 loading 相关接口可以相互混用，此参数可用于取消混用特性。 |
 
@@ -1047,7 +1061,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `title` | `string` | 是 | — | 页面标题。 |
 
@@ -1067,7 +1081,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `backgroundColor` | `string` | 是 | — | 背景颜色值，有效值为十六进制颜色。 |
 | `frontColor` | `string` | 是 | — | 前景颜色值，包括按钮、标题、状态栏的颜色，仅支持 #ffffff 和 #000000。 |
@@ -1105,7 +1119,7 @@ events 接收目标页回传，成功结果中的 eventChannel 向目标页发�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `duration` | `number` | 否 | 300 | 滚动动画的时长，单位 ms。 |
 | `offsetTop` | `number` | 否 | — | 偏移距离，需要和 selector 参数搭配使用，可以滚动到 selector 加偏移距离的位置，单位 px。 |
@@ -1164,12 +1178,12 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `delay` | `number` | 否 | 0 | 动画延迟时间，单位 ms。 |
 | `duration` | `number` | 否 | 400 | 动画持续时间，单位 ms。 |
 | `timingFunction` | `'linear' \| 'ease' \| 'ease-in' \| 'ease-in-out' \| 'ease-out' \| 'step-start' \| 'step-end'` | 否 | 'linear' | 动画的效果。 |
-| `transformOrigin` | `string` | 否 | '50% 50% 0' | 见字段类型及本 API 的说明。 |
+| `transformOrigin` | `string` | 否 | '50% 50% 0' | 变换原点，依次为 x、y、z 轴位置，取值规则同 CSS transform-origin。 |
 
 #### 返回值
 
@@ -1177,12 +1191,24 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 #### 对象用法
 
-| 方法 | 使用方式 |
+除 `export()` 外，下列方法均返回当前 `Animation`，可以链式调用；所有角度参数单位为度，数值位移单位为 px。
+
+| 方法 | 参数与结果 |
 | --- | --- |
-| opacity/backgroundColor/width/height/top/right/bottom/left | 设置样式值并继续链式调用。 |
-| rotate/rotateX/rotateY/rotateZ/rotate3d、scale/scaleX/scaleY/scaleZ/scale3d | 设置旋转与缩放。 |
-| translate/translateX/translateY/translateZ/translate3d、skew/skewX/skewY、matrix/matrix3d | 设置位移、倾斜或矩阵变换；端支持范围见差异。 |
-| step(options?) / export() | 划分步骤、导出动画数据供模板 animation 使用。 |
+| `opacity(value)` / `backgroundColor(color)` | value 为 `0–1` 的 number；color 为颜色 string。 |
+| `width(value)` / `height(value)` / `top(value)` / `right(value)` / `bottom(value)` / `left(value)` | value 为 number 或带单位的 string，数值按 px 使用。 |
+| `rotate(angle)` / `rotateX(angle)` / `rotateY(angle)` / `rotateZ(angle)` | angle 为 number。 |
+| `rotate3d(x, y, z, angle)` | 四个 number，前三项组成旋转轴向量，angle 为旋转角度。 |
+| `scale(sx, sy?)` / `scaleX(value)` / `scaleY(value)` / `scaleZ(value)` | number 类型的缩放比例，1 表示原尺寸；scale 省略 sy 时与 sx 相同。 |
+| `scale3d(sx, sy, sz)` | 三个 number，分别指定三个方向的缩放比例。 |
+| `translate(tx?, ty?)` / `translate3d(tx?, ty?, tz?)` | number 类型的位移，省略的方向默认为 0。 |
+| `translateX(value)` / `translateY(value)` / `translateZ(value)` | value 为 number 类型的单轴位移。 |
+| `skew(ax, ay)` / `skewX(angle)` / `skewY(angle)` | number 类型的倾斜角度。 |
+| `matrix(a, b, c, d, tx, ty)` / `matrix3d(...values)` | 分别传 6 个 / 16 个 number，顺序对应 CSS matrix / matrix3d 的矩阵参数，不传数组。 |
+| `step(options?)` | 完成一组动画；options 可含 `duration/delay: number`（ms）、`timingFunction: string`、`transformOrigin: string`，取值同创建选项，未指定的字段沿用创建配置。 |
+| `export()` | 无参数，返回可绑定到模板 `animation` 的动画数据对象；导出后清空已记录的步骤，不返回 Animation。 |
+
+矩阵、三维变换等方法的端支持范围见差异。
 
 ### nextTick
 
@@ -1192,9 +1218,9 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
-| `callback` | `function` | 是 | — | 延后执行的函数。 |
+| `callback` | `() => void` | 是 | — | 延后执行的无参函数，返回值不被消费。 |
 
 #### 返回值
 
@@ -1218,14 +1244,14 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 返回对象：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `bottom` | `number` | 下边界坐标，单位：px。 |
-| `height` | `number` | 高度；布局使用 px。 |
-| `left` | `number` | 左边界坐标，单位：px。 |
-| `right` | `number` | 右边界坐标，单位：px。 |
-| `top` | `number` | 上边界坐标，单位：px。 |
-| `width` | `number` | 宽度；布局使用 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `bottom` | `number` | — | 下边界坐标，单位：px。 |
+| `height` | `number` | — | 高度；布局使用 px。 |
+| `left` | `number` | — | 左边界坐标，单位：px。 |
+| `right` | `number` | — | 右边界坐标，单位：px。 |
+| `top` | `number` | — | 上边界坐标，单位：px。 |
+| `width` | `number` | — | 宽度；布局使用 px。 |
 
 ### onWindowResize
 
@@ -1235,7 +1261,7 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -1245,9 +1271,9 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `size` | `Object` | 见字段类型及本 API 的说明。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `size` | `{ windowWidth: number, windowHeight: number }` | — | 变化后的窗口宽高，单位 px。 |
 
 ### offWindowResize
 
@@ -1257,7 +1283,7 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -1275,7 +1301,7 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `index` | `number` | 是 | — | tabBar 的哪一项，从左边算起。 |
 | `iconPath` | `string` | 否 | — | 图片路径，icon 大小限制为 40kb，建议尺寸为 81px * 81px，当 postion 为 top 时，此参数无效。 |
@@ -1298,7 +1324,7 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `backgroundColor` | `string` | 否 | — | tab 的背景色，HexColor。 |
 | `borderStyle` | `string` | 否 | — | tabBar上边框的颜色， 仅支持 black/white。 |
@@ -1321,7 +1347,7 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `animation` | `boolean` | 否 | false | 是否需要动画效果。 |
 
@@ -1341,7 +1367,7 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `animation` | `boolean` | 否 | false | 是否需要动画效果。 |
 
@@ -1363,7 +1389,7 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `url` | `string` | 是 | — | 目标地址或应用内页面路径。 |
 | `data` | `string \| Object \| ArrayBuffer` | 否 | — | 传入或返回的数据。 |
@@ -1391,19 +1417,26 @@ scrollTop 与 selector 至少提供一个；页面需具备可滚动内容。
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `cookies` | `string[]` | 响应携带的 Cookie 列表。 |
-| `data` | `any` | 传入或返回的数据。 |
-| `exception` | `Object` | 请求异常信息。 |
-| `header` | `Object` | HTTP 请求头或响应头。 |
-| `profile` | `Object` | 请求性能信息。 |
-| `statusCode` | `number` | HTTP 状态码。 |
-| `useHttpDNS` | `boolean` | 本次请求是否使用了 HttpDNS。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `cookies` | `string[]` | — | 响应携带的 Cookie 列表。 |
+| `data` | `any` | — | 传入或返回的数据。 |
+| `exception` | `Object` | — | 请求异常信息。 |
+| `header` | `Object` | — | HTTP 请求头或响应头。 |
+| `profile` | `Object` | — | 请求性能信息。 |
+| `statusCode` | `number` | — | HTTP 状态码。 |
+| `useHttpDNS` | `boolean` | — | 本次请求是否使用了 HttpDNS。 |
 
 #### 对象用法
 
-RequestTask 基础操作是 `abort()`；微信还提供 headers/分块等任务监听，端支持情况见差异。可变参数请求应在回写前检查请求身份，取消时先废弃身份再 abort，避免晚到结果覆盖新状态。
+| RequestTask 方法 | 参数与回调 | 返回值 |
+| --- | --- | --- |
+| `abort()` | 无参数，取消请求。 | `void` |
+| `onHeadersReceived(callback)` | `(res) => void`，`res.header` 为响应头对象。 | `void` |
+| `onChunkReceived(callback)` | `(res) => void`，`res.data: ArrayBuffer` 为收到的分块；请求需开启 `enableChunked`。 | `void` |
+| `offHeadersReceived(callback?)` / `offChunkReceived(callback?)` | 原监听函数；省略时移除对应事件的全部监听。 | `void` |
+
+任务监听的端支持情况见差异。可变参数请求应在回写前检查请求身份，取消时先废弃身份再 abort，避免晚到结果覆盖新状态。
 
 #### 使用注意
 
@@ -1419,7 +1452,7 @@ RequestTask 基础操作是 `abort()`；微信还提供 headers/分块等任务�
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `url` | `string` | 是 | — | 目标地址或应用内页面路径。 |
 | `forceCellularNetwork` | `boolean` | 否 | false | 强制使用蜂窝网络发送请求。 |
@@ -1437,11 +1470,16 @@ RequestTask 基础操作是 `abort()`；微信还提供 headers/分块等任务�
 
 #### 对象用法
 
-| SocketTask 方法 | 参数/结果 |
+SocketTask 的下列方法均返回 `void`，监听回调返回值不被消费。
+
+| SocketTask 方法 | 参数与回调 |
 | --- | --- |
-| send(options) | data 为 string 或 ArrayBuffer，可传 success/fail/complete。 |
-| close(options?) | code、reason 可选；关闭状态从 onClose 得到。 |
-| onOpen/onMessage/onError/onClose(callback) | 监听连接、消息、错误和关闭；消息结果含 data，关闭结果含 code/reason。 |
+| `send(options)` | 必填 `data: string \| ArrayBuffer`，可传 `success/fail/complete`；这些回调接收调用结果对象，不是服务端消息。 |
+| `close(options)` | 可传 `{}`；`code?: number` 默认 1000，`reason?: string` 为关闭原因，可传 `success/fail/complete`；连接关闭事件从 onClose 取得。 |
+| `onOpen(callback)` | `(res) => void`，res 含握手响应头 `header: object`。 |
+| `onMessage(callback)` | `(res) => void`，`res.data: string \| ArrayBuffer` 为服务端消息。 |
+| `onError(callback)` | `(res) => void`，res 含 `errMsg: string`。 |
+| `onClose(callback)` | `(res) => void`，res 含 `code: number`、`reason: string`。 |
 
 #### 使用注意
 
@@ -1457,7 +1495,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `data` | `string \| ArrayBuffer` | 是 | — | 传入或返回的数据。 |
 
@@ -1477,7 +1515,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `code` | `number` | 否 | 1000（表示正常关闭连接） | 一个数字值表示关闭连接的状态号，表示连接被关闭的原因。 |
 | `reason` | `string` | 否 | — | 关闭 WebSocket 连接的原因。 |
@@ -1496,7 +1534,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -1506,9 +1544,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `header` | `Object` | HTTP 请求头或响应头。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `header` | `Object` | — | HTTP 请求头或响应头。 |
 
 ### onSocketError
 
@@ -1518,7 +1556,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -1528,9 +1566,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `errMsg` | `string` | 调用结果信息。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `errMsg` | `string` | — | 调用结果信息。 |
 
 ### onSocketMessage
 
@@ -1540,7 +1578,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -1550,9 +1588,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `data` | `string \| ArrayBuffer` | 传入或返回的数据。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `data` | `string \| ArrayBuffer` | — | 传入或返回的数据。 |
 
 ### onSocketClose
 
@@ -1562,7 +1600,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -1572,10 +1610,10 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `code` | `number` | 一个数字值表示关闭连接的状态号，表示连接被关闭的原因。 |
-| `reason` | `string` | 关闭 WebSocket 连接的原因。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `code` | `number` | — | 一个数字值表示关闭连接的状态号，表示连接被关闭的原因。 |
+| `reason` | `string` | — | 关闭 WebSocket 连接的原因。 |
 
 ## 文件
 
@@ -1589,7 +1627,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `url` | `string` | 是 | — | 目标地址或应用内页面路径。 |
 | `enableHttp2` | `boolean` | 否 | false | 是否开启 http2。 |
@@ -1605,12 +1643,18 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `filePath` | `string` | 用户文件路径 (本地路径)。 |
-| `profile` | `Object` | 请求性能信息。 |
-| `statusCode` | `number` | HTTP 状态码。 |
-| `tempFilePath` | `string` | 临时文件路径。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `filePath` | `string` | — | 用户文件路径 (本地路径)。 |
+| `profile` | `Object` | — | 请求性能信息。 |
+| `statusCode` | `number` | — | HTTP 状态码。 |
+| `tempFilePath` | `string` | — | 临时文件路径。 |
+
+#### 对象用法
+
+DownloadTask 的方法均返回 `void`：`abort()` 无参数，用于取消下载；`onProgressUpdate(callback)` 接收 `(res) => void`，res 含 `progress`（0–100）、`totalBytesWritten`、`totalBytesExpectedToWrite`，均为 number，后两项单位为字节。`onHeadersReceived(callback)` 的回调接收 `{ header: object }`。
+
+`offProgressUpdate(callback?)` / `offHeadersReceived(callback?)` 传原监听函数移除对应监听，省略时移除该事件全部监听；目标端支持范围见差异。
 
 ### uploadFile
 
@@ -1622,7 +1666,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `filePath` | `string` | 是 | — | 要上传文件资源的路径 (本地路径)。 |
 | `name` | `string` | 是 | — | 文件对应的 key，开发者在服务端可以通过这个 key 获取文件的二进制内容。 |
@@ -1640,11 +1684,17 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `data` | `string` | 传入或返回的数据。 |
-| `profile` | `Object` | 请求性能信息。 |
-| `statusCode` | `number` | HTTP 状态码。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `data` | `string` | — | 传入或返回的数据。 |
+| `profile` | `Object` | — | 请求性能信息。 |
+| `statusCode` | `number` | — | HTTP 状态码。 |
+
+#### 对象用法
+
+UploadTask 的方法均返回 `void`：`abort()` 无参数，用于取消上传；`onProgressUpdate(callback)` 接收 `(res) => void`，res 含 `progress`（0–100）、`totalBytesSent`、`totalBytesExpectedToSend`，均为 number，后两项单位为字节。`onHeadersReceived(callback)` 的回调接收 `{ header: object }`。
+
+`offProgressUpdate(callback?)` / `offHeadersReceived(callback?)` 传原监听函数移除对应监听，省略时移除该事件全部监听；目标端支持范围见差异。
 
 ### saveFile
 
@@ -1656,7 +1706,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `tempFilePath` | `string` | 是 | — | 临时文件路径。 |
 
@@ -1666,9 +1716,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `savedFilePath` | `string` | 持久文件路径。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `savedFilePath` | `string` | — | 持久文件路径。 |
 
 #### 使用注意
 
@@ -1686,7 +1736,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `data` | `any` | 是 | — | 传入或返回的数据。 |
 | `key` | `string` | 是 | — | 缓存键。 |
@@ -1706,7 +1756,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `key` | `string` | 是 | — | 缓存键。 |
 | `data` | `any` | 是 | — | 传入或返回的数据。 |
@@ -1725,7 +1775,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `key` | `string` | 是 | — | 缓存键。 |
 | `encrypt` | `boolean` | 否 | false | 是否开启加密存储。 |
@@ -1736,9 +1786,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `data` | `any` | 传入或返回的数据。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `data` | `any` | — | 传入或返回的数据。 |
 
 ### getStorageSync
 
@@ -1748,7 +1798,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `key` | `string` | 是 | — | 缓存键。 |
 
@@ -1772,11 +1822,11 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `currentSize` | `number` | 已用缓存容量，单位 KB。 |
-| `keys` | `string[]` | 缓存键列表。 |
-| `limitSize` | `number` | 缓存容量上限，单位 KB。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `currentSize` | `number` | — | 已用缓存容量，单位 KB。 |
+| `keys` | `string[]` | — | 缓存键列表。 |
+| `limitSize` | `number` | — | 缓存容量上限，单位 KB。 |
 
 ### getStorageInfoSync
 
@@ -1792,11 +1842,11 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 返回对象：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `currentSize` | `number` | 已用缓存容量，单位 KB。 |
-| `keys` | `string[]` | 缓存键列表。 |
-| `limitSize` | `number` | 缓存容量上限，单位 KB。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `currentSize` | `number` | — | 已用缓存容量，单位 KB。 |
+| `keys` | `string[]` | — | 缓存键列表。 |
+| `limitSize` | `number` | — | 缓存容量上限，单位 KB。 |
 
 #### 使用注意
 
@@ -1812,7 +1862,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `key` | `string` | 是 | — | 缓存键。 |
 
@@ -1830,7 +1880,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `key` | `string` | 是 | — | 缓存键。 |
 
@@ -1880,7 +1930,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `urls` | `string[]` | 是 | — | 需要预览的图片链接列表。 |
 | `current` | `string` | 否 | urls 的第一张 | 当前显示图片的链接。 |
@@ -1903,7 +1953,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `src` | `string` | 是 | — | 图片路径，图片的路径，支持本地路径、代码包路径。 |
 | `compressedHeight` | `number` | 否 | — | 压缩后图片的高度，单位为px，若不填写则默认以compressedWidth为准等比缩放。 |
@@ -1916,9 +1966,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `tempFilePath` | `string` | 临时文件路径。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `tempFilePath` | `string` | — | 临时文件路径。 |
 
 ### getImageInfo
 
@@ -1930,7 +1980,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `src` | `string` | 是 | — | 图片的路径，支持网络路径、本地路径、代码包路径。 |
 
@@ -1940,13 +1990,13 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `height` | `number` | 高度；布局使用 px。 |
-| `orientation` | `'up' \| 'up-mirrored' \| 'down' \| 'down-mirrored' \| 'left-mirrored' \| 'right' \| 'right-mirrored' \| 'left'` | 拍照时设备方向。 |
-| `path` | `string` | 页面路径。 |
-| `type` | `'unknown' \| 'jpeg' \| 'png' \| 'gif' \| 'tiff'` | 类型标识，取值见本 API。 |
-| `width` | `number` | 宽度；布局使用 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `height` | `number` | — | 高度；布局使用 px。 |
+| `orientation` | `'up' \| 'up-mirrored' \| 'down' \| 'down-mirrored' \| 'left-mirrored' \| 'right' \| 'right-mirrored' \| 'left'` | — | 拍照时设备方向。 |
+| `path` | `string` | — | 页面路径。 |
+| `type` | `'unknown' \| 'jpeg' \| 'png' \| 'gif' \| 'tiff'` | — | 类型标识，取值见本 API。 |
+| `width` | `number` | — | 宽度；布局使用 px。 |
 
 ### chooseMedia
 
@@ -1958,7 +2008,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `camera` | `'back' \| 'front'` | 否 | 'back' | 仅在 sourceType 为 camera 时生效，使用前置或后置摄像头。 |
 | `count` | `number` | 否 | 9 | 最多可以选择的文件个数，基础库2.25.0前，最多可支持9个文件，2.25.0及以后最多可支持20个文件。 |
@@ -1973,22 +2023,22 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `tempFiles` | `Object[]` | 本地临时文件列表。 |
-| `type` | `string` | 选择结果的媒体类型：image、video 或 mix。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `tempFiles` | `Object[]` | — | 本地临时文件列表。 |
+| `type` | `string` | — | 选择结果的媒体类型：image、video 或 mix。 |
 
 `tempFiles[]` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `duration` | `number` | 视频的时间长度。 |
-| `fileType` | `'image' \| 'video'` | 文件类型。 |
-| `height` | `number` | 高度；布局使用 px。 |
-| `size` | `number` | 本地临时文件大小，单位 B。 |
-| `tempFilePath` | `string` | 临时文件路径。 |
-| `thumbTempFilePath` | `string` | 视频缩略图临时文件路径。 |
-| `width` | `number` | 宽度；布局使用 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `duration` | `number` | — | 视频的时间长度。 |
+| `fileType` | `'image' \| 'video'` | — | 文件类型。 |
+| `height` | `number` | — | 高度；布局使用 px。 |
+| `size` | `number` | — | 本地临时文件大小，单位 B。 |
+| `tempFilePath` | `string` | — | 临时文件路径。 |
+| `thumbTempFilePath` | `string` | — | 视频缩略图临时文件路径。 |
+| `width` | `number` | — | 宽度；布局使用 px。 |
 
 ### createInnerAudioContext
 
@@ -2000,7 +2050,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `useWebAudioImplement` | `boolean` | 否 | false | 启用适合短音频频繁播放的 WebAudio 模式。 |
 
@@ -2008,24 +2058,33 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 返回对象：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `autoplay` | `boolean` | 是否自动开始播放，默认为 `false`。 |
-| `buffered` | `number` | 音频缓冲的时间点，仅保证当前播放时间点到此时间点内容已缓冲（只读）。 |
-| `currentTime` | `number` | 当前音频的播放位置（单位 s）。 |
-| `duration` | `number` | 当前音频的长度（单位 s）。 |
-| `loop` | `boolean` | 是否循环播放，默认为 `false`。 |
-| `obeyMuteSwitch` | `boolean` | 是否遵循系统静音开关，默认为 `true`。 |
-| `paused` | `boolean` | 当前是是否暂停或停止状态（只读）。 |
-| `playbackRate` | `number` | 播放速度。 |
-| `referrerPolicy` | `string` | `origin`: 发送完整的referrer。 |
-| `src` | `string` | 音频资源的地址，用于直接播放。 |
-| `startTime` | `number` | 开始播放的位置（单位：s），默认为 0。 |
-| `volume` | `number` | 音量。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `autoplay` | `boolean` | — | 是否自动开始播放，默认为 `false`。 |
+| `buffered` | `number` | — | 音频缓冲的时间点，仅保证当前播放时间点到此时间点内容已缓冲（只读）。 |
+| `currentTime` | `number` | — | 当前音频的播放位置（单位 s）。 |
+| `duration` | `number` | — | 当前音频的长度（单位 s）。 |
+| `loop` | `boolean` | — | 是否循环播放，默认为 `false`。 |
+| `obeyMuteSwitch` | `boolean` | — | 是否遵循系统静音开关，默认为 `true`。 |
+| `paused` | `boolean` | — | 当前是是否暂停或停止状态（只读）。 |
+| `playbackRate` | `number` | — | 播放速度。 |
+| `referrerPolicy` | `string` | — | `origin`: 发送完整的referrer。 |
+| `src` | `string` | — | 音频资源的地址，用于直接播放。 |
+| `startTime` | `number` | — | 开始播放的位置（单位：s），默认为 0。 |
+| `volume` | `number` | — | 音量。 |
 
 #### 对象用法
 
-常用属性为 src、autoplay、loop、volume、startTime；常用方法为 play/pause/stop/seek/destroy。可通过 onPlay/onPause/onStop/onEnded/onTimeUpdate/onError 等监听状态；属性与方法的端限制见差异。
+下列方法均返回 `void`，不会返回 Promise 或取消监听函数；属性与方法的端限制见差异。
+
+| 方法 | 参数与回调 |
+| --- | --- |
+| `play()` / `pause()` / `stop()` / `destroy()` | 无参数，分别播放、暂停、停止、销毁上下文。 |
+| `seek(position)` | `position: number`，跳转到指定秒数；不通过给 currentTime 赋值跳转。 |
+| `onPlay(callback)` / `onPause(callback)` / `onStop(callback)` / `onEnded(callback)` | 状态通知函数，可用无参回调；返回值不被消费。 |
+| `onCanplay(callback)` / `onWaiting(callback)` / `onSeeking(callback)` / `onSeeked(callback)` / `onTimeUpdate(callback)` | 状态通知函数，可用无参回调；播放位置、时长从上下文 `currentTime/duration` 读取，不把它们当作回调直接返回的 number。 |
+| `onError(callback)` | `(res) => void`，res 含 `errCode: number`、`errMsg: string`。 |
+| `offPlay/offPause/offStop/offEnded/offCanplay/offWaiting/offSeeking/offSeeked/offTimeUpdate/offError(callback?)` | 对应事件的原监听函数；省略时移除该事件的全部监听。 |
 
 ### createVideoContext
 
@@ -2035,7 +2094,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `id` | `string` | 是 | — | video 组件的 id。 |
 | `component` | `组件或页面实例` | 否 | — | 在自定义组件下，当前组件实例的this，以操作组件内 video 组件。 |
@@ -2046,7 +2105,18 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 对象用法
 
-常用方法为 play/pause/stop/seek/playbackRate、requestFullScreen/exitFullScreen；showStatusBar/hideStatusBar、sendDanmu 和后台/小窗能力的端支持范围见差异。
+下列方法均返回 `void`；播放进度、结束、错误等从 video 组件事件取得，端支持范围见差异。
+
+| 方法 | 参数 |
+| --- | --- |
+| `play()` / `pause()` / `stop()` | 无参数，分别播放、暂停、停止。 |
+| `seek(position)` | `position: number`，跳转位置，单位 s。 |
+| `playbackRate(rate)` | `rate: number`，支持 `0.5/0.8/1/1.25/1.5/2` 倍速。 |
+| `requestFullScreen(options)` / `exitFullScreen()` | 请求时传 `{ direction?: 0 \| 90 \| -90 }`，省略 direction 时按视频宽高选择方向；退出无参数。 |
+| `showStatusBar()` / `hideStatusBar()` | 无参数，控制全屏下状态栏。 |
+| `sendDanmu(data)` | `{ text: string, color?: string }`，发送弹幕文本及颜色。 |
+| `requestBackgroundPlayback()` / `exitBackgroundPlayback()` | 无参数，进入 / 退出后台音频播放。 |
+| `exitPictureInPicture(options?)` | 可选 `success/fail/complete` 回调配置，回调接收调用结果对象。 |
 
 ### createCameraContext
 
@@ -2064,7 +2134,14 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 对象用法
 
-常用方法为 setZoom({ zoom })、takePhoto(options)、startRecord(options)、stopRecord(options)，这些方法各自接收成功/失败回调。拍照结果可含 tempImagePath；录像结果可含 tempVideoPath/tempThumbPath。操作前需相机组件已就绪。
+操作前需相机组件已就绪。下列方法均返回 `void`，options 均可带 `success/fail/complete` 回调；拍照、录像结果从各自 success 回调取得。
+
+| 方法 | 业务参数 | 成功结果 |
+| --- | --- | --- |
+| `setZoom(options)` | 必填 `zoom: number`，范围为 1 到 camera 的 initdone 事件提供的 maxZoom。 | `{ zoom: number }`，实际设置的缩放值。 |
+| `takePhoto(options)` | `quality?: 'high' \| 'normal' \| 'low' \| 'original'` 指定画质，`selfieMirror?: boolean` 控制镜像。 | `{ tempImagePath: string }`，照片临时路径。 |
+| `startRecord(options)` | `timeout?: number` 为录制上限（s，最长 300），`selfieMirror?: boolean` 控制镜像；`timeoutCallback?: (res) => void` 在超时结束或异常退出时接收 `{ tempVideoPath: string, tempThumbPath: string }`。 | 开始录制的调用结果，不包含最终录像文件；文件从 stopRecord 或 timeoutCallback 取得。 |
+| `stopRecord(options)` | `compressed?: boolean` 控制视频压缩。 | `{ tempVideoPath: string, tempThumbPath: string }`，视频及封面临时路径。 |
 
 ### canvasToTempFilePath
 
@@ -2076,7 +2153,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `canvas` | `Object` | 否 | — | 画布标识，传入 canvas 组件实例 （canvas type="2d" 时使用该属性）。 |
 | `canvasId` | `string` | 否 | — | 画布标识，传入 canvas 组件的 canvas-id。 |
@@ -2091,7 +2168,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 其他位置参数：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `component` | `组件或页面实例` | 否 | — | 在自定义组件下，当前组件实例的this，以操作组件内 canvas 组件。 |
 
@@ -2101,9 +2178,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `tempFilePath` | `string` | 临时文件路径。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `tempFilePath` | `string` | — | 临时文件路径。 |
 
 ### canvasGetImageData
 
@@ -2115,7 +2192,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `canvasId` | `string` | 是 | — | 画布标识，传入 canvas 组件的 `canvas-id` 属性。 |
 | `height` | `number` | 是 | — | 高度；布局使用 px。 |
@@ -2125,7 +2202,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 其他位置参数：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `component` | `组件或页面实例` | 否 | — | 在自定义组件下，当前组件实例的this，以操作组件内 canvas 组件。 |
 
@@ -2135,11 +2212,11 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `data` | `Uint8ClampedArray` | 传入或返回的数据。 |
-| `height` | `number` | 高度；布局使用 px。 |
-| `width` | `number` | 宽度；布局使用 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `data` | `Uint8ClampedArray` | — | 传入或返回的数据。 |
+| `height` | `number` | — | 高度；布局使用 px。 |
+| `width` | `number` | — | 宽度；布局使用 px。 |
 
 ## 位置
 
@@ -2153,7 +2230,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `altitude` | `boolean` | 否 | false | 是否需要返回海拔高度。 |
 | `highAccuracyExpireTime` | `number` | 否 | — | 高精度定位超时时间(ms)，指定时间内返回最高精度，该值3000ms以上高精度定位才有效果。 |
@@ -2166,15 +2243,15 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `accuracy` | `number` | 位置精度，单位 m。 |
-| `altitude` | `number` | 是否需要返回海拔高度。 |
-| `horizontalAccuracy` | `number` | 水平精度，单位 m。 |
-| `latitude` | `number` | 纬度，-90 到 90。 |
-| `longitude` | `number` | 经度，-180 到 180。 |
-| `speed` | `number` | 移动速度，单位 m/s。 |
-| `verticalAccuracy` | `number` | 垂直精度，单位 m。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `accuracy` | `number` | — | 位置精度，单位 m。 |
+| `altitude` | `number` | — | 是否需要返回海拔高度。 |
+| `horizontalAccuracy` | `number` | — | 水平精度，单位 m。 |
+| `latitude` | `number` | — | 纬度，-90 到 90。 |
+| `longitude` | `number` | — | 经度，-180 到 180。 |
+| `speed` | `number` | — | 移动速度，单位 m/s。 |
+| `verticalAccuracy` | `number` | — | 垂直精度，单位 m。 |
 
 ### openLocation
 
@@ -2186,7 +2263,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `latitude` | `number` | 是 | — | 纬度，-90 到 90。 |
 | `longitude` | `number` | 是 | — | 经度，-180 到 180。 |
@@ -2210,7 +2287,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `latitude` | `number` | 否 | — | 纬度，-90 到 90。 |
 | `longitude` | `number` | 否 | — | 经度，-180 到 180。 |
@@ -2221,12 +2298,12 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `address` | `string` | 详细地址。 |
-| `latitude` | `number` | 纬度，-90 到 90。 |
-| `longitude` | `number` | 经度，-180 到 180。 |
-| `name` | `string` | 位置名称。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `address` | `string` | — | 详细地址。 |
+| `latitude` | `number` | — | 纬度，-90 到 90。 |
+| `longitude` | `number` | — | 经度，-180 到 180。 |
+| `name` | `string` | — | 位置名称。 |
 
 ### startLocationUpdate
 
@@ -2238,9 +2315,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
-| `type` | `string` | 否 | 坐标，gcj02 | 类型标识，取值见本 API。 |
+| `type` | `'wgs84' \| 'gcj02'` | 否 | — | 持续定位的坐标系；wgs84 为 GPS 坐标，gcj02 可用于 openLocation。依赖坐标系时显式指定。 |
 
 #### 返回值
 
@@ -2272,7 +2349,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -2282,15 +2359,15 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `accuracy` | `number` | 位置精度，单位 m。 |
-| `altitude` | `number` | 海拔，单位 m。 |
-| `horizontalAccuracy` | `number` | 水平精度，单位 m。 |
-| `latitude` | `number` | 纬度，-90 到 90。 |
-| `longitude` | `number` | 经度，-180 到 180。 |
-| `speed` | `number` | 移动速度，单位 m/s。 |
-| `verticalAccuracy` | `number` | 垂直精度，单位 m。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `accuracy` | `number` | — | 位置精度，单位 m。 |
+| `altitude` | `number` | — | 海拔，单位 m。 |
+| `horizontalAccuracy` | `number` | — | 水平精度，单位 m。 |
+| `latitude` | `number` | — | 纬度，-90 到 90。 |
+| `longitude` | `number` | — | 经度，-180 到 180。 |
+| `speed` | `number` | — | 移动速度，单位 m/s。 |
+| `verticalAccuracy` | `number` | — | 垂直精度，单位 m。 |
 
 ### offLocationChange
 
@@ -2300,7 +2377,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -2326,12 +2403,12 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `hasSystemProxy` | `boolean` | 设备是否使用了网络代理。 |
-| `networkType` | `'wifi' \| '2g' \| '3g' \| '4g' \| '5g' \| 'unknown' \| 'none'` | 网络类型。 |
-| `signalStrength` | `number` | 信号强度，范围和单位见宿主。 |
-| `weakNet` | `boolean` | 是否处于弱网环境。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `hasSystemProxy` | `boolean` | — | 设备是否使用了网络代理。 |
+| `networkType` | `'wifi' \| '2g' \| '3g' \| '4g' \| '5g' \| 'unknown' \| 'none'` | — | 网络类型。 |
+| `signalStrength` | `number` | — | 信号强度，范围和单位见宿主。 |
+| `weakNet` | `boolean` | — | 是否处于弱网环境。 |
 
 ### onNetworkStatusChange
 
@@ -2341,7 +2418,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -2351,10 +2428,10 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `isConnected` | `boolean` | 当前是否联网。 |
-| `networkType` | `'wifi' \| '2g' \| '3g' \| '4g' \| '5g' \| 'unknown' \| 'none'` | 网络类型。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `isConnected` | `boolean` | — | 当前是否联网。 |
+| `networkType` | `'wifi' \| '2g' \| '3g' \| '4g' \| '5g' \| 'unknown' \| 'none'` | — | 网络类型。 |
 
 ### offNetworkStatusChange
 
@@ -2364,7 +2441,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -2396,7 +2473,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -2406,9 +2483,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `height` | `number` | 键盘高度，单位 px。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `height` | `number` | — | 键盘高度，单位 px。 |
 
 ### offKeyboardHeightChange
 
@@ -2418,7 +2495,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -2436,7 +2513,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `phoneNumber` | `string` | 是 | — | 需要拨打的电话号码。 |
 
@@ -2456,9 +2533,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
-| `type` | `string` | 是 | — | 类型标识，取值见本 API。 |
+| `type` | `'heavy' \| 'medium' \| 'light'` | 是 | — | 短振动强度，分别为强、中、弱。 |
 
 #### 返回值
 
@@ -2492,7 +2569,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `data` | `string` | 是 | — | 传入或返回的数据。 |
 
@@ -2518,9 +2595,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `data` | `string` | 传入或返回的数据。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `data` | `string` | — | 传入或返回的数据。 |
 
 ### setScreenBrightness
 
@@ -2532,7 +2609,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `value` | `number` | 是 | — | 屏幕亮度，范围 0–1。 |
 
@@ -2558,9 +2635,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `value` | `number` | 屏幕亮度，范围 0–1。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `value` | `number` | — | 屏幕亮度，范围 0–1。 |
 
 ### setVisualEffectOnCapture
 
@@ -2572,7 +2649,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `visualEffect` | `string` | 否 | none | 截屏/录屏时的表现，仅支持 none / hidden，传入 hidden 则表示在截屏/录屏时隐藏屏幕。 |
 
@@ -2590,7 +2667,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -2600,10 +2677,10 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `promise` | `Promise<any>` | 如果该参数存在，则其它的参数将会以 resolve 结果为准，如果一秒内不 resolve，分享会使用上面传入的默认参数。 |
-| `query` | `string` | 页面查询参数。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `promise` | `Promise<any>` | — | 如果该参数存在，则其它的参数将会以 resolve 结果为准，如果一秒内不 resolve，分享会使用上面传入的默认参数。 |
+| `query` | `string` | — | 页面查询参数。 |
 
 ### offUserCaptureScreen
 
@@ -2629,7 +2706,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `firstName` | `string` | 是 | — | 名字。 |
 | `addressCity` | `string` | 否 | — | 联系地址城市。 |
@@ -2680,7 +2757,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `onlyFromCamera` | `boolean` | 否 | false | 是否只能从相机扫码，不允许从相册选择图片。 |
 | `scanType` | `Array< 'barCode' \| 'qrCode' \| 'wxCode' \| 'datamatrix' \| 'pdf417' >` | 否 | ['barCode', 'qrCode', 'wxCode'] | 扫码类型。 |
@@ -2691,13 +2768,13 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `charSet` | `string` | 所扫码的字符集。 |
-| `path` | `string` | 页面路径。 |
-| `rawData` | `string` | 原始数据，base64编码。 |
-| `result` | `string` | 所扫码的内容。 |
-| `scanType` | `'QR_CODE' \| 'AZTEC' \| 'CODABAR' \| 'CODE_39' \| 'CODE_93' \| 'CODE_128' \| 'DATA_MATRIX' \| 'EAN_8' \| 'EAN_13' \| 'ITF' \| 'MAXICODE' \| 'PDF_417' \| 'RSS_14' \| 'RSS_EXPANDED' \| 'UPC_A' \| 'UPC_E' \| 'UPC_EAN_EXTENSION' \| 'WX_CODE' \| 'CODE_25'` | 所扫码的类型。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `charSet` | `string` | — | 所扫码的字符集。 |
+| `path` | `string` | — | 页面路径。 |
+| `rawData` | `string` | — | 原始数据，base64编码。 |
+| `result` | `string` | — | 所扫码的内容。 |
+| `scanType` | `'QR_CODE' \| 'AZTEC' \| 'CODABAR' \| 'CODE_39' \| 'CODE_93' \| 'CODE_128' \| 'DATA_MATRIX' \| 'EAN_8' \| 'EAN_13' \| 'ITF' \| 'MAXICODE' \| 'PDF_417' \| 'RSS_14' \| 'RSS_EXPANDED' \| 'UPC_A' \| 'UPC_E' \| 'UPC_EAN_EXTENSION' \| 'WX_CODE' \| 'CODE_25'` | — | 所扫码的类型。 |
 
 ## 低功耗蓝牙
 
@@ -2711,7 +2788,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `mode` | `'central' \| 'peripheral'` | 否 | central | 蓝牙模式，可作为主/从设备，仅 iOS 需要。 |
 
@@ -2747,7 +2824,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `allowDuplicatesKey` | `boolean` | 否 | false | 是否允许重复上报同一设备。 |
 | `interval` | `number` | 否 | 0 | 上报设备的间隔，单位 ms。 |
@@ -2784,7 +2861,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -2794,22 +2871,22 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `devices` | `Object[]` | 设备对象数组。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `devices` | `Object[]` | — | 设备对象数组。 |
 
 `devices[]` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `RSSI` | `number` | 当前蓝牙设备的信号强度，单位 dBm。 |
-| `advertisData` | `ArrayBuffer` | 当前蓝牙设备的广播数据段中的 ManufacturerData 数据段。 |
-| `advertisServiceUUIDs` | `string[]` | 当前蓝牙设备的广播数据段中的 ServiceUUIDs 数据段。 |
-| `connectable` | `boolean` | 当前蓝牙设备是否可连接（ Android 8.0 以下不支持返回该值 ）。 |
-| `deviceId` | `string` | 蓝牙设备标识。 |
-| `localName` | `string` | 当前蓝牙设备的广播数据段中的 LocalName 数据段。 |
-| `name` | `string` | 蓝牙设备名称，某些设备可能没有。 |
-| `serviceData` | `Object` | 当前蓝牙设备的广播数据段中的 ServiceData 数据段。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `RSSI` | `number` | — | 当前蓝牙设备的信号强度，单位 dBm。 |
+| `advertisData` | `ArrayBuffer` | — | 当前蓝牙设备的广播数据段中的 ManufacturerData 数据段。 |
+| `advertisServiceUUIDs` | `string[]` | — | 当前蓝牙设备的广播数据段中的 ServiceUUIDs 数据段。 |
+| `connectable` | `boolean` | — | 当前蓝牙设备是否可连接（ Android 8.0 以下不支持返回该值 ）。 |
+| `deviceId` | `string` | — | 蓝牙设备标识。 |
+| `localName` | `string` | — | 当前蓝牙设备的广播数据段中的 LocalName 数据段。 |
+| `name` | `string` | — | 蓝牙设备名称，某些设备可能没有。 |
+| `serviceData` | `Object` | — | 当前蓝牙设备的广播数据段中的 ServiceData 数据段。 |
 
 ### offBluetoothDeviceFound
 
@@ -2835,7 +2912,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `services` | `string[]` | 是 | — | 服务列表或服务 UUID 筛选条件。 |
 
@@ -2845,16 +2922,16 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `devices` | `Object[]` | 设备对象数组。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `devices` | `Object[]` | — | 设备对象数组。 |
 
 `devices[]` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `deviceId` | `string` | 蓝牙设备标识。 |
-| `name` | `string` | 蓝牙设备名称，某些设备可能没有。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `deviceId` | `string` | — | 蓝牙设备标识。 |
+| `name` | `string` | — | 蓝牙设备名称，某些设备可能没有。 |
 
 ### getBluetoothAdapterState
 
@@ -2872,10 +2949,10 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `available` | `boolean` | 蓝牙适配器是否可用。 |
-| `discovering` | `boolean` | 是否正在搜索设备。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `available` | `boolean` | — | 蓝牙适配器是否可用。 |
+| `discovering` | `boolean` | — | 是否正在搜索设备。 |
 
 ### onBluetoothAdapterStateChange
 
@@ -2885,7 +2962,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -2895,10 +2972,10 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `available` | `boolean` | 蓝牙适配器是否可用。 |
-| `discovering` | `boolean` | 蓝牙适配器是否处于搜索状态。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `available` | `boolean` | — | 蓝牙适配器是否可用。 |
+| `discovering` | `boolean` | — | 蓝牙适配器是否处于搜索状态。 |
 
 ### offBluetoothAdapterStateChange
 
@@ -2930,22 +3007,22 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `devices` | `Object[]` | 设备对象数组。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `devices` | `Object[]` | — | 设备对象数组。 |
 
 `devices[]` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `RSSI` | `number` | 当前蓝牙设备的信号强度，单位 dBm。 |
-| `advertisData` | `ArrayBuffer` | 当前蓝牙设备的广播数据段中的 ManufacturerData 数据段。 |
-| `advertisServiceUUIDs` | `string[]` | 当前蓝牙设备的广播数据段中的 ServiceUUIDs 数据段。 |
-| `connectable` | `boolean` | 当前蓝牙设备是否可连接（ Android 8.0 以下不支持返回该值 ）。 |
-| `deviceId` | `string` | 蓝牙设备标识。 |
-| `localName` | `string` | 当前蓝牙设备的广播数据段中的 LocalName 数据段。 |
-| `name` | `string` | 蓝牙设备名称，某些设备可能没有。 |
-| `serviceData` | `Object` | 当前蓝牙设备的广播数据段中的 ServiceData 数据段。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `RSSI` | `number` | — | 当前蓝牙设备的信号强度，单位 dBm。 |
+| `advertisData` | `ArrayBuffer` | — | 当前蓝牙设备的广播数据段中的 ManufacturerData 数据段。 |
+| `advertisServiceUUIDs` | `string[]` | — | 当前蓝牙设备的广播数据段中的 ServiceUUIDs 数据段。 |
+| `connectable` | `boolean` | — | 当前蓝牙设备是否可连接（ Android 8.0 以下不支持返回该值 ）。 |
+| `deviceId` | `string` | — | 蓝牙设备标识。 |
+| `localName` | `string` | — | 当前蓝牙设备的广播数据段中的 LocalName 数据段。 |
+| `name` | `string` | — | 蓝牙设备名称，某些设备可能没有。 |
+| `serviceData` | `Object` | — | 当前蓝牙设备的广播数据段中的 ServiceData 数据段。 |
 
 ### createBLEConnection
 
@@ -2957,7 +3034,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
 | `timeout` | `number` | 否 | — | 超时时间，单位 ms。 |
@@ -2978,7 +3055,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
 
@@ -2996,7 +3073,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -3006,10 +3083,10 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `connected` | `boolean` | 是否处于已连接状态。 |
-| `deviceId` | `string` | 蓝牙设备标识。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `connected` | `boolean` | — | 是否处于已连接状态。 |
+| `deviceId` | `string` | — | 蓝牙设备标识。 |
 
 ### offBLEConnectionStateChange
 
@@ -3019,7 +3096,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -3037,7 +3114,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `characteristicId` | `string` | 是 | — | 特征 UUID。 |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
@@ -3061,7 +3138,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `characteristicId` | `string` | 是 | — | 特征 UUID。 |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
@@ -3087,13 +3164,13 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `characteristicId` | `string` | 是 | — | 特征 UUID。 |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
 | `serviceId` | `string` | 是 | — | 服务 UUID。 |
 | `state` | `boolean` | 是 | — | 是否启用 notify。 |
-| `type` | `string` | 否 | indication | 类型标识，取值见本 API。 |
+| `type` | `'notification' \| 'indication'` | 否 | indication | 特征订阅类型，需与该特征支持的通知方式匹配。 |
 
 #### 返回值
 
@@ -3109,7 +3186,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -3119,12 +3196,12 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `characteristicId` | `string` | 特征 UUID。 |
-| `deviceId` | `string` | 蓝牙设备标识。 |
-| `serviceId` | `string` | 服务 UUID。 |
-| `value` | `ArrayBuffer` | 数值或二进制值，含义见本 API。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `characteristicId` | `string` | — | 特征 UUID。 |
+| `deviceId` | `string` | — | 蓝牙设备标识。 |
+| `serviceId` | `string` | — | 服务 UUID。 |
+| `value` | `ArrayBuffer` | — | 数值或二进制值，含义见本 API。 |
 
 ### offBLECharacteristicValueChange
 
@@ -3150,7 +3227,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
 | `mtu` | `number` | 是 | — | 最大传输单元。 |
@@ -3161,9 +3238,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `mtu` | `number` | 最终协商的 MTU 值，与传入参数一致。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `mtu` | `number` | — | 最终协商的 MTU 值，与传入参数一致。 |
 
 ### getBLEDeviceRSSI
 
@@ -3175,7 +3252,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
 
@@ -3185,9 +3262,9 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `RSSI` | `number` | 信号强度，单位 dBm。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `RSSI` | `number` | — | 信号强度，单位 dBm。 |
 
 ### getBLEDeviceServices
 
@@ -3199,7 +3276,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
 
@@ -3209,16 +3286,16 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `services` | `Object[]` | 服务列表或服务 UUID 筛选条件。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `services` | `Object[]` | — | 服务列表或服务 UUID 筛选条件。 |
 
 `services[]` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `isPrimary` | `boolean` | 该服务是否为主服务。 |
-| `uuid` | `string` | 蓝牙设备服务的 UUID。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `isPrimary` | `boolean` | — | 该服务是否为主服务。 |
+| `uuid` | `string` | — | 蓝牙设备服务的 UUID。 |
 
 ### getBLEDeviceCharacteristics
 
@@ -3230,7 +3307,7 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `deviceId` | `string` | 是 | — | 蓝牙设备标识。 |
 | `serviceId` | `string` | 是 | — | 服务 UUID。 |
@@ -3241,16 +3318,16 @@ success 表示连接任务创建成功，发送应等待 SocketTask.onOpen。参
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `characteristics` | `Object[]` | 特征对象数组。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `characteristics` | `Object[]` | — | 特征对象数组。 |
 
 `characteristics[]` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `properties` | `Object` | 该特征支持的操作类型。 |
-| `uuid` | `string` | 蓝牙设备特征的 UUID。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `properties` | `Object` | — | 该特征支持的操作类型。 |
+| `uuid` | `string` | — | 蓝牙设备特征的 UUID。 |
 
 ## Wi-Fi
 
@@ -3314,7 +3391,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 是 | — | 事件发生时调用的函数。 |
 
@@ -3324,19 +3401,19 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 监听回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `wifiList` | `Object[]` | 热点对象数组。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `wifiList` | `Object[]` | — | 热点对象数组。 |
 
 `wifiList[]` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `BSSID` | `string` | Wi-Fi 的 BSSID。 |
-| `SSID` | `string` | Wi-Fi 的 SSID。 |
-| `frequency` | `number` | Wi-Fi 频段单位 MHz。 |
-| `secure` | `boolean` | Wi-Fi 是否安全。 |
-| `signalStrength` | `number` | 信号强度，范围和单位见宿主。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `BSSID` | `string` | — | Wi-Fi 的 BSSID。 |
+| `SSID` | `string` | — | Wi-Fi 的 SSID。 |
+| `frequency` | `number` | — | Wi-Fi 频段单位 MHz。 |
+| `secure` | `boolean` | — | Wi-Fi 是否安全。 |
+| `signalStrength` | `number` | — | 信号强度，范围和单位见宿主。 |
 
 ### offGetWifiList
 
@@ -3346,7 +3423,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 入参
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `callback` | `function` | 否 | — | 与注册时相同的函数。 |
 
@@ -3364,7 +3441,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `partialInfo` | `boolean` | 否 | false | 是否需要返回部分 Wi-Fi 信息。 |
 
@@ -3374,19 +3451,19 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `wifi` | `Object` | 当前连接的热点信息。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `wifi` | `Object` | — | 当前连接的热点信息。 |
 
 `wifi` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `BSSID` | `string` | Wi-Fi 的 BSSID。 |
-| `SSID` | `string` | Wi-Fi 的 SSID。 |
-| `frequency` | `number` | Wi-Fi 频段单位 MHz。 |
-| `secure` | `boolean` | Wi-Fi 是否安全。 |
-| `signalStrength` | `number` | 信号强度，范围和单位见宿主。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `BSSID` | `string` | — | Wi-Fi 的 BSSID。 |
+| `SSID` | `string` | — | Wi-Fi 的 SSID。 |
+| `frequency` | `number` | — | Wi-Fi 频段单位 MHz。 |
+| `secure` | `boolean` | — | Wi-Fi 是否安全。 |
+| `signalStrength` | `number` | — | 信号强度，范围和单位见宿主。 |
 
 ## 开放能力
 
@@ -3400,7 +3477,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `timeout` | `number` | 否 | — | 超时时间，单位 ms。 |
 
@@ -3410,9 +3487,9 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `code` | `string` | 用户登录凭证（有效期五分钟）。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `code` | `string` | — | 用户登录凭证（有效期五分钟）。 |
 
 ### checkSession
 
@@ -3440,7 +3517,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `lang` | `'en' \| 'zh_CN' \| 'zh_TW'` | 否 | en | 显示用户信息的语言。 |
 | `withCredentials` | `boolean` | 否 | — | 是否带上登录态信息。 |
@@ -3451,26 +3528,26 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `cloudID` | `string` | 敏感数据对应的云 ID，开通云开发的小程序才会返回，可通过云调用直接获取开放数据，详细见云调用直接获取开放数据。 |
-| `encryptedData` | `string` | 包括敏感数据在内的完整用户信息的加密数据，详见 用户数据的签名验证和加解密。 |
-| `iv` | `string` | 加密算法的初始向量，详见 用户数据的签名验证和加解密。 |
-| `rawData` | `string` | 不包括敏感信息的原始数据字符串，用于计算签名。 |
-| `signature` | `string` | 使用 sha1( rawData + sessionkey ) 得到字符串，用于校验用户信息，详见 用户数据的签名验证和加解密。 |
-| `userInfo` | `Object` | 用户信息对象，不含 openid。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `cloudID` | `string` | — | 敏感数据对应的云 ID，开通云开发的小程序才会返回，可通过云调用直接获取开放数据，详细见云调用直接获取开放数据。 |
+| `encryptedData` | `string` | — | 包括敏感数据在内的完整用户信息的加密数据，详见 用户数据的签名验证和加解密。 |
+| `iv` | `string` | — | 加密算法的初始向量，详见 用户数据的签名验证和加解密。 |
+| `rawData` | `string` | — | 不包括敏感信息的原始数据字符串，用于计算签名。 |
+| `signature` | `string` | — | 使用 sha1( rawData + sessionkey ) 得到字符串，用于校验用户信息，详见 用户数据的签名验证和加解密。 |
+| `userInfo` | `Object` | — | 用户信息对象，不含 openid。 |
 
 `userInfo` 常用字段：
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `avatarUrl` | `string` | 用户头像图片的 URL。 |
-| `city` | `string` | 用户所在城市。 |
-| `country` | `string` | 用户所在国家。 |
-| `gender` | `0 \| 1 \| 2` | 用户性别。 |
-| `language` | `'en' \| 'zh_CN' \| 'zh_TW'` | 显示 country，province，city 所用的语言。 |
-| `nickName` | `string` | 用户昵称。 |
-| `province` | `string` | 用户所在省份。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `avatarUrl` | `string` | — | 用户头像图片的 URL。 |
+| `city` | `string` | — | 用户所在城市。 |
+| `country` | `string` | — | 用户所在国家。 |
+| `gender` | `0 \| 1 \| 2` | — | 用户性别。 |
+| `language` | `'en' \| 'zh_CN' \| 'zh_TW'` | — | 显示 country，province，city 所用的语言。 |
+| `nickName` | `string` | — | 用户昵称。 |
+| `province` | `string` | — | 用户所在省份。 |
 
 #### 使用注意
 
@@ -3486,7 +3563,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `nonceStr` | `string` | 是 | — | 随机字符串，长度为32个字符以下。 |
 | `package` | `string` | 是 | — | 统一下单接口返回的 prepay_id 参数值，提交格式如：prepay_id=。 |
@@ -3510,7 +3587,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `withSubscriptions` | `boolean` | 否 | false | 是否同时获取用户订阅消息的订阅状态，默认不获取。 |
 
@@ -3520,11 +3597,11 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `authSetting` | `Object` | 授权项与授权状态的映射。 |
-| `subscriptionsSetting` | `Object` | SubscriptionsSetting 用户订阅消息设置，接口参数`withSubscriptions`值为`true`时才会返回。 |
-| `miniprogramAuthSetting` | `Object` | AuthSetting 在插件中调用时，当前宿主小程序的用户授权结果。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `authSetting` | `Object` | — | 授权项与授权状态的映射。 |
+| `subscriptionsSetting` | `Object` | — | SubscriptionsSetting 用户订阅消息设置，接口参数`withSubscriptions`值为`true`时才会返回。 |
+| `miniprogramAuthSetting` | `Object` | — | AuthSetting 在插件中调用时，当前宿主小程序的用户授权结果。 |
 
 ### openSetting
 
@@ -3536,7 +3613,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `withSubscriptions` | `boolean` | 否 | false | 是否同时获取用户订阅消息的订阅状态，默认不获取。 |
 
@@ -3546,10 +3623,10 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `authSetting` | `Object` | 授权项与授权状态的映射。 |
-| `subscriptionsSetting` | `Object` | SubscriptionsSetting 用户订阅消息设置，接口参数`withSubscriptions`值为`true`时才会返回。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `authSetting` | `Object` | — | 授权项与授权状态的映射。 |
+| `subscriptionsSetting` | `Object` | — | SubscriptionsSetting 用户订阅消息设置，接口参数`withSubscriptions`值为`true`时才会返回。 |
 
 ### enableAlertBeforeUnload
 
@@ -3561,7 +3638,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `message` | `string` | 是 | — | 询问对话框内容。 |
 
@@ -3603,9 +3680,9 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 成功回调参数
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `extConfig` | `Object` | 扩展配置对象。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `extConfig` | `Object` | — | 扩展配置对象。 |
 
 ### getExtConfigSync
 
@@ -3639,19 +3716,21 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 对象用法
 
-| 方法 | 返回/效果 |
+| 方法 | 参数与结果 |
 | --- | --- |
-| in(component) | 设置查询范围，返回查询对象。 |
-| select(selector) / selectAll(selector) / selectViewport() | 返回 NodesRef；分别选首个节点、全部匹配节点或视口。 |
-| boundingClientRect(callback) | 回调含 id/dataset、left/right/top/bottom/width/height。 |
-| scrollOffset(callback) | 回调含 id/dataset、scrollLeft/Top、scrollWidth/Height。 |
-| fields(options, callback) | 按 id/dataset/rect/size/scrollOffset/properties/computedStyle/context/node 选择返回字段。 |
-| context(callback) / node(callback) | 获取节点上下文或节点对象，返回结构分别为 { context } / { node }。 |
-| exec(callback) | 执行查询，按顺序交付结果数组；selectAll 的单项结果是数组。 |
+| `query.in(component)` | component 为页面或组件实例，设置查询范围，返回当前 `SelectorQuery`。 |
+| `query.select(selector)` / `query.selectAll(selector)` / `query.selectViewport()` | selector 为 CSS 选择器 string；视口查询无参数。返回 `NodesRef`，分别选首个节点、全部匹配节点或视口。 |
+| `nodes.boundingClientRect(callback?)` | `(res) => void`；res 含 `id: string`、`dataset: object`，及 number 类型的 `left/right/top/bottom/width/height`（px）。返回所属 `SelectorQuery`。 |
+| `nodes.scrollOffset(callback?)` | `(res) => void`；res 含 id/dataset，及 number 类型的 `scrollLeft/scrollTop/scrollWidth/scrollHeight`（px）。返回所属 `SelectorQuery`。 |
+| `nodes.fields(options, callback?)` | options 的 `id/dataset/rect/size/scrollOffset/context/node` 为可选 boolean，`properties/computedStyle` 为可选 `string[]`；开启的字段才查询。`callback(res)` 接收选定的字段，返回所属 `SelectorQuery`。 |
+| `nodes.context(callback?)` / `nodes.node(callback?)` | `(res) => void`，res 分别为 `{ context }` / `{ node }`，对象类型取决于目标组件；方法返回所属 `SelectorQuery`。 |
+| `query.exec(callback?)` | 执行已登记查询，无业务同步返回值；`callback(results)` 按登记顺序接收结果数组。不通过返回值读取节点数据或继续链式调用。 |
+
+上述查询回调的返回值不被消费；`selectAll` 的节点结果为数组，无匹配时为 `[]`，`select` 无匹配时为 `null`。查询未匹配、组件类型不具备所查询能力时，先检查结果再访问字段，端差异见对应参考。
 
 #### 使用注意
 
-先 select/selectAll/selectViewport，再选择查询字段，最后 exec；查询依赖节点已渲染，数据更新后先等待 core nextTick。
+先 select/selectAll/selectViewport，再选择查询字段，最后 exec。查询依赖节点已渲染；框架队列执行完不等于小程序宿主渲染完成，等待方式见 [视图更新与 watch 回调](./script-reference.md#视图更新与-watch-回调)。
 
 ### createIntersectionObserver
 
@@ -3663,7 +3742,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 配置对象中的业务字段：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `initialRatio` | `number` | 否 | 0 | 初始相交比例，用于决定首次回调。 |
 | `nativeMode` | `boolean` | 否 | false | 是否使用原生观察模式。 |
@@ -3672,7 +3751,7 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 其他位置参数：
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| 属性 | 类型 | 必填 | 默认值 | 用途 |
 | --- | --- | --- | --- | --- |
 | `component` | `Object` | 是 | — | 自定义组件实例。 |
 
@@ -3682,12 +3761,12 @@ success 只表示扫描请求成功，热点数组从 onGetWifiList 获得。
 
 #### 对象用法
 
-| 方法 | 使用方式 |
+| 方法 | 参数与返回值 |
 | --- | --- |
-| relativeTo(selector, margins?) | 相对指定节点观察，margins 可含 top/right/bottom/left。 |
-| relativeToViewport(margins?) | 相对视口观察。 |
-| observe(selector, callback) | 回调含 id/dataset、intersectionRatio、intersectionRect、boundingClientRect、relativeRect、time。 |
-| disconnect() | 停止观察，释放使用中的监听。 |
+| `relativeTo(selector, margins?)` | selector 为 string；margins 可含 number 类型的 top/right/bottom/left，默认均为 0，单位 px。返回当前 `IntersectionObserver`。 |
+| `relativeToViewport(margins?)` | margins 同上，相对视口观察；返回当前 `IntersectionObserver`。 |
+| `observe(selector, callback)` | selector 为目标节点的选择器 string；`callback(res)` 接收 `id: string`、`dataset: object`、`intersectionRatio: number`（0–1）、`time: number`（ms 时间戳），以及 `intersectionRect/boundingClientRect/relativeRect` 矩形对象。三个矩形均含 number 类型的 `left/right/top/bottom`，前两个另含 `width/height`，单位均为 px。方法与回调均返回 `void`。 |
+| `disconnect()` | 无参数，停止观察并释放监听，返回 `void`。 |
 
 #### 使用注意
 

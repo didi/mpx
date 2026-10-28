@@ -1,0 +1,143 @@
+<template>
+  <view class="page">
+    <view class="nav" wx:style="{{ { paddingTop: statusBarHeight + 'px', height: navHeight + 'px' } }}">
+      <text class="nav-title">订单</text>
+    </view>
+    <scroll-view id="outer-scroll" class="outer" type="nested" scroll-y="{{true}}"
+      enhanced="{{true}}" wx:style="{{ { height: scrollHeight + 'px' } }}">
+      <view class="summary">
+        <text class="summary-line">订单概览</text>
+        <text class="summary-line">滚动位置：{{scrollTop}}</text>
+      </view>
+      <scroll-view id="orders-scroll" class="groups" type="custom" scroll-y="{{true}}"
+        enhanced="{{true}}" associative-container="nested-scroll-view"
+        wx:style="{{ { height: scrollHeight + 'px' } }}"
+        refresher-enabled="{{!loading || refreshing}}" refresher-triggered="{{refreshing}}"
+        lower-threshold="{{50}}" bindrefresherrefresh="onRefresh"
+        bindscrolltolower="loadMore" bindscroll="onMainScroll">
+        <block wx:for="{{sections}}" wx:key="id">
+          <sticky-section wx:if="{{renderer === 'skyline'}}">
+            <sticky-header class="header"><text>{{item.title}}</text></sticky-header>
+            <scroll-view class="strip" type="list" scroll-x="{{true}}" enable-flex="{{true}}">
+              <view wx:for="{{item.items}}" wx:for-item="entry" wx:key="id" class="tile"><text>{{entry.name}}</text></view>
+            </scroll-view>
+          </sticky-section>
+          <view wx:else class="group">
+            <view class="header webview-header"><text>{{item.title}}</text></view>
+            <scroll-view class="strip" type="list" scroll-x="{{true}}" enable-flex="{{true}}">
+              <view wx:for="{{item.items}}" wx:for-item="entry" wx:key="id" class="tile"><text>{{entry.name}}</text></view>
+            </scroll-view>
+          </view>
+        </block>
+        <view wx:if="{{errorMessage}}" class="feedback"><text>{{errorMessage}}</text></view>
+        <view wx:if="{{loading && !refreshing}}" class="feedback"><text>加载中</text></view>
+      </scroll-view>
+    </scroll-view>
+    <view class="fab" wx:style="{{ { bottom: floatingBottom + 'px' } }}" bindtap="open"><text>订单说明</text></view>
+    <view wx:if="{{opened}}" class="modal" bindtap="close"><text>关闭订单说明</text></view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { getWindowInfo, getMenuButtonBoundingClientRect } from '@mpxjs/api-proxy'
+import { fetchOrders } from './service'
+
+createPage({
+  data: {
+    sections: [],
+    scrollTop: 0,
+    pageNo: 1,
+    opened: false,
+    loading: false,
+    refreshing: false,
+    errorMessage: '',
+    statusBarHeight: 0,
+    navHeight: 44,
+    scrollHeight: 0,
+    floatingBottom: 12
+  },
+  onLoad () {
+    this.updateLayout()
+    return this.reload()
+  },
+  onResize () {
+    this.updateLayout()
+  },
+  methods: {
+    updateLayout () {
+      const info = getWindowInfo()
+      const menu = getMenuButtonBoundingClientRect()
+      this.statusBarHeight = info.statusBarHeight
+      this.navHeight = menu.height + (menu.top - info.statusBarHeight) * 2
+      this.scrollHeight = info.windowHeight - this.statusBarHeight - this.navHeight
+      this.floatingBottom = info.screenHeight - info.safeArea.bottom + 12
+    },
+    onRefresh () {
+      return this.reload()
+    },
+    reload (shouldFail = false) {
+      if (this.loading) return Promise.resolve()
+      this.loading = true
+      this.refreshing = true
+      this.errorMessage = ''
+      return fetchOrders(1, shouldFail).then(sections => {
+        this.sections = sections
+        this.pageNo = 1
+      }).catch(error => {
+        this.errorMessage = error.message
+      }).finally(() => {
+        this.refreshing = false
+        this.loading = false
+      })
+    },
+    loadMore () {
+      if (this.loading) return Promise.resolve()
+      this.loading = true
+      this.errorMessage = ''
+      const nextPage = this.pageNo + 1
+      return fetchOrders(nextPage).then(sections => {
+        this.sections = this.sections.concat(sections)
+        this.pageNo = nextPage
+      }).catch(error => {
+        this.errorMessage = error.message
+      }).finally(() => {
+        this.loading = false
+      })
+    },
+    onMainScroll (e) {
+      this.scrollTop = e.detail.scrollTop
+    },
+    open () { this.opened = true },
+    close () { this.opened = false }
+  }
+})
+</script>
+
+<style>
+.page { width: 100%; background: #fff; }
+.nav { display: flex; align-items: center; width: 100%; background: #fff; }
+.nav-title { width: 100%; text-align: center; font-size: 18px; }
+.outer { width: 100%; }
+.summary { height: 120px; padding: 0 16px; }
+.summary-line { display: block; }
+.groups { width: 100%; }
+.header { height: 40px; line-height: 40px; padding: 0 16px; background: #fff; }
+.webview-header { position: sticky; top: 0; z-index: 1; }
+.strip { display: flex; flex-direction: row; width: 100%; height: 80px; }
+.tile { flex-shrink: 0; width: 120px; height: 80px; }
+.feedback { padding: 12px 16px; }
+.fab { position: fixed; right: 12px; z-index: 10; padding: 12px; background: #eee; }
+.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: #eee; }
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "订单",
+  "navigationStyle": "custom",
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "disableScroll": true,
+  "enablePullDownRefresh": false
+}
+</script>

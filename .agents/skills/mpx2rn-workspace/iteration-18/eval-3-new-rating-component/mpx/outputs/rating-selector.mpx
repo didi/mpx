@@ -1,12 +1,12 @@
 <template>
   <view class="rating-selector">
-    <text class="rating-label">{{label}}</text>
+    <text class="rating-title">{{label}}</text>
     <view class="rating-stars">
       <view
         wx:for="{{stars}}"
         wx:key="*this"
         class="rating-star-target"
-        hover-class="{{readonly ? 'none' : 'rating-star-pressed'}}"
+        hover-class="{{readonly ? 'rating-star-readonly' : 'rating-star-pressed'}}"
         hover-start-time="{{0}}"
         hover-stay-time="{{100}}"
         bindtap="selectRating(item)"
@@ -63,10 +63,10 @@ createComponent({
   },
   watch: {
     value: {
+      immediate: true,
       handler (value) {
         this.currentValue = value
-      },
-      immediate: true
+      }
     }
   },
   methods: {
@@ -84,15 +84,16 @@ createComponent({
   display: flex;
   flex-direction: column;
   padding: 16px;
+  box-sizing: border-box;
   background-color: #ffffff;
   border-radius: 12px;
 }
 
-.rating-label {
+.rating-title {
   font-size: 16px;
   line-height: 24px;
   font-weight: bold;
-  color: #222222;
+  color: #1f2937;
 }
 
 .rating-stars {
@@ -108,21 +109,23 @@ createComponent({
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 44px;
   height: 44px;
-  flex-shrink: 0;
+  margin-right: 4px;
+  margin-bottom: 4px;
   border-radius: 8px;
-  background-color: #ffffff;
+  background-color: transparent;
 }
 
 .rating-star {
   font-size: 30px;
   line-height: 40px;
-  color: #c4c9d1;
+  color: #c5cad3;
 }
 
 .rating-star-selected {
-  color: #e89a00;
+  color: #f59e0b;
 }
 
 .rating-star-pressed {
@@ -130,17 +133,22 @@ createComponent({
   opacity: 0.65;
 }
 
+.rating-star-readonly {
+  background-color: transparent;
+  opacity: 1;
+}
+
 .rating-score {
   margin-top: 8px;
   font-size: 14px;
-  line-height: 22px;
-  color: #555555;
+  line-height: 20px;
+  color: #4b5563;
 }
 
 .rating-tip {
   display: flex;
   flex-direction: column;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 </style>
 

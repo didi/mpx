@@ -5,13 +5,13 @@
       <view
         wx:for="{{stars}}"
         wx:key="*this"
-        class="rating-star"
+        class="rating-star-target"
         hover-class="{{readonly ? 'none' : 'rating-star-pressed'}}"
         hover-start-time="{{0}}"
         hover-stay-time="{{100}}"
         bindtap="selectRating(item)"
       >
-        <text class="rating-symbol" wx:class="{{ {'rating-symbol-selected': item <= currentValue} }}">★</text>
+        <text class="rating-star" wx:class="{{ {'rating-star-selected': item <= currentValue} }}">★</text>
       </view>
     </view>
     <text class="rating-score">{{currentValue}} / {{max}}</text>
@@ -81,55 +81,54 @@ createComponent({
   display: flex;
   flex-direction: column;
   padding: 24rpx;
-  border-radius: 16rpx;
   background-color: #ffffff;
+  border-radius: 16rpx;
 }
 
 .rating-label {
-  font-size: 30rpx;
+  font-size: 32rpx;
   line-height: 44rpx;
+  font-weight: bold;
   color: #222222;
-  margin-bottom: 16rpx;
 }
 
 .rating-stars {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  margin-top: 16rpx;
 }
 
-.rating-star {
+.rating-star-target {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  width: 72rpx;
-  height: 80rpx;
-  margin-right: 8rpx;
-  margin-bottom: 8rpx;
+  flex-shrink: 0;
+  width: 80rpx;
+  height: 88rpx;
   border-radius: 12rpx;
-  background-color: #f5f5f5;
+}
+
+.rating-star {
+  font-size: 56rpx;
+  line-height: 72rpx;
+  color: #b8bec8;
+}
+
+.rating-star-selected {
+  color: #e99700;
 }
 
 .rating-star-pressed {
-  opacity: 0.6;
-  background-color: #ffedbd;
-}
-
-.rating-symbol {
-  font-size: 52rpx;
-  line-height: 64rpx;
-  color: #b8bdc5;
-}
-
-.rating-symbol-selected {
-  color: #e99900;
+  background-color: #fff0c2;
+  opacity: 0.65;
 }
 
 .rating-score {
-  margin-top: 8rpx;
-  font-size: 26rpx;
-  line-height: 38rpx;
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  line-height: 40rpx;
   color: #555555;
 }
 

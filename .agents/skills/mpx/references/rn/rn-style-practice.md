@@ -49,9 +49,26 @@ RN 支持单类、`page` 和 `:host` 选择器。逗号并列的 `.a, .b { ... }
 
 `.a > .b` 只匹配直接子节点，专用类仅绑定到这一层。
 
+**改造前：**
+
 ```html
 <view class="list">
-  <view class="list-top-item">直接子项</view>
+  <view class="item">直接子项</view>
+  <view><view class="item">嵌套子项</view></view>
+</view>
+```
+
+```css
+.list > .item {
+  padding-left: 24rpx;
+}
+```
+
+**改造后：**
+
+```html
+<view class="list">
+  <view class="item list-top-item">直接子项</view>
   <view><view class="item">嵌套子项</view></view>
 </view>
 ```
@@ -66,8 +83,22 @@ RN 支持单类、`page` 和 `:host` 选择器。逗号并列的 `.a, .b { ... }
 
 `.a .b` 匹配任意深度的后代，将语境类绑定到真正命中的节点。
 
+**改造前：**
+
 ```html
-<view class="page"><view><text class="page-title">标题</text></view></view>
+<view class="page"><view><text class="title">标题</text></view></view>
+```
+
+```css
+.page .title {
+  font-size: 36rpx;
+}
+```
+
+**改造后：**
+
+```html
+<view class="page"><view><text class="title page-title">标题</text></view></view>
 ```
 
 ```css
@@ -80,8 +111,22 @@ RN 支持单类、`page` 和 `:host` 选择器。逗号并列的 `.a, .b { ... }
 
 `.a + .b` 用模板状态标记“紧跟在 A 后的 B”。同类连续列表可用 `index > 0`；存在条件渲染或不同类型节点时，按实际相邻关系判断。
 
+**改造前：**
+
 ```html
-<view wx:for="{{rows}}" wx:key="id"
+<view wx:for="{{rows}}" wx:key="id" class="row">{{item.text}}</view>
+```
+
+```css
+.row + .row {
+  margin-top: 16rpx;
+}
+```
+
+**改造后：**
+
+```html
+<view wx:for="{{rows}}" wx:key="id" class="row"
   wx:class="{{ { 'row-gap': index > 0 } }}">{{item.text}}</view>
 ```
 
@@ -95,10 +140,27 @@ RN 支持单类、`page` 和 `:host` 选择器。逗号并列的 `.a, .b { ... }
 
 `.a ~ .b` 用数据状态标记同一父级下、A 之后的所有目标 B；例如错误节点出现时，将后续说明标红。
 
+**改造前：**
+
 ```html
 <view>
-  <text wx:if="{{showError}}">格式错误</text>
-  <text wx:class="{{ { 'hint-error': showError } }}">填写说明</text>
+  <text class="error" wx:if="{{showError}}">格式错误</text>
+  <text class="hint">填写说明</text>
+</view>
+```
+
+```css
+.error ~ .hint {
+  color: #ff4d4f;
+}
+```
+
+**改造后：**
+
+```html
+<view>
+  <text class="error" wx:if="{{showError}}">格式错误</text>
+  <text class="hint" wx:class="{{ { 'hint-error': showError } }}">填写说明</text>
 </view>
 ```
 
@@ -111,6 +173,23 @@ RN 支持单类、`page` 和 `:host` 选择器。逗号并列的 `.a, .b { ... }
 #### 交集选择器
 
 `.a.b` 改为表达组合条件的单类。基础类仍可独立复用，模板可绑定多个类，但每条 CSS 规则只使用单类选择器。
+
+**改造前：**
+
+```html
+<view class="btn" wx:class="{{ { primary: primary } }}">按钮</view>
+```
+
+```css
+.btn {
+  padding: 16rpx;
+}
+.btn.primary {
+  background-color: #1677ff;
+}
+```
+
+**改造后：**
 
 ```html
 <view class="btn" wx:class="{{ { 'btn-primary': primary } }}">按钮</view>
@@ -127,16 +206,33 @@ RN 支持单类、`page` 和 `:host` 选择器。逗号并列的 `.a, .b { ... }
 
 #### 同步更新 `<script>` 中的 selector
 
-改类名时同步更新模板、样式、脚本中的动态类名字面量，以及 `createSelectorQuery`、`createIntersectionObserver`、`selectComponent`、`selectAllComponents` 使用的选择器。
+新增或替换专用类名时同步更新模板、样式、脚本中的动态类名字面量，以及 `createSelectorQuery`、`createIntersectionObserver`、`selectComponent`、`selectAllComponents` 使用的选择器。
 
 ```js
-// 模板类名由 title 改为 page-title 后，同步替换原 '.page .title'
+// 为目标节点添加 page-title 和 wx:ref 后，同步替换原 '.page .title'
 this.createSelectorQuery().select('.page-title').boundingClientRect().exec()
 ```
 
 ### 子元素伪类替代方案 (:first-child / :last-child / :nth-child)
 
 RN 不支持子元素伪类，用数据下标或渲染状态绑定单类。
+
+**改造前：**
+
+```html
+<view wx:for="{{list}}" wx:key="id" class="item">{{item.text}}</view>
+```
+
+```css
+.item {
+  margin-top: 16rpx;
+}
+.item:first-child {
+  margin-top: 0;
+}
+```
+
+**改造后：**
 
 ```html
 <view wx:for="{{list}}" wx:key="id" class="item"
@@ -157,7 +253,7 @@ RN 不支持子元素伪类，用数据下标或渲染状态绑定单类。
 RN 不支持 `::before` / `::after`，改用真实节点承载装饰，保留尺寸、位置和间距。
 
 ```html
-<view style="display: flex; align-items: center;">
+<view style="display: flex; flex-direction: row; align-items: center;">
   <view style="width: 10rpx; height: 30rpx; margin-right: 10rpx; background-color: blue;" />
   <text>标题</text>
 </view>
@@ -168,7 +264,7 @@ RN 不支持 `::before` / `::after`，改用真实节点承载装饰，保留尺
 RN 不支持 `:active`，改用 `hover-class`，支持 `view`、`button`、`navigator`、`cover-view`。`hover-stay-time` 控制松手后保留时间（毫秒）；动态启用限制见[能力预声明](#按需样式能力预声明)。
 
 ```html
-<view hover-class="btn-hover" hover-stay-time="{{100}}">点击我</view>
+<view class="btn" hover-class="btn-hover" hover-stay-time="{{100}}">点击我</view>
 ```
 
 ```css
@@ -341,9 +437,13 @@ RN 不支持 `rem` / `em`，需按原字号或设计稿基准换算。Mpx RN 以
 小程序 / Web 中 `view` 内的行内 `text` 可同排，RN 默认会纵排。独立文本项同排时显式设置横向 Flex；需要自动换行、基线对齐等文本流行为时，再用外层 `text` 包裹内层片段。
 
 ```html
+<!-- 独立文本项：显式横向 Flex -->
 <view style="display: flex; flex-direction: row;">
-  <text><text>a</text><text>b</text></text>
+  <text>a</text><text>b</text>
 </view>
+
+<!-- 需要文本流时：用外层 text 组织片段 -->
+<view><text><text>a</text><text>b</text></text></view>
 ```
 
 ### position: sticky 替代方案
@@ -352,6 +452,8 @@ RN 不支持 `rem` / `em`，需按原字号或设计稿基准换算。Mpx RN 以
 - `sticky-header` 必须直接位于 `scroll-view` 或 [`sticky-section`](./rn-template-reference.md#sticky-section) 下；分组吸顶时，`sticky-section` 直接位于 `scroll-view` 下。
 - 这两种吸顶组件仅支持 RN、Web、微信 Skyline；其他目标端通过条件编译保留原实现。
 - RN Android 更适合内容稳定的吸顶区域；动画中立即更新状态、内容高度突变或用 `scroll-into-view` / `scroll-top` 主动滚动，可能闪烁或抖动。
+
+以下展示 RN 分支结构，其他目标端按上文通过条件编译保留原实现。
 
 ```html
 <scroll-view scroll-y style="flex: 1;" enable-sticky@ios|android|harmony="{{true}}">
@@ -398,6 +500,8 @@ RN 没有 BFC 和 margin 折叠，相邻垂直 margin 会叠加。**先确认原
 
 RN 不支持 Grid，等宽栅格改用 Flex 换行与百分比宽度。
 
+模板为 .grid 包含多个 .grid-item。
+
 ```css
 .grid {
   display: flex;
@@ -412,6 +516,8 @@ RN 不支持 Grid，等宽栅格改用 Flex 换行与百分比宽度。
 ### 避免使用 Float 布局
 
 RN 不支持 Float，左右分栏改用横向 Flex。
+
+模板为 .columns 依次包含 .left、.right。
 
 ```css
 .columns {

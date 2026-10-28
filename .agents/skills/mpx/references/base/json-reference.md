@@ -43,28 +43,28 @@
 </script>
 ```
 
-| 字段 | 类型 | 描述 |
-| --- | --- | --- |
-| `pages` | `Array` | 注册主包页面，支持路径字符串及 `{ src, path? }`，`path` 为路由别名。实际注册路径可能由构建调整，使用资源 `?resolve` 取得路由路径。 |
-| `entryPagePath` | `string` | 指定默认入口页面；使用已注册的页面路径，不带开头的 `/` 与扩展名，未指定时默认取 `pages` 首项。 |
-| `window` | `Object` | 定义应用默认窗口配置；页面 JSON 顶层同名字段覆盖对应默认值。字段见 [页面配置](#页面配置)。 |
-| `usingComponents` | `Object` | 注册全局组件；仅用于当前页面或组件的依赖可在其局部注册。 |
-| `packages` / `subPackages` / `subpackages` | `Array` | 声明分包，推荐 `packages` + `?root`；分包入口、路径和异步引用见 [分包基准](./subpackage-reference.md)。 |
-| `networkTimeout` | `Object` | 对象形式配置网络请求相关 API 的超时时长，例如 `{ "request": 60000 }`，单位为毫秒。Web/RN 的 request 未传 `timeout` 时读取 `networkTimeout.request`，未配置时默认 `60000`。 |
-| `preloadRule` | `Object` | 按页面路径声明分包预下载规则，通过 `network` 和 `packages` 指定网络条件与目标分包，见 [分包预下载](./subpackage-reference.md#分包预下载与运行时边界)。 |
-| `tabBar` | `Object` | 声明应用标签栏，见 [tabBar 配置](#tabbar-配置)。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `pages` | `Array` | — | 注册主包页面，支持路径字符串及 `{ src, path? }`，`path` 为路由别名。实际注册路径可能由构建调整，使用资源 `?resolve` 取得路由路径。 |
+| `entryPagePath` | `string` | `pages` 首项 | 指定默认入口页面；使用已注册的页面路径，不带开头的 `/` 与扩展名。 |
+| `window` | `Object` | — | 定义应用默认窗口配置；页面 JSON 顶层同名字段覆盖对应默认值。字段见 [页面配置](#页面配置)。 |
+| `usingComponents` | `Object` | — | 注册全局组件；仅用于当前页面或组件的依赖可在其局部注册。 |
+| `packages` / `subPackages` / `subpackages` | `Array` | — | 声明分包，推荐 `packages` + `?root`；分包入口、路径和异步引用见 [分包基准](./subpackage-reference.md)。 |
+| `networkTimeout` | `Object` | — | 对象形式配置网络请求相关 API 的超时时长，例如 `{ "request": 60000 }`，单位为毫秒。Web/RN 的 request 未传 `timeout` 时读取 `networkTimeout.request`，未配置时默认 `60000`。 |
+| `preloadRule` | `Object` | — | 按页面路径声明分包预下载规则，通过 `network` 和 `packages` 指定网络条件与目标分包，见 [分包预下载](./subpackage-reference.md#分包预下载与运行时边界)。 |
+| `tabBar` | `Object` | — | 声明应用标签栏，见 [tabBar 配置](#tabbar-配置)。 |
 
 ### tabBar 配置
 
 配置在 App JSON 的 `tabBar` 中：
 
-| 字段 | 类型 | 描述 |
-| --- | --- | --- |
-| `list` | `Array` | 标签项列表，每项通过 `pagePath` 关联已注册页面，通过 `text`、`iconPath`、`selectedIconPath` 配置文字和图标。`pagePath` 填最终注册路径，不带开头的 `/` 与扩展名。 |
-| `color` / `selectedColor` | `string` | 普通与选中状态的文字颜色。 |
-| `backgroundColor` / `borderStyle` | `string` | 标签栏背景色和边框样式。 |
-| `position` | `string` | 标签栏位置。 |
-| `custom` | `boolean` | 启用自定义 tabBar；仍需保留 `list` 声明对应页面。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `list` | `Array` | — | 标签项列表，每项通过 `pagePath` 关联已注册页面，通过 `text`、`iconPath`、`selectedIconPath` 配置文字和图标。`pagePath` 填最终注册路径，不带开头的 `/` 与扩展名。 |
+| `color` / `selectedColor` | `string` | — | 普通与选中状态的文字颜色。 |
+| `backgroundColor` / `borderStyle` | `string` | — | 标签栏背景色和边框样式。 |
+| `position` | `string` | — | 标签栏位置。 |
+| `custom` | `boolean` | — | 启用自定义 tabBar；仍需保留 `list` 声明对应页面。 |
 
 ## 页面配置
 
@@ -80,20 +80,20 @@
 </script>
 ```
 
-| 字段 | 类型 | 描述 |
-| --- | --- | --- |
-| `navigationBarTitleText` | `string` | 导航栏标题文字。 |
-| `navigationBarTextStyle` | `string` | 默认 `white`。导航栏标题及状态栏文字颜色，仅支持 `black` / `white`。 |
-| `navigationBarBackgroundColor` | `string` | 默认 `#000000`。导航栏背景色，使用十六进制颜色值。 |
-| `navigationStyle` | `string` | 默认 `default`。`default` 使用默认导航栏；`custom` 使用自定义导航栏，仅保留右上角胶囊按钮。 |
-| `backgroundColor` | `string` | 默认 `#ffffff`。窗口背景色。 |
-| `backgroundTextStyle` | `string` | 默认 `dark`。下拉 loading 的样式，仅支持 `dark` / `light`。 |
-| `backgroundColorContent` | `string` | 默认白色（`#ffffff`）。页面容器背景色。微信 WebView 渲染使用 `#RRGGBB`，Skyline 还支持带透明度的 `#RRGGBBAA`；与页面 CSS 背景、窗口背景分层。 |
-| `disableScroll` | `boolean` | 默认 `false`。设为 `true` 时页面整体不能上下滚动；仅在页面配置中有效，不能在 App 的 `window` 中设置。 |
-| `enablePullDownRefresh` | `boolean` | 默认 `false`。是否开启当前页面的下拉刷新，刷新事件由 `onPullDownRefresh` 处理。 |
-| `onReachBottomDistance` | `number` | 默认 `50`。页面上拉时距底部达到此距离触发 `onReachBottom`，单位为 `px`。 |
-| `usingComponents` | `Object` | 以标签名到组件路径的映射注册页面局部组件。 |
-| `componentPlaceholder` | `Object` | 以异步组件标签名到占位组件名的映射配置占位；异步组件尚未就绪时渲染占位，就绪后替换。写在引用方，具体要求见 [异步分包组件](./subpackage-reference.md#异步分包组件)。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `navigationBarTitleText` | `string` | — | 导航栏标题文字。 |
+| `navigationBarTextStyle` | `string` | `white` | 导航栏标题及状态栏文字颜色，仅支持 `black` / `white`。 |
+| `navigationBarBackgroundColor` | `string` | `#000000` | 导航栏背景色，使用十六进制颜色值。 |
+| `navigationStyle` | `string` | `default` | `default` 使用默认导航栏；`custom` 使用自定义导航栏，仅保留右上角胶囊按钮。 |
+| `backgroundColor` | `string` | `#ffffff` | 窗口背景色。 |
+| `backgroundTextStyle` | `string` | `dark` | 下拉 loading 的样式，仅支持 `dark` / `light`。 |
+| `backgroundColorContent` | `string` | `#ffffff` | 页面容器背景色。微信 WebView 渲染使用 `#RRGGBB`，Skyline 还支持带透明度的 `#RRGGBBAA`；与页面 CSS 背景、窗口背景分层。 |
+| `disableScroll` | `boolean` | `false` | 设为 `true` 时页面整体不能上下滚动；仅在页面配置中有效，不能在 App 的 `window` 中设置。 |
+| `enablePullDownRefresh` | `boolean` | `false` | 是否开启当前页面的下拉刷新，刷新事件由 `onPullDownRefresh` 处理。 |
+| `onReachBottomDistance` | `number` | `50` | 页面上拉时距底部达到此距离触发 `onReachBottom`，单位为 `px`。 |
+| `usingComponents` | `Object` | — | 以标签名到组件路径的映射注册页面局部组件。 |
+| `componentPlaceholder` | `Object` | — | 以异步组件标签名到占位组件名的映射配置占位；异步组件尚未就绪时渲染占位，就绪后替换。写在引用方，具体要求见 [异步分包组件](./subpackage-reference.md#异步分包组件)。 |
 
 `usingComponents` 与 `componentPlaceholder` 为依赖配置，不放进 App 的 `window`。
 
@@ -111,12 +111,12 @@
 </script>
 ```
 
-| 字段 | 类型 | 描述 |
-| --- | --- | --- |
-| `component` | `boolean` | 自定义组件的 JSON 中应显式声明 `"component": true`。 |
-| `usingComponents` | `Object` | 注册当前组件模板依赖的子组件。 |
-| `componentPlaceholder` | `Object` | 为当前组件引用的异步子组件指定占位，写法与页面一致，见 [异步分包组件](./subpackage-reference.md#异步分包组件)。 |
-| `componentGenerics` | `Object` | 声明抽象节点，支持 `true` 或 `{ "default": "组件路径" }`，见 [抽象节点](#抽象节点)。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `component` | `boolean` | — | 自定义组件的 JSON 中应显式声明 `"component": true`。 |
+| `usingComponents` | `Object` | — | 注册当前组件模板依赖的子组件。 |
+| `componentPlaceholder` | `Object` | — | 为当前组件引用的异步子组件指定占位，写法与页面一致，见 [异步分包组件](./subpackage-reference.md#异步分包组件)。 |
+| `componentGenerics` | `Object` | — | 声明抽象节点，支持 `true` 或 `{ "default": "组件路径" }`，见 [抽象节点](#抽象节点)。 |
 
 ### 抽象节点
 

@@ -38,23 +38,23 @@
     "passed": 5,
     "failed": 0,
     "total": 5,
-    "total_tokens": 683913,
-    "tool_calls": 17,
-    "duration_ms": 180122,
-    "duration_seconds": 180.122
+    "total_tokens": 784865,
+    "tool_calls": 18,
+    "duration_ms": 208802,
+    "duration_seconds": 208.802
   },
   "metrics": {
-    "total_tokens": 683913,
-    "tool_calls": 17,
-    "duration_ms": 180122,
-    "duration_seconds": 180.122
+    "total_tokens": 784865,
+    "tool_calls": 18,
+    "duration_ms": 208802,
+    "duration_seconds": 208.802
   },
   "timing": {
-    "total_duration_seconds": 180.122,
-    "total_tokens": 683913
+    "total_duration_seconds": 208.802,
+    "total_tokens": 784865
   },
   "execution_metrics": {
-    "total_tool_calls": 17,
-    "output_chars": 683913
+    "total_tool_calls": 18,
+    "output_chars": 784865
   }
 }

@@ -25,7 +25,7 @@
 - **以 Mpx2RN 支持表为准**：不要按 React Native 原生能力推断支持性。已抹平的简写、CSS 变量、calc、媒体查询、rpx、颜色与文本继承无需额外替换。用户的基础组件/环境 API 扩展按工程实现核实。
 - **模板**：使用支持表内的基础组件、属性和事件；文字优先显式用 `text` 包裹。仅基础 `tap/longpress/touchstart/touchmove/touchend/touchcancel` 支持冒泡和捕获。Mustache 表达式调用、动态 class/style、内联事件参数与 i18n 原名规则按[模板基准](../base/template-reference.md)核对。
 - **selector**：`selectComponent/selectAllComponents/createSelectorQuery/createIntersectionObserver` 中 selector 支持 `#id` / `.class` 及 `.a.b` 这样的连续类选择器，不支持后代、子代、兄弟或逗号分组选择器；对应节点须声明 `wx:ref`，空值或具名均可，具名形式还可通过 refs 访问。virtualHost 无实体 host，不能按组件节点测量；相交观察的 selector 仅匹配内建节点。
-- **页面滚动**：RN 页面默认不可滚动；页面滚动/触底/下拉刷新钩子没有自动驱动。跨 RN 的页面 JSON 设 `disableScroll: true`、样式设 `page { height: 100%; }`，用开启 `scroll-y` 的 `scroll-view` 承载内容并接入事件。这是含 RN 目标的方案，不向 Web 单端推广。
+- **页面滚动**：RN 页面默认不可滚动；页面滚动/触底/下拉刷新钩子没有自动驱动。跨 RN 的页面 JSON 设 `disableScroll: true`、样式设 `page { height: 100%; }`，用开启 `scroll-y` 的 `scroll-view` 承载内容并接入事件，见[页面滚动替代示例](./rn-script-reference.md#页面滚动替代示例)。这是含 RN 目标的方案，不向 Web 单端推广。
 - **脚本**：按 RN 构造选项、生命周期与实例方法表实现；实例字段命名遵循[基准保留字段约束](../base/script-reference.md#页面与组件实例属性与方法)。不支持声明需要实际宿主适配及 `implement` 登记，或明确移除。`onShareAppMessage` 有独立的 `openTypeHandler` 桥接流程，见 RN 脚本/配置。Promise 化调用使用 await/then，环境 API 不直连 wx/my。
 - **选择器与布局**：展开预处理嵌套，采用单类选择器；逗号分隔的并列单类可用。替换复合/伪类/伪元素时同步模板与脚本引用，grid/float 等按样式实践选择等效布局。RN 专属 `numberOfLines` / `hairlineWidth` 等通过条件编译保留原端样式，不能只保留 RN 写法。
 - **按需样式能力**：首次渲染后可能引入 CSS 变量、文本透传、背景或动画时，按需预声明 `enable-var/enable-text-pass-through/enable-background/enable-animation`。`hover-class` 的有效启用状态和动画类型在实例生命周期内稳定；`disabled/readonly` 切换也不能让同一节点在有效 `hover-class` 与 `none` / 空值之间切换。仅值变化无需冗余声明。条件分支/列表可能复用且能力不同，优先稳定独立 key，无法保证时声明能力并集，避免切换时出现渲染错误。

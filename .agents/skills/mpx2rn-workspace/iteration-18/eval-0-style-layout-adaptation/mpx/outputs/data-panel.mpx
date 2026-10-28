@@ -8,19 +8,17 @@
     enable-sticky@ios="{{true}}"
     bindscrolltolower="loadMore"
   >
-    <view class="panel-header" mpxTagName@ios="sticky-header" offset-top@ios="{{0}}">
-      <view class="panel-header-content">
-        <text class="title">Data Overview</text>
-        <view class="tab-bar">
-          <view
-            wx:for="{{tabs}}"
-            wx:key="id"
-            class="tab-item"
-            bindtap="switchTab(item.id)"
-            wx:class="{{{'tab-active': activeTab === item.id}}}"
-          >
-            <text>{{item.label}}</text>
-          </view>
+    <view class="panel-header" mpxTagName@ios="sticky-header">
+      <text class="title">Data Overview</text>
+      <view class="tab-bar">
+        <view
+          wx:for="{{tabs}}"
+          wx:key="id"
+          class="tab-item"
+          bindtap="switchTab(item.id)"
+          wx:class="{{{'tab-active': activeTab === item.id}}}"
+        >
+          <text>{{item.label}}</text>
         </view>
       </view>
     </view>
@@ -34,7 +32,7 @@
     </view>
 
     <view class="stats-section" id="section-stats" wx:ref>
-      <view class="stat-cell" wx:for="{{stats}}" wx:key="label">
+      <view class="stat-cell" wx:for="{{stats}}" wx:key="label" mpxTagName@wx|web="block">
         <view class="stat-card">
           <text class="stat-value">{{item.value}}</text>
           <text class="stat-label">{{item.label}}</text>
@@ -77,10 +75,8 @@
 </template>
 
 <script>
-import mpx, { createComponent, ref, onMounted } from '@mpxjs/core'
-import apiProxy from '@mpxjs/api-proxy'
-
-mpx.use(apiProxy)
+import { createComponent, ref, onMounted } from '@mpxjs/core'
+import { request, showToast } from '@mpxjs/api-proxy'
 
 createComponent({
   setup (props, context) {
@@ -126,11 +122,11 @@ createComponent({
     }
 
     function loadMore () {
-      mpx.showToast({ title: 'Loading more...' })
+      showToast({ title: 'Loading more...' })
     }
 
     function fetchDetails () {
-      mpx.request({
+      request({
         url: '/api/details',
         data: { tab: activeTab.value },
         success (res) {
@@ -163,15 +159,12 @@ createComponent({
 }
 
 .panel-header {
-  /* @mpx-if (__mpx_mode__ !== 'ios') */
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
   position: sticky;
   top: 0;
   /* @mpx-endif */
   z-index: 10;
   background-color: #fff;
-}
-
-.panel-header-content {
   padding: 20rpx 30rpx; /*use rpx*/
   border-bottom: 1px solid #eee; /*use px*/
 }
@@ -180,7 +173,7 @@ createComponent({
   font-size: 36rpx;
   font-weight: bold;
   color: #1a1a2e;
-  /* @mpx-if (__mpx_mode__ !== 'ios') */
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
   background-image: linear-gradient(90deg, #667eea, #764ba2);
   -webkit-background-clip: text;
   /* @mpx-endif */
@@ -212,17 +205,26 @@ createComponent({
   padding: 10rpx;
 }
 
+/* @mpx-if (__mpx_mode__ === 'ios') */
 .stat-cell {
   width: 50%;
   box-sizing: border-box;
   padding: 16rpx 24rpx;
 }
+/* @mpx-endif */
 
 .stat-card {
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
+  width: calc(50% - 48rpx);
+  margin: 16rpx 24rpx;
+  /* @mpx-endif */
   padding: 20rpx 30rpx;
   background-color: #fff;
   border-radius: 16rpx;
   display: flex;
+  /* @mpx-if (__mpx_mode__ === 'ios') */
+  flex-direction: column;
+  /* @mpx-endif */
   align-items: center;
 }
 
@@ -259,6 +261,9 @@ createComponent({
   width: 100%;
   height: 400rpx;
   position: relative;
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
+  margin-top: 12rpx;
+  /* @mpx-endif */
 }
 
 .chart-placeholder {
@@ -334,30 +339,31 @@ createComponent({
   border-radius: 4rpx;
 }
 .summary-card {
+  /* @mpx-if (__mpx_mode__ === 'ios') */
   display: flex;
   flex-direction: row;
+  border-radius: 12rpx;
+  /* @mpx-else */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* @mpx-endif */
   position: relative;
   padding: 24rpx;
-  /* @mpx-if (__mpx_mode__ === 'ios') */
-  border-radius: 12rpx;
-  /* @mpx-endif */
 }
-
 .summary-title {
-  width: 50%;
-  min-width: 0;
-  font-size: 28rpx;
   /* @mpx-if (__mpx_mode__ === 'ios') */
-  font-weight: bold;
-  /* @mpx-else */
+  flex: 1;
+  min-width: 0;
+  /* @mpx-endif */
+  font-size: 28rpx;
   font-weight: 600;
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
   font-family: 'PingFang SC', 'Helvetica Neue', sans-serif;
   white-space: nowrap;
   text-overflow: ellipsis;
   /* @mpx-endif */
   overflow: hidden;
 }
-
 .summary-accent {
   position: absolute;
   top: 0;
@@ -366,23 +372,19 @@ createComponent({
   height: 4rpx;
   background-color: #1677ff;
 }
-
+/* @mpx-if (__mpx_mode__ === 'ios') */
 .summary-tags {
-  width: 50%;
-  min-width: 0;
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex: 1;
 }
-
+/* @mpx-endif */
 .tag {
   padding: 4rpx 12rpx;
 }
-
 .tag-spaced {
   margin-left: 8rpx;
 }
-
 .tag-highlight {
   color: #1677ff;
 }

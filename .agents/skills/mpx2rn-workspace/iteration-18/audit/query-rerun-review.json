@@ -1,0 +1,17 @@
+{
+  "eval_id": 5,
+  "group": "mpx2rn",
+  "assertion_id": "a2",
+  "static_passed": false,
+  "reviewed_passed": true,
+  "source": "eval-5-new-task-board-page/mpx2rn/outputs/task-board.mpx",
+  "sha256": "6ce3456a3b8c4a639de177fd48defe56b8d72628e6c325f40e489e7b5c1bea38",
+  "checks": {
+    "on_load_registered_synchronously": true,
+    "decoded_query_precedes_raw_query": true,
+    "invalid_category_defaults_to_all": true,
+    "omitted_decoded_query_falls_back_to_raw": true
+  },
+  "explanation": "onLoad 在 script setup 顶层同步注册；第二个参数 decodedQuery = rawQuery 仅在未传 decodedQuery 时回退，存在时优先读取 decodedQuery.category。动态执行确认参数优先级与分类筛选正确，静态评分未识别带默认值的参数。",
+  "limitation": "使用最小 ref/computed/onLoad 桩执行输出脚本，未进行真机页面导航；原始自动分数保留。"
+}

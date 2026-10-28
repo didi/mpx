@@ -57,7 +57,12 @@ class CalibratedGradeTests(unittest.TestCase):
         fixed = source.replace("decodeURIComponent(query.videoUrl || '')", "query.videoUrl || ''")
         self.assertTrue(all(grade.javascript_probe('video', fixed)[key] for key in ('srcMatches', 'fallback', 'detail')))
         self.assertFalse(grade.javascript_probe('video', source)['srcMatches'])
-        missing_argument = fixed.replace("query.videoUrl || ''", 'arguments[1].videoUrl')
+        local_source = grade.blocks((ROOT / CASES[2] / 'mpx/outputs/business-page.mpx').read_text())['script']
+        result = grade.javascript_probe('video', local_source)
+        self.assertTrue(all(result[key] for key in ('srcMatches', 'fallback', 'detail')))
+        self.assertEqual(result['lifecycle']['argumentCount'], 2)
+        self.assertTrue(result['lifecycle']['sameQuery'])
+        missing_argument = fixed.replace("query.videoUrl || ''", 'arguments[2].videoUrl')
         self.assertIn('error', grade.javascript_probe('video', missing_argument))
         no_media_fallback = fixed.replace('event.target', '{}')
         self.assertFalse(grade.javascript_probe('video', no_media_fallback)['fallback'])

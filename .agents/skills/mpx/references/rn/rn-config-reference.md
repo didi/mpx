@@ -24,15 +24,15 @@ RN 输出选择 `ios` / `android` / `harmony`，项目 `srcMode` 使用 `wx`；�
 
 以下字段配置在 **`MpxWebpackPlugin` 的 `rnConfig`** 中：
 
-| 配置项 | 默认值 | 说明 |
-| --- | --- | --- |
-| `projectName` | 未设置 | RN 根组件注册名称。设置后入口生成 `AppRegistry.registerComponent(projectName, () => app)`；未设置时入口默认导出 App，交给宿主注册。 |
-| `supportSubpackage` | `true` | 是否启用 RN 页面与组件的异步分包，以及框架的 `require.async` 支持。设为 `false` 时，页面与组件映射使用同步引用。 |
-| `asyncCommonSubpackage` | `true` | 多个异步分包的公共模块默认抽取为 `async-common/index.js`；设为 `false` 时合并进 App 主入口 chunk。 |
-| `transSubpackageRules` | 未设置 | RN 专用的分包资源转移规则，格式为 `[{ from: ['sub1'], to: 'common' }]`，作用于页面、组件及 `require.async` 引用的模块；`to: ''` 表示转移到主包。 |
-| `asyncChunk.loading` | 未设置 | 异步**页面**加载中的组件路径；不配置时使用内置 loading。 |
-| `asyncChunk.fallback` | 未设置 | 异步**页面**加载失败的组件路径；不配置时使用内置失败页。自定义 Mpx 组件调用 `this.triggerEvent('reload')` 触发重试；React 组件调用传入的 `onReload` 回调。 |
-| `customBuiltInComponents` | 未设置 | 主模板及 import 引入的子模板均生效；`Record<string, string>`，替换或扩展基础标签实现。key 为模板中的微信基础标签名（如 `view`、`text`、`scroll-view`），不使用 `mpx-*`；value 为绝对路径或 npm 包模块路径，不使用 `./`、`../`、`~` 前缀，避免将 `src/...` 误写为包路径。自定义实现负责对齐属性、事件和子节点行为。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `projectName` | `string` | 未设置 | RN 根组件注册名称。设置后入口生成 `AppRegistry.registerComponent(projectName, () => app)`；未设置时入口默认导出 App，交给宿主注册。 |
+| `supportSubpackage` | `boolean` | `true` | 是否启用 RN 页面与组件的异步分包，以及框架的 `require.async` 支持。设为 `false` 时，页面与组件映射使用同步引用。 |
+| `asyncCommonSubpackage` | `boolean` | `true` | 多个异步分包的公共模块默认抽取为 `async-common/index.js`；设为 `false` 时合并进 App 主入口 chunk。 |
+| `transSubpackageRules` | `object[]` | 未设置 | RN 专用的分包资源转移规则，格式为 `[{ from: ['sub1'], to: 'common' }]`，作用于页面、组件及 `require.async` 引用的模块；`to: ''` 表示转移到主包。 |
+| `asyncChunk.loading` | `string` | 未设置 | 异步**页面**加载中的组件路径；不配置时使用内置 loading。 |
+| `asyncChunk.fallback` | `string` | 未设置 | 异步**页面**加载失败的组件路径；不配置时使用内置失败页。自定义 Mpx 组件调用 `this.triggerEvent('reload')` 触发重试；React 组件调用传入的 `onReload` 回调。 |
+| `customBuiltInComponents` | `Record<string, string>` | 未设置 | 主模板及 import 引入的子模板均生效；`Record<string, string>`，替换或扩展基础标签实现。key 为模板中的微信基础标签名（如 `view`、`text`、`scroll-view`），不使用 `mpx-*`；value 为绝对路径或 npm 包模块路径，不使用 `./`、`../`、`~` 前缀，避免将 `src/...` 误写为包路径。自定义实现负责对齐属性、事件和子节点行为。 |
 
 ```js
 const path = require('path')
@@ -97,14 +97,14 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 
 #### 应用与导航
 
-| 配置项 | 默认值 | 说明 |
-| --- | --- | --- |
-| `parseAppProps` | 未设置 | `(props) => { initialRouteName?, initialParams? }`，解析宿主传给 RN 根组件的参数。`initialRouteName` 使用已注册页面路径；不指定时使用应用首页。 |
-| `onStateChange` | 未设置 | `(state) => void`，初始导航就绪及后续导航状态变化时回调。 |
-| `disablePageTransition` | `false` | 为 `true` 时禁用 RN 页面转场动画。 |
-| `disableAppStateListener` | 未设置 | 为 `true` 时不自动响应应用前后台变化，适合由宿主接管前后台状态的场景；应用卸载仍会正常处理。 |
-| `onAppBack` | 未设置 | `(delta) => boolean`，`navigateBack` 请求越过当前页面栈时触发，入参为超出栈的返回层数。返回 `true` 表示已由宿主接管，本次返回操作报告成功，不再继续退页；退出宿主页面的操作需自行实现。 |
-| `onStackTopBack` | 未设置 | `() => void`，配置函数后，默认导航栏在首页也显示返回按钮，点击时调用该函数；实际返回由宿主处理。自定义导航栏不使用该按钮。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `parseAppProps` | `Function` | 未设置 | `(props: Record<string, any>) => { initialRouteName?: string, initialParams?: object } \| void`，同步解析宿主传给 RN 根组件的参数。`initialRouteName` 使用已注册页面路径；不返回配置或不指定路径时使用应用首页。 |
+| `onStateChange` | `Function` | 未设置 | `(state: object) => void`，state 为 React Navigation 当前导航状态，含路由数组 routes 和活动索引 index；初始导航就绪及后续导航状态变化时回调，返回值不被消费。 |
+| `disablePageTransition` | `boolean` | `false` | 为 `true` 时禁用 RN 页面转场动画。 |
+| `disableAppStateListener` | `boolean` | 未设置 | 为 `true` 时不自动响应应用前后台变化，适合由宿主接管前后台状态的场景；应用卸载仍会正常处理。 |
+| `onAppBack` | `Function` | 未设置 | `(delta: number) => boolean`，`navigateBack` 请求越过当前页面栈时触发，入参为超出栈的返回层数。同步返回 `true` 表示已由宿主接管，本次返回操作报告成功，不再继续退页；退出宿主页面的操作需自行实现。 |
+| `onStackTopBack` | `Function` | 未设置 | `() => void`，配置函数后，默认导航栏在首页也显示返回按钮，点击时调用该函数；实际返回由宿主处理。自定义导航栏不使用该按钮。 |
 
 **初始参数的作用范围：** `parseAppProps` 返回的 `initialParams` 仅作为 RN 根组件初始化时首个路由实例的参数，传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 的 `query` 以当前路由实例参数为准。
 
@@ -112,14 +112,14 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 
 #### 布局与基础组件
 
-| 配置项 | 默认值 | 说明 |
-| --- | --- | --- |
-| `defaultBoxSizing` | `'content-box'` | 节点未显式声明 `box-sizing` 时使用的默认盒模型，可设为 `'border-box'`。 |
-| `allowFontScaling` | 未设置，按 `false` 处理 | 文本类基础组件是否跟随系统字体缩放；组件显式传入的 `allowFontScaling` 优先。 |
-| `customDimensions` | 未设置 | `({ window, screen }) => ({ window, screen })`，自定义框架样式换算使用的尺寸信息；返回空值时沿用原始尺寸。`rpx` / `vw` 依赖其中的 `window.width`，`vh` 依赖 `window.height`。 |
-| `getBottomVirtualHeight` | 未设置 | `() => number`，修正 Android 非横屏场景下底部虚拟区域高度；未配置时采用安全区域底部 inset，横屏时使用屏幕与窗口高度差。 |
-| `enableNativeKeyboardAvoiding` | 未设置，按 `true` 处理 | Android 默认配合原生键盘避让。宿主关闭原生避让时设为 `false`，启用 Mpx 内置补偿逻辑，仍受输入组件 `adjust-position` 控制。 |
-| `onPickerVibrate` | 未设置 | `() => void`，为 `picker-view-column` 滚动选择提供宿主振动反馈。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `defaultBoxSizing` | `string` | `'content-box'` | 节点未显式声明 `box-sizing` 时使用的默认盒模型，可设为 `'border-box'`。 |
+| `allowFontScaling` | `boolean` | 未设置，按 `false` 处理 | 文本类基础组件是否跟随系统字体缩放；组件显式传入的 `allowFontScaling` 优先。 |
+| `customDimensions` | `Function` | 未设置 | `({ window, screen }) => ({ window, screen })`，同步返回完整尺寸对象，或不返回以沿用原始尺寸；window/screen 均含 `width/height/scale/fontScale: number`。自定义框架样式换算使用的尺寸信息，`rpx` / `vw` 依赖其中的 `window.width`，`vh` 依赖 `window.height`。 |
+| `getBottomVirtualHeight` | `Function` | 未设置 | `() => number`，修正 Android 非横屏场景下底部虚拟区域高度；未配置时采用安全区域底部 inset，横屏时使用屏幕与窗口高度差。 |
+| `enableNativeKeyboardAvoiding` | `boolean` | 未设置，按 `true` 处理 | Android 默认配合原生键盘避让。宿主关闭原生避让时设为 `false`，启用 Mpx 内置补偿逻辑，仍受输入组件 `adjust-position` 控制。 |
+| `onPickerVibrate` | `Function` | 未设置 | `() => void`，为 `picker-view-column` 滚动选择提供宿主振动反馈。 |
 
 当前状态栏由页面配置与内置导航组件控制，见 [JSON 配置参考](./rn-json-reference.md)。虽然类型中仍声明了 `statusBarTranslucent`，当前实现没有读取该运行时字段，不应依赖它切换透明状态栏。
 
@@ -127,11 +127,11 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 
 `openTypeHandler` 用于对接 `button` 的宿主能力，未配置对应键时点击会告警。框架默认不会直接提供系统分享或用户授权能力。
 
-| 配置项 | 说明 |
-| --- | --- |
-| `projectName` | 运行时分享的默认标题，未设置时使用 `'AwesomeProject'`。与编译期同名字段分别配置，页面 `onShareAppMessage` 返回的 `title` 可覆盖它。 |
-| `openTypeHandler.onShareAppMessage` | `(shareInfo) => void`，对应 `open-type="share"`。框架合并默认 `title` / `path` 与当前页 `onShareAppMessage` 的返回结果后调用，可接收 `imageUrl` 等字段；宿主负责执行分享。 |
-| `openTypeHandler.onUserInfo` | 对应 `open-type="getUserInfo"`。当前按钮实现对该值执行 `Promise.resolve(value)`，得到对象后直接传给 `bindgetuserinfo`，**不会调用函数值**；接入时提供结果对象或 Promise，不使用返回对象的函数。该字段尚未在 `RnConfig` 类型中声明。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `projectName` | `string` | 未设置时使用 `'AwesomeProject'` | 运行时分享的默认标题，未设置时使用 `'AwesomeProject'`。与编译期同名字段分别配置，页面 `onShareAppMessage` 返回的 `title` 可覆盖它。 |
+| `openTypeHandler.onShareAppMessage` | `Function` | — | `(shareInfo: { title: string, path: string, imageUrl?: string }) => void`，对应 `open-type="share"`。框架合并默认 `title` / `path` 与当前页 `onShareAppMessage` 的返回结果后调用；宿主负责执行分享，返回值不作为分享结果消费。 |
+| `openTypeHandler.onUserInfo` | `object\|Promise<object>` | — | 对应 `open-type="getUserInfo"`。当前按钮实现对该值执行 `Promise.resolve(value)`，得到对象后直接传给 `bindgetuserinfo`，**不会调用函数值**；接入时提供结果对象或 Promise，不使用返回对象的函数。该字段尚未在 `RnConfig` 类型中声明。 |
 
 在 `button open-type="share"` 场景中，页面 `onShareAppMessage` 可返回 `promise` 提供异步分享数据；框架会与约 3 秒的等待上限竞争，超时使用同步返回的信息。系统或容器提供的非 button 分享入口由宿主自行接入，不要求经过 `openTypeHandler`，其回调参数与异步结果处理以宿主约定为准。
 
@@ -152,11 +152,11 @@ Mpx.config.rnConfig.openTypeHandler = Object.assign({}, Mpx.config.rnConfig.open
 
 #### 异步分包加载与预下载
 
-| 配置项 | 说明 |
-| --- | --- |
-| `loadChunkAsync` | `({ url, package }) => Promise`，宿主负责加载并**执行**异步 chunk，使 webpack 注册对应模块。只有下载文件而未执行，不能完成模块加载。 |
-| `downloadChunkAsync` | `(packages: string[]) => void`，按分包名数组预下载、不执行，由页面命中的应用 `preloadRule` 触发。 |
-| `onLazyLoadPageError` | `({ subpackage, errType }) => void`，异步页面加载失败时触发，可用于监控或宿主提示；错误类型取自加载错误（如 `'timeout'` / `'fail'`）。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `loadChunkAsync` | `Function` | — | `(params: { url: string, package: string }) => Promise`，url 为 chunk 资源地址，package 为分包名；宿主负责加载并**执行**异步 chunk，使 webpack 注册对应模块。只有下载文件而未执行，不能完成模块加载。 |
+| `downloadChunkAsync` | `Function` | — | `(packages: string[]) => void`，按分包名数组预下载、不执行，由页面命中的应用 `preloadRule` 触发。 |
+| `onLazyLoadPageError` | `Function` | — | `(error: { subpackage: string, errType: string }) => void`，异步页面加载失败时触发，可用于监控或宿主提示；错误类型取自加载错误（如 `'timeout'` / `'fail'`），返回值不被消费。 |
 
 `loadChunkAsync` 必须返回 Promise，且应在首次异步加载前注册。成功时先完成 chunk 执行，再结束 Promise（类型约定为 `Promise<null>`）；失败时按加载协议结束为 `'fail'` / `'timeout'` 等状态，框架交给 webpack 的加载完成回调处理。当前 RN 加载适配器不会自行启动超时计时器，超时与宿主侧重试策略需在实现中明确。
 
@@ -164,19 +164,19 @@ Mpx.config.rnConfig.openTypeHandler = Object.assign({}, Mpx.config.rnConfig.open
 
 #### 权限
 
-| 配置项 | 说明 |
-| --- | --- |
-| `bluetoothPermission` | `() => Promise<boolean>`，在 `openBluetoothAdapter` 中替代默认蓝牙权限检查，返回 `true` 表示通过。 |
-| `wifiPermission` | `() => Promise<boolean>`，在 `startWifi` 中替代默认 Wi-Fi 权限检查，返回 `true` 表示通过。 |
-| `cameraPermission` | `() => Promise<boolean>`，配置后 Camera 等待结果严格为 `true` 才渲染；未配置时框架不通过此回调阻塞渲染。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `bluetoothPermission` | `Function` | — | `() => Promise<boolean>`，在 `openBluetoothAdapter` 中替代默认蓝牙权限检查，返回 `true` 表示通过。 |
+| `wifiPermission` | `Function` | — | `() => Promise<boolean>`，在 `startWifi` 中替代默认 Wi-Fi 权限检查，返回 `true` 表示通过。 |
+| `cameraPermission` | `Function` | — | `() => Promise<boolean>`，配置后 Camera 等待结果严格为 `true` 才渲染；未配置时框架不通过此回调阻塞渲染。 |
 
 权限回调与环境 API 的 RN 支持范围见 [环境 API 参考](./rn-api-reference.md)。
 
 #### WebView
 
-| 配置项 | 说明 |
-| --- | --- |
-| `webviewConfig.hostWhitelists` | 字符串数组，从 URL 提取主机名后进行后缀匹配；未设置或为空数组时不限制主机。 |
-| `webviewConfig.apiImplementations` | 默认未设置，无自定义方法。按方法名配置函数，处理内置分支未处理的桥接调用；桥接参数逐项传入，结果经 Promise 回传，未配置对应函数时返回调用失败。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `webviewConfig.hostWhitelists` | `string[]` | — | 字符串数组，从 URL 提取主机名后进行后缀匹配；未设置或为空数组时不限制主机。 |
+| `webviewConfig.apiImplementations` | `Record<string, (...args: any[]) => any>` | — | 默认未设置，无自定义方法。类型为 `Record<string, (...args: any[]) => any>`，处理内置分支未处理的桥接调用；args 为 H5 调用传入的参数列表，返回可序列化结果或 resolve 为该结果的 Promise，拒绝的 Promise 作为失败回传。未配置对应函数时返回调用失败。 |
 
 WebView 使用方式见 [模板能力参考](./rn-template-reference.md)。

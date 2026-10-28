@@ -12,14 +12,14 @@
 
 ## 命令行参数
 
-| 参数 | 默认 | 说明 |
-| --- | --- | --- |
-| `<file.mpx>...` | - | 一个或多个待校验的 `.mpx` 绝对/相对路径 |
-| `--target=<mode>` | `ios` | 编译目标，多个用逗号分隔（如 `wx,ios,web`）|
-| `--type=<page\|component>` | `component` | 入口类型，按页面或组件进行校验 |
-| `--project-root=<path>` | 自动探测 | 显式指定业务构建工程根目录，用于依赖解析与构建配置加载 |
-| `--no-ignore-sub-components` | 关闭 | 保留 `usingComponents`，解析并递归编译所有子组件 |
-| `--json` | 关闭 | 输出结构化 JSON 结果 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `<file.mpx>...` | `string[]` | - | 一个或多个待校验的 `.mpx` 绝对/相对路径 |
+| `--target=<mode>` | `string` | `ios` | 编译目标，多个用逗号分隔（如 `wx,ios,web`） |
+| `--type=<page\|component>` | `string` | `component` | 入口类型，按页面或组件进行校验 |
+| `--project-root=<path>` | `string` | 自动探测 | 显式指定业务构建工程根目录，用于依赖解析与构建配置加载 |
+| `--no-ignore-sub-components` | `boolean` | 关闭 | 保留 `usingComponents`，解析并递归编译所有子组件 |
+| `--json` | `boolean` | 关闭 | 输出结构化 JSON 结果 |
 
 退出码：`0` 校验通过（无错误、无警告）；`1` 存在编译错误或警告；`2` 运行期异常（如未找到 `@mpxjs/mpx-cli-service`）。
 
@@ -27,26 +27,28 @@
 
 ## 使用示例
 
-> 下方示例中的 `<skill-root>` 表示本 skill 在宿主环境中的实际安装路径（例如 `.agents/skills/mpx`、`.claude/skills/mpx` 或 `~/.claude/skills/mpx` 等，以实际安装位置为准）；调用时使用该绝对路径，不要在宿主项目根目录下查找 `scripts/compile-validate.js`。
+> 先将下方 `skillRoot` 改为本 skill 的实际安装绝对路径（可能位于 `.agents/skills/mpx`、`.claude/skills/mpx` 等），并在业务工程根目录执行；`src/...` 相对该业务工程解析，不相对 Skill 目录。
 
 ```bash
+skillRoot="/absolute/path/to/mpx-skill"
+
 # 检查候选业务工程能否解析编译依赖
 node -e "console.log(require.resolve('@mpxjs/mpx-cli-service', { paths: [process.argv[1]] }))" /absolute/path/to/app
 
 # 单组件、显式 target=ios
-node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios
+node "$skillRoot/scripts/compile-validate.js" src/components/foo.mpx --target=ios
 
 # 显式指定为页面
-node <skill-root>/scripts/compile-validate.js src/pages/index.mpx --type=page --target=ios
+node "$skillRoot/scripts/compile-validate.js" src/pages/index.mpx --type=page --target=ios
 
 # 跨端多目标校验
-node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=wx,ios,web
+node "$skillRoot/scripts/compile-validate.js" src/components/foo.mpx --target=wx,ios,web
 
 # 输出结构化 JSON 便于二次处理
-node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios --json
+node "$skillRoot/scripts/compile-validate.js" src/components/foo.mpx --target=ios --json
 
 # 同时递归校验子组件（默认行为是仅校验目标自身）
-node <skill-root>/scripts/compile-validate.js src/components/foo.mpx --target=ios --no-ignore-sub-components
+node "$skillRoot/scripts/compile-validate.js" src/components/foo.mpx --target=ios --no-ignore-sub-components
 ```
 
 校验失败时按错误或警告的 `category` 字段回到对应任务步骤定位与修正问题，修复本次变更相关问题后重跑。遵守宿主仓库的测试失败重试上限；本仓库单元测试最多尝试 3 次修复，仍失败时保留错误与分析。

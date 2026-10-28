@@ -35,7 +35,7 @@
           "template": 2
         }
       },
-      "durationMs": 2733
+      "durationMs": 3130
     },
     "ios": {
       "success": false,
@@ -62,7 +62,7 @@
           "template": 2
         }
       },
-      "durationMs": 2459
+      "durationMs": 2647
     }
   }
 }

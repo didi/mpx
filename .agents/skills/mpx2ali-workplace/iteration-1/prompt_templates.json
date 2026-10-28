@@ -1,0 +1,11 @@
+{
+  "description": "相同任务、目标、模型与工作目录，仅 Skill 入口不同；不注入评分答案。",
+  "templates": {
+    "mpx": {
+      "prompt": "你是 Mpx 跨端开发者。完成任务：\n{{TASK_PROMPT}}\n\n目标：wx、ali；源码方言 wx。固定工作目录：{{WORKDIR}}。\n输入目录：{{INPUT_PATH}}。先读取目录内任务输入与依赖。\nSkill：首先完整读取 {{MPX_SKILL_PATH}}，按需查阅该 Skill 的 references。\n评测隔离：只能使用本组指定的 Skill，不加载其他 Skill，不读取 evals.json、eval_metadata.json、评分脚本、assessment、其他组输出或历史运行。两组是提示词隔离，不是文件系统权限隔离。\n输出目录：{{OUTPUT_PATH}}。必须交付：\n{{OUTPUT_FILES}}\n仅修改本组输出和为验证产生的临时产物；复用已复制的依赖，不修改输入、Skill、运行器或其他组文件。validation.md 如实记录改动、实际命令与日志、依赖版本、未验证项；未运行的检查不能写为通过。"
+    },
+    "mpx2ali": {
+      "prompt": "你是 Mpx 跨端开发者。完成任务：\n{{TASK_PROMPT}}\n\n目标：wx、ali；源码方言 wx。固定工作目录：{{WORKDIR}}。\n输入目录：{{INPUT_PATH}}。先读取目录内任务输入与依赖。\nSkill：首先完整读取 {{MPX2ALI_SKILL_PATH}}，按需查阅该 Skill 的 references。\n评测隔离：只能使用本组指定的 Skill，不加载其他 Skill，不读取 evals.json、eval_metadata.json、评分脚本、assessment、其他组输出或历史运行。两组是提示词隔离，不是文件系统权限隔离。\n输出目录：{{OUTPUT_PATH}}。必须交付：\n{{OUTPUT_FILES}}\n仅修改本组输出和为验证产生的临时产物；复用已复制的依赖，不修改输入、Skill、运行器或其他组文件。validation.md 如实记录改动、实际命令与日志、依赖版本、未验证项；未运行的检查不能写为通过。"
+    }
+  }
+}

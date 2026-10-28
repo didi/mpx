@@ -691,7 +691,7 @@ def check_eval_2(root):
     })
     for row in rows:
         if row["id"] == "c3":
-            row["evidence"] = "Actual Web router query and single-argument onLoad/media probes: " + json.dumps(video_probe, ensure_ascii=False)
+            row["evidence"] = "Actual Web router query and repository Web created/onLoad/media probes: " + json.dumps(video_probe, ensure_ascii=False)
         elif row["id"] == "c6":
             row["evidence"] = "Installed compiler's effective Web picker attributes: " + json.dumps(web_picker, ensure_ascii=False)
     return rows

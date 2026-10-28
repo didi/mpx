@@ -2,7 +2,7 @@
   "name": "mpx2skyline-skill-eval-workspace",
   "private": true,
   "scripts": {
-    "compile-validate": "node ../mpx/scripts/compile-validate.js --target=wx",
+    "compile-validate": "node iteration-8/skill-snapshots/mpx/scripts/compile-validate.js --target=wx",
     "lint": "eslint --ext .js,.ts,.mpx"
   },
   "dependencies": {

@@ -1,27 +1,29 @@
 <template>
   <view class="segmented-control">
-    <text class="control-title">{{label}}</text>
-    <view class="control-options">
+    <text class="segmented-title">{{label}}</text>
+    <view class="segmented-options">
       <view
         wx:for="{{options}}"
         wx:key="value"
-        class="control-option"
+        class="segmented-option"
         wx:class="{{ {
-          'control-option-selected': item.value === currentValue,
-          'control-option-disabled': disabled || item.disabled
+          'segmented-option-selected': item.value === currentValue,
+          'segmented-option-disabled': disabled || item.disabled
         } }}"
-        hover-class="{{disabled || item.disabled ? 'control-option-disabled' : 'control-option-pressed'}}"
+        hover-class="{{disabled || item.disabled ? 'segmented-option-disabled' : 'segmented-option-pressed'}}"
         hover-start-time="{{0}}"
-        hover-stay-time="{{0}}"
-        bindtap="selectOption(item)"
+        hover-stay-time="{{80}}"
+        aria-role="button"
+        aria-label="{{item.label}}"
+        bindtap="selectOption(index)"
       >
         <text
-          class="option-label"
-          wx:class="{{ { 'option-label-selected': item.value === currentValue } }}"
+          class="segmented-option-label"
+          wx:class="{{ { 'segmented-option-label-selected': item.value === currentValue } }}"
         >{{item.label}}</text>
       </view>
     </view>
-    <text class="control-summary">当前选择：{{selectedLabel}}</text>
+    <text class="segmented-summary">当前选择：{{selectedLabel}}</text>
   </view>
 </template>
 
@@ -35,20 +37,22 @@ const props = defineProps({
   disabled: { type: Boolean, value: false },
   label: { type: String, value: '请选择' }
 })
-const { triggerEvent } = useContext()
 const { options, disabled, label } = toRefs(props)
+const { triggerEvent } = useContext()
 const currentValue = ref(props.value)
 const selectedLabel = computed(() => {
-  const selected = props.options.find(option => option.value === currentValue.value)
-  return selected ? selected.label : '未选择'
+  const selectedOption = props.options.find(option => option.value === currentValue.value)
+  return selectedOption ? selectedOption.label : '未选择'
 })
 
 watch(() => props.value, value => {
   currentValue.value = value
 })
 
-function selectOption (option) {
-  if (props.disabled || option.disabled) return
+function selectOption (index) {
+  if (props.disabled) return
+  const option = props.options[index]
+  if (!option || option.disabled) return
   currentValue.value = option.value
   triggerEvent('change', { controlKey: props.controlKey, value: option.value })
 }
@@ -56,83 +60,81 @@ function selectOption (option) {
 defineExpose({ options, disabled, label, currentValue, selectedLabel, selectOption })
 </script>
 
-<style>
+<style scoped>
 .segmented-control {
   display: flex;
   flex-direction: column;
-  padding: 24rpx;
-  border-radius: 16rpx;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   background-color: #ffffff;
 }
 
-.control-title {
-  margin-bottom: 16rpx;
-  font-size: 30rpx;
-  line-height: 44rpx;
+.segmented-title {
+  margin-bottom: 12px;
+  color: #1e293b;
+  font-size: 16px;
   font-weight: bold;
-  color: #1f2937;
+  line-height: 24px;
 }
 
-.control-options {
+.segmented-options {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  padding: 4rpx;
-  border-radius: 12rpx;
+  align-items: stretch;
+  padding: 4px;
+  border-radius: 10px;
   background-color: #f1f5f9;
 }
 
-.control-option {
+.segmented-option {
   display: flex;
   flex-direction: row;
-  align-items: center;
-  justify-content: center;
   flex-grow: 1;
   flex-shrink: 1;
-  flex-basis: 120rpx;
+  flex-basis: 80px;
   min-width: 0;
-  min-height: 72rpx;
-  margin: 4rpx;
-  padding: 8rpx 16rpx;
-  border-width: 2rpx;
-  border-style: solid;
-  border-color: #cbd5e1;
-  border-radius: 8rpx;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
   background-color: #ffffff;
 }
 
-.control-option-selected {
+.segmented-option-selected {
   border-color: #2563eb;
   background-color: #2563eb;
 }
 
-/* 禁用时仍保留非空 hover-class，确保 RN 节点的 Hover 能力始终稳定。 */
-.control-option-disabled {
-  opacity: 0.4;
-}
-
-.control-option-pressed {
-  opacity: 0.6;
-}
-
-.option-label {
+.segmented-option-label {
   flex-shrink: 1;
-  font-size: 28rpx;
-  line-height: 40rpx;
-  text-align: center;
   color: #334155;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: center;
 }
 
-.option-label-selected {
+.segmented-option-label-selected {
   color: #ffffff;
   font-weight: bold;
 }
 
-.control-summary {
-  margin-top: 16rpx;
-  font-size: 24rpx;
-  line-height: 36rpx;
+.segmented-option-pressed {
+  opacity: 0.65;
+}
+
+.segmented-option-disabled {
+  opacity: 0.4;
+}
+
+.segmented-summary {
+  margin-top: 12px;
   color: #64748b;
+  font-size: 13px;
+  line-height: 20px;
 }
 </style>
 

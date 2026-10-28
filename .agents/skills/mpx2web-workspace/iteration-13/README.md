@@ -13,7 +13,7 @@
 
 每组 4 个用例、26 条断言，每用例每组运行 1 次，共 8 次运行。两组均以 wx/web 为目标，输入和交付范围相同，只允许按需读取本组 Skill。采用独立 Codex 进程，固定 cwd 为 `.agents/skills/mpx2web-workspace`，不继承父会话上下文。隔离由提示词约束实现，不是文件系统读权限隔离。
 
-正式全量语义复核及校准评分为 **mpx 25/26、mpx2web 24/26**。两组均存在视频初始化缺陷，mpx2web 另有地区绑定缺陷；两组也各有一项原断言未覆盖的 SSR 错误路径问题。原始 16/26、23/26 已归档到 `audit/original-scoring`。详见 [对比报告](benchmark.md)、[结果查看页面](review.html) 与 [评分复核](score-audit.md)。原始模型输出、真实日志与指标均已保存。
+正式全量语义复核及校准评分为 **mpx 26/26、mpx2web 24/26**。c3 已按当前仓库 Web 生命周期修正，mpx 通过；mpx2web 仍有重复解码及此前编译环境下的地区绑定缺陷；两组也各有一项原断言未覆盖的 SSR 错误路径问题。原始 16/26、23/26 已归档到 `audit/original-scoring`。详见 [对比报告](benchmark.md)、[结果查看页面](review.html) 与 [评分复核](score-audit.md)。原始模型输出、真实日志与指标均已保存。
 
 ## 环境与验证
 
@@ -46,3 +46,5 @@ python3 aggregate_benchmark.py --model gpt-6.1-sol --reasoning-effort high
 评分器已按全量语义复核校准，保持原有 26 条断言文本，汇总仍采用逐用例通过率的平均值。`semantic-review.json` 保存全部 52 条人工结论；`semantic_probe.cjs` 用安装版编译器、Vue Router 和受限 VM 验证关键行为，新增反例测试防止放宽规则后误过。额外 SSR 缺陷单列，不计入原分母。正式执行前如果修改题目、Skill 或依赖，应重新生成调度并记录变化。本次未修改两个被测 Skill，也未更改其他评测工作区。汇总器已修正通用脚本将运行次数写死为 3 的元数据，本轮实际为每用例每组 1 次。
 
 正式复核验证了 34 个交付与依赖文件的哈希未变。本轮仅更新评分逻辑和报告，未修复原始交付缺陷；修复交付或优化 Skill 应另建轮次以保持可比性。
+
+c3 评分探针直接执行当前仓库 Web `created` 方法体，实际传参和源码 SHA-256 见 `audit/local-runtime-c3.json`。本次仅切换 c3 生命周期基准，其他检查仍使用原评测依赖；原安装运行时的评分已归档至 `audit/installed-runtime-scoring`。

@@ -112,7 +112,11 @@ RN 模式下可通过 `class` / `wx:class` / `style` / `wx:style` 设置样式�
 
 ## React Hooks 使用
 
-通过 `REACTHOOKSEXEC` / `onReactHooksExec` 注册和执行 Hooks，返回值供模板绑定（展示、props、样式、事件等）。
+通过 `REACTHOOKSEXEC` / `onReactHooksExec` 注册和执行 Hooks，返回值供模板绑定（展示、props、样式、事件等）。以下计数示例需要点击后更新模板，因此同时设置 `options.disableMemo: true`；两种写法共用同一模板。
+
+选项式签名为 `[REACTHOOKSEXEC](props): object | void`；组合式为 `onReactHooksExec(callback): void`，其中 `callback(props): object | void`。`props` 是当前 React 渲染接收的属性对象，读取时视为只读；回调在每次 React 渲染时同步执行，可返回要挂到 Mpx 实例并供模板使用的字段和方法对象，无需暴露字段时可不返回。注册函数本身不返回这些字段，也不返回取消函数；异步回调、Promise 返回值和 React 渲染函数不是这里的返回契约。返回字段避免与 props、data、computed、methods、setup 绑定重名。
+
+组合式在 setup 同步注册；React Hooks 只在该回调内按稳定顺序调用，不放在条件分支、循环或异步任务中。
 
 **选项式 API**
 
@@ -132,6 +136,7 @@ RN 模式下可通过 `class` / `wx:class` / `style` / `wx:style` 设置样式�
 
   createComponent({
     components: { View, Text },
+    options: { disableMemo: true },
     [REACTHOOKSEXEC]() {
       const [count, setCount] = useState(0)
       const onTouchEnd = () => {
@@ -152,7 +157,8 @@ RN 模式下可通过 `class` / `wx:class` / `style` / `wx:style` 设置样式�
   import { useState } from 'react'
 
   defineOptions({
-    components: { View, Text }
+    components: { View, Text },
+    options: { disableMemo: true }
   })
 
   onReactHooksExec(() => {

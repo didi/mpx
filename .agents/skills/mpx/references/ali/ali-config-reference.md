@@ -22,10 +22,10 @@
 
 以下为 `MpxWebpackPlugin` 顶层选项，匹配方式见[规则匹配](../base/config-reference.md#规则匹配)，用法见[样式差异](./ali-style-reference.md)。
 
-| 配置项 | 默认值 | 约束 |
-| --- | --- | --- |
-| `autoScopeRules` | `{}` | 用 include/exclude 按资源路径限定范围；命中文件的所有样式区块启用 scoped，未命中仍尊重 `<style scoped>` |
-| `externalClasses` | `['custom-class', 'i-class']` | 与组件声明一致；自定义数组替换默认值，保留仍在使用的名称 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `autoScopeRules` | `object` | `{}` | 用 include/exclude 按资源路径限定范围；命中文件的所有样式区块启用 scoped，未命中仍尊重 `<style scoped>` |
+| `externalClasses` | `string[]` | `['custom-class', 'i-class']` | 与组件声明一致；自定义数组替换默认值，保留仍在使用的名称 |
 
 业务资源与保留文件名 `mpx-ali-compat.acss` 冲突时重命名业务资源，不修改或重复引入框架生成文件。
 

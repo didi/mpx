@@ -1,0 +1,53 @@
+{
+  "eval_id": 2,
+  "expectations": [
+    {
+      "id": "s2_00",
+      "text": "Skyline/glass-easel 的 wx:for 在初始化、数据返回前、null返回及正常数组更新阶段均接收 Array/Object 类型的数据。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:9-10,25-31：wx:for消费visibleItems；initData.visibleItems=[]保护首帧，data.items=[]保护异步前，computed对非数组返回[]、数组filter返回数组。原user-list.test.cjs/Jest14项覆盖初始化/null/空/正常/替换；新增grader-check.cjs与grader-mock.json对两种renderer执行undefined/null/空数组/有效数组，消费结果均Array，有效行过滤为0:甲、1:乙。"
+    },
+    {
+      "id": "s2_01",
+      "text": "Skyline/glass-easel 的用户容器使用合法的非数字开头id，通过正确的组件查询作用域定位同一容器。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:9,32-35：真实用户scroll-view id=users，按钮方法使用this.createSelectorQuery().select('#users')，合法字母开头且为实例组件作用域；grader-compile-artifacts/__validate_0.wxml:1编译后目标一致。原mock及grader-check.cjs校验select只命中#users；使用实例查询的性能建议亦已采纳。"
+    },
+    {
+      "id": "s2_02",
+      "text": "Skyline 的实际用户滚动目标开启 enhanced，节点查询返回的 ScrollViewContext 用于执行回到顶部操作。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:9,12,32-35：同一回顶按钮bindtap=scrollTop→组件查询#users→node().exec→res[0].node.scrollTo({top:0})；users本身scroll-y/enhanced=true，other为独立对照。user-list.test.cjs将users/other分离，确认只有users接收scrollTo；新增grader-check.cjs从模板bindtap名称分派至该方法，调用top0，真实滚动not_run。"
+    },
+    {
+      "id": "s2_03",
+      "text": "Skyline/glass-easel 模板片段使用 import 引入具名 template，并通过 template 调用；不使用 include。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:2,10与outputs/row.wxml:1：import ./row.wxml，外部具名user-row，循环内显式data={{item:item,index:index}}调用，无include；过滤后两行甲/乙绑定为index0/1及各自item.name，非外层泄漏。grader-compile-artifacts/__validate_0.wxml:1实际导入/template/row16a095f1.wxml，后者:1保留具名模板及index/item插值。"
+    },
+    {
+      "id": "s2_04",
+      "text": "Skyline 的简单 navigator 使用 text 或纯文本子节点；卡片导航采用符合该子节点结构的内容，或由外层点击事件实现同一详情跳转。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:13-14,39：简单navigator直接子text且url=/pages/detail；复杂卡片外层view bindtap=openDetail→wx.navigateTo({url:'/pages/detail'})。原Jest覆盖实际静态绑定与导航mock，grader-check.cjs再次执行目标一致；编译WXML:1保留两个入口。"
+    },
+    {
+      "id": "s2_05",
+      "text": "Skyline 图标与标题置于同一个可收缩的 span 内联容器，容器设置 max-lines=1、overflow=ellipsis，图片采用 inline-block，使同段图文在有限宽度内共同单行截断；WebView 对应分支保留同段图文单行截断。",
+      "passed": false,
+      "evidence": "部分实现正确：outputs/user-list.mpx:5,45-50及grader-compile-artifacts/__validate_0.wxml:1确认实际span包含image与text、max-lines1/ellipsis；图片renderer===skyline时命中inline-block，WebView保留truncate。但.heading只display:flex/align-items:center/width100%，未显式flex-direction；.title设flex:1;width:0。指定快照references/skyline/skyline-style-reference.md:37-40明确defaultDisplayBlock未开启时Skyline的Flex方向默认为column；此时flex:1沿纵轴分配，width:0仍为横向0，align-items:center不会拉伸，因此无法获得标题所需可用宽度。input/task.md只确认Skyline/glass-easel接入，无defaultDisplayBlock=true前提，outputs/report.md明确该项未核验。不能静态证明有限宽度内的共同图文截断，故s2_05失败；若宿主明确defaultDisplayBlock=true才能排除此失败路径。真实长label像素验证not_run本身不是扣分原因。"
+    },
+    {
+      "id": "s2_06",
+      "text": "Skyline 闪烁圆点由真实节点承载 CSS animation，采用支持的fill-mode（如both或forwards），实现原有1秒循环和透明度变化。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:6,51-52：真实pulse view，8px×8px、#f50、opacity .3，animation:user-list-pulse 1s ease infinite、fill-mode both；关键帧from .3/to1，无伪元素动画。grader-compile-artifacts/__validate_0.wxss:1保留1s循环/both/8px及相同opacity帧；不是alternate双秒周期。真实关键帧宿主作用域与视觉not_run。"
+    },
+    {
+      "id": "s2_07",
+      "text": "Skyline 按钮通过响应式状态，以wx:class或wx:style驱动transform/opacity的150ms CSS transition，完成按下及恢复的视觉过渡；WebView 保持对应体验。",
+      "passed": true,
+      "evidence": "outputs/user-list.mpx:12,26,37-38,53-54：同一按钮touchstart=press设置pressed=true，touchend/touchcancel=release恢复false；wx:class把状态映射button-pressed，scale(.96)/opacity(.7)，基础scale1/opacity1；transform/opacity各150ms ease。编译WXML:1保留四个事件与动态类，编译WXSS:1保留.15s及两状态；原mock与新增grader从模板事件名分派验证按下/松开/取消恢复。两renderer共用，不依赖wx.createAnimation。"
+    }
+  ]
+}

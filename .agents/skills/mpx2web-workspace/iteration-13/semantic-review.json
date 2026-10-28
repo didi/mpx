@@ -310,8 +310,9 @@
       "group": "mpx",
       "id": "c3",
       "text": "视频：保留 src 与播放事件，Web 在 detail 缺字段时从真实 target 安全回退",
-      "passed": false,
-      "evidence": "mpx/outputs/business-page.mpx:25,126-128,174-190; FAIL：Web onLoad(query,decodedQuery)直接读取decodedQuery.videoUrl，但安装core 2.11.1 pageStatusMixin.web.js:79-82仅传一个query参数。独立执行该实际mixin并用Vue Router 3.6.5真实解析query，重现TypeError: Cannot read properties of undefined (reading videoUrl)。 时间/元数据事件本身通过detail优先、0值、target回退、空字段保留验证；但src链路不满足原断言，整体失败。微信编码URL调用通过。; 独立验证脚本：/tmp/mpx2web-case2-verify.cjs；详细结果：/tmp/mpx2web-case2-verification.json；编译产物：/tmp/case2-mpx-{wx,web}.template"
+      "passed": true,
+      "evidence": "按当前仓库 Web created 生命周期实际调用 onLoad，传入 [query, query]。第二参数存在且为已解码路由参数；交付源码126-128行正确保留含%2F/%25签名的完整src，媒体detail优先、零值与target回退检查通过。旧安装依赖单参数导致的扣分已撤销。",
+      "runtime_basis": "repository packages/core/src/platform/builtInMixins/pageStatusMixin.web.js"
     },
     {
       "case": 2,
@@ -399,7 +400,8 @@
       "id": "c3",
       "text": "视频：保留 src 与播放事件，Web 在 detail 缺字段时从真实 target 安全回退",
       "passed": false,
-      "evidence": "mpx2web/outputs/business-page.mpx:17,123-124,178-197; FAIL：Web onLoad对Vue Router已经解码的query.videoUrl再decodeURIComponent。实际Vue Router 3.6.5解析签名URL后再经安装core的单参数onLoad调用，原https://media.example/video%2Fpart.mp4?signature=a%2Fb%25&next=%3Fv%3D1变为https://media.example/video/part.mp4?signature=a/b%&next=?v=1，破坏完整src。 时间/元数据事件本身通过detail优先、0值、target回退、空字段保留验证；但src链路不满足原断言，整体失败。微信编码URL调用通过。; 独立验证脚本：/tmp/mpx2web-case2-verify.cjs；详细结果：/tmp/mpx2web-case2-verification.json；编译产物：/tmp/case2-mpx2web-{wx,web}.template"
+      "evidence": "按当前仓库 Web created 生命周期实际调用 onLoad，传入 [query, query]；交付仍对已解码的query.videoUrl再次decodeURIComponent，改变%2F/%25路径及签名。媒体事件回退通过，但完整src仍不满足c3。",
+      "runtime_basis": "repository packages/core/src/platform/builtInMixins/pageStatusMixin.web.js"
     },
     {
       "case": 2,
@@ -560,7 +562,7 @@
   ],
   "summary": {
     "mpx": {
-      "passed": 25,
+      "passed": 26,
       "total": 26
     },
     "mpx2web": {
@@ -595,5 +597,12 @@
     "verified": true,
     "files": 34,
     "manifest": "audit/original-scoring/output-sha256.json"
+  },
+  "runtime_scope": "c3 follows current repository Web lifecycle; other assertions retain prior reviewed compiler/runtime basis.",
+  "c3_lifecycle": {
+    "path": "packages/core/src/platform/builtInMixins/pageStatusMixin.web.js",
+    "sha256": "0d7d546ce532ad969beb39eb57e67d0828ba0cd06b92ad7df6a5d620c5dcda36",
+    "argumentCount": 2,
+    "sameQuery": true
   }
 }

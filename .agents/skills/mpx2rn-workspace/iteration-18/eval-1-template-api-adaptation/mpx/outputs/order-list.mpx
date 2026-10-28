@@ -1,6 +1,6 @@
 <template>
   <view
-    class="page-container"
+    class="order-scroll"
     mpxTagName@ios="scroll-view"
     scroll-y@ios="{{true}}"
     refresher-enabled@ios="{{true}}"
@@ -12,10 +12,7 @@
     <view class="order-page">
       <view class="user-section">
         <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
-        <text>{{userInfo.nickName || '未登录'}}</text>
-        <view @wx wx:if="{{!userInfo.nickName}}" bindtap="requestUserInfo">
-          <text>获取用户信息</text>
-        </view>
+        <text>{{userInfo.nickName}}</text>
         <view bindtap="logout"><text>退出登录</text></view>
       </view>
       <view class="tab-bar">
@@ -60,17 +57,17 @@
             <view class="order-actions">
               <view
                 wx:if="{{item.status === 'unpaid'}}"
+                key@ios="pay"
                 class="btn btn-primary"
                 hover-class="btn-primary-hover"
-                key@ios="pay"
                 catchtap="payOrder(item.id)"
               >
                 <text class="btn-text">去支付</text>
               </view>
               <view
                 wx:elif="{{item.status === 'shipped'}}"
-                class="btn btn-default"
                 key@ios="receive"
+                class="btn btn-default"
                 catchtap="confirmReceive(item.id)"
               >
                 <text class="btn-text btn-default-text">确认收货</text>
@@ -90,13 +87,37 @@
   </view>
 </template>
 
+
 <script>
 import { createPage } from '@mpxjs/core'
 import { getProxy } from '@mpxjs/api-proxy'
 
 const api = getProxy({ usePromise: true })
-const statusColors = { unpaid: '#ff4d4f', shipped: '#1677ff', completed: '#52c41a' }
-const statusTexts = { unpaid: '待付款', shipped: '已发货', completed: '已完成' }
+
+// RN 定位返回 WGS84；转换后沿用原页面 lastLocation 的 GCJ02 坐标契约。
+function toGcj02 (lat, lng) {
+  if (lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271) {
+    return { lat, lng }
+  }
+  const x = lng - 105
+  const y = lat - 35
+  const pi = Math.PI
+  let dLat = -100 + 2 * x + 3 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x))
+  dLat += (20 * Math.sin(6 * x * pi) + 20 * Math.sin(2 * x * pi)) * 2 / 3
+  dLat += (20 * Math.sin(y * pi) + 40 * Math.sin(y / 3 * pi)) * 2 / 3
+  dLat += (160 * Math.sin(y / 12 * pi) + 320 * Math.sin(y * pi / 30)) * 2 / 3
+  let dLng = 300 + x + 2 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x))
+  dLng += (20 * Math.sin(6 * x * pi) + 20 * Math.sin(2 * x * pi)) * 2 / 3
+  dLng += (20 * Math.sin(x * pi) + 40 * Math.sin(x / 3 * pi)) * 2 / 3
+  dLng += (150 * Math.sin(x / 12 * pi) + 300 * Math.sin(x / 30 * pi)) * 2 / 3
+  const radLat = lat / 180 * pi
+  const magic = 1 - 0.006693421622965943 * Math.sin(radLat) * Math.sin(radLat)
+  const sqrtMagic = Math.sqrt(magic)
+  return {
+    lat: lat + dLat * 180 / ((6378245 * (1 - 0.006693421622965943)) / (magic * sqrtMagic) * pi),
+    lng: lng + dLng * 180 / (6378245 / sqrtMagic * Math.cos(radLat) * pi)
+  }
+}
 
 const pageOptions = {
   data: {
@@ -115,9 +136,9 @@ const pageOptions = {
   },
   computed: {
     displayOrders () {
-      return this.orders.map((order) => Object.assign({}, order, {
-        statusColor: statusColors[order.status] || '#999',
-        statusText: statusTexts[order.status] || '未知'
+      return this.orders.map(item => Object.assign({}, item, {
+        statusColor: this.getStatusColor(item.status),
+        statusText: this.getStatusText(item.status)
       }))
     }
   },
@@ -136,72 +157,66 @@ const pageOptions = {
     }
   },
   methods: {
-    async loadUserInfo () {
+    async readStorage (key) {
       try {
-        const res = await api.getStorage({ key: 'userInfo' })
-        if (res.data) {
-          this.userInfo = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
-        }
+        return (await api.getStorage({ key })).data
       } catch (e) {
-        // 缓存缺失时保留未登录状态，RN 用户资料由业务登录页写入缓存。
+        return ''
       }
     },
-    async requestUserInfo () {
-      // 微信资料接口必须由用户主动点击触发，RN 不提供此开放能力。
+    async loadUserInfo () {
+      const cachedInfo = await this.readStorage('userInfo')
+      if (cachedInfo) {
+        try {
+          this.userInfo = JSON.parse(cachedInfo)
+          return
+        } catch (e) {
+          // 无效缓存按未缓存处理。
+        }
+      }
       if (__mpx_mode__ === 'wx') {
         try {
           const res = await api.getUserProfile({ desc: '用于展示用户信息' })
           this.userInfo = res.userInfo
           await api.setStorage({ key: 'userInfo', data: JSON.stringify(res.userInfo) })
         } catch (e) {
-          await api.showToast({ title: '获取信息失败', icon: 'none' })
+          api.showToast({ title: '获取信息失败', icon: 'none' })
         }
+      } else if (__mpx_mode__ === 'ios') {
+        // RN 无微信用户资料能力，使用登录页写入的缓存；缺失时明确降级。
+        this.userInfo = { avatarUrl: '', nickName: '未登录' }
+        api.showToast({ title: '请先登录获取用户信息', icon: 'none' })
       }
     },
     async getLocation () {
-      const options = {}
-      if (__mpx_mode__ === 'wx') {
-        options.type = 'gcj02'
-      }
       try {
-        const res = await api.getLocation(options)
-        // RN 返回原生 WGS84 坐标，不支持通过 type 转为 GCJ02；记录坐标系避免混用。
-        this.locationInfo = {
-          lat: res.latitude,
-          lng: res.longitude,
-          coordinateType: __mpx_mode__ === 'wx' ? 'gcj02' : 'wgs84'
+        const options = {}
+        if (__mpx_mode__ === 'wx') {
+          options.type = 'gcj02'
         }
+        const res = await api.getLocation(options)
+        this.locationInfo = __mpx_mode__ === 'ios'
+          ? toGcj02(res.latitude, res.longitude)
+          : { lat: res.latitude, lng: res.longitude }
         await api.setStorage({ key: 'lastLocation', data: JSON.stringify(this.locationInfo) })
       } catch (e) {
-        await api.showToast({ title: '获取位置失败', icon: 'none' })
+        api.showToast({ title: '获取位置失败', icon: 'none' })
       }
     },
     async logout () {
       try {
-        const res = await api.showModal({
-          title: '确认退出',
-          content: '确定要退出登录吗？'
-        })
-        if (res.confirm) {
-          await Promise.all([
-            api.removeStorage({ key: 'userInfo' }),
-            api.removeStorage({ key: 'token' })
-          ])
-          await api.reLaunch({ url: '/pages/login' })
-        }
+        const res = await api.showModal({ title: '确认退出', content: '确定要退出登录吗？' })
+        if (!res.confirm) return
+        await api.removeStorage({ key: 'userInfo' })
+        await api.removeStorage({ key: 'token' })
+        await api.reLaunch({ url: '/pages/login' })
       } catch (e) {
-        await api.showToast({ title: '退出登录失败', icon: 'none' })
+        api.showToast({ title: '退出登录失败', icon: 'none' })
       }
     },
     async refreshBadge () {
-      let token = ''
       try {
-        const res = await api.getStorage({ key: 'token' })
-        token = res.data || ''
-      } catch (e) {
-        // 未登录时沿用空 token 请求。
-      }
-      try {
+        const token = await this.readStorage('token')
         const res = await api.request({
           url: '/api/user/badge',
           header: { Authorization: 'Bearer ' + token }
@@ -213,24 +228,30 @@ const pageOptions = {
             await api.removeTabBarBadge({ index: 2 })
           }
         } else if (__mpx_mode__ === 'ios') {
-          // RN 没有原生 TabBar API，将订单总数展示在本页“全部”标签。
-          this.tabs[0].badge = res.data.orderCount
+          // RN 无原生 tabBar，在页面的“全部”标签展示订单角标。
+          this.tabs = this.tabs.map(tab => tab.key === 'all'
+            ? Object.assign({}, tab, { badge: res.data.orderCount })
+            : tab)
         }
       } catch (e) {
-        await api.showToast({ title: '刷新订单角标失败', icon: 'none' })
+        api.showToast({ title: '更新订单角标失败', icon: 'none' })
       }
     },
     refreshData () {},
+    getStatusColor (status) {
+      const map = { unpaid: '#ff4d4f', shipped: '#1677ff', completed: '#52c41a' }
+      return map[status] || '#999'
+    },
+    getStatusText (status) {
+      const map = { unpaid: '待付款', shipped: '已发货', completed: '已完成' }
+      return map[status] || '未知'
+    },
     switchTab (key) {
       this.activeTab = key
       this.fetchOrders()
     },
-    async goOrderDetail (id) {
-      try {
-        await api.navigateTo({ url: '/pages/order-detail?id=' + id })
-      } catch (e) {
-        await api.showToast({ title: '打开订单失败', icon: 'none' })
-      }
+    goOrderDetail (id) {
+      api.navigateTo({ url: '/pages/order-detail?id=' + id })
     },
     async showActions (id, status) {
       try {
@@ -241,70 +262,58 @@ const pageOptions = {
           this.cancelOrder(id)
         }
       } catch (e) {
-        // 用户取消操作菜单时无需提示。
+        // 用户取消操作菜单时无需处理。
       }
     },
-    async payOrder (id) {
-      try {
-        await api.navigateTo({ url: '/pages/pay?orderId=' + id })
-      } catch (e) {
-        await api.showToast({ title: '打开支付页失败', icon: 'none' })
-      }
+    payOrder (id) {
+      api.navigateTo({ url: '/pages/pay?orderId=' + id })
     },
     async confirmReceive (id) {
       try {
-        const res = await api.showModal({
-          title: '确认收货',
-          content: '确认已收到商品？'
-        })
+        const res = await api.showModal({ title: '确认收货', content: '确认已收到商品？' })
         if (res.confirm) {
           this.doConfirmReceive(id)
         }
       } catch (e) {
-        await api.showToast({ title: '确认收货失败', icon: 'none' })
+        api.showToast({ title: '确认收货失败', icon: 'none' })
       }
     },
-    async refreshOrders () {
+    refreshOrders () {
       this.refreshing = true
-      await this.fetchOrders()
+      this.fetchOrders()
     },
     async fetchOrders () {
       this.loading = true
       try {
-        const res = await api.request({
-          url: '/api/orders',
-          data: { status: this.activeTab }
-        })
+        const res = await api.request({ url: '/api/orders', data: { status: this.activeTab } })
         this.orders = res.data.list
       } catch (e) {
-        await api.showToast({ title: '加载订单失败', icon: 'none' })
+        api.showToast({ title: '加载订单失败', icon: 'none' })
       } finally {
         this.loading = false
-        this.refreshing = false
-        if (__mpx_mode__ === 'wx') {
-          await api.stopPullDownRefresh()
+        if (__mpx_mode__ === 'wx' && this.refreshing) {
+          api.stopPullDownRefresh()
         }
+        this.refreshing = false
       }
     },
     loadMore () {},
-    cancelOrder () {},
-    doConfirmReceive () {}
+    cancelOrder (id) {},
+    doConfirmReceive (id) {}
   }
 }
 
+// 保留微信页面事件；RN 的滚动和刷新由 scroll-view 驱动。
 if (__mpx_mode__ === 'wx') {
   Object.assign(pageOptions, {
     onPullDownRefresh () {
-      this.fetchOrders()
+      this.refreshOrders()
     },
     onReachBottom () {
       this.loadMore()
     },
     onShareTimeline () {
-      return {
-        title: '来看看我的主页',
-        imageUrl: this.userInfo.avatarUrl
-      }
+      return { title: '来看看我的主页', imageUrl: this.userInfo.avatarUrl }
     },
     onTabItemTap (item) {
       if (item.index === 0) {
@@ -323,14 +332,18 @@ page {
   height: 100%;
 }
 
-.page-container {
+.order-scroll {
   height: 100%;
+  background: #f5f5f5;
 }
 /* @mpx-endif */
+
 .order-page {
   padding: 0 24rpx;
   background: #f5f5f5;
+  /* @mpx-if (__mpx_mode__ !== 'ios') */
   min-height: 100vh;
+  /* @mpx-endif */
 }
 
 .tab-bar {
@@ -343,9 +356,7 @@ page {
 
 .tab {
   flex: 1;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
+  text-align: center;
   position: relative;
   padding: 12rpx 0;
 }

@@ -23,8 +23,8 @@
     {
       "id": "s6",
       "text": "字体：RN 使用 bold/normal 字重和单一字体名",
-      "passed": true,
-      "evidence": "PASS"
+      "passed": false,
+      "evidence": "FAIL"
     },
     {
       "id": "s7",
@@ -100,27 +100,27 @@
     }
   ],
   "summary": {
-    "pass_rate": 0.9375,
-    "passed": 15,
-    "failed": 1,
+    "pass_rate": 0.875,
+    "passed": 14,
+    "failed": 2,
     "total": 16,
-    "total_tokens": 1200697,
-    "tool_calls": 37,
-    "duration_ms": 179787,
-    "duration_seconds": 179.787
+    "total_tokens": 982885,
+    "tool_calls": 40,
+    "duration_ms": 209828,
+    "duration_seconds": 209.828
   },
   "metrics": {
-    "total_tokens": 1200697,
-    "tool_calls": 37,
-    "duration_ms": 179787,
-    "duration_seconds": 179.787
+    "total_tokens": 982885,
+    "tool_calls": 40,
+    "duration_ms": 209828,
+    "duration_seconds": 209.828
   },
   "timing": {
-    "total_duration_seconds": 179.787,
-    "total_tokens": 1200697
+    "total_duration_seconds": 209.828,
+    "total_tokens": 982885
   },
   "execution_metrics": {
-    "total_tool_calls": 37,
-    "output_chars": 1200697
+    "total_tool_calls": 40,
+    "output_chars": 982885
   }
 }

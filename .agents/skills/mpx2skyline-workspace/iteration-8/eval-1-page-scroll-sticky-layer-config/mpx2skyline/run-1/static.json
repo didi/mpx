@@ -1,0 +1,41 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "name": "global and page configuration; homepage, window and WebView preserved",
+      "status": "passed"
+    },
+    {
+      "name": "service.js retained byte for byte",
+      "status": "passed"
+    },
+    {
+      "name": "bounded outer nested and associated custom inner scroll",
+      "status": "passed"
+    },
+    {
+      "name": "main-only business events, horizontal events stopped, obsolete page lifecycle removed",
+      "status": "passed"
+    },
+    {
+      "name": "renderer-isolated sticky structure and opaque first header",
+      "status": "passed"
+    },
+    {
+      "name": "horizontal direct tiles: list mode, flex enabled, row, width 120px, stable keys",
+      "status": "passed"
+    },
+    {
+      "name": "full viewport fixed overlay and FAB are siblings; overlay higher, no transformed ancestor",
+      "status": "passed"
+    },
+    {
+      "name": "text children and dynamic attribute syntax",
+      "status": "passed"
+    }
+  ],
+  "matrixRuleCount": 48,
+  "unresolvedErrors": [],
+  "unresolvedWarnings": [],
+  "caveat": "Structural/static audit only; real nested gestures, sticky visuals and overlay hit testing require devices."
+}

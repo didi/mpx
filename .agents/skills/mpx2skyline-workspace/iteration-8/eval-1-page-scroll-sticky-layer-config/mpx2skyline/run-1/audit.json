@@ -1,0 +1,583 @@
+{
+  "source": "/Users/didi/work/mpx/.agents/skills/mpx2skyline-workspace/iteration-8/skill-snapshots/mpx2skyline/references/skyline-audit-matrix.md",
+  "scope": [
+    "outputs/orders.mpx including page JSON",
+    "outputs/app.json",
+    "outputs/service.js"
+  ],
+  "reviewMethod": "All matrix rules scanned and manually reviewed against SFC blocks and renderer branches; candidate matches are not findings.",
+  "rules": [
+    {
+      "id": "CONFIG_APP_SKYLINE_OPTIONS",
+      "level": "error",
+      "scope": "app.json",
+      "rawPattern": "`lazyCodeLoading` / `rendererOptions` / `defaultDisplayBlock` / `defaultContentBox` / `tagNameStyleIsolation` / `enableScrollViewAutoSize` / `keyframeStyleIsolation`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "passed: app-level lazyCodeLoading and all five skyline options; existing homepage/window/webview preserved."
+    },
+    {
+      "id": "CONFIG_PAGE_SKYLINE",
+      "level": "error",
+      "scope": "page.json",
+      "rawPattern": "`renderer` / `componentFramework` / `disableScroll` / `navigationStyle`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "passed: page-local skyline/glass-easel/custom/disableScroll and actual custom navigation."
+    },
+    {
+      "id": "CONFIG_WORKLET_BABEL",
+      "level": "warn",
+      "scope": "script/config",
+      "rawPattern": "`worklet:` / `'worklet'` / `wx.worklet`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: no Worklet or Babel change."
+    },
+    {
+      "id": "GLASS_TEMPLATE_FRAGMENT",
+      "level": "error",
+      "scope": "template",
+      "rawPattern": "`<include`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "GLASS_TEMPLATE_ESCAPE",
+      "level": "error",
+      "scope": "template",
+      "rawPattern": "`\\\\\\\\\\\\\"\\|\\\\\\\\'`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "COMP_UNSUPPORTED",
+      "level": "error",
+      "scope": "template",
+      "rawPattern": "`web-view\\|editor\\|movable-area\\|movable-view\\|progress\\|navigation-bar\\|xr-frame`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "COMP_PENDING_SUPPORT",
+      "level": "warn",
+      "scope": "template",
+      "rawPattern": "`match-media\\|keyboard-accessory`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "COMP_WEBVIEW_ONLY_ATTR",
+      "level": "warn",
+      "scope": "template",
+      "rawPattern": "`mode=\"(top\\|bottom\\|center\\|left\\|right\\|top left\\|top right\\|bottom left\\|bottom right)\"\\|lazy-load\\|forceHttps\\|space=\\|decode=\\|placeholder-class\\|safe-password-\\|snap-to-edge`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "COMP_IMAGE_SVG",
+      "level": "warn",
+      "scope": "template/assets",
+      "rawPattern": "`<image[\\s\\S]*(\\\\.svg\\|image/svg\\|mode=\"scaleToFill\")\\|<svg[\\s\\S]*(<style\\|%\\|rgba\\\\()`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "COMP_SCROLL_TYPE",
+      "level": "error",
+      "scope": "template",
+      "rawPattern": "`<scroll-view`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 6,
+          "text": "    <scroll-view class=\"outer\" type=\"nested\" scroll-y=\"{{true}}\" enhanced=\"{{true}}\" wx:style=\"{{ { height: viewportHeight + 'px' } }}\">"
+        },
+        {
+          "line": 11,
+          "text": "      <scroll-view"
+        },
+        {
+          "line": 29,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        },
+        {
+          "line": 37,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        }
+      ],
+      "review": "passed: outer nested; main custom; horizontal lists."
+    },
+    {
+      "id": "COMP_SCROLL_LIST_DIRECT_CHILD",
+      "level": "warn",
+      "scope": "template",
+      "rawPattern": "`<scroll-view[^>]*type=\"list\"`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 29,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        },
+        {
+          "line": 37,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        }
+      ],
+      "review": "passed: both horizontal lists have repeated direct tiles, no wrapper."
+    },
+    {
+      "id": "COMP_SCROLL_NESTED",
+      "level": "error",
+      "scope": "template",
+      "rawPattern": "`<scroll-view[^>]*type=\"nested\"\\|associative-container=\"nested-scroll-view\"`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 6,
+          "text": "    <scroll-view class=\"outer\" type=\"nested\" scroll-y=\"{{true}}\" enhanced=\"{{true}}\" wx:style=\"{{ { height: viewportHeight + 'px' } }}\">"
+        },
+        {
+          "line": 15,
+          "text": "        associative-container=\"nested-scroll-view\""
+        }
+      ],
+      "review": "passed: main direct inner custom scroll associates with outer nested; strips are horizontal browsing only."
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL",
+      "level": "warn",
+      "scope": "template/style",
+      "rawPattern": "`scroll-x\\|enable-flex\\|flex-direction\\\\s*:?\\\\s*row`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 29,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        },
+        {
+          "line": 37,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        },
+        {
+          "line": 57,
+          "text": ".strip { display: flex; flex-direction: row; white-space: nowrap; height: 80px; }"
+        }
+      ],
+      "review": "passed: both strips enable-flex with flex-direction row."
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL_CHILD_WIDTH",
+      "level": "warn",
+      "scope": "template/style",
+      "rawPattern": "`scroll-x\\|flex\\\\s*:?\\\\s*1\\\\s+0\\\\s+auto`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 29,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        },
+        {
+          "line": 37,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        }
+      ],
+      "review": "passed: direct tile class declares width 120px and flex-shrink 0."
+    },
+    {
+      "id": "COMP_SCROLL_REFRESHER_SLOT",
+      "level": "warn",
+      "scope": "template",
+      "rawPattern": "`refresher-enabled\\|slot=\"refresher\"`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 19,
+          "text": "        refresher-enabled=\"{{!loadingMore}}\""
+        }
+      ],
+      "review": "not_applicable: built-in refresher, no custom slot."
+    },
+    {
+      "id": "COMP_NAVIGATOR_CHILDREN",
+      "level": "error",
+      "scope": "template",
+      "rawPattern": "`<navigator[\\s\\S]*<(view\\|image\\|swiper\\|rich-text\\|[^/!][^\\\\s>]*)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "COMP_TEXT_CHILDREN",
+      "level": "warn",
+      "scope": "template",
+      "rawPattern": "`<text[\\s\\S]*<(view\\|image\\|rich-text\\|special-text\\|span\\|[^/!][^\\\\s>]*)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "passed: text nodes contain only text/interpolation."
+    },
+    {
+      "id": "COMP_INLINE_MIXED_CONTENT",
+      "level": "warn",
+      "scope": "template",
+      "rawPattern": "`mpxTagName@wx=\"span\"\\|<image\\|<rich-text\\|<special-text\\|<mpx-icon\\|line-clamp\\|truncate`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "COMP_STICKY_STRUCTURE",
+      "level": "warn",
+      "scope": "template/style",
+      "rawPattern": "`position\\\\s*:?\\\\s*sticky\\|sticky-section\\|sticky-header`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 27,
+          "text": "          <sticky-section wx:for=\"{{sections}}\" wx:key=\"id\">"
+        },
+        {
+          "line": 28,
+          "text": "            <sticky-header class=\"header\"><text>{{item.title}}</text></sticky-header>"
+        },
+        {
+          "line": 32,
+          "text": "          </sticky-section>"
+        },
+        {
+          "line": 56,
+          "text": ".webview-sticky { position: sticky; top: 0; z-index: 1; }"
+        }
+      ],
+      "review": "passed_static: renderer branch; custom main; first unique sticky-header with white background; CSS sticky only WebView. Physical behavior not_run."
+    },
+    {
+      "id": "COMP_PICKER_VIEW_INDICATOR",
+      "level": "warn",
+      "scope": "template",
+      "rawPattern": "`picker-view[\\s\\S]*(indicator-class\\|mask-style\\|indicator-style)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "COMP_SWIPER_LIMIT",
+      "level": "warn",
+      "scope": "template",
+      "rawPattern": "`layout-type=\"(stackLeft\\|stackRight\\|tinder)\"\\|indicator-type=\"(scrollFixedCenter\\|swap\\|swapYRotation)\"\\|snap-to-edge\\|previous-margin\\|display-multiple-items\\|vertical`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_MEDIA_SCREEN",
+      "level": "error",
+      "scope": "style",
+      "rawPattern": "`@media screen`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_SELECTOR_UNSUPPORTED",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`(^\\|[\\\\s,{])\\\\*\\\\s*[,{]\\|\\\\[[^\\\\]]+\\\\]\\|::[a-zA-Z-]+`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_TEXT_OVERFLOW",
+      "level": "warn",
+      "scope": "template/style",
+      "rawPattern": "`text-overflow\\\\s*:?\\\\s*ellipsis\\|-webkit-line-clamp\\|truncate\\|line-clamp`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_FLEX_TEXT_WRAP",
+      "level": "warn",
+      "scope": "style/template",
+      "rawPattern": "`display\\\\s*:?\\\\s*flex\\|flex-direction\\\\s*:?\\\\s*column\\|align-items\\\\s*:?\\\\s*center`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 50,
+          "text": ".nav { display: flex; align-items: center; background: #fff; }"
+        },
+        {
+          "line": 57,
+          "text": ".strip { display: flex; flex-direction: row; white-space: nowrap; height: 80px; }"
+        }
+      ],
+      "review": "passed: centered navigation text has width 100%; tile text has width 100% inside explicit 120px tile; no mixed inline paragraph."
+    },
+    {
+      "id": "STYLE_OVERFLOW_AXIS",
+      "level": "error",
+      "scope": "style",
+      "rawPattern": "`overflow-x\\|overflow-y\\|overflow\\\\s*:`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_LAYOUT_UNSUPPORTED",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`display\\\\s*:?\\\\s*(grid\\|flow-root)\\|float\\\\s\\|contain\\\\s*:\\|resize\\\\s*:\\|visibility\\\\s*:?\\\\s*collapse\\|outline\\\\s*:\\|cursor\\\\s*:\\|justify-items\\|column-[a-z-]+`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_TEXT_UNSUPPORTED",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`direction\\\\s*:\\|text-indent\\|overflow-wrap\\|writing-mode\\|text-decoration-thickness\\|list-style-\\|white-space\\\\s*:?\\\\s*(pre\\|pre-wrap\\|pre-line)\\|word-break\\\\s*:?\\\\s*(keep-all\\|break-word)\\|text-align\\\\s*:?\\\\s*(justify-all\\|match-parent)\\|vertical-align\\\\s*:?\\\\s*(text-top\\|text-bottom)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 10,
+          "text": ".strip { display: flex; flex-direction: row; white-space: nowrap; height: 80px; }"
+        }
+      ],
+      "review": "false_positive: direction pattern matches flex-direction: row; no unsupported text property or value."
+    },
+    {
+      "id": "STYLE_FONT_POSTSCRIPT_NAME",
+      "level": "error",
+      "scope": "style/template/script",
+      "rawPattern": "`font-family\\\\s*:?\\\\s*[^;]+-(Medium\\|Semibold\\|Bold)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_FONT",
+      "level": "warn",
+      "scope": "style/template/script",
+      "rawPattern": "`font-weight\\\\s*:?\\\\s*(500\\|600\\|bolder\\|lighter)\\|font-style\\\\s*:?\\\\s*oblique`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_TEXT_DECORATION",
+      "level": "warn",
+      "scope": "style/template",
+      "rawPattern": "`text-decoration(-line)?\\\\s*:[^;]*(underline\\|line-through)[^;]*(underline\\|line-through)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_BORDER_RADIUS_BORDER",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`border-radius\\|border-(top\\|right\\|bottom\\|left)-(color\\|style)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_BACKGROUND_MASK_LIMIT",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`background-(image\\|position\\|repeat\\|size\\|attachment\\|origin\\|clip)\\|mask-(image\\|repeat\\|origin\\|clip\\|mode)\\|mask\\\\s*:`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_FILTER_LIMIT",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`(backdrop-)?filter\\\\s*:`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_BOX_SHADOW_MULTI",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`box-shadow\\\\s*:`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_CALC_ANGLE",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`calc\\\\([^)]*(deg\\|rad\\|turn)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_PSEUDO_ANIMATION",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`::(before\\|after)[\\\\s\\\\S]*animation`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_ANIMATION_FILL_MODE",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`animation-fill-mode\\\\s*:?\\\\s*(none\\|backwards)`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_ANIMATION_PROPERTY",
+      "level": "warn",
+      "scope": "style",
+      "rawPattern": "`transition-property\\|animation`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "STYLE_Z_INDEX_CONTEXT",
+      "level": "warn",
+      "scope": "style/template",
+      "rawPattern": "`z-index\\|transform\\\\s*:\\|opacity\\\\s*:`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 56,
+          "text": ".webview-sticky { position: sticky; top: 0; z-index: 1; }"
+        },
+        {
+          "line": 60,
+          "text": ".fab { position: fixed; right: 12px; bottom: 12px; z-index: 2; padding: 12px; background: #fff; }"
+        },
+        {
+          "line": 61,
+          "text": ".modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3; background: #eee; }"
+        }
+      ],
+      "review": "passed_static: root sibling fixed modal 3 > fixed FAB 2; no transform or negative z-index. CSS header z-index only WebView branch. Physical behavior not_run."
+    },
+    {
+      "id": "STYLE_NEGATIVE_MARGIN_OCCUPANCY",
+      "level": "warn",
+      "scope": "template/style",
+      "rawPattern": "`margin(-bottom)?\\\\s*:[^;]*-[0-9.]`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "GLASS_SELECTOR_NUMERIC_ID",
+      "level": "error",
+      "scope": "template/script",
+      "rawPattern": "`id=[\"']?[0-9]\\|select\\\\(['\"]#[0-9]`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "ANIMATION_WEBVIEW_API",
+      "level": "error",
+      "scope": "script/template",
+      "rawPattern": "`\\\\.animate\\\\(\\|\\\\.applyAnimation\\\\(\\|\\\\.clearAnimation\\\\(\\|\\\\.setInitialRenderingCache\\\\(\\|wx\\\\.createAnimation`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "SCROLL_CONTEXT_ENHANCED",
+      "level": "error",
+      "scope": "template/script",
+      "rawPattern": "`\\\\.node\\\\(\\\\)\\|ScrollViewContext\\|<scroll-view`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 67,
+          "text": "    <scroll-view class=\"outer\" type=\"nested\" scroll-y=\"{{true}}\" enhanced=\"{{true}}\" wx:style=\"{{ { height: viewportHeight + 'px' } }}\">"
+        },
+        {
+          "line": 72,
+          "text": "      <scroll-view"
+        },
+        {
+          "line": 90,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        },
+        {
+          "line": 98,
+          "text": "            <scroll-view class=\"strip\" type=\"list\" scroll-x=\"{{true}}\" enhanced=\"{{true}}\" enable-flex=\"{{true}}\" catchscroll=\"ignoreScroll\" catchscrolltolower=\"ignoreScroll\">"
+        }
+      ],
+      "review": "not_applicable: no node() / ScrollViewContext use; all scroll views nevertheless enhanced."
+    },
+    {
+      "id": "SELECTOR_QUERY_SCOPE",
+      "level": "warn",
+      "scope": "script",
+      "rawPattern": "`wx\\\\.createSelectorQuery`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "PROPS_DEFAULT_FIELD",
+      "level": "error",
+      "scope": "script",
+      "rawPattern": "`properties[\\\\s\\\\S]*default\\\\s*:`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    },
+    {
+      "id": "WX_FOR_DATA_TYPE",
+      "level": "warn",
+      "scope": "template/script",
+      "rawPattern": "`wx:for=.*\\\\{\\\\{[^}]+\\\\}\\\\}`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [
+        {
+          "line": 88,
+          "text": "          <sticky-section wx:for=\"{{sections}}\" wx:key=\"id\">"
+        },
+        {
+          "line": 91,
+          "text": "              <view wx:for=\"{{item.items}}\" wx:for-item=\"entry\" wx:key=\"id\" class=\"tile\"><text class=\"tile-name\">{{entry.name}}</text></view>"
+        },
+        {
+          "line": 96,
+          "text": "          <view wx:for=\"{{sections}}\" wx:key=\"id\" class=\"group\">"
+        },
+        {
+          "line": 99,
+          "text": "              <view wx:for=\"{{item.items}}\" wx:for-item=\"entry\" wx:key=\"id\" class=\"tile\"><text class=\"tile-name\">{{entry.name}}</text></view>"
+        }
+      ],
+      "review": "passed: sections initially []; only assigns/concats arrays from delivered service; items always arrays; stable id keys."
+    },
+    {
+      "id": "PROPS_UNION_TYPE",
+      "level": "error",
+      "scope": "script",
+      "rawPattern": "`type\\\\s*:\\\\s*\\\\[[^\\\\]]+\\\\]`",
+      "scan": "regex",
+      "candidateLinesWithinScope": [],
+      "review": "not_applicable: inspected template/script/styles; no corresponding capability or unsupported value used."
+    }
+  ]
+}

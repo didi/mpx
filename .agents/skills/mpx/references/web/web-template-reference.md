@@ -79,6 +79,8 @@
 
 配置、翻译与格式化函数范围及通用调用原则沿用 [i18n 基准](../base/template-reference.md#i18n-国际化)。
 
+Web 的 `useI18n()` 返回对象还支持 `d(value: number | Date | string, formatKey?: string, locale?: string): string`；其中字符串须为 ISO 8601 日期，number 为毫秒时间戳。该字符串扩展适用于组合式 d，不据此扩大选项式 `$d` 的输入类型。`n(value: number, formatKey?: string, locale?: string): string` 返回数字格式化结果；formatKey 为已配置格式名，locale 省略时使用当前语言。返回对象的字段及未命中结果差异见 [Web 组合式 API](./web-script-reference.md#组合式-api)。
+
 ## 基础组件
 
 组件用途、属性和事件契约见 [基础组件](../base/template-reference.md#基础组件)。仅有差异的组件在此展开；一致项直接使用目录中的基准链接，不支持项见 [不支持组件与降级处理](#不支持组件与降级处理)。
@@ -121,7 +123,7 @@
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `scroll-options` | object | `{}` | 设置滚动选项；不能通过 `observeDOM` 开启自动 DOM 监听。异步内容布局完成后检查滚动范围是否更新。 |
 | `enable-sticky` | boolean | `false` | 用于吸顶场景，关闭滚动的 CSS transition，并取消 scroll 回调的常规节流间隔。 |
@@ -136,7 +138,7 @@
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `scroll-options` | object | `{}` | 作为 BetterScroll 初始化选项。 |
 
@@ -258,7 +260,7 @@
 
 **扩展属性**
 
-| 属性 | 类型 | 默认值 | 说明 |
+| 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `playsinline` | boolean | `true` | 控制浏览器行内播放相关属性。 |
 

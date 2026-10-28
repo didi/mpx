@@ -1,0 +1,557 @@
+{
+  "type": "mock",
+  "nativeRendering": false,
+  "scenarios": [
+    {
+      "name": "initial",
+      "renderer": "webview",
+      "calls": [
+        [
+          1,
+          false
+        ]
+      ],
+      "pageNo": 1,
+      "groupCount": 4,
+      "orderCount": 32,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "pagination-1",
+      "renderer": "webview",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ]
+      ],
+      "pageNo": 2,
+      "groupCount": 8,
+      "orderCount": 64,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "pagination-2",
+      "renderer": "webview",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ]
+      ],
+      "pageNo": 3,
+      "groupCount": 12,
+      "orderCount": 96,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3",
+        "group-3-0",
+        "group-3-1",
+        "group-3-2",
+        "group-3-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "refresh-success",
+      "renderer": "webview",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          false
+        ]
+      ],
+      "pageNo": 1,
+      "groupCount": 4,
+      "orderCount": 32,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "refresh-failure-retains-data",
+      "renderer": "webview",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          false
+        ],
+        [
+          1,
+          true
+        ]
+      ],
+      "pageNo": 1,
+      "groupCount": 4,
+      "orderCount": 32,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "订单加载失败",
+      "scrollHeight": 736
+    },
+    {
+      "name": "recovery-after-failure",
+      "renderer": "webview",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          false
+        ],
+        [
+          1,
+          true
+        ],
+        [
+          2
+        ]
+      ],
+      "pageNo": 2,
+      "groupCount": 8,
+      "orderCount": 64,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "main-scroll-detail",
+      "renderer": "webview",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          false
+        ],
+        [
+          1,
+          true
+        ],
+        [
+          2
+        ]
+      ],
+      "pageNo": 2,
+      "groupCount": 8,
+      "orderCount": 64,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3"
+      ],
+      "scrollTop": 137,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "initial",
+      "renderer": "skyline",
+      "calls": [
+        [
+          1,
+          false
+        ]
+      ],
+      "pageNo": 1,
+      "groupCount": 4,
+      "orderCount": 32,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "pagination-1",
+      "renderer": "skyline",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ]
+      ],
+      "pageNo": 2,
+      "groupCount": 8,
+      "orderCount": 64,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "pagination-2",
+      "renderer": "skyline",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ]
+      ],
+      "pageNo": 3,
+      "groupCount": 12,
+      "orderCount": 96,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3",
+        "group-3-0",
+        "group-3-1",
+        "group-3-2",
+        "group-3-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "refresh-success",
+      "renderer": "skyline",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          false
+        ]
+      ],
+      "pageNo": 1,
+      "groupCount": 4,
+      "orderCount": 32,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "refresh-failure-retains-data",
+      "renderer": "skyline",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          false
+        ],
+        [
+          1,
+          true
+        ]
+      ],
+      "pageNo": 1,
+      "groupCount": 4,
+      "orderCount": 32,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "订单加载失败",
+      "scrollHeight": 736
+    },
+    {
+      "name": "recovery-after-failure",
+      "renderer": "skyline",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          false
+        ],
+        [
+          1,
+          true
+        ],
+        [
+          2
+        ]
+      ],
+      "pageNo": 2,
+      "groupCount": 8,
+      "orderCount": 64,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "main-scroll-detail",
+      "renderer": "skyline",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          false
+        ],
+        [
+          1,
+          true
+        ],
+        [
+          2
+        ]
+      ],
+      "pageNo": 2,
+      "groupCount": 8,
+      "orderCount": 64,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3"
+      ],
+      "scrollTop": 137,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    },
+    {
+      "name": "pagination-lock-failure-retry",
+      "renderer": "skyline",
+      "calls": [
+        [
+          1,
+          false
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ]
+      ],
+      "pageNo": 3,
+      "groupCount": 12,
+      "orderCount": 96,
+      "groupIds": [
+        "group-1-0",
+        "group-1-1",
+        "group-1-2",
+        "group-1-3",
+        "group-2-0",
+        "group-2-1",
+        "group-2-2",
+        "group-2-3",
+        "group-3-0",
+        "group-3-1",
+        "group-3-2",
+        "group-3-3"
+      ],
+      "scrollTop": 0,
+      "loading": false,
+      "refreshing": false,
+      "errorMessage": "",
+      "scrollHeight": 736
+    }
+  ]
+}

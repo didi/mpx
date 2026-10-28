@@ -51,8 +51,8 @@ this.safeBottom = info.safeArea
 
 ### SelectorQuery 与相交观察
 
-- `query.in(component)` 需传入具有 `createSelectorQuery` 方法的实例，并继续使用其返回值链式调用，不能回到旧查询。
-- `createIntersectionObserver(component, options)` 不支持用首个参数限定组件作用域，组件内观察需适配并验证范围。
+- `query.in(component): SelectorQuery` 的 `component` 必填，须为具有 `createSelectorQuery` 方法的组件实例；返回该实例创建的查询对象，继续使用返回值链式调用，不能回到旧查询。选择器、查询字段与结果回调见[节点查询契约](../base/api-reference.md#createselectorquery)。
+- `createIntersectionObserver(component, options?): IntersectionObserver` 的 `options` 默认 `{}`，选项和观察器方法见[相交观察契约](../base/api-reference.md#createintersectionobserver)。支付宝忽略首个参数，仍须把选项放在第二个参数；不支持用首个参数限定组件作用域，组件内观察需适配并验证范围。
 - `fields`、`node` 等方法使用前核对宿主支持。
 
 ### 自定义组件布局查询

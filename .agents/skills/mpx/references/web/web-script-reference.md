@@ -25,7 +25,7 @@
 | 选项 | Web 差异 |
 | --- | --- |
 | `onThemeChange` | 未内置支持，需自行适配主题变化通知。 |
-| `onAppInit` | 返回对象同步合并到 Vue 根实例选项；SSR 中用于每次请求创建独立的 Pinia，不能返回 Promise。 |
+| `onAppInit(): object \| void` | 无参数；返回对象同步合并到 Vue 根实例选项，不返回时不增加选项。SSR 中用于每次请求创建独立的 Pinia，不能返回 Promise。 |
 | `onSSRAppCreated` | Web SSR 专属；接收 `{ pinia, router, app, context }`，自定义时须返回最终 resolve 为 `app` 的 Promise，并接管路由就绪与状态输出。具体职责见 [SSR 参考](./ssr-reference.md#自定义服务端入口逻辑)。 |
 
 ### 页面与组件构造选项
@@ -49,7 +49,7 @@
 | 生命周期 / 钩子 | Web 差异 |
 | --- | --- |
 | `moved` / `error` | 未内置组件节点移动通知、组件方法错误处理，需自行适配。 |
-| `serverPrefetch` / `onServerPrefetch` / `SERVERPREFETCH` | Web SSR 专属；返回的 Promise 会被服务端渲染等待，浏览器端不执行。 |
+| `serverPrefetch` / `onServerPrefetch` / `SERVERPREFETCH` | Web SSR 专属；选项式回调为 `serverPrefetch(): Promise<unknown>`，组合式为 `onServerPrefetch(callback): void`，callback 为无参异步任务函数。SSR 等待回调返回的 Promise，不消费其 resolve 值；注册函数不返回任务或取消函数，浏览器端不执行回调。 |
 
 SSR 的 `onLoad` 也会执行，但服务端渲染不会等待其异步返回值；首屏异步数据使用 `serverPrefetch` / `onServerPrefetch`。浏览器监听器、DOM 操作等副作用放在客户端挂载后，具体要求见 [SSR 参考](./ssr-reference.md#浏览器对象与副作用)。
 
@@ -107,6 +107,8 @@ createPage({
 
 示例中的 `setWebShareHandler` 是业务自行实现的分享回调注册函数，不是 Mpx API。传入回调时替换当前页面的分享处理器，无参调用时清除处理器。页面显示时只注册回调，页面隐藏时清理；适配层在实际分享动作发生时才调用回调，并按入口传入 `{ from: 'menu' }` 或按钮分享所需的参数。
 
+该示例约定 `setWebShareHandler(handler?): void`，handler 接收 [分享回调参数](../base/script-reference.md#统一生命周期)，返回页面的分享配置对象；注册函数本身不返回分享数据。
+
 分享适配层负责消费回调返回的信息：将小程序 `path` 转换为当前 Web 项目可访问的完整 URL，将 `title`、`imageUrl` 等字段映射到所接入分享 SDK，并处理钩子的 `promise` 返回值。SDK 初始化、默认分享配置和实际分享入口也由该适配层实现。
 
 ## 实例属性与方法
@@ -117,7 +119,7 @@ createPage({
 | --- | --- | --- | --- |
 | `setData` | 方法 | 通用 | 不提供该方法；使用响应式赋值更新数据。 |
 | `triggerEvent(name, detail, options)` | 方法 | 组件 | 不支持第三个参数中的 `bubbles`、`composed`、`capturePhase` 传播选项。跨层通知使用 `provide/inject` 传递回调，或使用全局状态管理。 |
-| `selectComponent(selector)` / `selectAllComponents(selector)` | 方法 | 通用 | 仅支持 id、class 及其组合、逗号分组，不支持关系选择器；具体格式见下方 selector 查询要求。 |
+| `selectComponent(selector)` / `selectAllComponents(selector)` | 方法 | 通用 | 仅支持 id、class 及其组合、逗号分组，不支持关系选择器；无匹配时分别返回 `undefined` / `[]`。具体格式见下方 selector 查询要求。 |
 | `$forceUpdate()` | 方法 | 通用 | 仅支持无参刷新，传入的数据、选项和回调均被忽略。 |
 
 ### selector 查询要求
@@ -132,15 +134,17 @@ Web 不提供 `this.setData()`。应直接修改响应式数据，由框架自�
 
 ### 强制更新
 
-`this.$forceUpdate()` 和 setup context 的 `forceUpdate()` 只能无参强制刷新，传入的数据、选项和回调都会被忽略。
+`this.$forceUpdate(): void` 和 setup context 的 `forceUpdate(): void` 只能无参强制刷新，传入的数据、选项和回调都会被忽略，不返回 Promise。
 
 视图更新回调可改用从 `@mpxjs/core` 导入的 `nextTick(callback)`，在修改数据或调用无参 `forceUpdate()` 后执行，也可以使用实例的 `this.$nextTick(callback)`。
 
 ## 组合式 API
 
 - `setup` context 的 `forceUpdate()` 仅支持无参刷新；`triggerEvent` 不支持传播选项，组件查询遵循上述 selector 限制。
-- Web SSR 使用 `onServerPrefetch` 注册异步预取任务，返回需要等待的 Promise；浏览器端不执行该钩子。
+- Web SSR 使用 `onServerPrefetch(callback): void` 注册异步预取任务，由 callback 返回需要等待的 Promise；浏览器端不执行该回调。
 - `onShareAppMessage` 等未内置支持的页面事件，即使通过组合式钩子注册，仍需适配层实际驱动，不能仅依赖 `implement` 登记。
+
+`useI18n(options?)` 在 Web 返回 Vue I18n 的 composer；除 [基准参数](../base/script-reference.md#运行时导出)外，`useScope?: 'global' | 'parent' | 'local'` 可指定作用域。未传配置且没有组件局部 i18n 资源时使用全局作用域，非空配置未指定 useScope 时使用局部作用域。返回的 `messages` 是只读 computed ref，`locale` / `fallbackLocale` 是可写 computed ref；`getLocaleMessage(locale: string)` 未找到语言时返回 `{}`，`tm(key: string)` 未命中当前及回退词条时也返回 `{}`，不同于基准的 `undefined`。日期与数字格式化沿用 [i18n 模板基准](../base/template-reference.md#i18n-国际化)。
 
 ## script setup
 

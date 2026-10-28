@@ -73,6 +73,8 @@ mpx.navigateTo({
 
 在脚本中跨分包异步引用 JS 时，路径须带 **`?root=模块所在分包名`**，且使用 **`require.async('...').then(...)`** 的 Promise 风格（不能使用回调形式）。未带 `root` 时会触发构建告警。
 
+`require.async(request: string): Promise<any>` 接收可在编译期确定的模块路径字符串，成功时兑现为所加载模块的导出值，失败时拒绝；使用 ES Module 默认导出的模块时通过 `mod.default` 读取，具名导出通过 `mod.名称` 读取。`.then((mod) => result)` 的回调返回值成为后续 Promise 的结果；`.catch((error) => result)` 接收加载或前序回调失败原因。
+
 **示例：**
 
 ```js
@@ -104,11 +106,11 @@ require
 
 以下为 `MpxWebpackPlugin` 顶层配置：
 
-| 配置 | 默认 | 用途 |
-| --- | --- | --- |
-| `asyncSubpackageRules` | `[]` | 通过 `include` / `exclude`、`root` 与组件 `placeholder` 指定异步分包；路径 `?root` 与显式 `componentPlaceholder` 优先。 |
-| `retryRequireAsync` | `false` | `true` 等价于 `{ times: 1, interval: 0 }`，也可设置次数与间隔。 |
-| `disableRequireAsync` | `false` | 关闭框架对 `require.async` 的处理，与 RN 页面/组件分包开关区分。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `asyncSubpackageRules` | `object[]` | `[]` | 通过 `include` / `exclude`、`root` 与组件 `placeholder` 指定异步分包；路径 `?root` 与显式 `componentPlaceholder` 优先。 |
+| `retryRequireAsync` | `boolean\|object` | `false` | `true` 等价于 `{ times: 1, interval: 0 }`，也可设置次数与间隔。 |
+| `disableRequireAsync` | `boolean` | `false` | 关闭框架对 `require.async` 的处理，与 RN 页面/组件分包开关区分。 |
 
 异步 store 也先等待模块加载成功，再挂载依赖它的组件。加载和执行行为仍受目标端实现约束。
 

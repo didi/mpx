@@ -96,11 +96,15 @@ Skyline 没有 BFC 和垂直 margin 折叠机制，原 WebView 中折叠的间�
 - **适配方式**：需要直接比较的节点放在同一父级；局部重叠用 `relative` + `absolute`，全屏弹层按需用 `fixed`。`transform` / `opacity` / `will-change` 不会建立层叠上下文或提升层级。
 - **滚动项**：`scroll-view` 直接子节点的 `z-index` 不生效，需在内部增加一层承载。
 
+例：将 scroll-view 直接子节点上的局部层叠移到内部容器。
+
 ```html
-<view style="position: relative;">
-  <view>底层内容</view>
-  <view style="position: absolute; top: 0; z-index: 1;">浮层内容</view>
-</view>
+<scroll-view type="list" scroll-y style="height: 300px;">
+  <view style="position: relative;">
+    <view>底层内容</view>
+    <view style="position: absolute; top: 0; z-index: 1;">浮层内容</view>
+  </view>
+</scroll-view>
 ```
 
 ### sticky 吸顶替代方案
@@ -125,6 +129,8 @@ Skyline 没有 BFC 和垂直 margin 折叠机制，原 WebView 中折叠的间�
 ### scroll-view 高度自适应
 
 在 `app.json` 开启 `rendererOptions.skyline.enableScrollViewAutoSize`，并用 `max-height` 限高：内容不足时自动撑开，超过上限后滚动。
+
+固定高度会在内容不足时留下空白。
 
 ```json
 {
@@ -219,6 +225,23 @@ Skyline 下伪元素的 `animation` 不生效，将动画移到真实节点。
 
 Skyline 不支持 `wx.createAnimation` 及其 `animation` 属性赋值方式；简单状态过渡改用 CSS `transition`，复杂动画按需使用 Worklet。
 
+原 WebView 调用的 `createAnimation(options?)`、`opacity(value)`、`step(options?)` 和 `export()` 的参数与返回值见[动画 API 基准](../base/api-reference.md#createanimation)。
+
+**改造前：**
+
+```html
+<view animation="{{fadeAnimation}}">内容</view>
+```
+
+```js
+// 选项式组件方法中：hidden 为目标隐藏状态
+const animation = wx.createAnimation({ duration: 300, timingFunction: 'ease' })
+animation.opacity(this.hidden ? 0 : 1).step()
+this.fadeAnimation = animation.export()
+```
+
+**改造后：**
+
 ```html
 <view class="fade-element" wx:class="{{ { 'is-hidden': hidden } }}">内容</view>
 ```
@@ -269,6 +292,8 @@ Skyline 中，Flex 子节点若按文本内容定宽，可能溢出而不换行�
 - **保持断点一致**：WebView 使用媒体查询，Skyline 根据运行时窗口宽度绑定动态类；两端使用相同阈值与边界条件，不以屏幕物理尺寸替代窗口尺寸。调整断点时同步修改两端规则。
 
 例：窗口宽度不大于 `320px` 时隐藏内容。
+
+`getWindowInfo()` 无参数，同步返回窗口信息，其中 `windowWidth: number` 为可用窗口宽度（px）；完整返回字段见[窗口信息契约](../base/api-reference.md#getwindowinfo)。
 
 ```html
 <template>

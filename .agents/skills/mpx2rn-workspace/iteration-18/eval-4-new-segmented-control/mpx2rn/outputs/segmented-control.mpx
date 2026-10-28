@@ -1,29 +1,29 @@
 <template>
   <view class="segmented-control">
-    <text class="control-title">{{ label }}</text>
+    <text class="control-title">{{label}}</text>
     <view class="segments">
       <view
-        wx:for="{{ options }}"
+        wx:for="{{options}}"
         wx:key="value"
         class="segment"
-        wx:class="{{ { 'segment-selected': item.value === currentValue, 'segment-disabled': disabled || item.disabled } }}"
-        hover-class="{{ disabled || item.disabled ? 'none' : 'segment-pressed' }}"
-        hover-start-time="{{ 0 }}"
-        hover-stay-time="{{ 80 }}"
+        wx:class="{{{'segment-selected': currentValue === item.value, 'segment-disabled': disabled || item.disabled}}}"
+        hover-class="{{disabled || item.disabled ? 'segment-disabled' : 'segment-pressed'}}"
+        hover-start-time="{{0}}"
+        hover-stay-time="{{100}}"
         bindtap="selectOption(item)"
       >
         <text
           class="segment-label"
-          wx:class="{{ { 'segment-label-selected': item.value === currentValue } }}"
-        >{{ item.label }}</text>
+          wx:class="{{{'segment-label-selected': currentValue === item.value}}}"
+        >{{item.label}}</text>
       </view>
     </view>
-    <text class="selection-summary">当前选中：{{ selectedLabel }}</text>
+    <text class="selection-label">当前选中：{{selectedLabel}}</text>
   </view>
 </template>
 
 <script setup>
-import { computed, ref, toRefs, watch } from '@mpxjs/core'
+import { ref, computed, watch, toRefs } from '@mpxjs/core'
 
 const props = defineProps({
   controlKey: {
@@ -47,7 +47,6 @@ const props = defineProps({
     value: '请选择'
   }
 })
-
 const { options, disabled, label } = toRefs(props)
 const { triggerEvent } = useContext()
 const currentValue = ref(props.value)
@@ -85,7 +84,7 @@ defineExpose({
 
 .control-title {
   margin-bottom: 16rpx;
-  color: #1f2937;
+  color: #202124;
   font-size: 30rpx;
   line-height: 42rpx;
   font-weight: bold;
@@ -94,7 +93,7 @@ defineExpose({
 .segments {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  align-items: stretch;
   padding: 4rpx;
   border-radius: 16rpx;
   background-color: #f0f2f5;
@@ -103,18 +102,32 @@ defineExpose({
 .segment {
   display: flex;
   flex-direction: row;
+  flex: 1;
+  min-width: 0;
+  min-height: 72rpx;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  min-width: 100rpx;
-  margin: 4rpx;
-  padding: 16rpx 20rpx;
+  padding: 12rpx 8rpx;
+  border: 2rpx solid transparent;
   border-radius: 12rpx;
-  background-color: #ffffff;
+  background-color: #f0f2f5;
 }
 
 .segment-selected {
-  background-color: #2563eb;
+  border-color: #246bdb;
+  background-color: #246bdb;
+}
+
+.segment-label {
+  flex: 1;
+  color: #303640;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  text-align: center;
+}
+
+.segment-label-selected {
+  color: #ffffff;
 }
 
 .segment-disabled {
@@ -125,21 +138,9 @@ defineExpose({
   opacity: 0.6;
 }
 
-.segment-label {
-  flex-shrink: 1;
-  color: #374151;
-  font-size: 28rpx;
-  line-height: 40rpx;
-  text-align: center;
-}
-
-.segment-label-selected {
-  color: #ffffff;
-}
-
-.selection-summary {
+.selection-label {
   margin-top: 16rpx;
-  color: #6b7280;
+  color: #606875;
   font-size: 26rpx;
   line-height: 38rpx;
 }

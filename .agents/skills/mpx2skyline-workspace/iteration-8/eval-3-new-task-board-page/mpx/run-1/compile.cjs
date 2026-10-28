@@ -1,0 +1,20 @@
+const fs = require('fs')
+const path = require('path')
+const os = require('os')
+const crypto = require('crypto')
+const compile = require('../../../skill-snapshots/mpx/scripts/compile-validate.js')
+const outputs = path.resolve(__dirname, '../outputs')
+async function run () {
+  const page = path.join(outputs, 'pages/task-board.mpx')
+  const pageResult = await compile(page, { target: 'wx', type: 'page', ignoreSubComponents: false, cleanup: false })
+  fs.writeFileSync(path.join(__dirname, 'compile-final-page.json'), JSON.stringify(pageResult, null, 2) + '\n')
+  const hash = crypto.createHash('md5').update(page + '|wx|' + process.pid).digest('hex')
+  const temporary = path.join(os.tmpdir(), 'mpx-compile-validate', hash)
+  fs.cpSync(temporary, path.join(__dirname, 'build-wx'), { recursive: true })
+  fs.rmSync(temporary, { recursive: true, force: true })
+  const components = ['rating-selector', 'segmented-control'].map(name => path.join(outputs, 'components', name + '.mpx'))
+  const componentResult = await compile(components, { target: 'wx', type: 'component', ignoreSubComponents: false })
+  fs.writeFileSync(path.join(__dirname, 'compile-final-components.json'), JSON.stringify(componentResult, null, 2) + '\n')
+  if (!pageResult.success || !componentResult.success) process.exitCode = 1
+}
+run().catch(error => { console.error(error); process.exitCode = 1 })

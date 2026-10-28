@@ -48,14 +48,31 @@ Skyline 不支持页面滚动。页面 JSON 设置 `disableScroll: true`，使�
 | `onReachBottom` | `bindscrolltolower` | 按需配置 `lower-threshold` |
 | `onPageScroll` | `bindscroll` | 滚动位置从 `e.scrollTop` 改取 `e.detail.scrollTop`，高频处理按需节流 |
 
+事件处理函数均接收事件对象 `e`，无需返回值；`bindscroll` 的 `e.detail.scrollTop` / `scrollLeft` 为 number，单位 px，完整事件字段见[scroll-view 基准](../base/template-reference.md#scroll-view)。示例中的 `refreshData(): Promise<unknown>` 为业务请求方法，必须返回 Promise，才能在 `finally` 中结束刷新；`loadMore()` 的返回值在示例中不使用。
+
 ```html
-<!-- 父容器须提供明确高度 -->
-<scroll-view type="list" scroll-y="{{true}}" enhanced="{{true}}" style="height: 100%;"
-  refresher-enabled="{{true}}" bindrefresherrefresh="onRefresh"
-  bindscrolltolower="onLoadMore" bindscroll="onScroll">
+<scroll-view type="list" scroll-y="{{true}}" enhanced="{{true}}" style="height: 100vh;"
+  refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh"
+  bindscrolltolower="loadMore" bindscroll="onScroll">
   <view>页面内容</view>
 </scroll-view>
 ```
+
+```js
+// createPage 的选项片段；refreshData / loadMore 为已有业务方法
+data: { refreshing: false, scrollTop: 0 },
+methods: {
+  onRefresh () {
+    this.refreshing = true
+    this.refreshData().finally(() => { this.refreshing = false })
+  },
+  onScroll (e) {
+    this.scrollTop = e.detail.scrollTop
+  }
+}
+```
+
+示例由页面滚动整体迁移为 scroll-view；实际有导航栏或其他占位时，按可用区域设置滚动容器高度。
 
 ### Skyline 不支持的动画方法
 
@@ -65,13 +82,17 @@ Skyline 不支持页面滚动。页面 JSON 设置 `disableScroll: true`，使�
 
 glass-easel 下优先用实例 `this.createSelectorQuery()`，性能优于 `wx.createSelectorQuery().in(this)`；exparser 同样支持。
 
+`this.createSelectorQuery(): SelectorQuery` 无参数，查询范围为当前实例。`select(selector: string)` 选择节点后，仍需用 `boundingClientRect()`、`node()` 等声明查询内容，再 `exec(callback?)`；回调 `(results: unknown[]) => void` 接收按查询顺序排列的结果，返回值不使用。各方法的返回类型和结果字段见[节点查询契约](../base/api-reference.md#createselectorquery)。
+
 ```js
-this.createSelectorQuery().select('#el').exec((res) => {})
+this.createSelectorQuery().select('#el').boundingClientRect().exec((res) => {})
 ```
 
 ### ScrollViewContext：开启 enhanced 属性
 
 用 `NodesRef.node()` 获取 `ScrollViewContext` 前，须开启 `enhanced`；否则返回值不是该实例，调用 `scrollTo` 等方法会报错。节点查询放在渲染就绪后。
+
+`node(callback?)` 返回查询对象，节点实例从回调或 `exec` 结果的 `{ node }` 读取。`scrollView.scrollTo(options): void` 的 `options` 必填，其中 `top?: number` / `left?: number` 为目标滚动距离（px），`animated?: boolean` 控制动画；可选 `duration: number` 为动画时长、`velocity: number` 为初始速度，这两项在 WebView 仅 iOS 生效，Skyline 需基础库 3.14.3+。这些选项未声明统一默认值，依赖具体效果时显式传入；方法不返回 Promise 或完成结果。签名与版本见[微信官方类型](https://github.com/wechat-miniprogram/api-typings/blob/master/types/wx/lib.wx.api.d.ts)。
 
 ```html
 <scroll-view id="sv" type="list" scroll-y="{{true}}" enhanced="{{true}}">
@@ -159,6 +180,8 @@ createComponent({
 ```
 
 ### 预加载 Skyline 环境
+
+`wx.preloadSkylineView(options?): void` 从基础库 2.24.7 起支持。`options` 可省略，其中 `success` / `fail` / `complete` 均为可选 `(res: { errMsg: string }) => void` 回调；`complete` 在成功或失败后执行，回调无需返回值。调用结果由回调通知，不返回预加载对象或 Promise，见[微信官方类型](https://github.com/wechat-miniprogram/api-typings/blob/master/types/wx/lib.wx.api.d.ts)。
 
 微信默认不预加载 Skyline，首次进入有冷启动开销。可在可能跳转到 Skyline 的前置页 `onShow` 中延迟约 500ms 调用，避开当前页首帧高峰；使用 `onShow` 而非 `onLoad`，返回前置页时可再次预加载。
 

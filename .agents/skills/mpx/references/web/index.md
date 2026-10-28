@@ -33,7 +33,7 @@
 
 ## SSR 额外约束
 
-进入 SSR 任务时读取 [SSR 全流程](./ssr-reference.md)：server/client 使用同一 app.mpx，使用 history 路由及 context.url；useSSR 控制客户端等待路由就绪，不是服务端构建开关。每请求创建 Pinia，通过 onAppInit 返回；不使用模块级共享状态或依赖 @mpxjs/store 的 SSR 同步。首屏预取返回 serverPrefetch/onServerPrefetch 的实际 Promise，onLoad 的 Promise 不被 SSR 等待。服务端不直接访问 window/document，不无必要覆盖框架默认 onSSRAppCreated 流程。
+进入 SSR 任务时读取 [SSR 全流程](./ssr-reference.md)：server/client 使用同一 app.mpx，使用 history 路由及 context.url；useSSR 控制客户端等待路由就绪，不是服务端构建开关。每请求创建 Pinia，通过 onAppInit 返回；不使用模块级共享状态或依赖 @mpxjs/store 的 SSR 同步。首屏预取由 serverPrefetch 或 onServerPrefetch 注册的回调返回实际 Promise，onLoad 的 Promise 不被 SSR 等待。服务端不直接访问 window/document，不无必要覆盖框架默认 onSSRAppCreated 流程。
 
 ## 验证
 

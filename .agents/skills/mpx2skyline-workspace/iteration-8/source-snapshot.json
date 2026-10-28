@@ -1,0 +1,22 @@
+{
+  "status": "prepared",
+  "files": {
+    "README.md": "e1a4c9b2bb2aeeb5081a8966ef0d25cc3f8b960b6b1e8a16db5ab845b9b94073",
+    "assertion-migration.json": "e5ef8d6d8e3f527953124aea4c03fe35ade2a99b37e30fd5f4698134d1e8ebca",
+    "common-validation.json": "dc41a8c822c740ca920394b9e71a475e80ce9f9774716956fe0c7845d8c198ab",
+    "creation-validation.json": "760dd12197705c4ae57a00ac982fd3cf16a4f0e6173c9c9dbdfb8e3d2ebff899",
+    "evals.json": "c3ecc499c48071ff69661af9c523070532bb1f3444dcfd24ff97500b77d61055",
+    "fixture-provenance.json": "5e5e5822f3abd568f464877e832a66797ae106f93263247d3f367f82d98a9597",
+    "grade.py": "d14a4545dc7ede1485cfff2a78604ce13396881fe189a56bc12d92d7113e3f4e",
+    "grading-standard.md": "6d4e2e6b63b4d054afacb853ab5ef71eee99f50cde1190e3a7c01ae7047aee2c",
+    "jest.config.json": "72f2d17b64144d0cbe3bf821caf541e294af40d3a483908e502dee11834f4de4",
+    "previous-mpx.config.js": "54abc87c79cc12cc1d623bc27d287064b7f6ff722190f188ee400677546e7aa2",
+    "prompt_templates.json": "300961055e89f1f79202c104aa8ba62784a1cf0ed4e6ffe4845f4fcbc87bec67",
+    "report.py": "4a673401e0e57f1306097ba3d7ff41b1460205c03078ec465db207026a2adb96",
+    "run-metadata.json": "9a8e89389df76c19f9aa5a60532bca194433ae9ff99fcd1825987d23c1e8d900",
+    "run_evals.py": "afb5209e9ee9ff88ce62c9ce745e20383ff8ca094852e4a219bc7ad464002aff",
+    "skill-source.json": "fd292505e41b9fd23c421b80e8a58e1f3dfc4b3c0df0da6871dfea6cbe38d5b4",
+    "test_evals.py": "7856c4b9f9cbbd28e4d05196700fb68a2fece5b4b0e0c7dcf25308ff33572d8f",
+    "validate-suite.test.cjs": "a621707c0034b104f62a2d269680ee604018395e1c1534a06b44b18a2224c754"
+  }
+}

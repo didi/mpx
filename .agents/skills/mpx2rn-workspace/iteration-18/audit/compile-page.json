@@ -16,7 +16,7 @@
         "total": 0,
         "byCategory": {}
       },
-      "durationMs": 777
+      "durationMs": 815
     },
     "ios": {
       "success": true,
@@ -28,7 +28,7 @@
         "total": 0,
         "byCategory": {}
       },
-      "durationMs": 1858
+      "durationMs": 1996
     }
   }
 }

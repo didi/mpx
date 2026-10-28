@@ -1,0 +1,63 @@
+<template>
+  <view class="segmented-control">
+    <text class="segmented-label" max-lines="{{1}}" overflow="ellipsis">{{label}}</text>
+    <view class="segmented-options">
+      <view class="segmented-option" wx:for="{{safeOptions}}" wx:key="value" wx:class="{{{ 'segmented-option-selected': selectedValue === item.value, 'segmented-option-disabled': disabled || item.disabled, 'segmented-option-pressed': pressedIndex === index }}}" data-index="{{index}}" bindtap="onSelect" bindtouchstart="onPress" bindtouchend="onRelease" bindtouchcancel="onRelease">
+        <text class="segmented-option-text" max-lines="{{1}}" overflow="ellipsis">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { ref, computed, watch, getCurrentInstance } from '@mpxjs/core'
+
+defineOptions({ initData: { safeOptions: [] } })
+const props = defineProps({
+  controlKey: { type: String, value: '' },
+  options: { type: Array, value: [] },
+  value: { type: String, value: '' },
+  disabled: { type: Boolean, value: false },
+  label: { type: String, value: '请选择' }
+})
+const instance = getCurrentInstance().proxy
+const safeOptions = computed(() => Array.isArray(props.options) ? props.options : [])
+const selectedValue = ref(props.value)
+const pressedIndex = ref(-1)
+watch(() => props.value, (value) => { selectedValue.value = value })
+watch(() => props.disabled, (value) => { if (value) pressedIndex.value = -1 })
+watch(() => props.options, () => { pressedIndex.value = -1 })
+
+function getAvailableOption (event) {
+  if (props.disabled) return
+  const option = safeOptions.value[Number(event.currentTarget.dataset.index)]
+  if (option && !option.disabled) return option
+}
+function onSelect (event) {
+  const option = getAvailableOption(event)
+  if (!option) return
+  selectedValue.value = option.value
+  instance.triggerEvent('change', { controlKey: props.controlKey, value: option.value })
+}
+function onPress (event) {
+  if (getAvailableOption(event)) pressedIndex.value = Number(event.currentTarget.dataset.index)
+}
+function onRelease () { pressedIndex.value = -1 }
+
+defineExpose({ safeOptions, selectedValue, pressedIndex, onSelect, onPress, onRelease })
+</script>
+
+<style>
+.segmented-control { width: 100%; }
+.segmented-label { display: block; padding-bottom: 12rpx; font-size: 24rpx; color: #68758b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.segmented-options { display: flex; padding: 6rpx; border-radius: 14rpx; background-color: #eef1f7; }
+.segmented-option { display: flex; flex: 1; width: 0; min-width: 0; align-items: center; justify-content: center; padding: 16rpx 8rpx; border-radius: 10rpx; color: #43516a; transform: scale(1); opacity: 1; transition: transform 150ms, opacity 150ms; }
+.segmented-option-text { display: block; width: 100%; text-align: center; font-size: 26rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.segmented-option-selected { background-color: #315fcd; color: #ffffff; }
+.segmented-option-disabled { color: #9ba3b1; background-color: #e3e6ec; }
+.segmented-option-pressed { transform: scale(0.96); opacity: 0.7; }
+</style>
+
+<script type="application/json">
+{ "component": true }
+</script>

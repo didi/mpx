@@ -28,8 +28,8 @@
 
 | 字段 | RN 差异 |
 | --- | --- |
-| `disableScroll` | RN 页面不提供默认滚动；设为 `true`，通过 `scroll-view` 承载滚动内容。 |
-| `enablePullDownRefresh` / `onReachBottomDistance` | 不生效，使用 `scroll-view` 对应能力。 |
+| `disableScroll` | RN 页面不提供默认滚动；设为 `true`，通过 `scroll-view` 承载滚动内容，见[页面滚动替代示例](./rn-script-reference.md#页面滚动替代示例)。 |
+| `enablePullDownRefresh` / `onReachBottomDistance` | 不生效，使用 `scroll-view` 对应能力，见[页面滚动替代示例](./rn-script-reference.md#页面滚动替代示例)。 |
 | `disableKeyboardAvoiding` | RN 专属，为 `true` 时关闭框架键盘避让包裹，遮挡由业务处理。 |
 
 RN 页面滚动适配时同时设置 `page { height: 100%; }`，并为滚动容器开启 `scroll-y`。
@@ -79,7 +79,7 @@ const rnConfig = {
 }
 ```
 
-自定义 Mpx fallback 组件通过 `this.triggerEvent('reload')` 通知框架重新加载页面。React fallback 组件则调用传入的 `onReload` 回调。
+自定义 Mpx fallback 组件通过 `this.triggerEvent('reload')` 通知框架重新加载页面。React fallback 组件则调用传入的 `onReload(): void` 回调，无需参数，不返回加载 Promise。
 
 ```html
 <!-- src/components/page-fallback.mpx -->
@@ -122,6 +122,8 @@ Mpx.config.rnConfig.onLazyLoadPageError = ({ subpackage, errType }) => {
 #### 异步组件
 
 对于**异步分包组件**，可使用 **`mpx.onLazyLoadError`** 监听失败，回调入参中含 **`subpackage`** 分包名数组。若需重试，可在判断命中目标分包后，通过数据开关配合模板 **`wx:if`** 先卸载再挂载组件，以重新触发分包拉取与组件渲染。
+
+`mpx.onLazyLoadError(callback): void` 的 callback 签名为 `(error: { type: 'subpackage', subpackage: string[], errMsg: string }) => void`，回调返回值不被消费；注册不会返回取消函数。`mpx.offLazyLoadError(callback?): void` 传入注册时同一函数可移除该监听，省略参数会移除全部此类监听，组件销毁时应只移除自己的回调。
 
 **示例：**
 

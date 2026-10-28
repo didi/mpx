@@ -1,0 +1,253 @@
+{
+  "environment": "Node VM; mocked createPage and wx; real delivered service.js",
+  "trace": [
+    {
+      "renderer": "skyline",
+      "action": "initial",
+      "state": {
+        "groups": 4,
+        "orders": 32,
+        "pageNo": 1,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 0
+      },
+      "requested": [
+        1
+      ]
+    },
+    {
+      "renderer": "skyline",
+      "action": "pagination-1",
+      "state": {
+        "groups": 8,
+        "orders": 64,
+        "pageNo": 2,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 0
+      },
+      "requested": [
+        2
+      ]
+    },
+    {
+      "renderer": "skyline",
+      "action": "pagination-2",
+      "state": {
+        "groups": 12,
+        "orders": 96,
+        "pageNo": 3,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 0
+      },
+      "requested": [
+        3
+      ]
+    },
+    {
+      "renderer": "skyline",
+      "action": "main-scroll",
+      "state": {
+        "groups": 12,
+        "orders": 96,
+        "pageNo": 3,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 238
+      }
+    },
+    {
+      "renderer": "skyline",
+      "action": "refresh-success",
+      "state": {
+        "groups": 4,
+        "orders": 32,
+        "pageNo": 1,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 238
+      },
+      "requested": [
+        1
+      ]
+    },
+    {
+      "renderer": "skyline",
+      "action": "refresh-failure-preserves-list",
+      "state": {
+        "groups": 8,
+        "orders": 64,
+        "pageNo": 2,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 238
+      },
+      "requested": [
+        1,
+        true
+      ]
+    },
+    {
+      "renderer": "skyline",
+      "action": "paginate-after-failure",
+      "state": {
+        "groups": 12,
+        "orders": 96,
+        "pageNo": 3,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 238
+      },
+      "requested": [
+        3
+      ]
+    },
+    {
+      "renderer": "skyline",
+      "action": "pagination-failure-and-retry",
+      "state": {
+        "groups": 12,
+        "orders": 96,
+        "pageNo": 3,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 0
+      },
+      "requested": [
+        3,
+        3
+      ]
+    },
+    {
+      "renderer": "skyline",
+      "action": "resize",
+      "viewportHeight": 513
+    },
+    {
+      "renderer": "webview",
+      "action": "initial",
+      "state": {
+        "groups": 4,
+        "orders": 32,
+        "pageNo": 1,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 0
+      },
+      "requested": [
+        1
+      ]
+    },
+    {
+      "renderer": "webview",
+      "action": "pagination-1",
+      "state": {
+        "groups": 8,
+        "orders": 64,
+        "pageNo": 2,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 0
+      },
+      "requested": [
+        2
+      ]
+    },
+    {
+      "renderer": "webview",
+      "action": "pagination-2",
+      "state": {
+        "groups": 12,
+        "orders": 96,
+        "pageNo": 3,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 0
+      },
+      "requested": [
+        3
+      ]
+    },
+    {
+      "renderer": "webview",
+      "action": "main-scroll",
+      "state": {
+        "groups": 12,
+        "orders": 96,
+        "pageNo": 3,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 238
+      }
+    },
+    {
+      "renderer": "webview",
+      "action": "refresh-success",
+      "state": {
+        "groups": 4,
+        "orders": 32,
+        "pageNo": 1,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 238
+      },
+      "requested": [
+        1
+      ]
+    },
+    {
+      "renderer": "webview",
+      "action": "refresh-failure-preserves-list",
+      "state": {
+        "groups": 8,
+        "orders": 64,
+        "pageNo": 2,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 238
+      },
+      "requested": [
+        1,
+        true
+      ]
+    },
+    {
+      "renderer": "webview",
+      "action": "paginate-after-failure",
+      "state": {
+        "groups": 12,
+        "orders": 96,
+        "pageNo": 3,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 238
+      },
+      "requested": [
+        3
+      ]
+    },
+    {
+      "renderer": "webview",
+      "action": "pagination-failure-and-retry",
+      "state": {
+        "groups": 12,
+        "orders": 96,
+        "pageNo": 3,
+        "refreshing": false,
+        "loadingMore": false,
+        "scrollTop": 0
+      },
+      "requested": [
+        3,
+        3
+      ]
+    },
+    {
+      "renderer": "webview",
+      "action": "resize",
+      "viewportHeight": 513
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "scope": [
+    "outputs/pages/task-board.mpx",
+    "outputs/components/rating-selector.mpx",
+    "outputs/components/segmented-control.mpx",
+    "outputs/app.json"
+  ],
+  "target": [
+    "wx Skyline",
+    "wx WebView"
+  ],
+  "static": {
+    "status": "pass",
+    "eslint": {
+      "status": "pass",
+      "errors": 0,
+      "warnings": 0,
+      "evidence": "eslint-final.log"
+    },
+    "audit": {
+      "status": "pass",
+      "rulesReviewed": 48,
+      "errorResiduals": [],
+      "warningResiduals": [],
+      "evidence": [
+        "audit.json",
+        "audit-pass.log",
+        "audit-candidates.log"
+      ]
+    }
+  },
+  "real_compile": {
+    "status": "pass",
+    "target": "wx",
+    "entry": "outputs/pages/task-board.mpx",
+    "recursiveComponents": true,
+    "errors": [],
+    "warnings": [],
+    "evidence": [
+      "compile.cjs",
+      "compile.json",
+      "compile-final.log"
+    ],
+    "limitation": "真实 Mpx wx 编译；未启动微信渲染引擎，也不代表设备兼容验收。"
+  },
+  "mock": {
+    "status": "pass",
+    "total": 21,
+    "passed": 21,
+    "failed": 0,
+    "evidence": [
+      "behavior.test.cjs",
+      "jest.config.cjs",
+      "jest-final.log",
+      "jest-results.json",
+      "page.transformed.js",
+      "segmented.transformed.js",
+      "rating.transformed.js"
+    ],
+    "method": "真实 setup 转换后的脚本 + Vue 响应式模拟 + 模板绑定驱动 + wx/实例/计时器 mock",
+    "cases": [
+      {
+        "name": "real compiler transform exposes all setup template methods and collection bindings",
+        "status": "passed"
+      },
+      {
+        "name": "query category 全部 initializes correct filter",
+        "status": "passed"
+      },
+      {
+        "name": "query category 工作 initializes correct filter",
+        "status": "passed"
+      },
+      {
+        "name": "query category 生活 initializes correct filter",
+        "status": "passed"
+      },
+      {
+        "name": "query category illegal initializes correct filter",
+        "status": "passed"
+      },
+      {
+        "name": "query category undefined initializes correct filter",
+        "status": "passed"
+      },
+      {
+        "name": "task completion toggles twice via real card binding",
+        "status": "passed"
+      },
+      {
+        "name": "empty result uses actual empty conditional",
+        "status": "passed"
+      },
+      {
+        "name": "refresh success resets tasks and rating, with concurrent refresh/load guarded",
+        "status": "passed"
+      },
+      {
+        "name": "injected failure preserves list/rating, ends feedback, permits toggle/page/retry",
+        "status": "passed"
+      },
+      {
+        "name": "continuous pagination preserves tasks and unique keys: 全部",
+        "status": "passed"
+      },
+      {
+        "name": "continuous pagination preserves tasks and unique keys: 工作",
+        "status": "passed"
+      },
+      {
+        "name": "continuous pagination preserves tasks and unique keys: 生活",
+        "status": "passed"
+      },
+      {
+        "name": "rating defaults and public parent value updates",
+        "status": "passed"
+      },
+      {
+        "name": "rating immediate change detail and readonly prevents both events and press",
+        "status": "passed"
+      },
+      {
+        "name": "rating touchend/cancel and instance isolation use template bindings",
+        "status": "passed"
+      },
+      {
+        "name": "segmented touchend/cancel and instance isolation use template bindings",
+        "status": "passed"
+      },
+      {
+        "name": "segmented defaults/null/array transitions and continuous parent updates",
+        "status": "passed"
+      },
+      {
+        "name": "segmented immediate detail, disabled states and replacement clears press",
+        "status": "passed"
+      },
+      {
+        "name": "actual page registrations, props and two-way event chain",
+        "status": "passed"
+      },
+      {
+        "name": "resize updates viewport bound to the root",
+        "status": "passed"
+      }
+    ],
+    "limitation": "未执行真实 Mpx 实例挂载、glass-easel 属性校验、微信布局或原生触摸分发。"
+  },
+  "developer_tools": {
+    "status": "not_run",
+    "reason": "未启动微信开发者工具。"
+  },
+  "real_device": {
+    "skyline": {
+      "status": "not_run",
+      "reason": "本轮未连接微信真机。"
+    },
+    "webview": {
+      "status": "not_run",
+      "reason": "本轮未连接微信真机，renderer 调试覆盖及回退路径未验收。"
+    }
+  },
+  "failureInjection": {
+    "entry": "/pages/task-board?refreshFail=1",
+    "behavior": "下一次刷新失败一次，列表/评分保留，后续刷新可成功。"
+  },
+  "attempts": {
+    "jestRuns": 4,
+    "retriesAfterInitialFailure": 3,
+    "notes": [
+      "初次 Watchman 权限错误，测试配置关闭 Watchman。",
+      "两次联动测试失败/定位：适配器 sync 属性解构索引错误。",
+      "第三次后续尝试修正适配器后 21/21 通过。",
+      "编译证据脚本相对路径曾修正一次；真实最终编译通过。",
+      "静态断言两次误召回已修正，最终审计通过。"
+    ]
+  },
+  "sourceHashes": {
+    "pages/task-board.mpx": "5ef13fee4c9e61ba0d54a58a344e73923a2f07d71bd70232ab9152470a59f7a0",
+    "components/rating-selector.mpx": "e58deaf270cdcebb740547a5bbdde20dd2c437a91b2117da9f8e1a066b215145",
+    "components/segmented-control.mpx": "0b16b713441648a8c5c9418abfaacb89f5d9faedda975d068687e80a7501a0ae",
+    "app.json": "59dbff3905e33a3a5096f058ad7d34e1c9557f4ef64e65583b8d212dc35126b4"
+  },
+  "report": "../outputs/report.md"
+}

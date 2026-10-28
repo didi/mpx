@@ -56,23 +56,23 @@
     "passed": 8,
     "failed": 0,
     "total": 8,
-    "total_tokens": 657621,
-    "tool_calls": 13,
-    "duration_ms": 156076,
-    "duration_seconds": 156.076
+    "total_tokens": 782221,
+    "tool_calls": 17,
+    "duration_ms": 118015,
+    "duration_seconds": 118.015
   },
   "metrics": {
-    "total_tokens": 657621,
-    "tool_calls": 13,
-    "duration_ms": 156076,
-    "duration_seconds": 156.076
+    "total_tokens": 782221,
+    "tool_calls": 17,
+    "duration_ms": 118015,
+    "duration_seconds": 118.015
   },
   "timing": {
-    "total_duration_seconds": 156.076,
-    "total_tokens": 657621
+    "total_duration_seconds": 118.015,
+    "total_tokens": 782221
   },
   "execution_metrics": {
-    "total_tool_calls": 13,
-    "output_chars": 657621
+    "total_tool_calls": 17,
+    "output_chars": 782221
   }
 }

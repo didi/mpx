@@ -1,0 +1,93 @@
+{
+  "target": "wx",
+  "renderers": [
+    "webview",
+    "skyline"
+  ],
+  "artifact": "../outputs/style-card.mpx",
+  "sha256": "c35edc2916a81590ebb0572dadb0b937e1f572f3f485806f2903afa5313b93f3",
+  "static": {
+    "status": "pass_with_warnings",
+    "matrixRulesReviewed": 48,
+    "evidence": [
+      "static-scan.log",
+      "audit.json",
+      "jest-result.json"
+    ],
+    "warnings": [
+      "字体 500/600 与宿主字体映射尚无真机证据。",
+      "宿主 app/page 不在单组件范围，引用任务提供的两项盒模型前提。"
+    ]
+  },
+  "eslint": {
+    "status": "pass",
+    "evidence": [
+      "eslint.log",
+      "eslint-result.json"
+    ],
+    "scope": "正式 style-card.mpx",
+    "note": "首次 CLI 定位使用未导出的子路径失败，改用包根路径定位后成功；未修改配置。"
+  },
+  "mock": {
+    "status": "pass",
+    "runner": "Jest",
+    "passed": 8,
+    "failed": 0,
+    "evidence": [
+      "style-card.test.js",
+      "run-jest.cjs",
+      "jest.log",
+      "jest-result.json"
+    ],
+    "boundary": "脚本使用 vm 与模拟 API/组件实例；静态 CSS 断言不模拟微信布局引擎。",
+    "attempts": [
+      {
+        "status": "failed_before_tests",
+        "reason": "Watchman 状态目录权限不足",
+        "evidence": "jest-attempt-1.log"
+      },
+      {
+        "status": "pass",
+        "change": "watchman:false，测试与业务代码未变"
+      }
+    ],
+    "repairAttempts": 1
+  },
+  "real_compile": {
+    "status": "fail",
+    "target": "wx",
+    "command": "npm run compile-validate -- iteration-8/eval-0-style-layout/mpx/outputs/style-card.mpx --target=wx --json",
+    "exitCode": 1,
+    "errors": 2,
+    "reason": "输入未提供宿主字体 city.woff2；Can't resolve './city.woff2'，引起 wxss 与 extractor 两条 dependency 错误。",
+    "evidence": [
+      "compile.log",
+      "compile-result.json"
+    ],
+    "repairAttempts": 0
+  },
+  "diagnostic_compile": {
+    "status": "pass",
+    "kind": "真实 wx 编译器 + 移除 @font-face 的诊断副本",
+    "command": "npm run compile-validate -- iteration-8/eval-0-style-layout/mpx/run-1/font-external-diagnostic.mpx --target=wx --json",
+    "evidence": [
+      "font-external-diagnostic.mpx",
+      "compile-diagnostic.log",
+      "compile-diagnostic-result.json"
+    ],
+    "boundary": "不代表正式产物编译通过，不验证字体或宿主视觉。"
+  },
+  "renderer_runtime": {
+    "webview": "not_run",
+    "skyline": "not_run",
+    "reason": "无微信开发者工具渲染会话或可运行的宿主业务页面。"
+  },
+  "device": {
+    "status": "not_run",
+    "reason": "无 iOS/Android 微信真机与宿主字体二进制。"
+  },
+  "font_binary": {
+    "status": "not_run",
+    "reason": "二进制由宿主提供，输入目录没有 city.woff2 或 Trip 字体。"
+  }
+}

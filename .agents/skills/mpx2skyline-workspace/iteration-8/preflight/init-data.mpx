@@ -1,0 +1,8 @@
+<template><view><text wx:for="{{safeOptions}}" wx:key="index">{{item}}</text></view></template>
+<script setup>
+import { computed } from '@mpxjs/core'
+defineOptions({ initData: { safeOptions: [] } })
+const safeOptions = computed(() => [])
+defineExpose({ safeOptions })
+</script>
+<script type="application/json">{"component":true}</script>

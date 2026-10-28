@@ -1,0 +1,296 @@
+{
+  "scope": [
+    "outputs/style-card.mpx"
+  ],
+  "method": "aggregate rg + full source manual review against every matrix rule",
+  "rules": [
+    {
+      "id": "CONFIG_APP_SKYLINE_OPTIONS",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "单组件 scope；宿主已配置 defaultDisplayBlock/defaultContentBox；不改宿主配置。"
+    },
+    {
+      "id": "CONFIG_PAGE_SKYLINE",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "component:true，无页面入口或页面事件。"
+    },
+    {
+      "id": "CONFIG_WORKLET_BABEL",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "未使用 Worklet。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_FRAGMENT",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "GLASS_TEMPLATE_ESCAPE",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_UNSUPPORTED",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_PENDING_SUPPORT",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_WEBVIEW_ONLY_ATTR",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_IMAGE_SVG",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_SCROLL_TYPE",
+      "level": "error",
+      "status": "passed",
+      "reason": "横向容器保留 type=custom。"
+    },
+    {
+      "id": "COMP_SCROLL_LIST_DIRECT_CHILD",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_SCROLL_NESTED",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL",
+      "level": "warn",
+      "status": "passed",
+      "reason": "scroll-x、enable-flex、显式 flex-direction:row。"
+    },
+    {
+      "id": "COMP_SCROLL_HORIZONTAL_CHILD_WIDTH",
+      "level": "warn",
+      "status": "passed",
+      "reason": "直接 fit-content 设置 width:100%；fit-item 各50%，320px视口中各160px。"
+    },
+    {
+      "id": "COMP_SCROLL_REFRESHER_SLOT",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_NAVIGATOR_CHILDREN",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_TEXT_CHILDREN",
+      "level": "warn",
+      "status": "passed",
+      "reason": "text 均为纯文本或单一插值，无非 text 子节点。"
+    },
+    {
+      "id": "COMP_INLINE_MIXED_CONTENT",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_STICKY_STRUCTURE",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_PICKER_VIEW_INDICATOR",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "COMP_SWIPER_LIMIT",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_MEDIA_SCREEN",
+      "level": "error",
+      "status": "passed",
+      "reason": "媒体规则仅匹配 card-webview；该类只在非 Skyline 持有；Skyline 读取窗口并监听 resize，detached 清理。"
+    },
+    {
+      "id": "STYLE_SELECTOR_UNSUPPORTED",
+      "level": "warn",
+      "status": "passed",
+      "reason": "属性选择器改为 badge-sale 类；无不支持的伪元素或通配选择器。"
+    },
+    {
+      "id": "STYLE_TEXT_OVERFLOW",
+      "level": "warn",
+      "status": "passed",
+      "reason": "title 保留 WebView CSS；新增 max-lines=1/overflow=ellipsis；插值紧贴标签。"
+    },
+    {
+      "id": "STYLE_FLEX_TEXT_WRAP",
+      "level": "warn",
+      "status": "passed",
+      "reason": "标签、横向项均有50%宽度；纵向容器默认stretch，短内容无额外居中收缩。"
+    },
+    {
+      "id": "STYLE_OVERFLOW_AXIS",
+      "level": "error",
+      "status": "passed",
+      "reason": "仅使用单值 overflow:hidden；outer 不再依赖 BFC 提供顶部间距。"
+    },
+    {
+      "id": "STYLE_LAYOUT_UNSUPPORTED",
+      "level": "warn",
+      "status": "passed",
+      "reason": "grid 改横向Flex；无 float/flow-root 等不支持布局。"
+    },
+    {
+      "id": "STYLE_TEXT_UNSUPPORTED",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_FONT_POSTSCRIPT_NAME",
+      "level": "error",
+      "status": "exception",
+      "reason": "City-Semibold 已有同名字体族 @font-face；Trip-Medium 由宿主提供；保持已确认设计，不擅改字体族或字重。未取得二进制，无法核验 name 表。"
+    },
+    {
+      "id": "STYLE_FONT",
+      "level": "warn",
+      "status": "exception",
+      "reason": "保留600/500；部分机型字重匹配风险，需宿主字体和真机核验，不擅自替换为700。"
+    },
+    {
+      "id": "STYLE_TEXT_DECORATION",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_BORDER_RADIUS_BORDER",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_BACKGROUND_MASK_LIMIT",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_FILTER_LIMIT",
+      "level": "warn",
+      "status": "passed",
+      "reason": "独立blur保留；复合效果内层blur、外层brightness，维持先blur后brightness。"
+    },
+    {
+      "id": "STYLE_BOX_SHADOW_MULTI",
+      "level": "warn",
+      "status": "passed",
+      "reason": "rgba逗号不是多阴影；双阴影拆同尺寸父子，外层#333，内层#000绘制在上。"
+    },
+    {
+      "id": "STYLE_CALC_ANGLE",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_PSEUDO_ANIMATION",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_ANIMATION_FILL_MODE",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_ANIMATION_PROPERTY",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_Z_INDEX_CONTEXT",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "STYLE_NEGATIVE_MARGIN_OCCUPANCY",
+      "level": "warn",
+      "status": "passed_static_only",
+      "reason": "原H=184，原起点184+min(-28,-92)=92；Flex wrapper占位156，后项-64起点92，末端212；普通-8单侧回拉不改父布局。实际渲染not_run。"
+    },
+    {
+      "id": "GLASS_SELECTOR_NUMERIC_ID",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "ANIMATION_WEBVIEW_API",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "SCROLL_CONTEXT_ENHANCED",
+      "level": "error",
+      "status": "not_applicable",
+      "reason": "无 node()/ScrollViewContext 获取，不要求额外 enhanced。"
+    },
+    {
+      "id": "SELECTOR_QUERY_SCOPE",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "PROPS_DEFAULT_FIELD",
+      "level": "error",
+      "status": "passed",
+      "reason": "title descriptor 使用 String/value，保留公开接口。"
+    },
+    {
+      "id": "WX_FOR_DATA_TYPE",
+      "level": "warn",
+      "status": "not_applicable",
+      "reason": "已对完整SFC模板、脚本、样式及JSON人工复核；无该规则涉及的组件、API、结构或不支持值。"
+    },
+    {
+      "id": "PROPS_UNION_TYPE",
+      "level": "error",
+      "status": "passed",
+      "reason": "无数组联合类型；title 默认值是字符串；输入未提供调用方。"
+    }
+  ]
+}

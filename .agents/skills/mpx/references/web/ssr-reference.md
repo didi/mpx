@@ -88,6 +88,8 @@ app.listen(8080)
 - 默认入口不主动判断 404；示例仅处理业务显式产生的 404。
 - 默认自动注入资源与 `context.state`；`inject: false` 或不用模板时自行补齐。客户端固定读取 `window.__INITIAL_STATE__`，不能单改服务端变量名。
 
+示例中 `createBundleRenderer(bundle, options)` 返回 renderer：bundle 为 server bundle 对象，options 包含 HTML `template: string`、客户端 manifest 及渲染配置。`renderer.renderToString(context, callback): void` 的 context 至少提供 `url: string`，callback 为 `(err, html) => void`，成功时 html 为字符串，失败时先处理 err；省略 callback 的形式返回 `Promise<string>`。不要从回调形式的返回值读取 HTML。
+
 ## 路由与客户端挂载
 
 在 `createApp` 前配置 history：
@@ -108,7 +110,7 @@ if (__mpx_mode__ === 'web') {
 
 ### onAppInit：同步创建请求级 Pinia
 
-- `onAppInit` 仅声明于 App，每次服务端创建应用及浏览器启动时执行；同步返回值合入 Vue 根选项，不能异步、不能访问尚未创建的 Vue 实例，也不接收 SSR `context`。
+- `onAppInit(): object | void` 仅声明于 App，无参数，每次服务端创建应用及浏览器启动时执行；同步返回值合入 Vue 根选项，不返回时不增加选项。不能异步、不能访问尚未创建的 Vue 实例，也不接收 SSR `context`。
 - 已有钩子时合并 `pinia` 并保留其他选项，不重复声明覆盖。小程序也执行该钩子，但不要依赖其消费返回的 Vue 选项。
 
 ```js
@@ -131,6 +133,8 @@ createApp({
 ### serverPrefetch：返回真正的异步任务
 
 `serverPrefetch` 可声明于 App / Page / Component，组合式用 `onServerPrefetch`，均只在服务端执行。钩子及调用的 action 须返回 Promise，等请求完成且状态更新后再 resolve；多任务用 `return Promise.all(...)`。
+
+选项式回调 `serverPrefetch(): Promise<unknown>` 无参数；组合式注册 `onServerPrefetch(callback): void` 的 callback 同样无参数并返回 Promise。SSR 等待该 Promise 完成，不把 resolve 的值当作页面状态或 HTML；应在任务中写入 store / 响应式状态。注册函数没有可等待的返回值，不写 `await onServerPrefetch(...)`。
 
 **`onLoad` 在服务端也执行，但其 Promise 不被等待**（Web 中由 `created` 驱动）。仅把预取加载分支交给服务端钩子，保留客户端 / 小程序加载入口和其他必要同步初始化，避免漏取或重复请求。
 
@@ -186,6 +190,8 @@ return { store }
 ## 自定义服务端入口逻辑
 
 通常沿用默认入口；需要额外路由检查或请求上下文处理时才在 App 声明 `onSSRAppCreated({ pinia, router, app, context })`。它仅服务端执行，返回值替代默认入口，必须是最终 resolve 为 `app` 的 Promise。
+
+回调接收一个对象：`app` 为本次请求的 Vue 根实例；`router` 为本次请求的 Vue Router 实例；`pinia` 为 onAppInit 返回的 Pinia，未配置时为空对象，不能直接使用其 state；`context` 是传给 renderer 的请求级对象，含 `url: string`，可写入待序列化的 `state`。`context.rendered = (context) => void` 在渲染完成后接收同一请求上下文，返回值不被消费。`onSSRAppCreated` 应返回 `Promise<Vue>`，不能只返回状态对象。
 
 以下接管路由就绪、最终状态输出，并对未匹配路由返回 404；前提是 `onAppInit` 已返回 Pinia：
 

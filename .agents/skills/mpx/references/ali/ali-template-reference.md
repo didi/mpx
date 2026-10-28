@@ -84,6 +84,8 @@
 
 支付宝 `disable-scroll` 会影响子元素滚动：只对蒙层开启，将可滚动弹层放在兄弟节点；微信在弹层外层绑定 `catchtouchmove` 空处理函数。
 
+示例的 `stopMove(e): void` 接收触摸事件对象，但不使用其字段，因此可省略形参；无需返回 `false`，阻止冒泡由 `catchtouchmove` 绑定完成。通用事件对象与绑定规则见[模板基准](../base/template-reference.md#事件绑定)。
+
 ```html
 <template>
   <view class="dialog-root" catchtouchmove@wx="stopMove">

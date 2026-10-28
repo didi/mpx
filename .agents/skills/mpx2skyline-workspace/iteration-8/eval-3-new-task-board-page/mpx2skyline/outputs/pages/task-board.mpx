@@ -1,0 +1,156 @@
+<template>
+  <view class="board" wx:style="{{{ height: windowHeight + 'px' }}}">
+    <view class="navigation" wx:style="{{{ paddingTop: statusBarHeight + 'px', height: navigationHeight + 'px' }}}">
+      <text class="navigation-title">任务看板</text>
+    </view>
+    <view class="board-header">
+      <view class="board-summary">
+        <text class="board-heading">我的任务</text>
+        <text class="board-count">{{visibleTasks.length}} 项任务</text>
+      </view>
+      <segmented-control controlKey="category" options="{{categoryOptions}}" value="{{category}}" disabled="{{false}}" label="任务分类" bindchange="onCategoryChange" />
+      <view class="board-rating">
+        <rating-selector ratingKey="board" value="{{rating}}" max="{{5}}" readonly="{{false}}" label="看板评分" bindchange="onRatingChange" />
+      </view>
+      <text class="board-feedback" max-lines="{{1}}" overflow="ellipsis">{{refreshMessage || '下拉恢复初始任务，上拉加载更多'}}</text>
+      <text class="board-score">看板评分：{{rating}} / 5</text>
+    </view>
+    <scroll-view class="task-list" type="list" scroll-y="{{true}}" enhanced="{{true}}" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" lower-threshold="{{60}}" bindrefresherrefresh="onRefresh" bindscrolltolower="onLoadMore">
+      <view class="task-card" wx:for="{{visibleTasks}}" wx:key="taskKey" wx:class="{{{ 'task-card-completed': item.completed }}}" data-task-key="{{item.taskKey}}" bindtap="onToggleTask">
+        <view class="task-status" wx:class="{{{ 'task-status-completed': item.completed }}}"><text>{{item.completed ? '✓' : '○'}}</text></view>
+        <view class="task-content">
+          <text class="task-title" max-lines="{{1}}" overflow="ellipsis">{{item.title}}</text>
+          <text class="task-category">{{item.category}} · {{item.completed ? '已完成' : '未完成'}}</text>
+        </view>
+      </view>
+      <view class="task-empty" wx:if="{{visibleTasks.length === 0}}"><text>暂无任务</text></view>
+      <view class="task-footer"><text>{{refreshing ? '正在刷新…' : '继续上拉加载任务'}}</text></view>
+    </scroll-view>
+  </view>
+</template>
+
+<script setup>
+import { ref, computed, onLoad, onResize } from '@mpxjs/core'
+
+defineOptions({ initData: { visibleTasks: [], categoryOptions: [], category: '全部', rating: 0, refreshing: false } })
+
+const categoryOptions = [
+  { label: '全部', value: '全部' },
+  { label: '工作', value: '工作' },
+  { label: '生活', value: '生活' }
+]
+const createInitialTasks = () => [
+  { taskKey: 't1', title: '整理本周跨团队协作事项与上线验收清单', category: '工作', completed: false },
+  { taskKey: 't2', title: '购买周末出行用品', category: '生活', completed: false },
+  { taskKey: 't3', title: '完成每日阅读', category: '生活', completed: true }
+]
+const category = ref('全部')
+const tasks = ref(createInitialTasks())
+const rating = ref(0)
+const refreshing = ref(false)
+const refreshMessage = ref('')
+const windowInfo = wx.getWindowInfo()
+const menuRect = wx.getMenuButtonBoundingClientRect()
+const windowHeight = ref(windowInfo.windowHeight)
+const statusBarHeight = windowInfo.statusBarHeight
+const navigationHeight = Math.max(44, (menuRect.top - statusBarHeight) * 2 + menuRect.height)
+const visibleTasks = computed(() => tasks.value.filter(task => category.value === '全部' || task.category === category.value))
+let taskSequence = 0
+let failNextRefresh = false
+
+onLoad((query) => {
+  category.value = categoryOptions.some(option => option.value === query.category) ? query.category : '全部'
+  // Test entry: /pages/task-board?refreshFail=1 fails the next refresh once.
+  failNextRefresh = query.refreshFail === '1'
+})
+onResize(({ size }) => {
+  windowHeight.value = size.windowHeight
+})
+
+function onCategoryChange (event) {
+  if (event.detail.controlKey === 'category') category.value = event.detail.value
+}
+function onRatingChange (event) {
+  if (event.detail.ratingKey === 'board') rating.value = event.detail.value
+}
+function onToggleTask (event) {
+  tasks.value = tasks.value.map(task => task.taskKey === event.currentTarget.dataset.taskKey
+    ? Object.assign({}, task, { completed: !task.completed })
+    : task)
+}
+function requestInitialTasks () {
+  const shouldFail = failNextRefresh
+  failNextRefresh = false
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (shouldFail) reject(new Error('模拟刷新失败'))
+      else resolve(createInitialTasks())
+    }, 300)
+  })
+}
+async function onRefresh () {
+  if (refreshing.value) return
+  refreshing.value = true
+  refreshMessage.value = '正在刷新…'
+  try {
+    tasks.value = await requestInitialTasks()
+    rating.value = 0
+    refreshMessage.value = '刷新成功'
+  } catch (error) {
+    refreshMessage.value = '刷新失败，请下拉重试；当前任务已保留'
+  } finally {
+    refreshing.value = false
+  }
+}
+function onLoadMore () {
+  if (refreshing.value) return
+  const nextCategory = category.value === '全部' ? '工作' : category.value
+  const additions = [1, 2].map(() => {
+    taskSequence += 1
+    return { taskKey: 'extra-' + taskSequence, title: nextCategory + '追加任务 ' + taskSequence, category: nextCategory, completed: false }
+  })
+  tasks.value = tasks.value.concat(additions)
+}
+
+defineExpose({
+  categoryOptions, category, rating, visibleTasks, refreshing, refreshMessage,
+  windowHeight, statusBarHeight, navigationHeight,
+  onCategoryChange, onRatingChange, onToggleTask, onRefresh, onLoadMore
+})
+</script>
+
+<style>
+.board { display: flex; flex-direction: column; overflow: hidden; background-color: #f3f5f9; color: #233047; }
+.navigation { flex-shrink: 0; display: flex; align-items: center; padding-left: 32rpx; padding-right: 210rpx; background-color: #ffffff; }
+.navigation-title { font-size: 34rpx; font-weight: bold; }
+.board-header { flex-shrink: 0; padding: 24rpx 24rpx 16rpx; background-color: #ffffff; }
+.board-summary { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20rpx; }
+.board-heading { font-size: 32rpx; font-weight: bold; }
+.board-count { font-size: 24rpx; color: #68758b; }
+.board-rating { padding-top: 20rpx; }
+.board-feedback { display: block; padding-top: 16rpx; font-size: 22rpx; color: #68758b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.board-score { display: block; padding-top: 8rpx; font-size: 24rpx; color: #315fcd; }
+.task-list { flex: 1; height: 0; min-height: 0; width: 100%; }
+.task-card { display: flex; align-items: center; padding: 28rpx 24rpx; margin: 16rpx 24rpx 0; border-radius: 16rpx; background-color: #ffffff; }
+.task-card-completed { background-color: #eaf3ef; }
+.task-status { flex-shrink: 0; width: 44rpx; font-size: 32rpx; color: #7a8597; }
+.task-status-completed { color: #20805b; }
+.task-content { flex: 1; width: 0; min-width: 0; }
+.task-title { display: block; width: 100%; font-size: 28rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-category { display: block; padding-top: 10rpx; color: #68758b; font-size: 22rpx; }
+.task-empty { padding: 80rpx 24rpx; text-align: center; color: #68758b; font-size: 28rpx; }
+.task-footer { padding: 28rpx 24rpx; text-align: center; color: #7a8597; font-size: 22rpx; }
+</style>
+
+<script type="application/json">
+{
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "usingComponents": {
+    "rating-selector": "../components/rating-selector.mpx",
+    "segmented-control": "../components/segmented-control.mpx"
+  }
+}
+</script>

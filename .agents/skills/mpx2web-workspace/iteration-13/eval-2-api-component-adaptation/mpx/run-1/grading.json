@@ -24,8 +24,8 @@
     {
       "id": "c3",
       "text": "视频：保留 src 与播放事件，Web 在 detail 缺字段时从真实 target 安全回退",
-      "passed": false,
-      "evidence": "Actual Web router query and single-argument onLoad/media probes: {\"error\": \"Cannot read properties of undefined (reading 'videoUrl')\"}"
+      "passed": true,
+      "evidence": "Actual Web router query and repository Web created/onLoad/media probes: {\"srcMatches\": true, \"fallback\": true, \"detail\": true, \"expected\": \"https://media.example/video%2Fpart.mp4?signature=a%2Fb%25&next=%3Fv%3D1\", \"actual\": \"https://media.example/video%2Fpart.mp4?signature=a%2Fb%25&next=%3Fv%3D1\", \"lifecycle\": {\"path\": \"packages/core/src/platform/builtInMixins/pageStatusMixin.web.js\", \"sha256\": \"0d7d546ce532ad969beb39eb57e67d0828ba0cd06b92ad7df6a5d620c5dcda36\", \"argumentCount\": 2, \"sameQuery\": true}}"
     },
     {
       "id": "c4",
@@ -71,9 +71,9 @@
     }
   ],
   "summary": {
-    "pass_rate": 0.9091,
-    "passed": 10,
-    "failed": 1,
+    "pass_rate": 1.0,
+    "passed": 11,
+    "failed": 0,
     "total": 11,
     "total_tokens": 1283744,
     "tool_calls": 22,

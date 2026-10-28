@@ -49,12 +49,16 @@ export default defineConfig({
 
 跨端项目统一使用 `presetMpx()`，不要在业务配置中直接引用 `preset-rn`。
 
+`presetMpx(options?: object): Preset` 接收可选预设配置（默认 `{}`），返回放入 UnoCSS `presets` 数组的预设对象；`baseFontSize?: number` 默认 `37.5`，用于生成样式的 `rem` 换算，其余选项透传给 Wind3 预设。`defineConfig(config)` 接收 UnoCSS 配置对象并返回配置，供配置文件默认导出使用。
+
 ### 注册构建插件
 
 - 使用 `@mpxjs/cli@3.x` 且创建项目时已选择原子类：保留脚手架生成的 `mpx.unocss` 配置即可。
 - 手动接入：在 webpack 插件列表中注册一个 `MpxUnocssPlugin` 实例，并确保同一编译中已经注册 `MpxWebpackPlugin`。
 
 业务代码不需要 `import 'uno.css'`。
+
+`new MpxUnocssPlugin(options?: object)` 接收插件选项（默认 `{}`），返回放入 webpack `plugins` 数组的插件实例。本文使用的 `transformCSS?: boolean | { applyVariable?: string | string[] }` 和 `transformGroups?: boolean | { separators?: string[] }` 默认均关闭；它们是插件参数，不放入 `presetMpx`。
 
 ## 模板中使用原子类
 
@@ -81,14 +85,20 @@ export default defineConfig({
 
 ### 动态生成的类名
 
-模板中必须出现完整类名。不要通过字符串片段拼出类名：
+构建时须能从源码或 safelist 获取完整类名，不能依靠运行时拼接来生成对应 CSS：
 
 ```html
 <!-- Bad：不要动态拼接类名 -->
 <view class="text-{{color}}-500"></view>
 ```
 
-改为完整类名映射，或把所有可能值加入 `uno.config.mjs` 的 `safelist`：
+颜色只有 red / blue 两种时，直接在 `wx:class` 中列出完整类名：
+
+```html
+<view wx:class="{{ [color === 'red' ? 'text-red-500' : 'text-blue-500'] }}"></view>
+```
+
+如果完整类名来自接口或外部配置，模板使用 `wx:class="{{ [textClass] }}"` 绑定；再把所有允许的值加入 `uno.config.mjs` 的 `safelist`，确保构建时生成样式。safelist 只补齐样式提取，不替代模板绑定：
 
 ```js
 export default defineConfig({
@@ -129,6 +139,8 @@ module.exports = defineConfig({
 手动注册 `MpxUnocssPlugin` 时，将相同选项传给插件构造函数。`transformCSS` 也可以传对象配置 directives 的 `applyVariable`。
 
 支持 `@apply`、`--at-apply` / `--uno-apply` / `--uno`、`@screen` 与 `theme()`。apply 变量值包含 `:` 时使用引号包裹完整值。
+
+CSS 中的 `theme(path)` 接收主题键路径字符串（如 `'colors.gray.700'`），在编译时替换为相应主题值；它不是运行时 JS 函数，路径应指向可用于该 CSS 声明的主题值。
 
 ```css
 .card {

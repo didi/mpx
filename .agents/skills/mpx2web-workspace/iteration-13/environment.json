@@ -84,7 +84,7 @@
     "assertions_reviewed": 52,
     "scores": {
       "mpx": {
-        "passed": 25,
+        "passed": 26,
         "total": 26
       },
       "mpx2web": {
@@ -96,6 +96,13 @@
     "outputs_unchanged": true,
     "python_tests": 40,
     "jest_tests": 17,
-    "model_rerun": false
+    "model_rerun": false,
+    "c3_lifecycle": {
+      "path": "packages/core/src/platform/builtInMixins/pageStatusMixin.web.js",
+      "sha256": "0d7d546ce532ad969beb39eb57e67d0828ba0cd06b92ad7df6a5d620c5dcda36",
+      "argumentCount": 2,
+      "sameQuery": true
+    },
+    "runtime_scope": "c3 follows current repository Web lifecycle; other assertions retain prior reviewed compiler/runtime basis."
   }
 }

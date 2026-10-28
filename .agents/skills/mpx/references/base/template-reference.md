@@ -67,14 +67,16 @@ Mustache 中不要调用普通 methods 或任意函数，派生展示值使用 c
 | `wx:model` | 双向绑定，如 `<input wx:model="{{value}}" />`。 |
 | `wx:model-prop` / `wx:model-event` | 指定自定义双向绑定的属性与事件。 |
 | `wx:model-value-path` | 从 `e.detail` 取值的路径，默认 `value`；`[]` 表示整个 detail。 |
-| `wx:model-filter` | 内建过滤器如 `trim`，或绑定实例方法处理更新值。 |
+| `wx:model-filter` | 内建过滤器如 `trim`，或指定实例方法名；方法签名 `(value: any) => any`，接收从事件中提取的原值，返回实际写入绑定字段的新值，需同步返回。 |
 | `wx:ref` | 具名引用，如 `wx:ref="panel"` 对应实例 `$refs.panel` / setup `context.refs.panel`。 |
 
-动态样式优先使用 `wx:class/wx:style`，避免在 `class/style` 属性里拼接 Mustache。RN 对 selector 查询额外要求空 `wx:ref`，不是所有平台都要添加的规则。
+动态样式优先使用 `wx:class/wx:style`，避免在 `class/style` 属性里拼接 Mustache。RN 对 selector 查询额外要求目标节点声明 `wx:ref`，空值或具名均可，见 [RN 查询要求](../rn/rn-script-reference.md#selector-查询要求)；不是所有平台都要添加的规则。
 
 ## 事件绑定
 
 `bindtap="handleTap"` 绑定实例方法；内联参数用 `bindtap="handleTap(item, $event)"`，适合替代 dataset 绕行传参。动态方法名可使用 Mustache，结果须对应已声明的方法。
+
+直接绑定的方法接收事件对象 `handleTap(event)`；内联写法只传显式列出的参数，`$event` 表示原始事件。普通事件处理器无须返回值，不能用 `return false` 代替 `catch` 阻止冒泡；个别宿主事件消费返回值时按对应事件契约处理。
 
 `catchtap` 表达阻止冒泡，`capture-bind:` / `capture-catch:` 表达捕获阶段处理；**哪些事件支持传播按端核对**，不能把基础触摸事件的规则扩展到组件自定义事件。也不要把 WXS 事件处理器、`mut-bind` 或事件内 `count++` 当作所有端均支持。
 
@@ -113,15 +115,17 @@ i18n: {
 
 基准翻译与格式化函数范围如下；各目标端的支持限制见端参考。
 
-| 选项式 API | 组合式 API | 用途 |
+| 选项式 API | 组合式 API | 常用签名与返回值 |
 | --- | --- | --- |
-| `$t` | `t` | 文案翻译，支持插值与复数选择；复数翻译统一使用此方法。 |
-| `$te` | `te` | 检查指定语言中是否存在文案键。 |
-| `$tm` | `tm` | 按键获取文案资源，可返回对象或数组。 |
-| `$d` | `d` | 日期格式化。 |
-| `$n` | `n` | 数字格式化。 |
+| `$t` | `t` | `t(key: string, values?: object \| any[]): string` 或 `t(key: string, choice: number, values?: object \| any[]): string`。`values` 为具名/列表插值值，`choice` 为复数选择数量；按当前语言和回退语言查找，未找到可翻译文案时返回 key。复数翻译统一使用此方法。 |
+| `$te` | `te` | `te(key: string): boolean`，检查当前语言是否存在文案键；小程序/RN 不接受额外 locale 参数，也不查回退语言。 |
+| `$tm` | `tm` | `tm(key: string): any`，按当前语言和回退语言查找原始资源，可返回字符串、对象或数组；小程序/RN 未找到时返回 `undefined`。 |
+| `$d` | `d` | `d(value: number \| Date, formatKey?: string, locale?: string): string`，将时间戳（毫秒）或日期按已配置的日期格式键格式化；省略 locale 时使用当前语言。小程序/RN 不支持，Web 用法见端参考。 |
+| `$n` | `n` | `n(value: number, formatKey?: string, locale?: string): string`，按已配置的数字格式键格式化数字；省略 locale 时使用当前语言。小程序/RN 不支持，Web 用法见端参考。 |
 
 选项式通过实例调用上述方法；组合式在 `setup` 顶层同步调用 `useI18n()`，以原名解构并向模板暴露所需函数；`<script setup>` 仍须 `defineExpose`。用于模板的翻译函数不能重命名，避免破坏编译识别。
+
+`useI18n(options?: object)` 返回翻译上下文（Composer）；省略参数或传 `{}` 时使用全局上下文，传局部配置时返回当前组件的局部上下文。配置项、返回字段及 `getLocaleMessage/setLocaleMessage/mergeLocaleMessage` 的签名见[脚本运行时导出](./script-reference.md#运行时导出)。组合式通过 `locale.value = 'en-US'` 切换语言，选项式通过 `this.$i18n.locale = 'en-US'` 切换。
 
 目标端差异与扩展见 [RN i18n](../rn/rn-template-reference.md#i18n-国际化) / [Web i18n](../web/web-template-reference.md#i18n-国际化)。SSR 的实例和状态隔离另见 Web SSR 参考。
 
@@ -129,10 +133,10 @@ i18n: {
 
 使用 `aria-role` 声明元素的角色，使用 `aria-label` 提供读屏文案。公共模板沿用这两个属性，具体组件和目标端的支持限制见端参考。
 
-| 属性 | 类型 | 用法 |
-| --- | --- | --- |
-| `aria-role` | string | 描述元素的交互角色，例如按钮使用 `button`；角色应与实际用途一致。 |
-| `aria-label` | string | 描述元素名称或操作目的，例如“提交订单”；为仅有图标、缺少可读文字的操作提供明确文案。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `aria-role` | string | — | 描述元素的交互角色，例如按钮使用 `button`；角色应与实际用途一致。 |
+| `aria-label` | string | — | 描述元素名称或操作目的，例如“提交订单”；为仅有图标、缺少可读文字的操作提供明确文案。 |
 
 ```html
 <view aria-role="button" aria-label="提交订单" bindtap="submitOrder">
@@ -156,13 +160,13 @@ RN 样式开发优先 [RN 样式实践](../rn/rn-style-practice.md)，明确查�
 
 ### 通用属性与事件
 
-| 属性 | 类型 | 用法 |
-| --- | --- | --- |
-| `id` | string | 节点标识；定位滚动目标、查询节点或关联控件时保持唯一且稳定。 |
-| `class` / `style` | string | 样式类与内联样式；动态值优先 `wx:class/wx:style`。 |
-| `hidden` | boolean | 默认 `false`；需要通用显隐时也可使用 `wx:show`，移除节点用 `wx:if`。 |
-| `data-*` | any | 事件 dataset 数据；业务参数优先使用事件内联传参。 |
-| `aria-role` / `aria-label` | string | 角色语义与读屏文案，见 [无障碍访问](#无障碍访问)。 |
+| 属性 | 类型 | 默认值 | 用途 |
+| --- | --- | --- | --- |
+| `id` | string | — | 节点标识；定位滚动目标、查询节点或关联控件时保持唯一且稳定。 |
+| `class` / `style` | string | — | 样式类与内联样式；动态值优先 `wx:class/wx:style`。 |
+| `hidden` | boolean | `false` | 需要通用显隐时也可使用 `wx:show`，移除节点用 `wx:if`。 |
+| `data-*` | any | — | 事件 dataset 数据；业务参数优先使用事件内联传参。 |
+| `aria-role` / `aria-label` | string | — | 角色语义与读屏文案，见 [无障碍访问](#无障碍访问)。 |
 
 布尔属性优先明确写为 `disabled="{{false}}"` / `scroll-y="{{true}}"`；只写属性名表示开启，字符串 `"false"` 不能代替布尔假值。数值、数组和对象使用 Mustache 传递，避免将复杂值写成普通字符串。
 
@@ -204,8 +208,8 @@ RN 样式开发优先 [RN 样式实践](../rn/rn-style-practice.md)，明确查�
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `scroll-x` / `scroll-y` | boolean | `false` | 开启横向/纵向滚动。 |
-| `upper-threshold` / `lower-threshold` | number|string | `50` | 距起点/终点的触发距离，单位 px；跨端优先传 number。 |
-| `scroll-top` / `scroll-left` | number|string | — | 设置滚动位置；跨端优先传 number。 |
+| `upper-threshold` / `lower-threshold` | number\|string | `50` | 距起点/终点的触发距离，单位 px；跨端优先传 number。 |
+| `scroll-top` / `scroll-left` | number\|string | — | 设置滚动位置；跨端优先传 number。 |
 | `scroll-into-view` | string | — | 子节点 id，不能以数字开头；与 key 是不同用途。 |
 | `scroll-into-view-offset` | number | `0` | 定位目标的额外偏移，支持范围按端核对。 |
 | `scroll-with-animation` | boolean | `false` | 程序设置位置时是否使用过渡。 |
@@ -252,7 +256,7 @@ RN 样式开发优先 [RN 样式实践](../rn/rn-style-practice.md)，明确查�
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `direction` | string | `none` | `all/vertical/horizontal/none`。 |
-| `x` / `y` | number|string | — | 偏移；跨端优先使用以 px 表示的 number。 |
+| `x` / `y` | number\|string | — | 偏移；跨端优先使用以 px 表示的 number。 |
 | `inertia` / `out-of-bounds` / `disabled` | boolean | `false` | 惯性、允许越界、禁用。 |
 | `animation` | boolean | `true` | 位移是否使用动画；区别于 view 的动画对象。 |
 | `damping` / `friction` | number | `20` / `2` | 动画阻尼与惯性摩擦；实际物理表现按端验证。 |
@@ -278,11 +282,11 @@ RN 样式开发优先 [RN 样式实践](../rn/rn-style-practice.md)，明确查�
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `percent` | number | — | 进度 0–100，建议明确提供。 |
-| `stroke-width` | number|string | `6` | 线宽，单位 px。 |
+| `stroke-width` | number\|string | `6` | 线宽，单位 px。 |
 | `activeColor` / `backgroundColor` | string | `#09BB07` / `#EBEBEB` | 已完成/未完成颜色；不再采用旧 `color`。 |
 | `active` / `active-mode` | boolean / string | `false` / `backwards` | 进度动画；`backwards` 从头播放，`forwards` 接续。 |
 | `duration` | number | `30` | 每增加 1% 的动画时长，单位 ms。 |
-| `show-info` / `border-radius` / `font-size` | boolean / number|string / number|string | `false` / `0` / `16` | 百分比文字、圆角和文字大小，支持范围按端核对。 |
+| `show-info` / `border-radius` / `font-size` | boolean / number\|string / number\|string | `false` / `0` / `16` | 百分比文字、圆角和文字大小，支持范围按端核对。 |
 
 动画完成触发 `activeend`；detail 的字段按端核对，不将端扩展字段视为微信保证。
 

@@ -17,11 +17,12 @@
       <view class="tab-bar">
         <view
           class="tab"
+          wx:class="{{ {'tab-active': activeTab === item.key} }}"
           wx:for="{{tabs}}"
           wx:key="key"
           bindtap="switchTab(item.key)"
         >
-          <text class="tab-text" wx:class="{{{'tab-active': activeTab === item.key}}}">{{item.label}}</text>
+          <text class="tab-text">{{item.label}}</text>
           <view wx:if="{{item.badge > 0}}" class="badge">
             <text class="badge-text">{{item.badge > 99 ? '99+' : item.badge}}</text>
           </view>
@@ -38,7 +39,7 @@
         >
           <view class="order-header">
             <text class="order-no">订单号: {{item.orderNo}}</text>
-            <text class="order-status" wx:style="{{{color: item.statusColor}}}">{{item.statusText}}</text>
+            <text class="order-status" wx:style="{{ {color: item.statusColor} }}">{{item.statusText}}</text>
           </view>
           <view class="order-goods">
             <image class="goods-img" src="{{item.goodsImg}}" mode="aspectFill"></image>
@@ -56,17 +57,17 @@
             <view class="order-actions">
               <view
                 wx:if="{{item.status === 'unpaid'}}"
+                key@ios="pay"
                 class="btn btn-primary"
                 hover-class="btn-primary-hover"
-                key@ios="pay"
                 catchtap="payOrder(item.id)"
               >
                 <text class="btn-text">去支付</text>
               </view>
               <view
                 wx:elif="{{item.status === 'shipped'}}"
-                class="btn btn-default"
                 key@ios="receive"
+                class="btn btn-default"
                 catchtap="confirmReceive(item.id)"
               >
                 <text class="btn-text btn-default-text">确认收货</text>
@@ -85,6 +86,7 @@
     </view>
   </scroll-view>
 </template>
+
 
 <script>
 import mpx, { createPage } from '@mpxjs/core'
@@ -109,11 +111,9 @@ const pageOptions = {
   },
   computed: {
     displayOrders () {
-      const colorMap = { unpaid: '#ff4d4f', shipped: '#1677ff', completed: '#52c41a' }
-      const textMap = { unpaid: '待付款', shipped: '已发货', completed: '已完成' }
       return this.orders.map((order) => Object.assign({}, order, {
-        statusColor: colorMap[order.status] || '#999',
-        statusText: textMap[order.status] || '未知'
+        statusColor: this.getStatusColor(order.status),
+        statusText: this.getStatusText(order.status)
       }))
     }
   },
@@ -126,37 +126,30 @@ const pageOptions = {
     this.refreshBadge()
   },
   methods: {
-    showError (title) {
-      mpx.showToast({ title, icon: 'none' }).catch(console.error)
-    },
     async loadUserInfo () {
       try {
-        const cachedInfo = await mpx.getStorage({ key: 'userInfo' })
-          .then((res) => res.data)
-          .catch(() => null)
+        const cachedInfo = await mpx.getStorage({ key: 'userInfo' }).then(res => res.data, () => null)
         if (cachedInfo) {
           this.userInfo = JSON.parse(cachedInfo)
-          return
-        }
-        if (__mpx_mode__ !== 'ios') {
+        } else if (__mpx_mode__ === 'wx') {
           const res = await mpx.getUserProfile({ desc: '用于展示用户信息' })
           this.userInfo = res.userInfo
           await mpx.setStorage({ key: 'userInfo', data: JSON.stringify(res.userInfo) })
-        } else {
-          // todo: iOS 不支持 getUserProfile，需接入宿主登录资料；已有缓存仍可展示。
         }
+        // todo: RN/Web 没有 getUserProfile，未命中缓存时需接入业务登录态或宿主用户资料能力。
       } catch (err) {
-        this.showError('获取信息失败')
+        console.warn('获取用户信息失败', err)
+        await mpx.showToast({ title: '获取信息失败', icon: 'none' })
       }
     },
     async getLocation () {
       try {
-        // todo: iOS 不处理 type 坐标转换，当前位置为原生坐标；使用 GCJ-02 前需接入转换。
+        // todo: RN 的 type 参数不执行坐标系转换；依赖 GCJ-02 时需接入宿主转换能力。
         const res = await mpx.getLocation({ type: 'gcj02' })
         this.locationInfo = { lat: res.latitude, lng: res.longitude }
         await mpx.setStorage({ key: 'lastLocation', data: JSON.stringify(this.locationInfo) })
       } catch (err) {
-        console.warn('获取或保存位置失败', err)
+        console.warn('获取位置失败', err)
       }
     },
     async logout () {
@@ -166,102 +159,118 @@ const pageOptions = {
           content: '确定要退出登录吗？'
         })
         if (res.confirm) {
-          await mpx.removeStorage({ key: 'userInfo' })
-          await mpx.removeStorage({ key: 'token' })
+          await Promise.all([
+            mpx.removeStorage({ key: 'userInfo' }),
+            mpx.removeStorage({ key: 'token' })
+          ])
           await mpx.reLaunch({ url: '/pages/login' })
         }
       } catch (err) {
-        this.showError('退出登录失败')
+        console.warn('退出登录失败', err)
       }
     },
     async refreshBadge () {
-      if (__mpx_mode__ === 'ios') {
-        // todo: iOS 无内置 TabBar badge API，需由宿主或自定义 TabBar 接入。
-        return
-      }
-      try {
-        const token = await mpx.getStorage({ key: 'token' })
-          .then((res) => res.data)
-          .catch(() => '')
-        const res = await mpx.request({
-          url: '/api/user/badge',
-          header: { Authorization: 'Bearer ' + token }
-        })
-        if (res.data.orderCount > 0) {
-          await mpx.setTabBarBadge({ index: 2, text: String(res.data.orderCount) })
-        } else {
-          await mpx.removeTabBarBadge({ index: 2 })
+      // todo: RN/Web 没有内置 tabBar 角标 API，需由业务自定义导航承接。
+      if (__mpx_mode__ === 'wx') {
+        try {
+          const token = await mpx.getStorage({ key: 'token' }).then(res => res.data, () => '')
+          const res = await mpx.request({
+            url: '/api/user/badge',
+            header: { Authorization: 'Bearer ' + token }
+          })
+          if (res.data.orderCount > 0) {
+            await mpx.setTabBarBadge({ index: 2, text: String(res.data.orderCount) })
+          } else {
+            await mpx.removeTabBarBadge({ index: 2 })
+          }
+        } catch (err) {
+          console.warn('更新角标失败', err)
         }
-      } catch (err) {
-        console.warn('刷新订单角标失败', err)
       }
     },
     refreshData () {},
+    getStatusColor (status) {
+      const map = { unpaid: '#ff4d4f', shipped: '#1677ff', completed: '#52c41a' }
+      return map[status] || '#999'
+    },
+    getStatusText (status) {
+      const map = { unpaid: '待付款', shipped: '已发货', completed: '已完成' }
+      return map[status] || '未知'
+    },
     switchTab (key) {
       this.activeTab = key
       this.fetchOrders()
     },
-    goOrderDetail (orderId) {
-      mpx.navigateTo({ url: '/pages/order-detail?id=' + orderId })
-        .catch(() => this.showError('打开订单失败'))
+    async goOrderDetail (id) {
+      try {
+        await mpx.navigateTo({ url: '/pages/order-detail?id=' + id })
+      } catch (err) {
+        console.warn('打开订单失败', err)
+      }
     },
-    async showActions (orderId, status) {
+    async showActions (id, status) {
       try {
         const res = await mpx.showActionSheet({
           itemList: status === 'unpaid' ? ['取消订单', '联系客服'] : ['联系客服']
         })
         if (res.tapIndex === 0 && status === 'unpaid') {
-          this.cancelOrder(orderId)
+          this.cancelOrder(id)
         }
       } catch (err) {
-        // 取消操作菜单时 API 会 reject，无需提示。
+        // 取消操作菜单也会进入失败分支。
+        console.warn('订单操作菜单已关闭或打开失败', err)
       }
     },
-    payOrder (orderId) {
-      mpx.navigateTo({ url: '/pages/pay?orderId=' + orderId })
-        .catch(() => this.showError('打开支付失败'))
+    async payOrder (id) {
+      try {
+        await mpx.navigateTo({ url: '/pages/pay?orderId=' + id })
+      } catch (err) {
+        console.warn('打开支付失败', err)
+      }
     },
-    async confirmReceive (orderId) {
+    async confirmReceive (id) {
       try {
         const res = await mpx.showModal({
           title: '确认收货',
           content: '确认已收到商品？'
         })
         if (res.confirm) {
-          this.doConfirmReceive(orderId)
+          this.doConfirmReceive(id)
         }
       } catch (err) {
-        this.showError('确认收货失败')
+        console.warn('确认收货失败', err)
       }
     },
     refreshOrders () {
-      if (this.refreshing) return
       this.refreshing = true
       this.fetchOrders()
     },
     async fetchOrders () {
       this.loading = true
+      const status = this.activeTab
       try {
         const res = await mpx.request({
           url: '/api/orders',
-          data: { status: this.activeTab }
+          data: { status }
         })
-        this.orders = res.data.list
+        if (status === this.activeTab) {
+          this.orders = res.data.list
+        }
       } catch (err) {
-        this.showError('加载订单失败')
+        console.warn('加载订单失败', err)
       } finally {
         this.loading = false
         this.refreshing = false
       }
     },
     loadMore () {},
-    cancelOrder (orderId) {},
-    doConfirmReceive (orderId) {}
+    cancelOrder (id) {},
+    doConfirmReceive (id) {}
   }
 }
 
-if (__mpx_mode__ !== 'ios') {
-  // todo: iOS 缺少分享桥接及宿主 Tab 点击通知，暂不注册这些生命周期。
+// todo: RN 无时间线分享、原生 tab 点击驱动或默认分享宿主桥接，仅保留微信原实现。
+if (__mpx_mode__ === 'wx') {
   Object.assign(pageOptions, {
     onShareTimeline () {
       return {
@@ -293,7 +302,6 @@ page {
 
 .page-scroll {
   height: 100%;
-  background: #f5f5f5;
 }
 
 .order-page {
@@ -311,22 +319,19 @@ page {
 }
 
 .tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   flex: 1;
   text-align: center;
   position: relative;
   padding: 12rpx 0;
 }
 
-.tab-text {
-  font-size: 28rpx;
-}
-
 .tab-active {
   color: #1677ff;
   font-weight: bold;
+}
+
+.tab-text {
+  font-size: 28rpx;
 }
 
 .badge {
@@ -374,7 +379,6 @@ page {
 .order-goods {
   display: flex;
   padding: 16rpx 0;
-  /* todo: RN 极细边框使用 hairlineWidth，其他平台保留 1rpx。 */
   /* @mpx-if (__mpx_mode__ === 'ios') */
   border-top: hairlineWidth solid #f0f0f0;
   border-bottom: hairlineWidth solid #f0f0f0;
@@ -457,12 +461,10 @@ page {
 
 .btn-default {
   background: #fff;
-  border-style: solid;
-  border-color: #ddd;
   /* @mpx-if (__mpx_mode__ === 'ios') */
-  border-width: hairlineWidth;
+  border: hairlineWidth solid #ddd;
   /* @mpx-else */
-  border-width: 1rpx;
+  border: 1rpx solid #ddd;
   /* @mpx-endif */
 }
 
@@ -476,9 +478,6 @@ page {
 }
 
 .loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
   padding: 40rpx;
 }
@@ -489,9 +488,6 @@ page {
 }
 
 .empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
   padding: 80rpx;
 }
@@ -504,10 +500,10 @@ page {
 .avatar { width: 80rpx; height: 80rpx; }
 </style>
 
-<script name="json">
-module.exports = {
-  usingComponents: {},
-  navigationBarTitleText: 'My Orders',
-  disableScroll: true
+<script type="application/json">
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "My Orders",
+  "disableScroll": true
 }
 </script>
