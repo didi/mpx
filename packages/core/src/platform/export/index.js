@@ -40,7 +40,9 @@ export {
 } from '../../observer/effectScope'
 
 export {
-  getCurrentInstance
+  getCurrentInstance,
+  onRenderTracked,
+  onRenderTriggered
 } from '../../core/proxy'
 
 export {

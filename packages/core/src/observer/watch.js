@@ -138,6 +138,10 @@ export function watch (source, cb, options = {}) {
   job.allowRecurse = !!cb
 
   const effect = new ReactiveEffect(getter, scheduler)
+  if (process.env.NODE_ENV !== 'production') {
+    effect.onTrack = options.onTrack
+    effect.onTrigger = options.onTrigger
+  }
 
   if (cb) {
     if (immediate) {

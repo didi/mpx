@@ -1,6 +1,7 @@
 import Dep, { pushTarget, popTarget } from './dep'
 import { recordEffectScope } from './effectScope'
 import { PausedState } from '../helper/const'
+import { callWithErrorHandling } from '@mpxjs/utils'
 
 let uid = 0
 
@@ -15,6 +16,10 @@ export function pauseTracking () {
 export function resetTracking () {
   const last = trackStack.pop()
   shouldTrack = last === undefined ? true : last
+}
+
+export function isTracking () {
+  return shouldTrack && !!Dep.target
 }
 
 export class ReactiveEffect {
@@ -54,7 +59,7 @@ export class ReactiveEffect {
 
   // add dependency to this
   addDep (dep) {
-    if (!shouldTrack) return
+    if (!shouldTrack) return false
     const id = dep.id
     if (!this.newDepIds.has(id)) {
       this.newDepIds.add(id)
@@ -62,6 +67,17 @@ export class ReactiveEffect {
       if (!this.depIds.has(id)) {
         dep.addSub(this)
       }
+    }
+    return true
+  }
+
+  invokeDebuggerHook (name, info) {
+    if (process.env.NODE_ENV === 'production' || !this[name]) return
+    pauseTracking()
+    try {
+      callWithErrorHandling(this[name], null, `reactivity ${name}`, [Object.assign({ effect: this }, info)])
+    } finally {
+      resetTracking()
     }
   }
 
