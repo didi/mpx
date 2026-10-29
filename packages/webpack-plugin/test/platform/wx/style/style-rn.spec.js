@@ -14,6 +14,22 @@ function getClassMap (options) {
 }
 
 describe('React Native style validation for CSS variables', () => {
+  test.each(['matrix(1,,0,1,0,0)', 'matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,null,0,0,1)'])('rejects invalid static %s before serialization', (transform) => {
+    const warn = jest.fn()
+    const result = getClassMap({
+      content: `.a { transform: ${transform} translateX(12px); }`,
+      filename: 'test.css',
+      mode: 'ios',
+      srcMode: 'wx',
+      ctorType: 'component',
+      warn,
+      error: jest.fn()
+    })
+    expect(result.a.transform).toEqual([{ translateX: '12' }])
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toContain('invalid matrix')
+  })
+
   const createConfig = (mode = 'ios') => ({
     mode,
     srcMode: 'wx',

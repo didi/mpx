@@ -716,7 +716,11 @@ module.exports = function getSpec ({ warn, error }) {
           }
           case 'matrix':
             {
-              const matrixValues = parseValues(val, ',').map(val => +val)
+              const matrixValues = parseValues(val, ',').map(val => val ? +val : NaN)
+              if (!matrixValues.every(Number.isFinite)) {
+                warn(`Value of [transform] in ${selector} contains an invalid matrix value [${val}], dropped.`)
+                break
+              }
               if (matrixValues.length === 6) {
                 const [a, b, c, d, tx, ty] = matrixValues
                 transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
@@ -728,7 +732,11 @@ module.exports = function getSpec ({ warn, error }) {
             }
           case 'matrix3d':
             {
-              const matrixValues = parseValues(val, ',').map(val => +val)
+              const matrixValues = parseValues(val, ',').map(val => val ? +val : NaN)
+              if (!matrixValues.every(Number.isFinite)) {
+                warn(`Value of [transform] in ${selector} contains an invalid matrix3d value [${val}], dropped.`)
+                break
+              }
               if (matrixValues.length === 16) {
                 transform.push({ matrix: matrixValues })
               } else {
