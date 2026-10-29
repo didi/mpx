@@ -5,6 +5,7 @@ import { act, create, ReactTestRenderer } from 'react-test-renderer'
 import { Image as RNImage } from 'react-native'
 import MpxView, { __parseBgImageForTest } from '../../../lib/runtime/components/react/mpx-view'
 import * as runtimeUtils from '../../../lib/runtime/components/react/utils'
+import { transformStyleObj } from './helpers'
 
 const mockGetSize = RNImage.getSize as jest.Mock
 
@@ -62,6 +63,38 @@ describe('MpxView background image size resolution', () => {
   beforeEach(() => mockGetSize.mockReset())
 
   afterEach(() => jest.restoreAllMocks())
+
+  test('supports a single inline background size after numeric unit conversion', () => {
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(renderView(transformStyleObj({
+        backgroundImage: 'linear-gradient(red, blue)',
+        backgroundSize: '100px'
+      })))
+    })
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toMatchObject({ width: 100, height: '100%' })
+    act(() => renderer!.unmount())
+  })
+
+  test('recovers invalid background dimensions and positions without forwarding NaN', () => {
+    const errorHandler = jest.spyOn((global as any).__mpx.config, 'errorHandler')
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(renderView({
+        backgroundImage: 'linear-gradient(red, blue)',
+        backgroundSize: [100, null],
+        backgroundPosition: ['left', NaN, 'top', 0],
+        borderWidth: 1,
+        borderRadius: undefined
+      }))
+    })
+    act(() => renderer!.root.findAllByType('View')[1].props.onLayout(layoutEvent(200, 100)))
+    expect(renderer!.root.findByType('LinearGradient').props.style).toMatchObject({ width: '100%', height: '100%' })
+    expect(renderer!.root.findAllByType('View')[1].props.style.borderRadius).toBeUndefined()
+    expect(errorHandler).toHaveBeenCalledTimes(2)
+    act(() => renderer!.unmount())
+  })
 
   test('rejects SVG urls including query/hash forms', () => {
     expect(__parseBgImageForTest('url(https://example.com/a.svg)')).toEqual({})

@@ -6,6 +6,7 @@ import { act, create, ReactTestRenderer } from 'react-test-renderer'
 jest.mock('react-native', () => ({
   StyleSheet: { hairlineWidth: 1 / 3, absoluteFillObject: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } },
   Image: Object.assign((props: any) => jest.requireActual('react').createElement('Image', props), { getSize: jest.fn(), resolveAssetSource: jest.fn() }),
+  processColor: (color: string) => jest.requireActual('@react-native/normalize-colors')(color),
   View: 'View'
 }))
 
@@ -55,6 +56,8 @@ const renderGradient = (backgroundSize?: Array<string | number>) => {
 }
 
 describe('mpx-view linear-gradient parser', () => {
+  afterEach(() => jest.restoreAllMocks())
+
   test('keeps non-deg angle units as explicit gradient direction', () => {
     expect(__parseBgImageForTest('linear-gradient(0.25turn, red, blue)').linearInfo.direction).toBe('0.25turn')
     expect(__parseBgImageForTest('linear-gradient(1.5707963267948966rad, red, blue)').linearInfo.direction).toBe('1.5707963267948966rad')
@@ -100,5 +103,28 @@ describe('mpx-view linear-gradient parser', () => {
     expect(gradient.props.style).toMatchObject({ width: '100%', height: '100%' })
     expect(gradient.props.angle).toBeCloseTo(26.565)
     act(() => renderer!.unmount())
+  })
+
+  test('reports invalid colors and never mounts the native gradient', () => {
+    const errorHandler = jest.spyOn((global as any).__mpx.config, 'errorHandler')
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(React.createElement(MpxView, {
+        style: { backgroundImage: 'linear-gradient(red, null)', backgroundSize: [100, 100] }
+      }))
+    })
+    expect(renderer!.root.findAllByType('LinearGradient')).toHaveLength(0)
+    expect(errorHandler).toHaveBeenCalledTimes(1)
+    expect(errorHandler).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid linear-gradient color'), undefined, expect.any(Error)
+    )
+    act(() => renderer!.unmount())
+  })
+
+  test('preserves color function whitespace and an explicit zero end location', () => {
+    expect(__parseBgImageForTest('linear-gradient(rgba(0,  0, 0, 0.5) 0%, transparent 0%)').linearInfo).toMatchObject({
+      colors: ['rgba(0,  0, 0, 0.5)', 'transparent'],
+      locations: [0, 0]
+    })
   })
 })

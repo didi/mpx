@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent, processColor } from 'react-native'
 import { useRef, useState, useEffect, useMemo, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, extendObject, getImageLoadSize, svgRegExp, useHover, useTextPassThrough, hiddenStyle, isAndroid } from './utils'
+import { parseUrl, parseValues, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, extendObject, getImageLoadSize, svgRegExp, useHover, useTextPassThrough, hiddenStyle, isAndroid } from './utils'
 import { TextPassThroughContextValue } from './context'
 import { error, warn, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
@@ -146,10 +146,6 @@ const gradientToRegExp = /^to\b\s*/
 // 入口形态：仅在含 linear-gradient 时走解析；提取括号内内容
 const linearGradientRegExp = /linear-gradient\((.*)\)/
 const svgBase64RegExp = /^data:image\/svg\+xml(?:;[^,;]+)*;base64,/i
-// 顶层逗号切分（忽略 () / # 内部的逗号）
-const topLevelCommaRegExp = /,(?![^(#]*\))/
-// 色标内空白切分（忽略色函数里的逗号边界）
-const stopWhitespaceRegExp = /(?<!,)\s+/
 // 色标位置仅支持 `<n>%` 或裸 `0`（CSS 允许 0 作为唯一无单位 length）
 // 其它单位（px/rpx/em/vw/...）当前无法在不依赖 layout 的情况下归一为百分比，统一拒绝
 const validStopPosRegExp = /^-?\d+(?:\.\d+)?%$|^0$/
@@ -432,8 +428,6 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
     return global.__formatValue(part) as PositionVal
   })
 
-  if (parts.length === 4) return parts as backgroundPositionList
-
   // 归一化
   if (parts.length === 1) {
     // 1. center
@@ -485,7 +479,14 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
     }
   }
 
-  return [hStart, hOffset, vStart, vOffset] as backgroundPositionList
+  const normalized = parts.length === 4 ? parts : [hStart, hOffset, vStart, vOffset]
+  if (parts.length > 4 ||
+    !((isHorizontal(normalized[0]) && isVertical(normalized[2])) || (isVertical(normalized[0]) && isHorizontal(normalized[2]))) ||
+    [normalized[1], normalized[3]].some(val => !(Number.isFinite(val) || (isPercent(val) && Number.isFinite(parseFloat(val)))))) {
+    error(`[mpx-view] Invalid background-position [${parts}], dropped.`)
+    return []
+  }
+  return normalized as backgroundPositionList
 }
 
 /**
@@ -528,7 +529,12 @@ function parseLinearGradient (text: string): LinearInfo | null | undefined {
   } else if (!angleRegExp.test(linearText)) {
     linearText = '180deg ,' + linearText
   }
-  const [direction, ...colorList] = linearText.split(topLevelCommaRegExp)
+  const [direction, ...colorList] = parseValues(linearText, ',')
+  if (angleRegExp.test(direction) && !Number.isFinite(normalizeAngle(direction))) {
+    error(`[mpx-view] Invalid linear-gradient direction [${direction}], dropped.`)
+    return null
+  }
+  let invalidColor = false
   // 记录需要填充起点的起始位置
   let startIdx = 0; let startVal = 0
   // 把 ['red, 10%', 'blue, 20%']解析为 [[red, 10%], [blue, 20%]]
@@ -536,7 +542,7 @@ function parseLinearGradient (text: string): LinearInfo | null | undefined {
   // 等价于 CSS Images Level 4 中 `red 0% 50%` ≡ `red 0%, red 50%`
   // 同步对不支持的写法做拦截：color hint（仅一个位置 token）、非百分比位置（px/rpx 等）
   const linearInfo = colorList
-    .map(item => item.trim().split(stopWhitespaceRegExp))
+    .map(item => parseValues(item))
     .reduce<string[][]>((acc, parts) => {
       // color hint: 例如 `linear-gradient(red, 30%, blue)` 中的 `30%`
       // 该 token 仅含一个位置值、无颜色；当前实现无法做颜色采样，直接丢弃
@@ -545,11 +551,16 @@ function parseLinearGradient (text: string): LinearInfo | null | undefined {
         return acc
       }
       const [color, ...positions] = parts
+      if (!color || processColor(color) == null) {
+        invalidColor = true
+        error(`[mpx-view] Invalid linear-gradient color [${color || ''}], dropped gradient: ${text}`)
+        return acc
+      }
       if (positions.length === 0) {
         acc.push([color])
       } else {
         for (const pos of positions) {
-          if (!validStopPosRegExp.test(pos)) {
+          if (!validStopPosRegExp.test(pos) || !Number.isFinite(parseFloat(pos))) {
             warn(`[mpx-view] linear-gradient 色标位置仅支持百分比 [${color} ${pos}] 已丢弃位置，仅保留颜色`)
             acc.push([color])
           } else {
@@ -566,9 +577,9 @@ function parseLinearGradient (text: string): LinearInfo | null | undefined {
 
       // 处理渐变默认值
       if (idx === 0) {
-        numberVal = numberVal || 0
+        numberVal = isNaN(numberVal) ? 0 : numberVal
       } else if (self.length - 1 === idx) {
-        numberVal = numberVal || 1
+        numberVal = isNaN(numberVal) ? 1 : numberVal
       }
 
       // 出现缺省值时进行填充
@@ -588,6 +599,8 @@ function parseLinearGradient (text: string): LinearInfo | null | undefined {
       return prev
     }, { colors: [], locations: [] })
 
+  if (invalidColor) return null
+
   // 色标全部被丢弃或不足以构成渐变（至少 2 个颜色），降级返回
   if (linearInfo.colors.length < 2) {
     error(`[mpx-view] linear-gradient 至少需要 2 个有效色标，已丢弃，原值: ${text}`)
@@ -606,6 +619,10 @@ function parseBgImage (text?: string): {
   src?: string
 } {
   if (!text || text === 'none') return {}
+  if (typeof text !== 'string') {
+    error(`[mpx-view] Invalid background-image [${text}], dropped.`)
+    return {}
+  }
 
   const src = parseUrl(text)
   if (src) {
@@ -633,23 +650,32 @@ function parseBgImage (text?: string): {
 export const __parseBgImageForTest = (text?: string): any => parseBgImage(text)
 
 function normalizeBackgroundSize (
-  backgroundSize: NonNullable<ExtendedViewStyle['backgroundSize']>,
+  backgroundSize: NonNullable<ExtendedViewStyle['backgroundSize']> | string | number,
   type: 'image' | 'linear' | undefined
 ): DimensionValue[] {
-  const sizeList = backgroundSize.slice()
+  const sizeList = Array.isArray(backgroundSize) ? backgroundSize.slice() : typeof backgroundSize === 'string' ? parseValues(backgroundSize) : [backgroundSize]
   if (sizeList.length === 1) sizeList.push('auto')
 
-  return sizeList.map((val) => {
+  const formatted = sizeList.map((val) => {
     if (typeof val !== 'string') return val
 
     // 处理当使用渐变的时候，background-size出现cover, contain, auto，当作100%处理
-    if (type === 'linear' && /^cover|contain|auto$/.test(val)) {
+    if (type === 'linear' && /^(cover|contain|auto)$/.test(val)) {
       val = '100%'
     }
 
     // 模板 style 属性传入时， 需要额外转换处理单位 px/rpx/vh
     return global.__formatValue(val) as DimensionValue
   })
+  if (formatted.length !== 2 || formatted.some((val, index) => !(
+    (typeof val === 'number' && Number.isFinite(val) && val >= 0) ||
+    (isPercent(val) && Number.isFinite(parseFloat(val)) && parseFloat(val) >= 0) ||
+    val === 'auto' || (index === 0 && (val === 'cover' || val === 'contain'))
+  ))) {
+    error(`[mpx-view] Invalid background-size [${backgroundSize}], using auto.`)
+    return type === 'linear' ? ['100%', '100%'] : ['auto', 'auto']
+  }
+  return formatted
 }
 
 function getInnerBorderRadiusStyle (innerStyle: ExtendedViewStyle = {}) {
@@ -659,6 +685,7 @@ function getInnerBorderRadiusStyle (innerStyle: ExtendedViewStyle = {}) {
   borderRadiusKeys.forEach((key) => {
     if (key in innerStyle) {
       const val = innerStyle[key]
+      if (val == null) return
       if (borderWidth && !isPercent(val)) {
         result[key] = Math.max(+val - borderWidth, 0)
       } else {

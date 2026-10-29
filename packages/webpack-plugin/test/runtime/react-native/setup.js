@@ -45,5 +45,6 @@ jest.mock('react-native', () => ({
     absoluteFillObject: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }
   },
   Image: mockRNImage,
+  processColor: color => jest.requireActual('@react-native/normalize-colors')(color),
   View: 'View'
 }))
