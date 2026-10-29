@@ -1,11 +1,33 @@
 import { View, ViewProps, TextStyle } from 'react-native'
 import { createElement } from 'react'
-import { splitProps, splitStyle, wrapChildren, extendObject, useTextPassThrough, transformBoxSizing, isBoxSizingAffectingStyle } from './utils'
+import { splitProps, splitStyle, wrapChildren, extendObject, useTextPassThrough, transformBoxSizing, isBoxSizingAffectingStyle, validateStyleValue } from './utils'
 import useInnerProps from './getInnerListeners'
 import * as perf from '@mpxjs/perf'
 
 interface SimpleViewProps extends ViewProps {
   'enable-text-pass-through'?: boolean
+}
+
+function filterStyleArray (styles: any[]): any[] {
+  let filtered: any[] | undefined
+  styles.forEach((style, index) => {
+    let nextStyle = style
+    if (Array.isArray(style)) {
+      nextStyle = filterStyleArray(style)
+    } else if (style && typeof style === 'object') {
+      Object.keys(style).forEach((key) => {
+        if (!validateStyleValue(key, style[key])) {
+          if (nextStyle === style) nextStyle = extendObject({}, style)
+          delete nextStyle[key]
+        }
+      })
+    }
+    if (nextStyle !== style) {
+      filtered = filtered || styles.slice()
+      filtered[index] = nextStyle
+    }
+  })
+  return filtered || styles
 }
 
 const SimpleView = (simpleViewProps: SimpleViewProps): JSX.Element => {
@@ -19,11 +41,13 @@ const SimpleView = (simpleViewProps: SimpleViewProps): JSX.Element => {
   const enableTextPassThrough = props['enable-text-pass-through']
 
   let hasBoxSizingAffectingStyle = false
-  const { textStyle, innerStyle = {} } = splitStyle(props.style || {}, (key) => {
-    if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
-      hasBoxSizingAffectingStyle = true
-    }
-  })
+  const { textStyle, innerStyle = {} } = Array.isArray(props.style)
+    ? { textStyle: undefined, innerStyle: filterStyleArray(props.style) }
+    : splitStyle(props.style || {}, (key) => {
+      if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
+        hasBoxSizingAffectingStyle = true
+      }
+    }, validateStyleValue)
   const textPassThrough = useTextPassThrough(textStyle as TextStyle, textProps, { enableTextPassThrough })
 
   let styleObj: Record<string, any> = innerStyle

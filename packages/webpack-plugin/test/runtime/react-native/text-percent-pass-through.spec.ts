@@ -66,6 +66,8 @@ import MpxText from '../../../lib/runtime/components/react/mpx-text'
 // eslint-disable-next-line import/first
 import MpxSimpleText from '../../../lib/runtime/components/react/mpx-simple-text'
 // eslint-disable-next-line import/first
+import MpxSimpleView from '../../../lib/runtime/components/react/mpx-simple-view'
+// eslint-disable-next-line import/first
 import MpxInlineText from '../../../lib/runtime/components/react/mpx-inline-text'
 
 const mockedUseContext = useContext as jest.Mock
@@ -330,5 +332,51 @@ describe('text percent pass-through', () => {
       lineHeight: 30
     })
     expect(result.props.numberOfLines).toBe(1)
+  })
+})
+
+describe('mpx-simple-view native style arrays', () => {
+  beforeEach(() => {
+    mockTextContext = null
+  })
+
+  test('preserves valid nested arrays and transform references', () => {
+    const transform = [{ translateX: 0 }, { rotate: '45deg' }]
+    const nested = Object.freeze([null, false, undefined, Object.freeze({ transform, padding: 8 })])
+    const style = Object.freeze([{ width: 100 }, nested, { width: 200 }])
+
+    const result = (MpxSimpleView as any)({ style })
+
+    expect(result.props.style).toBe(style)
+    expect(result.props.style[1][3].transform).toBe(transform)
+  })
+
+  test('removes invalid declarations without mutating input or changing array order', () => {
+    const valid = Object.freeze({ width: 100 })
+    const invalid = Object.freeze({ width: NaN, height: 50, marginTop: 0 })
+    const invalidShadow = Object.freeze({ shadowOffset: { width: Infinity, height: 1 }, opacity: 1 })
+    const invalidTransform = Object.freeze({ transform: [{ scale: NaN }], width: null, height: undefined })
+    const nested = Object.freeze([false, invalidShadow, invalidTransform, valid])
+    const style = Object.freeze([valid, invalid, nested, valid])
+    const errorHandler = jest.spyOn(mockGlobal.__mpx.config, 'errorHandler')
+
+    const result = (MpxSimpleView as any)({ style })
+
+    expect(result.props.style).toEqual([
+      valid,
+      { height: 50, marginTop: 0 },
+      [false, { opacity: 1 }, { width: null, height: undefined }, valid],
+      valid
+    ])
+    expect(result.props.style).not.toBe(style)
+    expect(result.props.style[2]).not.toBe(nested)
+    expect(result.props.style[0]).toBe(valid)
+    expect(result.props.style[2][3]).toBe(valid)
+    expect(result.props.style[3]).toBe(valid)
+    expect(invalid.width).toBeNaN()
+    expect(invalidShadow.shadowOffset.width).toBe(Infinity)
+    expect(invalidTransform.transform[0].scale).toBeNaN()
+    expect(errorHandler).toHaveBeenCalledTimes(3)
+    errorHandler.mockRestore()
   })
 })

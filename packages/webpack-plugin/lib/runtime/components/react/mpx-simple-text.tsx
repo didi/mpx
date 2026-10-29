@@ -1,7 +1,7 @@
 import { Text, TextStyle, TextProps } from 'react-native'
 import { JSX, createElement, useContext, useRef } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject, getDefaultAllowFontScaling, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle, resolveTextFontSizePercentStyle, resolveTextLineHeightPercentStyle } from './utils'
+import { extendObject, getDefaultAllowFontScaling, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle, resolveTextFontSizePercentStyle, resolveTextLineHeightPercentStyle, validateStyleValue } from './utils'
 import * as perf from '@mpxjs/perf'
 import { diffAndCloneA } from '@mpxjs/utils'
 import { TextPassThroughContext, TextPassThroughContextValue } from './context'
@@ -14,11 +14,11 @@ const SimpleText = (props: TextProps): JSX.Element => {
   let idStyle = -1
   if (__mpx_perf_framework__) idStyle = perf.scopeStart('simple-text:render:style')
   let hasBoxSizingAffectingStyle = false
-  const { textStyle } = splitStyle(props.style as TextStyle | undefined, (key) => {
+  const { textStyle, innerStyle, backgroundStyle } = splitStyle(props.style as TextStyle | undefined, (key) => {
     if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
       hasBoxSizingAffectingStyle = true
     }
-  })
+  }, validateStyleValue)
   const inheritedText = useContext(TextPassThroughContext)
   const resolvedTextStyle = resolveTextFontSizePercentStyle(textStyle, inheritedText?.textStyle)
   // textStyle 仅在子节点非纯字符串时才需要透传给子级；按需计算 isStringChildren
@@ -41,7 +41,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
     ? extendObject({}, inheritedText.pendingTextProps, props)
     : props
   const mergedStyle = inheritedText?.textStyle || props.style
-    ? extendObject({}, inheritedText?.textStyle, props.style, resolvedTextStyle) as TextStyle
+    ? extendObject({}, inheritedText?.textStyle, innerStyle, backgroundStyle, resolvedTextStyle) as TextStyle
     : undefined
   if (mergedStyle) {
     resolveTextLineHeightPercentStyle(mergedStyle, inheritedText?.textStyle)

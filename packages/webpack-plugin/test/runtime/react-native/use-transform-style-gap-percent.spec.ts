@@ -48,6 +48,10 @@ const run = (style: Record<string, any>, parent: { parentWidth?: number, parentH
 }
 
 describe('useTransformStyle gap percent resolution', () => {
+  test('does not forward a non-finite percentage base to RN', () => {
+    expect(run({ rowGap: '50%', columnGap: '50%' }, { parentWidth: Infinity, parentHeight: NaN })).toEqual({ rowGap: undefined, columnGap: undefined })
+  })
+
   describe('long-form rowGap / columnGap percent', () => {
     test('rowGap percent resolves against parentHeight', () => {
       expect(run({ rowGap: '50%' })).toEqual({ rowGap: 200 })

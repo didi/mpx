@@ -14,7 +14,17 @@ jest.mock('react-native-safe-area-context', () => ({
 }))
 
 // eslint-disable-next-line import/first
-import { splitProps, splitStyle } from '../../../lib/runtime/components/react/utils'
+import { parseValues, splitProps, splitStyle } from '../../../lib/runtime/components/react/utils'
+
+test('parseValues splits whitespace outside parentheses and preserves empty comma values', () => {
+  expect(parseValues(' \ttranslateX(12px)\nrotate( 45deg )\r\fscale(1) ')).toEqual([
+    'translateX(12px)', 'rotate( 45deg )', 'scale(1)'
+  ])
+  expect(parseValues('rgba(0,  0,\t0, 0.5) 0%\ttransparent 0%')).toEqual([
+    'rgba(0,  0,\t0, 0.5)', '0%', 'transparent', '0%'
+  ])
+  expect(parseValues('1,,0,1,0,0', ',')).toEqual(['1', '', '0', '1', '0', '0'])
+})
 
 describe('runtime splitStyle', () => {
   test('reuses the original style object when no text/background style exists', () => {

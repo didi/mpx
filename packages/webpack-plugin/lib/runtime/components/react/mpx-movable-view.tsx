@@ -23,7 +23,7 @@ import { StyleSheet, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, hiddenStyle, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback, useTextPassThrough } from './utils'
+import { useTransformStyle, splitProps, splitStyle, hiddenStyle, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback, useTextPassThrough, resolveNumericValue } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -220,8 +220,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   propsRef.current = (props || {}) as MovableViewProps
 
   const {
-    x = 0,
-    y = 0,
+    x: xValue = 0,
+    y: yValue = 0,
     inertia = false,
     disabled = false,
     animation = true,
@@ -251,6 +251,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     bindchange,
     workletChange
   } = props
+  const x = resolveNumericValue(xValue, '[mpx-movable-view] x')
+  const y = resolveNumericValue(yValue, '[mpx-movable-view] y')
   const hasBindChange = !!bindchange
 
   const {
@@ -391,7 +393,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   useEffect(() => {
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
-        const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
+        const { x: newX, y: newY } = checkBoundaryPosition({ positionX: x, positionY: y })
         changeSource.value = ''
         if (direction === 'horizontal' || direction === 'all') {
           offsetX.value = animation

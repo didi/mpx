@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS
 import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture, useRunOnJSCallback, useTextPassThrough } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture, useRunOnJSCallback, useTextPassThrough, resolveNumericValue } from './utils'
 import { SwiperContext } from './context'
 import Portal from './mpx-portal'
 /**
@@ -196,8 +196,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
-  const preMargin = props['previous-margin'] ? global.__formatValue(props['previous-margin']) as number : 0
-  const nextMargin = props['next-margin'] ? global.__formatValue(props['next-margin']) as number : 0
+  const preMargin = props['previous-margin'] ? resolveNumericValue(global.__formatValue(props['previous-margin']), '[mpx-swiper] previous-margin') : 0
+  const nextMargin = props['next-margin'] ? resolveNumericValue(global.__formatValue(props['next-margin']), '[mpx-swiper] next-margin') : 0
   const preMarginShared = useSharedValue(preMargin)
   const nextMarginShared = useSharedValue(nextMargin)
   const autoplayShared = useSharedValue(autoplay)
@@ -213,7 +213,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const initHeight = typeof normalStyle?.height === 'number' ? normalStyle.height - preMargin - nextMargin : normalStyle.height
   const dir = horizontal === false ? 'y' : 'x'
   const pstep = dir === 'x' ? initWidth : initHeight
-  const initStep: number = isNaN(pstep) ? 0 : pstep
+  const initStep: number = Number.isFinite(pstep) ? pstep : 0
   // 每个元素的宽度 or 高度，有固定值直接初始化无则0
   const step = useSharedValue(initStep)
   // 记录选中元素的索引值

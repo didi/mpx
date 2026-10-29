@@ -315,9 +315,8 @@ describe('runtime transformShorthand', () => {
     })
 
     test('percent without parent dims is left as-is (resolvePercent base 缺失 → 原样返回)', () => {
-      // 生产链路 useTransformStyle 总会注入 percentConfig（含 parentWidth / parentHeight），
-      // 这里覆盖 base 缺失（parentWidth / parentHeight 为 undefined）时 resolvePercent 的兜底分支：
-      // error 提示后原样返回字符串，避免错误数值。生产链路不会进这条分支。
+      // 生产链路会注入 percentConfig，但未传 parent-width / parent-height 时基准仍可能为 undefined。
+      // 基准缺失时保留原值并上报，沿用既有降级行为。
       expect(run({ gap: '50%' }, ['gap'])).toEqual({ rowGap: '50%', columnGap: '50%' })
     })
   })

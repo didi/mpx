@@ -467,6 +467,8 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 - **渐变位置百分比**：颜色停靠点仅支持百分比单位（如 `red 10%`），不支持 `px` 等长度单位。
 - **渐变方向**：支持角度值（如 `45deg`）和 `to` 关键字方向（如 `to right`），未指定方向时默认 `180deg`（从上到下）。
 
+**非法值降级与错误采集：** `transform` 字符串及数组仅检查基础入口和数值有效性：非有限数值、无法解析出数值的标量和含非法元素的数值数组（含矩阵）会使对应子项被过滤，其余子项保留原顺序；运行时沿用既有字符串解析，不重复校验属性白名单、单位格式或数组长度，通过数值检查不代表写法受 RN 支持。`transform` 的 `null` / `undefined` 保留清除语义，`none` 转为空数组；静态非法矩阵在构建时输出 warning。新增运行时非法值校验通过框架 `error()` 上报，可配置 `mpx.config.errorHandler` 采集；原有 transform 格式和矩阵参数数量提示保留 `warn` 级别，不主动触发 App 的 `onError`。普通样式属性的 `null` / `undefined` 保留清除语义；非法数值字符串仅针对尺寸、间距等数值属性过滤，字体名等自由文本保持原值；CSS 变量值为 `null` / `undefined` 或在当前解析链中循环引用时使用 `var()` fallback，无法解析则丢弃声明；数值样式、百分比及 `calc()` 不向原生层传递无效计算结果。`movable-view` 非法坐标、`swiper` 非法前后边距按 `0` 处理。`shadowOffset` / `textShadowOffset` 的宽高含非法数值时整体丢弃；`is-simple` 的 `view` / `text` 也进行轻量数值校验，原生 `transform` 数组包含非法子项时丢弃整项 `transform`，合法数组保留原引用。simple-view 的原生 `style` 数组及嵌套数组逐项校验，只移除非法声明；合法数组和未修改对象保留原引用及层叠顺序。
+
 **自动检测与 enable-background：** 框架会自动检测样式中的背景相关属性（如 `background-image`、`background-size` 等）。如果样式中一开始不存在背景定义，但后续需要动态添加（如通过 `wx:style`），建议使用 `enable-background` 属性预先声明，以确保运行时正确处理背景。
 
 ```html

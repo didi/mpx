@@ -54,6 +54,8 @@ const lengthValueRegExp = /^(-?(?:\d+(?:\.\d+)?|\.\d+)(?:rpx|px|%|vw|vh)?|hairli
 const DEFAULT_FONT_SIZE = 16
 // transform: 'rotateX(45deg) ...' 单段拆出 fn 名与括号内值
 const transformFnRegExp = /([/\w]+)\((.+)\)/
+const invalidNumericValueRegExp = /^(null|undefined|NaN|[-+]?Infinity)(rpx|px|vw|vh|%)?$/
+const numericStylePropRegExp = /^(width|height|top|right|bottom|left|start|end|inset|margin.*|padding.*|opacity|elevation|aspectRatio|fontWeight|flex(Grow|Shrink|Basis)?|gap|.*(Width|Height|Radius|Spacing|Size|Gap|Offset|Opacity|Index))$/
 // boxShadow 子值识别 rpx 单位（仅 rpx 需要换算为 px，其它单位保留原样）
 const rpxSuffixRegExp = /\d+rpx$/
 // font-family / font 简写解析时统一去掉单/双引号
@@ -308,6 +310,13 @@ export interface GestureHandler {
 // generic utility functions
 // ============================================================
 
+export function resolveNumericValue (value: unknown, name: string, fallback = 0): number {
+  const number = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN
+  if (Number.isFinite(number)) return number
+  error(`Invalid numeric value [${value}] for [${name}], using ${fallback}.`)
+  return fallback
+}
+
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
   const shallowCopy: any = extendObject({}, obj)
   for (let i = 0; i < fields.length; i += 1) {
@@ -362,11 +371,13 @@ export function parseValues (str: string, char = ' ') {
       stack--
     }
     // 非括号内 或者 非分隔字符且非空
-    if (stack !== 0 || str[i] !== char) {
+    const delimiter = stack === 0 && (str[i] === char || (char === ' ' && str[i] >= '\t' && str[i] <= '\r'))
+    if (!delimiter) {
       temp += str[i]
     }
-    if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp.trim())
+    if (delimiter || i === str.length - 1) {
+      temp = temp.trim()
+      if (char !== ' ' || temp) result.push(temp)
       temp = ''
     }
   }
@@ -422,7 +433,25 @@ export function transformBoxSizing (style: Record<string, any> = {}) {
   }
 }
 
-export function splitStyle<T extends Record<string, any>> (styleObj: T = {} as T, sideEffect?: (key: string, val: T[keyof T]) => void): {
+function isInvalidNumericStyleValue (key: string, value: any) {
+  return (typeof value === 'number' && !Number.isFinite(value)) ||
+    (typeof value === 'string' && invalidNumericValueRegExp.test(value.trim()) && numericStylePropRegExp.test(key))
+}
+
+export function validateStyleValue (key: string, value: any) {
+  if (key === 'transform' && Array.isArray(value)) {
+    return value.findIndex(item => !validateTransformItem(item)) === -1
+  }
+  if (isInvalidNumericStyleValue(key, value) ||
+    ((key === 'shadowOffset' || key === 'textShadowOffset') && value &&
+      (isInvalidNumericStyleValue('width', value.width) || isInvalidNumericStyleValue('height', value.height)))) {
+    error(`Invalid style value [${value}] for [${key}], dropped.`)
+    return false
+  }
+  return true
+}
+
+export function splitStyle<T extends Record<string, any>> (styleObj: T = {} as T, sideEffect?: (key: string, val: T[keyof T]) => void, filter?: (key: string, val: T[keyof T]) => boolean): {
   textStyle?: Partial<T>
   backgroundStyle?: Partial<T>
   innerStyle?: Partial<T>
@@ -436,6 +465,11 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T = {} as T
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i]
     const val = styleObj[key]
+    if (filter && !filter(key, val)) {
+      // 被过滤项也作为分界，避免无文本/背景属性时透传原对象。
+      if (firstSpecialIdx < 0) firstSpecialIdx = i
+      continue
+    }
     sideEffect && sideEffect(key, val)
 
     if (isTextStyle(key)) {
@@ -503,7 +537,7 @@ export function splitProps<T extends Record<string, any>> (props: T = {} as T): 
 
 // --- var ---
 
-function resolveVar (input: string, varContext: Record<string, any>) {
+function resolveVar (input: string, varContext: Record<string, any>, resolving = new Set<string>(), invalid = new Set<string>()) {
   const parsed = parseFunc(input, 'var')
   const replaced = new ReplaceSource(input)
 
@@ -513,15 +547,30 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     // - parseFunc 会按逗号分割 args，因此这里把 args[1..] 重新 join 回 fallback
     const varName = args[0]
     const fallback: string | undefined = args.length > 1 ? args.slice(1).join(',').trim() : undefined
+    if (resolving.has(varName)) {
+      let inCycle = false
+      resolving.forEach((name) => {
+        if (name === varName) inCycle = true
+        if (inCycle) invalid.add(name)
+      })
+      return
+    }
 
     // 先处理 varValue
-    let varValue = hasOwn(varContext, varName) ? varContext[varName] : undefined
+    let varValue = !invalid.has(varName) && hasOwn(varContext, varName) ? varContext[varName] ?? undefined : undefined
     if (varValue !== undefined) {
-      varValue = varUseRegExp.test(varValue) ? resolveVar(varValue, varContext) : global.__formatValue(varValue)
+      if (varUseRegExp.test(varValue)) {
+        resolving.add(varName)
+        varValue = resolveVar(varValue, varContext, resolving, invalid)
+        resolving.delete(varName)
+        if (invalid.has(varName)) varValue = undefined
+      } else {
+        varValue = global.__formatValue(varValue)
+      }
     }
     // 再处理 fallback
     if (varValue === undefined && fallback !== undefined) {
-      varValue = varUseRegExp.test(fallback) ? resolveVar(fallback, varContext) : global.__formatValue(fallback)
+      varValue = varUseRegExp.test(fallback) ? resolveVar(fallback, varContext, resolving, invalid) : global.__formatValue(fallback)
     }
     if (varValue === undefined) return
     replaced.replace(start, end - 1, varValue)
@@ -591,7 +640,10 @@ function resolvePercent (value: string | number | undefined, key: string, percen
     error(`[${key}] can not contain % unit unless you set [${reason}] with a number for the percent calculation.`)
     return value
   } else {
-    return parseFloat(value) / 100 * base
+    const resolved = parseFloat(value) / 100 * base
+    if (Number.isFinite(resolved)) return resolved
+    error(`Invalid percentage value [${value}] for [${key}], dropped.`)
+    return undefined
   }
 }
 
@@ -610,18 +662,22 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
     setStyle(styleObj, calcKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'calc')
       const replaced = new ReplaceSource(value)
+      let invalid = false
       parsed.forEach(({ start, end, args }) => {
         const exp = args[0]
         try {
           const result = new ExpressionParser(exp, (value) => {
             return formatter(value, key)
           }).parse()
+          if (!Number.isFinite(result.value)) throw new Error('calc() must resolve to a finite number')
           replaced.replace(start, end - 1, '' + result.value)
         } catch (e) {
-          error(`calc(${exp}) parse error.`, undefined, e)
+          invalid = true
+          error(`calc(${exp}) parse error: ${e.message}, dropped.`, undefined, e)
         }
       })
-      target[key] = global.__formatValue(replaced.source())
+      if (invalid) delete target[key]
+      else target[key] = global.__formatValue(replaced.source())
     })
   })
 }
@@ -657,7 +713,7 @@ function parseTransform (transformStr: string) {
       return
     }
     let key = match[1]
-    const val = match[2]
+    const val = match[2].trim()
     switch (key) {
       case 'rotateX':
       case 'rotateY':
@@ -677,7 +733,7 @@ function parseTransform (transformStr: string) {
         break
       case 'matrix': {
         // parseValues 内部已 trim
-        const matrixValues = parseValues(val, ',').map(v => +v)
+        const matrixValues = parseValues(val, ',').map(v => v ? +v : NaN)
         if (matrixValues.length === 6) {
           const [a, b, c, d, tx, ty] = matrixValues
           transform.push({ matrix: [a, b, 0, 0, c, d, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1] })
@@ -688,7 +744,7 @@ function parseTransform (transformStr: string) {
       }
       case 'matrix3d': {
         // parseValues 内部已 trim
-        const matrixValues = parseValues(val, ',').map(v => +v)
+        const matrixValues = parseValues(val, ',').map(v => v ? +v : NaN)
         if (matrixValues.length === 16) {
           transform.push({ matrix: matrixValues })
         } else {
@@ -749,10 +805,39 @@ function parseTransform (transformStr: string) {
   return transform
 }
 
+function validateTransformItem (item: Record<string, any>) {
+  // 仅拦截非法数值，属性名、单位与数组长度交给原有解析流程及 RN 处理。
+  let valid = false
+  if (item && typeof item === 'object' && !Array.isArray(item)) {
+    for (const key in item) {
+      if (!hasOwn(item, key)) continue
+      const value = item[key]
+      valid = typeof value === 'number'
+        ? Number.isFinite(value)
+        : typeof value === 'string'
+          ? Number.isFinite(parseFloat(value))
+          : Array.isArray(value) && !value.includes(undefined) && value.every(Number.isFinite)
+      if (!valid) break
+    }
+  }
+  if (!valid) error(`Invalid transform item [${JSON.stringify(item)}], dropped.`)
+  return valid
+}
+
 // format style transform
 function transformTransform (style: Record<string, any>) {
-  if (!style.transform || Array.isArray(style.transform)) return
-  style.transform = parseTransform(style.transform)
+  if (style.transform == null) return
+  if (style.transform === 'none') {
+    style.transform = []
+    return
+  }
+  if (typeof style.transform === 'string') style.transform = parseTransform(style.transform)
+  if (!Array.isArray(style.transform)) {
+    error(`Invalid transform value [${style.transform}], dropped.`)
+    delete style.transform
+    return
+  }
+  style.transform = style.transform.filter(validateTransformItem)
 }
 
 function transformBoxShadow (styleObj: Record<string, any>) {
@@ -1419,6 +1504,10 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformBorderStyleNone(normalStyle)
   // transform position: fixed
   const hasPositionFixed = transformPosition(normalStyle)
+  // transform 已在专用流程中校验，避免重复扫描数组。
+  Object.keys(normalStyle).forEach((key) => {
+    if (key !== 'transform' && !validateStyleValue(key, normalStyle[key])) delete normalStyle[key]
+  })
   // 合并组件默认样式：默认样式在 user transform 之后兜底写入，需完全符合 RN style 规范
   // 命中 user 已存在 key（含简写展开后的长属性）则跳过。
   // 复用同一次循环顺带补 hasBoxSizingAffectingStyle，避免独立扫一遍 default。
@@ -1455,9 +1544,9 @@ export function useNavigation (): Record<string, any> | undefined {
 
 function getTextPercentBase (currentFontSize?: string | number, parentTextStyle?: TextStyle) {
   return typeof currentFontSize === 'number'
-    ? currentFontSize
+    ? resolveNumericValue(currentFontSize, 'fontSize', DEFAULT_FONT_SIZE)
     : typeof parentTextStyle?.fontSize === 'number'
-      ? parentTextStyle.fontSize
+      ? resolveNumericValue(parentTextStyle.fontSize, 'fontSize', DEFAULT_FONT_SIZE)
       : DEFAULT_FONT_SIZE
 }
 
@@ -1469,7 +1558,7 @@ export function resolveTextFontSizePercentStyle<T extends TextStyle | undefined>
 
   if (typeof textStyle.fontSize === 'string' && percentRegExp.test(textStyle.fontSize)) {
     const base = getTextPercentBase(undefined, parentTextStyle)
-    textStyle.fontSize = parseFloat(textStyle.fontSize) / 100 * base
+    textStyle.fontSize = resolveNumericValue(parseFloat(textStyle.fontSize) / 100 * base, 'fontSize', DEFAULT_FONT_SIZE)
   }
 
   return textStyle
@@ -1483,7 +1572,7 @@ export function resolveTextLineHeightPercentStyle<T extends TextStyle | undefine
 
   if (typeof textStyle.lineHeight === 'string' && percentRegExp.test(textStyle.lineHeight)) {
     const base = getTextPercentBase(textStyle.fontSize, parentTextStyle)
-    textStyle.lineHeight = parseFloat(textStyle.lineHeight) / 100 * base
+    textStyle.lineHeight = resolveNumericValue(parseFloat(textStyle.lineHeight) / 100 * base, 'lineHeight')
   }
 
   return textStyle

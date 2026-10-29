@@ -41,6 +41,29 @@ Mpx 框架在样式处理方面的工作分为两大类：
 - ✅ 单位的计算和处理
 - ✅ 100% 计算
 - ✅ CSS 函数处理：`env()`、`calc()`、`var()`
+
+### 非法样式值的降级与上报 {#invalid-style-values}
+
+RN 输出会在传入原生组件前处理以下非法输入：
+
+- `transform` 的字符串及数组写法均检查数值有效性；非有限数值、无法解析出数值的标量和包含非法元素的数值数组（含矩阵）会使对应子项被丢弃，其余子项保留原顺序。运行时沿用既有字符串解析，不重复校验属性白名单、单位格式或数组长度；通过数值检查不代表写法受 RN 支持。`null` / `undefined` 保留清除语义，`none` 转为空数组。静态矩阵中的非法值在构建时输出 warning 并丢弃该子项。
+- 运行时数值中的 `NaN` / `Infinity`、无效百分比计算和无法得到有限数的 `calc()` 不会继续传入原生布局；`movable-view` 非法坐标及 `swiper` 非法前后边距使用 `0`。
+- `shadowOffset` / `textShadowOffset` 的宽高包含非法数值时，丢弃整项偏移。`is-simple` 的 `view` / `text` 同样会过滤非法数值；原生 `transform` 数组包含非法子项时丢弃整项 `transform`，合法数组保留原引用，并保留 simple 组件的轻量处理路径。
+- simple-view 的原生 `style` 数组及嵌套数组会逐项校验，仅移除非法声明；合法数组和未修改的样式对象保留原引用，数组层叠顺序保持不变。
+- CSS 变量在当前解析链中循环引用时视为失效，使用消费处的 `var()` fallback；无法解析时丢弃对应样式声明。
+
+新增的运行时非法值校验通过框架的 `error()` 上报，可配置 `mpx.config.errorHandler` 统一采集；原有的 transform 格式和矩阵参数数量提示保留 `warn` 级别。这些诊断不会主动触发 App 的 `onError`，也不会通过抛出异常中断降级处理：
+
+```js
+import mpx from '@mpxjs/core'
+
+mpx.config.errorHandler = function (message, location, error) {
+  // 采集错误描述、来源和原始异常
+}
+```
+
+> 普通样式属性的 `null` / `undefined` 仍保留清除属性的语义，不会统一转成 `0`。非法数值字符串仅针对尺寸、间距等数值属性过滤，字体名等自由文本保持原值。CSS 变量值为 `null` / `undefined` 时视为未定义，优先使用 `var()` 的 fallback。
+
 ## CSS 选择器 {#css-selectors}
 
 RN 环境下仅支持编译器转换后的**单类选择器**。逗号并列的多条单类选择器仍受支持；`page` 和 `:host` 会在进入 RN class map 前由编译器转换为内部单类，因此也可使用。
