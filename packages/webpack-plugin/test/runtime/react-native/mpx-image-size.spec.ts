@@ -114,7 +114,7 @@ describe('MpxImage size resolution', () => {
     act(() => renderer!.unmount())
   })
 
-  test('uses getSize instead of onLoad dimensions on Android', () => {
+  test('shows Android fixed mode with onLoad dimensions before getSize calibration', () => {
     jest.replaceProperty(runtimeUtils, 'isAndroid', true)
     const callbacks: Array<(width: number, height: number) => void> = []
     mockGetSize.mockImplementation((_src, success) => callbacks.push(success))
@@ -124,13 +124,33 @@ describe('MpxImage size resolution', () => {
       renderer = create(renderImage({ src: 'https://example.com/a.png', mode: 'widthFix', bindload, 'enable-fast-image': false, style: { width: 200, height: 100 } }))
     })
     act(() => renderer!.root.findByType('View').props.onLayout(layoutEvent(200, 100)))
+    expect(mockGetSize).toHaveBeenCalledTimes(1)
+    expect(renderer!.root.findByType('Image').props.resizeMode).toBe('contain')
+    expect(renderer!.root.findByType('Image').props.style).toEqual({ transformOrigin: 'left top', width: '100%', height: '100%', opacity: 0 })
     act(() => renderer!.root.findByType('Image').props.onLoad({ nativeEvent: { source: { width: 100, height: 400 } } }))
     expect(bindload.mock.calls[0][0].detail).toEqual({ width: 100, height: 400 })
-    expect(renderer!.root.findByType('Image').props.style.opacity).toBe(0)
+    expect(renderer!.root.findByType('View').props.style.height).toBe(800)
+    expect(renderer!.root.findByType('Image').props.style.opacity).toBeUndefined()
 
     act(() => callbacks[0](400, 200))
+    expect(bindload).toHaveBeenCalledTimes(1)
     expect(renderer!.root.findByType('View').props.style.height).toBe(100)
     expect(renderer!.root.findByType('Image').props.style.opacity).toBeUndefined()
+    act(() => renderer!.unmount())
+  })
+
+  test('keeps exact getSize dimensions over later Android onLoad dimensions', () => {
+    jest.replaceProperty(runtimeUtils, 'isAndroid', true)
+    const callbacks: Array<(width: number, height: number) => void> = []
+    mockGetSize.mockImplementation((_src, success) => callbacks.push(success))
+    let renderer: ReactTestRenderer
+    act(() => {
+      renderer = create(renderImage({ src: 'https://example.com/a.png', mode: 'widthFix', 'enable-fast-image': false, style: { width: 200, height: 100 } }))
+    })
+    act(() => callbacks[0](400, 200))
+    act(() => renderer!.root.findByType('View').props.onLayout(layoutEvent(200, 100)))
+    act(() => renderer!.root.findByType('Image').props.onLoad({ nativeEvent: { source: { width: 100, height: 400 } } }))
+    expect(renderer!.root.findByType('View').props.style.height).toBe(100)
     act(() => renderer!.unmount())
   })
 

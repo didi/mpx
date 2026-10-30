@@ -173,12 +173,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const isHeightFixMode = mode === 'heightFix'
   const isCropMode = hasOwn(cropModeMap, mode)
   const isLayoutMode = isSvg || isWidthFixMode || isHeightFixMode || isCropMode
-  const resizeMode: ImageResizeMode = hasOwn(modeResizeMap, mode) ? modeResizeMap[mode] : 'stretch'
+  const isAndroidFixedMode = isAndroid && !isSvg && (isWidthFixMode || isHeightFixMode)
+  const resizeMode: ImageResizeMode = isAndroidFixedMode ? 'contain' : hasOwn(modeResizeMap, mode) ? modeResizeMap[mode] : 'stretch'
   isLayoutModeRef.current = isLayoutMode
   srcRef.current = sourceKey
 
-  const commitImageSize = (source: string, width: number, height: number) => {
-    if (hasOwn(imageSizeRef.current, source)) return
+  const commitImageSize = (source: string, width: number, height: number, override = false) => {
+    if (!override && hasOwn(imageSizeRef.current, source)) return
     if (!(Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0)) return
     imageSizeRef.current[source] = { width, height }
     if (Object.is(srcRef.current, source) && isLayoutModeRef.current && layoutInfoRef.current) setVersion(version => version + 1)
@@ -242,7 +243,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const modeStyle: ImageStyle = useMemo(() => {
     if (!isLayoutMode) return {}
     if (pending) {
-      return hiddenStyle
+      // Android 固定模式依赖 onLoad 尺寸，pending 时需撑满容器保证原生侧触发加载
+      return isAndroidFixedMode ? extendObject({}, BASE_IMAGE_FILL_STYLE, hiddenStyle) : hiddenStyle
     }
     if (!isSvg && !isCropMode) return BASE_IMAGE_FILL_STYLE
     let style: ImageStyle = {}
@@ -386,8 +388,9 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     const { width, height } = getImageLoadSize(evt)
-    // Android onLoad 返回渲染尺寸，图片真实尺寸仅通过 getSize 获取
-    if (!isAndroid) commitImageSize(sourceKey, width, height)
+    // Android onLoad 返回渲染尺寸，图片真实尺寸仅通过 getSize 获取；
+    // 固定模式下 contain 能保持宽高比，先作为近似尺寸展示，再由 getSize 校准
+    if (!isAndroid || isAndroidFixedMode) commitImageSize(sourceKey, width, height)
     bindload && bindload(
       getCustomEvent(
         'load',
@@ -417,7 +420,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   useEffect(() => {
     if (typeof src === 'string' && src && !isSvg && isLayoutMode && !hasOwn(imageSizeRef.current, sourceKey)) {
-      RNImage.getSize(src, (width, height) => commitImageSize(sourceKey, width, height))
+      RNImage.getSize(src, (width, height) => commitImageSize(sourceKey, width, height, isAndroidFixedMode))
     }
   }, [src, isSvg, isLayoutMode])
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
