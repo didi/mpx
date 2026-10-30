@@ -1,0 +1,103 @@
+{
+  "eval_id": 1,
+  "eval_name": "layout-card",
+  "prompt": "将 scenario.md 中的商品卡片改造为四端共用组件。保留给定尺寸、间距、长标题省略、窄屏排版以及同名类隔离，输出完整 product-card.mpx 和演示父组件。微信需兼容 Skyline 与 WebView，RN 包含三端。",
+  "files": [
+    "input/scenario.md"
+  ],
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser"
+  ],
+  "assertions": [
+    {
+      "id": "layout.portable-grid",
+      "capability": "layout.portable-grid",
+      "text": "卡片图片区域具有实际可用的跨端布局，RN 分支使用支持的选择器与布局声明。",
+      "verify": "检查 hero 布局及 photo 定位；RN 使用简单类和支持的 Flex/显式布局，其他端保留同等几何关系。",
+      "fail_when": "只删除 Grid/后代规则却未把宽高和布局落实到节点。",
+      "sources": [
+        "rn/rn-style-reference.md",
+        "skyline/skyline-style-practice.md"
+      ]
+    },
+    {
+      "id": "layout.margin-geometry",
+      "capability": "layout.margin-geometry",
+      "text": "折叠块级间距与不折叠 Flex 间距分别保持 24rpx、20rpx、16rpx。",
+      "verify": "按输入三种结构计算修改后的有效间距；在无 margin 折叠的 Skyline/RN 与 WebView 对比。",
+      "fail_when": "所有 margin 一律相加或归零，或者修复普通块却破坏 Flex 间距。",
+      "sources": [
+        "rn/rn-style-practice.md",
+        "skyline/skyline-style-practice.md"
+      ]
+    },
+    {
+      "id": "layout.text-ellipsis",
+      "capability": "layout.text-ellipsis",
+      "text": "同一长标题在各端均一行省略，并保留各端所需的文本约束。",
+      "verify": "检查实际单行省略效果：支付宝完整 App 构建已提供 text 的 white-space 继承，接受父容器承担截断或直接约束 text，不要求迁移样式；Skyline 有 max-lines/overflow，RN 有 numberOfLines，Web/WebView 有等效 CSS；宽度与裁剪落在实际承担截断的节点。",
+      "fail_when": "目标端实际换行、只裁剪不打点或缺少有效宽度/截断约束；只添加 RN 属性却删除其他端必要样式。不得仅因支付宝样式位于父容器而判失败。",
+      "sources": [
+        "ali/ali-style-reference.md",
+        "rn/rn-template-reference.md",
+        "skyline/skyline-style-practice.md"
+      ]
+    },
+    {
+      "id": "layout.image-padding",
+      "capability": "layout.image-padding",
+      "text": "图片自身保持 240×80rpx，四边 24rpx 留白由外层承担。",
+      "verify": "核对图片宽高与包装层 padding，计算总占位 288×128rpx。",
+      "fail_when": "仅删除 padding 导致留白丢失，或把留白重复加到图片和包装层。",
+      "sources": [
+        "ali/ali-style-reference.md"
+      ]
+    },
+    {
+      "id": "layout.responsive-breakpoint",
+      "capability": "layout.responsive-breakpoint",
+      "text": "400px 断点在 Skyline 与其他端保持一致且随窗口变化更新。",
+      "verify": "分别检查 399px/401px 与宽度切换；若保留媒体查询，其每个选择器仅命中非 Skyline 节点；接受全端运行时宽度方案。",
+      "fail_when": "让 Skyline 命中不受媒体条件约束的 .card 规则，或只按启动时宽度计算。",
+      "sources": [
+        "skyline/skyline-style-practice.md"
+      ]
+    },
+    {
+      "id": "layout.style-isolation",
+      "capability": "layout.style-isolation",
+      "text": "支付宝同名 badge 类不在页面、组件和兄弟实例间串色。",
+      "verify": "检查 scoped 或限定到组件目录的 autoScopeRules；演示父组件仍红、内部标签仍蓝。",
+      "fail_when": "依赖微信默认隔离，或为解决冲突删除父组件样式。",
+      "sources": [
+        "ali/ali-style-reference.md"
+      ]
+    },
+    {
+      "id": "layout.text-tree",
+      "capability": "layout.text-tree",
+      "text": "保障文本与官方标签采用各端合法节点树并保持横向展示。",
+      "verify": "检查 text 内无 view 等非法嵌套；Skyline/RN 可渲染两个文本内容与标签样式。",
+      "fail_when": "保留 text 内嵌 view，或删除标签以规避限制。",
+      "sources": [
+        "skyline/skyline-template-reference.md",
+        "rn/rn-template-reference.md"
+      ]
+    }
+  ]
+}

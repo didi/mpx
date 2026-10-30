@@ -10,7 +10,6 @@
   - [样式隔离](#样式隔离)
   - [外部样式类](#外部样式类)
 - [文本与图片样式](#文本与图片样式)
-  - [溢出打点样式直接作用于 text](#溢出打点样式直接作用于-text)
   - [图片内边距交给外层容器](#图片内边距交给外层容器)
 
 ## 样式引入与作用范围
@@ -48,24 +47,6 @@ externalClasses: ['custom-class', 'i-class', 'accent-class']
 子组件声明外部类并在静态 `class` 中放置 `accent-class`，调用方以 `accent-class="业务类名"` 传值。仅声明组件属性不够，插件选项也不能写进页面 JSON。
 
 ## 文本与图片样式
-
-### 溢出打点样式直接作用于 text
-
-单行省略的宽度、裁剪与省略样式直接作用于目标 `text`；继承父级 `white-space` 不代表继承完整截断规则。图文混排只约束需要截断的文本，不给整段混排套用。
-
-```html
-<view><text class="title">{{title}}</text></view>
-```
-
-```css
-.title {
-  display: block;
-  width: 240rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-```
 
 ### 图片内边距交给外层容器
 

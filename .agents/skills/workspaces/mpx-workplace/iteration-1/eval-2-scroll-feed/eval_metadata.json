@@ -1,0 +1,107 @@
+{
+  "eval_id": 2,
+  "eval_name": "scroll-feed",
+  "prompt": "请将 scenario.md 中的订单列表页面迁移为四端可用的滚动实现，保留刷新、分页、滚动位置、吸顶、横向分类和定位功能。支付宝允许使用明确的刷新按钮替代下拉手势。输出完整页面和本地数据模块；微信同时验证两种 renderer。",
+  "files": [
+    "input/scenario.md"
+  ],
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser"
+  ],
+  "assertions": [
+    {
+      "id": "scroll.refresh-entry",
+      "capability": "scroll.refresh-entry",
+      "text": "刷新在四端都有可触发入口，支付宝不依赖不支持的 refresher 事件。",
+      "verify": "Skyline/RN 检查实际滚动容器刷新绑定、开关和 finally 收尾；支付宝点击刷新按钮可重置到第一页；注入失败后可重试。",
+      "fail_when": "四端无差别绑定 refresherrefresh，或删除支付宝刷新能力。",
+      "sources": [
+        "ali/ali-template-reference.md",
+        "rn/rn-script-reference.md",
+        "skyline/skyline-runtime-practice.md"
+      ]
+    },
+    {
+      "id": "scroll.pagination",
+      "capability": "scroll.pagination",
+      "text": "触底分页从实际滚动容器触发并保留有界可滚动区域。",
+      "verify": "核对 scroll-y、高度链与 scrolltolower 绑定；连续触底不会重复追加同页，到 60 条停止。",
+      "fail_when": "仅保留 onReachBottom，或有处理器却未绑定到目标端容器。",
+      "sources": [
+        "rn/rn-script-reference.md",
+        "skyline/skyline-runtime-practice.md",
+        "web/web-json-reference.md"
+      ]
+    },
+    {
+      "id": "scroll.event-payload",
+      "capability": "scroll.event-payload",
+      "text": "滚动位置展示读取 scroll-view 的 detail.scrollTop。",
+      "verify": "用 {detail:{scrollTop:120}} 调用实际绑定函数，界面值变成 120。",
+      "fail_when": "沿用页面滚动事件 e.scrollTop 导致 undefined。",
+      "sources": [
+        "skyline/skyline-runtime-practice.md",
+        "base/template-reference.md"
+      ]
+    },
+    {
+      "id": "scroll.sticky-renderer",
+      "capability": "scroll.sticky-renderer",
+      "text": "分组标题的吸顶实现按目标和微信 renderer 生效。",
+      "verify": "Skyline 为 custom 滚动结构内 sticky-section/header，header 首子节点且有背景；RN 使用受支持吸顶结构；WebView/Web/支付宝采用各自有效等价路径。",
+      "fail_when": "用 @wx 区分两种 renderer，或者把 sticky-section 当所有端都支持的通用节点。",
+      "sources": [
+        "skyline/skyline-style-practice.md",
+        "rn/rn-style-practice.md"
+      ]
+    },
+    {
+      "id": "scroll.horizontal-width",
+      "capability": "scroll.horizontal-width",
+      "text": "横向分类的直接内容子节点分别具备视口宽和 1200rpx 宽的布局依据。",
+      "verify": "检查 Skyline enable-flex 与横向布局及直接子节点宽度，其他端无须支持微信专属属性也能横滚。",
+      "fail_when": "只给深层子元素 min-width/flex，依赖其反向撑开 Skyline 容器。",
+      "sources": [
+        "skyline/skyline-style-practice.md",
+        "ali/ali-template-reference.md"
+      ]
+    },
+    {
+      "id": "scroll.query-scope",
+      "capability": "scroll.query-scope",
+      "text": "订单定位链路采用合法 id、实例作用域与 RN 可查询节点。",
+      "verify": "检查 order-21 等合法 id、简单选择器、RN wx:ref 标记以及挂载后查询；若用 query.in(this)，继续使用其返回对象；按钮最终确实触发滚动。",
+      "fail_when": "仍用数字开头 id、丢弃 in 返回值，或添加 ref 却没有实现定位。",
+      "sources": [
+        "ali/ali-api-reference.md",
+        "rn/rn-script-reference.md",
+        "skyline/skyline-runtime-practice.md"
+      ]
+    },
+    {
+      "id": "scroll.scrollbar-boolean",
+      "capability": "scroll.scrollbar-boolean",
+      "text": "隐藏滚动条使用严格布尔 false，并仅对微信补 enhanced。",
+      "verify": "检查两个容器输出的 show-scrollbar 是布尔 false；完整 App/原本显示滚动条的设备上复验。",
+      "fail_when": "字符串 false、仅 @wx 隐藏或全局 scrollbar 规则。",
+      "sources": [
+        "ali/ali-template-reference.md"
+      ]
+    }
+  ]
+}

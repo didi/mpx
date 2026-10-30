@@ -1,0 +1,103 @@
+{
+  "eval_id": 5,
+  "eval_name": "reactive-switcher",
+  "prompt": "根据 scenario.md 新建可同时运行于四端的详情切换组件，用 script setup 实现，并提供两个子组件和父级演示。要求更新 props、切换类型、状态切换与点击回传都可验证，微信支持双 renderer。",
+  "files": [
+    "input/scenario.md"
+  ],
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser"
+  ],
+  "assertions": [
+    {
+      "id": "script.props-live",
+      "capability": "script.props-live",
+      "text": "title prop 在父级更新后继续驱动标题展示。",
+      "verify": "检查 title 对 defineProps 返回对象的消费或 toRef/toRefs/computed；父级将标题从 A 改成 B 后显示 B。disabled 与 activeKind 的业务效果分别归事件链与动态组件断言。",
+      "fail_when": "普通解构 title 后永久保留初值。",
+      "sources": [
+        "base/script-reference.md"
+      ]
+    },
+    {
+      "id": "script.setup-exposure",
+      "capability": "script.setup-exposure",
+      "text": "script setup 显式暴露模板所用的状态、计算值与方法。",
+      "verify": "核对模板绑定与 defineExpose，模板引用均可达；不要求暴露内部计时器或整个工具模块。",
+      "fail_when": "按 Vue3 默认暴露假设省略 defineExpose。",
+      "sources": [
+        "base/script-reference.md"
+      ]
+    },
+    {
+      "id": "script.lifecycle-registration",
+      "capability": "script.lifecycle-registration",
+      "text": "生命周期同步注册，异步配置只更新存活实例状态。",
+      "verify": "检查 onMounted/onUnmounted 注册在 setup 同步阶段；配置返回前卸载后无残留定时任务或失效实例写入。",
+      "fail_when": "await 配置完成后才注册挂载/卸载钩子。",
+      "sources": [
+        "base/script-reference.md",
+        "rn/rn-script-reference.md"
+      ]
+    },
+    {
+      "id": "template.dynamic-range",
+      "capability": "template.dynamic-range",
+      "text": "动态组件候选与 usingComponents 注册一致且保留父层共享计数。",
+      "verify": "range 仅 basic-card,vip-card；两次切换后 title 正确、父层累计 count 未重置。",
+      "fail_when": "缺失候选注册、使用基础标签充当候选，或把共享计数藏在被销毁子组件。",
+      "sources": [
+        "base/template-reference.md",
+        "base/json-reference.md"
+      ]
+    },
+    {
+      "id": "template.event-chain",
+      "capability": "template.event-chain",
+      "text": "点击处理和 change 事件在四端传递同一业务载荷并遵守 disabled。",
+      "verify": "启用点击两次得到 count=2、当前 kind；禁用点击不变化且不触发 change；父组件从正确的 detail 消费。",
+      "fail_when": "只写方法却未绑定，依赖 RN 不支持的 dataset，或禁用后仍触发事件。",
+      "sources": [
+        "base/template-reference.md",
+        "rn/rn-template-reference.md"
+      ]
+    },
+    {
+      "id": "rn.background-priming",
+      "capability": "rn.background-priming",
+      "text": "动态背景节点在 RN 首次渲染即开启 enable-background 并具有唯一有效 key。",
+      "verify": "初始空 coverUrl→非空后背景出现；开关在第一次渲染已存在，只作用于背景节点及 RN 目标。",
+      "fail_when": "等 coverUrl 非空后才给复用节点增加 enable-background，或没有有效 key。",
+      "sources": [
+        "rn/rn-template-reference.md",
+        "rn/rn-style-practice.md"
+      ]
+    },
+    {
+      "id": "rn.animation-priming",
+      "capability": "rn.animation-priming",
+      "text": "动态过渡节点在 RN 首次渲染即开启 enable-animation。",
+      "verify": "初始无 transition→展开→折叠的同一节点都能执行过渡；仅目标节点开启，属性限定 RN。",
+      "fail_when": "只添加 transition 样式，或首次展开才开启动画能力。",
+      "sources": [
+        "rn/rn-template-reference.md",
+        "rn/rn-style-practice.md"
+      ]
+    }
+  ]
+}

@@ -116,7 +116,7 @@ App 不支持 `data/computed/watch/inject/setup` 构造能力。
 
 例如 `onLoad((rawQuery, decodedQuery) => { console.log(decodedQuery.id) })`，不能写成 `onLoad(rawQuery, decodedQuery)` 来获取参数。选项式普通函数中的 `this` 为当前实例，组合式回调通过闭包访问状态与 context，不依赖 `this`。
 
-表中是 Mpx 生命周期的基准阶段对应关系，不承诺各端回调时序完全一致；DOM、RN 挂载与小程序原生通知应按目标端参考判断。`onLoad` **回调**的第二参数 `decodedQuery` 为 Mpx 抹平后的解码结果；不要再次重复解码。refs/布局查询放在挂载及之后，清理定时器和订阅放在卸载阶段。
+表中是 Mpx 生命周期的基准阶段对应关系，不承诺各端回调时序完全一致；DOM、RN 挂载与小程序原生通知应按目标端参考判断。获取页面参数时，推荐使用 `onLoad` **回调**的第二参数 `decodedQuery`，它是 Mpx 抹平后的解码结果；不要再次重复解码。refs/布局查询放在挂载及之后，清理定时器和订阅放在卸载阶段。
 
 `onReactHooksExec/REACTHOOKSEXEC` 只用于 RN 混编；`onServerPrefetch/SERVERPREFETCH` 只用于 Web SSR。
 

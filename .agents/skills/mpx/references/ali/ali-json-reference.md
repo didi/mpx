@@ -12,7 +12,6 @@
   - [不支持的应用字段](#不支持的应用字段)
 - [页面配置](#页面配置)
   - [不支持的页面字段与刷新](#不支持的页面字段与刷新)
-  - [自定义导航栏](#自定义导航栏)
   - [区分禁止页面滚动与关闭纵向回弹](#区分禁止页面滚动与关闭纵向回弹)
 - [组件配置](#组件配置)
   - [组件命名冲突](#组件命名冲突)
@@ -34,21 +33,13 @@
 
 ## 页面配置
 
+`navigationStyle` 沿用[基准声明](../base/json-reference.md#页面配置)；支付宝自定义导航栏仍可能显示返回按钮等宿主控件。
+
 ### 不支持的页面字段与刷新
 
 - 不支持 `disableScroll`、`disableSwipeBack`；锁定滚动或限制返回需另行适配。
 - 不支持 `navigationBarTextStyle`、`backgroundTextStyle`、`backgroundColorTop`、`backgroundColorBottom`、`pageOrientation`。以上字段移除或隔离到微信。
 - **刷新与回弹独立配置**：`enablePullDownRefresh: false` 不关闭回弹；`allowsBounceVertical: 'NO'` 关闭回弹，不等价于关闭刷新或锁定页面滚动。开启下拉刷新须允许回弹，不能同时设置前者为 `true`、后者为 `'NO'`。
-
-### 自定义导航栏
-
-`navigationStyle` 仅用 `custom` / `default`；页面设为 `default` 可恢复 App 中关闭的默认导航栏。不要叠加冲突的支付宝原生导航字段。
-
-```json
-{ "navigationStyle": "custom" }
-```
-
-自定义模式仍可能显示返回按钮等宿主控件；标题由业务绘制，并处理状态栏、安全区和点击区域。合入页面 JSON 时保留 `usingComponents` 等原配置；平台插件、隐私与权限声明分别配置。
 
 ### 区分禁止页面滚动与关闭纵向回弹
 

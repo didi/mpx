@@ -1,1 +1,0 @@
-module.exports = { rootDir: __dirname, testEnvironment: 'node', testMatch: ['**/behavior.test.cjs'], transform: {}, watchman: false, cache: false, cacheDirectory: '/tmp/i8-case3-skyline-grader-cache' }

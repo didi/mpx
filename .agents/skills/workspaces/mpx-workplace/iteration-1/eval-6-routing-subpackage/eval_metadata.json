@@ -1,0 +1,84 @@
+{
+  "eval_id": 6,
+  "eval_name": "routing-subpackage",
+  "prompt": "请完成 scenario.md 的四端详情页接入，输出路由初始化、完整页面和应用/构建配置片段。保留微信/支付宝页面访问，RN 使用给定宿主分包接口，Web 支持子路径直达刷新。",
+  "files": [
+    "input/scenario.md"
+  ],
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser"
+  ],
+  "assertions": [
+    {
+      "id": "routing.decoded-query",
+      "capability": "routing.decoded-query",
+      "text": "页面使用 Mpx 提供的 decodedQuery 且不重复解码。",
+      "verify": "输入 raw title=%252F，传入对应 decodedQuery.title=%2F，最终标题为 %2F。",
+      "fail_when": "从 rawQuery 重复 decode，或对 decodedQuery 再 decode。",
+      "sources": [
+        "base/script-reference.md"
+      ]
+    },
+    {
+      "id": "routing.web-deploy",
+      "capability": "routing.web-deploy",
+      "text": "Web 路由 base、资源 publicPath 和 history 回退各自正确配置。",
+      "verify": "运行时 routeConfig 设置 history 与 /catalog/，构建 publicPath 指向 CDN，说明深层页面回退 HTML；默认页面通过合法 pages/entryPagePath 注册。",
+      "fail_when": "把 base 写 entryPagePath 或只配插件 routeConfig，或手写 routes 覆盖生成路由。",
+      "sources": [
+        "web/web-config-reference.md",
+        "web/web-json-reference.md"
+      ]
+    },
+    {
+      "id": "routing.web-titlebar",
+      "capability": "routing.web-titlebar",
+      "text": "Web 内建标题栏被运行时显式启用且页面未将其隐藏。",
+      "verify": "检查 enableTitleBar===true 和 Web 页面 navigationStyle；动态标题更新可达。",
+      "fail_when": "仅调用 setNavigationBarTitle 或仅设 navigationStyle:default 就声称栏已显示。",
+      "sources": [
+        "web/web-config-reference.md"
+      ]
+    },
+    {
+      "id": "subpackage.load-driver",
+      "capability": "subpackage.load-driver",
+      "text": "RN 普通异步分包同时具备编译开关与真实宿主加载驱动，不承诺 RN/Web 独立启动。",
+      "verify": "检查 supportSubpackage 与 loadChunkAsync 接入 loadBundle；目标配置保留小程序支持能力，RN/Web 有正常导航路径。",
+      "fail_when": "只有 JSON packages/independent 声明，或只登记 implement 就认为加载成立。",
+      "sources": [
+        "rn/rn-json-reference.md",
+        "rn/rn-config-reference.md",
+        "web/web-json-reference.md",
+        "base/subpackage-reference.md"
+      ]
+    },
+    {
+      "id": "subpackage.prefetch-driver",
+      "capability": "subpackage.prefetch-driver",
+      "text": "RN 预下载单独接入只下载不执行的宿主方法，并明确 Web preloadRule 不生效。",
+      "verify": "检查 downloadChunkAsync→downloadBundle，不误调用 loadBundle；微信/支付宝原预下载配置按实际支持保留。",
+      "fail_when": "把预下载和加载执行混用，或宣称 Web 因相同 JSON 自动具备该能力。",
+      "sources": [
+        "rn/rn-json-reference.md",
+        "rn/rn-config-reference.md",
+        "web/web-json-reference.md"
+      ]
+    }
+  ]
+}

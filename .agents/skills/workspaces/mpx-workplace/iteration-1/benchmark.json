@@ -1,0 +1,1064 @@
+{
+  "metadata": {
+    "skill_name": "mpx",
+    "skill_path": "/Users/didi/work/mpx/.agents/skills/mpx",
+    "executor_model": "gpt-6.1-sol",
+    "analyzer_model": "gpt-6.1-sol",
+    "timestamp": "2026-10-29T11:55:55Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "runs_per_configuration": 1,
+    "reasoning_effort": "high",
+    "evaluation_level": "static_design",
+    "analyzer_reasoning_effort": "high",
+    "full_build_verified": false,
+    "host_runtime_verified": false
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 382.752,
+        "tokens": 1013362,
+        "tool_calls": 22,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "config.target-dialect",
+          "assertion_id": "config.target-dialect",
+          "text": "构建目标使用 wx/ali/ios/android/harmony/web，微信源码方言保持 wx，Skyline 不成为 mode。",
+          "passed": true,
+          "evidence": "outputs/plugin-options.js:1-10：六个合法目标逐值保留，srcMode 固定 wx；outputs/verification.test.js:17-31 执行六目标与无效目标检查。"
+        },
+        {
+          "id": "config.rn-file-fallback",
+          "assertion_id": "config.rn-file-fallback",
+          "text": "RN 条件文件回退后在 ios/android/harmony 都保留可渲染模板。",
+          "passed": true,
+          "evidence": "outputs/src/app.mpx:11 默认组件引用；outputs/src/components/status-card.ios.mpx:1-23 无 ios-only 区块，微信模板和 open 处理器完整，android/harmony 回退后不会被筛除。"
+        },
+        {
+          "id": "config.native-import-boundary",
+          "assertion_id": "config.native-import-boundary",
+          "text": "react-native 依赖只进入 RN 目标的模块图，三种 RN 目标仍可获得平台名。",
+          "passed": true,
+          "evidence": "outputs/src/device-label.js:1-3 无原生依赖；outputs/src/device-label.ios.js:1-5 唯一 react-native 导入并直接返回 Platform.OS；两种组件均引用默认 device-label.js，由条件解析隔离。"
+        },
+        {
+          "id": "config.skyline-json",
+          "assertion_id": "config.skyline-json",
+          "text": "微信应用/页面具有正确层级的 Skyline 配置，其他目标配置不被污染。",
+          "passed": true,
+          "evidence": "outputs/src/app.mpx:15-26 将 lazyCodeLoading 和 rendererOptions.skyline 限于 wx；outputs/src/pages/home.mpx:64-85 包含 wx 所需四项配置，其他目标不接收 renderer/componentFramework。"
+        },
+        {
+          "id": "config.external-classes",
+          "assertion_id": "config.external-classes",
+          "text": "支付宝插件 externalClasses 保留三个仍被消费的外部类名称。",
+          "passed": true,
+          "evidence": "outputs/plugin-options.js:10 完整保留三个类；两种 status-card.mpx:2-4,14 声明并静态消费；outputs/src/pages/home.mpx:8-10 传入父层样式。"
+        },
+        {
+          "id": "config.component2",
+          "assertion_id": "config.component2",
+          "text": "component2 在支付宝开发者工具工程配置中启用。",
+          "passed": true,
+          "evidence": "outputs/mini.project.json:2 component2=true；outputs/verification.md「交付与合入边界」明确复制到支付宝产物根、与 app.json 同级。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 577.361,
+        "tokens": 2038859,
+        "tool_calls": 44,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "layout.portable-grid",
+          "assertion_id": "layout.portable-grid",
+          "text": "卡片图片区域具有实际可用的跨端布局，RN 分支使用支持的选择器与布局声明。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:6-8,60-80：hero 采用单列 Flex、显式 content-box 和图片尺寸；业务选择器均为简单类，原 grid/后代选择器已替换。"
+        },
+        {
+          "id": "layout.margin-geometry",
+          "assertion_id": "layout.margin-geometry",
+          "text": "折叠块级间距与不折叠 Flex 间距分别保持 24rpx、20rpx、16rpx。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:81-110：标题 margin-bottom=24、summary margin-top=0；details margin-top=20、首子 margin-top=0；stats Flex 项相邻 8+8=16rpx。"
+        },
+        {
+          "id": "layout.text-ellipsis",
+          "assertion_id": "layout.text-ellipsis",
+          "text": "同一长标题在各端均一行省略，并保留各端所需的文本约束。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:9-12,81-93：实际文本定宽 240rpx，wx max-lines/overflow、RN 三目标 numberOfLines/ellipsizeMode、wx/ali/web 的 nowrap/ellipsis 齐全。"
+        },
+        {
+          "id": "layout.image-padding",
+          "assertion_id": "layout.image-padding",
+          "text": "图片自身保持 240×80rpx，四边 24rpx 留白由外层承担。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:67-80：外层 content-box 240×80+四边24 padding=288×128rpx；image 本身240×80且无padding；RN boxSizing 支持见 mpx/references/rn/rn-style-reference.md:556。"
+        },
+        {
+          "id": "layout.responsive-breakpoint",
+          "assertion_id": "layout.responsive-breakpoint",
+          "text": "400px 断点在 Skyline 与其他端保持一致且随窗口变化更新。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:2-5,35-55,119-126：Skyline/RN 读取窗口及订阅更新；媒体选择器只匹配非 Skyline 节点；399/400/401 双向切换及退订已有 checks/product-card.test.js 的真实 Jest 日志。"
+        },
+        {
+          "id": "layout.style-isolation",
+          "assertion_id": "layout.style-isolation",
+          "text": "支付宝同名 badge 类不在页面、组件和兄弟实例间串色。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:60,116-118 与 outputs/demo.mpx:43,68-70 均 scoped，内部蓝色与父级红色规则分别隔离；demo 具有兄弟卡片探针。"
+        },
+        {
+          "id": "layout.text-tree",
+          "assertion_id": "layout.text-tree",
+          "text": "保障文本与官方标签采用各端合法节点树并保持横向展示。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:22,111-118：保障和官方均为横向 Flex 下相邻 text，保留标签蓝色且没有 text 内嵌 view。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 1201.395,
+        "tokens": 3190660,
+        "tool_calls": 49,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "scroll.refresh-entry",
+          "assertion_id": "scroll.refresh-entry",
+          "text": "刷新在四端都有可触发入口，支付宝不依赖不支持的 refresher 事件。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:6 所有端刷新按钮调用 reload；40-42 将刷新开关、状态和事件绑定到 wx/RN/Web 的实际纵向容器，ali 不输出不支持的 refresher。155-167 的 finally 复位刷新状态；128-153 失败不提交页码、释放 loading，data.js:9-18 提供一次失败后可重试。run-1/agent.jsonl:103 真实 Jest 15/15 通过，包含刷新失败重试与忙时收尾；这些为 VM 模拟。"
+        },
+        {
+          "id": "scroll.pagination",
+          "assertion_id": "scroll.pagination",
+          "text": "触底分页从实际滚动容器触发并保留有界可滚动区域。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:34-43 在 scroll-y 实际容器绑定 next；271-287、365-374 形成页面高度—flex 剩余区域—100% 滚动区高度链。128-153 同步请求锁、成功提交页码；169-171 拒绝并发及 hasMore=false 后触底，143 在60条停止。run-1/agent.jsonl:103 的真实 Jest 包含首屏、连续触底去重、60条边界与分页失败重试。"
+        },
+        {
+          "id": "scroll.event-payload",
+          "assertion_id": "scroll.event-payload",
+          "text": "滚动位置展示读取 scroll-view 的 detail.scrollTop。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:43 实际绑定 onScroll，173-175 读取 event.detail.scrollTop，10 展示 scrollTop；以 {detail:{scrollTop:120}} 输入按该赋值路径得到120。checks/feed.test.cjs:101 及165 已真实回放同一 detail 数据路径；run-1/agent.jsonl:103 为15/15 Jest通过记录。"
+        },
+        {
+          "id": "scroll.sticky-renderer",
+          "assertion_id": "scroll.sticky-renderer",
+          "text": "分组标题的吸顶实现按目标和微信 renderer 生效。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:34 使用 custom；45 按实际 renderer 区分 wx Skyline/WebView，46-53 的 Skyline/RN/Web 分组首节点为唯一 sticky-header 且白底；36 开 RN/Web enable-sticky。55-63 及402-407 保留微信 WebView CSS sticky；72-74、228-257、409-422 为支付宝滚动区外同级白底浮层，测量边界并顶推。run-1/agent.jsonl:103 对支付宝边界与顶推的VM测试通过；宿主效果未验证。"
+        },
+        {
+          "id": "scroll.horizontal-width",
+          "assertion_id": "scroll.horizontal-width",
+          "text": "横向分类的直接内容子节点分别具备视口宽和 1200rpx 宽的布局依据。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:17-29 横向 list 的两个直接 view 为 category-viewport/category-wide；18 开 wx enable-flex；319-348 提供 row、width100%/1200rpx、flex-shrink:0，ali/Web 分支 inline-flex+nowrap，不依赖微信专属属性。"
+        },
+        {
+          "id": "scroll.query-scope",
+          "assertion_id": "scroll.query-scope",
+          "text": "订单定位链路采用合法 id、实例作用域与 RN 可查询节点。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:50、60 的基础订单节点具有合法 order-N id 和 wx:ref，184-204 定位按钮先补到第2页并等待提交，再对 wx/RN 发 scroll-into-view=order-21。206-225 使用实例 createSelectorQuery 与简单选择器，对 ali/Web 测量后赋 commandTop；116-125 区分小程序实际 forceUpdate 完成回调与 RN/Web nextTick。run-1/agent.jsonl:103 记录六目标定位分支及失败重试VM测试通过。"
+        },
+        {
+          "id": "scroll.scrollbar-boolean",
+          "assertion_id": "scroll.scrollbar-boolean",
+          "text": "隐藏滚动条使用严格布尔 false，并仅对微信补 enhanced。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:19、35 两滚动区 show-scrollbar 均为严格布尔false；18、35 的 enhanced 仅传 wx/RN，未传不支持它的ali；19、37、101 为Web显式 scrollbar:false。公共 RN mpx-scroll-view.tsx:759-760 直接将 showScrollbar 应用到原生 indicator，enhanced 判断777-781仅处理bounces/pagingEnabled；因此额外传 RN enhanced 不违背实际隐藏契约，不按断言“仅微信”的表面措辞扣分。完整App/原可见滚动条设备效果未验证。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 611.666,
+        "tokens": 1737539,
+        "tool_calls": 37,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "dialog.mask-scroll",
+          "assertion_id": "dialog.mask-scroll",
+          "text": "支付宝锁滚动仅作用于蒙层，内容区仍可滚动，微信背景触摸被正确拦截。",
+          "passed": true,
+          "evidence": "outputs/checkout-dialog.mpx:2-4 蒙层与面板为兄弟，disable-scroll@ali仅位于蒙层，未覆盖内部scroll-view；2 的wx局部catchtouchmove绑定88空stopMove；8-12、84-86、304-307为内部有界scroll-y。192-203关闭移除shown节点，没有page/body全局锁滚动；背景/内部手势实际效果未验证。"
+        },
+        {
+          "id": "dialog.device-input",
+          "assertion_id": "dialog.device-input",
+          "text": "仅复现问题的支付宝输入框按运行时 iOS/Android 设置 enableNative。",
+          "passed": true,
+          "evidence": "outputs/checkout-dialog.mpx:15-29仅ali输入框绑定enableNative=isIOS；213-216运行时getDeviceInfo按platform/system判断iOS，得到ali+iOS=true、ali+Android=false，不用RN编译目标判断设备。18、27 的wx adjust-position默认manualAvoidance=false时为true；76限定手动模式只属wx，RN/Web保留默认。run-1/agent.jsonl:75真实Jest16/16包含设备与自动避让检查。"
+        },
+        {
+          "id": "dialog.focus-readiness",
+          "assertion_id": "dialog.focus-readiness",
+          "text": "支付宝首次聚焦等待实际渲染和入场完成。",
+          "passed": true,
+          "evidence": "outputs/checkout-dialog.mpx:160-173打开后先等nextTick并实际查询面板布局，再改变transform启动入场；6绑定真实transitionend，176-189完成后才entryFinished并下一轮请求name焦点，8、16使输入节点仅在完成后创建/聚焦；192-197关闭清理状态并递增opening，完成回调及nextTick检查shown/visible/ticket。run-1/agent.jsonl:75的VM检查enterDone前后和关闭后迟到回调，未使用固定延时聚焦；真实宿主transitionend/焦点未验证。"
+        },
+        {
+          "id": "dialog.keyboard-order",
+          "assertion_id": "dialog.keyboard-order",
+          "text": "焦点和键盘状态对两种输入框切换事件顺序均稳定。",
+          "passed": true,
+          "evidence": "outputs/checkout-dialog.mpx:120-139忽略focus(B)后迟到的blur(A)，blur(A)先到则暂存高度/偏移并以0延时确认最终失焦，focus(B)取消任务；142-157缓存早到正高度、避免缺失高度覆盖，正高度/新focus取消旧收起回调。76、108-112确保自动避让时手动offset恒0，手动wx模式才同时关闭adjust-position。run-1/agent.jsonl:75真实Jest16/16明确包含两种序列、无新高度、最终失焦/0高度以及自动不叠加；跨任务实际设备时序仍未验证。"
+        },
+        {
+          "id": "dialog.window-units",
+          "assertion_id": "dialog.window-units",
+          "text": "尺寸封装使用窗口高度及同单位安全区，容忍缺失安全区并响应窗口变化。",
+          "passed": true,
+          "evidence": "outputs/size.js:4-11直接使用windowHeight，按同逻辑像素screenHeight-safeArea.bottom算safeBottom，不扣导航栏、不除pixelRatio；缺失safeArea返回0。14-24每次读最新窗口，resize事件size覆盖旧值且保留解绑。checkout-dialog.mpx:163打开重读、217-220订阅更新。run-1/agent.jsonl:75真实Jest包含700/20样本、null安全区、旋转与解绑通过。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 837.384,
+        "tokens": 2449103,
+        "tool_calls": 32,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "api.host-login",
+          "assertion_id": "api.host-login",
+          "text": "微信与支付宝授权码进入各自兑换入口，RN/Web 使用约定宿主 session 能力。",
+          "passed": true,
+          "evidence": "eval-4-account-search/mpx/outputs/api.js:34-55：wx/ali 的 code 分别进入 POST /session/wx、/session/ali；ios/android/harmony/web 的 hostSession 直接返回 signIn 的 token。api.js:60-71 真实装配使用 base.login/base.request/authHost.signIn；verification.md:21-35 给出工程注入到页面切换工程服务的完整入口。; eval-4-account-search/mpx/outputs/account.mpx:99-102 将工程服务传给 API/控制器，125-126 的登录入口最终调用 api.js:190 的 getSession；auth-host.js:9-11 真实宿主未配置时明确拒绝而非伪造登录。"
+        },
+        {
+          "id": "api.custom-contract",
+          "assertion_id": "api.custom-contract",
+          "text": "getSession 按实际目标注册且由安装后的代理调用，明确返回 Promise。",
+          "passed": true,
+          "evidence": "eval-4-account-search/mpx/outputs/api.js:35-55：exchange/hostSession 为 async，六个实际目标键均有自行返回 Promise 的 getSession；60-70 使用真实 getProxy 安装 custom，78 从安装后 platformApi.getSession 调用。; packages/api-proxy/src/install.js:12-20：每目标 custom 在 promisify 后合并，getProxy 是现有公共入口，不能假设 usePromise 自动包装 custom；实现满足此契约。"
+        },
+        {
+          "id": "api.request-task",
+          "assertion_id": "api.request-task",
+          "text": "Promise 请求的取消句柄从请求发起时的 __returned 获取。",
+          "passed": true,
+          "evidence": "eval-4-account-search/mpx/outputs/api.js:82-95：同步取原 Promise.__returned，then 只解析响应，cancel 执行 task.abort；165-170 的控制器取消路径可在请求完成前调用。; packages/api-proxy/src/common/js/promisify.js:75-92：原 request Promise 创建时保存 task，响应无需承担 abort 能力。"
+        },
+        {
+          "id": "api.stale-result",
+          "assertion_id": "api.stale-result",
+          "text": "查询身份阻止旧响应覆盖新结果或取消后的状态。",
+          "passed": true,
+          "evidence": "eval-4-account-search/mpx/outputs/api.js:165-178：先递增搜索/详情版本才 cancel，202-227：success/catch/finally 都校验 active 和 searchVersion；257-264 dispose 先设 inactive 再失效身份和取消。; eval-4-account-search/mpx/outputs/account.mpx:86-109：onShow 建控制器，onHide/onUnload dispose 后清空；重新进入时旧实例 active=false，不能覆盖新实例。; eval-4-account-search/mpx/run-1/agent.jsonl:73：31项离线测试通过，包括A/B双向乱序、旧finally、取消和离页晚到；是业务stub证据。"
+        },
+        {
+          "id": "network.cancel-token",
+          "assertion_id": "network.cancel-token",
+          "text": "xfetch 使用 CancelToken.token、exec 和 isCancel 完成取消链路。",
+          "passed": true,
+          "evidence": "eval-4-account-search/mpx/outputs/api.js:113-125：new xfetch.CancelToken，传 cancelToken.token，取消 exec；79 将 isCancel 委托真实 xfetch；238-240 取消静默、普通错误显示。; packages/fetch/src/cancelToken.js:1-12、request.js:44-50和67-74、xfetch.js:199-201：token Promise/exec、abort标记与isCancel调用链一致。"
+        },
+        {
+          "id": "network.interceptor-dispose",
+          "assertion_id": "network.interceptor-dispose",
+          "text": "响应拦截器保留成功值/业务错误语义并通过 use 返回的函数释放自身。",
+          "passed": true,
+          "evidence": "eval-4-account-search/mpx/outputs/api.js:75、98-111、120：唯一字符串scope检查本页详情，readBusinessResponse遇非0抛错而正常返回原res；保存use返回的release闭包并幂等执行。152注册，257-264 dispose仅调用本页释放。; packages/fetch/src/interceptorManager.js:35-73：返回闭包只删本次包装项；packages/fetch/src/proxy.js:86-102 保留自定义accountScope字段，request.js:52-65将requestConfig传回响应。; eval-4-account-search/mpx/run-1/agent.jsonl:73：离线用例验证正常透传、业务拒绝、两次进入离开无累积且保留其他订阅；测试使用xfetch替身，静态设计另以真实源码核查。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 421.563,
+        "tokens": 1392913,
+        "tool_calls": 26,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "script.props-live",
+          "assertion_id": "script.props-live",
+          "text": "title prop 在父级更新后继续驱动标题展示。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/detail-switcher.mpx:25-31 的defineProps经toRefs保持title引用，模板3/10用该title；basic-card.mpx:9-11和vip-card.mpx:9-11同样保留引用；demo.mpx:16-17绑定父级title，39-40更新ref。; packages/webpack-plugin/lib/script-setup-compiler/index.js:564-569 将props绑定到__props；packages/core/src/core/proxy.js:309-327 初始化reactive props并传入setup。"
+        },
+        {
+          "id": "script.setup-exposure",
+          "assertion_id": "script.setup-exposure",
+          "text": "script setup 显式暴露模板所用的状态、计算值与方法。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/detail-switcher.mpx:99-111 暴露模板3-17所用的title/disabled/count/currentKind/ready/coverStyle/expanded/hasTransition/panelStyle/handleAction/toggleExpanded；demo.mpx:78-93与两卡片:11同样覆盖模板绑定。; packages/webpack-plugin/lib/script-setup-compiler/index.js:574-592 将defineExpose对象作为setup返回值，613-615强制宏存在。"
+        },
+        {
+          "id": "script.lifecycle-registration",
+          "assertion_id": "script.lifecycle-registration",
+          "text": "生命周期同步注册，异步配置只更新存活实例状态。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/detail-switcher.mpx:77-97 在同步setup注册onMounted/onUnmounted；挂载后启动Promise定时任务，then先检查disposed，卸载清timer并结束resolver；已入队then也不会晚写ready。demo.mpx:64-75 清理本实例coverTimer。; eval-5-reactive-switcher/mpx/run-1/agent.jsonl:53：9项Jest含正常完成、提前卸载、多实例隔离及已resolve未then时卸载用例通过；使用Vue和生命周期stub。"
+        },
+        {
+          "id": "template.dynamic-range",
+          "assertion_id": "template.dynamic-range",
+          "text": "动态组件候选与 usingComponents 注册一致且保留父层共享计数。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/detail-switcher.mpx:10 range仅basic-card,vip-card，117-120注册两个随附真实组件；38的computed只产生两种候选；34的count属于外层switcher而非动态卡片。demo.mpx:45-46只更新activeKind，不重建外层。; packages/webpack-plugin/lib/template-compiler/compiler.js:1038-1078 将range与usingComponents交集生成componentMap，两候选均可达。"
+        },
+        {
+          "id": "template.event-chain",
+          "assertion_id": "template.event-chain",
+          "text": "点击处理和 change 事件在四端传递同一业务载荷并遵守 disabled。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/detail-switcher.mpx:8-9 绑定handleAction(currentKind)，51-55先检查最新disabled再count++并triggerEvent(change,{count,kind})；demo.mpx:17传$event，57-61直接读取并展示event.detail。无dataset依赖，count跨两次候选切换保留。; packages/core/src/core/proxy.js:326-339 为setup上下文提供已绑定的triggerEvent；eval-5-reactive-switcher/mpx/run-1/agent.jsonl:53的启用/禁用、count=2和父级实际detail脚本测试通过，未验证宿主事件桥。"
+        },
+        {
+          "id": "rn.background-priming",
+          "assertion_id": "rn.background-priming",
+          "text": "动态背景节点在 RN 首次渲染即开启 enable-background 并具有唯一有效 key。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/detail-switcher.mpx:6-7：背景真实view无条件存在，首帧即有enable-background=true和唯一常量key detail-cover，仅限定ios/android/harmony；39-46 coverUrl为空返回{}，demo.mpx:30和64-70初始空、稍后赋远程URL。; packages/webpack-plugin/lib/runtime/components/react/mpx-view.tsx:852-855 将首帧背景能力存入ref；本实现预开启，空到非空不会切换能力。gen-node-react.js:89-96保留显式key。"
+        },
+        {
+          "id": "rn.animation-priming",
+          "assertion_id": "rn.animation-priming",
+          "text": "动态过渡节点在 RN 首次渲染即开启 enable-animation。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/detail-switcher.mpx:15-16：同一真实面板首帧无条件enable-animation=transition，仅限定RN；47-49初始只有opacity，57-59首次展开开启transition，之后折叠仍保留transition。; packages/webpack-plugin/lib/runtime/components/react/animationHooks/index.ts:24-41 以显式transition固定首帧animationTypeRef，避免后增transition时能力切换。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 529.432,
+        "tokens": 1626891,
+        "tool_calls": 31,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "routing.decoded-query",
+          "assertion_id": "routing.decoded-query",
+          "text": "页面使用 Mpx 提供的 decodedQuery 且不重复解码。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/detail.mpx:30-36 直接使用 decodedQuery.title 更新响应式 title 与导航标题，无再次解码；模板 :9/:15 消费同一值。; eval-6-routing-subpackage/mpx/run-1/agent.jsonl:64 隔离 Jest 的 %252F/%2F 用例及全部 13 tests 通过；:70 ESLint 0 errors/warnings。"
+        },
+        {
+          "id": "routing.web-deploy",
+          "assertion_id": "routing.web-deploy",
+          "text": "Web 路由 base、资源 publicPath 和 history 回退各自正确配置。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/runtime-config.js:7-12 在 createApp 前设置运行时 history/base；app.mpx:2-5 导入顺序可达。; eval-6-routing-subpackage/mpx/outputs/app-json.js:4-15 合法首页 pages/index，并通过 pages 对象 path=detail 与 async query 生成 /detail；没有手写 routes。; eval-6-routing-subpackage/mpx/outputs/plugin-options.js:15-16 设置 CDN publicPath；verification.md:90-106 给出 webpack 合并与 Nginx history HTML 回退。; packages/webpack-plugin/lib/web/processJSON.js:248-270 保留页面别名并以 queryObj.async 生成异步映射；lib/runtime/optionProcessor.js:232-250 使用这些映射和运行时 routeConfig。"
+        },
+        {
+          "id": "routing.web-titlebar",
+          "assertion_id": "routing.web-titlebar",
+          "text": "Web 内建标题栏被运行时显式启用且页面未将其隐藏。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/runtime-config.js:12 显式 enableTitleBar=true；detail.mpx:77-90 仅 wx 设置 custom，Web 保留 default；:34 动态标题调用可达。; packages/webpack-plugin/lib/runtime/components/web/mpx-titlebar.vue:35 确认运行时显式开关和 navigationStyle 的实际消费。"
+        },
+        {
+          "id": "subpackage.load-driver",
+          "assertion_id": "subpackage.load-driver",
+          "text": "RN 普通异步分包同时具备编译开关与真实宿主加载驱动，不承诺 RN/Web 独立启动。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/plugin-options.js:4-9 三个 RN mode 开启 supportSubpackage；runtime-config.js:15-28 loadChunkAsync({package}) 调用 loadBundle(name) 并等待真实完成。; eval-6-routing-subpackage/mpx/outputs/bundle-host.js:2-24 默认 stub 明确拒绝并提供 installBundleHost；verification.md:70-86 在 require app 前注入宿主接口，明确下载且执行后 resolve。; eval-6-routing-subpackage/mpx/outputs/app-json.js:12-19 Web 异步 pages、RN 普通包、wx 保留 independent；index.mpx:10-17 用 resolve 实现导航；verification.md:61-68 明确 RN/Web 不能独立启动。; packages/webpack-plugin/lib/json-compiler/index.js:410-415 支付宝实际删除 independent；lib/react/LoadAsyncChunkModule.js:19-25/:54-57 确认 package 参数和 Promise 驱动契约。"
+        },
+        {
+          "id": "subpackage.prefetch-driver",
+          "assertion_id": "subpackage.prefetch-driver",
+          "text": "RN 预下载单独接入只下载不执行的宿主方法，并明确 Web preloadRule 不生效。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/runtime-config.js:30-37 单独的 downloadChunkAsync(packages) 逐项调用 downloadBundle，无 loadBundle；app-json.js:7-9 保留首页 preloadRule。; eval-6-routing-subpackage/mpx/outputs/verification.md:61-66/:84 明确微信/支付宝支持边界与 Web preloadRule 不生效。; packages/core/src/platform/patch/getDefaultOptions.ios.js:474-483 确认页面实际预下载调用传 packages 数组；eval-6-routing-subpackage/mpx/run-1/agent.jsonl:64 三 RN 目标的预下载不执行测试通过。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 837.236,
+        "tokens": 1769243,
+        "tool_calls": 49,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "ssr.request-pinia",
+          "assertion_id": "ssr.request-pinia",
+          "text": "每次 SSR 应用初始化同步创建并返回独立 Pinia，保留既有根选项。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/app.mpx:7-10 同步 onAppInit 返回 appMarker 与 createPinia；stores/detail.js:6-13 仅导出 defineStore，状态/在途任务按实例创建。; eval-7-ssr-shared-state/mpx/outputs/detail.mpx:30-33 同步捕获实例并显式绑定 instance.proxy.$pinia；:56-60 预取复用闭包 store，await 后不读取 active Pinia。; packages/pinia/src/index.web.js:20-35 非浏览器仅允许 onAppInit 中创建新 Pinia；packages/webpack-plugin/lib/runtime/optionProcessor.js:417-429/:434-443 默认每请求同步合并根选项并创建应用。; eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:87 模块 Jest 6 passed/1 skipped；:108 最终脚本 ESLint 与动态 JSON 检查通过；测试使用 Pinia/renderer 替身，不能证明实际 HTML/hydration。"
+        },
+        {
+          "id": "ssr.await-prefetch",
+          "assertion_id": "ssr.await-prefetch",
+          "text": "服务端预取返回真正的数据 Promise，并保留各客户端的加载入口。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/detail.mpx:45-60 SSR onLoad 提前跳过取数，onServerPrefetch 返回 detail.fetchItem Promise；wx/ali/RN 和浏览器保留 loadClient 入口。; eval-7-ssr-shared-state/mpx/outputs/stores/detail.js:15-55 async action 等待 fetcher 再更新状态；api/detail.js:29-34 本地延迟返回真实业务 Promise，server.js:9-29 提供 Node HTTP(S) Promise 传输。; packages/core/src/platform/patch/getDefaultOptions.web.js:116-117 返回 SERVERPREFETCH 结果；packages/core/src/platform/builtInMixins/pageStatusMixin.web.js:76-79 onLoad 由 created 触发，故该实现正确分离服务端取数。; eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:87 模块 Jest 6 passed/1 skipped；:108 最终脚本 ESLint 与动态 JSON 检查通过；测试使用 Pinia/renderer 替身，不能证明实际 HTML/hydration。"
+        },
+        {
+          "id": "ssr.browser-import",
+          "assertion_id": "ssr.browser-import",
+          "text": "浏览器专用埋点在 SSR 中不会被导入求值，其他端无此依赖。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/detail.mpx:67-74 仅浏览器 Web 的 onMounted 内才执行动态 import；analytics.web.js:2 保留导入立即读取 window 的反例，因此没有用伪造全局规避边界。; eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:87 模块 Jest 6 passed/1 skipped；:108 最终脚本 ESLint 与动态 JSON 检查通过；测试使用 Pinia/renderer 替身，不能证明实际 HTML/hydration。"
+        },
+        {
+          "id": "ssr.hydration-cache",
+          "assertion_id": "ssr.hydration-cache",
+          "text": "首屏状态通过 Pinia 恢复并按请求参数复用，而非永久跳过后续请求。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/stores/detail.js:7-9/:30-55 item/loadedId 在 Pinia state；按 id 命中缓存，成功才置 loadedId，失败清理 pending 可重试。; eval-7-ssr-shared-state/mpx/outputs/detail.mpx:39-64 客户端 action 共用缓存，同页 query 改 id 有 watcher；server.js:35-41 使用 renderer 模板默认注入 INITIAL_STATE。; packages/webpack-plugin/lib/runtime/optionProcessor.js:447-455 默认入口 push(context.url) 后等待路由，并在 rendered 导出 Pinia state；:469-476 客户端先恢复 INITIAL_STATE 再等异步路由就绪挂载。; eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:87 模块 Jest 6 passed/1 skipped；:108 最终脚本 ESLint 与动态 JSON 检查通过；测试使用 Pinia/renderer 替身，不能证明实际 HTML/hydration。"
+        },
+        {
+          "id": "ssr.dual-build",
+          "assertion_id": "ssr.dual-build",
+          "text": "SSR 具有同入口的服务端/客户端产物与逐请求渲染 context，异步首屏正确等待路由。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/ssr-build.js:36-75 同 app entry 生成 node/commonjs2 server 与 web client；分别配 server/client SSR 插件，关闭 server splitChunks/runtimeChunk，客户端 useSSR=true。; eval-7-ssr-shared-state/mpx/outputs/server.js:32-58 同版 bundle/manifest、HTML outlet、逐请求新 context.url 及 renderToString 回调链；app.mpx:21-24 与 packages/detail/app.mpx:4 保留共用异步普通分包。; packages/webpack-plugin/lib/runtime/optionProcessor.js:447-455 默认入口 push(context.url) 后等待路由，并在 rendered 导出 Pinia state；:469-476 客户端先恢复 INITIAL_STATE 再等异步路由就绪挂载。; eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:87 模块 Jest 6 passed/1 skipped；:108 最终脚本 ESLint 与动态 JSON 检查通过；测试使用 Pinia/renderer 替身，不能证明实际 HTML/hydration。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "noskill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 442.651,
+        "tokens": 1223714,
+        "tool_calls": 39,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "config.target-dialect",
+          "assertion_id": "config.target-dialect",
+          "text": "构建目标使用 wx/ali/ios/android/harmony/web，微信源码方言保持 wx，Skyline 不成为 mode。",
+          "passed": true,
+          "evidence": "outputs/plugin-options.js:1-10 六目标校验并原样传入 mode，srcMode 固定 wx。"
+        },
+        {
+          "id": "config.rn-file-fallback",
+          "assertion_id": "config.rn-file-fallback",
+          "text": "RN 条件文件回退后在 ios/android/harmony 都保留可渲染模板。",
+          "passed": true,
+          "evidence": "outputs/src/pages/home.mpx:38 使用默认 status-card.mpx 引用；outputs/src/components/status-card.ios.mpx:1-21 无目标限定模板，保留 open 事件。outputs/checks/verify.cjs 的真实 resolver 与 SFC parser 检查记录见 verification.md。"
+        },
+        {
+          "id": "config.native-import-boundary",
+          "assertion_id": "config.native-import-boundary",
+          "text": "react-native 依赖只进入 RN 目标的模块图，三种 RN 目标仍可获得平台名。",
+          "passed": true,
+          "evidence": "outputs/src/pages/home.mpx:19 引用默认模块；outputs/src/device-label.js 无原生导入；outputs/src/device-label.ios.js:1-5 通过 RN 条件文件独占 react-native 并读取 Platform.OS。"
+        },
+        {
+          "id": "config.skyline-json",
+          "assertion_id": "config.skyline-json",
+          "text": "微信应用/页面具有正确层级的 Skyline 配置，其他目标配置不被污染。",
+          "passed": true,
+          "evidence": "outputs/src/app.mpx:12-21 只在 wx 输出所需 app 配置；outputs/src/pages/home.mpx:35-46 的 custom 导航及 wx renderer/glass-easel/disableScroll 配置完整，其他端不带微信渲染字段。"
+        },
+        {
+          "id": "config.external-classes",
+          "assertion_id": "config.external-classes",
+          "text": "支付宝插件 externalClasses 保留三个仍被消费的外部类名称。",
+          "passed": true,
+          "evidence": "outputs/plugin-options.js:10 三个外部类齐全；两种组件:2,12 声明并静态使用，outputs/src/pages/home.mpx:7-9 传入三个父层样式。"
+        },
+        {
+          "id": "config.component2",
+          "assertion_id": "config.component2",
+          "text": "component2 在支付宝开发者工具工程配置中启用。",
+          "passed": true,
+          "evidence": "outputs/mini.project.json:2 开启 component2；outputs/verification.md「合入位置与业务保留」明确支付宝产物根落点及现有复制流程。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "noskill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 822.398,
+        "tokens": 1974456,
+        "tool_calls": 38,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "layout.portable-grid",
+          "assertion_id": "layout.portable-grid",
+          "text": "卡片图片区域具有实际可用的跨端布局，RN 分支使用支持的选择器与布局声明。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:77：单类选择器及单列 Flex 替代 grid，image 明确 240×80 与不收缩；verification-results.json 记录 RN 三端样式转换检查通过。"
+        },
+        {
+          "id": "layout.margin-geometry",
+          "assertion_id": "layout.margin-geometry",
+          "text": "折叠块级间距与不折叠 Flex 间距分别保持 24rpx、20rpx、16rpx。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:100：summary 顶部24、details顶部20且首子无额外margin；stat 仍上下各8，Flex项间有效16rpx。"
+        },
+        {
+          "id": "layout.text-ellipsis",
+          "assertion_id": "layout.text-ellipsis",
+          "text": "同一长标题在各端均一行省略，并保留各端所需的文本约束。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:9：wx max-lines/overflow 与 RN三目标行数属性齐全；title定宽240，并在wx/ali/web保留nowrap/hidden/ellipsis。"
+        },
+        {
+          "id": "layout.image-padding",
+          "assertion_id": "layout.image-padding",
+          "text": "图片自身保持 240×80rpx，四边 24rpx 留白由外层承担。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:77：hero 仅padding24，自身由图片240×80撑开，card align-items:flex-start，外框288×128；图片自身无padding。"
+        },
+        {
+          "id": "layout.responsive-breakpoint",
+          "assertion_id": "layout.responsive-breakpoint",
+          "text": "400px 断点在 Skyline 与其他端保持一致且随窗口变化更新。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:44：wx窗口监听与RN Dimensions监听均以窗口宽度<=400切换并退订；媒体查询仅编译至ali/web；verification-results.json含四目标边界与清理测试。"
+        },
+        {
+          "id": "layout.style-isolation",
+          "assertion_id": "layout.style-isolation",
+          "text": "支付宝同名 badge 类不在页面、组件和兄弟实例间串色。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:70 与 outputs/demo.mpx 的 scoped 样式分别隔离内部蓝badge和父级红badge；verification-results.json包含ali/web作用域检查。"
+        },
+        {
+          "id": "layout.text-tree",
+          "assertion_id": "layout.text-tree",
+          "text": "保障文本与官方标签采用各端合法节点树并保持横向展示。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:23：保障与官方为横向Flex下相邻text，文本及标签样式完整。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "noskill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8571428571428571,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 1348.019,
+        "tokens": 2872066,
+        "tool_calls": 54,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "scroll.refresh-entry",
+          "assertion_id": "scroll.refresh-entry",
+          "text": "刷新在四端都有可触发入口，支付宝不依赖不支持的 refresher 事件。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:4 为所有端刷新按钮，52-54 将wx/RN/Web刷新状态与事件绑定到实际容器且排除ali；219-241 同步刷新任务去重，等待已有操作，成功重置第一页，catch/finally释放刷新状态。outputs/data.js:12-30 提供一次失败；run-1/agent.jsonl:92 真实VM记录刷新失败保留列表/位置且可重试，111 最终版本补充复验通过。"
+        },
+        {
+          "id": "scroll.pagination",
+          "assertion_id": "scroll.pagination",
+          "text": "触底分页从实际滚动容器触发并保留有界可滚动区域。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:41-56 scroll-y容器绑定next且显式feedHeight；110-112、149-159、178-182按当前窗口计算有界高度；208-217成功才提交页码，250-258同步操作锁防重复触底并在60条停止。run-1/agent.jsonl:92、111记录重复触底、失败原页重试、60条边界VM通过；113现有相关Jest22/22通过，不替代产物宿主测试。"
+        },
+        {
+          "id": "scroll.event-payload",
+          "assertion_id": "scroll.event-payload",
+          "text": "滚动位置展示读取 scroll-view 的 detail.scrollTop。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:55 绑定onFeedScroll，183-185读取event.detail.scrollTop，8展示actualScrollTop；{detail:{scrollTop:120}}按赋值路径得到120。run-1/agent.jsonl:92 真实VM检查实际detail值且滚动命令独立，通过。"
+        },
+        {
+          "id": "scroll.sticky-renderer",
+          "assertion_id": "scroll.sticky-renderer",
+          "text": "分组标题的吸顶实现按目标和微信 renderer 生效。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:58-75 正常流保留分组头，并在实际scroll-view外放同级白底覆盖层；125-143依据组头40px与订单64px累计边界，top=min(0,end-scrollTop-40)完成组切换与推离；325-329固定行高且不收缩、背景与裁剪完整。该普通view覆盖层方案对Skyline/WebView/RN/ali/Web均有合法布局路径，属于grading-guide.md:9接受的等价实现，不因未使用sticky-section机械扣分。run-1/agent.jsonl:92、111记录边界算法VM通过；快速滚动跟随流畅度未验证。"
+        },
+        {
+          "id": "scroll.horizontal-width",
+          "assertion_id": "scroll.horizontal-width",
+          "text": "横向分类的直接内容子节点分别具备视口宽和 1200rpx 宽的布局依据。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:13-36 横向容器启用wx enable-flex，唯一直接category-track显式总宽；113-118计算第二面板viewportWidth*1200/750及总轨宽，23、32分别绑定视口宽与等效1200rpx宽。318-319轨道/面板row且不收缩，明确总宽直接节点负责Skyline滚动范围，非依赖深层min-width反撑。375px窗口可得到375/600/975px，接受同一布局契约的等价结构。"
+        },
+        {
+          "id": "scroll.query-scope",
+          "assertion_id": "scroll.query-scope",
+          "text": "订单定位链路采用合法 id、实例作用域与 RN 可查询节点。",
+          "passed": false,
+          "evidence": "outputs/feed.mpx:58 的#feed-content及61 的#order-N均未声明wx:ref；286-305却在RN必经路径用createSelectorQuery().in(this)查询两节点，3次重试后仍不会登记缺失的节点，定位按钮无法到达moveTo。公共compiler.js:1907-1955仅在ref属性has时注册id/class，rnSelectQuery.js:45通过__selectRef查询；mpx/references/rn/rn-script-reference.md:116、122明确要求wx:ref。run-1/agent.jsonl:92 的定位VM替身直接提供rect，未覆盖真实RN节点注册，因此其通过不能推翻此失败。"
+        },
+        {
+          "id": "scroll.scrollbar-boolean",
+          "assertion_id": "scroll.scrollbar-boolean",
+          "text": "隐藏滚动条使用严格布尔 false，并仅对微信补 enhanced。",
+          "passed": true,
+          "evidence": "outputs/feed.mpx:19-20、50-51 两容器均严格布尔false，enhanced只给wx，无全局scrollbar CSS。公共RN mpx-scroll-view.tsx:759-760不依赖enhanced直接应用showScrollbar；Web mpx-scroll-view.vue:219-245默认BetterScroll选项没有启用scrollbar，输出也未用scroll-options打开它，Web无需要另行关闭的indicator。ali由公共scroll-view转换隐藏类路径处理；outputs/verification.md:28、61-64和run-1/agent.jsonl:113的scroll-view编译现有测试记录可核对。宿主滚动条实际显隐未验证。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "noskill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 907.217,
+        "tokens": 3441200,
+        "tool_calls": 50,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "dialog.mask-scroll",
+          "assertion_id": "dialog.mask-scroll",
+          "text": "支付宝锁滚动仅作用于蒙层，内容区仍可滚动，微信背景触摸被正确拦截。",
+          "passed": true,
+          "evidence": "outputs/checkout-dialog.mpx:2-7 蒙层与内容面板为兄弟，disable-scroll@ali只作用蒙层，没有全局page/body锁；2、5、17的wx局部catchtouchmove绑定138空noop。16-17为显式scroll-y与有界scrollHeight；99-100计算滚动区高度。294-296发close由父组件关闭visible后移除覆盖层。支付宝滚动结构与微信触摸拦截符合本断言，实际手势未验证；未计分的Skyline入场/滚动type问题见review-2-3.md。"
+        },
+        {
+          "id": "dialog.device-input",
+          "assertion_id": "dialog.device-input",
+          "text": "仅复现问题的支付宝输入框按运行时 iOS/Android 设置 enableNative。",
+          "passed": false,
+          "evidence": "outputs/checkout-dialog.mpx:22、31将两个ali输入框绑定enableNative，89-90却返回deviceSystem !== ios，实际ali+iOS=false、ali+Android=true，与本评测既定verify明确要求的true/false相反。outputs/size.js:19-26使用运行时设备信息是正确的，但不能抵消取值方向错误；checks/checkout.spec.js:112-114测试同样断言了反向策略，run-1/agent.jsonl:98的25/25通过并未验证任务契约。outputs/verification.md:24-25、31引用Alipay+/IAP的pds.alipay.com输入框文档，其iOS降级H5建议不代表本评测指定中国支付宝复现机型的取值要求；资料适用范围区别已披露。"
+        },
+        {
+          "id": "dialog.focus-readiness",
+          "assertion_id": "dialog.focus-readiness",
+          "text": "支付宝首次聚焦等待实际渲染和入场完成。",
+          "passed": true,
+          "evidence": "outputs/checkout-dialog.mpx:8-11组件自身API动画transitionend连接enterDone，156-182只在开始后等待真实完成事件再设置focusField=name，未用220ms/300ms定时器假定就绪；23、32在entered前禁用输入。167-173验证visible、mounted、openId及目标，中断/过期事件被拒绝；288-292 reset递增openId并清焦点。run-1/agent.jsonl:98的25/25中包含入场前后和过期回调VM检查，checks/checkout.spec.js:116-127可复核。此项按既定支付宝聚焦契约评分，真实支付宝动画及首次键盘行为未验证。"
+        },
+        {
+          "id": "dialog.keyboard-order",
+          "assertion_id": "dialog.keyboard-order",
+          "text": "焦点和键盘状态对两种输入框切换事件顺序均稳定。",
+          "passed": true,
+          "evidence": "outputs/checkout-dialog.mpx:195-218对focus(B)先到时忽略旧A的blur，对blur(A)先到延后最终失焦确认，B的focus取消任务；184-193还用touchstart目标保护跨任务交接。220-257在ali缓存早到高度，缺失新高度时沿用，并按input实际rect反解剩余遮挡；自动避让充分时offset=0，wx/RN/Web不进入手动路径；271-292最终失焦/关闭清空。run-1/agent.jsonl:98真实25/25包含两顺序、早到高度、无新高度、跨任务与自动不叠加测试；checks/checkout.spec.js:129-205可复核。页面事件桥接57-67依赖组件静态模块先于宿主页注册加载，宿主集成尚未验证。"
+        },
+        {
+          "id": "dialog.window-units",
+          "assertion_id": "dialog.window-units",
+          "text": "尺寸封装使用窗口高度及同单位安全区，容忍缺失安全区并响应窗口变化。",
+          "passed": true,
+          "evidence": "outputs/size.js:4-16直接读windowHeight、screenHeight-safeArea.bottom，缺失safeArea返回0，无导航栏扣减或pixelRatio换算，无模块级窗口缓存；checkout-dialog.mpx:128-131 resize重读、142-154新值覆盖windowHeight与safeBottom，156-158每次打开也重读。run-1/agent.jsonl:98真实25/25包含windowHeight=700/safeBottom=20、safeArea=null、旋转新窗口覆盖旧值，checks/checkout.spec.js:91-101为对应断言。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "noskill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8333333333333334,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 647.884,
+        "tokens": 1578633,
+        "tool_calls": 40,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "api.host-login",
+          "assertion_id": "api.host-login",
+          "text": "微信与支付宝授权码进入各自兑换入口，RN/Web 使用约定宿主 session 能力。",
+          "passed": true,
+          "evidence": "eval-4-account-search/noskill/outputs/api.js:26-45：wx/ali 分别 login 后 POST /session/wx、/session/ali；RN 三端/Web 直接 await authHost.signIn 返回 token。account.mpx:76-92 将真实 nativeProxy.login 接入 custom，仅兑换/传输注入本地 stub。; eval-4-account-search/noskill/outputs/auth-host.js:13-20：signIn 返回 Promise，configureSignIn 可接工程宿主实现；packages/api-proxy/src/platform/api/login/index.ali.js:6-10 将 authCode 转 code。"
+        },
+        {
+          "id": "api.custom-contract",
+          "assertion_id": "api.custom-contract",
+          "text": "getSession 按实际目标注册且由安装后的代理调用，明确返回 Promise。",
+          "passed": true,
+          "evidence": "eval-4-account-search/noskill/outputs/api.js:27-45：exchange/signIn 均 async，六个目标键均返回 Promise getSession；account.mpx:77-85 通过 getProxy({usePromise:true,custom}) 安装，api.js:53 调用安装后的 proxy.getSession。; packages/api-proxy/src/install.js:12-20：custom[__mpx_mode__] 在 promisify 后赋给实际实例；getProxy 是现有公共导出。"
+        },
+        {
+          "id": "api.request-task",
+          "assertion_id": "api.request-task",
+          "text": "Promise 请求的取消句柄从请求发起时的 __returned 获取。",
+          "passed": true,
+          "evidence": "eval-4-account-search/noskill/outputs/api.js:56-65：原 request Promise 发起后立即取得 pending.__returned，再建立 then；cancel 调保存的 task.abort。api.js:131-136 在请求在途时调用已保存任务取消。; packages/api-proxy/src/common/js/promisify.js:75-92：同步调用底层 API，并把 task 写入 Promise.__returned。"
+        },
+        {
+          "id": "api.stale-result",
+          "assertion_id": "api.stale-result",
+          "text": "查询身份阻止旧响应覆盖新结果或取消后的状态。",
+          "passed": true,
+          "evidence": "eval-4-account-search/noskill/outputs/api.js:131-144：先递增版本再 cancel；api.js:188-214 的 success/catch/finally 均受 active 和 searchVersion 守卫；155-167 离页失效身份，重进旧响应仍不能提交。; eval-4-account-search/noskill/run-1/agent.jsonl:80：真实 Jest 日志中乱序、旧finally、取消与离页晚到测试通过，原生传输为 stub。"
+        },
+        {
+          "id": "network.cancel-token",
+          "assertion_id": "network.cancel-token",
+          "text": "xfetch 使用 CancelToken.token、exec 和 isCancel 完成取消链路。",
+          "passed": false,
+          "evidence": "eval-4-account-search/noskill/outputs/api.js:77-87 确实传 cancellation.token、用 exec；但 93-94 的 isCancellation 用 /abort|cancel/i 匹配任意错误文案，225-227 因此吞掉普通业务错误。; packages/fetch/src/xfetch.js:199-201：公共 isCancel 仅确认 __CANCEL__ 标记。独立只读反例注入详情 Promise.reject(Error(\"cancel 配额不足，业务失败\"))，登录后 showDetail 结束时 state.detailError 为 \"\"。根因仅在本断言扣分。"
+        },
+        {
+          "id": "network.interceptor-dispose",
+          "assertion_id": "network.interceptor-dispose",
+          "text": "响应拦截器保留成功值/业务错误语义并通过 use 返回的函数释放自身。",
+          "passed": true,
+          "evidence": "eval-4-account-search/noskill/outputs/api.js:68-75：本 scope 响应 checkResponse，非0/HTTP错误抛出，正常返回原 response；149-167：enter 保存 use 返回闭包，leave 仅执行自身闭包，重复 enter/leave 有门禁。; packages/fetch/src/interceptorManager.js:35-73：use 返回仅删除本次包装项的闭包；xfetch.js:241-248 在 adapter 后串联真实响应拦截器。; eval-4-account-search/noskill/run-1/agent.jsonl:80：真实 XFetch（仅原生 adapter 为stub）正常透传、业务拒绝和多次进出保留其他拦截器测试通过。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "noskill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8571428571428571,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 533.142,
+        "tokens": 2081153,
+        "tool_calls": 36,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "script.props-live",
+          "assertion_id": "script.props-live",
+          "text": "title prop 在父级更新后继续驱动标题展示。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/detail-switcher.mpx:28-34 defineProps经toRefs保持title引用，模板3/11消费；两卡片:10-11同样使用toRefs；demo.mpx:19将父级title持续绑定，46-48更新ref。; eval-5-reactive-switcher/noskill/run-1/agent.jsonl:79：真实Mpx reactive/ref/toRefs/computed及setup编译产物下props A→B测试通过，父子下发为手动注入。"
+        },
+        {
+          "id": "script.setup-exposure",
+          "assertion_id": "script.setup-exposure",
+          "text": "script setup 显式暴露模板所用的状态、计算值与方法。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/detail-switcher.mpx:74-85 暴露模板的全部状态/计算值/方法；demo.mpx:90-107和两卡片:13同样显式暴露模板引用。; packages/webpack-plugin/lib/script-setup-compiler/index.js:574-592 将defineExpose对象转为setup返回值，613-615要求该宏；agent.jsonl:79包含四SFC的真实setup loader片段检查。"
+        },
+        {
+          "id": "script.lifecycle-registration",
+          "assertion_id": "script.lifecycle-registration",
+          "text": "生命周期同步注册，异步配置只更新存活实例状态。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/detail-switcher.mpx:57-72 在同步setup注册mounted/unmounted；挂载回调启动Promise+timer，then检查disposed，卸载清本实例timer；已resolve尚未then时卸载仍不写ready。demo.mpx:78-87有独立coverTimer清理。; eval-5-reactive-switcher/noskill/run-1/agent.jsonl:79：配置正常完成、多实例清理、resolve后卸载竞态通过；生命周期分发由测试注入。"
+        },
+        {
+          "id": "template.dynamic-range",
+          "assertion_id": "template.dynamic-range",
+          "text": "动态组件候选与 usingComponents 注册一致且保留父层共享计数。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/detail-switcher.mpx:11 range仅basic-card,vip-card，91-94注册对应真实文件；40的selectedKind仅产生该两值；36的count在外层switcher，demo.mpx:63-65只切activeKind，不销毁外层。; packages/webpack-plugin/lib/template-compiler/compiler.js:1038-1078 将range与注册交集生成候选；agent.jsonl:79六目标真实模板片段检查以及切换count保留测试通过。"
+        },
+        {
+          "id": "template.event-chain",
+          "assertion_id": "template.event-chain",
+          "text": "点击处理和 change 事件在四端传递同一业务载荷并遵守 disabled。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/detail-switcher.mpx:12绑定handleAction(selectedKind)，46-50先查最新disabled再count++并triggerEvent(change,{count,kind})；demo.mpx:23传$event，71-75消费实际event.detail.count/kind并显示完整detail，无dataset。; packages/core/src/core/proxy.js:326-339提供绑定triggerEvent；packages/webpack-plugin/lib/runtime/components/react/mpx-button.tsx:226-227 disabled传入稳定useHover，371及385阻止禁用点击；不能仅因未写hover-class=none判断失效。; eval-5-reactive-switcher/noskill/run-1/agent.jsonl:79：真实Mpx响应式下两次操作count=2、disabled静默和kind切换测试通过，事件桥由注入模拟。"
+        },
+        {
+          "id": "rn.background-priming",
+          "assertion_id": "rn.background-priming",
+          "text": "动态背景节点在 RN 首次渲染即开启 enable-background 并具有唯一有效 key。",
+          "passed": false,
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/detail-switcher.mpx:6-10 首帧确实已预启enable-background=true且仅RN，41初始空背景；但该背景view没有key。只读公共compiler.parse+gen-node-react对ios/android/harmony生成的该view props均只有enable-background/style，没有自动key。; packages/webpack-plugin/lib/template-compiler/gen-node-react.js:89-96只透传节点属性；packages/core/src/platform/patch/getDefaultOptions.ios.js:62-72直接传React.createElement，不再注入key；因此不满足本条唯一有效key子项。; 评分边界：这是无条件固定位置节点，未证明缺key导致其背景失效；本条key要求可能过度约束。预开启背景能力本身满足，未把同一缺key重复扣动画项。"
+        },
+        {
+          "id": "rn.animation-priming",
+          "assertion_id": "rn.animation-priming",
+          "text": "动态过渡节点在 RN 首次渲染即开启 enable-animation。",
+          "passed": true,
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/detail-switcher.mpx:15-21 面板无条件存在，首帧enable-animation=transition且仅RN；42初始只有opacity，52-54展开后加transition，折叠仍保留，满足同节点首次能力预声明。; packages/webpack-plugin/lib/runtime/components/react/animationHooks/index.ts:24-41用显式transition稳定首帧animationTypeRef；agent.jsonl:79验证RN三目标只出现一次属性，其他端属性剥离及展开/折叠状态。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "noskill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 658.915,
+        "tokens": 2874048,
+        "tool_calls": 52,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "routing.decoded-query",
+          "assertion_id": "routing.decoded-query",
+          "text": "页面使用 Mpx 提供的 decodedQuery 且不重复解码。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/detail.mpx:22-28 直接读取 decodedQuery.title 供模板 :6 和导航 API 消费，不再 decode。; eval-6-routing-subpackage/noskill/run-1/agent.jsonl:96 18 项交付测试通过，含六 mode 的 %252F/%2F；:111 ESLint 35 输入零诊断。"
+        },
+        {
+          "id": "routing.web-deploy",
+          "assertion_id": "routing.web-deploy",
+          "text": "Web 路由 base、资源 publicPath 和 history 回退各自正确配置。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/app.mpx:3-6 先导入 runtime-config；runtime-config.js:7-15 在运行时设置 history/base=/catalog/，无 routes 覆盖。; eval-6-routing-subpackage/noskill/outputs/app-json.js:4-17 首页合法注册，Web pages 别名 detail 与 async query 保留框架路由生成；plugin-options.js:18-21 设置 CDN publicPath。; eval-6-routing-subpackage/noskill/outputs/verification.md:84-105 指定 /catalog/detail 深链、HTML 部署、Nginx history 回退和资源 404。; eval-6-routing-subpackage/noskill/run-1/agent.jsonl:96 公共 Web JSON 处理器与 buildPagesMap 的异步路由检查通过，确认生成 detail/pages/index 映射。"
+        },
+        {
+          "id": "routing.web-titlebar",
+          "assertion_id": "routing.web-titlebar",
+          "text": "Web 内建标题栏被运行时显式启用且页面未将其隐藏。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/runtime-config.js:9 显式 enableTitleBar=true；detail.mpx:34-45 Web default，custom 只限 wx；:26 动态标题 API 可达。; packages/webpack-plugin/lib/runtime/components/web/mpx-titlebar.vue:35 实际显示条件与本实现一致。"
+        },
+        {
+          "id": "subpackage.load-driver",
+          "assertion_id": "subpackage.load-driver",
+          "text": "RN 普通异步分包同时具备编译开关与真实宿主加载驱动，不承诺 RN/Web 独立启动。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/plugin-options.js:23-27 RN 三 mode 开启 supportSubpackage；runtime-config.js:18-24 loadChunkAsync({package}) 等待 loadBundle 并映射 null。; eval-6-routing-subpackage/noskill/outputs/bundle-host.js:10-35 提供真实宿主安装点和启动调用顺序，未绑定明确失败；app-json.js:19-26 RN 普通包、wx independent。; eval-6-routing-subpackage/noskill/outputs/index.mpx:17-18 给出 RN/Web 实际导航路径；verification.md:72-80 解释宿主执行/注册、公共包清单和 RN/Web 依赖主运行时。; packages/webpack-plugin/lib/react/LoadAsyncChunkModule.js:19-25/:54-57 确认宿主钩子参数和等待契约；packages/webpack-plugin/lib/json-compiler/index.js:410-415 确认支付宝不支持 independent，普通包保留符合实际能力。"
+        },
+        {
+          "id": "subpackage.prefetch-driver",
+          "assertion_id": "subpackage.prefetch-driver",
+          "text": "RN 预下载单独接入只下载不执行的宿主方法，并明确 Web preloadRule 不生效。",
+          "passed": true,
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/runtime-config.js:25-29 downloadChunkAsync 接收数组并逐包调用 downloadBundle，不执行 loadBundle；app-json.js:27-29 小程序和 RN preloadRule 保留。; eval-6-routing-subpackage/noskill/outputs/verification.md:74/:105 明确 RN 首页真实触发链及 Web 无相同 JSON 自动预下载。; packages/core/src/platform/patch/getDefaultOptions.ios.js:474-483 确认实际调用 packages 数组；eval-6-routing-subpackage/noskill/run-1/agent.jsonl:96 三 RN 目标下载不执行检查通过。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "noskill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 791.706,
+        "tokens": 1417526,
+        "tool_calls": 37,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "ssr.request-pinia",
+          "assertion_id": "ssr.request-pinia",
+          "text": "每次 SSR 应用初始化同步创建并返回独立 Pinia，保留既有根选项。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/app.mpx:5-9 同步 onAppInit 返回 appMarker 与新 Pinia；stores/detail.js:6-9 state 和 pending Map 仅在所属 store 闭包创建。; eval-7-ssr-shared-state/noskill/outputs/detail.mpx:20-22 同步 setup 显式绑定 instance.$pinia；:55-58 serverPrefetch 在 await 前获取当前 store，action 异步只操作 this store 的闭包。; packages/pinia/src/index.web.js:20-35 非浏览器仅允许 onAppInit 中创建新 Pinia；packages/webpack-plugin/lib/runtime/optionProcessor.js:417-429/:434-443 默认每请求同步合并根选项并创建应用。; eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:68 13 个局部 Jest 通过（真实 Vue2/Pinia、VM 页面与模拟 renderer）；:78/:83 JavaScript 与 5 个 SFC 脚本块 ESLint 通过。"
+        },
+        {
+          "id": "ssr.await-prefetch",
+          "assertion_id": "ssr.await-prefetch",
+          "text": "服务端预取返回真正的数据 Promise，并保留各客户端的加载入口。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/detail.mpx:55-64 serverPrefetch 返回 store.fetchItem Promise；SSR onLoad 不重复请求，其他客户端保留 this.loadDetail(query.id)。; eval-7-ssr-shared-state/noskill/outputs/stores/detail.js:11-29 返回并等待真正任务；api/detail.js:12-27 本地延迟数据源返回 Promise；:34-71 提供完整基地址、Node fetch/宿主 request Promise 适配。; packages/core/src/platform/patch/getDefaultOptions.web.js:116-117 返回 SERVERPREFETCH 结果；packages/core/src/platform/builtInMixins/pageStatusMixin.web.js:76-79 onLoad 由 created 触发，故该实现正确分离服务端取数。; eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:68 13 个局部 Jest 通过（真实 Vue2/Pinia、VM 页面与模拟 renderer）；:78/:83 JavaScript 与 5 个 SFC 脚本块 ESLint 通过。"
+        },
+        {
+          "id": "ssr.browser-import",
+          "assertion_id": "ssr.browser-import",
+          "text": "浏览器专用埋点在 SSR 中不会被导入求值，其他端无此依赖。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/detail.mpx:65-72 Web 且 typeof window 有效的 onReady 后才动态 import；非 Web 不执行该依赖分支，原来有导入副作用的模块同样可被该边界隔离。; eval-7-ssr-shared-state/noskill/outputs/analytics.web.js:1-5 另将浏览器访问移到 mountAnalytics 函数内；此处接受等价的更安全模块实现，但现有测试无法代替原始副作用模块的求值边界集成验证。; eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:68 13 个局部 Jest 通过（真实 Vue2/Pinia、VM 页面与模拟 renderer）；:78/:83 JavaScript 与 5 个 SFC 脚本块 ESLint 通过。"
+        },
+        {
+          "id": "ssr.hydration-cache",
+          "assertion_id": "ssr.hydration-cache",
+          "text": "首屏状态通过 Pinia 恢复并按请求参数复用，而非永久跳过后续请求。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/stores/detail.js:7-32 可序列化 items 以 detail:<id> 为键；只缓存成功结果，pending 按实例且 finally 删除，失败可重试。; eval-7-ssr-shared-state/noskill/outputs/detail.mpx:23-53 当前 id 的 computed 展示与 query watcher 保证 A 恢复后跳过、B 继续加载；server.js:7-16 使用 bundle renderer 模板默认 state 注入。; packages/webpack-plugin/lib/runtime/optionProcessor.js:447-455 默认入口 push(context.url) 后等待路由，并在 rendered 导出 Pinia state；:469-476 客户端先恢复 INITIAL_STATE 再等异步路由就绪挂载。; eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:68 13 个局部 Jest 通过（真实 Vue2/Pinia、VM 页面与模拟 renderer）；:78/:83 JavaScript 与 5 个 SFC 脚本块 ESLint 通过。"
+        },
+        {
+          "id": "ssr.dual-build",
+          "assertion_id": "ssr.dual-build",
+          "text": "SSR 具有同入口的服务端/客户端产物与逐请求渲染 context，异步首屏正确等待路由。",
+          "passed": true,
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/ssr-build.js:33-95 同一 app.mpx entry 配 server/client SSR 插件及 useSSR；server target=node/commonjs2/Node require chunk，关闭 splitChunks/runtimeChunk；client target=web。; eval-7-ssr-shared-state/noskill/outputs/server.js:5-28 HTML outlet、同版 bundle/manifest、每请求新 context.url 与 renderToString；app.mpx:15-21 详情仍注册普通异步分包。; packages/webpack-plugin/lib/runtime/optionProcessor.js:447-455 默认入口 push(context.url) 后等待路由，并在 rendered 导出 Pinia state；:469-476 客户端先恢复 INITIAL_STATE 再等异步路由就绪挂载。; eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:68 13 个局部 Jest 通过（真实 Vue2/Pinia、VM 页面与模拟 renderer）；:78/:83 JavaScript 与 5 个 SFC 脚本块 ESLint 通过。"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "mpx": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 674.8486,
+        "stddev": 271.0178,
+        "min": 382.752,
+        "max": 1201.395
+      },
+      "tokens": {
+        "mean": 1902321.25,
+        "stddev": 670596.7194,
+        "min": 1013362,
+        "max": 3190660
+      }
+    },
+    "noskill": {
+      "pass_rate": {
+        "mean": 0.9185,
+        "stddev": 0.089,
+        "min": 0.8,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 768.9915,
+        "stddev": 279.4521,
+        "min": 442.651,
+        "max": 1348.019
+      },
+      "tokens": {
+        "mean": 2182849.5,
+        "stddev": 798277.548,
+        "min": 1223714,
+        "max": 3441200
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.08",
+      "time_seconds": "-94.1",
+      "tokens": "-280528"
+    }
+  },
+  "notes": [
+    "本报告是48条预定义断言的静态设计符合率，不是完整构建或多端运行通过率。",
+    "每组8个case各执行一次，16/16成功交付，均使用gpt-6.1-sol / high；8次mpx执行使用同一Skill快照。没有重复实验，不能据此估计同一任务的重复运行波动。",
+    "两组共同通过44条；mpx额外通过scroll.query-scope、dialog.device-input、network.cancel-token、rn.background-priming四条。",
+    "背景key项仅因缺少预定义的唯一有效key子项扣分，固定位置节点是否实际失效未被证明；若接受其稳定位置身份为等价，noskill为45/48（93.75%），差值缩至6.25个百分点。正式分数保持原断言48/44。",
+    "当前RN源码showScrollbar不依赖enhanced；两组滚动条均通过，允许无害的额外RN增强配置。Skill对应描述与源码不一致，已披露而未改写本轮Skill。",
+    "重要未计分问题：mpx case5的4处display:block触发RN getClassMap错误回调；探针未throw且进程exit0，未执行完整业务构建。48/48不能证明产物可运行。",
+    "ESLint最终16/16通过；原Jest记录14组通过、1组含跳过、1组仍失败。case4 noskill为27/28；case7 mpx原6pass1skip，事后只补跑HTTP一项并通过。",
+    "全部16次独立六目标编译尝试都因缺少业务CLI/工程被阻塞；完整SSR HTML、hydration、浏览器及所有真机行为均未验证。",
+    "耗时和Token来自真实CLI用量；平均值跨不同case，不是同一case重复采样。Token含累计输入（含缓存输入）和输出，不是单次上下文长度；执行时间不包含后续评分和独立验证。",
+    "使用独立CLI上下文与提示词隔离，并非文件系统强制隔离。产物保持原始状态，没有在评分后修复来提高分数。",
+    "每组 8 个 case、48 条独立断言；加权通过率为通过断言数 / 48。每个 case 每组仅运行一次。",
+    "各 case 断言数不同；主指标使用加权通过率，Summary 中 Pass Rate 为逐 case 平均值，不混用。",
+    "语义断言依据 assessment.json 的显式证据评分；不以关键词匹配代替行为验证。",
+    "耗时与 Token 来自真实运行。input_tokens 已包含 cached_input_tokens，缓存不重复相加。",
+    "静态与编译验证不代表多端宿主行为通过。差值方向为 mpx - noskill。"
+  ],
+  "weighted_summary": {
+    "mpx": {
+      "passed": 48,
+      "total": 48,
+      "pass_rate": 1.0
+    },
+    "noskill": {
+      "passed": 44,
+      "total": 48,
+      "pass_rate": 0.9166666666666666
+    }
+  },
+  "weighted_delta_percentage_points": 8.3333
+}

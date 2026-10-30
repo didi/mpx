@@ -146,16 +146,16 @@ createPage({
   serverPrefetch () {
     return useDetailStore(this.$pinia).fetchData(this.$route.query)
   },
-  onLoad (query) {
+  onLoad (rawQuery, decodedQuery) {
     // 其他必要的同步初始化放在此判断之前
     if (__mpx_mode__ === 'web' && typeof window === 'undefined') return
     const store = __mpx_mode__ === 'web' ? useDetailStore(this.$pinia) : useDetailStore()
-    return store.fetchData(query)
+    return store.fetchData(decodedQuery)
   }
 })
 ```
 
-首屏复用判断统一放在 store；`fetchDetail` 为支持服务端、返回业务数据的项目请求函数：
+页面参数推荐使用 `onLoad` 的第二参数 `decodedQuery`；服务端预取读取的 Web `$route.query` 已由路由解析器解码，无需再次解码。首屏复用判断统一放在 store；`fetchDetail` 为支持服务端、返回业务数据的项目请求函数：
 
 ```js
 import { defineStore } from '@mpxjs/pinia'
@@ -164,8 +164,8 @@ import { fetchDetail } from '../api/detail'
 export const useDetailStore = defineStore('detail', {
   state: () => ({ detail: null, loadedId: null }),
   actions: {
-    async fetchData (query) {
-      const id = String(query.id || '')
+    async fetchData (decodedQuery) {
+      const id = String(decodedQuery.id || '')
       if (this.loadedId === id) return
       this.detail = await fetchDetail(id)
       this.loadedId = id

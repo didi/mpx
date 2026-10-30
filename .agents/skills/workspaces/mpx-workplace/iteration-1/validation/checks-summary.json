@@ -1,0 +1,2816 @@
+{
+  "schema_version": 1,
+  "evaluation_level": "static_logic_fragment_checks",
+  "complete": true,
+  "completed_runs": 16,
+  "total_runs": 16,
+  "all_checks_passed": false,
+  "scope": "仅整理真实日志，不执行/修复测试，不重评48条断言。run.json返回0不等于每项检查通过。",
+  "counting": "Jest按每个不同测试批次最后一次结果记录；相同批次重复通过不累加。公共现有套件可跨case重复，不计算整个评测的唯一测试总数。Node VM裸断言不计作Jest用例。",
+  "supplementary_checks": [
+    {
+      "eval_id": 7,
+      "group": "mpx",
+      "origin": "root_agent_post_run",
+      "evidence": "validation/case7-mpx-http-jest.json:1",
+      "command_scope": "RUN_HTTP_INTEGRATION=1; --testNamePattern Node HTTP 适配",
+      "suites": {
+        "passed": 1,
+        "failed": 0,
+        "total": 1
+      },
+      "tests": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 6,
+        "total": 7
+      },
+      "assertions": [
+        {
+          "name": "反序完成的两个请求隔离 store，并在 Promise 完成后拥有各自标题",
+          "status": "pending"
+        },
+        {
+          "name": "模拟已恢复 state 跳过 A；切 B 失败不写成功键并可重试",
+          "status": "pending"
+        },
+        {
+          "name": "相同 id 合并在途请求，旧 id 迟到不会覆盖新 id",
+          "status": "pending"
+        },
+        {
+          "name": "无效 id 使旧请求失效",
+          "status": "pending"
+        },
+        {
+          "name": "请求工厂验证绝对地址、编码 id、保持返回数据契约",
+          "status": "pending"
+        },
+        {
+          "name": "Node HTTP 适配实际访问本地异步服务；非 2xx 拒绝",
+          "status": "passed"
+        },
+        {
+          "name": "服务片段把每次 HTTP URL 与独立 context 交给 renderer，并处理渲染失败",
+          "status": "pending"
+        }
+      ],
+      "interpretation": "原运行6项通过、HTTP项跳过；补跑只选择HTTP，1通过、另6项因名称过滤跳过。结合两个来源，7个不同测试均有通过证据，不覆盖完整SSR渲染/hydration。"
+    }
+  ],
+  "final_status_counts": {
+    "eslint": {
+      "passed": 16,
+      "passed_with_skips": 0,
+      "failed": 0,
+      "unknown": 0
+    },
+    "jest": {
+      "passed": 14,
+      "passed_with_skips": 1,
+      "failed": 1,
+      "unknown": 0
+    }
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "case": "eval-0-target-config",
+      "group": "mpx",
+      "execution_status": "completed",
+      "run_evidence": "eval-0-target-config/mpx/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "JS、全部SFC普通script与动态JSON提取块",
+        "evidence": [
+          "eval-0-target-config/mpx/run-1/agent.jsonl:51"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-0-target-config/mpx/run-1/agent.jsonl:51",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 0 errors, 0 warnings; JS and all SFC script/dynamic JSON blocks"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 22,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 22
+            },
+            "evidence": "eval-0-target-config/mpx/run-1/agent.jsonl:50"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-0-target-config/mpx/run-1/agent.jsonl:47",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-0-target-config/mpx/run-1/agent.jsonl:50",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 22,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 22
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [],
+      "verification_claims": [
+        {
+          "evidence": "eval-0-target-config/mpx/outputs/verification.md:66",
+          "text": "验证环境：Node v24.12.0、可从父级仓库解析的 ESLint 7.32.0 / Jest 29.7.0。工具可用不代表存在待构建业务工程。"
+        },
+        {
+          "evidence": "eval-0-target-config/mpx/outputs/verification.md:69",
+          "text": "2. ESLint：使用 `useEslintrc: false`、Standard、ECMAScript 2020、module 语法、Node 环境及只读 `__mpx_mode__` 全局。检查全部交付 JS（含测试）和从四个 SFC 提取的每个普通 script / 动态 JSON script：**0 errors / 0 warnings**。静态 application/json 另作 JSON.parse 校验。没有把脚本提取 lint 称为模板、样式或完整 Mpx SFC 编译。"
+        },
+        {
+          "evidence": "eval-0-target-config/mpx/outputs/verification.md:70",
+          "text": "3. Jest：**1 suite、22 tests 通过**。覆盖六目标插件选项、无效目标拒绝、六目标 app/page 字段归属、component2 工程文件、两种组件外部类与事件契约、默认 JS 无原生依赖、RN 三端 Platform.OS 调用。"
+        },
+        {
+          "evidence": "eval-0-target-config/mpx/outputs/verification.md:72",
+          "text": "5. 首次 Jest 启动因默认 Watchman 尝试访问宿主状态目录而失败，报 `fchmod(.../watchman/didi-state, 2700): Operation not permitted`；仅调整一次运行参数，禁用 Watchman 后通过，未修改业务实现以绕过失败。"
+        },
+        {
+          "evidence": "eval-0-target-config/mpx/outputs/verification.md:74",
+          "text": "在已安装 Jest 的实际工程中，可从本交付目录复跑："
+        },
+        {
+          "evidence": "eval-0-target-config/mpx/outputs/verification.md:80",
+          "text": "测试使用 VM 执行动态 JSON，并以替身执行组件注册与 Platform.OS 读取；它们验证源代码契约，**不验证 Mpx 编译器、宿主功能或条件文件真实解析**。实际工程自己的 ESLint 配置和相关现有 Jest 用例尚未执行，需合入后运行。"
+        },
+        {
+          "evidence": "eval-0-target-config/mpx/outputs/verification.md:109",
+          "text": "- 依次运行现有 wx、ali、ios、android、harmony、web 构建命令，执行工程适用的 ESLint 和相关既有 Jest。当前 `@mpxjs/mpx-cli-service` 解析结果为 MODULE_NOT_FOUND，没有运行 Skill 单文件编译脚本；不创建替代 CLI 来制造构建通过结果。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 0,
+      "case": "eval-0-target-config",
+      "group": "noskill",
+      "execution_status": "completed",
+      "run_evidence": "eval-0-target-config/noskill/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "10个JS/提取SFC脚本块",
+        "evidence": [
+          "eval-0-target-config/noskill/run-1/agent.jsonl:75"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:66",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/checks/verify.cjs.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/plugin-options.js.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/src/app.mpx.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/src/app.mpx.json.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/src/components/status-card.ios.mpx.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/src/components/status-card.mpx.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files"
+            ]
+          },
+          {
+            "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:71",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "✖ 10 problems (10 errors, 0 warnings)"
+            ]
+          },
+          {
+            "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:75",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 10 JS/script blocks passed"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "framework_existing",
+            "exit_code": 0,
+            "suites": {
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 3
+            },
+            "tests": {
+              "passed": 25,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 25
+            },
+            "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:60"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-0-target-config/noskill/run-1/agent.jsonl:52",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-0-target-config/noskill/run-1/agent.jsonl:60",
+            "exit_code": 0,
+            "suites": {
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 3
+            },
+            "tests": {
+              "passed": 25,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 25
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。",
+          "scope": "仅Jest链；混合Node脚本的单元测试归属及上限另列policy_ambiguities。"
+        }
+      },
+      "other_check_history": [
+        {
+          "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:51",
+          "exit_code": 1,
+          "status": "failed",
+          "diagnostics": [
+            "Error: Cannot find module 'enhanced-resolve'"
+          ]
+        },
+        {
+          "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:59",
+          "exit_code": 1,
+          "status": "failed",
+          "diagnostics": [
+            "Error: Cannot find module 'enhanced-resolve'"
+          ]
+        },
+        {
+          "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:66",
+          "exit_code": 1,
+          "status": "failed",
+          "diagnostics": [
+            "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/checks/verify.cjs.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+            "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/plugin-options.js.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+            "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/src/app.mpx.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+            "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/src/app.mpx.json.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+            "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/src/components/status-card.ios.mpx.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+            "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/source-verification/src/components/status-card.mpx.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files"
+          ]
+        },
+        {
+          "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:71",
+          "exit_code": 1,
+          "status": "failed",
+          "diagnostics": [
+            "✖ 10 problems (10 errors, 0 warnings)"
+          ]
+        },
+        {
+          "evidence": "eval-0-target-config/noskill/run-1/agent.jsonl:75",
+          "exit_code": 0,
+          "status": "passed",
+          "diagnostics": [
+            "ESLint: 10 JS/script blocks passed"
+          ]
+        }
+      ],
+      "policy_ambiguities": [
+        "混合Node验证脚本经历51→59→66→71→75共四次修订/重试后通过，其中两轮是ESLint断言失败。Jest单独链只重试1次；若将整段Node配置/解析/lint检查也界定为单元测试，存在超过3次修订的疑点，适用范围无法仅凭日志可靠确认，保留unknown。"
+      ],
+      "unresolved_checks": [],
+      "notes": [
+        "交付自己的配置/真实resolver/标签检查使用node checks/verify.cjs，不是Jest用例数。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-0-target-config/noskill/outputs/verification.md:74",
+          "text": "结果：wx、ali、ios、android、harmony、web 六行检查全部通过；随后 10 个 JS/提取脚本单元的 ESLint 检查通过，0 error、0 warning。检查使用公共框架的 AddModePlugin 与 enhanced-resolve 实际解析文件，使用 SFC parser 选择区块、eval-json-js 求值以及真实 JSON 平台规则校验支付宝转换。标签执行检查仅 mock 了 Platform.OS；没有启动 RN。ESLint 采用仓库规则，禁用提取代码的 Babel 配置文件查找，并去掉 parser 为对齐行号添加的首尾空白。"
+        },
+        {
+          "evidence": "eval-0-target-config/noskill/outputs/verification.md:76",
+          "text": "从公共框架根目录执行相关现有 Jest："
+        },
+        {
+          "evidence": "eval-0-target-config/noskill/outputs/verification.md:82",
+          "text": "结果：3 个测试集通过、25 项测试通过、0 快照。page.spec.js 包含有意触发的不支持字段警告，均为该测试的既有输入。首次 Jest 启动遇到沙箱对 Watchman 状态目录的权限限制，改用 `--watchman=false` 后通过；没有修改框架实现。检查脚本的依赖路径和提取脚本 ESLint 设置已修正后复跑通过。"
+        },
+        {
+          "evidence": "eval-0-target-config/noskill/outputs/verification.md:84",
+          "text": "检查脚本依赖公共框架已有开发依赖（webpack 自带的 enhanced-resolve、ESLint、Babel），不要求给业务工程添加这些运行时依赖。所有本次交付代码仅写入指定输出目录。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ],
+      "overall_three_fix_policy_status": "unknown"
+    },
+    {
+      "eval_id": 1,
+      "case": "eval-1-layout-card",
+      "group": "mpx",
+      "execution_status": "completed",
+      "run_evidence": "eval-1-layout-card/mpx/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "两个SFC脚本及checks脚本，共4文件",
+        "evidence": [
+          "eval-1-layout-card/mpx/run-1/agent.jsonl:88"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-1-layout-card/mpx/run-1/agent.jsonl:63",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "1:0  error  Parsing error: This experimental syntax requires enabling one of the following parser plugin(s): \"jsx\", \"flow\", \"typescript\". (1:0)",
+              "1:0  error  Parsing error: This experimental syntax requires enabling one of the following parser plugin(s): \"jsx\", \"flow\", \"typescript\". (1:0)",
+              "✖ 2 problems (2 errors, 0 warnings)"
+            ]
+          },
+          {
+            "evidence": "eval-1-layout-card/mpx/run-1/agent.jsonl:84",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-1-layout-card/mpx/outputs/checks/lint.cjs. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-1-layout-card/mpx/outputs/checks/product-card.test.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-1-layout-card/mpx/outputs/demo.mpx. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-1-layout-card/mpx/outputs/product-card.mpx. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "✖ 4 problems (4 errors, 0 warnings)",
+              "ESLint: 4 files, 4 errors, 0 warnings"
+            ]
+          },
+          {
+            "evidence": "eval-1-layout-card/mpx/run-1/agent.jsonl:88",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 4 files, 0 errors, 0 warnings"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 9
+            },
+            "evidence": "eval-1-layout-card/mpx/run-1/agent.jsonl:97"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-1-layout-card/mpx/run-1/agent.jsonl:61",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 9
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-1-layout-card/mpx/run-1/agent.jsonl:83",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 9
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-1-layout-card/mpx/run-1/agent.jsonl:97",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 9
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 0,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [],
+      "verification_claims": [
+        {
+          "evidence": "eval-1-layout-card/mpx/outputs/verification.md:5",
+          "text": "**本次没有业务 App 工程，没有执行构建，也没有真机或浏览器运行证据。** 下述“已检查”仅表示源码复核、ESLint 或隔离脚本测试，不表示各端渲染验收通过。"
+        },
+        {
+          "evidence": "eval-1-layout-card/mpx/outputs/verification.md:12",
+          "text": "- `checks/product-card.test.js`、`checks/lint.cjs`：可复跑的脚本逻辑测试和 ESLint 入口。"
+        },
+        {
+          "evidence": "eval-1-layout-card/mpx/outputs/verification.md:106",
+          "text": "2. ESLint：使用当前仓库规则，显式把 `.mpx` 注册给 eslint-plugin-html；检查组件普通脚本与 checks 脚本，最终 **4 files, 0 errors, 0 warnings**。不等同于模板/CSS 的 Mpx 编译校验。"
+        },
+        {
+          "evidence": "eval-1-layout-card/mpx/outputs/verification.md:107",
+          "text": "3. Jest：**1 suite、9 tests 通过**。验证 Skyline 和 RN 三端初始窄屏、400px 含边界双向切换、卸载回调；验证两个实例独立退订；验证 WebView/ali/web 不注册窗口监听；验证 demo 同时更新并恢复两项输入值。"
+        },
+        {
+          "evidence": "eval-1-layout-card/mpx/outputs/verification.md:110",
+          "text": "Jest 使用 VM 执行提取的普通 script，替换 import 与生命周期/ref/API 依赖；它不实例化 Mpx 组件、不处理资源模块，不证明 props 在宿主的实际传播、CSS 尺寸、省略、隔离或原生事件驱动正确。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 1,
+      "case": "eval-1-layout-card",
+      "group": "noskill",
+      "execution_status": "completed",
+      "run_evidence": "eval-1-layout-card/noskill/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "Jest内ESLint检查两个SFC脚本及verifier",
+        "evidence": [
+          "eval-1-layout-card/noskill/run-1/agent.jsonl:73"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-1-layout-card/noskill/run-1/agent.jsonl:69",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-1-layout-card/noskill/run-1/agent.jsonl:73",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 16,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 16
+            },
+            "evidence": "eval-1-layout-card/noskill/run-1/agent.jsonl:73"
+          },
+          {
+            "kind": "framework_existing",
+            "exit_code": 0,
+            "suites": {
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 2
+            },
+            "tests": {
+              "passed": 37,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 37
+            },
+            "evidence": "eval-1-layout-card/noskill/run-1/agent.jsonl:75"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-1-layout-card/noskill/run-1/agent.jsonl:61",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-1-layout-card/noskill/run-1/agent.jsonl:63",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 0
+            },
+            "diagnostic": "Cannot find module '/Users/didi/work/mpx/node_modules/postcss' from 'verify.test.js'"
+          },
+          {
+            "log": "eval-1-layout-card/noskill/run-1/agent.jsonl:69",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 12,
+              "failed": 4,
+              "skipped": 0,
+              "todo": 0,
+              "total": 16
+            },
+            "diagnostic": "测试/检查启动或断言失败，详见原始日志；不将缺失的计数推断为0。"
+          },
+          {
+            "log": "eval-1-layout-card/noskill/run-1/agent.jsonl:73",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 16,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 16
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-1-layout-card/noskill/run-1/agent.jsonl:75",
+            "exit_code": 0,
+            "suites": {
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 2
+            },
+            "tests": {
+              "passed": 37,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 37
+            },
+            "diagnostic": "[Mpx style error]:Error evaluating condition: unknownVar === true ReferenceError: unknownVar is not defined"
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 3,
+          "limit_reached": true,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [
+        "三次修订后最终成功；包括Watchman、postcss依赖路径和编译结果格式断言问题。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-1-layout-card/noskill/outputs/verification.md:79",
+          "text": "1. 交付级 Jest：**16/16 通过**，其中包含两份 SFC 脚本及 verifier 的 ESLint，0 warning/error。其余覆盖六个 mode 的模板和 JSON、RN 三端完整样式转换、ali/Web scoped 及媒体查询、wx/RN 阈值更新与实例监听清理。结果见 `verification-results.json`。"
+        },
+        {
+          "evidence": "eval-1-layout-card/noskill/outputs/verification.md:80",
+          "text": "2. 框架现有相关 Jest：`style-strip-condition.spec.js`、`split-style-props.spec.ts`，**2 suites、37/37 通过**。前者负例会打印预期错误日志，最终退出码为 0。"
+        },
+        {
+          "evidence": "eval-1-layout-card/noskill/outputs/verification.md:83",
+          "text": "最初运行遇到 Watchman 沙箱写权限错误，随后禁用 Watchman；第二次遇到根目录不存在 postcss 包，改用 webpack-plugin 自身依赖解析；第三次修正检查脚本对编译器补齐空行和 RN 生成代码格式的断言。最终第四次运行全部通过，业务组件没有因上述检查问题变更。"
+        },
+        {
+          "evidence": "eval-1-layout-card/noskill/outputs/verification.md:93",
+          "text": "`MPX_SOURCE_ROOT` 可指定同版本框架源码根目录；以上命令中的 Jest 路径也需随之调整。ESLint 提取 SFC script 后移除编译器为行号对齐添加的空白行，沿用仓库 ESLint 配置；并未把普通 JS lint 说成模板语义验证。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "case": "eval-2-scroll-feed",
+      "group": "mpx",
+      "execution_status": "completed",
+      "run_evidence": "eval-2-scroll-feed/mpx/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "SFC两个script、data.js及检查脚本",
+        "evidence": [
+          "eval-2-scroll-feed/mpx/run-1/agent.jsonl:103"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-2-scroll-feed/mpx/run-1/agent.jsonl:59",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "1:0  error  Parsing error: This experimental syntax requires enabling one of the following parser plugin(s): \"jsx\", \"flow\", \"typescript\". (1:0)"
+            ]
+          },
+          {
+            "evidence": "eval-2-scroll-feed/mpx/run-1/agent.jsonl:69",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "1:0  error  Parsing error: This experimental syntax requires enabling one of the following parser plugin(s): \"jsx\", \"flow\", \"typescript\". (1:0)"
+            ]
+          },
+          {
+            "evidence": "eval-2-scroll-feed/mpx/run-1/agent.jsonl:76",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 通过（两个 SFC script、data.js、检查脚本）"
+            ]
+          },
+          {
+            "evidence": "eval-2-scroll-feed/mpx/run-1/agent.jsonl:103",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 通过（两个 SFC script、data.js、检查脚本）"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 15,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 15
+            },
+            "evidence": "eval-2-scroll-feed/mpx/run-1/agent.jsonl:103"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-2-scroll-feed/mpx/run-1/agent.jsonl:78",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-2-scroll-feed/mpx/run-1/agent.jsonl:80",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 15,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 15
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-2-scroll-feed/mpx/run-1/agent.jsonl:103",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 15,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 15
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [],
+      "verification_claims": [
+        {
+          "evidence": "eval-2-scroll-feed/mpx/outputs/verification.md:7",
+          "text": "- `checks/lint.cjs`、`checks/feed.test.cjs`：可复核的 ESLint/Jest 检查辅助文件，不是页面运行依赖。"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/mpx/outputs/verification.md:11",
+          "text": "**未提供实际业务工程，未完成任何目标的完整构建、单文件编译或设备/浏览器运行验证，不声称构建通过。** 当前目录向上解析 `@mpxjs/mpx-cli-service` 返回 `MODULE_NOT_FOUND`。检查使用现有仓库的 ESLint/Jest 工具，不代表该仓库就是待接入的业务应用。没有请求 SSR，因此未加入 SSR 初始化或服务端逻辑。"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/mpx/outputs/verification.md:51",
+          "text": "| ESLint | `node checks/lint.cjs` 成功，0 error / 0 warning；检查 data.js、SFC 的两个 script 区块及检查辅助脚本，使用 Standard 规则。不是模板/样式编译。直接把 .mpx 交给仓库默认 ESLint 会被当成 JS；已用明确提取 script 的检查脚本解决。 |"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/mpx/outputs/verification.md:52",
+          "text": "| Jest | 1 个 suite、15 项全部通过；覆盖 20/20/20/0 数据、唯一 id、数据源隔离、首屏、请求互斥、分页失败重试、刷新失败后再次刷新、忙时刷新复位、六目标定位分支、定位失败释放锁、Ali 组边界与顶推、卸载后忽略结果、动态 JSON。 |"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/mpx/outputs/verification.md:54",
+          "text": "| 工具环境 | Node v24.12.0。首次 Jest 被 Watchman 沙箱权限阻止；使用 watchman:false 后通过，未更改权限或宿主配置。 |"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "case": "eval-2-scroll-feed",
+      "group": "noskill",
+      "execution_status": "completed",
+      "run_evidence": "eval-2-scroll-feed/noskill/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "页面业务脚本、动态JSON及data.js三段",
+        "evidence": [
+          "eval-2-scroll-feed/noskill/run-1/agent.jsonl:112"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-2-scroll-feed/noskill/run-1/agent.jsonl:63",
+            "exit_code": 0,
+            "status": "ineffective_zero_files",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-2-scroll-feed/noskill/run-1/agent.jsonl:68",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-2-scroll-feed/noskill/run-1/agent.jsonl:98",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-2-scroll-feed/noskill/run-1/agent.jsonl:112",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "framework_existing",
+            "exit_code": 0,
+            "suites": {
+              "passed": 4,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 4
+            },
+            "tests": {
+              "passed": 22,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 22
+            },
+            "evidence": "eval-2-scroll-feed/noskill/run-1/agent.jsonl:113"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-2-scroll-feed/noskill/run-1/agent.jsonl:62",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-2-scroll-feed/noskill/run-1/agent.jsonl:69",
+            "exit_code": 0,
+            "suites": {
+              "passed": 4,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 4
+            },
+            "tests": {
+              "passed": 22,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 22
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-2-scroll-feed/noskill/run-1/agent.jsonl:113",
+            "exit_code": 0,
+            "suites": {
+              "passed": 4,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 4
+            },
+            "tests": {
+              "passed": 22,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 22
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [
+        "14项交付业务检查是Node VM断言（agent.jsonl:92），不是Jest测试；最终补充VM检查见:111。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-2-scroll-feed/noskill/outputs/verification.md:27",
+          "text": "- **分类与定位**：分类点击定位该组首条订单；“定位订单 21”在锁内顺序补足到第二页，然后等待渲染、查询 `#order-21`。所有 ID 均以字母开头。使用 `createSelectorQuery().in(this)` 的返回值创建查询，分别查询 `#feed-content` 和 `#order-N`，不用 RN 不支持的 `.orders .order` 后代选择器。两节点的 `boundingClientRect` 得到内容相对偏移，抵消容器实际滚动/transform，再减去 40px 分组头高度，通过 `scroll-top` 定位。因此没有同时设置会争抢优先级的 `scroll-into-view`。原生布局尚未完成时最多查询三次，失败显示可重试错误，不将空结果视为定位成功。"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/noskill/outputs/verification.md:32",
+          "text": "检查日期：2026-10-29。Node v24.12.0，Jest 29.7.0。没有加载 Skill 或读取评测评分、历史输出。"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/noskill/outputs/verification.md:36",
+          "text": "| ESLint | 页面业务脚本、动态 JSON 脚本、`data.js` 三段均 0 error / 0 warning | 通过 ESLint Node API，使用公共仓库 `.eslintrc.js`，将脚本文本传给仓库根下的虚拟 JS 文件名以避免隐藏目录被跳过；未生成这些虚拟文件。首次以隐藏目录路径检查返回空结果，未把它算作通过。 |"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/noskill/outputs/verification.md:41",
+          "text": "| 业务脚本模拟 | 14 项检查通过 | Node VM 执行实际 data.js 和 createPage 中的方法/计算属性；页面注册、窗口、渲染回调和节点查询为替身。验证数据边界/副本、首次加载、detail 取值、三次触底去重、刷新失败释放状态及重试、分页失败重试、已加载/未加载/重复定位 21、分类补齐第三页、60 条终止、吸顶推离和换组、刷新排队与合并、空查询三次后释放锁、卸载后不写数据。不能据此推断宿主实际布局或手势成功。 |"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/noskill/outputs/verification.md:42",
+          "text": "| 最终版本补充模拟 | 通过 | 核对小驼峰导出名并在 ali 模式无 window 对象下执行 onLoad；575px 隐藏/显示恢复、刷新失败保留保存位置、刷新成功清除保存位置均通过。同时重验重复分页、订单 21 定位、吸顶推离及 60 条边界。最终代码再次执行 ESLint 与同一组 Jest，结果仍通过。 |"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/noskill/outputs/verification.md:43",
+          "text": "| 相关现有 Jest | 4 suites、22 tests 通过 | 下列公共框架测试，未修改框架测试或源码。含测试自身预期打印的 tt 不支持属性告警，另有现有 Jest 多项目配置的 `testTimeout` 提示。 |"
+        },
+        {
+          "evidence": "eval-2-scroll-feed/noskill/outputs/verification.md:45",
+          "text": "现有 Jest 的复现命令（在 `/Users/didi/work/mpx` 执行）："
+        },
+        {
+          "evidence": "eval-2-scroll-feed/noskill/outputs/verification.md:57",
+          "text": "首次 Jest 因沙箱禁止访问用户 Watchman 状态目录而中断，未执行测试；一次调整为 `--watchman=false` 后得到以上通过结果。单文件检查脚本起初未找到根 node_modules 中的 `@babel/parser`，随后按 webpack-plugin 自身依赖路径解析再运行成功。这些属于检查环境修正，没有作为工程构建结果记录。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 3,
+      "case": "eval-3-checkout-dialog",
+      "group": "mpx",
+      "execution_status": "completed",
+      "run_evidence": "eval-3-checkout-dialog/mpx/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "checkout-dialog.mpx脚本与size.js",
+        "evidence": [
+          "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:83"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:53",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-3-checkout-dialog/mpx/outputs/checkout-dialog.mpx. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-3-checkout-dialog/mpx/outputs/size.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "✖ 2 problems (2 errors, 0 warnings)"
+            ]
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:57",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "1:0  error  Parsing error: This experimental syntax requires enabling one of the following parser plugin(s): \"jsx\", \"flow\", \"typescript\". (1:0)"
+            ]
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:62",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "✖ 14 problems (14 errors, 0 warnings)"
+            ]
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:70",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:75",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:83",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 0 errors; 0 warnings; component JSON parsed"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 16,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 16
+            },
+            "evidence": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:75"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:66",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:69",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 16,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 16
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-3-checkout-dialog/mpx/run-1/agent.jsonl:75",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 16,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 16
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [
+        "真实多目标编译尝试在agent.jsonl:51退出2，缺mpx-cli；没有进入构建。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-3-checkout-dialog/mpx/outputs/verification.md:39",
+          "text": "1. **ESLint**：借用 `/Users/didi/work/mpx/node_modules/eslint`，继承该仓库 Standard 配置，补充 `parserOptions.requireConfigFile=false` 和 `settings[\"html/html-extensions\"]=[\".mpx\"]`，实际提取检查组件脚本及 size.js。最终两文件均 0 error / 0 warning。初次默认运行因缺 Babel 配置失败；只设置 requireConfigFile 后又因未提取 .mpx 而失败；均为校验器接入问题，已修正后重跑。"
+        },
+        {
+          "evidence": "eval-3-checkout-dialog/mpx/outputs/verification.md:40",
+          "text": "2. **Jest**：16/16 通过，1 suite。直接提取本交付源代码，在 VM 中替换 core 响应式、生命周期、视图调度、设备及尺寸 API，以可控回调/假定时器验证上面的焦点序列、先到高度、自动避让不叠加、数据输入、关闭失效、设备判定、尺寸样本/旋转/解绑。首次运行因 Watchman 沙箱权限失败，禁用 watchman 后通过；修改剩余窗口高度计算后再次通过。不是 Mpx 渲染器、宿主键盘、真机或浏览器测试。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 3,
+      "case": "eval-3-checkout-dialog",
+      "group": "noskill",
+      "execution_status": "completed",
+      "run_evidence": "eval-3-checkout-dialog/noskill/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "size.js、提取组件script与两个检查脚本，共4文件",
+        "evidence": [
+          "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:107"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:57",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-3-checkout-dialog/noskill/outputs/size.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files"
+            ]
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:68",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:88",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:103",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:107",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 25,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 25
+            },
+            "evidence": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:98"
+          },
+          {
+            "kind": "framework_existing",
+            "exit_code": 0,
+            "suites": {
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 3
+            },
+            "tests": {
+              "passed": 33,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 33
+            },
+            "evidence": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:90"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:80",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:84",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 25,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 25
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:90",
+            "exit_code": 0,
+            "suites": {
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 3
+            },
+            "tests": {
+              "passed": 33,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 33
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-3-checkout-dialog/noskill/run-1/agent.jsonl:98",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 25,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 25
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [],
+      "verification_claims": [
+        {
+          "evidence": "eval-3-checkout-dialog/noskill/outputs/verification.md:65",
+          "text": "- ESLint：检查 size.js、组件实际 script、检查脚本；使用公共仓库 Standard 配置，关闭独立交付目录不存在的 Babel 配置要求。"
+        },
+        {
+          "evidence": "eval-3-checkout-dialog/noskill/outputs/verification.md:66",
+          "text": "- Jest：1 suite / 25 tests 通过。包含纯尺寸计算、设备识别、动画门控、页面键盘桥接隔离、两种换框顺序、跨任务触摸、关闭后过期测量、默认避让分支，以及六个编译 mode 的模板转换检查。测试使用模拟宿主 API，不模拟原生布局或软键盘。"
+        },
+        {
+          "evidence": "eval-3-checkout-dialog/noskill/outputs/verification.md:67",
+          "text": "- 公共框架现有 Jest：3 suites / 33 tests 通过，文件为 `test/platform/wx/template/{scroll-view,event-rn,common}.spec.js`，使用 `packages/webpack-plugin/jest.config.json`、`--watchman=false --runInBand --runTestsByPath`，缓存目录指定在本输出目录内。这些现有用例会打印自己用于断言兼容性诊断的 warning；不是本组件转换的 warning。"
+        },
+        {
+          "evidence": "eval-3-checkout-dialog/noskill/outputs/verification.md:68",
+          "text": "- 首次 ESLint 因独立目录缺少 Babel 配置停止，设置 requireConfigFile=false 后通过。首次 Jest 被沙箱禁止访问宿主 Watchman 状态目录；在交付配置中禁用 Watchman 后，25 项测试全部执行通过。没有为测试失败修改公共框架或降低断言。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 4,
+      "case": "eval-4-account-search",
+      "group": "mpx",
+      "execution_status": "completed",
+      "run_evidence": "eval-4-account-search/mpx/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "交付JS/CJS和SFC script提取块",
+        "evidence": [
+          "eval-4-account-search/mpx/run-1/agent.jsonl:72"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-4-account-search/mpx/run-1/agent.jsonl:52",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "✖ 9 problems (9 errors, 0 warnings)",
+              "ESLint: 9 errors/warnings (JS and extracted SFC scripts only)"
+            ]
+          },
+          {
+            "evidence": "eval-4-account-search/mpx/run-1/agent.jsonl:57",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 0 errors/warnings (JS and extracted SFC scripts only)"
+            ]
+          },
+          {
+            "evidence": "eval-4-account-search/mpx/run-1/agent.jsonl:72",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 0 errors/warnings (JS and extracted SFC scripts only)"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 31,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 31
+            },
+            "evidence": "eval-4-account-search/mpx/run-1/agent.jsonl:73"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-4-account-search/mpx/run-1/agent.jsonl:51",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-4-account-search/mpx/run-1/agent.jsonl:58",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 31,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 31
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-4-account-search/mpx/run-1/agent.jsonl:73",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 31,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 31
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [],
+      "verification_claims": [
+        {
+          "evidence": "eval-4-account-search/mpx/outputs/verification.md:3",
+          "text": "本目录为独立交付物，实际业务工程、构建配置及设备容器未提供。已完成离线 Jest 和 JS ESLint；**未执行 Mpx 构建、单文件编译或真机/浏览器运行，不能声称构建通过或四端运行通过**。未增加 SSR。仅使用指定的 Mpx Skill 及其 base、ali、RN、Web、Skyline 参考；未读取评测配置、评分资料、历史或其他运行输出。"
+        },
+        {
+          "evidence": "eval-4-account-search/mpx/outputs/verification.md:15",
+          "text": "| `account.test.cjs` / `verify.cjs` | 可复现离线行为的 Jest 用例 / 交付 JS 与 SFC 脚本 ESLint |"
+        },
+        {
+          "evidence": "eval-4-account-search/mpx/outputs/verification.md:71",
+          "text": "环境：Node v24.12.0，Jest 29.7.0，ESLint 7.32.0。工具来自当前环境已有依赖，并不表示目标业务工程依赖已配置。"
+        },
+        {
+          "evidence": "eval-4-account-search/mpx/outputs/verification.md:80",
+          "text": "结果：ESLint **0 errors / 0 warnings**；Jest **1 suite、31 tests passed**。测试直接加载交付的业务 JS，通过注入代理/xfetch 替身复现流程；动态 JSON 分六目标求值检查。**没有加载真实 api-proxy/Mpx 编译器或真实 xfetch 运行时，不能据此证明 custom 宿主安装、SFC 编译或原生传输可用。**"
+        },
+        {
+          "evidence": "eval-4-account-search/mpx/outputs/verification.md:84",
+          "text": "首次 Jest 启动因 Watchman 尝试访问沙箱外状态目录出现 `fchmod(...watchman/didi-state): Operation not permitted`，尚未执行用例；改用 `--watchman=false` 后通过。首轮 ESLint 的 9 处 object-property-newline 格式错误已修正。未发生业务断言失败；没有超出三次修复上限。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 4,
+      "case": "eval-4-account-search",
+      "group": "noskill",
+      "execution_status": "completed",
+      "run_evidence": "eval-4-account-search/noskill/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "JS、测试/配置、.mpx脚本（html插件）",
+        "evidence": [
+          "eval-4-account-search/noskill/run-1/agent.jsonl:82"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-4-account-search/noskill/run-1/agent.jsonl:57",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-4-account-search/noskill/outputs/account.mpx. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-4-account-search/noskill/outputs/account.spec.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-4-account-search/noskill/outputs/api.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-4-account-search/noskill/outputs/auth-host.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-4-account-search/noskill/outputs/jest.config.cjs. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-4-account-search/noskill/outputs/request-stub.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files"
+            ]
+          },
+          {
+            "evidence": "eval-4-account-search/noskill/run-1/agent.jsonl:65",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "1:0  error  Parsing error: This experimental syntax requires enabling one of the following parser plugin(s): \"jsx\", \"flow\", \"typescript\". (1:0)",
+              "✖ 2 problems (2 errors, 0 warnings)"
+            ]
+          },
+          {
+            "evidence": "eval-4-account-search/noskill/run-1/agent.jsonl:70",
+            "exit_code": 2,
+            "status": "failed",
+            "diagnostics": [
+              "Invalid option '--settings' - perhaps you meant '--stdin'?"
+            ]
+          },
+          {
+            "evidence": "eval-4-account-search/noskill/run-1/agent.jsonl:75",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-4-account-search/noskill/run-1/agent.jsonl:82",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          }
+        ]
+      },
+      "jest": {
+        "status": "failed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 27,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 28
+            },
+            "evidence": "eval-4-account-search/noskill/run-1/agent.jsonl:80"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-4-account-search/noskill/run-1/agent.jsonl:56",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-4-account-search/noskill/run-1/agent.jsonl:61",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 0
+            },
+            "diagnostic": "ReferenceError: __mpx_mode__ is not defined"
+          },
+          {
+            "log": "eval-4-account-search/noskill/run-1/agent.jsonl:71",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 26,
+              "failed": 2,
+              "skipped": 0,
+              "todo": 0,
+              "total": 28
+            },
+            "diagnostic": "测试/检查启动或断言失败，详见原始日志；不将缺失的计数推断为0。"
+          },
+          {
+            "log": "eval-4-account-search/noskill/run-1/agent.jsonl:80",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 27,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 28
+            },
+            "diagnostic": "Web input bindconfirm不支持，warning导致模板无诊断断言失败。"
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 3,
+          "limit_reached": true,
+          "stop_triggered": true,
+          "outcome": "stopped_with_failure",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [
+        "Jest最终27 passed / 1 failed /28 total；Web input bindconfirm不支持的warning仍使模板检查失败。已按三次修复上限停止，不能称全部检查通过。"
+      ],
+      "notes": [
+        "ESLint最终通过；Jest仍1 suite失败，27/28通过；Web bindconfirm兼容警告未解决。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-4-account-search/noskill/outputs/verification.md:5",
+          "text": "**当前结论：ESLint 通过；Jest 27/28 通过，其中业务逻辑 22/22 通过。Web 模板检查有一条未消除的事件兼容警告，详见下文。没有执行整包构建、安装或真机运行，不能认定四端验收通过。**"
+        },
+        {
+          "evidence": "eval-4-account-search/noskill/outputs/verification.md:86",
+          "text": "| web 浏览器 | host session 与业务测试通过；模板检查发现 bindconfirm 不支持，详见后文；输入即搜和按钮可作为页面搜索入口 | 真实浏览器路由离页/重入、输入/点击/样式/滚动、宿主 signIn 接入、真实传输取消；没有实际浏览器运行证据 |"
+        },
+        {
+          "evidence": "eval-4-account-search/noskill/outputs/verification.md:101",
+          "text": "ESLint：退出码 0，无诊断；`.mpx` 通过 html 插件检查 script，JSON 脚本块不作为 JS 解析。此检查不等同于样式、JSON 编译或页面运行。"
+        },
+        {
+          "evidence": "eval-4-account-search/noskill/outputs/verification.md:103",
+          "text": "Jest：退出码 1，1 suite failed，**27 passed / 1 failed / 28 total**。22 个业务测试通过，使用实际 XFetch 实现；另外 5 个目标的模板静态检查通过。模板检查只调用公共 template compiler 的 parse，不执行完整 SFC loader、脚本打包、样式编译或真机运行。"
+        },
+        {
+          "evidence": "eval-4-account-search/noskill/outputs/verification.md:108",
+          "text": "<input> does not support [bindconfirm] event in web environment!"
+        },
+        {
+          "evidence": "eval-4-account-search/noskill/outputs/verification.md:109",
+          "text": "Target: <input bindconfirm=\"search\">"
+        },
+        {
+          "evidence": "eval-4-account-search/noskill/outputs/verification.md:119",
+          "text": "遵守仓库“单元测试不通过最多尝试 3 次修复”限制，已停止后续修复尝试：第 1 次禁用沙箱无法访问状态目录的 Watchman；第 2 次补测试所需编译全局 `__mpx_mode__`；第 3 次补模板夹具 `externalClasses: []`。前两轮属于测试启动环境，后续才运行到全部用例；停止时仍有上述 Web warning。其余测试通过不消除这一已知限制。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 5,
+      "case": "eval-5-reactive-switcher",
+      "group": "mpx",
+      "execution_status": "completed",
+      "run_evidence": "eval-5-reactive-switcher/mpx/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "5个SFC共10个script/JSON块",
+        "evidence": [
+          "eval-5-reactive-switcher/mpx/run-1/agent.jsonl:52"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-5-reactive-switcher/mpx/run-1/agent.jsonl:47",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "✖ 11 problems (11 errors, 0 warnings)",
+              "✖ 9 problems (9 errors, 0 warnings)",
+              "SFC script/JSON blocks checked: 10; ESLint errors/warnings: 20"
+            ]
+          },
+          {
+            "evidence": "eval-5-reactive-switcher/mpx/run-1/agent.jsonl:52",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "SFC script/JSON blocks checked: 10; ESLint errors/warnings: 0"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 9
+            },
+            "evidence": "eval-5-reactive-switcher/mpx/run-1/agent.jsonl:53"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-5-reactive-switcher/mpx/run-1/agent.jsonl:46",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-5-reactive-switcher/mpx/run-1/agent.jsonl:53",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 9
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [
+        "agent.jsonl:41的真实编译尝试缺mpx-cli，未构建。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/verification.md:46",
+          "text": "- ESLint：抽取 5 个 `.mpx` 的全部 10 个 script/JSON 区块；JS 使用 Standard 规则与 setup 宏全局声明，JSON 使用 JSON.parse。结果：0 error、0 warning。覆盖的是脚本和配置语法，未声称模板、CSS 已通过编译器检查。"
+        },
+        {
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/verification.md:47",
+          "text": "- Jest：1 suite，9 tests 全部通过。使用本地 Vue 2.7.16 的 ref/reactive/toRefs/computed；script setup 宏、生命周期、triggerEvent 由测试桩提供。它验证交付文件中提取出的业务脚本和静态连线，不是真实 Mpx 响应系统、SFC 编译或事件桥接的集成测试。"
+        },
+        {
+          "evidence": "eval-5-reactive-switcher/mpx/outputs/verification.md:48",
+          "text": "- 第一次 ESLint 检查发现 defineExpose 多行对象的属性排版问题，已修正；首次 Jest 启动因 Watchman 尝试访问沙箱外状态目录失败，随后配置 `watchman:false`，重跑通过。未修改业务逻辑以绕过断言。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 5,
+      "case": "eval-5-reactive-switcher",
+      "group": "noskill",
+      "execution_status": "completed",
+      "run_evidence": "eval-5-reactive-switcher/noskill/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "Jest内4个SFC setup/JSON-JS脚本；另CLI检查验证辅助JS",
+        "evidence": [
+          "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:79",
+          "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:75"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:63",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "Cannot find module '@babel/plugin-transform-modules-commonjs' from 'verify.spec.js'",
+              "Cannot find module '@babel/plugin-transform-modules-commonjs' from 'verify.spec.js'",
+              "Cannot find module '@babel/plugin-transform-modules-commonjs' from 'verify.spec.js'",
+              "Cannot find module '@babel/plugin-transform-modules-commonjs' from 'verify.spec.js'",
+              "Cannot find module '@babel/plugin-transform-modules-commonjs' from 'verify.spec.js'",
+              "Cannot find module '@babel/plugin-transform-modules-commonjs' from 'verify.spec.js'"
+            ]
+          },
+          {
+            "evidence": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:68",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:71",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "✖ 11 problems (11 errors, 0 warnings)"
+            ]
+          },
+          {
+            "evidence": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:75",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:79",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 18,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 18
+            },
+            "evidence": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:79"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:55",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:59",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "测试/检查启动或断言失败，详见原始日志；不将缺失的计数推断为0。"
+          },
+          {
+            "log": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:63",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 3,
+              "failed": 15,
+              "skipped": 0,
+              "todo": 0,
+              "total": 18
+            },
+            "diagnostic": "Cannot find module '@babel/plugin-transform-modules-commonjs' from 'verify.spec.js'"
+          },
+          {
+            "log": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:68",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 18,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 18
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-5-reactive-switcher/noskill/run-1/agent.jsonl:79",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 18,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 18
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 3,
+          "limit_reached": true,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [
+        "三次修订后最终成功；初始Watchman、loader调用和Babel依赖问题均在日志保留。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/verification.md:29",
+          "text": "公共源码位置：`/Users/didi/work/mpx`，HEAD：`57f386271`。版本：webpack-plugin 2.11.1、utils 2.11.0、Node v24.12.0、Jest 29.7.0、ESLint 7.32.0。"
+        },
+        {
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/verification.md:42",
+          "text": "- 4 项：按公共仓库 ESLint 规则检查各 SFC 的 setup 脚本和 JSON-JS 脚本。仅去掉 SFC parser 为保留行号而补的开头空行；没有关闭业务 lint 规则。"
+        },
+        {
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/verification.md:48",
+          "text": "验证辅助 JS 另外执行 ESLint CLI，结果 exit 0："
+        },
+        {
+          "evidence": "eval-5-reactive-switcher/noskill/outputs/verification.md:58",
+          "text": "检查过程：首次因沙箱禁止修改宿主 Watchman 状态目录而未启动，配置 `watchman:false` 后继续；随后修正了验证脚本对异步 loader 的调用、SFC 行号补白的 lint 输入、RN 动态组件产物断言，以及 Babel 依赖入口。样式校验同时发现 RN 不支持 `display:block`，已删除该多余声明。经过三次修订后得到上述通过结果。业务源码 ESLint 无遗留错误。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 6,
+      "case": "eval-6-routing-subpackage",
+      "group": "mpx",
+      "execution_status": "completed",
+      "run_evidence": "eval-6-routing-subpackage/mpx/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "全部JS/CJS与SFC普通/动态JSON脚本",
+        "evidence": [
+          "eval-6-routing-subpackage/mpx/run-1/agent.jsonl:70"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-6-routing-subpackage/mpx/run-1/agent.jsonl:61",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint / SFC script blocks: 0 errors or warnings"
+            ]
+          },
+          {
+            "evidence": "eval-6-routing-subpackage/mpx/run-1/agent.jsonl:70",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint / SFC script blocks: 0 errors or warnings"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 13,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 13
+            },
+            "evidence": "eval-6-routing-subpackage/mpx/run-1/agent.jsonl:64"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-6-routing-subpackage/mpx/run-1/agent.jsonl:62",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-6-routing-subpackage/mpx/run-1/agent.jsonl:64",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 13,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 13
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 1,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [],
+      "verification_claims": [
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:19",
+          "text": "| `validate.cjs` / `verification.test.cjs` | ESLint/SFC 脚本校验与隔离的 Jest 契约检查 |"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:43",
+          "text": "业务依赖为工程相互兼容版本的 `@mpxjs/core`、`@mpxjs/api-proxy`、`@mpxjs/webpack-plugin`，以及工程原有的 Web Vue 2.7/Vue Router 3、RN/React Navigation 与各端 loader 链。若用 CLI，还需相应 `@mpxjs/mpx-cli-service`。此处未编造安装版本、原生工程或 lockfile。测试工具依赖为 Jest 和 ESLint Standard 及其 plugins，来自当前环境，不代表业务工程已装齐依赖。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:112",
+          "text": "2026-10-29，Node v24.12.0、ESLint 7.32.0、Jest 29.7.0。全部检查仅针对本输出目录；未读取评测元数据、评分资料、历史或其他运行输出。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:119",
+          "text": "- ESLint Standard：全部 JS/CJS 与 SFC 普通/动态 JSON 脚本块，0 errors / warnings；静态 JSON 块通过 JSON.parse。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:120",
+          "text": "- Jest：1 suite、13 tests 通过。覆盖目标配置隔离、runtime 合并、Web 别名/资源配置、decodedQuery 标题、RN 三目标等待执行、预下载不执行、失败/超时与宿主 stub/注入。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:121",
+          "text": "- 首次 Jest 因 Watchman 状态目录 fchmod 被沙箱拒绝而未进入测试；禁用 Watchman 后重试一次通过，无业务代码修复。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:123",
+          "text": "- Jest 使用 VM 和模拟宿主，检查交付代码的契约分支；没有执行 Mpx 路由生成、跨端模板/样式编译、浏览器导航或原生 bundle 下载。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:125",
+          "text": "拿到真实工程后需执行其 ESLint/Jest 与六个 mode 的完整构建。指定 Skill 单文件脚本可辅助定位，但必须指向真实业务工程，并显式使用 `--type=page --target=wx,ali,ios,android,harmony,web --no-ignore-sub-components`；即便通过也不等于完整应用或真机验收。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:131",
+          "text": "| wx Skyline | 页面四个 Skyline 字段、应用 requiredComponents 与五项 rendererOptions 已提供；正文纵向 scroll-view 有明确剩余高度、type=list、enhanced；Jest 检查 wx JSON | 真实独立冷启动、分包初始化先后、自定义导航完整组件树、标题、滚动、安全区、包体资源隔离、首页预下载；记录 renderer、基础库、微信/系统版本与机型 |"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:135",
+          "text": "| RN ios | Jest 验证 supportSubpackage、两个钩子的参数/兑现时机、默认导航、page 高度和 disableScroll 的配置 | iOS 容器实际预下载不执行、导航下载并执行、缓存、失败页重试、超时晚到、scroll-view、标题与系统返回 |"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/mpx/outputs/verification.md:138",
+          "text": "| web | Jest 检查 runtime history/base/标题栏、应用内入口、异步页面别名与 CDN output 配置；未覆盖 routes | 真实打包后核对生成 `/detail` 路由和 chunk；部署后地址栏直达/刷新/CDN/404/前进后退/标题栏验证；preloadRule 无自动预下载 |"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 6,
+      "case": "eval-6-routing-subpackage",
+      "group": "noskill",
+      "execution_status": "completed",
+      "run_evidence": "eval-6-routing-subpackage/noskill/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "交付JS和SFC运行时/JSON-JS，共35份输入",
+        "evidence": [
+          "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:111"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:73",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:98",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:111",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: no diagnostics"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 18,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 18
+            },
+            "evidence": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:96"
+          },
+          {
+            "kind": "framework_existing",
+            "exit_code": 0,
+            "suites": {
+              "passed": 8,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 8
+            },
+            "tests": {
+              "passed": 92,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 92
+            },
+            "evidence": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:90"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:84",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:88",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 0,
+              "failed": 18,
+              "skipped": 0,
+              "todo": 0,
+              "total": 18
+            },
+            "diagnostic": "Cannot find module '@babel/plugin-transform-modules-commonjs' from '../../../../../../../../package.json'"
+          },
+          {
+            "log": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:90",
+            "exit_code": 0,
+            "suites": {
+              "passed": 8,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 8
+            },
+            "tests": {
+              "passed": 92,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 92
+            },
+            "diagnostic": ""
+          },
+          {
+            "log": "eval-6-routing-subpackage/noskill/run-1/agent.jsonl:96",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 18,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 18
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 2,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [
+        "初始Watchman启动失败与Babel依赖入口失败，经两次修订后通过。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/verification.md:109",
+          "text": "- 交付契约 Jest：**1 suite / 18 tests 通过**。覆盖第二参数标题使用、六个 mode 的配置隔离、显式微信 WebView 回退、公共 Web JSON 处理器与异步路由生成、运行时路由/构建资源前缀分离，以及 RN 三目标宿主等待、下载数组与失败传播。测试中的宿主为可控制 mock，不是原生下载器。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/verification.md:110",
+          "text": "- 公共框架相关现有 Jest：**8 suites / 92 tests 通过**。范围为 core RN createApp，api-proxy Web/RN route、ali/Web/RN set-navigation-bar，webpack-plugin wx JSON app/page。测试命令使用 `--watchman=false --runInBand --runTestsByPath` 精确选取上述文件。现有用例中的不支持配置诊断是测试输入触发的输出；另有既有 testTimeout 配置警告，未修改框架配置。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/verification.md:112",
+          "text": "- ESLint 使用公共仓库配置检查交付 JS 与 `.mpx` 中运行时/JSON-JS 块：**35 份输入，0 errors / 0 warnings**。通过虚拟非隐藏文件路径调用 lintText，防止 `.agents` 目录被默认忽略；移除 SFC 解析器为定位行号生成的首尾空白后检查实际脚本，没有向公共源码目录写文件。"
+        },
+        {
+          "evidence": "eval-6-routing-subpackage/noskill/outputs/verification.md:113",
+          "text": "- 首次 Jest 因 Watchman 对宿主状态目录权限不足而未启动，已在交付测试配置禁用 Watchman；随后 Babel 直接依赖解析失败，改为使用仓库已有 preset-env 后通过。未安装或升级依赖。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "case": "eval-7-ssr-shared-state",
+      "group": "mpx",
+      "execution_status": "completed",
+      "run_evidence": "eval-7-ssr-shared-state/mpx/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "14个源文件/SFC脚本与JSON；动态JSON另作六目标求值",
+        "evidence": [
+          "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:108"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:76",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 13 个源文件，0 个问题（SFC 仅脚本/JSON）"
+            ]
+          },
+          {
+            "evidence": "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:87",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 13 个源文件，0 个问题（SFC 仅脚本/JSON）"
+            ]
+          },
+          {
+            "evidence": "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:97",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 14 个源文件，0 个问题（SFC 仅脚本/JSON）"
+            ]
+          },
+          {
+            "evidence": "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:108",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": [
+              "ESLint: 14 个源文件，0 个问题（SFC 仅脚本/JSON）"
+            ]
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed_with_skips",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 6,
+              "failed": 0,
+              "skipped": 1,
+              "todo": 0,
+              "total": 7
+            },
+            "evidence": "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:87"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:78",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:82",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 6,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 7
+            },
+            "diagnostic": "沙箱禁止监听127.0.0.1，真实HTTP集成项失败并等待超时。"
+          },
+          {
+            "log": "eval-7-ssr-shared-state/mpx/run-1/agent.jsonl:87",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 6,
+              "failed": 0,
+              "skipped": 1,
+              "todo": 0,
+              "total": 7
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 2,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed_with_skips",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [
+        "原运行真实Node HTTP集成项被跳过；主Agent独立补跑后获得通过证据，不能改写原执行记录。"
+      ],
+      "notes": [
+        "原运行6通过/1跳过：HTTP监听EPERM失败后将真实HTTP测试改为显式opt-in；这项不能在原运行中算通过。",
+        "主Agent事后在允许监听环境只补跑HTTP测试成功；原6项和补跑HTTP共7个不同测试已有通过证据，见supplementary_checks，仍非真实SSR HTML/hydration集成验收。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/verification.md:49",
+          "text": "| ESLint、Jest、Vue2 | 复现本目录检查所需开发依赖；本次复用了可见工作区安装的版本 |"
+        },
+        {
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/verification.md:57",
+          "text": "环境探测：Node v24.12.0、Vue 2.7.16、ESLint 7.32.0、Jest 29.7.0。没有 `@mpxjs/mpx-cli-service`、`vue-server-renderer`、`vue-style-loader` 和 `express`，也没有业务 webpack 配置或原生容器。"
+        },
+        {
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/verification.md:66",
+          "text": "ESLint 检查 JS、CJS、SFC 普通脚本和动态 JSON；静态 JSON 使用 JSON.parse，动态 JSON 对 wx/ali/ios/android/harmony/web 求值，并检查 wx 的 WebView 环境分支。**不检查 Mpx 模板或样式编译，不是单文件编译。**"
+        },
+        {
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/verification.md:68",
+          "text": "Jest 最终结果：**6 项通过，1 项跳过**。覆盖双 store A/B 反序完成、模拟恢复 A 后不请求、切 B 失败重试、同 id 去重、旧响应不能盖回、无效 id 失效、绝对地址与编码/数据契约、服务传入独立 URL/context 和 500 分支。"
+        },
+        {
+          "evidence": "eval-7-ssr-shared-state/mpx/outputs/verification.md:72",
+          "text": "首次 Jest 因 Watchman 写状态目录被沙箱拒绝而退出，已在本地配置设置 `watchman: false`。第二次 6 项通过、真实 HTTP 测试失败：`listen EPERM: operation not permitted 127.0.0.1`，随后等待监听回调超时。已补监听错误处理，并把真实 HTTP 项改为显式 opt-in；最终跳过该项，未声称真实 Node 网络已通过。本任务未超过 3 次修复上限。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "case": "eval-7-ssr-shared-state",
+      "group": "noskill",
+      "execution_status": "completed",
+      "run_evidence": "eval-7-ssr-shared-state/noskill/run-1/run.json",
+      "execution": {
+        "returncode": 0,
+        "output_exists": true,
+        "sources_unchanged": true
+      },
+      "eslint": {
+        "status": "passed",
+        "final_exit_code": 0,
+        "checked_scope": "全部JS及SFC运行时/JSON生成脚本5个提取块",
+        "evidence": [
+          "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:83",
+          "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:78"
+        ],
+        "attempt_history": [
+          {
+            "evidence": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:56",
+            "exit_code": 1,
+            "status": "failed",
+            "diagnostics": [
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-7-ssr-shared-state/noskill/outputs/analytics.web.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-7-ssr-shared-state/noskill/outputs/api/detail.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-7-ssr-shared-state/noskill/outputs/checks/jest.config.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-7-ssr-shared-state/noskill/outputs/checks/shared-state.spec.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-7-ssr-shared-state/noskill/outputs/server.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files",
+              "0:0  error  Parsing error: No Babel config file detected for /Users/didi/work/mpx/.agents/skills/workspaces/mpx-workplace/iteration-1/eval-7-ssr-shared-state/noskill/outputs/ssr-build.js. Either disable config file checking with requireConfigFile: false, or configure Babel so that it can find the config files"
+            ]
+          },
+          {
+            "evidence": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:67",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:72",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:78",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          },
+          {
+            "evidence": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:83",
+            "exit_code": 0,
+            "status": "passed",
+            "diagnostics": []
+          }
+        ]
+      },
+      "jest": {
+        "status": "passed",
+        "final_batches": [
+          {
+            "kind": "delivery",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 13,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 13
+            },
+            "evidence": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:68"
+          }
+        ],
+        "attempt_history": [
+          {
+            "log": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:51",
+            "exit_code": 1,
+            "suites": null,
+            "tests": null,
+            "diagnostic": "Watchman沙箱权限阻止测试启动；没有测试数量结论。"
+          },
+          {
+            "log": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:57",
+            "exit_code": 1,
+            "suites": {
+              "passed": 0,
+              "failed": 1,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 8,
+              "failed": 5,
+              "skipped": 0,
+              "todo": 0,
+              "total": 13
+            },
+            "diagnostic": "测试/检查启动或断言失败，详见原始日志；不将缺失的计数推断为0。"
+          },
+          {
+            "log": "eval-7-ssr-shared-state/noskill/run-1/agent.jsonl:68",
+            "exit_code": 0,
+            "suites": {
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 1
+            },
+            "tests": {
+              "passed": 13,
+              "failed": 0,
+              "skipped": 0,
+              "todo": 0,
+              "total": 13
+            },
+            "diagnostic": ""
+          }
+        ],
+        "three_fix_policy": {
+          "limit": 3,
+          "retries_after_first_unsuccessful_execution": 2,
+          "limit_reached": false,
+          "stop_triggered": false,
+          "outcome": "passed",
+          "counting_note": "按连续未通过后的修订/重试链保守计数，计入Watchman等启动问题；同一批通过后的重复复验不重复加总。"
+        }
+      },
+      "other_check_history": [],
+      "policy_ambiguities": [],
+      "unresolved_checks": [],
+      "notes": [
+        "原环境vue-demi处于Vue3模式，导致hasInjectionContext错误；仅在测试配置映射到该依赖自带lib/v2.7/index.cjs，未改公共依赖。",
+        "测试使用真实Vue2.7/Pinia2.3.1，但将@mpxjs/core响应式和@mpxjs/pinia Web桥接映射为对应Vue/Pinia，页面脚本在VM执行，renderer为模拟；通过不能等同真实SSR HTML/hydration。"
+      ],
+      "verification_claims": [
+        {
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/verification.md:122",
+          "text": "结果：JavaScript ESLint 无错误；额外抽取 app/detail/index 的运行脚本及 app/detail JSON 生成脚本共 5 个块执行同配置 ESLint，无错误，静态 JSON 块通过 JSON.parse。**这些不是 .mpx 编译。** Jest 的 1 个 suite、13 个用例通过：每容器隔离与 B→A 完成顺序、状态可序列化、恢复 A 不请求、同 ID 合并、B 失败重试、同容器 A/B 竞态、SSR 等待钩子、客户端 query watcher，以及 wx/ali/ios/android/harmony 的 onLoad 入口、无 DOM 埋点导入、传输契约、逐请求 URL/context。"
+        },
+        {
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/verification.md:124",
+          "text": "Jest 使用真实 Vue 2.7.16/Pinia 2.3.1，但把 @mpxjs/core 的响应式导出和 @mpxjs/pinia 的 Web 桥接映射到相应 Vue/Pinia；页面运行脚本在 VM 中抽取执行，未经过 Mpx loader。Node handler 用例使用模拟 renderer，不生成真实 SSR HTML。非 Web 用例验证 onLoad 会调用共享加载函数，不模拟宿主生命周期或原生渲染。"
+        },
+        {
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/verification.md:126",
+          "text": "首次 Jest 因 Watchman 尝试写不可写状态目录失败，已在检查配置关闭 Watchman。随后暴露公共 node_modules 的 vue-demi 处于 Vue3 模式，报 `TypeError: vueDemi.hasInjectionContext is not a function`；检查配置仅映射到该依赖自带的 `lib/v2.7/index.cjs`，未改公共依赖。修复配置后全部用例通过，未超过三次修复限制。ESLint 初始因输出目录无 Babel 配置报解析错误，已通过 requireConfigFile=false 使用公共 ESLint 规则完成检查。"
+        },
+        {
+          "evidence": "eval-7-ssr-shared-state/noskill/outputs/verification.md:151",
+          "text": "在这些步骤完成前，结论限于：共享实现与接入片段已交付，局部 ESLint/Jest 已通过；业务构建、完整 SSR HTML、hydration 与所有设备目标仍待验证。"
+        }
+      ],
+      "unverified": [
+        "完整业务工程构建未验证。",
+        "微信WebView/Skyline、支付宝iOS/Android、RN ios/android/harmony及浏览器实际交互未验证。"
+      ]
+    }
+  ]
+}

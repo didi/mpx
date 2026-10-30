@@ -1,9 +1,0 @@
-{
-  "rootDir": ".",
-  "testEnvironment": "node",
-  "testMatch": [
-    "<rootDir>/validate-suite.test.cjs"
-  ],
-  "transform": {},
-  "cacheDirectory": "/private/tmp/skyline-suite-v7-jest-cache"
-}

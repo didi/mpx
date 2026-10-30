@@ -1,0 +1,92 @@
+const fs = require('fs')
+const vm = require('vm')
+const file = require('path').resolve(__dirname, '../../../eval-1-keyboard-scroll-adaptation/mpx/outputs/address-dialog.mpx')
+const source = fs.readFileSync(file, 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1].replace(/^import .*$/gm, '')
+function mount (mode = 'ali', system = 'iOS 18') {
+  let options
+  const getSystemInfoSync = jest.fn(() => ({ system }))
+  vm.runInNewContext(source, { createComponent: value => { options = value }, getSystemInfoSync, __mpx_mode__: mode })
+  const rendered = []
+  const callbacks = []
+  const instance = Object.assign({}, JSON.parse(JSON.stringify(options.data)), options.methods, {
+    $forceUpdate (data, done) {
+      Object.assign(this, data)
+      rendered.push(Object.assign({}, data))
+      callbacks.push(done)
+    },
+    triggerEvent: jest.fn()
+  })
+  options.attached.call(instance)
+  return { instance, callbacks, rendered, getSystemInfoSync, detach: () => options.detached.call(instance) }
+}
+
+test.each([['ali', 'iOS 18', true], ['ali', 'Android 15', false], ['wx', 'iOS 18', false]])('runtime input mode: %s %s', (mode, system, ios) => {
+  const { instance, getSystemInfoSync } = mount(mode, system)
+  expect(instance.isIOS).toBe(ios)
+  expect(getSystemInfoSync).toHaveBeenCalledTimes(mode === 'ali' ? 1 : 0)
+})
+test('first focus waits for the host render completion callback', () => {
+  const { instance, callbacks, rendered } = mount()
+  instance.open()
+  expect(rendered).toEqual([{ visible: true, focusedInput: '' }])
+  expect(instance.focusedInput).toBe('')
+  callbacks.shift()()
+  expect(instance.focusedInput).toBe('name')
+})
+test('close and reopen cancel the old render callback; duplicate open is ignored', () => {
+  const { instance, callbacks } = mount()
+  instance.open()
+  instance.close()
+  instance.open()
+  instance.open()
+  expect(callbacks).toHaveLength(2)
+  callbacks.shift()()
+  expect(instance.focusedInput).toBe('')
+  callbacks.shift()()
+  expect(instance.focusedInput).toBe('name')
+})
+test('touching phone before the callback prevents autofocus stealing focus', () => {
+  const { instance, callbacks } = mount()
+  instance.open()
+  instance.focus('phone')
+  callbacks.shift()()
+  expect(instance.focusedInput).toBe('phone')
+})
+test.each(['blur-first', 'focus-first'])('switching inputs accepts %s ordering', order => {
+  const { instance, callbacks } = mount()
+  instance.open()
+  callbacks.shift()()
+  instance.focus('name')
+  if (order === 'blur-first') instance.blur('name')
+  instance.focus('phone')
+  if (order === 'focus-first') instance.blur('name')
+  expect(instance.focusedInput).toBe('phone')
+  instance.focus('name')
+  instance.blur('phone')
+  expect(instance.focusedInput).toBe('name')
+  instance.blur('name')
+  expect(instance.focusedInput).toBe('')
+})
+test('unmount cancels pending focus', () => {
+  const { instance, callbacks, detach } = mount()
+  instance.open()
+  detach()
+  callbacks.shift()()
+  expect(instance.focusedInput).toBe('')
+})
+test('input strings, selection and confirm payload survive close/reopen', () => {
+  const { instance, callbacks } = mount()
+  instance.open()
+  callbacks.shift()()
+  instance.setName({ detail: { value: '张三' } })
+  instance.setPhone({ detail: { value: '01234567890' } })
+  instance.select('near')
+  instance.close()
+  instance.open()
+  callbacks.shift()()
+  instance.confirm()
+  expect(instance.triggerEvent).toHaveBeenCalledWith('confirm', { name: '张三', phone: '01234567890', selected: 'near' })
+  expect(instance.visible).toBe(false)
+  expect(instance.focusedInput).toBe('')
+  expect(instance.phone).toBe('01234567890')
+})

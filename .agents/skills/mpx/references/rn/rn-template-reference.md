@@ -173,7 +173,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 
 | 差异类型 | 说明 |
 | --- | --- |
-| 支持范围 | `enable-back-to-top` 仅 iOS；`bounces` 为 iOS 边界弹性，须同时启用 `enhanced`。`paging-enabled`、`show-scrollbar`、`dragstart/dragging/dragend` 也依赖 `enhanced`。 |
+| 支持范围 | `enable-back-to-top` 仅支持 iOS 点击状态栏回顶，不支持基准中的 Android 双击标题栏回顶。 |
 | 支持范围 | `refresher-default-style`、`refresher-background` 仅 Android；`refresher-threshold` 仅对自定义下拉节点生效，当前编译规则仍可能对此属性给出不支持警告。 |
 | 支持范围 | 不支持 `enable-passive`、`scroll-anchoring`、`using-sticky`、`fast-deceleration`；不需要 `enable-flex` 开启横向 flex 布局。不支持 `refresherpulling/refresherrestore/refresherabort`。 |
 | 属性差异 | `upper-threshold` / `lower-threshold`：仅 number，默认 `50`；不支持基准的字符串类型 |

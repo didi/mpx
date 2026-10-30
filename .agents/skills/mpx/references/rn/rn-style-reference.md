@@ -522,62 +522,62 @@ this.dynamicStyle = {
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `display` | `flex` \| `none` | `flex` | RN 仅支持 Flex 布局。`display: none` 在 RN 中可能引发异常表现，不建议使用，推荐通过 `wx:if` 条件渲染或设置 `width: 0; height: 0; overflow: hidden` 等方式隐藏元素。示例：`display: flex`。 |
-| `flex-direction` | `row` \| `column` \| `row-reverse` \| `column-reverse` | `column` | 主轴方向。RN 原生默认值为 `column`，但 Mpx 输出 RN 在显式声明 `display: flex` 且未声明 `flex-direction` 时会自动补充 `flex-direction: row` 来对齐小程序 / Web；需要纵向布局时请显式写 `flex-direction: column`。示例：`flex-direction: row` 水平排列子元素。 |
-| `flex-wrap` | `nowrap` \| `wrap` \| `wrap-reverse` | `nowrap` | 换行控制。示例：`flex-wrap: wrap` 子元素超出时自动换行。 |
-| `justify-content` | `flex-start` \| `flex-end` \| `center` \| `space-between` \| `space-around` \| `space-evenly` | `flex-start` | 主轴对齐。示例：`justify-content: space-between` 两端对齐；`justify-content: center` 居中。 |
-| `align-items` | `flex-start` \| `flex-end` \| `center` \| `stretch` \| `baseline` | `stretch` | 交叉轴对齐。示例：`align-items: center` 垂直居中子元素。 |
-| `align-content` | `flex-start` \| `flex-end` \| `center` \| `stretch` \| `space-between` \| `space-around` \| `space-evenly` | `flex-start` | 多行交叉轴对齐。示例：`flex-wrap: wrap; align-content: space-between` 多行均匀分布。 |
-| `align-self` | `auto` \| `flex-start` \| `flex-end` \| `center` \| `stretch` \| `baseline` | `auto` | 单个元素交叉轴对齐。示例：`align-self: flex-end` 单独将某子元素对齐到底部。 |
-| `flex` | `none` \| `auto` \| `initial` \| `<flex-grow>` \| `<flex-grow> <flex-shrink>` \| `<flex-grow> <flex-basis>` \| `<flex-grow> <flex-shrink> <flex-basis>` | - | 简写属性。示例：`flex: 1` 填满剩余空间；`flex: 1 1 auto` 可伸缩且基于内容大小。 |
-| `flex-grow` | `number` | `0` | 放大比例。示例：`flex-grow: 1` 等比例分配剩余空间。 |
-| `flex-shrink` | `number` | `0` | 收缩比例。示例：`flex-shrink: 1` 空间不足时允许收缩。 |
-| `flex-basis` | `auto` \| `length` \| `%` | `auto` | 初始大小。示例：`flex-basis: 200rpx` 初始宽度 200rpx。 |
-| `flex-flow` | `<flex-direction> <flex-wrap>` | - | 简写属性，运行时自动展开为 `flex-direction` 和 `flex-wrap`。示例：`flex-flow: row wrap`。 |
-| `gap` / `row-gap` / `column-gap` | `length` \| `%` | - | 行列间距；`gap` 支持单值和双值，双值按 `row-gap column-gap` 展开；百分比运行时换算为数值，`row-gap` 基于 `parent-height`，`column-gap` 基于 `parent-width`。示例：`gap: 20rpx`；`gap: 10% 20%`；`row-gap: 10rpx; column-gap: 20rpx`。 |
+| `display` | `flex` \| `none` | `flex` | RN 仅支持 Flex 布局。`display: none` 在 RN 中可能引发异常表现，不建议使用，推荐通过 `wx:if` 或 `wx:show` 隐藏节点。 |
+| `flex-direction` | `row` \| `column` \| `row-reverse` \| `column-reverse` | `column` | 主轴方向。RN 原生默认值为 `column`，但 Mpx 输出 RN 在显式声明 `display: flex` 且未声明 `flex-direction` 时会自动补充 `flex-direction: row` 来对齐小程序 / Web；需要纵向布局时请显式写 `flex-direction: column`。 |
+| `flex-wrap` | `nowrap` \| `wrap` \| `wrap-reverse` | `nowrap` | 换行控制。 |
+| `justify-content` | `flex-start` \| `flex-end` \| `center` \| `space-between` \| `space-around` \| `space-evenly` | `flex-start` | 主轴对齐。 |
+| `align-items` | `flex-start` \| `flex-end` \| `center` \| `stretch` \| `baseline` | `stretch` | 交叉轴对齐。 |
+| `align-content` | `flex-start` \| `flex-end` \| `center` \| `stretch` \| `space-between` \| `space-around` \| `space-evenly` | `flex-start` | 多行交叉轴对齐。 |
+| `align-self` | `auto` \| `flex-start` \| `flex-end` \| `center` \| `stretch` \| `baseline` | `auto` | 单个元素交叉轴对齐。 |
+| `flex` | `none` \| `auto` \| `initial` \| `<flex-grow>` \| `<flex-grow> <flex-shrink>` \| `<flex-grow> <flex-basis>` \| `<flex-grow> <flex-shrink> <flex-basis>` | - | 简写属性。 |
+| `flex-grow` | `number` | `0` | 放大比例。 |
+| `flex-shrink` | `number` | `0` | 收缩比例。 |
+| `flex-basis` | `auto` \| `length` \| `%` | `auto` | 初始大小。 |
+| `flex-flow` | `<flex-direction> <flex-wrap>` | - | 简写属性，运行时自动展开为 `flex-direction` 和 `flex-wrap`。 |
+| `gap` / `row-gap` / `column-gap` | `length` \| `%` | - | 行列间距；`gap` 支持单值和双值，双值按 `row-gap column-gap` 展开；百分比运行时换算为数值，`row-gap` 基于 `parent-height`，`column-gap` 基于 `parent-width`。 |
 
 ### 定位与层级
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `position` | `relative` \| `absolute` \| `fixed` | `relative` | 不支持 `sticky`；`fixed` 会提升到 page root 下模拟，嵌套 fixed 无法保持父子层级而会转变为兄弟层级，需注意显式声明 `z-index` 并避免依赖事件冒泡。示例：`position: absolute; top: 0; left: 0` 绝对定位到左上角。 |
-| `top` / `right` / `bottom` / `left` | `length` \| `%` | - | 偏移量。示例：`top: 20rpx`；`left: 50%`。 |
-| `inset` | `length` \| `%` | - | 定位偏移简写；单值透传给 RN，2-4 值展开为 `top` / `right` / `bottom` / `left`。示例：`inset: 0`；`inset: 10rpx 20rpx`。 |
-| `z-index` | `number` | - | 层级控制。示例：`z-index: 10` 提升元素层级使其覆盖在其他元素之上。 |
+| `position` | `relative` \| `absolute` \| `fixed` | `relative` | 不支持 `sticky`；`fixed` 会提升到 page root 下模拟，嵌套 fixed 无法保持父子层级而会转变为兄弟层级，需注意显式声明 `z-index` 并避免依赖事件冒泡。 |
+| `top` / `right` / `bottom` / `left` | `length` \| `%` | - | 偏移量。 |
+| `inset` | `length` \| `%` | - | 定位偏移简写；单值透传给 RN，2-4 值展开为 `top` / `right` / `bottom` / `left`。 |
+| `z-index` | `number` | - | 层级控制。 |
 
 ### 尺寸与溢出
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `width` / `height` | `auto` \| `length` \| `%` | `auto` | 宽高。示例：`width: 750rpx; height: 200rpx`；`width: 100%`。 |
-| `min-width` / `min-height` | `length` \| `%` | - | 最小尺寸。示例：`min-height: 100rpx` 保证最小高度。 |
-| `max-width` / `max-height` | `length` \| `%` | - | 最大尺寸。示例：`max-width: 600rpx` 限制最大宽度。 |
-| `aspect-ratio` | `auto` \| `number` \| `width / height` | - | 宽高比。示例：`aspect-ratio: 16 / 9` 保持 16:9 比例；`aspect-ratio: 1` 正方形。 |
-| `box-sizing` | `border-box` \| `content-box` | `content-box` | 盒模型，RN 原始默认值为 `border-box`，Mpx 中为了跨端表现一致统一默认值为 `content-box`，可通过 `mpx.config.rnConfig.defaultBoxSizing` 配置默认值。示例：`box-sizing: border-box` 宽高包含边框和内边距。 |
-| `overflow` | `visible` \| `hidden` \| `scroll` | `visible` | 溢出控制。示例：`overflow: hidden` 裁剪超出内容；`overflow: scroll` 允许滚动。 |
+| `width` / `height` | `auto` \| `length` \| `%` | `auto` | 宽高。 |
+| `min-width` / `min-height` | `length` \| `%` | - | 最小尺寸。 |
+| `max-width` / `max-height` | `length` \| `%` | - | 最大尺寸。 |
+| `aspect-ratio` | `auto` \| `number` \| `width / height` | - | 宽高比。 |
+| `box-sizing` | `border-box` \| `content-box` | `content-box` | 盒模型，RN 原始默认值为 `border-box`，Mpx 中为了跨端表现一致统一默认值为 `content-box`，可通过 `mpx.config.rnConfig.defaultBoxSizing` 配置默认值。 |
+| `overflow` | `visible` \| `hidden` \| `scroll` | `visible` | 溢出控制。 |
 
 ### 间距 (Margin/Padding)
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `margin` | `auto` \| `length` \| `%` | — | 外边距简写（支持多值）。示例：`margin: 20rpx`；`margin: 10rpx 20rpx`（上下 10 左右 20）；`margin: auto` 水平居中。 |
-| `margin-*` | `auto` \| `length` \| `%` | — | 单边外边距。示例：`margin-top: 20rpx; margin-left: 30rpx`。 |
-| `padding` | `length` \| `%` | — | 内边距简写（支持多值）。示例：`padding: 20rpx`；`padding: 10rpx 20rpx 30rpx 40rpx`。 |
-| `padding-*` | `length` \| `%` | — | 单边内边距。示例：`padding-bottom: 40rpx`。 |
+| `margin` | `auto` \| `length` \| `%` | — | 外边距简写（支持多值）。 |
+| `margin-*` | `auto` \| `length` \| `%` | — | 单边外边距。 |
+| `padding` | `length` \| `%` | — | 内边距简写（支持多值）。 |
+| `padding-*` | `length` \| `%` | — | 单边内边距。 |
 
 ### 边框 (Border)
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `border` | `width \|\| style \|\| color` | — | 边框简写。示例：`border: 1px solid #e5e5e5`。 |
-| `border-*` | `width \|\| style \|\| color` | — | 单边边框简写，优先用于声明单边边框。示例：`border-bottom: 1px solid #e5e5e5`。 |
-| `border-width` | `length` | — | 边框宽度（支持多值）。示例：`border-width: 1px`；`border-width: 1px 2px`。 |
-| `border-color` | `color` | — | 边框颜色（支持多值）。示例：`border-color: #ccc`；`border-color: red blue`。 |
-| `border-style` | `solid` \| `dotted` \| `dashed` \| `none` | — | 边框样式（不支持单边设置）；`none` 会在运行时转换为 `border-width: 0`。示例：`border-style: dashed`；`border-style: none`。 |
-| `border-radius` | `length` \| `%` | — | 圆角半径（支持多值）。示例：`border-radius: 16rpx`；`border-radius: 50%` 圆形。 |
-| `border-*-radius` | `length` \| `%` | — | 单角圆角。示例：`border-top-left-radius: 20rpx; border-top-right-radius: 20rpx` 顶部圆角。 |
-| `outline` | `width \|\| style \|\| color` | — | 外轮廓简写，按值类型无序展开为 `outline-width` / `outline-style` / `outline-color`；缺省 style 时补 `none`，最终在运行时清除 outline；RN 0.76+ 生效，低版本忽略。示例：`outline: 1px solid red`；`outline: none`。 |
-| `outline-style` | `solid` \| `dotted` \| `dashed` \| `none` | — | 外轮廓样式；`none` 会在运行时转换为 `outline-width: 0`。示例：`outline-style: dashed`；`outline-style: none`。 |
+| `border` | `width \|\| style \|\| color` | — | 边框简写。 |
+| `border-*` | `width \|\| style \|\| color` | — | 单边边框简写，优先用于声明单边边框。 |
+| `border-width` | `length` | — | 边框宽度（支持多值）。 |
+| `border-color` | `color` | — | 边框颜色（支持多值）。 |
+| `border-style` | `solid` \| `dotted` \| `dashed` \| `none` | — | 边框样式（不支持单边设置）；`none` 会在运行时转换为 `border-width: 0`。 |
+| `border-radius` | `length` \| `%` | — | 圆角半径（支持多值）。 |
+| `border-*-radius` | `length` \| `%` | — | 单角圆角。 |
+| `outline` | `width \|\| style \|\| color` | — | 外轮廓简写，按值类型无序展开为 `outline-width` / `outline-style` / `outline-color`；缺省 style 时补 `none`，最终在运行时清除 outline；RN 0.76+ 生效，低版本忽略。 |
+| `outline-style` | `solid` \| `dotted` \| `dashed` \| `none` | — | 外轮廓样式；`none` 会在运行时转换为 `outline-width: 0`。 |
 
 ### 背景 (Background)
 
@@ -585,12 +585,12 @@ this.dynamicStyle = {
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `background` | `<background-color>` \| `<background-image>` \| `<background-repeat>` \| `<background-position>` / `<background-size>` | — | 背景简写，支持用 `/` 分隔的背景位置和尺寸。示例：`background: #f5f5f5`；`background: url(https://example.com/bg.png) no-repeat center/cover`。 |
-| `background-color` | `color` | — | 背景色。示例：`background-color: #fff`；`background-color: rgba(0, 0, 0, 0.5)` 半透明黑色。 |
-| `background-image` | `url()` \| `linear-gradient()` \| `none` | — | `url()` 仅支持位图，SVG 会输出错误并丢弃；渐变不受影响。示例：`background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none`。 |
-| `background-size` | `cover` \| `contain` \| `auto` \| `length` \| `%` | — | 背景尺寸。示例：`background-size: cover` 覆盖填充；`background-size: 200rpx 100rpx`。 |
-| `background-repeat` | `no-repeat` | — | 仅支持不重复。示例：`background-repeat: no-repeat`。 |
-| `background-position` | `center` \| `left` \| `right` \| `top` \| `bottom` \| `number` \| `%` | — | 背景位置。示例：`background-position: center`；`background-position: 50% 50%`。 |
+| `background` | `<background-color>` \| `<background-image>` \| `<background-repeat>` \| `<background-position>` / `<background-size>` | — | 背景简写，支持用 `/` 分隔的背景位置和尺寸。 |
+| `background-color` | `color` | — | 背景色。 |
+| `background-image` | `url()` \| `linear-gradient()` \| `none` | — | `url()` 仅支持位图，SVG 会输出错误并丢弃；渐变不受影响。 |
+| `background-size` | `cover` \| `contain` \| `auto` \| `length` \| `%` | — | 背景尺寸。 |
+| `background-repeat` | `no-repeat` | — | 仅支持不重复。 |
+| `background-position` | `center` \| `left` \| `right` \| `top` \| `bottom` \| `number` \| `%` | — | 背景位置。 |
 
 ### 文本与字体
 
@@ -602,29 +602,29 @@ this.dynamicStyle = {
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `color` | `color` | - | 文本颜色。示例：`color: #333`；`color: rgba(0, 0, 0, 0.8)`。 |
-| `font` | `[font-style] [small-caps] [font-weight] font-size [ / line-height ] font-family` | - | 字体简写，展开为字体相关长属性；`font-size` 与 `font-family` 必填，`/` 两侧可有空格。示例：`font: italic bold 16px / 1.5 Arial`。 |
-| `font-family` | `string` | - | 字体。示例：`font-family: PingFangSC-Regular`。 |
-| `font-size` | `length` \| `%` | - | 字体大小；百分比按文本透传字号基准解析。示例：`font-size: 28rpx`；`font-size: 16px`；`font-size: 120%`。 |
-| `font-weight` | `normal` \| `bold` \| `100-900` | `normal` | 字体粗细。示例：`font-weight: bold`；`font-weight: 500`。 |
-| `font-style` | `normal` \| `italic` | `normal` | 字体样式。示例：`font-style: italic` 斜体。 |
-| `line-height` | `length` \| `number` \| `%` | - | 行高，纯数字值自动转换为百分比（如 `1.5` → `150%`），最终按文本节点合并后的 `font-size` 解析；运行时数值型 `lineHeight` 表示绝对行高；多字号混排需统一设置外层行高。示例：`line-height: 40rpx`；`line-height: 1.5`。 |
-| `text-align` | `left` \| `right` \| `center` \| `justify` | `auto` | 文本对齐；`auto` 是 RN 默认值，不支持在用户源码中显式书写。示例：`text-align: center` 文本居中。 |
-| `vertical-align` | `auto` \| `top` \| `bottom` \| `middle` | - | 垂直对齐（Android / Harmony 支持，iOS 不支持）。示例：`vertical-align: middle`。 |
-| `text-decoration` | `line \|\| style \|\| color` | - | 装饰线简写；`text-decoration-style` 在 Android / Harmony 仅支持 `solid`，`text-decoration-color` 仅 iOS 支持；line 支持多值组合 `underline line-through`。示例：`text-decoration: underline`；`text-decoration: line-through solid red`。 |
-| `text-transform` | `none` \| `uppercase` \| `lowercase` \| `capitalize` | `none` | 大小写转换。示例：`text-transform: uppercase` 全部大写。 |
-| `letter-spacing` | `length` | - | 字符间距。示例：`letter-spacing: 2rpx`。 |
-| `text-shadow` | `offset-x offset-y blur color` | - | 文本阴影（Mpx 增强）。示例：`text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3)`。 |
-| `user-select` | `auto` \| `text` \| `none` \| `contain` \| `all` | `auto` | 文本选择控制。示例：`user-select: none` 禁止选择文本。 |
-| `font-variant` | `small-caps` \| `oldstyle-nums` \| `lining-nums` \| `tabular-nums` \| `proportional-nums` | - | 字体变体，支持空格分隔的多值。示例：`font-variant: tabular-nums`；`font-variant: small-caps tabular-nums`。 |
-| `direction` | `ltr` \| `rtl` \| `inherit` | `ltr` | 文本方向。示例：`direction: rtl` 右到左排列（适用于阿拉伯语等）。 |
+| `color` | `color` | - | 文本颜色。 |
+| `font` | `[font-style] [small-caps] [font-weight] font-size [ / line-height ] font-family` | - | 字体简写，展开为字体相关长属性；`font-size` 与 `font-family` 必填，`/` 两侧可有空格。 |
+| `font-family` | `string` | - | 字体。 |
+| `font-size` | `length` \| `%` | - | 字体大小；百分比按文本透传字号基准解析。 |
+| `font-weight` | `normal` \| `bold` \| `100-900` | `normal` | 字体粗细。新建和跨端适配推荐优先使用 `normal` / `bold`，仅在设计明确需要具体数值字重时保留数值。 |
+| `font-style` | `normal` \| `italic` | `normal` | 字体样式。 |
+| `line-height` | `length` \| `number` \| `%` | - | 行高，纯数字值自动转换为百分比（如 `1.5` → `150%`），最终按文本节点合并后的 `font-size` 解析；运行时数值型 `lineHeight` 表示绝对行高；多字号混排需统一设置外层行高。 |
+| `text-align` | `left` \| `right` \| `center` \| `justify` | `auto` | 文本对齐；`auto` 是 RN 默认值，不支持在用户源码中显式书写。 |
+| `vertical-align` | `auto` \| `top` \| `bottom` \| `middle` | - | 垂直对齐（Android / Harmony 支持，iOS 不支持）。 |
+| `text-decoration` | `line \|\| style \|\| color` | - | 装饰线简写；`text-decoration-style` 在 Android / Harmony 仅支持 `solid`，`text-decoration-color` 仅 iOS 支持；line 支持多值组合 `underline line-through`。 |
+| `text-transform` | `none` \| `uppercase` \| `lowercase` \| `capitalize` | `none` | 大小写转换。 |
+| `letter-spacing` | `length` | - | 字符间距。 |
+| `text-shadow` | `offset-x offset-y blur color` | - | 文本阴影（Mpx 增强）。 |
+| `user-select` | `auto` \| `text` \| `none` \| `contain` \| `all` | `auto` | 文本选择控制。 |
+| `font-variant` | `small-caps` \| `oldstyle-nums` \| `lining-nums` \| `tabular-nums` \| `proportional-nums` | - | 字体变体，支持空格分隔的多值。 |
+| `direction` | `ltr` \| `rtl` \| `inherit` | `ltr` | 文本方向。 |
 
 ### 变换 (Transform)
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `transform` | `translate` \| `scale` \| `rotate`... | — | 变换函数列表。示例：`transform: translateX(20rpx) rotate(45deg)`；`transform: scale(1.5)` 放大 1.5 倍。 |
-| `transform-origin` | `length` \| `%` \| `keyword` | — | 变换原点。示例：`transform-origin: center center`；`transform-origin: 0% 0%` 以左上角为变换原点。 |
+| `transform` | `translate` \| `scale` \| `rotate`... | — | 变换函数列表。 |
+| `transform-origin` | `length` \| `%` \| `keyword` | — | 变换原点。 |
 
 **不支持**：`translateZ`, `scaleZ`, `translate3d`, `scale3d`, `rotate3d`, `matrix3d`。
 
@@ -632,8 +632,8 @@ this.dynamicStyle = {
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `box-shadow` | `<offset-x> <offset-y> <blur-radius> <spread-radius> <color>` | — | 阴影简写（依赖宿主 RN/DRN 版本原生支持）。示例：`box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1)`。 |
-| `opacity` | `0-1` | — | 不透明度。示例：`opacity: 0.5` 半透明；`opacity: 0` 完全透明。 |
+| `box-shadow` | `<offset-x> <offset-y> <blur-radius> <spread-radius> <color>` | — | 阴影简写（依赖宿主 RN/DRN 版本原生支持）。 |
+| `opacity` | `0-1` | — | 不透明度。 |
 
 ### 动画 (Animation)
 
@@ -641,19 +641,19 @@ this.dynamicStyle = {
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `transition` | `property duration timing-function delay` | — | 过渡简写。示例：`transition: opacity 0.3s ease`；`transition: width 0.5s ease-in-out 0.1s`。 |
-| `transition-property` | `string` | — | 过渡属性（不支持 `all`）。示例：`transition-property: opacity, width` 指定多个过渡属性。 |
-| `transition-duration` | `time` | — | 过渡持续时间。示例：`transition-duration: 0.3s`；`transition-duration: 300ms`。 |
-| `transition-delay` | `time` | — | 过渡延迟时间。示例：`transition-delay: 0.1s` 延迟 0.1 秒后开始过渡。 |
-| `transition-timing-function` | `linear` \| `ease` \| `ease-in` \| `ease-out` \| `ease-in-out` \| `cubic-bezier` | — | 过渡时间函数。示例：`transition-timing-function: ease-in-out`；`transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)`。 |
+| `transition` | `property duration timing-function delay` | — | 过渡简写。 |
+| `transition-property` | `string` | — | 过渡属性（不支持 `all`）。 |
+| `transition-duration` | `time` | — | 过渡持续时间。 |
+| `transition-delay` | `time` | — | 过渡延迟时间。 |
+| `transition-timing-function` | `linear` \| `ease` \| `ease-in` \| `ease-out` \| `ease-in-out` \| `cubic-bezier` | — | 过渡时间函数。 |
 
 ### 其他属性
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `pointer-events` | `auto` \| `none` \| `box-none` \| `box-only` | — | 点击穿透控制。示例：`pointer-events: none` 穿透点击事件到下层元素；`pointer-events: box-none` 自身不响应但子元素可响应。 |
-| `backface-visibility` | `visible` \| `hidden` | — | 背面可见性。示例：`backface-visibility: hidden` 翻转时隐藏背面（常配合 `transform: rotateY(180deg)` 使用）。 |
-| `object-fit` | `cover` \| `contain` \| `fill` \| `scale-down` | — | 图片填充模式。示例：`object-fit: cover` 裁剪填充；`object-fit: contain` 完整显示。 |
+| `pointer-events` | `auto` \| `none` \| `box-none` \| `box-only` | — | 点击穿透控制。`box-none` / `box-only` 为 RN 专有扩展值，非标准 CSS 取值，仅用于 RN 端：`box-none` 自身不响应但子元素可响应；`box-only` 自身可响应但子元素不响应。 |
+| `backface-visibility` | `visible` \| `hidden` | — | 背面可见性。 |
+| `object-fit` | `cover` \| `contain` \| `fill` \| `scale-down` | — | 图片填充模式。 |
 
 ### 不支持的属性
 

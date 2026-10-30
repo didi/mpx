@@ -1,0 +1,92 @@
+{
+  "eval_id": 0,
+  "eval_name": "target-config",
+  "prompt": "请根据 scenario.md 修复这份微信语法 Mpx 工程的多端配置与模块边界，输出可合入工程的配置和完整相关文件。目标同时包含微信 Skyline（保留 WebView 回退）、支付宝、RN 三端及 Web。保留所有业务组件和可用的宿主功能。",
+  "files": [
+    "input/scenario.md"
+  ],
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser"
+  ],
+  "assertions": [
+    {
+      "id": "config.target-dialect",
+      "capability": "config.target-dialect",
+      "text": "构建目标使用 wx/ali/ios/android/harmony/web，微信源码方言保持 wx，Skyline 不成为 mode。",
+      "verify": "逐目标展开插件选项；检查条件命中的微信模板仍按 wx 方言转换。",
+      "fail_when": "把 skyline/rn 当成目标，或令 srcMode 无条件跟随目标。",
+      "sources": [
+        "base/conditional-compile.md",
+        "base/config-reference.md"
+      ]
+    },
+    {
+      "id": "config.rn-file-fallback",
+      "capability": "config.rn-file-fallback",
+      "text": "RN 条件文件回退后在 ios/android/harmony 都保留可渲染模板。",
+      "verify": "默认引用不变；检查 android/harmony 命中 .ios.mpx 后仍有模板和 open 绑定。",
+      "fail_when": "只保留 mode=\"ios\" 导致其他 RN 目标模板为空，或把 RN 文件回退推广到 Web。",
+      "sources": [
+        "base/conditional-compile.md"
+      ]
+    },
+    {
+      "id": "config.native-import-boundary",
+      "capability": "config.native-import-boundary",
+      "text": "react-native 依赖只进入 RN 目标的模块图，三种 RN 目标仍可获得平台名。",
+      "verify": "检查条件文件或等价构建隔离；非 RN 依赖解析无需安装 react-native。",
+      "fail_when": "只在调用处增加 if，仍保留共用模块顶层静态 import。",
+      "sources": [
+        "base/conditional-compile.md",
+        "rn/rn-hybrid-dev.md"
+      ]
+    },
+    {
+      "id": "config.skyline-json",
+      "capability": "config.skyline-json",
+      "text": "微信应用/页面具有正确层级的 Skyline 配置，其他目标配置不被污染。",
+      "verify": "展开动态 JSON：app 含 lazyCodeLoading 和 rendererOptions.skyline 的 block/content-box 配置；home 含 renderer、glass-easel、custom 导航、disableScroll；其他目标无微信专属配置。",
+      "fail_when": "只写 renderer；把 rendererOptions 子项放到 app 顶层；把页面字段放组件中。",
+      "sources": [
+        "skyline/skyline-json-reference.md",
+        "base/json-reference.md"
+      ]
+    },
+    {
+      "id": "config.external-classes",
+      "capability": "config.external-classes",
+      "text": "支付宝插件 externalClasses 保留三个仍被消费的外部类名称。",
+      "verify": "检查插件最终数组与组件声明/静态 class 的契约，custom-class、i-class、accent-class 均可用。",
+      "fail_when": "新增 accent-class 时覆盖掉仍在使用的默认外部类，或仅改页面 JSON。",
+      "sources": [
+        "ali/ali-style-reference.md",
+        "ali/ali-config-reference.md"
+      ]
+    },
+    {
+      "id": "config.component2",
+      "capability": "config.component2",
+      "text": "component2 在支付宝开发者工具工程配置中启用。",
+      "verify": "检查输出 mini.project.json 与放入支付宝产物根目录的集成说明。",
+      "fail_when": "只把 component2 写入 app/page JSON 或 MpxWebpackPlugin 选项。",
+      "sources": [
+        "ali/ali-config-reference.md"
+      ]
+    }
+  ]
+}

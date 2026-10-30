@@ -160,7 +160,7 @@ createComponent({
 
 Mpx 样式的最终表现取决于输出目标及其渲染环境，跨端时需核对以下差异：
 
-- 输出微信小程序：基础语义参考 [WXSS 文档](https://developers.weixin.qq.com/miniprogram/dev/framework/view/wxss.html)。WebView 渲染受操作系统内置引擎的 CSS 兼容性影响；Skyline 另有样式限制。
+- 输出微信小程序：Skyline 的样式限制查 [Skyline 样式差异](../skyline/skyline-style-reference.md)，适配方案查 [Skyline 样式最佳实践](../skyline/skyline-style-practice.md)。
 - 输出 Web：查 [Web 样式参考](../web/web-style-reference.md)。
 - 输出 RN：先查 [RN 样式实践](../rn/rn-style-practice.md)，属性支持查 [RN 样式参考](../rn/rn-style-reference.md)。
 - 样式条件分支：查 [条件编译](./conditional-compile.md#样式条件编译)。

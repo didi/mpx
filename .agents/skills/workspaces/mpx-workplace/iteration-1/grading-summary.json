@@ -1,0 +1,12 @@
+{
+  "mpx": {
+    "passed": 48,
+    "total": 48,
+    "pass_rate": 1.0
+  },
+  "noskill": {
+    "passed": 44,
+    "total": 48,
+    "pass_rate": 0.9166666666666666
+  }
+}

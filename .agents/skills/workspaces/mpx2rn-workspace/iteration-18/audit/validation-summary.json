@@ -1,0 +1,59 @@
+{
+  "eslint": {
+    "files": 12,
+    "errors": 0,
+    "warnings": 0
+  },
+  "compile": {
+    "compile-component": {
+      "wx": {
+        "success": false,
+        "errors": 0,
+        "warnings": 2
+      },
+      "ios": {
+        "success": false,
+        "errors": 0,
+        "warnings": 2
+      }
+    },
+    "compile-page": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    "latest-mpx-case0": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  "jest": {
+    "suites_passed": 2,
+    "tests_passed": 98
+  },
+  "scorer_tests": {
+    "passed": 75,
+    "skipped": 0
+  },
+  "notes": [
+    "当前所选 12 份输出 ESLint 为 0 错误、0 警告。",
+    "最新 mpx case 0 已重新执行 wx/iOS 编译，0 错误、0 警告；其余结果沿用原编译证据，其中评分组件有 4 条全局组件注册警告。",
+    "本次评分器回归测试 75 项全部通过。RN 模板/样式 Jest 98 项通过记录来自此前独立性修复验证。",
+    "未进行真机验证或完整 UnoCSS 样式生成验证。"
+  ]
+}

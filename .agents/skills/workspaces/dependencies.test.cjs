@@ -1,0 +1,21 @@
+const fs = require('fs')
+const path = require('path')
+const checkEnvironment = require('./check-env.cjs')
+const workspaces = fs.readdirSync(__dirname).filter(name => fs.existsSync(path.join(__dirname, name, 'package.json')))
+
+test.each(workspaces)('%s shares registry dependencies and keeps its own build configuration', name => {
+  const workspace = path.join(__dirname, name)
+  expect(checkEnvironment(workspace)['@mpxjs/core'].version).toBeTruthy()
+  expect(fs.existsSync(path.join(workspace, 'node_modules'))).toBe(false)
+  expect(fs.existsSync(path.join(workspace, 'package-lock.json'))).toBe(false)
+  const Service = require('@mpxjs/mpx-cli-service')
+  const service = new Service(workspace)
+  expect(service.pkgContext).toBe(__dirname)
+  expect(service.loadUserOptions().pluginOptions).toEqual(require(path.join(workspace, 'mpx.config.js')).pluginOptions)
+  expect(fs.existsSync(path.join(workspace, 'tools/runtime-core'))).toBe(false)
+  fs.readdirSync(workspace).filter(name => name.startsWith('iteration-')).forEach(iteration => {
+    expect(fs.existsSync(path.join(workspace, iteration, 'runtime-core'))).toBe(false)
+  })
+  const config = require(path.join(workspace, 'mpx.config.js'))
+  expect(config.configureWebpack?.resolve?.alias?.['@mpxjs/core']).toBeUndefined()
+})

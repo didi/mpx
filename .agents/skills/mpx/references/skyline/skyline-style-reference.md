@@ -7,8 +7,8 @@
 - [阅读说明](#阅读说明)
 - [默认值差异与配置影响](#默认值差异与配置影响)
 - [选择器差异](#选择器差异)
-- [值、单位与计算差异](#值单位与计算差异)
-  - [长度、函数与单位](#长度函数与单位)
+- [属性值差异](#属性值差异)
+  - [通用属性值](#通用属性值)
   - [百分比支持情况](#百分比支持情况)
   - [颜色与渐变](#颜色与渐变)
 - [布局、盒模型与层叠差异](#布局盒模型与层叠差异)
@@ -30,23 +30,23 @@
 
 ## 默认值差异与配置影响
 
-以下对比未显式声明样式时的表现；项目已有 WXSS、组件默认样式和 Skyline 配置均可能覆盖这些基线。配置的完整接入方式见 [rendererOptions.skyline](skyline-json-reference.md#rendereroptionsskyline-配置项)。
+以下对比常规场景下未显式声明样式时的默认值，Skyline 默认值以未开启兼容配置为准；项目已有 WXSS、组件默认样式和 Skyline 配置均可能覆盖这些默认值。配置的完整接入方式见 [rendererOptions.skyline](skyline-json-reference.md#rendereroptionsskyline-配置项)。
 
-| 属性 | WebView 基线 / 场景 | Skyline 默认值（未开启兼容配置） | 配置影响与迁移处理 |
+| 属性 | WebView 默认值 | Skyline 默认值 | 配置与迁移 |
 | --- | --- | --- | --- |
-| `display` | 普通 `view` 按块级布局 | `flex` | `defaultDisplayBlock: true` 后为 `block`；特殊组件仍核对自身布局 |
-| `position` | 普通流中为 `static` | `relative` | 需要静态定位时显式声明 `static` |
-| `box-sizing` | 常规 CSS 基线为 `content-box` | `border-box` | `defaultContentBox: true` 后为 `content-box` |
-| `flex-direction` | Flex 容器默认 `row` | `column` | `defaultDisplayBlock: true` 时为 `row` |
-| `align-items` | 默认 `normal`，Flex 场景通常表现为拉伸 | `stretch` | `defaultDisplayBlock: true` 时为 `normal` |
-| `mask-repeat` | 默认为 `repeat` | `no-repeat` | 需要平铺时显式声明 `repeat` |
-| `mask-position-x` / `mask-position-y` | [CSS 遮罩初始位置](https://www.w3.org/TR/css-masking-1/#the-mask-position)为 `0% 0%` | 默认 `center` | 不依赖默认定位；按原设计显式设置 `mask-position` |
+| `display` | `block`（普通 `view`） | `flex` | `defaultDisplayBlock: true` 后为 `block`；特殊组件仍核对自身布局 |
+| `position` | `static` | `relative` | 需要静态定位时显式声明 `static` |
+| `box-sizing` | `content-box`（CSS 初始值） | `border-box` | `defaultContentBox: true` 后为 `content-box` |
+| `flex-direction` | `row`（Flex 容器） | `column` | `defaultDisplayBlock: true` 时为 `row` |
+| `align-items` | `normal`（Flex 中通常表现为 `stretch`） | `stretch` | `defaultDisplayBlock: true` 时为 `normal` |
+| `mask-repeat` | `repeat` | `no-repeat` | 需要平铺时显式声明 `repeat` |
+| `mask-position-x` / `mask-position-y` | `0%`（各轴，[CSS 初始值](https://www.w3.org/TR/css-masking-1/#the-mask-position)） | `center`（各轴） | 不依赖默认定位；按原设计显式设置 `mask-position` |
 
 > `text-align: start` 不作为独立默认值差异：两种渲染模式均需结合文本方向理解。若业务要求固定物理方向，显式设置 `left` / `right`；Skyline 的 `direction` 限制见 [文本与字体差异](#文本与字体差异)。
 
 ## 选择器差异
 
-| 选择器 / 写法 | WebView 表现 | Skyline 差异 | 迁移处理 |
+| 选择器 | WebView 表现 | Skyline 差异 | 迁移建议 |
 | --- | --- | --- | --- |
 | `*` | 通配匹配 | **不支持** | 使用页面根类或组件类 |
 | `[attr]` / `[attr=value]` | 按属性匹配 | **不支持** | 用 `wx:class` 表达动态状态，再使用类选择器 |
@@ -59,12 +59,12 @@
 > 2. 兄弟选择器 `a ~ b` / `a + b` 及 `:not` / `:only-child` / `:empty` 微信 8.0.49+ 可用；
 > 3. `:nth-child` 微信 8.0.50+ 可用。
 
-## 值、单位与计算差异
+## 属性值差异
 
-### 长度、函数与单位
+### 通用属性值
 
-| 值 / 写法 | WebView 表现 | Skyline 差异                                                           | 迁移处理                                           |
-| --- | --- |----------------------------------------------------------------------|------------------------------------------------|
+| 属性值 | WebView 表现 | Skyline 差异 | 迁移建议 |
+| --- | --- | --- | --- |
 | `calc()` | 可用于长度、角度等计算，具体取决于使用该值的属性 | **取值受限**：仅支持长度计算，不支持角度类型                                             | 角度直接写确定值，动态计算放脚本；Mpx 适配推荐采用非嵌套写法   |
 | `env()` | 可访问宿主提供的环境变量 | **取值受限**：仅支持 `safe-area-inset-top/right/bottom/left`；语法允许长度 fallback | 只依赖安全区变量，其他信息通过宿主 API 获取                       |
 | `<length>` 中的 `%` / `auto` | 是否接受取决于具体属性 | **条件限制**：通用长度语法包含这些值，不代表每个属性均实现其语义                                   | 按属性核对；例如 `overflow` 的 `auto` 是关键字限制，不能由长度语法推断支持 |
@@ -77,7 +77,7 @@
 
 百分比必须分别确认“能否使用”和“相对谁计算”，以下为支持 `%` 的属性及参照对象。
 
-| 属性 | Skyline 参照对象 |
+| 属性 | 参照对象 |
 | --- | --- |
 | `line-height` | 当前 `font-size` |
 | `transform-origin` | 元素自身的 `width` / `height` |
@@ -104,7 +104,7 @@
 
 ### 颜色与渐变
 
-| 值 / 写法 | WebView 表现 | Skyline 差异 | 迁移处理 |
+| 渐变写法 | WebView 表现 | Skyline 差异 | 迁移建议 |
 | --- | --- | --- | --- |
 | `linear-gradient()` 的色标位置 | 使用颜色停止位置语法 | **取值受限**：停止位置仅支持 `%` 和固定长度单位（px、rpx 等） | 不依赖复杂计算或未列出的色标语法 |
 | `radial-gradient()` | 可使用 circle / ellipse 等形状及相应尺寸规则 | **取值受限**：仅支持 `circle` 形状（不支持 `ellipse`），尺寸仅支持 `px`，颜色停止仅支持 `%` | 椭圆效果改图片或拆节点；迁移采用明确 `px` 尺寸 |
@@ -115,7 +115,7 @@
 
 ## 布局、盒模型与层叠差异
 
-| 属性 / 写法 / 行为 | WebView 表现 | Skyline 差异 | 迁移处理 |
+| 属性 / 行为 | WebView 表现 | Skyline 差异 | 迁移建议 |
 | --- | --- | --- | --- |
 | `direction` | 可控制文本、表格列和水平溢出的方向 | **不支持** | 不依赖该属性 |
 | `display: grid` / `flow-root` | 可形成 Grid / 独立块格式化上下文 | **取值受限**：不支持 grid / flow-root | Grid 改 Flex 或 `grid-view`；内联场景仍按 [内联混排](skyline-style-practice.md#内联混排) 处理 |
@@ -143,7 +143,7 @@
 
 ## 文本与字体差异
 
-| 属性 / 写法 / 行为 | WebView 表现 | Skyline 差异 | 迁移处理 |
+| 属性 | WebView 表现 | Skyline 差异 | 迁移建议 |
 | --- | --- | --- | --- |
 | `font-weight: bolder/lighter` | 相对父级计算字重 | **取值受限**：仅 `normal` / `bold` / 数值 `100–900` | 先确认目标字重，再选择明确值 |
 | `font-style: oblique` | 倾斜字体，可带角度 | **取值受限**：oblique 不支持；采用 `normal` / `italic` | 按视觉需求使用 italic，不视为完全等效 |
@@ -155,7 +155,7 @@
 | `text-decoration-line` | 可组合多种装饰线 | **取值受限**：仅单个 `none` / `underline` / `overline` / `line-through`，不支持组合与 blink | 多装饰拆节点，见 [多值实践](skyline-style-practice.md#text-decoration-line-多值适配) |
 | `text-decoration-style` / `text-decoration-color` | 可控制装饰线样式与颜色 | **条件限制**：仅 text / input；style 列出 `solid` / `double` / `dotted` / `dashed` / `wavy` | 不把 border-style 的限制套到文字装饰；颜色仍按受支持颜色值设置 |
 | `text-decoration-thickness` | 指定装饰线粗细 | **不支持** | 需精确粗细时使用真实装饰节点 |
-| `text-overflow: ellipsis` | 常见块级文本容器可用，需配合溢出条件 | **条件限制**：CSS 属性只在 text 生效 | 用组件的 overflow / max-lines，并保留 WebView 省略样式，见 [文本省略实践](skyline-style-practice.md#文本溢出省略适配) |
+| `text-overflow: ellipsis` | 常见块级文本容器可用，需配合溢出条件 | **条件限制**：CSS 属性只在 text 生效 | 用组件的 overflow / max-lines，并保留 WebView 省略样式，见 [文本溢出处理](skyline-style-practice.md#文本溢出处理) |
 | `text-indent` | 首行缩进 | **不支持** | 占位节点或 padding 需验证；padding 会缩进整个内容区，不能当作等效替换 |
 | `overflow-wrap` | 控制长词溢出换行 | **不支持** | 按业务断词语义选择 word-break 或调整文本，不能仅换属性名 |
 | `writing-mode` | 改变书写模式 | **不支持** | 无等效 WXSS 属性 |
@@ -165,7 +165,7 @@
 
 ## 背景、边框与阴影差异
 
-| 属性 / 写法 / 行为 | WebView 表现 | Skyline 差异 | 迁移处理 |
+| 属性 | WebView 表现 | Skyline 差异 | 迁移建议 |
 | --- | --- | --- | --- |
 | `background-image` | 支持多层背景 | **取值受限**：最多 2 个值 | 超出范围拆节点，保留各层顺序 |
 | `background-position` | 各背景可有独立定位 | **取值受限**：最多 2 组；position-x / position-y 支持 | 分组数与背景层数对应；百分比基准见 [百分比](#百分比支持情况) |
@@ -181,7 +181,7 @@
 
 ### 遮罩差异
 
-| 属性 / 写法 / 行为 | WebView 表现 | Skyline 差异 | 迁移处理 |
+| 属性 | WebView 表现 | Skyline 差异 | 迁移建议 |
 | --- | --- | --- | --- |
 | `mask-image` | 支持图像与渐变遮罩 | **取值受限**：仅 none / url()；渐变不可用，最多 2 个值 | 渐变转换图片，超出层数拆节点并核对合成效果 |
 | `mask-origin` / `mask-clip` / `mask-mode` | 控制定位、裁剪与遮罩模式 | **不支持** | 按资源与节点结构实现目标效果，不从 mask 简写推断支持 |
@@ -196,7 +196,7 @@
 
 ### 滤镜差异
 
-| 属性 / 写法 / 行为 | WebView 表现 | Skyline 差异 | 迁移处理 |
+| 滤镜写法 | WebView 表现 | Skyline 差异 | 迁移建议 |
 | --- | --- | --- | --- |
 | `filter` / `backdrop-filter` 的 url() | 可引用 SVG filter，依宿主能力生效 | **取值受限**：不支持 url() | 按效果使用受支持单函数或预渲染资源 |
 | `filter` / `backdrop-filter` 的 drop-shadow() | 按图像轮廓产生阴影 | **取值受限**：不支持 drop-shadow() | box-shadow 仅适合盒阴影，不保证透明轮廓阴影等效 |
@@ -206,7 +206,7 @@
 
 ## 动画与过渡差异
 
-| 属性 / 写法 / 行为 | WebView 表现 | Skyline 差异 | 迁移处理 |
+| 属性 | WebView 表现 | Skyline 差异 | 迁移建议 |
 | --- | --- | --- | --- |
 | `animation-fill-mode: none/backwards` | 有独立的动画前后填充语义 | **行为不同**：可写但实际表现为 forwards；稳定值为 forwards / both | 显式处理初始与恢复状态，替换后仍需核对视觉效果 |
 | `will-change` | 可声明 scroll-position 或具体属性名 | **取值受限**：仅 auto / contents | 不使用 scroll-position 或自定义标识符；可省略该优化提示 |
@@ -217,13 +217,13 @@
 > 1. 伪元素 animation 不生效，改真实节点，见 [伪元素动画实践](skyline-style-practice.md#伪元素不支持的-animation-需替换为真实节点) |
 > 2. `animation-name`、`@keyframes` 的普通命名和百分比关键帧不另列为差异。
 > 3. `transform` 的 2D / 3D 函数语法已列为支持，但不改变 Skyline 的层叠模型；
-> 4. `calc()` 角度仍受 [值类型限制](#长度函数与单位)。
+> 4. `calc()` 角度仍受 [值类型限制](#通用属性值)。
 
 ### 可动画属性范围
 
 不以 `border-*` 等通配符推断全部后缀均可用；每项还受静态取值和节点限制。
 
-| 类别 | 支持 transition / animation 的属性 |
+| 类别 | 可动画属性 |
 | --- | --- |
 | 变换与透明度 | `transform`、`transform-origin`、`opacity` |
 | 尺寸 | `width`、`height`、`min-width`、`max-width`、`min-height`、`max-height` |
@@ -245,6 +245,6 @@
 
 ## 媒体查询差异
 
-| 写法 | WebView 表现 | Skyline 差异                                    | 迁移处理 |
-| --- | --- |-----------------------------------------------| --- |
+| 查询写法 | WebView 表现 | Skyline 差异 | 迁移建议 |
+| --- | --- | --- | --- |
 | `@media screen` | 按媒体条件决定内部规则是否生效 | **行为不同**：其中的样式声明会忽略 `@media screen` 的限制条件直接生效 | 仅非 Skyline 节点添加专用类，并将媒体查询中的选择器限定到该类；Skyline 根据运行时窗口宽度生成对应业务断点的动态类，见 [媒体查询实践](skyline-style-practice.md#media-screen-兼容方案) |

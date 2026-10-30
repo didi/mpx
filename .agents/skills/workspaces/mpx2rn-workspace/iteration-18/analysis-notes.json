@@ -1,0 +1,12 @@
+[
+  "本报告按每组每用例的最新结果汇总：mpx case 0 使用 2026-10-28 的定向重跑，其他 11 个结果沿用 2026-10-27 的全量重跑。本次仅更新报告并重新评分，未启动模型。",
+  "mpx case 0 从 14/16 提升至 16/16：s6 字重使用 bold，l11 在 ios 分支清除首子节点顶部 margin，父级保留 20rpx。其余 120 项判定不变。",
+  "mpx 为 61/61（100%），mpx2rn 为 59/61（96.72%）；mpx2rn 剩余未通过项为 case 0/l11 与 case 1/j1。",
+  "本次仅对 mpx case 0 使用了更新后的 Skill，不代表两组全部用例都已按当前 Skill 版本重跑。",
+  "性能指标与所选输出对应，mpx case 0 使用 977,842 Token、213.594 秒、24 次工具调用；不累计已被替换的旧任务成本。Token 包含缓存输入，不等于计费量。",
+  "run_summary 为各用例通过率的均值，weighted_totals 为按 61 条断言汇总的通过率；不同用例的标准差不是重复运行稳定性。",
+  "评分器已独立于其他 iteration，75 项回归测试全部通过；此前两个静态误判修复继续生效，原复核证据中的 static_passed 是修复前记录。",
+  "定向重跑目录已删除，当前 case 0 输出从原本地会话记录还原，恢复来源见 eval-0-style-layout-adaptation/mpx/run-1/session-source.json。旧 case 0 产物和指标保存在 audit/mpx-case0-before-focused-rerun/；未将旧 stdout/stderr 冒作新日志。",
+  "评分组件原有 4 条全局组件注册警告仍保留；未做真机验证或完整 UnoCSS 样式生成验证。",
+  "当前 12 份输出 ESLint 均通过；恢复后的最新 mpx case 0 再次通过 wx/iOS 编译，无错误或警告。75 项评分器回归测试全部通过。"
+]

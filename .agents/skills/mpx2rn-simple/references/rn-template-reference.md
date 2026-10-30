@@ -767,7 +767,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | refresher-background | string | `'#fff'` | 设置自定义下拉刷新背景颜色，仅安卓支持 |
 | refresher-triggered | boolean | `false` | 设置当前下拉刷新状态,true 表示已触发 |
 | paging-enabled | boolean | `false` | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置 |
-| show-scrollbar | boolean | `true` | 滚动条显隐控制 (同时开启 enhanced 属性后生效) |
+| show-scrollbar | boolean | `true` | 滚动条显隐控制，不依赖 `enhanced` |
 | enable-trigger-intersection-observer | boolean | `false` | RN 环境特有属性，是否在滚动时触发 IntersectionObserver 相交检测更新 |
 | simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | wait-for | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |

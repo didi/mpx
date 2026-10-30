@@ -213,15 +213,15 @@ RN 样式开发优先 [RN 样式实践](../rn/rn-style-practice.md)，明确查�
 | `scroll-into-view` | string | — | 子节点 id，不能以数字开头；与 key 是不同用途。 |
 | `scroll-into-view-offset` | number | `0` | 定位目标的额外偏移，支持范围按端核对。 |
 | `scroll-with-animation` | boolean | `false` | 程序设置位置时是否使用过渡。 |
-| `enhanced` | boolean | `false` | 启用增强能力；各增强属性的宿主支持不同。 |
-| `bounces` / `show-scrollbar` / `paging-enabled` | boolean | `true` / `true` / `false` | 边界弹性、滚动条和整页停靠，微信 WebView 模式需配合增强能力。 |
-| `enable-back-to-top` | boolean | `false` | 支持的宿主中点击状态栏回到顶部。 |
+| `enhanced` | boolean | `false` | 开启增强滚动模式。微信 WebView 中，`bounces`、`show-scrollbar`、`paging-enabled` 及 `dragstart/dragging/dragend` 均需设置 `enhanced="{{true}}"` 才生效。 |
+| `bounces` / `show-scrollbar` / `paging-enabled` | boolean | `true` / `true` / `false` | 分别控制边界弹性、滚动条显隐和整页停靠；`bounces` 仅在 iOS 下生效。 |
+| `enable-back-to-top` | boolean | `false` | iOS 点击顶部状态栏、Android 双击标题栏时滚动到顶部，仅支持竖向。 |
 | `refresher-enabled` / `refresher-triggered` | boolean | `false` | 开启下拉刷新、控制刷新状态。 |
 | `refresher-threshold` | number | `45` | 刷新触发距离，单位 px。 |
 | `refresher-default-style` | string | `black` | 默认刷新样式：`black` / `white` / `none`。 |
 | `refresher-background` | string | — | 刷新区域背景。 |
 
-`scrolltoupper/scrolltolower` 表示抵达阈值；`scroll` 的微信 detail 含 `scrollLeft/scrollTop/scrollHeight/scrollWidth/deltaX/deltaY`，不要假定所有目标端返回全部字段。`dragstart/dragging/dragend` 属于增强事件；下拉刷新事件为 `refresherpulling/refresherrefresh/refresherrestore/refresherabort`，各端实现范围不同。
+`scrolltoupper/scrolltolower` 表示抵达阈值；`scroll` 的微信 detail 含 `scrollLeft/scrollTop/scrollHeight/scrollWidth/deltaX/deltaY`，不要假定所有目标端返回全部字段。`dragstart/dragging/dragend` 分别表示拖动开始、拖动过程和拖动结束；下拉刷新事件为 `refresherpulling/refresherrefresh/refresherrestore/refresherabort`，各端实现范围不同。
 
 刷新回调中执行请求，完成后将 `refresher-triggered` 复位；触底加载须由业务控制加载中状态与是否还有数据，避免重复请求。`scrollend`、嵌套滚动、虚拟列表及 Skyline 专属配置不作为普通滚动的全端保证。
 

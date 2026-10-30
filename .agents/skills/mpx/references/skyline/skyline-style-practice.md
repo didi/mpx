@@ -15,7 +15,7 @@
   - [scroll-view 高度自适应](#scroll-view-高度自适应)
   - [横向 scroll-view 内 Flex 子节点无法自动撑满](#横向-scroll-view-内-flex-子节点无法自动撑满)
 - [样式适配](#样式适配)
-  - [文本溢出省略适配](#文本溢出省略适配)
+  - [文本溢出处理](#文本溢出处理)
   - [字体 PostScript name 兼容](#字体-postscript-name-兼容)
   - [伪元素不支持的 animation 需替换为真实节点](#伪元素不支持的-animation-需替换为真实节点)
   - [animation API 不支持 → 使用 CSS transition](#animation-api-不支持--使用-css-transition)
@@ -161,10 +161,11 @@ Skyline 没有 BFC 和垂直 margin 折叠机制，原 WebView 中折叠的间�
 
 ## 样式适配
 
-### 文本溢出省略适配
+### 文本溢出处理
 
-- **覆盖全部省略节点**：检查 `text-overflow: ellipsis`、`-webkit-line-clamp`、`overflow: hidden` + `white-space: nowrap`，在实际显示文本的节点上补 `max-lines` / `overflow`；图文混排见[内联混排](#内联混排)。
-- **保留 WebView 样式**：单行保留 nowrap、hidden、ellipsis；多行保留 `display: -webkit-box`、`-webkit-box-orient`、`-webkit-line-clamp` 等，通过 `renderer` 隔离专用样式。
+- **先区分打点与截断**：显示省略号使用 `overflow="ellipsis"`；直接截断、不显示省略号使用 `overflow="clip"`。两者均在实际承载文本的节点上配合 `max-lines` 限制行数，并保证文本宽度受约束；图文混排见[内联混排](#内联混排)。这里的 `overflow` 是组件属性，与 CSS `overflow: hidden` 的容器裁剪不同。
+- **覆盖全部溢出节点**：检查 `text-overflow`、`-webkit-line-clamp`、`overflow: hidden` + `white-space: nowrap`，按原有视觉效果补 `max-lines` / `overflow`，不要把原本直接截断的文本统一改成打点。仅裁剪图片或其他内容的容器无需补文本属性。
+- **保留 WebView 样式**：单行打点保留 `white-space: nowrap`、`overflow: hidden`、`text-overflow: ellipsis`，直接截断使用 `text-overflow: clip`；多行打点保留 `display: -webkit-box`、`-webkit-box-orient`、`-webkit-line-clamp` 等。多行直接截断可用固定 `line-height` 与对应行数的 `max-height` 配合 `overflow: hidden`，不使用会产生省略号的 line-clamp。通过 `renderer` 隔离专用样式。
 - **避免额外空白**：`text` 会字面保留首尾空白，插值须紧贴标签；属性可折行，文本内容不额外换行缩进。
 
 例：双模式两行省略，单行时改为 `max-lines="{{1}}"` 并使用对应单行样式。

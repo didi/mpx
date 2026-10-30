@@ -1,0 +1,59 @@
+{
+  "name": "mpx-skill-eval-workspaces",
+  "private": true,
+  "workspaces": [
+    "mpx-workplace",
+    "mpx2ali-workplace",
+    "mpx2rn-workspace",
+    "mpx2skyline-workspace",
+    "mpx2web-workspace"
+  ],
+  "scripts": {
+    "update-framework": "npm update @mpxjs/api-proxy @mpxjs/core @mpxjs/pinia @mpxjs/fetch @mpxjs/store @mpxjs/babel-plugin-inject-page-events @mpxjs/cli-shared-utils @mpxjs/eslint-config @mpxjs/mpx-cli-service @mpxjs/vue-cli-plugin-mpx @mpxjs/webpack-plugin @mpxjs/unocss-base --registry=https://registry.npmjs.org",
+    "check-env": "node check-env.cjs",
+    "test": "jest --config jest.config.json --runInBand --watchman=false"
+  },
+  "dependencies": {
+    "@mpxjs/api-proxy": "latest",
+    "@mpxjs/core": "latest",
+    "react": "^18.3.1",
+    "react-native": "^0.77.2",
+    "react-native-ble-manager": "^12.5.1",
+    "react-native-reanimated": "^3.16.7",
+    "react-native-wifi-reborn": "^4.13.6",
+    "vue": "^2.7.16",
+    "vue-demi": "^0.14.10",
+    "@mpxjs/pinia": "latest",
+    "vue-i18n": "^8.28.2",
+    "vue-i18n-bridge": "^9.14.1",
+    "vue-router": "^3.6.5",
+    "vue-server-renderer": "2.7.16",
+    "@mpxjs/fetch": "latest",
+    "@mpxjs/store": "latest"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-runtime": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@babel/runtime-corejs3": "^7.29.7",
+    "@mpxjs/babel-plugin-inject-page-events": "latest",
+    "@mpxjs/cli-shared-utils": "latest",
+    "@mpxjs/eslint-config": "latest",
+    "@mpxjs/mpx-cli-service": "latest",
+    "@mpxjs/vue-cli-plugin-mpx": "latest",
+    "@mpxjs/webpack-plugin": "latest",
+    "@vue/cli-service": "~5.0.0",
+    "eslint": "^9.39.5",
+    "less": "^4.9.0",
+    "less-loader": "^11.1.4",
+    "process": "^0.11.10",
+    "typescript": "^4.9.5",
+    "webpack": "5.104.1",
+    "jest": "^29.7.0",
+    "@mpxjs/unocss-base": "latest",
+    "jsdom": "^20.0.3",
+    "stylus": "^0.63.0",
+    "stylus-loader": "^7.1.3"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "eval_id": 3,
+  "eval_name": "checkout-dialog",
+  "prompt": "根据 scenario.md 修复四端结算弹层。只修改弹层组件及共用尺寸模块，保留背景页面滚动、弹层内滚动和两输入框交互；微信包含 Skyline 与 WebView，支付宝和 RN 需区分各自设备系统。",
+  "files": [
+    "input/scenario.md"
+  ],
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser"
+  ],
+  "assertions": [
+    {
+      "id": "dialog.mask-scroll",
+      "capability": "dialog.mask-scroll",
+      "text": "支付宝锁滚动仅作用于蒙层，内容区仍可滚动，微信背景触摸被正确拦截。",
+      "verify": "检查蒙层与可滚动内容为兄弟节点，disable-scroll@ali 只在蒙层；微信局部 catchtouchmove 配空处理器；关闭后背景可滚。",
+      "fail_when": "把 disable-scroll 放在包住 scroll-view 的祖先，或改全局 page 锁滚动。",
+      "sources": [
+        "ali/ali-template-reference.md"
+      ]
+    },
+    {
+      "id": "dialog.device-input",
+      "capability": "dialog.device-input",
+      "text": "仅复现问题的支付宝输入框按运行时 iOS/Android 设置 enableNative。",
+      "verify": "ali+iOS 为 true、ali+Android 为 false；RN ios 编译目标不能作为支付宝设备判断；微信 Android 自动上推仍启用。",
+      "fail_when": "用 __mpx_mode__ === ios 判断支付宝设备，或全端关闭自动避让。",
+      "sources": [
+        "ali/ali-template-reference.md"
+      ]
+    },
+    {
+      "id": "dialog.focus-readiness",
+      "capability": "dialog.focus-readiness",
+      "text": "支付宝首次聚焦等待实际渲染和入场完成。",
+      "verify": "在 enterDone 前后检查 focus 状态；关闭后到达的旧入场回调不重新打开键盘。",
+      "fail_when": "visible 一变就聚焦，或仅用固定延时代替就绪信号。",
+      "sources": [
+        "ali/ali-template-reference.md"
+      ]
+    },
+    {
+      "id": "dialog.keyboard-order",
+      "capability": "dialog.keyboard-order",
+      "text": "焦点和键盘状态对两种输入框切换事件顺序均稳定。",
+      "verify": "回放输入中的两种序列及缺失高度事件；焦点转移不归零，最终失焦才复位；无自动/手动双重位移。",
+      "fail_when": "任意 blur 立即清零，或假定 keyboardheightchange 与 focus 顺序固定。",
+      "sources": [
+        "ali/ali-template-reference.md"
+      ]
+    },
+    {
+      "id": "dialog.window-units",
+      "capability": "dialog.window-units",
+      "text": "尺寸封装使用窗口高度及同单位安全区，容忍缺失安全区并响应窗口变化。",
+      "verify": "样本输出 height=700、safeBottom=20；safeArea=null 不抛错且额外底部留白为0；新窗口数据覆盖旧缓存。",
+      "fail_when": "重复扣导航栏、统一除 pixelRatio，或把兜底分散到每个调用处。",
+      "sources": [
+        "ali/ali-api-reference.md",
+        "base/api-reference.md"
+      ]
+    }
+  ]
+}

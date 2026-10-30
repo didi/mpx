@@ -1,0 +1,872 @@
+{
+  "skill_name": "mpx",
+  "iteration": 1,
+  "status": "designed_not_executed",
+  "reference_workspace": "mpx2rn-workspace/iteration-18 (historical design reference only)",
+  "skill_path": "../../mpx/SKILL.md",
+  "source_path_base": "../../mpx/references",
+  "description": "8 个同时跨多端 case，48 条唯一能力断言；不复用 RN 专用检查器与历史运行结果。",
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser"
+  ],
+  "path_conventions": {
+    "skill_and_source_paths": "relative to workspace root",
+    "files": "relative to each eval directory",
+    "outputs": "relative to a future run outputs directory"
+  },
+  "scoring": {
+    "unit": "unique capability",
+    "points_per_assertion": 1,
+    "total": 48,
+    "rule": "同一断言涵盖的端差异与复现场景全部满足才通过，不按目标端倍增分数。",
+    "gate": "缺文件、空实现或删除所测业务路径时，对应断言不能通过；不另加通用质量计分。",
+    "evidence": "优先可执行行为或产物证据；设计审查可给静态判定，但运行验证缺失必须记录，不冒充真机通过。"
+  },
+  "comparison": {
+    "groups": [
+      {
+        "id": "mpx"
+      },
+      {
+        "id": "noskill"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "target-config",
+      "title": "构建目标、条件文件与配置归属",
+      "task_type": "migration",
+      "targets": [
+        "wx",
+        "ali",
+        "ios",
+        "android",
+        "harmony",
+        "web"
+      ],
+      "runtime_matrix": [
+        "wx/skyline",
+        "wx/webview",
+        "ali/iOS",
+        "ali/Android",
+        "ios",
+        "android",
+        "harmony",
+        "web/browser"
+      ],
+      "prompt": "请根据 scenario.md 修复这份微信语法 Mpx 工程的多端配置与模块边界，输出可合入工程的配置和完整相关文件。目标同时包含微信 Skyline（保留 WebView 回退）、支付宝、RN 三端及 Web。保留所有业务组件和可用的宿主功能。",
+      "expected_output": "完整实现与 verification.md；覆盖输入中的业务路径，并逐端区分已验证和待验证项。",
+      "files": [
+        "input/scenario.md"
+      ],
+      "outputs": [
+        "plugin-options.js",
+        "src/app.mpx",
+        "src/pages/home.mpx",
+        "src/components/status-card.mpx",
+        "src/components/status-card.ios.mpx",
+        "src/device-label.js",
+        "src/device-label.ios.js",
+        "mini.project.json",
+        "verification.md"
+      ],
+      "assertions": [
+        {
+          "id": "config.target-dialect",
+          "capability": "config.target-dialect",
+          "text": "构建目标使用 wx/ali/ios/android/harmony/web，微信源码方言保持 wx，Skyline 不成为 mode。",
+          "verify": "逐目标展开插件选项；检查条件命中的微信模板仍按 wx 方言转换。",
+          "fail_when": "把 skyline/rn 当成目标，或令 srcMode 无条件跟随目标。",
+          "sources": [
+            "base/conditional-compile.md",
+            "base/config-reference.md"
+          ]
+        },
+        {
+          "id": "config.rn-file-fallback",
+          "capability": "config.rn-file-fallback",
+          "text": "RN 条件文件回退后在 ios/android/harmony 都保留可渲染模板。",
+          "verify": "默认引用不变；检查 android/harmony 命中 .ios.mpx 后仍有模板和 open 绑定。",
+          "fail_when": "只保留 mode=\"ios\" 导致其他 RN 目标模板为空，或把 RN 文件回退推广到 Web。",
+          "sources": [
+            "base/conditional-compile.md"
+          ]
+        },
+        {
+          "id": "config.native-import-boundary",
+          "capability": "config.native-import-boundary",
+          "text": "react-native 依赖只进入 RN 目标的模块图，三种 RN 目标仍可获得平台名。",
+          "verify": "检查条件文件或等价构建隔离；非 RN 依赖解析无需安装 react-native。",
+          "fail_when": "只在调用处增加 if，仍保留共用模块顶层静态 import。",
+          "sources": [
+            "base/conditional-compile.md",
+            "rn/rn-hybrid-dev.md"
+          ]
+        },
+        {
+          "id": "config.skyline-json",
+          "capability": "config.skyline-json",
+          "text": "微信应用/页面具有正确层级的 Skyline 配置，其他目标配置不被污染。",
+          "verify": "展开动态 JSON：app 含 lazyCodeLoading 和 rendererOptions.skyline 的 block/content-box 配置；home 含 renderer、glass-easel、custom 导航、disableScroll；其他目标无微信专属配置。",
+          "fail_when": "只写 renderer；把 rendererOptions 子项放到 app 顶层；把页面字段放组件中。",
+          "sources": [
+            "skyline/skyline-json-reference.md",
+            "base/json-reference.md"
+          ]
+        },
+        {
+          "id": "config.external-classes",
+          "capability": "config.external-classes",
+          "text": "支付宝插件 externalClasses 保留三个仍被消费的外部类名称。",
+          "verify": "检查插件最终数组与组件声明/静态 class 的契约，custom-class、i-class、accent-class 均可用。",
+          "fail_when": "新增 accent-class 时覆盖掉仍在使用的默认外部类，或仅改页面 JSON。",
+          "sources": [
+            "ali/ali-style-reference.md",
+            "ali/ali-config-reference.md"
+          ]
+        },
+        {
+          "id": "config.component2",
+          "capability": "config.component2",
+          "text": "component2 在支付宝开发者工具工程配置中启用。",
+          "verify": "检查输出 mini.project.json 与放入支付宝产物根目录的集成说明。",
+          "fail_when": "只把 component2 写入 app/page JSON 或 MpxWebpackPlugin 选项。",
+          "sources": [
+            "ali/ali-config-reference.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "layout-card",
+      "title": "图文布局、间距与样式作用范围",
+      "task_type": "migration",
+      "targets": [
+        "wx",
+        "ali",
+        "ios",
+        "android",
+        "harmony",
+        "web"
+      ],
+      "runtime_matrix": [
+        "wx/skyline",
+        "wx/webview",
+        "ali/iOS",
+        "ali/Android",
+        "ios",
+        "android",
+        "harmony",
+        "web/browser"
+      ],
+      "prompt": "将 scenario.md 中的商品卡片改造为四端共用组件。保留给定尺寸、间距、长标题省略、窄屏排版以及同名类隔离，输出完整 product-card.mpx 和演示父组件。微信需兼容 Skyline 与 WebView，RN 包含三端。",
+      "expected_output": "完整实现与 verification.md；覆盖输入中的业务路径，并逐端区分已验证和待验证项。",
+      "files": [
+        "input/scenario.md"
+      ],
+      "outputs": [
+        "product-card.mpx",
+        "demo.mpx",
+        "verification.md"
+      ],
+      "assertions": [
+        {
+          "id": "layout.portable-grid",
+          "capability": "layout.portable-grid",
+          "text": "卡片图片区域具有实际可用的跨端布局，RN 分支使用支持的选择器与布局声明。",
+          "verify": "检查 hero 布局及 photo 定位；RN 使用简单类和支持的 Flex/显式布局，其他端保留同等几何关系。",
+          "fail_when": "只删除 Grid/后代规则却未把宽高和布局落实到节点。",
+          "sources": [
+            "rn/rn-style-reference.md",
+            "skyline/skyline-style-practice.md"
+          ]
+        },
+        {
+          "id": "layout.margin-geometry",
+          "capability": "layout.margin-geometry",
+          "text": "折叠块级间距与不折叠 Flex 间距分别保持 24rpx、20rpx、16rpx。",
+          "verify": "按输入三种结构计算修改后的有效间距；在无 margin 折叠的 Skyline/RN 与 WebView 对比。",
+          "fail_when": "所有 margin 一律相加或归零，或者修复普通块却破坏 Flex 间距。",
+          "sources": [
+            "rn/rn-style-practice.md",
+            "skyline/skyline-style-practice.md"
+          ]
+        },
+        {
+          "id": "layout.text-ellipsis",
+          "capability": "layout.text-ellipsis",
+          "text": "同一长标题在各端均一行省略，并保留各端所需的文本约束。",
+          "verify": "检查实际单行省略效果：支付宝完整 App 构建已提供 text 的 white-space 继承，接受父容器承担截断或直接约束 text，不要求迁移样式；Skyline 有 max-lines/overflow，RN 有 numberOfLines，Web/WebView 有等效 CSS；宽度与裁剪落在实际承担截断的节点。",
+          "fail_when": "目标端实际换行、只裁剪不打点或缺少有效宽度/截断约束；只添加 RN 属性却删除其他端必要样式。不得仅因支付宝样式位于父容器而判失败。",
+          "sources": [
+            "ali/ali-style-reference.md",
+            "rn/rn-template-reference.md",
+            "skyline/skyline-style-practice.md"
+          ]
+        },
+        {
+          "id": "layout.image-padding",
+          "capability": "layout.image-padding",
+          "text": "图片自身保持 240×80rpx，四边 24rpx 留白由外层承担。",
+          "verify": "核对图片宽高与包装层 padding，计算总占位 288×128rpx。",
+          "fail_when": "仅删除 padding 导致留白丢失，或把留白重复加到图片和包装层。",
+          "sources": [
+            "ali/ali-style-reference.md"
+          ]
+        },
+        {
+          "id": "layout.responsive-breakpoint",
+          "capability": "layout.responsive-breakpoint",
+          "text": "400px 断点在 Skyline 与其他端保持一致且随窗口变化更新。",
+          "verify": "分别检查 399px/401px 与宽度切换；若保留媒体查询，其每个选择器仅命中非 Skyline 节点；接受全端运行时宽度方案。",
+          "fail_when": "让 Skyline 命中不受媒体条件约束的 .card 规则，或只按启动时宽度计算。",
+          "sources": [
+            "skyline/skyline-style-practice.md"
+          ]
+        },
+        {
+          "id": "layout.style-isolation",
+          "capability": "layout.style-isolation",
+          "text": "支付宝同名 badge 类不在页面、组件和兄弟实例间串色。",
+          "verify": "检查 scoped 或限定到组件目录的 autoScopeRules；演示父组件仍红、内部标签仍蓝。",
+          "fail_when": "依赖微信默认隔离，或为解决冲突删除父组件样式。",
+          "sources": [
+            "ali/ali-style-reference.md"
+          ]
+        },
+        {
+          "id": "layout.text-tree",
+          "capability": "layout.text-tree",
+          "text": "保障文本与官方标签采用各端合法节点树并保持横向展示。",
+          "verify": "检查 text 内无 view 等非法嵌套；Skyline/RN 可渲染两个文本内容与标签样式。",
+          "fail_when": "保留 text 内嵌 view，或删除标签以规避限制。",
+          "sources": [
+            "skyline/skyline-template-reference.md",
+            "rn/rn-template-reference.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "scroll-feed",
+      "title": "刷新、吸顶与节点定位",
+      "task_type": "migration",
+      "targets": [
+        "wx",
+        "ali",
+        "ios",
+        "android",
+        "harmony",
+        "web"
+      ],
+      "runtime_matrix": [
+        "wx/skyline",
+        "wx/webview",
+        "ali/iOS",
+        "ali/Android",
+        "ios",
+        "android",
+        "harmony",
+        "web/browser"
+      ],
+      "prompt": "请将 scenario.md 中的订单列表页面迁移为四端可用的滚动实现，保留刷新、分页、滚动位置、吸顶、横向分类和定位功能。支付宝允许使用明确的刷新按钮替代下拉手势。输出完整页面和本地数据模块；微信同时验证两种 renderer。",
+      "expected_output": "完整实现与 verification.md；覆盖输入中的业务路径，并逐端区分已验证和待验证项。",
+      "files": [
+        "input/scenario.md"
+      ],
+      "outputs": [
+        "feed.mpx",
+        "data.js",
+        "verification.md"
+      ],
+      "assertions": [
+        {
+          "id": "scroll.refresh-entry",
+          "capability": "scroll.refresh-entry",
+          "text": "刷新在四端都有可触发入口，支付宝不依赖不支持的 refresher 事件。",
+          "verify": "Skyline/RN 检查实际滚动容器刷新绑定、开关和 finally 收尾；支付宝点击刷新按钮可重置到第一页；注入失败后可重试。",
+          "fail_when": "四端无差别绑定 refresherrefresh，或删除支付宝刷新能力。",
+          "sources": [
+            "ali/ali-template-reference.md",
+            "rn/rn-script-reference.md",
+            "skyline/skyline-runtime-practice.md"
+          ]
+        },
+        {
+          "id": "scroll.pagination",
+          "capability": "scroll.pagination",
+          "text": "触底分页从实际滚动容器触发并保留有界可滚动区域。",
+          "verify": "核对 scroll-y、高度链与 scrolltolower 绑定；连续触底不会重复追加同页，到 60 条停止。",
+          "fail_when": "仅保留 onReachBottom，或有处理器却未绑定到目标端容器。",
+          "sources": [
+            "rn/rn-script-reference.md",
+            "skyline/skyline-runtime-practice.md",
+            "web/web-json-reference.md"
+          ]
+        },
+        {
+          "id": "scroll.event-payload",
+          "capability": "scroll.event-payload",
+          "text": "滚动位置展示读取 scroll-view 的 detail.scrollTop。",
+          "verify": "用 {detail:{scrollTop:120}} 调用实际绑定函数，界面值变成 120。",
+          "fail_when": "沿用页面滚动事件 e.scrollTop 导致 undefined。",
+          "sources": [
+            "skyline/skyline-runtime-practice.md",
+            "base/template-reference.md"
+          ]
+        },
+        {
+          "id": "scroll.sticky-renderer",
+          "capability": "scroll.sticky-renderer",
+          "text": "分组标题的吸顶实现按目标和微信 renderer 生效。",
+          "verify": "Skyline 为 custom 滚动结构内 sticky-section/header，header 首子节点且有背景；RN 使用受支持吸顶结构；WebView/Web/支付宝采用各自有效等价路径。",
+          "fail_when": "用 @wx 区分两种 renderer，或者把 sticky-section 当所有端都支持的通用节点。",
+          "sources": [
+            "skyline/skyline-style-practice.md",
+            "rn/rn-style-practice.md"
+          ]
+        },
+        {
+          "id": "scroll.horizontal-width",
+          "capability": "scroll.horizontal-width",
+          "text": "横向分类的直接内容子节点分别具备视口宽和 1200rpx 宽的布局依据。",
+          "verify": "检查 Skyline enable-flex 与横向布局及直接子节点宽度，其他端无须支持微信专属属性也能横滚。",
+          "fail_when": "只给深层子元素 min-width/flex，依赖其反向撑开 Skyline 容器。",
+          "sources": [
+            "skyline/skyline-style-practice.md",
+            "ali/ali-template-reference.md"
+          ]
+        },
+        {
+          "id": "scroll.query-scope",
+          "capability": "scroll.query-scope",
+          "text": "订单定位链路采用合法 id、实例作用域与 RN 可查询节点。",
+          "verify": "检查 order-21 等合法 id、简单选择器、RN wx:ref 标记以及挂载后查询；若用 query.in(this)，继续使用其返回对象；按钮最终确实触发滚动。",
+          "fail_when": "仍用数字开头 id、丢弃 in 返回值，或添加 ref 却没有实现定位。",
+          "sources": [
+            "ali/ali-api-reference.md",
+            "rn/rn-script-reference.md",
+            "skyline/skyline-runtime-practice.md"
+          ]
+        },
+        {
+          "id": "scroll.scrollbar-boolean",
+          "capability": "scroll.scrollbar-boolean",
+          "text": "隐藏滚动条使用严格布尔 false，并仅对微信补 enhanced。",
+          "verify": "检查两个容器输出的 show-scrollbar 是布尔 false；完整 App/原本显示滚动条的设备上复验。",
+          "fail_when": "字符串 false、仅 @wx 隐藏或全局 scrollbar 规则。",
+          "sources": [
+            "ali/ali-template-reference.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "checkout-dialog",
+      "title": "弹层、键盘与窗口尺寸",
+      "task_type": "migration",
+      "targets": [
+        "wx",
+        "ali",
+        "ios",
+        "android",
+        "harmony",
+        "web"
+      ],
+      "runtime_matrix": [
+        "wx/skyline",
+        "wx/webview",
+        "ali/iOS",
+        "ali/Android",
+        "ios",
+        "android",
+        "harmony",
+        "web/browser"
+      ],
+      "prompt": "根据 scenario.md 修复四端结算弹层。只修改弹层组件及共用尺寸模块，保留背景页面滚动、弹层内滚动和两输入框交互；微信包含 Skyline 与 WebView，支付宝和 RN 需区分各自设备系统。",
+      "expected_output": "完整实现与 verification.md；覆盖输入中的业务路径，并逐端区分已验证和待验证项。",
+      "files": [
+        "input/scenario.md"
+      ],
+      "outputs": [
+        "checkout-dialog.mpx",
+        "size.js",
+        "verification.md"
+      ],
+      "assertions": [
+        {
+          "id": "dialog.mask-scroll",
+          "capability": "dialog.mask-scroll",
+          "text": "支付宝锁滚动仅作用于蒙层，内容区仍可滚动，微信背景触摸被正确拦截。",
+          "verify": "检查蒙层与可滚动内容为兄弟节点，disable-scroll@ali 只在蒙层；微信局部 catchtouchmove 配空处理器；关闭后背景可滚。",
+          "fail_when": "把 disable-scroll 放在包住 scroll-view 的祖先，或改全局 page 锁滚动。",
+          "sources": [
+            "ali/ali-template-reference.md"
+          ]
+        },
+        {
+          "id": "dialog.device-input",
+          "capability": "dialog.device-input",
+          "text": "仅复现问题的支付宝输入框按运行时 iOS/Android 设置 enableNative。",
+          "verify": "ali+iOS 为 true、ali+Android 为 false；RN ios 编译目标不能作为支付宝设备判断；微信 Android 自动上推仍启用。",
+          "fail_when": "用 __mpx_mode__ === ios 判断支付宝设备，或全端关闭自动避让。",
+          "sources": [
+            "ali/ali-template-reference.md"
+          ]
+        },
+        {
+          "id": "dialog.focus-readiness",
+          "capability": "dialog.focus-readiness",
+          "text": "支付宝首次聚焦等待实际渲染和入场完成。",
+          "verify": "在 enterDone 前后检查 focus 状态；关闭后到达的旧入场回调不重新打开键盘。",
+          "fail_when": "visible 一变就聚焦，或仅用固定延时代替就绪信号。",
+          "sources": [
+            "ali/ali-template-reference.md"
+          ]
+        },
+        {
+          "id": "dialog.keyboard-order",
+          "capability": "dialog.keyboard-order",
+          "text": "焦点和键盘状态对两种输入框切换事件顺序均稳定。",
+          "verify": "回放输入中的两种序列及缺失高度事件；焦点转移不归零，最终失焦才复位；无自动/手动双重位移。",
+          "fail_when": "任意 blur 立即清零，或假定 keyboardheightchange 与 focus 顺序固定。",
+          "sources": [
+            "ali/ali-template-reference.md"
+          ]
+        },
+        {
+          "id": "dialog.window-units",
+          "capability": "dialog.window-units",
+          "text": "尺寸封装使用窗口高度及同单位安全区，容忍缺失安全区并响应窗口变化。",
+          "verify": "样本输出 height=700、safeBottom=20；safeArea=null 不抛错且额外底部留白为0；新窗口数据覆盖旧缓存。",
+          "fail_when": "重复扣导航栏、统一除 pixelRatio，或把兜底分散到每个调用处。",
+          "sources": [
+            "ali/ali-api-reference.md",
+            "base/api-reference.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "account-search",
+      "title": "登录适配、任务句柄与请求取消",
+      "task_type": "migration",
+      "targets": [
+        "wx",
+        "ali",
+        "ios",
+        "android",
+        "harmony",
+        "web"
+      ],
+      "runtime_matrix": [
+        "wx/skyline",
+        "wx/webview",
+        "ali/iOS",
+        "ali/Android",
+        "ios",
+        "android",
+        "harmony",
+        "web/browser"
+      ],
+      "prompt": "按 scenario.md 改造四端账号搜索模块，保留真实登录、可取消搜索和详情请求。输出业务 API 模块及可操作的演示页面。宿主能力以提供的契约为准，不编造 RN/Web 的内置登录能力。",
+      "expected_output": "完整实现与 verification.md；覆盖输入中的业务路径，并逐端区分已验证和待验证项。",
+      "files": [
+        "input/scenario.md"
+      ],
+      "outputs": [
+        "account.mpx",
+        "api.js",
+        "auth-host.js",
+        "request-stub.js",
+        "verification.md"
+      ],
+      "assertions": [
+        {
+          "id": "api.host-login",
+          "capability": "api.host-login",
+          "text": "微信与支付宝授权码进入各自兑换入口，RN/Web 使用约定宿主 session 能力。",
+          "verify": "逐端追踪从登录入口到 session 结果，检查 ali code 不进入 /session/wx；RN/Web 不依赖未实现的内置 login。",
+          "fail_when": "更换 API 名称却共用微信兑换后端，或删掉 RN/Web 登录入口。",
+          "sources": [
+            "ali/ali-api-reference.md",
+            "rn/rn-api-reference.md",
+            "web/web-api-reference.md"
+          ]
+        },
+        {
+          "id": "api.custom-contract",
+          "capability": "api.custom-contract",
+          "text": "getSession 按实际目标注册且由安装后的代理调用，明确返回 Promise。",
+          "verify": "检查 ios/android/harmony/web 各自 custom 键与 Promise 契约；wx/ali 的 session 亦有可用路径；不使用不存在的具名导出。",
+          "fail_when": "只注册 custom.ios 却假定 android/harmony 继承，或以为 usePromise 自动包装 custom 回调实现。",
+          "sources": [
+            "base/api-reference.md"
+          ]
+        },
+        {
+          "id": "api.request-task",
+          "capability": "api.request-task",
+          "text": "Promise 请求的取消句柄从请求发起时的 __returned 获取。",
+          "verify": "请求尚未完成时取消按钮能调用任务 abort；await 结果仅用作响应，接受显式 usePromise:false 的等价回调方案。",
+          "fail_when": "对 await 后响应调用 abort，或等请求完成后才保存句柄。",
+          "sources": [
+            "base/api-reference.md"
+          ]
+        },
+        {
+          "id": "api.stale-result",
+          "capability": "api.stale-result",
+          "text": "查询身份阻止旧响应覆盖新结果或取消后的状态。",
+          "verify": "回放 A→B、B→A返回与取消后晚到；只有 B 可写结果，A 不能重置 B 的 loading；取消时先废弃身份。",
+          "fail_when": "仅 abort 而不校验身份，或旧 finally 覆盖新请求状态。",
+          "sources": [
+            "base/api-reference.md"
+          ]
+        },
+        {
+          "id": "network.cancel-token",
+          "capability": "network.cancel-token",
+          "text": "xfetch 使用 CancelToken.token、exec 和 isCancel 完成取消链路。",
+          "verify": "检查传给 fetch 的是 token Promise；取消通过 exec；catch 区分取消与普通错误并仍展示真实错误。",
+          "fail_when": "传整个 CancelToken 实例、调用 abort，或吞掉所有失败。",
+          "sources": [
+            "base/network-reference.md"
+          ]
+        },
+        {
+          "id": "network.interceptor-dispose",
+          "capability": "network.interceptor-dispose",
+          "text": "响应拦截器保留成功值/业务错误语义并通过 use 返回的函数释放自身。",
+          "verify": "正常响应透传，业务错误 reject；连续进入离开两次无拦截器累积且其他订阅仍在。",
+          "fail_when": "照搬 Axios eject(id)，或移除所有拦截器影响其他模块。",
+          "sources": [
+            "base/network-reference.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "reactive-switcher",
+      "title": "响应式动态组件与首次渲染能力",
+      "task_type": "new-component",
+      "targets": [
+        "wx",
+        "ali",
+        "ios",
+        "android",
+        "harmony",
+        "web"
+      ],
+      "runtime_matrix": [
+        "wx/skyline",
+        "wx/webview",
+        "ali/iOS",
+        "ali/Android",
+        "ios",
+        "android",
+        "harmony",
+        "web/browser"
+      ],
+      "prompt": "根据 scenario.md 新建可同时运行于四端的详情切换组件，用 script setup 实现，并提供两个子组件和父级演示。要求更新 props、切换类型、状态切换与点击回传都可验证，微信支持双 renderer。",
+      "expected_output": "完整实现与 verification.md；覆盖输入中的业务路径，并逐端区分已验证和待验证项。",
+      "files": [
+        "input/scenario.md"
+      ],
+      "outputs": [
+        "detail-switcher.mpx",
+        "basic-card.mpx",
+        "vip-card.mpx",
+        "demo.mpx",
+        "verification.md"
+      ],
+      "assertions": [
+        {
+          "id": "script.props-live",
+          "capability": "script.props-live",
+          "text": "title prop 在父级更新后继续驱动标题展示。",
+          "verify": "检查 title 对 defineProps 返回对象的消费或 toRef/toRefs/computed；父级将标题从 A 改成 B 后显示 B。disabled 与 activeKind 的业务效果分别归事件链与动态组件断言。",
+          "fail_when": "普通解构 title 后永久保留初值。",
+          "sources": [
+            "base/script-reference.md"
+          ]
+        },
+        {
+          "id": "script.setup-exposure",
+          "capability": "script.setup-exposure",
+          "text": "script setup 显式暴露模板所用的状态、计算值与方法。",
+          "verify": "核对模板绑定与 defineExpose，模板引用均可达；不要求暴露内部计时器或整个工具模块。",
+          "fail_when": "按 Vue3 默认暴露假设省略 defineExpose。",
+          "sources": [
+            "base/script-reference.md"
+          ]
+        },
+        {
+          "id": "script.lifecycle-registration",
+          "capability": "script.lifecycle-registration",
+          "text": "生命周期同步注册，异步配置只更新存活实例状态。",
+          "verify": "检查 onMounted/onUnmounted 注册在 setup 同步阶段；配置返回前卸载后无残留定时任务或失效实例写入。",
+          "fail_when": "await 配置完成后才注册挂载/卸载钩子。",
+          "sources": [
+            "base/script-reference.md",
+            "rn/rn-script-reference.md"
+          ]
+        },
+        {
+          "id": "template.dynamic-range",
+          "capability": "template.dynamic-range",
+          "text": "动态组件候选与 usingComponents 注册一致且保留父层共享计数。",
+          "verify": "range 仅 basic-card,vip-card；两次切换后 title 正确、父层累计 count 未重置。",
+          "fail_when": "缺失候选注册、使用基础标签充当候选，或把共享计数藏在被销毁子组件。",
+          "sources": [
+            "base/template-reference.md",
+            "base/json-reference.md"
+          ]
+        },
+        {
+          "id": "template.event-chain",
+          "capability": "template.event-chain",
+          "text": "点击处理和 change 事件在四端传递同一业务载荷并遵守 disabled。",
+          "verify": "启用点击两次得到 count=2、当前 kind；禁用点击不变化且不触发 change；父组件从正确的 detail 消费。",
+          "fail_when": "只写方法却未绑定，依赖 RN 不支持的 dataset，或禁用后仍触发事件。",
+          "sources": [
+            "base/template-reference.md",
+            "rn/rn-template-reference.md"
+          ]
+        },
+        {
+          "id": "rn.background-priming",
+          "capability": "rn.background-priming",
+          "text": "动态背景节点在 RN 首次渲染即开启 enable-background 并具有唯一有效 key。",
+          "verify": "初始空 coverUrl→非空后背景出现；开关在第一次渲染已存在，只作用于背景节点及 RN 目标。",
+          "fail_when": "等 coverUrl 非空后才给复用节点增加 enable-background，或没有有效 key。",
+          "sources": [
+            "rn/rn-template-reference.md",
+            "rn/rn-style-practice.md"
+          ]
+        },
+        {
+          "id": "rn.animation-priming",
+          "capability": "rn.animation-priming",
+          "text": "动态过渡节点在 RN 首次渲染即开启 enable-animation。",
+          "verify": "初始无 transition→展开→折叠的同一节点都能执行过渡；仅目标节点开启，属性限定 RN。",
+          "fail_when": "只添加 transition 样式，或首次展开才开启动画能力。",
+          "sources": [
+            "rn/rn-template-reference.md",
+            "rn/rn-style-practice.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "routing-subpackage",
+      "title": "路由参数、部署与异步分包",
+      "task_type": "integration",
+      "targets": [
+        "wx",
+        "ali",
+        "ios",
+        "android",
+        "harmony",
+        "web"
+      ],
+      "runtime_matrix": [
+        "wx/skyline",
+        "wx/webview",
+        "ali/iOS",
+        "ali/Android",
+        "ios",
+        "android",
+        "harmony",
+        "web/browser"
+      ],
+      "prompt": "请完成 scenario.md 的四端详情页接入，输出路由初始化、完整页面和应用/构建配置片段。保留微信/支付宝页面访问，RN 使用给定宿主分包接口，Web 支持子路径直达刷新。",
+      "expected_output": "完整实现与 verification.md；覆盖输入中的业务路径，并逐端区分已验证和待验证项。",
+      "files": [
+        "input/scenario.md"
+      ],
+      "outputs": [
+        "detail.mpx",
+        "runtime-config.js",
+        "plugin-options.js",
+        "app-json.js",
+        "bundle-host.js",
+        "verification.md"
+      ],
+      "assertions": [
+        {
+          "id": "routing.decoded-query",
+          "capability": "routing.decoded-query",
+          "text": "页面使用 Mpx 提供的 decodedQuery 且不重复解码。",
+          "verify": "输入 raw title=%252F，传入对应 decodedQuery.title=%2F，最终标题为 %2F。",
+          "fail_when": "从 rawQuery 重复 decode，或对 decodedQuery 再 decode。",
+          "sources": [
+            "base/script-reference.md"
+          ]
+        },
+        {
+          "id": "routing.web-deploy",
+          "capability": "routing.web-deploy",
+          "text": "Web 路由 base、资源 publicPath 和 history 回退各自正确配置。",
+          "verify": "运行时 routeConfig 设置 history 与 /catalog/，构建 publicPath 指向 CDN，说明深层页面回退 HTML；默认页面通过合法 pages/entryPagePath 注册。",
+          "fail_when": "把 base 写 entryPagePath 或只配插件 routeConfig，或手写 routes 覆盖生成路由。",
+          "sources": [
+            "web/web-config-reference.md",
+            "web/web-json-reference.md"
+          ]
+        },
+        {
+          "id": "routing.web-titlebar",
+          "capability": "routing.web-titlebar",
+          "text": "Web 内建标题栏被运行时显式启用且页面未将其隐藏。",
+          "verify": "检查 enableTitleBar===true 和 Web 页面 navigationStyle；动态标题更新可达。",
+          "fail_when": "仅调用 setNavigationBarTitle 或仅设 navigationStyle:default 就声称栏已显示。",
+          "sources": [
+            "web/web-config-reference.md"
+          ]
+        },
+        {
+          "id": "subpackage.load-driver",
+          "capability": "subpackage.load-driver",
+          "text": "RN 普通异步分包同时具备编译开关与真实宿主加载驱动，不承诺 RN/Web 独立启动。",
+          "verify": "检查 supportSubpackage 与 loadChunkAsync 接入 loadBundle；目标配置保留小程序支持能力，RN/Web 有正常导航路径。",
+          "fail_when": "只有 JSON packages/independent 声明，或只登记 implement 就认为加载成立。",
+          "sources": [
+            "rn/rn-json-reference.md",
+            "rn/rn-config-reference.md",
+            "web/web-json-reference.md",
+            "base/subpackage-reference.md"
+          ]
+        },
+        {
+          "id": "subpackage.prefetch-driver",
+          "capability": "subpackage.prefetch-driver",
+          "text": "RN 预下载单独接入只下载不执行的宿主方法，并明确 Web preloadRule 不生效。",
+          "verify": "检查 downloadChunkAsync→downloadBundle，不误调用 loadBundle；微信/支付宝原预下载配置按实际支持保留。",
+          "fail_when": "把预下载和加载执行混用，或宣称 Web 因相同 JSON 自动具备该能力。",
+          "sources": [
+            "rn/rn-json-reference.md",
+            "rn/rn-config-reference.md",
+            "web/web-json-reference.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "ssr-shared-state",
+      "title": "共享业务的 Web SSR 请求隔离",
+      "task_type": "migration",
+      "targets": [
+        "wx",
+        "ali",
+        "ios",
+        "android",
+        "harmony",
+        "web"
+      ],
+      "runtime_matrix": [
+        "wx/skyline",
+        "wx/webview",
+        "ali/iOS",
+        "ali/Android",
+        "ios",
+        "android",
+        "harmony",
+        "web/browser",
+        "web/SSR"
+      ],
+      "prompt": "将 scenario.md 中的共用详情业务接入 Web SSR，同时保留微信 Skyline/WebView、支付宝和 RN 三端的客户端加载。沿用现有构建服务并给出修改片段，不能只交一份 Web 专属页面。输出完整 App、页面、store、请求适配模块和必要的构建/服务片段。",
+      "expected_output": "完整实现与 verification.md；覆盖输入中的业务路径，并逐端区分已验证和待验证项。",
+      "files": [
+        "input/scenario.md"
+      ],
+      "outputs": [
+        "app.mpx",
+        "detail.mpx",
+        "stores/detail.js",
+        "api/detail.js",
+        "analytics.web.js",
+        "ssr-build.js",
+        "server.js",
+        "verification.md"
+      ],
+      "assertions": [
+        {
+          "id": "ssr.request-pinia",
+          "capability": "ssr.request-pinia",
+          "text": "每次 SSR 应用初始化同步创建并返回独立 Pinia，保留既有根选项。",
+          "verify": "并发 A/B 用各自 Pinia/store，await 前保留当前 store；无顶层 createPinia/useStore 实例；appMarker 仍返回。",
+          "fail_when": "模块级单例、异步 onAppInit，或 await 后使用全局 active Pinia 取错请求。",
+          "sources": [
+            "web/ssr-reference.md",
+            "base/store-reference.md"
+          ]
+        },
+        {
+          "id": "ssr.await-prefetch",
+          "capability": "ssr.await-prefetch",
+          "text": "服务端预取返回真正的数据 Promise，并保留各客户端的加载入口。",
+          "verify": "延迟响应时 HTML 等待标题；serverPrefetch/onServerPrefetch 与 action 返回 Promise；SSR 不从 onLoad 发重复请求，其他端仍加载。",
+          "fail_when": "只依赖 async onLoad，或返回未 Promise 化的 RequestTask。",
+          "sources": [
+            "web/ssr-reference.md"
+          ]
+        },
+        {
+          "id": "ssr.browser-import",
+          "capability": "ssr.browser-import",
+          "text": "浏览器专用埋点在 SSR 中不会被导入求值，其他端无此依赖。",
+          "verify": "Node 渲染时不存在 window/document 也可加载页面；浏览器挂载后再动态加载导入即访问 window 的模块。",
+          "fail_when": "顶层静态 import 后只保护调用，或把 mode=web 当成浏览器判断。",
+          "sources": [
+            "web/ssr-reference.md"
+          ]
+        },
+        {
+          "id": "ssr.hydration-cache",
+          "capability": "ssr.hydration-cache",
+          "text": "首屏状态通过 Pinia 恢复并按请求参数复用，而非永久跳过后续请求。",
+          "verify": "hydrate A 不重复获取；切到 B 会获取，失败不标记 loaded；检查缓存键和序列化恢复数据。",
+          "fail_when": "模块级 loaded=true 抑制所有后续 id，或仅存组件局部状态却声称自动恢复。",
+          "sources": [
+            "web/ssr-reference.md"
+          ]
+        },
+        {
+          "id": "ssr.dual-build",
+          "capability": "ssr.dual-build",
+          "text": "SSR 具有同入口的服务端/客户端产物与逐请求渲染 context，异步首屏正确等待路由。",
+          "verify": "检查 node/commonjs2 服务端与浏览器客户端、bundle/manifest 配套、每请求 context.url、HTML outlet；useSSR 用于客户端等路由而非生成服务端。",
+          "fail_when": "只设 useSSR:true 没有 server 构建，复用可变 context，或另写一套脱离共用页面的 Vue 应用。",
+          "sources": [
+            "web/ssr-reference.md"
+          ]
+        }
+      ]
+    }
+  ]
+}

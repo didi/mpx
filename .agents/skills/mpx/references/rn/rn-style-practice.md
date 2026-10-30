@@ -18,7 +18,7 @@
   - [单边边框](#单边边框)
   - [1 像素边框（极细线）](#1-像素边框极细线)
   - [避免使用不兼容的单位 (rem/em)](#避免使用不兼容的单位-remem)
-  - [谨慎使用 font-weight 数值](#谨慎使用-font-weight-数值)
+  - [优先使用 normal 和 bold 字重](#优先使用-normal-和-bold-字重)
 - [布局最佳实践](#布局最佳实践)
   - [使用 Flexbox 布局](#使用-flexbox-布局)
   - [text 跨平台布局对齐](#text-跨平台布局对齐)
@@ -30,7 +30,6 @@
 - [文本溢出处理](#文本溢出处理)
   - [溢出打点（text-overflow: ellipsis）](#溢出打点text-overflow-ellipsis)
   - [溢出截断（text-overflow: clip）](#溢出截断text-overflow-clip)
-  - [为 iOS 单行文本保留足够行高](#为-ios-单行文本保留足够行高)
 - [混排文本 line-height 对齐](#混排文本-line-height-对齐)
 - [文本垂直居中](#文本垂直居中)
 - [隐藏元素](#隐藏元素)
@@ -399,9 +398,9 @@ RN 不支持 `rem` / `em`，需按原字号或设计稿基准换算。Mpx RN 以
 }
 ```
 
-### 谨慎使用 font-weight 数值
+### 优先使用 normal 和 bold 字重
 
-数值字重在不同系统、字体及小程序 / Web 间可能存在视觉差异，优先使用 `normal` / `bold`。
+**新建和 RN 适配时，推荐优先使用 `normal` / `bold` 表达常规和加粗文字。** 存量数值字重也应按文字的强调语义优先调整为这两种值，避免不同系统、字体及小程序 / Web 间的视觉差异；仅在设计明确需要具体数值字重时保留数值。
 
 ```css
 .text-normal {
@@ -475,7 +474,7 @@ RN 中嵌套 fixed 节点会提升为页面根下的兄弟，不能依赖模板�
 
 ### 处理垂直 margin 折叠
 
-RN 没有 BFC 和 margin 折叠，相邻垂直 margin 会叠加。**先确认原小程序 / Web 确实发生折叠再改造**；不确定时保留原值，水平 margin 不处理。
+RN 没有 BFC 和 margin 折叠，相邻垂直 margin 会叠加。**适配时按下表的节点关系与布局条件直接处理折叠间距。** 水平 margin 和不满足折叠条件的间距保持原样。
 
 | 原平台节点关系 | 折叠判断要点 |
 | --- | --- |
@@ -484,12 +483,12 @@ RN 没有 BFC 和 margin 折叠，相邻垂直 margin 会叠加。**先确认原
 | 父与末个流内后代 | 底部无 border、padding，父无明确 height / min-height，且未建立 BFC，也不是 Flex / Grid 容器 |
 | 空块自身 | 无 border、padding、行内内容、height / min-height 阻隔上下 margin |
 
-- **按实际边界判断**：祖先是 Flex 不代表所有后代都是 flex item；`scroll-view` 按原端实现与配置判断。`overflow: hidden/auto/scroll` 建立 BFC 可阻止父子折叠，不排除该父节点与相邻兄弟折叠。详见 [margin 折叠条件](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Guides/Box_model/Margin_collapsing)。
-- **统一间距归属**：外部间距交给父 margin，内部留白交给父 padding，兄弟间距只保留一侧；检查 `margin` 简写与长写覆盖后的实际值，首尾项用 `wx:class` + `index` 控制。
+- **按实际边界判断**：祖先是 Flex 不代表所有后代都是 flex item；`scroll-view` 内仍按具体内容节点的关系与布局条件处理，不因外层使用 `scroll-view` 就跳过折叠适配。`overflow: hidden/auto/scroll` 建立 BFC 可阻止父子折叠，不排除该父节点与相邻兄弟折叠。详见 [margin 折叠条件](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Guides/Box_model/Margin_collapsing)。
+- **统一间距归属**：外部间距交给父 margin，内部留白交给父 padding；父子折叠间距归到父侧并清除首 / 末子节点对应方向的 margin，兄弟折叠间距只保留一侧；检查 `margin` 简写与长写覆盖后的实际值，首尾项用 `wx:class` + `index` 控制。
 - **保留折叠结果**：全非负取最大值，正负混合取最大正值与最小负值之和，全负取最小值。
 - **必要时统一纵向 Flex**：同时声明 `display: flex` 与 `flex-direction: column`，检查间距和拉伸；单侧间距已解决时无需额外改布局。
 
-例：确认相邻项的 `16rpx` / `12rpx` 会折叠后，统一为单侧 `16rpx`。
+例：相邻普通块级项的垂直 margin 为 `16rpx` / `12rpx`，统一为单侧 `16rpx`。
 
 ```html
 <view style="margin-bottom: 0;">标题</view>
@@ -559,22 +558,6 @@ RN 用 `numberOfLines` / `ellipsizeMode` 控制文本溢出，`text` 和 `view` 
 <text class="clip" numberOfLines@ios|android|harmony="{{1}}"
   ellipsizeMode@ios|android|harmony="clip">{{text}}</text>
 ```
-
-### 为 iOS 单行文本保留足够行高
-
-某些 iOS RN 单行文本在紧凑行高下会顶部裁切。复现后增加 iOS RN 行高，同时检查外层固定高度与裁剪，并在目标容器验证单行和混排文字完整显示；不要从小程序或其他系统的表现推断。
-
-```css
-.label {
-  font-size: 24rpx;
-  line-height: 26rpx;
-  /* @mpx-if (__mpx_mode__ === 'ios') */
-  line-height: 32rpx;
-  /* @mpx-endif */
-}
-```
-
-`32rpx` 仅为案例值，不是跨字体、设备或 RN 版本的统一下限；`ios` 目标不包含 iPhone 上的微信 / 支付宝小程序。混排规则见[下节](#混排文本-line-height-对齐)。
 
 ## 混排文本 line-height 对齐
 

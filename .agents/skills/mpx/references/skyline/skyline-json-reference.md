@@ -18,8 +18,8 @@
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `lazyCodeLoading` | string | — | 位置：`app.json` 顶层。开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量，Skyline 必需，WebView 可按需。推荐值 / 示例：`"requiredComponents"`。 |
-| `convertRpxToVw` | boolean | — | 位置：`app.json` 顶层。基础库 3.3.0+；开启后会将 WebView rpx 计算逻辑对齐 Skyline（`rpx` 单位转换为 `vw` 单位），用于修复部分 `rpx` 精度问题。推荐值 / 示例：按需。 |
+| `lazyCodeLoading` | string | — | 位置：`app.json` 顶层。开启按需注入用到的组件代码，降低页面初始化时一次性注入的代码量。使用 Skyline 时必填，值必须为 `"requiredComponents"`；WebView 可按需配置。 |
+| `convertRpxToVw` | boolean | — | 位置：`app.json` 顶层。基础库 3.3.0+；开启后会将 WebView rpx 计算逻辑对齐 Skyline（`rpx` 单位转换为 `vw` 单位），用于修复部分 `rpx` 精度问题。 |
 
 ### rendererOptions.skyline 配置项
 
@@ -73,7 +73,7 @@
 
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
-| `backgroundColorContent` | HexColor | — | 位置：页面 JSON。Skyline 特有页面配置；设置页面容器背景色，支持 `#RRGGBBAA` 透明度格式，常用于自定义路由透明背景。推荐值 / 示例：`"#00000000"`。 |
+| `backgroundColorContent` | HexColor | — | 位置：页面 JSON。Skyline 特有页面配置；设置页面容器背景色，支持 `#RRGGBBAA` 透明度格式，常用于自定义路由透明背景。 |
 
 页面 JSON 示例：
 

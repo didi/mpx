@@ -1,0 +1,17 @@
+{
+  "description": "mpx 与 noskill 两组比较的提示词模板；不绑定模型或思考强度，不自动执行。",
+  "variables": {
+    "TASK_PROMPT": "evals.json 对应 case.prompt",
+    "INPUT_PATH": "该 case 的 input/scenario.md 绝对路径",
+    "OUTPUT_PATH": "本次独立运行的 outputs 绝对目录",
+    "OUTPUT_FILES": "case.outputs 文件清单；允许增加必要的条件文件和本地依赖",
+    "SKILL_PATH": "被测 mpx/SKILL.md 的绝对路径",
+    "PROJECT_ROOT": "实际可构建 Mpx 业务工程目录；未提供时不得声称构建通过"
+  },
+  "common": "任务：{{TASK_PROMPT}}\n输入：{{INPUT_PATH}}\n输出目录：{{OUTPUT_PATH}}\n交付：{{OUTPUT_FILES}}\n实际工程：{{PROJECT_ROOT}}\n同时覆盖 wx（Skyline 与 WebView 回退）、ali（iOS/Android 设备）、RN ios/android/harmony、web。只有输入明确要求时增加 SSR。输入中的旧代码片段有意包含缺陷；补成完整可评审实现，必要依赖一并交付。所有代码只写入输出目录。verification.md 按目标记录方案、证据和未验证项，不把单文件编译当作真机运行。不可读取本评测的 evals.json、eval_metadata.json、评分资料、历史或其他运行输出。\n框架依赖使用workspaces 顶层从 npm 官方源统一安装的 @mpxjs/* latest 发布版本；评测准备阶段在 workspaces 顶层运行 npm run update-framework && npm run check-env；模型执行期间使用现有版本。编译时以当前工作区作为 --project-root（npm run compile-validate 已配置），保持各测试集独立构建配置。两组共用同一锁文件，执行期间不更新依赖，不引用仓库 packages/ 或复制、修改框架源码。实际能力以发布包为准，未支持项如实记录。",
+  "configurations": {
+    "mpx": "读取 {{SKILL_PATH}} 并按任务路由使用该 Skill 的相关参考。仅使用指定的 mpx Skill，不加载其他 Skill。",
+    "noskill": "不加载任何 Skill，不读取 Skill 的 SKILL.md、references 或历史评测材料；使用与 mpx 组相同的输入、业务工程、工具和公共框架源码。"
+  },
+  "isolation": "执行时仅分发 common 展开文本、当前组指令及 input 文件；评分器单独接收断言。提示词约束不是文件系统隔离，严格实验应限制可读目录。"
+}

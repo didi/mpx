@@ -1,0 +1,80 @@
+{
+  "eval_id": 7,
+  "eval_name": "ssr-shared-state",
+  "prompt": "将 scenario.md 中的共用详情业务接入 Web SSR，同时保留微信 Skyline/WebView、支付宝和 RN 三端的客户端加载。沿用现有构建服务并给出修改片段，不能只交一份 Web 专属页面。输出完整 App、页面、store、请求适配模块和必要的构建/服务片段。",
+  "files": [
+    "input/scenario.md"
+  ],
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser",
+    "web/SSR"
+  ],
+  "assertions": [
+    {
+      "id": "ssr.request-pinia",
+      "capability": "ssr.request-pinia",
+      "text": "每次 SSR 应用初始化同步创建并返回独立 Pinia，保留既有根选项。",
+      "verify": "并发 A/B 用各自 Pinia/store，await 前保留当前 store；无顶层 createPinia/useStore 实例；appMarker 仍返回。",
+      "fail_when": "模块级单例、异步 onAppInit，或 await 后使用全局 active Pinia 取错请求。",
+      "sources": [
+        "web/ssr-reference.md",
+        "base/store-reference.md"
+      ]
+    },
+    {
+      "id": "ssr.await-prefetch",
+      "capability": "ssr.await-prefetch",
+      "text": "服务端预取返回真正的数据 Promise，并保留各客户端的加载入口。",
+      "verify": "延迟响应时 HTML 等待标题；serverPrefetch/onServerPrefetch 与 action 返回 Promise；SSR 不从 onLoad 发重复请求，其他端仍加载。",
+      "fail_when": "只依赖 async onLoad，或返回未 Promise 化的 RequestTask。",
+      "sources": [
+        "web/ssr-reference.md"
+      ]
+    },
+    {
+      "id": "ssr.browser-import",
+      "capability": "ssr.browser-import",
+      "text": "浏览器专用埋点在 SSR 中不会被导入求值，其他端无此依赖。",
+      "verify": "Node 渲染时不存在 window/document 也可加载页面；浏览器挂载后再动态加载导入即访问 window 的模块。",
+      "fail_when": "顶层静态 import 后只保护调用，或把 mode=web 当成浏览器判断。",
+      "sources": [
+        "web/ssr-reference.md"
+      ]
+    },
+    {
+      "id": "ssr.hydration-cache",
+      "capability": "ssr.hydration-cache",
+      "text": "首屏状态通过 Pinia 恢复并按请求参数复用，而非永久跳过后续请求。",
+      "verify": "hydrate A 不重复获取；切到 B 会获取，失败不标记 loaded；检查缓存键和序列化恢复数据。",
+      "fail_when": "模块级 loaded=true 抑制所有后续 id，或仅存组件局部状态却声称自动恢复。",
+      "sources": [
+        "web/ssr-reference.md"
+      ]
+    },
+    {
+      "id": "ssr.dual-build",
+      "capability": "ssr.dual-build",
+      "text": "SSR 具有同入口的服务端/客户端产物与逐请求渲染 context，异步首屏正确等待路由。",
+      "verify": "检查 node/commonjs2 服务端与浏览器客户端、bundle/manifest 配套、每请求 context.url、HTML outlet；useSSR 用于客户端等路由而非生成服务端。",
+      "fail_when": "只设 useSSR:true 没有 server 构建，复用可变 context，或另写一套脱离共用页面的 Vue 应用。",
+      "sources": [
+        "web/ssr-reference.md"
+      ]
+    }
+  ]
+}

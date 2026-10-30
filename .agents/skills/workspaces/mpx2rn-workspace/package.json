@@ -1,0 +1,13 @@
+{
+  "name": "mpx2rn-skill-eval-workspace",
+  "private": true,
+  "scripts": {
+    "compile-validate": "node ../../mpx2rn/scripts/compile-validate.js --project-root=.",
+    "lint": "eslint --ext .js,.ts,.mpx",
+    "update-framework": "npm --prefix .. run update-framework",
+    "check-env": "node ../check-env.cjs"
+  },
+  "vuePlugins": {
+    "resolveFrom": ".."
+  }
+}

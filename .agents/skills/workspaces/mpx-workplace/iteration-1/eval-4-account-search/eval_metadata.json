@@ -1,0 +1,90 @@
+{
+  "eval_id": 4,
+  "eval_name": "account-search",
+  "prompt": "按 scenario.md 改造四端账号搜索模块，保留真实登录、可取消搜索和详情请求。输出业务 API 模块及可操作的演示页面。宿主能力以提供的契约为准，不编造 RN/Web 的内置登录能力。",
+  "files": [
+    "input/scenario.md"
+  ],
+  "targets": [
+    "wx",
+    "ali",
+    "ios",
+    "android",
+    "harmony",
+    "web"
+  ],
+  "runtime_matrix": [
+    "wx/skyline",
+    "wx/webview",
+    "ali/iOS",
+    "ali/Android",
+    "ios",
+    "android",
+    "harmony",
+    "web/browser"
+  ],
+  "assertions": [
+    {
+      "id": "api.host-login",
+      "capability": "api.host-login",
+      "text": "微信与支付宝授权码进入各自兑换入口，RN/Web 使用约定宿主 session 能力。",
+      "verify": "逐端追踪从登录入口到 session 结果，检查 ali code 不进入 /session/wx；RN/Web 不依赖未实现的内置 login。",
+      "fail_when": "更换 API 名称却共用微信兑换后端，或删掉 RN/Web 登录入口。",
+      "sources": [
+        "ali/ali-api-reference.md",
+        "rn/rn-api-reference.md",
+        "web/web-api-reference.md"
+      ]
+    },
+    {
+      "id": "api.custom-contract",
+      "capability": "api.custom-contract",
+      "text": "getSession 按实际目标注册且由安装后的代理调用，明确返回 Promise。",
+      "verify": "检查 ios/android/harmony/web 各自 custom 键与 Promise 契约；wx/ali 的 session 亦有可用路径；不使用不存在的具名导出。",
+      "fail_when": "只注册 custom.ios 却假定 android/harmony 继承，或以为 usePromise 自动包装 custom 回调实现。",
+      "sources": [
+        "base/api-reference.md"
+      ]
+    },
+    {
+      "id": "api.request-task",
+      "capability": "api.request-task",
+      "text": "Promise 请求的取消句柄从请求发起时的 __returned 获取。",
+      "verify": "请求尚未完成时取消按钮能调用任务 abort；await 结果仅用作响应，接受显式 usePromise:false 的等价回调方案。",
+      "fail_when": "对 await 后响应调用 abort，或等请求完成后才保存句柄。",
+      "sources": [
+        "base/api-reference.md"
+      ]
+    },
+    {
+      "id": "api.stale-result",
+      "capability": "api.stale-result",
+      "text": "查询身份阻止旧响应覆盖新结果或取消后的状态。",
+      "verify": "回放 A→B、B→A返回与取消后晚到；只有 B 可写结果，A 不能重置 B 的 loading；取消时先废弃身份。",
+      "fail_when": "仅 abort 而不校验身份，或旧 finally 覆盖新请求状态。",
+      "sources": [
+        "base/api-reference.md"
+      ]
+    },
+    {
+      "id": "network.cancel-token",
+      "capability": "network.cancel-token",
+      "text": "xfetch 使用 CancelToken.token、exec 和 isCancel 完成取消链路。",
+      "verify": "检查传给 fetch 的是 token Promise；取消通过 exec；catch 区分取消与普通错误并仍展示真实错误。",
+      "fail_when": "传整个 CancelToken 实例、调用 abort，或吞掉所有失败。",
+      "sources": [
+        "base/network-reference.md"
+      ]
+    },
+    {
+      "id": "network.interceptor-dispose",
+      "capability": "network.interceptor-dispose",
+      "text": "响应拦截器保留成功值/业务错误语义并通过 use 返回的函数释放自身。",
+      "verify": "正常响应透传，业务错误 reject；连续进入离开两次无拦截器累积且其他订阅仍在。",
+      "fail_when": "照搬 Axios eject(id)，或移除所有拦截器影响其他模块。",
+      "sources": [
+        "base/network-reference.md"
+      ]
+    }
+  ]
+}

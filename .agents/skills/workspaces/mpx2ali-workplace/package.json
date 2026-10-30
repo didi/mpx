@@ -1,0 +1,14 @@
+{
+  "name": "mpx2ali-skill-eval-workplace",
+  "private": true,
+  "scripts": {
+    "compile-validate": "node ../../mpx/scripts/compile-validate.js --target=wx,ali --project-root=.",
+    "lint": "eslint --ext .js,.ts,.mpx",
+    "test": "PYTHONDONTWRITEBYTECODE=1 python3 test_iterations.py",
+    "update-framework": "npm --prefix .. run update-framework",
+    "check-env": "node ../check-env.cjs"
+  },
+  "vuePlugins": {
+    "resolveFrom": ".."
+  }
+}

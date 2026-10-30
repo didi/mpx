@@ -7,7 +7,6 @@
 ## 目录
 
 - [文本与图片样式](#文本与图片样式)
-  - [溢出打点样式直接作用于 text](#溢出打点样式直接作用于-text)
   - [图片内边距交给外层容器](#图片内边距交给外层容器)
 - [输入框与键盘](#输入框与键盘)
   - [按宿主与操作系统选择输入框属性](#按宿主与操作系统选择输入框属性)
@@ -20,7 +19,7 @@
 - [组件样式隔离](#组件样式隔离)
   - [通过编译配置或 scoped 隔离组件样式](#通过编译配置或-scoped-隔离组件样式)
 - [页面配置](#页面配置)
-  - [按编译器能力配置自定义导航栏](#按编译器能力配置自定义导航栏)
+  - [使用统一声明配置自定义导航栏](#使用统一声明配置自定义导航栏)
   - [区分禁止页面滚动与关闭纵向回弹](#区分禁止页面滚动与关闭纵向回弹)
 - [跨端输出 RN 的补充案例](#跨端输出-rn-的补充案例)
   - [为 iOS 单行文本保留足够行高](#为-ios-单行文本保留足够行高)
@@ -29,51 +28,6 @@
 ---
 
 ## 文本与图片样式
-
-### 溢出打点样式直接作用于 text
-
-**原文验证状态：已验证，问题存在；新版 Mpx 已提供默认兼容样式。**
-
-支付宝 `text` 的默认换行行为可能覆盖外层容器的 `white-space: nowrap`。新版 `@mpxjs/webpack-plugin` 在支付宝完整 App 构建中会先于业务全局样式加载 `text { white-space: inherit }`，因此内部 `text` 默认可以继承父节点的换行方式，业务显式样式仍可覆盖该默认值。
-
-**❌ 避免：**未确认项目已有兼容样式时，只给外层设置溢出样式并依赖内部 `text` 继承。
-
-```html
-<template>
-  <view class="ellipsis">
-    <text>{{title}}</text>
-  </view>
-</template>
-
-<style>
-  .ellipsis {
-    width: 240rpx;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-</style>
-```
-
-**✅ 推荐：**升级后可由父容器控制换行；宽度和溢出规则仍应放在实际承担截断布局的节点上。直接约束 `text` 仍是边界最明确的写法。
-
-```html
-<template>
-  <text class="title">{{title}}</text>
-</template>
-
-<style>
-  .title {
-    display: block;
-    width: 240rpx;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-</style>
-```
-
-图文混排时，应先明确哪一段文字需要截断，再约束对应文本节点的宽度。原文没有给出适用于所有图文混排结构的统一方案，不应直接给整段混排内容套用此示例。
 
 ### 图片内边距交给外层容器
 
@@ -165,11 +119,11 @@
 - 仅监听 `keyboardheightchange`，认为每次键盘开合都会通知。
 - 任意输入框触发 `blur` 就立即把键盘高度清零，忽略另一个输入框可能正在获得焦点。
 - 弹层刚开始渲染就强制聚焦，依赖固定延迟适配所有设备。
-- 未复现问题就同时启用宿主自动上推和业务手动位移。
+- 同时启用宿主自动上推和业务手动位移，导致位移叠加。
 
 **✅ 推荐：**
 
-1. 先验证当前宿主的自动上推行为；仅在复现问题后选择手动处理。
+1. 优先使用宿主自动上推；需要业务控制位移时，统一管理键盘位移，避免与自动上推叠加。
 2. 微信若改用手动位移，应关闭相应输入框的 `adjust-position`，结合 `focus`、`blur` 与 `keyboardheightchange` 维护当前聚焦输入框及键盘状态。
 3. 输入框切换时，延后确认是否仍有输入框聚焦，再决定是否复位；不要假设事件到达顺序。
 4. 支付宝首次弹层聚焦应等待弹层实际渲染完成；存在入场动画时，还需结合弹层的完成时机。
@@ -378,13 +332,13 @@ autoScopeRules: {
 
 ## 页面配置
 
-### 按编译器能力配置自定义导航栏
+### 使用统一声明配置自定义导航栏
 
-微信与支付宝的导航栏配置字段不同。原文基于其版本基准提供了动态 JSON 方案；微信 `navigationStyle` 的声明方式见[页面配置文档](../../../../docs-vitepress/guide/basic/page.md#page-config)。采用下述自动转换方案前，应确认项目所用编译器及编译产物是否具备该能力。
+本节以本地仓库当前编译实现为准。微信源码方言输出支付宝时，编译器已自动转换 `navigationStyle`；使用统一声明，不再为导航配置维护旧版手动分支。声明方式见[页面配置文档](../../../../docs-vitepress/guide/basic/page.md#page-config)。
 
-**❌ 避免：**将原文“字段可能删除、忽略或报错”的历史结论当作所有版本的现状，或在已有自动转换时重复维护一套等价分支。
+**❌ 避免：**为已支持的导航转换重复声明 `defaultTitle`、`transparentTitle`、`titlePenetrate` 等等价字段。
 
-**✅ 推荐：**在支持该转换的编译器中，使用微信 JSON 语法统一声明。
+**✅ 推荐：**使用微信 JSON 语法统一声明。
 
 ```html
 <script type="application/json">
@@ -394,7 +348,7 @@ autoScopeRules: {
 </script>
 ```
 
-支持上述转换时，应核对支付宝产物是否移除了 `navigationStyle` 并生成以下字段：
+编译器会移除支付宝产物中的 `navigationStyle` 并生成以下字段：
 
 ```json
 {
@@ -406,23 +360,7 @@ autoScopeRules: {
 
 该转换实现空标题、透明与点击穿透，不代表移除返回按钮等全部宿主导航控件。自定义导航区域仍需处理状态栏、安全区与点击区域。
 
-**旧版本兼容方案：**项目尚不支持上述转换时，按原文思路显式输出目标平台配置；其他平台保持独立分支，不能一律套用支付宝配置。
-
-```html
-<script name="json">
-  const config = {}
-
-  if (__mpx_mode__ === 'wx') {
-    config.navigationStyle = 'custom'
-  } else if (__mpx_mode__ === 'ali') {
-    config.defaultTitle = ''
-    config.transparentTitle = 'always'
-    config.titlePenetrate = 'YES'
-  }
-
-  module.exports = config
-</script>
-```
+页面声明 `navigationStyle: 'default'` 时，编译器将支付宝 `transparentTitle` 复位为 `'none'`、`titlePenetrate` 复位为 `'NO'`，用于覆盖 App 中继承的透明导航配置。
 
 以上为页面配置片段；合入业务页面时保留原有 `usingComponents` 等配置。原文列出的 `navigationBarTextStyle`、`disableSwipeBack`、`backgroundColorTop` / `backgroundColorBottom`、`pageOrientation`、`functionalPages`、`requiredBackgroundModes`、`workers`、`networkTimeout` 等字段也应逐项核对适用层级和目标支持情况，平台插件、隐私与权限声明分别配置。
 
