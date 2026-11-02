@@ -174,12 +174,16 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const isCropMode = hasOwn(cropModeMap, mode)
   const isLayoutMode = isSvg || isWidthFixMode || isHeightFixMode || isCropMode
   const isAndroidFixedMode = isAndroid && !isSvg && (isWidthFixMode || isHeightFixMode)
-  const resizeMode: ImageResizeMode = isAndroidFixedMode ? 'contain' : hasOwn(modeResizeMap, mode) ? modeResizeMap[mode] : 'stretch'
+  const loadRequest = useMemo(() => ({}), [sourceKey])
+  const loadRequestRef = useRef(loadRequest)
+  loadRequestRef.current = loadRequest
+  const [loadedRequest, setLoadedRequest] = useState<object | null>(null)
+  const resizeMode: ImageResizeMode = hasOwn(modeResizeMap, mode) ? modeResizeMap[mode] : 'stretch'
   isLayoutModeRef.current = isLayoutMode
   srcRef.current = sourceKey
 
-  const commitImageSize = (source: string, width: number, height: number, override = false) => {
-    if (!override && hasOwn(imageSizeRef.current, source)) return
+  const commitImageSize = (source: string, width: number, height: number) => {
+    if (hasOwn(imageSizeRef.current, source)) return
     if (!(Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0)) return
     imageSizeRef.current[source] = { width, height }
     if (Object.is(srcRef.current, source) && isLayoutModeRef.current && layoutInfoRef.current) setVersion(version => version + 1)
@@ -229,6 +233,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const { width, height } = normalStyle
   const imageSize = imageSizeRef.current[sourceKey]
+  const needsFallback = isAndroidFixedMode && !imageSize
   const layoutInfo = layoutInfoRef.current
   const imageWidth = imageSize?.width || 0
   const imageHeight = imageSize?.height || 0
@@ -243,8 +248,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const modeStyle: ImageStyle = useMemo(() => {
     if (!isLayoutMode) return {}
     if (pending) {
-      // Android 固定模式依赖 onLoad 尺寸，pending 时需撑满容器保证原生侧触发加载
-      return isAndroidFixedMode ? extendObject({}, BASE_IMAGE_FILL_STYLE, hiddenStyle) : hiddenStyle
+      if (needsFallback) return loadedRequest === loadRequest ? BASE_IMAGE_FILL_STYLE : extendObject({}, BASE_IMAGE_FILL_STYLE, hiddenStyle)
+      return hiddenStyle
     }
     if (!isSvg && !isCropMode) return BASE_IMAGE_FILL_STYLE
     let style: ImageStyle = {}
@@ -353,7 +358,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       { transformOrigin: 'left top', width: imageWidth, height: imageHeight },
       style
     )
-  }, [pending, isSvg, mode, imageWidth, imageHeight, viewWidth, viewHeight])
+  }, [pending, isSvg, mode, imageWidth, imageHeight, viewWidth, viewHeight, needsFallback, loadedRequest, loadRequest])
 
   const onSvgLoad = (evt: LayoutChangeEvent) => {
     const { width, height } = evt.nativeEvent.layout
@@ -387,10 +392,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
+    if (isAndroidFixedMode && loadRequestRef.current === loadRequest) setLoadedRequest(loadRequest)
     const { width, height } = getImageLoadSize(evt)
-    // Android onLoad 返回渲染尺寸，图片真实尺寸仅通过 getSize 获取；
-    // 固定模式下 contain 能保持宽高比，先作为近似尺寸展示，再由 getSize 校准
-    if (!isAndroid || isAndroidFixedMode) commitImageSize(sourceKey, width, height)
+    // Android onLoad 返回渲染尺寸，图片真实尺寸仅通过 getSize 获取
+    if (!isAndroid) commitImageSize(sourceKey, width, height)
     bindload && bindload(
       getCustomEvent(
         'load',
@@ -420,7 +425,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   useEffect(() => {
     if (typeof src === 'string' && src && !isSvg && isLayoutMode && !hasOwn(imageSizeRef.current, sourceKey)) {
-      RNImage.getSize(src, (width, height) => commitImageSize(sourceKey, width, height, isAndroidFixedMode))
+      RNImage.getSize(src, (width, height) => commitImageSize(sourceKey, width, height))
     }
   }, [src, isSvg, isLayoutMode])
   if (__mpx_perf_framework__) perf.scopeEnd(idStyle)
@@ -472,7 +477,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       extendObject(
         {
           source: imageSource,
-          resizeMode: resizeMode,
+          resizeMode: isAndroidFixedMode ? 'contain' : resizeMode,
           onLoad: onImageLoad,
           onError: binderror && onImageError,
           style: modeStyle
