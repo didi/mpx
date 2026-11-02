@@ -146,9 +146,21 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `enable-background` | boolean | `false` | 启用 background-image、background-size、background-position 计算与渲染 |
-| `enable-animation` | boolean | `false` | 启用动画渲染 |
+| `enable-animation` | boolean \| string | `false` | 预声明动画类型；可显式选择 API 或 transition，具体取值见下表。 |
 | `enable-fast-image` | boolean | `true` | 渲染背景图片时默认使用 `@d11/react-native-fast-image`，设为 `false` 时使用 React Native 原生 `Image` |
 | `is-simple` | 标记 | — | 使用精简实现，不提供 CSS variable、calc、ref 等扩展 |
+
+`enable-animation` 的取值规则：
+
+| 值 | 行为 |
+| --- | --- |
+| 未设置、`false`、`'none'` | 按样式和 `animation` 属性自动检测动画类型，不会强制关闭已检测到的动画。 |
+| `true` | 默认选择 `createAnimation` API 动画；若同时检测到 transition 样式，则优先选择 transition。 |
+| `'api'` | 显式选择 `createAnimation` API 动画，优先于样式自动检测，需配合 `animation` 属性传入动画数据。 |
+| `'transition'` | 显式选择 CSS transition 动画，优先于自动检测，需配合 transition 样式。 |
+| `'animation'` | 识别为 CSS animation，但当前不支持，会提示错误且不启用动画渲染。 |
+
+动画类型在首次渲染时确定，同一实例不能从无动画切换为有动画，也不能在 API 与 transition 之间切换。首次没有 transition、后续才动态添加时，应从首次渲染起设置 `enable-animation="transition"`；`true` 不能代替此预声明。
 
 ### text
 

@@ -459,7 +459,9 @@ Mpx 在 RN 平台支持以下动画方式：
 
 - 仅 `view` 组件支持动画相关属性。
 
-**自动检测与 enable-animation：** 框架会自动检测样式和属性中的动画定义来确定动画类型（如检测到 `transition` 样式或 `animation` 属性）。如果样式中一开始不存在动画定义，但后续需要动态添加（如通过 `wx:style` 动态添加 `transition`），建议使用 `enable-animation` 属性预先声明动画类型。
+**自动检测与 enable-animation：** 属性支持 boolean 和 string，完整取值见 [view 扩展属性](./rn-template-reference.md#view)。未设置、`false` 或 `'none'` 时仍会按样式和 `animation` 属性自动检测；检测到 transition 时优先于 API 动画。`true` 默认选择 API 动画，显式字符串 `'api'` / `'transition'` 优先于自动检测。
+
+动画类型须在首次渲染时确定。首次没有 transition、后续通过 `wx:style` 动态添加时，必须用 `enable-animation="transition"` 预声明；使用 `true` 会先选择 API 动画，后续再添加 transition 会造成类型切换。
 
 ```html
 <template>
