@@ -10,6 +10,7 @@
 - [React Hooks 使用](#react-hooks-使用)
 - [Hooks 返回值更新模板](#hooks-返回值更新模板)
 - [跨端兼容隔离](#跨端兼容隔离)
+- [单组件窗口布局适配](#standalone-component-layout)
 
 ---
 
@@ -244,3 +245,9 @@ components/
 ```
 
 如果需要在模板中直接使用 RN 组件，通常更建议放在 RN 条件文件中实现，避免原平台构建解析 `react-native` 依赖；局部条件编译更适合隔离 RN 专属属性、少量模板节点或已经处在 RN 条件文件内部的局部差异。
+
+## 单组件窗口布局适配 {#standalone-component-layout}
+
+**作用：** 让单组件的 `getWindowInfo()` 返回宿主内容区域的窗口宽高。
+
+**用法：** 在组件外层创建稳定的 `{ isFocused: () => true, layout: { width, height }, insets }`，通过 `@mpxjs/utils` 的 `setFocusedNavigation()` 设置，尺寸变化时更新，卸载时恢复。宽高使用 RN 逻辑像素，外层需有 `SafeAreaProvider`。示例见 `docs-vitepress/guide/rn/hybrid-with-react-native.md#standalone-component-layout`。
