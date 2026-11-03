@@ -550,6 +550,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom ({ navigation, route, ...props }) {
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
+    const nativeInsetsRef = useRef(null)
     const currentPageId = useMemo(() => ++pageId, [])
     const routeContextValRef = useRef({
       navigation,
@@ -565,11 +566,22 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.layout = getLayoutData(headerHeight)
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
+      const dimensionListener = ReactNative.Dimensions.addEventListener('change', () => {
         navigation.layout = getLayoutData(headerHeight)
       })
-      return () => dimensionListener?.remove()
-    }, [])
+      const insetsListener = __mpx_mode__ === 'ios' && ReactNative.DeviceEventEmitter.addListener('mpxSafeAreaInsetsChange', metrics => {
+        nativeInsetsRef.current = metrics.insets
+        navigation.insets = metrics.insets
+        navigation.layout = getLayoutData(headerHeight)
+        if (navigation.isFocused()) {
+          ReactNative.DeviceEventEmitter.emit('mpxWindowResize', { navigation, window: ReactNative.Dimensions.get('window') })
+        }
+      })
+      return () => {
+        dimensionListener?.remove()
+        insetsListener && insetsListener.remove()
+      }
+    }, [navigation, headerHeight])
 
     usePagePreload(route)
     usePageStatus(navigation, currentPageId)
@@ -595,7 +607,8 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
       )
     }
     // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
-    navigation.insets = useSafeAreaInsets()
+    const safeAreaInsets = useSafeAreaInsets()
+    navigation.insets = nativeInsetsRef.current || safeAreaInsets
     return withKeyboardAvoidingView(
       createElement(ReactNative.View,
         {
