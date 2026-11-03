@@ -191,3 +191,36 @@ defineOptions({
   },
 })
 ```
+
+## 单组件输出的窗口布局适配 {#standalone-component-layout}
+
+**作用：** 单组件输出时，让 `getWindowInfo()` 返回宿主内容区域的窗口宽高。
+
+**用法：** 在单组件外层设置 `navigation`。`width/height` 传入实际内容区域的 RN 逻辑像素值，布局变化时更新；外层需提供 `SafeAreaProvider`。
+
+```jsx
+import React, { useEffect, useRef } from 'react'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { getFocusedNavigation, setFocusedNavigation } from '@mpxjs/utils'
+import ComponentIndex from './hello'
+
+export default function ComponentHost ({ width, height }) {
+  const insets = useSafeAreaInsets()
+  const previousNavigation = useRef(getFocusedNavigation()).current
+  const navigation = useRef({ isFocused: () => true }).current
+  navigation.layout = { width, height }
+  navigation.insets = insets
+  setFocusedNavigation(navigation)
+
+  useEffect(() => {
+    setFocusedNavigation(navigation)
+    return () => {
+      if (getFocusedNavigation() === navigation) {
+        setFocusedNavigation(previousNavigation)
+      }
+    }
+  }, [navigation, previousNavigation])
+
+  return <ComponentIndex />
+}
+```

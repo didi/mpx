@@ -514,6 +514,7 @@ const dimensions = getStyleDimensions()
 console.log(dimensions.width, dimensions.height)
 ```
 
+单组件输出需要修正 `getWindowInfo()` 的窗口宽高时，参考[单组件输出的窗口布局适配](./hybrid-with-react-native.md#standalone-component-layout)。
 
 ### 前后台切换 {#app-state-change}
 
