@@ -5,15 +5,11 @@ import { getFocusedNavigation } from '../../../common/js'
 const WindowRefStr = 'window'
 const IgnoreTarget = 'ignore'
 const DefaultMargin = { top: 0, bottom: 0, left: 0, right: 0 }
-// Share only pending native measurements, never coordinates from a previous round.
-const pendingViewports = new WeakMap()
 let idCount = 0
 
 class RNIntersectionObserver {
   constructor (component, options, intersectionCtx) {
     this.id = idCount++
-    this.navigation = getFocusedNavigation() || {}
-    this._measureVersion = 0
     this.component = component
     this.mpxFileResource = component.__mpxProxy?.options?.mpxFileResource || ''
     this.options = Object.assign({
@@ -114,37 +110,19 @@ class RNIntersectionObserver {
   }
 
   _getWindowRect () {
-    const navigation = this.navigation
+    const navigation = getFocusedNavigation() || {}
     const viewport = navigation.__mpxViewportRef?.current
     if (viewport) {
-      let measurement = pendingViewports.get(viewport)
-      if (!measurement) {
-        measurement = new Promise(resolve => {
-          const timer = setTimeout(() => resolve(IgnoreTarget), 1000)
-          try {
-            viewport.measureInWindow((left, top, width, height) => {
-              clearTimeout(timer)
-              resolve([left, top, width, height].every(Number.isFinite) && width > 0 && height > 0
-                ? { left, top, width, height }
-                : IgnoreTarget)
-            })
-          } catch (e) {
-            clearTimeout(timer)
-            resolve(IgnoreTarget)
-          }
+      return new Promise(resolve => {
+        viewport.measureInWindow((left, top, width, height) => {
+          const statusBarHeight = navigation.layout?.statusBarHeight || 0
+          resolve({
+            left: left - this.margins.left,
+            top: top + statusBarHeight - this.margins.top,
+            right: left + width + this.margins.right,
+            bottom: top + statusBarHeight + height + this.margins.bottom
+          })
         })
-        pendingViewports.set(viewport, measurement)
-        measurement.then(() => pendingViewports.delete(viewport))
-      }
-      return measurement.then(rect => {
-        if (rect === IgnoreTarget) return rect
-        const statusBarHeight = navigation.layout?.statusBarHeight || 0
-        return {
-          left: rect.left - this.margins.left,
-          top: rect.top + statusBarHeight - this.margins.top,
-          right: rect.left + rect.width + this.margins.right,
-          bottom: rect.top + statusBarHeight + rect.height + this.margins.bottom
-        }
       })
     }
     const screen = Dimensions.get('screen')
@@ -165,7 +143,8 @@ class RNIntersectionObserver {
   }
 
   _getReferenceRect (targetRef) {
-    const layout = this.navigation.layout || {}
+    const navigation = getFocusedNavigation() || {}
+    const layout = navigation.layout || {}
     const targetRefs = isArray(targetRef) ? targetRef : [targetRef]
     const targetPromiseQueue = []
     targetRefs.forEach((targetRefItem) => {
@@ -201,15 +180,7 @@ class RNIntersectionObserver {
     if (isArray(targetRef)) {
       return Promise.all(targetPromiseQueue)
     } else {
-      return Promise.resolve(targetPromiseQueue[0]).then(rect => {
-        if (targetRef === WindowRefStr || rect === IgnoreTarget) return rect
-        return Object.assign({}, rect, {
-          left: rect.left - this.margins.left,
-          top: rect.top - this.margins.top,
-          right: rect.right + this.margins.right,
-          bottom: rect.bottom + this.margins.bottom
-        })
-      })
+      return targetPromiseQueue[0]
     }
   }
 
@@ -263,19 +234,18 @@ class RNIntersectionObserver {
     if (this._disconnected || !this.observerRefs || !this.relativeRef) {
       return
     }
-    const version = ++this._measureVersion
-    return Promise.all([
+    Promise.all([
       this._getReferenceRect(this.observerRefs),
       this._getReferenceRect(this.relativeRef)
     ]).then(([observeRects, relativeRect]) => {
-      if (this._disconnected || version !== this._measureVersion || relativeRect === IgnoreTarget) return
+      if (this._disconnected || relativeRect === IgnoreTarget) return
       observeRects.forEach((observeRect, index) => {
         if (this._disconnected || observeRect === IgnoreTarget) return
         const { intersectionRatio, intersectionRect, isInsected } = this._measureIntersection({
           observeRect,
           observeIndex: index,
           relativeRect,
-          isInit: isInit || this.previousIntersectionRatio[index] === undefined
+          isInit
         })
         if (isInsected) {
           this.callback({
@@ -298,8 +268,6 @@ class RNIntersectionObserver {
   disconnect () {
     if (this._disconnected) return
     this._disconnected = true
-    this.throttleMeasure.cancel()
-    this.navigation = null
     if (this.intersectionCtx) delete this.intersectionCtx[this.id]
     remove(this.component._intersectionObservers, this)
     this.component = null
