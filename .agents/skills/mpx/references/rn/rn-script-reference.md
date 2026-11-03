@@ -124,6 +124,8 @@ methods: {
 
 相交观察的 RN 扩展签名为 `relativeTo(target, margins?): observer`、`observe(target, callback): void`：前者的 target 为 selector 字符串或单个内建节点查询对象，后者还接受此类查询对象数组；`margins` 的 `top/right/bottom/left` 均为可选 number，默认 `0`。callback 接收 [基准相交结果](../base/api-reference.md#createintersectionobserver)，返回值不被消费。`options.throttleTime?: number` 控制检测节流，默认 `100` 毫秒。目标未匹配时不开始观察；不要用 observe 的返回值判断是否命中。
 
+相交检测使用页面内容容器的实际窗口位置和尺寸，不应假定折叠或平行视界下视口从 `(0, 0)` 开始。目标与参照区域保留相同的状态栏补偿。窗口或内容布局变化会触发重新测量；宿主未派发布局/尺寸事件的窗口平移仍需主动触发检测。相交比例只计算矩形交集，不检测覆盖层遮挡。
+
 **使用示例：**
 
 ```html

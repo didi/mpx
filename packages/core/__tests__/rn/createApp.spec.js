@@ -589,4 +589,23 @@ describe('RN createApp initial params', () => {
     act(() => renderer.root.findByType('NavigationContainer').props.onReady())
     expect(listener).toHaveBeenCalledTimes(1)
   })
+
+  it('provides a measurable page viewport and remeasures observers on layout', () => {
+    const { IntersectionObserverContext } = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context')
+    const remeasure = jest.fn()
+    const Page = () => {
+      const observers = React.useContext(IntersectionObserverContext)
+      observers.test = { throttleMeasure: remeasure }
+      return React.createElement('Page')
+    }
+    Page.displayName = 'TestViewportPage'
+    transferOptions().currentInject.pagesMap['pages/home'] = Page
+    renderApp('pages/home')
+    const navigation = global.__mpxPagesMap['pages/home'][1]
+    const viewport = renderer.root.findAllByType('View').find(node => node.props.onLayout)
+    expect(navigation.__mpxViewportRef).toHaveProperty('current')
+    expect(viewport.props.collapsable).toBe(false)
+    act(() => viewport.props.onLayout())
+    expect(remeasure).toHaveBeenCalledTimes(1)
+  })
 })

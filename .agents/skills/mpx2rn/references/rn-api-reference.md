@@ -1854,6 +1854,8 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `relativeRect` | `Object` | 参照区域布局。 |
 | `time` | `number` | 测量时间戳 ms。 |
 
+`relativeToViewport()` 在 RN 中以页面内容容器的实际位置和尺寸为参照，支持非零窗口偏移。目标、参照节点及视口均保留相同的状态栏补偿；不要假定 `relativeRect.left/top` 恒为 0。布局或窗口尺寸变化会触发重新检测；没有布局/尺寸事件的窗口平移仍需宿主或业务触发检测。覆盖层遮挡不属于矩形相交判断。
+
 #### 注意事项
 
 - RN 中需在会影响目标节点位置的 `scroll-view` 上设置 `enable-trigger-intersection-observer="{{true}}"`，才能在滚动时更新相交检测；该属性默认关闭，不影响 `observe()` 的首次检测。详见 [scroll-view 注意事项](./rn-template-reference.md#scroll-view)。
