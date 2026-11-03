@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/unocss-plugin",
-  "version": "2.11.1",
+  "version": "2.11.2",
   "description": "mpx unocss webpack plugin",
   "main": "lib/index.js",
   "scripts": {
@@ -34,6 +34,6 @@
     "webpack-virtual-modules": "^0.6.0"
   },
   "devDependencies": {
-    "@mpxjs/unocss-base": "^2.11.1"
+    "@mpxjs/unocss-base": "^2.11.2"
   }
 }
