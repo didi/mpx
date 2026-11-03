@@ -1,5 +1,4 @@
 import { PixelRatio, Dimensions } from 'react-native'
-import mpx from '@mpxjs/core'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { getFocusedNavigation } from '../../../common/js'
 
@@ -13,13 +12,12 @@ const getWindowInfo = function () {
   let safeArea = {}
   const { top = 0, left = 0, bottom = 0, right = 0 } = insets
   const layout = navigation.layout || {}
-  const customLayout = mpx.config.rnConfig.customLayout?.() || {}
   const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - (layout.bottomVirtualHeight || 0) // 解决安卓开启屏幕内导航安卓把安全区计算进去后产生的影响
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
-  const fallbackWindowWidth = customLayout.width || (__mpx_mode__ === 'ios' ? dimensionsWindow.width : screenWidth)
-  const fallbackWindowHeight = customLayout.height || (__mpx_mode__ === 'ios' ? dimensionsWindow.height : screenHeight)
+  const fallbackWindowWidth = __mpx_mode__ === 'ios' ? dimensionsWindow.width : screenWidth
+  const fallbackWindowHeight = __mpx_mode__ === 'ios' ? dimensionsWindow.height : screenHeight
   const windowHeight = layoutHeight || fallbackWindowHeight
   try {
     safeArea = {
