@@ -2,7 +2,7 @@ import { useEffect, useRef, useContext, forwardRef, useMemo, createElement, Reac
 import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, useAnimatedValue } from 'react-native'
 import { ScrollViewContext, StickyContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThrough } from './utils'
+import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThrough, useStableCallback } from './utils'
 import { error } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
@@ -54,7 +54,8 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const headerTopAnimated = useAnimatedValue(0)
   // harmony animatedValue 不支持通过 _value 访问
-  const headerTopRef = useRef(0)
+  const headerTopRef = useRef<number | null>(null)
+  const scrollOffsetRef = useRef(0)
 
   useEffect(() => {
     registerStickyHeader({ key: id, updatePosition })
@@ -75,6 +76,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
               useNativeDriver: true
             }).start()
             headerTopRef.current = top
+            updateStickOnTop(scrollOffsetRef.current)
           }
         )
       } else {
@@ -91,51 +93,47 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     style: normalStyle
   })
 
+  const updateStickOnTop = useStableCallback((currentScrollValue: number) => {
+    if (!bindstickontopchange || headerTopRef.current === null) return
+
+    const newIsStickOnTop = currentScrollValue > headerTopRef.current - offsetTop
+    if (newIsStickOnTop !== isStickOnTopRef.current) {
+      isStickOnTopRef.current = newIsStickOnTop
+      bindstickontopchange(
+        getCustomEvent('stickontopchange', {}, {
+          detail: {
+            isStickOnTop: newIsStickOnTop
+          },
+          layoutRef
+        }, props))
+    }
+  })
+
   useEffect(() => {
     if (!bindstickontopchange || !scrollOffset) return
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
-      const currentScrollValue = state.value
-      const newIsStickOnTop = currentScrollValue > headerTopRef.current
-      if (newIsStickOnTop !== isStickOnTopRef.current) {
-        isStickOnTopRef.current = newIsStickOnTop
-        bindstickontopchange(
-          getCustomEvent('stickontopchange', {}, {
-            detail: {
-              isStickOnTop: newIsStickOnTop
-            },
-            layoutRef
-          }, props))
-      }
+      scrollOffsetRef.current = state.value
+      updateStickOnTop(state.value)
     })
+    updateStickOnTop(scrollOffsetRef.current)
 
     return () => {
       scrollOffset.removeListener(listener)
     }
-  }, [bindstickontopchange, scrollOffset])
+  }, [bindstickontopchange, scrollOffset, offsetTop, updateStickOnTop])
 
   const animatedStyle = useMemo(() => {
     if (scrollOffset) {
       const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-        inputRange: [0, 1],
+        inputRange: [-offsetTop, 1 - offsetTop],
         outputRange: [0, 1],
         extrapolateLeft: 'clamp',
         extrapolateRight: 'extend'
       })
 
-      const finalTranslateY = offsetTop === 0
-        ? translateY
-        : Animated.add(
-          translateY,
-          Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, offsetTop],
-            extrapolate: 'clamp'
-          })
-        )
-
       return {
-        transform: [{ translateY: finalTranslateY }]
+        transform: [{ translateY }]
       }
     }
   }, [scrollOffset, headerTopAnimated, offsetTop])
