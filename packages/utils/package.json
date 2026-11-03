@@ -8,7 +8,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/utils"
   },
   "keywords": [
     "mpx",

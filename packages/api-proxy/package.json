@@ -18,7 +18,8 @@
   "main": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com/didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/api-proxy"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

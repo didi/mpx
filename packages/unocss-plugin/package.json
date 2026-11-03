@@ -13,6 +13,11 @@
     "@mpxjs/webpack-plugin": "*",
     "webpack": "^5.83.1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/unocss-plugin"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
