@@ -173,12 +173,14 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const isHeightFixMode = mode === 'heightFix'
   const isCropMode = hasOwn(cropModeMap, mode)
   const isLayoutMode = isSvg || isWidthFixMode || isHeightFixMode || isCropMode
-  const isAndroidFixedMode = isAndroid && !isSvg && (isWidthFixMode || isHeightFixMode)
+  const isAndroidLayoutMode = isAndroid && !isSvg && isLayoutMode
   const loadRequest = useMemo(() => ({}), [sourceKey])
   const loadRequestRef = useRef(loadRequest)
   loadRequestRef.current = loadRequest
   const [loadedRequest, setLoadedRequest] = useState<object | null>(null)
-  const resizeMode: ImageResizeMode = hasOwn(modeResizeMap, mode) ? modeResizeMap[mode] : 'stretch'
+  const resizeMode: ImageResizeMode = isAndroidLayoutMode
+    ? 'contain'
+    : hasOwn(modeResizeMap, mode) ? modeResizeMap[mode] : 'stretch'
   isLayoutModeRef.current = isLayoutMode
   srcRef.current = sourceKey
 
@@ -233,7 +235,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const { width, height } = normalStyle
   const imageSize = imageSizeRef.current[sourceKey]
-  const needsFallback = isAndroidFixedMode && !imageSize
+  const needsFallback = isAndroidLayoutMode && !imageSize
   const layoutInfo = layoutInfoRef.current
   const imageWidth = imageSize?.width || 0
   const imageHeight = imageSize?.height || 0
@@ -247,10 +249,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const pending = isLayoutMode && (!imageSize || !layoutInfo)
   const modeStyle: ImageStyle = useMemo(() => {
     if (!isLayoutMode) return {}
-    if (pending) {
-      if (needsFallback) return loadedRequest === loadRequest ? BASE_IMAGE_FILL_STYLE : extendObject({}, BASE_IMAGE_FILL_STYLE, hiddenStyle)
-      return hiddenStyle
+    if (needsFallback) {
+      return loadedRequest === loadRequest
+        ? BASE_IMAGE_FILL_STYLE
+        : extendObject({}, BASE_IMAGE_FILL_STYLE, hiddenStyle)
     }
+    if (pending) return hiddenStyle
     if (!isSvg && !isCropMode) return BASE_IMAGE_FILL_STYLE
     let style: ImageStyle = {}
     switch (mode) {
@@ -392,7 +396,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
-    if (isAndroidFixedMode && loadRequestRef.current === loadRequest) setLoadedRequest(loadRequest)
+    if (needsFallback && loadRequestRef.current === loadRequest) setLoadedRequest(loadRequest)
     const { width, height } = getImageLoadSize(evt)
     // Android onLoad 返回渲染尺寸，图片真实尺寸仅通过 getSize 获取
     if (!isAndroid) commitImageSize(sourceKey, width, height)
@@ -477,7 +481,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       extendObject(
         {
           source: imageSource,
-          resizeMode: isAndroidFixedMode ? 'contain' : resizeMode,
+          resizeMode,
           onLoad: onImageLoad,
           onError: binderror && onImageError,
           style: modeStyle

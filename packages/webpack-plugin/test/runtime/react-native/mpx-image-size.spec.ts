@@ -130,9 +130,9 @@ describe('MpxImage size resolution', () => {
     expect(renderer!.root.findByType('Image').props.resizeMode).toBe('contain')
     expect(renderer!.root.findByType('View').props.style.height).toBe(100)
 
-    act(() => callbacks[0](400, 200))
+    act(() => callbacks[0](400, 100))
     expect(renderer!.root.findByType('Image').props.resizeMode).toBe('contain')
-    expect(renderer!.root.findByType('View').props.style.height).toBe(100)
+    expect(renderer!.root.findByType('View').props.style.height).toBe(50)
     expect(renderer!.root.findByType('Image').props.style.opacity).toBeUndefined()
     act(() => renderer!.unmount())
   })
