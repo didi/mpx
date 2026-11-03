@@ -4,10 +4,10 @@ artifacts/
 
 # Legacy case layout: only input fixtures and case definitions are source files.
 **/iteration-*/eval-*/*
-!**/iteration-*/eval-*/input/
 !**/iteration-*/eval-*/eval_metadata.json
 
-# Generated code, transcripts, metrics, snapshots, previews and build products.
+# Dependencies, generated code, transcripts, metrics, snapshots, previews and build products.
+node_modules/
 outputs/
 logs/
 run-[0-9]*/
@@ -41,3 +41,7 @@ coverage/
 !**/validation/**/
 !**/validation/**/checks-summary.md
 !**/validation/**/checks-summary.json
+
+# Preserve all input fixtures, including names matched by artifact rules above.
+!**/eval-*/input/
+!**/eval-*/input/**

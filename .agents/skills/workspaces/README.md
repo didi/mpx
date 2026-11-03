@@ -4,13 +4,13 @@
 
 | 工作区 | 当前保留轮次 |
 | --- | --- |
-| [mpx-workplace](mpx-workplace/README.md) | iteration-3 / iteration-2（仅报告） |
+| [mpx-workplace](mpx-workplace/README.md) | iteration-2（报告）；输入与约束在工作区顶层 |
 | [mpx2ali-workplace](mpx2ali-workplace/README.md) | iteration-3 |
 | [mpx2rn-workspace](mpx2rn-workspace/iteration-18/README.md) | iteration-18 |
 | [mpx2skyline-workspace](mpx2skyline-workspace/README.md) | iteration-8 |
 | [mpx2web-workspace](mpx2web-workspace/iteration-13/README.md) | iteration-13 |
 
-mpx-workplace 仅保留结果报告与可复用宿主配置；其余测试集保留执行器、配置、输入与评分逻辑；依赖统一安装在 workspaces 顶层，工具可共用，不依赖其他评测工作区或旧轮次。Skyline iteration-7 已删除。
+mpx-workplace 在顶层维护执行约束、原始输入、用例定义与可复用宿主配置，各 iteration 仅保留对应轮次报告或运行产物；其余测试集保留执行器、配置、输入与评分逻辑；依赖统一安装在 workspaces 顶层，工具可共用，不依赖其他评测工作区或旧轮次。Skyline iteration-7 已删除。
 
 从工作区根目录访问被测 Skill 使用 `../../mpx*`；从 iteration 目录访问公共汇总/查看器使用 `../../../skill-creator`。各轮 README 提供执行与验证命令。保留顶层共享环境、被测 Skill 及公共工具后，可独立清理旧轮次。
 
@@ -34,7 +34,7 @@ Skill 快照仅用于两组隔离。已有最终汇总来自历史环境，不�
 
 ## Git 归档与产物存放
 
-统一规则见 [.gitignore](.gitignore)。用例输入（`eval-*/input/`）、`eval_metadata.json`、配置、可复用执行/评分脚本继续追踪；结果报告保留 Markdown 和结构化汇总 JSON（如 `benchmark.json`、`compile-report.json`、`grading-summary.json`）。
+忽略规则统一维护在本目录的 [.gitignore](.gitignore)，子工作区和 iteration 内不再单独维护。用例输入（`eval-*/input/` 整棵目录，包括 `.log`、`.jsonl` 等测试素材）、`eval_metadata.json`、配置、可复用执行/评分脚本继续追踪；结果报告保留 Markdown 和结构化汇总 JSON（如 `benchmark.json`、`compile-report.json`、`grading-summary.json`）。
 
 新执行产生的临时工程、探针、原始诊断和其他未约定产物放入每轮 `.artifacts/`；最终报告放在 iteration 根目录或 `reports/`。已有执行器仍可使用各 case 分组目录、`outputs/`、`run-*/`、`logs/`、`skill-snapshot(s)/`、`audit/`、`validation/` 等旧路径，这些过程和交付产物均忽略；audit/validation 下明确的汇总报告保留。`review.html` 可能嵌入完整交付代码，只在本地生成，不作为报告提交。
 
