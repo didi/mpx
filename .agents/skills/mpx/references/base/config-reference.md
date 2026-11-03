@@ -12,6 +12,7 @@
   - [规则匹配](#规则匹配)
   - [模板与样式配置](#模板与样式配置)
   - [分包与异步配置](#分包与异步配置)
+  - [性能探针](#性能探针)
 - [运行时配置](#运行时配置)
   - [初始化方式](#初始化方式)
   - [全局字段](#全局字段)
@@ -52,7 +53,7 @@ CLI 工程将相同选项写入 `pluginOptions.mpx.plugin`。已有多端构建�
 | `srcMode` | `string` | 同 mode | 源码方言；注入 `__mpx_src_mode__`。跨 RN/Web 的微信源码明确设为 `'wx'`。 |
 | `env` | `string` | `''` | 环境标识，注入 `__mpx_env__` 并参与条件编译。 |
 | `defs` | `object` | `{}` | 编译常量；不覆盖 `__mpx_mode__`、`__mpx_src_mode__`、`__mpx_env__`、`__mpx_perf__`。 |
-| `srcModeRules` | `object` | `{}` | 按源码方言映射匹配规则；历史别名 `modeRules` 不能同时配置。 |
+| `srcModeRules` | `object` | `{}` | 按输出平台配置规则，只读取当前 `mode` 对应的规则，命中资源的 `srcMode` 设为该 `mode`；历史别名 `modeRules` 不能同时配置。 |
 | `fileConditionRules` | `object` | 全部匹配 | 控制参与文件维度条件编译的资源范围。 |
 
 文件和区块筛选、src-mode 优先级见 [条件编译](./conditional-compile.md)。
@@ -90,6 +91,42 @@ CLI 工程将相同选项写入 `pluginOptions.mpx.plugin`。已有多端构建�
 | `asyncSubpackageRules` | `object[]` | `[]` | 按资源匹配规则指定异步分包及组件占位。 |
 | `retryRequireAsync` | `boolean\|object` | `false` | 配置 `require.async` 加载失败后的重试次数与间隔。 |
 | `disableRequireAsync` | `boolean` | `false` | 关闭框架对 `require.async` 的处理。 |
+
+### 性能探针
+
+`@mpxjs/perf` 支持小程序、Web 与 RN 的聚合耗时、区段时间线和里程碑统计。在 `MpxWebpackPlugin` 顶层（CLI 为 `pluginOptions.mpx.plugin`）配置：
+
+```js
+perf: {
+  enable: true,
+  probes: ['framework', 'user']
+}
+```
+
+`enable` 默认关闭；`probes` 选择框架内建或业务探针，空数组关闭、未知分组报错。内建指标包括实例初始化、渲染、生命周期、卸载与支持平台上的基础组件 render；不代表原生布局或首屏可交互耗时。
+
+从 `@mpxjs/perf` 导入 API；`start(options?)` / `end(reporter?)` 控制共享录制窗口。调用点须直接放在 `if (__mpx_perf__)`、`if (__mpx_perf_framework__)` 或 `if (__mpx_perf_user__)` 编译常量条件内，保留构建的死代码消除，才能保证关闭态无探针残留。
+
+| API | 用途与约束 |
+| --- | --- |
+| `aggrStart(name)` / `aggrEnd(id)` | 聚合 `{ count, sum, avg, max }`；开始返回 id，支持同名并发与嵌套，适合高频路径。 |
+| `traceStart(name)` / `traceEnd(id, info?)` | 保留区段的 `start`、`timestamp`、`duration` 与可选 `info`；适合有限诊断窗口。 |
+| `mark(name, info?)` | 记录独立里程碑，含 `start`、`timestamp` 与可选 `info`。 |
+
+aggr / trace 的 start 第二个参数传 `true` 时按 name 配对结束；同名起点会覆盖，存在并发时使用 id。`start({ markLimit, traceLimit })` 的两个容量默认均为 1024，markLimit 含开始/结束边界且至少为 2，traceLimit 可为 0；都须为整数。录制中重复 start 不重置窗口。
+
+```js
+import { start, end, mark } from '@mpxjs/perf'
+
+// 在业务诊断流程开始与结束处调用，两个分组共享此录制窗口。
+if (__mpx_perf__) start()
+if (__mpx_perf_user__) mark('business:ready')
+if (__mpx_perf__) end()
+```
+
+Reporter 接收 `(aggregates, marks?, traces?)`：aggregates 为 `Map<string, AggrResult>`，marks/traces 含 `events` 与 `dropped`，traces 另含未完成区段数 `incomplete`。自定义 Reporter 通过 `setReporter` 注册或传给 `end`；`info` 按引用保存。
+
+`scopeStart/scopeEnd`、`measureStart/measureEnd` 仍为聚合统计兼容接口；新代码使用 aggr。升级自定义 Reporter 时将旧类型 `AggResult` 改为 `AggrResult`，将 `MarkEvent.at` 改为 `start`。相互包含的父子指标不能直接相加，不同平台需分别建立基线。
 
 ## 运行时配置
 

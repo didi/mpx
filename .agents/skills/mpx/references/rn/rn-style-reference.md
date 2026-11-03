@@ -176,13 +176,15 @@ Mpx 在 RN 平台支持多种 CSS 单位，并在运行时进行转换。
 | `vh` | 视口高度百分比 | `vh值 × window.height / 100` |
 | `hairlineWidth` | RN 特有极细线 | `StyleSheet.hairlineWidth` |
 
+上表按默认 `dimensionsBase: 'window'` 表示；改为 `'screen'` 时，响应式单位使用对应的 Screen 宽高，见 [样式计算基准与自定义](#样式计算基准与自定义)。
+
 ### rpx 自动转换
 
-`MpxWebpackPlugin.transRpxRules` 沿用 [rpx 自动转换基准](../base/style-reference.md#rpx-自动转换)，无需为 RN 额外开启；转换得到的 `rpx` 按 RN 的窗口宽度换算成数值，不输出 Web 的 `vw`。`designWidth` 只决定 `px → rpx` 的换算比例，最终 `rpx` 的计算基准见下方配置。
+`MpxWebpackPlugin.transRpxRules` 沿用 [rpx 自动转换基准](../base/style-reference.md#rpx-自动转换)，无需为 RN 额外开启；转换得到的 `rpx` 按 RN 选定的尺寸基准换算成数值，不输出 Web 的 `vw`。`designWidth` 只决定 `px → rpx` 的换算比例，最终 `rpx` 的计算基准见下方配置。
 
 ### 样式计算基准与自定义
 
-`rpx`、`vw` 的计算默认基于运行时的 `window.width`，`vh` 基于 `window.height`，即窗口尺寸。
+`rpx`、`vw`、`vh`、媒体查询及 `onResize` 统一使用 `Mpx.config.rnConfig.dimensionsBase` 选中的尺寸，默认 `'window'`；需要基于屏幕尺寸时设为 `'screen'`。此配置须在首次尺寸计算前完成，首次读取后保持不变。所选尺寸变化时，依赖响应式单位或媒体查询的组件会重新计算样式，独立组件也支持。
 
 同时支持通过运行时配置 `Mpx.config.rnConfig.customDimensions` 自定义样式计算基准：
 
@@ -202,7 +204,7 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
 })
 ```
 
-配置生效后，`rpx`、`vw` 按自定义后的 `window.width` 计算，`vh` 按 `window.height` 计算。上例仅调整窗口高度，因此只改变 `vh` 的换算基准。
+配置生效后，样式按自定义后的 `dimensionsBase` 对应尺寸计算。上例在默认 `'window'` 下仅调整窗口高度，因此改变 `vh` 的换算基准；选择 `'screen'` 时需修改返回值中的 screen。读取处理后的尺寸可用 [getDimensionsInfo](./rn-script-reference.md#全局方法)。
 
 ### 百分比计算规则
 
@@ -444,7 +446,7 @@ Mpx 在 RN 平台支持 `@media` 规则，但能力受限。
 
 **限制：**
 
-- 媒体查询中的宽度条件仅支持 `px` 单位，并基于运行时 `screen.width` 判断。
+- 媒体查询中的宽度条件仅支持 `px` 单位，并基于 `dimensionsBase` 选中尺寸的运行时宽度判断，默认使用 `window.width`。
 - 不支持 `width` 精确匹配、`height`、`orientation`、`all` 等其他特性。
 
 ### 动画支持

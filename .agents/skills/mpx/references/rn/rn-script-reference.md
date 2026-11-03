@@ -28,6 +28,7 @@
 | 选项 | RN 差异 |
 | --- | --- |
 | `onThemeChange` | 不支持。 |
+| `onPageNotFound` | 仅在启动入口未注册时触发，通知范围、原始入口参数和首页回退见 [应用与导航配置](./rn-config-reference.md#应用与导航)。无需 `implement` 登记，普通路由 API 失败不触发。 |
 | `onSSRAppCreated` | RN 不支持 SSR，不会触发。 |
 
 ### 页面与组件构造选项
@@ -177,9 +178,12 @@ methods: {
 
 ### 全局方法
 
-RN 提供以下全局方法，无需从 core 导入，供宿主接入或测试场景手动切换应用前后台状态；重复设置同一状态不会再次触发回调。
+RN 提供以下全局方法，无需从 core 导入。前后台切换方法供宿主接入或测试使用；重复设置同一状态不会再次触发回调。
 
 | 名称 | 使用入口 | RN 差异 |
 | --- | --- | --- |
 | `setAppShow(): void` | 全局方法 | 无参数；将应用切换为显示状态，并同步当前聚焦页面的显示状态，驱动对应的显示回调。 |
 | `setAppHide(): void` | 全局方法 | 无参数；将应用切换为隐藏状态，并同步当前聚焦页面的隐藏状态，驱动对应的隐藏回调。 |
+| `getDimensionsInfo(base?: 'window' \| 'screen'): ScaledSize` | 全局方法 | 获取经过 `customDimensions` 处理的尺寸副本，包含 `width/height/scale/fontScale: number`；不传 base 时使用首次读取的 `dimensionsBase`。传参不修改配置，修改返回值不影响框架缓存。 |
+
+`customDimensions` 内不能调用 `getDimensionsInfo`、`getWindowInfo`、`getSystemInfo` 等依赖其结果的 API；直接使用传入的 `window` / `screen`，避免递归读取。

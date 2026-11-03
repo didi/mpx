@@ -12,8 +12,8 @@
   - [注册构建插件](#注册构建插件)
 - [模板中使用原子类](#模板中使用原子类)
   - [静态与动态绑定](#静态与动态绑定)
-  - [任意值](#任意值)
   - [动态生成的类名](#动态生成的类名)
+  - [自定义样式值](#自定义样式值)
 - [工具类与 Variants](#工具类与-variants)
 - [Directives](#directives)
 - [Variant Groups](#variant-groups)
@@ -60,6 +60,8 @@ export default defineConfig({
 
 `new MpxUnocssPlugin(options?: object)` 接收插件选项（默认 `{}`），返回放入 webpack `plugins` 数组的插件实例。本文使用的 `transformCSS?: boolean | { applyVariable?: string | string[] }` 和 `transformGroups?: boolean | { separators?: string[] }` 默认均关闭；它们是插件参数，不放入 `presetMpx`。
 
+只有命中插件 `scan` 规则的模板才会扫描并转换 UnoCSS 类名；未命中的模板不会进行特殊类名转义，其中 `wx:class` 对象 key 仍须满足小程序 WXS 标识符限制。
+
 ## 模板中使用原子类
 
 ### 静态与动态绑定
@@ -73,39 +75,53 @@ export default defineConfig({
 ></view>
 ```
 
-### 任意值
-
-支持 UnoCSS 任意值，例如：
+`wx:class` 对象字面量中的静态 key 同样会被扫描，支持特殊字符类名与 Mpx UnoCSS 插件的 `alias`。例如 `active` 为业务布尔值时：
 
 ```html
-<view class="text-12px bg-#fff/10 translate-x-[-50%]"></view>
+<view wx:class="{{ { 'text-red-500': active, 'w-[100px]': true } }}"></view>
 ```
-
-任意值最终仍受目标端样式属性和值域约束；能被 UnoCSS 识别不代表目标端一定支持。
 
 ### 动态生成的类名
 
-构建时须能从源码或 safelist 获取完整类名，不能依靠运行时拼接来生成对应 CSS：
+构建时须能从模板或 safelist 获取完整类名，不能依靠运行时拼接来生成对应 CSS。当类名定义在 JS 的 `data`、`computed` 或其他变量中，或来自接口、外部配置时，模板只绑定变量，插件无法从模板收集到变量中的完整类名。
+
+这些场景统一在 `<template>` 内使用魔法注释 `mpx_config_safelist` 声明所有可能使用的完整类名，多个类名以空格分隔，再通过 `wx:class` 绑定变量；否则未被其他模板或 safelist 收集的类名不会生成对应样式：
 
 ```html
-<!-- Bad：不要动态拼接类名 -->
-<view class="text-{{color}}-500"></view>
-```
+<template>
+  <!-- mpx_config_safelist: 'text-red-500 text-blue-500' -->
+  <view wx:class="{{ [textClass] }}">状态</view>
+</template>
 
-颜色只有 red / blue 两种时，直接在 `wx:class` 中列出完整类名：
+<script>
+import { createComponent } from '@mpxjs/core'
 
-```html
-<view wx:class="{{ [color === 'red' ? 'text-red-500' : 'text-blue-500'] }}"></view>
-```
-
-如果完整类名来自接口或外部配置，模板使用 `wx:class="{{ [textClass] }}"` 绑定；再把所有允许的值加入 `uno.config.mjs` 的 `safelist`，确保构建时生成样式。safelist 只补齐样式提取，不替代模板绑定：
-
-```js
-export default defineConfig({
-  presets: [presetMpx()],
-  safelist: ['text-red-500', 'text-blue-500']
+createComponent({
+  data: {
+    active: false
+  },
+  computed: {
+    textClass () {
+      return this.active ? 'text-red-500' : 'text-blue-500'
+    }
+  }
 })
+</script>
 ```
+
+魔法注释声明当前组件的局部 safelist，只补齐样式收集，动态绑定仍使用 `wx:class`。
+
+### 自定义样式值
+
+当预设的字号、宽度等不能满足需求时，可以在原子类的方括号 `[...]` 中直接填写具体的样式值，这种写法称为 UnoCSS 的“任意值”语法：
+
+```html
+<view class="text-[13px] w-[137px] translate-x-[-50%]"></view>
+```
+
+上例分别设置 `13px` 字号、`137px` 宽度和向左移动自身宽度 `50%` 的水平位移。
+
+方括号内的值须在构建时确定，完整类名仍需出现在模板或 safelist 中。值必须符合对应样式属性的语法，并受目标端支持范围约束。
 
 ## 工具类与 Variants
 

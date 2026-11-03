@@ -18,6 +18,8 @@
   - [onAppHide](#onapphide)
   - [offAppShow](../base/api-reference.md#offappshow)（基准）
   - [offAppHide](../base/api-reference.md#offapphide)（基准）
+  - [onPageNotFound](../base/api-reference.md#onpagenotfound)（基准）
+  - [offPageNotFound](../base/api-reference.md#offpagenotfound)（基准）
   - [onError](#onerror)
   - [offError](../base/api-reference.md#offerror)（基准）
   - [onUnhandledRejection](#onunhandledrejection)

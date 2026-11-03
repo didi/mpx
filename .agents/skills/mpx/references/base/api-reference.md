@@ -22,6 +22,8 @@ Mpx 提供的基准环境 API，收录不表示每个目标端都支持；跨端
   - [onAppHide](#onapphide)
   - [offAppShow](#offappshow)
   - [offAppHide](#offapphide)
+  - [onPageNotFound](#onpagenotfound)
+  - [offPageNotFound](#offpagenotfound)
   - [onError](#onerror)
   - [offError](#offerror)
   - [onUnhandledRejection](#onunhandledrejection)
@@ -673,6 +675,24 @@ memorySize 的微信基准类型为 string。benchmarkLevel 在较新微信版�
 #### 返回值
 
 无。
+
+### onPageNotFound
+
+监听页面不存在事件：`mpx.onPageNotFound(callback)`，`callback` 必填，返回 `void`。
+
+回调接收以下对象，无需返回值：
+
+| 属性 | 类型 | 用途 |
+| --- | --- | --- |
+| `path` | `string` | 不存在的页面路径，不含开头 `/` 和 query。 |
+| `query` | `object` | 原始入口参数。 |
+| `isEntryPage` | `boolean` | 是否为启动入口页面。 |
+
+RN / Web 的入口通知时机和回退行为见对应脚本参考；不要用此监听替代路由 API 的 `fail`。
+
+### offPageNotFound
+
+取消监听：`mpx.offPageNotFound(callback?)`，返回 `void`。传入注册时的同一函数取消该监听，不传参数时移除全部监听。
 
 ### onError
 

@@ -18,7 +18,7 @@
 
 `mode` 只负责输出目标筛选，`srcMode` 只负责源码方言。条件文件后缀、区块 `mode`、节点/属性 `@mode` 命中后，仍按原有 srcMode 正常跨端转换。不能因命中条件文件或属性就跳过转换。
 
-`srcModeRules` 按资源匹配方言；`modeRules` 是历史兼容别名，不能同时配置。区块 `src-mode` 显式指定该区块方言，不能用它代替目标筛选。版本升级审计时先确认工程采用本语义的版本。
+`srcModeRules` 按输出平台配置资源匹配规则：构建时只读取当前 `mode` 对应的规则，命中后将资源 `srcMode` 标记为当前 `mode`，不会应用其他平台的规则。`modeRules` 是历史兼容别名，不能同时配置。区块 `src-mode` 显式指定该区块方言，不能用它代替目标筛选。版本升级审计时先确认工程采用本语义的版本。
 
 ## 文件维度条件编译
 
@@ -40,7 +40,7 @@ RN 条件文件解析链：
 
 ## 区块维度条件编译
 
-SFC 的 template/script/style/JSON 可通过 `mode` 选择平台专用区块，命中仍转换；需要改写源码方言时再声明 `src-mode`。
+SFC 的 template/script/style/JSON 可通过 `mode` 选择平台专用区块，命中仍转换；需要改写源码方言时再声明 `src-mode`。只有 `src-mode` 等于当前输出 `mode` 时才生效，否则忽略并继承资源 `srcMode`；例如 Android 构建不会采用 `src-mode="ios"`。
 
 ```html
 <template mode="web">

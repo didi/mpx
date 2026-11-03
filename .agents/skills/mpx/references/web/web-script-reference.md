@@ -25,6 +25,7 @@
 | 选项 | Web 差异 |
 | --- | --- |
 | `onThemeChange` | 未内置支持，需自行适配主题变化通知。 |
+| `onPageNotFound` | 仅客户端启动入口不存在时触发；先回退首页，在路由就绪后通知 App 回调及 `mpx.onPageNotFound` 监听，参数为原始入口的 `{ path, query, isEntryPage: true }`。未设置回调且未注册监听时通过统一错误处理上报；运行中的路由 API 失败不触发。 |
 | `onAppInit(): object \| void` | 无参数；返回对象同步合并到 Vue 根实例选项，不返回时不增加选项。SSR 中用于每次请求创建独立的 Pinia，不能返回 Promise。 |
 | `onSSRAppCreated` | Web SSR 专属；接收 `{ pinia, router, app, context }`，自定义时须返回最终 resolve 为 `app` 的 Promise，并接管路由就绪与状态输出。具体职责见 [SSR 参考](./ssr-reference.md#自定义服务端入口逻辑)。 |
 

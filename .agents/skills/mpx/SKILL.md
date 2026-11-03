@@ -35,6 +35,7 @@ description: Mpx 应用开发与跨端适配指南，以 Mpx 核心能力为基�
 | 页面列表、`usingComponents`、动态 JSON、抽象节点 | [JSON 基础](references/base/json-reference.md) |
 | `packages`、`?root`、`?resolve`、独立分包 `independent`、`componentPlaceholder`、`require.async`、分包预下载 | [分包与异步化](references/base/subpackage-reference.md) |
 | `MpxWebpackPlugin`、`mode/srcMode`、匹配规则、编译配置与 `Mpx.config` | [配置基准](references/base/config-reference.md) |
+| 性能探针、`@mpxjs/perf`、aggr / trace / mark、Reporter | [性能探针](references/base/config-reference.md#性能探针) |
 | 条件文件、区块 `mode/src-mode`、`@mode`、样式条件注释、隔离平台依赖 | [条件编译](references/base/conditional-compile.md) |
 | 环境 API 查询、`@mpxjs/api-proxy`、Promise/回调、`custom`、任务句柄 | [环境 API 基准](references/base/api-reference.md) |
 | `@mpxjs/fetch`、拦截器、取消、预请求 | [网络请求](references/base/network-reference.md) |

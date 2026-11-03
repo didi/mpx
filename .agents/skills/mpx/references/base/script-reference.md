@@ -56,6 +56,7 @@ createApp({
 | `globalData` 及自定义字段 | `any` | — | 声明应用级共享字段，不自动成为响应式状态。 |
 | 自定义方法 / `methods` | `Function / object` | — | 声明应用级业务方法；`methods` 中的方法会展开到 App 实例。 |
 | `onLaunch` / `onShow` / `onHide` 等 | `Function` | — | 应用生命周期与事件回调，具体支持范围由目标端确定。 |
+| `onPageNotFound` | `Function` | — | 页面不存在时接收 `{ path: string, query: object, isEntryPage: boolean }`；RN / Web 的入口通知范围见对应脚本参考。 |
 | `provide` | `object\|Function` | — | 应用级依赖提供，支持对象或返回对象的工厂函数，供页面和组件注入。 |
 | `mixins` | `object[]` | — | 合并公共 App 构造选项。 |
 
@@ -463,6 +464,8 @@ defineExpose({ title, count, increment })
 `Mpx.mixin` 的 options 可直接传 `'app'/'page'/'component'` 或这些类型的数组，也可传 `{ types, stage }`：`types` 为字符串或数组，默认 `['page', 'component']`；`stage: number` 默认 `-1`，负数在局部 mixins 前合并，正数在其后，数值越小越靠前，`0` 按默认值处理。在相关构造调用之前注入；要影响 App 需显式指定 `'app'`。
 
 `Mpx.use` 同步调用插件函数 `plugin(proxyMpx, options, Mpx)` 或对象的 `install(proxyMpx, options, Mpx)`；第一个参数用于挂载 API，第二个参数是配置，第三个是原始 Mpx 对象。插件返回值不被消费，同一插件对象或函数只安装一次。options 除插件自有字段外，还支持 `prefix?: string` / `postfix?: string`，将新增 API 改名为 `prefix_name` / `name_postfix`，两者同时提供时 prefix 优先。
+
+插件成功安装后，插件对象或函数的 `__installed` 属性为 `true`，可据此查询安装状态；框架仍独立记录已安装插件以避免重复安装。
 
 ### 全局方法
 

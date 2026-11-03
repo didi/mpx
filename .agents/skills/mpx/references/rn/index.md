@@ -16,7 +16,7 @@
 | 应用/页面/组件 JSON、分包宿主实现 | [RN JSON](./rn-json-reference.md)，语法按需补充 [分包基准](../base/subpackage-reference.md)。 |
 | 编译 rnConfig、运行时 rnConfig、导航/布局配置 | [RN 配置](./rn-config-reference.md)。 |
 | 网络/存储/媒体/位置/设备/查询 API | [API 基准](../base/api-reference.md) 查用途、参数与调用契约；[RN API 差异](./rn-api-reference.md) 查不支持的 API、参数、返回字段与对象方法，以及类型和默认值差异。 |
-| React Native 原生组件、React Hooks | [混合开发](./rn-hybrid-dev.md)。 |
+| React Native 原生组件、React Hooks、`pageWrapperHOC` 独立页面接入 | [混合开发](./rn-hybrid-dev.md)。 |
 
 ## 开发与评审约束
 

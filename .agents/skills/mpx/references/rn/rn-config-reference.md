@@ -108,7 +108,7 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 
 **初始参数的作用范围：** `parseAppProps` 返回的 `initialParams` 仅作为 RN 根组件初始化时首个路由实例的参数，传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 的 `query` 以当前路由实例参数为准。
 
-若 `initialRouteName` 未注册，框架通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），回退至应用首页，并丢弃该错误路由的 `initialParams`。
+若 `initialRouteName` 未注册，框架回退至应用首页，不把该错误路由的 `initialParams` 传给首页；导航就绪后通知 App `onPageNotFound` 及 `mpx.onPageNotFound` 监听，参数为 `{ path, query, isEntryPage: true }`，其中 `query` 为原始 `initialParams`（未传为 `{}`）。没有声明 App 回调且没有注册监听时，才通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调）。运行中的路由 API 失败不触发此通知。
 
 #### 布局与基础组件
 
@@ -116,7 +116,8 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | --- | --- | --- | --- |
 | `defaultBoxSizing` | `string` | `'content-box'` | 节点未显式声明 `box-sizing` 时使用的默认盒模型，可设为 `'border-box'`。 |
 | `allowFontScaling` | `boolean` | 未设置，按 `false` 处理 | 文本类基础组件是否跟随系统字体缩放；组件显式传入的 `allowFontScaling` 优先。 |
-| `customDimensions` | `Function` | 未设置 | `({ window, screen }) => ({ window, screen })`，同步返回完整尺寸对象，或不返回以沿用原始尺寸；window/screen 均含 `width/height/scale/fontScale: number`。自定义框架样式换算使用的尺寸信息，`rpx` / `vw` 依赖其中的 `window.width`，`vh` 依赖 `window.height`。 |
+| `dimensionsBase` | `'window' \| 'screen'` | `'window'` | `rpx` / `vw` / `vh`、媒体查询与 `onResize` 的尺寸基准；首次读取后保持不变，应在首次尺寸计算前配置。 |
+| `customDimensions` | `Function` | 未设置 | `({ window, screen }) => ({ window, screen })`，同步返回完整尺寸对象，或不返回以沿用原始尺寸；window/screen 均含 `width/height/scale/fontScale: number`。框架按 `dimensionsBase` 选取处理后的尺寸进行样式换算。 |
 | `getBottomVirtualHeight` | `Function` | 未设置 | `() => number`，修正 Android 非横屏场景下底部虚拟区域高度；未配置时采用安全区域底部 inset，横屏时使用屏幕与窗口高度差。 |
 | `enableNativeKeyboardAvoiding` | `boolean` | 未设置，按 `true` 处理 | Android 默认配合原生键盘避让。宿主关闭原生避让时设为 `false`，启用 Mpx 内置补偿逻辑，仍受输入组件 `adjust-position` 控制。 |
 | `onPickerVibrate` | `Function` | 未设置 | `() => void`，为 `picker-view-column` 滚动选择提供宿主振动反馈。 |

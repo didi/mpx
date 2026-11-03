@@ -9,6 +9,7 @@
 - [属性与事件](#属性与事件)
 - [React Hooks 使用](#react-hooks-使用)
 - [Hooks 返回值更新模板](#hooks-返回值更新模板)
+- [独立页面接入](#独立页面接入)
 - [跨端兼容隔离](#跨端兼容隔离)
 
 ## 注册 RN 组件
@@ -198,6 +199,25 @@ defineOptions({
   }
 })
 ```
+
+## 独立页面接入
+
+已有 Mpx RN 运行环境中，独立页面产物直接导出页面组件；接入宿主导航时用 `@mpxjs/core` 的 `pageWrapperHOC` 添加导航栏、安全区、手势根容器、键盘避让与 Portal。宿主需提供 React Navigation 的 `navigation`、`route` props，并在外层提供 `SafeAreaProvider`。
+
+```js
+// RN 专用文件；PageComponent 为独立编译的 Mpx 页面产物
+import { pageWrapperHOC } from '@mpxjs/core'
+import PageComponent from './page-output'
+
+const WrappedPage = pageWrapperHOC(PageComponent, {
+  navigationBarTitleText: '独立页面'
+})
+export default WrappedPage
+```
+
+将 `WrappedPage` 注册为宿主导航的 Screen。第二个参数为页面配置：`navigationStyle: 'custom'` 隐藏默认导航栏，`disableKeyboardAvoiding: true` 不添加键盘避让容器。应用内页面由框架自动包裹，无需重复调用；该 HOC 只支持 RN。
+
+页面身份使用实例 `getPageId()` 获取，不使用 `id` props；后者仅表示调用方传入的节点标识。
 
 ## 跨端兼容隔离
 
