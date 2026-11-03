@@ -60,7 +60,7 @@ description: Mpx 应用开发与跨端适配指南，以 Mpx 核心能力为基�
 
 新建或迁移完整页面/组件时核对四个 SFC 区块；局部修复核对受影响维度。Skyline 适配完成前、排障或评审还需按入口在指定范围内执行完整检查矩阵，能力查询与方案讨论无需执行。
 
-代码修改后针对实际目标检查行为与构建：涉及 SFC 编译时按 [编译校验](references/base/compile-validation.md) 显式指定目标；执行项目适用的 ESLint 与现有测试。编译成功不能证明滚动、原生宿主、浏览器权限或 SSR hydration 正常；按本次改动和端入口要求补充运行验证，Skyline 改动需分别验证 WebView / Skyline。缺少依赖或容器时说明未验证的范围。
+代码修改后针对实际目标检查行为与构建：涉及 SFC 编译时按 [编译校验](references/base/compile-validation.md) 显式指定目标，所有实际目标均须达到 **0 error、0 warning**；出现任何错误或警告必须修复并重新校验。执行项目适用的 ESLint 与现有测试。编译成功不能证明滚动、原生宿主、浏览器权限或 SSR hydration 正常；按本次改动和端入口要求补充运行验证，Skyline 改动需分别验证 WebView / Skyline。缺少依赖或容器时说明未验证的范围。
 
 ## 维护本 Skill
 

@@ -1,0 +1,408 @@
+{
+  "metadata": {
+    "skill_name": "mpx — compile diagnostics",
+    "skill_path": "skill-snapshot/SKILL.md",
+    "executor_model": "inherited current agent runtime",
+    "analyzer_model": "inherited current agent runtime",
+    "timestamp": "2026-11-03T06:22:15.679657+00:00",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8333333333333334,
+        "passed": 5,
+        "failed": 1,
+        "total": 6
+      },
+      "expectations": [
+        {
+          "text": "wx 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-page.stdout"
+        },
+        {
+          "text": "ali 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": false,
+          "evidence": "logs/final-page.stdout"
+        },
+        {
+          "text": "ios 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-page.stdout"
+        },
+        {
+          "text": "android 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-page.stdout"
+        },
+        {
+          "text": "harmony 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-page.stdout"
+        },
+        {
+          "text": "web 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-page.stdout"
+        }
+      ],
+      "notes": [
+        "仅编译诊断；原静态能力未重新评分。"
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6
+      },
+      "expectations": [
+        {
+          "text": "wx 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-demo.stdout.log"
+        },
+        {
+          "text": "ali 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-demo.stdout.log"
+        },
+        {
+          "text": "ios 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-demo.stdout.log"
+        },
+        {
+          "text": "android 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-demo.stdout.log"
+        },
+        {
+          "text": "harmony 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-demo.stdout.log"
+        },
+        {
+          "text": "web 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "logs/final-demo.stdout.log"
+        }
+      ],
+      "notes": [
+        "仅编译诊断；原静态能力未重新评分。"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8333333333333334,
+        "passed": 5,
+        "failed": 1,
+        "total": 6
+      },
+      "expectations": [
+        {
+          "text": "wx 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-2-wx.stdout', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-2-wx.stderr', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-2-wx.exit-code']"
+        },
+        {
+          "text": "ali 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": false,
+          "evidence": "['iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-ali.stdout', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-ali.stderr', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-ali.exit-code']"
+        },
+        {
+          "text": "ios 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-ios.stdout', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-ios.stderr', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-ios.exit-code']"
+        },
+        {
+          "text": "android 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-android.stdout', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-android.stderr', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-android.exit-code']"
+        },
+        {
+          "text": "harmony 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-harmony.stdout', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-harmony.stderr', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-harmony.exit-code']"
+        },
+        {
+          "text": "web 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-web.stdout', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-web.stderr', 'iteration-3/eval-2-scroll-feed/mpx/logs/compile-recheck-1-web.exit-code']"
+        }
+      ],
+      "notes": [
+        "仅编译诊断；原静态能力未重新评分。"
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6
+      },
+      "expectations": [
+        {
+          "text": "wx 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-3-checkout-dialog/mpx/logs/final-wx.stdout.log"
+        },
+        {
+          "text": "ali 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-3-checkout-dialog/mpx/logs/final-ali.stdout.log"
+        },
+        {
+          "text": "ios 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-3-checkout-dialog/mpx/logs/final-ios.stdout.log"
+        },
+        {
+          "text": "android 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-3-checkout-dialog/mpx/logs/final-android.stdout.log"
+        },
+        {
+          "text": "harmony 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-3-checkout-dialog/mpx/logs/final-harmony.stdout.log"
+        },
+        {
+          "text": "web 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-3-checkout-dialog/mpx/logs/final-web.stdout.log"
+        }
+      ],
+      "notes": [
+        "仅编译诊断；原静态能力未重新评分。"
+      ]
+    },
+    {
+      "eval_id": 4,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6
+      },
+      "expectations": [
+        {
+          "text": "wx 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-4-account-search/mpx/logs/compile-final.stdout"
+        },
+        {
+          "text": "ali 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-4-account-search/mpx/logs/compile-final.stdout"
+        },
+        {
+          "text": "ios 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-4-account-search/mpx/logs/compile-final.stdout"
+        },
+        {
+          "text": "android 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-4-account-search/mpx/logs/compile-final.stdout"
+        },
+        {
+          "text": "harmony 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-4-account-search/mpx/logs/compile-final.stdout"
+        },
+        {
+          "text": "web 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "iteration-3/eval-4-account-search/mpx/logs/compile-final.stdout"
+        }
+      ],
+      "notes": [
+        "仅编译诊断；原静态能力未重新评分。"
+      ]
+    },
+    {
+      "eval_id": 5,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6
+      },
+      "expectations": [
+        {
+          "text": "wx 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final-detail-switcher.stdout', 'logs/compile-final-detail-switcher.stderr', 'logs/compile-final-detail-switcher.exit-code', 'logs/compile-final-basic-card.stdout', 'logs/compile-final-basic-card.stderr', 'logs/compile-final-basic-card.exit-code', 'logs/compile-final-vip-card.stdout', 'logs/compile-final-vip-card.stderr', 'logs/compile-final-vip-card.exit-code', 'logs/compile-final-demo.stdout', 'logs/compile-final-demo.stderr', 'logs/compile-final-demo.exit-code']"
+        },
+        {
+          "text": "ali 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final-detail-switcher.stdout', 'logs/compile-final-detail-switcher.stderr', 'logs/compile-final-detail-switcher.exit-code', 'logs/compile-final-basic-card.stdout', 'logs/compile-final-basic-card.stderr', 'logs/compile-final-basic-card.exit-code', 'logs/compile-final-vip-card.stdout', 'logs/compile-final-vip-card.stderr', 'logs/compile-final-vip-card.exit-code', 'logs/compile-final-demo.stdout', 'logs/compile-final-demo.stderr', 'logs/compile-final-demo.exit-code']"
+        },
+        {
+          "text": "ios 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final-detail-switcher.stdout', 'logs/compile-final-detail-switcher.stderr', 'logs/compile-final-detail-switcher.exit-code', 'logs/compile-final-basic-card.stdout', 'logs/compile-final-basic-card.stderr', 'logs/compile-final-basic-card.exit-code', 'logs/compile-final-vip-card.stdout', 'logs/compile-final-vip-card.stderr', 'logs/compile-final-vip-card.exit-code', 'logs/compile-final-demo.stdout', 'logs/compile-final-demo.stderr', 'logs/compile-final-demo.exit-code']"
+        },
+        {
+          "text": "android 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final-detail-switcher.stdout', 'logs/compile-final-detail-switcher.stderr', 'logs/compile-final-detail-switcher.exit-code', 'logs/compile-final-basic-card.stdout', 'logs/compile-final-basic-card.stderr', 'logs/compile-final-basic-card.exit-code', 'logs/compile-final-vip-card.stdout', 'logs/compile-final-vip-card.stderr', 'logs/compile-final-vip-card.exit-code', 'logs/compile-final-demo.stdout', 'logs/compile-final-demo.stderr', 'logs/compile-final-demo.exit-code']"
+        },
+        {
+          "text": "harmony 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final-detail-switcher.stdout', 'logs/compile-final-detail-switcher.stderr', 'logs/compile-final-detail-switcher.exit-code', 'logs/compile-final-basic-card.stdout', 'logs/compile-final-basic-card.stderr', 'logs/compile-final-basic-card.exit-code', 'logs/compile-final-vip-card.stdout', 'logs/compile-final-vip-card.stderr', 'logs/compile-final-vip-card.exit-code', 'logs/compile-final-demo.stdout', 'logs/compile-final-demo.stderr', 'logs/compile-final-demo.exit-code']"
+        },
+        {
+          "text": "web 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final-detail-switcher.stdout', 'logs/compile-final-detail-switcher.stderr', 'logs/compile-final-detail-switcher.exit-code', 'logs/compile-final-basic-card.stdout', 'logs/compile-final-basic-card.stderr', 'logs/compile-final-basic-card.exit-code', 'logs/compile-final-vip-card.stdout', 'logs/compile-final-vip-card.stderr', 'logs/compile-final-vip-card.exit-code', 'logs/compile-final-demo.stdout', 'logs/compile-final-demo.stderr', 'logs/compile-final-demo.exit-code']"
+        }
+      ],
+      "notes": [
+        "仅编译诊断；原静态能力未重新评分。"
+      ]
+    },
+    {
+      "eval_id": 6,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6
+      },
+      "expectations": [
+        {
+          "text": "wx 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/final-page.stdout', 'logs/initial-component.stdout']"
+        },
+        {
+          "text": "ali 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/final-page.stdout', 'logs/initial-component.stdout']"
+        },
+        {
+          "text": "ios 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/final-page.stdout', 'logs/initial-component.stdout']"
+        },
+        {
+          "text": "android 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/final-page.stdout', 'logs/initial-component.stdout']"
+        },
+        {
+          "text": "harmony 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/final-page.stdout', 'logs/initial-component.stdout']"
+        },
+        {
+          "text": "web 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/final-page.stdout', 'logs/initial-component.stdout']"
+        }
+      ],
+      "notes": [
+        "仅编译诊断；原静态能力未重新评分。"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8333333333333334,
+        "passed": 5,
+        "failed": 1,
+        "total": 6
+      },
+      "expectations": [
+        {
+          "text": "wx 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final.stdout.log', 'logs/compile-final.stderr.log', 'logs/compile-final.exit.json']"
+        },
+        {
+          "text": "ali 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final.stdout.log', 'logs/compile-final.stderr.log', 'logs/compile-final.exit.json']"
+        },
+        {
+          "text": "ios 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final.stdout.log', 'logs/compile-final.stderr.log', 'logs/compile-final.exit.json']"
+        },
+        {
+          "text": "android 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final.stdout.log', 'logs/compile-final.stderr.log', 'logs/compile-final.exit.json']"
+        },
+        {
+          "text": "harmony 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": true,
+          "evidence": "['logs/compile-final.stdout.log', 'logs/compile-final.stderr.log', 'logs/compile-final.exit.json']"
+        },
+        {
+          "text": "web 编译 0 error / 0 warning（当前记录的页面/组件范围）",
+          "passed": false,
+          "evidence": "['logs/compile-final.stdout.log', 'logs/compile-final.stderr.log', 'logs/compile-final.exit.json']"
+        }
+      ],
+      "notes": [
+        "仅编译诊断；原静态能力未重新评分。"
+      ]
+    }
+  ],
+  "run_summary": {
+    "mpx": {
+      "pass_rate": {
+        "mean": 0.9375,
+        "stddev": 0.08625819491779425,
+        "min": 0.8333333333333334,
+        "max": 1.0
+      }
+    }
+  },
+  "notes": [
+    "仅执行 mpx；没有 baseline，不计算组间差值。",
+    "通过率为 8 case × 6 target 的零编译诊断比例，不是旧轮 48 条能力断言通过率。",
+    "Token/总执行时间未可靠获取，不报告为0。",
+    "编译入口冲突等过程诊断与源码错误应结合 README 分类解读。",
+    "原始过程与交付物已清理，仅保留结果报告；evidence 字段是历史路径。",
+    "后续定位：支付宝3条警告来自评测依赖缺少仓库已有实现，Web2条错误来自vue-demi错误使用Vue3入口。未重跑整组，保留原始编译统计。"
+  ]
+}

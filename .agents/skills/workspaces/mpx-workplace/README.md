@@ -1,10 +1,7 @@
 # mpx-workplace 评测报告
 
-仅保留 [iteration-2 报告](iteration-2/README.md)。iteration-1、评测产物及过程文件已清理。
+- [iteration-3 · 仅 mpx 分组编译复跑](iteration-3/README.md)：保留原始编译统计及后续环境根因分析；过程和交付产物已清理。
+- [结构化诊断报告](iteration-3/compile-report.json) · [编译统计](iteration-3/benchmark.json)
+- [iteration-2 · 历史评测报告](iteration-2/README.md)：保持原静态评分；原输入、产物及过程记录已清理。
 
-- [静态评分与统计](iteration-2/benchmark.partial.md)：mpx 48通过；noskill 33通过、14失败、1待核实。
-- [逐条评分证据摘要](iteration-2/assessment-report.md)
-- [信息源审计汇总](iteration-2/source-audit.json)：16/16通过。
-- [独立验证汇总](iteration-2/validation/checks-summary.md)
-
-评分保留评测时的判定，后续文档修订未追溯改分；静态断言通过不等于构建或真机通过。
+两个轮次均仅保留报告，历史证据路径不可直接访问，不能从归档直接重跑。根目录构建配置作为可复用测试基础保留。

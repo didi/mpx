@@ -37,4 +37,4 @@
 
 ## 验证
 
-按 [编译校验](../base/compile-validation.md) 显式 `--target=web`，跨端时再加实际原平台。执行项目相关 ESLint/测试；浏览器验证路由直达/刷新、事件、滚动和样式。SSR 分别构建 server/client，验证请求隔离、预取状态及 hydration。编译通过不能代替这些运行行为验证。
+按 [编译校验](../base/compile-validation.md) 显式传 `--target=web`，主要验证 Web 构建；涉及原平台行为变化时再补充原平台编译。执行项目相关 ESLint/测试；浏览器验证路由直达/刷新、事件、滚动和样式。SSR 分别构建 server/client，验证请求隔离、预取状态及 hydration。编译通过不能代替这些运行行为验证。

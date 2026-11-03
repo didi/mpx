@@ -51,7 +51,7 @@ node "$skillRoot/scripts/compile-validate.js" src/components/foo.mpx --target=io
 node "$skillRoot/scripts/compile-validate.js" src/components/foo.mpx --target=ios --no-ignore-sub-components
 ```
 
-校验失败时按错误或警告的 `category` 字段回到对应任务步骤定位与修正问题，修复本次变更相关问题后重跑。遵守宿主仓库的测试失败重试上限；本仓库单元测试最多尝试 3 次修复，仍失败时保留错误与分析。
+所有实际目标的编译校验均须达到 **0 error、0 warning**，存在任何错误或警告都不能判定通过。校验失败时按 `category` 字段定位问题，修复后重新校验，不得通过忽略或过滤诊断满足要求。受依赖、环境或修改范围限制无法消除时，明确报告残留诊断与阻塞原因，不得宣称编译校验通过。遵守宿主仓库的测试失败重试上限；本仓库单元测试最多尝试 3 次修复，仍失败时保留错误与分析。
 
 ## 校验边界
 
