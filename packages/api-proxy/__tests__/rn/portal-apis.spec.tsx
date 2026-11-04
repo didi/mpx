@@ -28,9 +28,9 @@ jest.mock('react-native-reanimated', () => ({
   Easing: { inOut: jest.fn(), out: jest.fn(), poly: jest.fn() }
 }), { virtual: true })
 
-jest.mock('../../src/platform/api/system/rnSystem', () => ({
-  getWindowInfo: () => ({ screenHeight: 844, safeArea: { bottom: 810 } })
-}))
+jest.mock('react-native-safe-area-context', () => ({
+  initialWindowMetrics: { insets: { top: 47, bottom: 34, left: 0, right: 0 } }
+}), { virtual: true })
 
 jest.mock('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index', () => require('../../../webpack-plugin/lib/runtime/components/react/mpx-portal'), { virtual: true })
 

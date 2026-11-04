@@ -148,6 +148,7 @@ export default function createApp (options) {
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
+    const safeAreaReadyRef = useRef(false)
     const pageNotFoundRef = useRef(null)
     const initialRouteRef = useRef({
       initialRouteName: firstPage,
@@ -226,7 +227,7 @@ export default function createApp (options) {
       navScreenOpts.animation = 'none'
     }
 
-    return createElement(SafeAreaProvider,
+    const app = createElement(SafeAreaProvider,
       null,
       createElement(NavigationContainer,
         {
@@ -256,6 +257,19 @@ export default function createApp (options) {
         )
       )
     )
+    if (__mpx_mode__ === 'ios') {
+      return createElement('RNCSafeAreaProvider', {
+        style: { flex: 1 },
+        onInsetsChange ({ nativeEvent: metrics }) {
+          if (!safeAreaReadyRef.current) {
+            safeAreaReadyRef.current = true
+            return
+          }
+          ReactNative.DeviceEventEmitter.emit('mpxSafeAreaInsetsChange', metrics)
+        }
+      }, app)
+    }
+    return app
   })
 
   global.getCurrentPages = function () {

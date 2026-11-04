@@ -10,6 +10,7 @@ let pageId = 0
 function getLayoutData (headerHeight) {
   const screenDimensions = ReactNative.Dimensions.get('screen')
   const windowDimensions = ReactNative.Dimensions.get('window')
+  const layoutDimensions = ReactNative.Platform.OS === 'ios' ? windowDimensions : screenDimensions
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
@@ -29,7 +30,7 @@ function getLayoutData (headerHeight) {
     top: headerHeight,
     // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
     width: windowDimensions.width,
-    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
+    height: layoutDimensions.height - headerHeight - bottomVirtualHeight,
     // ios为0 android为实际statusbar高度
     statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
     bottomVirtualHeight: bottomVirtualHeight,
@@ -63,10 +64,12 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.pageId = currentPageId
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
+    const nativeInsetsRef = useRef(null)
     const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
-    navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
+    const safeAreaInsets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
+    navigation.insets = nativeInsetsRef.current || safeAreaInsets
 
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     if (!hasOwn(global.__mpxPagesMap, route.key)) {
@@ -82,7 +85,18 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
       const dimensionListener = ReactNative.Dimensions.addEventListener('change', () => {
         navigation.layout = getLayoutData(headerHeight)
       })
-      return () => dimensionListener?.remove()
+      const insetsListener = __mpx_mode__ === 'ios' && ReactNative.DeviceEventEmitter.addListener('mpxSafeAreaInsetsChange', metrics => {
+        nativeInsetsRef.current = metrics.insets
+        navigation.insets = metrics.insets
+        navigation.layout = getLayoutData(headerHeight)
+        if (navigation.isFocused()) {
+          ReactNative.DeviceEventEmitter.emit('mpxWindowResize', { navigation, window: ReactNative.Dimensions.get('window') })
+        }
+      })
+      return () => {
+        dimensionListener?.remove()
+        insetsListener && insetsListener.remove()
+      }
     }, [navigation, headerHeight])
 
     useEffect(() => {

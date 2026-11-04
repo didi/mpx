@@ -29,6 +29,10 @@ jest.mock('@mpxjs/api-proxy', () => ({ createSelectorQuery: jest.fn(), createInt
 jest.mock('../../src/index', () => ({ config: { rnConfig: {}, ignoreProxyWhiteList: [] }, prototype: {} }))
 
 jest.mock('react-native', () => ({
+  DeviceEventEmitter: {
+    emit: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() }))
+  },
   AppState: { addEventListener: jest.fn(() => ({ remove: jest.fn() })) },
   StyleSheet: { create: value => value },
   processColor: () => null,
@@ -366,6 +370,41 @@ describe('RN createApp initial params', () => {
     snapshots.forEach(info => {
       expect(info).toEqual(expect.objectContaining({ windowWidth: 390, windowHeight: 753, screenTop: 91, statusBarHeight: 47 }))
     })
+  })
+
+  it('updates insets before notifying each native safe area change', () => {
+    const { DeviceEventEmitter, Dimensions } = require('react-native')
+    const { onWindowResize, offWindowResize } = require('../../../api-proxy/src/platform/api/window/rnWindow')
+    const snapshots = []
+    renderApp()
+    const provider = renderer.root.findByType('RNCSafeAreaProvider')
+    const callback = event => snapshots.push({ event, bottom: getWindowInfo().safeArea.bottom })
+    onWindowResize(callback)
+    DeviceEventEmitter.emit.mockImplementation((name, event) => {
+      DeviceEventEmitter.addListener.mock.calls.filter(([key]) => key === name).forEach(([, listener]) => listener(event))
+    })
+    const update = (bottom) => provider.props.onInsetsChange({
+      nativeEvent: {
+        insets: { top: 47, bottom, left: 0, right: 0 },
+        frame: { x: 0, y: 0, width: 390, height: 844 }
+      }
+    })
+    act(() => update(34))
+    expect(snapshots).toHaveLength(0)
+    act(() => {
+      update(0)
+      update(34)
+      update(0)
+    })
+    expect(snapshots.map(snapshot => snapshot.bottom)).toEqual([844, 810, 844])
+    snapshots.forEach(snapshot => expect(snapshot.event.size).toEqual({ windowWidth: 390, windowHeight: 844 }))
+    act(() => renderer.update(React.createElement(global.__mpxOptionsMap.app, { updated: true })))
+    expect(getWindowInfo().safeArea.bottom).toBe(844)
+    const dimensionChange = Dimensions.addEventListener.mock.calls.find(([name]) => name === 'change')[1]
+    act(() => dimensionChange({ window: { width: 390, height: 844 }, screen: { width: 844, height: 390 } }))
+    expect(snapshots).toHaveLength(3)
+    offWindowResize(callback)
+    DeviceEventEmitter.emit.mockReset()
   })
 
   it('displays portal content requested during App launch before the host mounts', () => {
