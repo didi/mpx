@@ -15,53 +15,53 @@ function removeToast (pageId) {
   }
 }
 
+const styles = StyleSheet.create({
+  toastContent: {
+    maxWidth: '60%',
+    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+    paddingTop: 15,
+    paddingBottom: 15,
+    paddingLeft: 20,
+    paddingRight: 20,
+    borderRadius: 5,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  toastWrap: {
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 10000,
+    position: 'absolute',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  toastHasIcon: {
+    width: 140
+  },
+  toastImg: {
+    width: 40,
+    height: 40,
+    marginLeft: 'auto',
+    marginRight: 'auto'
+  },
+  toastText: {
+    textAlign: 'center',
+    color: '#ffffff',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 10
+  }
+})
+
 function showToast (options = {}) {
   const dimensionsScreen = Dimensions.get('screen')
   const dimensionsWindow = Dimensions.get('window')
   const screenHeight = __mpx_mode__ === 'ios' ? dimensionsWindow.height : dimensionsScreen.height
-  const contentTop = parseInt(screenHeight * 0.4)
-  const styles = StyleSheet.create({
-    toastContent: {
-      maxWidth: '60%',
-      backgroundColor: 'rgba(20, 20, 20, 0.7)',
-      paddingTop: 15,
-      paddingBottom: 15,
-      paddingLeft: 20,
-      paddingRight: 20,
-      borderRadius: 5,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: contentTop // 小程序里面展示偏上一点
-    },
-    toastWrap: {
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      zIndex: 10000,
-      position: 'absolute',
-      display: 'flex',
-      alignItems: 'center'
-    },
-    toastHasIcon: {
-      width: 140
-    },
-    toastImg: {
-      width: 40,
-      height: 40,
-      marginLeft: 'auto',
-      marginRight: 'auto'
-    },
-    toastText: {
-      textAlign: 'center',
-      color: '#ffffff',
-      fontSize: 12,
-      lineHeight: 18,
-      marginTop: 10
-    }
-  })
+  const contentTop = parseInt(screenHeight * 0.4) // 小程序里面展示偏上一点
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   if (type(title) !== 'String') {
     const result = {
@@ -83,14 +83,14 @@ function showToast (options = {}) {
   isLoadingShow = isLoading
   if (image || icon === 'success' || icon === 'error') {
     ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
-      <View style={[styles.toastContent, styles.toastHasIcon]}>
+      <View style={[styles.toastContent, styles.toastHasIcon, { marginTop: contentTop }]}>
         <Image style={ styles.toastImg } source={{ uri: image || iconImg[icon] }}></Image>
         { title ? <Text numberOfLines={2} style={styles.toastText}>{title}</Text> : null }
       </View>
     </View>
   } else if (icon === 'loading') {
     ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
-      <View style={[styles.toastContent, styles.toastHasIcon]}>
+      <View style={[styles.toastContent, styles.toastHasIcon, { marginTop: contentTop }]}>
         <ActivityIndicator
           animating
           size='small'
@@ -101,7 +101,7 @@ function showToast (options = {}) {
     </View>
   } else {
     ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
-      <View style={styles.toastContent}>
+      <View style={[styles.toastContent, { marginTop: contentTop }]}>
         { title
           ? <Text numberOfLines={2} style={{
             ...styles.toastText,

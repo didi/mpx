@@ -10,12 +10,6 @@ import Animated, {
   Easing
 } from 'react-native-reanimated'
 
-const navigation = getFocusedNavigation() || {}
-const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
-const navigationInsets = navigation.insets || {}
-const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
-const bottom = insets.bottom || 0
-
 const styles = StyleSheet.create({
   actionAction: {
     left: 0,
@@ -66,12 +60,11 @@ const styles = StyleSheet.create({
   buttonStyle: {
     paddingTop: 10,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: bottom + 10
+    alignItems: 'center'
   }
 })
 
-function ActionSheet ({ itemColor, height, success, fail, complete, alertText, itemList, onClose }) {
+function ActionSheet ({ itemColor, height, bottom, success, fail, complete, alertText, itemList, onClose }) {
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
   const [selectedIndex, setSelectedIndex] = useState(null)
@@ -172,6 +165,7 @@ function ActionSheet ({ itemColor, height, success, fail, complete, alertText, i
         <View
           style={[
             styles.buttonStyle,
+            { paddingBottom: bottom + 10 },
             selectedIndex === -1
               ? {
                   backgroundColor: '#ececec'
@@ -208,12 +202,18 @@ function showActionSheet (options = {}) {
     failHandle(result, fail, complete)
     return
   }
+  const navigation = getFocusedNavigation() || {}
+  const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
+  const navigationInsets = navigation.insets || {}
+  const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
+  const bottom = insets.bottom || 0
   const height = len * 53 + 46 + bottom + (alertText ? 52 : 0)
 
   const actionSheetKey = Portal.add(
     <ActionSheet
       itemColor={itemColor}
       height={height}
+      bottom={bottom}
       success={success}
       fail={fail}
       complete={complete}

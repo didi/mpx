@@ -16,8 +16,8 @@ const getWindowInfo = function () {
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
-  const fallbackWindowWidth = __mpx_mode__ === 'ios' ? dimensionsWindow.width : screenWidth
-  const fallbackWindowHeight = __mpx_mode__ === 'ios' ? dimensionsWindow.height : screenHeight
+  const fallbackWindowWidth = __mpx_mode__ === 'ios' ? dimensionsWindow.width : dimensionsWindow.width - right
+  const fallbackWindowHeight = __mpx_mode__ === 'ios' ? dimensionsWindow.height : dimensionsWindow.height - (layout.bottomVirtualHeight || 0)
   const windowHeight = layoutHeight || fallbackWindowHeight
   try {
     safeArea = {

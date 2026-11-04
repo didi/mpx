@@ -64,12 +64,10 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.pageId = currentPageId
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
-    const nativeInsetsRef = useRef(null)
     const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
-    const safeAreaInsets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
-    navigation.insets = nativeInsetsRef.current || safeAreaInsets
+    navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
 
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     if (!hasOwn(global.__mpxPagesMap, route.key)) {
@@ -85,18 +83,7 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
       const dimensionListener = ReactNative.Dimensions.addEventListener('change', () => {
         navigation.layout = getLayoutData(headerHeight)
       })
-      const insetsListener = __mpx_mode__ === 'ios' && ReactNative.DeviceEventEmitter.addListener('mpxSafeAreaInsetsChange', metrics => {
-        nativeInsetsRef.current = metrics.insets
-        navigation.insets = metrics.insets
-        navigation.layout = getLayoutData(headerHeight)
-        if (navigation.isFocused()) {
-          ReactNative.DeviceEventEmitter.emit('mpxWindowResize', { navigation, window: ReactNative.Dimensions.get('window') })
-        }
-      })
-      return () => {
-        dimensionListener?.remove()
-        insetsListener && insetsListener.remove()
-      }
+      return () => dimensionListener?.remove()
     }, [navigation, headerHeight])
 
     useEffect(() => {
