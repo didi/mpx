@@ -1343,7 +1343,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   traverseStyle(styleObj, styleVisitor)
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
-  if (enableVarRef.current !== enableVar) {
+  if (enableVar && !enableVarRef.current) {
     error('css variable use/declare should be stable in the component lifecycle, or you can set [enable-var] with true.')
   }
   // apply css var
@@ -1556,7 +1556,7 @@ export function useTextPassThrough (
   )
   const enableTextPassThroughRef = useRef(shouldEnableTextPassThrough)
 
-  if (enableTextPassThroughRef.current !== shouldEnableTextPassThrough) {
+  if (shouldEnableTextPassThrough && !enableTextPassThroughRef.current) {
     error('[Mpx runtime error]: text style/props use should be stable in the component lifecycle, or you can set [enable-text-pass-through] with true.')
   }
 
