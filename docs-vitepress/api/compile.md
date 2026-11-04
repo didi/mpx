@@ -960,12 +960,13 @@ module.exports = {
 
 #### rnConfig.asyncChunk
 
-`{ timeout?: number, fallback?: string, loading?: string } | undefined`
+`{ fallback?: string, loading?: string } | undefined`
 
 异步分包相关：
 
-- **timeout**：传给内部 `LoadAsyncChunkModule` 的超时时间（毫秒级用途，见 `@mpxjs/webpack-plugin` 实现）。
-- **fallback** / **loading**：异步页面/组件的占位与 loading 组件资源路径（经 `addQuery(..., { isComponent: true })` 参与打包），在 `react/script-helper.js` 中生成异步包装代码时使用。
+- **fallback** / **loading**：异步页面加载失败与加载中的组件资源路径。异步组件的占位通过引用方 JSON 的 `componentPlaceholder` 配置。
+
+框架不再设置分包加载超时，`rnConfig.asyncChunk.timeout` 不生效；需要超时控制时，在运行时 `mpx.config.rnConfig.loadChunkAsync` 中实现。
 
 #### rnConfig.customBuiltInComponents {#rnconfig-custombuiltincomponents}
 
@@ -990,13 +991,12 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        mode: 'react',
+        mode: 'ios',
         rnConfig: {
           projectName: 'MyMpxApp',
           supportSubpackage: true,
           asyncCommonSubpackage: false,
           asyncChunk: {
-            timeout: 10000,
             fallback: path.resolve(__dirname, 'src/rn/PageFallback.mpx'),
             loading: path.resolve(__dirname, 'src/rn/PageLoading.mpx')
           },

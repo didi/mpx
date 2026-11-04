@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   }
 })
 
-const getOpenTypeEvent = (openType?: OpenType) => {
+const getOpenTypeHandler = (openType?: OpenType) => {
   if (!openType) return
   if (!global.__mpx?.config?.rnConfig) {
     warn('Environment not supported')
@@ -141,13 +141,13 @@ const getOpenTypeEvent = (openType?: OpenType) => {
     return
   }
 
-  const event = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
-  if (!event) {
+  const handler = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
+  if (!handler) {
     warn(`Unregistered ${eventName} event`)
     return
   }
 
-  return event
+  return handler
 }
 
 const timer = (data: any, time = 3000) => new Promise((resolve) => {
@@ -315,8 +315,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
-    const handleEvent = getOpenTypeEvent(openType)
-    if (!handleEvent) return
+    const openTypeHandler = getOpenTypeHandler(openType)
+    if (!openTypeHandler) return
 
     if (openType === 'share') {
       const currentPage = getCurrentPage(pageId)
@@ -335,22 +335,22 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
           if (promise) {
             Promise.race([Promise.resolve(promise), timer(message)])
               .then((msg) => {
-                handleEvent(Object.assign({}, defaultMessage, msg))
+                openTypeHandler(Object.assign({}, defaultMessage, msg))
               })
           } else {
-            handleEvent(Object.assign({}, defaultMessage, message))
+            openTypeHandler(Object.assign({}, defaultMessage, message))
           }
         } else {
-          handleEvent(defaultMessage)
+          openTypeHandler(defaultMessage)
         }
       } else {
         warn('Current page not found')
-        // Todo handleEvent(event)
+        // Todo openTypeHandler(event)
       }
     }
 
     if (openType === 'getUserInfo' && bindgetuserinfo) {
-      Promise.resolve(handleEvent)
+      Promise.resolve(openTypeHandler)
         .then((userInfo) => {
           if (typeof userInfo === 'object') {
             bindgetuserinfo(userInfo)

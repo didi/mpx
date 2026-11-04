@@ -14,7 +14,7 @@ function request (options = { url: '' }) {
     method = 'GET',
     dataType = 'json',
     responseType = 'text',
-    timeout = global.__networkTimeout || 60 * 1000,
+    timeout = (typeof global.__networkTimeout === 'number' ? global.__networkTimeout : global.__networkTimeout?.request) || 60 * 1000,
     header = {},
     success = null,
     fail = null,

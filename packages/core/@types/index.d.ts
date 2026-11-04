@@ -254,6 +254,26 @@ export function createPage<D extends Data = {}, P extends Properties = {}, C = {
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
 
+/** RN 独立页面的外层配置，与页面 JSON 配置一致。 */
+export interface PageWrapperConfig {
+  navigationStyle?: 'default' | 'custom'
+  navigationBarTitleText?: string
+  navigationBarTextStyle?: 'white' | 'black' | '#ffffff' | '#000000'
+  navigationBarBackgroundColor?: string
+  backgroundColorContent?: string
+  disableKeyboardAvoiding?: boolean
+  [key: string]: any
+}
+
+/** 仅支持 RN；返回的组件需要宿主传入 navigation 和 route。 */
+export function pageWrapperHOC<P extends object> (
+  WrappedComponent: ComponentType<P>,
+  pageConfig?: PageWrapperConfig
+): ComponentType<P & {
+  navigation: any
+  route: { key: string; name: string; params?: Record<string, any> }
+}>
+
 type MixinType = 'app' | 'page' | 'component'
 
 export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | {
@@ -476,7 +496,7 @@ export interface RnConfig {
   }) => void
 
   /**
-   * 自定义屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
+   * 自定义窗口和屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
    *
    * @param dimensions 包含 window 和 screen 的尺寸信息
    * @returns 返回修改后的尺寸对象，或 void 表示不修改
@@ -484,6 +504,13 @@ export interface RnConfig {
   customDimensions?: <T extends { window: ScaledSize; screen: ScaledSize }>(
     dimensions: T
   ) => T | void
+
+  /**
+   * rpx、vw、vh、媒体查询与 onResize 使用的尺寸基准。
+   * 首次尺寸计算后该配置固定，运行期间修改不会生效。
+   * @default 'window'
+   */
+  dimensionsBase?: 'window' | 'screen'
 
   /**
    * 加载并执行异步分包的方法。

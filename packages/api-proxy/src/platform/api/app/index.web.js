@@ -4,6 +4,7 @@ global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: [],
   error: [],
+  pageNotFound: [],
   rejection: [],
   lazyLoad: []
 }
@@ -35,6 +36,16 @@ function onError (callback) {
   if (isBrowser || isReact) {
     global.__mpxAppCbs.error.push(callback)
   }
+}
+
+function onPageNotFound (callback) {
+  if (isBrowser || isReact) {
+    global.__mpxAppCbs.pageNotFound.push(callback)
+  }
+}
+
+function offPageNotFound (callback) {
+  off(global.__mpxAppCbs.pageNotFound, callback)
 }
 
 function offError (callback) {
@@ -96,6 +107,8 @@ export {
   offAppHide,
   onError,
   offError,
+  onPageNotFound,
+  offPageNotFound,
   onUnhandledRejection,
   offUnhandledRejection,
   onLazyLoadError,

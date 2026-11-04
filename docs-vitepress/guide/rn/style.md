@@ -103,19 +103,14 @@ Mpx 转 RN 支持以下单位，部分单位在特定情况下存在使用限制
 |------|---------|----------|
 | `%` | ✅ 支持 | 百分比单位参考 [百分比单位说明](#percentage-unit-explanation) |
 | `px` | ✅ 支持 | 绝对像素单位 |
-| `rpx` | ✅ 支持 | 响应式像素，根据屏幕宽度动态计算 |
-| `vh` | ✅ 支持 | 相对于视口的高度 |
-| `vw` | ✅ 支持 | 相对视口的宽度 |
+| `rpx` | ✅ 支持 | 响应式像素，默认根据 Window 宽度动态计算 |
+| `vh` | ✅ 支持 | 默认使用 Window 高度计算 |
+| `vw` | ✅ 支持 | 默认使用 Window 宽度计算 |
 
-> [!tip] vh 单位使用注意
+> [!tip] 尺寸基准说明
 >
-> - **问题**：使用系统默认导航栏时，`vh` 的计算基准可能会发生变化
->   - 页面首次加载：`100vh = 屏幕总高度`
->   - 状态更新后：`100vh = 屏幕高度 - 导航栏高度`
->
-> - **影响**：可能导致布局在运行时突然变化
->
-> - **建议**：如需使用 `vh` 单位，推荐配合自定义导航栏使用，以确保计算基准始终一致
+> `rpx` / `vw` / `vh` 和媒体查询默认使用 React Native `Dimensions.get('window')` 的尺寸。可将 `mpx.config.rnConfig.dimensionsBase` 设置为 `'screen'`，恢复基于 Screen 尺寸计算的旧版本效果。所选尺寸变化时，依赖这些能力的组件会重新计算样式。
+
 ### 百分比单位说明 {#percentage-unit-explanation}
 
 RN 原生较多属性不支持百分比，或对百分比的支持存在 bug（如 `font-size`、`translate` 等），但这些属性在编写 Web/小程序代码时使用较多，所以框架进行了抹平支持。
@@ -1603,9 +1598,11 @@ object-fit: scale-down; /* 缩小显示 */
 
 
 ## 跨端动画 {#cross-platform-animation}
-基础组件 view 支持两种动画形式 createAnimation API 和 transition，
-可以通过设置 animation 属于来使用 createAnimation API 动画，通过 class 或者 style 设置 css transition 来使用 transition 动画，
-可以用过 prop enable-animation = api/transition 来指定使用 createAnimation API/transition 的动画形式，，enable-animation 设置 true 默认为 createAnimation API 形式，需要注意的是指定动画类型后，对应的动画参数也需要匹配设置，详细使用文档如下：
+基础组件 view 支持 `createAnimation` API 和 CSS transition 两种动画形式：通过 `animation` 属性传入 API 动画数据，通过 class 或 style 设置 transition 样式。
+
+`enable-animation` 支持 boolean 和 string，完整取值见 [view 属性说明](./component.md#view)。使用 `"api"` / `"transition"` 可显式指定动画类型，优先于自动检测；`true` 默认选择 API 动画，但检测到 transition 样式时会优先选择 transition。未设置、`false` 或 `"none"` 时仍会自动检测，不会强制关闭已检测到的动画。`"animation"` 对应的 CSS animation 当前不支持。
+
+动画类型须在首次渲染时确定，同一实例不能从无动画切换为有动画，也不能在 API 与 transition 之间切换。首次没有 transition、后续才动态添加时，应从首次渲染起设置 `enable-animation="transition"`，不能用 `true` 代替；动画数据或样式应与声明的类型匹配。
 
 ### createAnimation 动画API {#create-animation-api}
 创建一个动画实例 animation，调用实例的方法来描述动画，最后通过动画实例的 export 方法导出动画数据传递给组件的 animation 属性。

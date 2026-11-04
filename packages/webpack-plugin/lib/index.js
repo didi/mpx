@@ -201,7 +201,6 @@ class MpxWebpackPlugin {
     options.checkUsingComponentsRules = options.checkUsingComponentsRules || (options.checkUsingComponents ? { include: () => true } : { exclude: () => true })
     options.reportSize = options.reportSize || null
     options.pathHashMode = options.pathHashMode || 'absolute'
-    options.forceDisableBuiltInLoader = options.forceDisableBuiltInLoader || false
     options.useRelativePath = options.useRelativePath || false
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceMainPackageRules = options.forceMainPackageRules || {}
@@ -830,7 +829,6 @@ class MpxWebpackPlugin {
           defs: processDefs(this.options.defs),
           i18n: this.options.i18n,
           checkUsingComponentsRules: this.options.checkUsingComponentsRules,
-          forceDisableBuiltInLoader: this.options.forceDisableBuiltInLoader,
           appTitle: 'Mpx homepage',
           attributes: this.options.attributes,
           externals: this.options.externals,

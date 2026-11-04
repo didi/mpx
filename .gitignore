@@ -14,6 +14,7 @@ node_modules/
 *.log
 scripts/log.json
 package-lock.json
+!/package-lock.json
 pnpm-lock.yaml
 yarn.lock
 .DS_Store
@@ -25,4 +26,3 @@ packages/webpack-plugin/lib/runtime/components/react/dist/
 packages/perf/dist/
 .agent-workflows/
 .agents/skills/skillOpt
-.agents/skills/mpx

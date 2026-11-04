@@ -19,6 +19,8 @@
   - [offAppHide](#offapphide)
   - [onError](#onerror)
   - [offError](#offerror)
+  - [onPageNotFound](#onpagenotfound)
+  - [offPageNotFound](#offpagenotfound)
   - [onUnhandledRejection](#onunhandledrejection)
   - [offUnhandledRejection](#offunhandledrejection)
   - [onLazyLoadError](#onlazyloaderror)
@@ -265,6 +267,8 @@ mpx.use(apiProxy, {
 
 同步获取窗口、屏幕与安全区信息，常用于布局与刘海区域避让。
 
+可通过 `Mpx.config.rnConfig.customDimensions` 自定义尺寸，`getWindowInfo`、`getSystemInfo` 和 `getSystemInfoSync` 会基于处理后的尺寸计算相关字段。
+
 #### 入参
 
 无。
@@ -469,6 +473,28 @@ mpx.use(apiProxy, {
 #### 返回值
 
 无。
+
+---
+
+### onPageNotFound
+
+监听启动入口不存在事件，需先安装 `@mpxjs/api-proxy`。`mpx.canIUse('onPageNotFound')` 返回 `true`。
+
+| 入参 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `callback` | function | 是 | 接收 `{ path, query, isEntryPage: true }`；`path` 不带开头 `/`，`query` 为原始缺失入口的 `initialParams`（未传为 `{}`）。 |
+
+---
+
+### offPageNotFound
+
+取消通过 `mpx.onPageNotFound` 注册的监听。`mpx.canIUse('offPageNotFound')` 返回 `true`。
+
+| 入参 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `callback` | function | 否 | 注册时同一个函数对象；不传则移除全部 API 监听。 |
+
+无返回值，默认不参与 Promise 化。不移除 App 的 `onPageNotFound` 生命周期回调。
 
 ---
 
@@ -868,7 +894,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-**异步 API**。设置当前页导航栏标题。
+**异步 API**。更新当前页面内建标题栏的标题；标题栏更新接口不可用时触发 `fail` 与 `complete`，返回 `setNavigationBarTitle:fail`。
 
 #### 入参
 
@@ -892,7 +918,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-**异步 API**。设置导航栏前景色、背景色等。
+**异步 API**。更新当前页面内建标题栏的前景色、背景色及状态栏文字样式；标题栏更新接口不可用时触发 `fail` 与 `complete`，返回 `setNavigationBarColor:fail`。连续调用标题和颜色 API 时，各字段更新会合并保留。
 
 #### 入参
 

@@ -15,6 +15,8 @@ export {
   createComponent
 } from './platform/index'
 
+export { pageWrapperHOC } from './platform/patch/pageWrapperHOC'
+
 export {
   BEFORECREATE,
   CREATED,
@@ -147,7 +149,8 @@ Mpx.config = {
   */
   rnConfig: {
     defaultBoxSizing: 'content-box',
-    disablePageTransition: false
+    disablePageTransition: false,
+    dimensionsBase: 'window'
   }
 }
 

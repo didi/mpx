@@ -61,7 +61,7 @@ registered in parent context!`)
   }
 
   if (ctorType === 'page') {
-    option.__mpxPageConfig = extend({}, global.__mpxPageConfig, pageConfig)
+    option.__mpxPageConfig = pageConfig
   }
 
   if (!hasApp) {
@@ -247,7 +247,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       })
     }
     const webRouteConfig = global.__mpx.config.webConfig.routeConfig || global.__mpx.config.webRouteConfig
-    global.__mpxRouter = option.router = new VueRouter(extend({ routes }, webRouteConfig))
+    const router = global.__mpxRouter = option.router = new VueRouter(extend({ routes }, webRouteConfig))
+    let entryChecked = false
     let mpxStackPath = []
     if (isBrowser) {
       // 解决webview被刷新导致路由栈丢失后产生错乱问题
@@ -270,6 +271,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     // 处理reLaunch中传递的url并非首页时的replace逻辑
     global.__mpxRouter.beforeEach(function (to, from, next) {
       let action = global.__mpxRouter.__mpxAction
+      const isEntryPage = !entryChecked && !action
+      entryChecked = true
       const stack = global.__mpxRouter.stack
 
       // 处理人为操作
@@ -286,24 +289,16 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         }
       }
       global.__mpxRouter.currentActionType = action.type
-      const pageInRoutes = routes.some(item => item.path === to.path)
-      if (!pageInRoutes) {
-        if (stack.length < 1) {
-          if (global.__mpxRouter.app.$options.onPageNotFound) {
-            // onPageNotFound，仅首次进入时生效
-            global.__mpxRouter.app.$options.onPageNotFound({
-              path: to.path,
+      if (!to.matched.length) {
+        if (isEntryPage) {
+          if (isBrowser) {
+            router.__mpxPageNotFound = {
+              path: to.path.replace(/^\//, ''),
               query: to.query,
               isEntryPage: true
-            })
-            return
-          } else {
-            console.warn(`[Mpx runtime warn]: the ${to.path} path does not exist in the application，will redirect to the home page path ${firstPage}`)
-            return next({
-              path: firstPage,
-              replace: true
-            })
+            }
           }
+          return next({ path: '/' + firstPage, replace: true })
         } else {
           const typeMethodMap = {
             to: 'navigateTo',
@@ -313,7 +308,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
             reLaunch: 'reLaunch'
           }
           const method = typeMethodMap[action.type]
-          throw new Error(`${method}:fail page "${to.path}" is not found`)
+          return next(new Error(`${method}:fail page "${to.path}" is not found`))
         }
       }
 
@@ -391,9 +386,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
     if (isBrowser) {
       document.addEventListener('visibilitychange', function () {
-        const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
-        if (vnode && vnode.componentInstance) {
-          const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+        const currentPage = getCurrentPages().slice(-1)[0]
+        if (currentPage && currentPage.__mpxProxy) {
           if (document.hidden) {
             if (global.__mpxAppCbs && global.__mpxAppCbs.hide && global.__mpxAppCbs.hide.length) {
               const options = {}
@@ -402,9 +396,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
                 cb(options)
               })
             }
-            if (currentPage) {
-              currentPage.mpxPageStatus = 'hide'
-            }
+            currentPage.mpxPageStatus = 'hide'
           } else {
             if (global.__mpxAppCbs && global.__mpxAppCbs.show && global.__mpxAppCbs.show.length) {
               const options = {}
@@ -413,9 +405,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
                 cb(options)
               })
             }
-            if (currentPage) {
-              currentPage.mpxPageStatus = 'show'
-            }
+            currentPage.mpxPageStatus = 'show'
           }
         }
       })
@@ -455,7 +445,8 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
         return App.onSSRAppCreated({ pinia, router, app, context })
       } else {
         return new Promise((resolve, reject) => {
-          router.push(context.url)
+          // 由 onReady 接收最终结果，避免入口重定向产生未处理的 Promise rejection
+          router.push(context.url, () => {})
           router.onReady(() => {
             context.rendered = () => {
               context.state = pinia?.state?.value || {}

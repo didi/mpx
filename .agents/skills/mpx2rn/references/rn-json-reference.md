@@ -58,7 +58,7 @@
 | `subPackages` / `subpackages` | **兼容**：与微信等原生 `app.json` 的 `subPackages` 写法对齐；Mpx 中推荐使用 **`packages` + `?root`** 定义分包 |
 | `window` | 作为**全局默认窗口配置**，与各页面 JSON 合并后参与导航栏与页面展示，详情查看[页面配置](#页面配置)。 |
 | `usingComponents` | 全局组件注册。 |
-| `networkTimeout` | 定义请求相关能力的默认超时时长。 |
+| `networkTimeout` | 通过对象的 `request` 字段设置 request 默认超时时长，单位为毫秒；单次请求的 `timeout` 优先，均未配置时默认 `60000`。 |
 | `preloadRule` | 定义在指定页面进入后的预下载分包规则，需在运行时注册 `Mpx.config.rnConfig.downloadChunkAsync`，否则不会触发实际下载。 |
 | `entryPagePath` | 应用初始页面路径，未定义时使用 `pages` 数组的首个元素作为初始页面路径 |
 | `tabBar` | 输出 RN 暂不支持，后续会支持 |

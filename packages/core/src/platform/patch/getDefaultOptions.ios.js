@@ -3,7 +3,8 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
+import { ref } from '../../observer/ref'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -11,20 +12,19 @@ import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import {
   IntersectionObserverContext,
-  KeyboardAvoidContext,
   ProviderContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 import Mpx from '../../index'
 import * as perf from '@mpxjs/perf'
+import { getDimensionsBase, getDimensionsInfo } from '../dimensionsHelper'
 
 function getSystemInfo () {
-  const windowDimensions = global.__mpxAppDimensionsInfo.window
-  const screenDimensions = global.__mpxAppDimensionsInfo.screen
+  const baseDimensions = getDimensionsInfo()
+  const windowDimensions = getDimensionsInfo('window')
+  const screenDimensions = getDimensionsInfo('screen')
   return {
-    deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
+    deviceOrientation: baseDimensions.width > baseDimensions.height ? 'landscape' : 'portrait',
     size: {
       screenWidth: screenDimensions.width,
       screenHeight: screenDimensions.height,
@@ -40,9 +40,11 @@ function createEffect (proxy, componentsMap) {
     // if (proxy.propsUpdatedFlag) {
     //   proxy.updatePreRender()
     // }
+    // React 可能合并多次更新，共用任务直到对应版本提交完成。
+    if (!proxy.pendingUpdatedFlag) proxy.createRenderTask()
     if (proxy.isMounted()) {
-      proxy.callHook(BEFOREUPDATE)
       proxy.pendingUpdatedFlag = true
+      proxy.callHook(BEFOREUPDATE)
     }
     proxy.stateVersion = Symbol()
     proxy.onStoreChange && proxy.onStoreChange()
@@ -79,7 +81,7 @@ function getRootProps (props, validProps) {
   const rootProps = {}
   for (const key in props) {
     const altKey = dash2hump(key)
-    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && key !== 'children') {
+    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && !global.__externalClasses?.includes(key) && key !== 'children') {
       rootProps[key] = props[key]
     }
   }
@@ -306,15 +308,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
-    setFocusedNavigation(props.navigation)
     set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
-    // App onLaunch 在 Page created 之前执行
-    if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
-      global.__mpxAppOnLaunch(props.navigation)
-    }
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  proxy.externalClassesVersion = ref(0)
+  proxy.createRenderTask()
   proxy.created()
 
   if (type === 'page') {
@@ -389,7 +388,11 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   const oldSize = sizeRef.current.size
   const systemInfo = getSystemInfo()
   const newSize = systemInfo.size
-  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
+  const dimensionsBase = getDimensionsBase()
+  const widthKey = `${dimensionsBase}Width`
+  const heightKey = `${dimensionsBase}Height`
+
+  if (oldSize && oldSize[widthKey] === newSize[widthKey] && oldSize[heightKey] === newSize[heightKey]) {
     return
   }
   sizeRef.current = systemInfo
@@ -404,7 +407,7 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   }
 }
 
-function usePageEffect (mpxProxy, pageId) {
+function usePageEffect (mpxProxy, pageId, type) {
   const sizeRef = useRef(getSystemInfo())
 
   useEffect(() => {
@@ -412,19 +415,20 @@ function usePageEffect (mpxProxy, pageId) {
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
-    if (hasShowHook || hasHideHook || hasResizeHook) {
+    // Page 即使没有注册页面生命周期，也需要监听 show 来追平后台期间错过的尺寸版本。
+    // Component 仍仅在声明了对应生命周期时监听，避免无意义的 watcher。
+    if (type === 'page' || hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
+            // 后台页面重新显示时先追平尺寸版本，驱动依赖 rpx/vw/vh 和媒体查询的组件刷新。
+            if (type === 'page' && newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
+            }
+
             triggerPageStatusHook(mpxProxy, newVal)
             // 仅在尺寸确实变化时才触发resize事件
             triggerResizeEvent(mpxProxy, sizeRef)
-
-            // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
-            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
-              // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
-              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
-            }
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy, sizeRef)
           }
@@ -433,15 +437,15 @@ function usePageEffect (mpxProxy, pageId) {
     }
     return () => {
       unWatch && unWatch()
-      del(global.__mpxPageSizeCountMap, pageId)
+      if (type === 'page') {
+        del(global.__mpxPageSizeCountMap, pageId)
+      }
     }
   }, [])
 }
 
-let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 function usePageStatus (navigation, pageId) {
-  navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
   }
@@ -452,6 +456,7 @@ function usePageStatus (navigation, pageId) {
       })
     }
     const focusSubscription = navigation.addListener('focus', () => {
+      setFocusedNavigation(navigation)
       pageStatusMap[pageId] = 'show'
     })
     const blurSubscription = navigation.addListener('blur', () => {
@@ -506,139 +511,6 @@ const checkRelation = (options) => {
     hasAncestorRelation
   }
 }
-function getLayoutData (headerHeight) {
-  const screenDimensions = ReactNative.Dimensions.get('screen')
-  const windowDimensions = ReactNative.Dimensions.get('window')
-  // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
-  // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
-  const isLandscape = screenDimensions.height < screenDimensions.width
-  let bottomVirtualHeight = 0
-  if (ReactNative.Platform.OS === 'android') {
-    if (isLandscape) {
-      bottomVirtualHeight = screenDimensions.height - windowDimensions.height
-    } else {
-      bottomVirtualHeight = initialWindowMetrics?.insets?.bottom || 0
-      if (typeof mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight === 'function') {
-        bottomVirtualHeight = mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight() || 0
-      }
-    }
-  }
-  return {
-    left: 0,
-    top: headerHeight,
-    // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
-    width: windowDimensions.width,
-    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
-    // ios为0 android为实际statusbar高度
-    statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
-    bottomVirtualHeight: bottomVirtualHeight,
-    isLandscape: isLandscape
-  }
-}
-
-let hasResolvedSafeAreaTop = false
-
-function getSafeAreaInsetsWithInitialTop (safeAreaInsets) {
-  if (ReactNative.Platform.OS !== 'android' || hasResolvedSafeAreaTop) {
-    return safeAreaInsets
-  }
-  const initialTop = initialWindowMetrics?.insets?.top || 0
-  if (safeAreaInsets?.top === 0 && initialTop) {
-    // Android 初始化时 top 可能连续为 0（如红米 10 的 bottom 已更新但 top 仍为 0），此时持续兜底并保留其他 insets 的最新值。
-    // 返回新对象，避免修改 useSafeAreaInsets/context 返回的引用。
-    return Object.assign({}, safeAreaInsets, { top: initialTop })
-  } else {
-    // 拿到真实 top 或没有可用初始值后，后续完全使用 useSafeAreaInsets 的更新。
-    hasResolvedSafeAreaTop = true
-  }
-  return safeAreaInsets
-}
-
-export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
-  return function PageWrapperCom ({ navigation, route, ...props }) {
-    const keyboardAvoidRef = useRef(null)
-    const intersectionObservers = useRef({})
-    const currentPageId = useMemo(() => ++pageId, [])
-    const routeContextValRef = useRef({
-      navigation,
-      pageId: currentPageId
-    })
-    const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
-    if (!navigation || !route) {
-      // 独立组件使用时要求传递navigation
-      error('Using pageWrapper requires passing navigation and route')
-      return null
-    }
-    const headerHeight = useInnerHeaderHeight(currentPageConfig)
-    navigation.layout = getLayoutData(headerHeight)
-
-    useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
-        navigation.layout = getLayoutData(headerHeight)
-      })
-      return () => dimensionListener?.remove()
-    }, [])
-
-    usePagePreload(route)
-    usePageStatus(navigation, currentPageId)
-
-    const withKeyboardAvoidingView = (element) => {
-      if (currentPageConfig.disableKeyboardAvoiding) return element
-      const MpxKeyboardAvoidingView = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view').default
-      return createElement(KeyboardAvoidContext.Provider,
-        {
-          value: keyboardAvoidRef
-        },
-        createElement(MpxKeyboardAvoidingView,
-          {
-            style: {
-              flex: 1
-            },
-            contentContainerStyle: {
-              flex: 1
-            }
-          },
-          element
-        )
-      )
-    }
-    // Android 初始化期间持续兜底 safe area top，直到 useSafeAreaInsets 返回真实值。
-    navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
-    return withKeyboardAvoidingView(
-      createElement(ReactNative.View,
-        {
-          style: {
-            flex: 1,
-            // 页面容器背景色
-            backgroundColor: currentPageConfig?.backgroundColorContent || '#fff',
-            // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
-            overflow: 'hidden'
-          }
-        },
-        createElement(RouteContext.Provider,
-          {
-            value: routeContextValRef.current
-          },
-          createElement(IntersectionObserverContext.Provider,
-            {
-              value: intersectionObservers.current
-            },
-            createElement(PortalHost,
-              null,
-              createElement(WrappedComponent, {
-                ...props,
-                navigation,
-                route,
-                id: currentPageId
-              })
-            )
-          )
-        )
-      )
-    )
-  }
-}
-
 function updateProps (instance, props, validProps) {
   Object.keys(validProps).forEach((key) => {
     if (hasOwn(props, key)) {
@@ -650,6 +522,10 @@ function updateProps (instance, props, validProps) {
       }
     }
   })
+}
+
+function isExternalClassesChanged (props, oldProps) {
+  return global.__externalClasses?.some(externalClass => (hasOwn(props, externalClass) || hasOwn(oldProps, externalClass)) && !Object.is(props[externalClass], oldProps[externalClass]))
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -665,7 +541,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
-    const propsRef = useRef(null)
+    const propsRef = useRef({})
     const intersectionCtx = useContext(IntersectionObserverContext)
     const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
@@ -673,6 +549,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
     }
+    const oldProps = propsRef.current
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
@@ -703,25 +580,37 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
 
     if (!isFirst) {
+      const externalClassesChanged = isExternalClassesChanged(props, oldProps)
+      const update = () => {
+        updateProps(instance, props, validProps)
+        if (externalClassesChanged) {
+          proxy.externalClassesVersion.value++
+        }
+      }
       // 处理props更新
       if (Mpx.config.forceFlushSync) {
         // 避免开启forceFlushSync时react报错：Cannot update a component while rendering a different component
-        Promise.resolve().then(() => {
-          updateProps(instance, props, validProps)
-        })
+        Promise.resolve().then(update)
       } else {
-        updateProps(instance, props, validProps)
+        update()
       }
     }
 
+    const stateVersion = proxy.stateVersion
     useEffect(() => {
-      if (proxy.pendingUpdatedFlag) {
+      if (proxy.pendingUpdatedFlag && proxy.stateVersion === stateVersion) {
+        proxy.currentRenderTask && proxy.currentRenderTask.resolve()
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
       }
     })
 
-    usePageEffect(proxy, pageId)
+    // type 在创建 defaultOptions 时确定，同一组件的 Hook 调用顺序保持不变。
+    if (type === 'page') {
+      usePagePreload(props.route)
+      usePageStatus(props.navigation, pageId)
+    }
+    usePageEffect(proxy, pageId, type)
     useEffect(() => {
       proxy.mounted()
       return () => {
@@ -793,8 +682,5 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     defaultOptions.isCustomText = true
   }
 
-  if (type === 'page') {
-    return PageWrapperHOC(defaultOptions, currentInject.pageConfig)
-  }
   return defaultOptions
 }

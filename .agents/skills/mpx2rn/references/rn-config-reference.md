@@ -220,7 +220,7 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | `setDataHandler` | `null` | `(data, instance) => void`，数据渲染链路调用底层 `__render` 前触发；RN 的 VNode 渲染链路不经过此钩子，不用于监听所有 RN 更新。 |
 | `forceFlushSync` | `false` | 强制同步执行更新调度，改变默认批量异步更新行为，按需启用。 |
 | `webConfig` | `{}` | Web 通用配置，不用于 RN。 |
-| `rnConfig` | 见下文 | RN 运行时扩展配置，初始包含 `defaultBoxSizing: 'content-box'` 与 `disablePageTransition: false`。 |
+| `rnConfig` | 见下文 | RN 运行时扩展配置，初始包含 `defaultBoxSizing: 'content-box'`、`disablePageTransition: false` 与 `dimensionsBase: 'window'`。 |
 
 ### Mpx.config.rnConfig
 
@@ -239,7 +239,9 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 
 **初始参数的作用范围：** `parseAppProps` 返回的 `initialParams` 仅作为 RN 根组件初始化时首个路由实例的参数，传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`。后续创建的同路径页面实例不会自动继承；应用再次展示时，`onShow` 的 `query` 以当前路由实例参数为准。
 
-若 `initialRouteName` 未注册，框架通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调），回退至应用首页，并丢弃该错误路由的 `initialParams`。
+若 `initialRouteName` 未注册，框架以应用首页及空参数初始化导航，在导航就绪后调用 App 的 `onPageNotFound({ path, query, isEntryPage: true })` 及 `mpx.onPageNotFound` 注册的监听。`path` 为原始缺失路径（不带开头 `/`），`query` 为该入口的 `initialParams`（未传为 `{}`），这些参数不会传给首页；`onLaunch / onShow` 仍使用实际首页和其参数。未声明 App 回调且未注册 API 监听时保留统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调）。
+
+每次 RN 根组件初始化最多通知一次；根组件销毁后重建会重新解析宿主入口，同一 JS 上下文的 `onLaunch` 仍只执行一次。普通重渲染、前后台切换不重新派发。`initialRouteName` 仍是页面路径，query 通过 `initialParams` 提供，不支持将两者拼成 URL。
 
 #### 布局与基础组件
 
@@ -247,7 +249,8 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | --- | --- | --- |
 | `defaultBoxSizing` | `'content-box'` | 节点未显式声明 `box-sizing` 时使用的默认盒模型，可设为 `'border-box'`。 |
 | `allowFontScaling` | 未设置，按 `false` 处理 | 文本类基础组件是否跟随系统字体缩放；组件显式传入的 `allowFontScaling` 优先。 |
-| `customDimensions` | 未设置 | `({ window, screen }) => ({ window, screen })`，自定义框架样式换算使用的尺寸信息；返回空值时沿用原始尺寸。`rpx` / `vw` 依赖其中的 `window.width`，`vh` 依赖 `window.height`。 |
+| `dimensionsBase` | `'window'` | `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，可设为 `'window'` 或 `'screen'`。首次尺寸计算后该配置固定，运行期间修改不会生效。 |
+| `customDimensions` | 未设置 | `({ window, screen }) => ({ window, screen })`，自定义框架样式换算使用的尺寸信息；返回空值时沿用传入尺寸。`rpx` / `vw` / `vh` 与媒体查询使用 `dimensionsBase` 对应的自定义尺寸。 |
 | `getBottomVirtualHeight` | 未设置 | `() => number`，修正 Android 非横屏场景下底部虚拟区域高度；未配置时采用安全区域底部 inset，横屏时使用屏幕与窗口高度差。 |
 | `enableNativeKeyboardAvoiding` | 未设置，按 `true` 处理 | Android 默认配合原生键盘避让。宿主关闭原生避让时设为 `false`，启用 Mpx 内置补偿逻辑，仍受输入组件 `adjust-position` 控制。 |
 | `onPickerVibrate` | 未设置 | `() => void`，为 `picker-view-column` 滚动选择提供宿主振动反馈。 |

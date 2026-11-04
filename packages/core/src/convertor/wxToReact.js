@@ -1,8 +1,7 @@
-import {
-  error,
-  isDev
-} from '@mpxjs/utils'
+import { error } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
+
+const isDev = process.env.NODE_ENV !== 'production'
 
 // 暂不支持的wx选项，后期需要各种花式支持
 const unsupported = [

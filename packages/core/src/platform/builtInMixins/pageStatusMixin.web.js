@@ -7,21 +7,15 @@ import {
   ONRESIZE
 } from '../../core/innerLifecycle'
 import { isFunction, isBrowser } from '@mpxjs/utils'
+import { observable } from 'vue'
 
 let systemInfo = {}
 
 let count = 0
 
-function getCurrentPageInstance () {
-  const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
-  let pageInstance
-  if (vnode && vnode.componentInstance) {
-    pageInstance = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$children[1] : vnode.componentInstance
-  }
-  return pageInstance
-}
-
 function onResize () {
+  if (typeof getCurrentPages !== 'function') return
+
   // 设备屏幕状态
   const deviceOrientation = window.screen.width > window.screen.height ? 'landscape' : 'portrait'
 
@@ -36,9 +30,9 @@ function onResize () {
     }
   }
 
-  const pageInstance = getCurrentPageInstance()
+  const pageInstance = getCurrentPages().slice(-1)[0]
 
-  if (pageInstance) {
+  if (pageInstance && pageInstance.__mpxProxy) {
     pageInstance.mpxPageStatus = `resize${count++}`
     pageInstance.__mpxProxy.callHook(ONRESIZE, [systemInfo])
   }
@@ -68,6 +62,10 @@ export default function pageStatusMixin (mixinType) {
     Object.assign(mixin, {
       data: {
         mpxPageStatus: null
+      },
+      beforeCreate () {
+        // 同一页面定义可创建多个实例，配置需按实例隔离。
+        this.$options.__mpxPageConfig = observable(Object.assign({}, global.__mpxPageConfig, this.$options.__mpxPageConfig))
       },
       activated () {
         this.mpxPageStatus = 'show'

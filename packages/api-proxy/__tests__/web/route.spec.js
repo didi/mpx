@@ -15,7 +15,8 @@ function createRouter () {
       current: {}
     },
     stack: [{}],
-    match: jest.fn(url => ({ path: url })),
+    match: jest.fn(url => ({ path: url, matched: [{}] })),
+    resolve: jest.fn(url => ({ route: { path: url, matched: [{}] } })),
     push: jest.fn((location, onComplete) => onComplete()),
     replace: jest.fn((location, onComplete) => onComplete()),
     go: jest.fn()
@@ -41,6 +42,7 @@ describe('Web route APIs', () => {
   afterEach(() => {
     delete global.__tabBarPagesMap
     delete global.__mpxRouter
+    delete global.__mpxEventChannel
   })
 
   describe('invalid route target', () => {
@@ -98,5 +100,30 @@ describe('Web route APIs', () => {
       expect(callbacks.fail).not.toHaveBeenCalled()
       expect(callbacks.complete).toHaveBeenCalledTimes(1)
     })
+  })
+
+  test.each([
+    ['navigateTo', navigateTo],
+    ['redirectTo', redirectTo],
+    ['reLaunch', reLaunch],
+    ['switchTab', switchTab]
+  ])('%s rejects a missing page before any navigation side effects', (name, api) => {
+    const router = global.__mpxRouter
+    router.stack = [{}, {}, {}]
+    router.resolve.mockReturnValue({ route: { path: '/pages/missing', matched: [] } })
+    const calls = []
+    const callbacks = createCallbacks()
+    callbacks.fail.mockImplementation(() => calls.push('fail'))
+    callbacks.complete.mockImplementation(() => calls.push('complete'))
+    api(Object.assign({ url: '/pages/missing?foo=bar' }, callbacks))
+    expect(calls).toEqual(['fail', 'complete'])
+    expect(callbacks.fail).toHaveBeenCalledWith({ errMsg: `${name}:fail page "/pages/missing" is not found` })
+    expect(callbacks.success).not.toHaveBeenCalled()
+    expect(router.push).not.toHaveBeenCalled()
+    expect(router.replace).not.toHaveBeenCalled()
+    expect(router.go).not.toHaveBeenCalled()
+    expect(router.stack).toHaveLength(3)
+    expect(router.__mpxAction).toBeUndefined()
+    expect(global.__mpxEventChannel).toBeUndefined()
   })
 })
