@@ -127,7 +127,7 @@ Mustache 与指令的基准写法见 [数据绑定与指令](../base/template-re
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `enable-offset` | boolean | `false` | 获取布局偏移；触摸事件的 `currentTarget`、组件自定义事件的 `target` 提供 `offsetLeft`、`offsetTop` |
-| `enable-var` | boolean | `true` | 启用 CSS variable 计算 |
+| `enable-var` | boolean / `'use'` | `false` | 首次自动检测 CSS 变量能力；`'use'` 仅预留动态使用，`true` 预留动态声明与使用，见 [CSS 变量](./rn-style-reference.md#css-变量与函数) |
 | `enable-text-pass-through` | boolean | `false` | 开启文本样式与文本属性透传上下文；会动态添加这些能力时预先开启 |
 | `parent-width` | number | — | 提供父容器宽度，用于百分比、`calc()` 等计算 |
 | `parent-height` | number | — | 提供父容器高度，用于百分比、`calc()` 等计算 |

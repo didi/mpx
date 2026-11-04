@@ -185,7 +185,7 @@ interface MovableViewProps {
   'wait-for'?: Array<GestureHandler>
   'simultaneous-handlers'?: Array<GestureHandler>
   inertia?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -257,7 +257,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
   } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, parentWidth, parentHeight })
@@ -795,7 +795,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       props.children,
       {
         hasVarDec,
-        varContext: varContextRef.current,
+        varContext,
         textPassThrough
       }
     )

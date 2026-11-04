@@ -53,7 +53,7 @@ const stylesheet = StyleSheet.create({
 interface CanvasProps {
   style?: Record<string, any>
   originWhitelist?: Array<string>
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void

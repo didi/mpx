@@ -30,7 +30,7 @@ export interface _ViewProps extends ViewProps {
   'hover-stay-time'?: number
   'enable-background'?: boolean
   'enable-text-pass-through'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-fast-image'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -832,7 +832,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     hasSelfPercent,
     hasPositionFixed,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
   } = useTransformStyle(styleObj, {
@@ -915,7 +915,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     hasVarDec,
     enableBackground: enableBackgroundRef.current,
     backgroundStyle,
-    varContext: varContextRef.current,
+    varContext,
     textPassThrough,
     innerStyle,
     enableFastImage

@@ -36,7 +36,7 @@ export interface IconProps {
   color?: string
   style?: TextStyle & Record<string, any>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
 }

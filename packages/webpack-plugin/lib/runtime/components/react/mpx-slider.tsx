@@ -56,7 +56,7 @@ export interface SliderProps {
   bindchanging?: (event: any) => void
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
 }

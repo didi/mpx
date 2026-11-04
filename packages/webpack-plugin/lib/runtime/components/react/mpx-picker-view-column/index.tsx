@@ -18,7 +18,7 @@ interface ColumnProps {
   style: {
     [key: string]: any
   }
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   wrapperStyle: {
     height: number
     itemHeight: number
@@ -50,7 +50,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     setWidth,
     setHeight
@@ -354,7 +354,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         innerProps,
         wrapChildren(renderInnerchild(), {
           hasVarDec,
-          varContext: varContextRef.current,
+          varContext,
           textPassThrough
         })
       )

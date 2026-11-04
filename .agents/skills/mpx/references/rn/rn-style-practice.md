@@ -284,7 +284,7 @@ RN 不支持 `:active`，改用 `hover-class`，支持 `view`、`button`、`navi
 | 能力 | 基础组件 | 启用条件 | 预声明 / 限制 |
 | --- | --- | --- | --- |
 | Hover | `view`、`cover-view`、`navigator`、`button` | 有效的 `hover-class` | 无预声明属性；有效类与 `none` / 空值之间不能切换，需稳定启用状态或用独立 `key` 重建 |
-| CSS 变量 | 所有基础组件 | 声明 `--*` 或使用 `var(...)` | `enable-var="{{true}}"` |
+| CSS 变量 | 所有基础组件 | 声明 `--*` 或使用 `var(...)` | 仅动态使用 `var(...)`：`enable-var="use"`；首次无声明但后续需要新增 `--*`：`enable-var="{{true}}"`，即使首次已有变量使用也需预留声明能力 |
 | 文本样式与属性透传 | 除 `text` 外的基础组件；`text` 默认支持 | `color`、`letter-spacing`、`line-height`、`include-font-padding`、`writing-direction`、`font-*`、`text-*`，或 `ellipsizeMode`、`numberOfLines` | `enable-text-pass-through="{{true}}"` |
 | 背景图像 | `view`、`cover-view`、`navigator` | `background-image`、`background-size`、`background-repeat`、`background-position` 或包含它们的 `background` 简写 | `enable-background="{{true}}"`；仅 `background-color` 不计入 |
 | 动画 | `view`、`cover-view`、`navigator` | 模板 `animation` 属性或 `transition` 样式 | 分别用 `enable-animation="api"` / `enable-animation="transition"`；同一实例不切换类型，CSS `animation` 不支持 |

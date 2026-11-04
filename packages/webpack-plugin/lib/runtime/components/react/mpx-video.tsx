@@ -92,7 +92,7 @@ interface VideoProps {
   'license-url'?: string
   'preferred-peak-bit-rate'?: number
   'enable-auto-rotation'?: number
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   bindplay?: (event: Record<string, any>) => void
