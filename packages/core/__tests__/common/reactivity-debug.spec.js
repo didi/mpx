@@ -11,7 +11,7 @@ jest.mock('../../src/platform/patch/lifecycle/index', () => {
 const {
   default: Mpx, reactive, ref, shallowRef, customRef, toRef, triggerRef,
   computed, watch, watchEffect, nextTick, set, del,
-  onRenderTracked, onRenderTriggered, getCurrentScope
+  onRenderTracked, onRenderTriggered, effectScope, getCurrentScope
 } = require('../../src')
 const { ReactiveEffect } = require('../../src/observer/effect')
 const { default: MpxProxy, setCurrentInstance, unsetCurrentInstance, getCurrentInstance } = require('../../src/core/proxy')
@@ -226,45 +226,51 @@ describe('render debugger hooks', () => {
     expect(triggered).toHaveBeenCalledTimes(2)
   })
 
-  it('uses lifecycle error handling and restores the enclosing instance and scope', () => {
+  it.each(['options', 'composition'])('restores the enclosing instance and scope after %s debug hooks', (style) => {
     const errors = jest.spyOn(console, 'error').mockImplementation(() => {})
     const skipped = jest.fn()
     let owner
-    const composition = jest.fn(() => {
+    const hook = jest.fn(() => {
       owner = [getCurrentInstance(), getCurrentScope()]
-      throw new Error('composition hook error')
+      throw new Error('debug hook error')
     })
     const proxy = createComponent({
       data: { count: 0 },
       computed: { doubled () { return this.count * 2 } },
-      mixins: [{ renderTriggered () { throw new Error('mixin hook error') } }],
-      renderTriggered: skipped
+      mixins: style === 'options' ? [{ renderTriggered: hook }] : [],
+      renderTriggered: style === 'options' ? skipped : undefined,
+      setup () {
+        if (style === 'composition') onRenderTriggered(hook)
+        return {}
+      }
     })
     const enclosing = new MpxProxy({}, {})
     setCurrentInstance(enclosing)
-    onRenderTriggered(composition, proxy)
-    proxy.target.count++
-    expect(skipped).not.toHaveBeenCalled()
-    expect(composition).toHaveBeenCalledTimes(1)
-    expect(owner).toEqual([proxy, proxy.scope])
-    expect(errors).toHaveBeenCalled()
-    expect(getCurrentInstance()).toBe(enclosing)
-    expect(getCurrentScope()).toBe(enclosing.scope)
+    const enclosingScope = effectScope()
     const previousErrorHandler = Mpx.config.errorHandler
-    Mpx.config.errorHandler = () => { throw new Error('error handler failed') }
     try {
-      ;[() => proxy.callHook('renderTriggered'), () => proxy.hooks.renderTriggered[0]()].forEach(invoke => {
-        expect(invoke).toThrow('error handler failed')
+      enclosingScope.run(() => {
+        proxy.target.count++
+        expect(skipped).not.toHaveBeenCalled()
+        expect(hook).toHaveBeenCalledTimes(1)
+        expect(owner).toEqual([proxy, proxy.scope])
+        expect(errors).toHaveBeenCalled()
         expect(getCurrentInstance()).toBe(enclosing)
-        expect(getCurrentScope()).toBe(enclosing.scope)
+        expect(getCurrentScope()).toBe(enclosingScope)
+
+        Mpx.config.errorHandler = () => { throw new Error('error handler failed') }
+        expect(() => { proxy.target.count++ }).toThrow('error handler failed')
+        expect(hook).toHaveBeenCalledTimes(2)
+        expect(getCurrentInstance()).toBe(enclosing)
+        expect(getCurrentScope()).toBe(enclosingScope)
       })
     } finally {
       Mpx.config.errorHandler = previousErrorHandler
+      unsetCurrentInstance()
+      proxy.unmounted()
+      enclosing.unmounted()
+      errors.mockRestore()
     }
-    unsetCurrentInstance()
-    proxy.unmounted()
-    enclosing.unmounted()
-    errors.mockRestore()
   })
 })
 
