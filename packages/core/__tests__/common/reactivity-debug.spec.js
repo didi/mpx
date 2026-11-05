@@ -14,7 +14,7 @@ const {
   onRenderTracked, onRenderTriggered, effectScope, getCurrentScope
 } = require('../../src')
 const { ReactiveEffect } = require('../../src/observer/effect')
-const { default: MpxProxy, setCurrentInstance, unsetCurrentInstance, getCurrentInstance } = require('../../src/core/proxy')
+const { default: MpxProxy, setCurrentInstance, getCurrentInstance } = require('../../src/core/proxy')
 const { renderHelperDefs } = require('../../src/platform/builtInMixins/renderHelperMixin')
 const mergeOptions = require('../../src/core/mergeOptions').default
 
@@ -245,7 +245,7 @@ describe('render debugger hooks', () => {
       }
     })
     const enclosing = new MpxProxy({}, {})
-    setCurrentInstance(enclosing)
+    const resetInstance = setCurrentInstance(enclosing)
     const enclosingScope = effectScope()
     const previousErrorHandler = Mpx.config.errorHandler
     try {
@@ -258,15 +258,18 @@ describe('render debugger hooks', () => {
         expect(getCurrentInstance()).toBe(enclosing)
         expect(getCurrentScope()).toBe(enclosingScope)
 
-        Mpx.config.errorHandler = () => { throw new Error('error handler failed') }
-        expect(() => { proxy.target.count++ }).toThrow('error handler failed')
+        const handlerError = new Error('error handler failed')
+        Mpx.config.errorHandler = jest.fn(() => { throw handlerError })
+        expect(() => { proxy.target.count++ }).not.toThrow()
+        expect(Mpx.config.errorHandler).toHaveBeenCalledTimes(1)
+        expect(errors).toHaveBeenCalledWith(handlerError)
         expect(hook).toHaveBeenCalledTimes(2)
         expect(getCurrentInstance()).toBe(enclosing)
         expect(getCurrentScope()).toBe(enclosingScope)
       })
     } finally {
       Mpx.config.errorHandler = previousErrorHandler
-      unsetCurrentInstance()
+      resetInstance()
       proxy.unmounted()
       enclosing.unmounted()
       errors.mockRestore()

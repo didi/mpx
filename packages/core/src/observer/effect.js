@@ -74,11 +74,8 @@ export class ReactiveEffect {
   invokeDebuggerHook (name, info) {
     if (process.env.NODE_ENV === 'production' || !this[name]) return
     pauseTracking()
-    try {
-      callWithErrorHandling(this[name], null, `reactivity ${name}`, [Object.assign({ effect: this }, info)])
-    } finally {
-      resetTracking()
-    }
+    callWithErrorHandling(this[name], null, `reactivity ${name}`, [Object.assign({ effect: this }, info)])
+    resetTracking()
   }
 
   // Clean up for dependency collection.
