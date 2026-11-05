@@ -1,20 +1,22 @@
-import { Dimensions } from 'react-native'
+import { DeviceEventEmitter, Dimensions } from 'react-native'
+import { getFocusedNavigation } from '@mpxjs/utils'
 
 const callbacks = []
 let subscription
 const addListener = function () {
-  subscription = Dimensions.addEventListener(
-    'change',
-    ({ window }) => {
-      const result = {
-        size: {
-          windowWidth: window.width,
-          windowHeight: window.height
-        }
+  const listener = ({ window, navigation }) => {
+    if (__mpx_mode__ === 'ios' && navigation !== getFocusedNavigation()) return
+    const result = {
+      size: {
+        windowWidth: window.width,
+        windowHeight: window.height
       }
-      callbacks.forEach(cb => cb(result))
     }
-  )
+    callbacks.forEach(cb => cb(result))
+  }
+  subscription = __mpx_mode__ === 'ios'
+    ? DeviceEventEmitter.addListener('mpxWindowResize', listener)
+    : Dimensions.addEventListener('change', listener)
 }
 
 const removeListener = function () {
