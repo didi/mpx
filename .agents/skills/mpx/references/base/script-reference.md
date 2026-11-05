@@ -20,8 +20,8 @@
   - [组合式数据响应 API](#组合式数据响应-api)
   - [侦听器参数与清理](#侦听器参数与清理)
   - [视图更新与 watch 回调](#视图更新与-watch-回调)
-  - [响应式调试](#响应式调试)
   - [强制更新](#强制更新)
+  - [响应式调试](#响应式调试)
   - [数据响应使用要求](#数据响应使用要求)
 - [组合式 API](#组合式-api)
 - [script setup](#script-setup)
@@ -320,19 +320,6 @@ const stop = watch(keyword, (value, oldValue, onCleanup) => {
 
 小程序基准实现等待当前框架更新队列，不等待宿主 `setData` 的渲染完成回调。需要明确等待本次小程序视图更新完成时使用 `setData(data, callback)` 或 `$forceUpdate(data, callback)` 的完成回调；RN/Web 的调度与布局就绪条件见各端脚本参考。
 
-### 响应式调试
-
-调试钩子仅在开发环境生效。`onTrack` 观察依赖收集，`onTrigger` 在依赖变化通知时同步调用；侦听回调仍按 `flush` 调度，视图仍按原有规则更新。
-
-| 调试对象 | 配置方式 |
-| --- | --- |
-| 组合式 `computed` | 第二参数 `debugOptions` 支持 `onTrack` / `onTrigger`。选项式 `computed` 无调试选项。 |
-| `watch` / `watchEffect` / `watchPostEffect` / `watchSyncEffect` | 在可选配置参数中传入 `onTrack` / `onTrigger`。 |
-| 选项式 `watch` / 实例 `$watch` | 选项式 `watch` 在含 `handler` 的配置对象中声明 `onTrack` / `onTrigger`；`$watch` 可在第三参数或第二参数的 `handler` 对象中配置。 |
-| 页面与组件渲染 | 直接声明 `renderTracked(event)` / `renderTriggered(event)`，或从 `@mpxjs/core` 导入 `onRenderTracked(callback)` / `onRenderTriggered(callback)`，在 `setup` 中同步注册。两种写法可并用，选项式先执行。渲染钩子需要经过 Mpx 的响应式渲染路径。 |
-
-回调接收 `DebuggerEvent`，可查看依赖来源 `target`、操作 `type`、可选的 `key`，以及事件提供的 `oldValue` / `newValue`。用回调检查事件或设置断点，避免读写额外的响应式状态。
-
 ### 强制更新
 
 普通响应式赋值即可驱动视图更新；需要强制刷新时，使用实例 `this.$forceUpdate` 或组合式 `context.forceUpdate`。
@@ -346,6 +333,19 @@ const stop = watch(keyword, (value, oldValue, onCleanup) => {
 `data` 为数据路径到值的对象；`options.sync?: boolean` 默认 `false`；`callback: () => void` 无参数，普通函数的 `this` 指向实例，返回值不被消费。传入数据会修改实例状态，不是仅用于本次显示的临时数据，不应借此修改 props。回调等待本次视图更新完成，方法返回 `undefined`，不能通过 `await $forceUpdate()` 等待更新。
 
 Web 的参数支持差异见 [Web 更新差异](../web/web-script-reference.md#强制更新)。
+
+### 响应式调试
+
+调试钩子仅在开发环境生效。`onTrack` 观察依赖收集，`onTrigger` 在依赖变化通知时同步调用；侦听回调仍按 `flush` 调度，视图仍按原有规则更新。
+
+| 调试对象 | 配置方式 |
+| --- | --- |
+| 组合式 `computed` | 第二参数 `debugOptions` 支持 `onTrack` / `onTrigger`。选项式 `computed` 无调试选项。 |
+| `watch` / `watchEffect` / `watchPostEffect` / `watchSyncEffect` | 在可选配置参数中传入 `onTrack` / `onTrigger`。 |
+| 选项式 `watch` / 实例 `$watch` | 选项式 `watch` 在含 `handler` 的配置对象中声明 `onTrack` / `onTrigger`；`$watch` 可在第三参数或第二参数的 `handler` 对象中配置。 |
+| 页面与组件渲染 | 直接声明 `renderTracked(event)` / `renderTriggered(event)`，或从 `@mpxjs/core` 导入 `onRenderTracked(callback)` / `onRenderTriggered(callback)`，在 `setup` 中同步注册。两种写法可并用，选项式先执行。渲染钩子需要经过 Mpx 的响应式渲染路径。 |
+
+回调接收 `DebuggerEvent`，可查看依赖来源 `target`、操作 `type`、可选的 `key`，以及事件提供的 `oldValue` / `newValue`。用回调检查事件或设置断点，避免读写额外的响应式状态。
 
 ### 数据响应使用要求
 
