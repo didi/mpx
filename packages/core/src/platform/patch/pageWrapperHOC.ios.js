@@ -59,7 +59,7 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom (props) {
     const { navigation, route } = props
     const currentPageId = useMemo(() => ++pageId, [])
-    const routeContextValRef = useRef({ navigation, pageId: currentPageId })
+    const routeContextValue = useMemo(() => ({ navigation, pageId: currentPageId }), [navigation, currentPageId])
     navigation.pageId = currentPageId
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
@@ -72,8 +72,10 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     if (!hasOwn(global.__mpxPagesMap, route.key)) {
       // 实体页面创建后会填入 instance。
       global.__mpxPagesMap[route.key] = [null, navigation]
-      setFocusedNavigation(navigation)
+    } else if (global.__mpxPagesMap[route.key][1] !== navigation) {
+      global.__mpxPagesMap[route.key][1] = navigation
     }
+    if (navigation.isFocused()) setFocusedNavigation(navigation)
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
       global.__mpxAppOnLaunch(navigation)
     }
@@ -104,7 +106,7 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
         }
       },
       createElement(RouteContext.Provider,
-        { value: routeContextValRef.current },
+        { value: routeContextValue },
         createElement(IntersectionObserverContext.Provider,
           { value: intersectionObservers.current },
           createElement(PortalHost, { id: currentPageId }, createElement(WrappedComponent, props))

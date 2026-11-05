@@ -69,6 +69,7 @@ export const SUPPORTED_APIS = [
   'request',
 
   // route
+  'preload',
   'redirectTo',
   'navigateTo',
   'navigateBack',

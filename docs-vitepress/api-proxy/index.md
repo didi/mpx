@@ -33,6 +33,8 @@ mpx.use(apiProxy, options)
 | ~~fallbackMap~~ | ~~Object~~        | ~~对于不支持的 API，允许配置一个映射表，接管不存在的 API~~ | ~~否~~   | ~~{}~~  | 已删除                                                      |
 | custom          | Object            | 提供用户在各渠道下自定义 api 开放能力                      | 否       | `[]`    | 用于扩展或自定义特定平台下的 API 实现                       |
 
+RN 页面预加载见 [preload](./route/preload.md)。该 API 没有回调，开启 usePromise 时默认不包装为 Promise；不要将其加入 whiteList，否则强制包装的 Promise 无法通过回调结束。
+
 ## 使用介绍 {#introduction}
 
 ### 普通形式 {#normal-form}

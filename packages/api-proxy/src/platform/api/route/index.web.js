@@ -1,4 +1,4 @@
-import { successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser, resolvePath } from '../../../common/js'
+import { envError, successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser, resolvePath } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
 let routeCount = 0
@@ -203,7 +203,10 @@ function switchTab (options = {}) {
   }
 }
 
+const preload = envError('preload')
+
 export {
+  preload,
   redirectTo,
   navigateTo,
   navigateBack,

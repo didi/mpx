@@ -51,3 +51,9 @@ export function getFocusedNavigation () {
     }
   }
 }
+
+export function isPreloadSupported (navigation) {
+  if (!navigation || typeof navigation.preload !== 'function') return false
+  const state = navigation.getState?.()
+  return state?.type === 'stack' && Array.isArray(state.preloadedRoutes)
+}
