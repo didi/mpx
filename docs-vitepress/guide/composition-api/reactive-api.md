@@ -473,7 +473,6 @@ watch(
 
 * 不支持 `raw` 相关 API（`markRaw` 除外，我们提供了该 API 用于跳过部分数据的响应式转换）
 * 不支持 `readonly` 相关 API
-* 不支持 `watchEffect`、`watch`、`computed` 的调试选项
 * 不支持对 `map`、`set` 等集合类型进行响应式转换
 * 受到 `Object.defineProperty` 实现带来的数据响应限制影响
 

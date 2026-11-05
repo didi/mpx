@@ -20,6 +20,7 @@
   - [组合式数据响应 API](#组合式数据响应-api)
   - [侦听器参数与清理](#侦听器参数与清理)
   - [视图更新与 watch 回调](#视图更新与-watch-回调)
+  - [响应式调试](#响应式调试)
   - [强制更新](#强制更新)
   - [数据响应使用要求](#数据响应使用要求)
 - [组合式 API](#组合式-api)
@@ -120,6 +121,8 @@ App 不支持 `data/computed/watch/inject/setup` 构造能力。
 表中是 Mpx 生命周期的基准阶段对应关系，不承诺各端回调时序完全一致；DOM、RN 挂载与小程序原生通知应按目标端参考判断。获取页面参数时，推荐使用 `onLoad` **回调**的第二参数 `decodedQuery`，它是 Mpx 抹平后的解码结果；不要再次重复解码。refs/布局查询放在挂载及之后，清理定时器和订阅放在卸载阶段。
 
 `onReactHooksExec/REACTHOOKSEXEC` 只用于 RN 混编；`onServerPrefetch/SERVERPREFETCH` 只用于 Web SSR。
+
+页面与组件可通过 `renderTracked` / `renderTriggered` 或对应的组合式钩子观察渲染依赖，见 [响应式调试](#响应式调试)。
 
 ### 关系能力
 
@@ -249,13 +252,13 @@ createComponent({
 | `unref(value)` | 普通值或 ref。 | 若是 ref 返回 `.value`，否则返回输入本身；不递归解包。 |
 | `isRef(value)` / `isReactive(value)` | 待判断的值。 | `boolean`，分别判断是否为 ref / 响应式对象。 |
 | `customRef(factory)` | `factory(track, trigger)` 返回 `{ get(): T, set(value: T): void }`；`track`、`trigger` 均为无参函数。 | `Ref<T>`；在 getter 中调用 `track()` 收集依赖，在需要通知更新时调用 `trigger()`。 |
-| `computed(getter)` | `getter: () => T`，无参数，返回派生值。 | 只读计算 ref，读取 `.value` 获取缓存的派生值。 |
-| `computed({ get, set })` | `get: () => T`；`set: (value: T) => void`。 | 可写计算 ref；给 `.value` 赋值时调用 setter。 |
+| `computed(getter, debugOptions?)` | `getter: () => T`，无参数，返回派生值。 | 只读计算 ref，读取 `.value` 获取缓存的派生值。 |
+| `computed({ get, set }, debugOptions?)` | `get: () => T`；`set: (value: T) => void`。 | 可写计算 ref；给 `.value` 赋值时调用 setter。 |
 | `set(target, key, value)` | `target` 为对象或数组，`key` 为字符串键或数字索引，`value` 为新值。 | 返回写入的 `value`；向已响应式化的对象新增键时建立响应式，数组索引通过可观测变更更新。对应实例 `$set`。 |
 | `del(target, key)` | 对象或数组，以及字符串键或数字索引。 | `void`；删除属性，数组按索引删除一个元素并前移后续元素。对应实例 `$delete`。 |
 | `watch(source, callback, options?)` | 显式数据源、变化回调及配置，详见下节。 | `stop(): void`，调用后停止侦听并执行已登记的清理。 |
 | `watchEffect(effect, options?)` | `effect(onCleanup)`；`options.flush` 默认 `'pre'`。 | `stop(): void`；自动收集 effect 同步执行期间读取的依赖。 |
-| `watchPostEffect(effect)` / `watchSyncEffect(effect)` | effect 签名同 `watchEffect`，分别固定 `flush: 'post'` / `'sync'`。 | 基准运行时均返回停止函数；时序见 [视图更新与 watch 回调](#视图更新与-watch-回调)。 |
+| `watchPostEffect(effect, debugOptions?)` / `watchSyncEffect(effect, debugOptions?)` | effect 签名同 `watchEffect`，分别固定 `flush: 'post'` / `'sync'`。 | 基准运行时均返回停止函数；时序见 [视图更新与 watch 回调](#视图更新与-watch-回调)。 |
 | `effectScope(detached?)` | `detached: boolean` 默认 `false`；`true` 时不随当前父作用域一起销毁。 | 返回作用域对象，使用 `run` 收集副作用、`stop` 统一清理，见下文。 |
 | `getCurrentScope()` | 无参数。 | 当前活跃作用域；没有时为 `undefined`。 |
 | `onScopeDispose(callback)` | 无参清理函数，须在活跃作用域内登记。 | `void`；作用域停止时调用回调，回调返回值不被消费。 |
@@ -316,6 +319,19 @@ const stop = watch(keyword, (value, oldValue, onCleanup) => {
 命名导出 `nextTick(callback?)` 的 callback 为无参函数 `() => T`；不传回调时返回 Promise，可 `await nextTick()`，传回调时返回的 Promise 接收回调结果。实例 `$nextTick` 的基准用法相同，普通函数回调的 `this` 指向实例。
 
 小程序基准实现等待当前框架更新队列，不等待宿主 `setData` 的渲染完成回调。需要明确等待本次小程序视图更新完成时使用 `setData(data, callback)` 或 `$forceUpdate(data, callback)` 的完成回调；RN/Web 的调度与布局就绪条件见各端脚本参考。
+
+### 响应式调试
+
+调试钩子仅在开发环境生效。`onTrack` 观察依赖收集，`onTrigger` 在依赖变化通知时同步调用；侦听回调仍按 `flush` 调度，视图仍按原有规则更新。
+
+| 调试对象 | 配置方式 |
+| --- | --- |
+| 组合式 `computed` | 第二参数 `debugOptions` 支持 `onTrack` / `onTrigger`。选项式 `computed` 无调试选项。 |
+| `watch` / `watchEffect` / `watchPostEffect` / `watchSyncEffect` | 在可选配置参数中传入 `onTrack` / `onTrigger`。 |
+| 选项式 `watch` / 实例 `$watch` | 选项式 `watch` 在含 `handler` 的配置对象中声明 `onTrack` / `onTrigger`；`$watch` 可在第三参数或第二参数的 `handler` 对象中配置。 |
+| 页面与组件渲染 | 直接声明 `renderTracked(event)` / `renderTriggered(event)`，或从 `@mpxjs/core` 导入 `onRenderTracked(callback)` / `onRenderTriggered(callback)`，在 `setup` 中同步注册。两种写法可并用，选项式先执行。渲染钩子需要经过 Mpx 的响应式渲染路径。 |
+
+回调接收 `DebuggerEvent`，可查看依赖来源 `target`、操作 `type`、可选的 `key`，以及事件提供的 `oldValue` / `newValue`。用回调检查事件或设置断点，避免读写额外的响应式状态。
 
 ### 强制更新
 

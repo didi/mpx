@@ -133,6 +133,8 @@ createPage({
 
 Web 不提供 `this.setData()`。应直接修改响应式数据，由框架自动更新视图，例如使用 `this.count = value`。
 
+[响应式调试](../base/script-reference.md#响应式调试)沿用基准用法。Web 使用 Vue 2.7 的调试接口，`onTrack` 中额外读取响应式属性可能引入依赖或导致回调递归。
+
 ### 强制更新
 
 `this.$forceUpdate(): void` 和 setup context 的 `forceUpdate(): void` 只能无参强制刷新，传入的数据、选项和回调都会被忽略，不返回 Promise。
