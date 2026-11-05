@@ -69,7 +69,7 @@ interface SwiperProps {
   'previous-margin'?: string
   'next-margin'?: string
   'enable-offset'?: boolean
-  'enable-var': boolean
+  'enable-var': boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -183,7 +183,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     hasPositionFixed,
     setWidth,
@@ -928,7 +928,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
   }, wrapChildren(arrPages, {
     hasVarDec,
-    varContext: varContextRef.current,
+    varContext,
     textPassThrough
   }))
   const renderChildrens = showPagination ? [animateComponent, renderPagination()] : animateComponent
