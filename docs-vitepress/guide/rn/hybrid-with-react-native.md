@@ -210,36 +210,3 @@ const WrappedPage = pageWrapperHOC(PageComponent, {
 应用内的外层容器会在异步页面加载期间提前挂载，并在 App 的 `onLaunch/onShow` 前初始化窗口信息；外层同时生成稳定的 `pageId`，通过 `RouteContext` 提供页面身份并挂载 Portal。页面聚焦状态和预加载仍随真实页面挂载，不在加载占位阶段提前执行。页面内部仅保留实例和生命周期相关逻辑，不再调用 `pageWrapperHOC`，也不依赖 Context 跳过重复容器。
 
 页面身份通过实例的 `getPageId()` 获取；框架不再把内部 `pageId` 注入页面的 `id` props。`id` 仍表示调用方传入的节点标识，不能作为内部页面身份使用。
-
-## 单组件输出的窗口布局适配 {#standalone-component-layout}
-
-**作用：** 单组件输出时，让 `getWindowInfo()` 返回宿主内容区域的窗口宽高。
-
-**用法：** 在单组件外层设置 `navigation`。`width/height` 传入实际内容区域的 RN 逻辑像素值，布局变化时更新；外层需提供 `SafeAreaProvider`。
-
-```jsx
-import React, { useEffect, useRef } from 'react'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { getFocusedNavigation, setFocusedNavigation } from '@mpxjs/utils'
-import ComponentIndex from './hello'
-
-export default function ComponentHost ({ width, height }) {
-  const insets = useSafeAreaInsets()
-  const previousNavigation = useRef(getFocusedNavigation()).current
-  const navigation = useRef({ isFocused: () => true }).current
-  navigation.layout = { width, height }
-  navigation.insets = insets
-  setFocusedNavigation(navigation)
-
-  useEffect(() => {
-    setFocusedNavigation(navigation)
-    return () => {
-      if (getFocusedNavigation() === navigation) {
-        setFocusedNavigation(previousNavigation)
-      }
-    }
-  }, [navigation, previousNavigation])
-
-  return <ComponentIndex />
-}
-```

@@ -29,7 +29,8 @@ jest.mock('react-native-reanimated', () => ({
 }), { virtual: true })
 
 jest.mock('react-native-safe-area-context', () => ({
-  initialWindowMetrics: { insets: { top: 47, bottom: 34, left: 0, right: 0 } }
+  initialWindowMetrics: { insets: { top: 47, bottom: 34, left: 0, right: 0 } },
+  useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 })
 }), { virtual: true })
 
 jest.mock('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index', () => require('../../../webpack-plugin/lib/runtime/components/react/mpx-portal'), { virtual: true })

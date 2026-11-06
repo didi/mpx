@@ -6,10 +6,11 @@ const addListener = function () {
   subscription = Dimensions.addEventListener(
     'change',
     ({ window }) => {
+      const dimensionsWindow = global.getDimensionsInfo?.('window') || window
       const result = {
         size: {
-          windowWidth: window.width,
-          windowHeight: window.height
+          windowWidth: dimensionsWindow.width,
+          windowHeight: dimensionsWindow.height
         }
       }
       callbacks.forEach(cb => cb(result))

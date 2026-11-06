@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { successHandle, failHandle, getFocusedNavigation } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
-import { initialWindowMetrics } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -64,7 +64,9 @@ const styles = StyleSheet.create({
   }
 })
 
-function ActionSheet ({ itemColor, height, bottom, success, fail, complete, alertText, itemList, onClose }) {
+function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList, onClose }) {
+  const { bottom = 0 } = useSafeAreaInsets()
+  const height = itemList.length * 53 + 46 + bottom + (alertText ? 52 : 0)
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
   const [selectedIndex, setSelectedIndex] = useState(null)
@@ -202,18 +204,10 @@ function showActionSheet (options = {}) {
     failHandle(result, fail, complete)
     return
   }
-  const navigation = getFocusedNavigation() || {}
-  const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
-  const navigationInsets = navigation.insets || {}
-  const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
-  const bottom = insets.bottom || 0
-  const height = len * 53 + 46 + bottom + (alertText ? 52 : 0)
 
   const actionSheetKey = Portal.add(
     <ActionSheet
       itemColor={itemColor}
-      height={height}
-      bottom={bottom}
       success={success}
       fail={fail}
       complete={complete}

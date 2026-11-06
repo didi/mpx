@@ -11,7 +11,6 @@
 - [Hooks 返回值更新模板](#hooks-返回值更新模板)
 - [跨端兼容隔离](#跨端兼容隔离)
 - [独立页面包裹](#standalone-page-wrapper)
-- [单组件窗口布局适配](#standalone-component-layout)
 
 ---
 
@@ -256,9 +255,3 @@ components/
 - 外层生成稳定的 pageId，并提供 RouteContext 和 PortalHost；真实页面内部从 Context 获取 pageId，页面聚焦状态与预加载随真实页面挂载，异步加载占位期间不会提前启动。
 - 使用实例 `getPageId()` 获取页面身份；框架不再将内部 pageId 注入页面 id props，节点 id 与页面身份分离。
 - 应用内 Screen 提前挂载外层容器，先初始化窗口信息再触发 App 启动回调；页面内部仅保留实例和生命周期，不调用外层 HOC，也不通过 Context 判断是否重复包裹。
-
-## 单组件窗口布局适配 {#standalone-component-layout}
-
-**作用：** 让单组件的 `getWindowInfo()` 返回宿主内容区域的窗口宽高。
-
-**用法：** 在组件外层创建稳定的 `{ isFocused: () => true, layout: { width, height }, insets }`，通过 `@mpxjs/utils` 的 `setFocusedNavigation()` 设置，尺寸变化时更新，卸载时恢复。宽高使用 RN 逻辑像素，外层需有 `SafeAreaProvider`。示例见 `docs-vitepress/guide/rn/hybrid-with-react-native.md#standalone-component-layout`。

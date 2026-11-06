@@ -1,5 +1,5 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native'
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, getFocusedNavigation } from '../../../common/js'
 import { type } from '@mpxjs/utils'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 
@@ -58,10 +58,9 @@ const styles = StyleSheet.create({
 })
 
 function showToast (options = {}) {
-  const dimensionsScreen = Dimensions.get('screen')
-  const dimensionsWindow = Dimensions.get('window')
-  const screenHeight = __mpx_mode__ === 'ios' ? dimensionsWindow.height : dimensionsScreen.height
-  const contentTop = parseInt(screenHeight * 0.4) // 小程序里面展示偏上一点
+  const dimensionsWindow = global.getDimensionsInfo?.('window') || Dimensions.get('window')
+  const windowHeight = getFocusedNavigation()?.layout?.height ?? dimensionsWindow.height
+  const contentTop = parseInt(windowHeight * 0.4) // 小程序里面展示偏上一点
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   if (type(title) !== 'String') {
     const result = {
