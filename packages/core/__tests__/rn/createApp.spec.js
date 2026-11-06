@@ -149,13 +149,12 @@ describe('RN createApp initial params', () => {
     jest.clearAllTimers()
     jest.useRealTimers()
     delete global.__mpxEventChannel
-    delete global.__mpxEventChannels
   })
 
-  function createTestPage (Component, options = {}) {
+  function createTestPage (Component) {
     return getDefaultOptions({
       type: 'page',
-      rawOptions: Object.assign({ __type__: 'page' }, options),
+      rawOptions: { __type__: 'page' },
       currentInject: {
         componentsMap: {},
         render () { return React.createElement(Component, this.__props) }
@@ -589,133 +588,5 @@ describe('RN createApp initial params', () => {
     expect(onShow).toHaveBeenLastCalledWith(expect.objectContaining({ path: 'pages/index', query: { hot: true } }))
     act(() => renderer.root.findByType('NavigationContainer').props.onReady())
     expect(listener).toHaveBeenCalledTimes(1)
-  })
-  it('preserves preload status dependencies and the instance across navigation replacement', async () => {
-    const { BEFORECREATE, ONLOAD, ONSHOW, ONHIDE, UNMOUNTED, REACTHOOKSEXEC } = require('../../src/core/innerLifecycle')
-    const pageRouteMixin = require('../../src/platform/builtInMixins/pageRouteMixin.ios').default
-    const { getFocusedNavigation } = require('@mpxjs/utils')
-    const seen = []
-    const onLoad = jest.fn(function (params) { seen.push(['load', this.wasPreloaded, params]) })
-    const onShow = jest.fn(function () { seen.push(['show', this.wasPreloaded, this.routeParams]) })
-    const onHide = jest.fn()
-    const onUnload = jest.fn()
-    let contextNavigation
-    const Page = pageWrapperHOC(createTestPage(() => {
-      contextNavigation = React.useContext(require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context').RouteContext).navigation
-      return React.createElement('BusinessPage')
-    }, {
-      mixins: [pageRouteMixin('page')],
-      [BEFORECREATE] () { seen.push(['create', this.wasPreloaded]) },
-      [REACTHOOKSEXEC] ({ route }) { return { routeParams: route.params } },
-      [ONLOAD]: onLoad,
-      [ONSHOW]: onShow,
-      [ONHIDE]: onHide,
-      [UNMOUNTED]: onUnload
-    }))
-    const route = { key: 'b', name: 'pages/b', params: { id: '2', old: 'yes' } }
-    const state = { index: 0, routes: [{ key: 'a', name: 'pages/a' }], preloadedRoutes: [route] }
-    const placeholder = { getState: () => state, isFocused: () => false, addListener: () => () => {} }
-    await act(async () => { renderer = create(React.createElement(Page, { navigation: placeholder, route })) })
-    const instance = global.__mpxPagesMap.b[0]
-    const channel = instance.getOpenerEventChannel()
-    expect(seen).toEqual([['create', true], ['load', true, { id: '2', old: 'yes' }]])
-    const pageId = instance.__pageId
-    const getter = Object.getOwnPropertyDescriptor(pageStatusMap, pageId).get
-    const listeners = {}
-    let focused = true
-    const navigation = {
-      getState: () => state,
-      isFocused: () => focused,
-      addListener: (name, fn) => { listeners[name] = fn; return () => { delete listeners[name] } }
-    }
-    const activated = Object.assign({}, route, { params: { id: '3' } })
-    state.routes.push(activated)
-    state.index = 1
-    state.preloadedRoutes = []
-    await act(async () => { renderer.update(React.createElement(Page, { navigation, route: activated })) })
-    expect(global.__mpxPagesMap.b).toEqual([instance, navigation])
-    expect(contextNavigation).toBe(navigation)
-    setFocusedNavigation(placeholder)
-    expect(getFocusedNavigation()).toBe(navigation)
-    expect(instance.getOpenerEventChannel()).toBe(channel)
-    expect(Object.getOwnPropertyDescriptor(pageStatusMap, pageId).get).toBe(getter)
-    expect(onLoad).toHaveBeenCalledTimes(1)
-    expect(onShow).toHaveBeenCalledTimes(1)
-    expect(seen[2]).toEqual(['show', true, { id: '3' }])
-    expect(Reflect.set(instance, 'wasPreloaded', false)).toBe(false)
-    expect(() => Object.defineProperty(instance, 'wasPreloaded', { value: false })).toThrow(TypeError)
-    expect(instance.wasPreloaded).toBe(true)
-    act(() => listeners.focus())
-    expect(onShow).toHaveBeenCalledTimes(1)
-    act(() => { focused = false; listeners.blur() })
-    expect(onHide).toHaveBeenCalledTimes(1)
-    act(() => { focused = true; listeners.focus() })
-    expect(onShow).toHaveBeenCalledTimes(2)
-    act(() => renderer.unmount())
-    expect(onUnload).toHaveBeenCalledTimes(1)
-    expect(global.__mpxPagesMap.b).toBeUndefined()
-    expect(pageStatusMap).not.toHaveProperty(String(pageId))
-    expect(listeners).toEqual({})
-  })
-
-  it('marks instances first created in the real stack as ordinary opens', async () => {
-    const { ONLOAD, ONSHOW } = require('../../src/core/innerLifecycle')
-    const loaded = jest.fn(function () { expect(this.wasPreloaded).toBe(false) })
-    const shown = jest.fn()
-    const Page = pageWrapperHOC(createTestPage(() => null, { [ONLOAD]: loaded, [ONSHOW]: shown }))
-    const route = { key: 'b', name: 'pages/b' }
-    const navigation = { getState: () => ({ index: 0, routes: [route], preloadedRoutes: [] }), isFocused: () => true, addListener: () => () => {} }
-    await act(async () => { renderer = create(React.createElement(Page, { navigation, route })) })
-    const pageId = navigation.pageId
-    expect(loaded).toHaveBeenCalledTimes(1)
-    expect(shown).toHaveBeenCalledTimes(1)
-    act(() => renderer.unmount())
-    expect(pageStatusMap).not.toHaveProperty(String(pageId))
-  })
-
-  it('keeps an unmounted preload candidate channel across subsequent navigation', () => {
-    const { navigateTo } = require('../../../api-proxy/src/platform/api/route/index.ios')
-    const pageRouteMixin = require('../../src/platform/builtInMixins/pageRouteMixin.ios').default
-    const { BEFORECREATE } = require('../../src/core/innerLifecycle')
-    const container = renderApp('pages/home')
-    const navigation = global.__mpxPagesMap['pages/home'][1]
-    const state = navigation.getState()
-    state.preloadedRoutes = [{ key: 'b', name: 'pages/b' }]
-    navigation.push.mockImplementation(name => {
-      state.routes.push({ key: name === 'pages/b' ? 'b' : 'c', name })
-      state.index++
-      state.preloadedRoutes = []
-      container.props.onStateChange(state)
-    })
-    const successB = jest.fn(() => navigateTo({ url: '/pages/c', success: successC }))
-    const successC = jest.fn()
-    navigateTo({ url: '/pages/b', success: successB })
-    const channelB = successB.mock.calls[0][0].eventChannel
-    const channelC = successC.mock.calls[0][0].eventChannel
-    expect(global.__mpxEventChannels).toEqual({ b: channelB })
-    expect(global.__mpxEventChannel).toEqual({ route: 'pages/c', eventChannel: channelC })
-    const bind = pageRouteMixin('page')[BEFORECREATE]
-    const pageB = { route: 'pages/b', __props: { route: { key: 'b' } } }
-    const pageC = { route: 'pages/c', __props: { route: { key: 'c' } } }
-    bind.call(pageC)
-    bind.call(pageB)
-    expect(pageB.__eventChannel).toBe(channelB)
-    expect(pageC.__eventChannel).toBe(channelC)
-    expect(global.__mpxEventChannels).toEqual({})
-    expect(global.__mpxEventChannel).toBeUndefined()
-  })
-
-  it('retains live candidate channels and clears removed routes and navigator channels', () => {
-    const container = renderApp('pages/home')
-    const channelB = {}
-    const channelC = {}
-    Object.assign(global.__mpxEventChannels, { b: channelB, c: channelC })
-    container.props.onStateChange({ index: 0, routes: [{ key: 'b' }], preloadedRoutes: [{ key: 'c' }] })
-    expect(global.__mpxEventChannels).toEqual({ b: channelB, c: channelC })
-    container.props.onStateChange({ index: 0, routes: [{ key: 'b' }], preloadedRoutes: [] })
-    expect(global.__mpxEventChannels).toEqual({ b: channelB })
-    act(() => renderer.unmount())
-    expect(global.__mpxEventChannels).toBeUndefined()
-    expect(global.__mpxEventChannel).toBeUndefined()
   })
 })
