@@ -1,0 +1,30 @@
+{
+  "description": "mpx 与 mpx2rn 两组对比；相同输入、目标平台和模型，仅允许使用本组 Skill。",
+  "variables": {
+    "TASK_PROMPT": "evals.json 中的 prompt 字段",
+    "INPUT_PATH": "输入文件的绝对路径",
+    "OUTPUT_PATH": "输出文件的绝对路径",
+    "MPX2RN_SKILL_PATH": ".agents/skills/mpx2rn/SKILL.md 的绝对路径",
+    "MPX2RN_REFS_PATH": ".agents/skills/mpx2rn/references/ 的绝对路径",
+    "MODEL": "本次用户指定 gpt-6.1-sol，由调度时显式传入",
+    "REASONING_EFFORT": "本次用户指定 high，由调度时显式传入",
+    "WORKDIR": "子 agent 的固定工作目录，即 .agents/skills/workspaces/mpx2rn-workspace 的绝对路径",
+    "METRICS_PATH": "执行器从 codex exec JSONL 的真实 usage 与实际运行耗时生成；准备阶段不写指标"
+  },
+  "agent_config": {
+    "model": "{{MODEL}}",
+    "reasoning_effort": "{{REASONING_EFFORT}}",
+    "fork_turns": "none",
+    "run_in_background": true
+  },
+  "templates": {
+    "mpx": {
+      "label": "使用 mpx 统一 skill",
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**适配目标平台**：本次评测仅需考虑 wx 和 ios 平台。\n\n**工作目录**：将 {{WORKDIR}} 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 {{INPUT_PATH}}\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 {{WORKDIR}}/../../mpx/SKILL.md，按照其中的任务流程和知识库索引，仅在需要时读取 {{WORKDIR}}/../../mpx/references/ 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取 {{WORKDIR}}/../../mpx2rn/、mpx2rn-simple、mpx2rn-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将完整的修改后 .mpx 文件写入 {{OUTPUT_PATH}}，不要修改其他文件。\n框架依赖使用 workspaces 顶层从 npm 官方源统一安装的 @mpxjs/* latest 发布版本；评测准备阶段在 workspaces 顶层运行 npm run update-framework && npm run check-env；模型执行期间使用现有版本。若按本组 Skill 执行编译，以当前工作区作为 --project-root，保持各测试集独立构建配置。两组共用同一锁文件，执行期间不更新依赖，不引用仓库 packages/ 或复制、修改框架源码。实际能力以发布包为准，未支持项如实记录。"
+    },
+    "mpx2rn": {
+      "label": "使用 mpx2rn 完整版 skill",
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**适配目标平台**：本次评测仅需考虑 wx 和 ios 平台。\n\n**工作目录**：将 {{WORKDIR}} 作为本任务所有 shell 命令的固定工作目录。\n\n**输入文件**：读取 {{INPUT_PATH}}\n\n**Skill 参考**：你必须严格按照 skill 文档进行改造。首先完整读取 {{MPX2RN_SKILL_PATH}}，按照其中的任务流程和知识库索引，仅在需要时读取 {{MPX2RN_REFS_PATH}} 下的相关参考文档。严格遵循 SKILL.md 中描述的通用约束与适配原则。\n\n**评测隔离**：本次用户明确要求隔离比较，只能使用本组指定的 Skill，不得自动加载其他 Skill。不要读取 {{WORKDIR}}/../../mpx/、mpx2rn-simple、mpx2rn-workspace 中的 evals/grade/其他配置输出，也不要读取其他被测组的文件。\n\n**输出**：仅将完整的修改后 .mpx 文件写入 {{OUTPUT_PATH}}，不要修改其他文件。\n框架依赖使用 workspaces 顶层从 npm 官方源统一安装的 @mpxjs/* latest 发布版本；评测准备阶段在 workspaces 顶层运行 npm run update-framework && npm run check-env；模型执行期间使用现有版本。若按本组 Skill 执行编译，以当前工作区作为 --project-root，保持各测试集独立构建配置。两组共用同一锁文件，执行期间不更新依赖，不引用仓库 packages/ 或复制、修改框架源码。实际能力以发布包为准，未支持项如实记录。"
+    }
+  }
+}

@@ -15,9 +15,7 @@ export {
   createComponent
 } from './platform/index'
 
-export {
-  nextTick
-} from './observer/scheduler'
+export { pageWrapperHOC } from './platform/patch/pageWrapperHOC'
 
 export {
   BEFORECREATE,
@@ -110,6 +108,7 @@ function use (plugin, options = {}) {
   extendProps(Mpx, proxyMpx, rawProps, options)
   extendProps(Mpx.prototype, proxyMpx.prototype, rawPrototypeProps, options)
   installedPlugins.push(plugin)
+  plugin.__installed = true
   return this
 }
 
@@ -150,7 +149,8 @@ Mpx.config = {
   */
   rnConfig: {
     defaultBoxSizing: 'content-box',
-    disablePageTransition: false
+    disablePageTransition: false,
+    dimensionsBase: 'window'
   }
 }
 

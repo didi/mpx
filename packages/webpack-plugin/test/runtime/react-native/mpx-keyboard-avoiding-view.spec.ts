@@ -14,7 +14,7 @@ jest.mock('react-native', () => ({
     dismiss: jest.fn()
   },
   View: 'View'
-}), { virtual: false })
+}))
 
 jest.mock('react-native-reanimated', () => ({
   __esModule: true,
@@ -29,7 +29,7 @@ jest.mock('react-native-reanimated', () => ({
     out: (value: any) => value
   },
   cancelAnimation: jest.fn()
-}), { virtual: false })
+}))
 
 jest.mock('react', () => {
   const actual = jest.requireActual('react')

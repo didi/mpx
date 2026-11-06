@@ -10,9 +10,9 @@ const getLocation = function (options = {}) {
         errMsg: 'getLocation:ok',
         latitude: coords.latitude,
         longitude: coords.longitude,
-        speed: coords.accuracy
+        speed: coords.speed
       }
-      defineUnsupportedProps(result, ['horizontalAccuracy', 'verticalAccuracy'])
+      defineUnsupportedProps(result, ['altitude', 'horizontalAccuracy', 'verticalAccuracy'])
       successHandle(result, success, complete)
     }, (err) => {
       const result = {

@@ -3,7 +3,7 @@ import { nextTick } from '../next-tick'
 function setNavigationBarTitle (options = {}) {
   const { title = '', success, fail, complete } = options
   const navigation = getFocusedNavigation()
-  if (!(navigation && navigation.setOptions)) {
+  if (!(navigation && typeof navigation.setPageConfig === 'function')) {
     failHandle({ errMsg: 'setNavigationBarTitle:fail' }, fail, complete)
   } else {
     nextTick(() => {
@@ -22,7 +22,7 @@ function setNavigationBarColor (options = {}) {
     return
   }
   const navigation = getFocusedNavigation()
-  if (!(navigation && navigation.setOptions)) {
+  if (!(navigation && typeof navigation.setPageConfig === 'function')) {
     failHandle({ errMsg: 'setNavigationBarColor:fail' }, fail, complete)
   } else {
     nextTick(() => {

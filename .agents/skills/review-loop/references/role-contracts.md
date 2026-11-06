@@ -1,141 +1,110 @@
-# Role Contracts
+# 角色契约
 
-Planner, plan-reviewer, coder, and code-reviewer are real native subagents. The
-main agent orchestrates them, prepares inputs, persists reviewer results, and
-asks the user for confirmation.
+Planner、plan-reviewer、coder 和 code-reviewer 都是真实的原生子 Agent。主 Agent 负责编排角色、准备输入、持久化 reviewer 结果，以及请求用户确认。Planner 和 coder 可以分别跨轮复用原实例；plan-reviewer 和 code-reviewer 每轮必须新建独立实例。
+
+所有面向用户或需要用户确认的自然语言中间产物必须使用中文，包括技术方案、评审结论、修订记录、执行记录、角色日志、验证说明、剩余风险和确认节点消息。命令、路径、代码符号、Markdown 固定字段名、协议枚举值和工具原始输出可保留原文。
 
 ## planner
 
-Inputs:
+输入：
 
 - `goal.md`
-- current `plan.md`
-- latest `reviews/plan-review-N.json`, if any
-- relevant repository instructions already available to the role
+- 当前 `plan.md`
+- 最新的 `reviews/plan-review-N.md`（如有）
+- 角色已获得的相关仓库指令
 
-Responsibilities:
+职责：
 
-1. Produce or revise a practical technical plan.
-2. Respond to reviewer findings one by one.
-3. Record accepted, rejected, and partially accepted findings in `Plan Loop 修订记录`.
-4. Avoid implementation work.
-5. Prefer existing project flows and minimal changes.
+1. 编写或修订切实可行的中文技术方案。
+2. 逐条回应 reviewer 意见。
+3. 在“方案循环修订记录”中记录已接受、已拒绝和部分接受的意见。
+4. 不得执行实现工作。
+5. 优先复用现有项目流程，并保持最小改动。
 
-Outputs:
+输出：
 
-- updated `plan.md`
-- `logs/planner-N.md`
+- 更新后的 `plan.md`
+- 中文日志 `logs/planner-N.md`
 
 ## plan-reviewer
 
-Inputs:
+输入：
 
 - `goal.md`
-- current `plan.md`
-- previous plan reviews and revision records
+- 当前 `plan.md`
+- 之前的方案评审和修订记录
 
-Responsibilities:
+职责：
 
-1. Review the plan for correctness, completeness, stability, verifiability, and repository constraint risks.
-2. Focus on boundary and exceptional cases, performance cost, elegance and simplicity, and reuse of existing project flows with consistent local style.
-3. Do not repeat resolved findings.
-4. Do not edit `plan.md`.
-5. Return one strict JSON object to the orchestrator; do not write repository
-   files. The orchestrator owns persistence and validation.
-6. Start in a fresh context. Read `goal.md` and repository constraints first,
-   then the plan; independently inspect every claimed impact path, full related
-   functions, direct callers/consumers, adjacent implementations, and tests.
-   Read earlier reviews and revision records last, only for deduplication.
-7. On Codex and Claude Code, launch this role as a fresh native subagent with
-   paths-only initial task input and no inherited conversation.
-8. Construct at least one counterexample that could falsify a behavior
-   assumption, and record review paths, symbol traces, checks, counterexamples,
-   residual risks, and reviewer configuration in `evidence`.
+1. 评审方案的正确性、完整性、稳定性、可验证性和仓库约束风险。
+2. 重点检查边界与异常场景、性能开销、优雅与简洁性，以及是否以一致的本地风格复用现有项目流程。
+3. 不得重复已经解决的问题。
+4. 不得编辑 `plan.md`。
+5. 向编排者返回一份严格遵循固定格式的 Markdown 文档，不得写入仓库文件。编排者负责解析、持久化和校验。
+6. 在全新上下文中启动。先读取 `goal.md` 和仓库约束，再读取方案；独立检查每条声称的影响路径、完整相关函数、直接调用方/消费方、相邻实现和测试。最后才读取之前的评审与修订记录，只用于去重。
+7. 在 Codex 和 Claude Code 上，以仅含路径的初始任务输入，为每一轮方案评审新建全新、独立的原生子 Agent；不得恢复或复用任何历史 plan-reviewer/code-reviewer，也不得继承父级会话、planner 或 coder 的任何上下文。
+8. 至少构造一个能证伪行为假设的反例，但不在评审正文记录符号追踪、验证过程、反例过程或差异范围。
+9. 评审正文只保留摘要、已检查文件、评审问题和剩余风险，且自然语言内容必须使用中文。
 
-Output returned to the orchestrator:
+返回给编排者的输出：
 
-- `reviews/plan-review-N.json`
+- `reviews/plan-review-N.md`
 
 ## coder
 
-Inputs:
+输入：
 
-- user-confirmed `plan.md`
-- latest `reviews/code-review-N.json`, if any
-- current repository context
+- 用户已确认的 `plan.md`
+- 最新的 `reviews/code-review-N.md`（如有）
+- 当前仓库上下文
 
-Responsibilities:
+职责：
 
-1. Implement the confirmed plan with the smallest practical code change.
-2. Update `Code Loop 执行记录`.
-3. Explain any deviation from the plan.
-4. Run relevant validation commands and record results.
-5. Update docs or related skills when the change affects user-facing behavior.
+1. 以最小的切实可行代码改动实施已确认方案。
+2. 更新“代码循环执行记录”。
+3. 用中文说明任何方案偏差。
+4. 运行相关验证命令，并用中文记录结果和结论。
+5. 当变更影响面向用户的行为时，根据项目要求更新文档或相关 Skill。
 
-Outputs:
+输出：
 
-- source changes
-- updated `plan.md`
-- `logs/coder-N.md`
+- 源代码变更
+- 更新后的 `plan.md`
+- 中文日志 `logs/coder-N.md`
 
 ## code-reviewer
 
-Inputs:
+输入：
 
 - `goal.md`
-- user-confirmed `plan.md`
-- current `diffs/code-diff-N.patch`
-- validation results
+- 用户已确认的 `plan.md`
+- 初始基线清单 `runtime/baseline/manifest.json`
+- `diffs/code-diff-N.patch`，内容是初始基线到 Prepare 绑定工作树的完整差异
+- 验证结果
 
-Responsibilities:
+`diffs/code-diff-N.patch` 同时供 reviewer 评审和人工回溯；编排器会把其摘要绑定到请求，并校验它与两棵绑定树完全一致。
 
-1. Review code like an owner.
-2. Prioritize bugs, behavior regressions, missing tests, repository rule violations, and plan mismatch.
-3. Focus on boundary and exceptional cases, performance cost, elegance and simplicity, and reuse of existing project flows with consistent local style.
-4. Do not edit source files.
-5. Return one strict JSON object to the orchestrator; do not write repository
-   files. The orchestrator owns persistence and validation.
-6. Start in a fresh context. Read `goal.md`, repository constraints, cumulative
-   diff, round delta, and scope metadata before the confirmed plan, coder log,
-   or validation claims. Inspect full changed functions, direct
-   callers/consumers, adjacent implementations, and relevant tests.
-7. On Codex and Claude Code, launch this role as a fresh native subagent with
-   paths-only initial task input and no inherited conversation.
-8. Check target behavior, plan mismatch, unexpected paths, whether tests cover
-   the failure mode, and whether reported validation is credible. Construct at
-   least one falsifying counterexample; for UI/platform work distinguish an
-   intermediate value assertion from user-visible behavior.
-9. Record all required `evidence`. Give every unexpected path an explicit
-   disposition; do not approve while any disposition is `blocking`.
+职责：
 
-Output returned to the orchestrator:
+1. 像代码所有者一样评审代码。
+2. 优先检查 bug、行为回归、测试缺失、违反仓库规则和方案不一致。
+3. 重点检查边界与异常场景、性能开销、优雅与简洁性，以及是否以一致的本地风格复用现有项目流程。
+4. 不得编辑源文件。
+5. 向编排者返回一份严格遵循固定格式的 Markdown 文档，不得写入仓库文件。编排者负责解析、持久化和校验。
+6. 在全新上下文中启动。先读取 `goal.md`、仓库约束和当前 `code-diff-N.patch`，再读取已确认方案、coder 日志或验证声明。检查完整变更函数、直接调用方/消费方、相邻实现和相关测试。不得查找、比较或记录相邻轮次间的过程差异。
+7. 在 Codex 和 Claude Code 上，以仅含路径的初始任务输入，为每一轮代码评审新建全新、独立的原生子 Agent；不得恢复或复用任何历史 plan-reviewer/code-reviewer，也不得继承父级会话、planner 或 coder 的任何上下文。
+8. 检查目标行为、方案不一致、测试是否覆盖失败模式，以及上报的验证是否可信。至少构造一个可证伪反例；对于 UI/平台工作，要区分中间值断言与用户可见行为。
+9. 评审正文只保留摘要、已检查文件、评审问题和剩余风险，不记录符号追踪、验证过程、反例过程或差异范围。
+10. 所有自然语言评审内容必须使用中文。
 
-- `reviews/code-review-N.json`
+返回给编排者的输出：
 
-## Shared Reviewer JSON Requirements
+- `reviews/code-review-N.md`
 
-Reviewer JSON must follow `schemas/review.schema.json`. `review-manager.js
---finalize` persists it only for the state-derived next round during the
-matching reviewing phase. Persisted review artifacts are immutable;
-new files use exclusive creation and only byte-identical retries against an
-existing regular non-symlink file are accepted. The task workspace and
-`reviews/` path components must also be canonical non-symlink directories. The
-orchestrator advances state only with the current task's canonical regular
-persisted review. Persistence, advancement, validation, and migration share
-this path safety contract. Reviewer-run records bind every initial input to a
-SHA-256 digest; code reviews additionally bind the validated snapshot tree.
-Persisted reviews must also pass
-`scripts/validate-review-json.js`.
+## Reviewer Markdown 共同要求
 
-Before repository inspection, each reviewer must verify that its paths-only
-task is the first visible user task message and that no parent planner, coder,
-or orchestrator conversation is visible. It records the exact passed
-`context-isolation-preflight` check required by `review-manager.js --finalize`.
-This assertion is defense in depth; the host-native fresh-context launch is the
-actual isolation boundary.
+Reviewer Markdown 必须采用角色模板定义的固定章节格式；`review-manager.js --finalize` 会直接解析并校验 Markdown 的标题、元数据、已检查文件、问题和剩余风险，不使用 JSON Schema，也不接受 JSON review。它只会在匹配的评审阶段，按状态推导出的下一轮次持久化 `reviews/*-review-N.md`。已持久化的评审产物不可变；新文件使用排他创建，已有普通非符号链接文件仅接受逐字节相同的幂等重试。任务工作区和 `reviews/` 路径组件也必须是规范的非符号链接目录。编排者只能用当前任务中已规范持久化的普通评审文件推进状态。持久化、状态推进、校验和迁移共同遵循该路径安全契约。Reviewer-run 记录把每个初始输入绑定到 SHA-256 摘要；代码评审还会绑定已校验的快照树。已持久化评审通过 `scripts/validate-review-markdown.js` 复验。
 
-Use concise findings. Each finding must be actionable and must include a stable `id`.
-Approval is allowed without findings, but never without complete evidence.
-The reviewer must follow a no-write role contract. Prepare/finalize bind the
-Git tree and reject drift, and the orchestrator overwrites `reviewerConfig`
-with the host-native contract; reviewer self-reporting is not trusted.
+Reviewer 的实例隔离由编排者和 finalize 共同保证：编排者必须为每轮评审创建全新、独立的宿主原生子 Agent，禁止恢复或复用任何历史 reviewer，并禁用父级会话上下文继承；finalize 必须拒绝与任何历史 reviewer-run 重复的 Agent ID。Planner 和 coder 不受该每轮新建限制，可以分别复用自己的历史实例。
+
+问题应简洁、可执行，并包含稳定的 `id`。没有问题时可以通过。Reviewer 必须遵循禁止写入契约。Prepare/finalize 会绑定 Git 树并拒绝漂移；宿主原生 reviewer 配置只记录在内部运行证据中，不属于评审 Markdown。

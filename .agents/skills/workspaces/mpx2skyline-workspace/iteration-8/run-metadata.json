@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "iteration": 8,
+  "suite_version": 7,
+  "cases": 4,
+  "assertions": 40,
+  "comparison_groups": [
+    "mpx",
+    "mpx2skyline"
+  ],
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "high",
+  "planned_runs": 8,
+  "baseline_reuse": false,
+  "scoring_method": "independent_agent_semantic_review",
+  "completed_runs": 8,
+  "scores": {
+    "mpx": "39/40",
+    "mpx2skyline": "39/40"
+  }
+}

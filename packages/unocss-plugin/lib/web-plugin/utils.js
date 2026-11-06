@@ -77,7 +77,9 @@ async function createContext (configOrPath, defaults = {}, extraConfigSources = 
     if (code.includes(IGNORE_COMMENT)) {
       return false
     }
-    return code.includes(INCLUDE_COMMENT) || code.includes(CSS_PLACEHOLDER) || rollupFilter(id.replace(/\?v=\w+$/, ''))
+    // rollupFilter不支持query，所以直接过滤掉query匹配
+    const path = id.split('?')[0]
+    return code.includes(INCLUDE_COMMENT) || code.includes(CSS_PLACEHOLDER) || rollupFilter(path)
   }
 
   return {

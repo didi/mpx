@@ -153,5 +153,8 @@ export default function install (Vue) {
   Vue.prototype.getPageId = function () {
     return this.__pageId
   }
+  Vue.prototype.getOpenerEventChannel = function () {
+    return this.__eventChannel
+  }
   hackEffectScope()
 }

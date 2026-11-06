@@ -1,6 +1,8 @@
-import { warn, isArray, callWithErrorHandling, isDev, isReact } from '@mpxjs/utils'
+import { warn, isArray, callWithErrorHandling, isReact } from '@mpxjs/utils'
 import Mpx from '../index'
 import * as perf from '@mpxjs/perf'
+
+const isDev = process.env.NODE_ENV !== 'production'
 
 let isFlushing = false
 let isFlushPending = false

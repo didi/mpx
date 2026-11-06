@@ -106,7 +106,7 @@ interface MpxSectionListProps {
   'genericsection-footer'?: string;
   'genericlist-header'?: string;
   'genericlist-footer'?: string;
-  'enable-var'?: boolean;
+  'enable-var'?: boolean | 'use';
   'parent-width'?: number;
   'parent-height'?: number;
   'enable-sticky'?: boolean;
@@ -209,7 +209,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     hasPositionFixed,
     setWidth,
@@ -760,7 +760,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     ),
     {
       hasVarDec,
-      varContext: varContextRef.current,
+      varContext,
       textPassThrough
     }
   ) as ReactElement

@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/babel-plugin-inject-page-events",
-  "version": "2.10.21",
+  "version": "2.11.2",
   "description": "babel plugin for inject page events in composition-api",
   "license": "Apache-2.0",
   "main": "src/index.js",
@@ -11,7 +11,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com/didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/babel-plugin-inject-page-events"
   },
   "homepage": "https://didi.github.io/mpx/",
   "bugs": {

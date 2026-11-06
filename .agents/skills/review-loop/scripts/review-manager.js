@@ -4,14 +4,10 @@
 const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
-const persist = require('./persist-review-json')
+const persist = require('./persist-review-markdown')
+const reviewMarkdown = require('./review-markdown')
 const snapshot = require('./git-snapshot')
 const u = require('./review-loop-utils')
-
-const contextIsolationCheck = {
-  command: 'context-isolation-preflight',
-  result: 'passed: no parent planner/coder/orchestrator conversation visible'
-}
 
 function reviewerRole (kind) {
   if (kind === 'plan') return 'plan-reviewer'
@@ -27,28 +23,34 @@ function requestPath (taskId, kind, round) {
   return path.join(u.taskDir(taskId), 'runtime', 'reviewer-runs', kind + '-review-' + round + '.request.json')
 }
 
+function codeDiffPath (taskId, round) {
+  return path.join(u.taskDir(taskId), 'diffs', 'code-diff-' + round + '.patch')
+}
+
 function taskPath (taskId, file) {
   return path.posix.join('.agent-workflows', 'review-loop', taskId, file)
+}
+
+function reviewTaskPath (taskId, kind, round) {
+  return taskPath(taskId, 'reviews/' + kind + '-review-' + round + '.md')
 }
 
 function inputs (taskId, kind, round) {
   const files = [
     path.posix.join('.agents', 'skills', 'review-loop', 'templates', 'roles', reviewerRole(kind) + '.md'),
-    path.posix.join('.agents', 'skills', 'review-loop', 'schemas', 'review.schema.json'),
     taskPath(taskId, 'goal.md'),
     taskPath(taskId, 'plan.md')
   ]
   if (kind === 'plan') {
     Array.from({ length: round - 1 }, function (_, index) { return index + 1 }).forEach(function (reviewRound) {
-      files.push(taskPath(taskId, 'reviews/plan-review-' + reviewRound + '.json'))
+      files.push(reviewTaskPath(taskId, 'plan', reviewRound))
     })
   } else {
-    ;['code-diff-', 'code-round-', 'code-scope-'].forEach(function (prefix) {
-      files.push(taskPath(taskId, 'diffs/' + prefix + round + (prefix === 'code-scope-' ? '.json' : '.patch')))
-    })
+    files.push(taskPath(taskId, 'runtime/baseline/manifest.json'))
+    files.push(taskPath(taskId, 'diffs/code-diff-' + round + '.patch'))
     files.push(taskPath(taskId, 'logs/coder-' + round + '.md'))
     Array.from({ length: round - 1 }, function (_, index) { return index + 1 }).forEach(function (reviewRound) {
-      files.push(taskPath(taskId, 'reviews/code-review-' + reviewRound + '.json'))
+      files.push(reviewTaskPath(taskId, 'code', reviewRound))
     })
   }
   return files
@@ -78,19 +80,20 @@ function reviewerConfig (platform) {
 
 function prompt (taskId, kind, round, platform) {
   return [
-    'Run the ' + reviewerRole(kind) + ' role with a fresh context and no inherited planner/coder conversation.',
-    'Before reading repository files, run the role\'s context-isolation preflight and include its passed evidence in the review JSON.',
-    'Use only the repository paths below as initial task input, then inspect repository evidence as the role requires.',
-    'Do not modify repository files. Return exactly one JSON object matching the schema, without a Markdown fence.',
-    'Return reviewerConfig for schema compliance; the orchestrator will normalize it to the host-native reviewer contract.',
+    '本轮（round ' + round + '）必须将 ' + reviewerRole(kind) + ' 作为全新、独立的原生子 Agent 拉起；每一轮都要创建新实例，不得恢复或复用任何之前创建的 reviewer，也不得继承父级会话、planner 或 coder 的任何上下文。',
+    '仅使用下列仓库路径作为初始任务输入，再按照角色要求检查仓库证据。',
+    '不得修改仓库文件。只返回一份符合角色模板固定格式的 Markdown 文档，不加外围说明。',
+    '所有自然语言评审内容必须使用中文；命令、路径、代码符号、Markdown 固定字段名和协议枚举值可保留原文。',
+    '评审正文只能使用角色模板规定的 Markdown 章节，不得返回 reviewerConfig。',
     '',
     inputs(taskId, kind, round).join('\n')
   ].join('\n') + '\n'
 }
 
-function request (taskId, kind, round, platform) {
+function request (taskId, kind, round, platform, boundTrees) {
   if (!u.isPositiveInteger(round)) u.fail('Reviewer round must be a positive integer')
   const files = inputs(taskId, kind, round)
+  const trees = kind === 'code' ? (boundTrees || snapshot.reviewTrees(taskId)) : null
   const value = {
     protocolVersion: u.protocolVersion,
     taskId: taskId,
@@ -105,10 +108,13 @@ function request (taskId, kind, round, platform) {
     writePolicy: 'read-only-with-tree-drift-guard',
     inputs: files,
     inputDigests: inputDigests(files),
-    workspaceTree: snapshot.createWorktreeTree(taskId),
-    output: taskPath(taskId, 'reviews/' + kind + '-review-' + round + '.json')
+    workspaceTree: trees ? trees.currentTree : snapshot.createWorktreeTree(taskId),
+    output: taskPath(taskId, 'reviews/' + kind + '-review-' + round + '.md')
   }
-  if (kind === 'code') value.snapshotTree = snapshot.validateRoundSnapshot(taskId, round).currentTree
+  if (trees) {
+    value.baselineTree = trees.baselineTree
+    value.snapshotTree = trees.currentTree
+  }
   return value
 }
 
@@ -116,8 +122,7 @@ function digest (value) {
   return crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex')
 }
 
-function writeExclusive (file, value, label) {
-  const content = JSON.stringify(value, null, 2) + '\n'
+function writeTextExclusive (file, content, label) {
   u.ensureDir(path.dirname(file))
   try {
     fs.writeFileSync(file, content, { flag: 'wx' })
@@ -128,10 +133,32 @@ function writeExclusive (file, value, label) {
   return file
 }
 
+function writeExclusive (file, value, label) {
+  return writeTextExclusive(file, JSON.stringify(value, null, 2) + '\n', label)
+}
+
+function validateCodeDiff (taskId, round, reviewRequest) {
+  if (reviewRequest.kind !== 'code') return ''
+  const file = codeDiffPath(taskId, round)
+  const expected = snapshot.diffTrees(taskId, reviewRequest.baselineTree, reviewRequest.snapshotTree)
+  if (u.readRegularText(file, 'Code review diff') !== expected) {
+    u.fail('Code review diff must exactly match the prepared baseline and worktree trees')
+  }
+  return file
+}
+
 function prepare (state, taskId, kind, round) {
-  const reviewRequest = request(taskId, kind, round, state.platform)
+  const trees = kind === 'code' ? snapshot.reviewTrees(taskId) : null
+  const diff = trees
+    ? writeTextExclusive(
+        codeDiffPath(taskId, round),
+        snapshot.diffTrees(taskId, trees.baselineTree, trees.currentTree),
+        'Code review diff'
+      )
+    : ''
+  const reviewRequest = request(taskId, kind, round, state.platform, trees)
   const file = writeExclusive(requestPath(taskId, kind, round), reviewRequest, 'Reviewer request artifact')
-  return {
+  const result = {
     ok: true,
     runner: 'native-subagent',
     role: reviewRequest.role,
@@ -139,60 +166,67 @@ function prepare (state, taskId, kind, round) {
     requestDigest: digest(reviewRequest),
     prompt: prompt(taskId, kind, round, state.platform)
   }
+  if (diff) result.diff = diff
+  return result
 }
 
-function normalizeReviewerConfig (platform, raw) {
-  const review = JSON.parse(raw)
-  if (review && review.evidence && typeof review.evidence === 'object' && !Array.isArray(review.evidence)) {
-    review.evidence.reviewerConfig = reviewerConfig(platform)
-  }
-  return JSON.stringify(review)
-}
-
-function validateReviewerConfig (review, platform) {
-  const actual = review && review.evidence && review.evidence.reviewerConfig
+function validateReviewerConfig (actual, platform) {
   if (JSON.stringify(actual) !== JSON.stringify(reviewerConfig(platform))) {
     u.fail('Reviewer run artifact must contain the state-derived reviewer configuration')
   }
 }
 
-function validateContextIsolation (review) {
-  const checks = review && review.evidence && review.evidence.checks
-  const passed = Array.isArray(checks) && checks.some(function (check) {
-    return check.command === contextIsolationCheck.command && check.result === contextIsolationCheck.result
+function requireFreshReviewerAgent (taskId, kind, round, agentId) {
+  const current = artifactPath(taskId, kind, round)
+  const dir = path.dirname(current)
+  if (!fs.existsSync(dir)) return
+  fs.readdirSync(dir).filter(function (file) {
+    return /^(plan|code)-review-\d+\.json$/.test(file)
+  }).forEach(function (file) {
+    const runPath = path.join(dir, file)
+    if (runPath === current) return
+    let run
+    try {
+      run = JSON.parse(u.readRegularText(runPath, 'Reviewer run artifact'))
+    } catch (err) {
+      u.fail('Invalid reviewer run artifact: ' + err.message)
+    }
+    if (run && run.execution && run.execution.agentId === agentId) {
+      u.fail('每轮 reviewer 必须使用全新子 Agent，--agent-id 不得与历史 reviewer-run 重复: ' + agentId)
+    }
   })
-  if (!passed) {
-    u.fail('Reviewer result must include the passed context-isolation-preflight evidence')
-  }
 }
 
-function readPreparedRequest (taskId, kind, round, platform) {
+function requirePrepared (taskId, kind, round, platform) {
   const file = requestPath(taskId, kind, round)
   const prepared = JSON.parse(u.readRegularText(file, 'Reviewer request artifact'))
   if (JSON.stringify(prepared) !== JSON.stringify(request(taskId, kind, round, platform))) {
     u.fail('Reviewer inputs or workspace tree changed after prepare; start a new review round')
   }
+  validateCodeDiff(taskId, round, prepared)
   return prepared
 }
 
 function finalize (state, taskId, kind, round, input, agentId) {
   if (!input) u.fail('--input is required for --finalize')
   if (!agentId) u.fail('--agent-id is required for --finalize')
-  const reviewRequest = readPreparedRequest(taskId, kind, round, state.platform)
+  requireFreshReviewerAgent(taskId, kind, round, agentId)
+  const reviewRequest = requirePrepared(taskId, kind, round, state.platform)
   const raw = u.readRegularText(path.resolve(input), 'Reviewer result')
-  const validated = persist.validate(taskId, kind, round, normalizeReviewerConfig(state.platform, raw))
-  validateContextIsolation(validated.review)
+  const validated = persist.validate(taskId, kind, round, raw)
+  const reviewDocument = reviewMarkdown.render(validated.review)
   const run = {
     request: reviewRequest,
     execution: {
       agentId: agentId,
       contextInheritance: 'none',
-      resultSha256: crypto.createHash('sha256').update(raw).digest('hex')
+      resultSha256: crypto.createHash('sha256').update(raw).digest('hex'),
+      reviewerConfig: reviewerConfig(state.platform)
     },
-    review: validated.review
+    reviewDocument: reviewDocument
   }
   const file = writeExclusive(artifactPath(taskId, kind, round), run, 'Reviewer run artifact')
-  const persisted = persist.persist(taskId, kind, round, JSON.stringify(validated.review), { reviewerRun: true })
+  const persisted = persist.persist(taskId, kind, round, reviewDocument, { reviewerRun: true })
   return { ok: true, runner: 'native-subagent', run: file, review: persisted.review, status: persisted.status }
 }
 
@@ -215,34 +249,35 @@ function requireBoundInputs (taskId, kind, round, platform) {
     JSON.stringify(actual.request) !== JSON.stringify(request(taskId, kind, round, platform))) {
     u.fail('Invalid reviewer run artifact: request must exactly match the state-derived reviewer invocation')
   }
+  validateCodeDiff(taskId, round, actual.request)
   if (!actual.execution || typeof actual.execution.agentId !== 'string' || !actual.execution.agentId ||
     actual.execution.contextInheritance !== 'none') {
     u.fail('Invalid reviewer run artifact: native subagent execution evidence is incomplete')
   }
-  const errors = u.validateReviewObject(actual.review)
-  if (actual.review && actual.review.round !== round) errors.push('review round must equal expected round ' + round)
-  if (kind === 'code') {
-    errors.push.apply(errors, u.validateReviewScope(
-      actual.review,
-      u.readJson(path.join(u.taskDir(taskId), 'diffs', 'code-scope-' + round + '.json')),
-      round
-    ))
+  let review
+  try {
+    review = reviewMarkdown.parse(actual.reviewDocument)
+  } catch (err) {
+    u.fail('Invalid reviewer run artifact Markdown: ' + err.message)
   }
+  const errors = u.validateReviewObject(review)
+  if (review.round !== round) errors.push('review round must equal expected round ' + round)
   if (errors.length) u.fail('Invalid reviewer run artifact review:\n- ' + errors.join('\n- '))
-  validateReviewerConfig(actual.review, platform)
-  return { file: file, review: actual.review }
+  validateReviewerConfig(actual.execution.reviewerConfig, platform)
+  return { file: file, review: review, document: reviewMarkdown.render(review) }
 }
 
 function requireValid (taskId, kind, round, platform) {
   const completed = requireBoundInputs(taskId, kind, round, platform)
-  persist.validate(taskId, kind, round, JSON.stringify(completed.review))
+  persist.validate(taskId, kind, round, completed.document)
   return completed
 }
 
 function requireForState (state, taskId, kind, round) {
   if (state.platform !== 'codex' && state.platform !== 'claude-code') return
   const completed = requireValid(taskId, kind, round, state.platform)
-  if (u.readReviewArtifact(u.reviewArtifactPath(taskId, kind, round)) !== JSON.stringify(completed.review, null, 2) + '\n') {
+  const reviewFile = u.reviewArtifactPath(taskId, kind, round)
+  if (u.readReviewArtifact(reviewFile) !== completed.document) {
     u.fail('Persisted review must exactly match the reviewer run artifact')
   }
   return completed
@@ -255,8 +290,15 @@ function confirmationDrift (state, taskId, kind, round) {
     u.fail('Reviewer run artifact changed after state advancement')
   }
   const actual = JSON.parse(content)
-  validateReviewerConfig(actual.review, state.platform)
-  if (u.readReviewArtifact(u.reviewArtifactPath(taskId, kind, round)) !== JSON.stringify(actual.review, null, 2) + '\n') {
+  validateReviewerConfig(actual.execution && actual.execution.reviewerConfig, state.platform)
+  let review
+  try {
+    review = reviewMarkdown.parse(actual.reviewDocument)
+  } catch (err) {
+    u.fail('Invalid reviewer run artifact Markdown: ' + err.message)
+  }
+  const reviewFile = u.reviewArtifactPath(taskId, kind, round)
+  if (u.readReviewArtifact(reviewFile) !== reviewMarkdown.render(review)) {
     u.fail('Persisted review must exactly match the reviewer run artifact')
   }
   if (kind === 'plan') {
@@ -265,6 +307,7 @@ function confirmationDrift (state, taskId, kind, round) {
     const current = inputDigest(planPath)
     return { changed: bound.sha256 !== current, changedPaths: bound.sha256 === current ? [] : [planPath], reviewedValue: bound.sha256, currentValue: current }
   }
+  validateCodeDiff(taskId, round, actual.request)
   const drift = snapshot.snapshotDrift(taskId, actual.request.snapshotTree)
   return { changed: drift.changedPaths.length > 0, changedPaths: drift.changedPaths, reviewedValue: drift.reviewedTree, currentValue: drift.currentTree }
 }
@@ -301,12 +344,15 @@ module.exports = {
   artifactPath,
   artifactDigest,
   confirmationDrift,
+  codeDiffPath,
   finalize,
   inputs,
   prepare,
   prompt,
   request,
   requestPath,
+  requirePrepared,
+  requireFreshReviewerAgent,
   reviewerConfig,
   requireValid,
   requireForState

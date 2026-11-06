@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "new-profile-component",
+  "prompt": "请根据附件需求，从零创建一个可复用的 profile-card.mpx 组件，确保微信小程序与 Web 的功能和外部样式表现一致。仅输出完整组件 SFC，不要创建应用、页面或构建配置。",
+  "source_metadata": "evals.json"
+}

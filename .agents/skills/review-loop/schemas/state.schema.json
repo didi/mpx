@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "ReviewLoopState",
+  "title": "评审循环状态",
   "type": "object",
   "required": [
     "protocolVersion",
@@ -18,7 +18,7 @@
   "additionalProperties": true,
   "properties": {
     "protocolVersion": {
-      "const": "2.0.0"
+      "const": "3.0.0"
     },
     "taskId": {
       "type": "string",

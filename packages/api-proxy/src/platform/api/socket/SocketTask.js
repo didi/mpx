@@ -1,20 +1,23 @@
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import { type } from '@mpxjs/utils'
 
 const socketTasks = new Set()
 
 class SocketTask {
-  constructor (url, protocols) {
+  constructor (url, protocols, header) {
     this._openCb = null
     this._closeCb = null
     this._messageCb = null
     this._errorCb = null
-    this._closeData = null
 
-    if (protocols && protocols.length > 0) {
-      this._socket = new window.WebSocket(url, protocols)
+    if (header) {
+      this._socket = new WebSocket(url, protocols, {
+        headers: header
+      })
+    } else if (protocols && protocols.length > 0) {
+      this._socket = new WebSocket(url, protocols)
     } else {
-      this._socket = new window.WebSocket(url)
+      this._socket = new WebSocket(url)
     }
     this.addListener(this._socket)
     socketTasks.add(this._socket)
@@ -57,12 +60,8 @@ class SocketTask {
 
   close (options = {}) {
     const { code = 1000, reason = '', success, fail, complete } = options
-    this._closeData = {
-      code,
-      reason
-    }
     try {
-      this._socket.close()
+      this._socket.close(code, reason)
       const res = { errMsg: 'closeSocket:ok' }
       successHandle(res, success, complete)
     } catch (err) {
@@ -73,7 +72,10 @@ class SocketTask {
 
   addListener (socket) {
     socket.onopen = event => {
-      typeof this._openCb === 'function' && this._openCb(event)
+      if (typeof this._openCb === 'function') {
+        defineUnsupportedProps(event, ['header'])
+        this._openCb(event)
+      }
     }
     socket.onmessage = event => {
       typeof this._messageCb === 'function' && this._messageCb({
@@ -82,18 +84,19 @@ class SocketTask {
     }
     socket.onerror = event => {
       socketTasks.delete(this._socket)
-      typeof this._errorCb === 'function' && this._errorCb(event)
+      if (typeof this._errorCb === 'function') {
+        Object.assign(event, {
+          errMsg: `connectSocket:fail${event.message ? ' ' + event.message : ''}`
+        })
+        this._errorCb(event)
+      }
     }
     socket.onclose = event => {
       socketTasks.delete(this._socket)
       if (typeof this._closeCb !== 'function') {
         return
       }
-      if (this._closeData) {
-        this._closeCb(event)
-      } else {
-        this._closeCb({ code: event.code, reason: event.reason })
-      }
+      this._closeCb({ code: event.code, reason: event.reason })
     }
   }
 

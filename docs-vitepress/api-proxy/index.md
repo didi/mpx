@@ -17,6 +17,8 @@ import apiProxy from "@mpxjs/api-proxy"
 mpx.use(apiProxy, options)
 ```
 
+应用事件可通过监听 API 注册。例如，[onPageNotFound](./base/app/app-event/onPageNotFound.md) 监听启动入口不存在事件，[offPageNotFound](./base/app/app-event/offPageNotFound.md) 取消监听。
+
 ## 配置项 (Options) {#options}
 
 所有配置均为可选，可根据实际需求组合使用

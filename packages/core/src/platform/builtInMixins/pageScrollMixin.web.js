@@ -15,7 +15,7 @@ function refreshMs () {
 }
 
 function showLoading (vm) {
-  const { backgroundColor = 'transparent', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
+  const { backgroundColor = '#ffffff', backgroundTextStyle = 'dark' } = vm.$options.__mpxPageConfig
   vm.__mpxloading = document.createElement('div')
   vm.__mpxloading.className = 'pull-down-loading'
   vm.__mpxloading.style.cssText = `background-color: ${backgroundColor};`

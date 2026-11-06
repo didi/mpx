@@ -1,12 +1,28 @@
 ---
 name: mpx2rn
-description: Mpx 跨端输出 RN（简称 Mpx2RN 或 Mpx2DRN）的开发适配指南，覆盖模板、脚本、样式、JSON 配置四大维度。当用户进行 Mpx2RN 相关任务时强制调用，包括但不限于：技术方案设计、页面 / 组件的开发迭代、旧项目跨端适配改造、编译和运行时报错排查、Code Review 等。当用户问题不涉及 Mpx2RN 时不应调用，如 Mpx 小程序开发问题，RN 原生开发问题、Mpx2Web 相关问题等。
+description: Mpx2RN 旧版开发适配指南，已由 mpx Skill 替代。用户调用 mpx2rn 时提示迁移，优先使用可用的 mpx Skill；新版不可用时，继续提供 Mpx2RN/Mpx2DRN 的方案设计、页面与组件开发、跨端适配、排障和代码评审指引。不用于未经 Mpx 编译的纯 RN 项目或与 Mpx2RN 无关的开发任务。
 metadata:
-  version: "2.12.7"
+  version: "2.12.9"
   author: donghongping
 ---
 
 # Mpx 跨端输出 RN 开发与适配指南
+
+## 迁移提示（先于任务执行）
+
+本 Skill 已由 `mpx` Skill 替代，RN 指引位于新版的 `references/rn/`，下方旧版指引保留用于过渡。
+
+本会话首次使用本 Skill 时，必须在执行任务前向用户独立展示以下提示，保留加粗标题，不得仅在内部切换 Skill、混入普通进度说明或等到最终回复才告知：
+
+> **Skill 升级提示：`mpx2rn` 已由 `mpx` 替代。**
+> 新版统一提供 Mpx 小程序、RN、Web 与 Skyline 的开发和跨端适配指引，后续请使用 `mpx` Skill。
+
+从当前环境的可用技能列表或技能发现机制定位 `mpx`，按实际可用情况紧接提示说明本次处理方式：
+
+- **新版可用**：告知“本次将使用 `mpx` 中的 RN 指引继续处理。”读取该 Skill 的实际 `SKILL.md`，按其 RN 路由继续任务，不再加载下方旧版指引及参考。
+- **新版不可用**：告知“当前未找到可用的 `mpx` Skill，请执行 `d-skills add mpx` 安装新版；本次继续使用旧版指引完成任务。”
+
+同一会话只提示一次，不要求用户确认，不因迁移提示中断任务；用户明确要求使用旧版时尊重其选择，继续使用下方指引。
 
 ## 背景介绍
 
@@ -14,7 +30,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 
 ### 适用场景
 
-本 SKILL 是 Mpx2RN 开发适配的统一指南，覆盖模板、脚本、样式、JSON 配置四大维度。涉及 Mpx2RN 的任务均应在动笔前阅读本 SKILL 的 [Mpx2RN 跨端开发约束](#mpx2rn-跨端开发约束)，包括但不限于：
+继续使用旧版时，下方指引覆盖模板、脚本、样式、JSON 配置四大维度，动笔前阅读本 SKILL 的 [Mpx2RN 跨端开发约束](#mpx2rn-跨端开发约束)，适用任务包括但不限于：
 
 - **技术方案设计**：评估需求在 RN 平台的可行性、跨端兼容方案选型、是否需要文件级条件编译或混合开发等;
 - **旧项目跨端适配改造**：对已基于小程序规范编写、未适配 RN 的存量组件进行兼容性补齐（参见下文[任务一](#任务一对小程序-mpx-组件进行-rn-跨端适配改造)）;
@@ -38,6 +54,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 | [条件编译](./references/conditional-compile.md) | 模板、脚本、样式、JSON 等不同部分的条件编译语法，遇到无法跨端等效实现需分平台处理时读取 |
 | [跨端输出 RN 模板能力参考](./references/rn-template-reference.md) | 模板部分跨端能力详情：数据绑定、模板指令、事件、Slot、WXML 模板、i18n、无障碍访问、基础组件清单及其属性/事件支持情况 |
 | [跨端输出 RN 脚本能力参考](./references/rn-script-reference.md) | 脚本部分跨端能力详情：构造选项、生命周期、实例方法/属性、组合式 API、运行时导出、状态管理 |
+| [跨端输出 RN 编译与运行时配置参考](./references/rn-config-reference.md) | `MpxWebpackPlugin` 编译选项、编译期 `rnConfig` 与运行时 `Mpx.config` / `Mpx.config.rnConfig`；配置目标平台、基础组件替换、分包、导航或宿主能力时读取 |
 | [跨端输出 RN 样式能力参考](./references/rn-style-reference.md) | 样式部分跨端能力详情：选择器、单位、颜色、文本继承、CSS 变量、媒体查询、动画、背景图与逐项样式属性支持情况；明确查询某项样式能力是否支持时直接读取 |
 | [跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md) | 常用选择器与样式属性的跨端兼容方案；样式适配或开发时优先读取并直接应用命中的场景，未命中时再查样式能力参考 |
 | [Mpx2RN 原子 CSS 能力参考](./references/rn-atomic-css.md) | 基于 UnoCSS 的 RN 原子类接入、工具类、variants、directives 与 variant groups 支持范围、颜色透明度约束及编译排查；项目启用原子类或任务涉及 utility class 时读取 |
@@ -81,7 +98,7 @@ Mpx 是一个以微信小程序语法为基础、进行了类 Vue 语法拓展�
 
 ### 脚本开发约束
 
-1. **生命周期与构造选项**：仅使用[逻辑能力参考](./references/rn-script-reference.md)中标注 RN 支持的生命周期、构造选项和实例方法；`onShareTimeline` / `onTabItemTap` / `onAddToFavorites` / `onSaveExitState` 等不支持项不得直接用于 RN 产物。
+1. **生命周期与构造选项**：仅使用[逻辑能力参考](./references/rn-script-reference.md)中标注 RN 支持的生命周期、构造选项和实例方法；`onShareTimeline` / `onTabItemTap` / `onAddToFavorites` / `onSaveExitState` 等无默认驱动的声明须由业务提供适配并通过 [`implement` 登记](./references/rn-script-reference.md#通过-implement-适配)，或使用 `remove: true` 移除，不得仅登记便视为能力已实现。
 2. **环境 API**：统一通过 `@mpxjs/api-proxy` 提供的 `mpx.xxx` 调用环境能力，不要直接使用 `wx.xxx` / `my.xxx`；具体支持范围以[环境 API 参考](./references/rn-api-reference.md)为准。若用户通过 `custom` 配置扩展了能力，以用户说明为准。
 3. **Promise 化调用**：`@mpxjs/api-proxy` 开启 `usePromise` 时，参与 Promise 化的异步 API 必须使用 `await` 或 `.then()` / `.catch()`，不得传入 `success` / `fail` 回调。详见[环境 API 参考 · Promise 化](./references/rn-api-reference.md#使用说明)。
 4. **selector API**：`selectComponent` / `selectAllComponents` / `createSelectorQuery` / `createIntersectionObserver` 等 selector API 仅使用 `#id` / `.class`，且对应模板节点须声明空 `wx:ref`。详见[逻辑能力参考 · 页面 / 组件实例方法与属性](./references/rn-script-reference.md#页面--组件实例方法与属性)。

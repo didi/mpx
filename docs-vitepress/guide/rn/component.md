@@ -34,7 +34,7 @@
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | enable-offset		  | boolean  |     `false`    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
-| enable-var	  | boolean  |     `true`    | 默认支持使用 css variable，若想关闭该功能可设置为 false |
+| enable-var | boolean / `'use'` | `false` | 首次自动检测 CSS 变量能力；`'use'` 仅预留动态使用，`true` 预留动态声明与使用。见 [CSS 变量](./style.md#var-function) |
 | enable-text-pass-through | boolean | `false` | RN 环境特有属性，开启文本样式和文本属性透传上下文，请在动态添加文本样式或文本属性时开启 |
 | parent-width		  | number  |         | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度|
 | parent-height		  | number  |         | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度|
@@ -44,6 +44,8 @@
 由于 view、text、scroll-view、image 和 input 组件都是基于 React Native 原生组件实现的，因此这些组件默认继承原生组件支持的属性。
 
 与微信小程序一致，React Native 输出支持只传递属性名不传递属性值的布尔写法，例如 `<scroll-view scroll-y />` 等价于 `<scroll-view scroll-y="{{ true }}" />`。
+
+关闭 `enable-fast-image` 时需传递布尔值，例如 <span v-pre>`enable-fast-image="{{false}}"`</span>；`enable-fast-image="false"` 会传入字符串，无法关闭 fast-image。
 
 ### view
 视图容器。
@@ -56,9 +58,21 @@
 | hover-stay-time	  | number  |     `400`    | 手指松开后点击态保留时间，单位毫秒	 |
 | animation | object  |   | 传递动画的实例， 可配合mpx.createAnimation方法一起使用|
 | enable-background		  | boolean  |     `false `   |  RN环境特有属性，是否要开启background-image、background-size和background-position的相关计算或渲染，请根据实际情况开启 |
-| enable-animation | boolean  | `false`  | RN环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
-| enable-fast-image | boolean  | `false`  | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| enable-animation | boolean \| string | `false` | RN 环境特有属性，预声明动画类型；可显式选择 API 或 transition，具体取值见下表。 |
+| enable-fast-image | boolean  | `true`  | RN 环境特有属性，渲染背景图片时默认使用 `@d11/react-native-fast-image`，设为 `false` 时使用 React Native 原生 `Image` |
 | is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
+
+`enable-animation` 的取值规则：
+
+| 值 | 行为 |
+| --- | --- |
+| 未设置、`false`、`'none'` | 按样式和 `animation` 属性自动检测动画类型，不会强制关闭已检测到的动画。 |
+| `true` | 默认选择 `createAnimation` API 动画；若同时检测到 transition 样式，则优先选择 transition。 |
+| `'api'` | 显式选择 `createAnimation` API 动画，优先于样式自动检测，需配合 `animation` 属性传入动画数据。 |
+| `'transition'` | 显式选择 CSS transition 动画，优先于自动检测，需配合 transition 样式。 |
+| `'animation'` | 识别为 CSS animation，但当前不支持，会提示错误且不启用动画渲染。 |
+
+动画类型在首次渲染时确定，同一实例不能从无动画切换为有动画，也不能在 API 与 transition 之间切换。首次没有 transition、后续才动态添加时，应从首次渲染起设置 `enable-animation="transition"`；`true` 不能代替此预声明。
 
 事件
 
@@ -68,10 +82,10 @@
 
 
 > [!tip] 注意
-> - 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
+> - 如果从未使用背景图或动画，请不要开启 `enable-background` 或 `enable-animation` 属性，会有一定的性能消耗。
 > - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 > - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
-> - 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
+> - view 的背景与动画能力需在**首次**渲染时确定。后续可能使用背景图时，首次设置 <span v-pre>`enable-background="{{true}}"`</span>；后续可能使用动画时，按类型预声明 `enable-animation="api"` 或 `enable-animation="transition"`，不要将布尔值 `true` 当作通用动画开关。
 
 ### text
 文本。
@@ -212,6 +226,7 @@ movable-view的可移动区域。
 | animation  | boolean  |    `true`   | 是否使用动画	 |
 | damping   | number   |    `20`      | 阻尼系数，用于控制x或y改变时的动画和过界回弹的动画，值越大移动越快 |
 | friction  | number   |    `2`       | 摩擦系数，用于控制惯性滑动的动画，值越大摩擦力越大，滑动越快停止 |
+| workletChange | function |  | RN 环境特有属性，拖动位置变化时在 UI 线程立即触发，回调参数为 `{x, y, source}`，不受 `changeThrottleTime` 影响 |
 | simultaneous-handlers  | array\<object>  |   `[]`   | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | wait-for  |  array\<object>  |  `[]`    |  RN 环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | disable-event-passthrough | boolean  |  `false`   | RN 环境特有属性，有时候我们希望movable-view 在水平方向滑动，并且竖直方向的手势也希望被 movable-view 组件消费掉，不被其他组件响应，可以将这个属性设置为true） |
@@ -229,6 +244,7 @@ movable-view的可移动区域。
 >
 > - simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 > - wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
+> - workletChange 为 RN 环境特有属性，回调会在 UI 线程执行，函数体需包含 `'worklet'` 指令，且只接收 `{x, y, source}` 参数，不是完整 Mpx 事件对象
 > - RN 环境 movable 相关组件暂不支持缩放能力
 
 ### image
@@ -240,7 +256,7 @@ movable-view的可移动区域。
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | src                     | string  | `false`       | 图片资源地址、base64 格式数据或本地静态资源相对路径 |
 | mode                    | string  | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right`             |
-| enable-fast-image          | boolean  | `false`   | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| enable-fast-image          | boolean  | `true`   | RN 环境特有属性，默认使用 `@d11/react-native-fast-image` 渲染非 SVG 图片，设为 `false` 时使用 React Native 原生 `Image` |
 | is-svg                 | boolean  | `false`   | RN 环境特有属性，传递为 `true` 时强制使用 SVG 方式渲染图片 |
 
 事件
@@ -813,7 +829,7 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 | 功能 | 支持状态 | 说明 |
 |------|---------|------|
 | id, dataset | ✅ 完全支持 | 节点基础属性 |
-| setData | ✅ 完全支持 | 数据更新方法 |
+| setData | ✅ 完全支持 | 数据更新方法，回调在视图更新后执行 |
 | triggerEvent | ✅ 完全支持 | 事件触发 |
 | createSelectorQuery | ✅ 有限制 | 返回一个 SelectorQuery 对象实例，用以查询基础节点或非 virtualHost 自定义组件 host 节点的位置等属性，需配合 `wx:ref` 使用 |
 | selectComponent | ✅ 有限制 | 在父组件当中获取子组件的实例对象，返回匹配到的第一个组件实例，需配合 `wx:ref` 使用 |

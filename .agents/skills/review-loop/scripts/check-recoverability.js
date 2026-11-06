@@ -30,13 +30,7 @@ function main () {
   if (state.protocolVersion !== u.protocolVersion) {
     u.fail('Unsupported protocolVersion: ' + state.protocolVersion)
   }
-  const required = ['goal.md', 'plan.md', 'reviews', 'diffs', 'logs', path.join('runtime', 'baseline', 'manifest.json')]
-  if (state.phase === 'code_reviewing') {
-    const round = state.codeRound + 1
-    ;['code-diff-', 'code-round-', 'code-scope-'].forEach(function (prefix) {
-      required.push(path.join('diffs', prefix + round + (prefix === 'code-scope-' ? '.json' : '.patch')))
-    })
-  }
+  const required = ['goal.md', 'plan.md', 'reviews', 'logs', path.join('runtime', 'baseline', 'manifest.json')]
   if ((state.platform === 'codex' || state.platform === 'claude-code') &&
     (state.phase === 'plan_reviewing' || state.phase === 'code_reviewing')) {
     const kind = state.phase === 'plan_reviewing' ? 'plan' : 'code'
@@ -110,9 +104,9 @@ function main () {
     return !fs.existsSync(path.join(dir, item))
   })
   if (missing.length) {
-    const reviewPersisted = state.phase === 'code_reviewing' && fs.existsSync(path.join(
-      dir, 'reviews', 'code-review-' + (state.codeRound + 1) + '.json'
-    ))
+    const reviewPersisted = state.phase === 'code_reviewing' && fs.existsSync(
+      u.reviewArtifactPath(taskId, 'code', state.codeRound + 1)
+    )
     process.stdout.write(JSON.stringify({
       ok: false,
       action: missing.includes(path.join('runtime', 'baseline', 'manifest.json')) || reviewPersisted

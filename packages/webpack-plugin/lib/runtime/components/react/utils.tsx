@@ -23,6 +23,19 @@ export const isAndroid = __mpx_mode__ === 'android'
 export const isHarmony = __mpx_mode__ === 'harmony'
 export const extendObject = Object.assign
 
+type ImageLoadEvent = {
+  nativeEvent: {
+    source?: { width: number, height: number }
+    width?: number
+    height?: number
+  }
+}
+
+export function getImageLoadSize (event: ImageLoadEvent) {
+  const { source, width, height } = event.nativeEvent
+  return source || { width: width as number, height: height as number }
+}
+
 const textStyleMap: Record<string, boolean> = {
   color: true,
   letterSpacing: true,
@@ -252,7 +265,7 @@ interface PercentConfig {
 }
 
 interface TransformStyleConfig {
-  enableVar?: boolean
+  enableVar?: boolean | 'use'
   parentWidth?: number
   parentHeight?: number
   transformRadiusPercent?: boolean
@@ -482,15 +495,6 @@ export function splitProps<T extends Record<string, any>> (props: T = {} as T): 
     }
   }
   return { textProps, innerProps }
-}
-
-export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
-  return pickedKeys.reduce<Record<string, any>>((acc, key) => {
-    if (key in styleObj) {
-      acc[key] = callback ? callback(key, styleObj[key]) : styleObj[key]
-    }
-    return acc
-  }, {})
 }
 
 // ============================================================
@@ -1337,24 +1341,31 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   // traverse var & generate normalStyle
   traverseStyle(styleObj, styleVisitor)
-  enableVar = enableVar || hasVarDec || hasVarUse
+  const enableVarProvider = enableVar === true || hasVarDec
+  const enableVarProviderRef = useRef(enableVarProvider)
+  enableVar = !!enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
-  if (enableVarRef.current !== enableVar) {
-    error('css variable use/declare should be stable in the component lifecycle, or you can set [enable-var] with true.')
+  if (enableVarProvider && !enableVarProviderRef.current) {
+    error('css variable declaration must be enabled on the first render. Set [enable-var] to true before adding declarations dynamically.')
+  } else if (enableVar && !enableVarRef.current) {
+    error('css variable use must be enabled on the first render. Set [enable-var] to "use" before using var() dynamically.')
   }
   // apply css var
   const varContextRef = useRef<Record<string, any>>({})
   if (enableVarRef.current) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const varContext = useContext(VarContext)
-    // 无声明节点：直接用父 varContext 解析，跳过 merge / 比对 / ref 维护。
-    // 有声明节点：浅合并出 newVarContext，仅在内容变化时替换 ref 维持引用稳定，
-    //            供 wrapChildren 的 <VarContext.Provider> 使用。
+    // 消费节点只订阅父上下文；Provider 按首次声明或显式 enable-var=true 固定挂载。
     let resolvedVarContext = varContext
-    if (hasVarDec) {
-      const newVarContext = extendObject({}, varContext, varStyle)
-      if (!shallowEqual(varContextRef.current, newVarContext)) {
-        varContextRef.current = newVarContext
+    if (enableVarProviderRef.current) {
+      if (hasVarDec) {
+        const newVarContext = extendObject({}, varContext, varStyle)
+        if (!shallowEqual(varContextRef.current, newVarContext)) {
+          varContextRef.current = newVarContext
+        }
+      } else {
+        // 声明移除后保留 Provider，直接透传父上下文，避免重挂载或残留旧变量。
+        varContextRef.current = varContext
       }
       resolvedVarContext = varContextRef.current
     }
@@ -1430,8 +1441,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   if (hasBoxSizingAffectingStyle) transformBoxSizing(normalStyle)
 
   return {
-    hasVarDec,
-    varContextRef,
+    hasVarDec: enableVarProviderRef.current,
+    varContext: varContextRef.current,
     setWidth,
     setHeight,
     normalStyle,
@@ -1552,7 +1563,7 @@ export function useTextPassThrough (
   )
   const enableTextPassThroughRef = useRef(shouldEnableTextPassThrough)
 
-  if (enableTextPassThroughRef.current !== shouldEnableTextPassThrough) {
+  if (shouldEnableTextPassThrough && !enableTextPassThroughRef.current) {
     error('[Mpx runtime error]: text style/props use should be stable in the component lifecycle, or you can set [enable-text-pass-through] with true.')
   }
 

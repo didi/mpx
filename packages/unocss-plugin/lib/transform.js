@@ -2,12 +2,32 @@ import MagicString from 'magic-string'
 import transformerDirectives from '@unocss/transformer-directives' // default
 import { getReplaceSource } from './source.js'
 const escapedReg = /\\(.)/g
+const mpEscapeMap = {
+  '(': '_pl_',
+  ')': '_pr_',
+  '[': '_bl_',
+  ']': '_br_',
+  '{': '_cl_',
+  '}': '_cr_',
+  '#': '_h_',
+  '!': '_i_',
+  '/': '_s_',
+  '.': '_d_',
+  ':': '_c_',
+  ',': '_2c_',
+  '%': '_p_',
+  '\'': '_q_',
+  '"': '_dq_',
+  '+': '_a_',
+  $: '_si_'
+}
 
-function mpEscape (str, escapeMap = {}) {
+function mpEscape (str, onUnknown) {
   return str.replace(escapedReg, (_, p1) => {
-    if (escapeMap[p1]) return escapeMap[p1]
+    if (mpEscapeMap[p1]) return mpEscapeMap[p1]
+    onUnknown && onUnknown(p1)
     // unknown escaped
-    return escapeMap.unknown
+    return '_u_'
   })
 }
 

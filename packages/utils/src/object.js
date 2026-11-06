@@ -1,4 +1,5 @@
 import { type, noop, isObject } from './base'
+import { warn } from './log'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
@@ -6,6 +7,20 @@ const extend = Object.assign
 
 function hasOwn (obj, key) {
   return isObject(obj) && hasOwnProperty.call(obj, key)
+}
+
+function defineUnsupportedProps (resObj, props) {
+  const defineProps = {}
+  props.forEach((item) => {
+    defineProps[item] = {
+      get () {
+        warn(`The ${item} attribute is not supported in ${__mpx_mode__} environment`, '@mpxjs/api-proxy')
+        return null
+      },
+      set: noop
+    }
+  })
+  Object.defineProperties(resObj, defineProps)
 }
 
 function isPlainObject (value) {
@@ -219,6 +234,7 @@ function processUndefined (obj) {
 
 export {
   hasOwn,
+  defineUnsupportedProps,
   extend,
   isPlainObject,
   shallowEqual,

@@ -168,15 +168,23 @@ Mpx 在 RN 平台支持多种 CSS 单位，并在运行时进行转换。
 | 单位 | 说明 | 转换规则 |
 | --- | --- | --- |
 | `px` | 绝对像素 | 直接转换为 RN 的无单位数值 |
-| `rpx` | 响应式像素 | `rpx值 × 屏幕宽度 / 750` |
+| `rpx` | 响应式像素 | 按 `rpx值 × 视口基准宽度 / 750` 转换 |
 | `%` | 百分比 | 转换为字符串形式（如 `'50%'`），由 RN 原生支持或框架处理 |
-| `vw` | 视口宽度百分比 | `vw值 × 屏幕宽度 / 100` |
-| `vh` | 视口高度百分比 | `vh值 × 屏幕高度 / 100` |
+| `vw` | 视口宽度百分比 | 按 `vw值 × 视口基准宽度 / 100` 转换 |
+| `vh` | 视口高度百分比 | 按 `vh值 × 视口基准高度 / 100` 转换 |
 | `hairlineWidth` | RN 特有极细线 | `StyleSheet.hairlineWidth` |
 
 #### 样式计算基准与自定义
 
-`rpx`、`vw`、`vh` 的计算默认基于运行时的 `screen.width` 和 `screen.height`。
+`rpx`、`vw`、`vh` 与媒体查询的计算默认基于运行时的 `window.width` 和 `window.height`。如需保持旧版本基于 Screen 尺寸计算的效果，可将 `Mpx.config.rnConfig.dimensionsBase` 设置为 `"screen"`：
+
+`dimensionsBase` 应在首次尺寸计算前完成配置，首次读取后将保持不变。`customDimensions` 也建议在应用初始化阶段完成配置。
+
+```javascript
+Mpx.config.rnConfig.dimensionsBase = "screen"
+```
+
+该配置支持 `"window"` 和 `"screen"`，默认值为 `"window"`。所选尺寸发生变化时，依赖响应式单位或媒体查询的组件会重新计算样式。
 
 同时支持通过运行时配置 `Mpx.config.rnConfig.customDimensions` 自定义样式计算基准：
 
@@ -188,18 +196,15 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
     const nextWindow = Object.assign({}, dimensions.window, {
       height: dimensions.window.height - 44
     })
-    const nextScreen = Object.assign({}, dimensions.screen, {
-      height: dimensions.screen.height - 44
-    })
     return {
       window: nextWindow,
-      screen: nextScreen
+      screen: dimensions.screen
     }
   }
 })
 ```
 
-配置生效后，`rpx`、`vw`、`vh` 会按自定义后的 `screen` 宽高进行计算。
+配置生效后，`rpx`、`vw`、`vh` 与媒体查询会按自定义后的 `dimensionsBase` 对应尺寸进行计算。
 
 #### 百分比计算规则
 
@@ -408,7 +413,7 @@ Mpx 在 RN 平台支持 `@media` 规则，但能力受限。
 
 **限制：**
 
-- 媒体查询中的宽度条件仅支持 `px` 单位，并基于运行时 `screen.width` 判断。
+- 媒体查询中的宽度条件仅支持 `px` 单位，并基于 `dimensionsBase` 选中尺寸的运行时 `width` 判断，默认使用 `window.width`。
 - 不支持 `width` 精确匹配、`height`、`orientation`、`all` 等其他特性。
 
 ### 动画支持
@@ -447,7 +452,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 **支持特性：**
 
 - **背景颜色**：RN 原生支持 `background-color`。
-- **背景图**：支持 `background-image: url()` 引用图片，也支持 `background-image: none` 清空背景图。
+- **背景图**：支持 `background-image: url()` 引用位图，也支持 `background-image: none` 清空背景图；SVG 图片会输出错误并丢弃。
 - **渐变背景**：支持 `background-image: linear-gradient()` 线性渐变。
 - **相关属性**：完整支持 `background-size` 和 `background-position`。
 
@@ -553,7 +558,7 @@ Mpx 在 RN 平台支持 CSS 背景图及渐变背景，框架会自动处理样�
 | --- | --- | --- | --- |
 | `background` | `<background-color>` \| `<background-image>` \| `<background-repeat>` \| `<background-position>` / `<background-size>` | 背景简写，支持用 `/` 分隔的背景位置和尺寸 | `background: #f5f5f5`；`background: url(https://example.com/bg.png) no-repeat center/cover` |
 | `background-color` | `color` | 背景色 | `background-color: #fff`；`background-color: rgba(0, 0, 0, 0.5)` 半透明黑色 |
-| `background-image` | `url()` \| `linear-gradient()` \| `none` | 背景图/渐变 | `background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none` |
+| `background-image` | `url()` \| `linear-gradient()` \| `none` | `url()` 仅支持位图，SVG 会输出错误并丢弃；渐变不受影响 | `background-image: url(https://example.com/bg.png)`；`background-image: linear-gradient(to bottom, #ff0000, #0000ff)`；`background-image: none` |
 | `background-size` | `cover` \| `contain` \| `auto` \| `length` \| `%` | 背景尺寸 | `background-size: cover` 覆盖填充；`background-size: 200rpx 100rpx` |
 | `background-repeat` | `no-repeat` | 仅支持不重复 | `background-repeat: no-repeat` |
 | `background-position` | `center` \| `left` \| `right` \| `top` \| `bottom` \| `number` \| `%` | 背景位置 | `background-position: center`；`background-position: 50% 50%` |
