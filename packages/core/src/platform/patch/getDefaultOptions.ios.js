@@ -305,6 +305,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
+    const wasPreloaded = !!props.navigation.getState?.()?.preloadedRoutes?.some(route => route.key === props.route.key)
+    Object.defineProperty(instance, 'wasPreloaded', { value: wasPreloaded, writable: false, configurable: false, enumerable: true })
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
@@ -312,6 +314,9 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  if (type === 'page') {
+    proxy.ignoreProxyMap.wasPreloaded = true
+  }
   proxy.externalClassesVersion = ref(0)
   proxy.createRenderTask()
   proxy.created()
@@ -438,6 +443,7 @@ function usePageEffect (mpxProxy, pageId, type) {
     return () => {
       unWatch && unWatch()
       if (type === 'page') {
+        del(pageStatusMap, pageId)
         del(global.__mpxPageSizeCountMap, pageId)
       }
     }
@@ -450,15 +456,14 @@ function usePageStatus (navigation, pageId) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
-    if (navigation.isFocused && navigation.isFocused()) {
-      Promise.resolve().then(() => {
+    const show = () => {
+      if (navigation.isFocused()) {
+        setFocusedNavigation(navigation)
         pageStatusMap[pageId] = 'show'
-      })
+      }
     }
-    const focusSubscription = navigation.addListener('focus', () => {
-      setFocusedNavigation(navigation)
-      pageStatusMap[pageId] = 'show'
-    })
+    if (navigation.isFocused()) Promise.resolve().then(show)
+    const focusSubscription = navigation.addListener('focus', show)
     const blurSubscription = navigation.addListener('blur', () => {
       pageStatusMap[pageId] = 'hide'
     })
@@ -466,7 +471,6 @@ function usePageStatus (navigation, pageId) {
     return () => {
       focusSubscription()
       blurSubscription()
-      del(pageStatusMap, pageId)
     }
   }, [navigation])
 }

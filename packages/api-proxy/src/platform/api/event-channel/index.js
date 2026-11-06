@@ -45,13 +45,20 @@ class EventChannel {
   }
 
   _addListener (eventName, listener, type) {
-    (this.listener[eventName] || (this.listener[eventName] = [])).push({ fn: listener, type })
+    const entry = { fn: listener, type }
+    ;(this.listener[eventName] || (this.listener[eventName] = [])).push(entry)
+    return entry
   }
 
   _addListeners (events) {
-    Object.keys(events).forEach((eventName) => {
-      this.on(eventName, events[eventName])
-    })
+    const added = Object.keys(events).map(eventName => [eventName, this._addListener(eventName, events[eventName], 'on')])
+    return () => {
+      added.forEach(([eventName, entry]) => {
+        const listeners = this.listener[eventName]
+        const index = listeners ? listeners.indexOf(entry) : -1
+        if (index >= 0) listeners.splice(index, 1)
+      })
+    }
   }
 }
 

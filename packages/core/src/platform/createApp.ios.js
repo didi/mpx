@@ -73,6 +73,14 @@ export default function createApp (options) {
   })
   global.__mpxOptionsMap = global.__mpxOptionsMap || {}
   const onStateChange = (state) => {
+    const eventChannels = global.__mpxEventChannels
+    if (eventChannels) {
+      Object.keys(eventChannels).forEach(key => {
+        if (!state.routes.some(route => route.key === key) && !state.preloadedRoutes?.some(route => route.key === key)) {
+          delete eventChannels[key]
+        }
+      })
+    }
     Mpx.config.rnConfig.onStateChange?.(state)
     if (global.__navigationHelper.lastSuccessCallback) {
       const callback = global.__navigationHelper.lastSuccessCallback
@@ -158,6 +166,8 @@ export default function createApp (options) {
       global.__mpxAppHotLaunched = false
       // 热启动情况下重置__mpxPagesMap避免页面销毁函数未及时执行时错误地引用到之前的navigation
       global.__mpxPagesMap = {}
+      global.__mpxEventChannels = {}
+      delete global.__mpxEventChannel
       firstRef.current = false
       const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
       if (initialRouteName && !hasOwn(pagesMap, initialRouteName)) {
@@ -201,12 +211,17 @@ export default function createApp (options) {
     }
 
     useEffect(() => {
+      const eventChannels = global.__mpxEventChannels
       const changeSubscription = ReactNative.AppState.addEventListener('change', (state) => {
         // 外层可能会异常设置此配置，因此加载监听函数内部
         if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
       return () => {
+        if (global.__mpxEventChannels === eventChannels) {
+          delete global.__mpxEventChannels
+          delete global.__mpxEventChannel
+        }
         appState.state = 'exit'
         changeSubscription && changeSubscription.remove()
       }
