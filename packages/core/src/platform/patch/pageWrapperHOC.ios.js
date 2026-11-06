@@ -8,8 +8,8 @@ import MpxNav, { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/
 let pageId = 0
 
 function getLayoutData (headerHeight) {
-  const screenDimensions = global.getDimensionsInfo('screen') || ReactNative.Dimensions.get('screen')
-  const windowDimensions = global.getDimensionsInfo('window') ||  ReactNative.Dimensions.get('window')
+  const screenDimensions = global.getDimensionsInfo?.('screen') || ReactNative.Dimensions.get('screen')
+  const windowDimensions = global.getDimensionsInfo?.('window') ||  ReactNative.Dimensions.get('window')
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
