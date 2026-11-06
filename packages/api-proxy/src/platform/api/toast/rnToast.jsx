@@ -4,17 +4,6 @@ import { type } from '@mpxjs/utils'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 
 let isLoadingShow
-const toastMap = new Map()
-const timerMap = new Map()
-function removeToast (pageId) {
-  clearTimeout(timerMap.get(pageId))
-  timerMap.delete(pageId)
-  if (toastMap.has(pageId)) {
-    Portal.remove(toastMap.get(pageId))
-    toastMap.delete(pageId)
-  }
-}
-
 const styles = StyleSheet.create({
   toastContent: {
     maxWidth: '60%',
@@ -57,9 +46,20 @@ const styles = StyleSheet.create({
   }
 })
 
+const toastMap = new Map()
+const timerMap = new Map()
+function removeToast (pageId) {
+  clearTimeout(timerMap.get(pageId))
+  timerMap.delete(pageId)
+  if (toastMap.has(pageId)) {
+    Portal.remove(toastMap.get(pageId))
+    toastMap.delete(pageId)
+  }
+}
+
 function showToast (options = {}) {
   const dimensionsWindow = global.getDimensionsInfo?.('window') || Dimensions.get('window')
-  const windowHeight = getFocusedNavigation()?.layout?.height ?? dimensionsWindow.height
+  const windowHeight = getFocusedNavigation()?.layout?.height || dimensionsWindow.height
   const contentTop = parseInt(windowHeight * 0.4) // 小程序里面展示偏上一点
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   if (type(title) !== 'String') {

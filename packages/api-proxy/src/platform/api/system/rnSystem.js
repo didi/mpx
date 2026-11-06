@@ -14,7 +14,7 @@ const getWindowInfo = function () {
   const layout = navigation.layout || {}
   const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - (layout.bottomVirtualHeight || 0) // 解决安卓开启屏幕内导航安卓把安全区计算进去后产生的影响
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
-  const windowHeight = layout.height ?? dimensionsWindow.height
+  const windowHeight = layout.height || dimensionsWindow.height
   console.log('dimensionsScreen', dimensionsScreen, dimensionsWindow, initialWindowMetricsInset, insets)
   try {
     safeArea = {
@@ -29,7 +29,7 @@ const getWindowInfo = function () {
   }
   const result = {
     pixelRatio: PixelRatio.get(),
-    windowWidth: layout.width ?? dimensionsWindow.width,
+    windowWidth: layout.width || dimensionsWindow.width,
     windowHeight, // 取不到layout的时候有个兜底
     screenWidth: screenWidth,
     screenHeight: screenHeight,

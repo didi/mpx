@@ -2,11 +2,73 @@ import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextI
 import { successHandle, failHandle, getFocusedNavigation } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 
+const styles = StyleSheet.create({
+  modalTask: {
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    position: 'absolute',
+    zIndex: 10000
+  },
+  modalContent: {
+    paddingTop: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  modalTitleText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    paddingLeft: 20,
+    paddingRight: 20
+  },
+  contentBox: {
+    marginTop: 10
+  },
+  modalContentText: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: '#808080',
+    paddingLeft: 20,
+    paddingRight: 20,
+    textAlign: 'center'
+  },
+  modalBtnBox: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.2)',
+    borderStyle: 'solid',
+    marginTop: 25,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  modalBtn: {
+    flex: 1,
+    textAlign: 'center'
+  },
+  modalButton: {
+    width: '100%',
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
+  cancelStyle: {
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: 'rgba(0,0,0,0.2)',
+    borderStyle: 'solid'
+  }
+})
+
 const showModal = function (options = {}) {
   const dimensionsWindow = global.getDimensionsInfo?.('window') || Dimensions.get('window')
   const layout = getFocusedNavigation()?.layout
-  const width = layout?.width ?? dimensionsWindow.width
-  const height = layout?.height ?? dimensionsWindow.height
+  const width = layout?.width || dimensionsWindow.width
+  const height = layout?.height || dimensionsWindow.height
   let modalKey
   const {
     title,
@@ -101,68 +163,6 @@ const showModal = function (options = {}) {
     failHandle(result, fail, complete)
   }
 }
-
-const styles = StyleSheet.create({
-  modalTask: {
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    display: 'flex',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    position: 'absolute',
-    zIndex: 10000
-  },
-  modalContent: {
-    paddingTop: 20,
-    backgroundColor: '#ffffff',
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  modalTitleText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    paddingLeft: 20,
-    paddingRight: 20
-  },
-  contentBox: {
-    marginTop: 10
-  },
-  modalContentText: {
-    fontSize: 16,
-    lineHeight: 26,
-    color: '#808080',
-    paddingLeft: 20,
-    paddingRight: 20,
-    textAlign: 'center'
-  },
-  modalBtnBox: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0,0,0,0.2)',
-    borderStyle: 'solid',
-    marginTop: 25,
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'row'
-  },
-  modalBtn: {
-    flex: 1,
-    textAlign: 'center'
-  },
-  modalButton: {
-    width: '100%',
-    fontWeight: 'bold',
-    textAlign: 'center'
-  },
-  cancelStyle: {
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderRightColor: 'rgba(0,0,0,0.2)',
-    borderStyle: 'solid'
-  }
-})
 
 export {
   showModal
