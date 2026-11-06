@@ -147,6 +147,8 @@ Mpx.config.errorHandler = (msg, location, e) => {
 
 在 `app.mpx` 的脚本中先 `import './config'`，再引入依赖该配置的业务模块并调用 `createApp(...)`。保留框架默认值和已有配置；扩展已有对象时使用 `Object.assign`，嵌套对象需在对应层合并。平台专属初始化通过 [条件编译](./conditional-compile.md) 限定实际目标，平台依赖也需隔离。
 
+若自定义 `errorHandler` 或 `warnHandler` 同步抛出异常，Mpx 在开发和生产环境中均通过 `console.error` 记录该异常，随后返回。
+
 运行时配置是普通对象，不是可随时动态更新的响应式配置中心，不保证页面挂载后修改仍然生效。
 
 ### 全局字段

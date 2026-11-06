@@ -23,6 +23,8 @@ if (__mpx_mode__ === 'web') {
     'mixins',
     'watch',
     'computed',
+    'renderTracked',
+    'renderTriggered',
     'provide',
     'inject',
     'mpxCustomKeysForBlend',

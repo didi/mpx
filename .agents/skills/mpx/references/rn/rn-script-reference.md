@@ -164,6 +164,8 @@ methods: {
 
 响应式状态、watch 调度与强制更新的基准用法见 [数据响应](../base/script-reference.md#数据响应)。模板依赖 React Hooks 返回值时，还需按 [混合开发](./rn-hybrid-dev.md#hooks-返回值更新模板) 配置 `options.disableMemo`。
 
+[渲染调试钩子](../base/script-reference.md#响应式调试)沿用基准用法。`renderTriggered` / `onRenderTriggered` 在依赖通知时触发，早于 React 提交。
+
 ## 组合式 API
 
 - `setup` context 中的 selector 查询同样遵循 [selector 查询要求](#selector-查询要求) 中的 `wx:ref` 要求与选择器限制。

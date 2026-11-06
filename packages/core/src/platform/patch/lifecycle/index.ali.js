@@ -30,7 +30,9 @@ const PAGE_HOOKS = [
   'onPullDownRefresh',
   'onTabItemTap',
   'onPageScroll',
-  'onReachBottom'
+  'onReachBottom',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 const COMPONENT_HOOKS = [
@@ -41,7 +43,9 @@ const COMPONENT_HOOKS = [
   'didUnmount',
   'onError',
   'pageShow',
-  'pageHide'
+  'pageHide',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 export const lifecycleProxyMap = {
