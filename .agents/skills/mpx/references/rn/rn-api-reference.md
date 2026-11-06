@@ -28,7 +28,6 @@
   - [onLazyLoadError](../base/api-reference.md#onlazyloaderror)（基准）
   - [offLazyLoadError](../base/api-reference.md#offlazyloaderror)（基准）
 - [路由](#路由)
-  - [preload](#preload)
   - [navigateTo](../base/api-reference.md#navigateto)（基准）
   - [redirectTo](../base/api-reference.md#redirectto)（基准）
   - [reLaunch](../base/api-reference.md#relaunch)（基准）
@@ -179,14 +178,6 @@
 | 类型差异 | `reason`：基准类型为 `string`；RN 类型为 `any`（原始拒绝值，不限于字符串）。 |
 
 ## 路由
-
-### preload
-
-RN 专属：`mpx.preload({ url: string }): void`，仅支持 React Navigation 7.x 官方 Native Stack、无 getId；DRN 自研导航器、Web、小程序暂不支持。无 success/fail/complete，加入 promisify 内置黑名单，开启 usePromise 时默认不包装 Promise；不要加入 whiteList，否则强制包装的 Promise 无法通过回调结束。canIUse('preload') 沿用 RN 静态支持表，不动态判断导航器或逐项校验参数；实际调用时检查导航器能力。不支持、URL 格式错误或导航进行中时诊断并返回，不占用导航锁。目标页面是否已注册由 React Navigation 处理，Mpx 不额外检查或保证提供未注册页面的诊断。返回不表示实例就绪。
-
-同名重复调用替换候选，不同页面可并存；navigateTo 可复用同名候选并更新参数，不重跑 onLoad。redirectTo 不消费候选，reLaunch 清空候选，navigateBack 不额外清空候选；无取消 API。保留复用实例的 EventChannel，不重放早先消息。纯预加载也会产生 onStateChange；getCurrentPages 只包含正式栈。
-
-页面实例字段和副作用安排见脚本参考的页面实例属性部分。
 
 用法见索引中的基准链接。
 

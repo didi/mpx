@@ -343,13 +343,3 @@ createComponent({
   }
 })
 ```
-
-## RN 页面预加载属性 {#rn-preload-properties}
-
-仅 RN 页面实例提供，不要在 data、props、methods 或 setup 返回值中定义同名字段：
-
-| 属性 | 类型 | 说明 |
-| --- | --- | --- |
-| wasPreloaded | boolean（只读） | 实例是否在预加载阶段创建；创建钩子前可读，正式进入后保持原值，不代表当前焦点。不可写、不可删除或重新定义；严格模式下赋值会抛出 TypeError |
-
-用法和平台限制见 [preload](../api-proxy/route/preload.md)。

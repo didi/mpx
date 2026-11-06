@@ -109,10 +109,6 @@ methods: {
 
 ### 页面与组件实例属性与方法
 
-RN 页面提供只读 `wasPreloaded`（创建阶段快照，在 beforeCreate/setup/created/onLoad 前可读，此后不变）。不要在 data/props/methods/setup 中定义同名字段。wasPreloaded 不可写、不可删除或重新定义，严格模式下赋值会抛出 TypeError。紧邻 preload → navigateTo 若在入栈后才创建实例，wasPreloaded 为 false；此标识不代表焦点或就绪。
-
-预加载提前执行创建钩子、onLoad/onReady；未展示时不触发 onShow/onHide。正式进入复用实例只触发 onShow，不重跑初始化。框架不更新业务缓存。曝光、播放等副作用放在 onShow，卸载时清理资源。支持范围见 [preload](./rn-api-reference.md#preload)。
-
 | 名称 | 类型 | 适用 | RN 差异 |
 | --- | --- | --- | --- |
 | `triggerEvent(name, detail, options)` | 方法 | 组件 | 仅调用当前组件节点上匹配的事件处理器，不处理第三个参数中的 `bubbles`、`composed`、`capturePhase`，不实现自定义事件沿祖先节点冒泡或捕获。 |
