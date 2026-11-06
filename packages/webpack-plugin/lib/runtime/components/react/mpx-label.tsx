@@ -4,7 +4,7 @@
 import { JSX, useRef, forwardRef, ReactNode, useCallback, createElement } from 'react'
 import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent, isLabelControlHandled } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
 import { LabelContext, LabelContextValue } from './context'
@@ -70,7 +70,9 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const onTap = useCallback((evt: NativeSyntheticEvent<TouchEvent>) => {
       const { bindtap } = propsRef.current
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, { props: propsRef.current }))
-      contextRef.current.triggerChange(evt)
+      if (!isLabelControlHandled(evt)) {
+        contextRef.current.triggerChange(evt)
+      }
     }, [])
 
     const innerProps = useInnerProps(
