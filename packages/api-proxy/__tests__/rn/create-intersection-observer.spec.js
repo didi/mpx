@@ -192,3 +192,53 @@ describe('RN IntersectionObserver lifecycle', () => {
     expect(mpxGlobal.__mpx.config.warnHandler).not.toHaveBeenCalled()
   })
 })
+
+describe('RN IntersectionObserver measured viewport', () => {
+  const viewport = (x, y, width, height) => ({ measureInWindow: jest.fn(callback => callback(x, y, width, height)) })
+  beforeEach(() => {
+    jest.useFakeTimers()
+    global.mpxGlobal = { __mpx: { config: { warnHandler: jest.fn(), errorHandler: jest.fn() } } }
+  })
+  afterEach(() => {
+    jest.clearAllTimers()
+    jest.useRealTimers()
+    setFocusedNavigation(null)
+    delete global.mpxGlobal
+  })
+
+  it.each([
+    ['iOS half window', 485, 44, 0, 501, 137, 1],
+    ['Android compensated window', 0, 44, 33, 16, 344, 1],
+    ['Harmony parallel view', 355.84, 0, 35.84, 371.84, 300, 1],
+    ['top half clipped', 0, 0, 35.84, 16, -50, 0.5],
+    ['bottom half clipped', 0, 0, 35.84, 16, 575, 0.5]
+  ])('measures %s in the same coordinate space', async (name, x, y, statusBarHeight, targetX, targetY, ratio) => {
+    const root = viewport(x, y, 382, 625)
+    const navigation = { isFocused: () => true, layout: { statusBarHeight }, __mpxViewportRef: { current: root } }
+    setFocusedNavigation(navigation)
+    const target = createNodeRef('item', callback => callback(targetX, targetY, 240, 100))
+    const observer = new RNIntersectionObserver({ __selectRef: () => target }, { initialRatio: -1 }, {})
+    const callback = jest.fn()
+    observer.relativeToViewport().observe('.item', callback)
+    await jest.advanceTimersByTimeAsync(0)
+    expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({
+      intersectionRatio: ratio,
+      boundingClientRect: expect.objectContaining({ top: targetY + statusBarHeight }),
+      relativeRect: { left: x, top: y + statusBarHeight, right: x + 382, bottom: y + statusBarHeight + 625 }
+    }))
+    observer.disconnect()
+  })
+
+  it('remeasures a same-size window move and applies viewport margins', async () => {
+    let x = 0
+    const root = { measureInWindow: jest.fn(callback => callback(x, 0, 382, 625)) }
+    setFocusedNavigation({ isFocused: () => true, layout: { statusBarHeight: 33 }, __mpxViewportRef: { current: root } })
+    const observer = new RNIntersectionObserver({}, {}, {})
+    observer.relativeToViewport({ left: 10, top: 20, right: 30, bottom: 40 })
+    expect(await observer._getWindowRect()).toEqual({ left: -10, top: 13, right: 412, bottom: 698 })
+    x = 485
+    expect(await observer._getWindowRect()).toEqual({ left: 475, top: 13, right: 897, bottom: 698 })
+    expect(root.measureInWindow).toHaveBeenCalledTimes(2)
+    observer.disconnect()
+  })
+})

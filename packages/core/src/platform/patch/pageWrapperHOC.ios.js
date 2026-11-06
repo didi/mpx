@@ -63,6 +63,11 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.pageId = currentPageId
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
+    const viewportRef = useRef(null)
+    navigation.__mpxViewportRef = viewportRef
+    const remeasureObservers = () => {
+      Object.values(intersectionObservers.current).forEach(observer => observer.throttleMeasure())
+    }
     const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
@@ -81,6 +86,7 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     useEffect(() => {
       const dimensionListener = ReactNative.Dimensions.addEventListener('change', () => {
         navigation.layout = getLayoutData(headerHeight)
+        remeasureObservers()
       })
       return () => dimensionListener?.remove()
     }, [navigation, headerHeight])
@@ -96,6 +102,9 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
 
     let content = createElement(ReactNative.View,
       {
+        ref: viewportRef,
+        collapsable: false,
+        onLayout: remeasureObservers,
         style: {
           flex: 1,
           backgroundColor: currentPageConfig.backgroundColorContent || '#fff',

@@ -110,8 +110,21 @@ class RNIntersectionObserver {
   }
 
   _getWindowRect () {
-    if (this.windowRect) return this.windowRect
     const navigation = getFocusedNavigation() || {}
+    const viewport = navigation.__mpxViewportRef?.current
+    if (viewport) {
+      return new Promise(resolve => {
+        viewport.measureInWindow((left, top, width, height) => {
+          const statusBarHeight = navigation.layout?.statusBarHeight || 0
+          resolve({
+            left: left - this.margins.left,
+            top: top + statusBarHeight - this.margins.top,
+            right: left + width + this.margins.right,
+            bottom: top + statusBarHeight + height + this.margins.bottom
+          })
+        })
+      })
+    }
     const screen = Dimensions.get('screen')
     const navigationLayout = navigation.layout || {
       top: 0,
@@ -126,8 +139,7 @@ class RNIntersectionObserver {
       right: navigationLayout.width + this.margins.right,
       bottom: navigationLayout.top + navigationLayout.height + this.margins.bottom
     }
-    this.windowRect = windowRect
-    return this.windowRect
+    return windowRect
   }
 
   _getReferenceRect (targetRef) {
