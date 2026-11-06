@@ -121,7 +121,7 @@ const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3) => 
   const rangeArr = currentObj.rangeArr
 
   if (limit === 3 && (currentValue[0] !== value[0] || currentValue[1] !== value[1])) {
-    const days = daysInMonth(value[0], value[1] + 1)
+    const days = daysInMonth(value[0] + START_YEAR, value[1] + 1)
     rangeArr[2] = days
     const maxIndex = days.length - 1
     if (value[2] > maxIndex) {
