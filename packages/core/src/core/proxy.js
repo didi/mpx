@@ -899,9 +899,10 @@ export const onRenderTracked = process.env.NODE_ENV !== 'production' ? createHoo
 export const onRenderTriggered = process.env.NODE_ENV !== 'production' ? createHook('renderTriggered') : noop
 
 export function bindRenderDebugHooks (effect, instance) {
-  if (process.env.NODE_ENV === 'production') return
-  if (instance.hasHook('renderTracked')) effect.onTrack = (event) => instance.callHook('renderTracked', [event])
-  if (instance.hasHook('renderTriggered')) effect.onTrigger = (event) => instance.callHook('renderTriggered', [event])
+  if (process.env.NODE_ENV !== 'production') {
+    if (instance.hasHook('renderTracked')) effect.onTrack = (event) => instance.callHook('renderTracked', [event])
+    if (instance.hasHook('renderTriggered')) effect.onTrigger = (event) => instance.callHook('renderTriggered', [event])
+  }
 }
 
 // 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上
