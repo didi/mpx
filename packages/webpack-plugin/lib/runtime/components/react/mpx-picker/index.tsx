@@ -143,7 +143,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const {
       normalStyle,
       hasVarDec,
-      varContextRef,
+      varContext,
       hasSelfPercent,
       hasPositionFixed,
       setWidth,
@@ -346,7 +346,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         innerProps,
         wrapChildren(children, {
           hasVarDec,
-          varContext: varContextRef.current,
+          varContext,
           textPassThrough
         })
       )

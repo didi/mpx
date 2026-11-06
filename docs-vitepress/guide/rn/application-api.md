@@ -315,7 +315,6 @@ module.exports = defineConfig({
       plugin: {
         rnConfig: {
           asyncChunk: {
-            timeout: 10000, // 异步分包加载超时时间(ms)，默认为 10s
             loading: path.resolve(__dirname, 'src/components/loading.mpx'),    // 自定义异步分包 loading 页面
             fallback: path.resolve(__dirname, 'src/components/fallback.mpx')   // 自定义异步分包页面加载失败的兜底页面配置
           }
@@ -327,6 +326,8 @@ module.exports = defineConfig({
 ```
 
 #### 错误处理 {#error-handling}
+
+分包下载与执行的超时由宿主 `loadChunkAsync` 实现负责。框架不再启动默认 10 秒的超时计时器，`rnConfig.asyncChunk.timeout` 不生效；错误回调中的 `errType` 来自加载结果，框架不会自行产生超时通知。
 
 **组件加载失败监听**：微信小程序提供了 wx.onLazyLoadError 的全局 api 来监听异步组件加载失败，这个 api 同样在 Mpx 转 RN 场景下生效；
 

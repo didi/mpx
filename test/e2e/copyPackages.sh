@@ -8,10 +8,10 @@ for packageDir in "$packagesDir"/*; do
   targetDir="node_modules/$packageName"
   [ "$packageDir" -ef "$targetDir" ] && continue
   mkdir -p "$targetDir"
+  find "$targetDir" -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +
   for sourcePath in "$packageDir"/*; do
     entryName="$(basename "$sourcePath")"
     [ "$entryName" != node_modules ] || continue
-    rm -rf "$targetDir/$entryName"
     cp -R "$sourcePath" "$targetDir/$entryName"
   done
 done

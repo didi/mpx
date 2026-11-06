@@ -67,7 +67,10 @@ describe('RN interaction APIs before page creation', () => {
     delete global.__mpxPagesMap
   })
 
-  it('shows a cached loading on the first page and lets that page hide it', () => {
+  it.each([
+    ['hideToast', hideToast],
+    ['hideLoading', hideLoading]
+  ])('shows a cached loading on the first page and lets another page call %s', (_, hide) => {
     const success = jest.fn()
     showLoading({ title: 'Starting', success })
     expect(success).toHaveBeenCalledWith({ errMsg: 'showLoading:ok' })
@@ -76,11 +79,68 @@ describe('RN interaction APIs before page creation', () => {
     expect(texts(first)).toContain('Starting')
     expect(texts(second)).toEqual([])
     setFocusedNavigation({ pageId: 2, isFocused: () => true })
-    act(() => hideLoading())
-    expect(texts(first)).toContain('Starting')
-    setFocusedNavigation({ pageId: 1, isFocused: () => true })
-    act(() => hideLoading())
+    act(() => hide())
     expect(texts(first)).toEqual([])
+    setFocusedNavigation({ pageId: 1, isFocused: () => true })
+    expect(texts(first)).toEqual([])
+  })
+
+  it.each([
+    ['showToast', showToast],
+    ['showLoading', showLoading]
+  ])('%s on another page replaces the previous loading', (_, show) => {
+    const first = mountPage()
+    setFocusedNavigation({ pageId: 1, isFocused: () => true })
+    act(() => showLoading({ title: 'Old' }))
+    const second = mountPage(2)
+    setFocusedNavigation({ pageId: 2, isFocused: () => true })
+    act(() => show({ title: 'New' }))
+    expect(texts(first)).toEqual([])
+    expect(texts(second)).toEqual(['New'])
+  })
+
+  it('cancels the previous page toast timer when showing a new loading', () => {
+    const first = mountPage()
+    setFocusedNavigation({ pageId: 1, isFocused: () => true })
+    act(() => showToast({ title: 'Old', duration: 10 }))
+    const second = mountPage(2)
+    setFocusedNavigation({ pageId: 2, isFocused: () => true })
+    act(() => showLoading({ title: 'New' }))
+    act(() => jest.advanceTimersByTime(10))
+    expect(texts(first)).toEqual([])
+    expect(texts(second)).toEqual(['New'])
+  })
+
+  it('replaces the previous page toast and uses the new toast duration', () => {
+    const first = mountPage()
+    setFocusedNavigation({ pageId: 1, isFocused: () => true })
+    act(() => showToast({ title: 'Old', duration: 10 }))
+    const second = mountPage(2)
+    setFocusedNavigation({ pageId: 2, isFocused: () => true })
+    act(() => showToast({ title: 'New', duration: 30 }))
+    act(() => jest.advanceTimersByTime(10))
+    expect(texts(first)).toEqual([])
+    expect(texts(second)).toEqual(['New'])
+    act(() => jest.advanceTimersByTime(20))
+    expect(texts(second)).toEqual([])
+  })
+
+  it('honors noConflict when hiding toast and loading across pages', () => {
+    const first = mountPage()
+    setFocusedNavigation({ pageId: 1, isFocused: () => true })
+    act(() => showLoading({ title: 'Loading' }))
+    const second = mountPage(2)
+    setFocusedNavigation({ pageId: 2, isFocused: () => true })
+    act(() => hideToast({ noConflict: true }))
+    expect(texts(first)).toEqual(['Loading'])
+    act(() => hideLoading({ noConflict: true }))
+    expect(texts(first)).toEqual([])
+    act(() => showToast({ title: 'Toast' }))
+    setFocusedNavigation({ pageId: 1, isFocused: () => true })
+    act(() => hideLoading({ noConflict: true }))
+    expect(texts(second)).toEqual(['Toast'])
+    act(() => hideToast({ noConflict: true }))
+    expect(texts(second)).toEqual([])
   })
 
   it('cancels loading before the first page exists', () => {

@@ -5,7 +5,7 @@ import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
 import { ref } from '../../observer/ref'
 import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
-import MpxProxy from '../../core/proxy'
+import MpxProxy, { bindRenderDebugHooks } from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
@@ -73,6 +73,7 @@ function createEffect (proxy, componentsMap) {
     if (__mpx_perf_framework__) perf.scopeEnd(perfId)
     return result
   }, () => queueJob(update), proxy.scope)
+  if (process.env.NODE_ENV !== 'production') bindRenderDebugHooks(proxy.effect, proxy)
   // render effect允许自触发
   proxy.toggleRecurse(true)
 }

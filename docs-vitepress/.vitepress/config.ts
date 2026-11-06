@@ -132,6 +132,10 @@ const sidebar: ExtendedSidebar = {
           text: '响应式 API',
           link: '/guide/composition-api/reactive-api',
         },
+        {
+          text: '响应式调试',
+          link: '/guide/composition-api/reactivity-debugging',
+        },
       ],
     },
     {
@@ -915,6 +919,10 @@ const sidebar: ExtendedSidebar = {
           text: 'Mpx 小程序单元测试能力建设与实践',
           link: '/articles/unit-test',
         },
+        {
+          text: 'Mpx Skill：面向 AI 编程的统一跨端开发指南',
+          link: '/articles/mpx-skill'
+        }
       ],
     },
   ],

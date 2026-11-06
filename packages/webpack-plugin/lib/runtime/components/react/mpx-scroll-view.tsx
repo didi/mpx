@@ -66,7 +66,7 @@ interface ScrollViewProps {
   'enable-offset'?: boolean;
   'scroll-into-view'?: string;
   'enable-trigger-intersection-observer'?: boolean;
-  'enable-var'?: boolean;
+  'enable-var'?: boolean | 'use';
   'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
   'parent-height'?: number;
@@ -204,7 +204,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     hasPositionFixed,
     setWidth,
@@ -900,7 +900,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const wrappedChildren = wrapChildren(hasRefresher ? otherContent : props.children,
       {
         hasVarDec,
-        varContext: varContextRef.current,
+        varContext,
         textPassThrough
       })
     return createElement(ScrollViewContext.Provider, { value: contextValue }, wrappedChildren)

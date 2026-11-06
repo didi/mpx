@@ -26,7 +26,7 @@ interface CameraProps {
   bindscancode?: (result: { type: string, data: string }) => void
   'parent-width'?: number
   'parent-height'?: number
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
 }
 
 interface TakePhotoOptions {
