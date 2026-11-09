@@ -27,7 +27,7 @@ export interface CheckboxGroupProps {
   name: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   children: ReactNode
@@ -67,7 +67,7 @@ const CheckboxGroup = forwardRef<
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle })
@@ -166,7 +166,7 @@ const CheckboxGroup = forwardRef<
         props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current
+          varContext
         }
       )
     )

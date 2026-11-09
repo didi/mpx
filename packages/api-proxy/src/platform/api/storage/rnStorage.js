@@ -67,7 +67,7 @@ function getStorageInfo (options = {}) {
   AsyncStorage.getAllKeys((err, keys) => {
     if (err) {
       const result = {
-        errMsg: `getStorage:fail ${err}`
+        errMsg: `getStorageInfo:fail ${err}`
       }
       failHandle(result, fail, complete)
       return

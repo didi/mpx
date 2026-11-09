@@ -62,9 +62,9 @@ async function compileRequireAsync ({ source, transSubpackageRules, pluginOption
         srcMode: 'wx',
         projectRoot: virtualRoot,
         rnConfig: {
-          supportSubpackage: true
+          supportSubpackage: true,
+          transSubpackageRules
         },
-        transSubpackageRules,
         ...pluginOptions
       }),
       new NoEmitPlugin()
@@ -150,6 +150,27 @@ describe('require.async', () => {
     expect(entryModule.blocks).toHaveLength(1)
     expect(entryModule.blocks[0].groupOptions.name).toBe(`${targetRoot}/index`)
     expect(entryModule.blocks[0].dependencies[0].request).toBe('./target.js')
+  })
+
+  it.each([
+    ['legacy fallback', undefined, 'legacy'],
+    ['rnConfig priority', [{ from: ['map'], to: 'target' }], 'target'],
+    ['empty rnConfig rules', [], 'map']
+  ])('should use %s for RN subpackage transformation', async (_, transSubpackageRules, targetRoot) => {
+    const { stats, entryPath, targetPath } = await compileRequireAsync({
+      source: directAndAsyncSource,
+      transSubpackageRules,
+      pluginOptions: {
+        transSubpackageRules: [{ from: ['map'], to: 'legacy' }]
+      }
+    })
+
+    expect(stats.hasErrors()).toBe(false)
+
+    const { entryModule, targetModules } = getModules(stats, entryPath, targetPath)
+    expectSingleTargetModule(targetModules, targetPath)
+    expect(entryModule.blocks).toHaveLength(1)
+    expect(entryModule.blocks[0].groupOptions.name).toBe(`${targetRoot}/index`)
   })
 
   it('should preserve async entry behavior for supported mini program', async () => {

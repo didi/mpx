@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webview-bridge",
-  "version": "2.11.1",
+  "version": "2.11.2",
   "description": "a bridge for mpx webview",
   "author": "skyadmin",
   "license": "ISC",
@@ -19,7 +19,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/webview-bridge"
   },
   "homepage": "https://didi.github.io/mpx/",
   "bugs": {

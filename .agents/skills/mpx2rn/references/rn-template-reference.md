@@ -693,6 +693,8 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 与微信小程序一致，RN 输出支持只传递属性名不传递属性值的布尔写法，例如 `<scroll-view scroll-y />` 等价于 `<scroll-view scroll-y="{{ true }}" />`。
 
+关闭 `enable-fast-image` 时需传递布尔值，例如 <span v-pre>`enable-fast-image="{{false}}"`</span>；`enable-fast-image="false"` 会传入字符串，无法关闭 fast-image。
+
 ### view
 
 视图容器。
@@ -707,7 +709,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | animation | object |  | 传递动画的实例， 可配合 mpx.createAnimation 方法一起使用 |
 | enable-background | boolean | `false ` | RN 环境特有属性，是否要开启 background-image、background-size 和 background-position 的相关计算或渲染，请根据实际情况开启 |
 | enable-animation | boolean | `false` | RN 环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
-| enable-fast-image | boolean | `false` | RN 环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| enable-fast-image | boolean | `true` | RN 环境特有属性，渲染背景图片时默认使用 `@d11/react-native-fast-image`，设为 `false` 时使用 React Native 原生 `Image` |
 | is-simple | - | - | RN 环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 #### 事件
@@ -719,7 +721,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 #### 注意事项
 
 - **view 内可直接插入文字**：Mpx2RN 支持在 `view` 等非 `text` 组件中直接插入文字内容，无需严格遵循 RN 中文字必须由 `text` 组件包裹的限制，框架会在编译时自动为裸文字插入一个 `text` 包裹节点。但该行为存在性能开销——会额外多引入一个 `view` 层级，因此如果可以直接使用 `text` 组件包裹文字，仍应优先使用 `text`，以获得更优的渲染性能。`view` 内多个 `text` 的跨平台布局对齐方案见 [样式开发最佳实践 · text 跨平台布局对齐](./rn-style-practice.md#text-跨平台布局对齐)。
-- 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
+- 如果从未使用背景图或动画，请不要开启 `enable-background` 或 `enable-animation` 属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
 - 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
@@ -767,8 +769,8 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | refresher-background | string | `'#fff'` | 设置自定义下拉刷新背景颜色，仅安卓支持 |
 | refresher-triggered | boolean | `false` | 设置当前下拉刷新状态,true 表示已触发 |
 | paging-enabled | boolean | `false` | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置 |
-| show-scrollbar | boolean | `true` | 滚动条显隐控制 (同时开启 enhanced 属性后生效) |
-| enable-trigger-intersection-observer | boolean | `false` | RN 环境特有属性，是否开启 intersection-observer |
+| show-scrollbar | boolean | `true` | 滚动条显隐控制，不依赖 `enhanced` |
+| enable-trigger-intersection-observer | boolean | `false` | RN 环境特有属性，是否在滚动时触发 IntersectionObserver 相交检测更新 |
 | simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | wait-for | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | scroll-event-throttle | number | `0` | RN 环境特有属性，控制 scroll 事件触发频率 |
@@ -790,6 +792,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 #### 注意事项
 
 - 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。
+- `enable-trigger-intersection-observer` 用于在 RN 环境中开启 `scroll-view` 滚动时的相交检测更新，默认关闭。使用 `createIntersectionObserver` 监听节点曝光或可见性变化时，需在会影响目标节点位置的 `scroll-view` 上设置 `enable-trigger-intersection-observer="{{true}}"`；滚动时会按观察器的节流配置重新测量相交区域，并在满足阈值条件时触发回调。
 - simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 - wait-for 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 - scroll-view 组件在滚动过程中，不会触发其自身或子组件的 touchend 事件响应，这是 RN 底层实现导致的问题，手势系统识别当前是 scroll-view 的滚动，就会取消掉 touchend 事件的响应。
@@ -892,7 +895,7 @@ movable-view 的可移动区域。
 | --- | --- | --- | --- |
 | src | string | `false` | 图片资源地址、base64 格式数据或本地静态资源相对路径 |
 | mode | string | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right` |
-| enable-fast-image | boolean | `false` | RN 环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| enable-fast-image | boolean | `true` | RN 环境特有属性，默认使用 `@d11/react-native-fast-image` 渲染非 SVG 图片，设为 `false` 时使用 React Native 原生 `Image` |
 | is-svg | boolean | `false` | RN 环境特有属性，传递为 `true` 时强制使用 SVG 方式渲染图片 |
 
 #### 事件

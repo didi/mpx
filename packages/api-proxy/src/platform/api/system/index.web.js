@@ -1,4 +1,4 @@
-import { isBrowser, throwSSRWarning, successHandle } from '../../../common/js'
+import { isBrowser, throwSSRWarning, successHandle, defineUnsupportedProps } from '../../../common/js'
 
 const getDeviceInfo = function () {
   const ua = navigator.userAgent.split('(')[1]?.split(')')[0] || ''
@@ -33,30 +33,26 @@ const getDeviceInfo = function () {
   } else {
     system = `Android ${ua.replace(/^.*Android ([\d.]+);.*$/, '$1')}`
   }
-  return {
-    abi: null,
-    deviceAbi: null,
-    benchmarkLevel: null,
+  const result = {
     brand,
     model: brand,
     system,
-    platform: navigator.platform,
-    cpuType: null,
-    memorySize: null
+    platform: navigator.platform
   }
+  defineUnsupportedProps(result, ['abi', 'deviceAbi', 'benchmarkLevel', 'cpuType', 'memorySize'])
+  return result
 }
 
 const getWindowInfo = function () {
-  return {
+  const result = {
     pixelRatio: window.devicePixelRatio,
     screenWidth: window.screen.width,
     screenHeight: window.screen.height,
     windowWidth: document.documentElement.clientWidth,
-    windowHeight: document.documentElement.clientHeight,
-    statusBarHeight: null,
-    safeArea: null,
-    screenTop: null
+    windowHeight: document.documentElement.clientHeight
   }
+  defineUnsupportedProps(result, ['statusBarHeight', 'safeArea', 'screenTop'])
+  return result
 }
 
 function getSystemInfoSync () {
@@ -70,49 +66,51 @@ function getSystemInfoSync () {
     screenWidth,
     screenHeight,
     windowWidth,
-    windowHeight,
-    statusBarHeight,
-    safeArea
+    windowHeight
   } = getWindowInfo()
   const {
-    benchmarkLevel,
     brand,
     model,
     system,
     platform
   } = getDeviceInfo()
-  const result = Object.assign({
+  const result = {
     language: navigator.language,
-    version: null,
-    fontSizeSetting: null,
-    SDKVersion: null,
-    benchmarkLevel: null,
-    albumAuthorized: null,
-    cameraAuthorized: null,
-    locationAuthorized: null,
-    microphoneAuthorized: null,
-    notificationAlertAuthorized: null,
-    notificationAuthorized: null,
-    notificationBadgeAuthorized: null,
-    notificationSoundAuthorized: null,
-    bluetoothEnabled: null,
-    locationEnabled: null,
-    wifiEnabled: null
-  }, {
     pixelRatio,
     screenWidth,
     screenHeight,
     windowWidth,
     windowHeight,
-    statusBarHeight,
-    safeArea
-  }, {
-    benchmarkLevel,
     brand,
     model,
     system,
     platform
-  })
+  }
+  defineUnsupportedProps(result, [
+    'version',
+    'fontSizeSetting',
+    'SDKVersion',
+    'benchmarkLevel',
+    'albumAuthorized',
+    'cameraAuthorized',
+    'locationAuthorized',
+    'microphoneAuthorized',
+    'notificationAlertAuthorized',
+    'notificationAuthorized',
+    'notificationBadgeAuthorized',
+    'notificationSoundAuthorized',
+    'bluetoothEnabled',
+    'locationEnabled',
+    'wifiEnabled',
+    'statusBarHeight',
+    'safeArea',
+    'deviceOrientation',
+    'enableDebug',
+    'host',
+    'locationReducedAccuracy',
+    'phoneCalendarAuthorized',
+    'theme'
+  ])
   return result
 }
 
@@ -122,7 +120,7 @@ function getSystemInfo (options = {}) {
     return
   }
   const info = getSystemInfoSync()
-  const res = Object.assign({ errMsg: 'getSystemInfo:ok' }, info)
+  const res = Object.defineProperties({ errMsg: 'getSystemInfo:ok' }, Object.getOwnPropertyDescriptors(info))
   successHandle(res, options.success, options.complete)
 }
 

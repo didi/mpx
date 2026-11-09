@@ -1,0 +1,12 @@
+{
+  "mpx": {
+    "passed": 15,
+    "total": 15,
+    "pass_rate": 1.0
+  },
+  "mpx2ali": {
+    "passed": 15,
+    "total": 15,
+    "pass_rate": 1.0
+  }
+}

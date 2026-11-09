@@ -1,4 +1,7 @@
 const TAG_NAME = 'scroll-view'
+const { MPX_SCROLLBAR_HIDDEN } = require('../../../../utils/const')
+const { evalExp, parseMustacheWithContext } = require('../../../../template-compiler/compiler')
+const hasOwn = require('../../../../utils/has-own')
 
 module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
@@ -41,7 +44,37 @@ module.exports = function ({ print }) {
     },
     props: [
       {
-        test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration)$/,
+        test: 'class',
+        ali (attr, { el }) {
+          // 原有 class 由 show-scrollbar 规则统一合并。
+          if (hasOwn(el.attrsMap, 'show-scrollbar')) return false
+        }
+      },
+      {
+        test: 'show-scrollbar',
+        ali ({ value }, { el }) {
+          const className = el.attrsMap.class
+          const parsed = parseMustacheWithContext(value)
+          const evaluated = evalExp(parsed.result)
+          if (evaluated.success && evaluated.result !== false) {
+            return className ? [{ name: 'class', value: className }] : []
+          }
+
+          const hiddenClass = evaluated.success
+            ? MPX_SCROLLBAR_HIDDEN
+            : `{{${parsed.result} === false ? '${MPX_SCROLLBAR_HIDDEN}' : ''}}`
+          return [{
+            name: 'class',
+            value: className ? `${className} ${hiddenClass}` : hiddenClass
+          }]
+        },
+        tt: ttPropLog,
+        qq: qqPropLog,
+        swan: baiduPropLog,
+        qa: qaPropLog
+      },
+      {
+        test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|paging-enabled|fast-deceleration)$/,
         ali: aliPropLog,
         tt: ttPropLog,
         qq: qqPropLog,
@@ -57,7 +90,7 @@ module.exports = function ({ print }) {
         jd: jdPropLog
       },
       {
-        test: /^(enable-back-to-top|enable-flex|scroll-anchoring|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration|binddragstart|binddragging|binddragend)$/,
+        test: /^(enable-back-to-top|enable-flex|scroll-anchoring|enhanced|bounces|paging-enabled|fast-deceleration|binddragstart|binddragging|binddragend)$/,
         qa: qaPropLog
       },
       {

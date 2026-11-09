@@ -1,6 +1,12 @@
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { showToast, showLoading } from '../../src/platform/api/toast/rnToast'
 
+jest.mock('react/jsx-runtime', () => ({
+  jsx: (type, props) => ({ type, props }),
+  jsxs: (type, props) => ({ type, props }),
+  Fragment: 'Fragment'
+}), { virtual: true })
+
 jest.mock('react-native', () => ({
   View: 'View',
   Text: 'Text',
@@ -17,7 +23,7 @@ jest.mock('react-native', () => ({
 jest.mock('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index', () => ({
   add: jest.fn(),
   remove: jest.fn()
-}))
+}), { virtual: true })
 
 describe('RN toast APIs', () => {
   test.each([

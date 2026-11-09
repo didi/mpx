@@ -28,7 +28,7 @@ export interface RadioGroupProps {
   name: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   children: ReactNode
@@ -70,7 +70,7 @@ const radioGroup = forwardRef<
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle })
@@ -165,7 +165,7 @@ const radioGroup = forwardRef<
         props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current
+          varContext
         }
       )
     )
