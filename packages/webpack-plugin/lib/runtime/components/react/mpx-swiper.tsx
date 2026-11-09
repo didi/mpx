@@ -456,65 +456,28 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const { loop, pauseLoop, resumeLoop } = useMemo(() => {
     function createAutoPlay () {
       if (!autoplayShared.value || childrenLength.value <= 1 || step.value <= 0 || touchfinish.value === false || targetIndex.value !== currentIndex.value) return
-      let targetOffset = 0
-      let nextIndex = currentIndex.value
-      if (!circularShared.value) {
-        // 获取下一个位置的坐标, 循环到最后一个元素,直接停止, 取消定时器
-        const maxIndex = Math.max(0, childrenLength.value - displayMultipleItemsShared.value)
-        if (currentIndex.value >= maxIndex) {
-          pauseLoop()
-          return
-        }
-        nextIndex += 1
-        // targetOffset = -nextIndex * step.value - preMarginShared.value
-        targetOffset = -nextIndex * step.value
-        targetIndex.value = nextIndex
-        runOnJSCallback('handleSwiperChangeStart', nextIndex)
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, (finished) => {
-          if (finished && targetIndex.value === nextIndex) {
-            currentIndex.value = nextIndex
-            runOnJS(runOnJSCallback)('resumeLoop')
-          }
-        })
-      } else {
-        // 默认向右, 向下
-        if (nextIndex === childrenLength.value - 1) {
-          nextIndex = 0
-          targetOffset = -(childrenLength.value + patchElmNumShared.value) * step.value + preMarginShared.value
-          // 执行动画到下一帧
-          targetIndex.value = nextIndex
-          runOnJSCallback('handleSwiperChangeStart', nextIndex)
-          offset.value = withTiming(targetOffset, {
-            duration: easeDuration
-          }, (finished) => {
-            if (finished && targetIndex.value === nextIndex) {
-              const initOffset = -step.value * patchElmNumShared.value + preMarginShared.value
-              // 将开始位置设置为真正的位置
-              offset.value = initOffset
-              currentIndex.value = nextIndex
-              runOnJS(runOnJSCallback)('resumeLoop')
-            }
-          })
-        } else {
-          nextIndex = currentIndex.value + 1
-          targetOffset = -(nextIndex + patchElmNumShared.value) * step.value + preMarginShared.value
-          // 执行动画到下一帧
-          targetIndex.value = nextIndex
-          runOnJSCallback('handleSwiperChangeStart', nextIndex)
-          offset.value = withTiming(targetOffset, {
-            duration: easeDuration,
-            easing: easeMap[easeingFunc]
-          }, (finished) => {
-            if (finished && targetIndex.value === nextIndex) {
-              currentIndex.value = nextIndex
-              runOnJS(runOnJSCallback)('resumeLoop')
-            }
-          })
-        }
+      if (!circularShared.value && currentIndex.value >= Math.max(0, childrenLength.value - displayMultipleItemsShared.value)) {
+        pauseLoop()
+        return
       }
+      const isCriticalItem = circularShared.value && currentIndex.value === childrenLength.value - 1
+      const nextIndex = isCriticalItem ? 0 : currentIndex.value + 1
+      const targetOffset = circularShared.value
+        ? -(currentIndex.value + 1 + patchElmNumShared.value) * step.value + preMarginShared.value
+        : -nextIndex * step.value
+      targetIndex.value = nextIndex
+      runOnJSCallback('handleSwiperChangeStart', nextIndex)
+      offset.value = withTiming(targetOffset, isCriticalItem
+        ? { duration: easeDuration }
+        : { duration: easeDuration, easing: easeMap[easeingFunc] }, (finished) => {
+        if (finished && targetIndex.value === nextIndex) {
+          if (isCriticalItem) {
+            offset.value = -step.value * patchElmNumShared.value + preMarginShared.value
+          }
+          currentIndex.value = nextIndex
+          runOnJS(runOnJSCallback)('resumeLoop')
+        }
+      })
     }
 
     // loop在JS线程中调用，createAutoPlay + useEffect中
@@ -540,13 +503,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }, [])
 
   function handleSwiperChange (current: number) {
-    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-    bindchange && bindchange(eventData)
+    bindchange && bindchange(getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef }))
   }
 
   function handleSwiperChangeStart (current: number) {
-    const eventData = getCustomEvent('changestart', {}, { detail: { current }, layoutRef: layoutRef })
-    bindchangestart && bindchangestart(eventData)
+    bindchangestart && bindchangestart(getCustomEvent('changestart', {}, { detail: { current }, layoutRef: layoutRef }))
   }
 
   const runOnJSCallbackRef = useRef({
@@ -718,28 +679,16 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
       triggerChangeStart(selectedIndex)
       targetIndex.value = selectedIndex
-      if (isCriticalItem) {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, (finished) => {
-          if (finished && touchfinish.value !== false && targetIndex.value === selectedIndex) {
-            currentIndex.value = selectedIndex
-            offset.value = resetOffset
-            runOnJS(runOnJSCallback)('resumeLoop')
-          }
-        })
-      } else {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, (finished) => {
-          if (finished && touchfinish.value !== false && targetIndex.value === selectedIndex) {
-            currentIndex.value = selectedIndex
-            runOnJS(runOnJSCallback)('resumeLoop')
-          }
-        })
-      }
+      offset.value = withTiming(targetOffset, {
+        duration: easeDuration,
+        easing: easeMap[easeingFunc]
+      }, (finished) => {
+        if (finished && touchfinish.value !== false && targetIndex.value === selectedIndex) {
+          currentIndex.value = selectedIndex
+          if (isCriticalItem) offset.value = resetOffset
+          runOnJS(runOnJSCallback)('resumeLoop')
+        }
+      })
     }
     function handleBack (eventData: EventEndType) {
       'worklet'

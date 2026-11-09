@@ -151,13 +151,32 @@ describe('MpxSwiper RN runtime', () => {
     jest.useRealTimers()
   })
 
-  test.each([[false, 0, 1], [true, 4, 0]])('emits changestart before autoplay change, circular=%p', (circular, current, next) => {
+  test.each([[false, 0, 1], [true, 1, 2], [true, 4, 0]])('emits changestart before autoplay change, circular=%p', (circular, current, next) => {
     renderSwiper({ circular, current, autoplay: true, interval: 10, 'display-multiple-items': 2 })
     jest.advanceTimersByTime(10)
     expect(eventOrder).toEqual([`changestart:${next}`])
     mockFinishAnimations()
     expect(eventOrder).toEqual([`changestart:${next}`, `change:${next}`])
     expect(mockGetOffset()).toBe(-(next + (circular ? 2 : 0)) * 150)
+  })
+
+  test('stops non-circular autoplay at the last visible group', () => {
+    renderSwiper({ current: 3, autoplay: true, interval: 10, 'display-multiple-items': 2 })
+    jest.advanceTimersByTime(30)
+    expect(eventOrder).toEqual([])
+    expect(mockGetOffset()).toBe(-450)
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
+  test.each([false, true])('finishes an ordinary gesture transition, circular=%p', (circular) => {
+    renderSwiper({ circular, 'display-multiple-items': 2 })
+    mockGesture.onBegin({ absoluteX: 0 })
+    mockGesture.onUpdate({ absoluteX: -100 })
+    mockGesture.onFinalize({ absoluteX: -100, velocityX: -200 })
+    expect(eventOrder).toEqual(['changestart:1'])
+    mockFinishAnimations()
+    expect(eventOrder).toEqual(['changestart:1', 'change:1'])
+    expect(mockGetOffset()).toBe(-(circular ? 3 : 1) * 150)
   })
 
   test('cancels an obsolete controlled-current transition', () => {
