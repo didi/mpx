@@ -6,8 +6,7 @@ import Swiper from '../../../lib/runtime/components/react/mpx-swiper'
 import { SwiperContext } from '../../../lib/runtime/components/react/context'
 
 let mockAnimations: any[] = []
-let mockGestures: any[] = []
-let mockReactions: any[] = []
+let mockGesture: any
 const mockListeners = new Set<() => void>()
 let renderer: ReturnType<typeof create> | undefined
 let swiperProps: Record<string, any>
@@ -28,13 +27,18 @@ jest.mock('react-native-gesture-handler', () => ({
         'simultaneousWithExternalGesture', 'requireExternalGestureToFail'].forEach((method) => {
         gesture[method] = () => gesture
       })
-      mockGestures.push(gesture)
+      mockGesture = gesture.callbacks
       return gesture
     }
   }
 }))
 jest.mock('react-native-reanimated', () => {
   const React = jest.requireActual('react')
+  const cancelAnimation = (sharedValue: any) => {
+    mockAnimations.forEach((animation) => {
+      if (animation.sharedValue === sharedValue) animation.cancelled = true
+    })
+  }
   return {
     __esModule: true,
     default: { View: 'AnimatedView' },
@@ -45,15 +49,9 @@ jest.mock('react-native-reanimated', () => {
         const sharedValue = {
           get value () { return value },
           set value (next: any) {
-            mockAnimations.forEach((animation) => {
-              if (animation.sharedValue === sharedValue) animation.cancelled = true
-            })
-            if (next?.mockAnimation) {
-              next.mockAnimation.sharedValue = sharedValue
-              value = next.mockAnimation.value
-            } else {
-              value = next
-            }
+            cancelAnimation(sharedValue)
+            if (next?.mockAnimation) next.sharedValue = sharedValue
+            value = next?.mockAnimation ? next.value : next
             mockListeners.forEach((notify) => notify())
           }
         }
@@ -63,15 +61,11 @@ jest.mock('react-native-reanimated', () => {
     },
     useAnimatedStyle: (factory: () => any) => factory(),
     withTiming: (value: number, _options: any, callback: any) => {
-      const animation = { value, callback }
+      const animation = { value, callback, mockAnimation: true }
       mockAnimations.push(animation)
-      return { mockAnimation: animation }
+      return animation
     },
-    cancelAnimation: (sharedValue: any) => {
-      mockAnimations.forEach((animation) => {
-        if (animation.sharedValue === sharedValue) animation.cancelled = true
-      })
-    },
+    cancelAnimation,
     runOnJS: (callback: any) => callback,
     useAnimatedReaction: (prepare: any, react: any) => {
       const ref = React.useRef({ prepare, react, previous: null })
@@ -86,7 +80,6 @@ jest.mock('react-native-reanimated', () => {
             reaction.react(current, previous)
           }
         }
-        mockReactions.push(reaction)
         mockListeners.add(notify)
         notify()
         return () => mockListeners.delete(notify)
@@ -146,8 +139,6 @@ describe('MpxSwiper RN runtime', () => {
   beforeEach(() => {
     jest.useFakeTimers()
     mockAnimations = []
-    mockGestures = []
-    mockReactions = []
     mockListeners.clear()
     eventOrder = []
     const onEvent = (event: any) => eventOrder.push(`${event.type}:${event.detail.current}`)
@@ -180,10 +171,9 @@ describe('MpxSwiper RN runtime', () => {
 
   test('keeps the partial offset when the parent echoes a gesture current', () => {
     renderSwiper({ current: 0 })
-    const gesture = mockGestures[0].callbacks
-    gesture.onBegin({ absoluteX: 0 })
-    gesture.onUpdate({ absoluteX: -160 })
-    gesture.onUpdate({ absoluteX: -170 })
+    mockGesture.onBegin({ absoluteX: 0 })
+    mockGesture.onUpdate({ absoluteX: -160 })
+    mockGesture.onUpdate({ absoluteX: -170 })
     renderSwiper({ current: 1 })
     expect(swiperProps.bindchange).toHaveBeenCalledTimes(1)
     expect(mockGetOffset()).toBe(-170)
@@ -207,19 +197,18 @@ describe('MpxSwiper RN runtime', () => {
     renderSwiper({ current: 2, children: [] })
     renderSwiper({ current })
     renderSwiper({ children })
-    expect(mockReactions[0].prepare()).toBe(current)
+    expect(eventOrder).toEqual([`changestart:${current}`, `change:${current}`])
     expect(mockGetOffset()).toBe(-current * 300)
   })
 
   test.each([[-20, 0], [-200, 1]])('resets circular clones before autoplay resumes, velocity=%i', (velocityX, selected) => {
     renderSwiper({ current: 4, circular: true, autoplay: true, interval: 10, 'display-multiple-items': 2, 'previous-margin': '20' })
-    const gesture = mockGestures[0].callbacks
-    gesture.onBegin({ absoluteX: 0 })
-    gesture.onUpdate({ absoluteX: -150 })
-    gesture.onFinalize({ absoluteX: -150, velocityX })
+    mockGesture.onBegin({ absoluteX: 0 })
+    mockGesture.onUpdate({ absoluteX: -150 })
+    mockGesture.onFinalize({ absoluteX: -150, velocityX })
     expect(mockGetOffset()).toBe(-(selected + 8) * 140 + 20)
     mockFinishAnimations()
-    expect(mockReactions[0].prepare()).toBe(selected)
+    expect(eventOrder).toEqual([`changestart:${selected}`, `change:${selected}`])
     const offsetAfterGesture = mockGetOffset()
     expect(offsetAfterGesture).toBe(-(selected + 3) * 140 + 20)
     jest.advanceTimersByTime(10)
@@ -238,7 +227,6 @@ describe('MpxSwiper RN runtime', () => {
     renderSwiper({ current: 4, 'display-multiple-items': 3, 'previous-margin': '20', 'next-margin': '10' })
     const step = ((vertical ? 600 : 300) - 30) / 3
     expect(renderer!.root.findAllByType('SwiperItem')[0].props.value.step.value).toBe(step)
-    expect(mockReactions[0].prepare()).toBe(2)
     expect(mockGetOffset()).toBe(-2 * step)
     expect(eventOrder).toEqual(['changestart:2', 'change:2'])
   })
