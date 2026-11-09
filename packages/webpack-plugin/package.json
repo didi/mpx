@@ -111,7 +111,7 @@
     "react-test-renderer": "18.2.0",
     "rimraf": "^6.0.1",
     "vue": "^2.7.16",
-    "webpack": "^5.75.0"
+    "webpack": "5.102.1"
   },
   "engines": {
     "node": ">=14.14.0"
