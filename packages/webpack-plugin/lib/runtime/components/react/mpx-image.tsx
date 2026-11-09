@@ -163,7 +163,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const isHeightFixMode = mode === 'heightFix'
   const isCropMode = cropMode.includes(mode)
   const isLayoutMode = isWidthFixMode || isHeightFixMode || isCropMode
-  const resizeMode: ImageResizeMode = ModeMap.get(mode) || 'stretch'
+  const isAndroidLayoutMode = isAndroid && !isSvg && isLayoutMode
+  const loadRequest = useMemo(() => ({}), [src])
+  const loadRequestRef = useRef(loadRequest)
+  loadRequestRef.current = loadRequest
+  const [loadedRequest, setLoadedRequest] = useState<object | null>(null)
+  const fallbackTimer = useRef<ReturnType<typeof setTimeout>>()
+  const resizeMode: ImageResizeMode = isAndroidLayoutMode ? 'contain' : ModeMap.get(mode) || 'stretch'
 
   const onLayout = ({ nativeEvent: { layout: { width, height } } }: LayoutChangeEvent) => {
     state.current.viewWidth = width
@@ -209,6 +215,11 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const [imageHeight, setImageHeight] = useState(0)
   const [ratio, setRatio] = useState(0)
   const [loaded, setLoaded] = useState(!isLayoutMode)
+  const needsFallback = isAndroidLayoutMode && !ratio
+
+  useEffect(() => {
+    return () => clearTimeout(fallbackTimer.current)
+  }, [loadRequest, needsFallback])
 
   const state = useRef<ImageState>({
     viewWidth,
@@ -379,15 +390,26 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
+    if (isAndroidLayoutMode && loadRequestRef.current !== loadRequest) return
+    if (needsFallback) {
+      clearTimeout(fallbackTimer.current)
+      // 优先等待准确尺寸，最多 1 秒后展示兜底图片。
+      fallbackTimer.current = setTimeout(() => {
+        if (loadRequestRef.current === loadRequest) setLoadedRequest(loadRequest)
+      }, 1000)
+    }
     evt.persist()
     RNImage.getSize(src, (width: number, height: number) => {
+      if (isAndroidLayoutMode && loadRequestRef.current !== loadRequest) return
       // iPhone 8 等设备对缓存图 getSize 偶发返回 0，用 onLoad 事件里的真实尺寸兜底
-      if (!width || !height) {
-        const nativeEvent = evt.nativeEvent as any
-        const source = nativeEvent.source
-        width = (source && source.width) || nativeEvent.width || 0
-        height = (source && source.height) || nativeEvent.height || 0
-        // 布局模式下用真实尺寸同步 view（此时 useEffect 里的 getSize 也没拿到尺寸）
+      if (!width || !height || (isAndroidLayoutMode && !state.current.ratio)) {
+        if (!isAndroidLayoutMode) {
+          const nativeEvent = evt.nativeEvent as any
+          const source = nativeEvent.source
+          width = (source && source.width) || nativeEvent.width || 0
+          height = (source && source.height) || nativeEvent.height || 0
+        }
+        // 首次尺寸查询失败后，onLoad 中查询成功仍需补齐布局。
         if (isLayoutMode && width && height && !state.current.ratio) {
           state.current.imageWidth = width
           state.current.imageHeight = height
@@ -435,9 +457,14 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   useEffect(() => {
     if (!isSvg && isLayoutMode) {
+      if (isAndroidLayoutMode) {
+        state.current.ratio = 0
+        setRatio(0)
+      }
       RNImage.getSize(
         src,
         (width: number, height: number) => {
+          if (isAndroidLayoutMode && (loadRequestRef.current !== loadRequest || !width || !height)) return
           state.current.imageWidth = width
           state.current.imageHeight = height
           state.current.ratio = !width ? 0 : height / width
@@ -515,10 +542,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
           style: extendObject(
             {
               transformOrigin: 'left top',
-              // 布局模式下尺寸未知（ratio 为 0）前先隐藏，避免按默认高度闪一下（iPhone 8 getSize 返回 0 时尤其明显）
-              opacity: isLayoutMode && !ratio ? 0 : 1,
-              width: isCropMode ? imageWidth : '100%',
-              height: isCropMode ? imageHeight : '100%'
+              // Android 布局模式加载成功后先展示，其他情况仍等待准确比例。
+              opacity: needsFallback ? (loadedRequest === loadRequest ? 1 : 0) : isLayoutMode && !ratio ? 0 : 1,
+              width: isCropMode && !needsFallback ? imageWidth : '100%',
+              height: isCropMode && !needsFallback ? imageHeight : '100%'
             },
             isCropMode ? modeStyle : {}
           )
@@ -530,7 +557,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }
 
   function renderLayoutImage () {
-    return createElement(View, innerProps, loaded && renderBaseImage())
+    return createElement(View, innerProps, (isAndroidLayoutMode || loaded) && renderBaseImage())
   }
 
   const finalComponent = isSvg ? renderSvgImage() : isLayoutMode ? renderLayoutImage() : renderBaseImage()
