@@ -556,9 +556,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     handleSwiperChange,
     handleSwiperChangeStart
   })
-  runOnJSCallbackRef.current.loop = loop
-  runOnJSCallbackRef.current.pauseLoop = pauseLoop
-  runOnJSCallbackRef.current.resumeLoop = resumeLoop
   runOnJSCallbackRef.current.handleSwiperChange = handleSwiperChange
   runOnJSCallbackRef.current.handleSwiperChangeStart = handleSwiperChangeStart
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
@@ -677,20 +674,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         selectedIndex = Math.min(Math.max(moveToIndex, 0), maxIndex)
         moveToTargetPos = selectedIndex * step.value
       } else {
-        const circularIndex = ((moveToIndex - patchElmNumShared.value) % childrenLength.value + childrenLength.value) % childrenLength.value
-        if (moveToIndex >= childrenLength.value + patchElmNumShared.value) {
-          selectedIndex = circularIndex
+        selectedIndex = ((moveToIndex - patchElmNumShared.value) % childrenLength.value + childrenLength.value) % childrenLength.value
+        moveToTargetPos = moveToIndex * step.value - preMarginShared.value
+        if (moveToIndex >= childrenLength.value + patchElmNumShared.value || moveToIndex <= patchElmNumShared.value - 1) {
           resetOffsetPos = (selectedIndex + patchElmNumShared.value) * step.value - preMarginShared.value
-          moveToTargetPos = moveToIndex * step.value - preMarginShared.value
           isCriticalItem = true
-        } else if (moveToIndex <= patchElmNumShared.value - 1) {
-          selectedIndex = circularIndex
-          resetOffsetPos = (selectedIndex + patchElmNumShared.value) * step.value - preMarginShared.value
-          moveToTargetPos = moveToIndex * step.value - preMarginShared.value
-          isCriticalItem = true
-        } else {
-          selectedIndex = circularIndex
-          moveToTargetPos = moveToIndex * step.value - preMarginShared.value
         }
       }
       return {
