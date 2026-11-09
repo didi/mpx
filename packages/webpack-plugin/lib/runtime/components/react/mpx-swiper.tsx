@@ -8,7 +8,6 @@ import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture, useRunOnJSCallback, useTextPassThrough } from './utils'
 import { SwiperContext } from './context'
 import Portal from './mpx-portal'
-import { getCircularBoundary, getCircularIndex, getSwiperMaxIndex, getSwiperPatchElmNum, getSwiperResistanceOffset, getSwiperStep, isSwiperDotActive, normalizeDisplayMultipleItems, normalizeSwiperCurrent } from './mpx-swiper-utils'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
@@ -146,11 +145,12 @@ function SwiperDot ({
   inactiveColor,
   style
 }: SwiperDotProps) {
-  const dotAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: isSwiperDotActive(index, currentIndex.value, displayMultipleItems.value, childrenLength.value, circular.value)
-      ? activeColor
-      : inactiveColor
-  }))
+  const dotAnimatedStyle = useAnimatedStyle(() => {
+    const active = circular.value
+      ? ((index - currentIndex.value) % childrenLength.value + childrenLength.value) % childrenLength.value < displayMultipleItems.value
+      : index >= currentIndex.value && index < currentIndex.value + displayMultipleItems.value
+    return { backgroundColor: active ? activeColor : inactiveColor }
+  })
   return <Animated.View style={[style, dotAnimatedStyle]} />
 }
 const longPressRatio = 100
@@ -198,7 +198,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     marginBottom: dotSpacing,
     zIndex: 98
   }
-  const displayMultipleItems = normalizeDisplayMultipleItems(props['display-multiple-items'])
+  const displayCount = Math.floor(Number(props['display-multiple-items']))
+  const displayMultipleItems = Number.isFinite(displayCount) ? Math.max(1, displayCount) : 1
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
@@ -243,13 +244,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const initMainAxisSize = typeof mainAxisSize === 'number' ? mainAxisSize : 0
   const [layoutMainAxisSize, setLayoutMainAxisSize] = useState(initMainAxisSize)
   const mainAxisSizeShared = useSharedValue(layoutMainAxisSize)
-  const initStep = getSwiperStep(layoutMainAxisSize, preMargin, nextMargin, displayMultipleItems)
+  const initStep = getStep(layoutMainAxisSize)
   // 前后补位需要覆盖整个视口，避免边距较大时动画过程露白
-  const patchElmNum = getSwiperPatchElmNum(circular, children.length, displayMultipleItems, hasEdgeMargin, layoutMainAxisSize, initStep)
+  const patchElmNum = getPatchElmNum(layoutMainAxisSize, initStep)
   const patchElmNumShared = useSharedValue(patchElmNum)
   // 每个元素的宽度 or 高度，有固定值直接初始化无则0
   const step = useSharedValue(initStep)
-  const initCurrent = normalizeSwiperCurrent(propCurrent, children.length, displayMultipleItems, circular)
+  const initCurrent = normalizeCurrent(propCurrent)
   // 记录选中元素的索引值
   const currentIndex = useSharedValue(initCurrent)
   // 记录动画或手势已选定、但可能尚未完成切换的目标索引
@@ -338,11 +339,29 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
     ], { layoutRef: layoutRef })
 
+  function getStep (size: number) {
+    const itemSize = (size - preMargin - nextMargin) / displayMultipleItems
+    return Number.isFinite(itemSize) && itemSize > 0 ? itemSize : 0
+  }
+
+  function getPatchElmNum (size: number, itemSize: number) {
+    if (!circular || children.length <= 1) return 0
+    const baseCount = displayMultipleItems + (hasEdgeMargin ? 1 : 0)
+    const viewportCount = Math.ceil(size / itemSize)
+    return Number.isFinite(viewportCount) ? Math.max(baseCount, viewportCount) : baseCount
+  }
+
+  function normalizeCurrent (index: number | string) {
+    const value = Math.floor(Number(index))
+    const maxIndex = Math.max(0, children.length - (circular ? 1 : displayMultipleItems))
+    return Number.isFinite(value) ? Math.min(Math.max(0, value), maxIndex) : 0
+  }
+
   function onWrapperLayout (e: LayoutChangeEvent) {
     const { width, height } = e.nativeEvent.layout
     const newMainAxisSize = dir === 'x' ? width : height
-    const iStep = getSwiperStep(newMainAxisSize, preMargin, nextMargin, displayMultipleItems)
-    const nextPatchElmNum = getSwiperPatchElmNum(circular, children.length, displayMultipleItems, hasEdgeMargin, newMainAxisSize, iStep)
+    const iStep = getStep(newMainAxisSize)
+    const nextPatchElmNum = getPatchElmNum(newMainAxisSize, iStep)
     mainAxisSizeShared.value = newMainAxisSize
     if (newMainAxisSize !== layoutMainAxisSize) setLayoutMainAxisSize(newMainAxisSize)
     if (nextPatchElmNum !== patchElmNum) {
@@ -351,8 +370,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     if (iStep !== step.value) {
       step.value = iStep
-      syncCurrent(targetIndex.value, iStep)
-      updateAutoplay()
+      updateCurrent(targetIndex.value, iStep, false)
     }
   }
 
@@ -442,7 +460,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       let nextIndex = currentIndex.value
       if (!circularShared.value) {
         // 获取下一个位置的坐标, 循环到最后一个元素,直接停止, 取消定时器
-        const maxIndex = getSwiperMaxIndex(childrenLength.value, displayMultipleItemsShared.value, false)
+        const maxIndex = Math.max(0, childrenLength.value - displayMultipleItemsShared.value)
         if (currentIndex.value >= maxIndex) {
           pauseLoop()
           return
@@ -557,45 +575,30 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     return targetOffset
   }
 
-  function syncCurrent (index: number | string, stepValue: number) {
-    const nextCurrent = normalizeSwiperCurrent(index, children.length, displayMultipleItems, circular)
+  function updateCurrent (index: number | string, stepValue: number, animate = true) {
+    const nextCurrent = normalizeCurrent(index)
+    if (animate && nextCurrent === targetIndex.value) return
+    pauseLoop()
+    touchfinish.value = true
+    cancelAnimation(offset)
+    const targetOffset = getOffset(nextCurrent, stepValue)
     if (nextCurrent !== currentIndex.value && nextCurrent !== targetIndex.value) {
       runOnJSCallback('handleSwiperChangeStart', nextCurrent)
     }
-    touchfinish.value = true
-    cancelAnimation(offset)
     targetIndex.value = nextCurrent
-    offset.value = getOffset(nextCurrent, stepValue)
-    currentIndex.value = nextCurrent
-  }
-
-  function updateCurrent (index: number | string, stepValue: number) {
-    const nextCurrent = normalizeSwiperCurrent(index, children.length, displayMultipleItems, circular)
-    if (nextCurrent === targetIndex.value) return
-    pauseLoop()
-    if (touchfinish.value === false) touchfinish.value = true
-    const targetOffset = getOffset(nextCurrent, stepValue)
-    cancelAnimation(offset)
-    targetIndex.value = nextCurrent
-    if (nextCurrent !== currentIndex.value) {
-      runOnJSCallback('handleSwiperChangeStart', nextCurrent)
-      if (targetOffset !== offset.value) {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, (finished) => {
-          if (finished && targetIndex.value === nextCurrent) {
-            currentIndex.value = nextCurrent
-            runOnJS(runOnJSCallback)('resumeLoop')
-          }
-        })
-      } else {
-        currentIndex.value = nextCurrent
-        updateAutoplay()
-      }
+    if (animate && nextCurrent !== currentIndex.value && targetOffset !== offset.value) {
+      offset.value = withTiming(targetOffset, {
+        duration: easeDuration,
+        easing: easeMap[easeingFunc]
+      }, (finished) => {
+        if (finished && targetIndex.value === nextCurrent) {
+          currentIndex.value = nextCurrent
+          runOnJS(runOnJSCallback)('resumeLoop')
+        }
+      })
     } else {
-      cancelAnimation(offset)
       offset.value = targetOffset
+      currentIndex.value = nextCurrent
       updateAutoplay()
     }
   }
@@ -629,6 +632,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       displayMultipleItems !== displayMultipleItemsShared.value ||
       children.length !== childrenLength.value
     if (!propCurrentChanged && !configChanged) return
+    const childrenBecameReady = !childrenLength.value && children.length > 0
     propCurrentRef.current = propCurrent
     preMarginShared.value = preMargin
     nextMarginShared.value = nextMargin
@@ -636,14 +640,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     patchElmNumShared.value = patchElmNum
     displayMultipleItemsShared.value = displayMultipleItems
     childrenLength.value = children.length
-    const newStep = getSwiperStep(mainAxisSizeShared.value, preMargin, nextMargin, displayMultipleItems)
+    const newStep = getStep(mainAxisSizeShared.value)
     step.value = newStep
-    if (configChanged) {
-      syncCurrent(propCurrentChanged ? propCurrent : targetIndex.value, newStep)
-      updateAutoplay()
-    } else {
-      updateCurrent(propCurrent, newStep)
-    }
+    updateCurrent(propCurrentChanged || childrenBecameReady ? propCurrent : targetIndex.value, newStep, !configChanged)
   }, [propCurrent, preMargin, nextMargin, circular, patchElmNum, displayMultipleItems, children.length])
 
   useEffect(() => {
@@ -674,11 +673,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const moveToIndex = transdir < 0 ? Math.ceil(computedIndex) : Math.floor(computedIndex)
       // 实际应该定位的索引值
       if (!circularShared.value) {
-        const maxIndex = getSwiperMaxIndex(childrenLength.value, displayMultipleItemsShared.value, false)
+        const maxIndex = Math.max(0, childrenLength.value - displayMultipleItemsShared.value)
         selectedIndex = Math.min(Math.max(moveToIndex, 0), maxIndex)
         moveToTargetPos = selectedIndex * step.value
       } else {
-        const circularIndex = getCircularIndex(moveToIndex - patchElmNumShared.value, childrenLength.value)
+        const circularIndex = ((moveToIndex - patchElmNumShared.value) % childrenLength.value + childrenLength.value) % childrenLength.value
         if (moveToIndex >= childrenLength.value + patchElmNumShared.value) {
           selectedIndex = circularIndex
           resetOffsetPos = (selectedIndex + patchElmNumShared.value) * step.value - preMarginShared.value
@@ -709,7 +708,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const gestureMovePos = offset.value + translation
       if (!circularShared.value) {
         // 如果只判断区间，中间非滑动状态(handleResistanceMove)向左滑动，突然改为向右滑动，但是还在非滑动态，本应该可滑动判断为了不可滑动
-        const maxIndex = getSwiperMaxIndex(childrenLength.value, displayMultipleItemsShared.value, false)
+        const maxIndex = Math.max(0, childrenLength.value - displayMultipleItemsShared.value)
         const posEnd = -step.value * maxIndex
         if (transdir < 0) {
           return gestureMovePos > posEnd
@@ -765,8 +764,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const curIndex = currentOffset / step.value
       const moveToIndex = (transdir < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElmNumShared.value
       const selectedIndex = circularShared.value
-        ? getCircularIndex(moveToIndex, childrenLength.value)
-        : Math.min(Math.max(moveToIndex, 0), getSwiperMaxIndex(childrenLength.value, displayMultipleItemsShared.value, false))
+        ? (moveToIndex % childrenLength.value + childrenLength.value) % childrenLength.value
+        : Math.min(Math.max(moveToIndex, 0), Math.max(0, childrenLength.value - displayMultipleItemsShared.value))
       const targetPositionIndex = circularShared.value ? moveToIndex : selectedIndex
       const targetOffset = -(targetPositionIndex + patchElmNumShared.value) * step.value + (circularShared.value ? preMarginShared.value : 0)
       triggerChangeStart(selectedIndex)
@@ -777,6 +776,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }, (finished) => {
         if (finished && touchfinish.value !== false && targetIndex.value === selectedIndex) {
           currentIndex.value = selectedIndex
+          if (circularShared.value && moveToIndex !== selectedIndex) {
+            offset.value = -(selectedIndex + patchElmNumShared.value) * step.value + preMarginShared.value
+          }
           runOnJS(runOnJSCallback)('resumeLoop')
         }
       })
@@ -798,15 +800,32 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 1. 基于当前的offset和translation判断是否超过当前边界值
       const { translation } = eventData
       const moveToOffset = offset.value + translation
-      return getCircularBoundary(moveToOffset, childrenLength.value, patchElmNumShared.value, step.value, mainAxisSizeShared.value)
+      const boundaryEnd = Math.max(
+        -(childrenLength.value + patchElmNumShared.value) * step.value,
+        -(childrenLength.value + patchElmNumShared.value * 2) * step.value + mainAxisSizeShared.value
+      )
+      const cycleSize = childrenLength.value * step.value
+      let resetOffset = 0
+      if (moveToOffset < boundaryEnd) {
+        resetOffset = moveToOffset + Math.ceil((boundaryEnd - moveToOffset) / cycleSize) * cycleSize
+      } else if (moveToOffset > 0) {
+        resetOffset = moveToOffset - Math.ceil(moveToOffset / cycleSize) * cycleSize
+      }
+      return { isBoundary: moveToOffset < boundaryEnd || moveToOffset > 0, resetOffset }
     }
     // 非循环超出边界，应用阻力; 开始滑动少阻力小，滑动越长阻力越大
     function handleResistanceMove (eventData: EventDataType) {
       'worklet'
       const { translation, transdir } = eventData
-      const maxIndex = getSwiperMaxIndex(childrenLength.value, displayMultipleItemsShared.value, false)
+      const maxIndex = Math.max(0, childrenLength.value - displayMultipleItemsShared.value)
       const maxOffset = translation < 0 ? -maxIndex * step.value : 0
-      return getSwiperResistanceOffset(offset.value, translation, transdir, maxOffset, step.value)
+      const moveToOffset = offset.value + translation
+      const overDrag = transdir < 0 ? Math.abs(moveToOffset - maxOffset) : Math.abs(moveToOffset)
+      const resistance = Math.max(0.1, Math.min(0.5, 1 - overDrag / (step.value / 2)))
+      const adjustOffset = offset.value + translation * resistance
+      return transdir < 0
+        ? Math.max(adjustOffset, maxOffset - step.value / 2)
+        : Math.min(adjustOffset, step.value / 2)
     }
     // 设置手势移动的方向
     function setMoveDir (curAbsoPos: number) {
