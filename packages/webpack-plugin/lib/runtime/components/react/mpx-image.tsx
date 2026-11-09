@@ -168,6 +168,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const loadRequestRef = useRef(loadRequest)
   loadRequestRef.current = loadRequest
   const [loadedRequest, setLoadedRequest] = useState<object | null>(null)
+  const fallbackTimer = useRef<ReturnType<typeof setTimeout>>()
   const resizeMode: ImageResizeMode = isAndroidLayoutMode ? 'contain' : ModeMap.get(mode) || 'stretch'
 
   const onLayout = ({ nativeEvent: { layout: { width, height } } }: LayoutChangeEvent) => {
@@ -215,6 +216,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const [ratio, setRatio] = useState(0)
   const [loaded, setLoaded] = useState(!isLayoutMode)
   const needsFallback = isAndroidLayoutMode && !ratio
+
+  useEffect(() => {
+    return () => clearTimeout(fallbackTimer.current)
+  }, [loadRequest, needsFallback])
 
   const state = useRef<ImageState>({
     viewWidth,
@@ -386,7 +391,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     if (isAndroidLayoutMode && loadRequestRef.current !== loadRequest) return
-    if (needsFallback) setLoadedRequest(loadRequest)
+    if (needsFallback) {
+      clearTimeout(fallbackTimer.current)
+      // 优先等待准确尺寸，最多 1 秒后展示兜底图片。
+      fallbackTimer.current = setTimeout(() => {
+        if (loadRequestRef.current === loadRequest) setLoadedRequest(loadRequest)
+      }, 1000)
+    }
     evt.persist()
     RNImage.getSize(src, (width: number, height: number) => {
       if (isAndroidLayoutMode && loadRequestRef.current !== loadRequest) return
