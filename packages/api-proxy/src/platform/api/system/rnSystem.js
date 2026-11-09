@@ -15,14 +15,14 @@ const getWindowInfo = function () {
   const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - (layout.bottomVirtualHeight || 0) // 解决安卓开启屏幕内导航安卓把安全区计算进去后产生的影响
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
   const windowHeight = layout.height || dimensionsWindow.height
-  console.log('dimensionsScreen', dimensionsScreen, dimensionsWindow, initialWindowMetricsInset, insets)
   try {
+    const shouldCompensateStatusBar = dimensionsScreen.height > dimensionsWindow.height && __mpx_mode__ === 'android'
     safeArea = {
       left,
       right: dimensionsWindow.width - right,
       top,
-      bottom: dimensionsWindow.height - bottom + (dimensionsScreen.height > dimensionsWindow.height && __mpx_mode__ === 'android' ? top : 0),
-      height: dimensionsWindow.height - (dimensionsScreen.height > dimensionsWindow.height && __mpx_mode__ === 'android' ? 0 : top) - bottom,
+      bottom: dimensionsWindow.height - bottom + (shouldCompensateStatusBar ? top : 0),
+      height: dimensionsWindow.height - (shouldCompensateStatusBar ? 0 : top) - bottom,
       width: dimensionsWindow.width - left - right
     }
   } catch (error) {
