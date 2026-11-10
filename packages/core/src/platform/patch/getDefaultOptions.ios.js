@@ -456,14 +456,15 @@ function usePageStatus (navigation, pageId) {
     if (!hasOwn(pageStatusMap, pageId)) {
       set(pageStatusMap, pageId, '')
     }
-    const show = () => {
-      if (navigation.isFocused && navigation.isFocused()) {
-        setFocusedNavigation(navigation)
+    if (navigation.isFocused && navigation.isFocused()) {
+      Promise.resolve().then(() => {
         pageStatusMap[pageId] = 'show'
-      }
+      })
     }
-    Promise.resolve().then(show)
-    const focusSubscription = navigation.addListener('focus', show)
+    const focusSubscription = navigation.addListener('focus', () => {
+      setFocusedNavigation(navigation)
+      pageStatusMap[pageId] = 'show'
+    })
     const blurSubscription = navigation.addListener('blur', () => {
       pageStatusMap[pageId] = 'hide'
     })
