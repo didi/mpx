@@ -420,7 +420,7 @@ function usePageEffect (mpxProxy, pageId, type) {
     // Component 仍仅在声明了对应生命周期时监听，避免无意义的 watcher。
     if (type === 'page' || hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
-        unWatch = watch(() => pageStatusMapRef.value[pageId], (newVal) => {
+        unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             // 后台页面重新显示时先追平尺寸版本，驱动依赖 rpx/vw/vh 和媒体查询的组件刷新。
             if (type === 'page' && newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
@@ -446,16 +446,11 @@ function usePageEffect (mpxProxy, pageId, type) {
 }
 
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-// 订阅容器的增删通知，以便属性重建后重新收集依赖。
-const pageStatusMapRef = ref(pageStatusMap)
 function usePageStatus (navigation, pageId) {
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
-    if (!hasOwn(pageStatusMap, pageId)) {
-      set(pageStatusMap, pageId, '')
-    }
     if (navigation.isFocused && navigation.isFocused()) {
       Promise.resolve().then(() => {
         pageStatusMap[pageId] = 'show'
@@ -472,9 +467,13 @@ function usePageStatus (navigation, pageId) {
     return () => {
       focusSubscription()
       blurSubscription()
-      del(pageStatusMap, pageId)
     }
   }, [navigation])
+  useEffect(() => {
+    return () => {
+      del(pageStatusMap, pageId)
+    }
+  }, [])
 }
 
 function usePagePreload (route) {
