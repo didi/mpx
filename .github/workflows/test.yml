@@ -7,6 +7,9 @@ on:
       - master
   workflow_dispatch:
 
+env:
+  NPM_CONFIG_LEGACY_PEER_DEPS: 'true'
+
 jobs:
   tsc:
     runs-on: ubuntu-latest
@@ -20,9 +23,9 @@ jobs:
             ~/.npm
             node_modules
             packages/*/node_modules
-          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
+          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v2-${{ hashFiles('**/package.json', '.npmrc') }}
           restore-keys: |
-            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
+            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v2-
       - run: npm i
         if: steps.cache.outputs.cache-hit != 'true'
       - run: npm run build:tsc
@@ -39,9 +42,9 @@ jobs:
             ~/.npm
             node_modules
             packages/*/node_modules
-          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
+          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v2-${{ hashFiles('**/package.json', '.npmrc') }}
           restore-keys: |
-            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
+            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v2-
       - run: npm i
         if: steps.cache.outputs.cache-hit != 'true'
       - run: npm run lint
@@ -59,21 +62,19 @@ jobs:
             node_modules
             test/e2e/miniprogram-project/node_modules
             test/e2e/plugin-project/node_modules
-            packages/webpack-plugin/node_modules
-            packages/core/node_modules
-            packages/api-proxy/node_modules
-            packages/perf/node_modules
-            packages/unocss-base/node_modules
-            packages/unocss-plugin/node_modules
-          key: unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
+            packages/*/node_modules
+          key: unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v2-${{ hashFiles('**/package.json', '.npmrc') }}
           restore-keys: |
-            unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
+            unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v2-
 
       - name: install deps
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project
 
-      - name: copy-webpack-plugin
+      - name: build-tsc
+        run: npm run build:tsc
+
+      - name: copy-local-packages
         run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run copyPlugin --prefix test/e2e/plugin-project
 
       - name: build-miniprogram
@@ -81,9 +82,6 @@ jobs:
 
       - name: build-plugin
         run: npm run build --prefix test/e2e/plugin-project
-
-      - name: build-tsc
-        run: npm run build:tsc
 
       - name: exec unit test
         run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
