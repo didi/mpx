@@ -19,6 +19,8 @@ mpx.use(apiProxy, options)
 
 应用事件可通过监听 API 注册。例如，[onPageNotFound](./base/app/app-event/onPageNotFound.md) 监听启动入口不存在事件，[offPageNotFound](./base/app/app-event/offPageNotFound.md) 取消监听。
 
+RN 页面可通过 [preload](./route/preload.md) 提前创建目标页面，再通过 `navigateTo` 正式进入。支持范围、生命周期与页面通信时机见该 API 说明。
+
 ## 配置项 (Options) {#options}
 
 所有配置均为可选，可根据实际需求组合使用

@@ -3,7 +3,7 @@ import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, shallowEqual, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext, TextPassThroughContext, TextPassThroughContextValue } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
-import { initialWindowMetrics } from 'react-native-safe-area-context'
+import { initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
 
@@ -1352,6 +1352,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   }
   // apply css var
   const varContextRef = useRef<Record<string, any>>({})
+  // 首次渲染锁定。env() 中途新增时不再订阅，与 css 变量的首次启用约束一致。
+  const hasEnvRef = useRef<boolean | null>(null)
   if (enableVarRef.current) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const varContext = useContext(VarContext)
@@ -1379,6 +1381,14 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   // apply unocss var
   if (unoVarKeyPaths.length) transformVar(normalStyle, unoVarKeyPaths, unoVarStyle, visitOther)
+  if (hasEnvRef.current === null) {
+    hasEnvRef.current = envKeyPaths.length > 0
+  }
+  // 订阅安全区变化以触发重渲染；具体数值仍取 navigation.insets，其中包含 Android top 兜底。
+  if (hasEnvRef.current) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useSafeAreaInsets()
+  }
   // apply env
   if (envKeyPaths.length) transformEnv(normalStyle, envKeyPaths, navigation)
   // apply percent / calc
@@ -1524,7 +1534,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
   // 固定首次 layout 前是否需要隐藏，避免 hasSelfPercent 后续变化时重新隐藏组件
   const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? hiddenStyle : undefined }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
-  const navigation = useNavigation()
+  const routeContext = useContext(RouteContext)
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
     layoutProps.onLayout = (e: LayoutChangeEvent) => {
@@ -1536,7 +1546,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
       }
       if (enableOffset) {
         nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-          const { top: navigationY = 0 } = navigation?.layout || {}
+          const { top: navigationY = 0 } = routeContext?.navigation?.layout || {}
           layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft, offsetTop: offsetTop - navigationY }
         })
       }

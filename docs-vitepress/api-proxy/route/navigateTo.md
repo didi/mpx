@@ -4,6 +4,8 @@
 
 支持情况： 微信、支付宝、RN、web
 
+> RN 中通过 [preload](./preload.md) 预加载的页面，应在正式进入的 `onShow` 中获取 EventChannel，并在接收方就绪后发送消息，详见 [预加载注意事项](./preload.md#notes)。
+
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/route/wx.navigateTo.html)
 
 ### 参数 {#parameters}

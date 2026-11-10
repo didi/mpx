@@ -28,6 +28,7 @@
   - [onLazyLoadError](../base/api-reference.md#onlazyloaderror)（基准）
   - [offLazyLoadError](../base/api-reference.md#offlazyloaderror)（基准）
 - [路由](#路由)
+  - [preload](#preload)（RN 扩展）
   - [navigateTo](../base/api-reference.md#navigateto)（基准）
   - [redirectTo](../base/api-reference.md#redirectto)（基准）
   - [reLaunch](../base/api-reference.md#relaunch)（基准）
@@ -179,7 +180,25 @@
 
 ## 路由
 
-用法见索引中的基准链接。
+除下述 RN 扩展外，用法见索引中的基准链接。
+
+### preload
+
+`mpx.preload({ url }): void` 是 RN 扩展，用于在不跳转的情况下提前创建、渲染目标页面。支持 React Navigation 7.x Native Stack；自定义导航器需另行确认预加载支持情况。
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `url` | `string` | 是 | 非空页面路径，支持相对路径和 query 参数。 |
+
+无返回值，不提供 `success` / `fail` / `complete` 回调或就绪 Promise；默认不参与 API Promise 化，不应通过 `whiteList` 强制 Promise 化。调用结束不代表目标页或数据已加载完成。
+
+```js
+mpx.preload({ url: '/pages/detail?id=1' })
+// 需要展示时再跳转
+mpx.navigateTo({ url: '/pages/detail?id=1' })
+```
+
+预加载与跳转参数不同时，可能仍复用同一实例；建议两次调用使用相同参数。`onLoad` 第三个参数 `isPreload`、正式进入时的生命周期和 EventChannel 获取时机见 [预加载页面的生命周期与事件通道](./rn-script-reference.md#预加载页面的生命周期与事件通道)。
 
 ## 界面
 

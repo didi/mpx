@@ -18,7 +18,10 @@ jest.mock('react-native-safe-area-context', () => ({
 
 describe('RN built-in navigation bar', () => {
   test('merges consecutive title and color updates in the same batch', () => {
-    const navigation: any = { getState: () => ({ routes: [{}] }) }
+    const navigation: any = {
+      getState: () => ({ routes: [{}] }),
+      isFocused: () => true
+    }
     let renderer: any
     act(() => {
       renderer = create(React.createElement(MpxNav, {

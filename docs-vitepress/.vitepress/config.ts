@@ -315,6 +315,7 @@ const sidebar: ExtendedSidebar = {
           text: '路由',
           collapsed: true,
           items: [
+            { text: 'preload（RN）', link: '/api-proxy/route/preload' },
             { text: 'navigateTo', link: '/api-proxy/route/navigateTo' },
             { text: 'redirectTo', link: '/api-proxy/route/redirectTo' },
             { text: 'switchTab', link: '/api-proxy/route/switchTab' },

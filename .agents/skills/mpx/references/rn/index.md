@@ -10,6 +10,7 @@
 | --- | --- |
 | 基础组件、属性、事件、无障碍、i18n | [RN 模板与组件支持表](./rn-template-reference.md) |
 | 构造选项、生命周期、selector、实例方法、宿主钩子 | [RN 脚本差异](./rn-script-reference.md) |
+| 页面预加载、`preload`、`isPreload`、EventChannel 获取时机 | [preload API](./rn-api-reference.md#preload) 与 [预加载生命周期及事件通道](./rn-script-reference.md#预加载页面的生命周期与事件通道) |
 | 样式改造/开发 | 优先 [样式实践](./rn-style-practice.md) 命中的场景；未命中再查能力表。 |
 | 明确查询某个选择器/单位/样式属性是否支持 | 直接查 [样式能力](./rn-style-reference.md)。 |
 | UnoCSS / utility class | [原子 CSS 基准](../base/atomic-css.md)与 [RN 差异](./rn-atomic-css.md)，仅在接入或使用时加载。 |

@@ -8,6 +8,7 @@
   - [App 构造选项](#app-构造选项)
   - [页面与组件构造选项](#页面与组件构造选项)
   - [统一生命周期](#统一生命周期)
+  - [预加载页面的生命周期与事件通道](#预加载页面的生命周期与事件通道)
   - [关系能力](#关系能力)
   - [通过 implement 适配构造选项](#通过-implement-适配构造选项)
 - [实例属性与方法](#实例属性与方法)
@@ -93,9 +94,18 @@ methods: {
 
 | 生命周期 / 钩子 | RN 差异 |
 | --- | --- |
+| 页面 `onLoad` / `onLoad(callback)` | 回调签名为 `(rawQuery, decodedQuery, isPreload)`，前两个参数沿用基准；第三个参数为 `boolean`，表示本次初始化是否发生在预加载阶段，普通打开或入栈后才初始化时为 `false`。见 [预加载生命周期](#预加载页面的生命周期与事件通道)。 |
 | `moved` / `error` | 不支持。 |
 | `onReactHooksExec` / `REACTHOOKSEXEC` | RN 混编专属，用于执行 React Hooks，见 [混合开发](./rn-hybrid-dev.md)。 |
 | `onServerPrefetch` / `SERVERPREFETCH` | RN 不支持 SSR，不会执行。 |
+
+### 预加载页面的生命周期与事件通道
+
+通过 [preload](./rn-api-reference.md#preload) 创建页面时，提前执行 `onLoad(rawQuery, decodedQuery, true)`，不触发 `onShow/onHide`。正式进入并复用该实例时触发 `onShow`，不重复执行 `onLoad`；跳转参数变化也不意味着 `onLoad` 会重新执行。
+
+预加载阶段 `getOpenerEventChannel()` 返回 `undefined`。在正式进入的 `onShow` 中获取本次 `navigateTo` 创建的 EventChannel；页面的 setup context 提供的同名方法也应在这个时机调用，不要在 setup 初始化或预加载的 onLoad 中提前缓存通道。
+
+后续再次显示同一页面时保持已有通道，应避免在每次 `onShow` 重复注册监听。发送方需确认接收方已就绪后再发送消息。通道的 `emit/on/once/off` 用法沿用 [页面事件通道基准](../base/script-reference.md#页面与组件实例属性与方法)。
 
 ### 关系能力
 
@@ -111,6 +121,7 @@ methods: {
 
 | 名称 | 类型 | 适用 | RN 差异 |
 | --- | --- | --- | --- |
+| `getOpenerEventChannel()` | 方法 | 页面 | 预加载阶段返回 `undefined`；正式进入后获取通道的时机见 [预加载生命周期与事件通道](#预加载页面的生命周期与事件通道)。 |
 | `triggerEvent(name, detail, options)` | 方法 | 组件 | 仅调用当前组件节点上匹配的事件处理器，不处理第三个参数中的 `bubbles`、`composed`、`capturePhase`，不实现自定义事件沿祖先节点冒泡或捕获。 |
 | `getTabBar()` | 方法 | 通用 | RN 不提供该方法，也不支持 JSON `tabBar` 配置。 |
 | `selectComponent(selector)` / `selectAllComponents(selector)` | 方法 | 通用 | 目标自定义组件须声明 `wx:ref`，空值或具名均可；不返回基础组件节点。无匹配时分别返回 `undefined` / `[]`。selector 范围见 [selector 查询要求](#selector-查询要求)。 |

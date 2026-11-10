@@ -1,5 +1,6 @@
 import { RefObject, MutableRefObject } from 'react'
 import { NativeSyntheticEvent } from 'react-native'
+import { RouteContextValue } from '../context'
 
 type LayoutRef = MutableRefObject<{
   x?: number
@@ -35,8 +36,6 @@ type RemoveProps = string[]
 
 type NativeTouchEvent = NativeSyntheticEvent<NativeEvent>
 
-type Navigation = Record<string, any> | undefined
-
 interface EventConfigDetail {
   bubble: string[],
   capture: string[],
@@ -56,7 +55,7 @@ type EventConfig = {
   propsRef: PropsRef
   disableTap: boolean
   layoutRef: LayoutRef
-  navigation: Navigation
+  routeContext: RouteContextValue | null
   [index: string]: EventConfigDetail
 }
 
@@ -115,7 +114,6 @@ export {
   LayoutRef,
   PropsRef,
   DataSetType,
-  Navigation,
   ExtendedNativeTouchEvent,
   EventConfig,
   EventConfigRef,

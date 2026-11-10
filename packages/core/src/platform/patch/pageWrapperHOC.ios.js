@@ -1,6 +1,6 @@
 import { createElement, useEffect, useMemo, useRef } from 'react'
 import * as ReactNative from 'react-native'
-import { hasOwn, setFocusedNavigation } from '@mpxjs/utils'
+import { hasOwn, setFocusedNavigation, isPreloadedRoute } from '@mpxjs/utils'
 import { IntersectionObserverContext, KeyboardAvoidContext, RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { GestureHandlerRootView, PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import MpxNav, { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
@@ -59,7 +59,9 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom (props) {
     const { navigation, route } = props
     const currentPageId = useMemo(() => ++pageId, [])
-    const routeContextValue = useMemo(() => ({ navigation, pageId: currentPageId }), [navigation, currentPageId])
+    const routeContextValRef = useRef({ navigation, pageId: currentPageId })
+    // 预加载页面正式进入时 navigation 会由占位对象切换为真实对象，直接同步引用，避免更新 context 触发整页订阅刷新。
+    routeContextValRef.current.navigation = navigation
     navigation.pageId = currentPageId
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
@@ -106,7 +108,7 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
         }
       },
       createElement(RouteContext.Provider,
-        { value: routeContextValue },
+        { value: routeContextValRef.current },
         createElement(IntersectionObserverContext.Provider,
           { value: intersectionObservers.current },
           createElement(PortalHost, { id: currentPageId }, createElement(WrappedComponent, props))
@@ -125,7 +127,7 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     }
     return createElement(GestureHandlerRootView,
       { style: { flex: 1 } },
-      createElement(MpxNav, { pageConfig: currentPageConfig, navigation }),
+      createElement(MpxNav, { pageConfig: currentPageConfig, navigation, isPreload: isPreloadedRoute(navigation, route.key) }),
       content
     )
   }
