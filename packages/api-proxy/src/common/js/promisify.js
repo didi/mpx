@@ -22,6 +22,7 @@ const blackList = [
   'reportPerformance',
   'router',
   'nextTick',
+  'preload',
   'checkIsPictureInPictureActive',
   'worklet',
   'revokeBufferURL',

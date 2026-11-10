@@ -1,5 +1,5 @@
-import { envError, successHandle, failHandle, resolvePath, getFocusedNavigation } from '../../../common/js'
-import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
+import { envError, error, successHandle, failHandle, resolvePath, getFocusedNavigation } from '../../../common/js'
+import { parseUrlQuery as parseUrl, isPreloadSupported } from '@mpxjs/utils'
 import { nextTick } from '../next-tick'
 import { EventChannel } from '../event-channel'
 
@@ -36,6 +36,33 @@ function canNavigate (navigation, navigationHelper, type, options) {
     }
   }, 1000)
   return true
+}
+
+function preload (options = {}) {
+  const navigation = getFocusedNavigation()
+  if (!isPreloadSupported(navigation)) {
+    error('preload: current navigator does not support page preloading')
+    return
+  }
+  if (global.__navigationHelper?.lastSuccessCallback) {
+    error('preload: another navigation is in progress')
+    return
+  }
+  if (typeof options.url !== 'string' || !options.url.trim()) {
+    error('preload: url must be a non-empty string')
+    return
+  }
+  try {
+    const { path, queryObj } = parseUrl(options.url, true)
+    if (!path) {
+      error('preload: url must contain a page path')
+      return
+    }
+    const finalPath = resolvePath(path, getBasePath(navigation)).slice(1)
+    navigation.preload(finalPath, queryObj)
+  } catch (e) {
+    error(`preload: ${e.message}`)
+  }
 }
 
 function navigateTo (options = {}) {
@@ -147,6 +174,7 @@ function reLaunch (options = {}) {
 const switchTab = envError('switchTab')
 
 export {
+  preload,
   redirectTo,
   navigateTo,
   navigateBack,

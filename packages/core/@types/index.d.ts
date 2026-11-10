@@ -164,9 +164,13 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
   [index: string]: any
 }
 
+/** decodedQuery and isPreload are only provided on RN. */
+type OnLoadCallback<T extends Record<string, string | undefined>> = (query: T, decodedQuery?: T, isPreload?: boolean) => void
+
 type PageOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> =
   ComponentOpt<D, P, C, M, Mi, S>
-  & Partial<WechatMiniprogram.Page.ILifetime>
+  & Partial<Omit<WechatMiniprogram.Page.ILifetime, 'onLoad'>>
+  & { onLoad?: OnLoadCallback<Record<string, string | undefined>> }
 
 type ThisTypedPageOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   PageOpt<D, P, C, M, Mi, S>
@@ -943,7 +947,7 @@ export function onBeforeUpdate (callback: () => void): void
 export function onUpdated (callback: () => void): void
 export function onBeforeUnmount (callback: () => void): void
 export function onUnmounted (callback: () => void): void
-export function onLoad<T extends Record<string, string | undefined>> (callback: (query: T) => void): void
+export function onLoad<T extends Record<string, string | undefined>> (callback: OnLoadCallback<T>): void
 export function onShow (callback: WechatMiniprogram.Page.ILifetime['onShow']): void
 export function onHide (callback: WechatMiniprogram.Page.ILifetime['onHide']): void
 export function onResize (callback: WechatMiniprogram.Page.ILifetime['onResize']): void
