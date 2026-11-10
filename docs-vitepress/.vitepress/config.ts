@@ -132,6 +132,10 @@ const sidebar: ExtendedSidebar = {
           text: '响应式 API',
           link: '/guide/composition-api/reactive-api',
         },
+        {
+          text: '响应式调试',
+          link: '/guide/composition-api/reactivity-debugging',
+        },
       ],
     },
     {

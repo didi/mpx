@@ -27,7 +27,7 @@ description: Mpx 应用开发与跨端适配指南，以 Mpx 核心能力为基�
 | 任务线索 | 按需读取 |
 | --- | --- |
 | 工程目录、页面/组件注册、`.mpx` 四个区块 | [项目结构与 SFC](references/base/project-structure-and-single-file-component.md) |
-| `data/computed/watch`、数据不更新、对象新增键、数组更新、`ref/reactive` | [数据响应](references/base/script-reference.md#数据响应) |
+| `data/computed/watch`、数据不更新、对象新增键、数组更新、`ref/reactive`、响应式调试 | [数据响应](references/base/script-reference.md#数据响应) |
 | `createApp/Page/Component`、props、生命周期、`setup`、宏、`implement`、运行时导出 | [脚本基础](references/base/script-reference.md) |
 | Mustache、条件/列表渲染、事件参数、双向绑定、refs、Slot、动态组件、i18n | [模板基础](references/base/template-reference.md) |
 | 基础组件、属性默认值、事件数据、表单、滚动、媒体与宿主能力 | [基础组件](references/base/template-reference.md#基础组件) |

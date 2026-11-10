@@ -25,6 +25,8 @@ export {
   computed,
   // instance
   getCurrentInstance,
+  onRenderTracked,
+  onRenderTriggered,
   // effectScope
   effectScope,
   getCurrentScope,

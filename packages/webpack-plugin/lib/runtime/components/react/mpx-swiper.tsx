@@ -524,7 +524,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }
   // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
-  const hasChangeListener = !!bindchange
+  const hasChangeListener = !!bindchange // JS 线程：把函数转成 true/false，减少跨线程函数捕获及其开销
   useAnimatedReaction(() => currentIndex.value, (newIndex, preIndex) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     if (newIndex !== preIndex && hasChangeListener && !isFirstRef.current) {
