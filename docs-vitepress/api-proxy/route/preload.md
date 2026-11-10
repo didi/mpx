@@ -19,6 +19,6 @@ mpx.navigateTo({ url: '/pages/detail?id=1' })
 ## 注意事项 {#notes}
 
 - 预加载会提前执行 `onLoad`，但不触发 `onShow/onHide`。正式进入并复用该页面时触发 `onShow`，不重复执行 `onLoad`。
-- 页面实例的只读属性 `wasPreloaded` 表示实例是否在预加载阶段创建，在创建钩子中即可读取，此后保持不变。
+- RN 的 `onLoad(query, decodedQuery, isPreload)` 第三个参数表示本次初始化是否发生在预加载阶段；普通打开或入栈后才初始化时为 `false`。前两个参数保持原有含义，分别为原始 query 和解码后的 query。
 - 预加载与跳转参数不同时，可能仍复用同一实例，业务需自行处理参数变化。建议两次调用使用相同参数。
 - 预加载阶段 `getOpenerEventChannel()` 返回 `undefined`，正式进入后可在 `onShow` 中获取通道并注册监听。重复显示时请避免重复注册；发送消息前需确认接收方已就绪。

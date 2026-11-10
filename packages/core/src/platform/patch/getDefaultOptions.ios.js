@@ -305,8 +305,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
-    const wasPreloaded = !!props.navigation.getState?.()?.preloadedRoutes?.some(route => route.key === props.route.key)
-    Object.defineProperty(instance, 'wasPreloaded', { value: wasPreloaded, writable: false, configurable: false, enumerable: true })
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
@@ -314,9 +312,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
-  if (type === 'page') {
-    proxy.ignoreProxyMap.wasPreloaded = true
-  }
   proxy.externalClassesVersion = ref(0)
   proxy.createRenderTask()
   proxy.created()
@@ -334,7 +329,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         }
       }
     }
-    proxy.callHook(ONLOAD, [rawQuery, decodedQuery])
+    const isPreload = !!props.navigation.getState?.()?.preloadedRoutes?.some(route => route.key === props.route.key)
+    proxy.callHook(ONLOAD, [rawQuery, decodedQuery, isPreload])
   }
 
   Object.assign(proxy, {

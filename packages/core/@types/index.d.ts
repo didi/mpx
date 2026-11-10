@@ -160,13 +160,17 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
   [index: string]: any
 }
 
+/** decodedQuery and isPreload are only provided on RN. */
+type OnLoadCallback<T extends Record<string, string | undefined>> = (query: T, decodedQuery?: T, isPreload?: boolean) => void
+
 type PageOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> =
   ComponentOpt<D, P, C, M, Mi, S>
-  & Partial<WechatMiniprogram.Page.ILifetime>
+  & Partial<Omit<WechatMiniprogram.Page.ILifetime, 'onLoad'>>
+  & { onLoad?: OnLoadCallback<Record<string, string | undefined>> }
 
 type ThisTypedPageOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   PageOpt<D, P, C, M, Mi, S>
-  & ThisType<ComponentIns<D, P, C, M, Mi, S, O> & Omit<RNPageProperties, keyof InstanceFields<D, P, C, M, Mi, S>>> & O
+  & ThisType<ComponentIns<D, P, C, M, Mi, S, O>> & O
 
 type ThisTypedComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>, O = {}> =
   ComponentOpt<D, P, C, M, Mi, S>
@@ -193,11 +197,6 @@ declare function tm (key: string): any
 export function observable<T extends object> (obj: T): T
 
 type MpxComProps<O> = { $rawOptions: O }
-
-interface RNPageProperties {
-  /** RN pages only. Whether this instance was created during preloading. */
-  readonly wasPreloaded?: boolean
-}
 
 export interface MpxComponentIns {
   $refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
@@ -234,14 +233,11 @@ type WxComponentIns<D extends Data = {}, P extends Properties = {}, M extends Me
   Omit<WechatMiniprogram.Component.Instance<D, P, M>, 'selectComponent' | 'selectAllComponents'>
   & ReplaceWxComponentIns
 
-type InstanceFields<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> =
+export type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> & { [K in keyof S]: S[K] extends Ref<infer V> ? V : S[K] } &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
-  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>>
-
-export type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
-  InstanceFields<D, P, C, M, Mi, S> &
+  GetComputedType<C & UnboxMixinsField<Mi, 'computed'>> &
   WxComponentIns<D, P, M> & MpxComponentIns & MpxComProps<O>
 
 interface CreateConfig {
@@ -923,7 +919,7 @@ export function onBeforeUpdate (callback: () => void): void
 export function onUpdated (callback: () => void): void
 export function onBeforeUnmount (callback: () => void): void
 export function onUnmounted (callback: () => void): void
-export function onLoad<T extends Record<string, string | undefined>> (callback: (query: T) => void): void
+export function onLoad<T extends Record<string, string | undefined>> (callback: OnLoadCallback<T>): void
 export function onShow (callback: WechatMiniprogram.Page.ILifetime['onShow']): void
 export function onHide (callback: WechatMiniprogram.Page.ILifetime['onHide']): void
 export function onResize (callback: WechatMiniprogram.Page.ILifetime['onResize']): void
