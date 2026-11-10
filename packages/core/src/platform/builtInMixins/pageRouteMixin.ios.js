@@ -2,11 +2,12 @@ import { BEFORECREATE, ONSHOW } from '../../core/innerLifecycle'
 import { EventChannel } from '@mpxjs/api-proxy/src/platform/api/event-channel/index'
 
 function initEventChannel () {
+  if (this.__eventChannel) return
   const mpxEventChannel = global.__mpxEventChannel || {}
   if (mpxEventChannel.route === this.route) {
     this.__eventChannel = mpxEventChannel.eventChannel
     delete global.__mpxEventChannel
-  } else if (!this.__eventChannel) {
+  } else {
     this.__eventChannel = new EventChannel()
   }
 }
@@ -14,7 +15,11 @@ function initEventChannel () {
 export default function pageRouteMixin (mixinType) {
   if (mixinType === 'page') {
     return {
-      [BEFORECREATE]: initEventChannel,
+      [BEFORECREATE] () {
+        const { navigation, route } = this.__props
+        const isPreload = navigation.getState?.()?.preloadedRoutes?.some(item => item.key === route.key)
+        if (!isPreload) initEventChannel.call(this)
+      },
       [ONSHOW]: initEventChannel,
       methods: {
         getOpenerEventChannel () {
