@@ -252,6 +252,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     workletChange
   } = props
   const hasBindChange = !!bindchange
+  const hasTouchstart = !!bindtouchstart || !!catchtouchstart
+  const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
+  const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
+  const hasTouchend = !!bindtouchend || !!catchtouchend
 
   const {
     hasSelfPercent,
@@ -566,8 +570,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const gesture = useMemo(() => {
     const handleTriggerMove = (e: GestureTouchEvent) => {
       'worklet'
-      const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
-      const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
       if (hasTouchmove || hasCatchTouchmove) {
         runOnJS(runOnJSCallback)('triggerMoveOnJS', {
           e,
@@ -586,7 +588,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x: changedTouches.x,
           y: changedTouches.y
         }
-        if (bindtouchstart || catchtouchstart) {
+        if (hasTouchstart) {
           runOnJS(runOnJSCallback)('triggerStartOnJS', { e })
         }
       })
@@ -632,7 +634,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       .onTouchesUp((e: GestureTouchEvent) => {
         'worklet'
         isFirstTouch.value = true
-        if (bindtouchend || catchtouchend) {
+        if (hasTouchend) {
           runOnJS(runOnJSCallback)('triggerEndOnJS', { e })
         }
       })
@@ -711,6 +713,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     friction,
     disableEventPassthrough,
     flushBindChange,
+    hasTouchstart,
+    hasTouchmove,
+    hasCatchTouchmove,
+    hasTouchend,
     gestureSwitch.current
   ])
 
