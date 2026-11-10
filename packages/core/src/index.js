@@ -15,9 +15,7 @@ export {
   createComponent
 } from './platform/index'
 
-export {
-  nextTick
-} from './observer/scheduler'
+export { pageWrapperHOC } from './platform/patch/pageWrapperHOC'
 
 export {
   BEFORECREATE,
@@ -151,7 +149,8 @@ Mpx.config = {
   */
   rnConfig: {
     defaultBoxSizing: 'content-box',
-    disablePageTransition: false
+    disablePageTransition: false,
+    dimensionsBase: 'window'
   }
 }
 

@@ -45,7 +45,7 @@ export interface IntersectionObserver {
 }
 
 export interface PortalContextValue {
-  mount: (children: React.ReactNode, key?: number | null, id?: number | null) => number | undefined
+  mount: (children: React.ReactNode) => number
   update: (key: number, children: React.ReactNode) => void
   unmount: (key: number) => void
 }

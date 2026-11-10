@@ -60,7 +60,7 @@ interface Methods {
   [key: string]: (...args: any[]) => any
 }
 
-interface WatchOpt {
+interface WatchOpt extends DebuggerOptions {
   immediate?: boolean
   immediateAsync?: boolean
   deep?: boolean
@@ -149,6 +149,10 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
   pageShow?: () => void
 
   pageHide?: () => void
+
+  renderTracked?: DebuggerHook
+
+  renderTriggered?: DebuggerHook
 
   initData?: Record<string, any>
 
@@ -253,6 +257,26 @@ export function getMixin<D extends Data = {}, P extends Properties = {}, C = {},
 export function createPage<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], O extends AnyObject = {}> (opt: ThisTypedPageOpt<D, P, C, M, Mi, O>, config?: CreateConfig): void
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
+
+/** RN 独立页面的外层配置，与页面 JSON 配置一致。 */
+export interface PageWrapperConfig {
+  navigationStyle?: 'default' | 'custom'
+  navigationBarTitleText?: string
+  navigationBarTextStyle?: 'white' | 'black' | '#ffffff' | '#000000'
+  navigationBarBackgroundColor?: string
+  backgroundColorContent?: string
+  disableKeyboardAvoiding?: boolean
+  [key: string]: any
+}
+
+/** 仅支持 RN；返回的组件需要宿主传入 navigation 和 route。 */
+export function pageWrapperHOC<P extends object> (
+  WrappedComponent: ComponentType<P>,
+  pageConfig?: PageWrapperConfig
+): ComponentType<P & {
+  navigation: any
+  route: { key: string; name: string; params?: Record<string, any> }
+}>
 
 type MixinType = 'app' | 'page' | 'component'
 
@@ -476,7 +500,7 @@ export interface RnConfig {
   }) => void
 
   /**
-   * 自定义屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
+   * 自定义窗口和屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
    *
    * @param dimensions 包含 window 和 screen 的尺寸信息
    * @returns 返回修改后的尺寸对象，或 void 表示不修改
@@ -484,6 +508,13 @@ export interface RnConfig {
   customDimensions?: <T extends { window: ScaledSize; screen: ScaledSize }>(
     dimensions: T
   ) => T | void
+
+  /**
+   * rpx、vw、vh、媒体查询与 onResize 使用的尺寸基准。
+   * 首次尺寸计算后该配置固定，运行期间修改不会生效。
+   * @default 'window'
+   */
+  dimensionsBase?: 'window' | 'screen'
 
   /**
    * 加载并执行异步分包的方法。
@@ -741,7 +772,27 @@ type WatchSource<T> =
 
 type MultiWatchSources = (WatchSource<unknown> | object)[]
 
-interface WatchEffectOptions {
+export type TrackOpTypes = 'get' | 'touch'
+export type TriggerOpTypes = 'set' | 'add' | 'delete' | 'array mutation'
+
+export interface DebuggerEvent {
+  /** @internal Internal ReactiveEffect instance; its methods are not public APIs. */
+  effect: any
+  target: object
+  type: TrackOpTypes | TriggerOpTypes
+  key?: string | number | symbol
+  oldValue?: any
+  newValue?: any
+}
+
+export type DebuggerHook = (event: DebuggerEvent) => void
+
+export interface DebuggerOptions {
+  onTrack?: DebuggerHook
+  onTrigger?: DebuggerHook
+}
+
+interface WatchEffectOptions extends DebuggerOptions {
   flush?: 'pre' | 'post' | 'sync' // default: 'pre'
 }
 
@@ -819,10 +870,12 @@ export function markRaw<T extends object> (value: T): T
 export function shallowReactive<T extends object> (target: T): ShallowReactive<T>
 
 export function computed<T> (
-  getter: (...args: any[]) => T
+  getter: (...args: any[]) => T,
+  debugOptions?: DebuggerOptions
 ): ComputedRef<T>
 export function computed<T> (
-  options: WritableComputedOptions<T>
+  options: WritableComputedOptions<T>,
+  debugOptions?: DebuggerOptions
 ): WritableComputedRef<T>
 
 export function watchEffect (
@@ -882,6 +935,8 @@ export declare interface InjectionKey<T> extends Symbol { }
 export function nextTick (fn: () => any): void
 
 // lifecycle
+export function onRenderTracked (callback: DebuggerHook): void
+export function onRenderTriggered (callback: DebuggerHook): void
 export function onBeforeMount (callback: () => void): void
 export function onMounted (callback: () => void): void
 export function onBeforeUpdate (callback: () => void): void

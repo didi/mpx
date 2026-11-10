@@ -21,7 +21,7 @@ export interface RadioProps {
   color?: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -118,7 +118,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       hasSelfPercent,
       normalStyle,
       hasVarDec,
-      varContextRef,
+      varContext,
       setWidth,
       setHeight
     } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
@@ -207,7 +207,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
         props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current,
+          varContext,
           textPassThrough
         }
       )

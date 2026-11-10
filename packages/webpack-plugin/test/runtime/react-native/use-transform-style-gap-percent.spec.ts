@@ -9,15 +9,15 @@
 jest.mock('react-native', () => ({
   StyleSheet: { hairlineWidth: 1 / 3 },
   Image: class Image {}
-}), { virtual: false })
+}))
 
 jest.mock('react-native-gesture-handler', () => ({
   Gesture: { Tap: () => ({}), Pan: () => ({}), LongPress: () => ({}) }
-}), { virtual: false })
+}))
 
 jest.mock('react-native-safe-area-context', () => ({
   initialWindowMetrics: { insets: { top: 0, right: 0, bottom: 0, left: 0 } }
-}), { virtual: false })
+}))
 
 // 与 use-transform-style-default.spec.ts 一致：把 React hook 替换成可在普通函数里调用的 thin 版，
 // 让纯样式 transformation 的判断可以不挂载组件直接验证。

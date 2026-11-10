@@ -1,0 +1,98 @@
+[
+  {
+    "eval": "eval-0-style-layout-adaptation",
+    "kind": "mpx",
+    "score": "16/16",
+    "total_tokens": 977842,
+    "tool_calls": 24,
+    "duration_ms": 213594
+  },
+  {
+    "eval": "eval-0-style-layout-adaptation",
+    "kind": "mpx2rn",
+    "score": "15/16",
+    "total_tokens": 645914,
+    "tool_calls": 20,
+    "duration_ms": 157715
+  },
+  {
+    "eval": "eval-1-template-api-adaptation",
+    "kind": "mpx",
+    "score": "9/9",
+    "total_tokens": 1028785,
+    "tool_calls": 43,
+    "duration_ms": 258430
+  },
+  {
+    "eval": "eval-1-template-api-adaptation",
+    "kind": "mpx2rn",
+    "score": "8/9",
+    "total_tokens": 829034,
+    "tool_calls": 16,
+    "duration_ms": 203534
+  },
+  {
+    "eval": "eval-2-dynamic-capability-adaptation",
+    "kind": "mpx",
+    "score": "15/15",
+    "total_tokens": 976724,
+    "tool_calls": 18,
+    "duration_ms": 245700
+  },
+  {
+    "eval": "eval-2-dynamic-capability-adaptation",
+    "kind": "mpx2rn",
+    "score": "15/15",
+    "total_tokens": 703703,
+    "tool_calls": 24,
+    "duration_ms": 185690
+  },
+  {
+    "eval": "eval-3-new-rating-component",
+    "kind": "mpx",
+    "score": "8/8",
+    "total_tokens": 646457,
+    "tool_calls": 21,
+    "duration_ms": 128740
+  },
+  {
+    "eval": "eval-3-new-rating-component",
+    "kind": "mpx2rn",
+    "score": "8/8",
+    "total_tokens": 782221,
+    "tool_calls": 17,
+    "duration_ms": 118015
+  },
+  {
+    "eval": "eval-4-new-segmented-control",
+    "kind": "mpx",
+    "score": "5/5",
+    "total_tokens": 755153,
+    "tool_calls": 21,
+    "duration_ms": 206334
+  },
+  {
+    "eval": "eval-4-new-segmented-control",
+    "kind": "mpx2rn",
+    "score": "5/5",
+    "total_tokens": 784865,
+    "tool_calls": 18,
+    "duration_ms": 208802
+  },
+  {
+    "eval": "eval-5-new-task-board-page",
+    "kind": "mpx",
+    "score": "8/8",
+    "total_tokens": 696781,
+    "tool_calls": 30,
+    "duration_ms": 167553
+  },
+  {
+    "eval": "eval-5-new-task-board-page",
+    "kind": "mpx2rn",
+    "score": "8/8",
+    "total_tokens": 654824,
+    "tool_calls": 18,
+    "duration_ms": 210311
+  }
+]

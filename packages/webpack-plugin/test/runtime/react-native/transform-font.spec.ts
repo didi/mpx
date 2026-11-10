@@ -6,15 +6,15 @@
 jest.mock('react-native', () => ({
   StyleSheet: { hairlineWidth: 1 / 3 },
   Image: class Image {}
-}), { virtual: false })
+}))
 
 jest.mock('react-native-gesture-handler', () => ({
   Gesture: { Tap: () => ({}), Pan: () => ({}), LongPress: () => ({}) }
-}), { virtual: false })
+}))
 
 jest.mock('react-native-safe-area-context', () => ({
   initialWindowMetrics: { insets: { top: 0, right: 0, bottom: 0, left: 0 } }
-}), { virtual: false })
+}))
 
 // useTransformStyle 内部使用 useState / useRef / useContext / useEffect 等 hook：
 // 用 thin 版替换，避免引入 react-test-renderer 仍能在普通函数环境调用。

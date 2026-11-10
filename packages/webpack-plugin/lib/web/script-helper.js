@@ -152,6 +152,11 @@ function buildGlobalParams ({
   hasApp
 }) {
   let content = ''
+  if (isMain || !hasApp) {
+    content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+    content += '  global.__mpxOptionsMap = global.__mpxOptionsMap || {}\n'
+    content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+  }
   if (isMain) {
     content += `
   global.getApp = function () {}
@@ -172,20 +177,12 @@ function buildGlobalParams ({
     })
   }
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-  global.__mpxGenericsMap = {}
-  global.__mpxOptionsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
     if (globalTabBar) {
       content += globalTabBar
     }
   } else {
-    if (!hasApp) {
-      content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
-      content += '  global.__mpxOptionsMap = global.__mpxOptionsMap || {}\n'
-      content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
-    }
     content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
     content += `  global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
     content += `  global.currentInject = ${JSON.stringify({ moduleId })}\n`

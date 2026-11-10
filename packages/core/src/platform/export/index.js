@@ -1,4 +1,8 @@
 export {
+  nextTick
+} from '../../observer/scheduler'
+
+export {
   watchEffect,
   watchSyncEffect,
   watchPostEffect,
@@ -36,7 +40,9 @@ export {
 } from '../../observer/effectScope'
 
 export {
-  getCurrentInstance
+  getCurrentInstance,
+  onRenderTracked,
+  onRenderTriggered
 } from '../../core/proxy'
 
 export {

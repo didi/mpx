@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/perf",
-  "version": "2.11.1",
+  "version": "2.11.2",
   "description": "Mpx runtime performance probes.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,7 +14,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/perf"
   },
   "keywords": [
     "mpx",

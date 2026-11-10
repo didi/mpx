@@ -191,3 +191,22 @@ defineOptions({
   },
 })
 ```
+
+## 独立页面包裹 {#standalone-page-wrapper}
+
+在已有 Mpx RN 运行环境中独立接入页面时，可通过 `pageWrapperHOC` 包裹页面组件，整合导航栏、手势根容器、页面布局与安全区信息、键盘避让、页面上下文和 Portal 能力。宿主需要提供 React Navigation 的 `navigation`、`route`，并在外层提供 `SafeAreaProvider`。`pageWrapperHOC` 仅支持 RN 平台，非 RN 平台导出同名兜底函数，调用时输出仅支持 React Native 的错误提示；跨端代码应限定在 RN 平台调用。
+
+```js
+import { pageWrapperHOC } from '@mpxjs/core'
+
+const WrappedPage = pageWrapperHOC(PageComponent, {
+  navigationBarTitleText: '独立页面'
+})
+// 在宿主的导航 Screen 中使用 WrappedPage，传入 navigation 和 route。
+```
+
+`navigationStyle: 'custom'` 时不展示默认导航栏，`disableKeyboardAvoiding: true` 时不添加键盘避让容器。应用内页面由框架自动添加外层容器，无需重复包裹。独立页面产物直接导出原页面，由使用方调用上述 `pageWrapperHOC` 并传入页面配置后，再接入宿主导航。
+
+应用内的外层容器会在异步页面加载期间提前挂载，并在 App 的 `onLaunch/onShow` 前初始化窗口信息；外层同时生成稳定的 `pageId`，通过 `RouteContext` 提供页面身份并挂载 Portal。页面聚焦状态和预加载仍随真实页面挂载，不在加载占位阶段提前执行。页面内部仅保留实例和生命周期相关逻辑，不再调用 `pageWrapperHOC`，也不依赖 Context 跳过重复容器。
+
+页面身份通过实例的 `getPageId()` 获取；框架不再把内部 `pageId` 注入页面的 `id` props。`id` 仍表示调用方传入的节点标识，不能作为内部页面身份使用。

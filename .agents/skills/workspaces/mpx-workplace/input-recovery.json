@@ -1,0 +1,61 @@
+{
+  "restored_iteration": 2,
+  "input_source_commit": "0508ba54c",
+  "verification": "All 8 scenario contents match iteration-2 read outputs in local session records; all 48 assertion definitions match both groups in assessment-report.json.",
+  "evals_metadata_source": {
+    "session_id": "01a19a67-9678-7b42-b208-d46951ef1378",
+    "call_line": 50,
+    "note": "Historical iteration-2 preparation metadata; the reusable evals.json now omits iteration/status/reference_workspace and points to the current Skill. Case definitions and assertions are unchanged."
+  },
+  "files": [
+    {
+      "path": "cases/eval-0-target-config/input/scenario.md",
+      "sha256": "13faf47e37877a8f2bae6e17a3727e9930399a542c403aa76d373ea73ef59e77",
+      "session_id": "01a19acd-d7cf-7813-a61a-2ede27bb790e",
+      "read_call_line": 26
+    },
+    {
+      "path": "cases/eval-1-layout-card/input/scenario.md",
+      "sha256": "7ae4d7398127a181372578e34f295f3185b642b0be5df18187106614f0f12e17",
+      "session_id": "01a19acd-d7cf-7813-a61a-2ede27bb790e",
+      "read_call_line": 48
+    },
+    {
+      "path": "cases/eval-2-scroll-feed/input/scenario.md",
+      "sha256": "c09ce0fce07290175d26b90b3a28a0a72d99287461c06e44a889843ada13639d",
+      "session_id": "01a19acd-d7cf-7813-a61a-2ede27bb790e",
+      "read_call_line": 48
+    },
+    {
+      "path": "cases/eval-3-checkout-dialog/input/scenario.md",
+      "sha256": "48c0d59ee15e5de787b81b2b726676ce603dd8f94a8c6c2034d642dec15cc0aa",
+      "session_id": "01a19ad9-8a59-73b2-b94e-48d9427b23a2",
+      "read_call_line": 21
+    },
+    {
+      "path": "cases/eval-4-account-search/input/scenario.md",
+      "sha256": "0c40eafd5d635279ce877c2f2e2ca88d939580acef4fedfb8a24efd8150bd88f",
+      "session_id": "01a19ad9-8a59-73b2-b94e-48d9427b23a2",
+      "read_call_line": 21
+    },
+    {
+      "path": "cases/eval-5-reactive-switcher/input/scenario.md",
+      "sha256": "9e76272f7db2fc82b65f3dfbea034cffdc00c2574b514650b3a938d5761c1830",
+      "session_id": "01a19ad9-8a59-73b2-b94e-48d9427b23a2",
+      "read_call_line": 21
+    },
+    {
+      "path": "cases/eval-6-routing-subpackage/input/scenario.md",
+      "sha256": "9795293f6150f80cb284d4e4c112955446e90615e7f19ae29f1620fd171ed546",
+      "session_id": "01a19ae1-fc16-7671-9953-9afa9ab14c93",
+      "read_call_line": 23
+    },
+    {
+      "path": "cases/eval-7-ssr-shared-state/input/scenario.md",
+      "sha256": "35918f862ecaae67dbb68110807985641de877ef7a6773bf1ba201247a27bce7",
+      "session_id": "01a19ae1-fc16-7671-9953-9afa9ab14c93",
+      "read_call_line": 23
+    }
+  ],
+  "path_base": "mpx-workplace root"
+}

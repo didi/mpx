@@ -4,6 +4,11 @@ describe('react native plugin', () => {
   test('generates class map from UnoCSS layers', async () => {
     let compilationCallback
     let optimizeAssets
+    const blockedTokens = []
+    const isBlocked = token => {
+      blockedTokens.push(token)
+      return false
+    }
     const compiler = {
       options: {
         module: {
@@ -24,7 +29,7 @@ describe('react native plugin', () => {
       __unoCtx: {
         transformCache: new Map(),
         uno: {
-          blocked: new Set(),
+          isBlocked,
           generate: async () => ({
             layers: ['default'],
             getLayers: layers => layers.includes('default') ? '.text-red-500{color:red;}' : ''
@@ -61,6 +66,7 @@ describe('react native plugin', () => {
     await optimizeAssets()
 
     expect(compilation.assets['app.js'].source()).toContain('["text-red-500"]: function(_f){return {\'color\':"red"};}')
+    expect(blockedTokens).toEqual(['text-red-500'])
     expect(compilation.errors).toEqual([])
   })
 })

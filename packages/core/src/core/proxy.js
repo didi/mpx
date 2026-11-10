@@ -1,6 +1,6 @@
 import { reactive, defineReactive } from '../observer/reactive'
 import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
-import { effectScope } from '../platform/export/index'
+import { effectScope, getCurrentScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
@@ -230,11 +230,11 @@ export default class MpxProxy {
 
   mounted () {
     if (this.state === CREATED) {
+      this.currentRenderTask && this.currentRenderTask.resolve()
       // 用于处理refs等前置工作
       this.callHook(BEFOREMOUNT)
       this.state = MOUNTED
       this.callHook(MOUNTED)
-      this.currentRenderTask && this.currentRenderTask.resolve()
     }
   }
 
@@ -261,8 +261,11 @@ export default class MpxProxy {
     if (__mpx_perf_framework__) perfId = perf.scopeStart('instance:unmount')
     this.scope?.stop()
     if (this.update) this.update.active = false
-    if (this._intersectionObservers) {
-      this._intersectionObservers.forEach((observer) => {
+    const intersectionObservers = this.target._intersectionObservers
+    if (intersectionObservers?.length) {
+      // 先清空组件列表，避免disconnect逐项删除时漏项或反复移动数组元素
+      this.target._intersectionObservers = []
+      intersectionObservers.forEach((observer) => {
         observer.disconnect()
       })
     }
@@ -513,14 +516,9 @@ export default class MpxProxy {
     }
     let result
     if (isFunction(hook) && !hooksOnly) {
-      const setContext = hookName !== BEFORECREATE
-      if (setContext) {
-        setCurrentInstance(this)
-      }
+      const resetInstance = hookName !== BEFORECREATE && setCurrentInstance(this)
       result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
-      if (setContext) {
-        unsetCurrentInstance()
-      }
+      if (resetInstance) resetInstance()
     }
     hooks.forEach((hook) => {
       result = params ? hook(...params) : hook()
@@ -792,6 +790,7 @@ export default class MpxProxy {
       }
       if (__mpx_perf_framework__ && perfId >= 0) perf.scopeEnd(perfId)
     }, () => queueJob(update), this.scope)
+    if (process.env.NODE_ENV !== 'production') bindRenderDebugHooks(effect, this)
 
     const update = this.update = effect.run.bind(effect)
     update.id = this.uid
@@ -833,14 +832,7 @@ export default class MpxProxy {
       if (this.update) {
         options.sync ? this.update() : queueJob(this.update)
       }
-      if (callback) {
-        callback = callback.bind(this.target)
-        options.sync ? callback() : nextTick(callback)
-      }
-      return
-    }
-
-    if (this.effect) {
+    } else if (this.effect) {
       options.sync ? this.effect.run() : this.effect.update()
     } else {
       if (this.forceUpdateAll) {
@@ -872,8 +864,15 @@ export const getCurrentInstance = () => {
 }
 
 export const setCurrentInstance = (instance) => {
+  const previousInstance = currentInstance
+  const previousScope = getCurrentScope()
   currentInstance = instance
   instance?.scope?.on()
+  return () => {
+    instance?.scope?.off()
+    currentInstance = previousInstance
+    previousScope?.on()
+  }
 }
 
 export const unsetCurrentInstance = () => {
@@ -885,9 +884,9 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
   if (instance) {
     const wrappedHook = (...args) => {
       if (instance.isUnmounted()) return
-      setCurrentInstance(instance)
+      const resetInstance = setCurrentInstance(instance)
       const res = callWithErrorHandling(hook, instance, `${hookName} hook`, args)
-      unsetCurrentInstance()
+      resetInstance()
       return res
     }
     if (isFunction(hook)) (instance.hooks[hookName] || (instance.hooks[hookName] = [])).push(wrappedHook)
@@ -895,6 +894,17 @@ export const injectHook = (hookName, hook, instance = currentInstance) => {
 }
 
 export const createHook = (hookName) => (hook, instance) => injectHook(hookName, hook, instance)
+
+export const onRenderTracked = process.env.NODE_ENV !== 'production' ? createHook('renderTracked') : noop
+export const onRenderTriggered = process.env.NODE_ENV !== 'production' ? createHook('renderTriggered') : noop
+
+export function bindRenderDebugHooks (effect, instance) {
+  if (process.env.NODE_ENV !== 'production') {
+    if (instance.hasHook('renderTracked')) effect.onTrack = (event) => instance.callHook('renderTracked', [event])
+    if (instance.hasHook('renderTriggered')) effect.onTrigger = (event) => instance.callHook('renderTriggered', [event])
+  }
+}
+
 // 在代码中调用以下生命周期钩子时, 将生命周期钩子注入到mpxProxy实例上
 export const onBeforeMount = createHook(BEFOREMOUNT)
 export const onMounted = createHook(MOUNTED)

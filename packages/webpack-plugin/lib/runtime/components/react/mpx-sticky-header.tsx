@@ -11,7 +11,7 @@ interface StickyHeaderProps {
   style?: ViewStyle;
   padding?: [number, number, number, number];
   'offset-top'?: number;
-  'enable-var'?: boolean;
+  'enable-var'?: boolean | 'use';
   'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
   'parent-height'?: number;
@@ -41,7 +41,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     setWidth,
     setHeight
@@ -57,7 +57,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const headerTopRef = useRef(0)
 
   useEffect(() => {
-    registerStickyHeader({ key: id, updatePosition })
+    registerStickyHeader({ id, updatePosition })
     return () => {
       unregisterStickyHeader(id)
     }
@@ -162,7 +162,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
         props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current,
+          varContext,
           textPassThrough
         }
       )

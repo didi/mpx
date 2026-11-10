@@ -77,7 +77,8 @@
 
 ```js
 const { defineConfig } = require('unocss')
-const presetMpx = require('@mpxjs/unocss-base')
+const presetMpxModule = require('@mpxjs/unocss-base')
+const presetMpx = presetMpxModule.default || presetMpxModule
 
 module.exports = defineConfig({
   presets: [
@@ -89,10 +90,13 @@ module.exports = defineConfig({
 3. 注册`MpxUnocssPlugin`，在`build/getPlugins`中添加如下代码：
 
 ```js
-const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+const MpxUnocssPluginModule = require('@mpxjs/unocss-plugin')
+const MpxUnocssPlugin = MpxUnocssPluginModule.default || MpxUnocssPluginModule
 // ...
 plugins.push(new MpxUnocssPlugin())
 ```
+
+> `@mpxjs/unocss-plugin@2.11.1` 与 `@mpxjs/unocss-base@2.11.1` 起以 ESM 形式发布。在 CommonJS 配置文件中通过 `require()` 加载时，需要兼容读取默认导出；以上写法同时兼容旧版 CommonJS 导出。在不额外启用实验参数的情况下，上述 CommonJS 兼容写法要求 Node.js 版本满足 `^20.19.0 || >=22.12.0`。
 
 即可在项目模版中使用基于`unocss`的原子类功能，`unocss`默认的preset兼容`tailwindcss`/`windicss`
 ，可以通过查阅[tailwindcss文档](https://tailwindcss.com/docs/installation)、[windicss文档](https://windicss.org/utilities/general/colors.html)或[unocss可交互文档](https://unocss.dev/interactive/)进行探索使用。
@@ -120,10 +124,8 @@ plugins.push(new MpxUnocssPlugin())
   ```js
   // uno.config.js
   const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
-
-  const { defineConfig } = require("unocss")
-  const presetMpx = require("@mpxjs/unocss-base")
+  const presetMpxModule = require('@mpxjs/unocss-base')
+  const presetMpx = presetMpxModule.default || presetMpxModule
 
   module.exports = defineConfig({
     content: {
@@ -299,7 +301,7 @@ plugins.push(new MpxUnocssPlugin())
 基于`unocss`的原子类支持`value auto-infer`（值自动推导），可以在模版中根据相关规则书写灵活的自定义值原子类，如`p-5px bg-[hsl(211.7,81.9%,69.6%)]`等，针对原子类中出现的`[` `(` `,`等特殊字符，在web中会通过转义字符`\`进行转义，由于小程序环境下不支持css选择器中出现`\`转义字符，我们内置支持了一套不带`\`的转义规则对这些特殊字符进行转义，同时替换模版和css文件中的类名，内建的默认转义规则如下：
 
 ```js
-const escapeMap = {
+const classEscapeMap = {
     '(': '_pl_',
     ')': '_pr_',
     '[': '_bl_',
@@ -316,13 +318,15 @@ const escapeMap = {
     '\'': '_q_',
     '"': '_dq_',
     '+': '_a_',
-    $: '_si_',
-    // unknown用于兜底不在上述范围中未知的转义字符
-    unknown: '_u_'
+    $: '_si_'
   }
 ```
 
-与此同时，用户也可以通过传递`@mpxjs/unocss-plugin`的[`escapeMap`配置项](../../api/compile.md#escapemap)来覆盖内建的转义规则。
+该转义规则同时用于编译产物与运行时处理，为保证两端结果一致，不支持自定义。对于映射表以外的特殊字符，能够被 UnoCSS 规则正常处理的类名会使用内建兜底规则转义；未被 UnoCSS 处理的类名会输出编译错误。
+
+模板命中 `@mpxjs/unocss-plugin` 的 `scan` 规则时，`wx:class` 对象字面量中的 key 会和静态 `class` 使用相同的转义规则。插件会在扫描模板时将转义后的 key 转换为小程序可用的标识符，无法转换为合法标识符时会输出编译错误。
+
+未使用 `@mpxjs/unocss-plugin` 或模板未命中 `scan` 规则时，`wx:class` 对象字面量的 key 仅支持合法标识符以及包含空格或 `-` 的类名，其他无法转换为合法标识符的特殊字符会输出编译错误。如需在这类模板中使用 UnoCSS 特殊类名，需要通过 `scan.include` 将对应文件加入扫描范围。
 
 ### 原子类分包输出 {#subpackage}
 
@@ -356,16 +360,3 @@ const escapeMap = {
     <!-- ... -->
 </template>
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-

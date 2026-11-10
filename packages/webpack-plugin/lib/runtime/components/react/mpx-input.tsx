@@ -96,7 +96,7 @@ export interface InputProps {
   'selection-end'?: number
   'placeholder-style'?: { color?: string }
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   // 只有 RN 环境读取

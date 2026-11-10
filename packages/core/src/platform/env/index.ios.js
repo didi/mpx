@@ -10,6 +10,7 @@ export function init (Mpx) {
     show: [],
     hide: [],
     error: [],
+    pageNotFound: [],
     rejection: [],
     lazyLoad: []
   }
