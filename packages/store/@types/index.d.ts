@@ -95,12 +95,12 @@ export interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
     [key: string]: () => any
   }
 
-  mapMutations<K extends keyof M>(maps: K[]): Pick<GetMutations<M>, K>
+  mapMutations<Maps extends readonly (keyof M)[]>(maps: [...Maps]): Pick<GetMutations<M>, Maps[number]>
   mapMutations(depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
 
-  mapActions<K extends keyof A>(maps: K[]): Pick<GetActions<A>, K>
+  mapActions<Maps extends readonly (keyof A)[]>(maps: [...Maps]): Pick<GetActions<A>, Maps[number]>
   mapActions(depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
@@ -294,7 +294,7 @@ export interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps =
     [I in keyof T]: (...payloads: any[]) => any
   }
 
-  mapMutations<K extends keyof M>(maps: K[]): Pick<M, K>
+  mapMutations<Maps extends readonly (keyof M)[]>(maps: [...Maps]): Pick<M, Maps[number]>
   mapMutations<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
     [K in T]: CombineStringKey<P, K> extends keyof GetAllDepsType<M, D, 'mutations'> ? GetAllDepsType<M, D, 'mutations'>[CombineStringKey<P, K>] : (...payloads: any[]) => any
   }
@@ -305,7 +305,7 @@ export interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps =
     [I in keyof T]: (...payloads: any[]) => any
   }
 
-  mapActions<K extends keyof A>(maps: K[]): Pick<A, K>
+  mapActions<Maps extends readonly (keyof A)[]>(maps: [...Maps]): Pick<A, Maps[number]>
   mapActions<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
     [K in T]: CombineStringKey<P, K> extends keyof GetAllDepsType<A, D, 'actions'> ? GetAllDepsType<A, D, 'actions'>[CombineStringKey<P, K>] : (...payloads: any[]) => any
   }
