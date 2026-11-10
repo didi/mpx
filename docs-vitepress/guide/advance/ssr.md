@@ -248,4 +248,4 @@ export default context => {
    
 2. 在服务端渲染阶段，对于 global 全局对象访问修改，如__mpx, __mpxRouter, __mpxPinia 都可能导致全局状态污染，所以在服务端渲染阶段请尽量避免进行相关操作；对于存在全局访问修改的方法，如 getApp(), getCurrentPages() 等在服务端渲染中被调用时，会产生相关报错提示。
    
-3. 由于服务器无法收到 URL 中的 hash 信息，使用 SSR 时需要通过修改 `mpx.config.webRouteConfig` 将路由模式设置成 `history` 模式。
+3. 由于服务器无法收到 URL 中的 hash 信息，使用 SSR 时需要通过修改 `mpx.config.webConfig.routeConfig` 将路由模式设置成 `history` 模式。

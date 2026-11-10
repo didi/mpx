@@ -24,6 +24,9 @@ module.exports = {
     __mpx_mode__: 'readonly',
     __mpx_env__: 'readonly',
     __mpx_dynamic_runtime__: 'readonly',
+    __mpx_perf__: 'readonly',
+    __mpx_perf_framework__: 'readonly',
+    __mpx_perf_user__: 'readonly',
     getRegExp: 'readonly',
     getCurrentPages: 'readonly'
   },

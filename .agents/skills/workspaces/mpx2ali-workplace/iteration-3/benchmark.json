@@ -1,0 +1,400 @@
+{
+  "metadata": {
+    "skill_name": "mpx vs mpx2ali",
+    "skill_path": "/Users/didi/work/mpx/.agents/skills/mpx2ali",
+    "executor_model": "gpt-6.1-sol",
+    "analyzer_model": "evidence review",
+    "timestamp": "2026-10-29T11:10:31Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 1,
+    "reasoning_effort": "high",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_reasoning_effort": "high",
+    "status": "completed"
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 371.793,
+        "tokens": 2260085,
+        "tool_calls": 39,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a00",
+          "text": "标题在实际截断节点上具有宽度、溢出和换行约束，正确处理 text 继承。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:3、29 保留实际截断容器 view > text；容器有 width:240rpx、overflow:hidden、white-space:nowrap、text-overflow:ellipsis。audit/eval-0/mpx/dist/ali/components/product-card310f8c09/index.axml:1 和 index.acss:2 的实际产物一致；audit/eval-0/mpx/dist/ali/app.acss:1 导入 mpx-ali-compat.acss，其中 text 的 white-space:inherit 使内部 text 正确继承 nowrap，符合允许完整 App 默认兼容规则的口径，未重复注入业务补丁。同组 run-1/run.json 的 sources_unchanged=true、returncode=0；复核完整 agent.jsonl 的最终构建命令及磁盘产物，审计只读探针 audit/eval-0/eval-0-read-only-check.log 亦通过。"
+        },
+        {
+          "id": "a01",
+          "text": "图片留白由外层承担，保留 240rpx × 80rpx 图片内容及 24rpx 留白。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:4-6、30-31 将图片放入 .product-card-cover-wrap，24rpx padding 由外层承担；图片 display:block、width:240rpx、height:80rpx，src 与 aspectFit 保留，外层内容宽240rpx。audit/eval-0/mpx/dist/ali/components/product-card310f8c09/index.axml:1、index.acss:3-4 及 wx 对应产物均确认同样结构与尺寸；content-box 下含留白尺寸为288rpx×128rpx，非只删除 padding。独立只读探针再次断言图片尺寸和父节点 padding 通过；未把推导尺寸当作真机测量。"
+        },
+        {
+          "id": "a32",
+          "text": "通过单文件 scoped 隔离普通 CSS，避免父页面和兄弟组件的同名类互相污染。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:27 明确 <style scoped>，模板与样式统一 product-card 前缀，不再使用裸 title/price。audit/eval-0/mpx/dist/ali/components/product-card310f8c09/index.acss 每条普通CSS选择器均带 ._310f8c09，index.axml 所有组件节点含同一作用域类。audit/eval-0/mpx/dist/ali/page.acss 和 sibling*/index.acss 保留未 scoped 的 .title/.price；独立 DOM 选择器探针确认宿主/兄弟规则不匹配组件、组件 scoped 规则不匹配宿主/兄弟。没有用微信 styleIsolation 或原子类替代 scoped；未宣称阻挡任意全局选择器。"
+        },
+        {
+          "id": "a34",
+          "text": "保留 summary-root 测量入口，不因历史支付宝限制机械增加测量包装节点。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:2 原根 view 仍为 id=\"summary-root\" 且 bindtap=\"select\"，只在图片处增加留白容器，未增加测量根包装、重写 id 或添加查询修复。audit/eval-0/mpx/dist/ali/components/product-card310f8c09/index.axml:1 及 wx/components/product-card310f8c09/index.wxml:1 均以原 summary-root 根节点开头；只读 DOM 探针确认该 id 唯一、根仍有标题/图片包装/价格三个直接子节点。组件原脚本逐字一致，disabled/select VM 契约检查也通过。实际 selectorQuery/boundingClientRect 未运行，题设尚未复现的测量异常没有机械修复。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 433.824,
+        "tokens": 2356667,
+        "tool_calls": 44,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a10",
+          "text": "支付宝按运行时设备系统选择 enableNative，宿主属性分端且微信保持自动上推。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:8-9 两个输入均 enableNative@ali={{isIOS}}，always-embed 仅 @wx；36-39 在 attached 中以 getSystemInfoSync().system 的 /ios/i 布尔判断实际设备。核对本地 packages/api-proxy/src/platform/api/system/index.ali.js:22-25 会保留 platform 到 system，未把 RN 编译目标当设备。audit/eval-1/mpx/dist-ali/components/address-dialog8b9859e2/index.axml:1 实际为两个 enableNative={{isIOS}}；dist-wx 对应 WXML 保留 always-embed，均未关闭 adjust-position、无手动键盘平移。address-dialog.spec.cjs:28-32 及 behavior-jest.log 覆盖 ali iOS=true/Android=false。"
+        },
+        {
+          "id": "a12",
+          "text": "首次聚焦等待弹层实际渲染，关闭后的旧回调不会重新聚焦。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:45-58 先 $forceUpdate({visible:true,focusedInput:''})，渲染完成回调再设 name；以 visible 与请求序号共同检查，close/重开/detached 使旧回调失效。核对 packages/core/src/core/proxy.js:685-729 的宿主 __render 回调 resolve renderTask，与 850-859 forceUpdate 等待 currentRenderTask.promise 的真实调用链；不是固定 setTimeout。audit/eval-1/mpx/address-dialog.spec.cjs:33-54、behavior-jest.log 证明回调前无焦点、旧回调在关闭重开后无效；仅状态验证，不冒充设备键盘回归。"
+        },
+        {
+          "id": "a13",
+          "text": "输入框切换不被旧 blur 错误复位或重新抢焦点。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:60-68 focus(field) 更新当前字段并使首次回调失效，blur(field) 仅在其仍为当前字段时清空；focus-first 的旧 name blur 不清除 phone，反向旧 phone blur 不清除 name；blur-first 在随后新 focus 恢复当前字段，无自动重聚焦或位移复位逻辑。audit/eval-1/mpx/address-dialog.spec.cjs:55-69 及 behavior-jest.log 对两类顺序和双向切换执行通过。VM 回调顺序只证明方法状态，不证明宿主事件可达；无目标宿主抢焦证据，不据人为竞态扣分。"
+        },
+        {
+          "id": "a20",
+          "text": "禁止滚动的蒙层与可滚动面板为兄弟节点，背景拦截不阻断面板操作。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:5-17 mask 与 dialog 为同一 root 下兄弟；只有 mask 带 disable-scroll@ali，dialog 内 list 没有禁滚动祖先，mask bindtap=close、dialog catchtap=stopMove；root catchtouchmove 仅微信。audit/eval-1/mpx/dist-ali/components/address-dialog8b9859e2/index.axml:1 实际产物确认 mask 自闭合后紧跟 dialog，disable-scroll 只在 mask；dist-wx 对应 WXML 保留 root catchtouchmove，无 disable-scroll。局部结构符合要求，背景穿透/手势实机效果仍未验证。"
+        },
+        {
+          "id": "a23",
+          "text": "滚动条按节点采用严格布尔 false 隐藏，保留审计列表的宿主默认行为。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:4,10,13 横向选项严格布尔 show-scrollbar={{false}}，enhanced 仅 @wx，audit 和 list 均省略隐藏属性；未写旧 CSS 补丁。audit/eval-1/mpx/dist-ali/components/address-dialog8b9859e2/index.axml:1 只有横向节点含 mpx-scrollbar-hidden，audit/list 无隐藏类；dist-wx 对应 WXML 保留 enhanced 与 show-scrollbar=false。完整入口 audit/eval-1/mpx/app.mpx -> page.mpx -> 输出组件，dist-ali/app.json/page.json 注册链实际存在；dist-ali/app.acss:1 引用 ./mpx-ali-compat.acss，后者:14 起规则限定 .mpx-scrollbar-hidden::-webkit-scrollbar，不全局隐藏。build-app.cjs、本地模块路径 stats 摘要与 app-build-final-verified.log errors/warnings=[] 可复核；评审重跑 check-artifacts.cjs 通过。repository-jest-retry.log 的 23 例覆盖严格 false、true/省略默认和 App 注入。单组件构建不作为入口证明，独立分包/插件未验证已如实说明。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 832.791,
+        "tokens": 3118641,
+        "tool_calls": 55,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a40",
+          "text": "页面统一使用提供的公共 getWindowInfo，不在页面重复获取或归一原生系统信息。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:21-22 使用 createPage 且明确从 ./utils/window-info 导入提供的 getWindowInfo；updateLayout:39-43 唯一尺寸入口为该函数，页面没有重复调用原生系统信息、业务归一/缓存或用 api-proxy 替换公共封装。outputs/utils/window-info.js 与 input 文件字节相同，评分者重跑原 page.spec.cjs 6项通过、inspect.cjs 通过，后者再次比较两个依赖字节一致（audit/eval-2/mpx/eval-2-mpx-grader-jest.log 与 eval-2-mpx-grader-inspect.log）。"
+        },
+        {
+          "id": "a41",
+          "text": "根布局高度取 windowHeight 并使用逻辑 px，不误用屏幕高度或重复缩放。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:40-41 直接将公共 info.windowHeight 赋给 pageHeight，根:2 wx:style 使用 height:pageHeight+px，不将screenHeight或pixelRatio用于根高。实际有效 compiled-wx/fixed-page.wxml 和 compiled-ali/fixed-page.axml 引用生成 stringify WXS/SJS，并保留 height:pageHeight+\"px\"；评分者独立执行真实生成的两个样式helper，前三场景输出 height:640px，第四输出height:480px，详见 audit/eval-2/mpx/eval-2-mpx-style-probe.log。原单页校验未转换模板仅作为环境失败证据，不用其成功标记替代完整编译产物。"
+        },
+        {
+          "id": "a42",
+          "text": "安全区按同坐标 screenHeight-bottom 计算，缺失或负值取 0，并包含在窗口总高度内。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:43 为 info.safeArea ? Math.max(0,info.screenHeight-info.safeArea.bottom) : 0，坐标一致、缺失和负值归零。评分者重跑真实公共helper注入的原6项Jest及独立生成样式探针，四组实际得到 safeBottom=24/0/0/20；双端 stringify 均输出 padding-bottom:24px/0px/0px/20px。根:2 将statusBarHeight作为paddingTop、safeBottom作为paddingBottom；53-58及有效compiled-wx/fixed-page.wxss、compiled-ali/fixed-page.acss均有box-sizing:border-box，padding含在640/480px窗口总高度内。探针同时得到padding-top:24px，未把安全区额外加到根高；VM与CSS结构不等同宿主测量。"
+        },
+        {
+          "id": "a43",
+          "text": "页面显示及 onResize 都重新读取公共尺寸并刷新布局。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:32-36 的onShow和onResize均调用updateLayout，39-43每次重新getWindowInfo并更新三个data字段。原page.spec.cjs重跑验证首次show后注入480/800/bottom780，resize忽略事件伪高度999而从公共入口取得480和20；随后show读取640且安全区缺失并归零，入口累计3次。评分者独立样式探针另连续4次生命周期获得640/640/640/480和24/0/0/20。证据audit/eval-2/mpx/eval-2-mpx-grader-jest.log、eval-2-mpx-style-probe.log；宿主真实生命周期派发未验证。"
+        },
+        {
+          "id": "a50",
+          "text": "自定义导航使用统一 navigationStyle 声明，由本地编译器自动转换，保留组件注册。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:129-139统一声明navigationStyle:custom，保留usingComponents.info-badge，分端分支仅页面滚动/回弹。audit/eval-2/mpx/dependencies.json与stats-summary.json实际loader链证明本地/Users/didi/work/mpx/packages/webpack-plugin参与模板/JSON编译；agent.jsonl:100最终完整App命令退出0，双端errors/warnings均0。有效compiled-wx/fixed-page.json保留navigationStyle:\"custom\"；compiled-ali/fixed-page.json移除该字段并由框架生成defaultTitle:\"\"、transparentTitle:\"always\"、titlePenetrate:\"YES\"。两端注册真实/components/info-badgee3dbf562/index并产出component:true与模板，原依赖保持原样；inspect.cjs重跑再次通过。validation.md明确未承诺自动移除宿主返回按钮，无手工支付宝导航等价字段分支。"
+        },
+        {
+          "id": "a52",
+          "text": "微信禁用页面滚动，支付宝关闭回弹并采用固定根布局，局部列表在导航和操作区之间独立滚动。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:137-138分端配置，真实compiled-wx/fixed-page.json中disableScroll:true，compiled-ali/fixed-page.json中allowsBounceVertical:\"NO\"及独立pullRefresh:false。ali/fixed-page.acss根.fixed-page._0d851d78具有position:fixed/top:0/left:0/width:100%、overflow:hidden与纵向flex，wx去掉ali定位分支。有效双端模板为导航、scroll-view、底栏三个并列区域；列表scroll-y为布尔true，无disable-scroll祖先，样式flex:1;height:0;min-height:0约束剩余高度；导航56px、底栏88px均flex-shrink:0，底栏border-box。评分者读实际产物且重跑inspect通过，关闭回弹未替代根固定/局部滚动或刷新配置；真实滚动手感与背景锁页未做宿主验证。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "mpx2ali",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 370.596,
+        "tokens": 1375704,
+        "tool_calls": 36,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a00",
+          "text": "标题在实际截断节点上具有宽度、溢出和换行约束，正确处理 text 继承。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:3、29 保留实际截断容器 view > text；容器有 width:240rpx、overflow:hidden、white-space:nowrap、text-overflow:ellipsis。audit/eval-0/mpx2ali/dist/ali/components/product-cardf16fc546/index.axml:1 和 index.acss:2 的实际产物一致；audit/eval-0/mpx2ali/dist/ali/app.acss:1 导入 mpx-ali-compat.acss，其中 text 的 white-space:inherit 使内部 text 正确继承 nowrap，符合允许完整 App 默认兼容规则的口径，未重复注入业务补丁。同组 run-1/run.json 的 sources_unchanged=true、returncode=0；复核完整 agent.jsonl 的最终构建命令及磁盘产物，审计只读探针 audit/eval-0/eval-0-read-only-check.log 亦通过。"
+        },
+        {
+          "id": "a01",
+          "text": "图片留白由外层承担，保留 240rpx × 80rpx 图片内容及 24rpx 留白。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:4-6、30-31 将图片放入 .product-card-cover-wrapper，24rpx padding 由外层承担；图片 display:block、width:240rpx、height:80rpx，src 与 aspectFit 保留，外层内容宽240rpx。audit/eval-0/mpx2ali/dist/ali/components/product-cardf16fc546/index.axml:1、index.acss:3-4 及 wx 对应产物均确认同样结构与尺寸；content-box 下含留白尺寸为288rpx×128rpx，非只删除 padding。独立只读探针再次断言图片尺寸和父节点 padding 通过；未把推导尺寸当作真机测量。"
+        },
+        {
+          "id": "a32",
+          "text": "通过单文件 scoped 隔离普通 CSS，避免父页面和兄弟组件的同名类互相污染。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:27 明确 <style scoped>，模板与样式统一 product-card 前缀，不再使用裸 title/price。audit/eval-0/mpx2ali/dist/ali/components/product-cardf16fc546/index.acss 每条普通CSS选择器均带 ._f16fc546，index.axml 所有组件节点含同一作用域类。audit/eval-0/mpx2ali/dist/ali/page.acss 和 sibling*/index.acss 保留未 scoped 的 .title/.price；独立 DOM 选择器探针确认宿主/兄弟规则不匹配组件、组件 scoped 规则不匹配宿主/兄弟。没有用微信 styleIsolation 或原子类替代 scoped；未宣称阻挡任意全局选择器。"
+        },
+        {
+          "id": "a34",
+          "text": "保留 summary-root 测量入口，不因历史支付宝限制机械增加测量包装节点。",
+          "passed": true,
+          "evidence": "outputs/product-card.mpx:2 原根 view 仍为 id=\"summary-root\" 且 bindtap=\"select\"，只在图片处增加留白容器，未增加测量根包装、重写 id 或添加查询修复。audit/eval-0/mpx2ali/dist/ali/components/product-cardf16fc546/index.axml:1 及 wx/components/product-cardf16fc546/index.wxml:1 均以原 summary-root 根节点开头；只读 DOM 探针确认该 id 唯一、根仍有标题/图片包装/价格三个直接子节点。组件原脚本逐字一致，disabled/select VM 契约检查也通过。实际 selectorQuery/boundingClientRect 未运行，题设尚未复现的测量异常没有机械修复。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "mpx2ali",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 366.823,
+        "tokens": 1474641,
+        "tool_calls": 32,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a10",
+          "text": "支付宝按运行时设备系统选择 enableNative，宿主属性分端且微信保持自动上推。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:9-10 两输入均 enableNative@ali={{isIOS}}；40-44 在 created 中 /ios/i.test(getDeviceInfo().platform) 生成实际设备布尔值。核对 packages/api-proxy/src/platform/api/system/index.ali.js:39-61，优先 getDeviceBaseInfo 并回退 getSystemInfoSync，均提供 platform；未按 RN ios 编译目标判断。audit/eval-1/mpx2ali/dist/ali/components/address-dialogac85243a/index.axml:1 实际两个 enableNative={{isIOS}}，wx 对应 WXML 无该属性；源码和产物均未关闭微信默认自动上推、无固定高度或手动位移。dialog.spec.cjs:23-27 及 jest-dialog.log 检查 ali iOS=true/Android=false。与 mpx 组一致，不额外强制未复现问题的 always-embed 属性。"
+        },
+        {
+          "id": "a12",
+          "text": "首次聚焦等待弹层实际渲染，关闭后的旧回调不会重新聚焦。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:50-62 先 $forceUpdate 渲染 visible=true/两个 focus=false，完成回调以 visible 与 openVersion 双重门控再设置 nameFocus；close、重开和 detached 使旧回调失效。核对本地 packages/core/src/core/proxy.js:685-729 的 __render 回调 resolve renderTask，以及 850-859 等待 currentRenderTask.promise 的真实链路。audit/eval-1/mpx2ali/dialog.spec.cjs:29-55、末尾销毁用例与 jest-dialog.log 验证回调前无首焦、快速关闭重开旧回调无效；无固定延时。只证明渲染门控与方法状态，不代表真机上推回归。"
+        },
+        {
+          "id": "a13",
+          "text": "输入框切换不被旧 blur 错误复位或重新抢焦点。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:64-72 focusInput 同步两个互斥布尔焦点并递增 openVersion；blurInput 仅清理对应 field 的 Focus，旧 name blur 不清 phone、旧 phone blur 不清 name。blur-first 后新 focus 会重新设置正确字段；focus-first 后旧 blur 只写自身 false，无手动位移复位或再次自动聚焦。audit/eval-1/mpx2ali/dialog.spec.cjs 的双向 late blur、manual phone focus 用例及 jest-dialog.log 通过。和 mpx 组一致，VM 人为调度只作为状态证据，初始渲染与宿主事件的额外竞态缺少真实可达及抢焦证据，不据此扣分。"
+        },
+        {
+          "id": "a20",
+          "text": "禁止滚动的蒙层与可滚动面板为兄弟节点，背景拦截不阻断面板操作。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:5-20 mask 和 dialog 为兄弟，disable-scroll@ali 仅在 mask；两个 scroll-view 不在输入区/按钮区 catchtouchmove@ali 祖先链内。mask bindtap=close、dialog catchtap=stopMove，微信 root catchtouchmove；没有全局页面禁滚动。audit/eval-1/mpx2ali/dist/ali/components/address-dialogac85243a/index.axml:1 实际输出 mask 闭合后紧跟 dialog，局部 catchTouchMove 仅包输入/按钮；列表高度仍在 ACSS。符合局部拦截结构标准，真实手势与边界穿透仍未验证。"
+        },
+        {
+          "id": "a23",
+          "text": "滚动条按节点采用严格布尔 false 隐藏，保留审计列表的宿主默认行为。",
+          "passed": true,
+          "evidence": "outputs/address-dialog.mpx:4,12,15 横向唯一 show-scrollbar={{false}} 为严格布尔，enhanced 仅 @wx；audit 与 list 未设置隐藏属性。audit/eval-1/mpx2ali/dist/ali/components/address-dialogac85243a/index.axml:1 仅横向节点含 mpx-scrollbar-hidden，audit/list 无隐藏类；对应 wx WXML 保留 show-scrollbar=false/enhanced。完整 fixture/app.mpx -> fixture/page.mpx -> 实际输出组件注册链存在，dist/ali/app.json/page.json 可复核；dist/ali/app.acss:1 真实导入 ./mpx-ali-compat.acss，兼容文件:14 起只按 .mpx-scrollbar-hidden::-webkit-scrollbar 隐藏，无旧 CSS 或全局隐藏补丁。build.cjs 显式使用本地模板/样式 compiler，stats 摘要及 build.log 证明两端 errors/warnings=[]；评审重跑 check-artifacts.cjs 通过。jest-existing.log 的 23 例验证严格 false、true/省略默认和 App 注入。与 mpx 同口径，仅最小完整 App 得到证明，未冒充独立分包/插件集成。"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "mpx2ali",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 350.456,
+        "tokens": 1695027,
+        "tool_calls": 39,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "id": "a40",
+          "text": "页面统一使用提供的公共 getWindowInfo，不在页面重复获取或归一原生系统信息。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:26-27 从 @mpxjs/core 导入 createPage，并明确从 ./utils/window-info 导入提供的 getWindowInfo；updateWindowInfo:44-48 唯一读取入口为该函数，无页面内原生系统信息调用或归一/缓存副本。outputs/utils/window-info.js 与 input 同名文件逐字节一致，info-badge 依赖亦一致。原 outputs/.validation/page.test.cjs 注入真实公共模块 setWindowInfo 并统计 getWindowInfo 调用；评分者以同一测试重新运行7项通过（audit/eval-2/mpx2ali/grader-page-jest.log），证明实际取值链，未将 api-proxy 解析校验当作公共封装替代。"
+        },
+        {
+          "id": "a41",
+          "text": "根布局高度取 windowHeight 并使用逻辑 px，不误用屏幕高度或重复缩放。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:45-46 直接将公共 windowHeight 赋给 pageHeight；根模板:4 为 height: {{pageHeight}}px，不用 screenHeight 作根高，不除 pixelRatio。实际双端产物 audit/eval-2/mpx2ali/dist/wx/fixed-page.wxml:1 与 dist/ali/fixed-page.axml:1 保留该逻辑px绑定。评分者重跑 page.test.cjs 注入 windowHeight=640、screenHeight=800 后得到 pageHeight=640，第四场景为480；因此前三场景根高640px，非屏幕800px或重复缩放。"
+        },
+        {
+          "id": "a42",
+          "text": "安全区按同坐标 screenHeight-bottom 计算，缺失或负值取 0，并包含在窗口总高度内。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:48 计算 safeArea ? Math.max(0, screenHeight - safeArea.bottom) : 0，完全使用公共入口相同坐标；原 page.test.cjs 及评分者重跑实际覆盖 bottom=776、safeArea缺失、bottom=810、resize bottom=780 四场景，safeBottom依次24/0/0/20。根模板:4 使用内部 padding-top/statusBarHeight 与 padding-bottom/safeBottom；根样式:58-63 的 box-sizing:border-box 将两者计入 pageHeight，不额外增高；双端生成 fixed-page.wxss/acss 与模板一致。测试也得到statusBarHeight=24；这是状态和结构验证，未宣称宿主实测像素。"
+        },
+        {
+          "id": "a43",
+          "text": "页面显示及 onResize 都重新读取公共尺寸并刷新布局。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:37-42 的 onShow 与 onResize 每次都调用 this.updateWindowInfo()，44-48 每次重新 getWindowInfo 并赋值三个响应式data字段。评分者复用 outputs/.validation/page.test.cjs 重跑通过：先show读取640，再setWindowInfo至480并resize（伪造事件尺寸999被忽略），得到480/24/20，随后setWindowInfo至640且safeArea缺失再次show，得到640/0，公共入口累计调用3次。证据 audit/eval-2/mpx2ali/grader-page-jest.log；未以框架生命周期真机派发作已验证结论。"
+        },
+        {
+          "id": "a50",
+          "text": "自定义导航使用统一 navigationStyle 声明，由本地编译器自动转换，保留组件注册。",
+          "passed": true,
+          "evidence": "outputs/fixed-page.mpx:131-147 统一声明 navigationStyle:custom，保留 usingComponents.info-badge；条件分支仅平台页面滚动/回弹，未手工维护支付宝等价导航字段。audit/eval-2/mpx2ali/resolved.json 与 stats-summary.json 的实际loader链证明本地 /Users/didi/work/mpx/packages/webpack-plugin 参与编译。dist/wx/fixed-page.json 保留 navigationStyle:\"custom\"；dist/ali/fixed-page.json 删除 navigationStyle 并自动生成 defaultTitle:\"\"、transparentTitle:\"always\"、titlePenetrate:\"YES\"。两端 usingComponents 都指向真实 components/info-badge99610a0a/index，且模板与component:true产物均在。agent.jsonl第71行最终构建退出0、第79行页面测试及第63行现有导航测试退出0；validation.md明确不承诺移除宿主返回按钮。"
+        },
+        {
+          "id": "a52",
+          "text": "微信禁用页面滚动，支付宝关闭回弹并采用固定根布局，局部列表在导航和操作区之间独立滚动。",
+          "passed": true,
+          "evidence": "源码 outputs/fixed-page.mpx:140-143 分端配置；实际 audit/eval-2/mpx2ali/dist/wx/fixed-page.json 为 disableScroll:true，ali/fixed-page.json 为 allowsBounceVertical:\"NO\"（另独立 pullRefresh:false）。ali/fixed-page.acss 根选择器 .fixed-page._6250cf18 具有position:fixed/top:0/left:0/width:100%及overflow:hidden、纵向flex；wx产物不含ali固定定位。实际模板依次为导航、scroll-view、底部操作区，列表scroll-y为布尔true；样式导航和底部flex-shrink:0，列表flex:1/height:0/min-height:0消耗剩余高度，无disable-scroll祖先，符合固定根与局部列表职责。已读实际产物并重跑原7项检查通过；回弹配置没有被等同锁页或关闭刷新，未把静态布局推导宣称真机滚动通过。"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "mpx": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 546.136,
+        "stddev": 250.1805,
+        "min": 371.793,
+        "max": 832.791
+      },
+      "tokens": {
+        "mean": 2578464.3333,
+        "stddev": 470292.6154,
+        "min": 2260085,
+        "max": 3118641
+      }
+    },
+    "mpx2ali": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 362.625,
+        "stddev": 10.7062,
+        "min": 350.456,
+        "max": 370.596
+      },
+      "tokens": {
+        "mean": 1515124.0,
+        "stddev": 163465.4384,
+        "min": 1375704,
+        "max": 1695027
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+183.5",
+      "tokens": "+1063340"
+    }
+  },
+  "notes": [
+    "每组 3 个 case、15 条独立断言；加权通过率为通过断言数 / 15。每个 case 每组仅运行一次。",
+    "各 case 断言数不同；主指标使用加权通过率，Summary 中 Pass Rate 为逐 case 平均值，不混用。",
+    "语义断言依据 assessment.json 的显式证据评分；不以关键词匹配代替行为验证。",
+    "耗时与 Token 来自真实运行。input_tokens 已包含 cached_input_tokens，缓存不重复相加。",
+    "静态与编译验证不代表支付宝/微信真机行为通过。差值方向为 mpx - mpx2ali。",
+    "两组均通过15/15条独立断言；文本图片4/4、键盘滚动5/5、固定导航页面6/6。本轮用例未区分出能力得分差异，不代表两组Skill在所有场景等效。",
+    "mpx2ali总Token为4,545,372，mpx为7,735,393，本次减少41.2%。Token包含缓存输入；这不是费用降幅。",
+    "mpx2ali单次平均耗时362.625秒，mpx为546.136秒，本次减少33.6%。各组耗时合计不是并发评测的墙钟耗时。",
+    "固定页面用例耗时差最大：mpx 832.791秒，mpx2ali 350.456秒；工具调用55 vs 39。日志可见验证路径及构建配置不同，不能将差异直接归因为Skill或断言难度，详见audit/eval-2/timing-observations.json。",
+    "每个用例每组只运行一次；统计stddev体现不同用例间离散程度，不是重复实验方差，不据此推断统计显著性。",
+    "6次运行全部正常退出，输入、各组Skill快照和本地编译器前后哈希一致；六份交付ESLint、评测框架10项测试、相关编译器39项Jest均通过。",
+    "评分依据实际双端源码、编译产物、完整App样式入口和状态/尺寸探针；键盘、光标、背景穿透、视觉与测量等目标宿主真机行为未验证，独立分包/插件集成亦未验证。"
+  ],
+  "weighted_summary": {
+    "mpx": {
+      "passed": 15,
+      "total": 15,
+      "pass_rate": 1.0
+    },
+    "mpx2ali": {
+      "passed": 15,
+      "total": 15,
+      "pass_rate": 1.0
+    }
+  },
+  "configuration_totals": {
+    "mpx": {
+      "total_tokens": 7735393,
+      "input_tokens": 7687913,
+      "cached_input_tokens": 7339264,
+      "output_tokens": 47480,
+      "duration_ms": 1638408,
+      "tool_calls": 138
+    },
+    "mpx2ali": {
+      "total_tokens": 4545372,
+      "input_tokens": 4502142,
+      "cached_input_tokens": 4260352,
+      "output_tokens": 43230,
+      "duration_ms": 1087875,
+      "tool_calls": 107
+    }
+  }
+}

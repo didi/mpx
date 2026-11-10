@@ -28,9 +28,7 @@ export interface RadioGroupProps {
   name: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   children: ReactNode
@@ -44,8 +42,6 @@ const radioGroup = forwardRef<
   const {
     style = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -69,17 +65,15 @@ const radioGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = extendObject({}, defaultStyle, style)
-
   const {
     hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, { style: normalStyle })
@@ -124,7 +118,7 @@ const radioGroup = forwardRef<
       bindchange &&
         bindchange(
           getCustomEvent(
-            'tap',
+            'change',
             evt,
             {
               layoutRef,
@@ -152,7 +146,10 @@ const radioGroup = forwardRef<
         style: extendObject({}, normalStyle, layoutStyle)
       }
     ),
-    ['name'],
+    [
+      'name',
+      'bindchange'
+    ],
     {
       layoutRef
     }
@@ -165,10 +162,10 @@ const radioGroup = forwardRef<
         value: contextValue
       },
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current
+          varContext
         }
       )
     )

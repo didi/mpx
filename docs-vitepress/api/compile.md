@@ -127,11 +127,11 @@ module.exports = defineConfig({
 暂时只支持微信为源 mode 做跨平台，为其他时，mode 必须和 srcMode 保持一致。
 :::
 
-### modeRules
+### srcModeRules
 
 `{ [key: string]: Rules }`
 
-批量指定文件mode，用于条件编译场景下使用某些单小程序平台的库时批量标记这些文件的mode为对应平台，而不再走转换规则。
+按输出平台批量标记使用该平台源码方言的资源。构建时只读取当前输出 `mode` 对应的规则，通过 `include`/`exclude` 匹配资源；命中后将资源 `srcMode` 标记为当前 `mode`，其他平台规则在本次构建中不会生效。
 
 ```js
 // vue.config.js
@@ -139,7 +139,7 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        modeRules: {
+        srcModeRules: {
           ali: {
             include: [resolve('node_modules/vant-aliapp')]
           }
@@ -149,6 +149,8 @@ module.exports = defineConfig({
   }
 })
 ```
+
+旧 `modeRules` 仍作为兼容别名，但不能与 `srcModeRules` 同时配置。依赖 `.ali.mpx`、`mode="ali"` 或 `@ali` 跳过转换的项目，需要对完整支付宝原生资源配置 `srcModeRules.ali`，或在 SFC 区块上声明 `src-mode="ali"`。区块 `src-mode` 仅在等于当前输出 `mode` 时生效；`<template src>` 会读取该属性，而模板内容中的 `<import>` / `<include>` 不继承引用方 `srcMode`，需通过 `srcModeRules` 对被引用资源本身进行声明。
 
 ### externalClasses
 
@@ -818,20 +820,59 @@ module.exports = defineConfig({
 })
 ```
 
-### webConfig
+### webConfig {#web-config}
 
-`{transRpxFn(match:string, $1:number): string}`
+**`mode === 'web'`** 输出时使用的编译期配置对象，在 `plugin.webConfig`（如 `vue.config.js` / `mpx.config.js` 的 `pluginOptions.mpx.plugin` 下）中传入，由 `MpxWebpackPlugin` 读取并参与 Web 侧 rpx 转换、SSR、页面切换动画与内建组件等编译逻辑。
 
-transRpxFn 配置用于自定义输出 web 时对于 rpx 样式单位的转换逻辑，常见的方式有转换为 vw 或转换为 rem
+#### webConfig.transRpxFn {#webconfig-transrpxfn}
 
-`{useSSR: boolean}`
+`(match: string, $1: number) => string`
 
-useSSR 默认值为 `false`，当 SSR 模式下使用异步分包时，需要将 useSSR 设置为 `true`, 其他场景不需要。
+自定义 Web 输出时对 **rpx** 单位的转换规则，常见写法为转为 **vw** 或 **rem**。
 
-`{disablePageTransition: boolean}`
+#### webConfig.useSSR {#webconfig-usessr}
 
-用于配置禁用/开启页面切换动画，默认禁用
+`boolean = false`
 
+在 **SSR** 模式下若使用 **异步分包**，需将 `useSSR` 设为 **`true`**；其它场景保持默认即可。
+
+#### webConfig.disablePageTransition {#webconfig-disablepagetransition}
+
+`boolean = true`
+
+为 `true` 时 **禁用** 页面切换动画；设为 **`false`** 可 **开启** 切换过渡效果。
+
+#### webConfig.asyncCommonSubpackage
+
+`boolean = true`
+
+控制 Web 输出中被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
+
+
+#### webConfig.customBuiltInComponents {#webconfig-custombuiltincomponents}
+
+`Record<string, string> | undefined`
+
+在 **Web 输出**（**`mode === 'web'`**）、且 **非 app 入口**（存在参与编译的用户模版）时生效，用于 **替换或扩展** 框架对某一微信基础标签在 Web 侧的内建实现。
+
+**key**
+
+- 须为 **微信小程序侧基础标签名**（如 `view`、`text`、`scroll-view`），与模版中写的标签一致。
+- **不要** 使用 **`mpx-*`** 作为 key。
+
+**value**（文档约定，插件 **不在编译期校验** 格式）
+
+- 建议使用 **绝对路径**（POSIX 以 **`/`** 开头，或 Windows 下 **`path.isAbsolute` 为真**），或 **以 npm 包名开头的模块路径**（如 **`@scope/pkg/...`**、**`my-pkg/...`**，首段须为合法包名，避免写成易被误认为工程相对路径的 **`src/...`**）。
+- **不要** 使用 **`./`、`../`** 及 **`~`** 前缀；不符合约定时一般由 **webpack 解析** 等环节报错。
+
+**注意事项**
+
+- 某标签一旦在配置中声明，Web 侧将 **优先使用你提供的模块** 作为该基础标签的实现；**属性、事件、子节点等与微信文档的差异** 需在你的组件内 **自行对齐**。
+- **app 入口** 仅内置 **`mpx-keep-alive`**，**不使用** 本配置项。
+- **小程序等其它输出形态** 不读取 `webConfig.customBuiltInComponents`；仅在 **Web / RN** 输出下配置有效。RN 侧请使用 **`rnConfig.customBuiltInComponents`**，约定与本节相同，见 [rnConfig.customBuiltInComponents](#rnconfig-custombuiltincomponents)。
 
 ```js
 // mpx.config.js
@@ -840,6 +881,7 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         webConfig: {
+          asyncCommonSubpackage: false,
           transRpxFn: function (match, $1) {
             if ($1 === '0') return $1
             return `${$1 * +(100 / 750).toFixed(8)}vw`
@@ -847,7 +889,121 @@ module.exports = defineConfig({
           // 当 SSR 模式下使用异步分包时
           useSSR: true,
           // 开启页面切换动画
-          disablePageTransition: false
+          disablePageTransition: false,
+          customBuiltInComponents: {
+            view: require('path').resolve(__dirname, 'src/builtin/MpxView.vue')
+          }
+        }
+      }
+    }
+  }
+})
+```
+
+### rnConfig {#rn-config}
+
+**`mode` 为 `ios` / `android` / `harmony` 时**使用的编译期配置对象，由 `MpxWebpackPlugin` 传入 loader 上下文。它与运行时的 `mpx.config.rnConfig` 是独立的配置入口，不会自动整体同步。
+
+#### rnConfig.projectName
+
+`string | undefined`
+
+若配置，则在入口脚本中调用 `AppRegistry.registerComponent(projectName, () => app)`，用于注册 RN 根组件名称。
+
+#### rnConfig.supportSubpackage
+
+`boolean = true`
+
+为 `true` 时，RN 输出下页面与组件可走异步分包与 `import()` 等逻辑；为 `false` 时关闭相关能力。插件初始化时若未传入则默认为 `true`。
+
+#### rnConfig.asyncCommonSubpackage
+
+`boolean = true`
+
+控制 RN 输出中被多个异步分包共享的公共模块如何输出：
+
+- 为 `true`（默认）时，公共模块抽取到 `async-common/index.js`，运行时按需加载。
+- 为 `false` 时，公共模块合并进 app 主入口 chunk，不再输出 `async-common/index.js`。
+
+#### rnConfig.transSubpackageRules {#rnconfig-transsubpackagerules}
+
+`Array`
+
+仅在输出 RN（`ios` / `android` / `harmony`）时生效，用于将指定分包中的页面、组件或 `require.async` 引用的模块转移到其他分包或主包。
+
+- **from**：`Array<string>`，源分包名称列表。
+- **to**：`string`，目标分包名称；`''`（空字符串）表示主包。
+
+```js
+// mpx.config.js
+module.exports = {
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        rnConfig: {
+          transSubpackageRules: [
+            {
+              from: ['comp-pages'],
+              to: 'common'
+            },
+            {
+              from: ['sub1'],
+              to: ''
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+#### rnConfig.asyncChunk
+
+`{ fallback?: string, loading?: string } | undefined`
+
+异步分包相关：
+
+- **fallback** / **loading**：异步页面加载失败与加载中的组件资源路径。异步组件的占位通过引用方 JSON 的 `componentPlaceholder` 配置。
+
+框架不再设置分包加载超时，`rnConfig.asyncChunk.timeout` 不生效；需要超时控制时，在运行时 `mpx.config.rnConfig.loadChunkAsync` 中实现。
+
+#### rnConfig.customBuiltInComponents {#rnconfig-custombuiltincomponents}
+
+`Record<string, string> | undefined`
+
+在 **RN 输出**（**`mode`** 为 **`ios` / `android` / `harmony`** 等）时生效。与 [webConfig.customBuiltInComponents](#webconfig-custombuiltincomponents) 的 **key、value 约定及注意事项** 相同，仅在 **`rnConfig`** 中配置，便于与 Web 使用不同的模块路径。
+
+**注意事项**
+
+- 页面/组件 **主模版** 以及 **子模版**（如通过 import 引入的模版）均会应用本配置。
+- **key / value** 及路径书写要求与 Web 一节一致，此处不再重复；详见 [webConfig.customBuiltInComponents](#webconfig-custombuiltincomponents)。
+
+#### rnConfig.loadChunkAsync（运行时）
+
+编译插件不会在选项里“实现”该函数；异步分包下载 chunk 时，运行时代码会调用 **`mpx.config.rnConfig.loadChunkAsync`**（若存在）。需在 RN 应用启动后自行挂载，例如与原生下载、热更新方案对接。与 **asyncChunk** 编译配置配合使用。
+
+```js
+// vue.config.js / mpx.config.js 片段
+const path = require('path')
+
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        mode: 'ios',
+        rnConfig: {
+          projectName: 'MyMpxApp',
+          supportSubpackage: true,
+          asyncCommonSubpackage: false,
+          asyncChunk: {
+            fallback: path.resolve(__dirname, 'src/rn/PageFallback.mpx'),
+            loading: path.resolve(__dirname, 'src/rn/PageLoading.mpx')
+          },
+          customBuiltInComponents: {
+            view: '@your-org/mpx-rn-builtin/MpxView.mpx',
+            text: path.resolve(__dirname, 'src/builtin/MpxText.mpx')
+          }
         }
       }
     }
@@ -1014,11 +1170,13 @@ module.exports = defineConfig({
 
 ### partialCompileRules
 
-`{ include: string | RegExp | Function | Array<string | RegExp | Function> }`
+`Rules | { pages?: Rules, page?: Rules, components?: Rules, component?: Rules }`
 
-在大型的小程序开发当中，全量打包页面耗时非常长，往往在`开发过程`中仅仅只需用到几个 pages 而已，该配置项支持打包指定的小程序页面。
+在大型的小程序开发当中，全量打包页面和组件耗时非常长，往往在`开发过程`中仅仅只需用到几个页面或组件而已，该配置项支持打包指定的小程序页面和组件。
 
 **注意：** @mpxjs/webpack-plugin@2.9.41版本之前该配置为 partialCompile。
+
+历史写法 `partialCompileRules: { include, exclude }` 保持兼容，仅作用于页面；被保留页面引用的组件会继续全部编译。如需同时过滤组件，可使用 `pages` / `components` 分类型配置。`page` / `component` 为对应单数别名。
 
 ```js
 // vue.config.js
@@ -1028,17 +1186,39 @@ module.exports = defineConfig({
       plugin: {
         // include 可以是正则、字符串、函数、数组
         partialCompileRules: {
-          include: '/project/pages', // 文件路径包含 '/project/pages' 的页面都会被打包
-          include: /pages\/internal/, // 文件路径能与正则匹配上的页面都会被打包
-          include (pageResourcePath) {
-            // pageResourcePath 是小程序页面所在系统的文件路径
-            return pageResourcePath.includes('pages') // 文件路径包含 'pages' 的页面都会被打包
-          },
           include: [
             '/project/pages',
             /pages\/internal/,
             (pageResourcePath) => pageResourcePath.includes('pages')
-          ] // 满足任意条件的页面都会被打包
+          ] // 满足任意条件的页面都会被打包，旧写法只过滤页面
+        }
+      }
+    }
+  }
+})
+```
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        partialCompileRules: {
+          pages: {
+            include: [
+              '/project/pages',
+              /pages\/internal/,
+              (pageResourcePath) => pageResourcePath.includes('pages')
+            ] // 满足任意条件的页面都会被打包
+          },
+          components: {
+            include: [
+              '/project/components/base',
+              /components\/debug/,
+              (componentResourcePath) => componentResourcePath.includes('components')
+            ] // 满足任意条件的组件都会被打包
+          }
         }
       }
     }
@@ -1047,7 +1227,7 @@ module.exports = defineConfig({
 ```
 
 :::warning
-该特性只能用于**开发环境**，默认情况下会阻止所有页面(**入口 app.mpx 除外**)的打包。
+该特性只能用于**开发环境**。配置页面过滤规则后，未命中的页面会被替换为默认页面；配置组件过滤规则后，未命中的组件会被替换为默认组件，其 `usingComponents` 声明仍会保留。
 :::
 
 ### optimizeRenderRules
@@ -1122,39 +1302,6 @@ module.exports = defineConfig({
 * 若placeholder配置使用自定义组件，注意一定要配置 placeholder 中的 resource 字段
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
-
-### transSubpackageRules
-
-`Array`
-
-仅在输出 RN (ios/android/harmony) 时生效。
-
-用于配置分包资源转移规则，可将指定分包中的页面或组件资源转移到其他分包或主包中。
-
-- **from**: `Array<string>` 源分包名称列表
-- **to**: `string` 目标分包名称。当为 `''` (空字符串) 时，表示输出到主包
-
-#### 示例 {#example}
-
-```js
-// mpx.config.js
-module.exports = {
-  pluginOptions: {
-    mpx: {
-      transSubpackageRules: [
-        {
-          from: ['comp-pages'],
-          to: 'common'
-        },
-        {
-          from: ['sub1'],
-          to: ''
-        }
-      ]
-    }
-  }
-}
-```
 
 ### retryRequireAsync
 
@@ -1409,7 +1556,7 @@ module.exports = defineConfig({
 
 Mpx 编译 unocss 原子类的 webpack 主插件
 
-如果在使用 `@mpxjs/cli@3.x` 创建项目时选择了 unocss，会自动安装 MpxUnocssPlugin ，直接在 mpx.unocss 配置项中传入相关配置即可
+如果在使用 `@mpxjs/cli@3.x` 创建项目时选择了 unocss，脚手架会自动安装并注册 `MpxUnocssPlugin`，直接在 `mpx.unocss` 配置项中传入相关配置即可
 ```js
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
@@ -1436,7 +1583,8 @@ yarn add -D @mpxjs/unocss-plugin
 
 ```js
   // vue.config.js
-  const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+  const MpxUnocssPluginModule = require('@mpxjs/unocss-plugin')
+  const MpxUnocssPlugin = MpxUnocssPluginModule.default || MpxUnocssPluginModule
   const { defineConfig } = require('@vue/cli-service')
 
   module.exports = defineConfig({
@@ -1449,6 +1597,8 @@ yarn add -D @mpxjs/unocss-plugin
     },
   })
 ```
+
+> `@mpxjs/unocss-plugin@2.11.1` 起以 ESM 形式发布。在 CommonJS 配置文件中通过 `require()` 加载时，需要兼容读取默认导出；以上写法同时兼容旧版 CommonJS 导出。在不额外启用实验参数的情况下，上述 CommonJS 兼容写法要求 Node.js 版本满足 `^20.19.0 || >=22.12.0`。
 
 插件支持配置如下：
 
@@ -1538,6 +1688,8 @@ module.exports = defineConfig({
 
 配置需要扫描的文件目录
 
+只有命中 `scan` 规则的模板会由 UnoCSS 扫描和转换。未命中规则的模板不会处理 UnoCSS 特殊类名；其中 `wx:class` 对象字面量的 key 仍需满足小程序 WXS 的标识符限制。
+
 ```js
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
@@ -1552,34 +1704,6 @@ module.exports = defineConfig({
     }
   }
 })
-```
-
-### escapeMap
-
-`object`
-
-针对原子类中出现的`[` `(` `,`等特殊字符，在web中会通过转义字符`\`进行转义，由于小程序环境下不支持css选择器中出现`\`转义字符，我们内置支持了一套不带`\`的转义规则对这些特殊字符进行转义，同时替换模版和css文件中的类名，内建的默认转义规则，可自定义转译规则
-```js
-// vue.config.js
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  pluginOptions: {
-    mpx: {
-      unocss: {
-        escapeMap: {
-          ':': '_d_',
-        }
-      }
-    }
-  }
-})
-```
-```css
-  <view class="dark:text-green-400"/>
-```
-将会转化为
-```css
-  .dark .dark_d_text-green-400{--un-text-opacity:1;color:rgba(74,222,128,var(--un-text-opacity));}
 ```
 
 ### root
@@ -1756,7 +1880,7 @@ module.exports = defineConfig({
 
 ## MpxUnocssBase
 
-Mpx 内置的 unocss preset，继承自 `@unocss/preset-uno`，并额外提供小程序原子类的预设样式，安装示例如下：
+Mpx 内置的 unocss preset，继承自 `@unocss/preset-wind3`，并额外提供小程序原子类的预设样式，安装示例如下：
 
 ```bash
 npm install -D @mpxjs/unocss-base
@@ -1767,11 +1891,11 @@ yarn add -D @mpxjs/unocss-base
 使用示例如下：
 
 ```js
-  // uno.config.js
-  const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
+  // uno.config.mjs
+  import { defineConfig } from 'unocss'
+  import presetMpx from '@mpxjs/unocss-base'
 
-  module.exports = defineConfig({
+  export default defineConfig({
     presets: [
       presetMpx({
         // ...
@@ -1790,10 +1914,10 @@ yarn add -D @mpxjs/unocss-base
 同比换算1rem = 37.5rpx适配小程序
 ```js
   // uno.config.js
-  const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
+  import { defineConfig } from 'unocss'
+  import presetMpx from '@mpxjs/unocss-base'
 
-  module.exports = defineConfig({
+  export default defineConfig({
     presets: [
       presetMpx({
         baseFontSize: 37.5
@@ -1808,10 +1932,10 @@ yarn add -D @mpxjs/unocss-base
 是否生成预设样式
 ```js
   // uno.config.js
-  const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
+  import { defineConfig } from 'unocss'
+  import presetMpx from '@mpxjs/unocss-base'
 
-  module.exports = defineConfig({
+  export default defineConfig({
     presets: [
       presetMpx({
         preflight: true

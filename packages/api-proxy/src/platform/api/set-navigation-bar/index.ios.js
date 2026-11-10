@@ -3,7 +3,7 @@ import { nextTick } from '../next-tick'
 function setNavigationBarTitle (options = {}) {
   const { title = '', success, fail, complete } = options
   const navigation = getFocusedNavigation()
-  if (!(navigation && navigation.setOptions)) {
+  if (!(navigation && typeof navigation.setPageConfig === 'function')) {
     failHandle({ errMsg: 'setNavigationBarTitle:fail' }, fail, complete)
   } else {
     nextTick(() => {
@@ -17,8 +17,12 @@ function setNavigationBarTitle (options = {}) {
 
 function setNavigationBarColor (options = {}) {
   const { frontColor = '', backgroundColor = '', success, fail, complete } = options
+  if (!['#ffffff', '#000000'].includes(frontColor) || !/^#[\da-fA-F]{3}([\da-fA-F]{3})?$/.test(backgroundColor)) {
+    failHandle({ errMsg: 'setNavigationBarColor:fail invalid color' }, fail, complete)
+    return
+  }
   const navigation = getFocusedNavigation()
-  if (!(navigation && navigation.setOptions)) {
+  if (!(navigation && typeof navigation.setPageConfig === 'function')) {
     failHandle({ errMsg: 'setNavigationBarColor:fail' }, fail, complete)
   } else {
     nextTick(() => {

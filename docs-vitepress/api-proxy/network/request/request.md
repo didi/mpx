@@ -75,7 +75,7 @@
       <td>number</td>
       <td>60000</td>
       <td>否</td>
-      <td>超时时间，单位为毫秒。默认值为 60000</td>
+      <td>超时时间，单位为毫秒。Web 和 RN 未传时读取应用 JSON 的 networkTimeout.request，兼容历史数值形式的 networkTimeout；未配置时默认 60000，单次请求的 timeout 优先。</td>
       <td>2.10.0</td>
       <td><span style="color: green; font-weight: bold;">✓</span></td>
       <td><span style="color: green; font-weight: bold;">✓</span></td>

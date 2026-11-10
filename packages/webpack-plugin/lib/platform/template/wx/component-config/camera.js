@@ -38,13 +38,11 @@ module.exports = function ({ print }) {
           if (value !== 'normal') {
             baiduValueLogError({ name, value })
           }
-          return false
         },
         tt ({ name, value }) {
           if (value !== 'normal') {
             ttValueLogError({ name, value })
           }
-          return false
         },
         qa: qaPropLog
       },

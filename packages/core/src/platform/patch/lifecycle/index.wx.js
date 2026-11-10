@@ -28,6 +28,7 @@ const PAGE_HOOKS = [
   'onShow',
   'onHide',
   'onUnload',
+  'onRouteDone',
   'onPullDownRefresh',
   'onReachBottom',
   'onPageScroll',
@@ -36,7 +37,9 @@ const PAGE_HOOKS = [
   'onShareTimeline',
   'onResize',
   'onTabItemTap',
-  'onSaveExitState'
+  'onSaveExitState',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 const COMPONENT_HOOKS = [
@@ -44,11 +47,14 @@ const COMPONENT_HOOKS = [
   'attached',
   'ready',
   'moved',
+  'error',
   'detached',
   'pageShow',
   'pageHide',
   'serverPrefetch',
-  'reactHooksExec'
+  'reactHooksExec',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 export const lifecycleProxyMap = {

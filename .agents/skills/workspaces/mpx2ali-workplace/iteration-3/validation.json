@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-29",
+  "status": "prepared_not_model_evaluated",
+  "environment": {
+    "repository": "/Users/didi/work/mpx",
+    "resolved": {
+      "@mpxjs/webpack-plugin": "/Users/didi/work/mpx/packages/webpack-plugin/lib/index.js",
+      "@mpxjs/core": "/Users/didi/work/mpx/packages/core/src/index.js",
+      "@mpxjs/api-proxy": "/Users/didi/work/mpx/packages/api-proxy/src/index.js",
+      "webpack": "/Users/didi/work/mpx/node_modules/webpack/lib/index.js"
+    }
+  },
+  "checks": {
+    "framework_unittest": {
+      "iteration_2": 9,
+      "iteration_3": 10,
+      "failed": 0
+    },
+    "eslint": {
+      "files": 5,
+      "exit_code": 0
+    },
+    "repository_jest": {
+      "suites": 3,
+      "tests": 39,
+      "failed": 0
+    },
+    "navigation_compilation": {
+      "results": {
+        "wx": {
+          "success": true,
+          "target": "wx",
+          "projectRoot": "/Users/didi/work/mpx/.agents/skills/workspaces/mpx2ali-workplace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 1354
+        },
+        "ali": {
+          "success": true,
+          "target": "ali",
+          "projectRoot": "/Users/didi/work/mpx/.agents/skills/workspaces/mpx2ali-workplace",
+          "errors": [],
+          "warnings": [],
+          "summary": {
+            "total": 0,
+            "byCategory": {}
+          },
+          "durationMs": 125
+        }
+      },
+      "outputs": {
+        "wx": {
+          "navigationStyle": "custom",
+          "usingComponents": {}
+        },
+        "ali": {
+          "usingComponents": {},
+          "defaultTitle": "",
+          "transparentTitle": "always",
+          "titlePenetrate": "YES"
+        }
+      },
+      "input": "<template><view>导航转换探针</view></template>\n<script>import { createPage } from \"@mpxjs/core\"; createPage({})</script>\n<script type=\"application/json\">{\"navigationStyle\":\"custom\"}</script>\n",
+      "compiler": "/Users/didi/work/mpx/packages/webpack-plugin/lib/index.js"
+    }
+  },
+  "package_lock_sha256": "3277542e682402c5082baf36e0a58d195c10599128f3dea4ff0f37db7c5f52ec",
+  "notes": [
+    "No model tasks executed; no benchmark scores generated for iteration-3.",
+    "Initial npm install failed in the linked Webpack development prepare/husky script; install with --ignore-scripts completed. Optional schema-utils/webpack peer-version warnings remain; the local wx/ali probe passed with no compiler warnings.",
+    "Initial navigation fixture outside the project hit partial-compile path matching, then loader resolution. Final fixture was created under the host project, with partial compilation disabled, and both actual navigation JSON outputs passed.",
+    "Existing iteration-2 model outputs and score history were not updated to the new compiler baseline."
+  ]
+}

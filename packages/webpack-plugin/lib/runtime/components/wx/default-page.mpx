@@ -1,6 +1,5 @@
 <template>
-  <view>局部构建兜底页面</view>
-  <view>当前路由：{{currentRoute}}</view>
+  <view>局部构建兜底页面：{{pageRoute}}</view>
 </template>
 
 <script>
@@ -10,18 +9,11 @@ import { createPage } from '@mpxjs/core'
 createPage({
   data() {
     return {
-      currentRoute: '',
+      pageRoute: ''
     }
   },
   onLoad() {
-    this.getPagePath()
-  },
-  methods: {
-    getPagePath() {
-      const pages = getCurrentPages() || []
-      const currPage = pages[pages.length - 1]
-      this.currentRoute = currPage && currPage.route || ''
-    },
+    this.pageRoute = this.route
   }
 })
 </script>

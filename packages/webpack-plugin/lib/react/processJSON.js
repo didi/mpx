@@ -19,7 +19,8 @@ module.exports = function (jsonContent, {
   loaderContext,
   ctorType,
   pagesMap,
-  componentsMap
+  componentsMap,
+  srcMode
 }, rawCallback) {
   const localPagesMap = {}
   const localComponentsMap = {}
@@ -30,22 +31,21 @@ module.exports = function (jsonContent, {
   const mpx = loaderContext.getMpx()
   const {
     mode,
-    srcMode,
     env,
     projectRoot
   } = mpx
 
   const context = loaderContext.context
 
-  const emitWarning = (msg) => {
+  const emitWarning = (msg, loc) => {
     loaderContext.emitWarning(
-      new Error('[Mpx json warning][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const emitError = (msg, loc) => {
     loaderContext.emitError(
-      new Error('[Mpx json error][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
     )
   }
 
@@ -109,6 +109,9 @@ module.exports = function (jsonContent, {
       waterfall: true,
       warn: emitWarning,
       error: emitError,
+      diagnostic: {
+        file: loaderContext.resourcePath
+      },
       data: {
         // polyfill global usingComponents
         globalComponents: mpx.globalComponents
@@ -129,15 +132,9 @@ module.exports = function (jsonContent, {
   }
 
   if (ctorType === 'page') {
-    const keysToExtract = ['navigationStyle', 'navigationBarTitleText', 'navigationBarTextStyle', 'navigationBarBackgroundColor']
-    const configObj = {}
-    // 暂时先不注入数据，后续如需要使用再用
-    keysToExtract.forEach(key => {
-      if (jsonObj[key]) {
-        configObj[key] = jsonObj[key]
-      }
-    })
-    loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource).resourcePath, configObj))
+    const pageConfig = Object.assign({}, jsonObj)
+    delete pageConfig.usingComponents
+    loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource).resourcePath, pageConfig))
   }
 
   const fs = loaderContext._compiler.inputFileSystem
@@ -276,7 +273,7 @@ module.exports = function (jsonContent, {
           pagesMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
           // 通过asyncSubPackagesNameRules对tarRoot进行修改，仅修改tarRoot，不修改outputPath页面路径
-          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+          tarRoot = transSubpackage(mpx.rnConfig.transSubpackageRules, tarRoot)
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
             async: tarRoot,
@@ -325,7 +322,7 @@ module.exports = function (jsonContent, {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { relativePath } = entry
 
-          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+          tarRoot = transSubpackage(mpx.rnConfig.transSubpackageRules, tarRoot)
 
           resolveResourcePathMap.set(name, resourcePath)
           if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })

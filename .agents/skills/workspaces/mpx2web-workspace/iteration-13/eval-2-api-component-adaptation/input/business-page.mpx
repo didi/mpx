@@ -1,0 +1,176 @@
+<template>
+  <view>
+    <button bindtap="rename">编辑名称</button>
+    <text>{{displayName}}</text>
+    <button bindtap="choosePlace">选择位置</button>
+    <text>{{placeName}}</text>
+    <button bindtap="startScan">扫码</button>
+    <native-scanner wx:if="{{scanning}}" bindresult="onScanResult" bindfailure="onScanError" />
+    <text>{{scanResult}} {{scanError}}</text>
+    <foo-card />
+    <button open-type="share">分享</button>
+
+    <video wx:if="{{src}}" src="{{src}}" controls bindtimeupdate="onTimeUpdate" bindloadedmetadata="onMetadata" />
+    <text>进度：{{currentTime}} / {{duration}}；尺寸：{{videoWidth}} × {{videoHeight}}</text>
+
+    <picker mode="region" value="{{regionCodes}}" bindchange="onWxRegionChange">
+      <text>{{regionText}}</text>
+    </picker>
+    <map latitude="{{mapCenter.latitude}}" longitude="{{mapCenter.longitude}}" markers="{{storeMarkers}}" bindmarkertap="onWxMarkerTap" />
+    <text>{{selectedStoreName}}</text>
+    <button bindtap="confirmSelection">确认门店</button>
+    <text>{{confirmedText}}</text>
+
+    <swiper previous-margin="24rpx" next-margin="24rpx" display-multiple-items="2" bindchange="onBannerChange">
+      <swiper-item wx:for="{{banners}}" wx:key="id"><text>{{item.title}}</text></swiper-item>
+    </swiper>
+    <text>活动：{{activeBannerId}}；商品：{{selectedProductId}}；分类：{{appliedCategory}}</text>
+    <grid-view cross-axis-count="2">
+      <grid-item wx:for="{{filteredProducts}}" wx:key="id" bindtap="selectProduct(item.id)">
+        <image src="{{item.cover}}" mode="aspectFill" lazy-load />
+        <text>{{item.name}}</text>
+      </grid-item>
+    </grid-view>
+    <button bindtap="openFilter">筛选</button>
+    <page-container show="{{filterVisible}}" overlay>
+      <button wx:for="{{categories}}" wx:key="id" bindtap="chooseDraftCategory(item.id)">{{item.label}}</button>
+      <text>{{draftCategory}}</text>
+      <button bindtap="cancelFilter">取消</button>
+      <button bindtap="confirmFilter">确定</button>
+    </page-container>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    displayName: '默认名称',
+placeName: '尚未选择',
+    scanning: false,
+scanResult: '',
+scanError: '',
+    src: '',
+currentTime: 0,
+duration: 0,
+videoWidth: 0,
+videoHeight: 0,
+    regionOptions: [
+      { names: ['北京市', '北京市', '朝阳区'], codes: ['110000', '110100', '110105'] },
+      { names: ['上海市', '上海市', '浦东新区'], codes: ['310000', '310100', '310115'] }
+    ],
+    regionNames: ['北京市', '北京市', '朝阳区'],
+    regionCodes: ['110000', '110100', '110105'],
+    regionText: '北京市 / 北京市 / 朝阳区',
+    mapCenter: { latitude: 39.9219, longitude: 116.4436 },
+    storeMarkers: [
+      { id: 101, title: '朝阳门店', latitude: 39.9219, longitude: 116.4436 },
+      { id: 102, title: '国贸门店', latitude: 39.9087, longitude: 116.4601 }
+    ],
+    selectedStoreId: 101,
+selectedStoreName: '朝阳门店',
+confirmedText: '',
+    banners: [{ id: 'campaign-a', title: '上新' }, { id: 'campaign-b', title: '会员' }],
+    activeBannerId: 'campaign-a',
+    categories: [{ id: 'all', label: '全部' }, { id: 'home', label: '家居' }],
+    products: [
+      { id: 'p-101', name: '收纳盒', category: 'home', cover: 'https://static.example.com/p-101.jpg' },
+      { id: 'p-201', name: '耳机', category: 'digital', cover: 'https://static.example.com/p-201.jpg' }
+    ],
+    appliedCategory: 'all',
+draftCategory: 'all',
+filterVisible: false,
+selectedProductId: ''
+  },
+  computed: {
+    filteredProducts () {
+      return this.appliedCategory === 'all' ? this.products : this.products.filter(item => item.category === this.appliedCategory)
+    }
+  },
+  onLoad (query) {
+    this.src = decodeURIComponent(query.videoUrl || '')
+  },
+  onShareAppMessage () {
+    return { title: '业务详情', path: '/pages/business/index' }
+  },
+  methods: {
+    rename () {
+      wx.showModal({
+        title: '编辑名称',
+editable: true,
+content: this.displayName,
+        success: result => {
+          if (result.confirm) this.displayName = result.content
+        }
+      })
+    },
+    choosePlace () {
+      wx.chooseLocation({ success: result => { this.placeName = result.name } })
+    },
+    startScan () { this.scanning = true },
+    onScanResult (event) {
+      this.scanning = false
+      this.setData({ scanResult: event.detail.result })
+    },
+    onScanError () {
+      this.scanning = false
+      this.scanError = '相机不可用'
+    },
+    onTimeUpdate (event) {
+      this.currentTime = event.detail.currentTime
+      this.duration = event.detail.duration
+    },
+    onMetadata (event) {
+      this.videoWidth = event.detail.width
+      this.videoHeight = event.detail.height
+    },
+    onWxRegionChange (event) {
+      this.regionNames = event.detail.value
+      this.regionCodes = event.detail.code
+      this.regionText = this.regionNames.join(' / ')
+    },
+    onWxMarkerTap (event) {
+      const selected = this.storeMarkers.find(item => item.id === Number(event.detail.markerId))
+      if (!selected) return
+      this.selectedStoreId = selected.id
+      this.selectedStoreName = selected.title
+    },
+    confirmSelection () {
+      this.confirmedText = this.regionText + ' · ' + this.selectedStoreName
+    },
+    onBannerChange (event) { this.activeBannerId = this.banners[event.detail.current].id },
+    selectProduct (productId) { this.selectedProductId = productId },
+    openFilter () {
+      this.draftCategory = this.appliedCategory
+      this.filterVisible = true
+    },
+    chooseDraftCategory (categoryId) { this.draftCategory = categoryId },
+    cancelFilter () {
+      this.draftCategory = this.appliedCategory
+      this.filterVisible = false
+    },
+    confirmFilter () {
+      this.appliedCategory = this.draftCategory
+      this.filterVisible = false
+    }
+  }
+})
+</script>
+
+<style scoped>
+video { width: 100%; height: 180px; }
+map { width: 100%; height: 240px; }
+swiper { height: 100px; }
+image { width: 100px; height: 100px; }
+</style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "业务详情",
+  "usingComponents": {
+    "native-scanner": "./native-scanner.mpx",
+    "foo-card": "plugin://foo/component"
+  }
+}
+</script>

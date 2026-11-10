@@ -24,7 +24,7 @@ export default function relationsMixin (mixinType) {
       },
       methods: {
         getRelationNodes (path) {
-          return this.__mpxRelationNodesMap[path] || null
+          return this.__mpxRelationNodesMap[path] || []
         },
         __mpxCollectRelations () {
           const relations = this.__mpxProxy.options.relations
@@ -40,8 +40,8 @@ export default function relationsMixin (mixinType) {
           const target = current.$parent
           if (!target) return
 
-          // target为内建组件时，直接跳过，继续向上查找
-          if (target.$options.__mpxBuiltIn) {
+          // target为内建组件或模板包装组件时，直接跳过，继续向上查找
+          if (target.$options.__mpxBuiltIn || target.$options.__mpxTemplate) {
             return this.__mpxCheckParent(target, relation, path)
           }
 

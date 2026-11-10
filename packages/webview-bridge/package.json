@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webview-bridge",
-  "version": "2.10.17",
+  "version": "2.11.2",
   "description": "a bridge for mpx webview",
   "author": "skyadmin",
   "license": "ISC",
@@ -19,7 +19,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/webview-bridge"
   },
   "homepage": "https://didi.github.io/mpx/",
   "bugs": {
@@ -31,8 +32,6 @@
   },
   "sideEffects": true,
   "devDependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
     "rollup": "^1.12.3",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-node-resolve": "^5.0.0",

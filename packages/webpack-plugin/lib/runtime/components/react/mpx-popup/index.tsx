@@ -11,6 +11,10 @@ export interface IUsePopupOptions {
   type?: PopupType
 }
 
+type PopupOptions = {
+  contentHeight?: number
+}
+
 /**
  * 根据 type 返回对应的弹窗壳子组件
  */
@@ -44,7 +48,7 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
   const open = (
     childComponent: React.ReactNode,
     pageId: number | undefined,
-    options?: { contentHeight?: number }
+    options?: PopupOptions
   ) => {
     if (!isOpen && pageId != null) {
       isOpen = true
@@ -57,9 +61,9 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
     }
   }
 
-  const update = (updatedChild: ReactElement | null) => {
+  const update = (updatedChild: ReactElement | null, options?: PopupOptions) => {
     if (popupKey !== null && child !== null && updatedChild !== null) {
-      child = cloneElement(child, { children: updatedChild })
+      child = cloneElement(child, Object.assign({ children: updatedChild }, options))
       Portal.update(popupKey, child)
     }
   }

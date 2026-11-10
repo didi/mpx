@@ -1,13 +1,33 @@
-const MagicString = require('magic-string')
-const transformerDirectives = require('@unocss/transformer-directives').default
-const { getReplaceSource } = require('./source')
+import MagicString from 'magic-string'
+import transformerDirectives from '@unocss/transformer-directives' // default
+import { getReplaceSource } from './source.js'
 const escapedReg = /\\(.)/g
+const mpEscapeMap = {
+  '(': '_pl_',
+  ')': '_pr_',
+  '[': '_bl_',
+  ']': '_br_',
+  '{': '_cl_',
+  '}': '_cr_',
+  '#': '_h_',
+  '!': '_i_',
+  '/': '_s_',
+  '.': '_d_',
+  ':': '_c_',
+  ',': '_2c_',
+  '%': '_p_',
+  '\'': '_q_',
+  '"': '_dq_',
+  '+': '_a_',
+  $: '_si_'
+}
 
-function mpEscape (str, escapeMap = {}) {
+function mpEscape (str, onUnknown) {
   return str.replace(escapedReg, (_, p1) => {
-    if (escapeMap[p1]) return escapeMap[p1]
+    if (mpEscapeMap[p1]) return mpEscapeMap[p1]
+    onUnknown && onUnknown(p1)
     // unknown escaped
-    return escapeMap.unknown
+    return '_u_'
   })
 }
 
@@ -64,24 +84,30 @@ function transformGroups (source, options = {}) {
 const hasDirectiveTest = /@(apply|screen|layer)\s/
 const hasThemeFunctionTest = /theme\(.*?\)/
 
-function cssRequiresTransform (source) {
-  return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source)
+function cssRequiresTransform (source, transformCSS) {
+  let checkApplyReg
+  if (transformCSS) {
+    const checkApplyList = transformCSS.applyVariable || ['--at-apply', '--uno-apply', '--uno']
+    checkApplyReg = new RegExp(`(${checkApplyList.join('|')})(\\s)?:`)
+  }
+  return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source) || (checkApplyReg && checkApplyReg.test(source))
 }
 
 async function transformStyle (
   code,
   id,
-  uno
+  uno,
+  options
 ) {
   const s = new MagicString(code)
-  await transformerDirectives().transform(s, id, { uno })
+  await transformerDirectives(options).transform(s, id, { uno })
   if (s.hasChanged()) {
     code = s.toString()
   }
   return code
 }
 
-module.exports = {
+export {
   cssRequiresTransform,
   transformGroups,
   mpEscape,

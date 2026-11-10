@@ -17,7 +17,15 @@ description: 通过查看当前最新版本与上一版本间的git提交记录�
 
 严格遵循上述内容结构，不要私自添加其他内容，过于细碎的变更如变量重命名，实现微调等可以不用列出。
 
-生成内容写入到 CHANGELOG.md 文件中。
+生成内容写入到 changelogs/<version>.md 文件中。
+
+## 文档与 Skill 同步约束
+
+生成变更日志后，检查版本变更内容是否涉及**用户开发使用方式**（对外暴露的 API、配置项、模板/样式/脚本/JSON 能力、CLI 参数、生命周期、内建组件、环境 API、跨端行为差异等），如涉及则必须同步更新对应的文档与 Skill：
+
+- **文档**：更新 [docs-vitepress/](../../../docs-vitepress/) 下对应位置的 `.md`，并按 [docs-vitepress/AGENTS.md](../../../docs-vitepress/AGENTS.md) 的归档原则与索引要求同步侧边栏、导航及目录索引。
+- **Skill**：读取 [mpx Skill](../mpx/SKILL.md)，核对并补齐本版本涉及的用户开发使用方式。核心能力与通用用法归入 `mpx/references/base/`，支付宝、RN、Web、Skyline 的支持范围、差异与专属扩展分别归入 `mpx/references/ali/`、`mpx/references/rn/`、`mpx/references/web/`、`mpx/references/skyline/`；跨多个目标时同步核对实际受影响的参考与索引，已有内容准确覆盖时无需重复添加。
+- 仅修改内部实现、重构、测试、构建脚本而不改变对外使用方式的变更项，无需更新文档或 Skill。
 
 ## 内容示例
 

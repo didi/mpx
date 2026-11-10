@@ -1,4 +1,5 @@
-const { parseMustache, stringifyAttr } = require('@mpxjs/webpack-plugin/lib/template-compiler/compiler')
+import { parseMustache, stringifyAttr } from '@mpxjs/webpack-plugin/lib/template-compiler/compiler.js'
+import parseClassExpression from './parse-class-expression.js'
 
 function parseClasses (content) {
   const output = []
@@ -59,28 +60,9 @@ function parseCommentConfig (content) {
   return result
 }
 
-function parseStrings (content) {
-  const output = []
-  if (!content) { return output }
-  const regex = /'[^']*'|"[^"]*"/gm
-  let match
-  while (match = regex.exec(content)) {
-    const raw = match[0]
-    const value = raw.slice(1, -1)
-    const end = regex.lastIndex - 2
-    const start = regex.lastIndex - 1 - value.length
-    output.push({
-      result: value,
-      start,
-      end
-    })
-  }
-  return output
-}
-
-module.exports = {
+export {
   parseClasses,
-  parseStrings,
+  parseClassExpression,
   parseComments,
   parseCommentConfig,
   parseMustache,

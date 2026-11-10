@@ -1,6 +1,14 @@
 import NodeRef from './rnNodesRef'
 import { warn, noop } from '@mpxjs/utils'
 
+const HOST_REF = '__mpxHost'
+
+function normalizeNodeRef (ref) {
+  if (!ref) return ref
+  if (ref.__selectRef) return ref.__selectRef(HOST_REF, 'node')
+  if (ref.getNodeInstance) return ref
+}
+
 export default class SelectorQuery {
   constructor () {
     this._component = null
@@ -34,7 +42,12 @@ export default class SelectorQuery {
       warn('SelectQuery.select don\'t support combinator selector, it only supports selector like #a or .a or .a.b now.')
       return new NodeRef([], this, !all)
     }
-    const refs = this._component && this._component.__selectRef(selector, 'node', all)
+    let refs = this._component && this._component.__selectRef(selector, 'all', all)
+    if (Array.isArray(refs)) {
+      refs = refs.map(normalizeNodeRef).filter(Boolean)
+    } else {
+      refs = normalizeNodeRef(refs)
+    }
     return new NodeRef(refs, this, !all)
   }
 
