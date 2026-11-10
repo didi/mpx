@@ -1,4 +1,4 @@
-import { useEffect, useRef, useContext, forwardRef, useMemo, createElement, ReactNode, useId } from 'react'
+import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode, useId } from 'react'
 import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, useAnimatedValue } from 'react-native'
 import { ScrollViewContext, StickyContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -53,6 +53,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const headerTopAnimated = useAnimatedValue(0)
+  const [hasMeasured, setHasMeasured] = useState(false)
   // harmony animatedValue 不支持通过 _value 访问
   const headerTopRef = useRef<number | null>(null)
   const scrollOffsetRef = useRef(0)
@@ -70,11 +71,16 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
         headerRef.current.measureLayout(
           scrollViewRef.current,
           (left: number, top: number) => {
-            Animated.timing(headerTopAnimated, {
-              toValue: top,
-              duration: 0,
-              useNativeDriver: true
-            }).start()
+            if (headerTopRef.current === null) {
+              headerTopAnimated.setValue(top)
+              setHasMeasured(true)
+            } else {
+              Animated.timing(headerTopAnimated, {
+                toValue: top,
+                duration: 0,
+                useNativeDriver: true
+              }).start()
+            }
             headerTopRef.current = top
             updateStickOnTop(scrollOffsetRef.current)
           }
@@ -124,7 +130,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   }, [bindstickontopchange, scrollOffset, offsetTop, updateStickOnTop])
 
   const animatedStyle = useMemo(() => {
-    if (scrollOffset) {
+    if (scrollOffset && hasMeasured) {
       const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
         inputRange: [-offsetTop, 1 - offsetTop],
         outputRange: [0, 1],
@@ -136,7 +142,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
         transform: [{ translateY }]
       }
     }
-  }, [scrollOffset, headerTopAnimated, offsetTop])
+  }, [scrollOffset, headerTopAnimated, offsetTop, hasMeasured])
 
   const innerProps = useInnerProps(extendObject({}, props, {
     ref: headerRef,
