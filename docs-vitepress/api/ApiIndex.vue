@@ -37,12 +37,12 @@ const data = [
             anchor: '#forceFlushSync'
           },
           {
-            text: 'webRouteConfig',
-            anchor: '#webRouteConfig'
-          },
-          {
             text: 'webConfig',
             anchor: '#webConfig'
+          },
+          {
+            text: 'rnConfig',
+            anchor: '#rnConfig'
           },
         ]
       }
@@ -635,8 +635,8 @@ const data = [
             anchor: '#srcMode'
           },
           {
-            text: 'modeRules',
-            anchor: '#modeRules'
+            text: 'srcModeRules',
+            anchor: '#srcModeRules'
           },
           {
             text: 'externalClasses',

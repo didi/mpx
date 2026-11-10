@@ -10,7 +10,7 @@ interface SimpleViewProps extends ViewProps {
 
 const SimpleView = (simpleViewProps: SimpleViewProps): JSX.Element => {
   let idTotal = -1
-  if (__mpx_perf_framework__) idTotal = perf.scopeStart('simple-view:render:total')
+  if (__mpx_perf_framework__) idTotal = perf.scopeStart('simple-view:render')
 
   // ───── style 阶段 ─────
   let idStyle = -1

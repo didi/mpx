@@ -245,18 +245,15 @@ async function compileOne (projectRoot, mpxPaths, targetMode, type, ignoreSubCom
       try { fs.rmSync(outDir, { recursive: true, force: true }) } catch (_) { /* ignore */ }
     }
 
-    const summary = { total: errors.length, byCategory: {} }
-    errors.forEach(e => {
-      summary.byCategory[e.category] = (summary.byCategory[e.category] || 0) + 1
-    })
+    const validationState = getValidationState(errors, warnings)
 
     return {
-      success: errors.length === 0,
+      success: validationState.success,
       target: targetMode,
       projectRoot,
       errors,
       warnings,
-      summary,
+      summary: validationState.summary,
       durationMs: Date.now() - startedAt
     }
   } finally {
@@ -421,10 +418,20 @@ function categorize ({ message, moduleIdent, blockType, name }) {
   return 'other'
 }
 
+function getValidationState (errors, warnings) {
+  const issues = errors.concat(warnings)
+  const summary = { total: issues.length, byCategory: {} }
+  issues.forEach(issue => {
+    summary.byCategory[issue.category] = (summary.byCategory[issue.category] || 0) + 1
+  })
+  return { success: issues.length === 0, summary }
+}
+
 module.exports = compileValidate
 module.exports.compileValidate = compileValidate
 module.exports.resolveProjectRoot = resolveProjectRoot
 module.exports.categorize = categorize
+module.exports.getValidationState = getValidationState
 module.exports.MpxCliNotFoundError = MpxCliNotFoundError
 module.exports.InvalidInputError = InvalidInputError
 
@@ -445,8 +452,7 @@ async function runCli () {
   let projectRoot
 
   for (const a of argv) {
-    if (a === '-h' || a === '--help') { printHelp(); process.exit(0) }
-    else if (a.startsWith('--target=')) targetArg = a.slice('--target='.length)
+    if (a === '-h' || a === '--help') { printHelp(); process.exit(0) } else if (a.startsWith('--target=')) targetArg = a.slice('--target='.length)
     else if (a.startsWith('--type=')) typeArg = a.slice('--type='.length)
     else if (a.startsWith('--project-root=')) projectRoot = a.slice('--project-root='.length)
     else if (a === '--json') jsonOut = true
@@ -511,5 +517,11 @@ function prettyPrintOne (r) {
     const fileStr = e.file ? ` ${e.file}${locStr}` : ''
     console.log(`\n[${i + 1}][${e.category}${e.block ? '/' + e.block : ''}]${fileStr}`)
     console.log(e.message)
+  })
+  r.warnings.forEach((w, i) => {
+    const locStr = w.loc ? `:${w.loc.line}:${w.loc.column}` : ''
+    const fileStr = w.file ? ` ${w.file}${locStr}` : ''
+    console.log(`\n[warning ${i + 1}][${w.category}${w.block ? '/' + w.block : ''}]${fileStr}`)
+    console.log(w.message)
   })
 }

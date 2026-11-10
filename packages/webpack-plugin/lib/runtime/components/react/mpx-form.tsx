@@ -14,7 +14,7 @@ interface FormProps {
   style?: Record<string, any>
   children?: ReactNode
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -23,7 +23,7 @@ interface FormProps {
       value: any
     }
   }) => void
-  bindreset?: () => void
+  bindreset?: (evt: Record<string, any>) => void
 }
 
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: FormProps, ref): JSX.Element => {
@@ -40,7 +40,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
@@ -98,7 +98,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
 
     const reset = () => {
       const { bindreset } = propsRef.current
-      bindreset && bindreset()
+      bindreset && bindreset(getCustomEvent('reset', {}, { layoutRef }, propsRef.current))
       formValuesMap.forEach(item => item.resetValue())
     }
     return {
@@ -115,7 +115,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
       props.children,
       {
         hasVarDec,
-        varContext: varContextRef.current,
+        varContext,
         textPassThrough
       }
     )

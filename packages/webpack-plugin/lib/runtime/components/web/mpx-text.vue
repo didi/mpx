@@ -1,5 +1,6 @@
 <script>
   import getInnerListeners from './getInnerListeners'
+  import * as perf from '@mpxjs/perf'
 
   const encodeMap = {
     ' ': '&nbsp;',
@@ -34,6 +35,8 @@
       }
     },
     render (createElement) {
+      let id = -1
+      if (__mpx_perf_framework__) id = perf.scopeStart('text:render')
       let classNames = ['mpx-text']
       let decode = false
       const slots = this.$slots.default || []
@@ -67,7 +70,9 @@
         class: classNames,
         on: getInnerListeners(this)
       }
-      return createElement('span', data, decode ? newSlots : slots)
+      const result = createElement('span', data, decode ? newSlots : slots)
+      if (__mpx_perf_framework__) perf.scopeEnd(id)
+      return result
     }
   }
 </script>

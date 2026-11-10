@@ -4,6 +4,10 @@
 
 ## 目录
 
+- [文件维度条件编译](#文件维度条件编译)
+  - [文件命名规则](#文件命名规则)
+  - [RN 平台文件回退](#rn-平台文件回退)
+- [区块维度条件编译](#区块维度条件编译)
 - [样式条件编译](#样式条件编译)
   - [避免产物中出现空选择器](#避免产物中出现空选择器)
 - [模板条件编译](#模板条件编译)
@@ -11,6 +15,74 @@
   - [节点/属性维度条件编译](#节点属性维度条件编译)
 - [脚本条件编译](#脚本条件编译)
 - [配置条件编译](#配置条件编译)
+
+---
+
+## 文件维度条件编译
+
+当不同平台的实现差异较大，或 RN 实现需要引入 `react-native` 组件、React Hooks 等原平台无法解析的依赖时，优先使用文件维度条件编译，将平台专用实现放到同目录的独立文件中。业务侧继续引用默认文件，编译器会根据当前输出 `mode` 优先解析对应的条件文件。
+
+```text
+components/
+├── hybrid-card.mpx          # 小程序、Web 等原平台的默认实现
+├── hybrid-card.ios.mpx      # iOS 实现，也可作为 Android、Harmony 的 RN 公共实现
+├── hybrid-card.android.mpx  # Android 专用实现（可选）
+└── hybrid-card.harmony.mpx  # Harmony 专用实现（可选）
+```
+
+条件文件名中的平台标识只负责**目标文件筛选**，不会改变文件的源码方言。命中的 `.ios.mpx`、`.android.mpx` 或 `.harmony.mpx` 文件默认仍继承项目 `srcMode`（通常按微信/Mpx 规范编写），并继续经过 Mpx2RN 的模板、脚本、样式和 JSON 转换。若文件完整使用目标平台原生语法，应通过对应输出目标的 `srcModeRules.<target>` 精确声明源码方言；不要因为文件名带有平台后缀，就直接按目标平台原生语法编写。
+
+文件维度适合隔离大块平台差异；只有少量 RN 专属属性或节点时，优先使用 `@ios|android|harmony` 等局部条件编译，避免重复维护整份文件。混合开发的选择建议见 [Mpx 与 RN 混合开发 · 跨端兼容隔离](./rn-hybrid-dev.md#跨端兼容隔离)。
+
+### 文件命名规则
+
+```text
+原文件名.平台标识.扩展名
+```
+
+Mpx2RN 使用的文件平台标识为 `ios`、`android` 和 `harmony`，例如 `index.ios.mpx`、`request.android.js`、`theme.harmony.scss`。默认实现不带平台标识，例如 `index.mpx`。
+
+### RN 平台文件回退
+
+RN 平台按以下顺序查找条件文件：
+
+- `ios`：`.ios.*` → 默认文件
+- `android`：`.android.*` → `.ios.*` → 默认文件
+- `harmony`：`.harmony.*` → `.ios.*` → 默认文件
+
+因此，三个 RN 平台实现一致时，只需提供一份 `.ios.*` 文件；仅在 Android 或 Harmony 存在独立差异时，再补充对应的 `.android.*` 或 `.harmony.*` 文件。
+
+---
+
+## 区块维度条件编译
+
+template、script、style、JSON 区块可以使用 `mode` 选择 RN 平台专用区块。RN mode 只参与区块筛选，不会成为区块的局部 `srcMode`；命中的区块仍需按照项目 `srcMode`（通常为微信/Mpx 规范）编写，并继续参与 RN 模板、脚本、样式和 JSON 转换。
+
+```html
+<template mode="ios">
+  <view bindtap="handleTap">RN 平台内容</view>
+</template>
+
+<style mode="ios">
+.container {
+  width: 100rpx;
+}
+</style>
+```
+
+Android 和 Harmony 使用各自的 `mode` 区块，规则相同。
+
+完整 RN 原生模板区块可同时声明 `src-mode`，并使用已注册的 `View`、`Text` 等 RN 原生组件：
+
+```html
+<template mode="ios" src-mode="ios">
+  <View>
+    <Text>RN 原生内容</Text>
+  </View>
+</template>
+```
+
+模板区块内部的 `<template name>` 定义继承当前区块的 `srcMode`；`<import>` / `<include>` 引用的是独立模板资源，不继承引用方 `srcMode`，其源码方言由资源自身命中的 `srcModeRules` 决定。`.mpx` 文件的 `<template src="..." src-mode="...">` 仍属于 SFC 模板区块，默认继承当前资源的 `srcMode`，显式 `src-mode` 优先。
 
 ---
 
@@ -34,7 +106,7 @@
 
 样式条件编译后的产物中**不能留下空选择器（无样式内容的选择器）**。后续链路中的 CSS 预编译、PostCSS 插件等常会解析并遍历规则，空选择器容易触发解析错误或构建失败。
 
-若仅在声明块内做条件编译，某一平台分支可能把块内全部规则裁掉，从而留下「有选择器、无声明」的非法片段。此时应把**整条规则（含选择器与花括号内的内容）**一并纳入条件编译，保证每个平台产物里要么输出完整规则，要么完全不输出该规则。
+若仅在声明块内做条件编译，某一平台分支可能把块内全部规则裁掉，从而留下「有选择器、无声明」的非法片段。此时应把**整条规则（含选择器与花括号内的内容）**一并纳入条件编译，保证每个平台产物里都不会产生空选择器。
 
 **❌ 避免（仅 RN 需要样式时，若只包在声明块内，原平台产物会得到空块 `.rn-only { }`）：**
 
@@ -88,25 +160,25 @@
 
 使用 `@` 和 `|` 符号来指定某个节点或属性只在某些平台下有效。这种方式更加灵活简洁。
 
-- **显式声明 (`@mode`)**：节点或属性仅在目标平台下输出，节点或属性为目标平台原生支持，**框架会跳过对该节点或属性的跨平台语法转换**。
-- **隐式声明 (`@_mode`)**：节点或属性仅在目标平台下输出，节点或属性为 Mpx 转换支持，**框架仍然会对其进行正常的跨平台语法转换**。
+- **`@mode`**：节点或属性仅在目标平台下输出，命中后继续继承资源 `srcMode` 并执行正常跨平台转换。
+- **`@_mode`**：`@mode` 的兼容别名，筛选和转换行为完全一致；新代码优先使用 `@mode`。
 - **标签名动态替换 (`mpxTagName@mode`)**：结合 `@mode` 属性，可以对模板组件的 `tagName` 进行分平台条件编译。当节点存在该属性时，在输出到对应平台时会将节点标签修改为该属性的值。
 
 **示例：**
 
 ```html
 <template>
-  <!-- 属性维度条件编译，仅在 RN 平台注入 numberOfLines，该属性为 RN 平台原生支持，使用 @mode 进行显式声明，输出 RN 时跳过属性跨平台语法转换-->
+  <!-- 仅在 RN 平台保留 numberOfLines；命中后仍正常进入转换流程，无匹配转换规则的 RN 原生属性会原样保留 -->
   <text
     class="title"
     numberOfLines@ios|android|harmony="{{1}}"
   >
     {{title}}
   </text>
-  <!-- 属性维度条件编译，仅在 RN 平台注入 is-simple，该属性为 Mpx 转换支持，使用 @_mode 进行隐式声明，输出 RN 时保留属性跨平台语法转换-->
+  <!-- 仅在 RN 平台保留 is-simple，并正常执行 Mpx2RN 属性转换 -->
   <text
     class="content"
-    is-simple@_ios|_android|_harmony
+    is-simple@ios|android|harmony
   >
     {{content}}
   </text>
@@ -115,8 +187,8 @@
 
 ```html
 <template>
-  <!-- 节点维度条件编译，使用 @_mode 进行隐式声明，仅在目标平台输出，并且保留节点与属性的跨平台语法转换 -->
-  <view @_ios|_android|_harmony bindtap="handleTap" class="rn-only">仅 RN 可见</view>
+  <!-- 节点仅在 RN 平台输出，命中后节点与属性仍正常执行 Mpx2RN 转换 -->
+  <view @ios|android|harmony bindtap="handleTap" class="rn-only">仅 RN 可见</view>
 </template>
 ```
 

@@ -1,0 +1,46 @@
+{
+  "eval_id": 4,
+  "eval_name": "new-segmented-control",
+  "prompt": "请根据附件中的需求说明，从零创建一个 segmented-control.mpx 可复用组件。组件需在微信小程序、Web 和 RN（iOS/Android/Harmony）保持一致的功能与布局表现。请将完整的 .mpx 单文件组件写入指定输出路径，不要创建额外业务文件。",
+  "assertions": [
+    {
+      "id": "u0",
+      "text": "组合式组件：完整 script setup SFC 使用 defineProps 声明属性、defineExpose 暴露模板绑定",
+      "checks": [
+        "u0",
+        "u1"
+      ]
+    },
+    {
+      "id": "u2",
+      "text": "脚本：defineProps 返回的属性对象通过 toRefs/toRef 使用，不直接解构",
+      "checks": [
+        "u2"
+      ]
+    },
+    {
+      "id": "u3",
+      "text": "脚本：使用 ref 保存本地选中值并通过 watch 同步 value",
+      "checks": [
+        "u3"
+      ]
+    },
+    {
+      "id": "u4",
+      "text": "功能：使用 computed 派生候选项状态并渲染带 key 的候选列表",
+      "checks": [
+        "u4"
+      ]
+    },
+    {
+      "id": "u5",
+      "text": "功能：点击处理器校验整体与单项禁用状态，并通过 change 事件传出 controlKey 和 value",
+      "checks": [
+        "u5"
+      ]
+    }
+  ],
+  "source_evals": [
+    7
+  ]
+}

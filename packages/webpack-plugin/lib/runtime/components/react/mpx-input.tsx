@@ -96,7 +96,7 @@ export interface InputProps {
   'selection-end'?: number
   'placeholder-style'?: { color?: string }
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   // 只有 RN 环境读取
@@ -125,6 +125,8 @@ const inputModeMap: Record<Type, string> = {
   idcard: 'text',
   digit: 'decimal'
 }
+
+const INPUT_SWITCH_BLUR_GUARD_DURATION = 100
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
   const {
@@ -281,7 +283,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, readyToShow: true }
+      const preventBlurUntil = keyboardAvoid.current && keyboardAvoid.current.ref !== nodeRef
+        ? Date.now() + INPUT_SWITCH_BLUR_GUARD_DURATION
+        : keyboardAvoid.current?.preventBlurUntil
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, preventBlurUntil }
     }
   }
 

@@ -1,4 +1,5 @@
 const compiler = require('../../lib/template-compiler/compiler')
+const processTemplate = require('../../lib/web/processTemplate')
 const templateShared = require('../../lib/web/template-shared')
 const { MPX_TEMPLATE_COMPONENT_PREFIX } = require('../../lib/utils/const')
 
@@ -21,7 +22,72 @@ function createWebParseOptions (overrides = {}) {
 }
 
 describe('Web template support (compiler + template-shared)', () => {
+  it('preserves srcMode for mode block', (done) => {
+    const wxsContentMap = {}
+    const loaderContext = {
+      resource: '/test.mpx',
+      resourcePath: '/test.mpx',
+      getMpx: () => ({
+        projectRoot: '/project',
+        mode: 'web',
+        env: '',
+        defs: {},
+        wxsContentMap,
+        externalClasses: [],
+        webConfig: {},
+        globalComponents: {}
+      }),
+      emitWarning: jest.fn(),
+      emitError: jest.fn()
+    }
+    const template = {
+      tag: 'template',
+      attrs: {
+        mode: 'web'
+      },
+      mode: 'web',
+      content: '<view wx:if="{{show}}">Main</view>'
+    }
+
+    processTemplate(template, {
+      loaderContext,
+      hasScoped: false,
+      hasComment: false,
+      isNative: false,
+      srcMode: 'wx',
+      moduleId: 'm123',
+      ctorType: 'component',
+      usingComponentsInfo: {},
+      originalUsingComponents: {},
+      componentGenerics: {},
+      componentPlaceholder: []
+    }, (err, result) => {
+      expect(err).toBeNull()
+      expect(result.output).toContain('<div v-if="(show)">Main</div>')
+      done()
+    })
+  })
+
   describe('compiler.parse / serialize', () => {
+    it('creates a page host with a stable scope even with a registered div component', () => {
+      const opts = createWebParseOptions({
+        ctorType: 'page',
+        moduleId: 'm123',
+        hasScoped: true,
+        usingComponentsInfo: { 'mpx-com-div': {} }
+      })
+      const { root } = compiler.parse('<view class="content">main</view>', opts)
+      expect(root.tag).toBe('div')
+      expect(compiler.serialize(root)).toContain('["mpx-page","m123","mpx-app-scope"]')
+      expect(opts.error).not.toHaveBeenCalled()
+    })
+
+    it('does not add a scope id to an unscoped page', () => {
+      const opts = createWebParseOptions({ ctorType: 'page', moduleId: 'm123' })
+      const { root } = compiler.parse('<view>main</view>', opts)
+      expect(compiler.serialize(root)).toContain('["mpx-page"]')
+    })
+
     it('collects import src into meta.imports and removes import from serialized tree', () => {
       const opts = createWebParseOptions()
       const { root, meta } = compiler.parse(

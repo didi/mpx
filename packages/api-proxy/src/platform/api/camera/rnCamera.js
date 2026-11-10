@@ -1,4 +1,5 @@
 import { noop, getFocusedNavigation } from '@mpxjs/utils'
+import { failHandle } from '../../../common/js'
 
 export default class CameraContext {
   constructor () {
@@ -10,10 +11,10 @@ export default class CameraContext {
     const { zoom, success = noop, fail = noop, complete = noop } = options
     try {
       if (this.camera.setZoom) {
+        this.camera.setZoom(zoom)
         const result = { errMsg: 'setZoom:ok' }
         success(result)
         complete(result)
-        this.camera.setZoom(zoom)
       } else {
         const result = {
           errMsg: 'setZoom:fail camera instance not found'
@@ -30,15 +31,27 @@ export default class CameraContext {
     }
   }
 
-  takePhoto (options) {
-    this.camera?.takePhoto(options)
+  takePhoto (options = {}) {
+    if (this.camera.takePhoto) {
+      this.camera.takePhoto(options)
+    } else {
+      failHandle({ errMsg: 'takePhoto:fail camera instance not found' }, options.fail, options.complete)
+    }
   }
 
-  startRecord (options) {
-    this.camera?.startRecord(options)
+  startRecord (options = {}) {
+    if (this.camera.startRecord) {
+      this.camera.startRecord(options)
+    } else {
+      failHandle({ errMsg: 'startRecord:fail camera instance not found' }, options.fail, options.complete)
+    }
   }
 
-  stopRecord (options) {
-    this.camera?.stopRecord(options)
+  stopRecord (options = {}) {
+    if (this.camera.stopRecord) {
+      this.camera.stopRecord(options)
+    } else {
+      failHandle({ errMsg: 'stopRecord:fail camera instance not found' }, options.fail, options.complete)
+    }
   }
 }

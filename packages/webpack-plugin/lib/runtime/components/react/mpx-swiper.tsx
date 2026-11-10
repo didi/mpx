@@ -69,7 +69,7 @@ interface SwiperProps {
   'previous-margin'?: string
   'next-margin'?: string
   'enable-offset'?: boolean
-  'enable-var': boolean
+  'enable-var': boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -183,7 +183,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     hasPositionFixed,
     setWidth,
@@ -523,9 +523,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }
   // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
+  const hasChangeListener = !!bindchange // JS 线程：把函数转成 true/false，减少跨线程函数捕获及其开销
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
-    if (newIndex !== preIndex && bindchange && !isFirstRef.current) {
+    if (newIndex !== preIndex && hasChangeListener && !isFirstRef.current) {
       runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
     }
     isFirstRef.current = false
@@ -928,7 +929,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
   }, wrapChildren(arrPages, {
     hasVarDec,
-    varContext: varContextRef.current,
+    varContext,
     textPassThrough
   }))
   const renderChildrens = showPagination ? [animateComponent, renderPagination()] : animateComponent

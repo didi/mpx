@@ -1,5 +1,5 @@
 import { ReactNode, useContext, useEffect, useRef } from 'react'
-import { PortalContext, ProviderContext, RouteContext, VarContext, TextPassThroughContext } from '../context'
+import { PortalContext, ProviderContext, VarContext, TextPassThroughContext } from '../context'
 import PortalHost, { portal } from './portal-host'
 
 export type PortalProps = {
@@ -9,7 +9,6 @@ export type PortalProps = {
 const Portal = ({ children }: PortalProps): null => {
   const manager = useContext(PortalContext)
   const keyRef = useRef<any>(null)
-  const { pageId } = useContext(RouteContext) || {}
   const varContext = useContext(VarContext)
   const textPassThroughContext = useContext(TextPassThroughContext)
   const parentProvides = useContext(ProviderContext)
@@ -33,7 +32,7 @@ const Portal = ({ children }: PortalProps): null => {
         'Looks like you forgot to wrap your root component with `PortalHost` component from `@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index`.\n\n'
       )
     }
-    keyRef.current = manager.mount(children, null, pageId)
+    keyRef.current = manager.mount(children)
     return () => {
       manager.unmount(keyRef.current)
     }
@@ -45,5 +44,6 @@ Portal.Host = PortalHost
 Portal.add = portal.add
 Portal.remove = portal.remove
 Portal.update = portal.update
+Portal.getPageId = portal.getPageId
 
 export default Portal

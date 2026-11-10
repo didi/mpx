@@ -32,7 +32,11 @@ export const arrayMethods = Object.create(arrayProto)
       }
       if (inserted) ob.observeArray(inserted)
       // notify change
-      ob.dep.notify()
+      if (process.env.NODE_ENV !== 'production') {
+        ob.dep.notify({ target: this, type: 'array mutation', key: method })
+      } else {
+        ob.dep.notify()
+      }
     }
     return result
   })

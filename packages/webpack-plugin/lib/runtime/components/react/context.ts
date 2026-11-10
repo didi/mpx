@@ -14,8 +14,8 @@ export type KeyboardAvoidContextValue = MutableRefObject<{
   keyboardHeight?: number
   /** @internal bindfocus 异步延迟上报方法 */
   onKeyboardShow?: () => void
-  /** @internal 多个 Input 切换聚焦场景标记位 */
-  readyToShow?: boolean
+  /** @internal 切换 Input 时禁止 keyboardDidHide 主动失焦的截止时间 */
+  preventBlurUntil?: number
 } | null>
 
 export interface GroupValue {
@@ -45,7 +45,7 @@ export interface IntersectionObserver {
 }
 
 export interface PortalContextValue {
-  mount: (children: React.ReactNode, key?: number | null, id?: number | null) => number | undefined
+  mount: (children: React.ReactNode) => number
   update: (key: number, children: React.ReactNode) => void
   unmount: (key: number) => void
 }

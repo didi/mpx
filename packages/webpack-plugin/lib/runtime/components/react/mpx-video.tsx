@@ -92,7 +92,7 @@ interface VideoProps {
   'license-url'?: string
   'preferred-peak-bit-rate'?: number
   'enable-auto-rotation'?: number
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   bindplay?: (event: Record<string, any>) => void
@@ -213,7 +213,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   }
 
   function handleEnd () {
-    bindended!(getCustomEvent('end', {}, { layoutRef }, propsRef.current))
+    bindended!(getCustomEvent('ended', {}, { layoutRef }, propsRef.current))
   }
 
   function handleWaiting ({ isBuffering }: OnBufferData) {
@@ -259,7 +259,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
 
   function handleAndroidControlsVisibilityChange ({ isVisible }: OnControlsVisibilityChange) {
     bindcontrolstoggle!(
-      getCustomEvent('progress',
+      getCustomEvent('controlstoggle',
         {},
         {
           detail: {
@@ -292,7 +292,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   }
 
   function handleError ({ error }: OnVideoErrorData) {
-    binderror && binderror(getCustomEvent('play', {}, { detail: { errMsg: error.localizedFailureReason }, layoutRef }, propsRef.current))
+    binderror && binderror(getCustomEvent('error', {}, { detail: { errMsg: error.localizedFailureReason }, layoutRef }, propsRef.current))
   }
 
   function play () {

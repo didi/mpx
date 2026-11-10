@@ -1,4 +1,5 @@
 import { noop, type } from '@mpxjs/utils'
+import { defineUnsupportedProps } from '../../../common/js'
 import mpx from '@mpxjs/core'
 import { Platform, PermissionsAndroid } from 'react-native'
 import { base64ToArrayBuffer } from '../base/index'
@@ -179,7 +180,7 @@ function closeBluetoothAdapter (options = {}) {
     complete(result)
   } catch (error) {
     const result = {
-      errMsg: 'closeBluetoothAdapter:fail ' + error.message
+      errMsg: 'closeBluetoothAdapter:fail ' + (error?.message != null ? error.message : '')
     }
     fail(result)
     complete(result)
@@ -187,17 +188,23 @@ function closeBluetoothAdapter (options = {}) {
 }
 
 function startBluetoothDevicesDiscovery (options = {}) {
-  const BleManager = require('react-native-ble-manager').default
+  const { default: BleManager, BleScanMode } = require('react-native-ble-manager')
   const {
     services = [],
     allowDuplicatesKey = false,
+    powerLevel = 'medium',
     success = noop,
     fail = noop,
     complete = noop
   } = options
+  const scanMode = {
+    low: BleScanMode.LowPower,
+    medium: BleScanMode.Balanced,
+    high: BleScanMode.LowLatency
+  }[powerLevel]
 
   if (!bleManagerInitialized) {
-    commonFailHandler('startBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hans\'t been opened or ble is unavailable.')
+    commonFailHandler('startBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hasn\'t been opened or ble is unavailable.')
     return
   }
   DiscoverPeripheralSubscription = BleManager.onDiscoverPeripheral((device) => {
@@ -230,15 +237,13 @@ function startBluetoothDevicesDiscovery (options = {}) {
     getDevices.push(deviceInfo)
     // 处理设备发现逻辑
   })
-  BleManager.scan(services, 0, allowDuplicatesKey).then((res) => { // 必须，没有开启扫描，onDiscoverPeripheral回调不会触发
-    onStateChangeCallbacks.forEach(cb => {
-      if (type(cb) === 'Function') {
-        cb({
-          available: true,
-          discovering: true
-        })
-      }
-    })
+  BleManager.scan(services, 0, allowDuplicatesKey, scanMode == null ? {} : { scanMode }).then((res) => { // 必须，没有开启扫描，onDiscoverPeripheral回调不会触发
+    if (onStateChangeCallbacks.length) {
+      const stateChange = { available: true, discovering: true }
+      onStateChangeCallbacks.forEach(cb => {
+        if (type(cb) === 'Function') cb(stateChange)
+      })
+    }
     discovering = true
     getDevices = [] // 清空之前的发现设备列表
     const result = {
@@ -257,20 +262,18 @@ function stopBluetoothDevicesDiscovery (options = {}) {
   const { success = noop, fail = noop, complete = noop } = options
 
   if (!bleManagerInitialized) {
-    commonFailHandler('stopBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hans\'t been opened or ble is unavailable.')
+    commonFailHandler('stopBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hasn\'t been opened or ble is unavailable.')
     return
   }
   removeBluetoothDevicesDiscovery()
   BleManager.stopScan().then(() => {
     discovering = false
-    onStateChangeCallbacks.forEach(cb => {
-      if (type(cb) === 'Function') {
-        cb({
-          available: true,
-          discovering: false
-        })
-      }
-    })
+    if (onStateChangeCallbacks.length) {
+      const stateChange = { available: true, discovering: false }
+      onStateChangeCallbacks.forEach(cb => {
+        if (type(cb) === 'Function') cb(stateChange)
+      })
+    }
     const result = {
       errMsg: 'stopBluetoothDevicesDiscovery:ok'
     }
@@ -342,23 +345,20 @@ function getBluetoothAdapterState (options = {}) {
 function onDidUpdateState () {
   const BleManager = require('react-native-ble-manager').default
   updateStateSubscription = BleManager.onDidUpdateState((state) => {
-    onStateChangeCallbacks.forEach(cb => {
-      if (type(cb) === 'Function') {
-        cb({
-          available: state.state === 'on',
-          discovering: state.state === 'on' ? discovering : false
-        })
+    if (onStateChangeCallbacks.length) {
+      const stateChange = {
+        available: state.state === 'on',
+        discovering: state.state === 'on' ? discovering : false
       }
-    })
+      onStateChangeCallbacks.forEach(cb => {
+        if (type(cb) === 'Function') cb(stateChange)
+      })
+    }
     if (onBLEConnectionStateCallbacks.length && connectedDeviceId.length && state.state !== 'on') {
       connectedDeviceId.forEach((id) => {
+        const connectionState = { deviceId: id, connected: false }
         onBLEConnectionStateCallbacks.forEach(cb => {
-          if (type(cb) === 'Function') {
-            cb({
-              deviceId: id,
-              connected: false
-            })
-          }
+          if (type(cb) === 'Function') cb(connectionState)
         })
       })
     }
@@ -397,7 +397,7 @@ function getBluetoothDevices (options = {}) { // 该能力只是获取应用级�
   const { success = noop, fail = noop, complete = noop } = options
   if (!bleManagerInitialized) {
     const result = {
-      errMsg: 'getBluetoothDevices:fail ble adapter hans\'t been opened or ble is unavailable.'
+      errMsg: 'getBluetoothDevices:fail ble adapter hasn\'t been opened or ble is unavailable.'
     }
     fail(result)
     complete(result)
@@ -576,15 +576,15 @@ function offBLECharacteristicValueChange () {
 function setBLEMTU (options = {}) {
   const BleManager = require('react-native-ble-manager').default
   const { deviceId, mtu, success = noop, fail = noop, complete = noop } = options
-  if (!deviceId && !mtu) {
+  if (deviceId == null && mtu == null) {
     commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;parameter.mtu should be Number instead of Undefined;')
     return
   }
-  if (!mtu) {
+  if (mtu == null) {
     commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.mtu should be Number instead of Undefined;')
     return
   }
-  if (!deviceId) {
+  if (deviceId == null) {
     commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;')
     return
   }
@@ -651,9 +651,11 @@ function getBLEDeviceServices (options = {}) {
     return
   }
   BleManager.retrieveServices(deviceId).then((peripheralInfo) => {
-    const services = peripheralInfo.services.map(service => ({
-      uuid: service.uuid
-    }))
+    const services = peripheralInfo.services.map(service => {
+      const result = { uuid: service.uuid }
+      defineUnsupportedProps(result, ['isPrimary'])
+      return result
+    })
 
     // 存储服务信息
     BLEDeviceCharacteristics[deviceId] = peripheralInfo
@@ -707,16 +709,17 @@ function getBLEDeviceCharacteristics (options = {}) {
     complete(result)
     return
   }
-  const characteristics = characteristicsList.map(char => ({
-    uuid: char.characteristic,
-    properties: {
+  const characteristics = characteristicsList.map(char => {
+    const properties = {
       read: !!char.properties.Read,
       write: !!char.properties.Write,
       notify: !!char.properties.Notify,
       indicate: !!char.properties.Indicate,
       writeNoResponse: !!char.properties.WriteWithoutResponse
     }
-  }))
+    defineUnsupportedProps(properties, ['writeDefault'])
+    return { uuid: char.characteristic, properties }
+  })
 
   const result = {
     errMsg: 'getBLEDeviceCharacteristics:ok',
@@ -747,14 +750,12 @@ function createBLEConnection (options = {}) {
       connectedDeviceId.push(deviceId) // 记录一下已连接的设备id
     }
     clearTimeout(createBLEConnectionTimeout)
-    onBLEConnectionStateCallbacks.forEach(cb => {
-      if (type(cb) === 'Function') {
-        cb({
-          deviceId,
-          connected: true
-        })
-      }
-    })
+    if (onBLEConnectionStateCallbacks.length) {
+      const connectionState = { deviceId, connected: true }
+      onBLEConnectionStateCallbacks.forEach(cb => {
+        if (type(cb) === 'Function') cb(connectionState)
+      })
+    }
     connectedDevices.add(deviceId)
     const result = {
       errMsg: 'createBLEConnection:ok'
@@ -795,14 +796,12 @@ function closeBLEConnection (options = {}) {
     if (index !== -1) {
       connectedDeviceId.splice(index, 1) // 记录一下已连接的设备id
     }
-    onBLEConnectionStateCallbacks.forEach(cb => {
-      if (type(cb) === 'Function') {
-        cb({
-          deviceId,
-          connected: false
-        })
-      }
-    })
+    if (onBLEConnectionStateCallbacks.length) {
+      const connectionState = { deviceId, connected: false }
+      onBLEConnectionStateCallbacks.forEach(cb => {
+        if (type(cb) === 'Function') cb(connectionState)
+      })
+    }
     connectedDevices.delete(deviceId)
     const result = {
       errMsg: 'closeBLEConnection:ok'

@@ -79,7 +79,7 @@ const sidebar: ExtendedSidebar = {
 
         { text: '国际化 i18n', link: '/guide/advance/i18n' },
         { text: '包体积分析', link: '/guide/advance/size-report' },
-        { text: 'RN 运行时测速', link: '/guide/advance/perf' },
+        { text: '跨端运行时测速', link: '/guide/advance/perf' },
         { text: '图像资源处理', link: '/guide/advance/image-process' },
         { text: '原生渐进迁移', link: '/guide/advance/progressive' },
         {
@@ -91,7 +91,7 @@ const sidebar: ExtendedSidebar = {
           text: '自定义路径',
           link: '/guide/advance/custom-output-path',
         },
-        { text: '使用TypeScript', link: '/guide/tool/ts' },
+        { text: '使用TypeScript', link: '/guide/advance/ts' },
         {
           text: '使用原子类',
           link: '/guide/advance/utility-first-css',
@@ -131,6 +131,10 @@ const sidebar: ExtendedSidebar = {
         {
           text: '响应式 API',
           link: '/guide/composition-api/reactive-api',
+        },
+        {
+          text: '响应式调试',
+          link: '/guide/composition-api/reactivity-debugging',
         },
       ],
     },
@@ -280,6 +284,14 @@ const sidebar: ExtendedSidebar = {
                     {
                       text: 'offError',
                       link: '/api-proxy/base/app/app-event/offError',
+                    },
+                    {
+                      text: 'onPageNotFound',
+                      link: '/api-proxy/base/app/app-event/onPageNotFound',
+                    },
+                    {
+                      text: 'offPageNotFound',
+                      link: '/api-proxy/base/app/app-event/offPageNotFound',
                     },
                     {
                       text: 'onUnhandledRejection',
@@ -699,6 +711,10 @@ const sidebar: ExtendedSidebar = {
               collapsed: true,
               items: [
                 {
+                  text: 'startBluetoothDevicesDiscovery',
+                  link: '/api-proxy/device/bluetooth-ble/startBluetoothDevicesDiscovery',
+                },
+                {
                   text: 'closeBLEConnection',
                   link: '/api-proxy/device/bluetooth-ble/closeBLEConnection',
                 },
@@ -903,6 +919,10 @@ const sidebar: ExtendedSidebar = {
           text: 'Mpx 小程序单元测试能力建设与实践',
           link: '/articles/unit-test',
         },
+        {
+          text: 'Mpx Skill：面向 AI 编程的统一跨端开发指南',
+          link: '/articles/mpx-skill'
+        }
       ],
     },
   ],

@@ -51,7 +51,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   let firstPage = ''
   const pagesMap = {}
   const mpx = loaderContext.getMpx()
-  Object.keys(localPagesMap).forEach((pagePath) => {
+  Object.keys(localPagesMap).sort().forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     if (pageCfg.async && rnConfig.supportSubpackage) {
@@ -80,7 +80,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
   const componentsMap = {}
   const mpx = loaderContext.getMpx()
   if (localComponentsMap) {
-    Object.keys(localComponentsMap).forEach((componentName) => {
+    Object.keys(localComponentsMap).sort().forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
       if (componentCfg.async && rnConfig.supportSubpackage) {
@@ -114,7 +114,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
     })
   }
   if (builtInComponentsMap) {
-    Object.keys(builtInComponentsMap).forEach((componentName) => {
+    Object.keys(builtInComponentsMap).sort().forEach((componentName) => {
       const componentCfg = builtInComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
       componentsMap[componentName] = getComponentGetter(getBuiltInComponent(componentRequest))
@@ -140,7 +140,7 @@ function getRequireScript ({ script, ctorType, loaderContext }) {
 
 function buildGlobalParams ({
   moduleId,
-  scriptSrcMode,
+  srcMode,
   loaderContext,
   isProduction,
   ctorType,
@@ -152,13 +152,17 @@ function buildGlobalParams ({
   genericsInfo,
   hasApp
 }) {
+  const { externalClasses } = loaderContext.getMpx()
   let content = ''
+  if (ctorType === 'app' || !hasApp) {
+    content += 'global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+    content += `global.__externalClasses = ${JSON.stringify(externalClasses || [])}\n`
+  }
   if (ctorType === 'app') {
     content += `
 global.getApp = function () {}
 global.getCurrentPages = function () { return [] }
 global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-global.__mpxGenericsMap = {}
 global.__mpxOptionsMap = {}
 global.__mpxPagesMap = {}
 global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
@@ -168,19 +172,10 @@ global.__preloadRule = ${JSON.stringify(jsonConfig.preloadRule)}
 global.currentInject.pagesMap = ${shallowStringify(pagesMap)}
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
-    if (ctorType === 'page') {
-      const pageConfig = Object.assign({}, jsonConfig)
-      delete pageConfig.usingComponents
-      content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
-    }
-
     content += `
 var componentsMap = ${shallowStringify(componentsMap)}
 global.currentInject.componentsMap = componentsMap\n`
     if (genericsInfo) {
-      if (!hasApp) {
-        content += 'global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
-      }
       content += `
 const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
 global.__mpxGenericsMap[genericHash] = componentsMap\n`
@@ -190,7 +185,7 @@ global.__mpxGenericsMap[genericHash] = componentsMap\n`
     }
   }
   content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-  content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+  content += `global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
   if (!isProduction) {
     content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
   }

@@ -242,70 +242,19 @@ function diffTrees (taskId, fromTree, toTree) {
   ], { env: snapshotEnv(taskId) })
 }
 
-function arraysEqual (left, right) {
-  return Array.isArray(left) && left.length === right.length && left.every(function (item, index) {
-    return item === right[index]
-  })
-}
-
-function validateStoredPaths (paths, expected, field) {
-  const normalized = Array.from(validateRepoRelativePaths(paths, field))
-  if (!arraysEqual(paths, normalized) || !arraysEqual(normalized, expected)) {
-    u.fail(field + ' must exactly match the reconstructed Git paths')
-  }
-  return normalized
-}
-
-function validatePatch (file, expected, field) {
-  if (!fs.readFileSync(file).equals(Buffer.from(expected))) {
-    u.fail(field + ' must exactly match the reconstructed Git diff')
-  }
-}
-
-function validateRoundSnapshot (taskId, round) {
-  const dir = path.join(u.taskDir(taskId), 'diffs')
+function reviewTrees (taskId) {
   const baseline = readBaseline(taskId)
   validateBaselineBlobs(taskId, baseline)
   const baselineTree = createBaselineTree(taskId, baseline)
-  const scope = u.readJson(path.join(dir, 'code-scope-' + round + '.json'))
-  const previousTree = round === 1
-    ? baselineTree
-    : u.readJson(path.join(dir, 'code-scope-' + (round - 1) + '.json')).currentTree
-  if (scope.round !== round || scope.baselineHead !== baseline.head ||
-    scope.baselineTree !== baselineTree || scope.previousTree !== previousTree) {
-    u.fail('Code snapshot metadata does not match round ' + round)
-  }
-  if (typeof scope.currentTree !== 'string' || !scope.currentTree) {
-    u.fail('Code snapshot currentTree must be a non-empty string')
-  }
-  validateTreeObject(taskId, scope.currentTree)
-  const currentTree = createWorktreeTree(taskId, '', baseline.limits || defaultLimits)
-  if (scope.currentTree !== currentTree) {
-    u.fail('Code snapshot is stale for round ' + round + '; rerun snapshot-diff.js')
-  }
+  const limits = baseline.limits || defaultLimits
+  const currentTree = createWorktreeTree(taskId, '', limits)
   const cumulativePaths = diffPaths(taskId, baselineTree, currentTree)
-  const roundPaths = diffPaths(taskId, previousTree, currentTree)
-  validateStoredPaths(scope.cumulativePaths, cumulativePaths, 'code scope ' + round + ' cumulativePaths')
-  validateStoredPaths(scope.roundPaths, roundPaths, 'code scope ' + round + ' roundPaths')
-  const claimedPaths = Array.from(validateRepoRelativePaths(scope.claimedPaths, 'code scope ' + round + ' claimedPaths'))
-  const unexpectedPaths = Array.from(validateRepoRelativePaths(scope.unexpectedPaths, 'code scope ' + round + ' unexpectedPaths'))
-  const claimed = new Set(claimedPaths)
-  if (!arraysEqual(scope.claimedPaths, claimedPaths) || !arraysEqual(scope.unexpectedPaths, unexpectedPaths) ||
-    !arraysEqual(claimedPaths, roundPaths.filter(function (item) { return claimed.has(item) })) ||
-    !arraysEqual(unexpectedPaths, roundPaths.filter(function (item) { return !claimed.has(item) }))) {
-    u.fail('Code snapshot claimedPaths and unexpectedPaths must partition roundPaths')
+  validateTreePairPaths(taskId, baselineTree, currentTree, cumulativePaths, limits)
+  return {
+    baselineTree: baselineTree,
+    currentTree: currentTree,
+    changedPaths: cumulativePaths
   }
-  validatePatch(
-    path.join(dir, 'code-diff-' + round + '.patch'),
-    diffTrees(taskId, baselineTree, currentTree),
-    'code-diff-' + round + '.patch'
-  )
-  validatePatch(
-    path.join(dir, 'code-round-' + round + '.patch'),
-    diffTrees(taskId, previousTree, currentTree),
-    'code-round-' + round + '.patch'
-  )
-  return scope
 }
 
 function snapshotDrift (taskId, reviewedTree) {
@@ -337,10 +286,6 @@ function validateRepoRelativePaths (paths, field) {
   return validated
 }
 
-function validateClaimedPaths (paths) {
-  return validateRepoRelativePaths(paths, 'Changed-path manifest paths')
-}
-
 module.exports = {
   captureBaseline,
   changedPathsFromHead,
@@ -350,10 +295,9 @@ module.exports = {
   diffPaths,
   diffTrees,
   readBaseline,
+  reviewTrees,
   snapshotDrift,
   validateBaselineBlobs,
-  validateClaimedPaths,
-  validateRoundSnapshot,
   validatePaths,
   validateRepoRelativePaths,
   validateTreeObject,

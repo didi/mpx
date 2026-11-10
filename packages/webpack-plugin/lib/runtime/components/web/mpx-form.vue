@@ -29,10 +29,10 @@
     return value
   }
   function setEmptyValue (value) {
-    if (typeof value === 'string') {
+    if (typeof value === 'string' || typeof value === 'number') {
       return ''
-    } else if (typeof value === 'number') {
-      return 0
+    } else if (typeof value === 'boolean') {
+      return false
     } else if (Array.isArray(value)) {
       return []
     }
@@ -80,7 +80,7 @@
       },
       reset () {
         setFormValue(this.$slots.default, this.initialValue)
-        this.$emit('reset', getCustomEvent('reset', { value: this.initialValue }, this))
+        this.$emit('reset', getCustomEvent('reset', {}, this))
       }
     }
   }

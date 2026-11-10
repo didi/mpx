@@ -66,6 +66,28 @@ describe('json should transform app json correct', function () {
     expect(warnFn).toHaveBeenCalled()
   })
 
+  it.each([
+    ['custom', { defaultTitle: '', transparentTitle: 'always', titlePenetrate: 'YES' }],
+    ['default', { defaultTitle: '全局标题', transparentTitle: 'none', titlePenetrate: 'NO' }]
+  ])('should trans window navigationStyle %s to ali', function (navigationStyle, window) {
+    expect(compileJson({ window: { navigationStyle, navigationBarTitleText: '全局标题' } })).toEqual({ window })
+    expect(warnFn).not.toHaveBeenCalled()
+    expect(errorFn).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['custom', {}, { defaultTitle: '', transparentTitle: 'always', titlePenetrate: 'YES' }],
+    ['custom', { navigationStyle: 'default', navigationBarTitleText: '页面标题' }, { defaultTitle: '页面标题', transparentTitle: 'none', titlePenetrate: 'NO' }],
+    ['default', { navigationStyle: 'custom' }, { defaultTitle: '', transparentTitle: 'always', titlePenetrate: 'YES' }],
+    ['custom', { navigationBarTitleText: '页面标题' }, { defaultTitle: '页面标题', transparentTitle: 'always', titlePenetrate: 'YES' }],
+    ['custom', { navigationStyle: 'default' }, { defaultTitle: '', transparentTitle: 'none', titlePenetrate: 'NO' }]
+  ])('should apply page field overrides to ali window %s: %j', function (navigationStyle, page, expected) {
+    const app = compileJson({ window: { navigationStyle, navigationBarTitleText: '全局标题' } })
+    expect(Object.assign({}, app.window, compileJson(page, { type: 'page' }))).toEqual(expected)
+    expect(warnFn).not.toHaveBeenCalled()
+    expect(errorFn).not.toHaveBeenCalled()
+  })
+
   it('should remove global components to ali silently', function () {
     const input = {
       usingComponents: {

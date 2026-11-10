@@ -1,4 +1,17 @@
-const { getClassMap } = require('../../../../lib/react/style-helper')
+const { getClassMap: buildClassMap } = require('../../../../lib/react/style-helper')
+
+function getClassMap (options) {
+  if (!options.styles) {
+    options = Object.assign({}, options, {
+      styles: [{
+        content: options.content,
+        filename: options.filename
+      }]
+    })
+    delete options.content
+  }
+  return buildClassMap(options)
+}
 
 describe('React Native style validation for CSS variables', () => {
   const createConfig = (mode = 'ios') => ({
@@ -7,6 +20,140 @@ describe('React Native style validation for CSS variables', () => {
     ctorType: 'component',
     warn: jest.fn(),
     error: jest.fn()
+  })
+
+  test('should preserve target-native style declarations', () => {
+    const config = createConfig()
+    const result = getClassMap({
+      styles: [{
+        content: '.text { color: red; }',
+        filename: 'native.css',
+        srcMode: 'ios'
+      }],
+      filename: 'test.css',
+      ...config
+    })
+
+    expect(result.text).toEqual({
+      color: '"red"'
+    })
+    expect(config.error).not.toHaveBeenCalled()
+  })
+
+  describe('Selector validation', () => {
+    test.each([
+      ['pseudo class', '.button:hover { color: red; }', 'button:hover'],
+      ['pseudo element', '.text::before { color: red; }', 'text::before'],
+      ['functional pseudo class', '.item:not(.disabled) { color: red; }', 'item:not(.disabled)'],
+      ['escaped UnoCSS class with pseudo', '.hover\\:bg-red-500:hover { color: red; }', 'hover:bg-red-500:hover']
+    ])('should reject %s selectors', (name, css, key) => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result).not.toHaveProperty(key)
+      expect(config.error).toHaveBeenCalledTimes(1)
+      expect(config.error.mock.calls[0][0]).toContain('Only single class selector is supported')
+    })
+
+    test('should support single class selectors and comma-separated single classes', () => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: '.single { color: red; } .first, .second { color: blue; }',
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.single).toEqual({ color: '"red"' })
+      expect(result.first).toEqual({ color: '"blue"' })
+      expect(result.second).toEqual({ color: '"blue"' })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should keep valid selectors while reporting invalid selectors in a comma-separated rule', () => {
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: '.valid, .invalid:hover { color: red; }',
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.valid).toEqual({ color: '"red"' })
+      expect(result).not.toHaveProperty('invalid:hover')
+      expect(config.error).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('Media queries', () => {
+    test('keeps media declarations out of the default class style', () => {
+      const config = createConfig()
+      const result = getClassMap({
+        content: `
+          .media-box {
+            width: 280px;
+            background-color: red;
+          }
+          @media (min-width: 600px) {
+            .media-box {
+              width: 520px;
+              background-color: green;
+            }
+          }
+        `,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result['media-box']).toEqual({
+        width: '280',
+        backgroundColor: '"red"',
+        _media: [{
+          options: { minWidth: 600 },
+          value: {
+            width: '520',
+            backgroundColor: '"green"'
+          }
+        }]
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('keeps important declarations in the media style', () => {
+      const config = createConfig()
+      const result = getClassMap({
+        content: `
+          .media-box {
+            width: 100px;
+          }
+          @media (min-width: 300px) {
+            .media-box {
+              width: 200px !important;
+            }
+          }
+        `,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result['media-box']).toEqual({
+        width: '100',
+        _media: [{
+          options: { minWidth: 300 },
+          value: {
+            _inlineLayer: {
+              important: { width: '200' }
+            }
+          }
+        }]
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
   })
 
   describe('CSS variable fallback validation', () => {

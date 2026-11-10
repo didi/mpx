@@ -25,3 +25,13 @@
 
 ### 返回值 {#return-value}
 [IntersectionObserver](https://developers.weixin.qq.com/miniprogram/dev/api/wxml/IntersectionObserver.html)
+
+### RN 生命周期 {#rn-lifecycle}
+
+不再需要观察时调用 `observer.disconnect()`。该方法会解除框架对实例的登记，阻止后续测量，并忽略已发起测量的后续结果。重复调用是安全的；断开后的实例不能恢复观察，需要重新创建。业务不再使用该实例时，也应释放对它的引用，便于回收实例及其关联数据。
+
+对同一实例重复调用 `observe()`，或对已断开的实例调用 `observe()`、`relativeTo()`、`relativeToViewport()`，RN 会通过 Mpx 的 `error` 报告错误并忽略调用。错误交由 `mpx.config.errorHandler` 处理，未配置时使用框架默认错误日志；该工具方法本身不主动抛出异常，因此与微信直接抛出异常的反馈方式仍有差异。
+
+组件卸载时，框架会自动断开该组件创建的所有 observer。页面隐藏不等同于组件卸载；需要在隐藏期间停止观察时，应主动断开，并在页面重新显示后按需创建。
+
+同一组节点应复用 observer，避免在每次滚动时重复创建。使用 Mpx `scroll-view` 时，开启 `enable-trigger-intersection-observer` 可在滚动时触发现有 observer 的测量；目标节点变化后，按需断开旧实例并在节点渲染完成后重新创建。
