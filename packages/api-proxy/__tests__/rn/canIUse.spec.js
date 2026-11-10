@@ -91,6 +91,8 @@ describe('canIUse for RN', () => {
     // 测试事件监听 API
     expect(canIUse('onUnhandledRejection')).toBe(true)
     expect(canIUse('offUnhandledRejection')).toBe(true)
+    expect(canIUse('onPageNotFound')).toBe(true)
+    expect(canIUse('offPageNotFound')).toBe(true)
     expect(canIUse('onLazyLoadError')).toBe(true)
     expect(canIUse('offLazyLoadError')).toBe(true)
 

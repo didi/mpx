@@ -1,7 +1,6 @@
 import MpxUnocssPlugin from '../lib/index.js'
 import { getRawSource } from '../lib/source.js'
-import { createGenerator, e as cssEscape } from '@unocss/core'
-import { mpEscape } from '../lib/transform.js'
+import { createGenerator } from '@unocss/core'
 import presetMpx from '@mpxjs/unocss-base/lib/index.js'
 import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js'
 import { jest } from '@jest/globals'
@@ -41,12 +40,12 @@ describe('test plugin', () => {
   }) {
     const source = getRawSource(content)
     const classmap = {}
-    const { newsource } = parseTemplate(source, (className) => {
+    const { newsource } = await parseTemplate(source, (className) => {
       if (!className) {
         return className
       }
       classmap[className] = true
-      return mpEscape(cssEscape(className), plugin.options.escapeMap)
+      return className
     })
     // 测试模板是否转义
     expect(newsource.source()).toMatchSnapshot()
@@ -72,7 +71,7 @@ describe('test plugin', () => {
 
       expect(result.css).toContain('.box-border{box-sizing:border-box;}')
       expect(result.css).toContain('.box-content{box-sizing:content-box;}')
-      expect(uno.blocked).not.toContain('box-content')
+      expect(uno.isBlocked('box-content')).toBe(false)
     } finally {
       if (targetMode === undefined) {
         delete process.env.MPX_CURRENT_TARGET_MODE
@@ -87,8 +86,10 @@ describe('test plugin', () => {
     process.env.MPX_CURRENT_TARGET_MODE = 'ios'
 
     try {
+      const classList = ['transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition', 'transition-1', 'transition-all', 'transition-all-1', 'transition-all-foo', 'transition-colors', 'transition-[opacity,transform]']
       const uno = await createReactGenerator()
-      const result = await uno.generate(['transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition', 'transition-1', 'transition-all', 'transition-all-1', 'transition-all-foo', 'transition-colors', 'transition-[opacity,transform]'], { preflights: false })
+      const result = await uno.generate(classList, { preflights: false })
+      const blocked = classList.filter(className => uno.isBlocked(className))
 
       expect(result.css).toContain('transition-property:opacity;')
       expect(result.css).toContain('transition-duration:300ms;')
@@ -96,8 +97,8 @@ describe('test plugin', () => {
       expect(result.css).toContain('transition-delay:150ms;')
       expect(result.css).toContain('transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;')
       expect(result.css).toContain('transition-property:opacity,transform;')
-      expect([...uno.blocked]).toEqual(expect.arrayContaining(['transition', 'transition-1', 'transition-all', 'transition-all-1']))
-      expect([...uno.blocked]).toEqual(expect.not.arrayContaining(['transition-all-foo', 'transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition-colors', 'transition-[opacity,transform]']))
+      expect(blocked).toEqual(expect.arrayContaining(['transition', 'transition-1', 'transition-all', 'transition-all-1']))
+      expect(blocked).toEqual(expect.not.arrayContaining(['transition-all-foo', 'transition-opacity', 'duration-300', 'ease-in-out', 'delay-150', 'transition-colors', 'transition-[opacity,transform]']))
     } finally {
       if (targetMode === undefined) {
         delete process.env.MPX_CURRENT_TARGET_MODE

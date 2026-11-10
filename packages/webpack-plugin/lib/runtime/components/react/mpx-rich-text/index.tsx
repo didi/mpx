@@ -22,7 +22,7 @@ type Node = {
 interface _RichTextProps extends ViewProps {
   style?: ViewStyle
   nodes: string | Array<Node>
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
 }

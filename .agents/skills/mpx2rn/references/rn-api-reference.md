@@ -19,6 +19,8 @@
   - [offAppHide](#offapphide)
   - [onError](#onerror)
   - [offError](#offerror)
+  - [onPageNotFound](#onpagenotfound)
+  - [offPageNotFound](#offpagenotfound)
   - [onUnhandledRejection](#onunhandledrejection)
   - [offUnhandledRejection](#offunhandledrejection)
   - [onLazyLoadError](#onlazyloaderror)
@@ -191,7 +193,9 @@ mpx.use(apiProxy, {
 
 返回 **`boolean`**。
 
-> 注意：该接口只查询 `rnCanIUseConfig` 静态表，不会加载原生模块，也不会探测可选原生依赖是否安装或运行时权限是否授予；通过 `custom` 注入的业务 API 也不在静态表中。静态表只收录 RN 抹平层已有实际能力的内置 API、对象与方法。
+#### 注意事项
+
+- 该接口只查询 `rnCanIUseConfig` 静态表，不会加载原生模块，也不会探测可选原生依赖是否安装或运行时权限是否授予；通过 `custom` 注入的业务 API 也不在静态表中。静态表只收录 RN 抹平层已有实际能力的内置 API、对象与方法。
 
 ---
 
@@ -263,6 +267,8 @@ mpx.use(apiProxy, {
 
 同步获取窗口、屏幕与安全区信息，常用于布局与刘海区域避让。
 
+可通过 `Mpx.config.rnConfig.customDimensions` 自定义尺寸，`getWindowInfo`、`getSystemInfo` 和 `getSystemInfoSync` 会基于处理后的尺寸计算相关字段。
+
 #### 入参
 
 无。
@@ -306,10 +312,10 @@ mpx.use(apiProxy, {
 | `system` | `string` | 操作系统名称与版本。 |
 | `platform` | `string` | 平台标识。 |
 | `memorySize` | `number` | 设备内存量级（单位以实现为准，常见为 MB）。 |
-| `deviceAbi` | `string` \| `null` \| `undefined` | 非 iOS 目标上的主 64 位 ABI；无数据为 `null`，iOS 当前不返回该字段。 |
-| `benchmarkLevel` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `abi` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `cpuType` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `deviceAbi` | `string` \| `null` | 非 iOS 目标上的主 64 位 ABI；无数据为 `null`，iOS 不支持。 |
+| `benchmarkLevel` | — | RN 当前实现不支持。 |
+| `abi` | — | RN 当前实现不支持。 |
+| `cpuType` | — | RN 当前实现不支持。 |
 
 
 ---
@@ -335,8 +341,10 @@ mpx.use(apiProxy, {
 | `query` | `Object` | 查询参数键值对。 |
 | `shareTicket` | `string` | 分享票据。 |
 | `referrerInfo` | `Object` | 来源信息。 |
-| `apiCategory` | `string` | API 类目等。 |
-| `chatType` | `number` | 聊天场景枚举。 |
+| `apiCategory` | — | RN 当前实现不支持。 |
+| `chatType` | — | RN 当前实现不支持。 |
+| `forwardMaterials` | — | RN 当前实现不支持。 |
+| `hostExtraData` | — | RN 当前实现不支持。 |
 | （其余） | — | 运行时追加字段。 |
 
 
@@ -363,8 +371,10 @@ mpx.use(apiProxy, {
 | `query` | `Object` | 查询参数键值对。 |
 | `shareTicket` | `string` | 分享票据。 |
 | `referrerInfo` | `Object` | 来源信息。 |
-| `apiCategory` | `string` | API 类目等。 |
-| `chatType` | `number` | 聊天场景枚举。 |
+| `apiCategory` | — | RN 当前实现不支持。 |
+| `chatType` | — | RN 当前实现不支持。 |
+| `forwardMaterials` | — | RN 当前实现不支持。 |
+| `hostExtraData` | — | RN 当前实现不支持。 |
 | （其余） | — | 运行时追加字段。 |
 
 
@@ -397,6 +407,10 @@ mpx.use(apiProxy, {
 | `scene` | `number` | 场景值。 |
 | `shareTicket` | `string` | 分享相关。 |
 | `referrerInfo` | `Object` | 来源信息。 |
+| `apiCategory` | — | RN 当前实现不支持。 |
+| `chatType` | — | RN 当前实现不支持。 |
+| `forwardMaterials` | — | RN 当前实现不支持。 |
+| `hostExtraData` | — | RN 当前实现不支持。 |
 | （其余） | — | 运行时按需附带。 |
 
 
@@ -459,6 +473,28 @@ mpx.use(apiProxy, {
 #### 返回值
 
 无。
+
+---
+
+### onPageNotFound
+
+监听启动入口不存在事件，需先安装 `@mpxjs/api-proxy`。`mpx.canIUse('onPageNotFound')` 返回 `true`。
+
+| 入参 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `callback` | function | 是 | 接收 `{ path, query, isEntryPage: true }`；`path` 不带开头 `/`，`query` 为原始缺失入口的 `initialParams`（未传为 `{}`）。 |
+
+---
+
+### offPageNotFound
+
+取消通过 `mpx.onPageNotFound` 注册的监听。`mpx.canIUse('offPageNotFound')` 返回 `true`。
+
+| 入参 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `callback` | function | 否 | 注册时同一个函数对象；不传则移除全部 API 监听。 |
+
+无返回值，默认不参与 Promise 化。不移除 App 的 `onPageNotFound` 生命周期回调。
 
 ---
 
@@ -677,7 +713,9 @@ mpx.use(apiProxy, {
 | --- | --- | --- |
 | `errMsg` | `string` | 成功时为 **`navigateBack:ok`**。 |
 
-> `switchTab` 当前未在 RN 实现。调用时会通过 `envError` 报告环境不支持，`canIUse('switchTab')` 返回 **`false`**。
+#### 注意事项
+
+- `switchTab` 当前未在 RN 实现。调用时会通过 `envError` 报告环境不支持，`canIUse('switchTab')` 返回 **`false`**。
 
 ---
 
@@ -856,7 +894,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-**异步 API**。设置当前页导航栏标题。
+**异步 API**。更新当前页面内建标题栏的标题；标题栏更新接口不可用时触发 `fail` 与 `complete`，返回 `setNavigationBarTitle:fail`。
 
 #### 入参
 
@@ -880,7 +918,7 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-**异步 API**。设置导航栏前景色、背景色等。
+**异步 API**。更新当前页面内建标题栏的前景色、背景色及状态栏文字样式；标题栏更新接口不可用时触发 `fail` 与 `complete`，返回 `setNavigationBarColor:fail`。连续调用标题和颜色 API 时，各字段更新会合并保留。
 
 #### 入参
 
@@ -1074,8 +1112,6 @@ mpx.use(apiProxy, {
 
 同步返回 **`RequestTask`**（如取消请求等），与小程序一致。**未开启 Promise 化**时，即为 **`mpx.request(...)` 的返回值**。**开启 `usePromise: true`** 时，表达式为 **`Promise`**，**`RequestTask`** 在该 **`Promise`** 的 **`__returned`** 上；**`await` / `.then()` 的 resolve 值**仍为 **`success`** 的成功载荷（含 **`data`**、**`statusCode`** 等），与句柄分离。
 
-> 当前 RN `RequestTask` **仅实现 `abort()`**，用于取消请求。微信 `RequestTask` 的 `onHeadersReceived` / `offHeadersReceived`、分块响应、上传/下载进度等方法当前未实现，`canIUse('RequestTask.onHeadersReceived')` 与 `canIUse('RequestTask.offHeadersReceived')` 均返回 **`false`**。
-
 #### 成功回调参数
 
 | 字段名 | 类型 | 说明 |
@@ -1084,13 +1120,18 @@ mpx.use(apiProxy, {
 | `data` | `any` | 开发者服务器返回的数据；`dataType: 'json'` 且原值为字符串时会尝试解析 JSON，解析失败则保留原字符串。 |
 | `statusCode` | `number` | HTTP 状态码。 |
 | `header` | `Object` | HTTP 响应头。 |
-| `cookies` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `profile` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `exception` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `cookies` | — | RN 当前实现不支持。 |
+| `profile` | — | RN 当前实现不支持。 |
+| `exception` | — | RN 当前实现不支持。 |
+| `useHttpDNS` | — | RN 当前实现不支持。 |
 
 成功载荷还会保留 Axios 响应对象上的其它字段，但它们不属于稳定的小程序兼容协议，不建议业务依赖。
 
 当前实现使用 Axios 默认状态校验：HTTP `4xx` / `5xx` 通常进入 `fail`，与微信 `wx.request` 只要收到服务器响应通常就进入 `success` 的行为不同。
+
+#### 注意事项
+
+- 当前 RN `RequestTask` **仅实现 `abort()`**，用于取消请求。微信 `RequestTask` 的 `onHeadersReceived` / `offHeadersReceived`、分块响应、上传/下载进度等方法当前未实现，`canIUse('RequestTask.onHeadersReceived')` 与 `canIUse('RequestTask.offHeadersReceived')` 均返回 **`false`**。
 
 ---
 ### connectSocket
@@ -1106,9 +1147,10 @@ mpx.use(apiProxy, {
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `url` | `string` | 是 | `wss://` 或 `ws://` 地址。 |
+| `header` | `Object` | 否 | 请求头，会传递给 RN 原生 **WebSocket**。 |
 | `protocols` | `string[]` | 否 | 子协议列表。 |
 
-> 微信同名 API 的 `header`、`timeout`、`tcpNoDelay`、`perMessageDeflate` 等扩展参数**当前 RN 中暂不支持**。
+> 微信同名 API 的 `timeout`、`tcpNoDelay`、`perMessageDeflate` 等扩展参数**当前 RN 中暂不支持**。
 
 #### 返回值
 
@@ -1126,10 +1168,14 @@ mpx.use(apiProxy, {
 | --- | --- | --- |
 | `send(options)` | 发送 `string` 或 `ArrayBuffer`。 | `success`：`{ errMsg: 'sendSocketMessage:ok' }`。 |
 | `close(options)` | 关闭连接，支持 `code`、`reason`。 | `success`：`{ errMsg: 'closeSocket:ok' }`。 |
-| `onOpen(callback)` | 监听连接打开。 | 透传底层 WebSocket `open` 事件对象。 |
+| `onOpen(callback)` | 监听连接打开。 | `header` 不支持。 |
 | `onMessage(callback)` | 监听消息。 | `{ data }`。 |
-| `onError(callback)` | 监听错误。 | 透传底层 WebSocket `error` 事件对象。 |
+| `onError(callback)` | 监听错误。 | 返回以 `connectSocket:fail` 开头的 `errMsg`。 |
 | `onClose(callback)` | 监听关闭。 | `{ code, reason }` 或底层 WebSocket `close` 事件对象。 |
+
+#### 注意事项
+
+- 微信同名 API 的 `header`、`timeout`、`tcpNoDelay`、`perMessageDeflate` 等扩展参数**当前 RN 中暂不支持**。
 
 ---
 ### sendSocketMessage
@@ -1351,8 +1397,8 @@ mpx.use(apiProxy, {
 | --- | --- | --- |
 | `errMsg` | `string` | 成功时为 **`getStorageInfo:ok`**。 |
 | `keys` | `string[]` | 当前已存键名列表。 |
-| `currentSize` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `limitSize` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `currentSize` | — | RN 当前实现不支持。 |
+| `limitSize` | — | RN 当前实现不支持。 |
 
 ---
 ## 媒体
@@ -1387,8 +1433,8 @@ mpx.use(apiProxy, {
 | `width` | `number` | 图片宽度 px。 |
 | `height` | `number` | 图片高度 px。 |
 | `path` | `string` | 与入参 **`src`** 一致。 |
-| `orientation` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `type` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `orientation` | — | RN 当前实现不支持。 |
+| `type` | — | RN 当前实现不支持。 |
 
 ---
 ### createCameraContext
@@ -1434,8 +1480,6 @@ mpx.use(apiProxy, {
 | `type` | `string` | 否 | 坐标类型，支持 `wgs84` / `gcj02`；当前 RN 实现不会读取。 |
 | `highAccuracyExpireTime` | `number` | 否 | 高精度定位超时时间，单位 ms；当前 RN 实现不会读取。 |
 
-> 由于 `type` 未被读取，RN 实现不会按微信参数约定执行 `wgs84` / `gcj02` 坐标类型转换。
-
 #### 返回值
 
 无同步返回值。
@@ -1453,10 +1497,14 @@ mpx.use(apiProxy, {
 | `altitude` | `number` \| `null` | 海拔，单位 m；不可用时以底层返回为准。 |
 | `speed` | `number` \| `null` | 速度，单位 m/s；不可用时以底层返回为准。 |
 | `verticalAccuracy` | `number` \| `null` | iOS 可能提供的垂直精度；Android 通常无该字段。 |
-| `horizontalAccuracy` | `null` | RN 抹平层明确不支持该微信字段；访问会给出警告并返回 `null`。 |
+| `horizontalAccuracy` | — | RN 抹平层明确不支持该微信字段。 |
 | `time` | `number` | 定位时间戳，单位 ms；由底层定位库透传。 |
 | `bearing` / `provider` | 平台相关 | Android 底层可能提供。 |
 | `course` | `number` | iOS 底层可能提供的航向。 |
+
+#### 注意事项
+
+- 由于 `type` 未被读取，RN 实现不会按微信参数约定执行 `wgs84` / `gcj02` 坐标类型转换。
 
 ---
 ## 设备
@@ -1483,8 +1531,9 @@ mpx.use(apiProxy, {
 | --- | --- | --- |
 | `errMsg` | `string` | 成功时为 **`getNetworkType:ok`**。 |
 | `networkType` | `string` | `wifi`、`none`、`2g`、`3g`、`4g`、`5g` 或 `unknown`。 |
-| `signalStrength` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
-| `hasSystemProxy` | `null` | RN 当前实现不支持；访问会给出警告并返回 `null`。 |
+| `signalStrength` | — | RN 当前实现不支持。 |
+| `hasSystemProxy` | — | RN 当前实现不支持。 |
+| `weakNet` | — | RN 当前实现不支持。 |
 
 ---
 ### onNetworkStatusChange
@@ -1565,7 +1614,8 @@ mpx.use(apiProxy, {
 
 | 字段名 | 类型 | 说明 |
 | --- | --- | --- |
-| `height` | `number` | 键盘高度；键盘弹出时为可见高度，收起时 iOS 上多为 **`0`**，Android 上可能仍带高度值。 |
+| `height` | `number` | 键盘高度；键盘弹出时为可见高度，收起时为 **`0`**。 |
+| `duration` | — | RN 当前实现不支持。 |
 
 #### 返回值
 
@@ -1576,13 +1626,13 @@ mpx.use(apiProxy, {
 
 #### 说明
 
-取消键盘高度监听：仅移除与注册时**同一引用**的 **`callback`**；**不传引用不会移除其它监听**。当监听列表为空时会移除键盘显示/隐藏相关订阅。
+取消键盘高度监听：传入与注册时**同一引用**的 **`callback`** 时移除对应监听；不传回调时移除全部监听。当监听列表为空时会移除键盘显示/隐藏相关订阅。
 
 #### 入参
 
 | 字段名 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `callback` | `function` | 是 | 与 **`onKeyboardHeightChange`** 注册时为同一函数引用。 |
+| `callback` | `function` | 否 | 与 **`onKeyboardHeightChange`** 注册时为同一函数引用；不传时移除全部监听。 |
 
 #### 返回值
 
@@ -1693,8 +1743,8 @@ mpx.use(apiProxy, {
 | `offBLECharacteristicValueChange` | 取消特征值变化监听。 | 无参数；清除当前唯一回调与底层订阅。 |
 | `setBLEMTU` | 协商 MTU。 | `{ mtu }`，其中 `mtu` 为底层实际协商结果。 |
 | `getBLEDeviceRSSI` | 读取设备信号强度。 | `{ RSSI }`。 |
-| `getBLEDeviceServices` | 获取设备服务 UUID 列表，并缓存后续特征查询所需信息。 | `{ services: Array<{ uuid }> }`。 |
-| `getBLEDeviceCharacteristics` | 查询特征值；应先调用 `getBLEDeviceServices`。当前实现会校验 `serviceId` 存在，但成功时返回缓存中的**全部特征值**，未按该服务过滤。 | `{ characteristics }`；每项含 `uuid` 与 `properties.read/write/notify/indicate/writeNoResponse`。 |
+| `getBLEDeviceServices` | 获取设备服务 UUID 列表，并缓存后续特征查询所需信息。 | `{ services: Array<{ uuid }> }`。`services[].isPrimary` 不支持。 |
+| `getBLEDeviceCharacteristics` | 查询特征值；应先调用 `getBLEDeviceServices`。当前实现会校验 `serviceId` 存在，但成功时返回缓存中的**全部特征值**，未按该服务过滤。 | `{ characteristics }`；每项含 `uuid` 与 `properties.read/write/notify/indicate/writeNoResponse`。`characteristics[].properties.writeDefault` 不支持。 |
 
 `deviceId`、`serviceId`、`characteristicId`、`value`、`mtu` 等必填参数缺失时，接口会进入 `fail` 回调并以对应 API 的 `:fail parameter error` 作为 `errMsg`；`complete` 随后收到同一结果。
 
@@ -1727,19 +1777,17 @@ mpx.config.rnConfig.bluetoothPermission = () => {
 | API | 说明 | 成功回调或监听载荷（RN 实际实现） |
 | --- | --- | --- |
 | `startWifi` | 校验 Wi‑Fi 与权限并进入就绪态；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'startWifi:ok' }`。 |
-| `stopWifi` | 结束 Wi‑Fi 模块并清空列表监听；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'stopWifi:ok' }`。 |
+| `stopWifi` | 结束 Wi‑Fi 模块并保留列表监听；RN iOS 目标直接走 `fail`。 | RN Android 成功时为 `{ errMsg: 'stopWifi:ok' }`。 |
 | `getWifiList` | `startWifi` 就绪后扫描热点，通过 `onGetWifiList` 交付列表；RN iOS 目标直接走 `fail`。 | `success`：`{ errMsg: 'getWifiList:ok', errno: 0, errCode: 0 }`；热点列表不在此载荷中。 |
-| `onGetWifiList` | 注册接收热点列表的回调。 | `{ wifiList }`；每项含 `SSID`、`BSSID`、`frequency`、`signalStrength`。 |
-| `offGetWifiList` | 移除热点列表回调。 | 传入与注册时同一 `callback`；当前实现不支持省略参数清空全部。 |
-| `getConnectedWifi` | 读取当前已连接 Wi‑Fi；支持 `partialInfo`，且需先 `startWifi` 成功就绪。 | `{ errMsg: 'getConnectedWifi:ok', wifi }`；`wifi` 含 `SSID`、`BSSID`、`signalStrength`、`frequency`。 |
+| `onGetWifiList` | 注册接收热点列表的回调。 | `{ wifiList }`；每项含 `SSID`、`BSSID`、`frequency`、`signalStrength`。`wifiList[].secure` 不支持。 |
+| `offGetWifiList` | 移除热点列表回调。 | 传入与注册时同一 `callback`；省略参数清空全部。 |
+| `getConnectedWifi` | 读取当前已连接 Wi‑Fi；支持 `partialInfo`，且需先 `startWifi` 成功就绪。 | `{ errMsg: 'getConnectedWifi:ok', wifi }`；`wifi` 含 `SSID`、`BSSID`、`signalStrength`、`frequency`。`wifi.secure` 不支持。 |
 
 Wi-Fi API 的成功 `errMsg` 与微信文档保持一致，均以 `:ok` 结尾。
 
 #### 通过 mpx.config.rnConfig 扩展（权限）
 
 调用 **`startWifi`** 时，在检查 Wi‑Fi 是否已打开之前会先执行「扫描热点所需权限」的检查。当前实现下，**RN 输出为 iOS** 时，**`startWifi` / `stopWifi` / `getWifiList`** 会直接 **`fail`**（系统级扫网等能力受限），**不涉及**下述配置。**RN 输出为 Android** 且使用内置 **`react-native-wifi-reborn`** 路径时，未配置 **`wifiPermission`** 则使用内置的 **`ACCESS_FINE_LOCATION`** 等申请逻辑；若需自定义（统一权限组件、补充说明文案等），可在 **`mpx.config.rnConfig`** 上提供 **`wifiPermission`**，**完全替代**内置函数。
-
-> 当前代码只等待权限函数返回的 Promise，**不会检查 resolve 值**：resolve 为 `false` 仍会继续检查 Wi-Fi 开关并尝试后续流程，只有 Promise `reject` 才会直接进入 `startWifi` 的失败回调。自定义函数应在拒绝授权时 `reject`，不要仅 `resolve(false)`。
 
 | 配置项 | 类型 | 生效时机 | 说明 |
 | --- | --- | --- | --- |
@@ -1755,6 +1803,10 @@ mpx.config.rnConfig.wifiPermission = () => {
 ```
 
 类型与更多 **`rnConfig`** 字段见 **`@mpxjs/core`** 中的 **`RnConfig`** 声明。
+
+#### 注意事项
+
+- 当前代码只等待权限函数返回的 Promise，**不会检查 resolve 值**：resolve 为 `false` 仍会继续检查 Wi-Fi 开关并尝试后续流程，只有 Promise `reject` 才会直接进入 `startWifi` 的失败回调。自定义函数应在拒绝授权时 `reject`，不要仅 `resolve(false)`。
 
 ---
 
@@ -1788,7 +1840,7 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `relativeTo(selectorOrNodesRef, margins?)` | 指定参照节点；支持 selector 字符串或 `NodesRef`。`margins` 支持 `top/right/bottom/left`。 |
 | `relativeToViewport(margins?)` | 以当前可视窗口为参照区域。 |
 | `observe(selectorOrNodesRef, callback)` | 开始观察；同一实例只能调用一次。支持 selector、`NodesRef` 或 `NodesRef[]`。 |
-| `disconnect()` | 从当前 IntersectionObserver 上下文移除实例。 |
+| `disconnect()` | 停止观察，移除页面和组件中的注册引用，断开实例对组件的直接引用，阻止后续测量并忽略在途结果。可重复调用；断开后需新建实例才能重新观察。业务不再使用时也应释放对实例的引用，便于垃圾回收。 |
 
 `observe` 回调收到 **Object**：
 
@@ -1801,6 +1853,12 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `boundingClientRect` | `Object` | 目标节点布局，含 `top`、`right`、`bottom`、`left`、`width`、`height`。 |
 | `relativeRect` | `Object` | 参照区域布局。 |
 | `time` | `number` | 测量时间戳 ms。 |
+
+#### 注意事项
+
+- RN 中需在会影响目标节点位置的 `scroll-view` 上设置 `enable-trigger-intersection-observer="{{true}}"`，才能在滚动时更新相交检测；该属性默认关闭，不影响 `observe()` 的首次检测。详见 [scroll-view 注意事项](./rn-template-reference.md#scroll-view)。
+- 通过 selector 指定目标节点或参照节点时，使用 `#id` / `.class`，对应模板节点须添加空 `wx:ref`，并在节点渲染完成后调用。需先通过 `relativeTo()` 或 `relativeToViewport()` 设置参照区域，再调用 `observe()`；当前仅支持一个参照区域，多次设置会覆盖前一次。
+- 同一观察器实例只能调用一次 `observe()`；观察多个节点需设置 `observeAll: true`。目标节点在调用时确定，不会自动匹配后续新增节点；需更新观察目标时，先 `disconnect()`，再创建新观察器。
 
 ---
 
@@ -1825,11 +1883,13 @@ mpx.config.rnConfig.wifiPermission = () => {
 | `query.in(component)` | 当前 `SelectorQuery` | 必须先设置组件作用域；未设置时选择操作会警告。 |
 | `query.select(selector)` | `NodesRef` | 选择首个节点。支持 `#id` 与单个或连续 class（如 `.a.b`）；不支持组合器、逗号、空格等复杂选择器。 |
 | `query.selectAll(selector)` | `NodesRef` | 选择全部匹配节点，selector 约束同上。 |
-| `query.selectViewport()` | `NodesRef` | 当前 RN 实现未提供真正的 viewport 节点，仅走空 selector 占位，不应依赖；`canIUse('SelectorQuery.selectViewport')` 返回 **`false`**。 |
 | `nodesRef.boundingClientRect(callback)` | 当前 `SelectorQuery` | 回调含 `id`、`dataset`、`left`、`right`、`top`、`bottom`、`width`、`height`；`selectAll` 时为数组。 |
 | `nodesRef.scrollOffset(callback)` | 当前 `SelectorQuery` | 回调含 `id`、`dataset`、`scrollLeft`、`scrollTop`、`scrollWidth`、`scrollHeight`。 |
 | `nodesRef.fields(config, callback)` | 当前 `SelectorQuery` | 支持 `id`、`dataset`、`rect`、`size`、`scrollOffset`、`properties`、`computedStyle`、`context`、`node`、`ref` 等当前实现分支。 |
 | `nodesRef.context(callback)` / `node(callback)` / `ref(callback)` | 当前 `SelectorQuery` | 分别返回 `{ context }`、`{ node }`、`{ ref }`。 |
 | `query.exec(callback)` | `undefined` | 按入队顺序聚合前述回调结果，最终参数为结果数组。 |
 
----
+#### 注意事项
+
+- selector 仅支持 `#id`、`.class` 和连续 class（如 `.a.b`），不支持后代、子节点、跨组件等复杂选择器。对应模板节点须添加空 `wx:ref`，并在节点渲染完成后查询；数据更新后需等待 `this.$nextTick()` 再查询。
+- `selectViewport()` 当前不支持，不能用它查询视口尺寸或页面滚动位置；视口尺寸可通过 `getWindowInfo()` 获取，滚动位置应查询对应的 `scroll-view` 节点。

@@ -144,7 +144,7 @@ Mpx 框架运行时报错捕获感知处理函数。
 * Mpx 中的 computed、watch 等内置方法执行报错；
 * Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，入参出参类型错误等；
 
-同时被捕获的错误会通过 console.error 输出。
+若自定义 `errorHandler` 或 `warnHandler` 同步抛出异常，Mpx 在开发和生产环境中均通过 `console.error` 记录该异常，随后返回。
 
 **注意**：在 production 模式下，`location` 参数会变为页面/组件的 hash id。如需查找 hash id 与实际文件路径（resourcePath）的对应关系，可以通过以下方式：
 
@@ -153,17 +153,6 @@ Mpx 框架运行时报错捕获感知处理函数。
 3. 在该文件的 `moduleIdMap` 字段中查找 hash id 与 resourcePath 的映射关系
 
 这样可以帮助开发者在生产环境中快速定位错误发生的具体文件位置。
-
-## webRouteConfig
-Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置。
-此配置后续将被废弃，请使用 webConfig 进行配置
-
-- **用法**:
-```js
-mpx.config.webRouteConfig = {
-  mode: 'history'
-}
-```
 
 ## webConfig
 web 环境下的一些配置，如路由模式
@@ -207,3 +196,9 @@ import mpx from '@mpxjs/core'
 // 将 Android 状态栏高度设为 28px（默认 24px）
 mpx.config.webConfig.safeAreaInsetTop = 28
 ```
+
+## rnConfig
+
+RN 环境下的运行时配置，通过 `mpx.config.rnConfig` 设置异步分包加载、分享、路由控制、屏幕适配等能力，详见 [RN 高级特性](../guide/rn/application-api.md#advanced-features)。
+
+此配置与构建插件的 [rnConfig](compile.md#rn-config) 独立，编译期配置需在 `MpxWebpackPlugin` 中设置。

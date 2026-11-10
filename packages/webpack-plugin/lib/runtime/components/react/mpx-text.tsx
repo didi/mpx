@@ -49,7 +49,7 @@ interface _TextProps extends TextProps {
   children?: ReactNode
   selectable?: boolean
   'user-select'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   decode?: boolean
@@ -80,7 +80,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasPositionFixed
   } = useTransformStyle(currentStyle, {
     enableVar,
@@ -153,7 +153,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     children,
     {
       hasVarDec,
-      varContext: varContextRef.current,
+      varContext,
       textPassThrough
     }
   ))

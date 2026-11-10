@@ -1,0 +1,121 @@
+{
+  "policy": "mpx：仅本运行目录（TASK.md、input/、skill/、outputs/）；noskill：仅 TASK.md、input/、outputs/",
+  "isolation": "自包含目录 + 提示词白名单 + DSH 会话日志事后审计；不是操作系统级隔离",
+  "completed": 16,
+  "passed": 16,
+  "runs": [
+    {
+      "eval_id": 0,
+      "group": "mpx",
+      "policy_valid": true,
+      "in_room_paths": 37,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 0,
+      "group": "noskill",
+      "policy_valid": true,
+      "in_room_paths": 15,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 1,
+      "group": "mpx",
+      "policy_valid": true,
+      "in_room_paths": 0,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 1,
+      "group": "noskill",
+      "policy_valid": true,
+      "in_room_paths": 0,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 2,
+      "group": "mpx",
+      "policy_valid": true,
+      "in_room_paths": 1,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 2,
+      "group": "noskill",
+      "policy_valid": true,
+      "in_room_paths": 44,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 3,
+      "group": "mpx",
+      "policy_valid": true,
+      "in_room_paths": 22,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 3,
+      "group": "noskill",
+      "policy_valid": true,
+      "in_room_paths": 2,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 4,
+      "group": "mpx",
+      "policy_valid": true,
+      "in_room_paths": 0,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 4,
+      "group": "noskill",
+      "policy_valid": true,
+      "in_room_paths": 0,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 5,
+      "group": "mpx",
+      "policy_valid": true,
+      "in_room_paths": 46,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 5,
+      "group": "noskill",
+      "policy_valid": true,
+      "in_room_paths": 10,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 6,
+      "group": "mpx",
+      "policy_valid": true,
+      "in_room_paths": 52,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 6,
+      "group": "noskill",
+      "policy_valid": true,
+      "in_room_paths": 0,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 7,
+      "group": "mpx",
+      "policy_valid": true,
+      "in_room_paths": 0,
+      "out_of_room_reads": 0
+    },
+    {
+      "eval_id": 7,
+      "group": "noskill",
+      "policy_valid": true,
+      "in_room_paths": 24,
+      "out_of_room_reads": 0
+    }
+  ],
+  "discarded_round": "首轮 16 次中 8 次因评分提示词误置于运行目录被读取，已整体作废并在移动评分资料后重跑"
+}

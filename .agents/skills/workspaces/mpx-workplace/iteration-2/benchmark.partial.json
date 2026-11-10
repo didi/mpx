@@ -1,0 +1,268 @@
+{
+  "metadata": {
+    "executor_model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "scoring_status": "pending",
+    "runs_per_configuration": 1,
+    "iteration": 2,
+    "date": "2026-11-02",
+    "timezone": "Asia/Shanghai",
+    "service_tier": "priority",
+    "source_restriction": "closed-source-case-inputs-only; mpx snapshot only for mpx group"
+  },
+  "weighted_summary": {
+    "mpx": {
+      "passed": 48,
+      "failed": 0,
+      "pending": 0,
+      "total": 48,
+      "pass_rate_lower_bound": 1.0,
+      "pass_rate_upper_bound": 1.0
+    },
+    "noskill": {
+      "passed": 33,
+      "failed": 14,
+      "pending": 1,
+      "total": 48,
+      "pass_rate_lower_bound": 0.6875,
+      "pass_rate_upper_bound": 0.7083333333333334
+    }
+  },
+  "notes": [
+    "case5 noskill的 rn.animation-priming 保留pending：rn-template-reference.md:149允许boolean，rn-style-practice.md:290要求api/transition；尚无RN宿主行为证据消解此冲突。mpx使用明确的transition值，该歧义不影响其对应静态判定。",
+    "这是原48条断言的静态设计符合率，不是完整构建或真机通过率；每组每个case仅一次正式执行。",
+    "16/16正式运行完成，访问审计和输入/Skill哈希检查均通过，输出在独立验证前后保持原样。",
+    "mpx组只读取本case输入、mpx快照与自身输出；noskill组只读取本case输入与自身输出。编译、lint与评分在交付后独立执行，不回传执行者。",
+    "正式运行统一 gpt-6.1-sol / high / priority；首次因TLS断流中断的3个尝试不纳入成绩与用量，其原始过程文件已清理。正式日志中的重连计入真实壁钟耗时，因此耗时差不应解释为纯推理效率。",
+    "Token为CLI累计input+output，input已含缓存输入；不代表单次上下文长度，也不包括不可见的审批服务成本。",
+    "上轮允许公共源码与测试反馈，本轮限制条件不同，不据前后分数差推断Skill质量变化。",
+    "独立单文件编译使用锁定发布包webpack-plugin 2.11.1和共享构建配置；没有集成所有交付App/插件配置，不能等同完整业务构建。新版mode/srcMode题设与发布编译器有差异，相关诊断单列，不能据此覆盖题设契约。",
+    "case2 noskill以固定几何实现定位，业务行为可成立，但没有覆盖预定义query-scope中的实例查询与RN查询节点，正式该项未通过；若只要求定位结果，该组可增加1分。"
+  ],
+  "case_summaries": [
+    {
+      "eval_id": 0,
+      "name": "target-config",
+      "groups": {
+        "mpx": {
+          "passed": 6,
+          "failed": 0,
+          "pending": 0,
+          "total": 6,
+          "failed_ids": [],
+          "pending_ids": []
+        },
+        "noskill": {
+          "passed": 5,
+          "failed": 1,
+          "pending": 0,
+          "total": 6,
+          "failed_ids": [
+            "config.skyline-json"
+          ],
+          "pending_ids": []
+        }
+      }
+    },
+    {
+      "eval_id": 1,
+      "name": "layout-card",
+      "groups": {
+        "mpx": {
+          "passed": 7,
+          "failed": 0,
+          "pending": 0,
+          "total": 7,
+          "failed_ids": [],
+          "pending_ids": []
+        },
+        "noskill": {
+          "passed": 6,
+          "failed": 1,
+          "pending": 0,
+          "total": 7,
+          "failed_ids": [
+            "layout.text-ellipsis"
+          ],
+          "pending_ids": []
+        }
+      }
+    },
+    {
+      "eval_id": 2,
+      "name": "scroll-feed",
+      "groups": {
+        "mpx": {
+          "passed": 7,
+          "failed": 0,
+          "pending": 0,
+          "total": 7,
+          "failed_ids": [],
+          "pending_ids": []
+        },
+        "noskill": {
+          "passed": 6,
+          "failed": 1,
+          "pending": 0,
+          "total": 7,
+          "failed_ids": [
+            "scroll.query-scope"
+          ],
+          "pending_ids": []
+        }
+      }
+    },
+    {
+      "eval_id": 3,
+      "name": "checkout-dialog",
+      "groups": {
+        "mpx": {
+          "passed": 5,
+          "failed": 0,
+          "pending": 0,
+          "total": 5,
+          "failed_ids": [],
+          "pending_ids": []
+        },
+        "noskill": {
+          "passed": 4,
+          "failed": 1,
+          "pending": 0,
+          "total": 5,
+          "failed_ids": [
+            "dialog.keyboard-order"
+          ],
+          "pending_ids": []
+        }
+      }
+    },
+    {
+      "eval_id": 4,
+      "name": "account-search",
+      "groups": {
+        "mpx": {
+          "passed": 6,
+          "failed": 0,
+          "pending": 0,
+          "total": 6,
+          "failed_ids": [],
+          "pending_ids": []
+        },
+        "noskill": {
+          "passed": 5,
+          "failed": 1,
+          "pending": 0,
+          "total": 6,
+          "failed_ids": [
+            "network.cancel-token"
+          ],
+          "pending_ids": []
+        }
+      }
+    },
+    {
+      "eval_id": 5,
+      "name": "reactive-switcher",
+      "groups": {
+        "mpx": {
+          "passed": 7,
+          "failed": 0,
+          "pending": 0,
+          "total": 7,
+          "failed_ids": [],
+          "pending_ids": []
+        },
+        "noskill": {
+          "passed": 3,
+          "failed": 3,
+          "pending": 1,
+          "total": 7,
+          "failed_ids": [
+            "script.setup-exposure",
+            "template.event-chain",
+            "rn.background-priming"
+          ],
+          "pending_ids": [
+            "rn.animation-priming"
+          ]
+        }
+      }
+    },
+    {
+      "eval_id": 6,
+      "name": "routing-subpackage",
+      "groups": {
+        "mpx": {
+          "passed": 5,
+          "failed": 0,
+          "pending": 0,
+          "total": 5,
+          "failed_ids": [],
+          "pending_ids": []
+        },
+        "noskill": {
+          "passed": 0,
+          "failed": 5,
+          "pending": 0,
+          "total": 5,
+          "failed_ids": [
+            "routing.decoded-query",
+            "routing.web-deploy",
+            "routing.web-titlebar",
+            "subpackage.load-driver",
+            "subpackage.prefetch-driver"
+          ],
+          "pending_ids": []
+        }
+      }
+    },
+    {
+      "eval_id": 7,
+      "name": "ssr-shared-state",
+      "groups": {
+        "mpx": {
+          "passed": 5,
+          "failed": 0,
+          "pending": 0,
+          "total": 5,
+          "failed_ids": [],
+          "pending_ids": []
+        },
+        "noskill": {
+          "passed": 4,
+          "failed": 1,
+          "pending": 0,
+          "total": 5,
+          "failed_ids": [
+            "ssr.dual-build"
+          ],
+          "pending_ids": []
+        }
+      }
+    }
+  ],
+  "execution_summary": {
+    "mpx": {
+      "runs": 8,
+      "mean_seconds": 399.990875,
+      "stddev_seconds": 156.287095245931,
+      "mean_tokens": 1278142.125,
+      "stddev_tokens": 504691.28867271426,
+      "total_tokens": 10225137,
+      "input_tokens": 10039615,
+      "cached_input_tokens": 9368960,
+      "output_tokens": 185522
+    },
+    "noskill": {
+      "runs": 8,
+      "mean_seconds": 470.309875,
+      "stddev_seconds": 199.41552056407065,
+      "mean_tokens": 304302.25,
+      "stddev_tokens": 170982.7013746044,
+      "total_tokens": 2434418,
+      "input_tokens": 2225787,
+      "cached_input_tokens": 2056192,
+      "output_tokens": 208631
+    }
+  }
+}

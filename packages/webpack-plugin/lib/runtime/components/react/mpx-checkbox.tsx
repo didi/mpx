@@ -41,7 +41,7 @@ export interface CheckboxProps extends Selection {
   style?: ViewStyle & Record<string, any>
   groupValue?: Array<string>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -130,7 +130,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       hasSelfPercent,
       normalStyle,
       hasVarDec,
-      varContextRef,
+      varContext,
       setWidth,
       setHeight
     } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
@@ -223,7 +223,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current,
+          varContext,
           textPassThrough
         }
       )

@@ -1,4 +1,5 @@
 export {
+  nextTick,
   // watch
   watchEffect,
   watchSyncEffect,
@@ -24,6 +25,8 @@ export {
   computed,
   // instance
   getCurrentInstance,
+  onRenderTracked,
+  onRenderTriggered,
   // effectScope
   effectScope,
   getCurrentScope,
