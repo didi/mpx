@@ -4,7 +4,7 @@ import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
 import { ref } from '../../observer/ref'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, setFocusedNavigation, getDefaultValueByType, isPreloadedRoute } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -329,7 +329,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         }
       }
     }
-    const isPreload = !!props.navigation.getState?.()?.preloadedRoutes?.some(route => route.key === props.route.key)
+    const isPreload = isPreloadedRoute(props.navigation, props.route.key)
     proxy.callHook(ONLOAD, [rawQuery, decodedQuery, isPreload])
   }
 

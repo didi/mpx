@@ -57,3 +57,7 @@ export function isPreloadSupported (navigation) {
   const state = navigation.getState?.()
   return state?.type === 'stack' && Array.isArray(state.preloadedRoutes)
 }
+
+export function isPreloadedRoute (navigation, routeKey) {
+  return !!navigation.getState?.()?.preloadedRoutes?.some(route => route.key === routeKey)
+}
