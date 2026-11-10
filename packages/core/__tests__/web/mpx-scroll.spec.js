@@ -15,9 +15,9 @@ describe('test mpx scroll', () => {
   const app = new Vue({
     template: `
       <div id="app" class="app">
-        <page>
+        <div class="mpx-page">
           <div class="pull-down-loading" style="height: 0"></div>
-        </page>
+        </div>
       </div>
     `
   })
@@ -32,7 +32,8 @@ describe('test mpx scroll', () => {
   }
 
   test('el is a dom', () => {
-    expect(ms.el).toEqual(document.querySelector('page'))
+    expect(ms.el).not.toBeNull()
+    expect(ms.el).toBe(document.querySelector('.mpx-page'))
   })
 
   test('regist events and hooks', () => {

@@ -13,6 +13,7 @@
       "@babel/transform-runtime",
       {
         "corejs": 3,
+        "absoluteRuntime": true,
         "version": "^7.10.4"
       }
     ]
