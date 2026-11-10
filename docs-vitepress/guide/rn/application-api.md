@@ -221,11 +221,14 @@ module.exports = {
 > ⚠️ **注意：** 确保 Mpx 项目和容器中的 `react-native-reanimated` 版本一致
 
 ### 跨平台 API 使用限制 {#cross-platform-api-limit}
+
+> RN Android 的 `startWifi`、`stopWifi`、`getWifiList` 与 `getConnectedWifi` 成功回调 `errMsg` 均与微信文档一致，以 `:ok` 结尾。
+
 ### selectComponent/selectAllComponents
 在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式
   * id 选择器：`#id`
   * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
-  
+
 ```javascript
 <template>
   <!-- 必须添加 wx:ref 标记 -->
@@ -277,7 +280,7 @@ Mpx 提供 `@mpxjs/webview-bridge` 来实现 H5 页面与 RN 应用的双向通�
 ## 高级特性 {#advanced-features}
 
 `rnConfig` 是 Mpx 框架专为 React Native 环境提供的配置对象，用于定制 RN 平台特有的行为和功能。通过 `mpx.config.rnConfig` 可以配置异步分包、分享、路由控制、屏幕适配等高级特性。
-  
+
 ### 异步分包 {#async-subpackage}
 
 Mpx 在 RN 环境下实现了与微信小程序同等的异步分包功能，支持按需加载分包内容。基础使用可参考 [异步分包指南](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
@@ -312,7 +315,6 @@ module.exports = defineConfig({
       plugin: {
         rnConfig: {
           asyncChunk: {
-            timeout: 10000, // 异步分包加载超时时间(ms)，默认为 10s
             loading: path.resolve(__dirname, 'src/components/loading.mpx'),    // 自定义异步分包 loading 页面
             fallback: path.resolve(__dirname, 'src/components/fallback.mpx')   // 自定义异步分包页面加载失败的兜底页面配置
           }
@@ -324,6 +326,8 @@ module.exports = defineConfig({
 ```
 
 #### 错误处理 {#error-handling}
+
+分包下载与执行的超时由宿主 `loadChunkAsync` 实现负责。框架不再启动默认 10 秒的超时计时器，`rnConfig.asyncChunk.timeout` 不生效；错误回调中的 `errType` 来自加载结果，框架不会自行产生超时通知。
 
 **组件加载失败监听**：微信小程序提供了 wx.onLazyLoadError 的全局 api 来监听异步组件加载失败，这个 api 同样在 Mpx 转 RN 场景下生效；
 
@@ -350,7 +354,7 @@ mpx.config.rnConfig.onLazyLoadPageError = (error) => {
 
 #### 自定义兜底页面 {#custom-fallback-page}
 
-对于异步分包页面加载失败的情况会展示默认兜底页面，用户可以点击兜底页面底部的重试按钮重新加载异步分包页面。那么对于开发者提供的自定义的 fallback 兜底页面，框架会自动给自定义页面注入一个 `onReload` 方法以供开发者做页面重试的操作，具体见下方示例：
+对于异步分包页面加载失败的情况会展示默认兜底页面，用户可以点击兜底页面底部的重试按钮重新加载异步分包页面。那么对于开发者提供的自定义的 fallback 兜底页面，框架会自动给自定义页面注入一个 `reload` 方法以供开发者做页面重试的操作，具体见下方示例：
 
 ```html
 <template>
@@ -364,12 +368,9 @@ mpx.config.rnConfig.onLazyLoadPageError = (error) => {
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
-  props: {
-    onReload: Function // 框架自动注入
-  },
   methods: {
     handleRetry() {
-      this.onReload?.() // 触发重新加载
+      this.triggerEvent('reload') // 触发重新加载，reload 事件为框架自动注入
     }
   }
 })
@@ -416,8 +417,8 @@ createComponent({
 
 用于获取初始路由配置的函数，参数为 RN 根组件接收到的参数
 
-- initialRouteName: 首页路径，例如 pages/index
-- initialParams: 将作为 首页onLoad 与 应用onLaunch 的参数，例如 \{ a: 1 \}
+- initialRouteName: 首页路径，例如 pages/index，不包含 query。若该路径未注册，Mpx 回退至应用首页，并在导航就绪后调用 App 的 `onPageNotFound({ path, query, isEntryPage: true })`，其中 `query` 为该缺失入口的 `initialParams`（未传时为 `{}`），不会传入回退首页。未声明 App 回调且未注册 `mpx.onPageNotFound` 监听时通过统一错误处理上报（配置了 `Mpx.config.errorHandler` 时会触发该回调）
+- initialParams: 作为 RN 根组件初始化时首个路由实例的参数，会传入该页面的 `onLoad`，并作为初始化阶段应用 `onLaunch` / `onShow` 的 `query`，例如 \{ a: 1 \}。后续通过路由 API 再次打开同路径页面时不会自动继承；应用再次展示时，`onShow` 参数中的 `query` 以当前路由实例的参数为准
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，NA 可能会向 RN 的根组件传递 props，此时可在 parseAppProps 中接受 props 并进行处理和透传到页面
 
@@ -430,6 +431,20 @@ createComponent({
 当导航状态发生变化时触发，例如页面跳转、返回等。
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，可能需要将 RN 的路由栈同步到 NA 中以便于进行路径关系，此时可在此回调中将 RN 路径栈同步到容器中。
+
+#### mpx.config.rnConfig.disablePageTransition
+
+```ts
+boolean
+```
+
+用于禁用页面转场动画，默认为 `false`。设置为 `true` 后，框架会在内部导航配置中使用 `animation: 'none'`。
+
+如果需要关闭转场动画，可配置：
+
+```js
+mpx.config.rnConfig.disablePageTransition = true
+```
 
 #### mpx.config.rnConfig.onAppBack
 
@@ -454,17 +469,49 @@ createComponent({
 
 ### 折叠屏适配 {#foldable-screen-adaption}
 
+#### mpx.config.rnConfig.dimensionsBase
+
+```ts
+'window' | 'screen'
+```
+
+控制 `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，默认值为 `'window'`。
+
+如果需要保持旧版本基于屏幕尺寸计算的效果，可配置为 `'screen'`：
+
+```js
+mpx.config.rnConfig.dimensionsBase = 'screen'
+```
+
+配置后，响应式单位和媒体查询将使用 `Dimensions.get('screen')` 的宽高，并在 Screen 尺寸变化时重新计算相关样式及触发 `onResize`。
+
+该配置应在首次尺寸计算前完成，首次读取后将保持不变。
+
 #### mpx.config.rnConfig.customDimensions
 
 ```ts
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
-在某些情况下，我们可能不希望当前应用全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 尺寸信息来得到想要的渲染效果。
+在某些情况下，我们可能不希望当前应用全屏展示。此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 window 或 screen 尺寸信息，`rpx` / `vh` / `vw`、媒体查询与 `onResize` 会使用 `dimensionsBase` 指定的尺寸，并在该尺寸变化时触发相关更新。
 
-可在此方法中返回修改后的 dimensions，如果无返回或返回 undefined，则以入参作为返回值
+可在此方法中返回修改后的 dimensions，如果无返回或返回 `undefined`，则使用原始入参。
 
-例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
+例如，使用默认的 `dimensionsBase: 'window'` 时，折叠屏展开后如果期望应用只在一半窗口中展示，可在 `customDimensions` 中将 `window.width` 设为原来的一半。
+
+#### getDimensionsInfo
+
+```ts
+(dimensionsBase?: 'window' | 'screen') => ScaledSize
+```
+
+返回最近一次初始化或 React Native Dimensions 变化后生效的尺寸副本。可传入 `'window'` 或 `'screen'` 指定本次获取的尺寸；不传时使用首次读取的 `rnConfig.dimensionsBase`，传参不会修改该配置。修改返回值不会影响框架内部缓存。
+
+```js
+const dimensions = getDimensionsInfo()
+console.log(dimensions.width, dimensions.height)
+const screenDimensions = getDimensionsInfo('screen')
+```
 
 
 ### 前后台切换 {#app-state-change}

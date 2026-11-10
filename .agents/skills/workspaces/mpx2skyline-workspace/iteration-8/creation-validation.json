@@ -1,0 +1,30 @@
+{
+  "scope": "non-scoring creation acceptance",
+  "required_outputs": [
+    "pages/task-board.mpx",
+    "components/rating-selector.mpx",
+    "components/segmented-control.mpx",
+    "app.json",
+    "report.md"
+  ],
+  "checks": [
+    {
+      "id": "compile",
+      "requirement": "真实Mpx解析/编译三个SFC；检查setup宏、模板暴露、组件JSON及引用解析。区分局部编译与完整宿主构建。"
+    },
+    {
+      "id": "component-contracts",
+      "requirement": "rating-selector为createComponent选项式，segmented-control为script setup；逐项核对props类型默认值、value更新同步、禁用保护、change事件detail及实例隔离。"
+    },
+    {
+      "id": "page-integration",
+      "requirement": "页面usingComponents路径解析到交付文件，模板真实使用两组件，参数传入、事件detail消费和页面回写形成闭环；刷新成功重置评分、失败保留。"
+    },
+    {
+      "id": "page-business",
+      "requirement": "参数初始化及非法回退、筛选、完成状态、空列表、刷新成功/失败/重试、连续分页唯一key均通过实际模板绑定验证。"
+    }
+  ],
+  "reporting": "validation.json分别记录编译门槛、通用业务和Skyline各目标子检查；编译失败影响可执行性但同时保留适配存在/缺失的诊断证据，不将阻断等同于所有适配规则缺失。真机未运行记not_run。",
+  "extends": "common-validation.json"
+}

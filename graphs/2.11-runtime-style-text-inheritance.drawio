@@ -1,0 +1,149 @@
+<mxfile host="app.diagrams.net" modified="2026-07-07T00:00:00.000Z" agent="Codex" version="24.7.17" type="device">
+  <diagram id="runtime-style-text-inheritance" name="runtime-style-text-inheritance">
+    <mxGraphModel dx="1600" dy="980" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1060" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Mpx2RN 父子文本样式继承与运行时性能优化" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#1f2937;" vertex="1" parent="1">
+          <mxGeometry x="360" y="24" width="980" height="36" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="tree-title" value="示例节点树" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=15;fontStyle=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="50" y="92" width="260" height="42" as="geometry"/>
+        </mxCell>
+        <mxCell id="root-view" value="top view&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;style: color:#1677ff;&lt;br&gt;font: 600 24rpx/150% Arial;&lt;br&gt;enable-text-pass-through&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="162" width="260" height="112" as="geometry"/>
+        </mxCell>
+        <mxCell id="middle-view" value="middle view&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;style: padding:16rpx;&lt;br&gt;没有 color / font / text / lineHeight&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="360" width="260" height="92" as="geometry"/>
+        </mxCell>
+        <mxCell id="text-a" value="text A&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;style: font-size:20rpx;&lt;br&gt;line-height:120%;&lt;br&gt;文字 A&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="542" width="120" height="112" as="geometry"/>
+        </mxCell>
+        <mxCell id="text-b" value="text B&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;style: font:700 30rpx/1.2 Arial;&lt;br&gt;文字 B&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="190" y="542" width="140" height="112" as="geometry"/>
+        </mxCell>
+        <mxCell id="tree-edge-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="root-view" target="middle-view">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="tree-edge-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="middle-view" target="text-a">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="500"/>
+              <mxPoint x="110" y="500"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tree-edge-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="middle-view" target="text-b">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="500"/>
+              <mxPoint x="260" y="500"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="step1" value="1. top view 运行时处理&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;useTransformStyle 展开 font 简写：&lt;br&gt;fontWeight:600 / fontSize:24 / lineHeight:'150%' / fontFamily:'Arial'&lt;br&gt;splitStyle 抽出 textStyle，View 自身不承载文本样式&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="390" y="132" width="400" height="142" as="geometry"/>
+        </mxCell>
+        <mxCell id="ctx1" value="创建 TextPassThroughContext&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;{ color:'#1677ff', fontWeight:'600',&lt;br&gt;fontSize:24, lineHeight:'150%', fontFamily:'Arial' }&lt;br&gt;lineHeight 保留百分比，不在父层提前固化&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="870" y="132" width="390" height="142" as="geometry"/>
+        </mxCell>
+        <mxCell id="w3c-1" value="对齐 W3C 心智&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;容器上的 color / font* / text* / line-height 可以向文本后代继承&lt;br&gt;布局、背景、边框等非文本样式不会继承给 Text&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="132" width="320" height="142" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="step2" value="2. middle view 无文本样式&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;splitStyle 未命中文本 / 背景特殊 key&lt;br&gt;innerStyle 直接复用原 style 对象&lt;br&gt;不创建新的 Provider，不合并 context&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="390" y="344" width="400" height="124" as="geometry"/>
+        </mxCell>
+        <mxCell id="ctx-pass" value="继承链自然穿透&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;React Context 不会被中间 view 打断&lt;br&gt;middle view 没有文本样式时无需消费或重建上下文&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="870" y="344" width="390" height="124" as="geometry"/>
+        </mxCell>
+        <mxCell id="perf-mid" value="性能考量&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;无特殊 key：少分配对象、少做遍历后的转换&lt;br&gt;无当前文本样式：跳过 context 合并和 Provider 包裹&lt;br&gt;动态启用场景用 enable-text-pass-through 保持 Hook 路径稳定&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="344" width="320" height="124" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="step3a" value="3A. text A 合并与计算&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;继承：color、fontWeight、fontFamily、lineHeight:'150%'&lt;br&gt;自身覆盖：fontSize:20、lineHeight:'120%'&lt;br&gt;最终 lineHeight = 20 * 120% = 24&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="390" y="542" width="400" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="step3b" value="3B. text B 的 font 简写&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;useTransformStyle 展开：fontWeight:700 / fontSize:30 / lineHeight:'120%' / fontFamily:'Arial'&lt;br&gt;继承 color:#1677ff&lt;br&gt;最终 lineHeight = 30 * 120% = 36&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="870" y="542" width="390" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="w3c-2" value="覆盖顺序接近 CSS 级联&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;父级继承样式先合并&lt;br&gt;子 text 自身样式后合并并覆盖&lt;br&gt;百分比 line-height 等最终 fontSize 确定后再解析&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="542" width="320" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="final" value="最终 RN Text 接收的样式&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;text A：color #1677ff / fontWeight 600 / fontSize 20 / lineHeight 24 / fontFamily Arial&lt;br&gt;text B：color #1677ff / fontWeight 700 / fontSize 30 / lineHeight 36 / fontFamily Arial&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="390" y="752" width="870" height="106" as="geometry"/>
+        </mxCell>
+        <mxCell id="perf-final" value="整体热路径策略&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;按 key 收集特征，再进入对应转换分支&lt;br&gt;context 内容变化才替换 ref，减少子树无意义更新&lt;br&gt;百分比行高延迟到 Text 端，避免祖先层按错误字号预计算&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;arcSize=12;shadow=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="752" width="320" height="106" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="edge-r-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="root-view" target="step1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-r-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9673a6;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="step1" target="ctx1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-r-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#d6b656;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="ctx1" target="w3c-1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-m-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#666666;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="middle-view" target="step2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-m-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9673a6;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="step2" target="ctx-pass">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-m-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#b85450;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="ctx-pass" target="perf-mid">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-t-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#82b366;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="text-a" target="step3a">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-t-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#82b366;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="text-b" target="step3b">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="260" y="704"/>
+              <mxPoint x="1065" y="704"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-t-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#82b366;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="step3a" target="final">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="590" y="714"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-t-4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#82b366;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="step3b" target="final">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1065" y="714"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-w3c-final" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#d6b656;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="step3b" target="w3c-2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge-perf-final" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#b85450;strokeWidth=2;endArrow=block;html=1;" edge="1" parent="1" source="w3c-2" target="perf-final">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="context-line-1" value="TextPassThroughContext 覆盖子树" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9673a6;strokeWidth=2;dashed=1;endArrow=none;html=1;fontSize=12;fontColor=#6b4c7a;" edge="1" parent="1" source="ctx1" target="ctx-pass">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="context-line-2" value="继承样式进入 text" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9673a6;strokeWidth=2;dashed=1;endArrow=block;html=1;fontSize=12;fontColor=#6b4c7a;" edge="1" parent="1" source="ctx-pass" target="step3a">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1065" y="502"/>
+              <mxPoint x="590" y="502"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="context-line-3" value="同一份继承上下文" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9673a6;strokeWidth=2;dashed=1;endArrow=block;html=1;fontSize=12;fontColor=#6b4c7a;" edge="1" parent="1" source="ctx-pass" target="step3b">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

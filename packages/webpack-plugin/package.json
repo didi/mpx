@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.19",
+  "version": "2.11.2",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -28,8 +28,10 @@
     "@better-scroll/slide": "^2.5.1",
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
+    "@jridgewell/trace-mapping": "^0.3.25",
+    "@mpxjs/perf": "^2.11.2",
     "@mpxjs/template-engine": "^2.8.7",
-    "@mpxjs/utils": "^2.10.18",
+    "@mpxjs/utils": "^2.11.2",
     "acorn": "^8.11.3",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
@@ -60,10 +62,17 @@
     "postcss-value-parser": "^4.0.2",
     "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
+    "source-map": "^0.7.4",
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
-    "webpack": "^5.75.0"
+    "vue": "^2.7.10",
+    "webpack": "^5.83.1"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
@@ -71,7 +80,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/webpack-plugin"
   },
   "homepage": "https://didi.github.io/mpx/",
   "bugs": {
@@ -84,7 +94,7 @@
   },
   "devDependencies": {
     "@d11/react-native-fast-image": "^8.6.12",
-    "@mpxjs/api-proxy": "^2.10.19",
+    "@mpxjs/api-proxy": "^2.11.2",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/glob": "^8.1.0",
@@ -98,9 +108,9 @@
     "react-native-svg": "^15.8.0",
     "react-native-video": "^6.9.0",
     "react-native-vision-camera": "^4.7.2",
-    "react-native-webview": "^13.12.2",
+    "react-native-webview": "^13.17.0",
     "rimraf": "^6.0.1",
-    "webpack": "^5.75.0"
+    "vue-router": "^3.6.5"
   },
   "engines": {
     "node": ">=14.14.0"

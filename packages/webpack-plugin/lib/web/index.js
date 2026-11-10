@@ -23,6 +23,7 @@ module.exports = function ({
   usingComponentsInfo,
   originalUsingComponents,
   componentGenerics,
+  componentPlaceholder,
   autoScope,
   callback
 }) {
@@ -33,7 +34,8 @@ module.exports = function ({
           loaderContext,
           ctorType,
           pagesMap,
-          componentsMap
+          componentsMap,
+          srcMode: (parts.json && parts.json.srcMode) || srcMode
         }, callback)
       },
       (jsonRes, callback) => {
@@ -67,16 +69,18 @@ module.exports = function ({
             hasScoped,
             hasComment,
             isNative,
-            srcMode,
+            srcMode: (parts.template && parts.template.srcMode) || srcMode,
             moduleId,
             ctorType,
             usingComponentsInfo,
             originalUsingComponents,
-            componentGenerics
+            componentGenerics,
+            componentPlaceholder
           }, callback)
         },
         (callback) => {
           processStyles(parts.styles, {
+            loaderContext,
             ctorType,
             autoScope,
             moduleId
@@ -87,7 +91,8 @@ module.exports = function ({
             loaderContext,
             ctorType,
             pagesMap,
-            componentsMap
+            componentsMap,
+            srcMode: (parts.json && parts.json.srcMode) || srcMode
           }, callback)
         }
       ], (err, res) => {
@@ -101,8 +106,9 @@ module.exports = function ({
       processScript(parts.script, {
         loaderContext,
         ctorType,
-        srcMode,
+        srcMode: (parts.script && parts.script.srcMode) || srcMode,
         moduleId,
+        hasScoped,
         isProduction,
         componentGenerics,
         jsonConfig: jsonRes.jsonObj,
@@ -110,6 +116,7 @@ module.exports = function ({
         builtInComponentsMap: templateRes.builtInComponentsMap,
         genericsInfo: templateRes.genericsInfo,
         wxsModuleMap: templateRes.wxsModuleMap,
+        wxTemplateComponentsInfo: templateRes.wxTemplateComponentsInfo,
         localComponentsMap: jsonRes.localComponentsMap
       }, callback)
     }

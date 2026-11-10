@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/store",
-  "version": "2.10.18",
+  "version": "2.11.2",
   "description": "A store for mpx framework",
   "main": "src/index.js",
   "types": "@types/index.d.ts",
@@ -9,7 +9,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/store"
   },
   "keywords": [
     "mpx",
@@ -26,10 +27,10 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "@mpxjs/utils": "^2.10.18"
+    "@mpxjs/utils": "^2.11.2"
   },
   "peerDependencies": {
-    "@mpxjs/core": "^2.9.0"
+    "@mpxjs/core": "*"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

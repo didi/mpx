@@ -14,13 +14,10 @@ module.exports = function ({ print }) {
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
-  const iosValueLogError = print({ platform: 'ios', tag: TAG_NAME, isError: true, type: 'value' })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
-  const androidValueLogError = print({ platform: 'android', tag: TAG_NAME, isError: true, type: 'value' })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
-  const harmonyValueLogError = print({ platform: 'harmony', tag: TAG_NAME, isError: true, type: 'value' })
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
   const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
@@ -72,28 +69,7 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: 'confirm-type',
-        ios ({ name, value }) {
-          const notSupported = ['return']
-          if (notSupported.includes(value)) {
-            iosValueLogError({ name, value })
-          }
-        },
-        android ({ name, value }) {
-          const notSupported = ['return']
-          if (notSupported.includes(value)) {
-            androidValueLogError({ name, value })
-          }
-        },
-        harmony ({ name, value }) {
-          const notSupported = ['return']
-          if (notSupported.includes(value)) {
-            harmonyValueLogError({ name, value })
-          }
-        }
-      },
-      {
-        test: /^(always-embed|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
+        test: /^(always-embed|confirm-hold|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog

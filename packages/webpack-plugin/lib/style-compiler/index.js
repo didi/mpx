@@ -1,12 +1,13 @@
 const path = require('path')
 const postcss = require('postcss')
 const loadPostcssConfig = require('./load-postcss-config')
-const { MPX_ROOT_VIEW, MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
 const scopeId = require('./plugins/scope-id')
 const transSpecial = require('./plugins/trans-special')
 const cssArrayList = require('./plugins/css-array-list')
+const removeStripConditionalComments = require('./plugins/remove-strip-conditional-comments')
 const { matchCondition } = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
 const isReact = require('../utils/env').isReact
@@ -20,10 +21,8 @@ module.exports = function (css, map) {
   const mpxStyleOptions = (queryObj.mpxStyleOptions && JSON.parse(queryObj.mpxStyleOptions)) || {}
   const id = queryObj.moduleId || mpxStyleOptions.mid || mpx.getModuleId(resourcePath, false, (queryObj.moduleId || mpxStyleOptions.mid) ? null : this)
 
-  const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
-  const isApp = resourcePath === appInfo.resourcePath
   const transRpxRulesRaw = mpx.transRpxRules
   const transRpxRules = transRpxRulesRaw ? (Array.isArray(transRpxRulesRaw) ? transRpxRulesRaw : [transRpxRulesRaw]) : []
   const runtimeCompile = queryObj.isDynamic
@@ -50,9 +49,9 @@ module.exports = function (css, map) {
     // ali平台下处理scoped和host选择器
     if (mode === 'ali' || mode === 'web') {
       if (queryObj.scoped || mpxStyleOptions.scoped) {
-        plugins.push(scopeId({ id }))
+        plugins.push(scopeId({ id, scopePage: mode === 'web' }))
       }
-      plugins.push(transSpecial({ id }))
+      plugins.push(transSpecial({ id, transPage: mode === 'web' }))
     }
 
     if (isReact(mode)) {
@@ -96,17 +95,13 @@ module.exports = function (css, map) {
     if (mpx.mode === 'web') {
       postPlugins.push(vw({ transRpxFn }))
     }
+    postPlugins.push(removeStripConditionalComments())
 
     const finalPlugins = config.prePlugins.concat(plugins, config.plugins, postPlugins)
 
     return postcss(finalPlugins)
       .process(css, options)
       .then(result => {
-        // ali环境添加全局样式抹平root差异
-        if ((mode === 'ali' || mode === 'web') && isApp) {
-          result.css += `\n.${MPX_ROOT_VIEW} { display: initial }\npage { line-height: normal }`
-        }
-
         for (const warning of result.warnings()) {
           this.emitWarning(warning)
         }

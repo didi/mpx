@@ -1,0 +1,68 @@
+{
+  "eval_id": 3,
+  "eval_name": "new-rating-component",
+  "prompt": "请根据附件中的需求说明，从零创建一个 rating-selector.mpx 可复用组件。组件需在微信小程序、Web 和 RN（iOS/Android/Harmony）保持一致的功能与布局表现。请将完整的 .mpx 单文件组件写入指定输出路径，不要创建额外业务文件。",
+  "assertions": [
+    {
+      "id": "n0",
+      "text": "选项式组件：完整 SFC 使用 createComponent，声明评分属性并以 data/computed/watch/methods 组织逻辑",
+      "checks": [
+        "n0",
+        "n1"
+      ]
+    },
+    {
+      "id": "n2",
+      "text": "功能：根据 max 渲染带 key 的星级列表，并在视觉上区分选中状态",
+      "checks": [
+        "n2"
+      ]
+    },
+    {
+      "id": "n3",
+      "text": "功能：点击处理器校验 readonly，并通过 change 事件传出 ratingKey 和选中值",
+      "checks": [
+        "n3"
+      ]
+    },
+    {
+      "id": "n4",
+      "text": "脚本：使用 data 保存本地评分、watch 同步 value，且实例数据键不使用 id/data/dataset",
+      "checks": [
+        "n4"
+      ]
+    },
+    {
+      "id": "n8",
+      "text": "模板：用户可见的标签、星级和分数均使用 text 组件显式包裹",
+      "checks": [
+        "n8"
+      ]
+    },
+    {
+      "id": "n13",
+      "text": "模板：动态 component 使用 is 切换只读/可编辑提示，并用 range 精确声明两个候选组件",
+      "checks": [
+        "n13"
+      ]
+    },
+    {
+      "id": "n10",
+      "text": "普通 CSS：使用语义化 class，星级行显式 flex-direction:row，不使用不支持的 CSS 或原子类",
+      "checks": [
+        "n10",
+        "n14"
+      ]
+    },
+    {
+      "id": "n11",
+      "text": "交互：点击目标使用 hover-class，样式中不包含 :active",
+      "checks": [
+        "n11"
+      ]
+    }
+  ],
+  "source_evals": [
+    6
+  ]
+}

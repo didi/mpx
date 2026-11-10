@@ -1,5 +1,5 @@
 import { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect, useMemo } from 'react'
-import { getCurrentPage, useTransformStyle, useLayout, extendObject } from './utils'
+import { useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { Camera, useCameraDevice, useCodeScanner, useCameraFormat } from 'react-native-vision-camera'
 import { noop, warn, hasOwn } from '@mpxjs/utils'
@@ -20,15 +20,13 @@ interface CameraProps {
   flash?: 'auto' | 'on' | 'off'
   'frame-size'?: 'small' | 'medium' | 'large'
   style?: Record<string, any>
-  bindstop?: () => void
+  bindstop?: (event: Record<string, any>) => void
   binderror?: (error: { message: string }) => void
   bindinitdone?: (result: { type: string, data: string }) => void
   bindscancode?: (result: { type: string, data: string }) => void
-  'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'enable-var'?: boolean
-  'external-var-context'?: any
+  'enable-var'?: boolean | 'use'
 }
 
 interface TakePhotoOptions {
@@ -59,15 +57,34 @@ interface CameraRef {
   stopRecord: (options?: StopRecordOptions) => void
 }
 
+interface CameraPermissionCache {
+  promise?: Promise<any>
+  result?: boolean
+}
+
 type HandlerRef<T, P> = {
   current: T | null
 }
 
 let RecordRes: any = null
 
+const cameraPermissionCacheMap = new Map<number, CameraPermissionCache>()
+
+function getCameraPermissionCache (pageId: number | undefined) {
+  if (pageId == null) return
+  let cache = cameraPermissionCacheMap.get(pageId)
+  if (!cache) {
+    cache = {}
+    cameraPermissionCacheMap.set(pageId, cache)
+  }
+  return cache
+}
+
 const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const cameraRef = useRef<any>(null)
+  const propsRef = useRef(props)
+  propsRef.current = props
   const {
     mode = 'normal',
     resolution = 'medium',
@@ -77,11 +94,9 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     bindinitdone,
     bindstop,
     bindscancode,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     style = {}
   } = props
   const styleObj = extendObject(
@@ -95,8 +110,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     setHeight
   } = useTransformStyle(styleObj, {
     enableVar,
-    externalVarContext,
-    parentFontSize,
     parentWidth,
     parentHeight
   })
@@ -108,7 +121,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   const [zoomValue, setZoomValue] = useState<number>(1)
   const [isActive, setIsActive] = useState<boolean>(true)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
-  const page = getCurrentPage(pageId)
 
   // 先定义常量，避免在条件判断后使用
   const maxZoom = device?.maxZoom || 1
@@ -152,7 +164,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
             type,
             scanArea: [parseInt(frame.x) || 0, parseInt(frame.y) || 0, parseInt(frame.width) || 0, parseInt(frame.height) || 0]
           }
-        }))
+        }, propsRef.current))
       })
     }
   })
@@ -162,11 +174,11 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       detail: {
         maxZoom
       }
-    }))
+    }, propsRef.current))
   }, [bindinitdone, maxZoom])
 
   const onStopped = useCallback(() => {
-    bindstop && bindstop()
+    bindstop && bindstop(getCustomEvent('stop', {}, { layoutRef }, propsRef.current))
   }, [bindstop])
 
   const camera: CameraRef = useMemo(() => ({
@@ -273,9 +285,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     if (pageId && hasOwn(global.__mpxPageStatusMap, String(pageId))) {
       unWatch = watch(() => global.__mpxPageStatusMap[pageId], (newVal: string) => {
         if (newVal === 'show') {
-          if (page.id === pageId) {
-            setIsActive(true)
-          }
+          setIsActive(true)
         }
         if (newVal === 'hide') {
           setIsActive(false)
@@ -286,12 +296,33 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       try {
         const cameraPermission = global?.__mpx?.config?.rnConfig?.cameraPermission
         if (typeof cameraPermission === 'function') {
-          const permissionResult = await cameraPermission()
-          setHasPermission(permissionResult === true)
+          const permissionCache = getCameraPermissionCache(pageId)
+          if (permissionCache && hasOwn(permissionCache, 'result')) {
+            setHasPermission(permissionCache.result === true)
+            return
+          }
+          let permissionResult
+          if (permissionCache) {
+            if (!permissionCache.promise) {
+              permissionCache.promise = cameraPermission()
+            }
+            permissionResult = await permissionCache.promise
+          } else {
+            permissionResult = await cameraPermission()
+          }
+          const granted = permissionResult === true
+          if (permissionCache) {
+            permissionCache.result = granted
+          }
+          setHasPermission(granted)
         } else {
           setHasPermission(true)
         }
       } catch (error) {
+        const permissionCache = getCameraPermissionCache(pageId)
+        if (permissionCache) {
+          permissionCache.result = false
+        }
         setHasPermission(false)
       }
     }
@@ -328,6 +359,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       'mode',
       'resolution',
       'frame-size',
+      'device-position',
       'bindinitdone',
       'bindstop',
       'flash',

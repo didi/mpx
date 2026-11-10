@@ -2,6 +2,8 @@ import Dep from './dep'
 import { arrayMethods } from './array'
 import { ObKey } from '../helper/const'
 import { isRef } from './ref'
+import { isTracking } from './effect'
+import { createDebuggerInfo } from './debug'
 import {
   hasOwn,
   isObject,
@@ -128,7 +130,11 @@ export function defineReactive (obj, key, val, shallow) {
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        dep.depend()
+        if (process.env.NODE_ENV !== 'production' && isTracking() && Dep.target.onTrack) {
+          dep.depend(createDebuggerInfo(obj, 'get', key))
+        } else {
+          dep.depend()
+        }
         if (childOb) {
           childOb.dep.depend()
           if (Array.isArray(value)) {
@@ -151,7 +157,13 @@ export function defineReactive (obj, key, val, shallow) {
         val = newVal
       }
       childOb = shallow ? getObserver(newVal) : observe(newVal)
-      dep.notify()
+      if (process.env.NODE_ENV !== 'production') {
+        dep.notify(createDebuggerInfo(obj, 'set', key, shallow && isForceTrigger
+          ? undefined
+          : { newValue: newVal, oldValue: value }))
+      } else {
+        dep.notify()
+      }
     }
   })
 }
@@ -177,7 +189,11 @@ export function set (target, key, val) {
     return val
   }
   defineReactive(ob.value, key, val, ob.shallow)
-  ob.dep.notify()
+  if (process.env.NODE_ENV !== 'production') {
+    ob.dep.notify(createDebuggerInfo(target, 'add', key, { newValue: val }))
+  } else {
+    ob.dep.notify()
+  }
   return val
 }
 
@@ -197,7 +213,11 @@ export function del (target, key) {
   if (!ob) {
     return
   }
-  ob.dep.notify()
+  if (process.env.NODE_ENV !== 'production') {
+    ob.dep.notify(createDebuggerInfo(target, 'delete', key))
+  } else {
+    ob.dep.notify()
+  }
 }
 
 /**

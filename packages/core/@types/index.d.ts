@@ -60,7 +60,7 @@ interface Methods {
   [key: string]: (...args: any[]) => any
 }
 
-interface WatchOpt {
+interface WatchOpt extends DebuggerOptions {
   immediate?: boolean
   immediateAsync?: boolean
   deep?: boolean
@@ -125,7 +125,6 @@ interface Context {
   getOpenerEventChannel: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getOpenerEventChannel']
 }
 type ExtendedComponentOptions = {
-  disconnectOnUnmounted?: boolean
   shallowReactivePattern?: RegExp
   /**
    * 是否禁用render函数的useMemo，仅输出RN支持
@@ -150,6 +149,10 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
   pageShow?: () => void
 
   pageHide?: () => void
+
+  renderTracked?: DebuggerHook
+
+  renderTriggered?: DebuggerHook
 
   initData?: Record<string, any>
 
@@ -255,6 +258,26 @@ export function createPage<D extends Data = {}, P extends Properties = {}, C = {
 
 export function createApp<T extends WechatMiniprogram.IAnyObject> (opt: WechatMiniprogram.App.Options<T>, config?: CreateConfig): void
 
+/** RN 独立页面的外层配置，与页面 JSON 配置一致。 */
+export interface PageWrapperConfig {
+  navigationStyle?: 'default' | 'custom'
+  navigationBarTitleText?: string
+  navigationBarTextStyle?: 'white' | 'black' | '#ffffff' | '#000000'
+  navigationBarBackgroundColor?: string
+  backgroundColorContent?: string
+  disableKeyboardAvoiding?: boolean
+  [key: string]: any
+}
+
+/** 仅支持 RN；返回的组件需要宿主传入 navigation 和 route。 */
+export function pageWrapperHOC<P extends object> (
+  WrappedComponent: ComponentType<P>,
+  pageConfig?: PageWrapperConfig
+): ComponentType<P & {
+  navigation: any
+  route: { key: string; name: string; params?: Record<string, any> }
+}>
+
 type MixinType = 'app' | 'page' | 'component'
 
 export function injectMixins (mixins: object | Array<object>, options?: MixinType | MixinType[] | {
@@ -270,9 +293,101 @@ interface AnyConstructor {
   prototype: any
 }
 
+export interface WebRouteConfig {
+  /**
+   * Web 路由模式。
+   *
+   * @default 'hash'
+   */
+  mode?: 'hash' | 'history' | 'abstract'
+
+  /**
+   * 应用的基路径。
+   */
+  base?: string
+
+  /**
+   * history 模式不可用时是否回退到 hash 模式。
+   *
+   * @default true
+   */
+  fallback?: boolean
+
+  /**
+   * 全局激活链接的 CSS 类名。
+   */
+  linkActiveClass?: string
+
+  /**
+   * 全局精确激活链接的 CSS 类名。
+   */
+  linkExactActiveClass?: string
+
+  /**
+   * 自定义查询字符串解析函数。
+   */
+  parseQuery?: (query: string) => Record<string, any>
+
+  /**
+   * 自定义查询参数序列化函数。
+   */
+  stringifyQuery?: (query: Record<string, any>) => string
+
+  /**
+   * 自定义页面滚动行为。
+   */
+  scrollBehavior?: (
+    to: Record<string, any>,
+    from: Record<string, any>,
+    savedPosition: { x: number; y: number } | null
+  ) => any
+
+  [key: string]: any
+}
+
 export interface WebviewConfig {
+  /**
+   * 允许加载的 H5 域名白名单。
+   */
   hostWhitelists?: Array<string>
-  apiImplementations?: object
+
+  /**
+   * WebView 调用的宿主 API 实现。
+   */
+  apiImplementations?: Record<string, (...args: Array<any>) => any>
+}
+
+export interface WebConfig {
+  /**
+   * Web 路由配置。
+   */
+  routeConfig?: WebRouteConfig
+
+  /**
+   * 是否禁用页面切换动画。
+   *
+   * @deprecated 请使用编译阶段的 webConfig.disablePageTransition。
+   */
+  disablePageTransition?: boolean
+
+  /**
+   * 是否在 Web 输出时启用内置标题栏。
+   *
+   * @default false
+   */
+  enableTitleBar?: boolean
+
+  /**
+   * Android 设备上标题栏顶部安全区的高度，单位为 px。
+   *
+   * @default 24
+   */
+  safeAreaInsetTop?: number
+
+  /**
+   * WebView 宿主能力配置。
+   */
+  webviewConfig?: WebviewConfig
 }
 
 /**
@@ -280,11 +395,26 @@ export interface WebviewConfig {
  */
 export interface RnConfig {
   /**
+   * RN 节点未显式声明 box-sizing 时使用的默认盒模型。
+   *
+   * 默认值为 content-box，用于对齐小程序 / Web 的默认行为。
+   * 如需保留 RN 原始默认盒模型，可配置为 border-box。
+   */
+  defaultBoxSizing?: 'border-box' | 'content-box'
+
+  /**
    * 当导航状态发生变化时触发，例如页面跳转、返回等。
    *
    * @param state 当前的导航状态对象
    */
   onStateChange?: (state: Record<string, any>) => void
+
+  /**
+   * 是否禁用页面转场动画。
+   *
+   * @default false
+   */
+  disablePageTransition?: boolean
 
   /**
    * 用于获取初始路由配置的函数。
@@ -311,6 +441,20 @@ export interface RnConfig {
    * 是否禁用框架内部的 AppStateChange 监听。
    */
   disableAppStateListener?: boolean
+
+  /**
+   * RN 导航状态栏是否默认透明。
+   *
+   * @default true
+   */
+  statusBarTranslucent?: boolean
+
+  /**
+   * RN 文本类组件是否允许跟随系统字体缩放。
+   *
+   * @default false
+   */
+  allowFontScaling?: boolean
 
   /**
    * 控制首页回退按钮是否展示，并监听点击事件。
@@ -356,7 +500,7 @@ export interface RnConfig {
   }) => void
 
   /**
-   * 自定义屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
+   * 自定义窗口和屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
    *
    * @param dimensions 包含 window 和 screen 的尺寸信息
    * @returns 返回修改后的尺寸对象，或 void 表示不修改
@@ -366,6 +510,13 @@ export interface RnConfig {
   ) => T | void
 
   /**
+   * rpx、vw、vh、媒体查询与 onResize 使用的尺寸基准。
+   * 首次尺寸计算后该配置固定，运行期间修改不会生效。
+   * @default 'window'
+   */
+  dimensionsBase?: 'window' | 'screen'
+
+  /**
    * 加载并执行异步分包的方法。
    *
    * @param params 分包下载参数
@@ -373,7 +524,7 @@ export interface RnConfig {
    * @param params.package 分包名
    * @returns Promise，表示加载完成
    */
-  loadChunkAsync?: (params: { url: string; package: string }) => Promise<any>
+  loadChunkAsync?: (params: { url: string; package: string }) => Promise<null>
 
   /**
    * 下载多个异步分包的方法（不执行）。
@@ -418,6 +569,15 @@ export interface RnConfig {
    * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
    */
   cameraPermission?: () => Promise<boolean>
+
+  /**
+   * 自定义获取 Android 底部虚拟区域高度的方法，用于修正页面可视高度。
+   *
+   * 如果未配置，则使用框架默认的 bottom 区域高度计算逻辑。
+   *
+   * @returns number 底部虚拟区域高度
+   */
+  getBottomVirtualHeight?: () => number
 }
 
 interface MpxConfig {
@@ -430,14 +590,8 @@ interface MpxConfig {
   proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => void
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => void
   forceFlushSync: boolean,
-  webRouteConfig: object,
-  webConfig: object,
-  /*
-   * 支持两个属性
-   * hostWhitelists Array 类型 支持h5域名白名单安全校验
-   * apiImplementations webview JSSDK接口 例如getlocation
-  */
-  webviewConfig: WebviewConfig,
+  webRouteConfig: WebRouteConfig,
+  webConfig: WebConfig,
   /** react-native 相关配置，用于挂载事件等，如 onShareAppMessage */
   rnConfig: RnConfig,
 }
@@ -454,8 +608,10 @@ export function toPureObject<T extends object> (obj: T): T
 
 declare type PluginInstallFunction = (app: Mpx, ...options: any[]) => any
 
-export type Plugin = PluginInstallFunction | {
+export type Plugin = (PluginInstallFunction | {
   install: PluginInstallFunction
+}) & {
+  __installed?: boolean
 }
 
 export type PluginFunction<T extends Plugin> = T extends PluginInstallFunction ? T : T extends { install: infer U } ? U : never
@@ -616,7 +772,27 @@ type WatchSource<T> =
 
 type MultiWatchSources = (WatchSource<unknown> | object)[]
 
-interface WatchEffectOptions {
+export type TrackOpTypes = 'get' | 'touch'
+export type TriggerOpTypes = 'set' | 'add' | 'delete' | 'array mutation'
+
+export interface DebuggerEvent {
+  /** @internal Internal ReactiveEffect instance; its methods are not public APIs. */
+  effect: any
+  target: object
+  type: TrackOpTypes | TriggerOpTypes
+  key?: string | number | symbol
+  oldValue?: any
+  newValue?: any
+}
+
+export type DebuggerHook = (event: DebuggerEvent) => void
+
+export interface DebuggerOptions {
+  onTrack?: DebuggerHook
+  onTrigger?: DebuggerHook
+}
+
+interface WatchEffectOptions extends DebuggerOptions {
   flush?: 'pre' | 'post' | 'sync' // default: 'pre'
 }
 
@@ -694,10 +870,12 @@ export function markRaw<T extends object> (value: T): T
 export function shallowReactive<T extends object> (target: T): ShallowReactive<T>
 
 export function computed<T> (
-  getter: (...args: any[]) => T
+  getter: (...args: any[]) => T,
+  debugOptions?: DebuggerOptions
 ): ComputedRef<T>
 export function computed<T> (
-  options: WritableComputedOptions<T>
+  options: WritableComputedOptions<T>,
+  debugOptions?: DebuggerOptions
 ): WritableComputedRef<T>
 
 export function watchEffect (
@@ -757,6 +935,8 @@ export declare interface InjectionKey<T> extends Symbol { }
 export function nextTick (fn: () => any): void
 
 // lifecycle
+export function onRenderTracked (callback: DebuggerHook): void
+export function onRenderTriggered (callback: DebuggerHook): void
 export function onBeforeMount (callback: () => void): void
 export function onMounted (callback: () => void): void
 export function onBeforeUpdate (callback: () => void): void

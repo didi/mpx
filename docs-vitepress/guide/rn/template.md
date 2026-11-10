@@ -25,6 +25,9 @@
 | [wx:for](/api/directives.html#wx-for) | ✅ | 列表渲染 |
 | [wx:for-item](/api/directives.html#wx-for-item) | ✅ | 指定循环项变量名 |
 | [wx:for-index](/api/directives.html#wx-for-index) | ✅ | 指定循环索引变量名 |
+| [wx:key](/api/directives.html#wx-key) | ✅ | 指定列表项的唯一标识 |
+
+> [!tip] RN 平台会将 `wx:key` 转换为 React 的 `key`。动态列表应优先使用稳定的业务唯一标识；`index`、`_`，以及对象列表中的 `*this` 或对象类型属性值，都会使用列表索引，仅适用于顺序固定的列表。
 
 #### 增强模板指令 {#enhanced-template-directives}
 
@@ -44,7 +47,7 @@
 | 指令 | 支持状态 | 说明 |
 |------|---------|------|
 | [@mode](../../api/directives.md#mode) | ✅ | 平台条件编译 |
-| [@_mode](/api/directives.html#mode-1) | ✅ | 平台条件编译（保留转换能力）|
+| [@_mode](/api/directives.html#mode-1) | ✅ | `@mode` 的兼容别名，筛选和转换行为一致 |
 | [@env](../../api/directives.md#env) | ✅ | 自定义环境条件编译 |
 | [mpxTagName](../../api/directives.md#mpxtagname) | ✅ | 动态标签名 |
 
@@ -55,6 +58,7 @@
 在 RN 环境下使用 `wx:ref` 时需要注意选择器功能的限制：
 
 * 选择器仅支持 id 选择器（`#id`）和 class 选择器（`.class`）
+* `createSelectorQuery().select()` / `selectAll()` 命中自定义组件时，返回该组件实体 host 节点的信息；`virtualHost` 组件没有实体 host 节点，不支持按组件节点测量
 
 ```html
 <template>
@@ -62,6 +66,7 @@
   <view wx:ref="tref">123</view>
   <!-- 自定义组件 -->
   <test-component wx:ref="cref"></test-component>
+  <test-component id="card" wx:ref></test-component>
 </template>
 
 <script>
@@ -76,6 +81,14 @@ createPage({
     
     // 获取自定义组件实例，调用组件方法
     this.$refs.cref.show()
+
+    // 测量自定义组件的实体 host 节点
+    this.createSelectorQuery()
+      .select("#card")
+      .boundingClientRect()
+      .exec(([rect]) => {
+        console.log(rect)
+      })
   }
 })
 </script>
@@ -170,9 +183,10 @@ createPage({
 
 注意事项
 
-1. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
-2. 由于 tap 事件是由 touchend 事件模拟实现，所以在 RN 环境，如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
-3. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
+1. 仅 `tap`、`longpress`、`touchstart`、`touchmove`、`touchend`、`touchcancel` 事件支持阻止冒泡和捕获，其他事件使用 `catch`、`capture-bind` 或 `capture-catch` 时，编译器会给出警告并降级为普通 `bind` 绑定。
+2. `tap` 和 `longpress` 由 `touchstart` / `touchend` 等底层触摸事件模拟实现，因此子组件绑定 `catchtouchend` 后，父组件的 `tap` 事件不会响应。
+3. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
+4. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
    
 ## 生命周期 {#lifecycle}
 RN 环境支持 Mpx 除 SSR 外所有生命周期钩子，关于生命周期的完整说明和最佳实践，请参考 [**生命周期详细文档**](../basic/lifecycle.md)。

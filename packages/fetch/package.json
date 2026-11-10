@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/fetch",
-  "version": "2.10.19",
+  "version": "2.11.2",
   "description": "mpx fetch lib",
   "author": "donghongping",
   "license": "Apache-2.0",
@@ -19,7 +19,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:didi/mpx.git"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/fetch"
   },
   "homepage": "https://didi.github.io/mpx/",
   "bugs": {
@@ -29,8 +30,8 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.10.19",
-    "@mpxjs/utils": "^2.10.18",
+    "@mpxjs/api-proxy": "^2.11.2",
+    "@mpxjs/utils": "^2.11.2",
     "json-bigint": "^1.0.0",
     "path-to-regexp": "^6.2.0"
   },

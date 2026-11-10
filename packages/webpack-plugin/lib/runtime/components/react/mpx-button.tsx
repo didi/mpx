@@ -19,7 +19,7 @@
  * ✘ app-parameter
  * ✘ show-message-card
  * ✘ phone-number-no-quota-toast
- * ✘ bindgetuserinfo
+ * ✔ bindgetuserinfo
  * ✘ bindcontact
  * ✘ createliveactivity
  * ✘ bindgetphonenumber
@@ -45,9 +45,9 @@ import {
   NativeSyntheticEvent,
   useAnimatedValue
 } from 'react-native'
-import { warn } from '@mpxjs/utils'
+import { warn, hasOwn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThrough } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -78,9 +78,8 @@ export interface ButtonProps {
   'open-type'?: OpenType
   'form-type'?: 'submit' | 'reset'
   'enable-offset'?: boolean,
-  'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
+  'enable-var'?: boolean | 'use'
+  'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
   style?: ViewStyle & TextStyle & Record<string, any>
@@ -105,14 +104,14 @@ const OpenTypeEventsMap = new Map<OpenType, OpenTypeEvent>([
 
 const styles = StyleSheet.create({
   button: {
-    width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     height: 46,
     borderRadius: 5,
     backgroundColor: '#F8F8F8',
-    marginHorizontal: 'auto' // 按钮默认居中
+    marginHorizontal: 'auto',
+    paddingHorizontal: 14
   },
   buttonMini: {
     height: 30
@@ -130,7 +129,7 @@ const styles = StyleSheet.create({
   }
 })
 
-const getOpenTypeEvent = (openType?: OpenType) => {
+const getOpenTypeHandler = (openType?: OpenType) => {
   if (!openType) return
   if (!global.__mpx?.config?.rnConfig) {
     warn('Environment not supported')
@@ -142,13 +141,13 @@ const getOpenTypeEvent = (openType?: OpenType) => {
     return
   }
 
-  const event = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
-  if (!event) {
+  const handler = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
+  if (!handler) {
     warn(`Unregistered ${eventName} event`)
     return
   }
 
-  return event
+  return handler
 }
 
 const timer = (data: any, time = 3000) => new Promise((resolve) => {
@@ -211,8 +210,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     'open-type': openType,
     'form-type': formType,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     style = {},
@@ -282,24 +280,26 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     { color: plain ? plainTextColor : normalTextColor }
   )
 
-  const defaultStyle = extendObject({}, defaultViewStyle, defaultTextStyle)
+  const styleObj = isHover ? extendObject({}, style, hoverStyle) : style
 
-  const styleObj = extendObject(
-    {},
-    defaultStyle,
-    style,
-    isHover ? hoverStyle : {}
-  )
+  const defaultStyle: Record<string, any> = extendObject({}, defaultViewStyle, defaultTextStyle)
+  // 用户 shorthand 优先：避免 longhand default 反向覆盖
+  if (hasOwn(styleObj, 'margin')) {
+    delete defaultStyle.marginHorizontal
+  }
+  if (hasOwn(styleObj, 'padding')) {
+    delete defaultStyle.paddingHorizontal
+  }
 
   const {
     hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
 
@@ -308,14 +308,15 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   if (backgroundStyle) {
     warn('Button does not support background image-related styles!')
   }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
-    const handleEvent = getOpenTypeEvent(openType)
-    if (!handleEvent) return
+    const openTypeHandler = getOpenTypeHandler(openType)
+    if (!openTypeHandler) return
 
     if (openType === 'share') {
       const currentPage = getCurrentPage(pageId)
@@ -334,22 +335,22 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
           if (promise) {
             Promise.race([Promise.resolve(promise), timer(message)])
               .then((msg) => {
-                handleEvent(Object.assign({}, defaultMessage, msg))
+                openTypeHandler(Object.assign({}, defaultMessage, msg))
               })
           } else {
-            handleEvent(Object.assign({}, defaultMessage, message))
+            openTypeHandler(Object.assign({}, defaultMessage, message))
           }
         } else {
-          handleEvent(defaultMessage)
+          openTypeHandler(defaultMessage)
         }
       } else {
         warn('Current page not found')
-        // Todo handleEvent(event)
+        // Todo openTypeHandler(event)
       }
     }
 
     if (openType === 'getUserInfo' && bindgetuserinfo) {
-      Promise.resolve(handleEvent)
+      Promise.resolve(openTypeHandler)
         .then((userInfo) => {
           if (typeof userInfo === 'object') {
             bindgetuserinfo(userInfo)
@@ -395,7 +396,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       'hover-start-time',
       'hover-stay-time',
       'open-type',
-      'form-type'
+      'form-type',
+      'bindgetuserinfo'
     ],
     {
       layoutRef,
@@ -405,17 +407,16 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const baseButton = createElement(View, innerProps, loading && createElement(Loading, { alone: !children }),
     wrapChildren(
-      props,
+      props.children,
       {
         hasVarDec,
-        varContext: varContextRef.current,
-        textStyle,
-        textProps
+        varContext,
+        textPassThrough
       }
     )
   )
 
-  const finalComponent = enableHover
+  const finalComponent = gesture
     ? createElement(GestureDetector, { gesture: gesture as PanGesture }, baseButton)
     : baseButton
 

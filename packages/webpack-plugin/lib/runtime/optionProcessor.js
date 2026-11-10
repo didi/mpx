@@ -2,13 +2,15 @@ import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
-import { error } from '@mpxjs/utils'
+import { error, proxy, defineUnsupportedProps } from '@mpxjs/utils'
 const dash2hump = require('../utils/hump-dash').dash2hump
 
 export function processComponentOption (
   {
     option,
     ctorType,
+    moduleId,
+    hasScoped,
     outputPath,
     pageConfig,
     componentsMap,
@@ -59,7 +61,7 @@ registered in parent context!`)
   }
 
   if (ctorType === 'page') {
-    option.__mpxPageConfig = extend({}, global.__mpxPageConfig, pageConfig)
+    option.__mpxPageConfig = pageConfig
   }
 
   if (!hasApp) {
@@ -74,6 +76,19 @@ registered in parent context!`)
 
   if (outputPath) {
     option.componentPath = '/' + outputPath
+  }
+
+  // 宿主组件的 moduleId / scoped / ctorType 信息挂在 option 上，供 mpx-tpl-* 子模版通过 __mpxHost.$options 读取
+  option.__mpxModuleId = moduleId || ''
+  option.__mpxScoped = !!hasScoped
+  option.__mpxCtorType = ctorType
+  // 暴露宿主实例引用，供 mpx-tpl-* 子模版组件通过 inject 获取
+  const prevProvide = option.provide
+  option.provide = function () {
+    const base = typeof prevProvide === 'function'
+      ? prevProvide.call(this)
+      : (prevProvide || {})
+    return extend({}, base, { __mpxHost: this })
   }
   if (ctorType === 'app') {
     option.data = function () {
@@ -134,6 +149,68 @@ export function getWxsMixin (wxsModules) {
   }
 }
 
+/**
+ * 将子模版实例的 `$slots` 代理到 `inject` 的宿主 `__mpxHost.$slots`（仅默认 / 具名，与 solutions/web-template-support.md §2.8 一致）。
+ * 不使用 `$watch`；若无法 defineProperty（如属性已不可配置），开发环境告警并跳过。
+ */
+function installMpxWxTemplateHostSlotsProxy (vm) {
+  if (!vm.__mpxHost) return
+  try {
+    Object.defineProperty(vm, '$slots', {
+      configurable: true,
+      enumerable: true,
+      get () {
+        const h = this.__mpxHost
+        return (h && h.$slots) || {}
+      },
+      set () { } // 不支持写入
+    })
+  } catch (e) {
+    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') {
+      console.warn('[Mpx] mpx-tpl: could not proxy $slots to __mpxHost:', e && e.message)
+    }
+  }
+}
+
+// 创建 wxml template 对应的 Vue 子组件选项（仅接受构建期编译产物，见 web/compile-wx-template-fragment）
+// - props.mpxData：承载模版调用传入的数据，通过 proxy 在 this 上建立访问代理
+// - inject.__mpxHost：从最近的 mpx 宿主获取 this，用于继承 methods/components；其 $slots 经 installMpxWxTemplateHostSlotsProxy 供模版内 <slot> 使用
+// - wxsModules：由模版所在 wxml 自身声明的 wxs 模块（不继承宿主 wxs）
+// - render / staticRenderFns：须由 `vue/compiler-sfc` compileTemplate 等在构建期注入，不支持字符串 template
+export function createTemplateComponent ({ name, render, staticRenderFns, components, wxsModules }) {
+  if (typeof render !== 'function') {
+    throw new Error('[Mpx] createTemplateComponent requires a build-time `render` function (string template is not supported).')
+  }
+  const wxsMixin = getWxsMixin(wxsModules)
+  const base = {
+    __mpxTemplate: true,
+    name,
+    render,
+    components: components || {},
+    mixins: wxsMixin ? [wxsMixin] : [],
+    props: { mpxData: { type: Object, default: () => ({}) } },
+    inject: { __mpxHost: { default: null } },
+    created () {
+      const host = this.__mpxHost
+      if (host) {
+        const hostMethods = host.$options.methods || {}
+        Object.keys(hostMethods).forEach((k) => {
+          if (!(k in this)) this[k] = hostMethods[k].bind(host)
+        })
+        const compBase = this.$options.components || {}
+        const merged = Object.create(Object.getPrototypeOf(compBase) || null)
+        extend(merged, compBase, host.$options.components || {})
+        this.$options.components = merged
+        installMpxWxTemplateHostSlotsProxy(this)
+      }
+      // mpxData 常为宿主每次 render 的新字面量：source 传 getter，proxy 每次读都解析当前 this.mpxData；假定 key 集合在生命周期内不变（不在 updated 中补全新 key）
+      proxy(this, () => this.mpxData || {})
+    }
+  }
+  if (staticRenderFns && staticRenderFns.length) base.staticRenderFns = staticRenderFns
+  return base
+}
+
 function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, tabBarMap }) {
   const option = {}
   // 对于app中的组件需要全局注册
@@ -170,7 +247,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       })
     }
     const webRouteConfig = global.__mpx.config.webConfig.routeConfig || global.__mpx.config.webRouteConfig
-    global.__mpxRouter = option.router = new VueRouter(extend({ routes }, webRouteConfig))
+    const router = global.__mpxRouter = option.router = new VueRouter(extend({ routes }, webRouteConfig))
+    let entryChecked = false
     let mpxStackPath = []
     if (isBrowser) {
       // 解决webview被刷新导致路由栈丢失后产生错乱问题
@@ -193,6 +271,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     // 处理reLaunch中传递的url并非首页时的replace逻辑
     global.__mpxRouter.beforeEach(function (to, from, next) {
       let action = global.__mpxRouter.__mpxAction
+      const isEntryPage = !entryChecked && !action
+      entryChecked = true
       const stack = global.__mpxRouter.stack
 
       // 处理人为操作
@@ -209,24 +289,16 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         }
       }
       global.__mpxRouter.currentActionType = action.type
-      const pageInRoutes = routes.some(item => item.path === to.path)
-      if (!pageInRoutes) {
-        if (stack.length < 1) {
-          if (global.__mpxRouter.app.$options.onPageNotFound) {
-            // onPageNotFound，仅首次进入时生效
-            global.__mpxRouter.app.$options.onPageNotFound({
-              path: to.path,
+      if (!to.matched.length) {
+        if (isEntryPage) {
+          if (isBrowser) {
+            router.__mpxPageNotFound = {
+              path: to.path.replace(/^\//, ''),
               query: to.query,
               isEntryPage: true
-            })
-            return
-          } else {
-            console.warn(`[Mpx runtime warn]: the ${to.path} path does not exist in the application，will redirect to the home page path ${firstPage}`)
-            return next({
-              path: firstPage,
-              replace: true
-            })
+            }
           }
+          return next({ path: '/' + firstPage, replace: true })
         } else {
           const typeMethodMap = {
             to: 'navigateTo',
@@ -236,7 +308,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
             reLaunch: 'reLaunch'
           }
           const method = typeMethodMap[action.type]
-          throw new Error(`${method}:fail page "${to.path}" is not found`)
+          return next(new Error(`${method}:fail page "${to.path}" is not found`))
         }
       }
 
@@ -314,29 +386,26 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
     if (isBrowser) {
       document.addEventListener('visibilitychange', function () {
-        const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
-        if (vnode && vnode.componentInstance) {
-          const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
+        const currentPage = getCurrentPages().slice(-1)[0]
+        if (currentPage && currentPage.__mpxProxy) {
           if (document.hidden) {
-            if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
+            if (global.__mpxAppCbs && global.__mpxAppCbs.hide && global.__mpxAppCbs.hide.length) {
+              const options = {}
+              defineUnsupportedProps(options, ['reason'])
               global.__mpxAppCbs.hide.forEach((cb) => {
-                cb()
+                cb(options)
               })
             }
-            if (currentPage) {
-              currentPage.mpxPageStatus = 'hide'
-            }
+            currentPage.mpxPageStatus = 'hide'
           } else {
-            if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
+            if (global.__mpxAppCbs && global.__mpxAppCbs.show && global.__mpxAppCbs.show.length) {
+              const options = {}
+              defineUnsupportedProps(options, ['apiCategory', 'chatType', 'forwardMaterials', 'hostExtraData'])
               global.__mpxAppCbs.show.forEach((cb) => {
-                // todo 实现app.onShow参数
-                /* eslint-disable node/no-callback-literal */
-                cb({})
+                cb(options)
               })
             }
-            if (currentPage) {
-              currentPage.mpxPageStatus = 'show'
-            }
+            currentPage.mpxPageStatus = 'show'
           }
         }
       })
@@ -376,7 +445,8 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
         return App.onSSRAppCreated({ pinia, router, app, context })
       } else {
         return new Promise((resolve, reject) => {
-          router.push(context.url)
+          // 由 onReady 接收最终结果，避免入口重定向产生未处理的 Promise rejection
+          router.push(context.url, () => {})
           router.onReady(() => {
             context.rendered = () => {
               context.state = pinia?.state?.value || {}

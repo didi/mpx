@@ -6,20 +6,31 @@ import {
   diffAndCloneA,
   error,
   hasOwn,
-  isDev,
   getDefaultValueByType
 } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 
+const isDev = process.env.NODE_ENV !== 'production'
+
 // 暂不支持的wx选项，后期需要各种花式支持
-const unsupported = ['moved', 'definitionFilter', 'onShareAppMessage']
+const unsupported = [
+  'moved',
+  'error',
+  'definitionFilter',
+  'export',
+  'onShareAppMessage',
+  'onShareTimeline',
+  'onAddToFavorites',
+  'onSaveExitState',
+  'onRouteDone'
+]
 
 function convertErrorDesc (key) {
   error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource || global.currentModuleId)
 }
 
-function notSupportTip (options) {
-  unsupported.forEach(key => {
+export function notSupportTip (options, keys = unsupported) {
+  keys.forEach(key => {
     if (options[key]) {
       if (!implemented[key]) {
         isDev && convertErrorDesc(key)

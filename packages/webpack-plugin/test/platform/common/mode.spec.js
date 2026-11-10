@@ -54,23 +54,23 @@ describe('template should transform correct', function () {
     expect(swanOutput).toBe('<ali-view><ttt bindtap="handleTap">123</ttt></ali-view>')
   })
 
-  it('without error report when use condition syntax', function () {
+  it('should run normal transformation after condition syntax selection', function () {
     const input = '<button open-type@ali="{{testVal}}" scope@ali="phoneNumber" onGetAuthorize@ali="alipayPhonenumberLogin" onError@ali="onGetPhoneNumberError">手机号授权登录</button>'
     const output = compileTemplate(input)
-    expect(warnFn).not.toHaveBeenCalled()
+    expect(warnFn).toHaveBeenCalledTimes(1)
     expect(output).toBe('<button open-type="{{testVal}}" scope="phoneNumber" onGetAuthorize="alipayPhonenumberLogin" onError="onGetPhoneNumberError">手机号授权登录</button>')
   })
 
-  it('should no trans for specific attr if matched mode', function () {
+  it('should transform specific attr after matched mode', function () {
     // 默认会按规则进行自动转换
     const inputBefore = '<button open-type="getUserInfo">获取用户信息</button>'
     const outputBefore = compileTemplate(inputBefore)
     expect(outputBefore).toBe('<button open-type="getAuthorize" scope="userInfo">获取用户信息</button>')
 
-    // 通过@指定mode后，不再走转换规则
+    // @mode 仅负责筛选，命中后仍按 srcMode 走转换规则
     const input = '<button open-type@ali="getUserInfo">获取用户信息</button>'
     const output = compileTemplate(input)
-    expect(output).toBe('<button open-type="getUserInfo">获取用户信息</button>')
+    expect(output).toBe('<button open-type="getAuthorize" scope="userInfo">获取用户信息</button>')
   })
 
   it('should work correct with web mode', function () {
@@ -146,10 +146,10 @@ describe('template should transform correct', function () {
     expect(output2).toBe('<button>获取用户信息</button>')
   })
 
-  it('should attr trans correct when implicit mode', function () {
+  it('should treat @mode and @_mode equally', function () {
     const input1 = '<button @wx:didi|ali:didi bindtap="test">获取用户信息</button>'
     const output1 = compileTemplate(input1, { env: 'didi', mode: 'ali' })
-    expect(output1).toBe('<button bindtap="test">获取用户信息</button>')
+    expect(output1).toBe('<button onTap="test">获取用户信息</button>')
 
     const input2 = '<button @_wx:didi|_ali:didi bindtap="test">获取用户信息</button>'
     const output2 = compileTemplate(input2, { env: 'didi', mode: 'ali' })

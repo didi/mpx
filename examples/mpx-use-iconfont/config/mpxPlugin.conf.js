@@ -18,8 +18,8 @@ module.exports = {
   //   include: [resolve('src')]
   // },
 
-  // 批量指定文件mode，用法如下，指定平台，提供include/exclude指定文件，即include的文件会默认被认为是该平台的，include/exclude的规则和webpack的rules的相同
-  modeRules: {
+  // 按输出平台批量标记使用该平台源码方言的资源，仅当前mode对应规则生效，include/exclude规则与webpack rules相同
+  srcModeRules: {
     // ali: {
     //   include: [resolve('node_modules/vant-aliapp')]
     // }
@@ -36,9 +36,6 @@ module.exports = {
       include: resolve('src')
     },
   ],
-
-  // 输出web时，vue-loader版本<15时需要将该配置关闭
-  forceDisableBuiltInLoader: true,
 
   // 对于buildDependencies进行hack处理，避免使用cssnano或postcss时将package.json作为buildDependencies处理，问题详情可查看：https://github.com/webpack/webpack/issues/15466
   // 注意，开启这项hack配置时请确保package.json中没有存放编译配置，否则请关闭hack配置
