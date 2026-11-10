@@ -1,7 +1,7 @@
 {
   "name": "@mpxjs/unocss-base",
   "description": "mpx unocss base preset",
-  "version": "2.11.1",
+  "version": "2.11.2",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib"
@@ -10,6 +10,11 @@
   "scripts": {},
   "author": "",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/unocss-base"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"

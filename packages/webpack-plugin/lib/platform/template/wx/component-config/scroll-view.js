@@ -46,6 +46,7 @@ module.exports = function ({ print }) {
       {
         test: 'class',
         ali (attr, { el }) {
+          // 原有 class 由 show-scrollbar 规则统一合并。
           if (hasOwn(el.attrsMap, 'show-scrollbar')) return false
         }
       },
@@ -66,10 +67,14 @@ module.exports = function ({ print }) {
             name: 'class',
             value: className ? `${className} ${hiddenClass}` : hiddenClass
           }]
-        }
+        },
+        tt: ttPropLog,
+        qq: qqPropLog,
+        swan: baiduPropLog,
+        qa: qaPropLog
       },
       {
-        test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration)$/,
+        test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|paging-enabled|fast-deceleration)$/,
         ali: aliPropLog,
         tt: ttPropLog,
         qq: qqPropLog,
@@ -85,7 +90,7 @@ module.exports = function ({ print }) {
         jd: jdPropLog
       },
       {
-        test: /^(enable-back-to-top|enable-flex|scroll-anchoring|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration|binddragstart|binddragging|binddragend)$/,
+        test: /^(enable-back-to-top|enable-flex|scroll-anchoring|enhanced|bounces|paging-enabled|fast-deceleration|binddragstart|binddragging|binddragend)$/,
         qa: qaPropLog
       },
       {

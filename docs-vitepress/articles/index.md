@@ -17,3 +17,4 @@ sidebarDepth: 0
 * [Mpx 2.11.0 版本正式发布，Mpx2RN 样式一致性与运行时性能系统升级](2.11-release.md)
 * [Mpx-cli 插件化改造](mpx-cli-next.md)
 * [Mpx 小程序单元测试能力建设与实践](unit-test.md)
+* [Mpx Skill：面向 AI 编程的统一跨端开发指南](mpx-skill.md)

@@ -11,7 +11,9 @@ const COMPONENT_HOOKS = [
   'destroyed',
   'errorCaptured',
   'error',
-  'serverPrefetch'
+  'serverPrefetch',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 const PAGE_HOOKS = [

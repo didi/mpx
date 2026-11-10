@@ -1,0 +1,31 @@
+{
+  "id": "2026-10-29-host-config",
+  "eval_id": 2,
+  "reason": "补明宿主defaultDisplayBlock=true，避免对默认Flex方向采用不一致假设。",
+  "host_preconditions": {
+    "app.json": {
+      "rendererOptions": {
+        "skyline": {
+          "defaultDisplayBlock": true
+        }
+      }
+    }
+  },
+  "changed_file": "eval-2-template-runtime-inline-animation/input/task.md",
+  "before_sha256": "06aa06590d4181383b3947364d0f2a2d5fd51f06e597a415fecbe25503151b65",
+  "after_sha256": "671d7e76bc07648248b73fbc015e8bb5f23ad584270cea35218731670d67ec3b",
+  "original_execution": "../../execution-results.json",
+  "evaluation_rerun": false,
+  "historical_scores_revised": false,
+  "archived_files": [
+    "eval-2-template-runtime-inline-animation/input/task.md",
+    "eval-2-template-runtime-inline-animation/eval_metadata.json",
+    "evals.json",
+    "fixture-provenance.json",
+    "source-snapshot.json",
+    "run_evals.py",
+    "grade.py"
+  ],
+  "description": "宿主前提仅在case prompt及input/task.md文字中明示，未新增app.json输入文件。",
+  "runner_maintenance": "RN iteration-17已移除；当前入口改为复用iteration-18的独立运行器与指标读取函数。历史执行记录不变。"
+}

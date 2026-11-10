@@ -34,7 +34,7 @@
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | enable-offset		  | boolean  |     `false`    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
-| enable-var	  | boolean  |     `true`    | 默认支持使用 css variable，若想关闭该功能可设置为 false |
+| enable-var | boolean / `'use'` | `false` | 首次自动检测 CSS 变量能力；`'use'` 仅预留动态使用，`true` 预留动态声明与使用。见 [CSS 变量](./style.md#var-function) |
 | enable-text-pass-through | boolean | `false` | RN 环境特有属性，开启文本样式和文本属性透传上下文，请在动态添加文本样式或文本属性时开启 |
 | parent-width		  | number  |         | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度|
 | parent-height		  | number  |         | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度|
@@ -58,9 +58,21 @@
 | hover-stay-time	  | number  |     `400`    | 手指松开后点击态保留时间，单位毫秒	 |
 | animation | object  |   | 传递动画的实例， 可配合mpx.createAnimation方法一起使用|
 | enable-background		  | boolean  |     `false `   |  RN环境特有属性，是否要开启background-image、background-size和background-position的相关计算或渲染，请根据实际情况开启 |
-| enable-animation | boolean  | `false`  | RN环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
+| enable-animation | boolean \| string | `false` | RN 环境特有属性，预声明动画类型；可显式选择 API 或 transition，具体取值见下表。 |
 | enable-fast-image | boolean  | `true`  | RN 环境特有属性，渲染背景图片时默认使用 `@d11/react-native-fast-image`，设为 `false` 时使用 React Native 原生 `Image` |
 | is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
+
+`enable-animation` 的取值规则：
+
+| 值 | 行为 |
+| --- | --- |
+| 未设置、`false`、`'none'` | 按样式和 `animation` 属性自动检测动画类型，不会强制关闭已检测到的动画。 |
+| `true` | 默认选择 `createAnimation` API 动画；若同时检测到 transition 样式，则优先选择 transition。 |
+| `'api'` | 显式选择 `createAnimation` API 动画，优先于样式自动检测，需配合 `animation` 属性传入动画数据。 |
+| `'transition'` | 显式选择 CSS transition 动画，优先于自动检测，需配合 transition 样式。 |
+| `'animation'` | 识别为 CSS animation，但当前不支持，会提示错误且不启用动画渲染。 |
+
+动画类型在首次渲染时确定，同一实例不能从无动画切换为有动画，也不能在 API 与 transition 之间切换。首次没有 transition、后续才动态添加时，应从首次渲染起设置 `enable-animation="transition"`；`true` 不能代替此预声明。
 
 事件
 
@@ -73,7 +85,7 @@
 > - 如果从未使用背景图或动画，请不要开启 `enable-background` 或 `enable-animation` 属性，会有一定的性能消耗。
 > - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 > - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
-> - 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
+> - view 的背景与动画能力需在**首次**渲染时确定。后续可能使用背景图时，首次设置 <span v-pre>`enable-background="{{true}}"`</span>；后续可能使用动画时，按类型预声明 `enable-animation="api"` 或 `enable-animation="transition"`，不要将布尔值 `true` 当作通用动画开关。
 
 ### text
 文本。

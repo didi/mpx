@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/size-report",
-  "version": "2.11.0",
+  "version": "2.11.2",
   "description": "mpx size report plugin",
   "main": "src/index.js",
   "scripts": {
@@ -11,7 +11,8 @@
   "homepage": "https://www.mpxjs.cn/guide/advance/size-report.html",
   "repository": {
     "type": "git",
-    "url": "https://github.com/didi/mpx"
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/size-report"
   },
   "keywords": [
     "mpx",

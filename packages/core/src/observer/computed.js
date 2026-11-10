@@ -1,9 +1,9 @@
 import { isFunction, noop } from '@mpxjs/utils'
 import Dep from './dep'
 import { createRef } from './ref'
-import { ReactiveEffect } from './effect'
+import { ReactiveEffect, isTracking } from './effect'
 
-export function computed (getterOrOptions) {
+export function computed (getterOrOptions, debugOptions) {
   let getter, setter
   if (isFunction(getterOrOptions)) {
     getter = getterOrOptions
@@ -18,14 +18,21 @@ export function computed (getterOrOptions) {
   const effect = new ReactiveEffect(getter, () => {
     dirty = true
   })
+  if (process.env.NODE_ENV !== 'production' && debugOptions) {
+    effect.onTrack = debugOptions.onTrack
+    effect.onTrigger = debugOptions.onTrigger
+  }
 
-  return createRef({
+  const ref = createRef({
     get: () => {
       if (dirty) {
         value = effect.run()
         dirty = false
       }
       if (Dep.target) {
+        if (process.env.NODE_ENV !== 'production' && isTracking() && Dep.target.onTrack) {
+          Dep.target.invokeDebuggerHook('onTrack', { target: ref, type: 'get', key: 'value' })
+        }
         effect.depend()
       }
       return value
@@ -34,4 +41,5 @@ export function computed (getterOrOptions) {
       setter(val)
     }
   }, effect)
+  return ref
 }
