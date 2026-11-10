@@ -1,4 +1,4 @@
-import { ONLOAD, ONSHOW } from '../../core/innerLifecycle'
+import { BEFORECREATE, ONSHOW } from '../../core/innerLifecycle'
 import { EventChannel } from '@mpxjs/api-proxy/src/platform/api/event-channel/index'
 
 function initEventChannel () {
@@ -15,8 +15,9 @@ function initEventChannel () {
 export default function pageRouteMixin (mixinType) {
   if (mixinType === 'page') {
     return {
-      [ONLOAD] (query, decodedQuery, isPreload) {
-        if (!isPreload) initEventChannel.call(this)
+      [BEFORECREATE] () {
+        const props = this.__props
+        if (!props.navigation.getState?.()?.preloadedRoutes?.some(route => route.key === props.route.key)) initEventChannel.call(this)
       },
       [ONSHOW]: initEventChannel,
       methods: {
