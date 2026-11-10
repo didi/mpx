@@ -69,46 +69,30 @@ function navigateTo (options = {}) {
   const navigationHelper = global.__navigationHelper
   const navigation = getFocusedNavigation()
   if (canNavigate(navigation, navigationHelper, 'navigateTo', options)) {
+    const eventChannel = new EventChannel()
+    if (options.events) {
+      eventChannel._addListeners(options.events)
+    }
     const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
 
-    const state = navigation.getState()
-    const preloaded = state.preloadedRoutes?.find(route => route.name === finalPath)
-    const instance = preloaded && global.__mpxPagesMap[preloaded.key]?.[0]
-    const eventChannel = instance ? instance.getOpenerEventChannel() : new EventChannel()
-    const removeListeners = options.events && eventChannel._addListeners(options.events)
-    if (!instance) {
-      if (preloaded) {
-        const eventChannels = global.__mpxEventChannels || (global.__mpxEventChannels = {})
-        eventChannels[preloaded.key] = eventChannel
-      } else {
-        global.__mpxEventChannel = { route: finalPath, eventChannel }
-      }
+    global.__mpxEventChannel = {
+      route: finalPath,
+      eventChannel
     }
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateTo:ok', eventChannel }
       successHandle(res, options.success, options.complete)
     }
-    const onFailure = navigationHelper.lastFailCallback = (msg) => {
-      removeListeners && removeListeners()
+    navigationHelper.lastFailCallback = (msg) => {
       if (global.__mpxEventChannel?.eventChannel === eventChannel) {
         delete global.__mpxEventChannel
-      }
-      if (preloaded && global.__mpxEventChannels?.[preloaded.key] === eventChannel) {
-        delete global.__mpxEventChannels[preloaded.key]
       }
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
-    try {
-      navigation.push(finalPath, queryObj)
-    } catch (e) {
-      if (navigationHelper.lastFailCallback !== onFailure) throw e
-      navigationHelper.lastSuccessCallback = null
-      navigationHelper.lastFailCallback = null
-      onFailure(e.message)
-    }
+    navigation.push(finalPath, queryObj)
   }
 }
 
