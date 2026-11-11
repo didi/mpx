@@ -1,4 +1,4 @@
-let { mpxLoaderConf } = require('../config/index')
+const { mpxLoaderConf } = require('../config/index')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const { resolve, getConf } = require('./utils')
 
@@ -6,7 +6,7 @@ const baseRules = [
   {
     test: /\.js$/,
     loader: 'babel-loader',
-    include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')]
+    include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs'), resolve('../../../packages')]
   },
   {
     test: /\.json$/,
@@ -110,7 +110,8 @@ module.exports = function getRules (options) {
         test: /\.less$/,
         use: [
           MpxWebpackPlugin.wxssLoader({
-            importLoaders: 1
+            // Include the injected style compiler and less-loader for imported files.
+            importLoaders: 2
           }),
           'less-loader'
         ]
