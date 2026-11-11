@@ -21,4 +21,5 @@ mpx.navigateTo({ url: '/pages/detail?id=1' })
 - 预加载会提前执行 `onLoad`，但不触发 `onShow/onHide`。正式进入并复用该页面时触发 `onShow`，不重复执行 `onLoad`。
 - RN 的 `onLoad(query, decodedQuery, isPreload)` 第三个参数表示本次初始化是否发生在预加载阶段；普通打开或入栈后才初始化时为 `false`。前两个参数保持原有含义，分别为原始 query 和解码后的 query。
 - 预加载与跳转参数不同时，可能仍复用同一实例，业务需自行处理参数变化。建议两次调用使用相同参数。
+- 也可通过 [redirectTo](./redirectTo.md) 进入同路径的预加载页面并替换当前页；页面参数以本次跳转的 query 为准，不合并预加载参数。
 - 预加载阶段 `getOpenerEventChannel()` 返回 `undefined`。业务应在正式进入的 `onShow` 中获取本次 `navigateTo` 创建的通道；后续再次显示时保持该通道。重复显示时请避免重复注册；发送消息前需确认接收方已就绪。

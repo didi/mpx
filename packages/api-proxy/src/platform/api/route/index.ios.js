@@ -111,6 +111,17 @@ function redirectTo (options = {}) {
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
+    if (isPreloadSupported(navigation)) {
+      const state = navigation.getState()
+      const preloadedRoute = state.preloadedRoutes.find(route => route.name === finalPath)
+      if (preloadedRoute) {
+        navigation.reset(Object.assign({}, state, {
+          routes: state.routes.map((route, index) => index === state.index ? Object.assign({}, preloadedRoute, { params: queryObj }) : route),
+          preloadedRoutes: state.preloadedRoutes.filter(route => route.key !== preloadedRoute.key)
+        }))
+        return
+      }
+    }
     navigation.replace(finalPath, queryObj)
   }
 }

@@ -200,6 +200,8 @@ mpx.navigateTo({ url: '/pages/detail?id=1' })
 
 预加载与跳转参数不同时，可能仍复用同一实例；建议两次调用使用相同参数。`onLoad` 第三个参数 `isPreload`、正式进入时的生命周期和 EventChannel 获取时机见 [预加载页面的生命周期与事件通道](./rn-script-reference.md#预加载页面的生命周期与事件通道)。
 
+`redirectTo` 也可复用同路径的预加载路由来替换当前页，页面参数以本次跳转的 query 为准，不合并预加载参数；其他页面及预加载记录保留。未命中或导航器不支持预加载时，保持普通替换行为。
+
 ## 界面
 
 ### showModal

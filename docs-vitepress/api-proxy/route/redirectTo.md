@@ -4,6 +4,8 @@
 
 支持情况： 微信、支付宝、RN、web
 
+RN 端命中 [preload](./preload.md) 预加载的同路径页面时，复用该路由替换当前页，页面参数以本次 `redirectTo` 的 query 为准，不合并预加载参数；其他页面及预加载记录保留。未命中或当前导航器不支持预加载时，保持普通替换行为。
+
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/route/wx.redirectTo.html)
 
 ### 参数 {#parameters}
