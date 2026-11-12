@@ -290,6 +290,8 @@ setTimeout(() => {
 ```
 * 停止侦听
 
+`watch` / `watchEffect` 在 `setup()` 或生命周期钩子中同步创建时，会随组件卸载自动停止；异步创建需手动停止，注意事项与推荐写法见[停止侦听](../guide/composition-api/reactive-api.md#stop-watching)。
+
 ```js
 const stop = watchEffect(() => {
   /* ... */

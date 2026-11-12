@@ -286,6 +286,7 @@ const doubled = computed(() => count.value * 2)
 - `options` 支持 `immediate?: boolean`（默认 `false`）、`deep?: boolean`（默认 `false`）、`flush?: 'pre' | 'post' | 'sync'`（默认 `'pre'`）。直接监听响应式对象会隐式启用深层侦听。深层变更时，新旧值可能是同一对象引用，不是变化前后的快照。
 - `immediate: true` 的首次回调，单源 `oldValue` 为 `undefined`，基准组合式多源实现为 `[]`。实例 `$watch` 还支持把第二参数写成 `{ handler, immediate, deep, flush }`；选项式 `watch` 则将该对象作为所监听路径的配置值。
 - `watchEffect` 的参数是 `(onCleanup) => void`；使用相同的清理登记方式，依赖只在同步执行期间收集，异步函数 `await` 之后读取的值不会因此成为依赖。
+- 组合式 `watch/watchEffect` 在 `setup` 或生命周期钩子中同步创建时，随组件卸载自动停止；在 `Promise.then()`、`setTimeout()` 等异步回调中创建仍能监听，但需保存返回的停止函数，在同步注册的卸载钩子中调用，并防止卸载后才创建侦听器。优先同步创建，通过响应式数据是否就绪进行条件判断；设置 `flush: 'sync'` 不会使异步创建的侦听器自动关联组件。
 
 ```js
 import { ref, watch } from '@mpxjs/core'

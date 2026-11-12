@@ -191,7 +191,7 @@ setTimeout(() => {
 
 ### 停止侦听 {#stop-watching}
 
-当 `watchEffect` 在组件的 [setup()](composition-api.md#setup) 函数或[生命周期钩子](composition-api.md#lifecycle-hooks)被调用时，侦听器会被链接到该组件的生命周期，并在组件卸载时自动停止。
+当 `watchEffect` 在组件的 [setup()](composition-api.md#setup) 函数或[生命周期钩子](composition-api.md#lifecycle-hooks)中同步创建时，侦听器会被链接到该组件的生命周期，并在组件卸载时自动停止。`watch` 也遵循相同规则。
 
 在一些情况下，也可以显式调用返回值以停止侦听：
 
@@ -203,6 +203,46 @@ const stop = watchEffect(() => {
 // later
 stop()
 ```
+
+在 `Promise.then()`、`setTimeout()` 等异步回调中创建的侦听器仍能收集响应式依赖，但不会自动关联组件，需要手动调用返回的停止函数。
+
+推荐尽可能同步创建侦听器。如果需要等待异步数据，可以在侦听逻辑中判断数据是否就绪：
+
+```js
+// 在同步 setup 中执行，fetchData 为业务异步请求函数
+const data = ref(null)
+
+watchEffect(() => {
+  if (data.value) {
+    console.log(data.value.count)
+  }
+})
+
+fetchData().then(result => {
+  data.value = result
+})
+```
+
+确实需要异步创建时，应在同步 `setup` 中注册卸载清理，并防止组件卸载后才创建侦听器：
+
+```js
+// 在同步 setup 中执行
+const count = ref(0)
+let stop
+let disposed = false
+
+onBeforeUnmount(() => {
+  disposed = true
+  if (stop) stop()
+})
+
+setTimeout(() => {
+  if (disposed) return
+  stop = watch(count, value => console.log(value))
+}, 100)
+```
+
+> 上述 API 均从 `@mpxjs/core` 导入。“同步创建”指调用 `watch` / `watchEffect` 的时机，与控制回调调度的 `flush: 'sync'` 不同。
 
 ### 清除副作用 {#cleanup-side-effect}
 
