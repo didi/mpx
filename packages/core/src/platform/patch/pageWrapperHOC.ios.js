@@ -9,7 +9,7 @@ let pageId = 0
 
 function getLayoutData (headerHeight) {
   const screenDimensions = global.getDimensionsInfo?.('screen') || ReactNative.Dimensions.get('screen')
-  const windowDimensions = global.getDimensionsInfo?.('window') ||  ReactNative.Dimensions.get('window')
+  const windowDimensions = global.getDimensionsInfo?.('window') || ReactNative.Dimensions.get('window')
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
@@ -26,14 +26,15 @@ function getLayoutData (headerHeight) {
   }
   // 竖屏安卓下实测跟折叠屏的差值有区别，竖屏windowHeight的值已经减去了bottomVirtualHeight，如果再减就减多了
   const windowHeightHasBottomVirtual = __mpx_mode__ === 'android' && Math.abs((screenDimensions.height - windowDimensions.height) - (bottomVirtualHeight + (ReactNative.StatusBar.currentHeight || 0))) <= 1 / ReactNative.PixelRatio.get()
+  const shouldCompensateStatusBar = windowHeightHasBottomVirtual || (__mpx_mode__ === 'android' && Math.abs((screenDimensions.height - windowDimensions.height) - (ReactNative.StatusBar.currentHeight || 0)) <= 1 / ReactNative.PixelRatio.get())
   return {
     left: 0,
     top: headerHeight,
     // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
     width: windowDimensions.width,
-    // 实测安卓折叠屏在屏幕切换的时候，有的是window和screen的height值一致，有的差值是导航条的值，如果直接减headerHeight，就会被多减，兼容处理一下这块的逻辑
-    height: windowDimensions.height - (screenDimensions.height > windowDimensions.height && __mpx_mode__=== 'android' ? headerHeight - ReactNative.StatusBar.currentHeight : headerHeight) - (windowHeightHasBottomVirtual ? 0 : bottomVirtualHeight),
-    // ios为0 android为实际statusbar高度r
+    // 高度差约等于状态栏高度或状态栏与虚拟导航栏高度之和时补偿，避免重复扣减状态栏
+    height: windowDimensions.height - (shouldCompensateStatusBar ? headerHeight - (ReactNative.StatusBar.currentHeight || 0) : headerHeight) - (windowHeightHasBottomVirtual ? 0 : bottomVirtualHeight),
+    // ios为0 android为实际statusbar高度
     statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
     bottomVirtualHeight: bottomVirtualHeight,
     isLandscape: isLandscape
