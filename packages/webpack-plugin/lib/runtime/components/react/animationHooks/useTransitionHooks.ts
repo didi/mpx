@@ -228,7 +228,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       }
       // console.log('shareValMap = ', valMap)
       return valMap
-    }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
+    }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number|undefined> })
     if (transforms.length) animatedStyleKeys.push(transforms)
     return {
       shareValMap,
@@ -253,6 +253,17 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         ? ruleV
         : transitionSupportedProperty[key]
       const shareVal = shareValMap[key].value
+      const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
+      // 无过渡或无法插值时直接更新，不创建动画及完成回调。
+      if (
+        (duration === 0 && delay === 0) ||
+        toVal === undefined || shareVal === undefined ||
+        toVal === 'auto' || shareVal === 'auto'
+      ) {
+        cancelAnimation(shareValMap[key])
+        shareValMap[key].value = toVal
+        return
+      }
       if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && !isNaN(+shareVal)) {
         // 获取到的toVal为百分比格式化shareValMap为百分比
         shareValMap[key].value = `${shareVal as number * 100}%`
@@ -263,35 +274,29 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         // 动画起始值和终态值类型不一致报错提示一下
         warn(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
       }
-      if ((toVal === 'auto' && !isNaN(+shareVal)) || (shareVal === 'auto' && !isNaN(+toVal))) {
-        // 有 auto 直接赋值不做动画
-        shareValMap[key].value = toVal
-      } else {
-        // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
-        const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
-        // console.log('animationOptions=', { delay, duration, easing })
-        let callback
-        if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
-          runOnJSCallbackRef.current = {
-            animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
-              transitionend(finished, current, duration)
-            }
-          }
-          callback = (finished?: boolean, current?: AnimatableValue) => {
-            'worklet'
-            // 动画结束后设置下一次transformOrigin
-            if (finished) {
-              runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
-            }
+      // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
+      // console.log('animationOptions=', { delay, duration, easing })
+      let callback
+      if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
+        runOnJSCallbackRef.current = {
+          animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
+            transitionend(finished, current, duration)
           }
         }
-        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
-        // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
-        if (isTransformKey) {
-          transformTransitionendDone = true
+        callback = (finished?: boolean, current?: AnimatableValue) => {
+          'worklet'
+          // 动画结束后设置下一次transformOrigin
+          if (finished) {
+            runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
+          }
         }
-        shareValMap[key].value = animation
       }
+      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
+      // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
+      if (isTransformKey) {
+        transformTransitionendDone = true
+      }
+      shareValMap[key].value = animation
       // console.log(`useTransitionHooks, ${key}=`, animation)
     })
   }

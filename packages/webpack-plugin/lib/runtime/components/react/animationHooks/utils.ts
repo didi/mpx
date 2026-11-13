@@ -128,10 +128,10 @@ export const transitionSupportedProperty = Object.assign({
   marginTop: 0,
   marginHorizontal: 0,
   marginVertical: 0,
-  maxHeight: 0,
-  maxWidth: 0,
-  minHeight: 0,
-  minWidth: 0,
+  maxHeight: undefined,
+  maxWidth: undefined,
+  minHeight: undefined,
+  minWidth: undefined,
   padding: 0,
   paddingBottom: 0,
   paddingLeft: 0,
@@ -141,7 +141,13 @@ export const transitionSupportedProperty = Object.assign({
   paddingVertical: 0,
   fontSize: 0, // Todo
   letterSpacing: 0 // Todo
-}, animationAPIInitialValue)
+}, animationAPIInitialValue, {
+  // transition 未声明的定位属性不能补零，以免覆盖原生布局。
+  top: undefined,
+  right: undefined,
+  bottom: undefined,
+  left: undefined
+})
 
 // export type PropertyType = keyof transitionSupportedProperty
 // transform
@@ -154,16 +160,16 @@ export function getTransformObj (transforms: { [propName: string]: string | numb
   }, {} as { [propName: string]: string | number })
 }
 // 获取样式初始值（prop style or 默认值）
-export function getInitialVal (style: ExtendedViewStyle, key: string) {
+export function getInitialVal (style: ExtendedViewStyle, key: string, initialValues: ExtendedViewStyle = transitionSupportedProperty) {
   if (isTransform(key) && Array.isArray(style.transform)) {
-    let initialVal = transitionSupportedProperty[key]
+    let initialVal = initialValues[key]
     // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
     style.transform.forEach(item => {
       if (item[key] !== undefined) initialVal = item[key]
     })
     return initialVal
   }
-  return style[key] === undefined ? transitionSupportedProperty[key] : style[key]
+  return style[key] === undefined ? initialValues[key] : style[key]
 }
 // animated key transform 格式化
 export function formatAnimatedKeys (keys: string[]) {
