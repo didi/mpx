@@ -49,6 +49,8 @@ declare let global: {
 declare let mpxGlobal: Record<string, any>
 
 declare module '@react-navigation/native' {
+   export function useNavigationState<T>(selector: (state: { routes: { key: string }[] }) => T): T
+   export function useRoute (): { key: string }
    export function useNavigation (): Record<string, any>
    export function usePreventRemove(
     enabled: boolean,

@@ -1,5 +1,6 @@
 /* eslint-disable space-before-function-paren */
 import { useState, useMemo, memo } from 'react'
+import { useNavigationState, useRoute } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StatusBar, processColor, TouchableWithoutFeedback, Image, View, StyleSheet, Text } from 'react-native'
 
@@ -89,6 +90,8 @@ const BACK_ICON =
 const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
   const [innerPageConfig, setPageConfig] = useState<PageConfig>(pageConfig || {})
   const safeAreaTop = useSafeAreaInsets()?.top || 0
+  const route = useRoute()
+  const isFirstPage = useNavigationState(state => state.routes[0].key === route.key)
 
   navigation.setPageConfig = (config: PageConfig) => {
     setPageConfig((previousConfig) => Object.assign({}, previousConfig, config))
@@ -104,18 +107,16 @@ const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
   )
 
   if (isCustom) return statusBarElement
-  // 假设是栈导航，获取栈的长度
-  const stackLength = navigation.getState()?.routes?.length
   const onStackTopBack = mpxGlobal?.__mpx?.config?.rnConfig?.onStackTopBack
   const isHandleStackTopBack = typeof onStackTopBack === 'function'
 
   // 回退按钮与图标
   // prettier-ignore
-  const backElement = stackLength > 1 || isHandleStackTopBack
+  const backElement = !isFirstPage || isHandleStackTopBack
     ? (
       <TouchableWithoutFeedback
         onPress={() => {
-          if (stackLength <= 1 && isHandleStackTopBack) {
+          if (isFirstPage && isHandleStackTopBack) {
             onStackTopBack()
             return
           }
