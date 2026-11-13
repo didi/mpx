@@ -144,7 +144,7 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   const transitionMap = transitionData.reduce((acc, cur) => {
     // hasOwn(transitionSupportedProperty, dash2hump(val)) || val === Transform
     const { property = '', duration = 0, delay = 0, easing = Easing.inOut(Easing.ease) } = cur
-    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === 'transform') && duration > 0) {
+    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === 'transform') && duration >= 0) {
       acc[property] = {
         duration,
         delay,
@@ -157,18 +157,52 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   return transitionMap
 }
 
+const transitionKeys = ['transition', 'transitionDuration', 'transitionTimingFunction', 'transitionDelay', 'transitionProperty'] as const
+
+function getTransitionPropertyKeys (map: TransitionMap): string {
+  return Object.keys(map).sort().join(',')
+}
+
 export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useTransitionHooks, props=`, props)
   const { style: originalStyle = {}, transitionend } = props
   const originalTransform = originalStyle.transform
   // style变更标识(首次render不执行)，初始值为0，首次渲染后为1
   const animationDeps = useRef(0)
-  // 记录上次style map
-  // const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
-  // ** 从 style 中获取动画数据
+  // transition 时序属性动态更新追踪
+  const lastTransitionStyleRef = useRef<Record<string, any>>(
+    transitionKeys.reduce((acc, key) => { acc[key] = originalStyle[key]; return acc }, {} as Record<string, any>)
+  )
+  const prevTransitionMapRef = useRef<TransitionMap | null>(null)
+  // ** 从 style 中获取动画数据(支持动态更新 transitionDuration/transitionDelay/transitionTimingFunction)
   const transitionMap = useMemo(() => {
-    return parseTransitionStyle(originalStyle)
-  }, [])
+    const prevStyle = lastTransitionStyleRef.current
+    // 检测 transition 时序属性是否变化并更新
+    let hasChanged = false
+    transitionKeys.forEach(key => {
+      if (prevStyle[key] !== originalStyle[key]) {
+        hasChanged = true
+        prevStyle[key] = originalStyle[key]
+      }
+    })
+    // 时序属性未变化且非首次计算，跳过重新解析
+    if (!hasChanged && prevTransitionMapRef.current) {
+      return prevTransitionMapRef.current
+    }
+    const newTransitionMap = parseTransitionStyle(originalStyle)
+    if (!prevTransitionMapRef.current) {
+      // 首次计算
+      prevTransitionMapRef.current = newTransitionMap
+      return newTransitionMap
+    }
+    // 检测 transitionProperty 是否变化，变化时直接返回上一次的 transitionMap
+    if (getTransitionPropertyKeys(newTransitionMap) !== getTransitionPropertyKeys(prevTransitionMapRef.current)) {
+      error('[Mpx runtime error]: dynamic setting transitionProperty is not supported')
+      return prevTransitionMapRef.current
+    }
+    prevTransitionMapRef.current = newTransitionMap
+    return newTransitionMap
+  }, [originalStyle])
   // ** style prop sharedValue  interpolateOutput: SharedValue<InterpolateOutput>
   const { shareValMap, animatedKeys, animatedStyleKeys } = useMemo(() => {
     // 记录需要执行动画的 propName
@@ -180,6 +214,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       // const { property } = transition || {}
       if (property === 'transform') {
         Object.keys(originalStyle.transform ? getTransformObj(originalStyle.transform!) : transformInitial).forEach((key) => {
+          // perspective matrix 等 transform 属性保留原始样式，不参与动画追踪
+          if (!isTransform(key)) return
           const defaultVal = getInitialVal(originalStyle, key)
           // console.log(`shareValMap property=${key} defaultVal=${defaultVal}`)
           valMap[key] = makeMutable(defaultVal)
@@ -195,7 +231,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       }
       // console.log('shareValMap = ', valMap)
       return valMap
-    }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
+    }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number|undefined> })
     if (transforms.length) animatedStyleKeys.push(transforms)
     return {
       shareValMap,
@@ -220,6 +256,17 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         ? ruleV
         : transitionSupportedProperty[key]
       const shareVal = shareValMap[key].value
+      const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
+      // 无过渡或无法插值时直接更新，不创建动画及完成回调。
+      if (
+        (duration === 0 && delay === 0) ||
+        toVal === undefined || shareVal === undefined ||
+        toVal === 'auto' || shareVal === 'auto'
+      ) {
+        cancelAnimation(shareValMap[key])
+        shareValMap[key].value = toVal
+        return
+      }
       if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && !isNaN(+shareVal)) {
         // 获取到的toVal为百分比格式化shareValMap为百分比
         shareValMap[key].value = `${shareVal as number * 100}%`
@@ -230,35 +277,29 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         // 动画起始值和终态值类型不一致报错提示一下
         warn(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
       }
-      if ((toVal === 'auto' && !isNaN(+shareVal)) || (shareVal === 'auto' && !isNaN(+toVal))) {
-        // 有 auto 直接赋值不做动画
-        shareValMap[key].value = toVal
-      } else {
-        // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
-        const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
-        // console.log('animationOptions=', { delay, duration, easing })
-        let callback
-        if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
-          runOnJSCallbackRef.current = {
-            animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
-              transitionend(finished, current, duration)
-            }
-          }
-          callback = (finished?: boolean, current?: AnimatableValue) => {
-            'worklet'
-            // 动画结束后设置下一次transformOrigin
-            if (finished) {
-              runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
-            }
+      // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
+      // console.log('animationOptions=', { delay, duration, easing })
+      let callback
+      if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
+        runOnJSCallbackRef.current = {
+          animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
+            transitionend(finished, current, duration)
           }
         }
-        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
-        // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
-        if (isTransformKey) {
-          transformTransitionendDone = true
+        callback = (finished?: boolean, current?: AnimatableValue) => {
+          'worklet'
+          // 动画结束后设置下一次transformOrigin
+          if (finished) {
+            runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
+          }
         }
-        shareValMap[key].value = animation
       }
+      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
+      // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
+      if (isTransformKey) {
+        transformTransitionendDone = true
+      }
+      shareValMap[key].value = animation
       // console.log(`useTransitionHooks, ${key}=`, animation)
     })
   }
@@ -287,7 +328,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       if (Array.isArray(key)) {
         const transformStyle = getTransformObj(originalTransform || [])
         key.forEach((transformKey) => {
-          transformStyle[transformKey] = shareValMap[transformKey].value
+          transformStyle[transformKey] = shareValMap[transformKey].value!
         })
         styles.transform = Object.entries(transformStyle).map(([key, value]) => {
           return { [key]: value }

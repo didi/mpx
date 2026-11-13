@@ -45,7 +45,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
   // ** 全量 style prop sharedValue
   const shareValMap = useMemo(() => {
     return Object.keys(animationAPIInitialValue).reduce((valMap, key) => {
-      const defaultVal = getInitialVal(originalStyle, key)
+      const defaultVal = getInitialVal(originalStyle, key, animationAPIInitialValue)
       valMap[key] = makeMutable(defaultVal)
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
