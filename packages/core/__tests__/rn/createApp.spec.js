@@ -26,6 +26,11 @@ jest.mock('@mpxjs/utils', () => Object.assign({}, jest.requireActual('@mpxjs/uti
 
 jest.mock('@mpxjs/api-proxy', () => ({ createSelectorQuery: jest.fn(), createIntersectionObserver: jest.fn() }))
 
+jest.mock('@react-navigation/native', () => ({
+  useNavigationState: selector => selector({ routes: [{ key: 'home' }] }),
+  useRoute: () => ({ key: 'home' })
+}), { virtual: true })
+
 jest.mock('../../src/index', () => ({ config: { rnConfig: {}, ignoreProxyWhiteList: [] }, prototype: {} }))
 
 jest.mock('react-native', () => ({
