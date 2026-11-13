@@ -1649,6 +1649,7 @@ CSS transition 动画至少需要设置动画时长和动画属性，可通过�
 
 > 重要提示：
 > `transition-property` 需要保持稳定，不支持通过条件控制添加和移除 `transition-property`
+> 设置 `transition-property: transform` 时，`perspective` 和 `matrix` 仅样式更新，不参与动画
 > `transition` 支持设置百分比，如 ```marginTop: 1%;marginTop: 100%;```；要注意的是起始值和结束值需设置为同一类型，同为px或者同为百分比， 支持 ```marginTop: 10px;marginTop: 100px; ```，**不支持 ```marginTop: 10px; marginTop: 100%;```**
 
 ```js

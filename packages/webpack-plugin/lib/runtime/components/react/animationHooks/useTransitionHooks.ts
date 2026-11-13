@@ -214,6 +214,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       // const { property } = transition || {}
       if (property === 'transform') {
         Object.keys(originalStyle.transform ? getTransformObj(originalStyle.transform!) : transformInitial).forEach((key) => {
+          // perspective matrix 等 transform 属性保留原始样式，不参与动画追踪
+          if (!isTransform(key)) return
           const defaultVal = getInitialVal(originalStyle, key)
           // console.log(`shareValMap property=${key} defaultVal=${defaultVal}`)
           valMap[key] = makeMutable(defaultVal)
@@ -326,7 +328,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       if (Array.isArray(key)) {
         const transformStyle = getTransformObj(originalTransform || [])
         key.forEach((transformKey) => {
-          transformStyle[transformKey] = shareValMap[transformKey].value
+          transformStyle[transformKey] = shareValMap[transformKey].value!
         })
         styles.transform = Object.entries(transformStyle).map(([key, value]) => {
           return { [key]: value }

@@ -192,3 +192,60 @@ describe('transition 完成事件', () => {
     expect(transitionend).not.toHaveBeenCalled()
   })
 })
+
+describe('transition transform 属性追踪', () => {
+  const matrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 10, 20, 0, 1]
+
+  test.each([0, 300])('时长 %sms 时不覆盖仅包含 perspective/matrix 的原始样式', (duration) => {
+    const transitionend = jest.fn()
+    const transition = `transform ${duration}ms`
+    expect(renderStyle({ transition, transform: [{ perspective: 500 }, { matrix }] }, transitionend)).not.toHaveProperty('transform')
+    expect(renderStyle({ transition, transform: [{ perspective: 800 }] }, transitionend)).not.toHaveProperty('transform')
+    expect(renderStyle({ transition, transform: [] }, transitionend)).not.toHaveProperty('transform')
+    expect(withTiming).not.toHaveBeenCalled()
+    expect(transitionend).not.toHaveBeenCalled()
+    expect(error).not.toHaveBeenCalled()
+  })
+
+  test.each([0, 300])('时长 %sms 时混合属性保留顺序、原始值和支持的动画', (duration) => {
+    const transitionend = jest.fn()
+    const transition = `transform ${duration}ms`
+    const initial = [{ perspective: 500 }, { rotateY: '0deg' }, { matrix }, { scaleX: 1 }]
+    expect(renderStyle({ transition, transform: initial }, transitionend).transform).toEqual(initial)
+    const target = [{ perspective: 800 }, { rotateY: '45deg' }, { matrix }, { scaleX: 2 }]
+    expect(renderStyle({ transition, transform: target }, transitionend).transform).toEqual(target)
+    if (duration) {
+      expect(withTiming).toHaveBeenCalledTimes(2)
+      expect(withTiming).toHaveBeenNthCalledWith(1, '45deg', expect.objectContaining({ duration }), expect.any(Function))
+      expect(withTiming).toHaveBeenNthCalledWith(2, 2, expect.objectContaining({ duration }))
+      const onComplete = (withTiming as jest.Mock).mock.calls[0][2]
+      onComplete(true, '45deg')
+      expect(transitionend).toHaveBeenCalledTimes(1)
+    } else {
+      expect(withTiming).not.toHaveBeenCalled()
+      expect(transitionend).not.toHaveBeenCalled()
+    }
+    expect(warn).not.toHaveBeenCalled()
+    expect(error).not.toHaveBeenCalled()
+  })
+
+  test('混合属性更新时透传新增属性，并移除已撤销的 perspective/matrix', () => {
+    const transition = 'transform 300ms'
+    renderStyle({ transition, transform: [{ perspective: 500 }, { rotateY: '45deg' }] })
+    const target = [{ matrix }, { rotateY: '90deg' }]
+    expect(renderStyle({ transition, transform: target }).transform).toEqual(target)
+    expect(renderStyle({ transition, transform: [] }).transform).toEqual([{ rotateY: '0deg' }])
+    expect(withTiming).toHaveBeenLastCalledWith('0deg', expect.objectContaining({ duration: 300 }))
+  })
+
+  test('初始未声明 transform 时仍追踪已有默认属性，后续 perspective 直接透传', () => {
+    const transition = 'transform 300ms'
+    renderStyle({ transition })
+    const result = renderStyle({ transition, transform: [{ perspective: 500 }, { rotateY: '45deg' }] })
+    expect(result.transform[0]).toEqual({ perspective: 500 })
+    expect(result.transform).toContainEqual({ rotateY: '45deg' })
+    expect((withTiming as jest.Mock).mock.calls.some(([value]) => value === 500)).toBe(false)
+    expect(warn).not.toHaveBeenCalled()
+    expect(error).not.toHaveBeenCalled()
+  })
+})
