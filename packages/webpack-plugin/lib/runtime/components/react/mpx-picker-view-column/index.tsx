@@ -18,6 +18,7 @@ interface ColumnProps {
   style: {
     [key: string]: any
   }
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   wrapperStyle: {
     height: number
@@ -42,6 +43,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     pickerMaskStyle,
     pickerIndicatorStyle,
     enableWheelAnimation = true,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough
 
@@ -54,7 +56,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar })
+  } = useTransformStyle(style, { enableEnv, enableVar })
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })

@@ -89,6 +89,8 @@ export const PickerContext = createContext(null)
 
 export const VarContext = createContext({})
 
+export const EnvContext = createContext<Partial<Record<'top' | 'right' | 'bottom' | 'left', number>>>({})
+
 export const TextPassThroughContext = createContext<TextPassThroughContextValue | null>(null)
 
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)

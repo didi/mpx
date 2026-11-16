@@ -106,6 +106,7 @@ interface MpxSectionListProps {
   'genericsection-footer'?: string;
   'genericlist-header'?: string;
   'genericlist-footer'?: string;
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use';
   'parent-width'?: number;
   'parent-height'?: number;
@@ -166,6 +167,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     'genericsection-footer': genericsectionFooter,
     'genericlist-header': genericListHeader,
     'genericlist-footer': genericListFooter,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
@@ -214,7 +216,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((sectionListProps = {}
     hasPositionFixed,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableEnv, enableVar, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
   const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })

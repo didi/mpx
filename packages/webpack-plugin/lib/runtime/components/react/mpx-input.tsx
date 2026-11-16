@@ -96,6 +96,7 @@ export interface InputProps {
   'selection-end'?: number
   'placeholder-style'?: { color?: string }
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -147,6 +148,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'cursor-color': cursorColor,
     'selection-start': selectionStart = -1,
     'selection-end': selectionEnd = -1,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -210,7 +212,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableEnv, enableVar, parentWidth, parentHeight })
 
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, {

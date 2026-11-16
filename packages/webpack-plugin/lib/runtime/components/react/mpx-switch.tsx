@@ -22,6 +22,7 @@ interface _SwitchProps extends SwitchProps {
   type: 'switch' | 'checkbox'
   disabled: boolean
   color: string
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -35,6 +36,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     type = 'switch',
     disabled = false,
     color = '#04BE02',
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -58,6 +60,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     setHeight,
     hasPositionFixed
   } = useTransformStyle(style, {
+    enableEnv,
     enableVar,
     parentWidth,
     parentHeight

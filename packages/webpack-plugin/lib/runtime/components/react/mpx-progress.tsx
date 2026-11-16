@@ -50,6 +50,7 @@ export interface ProgressProps {
   bindactiveend?: (event: any) => void
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -69,6 +70,7 @@ const Progress = forwardRef<
     'active-mode': activeMode = 'backwards',
     duration = 30,
     style = {},
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -89,6 +91,7 @@ const Progress = forwardRef<
     setHeight,
     hasPositionFixed
   } = useTransformStyle(style, {
+    enableEnv,
     enableVar,
     parentWidth,
     parentHeight

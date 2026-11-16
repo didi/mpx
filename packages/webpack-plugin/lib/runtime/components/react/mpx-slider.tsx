@@ -56,6 +56,7 @@ export interface SliderProps {
   bindchanging?: (event: any) => void
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -79,6 +80,7 @@ const Slider = forwardRef<
     'block-color': blockColor = '#ffffff',
     name,
     style = {},
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -121,6 +123,7 @@ const Slider = forwardRef<
     setHeight,
     hasPositionFixed
   } = useTransformStyle(style, {
+    enableEnv,
     enableVar,
     parentWidth,
     parentHeight

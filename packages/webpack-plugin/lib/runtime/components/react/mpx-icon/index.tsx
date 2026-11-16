@@ -36,6 +36,7 @@ export interface IconProps {
   color?: string
   style?: TextStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -60,6 +61,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       size = 23,
       color,
       style = {},
+      'enable-env': enableEnv,
       'enable-var': enableVar,
       'parent-width': parentWidth,
       'parent-height': parentHeight
@@ -77,7 +79,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       normalStyle,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, parentWidth, parentHeight })
+    } = useTransformStyle(styleObj, { enableEnv, enableVar, parentWidth, parentHeight })
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, { style: normalStyle })

@@ -185,6 +185,7 @@ interface MovableViewProps {
   'wait-for'?: Array<GestureHandler>
   'simultaneous-handlers'?: Array<GestureHandler>
   inertia?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
@@ -228,6 +229,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     damping = 20,
     friction = 2,
     'out-of-bounds': outOfBounds = false,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
@@ -264,7 +266,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     varContext,
     setWidth,
     setHeight
-  } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, parentWidth, parentHeight })
+  } = useTransformStyle(Object.assign({}, style, styles.container), { enableEnv, enableVar, parentWidth, parentHeight })
 
   const navigation = useNavigation()
 

@@ -36,6 +36,7 @@
 | enable-offset		  | boolean  |     `false`    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 | enable-var | boolean / `'use'` | `false` | 首次自动检测 CSS 变量能力；`'use'` 仅预留动态使用，`true` 预留动态声明与使用。见 [CSS 变量](./style.md#var-function) |
 | enable-text-pass-through | boolean | `false` | RN 环境特有属性，开启文本样式和文本属性透传上下文，请在动态添加文本样式或文本属性时开启 |
+| enable-env | boolean | 按首次样式检测 | true 时订阅 CSS env 环境变量更新；未指定时，首次样式包含 env() 才启用；false 时不订阅。启用状态在组件生命周期内保持稳定，后续可能使用 env() 时需在首次渲染显式设为 true。 |
 | parent-width		  | number  |         | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度|
 | parent-height		  | number  |         | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度|
 

@@ -14,6 +14,7 @@ export interface LabelProps {
   for?: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
@@ -29,6 +30,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     const {
       style = {},
+      'enable-env': enableEnv,
       'enable-var': enableVar,
       'enable-text-pass-through': enableTextPassThrough,
       'parent-width': parentWidth,
@@ -49,7 +51,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       varContext,
       setWidth,
       setHeight
-    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle })
+    } = useTransformStyle(style, { enableEnv, enableVar, parentWidth, parentHeight, defaultStyle })
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, { style: normalStyle })

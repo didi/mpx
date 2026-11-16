@@ -39,6 +39,7 @@ const baseRemovePropsMap: Record<string, boolean> = {
   'enable-background': true,
   'enable-offset': true,
   'enable-var': true,
+  'enable-env': true,
   'external-var-context': true,
   'parent-font-size': true,
   'parent-width': true,

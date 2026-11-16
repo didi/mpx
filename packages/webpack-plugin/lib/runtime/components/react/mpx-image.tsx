@@ -52,6 +52,7 @@ export interface ImageProps {
   mode?: Mode
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -149,6 +150,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     src = '',
     mode = 'scaleToFill',
     style = {},
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-fast-image': enableFastImage = true,
     'parent-width': parentWidth,
@@ -208,7 +210,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isLayoutMode, parentWidth, parentHeight, defaultStyle: DEFAULT_IMAGE_STYLE })
+  } = useTransformStyle(styleObj, { enableEnv, enableVar, transformRadiusPercent: isAndroid && !isLayoutMode, parentWidth, parentHeight, defaultStyle: DEFAULT_IMAGE_STYLE })
 
   // normalStyle 已合入 DEFAULT_IMAGE_STYLE，对外暴露完整 style（含 default 兜底的 width/height）
   useNodesRef(props, ref, nodeRef, {

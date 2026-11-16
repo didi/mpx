@@ -11,6 +11,7 @@ interface StickyHeaderProps {
   style?: ViewStyle;
   padding?: [number, number, number, number];
   'offset-top'?: number;
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use';
   'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
@@ -25,6 +26,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     bindstickontopchange,
     padding = [0, 0, 0, 0],
     'offset-top': offsetTop = 0,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
@@ -45,7 +47,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableEnv, enableVar, parentWidth, parentHeight })
 
   const { layoutRef, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef, onLayout })
 

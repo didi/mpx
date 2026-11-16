@@ -26,6 +26,7 @@ interface CameraProps {
   bindscancode?: (result: { type: string, data: string }) => void
   'parent-width'?: number
   'parent-height'?: number
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
 }
 
@@ -96,6 +97,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     bindscancode,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     style = {}
   } = props
@@ -109,6 +111,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     setWidth,
     setHeight
   } = useTransformStyle(styleObj, {
+    enableEnv,
     enableVar,
     parentWidth,
     parentHeight
