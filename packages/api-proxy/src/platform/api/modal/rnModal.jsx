@@ -1,9 +1,73 @@
 import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
+const styles = StyleSheet.create({
+  modalTask: {
+    left: 0,
+    top: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    position: 'absolute',
+    zIndex: 10000
+  },
+  modalContent: {
+    paddingTop: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  modalTitleText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    paddingLeft: 20,
+    paddingRight: 20
+  },
+  contentBox: {
+    marginTop: 10
+  },
+  modalContentText: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: '#808080',
+    paddingLeft: 20,
+    paddingRight: 20,
+    textAlign: 'center'
+  },
+  modalBtnBox: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.2)',
+    borderStyle: 'solid',
+    marginTop: 25,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  modalBtn: {
+    flex: 1,
+    textAlign: 'center'
+  },
+  modalButton: {
+    width: '100%',
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
+  cancelStyle: {
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: 'rgba(0,0,0,0.2)',
+    borderStyle: 'solid'
+  }
+})
+
 const modalMap = new Map()
 const showModal = function (options = {}) {
-  const { width, height } = Dimensions.get('window')
+  const dimensionsWindow = global.getDimensionsInfo?.('window') || Dimensions.get('window')
+  const layout = getFocusedNavigation()?.layout
+  const width = layout?.width || dimensionsWindow.width
+  // Android 继续使用 screen 高度作为兜底。
+  const height = layout?.height || (__mpx_mode__ === 'ios' ? dimensionsWindow.height : (global.getDimensionsInfo?.('screen') || Dimensions.get('screen')).height)
   const id = getCurrentPageId()
   const {
     title,
@@ -36,72 +100,6 @@ const showModal = function (options = {}) {
     return currentArr.pop()
   }
 
-  const modalWidth = width * 0.8
-  const styles = StyleSheet.create({
-    modalTask: {
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-      display: 'flex',
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      position: 'absolute',
-      zIndex: 10000
-    },
-    modalContent: {
-      paddingTop: 20,
-      width: modalWidth,
-      backgroundColor: '#ffffff',
-      borderRadius: 15,
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    modalTitleText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      paddingLeft: 20,
-      paddingRight: 20
-    },
-    contentBox: {
-      maxHeight: height * 0.45,
-      marginTop: 10
-    },
-    modalContentText: {
-      fontSize: 16,
-      lineHeight: 26,
-      color: '#808080',
-      paddingLeft: 20,
-      paddingRight: 20,
-      textAlign: 'center'
-    },
-    modalBtnBox: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: 'rgba(0,0,0,0.2)',
-      borderStyle: 'solid',
-      marginTop: 25,
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row'
-    },
-    modalBtn: {
-      flex: 1,
-      textAlign: 'center',
-      paddingTop: width * 0.04,
-      paddingBottom: width * 0.04
-    },
-    modalButton: {
-      width: '100%',
-      fontWeight: 'bold',
-      textAlign: 'center'
-    },
-    cancelStyle: {
-      borderRightWidth: StyleSheet.hairlineWidth,
-      borderRightColor: 'rgba(0,0,0,0.2)',
-      borderStyle: 'solid'
-    }
-  })
   const modalTitle = []
   const modalContent = []
   const editableContent = []
@@ -153,10 +151,10 @@ const showModal = function (options = {}) {
       color: cancelColor
     })
   }
-  const ModalView = <View style={styles.modalTask}>
-    <View style={styles.modalContent}>
+  const ModalView = <View style={[styles.modalTask, { width, height }]}>
+    <View style={[styles.modalContent, { width: width * 0.8 }]}>
       {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
-      {modalContent.map((item, index) => <ScrollView key={index} style={styles.contentBox}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
+      {modalContent.map((item, index) => <ScrollView key={index} style={[styles.contentBox, { maxHeight: height * 0.45 }]}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
       {editableContent.map((item, index) => <View key={index} style={{
         width: '100%',
         paddingLeft: 25,
@@ -171,7 +169,7 @@ const showModal = function (options = {}) {
         paddingRight: 10
       }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
       <View style={styles.modalBtnBox}>
-        {modalButton.map((item, index) => <TouchableOpacity key={index} style={[styles.modalBtn, item.style]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
+        {modalButton.map((item, index) => <TouchableOpacity key={index} style={[styles.modalBtn, { paddingTop: width * 0.04, paddingBottom: width * 0.04 }, item.style]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
       </View>
     </View>
   </View>

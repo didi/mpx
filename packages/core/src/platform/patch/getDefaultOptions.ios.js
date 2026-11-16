@@ -512,8 +512,8 @@ const checkRelation = (options) => {
   }
 }
 function getLayoutData (headerHeight) {
-  const screenDimensions = ReactNative.Dimensions.get('screen')
-  const windowDimensions = ReactNative.Dimensions.get('window')
+  const screenDimensions = global.getDimensionsInfo?.('screen') || ReactNative.Dimensions.get('screen')
+  const windowDimensions = global.getDimensionsInfo?.('window') || ReactNative.Dimensions.get('window')
   // iOS 使用当前窗口尺寸，适配窗口与屏幕尺寸不一致的场景；Android 保留 screen 兼容逻辑。
   const layoutDimensions = ReactNative.Platform.OS === 'ios' ? windowDimensions : screenDimensions
   const isLandscape = screenDimensions.height < screenDimensions.width

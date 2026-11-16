@@ -1,57 +1,57 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 
 let isLoadingShow
+const styles = StyleSheet.create({
+  toastContent: {
+    maxWidth: '60%',
+    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+    paddingTop: 15,
+    paddingBottom: 15,
+    paddingLeft: 20,
+    paddingRight: 20,
+    borderRadius: 5,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  toastWrap: {
+    left: 0,
+    top: 0,
+    zIndex: 10000,
+    position: 'absolute',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  toastHasIcon: {
+    width: 140
+  },
+  toastImg: {
+    width: 40,
+    height: 40,
+    marginLeft: 'auto',
+    marginRight: 'auto'
+  },
+  toastText: {
+    textAlign: 'center',
+    color: '#ffffff',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 10
+  }
+})
+
 const toastMap = new Map()
 const timerMap = new Map()
 function showToast (options = {}) {
-  const dimensionsScreen = Dimensions.get('screen')
-  const dimensionsWindow = Dimensions.get('window')
-  const screenHeight = __mpx_mode__ === 'ios' ? dimensionsWindow.height : dimensionsScreen.height
-  const contentTop = parseInt(screenHeight * 0.4)
-  const styles = StyleSheet.create({
-    toastContent: {
-      maxWidth: '60%',
-      backgroundColor: 'rgba(20, 20, 20, 0.7)',
-      paddingTop: 15,
-      paddingBottom: 15,
-      paddingLeft: 20,
-      paddingRight: 20,
-      borderRadius: 5,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: contentTop // 小程序里面展示偏上一点
-    },
-    toastWrap: {
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      zIndex: 10000,
-      position: 'absolute',
-      display: 'flex',
-      alignItems: 'center'
-    },
-    toastHasIcon: {
-      width: 140
-    },
-    toastImg: {
-      width: 40,
-      height: 40,
-      marginLeft: 'auto',
-      marginRight: 'auto'
-    },
-    toastText: {
-      textAlign: 'center',
-      color: '#ffffff',
-      fontSize: 12,
-      lineHeight: 18,
-      marginTop: 10
-    }
-  })
+  const dimensionsType = __mpx_mode__ === 'ios' ? 'window' : 'screen'
+  const dimensions = global.getDimensionsInfo?.(dimensionsType) || Dimensions.get(dimensionsType)
+  const layout = getFocusedNavigation()?.layout
+  const windowWidth = layout?.width || (global.getDimensionsInfo?.('window') || Dimensions.get('window')).width
+  const windowHeight = layout?.height || dimensions.height
+  const contentTop = parseInt(windowHeight * 0.4) // 小程序里面展示偏上一点
   const id = getCurrentPageId()
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   if (id === null) {
@@ -75,15 +75,15 @@ function showToast (options = {}) {
   const pointerEvents = mask ? 'auto' : 'none'
   isLoadingShow = isLoading
   if (image || icon === 'success' || icon === 'error') {
-    ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
-      <View style={[styles.toastContent, styles.toastHasIcon]}>
+    ToastView = <View style={[styles.toastWrap, { width: windowWidth, height: windowHeight, pointerEvents }]}>
+      <View style={[styles.toastContent, styles.toastHasIcon, { marginTop: contentTop }]}>
         <Image style={ styles.toastImg } source={{ uri: image || iconImg[icon] }}></Image>
         { title ? <Text numberOfLines={2} style={styles.toastText}>{title}</Text> : null }
       </View>
     </View>
   } else if (icon === 'loading') {
-    ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
-      <View style={[styles.toastContent, styles.toastHasIcon]}>
+    ToastView = <View style={[styles.toastWrap, { width: windowWidth, height: windowHeight, pointerEvents }]}>
+      <View style={[styles.toastContent, styles.toastHasIcon, { marginTop: contentTop }]}>
         <ActivityIndicator
           animating
           size='small'
@@ -93,8 +93,8 @@ function showToast (options = {}) {
       </View>
     </View>
   } else {
-    ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
-      <View style={styles.toastContent}>
+    ToastView = <View style={[styles.toastWrap, { width: windowWidth, height: windowHeight, pointerEvents }]}>
+      <View style={[styles.toastContent, { marginTop: contentTop }]}>
         { title
           ? <Text numberOfLines={2} style={{
             ...styles.toastText,

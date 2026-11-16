@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, Dimensions, useWindowDimensions } from 'react-native'
 import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
-import { initialWindowMetrics } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,18 +18,10 @@ const remove = function (id) {
   }
 }
 
-const navigation = getFocusedNavigation() || {}
-const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
-const navigationInsets = navigation.insets || {}
-const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
-const bottom = insets.bottom
-
 const styles = StyleSheet.create({
   actionAction: {
     left: 0,
     top: 0,
-    bottom: 0,
-    right: 0,
     position: 'absolute',
     zIndex: 10000
   },
@@ -74,12 +66,19 @@ const styles = StyleSheet.create({
   buttonStyle: {
     paddingTop: 10,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: bottom + 10
+    alignItems: 'center'
   }
 })
 
-function ActionSheet ({ itemColor, height, success, fail, complete, alertText, itemList }) {
+function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList }) {
+  const { bottom = 0 } = useSafeAreaInsets()
+  const nativeWindow = useWindowDimensions()
+  const dimensionsWindow = global.getDimensionsInfo?.('window') || nativeWindow
+  const layout = getFocusedNavigation()?.layout
+  const windowWidth = layout?.width || dimensionsWindow.width
+  // Android 继续保留 screen 高度兜底；尺寸变化时更新整个弹层边界。
+  const windowHeight = layout?.height || (__mpx_mode__ === 'ios' ? dimensionsWindow.height : (global.getDimensionsInfo?.('screen') || Dimensions.get('screen')).height)
+  const height = itemList.length * 53 + 46 + bottom + (alertText ? 52 : 0)
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
   const [selectedIndex, setSelectedIndex] = useState(null)
@@ -132,7 +131,7 @@ function ActionSheet ({ itemColor, height, success, fail, complete, alertText, i
     setSelectedIndex(index)
   }
   return (
-    <View style={styles.actionAction}>
+    <View style={[styles.actionAction, { width: windowWidth, height: windowHeight }]}>
       <Animated.View style={[styles.maskWrap, maskAnimatedStyles]}>
         <View
           activeOpacity={1}
@@ -185,6 +184,7 @@ function ActionSheet ({ itemColor, height, success, fail, complete, alertText, i
         <View
           style={[
             styles.buttonStyle,
+            { paddingBottom: bottom + 10 },
             selectedIndex === -1
               ? {
                   backgroundColor: '#ececec'
@@ -230,12 +230,10 @@ function showActionSheet (options = {}) {
     failHandle(result, fail, complete)
     return
   }
-  const height = len * 53 + 46 + bottom + (alertText ? 52 : 0)
 
   const actionSheetKey = Portal.add(
     <ActionSheet
       itemColor={itemColor}
-      height={height}
       success={success}
       fail={fail}
       complete={complete}
