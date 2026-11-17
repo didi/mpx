@@ -1,7 +1,7 @@
 import { createElement, useEffect, useMemo, useRef } from 'react'
 import * as ReactNative from 'react-native'
 import { hasOwn, setFocusedNavigation } from '@mpxjs/utils'
-import { IntersectionObserverContext, KeyboardAvoidContext, RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import { IntersectionObserverContext, KeyboardAvoidContext, RouteContext, EnvContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { GestureHandlerRootView, PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import MpxNav, { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
@@ -67,6 +67,8 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
     navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
+    const { top, right, bottom, left } = navigation.insets
+    const envContextValue = useMemo(() => ({ top, right, bottom, left }), [top, right, bottom, left])
 
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     if (!hasOwn(global.__mpxPagesMap, route.key)) {
@@ -103,11 +105,14 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
           overflow: 'hidden'
         }
       },
-      createElement(RouteContext.Provider,
-        { value: routeContextValRef.current },
-        createElement(IntersectionObserverContext.Provider,
-          { value: intersectionObservers.current },
-          createElement(PortalHost, { id: currentPageId }, createElement(WrappedComponent, props))
+      createElement(EnvContext.Provider,
+        { value: envContextValue },
+        createElement(RouteContext.Provider,
+          { value: routeContextValRef.current },
+          createElement(IntersectionObserverContext.Provider,
+            { value: intersectionObservers.current },
+            createElement(PortalHost, { id: currentPageId }, createElement(WrappedComponent, props))
+          )
         )
       )
     )

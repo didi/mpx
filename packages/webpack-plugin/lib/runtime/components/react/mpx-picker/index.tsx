@@ -125,6 +125,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       bindchange,
       'header-text': headerText = '',
       style,
+      'enable-env': enableEnv,
       'enable-var': enableVar,
       'enable-text-pass-through': enableTextPassThrough,
       'parent-width': parentWidth,
@@ -148,7 +149,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       hasPositionFixed,
       setWidth,
       setHeight
-    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
+    } = useTransformStyle(style, { enableEnv, enableVar, parentWidth, parentHeight })
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
     const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 

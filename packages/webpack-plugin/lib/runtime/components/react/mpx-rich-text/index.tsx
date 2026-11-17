@@ -22,6 +22,7 @@ type Node = {
 interface _RichTextProps extends ViewProps {
   style?: ViewStyle
   nodes: string | Array<Node>
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -54,6 +55,7 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
   const {
     style = {},
     nodes,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -72,6 +74,7 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     width: '100%',
     height: webViewHeight
   }, style), {
+    enableEnv,
     enableVar,
     parentWidth,
     parentHeight

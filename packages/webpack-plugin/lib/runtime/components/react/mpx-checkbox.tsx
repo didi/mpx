@@ -41,6 +41,7 @@ export interface CheckboxProps extends Selection {
   style?: ViewStyle & Record<string, any>
   groupValue?: Array<string>
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
@@ -87,6 +88,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       checked = false,
       color = '#09BB07',
       style = {},
+      'enable-env': enableEnv,
       'enable-var': enableVar,
       'enable-text-pass-through': enableTextPassThrough,
       'parent-width': parentWidth,
@@ -133,7 +135,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       varContext,
       setWidth,
       setHeight
-    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
+    } = useTransformStyle(style, { enableEnv, enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
 
     const nodeRef = useRef(null)
 

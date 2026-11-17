@@ -49,6 +49,7 @@ interface _TextProps extends TextProps {
   children?: ReactNode
   selectable?: boolean
   'user-select'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -66,6 +67,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     style: currentStyle = {},
     allowFontScaling,
     selectable,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'user-select': userSelect,
     'parent-width': parentWidth,
@@ -83,6 +85,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     varContext,
     hasPositionFixed
   } = useTransformStyle(currentStyle, {
+    enableEnv,
     enableVar,
     parentWidth,
     parentHeight

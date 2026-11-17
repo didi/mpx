@@ -66,6 +66,7 @@ interface ScrollViewProps {
   'enable-offset'?: boolean;
   'scroll-into-view'?: string;
   'enable-trigger-intersection-observer'?: boolean;
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use';
   'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
@@ -150,6 +151,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'scroll-top': scrollTop = 0,
     'scroll-left': scrollLeft = 0,
     'refresher-triggered': refresherTriggered,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
@@ -209,7 +211,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     hasPositionFixed,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableEnv, enableVar, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
   const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })

@@ -69,6 +69,7 @@ interface SwiperProps {
   'previous-margin'?: string
   'next-margin'?: string
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var': boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
@@ -145,6 +146,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'indicator-spacing': dotSpacing = 4,
     'indicator-margin': paginationMargin = 10,
     'indicator-active-color': activeDotColor = '#000000',
+    'enable-env': enableEnv,
     'enable-var': enableVar = false,
     'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
@@ -189,6 +191,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     setWidth,
     setHeight
   } = useTransformStyle(style, {
+    enableEnv,
     enableVar,
     parentWidth,
     parentHeight

@@ -92,6 +92,7 @@ interface VideoProps {
   'license-url'?: string
   'preferred-peak-bit-rate'?: number
   'enable-auto-rotation'?: number
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -152,6 +153,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     'license-url': licenseUrl,
     'preferred-peak-bit-rate': preferredPeakBitRate = 0,
     'enable-auto-rotation': enableAutoRotation = false,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -169,6 +171,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
 
   const { normalStyle, hasSelfPercent, setWidth, setHeight, hasPositionFixed } =
     useTransformStyle(style, {
+      enableEnv,
       enableVar,
       parentWidth,
       parentHeight,

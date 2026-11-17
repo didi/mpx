@@ -21,6 +21,7 @@ export interface RadioProps {
   color?: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
@@ -73,6 +74,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       checked = false,
       color = '#09BB07',
       style = [],
+      'enable-env': enableEnv,
       'enable-var': enableVar,
       'enable-text-pass-through': enableTextPassThrough,
       'parent-width': parentWidth,
@@ -122,7 +124,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       varContext,
       setWidth,
       setHeight
-    } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
+    } = useTransformStyle(style, { enableEnv, enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
     const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })

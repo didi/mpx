@@ -53,6 +53,7 @@ const stylesheet = StyleSheet.create({
 interface CanvasProps {
   style?: Record<string, any>
   originWhitelist?: Array<string>
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
@@ -65,7 +66,7 @@ interface CanvasProps {
 }
 
 const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasProps>((props: CanvasProps = {}, ref): JSX.Element => {
-  const { style = {}, originWhitelist = ['*'], 'enable-var': enableVar, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
+  const { style = {}, originWhitelist = ['*'], 'enable-env': enableEnv, 'enable-var': enableVar, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
   const [isLoaded, setIsLoaded] = useState(false)
   const nodeRef = useRef(null)
 
@@ -76,6 +77,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     setWidth,
     setHeight
   } = useTransformStyle(extendObject({}, style, stylesheet.container), {
+    enableEnv,
     enableVar,
     parentWidth,
     parentHeight

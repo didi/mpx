@@ -1,9 +1,8 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, shallowEqual, error, warn } from '@mpxjs/utils'
-import { VarContext, ScrollViewContext, RouteContext, TextPassThroughContext, TextPassThroughContextValue } from './context'
+import { VarContext, EnvContext, ScrollViewContext, RouteContext, TextPassThroughContext, TextPassThroughContextValue } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
-import { initialWindowMetrics } from 'react-native-safe-area-context'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
 
@@ -266,6 +265,7 @@ interface PercentConfig {
 
 interface TransformStyleConfig {
   enableVar?: boolean | 'use'
+  enableEnv?: boolean
   parentWidth?: number
   parentHeight?: number
   transformRadiusPercent?: boolean
@@ -547,8 +547,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
 
 // --- env ---
 
-function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any> | undefined) {
-  const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
+function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, envContext: Record<string, any>) {
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'env')
@@ -556,8 +555,8 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
       parsed.forEach(({ start, end, args }) => {
         const name = args[0]
         const fallback = args[1] || ''
-        const inset = insets[safeAreaInsetMap[name]]
-        const next = '' + (inset ?? global.__formatValue(fallback))
+        const inset = envContext[safeAreaInsetMap[name]]
+        const next = '' + (inset != null ? inset : global.__formatValue(fallback))
         replaced.replace(start, end - 1, next)
       })
       target[key] = global.__formatValue(replaced.source())
@@ -1210,6 +1209,8 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
     target = target[keyPath[i]]
     if (!target) return
   }
+  // 前序转换可能已移除该样式，后续 calc / percent 不应重新写回。
+  if (!hasOwn(target, lastKey)) return
   setter({
     target,
     key: lastKey,
@@ -1222,12 +1223,13 @@ export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>,
 // core style hook
 // ============================================================
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, parentWidth, parentHeight, defaultStyle }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, enableEnv, transformRadiusPercent, parentWidth, parentHeight, defaultStyle }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
   let hasVarUse = false
+  let hasEnvUse = false
   let hasSelfPercent = false
   let hasBoxSizingAffectingStyle = false
   // 顶层 transform* 标志位：在 styleVisitor 阶段从原始 styleObj 收集，
@@ -1247,7 +1249,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const shorthandKeys: string[] = []
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
-  const navigation = useNavigation()
 
   function collectTopLevelFlags (key: string, value: any) {
     switch (key) {
@@ -1336,7 +1337,10 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       varKeyPaths.push(keyPath.slice())
     } else {
       visitOther({ target, key, value, keyPath })
+      return
     }
+    // 即使 var 首次命中主值，也要为其 env fallback 预留订阅。
+    hasEnvUse = hasEnvUse || value.includes('env(')
   }
 
   // traverse var & generate normalStyle
@@ -1380,7 +1384,19 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // apply unocss var
   if (unoVarKeyPaths.length) transformVar(normalStyle, unoVarKeyPaths, unoVarStyle, visitOther)
   // apply env
-  if (envKeyPaths.length) transformEnv(normalStyle, envKeyPaths, navigation)
+  const shouldEnableEnv = enableEnv === undefined ? hasEnvUse || !!envKeyPaths.length : enableEnv
+  const enableEnvRef = useRef(shouldEnableEnv)
+  if ((shouldEnableEnv && !enableEnvRef.current) || (enableEnv === false && enableEnvRef.current)) {
+    error('css env use should be stable in the component lifecycle, or you can set [enable-env] with true.')
+  }
+  if (enableEnvRef.current) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const envContext = useContext(EnvContext)
+    if (envKeyPaths.length) transformEnv(normalStyle, envKeyPaths, envContext)
+  } else if (envKeyPaths.length) {
+    // 未订阅时丢弃包含 env 的整项样式，避免残留非法尺寸或空 transform 项。
+    envKeyPaths.forEach((keyPath) => { delete normalStyle[keyPath[0]] })
+  }
   // apply percent / calc
   const percentConfig: PercentConfig = {
     width,

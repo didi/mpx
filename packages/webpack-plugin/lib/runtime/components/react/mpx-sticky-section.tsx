@@ -10,6 +10,7 @@ interface StickySectionProps {
   children?: ReactNode;
   style?: ViewStyle;
   'offset-top'?: number;
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use';
   'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
@@ -20,6 +21,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   const { textProps, innerProps: props = {} } = splitProps(stickySectionProps)
   const {
     style,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
@@ -34,7 +36,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableEnv, enableVar, parentWidth, parentHeight })
 
   const { layoutRef, layoutProps, layoutStyle } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: sectionRef, onLayout })
 

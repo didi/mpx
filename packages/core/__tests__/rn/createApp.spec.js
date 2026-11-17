@@ -46,7 +46,7 @@ jest.mock('react-native', () => ({
 }), { virtual: true })
 
 jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
+  useSafeAreaInsets: jest.fn(() => ({ top: 47, bottom: 34, left: 0, right: 0 })),
   initialWindowMetrics: { insets: { top: 47, bottom: 34, left: 0, right: 0 } }
 }), { virtual: true })
 
@@ -111,6 +111,7 @@ describe('RN createApp initial params', () => {
     Object.keys(implemented).forEach(key => delete implemented[key])
     jest.useFakeTimers()
     jest.clearAllMocks()
+    require('react-native-safe-area-context').useSafeAreaInsets.mockReturnValue({ top: 47, bottom: 34, left: 0, right: 0 })
     onLaunch.mockReset()
     global.mpxGlobal = Object.create(global)
     global.mpxGlobal.__mpx = Mpx
@@ -421,6 +422,33 @@ describe('RN createApp initial params', () => {
     expect(pageStatusMap).not.toHaveProperty(String(navigation.pageId))
     expect(global.__mpxPagesMap).not.toHaveProperty(route.key)
     removers.forEach(remove => expect(remove).toHaveBeenCalledTimes(1))
+  })
+
+  it('publishes env changes only when navigation inset values change', () => {
+    const { EnvContext } = require('../../../webpack-plugin/lib/runtime/components/react/context')
+    const { useSafeAreaInsets } = require('react-native-safe-area-context')
+    const values = []
+    const Child = React.memo(() => {
+      values.push(React.useContext(EnvContext))
+      return React.createElement('BusinessPage')
+    })
+    const navigation = { isFocused: () => true, addListener: jest.fn(() => jest.fn()) }
+    const route = { key: 'env', name: 'pages/env' }
+    const Page = pageWrapperHOC(Child, { navigationStyle: 'custom', disableKeyboardAvoiding: true })
+    const render = () => React.createElement(Page, { navigation, route })
+    act(() => { renderer = create(render()) })
+    expect(values).toEqual([{ top: 47, bottom: 34, left: 0, right: 0 }])
+    useSafeAreaInsets.mockReturnValue({ top: 47, bottom: 34, left: 0, right: 0 })
+    act(() => { renderer.update(render()) })
+    expect(values).toHaveLength(1)
+    ;['top', 'right', 'bottom', 'left'].forEach((key, index) => {
+      const insets = Object.assign({}, navigation.insets, { [key]: index })
+      useSafeAreaInsets.mockReturnValue(insets)
+      act(() => { renderer.update(render()) })
+      expect(values).toHaveLength(index + 2)
+      expect(values[index + 1]).toEqual(insets)
+      expect(navigation.insets).toBe(insets)
+    })
   })
 
   it('preserves custom navigation and disabled keyboard avoidance for standalone pages', () => {

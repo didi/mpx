@@ -78,6 +78,7 @@ export interface ButtonProps {
   'open-type'?: OpenType
   'form-type'?: 'submit' | 'reset'
   'enable-offset'?: boolean,
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
@@ -209,6 +210,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
     'form-type': formType,
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
@@ -299,7 +301,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     varContext,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, parentWidth, parentHeight, defaultStyle })
+  } = useTransformStyle(styleObj, { enableEnv, enableVar, parentWidth, parentHeight, defaultStyle })
 
   const nodeRef = useRef(null)
 

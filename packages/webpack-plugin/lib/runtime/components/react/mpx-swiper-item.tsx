@@ -9,6 +9,7 @@ import { SwiperContext } from './context'
 interface SwiperItemProps {
   'item-id'?: string
   'enable-offset'?: boolean
+  'enable-env'?: boolean
   'enable-var': boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
@@ -28,6 +29,7 @@ interface ContextType {
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
   const {
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough,
     style,
@@ -50,7 +52,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar })
+  } = useTransformStyle(style, { enableEnv, enableVar })
   const { textStyle, innerStyle } = splitStyle(normalStyle)
   const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
   useNodesRef(props, ref, nodeRef, {

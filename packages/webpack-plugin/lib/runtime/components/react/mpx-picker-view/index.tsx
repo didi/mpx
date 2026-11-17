@@ -36,6 +36,7 @@ interface PickerViewProps {
   'enable-wheel-animation'?: boolean
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
+  'enable-env'?: boolean
   'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'enable-offset'?: boolean
@@ -73,6 +74,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     'enable-wheel-animation': enableWheelAnimation = true,
     'indicator-style': indicatorStyle = {},
     'mask-style': pickerMaskStyle = {},
+    'enable-env': enableEnv,
     'enable-var': enableVar,
     'enable-text-pass-through': enableTextPassThrough
 
@@ -92,7 +94,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight,
     hasPositionFixed
-  } = useTransformStyle(style, { enableVar })
+  } = useTransformStyle(style, { enableEnv, enableVar })
 
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
     style: normalStyle
