@@ -33,64 +33,80 @@ jobs:
         run: |
           node --version
           npm --version
-          cat > /tmp/inspect-mpx-cache.cjs <<'NODE'
+          npm i --no-audit --no-fund > /tmp/root-install.log 2>&1
+          fixture=test/e2e/miniprogram-project
+          webpackPackage="$PWD/node_modules/webpack/package.json"
+          cp "$webpackPackage" /tmp/webpack-package-original.json
+          trap 'cp /tmp/webpack-package-original.json "$webpackPackage"' EXIT
+          cp -a --reflink=auto "$fixture" /tmp/fixture-original
+          cat > /tmp/inspect-version-case.cjs <<'NODE'
           const fs = require('fs')
           const path = require('path')
-          console.log(JSON.stringify({ stage: process.argv[2] }))
-          const projects = ['.', 'test/e2e/miniprogram-project', 'test/e2e/plugin-project']
-          projects.forEach((project) => {
-            const dir = path.resolve(project)
-            const entry = path.join(dir, 'node_modules/webpack')
-            const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'))
-            const state = { project, requestedWebpack: (pkg.dependencies || {}).webpack || (pkg.devDependencies || {}).webpack, outerLock: fs.existsSync(path.join(dir, 'package-lock.json')) }
-            if (fs.existsSync(entry)) {
-              state.link = fs.lstatSync(entry).isSymbolicLink()
-              state.realPath = fs.realpathSync(entry)
-              const webpack = JSON.parse(fs.readFileSync(path.join(entry, 'package.json'), 'utf8'))
-              state.version = webpack.version
-              state.prepare = (webpack.scripts || {}).prepare
-            }
-            const hidden = path.join(dir, 'node_modules/.package-lock.json')
-            if (fs.existsSync(hidden)) {
-              const lock = JSON.parse(fs.readFileSync(hidden, 'utf8'))
-              state.hiddenWebpack = Object.entries(lock.packages || {}).filter(([key, value]) => key.endsWith('node_modules/webpack') || (value.resolved || '').endsWith('node_modules/webpack'))
-            }
-            console.log(JSON.stringify(state))
-          })
+          const dir = 'test/e2e/miniprogram-project'
+          const entry = path.join(dir, 'node_modules/webpack')
+          const wanted = JSON.parse(fs.readFileSync(path.join(dir,'package.json'),'utf8'))
+          const actual = JSON.parse(fs.readFileSync(path.join(entry,'package.json'),'utf8'))
+          const lockPath = path.join(dir,'node_modules/.package-lock.json')
+          const lock = fs.existsSync(lockPath) ? JSON.parse(fs.readFileSync(lockPath,'utf8')) : {}
+          const hidden = (lock.packages || {})['node_modules/webpack']
+          console.log(JSON.stringify({case:process.argv[2],requested:wanted.devDependencies.webpack,actual:actual.version,link:fs.lstatSync(entry).isSymbolicLink(),prepare:actual.scripts.prepare,hiddenVersion:hidden && hidden.version}))
           NODE
-          node /tmp/inspect-mpx-cache.cjs restored
+          cat > /tmp/align-webpack-versions.cjs <<'NODE'
+          const fs = require('fs')
+          const dir = 'test/e2e/miniprogram-project'
+          const root = JSON.parse(fs.readFileSync('package-lock.json','utf8'))
+          const entry = root.packages['node_modules/webpack']
+          const packagePath = `${dir}/package.json`
+          const pkg = JSON.parse(fs.readFileSync(packagePath,'utf8'))
+          pkg.devDependencies.webpack = entry.version
+          fs.writeFileSync(packagePath, JSON.stringify(pkg,null,2)+'\n')
+          const lockPath = `${dir}/node_modules/.package-lock.json`
+          const stat = fs.statSync(lockPath)
+          const lock = JSON.parse(fs.readFileSync(lockPath,'utf8'))
+          lock.packages['node_modules/webpack'] = Object.assign({},entry,{dev:true})
+          fs.writeFileSync(lockPath,JSON.stringify(lock,null,2)+'\n')
+          fs.utimesSync(lockPath,stat.atime,stat.mtime)
+          NODE
+          restoreFixture() {
+            rm -rf "$fixture"
+            cp -a --reflink=auto /tmp/fixture-original "$fixture"
+          }
+          runCase() {
+            caseName="$1"
+            printf '::group::%s\n' "$caseName"
+            node /tmp/inspect-version-case.cjs "$caseName"
+            command -v husky || true
+            timeout 180 npm i --prefix "$fixture" --foreground-scripts --loglevel=verbose --no-audit --no-fund > "/tmp/$caseName.log" 2>&1
+            caseStatus=$?
+            tail -n 70 "/tmp/$caseName.log"
+          node /tmp/inspect-version-case.cjs "${caseName}_after"
+            printf 'MATRIX case=%s status=%s\n' "$caseName" "$caseStatus"
+            printf '::endgroup::\n'
+          }
           set +e
-          timeout 180 npm i --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/root-install.log 2>&1
-          root_status=$?
-          tail -n 50 /tmp/root-install.log
-          node /tmp/inspect-mpx-cache.cjs after-root-install
-          timeout 180 npm i --prefix test/e2e/miniprogram-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/fixture-install.log 2>&1
-          before_status=$?
-          tail -n 100 /tmp/fixture-install.log
-          node /tmp/inspect-mpx-cache.cjs after-fixture-install
-          if [ -L test/e2e/miniprogram-project/node_modules/webpack ]; then
-            unlink test/e2e/miniprogram-project/node_modules/webpack
-          fi
-          node /tmp/inspect-mpx-cache.cjs after-unlink-webpack
-          timeout 180 npm i --prefix test/e2e/miniprogram-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/fixture-retry.log 2>&1
-          after_status=$?
-          tail -n 100 /tmp/fixture-retry.log
-          node /tmp/inspect-mpx-cache.cjs after-retry
-          printf 'RESULT root=%s before=%s after=%s\n' "$root_status" "$before_status" "$after_status"
-          timeout 180 npm i --prefix test/e2e/plugin-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/plugin-before.log 2>&1
-          plugin_before=$?
-          tail -n 60 /tmp/plugin-before.log
-          if [ -L test/e2e/plugin-project/node_modules/webpack ]; then
-            unlink test/e2e/plugin-project/node_modules/webpack
-          fi
-          timeout 180 npm i --prefix test/e2e/plugin-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/plugin-after.log 2>&1
-          plugin_after=$?
-          tail -n 60 /tmp/plugin-after.log
-          mv test/e2e/miniprogram-project/node_modules/webpack /tmp/fixture-webpack-control
-          ln -s "$PWD/node_modules/webpack" test/e2e/miniprogram-project/node_modules/webpack
-          rm -f test/e2e/miniprogram-project/package-lock.json
-          timeout 180 npm i --prefix test/e2e/miniprogram-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/relinked.log 2>&1
-          relinked_status=$?
-          tail -n 60 /tmp/relinked.log
-          printf 'CONTROL plugin-before=%s plugin-after=%s relinked=%s\n' "$plugin_before" "$plugin_after" "$relinked_status"
+          restoreFixture
+          runCase cached_link
+          restoreFixture
+          node /tmp/align-webpack-versions.cjs
+          runCase matching_versions_link
+          restoreFixture
+          node /tmp/align-webpack-versions.cjs
+          unlink "$fixture/node_modules/webpack"
+          cp -a --reflink=auto "$PWD/node_modules/webpack" "$fixture/node_modules/webpack"
+          runCase matching_versions_directory
+          restoreFixture
+          node - <<'NODE'
+          const fs = require('fs')
+          const p='node_modules/webpack/package.json'
+          const data=JSON.parse(fs.readFileSync(p,'utf8'))
+          delete data.scripts.prepare
+          fs.writeFileSync(p,JSON.stringify(data,null,2)+'\n')
+          NODE
+          runCase link_without_prepare
+          cp /tmp/webpack-package-original.json "$webpackPackage"
+          restoreFixture
+          npm i --prefix /tmp/husky-tool husky@9.0.11 --ignore-scripts --no-audit --no-fund --loglevel=error > /tmp/husky-install.log 2>&1
+          toolStatus=$?
+          printf 'HUSKY_TOOL_SETUP status=%s\n' "$toolStatus"
+          PATH="/tmp/husky-tool/node_modules/.bin:$PATH" runCase link_with_husky
           exit 0
