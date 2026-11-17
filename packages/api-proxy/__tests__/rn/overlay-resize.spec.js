@@ -137,8 +137,8 @@ describe('visible RN overlays resize in place', () => {
   it.each([
     ['Toast', showToast, { title: 'message', icon: 'none' }],
     ['Loading', showLoading, { title: 'loading' }]
-  ])('stores only the processed Window height used by %s, even when resize reports Screen dimensions', async (name, show, options) => {
-    global.getDimensionsInfo = jest.fn(base => base === 'window' ? Object.assign({}, mockDimensions) : { width: 720, height: 1280 })
+  ])('stores only the configured base height used by %s', async (name, show, options) => {
+    global.getDimensionsInfo = jest.fn(base => base === undefined ? Object.assign({}, mockDimensions) : { width: 720, height: 1280 })
     const { renderer } = showAndMount(show, options)
     expectParentLayout(renderer)
     expect(stylesIn(renderer)).toContainEqual({ marginTop: 256 })
@@ -155,11 +155,11 @@ describe('visible RN overlays resize in place', () => {
     const resizedStyle = renderer.root.findAllByType('View')[1].props.style
     await act(async () => { global.__mpxWindowResizeHandler({ width: 1200, height: 592 }) })
     expect(renderer.root.findAllByType('View')[1].props.style).toBe(resizedStyle)
-    expect(global.getDimensionsInfo.mock.calls.every(([base]) => base === 'window')).toBe(true)
+    expect(global.getDimensionsInfo.mock.calls.every(args => args.length === 0)).toBe(true)
   })
 
-  it('refreshes Modal from processed Window dimensions even when resize reports Screen dimensions', async () => {
-    global.getDimensionsInfo = jest.fn(base => base === 'window' ? Object.assign({}, mockDimensions) : { width: 720, height: 1280 })
+  it('refreshes Modal from configured base dimensions on resize', async () => {
+    global.getDimensionsInfo = jest.fn(base => base === undefined ? Object.assign({}, mockDimensions) : { width: 720, height: 1280 })
     const { renderer } = showAndMount(showModal, { title: 'message', content: 'text' })
     expectParentLayout(renderer)
     expect(stylesIn(renderer)).toContainEqual({ width: 288 })
@@ -172,7 +172,7 @@ describe('visible RN overlays resize in place', () => {
     await act(async () => { global.__mpxWindowResizeHandler({ width: 1200, height: 592 }) })
     expect(stylesIn(renderer)).toContainEqual({ width: 480 })
     expect(stylesIn(renderer)).toContainEqual({ maxHeight: 296 * 0.45 })
-    expect(global.getDimensionsInfo.mock.calls.every(([base]) => base === 'window')).toBe(true)
+    expect(global.getDimensionsInfo.mock.calls.every(args => args.length === 0)).toBe(true)
   })
 
   it('keeps ActionSheet edge positioning and updates safe-area padding', async () => {
@@ -197,7 +197,7 @@ describe('visible RN overlays resize in place', () => {
   it.each([
     ['Toast', showToast, { title: 'message', icon: 'none', duration: 5000 }],
     ['Loading', showLoading, { title: 'loading' }]
-  ])('repositions an existing %s using the new Window height', async (name, show, options) => {
+  ])('repositions an existing %s using the new base height', async (name, show, options) => {
     const { renderer } = showAndMount(show, options)
     expectParentLayout(renderer)
     expect(stylesIn(renderer)).toContainEqual({ marginTop: 256 })
@@ -238,7 +238,7 @@ describe('visible RN overlays resize in place', () => {
     expect(stylesIn(renderer)).toContainEqual({ maxHeight: 360 * 0.45 })
   })
 
-  it('uses Window height regardless of the owning or focused page layout', async () => {
+  it('uses the configured base height with owning and focused page layouts', async () => {
     const { renderer } = showAndMount(showToast, { title: 'message', icon: 'none' })
     mockFocusedNavigation = { layout: { width: 999, height: 999 } }
     await rotate()

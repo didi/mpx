@@ -79,10 +79,10 @@ function showToast (options = {}) {
   const pointerEvents = mask ? 'auto' : 'none'
   isLoadingShow = isLoading
   const ToastView = function () {
-    const [dimensionsHeight, setDimensionsHeight] = useState(() => global.getDimensionsInfo('window').height)
+    const [dimensionsHeight, setDimensionsHeight] = useState(() => global.getDimensionsInfo().height)
     useEffect(() => {
       const resize = () => {
-        setDimensionsHeight(global.getDimensionsInfo('window').height)
+        setDimensionsHeight(global.getDimensionsInfo().height)
       }
       onWindowResize(resize)
       return () => offWindowResize(resize)
