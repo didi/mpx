@@ -141,6 +141,14 @@ Web 的 `useI18n()` 返回对象还支持 `d(value: number | Date | string, form
 | 属性 | 类型 | 默认值 | 用途 |
 | --- | --- | --- | --- |
 | `scroll-options` | object | `{}` | 作为 BetterScroll 初始化选项。 |
+| `indicator-width` / `indicator-height` | number | `8` | 指示点宽、高，单位 px。 |
+| `indicator-radius` | number | `4` | 指示点圆角半径，单位 px。 |
+| `indicator-spacing` | number | `4` | 相邻指示点的间距，单位 px；横向为水平间距，纵向为垂直间距。 |
+| `indicator-margin` | number | `10` | 指示点组沿对齐方向向内的留白，单位 px；对应轴居中时不产生该轴的偏移。 |
+| `indicator-alignment` | string / [number, number] | `'auto'` | 使用 `auto` 或 `[x, y]`，两项取值范围为 `[-1, 1]`：`-1` 为左侧/顶部，`0` 为居中，`1` 为右侧/底部。`auto` 在横向轮播中等同于 `[0, 1]`，纵向轮播中等同于 `[1, 0]`。 |
+| `indicator-offset` | [number, number] | `[0, 0]` | 在对齐和留白基础上追加 `[x, y]` 像素偏移；正值分别向右、向下。 |
+
+指示点配置在 `indicator-dots="{{ true }}"` 时生效。
 
 ### movable-view
 
