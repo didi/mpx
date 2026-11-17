@@ -1,58 +1,25 @@
 name: test
 
 on:
-  pull_request:
-  push:
-    branches:
-      - master
   workflow_dispatch:
 
 jobs:
-  tsc:
+  diagnose-unit-cache:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - case: base
+            ref: 8719a9244aede2be25ccfd3c6f0e9d25595387ab
+          - case: pr
+            ref: 2a8d197fd8cdf208a4350f694757647e4c283b4e
     steps:
       - uses: actions/checkout@v4
-      - name: Cache node modules
-        id: cache
-        uses: actions/cache@v4
         with:
-          path: |
-            ~/.npm
-            node_modules
-            packages/*/node_modules
-          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
-          restore-keys: |
-            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
-      - run: npm i
-        if: steps.cache.outputs.cache-hit != 'true'
-      - run: npm run build:tsc
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Cache node modules
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            node_modules
-            packages/*/node_modules
-          key: checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-${{ hashFiles('**/package.json', '.npmrc') }}
-          restore-keys: |
-            checks-${{ runner.os }}-${{ runner.arch }}-node-modules-v1-
-      - run: npm i
-        if: steps.cache.outputs.cache-hit != 'true'
-      - run: npm run lint
-
-  unit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Cache node modules
-        id: cache
-        uses: actions/cache@v4
+          ref: ${{ matrix.ref }}
+      - name: Restore the exact failing cache without saving
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.npm
@@ -60,25 +27,54 @@ jobs:
             test/e2e/miniprogram-project/node_modules
             test/e2e/plugin-project/node_modules
             packages/*/node_modules
-          key: unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v2-${{ hashFiles('**/package.json', '.npmrc') }}
-          restore-keys: |
-            unit-${{ runner.os }}-${{ runner.arch }}-node-modules-v2-
-
-      - name: install deps
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project
-
-      - name: build-tsc
-        run: npm run build:tsc
-
-      - name: link-workspace-packages
-        run: npm run linkPackages --prefix test/e2e/miniprogram-project && npm run linkPackages --prefix test/e2e/plugin-project
-
-      - name: build-miniprogram
-        run: npm run build:cross --prefix test/e2e/miniprogram-project
-
-      - name: build-plugin
-        run: npm run build --prefix test/e2e/plugin-project
-
-      - name: exec unit test
-        run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
+          key: unit-Linux-X64-node-modules-v2-456049abbd5301c0f7b21eed491b796449f0c5e648f80898c56beff84921d68f
+      - name: Diagnose cached installation (${{ matrix.case }})
+        shell: bash
+        run: |
+          node --version
+          npm --version
+          cat > /tmp/inspect-mpx-cache.cjs <<'NODE'
+          const fs = require('fs')
+          const path = require('path')
+          console.log(JSON.stringify({ stage: process.argv[2] }))
+          const projects = ['.', 'test/e2e/miniprogram-project', 'test/e2e/plugin-project']
+          projects.forEach((project) => {
+            const dir = path.resolve(project)
+            const entry = path.join(dir, 'node_modules/webpack')
+            const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'))
+            const state = { project, requestedWebpack: (pkg.dependencies || {}).webpack || (pkg.devDependencies || {}).webpack, outerLock: fs.existsSync(path.join(dir, 'package-lock.json')) }
+            if (fs.existsSync(entry)) {
+              state.link = fs.lstatSync(entry).isSymbolicLink()
+              state.realPath = fs.realpathSync(entry)
+              const webpack = JSON.parse(fs.readFileSync(path.join(entry, 'package.json'), 'utf8'))
+              state.version = webpack.version
+              state.prepare = (webpack.scripts || {}).prepare
+            }
+            const hidden = path.join(dir, 'node_modules/.package-lock.json')
+            if (fs.existsSync(hidden)) {
+              const lock = JSON.parse(fs.readFileSync(hidden, 'utf8'))
+              state.hiddenWebpack = Object.entries(lock.packages || {}).filter(([key, value]) => key.endsWith('node_modules/webpack') || (value.resolved || '').endsWith('node_modules/webpack'))
+            }
+            console.log(JSON.stringify(state))
+          })
+          NODE
+          node /tmp/inspect-mpx-cache.cjs restored
+          set +e
+          timeout 180 npm i --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/root-install.log 2>&1
+          root_status=$?
+          tail -n 50 /tmp/root-install.log
+          node /tmp/inspect-mpx-cache.cjs after-root-install
+          timeout 180 npm i --prefix test/e2e/miniprogram-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/fixture-install.log 2>&1
+          before_status=$?
+          tail -n 100 /tmp/fixture-install.log
+          node /tmp/inspect-mpx-cache.cjs after-fixture-install
+          if [ -L test/e2e/miniprogram-project/node_modules/webpack ]; then
+            unlink test/e2e/miniprogram-project/node_modules/webpack
+          fi
+          node /tmp/inspect-mpx-cache.cjs after-unlink-webpack
+          timeout 180 npm i --prefix test/e2e/miniprogram-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/fixture-retry.log 2>&1
+          after_status=$?
+          tail -n 100 /tmp/fixture-retry.log
+          node /tmp/inspect-mpx-cache.cjs after-retry
+          printf 'RESULT root=%s before=%s after=%s\n' "$root_status" "$before_status" "$after_status"
+          exit 0
