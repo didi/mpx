@@ -1,30 +1,14 @@
-import { Dimensions } from 'react-native'
-
 const callbacks = []
-let subscription
-const addListener = function () {
-  subscription = Dimensions.addEventListener(
-    'change',
-    ({ window }) => {
-      const dimensionsWindow = global.getDimensionsInfo?.('window') || window
-      const result = {
-        size: {
-          windowWidth: dimensionsWindow.width,
-          windowHeight: dimensionsWindow.height
-        }
-      }
-      callbacks.forEach(cb => cb(result))
-    }
-  )
-}
 
-const removeListener = function () {
-  subscription && subscription.remove()
+const windowChange = function ({ width, height }) {
+  callbacks.slice().forEach(cb => {
+    cb({ size: { windowWidth: width, windowHeight: height } })
+  })
 }
 
 function onWindowResize (callback) {
   if (callbacks.length === 0) {
-    addListener()
+    global.__mpxWindowResizeHandler = windowChange
   }
   callbacks.push(callback)
 }
@@ -34,8 +18,8 @@ function offWindowResize (callback) {
   if (index > -1) {
     callbacks.splice(index, 1)
   }
-  if (callbacks.length === 0) {
-    removeListener()
+  if (callbacks.length === 0 && global.__mpxWindowResizeHandler === windowChange) {
+    delete global.__mpxWindowResizeHandler
   }
 }
 

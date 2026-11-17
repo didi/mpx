@@ -1,6 +1,5 @@
 import { isArray, isObject, isString, noop, warn } from '@mpxjs/utils'
 import throttle from 'lodash/throttle'
-import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
 const WindowRefStr = 'window'
 const IgnoreTarget = 'ignore'
@@ -99,8 +98,7 @@ class RNIntersectionObserver {
   _getWindowRect () {
     if (this.windowRect) return this.windowRect
     const navigation = getFocusedNavigation() || {}
-    const dimensionsType = __mpx_mode__ === 'ios' ? 'window' : 'screen'
-    const dimensions = global.getDimensionsInfo?.(dimensionsType) || Dimensions.get(dimensionsType)
+    const dimensions = global.getDimensionsInfo?.()
     const navigationLayout = navigation.layout || {
       top: 0,
       left: 0,

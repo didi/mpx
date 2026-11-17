@@ -512,10 +512,10 @@ const checkRelation = (options) => {
   }
 }
 function getLayoutData (headerHeight) {
-  const screenDimensions = global.getDimensionsInfo?.('screen') || ReactNative.Dimensions.get('screen')
-  const windowDimensions = global.getDimensionsInfo?.('window') || ReactNative.Dimensions.get('window')
-  // iOS 使用当前窗口尺寸，适配窗口与屏幕尺寸不一致的场景；Android 保留 screen 兼容逻辑。
-  const layoutDimensions = ReactNative.Platform.OS === 'ios' ? windowDimensions : screenDimensions
+  const screenDimensions = global.getDimensionsInfo?.('screen')
+  const windowDimensions = global.getDimensionsInfo?.('window')
+  // 页面宽高使用 dimensionsBase 指定且经 customDimensions 处理后的尺寸。
+  const layoutDimensions = global.getDimensionsInfo?.()
   const isLandscape = screenDimensions.height < screenDimensions.width
   let bottomVirtualHeight = 0
   if (ReactNative.Platform.OS === 'android') {
@@ -533,8 +533,7 @@ function getLayoutData (headerHeight) {
   return {
     left: 0,
     top: headerHeight,
-    // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
-    width: windowDimensions.width,
+    width: layoutDimensions.width,
     height: layoutDimensions.height - headerHeight - bottomVirtualHeight,
     // ios为0 android为实际statusbar高度
     statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
@@ -591,7 +590,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
         navigation.layout = getLayoutData(headerHeight)
       })
       return () => dimensionListener?.remove()
-    }, [])
+    }, [navigation, headerHeight])
 
     usePagePreload(route)
     usePageStatus(navigation, currentPageId)

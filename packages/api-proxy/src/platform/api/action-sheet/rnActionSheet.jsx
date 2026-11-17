@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, Dimensions, useWindowDimensions } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated'
+import { onWindowResize, offWindowResize } from '../window/rnWindow'
 const actionSheetMap = new Map()
 
 const remove = function (id) {
@@ -72,12 +73,10 @@ const styles = StyleSheet.create({
 
 function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList }) {
   const { bottom = 0 } = useSafeAreaInsets()
-  const nativeWindow = useWindowDimensions()
-  const dimensionsWindow = global.getDimensionsInfo?.('window') || nativeWindow
+  const [dimensionsWindow, setDimensionsWindow] = useState(() => global.getDimensionsInfo?.())
   const layout = getFocusedNavigation()?.layout
   const windowWidth = layout?.width || dimensionsWindow.width
-  // Android 继续保留 screen 高度兜底；尺寸变化时更新整个弹层边界。
-  const windowHeight = layout?.height || (__mpx_mode__ === 'ios' ? dimensionsWindow.height : (global.getDimensionsInfo?.('screen') || Dimensions.get('screen')).height)
+  const windowHeight = layout?.height || dimensionsWindow.height
   const height = itemList.length * 53 + 46 + bottom + (alertText ? 52 : 0)
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
@@ -95,6 +94,10 @@ function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList 
   })
 
   useEffect(() => {
+    const resize = ({ size: { windowWidth: width, windowHeight: height } }) => {
+      setDimensionsWindow({ width, height })
+    }
+    onWindowResize(resize)
     fade.value = withTiming(1, {
       easing: Easing.inOut(Easing.poly(3)),
       duration: 250
@@ -103,6 +106,7 @@ function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList 
       easing: Easing.out(Easing.poly(3)),
       duration: 250
     })
+    return () => offWindowResize(resize)
   }, [])
 
   const removeActionSheet = function () {

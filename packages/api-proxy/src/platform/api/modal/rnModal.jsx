@@ -1,6 +1,8 @@
-import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
 import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
+import { onWindowResize, offWindowResize } from '../window/rnWindow'
 const styles = StyleSheet.create({
   modalTask: {
     left: 0,
@@ -63,12 +65,8 @@ const styles = StyleSheet.create({
 
 const modalMap = new Map()
 const showModal = function (options = {}) {
-  const dimensionsWindow = global.getDimensionsInfo?.('window') || Dimensions.get('window')
-  const layout = getFocusedNavigation()?.layout
-  const width = layout?.width || dimensionsWindow.width
-  // Android 继续使用 screen 高度作为兜底。
-  const height = layout?.height || (__mpx_mode__ === 'ios' ? dimensionsWindow.height : (global.getDimensionsInfo?.('screen') || Dimensions.get('screen')).height)
   const id = getCurrentPageId()
+  const navigation = getFocusedNavigation()
   const {
     title,
     content,
@@ -151,30 +149,45 @@ const showModal = function (options = {}) {
       color: cancelColor
     })
   }
-  const ModalView = <View style={[styles.modalTask, { width, height }]}>
-    <View style={[styles.modalContent, { width: width * 0.8 }]}>
-      {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
-      {modalContent.map((item, index) => <ScrollView key={index} style={[styles.contentBox, { maxHeight: height * 0.45 }]}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
-      {editableContent.map((item, index) => <View key={index} style={{
-        width: '100%',
-        paddingLeft: 25,
-        paddingRight: 25,
-        marginTop: 5
-      }}><TextInput placeholder={item} style={{
-        height: 40,
-        backgroundColor: '#eeeeee',
-        width: '100%',
-        keyboardType: 'default',
-        paddingLeft: 10,
-        paddingRight: 10
-      }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
-      <View style={styles.modalBtnBox}>
-        {modalButton.map((item, index) => <TouchableOpacity key={index} style={[styles.modalBtn, { paddingTop: width * 0.04, paddingBottom: width * 0.04 }, item.style]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
+  const ModalView = function () {
+    const [dimensionsWindow, setDimensionsWindow] = useState(() => global.getDimensionsInfo?.())
+    useEffect(() => {
+      const resize = ({ size: { windowWidth: width, windowHeight: height } }) => {
+        setDimensionsWindow(prev => prev.width === width && prev.height === height ? prev : { width, height })
+      }
+      onWindowResize(resize)
+      return () => offWindowResize(resize)
+    }, [])
+    const layout = navigation?.layout
+    const width = layout?.width || dimensionsWindow.width
+    const height = layout?.height || dimensionsWindow.height
+    return (
+      <View style={[styles.modalTask, { width, height }]}>
+        <View style={[styles.modalContent, { width: width * 0.8 }]}>
+          {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
+          {modalContent.map((item, index) => <ScrollView key={index} style={[styles.contentBox, { maxHeight: height * 0.45 }]}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
+          {editableContent.map((item, index) => <View key={index} style={{
+            width: '100%',
+            paddingLeft: 25,
+            paddingRight: 25,
+            marginTop: 5
+          }}><TextInput placeholder={item} style={{
+            height: 40,
+            backgroundColor: '#eeeeee',
+            width: '100%',
+            keyboardType: 'default',
+            paddingLeft: 10,
+            paddingRight: 10
+          }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
+          <View style={styles.modalBtnBox}>
+            {modalButton.map((item, index) => <TouchableOpacity key={index} style={[styles.modalBtn, { paddingTop: width * 0.04, paddingBottom: width * 0.04 }, item.style]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
+          </View>
+        </View>
       </View>
-    </View>
-  </View>
+    )
+  }
   try {
-    const modalKey = Portal.add(ModalView, id)
+    const modalKey = Portal.add(<ModalView />, id)
     setCurrentModalKey(modalKey)
   } catch (e) {
     const result = {

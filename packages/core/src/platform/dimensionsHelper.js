@@ -1,4 +1,4 @@
-import { getFocusedNavigation, hasOwn } from '@mpxjs/utils'
+import { getFocusedNavigation, hasOwn, isFunction } from '@mpxjs/utils'
 import { Dimensions } from 'react-native'
 import Mpx from '../index'
 
@@ -68,6 +68,9 @@ export function syncDimensions (dimensions) {
 
   if (styleDimensionsChanged) {
     triggerStyleDimensionsChange()
+    if (isFunction(global.__mpxWindowResizeHandler)) {
+      global.__mpxWindowResizeHandler(Object.assign({}, dimensionsInfo[currentDimensionsBase]))
+    }
   }
 }
 

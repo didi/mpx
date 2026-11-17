@@ -1,3 +1,8 @@
+jest.mock('react', () => Object.assign({}, jest.requireActual('react'), {
+  useEffect: jest.fn(),
+  useState: value => [typeof value === 'function' ? value() : value, jest.fn()]
+}))
+
 let mockWindow = { width: 360, height: 640 }
 const mockScreen = { width: 720, height: 1280 }
 
@@ -19,6 +24,7 @@ jest.mock('react/jsx-runtime', () => ({
 }), { virtual: true })
 jest.mock('@mpxjs/core', () => ({ config: { rnConfig: {} } }))
 jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 20, bottom: 10, left: 0, right: 0 }),
   initialWindowMetrics: { insets: { top: 20, bottom: 10, left: 0, right: 0 } }
 }), { virtual: true })
 jest.mock('../../src/common/js', () => ({
@@ -33,6 +39,7 @@ jest.mock('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/in
 
 function stylesIn (node) {
   if (!node || !node.props) return []
+  if (typeof node.type === 'function') return stylesIn(node.type(node.props))
   const styles = node.props.style ? [].concat(node.props.style) : []
   return styles.concat([].concat(node.props.children || []).flatMap(stylesIn))
 }
@@ -43,7 +50,7 @@ describe('RN window adaptation', () => {
     jest.useFakeTimers()
     mockWindow = { width: 360, height: 640 }
     global.__mpx_mode__ = 'ios'
-    delete global.getDimensionsInfo
+    global.getDimensionsInfo = type => type === 'screen' ? mockScreen : mockWindow
     require('@mpxjs/core').config.rnConfig = {}
     require('../../src/common/js').getFocusedNavigation.mockReturnValue({})
   })
@@ -60,15 +67,15 @@ describe('RN window adaptation', () => {
     expect(info.safeArea).toMatchObject({ right: 360, bottom: 630, width: 360, height: 610 })
   })
 
-  it('keeps processed Dimensions and re-reads customLayout, while page layout takes priority', () => {
+  it('uses processed Dimensions and ignores customLayout, while page layout takes priority', () => {
     const { getWindowInfo } = require('../../src/platform/api/system/rnSystem')
     global.getDimensionsInfo = type => type === 'window' ? { width: 320, height: 600 } : mockScreen
     expect(getWindowInfo().windowWidth).toBe(320)
     const customLayout = jest.fn(() => ({ width: 300, height: 500 }))
     require('@mpxjs/core').config.rnConfig.customLayout = customLayout
-    expect(getWindowInfo()).toMatchObject({ windowWidth: 300, windowHeight: 500 })
+    expect(getWindowInfo()).toMatchObject({ windowWidth: 320, windowHeight: 600 })
     customLayout.mockReturnValue({ width: 280, height: 450 })
-    expect(getWindowInfo()).toMatchObject({ windowWidth: 280, windowHeight: 450 })
+    expect(getWindowInfo()).toMatchObject({ windowWidth: 320, windowHeight: 600 })
     require('../../src/common/js').getFocusedNavigation.mockReturnValue({ layout: { width: 250, height: 400 } })
     expect(getWindowInfo()).toMatchObject({ windowWidth: 250, windowHeight: 400 })
     require('@mpxjs/core').config.rnConfig.customLayout = () => ({ width: 0 })
