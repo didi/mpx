@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { onWindowResize, offWindowResize } from '../window/rnWindow'
 
@@ -51,7 +51,6 @@ const toastMap = new Map()
 const timerMap = new Map()
 function showToast (options = {}) {
   const id = getCurrentPageId()
-  const navigation = getFocusedNavigation()
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   if (id === null) {
     const result = {
@@ -75,15 +74,13 @@ function showToast (options = {}) {
   const ToastView = function () {
     const [dimensionsHeight, setDimensionsHeight] = useState(() => global.getDimensionsInfo().height)
     useEffect(() => {
-      const resize = ({ size: { windowHeight } }) => {
-        setDimensionsHeight(windowHeight)
+      const resize = () => {
+        setDimensionsHeight(global.getDimensionsInfo().height)
       }
       onWindowResize(resize)
       return () => offWindowResize(resize)
     }, [])
-    const layout = navigation?.layout
-    const windowHeight = layout?.height || dimensionsHeight
-    const contentTop = parseInt(windowHeight * 0.4) // 小程序里面展示偏上一点
+    const contentTop = parseInt(dimensionsHeight * 0.4) // 小程序里面展示偏上一点
     let content
     if (image || icon === 'success' || icon === 'error') {
       content = <View style={[styles.toastWrap, { pointerEvents }]}>

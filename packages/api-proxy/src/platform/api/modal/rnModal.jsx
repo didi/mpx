@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { onWindowResize, offWindowResize } from '../window/rnWindow'
 const styles = StyleSheet.create({
@@ -68,7 +68,6 @@ const styles = StyleSheet.create({
 const modalMap = new Map()
 const showModal = function (options = {}) {
   const id = getCurrentPageId()
-  const navigation = getFocusedNavigation()
   const {
     title,
     content,
@@ -154,15 +153,13 @@ const showModal = function (options = {}) {
   const ModalView = function () {
     const [dimensionsWindow, setDimensionsWindow] = useState(() => global.getDimensionsInfo())
     useEffect(() => {
-      const resize = ({ size: { windowWidth: width, windowHeight: height } }) => {
-        setDimensionsWindow({ width, height })
+      const resize = () => {
+        setDimensionsWindow(global.getDimensionsInfo())
       }
       onWindowResize(resize)
       return () => offWindowResize(resize)
     }, [])
-    const layout = navigation?.layout
-    const width = layout?.width || dimensionsWindow.width
-    const height = layout?.height || dimensionsWindow.height
+    const { width, height } = dimensionsWindow
     return (
       <View style={styles.modalTask}>
         <View style={[styles.modalContent, { width: width * 0.8 }]}>

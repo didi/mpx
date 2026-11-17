@@ -70,14 +70,14 @@ function expectSheetLayout () {
   expect(view.props.style.height).toBeUndefined()
 }
 
-function expectVisualDimensions ({ width, height }, top = 0) {
+function expectVisualDimensions ({ width, height }, top = 0, overlayDimensions = { width, height }) {
   showModal({ title: 'dimensions', content: 'content' })
   const modal = portal.add.mock.calls[portal.add.mock.calls.length - 1][0]
-  expect(stylesIn(modal)).toContainEqual(expect.objectContaining({ width: width * 0.8 }))
-  expect(stylesIn(modal)).toContainEqual(expect.objectContaining({ maxHeight: height * 0.45 }))
+  expect(stylesIn(modal)).toContainEqual(expect.objectContaining({ width: overlayDimensions.width * 0.8 }))
+  expect(stylesIn(modal)).toContainEqual(expect.objectContaining({ maxHeight: overlayDimensions.height * 0.45 }))
   showToast({ title: 'dimensions', icon: 'none' })
   const toast = portal.add.mock.calls[portal.add.mock.calls.length - 1][0]
-  expect(stylesIn(toast)).toContainEqual(expect.objectContaining({ marginTop: parseInt(height * 0.4) }))
+  expect(stylesIn(toast)).toContainEqual(expect.objectContaining({ marginTop: parseInt(overlayDimensions.height * 0.4) }))
   expectSheetLayout()
   const rect = Observer.prototype._getWindowRect.call({ margins: { top: 0, bottom: 0, left: 0, right: 0 } })
   expect(rect).toEqual({ top, left: 0, right: width, bottom: top + height })
@@ -108,7 +108,7 @@ describe.each(['ios', 'android'])('%s APIs follow the configured dimensions base
     delete global.getDimensionsInfo
   })
 
-  it.each([undefined, 'window', 'screen'])('uses the no-argument getter with dimensionsBase=%s', base => {
+  it.each([undefined, 'window', 'screen'])('uses dimensionsBase=%s for overlays, resize and viewport bounds', base => {
     const processed = { window: { width: 288, height: 512 }, screen: { width: 576, height: 1024 } }
     global.getDimensionsInfo = jest.fn(type => processed[type || base || 'window'])
     const expected = processed[base || 'window']
@@ -133,10 +133,10 @@ describe.each(['ios', 'android'])('%s APIs follow the configured dimensions base
     expectSheetLayout()
   })
 
-  it('preserves page layout priority for views and viewport bounds', () => {
+  it('uses page layout for viewport bounds and base dimensions for overlays', () => {
     global.getDimensionsInfo = jest.fn(() => ({ width: 576, height: 1024 }))
     getFocusedNavigation.mockReturnValue({ layout: { width: 250, height: 400, top: 30 } })
-    expectVisualDimensions({ width: 250, height: 400 }, 30)
+    expectVisualDimensions({ width: 250, height: 400 }, 30, { width: 576, height: 1024 })
     expectResizeDimensions({ width: 576, height: 1024 })
   })
 })
