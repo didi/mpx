@@ -173,12 +173,13 @@ const isPercent = (val: string | number | undefined): val is string => typeof va
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
 const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
-  const { sizeList, backgroundPosition, type } = preImageInfo
+  const { sizeList, backgroundPosition, type, linearInfo } = preImageInfo
   const [width, height] = sizeList
   const bp = backgroundPosition
 
   if (type === 'linear') {
-    return !(Number.isFinite(width) && Number.isFinite(height)) || isPercent(bp[1]) || isPercent(bp[3])
+    return ((__mpx_mode__ === 'ios' || (linearInfo?.direction && diagonalAngleMap[linearInfo.direction])) &&
+      !(Number.isFinite(width) && Number.isFinite(height))) || isPercent(bp[1]) || isPercent(bp[3])
   }
 
   // 含有百分号，center 需计算布局
@@ -284,10 +285,7 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
   const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
   const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
   const [width, height] = sizeList
-  let dimensions: {
-    width: NumberVal,
-    height: NumberVal
-  } | null = { width: 0, height: 0 }
+  let dimensions: ImageStyle | null = { width: 0, height: 0 }
 
   // 枚举值
   if (typeof width === 'string' && ['cover', 'contain'].includes(width)) {
@@ -317,13 +315,9 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       dimensions = calculateSize(width as number, imageSizeHeight / imageSizeWidth, layoutInfo?.width, true)
       if (!dimensions) return
     } else { // 数值类型      ImageStyle
-      if (type === 'linear' && (!layoutWidth || !layoutHeight) && (isPercent(width) || isPercent(height))) {
-        // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，通过设置 % 的方式会渲染不出来，即使后面再更新为正常宽高也渲染不出来
-        // 所以 hack 手动先将 linear 宽高也设置为 0，后面再更新为正确的数值或 %。
-        dimensions = {
-          width: 0,
-          height: 0
-        } as { width: NumberVal, height: NumberVal }
+      if (__mpx_mode__ === 'ios' && type === 'linear' && (!layoutWidth || !layoutHeight) && (isPercent(width) || isPercent(height))) {
+        // iOS 百分比渐变在零尺寸布局下先归零，布局恢复后再使用百分比。
+        dimensions = { width: 0, height: 0 }
       } else {
         dimensions = {
           width: isPercent(width) ? width : +width,
