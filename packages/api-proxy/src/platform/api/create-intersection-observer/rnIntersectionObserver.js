@@ -98,7 +98,7 @@ class RNIntersectionObserver {
   _getWindowRect () {
     if (this.windowRect) return this.windowRect
     const navigation = getFocusedNavigation() || {}
-    const dimensions = global.getDimensionsInfo?.()
+    const dimensions = global.getDimensionsInfo()
     const navigationLayout = navigation.layout || {
       top: 0,
       left: 0,

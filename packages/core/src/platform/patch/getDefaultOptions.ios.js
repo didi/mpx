@@ -512,10 +512,10 @@ const checkRelation = (options) => {
   }
 }
 function getLayoutData (headerHeight) {
-  const screenDimensions = global.getDimensionsInfo?.('screen')
-  const windowDimensions = global.getDimensionsInfo?.('window')
+  const screenDimensions = global.getDimensionsInfo('screen')
+  const windowDimensions = global.getDimensionsInfo('window')
   // 页面宽高使用 dimensionsBase 指定且经 customDimensions 处理后的尺寸。
-  const layoutDimensions = global.getDimensionsInfo?.()
+  const layoutDimensions = global.getDimensionsInfo()
   const isLandscape = screenDimensions.height < screenDimensions.width
   let bottomVirtualHeight = 0
   if (ReactNative.Platform.OS === 'android') {

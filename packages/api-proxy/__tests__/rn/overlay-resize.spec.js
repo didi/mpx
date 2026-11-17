@@ -7,6 +7,7 @@ const mockRenderers = new Map()
 let mockPortalKey = 0
 
 jest.mock('react-native', () => ({
+  Dimensions: { addEventListener: jest.fn() },
   StyleSheet: { create: styles => styles, hairlineWidth: 0.5 },
   View: 'View',
   Text: 'Text',
@@ -19,7 +20,7 @@ jest.mock('react-native', () => ({
 jest.mock('react-native-safe-area-context', () => {
   const React = require('react')
   const Context = React.createContext({ top: 0, bottom: 0, left: 0, right: 0 })
-  return { Context, useSafeAreaInsets: jest.fn(() => React.useContext(Context)) }
+  return { Context, useSafeAreaInsets: () => React.useContext(Context) }
 }, { virtual: true })
 jest.mock('react-native-reanimated', () => ({
   __esModule: true,
@@ -47,9 +48,10 @@ jest.mock('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/in
 }), { virtual: true })
 
 const React = require('react')
+const { Dimensions } = require('react-native')
 const { act, create } = require('react-test-renderer')
 const { RouteContext } = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context')
-const { Context: SafeAreaContext, useSafeAreaInsets } = require('react-native-safe-area-context')
+const { Context: SafeAreaContext } = require('react-native-safe-area-context')
 const portal = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index')
 const { withTiming } = require('react-native-reanimated')
 const { showActionSheet } = require('../../src/platform/api/action-sheet/rnActionSheet')
@@ -91,7 +93,9 @@ function stylesIn (renderer) {
 async function rotate () {
   mockDimensions = { width: 640, height: 360 }
   mockNavigation.layout = { width: 600, height: 296 }
-  await act(async () => { global.__mpxWindowResizeHandler(mockDimensions) })
+  await act(async () => {
+    global.__mpxWindowResizeHandler?.(mockDimensions)
+  })
 }
 
 describe('visible RN overlays resize in place', () => {
@@ -103,7 +107,7 @@ describe('visible RN overlays resize in place', () => {
     mockNavigation = { layout: { width: 320, height: 576 } }
     mockFocusedNavigation = mockNavigation
     mockInsets = { top: 20, bottom: 10, left: 0, right: 0 }
-    global.getDimensionsInfo = () => mockDimensions
+    global.getDimensionsInfo = jest.fn(() => Object.assign({}, mockDimensions))
   })
 
   afterEach(() => {
@@ -122,7 +126,6 @@ describe('visible RN overlays resize in place', () => {
     ['Modal', showModal, { title: 'message' }]
   ])('keeps %s stretched to its parent across layout changes', async (name, show, options) => {
     const { renderer } = showAndMount(show, options)
-    expect(global.__mpxWindowResizeHandler).toEqual(expect.any(Function))
     expectParentLayout(renderer)
     expect(global.__mpxPageSizeCountMap).toBeUndefined()
     expect(global.__mpxSizeCount).toBeUndefined()
@@ -131,42 +134,62 @@ describe('visible RN overlays resize in place', () => {
   })
 
   it.each([
-    ['Toast', showToast, { title: 'message', icon: 'none' }, size => ({ marginTop: parseInt(size.height * 0.4) })],
-    ['Loading', showLoading, { title: 'loading' }, size => ({ marginTop: parseInt(size.height * 0.4) })],
-    ['Modal', showModal, { title: 'message' }, size => ({ width: size.width * 0.8 })]
-  ])('uses event dimensions for %s content and skips duplicate sizes', async (name, show, options, contentStyle) => {
+    ['Toast', showToast, { title: 'message', icon: 'none' }],
+    ['Loading', showLoading, { title: 'loading' }]
+  ])('stores only the height used by %s content', async (name, show, options) => {
     mockNavigation.layout = undefined
     const { renderer } = showAndMount(show, options)
     expectParentLayout(renderer)
-    expect(stylesIn(renderer)).toContainEqual(contentStyle({ width: 360, height: 640 }))
+    expect(stylesIn(renderer)).toContainEqual({ marginTop: 256 })
     const initialStyle = renderer.root.findAllByType('View')[1].props.style
     await act(async () => { global.__mpxWindowResizeHandler({ width: 360, height: 640 }) })
     expect(renderer.root.findAllByType('View')[1].props.style).toBe(initialStyle)
-    // Keep the getter unchanged to verify dimensions come from the event.
     await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 640 }) })
-    expect(stylesIn(renderer)).toContainEqual(contentStyle({ width: 600, height: 640 }))
+    expect(renderer.root.findAllByType('View')[1].props.style).toBe(initialStyle)
+    // Keep the getter unchanged to verify the height comes from the event.
     await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 296 }) })
-    expect(stylesIn(renderer)).toContainEqual(contentStyle({ width: 600, height: 296 }))
+    expect(stylesIn(renderer)).toContainEqual({ marginTop: 118 })
     expectParentLayout(renderer)
     const resizedStyle = renderer.root.findAllByType('View')[1].props.style
     await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 296 }) })
     expect(renderer.root.findAllByType('View')[1].props.style).toBe(resizedStyle)
   })
 
-  it('keeps an open ActionSheet synchronized on resize without replaying its entrance animation', async () => {
+  it('updates Modal width and height from resize events', async () => {
+    mockNavigation.layout = undefined
+    const { renderer } = showAndMount(showModal, { title: 'message', content: 'text' })
+    expectParentLayout(renderer)
+    expect(stylesIn(renderer)).toContainEqual({ width: 288 })
+    expect(stylesIn(renderer)).toContainEqual({ maxHeight: 640 * 0.45 })
+    const initialStyle = renderer.root.findAllByType('View')[1].props.style
+    await act(async () => { global.__mpxWindowResizeHandler({ width: 360, height: 640 }) })
+    expect(renderer.root.findAllByType('View')[1].props.style).not.toBe(initialStyle)
+    await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 640 }) })
+    expect(stylesIn(renderer)).toContainEqual({ width: 480 })
+    expect(stylesIn(renderer)).toContainEqual({ maxHeight: 640 * 0.45 })
+    await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 296 }) })
+    expect(stylesIn(renderer)).toContainEqual({ width: 480 })
+    expect(stylesIn(renderer)).toContainEqual({ maxHeight: 296 * 0.45 })
+    const resizedStyle = renderer.root.findAllByType('View')[1].props.style
+    await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 296 }) })
+    expect(renderer.root.findAllByType('View')[1].props.style).not.toBe(resizedStyle)
+  })
+
+  it('keeps ActionSheet edge positioning and updates safe-area padding', async () => {
     const { renderer, element } = showAndMount(showActionSheet, { itemList: ['first', 'second'] })
     expectParentLayout(renderer)
-    expect(global.__mpxWindowResizeHandler).toEqual(expect.any(Function))
+    expect(Dimensions.addEventListener).not.toHaveBeenCalled()
+    expect(global.__mpxWindowResizeHandler).toBeUndefined()
     expect(withTiming).toHaveBeenCalledTimes(2)
-    const initialRenders = useSafeAreaInsets.mock.calls.length
     await rotate()
-    expect(useSafeAreaInsets).toHaveBeenCalledTimes(initialRenders + 1)
     expectParentLayout(renderer)
     expect(stylesIn(renderer)).toContainEqual(expect.objectContaining({ bottom: 0, left: 0, right: 0 }))
     mockInsets = { top: 0, bottom: 0, left: 0, right: 0 }
     act(() => renderer.update(wrap(element)))
     expect(stylesIn(renderer)).toContainEqual({ paddingBottom: 10 })
-    expect(global.__mpxWindowResizeHandler).toEqual(expect.any(Function))
+    expect(global.getDimensionsInfo).not.toHaveBeenCalled()
+    expect(Dimensions.addEventListener).not.toHaveBeenCalled()
+    expect(global.__mpxWindowResizeHandler).toBeUndefined()
     expect(withTiming).toHaveBeenCalledTimes(2)
     expect(portal.add).toHaveBeenCalledTimes(1)
   })
@@ -236,11 +259,8 @@ describe('visible RN overlays resize in place', () => {
     offWindowResize(businessListener)
   })
 
-  it.each([
-    ['ActionSheet', showActionSheet, { itemList: ['first'] }],
-    ['Modal', showModal, { title: 'message' }]
-  ])('removes the resize subscription after %s unmounts', async (name, show, options) => {
-    const { key } = showAndMount(show, options)
+  it('removes the Modal resize subscription on unmount', () => {
+    const { key } = showAndMount(showModal, { title: 'message' })
     act(() => portal.remove(key))
     expect(global.__mpxWindowResizeHandler).toBeUndefined()
   })

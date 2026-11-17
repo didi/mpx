@@ -152,10 +152,10 @@ const showModal = function (options = {}) {
     })
   }
   const ModalView = function () {
-    const [dimensionsWindow, setDimensionsWindow] = useState(() => global.getDimensionsInfo?.())
+    const [dimensionsWindow, setDimensionsWindow] = useState(() => global.getDimensionsInfo())
     useEffect(() => {
       const resize = ({ size: { windowWidth: width, windowHeight: height } }) => {
-        setDimensionsWindow(prev => prev.width === width && prev.height === height ? prev : { width, height })
+        setDimensionsWindow({ width, height })
       }
       onWindowResize(resize)
       return () => offWindowResize(resize)

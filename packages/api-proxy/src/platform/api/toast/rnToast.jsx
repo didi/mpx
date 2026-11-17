@@ -73,16 +73,16 @@ function showToast (options = {}) {
   const pointerEvents = mask ? 'auto' : 'none'
   isLoadingShow = isLoading
   const ToastView = function () {
-    const [dimensions, setDimensions] = useState(() => global.getDimensionsInfo?.())
+    const [dimensionsHeight, setDimensionsHeight] = useState(() => global.getDimensionsInfo().height)
     useEffect(() => {
-      const resize = ({ size: { windowWidth: width, windowHeight: height } }) => {
-        setDimensions(prev => prev.width === width && prev.height === height ? prev : { width, height })
+      const resize = ({ size: { windowHeight } }) => {
+        setDimensionsHeight(windowHeight)
       }
       onWindowResize(resize)
       return () => offWindowResize(resize)
     }, [])
     const layout = navigation?.layout
-    const windowHeight = layout?.height || dimensions.height
+    const windowHeight = layout?.height || dimensionsHeight
     const contentTop = parseInt(windowHeight * 0.4) // 小程序里面展示偏上一点
     let content
     if (image || icon === 'success' || icon === 'error') {

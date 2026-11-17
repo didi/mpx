@@ -9,7 +9,6 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated'
-import { onWindowResize, offWindowResize } from '../window/rnWindow'
 const actionSheetMap = new Map()
 
 const remove = function (id) {
@@ -75,7 +74,6 @@ const styles = StyleSheet.create({
 
 function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList }) {
   const { bottom = 0 } = useSafeAreaInsets()
-  const [, setDimensionsWindow] = useState(() => global.getDimensionsInfo?.())
   const height = itemList.length * 53 + 46 + bottom + (alertText ? 52 : 0)
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
@@ -93,10 +91,6 @@ function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList 
   })
 
   useEffect(() => {
-    const resize = ({ size: { windowWidth: width, windowHeight: height } }) => {
-      setDimensionsWindow({ width, height })
-    }
-    onWindowResize(resize)
     fade.value = withTiming(1, {
       easing: Easing.inOut(Easing.poly(3)),
       duration: 250
@@ -105,7 +99,6 @@ function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList 
       easing: Easing.out(Easing.poly(3)),
       duration: 250
     })
-    return () => offWindowResize(resize)
   }, [])
 
   const removeActionSheet = function () {
