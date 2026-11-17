@@ -474,7 +474,7 @@ mpx.config.rnConfig.disablePageTransition = true
 'window' | 'screen'
 ```
 
-控制 `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，默认值为 `'window'`。
+控制 `rpx` / `vw` / `vh`、媒体查询与 `onResize` / `onWindowResize` 使用的尺寸基准，默认值为 `'window'`。
 
 如果需要保持旧版本基于屏幕尺寸计算的效果，可配置为 `'screen'`：
 
