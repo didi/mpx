@@ -1,8 +1,7 @@
-import { useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
-import { RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { onWindowResize, offWindowResize } from '../window/rnWindow'
 
 const styles = StyleSheet.create({
@@ -132,18 +131,15 @@ const showModal = function (options = {}) {
     })
   }
   const ModalView = function () {
-    const navigation = useContext(RouteContext)?.navigation
-    const [dimensions, setDimensions] = useState(() => global.getDimensionsInfo())
+    const [dimensions, setDimensions] = useState(() => global.getDimensionsInfo('window'))
     useEffect(() => {
-      const resize = ({ size: { windowWidth: width, windowHeight: height } }) => {
-        setDimensions({ width, height })
+      const resize = () => {
+        setDimensions(global.getDimensionsInfo('window'))
       }
       onWindowResize(resize)
       return () => offWindowResize(resize)
     }, [])
-    const layout = navigation?.layout
-    const width = layout?.width || dimensions.width
-    const height = layout?.height || dimensions.height
+    const { width, height } = dimensions
     return (
       <View style={styles.modalTask}>
         <View style={[styles.modalContent, { width: width * 0.8 }]}>
