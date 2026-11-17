@@ -77,4 +77,20 @@ jobs:
           tail -n 100 /tmp/fixture-retry.log
           node /tmp/inspect-mpx-cache.cjs after-retry
           printf 'RESULT root=%s before=%s after=%s\n' "$root_status" "$before_status" "$after_status"
+          timeout 180 npm i --prefix test/e2e/plugin-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/plugin-before.log 2>&1
+          plugin_before=$?
+          tail -n 60 /tmp/plugin-before.log
+          if [ -L test/e2e/plugin-project/node_modules/webpack ]; then
+            unlink test/e2e/plugin-project/node_modules/webpack
+          fi
+          timeout 180 npm i --prefix test/e2e/plugin-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/plugin-after.log 2>&1
+          plugin_after=$?
+          tail -n 60 /tmp/plugin-after.log
+          mv test/e2e/miniprogram-project/node_modules/webpack /tmp/fixture-webpack-control
+          ln -s "$PWD/node_modules/webpack" test/e2e/miniprogram-project/node_modules/webpack
+          rm -f test/e2e/miniprogram-project/package-lock.json
+          timeout 180 npm i --prefix test/e2e/miniprogram-project --foreground-scripts --loglevel=verbose --no-audit --no-fund > /tmp/relinked.log 2>&1
+          relinked_status=$?
+          tail -n 60 /tmp/relinked.log
+          printf 'CONTROL plugin-before=%s plugin-after=%s relinked=%s\n' "$plugin_before" "$plugin_after" "$relinked_status"
           exit 0
