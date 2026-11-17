@@ -19,7 +19,7 @@ jest.mock('react-native', () => ({
 jest.mock('react-native-safe-area-context', () => {
   const React = require('react')
   const Context = React.createContext({ top: 0, bottom: 0, left: 0, right: 0 })
-  return { Context, useSafeAreaInsets: () => React.useContext(Context) }
+  return { Context, useSafeAreaInsets: jest.fn(() => React.useContext(Context)) }
 }, { virtual: true })
 jest.mock('react-native-reanimated', () => ({
   __esModule: true,
@@ -49,7 +49,7 @@ jest.mock('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/in
 const React = require('react')
 const { act, create } = require('react-test-renderer')
 const { RouteContext } = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context')
-const { Context: SafeAreaContext } = require('react-native-safe-area-context')
+const { Context: SafeAreaContext, useSafeAreaInsets } = require('react-native-safe-area-context')
 const portal = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index')
 const { withTiming } = require('react-native-reanimated')
 const { showActionSheet } = require('../../src/platform/api/action-sheet/rnActionSheet')
@@ -75,6 +75,13 @@ function showAndMount (show, options) {
 
 function rootStyle (renderer) {
   return Object.assign({}, ...[].concat(renderer.root.findAllByType('View')[0].props.style))
+}
+
+function expectParentLayout (renderer) {
+  const style = rootStyle(renderer)
+  expect(style).toMatchObject({ left: 0, right: 0, top: 0, bottom: 0 })
+  expect(style.width).toBeUndefined()
+  expect(style.height).toBeUndefined()
 }
 
 function stylesIn (renderer) {
@@ -110,67 +117,56 @@ describe('visible RN overlays resize in place', () => {
 
   it.each([
     ['Toast', showToast, { title: 'message', icon: 'none' }],
+    ['Loading', showLoading, { title: 'loading' }],
     ['ActionSheet', showActionSheet, { itemList: ['first'] }],
     ['Modal', showModal, { title: 'message' }]
-  ])('refreshes %s through onWindowResize without depending on page counters', async (name, show, options) => {
+  ])('keeps %s stretched to its parent across layout changes', async (name, show, options) => {
     const { renderer } = showAndMount(show, options)
     expect(global.__mpxWindowResizeHandler).toEqual(expect.any(Function))
+    expectParentLayout(renderer)
     expect(global.__mpxPageSizeCountMap).toBeUndefined()
     expect(global.__mpxSizeCount).toBeUndefined()
     await rotate()
-    expect(rootStyle(renderer)).toMatchObject({ width: 600, height: 296 })
+    expectParentLayout(renderer)
   })
 
   it.each([
-    ['Toast', showToast, { title: 'message', icon: 'none' }],
-    ['Loading', showLoading, { title: 'loading' }],
-    ['Modal', showModal, { title: 'message' }]
-  ])('uses event dimensions for %s and skips duplicate sizes', async (name, show, options) => {
+    ['Toast', showToast, { title: 'message', icon: 'none' }, size => ({ marginTop: parseInt(size.height * 0.4) })],
+    ['Loading', showLoading, { title: 'loading' }, size => ({ marginTop: parseInt(size.height * 0.4) })],
+    ['Modal', showModal, { title: 'message' }, size => ({ width: size.width * 0.8 })]
+  ])('uses event dimensions for %s content and skips duplicate sizes', async (name, show, options, contentStyle) => {
     mockNavigation.layout = undefined
     const { renderer } = showAndMount(show, options)
-    expect(rootStyle(renderer)).toMatchObject({ width: 360, height: 640 })
-    const initialStyle = renderer.root.findAllByType('View')[0].props.style
+    expectParentLayout(renderer)
+    expect(stylesIn(renderer)).toContainEqual(contentStyle({ width: 360, height: 640 }))
+    const initialStyle = renderer.root.findAllByType('View')[1].props.style
     await act(async () => { global.__mpxWindowResizeHandler({ width: 360, height: 640 }) })
-    expect(renderer.root.findAllByType('View')[0].props.style).toBe(initialStyle)
+    expect(renderer.root.findAllByType('View')[1].props.style).toBe(initialStyle)
     // Keep the getter unchanged to verify dimensions come from the event.
     await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 640 }) })
-    expect(rootStyle(renderer)).toMatchObject({ width: 600, height: 640 })
+    expect(stylesIn(renderer)).toContainEqual(contentStyle({ width: 600, height: 640 }))
     await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 296 }) })
-    expect(rootStyle(renderer)).toMatchObject({ width: 600, height: 296 })
-    const resizedStyle = renderer.root.findAllByType('View')[0].props.style
+    expect(stylesIn(renderer)).toContainEqual(contentStyle({ width: 600, height: 296 }))
+    expectParentLayout(renderer)
+    const resizedStyle = renderer.root.findAllByType('View')[1].props.style
     await act(async () => { global.__mpxWindowResizeHandler({ width: 600, height: 296 }) })
-    expect(renderer.root.findAllByType('View')[0].props.style).toBe(resizedStyle)
+    expect(renderer.root.findAllByType('View')[1].props.style).toBe(resizedStyle)
   })
 
-  it('updates ActionSheet Window state from the latest resize dimensions', async () => {
-    mockNavigation.layout = undefined
-    const { renderer, element } = showAndMount(showActionSheet, { itemList: ['first'] })
-    expect(element.props.navigation).toBeUndefined()
-    expect(rootStyle(renderer)).toMatchObject({ width: 360, height: 640 })
-
-    await act(async () => { global.__mpxWindowResizeHandler({ width: 500, height: 700 }) })
-    expect(rootStyle(renderer)).toMatchObject({ width: 500, height: 700 })
-  })
-
-  it('reads the latest ActionSheet page layout on resize even when the base dimensions are unchanged', async () => {
-    const { renderer } = showAndMount(showActionSheet, { itemList: ['first'] })
-    expect(rootStyle(renderer)).toMatchObject({ width: 320, height: 576 })
-
-    mockNavigation.layout = { width: 300, height: 500 }
-    await act(async () => { global.__mpxWindowResizeHandler(mockDimensions) })
-    expect(rootStyle(renderer)).toMatchObject({ width: 300, height: 500 })
-  })
-
-  it('keeps an open ActionSheet at the new page bottom without replaying its entrance animation', async () => {
+  it('keeps an open ActionSheet synchronized on resize without replaying its entrance animation', async () => {
     const { renderer, element } = showAndMount(showActionSheet, { itemList: ['first', 'second'] })
-    expect(rootStyle(renderer)).toMatchObject({ width: 320, height: 576 })
+    expectParentLayout(renderer)
+    expect(global.__mpxWindowResizeHandler).toEqual(expect.any(Function))
     expect(withTiming).toHaveBeenCalledTimes(2)
+    const initialRenders = useSafeAreaInsets.mock.calls.length
     await rotate()
-    expect(rootStyle(renderer)).toMatchObject({ width: 600, height: 296 })
+    expect(useSafeAreaInsets).toHaveBeenCalledTimes(initialRenders + 1)
+    expectParentLayout(renderer)
     expect(stylesIn(renderer)).toContainEqual(expect.objectContaining({ bottom: 0, left: 0, right: 0 }))
     mockInsets = { top: 0, bottom: 0, left: 0, right: 0 }
     act(() => renderer.update(wrap(element)))
     expect(stylesIn(renderer)).toContainEqual({ paddingBottom: 10 })
+    expect(global.__mpxWindowResizeHandler).toEqual(expect.any(Function))
     expect(withTiming).toHaveBeenCalledTimes(2)
     expect(portal.add).toHaveBeenCalledTimes(1)
   })
@@ -180,10 +176,10 @@ describe('visible RN overlays resize in place', () => {
     ['Loading', showLoading, { title: 'loading' }]
   ])('repositions an existing %s using the new page dimensions', async (name, show, options) => {
     const { renderer } = showAndMount(show, options)
-    expect(rootStyle(renderer)).toMatchObject({ width: 320, height: 576 })
+    expectParentLayout(renderer)
     expect(stylesIn(renderer)).toContainEqual({ marginTop: 230 })
     await rotate()
-    expect(rootStyle(renderer)).toMatchObject({ width: 600, height: 296 })
+    expectParentLayout(renderer)
     expect(stylesIn(renderer)).toContainEqual({ marginTop: 118 })
     expect(portal.add).toHaveBeenCalledTimes(1)
   })
@@ -205,7 +201,7 @@ describe('visible RN overlays resize in place', () => {
     const input = renderer.root.findByType('TextInput')
     act(() => input.props.onChangeText('typed before rotation'))
     await rotate()
-    expect(rootStyle(renderer)).toMatchObject({ width: 600, height: 296 })
+    expectParentLayout(renderer)
     expect(stylesIn(renderer)).toContainEqual({ width: 480 })
     expect(renderer.root.findByType('TextInput')).toBe(input)
     act(() => renderer.root.findAllByType('TouchableOpacity')[1].props.onPress())
@@ -223,7 +219,8 @@ describe('visible RN overlays resize in place', () => {
     const { renderer } = showAndMount(showToast, { title: 'message', icon: 'none' })
     mockFocusedNavigation = { layout: { width: 999, height: 999 } }
     await rotate()
-    expect(rootStyle(renderer)).toMatchObject({ width: 600, height: 296 })
+    expectParentLayout(renderer)
+    expect(stylesIn(renderer)).toContainEqual({ marginTop: 118 })
   })
 
   it.each([

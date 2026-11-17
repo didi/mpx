@@ -21,7 +21,9 @@ const styles = StyleSheet.create({
   },
   toastWrap: {
     left: 0,
+    right: 0,
     top: 0,
+    bottom: 0,
     zIndex: 10000,
     position: 'absolute',
     display: 'flex',
@@ -80,19 +82,18 @@ function showToast (options = {}) {
       return () => offWindowResize(resize)
     }, [])
     const layout = navigation?.layout
-    const windowWidth = layout?.width || dimensions.width
     const windowHeight = layout?.height || dimensions.height
     const contentTop = parseInt(windowHeight * 0.4) // 小程序里面展示偏上一点
     let content
     if (image || icon === 'success' || icon === 'error') {
-      content = <View style={[styles.toastWrap, { width: windowWidth, height: windowHeight, pointerEvents }]}>
+      content = <View style={[styles.toastWrap, { pointerEvents }]}>
         <View style={[styles.toastContent, styles.toastHasIcon, { marginTop: contentTop }]}>
           <Image style={ styles.toastImg } source={{ uri: image || iconImg[icon] }}></Image>
           { title ? <Text numberOfLines={2} style={styles.toastText}>{title}</Text> : null }
         </View>
       </View>
     } else if (icon === 'loading') {
-      content = <View style={[styles.toastWrap, { width: windowWidth, height: windowHeight, pointerEvents }]}>
+      content = <View style={[styles.toastWrap, { pointerEvents }]}>
         <View style={[styles.toastContent, styles.toastHasIcon, { marginTop: contentTop }]}>
           <ActivityIndicator
             animating
@@ -103,7 +104,7 @@ function showToast (options = {}) {
         </View>
       </View>
     } else {
-      content = <View style={[styles.toastWrap, { width: windowWidth, height: windowHeight, pointerEvents }]}>
+      content = <View style={[styles.toastWrap, { pointerEvents }]}>
         <View style={[styles.toastContent, { marginTop: contentTop }]}>
           { title
             ? <Text numberOfLines={2} style={{

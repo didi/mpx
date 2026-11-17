@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
@@ -23,6 +23,8 @@ const styles = StyleSheet.create({
   actionAction: {
     left: 0,
     top: 0,
+    bottom: 0,
+    right: 0,
     position: 'absolute',
     zIndex: 10000
   },
@@ -73,10 +75,7 @@ const styles = StyleSheet.create({
 
 function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList }) {
   const { bottom = 0 } = useSafeAreaInsets()
-  const [dimensionsWindow, setDimensionsWindow] = useState(() => global.getDimensionsInfo?.())
-  const layout = getFocusedNavigation()?.layout
-  const windowWidth = layout?.width || dimensionsWindow.width
-  const windowHeight = layout?.height || dimensionsWindow.height
+  const [, setDimensionsWindow] = useState(() => global.getDimensionsInfo?.())
   const height = itemList.length * 53 + 46 + bottom + (alertText ? 52 : 0)
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
@@ -135,7 +134,7 @@ function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList 
     setSelectedIndex(index)
   }
   return (
-    <View style={[styles.actionAction, { width: windowWidth, height: windowHeight }]}>
+    <View style={styles.actionAction}>
       <Animated.View style={[styles.maskWrap, maskAnimatedStyles]}>
         <View
           activeOpacity={1}

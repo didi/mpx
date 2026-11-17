@@ -6,7 +6,9 @@ import { onWindowResize, offWindowResize } from '../window/rnWindow'
 const styles = StyleSheet.create({
   modalTask: {
     left: 0,
+    right: 0,
     top: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
     display: 'flex',
@@ -162,7 +164,7 @@ const showModal = function (options = {}) {
     const width = layout?.width || dimensionsWindow.width
     const height = layout?.height || dimensionsWindow.height
     return (
-      <View style={[styles.modalTask, { width, height }]}>
+      <View style={styles.modalTask}>
         <View style={[styles.modalContent, { width: width * 0.8 }]}>
           {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
           {modalContent.map((item, index) => <ScrollView key={index} style={[styles.contentBox, { maxHeight: height * 0.45 }]}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}

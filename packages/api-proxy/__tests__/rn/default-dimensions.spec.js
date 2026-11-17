@@ -61,11 +61,13 @@ function stylesIn (node) {
   return styles.concat([].concat(node.props.children || []).flatMap(stylesIn))
 }
 
-function expectSheetDimensions ({ width, height }) {
+function expectSheetLayout () {
   showActionSheet({ itemList: ['first'] })
   const sheet = portal.add.mock.calls[portal.add.mock.calls.length - 1][0]
   const view = sheet.type(sheet.props)
-  expect(view.props.style).toContainEqual({ width, height })
+  expect(view.props.style).toMatchObject({ left: 0, right: 0, top: 0, bottom: 0 })
+  expect(view.props.style.width).toBeUndefined()
+  expect(view.props.style.height).toBeUndefined()
 }
 
 function expectVisualDimensions ({ width, height }, top = 0) {
@@ -76,7 +78,7 @@ function expectVisualDimensions ({ width, height }, top = 0) {
   showToast({ title: 'dimensions', icon: 'none' })
   const toast = portal.add.mock.calls[portal.add.mock.calls.length - 1][0]
   expect(stylesIn(toast)).toContainEqual(expect.objectContaining({ marginTop: parseInt(height * 0.4) }))
-  expectSheetDimensions({ width, height })
+  expectSheetLayout()
   const rect = Observer.prototype._getWindowRect.call({ margins: { top: 0, bottom: 0, left: 0, right: 0 } })
   expect(rect).toEqual({ top, left: 0, right: width, bottom: top + height })
 }
@@ -122,13 +124,13 @@ describe.each(['ios', 'android'])('%s APIs follow the configured dimensions base
     expect(global.getDimensionsInfo.mock.calls.every(args => args.length === 0)).toBe(true)
   })
 
-  it('initializes each sheet from the current dimensions and prefers its page layout', () => {
+  it('keeps each sheet stretched to its parent across dimension and page layout changes', () => {
     global.getDimensionsInfo = jest.fn(() => ({ width: 288, height: 512 }))
-    expectSheetDimensions({ width: 288, height: 512 })
+    expectSheetLayout()
     global.getDimensionsInfo.mockReturnValue({ width: 512, height: 288 })
-    expectSheetDimensions({ width: 512, height: 288 })
+    expectSheetLayout()
     getFocusedNavigation().layout = { width: 480, height: 250 }
-    expectSheetDimensions({ width: 480, height: 250 })
+    expectSheetLayout()
   })
 
   it('preserves page layout priority for views and viewport bounds', () => {
