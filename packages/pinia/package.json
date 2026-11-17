@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/pinia",
-  "version": "2.11.2",
+  "version": "2.11.3",
   "description": "A pinia style store in miniprogram",
   "types": "@types/index.d.ts",
   "main": "src/index.js",
@@ -32,7 +32,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@mpxjs/utils": "^2.11.2"
+    "@mpxjs/utils": "^2.11.3"
   },
   "peerDependencies": {
     "@mpxjs/core": "*",
