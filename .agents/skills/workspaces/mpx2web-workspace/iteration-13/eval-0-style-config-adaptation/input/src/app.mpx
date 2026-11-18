@@ -1,0 +1,16 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+
+mpx.use(apiProxy)
+createApp({})
+</script>
+<script type="application/json">
+{
+  "pages": ["./pages/home/index.mpx", "./pages/choice/index.mpx"],
+  "window": { "navigationStyle": "custom" },
+  "subpackages": [
+    { "root": "packageA", "pages": ["./index.mpx"], "independent": true }
+  ]
+}
+</script>

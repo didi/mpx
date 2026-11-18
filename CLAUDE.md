@@ -1,1 +1,1 @@
-参考[AGENTS.md](AGENTS.md)
+参考 @AGENTS.md

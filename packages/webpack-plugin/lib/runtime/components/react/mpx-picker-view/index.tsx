@@ -36,7 +36,7 @@ interface PickerViewProps {
   'enable-wheel-animation'?: boolean
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'enable-offset'?: boolean
 }
@@ -87,7 +87,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     setWidth,
     setHeight,
@@ -231,7 +231,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         renderPickerColumns(),
         {
           hasVarDec,
-          varContext: varContextRef.current,
+          varContext,
           textPassThrough
         }
       )

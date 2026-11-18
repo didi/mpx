@@ -28,7 +28,7 @@ export interface BasePickerProps {
   /** 作为表单组件时的名称 */
   name?: string
   style?: Record<string, any>
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number

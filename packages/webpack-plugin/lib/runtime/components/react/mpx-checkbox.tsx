@@ -23,7 +23,7 @@ import {
   NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent, markLabelControlHandled } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
@@ -41,7 +41,7 @@ export interface CheckboxProps extends Selection {
   style?: ViewStyle & Record<string, any>
   groupValue?: Array<string>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -120,6 +120,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
+      markLabelControlHandled(evt)
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
@@ -129,7 +130,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       hasSelfPercent,
       normalStyle,
       hasVarDec,
-      varContextRef,
+      varContext,
       setWidth,
       setHeight
     } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle: styles.container })
@@ -222,7 +223,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current,
+          varContext,
           textPassThrough
         }
       )

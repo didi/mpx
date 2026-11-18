@@ -48,6 +48,25 @@ var unwatch = this.$watch('a', cb)
 unwatch()
 ```
 
+- `options.onTrack` / `options.onTrigger`
+
+`this.$watch` 的第三参数支持调试回调，第二参数使用含 `handler` 的对象时也可直接在该对象中配置。支持小程序和 Mpx2RN，Web 使用 Vue 2.7 的原生实现；仅在开发环境生效。
+
+```js
+this.$watch('count', function (value, oldValue) {
+  console.log(oldValue, value)
+}, {
+  onTrack(event) {
+    console.log('watch tracked', event.type, event.key)
+  },
+  onTrigger(event) {
+    debugger
+  }
+})
+```
+
+`onTrigger` 在依赖通知时同步执行，侦听回调仍按原有调度规则运行，也可能因结果未变化而跳过。停止侦听后调试事件随之停止。回调中避免修改响应式状态；Web 的 `onTrack` 中额外读取响应式状态还可能增加依赖或递归触发自身。事件结构和读取隔离差异见 [watch 系列调试选项](reactivity-api.md#watch-debug-options)。
+
 - `options.deep`
 
 为了发现对象内部值的变化，可以在选项参数中指定 deep: true。注意监听数组的变更不需要这么做。

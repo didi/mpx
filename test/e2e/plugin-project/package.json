@@ -9,7 +9,7 @@
     "build": "node ./build/build.js -p",
     "build:ali": "npm run build --mode=ali",
     "build:dev": "node ./build/build.js",
-    "copyPlugin": "sh ./copyWebpackPlugin.sh",
+    "linkPackages": "node ../linkPackages.js",
     "watch:cross": "npm run watch --modes=wx,ali,web",
     "build:cross": "npm run build --modes=wx,ali,web",
     "watch:web:serve": "npx npm-run-all --parallel watch:web serve",

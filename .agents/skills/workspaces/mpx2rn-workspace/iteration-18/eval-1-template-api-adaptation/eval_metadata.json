@@ -1,0 +1,81 @@
+{
+  "eval_id": 1,
+  "eval_name": "template-api-adaptation",
+  "prompt": "请对附件中的 order-list.mpx 页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style），不要省略任何内容。",
+  "assertions": [
+    {
+      "id": "t0",
+      "text": "模板：动态类名使用 wx:class，不在 class 属性中插值",
+      "checks": [
+        "t0"
+      ]
+    },
+    {
+      "id": "t2",
+      "text": "模板：Mustache 中不调用普通方法，getStatusColor/getStatusText 改为 computed 或 wx:style 绑定",
+      "checks": [
+        "t2"
+      ]
+    },
+    {
+      "id": "t1",
+      "text": "事件传参：移除 data-* 和 dataset 读取，模板与处理器改为内联传参",
+      "checks": [
+        "t1",
+        "t6"
+      ]
+    },
+    {
+      "id": "t3",
+      "text": "页面滚动：使用 scroll-view 承载刷新与触底加载，并适配页面刷新配置",
+      "checks": [
+        "t3",
+        "t4",
+        "j7"
+      ]
+    },
+    {
+      "id": "j0",
+      "text": "脚本：request/navigateTo/showModal/getStorageSync/setStorageSync/removeStorageSync/showToast/reLaunch 等 wx.xxx API 全部替换为 mpx.xxx",
+      "checks": [
+        "j0",
+        "t5"
+      ]
+    },
+    {
+      "id": "j1",
+      "text": "生命周期：隔离 RN 不支持的 onShareTimeline/onTabItemTap，保留 onShareAppMessage",
+      "checks": [
+        "j1",
+        "j2",
+        "j9"
+      ]
+    },
+    {
+      "id": "j3",
+      "text": "平台 API：RN 不执行 TabBar 角标和 getUserProfile，保留微信对应能力",
+      "checks": [
+        "j3",
+        "j4"
+      ]
+    },
+    {
+      "id": "t8",
+      "text": "模板：wx:style 对象键使用不加引号的驼峰写法，不使用引号或横杆写法",
+      "checks": [
+        "t8"
+      ]
+    },
+    {
+      "id": "t9",
+      "text": "模板：Hover 能力不同的相邻条件分支使用不同的有效 key，或让两个分支始终存在有效 hover-class",
+      "checks": [
+        "t9"
+      ]
+    }
+  ],
+  "source_evals": [
+    1,
+    2
+  ]
+}

@@ -160,6 +160,7 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
 export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useTransitionHooks, props=`, props)
   const { style: originalStyle = {}, transitionend } = props
+  const originalTransform = originalStyle.transform
   // style变更标识(首次render不执行)，初始值为0，首次渲染后为1
   const animationDeps = useRef(0)
   // 记录上次style map
@@ -284,7 +285,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     // console.info(`useAnimatedStyle styles=`, originalStyle)
     return animatedStyleKeys.reduce((styles, key) => {
       if (Array.isArray(key)) {
-        const transformStyle = getTransformObj(originalStyle.transform || [])
+        const transformStyle = getTransformObj(originalTransform || [])
         key.forEach((transformKey) => {
           transformStyle[transformKey] = shareValMap[transformKey].value
         })

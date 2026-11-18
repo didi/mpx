@@ -30,7 +30,7 @@ export interface _ViewProps extends ViewProps {
   'hover-stay-time'?: number
   'enable-background'?: boolean
   'enable-text-pass-through'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-fast-image'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -832,7 +832,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     hasSelfPercent,
     hasPositionFixed,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
   } = useTransformStyle(styleObj, {
@@ -851,7 +851,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
-  if (enableBackgroundRef.current !== enableBackground) {
+  if (enableBackground && !enableBackgroundRef.current) {
     error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
@@ -915,7 +915,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     hasVarDec,
     enableBackground: enableBackgroundRef.current,
     backgroundStyle,
-    varContext: varContextRef.current,
+    varContext,
     textPassThrough,
     innerStyle,
     enableFastImage

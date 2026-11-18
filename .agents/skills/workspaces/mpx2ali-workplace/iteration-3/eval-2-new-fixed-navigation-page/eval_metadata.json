@@ -1,0 +1,68 @@
+{
+  "eval_id": 2,
+  "eval_name": "new-fixed-navigation-page",
+  "prompt": "按 fixed-page-requirements.md 新建 fixed-page.mpx，统一处理窗口尺寸、安全区、窗口变化、自定义导航和固定页面布局。使用提供的公共尺寸入口，以npm latest 发布编译器为准，复用框架导航转换。输出完整 fixed-page.mpx 和 validation.md，保留辅助组件依赖，记录实际检查与未验证范围。",
+  "assertions": [
+    {
+      "id": "a40",
+      "covers": [
+        "a40"
+      ],
+      "text": "页面统一使用提供的公共 getWindowInfo，不在页面重复获取或归一原生系统信息。",
+      "verification": "追踪导入与取值入口；不把 api-proxy 等同含全部业务尺寸归一、校验和缓存的公共封装。"
+    },
+    {
+      "id": "a41",
+      "covers": [
+        "a41"
+      ],
+      "text": "根布局高度取 windowHeight 并使用逻辑 px，不误用屏幕高度或重复缩放。",
+      "verification": "给定 windowHeight=640 时根容器为 640px；不能使用 screenHeight 或无依据除以 pixelRatio。此项只评分尺寸字段和单位。"
+    },
+    {
+      "id": "a42",
+      "covers": [
+        "a42",
+        "a44"
+      ],
+      "text": "安全区按同坐标 screenHeight-bottom 计算，缺失或负值取 0，并包含在窗口总高度内。",
+      "verification": "核对 24/0/0/20px 四组数据及内部 padding/box-sizing；不能混用 windowHeight 与屏幕 bottom，也不能把安全区额外加到根高度之外。"
+    },
+    {
+      "id": "a43",
+      "covers": [
+        "a43"
+      ],
+      "text": "页面显示及 onResize 都重新读取公共尺寸并刷新布局。",
+      "verification": "检查生命周期到取值和响应式更新的调用链，不只复用首次缓存。"
+    },
+    {
+      "id": "a50",
+      "covers": [
+        "a50",
+        "a51",
+        "a55"
+      ],
+      "text": "自定义导航使用统一 navigationStyle 声明，由本地编译器自动转换，保留组件注册。",
+      "verification": "确认实际加载工作区 node_modules/@mpxjs/webpack-plugin。源码统一声明 navigationStyle=custom，不重复手动维护支付宝等价导航字段；wx 产物保留 custom，ali 产物移除 navigationStyle 并由编译器生成 defaultTitle=\"\"、transparentTitle=always、titlePenetrate=YES。保留 usingComponents；不把转换描述为移除宿主返回按钮。无需旧版替代配置。"
+    },
+    {
+      "id": "a52",
+      "covers": [
+        "a52",
+        "a53"
+      ],
+      "text": "微信禁用页面滚动，支付宝关闭回弹并采用固定根布局，局部列表在导航和操作区之间独立滚动。",
+      "verification": "核对 disableScroll、allowsBounceVertical=NO、根定位和列表高度约束。关闭回弹不等于锁页或关闭刷新。此项只评分滚动职责和布局结构；尺寸字段、安全区数值分别归 a41/a42。"
+    }
+  ],
+  "files": [
+    "input/fixed-page-requirements.md",
+    "input/utils/window-info.js",
+    "input/components/info-badge.mpx"
+  ],
+  "outputs": [
+    "fixed-page.mpx",
+    "validation.md"
+  ]
+}

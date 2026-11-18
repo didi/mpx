@@ -28,6 +28,8 @@ import type { AnimationHooksPropsType } from './utils'
 export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useAnimationAPIHooks, props=`, props)
   const { style: originalStyle = {}, animation, transitionend } = props
+  const originalTransform = originalStyle.transform
+  const hasTransitionEnd = !!transitionend
   // style变更标识(首次render不执行)
   const animationDeps = useRef(-1)
   // animation API 使用 animation.id 为依赖
@@ -78,21 +80,20 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
     const actions = animation?.actions || []
+    const transformOriginValue = shareValMap.transformOrigin
     const sequence = {} as { [propName: keyof ExtendedViewStyle]: (string|number)[] }
     const lastValueMap = {} as { [propName: keyof ExtendedViewStyle]: string|number }
     actions.forEach(({ animatedOption, rules, transform }, index) => {
       const { delay, duration, timingFunction, transformOrigin } = animatedOption
       const easing = timingFunction ? easingKey[timingFunction] : Easing.inOut(Easing.quad)
+      const nextTransformOrigin = actions[index + 1]?.animatedOption?.transformOrigin
       let needSetCallback = true
       const callback: AnimationCallback = (finished?: boolean, current?: AnimatableValue) => {
         'worklet'
         // 动画结束后设置下一次transformOrigin
         if (finished) {
-          if (index < actions.length - 1) {
-            const transformOrigin = actions[index + 1].animatedOption?.transformOrigin
-            transformOrigin && (shareValMap.transformOrigin.value = transformOrigin)
-          }
-          transitionend && runOnJS(runOnJSCallback)('transitionend', finished, current, duration)
+          nextTransformOrigin && (transformOriginValue.value = nextTransformOrigin)
+          hasTransitionEnd && runOnJS(runOnJSCallback)('transitionend', finished, current, duration)
         }
       }
       if (index === 0 && transformOrigin) {
@@ -180,7 +181,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
     // console.info(`useAnimatedStyle styles=`, originalStyle)
     return animatedStyleKeys.value.reduce((styles, key) => {
       if (Array.isArray(key)) {
-        const transformStyle = getTransformObj(originalStyle.transform || [])
+        const transformStyle = getTransformObj(originalTransform || [])
         key.forEach((transformKey) => {
           transformStyle[transformKey] = shareValMap[transformKey].value
         })

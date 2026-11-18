@@ -144,7 +144,7 @@ Mpx 框架运行时报错捕获感知处理函数。
 * Mpx 中的 computed、watch 等内置方法执行报错；
 * Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，入参出参类型错误等；
 
-同时被捕获的错误会通过 console.error 输出。
+若自定义 `errorHandler` 或 `warnHandler` 同步抛出异常，Mpx 在开发和生产环境中均通过 `console.error` 记录该异常，随后返回。
 
 **注意**：在 production 模式下，`location` 参数会变为页面/组件的 hash id。如需查找 hash id 与实际文件路径（resourcePath）的对应关系，可以通过以下方式：
 

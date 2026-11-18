@@ -960,12 +960,13 @@ module.exports = {
 
 #### rnConfig.asyncChunk
 
-`{ timeout?: number, fallback?: string, loading?: string } | undefined`
+`{ fallback?: string, loading?: string } | undefined`
 
 异步分包相关：
 
-- **timeout**：传给内部 `LoadAsyncChunkModule` 的超时时间（毫秒级用途，见 `@mpxjs/webpack-plugin` 实现）。
-- **fallback** / **loading**：异步页面/组件的占位与 loading 组件资源路径（经 `addQuery(..., { isComponent: true })` 参与打包），在 `react/script-helper.js` 中生成异步包装代码时使用。
+- **fallback** / **loading**：异步页面加载失败与加载中的组件资源路径。异步组件的占位通过引用方 JSON 的 `componentPlaceholder` 配置。
+
+框架不再设置分包加载超时，`rnConfig.asyncChunk.timeout` 不生效；需要超时控制时，在运行时 `mpx.config.rnConfig.loadChunkAsync` 中实现。
 
 #### rnConfig.customBuiltInComponents {#rnconfig-custombuiltincomponents}
 
@@ -990,13 +991,12 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        mode: 'react',
+        mode: 'ios',
         rnConfig: {
           projectName: 'MyMpxApp',
           supportSubpackage: true,
           asyncCommonSubpackage: false,
           asyncChunk: {
-            timeout: 10000,
             fallback: path.resolve(__dirname, 'src/rn/PageFallback.mpx'),
             loading: path.resolve(__dirname, 'src/rn/PageLoading.mpx')
           },
@@ -1556,7 +1556,7 @@ module.exports = defineConfig({
 
 Mpx 编译 unocss 原子类的 webpack 主插件
 
-如果在使用 `@mpxjs/cli@3.x` 创建项目时选择了 unocss，会自动安装 MpxUnocssPlugin ，直接在 mpx.unocss 配置项中传入相关配置即可
+如果在使用 `@mpxjs/cli@3.x` 创建项目时选择了 unocss，脚手架会自动安装并注册 `MpxUnocssPlugin`，直接在 `mpx.unocss` 配置项中传入相关配置即可
 ```js
 // vue.config.js
 const { defineConfig } = require('@vue/cli-service')
@@ -1583,7 +1583,8 @@ yarn add -D @mpxjs/unocss-plugin
 
 ```js
   // vue.config.js
-  const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+  const MpxUnocssPluginModule = require('@mpxjs/unocss-plugin')
+  const MpxUnocssPlugin = MpxUnocssPluginModule.default || MpxUnocssPluginModule
   const { defineConfig } = require('@vue/cli-service')
 
   module.exports = defineConfig({
@@ -1596,6 +1597,8 @@ yarn add -D @mpxjs/unocss-plugin
     },
   })
 ```
+
+> `@mpxjs/unocss-plugin@2.11.1` 起以 ESM 形式发布。在 CommonJS 配置文件中通过 `require()` 加载时，需要兼容读取默认导出；以上写法同时兼容旧版 CommonJS 导出。在不额外启用实验参数的情况下，上述 CommonJS 兼容写法要求 Node.js 版本满足 `^20.19.0 || >=22.12.0`。
 
 插件支持配置如下：
 

@@ -21,7 +21,11 @@ export function warn (msg, location, e) {
   if (!ignore) {
     const warnHandler = mpxGlobal.__mpx?.config.warnHandler
     if (isFunction(warnHandler)) {
-      warnHandler(msg, location, e)
+      try {
+        warnHandler(msg, location, e)
+      } catch (e) {
+        console.error(e)
+      }
     } else {
       log('warn', msg, location, e)
     }
@@ -48,7 +52,11 @@ export function error (msg, location, e) {
     }
   }
   if (isFunction(errorHandler)) {
-    errorHandler(msg, location, e)
+    try {
+      errorHandler(msg, location, e)
+    } catch (e) {
+      console.error(e)
+    }
   } else {
     log('error', msg, location, e)
   }

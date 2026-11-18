@@ -23,6 +23,12 @@ function readFile (path) {
   return result
 }
 
+function readImportedStyle (componentPath, css) {
+  const matched = readFile(componentPath + css).match(/@import "(\.\.\/\.\.\/styless\/global[\da-f]+\/index\.(?:wxss|acss))";/)
+  expect(matched).not.toBeNull()
+  return readFile(path.resolve(path.dirname(componentPath), matched[1]))
+}
+
 describe('index page', () => {
   let id
   beforeAll(() => {
@@ -46,22 +52,9 @@ describe('index page', () => {
       'src/pages/index/index.mpx',
       mode
     )
-    const listComponentCss = readFile(listComponentPath + css)
-    const cssImportCode = `@import "../../styless/global43985ba5/index${css}";`
-    const outputDir = resolveDist('', mode)
-    const outputStylePath = path.join(
-      outputDir,
-      `styless/global43985ba5/index${css}`
-    )
-    const styleContent = await fs.readFileSync(outputStylePath, 'utf8')
+    const styleContent = readImportedStyle(listComponentPath, css)
 
-    expect(listComponentCss.indexOf(cssImportCode) !== -1).toBe(true)
-    expect(
-      styleContent.includes(`
-.title-wrapper {
-    font-size: 30rpx;
-}`)
-    ).toBe(true)
+    expect(styleContent).toMatch(/\.title-wrapper\s*\{\s*font-size:\s*30rpx;\s*\}/)
   })
 
   it('When ali mode, the style import css file, it will draw out of this file', async () => {
@@ -74,22 +67,9 @@ describe('index page', () => {
       'src/pages/index/index.mpx',
       mode
     )
-    const listComponentCss = readFile(listComponentPath + css)
-    const cssImportCode = `@import "../../styless/global43985ba5/index${css}";`
-    const outputDir = resolveDist('', mode)
-    const outputStylePath = path.join(
-      outputDir,
-      `styless/global43985ba5/index${css}`
-    )
-    const styleContent = await fs.readFileSync(outputStylePath, 'utf8')
+    const styleContent = readImportedStyle(listComponentPath, css)
 
-    expect(listComponentCss.indexOf(cssImportCode) !== -1).toBe(true)
-    expect(
-      styleContent.includes(`
-.title-wrapper {
-    font-size: 30rpx;
-}`)
-    ).toBe(true)
+    expect(styleContent).toMatch(/\.title-wrapper\s*\{\s*font-size:\s*30rpx;\s*\}/)
   })
 
   it("when wx mode, use /* @mpx-import 'xx.less' */ note，the less-loader、stylus-loader or other preLoaders will ignore the import file compilation，finally draw out of this file", async () => {
@@ -101,22 +81,9 @@ describe('index page', () => {
       'src/pages/other/index.mpx',
       mode
     )
-    const listComponentCss = readFile(listComponentPath + css)
-    const cssImportCode = `@import "../../styless/global2f76fc37/index${css}";`
-    const outputDir = resolveDist('', mode)
-    const outputStylePath = path.join(
-      outputDir,
-      `styless/global2f76fc37/index${css}`
-    )
-    const styleContent = await fs.readFileSync(outputStylePath, 'utf8')
+    const styleContent = readImportedStyle(listComponentPath, css)
 
-    expect(listComponentCss.indexOf(cssImportCode) !== -1).toBe(true)
-    expect(
-      styleContent.includes(`
-html body {
-  font-size: 24rpx;
-}`)
-    ).toBe(true)
+    expect(styleContent).toMatch(/html\s+body\s*\{\s*font-size:\s*24rpx;\s*\}/)
   })
 
   it("when ali mode, use /* @mpx-import 'xx.less' */ note，the less-loader、stylus-loader or other preLoaders will ignore the import file compilation，finally draw out of this file", async () => {
@@ -128,22 +95,9 @@ html body {
       'src/pages/other/index.mpx',
       mode
     )
-    const listComponentCss = readFile(listComponentPath + css)
-    const cssImportCode = `@import "../../styless/global2f76fc37/index${css}";`
-    const outputDir = resolveDist('', mode)
-    const outputStylePath = path.join(
-      outputDir,
-      `styless/global2f76fc37/index${css}`
-    )
-    const styleContent = await fs.readFileSync(outputStylePath, 'utf8')
+    const styleContent = readImportedStyle(listComponentPath, css)
 
-    expect(listComponentCss.indexOf(cssImportCode) !== -1).toBe(true)
-    expect(
-      styleContent.includes(`
-html body {
-  font-size: 24rpx;
-}`)
-    ).toBe(true)
+    expect(styleContent).toMatch(/html\s+body\s*\{\s*font-size:\s*24rpx;\s*\}/)
   })
 
   it('when use ali mode, it should correctly contain css scope feature', async () => {

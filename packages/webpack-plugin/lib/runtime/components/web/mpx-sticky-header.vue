@@ -20,15 +20,7 @@ import { getCustomEvent } from './getInnerListeners'
     },
     watch: {
       scrollOffset: {
-        handler(newScrollOffset) {
-          const newIsStickOnTop = newScrollOffset > this.headerTop
-          if (newIsStickOnTop !== this.isStickOnTop) {
-            this.isStickOnTop = newIsStickOnTop
-            this.$emit('stickontopchange', getCustomEvent('stickontopchange', {
-              isStickOnTop: newIsStickOnTop
-            }, this))
-          }
-
+        handler() {
           this.setTransformStyle()
         },
         immediate: true
@@ -43,6 +35,7 @@ import { getCustomEvent } from './getInnerListeners'
     mounted() {
       this.setPaddingStyle()
       this.setHeaderTop()
+      this.setTransformStyle()
     },
     methods: {
       setHeaderTop () {
@@ -73,9 +66,17 @@ import { getCustomEvent } from './getInnerListeners'
       setTransformStyle () {
         const stickyHeader = this.$refs.stickyHeader
         if (!stickyHeader) return
+
+        const newIsStickOnTop = this.scrollOffset > this.headerTop - this.offsetTop
+        if (newIsStickOnTop !== this.isStickOnTop) {
+          this.isStickOnTop = newIsStickOnTop
+          this.$emit('stickontopchange', getCustomEvent('stickontopchange', {
+            isStickOnTop: newIsStickOnTop
+          }, this))
+        }
         
         // 设置 transform
-        if (this.scrollOffset > this.headerTop) {
+        if (newIsStickOnTop) {
           stickyHeader.style.transform = `translateY(${this.scrollOffset - this.headerTop + this.offsetTop}px)`
         } else {
           stickyHeader.style.transform = 'none'

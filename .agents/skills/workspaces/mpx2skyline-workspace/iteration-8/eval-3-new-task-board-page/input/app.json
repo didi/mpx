@@ -1,0 +1,11 @@
+{
+  "pages": [
+    "pages/home"
+  ],
+  "window": {
+    "navigationBarTitleText": "演示"
+  },
+  "rendererOptions": {
+    "webview": {}
+  }
+}

@@ -6,6 +6,29 @@ describe('common spec case', function () {
     errorFn.mockClear()
   })
 
+  it.each(['button', '{{role}}'])('should map aria-role %s to role in web', (role) => {
+    const output = compileTemplate(`<view aria-role="${role}" aria-label="{{label}}"></view>`, { mode: 'web' })
+    expect(output).toContain(role === 'button' ? 'role="button"' : ':role="(role)"')
+    expect(output).toContain(':aria-label="(label)"')
+    expect(output).not.toContain('aria-role')
+    expect(warnFn).not.toHaveBeenCalled()
+    expect(errorFn).not.toHaveBeenCalled()
+  })
+
+  it.each(['role="link"', 'role@web="{{role}}"', ':role="role"'])('should prefer explicit %s over aria-role in web', (role) => {
+    const expected = compileTemplate(`<view ${role}></view>`, { mode: 'web' })
+    ;[`aria-role="button" ${role}`, `${role} aria-role="button"`].forEach((attrs) => {
+      expect(compileTemplate(`<view ${attrs}></view>`, { mode: 'web' })).toBe(expected)
+    })
+    expect(warnFn).not.toHaveBeenCalled()
+    expect(errorFn).not.toHaveBeenCalled()
+  })
+
+  it('should preserve aria-role in wx', () => {
+    const input = '<view aria-role="button" aria-label="操作"></view>'
+    expect(compileTemplate(input, { mode: 'wx' })).toBe(input)
+  })
+
   it('should not report error about transform if node removed', () => {
     const input = `
     <view>test</view>

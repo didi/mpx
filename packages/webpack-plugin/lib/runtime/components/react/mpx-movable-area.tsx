@@ -16,7 +16,7 @@ interface MovableAreaProps {
   width?: number
   height?: number
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
 }
@@ -28,7 +28,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasPositionFixed,
     setWidth,
     setHeight
@@ -67,7 +67,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       props.children,
       {
         hasVarDec,
-        varContext: varContextRef.current
+        varContext
       }
     )
   ))

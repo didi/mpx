@@ -52,7 +52,7 @@ export interface ImageProps {
   mode?: Mode
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   'enable-fast-image'?: boolean

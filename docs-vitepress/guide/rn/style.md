@@ -411,6 +411,27 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 }
 ```
 
+首次渲染时自动检测 CSS 变量声明和使用，`enable-var` 用于预留后续才出现的能力：
+
+| 首次配置 | 预留能力 |
+| --- | --- |
+| 未设置或 `false` | 按首次样式检测：已有 `var()` 可继续增删使用；已有 `--*` 声明可继续增删声明与使用 |
+| `"use"` | 仅预留动态使用 `var()`，适合不会新增变量声明的节点 |
+| `true` | 预留动态声明 `--*` 和使用 `var()` |
+
+首次没有变量声明、后续需要新增声明时，必须从首次渲染起设置 `enable-var="{{true}}"`；即使首次已有 `var()` 或设置了 `"use"`，也不能替代此声明预留。`"use"` 不会关闭首次样式中已有的变量声明能力。未预留的新增声明会报错并被忽略；未启用使用能力时新增的 `var()` 样式会报错并被移除。
+
+能力在首次渲染时确定，后续修改 `enable-var` 不能升级或关闭已确定的能力。已启用能力内的声明和使用均可“有 → 无 → 有”，不会因此重挂载子组件；删除本地声明后回退到父级变量。`false` 表示不额外预留能力，不会禁用首次样式的自动检测。
+
+仅动态使用变量时选择 `"use"`，避免预留声明能力的额外开销。例如 `useVariable` 在 `data` 中初始化为 `false`，后续切换为 `true`：
+
+```html
+<view style="--width: 100px;">
+  <view enable-var@ios|android|harmony="use"
+    wx:style="{{ useVariable ? { width: 'var(--width)' } : {} }}" />
+</view>
+```
+
 #### 语法 {#syntax}
 
 ```css
@@ -1598,9 +1619,11 @@ object-fit: scale-down; /* 缩小显示 */
 
 
 ## 跨端动画 {#cross-platform-animation}
-基础组件 view 支持两种动画形式 createAnimation API 和 transition，
-可以通过设置 animation 属于来使用 createAnimation API 动画，通过 class 或者 style 设置 css transition 来使用 transition 动画，
-可以用过 prop enable-animation = api/transition 来指定使用 createAnimation API/transition 的动画形式，，enable-animation 设置 true 默认为 createAnimation API 形式，需要注意的是指定动画类型后，对应的动画参数也需要匹配设置，详细使用文档如下：
+基础组件 view 支持 `createAnimation` API 和 CSS transition 两种动画形式：通过 `animation` 属性传入 API 动画数据，通过 class 或 style 设置 transition 样式。
+
+`enable-animation` 支持 boolean 和 string，完整取值见 [view 属性说明](./component.md#view)。使用 `"api"` / `"transition"` 可显式指定动画类型，优先于自动检测；`true` 默认选择 API 动画，但检测到 transition 样式时会优先选择 transition。未设置、`false` 或 `"none"` 时仍会自动检测，不会强制关闭已检测到的动画。`"animation"` 对应的 CSS animation 当前不支持。
+
+动画类型须在首次渲染时确定，同一实例不能从无动画切换为有动画，也不能在 API 与 transition 之间切换。首次没有 transition、后续才动态添加时，应从首次渲染起设置 `enable-animation="transition"`，不能用 `true` 代替；动画数据或样式应与声明的类型匹配。
 
 ### createAnimation 动画API {#create-animation-api}
 创建一个动画实例 animation，调用实例的方法来描述动画，最后通过动画实例的 export 方法导出动画数据传递给组件的 animation 属性。

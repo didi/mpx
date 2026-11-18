@@ -4,7 +4,7 @@
 import { JSX, useRef, forwardRef, ReactNode, useCallback, createElement } from 'react'
 import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent, isLabelControlHandled } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThrough } from './utils'
 import { LabelContext, LabelContextValue } from './context'
@@ -14,7 +14,7 @@ export interface LabelProps {
   for?: string
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -46,7 +46,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       hasSelfPercent,
       normalStyle,
       hasVarDec,
-      varContextRef,
+      varContext,
       setWidth,
       setHeight
     } = useTransformStyle(style, { enableVar, parentWidth, parentHeight, defaultStyle })
@@ -70,7 +70,9 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const onTap = useCallback((evt: NativeSyntheticEvent<TouchEvent>) => {
       const { bindtap } = propsRef.current
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, { props: propsRef.current }))
-      contextRef.current.triggerChange(evt)
+      if (!isLabelControlHandled(evt)) {
+        contextRef.current.triggerChange(evt)
+      }
     }, [])
 
     const innerProps = useInnerProps(
@@ -99,7 +101,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
         props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current,
+          varContext,
           textPassThrough
         }
       )

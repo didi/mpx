@@ -4,122 +4,145 @@
 
 ## 目录
 
+- [`getCurrentInstance()` 差异](#getcurrentinstance-差异)
 - [与微信小程序的实例方法差异](#与微信小程序的实例方法差异)
-  - [`setData` 与视图更新](#setdata-与视图更新)
+  - [`setData`](#setdata)
+  - [微信原生实例方法](#微信原生实例方法)
   - [组件实例查询](#组件实例查询)
   - [`triggerEvent` 的传播选项](#triggerevent-的传播选项)
   - [`$forceUpdate` 与 setup `forceUpdate`](#forceupdate-与-setup-forceupdate)
-- [与微信小程序的能力差异](#与微信小程序的能力差异)
-  - [小程序内置 behavior](#小程序内置-behavior)
   - [关系能力](#关系能力)
-  - [框架未内置支持的生命周期和能力](#框架未内置支持的生命周期和能力)
-  - [通过 `implement` 抹平小程序能力差异](#通过-implement-抹平小程序能力差异)
+- [组件选项的跨端转换](#组件选项的跨端转换)
+- [与微信小程序的全局能力差异](#与微信小程序的全局能力差异)
+- [Web 缺失的宿主能力](#web-缺失的宿主能力)
+
+---
+
+## `getCurrentInstance()` 差异
+
+Web 返回 Vue 内部实例，小程序返回 MpxProxy，顶层结构不同。跨端统一在 `setup()` 或生命周期的同步阶段保存 `getCurrentInstance().proxy` 作为组件实例，不要在异步回调中重新获取。
 
 ---
 
 ## 与微信小程序的实例方法差异
 
-### `setData` 与视图更新
+### `setData`
 
-输出 Web 时框架不提供 `this.setData()`。应直接修改响应式数据，由框架自动更新视图，例如使用 `this.count = value`。
+微信小程序实例提供 `this.setData(data, callback)`；Mpx Web 实例不提供 `this.setData`，setup context 中也没有 `setData`。转换已有小程序代码时，将状态更新改为 Mpx 响应式赋值，并保留原小程序和 Web 都能执行的同一份业务逻辑：
 
-### 组件实例查询
-
-Web 的 `selectComponent` / `selectAllComponents` 仅支持 id、class 及其组合、逗号分组，不支持后代或子代等关系选择器。
-
-选择器中不能包含空白字符，逗号分组应写为 `#foo,.bar`，不能写为 `#foo, .bar`。
-
-### `triggerEvent` 的传播选项
-
-Web 不支持 `bubbles`、`composed`、`capturePhase` 传播选项，不依赖它们实现跨层通知。
-
-需要跨层通知时，使用 `provide/inject` 传递回调，或使用全局状态管理。
-
-### `$forceUpdate` 与 setup `forceUpdate`
-
-Web 中 `this.$forceUpdate()` 和 setup context 的 `forceUpdate()` 只能无参强制刷新，传入的数据、选项和回调都会被忽略。
-
-视图更新回调可改用从 `@mpxjs/core` 导入的 `nextTick(callback)`，在修改数据或调用无参 `forceUpdate()` 后执行，也可以使用实例的 `this.$nextTick(callback)`。
-
----
-
-## 与微信小程序的能力差异
-
-### 小程序内置 behavior
-
-Web 不支持小程序内置 behavior。
-
-### 关系能力
-
-Web 支持 `relations` 的父子/祖先后代匹配、`linked`、`unlinked` 和 `getRelationNodes()`，不支持 `target` 配置和 `linkChanged` 回调。
-
-关系能力仅注入组件。双方需要按组件路径声明配对的 `parent` / `child` 或 `ancestor` / `descendant` 关系，并满足同一调用模板中的插槽嵌套条件；内建组件和模板包装组件会被跳过。`ancestor` 向上查找到首个匹配目标后停止。关系在挂载时建立、卸载前解除；`getRelationNodes(path)` 返回缓存的实例数组，没有该路径的关系缓存时返回 `null`，已有缓存中的节点全部移除后可能返回 `[]`。
-
-### 框架未内置支持的生命周期和能力
-
-除上述小程序内置 behavior 和关系能力限制外，Web 框架未内置支持以下生命周期和选项：
-
-| 声明位置 | 生命周期或选项 | 未内置支持的能力 |
-| --- | --- | --- |
-| App | `onThemeChange` | 主题变化通知 |
-| Page / Component 页面 | `onShareAppMessage`、`onShareTimeline` | 分享入口及分享信息处理 |
-| Page / Component 页面 | `onAddToFavorites` | 收藏入口及收藏信息处理 |
-| Page / Component 页面 | `onSaveExitState` | 退出状态保存与恢复 |
-| Page / Component 页面 | `onRouteDone` | 路由过渡动画完成通知 |
-| Component / Behavior | `moved`、`error` | 节点移动通知、组件方法错误处理 |
-| Component / Behavior | `definitionFilter` | 定义预处理及过滤器调用链 |
-| Component | `export` | 组件查询时的自定义返回值 |
-
-### 通过 `implement` 抹平小程序能力差异
-
-上表中的生命周期和选项可以通过 `implement` 登记适配，并结合全局 mixin、Web SDK 或业务逻辑提供实际实现，复用原有的小程序声明。微信源码转 Web 时，未登记的这些声明会被移除，并在开发环境报错提示；App 的 `onThemeChange` 在 Web 的 App 创建流程中单独检查。
-
-在 App、页面或组件构造前调用 `implement`，指定 `modes: ['web']`，并在 `processor` 中初始化适配逻辑。只有当前输出平台包含在 `modes` 中时才执行登记；`processor` 在每次登记时执行，不接收页面实例，也不会自动去重。需要访问实例的逻辑应放在 mixin 的生命周期或方法中。
-
-登记后默认保留原声明，设置 `remove: true` 则移除。需要调用原有钩子时应保留声明。`implement` 本身不会实现能力或自动触发回调，触发时机、参数和返回值处理均由适配层负责。
-
-以 `onShareAppMessage` 为例，在 Web 页面显示时注册分享回调，在用户触发分享动作时调用原有分享钩子，将返回的信息交给业务分享适配层。
+- 已声明的顶层或深层字段直接赋值，例如 `this.count = 1`、`this.user.name = name`。
+- 给对象新增响应式字段时使用 `this.$set(object, key, value)`；按索引替换数组项时使用 `this.$set(array, index, value)` 或 `splice`。
+- `setData` 的路径 key 需要改为真实的属性访问。例如 `{ "user.name": name, "list[0].checked": true }` 改为 `this.user.name = name` 和 `this.list[0].checked = true`；动态路径应根据数据结构显式更新，不能继续调用 `setData`。
+- 原 `setData` 回调依赖视图更新完成时，状态赋值后使用 `this.$nextTick(callback)`；不依赖更新后视图时直接执行后续业务逻辑。
+- 不要改用带参数的 `this.$forceUpdate(data, callback)`：Web 的 `$forceUpdate()` 不消费这些参数。
 
 ```js
-// 在应用入口中先加载此适配模块，再构造页面
-import mpx, { implement } from '@mpxjs/core'
-import { setWebShareHandler } from './web-share'
+// 转换前：仅小程序实例提供 setData
+this.setData({
+  count: this.count + 1,
+  "user.name": name
+}, () => {
+  this.measureLayout()
+})
 
-implement('onShareAppMessage', {
-  modes: ['web'],
-  processor () {
-    mpx.mixin({
-      onShow () {
-        if (this.onShareAppMessage) {
-          setWebShareHandler(options => this.onShareAppMessage(options))
-        } else {
-          setWebShareHandler()
-        }
-      },
-      onHide () {
-        setWebShareHandler()
-      }
-    }, { types: 'page' })
-  }
+// 转换后：Mpx 小程序与 Web 可共用
+this.count += 1
+this.user.name = name
+this.$nextTick(() => {
+  this.measureLayout()
 })
 ```
 
-页面继续使用小程序的分享声明：
+### 微信原生实例方法
+
+Mpx Web 实例不提供下列方法。仅在源码直接调用时处理，不能增加同名空方法让代码表面通过：
+
+| 方法 | 转换规则 |
+| --- | --- |
+| `hasBehavior` | 分支依赖 Behavior 注入的方法时检查该方法；确实判断 Behavior 身份时由 Behavior 混入显式布尔标记。不要在 Web 固定返回 `false`。 |
+| `groupSetData` | 删除分组外壳，执行原 callback 中的业务更新，并按上一节把内部 `setData` 改为响应式赋值；更新后逻辑只保留一次 `$nextTick`。 |
+| `selectOwnerComponent` | 发送动作或数据时使用事件，读取 owner 数据时使用 prop，已有固定 `relations` 时使用 `getRelationNodes()`，跨层或插槽场景使用 provide/inject。不要替换成 `$parent`。 |
+
+### 组件实例查询
+
+小程序可以通过 id 或 class 查询自定义组件。Web 中 class 可能在编译后变成动态绑定，导致 `selectComponent('.item')` 或 `selectAllComponents('.item')` 找不到组件。
+
+- 查询单个组件时，优先添加稳定的 id 并使用 `selectComponent('#id')`，也可以使用 `wx:ref`。
+- 查询列表组件时，可以在 `wx:for` 中使用同名 `wx:ref` 获取实例数组；如果只是修改列表数据，直接由父组件状态驱动。
+
+`createSelectorQuery` 用于查询节点位置和尺寸，不能替代 `selectComponent` 获取组件实例。
+
+### `triggerEvent` 的传播选项
+
+- Web 不支持 `bubbles`、`composed`、`capturePhase` 传播选项，不依赖它们实现跨层通知。
+- 需要跨层通知时，在 Web 侧显式监听并转发，或使用项目已有通信方案；保留原有数据，避免与微信传播链重复通知。接收关系不明确时不能只删除传播参数或用空回调代替。
+
+### `$forceUpdate` 与 setup `forceUpdate`
+
+Web 中 `this.$forceUpdate()` 和 setup context 的 `forceUpdate()` 只能无参强制刷新，传入的数据、选项和回调都会被忽略。适配带参调用时沿用原有响应式数据更新；只有原回调依赖更新后的 DOM 时，才调用实例 `$nextTick(callback)`。setup 中先同步保存 `getCurrentInstance().proxy`，再通过该实例调用 `$nextTick`。
+
+### 关系能力
+
+Web 已支持 `relations` 的父子/祖先后代匹配、`linked`、`unlinked` 和 `getRelationNodes()`，这些能力无需整体重写。当前 Web 实现未消费关系配置中的 `target`，也不会调用 `linkChanged`；业务实际依赖这两个字段时再补 Web 等效处理或明确待接入边界，不要把整个 `relations` 判为不支持。
+
+---
+
+## 组件选项的跨端转换
+
+默认跨端构建会将普通 `Behavior({...})` 作为 mixin 合并，并将 `properties` 中的 `observer` 和组件 `observers` 转为 `watch`。先保留原写法；只有业务依赖回调参数或触发时机且 Web 表现不符时才调整。微信内置的 `wx://` behavior 不能按普通 Behavior 推断；设置 `forceDisableProxyCtor: true` 时，`Behavior()` 的构造器代理不生效。
+
+---
+
+## 与微信小程序的全局能力差异
+
+### App 生命周期
+
+- `onLaunch`：Web 的 `path`、`query` 来自当前路由；`scene` 固定为 `0`，`shareTicket` 为空字符串，`referrerInfo` 为空对象。业务依赖真实小程序启动信息时，微信逻辑保留，Web 改从路由或业务数据获取所需信息。
+
+### 页面加载
+
+- `onLoad`：Web 只传当前路由的 `query`，不会提供小程序侧的第二个 `decodedQuery` 参数。依赖第二参数的逻辑在 Web 侧自行处理 query 值。
+
+### 页面栈
+
+只有业务通过 `getCurrentPages()` 读取历史页的 `data` 或调用其方法时才需处理：Web 刷新后，历史页可能只剩 `{ route }`；刷新后仍要使用的数据改由路由参数或持久化状态承载。
+
+---
+
+## Web 缺失的宿主能力
+
+以下事件依赖小程序宿主语义，即使出现在 Web 生命周期允许列表中，也不代表运行时会触发。按业务需求接入对应的 Web 能力；需要排除仅适用于小程序的选项时，使用实际有效的转换或平台条件处理，不因钩子不触发就机械删除所有声明：
+
+| 生命周期 | Web 侧处理 |
+| --- | --- |
+| `onShareAppMessage` / `onShareTimeline` | Web 分享需单独接入业务方案；移除原宿主生命周期的方式见下例。 |
+| `onAddToFavorites` | 使用 Web 收藏、关注或业务用户体系。 |
+| `onSaveExitState` | 使用 Web Storage、服务端状态或业务恢复方案。 |
+| `onThemeChange` | 使用 Web 媒体查询或业务主题系统。 |
+
+`implement` 是能力登记入口，`remove: true` 不是通用的生命周期删除开关。当前 `packages/core/src/convertor/wxToWeb.js` 只对 `moved`、`definitionFilter`、`onShareAppMessage` 读取该标记并删除选项，`onShareTimeline` 不在此列表。`onShareAppMessage` 可在页面构造前登记移除，同时保持页面选项直接写在 `createPage` 中：
 
 ```js
-import { createPage } from '@mpxjs/core'
+import { createPage, implement } from '@mpxjs/core'
+
+if (__mpx_mode__ === 'web') {
+  implement('onShareAppMessage', {
+    modes: ['web'],
+    remove: true
+  })
+}
 
 createPage({
+  // 原有分享生命周期继续服务小程序输出
   onShareAppMessage () {
-    return {
-      title: '商品详情',
-      path: '/pages/detail?id=123',
-      imageUrl: 'https://example.com/share.png'
+    return { title: '分享标题', path: '/pages/detail/index' }
+  },
+  methods: {
+    shareOnWeb () {
+      // TODO(web): 接入业务指定的 Web 分享 SDK。
     }
   }
 })
 ```
 
-示例中的 `setWebShareHandler` 是业务自行实现的分享回调注册函数，不是 Mpx API。传入回调时替换当前页面的分享处理器，无参调用时清除处理器。页面显示时只注册回调，页面隐藏时清理；适配层在实际分享动作发生时才调用回调，并按入口传入 `{ from: 'menu' }` 或按钮分享所需的参数。
-
-分享适配层负责消费回调返回的信息：将小程序 `path` 转换为当前 Web 项目可访问的完整 URL，将 `title`、`imageUrl` 等字段映射到所接入分享 SDK，并处理钩子的 `promise` 返回值。SDK 初始化、默认分享配置和实际分享入口也由该适配层实现。
+上述示例保留微信分享声明，并在 Web 转换前登记移除。`onShareTimeline` 没有对应的 `implement(remove)` 转换；Web 运行时不会触发且没有其它消费者时保留原声明即可，确认会被其它代码消费时再使用最小平台条件隔离，不要为单个钩子把整个页面改写成可变 options。复制链接只有在业务协议明确采用该行为时才属于 Web 分享方案。

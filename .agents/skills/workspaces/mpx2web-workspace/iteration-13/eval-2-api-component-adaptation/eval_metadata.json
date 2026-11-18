@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "api-component-adaptation",
+  "prompt": "请对附件 business-page.mpx 页面进行 Web 跨端适配，保留微信原行为、公共能力和业务状态链。仅输出完整页面 SFC；native-scanner.mpx 为只读依赖，不要创建应用或额外业务文件。",
+  "source_metadata": "evals.json"
+}

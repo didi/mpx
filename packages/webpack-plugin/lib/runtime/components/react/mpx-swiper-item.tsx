@@ -9,7 +9,7 @@ import { SwiperContext } from './context'
 interface SwiperItemProps {
   'item-id'?: string
   'enable-offset'?: boolean
-  'enable-var': boolean
+  'enable-var': boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -46,7 +46,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     setWidth,
     setHeight
@@ -104,7 +104,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   })
   return createElement(Animated.View, mergeProps, wrapChildren(props.children, {
     hasVarDec,
-    varContext: varContextRef.current,
+    varContext,
     textPassThrough
   }))
 })

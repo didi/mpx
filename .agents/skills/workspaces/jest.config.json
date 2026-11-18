@@ -1,0 +1,9 @@
+{
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testMatch": [
+    "<rootDir>/dependencies.test.cjs"
+  ],
+  "transform": {},
+  "cacheDirectory": "/private/tmp/mpx-workspaces-jest-cache"
+}

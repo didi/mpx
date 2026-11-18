@@ -1,13 +1,15 @@
 <template>
-  <div>
+  <div class="mpx-tab-bar-container">
     <mpx-tab-bar v-show="showTabbar" ref="tabBar" :currentIndex="currentIndex" @change="itemChange"></mpx-tab-bar>
     <keep-alive>
-      <component ref="tabBarPage" :is="currentComponent"></component>
+      <component ref="tabBarPage" :is="currentComponent" @hook:activated="updatePageId"></component>
     </keep-alive>
   </div>
 </template>
 
 <script>
+  import { computed } from 'vue'
+
   const tabBar = global.__tabBar
   const tabBarPagesMap = global.__tabBarPagesMap
 
@@ -29,7 +31,13 @@
     components,
     data () {
       return {
-        currentIndex: 0 // 当前被选中的tabbar
+        currentIndex: 0, // 当前被选中的tabbar
+        pageId: null
+      }
+    },
+    provide () {
+      return {
+        __pageId: computed(() => this.pageId)
       }
     },
     computed: {
@@ -43,6 +51,9 @@
       }
     },
     watch: {
+      currentComponent () {
+        this.pageId = null
+      },
       $route: {
         handler (to) {
           this.setCurrentIndex(to.path)
@@ -51,6 +62,10 @@
       }
     },
     methods: {
+      updatePageId () {
+        // keep-alive 首次挂载（含异步页面）和缓存恢复时均触发 activated。
+        this.pageId = this.$refs.tabBarPage.__pageId
+      },
       itemChange (item, index) {
         const mpx = global.__mpx
         if (mpx && mpx.switchTab) {
@@ -75,3 +90,9 @@
   }
 </script>
 
+<style scoped>
+.mpx-tab-bar-container {
+  width: 100%;
+  height: 100%;
+}
+</style>

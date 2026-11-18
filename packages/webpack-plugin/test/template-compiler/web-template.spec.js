@@ -69,6 +69,25 @@ describe('Web template support (compiler + template-shared)', () => {
   })
 
   describe('compiler.parse / serialize', () => {
+    it('creates a page host with a stable scope even with a registered div component', () => {
+      const opts = createWebParseOptions({
+        ctorType: 'page',
+        moduleId: 'm123',
+        hasScoped: true,
+        usingComponentsInfo: { 'mpx-com-div': {} }
+      })
+      const { root } = compiler.parse('<view class="content">main</view>', opts)
+      expect(root.tag).toBe('div')
+      expect(compiler.serialize(root)).toContain('["mpx-page","m123","mpx-app-scope"]')
+      expect(opts.error).not.toHaveBeenCalled()
+    })
+
+    it('does not add a scope id to an unscoped page', () => {
+      const opts = createWebParseOptions({ ctorType: 'page', moduleId: 'm123' })
+      const { root } = compiler.parse('<view>main</view>', opts)
+      expect(compiler.serialize(root)).toContain('["mpx-page"]')
+    })
+
     it('collects import src into meta.imports and removes import from serialized tree', () => {
       const opts = createWebParseOptions()
       const { root, meta } = compiler.parse(

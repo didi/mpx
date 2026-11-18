@@ -1,0 +1,11 @@
+[
+  "本轮8/8正式任务完成，gpt-6.1-sol high，执行器与RN共用，最多并发3；mpx 39/40，mpx2skyline 39/40。",
+  "两组均使用执行前冻结的最新Skill快照；所有输入/Skill执行前后哈希一致，隔离core文件亦未改变。",
+  "本轮修复了共同编译依赖中的initData过滤缺陷。预检真实wx编译并捕获原生Component注册，safeOptions=[]已在attached前存在，initData原字段未透传。该环境修复与Skill更新同时发生，历史分差不能全归因于Skill优化。",
+  "本轮两组s0_12均通过，均以原WebView折叠基线计算Flex改造后的间距；mpx上一轮的28rpx位置偏差本轮已消除。",
+  "本轮两组图片inline-block与真实编译span均已正确；case2仍未通过s2_05，原因改为.heading缺少明确横向Flex、width:0标题依赖未确认的宿主defaultDisplayBlock。需要区分本轮新宽度链缺口与上一轮缺失图片样式，未声称真机已观测故障。",
+  "本轮两组case3实际编译原生Component注册均已包含safeOptions:[]，n3_06通过；该项改善有共同运行时修复的直接贡献。",
+  "每case每组只有1次。评分是Agent依据实际产物/编译/mock证据的语义判断，grade.py并非RN的自动静态检查器；每条证据见grading.json和grading-audit.md。",
+  "case0仍使用原fixture约定的宿主字体资源；未提供字体二进制引起的编译依赖问题应与静态能力分数分列。开发者工具/真机未执行，静态与mock不能代替宿主视觉、手势或设备验证。",
+  "原始Token包含缓存输入，未包含评分Agent消耗；累计任务耗时存在并发重叠，不是整轮墙钟时间，也不能以总Token直接推断费用。"
+]

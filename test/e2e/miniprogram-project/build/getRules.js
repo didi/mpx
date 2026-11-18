@@ -1,4 +1,4 @@
-let { mpxLoaderConf } = require('../config/index')
+const { mpxLoaderConf } = require('../config/index')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 const { resolve, getConf } = require('./utils')
 
@@ -6,7 +6,7 @@ const baseRules = [
   {
     test: /\.js$/,
     loader: 'babel-loader',
-    include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs')]
+    include: [resolve('src'), resolve('test'), resolve('node_modules/@mpxjs'), resolve('../../../packages')]
   },
   {
     test: /\.json$/,

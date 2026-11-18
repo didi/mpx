@@ -78,7 +78,7 @@ export interface ButtonProps {
   'open-type'?: OpenType
   'form-type'?: 'submit' | 'reset'
   'enable-offset'?: boolean,
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'enable-text-pass-through'?: boolean
   'parent-width'?: number
   'parent-height'?: number
@@ -296,7 +296,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     setWidth,
     setHeight
   } = useTransformStyle(styleObj, { enableVar, parentWidth, parentHeight, defaultStyle })
@@ -410,7 +410,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       props.children,
       {
         hasVarDec,
-        varContext: varContextRef.current,
+        varContext,
         textPassThrough
       }
     )

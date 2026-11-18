@@ -65,8 +65,6 @@ module.exports = function getSpec ({ warn, error }) {
           value: value
         }
       ]
-    } else {
-      return { name, value }
     }
   }
 
@@ -493,6 +491,17 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^aria-(role|label)$/,
         ali () {
           warn('Ali environment does not support aria-role|label props!')
+        },
+        web ({ name, value }, { el }) {
+          if (name === 'aria-role') {
+            if ('role' in el.attrsMap || ':role' in el.attrsMap) return false
+            name = 'role'
+          }
+          const parsed = parseMustacheWithContext(value)
+          return {
+            name: parsed.hasBinding ? ':' + name : name,
+            value: parsed.hasBinding ? parsed.result : value
+          }
         },
         ios: rnAccessibilityRulesHandle,
         android: rnAccessibilityRulesHandle,

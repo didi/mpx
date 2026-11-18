@@ -10,7 +10,7 @@ interface StickySectionProps {
   children?: ReactNode;
   style?: ViewStyle;
   'offset-top'?: number;
-  'enable-var'?: boolean;
+  'enable-var'?: boolean | 'use';
   'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
   'parent-height'?: number;
@@ -30,7 +30,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     setWidth,
     setHeight
@@ -84,7 +84,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
           props.children,
           {
             hasVarDec,
-            varContext: varContextRef.current,
+            varContext,
             textPassThrough
           }
         )

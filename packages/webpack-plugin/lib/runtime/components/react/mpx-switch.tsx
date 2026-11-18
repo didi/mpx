@@ -22,7 +22,7 @@ interface _SwitchProps extends SwitchProps {
   type: 'switch' | 'checkbox'
   disabled: boolean
   color: string
-  'enable-var'?: boolean
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void

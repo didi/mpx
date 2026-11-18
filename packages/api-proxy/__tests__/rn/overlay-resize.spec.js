@@ -112,6 +112,7 @@ describe('visible RN overlays resize in place', () => {
   })
 
   afterEach(() => {
+    act(() => hideToast())
     act(() => mockRenderers.forEach(renderer => renderer.unmount()))
     mockRenderers.clear()
     jest.clearAllTimers()
