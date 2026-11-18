@@ -6,6 +6,15 @@ let dimensionsBase
 let dimensionsInfo
 let styleDimensionsSnapshot
 let applyingCustomDimensions = false
+const dimensionsChangeCallbacks = []
+
+export function subscribeDimensionsChange (callback) {
+  if (!dimensionsChangeCallbacks.includes(callback)) dimensionsChangeCallbacks.push(callback)
+  return () => {
+    const index = dimensionsChangeCallbacks.indexOf(callback)
+    if (index > -1) dimensionsChangeCallbacks.splice(index, 1)
+  }
+}
 
 function assertNotApplyingCustomDimensions () {
   if (applyingCustomDimensions) {
@@ -64,6 +73,9 @@ export function syncDimensions (dimensions) {
 
   // 自定义尺寸计算成功后再统一提交，避免中途异常留下部分更新状态。
   dimensionsInfo = dimensions
+  if (styleDimensionsSnapshot !== undefined) {
+    dimensionsChangeCallbacks.slice().forEach(callback => callback())
+  }
   styleDimensionsSnapshot = nextStyleDimensionsSnapshot
   if (styleDimensionsChanged) {
     triggerStyleDimensionsChange()

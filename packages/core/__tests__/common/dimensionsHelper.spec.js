@@ -26,6 +26,7 @@ jest.mock('react-native', () => ({
 let Mpx
 let getDimensionsInfo
 let syncDimensions
+let subscribeDimensionsChange
 const originalWindowChange = global.__mpxWindowResizeHandler
 
 const dimensions = {
@@ -41,6 +42,7 @@ describe('RN dimensions helper', () => {
     const dimensionsHelper = require('../../src/platform/dimensionsHelper')
     getDimensionsInfo = dimensionsHelper.getDimensionsInfo
     syncDimensions = dimensionsHelper.syncDimensions
+    subscribeDimensionsChange = dimensionsHelper.subscribeDimensionsChange
     Mpx.config.rnConfig = {
       dimensionsBase: 'window'
     }
@@ -52,6 +54,46 @@ describe('RN dimensions helper', () => {
 
   afterEach(() => {
     global.__mpxWindowResizeHandler = originalWindowChange
+  })
+
+  it('keeps layout subscribers silent on initial reads', () => {
+    const layoutChange = jest.fn()
+    subscribeDimensionsChange(layoutChange)
+
+    getDimensionsInfo()
+    getDimensionsInfo('screen')
+
+    expect(layoutChange).not.toHaveBeenCalled()
+  })
+
+  it('keeps layout subscribers silent when the first native event initializes dimensions', () => {
+    const layoutChange = jest.fn()
+    subscribeDimensionsChange(layoutChange)
+
+    syncDimensions(dimensions)
+
+    expect(layoutChange).not.toHaveBeenCalled()
+  })
+
+  it.each(['window', 'screen'])('updates layout when only the non-selected dimensions change under the %s base', base => {
+    Mpx.config.rnConfig.dimensionsBase = base
+    getDimensionsInfo()
+    const otherBase = base === 'window' ? 'screen' : 'window'
+    const nextDimensions = Object.assign({}, dimensions, { [otherBase]: { width: 640, height: 360 } })
+    const layoutChange = jest.fn(() => {
+      expect(getDimensionsInfo(otherBase)).toEqual(nextDimensions[otherBase])
+    })
+    const unsubscribe = subscribeDimensionsChange(layoutChange)
+    global.__mpxWindowResizeHandler = jest.fn()
+
+    syncDimensions(nextDimensions)
+
+    expect(layoutChange).toHaveBeenCalledTimes(1)
+    expect(global.__mpxWindowResizeHandler).not.toHaveBeenCalled()
+    expect(global.__mpxSizeCount).toBe(0)
+    unsubscribe()
+    syncDimensions(dimensions)
+    expect(layoutChange).toHaveBeenCalledTimes(1)
   })
 
   it.each(['window', 'screen'])('notifies window change after committing processed %s dimensions', base => {

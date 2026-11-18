@@ -30,8 +30,12 @@ describe('RN window resize notifications', () => {
     global.__mpxWindowResizeHandler = originalWindowChange
   })
 
-  test('registers without reading or initializing dimensions', () => {
-    expect(global.getDimensionsInfo).not.toHaveBeenCalled()
+  test('initializes the baseline once when subscribing without dispatching a resize', () => {
+    expect(global.getDimensionsInfo).toHaveBeenCalledTimes(1)
+    expect(callback).not.toHaveBeenCalled()
+    onWindowResize(jest.fn())
+    expect(global.getDimensionsInfo).toHaveBeenCalledTimes(1)
+    offWindowResize()
   })
 
   test.each(['ios', 'android', 'harmony'])('uses the shared notification without another native listener on %s', mode => {

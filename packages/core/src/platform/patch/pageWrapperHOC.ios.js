@@ -4,6 +4,7 @@ import { hasOwn, setFocusedNavigation } from '@mpxjs/utils'
 import { IntersectionObserverContext, KeyboardAvoidContext, RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { GestureHandlerRootView, PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import MpxNav, { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
+import { subscribeDimensionsChange } from '../dimensionsHelper'
 
 let pageId = 0
 
@@ -83,10 +84,11 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     }
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', () => {
+      const updateLayout = () => {
         navigation.layout = getLayoutData(headerHeight)
-      })
-      return () => dimensionListener?.remove()
+      }
+      updateLayout()
+      return subscribeDimensionsChange(updateLayout)
     }, [navigation, headerHeight])
 
     useEffect(() => {

@@ -116,7 +116,7 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 | --- | --- | --- | --- |
 | `defaultBoxSizing` | `string` | `'content-box'` | 节点未显式声明 `box-sizing` 时使用的默认盒模型，可设为 `'border-box'`。 |
 | `allowFontScaling` | `boolean` | 未设置，按 `false` 处理 | 文本类基础组件是否跟随系统字体缩放；组件显式传入的 `allowFontScaling` 优先。 |
-| `dimensionsBase` | `'window' \| 'screen'` | `'window'` | `rpx` / `vw` / `vh`、媒体查询与 `onResize` / `onWindowResize` 的尺寸基准；首次读取后保持不变，应在首次尺寸计算前配置。 |
+| `dimensionsBase` | `'window' \| 'screen'` | `'window'` | `rpx` / `vw` / `vh`、媒体查询与 `onResize` / `onWindowResize` 的尺寸基准；首次读取后保持不变，应在首次尺寸计算或首次注册 `onWindowResize` 前完成 `dimensionsBase` 和 `customDimensions` 配置，注册监听本身不触发回调。 |
 | `customDimensions` | `Function` | 未设置 | `({ window, screen }) => ({ window, screen })`，同步返回完整尺寸对象，或不返回以沿用原始尺寸；window/screen 均含 `width/height/scale/fontScale: number`。框架按 `dimensionsBase` 选取处理后的尺寸进行样式换算。 |
 | `getBottomVirtualHeight` | `Function` | 未设置 | `() => number`，修正 Android 非横屏场景下底部虚拟区域高度；未配置时采用安全区域底部 inset，横屏时使用屏幕与窗口高度差。 |
 | `enableNativeKeyboardAvoiding` | `boolean` | 未设置，按 `true` 处理 | Android 默认配合原生键盘避让。宿主关闭原生避让时设为 `false`，启用 Mpx 内置补偿逻辑，仍受输入组件 `adjust-position` 控制。 |

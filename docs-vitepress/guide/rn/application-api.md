@@ -485,7 +485,7 @@ mpx.config.rnConfig.dimensionsBase = 'screen'
 
 配置后，响应式单位和媒体查询将使用 `Dimensions.get('screen')` 的宽高，并在 Screen 尺寸变化时重新计算相关样式及触发 `onResize`。
 
-该配置应在首次尺寸计算前完成，首次读取后将保持不变。
+该配置应在首次尺寸计算前完成，首次读取后将保持不变。首次调用 `onWindowResize` 注册监听也会初始化尺寸，因此应在注册监听前完成 `dimensionsBase` 和 `customDimensions` 配置。注册监听本身不会触发回调。
 
 #### mpx.config.rnConfig.customDimensions
 
