@@ -66,6 +66,7 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
+    const layoutRef = useRef(navigation.layout)
     navigation.insets = getSafeAreaInsetsWithInitialTop(useSafeAreaInsets())
 
     global.__mpxPagesMap = global.__mpxPagesMap || {}
@@ -79,8 +80,21 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     }
 
     useEffect(() => {
+      if (
+        layoutRef.current.top !== navigation.layout.top ||
+        layoutRef.current.width !== navigation.layout.width ||
+        layoutRef.current.height !== navigation.layout.height
+      ) {
+        layoutRef.current = navigation.layout
+        Object.values(intersectionObservers.current).forEach(observer => observer.throttleMeasure())
+      }
+    })
+
+    useEffect(() => {
       const dimensionListener = ReactNative.Dimensions.addEventListener('change', () => {
         navigation.layout = getLayoutData(headerHeight)
+        layoutRef.current = navigation.layout
+        Object.values(intersectionObservers.current).forEach(observer => observer.throttleMeasure())
       })
       return () => dimensionListener?.remove()
     }, [navigation, headerHeight])
