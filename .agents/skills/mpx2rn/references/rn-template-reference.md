@@ -724,7 +724,8 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 - 如果从未使用背景图或动画，请不要开启 `enable-background` 或 `enable-animation` 属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
-- 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
+- 出于性能考虑，view 的样式增强能力（如 `enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ 'transition' }}"`</span>。
+- CSS Transition 的 `transition-property` 在组件生命周期内必须保持稳定，不支持动态添加、移除或替换；`transition-duration`、`transition-delay`、`transition-timing-function` 支持动态更新。
 
 ### text
 

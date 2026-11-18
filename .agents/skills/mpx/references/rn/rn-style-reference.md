@@ -666,6 +666,8 @@ this.dynamicStyle = {
 | `transition-delay` | `time` | — | 过渡延迟时间。 |
 | `transition-timing-function` | `linear` \| `ease` \| `ease-in` \| `ease-out` \| `ease-in-out` \| `cubic-bezier` | — | 过渡时间函数。 |
 
+**注意**：设置 `transition-property: transform` 时，`perspective` 和 `matrix` 仅样式更新，不参与动画
+
 ### 其他属性
 
 | 属性 | 类型 | 默认值 | 用途 |
