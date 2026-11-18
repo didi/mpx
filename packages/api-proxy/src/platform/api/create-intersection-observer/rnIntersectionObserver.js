@@ -11,6 +11,11 @@ class RNIntersectionObserver {
   constructor (component, options, intersectionCtx) {
     this.id = idCount++
     this.component = component
+    const pageId = component.getPageId?.()
+    // 固定所属页面，避免后台检测时使用当前前台页面的布局。
+    this.navigation = pageId != null
+      ? Object.values(global.__mpxPagesMap || {}).find(([, navigation]) => navigation.pageId === pageId)?.[1]
+      : getFocusedNavigation()
     this.mpxFileResource = component.__mpxProxy?.options?.mpxFileResource || ''
     this.options = Object.assign({
       thresholds: [0],
@@ -110,8 +115,8 @@ class RNIntersectionObserver {
   }
 
   _getWindowRect () {
-    if (this.windowRect) return this.windowRect
-    const navigation = getFocusedNavigation() || {}
+    const navigation = this.navigation || {}
+    if (this.windowRect && this.windowLayout === navigation.layout) return this.windowRect
     const screen = Dimensions.get('screen')
     const navigationLayout = navigation.layout || {
       top: 0,
@@ -126,13 +131,12 @@ class RNIntersectionObserver {
       right: navigationLayout.width + this.margins.right,
       bottom: navigationLayout.top + navigationLayout.height + this.margins.bottom
     }
+    this.windowLayout = navigation.layout
     this.windowRect = windowRect
     return this.windowRect
   }
 
   _getReferenceRect (targetRef) {
-    const navigation = getFocusedNavigation() || {}
-    const layout = navigation.layout || {}
     const targetRefs = isArray(targetRef) ? targetRef : [targetRef]
     const targetPromiseQueue = []
     targetRefs.forEach((targetRefItem) => {
@@ -148,14 +152,13 @@ class RNIntersectionObserver {
       }
       const target = targetRefItem.getNodeInstance().nodeRef.current
       targetPromiseQueue.push(new Promise((resolve) => {
-        target.measureInWindow(
-          (x, y, width, height) => {
-            // 安卓measureInWindow的参考值在android下为statubar的左下角，因此top需要调整一下
+        target.measure(
+          (x, y, width, height, pageX, pageY) => {
             const boundingClientRect = {
-              left: x,
-              top: y + (layout.statusBarHeight || 0),
-              right: x + width,
-              bottom: y + height + (layout.statusBarHeight || 0),
+              left: pageX,
+              top: pageY,
+              right: pageX + width,
+              bottom: pageY + height,
               width: width,
               height: height
             }
@@ -259,6 +262,7 @@ class RNIntersectionObserver {
     if (this.intersectionCtx) delete this.intersectionCtx[this.id]
     remove(this.component._intersectionObservers, this)
     this.component = null
+    this.navigation = null
   }
 }
 

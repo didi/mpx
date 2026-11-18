@@ -589,4 +589,214 @@ describe('RN createApp initial params', () => {
     act(() => renderer.root.findByType('NavigationContainer').props.onReady())
     expect(listener).toHaveBeenCalledTimes(1)
   })
+
+  it('recalculates intersection results after resize without scrolling', async () => {
+    const { Dimensions } = require('react-native')
+    const RNIntersectionObserver = require('../../../api-proxy/src/platform/api/create-intersection-observer/rnIntersectionObserver').default
+    const { IntersectionObserverContext } = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context')
+    let intersectionCtx
+    const Page = () => {
+      intersectionCtx = React.useContext(IntersectionObserverContext)
+      return React.createElement('Page')
+    }
+    Page.displayName = 'ResizeObserverPage'
+    transferOptions().currentInject.pagesMap['pages/home'] = Page
+    let width = 390
+    const dimensionsGet = jest.spyOn(Dimensions, 'get').mockImplementation(() => ({ width, height: 844 }))
+    renderApp('pages/home')
+    const navigation = global.__mpxPagesMap['pages/home'][1]
+    const initialLayout = navigation.layout
+    const target = { getNodeInstance: () => ({ nodeRef: { current: { measure: callback => callback(0, 0, 60, 100, 300, 120) } }, props: { current: {} } }) }
+    const observer = new RNIntersectionObserver({ __selectRef: () => target }, { thresholds: [0, 1] }, intersectionCtx)
+    const callback = jest.fn()
+    try {
+      observer.relativeToViewport().observe('.item', callback)
+      await jest.advanceTimersByTimeAsync(0)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ intersectionRatio: 1 }))
+      const resize = Dimensions.addEventListener.mock.calls.filter(([type]) => type === 'change').pop()[1]
+      width = 320
+      act(() => resize())
+      await jest.advanceTimersByTimeAsync(0)
+      expect(navigation.layout).not.toBe(initialLayout)
+      expect(callback).toHaveBeenCalledTimes(2)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({
+        intersectionRatio: 0.33,
+        relativeRect: { left: 0, top: 91, right: 320, bottom: 844 }
+      }))
+      width = 390
+      act(() => resize())
+      await jest.advanceTimersByTimeAsync(100)
+      expect(callback).toHaveBeenCalledTimes(3)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ intersectionRatio: 1 }))
+    } finally {
+      observer.disconnect()
+      dimensionsGet.mockRestore()
+    }
+  })
+
+  it.each([false, true])('keeps the owning viewport on resize when the observer is created in the background: %s', async (createInBackground) => {
+    const { Dimensions } = require('react-native')
+    const RNIntersectionObserver = require('../../../api-proxy/src/platform/api/create-intersection-observer/rnIntersectionObserver').default
+    const { IntersectionObserverContext } = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context')
+    let active = 'a'
+    const navA = { getState: () => ({ routes: [{}] }), isFocused: () => active === 'a' }
+    const navB = { isFocused: () => active === 'b' }
+    let intersectionCtx
+    const PageA = pageWrapperHOC(() => {
+      intersectionCtx = React.useContext(IntersectionObserverContext)
+      return null
+    })
+    const PageB = pageWrapperHOC(() => null, { navigationStyle: 'custom' })
+    let width = 390
+    const dimensionsGet = jest.spyOn(Dimensions, 'get').mockImplementation(() => ({ width, height: 844 }))
+    act(() => {
+      renderer = create(React.createElement(React.Fragment, null,
+        React.createElement(PageA, { navigation: navA, route: { key: 'a' } }),
+        React.createElement(PageB, { navigation: navB, route: { key: 'b' } })))
+    })
+    active = createInBackground ? 'b' : 'a'
+    setFocusedNavigation(createInBackground ? navB : navA)
+    const target = { getNodeInstance: () => ({ nodeRef: { current: { measure: callback => callback(0, 0, 60, 20, 300, 80) } }, props: { current: {} } }) }
+    const observer = new RNIntersectionObserver({ getPageId: () => navA.pageId, __selectRef: () => target }, { thresholds: [0, 0.2, 1] }, intersectionCtx)
+    const callback = jest.fn()
+    const resize = () => Dimensions.addEventListener.mock.calls.filter(([type]) => type === 'change').forEach(([, handler]) => handler())
+    try {
+      observer.relativeToViewport().observe('.item', callback)
+      await jest.advanceTimersByTimeAsync(0)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ intersectionRatio: 0.45 }))
+      active = 'b'
+      setFocusedNavigation(navB)
+      width = 320
+      act(resize)
+      await jest.advanceTimersByTimeAsync(100)
+      expect(callback).toHaveBeenCalledTimes(2)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({
+        intersectionRatio: 0.15,
+        relativeRect: { left: 0, top: 91, right: 320, bottom: 844 }
+      }))
+      active = 'a'
+      setFocusedNavigation(navA)
+      width = 390
+      act(resize)
+      await jest.advanceTimersByTimeAsync(100)
+      expect(callback).toHaveBeenCalledTimes(3)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({
+        intersectionRatio: 0.45,
+        relativeRect: { left: 0, top: 91, right: 390, bottom: 844 }
+      }))
+    } finally {
+      observer.disconnect()
+      dimensionsGet.mockRestore()
+    }
+  })
+
+  it('recalculates only for viewport geometry changes on render without a Dimensions event', async () => {
+    const { Dimensions } = require('react-native')
+    const RNIntersectionObserver = require('../../../api-proxy/src/platform/api/create-intersection-observer/rnIntersectionObserver').default
+    const { IntersectionObserverContext } = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context')
+    let width = 390
+    let height = 844
+    const dimensionsGet = jest.spyOn(Dimensions, 'get').mockImplementation(() => ({ width, height }))
+    const navigation = { isFocused: () => true }
+    const route = { key: 'layout-change' }
+    let intersectionCtx
+    let layoutMetadata = {}
+    const Page = pageWrapperHOC(() => {
+      intersectionCtx = React.useContext(IntersectionObserverContext)
+      Object.assign(navigation.layout, layoutMetadata)
+      return null
+    }, { navigationStyle: 'custom' })
+    act(() => { renderer = create(React.createElement(Page, { navigation, route })) })
+    const measure = jest.fn(callback => callback(0, 0, 60, 100, 300, 700))
+    const target = { getNodeInstance: () => ({ nodeRef: { current: { measure } }, props: { current: {} } }) }
+    const observer = new RNIntersectionObserver({ getPageId: () => navigation.pageId, __selectRef: () => target }, { thresholds: [0, 0.2, 0.5, 1] }, intersectionCtx)
+    const callback = jest.fn()
+    try {
+      observer.relativeToViewport().observe('.item', callback)
+      await jest.advanceTimersByTimeAsync(0)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ intersectionRatio: 1 }))
+      layoutMetadata = { left: 100, statusBarHeight: 33, bottomVirtualHeight: 10, isLandscape: true }
+      act(() => renderer.update(React.createElement(Page, { navigation, route })))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(measure).toHaveBeenCalledTimes(1)
+      width = 320
+      act(() => renderer.update(React.createElement(Page, { navigation, route })))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(callback).toHaveBeenCalledTimes(2)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ intersectionRatio: 0.33 }))
+      height = 750
+      act(() => renderer.update(React.createElement(Page, { navigation, route })))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(callback).toHaveBeenCalledTimes(3)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({
+        intersectionRatio: 0.17,
+        relativeRect: { left: 0, top: 0, right: 320, bottom: 750 }
+      }))
+      act(() => Dimensions.addEventListener.mock.calls.filter(([type]) => type === 'change').forEach(([, handler]) => handler()))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(measure).toHaveBeenCalledTimes(4)
+      act(() => renderer.update(React.createElement(Page, { navigation, route })))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(measure).toHaveBeenCalledTimes(4)
+    } finally {
+      observer.disconnect()
+      dimensionsGet.mockRestore()
+    }
+  })
+
+  it.each(['default', 'custom'])('recalculates when %s navigation changes layout after resize', async (navigationStyle) => {
+    const { Dimensions } = require('react-native')
+    const RNIntersectionObserver = require('../../../api-proxy/src/platform/api/create-intersection-observer/rnIntersectionObserver').default
+    const { IntersectionObserverContext } = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context')
+    let safeTop = 47
+    const safeArea = jest.spyOn(require('react-native-safe-area-context'), 'useSafeAreaInsets').mockImplementation(() => ({ top: safeTop, bottom: 34, left: 0, right: 0 }))
+    const navigation = { getState: () => ({ routes: [{}] }), isFocused: () => true }
+    const route = { key: 'safe-area' }
+    const isCustom = navigationStyle === 'custom'
+    let intersectionCtx
+    const Page = pageWrapperHOC(() => {
+      intersectionCtx = React.useContext(IntersectionObserverContext)
+      return null
+    }, { navigationStyle })
+    act(() => { renderer = create(React.createElement(Page, { navigation, route })) })
+    const measure = jest.fn(callback => callback(0, 0, 20, 100, 10, 700 + (isCustom ? 0 : safeTop + 44)))
+    const target = { getNodeInstance: () => ({ nodeRef: { current: { measure } }, props: { current: {} } }) }
+    const observer = new RNIntersectionObserver({ getPageId: () => navigation.pageId, __selectRef: () => target }, { thresholds: [0, 1] }, intersectionCtx)
+    const callback = jest.fn()
+    try {
+      observer.relativeToViewport().observe('.item', callback)
+      await jest.advanceTimersByTimeAsync(0)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ intersectionRatio: isCustom ? 1 : 0.53 }))
+      act(() => renderer.update(React.createElement(Page, { navigation, route })))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(measure).toHaveBeenCalledTimes(1)
+
+      act(() => Dimensions.addEventListener.mock.calls.filter(([type]) => type === 'change').forEach(([, handler]) => handler()))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(measure).toHaveBeenCalledTimes(2)
+      safeTop = 0
+      act(() => renderer.update(React.createElement(Page, { navigation, route })))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(navigation.layout.top).toBe(isCustom ? 0 : 44)
+      expect(measure).toHaveBeenCalledTimes(isCustom ? 2 : 3)
+      expect(callback).toHaveBeenCalledTimes(isCustom ? 1 : 2)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({
+        intersectionRatio: 1,
+        relativeRect: { left: 0, top: isCustom ? 0 : 44, right: 390, bottom: 844 }
+      }))
+
+      safeTop = 47
+      act(() => renderer.update(React.createElement(Page, { navigation, route })))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(measure).toHaveBeenCalledTimes(isCustom ? 2 : 4)
+      expect(callback).toHaveBeenCalledTimes(isCustom ? 1 : 3)
+      expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ intersectionRatio: isCustom ? 1 : 0.53 }))
+      act(() => renderer.update(React.createElement(Page, { navigation, route })))
+      await jest.advanceTimersByTimeAsync(100)
+      expect(measure).toHaveBeenCalledTimes(isCustom ? 2 : 4)
+    } finally {
+      observer.disconnect()
+      safeArea.mockRestore()
+    }
+  })
 })
