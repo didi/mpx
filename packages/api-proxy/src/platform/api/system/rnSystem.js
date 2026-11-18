@@ -1,9 +1,10 @@
-import { PixelRatio, Dimensions } from 'react-native'
+import { PixelRatio } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { getFocusedNavigation } from '../../../common/js'
 
 const getWindowInfo = function () {
-  const dimensionsScreen = global.getDimensionsInfo?.('screen') || Dimensions.get('screen')
+  const dimensionsScreen = global.getDimensionsInfo('screen')
+  const dimensionsWindow = global.getDimensionsInfo('window')
   const navigation = getFocusedNavigation() || {}
   const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
   const navigationInsets = navigation.insets || {}
@@ -13,23 +14,25 @@ const getWindowInfo = function () {
   const layout = navigation.layout || {}
   const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - (layout.bottomVirtualHeight || 0) // 解决安卓开启屏幕内导航安卓把安全区计算进去后产生的影响
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
-  const layoutHeight = layout.height || 0
-  const layoutWidth = layout.width || 0
-  const windowHeight = layoutHeight || screenHeight
+  const windowHeight = layout.height || dimensionsWindow.height
   try {
+    const shouldCompensateStatusBar = __mpx_mode__ === 'android' && (
+      Math.abs((dimensionsScreen.height - dimensionsWindow.height) - top) <= 1 / PixelRatio.get() ||
+      Math.abs((dimensionsScreen.height - dimensionsWindow.height) - (top + (layout.bottomVirtualHeight || 0))) <= 1 / PixelRatio.get()
+    )
     safeArea = {
       left,
-      right: screenWidth - right,
+      right: dimensionsWindow.width - right,
       top,
-      bottom: screenHeight - bottom,
-      height: screenHeight - top - bottom,
-      width: screenWidth - left - right
+      bottom: dimensionsWindow.height - bottom + (shouldCompensateStatusBar ? top : 0),
+      height: dimensionsWindow.height - (shouldCompensateStatusBar ? 0 : top) - bottom,
+      width: dimensionsWindow.width - left - right
     }
   } catch (error) {
   }
   const result = {
     pixelRatio: PixelRatio.get(),
-    windowWidth: layoutWidth || screenWidth,
+    windowWidth: layout.width || dimensionsWindow.width,
     windowHeight, // 取不到layout的时候有个兜底
     screenWidth: screenWidth,
     screenHeight: screenHeight,
