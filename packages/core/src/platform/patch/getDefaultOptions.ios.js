@@ -593,7 +593,6 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     useEffect(() => {
       const updatePageLayout = () => {
         navigation.layout = getLayoutData(headerHeight)
-        console.log('[mpx] updatePageLayout', { pageId: navigation.pageId, layout: navigation.layout })
       }
       pageLayoutListeners.add(updatePageLayout)
       return () => pageLayoutListeners.delete(updatePageLayout)
