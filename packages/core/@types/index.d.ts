@@ -956,7 +956,7 @@ export function onPageScroll (callback: WechatMiniprogram.Page.ILifetime['onPage
 export function onTabItemTap (callback: WechatMiniprogram.Page.ILifetime['onTabItemTap']): void
 export function onSaveExitState (callback: () => void): void
 export function onServerPrefetch (callback: () => any): void
-export function onReactHooksExec (callback: () => void): void
+export function onReactHooksExec<T extends object = AnyObject> (callback: (props: T) => object | void): void
 
 // get instance
 export function getCurrentInstance<T extends ComponentIns<{}, {}, {}>> (): { proxy: T, [x: string]: any }
