@@ -444,6 +444,11 @@ function usePageEffect (mpxProxy, pageId, type) {
 }
 
 let pageId = 0
+const pageLayoutListeners = new Set()
+
+global.__mpxUpdatePageLayout = () => {
+  pageLayoutListeners.forEach(listener => listener())
+}
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
@@ -586,10 +591,12 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.layout = getLayoutData(headerHeight)
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
+      const updatePageLayout = () => {
         navigation.layout = getLayoutData(headerHeight)
-      })
-      return () => dimensionListener?.remove()
+        console.log('[mpx] updatePageLayout', { pageId: navigation.pageId, layout: navigation.layout })
+      }
+      pageLayoutListeners.add(updatePageLayout)
+      return () => pageLayoutListeners.delete(updatePageLayout)
     }, [navigation, headerHeight])
 
     usePagePreload(route)

@@ -57,16 +57,14 @@ const native = require('react-native')
 const { Context } = require('../../src/platform/env/navigationHelper')
 const { PageWrapperHOC } = require('../../src/platform/patch/getDefaultOptions.ios')
 
-describe('RN page layout updates on render and native dimensions changes', () => {
+describe('RN page layout updates on render and synchronized dimensions changes', () => {
   let renderer
   let navigation
   let Page
   let insets
 
   function resize () {
-    const calls = native.Dimensions.addEventListener.mock.calls
-    const change = calls[calls.length - 1][1]
-    act(() => change(mockDimensions))
+    act(() => global.__mpxUpdatePageLayout())
   }
 
   function render () {
@@ -78,7 +76,6 @@ describe('RN page layout updates on render and native dimensions changes', () =>
     jest.useFakeTimers()
     native.Dimensions.get.mockClear()
     native.Dimensions.addEventListener.mockClear()
-    native.Dimensions.addEventListener.mockReturnValue({ remove: jest.fn() })
     native.Platform.OS = 'ios'
     mockDimensions = {
       window: { width: 360, height: 640 },
@@ -102,7 +99,7 @@ describe('RN page layout updates on render and native dimensions changes', () =>
     delete global.getDimensionsInfo
   })
 
-  it('updates a plain layout value when the native dimensions event runs', () => {
+  it('updates a plain layout value when the shared layout callback runs', () => {
     expect(navigation.layout).toMatchObject({ width: 360, height: 576, top: 64 })
     mockDimensions = {
       window: { width: 640, height: 360 },
@@ -113,7 +110,7 @@ describe('RN page layout updates on render and native dimensions changes', () =>
     expect(navigation.layout).toMatchObject({ width: 360, height: 576, top: 64 })
     resize()
     expect(navigation.layout).toMatchObject({ width: 600, height: 296, top: 64 })
-    expect(native.Dimensions.addEventListener).toHaveBeenCalledWith('change', expect.any(Function))
+    expect(native.Dimensions.addEventListener).not.toHaveBeenCalled()
     expect(Object.getOwnPropertyDescriptor(navigation, 'layout').writable).toBe(true)
   })
 
@@ -214,10 +211,35 @@ describe('RN page layout updates on render and native dimensions changes', () =>
     expect(navigation.layout).toMatchObject({ width: 600, height: 296 })
   })
 
-  it('removes the native dimensions subscription when the page unmounts', () => {
-    const results = native.Dimensions.addEventListener.mock.results
-    const subscription = results[results.length - 1].value
+  it('updates each mounted page and keeps remaining callbacks after another page unmounts', () => {
+    const secondNavigation = { isFocused: () => false, addListener: jest.fn(() => jest.fn()) }
+    const renderPages = includeSecond => React.createElement(React.Fragment, null,
+      render(),
+      includeSecond
+        ? React.createElement(Context.Provider, { value: { top: 0, bottom: 0, left: 0, right: 0 } },
+          React.createElement(Page, { navigation: secondNavigation, route: { key: 'second', name: 'pages/second' } }))
+        : null)
+    act(() => renderer.update(renderPages(true)))
+    mockLayoutDimensions = { width: 640, height: 360 }
+    resize()
+    expect(navigation.layout).toMatchObject({ width: 640, height: 296, top: 64 })
+    expect(secondNavigation.layout).toMatchObject({ width: 640, height: 316, top: 44 })
+
+    const secondLayout = secondNavigation.layout
+    act(() => renderer.update(renderPages(false)))
+    mockLayoutDimensions = { width: 400, height: 700 }
+    resize()
+    expect(navigation.layout).toMatchObject({ width: 400, height: 636 })
+    expect(secondNavigation.layout).toBe(secondLayout)
+  })
+
+  it('removes the layout callback when the page unmounts', () => {
+    const layout = navigation.layout
     act(() => renderer.unmount())
-    expect(subscription.remove).toHaveBeenCalledTimes(1)
+    global.getDimensionsInfo.mockClear()
+    mockLayoutDimensions = { width: 640, height: 360 }
+    resize()
+    expect(navigation.layout).toBe(layout)
+    expect(global.getDimensionsInfo).not.toHaveBeenCalled()
   })
 })

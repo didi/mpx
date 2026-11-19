@@ -27,6 +27,7 @@ let Mpx
 let getDimensionsInfo
 let syncDimensions
 const originalWindowChange = global.__mpxWindowResizeHandler
+const originalUpdatePageLayout = global.__mpxUpdatePageLayout
 
 const dimensions = {
   window: { width: 360, height: 640 },
@@ -37,6 +38,7 @@ describe('RN dimensions helper', () => {
   beforeEach(() => {
     jest.resetModules()
     delete global.__mpxWindowResizeHandler
+    delete global.__mpxUpdatePageLayout
     Mpx = require('../../src/index').default
     const dimensionsHelper = require('../../src/platform/dimensionsHelper')
     getDimensionsInfo = dimensionsHelper.getDimensionsInfo
@@ -52,6 +54,7 @@ describe('RN dimensions helper', () => {
 
   afterEach(() => {
     global.__mpxWindowResizeHandler = originalWindowChange
+    global.__mpxUpdatePageLayout = originalUpdatePageLayout
   })
 
   it.each(['window', 'screen'])('notifies window change after committing processed %s dimensions', base => {
@@ -80,6 +83,28 @@ describe('RN dimensions helper', () => {
     })
   })
 
+  it('updates layout from committed dimensions before style and resize notifications', () => {
+    getDimensionsInfo()
+    Mpx.config.rnConfig.customDimensions = value => {
+      value.window.width /= 2
+      return value
+    }
+    const calls = []
+    global.__mpxUpdatePageLayout = () => {
+      expect(getDimensionsInfo('window')).toEqual({ width: 320, height: 360 })
+      calls.push('layout')
+    }
+    global.__classCaches.add({ clear: () => calls.push('style') })
+    global.__mpxWindowResizeHandler = () => calls.push('resize')
+
+    syncDimensions({
+      window: { width: 640, height: 360 },
+      screen: { width: 1280, height: 720 }
+    })
+
+    expect(calls).toEqual(['layout', 'style', 'resize'])
+  })
+
   it('keeps resize silent when customDimensions produces the same effective size', () => {
     Mpx.config.rnConfig.customDimensions = value => {
       value.window = { width: 320, height: 600 }
@@ -101,12 +126,16 @@ describe('RN dimensions helper', () => {
     Mpx.config.rnConfig.dimensionsBase = 'screen'
     getDimensionsInfo()
     global.__mpxWindowResizeHandler = jest.fn()
+    global.__mpxUpdatePageLayout = jest.fn(() => {
+      expect(getDimensionsInfo('window')).toEqual({ width: 640, height: 360 })
+    })
 
     syncDimensions({
       window: { width: 640, height: 360 },
       screen: dimensions.screen
     })
 
+    expect(global.__mpxUpdatePageLayout).toHaveBeenCalledTimes(1)
     expect(global.__mpxWindowResizeHandler).not.toHaveBeenCalled()
     expect(getDimensionsInfo('window')).toEqual({ width: 640, height: 360 })
     expect(getDimensionsInfo()).toEqual(dimensions.screen)
