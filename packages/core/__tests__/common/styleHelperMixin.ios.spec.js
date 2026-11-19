@@ -21,6 +21,7 @@ jest.mock('react-native', () => ({
 jest.mock('@mpxjs/utils', () => ({
   isObject: value => value !== null && typeof value === 'object',
   isArray: Array.isArray,
+  isFunction: value => typeof value === 'function',
   dash2hump: value => value.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()),
   cached: fn => fn,
   isEmptyObject: value => Object.keys(value).length === 0,

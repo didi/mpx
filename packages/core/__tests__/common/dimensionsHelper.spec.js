@@ -11,7 +11,8 @@ jest.mock('../../src/index', () => ({
 
 jest.mock('@mpxjs/utils', () => ({
   getFocusedNavigation: jest.fn(),
-  hasOwn: (value, key) => Object.prototype.hasOwnProperty.call(value, key)
+  hasOwn: (value, key) => Object.prototype.hasOwnProperty.call(value, key),
+  isFunction: value => typeof value === 'function'
 }))
 
 jest.mock('react-native', () => ({
@@ -25,6 +26,8 @@ jest.mock('react-native', () => ({
 let Mpx
 let getDimensionsInfo
 let syncDimensions
+const originalWindowChange = global.__mpxWindowResizeHandler
+const originalUpdatePageLayout = global.__mpxUpdatePageLayout
 
 const dimensions = {
   window: { width: 360, height: 640 },
@@ -34,6 +37,8 @@ const dimensions = {
 describe('RN dimensions helper', () => {
   beforeEach(() => {
     jest.resetModules()
+    delete global.__mpxWindowResizeHandler
+    delete global.__mpxUpdatePageLayout
     Mpx = require('../../src/index').default
     const dimensionsHelper = require('../../src/platform/dimensionsHelper')
     getDimensionsInfo = dimensionsHelper.getDimensionsInfo
@@ -45,6 +50,109 @@ describe('RN dimensions helper', () => {
     global.__mpxSizeCount = 0
     global.__mpxPageSizeCountMap = {}
     global.__mpxPageStatusMap = {}
+  })
+
+  afterEach(() => {
+    global.__mpxWindowResizeHandler = originalWindowChange
+    global.__mpxUpdatePageLayout = originalUpdatePageLayout
+  })
+
+  it.each(['window', 'screen'])('notifies window change after committing processed %s dimensions', base => {
+    Mpx.config.rnConfig.dimensionsBase = base
+    Mpx.config.rnConfig.customDimensions = value => ({
+      window: Object.assign({}, value.window, { width: value.window.width / 2 }),
+      screen: Object.assign({}, value.screen, { width: value.screen.width / 2 })
+    })
+    global.__mpxWindowResizeHandler = jest.fn(value => {
+      expect(getDimensionsInfo()).toEqual(value)
+    })
+
+    getDimensionsInfo()
+    expect(global.__mpxWindowResizeHandler).not.toHaveBeenCalled()
+    const nextDimensions = {
+      window: { width: 640, height: 360 },
+      screen: { width: 1280, height: 720 }
+    }
+    syncDimensions(nextDimensions)
+    syncDimensions(nextDimensions)
+
+    expect(global.__mpxWindowResizeHandler).toHaveBeenCalledTimes(1)
+    expect(global.__mpxWindowResizeHandler).toHaveBeenCalledWith({
+      width: nextDimensions[base].width / 2,
+      height: nextDimensions[base].height
+    })
+  })
+
+  it('updates layout from committed dimensions before style and resize notifications', () => {
+    getDimensionsInfo()
+    Mpx.config.rnConfig.customDimensions = value => {
+      value.window.width /= 2
+      return value
+    }
+    const calls = []
+    global.__mpxUpdatePageLayout = () => {
+      expect(getDimensionsInfo('window')).toEqual({ width: 320, height: 360 })
+      calls.push('layout')
+    }
+    global.__classCaches.add({ clear: () => calls.push('style') })
+    global.__mpxWindowResizeHandler = () => calls.push('resize')
+
+    syncDimensions({
+      window: { width: 640, height: 360 },
+      screen: { width: 1280, height: 720 }
+    })
+
+    expect(calls).toEqual(['layout', 'style', 'resize'])
+  })
+
+  it('keeps resize silent when customDimensions produces the same effective size', () => {
+    Mpx.config.rnConfig.customDimensions = value => {
+      value.window = { width: 320, height: 600 }
+      return value
+    }
+    const listener = global.__mpxWindowResizeHandler = jest.fn()
+    getDimensionsInfo()
+    expect(listener).not.toHaveBeenCalled()
+    syncDimensions({
+      window: { width: 640, height: 360 },
+      screen: { width: 1280, height: 720 }
+    })
+    expect(global.__mpxSizeCount).toBe(0)
+    expect(listener).not.toHaveBeenCalled()
+    expect(getDimensionsInfo()).toEqual({ width: 320, height: 600 })
+  })
+
+  it('keeps resize silent when the Window changes but the Screen base stays equal', () => {
+    Mpx.config.rnConfig.dimensionsBase = 'screen'
+    getDimensionsInfo()
+    global.__mpxWindowResizeHandler = jest.fn()
+    global.__mpxUpdatePageLayout = jest.fn(() => {
+      expect(getDimensionsInfo('window')).toEqual({ width: 640, height: 360 })
+    })
+
+    syncDimensions({
+      window: { width: 640, height: 360 },
+      screen: dimensions.screen
+    })
+
+    expect(global.__mpxUpdatePageLayout).toHaveBeenCalledTimes(1)
+    expect(global.__mpxWindowResizeHandler).not.toHaveBeenCalled()
+    expect(getDimensionsInfo('window')).toEqual({ width: 640, height: 360 })
+    expect(getDimensionsInfo()).toEqual(dimensions.screen)
+    expect(global.__mpxSizeCount).toBe(0)
+  })
+
+  it('initializes the first native update as the resize comparison baseline', () => {
+    global.__mpxWindowResizeHandler = jest.fn()
+    const nextDimensions = {
+      window: { width: 640, height: 360 },
+      screen: { width: 1280, height: 720 }
+    }
+
+    syncDimensions(nextDimensions)
+
+    expect(global.__mpxWindowResizeHandler).not.toHaveBeenCalled()
+    expect(getDimensionsInfo()).toEqual(nextDimensions.window)
   })
 
   it('uses customDimensions for the initial style dimensions', () => {
