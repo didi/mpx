@@ -1,9 +1,72 @@
-import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
 import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
+import { onWindowResize, offWindowResize } from '../window/rnWindow'
+const styles = StyleSheet.create({
+  modalTask: {
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    position: 'absolute',
+    zIndex: 10000
+  },
+  modalContent: {
+    paddingTop: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  modalTitleText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    paddingLeft: 20,
+    paddingRight: 20
+  },
+  contentBox: {
+    marginTop: 10
+  },
+  modalContentText: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: '#808080',
+    paddingLeft: 20,
+    paddingRight: 20,
+    textAlign: 'center'
+  },
+  modalBtnBox: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.2)',
+    borderStyle: 'solid',
+    marginTop: 25,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  modalBtn: {
+    flex: 1,
+    textAlign: 'center'
+  },
+  modalButton: {
+    width: '100%',
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
+  cancelStyle: {
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: 'rgba(0,0,0,0.2)',
+    borderStyle: 'solid'
+  }
+})
+
 const modalMap = new Map()
 const showModal = function (options = {}) {
-  const { width, height } = Dimensions.get('window')
   const id = getCurrentPageId()
   const {
     title,
@@ -36,72 +99,6 @@ const showModal = function (options = {}) {
     return currentArr.pop()
   }
 
-  const modalWidth = width * 0.8
-  const styles = StyleSheet.create({
-    modalTask: {
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-      display: 'flex',
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      position: 'absolute',
-      zIndex: 10000
-    },
-    modalContent: {
-      paddingTop: 20,
-      width: modalWidth,
-      backgroundColor: '#ffffff',
-      borderRadius: 15,
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    modalTitleText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      paddingLeft: 20,
-      paddingRight: 20
-    },
-    contentBox: {
-      maxHeight: height * 0.45,
-      marginTop: 10
-    },
-    modalContentText: {
-      fontSize: 16,
-      lineHeight: 26,
-      color: '#808080',
-      paddingLeft: 20,
-      paddingRight: 20,
-      textAlign: 'center'
-    },
-    modalBtnBox: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: 'rgba(0,0,0,0.2)',
-      borderStyle: 'solid',
-      marginTop: 25,
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row'
-    },
-    modalBtn: {
-      flex: 1,
-      textAlign: 'center',
-      paddingTop: width * 0.04,
-      paddingBottom: width * 0.04
-    },
-    modalButton: {
-      width: '100%',
-      fontWeight: 'bold',
-      textAlign: 'center'
-    },
-    cancelStyle: {
-      borderRightWidth: StyleSheet.hairlineWidth,
-      borderRightColor: 'rgba(0,0,0,0.2)',
-      borderStyle: 'solid'
-    }
-  })
   const modalTitle = []
   const modalContent = []
   const editableContent = []
@@ -153,30 +150,43 @@ const showModal = function (options = {}) {
       color: cancelColor
     })
   }
-  const ModalView = <View style={styles.modalTask}>
-    <View style={styles.modalContent}>
-      {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
-      {modalContent.map((item, index) => <ScrollView key={index} style={styles.contentBox}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
-      {editableContent.map((item, index) => <View key={index} style={{
-        width: '100%',
-        paddingLeft: 25,
-        paddingRight: 25,
-        marginTop: 5
-      }}><TextInput placeholder={item} style={{
-        height: 40,
-        backgroundColor: '#eeeeee',
-        width: '100%',
-        keyboardType: 'default',
-        paddingLeft: 10,
-        paddingRight: 10
-      }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
-      <View style={styles.modalBtnBox}>
-        {modalButton.map((item, index) => <TouchableOpacity key={index} style={[styles.modalBtn, item.style]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
+  const ModalView = function () {
+    const [dimensionsWindow, setDimensionsWindow] = useState(() => global.getDimensionsInfo())
+    useEffect(() => {
+      const resize = () => {
+        setDimensionsWindow(global.getDimensionsInfo())
+      }
+      onWindowResize(resize)
+      return () => offWindowResize(resize)
+    }, [])
+    const { width, height } = dimensionsWindow
+    return (
+      <View style={styles.modalTask}>
+        <View style={[styles.modalContent, { width: width * 0.8 }]}>
+          {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
+          {modalContent.map((item, index) => <ScrollView key={index} style={[styles.contentBox, { maxHeight: height * 0.45 }]}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
+          {editableContent.map((item, index) => <View key={index} style={{
+            width: '100%',
+            paddingLeft: 25,
+            paddingRight: 25,
+            marginTop: 5
+          }}><TextInput placeholder={item} style={{
+            height: 40,
+            backgroundColor: '#eeeeee',
+            width: '100%',
+            keyboardType: 'default',
+            paddingLeft: 10,
+            paddingRight: 10
+          }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
+          <View style={styles.modalBtnBox}>
+            {modalButton.map((item, index) => <TouchableOpacity key={index} style={[styles.modalBtn, { paddingTop: width * 0.04, paddingBottom: width * 0.04 }, item.style]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
+          </View>
+        </View>
       </View>
-    </View>
-  </View>
+    )
+  }
   try {
-    const modalKey = Portal.add(ModalView, id)
+    const modalKey = Portal.add(<ModalView />, id)
     setCurrentModalKey(modalKey)
   } catch (e) {
     const result = {

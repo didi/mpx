@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId, getFocusedNavigation } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
-import { initialWindowMetrics } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,12 +17,6 @@ const remove = function (id) {
     actionSheetMap.delete(id)
   }
 }
-
-const navigation = getFocusedNavigation() || {}
-const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
-const navigationInsets = navigation.insets || {}
-const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
-const bottom = insets.bottom
 
 const styles = StyleSheet.create({
   actionAction: {
@@ -74,12 +68,13 @@ const styles = StyleSheet.create({
   buttonStyle: {
     paddingTop: 10,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: bottom + 10
+    alignItems: 'center'
   }
 })
 
-function ActionSheet ({ itemColor, height, success, fail, complete, alertText, itemList }) {
+function ActionSheet ({ itemColor, success, fail, complete, alertText, itemList }) {
+  const { bottom = 0 } = useSafeAreaInsets()
+  const height = itemList.length * 53 + 46 + bottom + (alertText ? 52 : 0)
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
   const [selectedIndex, setSelectedIndex] = useState(null)
@@ -185,6 +180,7 @@ function ActionSheet ({ itemColor, height, success, fail, complete, alertText, i
         <View
           style={[
             styles.buttonStyle,
+            { paddingBottom: bottom + 10 },
             selectedIndex === -1
               ? {
                   backgroundColor: '#ececec'
@@ -230,12 +226,10 @@ function showActionSheet (options = {}) {
     failHandle(result, fail, complete)
     return
   }
-  const height = len * 53 + 46 + bottom + (alertText ? 52 : 0)
 
   const actionSheetKey = Portal.add(
     <ActionSheet
       itemColor={itemColor}
-      height={height}
       success={success}
       fail={fail}
       complete={complete}

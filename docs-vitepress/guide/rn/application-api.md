@@ -458,31 +458,21 @@ createComponent({
 'window' | 'screen'
 ```
 
-控制 `rpx` / `vw` / `vh`、媒体查询与 `onResize` 使用的尺寸基准，默认值为 `'window'`。
+控制尺寸计算基准，默认值为 `'window'`，使用 `customDimensions` 处理后的对应尺寸。
 
-如果需要保持旧版本基于屏幕尺寸计算的效果，可配置为 `'screen'`：
+影响范围包括以下组件和值。
+
+- 样式中的 `rpx` / `vw` / `vh` 和媒体查询。
+- `global.getDimensionsInfo()` 的 `width` / `height`，以及页面 `layout.width` / `layout.height`。
+- Modal、Toast、Loading、ActionSheet 的尺寸与位置，IntersectionObserver 的视口范围。
+- 当前页面 `getWindowInfo`、`getSystemInfo`、`getSystemInfoSync` 返回的 `windowWidth` / `windowHeight`。
+- 页面 `onResize`、组件 `pageLifetimes.resize`，以及 `mpx.onWindowResize` 回调的 `size.windowWidth` / `size.windowHeight`。
 
 ```js
 mpx.config.rnConfig.dimensionsBase = 'screen'
 ```
 
-配置后，响应式单位和媒体查询将使用 `Dimensions.get('screen')` 的宽高，并在 Screen 尺寸变化时重新计算相关样式及触发 `onResize`。
-
 该配置应在首次尺寸计算前完成，首次读取后将保持不变。
-
-#### mpx.config.rnConfig.customLayout {#rn-custom-layout}
-
-```ts
-() => { width?: number; height?: number } | void
-```
-
-每次调用 RN `getWindowInfo` 时同步读取，用于自定义窗口兜底尺寸及安全区域计算。窗口宽高优先使用页面的 `navigation.layout`，其次使用 `customLayout` 对应字段，最后使用平台默认尺寸；iOS 默认使用 Window，Android 保留 Screen 兼容逻辑。未返回或值为 `0` 的字段使用平台默认值。
-
-```js
-mpx.config.rnConfig.customLayout = () => ({ width: hostWidth, height: hostHeight })
-```
-
-该配置不改变 `rpx` / `vw` / `vh` 的换算基准；响应式样式尺寸应通过 `dimensionsBase` 和 `customDimensions` 配置。
 
 #### mpx.config.rnConfig.customDimensions
 
