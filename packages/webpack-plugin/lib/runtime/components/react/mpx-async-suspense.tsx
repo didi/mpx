@@ -1,6 +1,7 @@
 import { useState, ComponentType, useEffect, useCallback, useRef, ReactNode, createElement } from 'react'
 import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native'
 import { AnyFunc } from './types/common'
+import { isValidElementType } from 'react-is'
 
 const asyncChunkMap = new Map()
 
@@ -134,6 +135,9 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
         loadChunkPromise
           .current.then((res: ReactNode) => {
             if (cancelled) return
+            if (!isValidElementType(res)) {
+              throw new Error('Async chunk returned an invalid component type')
+            }
             asyncChunkMap.set(moduleId, res)
             setStatus('loaded')
           })
@@ -152,7 +156,8 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
             if (type === 'page' && typeof mpxGlobal.__mpx.config?.rnConfig?.onLazyLoadPageError === 'function') {
               mpxGlobal.__mpx.config.rnConfig.onLazyLoadPageError({
                 subpackage: chunkName,
-                errType: e.type
+                errType: e.type,
+                errMsg: e.message
               })
             }
             loadChunkPromise.current = null
