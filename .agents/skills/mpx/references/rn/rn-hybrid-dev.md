@@ -117,6 +117,8 @@ RN 模式下可通过 `class` / `wx:class` / `style` / `wx:style` 设置样式�
 
 选项式签名为 `[REACTHOOKSEXEC](props): object | void`；组合式为 `onReactHooksExec(callback): void`，其中 `callback(props): object | void`。`props` 是当前 React 渲染接收的属性对象，读取时视为只读；回调在每次 React 渲染时同步执行，可返回要挂到 Mpx 实例并供模板使用的字段和方法对象，无需暴露字段时可不返回。注册函数本身不返回这些字段，也不返回取消函数；异步回调、Promise 返回值和 React 渲染函数不是这里的返回契约。返回字段避免与 props、data、computed、methods、setup 绑定重名。
 
+回调执行时，Mpx 的响应式 props 尚未同步本轮更新。组合式写法可直接为回调的 `props` 参数标注 TypeScript 类型。
+
 组合式在 setup 同步注册；React Hooks 只在该回调内按稳定顺序调用，不放在条件分支、循环或异步任务中。
 
 **选项式 API**

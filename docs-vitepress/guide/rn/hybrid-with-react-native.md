@@ -133,7 +133,7 @@ Mpx 提供了 React Hooks 执行机制，通过在 Mpx 组件内注册 `REACTHOO
 
 ### 组合式 API {#composition-api-1}
 
-Mpx 也支持组合式 API 的使用，使用方式与选项式 API 类似，均在 `onReactHooksExec` 方法内进行 hooks 的注册与执行
+在 `onReactHooksExec` 的回调中调用 React Hooks。回调接收本次 React 渲染的 `props`，此时 Mpx 的响应式 props 尚未同步本轮更新。使用 TypeScript 时，可直接为回调参数标注 props 类型。回调可返回供模板使用的字段和方法对象，也可省略返回值。
 
 ```html {13}
 <script setup>
