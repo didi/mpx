@@ -7,6 +7,7 @@ const windowChange = function ({ width, height }) {
 }
 
 function onWindowResize (callback) {
+  global.getDimensionsInfo()
   if (callbacks.length === 0) {
     global.__mpxWindowResizeHandler = windowChange
   }

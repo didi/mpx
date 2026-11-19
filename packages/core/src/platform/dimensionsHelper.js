@@ -65,6 +65,9 @@ export function syncDimensions (dimensions) {
   // 自定义尺寸计算成功后再统一提交，避免中途异常留下部分更新状态。
   dimensionsInfo = dimensions
   styleDimensionsSnapshot = nextStyleDimensionsSnapshot
+  if (isFunction(global.__mpxUpdatePageLayout)) {
+    global.__mpxUpdatePageLayout()
+  }
   if (styleDimensionsChanged) {
     triggerStyleDimensionsChange()
     if (isFunction(global.__mpxWindowResizeHandler)) {

@@ -129,6 +129,9 @@ describe('RN createApp initial params', () => {
     global.__mpxPageConfig = {}
     global.__mpxPageConfigsMap = {}
     Mpx.config.rnConfig = {}
+    const { getDimensionsInfo, syncDimensions } = require('../../src/platform/dimensionsHelper')
+    global.getDimensionsInfo = base => Object.assign({}, getDimensionsInfo(base))
+    syncDimensions(global.__mpxAppDimensionsInfo)
     transferOptions.mockReturnValue({
       rawOptions: { onLaunch },
       currentInject: {
@@ -149,6 +152,8 @@ describe('RN createApp initial params', () => {
     jest.clearAllTimers()
     jest.useRealTimers()
     delete global.__mpxEventChannel
+    delete global.getDimensionsInfo
+    delete global.__mpxWindowResizeHandler
   })
 
   function createTestPage (Component) {
@@ -440,6 +445,61 @@ describe('RN createApp initial params', () => {
     expect(renderer.root.findAllByType('Text')).toHaveLength(0)
     expect(renderer.root.findAllByType('KeyboardAvoidingView')).toHaveLength(0)
     expect(renderer.root.findAllByType('BusinessPage')).toHaveLength(1)
+  })
+
+  it('refreshes mounted layouts from synchronized dimensions and removes unmounted callbacks', () => {
+    const { Dimensions } = require('react-native')
+    const { syncDimensions } = require('../../src/platform/dimensionsHelper')
+    const FirstPage = pageWrapperHOC(() => null, {
+      navigationStyle: 'custom',
+      disableKeyboardAvoiding: true
+    })
+    const SecondPage = pageWrapperHOC(() => null, { disableKeyboardAvoiding: true })
+    const firstNavigation = { isFocused: () => true }
+    const secondNavigation = {
+      isFocused: () => true,
+      getState: () => ({ routes: [{ key: 'second' }] })
+    }
+    const renderPages = includeFirst => React.createElement(React.Fragment, null,
+      includeFirst
+        ? React.createElement(FirstPage, {
+          key: 'first', navigation: firstNavigation, route: { key: 'first' }
+        })
+        : null,
+      React.createElement(SecondPage, {
+        key: 'second', navigation: secondNavigation, route: { key: 'second' }
+      }))
+    act(() => { renderer = create(renderPages(true)) })
+    expect(Dimensions.addEventListener).not.toHaveBeenCalled()
+    expect(firstNavigation.layout.height).toBe(844)
+    expect(secondNavigation.layout.height).toBe(753)
+    Mpx.config.rnConfig.customDimensions = value => {
+      value.window.width /= 2
+      return value
+    }
+    global.__mpxWindowResizeHandler = jest.fn(() => {
+      expect(firstNavigation.layout.width).toBe(422)
+      expect(secondNavigation.layout.width).toBe(422)
+      expect(secondNavigation.layout.height).toBe(299)
+    })
+
+    act(() => syncDimensions({
+      window: { width: 844, height: 390 },
+      screen: { width: 844, height: 390 }
+    }))
+    expect(global.__mpxWindowResizeHandler).toHaveBeenCalledTimes(1)
+    delete global.__mpxWindowResizeHandler
+    const firstLayout = firstNavigation.layout
+    global.__mpxPageConfig = { navigationStyle: 'custom' }
+    act(() => renderer.update(renderPages(false)))
+    act(() => syncDimensions({
+      window: { width: 1000, height: 500 },
+      screen: { width: 1000, height: 500 }
+    }))
+
+    expect(firstNavigation.layout).toBe(firstLayout)
+    expect(secondNavigation.layout.width).toBe(500)
+    expect(secondNavigation.layout.height).toBe(500)
   })
 
   it('mounts page status and preload only after the async page loads, without nesting containers', async () => {

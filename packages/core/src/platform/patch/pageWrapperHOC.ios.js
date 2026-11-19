@@ -6,6 +6,11 @@ import { GestureHandlerRootView, PortalHost, useSafeAreaInsets, initialWindowMet
 import MpxNav, { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
 let pageId = 0
+const pageLayoutListeners = new Set()
+
+global.__mpxUpdatePageLayout = () => {
+  pageLayoutListeners.forEach(listener => listener())
+}
 
 function getLayoutData (headerHeight) {
   const screenDimensions = global.getDimensionsInfo('screen')
@@ -83,10 +88,12 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     }
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', () => {
+      const updatePageLayout = () => {
         navigation.layout = getLayoutData(headerHeight)
-      })
-      return () => dimensionListener?.remove()
+        console.log('[mpx] updatePageLayout', { pageId: navigation.pageId, layout: navigation.layout })
+      }
+      pageLayoutListeners.add(updatePageLayout)
+      return () => pageLayoutListeners.delete(updatePageLayout)
     }, [navigation, headerHeight])
 
     useEffect(() => {
