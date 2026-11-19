@@ -2,10 +2,12 @@ import AsyncSuspense from '@mpxjs/webpack-plugin/lib/runtime/components/react/di
 import { memo, forwardRef, createElement } from 'react'
 import { error } from '@mpxjs/utils'
 import { extend } from './utils'
+import { isValidElementType } from 'react-is'
 
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
-  if (!component) {
+  if (!isValidElementType(component)) {
+    // error 文案也得改下？
     error(
       `getComponent expecting function/class component ${extendOptions?.displayName ? `[${extendOptions.displayName}] ` : ''}as the first argument, but got undefined.`
     )
