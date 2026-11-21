@@ -1,8 +1,8 @@
-mpx.onBLEConnectionStateChange(function listener)
+## mpx.onBLEConnectionStateChange(function listener)
 
 监听蓝牙低功耗连接状态改变事件。包括开发者主动连接或断开连接，设备丢失，连接异常断开等等
 
-支持情况： 微信、支付宝
+支持情况： 微信、支付宝、RN
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/bluetooth-ble/wx.onBLEConnectionStateChange.html)
 
