@@ -100,15 +100,11 @@ export default function pageStatusMixin (mixinType) {
             if (status === 'show') this.__mpxProxy.callHook(ONSHOW)
             if (status === 'hide') this.__mpxProxy.callHook(ONHIDE)
             const pageLifetimes = this.__mpxProxy.options.pageLifetimes
-            if (pageLifetimes) {
-              if (/^resize/.test(status) && isFunction(pageLifetimes.resize)) {
-                // resize
-                pageLifetimes.resize.call(this, systemInfo)
-              } else if (isFunction(pageLifetimes[status])) {
-                // show & hide
-                pageLifetimes[status].call(this)
-              }
+            if (/^resize/.test(status)) {
+              if (mixinType === 'component') this.__mpxProxy.callHook(ONRESIZE, [systemInfo])
+              if (isFunction(pageLifetimes?.resize)) return pageLifetimes.resize.call(this, systemInfo)
             }
+            if (isFunction(pageLifetimes?.[status])) pageLifetimes[status].call(this)
           }, {
             sync: true
           })
