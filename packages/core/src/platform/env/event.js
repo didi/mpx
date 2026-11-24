@@ -95,10 +95,10 @@ export function initEvent () {
   if (isBrowser && !global.__mpxCreatedEvent) {
     global.__mpxCreatedEvent = true
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      createMpxEvent(document.body)
+      createMpxEvent(document)
     } else {
       document.addEventListener('DOMContentLoaded', function () {
-        createMpxEvent(document.body)
+        createMpxEvent(document)
       }, false)
     }
   }
