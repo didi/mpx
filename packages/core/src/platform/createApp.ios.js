@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, isPreloadedRoute, hasOwn, callWithErrorHandling } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -55,7 +55,7 @@ export default function createApp (options) {
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pagesMap).map(([key, item]) => {
       const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
-      const headerLayout = ({ navigation, children }) => {
+      const headerLayout = ({ navigation, route, children }) => {
         return createElement(GestureHandlerRootView,
           {
             style: {
@@ -64,7 +64,8 @@ export default function createApp (options) {
           },
           createElement(MpxNav, {
             pageConfig,
-            navigation
+            navigation,
+            isPreload: isPreloadedRoute(navigation, route.key)
           }),
           children
         )
@@ -90,16 +91,20 @@ export default function createApp (options) {
   const onStateChange = (state) => {
     Mpx.config.rnConfig.onStateChange?.(state)
     if (global.__navigationHelper.lastSuccessCallback) {
-      global.__navigationHelper.lastSuccessCallback()
+      const callback = global.__navigationHelper.lastSuccessCallback
       global.__navigationHelper.lastSuccessCallback = null
+      global.__navigationHelper.lastFailCallback = null
+      callback()
     }
   }
   const onUnhandledAction = (action) => {
     const payload = action.payload
     const message = `The action '${action.type}'${payload ? ` with payload ${JSON.stringify(action.payload)}` : ''} was not handled by any navigator.`
     if (global.__navigationHelper.lastFailCallback) {
-      global.__navigationHelper.lastFailCallback(message)
+      const callback = global.__navigationHelper.lastFailCallback
+      global.__navigationHelper.lastSuccessCallback = null
       global.__navigationHelper.lastFailCallback = null
+      callback(message)
     }
   }
   const appState = reactive({ state: '' })

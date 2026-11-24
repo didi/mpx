@@ -4,7 +4,7 @@ import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
 import { ref } from '../../observer/ref'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, isPreloadedRoute, getDefaultValueByType } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -304,7 +304,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
-    setFocusedNavigation(props.navigation)
 
     if (!global.__mpxAppHotLaunched && global.__mpxInitialRunParams) {
       Object.assign(loadParams, global.__mpxInitialRunParams)
@@ -328,7 +327,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         decodedQuery[key] = decodeURIComponent(rawQuery[key])
       }
     }
-    proxy.callHook(ONLOAD, [rawQuery, decodedQuery])
+    const isPreload = isPreloadedRoute(props.navigation, props.route.key)
+    proxy.callHook(ONLOAD, [rawQuery, decodedQuery, isPreload])
   }
 
   Object.assign(proxy, {
@@ -471,9 +471,13 @@ function usePageStatus (navigation, pageId) {
     return () => {
       focusSubscription()
       blurSubscription()
-      del(pageStatusMap, pageId)
     }
   }, [navigation])
+  useEffect(() => {
+    return () => {
+      del(pageStatusMap, pageId)
+    }
+  }, [])
 }
 
 function usePagePreload (route) {
@@ -584,6 +588,10 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
       error('Using pageWrapper requires passing navigation and route')
       return null
     }
+    routeContextValRef.current.navigation = navigation
+    const page = global.__mpxPagesMap?.[route.key]
+    if (page) page[1] = navigation
+    if (navigation.isFocused?.()) setFocusedNavigation(navigation)
     navigation.setWebViewShowNav = (showNav) => {
       navigation.setPageConfig({ navigationStyle: showNav ? undefined : 'custom' })
     }

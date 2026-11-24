@@ -1,6 +1,7 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useContext } from 'react'
 import { collectDataset } from '@mpxjs/utils'
-import { omit, extendObject, useNavigation } from './utils'
+import { omit, extendObject } from './utils'
+import { RouteContext } from './context'
 import eventConfigMap from './event.config'
 import {
   Props,
@@ -24,9 +25,10 @@ const getTouchEvent = (
   event: ExtendedNativeTouchEvent,
   config: EventConfig
 ) => {
-  const { navigation, propsRef, layoutRef } = config
+  const { routeContext, propsRef, layoutRef } = config
   const props = propsRef.current
-  const { top: navigationY = 0 } = navigation?.layout || {}
+  // 预加载页面正式进入后 navigation 会切换，使用时再读取以拿到最新引用
+  const { top: navigationY = 0 } = routeContext?.navigation?.layout || {}
   const nativeEvent = event.nativeEvent
   const { timestamp, pageX, pageY, touches, changedTouches } = nativeEvent
   const { id } = props
@@ -261,7 +263,7 @@ const useInnerProps = (
   })
   const propsRef = useRef({})
   propsRef.current = props
-  const navigation = useNavigation()
+  const routeContext = useContext(RouteContext)
   const eventConfig: EventConfig = extendObject({
     layoutRef: {
       current: null
@@ -269,7 +271,7 @@ const useInnerProps = (
     propsRef,
     innerRef,
     disableTap: false,
-    navigation
+    routeContext
   }, rawConfig)
 
   let hashEventKey = ''

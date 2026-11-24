@@ -3,7 +3,7 @@ import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
-import { initialWindowMetrics } from 'react-native-safe-area-context'
+import { initialWindowMetrics, SafeAreaInsetsContext } from 'react-native-safe-area-context'
 import type { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
@@ -523,6 +523,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     hasPositionFixed: false
   }
 
+  // 只在样式使用 env() 时订阅安全区，预加载页面正式进入后重新计算。
+  useContext<any>(envKeyPaths.length ? SafeAreaInsetsContext : RouteContext)
   // apply env
   transformEnv(normalStyle, envKeyPaths, navigation)
   // apply percent
@@ -637,7 +639,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
   const hasLayoutRef = useRef(false)
   const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {} }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
-  const navigation = useNavigation()
+  const routeContext = useContext(RouteContext)
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
     layoutProps.onLayout = (e: LayoutChangeEvent) => {
@@ -649,7 +651,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
       }
       if (enableOffset) {
         nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-          const { top: navigationY = 0 } = navigation?.layout || {}
+          const { top: navigationY = 0 } = routeContext?.navigation?.layout || {}
           layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft, offsetTop: offsetTop - navigationY }
         })
       }

@@ -25,6 +25,7 @@ jest.mock('../../src/observer/ref', () => ({ ref: value => ({ value }) }))
 jest.mock('../../src/observer/scheduler', () => ({ queueJob: jest.fn(), hasPendingJob: jest.fn() }))
 jest.mock('@mpxjs/utils', () => ({
   hasOwn: (value, key) => Object.prototype.hasOwnProperty.call(value, key),
+  setFocusedNavigation: jest.fn(),
   error: jest.fn()
 }))
 jest.mock('@mpxjs/api-proxy', () => ({ createSelectorQuery: jest.fn(), createIntersectionObserver: jest.fn() }))
@@ -97,6 +98,23 @@ describe('RN page layout updates on render and synchronized dimensions changes',
     jest.clearAllTimers()
     jest.useRealTimers()
     delete global.getDimensionsInfo
+  })
+
+  it('updates the page navigation on focus without replacing its instance or page id', () => {
+    const instance = {}
+    global.__mpxPagesMap = { page: [instance, navigation] }
+    const pageId = navigation.pageId
+    expect(global.__mpxPageStatusMap[pageId]).toBe('')
+    navigation = { isFocused: () => true, addListener: jest.fn(() => jest.fn()) }
+    try {
+      act(() => renderer.update(render()))
+      expect(global.__mpxPagesMap.page).toEqual([instance, navigation])
+      expect(navigation.pageId).toBe(pageId)
+      expect(global.__mpxPageStatusMap).toHaveProperty(String(pageId))
+      expect(require('@mpxjs/utils').setFocusedNavigation).toHaveBeenCalledWith(navigation)
+    } finally {
+      delete global.__mpxPagesMap
+    }
   })
 
   it('updates a plain layout value when the shared layout callback runs', () => {
