@@ -6,7 +6,8 @@ import { act, create, ReactTestRenderer } from 'react-test-renderer'
 jest.mock('react-native', () => ({
   StyleSheet: { hairlineWidth: 1 / 3, absoluteFillObject: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } },
   Image: Object.assign((props: any) => jest.requireActual('react').createElement('Image', props), { getSize: jest.fn(), resolveAssetSource: jest.fn() }),
-  View: 'View'
+  View: 'View',
+  processColor: (color: any) => jest.requireActual('@react-native/normalize-colors')(color)
 }))
 
 jest.mock('react-native-reanimated', () => ({
@@ -66,6 +67,26 @@ describe('mpx-view linear-gradient parser', () => {
 
     expect(linearInfo.direction).toBe('90deg')
     expect(linearInfo.colors).toEqual(['tomato', 'blue'])
+  })
+
+  test.each([
+    'linear-gradient(45deg, red, null)',
+    'linear-gradient(45deg, red, undefined)',
+    'linear-gradient(45deg, red, )',
+    'linear-gradient(45deg, red, #ggg)',
+    'linear-gradient(45deg, red, none)'
+  ])('drops gradient with invalid color stop: %s', (text) => {
+    expect(__parseBgImageForTest(text)).toEqual({})
+  })
+
+  test('parses case-insensitive and whitespace variants', () => {
+    expect(__parseBgImageForTest('linear-gradient( to top right, red, blue)').linearInfo).toMatchObject({ direction: 'top right', colors: ['red', 'blue'] })
+    expect(__parseBgImageForTest('linear-gradient(TO TOP, RED, Blue)').linearInfo).toMatchObject({ direction: 'top', colors: ['red', 'blue'] })
+    expect(__parseBgImageForTest('linear-gradient(90DEG, red, blue)').linearInfo.direction).toBe('90deg')
+    expect(__parseBgImageForTest('linear-gradient(rgba(255,  0, 0, 0.5) 20%, rgb(0 0 255) 80%)').linearInfo).toMatchObject({
+      colors: ['rgba(255, 0, 0, 0.5)', 'rgb(0 0 255)'],
+      locations: [0.2, 0.8]
+    })
   })
 
   test('renders fixed diagonal gradient without layout and ignores passive layout for publishing', () => {

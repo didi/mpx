@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent, processColor } from 'react-native'
 import { useRef, useState, useEffect, useMemo, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, extendObject, getImageLoadSize, svgRegExp, useHover, useTextPassThrough, hiddenStyle, isAndroid } from './utils'
+import { parseUrl, parseValues, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, extendObject, getImageLoadSize, svgRegExp, useHover, useTextPassThrough, hiddenStyle, isAndroid } from './utils'
 import { TextPassThroughContextValue } from './context'
 import { error, warn, hasOwn } from '@mpxjs/utils'
 import * as perf from '@mpxjs/perf'
@@ -148,8 +148,6 @@ const linearGradientRegExp = /linear-gradient\((.*)\)/
 const svgBase64RegExp = /^data:image\/svg\+xml(?:;[^,;]+)*;base64,/i
 // 顶层逗号切分（忽略 () / # 内部的逗号）
 const topLevelCommaRegExp = /,(?![^(#]*\))/
-// 色标内空白切分（忽略色函数里的逗号边界）
-const stopWhitespaceRegExp = /(?<!,)\s+/
 // 色标位置仅支持 `<n>%` 或裸 `0`（CSS 允许 0 作为唯一无单位 length）
 // 其它单位（px/rpx/em/vw/...）当前无法在不依赖 layout 的情况下归一为百分比，统一拒绝
 const validStopPosRegExp = /^-?\d+(?:\.\d+)?%$|^0$/
@@ -512,7 +510,8 @@ function calcSteps (startVal: number, endVal: number, len: number) {
 //   - null        已识别为 linear-gradient 但内部已通过 error/warn 报错，外部不要再报
 //   - undefined   不是 linear-gradient 形态，外部按"不支持的 background-image"处理
 function parseLinearGradient (text: string): LinearInfo | null | undefined {
-  let linearText = text.trim().match(linearGradientRegExp)?.[1]
+  // CSS 关键字/单位/颜色大小写不敏感，统一小写以匹配方向正则及 RN 颜色解析
+  let linearText = text.trim().match(linearGradientRegExp)?.[1].trim().toLowerCase()
   if (!linearText) return
 
   // 多重渐变 / 多重背景：linearGradientRegExp 用了贪婪 `.*`，多渐变时括号内
@@ -536,7 +535,8 @@ function parseLinearGradient (text: string): LinearInfo | null | undefined {
   // 等价于 CSS Images Level 4 中 `red 0% 50%` ≡ `red 0%, red 50%`
   // 同步对不支持的写法做拦截：color hint（仅一个位置 token）、非百分比位置（px/rpx 等）
   const linearInfo = colorList
-    .map(item => item.trim().split(stopWhitespaceRegExp))
+    // 按括号外空白切分，兼容 rgb(255 0 0) 及色函数内多余空白
+    .map(item => parseValues(item.trim().replace(/\s+/g, ' ')))
     .reduce<string[][]>((acc, parts) => {
       // color hint: 例如 `linear-gradient(red, 30%, blue)` 中的 `30%`
       // 该 token 仅含一个位置值、无颜色；当前实现无法做颜色采样，直接丢弃
@@ -582,7 +582,7 @@ function parseLinearGradient (text: string): LinearInfo | null | undefined {
       }
 
       // 添加color的数组
-      colors.push(color.trim())
+      colors.push(color)
 
       !isNaN(numberVal) && locations.push(numberVal)
       return prev
@@ -591,6 +591,12 @@ function parseLinearGradient (text: string): LinearInfo | null | undefined {
   // 色标全部被丢弃或不足以构成渐变（至少 2 个颜色），降级返回
   if (linearInfo.colors.length < 2) {
     error(`[mpx-view] linear-gradient 至少需要 2 个有效色标，已丢弃，原值: ${text}`)
+    return null
+  }
+
+  // 非法颜色经 processColor 转为 null 后会导致原生层崩溃，与 CSS 一致整条丢弃
+  if (linearInfo.colors.some(color => processColor(color) == null)) {
+    error(`[mpx-view] linear-gradient 存在无效色标，已丢弃，原值: ${text}`)
     return null
   }
 
