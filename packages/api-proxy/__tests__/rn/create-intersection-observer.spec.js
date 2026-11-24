@@ -18,6 +18,7 @@ function createNodeRef (id, measureInWindow = jest.fn(callback => callback(10, 1
 describe('RN IntersectionObserver lifecycle', () => {
   beforeEach(() => {
     jest.useFakeTimers()
+    global.getDimensionsInfo = () => ({ width: 100, height: 100 })
     global.mpxGlobal = { __mpx: { config: { warnHandler: jest.fn(), errorHandler: jest.fn() } } }
     setFocusedNavigation({
       isFocused: () => true,
@@ -30,6 +31,7 @@ describe('RN IntersectionObserver lifecycle', () => {
     jest.useRealTimers()
     setFocusedNavigation(null)
     delete global.mpxGlobal
+    delete global.getDimensionsInfo
   })
 
   it('should release registrations on repeated create and disconnect', () => {

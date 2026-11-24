@@ -6,10 +6,15 @@ import { GestureHandlerRootView, PortalHost, useSafeAreaInsets, initialWindowMet
 import MpxNav, { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
 let pageId = 0
+const pageLayoutListeners = new Set()
+
+global.__mpxUpdatePageLayout = () => {
+  pageLayoutListeners.forEach(listener => listener())
+}
 
 function getLayoutData (headerHeight) {
-  const screenDimensions = ReactNative.Dimensions.get('screen')
-  const windowDimensions = ReactNative.Dimensions.get('window')
+  const screenDimensions = global.getDimensionsInfo('screen')
+  const windowDimensions = global.getDimensionsInfo('window')
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
@@ -24,12 +29,16 @@ function getLayoutData (headerHeight) {
       }
     }
   }
+  // 竖屏安卓下实测跟折叠屏的差值有区别，竖屏windowHeight的值已经减去了bottomVirtualHeight，如果再减就减多了
+  const windowHeightHasBottomVirtual = __mpx_mode__ === 'android' && Math.abs((screenDimensions.height - windowDimensions.height) - (bottomVirtualHeight + (ReactNative.StatusBar.currentHeight || 0))) <= 1 / ReactNative.PixelRatio.get()
+  const shouldCompensateStatusBar = windowHeightHasBottomVirtual || (__mpx_mode__ === 'android' && Math.abs((screenDimensions.height - windowDimensions.height) - (ReactNative.StatusBar.currentHeight || 0)) <= 1 / ReactNative.PixelRatio.get())
   return {
     left: 0,
     top: headerHeight,
     // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
     width: windowDimensions.width,
-    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
+    // 高度差约等于状态栏高度或状态栏与虚拟导航栏高度之和时补偿，避免重复扣减状态栏
+    height: windowDimensions.height - (shouldCompensateStatusBar ? headerHeight - (ReactNative.StatusBar.currentHeight || 0) : headerHeight) - (windowHeightHasBottomVirtual ? 0 : bottomVirtualHeight),
     // ios为0 android为实际statusbar高度
     statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
     bottomVirtualHeight: bottomVirtualHeight,
@@ -79,10 +88,11 @@ export function pageWrapperHOC (WrappedComponent, pageConfig = {}) {
     }
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', () => {
+      const updatePageLayout = () => {
         navigation.layout = getLayoutData(headerHeight)
-      })
-      return () => dimensionListener?.remove()
+      }
+      pageLayoutListeners.add(updatePageLayout)
+      return () => pageLayoutListeners.delete(updatePageLayout)
     }, [navigation, headerHeight])
 
     useEffect(() => {

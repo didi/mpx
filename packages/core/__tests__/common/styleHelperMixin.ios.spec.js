@@ -25,7 +25,8 @@ jest.mock('@mpxjs/utils', () => ({
   cached: fn => fn,
   isEmptyObject: value => Object.keys(value).length === 0,
   hasOwn: (value, key) => Object.prototype.hasOwnProperty.call(value, key),
-  getFocusedNavigation: jest.fn()
+  getFocusedNavigation: jest.fn(),
+  isFunction: value => typeof value === 'function'
 }))
 
 jest.mock('../../src/observer/reactive', () => ({
