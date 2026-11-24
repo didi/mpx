@@ -16,10 +16,7 @@ const getWindowInfo = function () {
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
   const windowHeight = layout.height || dimensionsWindow.height
   try {
-    const shouldCompensateStatusBar = __mpx_mode__ === 'android' && (
-      Math.abs((dimensionsScreen.height - dimensionsWindow.height) - top) <= 1 / PixelRatio.get() ||
-      Math.abs((dimensionsScreen.height - dimensionsWindow.height) - (top + (layout.bottomVirtualHeight || 0))) <= 1 / PixelRatio.get()
-    )
+    const shouldCompensateStatusBar = __mpx_mode__ === 'android' && Math.abs((dimensionsScreen.height - dimensionsWindow.height) - (top + (layout.bottomVirtualHeight || 0))) <= 1 / PixelRatio.get()
     safeArea = {
       left,
       right: dimensionsWindow.width - right,
