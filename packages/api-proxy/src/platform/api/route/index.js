@@ -10,7 +10,10 @@ const reLaunch = ENV_OBJ.reLaunch || envError('reLaunch')
 
 const switchTab = ENV_OBJ.switchTab || envError('switchTab')
 
+const preload = envError('preload')
+
 export {
+  preload,
   redirectTo,
   navigateTo,
   navigateBack,

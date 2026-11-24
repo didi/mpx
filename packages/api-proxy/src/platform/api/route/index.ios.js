@@ -1,5 +1,5 @@
-import { successHandle, failHandle, resolvePath } from '../../../common/js'
-import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
+import { error, successHandle, failHandle, resolvePath, getFocusedNavigation } from '../../../common/js'
+import { parseUrlQuery as parseUrl, isPreloadSupported } from '@mpxjs/utils'
 import { nextTick } from '../next-tick'
 import { EventChannel } from '../event-channel'
 
@@ -25,11 +25,40 @@ function isLock (navigationHelper, type, options) {
   clearTimeout(timerId)
   timerId = setTimeout(() => {
     if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-      navigationHelper.lastFailCallback(`${type}:fail timeout ${options.url || ''}`)
+      const callback = navigationHelper.lastFailCallback
+      navigationHelper.lastSuccessCallback = null
       navigationHelper.lastFailCallback = null
+      callback(`${type}:fail timeout ${options.url || ''}`)
     }
   }, 1000)
   return false
+}
+
+function preload (options = {}) {
+  const navigation = getFocusedNavigation()
+  if (!isPreloadSupported(navigation) || !navigation.isFocused()) {
+    error('preload: current navigator does not support page preloading')
+    return
+  }
+  if (global.__navigationHelper?.lastSuccessCallback) {
+    error('preload: another navigation is in progress')
+    return
+  }
+  if (typeof options.url !== 'string' || !options.url.trim()) {
+    error('preload: url must be a non-empty string')
+    return
+  }
+  try {
+    const { path, queryObj } = parseUrl(options.url, true)
+    if (!path) {
+      error('preload: url must contain a page path')
+      return
+    }
+    const finalPath = resolvePath(path, getBasePath(navigation)).slice(1)
+    navigation.preload(finalPath, queryObj)
+  } catch (e) {
+    error(`preload: ${e.message}`)
+  }
 }
 
 function navigateTo (options = {}) {
@@ -37,7 +66,7 @@ function navigateTo (options = {}) {
   if (isLock(navigationHelper, 'navigateTo', options)) {
     return
   }
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigation = getFocusedNavigation()
   if (navigation && navigationHelper) {
     const eventChannel = new EventChannel()
     if (options.events) {
@@ -64,7 +93,7 @@ function navigateTo (options = {}) {
 }
 
 function redirectTo (options = {}) {
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigation = getFocusedNavigation()
   const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'redirectTo', options)) {
     return
@@ -86,7 +115,7 @@ function redirectTo (options = {}) {
 }
 
 function navigateBack (options = {}) {
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigation = getFocusedNavigation()
   const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'navigateBack', options)) {
     return
@@ -105,8 +134,10 @@ function navigateBack (options = {}) {
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
         if (navigationHelper.lastSuccessCallback) {
-          navigationHelper.lastSuccessCallback()
+          const callback = navigationHelper.lastSuccessCallback
           navigationHelper.lastSuccessCallback = null
+          navigationHelper.lastFailCallback = null
+          callback()
         }
       })
     } else {
@@ -116,7 +147,7 @@ function navigateBack (options = {}) {
 }
 
 function reLaunch (options = {}) {
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigation = getFocusedNavigation()
   const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'reLaunch', options)) {
     return
@@ -150,6 +181,7 @@ function switchTab () {
 }
 
 export {
+  preload,
   redirectTo,
   navigateTo,
   navigateBack,

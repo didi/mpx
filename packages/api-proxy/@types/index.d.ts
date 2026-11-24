@@ -23,8 +23,15 @@ interface RequestPaymentInterface extends WechatMiniprogram.RequestPaymentOption
   tradeNO?: string
 }
 
+/** RN Native Stack only. Returns immediately; no callbacks or readiness Promise. */
+export interface PreloadOption {
+  url: string
+}
+export const preload: (options: PreloadOption) => void
+
 declare module '@mpxjs/core' {
   interface Mpx extends AddPromise<WechatMiniprogram.Wx> {
+    preload: typeof preload
     getLocation: AddParam<GetLocationInterface, PickApiValue<'getLocation'>>
     requestPayment: AddParam<RequestPaymentInterface, PickApiValue<'requestPayment'>>
   }

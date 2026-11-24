@@ -21,8 +21,8 @@ import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useM
 import { StyleSheet, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback } from './utils'
+import { MovableAreaContext, RouteContext } from './context'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useRunOnJSCallback } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -245,7 +245,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     setHeight
   } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const navigation = useNavigation()
+  const routeContext = useContext(RouteContext)
 
   const prevSimultaneousHandlersRef = useRef<Array<GestureHandler>>(originSimultaneousHandlers || [])
   const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
@@ -440,7 +440,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       setHeight(height || 0)
     }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
-      const { top: navigationY = 0 } = navigation?.layout || {}
+      const { top: navigationY = 0 } = routeContext?.navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
       resetBoundaryAndCheck({ width, height })
     })
@@ -448,7 +448,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
-    const { top: navigationY = 0 } = navigation?.layout || {}
+    const { top: navigationY = 0 } = routeContext?.navigation?.layout || {}
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number; clientX: number; clientY: number }) => {

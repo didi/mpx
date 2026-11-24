@@ -17,6 +17,8 @@ import apiProxy from "@mpxjs/api-proxy"
 mpx.use(apiProxy, options)
 ```
 
+RN 页面预加载见 [mpx.preload](./route/preload.md)。
+
 ## 配置项 (Options) {#options}
 
 所有配置均为可选，可根据实际需求组合使用
